@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_machdep.c,v 1.306.2.1 2025/08/02 05:55:54 perseant Exp $	*/
+/*	$NetBSD: mips_machdep.c,v 1.306.2.2 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.306.2.1 2025/08/02 05:55:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_machdep.c,v 1.306.2.2 2026/11/04 23:20:58 perseant Exp $");
 
 #define __INTR_PRIVATE
 #include "opt_cputype.h"
@@ -692,9 +692,11 @@ static const struct pridtab cputab[] = {
 	{ MIPS_PRID_CID_MICROSOFT, MIPS_eMIPS, 1, -1, CPU_ARCH_MIPS1, 64,
 	  CPU_MIPS_NO_WAIT, 0, 0,		"eMIPS CPU"		},
 
-	/* Ingenic XBurst */
+	/*
+	 * Ingenic XBurst (e.g. JZ4780).
+	 */
 	{ MIPS_PRID_CID_INGENIC, MIPS_XBURST,  -1, -1,	-1, 0,
-	  MIPS32_FLAGS | CPU_MIPS_D_CACHE_COHERENT | CPU_MIPS_DOUBLE_COUNT,
+	  MIPS32_FLAGS | CPU_MIPS_DOUBLE_COUNT,
 	  0, 0, "XBurst"		},
 
 	{ 0, 0, 0,				0, 0, 0,
@@ -960,7 +962,7 @@ mips32r2_vector_init(const struct splsw *splsw)
 
 	/*
 	 * If this CPU doesn't have a COP0 USERLOCAL register, at the end
-	 * of cpu_switch resume overwrite the instructions which update it.
+	 * of cpu_switch_resume overwrite the instructions which update it.
 	 */
 	if (!MIPS_HAS_USERLOCAL) {
 		extern uint32_t mips32r2_cpu_switch_resume[];
@@ -1630,7 +1632,7 @@ cpu_identify(device_t dev)
 		    opts->mips_num_tlb_entries);
 #if !defined(__mips_o32)
 		if (CPUIS64BITS) {
-			int64_t pfn_mask;
+			uint64_t pfn_mask;
 			i = ffs(~(opts->mips3_tlb_vpn_mask >> 31)) + 30;
 			aprint_normal(", %d%cB (%d-bit) VAs",
 			    1 << (i % 10), sufx[(i / 10) - 1], i);
@@ -2464,18 +2466,6 @@ std_splsw_test(void)
 }
 
 #endif /* PARANOIA */
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-
-	/* XXX Do something board/machine specific here one day... */
-}
-#endif /* MODULAR */
 
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)

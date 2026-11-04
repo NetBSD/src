@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -644,7 +644,7 @@ insns_bit_useless (const insn_list *insns, const decode_table *rule, int bit_nr)
 
   /* Given only one constant value has been found, check through all
      the instructions to see if at least one conditional makes it
-     usefull */
+     useful */
   if (value >= 0 && is_useless)
     {
       for (entry = insns; entry != NULL; entry = entry->next)
@@ -981,7 +981,7 @@ gen_entry_expand_opcode (gen_entry *table,
 						     condition->field->last);
 					  /* this is a requirement of
 					     a conditonal field
-					     refering to another field */
+					     referring to another field */
 					  ASSERT ((condition->field->first -
 						   condition->field->last) ==
 						  (first_pos - last_pos));

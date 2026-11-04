@@ -1,4 +1,4 @@
-/* $NetBSD: intr.h,v 1.5.6.1 2025/08/02 05:56:03 perseant Exp $ */
+/* $NetBSD: intr.h,v 1.5.6.2 2026/11/04 23:21:14 perseant Exp $ */
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #endif
 
 /*
- * This is a common <machine/intr.h> for all RISCV platforms.
+ * This is a common <machine/intr.h> for all RISC-V platforms.
  */
 
 #define	IPL_NONE	0

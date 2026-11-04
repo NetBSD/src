@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.85 2022/10/30 10:20:45 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.85.8.1 2026/11/04 23:20:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.85 2022/10/30 10:20:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.85.8.1 2026/11/04 23:20:13 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>

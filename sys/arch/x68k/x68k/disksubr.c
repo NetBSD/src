@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.37 2024/01/07 07:58:35 isaki Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.37.2.1 2026/11/04 23:21:32 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37 2024/01/07 07:58:35 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.37.2.1 2026/11/04 23:21:32 perseant Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -65,7 +65,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
     struct disklabel *lp, struct cpu_disklabel *osdep)
 {
 	struct dos_partition *dp = 0;
-	struct dkbad *bdp = &osdep->bad;
 	struct buf *bp;
 	struct disklabel *dlp;
 	const char *msg = NULL;
@@ -73,7 +72,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 
 	if (osdep)
 		dp = osdep->dosparts;
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEF_BSIZE;
 	if (lp->d_secperunit == 0)
@@ -88,6 +87,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	lp->d_partitions[RAW_PART].p_offset = 0;
 
 	lp->d_partitions[0].p_size = lp->d_partitions[RAW_PART].p_size;
+
+	lp->d_bbsize = 8192;
+	lp->d_sbsize = 2048;
 
 	/* get a buffer and initialize it */
 	bsdlabelsz =
@@ -134,7 +136,7 @@ dodospart:
 	if (lp->d_secsize >= 2048) {
 		if (msg)
 			goto done;
-		goto dobadsect;
+		goto done;
 	}
 	bp->b_blkno = DOSPARTOFF * DEF_BSIZE / lp->d_secsize;
 				/* DOSPARTOFF in DEV_BSIZE unit */
@@ -150,7 +152,7 @@ dodospart:
 		/* Human68k-style partition table does not exist */
 		if (msg)
 			goto done;
-		goto dobadsect;
+		goto done;
 	}
 
 	/* XXX how do we check veracity/bounds of this? */
@@ -163,8 +165,6 @@ dodospart:
 	/* if BSD disklabel does not exist, fall back to Human68k partition */
 	if (msg != NULL) {
 		msg = NULL;
-		lp->d_bbsize = 8192;
-		lp->d_sbsize = 2048;
 		for (i = 0; i < NDOSPART; i++, dp++)
 			/* is this ours? */
 			if (dp->dp_size) {
@@ -205,43 +205,6 @@ dodospart:
 			}
 	} else {
 		parttbl_consistency_check(lp, dp);
-	}
-
-dobadsect:
-	/* obtain bad sector table if requested and present */
-	if (bdp && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *db;
-
-		i = 0;
-		do {
-			/* read a bad sector table */
-			bp->b_oflags &= ~(BO_DONE);
-			bp->b_flags |= B_READ;
-			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEF_BSIZE)
-				bp->b_blkno *= lp->d_secsize / DEF_BSIZE;
-			else
-				bp->b_blkno /= DEF_BSIZE / lp->d_secsize;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_cylinder = lp->d_ncylinders - 1;
-			(*strat)(bp);
-
-			/* if successful, validate, otherwise try another */
-			if (biowait(bp)) {
-				msg = "bad sector table I/O error";
-			} else {
-				db = (struct dkbad *)(bp->b_data);
-#define DKBAD_MAGIC 0x4321
-				if (db->bt_mbz == 0
-					&& db->bt_flag == DKBAD_MAGIC) {
-					msg = NULL;
-					*bdp = *db;
-					break;
-				} else
-					msg = "bad sector table corrupted";
-			}
-		} while (bp->b_error != 0 && (i += 2) < 10 &&
-			i < lp->d_nsectors);
 	}
 
 done:

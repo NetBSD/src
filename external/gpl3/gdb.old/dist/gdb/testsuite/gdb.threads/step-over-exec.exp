@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -45,6 +45,8 @@ proc do_test { execr_thread different_text_segments displaced_stepping } {
 
     set execr_opts [list debug]
     set execd_opts [list debug]
+
+    lappend_include_file execr_opts $::srcdir/lib/my-syscalls.h
 
     if { $different_text_segments } {
 	lappend execr_opts "text_segment=0x600000"

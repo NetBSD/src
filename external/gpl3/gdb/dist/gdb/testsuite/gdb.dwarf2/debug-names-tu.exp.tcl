@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile _start.c debug-names.S
 
@@ -48,7 +46,7 @@ Dwarf::assemble {
     }
 
     tu { label tu_label version $dwarf_version } 0x8ece66f4224fddb3 "" {
-	type_unit {} {
+	type_unit {{language @DW_LANG_C}} {
 	    declare_labels int_type
 
 	    structure_type {
@@ -72,7 +70,8 @@ Dwarf::assemble {
 	cu cu_label
 	tu tu_label
 	name _start subprogram cu_label 0xEDDB6232
-	name struct_with_int_member structure_type tu_label 0x53A2AE86
+	name struct_with_int_member structure_type tu_label 0x53A2AE86 \
+	    {DW_LANG_C}
     }
 }
 

@@ -1,0 +1,229 @@
+# Copyright (C) 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check the 'maint info inline-frames' and 'maint info blocks'
+# commands.
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  {debug nopie}]} {
+    return -1
+}
+
+if {![runto normal_func]} {
+    return 0
+}
+
+# Make a pattern to match 'maint info blocks' output.  ARGS is the
+# list of function names we expect to see.  If the function name
+# starts with 'inline_func' then we expect to see an inline block,
+# otherwise blocks are not expected to be inline.
+proc make_blocks_result { args } {
+    set result \
+	[list \
+	     "Blocks at $::hex:" \
+	     "  from objfile: \\\[\\(objfile \\*\\) $::hex\\\] [string_to_regexp $::binfile]" \
+	     ""\
+	     "\\\[\\(block \\*\\) $::hex\\\] $::hex\\.\\.$::hex" \
+	     "  entry pc: $::hex" \
+	     "  is global block" \
+	     ".*" \
+	     "\\\[\\(block \\*\\) $::hex\\\] $::hex\\.\\.$::hex" \
+	     "  entry pc: $::hex" \
+	     "  is static block" \
+	     ".*" ]
+
+    foreach func $args {
+	lappend result \
+	    "\\\[\\(block \\*\\) $::hex\\\] $::hex\\.\\.$::hex" \
+	    "  entry pc: $::hex"
+
+	if { [string range $func 0 10] eq "inline_func" } {
+	    lappend result"  inline function: $func"
+	} else {
+	    lappend result"  function: $func"
+	}
+
+	lappend result ".*"
+    }
+
+    return [multi_line {*}$result]
+}
+
+gdb_test "maint info blocks" [make_blocks_result normal_func] \
+    "maint info blocks in normal_func only"
+
+# Next forward until we find the call to inline_func_a().  The hope is
+# that when we see the 'inline_func_a()' line this will be the start of
+# the inlined function.  This might not be the case on all
+# architectures if the compiler needs to perform some preamble.
+gdb_test_multiple "next" "next forward to inline_func_a" {
+    -re "^$decimal\\s+inline_func_a \\(\\);\r\n" {
+	# Consume the next prompt.
+	gdb_expect {
+	    -re "^$gdb_prompt $" {}
+	}
+	pass $gdb_test_name
+    }
+
+    -re "^$decimal\\s+\[^\r\n\]+After inline function\[^\r\n\]+\r\n" {
+	# We've gone too far!
+	fail $gdb_test_name
+    }
+
+    -re "^$decimal\\s+\[^\r\n\]+\r\n" {
+	send_gdb "next\n"
+	exp_continue
+    }
+
+    -re "^\[^\r\n\]+\r\n" {
+	exp_continue
+    }
+}
+
+gdb_test "maint info blocks" [make_blocks_result normal_func \
+				  inline_func_a inline_func_b] \
+    "maint info blocks when all blocks visible"
+
+# View the inline frame information.  This should display that we are
+# at the start of inline_func_a() within normal_func().
+gdb_test "maint info inline-frames" \
+    [multi_line \
+	 "^Cached inline state information for thread $decimal\\." \
+	 "program counter = $hex" \
+	 "skipped frames = 2" \
+	 "  inline_func_b" \
+	 "  inline_func_a" \
+	 "> normal_func"] \
+    "check inline-frames state when in normal_func"
+
+# Step, we should now enter the inlined function.
+gdb_test "step" ".*" \
+    "step to enter inline_func"
+
+# And the inline-frames information should update.
+gdb_test "maint info inline-frames" \
+    [multi_line \
+	 "^Cached inline state information for thread $decimal\\." \
+	 "program counter = $hex" \
+	 "skipped frames = 1" \
+	 "  inline_func_b" \
+	 "> inline_func_a" \
+	 "  normal_func"] \
+    "check inline-frames state when just entered inline_func_a"
+
+# Record the current program counter.
+set pc [get_hexadecimal_valueof "\$pc" "UNKNOWN"]
+
+# Use the recorded $pc value to check inline frames.
+gdb_test "maint info inline-frames $pc" \
+    [multi_line \
+	 "^program counter = $hex" \
+	 "skipped frames = 2" \
+	 "  inline_func_b" \
+	 "  inline_func_a" \
+	 "> normal_func"] \
+    "check inline-frames state at recorded \$pc while at the \$pc"
+
+# Step again, we should now enter inlined_func_b().
+gdb_test "step" ".*" \
+    "step into inline_func_b"
+
+gdb_test "maint info inline-frames" \
+    [multi_line \
+	 "^Cached inline state information for thread $decimal\\." \
+	 "program counter = $hex" \
+	 "skipped frames = 0" \
+	 "> inline_func_b" \
+	 "  inline_func_a" \
+	 "  normal_func"] \
+    "check inline-frames state when just entered inline_func_b"
+
+gdb_test "maint info blocks" [make_blocks_result normal_func \
+				  inline_func_a inline_func_b] \
+    "maint info blocks when all blocks still visible"
+
+gdb_test "step" ".*" \
+    "step into the body of inline_func_b"
+
+# Now we are no longer at the start of the inlined function we should
+# no longer see normal_func() in the inline-frames information.
+gdb_test "maint info inline-frames" \
+    [multi_line \
+	 "^Cached inline state information for thread $decimal\\." \
+	 "program counter = $hex" \
+	 "skipped frames = 0" \
+	 "> inline_func_b"] \
+    "check inline-frames state when within inline_func_b"
+
+gdb_test "maint info blocks" [make_blocks_result normal_func \
+				  inline_func_a inline_func_b] \
+    "maint info blocks within inline function, all blocks still visible"
+
+# Use 'stepi' and check 'maint info inline-frames' still works.
+gdb_test "stepi" ".*" "perform stepi"
+gdb_test "maint info inline-frames" \
+    [multi_line \
+	 "^Inline state information for thread $decimal\\." \
+	 "program counter = $hex" \
+	 "skipped frames = 0" \
+	 "> inline_func_b"] \
+    "check inline-frames state when within inline_func_b after stepi"
+
+gdb_test "maint info blocks" [make_blocks_result normal_func \
+				  inline_func_a inline_func_b] \
+    "maint info blocks within inline function after stepi, all blocks still visible"
+
+# Use the recorded $pc value to check inline frames.
+gdb_test "maint info inline-frames $pc" \
+    [multi_line \
+	 "^program counter = $hex" \
+	 "skipped frames = 2" \
+	 "  inline_func_b" \
+	 "  inline_func_a" \
+	 "> normal_func"] \
+    "check inline-frames state at recorded \$pc"
+
+gdb_test "maint info blocks" [make_blocks_result normal_func \
+				  inline_func_a inline_func_b] \
+    "maint info blocks using stored \$pc, inferior still running"
+
+clean_restart
+gdb_load $binfile
+
+# Use the recorded $pc value to check inline frames when the inferior
+# is not executing.
+gdb_test "maint info inline-frames $pc" \
+    [multi_line \
+	 "^program counter = $hex" \
+	 "skipped frames = 2" \
+	 "  inline_func_b" \
+	 "  inline_func_a" \
+	 "> normal_func"] \
+    "check inline-frames state at recorded \$pc before execution starts"
+
+gdb_test "maint info blocks $pc" [make_blocks_result normal_func \
+				      inline_func_a inline_func_b] \
+    "maint info blocks using stored \$pc, inferior not running"
+
+# Trying to read the $pc from the current thread should fail if the
+# inferior is not yet running.
+gdb_test "maint info inline-frames" \
+    "^no inferior thread" \
+    "check inline-frames state of current thread before execution starts"
+
+gdb_test "maint info blocks" "^no inferior thread" \
+    "maint info blocks with no \$pc and inferior not running"

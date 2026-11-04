@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_40.h,v 1.3.2.1 2025/08/02 05:55:49 perseant Exp $	*/
+/*	$NetBSD: mmu_40.h,v 1.3.2.2 2026/11/04 23:20:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -72,8 +72,8 @@
 #define	LA40_L1_SHIFT	25
 #define	LA40_L2_NBITS	7U
 #define	LA40_L2_SHIFT	18
-#define	LA40_L3_NBITS	(32U - LA40_L1_NBITS - LA40_L2_NBITS - PGSHIFT)
-#define	LA40_L3_SHIFT	PGSHIFT
+#define	LA40_L3_NBITS	(32U - LA40_L1_NBITS - LA40_L2_NBITS - PAGE_SHIFT)
+#define	LA40_L3_SHIFT	PAGE_SHIFT
 
 #define	LA40_L1_COUNT	__BIT(LA40_L1_NBITS)
 #define	LA40_L2_COUNT	__BIT(LA40_L2_NBITS)
@@ -100,15 +100,15 @@
  */
 #define	UTE40_PTA	__BITS(9,31)	/* Pointer Table Address (L1 PTE) */
 					/* Page Table Address (L2 PTE) */
-#define	UTE40_PGTA	__BITS(8 - (13 - PGSHIFT),31)
+#define	UTE40_PGTA	__BITS(8 - (13 - PAGE_SHIFT),31)
 #define	UTE40_U		__BIT(3)	/* Used (referenced) */
 #define	UTE40_W		__BIT(2)	/* Write Protected */
 #define	UTE40_UDT	__BITS(0,1)	/* Upper Descriptor Type */
 					/* 00 or 01 -- Invalid */
 					/* 10 or 11 -- Resident */
 
-#define	UTE40_INVALID	__SHIFTIN(0, UTE_UDT)
-#define	UTE40_RESIDENT	__SHIFTIN(2, UTE_UDT)
+#define	UTE40_INVALID	__SHIFTIN(0, UTE40_UDT)
+#define	UTE40_RESIDENT	__SHIFTIN(2, UTE40_UDT)
 
 /*
  * The PTE format for L3 tables.
@@ -127,7 +127,7 @@
  *   CPU signals if an external bus transfer results from the access,
  *   meaning that they may have system-specific side-effects.
  */
-#define	PTE40_PGA	__BITS(PGSHIFT,31) /* Page Physical Address */
+#define	PTE40_PGA	__BITS(PAGE_SHIFT,31) /* Page Physical Address */
 #define	PTE40_UR_x	__BIT(12)	/* User Reserved (extra avail if 8K) */
 #define	PTE40_UR	__BIT(11)	/* User Reserved */
 #define	PTE40_G		__BIT(10)	/* Global */
@@ -212,6 +212,8 @@
 #define	MMUSR40_R	PTE40_RESIDENT
 
 #ifdef _KERNEL
+#include <m68k/mmu.h>
+
 /*
  * TT register value indices in the mmu_ttregs[] array.  Note that asm
  * code makes assumptions about these indices, to change them at your
@@ -222,7 +224,7 @@ extern uint32_t mmu_tt40[];
 #define	MMU_TTREG_ITT1	1
 #define	MMU_TTREG_DTT0	2
 #define	MMU_TTREG_DTT1	3
-#define	MMU_NTTREGS40
+#define	MMU_NTTREGS40	4
 
 void	mmu_load_urp40(paddr_t);
 void	mmu_load_urp60(paddr_t);

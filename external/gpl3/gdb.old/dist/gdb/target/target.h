@@ -1,6 +1,6 @@
 /* Declarations for common target functions.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,33 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_TARGET_H
-#define TARGET_TARGET_H
+#ifndef GDB_TARGET_TARGET_H
+#define GDB_TARGET_TARGET_H
 
 #include "target/waitstatus.h"
 #include "target/wait.h"
+#include "gdbsupport/enum-flags.h"
 
 /* This header is a stopgap until more code is shared.  */
+
+/* Available thread options.  Keep this in sync with to_string, in
+   target.c.  */
+
+enum gdb_thread_option : unsigned
+{
+  /* Tell the target to report TARGET_WAITKIND_THREAD_CLONED events
+     for the thread.  */
+  GDB_THREAD_OPTION_CLONE = 1 << 0,
+
+  /* Tell the target to report TARGET_WAITKIND_THREAD_EXIT events for
+     the thread.  */
+  GDB_THREAD_OPTION_EXIT = 1 << 1,
+};
+
+DEF_ENUM_FLAGS_TYPE (enum gdb_thread_option, gdb_thread_options);
+
+/* Convert gdb_thread_option to a string.  */
+extern std::string to_string (gdb_thread_options options);
 
 /* Read LEN bytes of target memory at address MEMADDR, placing the
    results in GDB's memory at MYADDR.  Return zero for success,
@@ -242,4 +262,4 @@ private:
   static target_terminal_state m_terminal_state;
 };
 
-#endif /* TARGET_TARGET_H */
+#endif /* GDB_TARGET_TARGET_H */

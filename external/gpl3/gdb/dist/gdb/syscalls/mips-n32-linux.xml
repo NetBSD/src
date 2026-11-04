@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2011-2024 Free Software Foundation, Inc.
+<!-- Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -398,4 +398,9 @@
   <syscall name="lsm_get_self_attr" number="6459"/>
   <syscall name="lsm_set_self_attr" number="6460"/>
   <syscall name="lsm_list_modules" number="6461"/>
+  <syscall name="mseal" number="6462" groups="memory"/>
+  <syscall name="setxattrat" number="6463" groups="descriptor,file"/>
+  <syscall name="getxattrat" number="6464" groups="descriptor,file"/>
+  <syscall name="listxattrat" number="6465" groups="descriptor,file"/>
+  <syscall name="removexattrat" number="6466" groups="descriptor,file"/>
 </syscalls_info>

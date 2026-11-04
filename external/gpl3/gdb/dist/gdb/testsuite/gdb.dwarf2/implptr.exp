@@ -1,4 +1,4 @@
-# Copyright 2010-2024 Free Software Foundation, Inc.
+# Copyright 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -63,7 +63,7 @@ proc implptr_test_bar {} {
 proc implptr_test_baz {} {
     global csrcfile
     set line [gdb_get_line_number "baz breakpoint" $csrcfile]
-    gdb_test "break implptr.c:$line" "Breakpoint 3.*" \
+    gdb_test "break add" "Breakpoint 3.*" \
 	"set baz breakpoint for implptr"
     gdb_continue_to_breakpoint "continue to baz breakpoint for implptr"
 

@@ -1,4 +1,4 @@
-# $NetBSD: files.npf,v 1.23.26.1 2025/08/02 05:57:48 perseant Exp $
+# $NetBSD: files.npf,v 1.23.26.2 2026/11/04 23:27:58 perseant Exp $
 #
 # Public Domain.
 #
@@ -7,7 +7,7 @@
 # NPF pseudo device and modules.
 #
 
-defpseudo	npf:	ifnet, libnv
+defpseudo	npf:	ifnet, libnv, bpf_filter
 
 # Core
 file	net/npf/npf.c				npf
@@ -44,6 +44,7 @@ file	net/npf/lpm.c				npf
 file	net/npf/npf_ext_log.c			npf
 file	net/npf/npf_ext_normalize.c		npf
 file	net/npf/npf_ext_rndblock.c		npf
+file	net/npf/npf_ext_route.c			npf
 
 # ALGs
 file	net/npf/npf_alg_icmp.c			npf

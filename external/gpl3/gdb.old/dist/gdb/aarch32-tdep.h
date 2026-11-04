@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,13 +15,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH32_TDEP_H
-#define AARCH32_TDEP_H
+#ifndef GDB_AARCH32_TDEP_H
+#define GDB_AARCH32_TDEP_H
 
 struct target_desc;
 
 /* Get the AArch32 target description.  */
 
-const target_desc *aarch32_read_description ();
+const target_desc *aarch32_read_description (bool tls);
 
-#endif /* aarch32-tdep.h.  */
+#endif /* GDB_AARCH32_TDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.94 2024/02/10 09:21:53 andvar Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.94.2.1 2026/11/04 23:22:36 perseant Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.94 2024/02/10 09:21:53 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.94.2.1 2026/11/04 23:22:36 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -278,6 +278,7 @@ smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 {
 	uint32_t addr;
 	uint32_t data = 0;
+	int err;
 
 	if (un->un_phyno != phy) {
 		*val = 0;
@@ -299,7 +300,11 @@ smsc_uno_miibus_readreg(struct usbnet *un, int phy, int reg, uint16_t *val)
 		return ETIMEDOUT;
 	}
 
-	smsc_readreg(un, SMSC_MII_DATA, &data);
+	err = smsc_readreg(un, SMSC_MII_DATA, &data);
+	if (err != 0) {
+		*val = 0;
+		return err;
+	}
 
 	*val = data & 0xffff;
 	return 0;
@@ -851,15 +856,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	 */
 	memset(un->un_eaddr, 0xff, ETHER_ADDR_LEN);
 
-	prop_dictionary_t dict = device_properties(self);
-	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
-
-	if (eaprop != NULL) {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(un->un_eaddr, prop_data_value(eaprop),
-		    ETHER_ADDR_LEN);
-	} else {
+	if (! ether_getaddr(self, un->un_eaddr)) {
 		/* Check if there is already a MAC address in the register */
 		if ((smsc_readreg(un, SMSC_MAC_ADDRL, &mac_l) == 0) &&
 		    (smsc_readreg(un, SMSC_MAC_ADDRH, &mac_h) == 0)) {

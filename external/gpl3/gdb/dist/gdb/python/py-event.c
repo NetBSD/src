@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -56,24 +56,8 @@ evpy_add_attribute (PyObject *event, const char *name, PyObject *attr)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_event (void)
 {
-  return gdbpy_initialize_event_generic (&event_object_type,
-					 "Event");
+  return gdbpy_type_ready (&event_object_type);
 }
-
-/* Initialize the given event type.  If BASE is not NULL it will
-  be set as the types base.
-  Returns 0 if initialization was successful -1 otherwise.  */
-
-int
-gdbpy_initialize_event_generic (PyTypeObject *type,
-				const char *name)
-{
-  if (PyType_Ready (type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, name, (PyObject *) type);
-}
-
 
 /* Notify the list of listens that the given EVENT has occurred.
    returns 0 if emit is successful -1 otherwise.  */

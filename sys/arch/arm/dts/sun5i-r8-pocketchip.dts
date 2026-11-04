@@ -1,4 +1,4 @@
-/* $NetBSD: sun5i-r8-pocketchip.dts,v 1.2 2019/05/07 04:21:09 thorpej Exp $ */
+/* $NetBSD: sun5i-r8-pocketchip.dts,v 1.2.34.1 2026/11/04 23:20:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/sun5i-r8-chip.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/allwinner/sun5i-r8-chip.dts"
 
 #include <dt-bindings/gpio/gpio.h>
 #include <dt-bindings/input/input.h>

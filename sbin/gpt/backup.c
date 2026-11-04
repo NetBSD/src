@@ -33,11 +33,14 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/show.c,v 1.14 2006/06/22 22:22:32 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: backup.c,v 1.20.8.1 2025/08/02 05:55:06 perseant Exp $");
+__RCSID("$NetBSD: backup.c,v 1.20.8.2 2026/11/04 23:19:39 perseant Exp $");
 #endif
 
 #include <sys/bootblock.h>
 #include <sys/types.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 
 #include <assert.h>
 #include <err.h>

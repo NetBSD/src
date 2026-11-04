@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.10.2.1 2025/08/02 05:53:43 perseant Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.10.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -754,9 +754,7 @@ tostruct_loc(ARGS_TOSTRUCT) {
 		return ISC_R_NOTIMPLEMENTED;
 	}
 
-	loc->common.rdclass = rdata->rdclass;
-	loc->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&loc->common, link);
+	DNS_RDATACOMMON_INIT(loc, rdata->type, rdata->rdclass);
 
 	loc->v.v0.version = version;
 	isc_region_consume(&r, 1);

@@ -1,5 +1,5 @@
 /* Event loop machinery for GDB, the GNU debugger.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -81,7 +81,7 @@ struct file_handler
 
 #ifdef HAVE_POLL
 /* Do we use poll or select?  Some systems have poll, but then it's
-   not useable with all kinds of files.  We probe that whenever a new
+   not usable with all kinds of files.  We probe that whenever a new
    file handler is added.  */
 static bool use_poll = true;
 #endif
@@ -827,7 +827,8 @@ update_wait_timeout (void)
       /* Update the timeout for select/ poll.  */
 #ifdef HAVE_POLL
       if (use_poll)
-	gdb_notifier.poll_timeout = timeout.tv_sec * 1000;
+	gdb_notifier.poll_timeout = (timeout.tv_sec * 1000 +
+				     (timeout.tv_usec + 1000 - 1) / 1000);
       else
 #endif /* HAVE_POLL */
 	{

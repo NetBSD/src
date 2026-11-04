@@ -1,4 +1,4 @@
-/*	$NetBSD: OsdSchedule.c,v 1.20 2021/12/31 14:22:26 riastradh Exp $	*/
+/*	$NetBSD: OsdSchedule.c,v 1.20.10.1 2026/11/04 23:21:47 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.20 2021/12/31 14:22:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: OsdSchedule.c,v 1.20.10.1 2026/11/04 23:21:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -69,7 +69,7 @@ static kmutex_t		acpi_osd_sleep_mtx;
 /*
  * acpi_osd_sched_init:
  *
- *	Initialize the APCICA Osd scheduler.  Called from AcpiOsInitialize().
+ *	Initialize the ACPICA Osd scheduler.  Called from AcpiOsInitialize().
  */
 void
 acpi_osd_sched_init(void)

@@ -1,6 +1,6 @@
 /* Python interface to inferior thread event registries.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -104,11 +104,7 @@ evregpy_dealloc (PyObject *self)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_eventregistry (void)
 {
-  if (PyType_Ready (&eventregistry_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "EventRegistry",
-				 (PyObject *) &eventregistry_object_type);
+  return gdbpy_type_ready (&eventregistry_object_type);
 }
 
 /* Return the number of listeners currently connected to this

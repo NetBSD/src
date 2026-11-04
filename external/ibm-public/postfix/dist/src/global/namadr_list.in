@@ -50,3 +50,9 @@ ${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk foo 1.2.3.4
 ${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk bar 1.2.3.4
 ${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk baz 1.2.3.4
 ${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk fool 1.2.3.4
+echo 'foo !inline:{
+    { bar = yes}
+  } baz' >junk; mv junk /tmp
+${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk foo 1.2.3.4
+${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk bar 1.2.3.4
+${SHLIB_ENV} ${VALGRIND} ./namadr_list /tmp/junk baz 1.2.3.4

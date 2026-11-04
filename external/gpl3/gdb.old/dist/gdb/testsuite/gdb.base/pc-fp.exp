@@ -1,4 +1,4 @@
-#   Copyright 2002-2023 Free Software Foundation, Inc.
+#   Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,4 +53,4 @@ gdb_test "info register \$fp" "${valueof_fp}.*"
 # Regression test for
 # http://sourceware.org/bugzilla/show_bug.cgi?id=12659
 gdb_test "info register pc fp" \
-    "pc +${valueof_pc}\[ \t\]+${valueof_pc} <.*>\[\r\n\]+fp +${valueof_fp}\[ \t\]+${valueof_fp}\[\r\n\]+"
+    "pc +${valueof_pc}\[ \t\]+${valueof_pc} <.*>\[\r\n\]+fp +${valueof_fp}\[ \t\]+${valueof_fp}"

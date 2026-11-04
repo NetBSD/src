@@ -1,6 +1,6 @@
 /* Target-dependent code for i386 BSD's.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "extract-store-integer.h"
 #include "frame.h"
 #include "gdbcore.h"
 #include "regcache.h"
@@ -32,7 +32,7 @@
    address of the associated sigcontext structure.  */
 
 static CORE_ADDR
-i386bsd_sigcontext_addr (frame_info_ptr this_frame)
+i386bsd_sigcontext_addr (const frame_info_ptr &this_frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);

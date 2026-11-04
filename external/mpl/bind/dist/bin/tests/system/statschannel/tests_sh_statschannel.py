@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "K*",
         "bind9.xsl.1",
@@ -31,11 +33,15 @@ pytestmark = pytest.mark.extra_artifacts(
         "zones*",
         "ns2/*.jnl",
         "ns2/*.signed",
+        "ns2/*.db",
         "ns2/dsset-*",
         "ns2/K*",
+        "ns2/dnssec.db",
         "ns2/dnssec.*.id",
+        "ns2/manykeys.db",
         "ns2/manykeys.*.id",
         "ns2/named.stats",
+        "ns2/settime.out.*",
         "ns2/signzone.out.*",
         "ns3/_default.nzf*",
         "ns3/_default.nzd*",
@@ -45,6 +51,11 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns3/example.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_libxml2_or_json_c,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_statschannel(run_tests_sh):

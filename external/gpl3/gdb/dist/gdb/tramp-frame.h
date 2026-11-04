@@ -1,6 +1,6 @@
 /* Signal trampoline unwinder.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TRAMP_FRAME_H
-#define TRAMP_FRAME_H
+#ifndef GDB_TRAMP_FRAME_H
+#define GDB_TRAMP_FRAME_H
 
 #include "frame.h"
 #include "frame-unwind.h"	/* For frame_prev_arch_ftype.  */
@@ -85,4 +85,4 @@ struct tramp_frame
 void tramp_frame_prepend_unwinder (struct gdbarch *gdbarch,
 				   const struct tramp_frame *tramp);
 
-#endif
+#endif /* GDB_TRAMP_FRAME_H */

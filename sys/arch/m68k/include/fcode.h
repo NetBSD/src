@@ -1,4 +1,4 @@
-/*	$NetBSD: fcode.h,v 1.2 2024/01/13 00:44:42 thorpej Exp $	*/
+/*	$NetBSD: fcode.h,v 1.2.2.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -79,6 +79,12 @@ getdfc(void)
 	return rv;
 }
 
+static inline void
+setdfc(int val)
+{
+	__asm volatile("movc %0,%%dfc" :: "d" (val));
+}
+
 static inline int
 getsfc(void)
 {
@@ -89,6 +95,11 @@ getsfc(void)
 	return rv;
 }
 
+static inline void
+setsfc(int val)
+{
+	__asm volatile("movc %0,%%sfc" :: "d" (val));
+}
 #endif /* _KERNEL */
 
 #endif /* _M68K_FCODE_H_ */

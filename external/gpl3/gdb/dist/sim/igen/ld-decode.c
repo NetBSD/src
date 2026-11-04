@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -161,7 +161,7 @@ load_decode_table (const char *file_name)
       else
 	new_rule->last = options.insn_bit_size - 1;
       if (new_rule->first > new_rule->last)
-	error (new_rule->line, "First must preceed last\n");
+	error (new_rule->line, "First must precede last\n");
 
       /* force first/last, with default values based on first/last */
       if (entry->nr_fields > decode_force_first_field

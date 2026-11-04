@@ -1,4 +1,4 @@
-/* $NetBSD: tmp121.c,v 1.7 2022/01/19 05:21:44 thorpej Exp $ */
+/* $NetBSD: tmp121.c,v 1.7.10.1 2026/11/04 23:22:34 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.7 2022/01/19 05:21:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.7.10.1 2026/11/04 23:22:34 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: tmp121.c,v 1.7 2022/01/19 05:21:44 thorpej Exp $");
 #include <dev/spi/spivar.h>
 
 struct tmp121temp_softc {
-	struct spi_handle *sc_sh;
+	spi_handle_t sc_sh;
 	
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
@@ -68,10 +68,36 @@ static void	tmp121temp_refresh(struct sysmon_envsys *, envsys_data_t *);
 CFATTACH_DECL_NEW(tmp121temp, sizeof(struct tmp121temp_softc),
     tmp121temp_match, tmp121temp_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "ti,tmp121" },
+	{ .compat = "TMP00121" },
+
+#if 0	/* We should also add support for these: */
+	{ .compat = "ti,tmp122" },
+
+	{ .compat = "ti,lm70" },
+	{ .compat = "LM000070" },
+
+	{ .compat = "ti,lm71" },
+	{ .compat = "LM000071" },
+
+	{ .compat = "ti,lm74" },
+	{ .compat = "LM000074" },
+#endif
+	DEVICE_COMPAT_EOL
+};
+
 static int
 tmp121temp_match(device_t parent, cfdata_t cf, void *aux)
 {
-	return 1;
+	struct spi_attach_args *sa = aux;
+	int match_result;
+
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
+
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
@@ -85,7 +111,8 @@ tmp121temp_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": TI TMP121 Temperature Sensor\n");
 
 	/* configure for 10MHz */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
+	    SPI_FREQ_MHz(10));
 	if (error) {
 		return;
 	}

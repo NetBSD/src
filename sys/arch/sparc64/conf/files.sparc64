@@ -1,4 +1,4 @@
-#	$NetBSD: files.sparc64,v 1.166 2021/05/12 23:22:33 thorpej Exp $
+#	$NetBSD: files.sparc64,v 1.166.18.1 2026/11/04 23:21:22 perseant Exp $
 
 # @(#)files.sparc64	8.1 (Berkeley) 7/19/93
 # sparc64-specific configuration info
@@ -44,11 +44,14 @@ file	arch/sparc64/dev/schizo.c		schizo
 file	arch/sparc64/dev/pyro.c			pyro
 file	arch/sparc64/dev/vpci.c			vpci
 file	arch/sparc64/dev/pci_machdep.c		psycho | schizo | pyro | vpci
-file	dev/ofw/ofw_pci_subr.c			pci
 
 device jbusi2c: i2cexec, i2c_bitbang, i2cbus
 attach jbusi2c at mainbus
 file	arch/sparc64/dev/jbus-i2c.c		jbusi2c
+
+device firei2c: i2cexec, i2cbus
+attach firei2c at mainbus
+file	arch/sparc64/dev/fire_i2c.c		firei2c
 
 define  central {}
 device	central: central
@@ -92,6 +95,18 @@ device rtc: mc146818
 attach rtc at ebus with rtc_ebus
 file	arch/sparc64/dev/rtc.c			rtc
 
+device bq4802rtc: sysmon_envsys
+attach bq4802rtc at ebus with bq4802rtc_ebus
+file	arch/sparc64/dev/bq4802_ebus.c		bq4802rtc
+
+device envmon: sysmon_envsys
+attach envmon at ebus with envmon_ebus
+file	arch/sparc64/dev/envmon_ebus.c		envmon
+
+device auxfan: sysmon_envsys
+attach auxfan at iic
+file	arch/sparc64/dev/auxfan.c		auxfan
+
 device psm: sysmon_power
 attach psm at ebus
 file	arch/sparc64/dev/psm.c			psm
@@ -103,9 +118,8 @@ device	tda: sysmon_envsys
 attach	tda at iic
 file	arch/sparc64/dev/tda.c			tda
 
-device pcfiic: pcf8584, i2cbus
-attach pcfiic at ebus
-file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic
+attach pcfiic at ebus with pcfiic_ebus
+file	arch/sparc64/dev/pcfiic_ebus.c		pcfiic_ebus
 
 device ecadc: sysmon_envsys
 attach ecadc at iic

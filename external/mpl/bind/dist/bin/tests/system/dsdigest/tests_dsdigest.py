@@ -9,6 +9,7 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import dns.flags
 import dns.message
 import pytest
 
@@ -29,7 +30,7 @@ pytestmark = pytest.mark.extra_artifacts(
 
 def test_dsdigest_good():
     """Check that validation with enabled digest types works"""
-    msg = dns.message.make_query("a.good.", "A", want_dnssec=True)
+    msg = isctest.query.create("a.good.", "A")
     res = isctest.query.tcp(
         msg,
         "10.53.0.3",
@@ -51,7 +52,7 @@ def test_dsdigest_bad():
 
 def test_dsdigest_insecure():
     """Check that validation with not supported digest algorithms is insecure"""
-    msg_ds = dns.message.make_query("bad.", "DS", want_dnssec=True)
+    msg_ds = isctest.query.create("bad.", "DS")
     res_ds = isctest.query.tcp(
         msg_ds,
         "10.53.0.4",
@@ -59,7 +60,7 @@ def test_dsdigest_insecure():
     isctest.check.noerror(res_ds)
     assert res_ds.flags & dns.flags.AD
 
-    msg_a = dns.message.make_query("a.bad.", "A", want_dnssec=True)
+    msg_a = isctest.query.create("a.bad.", "A")
     res_a = isctest.query.tcp(
         msg_a,
         "10.53.0.4",

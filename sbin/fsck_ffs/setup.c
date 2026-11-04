@@ -1,4 +1,4 @@
-/*	$NetBSD: setup.c,v 1.109.2.1 2025/08/02 05:55:05 perseant Exp $	*/
+/*	$NetBSD: setup.c,v 1.109.2.2 2026/11/04 23:19:38 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)setup.c	8.10 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: setup.c,v 1.109.2.1 2025/08/02 05:55:05 perseant Exp $");
+__RCSID("$NetBSD: setup.c,v 1.109.2.2 2026/11/04 23:19:38 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -55,6 +55,7 @@ __RCSID("$NetBSD: setup.c,v 1.109.2.1 2025/08/02 05:55:05 perseant Exp $");
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

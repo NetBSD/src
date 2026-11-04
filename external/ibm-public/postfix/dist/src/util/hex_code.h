@@ -1,4 +1,4 @@
-/*	$NetBSD: hex_code.h,v 1.4.4.1 2025/08/02 05:50:18 perseant Exp $	*/
+/*	$NetBSD: hex_code.h,v 1.4.4.2 2026/11/04 23:14:57 perseant Exp $	*/
 
 #ifndef _HEX_CODE_H_INCLUDED_
 #define _HEX_CODE_H_INCLUDED_
@@ -24,6 +24,7 @@
 #define HEX_ENCODE_FLAG_NONE		(0)
 #define HEX_ENCODE_FLAG_USE_COLON	(1<<0)
 #define HEX_ENCODE_FLAG_APPEND		(1<<1)
+#define HEX_ENCODE_FLAG_LOWERCASE	(1<<2)
 
 #define HEX_DECODE_FLAG_NONE	(0)
 #define HEX_DECODE_FLAG_ALLOW_COLON	(1<<0)

@@ -1,4 +1,4 @@
-/*	$Id: imx_pcic.h,v 1.3 2012/10/27 17:17:39 chs Exp $	*/
+/*	$NetBSD: imx_pcic.h,v 1.3.74.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*
  * IMX CF interface to pcic/pcmcia
@@ -6,7 +6,7 @@
  * Sun Apr  1 21:42:37 PDT 2007
  */
 
-/*	$NetBSD: imx_pcic.h,v 1.3 2012/10/27 17:17:39 chs Exp $	*/
+/*	$NetBSD: imx_pcic.h,v 1.3.74.1 2026/11/04 23:20:11 perseant Exp $	*/
 /*	$OpenBSD: pxapcicvar.h,v 1.7 2005/12/14 15:08:51 uwe Exp $ */
 
 /*

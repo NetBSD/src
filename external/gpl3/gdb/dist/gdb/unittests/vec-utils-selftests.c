@@ -1,6 +1,6 @@
 /* Self tests for vector utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -65,9 +65,7 @@ unordered_remove_tests ()
 } /* namespace vector_utils_tests */
 } /* namespace selftests */
 
-void _initialize_vec_utils_selftests ();
-void
-_initialize_vec_utils_selftests ()
+INIT_GDB_FILE (vec_utils_selftests)
 {
   selftests::register_test
     ("unordered_remove",

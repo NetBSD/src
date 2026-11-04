@@ -1,5 +1,5 @@
 /* SFrame format description.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of libsframe.
 
@@ -82,9 +82,20 @@ extern "C"
 /* Various flags for SFrame.  */
 
 /* Function Descriptor Entries are sorted on PC.  */
-#define SFRAME_F_FDE_SORTED	0x1
+#define SFRAME_F_FDE_SORTED		    0x1
 /* Functions preserve frame pointer.  */
-#define SFRAME_F_FRAME_POINTER 0x2
+#define SFRAME_F_FRAME_POINTER		    0x2
+/* Function start address in SFrame FDE is encoded as the distance from the
+   location of the sfde_func_start_address to the start PC of the function.
+   If absent, the function start address in SFrame FDE is encoded as the
+   distance from the start of the SFrame FDE section to the start PC of the
+   function.  */
+#define SFRAME_F_FDE_FUNC_START_PCREL	    0x4
+
+/* Set of all defined flags in SFrame V2.  */
+#define SFRAME_V2_F_ALL_FLAGS \
+  (SFRAME_F_FDE_SORTED | SFRAME_F_FRAME_POINTER \
+   | SFRAME_F_FDE_FUNC_START_PCREL)
 
 #define SFRAME_CFA_FIXED_FP_INVALID 0
 #define SFRAME_CFA_FIXED_RA_INVALID 0
@@ -93,6 +104,7 @@ extern "C"
 #define SFRAME_ABI_AARCH64_ENDIAN_BIG      1 /* AARCH64 big endian.  */
 #define SFRAME_ABI_AARCH64_ENDIAN_LITTLE   2 /* AARCH64 little endian.  */
 #define SFRAME_ABI_AMD64_ENDIAN_LITTLE     3 /* AMD64 little endian.  */
+#define SFRAME_ABI_S390X_ENDIAN_BIG        4 /* s390x big endian.  */
 
 /* SFrame FRE types.  */
 #define SFRAME_FRE_TYPE_ADDR1	0
@@ -190,7 +202,7 @@ typedef struct sframe_func_desc_entry
      - 2-bits: Unused.
      ------------------------------------------------------------------------
      |     Unused    |  PAC auth A/B key (aarch64) |  FDE type |   FRE type   |
-     |               |        Unused (amd64)       |           |              |
+     |               |     Unused (amd64, s390x)   |           |              |
      ------------------------------------------------------------------------
      8               6                             5           4              0     */
   uint8_t sfde_func_info;
@@ -236,6 +248,10 @@ typedef struct sframe_func_desc_entry
    may or may not be tracked.  */
 #define SFRAME_FRE_FP_OFFSET_IDX    2
 
+/* Invalid RA offset.  Currently used for s390x as padding to represent FP
+   without RA saved.  */
+#define SFRAME_FRE_RA_OFFSET_INVALID 0
+
 typedef struct sframe_fre_info
 {
   /* Information about
@@ -248,7 +264,7 @@ typedef struct sframe_fre_info
      - 1 bit: Mangled RA state bit (aarch64 only).
      ----------------------------------------------------------------------------------
      | Mangled-RA (aarch64) |  Size of offsets   |   Number of offsets    |   base_reg |
-     |  Unused (amd64)      |                    |                        |            |
+     | Unused (amd64, s390x)|                    |                        |            |
      ----------------------------------------------------------------------------------
      8                     7                    5                        1            0
 
@@ -274,7 +290,7 @@ typedef struct sframe_fre_info
 
 /* SFrame Frame Row Entry definitions.
 
-   Used for both AMD64 and AARCH64.
+   Used for AMD64, AARCH64, and s390x.
 
    An SFrame Frame Row Entry is a self-sufficient record which contains
    information on how to generate the stack trace for the specified range of
@@ -282,20 +298,40 @@ typedef struct sframe_fre_info
      S is the size of the stack frame offset for the FRE, and
      N is the number of stack frame offsets in the FRE
 
-   The offsets are interpreted in order as follows:
+   The interpretation of FRE stack offsets is ABI-specific:
 
-    offset1 (interpreted as CFA = BASE_REG + offset1)
-
-    if RA is being tracked
-      offset2 (interpreted as RA = CFA + offset2)
+   AMD64:
+     offset1 (interpreted as CFA = BASE_REG + offset1)
       if FP is being tracked
-	offset3 (intrepreted as FP = CFA + offset2)
+	offset2 (intrepreted as FP = CFA + offset2)
       fi
-    else
+
+    AARCH64:
+     offset1 (interpreted as CFA = BASE_REG + offset1)
+     if FP is being tracked (in other words, if frame record created)
+       offset2 (interpreted as RA = CFA + offset2)
+       offset3 (intrepreted as FP = CFA + offset3)
+     fi
+     Note that in AAPCS64, a frame record, if created, will save both FP and
+     LR on stack.
+
+   s390x:
+     offset1 (interpreted as CFA = BASE_REG + offset1)
+     if RA is being tracked
+       offset2 (interpreted as RA = CFA + offset2; an offset value of
+	       SFRAME_FRE_RA_OFFSET_INVALID indicates a dummy padding RA offset
+	       to represent FP without RA saved on stack)
+       if FP is being tracked
+	 offset3 (intrepreted as FP = CFA + offset3)
+       fi
+     else
       if FP is being tracked
 	offset2 (intrepreted as FP = CFA + offset2)
       fi
     fi
+    Note that in s390x, if a FP/RA offset2/offset3 value has the least-
+    significant bit set it represents a DWARF register number shifted to the
+    left by 1 to restore the FP/RA value from.
 */
 
 /* Used when SFRAME_FRE_TYPE_ADDR1 is specified as FRE type.  */
@@ -339,6 +375,36 @@ typedef struct sframe_frame_row_entry_addr4
    is 0x100000000 (not inclusive).  */
 #define SFRAME_FRE_TYPE_ADDR4_LIMIT   \
   (1ULL << ((SFRAME_FRE_TYPE_ADDR4 * 2) * 8))
+
+/* On s390x, the CFA offset from CFA base register is by definition a minimum
+   of 160.  Store it adjusted by -160 to enable use of 8-bit SFrame offsets.
+   Additionally scale by an alignment factor of 8, as the SP and thus CFA
+   offset on s390x is always 8-byte aligned.  */
+#define SFRAME_S390X_CFA_OFFSET_ADJUSTMENT		SFRAME_S390X_SP_VAL_OFFSET
+#define SFRAME_S390X_CFA_OFFSET_ALIGNMENT_FACTOR	8
+#define SFRAME_V2_S390X_CFA_OFFSET_ENCODE(offset) \
+  (((offset) + SFRAME_S390X_CFA_OFFSET_ADJUSTMENT) \
+   / SFRAME_S390X_CFA_OFFSET_ALIGNMENT_FACTOR)
+#define SFRAME_V2_S390X_CFA_OFFSET_DECODE(offset) \
+  (((offset) * SFRAME_S390X_CFA_OFFSET_ALIGNMENT_FACTOR) \
+   - SFRAME_S390X_CFA_OFFSET_ADJUSTMENT)
+
+/* On s390x, the CFA is defined as SP at call site + 160.  Therefore the
+   SP value offset from CFA is -160.  */
+#define SFRAME_S390X_SP_VAL_OFFSET			(-160)
+
+/* On s390x, the FP and RA registers can be saved either on the stack or,
+   in case of leaf functions, in registers.  Store DWARF register numbers
+   encoded as offset by using the least-significant bit (LSB) as indicator:
+   - LSB=0: Stack offset.  The s390x ELF ABI mandates that stack register
+     slots must be 8-byte aligned.
+   - LSB=1: DWARF register number shifted to the left by one.  */
+#define SFRAME_V2_S390X_OFFSET_IS_REGNUM(offset) \
+  ((offset) & 1)
+#define SFRAME_V2_S390X_OFFSET_ENCODE_REGNUM(regnum) \
+  (((regnum) << 1) | 1)
+#define SFRAME_V2_S390X_OFFSET_DECODE_REGNUM(offset) \
+  ((offset) >> 1)
 
 #ifdef	__cplusplus
 }

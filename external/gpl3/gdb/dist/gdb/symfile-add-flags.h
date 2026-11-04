@@ -1,6 +1,6 @@
 /* Definition of symfile add flags.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (SYMFILE_ADD_FLAGS_H)
-#define SYMFILE_ADD_FLAGS_H
+#ifndef GDB_SYMFILE_ADD_FLAGS_H
+#define GDB_SYMFILE_ADD_FLAGS_H
 
 #include "gdbsupport/enum-flags.h"
 
@@ -54,4 +54,4 @@ enum symfile_add_flag : unsigned
 
 DEF_ENUM_FLAGS_TYPE (enum symfile_add_flag, symfile_add_flags);
 
-#endif /* !defined(SYMFILE_ADD_FLAGS_H) */
+#endif /* GDB_SYMFILE_ADD_FLAGS_H */

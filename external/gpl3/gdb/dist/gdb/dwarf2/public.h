@@ -1,6 +1,6 @@
 /* Public API for gdb DWARF reader
 
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_PUBLIC_H
-#define DWARF2_PUBLIC_H
+#ifndef GDB_DWARF2_PUBLIC_H
+#define GDB_DWARF2_PUBLIC_H
 
 /* A DWARF names index variant.  */
 enum class dw_index_kind
@@ -29,6 +29,8 @@ enum class dw_index_kind
   /* DWARF5 .debug_names.  */
   DEBUG_NAMES,
 };
+
+#if defined(DWARF_FORMAT_AVAILABLE)
 
 /* Try to locate the sections we need for DWARF 2 debugging
    information.  If these are found, begin reading the DWARF and
@@ -44,4 +46,27 @@ extern bool dwarf2_initialize_objfile
 
 extern void dwarf2_build_frame_info (struct objfile *);
 
-#endif /* DWARF2_PUBLIC_H */
+/* Append the DWARF-2 frame unwinders to GDBARCH's list.  */
+
+void dwarf2_append_unwinders (struct gdbarch *gdbarch);
+
+#else /* DWARF_FORMAT_AVAILABLE */
+
+static inline bool
+dwarf2_initialize_objfile (struct objfile  *,
+			   const struct dwarf2_debug_sections * = nullptr,
+			   bool = false)
+{
+  warning (_("No dwarf support available."));
+  return false;
+}
+
+static inline void
+dwarf2_build_frame_info (struct objfile *)
+{
+  warning (_("No dwarf support available."));
+}
+
+#endif /* DWARF_FORMAT_AVAILABLE */
+
+#endif /* GDB_DWARF2_PUBLIC_H */

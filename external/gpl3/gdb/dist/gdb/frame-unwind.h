@@ -1,6 +1,6 @@
 /* Definitions for a frame unwinder, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (FRAME_UNWIND_H)
-#define FRAME_UNWIND_H 1
+#ifndef GDB_FRAME_UNWIND_H
+#define GDB_FRAME_UNWIND_H
 
 struct frame_data;
 class frame_info_ptr;
@@ -156,21 +156,171 @@ typedef void (frame_dealloc_cache_ftype) (frame_info *self,
 typedef gdbarch *(frame_prev_arch_ftype) (const frame_info_ptr &this_frame,
 					  void **this_prologue_cache);
 
-struct frame_unwind
+/* Unwinders are classified by what part of GDB code created it.  */
+enum frame_unwind_class
 {
-  const char *name;
+  /* This is mostly handled by core GDB code.  */
+  FRAME_UNWIND_GDB,
+  /* This unwinder was added by one of GDB's extension languages.  */
+  FRAME_UNWIND_EXTENSION,
+  /* The unwinder was created and mostly handles debug information.  */
+  FRAME_UNWIND_DEBUGINFO,
+  /* The unwinder was created and handles target dependent things.  */
+  FRAME_UNWIND_ARCH,
+  /* Meta enum value, to ensure we're always sent a valid unwinder class.  */
+  UNWIND_CLASS_NUMBER,
+};
+
+class frame_unwind
+{
+public:
+  frame_unwind (const char *name, frame_type type, frame_unwind_class uclass,
+		const frame_data *data)
+    : m_name (name), m_type (type), m_unwinder_class (uclass),
+      m_unwind_data (data)
+  { }
+
+  const char *name () const
+  { return m_name; }
+
+  frame_type type () const
+  { return m_type; }
+
+  frame_unwind_class unwinder_class () const
+  { return m_unwinder_class; }
+
+  const frame_data *unwind_data () const
+  { return m_unwind_data; }
+
+  bool enabled () const
+  { return m_enabled; }
+
+  void set_enabled (bool state) const
+  { m_enabled = state; }
+
+  /* Default stop_reason implementation.  It reports NO_REASON, unless the
+     frame is the outermost.  */
+
+  virtual unwind_stop_reason stop_reason (const frame_info_ptr &this_frame,
+					  void **this_prologue_cache) const
+  {
+    return default_frame_unwind_stop_reason (this_frame, this_prologue_cache);
+  }
+
+  /* Default frame sniffer.  Will always return that the unwinder
+     is able to unwind the frame.  */
+
+  virtual int sniff (const frame_info_ptr &this_frame,
+		     void **this_prologue_cache) const
+  { return 1; }
+
+  /* Calculate the ID of the given frame using this unwinder.  */
+
+  virtual void this_id (const frame_info_ptr &this_frame,
+			void **this_prologue_cache,
+			struct frame_id *id) const = 0;
+
+  /* Get the value of a register in a previous frame.  */
+
+  virtual struct value *prev_register (const frame_info_ptr &this_frame,
+				       void **this_prologue_cache,
+				       int regnum) const = 0;
+
+  /* Properly deallocate the cache.  */
+
+  virtual void dealloc_cache (frame_info *self, void *this_cache) const
+  { }
+
+  /* Get the previous architecture.  */
+
+  virtual gdbarch *prev_arch (const frame_info_ptr &this_frame,
+			      void **this_prologue_cache) const
+  { return get_frame_arch (this_frame); }
+
+private:
+
+  /* Name of the unwinder.  Used to uniquely identify unwinders.  */
+  const char *m_name;
+
   /* The frame's type.  Should this instead be a collection of
      predicates that test the frame for various attributes?  */
-  enum frame_type type;
-  /* Should an attribute indicating the frame's address-in-block go
-     here?  */
-  frame_unwind_stop_reason_ftype *stop_reason;
-  frame_this_id_ftype *this_id;
-  frame_prev_register_ftype *prev_register;
-  const struct frame_data *unwind_data;
-  frame_sniffer_ftype *sniffer;
-  frame_dealloc_cache_ftype *dealloc_cache;
-  frame_prev_arch_ftype *prev_arch;
+  frame_type m_type;
+
+  /* What kind of unwinder is this.  It generally follows from where
+     the unwinder was added or where it looks for information to do the
+     unwinding.  */
+  frame_unwind_class m_unwinder_class;
+
+  /* Additional data used by the trampoline and python frame unwinders.  */
+  const frame_data *m_unwind_data;
+
+  /* Whether this unwinder can be used when sniffing.  */
+  mutable bool m_enabled = true;
+};
+
+/* This is a legacy version of the frame unwinder.  The original struct
+   used function pointers for callbacks, this updated version has a
+   method that just passes the parameters along to the callback
+   pointer.
+   Do not use this class for new unwinders.  Instead, see other classes
+   that inherit from frame_unwind, such as the python unwinder.  */
+struct frame_unwind_legacy : public frame_unwind
+{
+  frame_unwind_legacy (const char *name, frame_type type,
+		       frame_unwind_class uclass,
+		       frame_unwind_stop_reason_ftype *stop_reason_func,
+		       frame_this_id_ftype *this_id_func,
+		       frame_prev_register_ftype *prev_register_func,
+		       const struct frame_data *data,
+		       frame_sniffer_ftype *sniffer_func,
+		       frame_dealloc_cache_ftype *dealloc_cache_func = nullptr,
+		       frame_prev_arch_ftype *prev_arch_func = nullptr)
+  : frame_unwind (name, type, uclass, data), m_stop_reason (stop_reason_func),
+    m_this_id (this_id_func), m_prev_register (prev_register_func),
+    m_sniffer (sniffer_func), m_dealloc_cache (dealloc_cache_func),
+    m_prev_arch (prev_arch_func)
+  { }
+
+  /* This method just passes the parameters to the callback pointer.  */
+
+  enum unwind_stop_reason stop_reason (const frame_info_ptr &this_frame,
+				       void **this_prologue_cache) const override;
+
+  /* This method just passes the parameters to the callback pointer.  */
+
+  void this_id (const frame_info_ptr &this_frame, void **this_prologue_cache,
+		struct frame_id *id) const override;
+
+  /* This method just passes the parameters to the callback pointer.  */
+
+  struct value *prev_register (const frame_info_ptr &this_frame,
+			       void **this_prologue_cache,
+			       int regnum) const override;
+
+  /* This method just passes the parameters to the callback pointer.  */
+
+  int sniff (const frame_info_ptr &this_frame,
+	     void **this_prologue_cache) const override;
+
+  /* This method just passes the parameters to the callback pointer.
+     It is safe to call this method if no callback is installed, it
+     just turns into a noop.  */
+
+  void dealloc_cache (frame_info *self, void *this_cache) const override;
+
+  /* This method just passes the parameters to the callback pointer.  */
+
+  struct gdbarch *prev_arch (const frame_info_ptr &this_frame,
+			     void **this_prologue_cache) const override;
+
+private:
+
+  frame_unwind_stop_reason_ftype *m_stop_reason;
+  frame_this_id_ftype *m_this_id;
+  frame_prev_register_ftype *m_prev_register;
+  frame_sniffer_ftype *m_sniffer;
+  frame_dealloc_cache_ftype *m_dealloc_cache;
+  frame_prev_arch_ftype *m_prev_arch;
 };
 
 /* Register a frame unwinder, _prepending_ it to the front of the
@@ -226,7 +376,7 @@ value *frame_unwind_got_constant (const frame_info_ptr &frame, int regnum,
    inside BUF.  */
 
 value *frame_unwind_got_bytes (const frame_info_ptr &frame, int regnum,
-			       const gdb_byte *buf);
+			       gdb::array_view<const gdb_byte> buf);
 
 /* Return a value which indicates that FRAME's saved version of REGNUM
    has a known constant (computed) value of ADDR.  Convert the
@@ -235,4 +385,4 @@ value *frame_unwind_got_bytes (const frame_info_ptr &frame, int regnum,
 value *frame_unwind_got_address (const frame_info_ptr &frame, int regnum,
 				 CORE_ADDR addr);
 
-#endif
+#endif /* GDB_FRAME_UNWIND_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.71.2.1 2025/08/02 05:55:01 perseant Exp $	 */
+/*	$NetBSD: headers.c,v 1.71.2.2 2026/11/04 23:19:33 perseant Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.71.2.1 2025/08/02 05:55:01 perseant Exp $");
+__RCSID("$NetBSD: headers.c,v 1.71.2.2 2026/11/04 23:19:33 perseant Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -319,7 +319,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_INIT_ARRAYSZ:
 			obj->init_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
-			dbg(("headers: DT_INIT_ARRAYZ %zu",
+			dbg(("headers: DT_INIT_ARRAYSZ %zu",
 			    obj->init_arraysz));
 			break;
 #endif
@@ -340,8 +340,23 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 
 		case DT_FINI_ARRAYSZ:
 			obj->fini_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
-			dbg(("headers: DT_FINI_ARRAYZ %zu",
+			dbg(("headers: DT_FINI_ARRAYSZ %zu",
 			    obj->fini_arraysz));
+			break;
+#endif
+
+#ifdef HAVE_INITFINI_ARRAY
+		case DT_PREINIT_ARRAY:
+			obj->preinit_array =
+			    (fptr_t *)(obj->relocbase + dynp->d_un.d_ptr);
+			dbg(("headers: DT_PREINIT_ARRAY at %p",
+			    obj->preinit_array));
+			break;
+
+		case DT_PREINIT_ARRAYSZ:
+			obj->preinit_arraysz = dynp->d_un.d_val / sizeof(fptr_t);
+			dbg(("headers: DT_PREINIT_ARRAYSZ %zu",
+			    obj->preinit_arraysz));
 			break;
 #endif
 
@@ -551,14 +566,18 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 			break;
 
 		case PT_LOAD:
-			size = round_up(vaddr + ph->p_memsz) - obj->vaddrbase;
 			if (first_seg) {	/* First load segment */
 				obj->vaddrbase = round_down(vaddr);
-				obj->mapbase = (caddr_t)(uintptr_t)obj->vaddrbase;
+				obj->mapbase =
+				    (caddr_t)(uintptr_t)obj->vaddrbase;
+				size = round_up(vaddr + ph->p_memsz) -
+				    obj->vaddrbase;
 				obj->textsize = size;
 				obj->mapsize = size;
 				first_seg = false;
 			} else {		/* Last load segment */
+				size = round_up(vaddr + ph->p_memsz) -
+				    obj->vaddrbase;
 				obj->mapsize = MAX(obj->mapsize, size);
 			}
 			dbg(("headers: %s %p phsize %" PRImemsz,

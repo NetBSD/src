@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.55 2024/01/20 00:15:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.55.2.1 2026/11/04 23:21:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,6 +44,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_lockdebug.h"
 #include "opt_newsconf.h"
+#include "opt_m68k_arch.h"
 #endif
 
 /*
@@ -56,22 +57,6 @@
  * Exported definitions unique to news68k cpu support.
  */
 
-/*
- * XXX news1700 L2 cache would be corrupted with DC_BE and IC_BE...
- * XXX Should these be defined in machine/cpu.h?
- */
-#undef CACHE_ON
-#undef CACHE_CLR
-#undef IC_CLEAR
-#undef DC_CLEAR
-#define CACHE_ON	(DC_WA|DC_CLR|DC_ENABLE|IC_CLR|IC_ENABLE)
-#define CACHE_CLR	CACHE_ON
-#define IC_CLEAR	(DC_WA|DC_ENABLE|IC_CLR|IC_ENABLE)
-#define DC_CLEAR	(DC_WA|DC_CLR|DC_ENABLE|IC_ENABLE)
-
-#define DCIC_CLR	(DC_CLR|IC_CLR)
-#define CACHE_BE	(DC_BE|IC_BE)
-
 #define	cpu_set_hw_ast(l)						\
 	do {								\
 		extern volatile u_char *ctrl_ast;			\
@@ -81,16 +66,19 @@
 
 #if defined(news1700)
 #define CACHE_HAVE_PAC
+#ifndef M68K_EC_PAC
+#error M68K_EC_PAC should be defined
+#endif
+#ifndef M68K_EC
+#error M68K_EC should be defined
+#endif
 #endif
 
 extern int systype;
 #define NEWS1700	0
 #define NEWS1200	1
 
-extern int cpuspeed;
-extern char *intiobase, *intiolimit, *extiobase;
-extern u_int intiobase_phys, intiotop_phys;
-extern u_int extiobase_phys, extiotop_phys;
+extern uint8_t *intiobase, *intiotop;
 
 extern void *romcallvec;
 
@@ -102,10 +90,6 @@ void nmihand(struct frame *);
 void ecacheon(void);
 void ecacheoff(void);
 
-/* machdep.c functions */
-int badaddr(void *, int);
-int badbaddr(void *);
-
 #endif
 
 /* physical memory sections */
@@ -114,14 +98,12 @@ int badbaddr(void *);
 #define INTIOBASE1700	0xe0c00000
 #define INTIOTOP1700	0xe1d00000 /* XXX */
 #define EXTIOBASE1700	0xf0f00000
-#define EXTIOTOP1700	0xf1000000 /* XXX */
 #define CTRL_POWER1700	0xe1380000
 #define CTRL_LED1700	0xe0dc0000
 
 #define INTIOBASE1200	0xe1000000
 #define INTIOTOP1200	0xe1d00000 /* XXX */
 #define EXTIOBASE1200	0xe4000000
-#define EXTIOTOP1200	0xe4020000 /* XXX */
 #define CTRL_POWER1200	0xe1000000
 #define CTRL_LED1200	0xe1500001
 
@@ -130,33 +112,21 @@ int badbaddr(void *);
 /*
  * Internal IO space:
  *
- * Internal IO space is mapped in the kernel from ``intiobase'' to
- * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
- * conversion between physical and kernel virtual addresses is easy.
+ * Internal IO space is mapped in the kernel by TT0 register (in locore.s)
+ * and PA range is from ``intiobase'' to ``intiotop''.
  */
-#define ISIIOVA(va) \
-	((char *)(va) >= intiobase && (char *)(va) < intiolimit)
-#define IIOV(pa)	(((u_int)(pa) - intiobase_phys) + (u_int)intiobase)
 #define ISIIOPA(pa) \
-	((u_int)(pa) >= intiobase_phys && (u_int)(pa) < intiotop_phys)
-#define IIOP(va)	(((u_int)(va) - (u_int)intiobase) + intiobase_phys)
-#define IIOPOFF(pa)	((u_int)(pa) - intiobase_phys)
+	((uint8_t *)(pa) >= intiobase && (uint8_t *)(pa) < intiotop)
 
-/* XXX EIO space mapping should be modified like hp300 XXX */
-#define	EIOSIZE		(extiotop_phys - extiobase_phys)
-#define ISEIOVA(va) \
-	((char *)(va) >= extiobase && (char *)(va) < (char *)EIOSIZE)
-#define EIOV(pa)	(((u_int)(pa) - extiobase_phys) + (u_int)extiobase)
-
-#if defined(CACHE_HAVE_PAC) || defined(CACHE_HAVE_VAC)
+#if defined(M68K_EC)
 #define M68K_CACHEOPS_MACHDEP
 #endif
 
-#ifdef CACHE_HAVE_PAC
+#ifdef M68K_EC_PAC
 #define M68K_CACHEOPS_MACHDEP_PCIA
 #endif
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 #define M68K_CACHEOPS_MACHDEP_DCIA
 #define M68K_CACHEOPS_MACHDEP_DCIS
 #define M68K_CACHEOPS_MACHDEP_DCIU

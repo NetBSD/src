@@ -1,5 +1,5 @@
 /* C API for x86 cpuid insn.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_X86_CPUID_H
-#define NAT_X86_CPUID_H
+#ifndef GDB_NAT_X86_CPUID_H
+#define GDB_NAT_X86_CPUID_H
 
 /* Always include the header for the cpu bit defines.  */
 #include "x86-gcc-cpuid.h"
@@ -82,4 +82,4 @@ x86_cpuid_count (unsigned int __level, unsigned int __sublevel,
 #undef nullptr
 #endif
 
-#endif /* NAT_X86_CPUID_H */
+#endif /* GDB_NAT_X86_CPUID_H */

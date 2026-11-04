@@ -16,7 +16,7 @@
 #
 m4_define([bind_VERSION_MAJOR], 9)dnl
 m4_define([bind_VERSION_MINOR], 20)dnl
-m4_define([bind_VERSION_PATCH], 11)dnl
+m4_define([bind_VERSION_PATCH], 29)dnl
 m4_define([bind_VERSION_EXTRA], )dnl
 m4_define([bind_DESCRIPTION], [(Stable Release)])dnl
 m4_define([bind_SRCID], [m4_esyscmd_s([git rev-parse --short HEAD | cut -b1-7])])dnl
@@ -174,7 +174,7 @@ AC_ARG_ENABLE([developer],
 
 AS_IF([test "$enable_developer" = "yes"],
       [DEVELOPER_MODE=yes
-       STD_CPPFLAGS="$STD_CPPFLAGS -DISC_MEM_DEFAULTFILL=1 -DISC_MEM_TRACKLINES=1 -DISC_LIST_CHECKINIT=1 -DISC_STATS_CHECKUNDERFLOW=1 -DDNS_RBTDB_STRONG_RWLOCK_CHECK=1 -DISC_MUTEX_ERROR_CHECK=1"
+       STD_CPPFLAGS="$STD_CPPFLAGS -DDEVELOPER_MODE=1 -DISC_MEM_DEFAULTFILL=1 -DISC_MEM_TRACKLINES=1 -DISC_LIST_CHECKINIT=1 -DISC_STATS_CHECKUNDERFLOW=1 -DDNS_RBTDB_STRONG_RWLOCK_CHECK=1 -DISC_MUTEX_ERROR_CHECK=1"
        test "${enable_fixed_rrset+set}" = set || enable_fixed_rrset=yes
        test "${enable_querytrace+set}" = set || enable_querytrace=yes
        test "${with_cmocka+set}" = set || with_cmocka=yes
@@ -250,6 +250,8 @@ AC_DEFINE_UNQUOTED([RCU_VERSION], ["$RCU_VERSION"], [Compile-time Userspace-RCU 
 CFLAGS="$CFLAGS $LIBURCU_CFLAGS"
 LIBS="$LIBS $LIBURCU_LIBS"
 
+AC_CHECK_HEADERS([urcu/assert.h urcu/uatomic.h urcu/pointer.h])
+
 #
 # Userspace-RCU inlining doesn't work for rcu_deference() with some combination
 # of C compiler and library version.
@@ -317,7 +319,7 @@ AM_CONDITIONAL([HAVE_PERL], [test -n "$PERL"])
 #
 # Python is optional, it is used only by some of the system test scripts.
 #
-AM_PATH_PYTHON([3.6], [], [:])
+AM_PATH_PYTHON([3.10], [], [:])
 AM_CONDITIONAL([HAVE_PYTHON], [test "$PYTHON" != ":"])
 
 AC_PATH_PROGS([PYTEST], [pytest-3 py.test-3 pytest py.test pytest-pypy], [])
@@ -327,8 +329,10 @@ AC_SUBST([PYTEST])
 AM_CONDITIONAL([HAVE_PYTEST], [test -n "$PYTEST"])
 
 #
-# xsltproc is optional, it is used only by system test scripts.
+# Optional utilities, only used by system tests.
 #
+AC_PATH_PROG([JQ], [jq])
+AC_PATH_PROG([XMLLINT], [xmllint])
 AC_PATH_PROG([XSLTPROC], [xsltproc])
 
 #
@@ -488,6 +492,11 @@ AC_COMPILE_IFELSE(
 # check for GCC returns_nonnull attribute
 #
 AX_GCC_FUNC_ATTRIBUTE([returns_nonnull])
+
+#
+# check for GCC returns_nonnull attribute
+#
+AX_GCC_FUNC_ATTRIBUTE([warn_unused_result])
 
 #
 # how to link math functions?
@@ -653,7 +662,7 @@ AS_IF([test "$enable_pthread_rwlock" = "yes"],
       ])
 AM_CONDITIONAL([USE_ISC_RWLOCK], [test "$enable_pthread_rwlock" != "yes"])
 
-CRYPTO=OpenSSL
+AC_CHECK_FUNCS_ONCE([arc4random])
 
 #
 # OpenSSL/LibreSSL is mandatory
@@ -1585,6 +1594,17 @@ AS_CASE([$with_cachedb],
 AC_DEFINE_UNQUOTED([CACHEDB_DEFAULT], ["$cachedb"], [Default cache database type])
 
 #
+# In solaris 10, SMF can manage named service
+#
+LIBSCF_LIBS=
+AC_CHECK_HEADER([libscf.h],
+		[AC_CHECK_LIB([scf], [smf_enable_instance],
+			      [AC_DEFINE([HAVE_LIBSCF], [1],
+					 [Define to 1 if libscf was found])
+			       LIBSCF_LIBS="-lscf"])])
+AC_SUBST([LIBSCF_LIBS])
+
+#
 # Files to configure.  These are listed here because we used to
 # specify them as arguments to AC_OUTPUT.
 #
@@ -1643,11 +1663,13 @@ AC_CONFIG_FILES([bin/tests/Makefile
 		 bin/tests/system/isctest/vars/.ac_vars/TOP_BUILDDIR
 		 bin/tests/system/isctest/vars/.ac_vars/TOP_SRCDIR
 		 bin/tests/system/isctest/vars/.ac_vars/FSTRM_CAPTURE
+		 bin/tests/system/isctest/vars/.ac_vars/JQ
 		 bin/tests/system/isctest/vars/.ac_vars/SHELL
 		 bin/tests/system/isctest/vars/.ac_vars/PYTHON
 		 bin/tests/system/isctest/vars/.ac_vars/PERL
 		 bin/tests/system/isctest/vars/.ac_vars/CURL
 		 bin/tests/system/isctest/vars/.ac_vars/NC
+		 bin/tests/system/isctest/vars/.ac_vars/XMLLINT
 		 bin/tests/system/isctest/vars/.ac_vars/XSLTPROC
 		 bin/tests/system/isctest/vars/.ac_vars/PYTEST
 		 bin/tests/system/dyndb/driver/Makefile
@@ -1669,7 +1691,7 @@ AC_CONFIG_FILES([fuzz/Makefile])
 
 # Misc
 
-AC_CONFIG_FILES([util/check-make-install])
+AC_CONFIG_FILES([util/check-make-install.sh])
 
 #
 # Do it

@@ -1,4 +1,4 @@
---  Copyright 2018-2024 Free Software Foundation, Inc.
+--  Copyright 2018-2025 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -16,6 +16,6 @@
 package body Pck is
   function Break_Me (Item : T) return Boolean is
   begin
-     return False;
+     return False; -- BREAK
    end Break_Me;
 end Pck;

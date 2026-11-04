@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.20 2024/02/09 22:08:35 andvar Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.20.2.1 2026/11/04 23:22:01 perseant Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -205,7 +205,7 @@ INLINE void mvxpsec_packet_enqueue(struct mvxpsec_packet *);
 STATIC void mvxpsec_packet_dealloc(struct mvxpsec_packet *);
 STATIC int mvxpsec_done_packet(struct mvxpsec_packet *);
 
-/* session header manegement */
+/* session header management */
 STATIC int mvxpsec_header_finalize(struct mvxpsec_packet *);
 
 /* packet queue management */
@@ -1417,7 +1417,7 @@ mvxpsec_session_dtor(void *arg, void *obj)
 	struct mvxpsec_session *mv_s = obj;
 
 	if (mv_s->sc != sc)
-		panic("inconsitent context\n");
+		panic("inconsistent context\n");
 
 	bus_dmamap_destroy(sc->sc_dmat, mv_s->session_header_map);
 }

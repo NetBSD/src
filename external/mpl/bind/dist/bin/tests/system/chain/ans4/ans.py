@@ -11,16 +11,16 @@ See the COPYRIGHT file distributed with this work for additional
 information regarding copyright ownership.
 """
 
+from collections.abc import AsyncGenerator
 from dataclasses import dataclass
 from enum import Enum
-from typing import AsyncGenerator, List, Optional, Tuple
 
 import abc
 import logging
 import re
 
+import dns.name
 import dns.rcode
-import dns.rdata
 import dns.rdataclass
 import dns.rdatatype
 import dns.rrset
@@ -33,11 +33,6 @@ from isctest.asyncserver import (
     QueryContext,
     ResponseAction,
 )
-
-try:
-    RdataType = dns.rdatatype.RdataType
-except AttributeError:  # dnspython < 2.0.0 compat
-    RdataType = int  # type: ignore
 
 
 class ChainNameGenerator:
@@ -105,13 +100,13 @@ class RecordGenerator(abc.ABC):
 
     @classmethod
     def create_rrset(
-        cls, owner: dns.name.Name, rrtype: RdataType, rdata: str
+        cls, owner: dns.name.Name, rrtype: dns.rdatatype.RdataType, rdata: str
     ) -> dns.rrset.RRset:
         return dns.rrset.from_text(owner, 86400, dns.rdataclass.IN, rrtype, rdata)
 
     @classmethod
     def create_rrset_signature(
-        cls, owner: dns.name.Name, rrtype: RdataType
+        cls, owner: dns.name.Name, rrtype: dns.rdatatype.RdataType
     ) -> dns.rrset.RRset:
         covers = dns.rdatatype.to_text(rrtype)
         ttl = "86400"
@@ -128,7 +123,7 @@ class RecordGenerator(abc.ABC):
     def __init__(self, name_generator: ChainNameGenerator) -> None:
         self._name_generator = name_generator
 
-    def get_rrsets(self) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+    def get_rrsets(self) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         """
         Return the lists of records and their signatures that should be
         generated in response to a given "action".
@@ -160,7 +155,7 @@ class RecordGenerator(abc.ABC):
         raise NotImplementedError
 
     @abc.abstractmethod
-    def generate_rrsets(self) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+    def generate_rrsets(self) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         """
         Return the lists of records and their signatures that should be
         generated in response to a given "action".
@@ -175,7 +170,7 @@ class CnameRecordGenerator(RecordGenerator):
 
     response_count = 1
 
-    def generate_rrsets(self) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+    def generate_rrsets(self) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         owner = self._name_generator.current_name
         target = self._name_generator.generate_next_name().to_text()
         response = self.create_rrset(owner, dns.rdatatype.CNAME, target)
@@ -187,7 +182,7 @@ class DnameRecordGenerator(RecordGenerator):
 
     response_count = 2
 
-    def generate_rrsets(self) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+    def generate_rrsets(self) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         dname_owner = self._name_generator.current_domain
         cname_owner = self._name_generator.current_name
         dname_target = self._name_generator.generate_next_sld().to_text()
@@ -211,7 +206,7 @@ class XnameRecordGenerator(RecordGenerator):
 
     response_count = 1
 
-    def generate_rrsets(self) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+    def generate_rrsets(self) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         owner = self._name_generator.current_name
         target = self._name_generator.generate_next_name_in_next_sld().to_text()
         response = self.create_rrset(owner, dns.rdatatype.CNAME, target)
@@ -223,7 +218,7 @@ class FinalRecordGenerator(RecordGenerator):
 
     response_count = 1
 
-    def generate_rrsets(self) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+    def generate_rrsets(self) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         owner = self._name_generator.current_name
         response = self.create_rrset(owner, dns.rdatatype.A, "10.53.0.4")
         signature = self.create_rrset_signature(owner, response.rdtype)
@@ -302,11 +297,11 @@ class ChainSetupCommand(ControlCommand):
     control_subdomain = "setup-chain"
 
     def __init__(self) -> None:
-        self._current_handler: Optional[ChainResponseHandler] = None
+        self._current_handler: ChainResponseHandler | None = None
 
     def handle(
-        self, args: List[str], server: ControllableAsyncDnsServer, qctx: QueryContext
-    ) -> Optional[str]:
+        self, args: list[str], server: ControllableAsyncDnsServer, qctx: QueryContext
+    ) -> str | None:
         try:
             actions, selectors = self._parse_args(args)
         except ValueError as exc:
@@ -325,8 +320,8 @@ class ChainSetupCommand(ControlCommand):
         return "chain response setup successful"
 
     def _parse_args(
-        self, args: List[str]
-    ) -> Tuple[List[ChainAction], List[ChainSelector]]:
+        self, args: list[str]
+    ) -> tuple[list[ChainAction], list[ChainSelector]]:
         try:
             delimiter = args.index("_")
         except ValueError as exc:
@@ -340,7 +335,7 @@ class ChainSetupCommand(ControlCommand):
 
         return actions, selectors
 
-    def _parse_args_actions(self, args_actions: List[str]) -> List[ChainAction]:
+    def _parse_args_actions(self, args_actions: list[str]) -> list[ChainAction]:
         actions = []
 
         for action in args_actions + ["FINAL"]:
@@ -352,8 +347,8 @@ class ChainSetupCommand(ControlCommand):
         return actions
 
     def _parse_args_selectors(
-        self, args_selectors: List[str], actions: List[ChainAction]
-    ) -> List[ChainSelector]:
+        self, args_selectors: list[str], actions: list[ChainAction]
+    ) -> list[ChainSelector]:
         max_response_index = self._get_max_response_index(actions)
         selectors = []
 
@@ -371,19 +366,19 @@ class ChainSetupCommand(ControlCommand):
 
         return selectors
 
-    def _get_max_response_index(self, actions: List[ChainAction]) -> int:
+    def _get_max_response_index(self, actions: list[ChainAction]) -> int:
         rrset_generator_classes = [a.value for a in actions]
         return sum(g.response_count for g in rrset_generator_classes)
 
     def _prepare_answer(
-        self, actions: List[ChainAction], selectors: List[ChainSelector]
-    ) -> List[dns.rrset.RRset]:
+        self, actions: list[ChainAction], selectors: list[ChainSelector]
+    ) -> list[dns.rrset.RRset]:
         all_responses, all_signatures = self._generate_rrsets(actions)
         return self._select_rrsets(all_responses, all_signatures, selectors)
 
     def _generate_rrsets(
-        self, actions: List[ChainAction]
-    ) -> Tuple[List[dns.rrset.RRset], List[dns.rrset.RRset]]:
+        self, actions: list[ChainAction]
+    ) -> tuple[list[dns.rrset.RRset], list[dns.rrset.RRset]]:
         all_responses = []
         all_signatures = []
         name_generator = ChainNameGenerator()
@@ -399,10 +394,10 @@ class ChainSetupCommand(ControlCommand):
 
     def _select_rrsets(
         self,
-        all_responses: List[dns.rrset.RRset],
-        all_signatures: List[dns.rrset.RRset],
-        selectors: List[ChainSelector],
-    ) -> List[dns.rrset.RRset]:
+        all_responses: list[dns.rrset.RRset],
+        all_signatures: list[dns.rrset.RRset],
+        selectors: list[ChainSelector],
+    ) -> list[dns.rrset.RRset]:
         rrsets = []
 
         for selector in selectors:
@@ -423,7 +418,7 @@ class ChainResponseHandler(DomainHandler):
 
     domains = ["domain.nil."]
 
-    def __init__(self, answer_rrsets: List[dns.rrset.RRset]):
+    def __init__(self, answer_rrsets: list[dns.rrset.RRset]):
         super().__init__()
         self._answer_rrsets = answer_rrsets
 
@@ -443,11 +438,10 @@ class ChainResponseHandler(DomainHandler):
         for rrset in self._additional_rrsets:
             qctx.response.additional.append(rrset)
 
-        qctx.response.set_rcode(dns.rcode.NOERROR)
         qctx.response.use_edns()
-        yield DnsResponseSend(qctx.response, authoritative=True)
+        yield DnsResponseSend(qctx.response)
 
-    def _non_chain_answer(self, qctx: QueryContext) -> List[dns.rrset.RRset]:
+    def _non_chain_answer(self, qctx: QueryContext) -> list[dns.rrset.RRset]:
         owner = qctx.qname
         return [
             RecordGenerator.create_rrset(owner, dns.rdatatype.A, "10.53.0.4"),
@@ -455,14 +449,14 @@ class ChainResponseHandler(DomainHandler):
         ]
 
     @property
-    def _authority_rrsets(self) -> List[dns.rrset.RRset]:
+    def _authority_rrsets(self) -> list[dns.rrset.RRset]:
         owner = dns.name.from_text("domain.nil.")
         return [
             RecordGenerator.create_rrset(owner, dns.rdatatype.NS, "ns1.domain.nil."),
         ]
 
     @property
-    def _additional_rrsets(self) -> List[dns.rrset.RRset]:
+    def _additional_rrsets(self) -> list[dns.rrset.RRset]:
         owner = dns.name.from_text("ns1.domain.nil.")
         return [
             RecordGenerator.create_rrset(owner, dns.rdatatype.A, "10.53.0.4"),
@@ -473,7 +467,10 @@ class ChainResponseHandler(DomainHandler):
 
 
 def main() -> None:
-    server = ControllableAsyncDnsServer(commands=[ChainSetupCommand])
+    server = ControllableAsyncDnsServer(
+        default_aa=True, default_rcode=dns.rcode.NOERROR
+    )
+    server.install_control_command(ChainSetupCommand())
     server.run()
 
 

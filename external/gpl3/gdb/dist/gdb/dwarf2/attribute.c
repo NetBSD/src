@@ -1,6 +1,6 @@
 /* DWARF attributes
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -73,7 +73,8 @@ attribute::form_is_string () const
 	  || form == DW_FORM_strx3
 	  || form == DW_FORM_strx4
 	  || form == DW_FORM_GNU_str_index
-	  || form == DW_FORM_GNU_strp_alt);
+	  || form == DW_FORM_GNU_strp_alt
+	  || form == DW_FORM_strp_sup);
 }
 
 /* See attribute.h.  */
@@ -164,11 +165,80 @@ attribute::constant_value (int default_value) const
 
 /* See attribute.h.  */
 
+std::optional<ULONGEST>
+attribute::unsigned_constant () const
+{
+  if (form_is_strictly_signed ())
+    {
+      if (u.snd >= 0)
+	return u.snd;
+      complaint (_("Attribute value is not unsigned (%s)"),
+		 dwarf_form_name (form));
+    }
+  else if (form_is_constant ())
+    return u.unsnd;
+
+  /* For DW_FORM_data16 see attribute::form_is_constant.  */
+  complaint (_("Attribute value is not a constant (%s)"),
+	     dwarf_form_name (form));
+  return {};
+}
+
+/* See attribute.h.  */
+
+std::optional<LONGEST>
+attribute::signed_constant () const
+{
+  if (form_is_strictly_signed ())
+    return u.snd;
+
+  switch (form)
+    {
+    case DW_FORM_data8:
+    case DW_FORM_udata:
+      /* Not sure if DW_FORM_udata should be handled or not.  Anyway
+	 for DW_FORM_data8, there's no need to sign-extend.  */
+      return u.snd;
+
+    case DW_FORM_data1:
+      return sign_extend (u.unsnd, 8);
+    case DW_FORM_data2:
+      return sign_extend (u.unsnd, 16);
+    case DW_FORM_data4:
+      return sign_extend (u.unsnd, 32);
+    }
+
+  /* For DW_FORM_data16 see attribute::form_is_constant.  */
+  complaint (_("Attribute value is not a constant (%s)"),
+	     dwarf_form_name (form));
+  return {};
+}
+
+/* See attribute.h.  */
+
+std::optional<LONGEST>
+attribute::confused_constant () const
+{
+  if (form_is_strictly_signed ())
+    return u.snd;
+  else if (form_is_constant ())
+    return u.unsnd;
+
+  /* For DW_FORM_data16 see attribute::form_is_constant.  */
+  complaint (_("Attribute value is not a constant (%s)"),
+	     dwarf_form_name (form));
+  return {};
+}
+
+/* See attribute.h.  */
+
 bool
 attribute::form_is_unsigned () const
 {
   return (form == DW_FORM_ref_addr
 	  || form == DW_FORM_GNU_ref_alt
+	  || form == DW_FORM_ref_sup4
+	  || form == DW_FORM_ref_sup8
 	  || form == DW_FORM_data2
 	  || form == DW_FORM_data4
 	  || form == DW_FORM_data8
@@ -189,7 +259,7 @@ attribute::form_is_unsigned () const
 /* See attribute.h.  */
 
 bool
-attribute::form_is_signed () const
+attribute::form_is_strictly_signed () const
 {
   return form == DW_FORM_sdata || form == DW_FORM_implicit_const;
 }
@@ -216,21 +286,24 @@ attribute::form_requires_reprocessing () const
 dwarf_defaulted_attribute
 attribute::defaulted () const
 {
-  LONGEST value = constant_value (-1);
+  std::optional<ULONGEST> value = unsigned_constant ();
 
-  switch (value)
+  if (value.has_value ())
     {
-    case DW_DEFAULTED_no:
-    case DW_DEFAULTED_in_class:
-    case DW_DEFAULTED_out_of_class:
-      return (dwarf_defaulted_attribute) value;
+      switch (*value)
+	{
+	case DW_DEFAULTED_no:
+	case DW_DEFAULTED_in_class:
+	case DW_DEFAULTED_out_of_class:
+	  return (dwarf_defaulted_attribute) *value;
+
+	default:
+	  complaint (_("unrecognized DW_AT_defaulted value (%s)"),
+		     plongest (*value));
+	  break;
+	}
     }
 
-  /* If the form was not constant, we already complained in
-     constant_value, so there's no need to complain again.  */
-  if (form_is_constant ())
-    complaint (_("unrecognized DW_AT_defaulted value (%s)"),
-	       plongest (value));
   return DW_DEFAULTED_no;
 }
 
@@ -239,21 +312,24 @@ attribute::defaulted () const
 dwarf_virtuality_attribute
 attribute::as_virtuality () const
 {
-  LONGEST value = constant_value (-1);
+  std::optional<ULONGEST> value = unsigned_constant ();
 
-  switch (value)
+  if (value.has_value ())
     {
-    case DW_VIRTUALITY_none:
-    case DW_VIRTUALITY_virtual:
-    case DW_VIRTUALITY_pure_virtual:
-      return (dwarf_virtuality_attribute) value;
+      switch (*value)
+	{
+	case DW_VIRTUALITY_none:
+	case DW_VIRTUALITY_virtual:
+	case DW_VIRTUALITY_pure_virtual:
+	  return (dwarf_virtuality_attribute) *value;
+
+	default:
+	  complaint (_("unrecognized DW_AT_virtuality value (%s)"),
+		     plongest (*value));
+	  break;
+	}
     }
 
-  /* If the form was not constant, we already complained in
-     constant_value, so there's no need to complain again.  */
-  if (form_is_constant ())
-    complaint (_("unrecognized DW_AT_virtuality value (%s)"),
-	       plongest (value));
   return DW_VIRTUALITY_none;
 }
 
@@ -266,5 +342,8 @@ attribute::as_boolean () const
     return true;
   else if (form == DW_FORM_flag)
     return u.unsnd != 0;
-  return constant_value (0) != 0;
+  /* Using signed_constant here will work even for the weird case
+     where a negative value is provided.  Probably doesn't matter but
+     also seems harmless.  */
+  return signed_constant ().value_or (0) != 0;
 }

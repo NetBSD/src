@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on Xtensa processors.
 
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "xtensa-tdep.h"
 #include "osabi.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "solib-svr4.h"
 #include "symtab.h"
 #include "gdbarch.h"
@@ -111,8 +112,7 @@ xtensa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   linux_init_abi (info, gdbarch, 0);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 
   set_gdbarch_gdb_signal_from_target (gdbarch,
 				      xtensa_linux_gdb_signal_from_target);
@@ -124,9 +124,7 @@ xtensa_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					     svr4_fetch_objfile_link_map);
 }
 
-void _initialize_xtensa_linux_tdep ();
-void
-_initialize_xtensa_linux_tdep ()
+INIT_GDB_FILE (xtensa_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_xtensa, bfd_mach_xtensa, GDB_OSABI_LINUX,
 			  xtensa_linux_init_abi);

@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,6 +70,12 @@ proc test_with_menu {command result} {
 	    } else {
 		fail $command
 	    }
+	}
+	"Argument to arithmetic operation not a number or boolean." {
+	    fail $command
+	}
+	-re "No definition of \".*\" in current context." {
+	    fail $command
 	}
 	timeout {
 	    fail "$command (timeout)"

@@ -1,5 +1,5 @@
 /* GDB generic memory tagging definitions.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MEMTAG_H
-#define MEMTAG_H
+#ifndef GDB_MEMTAG_H
+#define GDB_MEMTAG_H
 
 #include "bfd.h"
 
@@ -47,4 +47,4 @@ bool get_next_core_memtag_section (bfd *abfd, asection *section,
 				   CORE_ADDR address,
 				   memtag_section_info &info);
 
-#endif /* MEMTAG_H */
+#endif /* GDB_MEMTAG_H */

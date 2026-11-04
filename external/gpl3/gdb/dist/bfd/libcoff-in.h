@@ -1,5 +1,5 @@
 /* BFD COFF object file private structure.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,6 +40,7 @@ extern "C" {
 #define obj_relocbase(bfd)	      (coff_data (bfd)->relocbase)
 #define obj_raw_syments(bfd)	      (coff_data (bfd)->raw_syments)
 #define obj_raw_syment_count(bfd)     (coff_data (bfd)->raw_syment_count)
+#define obj_coff_keep_raw_syms(bfd)   (coff_data (bfd)->keep_raw_syms)
 #define obj_convert(bfd)	      (coff_data (bfd)->conversion_table)
 #define obj_conv_table_size(bfd)      (coff_data (bfd)->conv_table_size)
 #define obj_coff_external_syms(bfd)   (coff_data (bfd)->external_syms)
@@ -91,6 +92,8 @@ typedef struct coff_tdata
      backend flag _bfd_coff_long_section_names.  */
   bool long_section_names;
 
+  /* If this is TRUE, raw_syments may not be released.  */
+  bool keep_raw_syms;
   /* If this is TRUE, the external_syms may not be freed.  */
   bool keep_syms;
   /* If this is TRUE, the strings may not be freed.  */

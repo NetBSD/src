@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_init.c,v 1.64.6.1 2025/08/02 05:57:43 perseant Exp $	*/
+/*	$NetBSD: vfs_init.c,v 1.64.6.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.64.6.1 2025/08/02 05:57:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_init.c,v 1.64.6.2 2026/11/04 23:27:50 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -481,7 +481,19 @@ vfs_attach(struct vfsops *vfs)
 	 * Make sure this file system doesn't already exist.
 	 */
 	LIST_FOREACH(v, &vfs_list, vfs_list) {
+		long fstype;
+
 		if (strcmp(vfs->vfs_name, v->vfs_name) == 0) {
+			error = SET_ERROR(EEXIST);
+			goto out;
+		}
+
+		fstype = makefstype(vfs->vfs_name);
+		if (fstype == makefstype(v->vfs_name)) {
+			printf("failed to attach file system '%s' "
+			       "because it shares the same fstype (%ld) "
+			       "with %s\n",
+			       vfs->vfs_name, fstype, v->vfs_name);
 			error = SET_ERROR(EEXIST);
 			goto out;
 		}

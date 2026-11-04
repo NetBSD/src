@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,27 +40,22 @@ proc do_test {sync_command} {
     global gdb_spawn_id gdb_main_spawn_id mi_spawn_id inferior_spawn_id
     global gdb_prompt mi_gdb_prompt
 
-    if {[mi_clean_restart $binfile "separate-mi-tty"] != 0} {
-	fail "could not start gdb"
-	return
-    }
-
     # Start a synchronous run/continue on the MI UI.
     set test "send synchronous execution command"
     if {$sync_command == "run"} {
 	if {[mi_run_cmd] >= 0} {
 	    pass $test
 	} else {
-	    return
+	    return -1
 	}
     } else {
 	if {[mi_runto_main] < 0} {
-	    return
+	    return -1
 	}
 	if {[mi_send_resuming_command_raw "123-exec-continue" $test] >= 0} {
 	    pass $test
 	} else {
-	    return
+	    return -1
 	}
     }
 
@@ -107,5 +102,18 @@ proc do_test {sync_command} {
 }
 
 foreach_with_prefix sync-command {"run" "continue"} {
-    do_test ${sync-command}
+    if {[mi_clean_restart $::testfile "separate-mi-tty"] != 0} {
+	fail "could not start gdb"
+	break
+    }
+
+    set res [do_test ${sync-command}]
+
+    # mi_clean_restart and gdb_finish call gdb_exit, which doesn't work for
+    # separate-mi-tty.  Use mi_gdb_exit instead.
+    mi_gdb_exit
+
+    if { $res == -1 } {
+	break
+    }
 }

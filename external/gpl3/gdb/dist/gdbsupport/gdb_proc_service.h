@@ -1,5 +1,5 @@
 /* <proc_service.h> replacement for systems that don't have it.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_PROC_SERVICE_H
-#define COMMON_GDB_PROC_SERVICE_H
+#ifndef GDBSUPPORT_GDB_PROC_SERVICE_H
+#define GDBSUPPORT_GDB_PROC_SERVICE_H
 
 #include <sys/types.h>
 
@@ -199,4 +199,4 @@ PS_EXPORT (ps_lsetxregs);
 PS_EXPORT (ps_plog);
 #endif
 
-#endif /* COMMON_GDB_PROC_SERVICE_H */
+#endif /* GDBSUPPORT_GDB_PROC_SERVICE_H */

@@ -1,0 +1,129 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# If a user uses 'Ctrl+d' to exit from a secondary prompt, then
+# readline can get stuck thinking that an EOF has arrived.  As a
+# consequence of this readline will output an extra newline every time
+# that it exits bracketed-paste-mode (which is done after every line
+# of input).  The result is the user will see some unexpected blank
+# lines in the output.
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+    return -1
+}
+
+# The fix for this issue relies on GDB being able to adjust the EOF
+# flag state within readline.  Access to this state was added for
+# readline 8.2, but was also backported to out internal readline.  If
+# this feature is not available then this test might not pass.
+if { ![readline_supports_eof_flag] } {
+    unsupported "readline is not eof flag aware"
+    return -1
+}
+
+# Create a breakpoint then issue the 'commands' commands.  When the
+# secondary prompt is displayed, use Ctrl+d to send EOF to readline
+# and cancel the input.
+#
+# Then check that readline is not stuck thinking that an EOF has
+# arrived.  If it is then GDB will start displaying extra blank lines
+# after each line of input.
+proc run_test {} {
+    clean_restart
+    gdb_load $::binfile
+
+    gdb_breakpoint main
+
+    # Issue the 'commands' command, and wait for the secondary prompt
+    # to be displayed.
+    gdb_test_multiple "commands" "start b/p commands" {
+	-re "Type commands for breakpoint\\(s\\) 1, one per line\\.\r\n" {
+	    exp_continue
+	}
+	-re "^End with a line saying just \"end\"\\.\r\n" {
+	    exp_continue
+	}
+	-re "^\[^\r\n\]*>$" {
+	    pass $gdb_test_name
+	}
+    }
+
+    # Send Ctrl+d to GDB and wait for the 'quit' message, and then for
+    # the GDB prompt to be displayed.
+    #
+    # As this test runs (sometimes) with bracketed-paste-mode on then
+    # we need to accept a control sequence before the prompt.  This
+    # control sequence can contain '\r', which is why we only check
+    # for '\n' here, which is different than what we do in the rest of
+    # the testsuite, where we usually check for '\r\n' together.
+    send_gdb "\004"
+    gdb_test_multiple "" "quit b/p commands" {
+	-re "^quit\r\n\[^\n\]*$::gdb_prompt $" {
+	    pass $gdb_test_name
+	}
+    }
+
+    # Now issue any other command.  If readline is stuck in EOF mode
+    # (thinking that an EOF has just arrived), then we'll see an extra
+    # blank line after the command, and before any command output.
+    #
+    # As described above we scan for '\n' only in some patterns here
+    # as we're allowing for a control sequence that might include
+    # '\r'.
+    gdb_test_multiple "show architecture" "check for excessive blank lines" {
+	-re "^show architecture\r\n" {
+	    exp_continue
+	}
+	-re "^\[^\n\]*The target architecture is set to \[^\r\n\]+\\.\r\n\[^\n\]*$::gdb_prompt $" {
+	    pass $gdb_test_name
+	}
+	-re "^\[^\n\]*\nThe target architecture is set to \[^\r\n\]+\\.\r\n\[^\n\]*$::gdb_prompt" {
+	    fail $gdb_test_name
+	}
+    }
+}
+
+# Run the test in various different terminal modes.
+with_test_prefix "default" {
+    run_test
+}
+
+save_vars { env(TERM) } {
+    setenv TERM ansi
+
+    with_test_prefix "with non-dump terminal" {
+	run_test
+
+	save_vars { env(INPUTRC) } {
+
+	    # Create an inputrc file that turns bracketed paste mode
+	    # on.  This is usually turned off (see lib/gdb.exp), but
+	    # for the next test we want to see what happens with this
+	    # on.
+	    set inputrc [standard_output_file inputrc]
+	    set fd [open "$inputrc" w]
+	    puts $fd "set enable-bracketed-paste on"
+	    close $fd
+
+	    setenv INPUTRC "$inputrc"
+	    with_test_prefix "with bracketed-paste-mode on" {
+		run_test
+	    }
+	}
+    }
+}
+

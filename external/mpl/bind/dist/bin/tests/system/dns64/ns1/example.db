@@ -26,6 +26,9 @@ partially-excluded-bad-a	AAAA	2001:eeee::2
 		A	10.0.0.1
 partially-excluded-only	AAAA	2001:eeee::3
 		AAAA	2001::3
+; A wildcard match yields a signed answer carrying a NOQNAME proof.
+*.wild-partially-excluded AAAA	2001:eeee::4
+		AAAA	2001::4
 a-only		A	1.2.3.5
 a-and-aaaa	AAAA	2001::1
 		A	1.2.3.6

@@ -1,4 +1,4 @@
-/*	$NetBSD: grfabs_fal.c,v 1.29.6.1 2025/08/02 05:55:30 perseant Exp $	*/
+/*	$NetBSD: grfabs_fal.c,v 1.29.6.2 2026/11/04 23:20:19 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Thomas Gerner.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.29.6.1 2025/08/02 05:55:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: grfabs_fal.c,v 1.29.6.2 2026/11/04 23:20:19 perseant Exp $");
 
 #ifdef FALCON_VIDEO
 /*
@@ -124,7 +124,7 @@ static dmode_t vid_modes[] = {
  * DISPLAY. -- Thomas
  */
 static struct videl videlinit[] = {
-	{ RES_FALAUTO,		    /* autodedect			    */
+	{ RES_FALAUTO,		    /* autodetect			    */
 	0x0, 0x0, 0x0,   0x0, 0x0,   0x0,  0x0,  0x0,  0x0,   0x0,  0x0,  0x0,
 	0x0, 0x0,   0x0,   0x0,  0x0,  0x0,   0x0,   0x0,   0x0 },
 

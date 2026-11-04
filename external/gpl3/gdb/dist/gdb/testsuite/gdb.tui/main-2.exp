@@ -1,4 +1,4 @@
-# Copyright 2024 Free Software Foundation, Inc.
+# Copyright 2024-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if { [build_executable "failed to prepare" $testfile $srcfile ] == -1} {
     return -1
 }
 
-Term::clean_restart 24 80 $binfile
+Term::clean_restart 24 80 $testfile
 
 if {![runto_main]} {
     perror "test suppressed"
@@ -41,7 +41,7 @@ if {![Term::enter_tui]} {
 set line "  return 0;"
 set nr [gdb_get_line_number $line]
 
-set screen_line [Term::get_line_with_attrs 6]
+set screen_line [Term::get_string_with_attrs 6 11 79]
 verbose -log "screen line 6: '$screen_line'"
-gdb_assert { [regexp "$nr <reverse:1>$line<reverse:0>" $screen_line] } \
+gdb_assert { [regexp "<reverse:1>$line<reverse:0>" $screen_line] } \
     "highlighted line in middle of source window"

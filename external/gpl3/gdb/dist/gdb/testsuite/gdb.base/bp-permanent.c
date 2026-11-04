@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -101,7 +101,7 @@ test_signal_no_handler (void)
 }
 
 static void
-test_signal_nested_handler ()
+test_signal_nested_handler (int sig)
 {
   test ();
 }

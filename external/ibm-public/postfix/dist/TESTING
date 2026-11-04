@@ -1,0 +1,17 @@
+Testing is a work in progress.
+
+- As of Postfix 3.11 most new code is covered by tests.
+
+- Many Postfix tests require building with shared=yes and dynamicmaps=no.
+The shared=yes is needed so that test code can overrride internal
+dependencies with mocks; the dynamicmaps=no is needed until there
+is an easy way way to tell dynamicmaps support to not use the system
+dynamicmaps.cf file.
+
+- Historically, many tests in src/util, src/dns, and src/smtpd
+are non-hermetic: they have dependencies on DNS or on local system
+configuration.
+
+- The PTEST test framework needs to be integrated; this fixed many many
+non-hermetic tests in src/util and src/dns. That development stalled
+after postfix-3.8-20220816-nonprod.

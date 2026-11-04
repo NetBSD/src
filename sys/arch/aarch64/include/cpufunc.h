@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.27.2.1 2025/08/02 05:55:20 perseant Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.27.2.2 2026/11/04 23:19:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -31,13 +31,14 @@
 
 #ifdef _KERNEL
 
-#include <arm/armreg.h>
-#include <sys/device_if.h>
+#ifdef _KERNEL_OPT
+#include "opt_cpuoptions.h"
+#endif
 
 #include <sys/cpu.h>
+#include <sys/device_if.h>
 
-#include <uvm/uvm_extern.h>
-#include <uvm/pmap/pmap_devmap.h>
+#include <arm/armreg.h>
 
 extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
@@ -56,6 +57,7 @@ void aarch64_cpu_idle_wfi(void);
 
 int set_cpufuncs(void);
 int aarch64_setcpufuncs(struct cpu_info *);
+bool aarch64_earlydevice_va_p(void);
 void aarch64_getcacheinfo(struct cpu_info *);
 void aarch64_parsecacheinfo(struct cpu_info *);
 void aarch64_printcacheinfo(device_t, struct cpu_info *);
@@ -89,8 +91,13 @@ void aarch64_tlbi_by_va_ll(vaddr_t);		/* all ASID, a VA, lastlevel */
 void aarch64_tlbi_by_asid_va(int, vaddr_t);	/*  an ASID, a VA */
 void aarch64_tlbi_by_asid_va_ll(int, vaddr_t);	/*  an ASID, a VA, lastlevel */
 
+void aarch64_tlbi_by_vmid(void);		/* EL2: current VMID, all EL0/1 VA and stage1 IPA */
+void aarch64_tlbi_by_vmid_ipa(paddr_t);		/* EL2: current VMID, a stage1 IPA */
+void aarch64_tlbi_all_local_el2(void);		/* EL2: all local TLB EL2 VA */
+
 /* misc */
 #define cpu_idnum()			aarch64_cpuid()
+#define cpu_earlydevice_va_p()		aarch64_earlydevice_va_p()
 
 /* cache op */
 #define cpu_dcache_wbinv_all()		aarch64_dcache_wbinv_all()
@@ -131,20 +138,6 @@ cpu_clusterid(void)
 {
 
 	return __SHIFTOUT(reg_mpidr_el1_read(), MPIDR_AFF1);
-}
-
-static inline bool
-cpu_earlydevice_va_p(void)
-{
-	/* This function may be called before enabling MMU, or mapping KVA */
-	if ((reg_sctlr_el1_read() & SCTLR_M) == 0)
-		return false;
-
-	/* device mapping will be available after pmap_devmap_bootstrap() */
-	if (!pmap_devmap_bootstrapped_p())
-		return false;
-
-	return true;
 }
 
 #endif /* _KERNEL */
@@ -231,5 +224,33 @@ aarch64_strip_pac(uint64_t __val)
 		return __val | AARCH64_ADDRESS_TAGPAC_MASK;
 	return __val & ~AARCH64_ADDRESS_TAGPAC_MASK;
 }
+
+
+#ifdef ARMV81_HAFDBS
+static inline bool
+cpu_has_hw_mod_p(void)
+{
+	return aarch64_hafdbs_enabled == ID_AA64MMFR1_EL1_HAFDBS_AD;
+}
+
+static inline bool
+cpu_has_hw_ref_p(void)
+{
+	return aarch64_hafdbs_enabled != ID_AA64MMFR1_EL1_HAFDBS_NONE;
+}
+
+#else
+static inline bool
+cpu_has_hw_mod_p(void)
+{
+	return false;
+}
+
+static inline bool
+cpu_has_hw_ref_p(void)
+{
+	return false;
+}
+#endif
 
 #endif /* _AARCH64_CPUFUNC_H_ */

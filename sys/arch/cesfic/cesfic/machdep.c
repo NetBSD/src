@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.74.2.1 2026/11/04 23:20:23 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,12 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74.2.1 2026/11/04 23:20:23 perseant Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_sysv.h"
 #include "opt_panicbutton.h"
 #include "opt_modular.h"
@@ -55,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $")
 #include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/file.h>
 #include <sys/ioctl.h>
 #include <sys/kernel.h>
@@ -84,6 +82,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $")
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#include <m68k/seglist.h>
+
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
 #include <uvm/uvm_extern.h>
@@ -98,54 +98,38 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.74 2024/03/05 14:15:29 thorpej Exp $")
 
 #include "ksyms.h"
 
-/* the following is used externally (sysctl_hw) */
-char machine[] = MACHINE;		/* CPU "architecture" */
-
-/* Our exported CPU info; we can have only one. */  
-struct cpu_info cpu_info_store;
-
-struct vm_map *phys_map = NULL;
-
-/*
- * Declare these as initialized data so we can patch them.
- */
-/*int	maxmem;*/			/* max memory per process */
-extern psize_t physmem;			/* max supported memory, changes to actual */
-
 extern	u_int lowram;
 
-void fic_init(void);
+void machine_init(paddr_t);
 
 /* prototypes for local functions */
-void    identifycpu(void);
 char	*hexstr(int, int);
 
 /* functions called from locore.s */
 void    dumpsys(void);
-void    straytrap(int, u_short);
 void	nmihand(struct frame);
 
 int	delay_divisor;		/* delay constant */
 
 extern void sicinit(void*);
 
-void fic_init(void)
+struct pmap_bootmap machine_bootmap[] = {
+	/* XXX */
+	{ .pmbm_vaddr = -1 },
+};
+
+void
+machine_init(paddr_t nextpa)
 {
-	int i;
-
-	extern paddr_t avail_start, avail_end;
-
 	boothowto = RB_SINGLE; /* XXX for now */
 	boothowto |= RB_KDB; /* XXX for now */
 
-	delay_divisor = 30; /* XXX */
+	delay_divisor = delay_divisor_est40(25); /* XXX */
 
-	/*
-	 * Tell the VM system about available physical memory.  The
-	 * fic uses one segment.
-	 */
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	phys_seg_list[0].ps_start = lowram;
+	phys_seg_list[0].ps_end = lowram + m68k_ptob(physmem);
+
+	machine_init_common(nextpa);
 
 	/*
 	 * map and init interrupt controller
@@ -154,23 +138,12 @@ void fic_init(void)
 	    PAGE_SIZE, PG_RW|PG_CI);
 	sicinit((void*)virtual_avail);
 	virtual_avail += PAGE_SIZE;
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }
 
 int
 zs_check_kgdb(struct zs_chanstate *cs, int dev)
 {
-	
+
 	if((boothowto & RB_KDB) && (dev == makedev(10, 0)))
 		return (1);
 	return (0);
@@ -229,48 +202,15 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	vaddr_t minaddr, maxaddr;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
+	cpu_startup_common();
 
-	pmapdebug = 0;
-#endif
-
-	cpu_setmodel("FIC8234");
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	printf("real mem  = %d\n", ctob(physmem));
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	printf("avail mem = %ld\n", ptoa(uvm_availmem(false)));
+	printf("delay constant: %d\n", delay_divisor);
 }
 
-/*
- * Info for CTL_HW
- */
-
 void
-identifycpu(void)
+machine_set_model(void)
 {
-	printf("%s\n", cpu_getmodel());
-	printf("delay constant: %d\n", delay_divisor);
+	cpu_setmodel("FIC8234");
 }
 
 /*
@@ -290,66 +230,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTLTYPE_STRUCT, "console_device", NULL,
 		       sysctl_consdev, 0, NULL, sizeof(dev_t),
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
-}
-
-int	waittime = -1;
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is cold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
- haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-#if defined(PANICWAIT) && !defined(DDB)
-	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
-		cnpollc(1);
-		(void)cngetc();
-		cnpollc(0);
-		printf("\n");
-	}
-#endif
-
-	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
-		printf("System halted.  Hit any key to reboot.\n\n");
-		cnpollc(1);
-		(void)cngetc();
-		cnpollc(0);
-	}
-
-	printf("rebooting...\n");
-	DELAY(1000000);
-	doboot();
-	/*NOTREACHED*/
 }
 
 /*
@@ -476,51 +356,6 @@ dumpsys(void)
 	printf("succeeded\n");
 }
 
-void
-straytrap(int pc, u_short evec)
-{
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
-}
-
-/* XXX should change the interface, and make one badaddr() function */
-
-int	*nofault;
-
-int
-badaddr(void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	i = *(volatile short *)addr;
-	__USE(i);
-	nofault = (int *) 0;
-	return (0);
-}
-
-int
-badbaddr(void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return (1);
-	}
-	i = *(volatile char *)addr;
-	__USE(i);
-	nofault = (int *) 0;
-	return (0);
-}
-
 #ifdef PANICBUTTON
 /*
  * Declare these so they can be patched.
@@ -561,65 +396,3 @@ nmihand(struct frame frame)
 
 	innmihand = 0;
 }
-
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- * 
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- *
- * XXX what are the special cases for the hp300?
- * XXX why is this COMPAT_NOMID?  was something generating
- *	hp300 binaries with an a_mid of 0?  i thought that was only
- *	done on little-endian machines...  -- cgd
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-#if defined(COMPAT_NOMID) || defined(COMPAT_44)
-	u_long midmag, magic;
-	u_short mid;
-	int error;
-	struct exec *execp = epp->ep_hdr;
-
-	midmag = ntohl(execp->a_midmag);
-	mid = (midmag >> 16) & 0xffff;
-	magic = midmag & 0xffff;
-
-	midmag = mid << 16 | magic;
-
-	switch (midmag) {
-#ifdef COMPAT_NOMID
-	case (MID_ZERO << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l, epp);
-		return (error);
-#endif
-#ifdef COMPAT_44
-	case (MID_HP300 << 16) | ZMAGIC:
-		error = exec_aout_prep_oldzmagic(l, epp);
-		return (error);
-#endif
-	}
-#endif /* !(defined(COMPAT_NOMID) || defined(COMPAT_44)) */
-
-	return ENOEXEC;
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
-}
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif

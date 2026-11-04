@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.143.2.1 2025/08/02 05:57:43 perseant Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.143.2.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143.2.1 2025/08/02 05:57:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.143.2.2 2026/11/04 23:27:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -297,7 +297,7 @@ sonewconn(struct socket *head, bool soready)
 				break;
 			}
 
-			/* If nothing was nudged out of the acept filter, bail
+			/* If nothing was nudged out of the accept filter, bail
 			 * out; otherwise proceed allocating the socket. */
 			if (so2 == NULL) {
 				return NULL;
@@ -1223,19 +1223,16 @@ bad:
 }
 
 
-int
+void
 sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 {
 	struct mbuf	*m, *mlast, *n;
-	int		space;
 
 	KASSERT(solocked(sb->sb_so));
 
-	space = 0;
 	if (control == NULL)
 		panic("sbappendcontrol");
 	for (m = control; ; m = m->m_next) {
-		space += m->m_len;
 		MCLAIM(m, sb->sb_mowner);
 		if (m->m_next == NULL)
 			break;
@@ -1243,10 +1240,7 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	n = m;			/* save pointer to last control buffer */
 	for (m = m0; m; m = m->m_next) {
 		MCLAIM(m, sb->sb_mowner);
-		space += m->m_len;
 	}
-	if (space > sbspace(sb))
-		return (0);
 	n->m_next = m0;			/* concatenate data to control */
 
 	SBLASTRECORDCHK(sb, "sbappendcontrol 1");
@@ -1260,8 +1254,6 @@ sbappendcontrol(struct sockbuf *sb, struct mbuf *m0, struct mbuf *control)
 	sb->sb_mbtail = mlast;
 	SBLASTMBUFCHK(sb, "sbappendcontrol");
 	SBLASTRECORDCHK(sb, "sbappendcontrol 2");
-
-	return (1);
 }
 
 /*

@@ -3,7 +3,7 @@
 
 #include "sim-main.h"
 #include "sim-options.h"
-#include "v850_sim.h"
+#include "v850-sim.h"
 #include "sim-assert.h"
 #include "itable.h"
 
@@ -50,6 +50,8 @@ const char *interrupt_names[] =
 static void
 do_interrupt (SIM_DESC sd, void *data)
 {
+  sim_cpu *cpu = STATE_CPU (sd, 0);
+  struct v850_sim_cpu *v850_cpu = V850_SIM_CPU (cpu);
   const char **interrupt_name = (const char**)data;
   enum interrupt_type inttype;
   inttype = (interrupt_name - STATE_WATCHPOINTS (sd)->interrupt_names);
@@ -74,9 +76,9 @@ do_interrupt (SIM_DESC sd, void *data)
 	     ignores subsequent NMIs, so we don't need to count them.
 	     Just keep re-scheduling a single NMI until it manages to
 	     be delivered */
-	  if (STATE_CPU (sd, 0)->pending_nmi != NULL)
-	    sim_events_deschedule (sd, STATE_CPU (sd, 0)->pending_nmi);
-	  STATE_CPU (sd, 0)->pending_nmi =
+	  if (v850_cpu->pending_nmi != NULL)
+	    sim_events_deschedule (sd, v850_cpu->pending_nmi);
+	  v850_cpu->pending_nmi =
 	    sim_events_schedule (sd, 1, do_interrupt, data);
 	  return;
 	}
@@ -204,7 +206,8 @@ sim_open (SIM_OPEN_KIND    kind,
   cb->syscall_map = cb_v850_syscall_map;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct v850_sim_cpu))
+      != SIM_RC_OK)
     return 0;
 
   /* for compatibility */
@@ -281,8 +284,8 @@ sim_open (SIM_OPEN_KIND    kind,
     case bfd_mach_v850e2:
     case bfd_mach_v850e2v3:
     case bfd_mach_v850e3v5:
-      STATE_CPU (sd, 0)->psw_mask = (PSW_NP | PSW_EP | PSW_ID | PSW_SAT
-				     | PSW_CY | PSW_OV | PSW_S | PSW_Z);
+      V850_SIM_CPU (STATE_CPU (sd, 0))->psw_mask =
+	(PSW_NP | PSW_EP | PSW_ID | PSW_SAT | PSW_CY | PSW_OV | PSW_S | PSW_Z);
       break;
     }
 

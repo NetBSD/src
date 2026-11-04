@@ -1,5 +1,5 @@
 /* Meta support for 32-bit ELF
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
    Contributed by Imagination Technologies Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1022,8 +1022,7 @@ elf_metag_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&htab->etab, abfd,
 				      metag_link_hash_newfunc,
-				      sizeof (struct elf_metag_link_hash_entry),
-				      METAG_ELF_DATA))
+				      sizeof (struct elf_metag_link_hash_entry)))
     {
       free (htab);
       return NULL;
@@ -1384,44 +1383,6 @@ metag_final_link_relocate (reloc_howto_type *howto,
   return r;
 }
 
-/* This is defined because R_METAG_NONE != 0...
-   See RELOC_AGAINST_DISCARDED_SECTION for details.  */
-#define METAG_RELOC_AGAINST_DISCARDED_SECTION(info, input_bfd, input_section, \
-					      rel, relend, howto, contents) \
-  {									\
-    _bfd_clear_contents (howto, input_bfd, input_section,		\
-			 contents, rel->r_offset);			\
-									\
-    if (bfd_link_relocatable (info)					\
-	&& (input_section->flags & SEC_DEBUGGING))			\
-      {									\
-	/* Only remove relocations in debug sections since other	\
-	   sections may require relocations.  */			\
-	Elf_Internal_Shdr *rel_hdr;					\
-									\
-	rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section); \
-									\
-	/* Avoid empty output section.  */				\
-	if (rel_hdr->sh_size > rel_hdr->sh_entsize)			\
-	  {								\
-	    rel_hdr->sh_size -= rel_hdr->sh_entsize;			\
-	    rel_hdr = _bfd_elf_single_rel_hdr (input_section);		\
-	    rel_hdr->sh_size -= rel_hdr->sh_entsize;			\
-									\
-	    memmove (rel, rel + 1, (relend - rel) * sizeof (*rel));	\
-									\
-	    input_section->reloc_count--;				\
-	    relend--;							\
-	    rel--;							\
-	    continue;							\
-	  }								\
-      }									\
-									\
-    rel->r_info = R_METAG_NONE;						\
-    rel->r_addend = 0;							\
-    continue;								\
-  }
-
 /* Relocate a META ELF section.
 
 The RELOCATE_SECTION function is called by the new ELF backend linker
@@ -1530,8 +1491,9 @@ elf_metag_relocate_section (bfd *output_bfd,
 	}
 
       if (sec != NULL && discarded_section (sec))
-	  METAG_RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-						 rel, relend, howto, contents);
+	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
+					 rel, 1, relend, R_METAG_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -2741,6 +2703,7 @@ elf_metag_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -2885,7 +2848,8 @@ elf_metag_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
-      else if (reloc_section)
+      s->alloced = 1;
+      if (reloc_section)
 	{
 	  unsigned char *contents = s->contents;
 	  Elf32_External_Rela reloc;
@@ -3342,7 +3306,7 @@ metag_build_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
      section.  The user should fix his linker script.  */
   if (hsh->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
+    info->callbacks->fatal (_("%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    hsh->target_section);
 
@@ -3965,6 +3929,7 @@ elf_metag_build_stubs (struct bfd_link_info *info)
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
 	return false;
+      stub_sec->alloced = 1;
       stub_sec->size = 0;
     }
 

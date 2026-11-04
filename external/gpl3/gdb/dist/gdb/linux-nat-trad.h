@@ -1,6 +1,6 @@
 /* Generic GNU/Linux target using traditional ptrace register access.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_NAT_TRAD_H
-#define LINUX_NAT_TRAD_H
+#ifndef GDB_LINUX_NAT_TRAD_H
+#define GDB_LINUX_NAT_TRAD_H
 
 #include "linux-nat.h"
 
@@ -43,4 +43,4 @@ private:
   void store_register (const struct regcache *regcache, int regnum);
 };
 
-#endif /* LINUX_NAT_TRAD_H */
+#endif /* GDB_LINUX_NAT_TRAD_H */

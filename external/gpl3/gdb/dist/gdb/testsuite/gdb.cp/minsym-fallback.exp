@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2024 Free Software Foundation, Inc.
+# Copyright (C) 2011-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,13 +21,21 @@ standard_testfile .cc minsym-fallback-main.cc
 
 include_file minsym-fallback.h
 
+set debug_flags {}
+lappend debug_flags debug
+lappend debug_flags c++
+
+set nodebug_flags {}
+lappend nodebug_flags nodebug
+lappend nodebug_flags c++
+
 set executable $testfile
 set objfile [standard_output_file ${testfile}.o]
 set objmainfile [standard_output_file ${testfile}-main.o]
 
-if {[gdb_compile $srcdir/$subdir/$srcfile $objfile object {}] != ""
-    || [gdb_compile $srcdir/$subdir/$srcfile2 $objmainfile object {debug}] != ""
-    || [gdb_compile "$objfile $objmainfile" $binfile executable {c++}] != ""} {
+if {[gdb_compile $srcdir/$subdir/$srcfile $objfile object $nodebug_flags] != ""
+    || [gdb_compile $srcdir/$subdir/$srcfile2 $objmainfile object $debug_flags] != ""
+    || [gdb_compile "$objfile $objmainfile" $binfile executable $debug_flags] != ""} {
     untested "failed to compile"
     return -1
 }

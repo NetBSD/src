@@ -1,0 +1,8 @@
+#	$NetBSD: list.lfs,v 1.1.2.2 2026/11/04 23:19:36 perseant Exp $
+
+PROG	dump_lfs	rdump_lfs
+PROG	fsck_lfs
+PROG	mount_lfs
+PROG	newfs_lfs
+PROG	dumplfs
+PROG	lfs_cleanerd

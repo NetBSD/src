@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_send.c,v 1.40.2.1 2025/08/02 05:56:43 perseant Exp $	*/
+/*	$NetBSD: iscsi_send.c,v 1.40.2.2 2026/11/04 23:22:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -343,6 +343,9 @@ iscsi_send_thread(void *par)
 				(pdu = TAILQ_FIRST(&conn->c_pdus_to_send)) != NULL) {
 				TAILQ_REMOVE(&conn->c_pdus_to_send, pdu, pdu_send_chain);
 				pdu->pdu_flags &= ~PDUF_INQUEUE;
+				pdisp = pdu->pdu_disp;
+				if (pdisp > PDUDISP_FREE)
+					pdu->pdu_flags &= ~PDUF_BUSY;
 				mutex_exit(&conn->c_lock);
 
 				/* update ExpStatSN here to avoid discontinuities */
@@ -357,11 +360,6 @@ iscsi_send_thread(void *par)
 				                ntohl(pdu->pdu_hdr.pduh_p.command.ExpStatSN)));
 				my_soo_write(conn, &pdu->pdu_uio);
 
-				mutex_enter(&conn->c_lock);
-				pdisp = pdu->pdu_disp;
-				if (pdisp > PDUDISP_FREE)
-					pdu->pdu_flags &= ~PDUF_BUSY;
-				mutex_exit(&conn->c_lock);
 				if (pdisp <= PDUDISP_FREE)
 					free_pdu(pdu);
 
@@ -527,9 +525,7 @@ send_pdu(ccb_t *ccb, pdu_t *pdu, ccb_disp_t cdisp, pdu_disp_t pdisp)
 		if (prev_cdisp <= CCBDISP_NOWAIT)
 			suspend_ccb(ccb, TRUE);
 
-		mutex_exit(&conn->c_lock);
 		ccb_timeout_start(ccb, COMMAND_TIMEOUT);
-		mutex_enter(&conn->c_lock);
 
 		while (ccb->ccb_disp == CCBDISP_WAIT) {
 			DEBC(conn, 15, ("Send_pdu: ccb=%p cdisp=%d waiting\n",

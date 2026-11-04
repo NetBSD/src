@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.60.2.1 2025/08/02 05:56:18 perseant Exp $	*/
+/*	$NetBSD: tsc.c,v 1.60.2.2 2026/11/04 23:21:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.60.2.1 2025/08/02 05:56:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.60.2.2 2026/11/04 23:21:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -158,8 +158,9 @@ tsc_is_invariant(void)
 	 * is to check CPUID 80000007.
 	 */
 	family = CPUID_TO_BASEFAMILY(ci->ci_signature);
-	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD))
-	    && ((family == 0x06) || (family == 0x0f))) {
+	if (((cpu_vendor == CPUVENDOR_INTEL) || (cpu_vendor == CPUVENDOR_AMD)
+	    || (cpu_vendor == CPUVENDOR_IDT))
+	    && ((family == 0x06) || (family == 0x07) || (family == 0x0f))) {
 		x86_cpuid(0x80000000, descs);
 		if (descs[0] >= 0x80000007) {
 			x86_cpuid(0x80000007, descs);
@@ -175,6 +176,7 @@ void
 tsc_setfunc(struct cpu_info *ci)
 {
 	bool use_lfence, use_mfence;
+	uint32_t family;
 
 	use_lfence = use_mfence = false;
 
@@ -191,6 +193,11 @@ tsc_setfunc(struct cpu_info *ci)
 		use_mfence = true;
 	else if (cpu_vendor == CPUVENDOR_INTEL)
 		use_lfence = true;
+	else if (cpu_vendor == CPUVENDOR_IDT) {
+		family = CPUID_TO_BASEFAMILY(ci->ci_signature);
+		use_lfence = family > 0x06 || (family == 0x06 &&
+		    CPUID_TO_MODEL(ci->ci_signature) == 0x0f);
+	}
 
 	/* LFENCE and MFENCE are applicable if SSE2 is set. */
 	if ((ci->ci_feat_val[0] & CPUID_SSE2) == 0)
@@ -243,7 +250,12 @@ tsc_tc_init(void)
 		invariant = false;
 	} else if (vm_guest == VM_GUEST_NO) {
 		delay_func = tsc_delay;
-	} else if (vm_guest == VM_GUEST_VIRTUALBOX) {
+	} else if (vm_guest == VM_GUEST_VIRTUALBOX ||
+		   vm_guest == VM_GUEST_NVMM) {
+		/*
+		 * nvmm doesn't advance guest tsc constantly unless
+		 * the vcpu is pinned to a physical cpu.
+		 */
 		tsc_timecounter.tc_quality = -100;
 	}
 

@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_NAT_H
-#define LINUX_NAT_H
+#ifndef GDB_LINUX_NAT_H
+#define GDB_LINUX_NAT_H
 
 #include "nat/linux-nat.h"
 #include "inf-ptrace.h"
@@ -78,7 +78,7 @@ public:
   bool stopped_by_hw_breakpoint () override;
   bool supports_stopped_by_hw_breakpoint () override;
 
-  void thread_events (int) override;
+  void thread_events (bool) override;
 
   bool supports_set_thread_options (gdb_thread_options options) override;
 
@@ -107,6 +107,9 @@ public:
     fileio_readlink (struct inferior *inf,
 		     const char *filename,
 		     fileio_error *target_errno) override;
+
+  int fileio_lstat (struct inferior *inf, const char *filename,
+		   struct stat *sb, fileio_error *target_errno) override;
 
   int fileio_unlink (struct inferior *inf,
 		     const char *filename,
@@ -276,12 +279,12 @@ struct lwp_info : intrusive_list_node<lwp_info>
      will be recorded here, while 'status == 0' is ambiguous.  */
   struct target_waitstatus waitstatus;
 
-  /* Signal whether we are in a SYSCALL_ENTRY or
-     in a SYSCALL_RETURN event.
-     Values:
-     - TARGET_WAITKIND_SYSCALL_ENTRY
-     - TARGET_WAITKIND_SYSCALL_RETURN */
-  enum target_waitkind syscall_state;
+  /* Signal whether we are in a SYSCALL_ENTRY or SYSCALL_RETURN event.
+
+     Valid values are TARGET_WAITKIND_SYSCALL_ENTRY,
+     TARGET_WAITKIND_SYSCALL_RETURN, or TARGET_WAITKIND_SYSCALL_IGNORE, when
+     not stopped at a syscall.  */
+  target_waitkind syscall_state = TARGET_WAITKIND_IGNORE;
 
   /* The processor core this LWP was last seen on.  */
   int core = -1;
@@ -304,9 +307,6 @@ lwp_info_range all_lwps ();
 /* Same as the above, but safe against deletion while iterating.  */
 
 lwp_info_safe_range all_lwps_safe ();
-
-/* Does the current host support PTRACE_GETREGSET?  */
-extern enum tribool have_ptrace_getregset;
 
 /* Called from the LWP layer to inform the thread_db layer that PARENT
    spawned CHILD.  Both LWPs are currently stopped.  This function
@@ -345,4 +345,4 @@ void linux_nat_switch_fork (ptid_t new_ptid);
    uninitialized in such case).  */
 bool linux_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
 
-#endif /* LINUX_NAT_H */
+#endif /* GDB_LINUX_NAT_H */

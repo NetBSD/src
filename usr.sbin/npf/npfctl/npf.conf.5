@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.91.8.1 2025/08/02 05:58:52 perseant Exp $
+.\"    $NetBSD: npf.conf.5,v 1.91.8.2 2026/11/04 23:28:54 perseant Exp $
 .\"
 .\" Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 2, 2025
+.Dd October 31, 2026
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -68,7 +68,7 @@ parameter settings.
 .Sh SYNTAX
 .Ss Variables
 Variables are specified using the dollar
-.Pq Li $
+.Pq Ql $
 sign, which is used for both
 definition and referencing of a variable.
 Variables are defined by assigning a value to them as follows:
@@ -88,9 +88,9 @@ Common variable definitions are for IP addresses, networks, ports,
 and interfaces.
 .Ss Tables
 Tables are specified using a name between angle brackets
-.Sq Li <
+.Ql <
 and
-.Sq Li > .
+.Ql > .
 The following is an example of table definition:
 .Pp
 .Dl table <blocklist> type ipset
@@ -121,6 +121,20 @@ The
 .Cm lpm
 tables can contain networks and they will perform the longest
 prefix match on lookup.
+.Pp
+.Cm const
+provides the best combination of performance and lighter memory consumption.
+.Cm ipset
+offers fast lookups, with possibly higher memory usage than
+.Cm const .
+Given its additional capability,
+.Cm lpm
+has potentially higher lookup costs and memory needs.
+Note that tables can be replaced by other tables using
+.Xr npfctl 8 ,
+so for example, a
+.Cm const
+table could be replaced at runtime.
 .Ss Interfaces
 In NPF, an interface can be referenced directly by using its name, or can be
 passed to an extraction function which will return a list of IP addresses
@@ -141,7 +155,7 @@ all addresses will remain present.
 .Pp
 Three functions exist, to extract addresses from an interface with a chosen
 list type and IP address type:
-.Bl -tag -width "Fn ifaddrs interface" -offset indent
+.Bl -tag -width Fn -offset indent
 .It Fn inet4 interface
 Static list.
 IPv4 addresses.
@@ -256,12 +270,27 @@ The flags that are not present in
 .Ar mask
 are ignored.
 .Pp
+For ICMP, the
+.Cd icmp
+or
+.Cd ipv6-icmp
+keyword is used based on the address family of the packet being filtered.
+Its parameter should be the ICMP type and or the ICMP code.
+The ICMP type is indicated using the
+.Cd icmp-type
+keyword followed by the name or number representing the ICMP type.
+The ICMP code is also indicated using the
+.Cd code
+keyword followed by the name or number of the code of the ICMP type.
+.Pp
+.D1 Ic proto Cm icmp icmp-type Ar icmp_type code Ar icmp_code
+.Pp
 To notify the sender of a blocking decision, three
 .Cm return
 options can be used in conjunction with a
 .Ic block
 rule:
-.Bl -tag -width "Cm return-icmp" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm return
 Behaves as
 .Cm return-rst
@@ -284,15 +313,20 @@ keywords are provided to filter by source or destination IP addresses.
 They can be used in conjunction with the
 .Cm port
 keyword.
-Negation (the exclamation mark) can be used in front of the address
+Negation
+.Po
+the exclamation mark,
+.Ql \&!
+.Pc
+can be used in front of the address
 filter criteria.
 .Pp
 Further packet specification at present is limited to TCP and UDP
 understanding source and destination ports, and ICMP and IPv6-ICMP
-understanding icmp-type.
+understanding ICMP type.
 .Pp
 A rule can also instruct NPF to create an entry in the state table when
-passing the packet or to apply a procedure to the packet (e.g. "log").
+passing the packet or to apply a procedure to the packet (e.g., "log").
 .Pp
 A
 .Dq fully-featured
@@ -312,7 +346,6 @@ syntax, for example:
 Fragments are not selectable since NPF always reassembles packets
 before further processing.
 .Ss Layer 2 filtering
-.Pp
 NPF allows the filtering of frames at the data link layer.
 NPF also requires that the inspection rules are defined within groups.
 Groups containing rules to filter frames should be marked with a
@@ -339,7 +372,8 @@ Rules that are defined for the link layer should pass the
 .Cm ether
 keyword after the pass or block instruction.
 EtherType is passed on the rule by preceeding the four digit hexadecimal constant
-EtherType with "Ex".
+EtherType with
+.Ql \&Ex .
 When a frame matches a rule with the
 .Cm final
 keyword, the rule is considered the last matching rule.
@@ -357,7 +391,8 @@ pass ether from 00:00:5E:00:53:00 to 00:00:5E:00:53:01 type Ex0800
 .Ed
 .Pp
 This passes frames with source MAC address 00:00:5E:00:53:00 and
-destination MAC address 00:00:5E:00:53:01 carrying IP packets(0800).
+destination MAC address 00:00:5E:00:53:01 carrying IP packets
+.Pq 0800 .
 Alternatively, layer 2 rules also support variables.
 .Pp
 .Dl block ether in final from $source_mac to $dest_mac type $ether_type
@@ -366,7 +401,6 @@ Filtering at this layer is stateless and has no access to upper layer protocols.
 Block returns are not supported.
 MAC address tables are also not supported yet.
 .Ss User/group ID filtering
-.Pp
 NPF allows filtering by user or group identity.
 Packet filtering by user or group
 controls data packet flows based on the user or group identity of the process
@@ -374,21 +408,22 @@ that generated the traffic, or is waiting to receive traffic,
 rather than just traditional parameters like IP address, port number, and protocol.
 .Pp
 There are many situations where this is useful:
-.Bl -bullet -hang
-.It Finer-grained access control
+.Bl -tag
+.It Finer-grained access control.
 One can allow specific destinations to be accessed only by certain users
 or groups.
-.It Application level security
+.It Application level security.
 Two processes are using a specific port, but only one should be allowed to
 access packets originating from a particular host.
 .It Improves isolation in multi-tenant systems
 Prevent an untrusted user from making any network connections.
-.It Security hardening and containment
+.It Security hardening and containment.
 A user application that has been exploited can be prevented from making
 network connections to a command-and-control server.
-.It Compliance and policy enforcement
+.It Compliance and policy enforcement.
 Can restrict access to particular networks to network administrators only.
 .El
+.Pp
 This filtering process can be achieved by passing the user or group ID on the rule.
 .Pp
 .Dl pass out from all user jack group < 1000
@@ -437,7 +472,7 @@ In both cases, a full TCP state tracking is performed for TCP connections
 and a limited tracking for message-based protocols (UDP and ICMP).
 .Pp
 By default, a stateful rule implies SYN-only flag check
-.Pq Dq Li flags S/SAFR
+.Pq Ql flags S/SAFR
 for the TCP packets.
 It is not advisable to change this behavior; however,
 it can be overridden with the aforementioned
@@ -452,13 +487,16 @@ The translation may be
 (stateless).
 The following mapping types are available:
 .Pp
-.Bl -tag -width "Cm \&<->" -offset indent -compact
+.Bl -tag -width Cm -offset indent -compact
 .It Cm \&->
-outbound NAT (translation of the source)
+outbound NAT
+.Pq translation of the source
 .It Cm \&<-
-inbound NAT (translation of the destination)
+inbound NAT
+.Pq translation of the destination
 .It Cm \&<->
-bi-directional NAT (combination of inbound and outbound NAT)
+bi-directional NAT
+.Pq combination of inbound and outbound NAT
 .El
 .Pp
 The following would translate the source (10.1.1.0/24) to the IP address
@@ -500,7 +538,7 @@ then a custom selection algorithm can be chosen using the
 .Cm algo
 keyword.
 The currently available algorithms for the dynamic translation are:
-.Bl -tag -width "Cm round-robin" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm ip-hash
 The translation address for a new connection is selected based on a
 hash of the original source and destination addresses.
@@ -519,7 +557,7 @@ chosen using the
 .Cm algo
 keyword.
 The currently available algorithms are:
-.Bl -tag -width "Cm netmap" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm netmap
 Network address mapping from one segment to another, leaving the host
 part as-is.
@@ -539,7 +577,7 @@ Such translation is performed by packet filter extensions called
 Application Level Gateways (ALGs).
 .Pp
 NPF supports the following ALGs:
-.Bl -tag -width "Cm icmp" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm icmp
 ICMP ALG.
 Applies to IPv4 and IPv6.
@@ -571,7 +609,7 @@ key-value pairs.
 Depending on the call, the key might represent the argument and the value
 might be optional.
 Available options:
-.Bl -tag -width "Cm log: Ar interface" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm log : Ar interface
 Log events.
 This requires the
@@ -583,15 +621,32 @@ configuration is loaded.
 The log packets can be written to a file using the
 .Xr npfd 8
 daemon.
+.It Cm route : Ar option1 Ns Op Li \&, Ar option2 ...
+Route traffic via a different path according to specified routing options.
+This requires the
+.Pa npf_ext_route
+kernel module, which would get auto-loaded by NPF.
+.Pp
+The available routing options are:
+.Bl -tag -width Cm -offset indent
+.It Cm \*qinterface\*q Ar value
+Decides which network interface to send the outgoing packet.
+.It Cm \*qvia\*q Ar value
+Specifies the gateway address for your IPv4 packet on the specified interface.
+.It Cm \*qvia6\*q Ar value
+Specifies the gateway address for your IPv6 packet on the specified interface.
+.It Cm \*qdup-to\*q
+Duplicates packet and sends duplicated packet via the defined route without
+interfering with the path of the original packet.
+.El
 .It Cm normalize : Ar option1 Ns Op Li \&, Ar option2 ...
 Modify packets according to the specified normalization options.
 This requires the
-.Pa npf_ext_normalize kernel
-module, which would normally get auto-loaded by NPF.
-.El
+.Pa npf_ext_normalize
+kernel module, which would normally get auto-loaded by NPF.
 .Pp
 The available normalization options are:
-.Bl -tag -width "Cm \*qmin-mss\*q Ar value" -offset indent
+.Bl -tag -width Cm -offset indent
 .It Cm \*qmax-mss\*q Ar value
 Enforce a maximum value for the Maximum Segment Size (MSS) TCP option.
 Typically, for
@@ -603,16 +658,46 @@ Remove the Don't Fragment (DF) flag from IPv4 packets.
 .It Cm \*qrandom-id\*q
 Randomize the IPv4 ID parameter.
 .El
+.It Cm rndblock : Ar option1 Ns Op Li \&, Ar option2 ...
+Drop packets based on a modulo or percentage.
+This requires the
+.Pa npf_ext_rndblcok
+kernel module which would normally get auto-loaded by NPF.
+This is particularly useful to assess how the network stack
+handles random or unexpected packet drops.
+.Pp
+The available random blocking options are:
+.Bl -tag -width Cm -offset indent
+.It Cm \*qmod\*q Ar value
+Drop packets with counters divisible by the modulo parameter.
+mod counters are kept for each packet matching the rule with the procedure.
+.It Cm \*qpercentage\*q Ar value
+Drop packets based on randomly generated values from 0 to 10000 that
+fall in the range of the random block defined percentage.
+.El
 .Pp
 For example:
 .Bd -literal -offset indent
 procedure "someproc" {
 	log: npflog0
 	normalize: "random-id", "min-ttl" 64, "max-mss" 1432
+	route: "interface" bge0, "via" 192.168.64.1, "via6" fe80::1, "dup-to"
 }
 .Ed
 .Pp
-In this case, the procedure calls the logging and normalization modules.
+In this case, the procedure calls the logging, normalization and routing modules.
+It is good practice to put routing last in a procedure as the packet may be freed.
+.Pp
+A procedure having a random block extension can be configured as
+.Bd -literal -offset indent
+procedure "someproc" {
+	rndblock: "mod" 10, "percentage" 64
+}
+.Ed
+.Pp
+In this case, for every ten packets that match the rule, the tenth packet will get dropped.
+Packets will also be dropped based on random values generated that lie within 0 to 64 percent
+of 10000.
 .Ss Parameter settings
 NPF supports a set of dynamically tunable configuration-wide parameters.
 For example:
@@ -625,10 +710,10 @@ See
 for the list of parameters and their details.
 .Ss Misc
 Text after a hash
-.Pq Sq #
+.Pq Ql #
 character is considered a comment.
 The backslash
-.Pq Sq \e
+.Pq Ql \e
 character at the end of a line marks a continuation line,
 i.e., the next line is considered an extension of the present line.
 Additionally, within curly braces of variable definitions, newlines are

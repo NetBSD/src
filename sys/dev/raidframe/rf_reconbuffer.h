@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_reconbuffer.h,v 1.8 2005/12/11 12:23:37 christos Exp $	*/
+/*	$NetBSD: rf_reconbuffer.h,v 1.8.202.1 2026/11/04 23:22:32 perseant Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -54,5 +54,7 @@ rf_CheckForFullRbuf(RF_Raid_t * raidPtr, RF_ReconCtrl_t * reconCtrl,
     RF_ReconParityStripeStatus_t * pssPtr, int numDataCol);
 void
 rf_ReleaseFloatingReconBuffer(RF_Raid_t * raidPtr, RF_ReconBuffer_t * rbuf);
+void
+rf_ReleaseForcedReconBuffer(RF_Raid_t * raidPtr, RF_ReconBuffer_t * rbuf);
 
 #endif				/* !_RF__RF_RECONBUFFER_H_ */

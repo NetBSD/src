@@ -1,6 +1,6 @@
 /* Serial interface for UN*X file-descriptor based connection.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SER_UNIX_H
-#define SER_UNIX_H
+#ifndef GDB_SER_UNIX_H
+#define GDB_SER_UNIX_H
 
 extern int ser_unix_read_prim (struct serial *scb, size_t count);
 extern int ser_unix_write_prim (struct serial *scb, const void *buf, 
 				size_t count);
 
-#endif
+#endif /* GDB_SER_UNIX_H */

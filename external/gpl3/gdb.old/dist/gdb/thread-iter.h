@@ -1,5 +1,5 @@
 /* Thread iterators and ranges for GDB, the GNU debugger.
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef THREAD_ITER_H
-#define THREAD_ITER_H
+#ifndef GDB_THREAD_ITER_H
+#define GDB_THREAD_ITER_H
 
 #include "gdbsupport/filtered-iterator.h"
 #include "gdbsupport/iterator-range.h"
@@ -249,4 +249,4 @@ private:
   ptid_t m_filter_ptid;
 };
 
-#endif /* THREAD_ITER_H */
+#endif /* GDB_THREAD_ITER_H */

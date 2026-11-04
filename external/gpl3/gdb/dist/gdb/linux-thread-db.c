@@ -1,6 +1,6 @@
 /* libthread_db assisted debugging support, generic parts.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include <dlfcn.h>
+#include "exceptions.h"
 #include "gdb_proc_service.h"
 #include "nat/gdb_thread_db.h"
 #include "gdbsupport/gdb_vecs.h"
@@ -466,11 +467,11 @@ verbose_dlsym (void *handle, const char *name)
 static int
 inferior_has_bug (const char *ver_symbol, int ver_major_min, int ver_minor_min)
 {
-  struct bound_minimal_symbol version_msym;
   CORE_ADDR version_addr;
   int got, retval = 0;
 
-  version_msym = lookup_minimal_symbol (ver_symbol, NULL, NULL);
+  bound_minimal_symbol version_msym
+    = lookup_minimal_symbol (current_program_space, ver_symbol);
   if (version_msym.minsym == NULL)
     return 0;
 
@@ -777,9 +778,6 @@ check_thread_db (struct thread_db_info *info, bool log_progress)
     }
   catch (const gdb_exception_error &except)
     {
-      if (warning_pre_print)
-	gdb_puts (warning_pre_print, gdb_stderr);
-
       exception_fprintf (gdb_stderr, except,
 			 _("libthread_db integrity checks failed: "));
 
@@ -809,9 +807,8 @@ static bool
 libpthread_objfile_p (objfile *obj)
 {
   return (libpthread_name_p (objfile_name (obj))
-	  && lookup_minimal_symbol ("pthread_create",
-				    NULL,
-				    obj).minsym != NULL);
+	  && lookup_minimal_symbol (current_program_space,
+				    "pthread_create", obj).minsym != nullptr);
 }
 
 /* Attempt to initialize dlopen()ed libthread_db, described by INFO.
@@ -1984,9 +1981,7 @@ maintenance_check_libthread_db (const char *args, int from_tty)
   check_thread_db (info, true);
 }
 
-void _initialize_thread_db ();
-void
-_initialize_thread_db ()
+INIT_GDB_FILE (thread_db)
 {
   /* Defer loading of libthread_db.so until inferior is running.
      This allows gdb to load correct libthread_db for a given

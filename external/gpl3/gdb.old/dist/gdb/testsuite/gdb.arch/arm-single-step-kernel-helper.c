@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2016-2023 Free Software Foundation, Inc.
+   Copyright 2016-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-static int *kernel_user_helper_version = (int *) 0xffff0ffc;
+static int *kernel_user_helper_version_ptr = (int *) 0xffff0ffc;
+static int kernel_user_helper_version;
 
 typedef void * (kernel_user_func_t)(void);
 #define kernel_user_get_tls (*(kernel_user_func_t *) 0xffff0fe0)
@@ -24,6 +25,8 @@ int
 main (void)
 {
   int i;
+
+  kernel_user_helper_version = *kernel_user_helper_version_ptr;
 
   for (i = 0; i < 8; i++)
     kernel_user_get_tls ();

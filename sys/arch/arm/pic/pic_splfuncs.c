@@ -1,4 +1,4 @@
-/*	$NetBSD: pic_splfuncs.c,v 1.24 2022/06/25 13:24:35 jmcneill Exp $	*/
+/*	$NetBSD: pic_splfuncs.c,v 1.24.10.1 2026/11/04 23:20:13 perseant Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.24 2022/06/25 13:24:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic_splfuncs.c,v 1.24.10.1 2026/11/04 23:20:13 perseant Exp $");
 
 #define _INTR_PRIVATE
 #include <sys/param.h>

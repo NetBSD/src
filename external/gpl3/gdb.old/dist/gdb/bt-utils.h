@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 /* Support for printing a backtrace when GDB hits an error.  This is not
    for printing backtraces of the inferior, but backtraces of GDB itself.  */
 
-#ifndef BT_UTILS_H
-#define BT_UTILS_H
+#ifndef GDB_BT_UTILS_H
+#define GDB_BT_UTILS_H
 
 #ifdef HAVE_LIBBACKTRACE
 # include "backtrace.h"
@@ -32,7 +32,7 @@
 
 #if defined HAVE_EXECINFO_H			\
   && defined HAVE_EXECINFO_BACKTRACE		\
-  && !defined PRINT_BACKTRACE_ON_FATAL_SIGNAL
+  && !defined GDB_PRINT_INTERNAL_BACKTRACE_USING_LIBBACKTRACE
 # include <execinfo.h>
 # define GDB_PRINT_INTERNAL_BACKTRACE
 # define GDB_PRINT_INTERNAL_BACKTRACE_USING_EXECINFO
@@ -71,4 +71,8 @@ extern void gdb_internal_backtrace ();
 extern void gdb_internal_backtrace_set_cmd (const char *args, int from_tty,
 					    cmd_list_element *c);
 
-#endif /* BT_UTILS_H */
+/* Initialize language specific strings.  */
+
+extern void gdb_internal_backtrace_init_str ();
+
+#endif /* GDB_BT_UTILS_H */

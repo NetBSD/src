@@ -1,4 +1,4 @@
-/*	$NetBSD: wsmux.c,v 1.66.10.1 2025/08/02 05:57:08 perseant Exp $	*/
+/*	$NetBSD: wsmux.c,v 1.66.10.2 2026/11/04 23:22:39 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2005 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.66.10.1 2025/08/02 05:57:08 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsmux.c,v 1.66.10.2 2026/11/04 23:22:39 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -589,7 +589,7 @@ wsmuxkqfilter(dev_t dev, struct knote *kn)
 		return (1);
 	}
 
-	KASSERTMSG(sc->sc_base.me_evp == NULL, "wsmuxkqfilter: not open\n");
+	KASSERTMSG(sc->sc_base.me_evp != NULL, "wsmuxkqfilter: not open\n");
 
 	return (wsevent_kqfilter(sc->sc_base.me_evp, kn));
 }

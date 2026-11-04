@@ -1,6 +1,6 @@
 /* Signal trampoline unwinder, for GDB the GNU Debugger.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,10 +57,41 @@ tramp_frame_cache (const frame_info_ptr &this_frame,
   return tramp_cache->trad_cache;
 }
 
-static void
-tramp_frame_this_id (const frame_info_ptr &this_frame,
-		     void **this_cache,
-		     struct frame_id *this_id)
+class frame_unwind_trampoline : public frame_unwind
+{
+public:
+  frame_unwind_trampoline (enum frame_type type, const struct frame_data *data,
+			   frame_prev_arch_ftype *prev_arch_func)
+    : frame_unwind ("trampoline", type, FRAME_UNWIND_GDB, data),
+      m_prev_arch (prev_arch_func)
+  { }
+
+  int sniff (const frame_info_ptr &this_frame,
+	     void **this_prologue_cache) const override;
+
+  void this_id (const frame_info_ptr &this_frame, void **this_prologue_cache,
+		struct frame_id *id) const override;
+
+  value *prev_register (const frame_info_ptr &this_frame,
+			void **this_prologue_cache,
+			int regnum) const override;
+
+  struct gdbarch *prev_arch (const frame_info_ptr &this_frame,
+			     void **this_prologue_cache) const override
+  {
+    if (m_prev_arch == nullptr)
+      return frame_unwind::prev_arch (this_frame, this_prologue_cache);
+    return m_prev_arch (this_frame, this_prologue_cache);
+  }
+
+private:
+  frame_prev_arch_ftype *m_prev_arch;
+};
+
+void
+frame_unwind_trampoline::this_id (const frame_info_ptr &this_frame,
+				  void **this_cache,
+				  struct frame_id *this_id) const
 {
   struct trad_frame_cache *trad_cache
     = tramp_frame_cache (this_frame, this_cache);
@@ -68,10 +99,10 @@ tramp_frame_this_id (const frame_info_ptr &this_frame,
   trad_frame_get_id (trad_cache, this_id);
 }
 
-static struct value *
-tramp_frame_prev_register (const frame_info_ptr &this_frame,
-			   void **this_cache,
-			   int prev_regnum)
+struct value *
+frame_unwind_trampoline::prev_register (const frame_info_ptr &this_frame,
+					void **this_cache,
+					int prev_regnum) const
 {
   struct trad_frame_cache *trad_cache
     = tramp_frame_cache (this_frame, this_cache);
@@ -119,12 +150,11 @@ tramp_frame_start (const struct tramp_frame *tramp,
   return 0;
 }
 
-static int
-tramp_frame_sniffer (const struct frame_unwind *self,
-		     const frame_info_ptr &this_frame,
-		     void **this_cache)
+int
+frame_unwind_trampoline::sniff (const frame_info_ptr &this_frame,
+				void **this_cache) const
 {
-  const struct tramp_frame *tramp = self->unwind_data->tramp_frame;
+  const struct tramp_frame *tramp = unwind_data ()->tramp_frame;
   CORE_ADDR pc = get_frame_pc (this_frame);
   CORE_ADDR func;
   struct tramp_frame_cache *tramp_cache;
@@ -161,15 +191,11 @@ tramp_frame_prepend_unwinder (struct gdbarch *gdbarch,
   gdb_assert (tramp_frame->insn_size <= sizeof (tramp_frame->insn[0].bytes));
 
   data = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct frame_data);
-  unwinder = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct frame_unwind);
-
   data->tramp_frame = tramp_frame;
-  unwinder->type = tramp_frame->frame_type;
-  unwinder->unwind_data = data;
-  unwinder->sniffer = tramp_frame_sniffer;
-  unwinder->stop_reason = default_frame_unwind_stop_reason;
-  unwinder->this_id = tramp_frame_this_id;
-  unwinder->prev_register = tramp_frame_prev_register;
-  unwinder->prev_arch = tramp_frame->prev_arch;
+
+  unwinder = obstack_new <frame_unwind_trampoline> (gdbarch_obstack (gdbarch),
+						    tramp_frame->frame_type,
+						    data,
+						    tramp_frame->prev_arch);
   frame_unwind_prepend_unwinder (gdbarch, unwinder);
 }

@@ -26,10 +26,7 @@
 #include "pk.h"
 
 #include <stdio.h>
-
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #ifndef	SEEK_SET
 #define	SEEK_SET 0

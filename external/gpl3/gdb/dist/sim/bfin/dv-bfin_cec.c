@@ -1,6 +1,6 @@
 /* Blackfin Core Event Controller (CEC) model.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -574,7 +574,7 @@ _cec_raise (SIM_CPU *cpu, struct bfin_cec *cec, int ivg)
 	  /* XXX: what happens with 'raise 0' ?  */
 	  SET_RETEREG (oldpc);
 	  excp_to_sim_halt (sim_stopped, SIM_SIGTRAP);
-	  /* XXX: Need an easy way for gdb to signal it isnt here.  */
+	  /* XXX: Need an easy way for gdb to signal it isn't here.  */
 	  cec->ipend &= ~IVG_EMU_B;
 	  break;
 	case IVG_RST:

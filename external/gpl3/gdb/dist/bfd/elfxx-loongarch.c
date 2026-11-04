@@ -1,5 +1,5 @@
 /* LoongArch-specific support for ELF.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    Based on RISC-V target.
@@ -1388,9 +1388,9 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 false,					/* partial_inplace.  */
 	 0,					/* src_mask */
 	 0xffffffff,				/* dst_mask */
-	 false,					/* pcrel_offset */
+	 true,					/* pcrel_offset */
 	 BFD_RELOC_LARCH_32_PCREL,		/* bfd_reloc_code_real_type */
-	 NULL,					/* adjust_reloc_bits */
+	 reloc_sign_bits,			/* adjust_reloc_bits */
 	 NULL),					/* larch_reloc_type_name */
 
   /* The paired relocation may be relaxed.  */
@@ -1580,7 +1580,7 @@ static loongarch_reloc_howto_type loongarch_howto_table[] =
 	 false,					/* partial_inplace.  */
 	 0,					/* src_mask */
 	 0xffffffffffffffff,			/* dst_mask */
-	 false,					/* pcrel_offset */
+	 true,					/* pcrel_offset */
 	 BFD_RELOC_LARCH_64_PCREL,		/* bfd_reloc_code_real_type */
 	 NULL,					/* adjust_reloc_bits */
 	 NULL),					/* larch_reloc_type_name */
@@ -2171,11 +2171,11 @@ loongarch_elf_add_sub_reloc_uleb128 (bfd *abfd,
   if (output_bfd != NULL)
     return bfd_reloc_continue;
 
-  relocation = symbol->value + symbol->section->output_section->vma
-    + symbol->section->output_offset + reloc_entry->addend;
+  relocation = (symbol->value + symbol->section->output_section->vma
+		+ symbol->section->output_offset + reloc_entry->addend);
 
-  bfd_size_type octets = reloc_entry->address
-    * bfd_octets_per_byte (abfd, input_section);
+  bfd_size_type octets = (reloc_entry->address
+			  * bfd_octets_per_byte (abfd, input_section));
   if (!bfd_reloc_offset_in_range (reloc_entry->howto, abfd,
 				  input_section, octets))
     return bfd_reloc_outofrange;
@@ -2195,8 +2195,11 @@ loongarch_elf_add_sub_reloc_uleb128 (bfd *abfd,
       break;
     }
 
-  bfd_vma mask = (1 << (7 * len)) - 1;
-  relocation = relocation & mask;
+  if (7 * len < sizeof (bfd_vma))
+    {
+      bfd_vma mask = ((bfd_vma) 1 << (7 * len)) - 1;
+      relocation = relocation & mask;
+    }
   loongarch_write_unsigned_leb128 (p, len, relocation);
   return bfd_reloc_ok;
 }

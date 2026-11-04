@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.3 2021/11/07 17:10:46 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.3.10.1 2026/11/04 23:22:41 perseant Exp $
+
+# Important: Regenerate dtb set lists by running 'make update-sets' in
+# sys/arch/dtb after changing this file.
 
 DTSSUBDIR=	amlogic
 DTSMAKEVARS=	CONFIG_ARCH_MESON=y

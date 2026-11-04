@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.39.6.1 2025/08/02 05:55:20 perseant Exp $
+# $NetBSD: genassym.cf,v 1.39.6.2 2026/11/04 23:19:54 perseant Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -147,9 +147,9 @@ define	PAGE_MASK		PAGE_MASK
 define	PGSHIFT			PGSHIFT
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_FLAG			offsetof(struct lwp, l_flag)
+define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
@@ -287,27 +287,27 @@ define	FPREG_FPCR		offsetof(struct fpreg, fpcr)
 define	FPREG_FPSR		offsetof(struct fpreg, fpsr)
 
 define	CPU_INFO_SIZE		sizeof(struct cpu_info)
-define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MIDR			offsetof(struct cpu_info, ci_id.ac_midr)
 define	CI_MPIDR		offsetof(struct cpu_info, ci_id.ac_mpidr)
-define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
-define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
-define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CI_WANT_RESCHED		offsetof(struct cpu_info, ci_want_resched)
 
 define	V_RESCHED_KPREEMPT	ilog2(RESCHED_KPREEMPT)
 
 define	SPSR_M_EL1T		SPSR_M_EL1T
 define	DAIF_I			DAIF_I
 define	DAIF_F			DAIF_F
-define	DAIF_SETCLR_SHIFT	DAIF_SETCLR_SHIFT
+define	DAIF_MASK		DAIF_MASK
 
-define	CNTHCTL_EL1PCTEN	CNTHCTL_EL1PCTEN
-define	CNTHCTL_EL1PCEN		CNTHCTL_EL1PCEN
+define	CNTHCTL_NVHE_EL1PCTEN	CNTHCTL_EL2_NVHE_EL1PCTEN
+define	CNTHCTL_NVHE_EL1PCEN	CNTHCTL_EL2_NVHE_EL1PCEN
 define	CNTKCTL_EL0VCTEN	CNTKCTL_EL0VCTEN
 define	SPSR_SS_SHIFT		SPSR_SS_SHIFT
 define	SPSR_F			SPSR_F
@@ -360,6 +360,7 @@ define	SCTLR_nAA		SCTLR_nAA
 define	SCTLR_ITD		SCTLR_ITD
 define	SCTLR_SED		SCTLR_SED
 define	SCTLR_UMA		SCTLR_UMA
+define	SCTLR_EOS		SCTLR_EOS
 define	SCTLR_I			SCTLR_I
 define	SCTLR_DZE		SCTLR_DZE
 define	SCTLR_UCT		SCTLR_UCT
@@ -378,9 +379,12 @@ define	SCTLR_EnIB		SCTLR_EnIB
 define	SCTLR_EnDA		SCTLR_EnDA
 define	SCTLR_EnDB		SCTLR_EnDB
 
+define	HCR_EL2_RW		HCR_EL2_RW
+
+define	CPTR_EL2_NVHE_RES1	CPTR_EL2_NVHE_RES1
+
 define	ICC_SRE_EL2_EN		ICC_SRE_EL2_EN
 define	ICC_SRE_EL2_SRE		ICC_SRE_EL2_SRE
-
 
 # for bus_space_asm
 define	BS_STRIDE		offsetof(struct bus_space, bs_stride)

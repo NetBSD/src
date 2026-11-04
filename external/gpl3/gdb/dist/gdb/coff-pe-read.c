@@ -2,7 +2,7 @@
    convert to internal format, for GDB. Used as a last resort if no
    debugging symbols recognized.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -174,24 +174,24 @@ add_pe_forwarded_sym (minimal_symbol_reader &reader,
 		      const char *forward_func_name, int ordinal,
 		      const char *dll_name, struct objfile *objfile)
 {
-  struct bound_minimal_symbol msymbol;
   enum minimal_symbol_type msymtype;
   int forward_dll_name_len = strlen (forward_dll_name);
-  short section;
 
   std::string forward_qualified_name = string_printf ("%s!%s",
 						      forward_dll_name,
 						      forward_func_name);
 
-  msymbol = lookup_bound_minimal_symbol (forward_qualified_name.c_str ());
-
+  bound_minimal_symbol msymbol
+    = lookup_minimal_symbol (current_program_space,
+			     forward_qualified_name.c_str ());
   if (!msymbol.minsym)
     {
       int i;
 
       for (i = 0; i < forward_dll_name_len; i++)
 	forward_qualified_name[i] = tolower ((unsigned char)forward_qualified_name[i]);
-      msymbol = lookup_bound_minimal_symbol (forward_qualified_name.c_str ());
+      msymbol = lookup_minimal_symbol (current_program_space,
+				       forward_qualified_name.c_str ());
     }
 
   if (!msymbol.minsym)
@@ -214,7 +214,7 @@ add_pe_forwarded_sym (minimal_symbol_reader &reader,
   unrelocated_addr vma = unrelocated_addr (msymbol.value_address ()
 					   - objfile->text_section_offset ());
   msymtype = msymbol.minsym->type ();
-  section = msymbol.minsym->section_index ();
+  int section = msymbol.minsym->section_index ();
 
   /* Generate a (hopefully unique) qualified name using the first part
      of the dll name, e.g. KERNEL32!AddAtomA.  This matches the style
@@ -694,9 +694,7 @@ show_debug_coff_pe_read (struct ui_file *file, int from_tty,
 
 /* Adds "Set/show debug coff_pe_read" commands.  */
 
-void _initialize_coff_pe_read ();
-void
-_initialize_coff_pe_read ()
+INIT_GDB_FILE (coff_pe_read)
 {
   add_setshow_zuinteger_cmd ("coff-pe-read", class_maintenance,
 			     &debug_coff_pe_read,

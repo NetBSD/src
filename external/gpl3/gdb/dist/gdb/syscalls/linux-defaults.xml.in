@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -108,6 +108,7 @@
   <syscall name="getpmsg" groups="network"/>
   <syscall name="getsockname" groups="network"/>
   <syscall name="getsockopt" groups="network"/>
+  <syscall name="getxattrat" groups="descriptor,file"/>
   <syscall name="getxattr" groups="file"/>
   <syscall name="inotify_add_watch" groups="descriptor,file"/>
   <syscall name="inotify_init1" groups="descriptor"/>
@@ -131,6 +132,7 @@
   <syscall name="linkat" groups="descriptor,file"/>
   <syscall name="link" groups="file"/>
   <syscall name="listen" groups="network"/>
+  <syscall name="listxattrat" groups="descriptor,file"/>
   <syscall name="listxattr" groups="file"/>
   <syscall name="llistxattr" groups="file"/>
   <syscall name="_llseek" groups="descriptor"/>
@@ -168,6 +170,7 @@
   <syscall name="mq_timedsend" groups="descriptor"/>
   <syscall name="mq_timedsend_time64" groups="descriptor"/>
   <syscall name="mremap" groups="memory"/>
+  <syscall name="mseal" groups="memory"/>
   <syscall name="msgctl" groups="ipc"/>
   <syscall name="msgget" groups="ipc"/>
   <syscall name="msgrcv" groups="ipc"/>
@@ -261,6 +264,7 @@
   <syscall name="recvmsg" groups="network"/>
   <syscall name="recv" groups="network"/>
   <syscall name="remap_file_pages" groups="memory"/>
+  <syscall name="removexattrat" groups="descriptor,file"/>
   <syscall name="removexattr" groups="file"/>
   <syscall name="renameat2" groups="descriptor,file"/>
   <syscall name="renameat" groups="descriptor,file"/>
@@ -292,6 +296,7 @@
   <syscall name="set_mempolicy" groups="memory"/>
   <syscall name="setns" groups="descriptor"/>
   <syscall name="setsockopt" groups="network"/>
+  <syscall name="setxattrat" groups="descriptor,file"/>
   <syscall name="setxattr" groups="file"/>
   <syscall name="sgetmask" groups="signal"/>
   <syscall name="shmat" groups="ipc,memory"/>

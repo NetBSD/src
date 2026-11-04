@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,9 +24,10 @@ load_lib gdbserver-support.exp
 
 standard_testfile
 
-if {[skip_gdbserver_tests]} {
-    return 0
-}
+require allow_gdbserver_tests
+# The test-case uses "spawn -pty", which creates a pty on build, which gdb
+# cannot use on remote host.
+require {!is_remote host}
 
 save_vars { GDBFLAGS } {
     # If GDB and GDBserver are both running locally, set the sysroot to avoid
@@ -100,6 +101,35 @@ with_spawn_id $server_spawn_id {
 # Interact with the main UI.
 with_spawn_id $gdb_main_spawn_id {
     gdb_test "echo hello\\n" "hello" "interact with GDB's main UI"
+}
+
+# Get the gdbserver PID.
+set gdbserver_pid 0
+with_spawn_id $gdb_main_spawn_id {
+    gdb_test -no-prompt-anchor "interrupt"
+
+    gdb_test_multiple "" "interrupt arrived" {
+	-re "Program received signal SIGINT, Interrupt\\.\r\n" {
+	    pass $gdb_test_name
+	}
+    }
+
+    gdb_test_multiple "p server_pid" "" {
+	-re -wrap " = ($decimal)" {
+	    set gdbserver_pid $expect_out(1,string)
+	    pass $gdb_test_name
+	}
+    }
+
+    gdb_test_multiple continue "" {
+	-re "Continuing\\.\r\n" {
+	    pass $gdb_test_name
+	}
+    }
+}
+
+if { $gdbserver_pid == 0 } {
+    return
 }
 
 # Now kill the gdbserver.

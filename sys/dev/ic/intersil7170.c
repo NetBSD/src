@@ -1,4 +1,4 @@
-/*	$NetBSD: intersil7170.c,v 1.12 2008/04/28 20:23:50 martin Exp $ */
+/*	$NetBSD: intersil7170.c,v 1.12.126.1 2026/11/04 23:21:58 perseant Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.12 2008/04/28 20:23:50 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intersil7170.c,v 1.12.126.1 2026/11/04 23:21:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -58,12 +58,9 @@ intersil7170_attach(struct intersil7170_softc *sc)
 
 	handle = &sc->sc_handle;
 
-	handle->cookie = sc;
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
+	handle->todr_dev = sc->sc_dev;
 	handle->todr_gettime_ymdhms = intersil7170_gettime_ymdhms;
 	handle->todr_settime_ymdhms = intersil7170_settime_ymdhms;
-	handle->todr_setwen = NULL;
 
 	todr_attach(handle);
 }
@@ -74,7 +71,7 @@ intersil7170_attach(struct intersil7170_softc *sc)
 int
 intersil7170_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct intersil7170_softc *sc = handle->cookie;
+	struct intersil7170_softc *sc = device_private(handle->todr_dev);
 	bus_space_tag_t bt = sc->sc_bst;
 	bus_space_handle_t bh = sc->sc_bsh;
 	uint8_t cmd;
@@ -119,7 +116,7 @@ intersil7170_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 int
 intersil7170_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct intersil7170_softc *sc = handle->cookie;
+	struct intersil7170_softc *sc = device_private(handle->todr_dev);
 	bus_space_tag_t bt = sc->sc_bst;
 	bus_space_handle_t bh = sc->sc_bsh;
 	uint8_t cmd;

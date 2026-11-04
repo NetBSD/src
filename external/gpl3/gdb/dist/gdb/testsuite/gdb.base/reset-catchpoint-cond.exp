@@ -1,0 +1,174 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that the condition for a catchpoint is correctly reset after
+# shared libraries are unloaded, as happens when an inferior is
+# restarted.
+#
+# If this is not done then, when the catchpoint is hit on the second
+# run, we'll evaluate the parsed expression from the first run, which
+# might include references to types owned by the now deleted objfile
+# (for the shared library loaded in the first run).
+#
+# This scripts tests a number of different catchpoint types.  Inside
+# GDB these are all sub-classes of the 'catchpoint' type, which is
+# where the fix for the above issue resides, so all catchpoint types
+# should work correctly.
+
+standard_testfile .c -lib.c
+
+set libfile $binfile-lib.so
+
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+
+if {[build_executable "build shared library" $libfile $srcfile2 \
+	 {debug shlib}] == -1} {
+    return
+}
+
+# Depending on whether or not libc debug info is installed, when we
+# hit a syscall catchpoint inside libc there might be a source line
+# included in the output.
+#
+# This regexp will match an optional line and can be added to the
+# expected catchpoint output to ignore the (possibly missing) source
+# line.
+set libc_src_line_re "(?:\r\n\[^\r\n\]+)?"
+
+# Check the Python bp_modified_list and then reset the list back to
+# empty.  TESTNAME is just a string.  BP_NUM is a list of breakpoint
+# numbers that are expected to appear (in the given order) in the
+# bp_modified_list.
+
+proc check_modified_bp_list { testname bp_num } {
+    if { [allow_python_tests] } {
+	set expected [join $bp_num ", "]
+
+	gdb_test "python print(bp_modified_list)" "\\\[$expected\\\]" \
+	    $testname
+	gdb_test_no_output -nopass "python bp_modified_list=\[\]" \
+	    "reset bp_modified_list after $testname"
+    }
+}
+
+# Build an executable and run tests on 'catch MODE'.
+
+proc run_test { mode } {
+    set exec_name ${::binfile}-${mode}
+
+    set macro TEST_[string toupper $mode]
+
+    if {[build_executable "build test executable" $exec_name $::srcfile \
+	     [list debug shlib=$::libfile additional_flags=-D${macro}]] == -1} {
+	return
+    }
+
+    clean_restart
+    gdb_load $exec_name
+    gdb_load_shlib $::libfile
+
+    if {![runto_main]} {
+	return
+    }
+
+    if { $mode eq "syscall" } {
+	gdb_test "catch syscall write" \
+	    "Catchpoint $::decimal \\(syscall 'write' \[^)\]+\\)"
+	set catch_re "call to syscall write"
+    } elseif { $mode eq "signal" } {
+	gdb_test "catch signal SIGUSR1" \
+	    "Catchpoint $::decimal \\(signal SIGUSR1\\)"
+	set catch_re "signal SIGUSR1"
+    } elseif { $mode eq "fork" } {
+	gdb_test "catch fork" \
+	    "Catchpoint $::decimal \\(fork\\)"
+	set catch_re "forked process $::decimal"
+    } else {
+	error "unknown mode $mode"
+    }
+    set cp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*"]
+
+    gdb_breakpoint "breakpt_before_exit"
+
+    gdb_test "continue" \
+	"Catchpoint ${cp_num} \[^\r\n\]+$::libc_src_line_re"
+
+    if { [allow_python_tests] } {
+	gdb_test_no_output "source $::pyfile" "import python scripts"
+	check_modified_bp_list \
+	    "check b/p modified observer has not yet triggered" {}
+    }
+
+    with_test_prefix "with false condition" {
+	gdb_test_no_output "condition $cp_num ((struct lib_type *) opaque_ptr) != 0" \
+	    "set catchpoint condition"
+
+	check_modified_bp_list \
+	    "catchpoint modified once by setting condition" \
+	    [list $cp_num]
+
+	gdb_run_cmd
+	gdb_test "" [multi_line \
+			 "Breakpoint $::decimal, main \\(\\) \[^\r\n\]+" \
+			 "$::decimal\\s+\[^\r\n\]+"]
+
+	check_modified_bp_list "catchpoint modified twice at startup" \
+	    [list $cp_num $cp_num "$::decimal"]
+
+	gdb_test "continue" \
+	    [multi_line \
+		 "Breakpoint $::decimal, breakpt_before_exit \\(\\) at \[^\r\n\]+" \
+		 "$::decimal\\s+\[^\r\n\]+"] \
+	    "continue to breakpt_before_exit"
+    }
+
+    # Check the bp_modified_list against '.*'.  We don't care at this
+    # point what's in the list (nothing relevant has happened since we
+    # last checked), but this has the side effect of clearing the list.
+    check_modified_bp_list "clear bp modified list" { .* }
+
+    with_test_prefix "with true condition" {
+	gdb_test_no_output "condition $cp_num ((struct lib_type *) opaque_ptr) == 0" \
+	    "set catchpoint condition"
+
+	check_modified_bp_list \
+	    "catchpoint modified once by setting condition" \
+	    [list $cp_num]
+
+	gdb_run_cmd
+	gdb_test "" [multi_line \
+			 "Breakpoint $::decimal, main \\(\\) \[^\r\n\]+" \
+			 "$::decimal\\s+\[^\r\n\]+"]
+
+	check_modified_bp_list "catchpoint modified twice at startup" \
+	    [list $cp_num $cp_num "$::decimal"]
+
+	gdb_test "continue" \
+	    "Catchpoint $cp_num \\($catch_re\\), \[^\r\n\]+$::libc_src_line_re" \
+	    "continue until catchpoint hit"
+
+	check_modified_bp_list "catchpoint modified again when hit" \
+	    [list $cp_num]
+    }
+}
+
+# Run the tests.
+foreach_with_prefix mode { syscall signal fork } {
+    if { $mode == "syscall"
+	 && ( ![allow_xml_test] || ![supports_catch_syscall] ) } {
+	continue
+    }
+    run_test $mode
+}

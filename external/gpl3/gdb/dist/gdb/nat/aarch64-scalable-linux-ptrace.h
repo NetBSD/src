@@ -1,7 +1,7 @@
 /* Common native Linux definitions for the AArch64 scalable
    extensions: SVE and SME.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_AARCH64_SCALABLE_LINUX_PTRACE_H
-#define NAT_AARCH64_SCALABLE_LINUX_PTRACE_H
+#ifndef GDB_NAT_AARCH64_SCALABLE_LINUX_PTRACE_H
+#define GDB_NAT_AARCH64_SCALABLE_LINUX_PTRACE_H
 
 #include <signal.h>
 #include <sys/utsname.h>
@@ -176,4 +176,4 @@ aarch64_zt_regs_copy_to_reg_buf (int tid, struct reg_buffer_common *reg_buf,
 extern void
 aarch64_zt_regs_copy_from_reg_buf (int tid, struct reg_buffer_common *reg_buf,
 				   int zt_regnum);
-#endif /* NAT_AARCH64_SCALABLE_LINUX_PTRACE_H */
+#endif /* GDB_NAT_AARCH64_SCALABLE_LINUX_PTRACE_H */

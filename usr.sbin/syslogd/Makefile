@@ -1,11 +1,15 @@
-#	$NetBSD: Makefile,v 1.33.2.1 2025/08/02 05:58:59 perseant Exp $
+#	$NetBSD: Makefile,v 1.33.2.2 2026/11/04 23:29:02 perseant Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 .include <bsd.own.mk>
 
 WARNS?=4
 USE_FORT?= yes	# network server
 
-LINTFLAGS+=-X 132,247,135,259,117,298
+LINTFLAGS+=	-X 117	# bit shift on signed integers
+LINTFLAGS+=	-X 132	# loss of accuracy
+LINTFLAGS+=	-X 135	# pointer cast increases alignment
+LINTFLAGS+=	-X 247	# pointer cast between unrelated types
+LINTFLAGS+=	-X 298	# loss of accuracy in function call
 
 PROG=	syslogd
 SRCS=	syslogd.c utmpentry.c tls.c sign.c
@@ -28,12 +32,13 @@ CPPFLAGS+=-DOPENSSL_API_COMPAT=0x10100000L
 LDADD+=	-lwrap -lblocklist 
 DPADD+=	${LIBWRAP} ${LIBBLOCKLIST} 
 
-LDADD+=	-lssl -lcrypto -lpthread
-DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBPTHREAD}
+LDADD+=	-lssl -lcrypto
+DPADD+= ${LIBSSL} ${LIBCRYPTO}
 
 # Overflow that appears impossible
 COPTS.syslogd.c+=        ${CC_WNO_FORMAT_TRUNCATION} ${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.tls.c+= -Wno-error=deprecated-declarations
 COPTS.sign.c+= -Wno-error=deprecated-declarations
+COPTS.sign.c+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-error=use-after-free :}
 
 .include <bsd.prog.mk>

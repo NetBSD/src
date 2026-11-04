@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,9 @@ load_lib opencl.exp
 
 require allow_opencl_tests
 
-set testfile "callfuncs"
-set clprogram [remote_download target ${srcdir}/${subdir}/${testfile}.cl]
+standard_testfile .cl
+
+set clprogram [remote_download target $srcdir/$subdir/$srcfile]
 
 # Compile the generic OpenCL host app
 if { [gdb_compile_opencl_hostapp "${clprogram}" "${testfile}" "" ] != "" } {
@@ -30,7 +31,7 @@ if { [gdb_compile_opencl_hostapp "${clprogram}" "${testfile}" "" ] != "" } {
     return -1
 }
 
-clean_restart [standard_testfile $testfile]
+clean_restart $testfile
 
 # Set breakpoint at the OpenCL kernel
 gdb_test "tbreak testkernel" \

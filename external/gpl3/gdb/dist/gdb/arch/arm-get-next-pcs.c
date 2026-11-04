@@ -1,6 +1,6 @@
 /* Common code for ARM software single stepping support.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/gdb_vecs.h"
 #include "gdbsupport/common-regcache.h"
 #include "arm.h"
 #include "arm-get-next-pcs.h"
@@ -40,10 +39,92 @@ arm_get_next_pcs_ctor (struct arm_get_next_pcs *self,
   self->regcache = regcache;
 }
 
-/* Checks for an atomic sequence of instructions beginning with a LDREX{,B,H,D}
-   instruction and ending with a STREX{,B,H,D} instruction.  If such a sequence
-   is found, attempt to step through it.  The end of the sequence address is
-   added to the next_pcs list.  */
+/* Return true if INSN matches one of the <value,mask> pairs in MATCHES.  */
+
+static bool
+insn_matches (uint32_t insn, gdb::array_view<const uint32_t> matches)
+{
+  gdb_assert (matches.size () % 2 == 0);
+
+  for (int i = 0; i < matches.size (); i += 2)
+    {
+      uint32_t value = matches[i];
+      uint32_t mask = matches[i + 1];
+      if ((insn & mask) == value)
+	return true;
+    }
+
+  return false;
+}
+
+/* Return true if INSN is an ldaex arm insn.  */
+
+static bool
+ldaex_arm_p (uint32_t insn)
+{
+  /* Copied from arm_opcodes in opcodes/arm-dis.c.  */
+  const uint32_t matches_ldaex_arm[] = {
+    0x01900e9f, 0x0ff00fff, /* ldaex.  */
+    0x01b00e9f, 0x0ff00fff, /* ldaexd.  */
+    0x01d00e9f, 0x0ff00fff, /* ldaexb.  */
+    0x01f00e9f, 0x0ff00fff  /* ldaexh.  */
+  };
+
+  return insn_matches (insn, matches_ldaex_arm);
+}
+
+/* Return true if INSN is an ldaex thumb32 insn.  */
+
+static bool
+ldaex_thumb32_p (uint32_t insn)
+{
+  /* Copied from thumb32_opcodes in opcodes/arm-dis.c.  */
+  const uint32_t matches_ldaex_thumb32[] = {
+    0xe8d00fcf, 0xfff00fff, /* ldaexb.  */
+    0xe8d00fdf, 0xfff00fff, /* ldaexh.  */
+    0xe8d00fef, 0xfff00fff, /* ldaex.  */
+    0xe8d000ff, 0xfff000ff  /* ldaexd.  */
+  };
+
+  return insn_matches (insn, matches_ldaex_thumb32);
+}
+
+/* Return true if INSN is an stlex arm insn.  */
+
+static bool
+stlex_arm_p (uint32_t insn)
+{
+  /* Copied from arm_opcodes in opcodes/arm-dis.c.  */
+  const uint32_t matches_stlex_arm[] = {
+    0x01800e90, 0x0ff00ff0, /* stlex.  */
+    0x01a00e90, 0x0ff00ff0, /* stlexd.  */
+    0x01c00e90, 0x0ff00ff0, /* stlexb.  */
+    0x01e00e90, 0x0ff00ff0, /* stlexh.  */
+  };
+
+  return insn_matches (insn, matches_stlex_arm);
+}
+
+/* Return true if INSN is an stlex thumb32 insn.  */
+
+static bool
+stlex_thumb32_p (uint32_t insn)
+{
+  /* Copied from thumb32_opcodes in opcodes/arm-dis.c.  */
+  const uint32_t matches_stlex_thumb32[] = {
+    0xe8c00fc0, 0xfff00ff0, /* stlexb.  */
+    0xe8c00fd0, 0xfff00ff0, /* stlexh.  */
+    0xe8c00fe0, 0xfff00ff0, /* stlex.  */
+    0xe8c000f0, 0xfff000f0, /* stlexd.  */
+  };
+
+  return insn_matches (insn, matches_stlex_thumb32);
+}
+
+/* Checks for an atomic sequence of instructions beginning with an
+   LD[AR]EX{,B,H,D} instruction and ending with a ST[LR]EX{,B,H,D} instruction.
+   If such a sequence is found, attempt to step through it.  The end of the
+   sequence address is added to the next_pcs list.  */
 
 static std::vector<CORE_ADDR>
 thumb_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
@@ -65,18 +146,22 @@ thumb_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
   if (itstate & 0x0f)
     return {};
 
-  /* Assume all atomic sequences start with a ldrex{,b,h,d} instruction.  */
   insn1 = self->ops->read_mem_uint (loc, 2, byte_order_for_code);
-
   loc += 2;
+
   if (thumb_insn_size (insn1) != 4)
     return {};
 
   insn2 = self->ops->read_mem_uint (loc, 2, byte_order_for_code);
-
   loc += 2;
+
+  uint32_t insn = (uint32_t)insn2 | ((uint32_t)insn1 << 16);
+
+  /* Assume all atomic sequences start with an ld[ar]ex{,b,h,d}
+     instruction.  */
   if (!((insn1 & 0xfff0) == 0xe850
-	|| ((insn1 & 0xfff0) == 0xe8d0 && (insn2 & 0x00c0) == 0x0040)))
+	|| ((insn1 & 0xfff0) == 0xe8d0 && (insn2 & 0x00c0) == 0x0040)
+	|| ldaex_thumb32_p (insn)))
     return {};
 
   /* Assume that no atomic sequence is longer than "atomic_sequence_length"
@@ -111,8 +196,9 @@ thumb_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
       else
 	{
 	  insn2 = self->ops->read_mem_uint (loc, 2, byte_order_for_code);
-
 	  loc += 2;
+
+	  insn = (uint32_t)insn2 | ((uint32_t)insn1 << 16);
 
 	  /* Assume that there is at most one conditional branch in the
 	     atomic sequence.  If a conditional branch is found, put a
@@ -148,9 +234,10 @@ thumb_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
 	  else if (thumb2_instruction_changes_pc (insn1, insn2))
 	    return {};
 
-	  /* If we find a strex{,b,h,d}, we're done.  */
+	  /* If we find a st[lr]ex{,b,h,d}, we're done.  */
 	  if ((insn1 & 0xfff0) == 0xe840
-	      || ((insn1 & 0xfff0) == 0xe8c0 && (insn2 & 0x00c0) == 0x0040))
+	      || ((insn1 & 0xfff0) == 0xe8c0 && (insn2 & 0x00c0) == 0x0040)
+	      || stlex_thumb32_p (insn))
 	    break;
 	}
     }
@@ -178,10 +265,10 @@ thumb_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
   return next_pcs;
 }
 
-/* Checks for an atomic sequence of instructions beginning with a LDREX{,B,H,D}
-   instruction and ending with a STREX{,B,H,D} instruction.  If such a sequence
-   is found, attempt to step through it.  The end of the sequence address is
-   added to the next_pcs list.  */
+/* Checks for an atomic sequence of instructions beginning with an
+   LD[AR]EX{,B,H,D} instruction and ending with a ST[LR]EX{,B,H,D} instruction.
+   If such a sequence is found, attempt to step through it.  The end of the
+   sequence address is added to the next_pcs list.  */
 
 static std::vector<CORE_ADDR>
 arm_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
@@ -196,13 +283,16 @@ arm_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
   int last_breakpoint = 0; /* Defaults to 0 (no breakpoints placed).  */
   const int atomic_sequence_length = 16; /* Instruction sequence length.  */
 
-  /* Assume all atomic sequences start with a ldrex{,b,h,d} instruction.
-     Note that we do not currently support conditionally executed atomic
-     instructions.  */
   insn = self->ops->read_mem_uint (loc, 4, byte_order_for_code);
-
   loc += 4;
-  if ((insn & 0xff9000f0) != 0xe1900090)
+
+  /* Currently we do not support conditionally executed atomic instructions.  */
+  if (!insn_condition_always_true (insn))
+    return {};
+
+  /* Assume all atomic sequences start with an ld[ar]ex{,b,h,d} instruction.  */
+  if (!((insn & 0x0f9000f0) == 0x01900090
+	|| ldaex_arm_p (insn)))
     return {};
 
   /* Assume that no atomic sequence is longer than "atomic_sequence_length"
@@ -232,8 +322,14 @@ arm_deal_with_atomic_sequence_raw (struct arm_get_next_pcs *self)
       else if (arm_instruction_changes_pc (insn))
 	return {};
 
-      /* If we find a strex{,b,h,d}, we're done.  */
-      if ((insn & 0xff9000f0) == 0xe1800090)
+      /* Currently we do not support conditionally executed atomic
+	 instructions.  */
+      if (!insn_condition_always_true (insn))
+	return {};
+
+      /* If we find a st[lr]ex{,b,h,d}, we're done.  */
+      if ((insn & 0x0f9000f0) == 0x01800090
+	  || stlex_arm_p (insn))
 	break;
     }
 

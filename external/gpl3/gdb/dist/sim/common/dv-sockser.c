@@ -1,5 +1,5 @@
 /* Serial port emulation using sockets.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This program is free software; you can redistribute it and/or modify
@@ -175,7 +175,7 @@ dv_sockser_init (SIM_DESC sd)
      ??? Need a central signal management module.  */
 #ifdef SIGPIPE
   {
-    RETSIGTYPE (*orig) ();
+    void (*orig) (int);
     orig = signal (SIGPIPE, SIG_IGN);
     /* If a handler is already set up, don't mess with it.  */
     if (orig != SIG_DFL && orig != SIG_IGN)

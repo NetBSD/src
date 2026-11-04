@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       arm.c
@@ -5,9 +7,6 @@
 ///
 //  Authors:    Igor Pavlov
 //              Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -19,12 +18,14 @@ arm_code(void *simple lzma_attribute((__unused__)),
 		uint32_t now_pos, bool is_encoder,
 		uint8_t *buffer, size_t size)
 {
+	size &= ~(size_t)3;
+
 	size_t i;
-	for (i = 0; i + 4 <= size; i += 4) {
+	for (i = 0; i < size; i += 4) {
 		if (buffer[i + 3] == 0xEB) {
-			uint32_t src = (buffer[i + 2] << 16)
-					| (buffer[i + 1] << 8)
-					| (buffer[i + 0]);
+			uint32_t src = ((uint32_t)(buffer[i + 2]) << 16)
+					| ((uint32_t)(buffer[i + 1]) << 8)
+					| (uint32_t)(buffer[i + 0]);
 			src <<= 2;
 
 			uint32_t dest;
@@ -53,6 +54,7 @@ arm_coder_init(lzma_next_coder *next, const lzma_allocator *allocator,
 }
 
 
+#ifdef HAVE_ENCODER_ARM
 extern lzma_ret
 lzma_simple_arm_encoder_init(lzma_next_coder *next,
 		const lzma_allocator *allocator,
@@ -60,8 +62,10 @@ lzma_simple_arm_encoder_init(lzma_next_coder *next,
 {
 	return arm_coder_init(next, allocator, filters, true);
 }
+#endif
 
 
+#ifdef HAVE_DECODER_ARM
 extern lzma_ret
 lzma_simple_arm_decoder_init(lzma_next_coder *next,
 		const lzma_allocator *allocator,
@@ -69,3 +73,4 @@ lzma_simple_arm_decoder_init(lzma_next_coder *next,
 {
 	return arm_coder_init(next, allocator, filters, false);
 }
+#endif

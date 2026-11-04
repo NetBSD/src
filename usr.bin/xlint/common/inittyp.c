@@ -1,4 +1,4 @@
-/*	$NetBSD: inittyp.c,v 1.42.2.1 2025/08/02 05:58:45 perseant Exp $	*/
+/*	$NetBSD: inittyp.c,v 1.42.2.2 2026/11/04 23:28:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: inittyp.c,v 1.42.2.1 2025/08/02 05:58:45 perseant Exp $");
+__RCSID("$NetBSD: inittyp.c,v 1.42.2.2 2026/11/04 23:28:45 perseant Exp $");
 #endif
 
 #if IS_LINT1
@@ -95,10 +95,8 @@ ttab_t ttab[NTSPEC] = {
 	typeinfo("unsigned long", LONG, ULONG, LONG_SIZE, 5, 'u'),
 	typeinfo("long long", LLONG, ULLONG, LLONG_SIZE, 6, 's'),
 	typeinfo("unsigned long long", LLONG, ULLONG, LLONG_SIZE, 6, 'u'),
-#ifdef INT128_SIZE
-	typeinfo("__int128_t", INT128, UINT128, INT128_SIZE, 7, 's'),
-	typeinfo("__uint128_t", INT128, UINT128, INT128_SIZE, 7, 'u'),
-#endif
+	typeinfo("__int128_t", INT128, UINT128, 128, 7, 's'),
+	typeinfo("__uint128_t", INT128, UINT128, 128, 7, 'u'),
 	typeinfo("float", FLOAT, FLOAT, FLOAT_SIZE, 1, 'f'),
 	typeinfo("double", DOUBLE, DOUBLE, DOUBLE_SIZE, 2, 'f'),
 	typeinfo("long double", LDOUBLE, LDOUBLE, LDOUBLE_SIZE, 3, 'f'),

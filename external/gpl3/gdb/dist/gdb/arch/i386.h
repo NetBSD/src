@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,13 +15,18 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_I386_H
-#define ARCH_I386_H
+#ifndef GDB_ARCH_I386_H
+#define GDB_ARCH_I386_H
 
 #include "gdbsupport/tdesc.h"
 #include <stdint.h>
 
-target_desc *i386_create_target_description (uint64_t xcr0, bool is_linux,
+/* Create i386 target descriptions according to XSTATE_BV.  If IS_LINUX is
+   true, create target descriptions for Linux.  If SEGMENTS is true, then
+   include the "org.gnu.gdb.i386.segments" feature registers.  */
+
+target_desc *i386_create_target_description (uint64_t xstate_bv,
+					     bool is_linux,
 					     bool segments);
 
-#endif /* ARCH_I386_H */
+#endif /* GDB_ARCH_I386_H */

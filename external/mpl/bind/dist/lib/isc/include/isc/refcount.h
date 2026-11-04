@@ -1,4 +1,4 @@
-/*	$NetBSD: refcount.h,v 1.7.2.1 2025/08/02 05:54:01 perseant Exp $	*/
+/*	$NetBSD: refcount.h,v 1.7.2.2 2026/11/04 23:18:17 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -203,7 +203,7 @@ typedef atomic_uint_fast32_t isc_refcount_t;
 		__attribute__((unused));                                    \
 	stat void name##_detach(name##_t **ptrp) __attribute__((unused))
 
-#define ISC_REFCOUNT_DECL(name)	       ISC__REFCOUNT_DECL(name, ISC_REFCOUNT_BLANK)
+#define ISC_REFCOUNT_DECL(name) ISC__REFCOUNT_DECL(name, ISC_REFCOUNT_BLANK)
 #define ISC_REFCOUNT_STATIC_DECL(name) ISC__REFCOUNT_DECL(name, static inline)
 
 #define ISC__REFCOUNT_IMPL(name, destroy, stat)                      \

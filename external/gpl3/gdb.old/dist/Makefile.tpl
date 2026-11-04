@@ -166,6 +166,8 @@ BUILD_EXPORTS = \
 	GOCFLAGS="$(GOCFLAGS_FOR_BUILD)"; export GOCFLAGS; \
 	GDC="$(GDC_FOR_BUILD)"; export GDC; \
 	GDCFLAGS="$(GDCFLAGS_FOR_BUILD)"; export GDCFLAGS; \
+	GM2="$(GM2_FOR_BUILD)"; export GM2; \
+	GM2FLAGS="$(GM2FLAGS_FOR_BUILD)"; export GM2FLAGS; \
 	DLLTOOL="$(DLLTOOL_FOR_BUILD)"; export DLLTOOL; \
 	DSYMUTIL="$(DSYMUTIL_FOR_BUILD)"; export DSYMUTIL; \
 	LD="$(LD_FOR_BUILD)"; export LD; \
@@ -204,6 +206,7 @@ HOST_EXPORTS = \
 	GFORTRAN="$(GFORTRAN)"; export GFORTRAN; \
 	GOC="$(GOC)"; export GOC; \
 	GDC="$(GDC)"; export GDC; \
+	GM2="$(GM2)"; export GM2; \
 	AR="$(AR)"; export AR; \
 	AS="$(AS)"; export AS; \
 	CC_FOR_BUILD="$(CC_FOR_BUILD)"; export CC_FOR_BUILD; \
@@ -226,7 +229,7 @@ HOST_EXPORTS = \
 	AR_FOR_TARGET="$(AR_FOR_TARGET)"; export AR_FOR_TARGET; \
 	AS_FOR_TARGET="$(AS_FOR_TARGET)"; export AS_FOR_TARGET; \
 	DSYMUTIL_FOR_TARGET="$(DSYMUTIL_FOR_TARGET)"; export DSYMUTIL_FOR_TARGET; \
-	GCC_FOR_TARGET="$(GCC_FOR_TARGET)"; export GCC_FOR_TARGET; \
+	GCC_FOR_TARGET="$(GCC_FOR_TARGET) $$TFLAGS"; export GCC_FOR_TARGET; \
 	LD_FOR_TARGET="$(LD_FOR_TARGET)"; export LD_FOR_TARGET; \
 	NM_FOR_TARGET="$(NM_FOR_TARGET)"; export NM_FOR_TARGET; \
 	OBJDUMP_FOR_TARGET="$(OBJDUMP_FOR_TARGET)"; export OBJDUMP_FOR_TARGET; \
@@ -240,8 +243,6 @@ HOST_EXPORTS = \
 	GMPINC="$(HOST_GMPINC)"; export GMPINC; \
 	ISLLIBS="$(HOST_ISLLIBS)"; export ISLLIBS; \
 	ISLINC="$(HOST_ISLINC)"; export ISLINC; \
-	LIBELFLIBS="$(HOST_LIBELFLIBS)"; export LIBELFLIBS; \
-	LIBELFINC="$(HOST_LIBELFINC)"; export LIBELFINC; \
 	XGCC_FLAGS_FOR_TARGET="$(XGCC_FLAGS_FOR_TARGET)"; export XGCC_FLAGS_FOR_TARGET; \
 @if gcc-bootstrap
 	$(RPATH_ENVVAR)=`echo "$(TARGET_LIB_PATH)$$$(RPATH_ENVVAR)" | sed 's,::*,:,g;s,^:*,,;s,:*$$,,'`; export $(RPATH_ENVVAR); \
@@ -277,11 +278,14 @@ POSTSTAGE1_HOST_EXPORTS = \
 	$(POSTSTAGE1_CXX_EXPORT) \
 	$(LTO_EXPORTS) \
 	GDC="$$r/$(HOST_SUBDIR)/prev-gcc/gdc$(exeext) -B$$r/$(HOST_SUBDIR)/prev-gcc/ \
-	  -B$(build_tooldir)/bin/ $(GDC_FLAGS_FOR_TARGET) \
+	  -B$(build_tooldir)/bin/ $(GDCFLAGS_FOR_TARGET) \
+	  -B$$r/prev-$(TARGET_SUBDIR)/libphobos/libdruntime/gcc \
 	  -B$$r/prev-$(TARGET_SUBDIR)/libphobos/src \
+	  -B$$r/prev-$(TARGET_SUBDIR)/libphobos/src/.libs \
 	  -I$$r/prev-$(TARGET_SUBDIR)/libphobos/libdruntime -I$$s/libphobos/libdruntime \
 	  -L$$r/prev-$(TARGET_SUBDIR)/libphobos/src/.libs \
-	  -L$$r/prev-$(TARGET_SUBDIR)/libphobos/libdruntime/.libs"; \
+	  -B$$r/prev-$(TARGET_SUBDIR)/libstdc++-v3/src/.libs \
+	  -L$$r/prev-$(TARGET_SUBDIR)/libstdc++-v3/src/.libs"; \
 	export GDC; \
 	GDC_FOR_BUILD="$$GDC"; export GDC_FOR_BUILD; \
 	GNATBIND="$$r/$(HOST_SUBDIR)/prev-gcc/gnatbind"; export GNATBIND; \
@@ -307,6 +311,7 @@ BASE_TARGET_EXPORTS = \
 	GFORTRAN="$(GFORTRAN_FOR_TARGET) $(XGCC_FLAGS_FOR_TARGET) $$TFLAGS"; export GFORTRAN; \
 	GOC="$(GOC_FOR_TARGET) $(XGCC_FLAGS_FOR_TARGET) $$TFLAGS"; export GOC; \
 	GDC="$(GDC_FOR_TARGET) $(XGCC_FLAGS_FOR_TARGET) $$TFLAGS"; export GDC; \
+	GM2="$(GM2_FOR_TARGET) $(XGCC_FLAGS_FOR_TARGET) $$TFLAGS"; export GM2; \
 	DLLTOOL="$(DLLTOOL_FOR_TARGET)"; export DLLTOOL; \
 	DSYMUTIL="$(DSYMUTIL_FOR_TARGET)"; export DSYMUTIL; \
 	LD="$(COMPILER_LD_FOR_TARGET)"; export LD; \
@@ -319,6 +324,7 @@ BASE_TARGET_EXPORTS = \
 	RANLIB="$(RANLIB_FOR_TARGET)"; export RANLIB; \
 	READELF="$(READELF_FOR_TARGET)"; export READELF; \
 	STRIP="$(STRIP_FOR_TARGET)"; export STRIP; \
+	SYSROOT_CFLAGS_FOR_TARGET="$(SYSROOT_CFLAGS_FOR_TARGET)"; export SYSROOT_CFLAGS_FOR_TARGET; \
 	WINDRES="$(WINDRES_FOR_TARGET)"; export WINDRES; \
 	WINDMC="$(WINDMC_FOR_TARGET)"; export WINDMC; \
 @if gcc-bootstrap
@@ -343,10 +349,6 @@ HOST_GMPINC = @gmpinc@
 # Where to find isl
 HOST_ISLLIBS = @isllibs@
 HOST_ISLINC = @islinc@
-
-# Where to find libelf
-HOST_LIBELFLIBS = @libelflibs@
-HOST_LIBELFINC = @libelfinc@
 
 # ----------------------------------------------
 # Programs producing files for the BUILD machine
@@ -377,6 +379,7 @@ DSYMUTIL_FOR_BUILD = @DSYMUTIL_FOR_BUILD@
 GFORTRAN_FOR_BUILD = @GFORTRAN_FOR_BUILD@
 GOC_FOR_BUILD = @GOC_FOR_BUILD@
 GDC_FOR_BUILD = @GDC_FOR_BUILD@
+GM2_FOR_BUILD = @GM2_FOR_BUILD@
 LDFLAGS_FOR_BUILD = @LDFLAGS_FOR_BUILD@
 LD_FOR_BUILD = @LD_FOR_BUILD@
 NM_FOR_BUILD = @NM_FOR_BUILD@
@@ -406,7 +409,7 @@ MAKEINFO = @MAKEINFO@
 EXPECT = @EXPECT@
 RUNTEST = @RUNTEST@
 
-AUTO_PROFILE = gcc-auto-profile -c 10000000
+AUTO_PROFILE = gcc-auto-profile --all -c 10000000
 
 # This just becomes part of the MAKEINFO definition passed down to
 # sub-makes.  It lets flags be given on the command line while still
@@ -446,7 +449,8 @@ LIBCFLAGS = $(CFLAGS)
 CXXFLAGS = @CXXFLAGS@
 LIBCXXFLAGS = $(CXXFLAGS) -fno-implicit-templates
 GOCFLAGS = $(CFLAGS)
-GDCFLAGS = $(CFLAGS)
+GDCFLAGS = @GDCFLAGS@
+GM2FLAGS = $(CFLAGS)
 
 PKG_CONFIG_PATH = @PKG_CONFIG_PATH@
 
@@ -494,6 +498,7 @@ PGO-TRAINING-TARGETS = binutils gas gdb ld sim
 PGO_BUILD_TRAINING = $(addprefix maybe-check-,$(PGO-TRAINING-TARGETS))
 
 CREATE_GCOV = create_gcov
+PROFILE_MERGER = profile_merger
 
 TFLAGS =
 
@@ -533,6 +538,11 @@ STAGE1_CONFIGURE_FLAGS = --disable-intermodule $(STAGE1_CHECKING) \
 	  --disable-coverage --enable-languages="$(STAGE1_LANGUAGES)" \
 	  --disable-build-format-warnings
 
+@if target-libphobos-bootstrap
+STAGE1_CONFIGURE_FLAGS += --with-libphobos-druntime-only
+STAGE2_CONFIGURE_FLAGS += --with-libphobos-druntime-only
+@endif target-libphobos-bootstrap
+
 # When using the slow stage1 compiler disable IL verification and forcefully
 # enable it when using the stage2 compiler instead.  As we later compare
 # stage2 and stage3 we are merely avoid doing redundant work, plus we apply
@@ -551,12 +561,19 @@ STAGEtrain_TFLAGS = $(filter-out -fchecking=1,$(STAGE3_TFLAGS))
 
 STAGEfeedback_CFLAGS = $(STAGE4_CFLAGS) -fprofile-use -fprofile-reproducible=parallel-runs
 STAGEfeedback_TFLAGS = $(STAGE4_TFLAGS)
+# Disable warnings as errors for a few reasons:
+# - sources for gen* binaries do not have .gcda files available
+# - inlining decisions generate extra warnings
+STAGEfeedback_CONFIGURE_FLAGS = $(filter-out --enable-werror-always,$(STAGE_CONFIGURE_FLAGS))
 
-STAGEautoprofile_CFLAGS = $(STAGE2_CFLAGS) -g
+STAGEautoprofile_CFLAGS = $(filter-out -gtoggle,$(STAGE2_CFLAGS)) -g
 STAGEautoprofile_TFLAGS = $(STAGE2_TFLAGS)
 
 STAGEautofeedback_CFLAGS = $(STAGE3_CFLAGS)
 STAGEautofeedback_TFLAGS = $(STAGE3_TFLAGS)
+# Disable warnings as errors since inlining decisions with -fauto-profile
+# may result in additional warnings.
+STAGEautofeedback_CONFIGURE_FLAGS = $(filter-out --enable-werror-always,$(STAGE_CONFIGURE_FLAGS))
 
 do-compare = @do_compare@
 do-compare3 = $(do-compare)
@@ -579,6 +596,7 @@ RAW_CXX_FOR_TARGET=$(STAGE_CC_WRAPPER) @RAW_CXX_FOR_TARGET@
 GFORTRAN_FOR_TARGET=$(STAGE_CC_WRAPPER) @GFORTRAN_FOR_TARGET@
 GOC_FOR_TARGET=$(STAGE_CC_WRAPPER) @GOC_FOR_TARGET@
 GDC_FOR_TARGET=$(STAGE_CC_WRAPPER) @GDC_FOR_TARGET@
+GM2_FOR_TARGET=$(STAGE_CC_WRAPPER) @GM2_FOR_TARGET@
 DLLTOOL_FOR_TARGET=@DLLTOOL_FOR_TARGET@
 DSYMUTIL_FOR_TARGET=@DSYMUTIL_FOR_TARGET@
 LD_FOR_TARGET=@LD_FOR_TARGET@
@@ -604,6 +622,7 @@ CXXFLAGS_FOR_TARGET = @CXXFLAGS_FOR_TARGET@
 LIBCFLAGS_FOR_TARGET = $(CFLAGS_FOR_TARGET)
 LIBCXXFLAGS_FOR_TARGET = $(CXXFLAGS_FOR_TARGET) -fno-implicit-templates
 LDFLAGS_FOR_TARGET = @LDFLAGS_FOR_TARGET@
+GM2FLAGS_FOR_TARGET = -O2 -g
 GOCFLAGS_FOR_TARGET = -O2 -g
 GDCFLAGS_FOR_TARGET = -O2 -g
 
@@ -710,6 +729,7 @@ EXTRA_HOST_FLAGS = \
 	'GFORTRAN=$(GFORTRAN)' \
 	'GOC=$(GOC)' \
 	'GDC=$(GDC)' \
+	'GM2=$(GM2)' \
 	'LD=$(LD)' \
 	'LIPO=$(LIPO)' \
 	'NM=$(NM)' \
@@ -720,7 +740,8 @@ EXTRA_HOST_FLAGS = \
 	'STRIP=$(STRIP)' \
 	'WINDRES=$(WINDRES)' \
 	'WINDMC=$(WINDMC)' \
-	'CREATE_GCOV=$(CREATE_GCOV)'
+	'CREATE_GCOV=$(CREATE_GCOV)' \
+	'PROFILE_MERGER=$(PROFILE_MERGER)'
 
 FLAGS_TO_PASS = $(BASE_FLAGS_TO_PASS) $(EXTRA_HOST_FLAGS)
 
@@ -736,6 +757,7 @@ POSTSTAGE1_FLAGS_TO_PASS = \
 	CC="$${CC}" CC_FOR_BUILD="$${CC_FOR_BUILD}" \
 	CXX="$${CXX}" CXX_FOR_BUILD="$${CXX_FOR_BUILD}" \
 	GDC="$${GDC}" GDC_FOR_BUILD="$${GDC_FOR_BUILD}" \
+	GM2="$${GM2}" GM2_FOR_BUILD="$${GM2_FOR_BUILD}" \
 	GNATBIND="$${GNATBIND}" \
 	LDFLAGS="$${LDFLAGS}" \
 	HOST_LIBS="$${HOST_LIBS}" \
@@ -771,6 +793,8 @@ EXTRA_TARGET_FLAGS = \
 	'GOCFLAGS=$$(GOCFLAGS_FOR_TARGET)' \
 	'GDC=$$(GDC_FOR_TARGET) $$(XGCC_FLAGS_FOR_TARGET) $$(TFLAGS)' \
 	'GDCFLAGS=$$(GDCFLAGS_FOR_TARGET)' \
+	'GM2=$$(GM2_FOR_TARGET) $$(XGCC_FLAGS_FOR_TARGET) $$(TFLAGS)' \
+	'GM2FLAGS=$$(GM2FLAGS_FOR_TARGET)' \
 	'LD=$(COMPILER_LD_FOR_TARGET)' \
 	'LDFLAGS=$$(LDFLAGS_FOR_TARGET)' \
 	'LIBCFLAGS=$$(LIBCFLAGS_FOR_TARGET)' \
@@ -796,7 +820,8 @@ TARGET_FLAGS_TO_PASS = $(BASE_FLAGS_TO_PASS) $(EXTRA_TARGET_FLAGS)
 # The BUILD_* variables are a special case, which are used for the gcc
 # cross-building scheme.
 EXTRA_GCC_FLAGS = \
-	"GCC_FOR_TARGET=$(GCC_FOR_TARGET)" \
+	"GCC_FOR_TARGET=$(GCC_FOR_TARGET) $$TFLAGS" \
+	"GM2_FOR_TARGET=$(GM2_FOR_TARGET) $$TFLAGS" \
 	"`echo 'STMP_FIXPROTO=$(STMP_FIXPROTO)' | sed -e s'/[^=][^=]*=$$/XFOO=/'`" \
 	"`echo 'LIMITS_H_TEST=$(LIMITS_H_TEST)' | sed -e s'/[^=][^=]*=$$/XFOO=/'`"
 
@@ -1614,9 +1639,17 @@ cross: all-build all-gas all-ld
 @endif gcc-no-bootstrap
 
 @if gcc
+
+.PHONY: gcc-site.exp
+gcc-site.exp:
+	r=`${PWD_COMMAND}`; export r; \
+	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
+	$(HOST_EXPORTS) \
+	(cd gcc && $(MAKE) $(GCC_FLAGS_TO_PASS) site.exp);
+
 [+ FOR languages +]
 .PHONY: check-gcc-[+language+] check-[+language+]
-check-gcc-[+language+]:
+check-gcc-[+language+]: gcc-site.exp
 	r=`${PWD_COMMAND}`; export r; \
 	s=`cd $(srcdir); ${PWD_COMMAND}`; export s; \
 	$(HOST_EXPORTS) \

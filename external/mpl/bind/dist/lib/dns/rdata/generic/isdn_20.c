@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.c,v 1.9.2.1 2025/08/02 05:53:42 perseant Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.9.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -139,9 +139,7 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 	REQUIRE(isdn != NULL);
 	REQUIRE(rdata->length != 0);
 
-	isdn->common.rdclass = rdata->rdclass;
-	isdn->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&isdn->common, link);
+	DNS_RDATACOMMON_INIT(isdn, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 

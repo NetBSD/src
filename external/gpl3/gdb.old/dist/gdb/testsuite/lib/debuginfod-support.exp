@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,34 +15,34 @@
 
 # Helper functions to make it easier to write debuginfod tests.
 
-# Return true if the debuginfod tests should be skipped, otherwise, return
+# Return true if the debuginfod tests should be run, otherwise, return
 # false.
-proc skip_debuginfod_tests {} {
+proc allow_debuginfod_tests {} {
     if [is_remote host] {
-	return true
+	return false
     }
 
     if { [which debuginfod] == 0 } {
-	return true
+	return false
     }
 
     if { [which curl] == 0 } {
 	untested "cannot find curl"
-	return true
+	return false
     }
 
     # Skip testing if gdb was not configured with debuginfod.
     #
     # If GDB is built with ASan, it warns that some signal handlers
     # (installed by ASan) exist on startup.  That makes TCL's exec throw an
-    # error.  Disable that by passing --quiet.
+    # error.  This is dealt with by the --quiet in INTERNAL_GDBFLAGS.
     if { [string first "with-debuginfod" \
-	      [eval exec $::GDB --quiet $::INTERNAL_GDBFLAGS \
+	      [eval exec $::GDB $::INTERNAL_GDBFLAGS \
 		   --configuration]] == -1 } {
-	return true
+	return false
     }
 
-    return false
+    return true
 }
 
 # Create two directories within the current output directory.  One directory

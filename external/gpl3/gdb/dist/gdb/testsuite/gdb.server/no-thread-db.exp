@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corporation.
 #
@@ -57,6 +57,8 @@ gdb_breakpoint ${srcfile}:[gdb_get_line_number "after tls assignment"]
 gdb_continue_to_breakpoint "after tls assignment"
 
 # Printing a tls variable should fail gracefully without a libthread_db.
+# Alternately, the correct answer might be printed due GDB's internal
+# TLS support for some targets.
 set re_exec "\[^\r\n\]*[file tail $binfile]"
 gdb_test "print foo" \
-    "Cannot find thread-local storage for Thread \[^,\]+, executable file $re_exec:\[\r\n\]+Remote target failed to process qGetTLSAddr request"
+    "= 1|(?:Cannot find thread-local storage for Thread \[^,\]+, executable file $re_exec:\[\r\n\]+Remote target failed to process qGetTLSAddr request)"

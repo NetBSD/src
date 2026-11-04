@@ -1,6 +1,6 @@
 /* Python interface to inferiors.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "python-internal.h"
 #include "process-stratum-target.h"
 #include "inferior.h"
@@ -204,7 +203,7 @@ connpy_repr (PyObject *obj)
   process_stratum_target *target = self->target;
 
   if (target == nullptr)
-    return PyUnicode_FromFormat ("<%s (invalid)>", Py_TYPE (obj)->tp_name);
+    return gdb_py_invalid_object_repr (obj);
 
   return PyUnicode_FromFormat ("<%s num=%d, what=\"%s\">",
 			       Py_TYPE (obj)->tp_name,
@@ -285,21 +284,13 @@ connpy_get_connection_details (PyObject *self, void *closure)
 
 /* Python specific initialization for this file.  */
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_connection (void)
 {
-  if (PyType_Ready (&connection_object_type) < 0)
+  if (gdbpy_type_ready (&connection_object_type) < 0)
     return -1;
 
-  if (gdb_pymodule_addobject (gdb_module, "TargetConnection",
-			      (PyObject *) &connection_object_type) < 0)
-    return -1;
-
-  if (PyType_Ready (&remote_connection_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_module, "RemoteTargetConnection",
-			      (PyObject *) &remote_connection_object_type) < 0)
+  if (gdbpy_type_ready (&remote_connection_object_type) < 0)
     return -1;
 
   return 0;
@@ -351,7 +342,7 @@ struct py_send_packet_callbacks : public send_remote_packet_callbacks
      It is important that the result is inspected immediately after sending
      a packet to the remote, and any error fetched,  calling any other
      Python functions that might clear the error state, or rely on an error
-     not being set will cause undefined behaviour.  */
+     not being set will cause undefined behavior.  */
 
   gdbpy_ref<> result () const
   {
@@ -432,8 +423,7 @@ connpy_send_packet (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return nullptr;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 }
 
@@ -446,6 +436,8 @@ _initialize_py_connection ()
   gdb::observers::connection_removed.attach (connpy_connection_removed,
 					     "py-connection");
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_connection);
 
 /* Methods for the gdb.TargetConnection object type.  */
 

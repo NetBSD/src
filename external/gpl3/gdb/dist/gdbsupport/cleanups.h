@@ -1,5 +1,5 @@
 /* Cleanups.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_CLEANUPS_H
-#define COMMON_CLEANUPS_H
+#ifndef GDBSUPPORT_CLEANUPS_H
+#define GDBSUPPORT_CLEANUPS_H
 
 #include <functional>
 
@@ -27,4 +27,4 @@ extern void add_final_cleanup (std::function<void ()> &&func);
 /* Run all the registered functions.  */
 extern void do_final_cleanups ();
 
-#endif /* COMMON_CLEANUPS_H */
+#endif /* GDBSUPPORT_CLEANUPS_H */

@@ -1,5 +1,5 @@
 /* Serial interface for a selectable event.
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 #include "ser-event.h"
 #include "serial.h"
 #include "gdbsupport/filestuff.h"
+#include "gdbsupport/eintr.h"
 
 /* On POSIX hosts, a serial_event is basically an abstraction for the
    classical self-pipe trick.
@@ -62,8 +63,8 @@ serial_event_open (struct serial *scb, const char *name)
     if (gdb_pipe_cloexec (fds) == -1)
       internal_error ("creating serial event pipe failed.");
 
-    fcntl (fds[0], F_SETFL, O_NONBLOCK);
-    fcntl (fds[1], F_SETFL, O_NONBLOCK);
+    gdb::fcntl (fds[0], F_SETFL, O_NONBLOCK);
+    gdb::fcntl (fds[1], F_SETFL, O_NONBLOCK);
 
     scb->fd = fds[0];
     state->write_fd = fds[1];
@@ -91,9 +92,9 @@ serial_event_close (struct serial *scb)
 {
   struct serial_event_state *state = (struct serial_event_state *) scb->state;
 
-  close (scb->fd);
+  gdb::close (scb->fd);
 #ifndef USE_WIN32API
-  close (state->write_fd);
+  gdb::close (state->write_fd);
 #else
   CloseHandle (state->event);
 #endif
@@ -179,14 +180,9 @@ serial_event_set (struct serial_event *event)
   struct serial *ser = (struct serial *) event;
   struct serial_event_state *state = (struct serial_event_state *) ser->state;
 #ifndef USE_WIN32API
-  int r;
   char c = '+';		/* Anything.  */
 
-  do
-    {
-      r = write (state->write_fd, &c, 1);
-    }
-  while (r < 0 && errno == EINTR);
+  gdb::write (state->write_fd, &c, 1);
 #else
   SetEvent (state->event);
 #endif
@@ -205,9 +201,9 @@ serial_event_clear (struct serial_event *event)
     {
       char c;
 
-      r = read (ser->fd, &c, 1);
+      r = gdb::read (ser->fd, &c, 1);
     }
-  while (r > 0 || (r < 0 && errno == EINTR));
+  while (r > 0);
 #else
   struct serial_event_state *state = (struct serial_event_state *) ser->state;
   ResetEvent (state->event);

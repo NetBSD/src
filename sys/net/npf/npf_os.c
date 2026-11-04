@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.21.24.1 2025/08/02 05:57:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.21.24.2 2026/11/04 23:27:58 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -78,10 +78,10 @@ __KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.21.24.1 2025/08/02 05:57:48 perseant Ex
  * So we make this misc; a better way would be to have early boot and late
  * boot drivers.
  */
-MODULE(MODULE_CLASS_MISC, npf, "bpf");
+MODULE(MODULE_CLASS_MISC, npf, "bpf_filter");
 #else
 /* This module autoloads via /dev/npf so it needs to be a driver */
-MODULE(MODULE_CLASS_DRIVER, npf, "bpf");
+MODULE(MODULE_CLASS_DRIVER, npf, "bpf_filter");
 #endif
 
 #define	NPF_IOCTL_DATA_LIMIT	(4 * 1024 * 1024)
@@ -278,6 +278,9 @@ npf_dev_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		return npfctl_table(npf, data);
 	case IOC_NPF_STATS:
 		return npf_stats_export(npf, data);
+	case IOC_NPF_STATS_RESET:
+		npfk_stats_clear(npf);
+		return 0;
 	case IOC_NPF_LOAD:
 	case IOC_NPF_SAVE:
 	case IOC_NPF_RULE:

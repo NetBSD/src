@@ -1,6 +1,6 @@
 /* Portable <sys/ptrace.h>
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_GDB_PTRACE_H
-#define NAT_GDB_PTRACE_H
+#ifndef GDB_NAT_GDB_PTRACE_H
+#define GDB_NAT_GDB_PTRACE_H
 
 /* The <sys/ptrace.h> header was introduced with 4.4BSD, and provided
    the PT_* symbolic constants for the ptrace(2) request numbers.  The
@@ -142,4 +142,4 @@
 	 ptrace ((PTRACE_TYPE_ARG1) request, pid, addr, data)
 #endif
 
-#endif /* NAT_GDB_PTRACE_H */
+#endif /* GDB_NAT_GDB_PTRACE_H */

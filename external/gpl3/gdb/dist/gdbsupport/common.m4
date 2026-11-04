@@ -1,5 +1,5 @@
 dnl Autoconf configure snippets for common.
-dnl Copyright (C) 1995-2024 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl 
@@ -21,7 +21,6 @@ AC_DEFUN([GDB_AC_COMMON], [
   # Set the 'development' global.
   . $srcdir/../bfd/development.sh
 
-  AC_HEADER_STDC
   AC_FUNC_ALLOCA
 
   WIN32APILIBS=
@@ -40,22 +39,49 @@ AC_DEFUN([GDB_AC_COMMON], [
   dnl by the users of common.m4.
   AM_LANGINFO_CODESET
 
-  AC_CHECK_HEADERS(linux/perf_event.h locale.h memory.h signal.h dnl
-		   sys/resource.h sys/socket.h dnl
-		   sys/un.h sys/wait.h dnl
-		   thread_db.h wait.h dnl
-		   termios.h dnl
-		   dlfcn.h dnl
-		   linux/elf.h proc_service.h dnl
-		   poll.h sys/poll.h sys/select.h)
+AC_CHECK_HEADERS([ \
+  dlfcn.h \
+  linux/elf.h \
+  linux/perf_event.h  \
+  locale.h \
+  memory.h \
+  poll.h \
+  proc_service.h \
+  signal.h \
+  sys/poll.h \
+  sys/resource.h \
+  sys/select.h \
+  sys/socket.h \
+  sys/un.h \
+  sys/wait.h \
+  termios.h \
+  thread_db.h \
+  wait.h \
+])
 
   AC_FUNC_MMAP
   AC_FUNC_FORK
   # Some systems (e.g. Solaris) have `socketpair' in libsocket.
   AC_SEARCH_LIBS(socketpair, socket)
-  AC_CHECK_FUNCS([fdwalk getrlimit pipe pipe2 poll socketpair sigaction \
-		  ptrace64 sbrk setns sigaltstack sigprocmask \
-		  setpgid setpgrp getrusage getauxval sigtimedwait])
+  AC_CHECK_FUNCS([ \
+    fdwalk \
+    getauxval \
+    getrlimit \
+    getrusage \
+    pipe \
+    pipe2 \
+    poll \
+    ptrace64 \
+    sbrk \
+    setns \
+    setpgid \
+    setpgrp \
+    sigaction \
+    sigaltstack \
+    sigprocmask \
+    sigtimedwait \
+    socketpair \
+  ])
 
   # This is needed for RHEL 5 and uclibc-ng < 1.0.39.
   # These did not define ADDR_NO_RANDOMIZE in sys/personality.h,
@@ -200,6 +226,8 @@ AC_DEFUN([GDB_AC_COMMON], [
       AC_CHECK_FUNCS(pt_insn_event)
       AC_CHECK_MEMBERS([struct pt_insn.enabled, struct pt_insn.resynced], [], [],
 		       [#include <intel-pt.h>])
+      AC_CHECK_MEMBERS([struct pt_event.variant.ptwrite], [], [],
+		       [#include <intel-pt.h>])
       LIBS=$save_LIBS
     fi
   fi
@@ -263,7 +291,7 @@ AC_DEFUN([GDB_AC_COMMON], [
 ])
 
 dnl Check that the provided value ($1) is either "yes" or "no".  If not,
-dnl emit an error message mentionning the configure option $2, and abort
+dnl emit an error message mentioning the configure option $2, and abort
 dnl the script.
 AC_DEFUN([GDB_CHECK_YES_NO_VAL],
 	 [
@@ -277,7 +305,7 @@ AC_DEFUN([GDB_CHECK_YES_NO_VAL],
 	  ])
 
 dnl Check that the provided value ($1) is either "yes", "no" or "auto".  If not,
-dnl emit an error message mentionning the configure option $2, and abort
+dnl emit an error message mentioning the configure option $2, and abort
 dnl the script.
 AC_DEFUN([GDB_CHECK_YES_NO_AUTO_VAL],
 	 [

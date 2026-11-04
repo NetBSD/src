@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.326.4.1 2025/08/02 05:57:47 perseant Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.326.4.2 2026/11/04 23:27:57 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326.4.1 2025/08/02 05:57:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326.4.2 2026/11/04 23:27:57 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -113,6 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.326.4.1 2025/08/02 05:57:47 perse
 
 #include <net/if_ether.h>
 #include <net/if_vlanvar.h>
+#include <net/ether_calls.h>
 
 #if NPPPOE > 0
 #include <net/if_pppoe.h>
@@ -182,8 +183,45 @@ const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN] =
 
 static pktq_rps_hash_func_t ether_pktq_rps_hash_p;
 
-static int ether_output(struct ifnet *, struct mbuf *,
-    const struct sockaddr *, const struct rtentry *);
+/*
+ * Attempt to get the Ethernet address from device properties.
+ *
+ * We generally follow the Device Tree specification with regard
+ * to the property names, but that's OK because the property names
+ * are pretty generic.
+ */
+bool
+ether_getaddr(device_t dev, uint8_t enaddr[ETHER_ADDR_LEN])
+{
+	/*
+	 * First check the platform device tree; it may have specific
+	 * rules about how Ethernet addresses are assigned, separate
+	 * from properties associated with a given device.
+	 */
+	struct ether_get_mac_address_args args = {
+		.enaddr = enaddr,
+	};
+	if (device_call(dev, ETHER_GET_MAC_ADDRESS(&args)) == 0) {
+		/* Got it from the platform device tree. */
+		return true;
+	}
+
+	/*
+	 * Check first for the "mac-address" property.  The bindings
+	 * say that this would be used only if it is different then the
+	 * "local-mac-address" property.  But if it's the same, then
+	 * using it is exactly the same as using "local-mac-address". So,
+	 * we first look for "mac-address", and if that's not there, then
+	 * we look for "local-mac-address".
+	 */
+	if (device_getprop_data(dev, "mac-address", enaddr,
+				ETHER_ADDR_LEN) == ETHER_ADDR_LEN ||
+	    device_getprop_data(dev, "local-mac-address", enaddr,
+				ETHER_ADDR_LEN) == ETHER_ADDR_LEN) {
+		return true;
+	}
+	return false;
+}
 
 /*
  * Ethernet output routine.
@@ -375,8 +413,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		break;
 
 	default:
-		printf("%s: can't handle af%d\n", ifp->if_xname,
-		    dst->sa_family);
+		rt_unhandled(__func__, ifp, dst);
 		senderr(EAFNOSUPPORT);
 	}
 
@@ -417,7 +454,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 	if (hdrcmplt) {
 		memcpy(eh->ether_shost, esrc, sizeof(eh->ether_shost));
 	} else {
-	 	memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
+		memcpy(eh->ether_shost, CLLADDR(ifp->if_sadl),
 		    sizeof(eh->ether_shost));
 	}
 
@@ -1124,8 +1161,8 @@ ether_ifdetachhook_establish(struct ifnet *ifp,
 	struct ethercom *ec;
 	khook_t *hk;
 
-	if (ifp->if_type != IFT_ETHER)
-		return NULL;
+	KASSERT(ifp->if_type == IFT_ETHER ||
+	    ifp->if_type == IFT_L2TP);
 
 	ec = (struct ethercom *)ifp;
 	hk = simplehook_establish(ec->ec_ifdetach_hooks,
@@ -1670,7 +1707,7 @@ ether_disable_vlan_mtu(struct ifnet *ifp)
 	if (ec->ec_nvlans != 0)
 		return 0;
 
-	/* Parent does not support VLAB's, nothing to do. */
+	/* Parent does not have or never had VLANs enabled, nothing to do */
 	if ((ec->ec_capenable & ETHERCAP_VLAN_MTU) == 0)
 		return -1;
 

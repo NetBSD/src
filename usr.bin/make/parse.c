@@ -1,4 +1,4 @@
-/*	$NetBSD: parse.c,v 1.731.2.1 2025/08/02 05:58:29 perseant Exp $	*/
+/*	$NetBSD: parse.c,v 1.731.2.2 2026/11/04 23:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -105,7 +105,7 @@
 #include "pathnames.h"
 
 /*	"@(#)parse.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: parse.c,v 1.731.2.1 2025/08/02 05:58:29 perseant Exp $");
+MAKE_RCSID("$NetBSD: parse.c,v 1.731.2.2 2026/11/04 23:28:37 perseant Exp $");
 
 /* Detects a multiple-inclusion guard in a makefile. */
 typedef enum {
@@ -476,11 +476,11 @@ add_parent_stack_trace:
 }
 
 void
-PrintStackTrace(bool includingInnermost)
+PrintStackTrace(FILE *f, bool includingInnermost)
 {
 	char *stackTrace = GetStackTrace(includingInnermost);
-	fprintf(stderr, "%s", stackTrace);
-	fflush(stderr);
+	fprintf(f, "%s", stackTrace);
+	fflush(f);
 	free(stackTrace);
 }
 
@@ -597,7 +597,7 @@ ParseVErrorInternal(FILE *f, bool useVars, const GNode *gn,
 
 	if (level == PARSE_FATAL || DEBUG(PARSE)
 	    || (gn == NULL && includes.len == 0 /* see PrintLocation */))
-		PrintStackTrace(false);
+		PrintStackTrace(f, false);
 }
 
 static void MAKE_ATTR_PRINTFLIKE(3, 4)
@@ -719,7 +719,7 @@ TryApplyDependencyOperator(GNode *gn, GNodeType op)
 	 * operator also defines a dependency, they must match.
 	 */
 	if ((op & OP_OPMASK) && (gn->type & OP_OPMASK) &&
-	    ((op & OP_OPMASK) != (gn->type & OP_OPMASK))) {
+	    (op & OP_OPMASK) != (gn->type & OP_OPMASK)) {
 		Parse_Error(PARSE_FATAL, "Inconsistent operator for %s",
 		    gn->name);
 		return false;
@@ -1980,46 +1980,6 @@ Parse_Var(VarAssign *var, GNode *scope)
 }
 
 
-/*
- * See if the command possibly calls a sub-make by using the
- * expressions ${.MAKE}, ${MAKE} or the plain word "make".
- */
-static bool
-MaybeSubMake(const char *cmd)
-{
-	const char *start;
-
-	for (start = cmd; *start != '\0'; start++) {
-		const char *p = start;
-		char endc;
-
-		/* XXX: What if progname != "make"? */
-		if (strncmp(p, "make", 4) == 0)
-			if (start == cmd || !ch_isalnum(p[-1]))
-				if (!ch_isalnum(p[4]))
-					return true;
-
-		if (*p != '$')
-			continue;
-		p++;
-
-		if (*p == '{')
-			endc = '}';
-		else if (*p == '(')
-			endc = ')';
-		else
-			continue;
-		p++;
-
-		if (*p == '.')	/* Accept either ${.MAKE} or ${MAKE}. */
-			p++;
-
-		if (strncmp(p, "MAKE", 4) == 0 && p[4] == endc)
-			return true;
-	}
-	return false;
-}
-
 /* Append the command to the target node. */
 static void
 GNode_AddCommand(GNode *gn, char *cmd)
@@ -2030,8 +1990,6 @@ GNode_AddCommand(GNode *gn, char *cmd)
 	/* if target already supplied, ignore commands */
 	if (!(gn->type & OP_HAS_COMMANDS)) {
 		Lst_Append(&gn->commands, cmd);
-		if (MaybeSubMake(cmd))
-			gn->type |= OP_SUBMAKE;
 		RememberLocation(gn);
 	} else {
 		Parse_Error(PARSE_WARNING,
@@ -2350,17 +2308,24 @@ ParseGmakeExport(char *line)
 static bool
 ParseEOF(void)
 {
+	unsigned prevLineno;
 	IncludedFile *curFile = CurFile();
 
 	doing_depend = curFile->depending;
-	if (curFile->forLoop != NULL &&
-	    For_NextIteration(curFile->forLoop, &curFile->buf)) {
+	if (curFile->forLoop == NULL)
+		goto end_file;
+
+	prevLineno = curFile->lineno;
+	curFile->lineno = curFile->forHeadLineno;
+	if (For_NextIteration(curFile->forLoop, &curFile->buf)) {
 		curFile->buf_ptr = curFile->buf.data;
 		curFile->buf_end = curFile->buf.data + curFile->buf.len;
 		curFile->readLines = curFile->forBodyReadLines;
 		return true;
 	}
+	curFile->lineno = prevLineno;
 
+end_file:
 	Cond_EndFile();
 
 	if (curFile->guardState == GS_DONE) {
@@ -2875,22 +2840,23 @@ Parse_GuardEndif(void)
 static char *
 FindSemicolon(char *p)
 {
-	int depth = 0;
+	if (strchr(p, ';') == NULL)
+		return NULL;
 
-	for (; *p != '\0'; p++) {
-		if (*p == '\\' && p[1] != '\0') {
+	while (*p != '\0') {
+		if (*p == ';')
+			return p;
+		if (*p == '$' && p[1] == '$')
+			p += 2;
+		else if (*p == '$') {
+			const char *cp = p;
+			FStr value = Var_Parse(&cp, SCOPE_GLOBAL, VARE_PARSE);
+			FStr_Done(&value);
+			p += cp - p;
+		} else
 			p++;
-			continue;
-		}
-
-		if (*p == '$' && (p[1] == '(' || p[1] == '{'))
-			depth++;
-		else if (depth > 0 && (*p == ')' || *p == '}'))
-			depth--;
-		else if (depth == 0 && *p == ';')
-			break;
 	}
-	return p;
+	return NULL;
 }
 
 static void
@@ -2901,7 +2867,7 @@ ParseDependencyLine(char *line)
 
 	{
 		char *semicolon = FindSemicolon(line);
-		if (*semicolon != '\0') {
+		if (semicolon != NULL) {
 			/* Terminate the dependency list at the ';' */
 			*semicolon = '\0';
 			shellcmd = semicolon + 1;

@@ -1,5 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -133,7 +133,7 @@ csky_target::low_arch_setup ()
 
   if (tdesc->expedite_regs.empty ())
     {
-      init_target_desc (tdesc.get (), expedite_regs);
+      init_target_desc (tdesc.get (), expedite_regs, GDB_OSABI_LINUX);
       gdb_assert (!tdesc->expedite_regs.empty ());
     }
 

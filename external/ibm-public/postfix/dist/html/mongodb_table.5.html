@@ -17,11 +17,15 @@ MONGODB_TABLE(5)                                              MONGODB_TABLE(5)
 
 <b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail system uses optional tables for address rewriting or
-       mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
+       mail routing. These tables are usually in <b><a href="lmdb_table.5.html">lmdb</a>:</b>, <b><a href="CDB_README.html">cdb</a>:</b>, <b><a href="DATABASE_README.html#types">hash</a>:</b>,  or  <b><a href="DATABASE_README.html#types">dbm</a>:</b>
+       format.
 
-       Alternatively, lookup tables can be specified as MongoDB databases.  In
-       order to use MongoDB lookups, define a MongoDB source as a lookup table
-       in <a href="postconf.5.html">main.cf</a>, for example:
+       Alternatively, lookup tables can be specified as MongoDB databases.  To
+       find out what types of lookup tables your Postfix system  supports  use
+       the "<b>postconf -m</b>" command.
+
+       In  order  to  use MongoDB lookups, define a MongoDB source as a lookup
+       table in <a href="postconf.5.html">main.cf</a>, for example:
            <a href="postconf.5.html#alias_maps">alias_maps</a> = <a href="mongodb_table.5.html">mongodb</a>:/etc/postfix/mongodb-aliases.cf
 
        In this example, the file /etc/postfix/mongodb-aliases.cf has the  same

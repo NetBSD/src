@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -68,10 +68,7 @@
 # The companion test file pass-by-ref-2.exp also contains
 # manually-written cases.
 
-if {[skip_cplus_tests]} {
-    untested "c++ test skipped"
-    return
-}
+require allow_cplus_tests
 
 # The program source is generated in the output directory.
 # We use standard_testfile here to set convenience variables.
@@ -399,12 +396,12 @@ proc test_for_class { prefix states cbvfun data_field length} {
 	    gdb_test "print ${cbvfun}<$name> (${name}_var)" " = $expected" \
 		"call '$cbvfun'"
 	    gdb_test "print ${name}_var.${data_field}\[0\]" " = $ORIGINAL" \
-		"cbv argument should not change (item 0)"
+		"cbv argument should not change, item 0"
 	    if {$length > 1} {
 		set last_index [expr $length - 1]
 		gdb_test "print ${name}_var.${data_field}\[$last_index\]" \
 		    " = $ORIGINAL" \
-		    "cbv argument should not change (item $last_index)"
+		    "cbv argument should not change, item $last_index"
 	    }
 	    if {$dtor == "explicit"} {
 		if {$cctor == "defaultedIn"

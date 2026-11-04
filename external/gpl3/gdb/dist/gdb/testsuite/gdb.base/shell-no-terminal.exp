@@ -1,0 +1,60 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Run GDB in batch mode, with stdin attached to a non-pty.  Use the
+# 'shell' command from the GDB command line.  Check that GDB doesn't
+# crash.  This checks for bug PR gdb/33716.
+
+# Remote boards override the 'remote_spawn' mechanism, and don't
+# support the 'readonly' argument that this test relies on.  Just
+# running this test on local hosts should be fine.
+require {!is_remote host}
+
+gdb_exit
+
+save_vars { GDBFLAGS } {
+    append GDBFLAGS " -batch -ex \"shell echo first\" -ex \"shell echo second\" </dev/null"
+
+    # Inlined default_gdb_spawn.
+    verbose -log "Spawning $GDB $INTERNAL_GDBFLAGS $GDBFLAGS"
+    gdb_write_cmd_file "$GDB $INTERNAL_GDBFLAGS $GDBFLAGS"
+
+    set use_gdb_stub [use_gdb_stub]
+    set res [remote_spawn host "$GDB $INTERNAL_GDBFLAGS [host_info gdb_opts] $GDBFLAGS" "readonly"]
+    if { $res < 0 || $res == "" } {
+	perror "Spawning $GDB failed."
+	return
+    }
+    set gdb_spawn_id $res
+}
+
+# Capture the output of the GDB process.  The above GDB is spawned
+# without a pty (so that we can replace its stdin), and so we don't
+# use '\r\n' as the end of line sequence, instead we expect '\n'.
+set saw_first false
+set saw_second false
+gdb_test_multiple "" "check shell command output" {
+    -re "^first\n" {
+	set saw_first true
+	exp_continue
+    }
+    -re "^second\n" {
+	set saw_second true
+	exp_continue
+    }
+    eof {
+	gdb_assert { $saw_first && $saw_second } $gdb_test_name
+    }
+}

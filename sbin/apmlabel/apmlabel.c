@@ -1,4 +1,4 @@
-/*	$NetBSD: apmlabel.c,v 1.3 2013/10/19 01:09:58 christos Exp $	*/
+/*	$NetBSD: apmlabel.c,v 1.3.38.1 2026/11/04 23:19:36 perseant Exp $	*/
 
 /*
  * Copyright (C) 1998 Wolfgang Solfrank.
@@ -33,12 +33,13 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: apmlabel.c,v 1.3 2013/10/19 01:09:58 christos Exp $");
+__RCSID("$NetBSD: apmlabel.c,v 1.3.38.1 2026/11/04 23:19:36 perseant Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <limits.h>
 #include <stdlib.h>

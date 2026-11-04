@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pppvar.h,v 1.28 2016/04/28 00:16:56 ozaki-r Exp $	*/
+/*	$NetBSD: if_pppvar.h,v 1.28.54.1 2026/11/04 23:27:57 perseant Exp $	*/
 /*	Id: if_pppvar.h,v 1.3 1996/07/01 01:04:37 paulus Exp	 */
 
 /*
@@ -21,11 +21,6 @@
  * 3. The name(s) of the authors of this software must not be used to
  *    endorse or promote products derived from this software without
  *    prior written permission.
- *
- * 4. Redistributions of any form whatsoever must retain the following
- *    acknowledgment:
- *    "This product includes software developed by Paul Mackerras
- *     <paulus@samba.org>".
  *
  * THE AUTHORS OF THIS SOFTWARE DISCLAIM ALL WARRANTIES WITH REGARD TO
  * THIS SOFTWARE, INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY

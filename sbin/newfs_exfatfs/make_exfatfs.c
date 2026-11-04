@@ -1,4 +1,4 @@
-/*	$NetBSD: make_exfatfs.c,v 1.1.2.11 2025/08/09 23:06:51 perseant Exp $	*/
+/*	$NetBSD: make_exfatfs.c,v 1.1.2.12 2026/11/04 23:19:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 #if 0
 static char sccsid[] = "@(#)lfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.11 2025/08/09 23:06:51 perseant Exp $");
+__RCSID("$NetBSD: make_exfatfs.c,v 1.1.2.12 2026/11/04 23:19:41 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -338,7 +338,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 						printf(" write zero bitmap block size %zd at bn 0x%lx\n",
 				       		size, (unsigned long)bp->b_blkno);
 					else if (!Qflag) {
-						progress = 80 * (daddr - start) / (end - start);
+						progress = 40 * (daddr - start) / (end - start);
 						for (i = oprogress; i < progress; i++) {
 							printf(".");
 							fflush(stdout);
@@ -351,10 +351,9 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 				}
 			}
 			if (!Vflag && !Qflag) {
-				for (i = progress; i < 80; i++)
+				for (i = progress; i < 40; i++)
 					printf(".");
 				fflush(stdout);
-				printf("\n");
 			}
 		}
 	}
@@ -446,7 +445,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 					printf(" write fat sector size %zd at bn 0x%lx\n",
 				       	size, (unsigned long)bp->b_blkno);
 				} else if (!Qflag) {
-					progress = 80 * i / end;
+					progress = 40 * i / end;
 					for (j = oprogress; j < progress; j++) {
 						printf(".");
 						fflush(stdout);
@@ -459,7 +458,7 @@ make_exfatfs(struct uvnode *devvp, struct exfatfs *fs,
 			}
 		}
 		if (!Vflag && !Qflag) {
-			for (i = progress; i < 80; i++)
+			for (i = progress; i < 40; i++)
 				printf(".");
 			fflush(stdout);
 			printf("\n");

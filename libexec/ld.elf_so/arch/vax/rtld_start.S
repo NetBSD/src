@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld_start.S,v 1.24.28.1 2025/08/02 05:55:03 perseant Exp $	*/
+/*	$NetBSD: rtld_start.S,v 1.24.28.2 2026/11/04 23:19:34 perseant Exp $	*/
 
 /*
  * Copyright 1996 Matt Thomas <matt@3am-software.com>
@@ -87,7 +87,7 @@ ALTENTRY(_rtld_bind_start)
 	movl	3(%r1),%r3	/* get displacement */
 	addl2	16(%fp),%r3	/* add ending location */
 	cmpl	(%r3),%r0	/* does it contain the routine address? */
-#ifdef DEBUG
+#if defined(DEBUG) && 0 /* XXX port-vax/60478 */
 	jneq	30f		/*   no it doesn't, die */
 #else
 	jneq	20f		/*   no it doesn't, go fake a new callframe */

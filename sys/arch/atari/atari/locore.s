@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.127 2024/01/19 18:18:53 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.127.2.1 2026/11/04 23:20:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -77,180 +77,6 @@
 
 	.text
 	.even
-/*
- * Do a dump.
- * Called by auto-restart.
- */
-ENTRY_NOPROFILE(doadump)
-	jbsr	_C_LABEL(dumpsys)
-	jbsr	_C_LABEL(doboot)
-	/*NOTREACHED*/
-
-/*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
-
-#if defined(M68040) || defined(M68060)
-ENTRY_NOPROFILE(addrerr4060)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%sp@(FR_HW+8),%sp@-
-	clrl	%sp@-			| dummy code
-	movl	#T_ADDRERR,%sp@-	| mark address error
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-#endif /* defined(M68040) || defined(M68060) */
-
-#if defined(M68060)
-ENTRY_NOPROFILE(buserr60)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movel	%sp@(FR_HW+12),%d0	| FSLW
-	btst	#2,%d0			| branch prediction error?
-	jeq	Lnobpe
-	movc	%cacr,%d2
-	orl	#IC60_CABC,%d2		| clear all branch cache entries
-	movc	%d2,%cacr
-	movl	%d0,%d1
-	addql	#1,L60bpe
-	andl	#0x7ffd,%d1
-	jeq	_ASM_LABEL(faultstkadjnotrap2)
-Lnobpe:
-| we need to adjust for misaligned addresses
-	movl	%sp@(FR_HW+8),%d1	| grab VA
-	btst	#27,%d0			| check for mis-aligned access
-	jeq	Lberr3			| no, skip
-	addl	#28,%d1			| yes, get into next page
-					| operand case: 3,
-					| instruction case: 4+12+12
-	andl	#PG_FRAME,%d1           | and truncate
-Lberr3:
-	movl	%d1,%sp@-
-	movl	%d0,%sp@-		| code is FSLW now.
-	andw	#0x1f80,%d0
-	jeq	Lisberr
-	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-#endif /* defined(M68060) */
-
-#if defined(M68040)
-ENTRY_NOPROFILE(buserr40)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%sp@(FR_HW+20),%d1	| get fault address
-	moveq	#0,%d0
-	movw	%sp@(FR_HW+12),%d0	| get SSW
-	btst	#11,%d0			| check for mis-aligned
-	jeq	Lbe1stpg		| no skip
-	addl	#3,%d1			| get into next page
-	andl	#PG_FRAME,%d1		| and truncate
-Lbe1stpg:
-	movl	%d1,%sp@-		| pass fault address.
-	movl	%d0,%sp@-		| pass SSW as code
-	btst	#10,%d0			| test ATC
-	jeq	Lisberr			| it is a bus error
-	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-#endif /* defined(M68040) */
-
-#if defined(M68020) || defined(M68030)
-ENTRY_NOPROFILE(buserr2030)
-ENTRY_NOPROFILE(addrerr2030)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	moveq	#0,%d0
-	movw	%sp@(FR_HW+10),%d0	| grab SSW for fault processing
-	btst	#12,%d0			| RB set?
-	jeq	LbeX0			| no, test RC
-	bset	#14,%d0			| yes, must set FB
-	movw	%d0,%sp@(FR_HW+10)	| for hardware too
-LbeX0:
-	btst	#13,%d0			| RC set?
-	jeq	LbeX1			| no, skip
-	bset	#15,%d0			| yes, must set FC
-	movw	%d0,%sp@(FR_HW+10)	| for hardware too
-LbeX1:
-	btst	#8,%d0			| data fault?
-	jeq	Lbe0			| no, check for hard cases
-	movl	%sp@(FR_HW+16),%d1	| fault address is as given in frame
-	jra	Lbe10			| thats it
-Lbe0:
-	btst	#4,%sp@(FR_HW+6)	| long (type B) stack frame?
-	jne	Lbe4			| yes, go handle
-	movl	%sp@(FR_HW+2),%d1	| no, can use save PC
-	btst	#14,%d0			| FB set?
-	jeq	Lbe3			| no, try FC
-	addql	#4,%d1			| yes, adjust address
-	jra	Lbe10			| done
-Lbe3:
-	btst	#15,%d0			| FC set?
-	jeq	Lbe10			| no, done
-	addql	#2,%d1			| yes, adjust address
-	jra	Lbe10			| done
-Lbe4:
-	movl	%sp@(FR_HW+36),%d1	| long format, use stage B address
-	btst	#15,%d0			| FC set?
-	jeq	Lbe10			| no, all done
-	subql	#2,%d1			| yes, adjust address
-Lbe10:
-	movl	%d1,%sp@-		| push fault VA
-	movl	%d0,%sp@-		| and padded SSW
-	movw	%sp@(FR_HW+8+6),%d0	| get frame format/vector offset
-	andw	#0x0FFF,%d0		| clear out frame format
-	cmpw	#12,%d0			| address error vector?
-	jeq	Lisaerr			| yes, go to it
-	movl	%d1,%a0			| fault address
-	movl	%sp@,%d0		| function code from ssw
-	btst	#8,%d0			| data fault?
-	jne	Lbe10a
-	movql	#1,%d0			| user program access FC
-					| (we do not separate data/program)
-	btst	#5,%sp@(FR_HW+8)	| supervisor mode?
-	jeq	Lbe10a			| if no, done
-	movql	#5,%d0			| else supervisor program access
-Lbe10a:
-	ptestr	%d0,%a0@,#7		| do a table search
-	pmove	%psr,%sp@		| save result
-	movb	%sp@,%d1
-	btst	#2,%d1			| invalid (incl. limit viol. and berr)?
-	jeq	Lmightnotbemerr		| no -> wp check
-	btst	#7,%d1			| is it MMU table berr?
-	jeq	Lismerr			| no, must be fast
-	jra	Lisberr1		| real bus err needs not be fast.
-Lmightnotbemerr:
-	btst	#3,%d1			| write protect bit set?
-	jeq	Lisberr1		| no: must be bus error
-	movl	%sp@,%d0		| ssw into low word of d0
-	andw	#0xc0,%d0		| Write protect is set on page:
-	cmpw	#0x40,%d0		| was it read cycle?
-	jeq	Lisberr1		| yes, was not WPE, must be bus err
-Lismerr:
-	movl	#T_MMUFLT,%sp@-		| show that we are an MMU fault
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lisaerr:
-	movl	#T_ADDRERR,%sp@-	| mark address error
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
-Lisberr1:
-	clrw	%sp@			| re-clear pad word
-#endif /* !(defined(M68020) || defined(M68030)) */
-
-Lisberr:				| also used by M68040/60
-	tstl	_C_LABEL(nofault)	| device probe?
-	jeq	LberrIsProbe		| no, handle as usual
-	movl	_C_LABEL(nofault),%sp@-	| yes,
-	jbsr	_C_LABEL(longjmp)	|  longjmp(nofault)
-	/* NOTREACHED */
-LberrIsProbe:
-	movl	#T_BUSERR,%sp@-		| mark bus error
-	jra	_ASM_LABEL(faultstkadj)	| and deal with it
 
 	/*
 	 * This is where the default vectors end-up!
@@ -259,8 +85,8 @@ LberrIsProbe:
 	 * yet setup at this point, the real fault handlers sometimes
 	 * misinterpret the cause of the fault.
 	 */
-ENTRY_NOPROFILE(buserr)
-ENTRY_NOPROFILE(addrerr)
+ENTRY_NOPROFILE(buserr_early)
+ENTRY_NOPROFILE(addrerr_early)
 	tstl	_C_LABEL(nofault)	| device probe?
 	jeq	1f			| no, halt...
 	movl	_C_LABEL(nofault),%sp@-	| yes,
@@ -268,73 +94,6 @@ ENTRY_NOPROFILE(addrerr)
 	/* NOTREACHED */
 1:
 	jra	_C_LABEL(badtrap)	| only catch probes!
-
-/*
- * FP exceptions.
- */
-ENTRY_NOPROFILE(fpfline)
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jne	fpfline_not40		|  not a 040 FPU, do 6888? emulation
-	cmpw	#0x202c,%sp@(6)		|  format type 2?
-	jne	_C_LABEL(illinst)	|  no, not an FP emulation
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unimp)	|  yes, go handle it
-#endif
-fpfline_not40:
-	clrl	%sp@-			|  stack adjust count
-	moveml	#0xFFFF,%sp@-		|  save registers
-	moveq	#T_FPEMULI,%d0		|  denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	|  do it
-
-ENTRY_NOPROFILE(fpunsupp)
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jne	fpunsupp_not40		| not a 040 FPU, try 6888?
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unsupp)	|  yes, go handle it
-#endif
-fpunsupp_not40:
-	clrl	%sp@-			|  stack adjust count
-	moveml	#0xFFFF,%sp@-		|  save registers
-	moveq	#T_FPEMULD,%d0		|  denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	|  do it
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-			|  stack adjust count
-	moveml	#0xFFFF,%sp@-		|  save user registers
-	movl	%usp,%a0		|  and save
-	movl	%a0,%sp@(FR_SP)		|    the user stack pointer
-	clrl	%sp@-			|  no VA arg
-	movl	_C_LABEL(curpcb),%a0	|  current pcb
-	lea	%a0@(PCB_FPCTX),%a0	|  address of FP savearea
-	fsave	%a0@			|  save state
-
-#if defined(M68040) || defined(M68060)
-#ifdef notdef /* XXX: Can't use this while we don't have the cputype */
-	movb	_C_LABEL(cputype), %d0
-	andb	#(ATARI_68040|ATARI_68060), %d0
-	jne	Lfptnull
-#else
-	cmpb	#0x41,%a0@		|  is it the 68040 FPU-frame format?
-	jeq	Lfptnull		|  yes, safe
-#endif /* notdef */
-#endif /* defined(M68040) || defined(M68060) */
-
-	tstb	%a0@			|  null state frame?
-	jeq	Lfptnull		|  yes, safe
-	clrw	%d0			|  no, need to tweak BIU
-	movb	%a0@(1),%d0		|  get frame size
-	bset	#3,%a0@(0,%d0:w)	|  set exc_pend bit of BIU
-Lfptnull:
-	fmovem	%fpsr,%sp@-		|  push fpsr as code argument
-	frestore %a0@			|  restore state
-	movl	#T_FPERR,%sp@-		|  push type arg
-	jra	_ASM_LABEL(faultstkadj)	|  call trap and deal with stack cleanup
 
 /*
  * Other exceptions only cause four and six word stack frame and require
@@ -460,7 +219,6 @@ ENTRY_NOPROFILE(lev7intr)
 #endif /* _MILANHW_ */
 
 ENTRY_NOPROFILE(lev3intr)
-ENTRY_NOPROFILE(badtrap)
 	addql	#1,_C_LABEL(intr_depth)
 	INTERRUPT_SAVEREG
 	movw	%sp@(22),%sp@-		|  push exception vector info
@@ -483,140 +241,6 @@ ENTRY_NOPROFILE(badmfpint)
 	INTERRUPT_RESTOREREG		|  restore regs
 	subql	#1,_C_LABEL(intr_depth)
 	jra	_ASM_LABEL(rei)		|  all done
-
-ENTRY_NOPROFILE(trap0)
-	clrl	%sp@-			|  stack adjust count
-	moveml	#0xFFFF,%sp@-		|  save user registers
-	movl	%usp,%a0		|  save the user SP
-	movl	%a0,%sp@(FR_SP)		|    in the savearea
-	movl	%d0,%sp@-		|  push syscall number
-	jbsr	_C_LABEL(syscall)	|  handle it
-	addql	#4,%sp			|  pop syscall arg
-	movl	%sp@(FR_SP),%a0		|  grab and restore
-	movl	%a0,%usp		|    user SP
-	moveml	%sp@+,#0x7FFF		|  restore most registers
-	addql	#8,%sp			|  pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		|  all done
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall"
- *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
- */
-ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curlwp),%a0
-	movl	%a0@(L_PROC),%sp@-	|  push curproc pointer
-	movl	%d1,%sp@-		|  push length
-	movl	%a1,%sp@-		|  push addr
-	movl	%d0,%sp@-		|  push command
-	jbsr	_C_LABEL(cachectl1)	|  do it
-	lea	%sp@(16),%sp		|  pop args
-	jra	_ASM_LABEL(rei)		|  all done
-
-/*
- * Trace (single-step) trap.  Kernel-mode is special.
- * User mode traps are simply passed on to trap().
- */
-ENTRY_NOPROFILE(trace)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRACE,%d0
-
-	| Check PSW and see what happen.
-	|   T=0 S=0	(should not happen)
-	|   T=1 S=0	trace trap from user mode
-	|   T=0 S=1	trace trap on a trap instruction
-	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
-
-	movw	%sp@(FR_HW),%d1		| get PSW
-	notw	%d1			| XXX no support for T0 on 680[234]0
-	andw	#PSL_TS,%d1		| from system mode (T=1, S=1)?
-	jeq	Lkbrkpt			| yes, kernel breakpoint
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-/*
- * Trap 15 is used for:
- *	- GDB breakpoints (in user programs)
- *	- KGDB breakpoints (in the kernel)
- *	- trace traps for SUN binaries (not fully supported yet)
- * User mode traps are simply passed to trap().
- */
-ENTRY_NOPROFILE(trap15)
-	clrl	%sp@-
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRAP15,%d0
-	movw	%sp@(FR_HW),%d1		|  get PSW
-	andw	#PSL_S,%d1		|  from system mode?
-	jne	Lkbrkpt			|  yes, kernel breakpoint
-	jra	_ASM_LABEL(fault)	|  no, user-mode fault
-
-Lkbrkpt:
-	| Kernel-mode breakpoint or trace trap. (d0=trap_type)
-	| Save the system sp rather than the user sp.
-	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
-	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
-	movl	%a6,%sp@(FR_SP)		|  from before trap
-
-	| If were are not on tmpstk switch to it.
-	| (so debugger can change the stack pointer)
-	movl	%a6,%d1
-	cmpl	#_ASM_LABEL(tmpstk),%d1
-	jls	Lbrkpt2				| already on tmpstk
-	| Copy frame to the temporary stack
-	movl	%sp,%a0				| a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1	| a1=dst
-	movl	%a1,%sp				| sp=new frame
-	moveq	#FR_SIZE,%d1
-Lbrkpt1:
-	movl	%a0@+,%a1@+
-	subql	#4,%d1
-	bgt	Lbrkpt1
-
-Lbrkpt2:
-	| Call the trap handler for the kernel debugger.
-	| Do not call trap() to do it, so that we can
-	| set breakpoints in trap() if we want.  We know
-	| the trap type is either T_TRACE or T_BREAKPOINT.
-	| If we have both DDB and KGDB, let KGDB see it first,
-	| because KGDB will just return 0 if not connected.
-	| Save args in d2, a2
-	movl	%d0,%d2			| trap type
-	movl	%sp,%a2			| frame ptr
-#ifdef KGDB
-	| Let KGDB handle it (if connected)
-	movl	%a2,%sp@-		| push frame ptr
-	movl	%d2,%sp@-		| push trap type
-	jbsr	_C_LABEL(kgdb_trap)	| handle the trap
-	addql	#8,%sp			| pop args
-	cmpl	#0,%d0			| did kgdb handle it?
-	jne	Lbrkpt3			| yes, done
-#endif
-#ifdef DDB
-	| Let DDB handle it
-	movl	%a2,%sp@-		| push frame ptr
-	movl	%d2,%sp@-		| push trap type
-	jbsr	_C_LABEL(kdb_trap)	| handle the trap
-	addql	#8,%sp			| pop args
-#if 0	/* not needed on atari */
-	cmpl	#0,%d0			| did ddb handle it?
-	jne	Lbrkpt3			| yes, done
-#endif
-#endif
-	/* Sun 3 drops into PROM here. */
-Lbrkpt3:
-	| The stack pointer may have been modified, or
-	| data below it modified (by kgdb push call),
-	| so push the hardware frame at the current sp
-	| before restoring registers and returning.
-
-	movl	%sp@(FR_SP),%a0		| modified sp
-	lea	%sp@(FR_SIZE),%a1	| end of our frame
-	movl	%a1@-,%a0@-		| copy 2 longs with
-	movl	%a1@-,%a0@-		| ... predecrement
-	movl	%a0,%sp@(FR_SP)		| sp = h/w frame
-	moveml	%sp@+,#0x7FFF		| restore all but sp
-	movl	%sp@,%sp		| ... and sp
-	rte				| all done
 
 /*
  * Interrupt handlers.
@@ -758,93 +382,6 @@ ENTRY_NOPROFILE(lev7intr)
 
 #endif /* _ATARIHW_ */
 
-
-/*
- * Emulation of VAX REI instruction.
- *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling) and software interrupts (network, softclock).
- * We check for ASTs first, just like the VAX.  To avoid excess overhead
- * the T_ASTFLT handling code will also check for software interrupts so we
- * do not have to do it here.  After identifying that we need an AST we
- * drop the IPL to allow device interrupts.
- *
- * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.  A cleanup should only be needed at this
- * point for coprocessor mid-instruction frames (type 9), but we also test
- * for bus error frames (type 10 and 11).
- */
-ASENTRY_NOPROFILE(rei)
-#ifdef DEBUG
-	tstl	_C_LABEL(panicstr)	|  have we panicked?
-	jne	Ldorte			|  yes, do not make matters worse
-#endif
-	tstl	_C_LABEL(astpending)	|  AST pending?
-	jeq	Lchksir			|  no, go check for SIR
-Lrei1:
-	btst	#5,%sp@			|  yes, are we returning to user mode?
-	jne	Lchksir			|  no, go check for SIR
-	movw	#PSL_LOWIPL,%sr		|  lower SPL
-	clrl	%sp@-			|  stack adjust
-	moveml	#0xFFFF,%sp@-		|  save all registers
-	movl	%usp,%a1		|  including
-	movl	%a1,%sp@(FR_SP)		|     the users SP
-	clrl	%sp@-			|  VA == none
-	clrl	%sp@-			|  code == none
-	movl	#T_ASTFLT,%sp@-		|  type == async system trap
-	pea	%sp@(12)		|  fp == address of trap frame
-	jbsr	_C_LABEL(trap)		|  go handle it
-	lea	%sp@(16),%sp		|  pop value args
-	movl	%sp@(FR_SP),%a0		|  restore user SP
-	movl	%a0,%usp		|    from save area
-	movw	%sp@(FR_ADJ),%d0	|  need to adjust stack?
-	jne	Laststkadj		|  yes, go to it
-	moveml	%sp@+,#0x7FFF		|  no, restore most user regs
-	addql	#8,%sp			|  toss SP and stack adjust
-	rte				|  and do real RTE
-Laststkadj:
-	lea	%sp@(FR_HW),%a1		|  pointer to HW frame
-	addql	#8,%a1			|  source pointer
-	movl	%a1,%a0			|  source
-	addw	%d0,%a0			|   + hole size = dest pointer
-	movl	%a1@-,%a0@-		|  copy
-	movl	%a1@-,%a0@-		|   8 bytes
-	movl	%a0,%sp@(FR_SP)		|  new SSP
-	moveml	%sp@+,#0x7FFF		|  restore user registers
-	movl	%sp@,%sp		|  and our SP
-	rte				|  and do real RTE
-Lchksir:
-	tstb	_C_LABEL(ssir)		|  SIR pending?
-	jeq	Ldorte			|  no, all done
-	movl	%d0,%sp@-		|  need a scratch register
-	movw	%sp@(4),%d0		|  get SR
-	andw	#PSL_IPL7,%d0		|  mask all but IPL
-	jne	Lnosir			|  came from interrupt, no can do
-	movl	%sp@+,%d0		|  restore scratch register
-Lgotsir:
-	movw	#SPL1,%sr		|  prevent others from servicing int
-	tstb	_C_LABEL(ssir)		|  too late?
-	jeq	Ldorte			|  yes, oh well...
-	clrl	%sp@-			|  stack adjust
-	moveml	#0xFFFF,%sp@-		|  save all registers
-	movl	%usp,%a1		|  including
-	movl	%a1,%sp@(FR_SP)		|     the users SP
-	clrl	%sp@-			|  VA == none
-	clrl	%sp@-			|  code == none
-	movl	#T_SSIR,%sp@-		|  type == software interrupt
-	pea	%sp@(12)		|  fp == address of trap frame
-	jbsr	_C_LABEL(trap)		|  go handle it
-	lea	%sp@(16),%sp		|  pop value args
-	movl	%sp@(FR_SP),%a0		|  restore
-	movl	%a0,%usp		|    user SP
-	moveml	%sp@+,#0x7FFF		|  and all remaining registers
-	addql	#8,%sp			|  pop SP and stack adjust
-	rte
-Lnosir:
-	movl	%sp@+,%d0		|  restore scratch register
-Ldorte:
-	rte				|  real return
-
 /*
  * Initialization
  *
@@ -957,26 +494,12 @@ Lend_cpuset:
 	movc	%a0,%vbr
 
 	/*
-	 * Initialize source/destination control registers for movs
-	 */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
-
-	/*
 	 * let the C function initialize everything and enable the MMU
+	 * start_c() returns lwp0 SP in %a0
 	 */
 	jsr	_C_LABEL(start_c)
-
-	/*
-	 * set kernel stack, user SP
-	 */
-	movl	_C_LABEL(lwp0uarea),%a1	| grab lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	movl	#USRSTACK-4,%a2
-	movl	%a2,%usp		| init user SP
-	movl	%a2,%a1@(PCB_USP)	| and save it
-	clrw	%a1@(PCB_FLAGS)		| clear flags
+	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
 
 	/* flush TLB and turn on caches */
 	jbsr	_C_LABEL(_TBIA)		|  invalidate TLB
@@ -1001,40 +524,7 @@ Lcacheon:
 	movl	%d6,_C_LABEL(bootdev)	|    and boot device
 #endif
 
-	/*
-	 * Create a fake exception frame that returns to user mode,
-	 * make space for the rest of a fake saved register set, and
-	 * pass a pointer to the register set to "main()".
-	 * "main()" will call "icode()", which fakes
-	 * an "execve()" system call, which is why we need to do that
-	 * ("main()" sets "u.u_ar0" to point to the register set).
-	 * When "main()" returns, we're running in process 1 and have
-	 * successfully faked the "execve()".  We load up the registers from
-	 * that set; the "rte" loads the PC and PSR, which jumps to "init".
-	 */
-	movl	#0,%a6			|  make DDB stack_trace() work
-	clrw	%sp@-			|  vector offset/frame type
-	clrl	%sp@-			|  PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		|  in user mode
-	clrl	%sp@-			|  stack adjust count
-	lea	%sp@(-64),%sp		|  construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| lwp0 in a0
-	movl	%sp,%a0@(L_MD_REGS)     | save frame for lwp0
-	movl	%usp,%a1
-	movl	%a1,%sp@(FR_SP)		| save user stack pointer in frame
-	pea	%sp@			|  addr of space for D0
-	jbsr	_C_LABEL(main)		|  main(r0)
-	addql	#4,%sp			|  pop args
-	cmpl	#MMU_68040,_C_LABEL(mmutype)
-	jne	Lnoflush		|  Not an 68040, skip flush
-	.word	0xf478			|  cpusha dc
-	.word	0xf498			|  cinva ic
-Lnoflush:
-	movl	%sp@(FR_SP),%a0		|  grab and load
-	movl	%a0,%usp		|    user SP
-	moveml	%sp@+,#0x7FFF		|  load most registers (all but SSP)
-	addql	#8,%sp			|  pop SSP and stack adjust count
-	rte
+	jra	_C_LABEL(main)		| main() (never returns)
 
 /*
  * Primitives
@@ -1050,47 +540,6 @@ ENTRY(qsetjmp)
 	movl	%sp,%a0@+		|  save SP
 	movl	%sp@,%a0@		|  and return address
 	moveq	#0,%d0			|  return 0
-	rts
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#define FPCOPROC
-#include <m68k/m68k/switch_subr.s>
-
-
-#if defined(M68040)
-ENTRY(suline)
-	movl	%sp@(4),%a0		| address to write
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	movl	#Lslerr,%a1@(PCB_ONFAULT) | where to return to on a fault
-	movl	%sp@(8),%a1		| address of line
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	moveq	#0,%d0			| indicate no fault
-	jra	Lsldone
-Lslerr:
-	moveq	#-1,%d0
-Lsldone:
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	clrl	%a1@(PCB_ONFAULT)	| clear fault address
-	rts
-#endif /* defined(M68040) */
-
-ENTRY(ecacheon)
-	rts
-
-ENTRY(ecacheoff)
 	rts
 
 /*
@@ -1110,30 +559,10 @@ ENTRY(probeva)
 	rts
 
 /*
- * Set processor priority level calls.  Most are implemented with
- * inline asm expansions.  However, spl0 requires special handling
- * as we need to check for our emulated software interrupts.
- */
-
-ENTRY(spl0)
-	moveq	#0,%d0
-	movw	%sr,%d0			|  get old SR for return
-	movw	#PSL_LOWIPL,%sr		|  restore new SR
-	tstb	_C_LABEL(ssir)		|  software interrupt pending?
-	jeq	Lspldone		|  no, all done
-	subql	#4,%sp			|  make room for RTE frame
-	movl	%sp@(4),%sp@(2)		|  position return address
-	clrw	%sp@(6)			|  set frame type 0
-	movw	#PSL_LOWIPL,%sp@	|  and new SR
-	jra	Lgotsir			|  go handle it
-Lspldone:
-	rts
-
-/*
  * Handle the nitty-gritty of rebooting the machine.
  *
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movl	#CACHE_OFF,%d0
 	cmpl	#MMU_68040,_C_LABEL(mmutype) |  is it 68040?
 	jne	Ldoboot0
@@ -1202,14 +631,13 @@ Ldorebootend:
 	.data
 	.p2align 2
 	.space	PAGE_SIZE
-ASLOCAL(tmpstk)
+ASGLOBAL(tmpstk)
 
 #ifdef M68060 /* XXX */
 L60iem:		.long	0
 L60fpiem:	.long	0
 L60fpdem:	.long	0
 L60fpeaem:	.long	0
-L60bpe:		.long	0
 #endif
 #ifdef DEBUG
 

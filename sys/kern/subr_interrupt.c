@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_interrupt.c,v 1.5 2021/12/10 20:36:04 andvar Exp $	*/
+/*	$NetBSD: subr_interrupt.c,v 1.5.10.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,24 +27,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.5 2021/12/10 20:36:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_interrupt.c,v 1.5.10.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/errno.h>
-#include <sys/cpu.h>
-#include <sys/interrupt.h>
-#include <sys/intr.h>
-#include <sys/kcpuset.h>
-#include <sys/kmem.h>
-#include <sys/proc.h>
-#include <sys/xcall.h>
-#include <sys/sysctl.h>
+#include <sys/types.h>
 
 #include <sys/conf.h>
+#include <sys/cpu.h>
+#include <sys/errno.h>
+#include <sys/interrupt.h>
+#include <sys/intr.h>
 #include <sys/intrio.h>
 #include <sys/kauth.h>
+#include <sys/kcpuset.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <machine/limits.h>
 
@@ -91,7 +93,7 @@ interrupt_shield(u_int cpu_idx, int shield)
 
 	ci = cpu_lookup(cpu_idx);
 	if (ci == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	spc = &ci->ci_schedstate;
 	if (shield == UNSET_NOINTR_SHIELD) {
@@ -133,7 +135,7 @@ interrupt_avert_intr(u_int cpu_idx)
 
 	ii_handler = interrupt_construct_intrids(cpuset);
 	if (ii_handler == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 	nids = ii_handler->iih_nids;
@@ -146,7 +148,7 @@ interrupt_avert_intr(u_int cpu_idx)
 	kcpuset_clear(cpuset, cpu_idx);
 	if (kcpuset_iszero(cpuset)) {
 		DPRINTF(("%s: no available cpu\n", __func__));
-		error = ENOENT;
+		error = SET_ERROR(ENOENT);
 		goto destruct_out;
 	}
 
@@ -193,7 +195,7 @@ interrupt_intrio_list_size(size_t *ilsize)
 	/* il_line body */
 	ii_handler = interrupt_construct_intrids(kcpuset_running);
 	if (ii_handler == NULL)
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 	*ilsize += interrupt_intrio_list_line_size() * ii_handler->iih_nids;
 
 	interrupt_destruct_intrids(ii_handler);
@@ -227,7 +229,7 @@ interrupt_intrio_list(struct intrio_list *il, size_t ilsize)
 	if (ii_handler == NULL) {
 		DPRINTF(("%s: interrupt_construct_intrids() failed\n",
 		    __func__));
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -238,7 +240,7 @@ interrupt_intrio_list(struct intrio_list *il, size_t ilsize)
 	if (ilsize < sizeof(struct intrio_list) + line_size * nids) {
 		DPRINTF(("%s: interrupts are added during execution.\n",
 		    __func__));
-		error = EAGAIN;
+		error = SET_ERROR(EAGAIN);
 		goto destruct_out;
 	}
 
@@ -291,7 +293,7 @@ interrupt_intrio_list_sysctl(SYSCTLFN_ARGS)
 	size_t ilsize;
 
 	if (oldlenp == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((error = interrupt_intrio_list_size(&ilsize)) != 0)
 		return error;
@@ -310,7 +312,7 @@ interrupt_intrio_list_sysctl(SYSCTLFN_ARGS)
 	 * size and the contents of intrctl list data.
 	 */
 	if (*oldlenp < ilsize)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	buf = kmem_zalloc(ilsize, KM_SLEEP);
 	if ((error = interrupt_intrio_list(buf, ilsize)) != 0)
@@ -337,7 +339,7 @@ interrupt_set_affinity_sysctl(SYSCTLFN_ARGS)
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_INTR,
 	    KAUTH_REQ_SYSTEM_INTR_AFFINITY, NULL, NULL, NULL);
 	if (error)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	node = *rnode;
 	iset = (struct intrio_set *)node.sysctl_data;
@@ -352,7 +354,7 @@ interrupt_set_affinity_sysctl(SYSCTLFN_ARGS)
 	if (error)
 		goto out;
 	if (kcpuset_iszero(kcpuset)) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -379,7 +381,7 @@ interrupt_intr_sysctl(SYSCTLFN_ARGS)
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CPU,
 	    KAUTH_REQ_SYSTEM_CPU_SETSTATE, NULL, NULL, NULL);
 	if (error)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	node = *rnode;
 	iset = (struct intrio_set *)node.sysctl_data;
@@ -394,7 +396,7 @@ interrupt_intr_sysctl(SYSCTLFN_ARGS)
 	if (error)
 		goto out;
 	if (kcpuset_iszero(kcpuset)) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -425,7 +427,7 @@ interrupt_nointr_sysctl(SYSCTLFN_ARGS)
 	error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CPU,
 	    KAUTH_REQ_SYSTEM_CPU_SETSTATE, NULL, NULL, NULL);
 	if (error)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	node = *rnode;
 	iset = (struct intrio_set *)node.sysctl_data;
@@ -440,7 +442,7 @@ interrupt_nointr_sysctl(SYSCTLFN_ARGS)
 	if (error)
 		goto out;
 	if (kcpuset_iszero(kcpuset)) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 

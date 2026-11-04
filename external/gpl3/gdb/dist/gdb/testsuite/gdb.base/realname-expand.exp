@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,8 +41,9 @@ gdb_test_no_output "set basenames-may-differ on"
 
 gdb_test "rbreak realname-expand-real.c:func" \
     [multi_line "" \
-		"Breakpoint 1 at $hex: file \[^\r\n\]*/realname-expand-link\\.c, line $decimal\\." \
-		"void func\\(void\\);"]
+	 "Breakpoint 1 at $hex: file \[^\r\n\]*/realname-expand-link\\.c, line $decimal\\." \
+	 "void func\\(void\\);" \
+	 "Successfully created breakpoint 1."]
 
 delete_breakpoints
 

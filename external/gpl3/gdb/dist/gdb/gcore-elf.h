@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
 
 /* This file contains generic functions for writing ELF based core files.  */
 
-#if !defined (GCORE_ELF_H)
-#define GCORE_ELF_H 1
+#ifndef GDB_GCORE_ELF_H
+#define GDB_GCORE_ELF_H
 
 #include "gdb_bfd.h"
 #include "gdbsupport/gdb_signals.h"
@@ -45,4 +45,4 @@ extern void gcore_elf_make_tdesc_note
   (struct gdbarch *gdbarch, bfd *obfd,
    gdb::unique_xmalloc_ptr<char> *note_data, int *note_size);
 
-#endif /* GCORE_ELF_H */
+#endif /* GDB_GCORE_ELF_H */

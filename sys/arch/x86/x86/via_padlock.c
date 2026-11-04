@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.35 2022/05/22 11:39:27 riastradh Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.35.10.1 2026/11/04 23:21:33 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.35 2022/05/22 11:39:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.35.10.1 2026/11/04 23:21:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -37,7 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.35 2022/05/22 11:39:27 riastradh E
 #include <machine/cpufunc.h>
 #include <machine/cpuvar.h>
 
-#include <crypto/aes/aes_bear.h>
+#include <crypto/aes/aes_keysched.h>
 
 #include <opencrypto/cryptodev.h>
 #include <opencrypto/cryptosoft.h>
@@ -133,7 +133,8 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 	struct via_padlock_session *ses = NULL;
 	const struct swcr_auth_hash *axf;
 	struct swcr_data *swd;
-	int sesn, i, cw0;
+	int sesn, cw0;
+	unsigned int i;
 
 	if (sc->sc_sessions == NULL) {
 		ses = sc->sc_sessions = malloc(sizeof(*ses), M_DEVBUF,
@@ -176,23 +177,28 @@ via_padlock_crypto_newsession(void *arg, uint32_t *sidp, struct cryptoini *cri)
 
 			switch (c->cri_klen) {
 			case 128:
-				br_aes_ct_keysched_stdenc(ses->ses_ekey,
+				/*
+				 * XXX Is this needed?  For AES-128 the
+				 * VIA padlock instructions usually
+				 * compute the key schedule internally.
+				 */
+				aes_keysched_enc(ses->ses_ekey,
 				    c->cri_key, 16);
-				br_aes_ct_keysched_stddec(ses->ses_dkey,
+				aes_keysched_dec(ses->ses_dkey,
 				    c->cri_key, 16);
 				cw0 = C3_CRYPT_CWLO_KEY128;
 				break;
 			case 192:
-				br_aes_ct_keysched_stdenc(ses->ses_ekey,
+				aes_keysched_enc(ses->ses_ekey,
 				    c->cri_key, 24);
-				br_aes_ct_keysched_stddec(ses->ses_dkey,
+				aes_keysched_dec(ses->ses_dkey,
 				    c->cri_key, 24);
 				cw0 = C3_CRYPT_CWLO_KEY192;
 				break;
 			case 256:
-				br_aes_ct_keysched_stdenc(ses->ses_ekey,
+				aes_keysched_enc(ses->ses_ekey,
 				    c->cri_key, 32);
-				br_aes_ct_keysched_stddec(ses->ses_dkey,
+				aes_keysched_dec(ses->ses_dkey,
 				    c->cri_key, 32);
 				cw0 = C3_CRYPT_CWLO_KEY256;
 				break;

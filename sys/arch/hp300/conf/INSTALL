@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.71.2.1 2025/08/02 05:55:37 perseant Exp $
+# $NetBSD: INSTALL,v 1.71.2.2 2026/11/04 23:20:38 perseant Exp $
 #
 # INSTALL machine description file
 #
@@ -10,7 +10,7 @@ include 	"arch/hp300/conf/std.hp300"
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
 # Optimize for space.
-makeoptions	COPTS="-Os -fno-unwind-tables"
+makeoptions	COPTS="-Os"
 
 maxusers	8		# estimated number of users
 
@@ -38,7 +38,6 @@ options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
-options 	FPSP		# floating point interface for 68040
 #options 	FPU_EMULATE	# software fpu emulation for MC68030
 
 # Standard system options

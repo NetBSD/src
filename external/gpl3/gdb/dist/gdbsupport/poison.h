@@ -1,6 +1,6 @@
 /* Poison symbols at compile time.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_POISON_H
-#define COMMON_POISON_H
+#ifndef GDBSUPPORT_POISON_H
+#define GDBSUPPORT_POISON_H
 
 #include "traits.h"
 #include "obstack.h"
@@ -183,7 +183,7 @@ xnewvar (size_t s)
 {
   static_assert (IsMallocable<T>::value, "Trying to use XNEWVAR with a \
 non-POD data type.");
-  return XNEWVAR (T, s);;
+  return XNEWVAR (T, s);
 }
 
 #undef XNEWVAR
@@ -237,4 +237,4 @@ non-POD data type.");
 #undef XOBNEWVEC
 #define XOBNEWVEC(O, T, N) xobnewvec<T> (O, N)
 
-#endif /* COMMON_POISON_H */
+#endif /* GDBSUPPORT_POISON_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: nid_104.c,v 1.8.2.1 2025/08/02 05:53:44 perseant Exp $	*/
+/*	$NetBSD: nid_104.c,v 1.8.2.2 2026/11/04 23:18:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,12 +149,12 @@ tostruct_nid(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	nid->common.rdclass = rdata->rdclass;
-	nid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nid->common, link);
+	DNS_RDATACOMMON_INIT(nid, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	nid->pref = uint16_fromregion(&region);
+	isc_region_consume(&region, 2);
+	INSIST(region.length == sizeof(nid->nid));
 	memmove(nid->nid, region.base, region.length);
 	return ISC_R_SUCCESS;
 }

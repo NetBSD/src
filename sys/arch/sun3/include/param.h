@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62 2021/05/31 14:38:56 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.62.18.1 2026/11/04 23:21:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -59,11 +59,7 @@
 #ifdef MSGBUFSIZE
 #error "MSGBUFSIZE is not user-adjustable for this arch"
 #endif
-#define MSGBUFOFF	0
 #define MSGBUFSIZE	(NBPG)
-
-/* This is needed by ps (actually USPACE). */
-#define	UPAGES		2		/* pages of u-area */
 
 #ifdef	_SUN3_
 #include <machine/param3.h>
@@ -85,10 +81,6 @@
 
 extern const vaddr_t kernbase;
 extern const vaddr_t kern_end;
-
-extern void _delay(unsigned);
-#define delay(us)	_delay((us)<<8)
-#define	DELAY(n)	delay(n)
 
 #endif	/* _KERNEL && !_LOCORE */
 #endif	/* !_MACHINE_PARAM_H_ */

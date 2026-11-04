@@ -1,4 +1,4 @@
-#	$NetBSD: files.sun3,v 1.83 2018/12/19 13:57:50 maxv Exp $
+#	$NetBSD: files.sun3,v 1.83.36.1 2026/11/04 23:21:25 perseant Exp $
 
 #
 # sun3-specific configuration info
@@ -18,7 +18,7 @@ file arch/sun3/sun3/enable.c			_sun3_
 file arch/sun3/sun3/locore2.c			_sun3_
 file arch/sun3/sun3/machdep.c			_sun3_
 file arch/sun3/sun3/mm_md.c			_sun3_
-file arch/sun3/sun3/pmap.c			_sun3_
+file arch/sun68k/sun68k/pmap_sunmmu.c		_sun3_
 
 # Standard stuff (Sun3X-specific)
 file arch/sun3/sun3x/bus_subr.c			_sun3x_
@@ -32,16 +32,8 @@ file arch/sun3/sun3x/pmap.c			_sun3x_
 # Standard stuff (common to Sun3 and Sun3X)
 file arch/sun3/sun3/autoconf.c
 file arch/sun3/sun3/db_machdep.c		ddb
-file arch/sun3/sun3/db_memrw.c			ddb | kgdb
-file arch/sun3/sun3/fpu_machdep.c
 file arch/sun3/sun3/leds.c
 file arch/sun3/sun3/sunmon.c
-file arch/sun3/sun3/sys_machdep.c
-file arch/sun3/sun3/trap.c
-file arch/m68k/m68k/cacheops.c			_sun3x_
-file arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
-
-include "arch/m68k/fpe/files.fpe"
 
 # Console support
 #file arch/sun3/sun3/cninit.c
@@ -205,13 +197,13 @@ file arch/sun3/dev/cg2.c		cgtwo needs-flag
 
 device	xyc {drive = -1}
 attach	xyc at vme
-device	xy: disk
+device	xy: disk, bad144
 attach	xy at xyc
 file	arch/sun3/dev/xy.c		xy | xyc needs-flag
 
 device	xdc {drive = -1}
 attach	xdc at vme
-device	xd: disk
+device	xd: disk, bad144
 attach	xd at xdc
 file	arch/sun3/dev/xd.c		xd | xdc needs-flag
 
@@ -245,23 +237,5 @@ file dev/sun/ms.c			ms needs-flag
 
 # Memory Disk for boot tape
 file dev/md_root.c			memory_disk_hooks
-
-
-# Compatibility modules
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c	compat_linux
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 include "arch/sun3/conf/majors.sun3"

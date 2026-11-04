@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,10 +22,7 @@ if {![istarget *-*-linux*]} {
 }
 
 # Support for XML-output is needed to run this test.
-if {[gdb_skip_xml_test]} {
-    unsupported "info-os.exp"
-    return -1
-}
+require allow_xml_test
 
 # Compile test program.
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile {debug pthreads}] } {

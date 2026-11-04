@@ -278,7 +278,7 @@ bool CFI_Parser<A, R>::parseCIE(A &addressSpace, pint_t cie,
   return true;
 }
 
-/// "Run" the dwarf instructions and create the abstact PrologInfo for an FDE.
+/// "Run" the dwarf instructions and create the abstract PrologInfo for an FDE.
 template <typename A, typename R>
 bool CFI_Parser<A, R>::parseFDEInstructions(A &addressSpace,
                                             const FDE_Info &fdeInfo,

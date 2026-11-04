@@ -1,6 +1,6 @@
 /* GDB routines for manipulating objfiles.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -34,7 +34,6 @@
 #include <sys/stat.h>
 #include <fcntl.h>
 #include "gdbsupport/gdb_obstack.h"
-#include "hashtab.h"
 
 #include "breakpoint.h"
 #include "block.h"
@@ -153,39 +152,6 @@ set_objfile_main_name (struct objfile *objfile,
   objfile->per_bfd->language_of_main = lang;
 }
 
-/* Helper structure to map blocks to static link properties in hash tables.  */
-
-struct static_link_htab_entry
-{
-  const struct block *block;
-  const struct dynamic_prop *static_link;
-};
-
-/* Return a hash code for struct static_link_htab_entry *P.  */
-
-static hashval_t
-static_link_htab_entry_hash (const void *p)
-{
-  const struct static_link_htab_entry *e
-    = (const struct static_link_htab_entry *) p;
-
-  return htab_hash_pointer (e->block);
-}
-
-/* Return whether P1 an P2 (pointers to struct static_link_htab_entry) are
-   mappings for the same block.  */
-
-static int
-static_link_htab_entry_eq (const void *p1, const void *p2)
-{
-  const struct static_link_htab_entry *e1
-    = (const struct static_link_htab_entry *) p1;
-  const struct static_link_htab_entry *e2
-    = (const struct static_link_htab_entry *) p2;
-
-  return e1->block == e2->block;
-}
-
 /* Register STATIC_LINK as the static link for BLOCK, which is part of OBJFILE.
    Must not be called more than once for each BLOCK.  */
 
@@ -194,25 +160,10 @@ objfile_register_static_link (struct objfile *objfile,
 			      const struct block *block,
 			      const struct dynamic_prop *static_link)
 {
-  void **slot;
-  struct static_link_htab_entry lookup_entry;
-  struct static_link_htab_entry *entry;
-
-  if (objfile->static_links == NULL)
-    objfile->static_links.reset (htab_create_alloc
-      (1, &static_link_htab_entry_hash, static_link_htab_entry_eq, NULL,
-       xcalloc, xfree));
-
-  /* Create a slot for the mapping, make sure it's the first mapping for this
-     block and then create the mapping itself.  */
-  lookup_entry.block = block;
-  slot = htab_find_slot (objfile->static_links.get (), &lookup_entry, INSERT);
-  gdb_assert (*slot == NULL);
-
-  entry = XOBNEW (&objfile->objfile_obstack, static_link_htab_entry);
-  entry->block = block;
-  entry->static_link = static_link;
-  *slot = (void *) entry;
+  /* Enter the mapping and make sure it's the first mapping for this
+     block.  */
+  bool inserted = objfile->static_links.emplace (block, static_link).second;
+  gdb_assert (inserted);
 }
 
 /* Look for a static link for BLOCK, which is part of OBJFILE.  Return NULL if
@@ -222,19 +173,11 @@ const struct dynamic_prop *
 objfile_lookup_static_link (struct objfile *objfile,
 			    const struct block *block)
 {
-  struct static_link_htab_entry *entry;
-  struct static_link_htab_entry lookup_entry;
+  if (auto iter = objfile->static_links.find (block);
+      iter != objfile->static_links.end ())
+    return iter->second;
 
-  if (objfile->static_links == NULL)
-    return NULL;
-  lookup_entry.block = block;
-  entry = ((struct static_link_htab_entry *)
-	   htab_find (objfile->static_links.get (), &lookup_entry));
-  if (entry == NULL)
-    return NULL;
-
-  gdb_assert (entry->block == block);
-  return entry->static_link;
+  return nullptr;
 }
 
 
@@ -246,7 +189,7 @@ objfile_lookup_static_link (struct objfile *objfile,
 
 static void
 add_to_objfile_sections (struct bfd *abfd, struct bfd_section *asect,
-			      struct objfile *objfile, int force)
+			 struct objfile *objfile, int force)
 {
   struct obj_section *section;
 
@@ -306,9 +249,10 @@ build_objfile_section_table (struct objfile *objfile)
    requests for specific operations.  Other bits like OBJF_SHARED are
    simply copied through to the new objfile flags member.  */
 
-objfile::objfile (gdb_bfd_ref_ptr bfd_, const char *name, objfile_flags flags_)
+objfile::objfile (gdb_bfd_ref_ptr bfd_, program_space *pspace,
+		  const char *name, objfile_flags flags_)
   : flags (flags_),
-    pspace (current_program_space),
+    m_pspace (pspace),
     obfd (std::move (bfd_))
 {
   const char *expanded_name;
@@ -336,7 +280,7 @@ objfile::objfile (gdb_bfd_ref_ptr bfd_, const char *name, objfile_flags flags_)
 
   if (obfd != nullptr)
     {
-      mtime = bfd_get_mtime (obfd.get ());
+      mtime = gdb_bfd_get_mtime (obfd.get ());
 
       /* Build section table.  */
       build_objfile_section_table (this);
@@ -345,13 +289,12 @@ objfile::objfile (gdb_bfd_ref_ptr bfd_, const char *name, objfile_flags flags_)
   set_objfile_per_bfd (this);
 }
 
-/* If there is a valid and known entry point, function fills *ENTRY_P with it
-   and returns non-zero; otherwise it returns zero.  */
+/* See objfiles.h.  */
 
 int
-entry_point_address_query (CORE_ADDR *entry_p)
+entry_point_address_query (program_space *pspace, CORE_ADDR *entry_p)
 {
-  objfile *objf = current_program_space->symfile_object_file;
+  objfile *objf = pspace->symfile_object_file;
   if (objf == NULL || !objf->per_bfd->ei.entry_point_p)
     return 0;
 
@@ -361,14 +304,14 @@ entry_point_address_query (CORE_ADDR *entry_p)
   return 1;
 }
 
-/* Get current entry point address.  Call error if it is not known.  */
+/* See objfiles.h.  */
 
 CORE_ADDR
-entry_point_address (void)
+entry_point_address (program_space *pspace)
 {
   CORE_ADDR retval;
 
-  if (!entry_point_address_query (&retval))
+  if (!entry_point_address_query (pspace, &retval))
     error (_("Entry point address is not known."));
 
   return retval;
@@ -442,18 +385,17 @@ add_separate_debug_objfile (struct objfile *objfile, struct objfile *parent)
 /* See objfiles.h.  */
 
 objfile *
-objfile::make (gdb_bfd_ref_ptr bfd_, const char *name_, objfile_flags flags_,
-	       objfile *parent)
+objfile::make (gdb_bfd_ref_ptr bfd_, program_space *pspace, const char *name_,
+	       objfile_flags flags_, objfile *parent)
 {
-  objfile *result = new objfile (std::move (bfd_), name_, flags_);
+  objfile *result = new objfile (std::move (bfd_), pspace, name_, flags_);
   if (parent != nullptr)
     add_separate_debug_objfile (result, parent);
 
-  current_program_space->add_objfile (std::unique_ptr<objfile> (result),
-				      parent);
+  pspace->add_objfile (std::unique_ptr<objfile> (result), parent);
 
   /* Rebuild section map next time we need it.  */
-  get_objfile_pspace_data (current_program_space)->new_objfiles_available = 1;
+  get_objfile_pspace_data (pspace)->new_objfiles_available = 1;
 
   return result;
 }
@@ -463,7 +405,7 @@ objfile::make (gdb_bfd_ref_ptr bfd_, const char *name_, objfile_flags flags_,
 void
 objfile::unlink ()
 {
-  current_program_space->remove_objfile (this);
+  this->pspace ()->remove_objfile (this);
 }
 
 /* Free all separate debug objfile of OBJFILE, but don't free OBJFILE
@@ -530,6 +472,8 @@ objfile::~objfile ()
   /* It still may reference data modules have associated with the objfile and
      the symbol file data.  */
   forget_cached_source_info ();
+  for (compunit_symtab *cu : compunits ())
+    cu->finalize ();
 
   breakpoint_free_objfile (this);
   btrace_free_objfile (this);
@@ -557,16 +501,12 @@ objfile::~objfile ()
 
   /* Check to see if the current_source_symtab belongs to this objfile,
      and if so, call clear_current_source_symtab_and_line.  */
-
-  {
-    struct symtab_and_line cursal = get_current_source_symtab_and_line ();
-
-    if (cursal.symtab && cursal.symtab->compunit ()->objfile () == this)
-      clear_current_source_symtab_and_line ();
-  }
+  clear_current_source_symtab_and_line (this);
 
   /* Rebuild section map next time we need it.  */
-  get_objfile_pspace_data (pspace)->section_map_dirty = 1;
+  auto info = objfiles_pspace_data.get (pspace ());
+  if (info != nullptr)
+    info->section_map_dirty = 1;
 }
 
 
@@ -581,8 +521,8 @@ relocate_one_symbol (struct symbol *sym, struct objfile *objfile,
      any symbols in STRUCT_DOMAIN or UNDEF_DOMAIN.
      But I'm leaving out that test, on the theory that
      they can't possibly pass the tests below.  */
-  if ((sym->aclass () == LOC_LABEL
-       || sym->aclass () == LOC_STATIC)
+  if ((sym->loc_class () == LOC_LABEL
+       || sym->loc_class () == LOC_STATIC)
       && sym->section_index () >= 0)
     sym->set_value_address (sym->value_address ()
 			    + delta[sym->section_index ()]);
@@ -644,15 +584,15 @@ objfile_relocate1 (struct objfile *objfile,
     objfile->section_offsets[i] = new_offsets[i];
 
   /* Rebuild section map next time we need it.  */
-  get_objfile_pspace_data (objfile->pspace)->section_map_dirty = 1;
+  get_objfile_pspace_data (objfile->pspace ())->section_map_dirty = 1;
 
   /* Update the table in exec_ops, used to read memory.  */
-  for (obj_section *s : objfile->sections ())
+  for (obj_section &s : objfile->sections ())
     {
-      int idx = s - objfile->sections_start;
+      int idx = &s - objfile->sections_start;
 
       exec_set_section_address (bfd_get_filename (objfile->obfd.get ()), idx,
-				s->addr ());
+				s.addr ());
     }
 
   /* Data changed.  */
@@ -729,67 +669,58 @@ objfile_rebase (struct objfile *objfile, CORE_ADDR slide)
   if (changed)
     breakpoint_re_set ();
 }
-
-/* Return non-zero if OBJFILE has full symbols.  */
 
-int
-objfile_has_full_symbols (struct objfile *objfile)
+/* See objfiles.h.  */
+
+bool
+objfile::has_full_symbols ()
 {
-  return objfile->compunit_symtabs != NULL;
+  return this->compunit_symtabs != nullptr;
 }
 
-/* Return non-zero if OBJFILE has full or partial symbols, either directly
-   or through a separate debug file.  */
+/* See objfiles.h.  */
 
-int
-objfile_has_symbols (struct objfile *objfile)
+bool
+objfile::has_symbols ()
 {
-  for (::objfile *o : objfile->separate_debug_objfiles ())
-    if (o->has_partial_symbols () || objfile_has_full_symbols (o))
-      return 1;
-  return 0;
+  for (::objfile *o : this->separate_debug_objfiles ())
+    if (o->has_partial_symbols () || o->has_full_symbols ())
+      return true;
+
+  return false;
 }
 
+/* See objfiles.h.  */
 
-/* Many places in gdb want to test just to see if we have any partial
-   symbols available.  This function returns zero if none are currently
-   available, nonzero otherwise.  */
-
-int
-have_partial_symbols (void)
+bool
+have_partial_symbols (program_space *pspace)
 {
-  for (objfile *ofp : current_program_space->objfiles ())
-    {
-      if (ofp->has_partial_symbols ())
-	return 1;
-    }
-  return 0;
+  for (objfile *ofp : pspace->objfiles ())
+    if (ofp->has_partial_symbols ())
+      return true;
+
+  return false;
 }
 
-/* Many places in gdb want to test just to see if we have any full
-   symbols available.  This function returns zero if none are currently
-   available, nonzero otherwise.  */
+/* See objfiles.h.  */
 
-int
-have_full_symbols (void)
+bool
+have_full_symbols (program_space *pspace)
 {
-  for (objfile *ofp : current_program_space->objfiles ())
-    {
-      if (objfile_has_full_symbols (ofp))
-	return 1;
-    }
-  return 0;
+  for (objfile *ofp : pspace->objfiles ())
+    if (ofp->has_full_symbols ())
+      return true;
+
+  return false;
 }
 
 
-/* This operations deletes all objfile entries that represent solibs that
-   weren't explicitly loaded by the user, via e.g., the add-symbol-file
-   command.  */
+/* See objfiles.h.  */
 
 void
-objfile_purge_solibs (void)
+objfile_purge_solibs (program_space *pspace)
 {
-  for (objfile *objf : current_program_space->objfiles_safe ())
+  for (objfile *objf : pspace->objfiles_safe ())
     {
       /* We assume that the solib package has been purged already, or will
 	 be soon.  */
@@ -799,22 +730,16 @@ objfile_purge_solibs (void)
     }
 }
 
+/* See objfiles.h.  */
 
-/* Many places in gdb want to test just to see if we have any minimal
-   symbols available.  This function returns zero if none are currently
-   available, nonzero otherwise.  */
-
-int
-have_minimal_symbols (void)
+bool
+have_minimal_symbols (program_space *pspace)
 {
-  for (objfile *ofp : current_program_space->objfiles ())
-    {
-      if (ofp->per_bfd->minimal_symbol_count > 0)
-	{
-	  return 1;
-	}
-    }
-  return 0;
+  for (objfile *ofp : pspace->objfiles ())
+    if (ofp->per_bfd->minimal_symbol_count > 0)
+      return true;
+
+  return false;
 }
 
 /* Qsort comparison function.  */
@@ -865,10 +790,10 @@ sort_cmp (const struct obj_section *sect1, const obj_section *sect2)
 	     second case shouldn't occur during normal use, but std::sort
 	     does check that '!(a < a)' when compiled in debug mode.  */
 
-	  for (const obj_section *osect : objfile1->sections ())
-	    if (osect == sect2)
+	  for (const obj_section &osect : objfile1->sections ())
+	    if (&osect == sect2)
 	      return false;
-	    else if (osect == sect1)
+	    else if (&osect == sect1)
 	      return true;
 
 	  /* We should have found one of the sections before getting here.  */
@@ -1069,8 +994,8 @@ update_section_map (struct program_space *pspace,
 
   alloc_size = 0;
   for (objfile *objfile : pspace->objfiles ())
-    for (obj_section *s : objfile->sections ())
-      if (insert_section_p (objfile->obfd.get (), s->the_bfd_section))
+    for (obj_section &s : objfile->sections ())
+      if (insert_section_p (objfile->obfd.get (), s.the_bfd_section))
 	alloc_size += 1;
 
   /* This happens on detach/attach (e.g. in gdb.base/attach.exp).  */
@@ -1085,9 +1010,9 @@ update_section_map (struct program_space *pspace,
 
   i = 0;
   for (objfile *objfile : pspace->objfiles ())
-    for (obj_section *s : objfile->sections ())
-      if (insert_section_p (objfile->obfd.get (), s->the_bfd_section))
-	map[i++] = s;
+    for (obj_section &s : objfile->sections ())
+      if (insert_section_p (objfile->obfd.get (), s.the_bfd_section))
+	map[i++] = &s;
 
   std::sort (map, map + alloc_size, sort_cmp);
   map_size = filter_debuginfo_sections(map, alloc_size);
@@ -1175,16 +1100,14 @@ pc_in_section (CORE_ADDR pc, const char *name)
 	  && s->the_bfd_section->name != nullptr
 	  && strcmp (s->the_bfd_section->name, name) == 0);
 }
-
 
-/* Set section_map_dirty so section map will be rebuilt next time it
-   is used.  Called by reread_symbols.  */
+/* See objfiles.h.  */
 
 void
-objfiles_changed (void)
+objfiles_changed (program_space *pspace)
 {
   /* Rebuild section map next time we need it.  */
-  get_objfile_pspace_data (current_program_space)->section_map_dirty = 1;
+  get_objfile_pspace_data (pspace)->section_map_dirty = 1;
 }
 
 /* See comments in objfiles.h.  */
@@ -1204,12 +1127,12 @@ is_addr_in_objfile (CORE_ADDR addr, const struct objfile *objfile)
   if (objfile == NULL)
     return false;
 
-  for (obj_section *osect : objfile->sections ())
+  for (obj_section &osect : objfile->sections ())
     {
-      if (section_is_overlay (osect) && !section_is_mapped (osect))
+      if (section_is_overlay (&osect) && !section_is_mapped (&osect))
 	continue;
 
-      if (osect->contains (addr))
+      if (osect.contains (addr))
 	return true;
     }
   return false;
@@ -1229,24 +1152,6 @@ shared_objfile_contains_address_p (struct program_space *pspace,
     }
 
   return false;
-}
-
-/* The default implementation for the "iterate_over_objfiles_in_search_order"
-   gdbarch method.  It is equivalent to use the objfiles iterable,
-   searching the objfiles in the order they are stored internally,
-   ignoring CURRENT_OBJFILE.
-
-   On most platforms, it should be close enough to doing the best
-   we can without some knowledge specific to the architecture.  */
-
-void
-default_iterate_over_objfiles_in_search_order
-  (gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
-   objfile *current_objfile)
-{
-  for (objfile *objfile : current_program_space->objfiles ())
-    if (cb (objfile))
-	return;
 }
 
 /* See objfiles.h.  */

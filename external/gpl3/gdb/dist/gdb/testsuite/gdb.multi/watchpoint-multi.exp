@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,6 +15,8 @@
 
 standard_testfile
 set executable ${testfile}
+
+require allow_multi_inferior_tests
 
 # Multiple inferiors are needed, therefore both native and extended gdbserver
 # modes are supported.  Only non-extended gdbserver is not supported.

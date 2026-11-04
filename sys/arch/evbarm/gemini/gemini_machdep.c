@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_machdep.c,v 1.35 2023/08/10 20:02:55 andvar Exp $	*/
+/*	$NetBSD: gemini_machdep.c,v 1.35.6.1 2026/11/04 23:20:28 perseant Exp $	*/
 
 /* adapted from:
  *	NetBSD: sdp24xx_machdep.c,v 1.4 2008/08/27 11:03:10 matt Exp
@@ -111,9 +111,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -129,7 +126,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.35 2023/08/10 20:02:55 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_machdep.c,v 1.35.6.1 2026/11/04 23:20:28 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -363,7 +360,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-	cnpollc(1);
+	cnpollc(true);
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

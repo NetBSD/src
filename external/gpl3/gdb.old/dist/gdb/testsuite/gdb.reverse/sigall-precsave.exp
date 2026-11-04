@@ -1,4 +1,4 @@
-#   Copyright 2009-2023 Free Software Foundation, Inc.
+#   Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,19 +13,9 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping sigall-precsave.exp because of nosignals."
-    return
-}
+require {!target_info exists gdb,nosignals}
 
-if ![supports_reverse] {
-    return
-}
-
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+require supports_reverse
 
 standard_testfile sigall-reverse.c
 set precsave [standard_output_file sigall.precsave]
@@ -138,7 +128,7 @@ proc test_one_sig_reverse {prevsig} {
 		xfail "$testmsg (handled)"
 	    }
 	}
-	-re "No more reverse-execution history.*kill.*$gdb_prompt " {
+	-re "Reached end of recorded history.*Backward execution.*kill.*$gdb_prompt " {
 	    if {$saw_signal} {
 		pass "$testmsg (handled)"
 	    } else {
@@ -148,7 +138,7 @@ proc test_one_sig_reverse {prevsig} {
     }
 }
 
-gdb_load $binfile
+clean_restart $binfile
 
 runto gen_ABRT
 
@@ -165,7 +155,7 @@ gdb_test "break $breakloc" \
     "breakpoint at end of main"
 
 # Signal handlers must be disabled
-gdb_test "handle all nostop noprint"
+gdb_test_lines "handle all nostop noprint" "" ""
 
 # The list of signals that the program generates, in the order they
 # are generated.
@@ -286,7 +276,7 @@ gdb_test "record restore $precsave" \
     "reload precord save file"
 
 # Signal handlers must be re-enabled
-gdb_test "handle all stop print"
+gdb_test_lines "handle all stop print" "" ""
 
 # Make the first signal SIGABRT because it is always supported.
 set sig_supported 1

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.58.1 2026/11/04 23:27:55 perseant Exp $
 
 .include "../Makefile.inc"
 
@@ -8,5 +8,7 @@ KMOD=	ld_sdmmc
 IOCONF=	ld_sdmmc.ioconf
 
 SRCS+=	ld_sdmmc.c
+
+WARNS=	3	# -Wsign-compare issues
 
 .include <bsd.kmodule.mk>

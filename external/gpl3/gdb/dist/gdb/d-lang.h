@@ -1,6 +1,6 @@
 /* D language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (D_LANG_H)
-#define D_LANG_H 1
+#ifndef GDB_D_LANG_H
+#define GDB_D_LANG_H
 
 #include "symtab.h"
 
@@ -84,4 +84,4 @@ extern void d_value_print_inner (struct value *val,
 				 struct ui_file *stream, int recurse,
 				 const struct value_print_options *options);
 
-#endif /* !defined (D_LANG_H) */
+#endif /* GDB_D_LANG_H */

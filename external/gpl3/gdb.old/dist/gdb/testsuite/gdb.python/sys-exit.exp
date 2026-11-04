@@ -1,0 +1,69 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that python sys.exit makes gdb exit, with the correct exit status.
+
+require allow_python_tests
+
+# Have this code in a proc avoids clashing with runtest variable exit_status.
+
+proc do_test { n {expected_exit_status ""} {msg ""}} {
+    if { $expected_exit_status == "" } {
+	set expected_exit_status $n
+    }
+
+    with_test_prefix $n {
+	clean_restart
+
+	# Regression test for PR python/31946.
+	set seen_message 0
+	gdb_test_multiple "python sys.exit ($n)" "python sys.exit" {
+	    -re "\r\n$msg\r\n" {
+		set seen_message 1
+		exp_continue
+	    }
+	    eof {
+		set wait_status [wait -i $::gdb_spawn_id]
+		clear_gdb_spawn_id
+
+		verbose -log "GDB process exited with wait status $wait_status"
+
+		set os_error [lindex $wait_status 2]
+		set exit_status [lindex $wait_status 3]
+
+		gdb_assert \
+		    { $os_error == 0 \
+			  && $exit_status == $expected_exit_status } \
+		    $gdb_test_name
+
+		if { $msg != "" } {
+		    gdb_assert { $seen_message }
+		}
+	    }
+	}
+    }
+}
+
+# Test sys.exit (<int>).
+do_test 0
+do_test 1
+do_test 2
+
+# Test sys.exit (None).
+do_test None 0
+
+# Test sys.exit (<string>).
+do_test {"Error Message"} 1 "Error Message"
+do_test {""} 1

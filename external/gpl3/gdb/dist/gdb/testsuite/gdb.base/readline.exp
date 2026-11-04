@@ -1,4 +1,4 @@
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #
 # Tests for readline operations.
 #
+
+require {!is_remote host}
 
 # This function is used to test operate-and-get-next.
 # NAME is the name of the test.
@@ -259,4 +261,46 @@ save_vars { env(TERM) } {
 		"All the characters transferred"
 	}
     }
+}
+
+# Test operate_and_get_next when selecting the last command.
+with_test_prefix "operate_and_get_next last command" {
+    clean_restart
+
+    # Expected output from echo 1\n.
+    set re1 \
+	[multi_line \
+	     "" \
+	     "1"]
+
+    # Expected output from echo 2\n.
+    set re2 \
+	[multi_line \
+	     "" \
+	     "2"]
+
+    # Enter command into history.
+    gdb_test {echo 1\n} $re1 \
+	"enter command"
+
+    # Recall command from history (Ctrl-r, 022), and do operate-and-get-next
+    # (Ctrl-o, 017).  There shouldn't be a prefill, but if there is one,
+    # prevent a possible timeout using -no-prompt-anchor.
+    send_gdb "\022echo 1\017"
+    gdb_test -no-prompt-anchor "" $re1 \
+	"recall command"
+
+    # Regression test for PR32485: Since we recalled the last command, there
+    # shouldn't be a prefil, so check that here.
+    # If there is no prefil, we simple have:
+    #   (gdb) echo 2\n^M
+    #   2^M
+    #   (gdb)
+    # If there is a prefil, we have:
+    #   (gdb) echo 1\necho 2\n^M
+    #   1^M
+    #   echo 2^M
+    #   (gdb)
+    gdb_test {echo 2\n} $re2 \
+	"no prefill"
 }

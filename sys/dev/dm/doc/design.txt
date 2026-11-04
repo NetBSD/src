@@ -326,7 +326,7 @@
  As SOC task I want to replace this structure with proplib dict. Proplib dict 
  basic structure should be:
 
- Note: I don't need data_star, data_size and use_space_addr. They are needed 
+ Note: I don't need data_start, data_size and use_space_addr. They are needed 
        for current implementation. 
 
        <dict>

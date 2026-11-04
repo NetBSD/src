@@ -1,4 +1,4 @@
-/*	$NetBSD: feature-test.c,v 1.12.2.1 2025/08/02 05:50:57 perseant Exp $	*/
+/*	$NetBSD: feature-test.c,v 1.12.2.2 2026/11/04 23:15:37 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,6 +40,7 @@ usage(void) {
 	fprintf(stderr, "usage: feature-test <arg>\n");
 	fprintf(stderr, "args:\n");
 	fprintf(stderr, "\t--edns-version\n");
+	fprintf(stderr, "\t--enable-developer\n");
 	fprintf(stderr, "\t--enable-dnsrps\n");
 	fprintf(stderr, "\t--enable-dnstap\n");
 	fprintf(stderr, "\t--enable-querytrace\n");
@@ -52,11 +53,9 @@ usage(void) {
 	fprintf(stderr, "\t--have-json-c\n");
 	fprintf(stderr, "\t--have-libxml2\n");
 	fprintf(stderr, "\t--have-openssl-cipher-suites\n");
-	fprintf(stderr, "\t--ipv6only=no\n");
 	fprintf(stderr, "\t--md5\n");
 	fprintf(stderr, "\t--rsasha1\n");
 	fprintf(stderr, "\t--tsan\n");
-	fprintf(stderr, "\t--with-dlz-filesystem\n");
 	fprintf(stderr, "\t--with-libidn2\n");
 	fprintf(stderr, "\t--with-lmdb\n");
 	fprintf(stderr, "\t--with-libnghttp2\n");
@@ -77,6 +76,14 @@ main(int argc, char **argv) {
 		printf("0\n");
 #endif /* ifdef DNS_EDNS_VERSION */
 		return 0;
+	}
+
+	if (strcmp(argv[1], "--enable-developer") == 0) {
+#ifdef DEVELOPER_MODE
+		return 0;
+#else  /* ifdef DEVELOPER_MODE */
+		return 1;
+#endif /* ifdef DEVELOPER_MODE */
 	}
 
 	if (strcmp(argv[1], "--enable-dnsrps") == 0) {
@@ -220,25 +227,6 @@ main(int argc, char **argv) {
 		return answer;
 	}
 
-	if (strcmp(argv[1], "--ipv6only=no") == 0) {
-#if defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY)
-		int s;
-		int n = -1;
-		int v6only = -1;
-		socklen_t len = sizeof(v6only);
-
-		s = socket(AF_INET6, SOCK_DGRAM, IPPROTO_UDP);
-		if (s >= 0) {
-			n = getsockopt(s, IPPROTO_IPV6, IPV6_V6ONLY,
-				       (void *)&v6only, &len);
-			close(s);
-		}
-		return (n == 0 && v6only == 0) ? 0 : 1;
-#else  /* defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY) */
-		return 1;
-#endif /* defined(IPPROTO_IPV6) && defined(IPV6_V6ONLY) */
-	}
-
 	if (strcasecmp(argv[1], "--rsasha1") == 0) {
 		int answer;
 		isc_mem_t *mctx = NULL;
@@ -248,14 +236,6 @@ main(int argc, char **argv) {
 		dst_lib_destroy();
 		isc_mem_detach(&mctx);
 		return answer;
-	}
-
-	if (strcmp(argv[1], "--with-dlz-filesystem") == 0) {
-#ifdef DLZ_FILESYSTEM
-		return 0;
-#else  /* ifdef DLZ_FILESYSTEM */
-		return 1;
-#endif /* ifdef DLZ_FILESYSTEM */
 	}
 
 	if (strcmp(argv[1], "--with-libidn2") == 0) {

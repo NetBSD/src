@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -19,6 +19,7 @@ require allow_shlib_tests
 standard_testfile
 set executable $testfile
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 
 set lib_opts debug

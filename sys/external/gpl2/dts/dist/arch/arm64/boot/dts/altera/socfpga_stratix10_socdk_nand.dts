@@ -7,6 +7,7 @@
 
 / {
 	model = "SoCFPGA Stratix 10 SoCDK";
+	compatible = "altr,socfpga-stratix10-socdk", "altr,socfpga-stratix10";
 
 	aliases {
 		serial0 = &uart0;
@@ -21,42 +22,36 @@
 
 	leds {
 		compatible = "gpio-leds";
-		hps0 {
+		led-hps0 {
 			label = "hps_led0";
 			gpios = <&portb 20 GPIO_ACTIVE_HIGH>;
 		};
 
-		hps1 {
+		led-hps1 {
 			label = "hps_led1";
 			gpios = <&portb 19 GPIO_ACTIVE_HIGH>;
 		};
 
-		hps2 {
+		led-hps2 {
 			label = "hps_led2";
 			gpios = <&portb 21 GPIO_ACTIVE_HIGH>;
 		};
 	};
 
-	memory {
+	memory@80000000 {
 		device_type = "memory";
 		/* We expect the bootloader to fill in the reg */
-		reg = <0 0 0 0>;
+		reg = <0 0x80000000 0 0>;
 	};
 
-	ref_033v: 033-v-ref {
+	ref_033v: regulator-v-ref {
 		compatible = "regulator-fixed";
 		regulator-name = "0.33V";
 		regulator-min-microvolt = <330000>;
 		regulator-max-microvolt = <330000>;
 	};
 
-	soc {
-		clocks {
-			osc1 {
-				clock-frequency = <25000000>;
-			};
-		};
-
+	soc@0 {
 		eccmgr {
 			sdmmca-ecc@ff8c8c00 {
 				compatible = "altr,socfpga-s10-sdmmc-ecc",
@@ -107,10 +102,10 @@
 &nand {
 	status = "okay";
 
-	flash@0 {
+	nand@0 {
+		reg = <0>;
 		#address-cells = <1>;
 		#size-cells = <1>;
-		reg = <0>;
 		nand-bus-width = <16>;
 
 		partition@0 {
@@ -119,30 +114,14 @@
 		};
 
 		partition@200000 {
-			label = "env";
-			reg = <0x200000 0x40000>;
-		};
-
-		partition@240000 {
-			label = "dtb";
-			reg = <0x240000 0x40000>;
-		};
-
-		partition@280000 {
-			label = "kernel";
-			reg = <0x280000 0x2000000>;
-		};
-
-		partition@2280000 {
-			label = "misc";
-			reg = <0x2280000 0x2000000>;
-		};
-
-		partition@4280000 {
-			label = "rootfs";
-			reg = <0x4280000 0x3bd80000>;
+			label = "root";
+			reg = <0x200000 0x3fe00000>;
 		};
 	};
+};
+
+&osc1 {
+	clock-frequency = <25000000>;
 };
 
 &uart0 {
@@ -162,7 +141,7 @@
 	status = "okay";
 	clock-frequency = <100000>;
 	i2c-sda-falling-time-ns = <890>;  /* hcnt */
-	i2c-sdl-falling-time-ns = <890>;  /* lcnt */
+	i2c-scl-falling-time-ns = <890>;  /* lcnt */
 
 	adc@14 {
 		compatible = "lltc,ltc2497";
@@ -190,15 +169,11 @@
 &qspi {
 	status = "okay";
 	flash@0 {
-		#address-cells = <1>;
-		#size-cells = <1>;
 		compatible = "micron,mt25qu02g", "jedec,spi-nor";
 		reg = <0>;
 		spi-max-frequency = <100000000>;
 
 		m25p,fast-read;
-		cdns,page-size = <256>;
-		cdns,block-size = <16>;
 		cdns,read-delay = <1>;
 		cdns,tshsl-ns = <50>;
 		cdns,tsd2d-ns = <50>;
@@ -215,7 +190,7 @@
 				reg = <0x0 0x03FE0000>;
 			};
 
-			qspi_rootfs: partition@3FE0000 {
+			qspi_rootfs: partition@3fe0000 {
 				label = "Root Filesystem - JFFS2";
 				reg = <0x03FE0000 0x0C020000>;
 			};

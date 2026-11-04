@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.31.2.1 2025/08/02 05:58:14 perseant Exp $	*/
+/*	$NetBSD: decl.c,v 1.31.2.2 2026/11/04 23:28:26 perseant Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -325,9 +325,9 @@ void static_function(change_logger);
 void no_prototype_declaration();
 void prototype_declaration(void);
 
-// TODO: Warn about the missing 'void', for C99 and later.
 void
 no_prototype_definition()
+/* expect+1: warning: function definition for 'no_prototype_definition' is not a prototype [286] */
 {
 }
 
@@ -335,3 +335,9 @@ void
 prototype_definition(void)
 {
 }
+
+/* These integer overflows in '<<' expressions are detected by KUBSAN. */
+/* expect+1: warning: constant -0x8000000000000000 too large for 'int' [56] */
+typedef int shl_overflow_positive[1LL << 32 << 31];
+/* expect+1: warning: constant -0x8000000000000000 too large for 'int' [56] */
+typedef int shl_overflow_negative[-1LL << 32 << 31];

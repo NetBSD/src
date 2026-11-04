@@ -1,5 +1,5 @@
 /* Run a function on the main thread
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,7 @@
 #include <thread>
 #include <mutex>
 #endif
+#include "gdbsupport/cleanups.h"
 #include "gdbsupport/event-loop.h"
 
 /* The serial event used when posting runnables.  */
@@ -74,7 +75,20 @@ run_events (int error, gdb_client_data client_data)
 	{
 	  item ();
 	}
-      catch (...)
+      catch (const gdb_exception_forced_quit &e)
+	{
+	  /* GDB is terminating, so:
+	     - make sure this is propagated, and
+	     - no need to keep running things, so propagate immediately.  */
+	  throw;
+	}
+      catch (const gdb_exception_quit &e)
+	{
+	  /* Should cancellation of a runnable event cancel the execution of
+	     the following one?  The answer is not clear, so keep doing what
+	     we've done so far: ignore this exception.  */
+	}
+      catch (const gdb_exception &)
 	{
 	  /* Ignore exceptions in the callback.  */
 	}
@@ -117,9 +131,7 @@ is_main_thread ()
 #endif
 }
 
-void _initialize_run_on_main_thread ();
-void
-_initialize_run_on_main_thread ()
+INIT_GDB_FILE (run_on_main_thread)
 {
 #if CXX_STD_THREAD
   /* The variable main_thread_id should be initialized when entering main, or

@@ -1,6 +1,6 @@
 /* Self tests for memory-map for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -75,9 +75,7 @@ parse_memory_map_tests ()
 
 #endif /* HAVE_LIBEXPAT */
 
-void _initialize_memory_map_selftests ();
-void
-_initialize_memory_map_selftests ()
+INIT_GDB_FILE (memory_map_selftests)
 {
 #if defined(HAVE_LIBEXPAT)
   selftests::register_test

@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.46 2023/02/04 14:34:28 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.46.2.1 2026/11/04 23:19:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.46 2023/02/04 14:34:28 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.46.2.1 2026/11/04 23:19:27 perseant Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -851,7 +851,7 @@ terminal_set(EditLine *el, const char *term)
 
 
 	if (term == NULL)
-		term = getenv("TERM");
+		term = (el->el_getenv)("TERM");
 
 	if (!term || !term[0])
 		term = "dumb";

@@ -1,6 +1,6 @@
 /* Target-dependent code for the GNU C Library (glibc).
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GLIBC_TDEP_H
-#define GLIBC_TDEP_H
+#ifndef GDB_GLIBC_TDEP_H
+#define GDB_GLIBC_TDEP_H
 
 struct gdbarch;
 
 extern CORE_ADDR glibc_skip_solib_resolver (struct gdbarch *gdbarch,
 					    CORE_ADDR);
 
-#endif /* glibc-tdep.h */
+#endif /* GDB_GLIBC_TDEP_H */

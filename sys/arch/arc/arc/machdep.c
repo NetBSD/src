@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.134 2024/03/05 14:15:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.134.2.1 2026/11/04 23:20:03 perseant Exp $	*/
 /*	$OpenBSD: machdep.c,v 1.36 1999/05/22 21:22:19 weingart Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134 2024/03/05 14:15:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.134.2.1 2026/11/04 23:20:03 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_ddbparam.h"
@@ -207,7 +207,7 @@ mach_init(int argc, char *argv[], u_int bim, void *bip)
 		ssym = (char *)bi_syms->ssym;
 		esym = (char *)bi_syms->esym;
 		kernend = (void *)mips_round_page(esym);
-#if 0	
+#if 0
 		/*
 		 * Don't clear BSS here since bi_buf[] is allocated in BSS
 		 * and it has been cleared by the bootloader in this case.
@@ -554,9 +554,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* for proper keyboard command handling */
+		cnpollc(true);	/* for proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n");

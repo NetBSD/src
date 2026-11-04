@@ -245,7 +245,7 @@ zalloc(long size)
 
 /* When a CNTRL-C occures, queue an event to shut down the simulation */
 
-static RETSIGTYPE
+static void
 cntrl_c(int sig)
 {
   psim_stop (simulation);
@@ -289,7 +289,7 @@ main(int argc, char * const *argv)
   psim_stack(simulation, argv, environ);
 
   {
-    RETSIGTYPE (*prev) ();
+    void (*prev) (int);
     prev = signal(SIGINT, cntrl_c);
     psim_run(simulation);
     signal(SIGINT, prev);

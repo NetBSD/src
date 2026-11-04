@@ -1,6 +1,6 @@
 /* Low level packing and unpacking of values for GDB, the GNU Debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +45,7 @@
 #include <utility>
 #include <vector>
 #include "completer.h"
+#include "gdbsupport/cleanups.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/array-view.h"
 #include "cli/cli-style.h"
@@ -55,17 +56,26 @@
 /* Definition of a user function.  */
 struct internal_function
 {
+  internal_function (std::string name, internal_function_fn_noside handler,
+		     void *cookie)
+    : name (std::move (name)),
+      handler (handler),
+      cookie (cookie)
+  {}
+
   /* The name of the function.  It is a bit odd to have this in the
      function itself -- the user might use a differently-named
      convenience variable to hold the function.  */
-  char *name;
+  std::string name;
 
   /* The handler.  */
-  internal_function_fn handler;
+  internal_function_fn_noside handler;
 
   /* User data for the handler.  */
   void *cookie;
 };
+
+using internal_function_up = std::unique_ptr<internal_function>;
 
 /* Returns true if the ranges defined by [offset1, offset1+len1) and
    [offset2, offset2+len2) overlap.  */
@@ -98,7 +108,7 @@ ranges_contain (const std::vector<range> &ranges, LONGEST offset,
      range, we can do a binary search for the position the given range
      would be inserted if we only considered the starting OFFSET of
      ranges.  We call that position I.  Since we also have LENGTH to
-     care for (this is a range afterall), we need to check if the
+     care for (this is a range after all), we need to check if the
      _previous_ range overlaps the I range.  E.g.,
 
 	 R
@@ -258,7 +268,7 @@ insert_into_bit_range_vector (std::vector<range> *vectorp,
   /* Do a binary search for the position the given range would be
      inserted if we only considered the starting OFFSET of ranges.
      Call that position I.  Since we also have LENGTH to care for
-     (this is a range afterall), we need to check if the _previous_
+     (this is a range after all), we need to check if the _previous_
      range overlaps the I range.  E.g., calling R the new range:
 
        #1 - overlaps with previous
@@ -1700,25 +1710,7 @@ value::record_latest ()
      the value was taken, and fast watchpoints should be able to assume that
      a value on the value history never changes.  */
   if (lazy ())
-    {
-      /* We know that this is a _huge_ array, any attempt to fetch this
-	 is going to cause GDB to throw an error.  However, to allow
-	 the array to still be displayed we fetch its contents up to
-	 `max_value_size' and mark anything beyond "unavailable" in
-	 the history.  */
-      if (m_type->code () == TYPE_CODE_ARRAY
-	  && m_type->length () > max_value_size
-	  && array_length_limiting_element_count.has_value ()
-	  && m_enclosing_type == m_type
-	  && calculate_limited_array_length (m_type) <= max_value_size)
-	m_limited_length = max_value_size;
-
-      fetch_lazy ();
-    }
-
-  ULONGEST limit = m_limited_length;
-  if (limit != 0)
-    mark_bytes_unavailable (limit, m_enclosing_type->length () - limit);
+    fetch_lazy ();
 
   /* Mark the value as recorded in the history for the availability check.  */
   m_in_history = true;
@@ -1882,6 +1874,19 @@ struct internalvar
   internalvar (std::string name)
     : name (std::move (name))
   {}
+
+  internalvar (internalvar &&other)
+    : name (std::move(other.name)),
+      kind (other.kind),
+      u (other.u)
+  {
+    other.kind = INTERNALVAR_VOID;
+  }
+
+  ~internalvar ()
+  {
+    clear_internalvar (this);
+  }
 
   std::string name;
 
@@ -2295,13 +2300,13 @@ set_internalvar_string (struct internalvar *var, const char *string)
 }
 
 static void
-set_internalvar_function (struct internalvar *var, struct internal_function *f)
+set_internalvar_function (internalvar *var, internal_function_up f)
 {
   /* Clean up old contents.  */
   clear_internalvar (var);
 
   var->kind = INTERNALVAR_FUNCTION;
-  var->u.fn.function = f;
+  var->u.fn.function = f.release ();
   var->u.fn.canonical = 1;
   /* Variables installed here are always the canonical version.  */
 }
@@ -2320,6 +2325,10 @@ clear_internalvar (struct internalvar *var)
       xfree (var->u.string);
       break;
 
+    case INTERNALVAR_FUNCTION:
+      delete var->u.fn.function;
+      break;
+
     default:
       break;
     }
@@ -2334,18 +2343,6 @@ internalvar_name (const struct internalvar *var)
   return var->name.c_str ();
 }
 
-static struct internal_function *
-create_internal_function (const char *name,
-			  internal_function_fn handler, void *cookie)
-{
-  struct internal_function *ifn = XNEW (struct internal_function);
-
-  ifn->name = xstrdup (name);
-  ifn->handler = handler;
-  ifn->cookie = cookie;
-  return ifn;
-}
-
 const char *
 value_internal_function_name (struct value *val)
 {
@@ -2356,13 +2353,14 @@ value_internal_function_name (struct value *val)
   result = get_internalvar_function (VALUE_INTERNALVAR (val), &ifn);
   gdb_assert (result);
 
-  return ifn->name;
+  return ifn->name.c_str ();
 }
 
 struct value *
 call_internal_function (struct gdbarch *gdbarch,
 			const struct language_defn *language,
-			struct value *func, int argc, struct value **argv)
+			struct value *func, int argc, struct value **argv,
+			enum noside noside)
 {
   struct internal_function *ifn;
   int result;
@@ -2371,7 +2369,7 @@ call_internal_function (struct gdbarch *gdbarch,
   result = get_internalvar_function (VALUE_INTERNALVAR (func), &ifn);
   gdb_assert (result);
 
-  return (*ifn->handler) (gdbarch, language, ifn->cookie, argc, argv);
+  return ifn->handler (gdbarch, language, ifn->cookie, argc, argv, noside);
 }
 
 /* The 'function' command.  This does nothing -- it is just a
@@ -2388,13 +2386,11 @@ function_command (const char *command, int from_tty)
 
 static struct cmd_list_element *
 do_add_internal_function (const char *name, const char *doc,
-			  internal_function_fn handler, void *cookie)
+			  internal_function_fn_noside handler, void *cookie)
 {
-  struct internal_function *ifn;
-  struct internalvar *var = lookup_internalvar (name);
-
-  ifn = create_internal_function (name, handler, cookie);
-  set_internalvar_function (var, ifn);
+  set_internalvar_function (lookup_internalvar (name),
+			    std::make_unique<internal_function> (name, handler,
+								 cookie));
 
   return add_cmd (name, no_class, function_command, doc, &functionlist);
 }
@@ -2403,9 +2399,42 @@ do_add_internal_function (const char *name, const char *doc,
 
 void
 add_internal_function (const char *name, const char *doc,
-		       internal_function_fn handler, void *cookie)
+		       internal_function_fn_noside handler, void *cookie)
 {
   do_add_internal_function (name, doc, handler, cookie);
+}
+
+/* By default, internal functions are assumed to return int.  Return a value
+   with that type to reflect this.  If this is not correct for a specific
+   internal function, it should use an internal_function_fn_noside handler to
+   bypass this default.  */
+
+static struct value *
+internal_function_default_return_type (struct gdbarch *gdbarch)
+{
+  return value::zero (builtin_type (gdbarch)->builtin_int, not_lval);
+}
+
+/* See value.h.  */
+
+void
+add_internal_function (const char *name, const char *doc,
+		       internal_function_fn handler, void *cookie)
+{
+  internal_function_fn_noside fn
+    = [=] (struct gdbarch *gdbarch,
+	   const struct language_defn *language,
+	   void *_cookie,
+	   int argc,
+	   struct value **argv,
+	   enum noside noside)
+    {
+      if (noside == EVAL_AVOID_SIDE_EFFECTS)
+	return internal_function_default_return_type (gdbarch);
+      return handler (gdbarch, language, _cookie, argc, argv);
+    };
+
+  do_add_internal_function (name, doc, fn, cookie);
 }
 
 /* See value.h.  */
@@ -2413,7 +2442,7 @@ add_internal_function (const char *name, const char *doc,
 void
 add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
 		       gdb::unique_xmalloc_ptr<char> &&doc,
-		       internal_function_fn handler, void *cookie)
+		       internal_function_fn_noside handler, void *cookie)
 {
   struct cmd_list_element *cmd
     = do_add_internal_function (name.get (), doc.get (), handler, cookie);
@@ -2426,8 +2455,33 @@ add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
   cmd->name_allocated = 1;
 }
 
+/* See value.h.  */
+
 void
-value::preserve (struct objfile *objfile, htab_t copied_types)
+add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
+		       gdb::unique_xmalloc_ptr<char> &&doc,
+		       internal_function_fn handler, void *cookie)
+{
+  internal_function_fn_noside fn
+    = [=] (struct gdbarch *gdbarch,
+	   const struct language_defn *language,
+	   void *_cookie,
+	   int argc,
+	   struct value **argv,
+	   enum noside noside)
+    {
+      if (noside == EVAL_AVOID_SIDE_EFFECTS)
+	return internal_function_default_return_type (gdbarch);
+      return handler (gdbarch, language, _cookie, argc, argv);
+    };
+
+  add_internal_function (std::forward<gdb::unique_xmalloc_ptr<char>>(name),
+			 std::forward<gdb::unique_xmalloc_ptr<char>>(doc),
+			 fn, cookie);
+}
+
+void
+value::preserve (struct objfile *objfile, copied_types_hash_t &copied_types)
 {
   if (m_type->objfile_owner () == objfile)
     m_type = copy_type_recursive (m_type, copied_types);
@@ -2440,7 +2494,7 @@ value::preserve (struct objfile *objfile, htab_t copied_types)
 
 static void
 preserve_one_internalvar (struct internalvar *var, struct objfile *objfile,
-			  htab_t copied_types)
+			  copied_types_hash_t &copied_types)
 {
   switch (var->kind)
     {
@@ -2463,7 +2517,7 @@ preserve_one_internalvar (struct internalvar *var, struct objfile *objfile,
 
 static void
 preserve_one_varobj (struct varobj *varobj, struct objfile *objfile,
-		     htab_t copied_types)
+		     copied_types_hash_t &copied_types)
 {
   if (varobj->type->is_objfile_owned ()
       && varobj->type->objfile_owner () == objfile)
@@ -2487,22 +2541,21 @@ preserve_values (struct objfile *objfile)
 {
   /* Create the hash table.  We allocate on the objfile's obstack, since
      it is soon to be deleted.  */
-  htab_up copied_types = create_copied_types_hash ();
+  copied_types_hash_t copied_types;
 
   for (const value_ref_ptr &item : value_history)
-    item->preserve (objfile, copied_types.get ());
+    item->preserve (objfile, copied_types);
 
   for (auto &pair : internalvars)
-    preserve_one_internalvar (&pair.second, objfile, copied_types.get ());
+    preserve_one_internalvar (&pair.second, objfile, copied_types);
 
   /* For the remaining varobj, check that none has type owned by OBJFILE.  */
   all_root_varobjs ([&copied_types, objfile] (struct varobj *varobj)
     {
-      preserve_one_varobj (varobj, objfile,
-			   copied_types.get ());
+      preserve_one_varobj (varobj, objfile, copied_types);
     });
 
-  preserve_ext_lang_values (objfile, copied_types.get ());
+  preserve_ext_lang_values (objfile, copied_types);
 }
 
 static void
@@ -2547,8 +2600,9 @@ show_convenience (const char *ignore, int from_tty)
       gdb_printf (_("No debugger convenience variables now defined.\n"
 		    "Convenience variables have "
 		    "names starting with \"$\";\n"
-		    "use \"set\" as in \"set "
-		    "$foo = 5\" to define them.\n"));
+		    "use \"%ps\" as in \"%ps\" to define them.\n"),
+		  styled_string (command_style.style (), "set"),
+		  styled_string (command_style.style (), "set $foo = 5"));
     }
 }
 
@@ -2780,7 +2834,7 @@ value_as_address (struct value *val)
 #endif
 }
 
-/* Unpack raw data (copied from debugee, target byte order) at VALADDR
+/* Unpack raw data (copied from debuggee, target byte order) at VALADDR
    as a long, or as a double, assuming the raw data is described
    by type TYPE.  Knows how to convert different sizes of values
    and can convert between fixed and floating point.  We don't assume
@@ -2871,7 +2925,7 @@ unpack_long (struct type *type, const gdb_byte *valaddr)
     }
 }
 
-/* Unpack raw data (copied from debugee, target byte order) at VALADDR
+/* Unpack raw data (copied from debuggee, target byte order) at VALADDR
    as a CORE_ADDR, assuming the raw data is described by type TYPE.
    We don't assume any alignment for the raw data.  Return value is in
    host byte order.
@@ -2933,8 +2987,8 @@ value_static_field (struct type *type, int fieldno)
 	{
 	  /* With some compilers, e.g. HP aCC, static data members are
 	     reported as non-debuggable symbols.  */
-	  struct bound_minimal_symbol msym
-	    = lookup_minimal_symbol (phys_name, NULL, NULL);
+	  bound_minimal_symbol msym
+	    = lookup_minimal_symbol (current_program_space, phys_name);
 	  struct type *field_type = type->field (fieldno).type ();
 
 	  if (!msym.minsym)
@@ -3116,13 +3170,13 @@ value_fn_field (struct value **arg1p, struct fn_field *f,
   struct type *ftype = TYPE_FN_FIELD_TYPE (f, j);
   const char *physname = TYPE_FN_FIELD_PHYSNAME (f, j);
   struct symbol *sym;
-  struct bound_minimal_symbol msym;
+  bound_minimal_symbol msym;
 
   sym = lookup_symbol (physname, nullptr, SEARCH_FUNCTION_DOMAIN,
 		       nullptr).symbol;
   if (sym == nullptr)
     {
-      msym = lookup_bound_minimal_symbol (physname);
+      msym = lookup_minimal_symbol (current_program_space, physname);
       if (msym.minsym == NULL)
 	return NULL;
     }
@@ -3213,6 +3267,9 @@ unpack_bits_as_long (struct type *field_type, const gdb_byte *valaddr,
 	}
     }
 
+  if (field_type->code () == TYPE_CODE_RANGE)
+    val += field_type->bounds ()->bias;
+
   return val;
 }
 
@@ -3243,17 +3300,24 @@ unpack_value_field_as_long (struct type *type, const gdb_byte *valaddr,
   return 1;
 }
 
-/* Unpack a field FIELDNO of the specified TYPE, from the anonymous
-   object at VALADDR.  See unpack_bits_as_long for more details.  */
+/* See value.h.  */
+
+LONGEST
+unpack_field_as_long (const gdb_byte *valaddr, struct field *field)
+{
+  int bitpos = field->loc_bitpos ();
+  int bitsize = field->bitsize ();
+  struct type *field_type = field->type ();
+
+  return unpack_bits_as_long (field_type, valaddr, bitpos, bitsize);
+}
+
+/* See value.h.  */
 
 LONGEST
 unpack_field_as_long (struct type *type, const gdb_byte *valaddr, int fieldno)
 {
-  int bitpos = type->field (fieldno).loc_bitpos ();
-  int bitsize = type->field (fieldno).bitsize ();
-  struct type *field_type = type->field (fieldno).type ();
-
-  return unpack_bits_as_long (field_type, valaddr, bitpos, bitsize);
+  return unpack_field_as_long (valaddr, &type->field (fieldno));
 }
 
 /* See value.h.  */
@@ -3931,6 +3995,11 @@ value::fetch_lazy_memory ()
   if (len > 0)
     read_value_memory (this, 0, stack (), addr,
 		       contents_all_raw ().data (), len);
+
+  /* If only part of an array was loaded, mark the rest as unavailable.  */
+  if (m_limited_length > 0)
+    mark_bytes_unavailable (m_limited_length,
+			    m_enclosing_type->length () - m_limited_length);
 }
 
 /* See value.h.  */
@@ -4236,7 +4305,8 @@ isvoid_internal_fn (struct gdbarch *gdbarch,
 static struct value *
 creal_internal_fn (struct gdbarch *gdbarch,
 		   const struct language_defn *language,
-		   void *cookie, int argc, struct value **argv)
+		   void *cookie, int argc, struct value **argv,
+		   enum noside noside)
 {
   if (argc != 1)
     error (_("You must provide one argument for $_creal."));
@@ -4245,6 +4315,8 @@ creal_internal_fn (struct gdbarch *gdbarch,
   type *ctype = check_typedef (cval->type ());
   if (ctype->code () != TYPE_CODE_COMPLEX)
     error (_("expected a complex number"));
+  if (noside == EVAL_AVOID_SIDE_EFFECTS)
+    return value::zero (ctype->target_type (), not_lval);
   return value_real_part (cval);
 }
 
@@ -4255,7 +4327,7 @@ static struct value *
 cimag_internal_fn (struct gdbarch *gdbarch,
 		   const struct language_defn *language,
 		   void *cookie, int argc,
-		   struct value **argv)
+		   struct value **argv, enum noside noside)
 {
   if (argc != 1)
     error (_("You must provide one argument for $_cimag."));
@@ -4264,6 +4336,8 @@ cimag_internal_fn (struct gdbarch *gdbarch,
   type *ctype = check_typedef (cval->type ());
   if (ctype->code () != TYPE_CODE_COMPLEX)
     error (_("expected a complex number"));
+  if (noside == EVAL_AVOID_SIDE_EFFECTS)
+    return value::zero (ctype->target_type (), not_lval);
   return value_imaginary_part (cval);
 }
 
@@ -4423,9 +4497,7 @@ test_value_copy ()
 } /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_values ();
-void
-_initialize_values ()
+INIT_GDB_FILE (values)
 {
   cmd_list_element *show_convenience_cmd
     = add_cmd ("convenience", no_class, show_convenience, _("\

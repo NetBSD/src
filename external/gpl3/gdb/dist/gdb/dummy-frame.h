@@ -1,6 +1,6 @@
 /* Code dealing with dummy stack frames, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (DUMMY_FRAME_H)
-#define DUMMY_FRAME_H 1
+#ifndef GDB_DUMMY_FRAME_H
+#define GDB_DUMMY_FRAME_H
 
 #include "frame.h"
 
@@ -54,7 +54,7 @@ extern void dummy_frame_discard (frame_id dummy_id, thread_info *thread);
 /* If the PC falls in a dummy frame, return a dummy frame
    unwinder.  */
 
-extern const struct frame_unwind dummy_frame_unwind;
+extern const struct frame_unwind_legacy dummy_frame_unwind;
 
 /* Destructor for dummy_frame.  DATA is supplied by registrant.
    REGISTERS_VALID is 1 for dummy_frame_pop, 0 for dummy_frame_discard.  */
@@ -80,4 +80,4 @@ extern int find_dummy_frame_dtor (dummy_frame_dtor_ftype *dtor,
 extern struct frame_id default_dummy_id (struct gdbarch *gdbarch,
 					 const frame_info_ptr &this_frame);
 
-#endif /* !defined (DUMMY_FRAME_H)  */
+#endif /* GDB_DUMMY_FRAME_H */

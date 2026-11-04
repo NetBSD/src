@@ -1,0 +1,483 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test different ways in which DW_AT_entry_pc can be expressed in the
+# DWARF.  Also test with DWARF-4 and DWARF-5.  See the individule test
+# procs below precise details of what DW_AT_entry_pc forms are tested.
+
+load_lib dwarf.exp
+
+require dwarf2_support
+
+standard_testfile
+
+# This compiles the source file and starts and stops GDB, so run it
+# before calling prepare_for_testing otherwise GDB will have exited.
+get_func_info foo
+
+if { [prepare_for_testing "failed to prepare" ${testfile} \
+	  [list ${srcfile}]] } {
+    return -1
+}
+
+if ![runto_main] {
+    return -1
+}
+
+# Address for the middle of foo.  This is used as our entry point when
+# the entry_pc is defined as an address.
+set foo_middle_addr [get_hexadecimal_valueof "&foo_middle" "UNKNOWN" \
+			 "get address for middle of foo"]
+
+# The FOO_START and FOO_END we get from get_func_info is an expression
+# involving symbols and offsets.  To check the 'maint info blocks'
+# output we need these converted into actual addresses.
+set foo_start_addr [get_hexadecimal_valueof "$foo_start" "UNKNOWN" \
+			"get address for start of foo"]
+set foo_end_addr [get_hexadecimal_valueof "$foo_end" "UNKNOWN" \
+		      "get address for end of foo"]
+
+# The ranges within foo.  Used when foo is defined using ranges rather
+# than a low pc and high pc pair.  The entry point is in the middle of
+# the second range.
+foreach var { r1_s r1_e r2_s r2_e r3_s r3_e } {
+    set $var [get_hexadecimal_valueof "&foo_$var" "UNKNOWN" \
+		  "get address for foo_$var"]
+}
+
+# Line on which 'foo' is declared.  Used in generated debug.
+set foo_decl_line [gdb_get_line_number "foo decl line"]
+
+if [is_ilp32_target] {
+    set ptr_type "data4"
+} else {
+    set ptr_type "data8"
+}
+
+# Generate a suffix number.  Called from each of the test procs below
+# to acquire a unique suffix for naming asm files and executables.
+
+set global_test_suffix 0
+proc get_next_suffix {} {
+    global global_test_suffix
+    incr global_test_suffix
+
+    return $global_test_suffix
+}
+
+# Helper for the two build_and_test_* procs below.  Combine ASM_FILE
+# with the global SRCFILE and build an executable.  Use SUFFIX to give
+# the executable a unique name.
+
+proc build_and_runto_main { suffix asm_file } {
+    if {[prepare_for_testing "failed to prepare" "${::testfile}-${suffix}" \
+	     [list $::srcfile $asm_file] {nodebug}]} {
+	return false
+    }
+
+    if ![runto_main] {
+	return false
+    }
+
+    # Ensure the CU containing 'foo' is expanded, so the blocks are
+    # visible.
+    gdb_test "info function foo" \
+	"File \[^\r\n\]+/$::srcfile:\r\n$::foo_decl_line:\\s+void foo\\(\\);.*"
+
+    return true
+}
+
+
+# Combine ASM_FILE with the global SRCFILE and build an executable,
+# use SUFFIX to make the executable name unique.
+#
+# Then check the blocks at the symbol `foo_middle'.  The inner most
+# block should be a block for 'foo' with a continuous address range
+# and an entry address of ENTRY_PC.
+
+proc build_and_test_continuous { suffix asm_file entry_pc } {
+    if { ![build_and_runto_main $suffix $asm_file] } {
+	return false
+    }
+
+    gdb_test "maint info blocks foo_middle" \
+	[multi_line \
+	     "\\\[\[^\]\]+\\\] $::foo_start_addr\.\.$::foo_end_addr" \
+	     "  entry pc: $entry_pc" \
+	     "  function: foo" \
+	     "  is contiguous"]
+}
+
+# Combine ASM_FILE with the global SRCFILE and build an executable,
+# use SUFFIX to make the executable name unique.
+#
+# Then check the blocks at the symbol `foo_middle'.  The inner most
+# block should be a block for 'foo' which has 3 address ranges and an
+# entry address of ENTRY_PC.
+
+proc build_and_test_ranged { suffix asm_file entry_pc } {
+    if { ![build_and_runto_main $suffix $asm_file] } {
+	return false
+    }
+
+    gdb_test "maint info blocks foo_middle" \
+	[multi_line \
+	     "\\\[\[^\]\]+\\\] $::r1_s\.\.$::r3_e" \
+	     "  entry pc: $entry_pc" \
+	     "  function: foo" \
+	     "  address ranges:" \
+	     "    $::r1_s\.\.$::r1_e" \
+	     "    $::r2_s\.\.$::r2_e" \
+	     "    $::r3_s\.\.$::r3_e" ]
+}
+
+# The function's address range is defined using low/high bounds and
+# the entry_pc attribute is not given.  The function's entry PC will
+# default to the low address.
+
+proc_with_prefix use_low_high_bounds_without_entry_pc { dwarf_vesion } {
+    set suffix [get_next_suffix]
+
+    # Make some DWARF for the test.
+    set asm_file [standard_output_file "$::testfile-dw-$suffix.S"]
+    Dwarf::assemble $asm_file {
+	global srcfile
+
+	declare_labels lines_table
+
+	cu { version $::dwarf_version } {
+	    compile_unit {
+		{producer "gcc"}
+		{language @DW_LANG_C}
+		{name ${srcfile}}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+	    } {
+		subprogram {
+		    {name foo}
+		    {decl_file 1 data1}
+		    {decl_line $::foo_decl_line data1}
+		    {decl_column 1 data1}
+		    {low_pc $::foo_start addr}
+		    {high_pc $::foo_len $::ptr_type}
+		    {external 1 flag}
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$srcfile" 1
+	}
+    }
+
+    build_and_test_continuous $suffix $asm_file $::foo_start_addr
+}
+
+# The function's address range is defined using low/high bounds and an
+# entry_pc attribute is given (which contains an address), which will
+# be used as the function's entry address.
+
+proc_with_prefix use_low_high_bounds_with_entry_pc { dwarf_version } {
+    set suffix [get_next_suffix]
+
+    # Make some DWARF for the test.
+    set asm_file [standard_output_file "$::testfile-dw-$suffix.S"]
+    Dwarf::assemble $asm_file {
+	global srcfile
+
+	declare_labels lines_table
+
+	cu { version $::dwarf_version } {
+	    compile_unit {
+		{producer "gcc"}
+		{language @DW_LANG_C}
+		{name ${srcfile}}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+	    } {
+		subprogram {
+		    {name foo}
+		    {decl_file 1 data1}
+		    {decl_line $::foo_decl_line data1}
+		    {decl_column 1 data1}
+		    {low_pc $::foo_start addr}
+		    {high_pc $::foo_len $::ptr_type}
+		    {external 1 flag}
+		    {entry_pc foo_middle addr}
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$srcfile" 1
+	}
+    }
+
+    build_and_test_continuous $suffix $asm_file $::foo_middle_addr
+}
+
+# The function's address range is defined using low/high bounds and an
+# entry_pc attribute is given (which contains an offset from the base
+# address), which will be used to compute the function's entry address.
+
+proc_with_prefix use_low_high_bounds_with_entry_offset { dwarf_version } {
+    set suffix [get_next_suffix]
+
+    # Make some DWARF for the test.
+    set asm_file [standard_output_file "$::testfile-dw-$suffix.S"]
+    Dwarf::assemble $asm_file {
+	global srcfile
+
+	declare_labels lines_table
+
+	set foo_offset [expr $::foo_middle_addr - $::foo_start_addr]
+
+	cu { version $::dwarf_version } {
+	    compile_unit {
+		{producer "gcc"}
+		{language @DW_LANG_C}
+		{name ${srcfile}}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+	    } {
+		subprogram {
+		    {name foo}
+		    {decl_file 1 data1}
+		    {decl_line $::foo_decl_line data1}
+		    {decl_column 1 data1}
+		    {low_pc $::foo_start addr}
+		    {high_pc $::foo_len $::ptr_type}
+		    {external 1 flag}
+		    {entry_pc $foo_offset data4}
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$srcfile" 1
+	}
+    }
+
+    build_and_test_continuous $suffix $asm_file $::foo_middle_addr
+}
+
+# The function's address range is defined using range information.  No
+# entry_pc attribute is used.  The entry PC for the function will
+# default to the first address of the first range.
+
+proc_with_prefix use_ranges_without_entry_pc { dwarf_version } {
+    set suffix [get_next_suffix]
+
+    # Make some DWARF for the test.
+    set asm_file [standard_output_file "$::testfile-dw-$suffix.S"]
+    Dwarf::assemble $asm_file {
+	upvar dwarf_version dwarf_version
+	global srcfile
+
+	declare_labels lines_table ranges_label
+
+	cu { version $::dwarf_version } {
+	    compile_unit {
+		{producer "gcc"}
+		{language @DW_LANG_C}
+		{name ${srcfile}}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+		{low_pc 0 addr}
+	    } {
+		subprogram {
+		    {name foo}
+		    {decl_file 1 data1}
+		    {decl_line $::foo_decl_line data1}
+		    {decl_column 1 data1}
+		    {external 1 flag}
+		    {ranges ${ranges_label} DW_FORM_sec_offset}
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$srcfile" 1
+	}
+
+	if { $dwarf_version == 5 } {
+	    rnglists {} {
+		table {} {
+		    ranges_label: list_ {
+			start_end foo_r1_s foo_r1_e
+			start_end foo_r2_s foo_r2_e
+			start_end foo_r3_s foo_r3_e
+		    }
+		}
+	    }
+	} else {
+	    ranges { } {
+		ranges_label: sequence {
+		    range foo_r1_s foo_r1_e
+		    range foo_r2_s foo_r2_e
+		    range foo_r3_s foo_r3_e
+		}
+	    }
+	}
+    }
+
+    build_and_test_ranged $suffix $asm_file $::r1_s
+}
+
+# The function's address range is defined using range information and
+# an entry_pc attribute (which is an address) is used, this will be
+# the entry PC for the function.
+
+proc_with_prefix use_ranges_with_entry_pc { dwarf_version } {
+    set suffix [get_next_suffix]
+
+    # Make some DWARF for the test.
+    set asm_file [standard_output_file "$::testfile-dw-$suffix.S"]
+    Dwarf::assemble $asm_file {
+	upvar dwarf_version dwarf_version
+	global srcfile
+
+	declare_labels lines_table ranges_label
+
+	cu { version $::dwarf_version } {
+	    compile_unit {
+		{producer "gcc"}
+		{language @DW_LANG_C}
+		{name ${srcfile}}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+		{low_pc 0 addr}
+	    } {
+		subprogram {
+		    {name foo}
+		    {decl_file 1 data1}
+		    {decl_line $::foo_decl_line data1}
+		    {decl_column 1 data1}
+		    {external 1 flag}
+		    {ranges ${ranges_label} DW_FORM_sec_offset}
+		    {entry_pc foo_middle addr}
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$srcfile" 1
+	}
+
+	if { $dwarf_version == 5 } {
+	    rnglists {} {
+		table {} {
+		    ranges_label: list_ {
+			start_end foo_r1_s foo_r1_e
+			start_end foo_r2_s foo_r2_e
+			start_end foo_r3_s foo_r3_e
+		    }
+		}
+	    }
+	} else {
+	    ranges { } {
+		ranges_label: sequence {
+		    range foo_r1_s foo_r1_e
+		    range foo_r2_s foo_r2_e
+		    range foo_r3_s foo_r3_e
+		}
+	    }
+	}
+    }
+
+    build_and_test_ranged $suffix $asm_file $::foo_middle_addr
+}
+
+# The function's address range is defined using range information and
+# an entry_pc attribute (which is an offset) is used, this will be
+# used to calculate the entry PC for the function.
+
+proc_with_prefix use_ranges_with_entry_offset { dwarf_version } {
+    set suffix [get_next_suffix]
+
+    # Make some DWARF for the test.
+    set asm_file [standard_output_file "$::testfile-dw-$suffix.S"]
+    Dwarf::assemble $asm_file {
+	upvar dwarf_version dwarf_version
+	global srcfile
+
+	declare_labels lines_table ranges_label
+
+	set foo_offset [expr $::foo_middle_addr - $::r1_s]
+
+	cu { version $::dwarf_version } {
+	    compile_unit {
+		{producer "gcc"}
+		{language @DW_LANG_C}
+		{name ${srcfile}}
+		{comp_dir /tmp}
+		{stmt_list $lines_table DW_FORM_sec_offset}
+		{low_pc 0 addr}
+	    } {
+		subprogram {
+		    {name foo}
+		    {decl_file 1 data1}
+		    {decl_line $::foo_decl_line data1}
+		    {decl_column 1 data1}
+		    {external 1 flag}
+		    {ranges ${ranges_label} DW_FORM_sec_offset}
+		    {entry_pc $foo_offset data4}
+		}
+	    }
+	}
+
+	lines {version 2} lines_table {
+	    include_dir "$::srcdir/$::subdir"
+	    file_name "$srcfile" 1
+	}
+
+	if { $dwarf_version == 5 } {
+	    rnglists {} {
+		table {} {
+		    ranges_label: list_ {
+			start_end foo_r1_s foo_r1_e
+			start_end foo_r2_s foo_r2_e
+			start_end foo_r3_s foo_r3_e
+		    }
+		}
+	    }
+	} else {
+	    ranges { } {
+		ranges_label: sequence {
+		    range foo_r1_s foo_r1_e
+		    range foo_r2_s foo_r2_e
+		    range foo_r3_s foo_r3_e
+		}
+	    }
+	}
+    }
+
+    build_and_test_ranged $suffix $asm_file $::foo_middle_addr
+}
+
+# Run the tests.
+foreach_with_prefix dwarf_version { 4 5 } {
+    use_low_high_bounds_without_entry_pc $dwarf_version
+    use_low_high_bounds_with_entry_offset $dwarf_version
+    use_low_high_bounds_with_entry_pc $dwarf_version
+    use_ranges_without_entry_pc $dwarf_version
+    use_ranges_with_entry_pc $dwarf_version
+    use_ranges_with_entry_offset $dwarf_version
+}

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -74,7 +74,7 @@
 # range.  It is only when GDB exits the loop that we leave the stepping
 # range, and the stepping finishes at address 0x114.
 #
-# This test checks this behaviour using the DWARF assembler.
+# This test checks this behavior using the DWARF assembler.
 
 load_lib dwarf.exp
 

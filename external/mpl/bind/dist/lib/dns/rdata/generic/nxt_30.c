@@ -1,4 +1,4 @@
-/*	$NetBSD: nxt_30.c,v 1.8.2.1 2025/08/02 05:53:45 perseant Exp $	*/
+/*	$NetBSD: nxt_30.c,v 1.8.2.2 2026/11/04 23:18:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -246,9 +246,7 @@ tostruct_nxt(ARGS_TOSTRUCT) {
 	REQUIRE(nxt != NULL);
 	REQUIRE(rdata->length != 0);
 
-	nxt->common.rdclass = rdata->rdclass;
-	nxt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&nxt->common, link);
+	DNS_RDATACOMMON_INIT(nxt, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

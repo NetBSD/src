@@ -1,6 +1,6 @@
 /* Target dependent code for GNU/Linux ARC.
 
-   Copyright 2020-2023 Free Software Foundation, Inc.
+   Copyright 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARC_LINUX_TDEP_H
-#define ARC_LINUX_TDEP_H
+#ifndef GDB_ARC_LINUX_TDEP_H
+#define GDB_ARC_LINUX_TDEP_H
 
 #include "gdbarch.h"
 #include "regset.h"
@@ -31,7 +31,7 @@ void arc_linux_supply_gregset (const struct regset *regset,
 			       struct regcache *regcache, int regnum,
 			       const void *gregs, size_t size);
 
-/* Reads regsiters from the NT_ARC_V2 data array into the regcache.  */
+/* Reads registers from the NT_ARC_V2 data array into the regcache.  */
 
 void arc_linux_supply_v2_regset (const struct regset *regset,
 				 struct regcache *regcache, int regnum,
@@ -49,4 +49,4 @@ void arc_linux_collect_v2_regset (const struct regset *regset,
 				  const struct regcache *regcache,
 				  int regnum, void *v2_regs, size_t size);
 
-#endif /* ARC_LINUX_TDEP_H */
+#endif /* GDB_ARC_LINUX_TDEP_H */

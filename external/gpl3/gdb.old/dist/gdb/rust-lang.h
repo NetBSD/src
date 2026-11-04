@@ -1,6 +1,6 @@
 /* Rust language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RUST_LANG_H
-#define RUST_LANG_H
+#ifndef GDB_RUST_LANG_H
+#define GDB_RUST_LANG_H
 
 #include "demangle.h"
 #include "language.h"
@@ -45,10 +45,14 @@ extern const char *rust_last_path_segment (const char *path);
 
 /* Create a new slice type.  NAME is the name of the type.  ELT_TYPE
    is the type of the elements of the slice.  USIZE_TYPE is the Rust
-   "usize" type to use.  The new type is allocated whereever ELT_TYPE
+   "usize" type to use.  The new type is allocated wherever ELT_TYPE
    is allocated.  */
 extern struct type *rust_slice_type (const char *name, struct type *elt_type,
 				     struct type *usize_type);
+
+/* Return a new array that holds the contents of the given slice,
+   VAL.  */
+extern struct value *rust_slice_to_array (struct value *val);
 
 /* Class representing the Rust language.  */
 
@@ -93,7 +97,7 @@ public:
        (const char *mangled, gdb::unique_xmalloc_ptr<char> *demangled)
        const override
   {
-    *demangled = gdb_demangle (mangled, DMGL_PARAMS | DMGL_ANSI);
+    demangled->reset (rust_demangle (mangled, 0));
     return *demangled != NULL;
   }
 
@@ -102,7 +106,7 @@ public:
   gdb::unique_xmalloc_ptr<char> demangle_symbol (const char *mangled,
 						 int options) const override
   {
-    return gdb_demangle (mangled, options);
+    return gdb::unique_xmalloc_ptr<char> (rust_demangle (mangled, options));
   }
 
   /* See language.h.  */
@@ -144,38 +148,7 @@ public:
 
   struct block_symbol lookup_symbol_nonlocal
 	(const char *name, const struct block *block,
-	 const domain_enum domain) const override
-  {
-    struct block_symbol result = {};
-
-    symbol_lookup_debug_printf
-      ("rust_lookup_symbol_non_local (%s, %s (scope %s), %s)",
-       name, host_address_to_string (block), block_scope (block),
-       domain_name (domain));
-
-    /* Look up bare names in the block's scope.  */
-    std::string scopedname;
-    if (name[cp_find_first_component (name)] == '\0')
-      {
-	const char *scope = block_scope (block);
-
-	if (scope[0] != '\0')
-	  {
-	    scopedname = std::string (scope) + "::" + name;
-	    name = scopedname.c_str ();
-	  }
-	else
-	  name = NULL;
-      }
-
-    if (name != NULL)
-      {
-	result = lookup_symbol_in_static_block (name, block, domain);
-	if (result.symbol == NULL)
-	  result = lookup_global_symbol (name, block, domain);
-      }
-    return result;
-  }
+	 const domain_search_flags domain) const override;
 
   /* See language.h.  */
 
@@ -220,10 +193,26 @@ public:
 
   /* See language.h.  */
 
+  bool is_array_like (struct type *type) const override;
+
+  /* See language.h.  */
+
+  struct value *to_array (struct value *val) const override
+  { return rust_slice_to_array (val); }
+
+  /* See language.h.  */
+
   bool range_checking_on_by_default () const override
   { return true; }
 
 private:
+
+  /* Helper for value_print_inner, arguments are as for that function.
+     Prints a slice.  */
+
+  void val_print_slice (struct value *val, struct ui_file *stream,
+			int recurse,
+			const struct value_print_options *options) const;
 
   /* Helper for value_print_inner, arguments are as for that function.
      Prints structs and untagged unions.  */
@@ -239,4 +228,4 @@ private:
 		   const struct value_print_options *options) const;
 };
 
-#endif /* RUST_LANG_H */
+#endif /* GDB_RUST_LANG_H */

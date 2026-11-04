@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.c,v 1.7.2.1 2025/08/02 05:50:52 perseant Exp $	*/
+/*	$NetBSD: geoip.c,v 1.7.2.2 2026/11/04 23:15:34 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -85,6 +85,8 @@ named_geoip_load(char *dir) {
 		      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 		      "looking for GeoIP2 databases in '%s'", dir);
 
+	dns_geoip_invalidate();
+
 	named_g_geoip->country = open_geoip2(dir, "GeoIP2-Country.mmdb",
 					     &geoip_country);
 	if (named_g_geoip->country == NULL) {
@@ -117,6 +119,7 @@ named_geoip_load(char *dir) {
 void
 named_geoip_unload(void) {
 #ifdef HAVE_GEOIP2
+	dns_geoip_invalidate();
 	if (named_g_geoip->country != NULL) {
 		MMDB_close(named_g_geoip->country);
 		named_g_geoip->country = NULL;

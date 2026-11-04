@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.426.6.1 2025/08/02 05:56:18 perseant Exp $	*/
+/*	$NetBSD: pmap.c,v 1.426.6.2 2026/11/04 23:21:33 perseant Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.426.6.1 2025/08/02 05:56:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.426.6.2 2026/11/04 23:21:33 perseant Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1089,7 +1089,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 	if (opte != npte) {
 		pmap_pte_set(pte, npte);
 		pmap_pte_flush();
-		invlpg(va);
+		pmap_update_pg(va);
 	}
 }
 #endif /* defined(__x86_64__) */
@@ -1389,7 +1389,7 @@ pmap_bootstrap(vaddr_t kva_start)
 	extern volatile struct xencons_interface *xencons_interface; /* XXX */
 	extern struct xenstore_domain_interface *xenstore_interface; /* XXX */
 
-	if (vm_guest != VM_GUEST_XENPVH) {
+	if (vm_guest == VM_GUEST_XENHVM) {
 		HYPERVISOR_shared_info = (void *) pmap_bootstrap_valloc(1);
 		HYPERVISOR_shared_info_pa = pmap_bootstrap_palloc(1);
 	}

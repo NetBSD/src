@@ -45,7 +45,7 @@ For info on supported ERC32 functionality, see README.sis.
 
 The GDB load command loads an aout file into the simulator
 memory with the data section starting directly after the text
-section regardless of wich start address was specified for the data
+section regardless of which start address was specified for the data
 at link time! This means that your applications either has to include
 a routine that initialise the data segment at the proper address or
 link with the data placed directly after the text section.

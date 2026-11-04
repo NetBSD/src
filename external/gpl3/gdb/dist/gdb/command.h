@@ -1,6 +1,6 @@
 /* Header file for command creation.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,10 +15,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (COMMAND_H)
-#define COMMAND_H 1
+#ifndef GDB_COMMAND_H
+#define GDB_COMMAND_H
 
-#include "gdbsupport/gdb_vecs.h"
 #include "gdbsupport/scoped_restore.h"
 
 struct completion_tracker;
@@ -111,7 +110,9 @@ enum var_types
     /* Enumerated type.  Can only have one of the specified values.
        *VAR is a char pointer to the name of the element that we
        find.  */
-    var_enum
+    var_enum,
+    /* Color type.  *VAR is a ui_file_style::color structure.  */
+    var_color
   };
 
 /* A structure describing an extra literal accepted and shown in place
@@ -183,6 +184,14 @@ template<>
 inline bool var_type_uses<const char *> (var_types t)
 {
   return t == var_enum;
+}
+
+/* Return true if a setting of type T is backed by an ui_file_style::color
+   variable.  */
+template<>
+inline bool var_type_uses<ui_file_style::color> (var_types t)
+{
+  return t == var_color;
 }
 
 template<bool is_scalar, typename T> struct setting_func_types_1;
@@ -549,7 +558,7 @@ extern struct cmd_list_element *lookup_cmd (const char **,
    the section of text it matched, set *RESULT_LIST to point to the list in
    which the last word was matched, and will return a pointer to the cmd
    list element which the text matches.  It will return NULL if no match at
-   all was possible.  It will return -1 (cast appropriately, ick) if ambigous
+   all was possible.  It will return -1 (cast appropriately, ick) if ambiguous
    matches are possible; in this case *RESULT_LIST will be set to point to
    the list in which there are ambiguous choices (and *TEXT will be set to
    the ambiguous text string).
@@ -680,6 +689,20 @@ extern set_show_commands add_setshow_enum_cmd
    const char *help_doc, setting_func_types<const char *>::set set_func,
    setting_func_types<const char *>::get get_func, show_value_ftype *show_func,
    cmd_list_element **set_list, cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_color_cmd
+  (const char *name, command_class theclass, ui_file_style::color *var,
+   const char *set_doc, const char *show_doc, const char *help_doc,
+   cmd_func_ftype *set_func, show_value_ftype *show_func,
+   cmd_list_element **set_list, cmd_list_element **show_list);
+
+extern set_show_commands add_setshow_color_cmd
+  (const char *name, command_class theclass,
+   const char *set_doc, const char *show_doc, const char *help_doc,
+   setting_func_types<ui_file_style::color>::set set_func,
+   setting_func_types<ui_file_style::color>::get get_func,
+   show_value_ftype *show_func, cmd_list_element **set_list,
+   cmd_list_element **show_list);
 
 extern set_show_commands add_setshow_auto_boolean_cmd
   (const char *name, command_class theclass, auto_boolean *var,
@@ -876,7 +899,7 @@ extern void cmd_show_list (struct cmd_list_element *, int);
 /* Used everywhere whenever at least one parameter is required and
    none is specified.  */
 
-extern void error_no_arg (const char *) ATTRIBUTE_NORETURN;
+[[noreturn]] extern void error_no_arg (const char *);
 
 
 /* Command line saving and repetition.
@@ -934,4 +957,4 @@ extern void not_just_help_class_command (const char *, int);
 extern void cmd_func (struct cmd_list_element *cmd,
 		      const char *args, int from_tty);
 
-#endif /* !defined (COMMAND_H) */
+#endif /* GDB_COMMAND_H */

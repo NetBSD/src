@@ -1,4 +1,4 @@
-/*	$NetBSD: addbytes.c,v 1.69.2.1 2025/08/02 05:54:45 perseant Exp $	*/
+/*	$NetBSD: addbytes.c,v 1.69.2.2 2026/11/04 23:19:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)addbytes.c	8.4 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: addbytes.c,v 1.69.2.1 2025/08/02 05:54:45 perseant Exp $");
+__RCSID("$NetBSD: addbytes.c,v 1.69.2.2 2026/11/04 23:19:26 perseant Exp $");
 #endif
 #endif				/* not lint */
 
@@ -115,7 +115,7 @@ int
 _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 	    int char_interp)
 {
-	int		*py = &win->cury, *px = &win->curx, err;
+	int		*py, *px, err;
 	__LINE		*lp;
 #ifdef HAVE_WCHAR
 	int		n;
@@ -127,10 +127,12 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 #endif
 #ifdef DEBUG
 	int             i;
+#endif
 
 	if (__predict_false(win == NULL))
 		return ERR;
 
+#ifdef DEBUG
 	for (i = 0; i < win->maxy; i++) {
 		assert(win->alines[i]->sentinel == SENTINEL_VALUE);
 	}
@@ -138,6 +140,8 @@ _cursesi_waddbytes(WINDOW *win, const char *bytes, int count, attr_t attr,
 	__CTRACE(__CTRACE_INPUT, "ADDBYTES: add %d bytes\n", count);
 #endif
 
+	py = &win->cury;
+	px = &win->curx;
 	err = OK;
 	lp = win->alines[*py];
 
@@ -351,13 +355,15 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	return ERR;
 #else
 	int sx = 0, ex = 0, cw = 0, i = 0, newx = 0, tabsize;
-	__LDATA *lp = &win->alines[*y]->line[*x], *tp = NULL;
+	__LDATA *lp, *tp = NULL;
 	nschar_t *np = NULL;
 	cchar_t cc;
 	attr_t attributes;
 
 	if (__predict_false(win == NULL))
 		return ERR;
+
+	lp = &win->alines[*y]->line[*x];
 
 	if (char_interp) {
 		/* special characters handling */
@@ -405,6 +411,7 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 			for (i = 0; i < newx; i++) {
 				if (wadd_wch(win, &cc) == ERR)
 					return ERR;
+				(*lnp)->flags |= __ISDIRTY;
 			}
 			return OK;
 		}
@@ -474,6 +481,9 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 		newx = sx + win->ch_off;
 		if (newx < *(*lnp)->firstchp)
 			*(*lnp)->firstchp = newx;
+
+		if (newx > *(*lnp)->lastchp)
+			*(*lnp)->lastchp = newx;
 	}
 
 	/* check for enough space before the end of line */
@@ -523,6 +533,9 @@ _cursesi_addwchar(WINDOW *win, __LINE **lnp, int *y, int *x,
 	newx = *x + win->ch_off;
 	if (newx < *(*lnp)->firstchp)
 		*(*lnp)->firstchp = newx;
+
+	if (newx > *(*lnp)->lastchp)
+		*(*lnp)->lastchp = newx;
 
 	if (lp->nsp) {
 		__cursesi_free_nsp(lp->nsp);

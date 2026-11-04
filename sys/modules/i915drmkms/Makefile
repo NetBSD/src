@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.23 2023/09/04 21:45:35 mrg Exp $
+# $NetBSD: Makefile,v 1.23.6.1 2026/11/04 23:27:54 perseant Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -70,6 +70,7 @@ COPTS.intel_hdmi.c+=	${${ACTIVE_CC} == "clang":? -Wno-unused-function :}
 COPTS.intel_pm.c+=	${CC_WNO_STRINGOP_OVERREAD} ${CC_WNO_STRINGOP_OVERFLOW}
 COPTS.intel_sdvo.c+=	${CC_WNO_IMPLICIT_FALLTHROUGH}
 COPTS.intel_sprite.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
+COPTS.dvo_ch7xxx.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 
 # NetBSD additions.
 SRCS+=	i915_module.c

@@ -62,7 +62,7 @@
  * 
  *  Because gdb will sometimes write to the stack area to execute function
  *  calls, this program cannot rely on using the supervisor stack so it
- *  uses it's own stack area reserved in the int array remcomStack.  
+ *  uses its own stack area reserved in the int array remcomStack.
  * 
  *************
  *
@@ -352,7 +352,7 @@ saveFrameLoop:
 	movew  	sp@+,a1@+
 	dbf     d0,saveFrameLoop
 #
-# now that the stack has been clenaed,
+# now that the stack has been cleaned,
 # save the a7 in use at time of exception
 	movel   sp,_superStack  /* save supervisor sp           */
 	andiw   #0x2000,d1      /* were we in supervisor mode ? */

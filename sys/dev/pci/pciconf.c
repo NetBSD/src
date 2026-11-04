@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.55 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.55.10.1 2026/11/04 23:22:06 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.55 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.55.10.1 2026/11/04 23:22:06 perseant Exp $");
 
 #include "opt_pci.h"
 
@@ -91,6 +91,9 @@ int pci_conf_debug = 0;
 #define MAX_CONF_DEV	32			/* Arbitrary */
 #define MAX_CONF_MEM	(3 * MAX_CONF_DEV)	/* Avg. 3 per device -- Arb. */
 #define MAX_CONF_IO	(3 * MAX_CONF_DEV)	/* Avg. 1 per device -- Arb. */
+
+#define	PCICONF_MAPREG_IS_ROM(reg)					\
+	(((reg) == PCI_MAPREG_ROM) || ((reg) == PCI_BRIDGE_EXPROMADDR_REG))
 
 struct _s_pciconf_bus_t;			/* Forward declaration */
 
@@ -143,10 +146,10 @@ typedef struct _s_pciconf_dev_t {
 typedef struct _s_pciconf_win_t {
 	pciconf_dev_t	*dev;
 	int		reg;			/* 0 for busses */
-	int		align;
 	int		prefetch;
 	uint64_t	size;
 	uint64_t	address;
+	uint64_t	align;
 } pciconf_win_t;
 
 typedef struct _s_pciconf_bus_t {
@@ -166,14 +169,11 @@ typedef struct _s_pciconf_bus_t {
 	int		io_32bit;
 	int		pmem_64bit;
 	int		mem_64bit;
-	int		io_align;
-	int		mem_align;
-	int		pmem_align;
 
 	int		ndevs;
 	pciconf_dev_t	device[MAX_CONF_DEV];
 
-	/* These should be sorted in order of decreasing size */
+	/* These should be sorted in order of decreasing alignment */
 	int		nmemwin;
 	pciconf_win_t	pcimemwin[MAX_CONF_MEM];
 	int		niowin;
@@ -182,6 +182,9 @@ typedef struct _s_pciconf_bus_t {
 	bus_size_t	io_total;
 	bus_size_t	mem_total;
 	bus_size_t	pmem_total;
+	bus_size_t	io_align;
+	bus_size_t	mem_align;
+	bus_size_t	pmem_align;
 
 	struct pciconf_resource io_res;
 	struct pciconf_resource mem_res;
@@ -271,23 +274,23 @@ print_tag(pci_chipset_tag_t pc, pcitag_t tag)
 /************************************************************************/
 /************************************************************************/
 static pciconf_win_t *
-get_io_desc(pciconf_bus_t *pb, bus_size_t size)
+get_io_desc(pciconf_bus_t *pb, bus_size_t align)
 {
 	int	i, n;
 
 	n = pb->niowin;
-	for (i = n; i > 0 && size > pb->pciiowin[i-1].size; i--)
+	for (i = n; i > 0 && align > pb->pciiowin[i-1].align; i--)
 		pb->pciiowin[i] = pb->pciiowin[i-1]; /* struct copy */
 	return &pb->pciiowin[i];
 }
 
 static pciconf_win_t *
-get_mem_desc(pciconf_bus_t *pb, bus_size_t size)
+get_mem_desc(pciconf_bus_t *pb, bus_size_t align)
 {
 	int	i, n;
 
 	n = pb->nmemwin;
-	for (i = n; i > 0 && size > pb->pcimemwin[i-1].size; i--)
+	for (i = n; i > 0 && align > pb->pcimemwin[i-1].align; i--)
 		pb->pcimemwin[i] = pb->pcimemwin[i-1]; /* struct copy */
 	return &pb->pcimemwin[i];
 }
@@ -462,8 +465,8 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			    parent->niowin);
 			goto err;
 		}
-		pb->io_total |= pb->io_align - 1; /* Round up */
-		pi = get_io_desc(parent, pb->io_total);
+		pb->io_total = roundup2(pb->io_total, pb->io_align);
+		pi = get_io_desc(parent, pb->io_align);
 		pi->dev = pd;
 		pi->reg = 0;
 		pi->size = pb->io_total;
@@ -478,11 +481,11 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	if (pb->mem_total > 0) {
 		if (parent->nmemwin >= MAX_CONF_MEM) {
 			printf("pciconf: too many (%d) MEM windows\n",
-			     parent->nmemwin);
+			    parent->nmemwin);
 			goto err;
 		}
-		pb->mem_total |= pb->mem_align - 1; /* Round up */
-		pm = get_mem_desc(parent, pb->mem_total);
+		pb->mem_total = roundup2(pb->mem_total, pb->mem_align);
+		pm = get_mem_desc(parent, pb->mem_align);
 		pm->dev = pd;
 		pm->reg = 0;
 		pm->size = pb->mem_total;
@@ -499,12 +502,12 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 			printf("pciconf: too many MEM windows\n");
 			goto err;
 		}
-		pb->pmem_total |= pb->pmem_align - 1; /* Round up */
-		pm = get_mem_desc(parent, pb->pmem_total);
+		pb->pmem_total = roundup2(pb->pmem_total, pb->pmem_align);
+		pm = get_mem_desc(parent, pb->pmem_align);
 		pm->dev = pd;
 		pm->reg = 0;
 		pm->size = pb->pmem_total;
-		pm->align = pb->pmem_align;	/* 1M alignment */
+		pm->align = pb->pmem_align;	/* 1M min alignment */
 		if (parent->pmem_align < pb->pmem_align)
 			parent->pmem_align = pb->pmem_align;
 		pm->prefetch = 1;
@@ -526,7 +529,8 @@ pci_resource_is_reserved(int type, uint64_t addr, uint64_t size)
 	LIST_FOREACH(rsvd, &pciconf_resource_reservations, next) {
 		if (rsvd->type != type)
 			continue;
-		if (rsvd->start <= addr + size && rsvd->start + rsvd->size >= addr)
+		if (rsvd->start <= addr + size &&
+		    rsvd->start + rsvd->size >= addr)
 			return rsvd;
 	}
 
@@ -593,7 +597,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	pcireg_t	classreg, cmd, icr, bhlc, bar, mask, bar64, mask64,
 	    busreg;
 	uint64_t	size;
-	int		br, width, reg_start, reg_end;
+	u_int		hdrtype, br, width, reg_start, reg_end, reg_rom;
 
 	pd = &pb->device[pb->ndevs];
 	pd->pc = pb->pc;
@@ -615,8 +619,9 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		return 0;
 	}
 
+	hdrtype = PCI_HDRTYPE_TYPE(bhlc);
 	if (PCI_CLASS(classreg) != PCI_CLASS_BRIDGE
-	    && PCI_HDRTYPE_TYPE(bhlc) != PCI_HDRTYPE_PPB) {
+	    && hdrtype != PCI_HDRTYPE_PPB) {
 		cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
 		    PCI_COMMAND_IO_ENABLE | PCI_COMMAND_MEM_ENABLE);
 		pci_conf_write(pb->pc, tag, PCI_COMMAND_STATUS_REG, cmd);
@@ -631,7 +636,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	if ((cmd & PCI_STATUS_66MHZ_SUPPORT) == 0)
 		pb->freq_66 = 0;
 
-	switch (PCI_HDRTYPE_TYPE(bhlc)) {
+	reg_rom = PCI_MAPREG_ROM; /* Default */
+	switch (hdrtype) {
 	case PCI_HDRTYPE_DEVICE:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_END;
@@ -640,7 +646,16 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		pd->ppb = query_bus(pb, pd, dev);
 		if (pd->ppb == NULL)
 			return -1;
-		return 0;
+		/*
+		 * PCI-to-PCI Bridge Spec rev. 1.2.
+		 * "3.2.5.1 Base Address registers" says that if the optional
+		 * BARs are implemented, the configuration software must map
+		 * address ranges.
+		 */
+		reg_start = PCI_MAPREG_START;
+		reg_end = PCI_MAPREG_PPB_END; /* Only BAR0 and BAR1 */
+		reg_rom = PCI_BRIDGE_EXPROMADDR_REG;
+		break;
 	case PCI_HDRTYPE_PCB:
 		reg_start = PCI_MAPREG_START;
 		reg_end = PCI_MAPREG_PCB_END;
@@ -661,8 +676,6 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 	icr = pci_conf_read(pb->pc, tag, PCI_INTERRUPT_REG);
 	pd->ipin = PCI_INTERRUPT_PIN(icr);
 	pd->iline = PCI_INTERRUPT_LINE(icr);
-	pd->min_gnt = PCI_MIN_GNT(icr);
-	pd->max_lat = PCI_MAX_LAT(icr);
 	if (pd->iline || pd->ipin) {
 		pci_conf_interrupt(pb->pc, pb->busno, dev, pd->ipin, pb->swiz,
 		    &pd->iline);
@@ -671,15 +684,20 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 		pci_conf_write(pb->pc, tag, PCI_INTERRUPT_REG, icr);
 	}
 
-	if (pd->min_gnt != 0 || pd->max_lat != 0) {
-		if (pd->min_gnt != 0 && pd->min_gnt > pb->max_mingnt)
-			pb->max_mingnt = pd->min_gnt;
+	/* For non-PPB devices */
+	if (hdrtype != PCI_HDRTYPE_PPB) {
+		pd->min_gnt = PCI_MIN_GNT(icr);
+		pd->max_lat = PCI_MAX_LAT(icr);
+		if (pd->min_gnt != 0 || pd->max_lat != 0) {
+			if (pd->min_gnt != 0 && pd->min_gnt > pb->max_mingnt)
+				pb->max_mingnt = pd->min_gnt;
 
-		if (pd->max_lat != 0 && pd->max_lat < pb->min_maxlat)
-			pb->min_maxlat = pd->max_lat;
+			if (pd->max_lat != 0 && pd->max_lat < pb->min_maxlat)
+				pb->min_maxlat = pd->max_lat;
 
-		pb->bandwidth_used += pd->min_gnt * 4000000 /
-				(pd->min_gnt + pd->max_lat);
+			pb->bandwidth_used += pd->min_gnt * 4000000 /
+			    (pd->min_gnt + pd->max_lat);
+		}
 	}
 
 	width = 4;
@@ -719,13 +737,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 				return -1;
 			}
 
-			pi = get_io_desc(pb, size);
+			pi = get_io_desc(pb, size /*align*/);
 			pi->dev = pd;
 			pi->reg = br;
-			pi->size = (uint64_t)size;
-			pi->align = 4;
-			if (pb->io_align < pi->size)
-				pb->io_align = pi->size;
+			pi->size = pi->align = size;
+			if (pb->io_align < pi->align)
+				pb->io_align = pi->align;
 			pi->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -782,11 +799,10 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 				return -1;
 			}
 
-			pm = get_mem_desc(pb, size);
+			pm = get_mem_desc(pb, size /*align*/);
 			pm->dev = pd;
 			pm->reg = br;
-			pm->size = size;
-			pm->align = 4;
+			pm->size = pm->align = size;
 			pm->prefetch = PCI_MAPREG_MEM_PREFETCHABLE(mask);
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -796,21 +812,21 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pb->nmemwin++;
 			if (pm->prefetch) {
 				pb->pmem_total += size;
-				if (pb->pmem_align < pm->size)
-					pb->pmem_align = pm->size;
+				if (pb->pmem_align < pm->align)
+					pb->pmem_align = pm->align;
 			} else {
 				pb->mem_total += size;
-				if (pb->mem_align < pm->size)
-					pb->mem_align = pm->size;
+				if (pb->mem_align < pm->align)
+					pb->mem_align = pm->align;
 			}
 		}
 	}
 
 	if (mode & PCI_CONF_MAP_ROM) {
-		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, 0xfffffffe);
-		mask = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM, bar);
+		bar = pci_conf_read(pb->pc, tag, reg_rom);
+		pci_conf_write(pb->pc, tag, reg_rom, 0xfffffffe);
+		mask = pci_conf_read(pb->pc, tag, reg_rom);
+		pci_conf_write(pb->pc, tag, reg_rom, bar);
 
 		if (mask != 0 && mask != 0xffffffff) {
 			if (pb->nmemwin >= MAX_CONF_MEM) {
@@ -819,11 +835,10 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			}
 			size = (uint64_t)PCI_MAPREG_MEM_SIZE(mask);
 
-			pm = get_mem_desc(pb, size);
+			pm = get_mem_desc(pb, size /*align*/);
 			pm->dev = pd;
-			pm->reg = PCI_MAPREG_ROM;
-			pm->size = size;
-			pm->align = 4;
+			pm->reg = reg_rom;
+			pm->size = pm->align = size;
 			pm->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
@@ -833,12 +848,12 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pb->nmemwin++;
 			if (pm->prefetch) {
 				pb->pmem_total += size;
-				if (pb->pmem_align < pm->size)
-					pb->pmem_align = pm->size;
+				if (pb->pmem_align < pm->align)
+					pb->pmem_align = pm->align;
 			} else {
 				pb->mem_total += size;
-				if (pb->mem_align < pm->size)
-					pb->mem_align = pm->size;
+				if (pb->mem_align < pm->align)
+					pb->mem_align = pm->align;
 			}
 		}
 	} else {
@@ -849,8 +864,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 
 	if (!(mode & PCI_CONF_ENABLE_ROM)) {
 		/* Ensure ROM is disabled */
-		bar = pci_conf_read(pb->pc, tag, PCI_MAPREG_ROM);
-		pci_conf_write(pb->pc, tag, PCI_MAPREG_ROM,
+		bar = pci_conf_read(pb->pc, tag, reg_rom);
+		pci_conf_write(pb->pc, tag, reg_rom,
 		    bar & ~PCI_MAPREG_ROM_ENABLE);
 	}
 
@@ -1001,7 +1016,7 @@ setup_memwins(pciconf_bus_t *pb)
 		 * capable or not.  If it's not, then we need to constrain
 		 * the address allocation.
 		 */
-		if (pm->reg == PCI_MAPREG_ROM) {
+		if (PCICONF_MAPREG_IS_ROM(pm->reg)) {
 			ok64 = false;
 		} else if (ok64) {
 			base = pci_conf_read(pd->pc, pd->tag, pm->reg);
@@ -1045,7 +1060,7 @@ setup_memwins(pciconf_bus_t *pb)
 		} else
 			pd->enable |= PCI_CONF_ENABLE_MEM;
 
-		if (pm->reg != PCI_MAPREG_ROM) {
+		if (!PCICONF_MAPREG_IS_ROM(pm->reg)) {
 			if (pci_conf_debug) {
 				print_tag(pd->pc, pd->tag);
 				printf(
@@ -1080,7 +1095,7 @@ setup_memwins(pciconf_bus_t *pb)
 		}
 	}
 	for (pm = pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin]; pm++) {
-		if (pm->reg == PCI_MAPREG_ROM && pm->address != -1) {
+		if (PCICONF_MAPREG_IS_ROM(pm->reg) && pm->address != -1) {
 			pd = pm->dev;
 			if (!(pd->enable & PCI_CONF_MAP_ROM))
 				continue;
@@ -1387,7 +1402,7 @@ mem_region_ok64(struct pciconf_resource * const r __used_only_lp64)
 /*
  * pciconf_resource_init:
  *
- *	Allocate and initilize a pci configuration resources container.
+ *	Allocate and initialize a pci configuration resources container.
  */
 struct pciconf_resources *
 pciconf_resource_init(void)
@@ -1396,7 +1411,7 @@ pciconf_resource_init(void)
 
 	rs = kmem_zalloc(sizeof(*rs), KM_SLEEP);
 
-	return (rs);
+	return rs;
 }
 
 /*

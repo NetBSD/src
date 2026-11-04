@@ -1,4 +1,4 @@
-/*	$NetBSD: dbcool_var.h,v 1.17 2020/07/12 08:48:49 kim Exp $ */
+/*	$NetBSD: dbcool_var.h,v 1.17.26.1 2026/11/04 23:21:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.17 2020/07/12 08:48:49 kim Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbcool_var.h,v 1.17.26.1 2026/11/04 23:21:55 perseant Exp $");
 
 #include <dev/i2c/i2cvar.h>
 
@@ -95,6 +95,11 @@ struct dbcool_sensor {
 	int nom_volt_index;
 };
 
+struct dbcool_fan_div {
+	uint8_t fan_reg;
+	uint8_t char_reg;
+};
+
 /*
  * The members of dbcool_power_control need to stay in the same order
  * as the enum dbc_pwm_params above
@@ -125,11 +130,12 @@ struct dbcool_softc {
 	int sc_sysctl_num[DBCOOL_MAXSENSORS];
 	struct reg_list *sc_regs[DBCOOL_MAXSENSORS];
 	int sc_nom_volt[DBCOOL_MAXSENSORS];
+	int sc_fan_num;
+	int sc_fan_div[DBCOOL_MAXSENSORS];
 	int sc_temp_offset;
 	int64_t sc_supply_voltage;
 	bool sc_suspend;
 	struct sysctllog *sc_sysctl_log;
-	prop_dictionary_t sc_prop;
 #ifdef DBCOOL_DEBUG
 	uint8_t sc_user_reg;
 #endif

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1.2.1 2025/08/02 05:56:14 perseant Exp $
+#	$NetBSD: Makefile,v 1.1.2.2 2026/11/04 23:21:29 perseant Exp $
 
 INCSDIR= /usr/include/virt68k
 
 INCS=	ansi.h aout_machdep.h asm.h \
-	bootinfo.h bswap.h \
+	bswap.h \
 	cdefs.h cpu.h \
 	disklabel.h \
 	elf_machdep.h endian.h endian_machdep.h \

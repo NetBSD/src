@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.612.2.1 2025/08/02 05:55:23 perseant Exp $
+# $NetBSD: GENERIC,v 1.612.2.2 2026/11/04 23:19:59 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.612.2.1 $"
+#ident		"GENERIC-$Revision: 1.612.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -320,6 +320,7 @@ acpi0		at mainbus0
 options 	ACPI_SCANPCI		# find PCI roots using ACPI
 options 	MPBIOS			# configure CPUs and APICs using MPBIOS
 options 	MPBIOS_SCANPCI		# MPBIOS configures PCI roots
+options 	PCI_RESOURCE		# Allocate unconfigured PCI resources
 #options 	PCI_INTR_FIXUP		# fixup PCI interrupt routing via ACPI
 #options 	PCI_BUS_FIXUP		# fixup PCI bus numbering
 #options 	PCI_ADDR_FIXUP		# fixup PCI I/O addresses
@@ -529,6 +530,8 @@ amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
 
 amdsmn* at pci?				# AMD SMN Configuration
 amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
+
+pchtemp* at pci?			# Intel PCH Thermal Subsystem
 
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e
@@ -860,7 +863,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-rge*	at pci? dev ? function ?	# Realtek 8125
+rge*	at pci? dev ? function ?	# Realtek 8125/8126/8127
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n
@@ -1141,6 +1144,9 @@ hvheartbeat*	at vmbus?		# Hyper-V Heartbeat Service
 hvshutdown*	at vmbus?		# Hyper-V Guest Shutdown Service
 hvtimesync*	at vmbus?		# Hyper-V Time Synchronization Service
 #hvkvp*		at vmbus?		# Hyper-V Data Exchange Service
+
+# VMWare devices
+pvscsi* 	at pci? dev ? function?	# PV SCSI device
 
 # Pseudo-Devices
 

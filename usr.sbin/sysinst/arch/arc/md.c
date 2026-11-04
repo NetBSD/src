@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.14 2022/01/29 16:01:17 martin Exp $ */
+/*	$NetBSD: md.c,v 1.14.4.1 2026/11/04 23:28:59 perseant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@
 #include "menu_defs.h"
 
 /*
- * ARC BIOS reognizes only FAT, so we have to have a FAT partition
+ * ARC BIOS recognizes only FAT, so we have to have a FAT partition
  * to store our native bootloader.
  */
 static int nobootfs = 0;

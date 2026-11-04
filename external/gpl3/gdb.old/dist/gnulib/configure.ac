@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -20,7 +20,7 @@ dnl Process this file with autoconf to produce a configure script.
 
 AC_INIT([libgnu], [UNUSED-VERSION])
 AC_CONFIG_SRCDIR([import/memmem.c])
-AC_CONFIG_HEADER(config.h:config.in)
+AC_CONFIG_HEADERS([config.h:config.in])
 AC_CONFIG_MACRO_DIRS([import/m4])
 AC_CONFIG_MACRO_DIRS([../config])
 AM_MAINTAINER_MODE
@@ -34,7 +34,7 @@ gl_EARLY
 AM_PROG_CC_STDC
 
 AC_CONFIG_AUX_DIR(..)
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 
 gl_INIT
 

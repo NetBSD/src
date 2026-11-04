@@ -1,0 +1,51 @@
+# Copyright 2012-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Compile a 32-bit x86 executable and then stop within a system call.
+# Change the sysroot to a non-existent directory, GDB should try (and
+# fail) to reload the currently loaded shared libraries.  However, GDB
+# should retain the symbols for the vDSO library as that is not loaded
+# from the file system.
+#
+# Check the backtrace to ensure that the __kernel_vsyscall symbol is
+# still in the backtrace, this indicates GDB still has the vDSO
+# symbols available.
+
+require {is_any_target "i?86-*-linux*" "x86_64-*-linux*"}
+standard_testfile
+
+# The binary must be compiled as 32-bit so that the system call
+# `__kernel_vsyscall' originates from vDSO.
+set flags { debug }
+if { ![is_ilp32_target] } {
+     lappend flags  "additional_flags=-m32"
+}
+
+if { [prepare_for_testing $testfile.exp $testfile $srcfile $flags] } {
+    return
+}
+
+if { ![runto_main] } {
+    return
+}
+
+set non_existing_directory [standard_output_file "BOGUS"]
+
+gdb_test "continue" "Program received signal SIGABRT, Aborted.*" \
+    "continue until abort"
+gdb_test "set sysroot $non_existing_directory" \
+    ".*warning: Unable to find dynamic linker breakpoint function.*" \
+    "set sysroot"
+gdb_test "bt" "__kernel_vsyscall.*" "backtrace with __kernel_vsyscall"

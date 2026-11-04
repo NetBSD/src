@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.hp300,v 1.95 2019/08/21 20:31:23 skrll Exp $
+#	$NetBSD: Makefile.hp300,v 1.95.32.1 2026/11/04 23:20:38 perseant Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 HP300=		$S/arch/hp300
-GENASSYM_CONF=	${HP300}/hp300/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${HP300}/hp300/genassym.cf
 
 ##
 ## (2) compile settings
@@ -43,6 +44,8 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 

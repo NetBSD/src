@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.282.2.1 2025/08/02 05:57:51 perseant Exp $	*/
+/*	$NetBSD: nd6.c,v 1.282.2.2 2026/11/04 23:28:00 perseant Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.282.2.1 2025/08/02 05:57:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.282.2.2 2026/11/04 23:28:00 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -128,6 +128,7 @@ struct nd_domain nd6_nd_domain = {
 	.nd_retransmultiple = BACKOFF_MULTIPLE,
 	.nd_maxretrans = MAX_RETRANS_TIMER,
 	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
+	.nd_gctimer = 24*60*60,	/* stale neighbor GC timer duration */
 	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
 	.nd_nud_enabled = nd6_nud_enabled,
 	.nd_reachable = nd6_llinfo_reachable,
@@ -1399,6 +1400,7 @@ nd6_cache_lladdr(
 		 */
 		memcpy(&ln->ll_addr, lladdr, ifp->if_addrlen);
 		ln->la_flags |= LLE_VALID;
+		ln->la_flags &= ~LLE_UNRESOLVED;
 	}
 
 	if (!is_newentry) {
@@ -1425,7 +1427,7 @@ nd6_cache_lladdr(
 		if (ln->ln_state == ND_LLINFO_STALE) {
 			/*
 			 * XXX: since nd6_output() below will cause
-			 * state tansition to DELAY and reset the timer,
+			 * state transition to DELAY and reset the timer,
 			 * we must set the timer now, although it is actually
 			 * meaningless.
 			 */

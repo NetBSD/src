@@ -1,4 +1,4 @@
-/*	$NetBSD: lint.h,v 1.50.2.1 2025/08/02 05:58:45 perseant Exp $	*/
+/*	$NetBSD: lint.h,v 1.50.2.2 2026/11/04 23:28:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -75,10 +75,8 @@ typedef enum {
 	ULONG,		/* unsigned long */
 	LLONG,		/* (signed) long long */
 	ULLONG,		/* unsigned long long */
-#ifdef INT128_SIZE
 	INT128,		/* (signed) __int128_t */
 	UINT128,	/* __uint128_t */
-#endif
 	FLOAT,		/* float */
 	DOUBLE,		/* double or, with tflag, long float */
 	LDOUBLE,	/* long double */

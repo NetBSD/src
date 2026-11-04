@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC64,v 1.9.2.1 2025/08/02 05:56:02 perseant Exp $
+# $NetBSD: GENERIC64,v 1.9.2.2 2026/11/04 23:21:14 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -28,20 +28,21 @@ options 	VERBOSE_INIT_RISCV
 # Diagnostic/debugging support options
 options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
-options 	DEBUG		# expensive debugging checks/support
+#options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
 #options 	KERNHIST
-#options 	KERNHIST_PRINT
+#options 	KERNHIST_PRINT,KERNHIST_DELAY=0
 #options 	UVMHIST
-#options 	UVMHIST_PRINT
+#options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options 	PMAPHIST
-#options 	PMAPHIST_PRINT
+#options 	PMAPHIST_PRINT,KERNHIST_DELAY=0
 #options 	SYSCTL_DEBUG
 #options 	SYSCTL_DEBUG_SETUP
 #options 	SYSCTL_DEBUG_CREATE
 #options 	PMAP_FAULTINFO
 #options 	RISCV_SYSCALL_DEBUG
 #options 	SYSCALL_DEBUG
+#options 	PMAP_DEBUG
 
 #options 	COMPAT_NETBSD32
 #options 	EXEC_ELF32
@@ -78,8 +79,13 @@ gpio* 		at gpiobus?
 # System control
 jh7110syscon* 	at fdt? pass 1
 
+# Watchdog
+jh7110wdt*	at fdt?			# StarFive JH7110 wdt driver
+sunxiwdt* 	at fdt?			# Allwinner watchdog
+
 # SDMMC
 dwcmmc* 	at fdt?			# DesignWare SD/MMC
+sunximmc*	at fdt?			# Allwinner SD/MMC
 sdmmc* 		at sdmmcbus?
 ld0 		at sdmmc0
 ld1 		at sdmmc1
@@ -101,6 +107,7 @@ eqos* 		at fdt?			# DesignWare Ethernet QoS
 # MII/PHY support
 micphy* 	at mii? phy ?		# Micrel KSZ[89]xxx PHYs
 mcommphy* 	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
+rgephy* 	at mii? phy ?		# Realtek 8169S/8110S internal PHYs
 ukphy* 		at mii? phy ?		# generic unknown PHYs
 
 # Temperature sensor

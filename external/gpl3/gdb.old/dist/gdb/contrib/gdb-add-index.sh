@@ -2,7 +2,7 @@
 
 # Add a .gdb_index section to a file.
 
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -113,7 +113,7 @@ trap "rm -f $tmp_files" 0
 
 $GDB --batch -nx -iex 'set auto-load no' \
     -iex 'set debuginfod enabled off' \
-    -ex "file $file" -ex "save gdb-index $dwarf5 $dir" || {
+    -ex "file '$file'" -ex "save gdb-index $dwarf5 '$dir'" || {
     # Just in case.
     status=$?
     echo "$myname: gdb error generating index for $file" 1>&2
@@ -122,7 +122,7 @@ $GDB --batch -nx -iex 'set auto-load no' \
 
 # In some situations gdb can exit without creating an index.  This is
 # not an error.
-# E.g., if $file is stripped.  This behaviour is akin to stripping an
+# E.g., if $file is stripped.  This behavior is akin to stripping an
 # already stripped binary, it's a no-op.
 status=0
 
@@ -143,34 +143,31 @@ handle_file ()
 	    index="$index5"
 	    section=".debug_names"
 	fi
-	debugstradd=false
-	debugstrupdate=false
 	if test -s "$debugstr"; then
 	    if ! $OBJCOPY --dump-section .debug_str="$debugstrmerge" "$fpath" \
-		 /dev/null 2>$debugstrerr; then
-		cat >&2 $debugstrerr
+		 /dev/null 2> "$debugstrerr"; then
+		cat >&2 "$debugstrerr"
 		exit 1
 	    fi
-	    if grep -q "can't dump section '.debug_str' - it does not exist" \
-		    $debugstrerr; then
-		debugstradd=true
-	    else
-		debugstrupdate=true
-		cat >&2 $debugstrerr
-	    fi
 	    cat "$debugstr" >>"$debugstrmerge"
+	    if grep -q "can't dump section '.debug_str' - it does not exist" \
+		    "$debugstrerr"; then
+		$OBJCOPY --add-section $section="$index" \
+			 --set-section-flags $section=readonly \
+			 --add-section .debug_str="$debugstrmerge" \
+		         --set-section-flags .debug_str=readonly \
+			 "$fpath" "$fpath"
+	    else
+		$OBJCOPY --add-section $section="$index" \
+			 --set-section-flags $section=readonly \
+			 --update-section .debug_str="$debugstrmerge" \
+			 "$fpath" "$fpath"
+	    fi
+	else
+	    $OBJCOPY --add-section $section="$index" \
+		     --set-section-flags $section=readonly \
+		     "$fpath" "$fpath"
 	fi
-
-	$OBJCOPY --add-section $section="$index" \
-		 --set-section-flags $section=readonly \
-		 $(if $debugstradd; then \
-		       echo --add-section .debug_str="$debugstrmerge"; \
-		       echo --set-section-flags .debug_str=readonly; \
-		   fi; \
-		   if $debugstrupdate; then \
-		       echo --update-section .debug_str="$debugstrmerge"; \
-		   fi) \
-		 "$fpath" "$fpath"
 
 	status=$?
     else

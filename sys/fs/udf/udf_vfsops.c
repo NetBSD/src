@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.85 2022/05/03 07:33:07 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.85.10.1 2026/11/04 23:27:46 perseant Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.85 2022/05/03 07:33:07 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.85.10.1 2026/11/04 23:27:46 perseant Exp $");
 #endif /* not lint */
 
 
@@ -765,9 +765,7 @@ udf_root(struct mount *mp, int lktype, struct vnode **vpp)
 	if (error)
 		return error;
 
-	if (!root_dir)
-		error = ENOENT;
-
+	KASSERT(root_dir);
 	vp = root_dir->vnode;
 	KASSERT(vp->v_vflag & VV_ROOT);
 

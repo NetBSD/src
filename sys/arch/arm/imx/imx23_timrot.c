@@ -1,4 +1,4 @@
-/* $Id: imx23_timrot.c,v 1.3 2013/10/07 17:36:40 matt Exp $ */
+/* $NetBSD: imx23_timrot.c,v 1.3.66.1 2026/11/04 23:20:10 perseant Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,80 +33,54 @@
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/errno.h>
+#include <sys/kernel.h>
 #include <sys/systm.h>
 
-#include <arm/pic/picvar.h>
+#include <dev/fdt/fdtvar.h>
 
-#include <arm/imx/imx23_icollreg.h>
+#include <arm/fdt/arm_fdtvar.h>
 #include <arm/imx/imx23_timrotreg.h>
 #include <arm/imx/imx23var.h>
+#include <arm/pic/picvar.h>
 
-extern int hz;
-extern int stathz;
+#include "opt_arm_timer.h"
+#ifdef __HAVE_GENERIC_CPU_INITCLOCKS
+void	imx23_timrot_cpu_initclocks(void);
+#else
+#define imx23_timrot_cpu_initclocks	cpu_initclocks
+#endif
 
-static int	timrot_match(device_t, cfdata_t, void *);
-static void	timrot_attach(device_t, device_t, void *);
-static int	timrot_activate(device_t, enum devact);
 
-static void	timrot_reset(void);
-
-/*
- * Timer IRQ handler definitions.
- */
-static int	systimer_irq(void *);
-static int	stattimer_irq(void *);
-
-void	cpu_initclocks(void);
-void 	setstatclockrate(int);
-
-/* Allocated for each timer instance. */
-struct timrot_softc {
-	device_t sc_dev;
+struct imx23_timrot_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_hdl;
-	int8_t sc_irq;
-	int (*irq_handler)(void *);
-	int freq;
 };
 
-static bus_space_tag_t timrot_iot;
-static bus_space_handle_t timrot_hdl;
+static int	imx23_timrot_match(device_t, cfdata_t, void *);
+static void	imx23_timrot_attach(device_t, device_t, void *);
 
-CFATTACH_DECL3_NEW(timrot,
-	sizeof(struct timrot_softc),
-	timrot_match,
-	timrot_attach,
-	NULL,
-	timrot_activate,
-	NULL,
-	NULL,
-	0);
+static void	imx23_timrot_reset(struct imx23_timrot_softc *);
+int 		imx23_timrot_systimer_irq(void *frame);
+int 		imx23_timrot_stattimer_irq(void *);
+static void	imx23_timrot_setstatclockrate(int);
 
-#define MAX_TIMERS	4
-#define SYS_TIMER	0
-#define STAT_TIMER	1	
-#define SCHED_TIMER	2
+CFATTACH_DECL_NEW(imx23timrot, sizeof(struct imx23_timrot_softc),
+		  imx23_timrot_match, imx23_timrot_attach, NULL, NULL);
 
-struct timrot_softc *timer_sc[MAX_TIMERS];
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx23-timrot" },
+	{ .compat = "fsl,timrot" },
+	DEVICE_COMPAT_EOL
+};
 
-static void	timer_init(struct timrot_softc *);
+static struct imx23_timrot_softc *timer_sc = NULL;
 
 #define TIMROT_SOFT_RST_LOOP 455 /* At least 1 us ... */
-#define TIMROT_READ(reg)						\
-	bus_space_read_4(timrot_iot, timrot_hdl, (reg))
-#define TIMROT_WRITE(reg, val)						\
-	bus_space_write_4(timrot_iot, timrot_hdl, (reg), (val))
-
-#define TIMER_REGS_SIZE 0x20
-
-#define TIMER_CTRL	0x00
-#define TIMER_CTRL_SET	0x04
-#define TIMER_CTRL_CLR	0x08
-#define TIMER_CTRL_TOG	0x0C
-#define TIMER_COUNT	0x10
-
-#define TIMER_READ(sc, reg)						\
+#define TIMROT_READ(sc, reg)						\
 	bus_space_read_4(sc->sc_iot, sc->sc_hdl, (reg))
+#define TIMROT_WRITE(sc, reg, val)					\
+	bus_space_write_4(sc->sc_iot, sc->sc_hdl, (reg), (val))
+
 #define TIMER_WRITE(sc, reg, val)					\
 	bus_space_write_4(sc->sc_iot, sc->sc_hdl, (reg), (val))
 #define TIMER_WRITE_2(sc, reg, val)					\
@@ -115,174 +89,138 @@ static void	timer_init(struct timrot_softc *);
 #define SELECT_32KHZ	0x8	/* Use 32kHz clock source. */
 #define SOURCE_32KHZ_HZ	32000	/* Above source in Hz. */
 
-#define IRQ HW_TIMROT_TIMCTRL0_IRQ
 #define IRQ_EN HW_TIMROT_TIMCTRL0_IRQ_EN
 #define UPDATE HW_TIMROT_TIMCTRL0_UPDATE
 #define RELOAD HW_TIMROT_TIMCTRL0_RELOAD
 
 static int
-timrot_match(device_t parent, cfdata_t match, void *aux)
+imx23_timrot_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct apb_attach_args *aa = aux;
+	struct fdt_attach_args * const faa = aux;
 
-	if ((aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL0
-	    && aa->aa_size == TIMER_REGS_SIZE))
-		return 1;
-
-	if ((aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL1
-	    && aa->aa_size == TIMER_REGS_SIZE))
-		return 1;
-
-#if 0
-	if ((aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL2
-	    && aa->aa_size == TIMER_REGS_SIZE))
-		return 1;
-
-	if ((aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL3
-	    && aa->aa_size == TIMER_REGS_SIZE))
-		return 1;
-#endif
-	return 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
-timrot_attach(device_t parent, device_t self, void *aux)
+imx23_timrot_attach(device_t parent, device_t self, void *aux)
 {
-	struct apb_attach_args *aa = aux;
-	struct timrot_softc *sc = device_private(self);
-	static int timrot_attached = 0;
+	struct imx23_timrot_softc * const sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	char intrstr[128];
 
-	if (!timrot_attached) {
-		timrot_iot = aa->aa_iot;
-		if (bus_space_map(timrot_iot, HW_TIMROT_BASE, HW_TIMROT_SIZE,
-		    0, &timrot_hdl)) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to map bus space\n");
-			return;
-		}
-		timrot_reset();
-		timrot_attached = 1;
+	timer_sc = sc;
+	sc->sc_iot = faa->faa_bst;
+	stathz = (hz>>1);
+
+	/* ma timer registers */
+	bus_addr_t addr;
+	bus_size_t size;
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get register address\n");
+		return;
+	}
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_hdl)) {
+		aprint_error(": couldn't map registers\n");
+		return;
 	}
 
-	if (aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL0
-	    && aa->aa_size == TIMER_REGS_SIZE
-	    && timer_sc[SYS_TIMER] == NULL) {
-		if (bus_space_subregion(timrot_iot, timrot_hdl, 
-		    HW_TIMROT_TIMCTRL0, TIMER_REGS_SIZE,
-		    &sc->sc_hdl)) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to map subregion\n");
-			return;
-		}
+	/* reset timer */
+	imx23_timrot_reset(sc);
 
-		sc->sc_iot = aa->aa_iot;
-		sc->sc_irq = aa->aa_irq;
-		sc->irq_handler = &systimer_irq;
-		sc->freq = hz;
-
-		timer_sc[SYS_TIMER] = sc;
-
-		aprint_normal("\n");
-
-	} else if (aa->aa_addr == HW_TIMROT_BASE + HW_TIMROT_TIMCTRL1
-	    && aa->aa_size == TIMER_REGS_SIZE
-	    && timer_sc[STAT_TIMER] == NULL) {
-		if (bus_space_subregion(timrot_iot, timrot_hdl, 
-		    HW_TIMROT_TIMCTRL1, TIMER_REGS_SIZE, &sc->sc_hdl)) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to map subregion\n");
-			return;
-		}
-
-		sc->sc_iot = aa->aa_iot;
-		sc->sc_irq = aa->aa_irq;
-		sc->irq_handler = &stattimer_irq;
-		stathz = (hz>>1);
-		sc->freq = stathz;
-
-		timer_sc[STAT_TIMER] = sc;
-
-		aprint_normal("\n");
+	/* establish system timer */
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
 	}
+	void *ih = fdtbus_intr_establish_xname(phandle, 0, IPL_CLOCK, 0,
+					       imx23_timrot_systimer_irq, NULL,
+					       device_xname(self));
+	if (ih == NULL) {
+		aprint_error_dev(self,
+				 "couldn't install systimer interrupt handler\n");
+		return;
+	}
+	aprint_normal(": systimer on %s", intrstr);
 
-	return;
-}
+	/* establish stat timer */
+	if (!fdtbus_intr_str(phandle, 1, intrstr, sizeof(intrstr))) {
+		aprint_error(": failed to decode interrupt\n");
+		return;
+	}
+	ih = fdtbus_intr_establish_xname(phandle, 1, IPL_CLOCK, 0,
+					 imx23_timrot_stattimer_irq, NULL,
+					 device_xname(self));
+	if (ih == NULL) {
+		aprint_error_dev(self,
+			"couldn't install stattimer interrupt handler\n");
+		return;
+	}
+	aprint_normal(": stattimer on %s\n", intrstr);
 
-static int
-timrot_activate(device_t self, enum devact act)
-{
-	return EOPNOTSUPP;
+	arm_fdt_timer_register(imx23_timrot_cpu_initclocks);
+	arm_fdt_timer_register_setstatclockrate(imx23_timrot_setstatclockrate);
 }
 
 /*
- * cpu_initclock is called once at the boot time.
+ * imx23_timrot_cpu_initclocks is called once at the boot time. It actually
+ * starts the timers.
  */
 void
-cpu_initclocks(void)
+imx23_timrot_cpu_initclocks(void)
 {
-	if (timer_sc[SYS_TIMER] != NULL)
-		timer_init(timer_sc[SYS_TIMER]);
+	struct imx23_timrot_softc *sc = timer_sc;
+	uint32_t ctrl = IRQ_EN | UPDATE | RELOAD | SELECT_32KHZ;
 
-	if (timer_sc[STAT_TIMER] != NULL)
-		timer_init(timer_sc[STAT_TIMER]);
+	// systimer
+	TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT0,
+		      __SHIFTIN(SOURCE_32KHZ_HZ / hz - 1,
+				HW_TIMROT_TIMCOUNT0_FIXED_COUNT));
+	TIMER_WRITE(sc, HW_TIMROT_TIMCTRL0, ctrl);
 
-	return;
+	// stattimer
+	TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
+		      __SHIFTIN(SOURCE_32KHZ_HZ / stathz - 1,
+				HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
+	TIMER_WRITE(sc, HW_TIMROT_TIMCTRL1, ctrl);
 }
 
 /*
  * Change statclock rate when profiling takes place.
  */
-void
-setstatclockrate(int newhz)
-{
-	struct timrot_softc *sc = timer_sc[STAT_TIMER];
-	sc->freq = newhz;
-
-	TIMER_WRITE_2(sc, TIMER_COUNT,
-	    __SHIFTIN(SOURCE_32KHZ_HZ / sc->freq - 1,
-	    HW_TIMROT_TIMCOUNT0_FIXED_COUNT));
-
-	return;
-}
-
-/*
- * Generic timer initialization function.
- */
 static void
-timer_init(struct timrot_softc *sc)
+imx23_timrot_setstatclockrate(int newhz)
 {
-	uint32_t ctrl;
+	struct imx23_timrot_softc *sc = timer_sc;
 
-	TIMER_WRITE_2(sc, TIMER_COUNT,
-	    __SHIFTIN(SOURCE_32KHZ_HZ / sc->freq - 1,
-	    HW_TIMROT_TIMCOUNT0_FIXED_COUNT));
-	ctrl = IRQ_EN | UPDATE | RELOAD | SELECT_32KHZ;
-	TIMER_WRITE(sc, TIMER_CTRL, ctrl);
-
-	intr_establish(sc->sc_irq, IPL_SCHED, IST_LEVEL, sc->irq_handler, NULL);
-
-	return;
+	TIMER_WRITE_2(sc, HW_TIMROT_TIMCOUNT1,
+		      __SHIFTIN(SOURCE_32KHZ_HZ / newhz - 1,
+				HW_TIMROT_TIMCOUNT1_FIXED_COUNT));
 }
 
 /*
  * Timer IRQ handlers.
  */
-static int
-systimer_irq(void *frame)
+int
+imx23_timrot_systimer_irq(void *frame)
 {
+	struct imx23_timrot_softc *sc = timer_sc;
+
 	hardclock(frame);
 
-	TIMER_WRITE(timer_sc[SYS_TIMER], TIMER_CTRL_CLR, IRQ);
+	TIMER_WRITE(sc, HW_TIMROT_TIMCTRL0_CLR, HW_TIMROT_TIMCTRL0_IRQ);
 
 	return 1;
 }
 
-static int
-stattimer_irq(void *frame)
+int
+imx23_timrot_stattimer_irq(void *frame)
 {
+	struct imx23_timrot_softc *sc = timer_sc;
+
 	statclock(frame);
 
-	TIMER_WRITE(timer_sc[STAT_TIMER], TIMER_CTRL_CLR, IRQ);
+	TIMER_WRITE(sc, HW_TIMROT_TIMCTRL1_CLR, HW_TIMROT_TIMCTRL1_IRQ);
 
 	return 1;
 }
@@ -293,41 +231,42 @@ stattimer_irq(void *frame)
  * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
  */
 static void
-timrot_reset(void)
+imx23_timrot_reset(struct imx23_timrot_softc *sc)
 {
 	unsigned int loop;
-	
-	/* Prepare for soft-reset by making sure that SFTRST is not currently
-	* asserted. Also clear CLKGATE so we can wait for its assertion below.
-	*/
-	TIMROT_WRITE(HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_SFTRST);
+
+	/*
+	 * Prepare for soft-reset by making sure that SFTRST is not currently
+	 * asserted. Also clear CLKGATE so we can wait for its assertion below.
+	 */
+	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_SFTRST);
 
 	/* Wait at least a microsecond for SFTRST to deassert. */
 	loop = 0;
-	while ((TIMROT_READ(HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_SFTRST) ||
+	while ((TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_SFTRST) ||
 	    (loop < TIMROT_SOFT_RST_LOOP))
 		loop++;
 
 	/* Clear CLKGATE so we can wait for its assertion below. */
-	TIMROT_WRITE(HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_CLKGATE);
+	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_CLKGATE);
 
 	/* Soft-reset the block. */
-	TIMROT_WRITE(HW_TIMROT_ROTCTRL_SET, HW_TIMROT_ROTCTRL_SFTRST);
+	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_SET, HW_TIMROT_ROTCTRL_SFTRST);
 
 	/* Wait until clock is in the gated state. */
-	while (!(TIMROT_READ(HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE));
+	while (!(TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE))
+		continue;
 
 	/* Bring block out of reset. */
-	TIMROT_WRITE(HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_SFTRST);
+	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_SFTRST);
 
 	loop = 0;
-	while ((TIMROT_READ(HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_SFTRST) ||
+	while ((TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_SFTRST) ||
 	    (loop < TIMROT_SOFT_RST_LOOP))
 		loop++;
 
-	TIMROT_WRITE(HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_CLKGATE);
+	TIMROT_WRITE(sc, HW_TIMROT_ROTCTRL_CLR, HW_TIMROT_ROTCTRL_CLKGATE);
 	/* Wait until clock is in the NON-gated state. */
-	while (TIMROT_READ(HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE);
-
-	return;
+	while (TIMROT_READ(sc, HW_TIMROT_ROTCTRL) & HW_TIMROT_ROTCTRL_CLKGATE)
+		continue;
 }

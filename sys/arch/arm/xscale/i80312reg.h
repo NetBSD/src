@@ -1,4 +1,4 @@
-/*	$NetBSD: i80312reg.h,v 1.12 2018/02/08 09:05:17 dholland Exp $	*/
+/*	$NetBSD: i80312reg.h,v 1.12.40.1 2026/11/04 23:20:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -360,7 +360,7 @@
 /*
  * Internal Arbitration Unit
  */
-#define	I80312_ARB_IAC		0x00	/* Internal Aribtration Control */
+#define	I80312_ARB_IAC		0x00	/* Internal Arbitration Control */
 #define	I80312_ARB_MLT		0x04	/* Master Latency Timer */
 #define	I80312_ARB_MTT		0x08	/* Multi-Transaction Timer */
      /* not used		0x0c .. 0x3c */

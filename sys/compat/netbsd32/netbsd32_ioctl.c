@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.121.2.1 2025/08/02 05:56:27 perseant Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.121.2.2 2026/11/04 23:21:41 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.121.2.1 2025/08/02 05:56:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.121.2.2 2026/11/04 23:21:41 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1382,7 +1382,7 @@ netbsd32_ioctl(struct lwp *l,
 			break;
 		}
 	}
-	if (alloc_size32 > IOCPARM_MAX) {
+	if (alloc_size32 > (size_t)IOCPARM_MAX) {
 		error = ENOTTY;
 		goto out;
 	}

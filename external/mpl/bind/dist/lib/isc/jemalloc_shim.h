@@ -1,4 +1,4 @@
-/*	$NetBSD: jemalloc_shim.h,v 1.2.6.1 2025/08/02 05:53:53 perseant Exp $	*/
+/*	$NetBSD: jemalloc_shim.h,v 1.2.6.2 2026/11/04 23:18:15 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,7 +32,8 @@ const char *malloc_conf = NULL;
 
 typedef union {
 	size_t size;
-	max_align_t __alignment;
+	// libuv uses the least significant 3 bits for internal purposes
+	max_align_t __alignment __attribute__((__aligned__(16)));
 } size_info;
 
 static inline void *
@@ -41,7 +42,9 @@ mallocx(size_t size, int flags) {
 
 	size_t bytes = ISC_CHECKED_ADD(size, sizeof(size_info));
 	size_info *si = malloc(bytes);
-	INSIST(si != NULL);
+	if (si == NULL) {
+		return NULL;
+	}
 
 	si->size = size;
 	ptr = &si[1];
@@ -69,8 +72,11 @@ sallocx(void *ptr, int flags ISC_ATTR_UNUSED) {
 
 static inline void *
 rallocx(void *ptr, size_t size, int flags) {
-	size_info *si = realloc(&(((size_info *)ptr)[-1]), size + sizeof(*si));
-	INSIST(si != NULL);
+	size_t bytes = ISC_CHECKED_ADD(size, sizeof(size_info));
+	size_info *si = realloc(&(((size_info *)ptr)[-1]), bytes);
+	if (si == NULL) {
+		return NULL;
+	}
 
 	if ((flags & MALLOCX_ZERO) != 0 && size > si->size) {
 		memset((uint8_t *)si + sizeof(*si) + si->size, 0,

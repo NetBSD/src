@@ -340,8 +340,10 @@ grep "status: NOERROR" dig.out.ns1.$n >/dev/null || ret=1
 n=$((n + 1))
 ret=0
 echo_i "check that TYPE=0 update is handled ($n)"
+nextpart ns1/named.run >/dev/null
 echo "a0e4280000010000000100000000060001c00c000000fe000000000000" \
-  | $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp >/dev/null || ret=1
+  | $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp -b >/dev/null || ret=1
+wait_for_log 2 "message parsing failed: FORMERR" ns1/named.run || ret=1
 $DIG $DIGOPTS +tcp version.bind txt ch @10.53.0.1 >dig.out.ns1.$n || ret=1
 grep "status: NOERROR" dig.out.ns1.$n >/dev/null || ret=1
 [ $ret = 0 ] || {
@@ -352,20 +354,10 @@ grep "status: NOERROR" dig.out.ns1.$n >/dev/null || ret=1
 n=$((n + 1))
 ret=0
 echo_i "check that TYPE=0 additional data is handled ($n)"
+nextpart ns1/named.run >/dev/null
 echo "a0e4280000010000000000010000060001c00c000000fe000000000000" \
-  | $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp >/dev/null || ret=1
-$DIG $DIGOPTS +tcp version.bind txt ch @10.53.0.1 >dig.out.ns1.$n || ret=1
-grep "status: NOERROR" dig.out.ns1.$n >/dev/null || ret=1
-[ $ret = 0 ] || {
-  echo_i "failed"
-  status=1
-}
-
-n=$((n + 1))
-ret=0
-echo_i "check that update to undefined class is handled ($n)"
-echo "a0e4280000010001000000000000060101c00c000000fe000000000000" \
-  | $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp >/dev/null || ret=1
+  | $PERL ../packet.pl -a 10.53.0.1 -p ${PORT} -t tcp -b >/dev/null || ret=1
+wait_for_log 2 "message parsing failed: FORMERR" ns1/named.run || ret=1
 $DIG $DIGOPTS +tcp version.bind txt ch @10.53.0.1 >dig.out.ns1.$n || ret=1
 grep "status: NOERROR" dig.out.ns1.$n >/dev/null || ret=1
 [ $ret = 0 ] || {
@@ -734,7 +726,7 @@ END
 grep REFUSED nsupdate.out.$n >/dev/null 2>&1 || ret=1
 $DIG $DIGOPTS @10.53.0.6 \
   +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
-  -x 127.0.0.1 >dig.out.ns6.$n
+  -x 127.0.0.1 >dig.out.ns6.$n || ret=1
 grep localhost. dig.out.ns6.$n >/dev/null 2>&1 && ret=1
 if test $ret -ne 0; then
   echo_i "failed"
@@ -772,7 +764,7 @@ END
 grep REFUSED nsupdate.out.$n >/dev/null 2>&1 || ret=1
 $DIG $DIGOPTS @10.53.0.6 \
   +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
-  -x 192.168.0.1 >dig.out.ns6.$n
+  -x 192.168.0.1 >dig.out.ns6.$n || ret=1
 grep localhost. dig.out.ns6.$n >/dev/null 2>&1 && ret=1
 if test $ret -ne 0; then
   echo_i "failed"
@@ -793,7 +785,7 @@ END
 grep REFUSED nsupdate.out.$n >/dev/null 2>&1 || ret=1
 $DIG $DIGOPTS @10.53.0.6 \
   +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
-  $REVERSE_NAME NS >dig.out.ns6.$n
+  $REVERSE_NAME NS >dig.out.ns6.$n || ret=1
 grep localhost. dig.out.ns6.$n >/dev/null 2>&1 && ret=1
 if test $ret -ne 0; then
   echo_i "failed"
@@ -835,7 +827,7 @@ END
 grep REFUSED nsupdate.out.$n >/dev/null 2>&1 || ret=1
 $DIG $DIGOPTS @fd92:7065:b8e:ffff::6 \
   +tcp +noadd +nosea +nostat +noquest +nocomm +nocmd \
-  $REVERSE_NAME NS >dig.out.ns6.$n
+  $REVERSE_NAME NS >dig.out.ns6.$n || ret=1
 grep localhost. dig.out.ns6.$n >/dev/null 2>&1 && ret=1
 if test $ret -ne 0; then
   echo_i "failed"
@@ -1858,7 +1850,7 @@ n=$((n + 1))
 ret=0
 echo_i "check that max records is enforced ($n)"
 nextpart ns6/named.run >/dev/null
-$NSUPDATE -v >nsupdate.out.$n 2>&1 <<END
+$NSUPDATE -v >nsupdate.out.$n 2>&1 <<END || ret=1
 server 10.53.0.6 ${PORT}
 local 10.53.0.5
 update del 5.0.53.10.in-addr.arpa.
@@ -1884,7 +1876,7 @@ n=$((n + 1))
 ret=0
 echo_i "check that max records for ANY is enforced ($n)"
 nextpart ns6/named.run >/dev/null
-$NSUPDATE -v >nsupdate.out.$n 2>&1 <<END
+$NSUPDATE -v >nsupdate.out.$n 2>&1 <<END || ret=1
 server 10.53.0.6 ${PORT}
 local 10.53.0.5
 update del 5.0.53.10.in-addr.arpa.
@@ -2158,6 +2150,32 @@ wait_for_log 10 "too many DNS UPDATEs queued" ns1/named.run || ret=1
   status=1
 }
 
+n=$((n + 1))
+ret=0
+echo_i "check that grant external pass client address properly ($n)" {
+($PERL "${TOP_SRCDIR}/bin/tests/system/authsock.pl" --type=CNAME --path=ns1/auth.sock --pidfile=authsock.pid --timeout=120 >authsock.out.test$n 2>&1 &) &
+sleep 1
+nextpart authsock.out.test$n >/dev/null
+$NSUPDATE -k ns1/ddns.key -d <<EOF >nsupdate.udp.test$n 2>&1 || ret=1
+server 10.53.0.1 ${PORT}
+zone grant-external.test
+update add cnameoverudp.grant-external.test 0 IN CNAME grant-external.test.
+send
+EOF
+nextpart authsock.out.test$n | grep ' addr= ' >/dev/null || ret=1
+$NSUPDATE -v -d <<EOF >nsupdate.tcp.test$n 2>&1 || ret=1
+server 10.53.0.1 ${PORT}
+zone grant-external.test
+update add cnameovertcp.grant-external.test 0 IN CNAME grant-external.test.
+send
+EOF
+nextpart authsock.out.test$n | grep ' addr=10.53.0.1 ' >/dev/null || ret=1
+kill $(cat authsock.pid) || true
+[ $ret = 0 ] || {
+  echo_i "failed"
+  status=1
+}
+
 if ! $FEATURETEST --gssapi; then
   echo_i "SKIPPED: GSSAPI tests"
 else
@@ -2179,7 +2197,7 @@ EOF
     status=1
   }
 
-  copy_setports ns7/named2.conf.in ns7/named.conf
+  cp ns7/named2.conf ns7/named.conf
   rndc_reload ns7 10.53.0.7
 
   n=$((n + 1))

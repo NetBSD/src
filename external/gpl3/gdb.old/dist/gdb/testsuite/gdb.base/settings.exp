@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -143,7 +143,7 @@ proc test-integer {variant} {
     if {$variant == "zuinteger-unlimited"} {
 	# -1 means unlimited.  Other negative values are rejected.  -1
 	# -is tested further below, along the "unlimited" tests.
-	gdb_test "$set_cmd -2" "only -1 is allowed to set as unlimited"
+	gdb_test "$set_cmd -2" "integer -2 out of range"
 	check_type "test-settings $variant" "type = int"
     } elseif {$variant == "uinteger" || $variant == "zuinteger"} {
 	# Negative values are not accepted.
@@ -504,7 +504,7 @@ proc_with_prefix test-enum {} {
     gdb_test_no_output "$set_cmd zzz"
     show_setting "$show_cmd" "zzz" 0 "yyy"
 
-    check_type "test-settings enum" "type = char \\\[3\\\]"
+    check_type "test-settings enum" "type = char \\\[4\\\]"
 
     test_gdb_complete_multiple "$set_cmd " "" "" {
 	"xxx"
@@ -540,7 +540,9 @@ proc test-string {variant} {
 
     # Checks that gdb doesn't crash if we haven't set the string yet.
     if {$variant != "filename"} {
-	gdb_test "$show_cmd" "^$show_cmd\r\n" "$show_cmd: show default"
+	# This odd expected output here is because we expect GDB to
+	# emit a single blank line as a result of this command.
+	gdb_test -nonl "$show_cmd" "^\r\n" "$show_cmd: show default"
     } else {
 	gdb_test "$show_cmd" "/foo/bar" "$show_cmd: show default"
     }
@@ -570,8 +572,9 @@ proc test-string {variant} {
 	    show_setting "$show_cmd" "\"hello world\""
 	} else {
 	    gdb_test_no_output "$set_cmd"
-	    gdb_test "$show_cmd" \
-		"^$show_cmd\r\n" "$show_cmd: empty second time"
+	    # This odd expected output here is because we expect GDB to
+	    # emit a single blank line as a result of this command.
+	    gdb_test -nonl "$show_cmd" "^\r\n" "$show_cmd: empty second time"
 	}
     }
 
@@ -622,6 +625,19 @@ proc test-string {variant} {
     test_gdb_complete_none "$show_cmd "
 }
 
+# Check that $_gdb_setting & co report the correct error strings.
+proc test-setting-error {} {
+    gdb_test {print $_gdb_setting("xxx")} \
+	"First argument of \\\$_gdb_setting must be a valid setting of the 'show' command\\."
+    gdb_test {print $_gdb_setting_str("xxx")} \
+	"First argument of \\\$_gdb_setting_str must be a valid setting of the 'show' command\\."
+
+    gdb_test {print $_gdb_maint_setting("xxx")} \
+	"First argument of \\\$_gdb_maint_setting must be a valid setting of the 'maintenance show' command\\."
+    gdb_test {print $_gdb_maint_setting_str("xxx")} \
+	"First argument of \\\$_gdb_maint_setting_str must be a valid setting of the 'maintenance show' command\\."
+}
+
 foreach variant {
     uinteger
     integer
@@ -648,3 +664,5 @@ foreach variant {
 	test-string $variant
     }
 }
+
+test-setting-error

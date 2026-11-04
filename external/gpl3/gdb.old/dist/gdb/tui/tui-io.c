@@ -1,6 +1,6 @@
 /* TUI support I/O functions.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,12 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "exceptions.h"
 #include "target.h"
 #include "gdbsupport/event-loop.h"
 #include "event-top.h"
-#include "command.h"
 #include "top.h"
+#include "ui.h"
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-io.h"
@@ -32,7 +32,6 @@
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-file.h"
-#include "tui/tui-out.h"
 #include "ui-out.h"
 #include "cli-out.h"
 #include <fcntl.h>
@@ -165,7 +164,7 @@ do_tui_putc (WINDOW *w, char c)
 static void
 update_cmdwin_start_line ()
 {
-  TUI_CMD_WIN->start_line = getcury (TUI_CMD_WIN->handle.get ());
+  tui_cmd_win ()->start_line = getcury (tui_cmd_win ()->handle.get ());
 }
 
 /* Print a character in the curses command window.  The output is
@@ -175,7 +174,7 @@ update_cmdwin_start_line ()
 static void
 tui_putc (char c)
 {
-  do_tui_putc (TUI_CMD_WIN->handle.get (), c);
+  do_tui_putc (tui_cmd_win ()->handle.get (), c);
   update_cmdwin_start_line ();
 }
 
@@ -458,7 +457,7 @@ void
 tui_puts (const char *string, WINDOW *w)
 {
   if (w == nullptr)
-    w = TUI_CMD_WIN->handle.get ();
+    w = tui_cmd_win ()->handle.get ();
 
   while (true)
     {
@@ -509,7 +508,7 @@ tui_puts (const char *string, WINDOW *w)
       string = next;
     }
 
-  if (TUI_CMD_WIN != nullptr && w == TUI_CMD_WIN->handle.get ())
+  if (tui_cmd_win () != nullptr && w == tui_cmd_win ()->handle.get ())
     update_cmdwin_start_line ();
 }
 
@@ -522,37 +521,38 @@ tui_puts_internal (WINDOW *w, const char *string, int *height)
 
   while ((c = *string++) != 0)
     {
-      if (c == '\n')
-	saw_nl = true;
-
       if (c == '\1' || c == '\2')
 	{
 	  /* Ignore these, they are readline escape-marking
 	     sequences.  */
+	  continue;
 	}
-      else
-	{
-	  if (c == '\033')
-	    {
-	      size_t bytes_read = apply_ansi_escape (w, string - 1);
-	      if (bytes_read > 0)
-		{
-		  string = string + bytes_read - 1;
-		  continue;
-		}
-	    }
-	  do_tui_putc (w, c);
 
-	  if (height != nullptr)
+      if (c == '\033')
+	{
+	  size_t bytes_read = apply_ansi_escape (w, string - 1);
+	  if (bytes_read > 0)
 	    {
-	      int col = getcurx (w);
-	      if (col <= prev_col)
-		++*height;
-	      prev_col = col;
+	      string = string + bytes_read - 1;
+	      continue;
 	    }
+	}
+
+      if (c == '\n')
+	saw_nl = true;
+
+      do_tui_putc (w, c);
+
+      if (height != nullptr)
+	{
+	  int col = getcurx (w);
+	  if (col <= prev_col)
+	    ++*height;
+	  prev_col = col;
 	}
     }
-  if (TUI_CMD_WIN != nullptr && w == TUI_CMD_WIN->handle.get ())
+
+  if (tui_cmd_win () != nullptr && w == tui_cmd_win ()->handle.get ())
     update_cmdwin_start_line ();
   if (saw_nl)
     wrefresh (w);
@@ -564,15 +564,7 @@ tui_puts_internal (WINDOW *w, const char *string, int *height)
 void
 tui_redisplay_readline (void)
 {
-  int prev_col;
-  int height;
-  int col;
-  int c_pos;
-  int c_line;
-  int in;
-  WINDOW *w;
   const char *prompt;
-  int start_line;
 
   /* Detect when we temporarily left SingleKey and now the readline
      edit buffer is empty, automatically restore the SingleKey
@@ -588,18 +580,17 @@ tui_redisplay_readline (void)
   else
     prompt = rl_display_prompt;
   
-  c_pos = -1;
-  c_line = -1;
-  w = TUI_CMD_WIN->handle.get ();
-  start_line = TUI_CMD_WIN->start_line;
+  int c_pos = -1;
+  int c_line = -1;
+  WINDOW *w = tui_cmd_win ()->handle.get ();
+  int start_line = tui_cmd_win ()->start_line;
   wmove (w, start_line, 0);
-  prev_col = 0;
-  height = 1;
+  int height = 1;
   if (prompt != nullptr)
     tui_puts_internal (w, prompt, &height);
 
-  prev_col = getcurx (w);
-  for (in = 0; in <= rl_end; in++)
+  int prev_col = getcurx (w);
+  for (int in = 0; in <= rl_end; in++)
     {
       unsigned char c;
       
@@ -620,7 +611,7 @@ tui_redisplay_readline (void)
       else if (c == '\t')
 	{
 	  /* Expand TABs, since ncurses on MS-Windows doesn't.  */
-	  col = getcurx (w);
+	  int col = getcurx (w);
 	  do
 	    {
 	      waddch (w, ' ');
@@ -632,20 +623,19 @@ tui_redisplay_readline (void)
 	  waddch (w, c);
 	}
       if (c == '\n')
-	TUI_CMD_WIN->start_line = getcury (w);
-      col = getcurx (w);
+	tui_cmd_win ()->start_line = getcury (w);
+      int col = getcurx (w);
       if (col < prev_col)
 	height++;
       prev_col = col;
     }
   wclrtobot (w);
-  TUI_CMD_WIN->start_line = getcury (w);
+  tui_cmd_win ()->start_line = getcury (w);
   if (c_line >= 0)
     wmove (w, c_line, c_pos);
-  TUI_CMD_WIN->start_line -= height - 1;
+  tui_cmd_win ()->start_line -= height - 1;
 
   wrefresh (w);
-  fflush(stdout);
 }
 
 /* Readline callback to prepare the terminal.  It is called once each
@@ -655,7 +645,8 @@ static void
 tui_prep_terminal (int notused1)
 {
 #ifdef NCURSES_MOUSE_VERSION
-  mousemask (ALL_MOUSE_EVENTS, NULL);
+  if (tui_enable_mouse)
+    mousemask (ALL_MOUSE_EVENTS, NULL);
 #endif
 }
 
@@ -716,7 +707,7 @@ tui_mld_puts (const struct match_list_displayer *displayer, const char *s)
 static void
 tui_mld_flush (const struct match_list_displayer *displayer)
 {
-  wrefresh (TUI_CMD_WIN->handle.get ());
+  wrefresh (tui_cmd_win ()->handle.get ());
 }
 
 /* TUI version of displayer.erase_entire_line.  */
@@ -724,7 +715,7 @@ tui_mld_flush (const struct match_list_displayer *displayer)
 static void
 tui_mld_erase_entire_line (const struct match_list_displayer *displayer)
 {
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
+  WINDOW *w = tui_cmd_win ()->handle.get ();
   int cur_y = getcury (w);
 
   wmove (w, cur_y, 0);
@@ -762,7 +753,7 @@ gdb_wgetch (WINDOW *win)
 static int
 tui_mld_getc (FILE *fp)
 {
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
+  WINDOW *w = tui_cmd_win ()->handle.get ();
   int c = gdb_wgetch (w);
 
   return c;
@@ -773,14 +764,10 @@ tui_mld_getc (FILE *fp)
 static int
 tui_mld_read_key (const struct match_list_displayer *displayer)
 {
-  rl_getc_func_t *prev = rl_getc_function;
-  int c;
-
   /* We can't use tui_getc as we need NEWLINE to not get emitted.  */
-  rl_getc_function = tui_mld_getc;
-  c = rl_read_key ();
-  rl_getc_function = prev;
-  return c;
+  scoped_restore restore_getc_function
+    = make_scoped_restore (&rl_getc_function, tui_mld_getc);
+  return rl_read_key ();
 }
 
 /* TUI version of rl_completion_display_matches_hook.
@@ -851,7 +838,6 @@ tui_setup_io (int mode)
       gdb_stderr = tui_stderr;
       gdb_stdlog = tui_stdlog;
       gdb_stdtarg = gdb_stderr;
-      gdb_stdtargerr = gdb_stderr;
       current_uiout = tui_out;
 
       /* Save tty for SIGCONT.  */
@@ -864,7 +850,6 @@ tui_setup_io (int mode)
       gdb_stderr = tui_old_stderr;
       gdb_stdlog = tui_old_stdlog;
       gdb_stdtarg = gdb_stderr;
-      gdb_stdtargerr = gdb_stderr;
       current_uiout = tui_old_uiout;
 
       /* Restore readline.  */
@@ -918,7 +903,7 @@ tui_initialize_io (void)
   tui_stdout = new pager_file (new tui_file (stdout, true));
   tui_stderr = new tui_file (stderr, false);
   tui_stdlog = new timestamped_file (tui_stderr);
-  tui_out = new tui_ui_out (tui_stdout);
+  tui_out = new cli_ui_out (tui_stdout, 0);
 
   /* Create the default UI.  */
   tui_old_uiout = new cli_ui_out (gdb_stdout);
@@ -1050,7 +1035,7 @@ tui_inject_newline_into_command_window ()
 {
   gdb_assert (tui_active);
 
-  WINDOW *w = TUI_CMD_WIN->handle.get ();
+  WINDOW *w = tui_cmd_win ()->handle.get ();
 
   /* When hitting return with an empty input, gdb executes the last
      command.  If we emit a newline, this fills up the command window
@@ -1075,8 +1060,8 @@ tui_inject_newline_into_command_window ()
       int px, py;
       getyx (w, py, px);
       px += rl_end - rl_point;
-      py += px / TUI_CMD_WIN->width;
-      px %= TUI_CMD_WIN->width;
+      py += px / tui_cmd_win ()->width;
+      px %= tui_cmd_win ()->width;
       wmove (w, py, px);
       tui_putc ('\n');
     }
@@ -1110,7 +1095,7 @@ tui_getc_1 (FILE *fp)
   int ch;
   WINDOW *w;
 
-  w = TUI_CMD_WIN->handle.get ();
+  w = tui_cmd_win ()->handle.get ();
 
 #ifdef TUI_USE_PIPE_FOR_READLINE
   /* Flush readline output.  */
@@ -1194,11 +1179,14 @@ tui_getc_1 (FILE *fp)
 #endif
 	}
 
-      /* Keycodes above KEY_MAX are not garanteed to be stable.
+      /* Keycodes above KEY_MAX are not guaranteed to be stable.
 	 Compare keyname instead.  */
       if (ch >= KEY_MAX)
 	{
-	  auto name = gdb::string_view (keyname (ch));
+	  std::string_view name;
+	  const char *name_str = keyname (ch);
+	  if (name_str != nullptr)
+	    name = std::string_view (name_str);
 
 	  /* The following sequences are hardcoded in readline as
 	     well.  */
@@ -1274,6 +1262,14 @@ tui_getc (FILE *fp)
   try
     {
       return tui_getc_1 (fp);
+    }
+  catch (const gdb_exception_forced_quit &ex)
+    {
+      /* As noted below, it's not safe to let an exception escape
+	 to newline, so, for this case, reset the quit flag for
+	 later QUIT checking.  */
+      set_force_quit_flag ();
+      return 0;
     }
   catch (const gdb_exception &ex)
     {

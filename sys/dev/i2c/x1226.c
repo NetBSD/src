@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.23 2020/01/02 19:00:34 thorpej Exp $	*/
+/*	$NetBSD: x1226.c,v 1.23.32.1 2026/11/04 23:21:56 perseant Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.23 2020/01/02 19:00:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.23.32.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,12 +125,9 @@ xrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
 	sc->sc_open = 0;
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = xrtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = xrtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
@@ -252,7 +249,7 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 static int
 xrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct xrtc_softc *sc = ch->cookie;
+	struct xrtc_softc *sc = device_private(ch->todr_dev);
 	struct clock_ymdhms check;
 	int retries;
 	int error;
@@ -339,7 +336,7 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 static int
 xrtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct xrtc_softc *sc = ch->cookie;
+	struct xrtc_softc *sc = device_private(ch->todr_dev);
 	int i = 0, addr;
 	u_int8_t bcd[X1226_REG_RTC_SIZE], cmdbuf[3];
 	int error, error2;

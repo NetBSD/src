@@ -1,6 +1,6 @@
 /* Common Linux native ptrace code for AArch64 MTE.
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "gdbsupport/byte-vector.h"
 
 #include "linux-ptrace.h"
 
 #include "arch/aarch64.h"
+#include "arch/aarch64-mte.h"
 #include "arch/aarch64-mte-linux.h"
 #include "nat/aarch64-linux.h"
 #include "nat/aarch64-mte-linux-ptrace.h"
@@ -32,7 +32,7 @@
 /* Helper function to display various possible errors when reading
    MTE tags.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 aarch64_mte_linux_peek_error (int error)
 {
   switch (error)
@@ -54,7 +54,7 @@ aarch64_mte_linux_peek_error (int error)
 /* Helper function to display various possible errors when writing
    MTE tags.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 aarch64_mte_linux_poke_error (int error)
 {
   switch (error)
@@ -119,10 +119,10 @@ aarch64_mte_fetch_memtags (int tid, CORE_ADDR address, size_t len,
   if (ntags == 0)
     return true;
 
-  gdb_byte tagbuf[ntags];
+  gdb::byte_vector tagbuf (ntags);
 
   struct iovec iovec;
-  iovec.iov_base = tagbuf;
+  iovec.iov_base = tagbuf.data ();
   iovec.iov_len = ntags;
 
   tags.clear ();

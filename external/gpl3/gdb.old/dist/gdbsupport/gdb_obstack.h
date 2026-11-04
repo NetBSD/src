@@ -1,6 +1,6 @@
 /* Obstack wrapper for GDB.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GDB_OBSTACK_H)
-#define GDB_OBSTACK_H 1
+#ifndef GDBSUPPORT_GDB_OBSTACK_H
+#define GDBSUPPORT_GDB_OBSTACK_H
 
 #include "obstack.h"
 
@@ -133,14 +133,18 @@ struct auto_obstack : obstack
   { obstack_free (this, obstack_base (this)); }
 };
 
-/* Objects are allocated on obstack instead of heap.  */
+/* Objects are allocated on obstack instead of heap.  This is a mixin
+   that uses CRTP to ensure that the type in question is trivially
+   destructible.  */
 
+template<typename T>
 struct allocate_on_obstack
 {
   allocate_on_obstack () = default;
 
   void* operator new (size_t size, struct obstack *obstack)
   {
+    static_assert (IsFreeable<T>::value);
     return obstack_alloc (obstack, size);
   }
 
@@ -153,4 +157,4 @@ struct allocate_on_obstack
   void operator delete[] (void *memory) {}
 };
 
-#endif
+#endif /* GDBSUPPORT_GDB_OBSTACK_H */

@@ -1,5 +1,5 @@
 /* Cache of styled source file text
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOURCE_CACHE_H
-#define SOURCE_CACHE_H
+#ifndef GDB_SOURCE_CACHE_H
+#define GDB_SOURCE_CACHE_H
 
 #include <unordered_map>
 #include <unordered_set>
@@ -66,6 +66,7 @@ public:
   {
     m_source_map.clear ();
     m_offset_cache.clear ();
+    m_no_styling_files.clear ();
   }
 
 private:
@@ -95,9 +96,12 @@ private:
   /* The file offset cache.  The key is the full name of the source
      file.  */
   std::unordered_map<std::string, std::vector<off_t>> m_offset_cache;
+
+  /* The list of files where styling failed.  */
+  std::unordered_set<std::string> m_no_styling_files;
 };
 
 /* The global source cache.  */
 extern source_cache g_source_cache;
 
-#endif /* SOURCE_CACHE_H */
+#endif /* GDB_SOURCE_CACHE_H */

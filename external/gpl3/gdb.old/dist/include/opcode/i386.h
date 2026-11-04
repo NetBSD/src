@@ -1,5 +1,5 @@
 /* opcode/i386.h -- Intel 80386 opcode macros
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2024 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler, and GDB, the GNU Debugger.
 
@@ -112,9 +112,13 @@
 /* x86-64 extension prefix.  */
 #define REX_OPCODE	0x40
 
+#define REX2_OPCODE	0xd5
+
 /* Non-zero if OPCODE is the rex prefix.  */
 #define REX_PREFIX_P(opcode) (((opcode) & 0xf0) == REX_OPCODE)
 
+/* M0 in rex2 prefix represents map0 or map1.  */
+#define REX2_M 0x8
 /* Indicates 64 bit operand size.  */
 #define REX_W	8
 /* High extension to reg field of modrm byte.  */

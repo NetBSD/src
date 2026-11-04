@@ -23,6 +23,7 @@
 #include "lf.h"
 #include "table.h"
 #include "ld-decode.h"
+#include "dumpf.h"
 
 
 enum {
@@ -143,7 +144,7 @@ main(int argc, char **argv)
 {
   decode_table *rules;
   if (argc != 3)
-    error("Usage: decode <decode-file> <hi-bit-nr>\n");
+    ERROR("Usage: decode <decode-file> <hi-bit-nr>\n");
   rules = load_decode_table(argv[1], a2i(argv[2]));
   dump_decode_rules(rules, 0);
   return 0;

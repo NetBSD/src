@@ -1,0 +1,173 @@
+#	$NetBSD: SAM460EX,v 1.7.2.2 2026/11/04 23:20:35 perseant Exp $
+#
+#	SAM460EX -- ACube Sam460ex (AMCC 460EX)
+#
+
+include 	"arch/evbppc/conf/std.sam460ex"
+
+#ident 		"SAM460EX-$Revision: 1.7.2.2 $"
+
+maxusers	32
+
+options 	SAM460EX_FDT		# parse U-Boot supplied device tree
+options 	PPC4XX_L2CACHE		# on-chip 256KB L2 
+
+#
+# Diagnostic/debugging support options
+#
+#options 	DIAGNOSTIC		# cheap kernel consistency checks
+#options 	DEBUG			# expensive debugging checks/support
+options 	DDB			# in-kernel debugger
+options 	DDB_HISTORY_SIZE=512	# enable history editing in DDB
+options 	TRAP_PANICWAIT
+makeoptions	COPY_SYMTAB=1		# size for embedded symbol table
+
+options		KTRACE			# system call tracing
+
+makeoptions	DEBUG="-g"		# compile full symbol table
+
+#
+# File systems
+#
+file-system 	FFS			# UFS
+file-system 	EXT2FS			# Linux ext2fs
+file-system 	MSDOSFS			# FAT 
+file-system 	KERNFS			# /kern
+file-system	PTYFS			# /dev/pts/N support
+file-system	TMPFS			# Efficient memory file-system
+
+options		FFS_EI			# Enable Endian Independent 
+
+options         DKWEDGE_AUTODISCOVER	# Automatically add dk(4) instances
+options         DKWEDGE_METHOD_MBR	# Support MBR partitions as wedges
+options         DKWEDGE_METHOD_RDB	# Support RDB partitions as wedges
+
+file-system 	NFS			# Network File System client
+options 	NFS_BOOT_DHCP		# Support DHCP NFS root
+
+#
+# Networking options
+#
+options 	INET
+options 	INET6
+
+#
+# Kernel root file system and dump configuration.
+#
+config		netbsd	root on ? type ?
+
+#
+# Device configuration
+#
+plb0 at root				# Processor Local Bus
+cpu0	at plb?				# CPU
+
+# On-chip Peripheral Bus support
+opb*	at plb?				# On-chip Peripheral Bus
+com*	at opb? addr ? irq ?		# UARTs
+wdog*	at opb?				# On-chip Watchdog
+ebc0	at plb?				# External Bus Controller
+samfpga0 at ebc0 bank 2			# Lattice XP2 FPGA
+gpio0	at samfpga0			# GPIOs on J22 connector
+opbgpio* at opb? addr ? irq ?		# On-chip GPIO
+gpio1	at opbgpio0			# GPIO0-31
+gpio2	at opbgpio1			# GPIO32-63
+gpiic*	at opb? addr ? irq ?		# On-chip IIC 
+iic*	at gpiic?			# I2C bus
+
+strtc0	at iic0 addr 0x68 flags 62	# M41T62 RTC (M41T80 under QEMU)
+spdmem0 at iic0 addr 0x50		# DDR2 SPD EEPROM
+
+#seeprom0 at iic0 addr 0x54 flags 8	# U-Boot env EEPROM
+
+# only EMAC0 is wired on the Sam460ex 
+emac0	at opb0 addr 0xef600e00 irq 80	# Ethernet Media Access Controller
+options 	EMAC_EVENT_COUNTERS
+options 	EMAC_RGMII_PHY		# both EMACs use the RGMII0 bridge
+options		EMAC_TAH
+
+# MII/PHY support
+makphy*	at mii? phy ?			# Marvell 88E1121R (dual GbE PHY)
+ukphy*	at mii? phy ?			# generic/unknown PHYs
+
+# PCI bus support
+options 	PCI_NETBSD_CONFIGURE
+pcix0	at plb?				# 460EX PLB-PCIX host bridge
+pciex0	at plb?				# 460EX PCIe root complex 0
+pciex1	at plb?				# 460EX PCIe root complex 1
+pci*	at pcix?
+pci*	at pciex?
+ppb*	at pci? dev ? function ?	# PCI-PCI bridges
+pci*	at ppb? bus ?
+
+# on-board SM502 framebuffer, selected via console=sm502
+voyager0 at pci? dev ? function ?	# SM502 multimedia processor
+voyagerfb0 at voyager0			# SM502 framebuffer console
+options 	VOYAGERFB_MODE_SETTING	# DDC/EDID readout + mode-setting
+vac0	at voyager0			# SM502 AC97-link (Realtek ALC655)
+
+# audio
+audio*	at audiobus?
+
+spkr*	at audio?			# tone interface, synthesized via audio
+wsbell*	at spkr?			# bell for the wscons display
+
+# selected via console=pci
+radeonfb* at pci? dev ? function ?	# ATI Radeon R100 - R3XX
+pm2fb*	at pci? dev ? function ?	# 3Dlabs Permedia 2/2v framebuffer
+
+wsdisplay* at wsemuldisplaydev?
+
+options 	WSEMUL_VT100
+options 	WSDISPLAY_SCROLLSUPPORT
+options 	FONT_BOLD8x16		# bitmap font
+
+satalink* at pci? dev ? function ?	# SATALink
+siisata* at pci? dev ? function ?
+
+# SATA shares SERDES PHY with one of PCI root complexes, but we detect
+# which one was enabled on the firmware level and configure accordingly.
+dwcsata0 at plb? addr 0xbffd1000 irq 96	# on-chip DWC SATA-II
+options 	DWCSATA_PIO_ONLY	# force PIO mode
+
+atabus*	at ata?
+wd*	at atabus? drive ? flags 0x0000
+
+# On-chip USB controllers.
+#
+# Due to 460ex CHIP_16 errata, we can not safely operate both EHCI and OHCI
+# at the same time. However, it's not a huge deal in practice.
+#ohci0	at plb? addr 0xbffd0000 irq 94
+ehci0	at plb? addr 0xbffd0400 irq 93
+
+# USB bus support
+usb*	at ehci0
+#usb*	at ohci0
+
+# USB Hubs
+uhub*	at usb?
+uhub*	at uhub? port ?
+
+# USB Mass Storage
+umass*	at uhub? port ? configuration ? interface ?
+scsibus* at umass?
+sd*	at scsibus? target ? lun ?	# SCSI disk drives
+
+# USB HID devices
+uhidev*	at uhub? port ? configuration ? interface ?
+ukbd*	at uhidev? reportid ?
+wskbd*	at ukbd? console ?
+ums*	at uhidev? reportid ?
+wsmouse* at ums? mux 0
+uhid*	at uhidev? reportid ?
+
+#
+# Pseudo devices
+#
+pseudo-device	wsmux			# keyboard/mouse multiplexor
+pseudo-device	wsfont			# bitmap fonts for the wsdisplay console
+pseudo-device	loop			# network loopback
+pseudo-device	pty			# pseudo-terminals
+pseudo-device	clockctl		# user control of clock subsystem
+pseudo-device	drvctl			# detach/rescan devices
+pseudo-device	ksyms			# /dev/ksyms

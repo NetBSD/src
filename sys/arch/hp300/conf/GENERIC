@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.212.2.1 2025/08/02 05:55:37 perseant Exp $
+# $NetBSD: GENERIC,v 1.212.2.2 2026/11/04 23:20:38 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -18,15 +18,18 @@
 # of each device driver in this file see the section 4 man page for the
 # device.
 
+#
+# Make sure to update the SMALL* kernel configs when updating this one
+# (even if you're just adding a commented-out line).
+#
+
 include 	"arch/hp300/conf/std.hp300"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.212.2.1 $"
+#ident 		"GENERIC-$Revision: 1.212.2.2 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer"
-	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
-	# backtraces in DDB.
+makeoptions	COPTS="-O2 -fno-reorder-blocks"
 
 maxusers	8		# estimated number of users
 
@@ -46,7 +49,6 @@ options 	HP385
 options 	HP400
 options 	HP425
 options 	HP433
-options 	FPSP		# floating point interface for 68040
 #options 	FPU_EMULATE	# software fpu emulation for MC68030
 
 # Standard system options

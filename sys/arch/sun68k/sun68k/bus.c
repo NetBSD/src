@@ -1,4 +1,4 @@
-/*	$NetBSD: bus.c,v 1.25 2022/07/26 20:08:56 andvar Exp $	*/
+/*	$NetBSD: bus.c,v 1.25.10.1 2026/11/04 23:21:27 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -153,7 +153,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.25 2022/07/26 20:08:56 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus.c,v 1.25.10.1 2026/11/04 23:21:27 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,8 +617,6 @@ sun68k_bus_mmap(bus_space_tag_t t, bus_type_t iospace, bus_addr_t paddr,
 /*
  * These assist in device probes.
  */
-
-extern label_t *nofault;
 
 int 
 sun68k_bus_peek(bus_space_tag_t tag, bus_space_handle_t handle,

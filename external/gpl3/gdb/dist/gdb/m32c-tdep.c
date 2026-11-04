@@ -1,6 +1,6 @@
 /* Renesas M32C target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1955,15 +1955,16 @@ m32c_prev_register (const frame_info_ptr &this_frame,
 }
 
 
-static const struct frame_unwind m32c_unwind = {
+static const struct frame_unwind_legacy m32c_unwind (
   "m32c prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   m32c_this_id,
   m32c_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 
 /* Inferior calls.  */
@@ -2212,8 +2213,8 @@ m32c_return_value (struct gdbarch *gdbarch,
 	  /* Everything else is passed in mem0, using as many bytes as
 	     needed.  This is not what the Renesas tools do, but it's
 	     what GCC does at the moment.  */
-	  struct bound_minimal_symbol mem0
-	    = lookup_minimal_symbol ("mem0", NULL, NULL);
+	  bound_minimal_symbol mem0
+	    = lookup_minimal_symbol (current_program_space, "mem0");
 
 	  if (! mem0.minsym)
 	    error (_("The return value is stored in memory at 'mem0', "
@@ -2244,8 +2245,8 @@ m32c_return_value (struct gdbarch *gdbarch,
 	  /* Everything else is passed in mem0, using as many bytes as
 	     needed.  This is not what the Renesas tools do, but it's
 	     what GCC does at the moment.  */
-	  struct bound_minimal_symbol mem0
-	    = lookup_minimal_symbol ("mem0", NULL, NULL);
+	  bound_minimal_symbol mem0
+	    = lookup_minimal_symbol (current_program_space, "mem0");
 
 	  if (! mem0.minsym)
 	    error (_("The return value is stored in memory at 'mem0', "
@@ -2421,11 +2422,9 @@ m32c_m16c_address_to_pointer (struct gdbarch *gdbarch,
     {
       const char *func_name;
       char *tramp_name;
-      struct bound_minimal_symbol tramp_msym;
 
       /* Try to find a linker symbol at this address.  */
-      struct bound_minimal_symbol func_msym
-	= lookup_minimal_symbol_by_pc (addr);
+      bound_minimal_symbol func_msym = lookup_minimal_symbol_by_pc (addr);
 
       if (! func_msym.minsym)
 	error (_("Cannot convert code address %s to function pointer:\n"
@@ -2438,7 +2437,8 @@ m32c_m16c_address_to_pointer (struct gdbarch *gdbarch,
       strcat (tramp_name, ".plt");
 
       /* Try to find a linker symbol for the trampoline.  */
-      tramp_msym = lookup_minimal_symbol (tramp_name, NULL, NULL);
+      bound_minimal_symbol tramp_msym
+	= lookup_minimal_symbol (current_program_space, tramp_name);
 
       /* We've either got another copy of the name now, or don't need
 	 the name any more.  */
@@ -2502,7 +2502,7 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
     {
       /* See if there is a minimal symbol at that address whose name is
 	 "NAME.plt".  */
-      struct bound_minimal_symbol ptr_msym = lookup_minimal_symbol_by_pc (ptr);
+      bound_minimal_symbol ptr_msym = lookup_minimal_symbol_by_pc (ptr);
 
       if (ptr_msym.minsym)
 	{
@@ -2512,7 +2512,6 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
 	  if (len > 4
 	      && strcmp (ptr_msym_name + len - 4, ".plt") == 0)
 	    {
-	      struct bound_minimal_symbol func_msym;
 	      /* We have a .plt symbol; try to find the symbol for the
 		 corresponding function.
 
@@ -2522,8 +2521,8 @@ m32c_m16c_pointer_to_address (struct gdbarch *gdbarch,
 	      char *func_name = (char *) xmalloc (len - 4 + 1);
 	      memcpy (func_name, ptr_msym_name, len - 4);
 	      func_name[len - 4] = '\0';
-	      func_msym
-		= lookup_minimal_symbol (func_name, NULL, NULL);
+	      bound_minimal_symbol func_msym
+		= lookup_minimal_symbol (current_program_space, func_name);
 
 	      /* If we do have such a symbol, return its value as the
 		 function's true address.  */
@@ -2654,9 +2653,7 @@ m32c_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_m32c_tdep ();
-void
-_initialize_m32c_tdep ()
+INIT_GDB_FILE (m32c_tdep)
 {
   gdbarch_register (bfd_arch_m32c, m32c_gdbarch_init);
 

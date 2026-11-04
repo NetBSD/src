@@ -1,4 +1,4 @@
-/*	$NetBSD: shrinker.h,v 1.5 2021/12/19 01:22:37 riastradh Exp $	*/
+/*	$NetBSD: shrinker.h,v 1.5.10.1 2026/11/04 23:22:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ unregister_shrinker(struct shrinker *shrinker __unused)
 static inline bool
 current_is_kswapd(void)
 {
-	return curlwp == uvm.pagedaemon_lwp;
+	return uvm_lwp_is_pagedaemon(curlwp);
 }
 
 static inline size_t

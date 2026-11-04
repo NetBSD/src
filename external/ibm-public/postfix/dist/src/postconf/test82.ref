@@ -1,0 +1,2 @@
+{"foo/unix": "foo unix - n n - 0 other -o mydestination=$whatever -o whatever=example.net"}
+{"12345/inet": "12345 inet n n n - - spawn -o {command_time_limit=2 3} user=nobody argv=/bin/sh -c {sleep 1}"}

@@ -1,6 +1,6 @@
 /* Ada Ravenscar thread support.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,7 @@
 #include "top.h"
 #include "regcache.h"
 #include "objfiles.h"
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 /* This module provides support for "Ravenscar" tasks (Ada) when
    debugging on bare-metal targets.
@@ -194,7 +194,7 @@ private:
      needed because sometimes the runtime will report an active task
      that hasn't yet been put on the list of tasks that is read by
      ada-tasks.c.  */
-  std::unordered_map<ULONGEST, int> m_cpu_map;
+  gdb::unordered_map<ULONGEST, int> m_cpu_map;
 };
 
 /* Return true iff PTID corresponds to a ravenscar task.  */
@@ -326,18 +326,17 @@ ravenscar_thread_target::add_active_thread ()
    and return its associated minimal symbol.
    Return NULL if not found.  */
 
-static struct bound_minimal_symbol
+static bound_minimal_symbol
 get_running_thread_msymbol ()
 {
-  struct bound_minimal_symbol msym;
-
-  msym = lookup_minimal_symbol (running_thread_name, NULL, NULL);
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, running_thread_name);
   if (!msym.minsym)
     /* Older versions of the GNAT runtime were using a different
        (less ideal) name for the symbol where the active thread ID
        is stored.  If we couldn't find the symbol using the latest
        name, then try the old one.  */
-    msym = lookup_minimal_symbol ("running_thread", NULL, NULL);
+    msym = lookup_minimal_symbol (current_program_space, "running_thread");
 
   return msym;
 }
@@ -348,14 +347,14 @@ get_running_thread_msymbol ()
 static bool
 has_ravenscar_runtime ()
 {
-  struct bound_minimal_symbol msym_ravenscar_runtime_initializer
-    = lookup_minimal_symbol (ravenscar_runtime_initializer, NULL, NULL);
-  struct bound_minimal_symbol msym_known_tasks
-    = lookup_minimal_symbol (known_tasks_name, NULL, NULL);
-  struct bound_minimal_symbol msym_first_task
-    = lookup_minimal_symbol (first_task_name, NULL, NULL);
-  struct bound_minimal_symbol msym_running_thread
-    = get_running_thread_msymbol ();
+  bound_minimal_symbol msym_ravenscar_runtime_initializer
+    = lookup_minimal_symbol (current_program_space,
+			     ravenscar_runtime_initializer);
+  bound_minimal_symbol msym_known_tasks
+    = lookup_minimal_symbol (current_program_space, known_tasks_name);
+  bound_minimal_symbol msym_first_task
+    = lookup_minimal_symbol (current_program_space, first_task_name);
+  bound_minimal_symbol msym_running_thread = get_running_thread_msymbol ();
 
   return (msym_ravenscar_runtime_initializer.minsym
 	  && (msym_known_tasks.minsym || msym_first_task.minsym)
@@ -377,7 +376,7 @@ ravenscar_thread_target::runtime_initialized ()
 static CORE_ADDR
 get_running_thread_id (int cpu)
 {
-  struct bound_minimal_symbol object_msym = get_running_thread_msymbol ();
+  bound_minimal_symbol object_msym = get_running_thread_msymbol ();
   int object_size;
   int buf_size;
   gdb_byte *buf;
@@ -504,7 +503,7 @@ ravenscar_thread_target::pid_to_str (ptid_t ptid)
     return beneath ()->pid_to_str (ptid);
 
   return string_printf ("Ravenscar Thread 0x%s",
-			phex_nz (ptid.tid (), sizeof (ULONGEST)));
+			phex_nz (ptid.tid ()));
 }
 
 CORE_ADDR
@@ -642,7 +641,8 @@ ravenscar_thread_target::get_fpu_state (struct regcache *regcache,
     return NOTHING_SPECIAL;
 
   bound_minimal_symbol fpu_context
-    = lookup_minimal_symbol ("system__bb__cpu_primitives__current_fpu_context",
+    = lookup_minimal_symbol (current_program_space,
+			     "system__bb__cpu_primitives__current_fpu_context",
 			     nullptr, nullptr);
   /* If the symbol can't be found, just fall back.  */
   if (fpu_context.minsym == nullptr)
@@ -921,9 +921,7 @@ Support for Ravenscar task/thread switching is disabled\n"));
 /* Module startup initialization function, automagically called by
    init.c.  */
 
-void _initialize_ravenscar ();
-void
-_initialize_ravenscar ()
+INIT_GDB_FILE (ravenscar)
 {
   /* Notice when the inferior is created in order to push the
      ravenscar ops if needed.  */

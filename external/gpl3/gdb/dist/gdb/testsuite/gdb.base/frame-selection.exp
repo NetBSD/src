@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -185,4 +185,41 @@ with_test_prefix "second frame_2 breakpoint" {
     gdb_test "frame function main" "#4  $hex in main.*"
     gdb_test "frame function recursive" "#1  $hex in recursive.*" \
 	"select frame for function recursive, third attempt"
+}
+
+# At one point using the 'function' sub-command (e.g. 'frame function
+# ...') would fail to select a frame if the frame ended with a
+# tail-call, and the address within the frame was outside the bounds
+# of the function.
+with_test_prefix "stack with tail call" {
+    gdb_breakpoint func_that_never_returns
+    gdb_continue_to_breakpoint func_that_never_returns
+
+    gdb_test "bt" \
+	[multi_line \
+	     "#0  func_that_never_returns \\(\\) at \[^\r\n\]+" \
+	     "#1  $hex in func_that_tail_calls \\(\\) at \[^\r\n\]+" \
+	     "#2  $hex in main \\(\\) at \[^\r\n\]+"] \
+	"bt from func_that_never_returns"
+
+    # Reset the frame addresses based on the new stack.
+    gdb_test "frame 0" "#0  func_that_never_returns.*"
+    set frame_0_address [ get_frame_address "frame 0" ]
+    gdb_test "frame 1" "#1  $hex in func_that_tail_calls.*"
+    set frame_1_address [ get_frame_address "frame 1" ]
+    gdb_test "frame 2" "#2  $hex in main.*"
+    set frame_2_address [ get_frame_address "frame 2" ]
+
+    # Test 'select-frame function ...' command.
+    gdb_test_no_output "select-frame function func_that_never_returns"
+    check_frame "0" "${frame_0_address}" "func_that_never_returns"
+    gdb_test_no_output "select-frame function func_that_tail_calls"
+    check_frame "1" "${frame_1_address}" "func_that_tail_calls"
+    gdb_test_no_output "select-frame function main"
+    check_frame "2" "${frame_2_address}" "main"
+
+    # Test 'frame function ...' command.
+    gdb_test "frame function func_that_never_returns" "#0  func_that_never_returns.*"
+    gdb_test "frame function func_that_tail_calls" "#1  $hex in func_that_tail_calls.*"
+    gdb_test "frame function main" "#2  $hex in main.*"
 }

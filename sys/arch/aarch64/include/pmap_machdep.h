@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.h,v 1.8.6.1 2025/08/02 05:55:20 perseant Exp $	*/
+/*	$NetBSD: pmap_machdep.h,v 1.8.6.2 2026/11/04 23:19:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -101,6 +101,8 @@ paddr_t	pmap_md_unmap_poolpage(vaddr_t, size_t);
 struct vm_page *
 	pmap_md_alloc_poolpage(int);
 
+bool	pmap_md_kernel_vaddr_p(vaddr_t);
+paddr_t	pmap_md_kernel_vaddr_to_paddr(vaddr_t);
 bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
 vaddr_t	pmap_md_direct_map_paddr(paddr_t);
@@ -132,10 +134,10 @@ struct pmap_page {
 
 #define	PVLIST_EMPTY_P(pg)	VM_PAGEMD_PVLIST_EMPTY_P(VM_PAGE_TO_MD(pg))
 
-#define	LX_BLKPAG_OS_MODIFIED	LX_BLKPAG_OS_0
+#define	LX_BLKPAG_OS_MODEMUL	LX_BLKPAG_OS_0
 
-#define	PMAP_PTE_OS0	"modified"
-#define	PMAP_PTE_OS1	"(unk)"
+#define	PMAP_PTE_OS0		"modemul"
+#define	PMAP_PTE_OS1		"(unused)"
 
 static inline paddr_t
 pmap_l0pa(struct pmap *pm)
@@ -155,11 +157,6 @@ bool	pmap_md_vca_add(struct vm_page_md *, vaddr_t, pt_entry_t *);
 void	pmap_md_vca_clean(struct vm_page_md *, int);
 void	pmap_md_vca_remove(struct vm_page_md *, vaddr_t, bool, bool);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
-
-void	pmap_md_xtab_activate(pmap_t, struct lwp *);
-void	pmap_md_xtab_deactivate(pmap_t);
-
-vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 
 
 #ifdef MULTIPROCESSOR
@@ -229,7 +226,20 @@ static inline bool
 pte_modified_p(pt_entry_t pte)
 {
 
-	return (pte & LX_BLKPAG_OS_MODIFIED) != 0;
+	if (cpu_has_hw_mod_p()) {
+		return (pte & (LX_BLKPAG_AP | LX_BLKPAG_DBM)) ==
+		    (LX_BLKPAG_AP_RW | LX_BLKPAG_DBM);
+	} else {
+		return (pte & (LX_BLKPAG_AP | LX_BLKPAG_OS_MODEMUL)) ==
+		    (LX_BLKPAG_AP_RW | LX_BLKPAG_OS_MODEMUL);
+	}
+}
+
+static inline bool
+pte_referenced_p(pt_entry_t pte)
+{
+
+	return (pte & LX_BLKPAG_AF) != 0;
 }
 
 
@@ -287,18 +297,50 @@ pte_nv_entry(bool kernel_p)
 }
 
 static inline pt_entry_t
-pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
+pte_prot_downgrade(pt_entry_t pte, vm_prot_t newprot)
 {
+	KASSERT((newprot & VM_PROT_READ) != 0);
 
-	return (pte & ~LX_BLKPAG_AP)
-	    | (((prot) & (VM_PROT_READ | VM_PROT_WRITE)) == VM_PROT_READ ? LX_BLKPAG_AP_RO : LX_BLKPAG_AP_RW);
+	/*
+	 * Modified state has been saved already by pmap_pte_protect.
+	 */
+	const bool mod_tracking_p = (newprot & VM_PROT_WRITE) != 0;
+
+	const pt_entry_t pte_mod_tracking = cpu_has_hw_mod_p() ?
+	    LX_BLKPAG_DBM : LX_BLKPAG_OS_MODEMUL;
+
+	return (pte & ~(LX_BLKPAG_AP | LX_BLKPAG_DBM | LX_BLKPAG_OS_MODEMUL)) |
+	    (mod_tracking_p ? (LX_BLKPAG_AP_RO | pte_mod_tracking) :
+	    LX_BLKPAG_AP_RO);
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
+	if (cpu_has_hw_mod_p()) {
+		if ((pte & LX_BLKPAG_DBM) == 0)
+			return pte;
 
-	return pte & ~LX_BLKPAG_AF;
+		return (pte & ~LX_BLKPAG_AP) |
+		    LX_BLKPAG_AP_RO;
+	} else {
+		/*
+		 * See the table in pte_make_enter.
+		 *
+		 * Set the page RO and MODEMUL, but don't touch _AF as ref
+		 * emulation might have completed.
+		 */
+
+		return (pte & ~LX_BLKPAG_AP) |
+		    LX_BLKPAG_AP_RO | LX_BLKPAG_OS_MODEMUL;
+	}
+
+}
+
+static inline pt_entry_t
+pte_clear_reference(pt_entry_t pte)
+{
+        return pte & ~LX_BLKPAG_AF;
 }
 
 static inline pt_entry_t
@@ -372,7 +414,6 @@ pte_pde_cas(pd_entry_t *pdep, pd_entry_t opde, pt_entry_t npde)
 {
 #ifdef MULTIPROCESSOR
 	opde = atomic_cas_64(pdep, opde, npde);
-	dsb(ishst);
 #else
 	*pdep = npde;
 #endif
@@ -466,13 +507,31 @@ pte_make_enter_efirt(paddr_t pa, vm_prot_t prot, u_int flags)
 }
 #endif
 
-
 static inline pt_entry_t
 pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
     u_int flags, bool is_kernel_pmap_p)
 {
 	KASSERTMSG((pa & ~L3_PAG_OA) == 0, "pa %" PRIxPADDR, pa);
 
+	/*
+	 * pmap_enter should have checked flags and updated
+	 * VM_PAGEMD_{REFERENCED,MODIFIED}_P, so there is no
+	 * need here.
+	 */
+        KASSERT(((flags & VM_PROT_ALL) == 0) || VM_PAGEMD_REFERENCED_P(mdpg));
+        KASSERT(((flags & VM_PROT_WRITE) == 0) || VM_PAGEMD_MODIFIED_P(mdpg));
+
+        /*
+         *  ref |  mod |  AF |      AP |  OS_MODEMUL
+         * emul | emul |     |         |
+         * -----+------+-----+---------+------------
+         *   no |  no  | set |   RO/RW |  not set
+         *  yes |  no  | clr |   RO/RW |  not set
+         *   no | yes  | set |      RO |  set *
+         *  yes | yes  | clr |      RO |  set *
+         *
+         * [*] a write fault should be fixed up, and allowed.
+         */
 	pt_entry_t npte = pa
 	    | LX_VALID
 #ifdef MULTIPROCESSOR
@@ -480,26 +539,47 @@ pte_make_enter(paddr_t pa, const struct vm_page_md *mdpg, vm_prot_t prot,
 #endif
 	    | L3_TYPE_PAG
 	    | LX_BLKPAG_UXN | LX_BLKPAG_PXN
-	    | (((prot) & (VM_PROT_READ | VM_PROT_WRITE)) == VM_PROT_READ ? LX_BLKPAG_AP_RO : LX_BLKPAG_AP_RW);
+	;
 
-	if ((prot & VM_PROT_WRITE) != 0 &&
-	    ((flags & VM_PROT_WRITE) != 0 || VM_PAGEMD_MODIFIED_P(mdpg))) {
-		/*
-		 * This is a writable mapping, and the page's mod state
-		 * indicates it has already been modified.  No need for
-		 * modified emulation.
-		 */
-		npte |= LX_BLKPAG_AF;
-	} else if ((flags & VM_PROT_ALL) || VM_PAGEMD_REFERENCED_P(mdpg)) {
-		/*
-		 * - The access type indicates that we don't need to do
-		 *   referenced emulation.
-		 * OR
-		 * - The physical page has already been referenced so no need
-		 *   to re-do referenced emulation here.
-		 */
-		npte |= LX_BLKPAG_AF;
-	}
+	const bool writeable_p = (prot & VM_PROT_WRITE) != 0;
+	const bool any_p = (prot & VM_PROT_ALL) != 0;
+
+	/*
+	 * Need to do modified emulation if
+	 * - the page is writeable; and
+	 * - the physical page hasn't already been modified.
+	 */
+	const bool mod_tracking_p = writeable_p && !VM_PAGEMD_MODIFIED_P(mdpg);
+
+	/*
+	 * Need to do referenced emulation if
+	 * - the page has any kind of access; and
+	 * - the physical page hasn't already been referenced
+	 */
+	bool ref_tracking_p = any_p && !VM_PAGEMD_REFERENCED_P(mdpg);
+
+	/*
+	 * When doing modified emulation mark page as RO and
+	 * LX_BLKPAG_OS_MODEMUL. A write fault will use the existence of
+	 * OS_MODEMUL to fixup the pte and mark the page as writeable.
+	 * AP_RW and OS_MODEMUL indicates that is was modified.
+	 *
+	 * When not doing modified emulation mark the page as RO or RW.
+	 */
+
+	const pt_entry_t mod_tracking_mask = cpu_has_hw_mod_p() ?
+	    0 : LX_BLKPAG_OS_MODEMUL;
+
+	npte |= writeable_p && cpu_has_hw_mod_p() ? LX_BLKPAG_DBM : 0;
+	npte |= mod_tracking_p ?
+	    (LX_BLKPAG_AP_RO | mod_tracking_mask) :
+	    (((prot) & (VM_PROT_READ | VM_PROT_WRITE)) == VM_PROT_READ ? LX_BLKPAG_AP_RO : LX_BLKPAG_AP_RW);
+
+	/*
+	 * Don't mark the PTE as AF when doing reference emulation to ensure
+	 * we see a fault when it is referenced.
+	 */
+	npte |= ref_tracking_p ? 0 : LX_BLKPAG_AF;
 
 	if (prot & VM_PROT_EXECUTE)
 		npte &= (is_kernel_pmap_p ? ~LX_BLKPAG_PXN : ~LX_BLKPAG_UXN);

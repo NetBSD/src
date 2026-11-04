@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_clock.c,v 1.19.2.1 2025/08/02 05:56:19 perseant Exp $	*/
+/*	$NetBSD: xen_clock.c,v 1.19.2.2 2026/11/04 23:21:34 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2017, 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.19.2.1 2025/08/02 05:56:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_clock.c,v 1.19.2.2 2026/11/04 23:21:34 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -1142,7 +1142,7 @@ xen_wallclock_time(struct timespec *tsp)
  *	Set the statclock to run at rate, in units of ticks per second.
  *
  *	Currently Xen does not have a separate statclock, so this is a
- *	noop; instad the statclock runs in hardclock.
+ *	noop; instead the statclock runs in hardclock.
  */
 void
 setstatclockrate(int rate)

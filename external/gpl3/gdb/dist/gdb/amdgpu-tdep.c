@@ -1,6 +1,6 @@
 /* Target-dependent code for the AMDGPU architectures.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,8 +28,6 @@
 #include "gdbsupport/selftest.h"
 #include "gdbtypes.h"
 #include "inferior.h"
-#include "objfiles.h"
-#include "observable.h"
 #include "producer.h"
 #include "reggroups.h"
 
@@ -891,17 +889,18 @@ amdgpu_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const frame_unwind amdgpu_frame_unwind = {
+static const frame_unwind_legacy amdgpu_frame_unwind (
   "amdgpu",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   amdgpu_frame_this_id,
   amdgpu_frame_prev_register,
   nullptr,
   default_frame_sniffer,
   nullptr,
-  nullptr,
-};
+  nullptr
+);
 
 static int
 print_insn_amdgpu (bfd_vma memaddr, struct disassemble_info *info)
@@ -1372,10 +1371,7 @@ amdgpu_register_type_parse_test ()
 
 #endif
 
-void _initialize_amdgpu_tdep ();
-
-void
-_initialize_amdgpu_tdep ()
+INIT_GDB_FILE (amdgpu_tdep)
 {
   gdbarch_register (bfd_arch_amdgcn, amdgpu_gdbarch_init, NULL,
 		    amdgpu_supports_arch_info);

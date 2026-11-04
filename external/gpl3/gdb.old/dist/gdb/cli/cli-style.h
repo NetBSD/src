@@ -1,6 +1,6 @@
 /* CLI stylizing
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_STYLE_H
-#define CLI_CLI_STYLE_H
+#ifndef GDB_CLI_CLI_STYLE_H
+#define GDB_CLI_CLI_STYLE_H
 
 #include "ui-file.h"
 #include "command.h"
@@ -96,6 +96,10 @@ private:
 				 const char *value);
 };
 
+/* Chains containing all defined "set/show style" subcommands.  */
+extern struct cmd_list_element *style_set_list;
+extern struct cmd_list_element *style_show_list;
+
 /* The file name style.  */
 extern cli_style_option file_name_style;
 
@@ -113,6 +117,9 @@ extern cli_style_option highlight_style;
 
 /* The title style.  */
 extern cli_style_option title_style;
+
+/* Style used for commands.  */
+extern cli_style_option command_style;
 
 /* The metadata style.  */
 extern cli_style_option metadata_style;
@@ -141,6 +148,9 @@ extern cli_style_option tui_active_border_style;
 /* The style to use for the GDB version string.  */
 extern cli_style_option version_style;
 
+/* The style for a line number.  */
+extern cli_style_option line_number_style;
+
 /* True if source styling is enabled.  */
 extern bool source_styling;
 
@@ -150,4 +160,4 @@ extern bool disassembler_styling;
 /* True if styling is enabled.  */
 extern bool cli_styling;
 
-#endif /* CLI_CLI_STYLE_H */
+#endif /* GDB_CLI_CLI_STYLE_H */

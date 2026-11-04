@@ -1,6 +1,6 @@
 /* Python interface to symbol tables.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "charset.h"
 #include "symtab.h"
 #include "source.h"
@@ -509,24 +508,21 @@ symtab_object_to_symtab (PyObject *obj)
   return ((symtab_object *) obj)->symtab;
 }
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_symtabs (void)
 {
   symtab_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&symtab_object_type) < 0)
+  if (gdbpy_type_ready (&symtab_object_type) < 0)
     return -1;
 
   sal_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&sal_object_type) < 0)
+  if (gdbpy_type_ready (&sal_object_type) < 0)
     return -1;
 
-  if (gdb_pymodule_addobject (gdb_module, "Symtab",
-			      (PyObject *) &symtab_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Symtab_and_line",
-				 (PyObject *) &sal_object_type);
+  return 0;
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_symtabs);
 
 
 

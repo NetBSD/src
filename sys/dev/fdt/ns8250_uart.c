@@ -1,4 +1,4 @@
-/* $NetBSD: ns8250_uart.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: ns8250_uart.c,v 1.7.24.1 2026/11/04 23:21:52 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017-2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.7 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.7.24.1 2026/11/04 23:21:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(1, "$NetBSD: ns8250_uart.c,v 1.7 2021/01/27 03:10:21 thorpej Exp 
 #include <dev/ic/comvar.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 static int ns8250_uart_match(device_t, cfdata_t, void *);
 static void ns8250_uart_attach(device_t, device_t, void *);
@@ -122,10 +123,7 @@ ns8250_uart_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
-		/* missing or bad reg-shift property, assume 0 */
-		reg_shift = 0;
-	}
+	reg_shift = fdtbus_get_reg_shift(phandle, 0);
 
 	sc->sc_dev = self;
 	if (of_getprop_uint32(phandle, "clock-frequency", &sc->sc_frequency)) {
@@ -204,10 +202,7 @@ ns8250_uart_console_consinit(struct fdt_attach_args *faa, u_int uart_freq)
 		speed = 115200;	/* default */
 	flags = fdtbus_get_stdout_flags();
 
-	if (of_getprop_uint32(phandle, "reg-shift", &reg_shift)) {
-		/* missing or bad reg-shift property, assume 0 */
-		reg_shift = 0;
-	}
+	reg_shift = fdtbus_get_reg_shift(phandle, 0);
 
 	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
 	com_init_regs_stride(&regs, bst, dummy_bsh, addr, reg_shift);

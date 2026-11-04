@@ -235,7 +235,7 @@ Our downloader is to be invoked as::
 
     $ ./uvwget [url1] [url2] ...
 
-So we add each argument as an URL
+So we add each argument as a URL
 
 .. rubric:: uvwget/main.c - Adding urls
 .. literalinclude:: ../../code/uvwget/main.c
@@ -363,7 +363,7 @@ to get the error message.
 argument. ``init_plugin_function`` is a function pointer to the sort of
 function we are looking for in the application's plugins.
 
-.. _shared libraries: https://en.wikipedia.org/wiki/Shared_library#Shared_libraries
+.. _shared libraries: https://en.wikipedia.org/wiki/Shared_library
 
 TTY
 ---

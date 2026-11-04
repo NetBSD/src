@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.29.2.1 2025/08/02 05:58:55 perseant Exp $	*/
+/*	$NetBSD: menus.mi,v 1.29.2.2 2026/11/04 23:28:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -142,6 +142,7 @@ remove_sub_menu(int menuID)
 	}
 }
 
+#ifndef NO_PARTMAN
 static void
 remove_menu_option(int menuID, const char *option)
 {
@@ -159,6 +160,7 @@ remove_menu_option(int menuID, const char *option)
 		}
 	}
 }
+#endif
 
 void
 remove_color_options()
@@ -169,16 +171,6 @@ remove_color_options()
 	 * make any sense in this case.
 	 */
 	remove_sub_menu(MENU_colors);
-}
-
-void
-remove_https_options()
-{
-	/*
-	 * If we can not validate certificates, do not pretend
-	 * to do https
-	 */
-	remove_menu_option(MENU_distmedium, MSG_https);
 }
 
 #ifndef NO_PARTMAN
@@ -349,6 +341,26 @@ menu ptnsize_replace_existing_partition, sub menu, y=0,
 	option MSG_cancel, exit, action { *((int*)arg) = 0; };
 
 menu distmedium, title MSG_Select_medium, y=-5;
+	display action {
+		/*
+		 * In some installers we can not use https early,
+		 * so disable the menu item.
+		 * Later, after installing the base sets,
+		 * we an use it in a target chroot, so
+		 * enable it again.
+		 */
+		char *env_opt = getenv("FTPSSLNOVERIFY");
+		bool disable = env_opt && strcmp(env_opt, "1") == 0;
+
+		for (int i = 0; i < menu->numopts; i++) {
+			if (menu->opts[i].opt_name != MSG_https)
+				continue;
+			if (disable)
+				menu->opts[i].opt_flags |= OPT_IGNORE;
+			else
+				menu->opts[i].opt_flags &= ~OPT_IGNORE;
+		}
+	    };
 	option MSG_cdrom,     exit, action { *(int *)arg = get_via_cdrom(); };
 	option MSG_https,     exit, action { *(int *)arg = get_via_ftp(XFER_HTTPS); };
 	option MSG_http,      exit, action { *(int *)arg = get_via_ftp(XFER_HTTP); };
@@ -674,11 +686,13 @@ menu usersh, title MSG_User_shell, no clear;
 	option "/bin/ksh", exit, action { ushell = "/bin/ksh";};
 	option "/bin/csh", exit, action { ushell = "/bin/csh";};
 
+.if HAVE_DISKSIZE_CHECKS
 menu convertscheme, title MSG_cvtscheme_hdr;
 	option MSG_cvtscheme_keep,		exit, action { *(int*)arg = 0; };
 	option MSG_cvtscheme_delete,		exit, action { *(int*)arg = 1; };
 	option MSG_cvtscheme_convert,		exit, action { *(int*)arg = 2; };
 	option MSG_cvtscheme_abort,		exit, action { *(int*)arg = 3; };
+.endif
 
 
 menu reedit, title MSG_reeditpart, y=-10;

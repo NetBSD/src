@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "target.h"
 #include "gdbtypes.h"
 #include "regcache.h"
@@ -1817,6 +1817,12 @@ Do you want to stop the program?"),
 
     case gdb_sys_clock_gettime:
       if (record_mem_at_reg (regcache, tdep->arg2, tdep->size_timespec))
+	return -1;
+      break;
+
+    case gdb_sys_clock_gettime64:
+      /* Size of struct __timespec64 is 16.  */
+      if (record_mem_at_reg (regcache, tdep->arg2, 16))
 	return -1;
       break;
 

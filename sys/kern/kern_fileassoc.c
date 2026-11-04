@@ -1,4 +1,4 @@
-/* $NetBSD: kern_fileassoc.c,v 1.38 2023/12/28 12:49:06 hannken Exp $ */
+/* $NetBSD: kern_fileassoc.c,v 1.38.2.1 2026/11/04 23:27:48 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
@@ -28,21 +28,24 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.38 2023/12/28 12:49:06 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fileassoc.c,v 1.38.2.1 2026/11/04 23:27:48 perseant Exp $");
 
 #include "opt_fileassoc.h"
 
 #include <sys/param.h>
-#include <sys/mount.h>
-#include <sys/queue.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
 #include <sys/errno.h>
 #include <sys/fileassoc.h>
-#include <sys/specificdata.h>
 #include <sys/hash.h>
 #include <sys/kmem.h>
-#include <sys/once.h>
+#include <sys/mount.h>
 #include <sys/mutex.h>
+#include <sys/once.h>
+#include <sys/queue.h>
+#include <sys/sdt.h>
+#include <sys/specificdata.h>
+#include <sys/vnode.h>
 #include <sys/xcall.h>
 
 #define	FILEASSOC_INITIAL_TABLESIZE	128
@@ -435,12 +438,12 @@ fileassoc_table_delete(struct mount *mp)
 
 	tbl = fileassoc_table_lookup(mp);
 	if (tbl == NULL)
-		return (EEXIST);
+		return SET_ERROR(EEXIST);
 
 	mount_setspecific(mp, fileassoc_mountspecific_key, NULL);
 	table_dtor(tbl);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -455,7 +458,7 @@ fileassoc_table_run(struct mount *mp, fileassoc_t assoc, fileassoc_cb_t cb,
 
 	tbl = fileassoc_table_lookup(mp);
 	if (tbl == NULL)
-		return (EEXIST);
+		return SET_ERROR(EEXIST);
 
 	for (i = 0; i < tbl->tbl_nslots; i++) {
 		struct fileassoc_file *faf;
@@ -469,7 +472,7 @@ fileassoc_table_run(struct mount *mp, fileassoc_t assoc, fileassoc_cb_t cb,
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -483,7 +486,7 @@ fileassoc_table_clear(struct mount *mp, fileassoc_t assoc)
 
 	tbl = fileassoc_table_lookup(mp);
 	if (tbl == NULL)
-		return (EEXIST);
+		return SET_ERROR(EEXIST);
 
 	for (i = 0; i < tbl->tbl_nslots; i++) {
 		struct fileassoc_file *faf;
@@ -496,7 +499,7 @@ fileassoc_table_clear(struct mount *mp, fileassoc_t assoc)
 		}
 	}
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -515,7 +518,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 	if (hint == NULL) {
 		error = vfs_composefh_alloc(vp, &th);
 		if (error)
-			return (NULL);
+			return NULL;
 	} else
 		th = hint;
 
@@ -524,7 +527,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 		if (hint == NULL)
 			vfs_composefh_free(th);
 
-		return (faf);
+		return faf;
 	}
 
 	tbl = fileassoc_table_lookup(vp->v_mount);
@@ -554,7 +557,7 @@ fileassoc_file_add(struct vnode *vp, fhandle_t *hint)
 		    newtbl);
 	}
 
-	return (faf);
+	return faf;
 }
 
 /*
@@ -567,14 +570,14 @@ fileassoc_file_delete(struct vnode *vp)
 	struct fileassoc_file *faf;
 
 	if (!fileassoc_inuse())
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	KERNEL_LOCK(1, NULL);
 
 	faf = fileassoc_file_lookup(vp, NULL);
 	if (faf == NULL) {
 		KERNEL_UNLOCK_ONE(NULL);
-		return (ENOENT);
+		return SET_ERROR(ENOENT);
 	}
 
 	file_free(faf);
@@ -585,7 +588,7 @@ fileassoc_file_delete(struct vnode *vp)
 
 	KERNEL_UNLOCK_ONE(NULL);
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -601,12 +604,12 @@ fileassoc_add(struct vnode *vp, fileassoc_t assoc, void *data)
 	if (faf == NULL) {
 		faf = fileassoc_file_add(vp, NULL);
 		if (faf == NULL)
-			return (ENOTDIR);
+			return SET_ERROR(ENOTDIR);
 	}
 
 	olddata = file_getdata(faf, assoc);
 	if (olddata != NULL)
-		return (EEXIST);
+		return SET_ERROR(EEXIST);
 
 	fileassoc_incuse();
 
@@ -614,7 +617,7 @@ fileassoc_add(struct vnode *vp, fileassoc_t assoc, void *data)
 
 	faf->faf_nassocs++;
 
-	return (0);
+	return 0;
 }
 
 /*
@@ -627,7 +630,7 @@ fileassoc_clear(struct vnode *vp, fileassoc_t assoc)
 
 	faf = fileassoc_file_lookup(vp, NULL);
 	if (faf == NULL)
-		return (ENOENT);
+		return SET_ERROR(ENOENT);
 
 	file_cleanup(faf, assoc);
 	file_setdata(faf, assoc, NULL);
@@ -636,5 +639,5 @@ fileassoc_clear(struct vnode *vp, fileassoc_t assoc)
 
 	fileassoc_decuse();
 
-	return (0);
+	return 0;
 }

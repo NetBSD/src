@@ -1,6 +1,6 @@
 /* Simulator for TI MSP430 and MSP430x processors.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of simulators.
@@ -44,6 +44,8 @@ struct msp430_cpu_state
   uint64_t     hw32mult_result;
 };
 
-#define HWMULT(SD, FIELD) MSP430_CPU (SD)->state.FIELD
+#define HWMULT(sd, field) MSP430_SIM_CPU (STATE_CPU (sd, 0))->field
+
+#define MSP430_SIM_CPU(cpu) ((struct msp430_cpu_state *) CPU_ARCH_DATA (cpu))
 
 #endif

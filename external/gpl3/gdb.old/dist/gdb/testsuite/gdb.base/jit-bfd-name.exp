@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,7 @@
 # Additionally, check that GDB cau use 'dump binary memory' to write
 # out the in-memory JIT files.
 
-if {[skip_shlib_tests]} {
-    untested "skipping shared library tests"
-    return -1
-}
+require allow_shlib_tests
 
 load_lib jit-elf-helpers.exp
 
@@ -105,7 +102,7 @@ gdb_test_multiple "maint info symtabs" "" {
     -re "^\\\}\\s*\r\n" {
 	exp_continue
     }
-    -re "^\\\{ objfile <in-memory@($hex)>\\s+\[^\r\n\]+\r\n" {
+    -re "^\\\{ objfile <in-memory@($hex-$hex)>\\s+\[^\r\n\]+\r\n" {
 	lappend bfd_name_addrs $expect_out(1,string)
 	exp_continue
     }
@@ -136,12 +133,19 @@ foreach addr $symfile_addrs len $symfile_lengths {
 # Check that each of the expected jit symfile addresses was mentioned
 # in an in-memory BFD filename.
 set count 1
-foreach addr $symfile_addrs {
+foreach addr $symfile_addrs len $symfile_lengths {
     # Drop any loading zeros from the symfile address.
-    set addr [format 0x%x $addr]
+    set start [format 0x%x $addr]
+
+    # Calculate the end address.
+    set end [format 0x%x [expr $addr + $len]]
+
+    # This is what we expect the address range to look like in the BFD
+    # filename.
+    set rng "$start-$end"
 
     # Check there was a BFD with the expected address in its name.
-    gdb_assert { [expr [lsearch -exact $bfd_name_addrs $addr] != -1] } \
+    gdb_assert { [expr [lsearch -exact $bfd_name_addrs $rng] != -1] } \
 	"check for in-memory bfd $count"
     incr count
 }

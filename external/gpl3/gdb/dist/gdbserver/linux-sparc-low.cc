@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for the remote server for GDB.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -109,7 +109,7 @@ static int sparc_regmap[] = {
    17 *8, /*    pc */
    18 *8, /*   npc */
    16 *8, /* state */
-  /* FSR offset also corresponds to GET/SETFPREGSET, ans is placed
+  /* FSR offset also corresponds to GET/SETFPREGSET, and is placed
      next to f62.  */
    32 *8, /*   fsr */
       -1, /*  fprs */

@@ -1,5 +1,5 @@
 /* Target definitions for NN-bit ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -187,11 +187,6 @@
 #define bfd_elfNN_bfd_gc_sections bfd_elf_gc_sections
 #endif
 
-#ifndef bfd_elfNN_bfd_merge_sections
-#define bfd_elfNN_bfd_merge_sections \
-  _bfd_elf_merge_sections
-#endif
-
 #ifndef bfd_elfNN_bfd_is_group_section
 #define bfd_elfNN_bfd_is_group_section bfd_elf_is_group_section
 #endif
@@ -230,8 +225,6 @@
   _bfd_elf_copy_private_symbol_data
 #endif
 
-#define bfd_elfNN_init_private_section_data \
-  _bfd_elf_init_private_section_data
 #ifndef bfd_elfNN_bfd_copy_private_section_data
 #define bfd_elfNN_bfd_copy_private_section_data \
   _bfd_elf_copy_private_section_data
@@ -287,6 +280,9 @@
 #ifndef bfd_elfNN_bfd_final_link
 #define bfd_elfNN_bfd_final_link	bfd_elf_final_link
 #endif
+#ifndef bfd_elfNN_bfd_merge_sections
+#define bfd_elfNN_bfd_merge_sections	_bfd_elf_merge_sections
+#endif
 #else /* ! defined (elf_backend_relocate_section) */
 /* If no backend relocate_section routine, use the generic linker.
    Note - this will prevent the port from being able to use some of
@@ -309,6 +305,9 @@
 #endif
 #ifndef bfd_elfNN_bfd_final_link
 #define bfd_elfNN_bfd_final_link	_bfd_generic_final_link
+#endif
+#ifndef bfd_elfNN_bfd_merge_sections
+#define bfd_elfNN_bfd_merge_sections	bfd_generic_merge_sections
 #endif
 #endif /* ! defined (elf_backend_relocate_section) */
 
@@ -709,10 +708,6 @@
 #define elf_backend_rela_normal 0
 #endif
 
-#ifndef elf_backend_is_rela_normal
-#define elf_backend_is_rela_normal NULL
-#endif
-
 #ifndef elf_backend_dtrel_excludes_plt
 #define elf_backend_dtrel_excludes_plt 0
 #endif
@@ -959,7 +954,6 @@ static const struct elf_backend_data elfNN_bed =
   elf_backend_default_use_rela_p,
   elf_backend_rela_plts_and_copies_p,
   elf_backend_rela_normal,
-  elf_backend_is_rela_normal,
   elf_backend_dtrel_excludes_plt,
   elf_backend_sign_extend_vma,
   elf_backend_want_got_plt,

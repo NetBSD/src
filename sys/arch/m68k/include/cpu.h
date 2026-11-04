@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.25 2024/02/28 13:05:39 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25.2.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -93,16 +93,37 @@
 #define	IC60_NAI	0x00004000	/* no allocate mode, instr. cache */
 #define	IC60_FIC	0x00002000	/* four kB instr. cache (else 8) */
 
-#define	CACHE_ON	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	CACHE_OFF	(DC_CLR|IC_CLR)
+#define	CACHE2030_ON	(DC_WA|DC_CLR|DC_ENABLE|IC_CLR|IC_ENABLE)
+#define	CACHE2030_BE	(DC_BE|IC_BE)
+
+#define	_IC_CLEAR(x)	((x) & ~DC_CLR)
+#define	_DC_CLEAR(x)	((x) & ~IC_CLR)
+
+#ifdef _KERNEL
+#ifdef __HAVE_M68K_DYNAMIC_CACR
+extern int cacr_cache_on;
+extern int cacr_cache_clr;
+extern int cacr_ic_clr;
+extern int cacr_dc_clr;
+
+#define	CACHE_ON	cacr_cache_on
+#define	CACHE_CLR	cacr_cache_clr
+#define	IC_CLEAR	cacr_ic_clr
+#define	DC_CLEAR	cacr_dc_clr
+#else
+#define	CACHE_ON	(CACHE2030_ON | CACHE2030_BE)
 #define	CACHE_CLR	(CACHE_ON)
-#define	IC_CLEAR	(DC_WA|DC_BE|DC_ENABLE|IC_BE|IC_CLR|IC_ENABLE)
-#define	DC_CLEAR	(DC_WA|DC_BE|DC_CLR|DC_ENABLE|IC_BE|IC_ENABLE)
+#define	IC_CLEAR	_IC_CLEAR(CACHE_CLR)
+#define	DC_CLEAR	_DC_CLEAR(CACHE_CLR)
+#endif /* __HAVE_M68K_DYNAMIC_CACR */
+#endif /* _KERNEL */
+
+#define	CACHE_OFF	(DC_CLR|IC_CLR)
 
 #define	CACHE40_ON	(IC40_ENABLE|DC40_ENABLE)
 #define	CACHE40_OFF	(0x00000000)
 
-#define	CACHE60_ON	(CACHE40_ON|IC60_CABC|IC60_EBC|DC60_ESB)
+#define	CACHE60_ON	(CACHE40_ON |IC60_CABC|IC60_EBC|DC60_ESB)
 #define	CACHE60_OFF	(CACHE40_OFF|IC60_CABC)
 
 #define CACHELINE_SIZE	16
@@ -112,6 +133,7 @@
 #define	CPU_CONSDEV		1	/* dev_t: console terminal device */
 #define	CPU_ROOT_DEVICE		2	/* string: root device name */
 #define	CPU_BOOTED_KERNEL	3	/* string: booted kernel name */
+#define	CPU_BROKEN_RMC		4	/* bool: has non-working /RMC */
 
 #if defined(_KERNEL) || defined(_KMEMUSER)
 #include <sys/cpu_data.h>

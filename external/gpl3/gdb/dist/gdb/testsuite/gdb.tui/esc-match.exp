@@ -1,0 +1,48 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test that the ANSI escape sequence matcher works
+# character-by-character.
+
+load_lib gdb-python.exp
+require allow_python_tests allow_tui_tests
+
+tuiterm_env
+
+Term::clean_restart 24 80
+
+set remote_python_file [gdb_remote_download host \
+			    ${srcdir}/${subdir}/esc-match.py]
+gdb_test_no_output "source ${remote_python_file}" \
+    "source esc-match.py"
+
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+Term::command "python print_it()"
+
+Term::dump_screen
+
+set text [Term::get_all_lines]
+# We should not see the control sequence here.
+gdb_assert {![regexp -- "\\\[35;1mOUTPUT\\\[m" $text]} \
+    "output visible without control sequences"
+
+# Also check the styling.
+set text [Term::get_region 0 1 78 23 "\n" true]
+gdb_assert {[regexp -- "<fg:magenta>.*OUTPUT" $text]} \
+    "output is magenta"

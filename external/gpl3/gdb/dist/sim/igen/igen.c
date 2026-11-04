@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -481,7 +481,7 @@ print_itrace (lf *file, const insn_entry *insn, int idecode)
 {
   /* NB: Here we escape each EOLN. This is so that the the compiler
      treats a trace function call as a single line.  Consequently any
-     errors in the line are refered back to the same igen assembler
+     errors in the line are referred back to the same igen assembler
      source line */
   const char *phase = (idecode) ? "DECODE" : "INSN";
   lf_printf (file, "\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs.c,v 1.34 2022/04/29 07:42:07 rin Exp $	*/
+/*	$NetBSD: ext2fs.c,v 1.34.10.1 2026/11/04 23:27:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.
@@ -89,6 +89,7 @@
 /* #define EXT2FS_DEBUG */
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/time.h>
 #include <ufs/ext2fs/ext2fs_dinode.h>
 #include <ufs/ext2fs/ext2fs_dir.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_367.c,v 1.2.2.1 2025/08/02 05:58:18 perseant Exp $	*/
+/*	$NetBSD: msg_367.c,v 1.2.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_367.c"
 
 // Test for message: empty description in '%.*s' [367]
@@ -107,6 +107,7 @@ new_style(uint64_t u64)
 		"=\000z\0"
 		":\001o\0"
 		"*d\0",
+	    /* expect+1: warning: conversion '=' from '=\000z\0' does not mix with 'F' [386] */
 	    u64 >> 1);
 
 	/* expect+6: warning: empty description in 'b\001""""""\0' [367] */

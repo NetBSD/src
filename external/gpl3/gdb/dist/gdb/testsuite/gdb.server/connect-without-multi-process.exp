@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,7 +38,7 @@ proc do_test {multiprocess} {
 	    set GDBFLAGS "$GDBFLAGS -ex \"set sysroot\""
 	}
 
-	clean_restart $binfile
+	clean_restart $::testfile
     }
 
     # Make sure we're disconnected, in case we're testing with an

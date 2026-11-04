@@ -1,4 +1,4 @@
-/*	$NetBSD: ptr_12.c,v 1.8.2.1 2025/08/02 05:53:46 perseant Exp $	*/
+/*	$NetBSD: ptr_12.c,v 1.8.2.2 2026/11/04 23:18:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -161,9 +161,7 @@ tostruct_ptr(ARGS_TOSTRUCT) {
 	REQUIRE(ptr != NULL);
 	REQUIRE(rdata->length != 0);
 
-	ptr->common.rdclass = rdata->rdclass;
-	ptr->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ptr->common, link);
+	DNS_RDATACOMMON_INIT(ptr, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

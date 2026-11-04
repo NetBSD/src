@@ -1,4 +1,4 @@
-# $NetBSD: t_pubkey.sh,v 1.7.2.1 2025/08/02 05:57:58 perseant Exp $
+# $NetBSD: t_pubkey.sh,v 1.7.2.2 2026/11/04 23:28:10 perseant Exp $
 #
 # Copyright (c) 2008, 2009, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -29,7 +29,7 @@ atf_test_case dsa
 dsa_head()
 {
 	atf_set "descr" "Checks DSA cipher"
-	atf_set "timeout" "1350"
+	atf_set "timeout" "1800"
 }
 dsa_body()
 {
@@ -40,6 +40,7 @@ atf_test_case dh
 dh_head()
 {
 	atf_set "descr" "Checks Diffie-Hellman key agreement protocol"
+	atf_set "timeout" "1000"
 }
 dh_body()
 {

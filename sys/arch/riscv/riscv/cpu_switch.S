@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_switch.S,v 1.6.2.1 2025/08/02 05:56:04 perseant Exp $ */
+/* $NetBSD: cpu_switch.S,v 1.6.2.2 2026/11/04 23:21:15 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -307,7 +307,7 @@ ENTRY_NP(cpu_exception_handler)
 	REG_S	a2, TF_SR(sp)
 	REG_S	a3, TF_CAUSE(sp)	// save cause
 
-	// Now we've saved the trapfame, the cause is still in a3.
+	// Now we've saved the trapframe, the cause is still in a3.
 
 	bltz	a3, intr_handler	// MSB is set if interrupt
 

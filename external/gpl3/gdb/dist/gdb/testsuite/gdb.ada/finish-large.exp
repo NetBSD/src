@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ standard_ada_testfile p
 
 set flags {debug}
 
-if {[have_fvar_tracking]} {
+if {[ada_fvar_tracking]} {
   lappend flags "additional_flags=-fvar-tracking"
 }
 

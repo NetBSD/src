@@ -146,7 +146,7 @@ static int maskl = 0;
 
 /* Alternate bank of registers r0-r7 */
 
-/* Note: code controling SR handles flips between BANK0 and BANK1 */
+/* Note: code controlling SR handles flips between BANK0 and BANK1 */
 #define Rn_BANK(n) (saved_state.asregs.bank[(n)])
 #define SET_Rn_BANK(n, EXP) do { saved_state.asregs.bank[(n)] = (EXP); } while (0)
 
@@ -726,7 +726,7 @@ static int nsamples;
 #define SSR1 (0x05FFFECC)	/* Channel 1  serial status register */
 #define RDR1 (0x05FFFECD)	/* Channel 1  receive data register */
 
-#define SCI_RDRF  	 0x40	/* Recieve data register full */
+#define SCI_RDRF  	 0x40	/* Receive data register full */
 #define SCI_TDRE	0x80	/* Transmit data register empty */
 
 static int
@@ -1238,7 +1238,7 @@ macl (int *regs, unsigned char *memory, int n, int m)
           mach |= 0xffff8000; /* Sign extend higher 16 bits */
         }
       else
-        mach = mach & 0x00007fff; /* Postive Result */
+        mach = mach & 0x00007fff; /* Positive Result */
     }
 
   MACL = macl;
@@ -1712,7 +1712,7 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
   register int endianw = global_endianw;
 
   int tick_start = get_now ();
-  void (*prev_fpe) ();
+  void (*prev_fpe) (int);
 
   register unsigned short *jump_table = sh_jump_table;
 

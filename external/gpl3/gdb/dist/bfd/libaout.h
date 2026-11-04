@@ -1,5 +1,5 @@
 /* BFD back-end data structures for a.out (and similar) files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -176,13 +176,6 @@ struct aout_backend_data
   bool (*add_dynamic_symbols)
     (bfd *, struct bfd_link_info *, struct external_nlist **,
      bfd_size_type *, char **);
-
-  /* Callback from the add symbols phase of the linker code to handle
-     adding a single symbol to the global linker hash table.  */
-  bool (*add_one_symbol)
-    (struct bfd_link_info *, bfd *, const char *, flagword,
-     asection *, bfd_vma, const char *, bool, bool,
-     struct bfd_link_hash_entry **);
 
   /* Called to handle linking a dynamic object.  */
   bool (*link_dynamic_object)
@@ -448,21 +441,6 @@ struct  aout_data_struct
 /* We take the address of the first element of an asymbol to ensure that the
    macro is only ever applied to an asymbol.  */
 #define aout_symbol(asymbol) ((aout_symbol_type *)(&(asymbol)->the_bfd))
-
-/* Information we keep for each a.out section.  This is currently only
-   used by the a.out backend linker.  */
-
-struct aout_section_data_struct
-{
-  /* The unswapped relocation entries for this section.  */
-  void * relocs;
-};
-
-#define aout_section_data(s) \
-  ((struct aout_section_data_struct *) (s)->used_by_bfd)
-
-#define set_aout_section_data(s,v) \
-  ((s)->used_by_bfd = (void *)&(v)->relocs)
 
 /* Prototype declarations for functions defined in aoutx.h.  */
 

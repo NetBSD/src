@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -33,6 +33,7 @@ if ![gdb_target_supports_trace] {
     return -1
 }
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 
 # Can't use prepare_for_testing, because that splits compiling into

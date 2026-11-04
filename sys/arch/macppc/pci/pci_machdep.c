@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.c,v 1.43 2021/01/26 14:49:41 thorpej Exp $	*/
+/*	$NetBSD: pci_machdep.c,v 1.43.24.1 2026/11/04 23:20:56 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All rights reserved.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43 2021/01/26 14:49:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_machdep.c,v 1.43.24.1 2026/11/04 23:20:56 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -391,9 +391,9 @@ find_node_intr(int node, u_int32_t *addr, uint32_t *intr)
 
 		if (OF_getprop(node, "interrupts", &map, sizeof(map)) != (icells * 4))
 			return -1;
-
+		
 		memcpy(intr, map, icells * 4);
-		return (icells * 4);
+		if (*intr != 1) return (icells * 4);
 	}
 
 	parent = OF_parent(node);

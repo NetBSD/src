@@ -1,4 +1,4 @@
-/* Copyright 2019-2023 Free Software Foundation, Inc.
+/* Copyright 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -43,8 +43,7 @@ foo ()
       try
 	{
 	  bar ();
-	}
-      catch (const my_exception &ex)	/* Catch 1.  */
+	} catch (const my_exception &ex)	/* Catch 1.  */
 	{
 	  if (i == 1)
 	    throw;	/* Throw 2.  */
@@ -60,8 +59,7 @@ main ()
       try
 	{
 	  foo ();
-	}
-      catch (const my_exception &ex)	/* Catch 2.  */
+	} catch (const my_exception &ex)	/* Catch 2.  */
 	{
 	  if (i == 1)
 	    return 1;	/* Stop here.  */

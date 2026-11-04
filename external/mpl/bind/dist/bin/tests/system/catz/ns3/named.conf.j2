@@ -1,0 +1,50 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% include "_common/controls.conf.j2" %}
+
+options {
+	{% include_indented "_common/options-dual.conf.j2" %}
+	allow-new-zones yes;
+	provide-ixfr no;
+	allow-transfer { any; };
+	notify no;
+	notify-delay 0;
+	recursion no;
+	dnssec-validation no;
+};
+
+zone "catalog2.example" {
+	type primary;
+	file "catalog2.example.db";
+	allow-transfer { any; };
+	allow-update { any; };
+	also-notify { 10.53.0.2; };
+	notify explicit;
+};
+
+zone "dom5.example" {
+	type primary;
+	file "dom5.example.db";
+	allow-transfer { any; };
+	allow-update { any; };
+	notify explicit;
+};
+
+zone "dom6.example" {
+	type primary;
+	file "dom6.example.db";
+	allow-transfer { any; };
+	allow-update { any; };
+	notify explicit;
+};

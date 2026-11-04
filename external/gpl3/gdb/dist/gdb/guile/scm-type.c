@@ -1,6 +1,6 @@
 /* Scheme interface to types.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -94,8 +94,8 @@ struct tyscm_deleter
       return;
 
     gdb_assert (htab != nullptr);
-    htab_up copied_types = create_copied_types_hash ();
-    htab_traverse_noresize (htab, tyscm_copy_type_recursive, copied_types.get ());
+    copied_types_hash_t copied_types;
+    htab_traverse_noresize (htab, tyscm_copy_type_recursive, &copied_types);
     htab_delete (htab);
   }
 };
@@ -375,12 +375,11 @@ static int
 tyscm_copy_type_recursive (void **slot, void *info)
 {
   type_smob *t_smob = (type_smob *) *slot;
-  htab_t copied_types = (htab_t) info;
+  copied_types_hash_t &copied_types = *static_cast<copied_types_hash_t *> (info);
   htab_t htab;
   eqable_gdb_smob **new_slot;
   type_smob t_smob_for_lookup;
 
-  htab_empty (copied_types);
   t_smob->type = copy_type_recursive (t_smob->type, copied_types);
 
   /* The eq?-hashtab that the type lived in is going away.
@@ -511,7 +510,7 @@ tyscm_field_smob_to_field (field_smob *f_smob)
   struct type *type = tyscm_field_smob_containing_type (f_smob);
 
   /* This should be non-NULL by construction.  */
-  gdb_assert (type->fields () != NULL);
+  gdb_assert (type->fields ().data () != nullptr);
 
   return &type->field (f_smob->field_num);
 }

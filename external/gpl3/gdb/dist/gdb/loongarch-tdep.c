@@ -1,6 +1,6 @@
 /* Target-dependent code for the LoongArch architecture, for GDB.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,17 +18,49 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "arch-utils.h"
+#include "arch/loongarch-insn.h"
 #include "dwarf2/frame.h"
 #include "elf-bfd.h"
 #include "extract-store-integer.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
+#include "linux-record.h"
 #include "loongarch-tdep.h"
+#include "prologue-value.h"
+#include "record.h"
+#include "record-full.h"
 #include "reggroups.h"
 #include "target.h"
 #include "target-descriptions.h"
 #include "trad-frame.h"
 #include "user-regs.h"
+
+/* LoongArch frame cache structure.  */
+struct loongarch_frame_cache
+{
+  /* The program counter at the start of the function.  It is used to
+     identify this frame as a prologue frame.  */
+  CORE_ADDR func;
+
+  /* The stack pointer at the time this frame was created; i.e. the
+     caller's stack pointer when this function was called.  It is used
+     to identify this frame.  */
+  CORE_ADDR prev_sp;
+
+  CORE_ADDR pc;
+
+  int available_p;
+
+  /* This register stores the frame base of the frame.  */
+  int framebase_reg;
+
+  /* The framebase_offset is the distance from frame base to the prev_sp,
+     so the value of framebase_reg is just prev_sp - framebase_offset. */
+  int framebase_offset;
+
+  /* Saved register offsets.  */
+  trad_frame_saved_reg *saved_regs;
+};
 
 /* Fetch the instruction at PC.  */
 
@@ -36,14 +68,14 @@ static insn_t
 loongarch_fetch_instruction (CORE_ADDR pc)
 {
   size_t insn_len = loongarch_insn_length (0);
-  gdb_byte buf[insn_len];
+  gdb::byte_vector buf (insn_len);
   int err;
 
-  err = target_read_memory (pc, buf, insn_len);
+  err = target_read_memory (pc, buf.data (), insn_len);
   if (err)
     memory_error (TARGET_XFER_E_IO, pc);
 
-  return extract_unsigned_integer (buf, insn_len, BFD_ENDIAN_LITTLE);
+  return extract_unsigned_integer (buf.data (), insn_len, BFD_ENDIAN_LITTLE);
 }
 
 /* Return TRUE if INSN is a unconditional branch instruction, otherwise return FALSE.  */
@@ -70,7 +102,9 @@ loongarch_insn_is_cond_branch (insn_t insn)
       || (insn & 0xfc000000) == 0x68000000	/* bltu  */
       || (insn & 0xfc000000) == 0x6c000000	/* bgeu  */
       || (insn & 0xfc000000) == 0x40000000	/* beqz  */
-      || (insn & 0xfc000000) == 0x44000000)	/* bnez  */
+      || (insn & 0xfc000000) == 0x44000000	/* bnez  */
+      || (insn & 0xfc000300) == 0x48000000	/* bceqz  */
+      || (insn & 0xfc000300) == 0x48000100)	/* bcnez  */
     return true;
   return false;
 }
@@ -92,7 +126,9 @@ static bool
 loongarch_insn_is_ll (insn_t insn)
 {
   if ((insn & 0xff000000) == 0x20000000		/* ll.w  */
-      || (insn & 0xff000000) == 0x22000000)	/* ll.d  */
+      || (insn & 0xff000000) == 0x22000000	/* ll.d  */
+      || (insn & 0xfffffc00) == 0x38578000	/* llacq.w  */
+      || (insn & 0xfffffc00) == 0x38578800)	/* llacq.d  */
     return true;
   return false;
 }
@@ -103,7 +139,10 @@ static bool
 loongarch_insn_is_sc (insn_t insn)
 {
   if ((insn & 0xff000000) == 0x21000000		/* sc.w  */
-      || (insn & 0xff000000) == 0x23000000)	/* sc.d  */
+      || (insn & 0xff000000) == 0x23000000	/* sc.d  */
+      || (insn & 0xffff8000) == 0x38570000	/* sc.q  */
+      || (insn & 0xfffffc00) == 0x38578400	/* screl.w  */
+      || (insn & 0xfffffc00) == 0x38578c00)	/* screl.d  */
     return true;
   return false;
 }
@@ -114,13 +153,23 @@ loongarch_insn_is_sc (insn_t insn)
 static CORE_ADDR
 loongarch_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc,
 			 CORE_ADDR limit_pc, const frame_info_ptr &this_frame,
-			 struct trad_frame_cache *this_cache)
+			 struct loongarch_frame_cache *this_cache)
 {
   CORE_ADDR cur_pc = start_pc, prologue_end = 0;
   int32_t sp = LOONGARCH_SP_REGNUM;
   int32_t fp = LOONGARCH_FP_REGNUM;
+  int32_t ra = LOONGARCH_RA_REGNUM;
   int32_t reg_value[32] = {0};
   int32_t reg_used[32] = {1, 0};
+  int i;
+
+  /* Track 32 GPR, ORIG_A0, PC, BADV in prologue.  */
+  pv_t regs[LOONGARCH_USED_NUM_GREGSET];
+
+  for (i = 0; i < LOONGARCH_USED_NUM_GREGSET; i++)
+    regs[i] = pv_register (i, 0);
+
+  pv_area stack (LOONGARCH_SP_REGNUM, gdbarch_addr_bit (gdbarch));
 
   while (cur_pc < limit_pc)
     {
@@ -130,27 +179,40 @@ loongarch_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc,
       int32_t rj = loongarch_decode_imm ("5:5", insn, 0);
       int32_t rk = loongarch_decode_imm ("10:5", insn, 0);
       int32_t si12 = loongarch_decode_imm ("10:12", insn, 1);
+      int32_t si14 = loongarch_decode_imm ("10:14", insn, 1);
       int32_t si20 = loongarch_decode_imm ("5:20", insn, 1);
 
       if ((insn & 0xffc00000) == 0x02c00000	/* addi.d sp,sp,si12  */
 	  && rd == sp && rj == sp && si12 < 0)
 	{
 	  prologue_end = cur_pc + insn_len;
+	  regs[rd] = pv_add_constant (regs[rj], si12);
 	}
       else if ((insn & 0xffc00000) == 0x02c00000 /* addi.d fp,sp,si12  */
 	       && rd == fp && rj == sp && si12 > 0)
 	{
 	  prologue_end = cur_pc + insn_len;
+	  regs[rd] = pv_add_constant (regs[rj], si12);
 	}
       else if ((insn & 0xffc00000) == 0x29c00000 /* st.d rd,sp,si12  */
 	       && rj == sp)
 	{
 	  prologue_end = cur_pc + insn_len;
+	  /* ra, fp, s0~s8 are saved by callee with sp as a base */
+	  if ((rd >= fp && rd <= fp + 9) || rd == ra)
+	    {
+	      stack.store (pv_add_constant (regs[sp], si12), register_size (gdbarch, rd), regs[rd]);
+	    }
 	}
       else if ((insn & 0xff000000) == 0x27000000 /* stptr.d rd,sp,si14  */
 	       && rj == sp)
 	{
 	  prologue_end = cur_pc + insn_len;
+	  /* ra, fp, s0~s8 are saved by callee with sp as a base */
+	  if ((rd >= fp && rd <= fp + 9) || rd == ra)
+	    {
+	      stack.store (pv_add_constant (regs[sp], si14), register_size (gdbarch, rd), regs[rd]);
+	    }
 	}
       else if ((insn & 0xfe000000) == 0x14000000) /* lu12i.w rd,si20  */
 	{
@@ -184,6 +246,38 @@ loongarch_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc,
 
   if (prologue_end == 0)
     prologue_end = cur_pc;
+
+  if (this_cache == NULL)
+    return prologue_end;
+
+  if (pv_is_register (regs[LOONGARCH_FP_REGNUM], LOONGARCH_SP_REGNUM))
+    {
+      /* Frame pointer is fp.  */
+      this_cache->framebase_reg = LOONGARCH_FP_REGNUM;
+      this_cache->framebase_offset = -regs[LOONGARCH_FP_REGNUM].k;
+    }
+  else if (pv_is_register (regs[LOONGARCH_SP_REGNUM], LOONGARCH_SP_REGNUM))
+    {
+      /* Try the stack pointer.  */
+      this_cache->framebase_reg = LOONGARCH_SP_REGNUM;
+      this_cache->framebase_offset = -regs[LOONGARCH_SP_REGNUM].k;
+    }
+  else
+    {
+      /* We're just out of luck.  We don't know where the frame is.  */
+      this_cache->framebase_reg = -1;
+      this_cache->framebase_offset = 0;
+    }
+
+  for (i = 0; i < LOONGARCH_USED_NUM_GREGSET; i++)
+    {
+      CORE_ADDR offset;
+
+      if (stack.find_reg (gdbarch, i, &offset))
+	{
+	  this_cache->saved_regs[i].set_addr (offset);
+	}
+    }
 
   return prologue_end;
 }
@@ -310,6 +404,20 @@ loongarch_next_pc (struct regcache *regcache, CORE_ADDR cur_pc)
       if (rj != 0)
 	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
     }
+  else if ((insn & 0xfc000300) == 0x48000000)		/* bceqz cj, offs21  */
+    {
+      LONGEST cj = regcache_raw_get_signed (regcache,
+		     loongarch_decode_imm ("5:3", insn, 0) + LOONGARCH_FIRST_FCC_REGNUM);
+      if (cj == 0)
+	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
+    }
+  else if ((insn & 0xfc000300) == 0x48000100)		/* bcnez cj, offs21  */
+    {
+      LONGEST cj = regcache_raw_get_signed (regcache,
+		     loongarch_decode_imm ("5:3", insn, 0) + LOONGARCH_FIRST_FCC_REGNUM);
+      if (cj != 0)
+	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
+    }
   else if ((insn & 0xffff8000) == 0x002b0000)		/* syscall  */
     {
       if (tdep->syscall_next_pc != nullptr)
@@ -319,13 +427,50 @@ loongarch_next_pc (struct regcache *regcache, CORE_ADDR cur_pc)
   return next_pc;
 }
 
+/* Calculate the destination address of a condition branch instruction under an
+   assumed true condition  */
+
+static CORE_ADDR
+cond_branch_destination_address (CORE_ADDR cur_pc, insn_t insn)
+{
+  size_t insn_len = loongarch_insn_length (insn);
+  CORE_ADDR next_pc = cur_pc + insn_len;
+
+  if ((insn & 0xfc000000) == 0x58000000)		/* beq	rj, rd, offs16  */
+	next_pc = cur_pc + loongarch_decode_imm ("10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x5c000000)		/* bne	rj, rd, offs16  */
+	next_pc = cur_pc + loongarch_decode_imm ("10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x60000000)		/* blt	rj, rd, offs16  */
+	next_pc = cur_pc + loongarch_decode_imm ("10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x64000000)		/* bge	rj, rd, offs16  */
+	next_pc = cur_pc + loongarch_decode_imm ("10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x68000000)		/* bltu	rj, rd, offs16  */
+	next_pc = cur_pc + loongarch_decode_imm ("10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x6c000000)		/* bgeu	rj, rd, offs16  */
+	next_pc = cur_pc + loongarch_decode_imm ("10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x40000000)		/* beqz	rj, offs21  */
+	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
+  else if ((insn & 0xfc000000) == 0x44000000)		/* bnez	rj, offs21  */
+	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
+  else if ((insn & 0xfc000300) == 0x48000000)		/* bceqz cj, offs21  */
+	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
+  else if ((insn & 0xfc000300) == 0x48000100)		/* bcnez cj, offs21  */
+	next_pc = cur_pc + loongarch_decode_imm ("0:5|10:16<<2", insn, 1);
+
+  return next_pc;
+}
+
 /* We can't put a breakpoint in the middle of a ll/sc atomic sequence,
-   so look for the end of the sequence and put the breakpoint there.  */
+   so a breakpoint should be outside of atomic sequence in any case,
+   just look for the start and end of the sequence, and then restrict
+   the breakpoint outside of the atomic sequence.  */
 
 static std::vector<CORE_ADDR>
 loongarch_deal_with_atomic_sequence (struct regcache *regcache, CORE_ADDR cur_pc)
 {
   CORE_ADDR next_pc;
+  CORE_ADDR ll_insn_addr;
+  CORE_ADDR sc_insn_addr;
   std::vector<CORE_ADDR> next_pcs;
   insn_t insn = loongarch_fetch_instruction (cur_pc);
   size_t insn_len = loongarch_insn_length (insn);
@@ -335,6 +480,30 @@ loongarch_deal_with_atomic_sequence (struct regcache *regcache, CORE_ADDR cur_pc
   /* Look for a Load Linked instruction which begins the atomic sequence.  */
   if (!loongarch_insn_is_ll (insn))
     return {};
+
+  /* Record the address of a Load Linked instruction  */
+  ll_insn_addr = cur_pc;
+
+  for (int insn_count = 0; insn_count < atomic_sequence_length; ++insn_count)
+    {
+      cur_pc += insn_len;
+      insn = loongarch_fetch_instruction (cur_pc);
+
+      if (loongarch_insn_is_sc (insn))
+	{
+	  /* Record the address of a Store Conditional instruction  */
+	  sc_insn_addr = cur_pc;
+	  found_atomic_sequence_endpoint = true;
+	  break;
+	}
+    }
+
+  /* We didn't find a closing Store Conditional instruction, fallback to the standard code.  */
+  if (!found_atomic_sequence_endpoint)
+    return {};
+
+  /* Restore current PC with the address of a Load Linked instruction  */
+  cur_pc = ll_insn_addr;
 
   /* Assume that no atomic sequence is longer than "atomic_sequence_length" instructions.  */
   for (int insn_count = 0; insn_count < atomic_sequence_length; ++insn_count)
@@ -347,25 +516,23 @@ loongarch_deal_with_atomic_sequence (struct regcache *regcache, CORE_ADDR cur_pc
 	{
 	  return {};
 	}
-      /* Look for a conditional branch instruction, put a breakpoint in its destination address.  */
+      /* Look for a conditional branch instruction, put a breakpoint in its destination address
+	 which is outside of the ll/sc atomic instruction sequence.  */
       else if (loongarch_insn_is_cond_branch (insn))
 	{
-	  next_pc = loongarch_next_pc (regcache, cur_pc);
-	  next_pcs.push_back (next_pc);
+	  next_pc = cond_branch_destination_address (cur_pc, insn);
+	  /* Restrict the breakpoint outside of the atomic sequence.  */
+	  if (next_pc < ll_insn_addr || next_pc > sc_insn_addr)
+	    next_pcs.push_back (next_pc);
 	}
       /* Look for a Store Conditional instruction which closes the atomic sequence.  */
       else if (loongarch_insn_is_sc (insn))
 	{
-	  found_atomic_sequence_endpoint = true;
 	  next_pc = cur_pc + insn_len;
 	  next_pcs.push_back (next_pc);
 	  break;
 	}
     }
-
-  /* We didn't find a closing Store Conditional instruction, fallback to the standard code.  */
-  if (!found_atomic_sequence_endpoint)
-    return {};
 
   return next_pcs;
 }
@@ -404,26 +571,140 @@ loongarch_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
   return align_down (addr, 16);
 }
 
+/* Analyze the function prologue for THIS_FRAME and populate the frame
+   cache CACHE.  */
+
+static void
+loongarch_analyze_prologue (const frame_info_ptr &this_frame,
+			    struct loongarch_frame_cache *cache)
+{
+  CORE_ADDR block_addr = get_frame_address_in_block (this_frame);
+  CORE_ADDR prologue_start = 0;
+  CORE_ADDR prologue_end = 0;
+  CORE_ADDR pc = get_frame_pc (this_frame);
+  struct gdbarch *gdbarch = get_frame_arch (this_frame);
+
+  cache->pc = pc;
+
+  /* Assume we do not find a frame.  */
+  cache->framebase_reg = -1;
+  cache->framebase_offset = 0;
+
+
+  if (find_pc_partial_function (block_addr, NULL, &prologue_start,
+				&prologue_end))
+    {
+      struct symtab_and_line sal = find_pc_line (prologue_start, 0);
+
+      if (sal.line == 0)
+	{
+	  /* No line info so use the current PC.  */
+	  prologue_end = pc;
+	}
+      else if (sal.end < prologue_end)
+	{
+	  if (sal.symtab != NULL && sal.symtab->language () == language_asm)
+	    {
+	      /* This sal.end usually cannot point to prologue_end correctly
+		 in asm file. */
+	      prologue_end = pc;
+	    }
+	  else
+	    {
+	      /* The next line begins after the prologue_end.  */
+	      prologue_end = sal.end;
+	    }
+	}
+
+    }
+  else
+    {
+      /* We're in the boondocks: we have no idea where the start of the
+	 function is.  */
+      return;
+    }
+
+  prologue_end = std::min (prologue_end, pc);
+  loongarch_scan_prologue (gdbarch, prologue_start, prologue_end, nullptr, cache);
+}
+
+/* Fill in *CACHE with information about the prologue of *THIS_FRAME.  */
+
+static void
+loongarch_frame_cache_1 (const frame_info_ptr &this_frame,
+			 struct loongarch_frame_cache *cache)
+{
+  CORE_ADDR unwound_fp;
+  int reg;
+
+  loongarch_analyze_prologue (this_frame, cache);
+
+  if (cache->framebase_reg == -1)
+    return;
+
+  unwound_fp = get_frame_register_unsigned (this_frame, cache->framebase_reg);
+  if (unwound_fp == 0)
+    return;
+
+  cache->prev_sp = unwound_fp;
+  cache->prev_sp += cache->framebase_offset;
+
+  /* Calculate actual addresses of saved registers using offsets
+     determined by loongarch_scan_prologue.  */
+  for (reg = 0; reg < gdbarch_num_regs (get_frame_arch (this_frame)); reg++)
+    if (cache->saved_regs[reg].is_addr ())
+      cache->saved_regs[reg].set_addr (cache->saved_regs[reg].addr ()
+				       + cache->prev_sp);
+
+  cache->func = get_frame_func (this_frame);
+
+  cache->available_p = 1;
+}
+
 /* Generate, or return the cached frame cache for frame unwinder.  */
 
-static struct trad_frame_cache *
+static struct loongarch_frame_cache *
 loongarch_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
-  struct trad_frame_cache *cache;
-  CORE_ADDR pc;
+  struct loongarch_frame_cache *cache;
 
-  if (*this_cache != nullptr)
-    return (struct trad_frame_cache *) *this_cache;
+  if (*this_cache != NULL)
+    return (struct loongarch_frame_cache *) *this_cache;
 
-  cache = trad_frame_cache_zalloc (this_frame);
+  cache = FRAME_OBSTACK_ZALLOC (struct loongarch_frame_cache);
+  cache->saved_regs = trad_frame_alloc_saved_regs (this_frame);
   *this_cache = cache;
 
-  trad_frame_set_reg_realreg (cache, LOONGARCH_PC_REGNUM, LOONGARCH_RA_REGNUM);
-
-  pc = get_frame_address_in_block (this_frame);
-  trad_frame_set_id (cache, frame_id_build_unavailable_stack (pc));
+  try
+    {
+      loongarch_frame_cache_1 (this_frame, cache);
+    }
+  catch (const gdb_exception_error &ex)
+    {
+      if (ex.error != NOT_AVAILABLE_ERROR)
+	throw;
+    }
 
   return cache;
+}
+
+/* Implement the "stop_reason" frame_unwind method.  */
+
+static enum unwind_stop_reason
+loongarch_frame_unwind_stop_reason (const frame_info_ptr &this_frame,
+				    void **this_cache)
+{
+  struct loongarch_frame_cache *cache
+    = loongarch_frame_cache (this_frame, this_cache);
+
+  if (!cache->available_p)
+    return UNWIND_UNAVAILABLE;
+
+  /* We've hit a wall, stop.  */
+  if (cache->prev_sp == 0)
+    return UNWIND_OUTERMOST;
+
+  return UNWIND_NO_REASON;
 }
 
 /* Implement the this_id callback for frame unwinder.  */
@@ -432,10 +713,15 @@ static void
 loongarch_frame_this_id (const frame_info_ptr &this_frame, void **prologue_cache,
 			 struct frame_id *this_id)
 {
-  struct trad_frame_cache *info;
+  struct loongarch_frame_cache *cache
+    = loongarch_frame_cache (this_frame, prologue_cache);
 
-  info = loongarch_frame_cache (this_frame, prologue_cache);
-  trad_frame_get_id (info, this_id);
+  /* Our frame ID for a normal frame is the current function's starting
+     PC and the caller's SP when we were called.  */
+  if (!cache->available_p)
+    *this_id = frame_id_build_unavailable_stack (cache->func);
+  else
+    *this_id = frame_id_build (cache->prev_sp, cache->func);
 }
 
 /* Implement the prev_register callback for frame unwinder.  */
@@ -444,23 +730,62 @@ static struct value *
 loongarch_frame_prev_register (const frame_info_ptr &this_frame,
 			       void **prologue_cache, int regnum)
 {
-  struct trad_frame_cache *info;
+  struct loongarch_frame_cache *cache
+    = loongarch_frame_cache (this_frame, prologue_cache);
 
-  info = loongarch_frame_cache (this_frame, prologue_cache);
-  return trad_frame_get_register (info, this_frame, regnum);
+  /* If we are asked to unwind the PC, then we need to return the RA
+     instead.  The prologue may save PC, but it will point into this
+     frame's prologue, not the previou frame's resume location.  */
+  if (regnum == LOONGARCH_PC_REGNUM)
+    {
+      CORE_ADDR ra;
+      ra = frame_unwind_register_unsigned (this_frame, LOONGARCH_RA_REGNUM);
+
+      return frame_unwind_got_constant (this_frame, regnum, ra);
+    }
+
+  /* SP is generally not saved to the stack, but this frame is
+     identified by the next frame's stack pointer at the time of the
+     call.  The value was already reconstructed into PREV_SP.  */
+  /*
+	addi.d          $sp, $sp, -32
+	st.d            $ra, $sp, 24
+	st.d            $fp, $sp, 16
+	addi.d          $fp, $sp, 32
+
+	+->+----------+
+	|  | saved ra |
+	|  | saved fp |
+	|  |          |
+	|  |          |
+	|  +----------+  <- Previous SP == FP
+	|  | saved ra |
+	+--| saved fp |
+	   |          |
+	   |          |
+	   +----------+   <- SP
+			*/
+
+  if (regnum == LOONGARCH_SP_REGNUM)
+    return frame_unwind_got_constant (this_frame, regnum, cache->prev_sp);
+
+  return trad_frame_get_prev_register (this_frame, cache->saved_regs, regnum);
+
 }
 
-static const struct frame_unwind loongarch_frame_unwind = {
+/* LoongArch prologue unwinder.  */
+static const struct frame_unwind_legacy loongarch_frame_unwind (
   "loongarch prologue",
   /*.type	   =*/NORMAL_FRAME,
-  /*.stop_reason   =*/default_frame_unwind_stop_reason,
+  /*.unwinder_class=*/FRAME_UNWIND_ARCH,
+  /*.stop_reason   =*/loongarch_frame_unwind_stop_reason,
   /*.this_id	   =*/loongarch_frame_this_id,
   /*.prev_register =*/loongarch_frame_prev_register,
   /*.unwind_data   =*/nullptr,
   /*.sniffer	   =*/default_frame_sniffer,
   /*.dealloc_cache =*/nullptr,
-  /*.prev_arch	   =*/nullptr,
-};
+  /*.prev_arch	   =*/nullptr
+);
 
 /* Write the contents of buffer VAL into the general-purpose argument
    register defined by GAR in REGCACHE.  GAR indicates the available
@@ -1306,18 +1631,24 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
 	   and the signed integer scalars are sign-extended.  */
 	if (writebuf)
 	  {
-	    gdb_byte buf[regsize];
+	    gdb::byte_vector buf (regsize);
 	    if (type->is_unsigned ())
 	      {
-		ULONGEST data = extract_unsigned_integer (writebuf, len, BFD_ENDIAN_LITTLE);
-		store_unsigned_integer (buf, regsize, BFD_ENDIAN_LITTLE, data);
+		ULONGEST data = extract_unsigned_integer (writebuf, len,
+							  BFD_ENDIAN_LITTLE);
+		store_unsigned_integer (buf.data (), regsize,
+					BFD_ENDIAN_LITTLE, data);
 	      }
 	    else
 	      {
-		LONGEST data = extract_signed_integer (writebuf, len, BFD_ENDIAN_LITTLE);
-		store_signed_integer (buf, regsize, BFD_ENDIAN_LITTLE, data);
+		LONGEST data
+		  = extract_signed_integer (writebuf, len, BFD_ENDIAN_LITTLE);
+		store_signed_integer (buf.data (), regsize, BFD_ENDIAN_LITTLE,
+				      data);
 	      }
-	    loongarch_xfer_reg (regcache, a0, regsize, nullptr, buf, 0);
+
+	    loongarch_xfer_reg (regcache, a0, regsize, nullptr, buf.data (),
+				0);
 	  }
 	else
 	  loongarch_xfer_reg (regcache, a0, len, readbuf, nullptr, 0);
@@ -1866,9 +2197,10 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_frame_align (gdbarch, loongarch_frame_align);
 
   /* Breakpoint manipulation.  */
-  set_gdbarch_software_single_step (gdbarch, loongarch_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, loongarch_software_single_step);
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, loongarch_breakpoint::kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, loongarch_breakpoint::bp_from_kind);
+  set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
 
   /* Frame unwinders. Use DWARF debug info if available, otherwise use our own unwinder.  */
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, loongarch_dwarf2_reg_to_regnum);
@@ -1882,9 +2214,516 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_loongarch_tdep ();
-void
-_initialize_loongarch_tdep ()
+/* LoongArch record/replay enumerations and structures.  */
+
+enum loongarch_record_result
+{
+  LOONGARCH_RECORD_SUCCESS,
+  LOONGARCH_RECORD_UNSUPPORTED,
+  LOONGARCH_RECORD_UNKNOWN
+};
+
+struct loongarch_record_s
+{
+  struct gdbarch *gdbarch;
+  struct regcache *regcache;
+  CORE_ADDR this_addr;                 /* Addr of insn to be recorded.   */
+  uint32_t insn;                       /* Insn to be recorded.           */
+};
+
+/* Record handler for data processing instructions.  */
+
+static int
+loongarch_record_data_proc_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for read time instructions.  */
+
+static int
+loongarch_record_read_time_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num, rj_num;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rj_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for branch instructions.  */
+
+static int
+loongarch_record_branch_insn (loongarch_record_s *loongarch_record)
+{
+  if (is_jirl_insn (loongarch_record->insn))
+    {
+      int rd_num;
+      rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+	return -1;
+    }
+  else if (is_bl_insn (loongarch_record->insn))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache,
+					 LOONGARCH_RA_REGNUM))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for float data processing instructions.  */
+
+static int
+loongarch_record_float_data_proc_insn (loongarch_record_s *loongarch_record)
+{
+  int fd_num;
+  fd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0)
+	   + LOONGARCH_FIRST_FP_REGNUM;
+
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, fd_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for move gr to fcsr instructions.  */
+
+static int
+loongarch_record_movgr2fcsr_insn (loongarch_record_s *loongarch_record)
+{
+  if (record_full_arch_list_add_reg (loongarch_record->regcache,
+				     LOONGARCH_FCSR_REGNUM))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for move gr/fr to fcc instructions.  */
+
+static int
+loongarch_record_mov2cf_insn (loongarch_record_s *loongarch_record)
+{
+  int cd;
+  cd = loongarch_decode_imm ("0:3", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, cd))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for float instructions.  */
+
+static unsigned int
+loongarch_record_float_insn (loongarch_record_s *loongarch_record)
+{
+  if (is_movgr2fcsr_insn (loongarch_record->insn))
+    return loongarch_record_movgr2fcsr_insn (loongarch_record);
+  else if (is_mov2cf_insn (loongarch_record->insn))
+    return loongarch_record_mov2cf_insn (loongarch_record);
+  else
+    return loongarch_record_float_data_proc_insn (loongarch_record);
+}
+
+/* Record handler for store instructions.  */
+
+static int
+loongarch_record_store_insn (loongarch_record_s *loongarch_record)
+{
+  enum store_types
+    {
+      STB, STH, STW, STD, STXB, STXH, STXW, STXD, STPTRW, STPTRD,
+      SCW, SCD, FSTS, FSTD, FSTXS, FSTXD, VST, XVST, NOT_STORE
+    };
+  int store_type, data_size, rj_num;
+  uint64_t address, rj_val;
+
+  store_type = is_st_b_insn (loongarch_record->insn)	   ? STB     :
+	       is_st_h_insn (loongarch_record->insn)       ? STH     :
+	       is_st_w_insn (loongarch_record->insn)       ? STW     :
+	       is_st_d_insn (loongarch_record->insn)       ? STD     :
+	       is_stx_b_insn (loongarch_record->insn)      ? STXB    :
+	       is_stx_h_insn (loongarch_record->insn)      ? STXH    :
+	       is_stx_w_insn (loongarch_record->insn)      ? STXW    :
+	       is_stx_d_insn (loongarch_record->insn)      ? STXD    :
+	       is_stptr_w_insn (loongarch_record->insn)    ? STPTRW  :
+	       is_stptr_d_insn (loongarch_record->insn)    ? STPTRD  :
+	       is_sc_w_insn (loongarch_record->insn)       ? SCW     :
+	       is_sc_d_insn (loongarch_record->insn)       ? SCD     :
+	       is_fst_s_insn (loongarch_record->insn)      ? FSTS    :
+	       is_fst_d_insn (loongarch_record->insn)      ? FSTD    :
+	       is_fstx_s_insn (loongarch_record->insn)     ? FSTXS   :
+	       is_fstx_d_insn (loongarch_record->insn)     ? FSTXD   :
+	       is_vst_insn (loongarch_record->insn)        ? VST     :
+	       is_xvst_insn (loongarch_record->insn)       ? XVST    :
+	       NOT_STORE;
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+
+  if (store_type == STB || store_type == STH || store_type == STW
+      || store_type == STD || store_type == FSTS || store_type == FSTD
+      || store_type == VST || store_type == XVST)
+    {
+      int imm;
+      imm = loongarch_decode_imm ("10:12", loongarch_record->insn, 1);
+      address = rj_val + imm;
+      switch (store_type)
+	{
+	case STB:
+	  data_size = 1;
+	  break;
+	case STH:
+	  data_size = 2;
+	  break;
+	case STW:
+	case FSTS:
+	  data_size = 4;
+	  break;
+	case STD:
+	case FSTD:
+	  data_size = 8;
+	  break;
+	case VST:
+	  data_size = 16;
+	  break;
+	case XVST:
+	  data_size = 32;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  else if (store_type == STXB || store_type == STXH || store_type == STXW
+	   || store_type == STXD || store_type == FSTXS || store_type == FSTXD)
+    {
+      int rk_num;
+      uint64_t rk_val;
+      rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+      regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+      address = rj_val + rk_val;
+      switch (store_type)
+	{
+	case STXB:
+	  data_size = 1;
+	  break;
+	case STXH:
+	  data_size = 2;
+	  break;
+	case STXW:
+	case FSTXS:
+	  data_size = 4;
+	  break;
+	case STXD:
+	case FSTXD:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  else if (store_type == STPTRW || store_type == STPTRD || store_type == SCW
+	   || store_type == SCD)
+    {
+      int imm;
+      imm = loongarch_decode_imm ("10:14<<2", loongarch_record->insn, 1);
+      address = rj_val + imm;
+      switch (store_type)
+	{
+	case STPTRW:
+	case SCW:
+	  data_size = 4;
+	  break;
+	case STPTRD:
+	case SCD:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for atomic memory access instructions.  */
+
+static int
+loongarch_record_atomic_access_insn (loongarch_record_s *loongarch_record)
+{
+  int rj_num, rd_num, rk_num, length;
+  int data_size;
+  uint64_t address;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &address);
+  if (is_basic_am_w_d_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:1", loongarch_record->insn, 0);
+      data_size = length == 1 ? 8 : 4;
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  if (is_am_b_h_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:1", loongarch_record->insn, 0);
+      data_size = length == 1 ? 2 : 1;
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  if (is_amcas_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:2", loongarch_record->insn, 0);
+      switch (length)
+	{
+	case 0x0:
+	  data_size = 1;
+	  break;
+	case 0x1:
+	  data_size = 2;
+	  break;
+	case 0x2:
+	  data_size = 4;
+	  break;
+	case 0x3:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+
+  if (is_amswap_insn (loongarch_record->insn))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rk_num))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for bound check load instructions.  */
+
+static int
+loongarch_record_bound_check_load_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num, rj_num, rk_num, fd_num;
+  uint64_t rj_val, rk_val;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  fd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+
+  if ((is_ldgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+      || (is_ldle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+	return -1;
+    }
+  else if ((is_fldgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+	   || (is_fldle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, fd_num))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for bound check store instructions.  */
+
+static int
+loongarch_record_bound_check_store_insn (loongarch_record_s *loongarch_record)
+{
+  int rj_num, rk_num;
+  int data_size;
+  uint64_t rj_val, rk_val;
+  uint32_t length_opcode;
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+
+  if ((is_stgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+      || (is_stle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      length_opcode = loongarch_record->insn & 0x00018000;
+      switch (length_opcode)
+	{
+	case 0x00000000:
+	  data_size = 1;
+	  break;
+	case 0x00008000:
+	  data_size = 2;
+	  break;
+	case 0x00010000:
+	  data_size = 4;
+	  break;
+	case 0x00018000:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (rj_val, data_size))
+	return -1;
+    }
+  else if ((is_fstgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+	    || (is_fstle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      length_opcode = loongarch_record->insn & 0x00008000;
+      switch (length_opcode)
+	{
+	case 0x00000000:
+	  data_size = 4;
+	  break;
+	case 0x00008000:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (rj_val, data_size))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for special instructions like privilege instructions,
+   barrier instructions and cache related instructions etc.  */
+
+static int
+loongarch_record_special_insn (loongarch_record_s *loongarch_record)
+{
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for syscall instructions.  */
+
+static int
+loongarch_record_syscall_insn (loongarch_record_s *loongarch_record)
+{
+  uint64_t syscall_number;
+  struct loongarch_gdbarch_tdep *tdep
+	    = gdbarch_tdep<loongarch_gdbarch_tdep> (loongarch_record->gdbarch);
+
+  regcache_raw_read_unsigned (loongarch_record->regcache, LOONGARCH_A7_REGNUM,
+			      &syscall_number);
+
+  return tdep->loongarch_syscall_record (loongarch_record->regcache,
+					 syscall_number);
+}
+
+/* Decode insns type and invoke its record handler.  */
+
+static int
+loongarch_record_decode_insn_handler (loongarch_record_s *loongarch_record)
+{
+  if (is_data_process_insn (loongarch_record->insn))
+    return loongarch_record_data_proc_insn (loongarch_record);
+  else if (is_branch_insn (loongarch_record->insn))
+    return loongarch_record_branch_insn (loongarch_record);
+  else if (is_store_insn (loongarch_record->insn))
+    return loongarch_record_store_insn (loongarch_record);
+  else if (is_read_time_insn (loongarch_record->insn))
+    return loongarch_record_read_time_insn (loongarch_record);
+  else if (is_float_insn (loongarch_record->insn))
+    return loongarch_record_float_insn (loongarch_record);
+  else if (is_special_insn (loongarch_record->insn))
+    return loongarch_record_special_insn (loongarch_record);
+  else if (is_atomic_access_insn (loongarch_record->insn))
+    return loongarch_record_atomic_access_insn (loongarch_record);
+  else if (is_bound_check_load_insn (loongarch_record->insn))
+    return loongarch_record_bound_check_load_insn (loongarch_record);
+  else if (is_bound_check_store_insn (loongarch_record->insn))
+    return loongarch_record_bound_check_store_insn (loongarch_record);
+  else if (is_syscall_insn (loongarch_record->insn))
+    return loongarch_record_syscall_insn (loongarch_record);
+
+  return LOONGARCH_RECORD_UNSUPPORTED;
+}
+
+/* Parse the current instruction and record the values of the registers and
+   memory that will be changed in current instruction to record_arch_list
+   return -1 if something is wrong.  */
+
+int
+loongarch_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
+			  CORE_ADDR insn_addr)
+{
+  int ret = 0;
+  loongarch_record_s loongarch_record;
+
+  /* reset the content of loongarch_record */
+  memset (&loongarch_record, 0, sizeof (loongarch_record_s));
+
+  /* write the loongarch_record */
+  loongarch_record.gdbarch = gdbarch;
+  loongarch_record.regcache = regcache;
+  loongarch_record.this_addr = insn_addr;
+
+  /* Get the current instruction */
+  loongarch_record.insn = (uint32_t) loongarch_fetch_instruction (insn_addr);
+  ret = loongarch_record_decode_insn_handler (&loongarch_record);
+  if (ret == LOONGARCH_RECORD_UNSUPPORTED)
+    {
+      gdb_printf (gdb_stderr,
+		  _("Process record does not support instruction "
+		    "0x%0x at address %s.\n"),
+		  loongarch_record.insn,
+		  paddress (gdbarch, insn_addr));
+      return -1;
+    }
+  if (ret == LOONGARCH_RECORD_SUCCESS)
+    {
+      /* Record PC registers.  */
+      if (record_full_arch_list_add_reg (loongarch_record.regcache,
+					 LOONGARCH_PC_REGNUM))
+	return -1;
+
+      if (record_full_arch_list_add_end ())
+	return -1;
+    }
+
+  return ret;
+}
+
+INIT_GDB_FILE (loongarch_tdep)
 {
   gdbarch_register (bfd_arch_loongarch, loongarch_gdbarch_init, nullptr);
 }

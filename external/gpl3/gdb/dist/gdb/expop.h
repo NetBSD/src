@@ -1,6 +1,6 @@
 /* Definitions for expressions in GDB
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXPOP_H
-#define EXPOP_H
+#ifndef GDB_EXPOP_H
+#define GDB_EXPOP_H
 
 #include "c-lang.h"
 #include "cp-abi.h"
@@ -45,10 +45,6 @@ extern void gen_expr_unop (struct expression *exp,
 			   expr::operation *lhs,
 			   struct agent_expr *ax, struct axs_value *value);
 
-extern struct value *eval_op_scope (struct type *expect_type,
-				    struct expression *exp,
-				    enum noside noside,
-				    struct type *type, const char *string);
 extern struct value *eval_op_var_msym_value (struct type *expect_type,
 					     struct expression *exp,
 					     enum noside noside,
@@ -172,9 +168,6 @@ extern struct value *eval_op_ind (struct type *expect_type,
 				  struct expression *exp,
 				  enum noside noside,
 				  struct value *arg1);
-extern struct value *eval_op_type (struct type *expect_type,
-				   struct expression *exp,
-				   enum noside noside, struct type *type);
 extern struct value *eval_op_alignof (struct type *expect_type,
 				      struct expression *exp,
 				      enum noside noside,
@@ -483,11 +476,11 @@ check_constant (const gdb_mpz &cst)
 static inline bool
 check_constant (struct symbol *sym)
 {
-  enum address_class sc = sym->aclass ();
-  return (sc == LOC_BLOCK
-	  || sc == LOC_CONST
-	  || sc == LOC_CONST_BYTES
-	  || sc == LOC_LABEL);
+  location_class lc = sym->loc_class ();
+  return (lc == LOC_BLOCK
+	  || lc == LOC_CONST
+	  || lc == LOC_CONST_BYTES
+	  || lc == LOC_LABEL);
 }
 
 static inline bool
@@ -603,13 +596,14 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    return eval_op_scope (expect_type, exp, noside,
-			  std::get<0> (m_storage),
-			  std::get<1> (m_storage).c_str ());
+    return evaluate_internal (expect_type, exp, noside, false);
   }
 
   value *evaluate_for_address (struct expression *exp,
-			       enum noside noside) override;
+			       enum noside noside) override
+  {
+    return evaluate_internal (nullptr, exp, noside, true);
+  }
 
   value *evaluate_funcall (struct type *expect_type,
 			   struct expression *exp,
@@ -626,6 +620,11 @@ protected:
 		       struct axs_value *value,
 		       struct type *cast_type)
     override;
+
+private:
+
+  value *evaluate_internal (struct type *expect_type, struct expression *exp,
+			    enum noside noside, bool want_address);
 };
 
 /* Compute the value of a variable.  */
@@ -1560,15 +1559,15 @@ public:
 
   value *evaluate (struct type *expect_type,
 		   struct expression *exp,
-		   enum noside noside) override
-  {
-    return eval_op_type (expect_type, exp, noside, std::get<0> (m_storage));
-  }
+		   enum noside noside) override;
 
   enum exp_opcode opcode () const override
   { return OP_TYPE; }
 
   bool constant_p () const override
+  { return true; }
+
+  bool type_p () const override
   { return true; }
 };
 
@@ -1593,6 +1592,9 @@ public:
 
   enum exp_opcode opcode () const override
   { return OP_TYPEOF; }
+
+  bool type_p () const override
+  { return true; }
 };
 
 /* Implement 'decltype'.  */
@@ -1638,6 +1640,9 @@ public:
 
   enum exp_opcode opcode () const override
   { return OP_DECLTYPE; }
+
+  bool type_p () const override
+  { return true; }
 };
 
 /* Implement 'typeid'.  */
@@ -1652,9 +1657,8 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    enum exp_opcode sub_op = std::get<0> (m_storage)->opcode ();
     enum noside sub_noside
-      = ((sub_op == OP_TYPE || sub_op == OP_DECLTYPE || sub_op == OP_TYPEOF)
+      = (std::get<0> (m_storage)->type_p ()
 	 ? EVAL_AVOID_SIDE_EFFECTS
 	 : noside);
 
@@ -2214,4 +2218,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* EXPOP_H */
+#endif /* GDB_EXPOP_H */

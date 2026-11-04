@@ -1,4 +1,4 @@
-/*	$NetBSD: nhpib.c,v 1.44 2024/01/16 05:48:28 thorpej Exp $	*/
+/*	$NetBSD: nhpib.c,v 1.44.2.1 2026/11/04 23:20:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.44 2024/01/16 05:48:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nhpib.c,v 1.44.2.1 2026/11/04 23:20:38 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -442,7 +442,7 @@ nhpibgo(struct hpibbus_softc *hs, int slave, int sec, void *ptr, int count,
  * This timeout can only happen if a DMA read finishes DMAing with the read
  * still pending (more data in read transaction than the driver was prepared
  * to accept).  At the moment, variable-record tape drives are the only things
- * capabale of doing this.  We repeat the necessary code from nhpibintr() -
+ * capable of doing this.  We repeat the necessary code from nhpibintr() -
  * easier and quicker than calling nhpibintr() for this special case.
  */
 static void

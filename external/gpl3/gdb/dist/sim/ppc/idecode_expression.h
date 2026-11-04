@@ -40,7 +40,7 @@
    resulting dead code.  That dead code being the calculations that,
    as it turned out were not in the end needed.
 
-   64bit arrithemetic is used firstly because it allows the use of
+   64bit arithmetic is used firstly because it allows the use of
    gcc's efficient long long operators (typically efficiently output
    inline) and secondly because the resultant answer will contain in
    the low 32bits the answer while in the high 32bits is either carry
@@ -48,7 +48,7 @@
 
 /* 64bit target expressions:
 
-   Unfortunatly 128bit arrithemetic isn't that common.  Consequently
+   Unfortunately 128bit arithmetic isn't that common.  Consequently
    the 32/64 bit trick can not be used.  Instead all calculations are
    required to retain carry/overflow information in separate
    variables.  Even with this restriction it is still possible for the

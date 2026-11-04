@@ -1,4 +1,4 @@
-# $NetBSD: t_filter_exec.sh,v 1.8 2013/03/17 03:00:05 jmmv Exp $
+# $NetBSD: t_filter_exec.sh,v 1.8.42.1 2026/11/04 23:28:13 perseant Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.

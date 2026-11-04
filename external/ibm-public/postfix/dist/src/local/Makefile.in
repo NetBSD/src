@@ -78,6 +78,7 @@ alias.o: ../../include/myflock.h
 alias.o: ../../include/mymalloc.h
 alias.o: ../../include/mypwd.h
 alias.o: ../../include/nvtable.h
+alias.o: ../../include/pol_stats.h
 alias.o: ../../include/recipient_list.h
 alias.o: ../../include/resolve_clnt.h
 alias.o: ../../include/sent.h
@@ -117,6 +118,7 @@ bounce_workaround.o: ../../include/msg_stats.h
 bounce_workaround.o: ../../include/myflock.h
 bounce_workaround.o: ../../include/mymalloc.h
 bounce_workaround.o: ../../include/nvtable.h
+bounce_workaround.o: ../../include/pol_stats.h
 bounce_workaround.o: ../../include/recipient_list.h
 bounce_workaround.o: ../../include/resolve_clnt.h
 bounce_workaround.o: ../../include/split_addr.h
@@ -156,6 +158,7 @@ command.o: ../../include/myflock.h
 command.o: ../../include/mymalloc.h
 command.o: ../../include/nvtable.h
 command.o: ../../include/pipe_command.h
+command.o: ../../include/pol_stats.h
 command.o: ../../include/recipient_list.h
 command.o: ../../include/resolve_clnt.h
 command.o: ../../include/sent.h
@@ -223,6 +226,7 @@ dotforward.o: ../../include/mymalloc.h
 dotforward.o: ../../include/mypwd.h
 dotforward.o: ../../include/nvtable.h
 dotforward.o: ../../include/open_as.h
+dotforward.o: ../../include/pol_stats.h
 dotforward.o: ../../include/recipient_list.h
 dotforward.o: ../../include/resolve_clnt.h
 dotforward.o: ../../include/sent.h
@@ -260,6 +264,7 @@ file.o: ../../include/msg_stats.h
 file.o: ../../include/myflock.h
 file.o: ../../include/mymalloc.h
 file.o: ../../include/nvtable.h
+file.o: ../../include/pol_stats.h
 file.o: ../../include/recipient_list.h
 file.o: ../../include/resolve_clnt.h
 file.o: ../../include/safe_open.h
@@ -298,6 +303,7 @@ forward.o: ../../include/msg_stats.h
 forward.o: ../../include/myflock.h
 forward.o: ../../include/mymalloc.h
 forward.o: ../../include/nvtable.h
+forward.o: ../../include/pol_stats.h
 forward.o: ../../include/rec_type.h
 forward.o: ../../include/recipient_list.h
 forward.o: ../../include/record.h
@@ -339,6 +345,7 @@ include.o: ../../include/mymalloc.h
 include.o: ../../include/mypwd.h
 include.o: ../../include/nvtable.h
 include.o: ../../include/open_as.h
+include.o: ../../include/pol_stats.h
 include.o: ../../include/recipient_list.h
 include.o: ../../include/resolve_clnt.h
 include.o: ../../include/sent.h
@@ -371,6 +378,7 @@ indirect.o: ../../include/msg_stats.h
 indirect.o: ../../include/myflock.h
 indirect.o: ../../include/mymalloc.h
 indirect.o: ../../include/nvtable.h
+indirect.o: ../../include/pol_stats.h
 indirect.o: ../../include/recipient_list.h
 indirect.o: ../../include/resolve_clnt.h
 indirect.o: ../../include/sent.h
@@ -476,6 +484,7 @@ mailbox.o: ../../include/myflock.h
 mailbox.o: ../../include/mymalloc.h
 mailbox.o: ../../include/mypwd.h
 mailbox.o: ../../include/nvtable.h
+mailbox.o: ../../include/pol_stats.h
 mailbox.o: ../../include/recipient_list.h
 mailbox.o: ../../include/resolve_clnt.h
 mailbox.o: ../../include/safe_open.h
@@ -517,6 +526,7 @@ maildir.o: ../../include/msg_stats.h
 maildir.o: ../../include/myflock.h
 maildir.o: ../../include/mymalloc.h
 maildir.o: ../../include/nvtable.h
+maildir.o: ../../include/pol_stats.h
 maildir.o: ../../include/recipient_list.h
 maildir.o: ../../include/resolve_clnt.h
 maildir.o: ../../include/safe_open.h
@@ -556,6 +566,7 @@ recipient.o: ../../include/myflock.h
 recipient.o: ../../include/mymalloc.h
 recipient.o: ../../include/mypwd.h
 recipient.o: ../../include/nvtable.h
+recipient.o: ../../include/pol_stats.h
 recipient.o: ../../include/recipient_list.h
 recipient.o: ../../include/resolve_clnt.h
 recipient.o: ../../include/split_addr.h
@@ -593,6 +604,7 @@ resolve.o: ../../include/msg_stats.h
 resolve.o: ../../include/myflock.h
 resolve.o: ../../include/mymalloc.h
 resolve.o: ../../include/nvtable.h
+resolve.o: ../../include/pol_stats.h
 resolve.o: ../../include/recipient_list.h
 resolve.o: ../../include/resolve_clnt.h
 resolve.o: ../../include/rewrite_clnt.h
@@ -624,6 +636,7 @@ token.o: ../../include/msg_stats.h
 token.o: ../../include/myflock.h
 token.o: ../../include/mymalloc.h
 token.o: ../../include/nvtable.h
+token.o: ../../include/pol_stats.h
 token.o: ../../include/readlline.h
 token.o: ../../include/recipient_list.h
 token.o: ../../include/resolve_clnt.h
@@ -662,6 +675,7 @@ unknown.o: ../../include/msg_stats.h
 unknown.o: ../../include/myflock.h
 unknown.o: ../../include/mymalloc.h
 unknown.o: ../../include/nvtable.h
+unknown.o: ../../include/pol_stats.h
 unknown.o: ../../include/recipient_list.h
 unknown.o: ../../include/resolve_clnt.h
 unknown.o: ../../include/sent.h

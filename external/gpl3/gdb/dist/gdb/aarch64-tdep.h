@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -19,10 +19,11 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef AARCH64_TDEP_H
-#define AARCH64_TDEP_H
+#ifndef GDB_AARCH64_TDEP_H
+#define GDB_AARCH64_TDEP_H
 
 #include "arch/aarch64.h"
+#include "dwarf2/frame.h"
 #include "displaced-stepping.h"
 #include "infrun.h"
 #include "gdbarch.h"
@@ -182,6 +183,30 @@ struct aarch64_gdbarch_tdep : gdbarch_tdep_base
   {
     return sme2_zt0_regnum > 0;
   }
+
+  /* First GCS register.  This is -1 if no GCS registers are available.  */
+  int gcs_reg_base = -1;
+
+  /* First GCS Linux-specific register.  This is -1 if no GCS Linux feature is
+     available.  */
+  int gcs_linux_reg_base = -1;
+
+  /* Function to unwind the GCSPR from the given frame.  */
+  fn_prev_register fn_prev_gcspr = nullptr;
+
+  /* Returns true if the target supports GCS.  */
+  bool
+  has_gcs () const
+  {
+    return gcs_reg_base != -1;
+  }
+
+  /* Returns true if the target supports the Linux GCS feature.  */
+  bool
+  has_gcs_linux () const
+  {
+    return gcs_linux_reg_base != -1;
+  }
 };
 
 const target_desc *aarch64_read_description (const aarch64_features &features);
@@ -203,4 +228,12 @@ void aarch64_displaced_step_fixup (struct gdbarch *gdbarch,
 
 bool aarch64_displaced_step_hw_singlestep (struct gdbarch *gdbarch);
 
-#endif /* aarch64-tdep.h */
+std::optional<CORE_ADDR> aarch64_mte_get_atag (CORE_ADDR address);
+
+/* AArch64 implementation of the remove_non_address_bits gdbarch hooks.
+   Remove non address bits from a pointer value.  */
+
+CORE_ADDR aarch64_remove_non_address_bits (struct gdbarch *gdbarch,
+					   CORE_ADDR pointer);
+
+#endif /* GDB_AARCH64_TDEP_H */

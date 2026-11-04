@@ -1,5 +1,5 @@
 /* Portable <regex.h>.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_REGEX_H
-#define GDB_REGEX_H 1
+#ifndef GDBSUPPORT_GDB_REGEX_H
+#define GDBSUPPORT_GDB_REGEX_H
 
 # include "xregex.h"
 
@@ -54,4 +54,4 @@ private:
   regex_t m_pattern;
 };
 
-#endif /* not GDB_REGEX_H */
+#endif /* GDBSUPPORT_GDB_REGEX_H */

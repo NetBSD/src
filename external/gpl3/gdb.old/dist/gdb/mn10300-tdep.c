@@ -1,6 +1,6 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
 
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "dis-asm.h"
+#include "extract-store-integer.h"
 #include "gdbtypes.h"
 #include "regcache.h"
-#include "gdbcore.h"	/* For write_memory_unsigned_integer.  */
+#include "gdbcore.h"
 #include "value.h"
 #include "frame.h"
 #include "frame-unwind.h"
@@ -1042,7 +1042,7 @@ mn10300_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
    use the current frame PC as the limit, then
    invoke mn10300_analyze_prologue and return its result.  */
 static struct mn10300_prologue *
-mn10300_analyze_frame_prologue (frame_info_ptr this_frame,
+mn10300_analyze_frame_prologue (const frame_info_ptr &this_frame,
 			   void **this_prologue_cache)
 {
   if (!*this_prologue_cache)
@@ -1071,7 +1071,7 @@ mn10300_analyze_frame_prologue (frame_info_ptr this_frame,
 /* Given the next frame and a prologue cache, return this frame's
    base.  */
 static CORE_ADDR
-mn10300_frame_base (frame_info_ptr this_frame, void **this_prologue_cache)
+mn10300_frame_base (const frame_info_ptr &this_frame, void **this_prologue_cache)
 {
   struct mn10300_prologue *p
     = mn10300_analyze_frame_prologue (this_frame, this_prologue_cache);
@@ -1095,7 +1095,7 @@ mn10300_frame_base (frame_info_ptr this_frame, void **this_prologue_cache)
 }
 
 static void
-mn10300_frame_this_id (frame_info_ptr this_frame,
+mn10300_frame_this_id (const frame_info_ptr &this_frame,
 		       void **this_prologue_cache,
 		       struct frame_id *this_id)
 {
@@ -1106,7 +1106,7 @@ mn10300_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-mn10300_frame_prev_register (frame_info_ptr this_frame,
+mn10300_frame_prev_register (const frame_info_ptr &this_frame,
 			     void **this_prologue_cache, int regnum)
 {
   struct mn10300_prologue *p
@@ -1181,7 +1181,7 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
   regs_used = (return_method == return_method_struct) ? 1 : 0;
   for (len = 0, argnum = 0; argnum < nargs; argnum++)
     {
-      arg_len = (value_type (args[argnum])->length () + 3) & ~3;
+      arg_len = (args[argnum]->type ()->length () + 3) & ~3;
       while (regs_used < 2 && arg_len > 0)
 	{
 	  regs_used++;
@@ -1205,20 +1205,20 @@ mn10300_push_dummy_call (struct gdbarch *gdbarch,
   for (argnum = 0; argnum < nargs; argnum++)
     {
       /* FIXME what about structs?  Unions?  */
-      if (value_type (*args)->code () == TYPE_CODE_STRUCT
-	  && value_type (*args)->length () > 8)
+      if ((*args)->type ()->code () == TYPE_CODE_STRUCT
+	  && (*args)->type ()->length () > 8)
 	{
 	  /* Change to pointer-to-type.  */
 	  arg_len = push_size;
 	  gdb_assert (push_size <= MN10300_MAX_REGISTER_SIZE);
 	  store_unsigned_integer (valbuf, push_size, byte_order,
-				  value_address (*args));
+				  (*args)->address ());
 	  val = &valbuf[0];
 	}
       else
 	{
-	  arg_len = value_type (*args)->length ();
-	  val = value_contents (*args).data ();
+	  arg_len = (*args)->type ()->length ();
+	  val = (*args)->contents ().data ();
 	}
 
       while (regs_used < 2 && arg_len > 0)
@@ -1332,15 +1332,15 @@ static struct gdbarch *
 mn10300_gdbarch_init (struct gdbarch_info info,
 		      struct gdbarch_list *arches)
 {
-  struct gdbarch *gdbarch;
   int num_regs;
 
   arches = gdbarch_list_lookup_by_info (arches, &info);
   if (arches != NULL)
     return arches->gdbarch;
 
-  mn10300_gdbarch_tdep *tdep = new mn10300_gdbarch_tdep;
-  gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new mn10300_gdbarch_tdep));
+  mn10300_gdbarch_tdep *tdep = gdbarch_tdep<mn10300_gdbarch_tdep> (gdbarch);
 
   switch (info.bfd_arch_info->mach)
     {

@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.34 2024/03/05 14:15:30 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.34.2.1 2026/11/04 23:20:31 perseant Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -69,7 +69,7 @@
  * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
- */ 
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34 2024/03/05 14:15:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.34.2.1 2026/11/04 23:20:31 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -163,7 +163,7 @@ cal_timer(void)
 	uint32_t	cntfreq;
 
 	cntfreq = curcpu()->ci_cpu_freq = atheros_get_cpu_freq();
-	
+
 	/* MIPS 4Kc CP0 counts every other clock */
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
@@ -277,7 +277,7 @@ mach_init(void)
 	/*
 	 * Turn off watchpoint that may have been enabled by the
 	 * PROM.  VxWorks bootloader seems to leave one set.
-	 */ 
+	 */
 	__asm volatile (
 		"mtc0	$0, $%0\n\t"
 		"nop\n\t"
@@ -365,9 +365,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("resetting board...\n\n");

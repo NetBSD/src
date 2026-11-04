@@ -1,4 +1,4 @@
-/*	$NetBSD: makefs.c,v 1.58.2.1 2025/08/02 05:58:50 perseant Exp $	*/
+/*	$NetBSD: makefs.c,v 1.58.2.2 2026/11/04 23:28:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001-2003 Wasabi Systems, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(__lint)
-__RCSID("$NetBSD: makefs.c,v 1.58.2.1 2025/08/02 05:58:50 perseant Exp $");
+__RCSID("$NetBSD: makefs.c,v 1.58.2.2 2026/11/04 23:28:52 perseant Exp $");
 #endif	/* !__lint */
 
 #include <assert.h>
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: makefs.c,v 1.58.2.1 2025/08/02 05:58:50 perseant Exp $");
 #include <unistd.h>
 #include <stdbool.h>
 #include <util.h>
+#include <time.h>
 
 #include "makefs.h"
 #include "mtree.h"

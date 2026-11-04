@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.114 2023/03/22 21:14:46 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.114.6.1 2026/11/04 23:21:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.114 2023/03/22 21:14:46 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.114.6.1 2026/11/04 23:21:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -663,7 +663,7 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 	cl = FSS_BTOCL(sc, dbtob(bp->b_blkno));
 	ch = FSS_BTOCL(sc, dbtob(bp->b_blkno)+bp->b_bcount-1);
 	error = 0;
-	if (curlwp == uvm.pagedaemon_lwp) {
+	if (uvm_lwp_is_pagedaemon(curlwp)) {
 		for (c = cl; c <= ch; c++)
 			if (isclr(sc->sc_copied, c)) {
 				error = ENOMEM;
@@ -1091,9 +1091,13 @@ static int
 fss_bs_io(struct fss_softc *sc, fss_io_type rw,
     u_int32_t cl, off_t off, int len, void *data, size_t *resid)
 {
+	struct mount *mp = sc->sc_bs_vp->v_mount;
 	int error;
 
 	off += FSS_CLTOB(sc, cl);
+
+	/* Request must succeed while suspending backing store fs. */
+	fstrans_start_lazy(mp);
 
 	vn_lock(sc->sc_bs_vp, LK_EXCLUSIVE|LK_RETRY);
 
@@ -1108,6 +1112,8 @@ fss_bs_io(struct fss_softc *sc, fss_io_type rw,
 	}
 
 	VOP_UNLOCK(sc->sc_bs_vp);
+
+	fstrans_done(mp);
 
 	return error;
 }

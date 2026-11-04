@@ -1,6 +1,6 @@
 /* DWARF 2 debugging format support for GDB.
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF2_LINE_HEADER_H
-#define DWARF2_LINE_HEADER_H
+#ifndef GDB_DWARF2_LINE_HEADER_H
+#define GDB_DWARF2_LINE_HEADER_H
+
+#include "dwarf2/types.h"
+
+struct dwarf2_per_objfile;
 
 /* dir_index is 1-based in DWARF 4 and before, and is 0-based in DWARF 5 and
    later.  */
@@ -196,7 +200,7 @@ struct line_header
   const char *m_comp_dir = nullptr;
 };
 
-typedef std::unique_ptr<line_header> line_header_up;
+using line_header_up = std::unique_ptr<line_header>;
 
 inline const char *
 file_entry::include_dir (const line_header *lh) const
@@ -214,7 +218,7 @@ file_entry::include_dir (const line_header *lh) const
 
 extern line_header_up dwarf_decode_line_header
   (sect_offset sect_off, bool is_dwz, dwarf2_per_objfile *per_objfile,
-   struct dwarf2_section_info *section, const struct comp_unit_head *cu_header,
+   struct dwarf2_section_info *section, const struct unit_head *cu_header,
    const char *comp_dir);
 
-#endif /* DWARF2_LINE_HEADER_H */
+#endif /* GDB_DWARF2_LINE_HEADER_H */

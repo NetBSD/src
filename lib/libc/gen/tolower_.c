@@ -1,4 +1,4 @@
-/*	$NetBSD: tolower_.c,v 1.14.40.1 2025/08/02 05:54:37 perseant Exp $	*/
+/*	$NetBSD: tolower_.c,v 1.14.40.2 2026/11/04 23:19:17 perseant Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_RCS) && !defined(lint)
-__RCSID("$NetBSD: tolower_.c,v 1.14.40.1 2025/08/02 05:54:37 perseant Exp $");
+__RCSID("$NetBSD: tolower_.c,v 1.14.40.2 2026/11/04 23:19:17 perseant Exp $");
 #endif /* LIBC_RCS and not lint */
 
 #include <sys/ctype_bits.h>
@@ -25,6 +25,7 @@ __RCSID("$NetBSD: tolower_.c,v 1.14.40.1 2025/08/02 05:54:37 perseant Exp $");
 __ctype_table
 static const short _C_tolower_tab_guarded_[_C_TOLOWER_TAB_GUARD +
     1 + _CTYPE_NUM_CHARS] = {
+	_CTYPE_GUARD_INIT(_C_TOLOWER_TAB_GUARD, EOF)
 	[_C_TOLOWER_TAB_GUARD] = EOF,
 	0x00,	0x01,	0x02,	0x03,	0x04,	0x05,	0x06,	0x07,
 	0x08,	0x09,	0x0a,	0x0b,	0x0c,	0x0d,	0x0e,	0x0f,
@@ -76,6 +77,8 @@ static void
 _C_tolower_tab_guard_init(void)
 {
 
+	if (constructor_allow_ctype_abuse())
+		return;
 	(void)mprotect(__UNCONST(_C_tolower_tab_guarded_), _CTYPE_GUARD_SIZE,
 	    PROT_NONE);
 }

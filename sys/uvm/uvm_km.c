@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.165.6.1 2025/08/02 05:57:57 perseant Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.165.6.2 2026/11/04 23:28:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.165.6.1 2025/08/02 05:57:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.165.6.2 2026/11/04 23:28:08 perseant Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -465,6 +465,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	pmap_remove(pmap_kernel(), startva, endva);
+	pmap_update(pmap_kernel());
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
@@ -540,6 +541,7 @@ uvm_km_pgremove_intrsafe(struct vm_map *map, vaddr_t start, vaddr_t end)
 		npgrm = i;
 		/* now remove the mappings */
 		pmap_kremove(batch_vastart, va - batch_vastart);
+		pmap_update(pmap_kernel());
 		/* and free the pages */
 		for (i = 0; i < npgrm; i++) {
 			pg = PHYS_TO_VM_PAGE(pa[i]);
@@ -612,6 +614,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	vaddr_t kva, loopva;
 	vaddr_t offset;
 	vsize_t loopsize;
+	uint64_t ticket;
 	struct vm_page *pg;
 	struct uvm_object *obj;
 	int pgaflags;
@@ -685,6 +688,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		KASSERTMSG(!pmap_extract(pmap_kernel(), loopva, NULL),
 		    "loopva=%#"PRIxVADDR, loopva);
 
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc_strat(NULL, offset, NULL, pgaflags,
 #ifdef UVM_KM_VMFREELIST
 		   UVM_PGA_STRAT_ONLY, UVM_KM_VMFREELIST
@@ -705,7 +709,8 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 				    flags & UVM_KMF_TYPEMASK);
 				return (0);
 			} else {
-				uvm_wait("km_getwait2");	/* sleep here */
+				/* sleep here */
+				uvm_wait("km_getwait2", ticket);
 				continue;
 			}
 		}
@@ -773,8 +778,9 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 	}
 
 	/*
-	 * Note: uvm_unmap_remove() calls pmap_update() for us, before
-	 * KVA becomes globally available.
+	 * Note: pmap_update() for the mappings was done inside
+	 * uvm_km_pgremove*() above (before any page frees).
+	 * VAONLY below tells uvm_unmap_remove() to skip pmap work.
 	 */
 
 	uvm_unmap1(map, addr, addr + size, UVM_FLAG_VAONLY);
@@ -795,6 +801,7 @@ int
 uvm_km_kmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags,
     vmem_addr_t *addr)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	vmem_addr_t va;
 	int rc;
@@ -806,6 +813,7 @@ uvm_km_kmem_alloc(vmem_t *vm, vmem_size_t size, vm_flag_t flags,
 #if defined(PMAP_MAP_POOLPAGE)
 	if (size == PAGE_SIZE) {
 again:
+		ticket = uvm_wait_prepare();
 #ifdef PMAP_ALLOC_POOLPAGE
 		pg = PMAP_ALLOC_POOLPAGE((flags & VM_SLEEP) ?
 		   0 : UVM_PGA_USERESERVE);
@@ -815,7 +823,7 @@ again:
 #endif /* PMAP_ALLOC_POOLPAGE */
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
-				uvm_wait("plpg");
+				uvm_wait("plpg", ticket);
 				goto again;
 			}
 			return ENOMEM;
@@ -851,12 +859,13 @@ again:
 		    " pa=%#"PRIxPADDR" vmem=%p",
 		    loopva, loopsize, pa, vm);
 
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc(NULL, loopva, NULL,
 		    UVM_FLAG_COLORMATCH
 		    | ((flags & VM_SLEEP) ? 0 : UVM_PGA_USERESERVE));
 		if (__predict_false(pg == NULL)) {
 			if (flags & VM_SLEEP) {
-				uvm_wait("plpg");
+				uvm_wait("plpg", ticket);
 				continue;
 			} else {
 				uvm_km_pgremove_intrsafe(kernel_map, va,

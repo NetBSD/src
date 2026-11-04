@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.16.2.1 2025/08/02 05:54:09 perseant Exp $	*/
+/*	$NetBSD: client.h,v 1.16.2.2 2026/11/04 23:18:21 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -187,17 +187,20 @@ struct ns_client {
 	uint16_t	extflags;
 	int16_t		ednsversion; /* -1 noedns */
 	uint16_t	additionaldepth;
+	uint16_t	additionaltotal;
 	void (*cleanup)(ns_client_t *);
-	ns_query_t    query;
-	isc_time_t    requesttime;
-	isc_stdtime_t now;
-	isc_time_t    tnow;
-	dns_name_t    signername; /*%< [T]SIG key name */
-	dns_name_t   *signer;	  /*%< NULL if not valid sig */
-	isc_result_t  sigresult;
-	isc_result_t  viewmatchresult;
-	isc_buffer_t *buffer;
-	isc_buffer_t  tbuffer;
+	ns_query_t     query;
+	isc_time_t     requesttime;
+	isc_stdtime_t  now;
+	isc_time_t     tnow;
+	dns_name_t     signername; /*%< [T]SIG key name */
+	dns_name_t    *signer;	   /*%< NULL if not valid sig */
+	isc_result_t   sigresult;
+	isc_result_t   viewmatchresult;
+	isc_buffer_t  *buffer;
+	isc_buffer_t   tbuffer;
+	unsigned char *reqbuf; /*%< request copy for async path */
+	size_t	       reqbuf_size;
 
 	isc_sockaddr_t peeraddr;
 	bool	       peeraddr_valid;
@@ -250,14 +253,14 @@ struct ns_client {
 #define NS_CLIENTATTR_BADCOOKIE \
 	0x00040 /*%< Presented cookie is bad/out-of-date */
 /* Obsolete: NS_CLIENTATTR_FILTER_AAAA_RC 0x00080 */
-#define NS_CLIENTATTR_WANTAD	   0x00100 /*%< want AD in response if possible */
-#define NS_CLIENTATTR_WANTCOOKIE   0x00200 /*%< return a COOKIE */
-#define NS_CLIENTATTR_HAVECOOKIE   0x00400 /*%< has a valid COOKIE */
-#define NS_CLIENTATTR_WANTEXPIRE   0x00800 /*%< return seconds to expire */
-#define NS_CLIENTATTR_HAVEEXPIRE   0x01000 /*%< return seconds to expire */
-#define NS_CLIENTATTR_WANTOPT	   0x02000 /*%< add opt to reply */
-#define NS_CLIENTATTR_HAVEECS	   0x04000 /*%< received an ECS option */
-#define NS_CLIENTATTR_WANTPAD	   0x08000 /*%< pad reply */
+#define NS_CLIENTATTR_WANTAD	 0x00100 /*%< want AD in response if possible */
+#define NS_CLIENTATTR_WANTCOOKIE 0x00200 /*%< return a COOKIE */
+#define NS_CLIENTATTR_HAVECOOKIE 0x00400 /*%< has a valid COOKIE */
+#define NS_CLIENTATTR_WANTEXPIRE 0x00800 /*%< return seconds to expire */
+#define NS_CLIENTATTR_HAVEEXPIRE 0x01000 /*%< return seconds to expire */
+#define NS_CLIENTATTR_WANTOPT	 0x02000 /*%< add opt to reply */
+#define NS_CLIENTATTR_HAVEECS	 0x04000 /*%< received an ECS option */
+#define NS_CLIENTATTR_WANTPAD	 0x08000 /*%< pad reply */
 #define NS_CLIENTATTR_USEKEEPALIVE 0x10000 /*%< use TCP keepalive */
 
 #define NS_CLIENTATTR_NOSETFC 0x20000 /*%< don't set servfail cache */

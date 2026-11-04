@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -548,7 +548,7 @@ do { \
 
 
 /* some rotate functions.  The generic macro's ROT, ROTL, ROTR are
-   intentionally omited. */
+   intentionally omitted. */
 
 
 INLINE_SIM_BITS(uint8_t)  ROT8  (uint8_t  val, int shift);

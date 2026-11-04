@@ -46,32 +46,33 @@ POSTDROP(1)                                                        POSTDROP(1)
 <b><a name="environment">ENVIRONMENT</a></b>
        MAIL_CONFIG
               Directory  with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid exploitation
-              of set-group ID privileges, a non-standard directory is  allowed
+              of set-group ID privileges, a non-default directory  is  allowed
               only if:
 
-              <b>o</b>      The  name is listed in the standard <a href="postconf.5.html"><b>main.cf</b></a> file with the
-                     <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b> configuration parameter.
+              <b>o</b>      The  name  is listed in the default <a href="postconf.5.html"><b>main.cf</b></a> file with the
+                     <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>  or  <b><a href="postconf.5.html#multi_instance_directories">multi_instance_directo</a>-</b>
+                     <b><a href="postconf.5.html#multi_instance_directories">ries</a></b> configuration parameter.
 
               <b>o</b>      The command is invoked by the super-user.
 
 <b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
-       gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
               A list of non-default Postfix configuration directories that may
-              be  specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line (in
-              the case of <a href="sendmail.1.html"><b>sendmail</b>(1)</a>, with  the  "-C"  option),  or  via  the
+              be specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line  (in
+              the  case  of  <a href="sendmail.1.html"><b>sendmail</b>(1)</a>,  with  the  "-C" option), or via the
               MAIL_CONFIG environment parameter.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The list of environment  variables  that  a  privileged  Postfix
-              process  will  import  from  a  non-Postfix  parent  process, or
+              The  list  of  environment  variables  that a privileged Postfix
+              process will  import  from  a  non-Postfix  parent  process,  or
               name=value environment overrides.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
@@ -81,33 +82,33 @@ POSTDROP(1)                                                        POSTDROP(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A prefix that  is  prepended  to  the  process  name  in  syslog
+              A  prefix  that  is  prepended  to  the  process  name in syslog
               records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
-              The  time  limit  for sending a trigger to a Postfix daemon (for
+              The time limit for sending a trigger to a  Postfix  daemon  (for
               example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon).
 
        Available in Postfix version 2.2 and later:
 
        <b><a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> (<a href="DATABASE_README.html#types">static</a>:anyone)</b>
-              List of users who are authorized to submit mail with  the  <a href="sendmail.1.html"><b>send-</b></a>
+              List  of  users who are authorized to submit mail with the <a href="sendmail.1.html"><b>send-</b></a>
               <a href="sendmail.1.html"><b>mail</b>(1)</a> command (and with the privileged <a href="postdrop.1.html"><b>postdrop</b>(1)</a> helper com-
               mand).
 
        Available in Postfix version 3.6 and later:
 
        <b><a href="postconf.5.html#local_login_sender_maps">local_login_sender_maps</a> (<a href="DATABASE_README.html#types">static</a>:*)</b>
-              A list of lookup tables that are  searched  by  the  UNIX  login
+              A  list  of  lookup  tables  that are searched by the UNIX login
               name, and that return a list of allowed envelope sender patterns
               separated by space or comma.
 
        <b><a href="postconf.5.html#empty_address_local_login_sender_maps_lookup_key">empty_address_local_login_sender_maps_lookup_key</a> (</b>&lt;&gt;<b>)</b>
-              The lookup key to be  used  in  <a href="postconf.5.html#local_login_sender_maps">local_login_sender_maps</a>  tables,
+              The  lookup  key  to  be used in <a href="postconf.5.html#local_login_sender_maps">local_login_sender_maps</a> tables,
               instead of the null sender address.
 
        <b><a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> (empty)</b>
-              The  set of characters that can separate an email address local-
+              The set of characters that can separate an email address  local-
               part, user name, or a .forward file name from its extension.
 
 <b><a name="files">FILES</a></b>

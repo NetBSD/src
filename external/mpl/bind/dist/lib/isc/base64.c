@@ -1,4 +1,4 @@
-/*	$NetBSD: base64.c,v 1.8.4.1 2025/08/02 05:53:51 perseant Exp $	*/
+/*	$NetBSD: base64.c,v 1.8.4.2 2026/11/04 23:18:14 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,13 +22,6 @@
 #include <isc/lex.h>
 #include <isc/string.h>
 #include <isc/util.h>
-
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
 
 /*@{*/
 /*!
@@ -188,7 +181,7 @@ isc_base64_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 	isc_token_t token;
 	bool eol;
 
-	REQUIRE(length >= -2);
+	REQUIRE(length >= isc_one_or_more);
 
 	base64_decode_init(&ctx, length, target);
 
@@ -216,7 +209,7 @@ isc_base64_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length) {
 		isc_lex_ungettoken(lexer, &token);
 	}
 	RETERR(base64_decode_finish(&ctx));
-	if (length == -2 && before == after) {
+	if (length == isc_one_or_more && before == after) {
 		return ISC_R_UNEXPECTEDEND;
 	}
 	return ISC_R_SUCCESS;
@@ -226,7 +219,7 @@ isc_result_t
 isc_base64_decodestring(const char *cstr, isc_buffer_t *target) {
 	base64_decode_ctx_t ctx;
 
-	base64_decode_init(&ctx, -1, target);
+	base64_decode_init(&ctx, isc_zero_or_more, target);
 	for (;;) {
 		int c = *cstr++;
 		if (c == '\0') {

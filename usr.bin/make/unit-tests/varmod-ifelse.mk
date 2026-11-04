@@ -1,4 +1,4 @@
-# $NetBSD: varmod-ifelse.mk,v 1.29.2.2 2025/08/02 05:58:38 perseant Exp $
+# $NetBSD: varmod-ifelse.mk,v 1.29.2.3 2026/11/04 23:28:39 perseant Exp $
 #
 # Tests for the ${cond:?then:else} variable modifier, which evaluates either
 # the then-expression or the else-expression, depending on the condition.
@@ -86,9 +86,9 @@ COND:=	${${UNDEF} == "":?bad-assign:bad-assign}
 # string.  The left-hand side of the comparison is therefore just an empty
 # string, which is obviously equal to the empty string on the right-hand side.
 #
-# XXX: The debug log for -dc shows a comparison between 1.0 and 0.0.  The
-# condition should be detected as being malformed before any comparison is
-# done since there is no well-formed comparison in the condition at all.
+# XXX: The comparison between 1.0 and 0.0 should not be done because the
+# condition is not well-formed at all.
+# expect: Comparing 1.000000 == 0.000000
 .MAKEFLAGS: -dc
 # expect+1: Bad condition
 .if "${1 == == 2:?yes:no}" != ""

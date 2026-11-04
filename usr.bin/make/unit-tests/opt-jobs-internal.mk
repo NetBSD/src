@@ -1,6 +1,12 @@
-# $NetBSD: opt-jobs-internal.mk,v 1.3.4.1 2025/08/02 05:58:36 perseant Exp $
+# $NetBSD: opt-jobs-internal.mk,v 1.3.4.2 2026/11/04 23:28:39 perseant Exp $
 #
 # Tests for the (intentionally undocumented) internal -J command line option.
+.if ${DEBUG_TEST:U:M${.PARSEFILE:R}} != ""
+.MAKEFLAGS: -djg2
+.endif
+
+_make ?= .make${.MAKE.PID}
+.export _make
 
 all: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 direct
@@ -11,6 +17,7 @@ all: .PHONY
 	@${MAKE} -f ${MAKEFILE} -j1 indirect-comment
 	@${MAKE} -f ${MAKEFILE} -j1 indirect-silent-comment
 	@${MAKE} -f ${MAKEFILE} -j1 indirect-expr-empty
+	@rm -f ${_make}
 
 detect-mode: .PHONY
 	@mode=parallel
@@ -30,8 +37,8 @@ direct-open: .PHONY
 	@${MAKE} -f ${MAKEFILE} -J 31,32 detect-mode HEADING=${.TARGET}
 
 # expect: indirect-open: mode=compat
-indirect-open: .PHONY
-	@${MAKE:U} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
+indirect-open: .PHONY ${_make}
+	@./${_make} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
 
 # When a command in its unexpanded form contains the expression "${MAKE}"
 # without any modifiers, the file descriptors get passed around.
@@ -42,9 +49,9 @@ indirect-expr: .PHONY
 # The "# make" comment starts directly after the leading tab and is thus not
 # considered a shell command line. No file descriptors are passed around.
 # expect: indirect-comment: mode=compat
-indirect-comment: .PHONY
+indirect-comment: .PHONY ${_make}
 	# make
-	@${MAKE:U} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
+	@./${_make} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
 
 # When the "# make" comment is prefixed with "@", it becomes a shell command.
 # As that shell command contains the plain word "make", the file descriptors
@@ -54,9 +61,10 @@ indirect-silent-comment: .PHONY
 	@# make
 	@${MAKE:U} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
 
-# When a command in its unexpanded form contains the plain word "make", the
-# file descriptors get passed around.
 # expect: indirect-expr-empty: mode=parallel
 indirect-expr-empty: .PHONY
-	@${:D make}
 	@${MAKE:U} -f ${MAKEFILE} detect-mode HEADING=${.TARGET}
+
+${_make}:
+	@ln -s ${MAKE} ${.TARGET}
+

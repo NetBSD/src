@@ -1,5 +1,5 @@
 /* $KAME: sctp6_usrreq.c,v 1.38 2005/08/24 08:08:56 suz Exp $ */
-/* $NetBSD: sctp6_usrreq.c,v 1.24.8.1 2025/08/02 05:57:51 perseant Exp $ */
+/* $NetBSD: sctp6_usrreq.c,v 1.24.8.2 2026/11/04 23:28:00 perseant Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.24.8.1 2025/08/02 05:57:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp6_usrreq.c,v 1.24.8.2 2026/11/04 23:28:00 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -186,7 +186,7 @@ sctp6_input(struct mbuf **mp, int *offp, int proto)
 			if ((in6p) && (stcb)) {
 				sctp_send_packet_dropped(stcb, net, m, iphlen, 1);
 				sctp_chunk_output((struct sctp_inpcb *)in6p, stcb, 2);
-			}  else if ((in6p != NULL) && (stcb == NULL)) {
+			} else if ((in6p != NULL) && (stcb == NULL)) {
 				refcount_up = 1;
 			}
 			sctp_pegs[SCTP_BAD_CSUM]++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_kernel.h,v 1.3 2016/06/20 03:29:52 dholland Exp $	*/
+/*	$NetBSD: lfs_kernel.h,v 1.3.54.1 2026/11/04 23:28:07 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.157 2013/06/28 16:14:06 matt Exp  */
 
@@ -68,11 +68,7 @@
 
 extern struct lfs_stats lfs_stats;
 
-/* XXX MP */
-#define	LFS_SEGLOCK_HELD(fs) \
-	((fs)->lfs_seglock != 0 &&					\
-	 (fs)->lfs_lockpid == curproc->p_pid &&				\
-	 (fs)->lfs_locklwp == curlwp->l_lid)
+#define  LFS_SEGLOCK_HELD(fs) lfs_seglock_held(fs)
 
 struct lfs_cluster {
 	size_t bufsize;	       /* Size of kept data */
@@ -107,6 +103,7 @@ struct lfs_fcntl_markv_70 {
 
 #define LFCNSEGWAITALL_COMPAT	 _FCNW_FSPRIV('L', 0, struct timeval50)
 #define LFCNSEGWAIT_COMPAT	 _FCNW_FSPRIV('L', 1, struct timeval50)
+#define LFCNRECLAIM_COMPAT	 _FCNO_FSPRIV('L', 4)
 #define LFCNIFILEFH_COMPAT	 _FCNW_FSPRIV('L', 5, struct lfs_fhandle)
 #define LFCNIFILEFH_COMPAT2	 _FCN_FSPRIV(F_FSOUT, 'L', 11, 32)
 #define LFCNWRAPSTOP_COMPAT	 _FCNO_FSPRIV('L', 9)

@@ -1,4 +1,4 @@
-/*	$NetBSD: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $	*/
+/*	$NetBSD: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $	*/
 /*
  * This file is derived from various .h and .c files from the zlib-1.0.4
  * distribution by Jean-loup Gailly and Mark Adler, with some additions
@@ -11,7 +11,7 @@
  * - added inflateIncomp and deflateOutputPending
  * - allow strm->next_out to be NULL, meaning discard the output
  *
- * $Id: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $
+ * $Id: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $
  */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $");
 
 #define NO_DUMMY_DECL
 #define NO_ZCFUNCS
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp 
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $ */
 
 #ifndef _Z_UTIL_H
 #define _Z_UTIL_H
@@ -294,7 +294,7 @@ void   zcfree(voidpf opaque, voidpf ptr);
    subject to change. Applications should only use zlib.h.
  */
 
-/* @(#) $Id: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $ */
 
 #ifndef _DEFLATE_H
 #define _DEFLATE_H
@@ -656,7 +656,7 @@ void _tr_stored_type_only(deflate_state *);
  *
  */
 
-/* @(#) $Id: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $ */
 
 /* #include "deflate.h" */
 
@@ -1999,7 +1999,7 @@ local block_state deflate_slow(deflate_state *s, int flush)
  *          Addison-Wesley, 1983. ISBN 0-201-06672-6.
  */
 
-/* @(#) $Id: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $ */
 
 /* #define GEN_TREES_H */
 
@@ -2414,7 +2414,7 @@ local void tr_static_init(void)
 }
 
 /* ===========================================================================
- * Genererate the file trees.h describing the static trees.
+ * Generate the file trees.h describing the static trees.
  */
 #ifdef GEN_TREES_H
 #  ifndef DEBUG_ZLIB
@@ -5830,7 +5830,7 @@ void  zcfree (opaque, ptr)
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
-/* @(#) $Id: zlib.c,v 1.38.10.1 2025/08/02 05:57:47 perseant Exp $ */
+/* @(#) $Id: zlib.c,v 1.38.10.2 2026/11/04 23:27:58 perseant Exp $ */
 
 /* #include "zlib.h" */
 

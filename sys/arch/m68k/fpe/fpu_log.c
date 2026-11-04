@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_log.c,v 1.18 2014/01/04 13:23:22 isaki Exp $	*/
+/*	$NetBSD: fpu_log.c,v 1.18.66.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.18 2014/01/04 13:23:22 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_log.c,v 1.18.66.1 2026/11/04 23:20:50 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/systm.h>
@@ -196,7 +196,7 @@ static struct fpn *__fpu_logn(struct fpemu *fe);
 static struct fpn *
 __fpu_logn(struct fpemu *fe)
 {
-	static struct fpn X, F, U, V, W, KLOG2;
+	struct fpn X, F, U, V, W, KLOG2;
 	struct fpn *d;
 	int i, k;
 

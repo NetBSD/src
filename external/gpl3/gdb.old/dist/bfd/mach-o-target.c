@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,8 +24,6 @@
 #ifndef MACH_O_TARGET_COMMON_DEFINED
 #define MACH_O_TARGET_COMMON_DEFINED
 
-#define bfd_mach_o_bfd_free_cached_info		      _bfd_generic_bfd_free_cached_info
-#define bfd_mach_o_get_section_contents_in_window     _bfd_generic_get_section_contents_in_window
 #define bfd_mach_o_bfd_print_private_bfd_data	      bfd_mach_o_bfd_print_private_bfd_data
 #define bfd_mach_o_bfd_is_target_special_symbol	      _bfd_bool_bfd_asymbol_false
 #define bfd_mach_o_bfd_is_local_label_name	      bfd_generic_is_local_label_name
@@ -76,6 +74,7 @@
 #define bfd_mach_o_write_armap			  _bfd_noarchive_write_armap
 #define bfd_mach_o_get_elt_at_index		  _bfd_noarchive_get_elt_at_index
 #define bfd_mach_o_update_armap_timestamp	  _bfd_noarchive_update_armap_timestamp
+#define bfd_mach_o_init_private_section_data	  _bfd_generic_init_private_section_data
 
 #define TARGET_NAME_BACKEND XCONCAT2(TARGET_NAME,_backend)
 

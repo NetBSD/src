@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.21.2.1 2025/08/02 05:55:42 perseant Exp $	*/
+/*	$NetBSD: machdep.c,v 1.21.2.2 2026/11/04 23:20:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.1 2025/08/02 05:55:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.21.2.2 2026/11/04 23:20:43 perseant Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -451,10 +451,10 @@ hppa_init(paddr_t start, void *bi)
 	ci = curcpu();
 
 	ci->ci_psw =
-		PSW_Q |         /* Interrupt State Collection Enable */
-		PSW_P |         /* Protection Identifier Validation Enable */
-		PSW_C |         /* Instruction Address Translation Enable */
-		PSW_D;          /* Data Address Translation Enable */
+		PSW_Q |		/* Interrupt State Collection Enable */
+		PSW_P |		/* Protection Identifier Validation Enable */
+		PSW_C |		/* Instruction Address Translation Enable */
+		PSW_D;		/* Data Address Translation Enable */
 
 	/* Copy bootinfo */
 	if (bi != NULL)
@@ -797,7 +797,8 @@ cpuid(void)
 	}
 
 	if (!cpu_found) {
-		panic("CPU detection failed. Please report the problem.");
+		panic("CPU detection failed. Please report the problem. "
+		    "CPU version %#x/type %#x", cpu_version, cpu_type);
 	}
 
 	hppa_cpu_info = p;
@@ -883,6 +884,7 @@ cpu_model_cpuid(int modelno)
 	case HPPA_BOARD_HP725_50:
 	case HPPA_BOARD_HP725_75:
 	case HPPA_BOARD_HP725_99:
+	case HPPA_BOARD_HP745I_50:
 		return hpcxt;
 	}
 	return hpc_unknown;
@@ -1437,7 +1439,7 @@ cpu_reboot(int howto, char *user_boot_string)
 
 		/* ask firmware to reset */
 		pdcproc_doreset();
-		/* forcably reset module if that fails */
+		/* forcibly reset module if that fails */
 		__asm __volatile("stwas %0, 0(%1)"
 		    :: "r" (CMD_RESET), "r" (HPPA_LBCAST + iomod_command));
 	}
@@ -1637,14 +1639,14 @@ hppa_pim64_dump(int check_type, void *data, size_t size)
 
 		/* Print out some interesting registers. */
 		printf("\n\nIIA head 0x%lx:0x%016lx\n"
-	            "IIA tail 0x%lx:0x%016lx",
+		    "IIA tail 0x%lx:0x%016lx",
 		    (unsigned long)regs->pim_regs_cr17,
 		    (unsigned long)regs->pim_regs_cr18,
 		    (unsigned long)regs->pim_regs_iisq_tail,
 		    (unsigned long)regs->pim_regs_iioq_tail);
 		PIM_WORD("\nIPSW", regs->pim_regs_cr22, PSW_BITS);
 		printf("\nSP 0x%lx:0x%016lx\nFP 0x%lx:0x%016lx",
-       		    (unsigned long)regs->pim_regs_sr0,
+		    (unsigned long)regs->pim_regs_sr0,
 		    (unsigned long)regs->pim_regs_r30,
 		    (unsigned long)regs->pim_regs_sr0,
 		    (unsigned long)regs->pim_regs_r3);
@@ -1921,12 +1923,15 @@ setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
 	hppa_setvmspace(l);
 
 	/* reset any of the pending FPU exceptions */
+	kpreempt_disable();
 	hppa_fpu_flush(l);
 	memset(pcb->pcb_fpregs, 0, sizeof(*pcb->pcb_fpregs));
 	pcb->pcb_fpregs->fpr_regs[0] = ((uint64_t)HPPA_FPU_INIT) << 32;
 	pcb->pcb_fpregs->fpr_regs[1] = 0;
 	pcb->pcb_fpregs->fpr_regs[2] = 0;
 	pcb->pcb_fpregs->fpr_regs[3] = 0;
+	hppa_fpu_commit(l);
+	kpreempt_enable();
 
 	l->l_md.md_bpva = 0;
 
@@ -2113,16 +2118,6 @@ blink_lcd_timeout(void *vsc)
 	callout_schedule(&sc->bls_to, t);
 }
 #endif
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */
 
 bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)

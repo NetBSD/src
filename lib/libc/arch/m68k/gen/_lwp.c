@@ -1,4 +1,4 @@
-/*	$NetBSD: _lwp.c,v 1.9.2.1 2025/08/02 05:54:32 perseant Exp $	*/
+/*	$NetBSD: _lwp.c,v 1.9.2.2 2026/11/04 23:19:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -31,15 +31,20 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _lwp.c,v 1.9.2.1 2025/08/02 05:54:32 perseant Exp $");
+__RCSID("$NetBSD: _lwp.c,v 1.9.2.2 2026/11/04 23:19:12 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+
+#define	__EXPOSE_STACK
+
+#include <sys/param.h>
 #include <sys/types.h>
 #include <sys/tls.h>
-#include <ucontext.h>
+
 #include <lwp.h>
 #include <stdlib.h>
+#include <ucontext.h>
 
 #include <machine/lwp_private.h>
 
@@ -57,7 +62,8 @@ _lwp_makecontext(ucontext_t *u, void (*start)(void *),
 
 	u->uc_mcontext.__gregs[_REG_PC] = (int)start;
 
-	sp = (void **)(void *)(stack_base + stack_size);
+	sp =
+	    (void **)(((uintptr_t)stack_base + stack_size) & ~STACK_ALIGNBYTES);
 
 	*--sp = arg;
 	*--sp = (void *) _lwp_exit;

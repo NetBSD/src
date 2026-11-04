@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.5 2024/03/05 14:15:31 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.5.2.1 2026/11/04 23:20:33 perseant Exp $ */
 
 /*-
  * Copyright (c) 2001,2021 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5 2024/03/05 14:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.5.2.1 2026/11/04 23:20:33 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -136,7 +136,7 @@ cal_timer(void)
 }
 
 /*
- * 
+ *
  */
 void
 mach_init(u_long arg0, u_long arg1, u_long arg2, u_long arg3)
@@ -356,9 +356,9 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("resetting...\n\n");

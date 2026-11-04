@@ -1,4 +1,4 @@
-/*	$NetBSD: httpd.c,v 1.9.2.1 2025/08/02 05:53:52 perseant Exp $	*/
+/*	$NetBSD: httpd.c,v 1.9.2.2 2026/11/04 23:18:14 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -38,14 +38,6 @@
 #ifdef HAVE_ZLIB
 #include <zlib.h>
 #endif /* ifdef HAVE_ZLIB */
-
-#define CHECK(m)                               \
-	do {                                   \
-		result = (m);                  \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	} while (0)
 
 /*
  * Size the recv buffer to hold at maximum two full buffers from isc_nm_read(),
@@ -293,7 +285,7 @@ destroy_httpdmgr(isc_httpdmgr_t *httpdmgr) {
 	 * memory.
 	 */
 	isc_httpdurl_t *url, *next;
-	ISC_LIST_FOREACH_SAFE (httpdmgr->urls, url, link, next) {
+	ISC_LIST_FOREACH_SAFE(httpdmgr->urls, url, link, next) {
 		isc_mem_free(httpdmgr->mctx, url->url);
 		ISC_LIST_UNLINK(httpdmgr->urls, url, link);
 		isc_mem_put(httpdmgr->mctx, url, sizeof(isc_httpdurl_t));
@@ -435,9 +427,8 @@ process_request(isc_httpd_t *httpd, size_t last_len) {
 
 		if (name_match(header, "Content-Length")) {
 			char *endptr;
-			long val = strtol(header->value, &endptr, 10);
-
 			errno = 0;
+			long val = strtol(header->value, &endptr, 10);
 
 			/* ensure we consumed all digits */
 			if ((header->value + header->value_len) != endptr) {
@@ -759,7 +750,7 @@ httpd_compress(isc_httpd_sendreq_t *req) {
 }
 #endif /* ifdef HAVE_ZLIB */
 
-static void
+static isc_result_t
 prepare_response(void *arg) {
 	isc_httpd_sendreq_t *req = arg;
 	isc_httpd_t *httpd = req->httpd;
@@ -783,7 +774,7 @@ prepare_response(void *arg) {
 	}
 
 	LOCK(&mgr->lock);
-	ISC_LIST_FOREACH (mgr->urls, url, link) {
+	ISC_LIST_FOREACH(mgr->urls, url, link) {
 		if (strncmp(path, url->url, path_len) == 0) {
 			break;
 		}
@@ -883,10 +874,12 @@ prepare_response(void *arg) {
 	}
 	httpd->recvlen -= httpd->consume;
 	httpd->consume = 0;
+
+	return ISC_R_SUCCESS;
 }
 
 static void
-prepare_response_done(void *arg) {
+prepare_response_done(void *arg, isc_result_t result) {
 	isc_region_t r;
 	isc_httpd_sendreq_t *req = arg;
 	isc_httpd_t *httpd = req->httpd;
@@ -895,6 +888,11 @@ prepare_response_done(void *arg) {
 	 * Determine total response size.
 	 */
 	isc_buffer_usedregion(req->sendbuffer, &r);
+
+	if (result != ISC_R_SUCCESS) {
+		httpd_senddone(httpd->handle, result, req);
+		return;
+	}
 
 	isc_nm_send(httpd->handle, &r, httpd_senddone, req);
 }
@@ -956,8 +954,8 @@ httpd_request(isc_nmhandle_t *handle, isc_result_t eresult,
 
 	isc_httpd_sendreq_t *req = isc__httpd_sendreq_new(httpd);
 	isc_nmhandle_ref(handle);
-	isc_work_enqueue(isc_loop(), prepare_response, prepare_response_done,
-			 req);
+	isc_work_enqueue(isc_loop(), ISC_WORKLANE_SLOW, prepare_response,
+			 prepare_response_done, req);
 	return;
 
 close_readhandle:
@@ -982,7 +980,7 @@ isc_httpdmgr_shutdown(isc_httpdmgr_t **httpdmgrp) {
 	LOCK(&httpdmgr->lock);
 
 	isc_httpd_t *httpd = NULL, *next = NULL;
-	ISC_LIST_FOREACH_SAFE (httpdmgr->running, httpd, link, next) {
+	ISC_LIST_FOREACH_SAFE(httpdmgr->running, httpd, link, next) {
 		if (httpd->handle != NULL) {
 			httpd_request(httpd->handle, ISC_R_SUCCESS, NULL,
 				      httpd);

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,13 +18,9 @@
 
 load_lib gdb-guile.exp
 
-# Start with a fresh gdb.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+require allow_guile_tests
 
-# Skip all tests if Guile scripting is not enabled.
-if { [skip_guile_tests] } { continue }
+clean_restart
 
 gdb_install_guile_utils
 gdb_install_guile_module
@@ -38,8 +34,15 @@ proc scm_param_test_maybe_no_output { command pattern args } {
 }
 
 # We use "." here instead of ":" so that this works on win32 too.
-set escaped_directory [string_to_regexp "$srcdir/$subdir"]
-gdb_test "guile (print (parameter-value \"directories\"))" "$escaped_directory.\\\$cdir.\\\$cwd"
+if { [is_remote host] } {
+    # Proc gdb_reinitialize_dir has no effect for remote host.
+    gdb_test "guile (print (parameter-value \"directories\"))" \
+	"\\\$cdir.\\\$cwd"
+} else {
+    set escaped_directory [string_to_regexp "$srcdir/$subdir"]
+    gdb_test "guile (print (parameter-value \"directories\"))" \
+	"$escaped_directory.\\\$cdir.\\\$cwd"
+}
 
 # Test a simple boolean parameter, and parameter? while we're at it.
 
@@ -59,11 +62,11 @@ gdb_test_multiline "Simple gdb boolean parameter" \
     "end"
 
 with_test_prefix "test-param" {
-    gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value (true)"
+    gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value, true"
     gdb_test "show print test-param" "The state of the Test Parameter is on." "show parameter on"
     gdb_test_no_output "set print test-param off"
     gdb_test "show print test-param" "The state of the Test Parameter is off." "show parameter off"
-    gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value (false)"
+    gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value, false"
     gdb_test "help show print test-param" "Show the state of the boolean test-param.*" "show help"
     gdb_test "help set print test-param" "Set the state of the boolean test-param.*" "set help"
     gdb_test "help set print" "set print test-param -- Set the state of the boolean test-param.*" "general help"
@@ -91,11 +94,11 @@ gdb_test_multiline "enum gdb parameter" \
     "end"
 
 with_test_prefix "test-enum-param" {
-    gdb_test "guile (print (parameter-value test-enum-param))" "one" "enum parameter value (one)"
+    gdb_test "guile (print (parameter-value test-enum-param))" "one" "enum parameter value, one"
     gdb_test "show print test-enum-param" "The state of the enum is one." "show initial value"
     gdb_test_no_output "set print test-enum-param two"
     gdb_test "show print test-enum-param" "The state of the enum is two." "show new value"
-    gdb_test "guile (print (parameter-value test-enum-param))" "two" "enum parameter value (two)"
+    gdb_test "guile (print (parameter-value test-enum-param))" "two" "enum parameter value, two"
     gdb_test "set print test-enum-param three" "Undefined item: \"three\".*" "set invalid enum parameter" 
 }
 
@@ -105,6 +108,7 @@ foreach_with_prefix param {
     "listsize"
     "print elements"
     "max-completions"
+    "print characters"
 } {
     set param_range_error "integer -1 out of range"
     set param_type_error \
@@ -114,24 +118,19 @@ foreach_with_prefix param {
 	    \\(3\\) \\(3\\)\\)>"
     switch -- $param {
 	"listsize" {
-	    set param_get_one $param_type_error
-	    set param_get_zero $param_type_error
-	    set param_get_minus_one $param_type_error
-	    set param_get_unlimited $param_type_error
+	    set param_get_zero "#:unlimited"
+	    set param_get_minus_one -1
 	    set param_set_minus_one ""
 	}
-	"print elements" {
-	    set param_get_one 1
+	"print elements" -
+	"print characters" {
 	    set param_get_zero "#:unlimited"
 	    set param_get_minus_one "#:unlimited"
-	    set param_get_unlimited "#:unlimited"
 	    set param_set_minus_one $param_range_error
 	}
 	"max-completions" {
-	    set param_get_one 1
 	    set param_get_zero 0
 	    set param_get_minus_one "#:unlimited"
-	    set param_get_unlimited "#:unlimited"
 	    set param_set_minus_one ""
 	}
 	default {
@@ -142,7 +141,7 @@ foreach_with_prefix param {
     gdb_test_no_output "set $param 1" "test set to 1"
 
     gdb_test "guile (print (parameter-value \"$param\"))" \
-	$param_get_one "test value of 1"
+	1 "test value of 1"
 
     gdb_test_no_output "set $param 0" "test set to 0"
 
@@ -158,7 +157,14 @@ foreach_with_prefix param {
     gdb_test_no_output "set $param unlimited" "test set to 'unlimited'"
 
     gdb_test "guile (print (parameter-value \"$param\"))" \
-	$param_get_unlimited "test value of 'unlimited'"
+	"#:unlimited" "test value of 'unlimited'"
+
+    if {$param == "print characters"} {
+	gdb_test_no_output "set $param elements" "test set to 'elements'"
+
+	gdb_test "guile (print (parameter-value \"$param\"))" \
+	    "#:elements" "test value of 'elements'"
+    }
 }
 
 foreach_with_prefix kind {
@@ -190,8 +196,7 @@ foreach_with_prefix kind {
 	     #:unlimited" \
 	    "Error while executing Scheme code\\."]
     set param_minus_one_error "integer -1 out of range"
-    set param_minus_two_range "integer -2 out of range"
-    set param_minus_two_unlimited "only -1 is allowed to set as unlimited"
+    set param_minus_two_error "integer -2 out of range"
     switch -- $kind {
 	PARAM_UINTEGER {
 	    set param_get_zero "#:unlimited"
@@ -200,7 +205,7 @@ foreach_with_prefix kind {
 	    set param_str_unlimited unlimited
 	    set param_set_unlimited ""
 	    set param_set_minus_one $param_minus_one_error
-	    set param_set_minus_two $param_minus_two_range
+	    set param_set_minus_two $param_minus_two_error
 	}
 	PARAM_ZINTEGER {
 	    set param_get_zero 0
@@ -218,7 +223,7 @@ foreach_with_prefix kind {
 	    set param_str_unlimited 2
 	    set param_set_unlimited $param_integer_error
 	    set param_set_minus_one $param_minus_one_error
-	    set param_set_minus_two $param_minus_two_range
+	    set param_set_minus_two $param_minus_two_error
 	}
 	PARAM_ZUINTEGER_UNLIMITED {
 	    set param_get_zero 0
@@ -227,7 +232,7 @@ foreach_with_prefix kind {
 	    set param_str_unlimited unlimited
 	    set param_set_unlimited ""
 	    set param_set_minus_one ""
-	    set param_set_minus_two $param_minus_two_unlimited
+	    set param_set_minus_two $param_minus_two_error
 	}
 	default {
 	    error "invalid kind: $kind"
@@ -236,14 +241,14 @@ foreach_with_prefix kind {
 
     with_test_prefix "test-$kind-param" {
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    3 "$kind parameter value (3)"
+	    3 "$kind parameter value, 3"
 	gdb_test "show print test-$kind-param" \
 	    "The state of $kind is 3." "show initial value"
 	gdb_test_no_output "set print test-$kind-param 2"
 	gdb_test "show print test-$kind-param" \
 	    "The state of $kind is 2." "show new value"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    2 "$kind parameter value (2)"
+	    2 "$kind parameter value, 2"
 	scm_param_test_maybe_no_output \
 	    "guile (set-parameter-value! test-$kind-param #:unlimited)" \
 	    $param_set_unlimited
@@ -252,18 +257,18 @@ foreach_with_prefix kind {
 	    "show unlimited value"
 	gdb_test_no_output "guile (set-parameter-value! test-$kind-param 1)"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    1 "$kind parameter value (1)"
+	    1 "$kind parameter value, 1"
 	gdb_test_no_output "guile (set-parameter-value! test-$kind-param 0)"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_zero "$kind parameter value (0)"
+	    $param_get_zero "$kind parameter value, 0"
 	scm_param_test_maybe_no_output "set print test-$kind-param -1" \
 	    $param_set_minus_one
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_minus_one "$kind parameter value (-1)"
+	    $param_get_minus_one "$kind parameter value, -1"
 	scm_param_test_maybe_no_output "set print test-$kind-param -2" \
 	    $param_set_minus_two
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_minus_two "$kind parameter value (-2)"
+	    $param_get_minus_two "$kind parameter value, -2"
     }
 }
 
@@ -373,11 +378,11 @@ gdb_test_multiline "previously ambiguously named boolean parameter" \
 gdb_test_no_output "guile (register-parameter! prev-ambig)"
 
 with_test_prefix "previously-ambiguous" {
-    gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value (false)"
+    gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value, false"
     gdb_test "show print s" "Command is not documented is off." "show parameter off"
     gdb_test_no_output "set print s on"
     gdb_test "show print s" "Command is not documented is on." "show parameter on"
-    gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value (true)"
+    gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value, true"
     gdb_test "help show print s" "This command is not documented." "show help"
     gdb_test "help set print s" "This command is not documented." "set help"
     gdb_test "help set print" "set print s -- This command is not documented.*" "general help"

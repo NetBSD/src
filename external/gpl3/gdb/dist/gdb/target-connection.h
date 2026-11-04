@@ -1,6 +1,6 @@
 /* List of target connections for GDB.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_CONNECTION_H
-#define TARGET_CONNECTION_H
+#ifndef GDB_TARGET_CONNECTION_H
+#define GDB_TARGET_CONNECTION_H
 
 #include <string>
 
@@ -37,4 +37,4 @@ void connection_list_remove (process_stratum_target *t);
    it.  */
 std::string make_target_connection_string (process_stratum_target *t);
 
-#endif /* TARGET_CONNECTION_H */
+#endif /* GDB_TARGET_CONNECTION_H */

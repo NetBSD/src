@@ -1,6 +1,6 @@
 // class template regex -*- C++ -*-
 
-// Copyright (C) 2013-2020 Free Software Foundation, Inc.
+// Copyright (C) 2013-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -43,20 +43,20 @@ namespace __detail
   //
   // That __match_mode is true means regex_match, else regex_search.
   template<typename _BiIter, typename _Alloc,
-	   typename _CharT, typename _TraitsT,
-	   _RegexExecutorPolicy __policy,
-	   bool __match_mode>
+	   typename _CharT, typename _TraitsT>
     bool
     __regex_algo_impl(_BiIter                              __s,
 		      _BiIter                              __e,
 		      match_results<_BiIter, _Alloc>&      __m,
 		      const basic_regex<_CharT, _TraitsT>& __re,
-		      regex_constants::match_flag_type     __flags)
+		      regex_constants::match_flag_type     __flags,
+		      _RegexExecutorPolicy		   __policy,
+		      bool				   __match_mode)
     {
       if (__re._M_automaton == nullptr)
 	return false;
 
-      typename match_results<_BiIter, _Alloc>::_Base_type& __res = __m;
+      typename match_results<_BiIter, _Alloc>::_Unchecked& __res = __m;
       __m._M_begin = __s;
       __m._M_resize(__re._M_automaton->_M_sub_count());
 
@@ -66,7 +66,7 @@ namespace __detail
 	      && !__re._M_automaton->_M_has_backref))
 	{
 	  _Executor<_BiIter, _Alloc, _TraitsT, false>
-	    __executor(__s, __e, __m, __re, __flags);
+	    __executor(__s, __e, __res, __re, __flags);
 	  if (__match_mode)
 	    __ret = __executor._M_match();
 	  else
@@ -75,7 +75,7 @@ namespace __detail
       else
 	{
 	  _Executor<_BiIter, _Alloc, _TraitsT, true>
-	    __executor(__s, __e, __m, __re, __flags);
+	    __executor(__s, __e, __res, __re, __flags);
 	  if (__match_mode)
 	    __ret = __executor._M_match();
 	  else

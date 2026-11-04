@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.448.6.1 2025/08/02 05:56:45 perseant Exp $
+#	$NetBSD: files.pci,v 1.448.6.2 2026/11/04 23:22:04 perseant Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -204,6 +204,11 @@ file	dev/pci/esiop_pci.c		esiop_pci
 # Initio INIC-940/950 SCSI controllers
 attach	iha at pci with iha_pci
 file	dev/pci/iha_pci.c		iha_pci
+
+# VMware PVSCSI
+device	pvscsi: scsi
+attach	pvscsi at pci
+file	dev/pci/pvscsi.c		pvscsi
 
 # Tekram DC-395U/UW/F and DC-315/U SCSI controllers
 device	trm: scsi
@@ -1144,6 +1149,13 @@ device	tdvfb: wsemuldisplaydev, rasops16, rasops32, vcons, videomode
 attach	tdvfb at pci
 file	dev/pci/tdvfb.c		tdvfb
 
+# Rendition Verite V2100/V2200
+defflag	opt_veritefb.h		VERITEFB_CONSOLE VERITEFB_DEBUG
+device	veritefb: wsemuldisplaydev, rasops8, vcons, firmload, glyphcache,
+		  i2cexec, i2c_bitbang, ddc_read_edid, edid, videomode
+attach	veritefb at pci
+file	dev/pci/veritefb.c	veritefb
+
 # nvidia geforce framebuffer console driver
 device	gffb: wsemuldisplaydev, rasops8, vcons, glyphcache
 attach	gffb at pci
@@ -1219,4 +1231,14 @@ defflag	opt_if_vmx.h	VMXNET3_ALWAYS_TXDEFER
 device	rge: ether, ifnet, arp, mii
 attach	rge at pci
 file	dev/pci/if_rge.c		rge
+
+# Bochs compatible framebuffer
+device	bochsfb: wsemuldisplaydev, rasops32, fb, vcons, videomode, edid
+attach	bochsfb at pci
+file	dev/pci/bochsfb.c		bochsfb
+
+defflag	opt_mgafb.h		MGAFB_NO_HW_INIT MGAFB_CONSOLE MGAFB_ACCEL MGAFB_PINS MGAFB_8BPP
+device	mgafb: wsemuldisplaydev, rasops8, rasops16, vcons, videomode, i2cexec, i2c_bitbang, ddc_read_edid, edid, glyphcache
+attach	mgafb at pci
+file	dev/pci/mgafb.c		mgafb
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.137.6.1 2025/08/02 05:57:42 perseant Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.137.6.2 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,17 +67,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.137.6.1 2025/08/02 05:57:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.137.6.2 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
+#include <sys/buf.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
-#include <sys/buf.h>
-#include <sys/fcntl.h>
-#include <sys/syslog.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
+#include <sys/syslog.h>
+
 #include <lib/libkern/libkern.h>
 
 /*
@@ -217,7 +221,7 @@ disk_begindetach(struct disk *dk, int (*lastclose)(device_t),
 	if (dk->dk_openmask == 0)
 		;	/* nothing to do */
 	else if ((flags & DETACH_FORCE) == 0)
-		rc = EBUSY;
+		rc = SET_ERROR(EBUSY);
 	else if (lastclose != NULL)
 		rc = (*lastclose)(self);
 	mutex_exit(&dk->dk_openlock);
@@ -312,7 +316,7 @@ bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 
 	if (bp->b_blkno < 0) {
 		/* Reject negative offsets immediately. */
-		bp->b_error = EINVAL;
+		bp->b_error = SET_ERROR(EINVAL);
 		return 0;
 	}
 
@@ -332,7 +336,7 @@ bounds_check_with_mediasize(struct buf *bp, int secsize, uint64_t mediasize)
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
-			bp->b_error = EINVAL;
+			bp->b_error = SET_ERROR(EINVAL);
 			return 0;
 		}
 		/* Otherwise, truncate request. */
@@ -357,13 +361,13 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 
 	if (bp->b_blkno < 0) {
 		/* Reject negative offsets immediately. */
-		bp->b_error = EINVAL;
+		bp->b_error = SET_ERROR(EINVAL);
 		return -1;
 	}
 
 	/* Protect against division by zero. XXX: Should never happen?!?! */
 	if ((lp->d_secsize / DEV_BSIZE) == 0 || lp->d_secpercyl == 0) {
-		bp->b_error = EINVAL;
+		bp->b_error = SET_ERROR(EINVAL);
 		return -1;
 	}
 
@@ -392,7 +396,7 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 		}
 		if (sz < 0) {
 			/* If past end of disk, return EINVAL. */
-			bp->b_error = EINVAL;
+			bp->b_error = SET_ERROR(EINVAL);
 			return -1;
 		}
 		/* Otherwise, truncate request. */
@@ -403,7 +407,7 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	if (bp->b_blkno + p_offset <= labelsector &&
 	    bp->b_blkno + p_offset + sz > labelsector &&
 	    (bp->b_flags & B_READ) == 0 && !wlabel) {
-		bp->b_error = EROFS;
+		bp->b_error = SET_ERROR(EROFS);
 		return -1;
 	}
 
@@ -419,7 +423,7 @@ disk_read_sectors(void (*strat)(struct buf *), const struct disklabel *lp,
 {
 
 	if ((lp->d_secsize / DEV_BSIZE) == 0 || lp->d_secpercyl == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	bp->b_blkno = btodb((off_t)sector * lp->d_secsize);
 	bp->b_bcount = count * lp->d_secsize;
@@ -536,7 +540,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 
 		mutex_enter(&dk->dk_openlock);
 		if ((disk_info = dk->dk_info) == NULL) {
-			error = ENOTSUP;
+			error = SET_ERROR(ENOTSUP);
 		} else {
 			prop_object_retain(disk_info);
 			error = 0;
@@ -562,23 +566,23 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 	}
 
 	if (dev == NODEV)
-		return EPASSTHROUGH;
+		return SET_ERROR(EPASSTHROUGH);
 
 	/* The following should be moved to dk_ioctl */
 	switch (cmd) {
 	case DIOCGDINFO:
 		if (dk->dk_label == NULL)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		memcpy(data, dk->dk_label, sizeof (*dk->dk_label));
 		return 0;
 
 #ifdef __HAVE_OLD_DISKLABEL
 	case ODIOCGDINFO:
 		if (dk->dk_label == NULL)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		memcpy(&newlabel, dk->dk_label, sizeof(newlabel));
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
-			return ENOTTY;
+			return SET_ERROR(ENOTTY);
 		memcpy(data, &newlabel, sizeof(struct olddisklabel));
 		return 0;
 #endif
@@ -595,7 +599,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 		}
 
 		if (dk->dk_label == NULL)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 
 		dp = &dk->dk_label->d_partitions[DISKPART(dev)];
 		pi->pi_offset = dp->p_offset;
@@ -627,7 +631,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 
 	case DIOCAWEDGE:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return SET_ERROR(EBADF);
 
 		dkw = data;
 		strlcpy(dkw->dkw_parent, dk->dk_name, sizeof(dkw->dkw_parent));
@@ -635,7 +639,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 
 	case DIOCDWEDGE:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return SET_ERROR(EBADF);
 
 		dkw = data;
 		strlcpy(dkw->dkw_parent, dk->dk_name, sizeof(dkw->dkw_parent));
@@ -646,14 +650,14 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 
 	case DIOCMWEDGES:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return SET_ERROR(EBADF);
 
 		dkwedge_discover(dk);
 		return 0;
 
 	case DIOCRMWEDGES:
 		if ((flag & FWRITE) == 0)
-			return EBADF;
+			return SET_ERROR(EBADF);
 
 		dkwedge_delidle(dk);
 		return 0;
@@ -681,7 +685,7 @@ disk_ioctl(struct disk *dk, dev_t dev, u_long cmd, void *data, int flag,
 	}
 
 	default:
-		return EPASSTHROUGH;
+		return SET_ERROR(EPASSTHROUGH);
 	}
 }
 

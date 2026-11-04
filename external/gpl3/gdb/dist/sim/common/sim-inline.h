@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -38,7 +38,7 @@
    speed improvement (x3-x5).  In the case of RISC (sparc) while the
    performance gain isn't as great it is still significant.
 
-   Each module is controled by the macro <module>_INLINE which can
+   Each module is controlled by the macro <module>_INLINE which can
    have the values described below
 
        0 (ZERO)

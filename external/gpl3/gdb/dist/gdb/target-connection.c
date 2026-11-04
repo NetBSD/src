@@ -1,6 +1,6 @@
 /* List of target connections for GDB.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -149,10 +149,7 @@ info_connections_command (const char *args, int from_tty)
   print_connection (current_uiout, args);
 }
 
-void _initialize_target_connection ();
-
-void
-_initialize_target_connection ()
+INIT_GDB_FILE (target_connection)
 {
   add_info ("connections", info_connections_command,
 	    _("\

@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $	*/
+/*	$NetBSD: newfs_msdos.c,v 1.45.24.1 2026/11/04 23:19:41 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 Robert Nordier
@@ -33,7 +33,7 @@
 static const char rcsid[] =
   "$FreeBSD: src/sbin/newfs_msdos/newfs_msdos.c,v 1.15 2000/10/10 01:49:37 wollman Exp $";
 #else
-__RCSID("$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $");
+__RCSID("$NetBSD: newfs_msdos.c,v 1.45.24.1 2026/11/04 23:19:41 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -45,10 +45,12 @@ __RCSID("$NetBSD: newfs_msdos.c,v 1.45 2017/02/16 22:42:25 christos Exp $");
 #include <stdlib.h>
 #include <unistd.h>
 #include <paths.h>
+#include <fcntl.h>
 #include <errno.h>
 #include <util.h>
 
 #include "mkfs_msdos.h"
+#include "partutil.h"
 
 #define argto1(arg, lo, msg)  argtou(arg, lo, 0xff, msg)
 #define argto2(arg, lo, msg)  argtou(arg, lo, 0xffff, msg)
@@ -92,8 +94,8 @@ main(int argc, char *argv[])
 {
     static const char opts[] = "@:NB:C:F:I:L:O:S:a:b:c:e:f:h:i:k:m:n:o:r:s:T:u:";
     struct msdos_options o;
-    char *fname, *dtype;
-    char buf[MAXPATHLEN];
+    const char *fname, *dtype;
+    char device[MAXPATHLEN];
     int ch;
 
     memset(&o, 0, sizeof(o));
@@ -183,13 +185,15 @@ main(int argc, char *argv[])
     argv += optind;
     if (argc < 1 || argc > 2)
 	usage();
-    fname = *argv++;
-    if (!strchr(fname, '/') && !o.create_size) {
-	snprintf(buf, sizeof(buf), "%sr%s", _PATH_DEV, fname);
-	if (!(fname = strdup(buf)))
+    fname = findspecial(*argv, 0);
+    if (fname == NULL)
+	fname = *argv;
+    if (strchr(fname, '/') == NULL && o.create_size == 0) {
+	snprintf(device, sizeof(device), "%sr%s", _PATH_DEV, fname);
+	if ((fname = strdup(device)) == NULL)
 	    err(1, NULL);
     }
-    dtype = *argv;
+    dtype = *++argv;
     return mkfs_msdos(fname, dtype, &o);
 }
 
@@ -253,7 +257,6 @@ argtooff(const char *arg, const char *msg)
 	case 'l':	/* partition length */
 	case 'L':	/* partition length */
 	    errx(1, "%s: not supported yet %s", arg, msg);
-	    return -1;
 	    /* notreached */
 	}
     }

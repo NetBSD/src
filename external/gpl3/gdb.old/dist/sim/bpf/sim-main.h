@@ -1,5 +1,7 @@
 /* eBPF simulator main header
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+
+   Contributed by Oracle Inc.
 
    This file is part of GDB, the GNU debugger.
 
@@ -20,24 +22,6 @@
 #define SIM_MAIN_H
 
 #include "sim-basics.h"
-#include "cgen-types.h"
-#include "bpf-desc.h"
-#include "bpf-opc.h"
-#include "arch.h"
 #include "sim-base.h"
-#include "cgen-sim.h"
-#include "bpf-sim.h"
-#include "bpf-helpers.h"
-
-
-struct _sim_cpu
-{
-  sim_cpu_base base;
-  CGEN_CPU cgen_cpu;
-
-#if defined (WANT_CPU_BPFBF)
-  BPFBF_CPU_DATA cpu_data;
-#endif
-};
 
 #endif /* ! SIM_MAIN_H */

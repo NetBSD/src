@@ -1,6 +1,6 @@
 /* YACC parser for D expressions, for GDB.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -435,7 +435,7 @@ PrimaryExpression:
 	'(' Expression ')'
 		{ /* Do nothing.  */ }
 |	IdentifierExp
-		{ struct bound_minimal_symbol msymbol;
+		{
 		  std::string copy = copy_name ($1);
 		  struct field_of_this_result is_a_field_of_this;
 		  struct block_symbol sym;
@@ -444,7 +444,7 @@ PrimaryExpression:
 		  sym = lookup_symbol (copy.c_str (),
 				       pstate->expression_context_block,
 				       SEARCH_VFT, &is_a_field_of_this);
-		  if (sym.symbol && sym.symbol->aclass () != LOC_TYPEDEF)
+		  if (sym.symbol && sym.symbol->loc_class () != LOC_TYPEDEF)
 		    {
 		      if (symbol_read_needs_frame (sym.symbol))
 			pstate->block_tracker->update (sym);
@@ -463,10 +463,12 @@ PrimaryExpression:
 		  else
 		    {
 		      /* Lookup foreign name in global static symbols.  */
-		      msymbol = lookup_bound_minimal_symbol (copy.c_str ());
+		      bound_minimal_symbol msymbol
+			= lookup_minimal_symbol (current_program_space, copy.c_str ());
 		      if (msymbol.minsym != NULL)
 			pstate->push_new<var_msym_value_operation> (msymbol);
-		      else if (!have_full_symbols () && !have_partial_symbols ())
+		      else if (!have_full_symbols (current_program_space)
+			       && !have_partial_symbols (current_program_space))
 			error (_("No symbol table is loaded.  Use the \"file\" command"));
 		      else
 			error (_("No symbol \"%s\" in current context."),
@@ -1332,7 +1334,7 @@ classify_name (struct parser_state *par_state, const struct block *block)
   std::string copy = copy_name (yylval.sval);
 
   sym = lookup_symbol (copy.c_str (), block, SEARCH_VFT, &is_a_field_of_this);
-  if (sym.symbol && sym.symbol->aclass () == LOC_TYPEDEF)
+  if (sym.symbol && sym.symbol->loc_class () == LOC_TYPEDEF)
     {
       yylval.tsym.type = sym.symbol->type ();
       return TYPENAME;
@@ -1381,7 +1383,7 @@ classify_inner_name (struct parser_state *par_state,
   if (yylval.ssym.sym.symbol == NULL)
     return ERROR;
 
-  if (yylval.ssym.sym.symbol->aclass () == LOC_TYPEDEF)
+  if (yylval.ssym.sym.symbol->loc_class () == LOC_TYPEDEF)
     {
       yylval.tsym.type = yylval.ssym.sym.symbol->type ();
       return TYPENAME;

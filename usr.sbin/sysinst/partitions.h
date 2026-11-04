@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.29.2.1 2025/08/02 05:58:56 perseant Exp $	*/
+/*	$NetBSD: partitions.h,v 1.29.2.2 2026/11/04 23:28:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  * types that are not in the FSTYPE enumeration.
  */
 #ifndef	FS_TMPFS
-#define	FS_TMPFS	256	/* tmpfs (prefered for /tmp if available) */
+#define	FS_TMPFS	256	/* tmpfs (preferred for /tmp if available) */
 #endif
 #ifndef	FS_MFS
 #define	FS_MFS		257	/* mfs, alternative to tmpfs if that is

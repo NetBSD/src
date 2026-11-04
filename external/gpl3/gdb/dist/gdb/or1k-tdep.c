@@ -1,5 +1,5 @@
 /* Target-dependent code for the 32-bit OpenRISC 1000, for the GDB.
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1125,16 +1125,17 @@ or1k_frame_prev_register (const frame_info_ptr &this_frame,
 
 /* Data structures for the normal prologue-analysis-based unwinder.  */
 
-static const struct frame_unwind or1k_frame_unwind = {
+static const struct frame_unwind_legacy or1k_frame_unwind (
   "or1k prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   or1k_frame_this_id,
   or1k_frame_prev_register,
   NULL,
   default_frame_sniffer,
-  NULL,
-};
+  NULL
+);
 
 /* Architecture initialization for OpenRISC 1000.  */
 
@@ -1285,9 +1286,7 @@ or1k_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 }
 
 
-void _initialize_or1k_tdep ();
-void
-_initialize_or1k_tdep ()
+INIT_GDB_FILE (or1k_tdep)
 {
   /* Register this architecture.  */
   gdbarch_register (bfd_arch_or1k, or1k_gdbarch_init, or1k_dump_tdep);

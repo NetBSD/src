@@ -1,4 +1,4 @@
-/*	$NetBSD: getservbyport_r.c,v 1.9 2012/03/13 21:13:41 christos Exp $	*/
+/*	$NetBSD: getservbyport_r.c,v 1.9.44.1 2026/11/04 23:19:20 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,11 +34,12 @@
 #if 0
 static char sccsid[] = "@(#)getservbyport.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: getservbyport_r.c,v 1.9 2012/03/13 21:13:41 christos Exp $");
+__RCSID("$NetBSD: getservbyport_r.c,v 1.9.44.1 2026/11/04 23:19:20 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
+#include <sys/endian.h>
 #include <cdbr.h>
 #include <netdb.h>
 #include <string.h>

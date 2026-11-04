@@ -7,6 +7,7 @@ TTaabbllee ooff CCoonntteennttss
   * Introduction
   * Building Postfix with TLSRPT support
   * Turning on TLSRPT
+  * Connection reuse versus session resumption
   * TLSRPT Status logging
   * Delivering TLSRPT summaries via email
   * MTA-STS Support via smtp_tls_policy_maps
@@ -27,7 +28,7 @@ A policy for domain example.com could look like this:
 
 Instead of mailto:, a policy may specify an https: destination.
 
-The diagram below shows how Postfix TLS handshake success and failure events
+The diagram below shows how successful or failed Postfix TLS handshake events
 are collected and processed into daily summary reports.
 
      Postfix SMTP and      TLSRPT client     TLSRPT collector,    Email or HTTP
@@ -49,8 +50,8 @@ TLSRPT information, are implemented and maintained by sys4 at https://
 github.com/sys4/libtlsrpt and https://github.com/sys4/tlsrpt-reporter,
 respectively.
 
-The Postfix implementation supports TLSRPT or domains with DANE (Postfix built-
-in) and MTA-STS (through an smtp_tls_policy_maps plug-in).
+The Postfix implementation supports TLSRPT for domains with DANE (Postfix
+built-in) and MTA-STS (through an smtp_tls_policy_maps plug-in).
 
 The Postfix smtp(8) client process implements the SMTP client engine. With
 "smtp_tls_connection_reuse = no", the smtp(8) client process also implements
@@ -124,6 +125,36 @@ Notes:
 For details on how to run the TLSRPT collection and reporting infrastructure,
 see the documentation at https://github.com/sys4/tlsrpt-reporter.
 
+CCoonnnneeccttiioonn rreeuussee vveerrssuuss sseessssiioonn rreessuummppttiioonn
+
+The Postfix SMTP client implements two kinds of reuse:
+
+  * SSMMTTPP CCoonnnneeccttiioonn rreeuussee:: a Postfix SMTP client creates a new SMTP connection,
+    sends one email message, and saves the connection instead of closing it.
+    Later, some SMTP client reuses that connection, sends an email message, and
+    saves or closes the connection depending on whether it has reached some
+    reuse limit. Each connection can be used by only one Postfix SMTP client at
+    a time.
+
+  * TTLLSS SSeessssiioonn rreessuummppttiioonn:: a Postfix SMTP client saves the result from a "new"
+    TLS handshake. Later, one or more SMTP clients create a new SMTP connection
+    and resume the saved TLS session on their new connection.
+
+Of course there is a third case:
+
+  * CCoommbbiinneedd rreeuussee aanndd rreessuummppttiioonn:: a Postfix SMTP client creates a new SMTP
+    connection, sends one email message, saves the result from a "new" TLS
+    handshake, and also saves the connection instead of closing it. Later, one
+    SMTP client reuses (and saves) that connection, one client at a time, and
+    one or more clients create a new SMTP connection and resume the saved TLS
+    session on their new connection.
+
+In all cases, there is no TLS handshake when a saved SMTP connection is reused,
+and there is no "new" TLS handshake when a saved TLS session is resumed.
+
+As described next, Postfix will by default log and generate only a TLSRPT event
+for a "new" TLS handshake.
+
 TTLLSSRRPPTT SSttaattuuss llooggggiinngg
 
 With TLSRPT support turned on, the Postfix TLSRPT client will not only report
@@ -157,11 +188,11 @@ Notes:
     Untrusted TTLLSS ccoonnnneeccttiioonn rreeuusseedd to mail.example.com[ipaddr]:25:
         TLSv1.2 with cipher ECDHE-RSA-AES256-GCM-SHA384 (256/256 bits)
 
-  * By default, Postfix does not report the TLSRPT status for a TLS handshake
-    that reuses a previously-negotiated TLS session (there would be no new
-    information to report). Specify "smtp_tlsrpt_skip_reused_handshakes = no"
-    to report the TLSRPT status for all TLS handshakes. This may be useful for
-    troubleshooting.
+  * With TLSRPT enabled, the Postfix SMTP client reports the TLSRPT status for
+    all TLS handshakes (the default as of Postfix 3.11). Specify
+    "smtp_tlsrpt_skip_reused_handshakes = yes" (the default with Postfix 3.10)
+    to skip reporting TLS handshakes that reuse a previously-negotiated TLS
+    session as there would be no new information to report.
 
   * Postfix logging for certificate verification failures may differ between
     new or reused TLS sessions.
@@ -225,7 +256,7 @@ Options:
 
 MMTTAA--SSTTSS SSuuppppoorrtt vviiaa ssmmttpp__ttllss__ppoolliiccyy__mmaappss
 
-Postfix supports MTA-STS though an smtp_tls_policy_maps policy plugin, which
+Postfix supports MTA-STS through an smtp_tls_policy_maps policy plugin, which
 replies with a TLS security level and name=value attributes with certificate
 matching requirements. Postfix 3.10 and later extend the policy plugin response
 with additional name=value attributes that are needed for TLSRPT.

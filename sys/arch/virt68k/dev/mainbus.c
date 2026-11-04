@@ -1,4 +1,4 @@
-/*	$NetBSD: mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $	*/
+/*	$NetBSD: mainbus.c,v 1.1.2.1 2026/11/04 23:21:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,10 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1.2.1 2026/11/04 23:21:29 perseant Exp $");
 
-#define _VIRT68K_BUS_DMA_PRIVATE
-#define _VIRT68K_BUS_SPACE_PRIVATE
+#define _M68K_BUS_DMA_PRIVATE
+#define _M68K_BUS_SPACE_PRIVATE
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -42,13 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: mainbus.c,v 1.1 2024/01/02 07:40:59 thorpej Exp $");
 #include <sys/bus.h>
 #include <sys/intr.h>
 
-#include <machine/bootinfo.h>
+#include <m68k/linux_bootinfo.h>
 #include <machine/cpu.h>
 
 #include <virt68k/dev/mainbusvar.h>
 
-struct virt68k_bus_dma_tag _mainbus_dma_tag = {
+struct m68k_bus_dma_tag _mainbus_dma_tag = {
 	NULL,
+	0,
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load_direct,
@@ -56,24 +57,12 @@ struct virt68k_bus_dma_tag _mainbus_dma_tag = {
 	_bus_dmamap_load_uio_direct,
 	_bus_dmamap_load_raw_direct,
 	_bus_dmamap_unload,
-	NULL,			/* Set up at run-time */
+	_bus_dmamap_sync,
 	_bus_dmamem_alloc,
 	_bus_dmamem_free,
 	_bus_dmamem_map,
 	_bus_dmamem_unmap,
 	_bus_dmamem_mmap
-};
-
-struct virt68k_bus_space_tag _mainbus_space_tag = {
-	NULL,
-	_bus_space_map,
-	_bus_space_unmap,
-	_bus_space_peek_1,
-	_bus_space_peek_2,
-	_bus_space_peek_4,
-	_bus_space_poke_1,
-	_bus_space_poke_2,
-	_bus_space_poke_4
 };
 
 static int
@@ -106,7 +95,7 @@ static bool
 mainbus_attach_gfpic(struct bi_record *bi, void *v)
 {
 	struct mainbus_attach_args ma = {
-		.ma_st = &_mainbus_space_tag,
+		.ma_st = &m68k_simple_bus_space,
 		.ma_dmat = &_mainbus_dma_tag,
 	};
 	device_t self = v;
@@ -130,7 +119,7 @@ static bool
 mainbus_attach_gfother(struct bi_record *bi, void *v)
 {
 	struct mainbus_attach_args ma = {
-		.ma_st = &_mainbus_space_tag,
+		.ma_st = &m68k_simple_bus_space,
 		.ma_dmat = &_mainbus_dma_tag,
 	};
 	device_t self = v;
@@ -198,7 +187,7 @@ static bool
 mainbus_attach_other(struct bi_record *bi, void *v)
 {
 	struct mainbus_attach_args ma = {
-		.ma_st = &_mainbus_space_tag,
+		.ma_st = &m68k_simple_bus_space,
 		.ma_dmat = &_mainbus_dma_tag,
 	};
 	device_t self = v;
@@ -247,10 +236,6 @@ mainbus_attach(device_t parent __unused, device_t self, void *args __unused)
 
 	printf("\n");
 
-	_mainbus_dma_tag._dmamap_sync =
-	    (mmutype == MMU_68040) ? _bus_dmamap_sync_0460
-				   : _bus_dmamap_sync_030;
-
 	/* Attach the PICs first. */
 	bootinfo_enumerate(mainbus_attach_gfpic, self);
 
@@ -265,22 +250,16 @@ int
 mainbus_compatible_match(const struct mainbus_attach_args * const ma,
    const struct device_compatible_entry * driver_compats)
 {
-	const char *device_compats[1] = {
-		[0] = ma->ma_compatible,
-	};
-	return device_compatible_match(device_compats,
-	    __arraycount(device_compats), driver_compats);
+	return device_compatible_match_strlist(ma->ma_compatible,
+	    strlen(ma->ma_compatible) + 1, driver_compats);
 }
 
 const struct device_compatible_entry *
 mainbus_compatible_lookup(const struct mainbus_attach_args * const ma,
     const struct device_compatible_entry * driver_compats)
 {
-	const char *device_compats[1] = {
-		[0] = ma->ma_compatible,
-	};
-	return device_compatible_lookup(device_compats,
-	    __arraycount(device_compats), driver_compats);
+	return device_compatible_lookup_strlist(ma->ma_compatible,
+	    strlen(ma->ma_compatible) + 1, driver_compats);
 }
 
 CFATTACH_DECL_NEW(mainbus, 0,

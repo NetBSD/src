@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1389,7 +1389,7 @@ rs6000_fetch_instruction (struct gdbarch *gdbarch, const CORE_ADDR pc)
   return op;
 }
 
-/* GCC generates several well-known sequences of instructions at the begining
+/* GCC generates several well-known sequences of instructions at the beginning
    of each function prologue when compiling with -fstack-check.  If one of
    such sequences starts at START_PC, then return the address of the
    instruction immediately past this sequence.  Otherwise, return START_PC.  */
@@ -2163,7 +2163,7 @@ skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc, CORE_ADDR lim_pc,
      this might be a call to an initializer in main(), introduced by gcc2.
      We'd like to skip over it as well.  Fortunately, xlc does some extra
      work before calling a function right after a prologue, thus we can
-     single out such gcc2 behaviour.  */
+     single out such gcc2 behavior.  */
 
 
   if ((op & 0xfc000001) == 0x48000001)
@@ -2250,7 +2250,7 @@ rs6000_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
     {
       CORE_ADDR displ = op & BL_DISPLACEMENT_MASK;
       CORE_ADDR call_dest = pc + 4 + displ;
-      struct bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
+      bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
       /* We check for ___eabi (three leading underscores) in addition
 	 to __eabi in case the GCC option "-fleading-underscore" was
@@ -2324,7 +2324,6 @@ rs6000_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
   unsigned int ii, op;
   int rel;
   CORE_ADDR solib_target_pc;
-  struct bound_minimal_symbol msymbol;
 
   static unsigned trampoline_code[] =
   {
@@ -2339,7 +2338,7 @@ rs6000_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
   };
 
   /* Check for bigtoc fixup code.  */
-  msymbol = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (pc);
   if (msymbol.minsym
       && rs6000_in_solib_return_trampoline (gdbarch, pc,
 					    msymbol.minsym->linkage_name ()))
@@ -3529,7 +3528,7 @@ struct ppc_variant
     const struct target_desc **tdesc;
   };
 
-static struct ppc_variant variants[] =
+static const ppc_variant variants[] =
 {
   {"powerpc", "PowerPC user-level", bfd_arch_powerpc,
    bfd_mach_ppc, &tdesc_powerpc_altivec32},
@@ -3838,16 +3837,16 @@ rs6000_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind rs6000_frame_unwind =
-{
+static const struct frame_unwind_legacy rs6000_frame_unwind (
   "rs6000 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   rs6000_frame_this_id,
   rs6000_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Allocate and initialize a frame cache for an epilogue frame.
    SP is restored and prev-PC is stored in LR.  */
@@ -3979,15 +3978,15 @@ rs6000_epilogue_frame_sniffer (const struct frame_unwind *self,
 /* Frame unwinder for epilogue frame.  This is required for reverse step-over
    a function without debug information.  */
 
-static const struct frame_unwind rs6000_epilogue_frame_unwind =
-{
+static const struct frame_unwind_legacy rs6000_epilogue_frame_unwind (
   "rs6000 epilogue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   rs6000_epilogue_frame_this_id, rs6000_epilogue_frame_prev_register,
   NULL,
   rs6000_epilogue_frame_sniffer
-};
+);
 
 
 static CORE_ADDR
@@ -4299,7 +4298,7 @@ ppc_record_ACC_fpscr (struct regcache *regcache, ppc_gdbarch_tdep *tdep,
 	 ACC[7][3] -> VSR[31]
 
      NOTE:
-     In ISA 3.1 the ACC is mapped on top of VSR[0] thru VSR[31].
+     In ISA 3.1 the ACC is mapped on top of VSR[0] through VSR[31].
 
      In the future, the ACC may be implemented as an independent register file
      rather than mapping on top of the VSRs.  This will then require the ACC to
@@ -6952,7 +6951,7 @@ ppc_process_record_prefix_store_vsx_ds_form (struct gdbarch *gdbarch,
 }
 
 /* Record the prefixed VSX, form D, instructions.  The arguments are the
-   instruction address for PC-relative addresss (addr), the first 32-bits of
+   instruction address for PC-relative address (addr), the first 32-bits of
    the instruction (insn_prefix) and the following 32-bits of the instruction
    (insn_suffix).  Return 0 on success.  */
 
@@ -7584,7 +7583,7 @@ ppc64_update_call_site_pc (struct gdbarch *gdbarch, CORE_ADDR pc)
   return pc + 4;
 }
 
-/* Initialize the current architecture based on INFO.  If possible, re-use an
+/* Initialize the current architecture based on INFO.  If possible, reuse an
    architecture from ARCHES, which is a list of architectures already created
    during this debugging session.
 
@@ -8459,7 +8458,7 @@ rs6000_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sofun_address_maybe_missing (gdbarch, 1);
 
   /* Handles single stepping of atomic sequences.  */
-  set_gdbarch_software_single_step (gdbarch, ppc_deal_with_atomic_sequence);
+  set_gdbarch_get_next_pcs (gdbarch, ppc_deal_with_atomic_sequence);
   
   /* Not sure on this.  FIXMEmgo */
   set_gdbarch_frame_args_skip (gdbarch, 8);
@@ -8604,7 +8603,7 @@ powerpc_set_soft_float (const char *args, int from_tty,
   struct gdbarch_info info;
 
   /* Update the architecture.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("could not update architecture"));
 }
 
@@ -8630,7 +8629,7 @@ powerpc_set_vector_abi (const char *args, int from_tty,
 
   /* Update the architecture.  */
   gdbarch_info info;
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("could not update architecture"));
 }
 
@@ -8723,9 +8722,7 @@ ppc_insn_prefix_dform (unsigned int insn1, unsigned int insn2)
 
 /* Initialization code.  */
 
-void _initialize_rs6000_tdep ();
-void
-_initialize_rs6000_tdep ()
+INIT_GDB_FILE (rs6000_tdep)
 {
   gdbarch_register (bfd_arch_rs6000, rs6000_gdbarch_init, rs6000_dump_tdep);
   gdbarch_register (bfd_arch_powerpc, rs6000_gdbarch_init, rs6000_dump_tdep);

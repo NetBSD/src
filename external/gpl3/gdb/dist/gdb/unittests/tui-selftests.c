@@ -1,6 +1,6 @@
 /* Self tests for the TUI
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,9 +45,7 @@ run_tests ()
 
 #endif /* TUI */
 
-void _initialize_tui_selftest ();
-void
-_initialize_tui_selftest ()
+INIT_GDB_FILE (tui_selftest)
 {
 #ifdef TUI
   selftests::register_test ("tui", selftests::tui::run_tests);

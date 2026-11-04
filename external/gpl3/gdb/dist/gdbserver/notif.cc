@@ -1,5 +1,5 @@
 /* Notification to GDB.
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -32,14 +32,14 @@
    1.  At any time, when something interesting FOO happens, a object
    of 'struct notif_event' or its sub-class EVENT is created for FOO.
 
-   2.  Enque EVENT to the 'queue' field of 'struct notif_server' for
+   2.  Enqueue EVENT to the 'queue' field of 'struct notif_server' for
    FOO and send corresponding notification packet to GDB if EVENT is
    the first one.
    #1 and #2 are done by function 'notif_push'.
 
    3.  EVENT is not deque'ed until the ack of FOO from GDB arrives.
    Before ack of FOO arrives, FOO happens again, a new object of
-   EVENT is created and enque EVENT silently.
+   EVENT is created and enqueue EVENT silently.
    Once GDB has a chance to ack to FOO, it sends an ack to GDBserver,
    and GDBserver repeatedly sends events to GDB and gets ack of FOO,
    until queue is empty.  Then, GDBserver sends 'OK' to GDB that all

@@ -1,5 +1,5 @@
 /* Interface to functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MACROSCOPE_H
-#define MACROSCOPE_H
+#ifndef GDB_MACROSCOPE_H
+#define GDB_MACROSCOPE_H
 
 #include "macrotab.h"
 #include "symtab.h"
@@ -61,4 +61,4 @@ gdb::unique_xmalloc_ptr<struct macro_scope> default_macro_scope (void);
 macro_definition *standard_macro_lookup (const char *name,
 					 const macro_scope &ms);
 
-#endif /* MACROSCOPE_H */
+#endif /* GDB_MACROSCOPE_H */

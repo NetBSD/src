@@ -1,6 +1,6 @@
 /* Program and address space management, for GDB, the GNU debugger.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,17 +18,17 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef PROGSPACE_H
-#define PROGSPACE_H
+#ifndef GDB_PROGSPACE_H
+#define GDB_PROGSPACE_H
 
 #include "target.h"
 #include "gdb_bfd.h"
-#include "gdbsupport/gdb_vecs.h"
 #include "registry.h"
 #include "solist.h"
-#include "gdbsupport/next-iterator.h"
 #include "gdbsupport/safe-iterator.h"
-#include <list>
+#include "gdbsupport/intrusive_list.h"
+#include "gdbsupport/refcounted-object.h"
+#include "gdbsupport/gdb_ref_ptr.h"
 #include <vector>
 
 struct target_ops;
@@ -38,58 +38,41 @@ struct inferior;
 struct exec;
 struct address_space;
 struct program_space;
-struct so_list;
+struct solib;
 
-typedef std::list<std::unique_ptr<objfile>> objfile_list;
-
-/* An iterator that wraps an iterator over std::unique_ptr<objfile>,
-   and dereferences the returned object.  This is useful for iterating
-   over a list of shared pointers and returning raw pointers -- which
-   helped avoid touching a lot of code when changing how objfiles are
-   managed.  */
-
-class unwrapping_objfile_iterator
+/* An address space.  It is used for comparing if
+   pspaces/inferior/threads see the same address space and for
+   associating caches to each address space.  */
+struct address_space : public refcounted_object
 {
-public:
+  /* Create a new address space object, and add it to the list.  */
+  address_space ();
+  DISABLE_COPY_AND_ASSIGN (address_space);
 
-  typedef unwrapping_objfile_iterator self_type;
-  typedef typename ::objfile *value_type;
-  typedef typename ::objfile &reference;
-  typedef typename ::objfile **pointer;
-  typedef typename objfile_list::iterator::iterator_category iterator_category;
-  typedef typename objfile_list::iterator::difference_type difference_type;
-
-  unwrapping_objfile_iterator (objfile_list::iterator iter)
-    : m_iter (std::move (iter))
+  /* Returns the integer address space id of this address space.  */
+  int num () const
   {
+    return m_num;
   }
 
-  objfile *operator* () const
-  {
-    return m_iter->get ();
-  }
-
-  unwrapping_objfile_iterator operator++ ()
-  {
-    ++m_iter;
-    return *this;
-  }
-
-  bool operator!= (const unwrapping_objfile_iterator &other) const
-  {
-    return m_iter != other.m_iter;
-  }
+  /* Per aspace data-pointers required by other GDB modules.  */
+  registry<address_space> registry_fields;
 
 private:
-
-  /* The underlying iterator.  */
-  objfile_list::iterator m_iter;
+  int m_num;
 };
 
+using address_space_ref_ptr
+  = gdb::ref_ptr<address_space,
+		 refcounted_object_delete_ref_policy<address_space>>;
 
-/* A range that returns unwrapping_objfile_iterators.  */
+/* Create a new address space.  */
 
-using unwrapping_objfile_range = iterator_range<unwrapping_objfile_iterator>;
+static inline address_space_ref_ptr
+new_address_space ()
+{
+  return address_space_ref_ptr::new_reference (new address_space);
+}
 
 /* A program space represents a symbolic view of an address space.
    Roughly speaking, it holds all the data associated with a
@@ -191,7 +174,7 @@ struct program_space
 {
   /* Constructs a new empty program space, binds it to ASPACE, and
      adds it to the program space list.  */
-  explicit program_space (address_space *aspace);
+  explicit program_space (address_space_ref_ptr aspace);
 
   /* Releases a program space, and all its contents (shared libraries,
      objfiles, and any other references to the program space in other
@@ -200,7 +183,9 @@ struct program_space
      a program space.  */
   ~program_space ();
 
-  using objfiles_range = unwrapping_objfile_range;
+  using objfiles_iterator
+    = reference_to_pointer_iterator<intrusive_list<objfile>::iterator>;
+  using objfiles_range = iterator_range<objfiles_iterator>;
 
   /* Return an iterable object that can be used to iterate over all
      objfiles.  The basic use is in a foreach, like:
@@ -208,9 +193,7 @@ struct program_space
      for (objfile *objf : pspace->objfiles ()) { ... }  */
   objfiles_range objfiles ()
   {
-    return objfiles_range
-      (unwrapping_objfile_iterator (objfiles_list.begin ()),
-       unwrapping_objfile_iterator (objfiles_list.end ()));
+    return objfiles_range (objfiles_iterator (m_objfiles_list.begin ()));
   }
 
   using objfiles_safe_range = basic_safe_range<objfiles_range>;
@@ -225,9 +208,7 @@ struct program_space
   objfiles_safe_range objfiles_safe ()
   {
     return objfiles_safe_range
-      (objfiles_range
-	 (unwrapping_objfile_iterator (objfiles_list.begin ()),
-	  unwrapping_objfile_iterator (objfiles_list.end ())));
+      (objfiles_range (objfiles_iterator (m_objfiles_list.begin ())));
   }
 
   /* Add OBJFILE to the list of objfiles, putting it just before
@@ -241,20 +222,27 @@ struct program_space
 
   /* Return true if there is more than one object file loaded; false
      otherwise.  */
-  bool multi_objfile_p () const
-  {
-    return objfiles_list.size () > 1;
-  }
+  bool multi_objfile_p () const;
 
   /* Free all the objfiles associated with this program space.  */
   void free_all_objfiles ();
 
-  /* Return a range adapter for iterating over all the solibs in this
-     program space.  Use it like:
+  /* Return the objfile containing ADDRESS, or nullptr if the address
+     is outside all objfiles in this progspace.  */
+  struct objfile *objfile_for_address (CORE_ADDR address);
 
-     for (so_list *so : pspace->solibs ()) { ... }  */
-  so_list_range solibs () const
-  { return so_list_range (this->so_list); }
+  /* Return the list of  all the solibs in this program space.  */
+  owning_intrusive_list<solib> &solibs ()
+  { return so_list; }
+
+  /* Similar to `bfd_get_filename (exec_bfd ())` but in original form given
+     by user, without symbolic links and pathname resolved.  It is not nullptr
+     iff `exec_bfd ()` is not nullptr.  */
+  const char *exec_filename () const
+  { return m_exec_filename.get (); }
+
+  void set_exec_filename (gdb::unique_xmalloc_ptr<char> filename)
+  { m_exec_filename = std::move (filename); }
 
   /* Close and clear exec_bfd.  If we end up with no target sections
      to read memory from, this unpushes the exec_ops target.  */
@@ -262,15 +250,16 @@ struct program_space
 
   /* Return the exec BFD for this program space.  */
   bfd *exec_bfd () const
-  {
-    return ebfd.get ();
-  }
+  { return ebfd.get (); }
 
   /* Set the exec BFD for this program space to ABFD.  */
   void set_exec_bfd (gdb_bfd_ref_ptr &&abfd)
   {
     ebfd = std::move (abfd);
   }
+
+  bfd *core_bfd () const
+  { return cbfd.get ();  }
 
   /* Reset saved solib data at the start of an solib event.  This lets
      us properly collect the data when calling solib_add, so it can then
@@ -282,12 +271,12 @@ struct program_space
   bool empty ();
 
   /* Remove all target sections owned by OWNER.  */
-  void remove_target_sections (void *owner);
+  void remove_target_sections (target_section_owner owner);
 
   /* Add the sections array defined by SECTIONS to the
      current set of target sections.  */
-  void add_target_sections (void *owner,
-			    const target_section_table &sections);
+  void add_target_sections (target_section_owner owner,
+			    const std::vector<target_section> &sections);
 
   /* Add the sections of OBJFILE to the current set of target
      sections.  They are given OBJFILE as the "owner".  */
@@ -300,7 +289,7 @@ struct program_space
   }
 
   /* Return a reference to the M_TARGET_SECTIONS table.  */
-  target_section_table &target_sections ()
+  std::vector<target_section> &target_sections ()
   {
     return m_target_sections;
   }
@@ -315,10 +304,6 @@ struct program_space
   gdb_bfd_ref_ptr ebfd;
   /* The last-modified time, from when the exec was brought in.  */
   long ebfd_mtime = 0;
-  /* Similar to bfd_get_filename (exec_bfd) but in original form given
-     by user, without symbolic links and pathname resolved.  It is not
-     NULL iff EBFD is not NULL.  */
-  gdb::unique_xmalloc_ptr<char> exec_filename;
 
   /* Binary file diddling handle for the core file.  */
   gdb_bfd_ref_ptr cbfd;
@@ -332,7 +317,7 @@ struct program_space
      are global, then this field is ignored (we don't currently
      support inferiors sharing a program space if the target doesn't
      make breakpoints global).  */
-  struct address_space *aspace = NULL;
+  address_space_ref_ptr aspace;
 
   /* True if this program space's section offsets don't yet represent
      the final offsets of the "live" address space (that is, the
@@ -352,19 +337,16 @@ struct program_space
      (e.g. the argument to the "symbol-file" or "file" command).  */
   struct objfile *symfile_object_file = NULL;
 
-  /* All known objfiles are kept in a linked list.  */
-  std::list<std::unique_ptr<objfile>> objfiles_list;
-
   /* List of shared objects mapped into this space.  Managed by
      solib.c.  */
-  struct so_list *so_list = NULL;
+  owning_intrusive_list<solib> so_list;
 
   /* Number of calls to solib_add.  */
   unsigned int solib_add_generation = 0;
 
   /* When an solib is added, it is also added to this vector.  This
      is so we can properly report solib changes to the user.  */
-  std::vector<struct so_list *> added_solibs;
+  std::vector<solib *> added_solibs;
 
   /* When an solib is removed, its name is added to this vector.
      This is so we can properly report solib changes to the user.  */
@@ -374,31 +356,15 @@ struct program_space
   registry<program_space> registry_fields;
 
 private:
+  /* All known objfiles are kept in a linked list.  */
+  owning_intrusive_list<objfile> m_objfiles_list;
+
   /* The set of target sections matching the sections mapped into
      this program space.  Managed by both exec_ops and solib.c.  */
-  target_section_table m_target_sections;
-};
+  std::vector<target_section> m_target_sections;
 
-/* An address space.  It is used for comparing if
-   pspaces/inferior/threads see the same address space and for
-   associating caches to each address space.  */
-struct address_space
-{
-  /* Create a new address space object, and add it to the list.  */
-  address_space ();
-  DISABLE_COPY_AND_ASSIGN (address_space);
-
-  /* Returns the integer address space id of this address space.  */
-  int num () const
-  {
-    return m_num;
-  }
-
-  /* Per aspace data-pointers required by other GDB modules.  */
-  registry<address_space> registry_fields;
-
-private:
-  int m_num;
+  /* See `exec_filename`.  */
+  gdb::unique_xmalloc_ptr<char> m_exec_filename;
 };
 
 /* The list of all program spaces.  There's always at least one.  */
@@ -406,6 +372,9 @@ extern std::vector<struct program_space *>program_spaces;
 
 /* The current program space.  This is always non-null.  */
 extern struct program_space *current_program_space;
+
+/* Initialize progspace-related global state.  */
+extern void initialize_progspace ();
 
 /* Copies program space SRC to DEST.  Copies the main executable file,
    and the main symbol file.  Returns DEST.  */
@@ -443,7 +412,7 @@ private:
 /* Maybe create a new address space object, and add it to the list, or
    return a pointer to an existing address space, in case inferiors
    share an address space.  */
-extern struct address_space *maybe_new_address_space (void);
+extern address_space_ref_ptr maybe_new_address_space ();
 
 /* Update all program spaces matching to address spaces.  The user may
    have created several program spaces, and loaded executables into
@@ -455,4 +424,4 @@ extern struct address_space *maybe_new_address_space (void);
    mappings.  */
 extern void update_address_spaces (void);
 
-#endif
+#endif /* GDB_PROGSPACE_H */

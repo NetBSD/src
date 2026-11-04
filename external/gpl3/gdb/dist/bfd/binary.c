@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -293,15 +293,7 @@ binary_set_section_contents (bfd *abfd,
   return _bfd_generic_set_section_contents (abfd, sec, data, offset, size);
 }
 
-/* No space is required for header information.  */
-
-static int
-binary_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
-		       struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return 0;
-}
-
+#define binary_sizeof_headers			   _bfd_nolink_sizeof_headers
 #define binary_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
 #define binary_bfd_relax_section		   bfd_generic_relax_section
 #define binary_bfd_gc_sections			   bfd_generic_gc_sections
@@ -329,8 +321,8 @@ const bfd_target binary_vec =
   BFD_ENDIAN_UNKNOWN,		/* byteorder */
   BFD_ENDIAN_UNKNOWN,		/* header_byteorder */
   EXEC_P,			/* object_flags */
-  (SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE | SEC_DATA
-   | SEC_ROM | SEC_HAS_CONTENTS), /* section_flags */
+  (SEC_CODE | SEC_DATA | SEC_ROM | SEC_HAS_CONTENTS
+   | SEC_ALLOC | SEC_LOAD),	/* section_flags */
   0,				/* symbol_leading_char */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */

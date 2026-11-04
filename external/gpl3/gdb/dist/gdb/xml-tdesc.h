@@ -1,6 +1,6 @@
 /* XML target description support for GDB.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    Contributed by CodeSourcery.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef XML_TDESC_H
-#define XML_TDESC_H
+#ifndef GDB_XML_TDESC_H
+#define GDB_XML_TDESC_H
 
 #include <optional>
 #include <string>
@@ -49,5 +49,4 @@ std::optional<std::string> target_fetch_description_xml (target_ops *ops);
 
 const struct target_desc *string_read_description_xml (const char *xml);
 
-#endif /* XML_TDESC_H */
-
+#endif /* GDB_XML_TDESC_H */

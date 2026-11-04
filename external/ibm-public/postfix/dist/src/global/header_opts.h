@@ -1,4 +1,4 @@
-/*	$NetBSD: header_opts.h,v 1.2.24.1 2025/08/02 05:50:07 perseant Exp $	*/
+/*	$NetBSD: header_opts.h,v 1.2.24.2 2026/11/04 23:14:47 perseant Exp $	*/
 
 #ifndef _HEADER_OPTS_H_INCLUDED_
 #define _HEADER_OPTS_H_INCLUDED_
@@ -57,6 +57,7 @@ typedef struct {
 #define HDR_MIME_VERSION		30
 #define HDR_DISP_NOTIFICATION		31
 #define HDR_TLS_REQUIRED		32	/* RFC 8689 */
+#define HDR_REQTLS_ESMTP		33	/* non-standard */
 
  /*
   * Header flags.

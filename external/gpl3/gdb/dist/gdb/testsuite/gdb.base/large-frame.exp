@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,12 +28,12 @@ if { [is_remote host] } {
 # the test.
 
 proc run_test { opt_level } {
-    global srcfile srcfile2 binfile hex
+    global srcfile srcfile2 hex
 
     standard_testfile large-frame-1.c large-frame-2.c
 
     if {[prepare_for_testing_full "failed to prepare" \
-	     [list ${binfile}-${opt_level} debug \
+	     [list $::testfile-$opt_level debug \
 		  $srcfile [list debug] \
 		  $srcfile2 [list nodebug optimize=-$opt_level]]]} {
 	return

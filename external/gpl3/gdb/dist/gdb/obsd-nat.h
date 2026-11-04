@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef OBSD_NAT_H
-#define OBSD_NAT_H
+#ifndef GDB_OBSD_NAT_H
+#define GDB_OBSD_NAT_H
 
 #include "inf-ptrace.h"
 
@@ -41,4 +41,4 @@ protected:
   void post_startup_inferior (ptid_t) override;
 };
 
-#endif /* obsd-nat.h */
+#endif /* GDB_OBSD_NAT_H */

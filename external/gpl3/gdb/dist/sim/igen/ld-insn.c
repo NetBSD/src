@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -201,7 +201,7 @@ parse_insn_word (const line_ref *line, char *string, int word_nr)
 	{
 	  if (strlen_pos == 0)
 	    {
-	      /* when the length/pos field is omited, an integer field
+	      /* when the length/pos field is omitted, an integer field
 	         is always binary */
 	      uint64_t val = 0;
 	      int i;
@@ -409,7 +409,7 @@ parse_insn_words (insn_entry * insn, char *formats)
       insn->word[i] = word;
   }
 
-  /* Go over all fields that have conditionals refering to other
+  /* Go over all fields that have conditionals referring to other
      fields.  Link the fields up.  Verify that the two fields have the
      same size. Verify that the two fields are different */
   {
@@ -442,9 +442,9 @@ parse_insn_words (insn_entry * insn, char *formats)
 				&& strcmp (refered_field->val_string,
 					   cond->string) == 0)
 			      {
-				/* found field being refered to by conditonal */
+				/* found field being referred to by conditonal */
 				cond->field = refered_field;
-				/* check refered to and this field are
+				/* check referred to and this field are
 				   the same size */
 				if (f->width != refered_field->width)
 				  error (insn->line,

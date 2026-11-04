@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,9 @@
 
 #include <sys/mman.h>
 #include "tracepoint.h"
-#include "linux-x86-tdesc.h"
 #include "gdbsupport/x86-xstate.h"
+#include "arch/amd64-linux-tdesc.h"
+#include "arch/x86-linux-tdesc-features.h"
 
 /* fast tracepoints collect registers.  */
 
@@ -75,135 +76,21 @@ get_raw_reg (const unsigned char *raw_regs, int regnum)
   return *(ULONGEST *) (raw_regs + x86_64_ft_collect_regmap[regnum]);
 }
 
-#ifdef HAVE_UST
-
-#include <ust/processor.h>
-
-/* "struct registers" is the UST object type holding the registers at
-   the time of the static tracepoint marker call.  This doesn't
-   contain RIP, but we know what it must have been (the marker
-   address).  */
-
-#define ST_REGENTRY(REG)			\
-  {						\
-    offsetof (struct registers, REG),		\
-    sizeof (((struct registers *) NULL)->REG)	\
-  }
-
-static struct
-{
-  int offset;
-  int size;
-} x86_64_st_collect_regmap[] =
-  {
-    ST_REGENTRY(rax),
-    ST_REGENTRY(rbx),
-    ST_REGENTRY(rcx),
-    ST_REGENTRY(rdx),
-    ST_REGENTRY(rsi),
-    ST_REGENTRY(rdi),
-    ST_REGENTRY(rbp),
-    ST_REGENTRY(rsp),
-    ST_REGENTRY(r8),
-    ST_REGENTRY(r9),
-    ST_REGENTRY(r10),
-    ST_REGENTRY(r11),
-    ST_REGENTRY(r12),
-    ST_REGENTRY(r13),
-    ST_REGENTRY(r14),
-    ST_REGENTRY(r15),
-    { -1, 0 },
-    ST_REGENTRY(rflags),
-    ST_REGENTRY(cs),
-    ST_REGENTRY(ss),
-  };
-
-#define X86_64_NUM_ST_COLLECT_GREGS \
-  (sizeof (x86_64_st_collect_regmap) / sizeof (x86_64_st_collect_regmap[0]))
-
-/* GDB's RIP register number.  */
-#define AMD64_RIP_REGNUM 16
-
-void
-supply_static_tracepoint_registers (struct regcache *regcache,
-				    const unsigned char *buf,
-				    CORE_ADDR pc)
-{
-  int i;
-  unsigned long newpc = pc;
-
-  supply_register (regcache, AMD64_RIP_REGNUM, &newpc);
-
-  for (i = 0; i < X86_64_NUM_ST_COLLECT_GREGS; i++)
-    if (x86_64_st_collect_regmap[i].offset != -1)
-      {
-	switch (x86_64_st_collect_regmap[i].size)
-	  {
-	  case 8:
-	    supply_register (regcache, i,
-			     ((char *) buf)
-			     + x86_64_st_collect_regmap[i].offset);
-	    break;
-	  case 2:
-	    {
-	      unsigned long reg
-		= * (short *) (((char *) buf)
-			       + x86_64_st_collect_regmap[i].offset);
-	      reg &= 0xffff;
-	      supply_register (regcache, i, &reg);
-	    }
-	    break;
-	  default:
-	    internal_error ("unhandled register size: %d",
-			    x86_64_st_collect_regmap[i].size);
-	    break;
-	  }
-      }
-}
-
-#endif /* HAVE_UST */
-
-#if !defined __ILP32__
-/* Map the tdesc index to xcr0 mask.  */
-static uint64_t idx2mask[X86_TDESC_LAST] = {
-  X86_XSTATE_X87_MASK,
-  X86_XSTATE_SSE_MASK,
-  X86_XSTATE_AVX_MASK,
-  X86_XSTATE_MPX_MASK,
-  X86_XSTATE_AVX_MPX_MASK,
-  X86_XSTATE_AVX_AVX512_MASK,
-  X86_XSTATE_AVX_MPX_AVX512_PKU_MASK,
-};
-#endif
-
 /* Return target_desc to use for IPA, given the tdesc index passed by
    gdbserver.  */
 
 const struct target_desc *
 get_ipa_tdesc (int idx)
 {
-  if (idx >= X86_TDESC_LAST)
-    {
-      internal_error ("unknown ipa tdesc index: %d", idx);
-    }
+  uint64_t xstate_bv = x86_linux_tdesc_idx_to_xstate_bv (idx);
 
 #if defined __ILP32__
-  switch (idx)
-    {
-    case X86_TDESC_SSE:
-      return amd64_linux_read_description (X86_XSTATE_SSE_MASK, true);
-    case X86_TDESC_AVX:
-      return amd64_linux_read_description (X86_XSTATE_AVX_MASK, true);
-    case X86_TDESC_AVX_AVX512:
-      return amd64_linux_read_description (X86_XSTATE_AVX_AVX512_MASK, true);
-    default:
-      break;
-    }
+  bool is_x32 = true;
 #else
-  return amd64_linux_read_description (idx2mask[idx], false);
+  bool is_x32 = false;
 #endif
 
-  internal_error ("unknown ipa tdesc index: %d", idx);
+  return amd64_linux_read_description (xstate_bv, is_x32);
 }
 
 /* Allocate buffer for the jump pads.  The branch instruction has a
@@ -271,11 +158,12 @@ void
 initialize_low_tracepoint (void)
 {
 #if defined __ILP32__
-  amd64_linux_read_description (X86_XSTATE_SSE_MASK, true);
-  amd64_linux_read_description (X86_XSTATE_AVX_MASK, true);
-  amd64_linux_read_description (X86_XSTATE_AVX_AVX512_MASK, true);
+  for (int i = 0; i < x86_linux_x32_tdesc_count (); i++)
+    amd64_linux_read_description
+      (x86_linux_tdesc_idx_to_xstate_bv (i), true);
 #else
-  for (auto i = 0; i < X86_TDESC_LAST; i++)
-    amd64_linux_read_description (idx2mask[i], false);
+  for (int i = 0; i < x86_linux_amd64_tdesc_count (); i++)
+    amd64_linux_read_description
+      (x86_linux_tdesc_idx_to_xstate_bv (i), false);
 #endif
 }

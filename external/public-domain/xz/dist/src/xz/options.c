@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       options.c
 /// \brief      Parser for filter-specific options
 //
 //  Author:     Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -49,12 +48,12 @@ typedef struct {
 /// is called, which should update the given value to filter-specific
 /// options structure.
 ///
+/// This returns only if no errors occur.
+///
 /// \param      str     String containing the options from the command line
 /// \param      opts    Filter-specific option map
 /// \param      set     Filter-specific function to update filter_options
 /// \param      filter_options  Pointer to filter-specific options structure
-///
-/// \return     Returns only if no errors occur.
 ///
 static void
 parse_options(const char *str, const option_map *opts,
@@ -83,15 +82,16 @@ parse_options(const char *str, const option_map *opts,
 			*value++ = '\0';
 
 		if (value == NULL || value[0] == '\0')
-			message_fatal(_("%s: Options must be `name=value' "
-					"pairs separated with commas"), str);
+			message_fatal(_("%s: %s"), tuklib_mask_nonprint(str),
+					_("Options must be 'name=value' "
+					"pairs separated with commas"));
 
 		// Look for the option name from the option map.
 		unsigned i = 0;
 		while (true) {
 			if (opts[i].name == NULL)
 				message_fatal(_("%s: Invalid option name"),
-						name);
+						tuklib_mask_nonprint(name));
 
 			if (strcmp(name, opts[i].name) == 0)
 				break;
@@ -110,8 +110,9 @@ parse_options(const char *str, const option_map *opts,
 			}
 
 			if (opts[i].map[j].name == NULL)
-				message_fatal(_("%s: Invalid option value"),
-						value);
+				message_fatal(_("%s: %s"),
+						tuklib_mask_nonprint(value),
+						_("Invalid option value"));
 
 			set(filter_options, i, opts[i].map[j].id, value);
 
@@ -241,10 +242,12 @@ enum {
 };
 
 
-static void lzma_attribute((__noreturn__))
+tuklib_attr_noreturn
+static void
 error_lzma_preset(const char *valuestr)
 {
-	message_fatal(_("Unsupported LZMA1/LZMA2 preset: %s"), valuestr);
+	message_fatal(_("Unsupported LZMA1/LZMA2 preset: %s"),
+			tuklib_mask_nonprint(valuestr));
 }
 
 
@@ -258,7 +261,7 @@ set_lzma(void *options, unsigned key, uint64_t value, const char *valuestr)
 		if (valuestr[0] < '0' || valuestr[0] > '9')
 			error_lzma_preset(valuestr);
 
-		uint32_t preset = valuestr[0] - '0';
+		uint32_t preset = (uint32_t)(valuestr[0] - '0');
 
 		// Currently only "e" is supported as a modifier,
 		// so keep this simple for now.
@@ -353,11 +356,6 @@ options_lzma(const char *str)
 
 	if (options->lc + options->lp > LZMA_LCLP_MAX)
 		message_fatal(_("The sum of lc and lp must not exceed 4"));
-
-	const uint32_t nice_len_min = options->mf & 0x0F;
-	if (options->nice_len < nice_len_min)
-		message_fatal(_("The selected match finder requires at "
-				"least nice=%" PRIu32), nice_len_min);
 
 	return options;
 }

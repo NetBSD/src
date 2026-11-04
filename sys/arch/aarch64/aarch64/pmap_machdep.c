@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.6 2023/04/20 08:28:02 skrll Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.6.6.1 2026/11/04 23:19:55 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2022 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #define __PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.6 2023/04/20 08:28:02 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.6.6.1 2026/11/04 23:19:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -68,6 +68,9 @@ uint64_t pmap_attr_gp = 0;
  */
 vaddr_t virtual_avail;
 vaddr_t virtual_end;
+
+PMAP_COUNTER(fixup_referenced, "page reference emulations");
+PMAP_COUNTER(fixup_modified, "page modification emulations");
 
 paddr_t
 vtophys(vaddr_t va)
@@ -128,7 +131,6 @@ pmap_extract_coherency(pmap_t pm, vaddr_t va, paddr_t *pap, bool *coherentp)
 	return true;
 }
 
-
 bool
 pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 {
@@ -138,12 +140,14 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 
 	kpreempt_disable();
 
+//	struct cpu_info * const ci = curcpu();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
 	UVMHIST_LOG(pmaphist, " pm=%#jx, va=%#jx, ftype=%#jx, user=%jd",
 	    (uintptr_t)pm, va, ftype, user);
 	UVMHIST_LOG(pmaphist, " ti=%#jx pai=%#jx asid=%#jx",
 	    (uintptr_t)cpu_tlb_info(curcpu()),
-	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu())),
-	    (uintptr_t)PMAP_PAI(pm, cpu_tlb_info(curcpu()))->pai_asid, 0);
+	    (uintptr_t)pai, (uintptr_t)pai->pai_asid, 0);
 
 	bool fixed = false;
 	pt_entry_t * const ptep = pmap_pte_lookup(pm, va);
@@ -152,7 +156,7 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		goto done;
 	}
 
-	const pt_entry_t opte = *ptep;
+	const pt_entry_t opte = atomic_load_relaxed(ptep);
 	if (!l3pte_valid(opte)) {
 		UVMHIST_LOG(pmaphist, "invalid pte: %016llx: va=%016lx",
 		    opte, va, 0, 0);
@@ -170,21 +174,27 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 	UVMHIST_LOG(pmaphist, " pg=%#jx, opte=%#jx, ptep=%#jx", (uintptr_t)pg,
 	    opte, (uintptr_t)ptep, 0);
 
-	if ((ftype & VM_PROT_WRITE) && (opte & LX_BLKPAG_AP) == LX_BLKPAG_AP_RW) {
+	if ((ftype & VM_PROT_WRITE) && (opte & LX_BLKPAG_OS_MODEMUL) != 0) {
 		/*
-		 * This looks like a good candidate for "page modified"
-		 * emulation...
+		 * This is "page modified" emulation...
 		 */
 		pmap_page_set_attributes(mdpg, VM_PAGEMD_MODIFIED | VM_PAGEMD_REFERENCED);
 
-		/*
-		 * Enable write permissions for the page by setting the Access Flag.
+                /*
+		 * Enable write permissions for the page by setting the Access
+		 * Flag, marking the page as writeable. The PTE being writeable
+		 * and OS_MODEMUL indicates it's been modified.
 		 */
-		// XXXNH LX_BLKPAG_OS_0?
-		const pt_entry_t npte = opte | LX_BLKPAG_AF | LX_BLKPAG_OS_0;
+		const pt_entry_t npte =
+		    (opte & ~LX_BLKPAG_AP) |
+		    LX_BLKPAG_AF |
+		    LX_BLKPAG_AP_RW;
 		atomic_swap_64(ptep, npte);
-		dsb(ishst);
+		// tlb_invalidate_addr does dsb(ishst)
+		tlb_invalidate_addr(va, pai->pai_asid);
 		fixed = true;
+
+		PMAP_COUNT(fixup_modified);
 
 		UVMHIST_LOG(pmaphist, " <-- done (mod emul: changed pte "
 		    "from %#jx to %#jx)", opte, npte, 0, 0);
@@ -194,6 +204,8 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		 * emulation.
 		 */
 
+		KASSERT((opte & LX_BLKPAG_AF) == 0);
+
 		pmap_page_set_attributes(mdpg, VM_PAGEMD_REFERENCED);
 
 		/*
@@ -201,8 +213,11 @@ pmap_fault_fixup(pmap_t pm, vaddr_t va, vm_prot_t ftype, bool user)
 		 */
 		const pt_entry_t npte = opte | LX_BLKPAG_AF;
 		atomic_swap_64(ptep, npte);
-		dsb(ishst);
+		// tlb_invalidate_addr does dsb(ishst)
+		tlb_invalidate_addr(va, pai->pai_asid);
 		fixed = true;
+
+		PMAP_COUNT(fixup_referenced);
 
 		UVMHIST_LOG(pmaphist, " <-- done (ref emul: changed pte "
 		    "from %#jx to %#jx)", opte, npte, 0, 0);
@@ -251,10 +266,10 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 
 			atomic_swap_64(ptep, opte | LX_BLKPAG_AF);
 			// tlb_invalidate_addr does the dsb(ishst);
-			tlb_invalidate_addr(pai->pai_asid, va);
+			tlb_invalidate_addr(va, pai->pai_asid);
 			cpu_icache_sync_range(va, PAGE_SIZE);
 			atomic_swap_64(ptep, opte);
-			tlb_invalidate_addr(pai->pai_asid, va);
+			tlb_invalidate_addr(va, pai->pai_asid);
 		}
 	}
 done:
@@ -324,9 +339,39 @@ pmap_md_unmap_poolpage(vaddr_t va, size_t len)
 
 
 bool
-pmap_md_direct_mapped_vaddr_p(vaddr_t va)
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	extern char __kernel_text[];
+	extern char _end[];
+	extern long kernend_extra;
+
+	const vaddr_t kernstart = trunc_page((vaddr_t)__kernel_text);
+	const vaddr_t kernend = round_page((vaddr_t)_end);
+
+	const vaddr_t fva = L2_TRUNC_BLOCK(kernstart);
+	const vaddr_t lva = L2_ROUND_BLOCK(kernend + kernend_extra);
+
+	if (va >= fva && va < lva) {
+		return true;
+	}
+
+	return false;
+}
+
+paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t va)
 {
 
+	if (pmap_md_kernel_vaddr_p(va)) {
+		return KERN_VTOPHYS(va);
+	}
+	panic("%s: va %#" PRIxVADDR " not direct mapped!", __func__, va);
+}
+
+
+bool
+pmap_md_direct_mapped_vaddr_p(vaddr_t va)
+{
 	if (!AARCH64_KVA_P(va))
 		return false;
 
@@ -415,8 +460,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialise the kernel pmap object
 	 */
-	curcpu()->ci_pmap_cur = pm;
-
 	virtual_avail = vstart;
 	virtual_end = vend;
 
@@ -497,7 +540,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	pmap_t efipm = pmap_efirt();
 	efipm->pm_l0_pa = AARCH64_KVA_TO_PA(efi_l0va);
 	efipm->pm_pdetab = (pmap_pdetab_t *)efi_l0va;
-
 #endif
 
 	pool_init(&pmap_pmap_pool, PMAP_SIZE, 0, 0, 0, "pmappl",
@@ -518,85 +560,25 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 }
 
 
-void
-pmap_md_xtab_activate(pmap_t pm, struct lwp *l)
-{
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx l=%#jx)", (uintptr_t)pm, (uintptr_t)l, 0, 0);
-
-	KASSERT(kpreempt_disabled());
-
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only
-	 * has non-global mappings.  To prevent speculation from doing
-	 * evil things we disable translation table walks using TTBR0
-	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
-	 * Once both are set, table walks are reenabled.
-	 */
-
-	const uint64_t old_tcrel1 = reg_tcr_el1_read();
-	reg_tcr_el1_write(old_tcrel1 | TCR_EPD0);
-	isb();
-
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
-
-	const uint64_t ttbr =
-	    __SHIFTIN(pai->pai_asid, TTBR_ASID) |
-	    __SHIFTIN(pm->pm_l0_pa, TTBR_BADDR);
-
-	cpu_set_ttbr0(ttbr);
-
-	if (pm != pmap_kernel()) {
-		reg_tcr_el1_write(old_tcrel1 & ~TCR_EPD0);
-	}
-
-	UVMHIST_LOG(maphist, " pm %#jx pm->pm_l0 %016jx pm->pm_l0_pa %016jx asid %ju... done",
-	    (uintptr_t)pm, (uintptr_t)pm->pm_pdetab, (uintptr_t)pm->pm_l0_pa,
-	    (uintptr_t)pai->pai_asid);
-
-	KASSERTMSG(ci->ci_pmap_asid_cur == pai->pai_asid, "%u vs %u",
-	    ci->ci_pmap_asid_cur, pai->pai_asid);
-	ci->ci_pmap_cur = pm;
-}
-
-
-void
-pmap_md_xtab_deactivate(pmap_t pm)
-{
-	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-	KASSERT(kpreempt_disabled());
-
-	struct cpu_info * const ci = curcpu();
-	/*
-	 * Disable translation table walks from TTBR0 while no pmap has been
-	 * activated.
-	 */
-	const uint64_t old_tcrel1 = reg_tcr_el1_read();
-	reg_tcr_el1_write(old_tcrel1 | TCR_EPD0);
-	isb();
-
-	cpu_set_ttbr0(0);
-
-	ci->ci_pmap_cur = pmap_kernel();
-	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
-	    ci->ci_pmap_asid_cur);
-}
-
-
 #if defined(EFI_RUNTIME)
 void
 pmap_md_activate_efirt(void)
 {
 	kpreempt_disable();
 
-	pmap_md_xtab_activate(pmap_efirt(), NULL);
+//	struct cpu_info * const ci = curcpu();
+	struct pmap * const pm = pmap_efirt();
+	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
+
+	pmap_md_asid_activate(pai->pai_asid, pmap_efirt(), NULL);
 }
+
 void
 pmap_md_deactivate_efirt(void)
 {
-	pmap_md_xtab_deactivate(pmap_efirt());
+	pmap_md_asid_deactivate(pmap_efirt());
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	kpreempt_enable();
 }
@@ -625,7 +607,14 @@ pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *onproc)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(pmaphist);
 
-	//XXXNH
+	/*
+	 * This handles the PIPT case where we can use the direct map
+	 * to sync the icache without worrying about aliasing.
+	 */
+	struct vm_page * const pg = VM_MD_TO_PAGE(mdpg);
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	const vaddr_t kva = pmap_md_direct_map_paddr(pa);
+	cpu_icache_sync_range(kva, PAGE_SIZE);
 }
 
 

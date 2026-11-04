@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.234.6.1 2025/08/02 05:57:44 perseant Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.234.6.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.234.6.1 2025/08/02 05:57:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.234.6.2 2026/11/04 23:27:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1363,7 +1363,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 
 		/*
 		 * Stop and get a hold on the vnode if we've encountered
-		 * something other than a dirctory.
+		 * something other than a directory.
 		 */
 		if (foundobj->v_type != VDIR) {
 			error = vcache_tryvget(foundobj);

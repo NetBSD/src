@@ -1,5 +1,5 @@
 /* BFD back-end for PDB Multi-Stream Format archives.
-   Copyright (C) 2022 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -41,7 +41,7 @@ pdb_archive_p (bfd *abfd)
   int ret;
   char magic[sizeof (pdb_magic)];
 
-  ret = bfd_bread (magic, sizeof (magic), abfd);
+  ret = bfd_read (magic, sizeof (magic), abfd);
   if (ret != sizeof (magic))
     {
       bfd_set_error (bfd_error_wrong_format);
@@ -77,7 +77,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
   if (bfd_seek (abfd, sizeof (pdb_magic), SEEK_SET))
     return NULL;
 
-  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     {
       bfd_set_error (bfd_error_malformed_archive);
       return NULL;
@@ -97,7 +97,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
   if (bfd_seek (abfd, 4 * sizeof (uint32_t), SEEK_CUR))
     return NULL;
 
-  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     {
       bfd_set_error (bfd_error_malformed_archive);
       return NULL;
@@ -110,7 +110,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
   if (bfd_seek (abfd, block_map_addr * block_size, SEEK_SET))
     return NULL;
 
-  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     {
       bfd_set_error (bfd_error_malformed_archive);
       return NULL;
@@ -121,7 +121,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
   if (bfd_seek (abfd, first_dir_block * block_size, SEEK_SET))
     return NULL;
 
-  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     {
       bfd_set_error (bfd_error_malformed_archive);
       return NULL;
@@ -149,7 +149,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 		    SEEK_SET))
 	return NULL;
 
-      if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+      if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
 	{
 	  bfd_set_error (bfd_error_malformed_archive);
 	  return NULL;
@@ -166,7 +166,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 		SEEK_SET))
     return NULL;
 
-  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     {
       bfd_set_error (bfd_error_malformed_archive);
       return NULL;
@@ -232,7 +232,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 		   SEEK_SET))
 		goto fail;
 
-	      if (bfd_bread (int_buf, sizeof (uint32_t), abfd) !=
+	      if (bfd_read (int_buf, sizeof (uint32_t), abfd) !=
 		  sizeof (uint32_t))
 		{
 		  bfd_set_error (bfd_error_malformed_archive);
@@ -245,7 +245,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 		goto fail;
 	    }
 
-	  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) !=
+	  if (bfd_read (int_buf, sizeof (uint32_t), abfd) !=
 	      sizeof (uint32_t))
 	    {
 	      bfd_set_error (bfd_error_malformed_archive);
@@ -278,7 +278,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 		    SEEK_SET))
 	goto fail;
 
-      if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+      if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
 	{
 	  bfd_set_error (bfd_error_malformed_archive);
 	  goto fail;
@@ -312,7 +312,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 	       SEEK_SET))
 	    goto fail2;
 
-	  if (bfd_bread (int_buf, sizeof (uint32_t), abfd) !=
+	  if (bfd_read (int_buf, sizeof (uint32_t), abfd) !=
 	      sizeof (uint32_t))
 	    {
 	      bfd_set_error (bfd_error_malformed_archive);
@@ -326,7 +326,7 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 		    SEEK_SET))
 	goto fail2;
 
-      if (bfd_bread (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+      if (bfd_read (int_buf, sizeof (uint32_t), abfd) != sizeof (uint32_t))
 	{
 	  bfd_set_error (bfd_error_malformed_archive);
 	  goto fail2;
@@ -339,13 +339,13 @@ pdb_get_elt_at_index (bfd *abfd, symindex sym_index)
 
       to_read = left > block_size ? block_size : left;
 
-      if (bfd_bread (buf, to_read, abfd) != to_read)
+      if (bfd_read (buf, to_read, abfd) != to_read)
 	{
 	  bfd_set_error (bfd_error_malformed_archive);
 	  goto fail2;
 	}
 
-      if (bfd_bwrite (buf, to_read, file) != to_read)
+      if (bfd_write (buf, to_read, file) != to_read)
 	goto fail2;
 
       if (left > block_size)
@@ -412,7 +412,8 @@ pdb_allocate_block (uint32_t *num_blocks, uint32_t block_size)
 
 static bool
 pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
-		     uint32_t block_map_addr, uint32_t * num_blocks)
+		     uint32_t block_map_addr, uint32_t * num_blocks,
+		     uint32_t *stream0_start)
 {
   char tmp[sizeof (uint32_t)];
   uint32_t block, left, block_map_off;
@@ -431,7 +432,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
   bfd_putl32 (block, tmp);
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   block_map_off = sizeof (uint32_t);
@@ -443,7 +444,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
   bfd_putl32 (num_files, tmp);
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   left -= sizeof (uint32_t);
@@ -470,7 +471,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
 	  bfd_putl32 (block, tmp);
 
-	  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+	  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
 	    return false;
 
 	  block_map_off += sizeof (uint32_t);
@@ -481,7 +482,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
       bfd_putl32 (bfd_get_size (arelt), tmp);
 
-      if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+      if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
 	return false;
 
       left -= sizeof (uint32_t);
@@ -533,7 +534,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
 	      bfd_putl32 (block, tmp);
 
-	      if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) !=
+	      if (bfd_write (tmp, sizeof (uint32_t), abfd) !=
 		  sizeof (uint32_t))
 		{
 		  free (buf);
@@ -555,11 +556,14 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
 	  bfd_putl32 (file_block, tmp);
 
-	  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+	  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
 	    {
 	      free (buf);
 	      return false;
 	    }
+
+	  if (arelt == abfd->archive_head && i == 0)
+	    *stream0_start = file_block;
 
 	  left -= sizeof (uint32_t);
 
@@ -567,7 +571,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
 	  to_read = size > block_size ? block_size : size;
 
-	  if (bfd_bread (buf, to_read, arelt) != to_read)
+	  if (bfd_read (buf, to_read, arelt) != to_read)
 	    {
 	      free (buf);
 	      return false;
@@ -586,7 +590,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
 	  /* Write file contents into allocated block.  */
 
-	  if (bfd_bwrite (buf, block_size, abfd) != block_size)
+	  if (bfd_write (buf, block_size, abfd) != block_size)
 	    {
 	      free (buf);
 	      return false;
@@ -605,7 +609,7 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 
   memset (buf, 0, left);
 
-  if (bfd_bwrite (buf, left, abfd) != left)
+  if (bfd_write (buf, left, abfd) != left)
     {
       free (buf);
       return false;
@@ -617,7 +621,8 @@ pdb_write_directory (bfd *abfd, uint32_t block_size, uint32_t num_files,
 }
 
 static bool
-pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
+pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks,
+		  uint32_t stream0_start)
 {
   char *buf;
   uint32_t num_intervals = (num_blocks + block_size - 1) / block_size;
@@ -625,8 +630,6 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
   buf = bfd_malloc (block_size);
   if (!buf)
     return false;
-
-  num_blocks--;			/* Superblock not included.  */
 
   for (uint32_t i = 0; i < num_intervals; i++)
     {
@@ -636,8 +639,8 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
 	  return false;
 	}
 
-      /* All of our blocks are contiguous, making our free block map simple.
-         0 = used, 1 = free.  */
+      /* All of our blocks are contiguous, making our free block map
+	 relatively simple.  0 = used, 1 = free.  */
 
       if (num_blocks >= 8)
 	memset (buf, 0,
@@ -650,7 +653,7 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
 
 	  if (num_blocks % 8)
 	    {
-	      buf[off] = (1 << (8 - (num_blocks % 8))) - 1;
+	      buf[off] = 256 - (1 << (num_blocks % 8));
 	      off++;
 	    }
 
@@ -658,12 +661,46 @@ pdb_write_bitmap (bfd *abfd, uint32_t block_size, uint32_t num_blocks)
 	    memset (buf + off, 0xff, block_size - off);
 	}
 
+      /* Mark the blocks allocated to stream 0 as free.  This is because stream
+	 0 is intended to be used for the previous MSF directory, to allow
+	 atomic updates.  This doesn't apply to us, as we rewrite the whole
+	 file whenever any change is made.  */
+
+      if (i == 0 && abfd->archive_head)
+	{
+	  bfd *arelt = abfd->archive_head;
+	  uint32_t stream0_blocks =
+	    (bfd_get_size (arelt) + block_size - 1) / block_size;
+
+	  if (stream0_start % 8)
+	    {
+	      unsigned int high_bit;
+
+	      high_bit = (stream0_start % 8) + stream0_blocks;
+	      if (high_bit > 8)
+		high_bit = 8;
+
+	      buf[stream0_start / 8] |=
+		(1 << high_bit) - (1 << (stream0_start % 8));
+
+	      stream0_blocks -= high_bit - (stream0_start % 8);
+	      stream0_start += high_bit - (stream0_start % 8);
+	    }
+
+	  memset (buf + (stream0_start / 8), 0xff, stream0_blocks / 8);
+	  stream0_start += stream0_blocks / 8;
+	  stream0_blocks %= 8;
+
+	  if (stream0_blocks > 0)
+	    buf[stream0_start / 8] |= (1 << stream0_blocks) - 1;
+	}
+
       if (num_blocks < block_size * 8)
 	num_blocks = 0;
       else
 	num_blocks -= block_size * 8;
 
-      if (bfd_bwrite (buf, block_size, abfd) != block_size)
+      if (bfd_write (buf, block_size, abfd) != block_size)
 	return false;
     }
 
@@ -681,19 +718,20 @@ pdb_write_contents (bfd *abfd)
   uint32_t num_blocks;
   uint32_t num_files = 0;
   uint32_t num_directory_bytes = sizeof (uint32_t);
+  uint32_t stream0_start = 0;
   bfd *arelt;
 
-  if (bfd_bwrite (pdb_magic, sizeof (pdb_magic), abfd) != sizeof (pdb_magic))
+  if (bfd_write (pdb_magic, sizeof (pdb_magic), abfd) != sizeof (pdb_magic))
     return false;
 
   bfd_putl32 (block_size, tmp);
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   bfd_putl32 (1, tmp); /* Free block map block (always either 1 or 2).  */
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   arelt = abfd->archive_head;
@@ -720,7 +758,7 @@ pdb_write_contents (bfd *abfd)
 
   bfd_putl32 (num_directory_bytes, tmp);
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   /* Skip unknown uint32_t (always 0?).  */
@@ -731,14 +769,15 @@ pdb_write_contents (bfd *abfd)
 
   bfd_putl32 (block_map_addr, tmp);
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   if (!pdb_write_directory
-      (abfd, block_size, num_files, block_map_addr, &num_blocks))
+      (abfd, block_size, num_files, block_map_addr, &num_blocks,
+       &stream0_start))
     return false;
 
-  if (!pdb_write_bitmap (abfd, block_size, num_blocks))
+  if (!pdb_write_bitmap (abfd, block_size, num_blocks, stream0_start))
     return false;
 
   /* Write num_blocks now we know it.  */
@@ -750,7 +789,7 @@ pdb_write_contents (bfd *abfd)
 
   bfd_putl32 (num_blocks, tmp);
 
-  if (bfd_bwrite (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
+  if (bfd_write (tmp, sizeof (uint32_t), abfd) != sizeof (uint32_t))
     return false;
 
   return true;
@@ -759,7 +798,6 @@ pdb_write_contents (bfd *abfd)
 #define pdb_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define pdb_new_section_hook _bfd_generic_new_section_hook
 #define pdb_get_section_contents _bfd_generic_get_section_contents
-#define pdb_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 #define pdb_close_and_cleanup _bfd_generic_close_and_cleanup
 
 #define pdb_slurp_armap _bfd_noarchive_slurp_armap

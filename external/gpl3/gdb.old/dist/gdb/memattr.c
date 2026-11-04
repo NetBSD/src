@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "memattr.h"
 #include "target.h"
 #include "target-dcache.h"
@@ -29,6 +29,8 @@
 #include "cli/cli-utils.h"
 #include <algorithm>
 #include "gdbarch.h"
+#include "inferior.h"
+#include "progspace.h"
 
 static std::vector<mem_region> user_mem_region_list, target_mem_region_list;
 static std::vector<mem_region> *mem_region_list = &target_mem_region_list;
@@ -90,7 +92,8 @@ require_user_regions (int from_tty)
   /* Otherwise, let the user know how to get back.  */
   if (from_tty)
     warning (_("Switching to manual control of memory regions; use "
-	       "\"mem auto\" to fetch regions from the target again."));
+	       "\"%ps\" to fetch regions from the target again."),
+	     styled_string (command_style.style (), "mem auto"));
 
   /* And create a new list (copy of the target-supplied regions) for the user
      to modify.  */
@@ -133,7 +136,7 @@ create_user_mem_region (CORE_ADDR lo, CORE_ADDR hi,
   int ix = std::distance (user_mem_region_list.begin (), it);
 
   /* Check for an overlapping memory region.  We only need to check
-     in the vincinity - at most one before and one after the
+     in the vicinity - at most one before and one after the
      insertion point.  */
   for (int i = ix - 1; i < ix + 1; i++)
     {
@@ -354,10 +357,10 @@ info_mem_command (const char *args, int from_tty)
   gdb_printf ("Num ");
   gdb_printf ("Enb ");
   gdb_printf ("Low Addr   ");
-  if (gdbarch_addr_bit (target_gdbarch ()) > 32)
+  if (gdbarch_addr_bit (current_inferior ()->arch ()) > 32)
     gdb_printf ("        ");
   gdb_printf ("High Addr  ");
-  if (gdbarch_addr_bit (target_gdbarch ()) > 32)
+  if (gdbarch_addr_bit (current_inferior ()->arch ()) > 32)
     gdb_printf ("        ");
   gdb_printf ("Attrs ");
   gdb_printf ("\n");
@@ -369,14 +372,14 @@ info_mem_command (const char *args, int from_tty)
       gdb_printf ("%-3d %-3c\t",
 		  m.number,
 		  m.enabled_p ? 'y' : 'n');
-      if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
+      if (gdbarch_addr_bit (current_inferior ()->arch ()) <= 32)
 	tmp = hex_string_custom (m.lo, 8);
       else
 	tmp = hex_string_custom (m.lo, 16);
       
       gdb_printf ("%s ", tmp);
 
-      if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
+      if (gdbarch_addr_bit (current_inferior ()->arch ()) <= 32)
 	{
 	  if (m.hi == 0)
 	    tmp = "0x100000000";
@@ -482,7 +485,7 @@ enable_mem_command (const char *args, int from_tty)
 {
   require_user_regions (from_tty);
 
-  target_dcache_invalidate ();
+  target_dcache_invalidate (current_program_space->aspace);
 
   if (args == NULL || *args == '\0')
     { /* Enable all mem regions.  */
@@ -520,7 +523,7 @@ disable_mem_command (const char *args, int from_tty)
 {
   require_user_regions (from_tty);
 
-  target_dcache_invalidate ();
+  target_dcache_invalidate (current_program_space->aspace);
 
   if (args == NULL || *args == '\0')
     {
@@ -566,7 +569,7 @@ delete_mem_command (const char *args, int from_tty)
 {
   require_user_regions (from_tty);
 
-  target_dcache_invalidate ();
+  target_dcache_invalidate (current_program_space->aspace);
 
   if (args == NULL || *args == '\0')
     {
@@ -594,8 +597,7 @@ void
 _initialize_mem ()
 {
   add_com ("mem", class_vars, mem_command, _("\
-Define attributes for memory region or reset memory region handling to "
-"target-based.\n\
+Define or reset attributes for memory regions.\n\
 Usage: mem auto\n\
        mem LOW HIGH [MODE WIDTH CACHE],\n\
 where MODE  may be rw (read/write), ro (read-only) or wo (write-only),\n\

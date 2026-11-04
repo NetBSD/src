@@ -1,5 +1,5 @@
 /* GDB-friendly replacement for <assert.h>.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_ASSERT_H
-#define COMMON_GDB_ASSERT_H
+#ifndef GDBSUPPORT_GDB_ASSERT_H
+#define GDBSUPPORT_GDB_ASSERT_H
 
 #include "errors.h"
 
@@ -43,4 +43,4 @@
   internal_error_loc (__FILE__, __LINE__, _("%s: " message), __func__, \
 		      ##__VA_ARGS__)
 
-#endif /* COMMON_GDB_ASSERT_H */
+#endif /* GDBSUPPORT_GDB_ASSERT_H */

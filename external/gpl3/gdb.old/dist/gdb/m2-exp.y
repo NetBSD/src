@@ -1,5 +1,5 @@
 /* YACC grammar for Modula-2 expressions, for GDB.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
    Generated from expread.y (now c-exp.y) and contributed by the Department
    of Computer Science at the State University of New York at Buffalo, 1991.
 
@@ -37,15 +37,11 @@
    
 %{
 
-#include "defs.h"
 #include "expression.h"
 #include "language.h"
 #include "value.h"
 #include "parser-defs.h"
 #include "m2-lang.h"
-#include "bfd.h" /* Required by objfiles.h.  */
-#include "symfile.h" /* Required by objfiles.h.  */
-#include "objfiles.h" /* For have_full_symbols and have_partial_symbols */
 #include "block.h"
 #include "m2-exp.h"
 
@@ -121,7 +117,7 @@ using namespace expr;
 %token <sval> TYPENAME
 
 %token SIZE CAP ORD HIGH ABS MIN_FUNC MAX_FUNC FLOAT_FUNC VAL CHR ODD TRUNC
-%token TSIZE
+%token TSIZE ADR
 %token INC DEC INCL EXCL
 
 /* The GDB scope operator */
@@ -193,6 +189,10 @@ exp	:	ORD '(' exp ')'
 
 exp	:	ABS '(' exp ')'
 			{ error (_("ABS function is not implemented")); }
+	;
+
+exp	:	ADR '(' exp ')'
+			{ pstate->wrap<unop_addr_operation> (); }
 	;
 
 exp	: 	HIGH '(' exp ')'
@@ -497,7 +497,7 @@ fblock	:	BLOCKNAME
 			{ struct symbol *sym
 			    = lookup_symbol (copy_name ($1).c_str (),
 					     pstate->expression_context_block,
-					     VAR_DOMAIN, 0).symbol;
+					     SEARCH_VFT, 0).symbol;
 			  $$ = sym;}
 	;
 			     
@@ -506,7 +506,7 @@ fblock	:	BLOCKNAME
 fblock	:	block COLONCOLON BLOCKNAME
 			{ struct symbol *tem
 			    = lookup_symbol (copy_name ($3).c_str (), $1,
-					     VAR_DOMAIN, 0).symbol;
+					     SEARCH_VFT, 0).symbol;
 			  if (!tem || tem->aclass () != LOC_BLOCK)
 			    error (_("No function \"%s\" in specified context."),
 				   copy_name ($3).c_str ());
@@ -531,7 +531,7 @@ variable:	DOLLAR_VARIABLE
 variable:	block COLONCOLON NAME
 			{ struct block_symbol sym
 			    = lookup_symbol (copy_name ($3).c_str (), $1,
-					     VAR_DOMAIN, 0);
+					     SEARCH_VFT, 0);
 
 			  if (sym.symbol == 0)
 			    error (_("No symbol \"%s\" in specified context."),
@@ -552,7 +552,7 @@ variable:	NAME
 			  sym
 			    = lookup_symbol (name.c_str (),
 					     pstate->expression_context_block,
-					     VAR_DOMAIN,
+					     SEARCH_VFT,
 					     &is_a_field_of_this);
 
 			  pstate->push_symbol (name.c_str (), sym);
@@ -703,6 +703,7 @@ static struct keyword keytab[] =
     {"IN",    IN         },/* Note space after IN */
     {"AND",   LOGICAL_AND},
     {"ABS",   ABS	 },
+    {"ADR",   ADR	 },
     {"CHR",   CHR	 },
     {"DEC",   DEC	 },
     {"NOT",   NOT	 },
@@ -873,13 +874,8 @@ yylex (void)
 	}
 	toktype = parse_number (p - tokstart);
 	if (toktype == ERROR)
-	  {
-	    char *err_copy = (char *) alloca (p - tokstart + 1);
-
-	    memcpy (err_copy, tokstart, p - tokstart);
-	    err_copy[p - tokstart] = 0;
-	    error (_("Invalid number \"%s\"."), err_copy);
-	  }
+	  error (_("Invalid number \"%.*s\"."), (int) (p - tokstart),
+		 tokstart);
 	pstate->lexptr = p;
 	return toktype;
     }
@@ -927,10 +923,11 @@ yylex (void)
     std::string tmp = copy_name (yylval.sval);
     struct symbol *sym;
 
-    if (lookup_symtab (tmp.c_str ()))
+    if (lookup_symtab (current_program_space, tmp.c_str ()) != nullptr)
       return BLOCKNAME;
+
     sym = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
-			 VAR_DOMAIN, 0).symbol;
+			 SEARCH_VFT, 0).symbol;
     if (sym && sym->aclass () == LOC_BLOCK)
       return BLOCKNAME;
     if (lookup_typename (pstate->language (),
@@ -964,7 +961,7 @@ yylex (void)
 
        case LOC_LABEL:
        case LOC_UNRESOLVED:
-	  error (_("internal:  Unforseen case in m2lex()"));
+	  error (_("internal:  Unforeseen case in m2lex()"));
 
        default:
 	  error (_("unhandled token in m2lex()"));
@@ -1009,8 +1006,5 @@ m2_language::parser (struct parser_state *par_state) const
 static void
 yyerror (const char *msg)
 {
-  if (pstate->prev_lexptr)
-    pstate->lexptr = pstate->prev_lexptr;
-
-  error (_("A %s in expression, near `%s'."), msg, pstate->lexptr);
+  pstate->parse_error (msg);
 }

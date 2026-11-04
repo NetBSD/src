@@ -1,6 +1,6 @@
 /* Definitions for reading symbol files into GDB.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (SYMFILE_H)
-#define SYMFILE_H
+#ifndef GDB_SYMFILE_H
+#define GDB_SYMFILE_H
 
 /* This file requires that you first include "bfd.h".  */
 #include "symtab.h"
@@ -26,7 +26,6 @@
 #include "symfile-add-flags.h"
 #include "objfile-flags.h"
 #include "gdb_bfd.h"
-#include "gdbsupport/function-view.h"
 #include "target-section.h"
 #include "quick-symbol.h"
 
@@ -347,15 +346,15 @@ symfile_segment_data_up get_symfile_segment_data (bfd *abfd);
 extern scoped_restore_tmpl<int> increment_reading_symtab (void);
 
 bool expand_symtabs_matching
-  (gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+  (expand_symtabs_file_matcher file_matcher,
    const lookup_name_info &lookup_name,
-   gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-   gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+   expand_symtabs_symbol_matcher symbol_matcher,
+   expand_symtabs_expansion_listener expansion_notify,
    block_search_flags search_flags,
-   domain_search_flags kind);
+   domain_search_flags kind,
+   expand_symtabs_lang_matcher lang_matcher = nullptr);
 
-void map_symbol_filenames (gdb::function_view<symbol_filename_ftype> fun,
-			   bool need_fullname);
+void map_symbol_filenames (symbol_filename_listener fun, bool need_fullname);
 
 /* Target-agnostic function to load the sections of an executable into memory.
 
@@ -370,6 +369,25 @@ extern gdb_bfd_ref_ptr find_separate_debug_file_in_section (struct objfile *);
 /* True if we are printing debug output about separate debug info files.  */
 
 extern bool separate_debug_file_debug;
+
+/* Print a "separate-debug-file" debug statement.  */
+
+#define separate_debug_file_debug_printf(fmt, ...)		\
+  debug_prefixed_printf_cond (separate_debug_file_debug,	\
+			      "separate-debug-file",		\
+			      fmt, ##__VA_ARGS__)
+
+/* Print "separate-debug-file" enter/exit debug statements.  */
+
+#define SEPARATE_DEBUG_FILE_SCOPED_DEBUG_ENTER_EXIT \
+  scoped_debug_enter_exit (separate_debug_file_debug,	\
+			   "separate-debug-file")
+
+/* Print "separate-debug-file" start/end debug statements.  */
+
+#define SEPARATE_DEBUG_FILE_SCOPED_DEBUG_START_END(fmt, ...) \
+  scoped_debug_start_end (separate_debug_file_debug,	     \
+			  "separate-debug-file", fmt, ##__VA_ARGS__)
 
 /* Read full symbols immediately.  */
 
@@ -395,4 +413,4 @@ extern int readnever_symbol_files;
 
 extern void symbol_file_command (const char *, int);
 
-#endif /* !defined(SYMFILE_H) */
+#endif /* GDB_SYMFILE_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: argv.h,v 1.4.2.1 2025/08/02 05:50:17 perseant Exp $	*/
+/*	$NetBSD: argv.h,v 1.4.2.2 2026/11/04 23:14:56 perseant Exp $	*/
 
 #ifndef _ARGV_H_INCLUDED_
 #define _ARGV_H_INCLUDED_
@@ -59,6 +59,15 @@ extern ARGV *argv_split_at_append(ARGV *, const char *, int);
 	__fake_argv_args__[1] = 0; \
 	fake_argv.argv = __fake_argv_args__; \
 	fake_argv.argc = fake_argv.len = 1;
+
+#define ARGV_FAKE2_BEGIN(fake_argv, arg1, arg2) { \
+	ARGV fake_argv; \
+	char *__fake_argv_args__[3]; \
+	__fake_argv_args__[0] = (char *) (arg1); \
+	__fake_argv_args__[1] = (char *) (arg2); \
+	__fake_argv_args__[2] = 0; \
+	fake_argv.argv = __fake_argv_args__; \
+	fake_argv.argc = fake_argv.len = 2;
 
 #define ARGV_FAKE_END	}
 

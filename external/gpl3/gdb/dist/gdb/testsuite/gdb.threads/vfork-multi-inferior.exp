@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,10 @@
 #
 # To catch the bug, this test verifies that we can hit a breakpoint after a
 # vfork call, while a second inferior runs in the background.
+
+require allow_fork_tests
+
+require allow_multi_inferior_tests
 
 require !use_gdb_stub
 

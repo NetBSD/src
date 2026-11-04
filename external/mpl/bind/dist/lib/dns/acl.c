@@ -1,4 +1,4 @@
-/*	$NetBSD: acl.c,v 1.9.2.1 2025/08/02 05:53:23 perseant Exp $	*/
+/*	$NetBSD: acl.c,v 1.9.2.2 2026/11/04 23:17:59 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -424,7 +424,13 @@ dns_aclelement_match(const isc_netaddr_t *reqaddr, const dns_name_t *reqsigner,
 		if (env == NULL || env->geoip == NULL) {
 			return false;
 		}
-		return dns_geoip_match(reqaddr, env->geoip, &e->geoip_elem);
+		if (dns_geoip_match(reqaddr, env->geoip, &e->geoip_elem)) {
+			if (matchelt != NULL) {
+				*matchelt = e;
+			}
+			return true;
+		}
+		return false;
 #endif /* if defined(HAVE_GEOIP2) */
 	default:
 		UNREACHABLE();
@@ -464,8 +470,7 @@ static void
 dns__acl_destroy_port_transports(dns_acl_t *acl) {
 	dns_acl_port_transports_t *port_proto = NULL;
 	dns_acl_port_transports_t *next = NULL;
-	ISC_LIST_FOREACH_SAFE (acl->ports_and_transports, port_proto, link,
-			       next)
+	ISC_LIST_FOREACH_SAFE(acl->ports_and_transports, port_proto, link, next)
 	{
 		ISC_LIST_DEQUEUE(acl->ports_and_transports, port_proto, link);
 		isc_mem_put(acl->mctx, port_proto, sizeof(*port_proto));

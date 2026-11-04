@@ -1,5 +1,5 @@
 /* m32r exception, interrupt, and trap (EIT) support
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions & Renesas.
 
    This file is part of GDB, the GNU debugger.
@@ -152,7 +152,7 @@ t2h_addr (host_callback *cb, struct cb_syscall *sc,
 
 /* TODO: These functions are a big hack and assume that the host runtime has
    type sizes and struct layouts that match the target.  So the Linux emulation
-   probaly only really works in 32-bit runtimes.  */
+   probably only really works in 32-bit runtimes.  */
 
 static void
 translate_endian_h2t (void *addr, size_t size)

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_132.c,v 1.40.2.1 2025/08/02 05:58:16 perseant Exp $	*/
+/*	$NetBSD: msg_132.c,v 1.40.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_132.c"
 
 // Test for message: conversion from '%s' to '%s' may lose accuracy [132]
@@ -21,6 +21,7 @@ typedef signed char s8_t;
 typedef signed short s16_t;
 typedef signed int s32_t;
 typedef signed long long s64_t;
+typedef typeof(sizeof(0)) size_t;
 
 _Bool cond;
 char ch;
@@ -435,15 +436,16 @@ test_ic_shl(void)
 	u16 = u8 << 8;
 	/* expect+1: warning: conversion from 'int' to 'unsigned short' may lose accuracy [132] */
 	u16 = u8 << 9;
+	/* expect+1: warning: bitwise '<<' on signed 'int promoted from unsigned short' possibly nonportable [117] */
 	u32 = u16 << 16;
 	// XXX: missing warning as UINT has the same rank as INT, see portable_rank_cmp.
 	u32 = u16 << 17;
-	/* expect+1: warning: shift amount 56 is greater than bit-size 32 of 'int' [122] */
+	/* expect+1: warning: shift amount 56 is greater than bit-size 32 of 'int promoted from unsigned char' [122] */
 	u64 = u8 << 56;
 	u64 = (u64_t)u8 << 56;
 	// XXX: missing warning, as the operand types of '=' are the same, thus no conversion.
 	u64 = (u64_t)u8 << 57;
-	/* expect+1: warning: shift amount 48 is greater than bit-size 32 of 'int' [122] */
+	/* expect+1: warning: shift amount 48 is greater than bit-size 32 of 'int promoted from unsigned short' [122] */
 	u64 = u16 << 48;
 	u64 = (u64_t)u16 << 48;
 	// XXX: missing warning, as the operand types of '=' are the same, thus no conversion.
@@ -640,4 +642,37 @@ unsigned char
 combine_arithmetic_and_bit_operations(void)
 {
 	return 0xc0 | (u32 & 0x07c0) / 64;
+}
+
+long write(int, const void *, size_t);
+long read(int, void *, size_t);
+
+size_t strlen(const char *);
+size_t strcspn(const char *, const char *);
+size_t strspn(const char *, const char *);
+size_t strlcpy(char *, const char *, size_t);
+size_t strlcat(char *, const char *, size_t);
+
+
+void
+limited_range_functions(void)
+{
+	char buf127[127];
+	char buf128[128];
+
+	// Assume that strings with length >= 2 GB are so rare
+	// that there is no point worrying about integer overflows here.
+
+	s32 = strlen("");
+	s32 = strcspn("", "");
+	s32 = strspn("", "");
+	s32 = strlcpy(buf128, "", sizeof(buf128));
+	s32 = strlcat(buf128, "", sizeof(buf128));
+
+	s8 = read(0, buf127, sizeof(buf127));
+	s8 = write(1, buf127, sizeof(buf127));
+	/* expect+1: warning: conversion from 'long' to 'signed char' may lose accuracy [132] */
+	s8 = read(0, buf128, sizeof(buf128));
+	/* expect+1: warning: conversion from 'long' to 'signed char' may lose accuracy [132] */
+	s8 = write(1, buf128, sizeof(buf128));
 }

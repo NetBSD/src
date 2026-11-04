@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2022/07/21 22:51:23 mrg Exp $
+#	$NetBSD: Makefile,v 1.3.4.1 2026/11/04 23:15:29 perseant Exp $
 
 XMODULEDIR=	${X11USRLIBDIR}/modules
 
@@ -18,6 +18,11 @@ CPPFLAGS+=	\
 	-I${X11SRCDIR.xorg-server}/mi \
 	-I${X11SRCDIR.xorg-server}/include \
 	-I${X11SRCDIR.xorg-server}/glamor \
+	-I${X11SRCDIR.xorg-server}/glx \
+	-I${X11SRCDIR.xorg-server}/composite \
+	-I${X11SRCDIR.xorg-server}/damageext \
+	-I${X11SRCDIR.xorg-server}/xfixes \
+	-I${X11SRCDIR.xorg-server}/Xi \
 	-I${X11SRCDIR.xorg-server}/../include \
 	-I${DESTDIR}${X11INCDIR}/X11 \
 	-I${DESTDIR}${X11INCDIR}/pixman-1 \
@@ -31,7 +36,7 @@ CPPFLAGS+=	\
 
 .include "../../../../../lib/mesa-which.mk"
 
-LIBDPLIBS=	\
+LIBDPLIBS+=	\
 	gbm	${.CURDIR}/../../../../../lib/libgbm${OLD_SUFFIX}
 
 .include <bsd.x11.mk>

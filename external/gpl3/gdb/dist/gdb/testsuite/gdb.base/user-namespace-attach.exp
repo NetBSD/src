@@ -1,0 +1,148 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that GDB can attach to a process started using 'unshare'.  The
+# inferior is started in a separate mnt namespace.
+
+require can_spawn_for_attach
+
+standard_testfile
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile] == -1} {
+    return
+}
+
+# This test relies (at least in some parts) on the sysroot being
+# 'target:'.  Grab the current sysroot now so we can skip those tests
+# if the board file has changed the sysroot.
+set sysroot ""
+set test "show sysroot"
+gdb_test_multiple $test $test {
+    -re -wrap "The current system root is \"(.*)\"\\." {
+	set sysroot $expect_out(1,string)
+    }
+}
+
+# Start a process using 'unshare FLAGS', then attach to the process
+# from GDB.  Check that the attach worked as expected.
+proc run_test { flags } {
+
+    # If FLAGS contains '--mount' then a separate mnt namespace will
+    # be created, in which case the executable will have been read
+    # from the 'target:'.  Otherwise, the executable will have been
+    # read from the local filesystem, and there will be no prefix.
+    #
+    # Of course, this only applies if the sysroot is 'target:', some
+    # boards change this, so skip these tests on those boards.
+    if { [lsearch -exact [split $flags " "] "--mount"] != -1 } {
+	if { $::sysroot ne "target:" } {
+	    return
+	}
+
+	set prefix "target:"
+    } else {
+	set prefix ""
+    }
+
+    set unshare_cmd "unshare $flags"
+
+    # Run '/bin/true' using UNSHARE_CMD.  If the flags in UNSHARE_CMD
+    # aren't supported then this will fail, this means we shouldn't
+    # spawn the command with our test executable and try attaching.
+    #
+    # This will also fail if /bin/true isn't present, or doesn't work
+    # as we expect.  But this should be fine for many targets.
+    set res [remote_exec target "$unshare_cmd /bin/true"]
+    if { [lindex $res 0] != 0 } {
+	unsupported "unshare flags not supported"
+	return
+    }
+
+    set inferior_spawn_id \
+	[spawn_wait_for_attach [list "$unshare_cmd $::binfile"]]
+    if { $inferior_spawn_id == -1 } {
+	unsupported "failed to spawn for attach"
+	return
+    }
+
+    set inferior_pid [spawn_id_get_pid $inferior_spawn_id]
+
+    clean_restart
+
+    set saw_bad_warning false
+    gdb_test_multiple "attach $inferior_pid" "attach to inferior" {
+	-re "^attach $::decimal\r\n" {
+	    exp_continue
+	}
+
+	-re "^warning: \[^\r\n\]+: could not open as an executable file: \[^\r\n\]+\r\n" {
+	    set saw_bad_warning true
+	    exp_continue
+	}
+
+	-re "^warning: \[^\r\n\]+: can't open to read symbols: \[^\r\n\]+\r\n" {
+	    set saw_bad_warning true
+	    exp_continue
+	}
+
+	-re "^warning: Could not load vsyscall page because no executable was specified\r\n" {
+	    # This warning is a secondary consequence of the above bad
+	    # warnings, so don't count this as a bad warnings, ignore
+	    # it instead.
+	    exp_continue
+	}
+
+	-re "^warning:\\s+$::decimal\\s*\[^\r\n\]+: No such file or directory\r\n" {
+	    # This unrelated warning is seen when GDB stops in libc,
+	    # and the source code for libc is not available.
+	    exp_continue
+	}
+
+	-re "^warning: \[^\r\n\]+\r\n" {
+	    # If we ignore "other" warnings then, should the above
+	    # warnings strings change we'll start ignoring the bad
+	    # warnings, and the test will appear to pass.
+	    #
+	    # If you are seeing a warning here that really has nothing
+	    # to do with the test failing, then the correct solution
+	    # is to add a new regexp to specifically match _that_
+	    # warning, and ignore it.
+	    set saw_bad_warning true
+	    exp_continue
+	}
+
+	-re "^$::gdb_prompt $" {
+	    gdb_assert { !$saw_bad_warning } $gdb_test_name
+	}
+
+	-re "^\[^\r\n\]*\r\n" {
+	    exp_continue
+	}
+    }
+
+    # Ensure GDB could access the executable.
+    set binfile_re [string_to_regexp $::binfile]
+    gdb_test "info inferiors" \
+	"\r\n\\*\\s+$::decimal\\s+\[^\r\n\]+\\s+${prefix}${binfile_re}\\s*"
+}
+
+set test_flags [list \
+		    "--mount --map-root-user" \
+		    "--user" \
+		    "--user --map-root-user"]
+
+foreach_with_prefix flags $test_flags {
+    run_test $flags
+}

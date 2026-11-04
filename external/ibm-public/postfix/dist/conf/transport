@@ -25,39 +25,57 @@
 #               This  is  the default for final delivery to domains
 #               listed with mydestination, and for [ipaddress] des-
 #               tinations    that    match    $inet_interfaces   or
-#               $proxy_interfaces. The default nexthop  destination
-#               is the MTA hostname.
+#               $proxy_interfaces.
+# 
+#               In order of decreasing precedence, the nexthop des-
+#               tination is taken from transport_maps, local_trans-
+#               port, or from the recipient domain.
 # 
 #        virtual_transport (default: virtual:)
-#               This  is  the default for final delivery to domains
-#               listed with  virtual_mailbox_domains.  The  default
-#               nexthop destination is the recipient domain.
+#               This is the default for final delivery  to  domains
+#               listed with virtual_mailbox_domains.
+# 
+#               In order of decreasing precedence, the nexthop des-
+#               tination  is  taken   from   transport_maps,   vir-
+#               tual_transport, or from the recipient domain.
 # 
 #        relay_transport (default: relay:)
 #               This  is the default for remote delivery to domains
-#               listed with relay_domains. In order  of  decreasing
-#               precedence,  the  nexthop destination is taken from
-#               relay_transport,   sender_dependent_relayhost_maps,
-#               relayhost, or from the recipient domain.
+#               listed with relay_domains.
+# 
+#               In order of decreasing precedence, the nexthop des-
+#               tination is taken from transport_maps, relay_trans-
+#               port,  sender_dependent_relayhost_maps,  relayhost,
+#               or from the recipient domain.
 # 
 #        default_transport (default: smtp:)
 #               This  is  the  default for remote delivery to other
-#               destinations.  In order of  decreasing  precedence,
-#               the nexthop destination is taken from sender_depen-
-#               dent_default_transport_maps,     default_transport,
-#               sender_dependent_relayhost_maps, relayhost, or from
-#               the recipient domain.
+#               destinations.
+# 
+#               In order of decreasing precedence, the nexthop des-
+#               tination     is    taken    from    transport_maps,
+#               sender_dependent_default_transport_maps,
+#               default_transport, sender_dependent_relayhost_maps,
+#               relayhost, or from the recipient domain.
 # 
 #        Normally, the transport(5) table is specified  as  a  text
-#        file  that serves as input to the postmap(1) command.  The
-#        result, an indexed file in dbm or db format, is  used  for
-#        fast  searching  by  the  mail system. Execute the command
-#        "postmap /etc/postfix/transport"  to  rebuild  an  indexed
-#        file after changing the corresponding transport table.
+#        file  that  serves  as  input to the postmap(1) command to
+#        create an indexed file for fast lookup.
 # 
-#        When  the  table  is provided via other means such as NIS,
-#        LDAP or SQL, the same lookups are  done  as  for  ordinary
-#        indexed files.
+#        Execute the command  "postmap  /etc/postfix/transport"  to
+#        rebuild  a  default-type  indexed  file after changing the
+#        text file, or  execute  "postmap  type:/etc/postfix/trans-
+#        port" to specify an explicit type.
+# 
+#        The  default  indexed  file  type  is  configured with the
+#        default_database_type parameter. Depending on the platform
+#        this  may  be  one of lmdb:, cdb:, hash:, or dbm: (without
+#        the trailing ':').
+# 
+#        When the table is provided via other means  such  as  NIS,
+#        LDAP  or  SQL,  the  same lookups are done as for ordinary
+#        indexed files.  Managing such  databases  is  outside  the
+#        scope of Postfix.
 # 
 #        Alternatively,  the  table  can  be  provided  as  a regu-
 #        lar-expression map where patterns  are  given  as  regular
@@ -185,28 +203,35 @@
 #             example.com      uucp:example
 #             .example.com     uucp:example
 # 
-#        When no nexthop host name is  specified,  the  destination
-#        domain  name  is  used instead. For example, the following
-#        directs mail for user@example.com via the  slow  transport
-#        to  a  mail exchanger for example.com.  The slow transport
+#        When no nexthop destination  is  specified,  Postfix  uses
+#        (from  low  to high precedence): the recipient domain, the
+#        nexthop  specified  with  relayhost,  with   sender_depen-
+#        dent_relayhost_maps (for remote deliveries only), with the
+#        transport for the address domain  class  (see  DESCRIPTION
+#        above),  or  with  sender_dependent_default_transport_maps
+#        (for remote deliveries only). For example,  the  following
+#        directs  mail  for user@example.com via the slow transport
+#        to a mail exchanger for example.com.  The  slow  transport
 #        could be configured to run at most one delivery process at
 #        a time:
 # 
 #             example.com      slow:
 # 
 #        When no transport is specified, Postfix uses the transport
-#        that matches the address  domain  class  (see  DESCRIPTION
-#        above).   The following sends all mail for example.com and
-#        its subdomains to host gateway.example.com:
+#        that  matches  the  address  domain class (see DESCRIPTION
+#        above), or  the  transport  specified  with  sender_depen-
+#        dent_default_transport_maps  (for remote deliveries only).
+#        The following sends all mail for example.com and its  sub-
+#        domains to host gateway.example.com:
 # 
 #             example.com      :[gateway.example.com]
 #             .example.com     :[gateway.example.com]
 # 
-#        In the above example, the [] suppress  MX  lookups.   This
-#        prevents  mail  routing loops when your machine is primary
+#        In  the  above  example, the [] suppress MX lookups.  This
+#        prevents mail routing loops when your machine  is  primary
 #        MX host for example.com.
 # 
-#        In the case of delivery via SMTP or LMTP, one may  specify
+#        In  the case of delivery via SMTP or LMTP, one may specify
 #        host:service instead of just a host:
 # 
 #             example.com      smtp:bar.example:2025
@@ -216,74 +241,74 @@
 #        be used. Specify [] around the hostname if MX lookups must
 #        be disabled.
 # 
-#        Deliveries via SMTP or LMTP support multiple  destinations
+#        Deliveries  via SMTP or LMTP support multiple destinations
 #        (Postfix >= 3.5):
 # 
 #             example.com      smtp:bar.example, foo.example
 # 
-#        This  tries  to  deliver  to  bar.example before trying to
+#        This tries to deliver  to  bar.example  before  trying  to
 #        deliver to foo.example.
 # 
 #        The error mailer can be used to bounce mail:
 # 
 #             .example.com     error:mail for *.example.com is not deliverable
 # 
-#        This causes all mail for user@anything.example.com  to  be
+#        This  causes  all mail for user@anything.example.com to be
 #        bounced.
 # 
 # REGULAR EXPRESSION TABLES
-#        This  section  describes how the table lookups change when
+#        This section describes how the table lookups  change  when
 #        the table is given in the form of regular expressions. For
-#        a  description  of regular expression lookup table syntax,
+#        a description of regular expression lookup  table  syntax,
 #        see regexp_table(5) or pcre_table(5).
 # 
-#        Each pattern is a regular expression that  is  applied  to
-#        the    entire    address    being    looked    up.   Thus,
-#        some.domain.hierarchy is not  looked  up  via  its  parent
-#        domains,  nor is user+foo@domain looked up as user@domain.
+#        Each  pattern  is  a regular expression that is applied to
+#        the   entire    address    being    looked    up.    Thus,
+#        some.domain.hierarchy  is  not  looked  up  via its parent
+#        domains, nor is user+foo@domain looked up as  user@domain.
 # 
-#        Patterns are applied in the order as specified in the  ta-
-#        ble,  until  a  pattern  is  found that matches the search
+#        Patterns  are applied in the order as specified in the ta-
+#        ble, until a pattern is  found  that  matches  the  search
 #        string.
 # 
 #        The trivial-rewrite(8) server disallows regular expression
-#        substitution  of  $1  etc.  in  regular  expression lookup
-#        tables, because that could open a security  hole  (Postfix
+#        substitution of  $1  etc.  in  regular  expression  lookup
+#        tables,  because  that could open a security hole (Postfix
 #        version 2.3 and later).
 # 
 # TCP-BASED TABLES
-#        This  section  describes how the table lookups change when
+#        This section describes how the table lookups  change  when
 #        lookups are directed to a TCP-based server. For a descrip-
 #        tion of the TCP client/server lookup protocol, see tcp_ta-
 #        ble(5).  This feature is not available up to and including
 #        Postfix version 2.4.
 # 
-#        Each  lookup  operation  uses the entire recipient address
-#        once.  Thus, some.domain.hierarchy is not  looked  up  via
-#        its  parent  domains,  nor is user+foo@domain looked up as
+#        Each lookup operation uses the  entire  recipient  address
+#        once.   Thus,  some.domain.hierarchy  is not looked up via
+#        its parent domains, nor is user+foo@domain  looked  up  as
 #        user@domain.
 # 
 #        Results are the same as with indexed file lookups.
 # 
 # CONFIGURATION PARAMETERS
-#        The following main.cf parameters are especially  relevant.
-#        The  text  below  provides  only  a parameter summary. See
+#        The  following main.cf parameters are especially relevant.
+#        The text below provides  only  a  parameter  summary.  See
 #        postconf(5) for more details including examples.
 # 
 #        empty_address_recipient (MAILER-DAEMON)
-#               The  recipient  of  mail  addressed  to  the   null
+#               The   recipient  of  mail  addressed  to  the  null
 #               address.
 # 
-#        parent_domain_matches_subdomains  (see  'postconf -d' out-
+#        parent_domain_matches_subdomains (see 'postconf  -d'  out-
 #        put)
 #               A list of Postfix features where the pattern "exam-
-#               ple.com" also matches  subdomains  of  example.com,
-#               instead  of  requiring  an  explicit ".example.com"
+#               ple.com"  also  matches  subdomains of example.com,
+#               instead of  requiring  an  explicit  ".example.com"
 #               pattern.
 # 
 #        transport_maps (empty)
 #               Optional lookup tables with mappings from recipient
-#               address  to  (message  delivery transport, next-hop
+#               address to (message  delivery  transport,  next-hop
 #               destination).
 # 
 # SEE ALSO
@@ -293,14 +318,14 @@
 #        postmap(1), Postfix lookup table manager
 # 
 # README FILES
-#        Use "postconf readme_directory" or  "postconf  html_direc-
+#        Use  "postconf  readme_directory" or "postconf html_direc-
 #        tory" to locate this information.
 #        ADDRESS_REWRITING_README, address rewriting guide
 #        DATABASE_README, Postfix lookup table overview
 #        FILTER_README, external content filter
 # 
 # LICENSE
-#        The  Secure  Mailer  license must be distributed with this
+#        The Secure Mailer license must be  distributed  with  this
 #        software.
 # 
 # AUTHOR(S)

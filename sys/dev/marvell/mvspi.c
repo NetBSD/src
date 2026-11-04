@@ -104,7 +104,6 @@ mvspi_attach(struct device *parent, struct device *self, void *aux)
 {
 	struct mvspi_softc *sc =  device_private(self);
   	struct marvell_attach_args *mva = aux;
-	struct spibus_attach_args sba;
 	int ctl;
 
 	aprint_normal(": Marvell SPI controller\n");
@@ -147,9 +146,7 @@ mvspi_attach(struct device *parent, struct device *self, void *aux)
 	/*
 	 * Initialize and attach bus attach.
 	 */
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-	config_found(self, &sba, spibus_print, CFARGS_NONE);
+	spibus_attach(self, &sc->sc_spi);
 }
     
 int

@@ -8,6 +8,9 @@ __libc_cond_init
 __libc_cond_signal
 __libc_cond_timedwait
 __libc_cond_wait
+__libc_condattr_destroy
+__libc_condattr_init
+__libc_condattr_setclock
 __libc_mutex_destroy
 __libc_mutex_init
 __libc_mutex_lock
@@ -23,13 +26,18 @@ __libc_rwlock_tryrdlock
 __libc_rwlock_trywrlock
 __libc_rwlock_unlock
 __libc_rwlock_wrlock
+__libc_thr_attr_destroy
+__libc_thr_attr_init
+__libc_thr_attr_setdetachstate
 __libc_thr_create
 __libc_thr_curcpu
+__libc_thr_detach
 __libc_thr_equal
 __libc_thr_errno
 __libc_thr_exit
 __libc_thr_getspecific
 __libc_thr_init
+__libc_thr_join
 __libc_thr_keycreate
 __libc_thr_keydelete
 __libc_thr_once
@@ -195,6 +203,7 @@ pthread_key_create
 pthread_key_delete
 pthread_keys_max
 pthread_kill
+pthread_main_np
 pthread_mutex_destroy
 pthread_mutex_getprioceiling
 pthread_mutex_held_np

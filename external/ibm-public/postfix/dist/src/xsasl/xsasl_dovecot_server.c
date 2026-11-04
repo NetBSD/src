@@ -1,4 +1,4 @@
-/*	$NetBSD: xsasl_dovecot_server.c,v 1.4.4.1 2025/08/02 05:50:21 perseant Exp $	*/
+/*	$NetBSD: xsasl_dovecot_server.c,v 1.4.4.2 2026/11/04 23:14:59 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -619,6 +619,7 @@ static int xsasl_dovecot_handle_reply(XSASL_DOVECOT_SERVER *server,
     }
 
     vstring_strcpy(reply, "Connection lost to authentication server");
+    xsasl_dovecot_server_disconnect(server->impl);
     return XSASL_AUTH_TEMP;
 }
 
@@ -709,6 +710,7 @@ int     xsasl_dovecot_server_first(XSASL_SERVER *xp, const char *sasl_method,
 
 	if (i == 1) {
 	    vstring_strcpy(reply, "Can't connect to authentication server");
+	    xsasl_dovecot_server_disconnect(server->impl);
 	    return XSASL_AUTH_TEMP;
 	}
 
@@ -737,6 +739,7 @@ static int xsasl_dovecot_server_next(XSASL_SERVER *xp, const char *request,
 		    "CONT\t%u\t%s\n", server->last_request_id, request);
     if (vstream_fflush(server->impl->sasl_stream) == VSTREAM_EOF) {
 	vstring_strcpy(reply, "Connection lost to authentication server");
+	xsasl_dovecot_server_disconnect(server->impl);
 	return XSASL_AUTH_TEMP;
     }
     return xsasl_dovecot_handle_reply(server, reply);

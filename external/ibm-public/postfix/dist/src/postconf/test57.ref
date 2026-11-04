@@ -6,5 +6,5 @@ config_directory = .
 t1 = Postfix 2.11 compatible
 x = x-value
 y = y-value
-./postconf: warning: ./main.cf: unused parameter: t2=$t1
 ./postconf: warning: ./main.cf: unused parameter: foo=$bar$baz
+./postconf: warning: ./main.cf: unused parameter: t2=$t1

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.4 2009/05/26 08:04:11 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.4.58.1 2026/11/04 23:19:19 perseant Exp $
 
 # hash functions
-.PATH: ${.CURDIR}/hash/sha2
+.PATH: ${.PARSEDIR}
 
 SRCS+=	sha2.c sha224hl.c sha256hl.c sha384hl.c sha512hl.c
 

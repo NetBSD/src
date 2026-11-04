@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
 standard_testfile
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" "$binfile" executable {debug}] != "" } {
@@ -82,14 +79,26 @@ proc gdb_cont_to_bp_line { line threads nthreads } {
         $nthreads
 }
 
-proc gdb_cont_to_no_history { threads cmd nthreads } {
+proc gdb_cont_to_no_history_backward { threads cmd nthreads } {
     gdb_cont_to $threads $cmd \
-        [multi_line \
-             "No more reverse-execution history\." \
-             "\[^\\\r\\\n\]*" \
-             "\[^\\\r\\\n\]*" \
-            ] \
-        $nthreads
+	[multi_line \
+	     "Reached end of recorded history; stopping\." \
+	     "Backward execution from here not possible\." \
+	     "\[^\\\r\\\n\]*" \
+	     "\[^\\\r\\\n\]*" \
+	     ] \
+	$nthreads
+}
+
+proc gdb_cont_to_no_history_forward { threads cmd nthreads } {
+    gdb_cont_to $threads $cmd \
+	[multi_line \
+	     "Reached end of recorded history; stopping\." \
+	     "Following forward execution will be added to history\." \
+	     "\[^\\\r\\\n\]*" \
+	     "\[^\\\r\\\n\]*" \
+	    ] \
+	$nthreads
 }
 
 # trace the code between the two breakpoints
@@ -179,14 +188,14 @@ with_test_prefix "reverse-step" {
 with_test_prefix "continue" {
     with_test_prefix "thread 1" {
 	with_test_prefix "continue" {
-	    gdb_cont_to_no_history 1 "continue" 1
+	    gdb_cont_to_no_history_forward 1 "continue" 1
 	    gdb_test "thread apply 1 info record" \
 		".*Recorded \[0-9\]+ instructions \[^\\\r\\\n\]*"
 	    gdb_test "thread apply 2 info record" \
 		".*Replay in progress\.  At instruction 5\."
 	}
 	with_test_prefix "reverse-continue" {
-	    gdb_cont_to_no_history 1 "reverse-continue" 1
+	    gdb_cont_to_no_history_backward 1 "reverse-continue" 1
 	    gdb_test "thread apply 1 info record" \
 		".*Replay in progress\.  At instruction 1\."
 	    gdb_test "thread apply 2 info record" \
@@ -196,14 +205,14 @@ with_test_prefix "continue" {
 
     with_test_prefix "thread 2" {
 	with_test_prefix "continue" {
-	    gdb_cont_to_no_history 2 "continue" 1
+	    gdb_cont_to_no_history_forward 2 "continue" 1
 	    gdb_test "thread apply 1 info record" \
 		".*Replay in progress\.  At instruction 1\."
 	    gdb_test "thread apply 2 info record" \
 		".*Recorded \[0-9\]+ instructions \[^\\\r\\\n\]*"
 	}
 	with_test_prefix "reverse-continue" {
-	    gdb_cont_to_no_history 2 "reverse-continue" 1
+	    gdb_cont_to_no_history_backward 2 "reverse-continue" 1
 	    gdb_test "thread apply 1 info record" \
 		".*Replay in progress\.  At instruction 1\."
 	    gdb_test "thread apply 2 info record" \
@@ -218,8 +227,8 @@ with_test_prefix "no progress" {
         gdb_test "thread apply 1 record goto end" ".*"
         gdb_test "thread apply 2 record goto begin" ".*"
 
-        gdb_cont_to_no_history 1 "continue" 1
-        gdb_cont_to_no_history 1 "step" 1
+        gdb_cont_to_no_history_forward 1 "continue" 1
+        gdb_cont_to_no_history_forward 1 "step" 1
         gdb_test "thread apply 1 info record" \
             ".*Recorded \[0-9\]+ instructions \[^\\\r\\\n\]*"
         gdb_test "thread apply 2 info record" \
@@ -230,8 +239,8 @@ with_test_prefix "no progress" {
         gdb_test "thread apply 1 record goto begin" ".*"
         gdb_test "thread apply 2 record goto end" ".*"
 
-        gdb_cont_to_no_history 2 "continue" 1
-        gdb_cont_to_no_history 2 "step" 1
+        gdb_cont_to_no_history_forward 2 "continue" 1
+        gdb_cont_to_no_history_forward 2 "step" 1
         gdb_test "thread apply 1 info record" \
             ".*Replay in progress\.  At instruction 1\."
         gdb_test "thread apply 2 info record" \
@@ -241,7 +250,7 @@ with_test_prefix "no progress" {
     with_test_prefix "all" {
         gdb_test "thread apply all record goto begin" ".*"
 
-        gdb_cont_to_no_history all "continue" 2
+        gdb_cont_to_no_history_forward all "continue" 2
         gdb_test "thread apply 1 info record" \
             ".*Recorded \[0-9\]+ instructions \[^\\\r\\\n\]*"
         gdb_test "thread apply 2 info record" \

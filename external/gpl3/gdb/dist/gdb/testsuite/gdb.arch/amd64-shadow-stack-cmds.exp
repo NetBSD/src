@@ -1,0 +1,143 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test shadow stack enabling for frame level update, the return and the
+# call commands.
+# As potential CET violations often only occur after resuming normal
+# execution, test normal program continuation after each return or call
+# commands.
+
+require allow_ssp_tests
+
+standard_testfile amd64-shadow-stack.c
+
+# Restart GDB an run until breakpoint in call2.
+
+proc restart_and_run_infcall_call2 {} {
+    global binfile
+    clean_restart ${::testfile}
+    if { ![runto_main] } {
+	return -1
+    }
+    set inside_infcall_str "The program being debugged stopped while in a function called from GDB"
+    gdb_breakpoint [ gdb_get_line_number "break call2" ]
+    gdb_continue_to_breakpoint "break call2" ".*break call2.*"
+    gdb_test "call (int) call2()" \
+	"Breakpoint \[0-9\]*, call2.*$inside_infcall_str.*"
+}
+
+save_vars { ::env(GLIBC_TUNABLES) } {
+
+    append_environment GLIBC_TUNABLES "glibc.cpu.hwcaps" "SHSTK"
+
+    if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  {debug additional_flags="-fcf-protection=return"}] } {
+	return -1
+    }
+
+    clean_restart ${::testfile}
+    if { ![runto_main] } {
+	return -1
+    }
+
+    with_test_prefix "test inferior call and continue" {
+	gdb_breakpoint [ gdb_get_line_number "break call1" ]
+	gdb_continue_to_breakpoint "break call1" ".*break call1.*"
+
+	gdb_test "call (int) call2()" "= 42"
+
+	gdb_continue_to_end
+    }
+
+    with_test_prefix "test return inside an inferior call" {
+	restart_and_run_infcall_call2
+
+	gdb_test "return" "\#0.*call2.*" \
+	    "Test shadow stack return inside an inferior call" \
+	    "Make.*return now\\? \\(y or n\\) " "y"
+
+	gdb_continue_to_end
+    }
+
+    with_test_prefix "test return 'above' an inferior call" {
+	restart_and_run_infcall_call2
+
+	gdb_test "frame 2" "call2 ().*" "move to frame 'above' inferior call"
+
+	gdb_test "return" "\#0.*call1.*" \
+	    "Test shadow stack return 'above' an inferior call" \
+	    "Make.*return now\\? \\(y or n\\) " "y"
+
+	gdb_continue_to_end
+    }
+
+    clean_restart ${::testfile}
+    if { ![runto_main] } {
+	return -1
+    }
+
+    set call1_line [ gdb_get_line_number "break call1" ]
+    set call2_line [ gdb_get_line_number "break call2" ]
+
+    # Extract shadow stack pointer inside main, call1 and call2 function.
+    gdb_breakpoint $call1_line
+    gdb_breakpoint $call2_line
+    set ssp_main [get_valueof /x "\$pl3_ssp" 0 "get value of ssp in main"]
+    gdb_continue_to_breakpoint "break call1" ".*break call1.*"
+    set ssp_call1 [get_valueof /x "\$pl3_ssp" 0 "get value of ssp in call1"]
+    gdb_continue_to_breakpoint "break call2" ".*break call2.*"
+    set ssp_call2 [get_valueof /x "\$pl3_ssp" 0 "get value of ssp in call2"]
+
+    with_test_prefix "test frame level update" {
+	gdb_test "up" "call1.*" "move to frame 1"
+	gdb_test "print /x \$pl3_ssp" "= $ssp_call1" "check pl3_ssp of frame 1"
+	gdb_test "up" "main.*" "move to frame 2"
+	gdb_test "print /x \$pl3_ssp" "= $ssp_main" "check pl3_ssp of frame 2"
+	gdb_test "frame 0" "call2.*" "move to frame 0"
+	gdb_test "print /x \$pl3_ssp" "= $ssp_call2" "check pl3_ssp of frame 0"
+    }
+
+    with_test_prefix "test return from current frame" {
+	gdb_test "return (int) 1" "#0.*call1.*" \
+	"Test shadow stack return from current frame" \
+	"Make.*return now\\? \\(y or n\\) " "y"
+
+	# Potential CET violations often only occur after resuming normal execution.
+	# Therefore, it is important to test normal program continuation after
+	# testing the return command.
+	gdb_continue_to_end
+    }
+
+    clean_restart ${::testfile}
+    if { ![runto_main] } {
+	return -1
+    }
+
+    with_test_prefix "test return from past frame" {
+	gdb_breakpoint $call2_line
+	gdb_continue_to_breakpoint "break call2" ".*break call2.*"
+
+	gdb_test "frame 1" ".*in call1.*"
+
+	gdb_test "return (int) 1" "#0.*main.*" \
+	    "Test shadow stack return from past frame" \
+	    "Make.*return now\\? \\(y or n\\) " "y"
+
+	# Potential CET violations often only occur after resuming normal execution.
+	# Therefore, it is important to test normal program continuation after
+	# testing the return command.
+	gdb_continue_to_end
+    }
+}

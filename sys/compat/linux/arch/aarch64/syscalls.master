@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.12.2.1 2025/08/02 05:56:21 perseant Exp $
+	$NetBSD: syscalls.master,v 1.12.2.2 2026/11/04 23:21:36 perseant Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -170,7 +170,7 @@
 			    size_t nbyte); }
 65	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-66	NOARGS		{ ssize_t|sys||writev(int fd, \
+66	STD		{ ssize_t|linux_sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 67	STD		{ int|linux_sys||pread(int fd, char *buf, \
 			    size_t nbyte, off_t offset); }
@@ -347,7 +347,8 @@
 165	NOARGS		{ int|compat_50_sys||getrusage(int who, \
 			    struct rusage50 *rusage); }
 166	NOARGS		{ int|sys||umask(int newmask); }
-167	UNIMPL		prctl
+167	INDIR		{ int|linux_sys||__prctl(int code, \
+                                  ... void * args[LINUX_SYS_MAXSYSARGS]); }
 168	STD		{ int|linux_sys||getcpu(unsigned int *cpu, \
 			    unsigned int *node, \
 			    struct linux_getcpu_cache *tcache); }
@@ -399,7 +400,9 @@
 190	NOARGS		{ int|sys||semget(key_t key, int nsems, int semflg); }
 191	STD		{ int|linux_sys||semctl(int semid, int semnum, \
 			    int cmd, union linux_semun arg); }
-192	UNIMPL		semtimedop
+192	STD		{ int|linux_sys||semtimedop(int semid, \
+			    struct sembuf *sops, size_t nsops, \
+			    struct linux_timespec *timeout); }
 193	NOARGS		{ int|sys||semop(int semid, struct sembuf *sops, \
 			    size_t nsops); }
 #else

@@ -1,4 +1,4 @@
-# $NetBSD: std,v 1.24 2024/03/26 10:56:34 riastradh Exp $
+# $NetBSD: std,v 1.24.2.1 2026/11/04 23:21:43 perseant Exp $
 #
 # standard MI 'options'
 #
@@ -24,6 +24,7 @@ select	net		# XXX Clean up dependency
 # the following options are on-by-default to keep
 # kernel config file compatibility.
 options	VMSWAP		# Swap device/file support
+options	VMSWAP_ENCRYPTION # Swap encryption support
 options	BUFQ_FCFS	# First-come First-serve strategy
 options	BUFQ_DISKSORT	# Traditional min seek sort strategy
 options	RFC2292		# Previous version of Adv. Sockets API for IPv6 
@@ -42,6 +43,7 @@ options        COMPAT_UTILS
 # Security model.
 #
 options	secmodel_bsd44	# Traditional 4.4BSD security model
+options secmodel_extensions	# Long-documented, thus not really optional
 
 #
 # Scheduling algorithm

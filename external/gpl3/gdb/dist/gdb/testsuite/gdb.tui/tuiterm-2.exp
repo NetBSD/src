@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -106,6 +106,76 @@ with_override Term::accept_gdb_output test_accept_gdb_output {
 		}
 		gdb_assert { [Term::wait_for ""] }
 	    }
+
+	    with_test_prefix "Term::wait_for 2" {
+		Term::_setup 4 20
+		set send_cnt 0
+		set expect_send {}
+		set action_cnt 0
+		set actions {
+		    {
+			Term::_move_cursor 0 0
+
+			Term::_insert "${::border}(gdb) "
+			set pos $Term::_cur_col
+
+			Term::_insert "foo"
+
+			Term::_move_cursor 19 0
+			Term::_insert "$::border"
+
+			Term::_move_cursor $pos 0
+		    }
+		    {
+			Term::_move_cursor 0 1
+
+			Term::_insert "${::border}(gdb) "
+			set pos $Term::_cur_col
+
+			Term::_move_cursor 19 1
+			Term::_insert "$::border"
+
+			Term::_move_cursor $pos 1
+		    }
+		}
+
+		# Wait for a prompt.
+		gdb_assert { [Term::wait_for ""] }
+
+		# The first action sets the cursor after the prompt on the
+		# first line.  The second action sets the cursor after the
+		# prompt on the second line.   Check that wait_for returns
+		# after the second action, not the first.
+		gdb_assert { $Term::_cur_row == 1 }
+	    }
 	}
     }
+}
+
+with_test_prefix "Unrecognized escape sequence" {
+    spawn $srcdir/$subdir/gdb.tcl
+    switch_gdb_spawn_id  $spawn_id
+
+    Term::_setup 4 20
+
+    save_vars timeout {
+	set timeout 1
+
+	set line { 0 0 20 1 }
+
+	# Parse "foo".
+	gdb_assert { [Term::wait_for_region_contents \
+			  {*}$line \
+			  [string_to_regexp "foo"]] } \
+	    "foo"
+
+	# Parse "\033(%5".
+	gdb_assert { ![Term::accept_gdb_output 0] } \
+	    "fail to parse escape sequence"
+	gdb_assert { [Term::wait_for_region_contents \
+			  {*}$line \
+			  [string_to_regexp "^\[(%5"]] } \
+	    "echoed escape sequence"
+    }
+    Term::dump_screen
 }

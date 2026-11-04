@@ -19,15 +19,23 @@
 #        messages.
 # 
 #        Normally, the access(5) table is specified as a text  file
-#        that  serves  as  input  to  the  postmap(1) command.  The
-#        result, an indexed file in dbm or db format, is  used  for
-#        fast  searching  by  the  mail system. Execute the command
-#        "postmap /etc/postfix/access" to rebuild an  indexed  file
-#        after changing the corresponding text file.
+#        that  serves  as input to the postmap(1) command to create
+#        an indexed file for fast lookup.
 # 
-#        When  the  table  is provided via other means such as NIS,
-#        LDAP or SQL, the same lookups are  done  as  for  ordinary
-#        indexed files.
+#        Execute  the  command  "postmap  /etc/postfix/access"   to
+#        rebuild  a  default-type  indexed  file after changing the
+#        text file, or execute  "postmap  type:/etc/postfix/access"
+#        to specify an explicit type.
+# 
+#        The  default  indexed  file  type  is  configured with the
+#        default_database_type parameter. Depending on the platform
+#        this  may  be  one of lmdb:, cdb:, hash:, or dbm: (without
+#        the trailing ':').
+# 
+#        When the table is provided via other means  such  as  NIS,
+#        LDAP  or  SQL,  the  same lookups are done as for ordinary
+#        indexed files.  Managing such  databases  is  outside  the
+#        scope of Postfix.
 # 
 #        Alternatively,  the  table  can  be  provided  as  a regu-
 #        lar-expression map where patterns  are  given  as  regular

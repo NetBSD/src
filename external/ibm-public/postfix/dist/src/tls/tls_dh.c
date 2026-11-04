@@ -1,4 +1,4 @@
-/*	$NetBSD: tls_dh.c,v 1.5.2.1 2025/08/02 05:50:16 perseant Exp $	*/
+/*	$NetBSD: tls_dh.c,v 1.5.2.2 2026/11/04 23:14:55 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -410,7 +410,7 @@ void    tls_auto_groups(SSL_CTX *ctx, const char *eecdh, const char *ffdhe)
 
     /* Use OpenSSL defaults */
     if (!*eecdh && !*ffdhe)
-        return;
+	return;
 
     /*
      * Try the user-specified list first. If that fails (empty list or no

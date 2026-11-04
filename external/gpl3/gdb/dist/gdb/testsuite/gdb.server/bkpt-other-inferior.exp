@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,7 +23,7 @@ standard_testfile server.c
 
 require allow_gdbserver_tests
 
-if { [prepare_for_testing "failed to prepare" ${binfile} "${srcfile}" \
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
 	  {debug pthreads}] } {
     return
 }
@@ -77,19 +77,23 @@ foreach inf_sel {1 2} {
 
 	gdb_test_no_output "set debug remote 1"
 
-	gdb_test_multiple "break -q main" "set breakpoint" {
-	    -re "Sending packet: \\\$qXfer:auxv:read.*$gdb_prompt $" {
-		# Symbol lookup may access the target to read AUXV in
-		# order to determine the debug base for SVR4 linker
-		# namespaces.
-		xfail "$gdb_test_name"
-	    }
-	    -re "Sending packet.*$gdb_prompt $" {
-		fail "$gdb_test_name"
-	    }
-	    -re "^break -q main\r\nBreakpoint .* at .*$gdb_prompt $" {
-		pass "$gdb_test_name"
-	    }
+	set lines [gdb_get_lines "break -q main"]
+
+	set test "set breakpoint"
+	set re_xfail \
+	    [string_to_regexp {Sending packet: $qXfer:auxv:read}]
+	if { [regexp $re_xfail $lines] } {
+	    # Symbol lookup may access the target to read AUXV in
+	    # order to determine the debug base for SVR4 linker
+	    # namespaces.
+	    xfail $test
+	} elseif { [regexp "Sending packet:" $lines] } {
+	    fail $test
+	} else {
+	    set re \
+		"Breakpoint $decimal at $hex: \[^\r\n\]+"
+	    set re "^$re\r\n$"
+	    gdb_assert { [regexp $re $lines] } $test
 	}
 
 	gdb_test_no_output "set debug remote 0"

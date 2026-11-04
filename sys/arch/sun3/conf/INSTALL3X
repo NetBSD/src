@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL3X,v 1.62 2021/01/21 06:51:56 nia Exp $
+# $NetBSD: INSTALL3X,v 1.62.24.1 2026/11/04 23:21:25 perseant Exp $
 #
 # INSTALL3X - Installation kernel for the Sun3X
 #
@@ -11,7 +11,7 @@ include "arch/sun3/conf/std.sun3x"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -fno-unwind-tables"	# Optimise for space. Implies -O2
+makeoptions	COPTS="-Os"		# Optimise for space. Implies -O2
 
 # Machines to be supported by this kernel
 # options 	FPU_EMULATE	# XXX - Ever needed?

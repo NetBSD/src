@@ -1,7 +1,7 @@
-# $NetBSD: Makefile.inc,v 1.1 2005/09/24 19:04:52 elad Exp $
+# $NetBSD: Makefile.inc,v 1.1.98.1 2026/11/04 23:19:18 perseant Exp $
 
 # hash functions
-.PATH: ${.CURDIR}/hash/rmd160
+.PATH: ${.PARSEDIR}
 
 SRCS+=	rmd160.c rmd160hl.c
 

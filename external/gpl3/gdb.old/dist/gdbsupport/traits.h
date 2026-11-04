@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,42 +15,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_TRAITS_H
-#define COMMON_TRAITS_H
+#ifndef GDBSUPPORT_TRAITS_H
+#define GDBSUPPORT_TRAITS_H
 
 #include <type_traits>
 
-/* GCC does not understand __has_feature.  */
-#if !defined(__has_feature)
-# define __has_feature(x) 0
-#endif
-
-/* HAVE_IS_TRIVIALLY_COPYABLE is defined as 1 iff
-   std::is_trivially_copyable is available.  GCC only implemented it
-   in GCC 5.  */
-#if (__has_feature(is_trivially_copyable) \
-     || (defined __GNUC__ && __GNUC__ >= 5))
-# define HAVE_IS_TRIVIALLY_COPYABLE 1
-#endif
-
-/* HAVE_IS_TRIVIALLY_CONSTRUCTIBLE is defined as 1 iff
-   std::is_trivially_constructible is available.  GCC only implemented it
-   in GCC 5.  */
-#if (__has_feature(is_trivially_constructible) \
-     || (defined __GNUC__ && __GNUC__ >= 5))
-# define HAVE_IS_TRIVIALLY_CONSTRUCTIBLE 1
-#endif
-
 namespace gdb {
-
-/* Pre C++14-safe (CWG 1558) version of C++17's std::void_t.  See
-   <http://en.cppreference.com/w/cpp/types/void_t>.  */
-
-template<typename... Ts>
-struct make_void { typedef void type; };
-
-template<typename... Ts>
-using void_t = typename make_void<Ts...>::type;
 
 /* Implementation of the detection idiom:
 
@@ -79,7 +49,7 @@ struct detector
 
 /* Implementation of the detection idiom (positive case).  */
 template<typename Default, template<typename...> class Op, typename... Args>
-struct detector<Default, void_t<Op<Args...>>, Op, Args...>
+struct detector<Default, std::void_t<Op<Args...>>, Op, Args...>
 {
   using value_t = std::true_type;
   using type = Op<Args...>;
@@ -173,4 +143,8 @@ template<typename Condition>
 using Requires = typename std::enable_if<Condition::value, void>::type;
 }
 
-#endif /* COMMON_TRAITS_H */
+template<typename T>
+using RequireLongest = gdb::Requires<gdb::Or<std::is_same<T, LONGEST>,
+					     std::is_same<T, ULONGEST>>>;
+
+#endif /* GDBSUPPORT_TRAITS_H */

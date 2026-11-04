@@ -33,6 +33,9 @@ c			AAAA	fd92:7065:b8e:ffff::3
 d			A	10.0.0.0
 d			AAAA	fd92:7065:b8e:ffff::
 
+silent			A	10.0.0.1
+close			A	10.0.0.1
+
 xn--caf-dma		A	10.1.2.3
 
 foo			TXT	"testing"

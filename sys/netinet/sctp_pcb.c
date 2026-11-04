@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.26.8.1 2025/08/02 05:57:50 perseant Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.26.8.2 2026/11/04 23:27:59 perseant Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.26.8.1 2025/08/02 05:57:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.26.8.2 2026/11/04 23:27:59 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -666,7 +666,7 @@ sctp_endpoint_probe(struct sockaddr *nam, struct sctppcbhead *head,
 	struct sockaddr_in6 *sin6;
 	struct sctp_laddr *laddr;
 
-	/* Endpoing probe expects
+	/* Endpoint probe expects
 	 * that the INP_INFO is locked.
 	 */
 	if (nam->sa_family == AF_INET) {

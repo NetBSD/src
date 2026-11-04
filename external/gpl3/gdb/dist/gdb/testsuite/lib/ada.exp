@@ -1,4 +1,4 @@
-# Copyright 2004-2024 Free Software Foundation, Inc.
+# Copyright 2004-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,35 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# A wrapper for foreach_with_prefix that applies suitable
+# -fgnat-encodings arguments to a command line.  SCENARIO_ARG is the
+# name of a loop variable that will hold the scenario currently being
+# evaluated.  FLAGS_ARG will be set to the appropriate compiler flags
+# (if any) for this scenario.  LIST is the list of desired scenarios
+# to run, and BODY is what actually does the work.
+
+proc foreach_gnat_encoding {scenario_arg flags_arg list body} {
+    # gnat-llvm does not understand -fgnat-encodings at all.  However,
+    # some tests examine the precise setting of the scenario -- so
+    # pretend we support minimal.  What is going on here is that for
+    # gnat-llvm, there are no "GNAT encodings", only minimal
+    # encodings, aka, real DWARF.
+    set has_flag [ada_minimal_encodings]
+    if {!$has_flag} {
+	set list minimal
+    }
+
+    upvar 1 $scenario_arg scenario
+    upvar 1 $flags_arg flags
+    foreach_with_prefix scenario $list {
+	set flags {}
+	if {$scenario != "none" && $has_flag} {
+	    lappend flags additional_flags=-fgnat-encodings=$scenario
+	}
+	uplevel 1 $body
+    }
+}
 
 # Call target_compile with SOURCE DEST TYPE and OPTIONS as argument,
 # after having temporarily changed the current working directory to
@@ -148,25 +177,20 @@ proc find_ada_tool {tool} {
     return $result
 }
 
-# Return 1 if gnatmake is at least version $MAJOR.x.x
+# Compare the GNAT version against L2 using version_compare.  If the
+# compiler does not appear to be GCC, this will always return false.
 
-proc gnatmake_version_at_least { major } {
+proc gnat_version_compare {op l2} {
     set gnatmake [find_gnatmake]
     set gnatmake [lindex [split $gnatmake] 0]
     if {[catch {exec $gnatmake --version} output]} {
 	return 0
     }
-    if { [regexp {GNATMAKE ([^ .]+).([^ .]+).([^ .]+)} $output \
-	      match gnatmake_major gnatmake_minor gnatmake_micro] } {
-	if { $gnatmake_major >= $major } {
-	    return 1
-	} else {
-	    return 0
-	}
+    if {![regexp {GNATMAKE ([0-9]+(\.[0-9]+)*)} $output match version]} {
+	return 0
     }
 
-    # Unknown, return 1
-    return 1
+    return [version_compare [split $version .] $op $l2]
 }
 
 # Return 1 if the GNAT runtime appears to have debug info.
@@ -196,7 +220,8 @@ proc gnat_runtime_has_debug_info_1 { shared } {
 	return 0
     }
 
-    clean_restart $dst
+    clean_restart
+    gdb_load $dst
 
     if { ! [runto "GNAT_Debug_Info_Test"] } {
 	return 0
@@ -230,4 +255,51 @@ gdb_caching_proc gnat_runtime_has_debug_info {} {
 
 gdb_caching_proc shared_gnat_runtime_has_debug_info {} {
     return [gnat_runtime_has_debug_info_1 1]
+}
+
+# A helper that writes an Ada source file, then tries to compile it
+# with the given compiler options (a list like one accepted by
+# gdb_compile_ada).  Returns 1 if the flags are supported, 0
+# otherwise.
+proc ada_simple_compile {name options} {
+    set src [standard_temp_file $name.adb]
+    set dest [standard_temp_file $name.x]
+    set f [open $src w]
+    puts $f "procedure $name is"
+    puts $f "begin"
+    puts $f "  null;"
+    puts $f "end $name;"
+    close $f
+
+    # Note that we create an executable here.  For -fvar-tracking, at
+    # least, the option is supported and ignored by llvm-gnatmake --
+    # but then is passed to clang during further compilation, and this
+    # fails.  So to detect it we can't just stop with a .o file.
+    set output [gdb_compile_ada_1 $src $dest executable $options]
+    return [expr {[gdb_compile_test_nofail $output] == 1}]
+}
+
+# Return 1 if GNAT supports -fvar-tracking.
+gdb_caching_proc ada_fvar_tracking {} {
+    return [ada_simple_compile fvar_tracking additional_flags=-fvar-tracking]
+}
+
+# Return 1 if GNAT supports the minimal encodings option.
+gdb_caching_proc ada_minimal_encodings {} {
+    return [ada_simple_compile minimal_encodings \
+		additional_flags=-fgnat-encodings=minimal]
+}
+
+# Return 1 if GNAT supports -Og.
+gdb_caching_proc ada_og {} {
+    return [ada_simple_compile gnat_og additional_flags=-Og]
+}
+
+# Return 1 if GNAT can link with -shared.
+gdb_caching_proc ada_shared_link {} {
+    return [ada_simple_compile ada_shared_link {
+	additional_flags=-bargs
+	additional_flags=-shared
+	additional_flags=-margs
+    }]
 }

@@ -1,4 +1,4 @@
-#   Copyright 2008-2023 Free Software Foundation, Inc.
+#   Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 # with breakpoints in a process record logfile.
 
 # This test suitable only for process record-replay
-if ![supports_process_record] {
-    return
-}
+require supports_process_record
 
 standard_testfile break-reverse.c
 set precsave [standard_output_file break.precsave]
@@ -39,10 +37,8 @@ proc precsave_tests {} {
 
     runto_main
 
-    if [supports_process_record] {
-	# Activate process record/replay
-	gdb_test_no_output "record" "turn on process record"
-    }
+    # Activate process record/replay
+    gdb_test_no_output "record" "turn on process record"
 
     gdb_test "break $end_location" \
 	"Breakpoint $decimal at .*$srcfile, line $end_location\." \
@@ -77,7 +73,7 @@ proc precsave_tests {} {
 	-re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $"  {
 	    pass "go to end of main forward"
 	}
-	-re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+	-re -wrap "Reached end of recorded.*Following forward.* end of main .*" {
 	    pass "go to end of main forward"
 	}
     }
@@ -91,7 +87,7 @@ proc precsave_tests {} {
 	-re ".*Breakpoint $decimal,.*$srcfile:$main_location.*$gdb_prompt $" {
 	    pass "main backward"
 	}
-	-re "No more reverse-execution history.* break in main .*$gdb_prompt $" {
+	-re -wrap "Reached end of recorded.*Backward execution.* break in main .*" {
 	    pass "main backward"
 	}
     }
@@ -107,7 +103,7 @@ proc precsave_tests {} {
 	-re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $" {
 	    pass "end of record log"
 	}
-	-re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+	-re -wrap "Reached end of recorded.*Following forward.* end of main .*" {
 	    pass "end of record log"
 	}
     }

@@ -1,6 +1,6 @@
 /* Support for GDB maintenance commands.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -28,8 +28,6 @@
 #include "symtab.h"
 #include "block.h"
 #include "gdbtypes.h"
-#include "demangle.h"
-#include "gdbcore.h"
 #include "expression.h"
 #include "language.h"
 #include "symfile.h"
@@ -40,10 +38,13 @@
 #include "gdbsupport/selftest.h"
 #include "inferior.h"
 #include "gdbsupport/thread-pool.h"
+#include "event-top.h"
+#include "cp-support.h"
 
 #include "cli/cli-decode.h"
 #include "cli/cli-utils.h"
 #include "cli/cli-setshow.h"
+#include "cli/cli-style.h"
 #include "cli/cli-cmds.h"
 
 static void maintenance_do_deprecate (const char *, int);
@@ -104,14 +105,28 @@ maintenance_demangler_warning (const char *args, int from_tty)
 static void
 maintenance_demangle (const char *args, int from_tty)
 {
-  gdb_printf (_("This command has been moved to \"demangle\".\n"));
+  gdb_printf (_("This command has been moved to \"%ps\".\n"),
+	      styled_string (command_style.style (), "demangle"));
+}
+
+/* Print the canonical form of a name.  */
+
+static void
+maintenance_canonicalize (const char *args, int from_tty)
+{
+  gdb::unique_xmalloc_ptr<char> canon = cp_canonicalize_string (args);
+  if (canon == nullptr)
+    gdb_printf ("No change.\n");
+  else
+    gdb_printf ("canonical = %s\n", canon.get ());
 }
 
 static void
 maintenance_time_display (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
-    gdb_printf (_("\"maintenance time\" takes a numeric argument.\n"));
+    gdb_printf (_("\"%ps\" takes a numeric argument.\n"),
+		styled_string (command_style.style (), "maintenance time"));
   else
     set_per_command_time (strtol (args, NULL, 10));
 }
@@ -120,7 +135,8 @@ static void
 maintenance_space_display (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
-    gdb_printf ("\"maintenance space\" takes a numeric argument.\n");
+    gdb_printf ("\"%ps\" takes a numeric argument.\n",
+		styled_string (command_style.style (), "maintenance space"));
   else
     set_per_command_space (strtol (args, NULL, 10));
 }
@@ -369,6 +385,8 @@ maint_print_all_sections (const char *header, bfd *abfd, objfile *objfile,
 
   for (asection *sect : gdb_bfd_sections (abfd))
     {
+      QUIT;
+
       obj_section *osect = nullptr;
 
       if (objfile != nullptr)
@@ -546,7 +564,6 @@ maintenance_translate_address (const char *arg, int from_tty)
   CORE_ADDR address;
   struct obj_section *sect;
   const char *p;
-  struct bound_minimal_symbol sym;
 
   if (arg == NULL || *arg == 0)
     error (_("requires argument (address or section + address)"));
@@ -565,9 +582,9 @@ maintenance_translate_address (const char *arg, int from_tty)
       p = skip_spaces (p + 1);
 
       for (objfile *objfile : current_program_space->objfiles ())
-	for (obj_section *iter : objfile->sections ())
+	for (obj_section &iter : objfile->sections ())
 	  {
-	    if (strncmp (iter->the_bfd_section->name, arg, arg_len) == 0)
+	    if (strncmp (iter.the_bfd_section->name, arg, arg_len) == 0)
 	      goto found;
 	  }
 
@@ -577,6 +594,7 @@ maintenance_translate_address (const char *arg, int from_tty)
 
   address = parse_and_eval_address (p);
 
+  bound_minimal_symbol sym;
   if (sect)
     sym = lookup_minimal_symbol_by_pc_section (address, sect);
   else
@@ -630,9 +648,11 @@ maintenance_deprecate (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
     {
-      gdb_printf (_("\"maintenance deprecate\" takes an argument,\n\
+      gdb_printf (_("\"%ps\" takes an argument,\n\
 the command you want to deprecate, and optionally the replacement command\n\
-enclosed in quotes.\n"));
+enclosed in quotes.\n"),
+		  styled_string (command_style.style (),
+				 "maintenance deprecate"));
     }
 
   maintenance_do_deprecate (args, 1);
@@ -644,8 +664,10 @@ maintenance_undeprecate (const char *args, int from_tty)
 {
   if (args == NULL || *args == '\0')
     {
-      gdb_printf (_("\"maintenance undeprecate\" takes an argument, \n\
-the command you want to undeprecate.\n"));
+      gdb_printf (_("\"%ps\" takes an argument, \n\
+the command you want to undeprecate.\n"),
+		  styled_string (command_style.style (),
+				 "maintenance undeprecate"));
     }
 
   maintenance_do_deprecate (args, 0);
@@ -898,9 +920,9 @@ maintenance_show_worker_threads (struct ui_file *file, int from_tty,
 }
 
 
-/* If true, display time usage both at startup and for each command.  */
+/* See maint.h.  */
 
-static bool per_command_time;
+bool per_command_time;
 
 /* If true, display space usage both at startup and for each command.  */
 
@@ -1129,6 +1151,72 @@ set_per_command_cmd (const char *args, int from_tty)
       }
 }
 
+/* Handle "mt set per-command time".  Warn if per-thread run time
+   information is not possible.  */
+
+static void
+maintenance_set_command_time_cmd (const char *args, int from_tty,
+				  cmd_list_element *c)
+{
+  /* No point warning if this platform can't use multiple threads at
+     all.  */
+#if CXX_STD_THREAD
+  static bool already_warned = false;
+  if (per_command_time
+      && !get_run_time_thread_scope_available ()
+      && !already_warned)
+    {
+      warning (_("\
+per-thread run time information not available on this platform"));
+      already_warned = true;
+    }
+#endif
+}
+
+/* See maint.h.  */
+
+scoped_time_it::scoped_time_it (const char *what, bool enabled)
+  : m_enabled (enabled),
+    m_what (what),
+    m_start_wall (m_enabled
+		  ? std::chrono::steady_clock::now ()
+		  : std::chrono::steady_clock::time_point ())
+{
+  if (m_enabled)
+    get_run_time (m_start_user, m_start_sys, run_time_scope::thread);
+}
+
+/* See maint.h.  */
+
+scoped_time_it::~scoped_time_it ()
+{
+  if (!m_enabled)
+    return;
+
+  namespace chr = std::chrono;
+  auto end_wall = chr::steady_clock::now ();
+
+  user_cpu_time_clock::time_point end_user;
+  system_cpu_time_clock::time_point end_sys;
+  get_run_time (end_user, end_sys, run_time_scope::thread);
+
+  auto user = end_user - m_start_user;
+  auto sys = end_sys - m_start_sys;
+  auto wall = end_wall - m_start_wall;
+  auto user_ms = chr::duration_cast<chr::milliseconds> (user).count ();
+  auto sys_ms = chr::duration_cast<chr::milliseconds> (sys).count ();
+  auto wall_ms = chr::duration_cast<chr::milliseconds> (wall).count ();
+  auto user_plus_sys_ms = user_ms + sys_ms;
+
+  auto str
+    = string_printf ("Time for \"%s\": wall %.03f, user %.03f, sys %.03f, "
+		     "user+sys %.03f, %.01f %% CPU\n",
+		     m_what, wall_ms / 1000.0, user_ms / 1000.0,
+		     sys_ms / 1000.0, user_plus_sys_ms / 1000.0,
+		     user_plus_sys_ms * 100.0 / wall_ms);
+  gdb_stdlog->write_async_safe (str.data (), str.size ());
+}
+
 /* Options affecting the "maintenance selftest" command.  */
 
 struct maintenance_selftest_options
@@ -1213,9 +1301,7 @@ Selftests have been disabled for this build.\n"));
 }
 
 
-void _initialize_maint_cmds ();
-void
-_initialize_maint_cmds ()
+INIT_GDB_FILE (maint_cmds)
 {
   struct cmd_list_element *cmd;
 
@@ -1334,6 +1420,12 @@ This command has been moved to \"demangle\"."),
 		 &maintenancelist);
   deprecate_cmd (cmd, "demangle");
 
+  cmd = add_cmd ("canonicalize", class_maintenance, maintenance_canonicalize,
+		 _("\
+Show the canonical form of a C++ name.\n\
+Usage: maintenance canonicalize NAME"),
+		 &maintenancelist);
+
   add_prefix_cmd ("per-command", class_maintenance, set_per_command_cmd, _("\
 Per-command statistics settings."),
 		    &per_command_setlist,
@@ -1351,7 +1443,7 @@ Show whether to display per-command execution time."),
 			   _("\
 If enabled, the execution time for each command will be\n\
 displayed following the command's output."),
-			   NULL, NULL,
+			   maintenance_set_command_time_cmd, NULL,
 			   &per_command_setlist, &per_command_showlist);
 
   add_setshow_boolean_cmd ("space", class_maintenance,

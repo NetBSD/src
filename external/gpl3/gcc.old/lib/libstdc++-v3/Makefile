@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2023/02/20 02:12:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.14.2.1 2026/11/04 23:00:39 perseant Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -17,8 +17,6 @@ LIBDPLIBS+=	m ${.CURDIR}/../../../../../lib/libm
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 COPTS.random.cc+=	${${ACTIVE_CC} == "clang":? -mrdrnd :}
 .endif
-
-CSHLIBFLAGS+=	-D_GLIBCXX_COMPAT_
 
 DIST=		${GCCDIST}
 GNUVER=		${DIST}/libstdc++-v3/config/abi/pre/gnu.ver
@@ -56,7 +54,7 @@ CWARNFLAGS.clang+=	-Wno-logical-op-parentheses \
 .include "${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}/defs.mk"
 
 SHLIB_MAJOR=	9
-SHLIB_MINOR=	0
+SHLIB_MINOR=	1
 
 SUBDIR=		include
 
@@ -64,11 +62,15 @@ SRCS=		${LIBSUPCXXSRCS} ${LIBSTDCXXSRCS}
 
 GCC_MACHINE_SUBDIR=${MACHINE_CPU:C/powerpc.*/rs6000/:C/x86_64/i386/}
 
+# Only the shared library is build with -D_GLIBCXX_SHARED, and the
+# static library shouldn't need to provide old symbols.
+CSHLIBFLAGS+=	-D_GLIBCXX_SHARED
+
 CXXFLAGS+=	-fno-implicit-templates
 CPPFLAGS+=	-I${DIST}/libstdc++-v3/include
 CPPFLAGS+=	-I${DIST}/gcc/config/${GCC_MACHINE_SUBDIR}
 CPPFLAGS+=	-I${.CURDIR}/arch/${LIBSTDCXX_MACHINE_ARCH}
-CPPFLAGS+=	-D_GLIBCXX_SHARED -DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
+CPPFLAGS+=	-DGTHREAD_USE_WEAK -DSUPPORTS_WEAK
 .if ${G_CLOCALE_CC:M*dragonfly*} != ""
 CPPFLAGS+=	-I${CONF}/locale/dragonfly
 LOCALETYPE=	dragonfly
@@ -87,8 +89,7 @@ CONF=		${DIST}/libstdc++-v3/config
 GLIBCPP_INCLUDE_DIR=	${DESTDIR}/usr/include/g++
 
 # Template instantiation bug workaround for -O<2/s
-COPTS.cp-demangle.c += -Wno-stack-protector
-COPTS.cp-demangle.c += -Wno-stack-protector
+COPTS.cp-demangle.cc += -Wno-stack-protector
 COPTS.fstream-inst.cc += -Wno-stack-protector
 COPTS.locale-inst.cc += -Wno-stack-protector
 COPTS.misc-inst.cc += -Wno-stack-protector
@@ -97,6 +98,7 @@ COPTS.functexcept.cc += -Wno-stack-protector
 COPTS.valarray-inst.cc += -Wno-stack-protector
 COPTS.wlocale-inst.cc += -Wno-stack-protector
 COPTS.snprintf_lite.cc += -Wno-stack-protector
+COPTS.std_stacktrace-cp-demangle.c += -Wno-stack-protector
 # From system headers.
 COPTS.cxx11-wlocale-inst.cc +=-Wno-stack-protector
 COPTS.cxx11-locale-inst.cc +=-Wno-stack-protector
@@ -132,6 +134,10 @@ COPTS.random.cc += -Wno-error=psabi
 COPTS.cow-string-inst.cc += -Wno-error=psabi
 .endif
 
+.if ${MACHINE} == "sun2"
+COPTS.std_stacktrace-cp-demangle.c += -Wno-stack-protector
+.endif
+
 # XXX
 MKDEPFLAGS+=	-I$(GLIBCPP_INCLUDE_DIR)/backward
 
@@ -162,7 +168,8 @@ BUILDSYMLINKS+=	\
 	codecvt 98 11 \
 	cow-string-inst 11 17 \
 	ostream-inst 11 17 \
-	string-inst 11 17
+	string-inst 11 17 \
+	sstream-inst 11 20
 
 BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/src/c++${_V1}/${_N}.cc c${_V1}-${_N}.cc
@@ -170,11 +177,6 @@ BUILDSYMLINKS+=	\
 	${GLIBCXX_SRCDIR}/src/c++${_V2}/${_N}.cc c${_V2}-${_N}.cc
 
 .endfor
-
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++98/codecvt.cc c98-codecvt.cc
-#BUILDSYMLINKS+=	\
-#	${GLIBCXX_SRCDIR}/src/c++11/codecvt.cc c11-codecvt.cc
 
 .include "../Makefile.gthr"
 
@@ -209,6 +211,31 @@ COPTS.ext-inst.cc+= -Wno-error
 	  numeric_members_cow \
 	  c++locale
 COPTS.${f}.cc+= -fimplicit-templates ${G_GLIBCXX_ABI_FLAGS}
+.endfor
+
+# XXXGCC12
+# hits on sparc, sparc64, armv7 at least
+COPTS.floating_to_chars.cc+=	-Wno-error=unused-function
+COPTS.cp-demangle.c+=	-Wno-error=stack-protector
+COPTS.floating_to_chars.cc+=	-Wno-error=stack-protector
+
+# libbacktrace
+.for f in ${G_LIBBACKTRACE_SOURCES} ${G_LIBBACKTRACE_DEPS}
+. if ${f} == "cp-demangle.c"
+BUILDSYMLINKS+=	\
+	${DIST}/libiberty/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libiberty/arch/${LIBSTDCXX_MACHINE_ARCH}
+. else
+BUILDSYMLINKS+=	\
+	${DIST}/libbacktrace/${f} std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-I${.CURDIR}/../libbacktrace/arch/${LIBSTDCXX_MACHINE_ARCH} \
+	-I${DIST}/libbacktrace
+. endif
+SRCS+=	std_stacktrace-${f}
+CPPFLAGS.std_stacktrace-${f}+= \
+	-include ${GLIBCXX_SRCDIR}/src/libbacktrace/backtrace-rename.h
 .endfor
 
 .include <bsd.lib.mk>

@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -596,7 +596,7 @@ fetch_instruction (CORE_ADDR addr, ia64_instruction_type *it, long long *instr)
    If we would like to store the whole bundle to SHADOW_CONTENTS we would have
    to store already the base address (`address & ~0x0f') into PLACED_ADDRESS.
    In such case there is no other place where to store
-   SLOTNUM (`adress & 0x0f', value in the range <0..2>).  We need to know
+   SLOTNUM (`address & 0x0f', value in the range <0..2>).  We need to know
    SLOTNUM in ia64_memory_remove_breakpoint.
 
    There is one special case where we need to be extra careful:
@@ -2162,16 +2162,16 @@ ia64_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache,
     }
 }
  
-static const struct frame_unwind ia64_frame_unwind =
-{
+static const struct frame_unwind_legacy ia64_frame_unwind (
   "ia64 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   &ia64_frame_this_id,
   &ia64_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Signal trampolines.  */
 
@@ -2351,16 +2351,16 @@ ia64_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind ia64_sigtramp_frame_unwind =
-{
+static const struct frame_unwind_legacy ia64_sigtramp_frame_unwind (
   "ia64 sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   ia64_sigtramp_frame_this_id,
   ia64_sigtramp_frame_prev_register,
   NULL,
   ia64_sigtramp_frame_sniffer
-};
+);
 
 
 
@@ -3011,17 +3011,17 @@ ia64_libunwind_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind ia64_libunwind_frame_unwind =
-{
+static const struct frame_unwind_legacy ia64_libunwind_frame_unwind (
   "ia64 libunwind",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   ia64_libunwind_frame_this_id,
   ia64_libunwind_frame_prev_register,
   NULL,
   ia64_libunwind_frame_sniffer,
   libunwind_frame_dealloc_cache
-};
+);
 
 static void
 ia64_libunwind_sigtramp_frame_this_id (const frame_info_ptr &this_frame,
@@ -3100,18 +3100,18 @@ ia64_libunwind_sigtramp_frame_sniffer (const struct frame_unwind *self,
     return ia64_sigtramp_frame_sniffer (self, this_frame, this_cache);
 }
 
-static const struct frame_unwind ia64_libunwind_sigtramp_frame_unwind =
-{
+static const struct frame_unwind_legacy ia64_libunwind_sigtramp_frame_unwind (
   "ia64 libunwind sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   ia64_libunwind_sigtramp_frame_this_id,
   ia64_libunwind_sigtramp_frame_prev_register,
   NULL,
   ia64_libunwind_sigtramp_frame_sniffer
-};
+);
 
-/* Set of libunwind callback acccessor functions.  */
+/* Set of libunwind callback accessor functions.  */
 unw_accessors_t ia64_unw_accessors =
 {
   ia64_find_proc_info_x,
@@ -3124,7 +3124,7 @@ unw_accessors_t ia64_unw_accessors =
   /* get_proc_name */
 };
 
-/* Set of special libunwind callback acccessor functions specific for accessing
+/* Set of special libunwind callback accessor functions specific for accessing
    the rse registers.  At the top of the stack, we want libunwind to figure out
    how to read r32 - r127.  Though usually they are found sequentially in
    memory starting from $bof, this is not always true.  */
@@ -3415,7 +3415,7 @@ slot_alignment_is_next_even (struct type *t)
 /* Attempt to find (and return) the global pointer for the given
    function.
 
-   This is a rather nasty bit of code searchs for the .dynamic section
+   This rather nasty bit of code searches for the .dynamic section
    in the objfile corresponding to the pc of the function we're trying
    to call.  Once it finds the addresses at which the .dynamic section
    lives in the child process, it scans the Elf64_Dyn entries for a
@@ -3432,12 +3432,12 @@ ia64_find_global_pointer_from_dynamic_section (struct gdbarch *gdbarch,
   faddr_sect = find_pc_section (faddr);
   if (faddr_sect != NULL)
     {
-      for (obj_section *osect : faddr_sect->objfile->sections ())
+      for (obj_section &osect : faddr_sect->objfile->sections ())
 	{
-	  if (strcmp (osect->the_bfd_section->name, ".dynamic") == 0)
+	  if (strcmp (osect.the_bfd_section->name, ".dynamic") == 0)
 	    {
-	      CORE_ADDR addr = osect->addr ();
-	      CORE_ADDR endaddr = osect->endaddr ();
+	      CORE_ADDR addr = osect.addr ();
+	      CORE_ADDR endaddr = osect.endaddr ();
 
 	      while (addr < endaddr)
 		{
@@ -3513,12 +3513,12 @@ find_extant_func_descr (struct gdbarch *gdbarch, CORE_ADDR faddr)
 
   if (faddr_sect != NULL)
     {
-      for (obj_section *osect : faddr_sect->objfile->sections ())
+      for (obj_section &osect : faddr_sect->objfile->sections ())
 	{
-	  if (strcmp (osect->the_bfd_section->name, ".opd") == 0)
+	  if (strcmp (osect.the_bfd_section->name, ".opd") == 0)
 	    {
-	      CORE_ADDR addr = osect->addr ();
-	      CORE_ADDR endaddr = osect->endaddr ();
+	      CORE_ADDR addr = osect.addr ();
+	      CORE_ADDR endaddr = osect.endaddr ();
 
 	      while (addr < endaddr)
 		{
@@ -3615,9 +3615,7 @@ ia64_convert_from_func_ptr_addr (struct gdbarch *gdbarch, CORE_ADDR addr,
   /* There are also descriptors embedded in vtables.  */
   if (s)
     {
-      struct bound_minimal_symbol minsym;
-
-      minsym = lookup_minimal_symbol_by_pc (addr);
+      bound_minimal_symbol minsym = lookup_minimal_symbol_by_pc (addr);
 
       if (minsym.minsym
 	  && is_vtable_name (minsym.minsym->linkage_name ()))
@@ -3846,7 +3844,7 @@ ia64_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      a dummy code sequence pushed on the stack to make the call, and
      this sequence doesn't need b0 to be set in order for our dummy
      breakpoint to be hit.  Nonetheless, this doesn't interfere, and
-     it's needed for other OSes, so we do this unconditionaly.  */
+     it's needed for other OSes, so we do this unconditionally.  */
   regcache_cooked_write_unsigned (regcache, IA64_BR0_REGNUM, bp_addr);
 
   regcache_cooked_write_unsigned (regcache, sp_regnum, sp);
@@ -4016,9 +4014,7 @@ ia64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_ia64_tdep ();
-void
-_initialize_ia64_tdep ()
+INIT_GDB_FILE (ia64_tdep)
 {
   gdbarch_register (bfd_arch_ia64, ia64_gdbarch_init, NULL);
 }

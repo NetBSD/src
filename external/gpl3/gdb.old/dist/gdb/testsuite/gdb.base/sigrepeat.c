@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2004-2023 Free Software Foundation, Inc.
+   Copyright 2004-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -59,7 +59,7 @@ handler (int sig)
   while (1)
     {
       /* Wait until a signal has become pending, that way when this
-	 handler returns it will be immediatly delivered leading to
+	 handler returns it will be immediately delivered leading to
 	 back-to-back signals.  */
       sigset_t set;
       sigemptyset (&set);

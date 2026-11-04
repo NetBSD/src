@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SEARCH_H
-#define COMMON_SEARCH_H
+#ifndef GDBSUPPORT_SEARCH_H
+#define GDBSUPPORT_SEARCH_H
 
 #include "gdbsupport/function-view.h"
 
@@ -39,4 +39,4 @@ extern int simple_search_memory
    ULONGEST pattern_len,
    CORE_ADDR *found_addrp);
 
-#endif /* COMMON_SEARCH_H */
+#endif /* GDBSUPPORT_SEARCH_H */

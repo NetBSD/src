@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.2.70.1 2026/11/04 23:20:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,34 +41,18 @@
 #ifndef	_MACHINE_PARAM_H_
 #define	_MACHINE_PARAM_H_
 
-/*
- * Machine dependent constants for mvme68k, based on HP9000 series 300.
- */
 #define	_MACHINE 	evbcf
 #define	MACHINE		"evbcf"
 
+#define	PGSHIFT		12		/* LOG2(NBPG) */
+
 #ifdef _KERNEL
-/*
- * Grab the interrupt definitions
- */
 #include <machine/intr.h>
+
+#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 #endif /* _KERNEL */
 
-#define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
-
-#define	UPAGES		2		/* pages of u-area */
-
 #include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #if defined(_KERNEL) && !defined(_LOCORE)
 extern void _delay(unsigned int);

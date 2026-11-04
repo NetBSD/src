@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -113,7 +113,6 @@ target_triplet = @target@
 subdir = .
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
 am__aclocal_m4_deps = $(top_srcdir)/../config/acx.m4 \
-	$(top_srcdir)/../config/bfd64.m4 \
 	$(top_srcdir)/../config/depstand.m4 \
 	$(top_srcdir)/../config/gettext-sister.m4 \
 	$(top_srcdir)/../config/gettext.m4 \
@@ -610,7 +609,6 @@ ALL_MACHINES = \
 	cpu-mt.lo \
 	cpu-nds32.lo \
 	cpu-nfp.lo \
-	cpu-nios2.lo \
 	cpu-ns32k.lo \
 	cpu-or1k.lo \
 	cpu-pdp11.lo \
@@ -694,7 +692,6 @@ ALL_MACHINES_CFILES = \
 	cpu-mt.c \
 	cpu-nds32.c \
 	cpu-nfp.c \
-	cpu-nios2.c \
 	cpu-ns32k.c \
 	cpu-or1k.c \
 	cpu-pdp11.c \
@@ -758,7 +755,6 @@ BFD32_BACKENDS = \
 	elf-ifunc.lo \
 	elf-m10200.lo \
 	elf-m10300.lo \
-	elf-nacl.lo \
 	elf-sframe.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
@@ -800,7 +796,6 @@ BFD32_BACKENDS = \
 	elf32-msp430.lo \
 	elf32-mt.lo \
 	elf32-nds32.lo \
-	elf32-nios2.lo \
 	elf32-or1k.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
@@ -893,7 +888,6 @@ BFD32_BACKENDS_CFILES = \
 	elf-ifunc.c \
 	elf-m10200.c \
 	elf-m10300.c \
-	elf-nacl.c \
 	elf-sframe.c \
 	elf-strtab.c \
 	elf-vxworks.c \
@@ -935,7 +929,6 @@ BFD32_BACKENDS_CFILES = \
 	elf32-msp430.c \
 	elf32-mt.c \
 	elf32-nds32.c \
-	elf32-nios2.c \
 	elf32-or1k.c \
 	elf32-pj.c \
 	elf32-ppc.c \
@@ -1172,12 +1165,12 @@ SOURCE_HFILES = \
 	ecoff-bfd.h ecoffswap.h \
 	elf32-arm.h elf32-avr.h elf32-bfin.h elf32-cr16.h elf32-csky.h \
 	elf32-dlx.h elf32-hppa.h elf32-m68hc1x.h elf32-m68k.h \
-	elf32-metag.h elf32-nds32.h elf32-nios2.h elf32-ppc.h \
+	elf32-metag.h elf32-nds32.h elf32-ppc.h \
 	elf32-rx.h elf32-score.h elf32-sh-relocs.h elf32-spu.h \
 	elf32-tic6x.h elf32-tilegx.h elf32-tilepro.h elf32-v850.h \
 	elf64-hppa.h elf64-ppc.h elf64-tilegx.h \
 	elf-bfd.h elfcode.h elfcore.h elf-hppa.h elf-linker-x86.h \
-	elf-linux-core.h elf-nacl.h elf-s390.h elf-vxworks.h \
+	elf-linux-core.h elf-s390.h elf-vxworks.h \
 	elfxx-aarch64.h elfxx-ia64.h elfxx-mips.h elfxx-riscv.h \
 	elfxx-sparc.h elfxx-tilegx.h elfxx-x86.h elfxx-loongarch.h \
 	genlink.h go32stub.h \
@@ -1305,7 +1298,7 @@ SRCIPROT = $(srcdir)/cache.c $(srcdir)/libbfd.c \
 TEXIDIR = $(srcdir)/../texinfo/fsf
 info_TEXINFOS = doc/bfd.texi
 doc_bfd_TEXINFOS = $(DOCFILES) doc/bfdsumm.texi
-AM_MAKEINFOFLAGS = --no-split -I "$(srcdir)/doc" -I doc
+AM_MAKEINFOFLAGS = --no-split -I "$(srcdir)/doc" -P doc
 TEXI2DVI = texi2dvi -I "$(srcdir)/doc" -I doc
 MKDOC = doc/chew$(EXEEXT_FOR_BUILD)
 
@@ -1322,7 +1315,7 @@ REGEN_TEXI = \
 	$(MKDOC) -f $(srcdir)/doc/doc.str < $< > $@.tmp; \
 	texi=$@; \
 	texi=$${texi%.stamp}.texi; \
-	test -e $$texi || test ! -f $(srcdir)/$$texi || $(LN_S) $(srcdir)/$$texi .; \
+	test -e $$texi || test ! -f $(srcdir)/$$texi || $(LN_S) $(abs_srcdir)/$$texi $$texi; \
 	$(SHELL) $(srcdir)/../move-if-change $@.tmp $$texi; \
 	touch $@; \
 	)
@@ -1524,7 +1517,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-mt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nds32.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nfp.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-nios2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-ns32k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-or1k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cpu-pdp11.Plo@am__quote@
@@ -1566,7 +1558,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-ifunc.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-m10200.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-m10300.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-nacl.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-properties.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-sframe.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf-strtab.Plo@am__quote@
@@ -1614,7 +1605,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-msp430.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-mt.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-nds32.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-nios2.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-or1k.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-pj.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/elf32-ppc.Plo@am__quote@
@@ -2497,7 +2487,7 @@ coff-tic54x.lo: coff-tic54x.c
 $(MKDOC): doc/chew.stamp ; @true
 doc/chew.stamp: $(srcdir)/doc/chew.c doc/$(am__dirstamp)
 	$(AM_V_CCLD)$(CC_FOR_BUILD) -o doc/chw$$$$$(EXEEXT_FOR_BUILD) $(CFLAGS_FOR_BUILD) \
-	  $(CPPFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) \
+	  $(WARN_CFLAGS_FOR_BUILD) $(CPPFLAGS_FOR_BUILD) $(LDFLAGS_FOR_BUILD) \
 	  -I. -I$(srcdir) -Idoc -I$(srcdir)/../include -I$(srcdir)/../intl -I../intl \
 	  $(srcdir)/doc/chew.c && \
 	$(SHELL) $(srcdir)/../move-if-change \

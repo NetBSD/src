@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -193,6 +193,12 @@ set line [gdb_get_line_number "f1 breakpoint" lspec.h]
 gdb_test "break lspec.h:$line" \
     "Breakpoint \[0-9\]+ at $hex: file .*lspec.h, line $line." \
     "set breakpoint in f1"
+
+# This should only have a single location -- in no_multi_locs.
+set line [gdb_get_line_number no_multi_locs]
+gdb_test "break $line" \
+    "Breakpoint \[0-9\]+ at $hex: file .*$srcfile, line $line." \
+    "set breakpoint at no_multi_locs"
 
 #
 # Multi-inferior tests.

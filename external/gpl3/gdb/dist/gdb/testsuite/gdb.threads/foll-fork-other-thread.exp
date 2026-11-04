@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,8 @@
 # Test catching a vfork/fork in one thread, and then doing a "next" in
 # another thread, in different combinations of "set follow-fork
 # parent/child", and other execution modes.
+
+require allow_fork_tests
 
 standard_testfile
 
@@ -44,7 +46,7 @@ proc do_test { fork_func follow target-non-stop non-stop displaced-stepping } {
     save_vars { ::GDBFLAGS } {
 	append ::GDBFLAGS " -ex \"maintenance set target-non-stop ${target-non-stop}\""
 	append ::GDBFLAGS " -ex \"set non-stop ${non-stop}\""
-	clean_restart ${::binfile}-${fork_func}
+	clean_restart ${::testfile}-${fork_func}
     }
 
     gdb_test_no_output "set displaced-stepping ${displaced-stepping}"

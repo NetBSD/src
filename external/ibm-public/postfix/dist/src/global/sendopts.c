@@ -1,4 +1,4 @@
-/*	$NetBSD: sendopts.c,v 1.2.4.2 2025/08/02 05:50:08 perseant Exp $	*/
+/*	$NetBSD: sendopts.c,v 1.2.4.3 2026/11/04 23:14:48 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -92,4 +92,3 @@ const char *sendopts_strflags(unsigned flags, int delim)
     return (str_name_mask_opt(result, "sendopts_strflags", sendopts_flag_map,
 			      flags, NAME_MASK_FATAL | dflags[cp - delims]));
 }
-

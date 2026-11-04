@@ -1,6 +1,6 @@
 /* x86 XSAVE extended state functions.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_X86_XSTATE_H
-#define NAT_X86_XSTATE_H
+#ifndef GDB_NAT_X86_XSTATE_H
+#define GDB_NAT_X86_XSTATE_H
 
 #include "gdbsupport/x86-xstate.h"
 
@@ -32,4 +32,4 @@ int x86_xsave_length ();
 
 x86_xsave_layout x86_fetch_xsave_layout (uint64_t xcr0, int len);
 
-#endif /* NAT_X86_XSTATE_H */
+#endif /* GDB_NAT_X86_XSTATE_H */

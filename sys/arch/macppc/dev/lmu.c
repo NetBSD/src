@@ -1,4 +1,4 @@
-/* $NetBSD: lmu.c,v 1.9.16.1 2025/08/02 05:55:51 perseant Exp $ */
+/* $NetBSD: lmu.c,v 1.9.16.2 2026/11/04 23:20:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9.16.1 2025/08/02 05:55:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.9.16.2 2026/11/04 23:20:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,6 @@ struct lmu_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
-	int		sc_node;
 
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensors[2];
@@ -169,7 +168,6 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_node = ia->ia_cookie;
 	sc->sc_last = 0;
 
 	aprint_naive("\n");
@@ -195,7 +193,7 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_cookie = sc;
 	sc->sc_sme->sme_refresh = lmu_sensors_refresh;
 	sc->sc_sme->sme_class = 0;
-	sc->sc_sme->sme_flags = SME_INIT_REFRESH;;
+	sc->sc_sme->sme_flags = SME_INIT_REFRESH;
 
 
 	s = &sc->sc_sensors[0];

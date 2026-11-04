@@ -19,7 +19,7 @@ import isctest
 
 def test_masterfile_include_semantics():
     """Test master file $INCLUDE semantics"""
-    msg_axfr = dns.message.make_query("include.", "AXFR")
+    msg_axfr = isctest.query.create("include.", "AXFR")
     res_axfr = isctest.query.tcp(msg_axfr, "10.53.0.1")
     axfr_include_semantics = """;ANSWER
 include.			300	IN	SOA	ns.include. hostmaster.include. 1 3600 1800 1814400 3600
@@ -40,7 +40,7 @@ ns.include.			300	IN	A	127.0.0.1
 
 def test_masterfile_bind_8_compat_semantics():
     """Test master file BIND 8 TTL and $TTL semantics compatibility"""
-    msg_axfr = dns.message.make_query("ttl1.", "AXFR")
+    msg_axfr = isctest.query.create("ttl1.", "AXFR")
     res_axfr = isctest.query.tcp(msg_axfr, "10.53.0.1")
     axfr_ttl_semantics = """;ANSWER
 ttl1.		3	IN	SOA	ns.ttl1. hostmaster.ttl1. 1 3600 1800 1814400 3
@@ -59,7 +59,7 @@ ns.ttl1.	3	IN	A	10.53.0.1
 
 def test_masterfile_rfc_1035_semantics():
     """Test master file RFC1035 TTL and $TTL semantics"""
-    msg_axfr = dns.message.make_query("ttl2.", "AXFR")
+    msg_axfr = isctest.query.create("ttl2.", "AXFR")
     res_axfr = isctest.query.tcp(msg_axfr, "10.53.0.1")
     axfr_ttl_semantics = """;ANSWER
 ttl2.		1	IN	SOA	ns.ttl2. hostmaster.ttl2. 1 3600 1800 1814400 3
@@ -78,7 +78,7 @@ ns.ttl2.	1	IN	A	10.53.0.1
 
 def test_masterfile_missing_master_file():
     """Test nameserver running with a missing master file"""
-    msg_soa = dns.message.make_query("example.", "SOA")
+    msg_soa = isctest.query.create("example.", "SOA")
     res_soa = isctest.query.tcp(msg_soa, "10.53.0.2")
     expected_soa_rr = """;ANSWER
 example.	300	IN	SOA	mname1. . 2010042407 20 20 1814400 3600
@@ -89,14 +89,14 @@ example.	300	IN	SOA	mname1. . 2010042407 20 20 1814400 3600
 
 def test_masterfile_missing_master_file_servfail():
     """Test nameserver returning SERVFAIL for a missing master file"""
-    msg_soa = dns.message.make_query("missing.", "SOA")
+    msg_soa = isctest.query.create("missing.", "SOA")
     res_soa = isctest.query.tcp(msg_soa, "10.53.0.2")
     isctest.check.servfail(res_soa)
 
 
 def test_masterfile_owner_inheritance():
     """Test owner inheritance after $INCLUDE"""
-    checker_output = isctest.run.cmd(
+    cmd = isctest.run.cmd(
         [
             os.environ["CHECKZONE"],
             "-D",
@@ -104,12 +104,12 @@ def test_masterfile_owner_inheritance():
             "example",
             "zone/inheritownerafterinclude.db",
         ]
-    ).stdout.decode("utf-8")
+    )
     owner_inheritance_zone = """
 example.	0	IN	SOA	. . 0 0 0 0 0
 example.	0	IN	TXT	"this should be at the zone apex"
 example.	0	IN	NS	.
 """
-    checker_zone = dns.zone.from_text(checker_output, origin="example.")
+    checker_zone = dns.zone.from_text(cmd.out, origin="example.")
     expected = dns.zone.from_text(owner_inheritance_zone, origin="example.")
     isctest.check.zones_equal(checker_zone, expected, compare_ttl=True)

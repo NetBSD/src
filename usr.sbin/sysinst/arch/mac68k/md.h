@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2 2018/11/18 10:34:46 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.2.12.1 2026/11/04 23:29:01 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -114,7 +114,7 @@ typedef struct {
 	unsigned int crit : 1;	/* FS contains a "Critical"? FS */
 	unsigned int used : 1;  /* FS in use */
 	unsigned int      : 7;
-	unsigned int slice : 5;	/* Slice number to assocate with plus one */
+	unsigned int slice : 5;	/* Slice number to associate with plus one */
 	unsigned int part  : 16; /* reserved, but we'll hide disk part here */
     } flags;
     u_int32_t tmade;	/* time FS was created */
@@ -150,7 +150,7 @@ typedef struct {
 } Block0;
 
 /*
- * Default Disk Partition Map used for an uninitilized disk.
+ * Default Disk Partition Map used for an uninitialized disk.
  *  Has minimal entry for an old Apple SCSI driver, a newer 43 SCSI
  *  driver and an IDE driver (for those Macs with IDE).
  */

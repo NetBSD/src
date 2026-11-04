@@ -1,4 +1,4 @@
-/*	$NetBSD: err.c,v 1.246.2.1 2025/08/02 05:58:45 perseant Exp $	*/
+/*	$NetBSD: err.c,v 1.246.2.2 2026/11/04 23:28:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: err.c,v 1.246.2.1 2025/08/02 05:58:45 perseant Exp $");
+__RCSID("$NetBSD: err.c,v 1.246.2.2 2026/11/04 23:28:45 perseant Exp $");
 #endif
 
 #include <limits.h>
@@ -172,10 +172,10 @@ static const char *const msgs[] = {
 	"%soperand of '%s' must be lvalue",				// 114
 	"%soperand of '%s' must be modifiable lvalue",			// 115
 	"invalid pointer subtraction",					// 116
-	"bitwise '%s' on signed value possibly nonportable",		// 117
-	"semantics of '%s' change in C90; use explicit cast",		// 118
+	"bitwise '%s' on signed '%s' possibly nonportable",		// 117
+	"'%s' %s '%s' differs between traditional C and C90",		// 118
 	"conversion of '%s' to '%s' is out of range",			// 119
-	"bitwise '%s' on signed value nonportable",			// 120
+	"bitwise '%s' on signed '%s' nonportable",			// 120
 	"negative shift",						// 121
 	"shift amount %llu is greater than bit-size %llu of '%s'",	// 122
 	"invalid combination of %s '%s' and %s '%s', op '%s'",		// 123
@@ -259,8 +259,8 @@ static const char *const msgs[] = {
 	"default outside switch",					// 201
 	"duplicate default in switch",					// 202
 	"case label must be of type 'int' in traditional C",		// 203
-	"controlling expressions must have scalar type",		// 204
-	"switch expression must have integral type",			// 205
+	"controlling expressions must have scalar type, not '%s'",	// 204
+	"switch expression must have integral type, not '%s'",		// 205
 	"enumeration value(s) not handled in switch",			// 206
 	"",			/* no longer used */			// 207
 	"break outside loop or switch",					// 208
@@ -283,7 +283,7 @@ static const char *const msgs[] = {
 	"static function '%s' called but not defined",			// 225
 	"static variable '%s' unused",					// 226
 	"const object '%s' should have initializer",			// 227
-	"function cannot return const or volatile object",		// 228
+	"returning the type qualifier '%s' has no effect",		// 228
 	"converting '%s' to '%s' is questionable",			// 229
 	"nonportable character comparison '%s'",			// 230
 	"parameter '%s' unused in function '%s'",			// 231
@@ -341,8 +341,8 @@ static const char *const msgs[] = {
 	"parameter number mismatch in comment /* %s */",		// 283
 	"fallthrough on default statement",				// 284
 	"prototype declaration",					// 285
-	"function definition is not a prototype",			// 286
-	"function declaration is not a prototype",			// 287
+	"function definition for '%s' is not a prototype",		// 286
+	"function declaration for '%s' is not a prototype",		// 287
 	"dubious use of /* VARARGS */ with /* %s */",			// 288
 	"/* PRINTFLIKE */ and /* SCANFLIKE */ cannot be combined",	// 289
 	"static function '%s' declared but not defined",		// 290
@@ -435,12 +435,13 @@ static const char *const msgs[] = {
 	"redundant '\\0' at the end of the format",			// 377
 	"conversion '%.*s' is unreachable by input value",		// 378
 	"comparing integer '%s' to floating point constant %Lg",	// 379
-	"lossy conversion of %Lg to '%s', arg #%d",			// 380
-	"lossy conversion of %Lg to '%s'",				// 381
+	"lossy conversion of %Lg (%La) to '%s', arg #%d",		// 380
+	"lossy conversion of %Lg (%La) to '%s'",			// 381
 	"constant assignment of type '%s' in operand of '%s' always evaluates to '%s'", // 382
 	"passing '%s' as argument %d to '%s' discards '%s'",		// 383
 	"function definition for '%s' with identifier list is obsolete in C23", // 384
 	"do-while macro '%.*s' ends with semicolon",			// 385
+	"conversion '%.*s' from '%.*s' does not mix with '%c'",		// 386
 };
 
 static bool is_suppressed[sizeof(msgs) / sizeof(msgs[0])];
@@ -755,6 +756,7 @@ static const char *queries[] = {
 	"typedef '%s' of union type '%s'",				// Q22
 	"typedef '%s' of pointer to struct type '%s'",			// Q23
 	"typedef '%s' of pointer to union type '%s'",			// Q24
+	"negation of signed '%s'",					// Q25
 };
 
 // Omit any expensive computations in the default mode where none of the

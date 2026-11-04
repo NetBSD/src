@@ -1,6 +1,6 @@
 /* Modula 2 language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef M2_LANG_H
-#define M2_LANG_H
+#ifndef GDB_M2_LANG_H
+#define GDB_M2_LANG_H
 
 struct type_print_options;
 struct parser_state;
@@ -149,4 +149,4 @@ public:
   { return true; }
 };
 
-#endif /* M2_LANG_H */
+#endif /* GDB_M2_LANG_H */

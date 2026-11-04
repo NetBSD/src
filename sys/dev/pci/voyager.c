@@ -1,4 +1,4 @@
-/*	$NetBSD: voyager.c,v 1.18.10.1 2025/08/02 05:57:00 perseant Exp $	*/
+/*	$NetBSD: voyager.c,v 1.18.10.2 2026/11/04 23:22:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009, 2011 Michael Lorenz
@@ -26,7 +26,7 @@
  */
  
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.18.10.1 2025/08/02 05:57:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.18.10.2 2026/11/04 23:22:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: voyager.c,v 1.18.10.1 2025/08/02 05:57:00 perseant E
 #include "opt_voyager.h"
 #include "voyagerfb.h"
 #include "pwmclock.h"
+#include "vac.h"
 
 #ifdef VOYAGER_DEBUG
 #define DPRINTF aprint_normal
@@ -148,7 +149,6 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	pci_intr_handle_t ih;
 	struct voyager_attach_args vaa;
-	struct i2cbus_attach_args iba;
 	uint32_t reg;
 	const char *intrstr;
 	int i;
@@ -160,25 +160,29 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_dev = self;
 
-	voyager_cookie = sc;
-
 	pci_aprint_devinfo(pa, NULL);
 
 	if (pci_mapreg_map(pa, 0x14, PCI_MAPREG_TYPE_MEM, 0,
 	    &sc->sc_memt, &sc->sc_regh, &sc->sc_reg, &sc->sc_regsize)) {
-		aprint_error("%s: failed to map registers.\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "failed to map registers\n");
+		return;
 	}
 
 	if (pci_mapreg_map(pa, 0x10, PCI_MAPREG_TYPE_MEM,
 	    BUS_SPACE_MAP_LINEAR,
 	    &sc->sc_memt, &sc->sc_fbh, &sc->sc_fb, &sc->sc_fbsize)) {
-		aprint_error("%s: failed to map the frame buffer.\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(self, "failed to map the frame buffer\n");
+		bus_space_unmap(sc->sc_memt, sc->sc_regh, sc->sc_regsize);
+		return;
 	}
+
+	voyager_cookie = sc;
 
 	/* disable all interrupts */
 	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_MASK, 0);
+	/* ack anything firmware left pending */
+	bus_space_write_4(sc->sc_memt, sc->sc_regh, SM502_INTR_CLEAR_R,
+	    0xffffffff);
 	
 	/* initialize handler list */
 	for (i = 0; i < 32; i++) {
@@ -188,24 +192,28 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		    EVCNT_TYPE_INTR, NULL, "voyager", sc->sc_intrs[i].vih_name);
 	}
 
-	/* Map and establish the interrupt. */
+	/*
+	 * Map and establish the interrupt (or not). 
+	 */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(self, "couldn't map interrupt\n");
-		return;
+		aprint_normal_dev(self,
+		    "no interrupt mapped, continuing without\n");
+		sc->sc_ih = NULL;
+	} else {
+		intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf,
+		    sizeof(intrbuf));
+		sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_VM,
+		    voyager_intr, NULL, /* so we get the clock frame instead */
+		    device_xname(self));
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(self, "couldn't establish interrupt");
+			if (intrstr != NULL)
+				aprint_error(" at %s", intrstr);
+			aprint_error("\n");
+			return;
+		}
+		aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 	}
-
-	intrstr = pci_intr_string(sc->sc_pc, ih, intrbuf, sizeof(intrbuf));
-	sc->sc_ih = pci_intr_establish_xname(sc->sc_pc, ih, IPL_VM,
-	    voyager_intr, NULL, /* so we get the clock frame instead */
-	    device_xname(self));
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "couldn't establish interrupt");
-		if (intrstr != NULL)
-			aprint_error(" at %s", intrstr);
-		aprint_error("\n");
-		return;
-	}
-	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 #ifdef VOYAGER_DEBUG
 	voyager_print_pwm(sc, SM502_PWM0);
@@ -231,7 +239,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 	config_found(sc->sc_dev, &vaa, voyager_print,
 	    CFARGS(.iattr = "voyagerbus"));
 #endif
-#ifdef notyet
+#if NVAC > 0
 	strcpy(vaa.vaa_name, "vac");
 	config_found(sc->sc_dev, &vaa, voyager_print,
 	    CFARGS(.iattr = "voyagerbus"));
@@ -246,7 +254,6 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		voyager_gpio_dir(sc, 0xffffffff, GPIO_I2C_BITS);
 		
 		/* Fill in the i2c tag */
-		memset(&iba, 0, sizeof(iba));
 		iic_tag_init(&sc->sc_i2c);
 		sc->sc_i2c.ic_cookie = sc;
 		sc->sc_i2c.ic_send_start = voyager_i2c_send_start;
@@ -254,9 +261,7 @@ voyager_attach(device_t parent, device_t self, void *aux)
 		sc->sc_i2c.ic_initiate_xfer = voyager_i2c_initiate_xfer;
 		sc->sc_i2c.ic_read_byte = voyager_i2c_read_byte;
 		sc->sc_i2c.ic_write_byte = voyager_i2c_write_byte;
-		iba.iba_tag = &sc->sc_i2c;
-		config_found(self, &iba, iicbus_print,
-		    CFARGS(.iattr = "i2cbus"));
+		iicbus_attach(self, &sc->sc_i2c);
 	}
 	voyager_control_gpio(sc, ~(1 << 16), 0);
 	voyager_gpio_dir(sc, 0xffffffff, 1 << 16);

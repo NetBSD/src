@@ -1,6 +1,6 @@
 /* Definitions for Fortran expressions
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef FORTRAN_EXP_H
-#define FORTRAN_EXP_H
+#ifndef GDB_F_EXP_H
+#define GDB_F_EXP_H
 
 #include "expop.h"
 
@@ -417,4 +417,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* FORTRAN_EXP_H */
+#endif /* GDB_F_EXP_H */

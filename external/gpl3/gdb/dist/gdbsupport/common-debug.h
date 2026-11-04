@@ -1,6 +1,6 @@
 /* Declarations for debug printing functions.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_DEBUG_H
-#define COMMON_COMMON_DEBUG_H
+#ifndef GDBSUPPORT_COMMON_DEBUG_H
+#define GDBSUPPORT_COMMON_DEBUG_H
 
 #include <optional>
 #include "gdbsupport/preprocessor.h"
@@ -106,7 +106,7 @@ struct scoped_debug_start_end
 
      If the FMT format string is non-nullptr, then a `: ` is appended to the
      messages, followed by the rendering of that format string with ARGS.
-     The format string is rendered during construction and is re-used as is
+     The format string is rendered during construction and is reused as is
      for the message on exit.  */
 
   scoped_debug_start_end (PT &debug_enabled, const char *module,
@@ -215,7 +215,7 @@ private:
   bool m_disabled = false;
 };
 
-/* Implementation of is_debug_enabled when PT is an invokable type.  */
+/* Implementation of is_debug_enabled when PT is an invocable type.  */
 
 template<typename PT>
 inline bool
@@ -271,4 +271,4 @@ make_scoped_debug_start_end (PT &&pred, const char *module, const char *func,
 				   __func__, "enter", "exit",	\
 				   nullptr)
 
-#endif /* COMMON_COMMON_DEBUG_H */
+#endif /* GDBSUPPORT_COMMON_DEBUG_H */

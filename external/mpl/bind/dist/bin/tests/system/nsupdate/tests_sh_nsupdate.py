@@ -15,12 +15,16 @@ import pytest
 
 import isctest.mark
 
-pytestmark = pytest.mark.extra_artifacts(
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "Kxxx*",
+        "authsock.out.*",
+        "authsock.pid",
         "dig.out.*",
         "nextpart.out.*",
         "nsupdate.*out*",
+        "nsupdate.tcp.*",
+        "nsupdate.udp.*",
         "perl.update_test.out",
         "typelist.out.*",
         "update.in.*",
@@ -28,8 +32,10 @@ pytestmark = pytest.mark.extra_artifacts(
         "ans*/ans.run",
         "ns*/*.jnl",
         "ns*/*.jnl",
+        "ns1/auth.sock",
         "ns1/ddns.key",
         "ns1/example.db",
+        "ns1/grant-external.test.db",
         "ns1/keytests.db",
         "ns1/legacy*.key",
         "ns1/many.test.db",
@@ -60,6 +66,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns5/local.db",
         "ns6/2.0.0.2.ip6.addr.db",
         "ns6/in-addr.db",
+        "ns6/sigaxfr.bk",
         "ns7/_default.tsigkeys",
         "ns7/example.com.db",
         "ns7/in-addr.db",
@@ -76,10 +83,15 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
+pytestmark = [
+    isctest.mark.requires_net_dns,
+    EXTRA_ARTIFACTS,
+]
+
 
 MAX_RUNS = 2 if platform.system() == "FreeBSD" else 1  # GL#3846
 
 
-@isctest.mark.flaky(max_runs=MAX_RUNS)
+@pytest.mark.flaky(max_runs=MAX_RUNS)
 def test_nsupdate(run_tests_sh):
     run_tests_sh()

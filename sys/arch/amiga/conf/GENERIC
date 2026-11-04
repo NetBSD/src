@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.339 2024/01/29 18:27:10 christos Exp $
+# $NetBSD: GENERIC,v 1.339.2.1 2026/11/04 23:20:00 perseant Exp $
 #
 # This file was automatically created.
 # Changes will be lost when make is run in this directory.
@@ -29,11 +29,9 @@ include "arch/amiga/conf/std.amiga"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.339 $"
+#ident 		"GENERIC-$Revision: 1.339.2.1 $"
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
-	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
-	# backtraces in DDB.
+makeoptions	COPTS="-O2 -fno-reorder-blocks"
 
 maxusers	8
 options 	RTC_OFFSET=0
@@ -53,9 +51,7 @@ options 	P5PPC68KBOARD	# Phase5 PPC/68K board support
 # processors this kernel should support
 #
 options 	M68060		# support for 060
-options 	M060SP		# MC68060 software support (Required for 060)
 options 	M68040		# support for 040
-options 	FPSP		# MC68040 floating point support
 options 	M68030		# support for 030
 options 	M68020		# support for 020/851
 options 	FPU_EMULATE	# FPU emulation

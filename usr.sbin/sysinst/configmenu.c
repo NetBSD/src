@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.19.2.1 2025/08/02 05:58:55 perseant Exp $ */
+/* $NetBSD: configmenu.c,v 1.19.2.2 2026/11/04 23:28:58 perseant Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <curses.h>
 #include <unistd.h>
 #include <errno.h>
+#include <time.h>
 #include "defs.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
@@ -57,15 +58,20 @@ static int toggle_mdnsd(struct menudesc *, void *);
 static void configmenu_hdr(struct menudesc *, void *);
 static int check_root_password(void);
 static int run_bin_sh(struct menudesc *, void *);
+static int time_and_date_setup(struct menudesc *menu, void *arg);
+static void time_and_date_hdr(struct menudesc *, void *);
 
 char pkgpath[STRSIZE];
 char pkgsrcpath[STRSIZE];
 
 extern const char *tz_default;
+char cur_date_time[28];
+static const char generic_date_time_fmt[] = "%a, %d %b %Y %X";
 
 enum {
 	CONFIGOPT_NETCONF,
 	CONFIGOPT_TZ,
+	CONFIGOPT_SETDATETIME,
 	CONFIGOPT_ROOTSH,
 	CONFIGOPT_ROOTPW,
 	CONFIGOPT_BINPKG,
@@ -96,6 +102,7 @@ typedef struct configinfo {
 configinfo config_list[] = {
 	{MSG_Configure_network, CONFIGOPT_NETCONF, NULL, set_network, MSG_configure},
 	{MSG_timezone, CONFIGOPT_TZ, NULL, set_timezone_menu, NULL},
+	{MSG_setdatetime, CONFIGOPT_SETDATETIME, NULL, time_and_date_setup, NULL},
 	{MSG_Root_shell, CONFIGOPT_ROOTSH, NULL, set_root_shell, NULL},
 	{MSG_change_rootpw, CONFIGOPT_ROOTPW, NULL, change_root_password, MSG_change},
 	{MSG_enable_binpkg, CONFIGOPT_BINPKG, NULL, set_binpkg, MSG_install},
@@ -127,6 +134,16 @@ config_list_init(void)
 			get_tz_default();
 			config_list[CONFIGOPT_TZ].setting = tz_default;
 			break;
+		case CONFIGOPT_SETDATETIME:
+			{
+				time_t now = time(NULL);
+				struct tm *lt = localtime(&now);
+				strftime(cur_date_time, sizeof(cur_date_time),
+				     generic_date_time_fmt, lt);
+				config_list[CONFIGOPT_SETDATETIME].setting =
+				    cur_date_time;
+				break; 
+			}
 		case CONFIGOPT_ROOTSH:
 			get_rootsh();
 			break;
@@ -178,7 +195,8 @@ set_config(menudesc *menu, int opt, void *arg)
 	optname = config->optname;
 	setting = msg_string(config->setting);
 
-	wprintw(menu->mw, "%-50s %-10s", msg_string(optname), setting);
+	wprintw(menu->mw, opt == CONFIGOPT_SETDATETIME ?
+	    "%-30s %40s" : "%-50s %-10s", msg_string(optname), setting);
 }
 
 static int
@@ -326,9 +344,15 @@ set_binpkg(struct menudesc *menu, void *arg)
 	char additional_pkgs[STRSIZE] = {0};
 	int allok = 0;
 	arg_rv parm;
+	bool remove_target_resolv = false;
 
 	if (config_network(0))
 		mnt_net_config();
+
+	if (access(target_expand("/etc/resolv.conf"), R_OK) != 0) {
+		dup_file_into_target("/etc/resolv.conf");
+		remove_target_resolv = true;
+	}
 
 	do {
 		parm.rv = -1;
@@ -338,14 +362,6 @@ set_binpkg(struct menudesc *menu, void *arg)
 			confp[menu->cursel]->setting = MSG_abandoned;
 			return 0;
 		}
-
-		/*
-		 * Make sure we have the TLS certs in a usable state
-		 * (if target is a new installation)
-		 */
-		if (pkg.xfer == XFER_HTTPS)
-			run_program(RUN_CHROOT | RUN_SILENT,
-			    "/bin/sh /etc/rc.d/certctl_init onestart");
 
 		make_url(pkgpath, &pkg, pkg_dir);
 		if (run_program(RUN_DISPLAY | RUN_PROGRESS | RUN_CHROOT,
@@ -366,6 +382,9 @@ set_binpkg(struct menudesc *menu, void *arg)
 		"/usr/pkg/bin/pkgin -y install %s", additional_pkgs);
 
 	hit_enter_to_continue(MSG_binpkg_installed, NULL);
+
+	if (remove_target_resolv)
+		unlink(target_expand("/etc/resolv.conf"));
 
 	confp[menu->cursel]->setting = MSG_DONE;
 	return 0;
@@ -510,6 +529,13 @@ run_bin_sh(struct menudesc *menu, void *arg)
 	return 0;
 }
 
+static int
+time_and_date_setup(struct menudesc *menu, void *arg)
+{
+	do_time_and_date_setup("");
+	return 0;
+}
+
 static void
 configmenu_hdr(struct menudesc *menu, void *arg)
 {
@@ -551,5 +577,143 @@ do_configmenu(struct install_partition_desc *install)
 		MSG_doneconfig);
 
 	process_menu(menu_no, ce);
+	free_menu(menu_no);
+}
+
+static const msg struct_tm_opt_names[] =
+{ MSG_year, MSG_month, MSG_day, MSG_hour, MSG_minute, MSG_time_ok };
+
+struct date_and_time_menu_arg
+{
+	const char *header;
+	struct tm new_time;
+};
+
+static void
+fill_date_time_val(char *buf, size_t sizeof_buf, int opt,
+    const struct date_and_time_menu_arg *time_opts)
+{
+	switch (opt) {
+	case 0:
+		strftime(buf, sizeof_buf, "%Y", &time_opts->new_time);
+		break;
+	case 1:
+		strftime(buf, sizeof_buf, "%m", &time_opts->new_time);
+		break;
+	case 2:
+		strftime(buf, sizeof_buf, "%d", &time_opts->new_time);
+		break;
+	case 3:
+		strftime(buf, sizeof_buf, "%H", &time_opts->new_time);
+		break;
+	case 4:
+		strftime(buf, sizeof_buf, "%M", &time_opts->new_time);
+		break;
+	}
+}
+
+static void
+update_new_time(menudesc *menu, int opt, void *arg)
+{
+	char buf[50];
+
+	fill_date_time_val(buf, sizeof(buf), opt, arg);
+
+	wprintw(menu->mw, "%-30s %-10s", msg_string(struct_tm_opt_names[opt]),
+	    buf);
+}
+
+static int
+set_new_time(menudesc *menu, void *arg)
+{
+	struct date_and_time_menu_arg *ma = arg;
+	struct timeval tv;
+
+	memset(&tv, 0, sizeof(tv));
+	tv.tv_sec = mktime(&ma->new_time);
+	settimeofday(&tv, NULL);
+
+	return 1;
+}
+
+static int
+time_and_date_update(struct menudesc *menu, void *arg)
+{
+	struct date_and_time_menu_arg *ma = arg;
+	char buf[50];
+	struct tm saved_time;
+
+	buf[0] = 0;
+
+	msg_prompt_win(struct_tm_opt_names[menu->cursel], -1, 18, 0, 0,
+	    "", buf, sizeof(buf));
+
+	saved_time = ma->new_time;
+	switch (menu->cursel) {
+	case 0:
+		ma->new_time.tm_year = atoi(buf)-1900;
+		break;
+	case 1:
+		ma->new_time.tm_mon = atoi(buf)-1;
+		break;
+	case 2:
+		ma->new_time.tm_mday = atoi(buf);
+		break;
+	case 3:
+		ma->new_time.tm_hour = atoi(buf);
+		break;
+	case 4:
+		ma->new_time.tm_min = atoi(buf);
+		break;
+	}
+
+	if (mktime(&ma->new_time) == -1)
+		ma->new_time = saved_time;
+
+	return 0;
+}
+
+static void
+time_and_date_hdr(struct menudesc *menuitem, void *arg)
+{
+	const struct date_and_time_menu_arg *ma = arg;
+
+	strftime(cur_date_time, sizeof(cur_date_time),
+	     generic_date_time_fmt, &ma->new_time);
+	
+	msg_display_subst(MSG_date_and_time_hdr, 2, ma->header, cur_date_time);
+}
+
+void
+do_time_and_date_setup(const char *header)
+{
+	int menu_no;
+#define NUM_DATE_TIME_ITEMS	6	/* year, month, day, hour, min,
+					   save */
+	menu_ent me[CONFIGOPT_LAST];
+	struct date_and_time_menu_arg menu_arg;
+	time_t now;
+
+	wrefresh(curscr);
+	wmove(stdscr, 0, 0);
+	wclear(stdscr);
+	wrefresh(stdscr);
+
+	memset(me, 0, sizeof(me));
+	for (size_t i = 0; i < NUM_DATE_TIME_ITEMS-1; i++)
+		me[i].opt_action = time_and_date_update;
+	me[NUM_DATE_TIME_ITEMS-1].opt_action = set_new_time;
+	me[NUM_DATE_TIME_ITEMS-1].opt_flags = OPT_EXIT;
+
+	now = time(NULL);
+	menu_arg.header =  msg_string(header);
+	menu_arg.new_time = *localtime(&now);
+
+	menu_no = new_menu(NULL, me, NUM_DATE_TIME_ITEMS, 0, -4, 0, 70,
+		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
+		time_and_date_hdr, update_new_time, NULL, NULL,
+		MSG_cancel);
+
+	process_menu(menu_no, &menu_arg);
 	free_menu(menu_no);
 }

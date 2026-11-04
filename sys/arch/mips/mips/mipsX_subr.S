@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.115.10.1 2025/08/02 05:55:54 perseant Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.115.10.2 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -117,7 +117,7 @@
  */
 
 #include <mips/asm.h>
-RCSID("$NetBSD: mipsX_subr.S,v 1.115.10.1 2025/08/02 05:55:54 perseant Exp $")
+RCSID("$NetBSD: mipsX_subr.S,v 1.115.10.2 2026/11/04 23:20:58 perseant Exp $")
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -658,7 +658,7 @@ VECTOR(MIPSX(intr), unknown)
 	MFC0_HAZARD				#01: stall
 	and	k0, k0, MIPS3_SR_KSU_USER	#02: test for user mode
 	bnez	k0, 1f				#03: yep, do it
-	 nop					#04:  branch deay
+	 nop					#04:  branch delay
 	j	MIPSX(kern_intr)		#05: nope, kernel intr
 1:
 	lui	k1, %hi(CPUVAR(CURLWP))		#06: k1=hi of curlwp
@@ -1029,8 +1029,8 @@ NESTED_NOPROFILE(MIPSX(kern_nonmaskable_intr), KERNFRAME_SIZ, ra)
 	/*
 	 * Clear exception level.
 	 */
-	li	v0, ~(MIPS_SR_EXL|MIPS3_SR_NMI)
-	and	v0, a0				# zero NMI/EXL bits
+	li	v0, ~(MIPS_SR_EXL|MIPS3_SR_ERL|MIPS3_SR_NMI)
+	and	v0, a0				# zero EXL/ERL/NMI bits
 	mtc0	v0, MIPS_COP_0_STATUS		# update.
 	COP0_SYNC
 #ifdef MIPS3
@@ -1320,32 +1320,63 @@ NESTED_NOPROFILE(MIPSX(user_reserved_insn), CALLFRAME_SIZ, ra)
 	 nop
 
 	/*
-	 * Get exception PC and fetch the instruction.  We know we can do
-	 * this since the instruction actually got read.
+	 * Get exception PC and fetch the instruction.
+	 *
+	 * Probe the page with TLBP first, and take the slow path if the
+	 * entry isn't there.  A nested miss on the inline read below would
+	 * otherwise land in user_gen_exception and clobber this routine's
+	 * own v0, since the exception PC isn't saved again while EXL is set.
 	 */
 	_MFC0	v0, MIPS_COP_0_EXC_PC
 	MFC0_HAZARD
+
+	/* Need v1 and a0 too */
+	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)
+	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)
+
+	_MFC0	v1, MIPS_COP_0_TLB_HI		# grab current ASID
+	MFC0_HAZARD
+	andi	a0, v1, MIPS3_PG_ASID
+	move	AT, v0
+#ifdef MIPSNNR2
+	_INS	AT, a0, 0, V_MIPS3_PG_HVPN
+#else
+	_SRA	AT, V_MIPS3_PG_HVPN		# clear bottom bits of VA
+	_SLL	AT, V_MIPS3_PG_HVPN		# clear bottom bits of VA
+	or	AT, AT, a0
+#endif
+	_MTC0	AT, MIPS_COP_0_TLB_HI		# look for the vaddr & ASID
+	COP0_SYNC
+	tlbp					# probe the entry in question
+	COP0_SYNC
+	mfc0	AT, MIPS_COP_0_TLB_INDEX	# see what we got
+	MFC0_HAZARD
+	_MTC0	v1, MIPS_COP_0_TLB_HI		# restore HI
+	COP0_SYNC
+	bltz	AT, MIPSX(user_gen_exception_common2) # index < 0 => !found
+	 nop
+
+	// Load instruction
 	INT_L	AT, 0(v0)
 
 	/*
 	 * Was this rdhwr $3,$29?
 	 */
-	lui	v0, %hi(0x7c03e83b)	# 0x7c03e83b => rdhwr $3,$29
-	addiu	v0, %lo(0x7c03e83b)	#        or ... rdhwr v1,ulr
-	bne	AT, v0, MIPSX(user_gen_exception_common)
+	lui	v1, %hi(0x7c03e83b)	# 0x7c03e83b => rdhwr $3,$29
+	addiu	v1, %lo(0x7c03e83b)	#        or ... rdhwr v1,ulr
+	bne	AT, v1, MIPSX(user_gen_exception_common2)
 	 nop
 
 	/*
 	 * Advance the PC (don't want to restart at the rdhwr).
 	 */
-	_MFC0	v0, MIPS_COP_0_EXC_PC
-	MFC0_HAZARD
 	PTR_ADDIU v0, 4
 	_MTC0	v0, MIPS_COP_0_EXC_PC
 	COP0_SYNC
 
 	PTR_L	v1, L_PRIVATE(k1)		# rdhwr $3,$29 updates v1
 
+	REG_L	a0, CALLFRAME_SIZ+TF_REG_A0(k0) # restore reg
 	REG_L	AT, CALLFRAME_SIZ+TF_REG_AST(k0)# restore reg
 	REG_L	v0, CALLFRAME_SIZ+TF_REG_V0(k0) # restore reg
 	eret
@@ -1367,41 +1398,42 @@ NESTED_NOPROFILE(MIPSX(user_gen_exception), CALLFRAME_SIZ, ra)
 	 * Save all the registers except the kernel temporaries onto the stack.
 	 */
 	KERN_ENTRY_ERRATA
-	/* K1 already has CURLWP */
+	/* K1 already has CURLWP (loaded by exception vector from ci_curlwp) */
 	PTR_L	k0, L_PCB(k1)			# XXXuvm_lwp_getuarea
 	PTR_ADDU k0, USPACE - TF_SIZ - CALLFRAME_SIZ
 	REG_S	AT, CALLFRAME_SIZ+TF_REG_AST(k0)
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_V0(k0)
 MIPSX(user_gen_exception_common):
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_V1(k0)
-	mflo	v0
 	REG_S	a0, CALLFRAME_SIZ+TF_REG_A0(k0)
+MIPSX(user_gen_exception_common2):
 	REG_S	a1, CALLFRAME_SIZ+TF_REG_A1(k0)
+	mflo	v0
 	REG_S	a2, CALLFRAME_SIZ+TF_REG_A2(k0)
 	REG_S	a3, CALLFRAME_SIZ+TF_REG_A3(k0)
-	mfhi	v1
 	REG_S	t0, CALLFRAME_SIZ+TF_REG_T0(k0)
 	REG_S	t1, CALLFRAME_SIZ+TF_REG_T1(k0)
+	mfhi	v1
 	REG_S	t2, CALLFRAME_SIZ+TF_REG_T2(k0)
 	REG_S	t3, CALLFRAME_SIZ+TF_REG_T3(k0)
-	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
 	REG_S	ta0, CALLFRAME_SIZ+TF_REG_TA0(k0)
 	REG_S	ta1, CALLFRAME_SIZ+TF_REG_TA1(k0)
+	mfc0	a0, MIPS_COP_0_STATUS		# 1st arg is STATUS
 	REG_S	ta2, CALLFRAME_SIZ+TF_REG_TA2(k0)
 	REG_S	ta3, CALLFRAME_SIZ+TF_REG_TA3(k0)
-	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	s0, CALLFRAME_SIZ+TF_REG_S0(k0)
 	REG_S	s1, CALLFRAME_SIZ+TF_REG_S1(k0)
+	mfc0	a1, MIPS_COP_0_CAUSE		# 2nd arg is CAUSE
 	REG_S	s2, CALLFRAME_SIZ+TF_REG_S2(k0)
 	REG_S	s3, CALLFRAME_SIZ+TF_REG_S3(k0)
-	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	REG_S	s4, CALLFRAME_SIZ+TF_REG_S4(k0)
 	REG_S	s5, CALLFRAME_SIZ+TF_REG_S5(k0)
+	_MFC0	a2, MIPS_COP_0_BAD_VADDR	# 3rd arg is fault address
 	REG_S	s6, CALLFRAME_SIZ+TF_REG_S6(k0)
 	REG_S	s7, CALLFRAME_SIZ+TF_REG_S7(k0)
-	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
 	REG_S	t8, CALLFRAME_SIZ+TF_REG_T8(k0)	# will be MIPS_CURLWP
 	REG_S	t9, CALLFRAME_SIZ+TF_REG_T9(k0)
+	_MFC0	a3, MIPS_COP_0_EXC_PC		# 4th arg is exception PC
 	REG_S	v0, CALLFRAME_SIZ+TF_REG_MULLO(k0)
 	REG_S	v1, CALLFRAME_SIZ+TF_REG_MULHI(k0)
 	REG_S	gp, CALLFRAME_SIZ+TF_REG_GP(k0)
@@ -2624,7 +2656,7 @@ END(MIPSX(tlb_record_asids))
 /*
  * mipsN_lwp_trampoline()
  *
- * Arrange for a function to be invoked neatly, after a cpu_switch().
+ * Arrange for a function to be invoked neatly, after a cpu_switchto().
  * Call the service function with one argument, specified by the s0
  * and s1 respectively.  There is no need register save operation.
  * XXX - Not profiled because we pass an arg in with v0 which isn't
@@ -2732,7 +2764,7 @@ LEAF_NOPROFILE(MIPSX(cpu_switch_resume))
 #if (USPACE > PAGE_SIZE)
 #error Unsupported
 #else
-	/* even/odd are contiguaous */
+	/* even/odd are contiguous */
 	INT_ADD a2, a1, MIPS3_PG_NEXT		# a2 = upper half
 #endif
 #else
@@ -3083,11 +3115,7 @@ MIPSX(excpt_sw):
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  7
 	PTR_WORD _C_LABEL(MIPSX(systemcall))		#  8
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	#  9
-#ifdef MIPS64_OCTEON	/* rdhwr emulation is haunted on Octeon, PR 59236 */
-	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 10
-#else
 	PTR_WORD _C_LABEL(MIPSX(user_reserved_insn))	# 10
-#endif
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 11
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 12
 	PTR_WORD _C_LABEL(MIPSX(user_gen_exception))	# 13

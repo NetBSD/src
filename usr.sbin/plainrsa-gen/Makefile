@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2.2.1 2025/08/02 05:58:54 perseant Exp $
+# $NetBSD: Makefile,v 1.2.2.2 2026/11/04 23:28:56 perseant Exp $
 
 WARNS?=	3	# XXX third-party program, many issues
 
@@ -9,8 +9,8 @@ SRCS+=	plainrsa-gen.c
 MAN=	plainrsa-gen.8
 
 CPPFLAGS+=-DNOUSE_PRIVSEP
-LDADD+= -lcrypto -lipsec -lpthread
-DPADD+= ${LIBCRYPTO} ${LIBIPSEC} ${LIBPTHREAD}
+LDADD+= -lcrypto -lipsec
+DPADD+= ${LIBCRYPTO} ${LIBIPSEC}
 
 .include "${.CURDIR}/../racoon/Makefile.racoon"
 

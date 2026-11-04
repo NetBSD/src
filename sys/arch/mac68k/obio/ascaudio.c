@@ -1,4 +1,4 @@
-/* $NetBSD: ascaudio.c,v 1.1.2.1 2025/08/02 05:55:50 perseant Exp $ */
+/* $NetBSD: ascaudio.c,v 1.1.2.2 2026/11/04 23:20:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017, 2023, 2025 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -29,7 +29,7 @@
 /* Based on pad(4) and asc(4) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1.2.1 2025/08/02 05:55:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1.2.2 2026/11/04 23:20:54 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -64,7 +64,9 @@ __KERNEL_RCSID(0, "$NetBSD: ascaudio.c,v 1.1.2.1 2025/08/02 05:55:50 perseant Ex
 #define	MAC68K_ASCAUDIO_LEN		0x2000
 
 #define BUFSIZE 			32768
-#define PLAYBLKSIZE			8192
+#define PLAYBLKUNIT			1024	/* one FIFO half: 512 frames */
+#define PLAYBLKMIN			2048	/* 92 ms */
+#define PLAYBLKSIZE			8192	/* 368 ms, the cap */
 #define RECBLKSIZE			1024
 
 #define ASC_VIA_CLR_INTR()     via_reg(VIA2, vIFR) = V2IF_ASC
@@ -258,19 +260,20 @@ ascaudioattach(device_t parent, device_t self, void *aux)
 
 	bus_space_write_1(sc->sc_tag, sc->sc_handle, ASCMODE, MODESTOP);
 
-	if (mac68k_machine.aux_interrupts) {
-		intr_establish(ascaudio_intr_est, sc, ASCIRQ);
-	} else {
-		via2_register_irq(VIA2_ASC, ascaudio_intr, sc);
-	}
-	ascaudio_intr_enable();
-
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_AUDIO);
 	callout_init(&sc->sc_pcallout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_pcallout, ascaudio_done_output, sc);
 	callout_init(&sc->sc_rcallout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_rcallout, ascaudio_done_input, sc);
+
+	/* The handler takes sc_intr_lock, so it goes live only now. */
+	if (mac68k_machine.aux_interrupts) {
+		intr_establish(ascaudio_intr_est, sc, ASCIRQ);
+	} else {
+		via2_register_irq(VIA2_ASC, ascaudio_intr, sc);
+	}
+	ascaudio_intr_enable();
 
 	sc->sc_vol = 180;
 	sc->sc_recvol = 255;
@@ -760,10 +763,15 @@ ascaudio_round_blocksize(void *opaque, int blksize, int mode,
 	sc = (ascaudio_softc_t *)opaque;
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	if (mode == AUMODE_PLAY)
-		return PLAYBLKSIZE;
-	else
-		return RECBLKSIZE;
+	if (mode == AUMODE_PLAY) {
+		blksize = roundup(blksize, PLAYBLKUNIT);
+		if (blksize < PLAYBLKMIN)
+			blksize = PLAYBLKMIN;
+		if (blksize > PLAYBLKSIZE)
+			blksize = PLAYBLKSIZE;
+		return blksize;
+	}
+	return RECBLKSIZE;
 }
 
 static void
@@ -791,6 +799,7 @@ ascaudio_intr(void *arg)
 	struct ascaudio_softc *sc = arg;
 	uint8_t status;
 	int8_t val;
+	int16_t scaled;
 	int loc_a, loc_b, total, count, i;
 
 	if (!sc)
@@ -837,8 +846,12 @@ ascaudio_intr(void *arg)
 				val = bus_space_read_1(sc->sc_tag,
 				    sc->sc_handle, loc_a);
 				val ^= 0x80;
-				val = val * sc->sc_recvol / 64;
-				*sc->sc_rptr++ = val;
+				scaled = val * sc->sc_recvol / 64;
+				if (scaled > INT8_MAX)
+					scaled = INT8_MAX;
+				else if (scaled < INT8_MIN)
+					scaled = INT8_MIN;
+				*sc->sc_rptr++ = scaled;
 				if (loc_b) {
 					(void)bus_space_read_1
 					    (sc->sc_tag, sc->sc_handle, loc_b);
@@ -956,6 +969,9 @@ ascaudio_intr_enable(void)
 {
 	int s;
 
+	if (mac68k_machine.aux_interrupts)
+		return;
+
 	s = splhigh();
 	if (VIA2 == VIA2OFF)
 		via2_reg(vIER) = 0x80 | V2IF_ASC;
@@ -1021,7 +1037,7 @@ static const struct cfiattrdata * const ascaudio_attrs[] = {
 	&audiobuscf_iattrdata, NULL
 };
 
-CFDRIVER_DECL(ascaudio, DV_DULL, ascaud_attrs);
+CFDRIVER_DECL(ascaudio, DV_DULL, ascaudio_attrs);
 extern struct cfattach ascaudio_ca;
 static int ascaudioloc[] = { -1, -1 };
 
@@ -1051,7 +1067,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		error = config_cfattach_attach(ascaudio_cd.cd_name, &ascaud_ca);
+		error = config_cfattach_attach(ascaudio_cd.cd_name, &ascaudio_ca);
 		if (error) {
 			config_cfdriver_detach(&ascaudio_cd);
 			aprint_error("%s: unable to register cfattach\n",
@@ -1062,7 +1078,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 
 		error = config_cfdata_attach(ascaudio_cfdata, 1);
 		if (error) {
-			config_cfattach_detach(ascaudio_cd.cd_name, &ascaud_ca);
+			config_cfattach_detach(ascaudio_cd.cd_name, &ascaudio_ca);
 			config_cfdriver_detach(&ascaudio_cd);
 			aprint_error("%s: unable to register cfdata\n",
 				ascaudio_cd.cd_name);
@@ -1077,7 +1093,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 			if (error) {
 				return error;
 			}
-			config_cfattach_detach(ascaudio_cd.cd_name, &ascaud_ca);
+			config_cfattach_detach(ascaudio_cd.cd_name, &ascaudio_ca);
 			config_cfdriver_detach(&ascaudio_cd);
 			aprint_error("%s: unable to register devsw\n",
 				ascaudio_cd.cd_name);
@@ -1094,7 +1110,7 @@ ascaudio_modcmd(modcmd_t cmd, void *arg)
 			return error;
 		}
 
-		config_cfattach_detach(ascaudio_cd.cd_name, &ascaud_ca);
+		config_cfattach_detach(ascaudio_cd.cd_name, &ascaudio_ca);
 		config_cfdriver_detach(&ascaudio_cd);
 		devsw_detach(NULL, &ascaudio_cdevsw);
 

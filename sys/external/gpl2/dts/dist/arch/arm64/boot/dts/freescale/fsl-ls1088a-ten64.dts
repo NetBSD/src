@@ -35,18 +35,16 @@
 		 * external power off (e.g ATX Power Button)
 		 * asserted
 		 */
-		powerdn {
+		button-powerdn {
 			label = "External Power Down";
 			gpios = <&gpio1 17 GPIO_ACTIVE_LOW>;
-			interrupts = <&gpio1 17 IRQ_TYPE_EDGE_FALLING>;
 			linux,code = <KEY_POWER>;
 		};
 
 		/* Rear Panel 'ADMIN' button (GPIO_H) */
-		admin {
+		button-admin {
 			label = "ADMIN button";
 			gpios = <&gpio3 8 GPIO_ACTIVE_HIGH>;
-			interrupts = <&gpio3 8 IRQ_TYPE_EDGE_RISING>;
 			linux,code = <KEY_WPS_BUTTON>;
 		};
 	};
@@ -54,17 +52,17 @@
 	leds {
 		compatible = "gpio-leds";
 
-		sfp1down {
+		led-0 {
 			label = "ten64:green:sfp1:down";
 			gpios = <&gpio3 11 GPIO_ACTIVE_HIGH>;
 		};
 
-		sfp2up {
+		led-1 {
 			label = "ten64:green:sfp2:up";
 			gpios = <&gpio3 12 GPIO_ACTIVE_HIGH>;
 		};
 
-		admin {
+		led-2 {
 			label = "ten64:admin";
 			gpios = <&sfpgpio 12 GPIO_ACTIVE_HIGH>;
 		};
@@ -222,7 +220,7 @@
 		#gpio-cells = <2>;
 		gpio-controller;
 
-		admin_led_lower {
+		admin-led-lower-hog {
 			gpio-hog;
 			gpios = <13 GPIO_ACTIVE_HIGH>;
 			output-low;
@@ -247,7 +245,7 @@
 &i2c3 {
 	status = "okay";
 
-	i2c-switch@70 {
+	i2c-mux@70 {
 		compatible = "nxp,pca9540";
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -325,9 +323,9 @@
 				reg = <0x580000 0x40000>;
 			};
 
-			partition@5C0000 {
+			partition@5c0000 {
 				label = "dpc";
-				reg = <0x5C0000 0x40000>;
+				reg = <0x5c0000 0x40000>;
 			};
 
 			partition@600000 {

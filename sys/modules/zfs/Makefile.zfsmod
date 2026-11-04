@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.zfsmod,v 1.10 2021/04/15 17:26:22 christos Exp $
+#	$NetBSD: Makefile.zfsmod,v 1.10.22.1 2026/11/04 23:27:56 perseant Exp $
 
 ZFSDIR=	${S}/../external/cddl/osnet
 
@@ -123,6 +123,7 @@ CWARNFLAGS+=	-Wno-unused
 CWARNFLAGS+=	-Wno-switch
 CWARNFLAGS+=	-Wno-strict-prototypes
 CWARNFLAGS+=	-Wno-missing-prototypes
+CWARNFLAGS+=	${CC_WNO_MAYBE_UNINITIALIZED}
 
 CPPFLAGS+=	-I${ZFSDIR}/sys
 CPPFLAGS+=      -I${ZFSDIR}/dist/common

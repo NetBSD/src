@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.h,v 1.4 2019/01/27 02:08:48 pgoyette Exp $ */
+/*	$NetBSD: ocryptodev.h,v 1.4.36.1 2026/11/04 23:28:01 perseant Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.h,v 1.2.2.6 2003/07/02 17:04:50 sam Exp $	*/
 /*	$OpenBSD: cryptodev.h,v 1.33 2002/07/17 23:52:39 art Exp $	*/
 
@@ -85,37 +85,46 @@
 #ifndef _CRYPTO_OCRYPTODEV_H_
 #define _CRYPTO_OCRYPTODEV_H_
 
+#include <sys/types.h>
+
 #include <sys/ioccom.h>
 
+struct crypt_n_op;
+struct crypt_op;
+struct csession;
+struct fcrypt;
+struct file;
+struct session_op;
+
 struct osession_op {	/* backwards compatible */
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
-	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
-	u_int32_t	keylen;		/* cipher key */
+	uint32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	uint32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	uint32_t	keylen;		/* cipher key */
 	void *		key;
 	int		mackeylen;	/* mac key */
 	void *		mackey;
 
-  	u_int32_t	ses;		/* returns: session # */
+  	uint32_t	ses;		/* returns: session # */
 };
 
 struct osession_n_op {
-	u_int32_t	cipher;		/* ie. CRYPTO_DES_CBC */
-	u_int32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
+	uint32_t	cipher;		/* ie. CRYPTO_DES_CBC */
+	uint32_t	mac;		/* ie. CRYPTO_MD5_HMAC */
 
-	u_int32_t	keylen;		/* cipher key */
+	uint32_t	keylen;		/* cipher key */
 	void *		key;
 	int		mackeylen;	/* mac key */
 	void *		mackey;
 
-	u_int32_t	ses;		/* returns: session # */
+	uint32_t	ses;		/* returns: session # */
 	int		status;
 };
 
 struct ocrypt_op {
-	u_int32_t	ses;
-	u_int16_t	op;		/* i.e. COP_ENCRYPT */
-	u_int16_t	flags;
-	u_int		len;
+	uint32_t	ses;
+	uint16_t	op;		/* i.e. COP_ENCRYPT */
+	uint16_t	flags;
+	uint32_t	len;
 	void *		src, *dst;	/* become iov[] inside kernel */
 	void *		mac;		/* must be big enough for chosen MAC */
 	void *		iv;
@@ -124,9 +133,9 @@ struct ocrypt_op {
 /* to support multiple session creation */
 /*
  *
- * The reqid field is filled when the operation has 
+ * The reqid field is filled when the operation has
  * been accepted and started, and can be used to later retrieve
- * the operation results via CIOCNCRYPTRET or identify the 
+ * the operation results via CIOCNCRYPTRET or identify the
  * request in the completion list returned by CIOCNCRYPTRETM.
  *
  * The opaque pointer can be set arbitrarily by the user
@@ -137,17 +146,17 @@ struct ocrypt_op {
  */
 
 struct ocrypt_n_op {
-	u_int32_t	ses;
-	u_int16_t	op;		/* i.e. COP_ENCRYPT */
-	u_int16_t	flags;
-	u_int		len;		/* src & dst len */
+	uint32_t	ses;
+	uint16_t	op;		/* i.e. COP_ENCRYPT */
+	uint16_t	flags;
+	uint32_t	len;		/* src & dst len */
 
-	u_int32_t	reqid;		/* request id */
-	int		status;		/* status of request -accepted or not */	
+	uint32_t	reqid;		/* request id */
+	int		status;		/* status of request -accepted or not */
 	void		*opaque;	/* opaque pointer returned to user */
-	u_int32_t	keylen;		/* cipher key - optional */
+	uint32_t	keylen;		/* cipher key - optional */
 	void *		key;
-	u_int32_t	mackeylen;	/* also optional */
+	uint32_t	mackeylen;	/* also optional */
 	void *		mackey;
 
 	void *		src, *dst;	/* become iov[] inside kernel */
@@ -169,12 +178,6 @@ struct ocrypt_mop {
 #define	OCIOCNGSESSION	_IOWR('c', 106, struct ocrypt_sgop)
 #define OCIOCCRYPT	_IOWR('c', 103, struct ocrypt_op)
 #define OCIOCNCRYPTM	_IOWR('c', 107, struct ocrypt_mop)
-
-struct fcrypt;
-struct session_op;
-struct csession;
-struct crypt_op;
-struct crypt_n_op;
 
 int ocryptof_ioctl(struct file *, u_long, void *);
 

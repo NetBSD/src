@@ -1,5 +1,5 @@
 /* Linux-specific ptrace manipulation routines.
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,14 +16,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "linux-ptrace.h"
 #include "linux-procfs.h"
 #include "linux-waitpid.h"
-#include "gdbsupport/buffer.h"
 #ifdef HAVE_SYS_PROCFS_H
 #include <sys/procfs.h>
 #endif
+#include "gdbsupport/eintr.h"
 
 /* Stores the ptrace options supported by the running kernel.
    A value of -1 means we did not check for features yet.  A value
@@ -71,7 +70,7 @@ linux_ptrace_attach_fail_reason_string (ptid_t ptid, int err)
 #if defined __i386__ || defined __x86_64__
 
 /* Address of the 'ret' instruction in asm code block below.  */
-EXTERN_C void linux_ptrace_test_ret_to_nx_instr (void);
+extern "C" void linux_ptrace_test_ret_to_nx_instr (void);
 
 #include <sys/reg.h>
 #include <sys/mman.h>
@@ -179,7 +178,7 @@ linux_ptrace_test_ret_to_nx (void)
     }
 
   errno = 0;
-  got_pid = waitpid (child, &status, 0);
+  got_pid = gdb::waitpid (child, &status, 0);
   if (got_pid != child)
     {
       warning (_("linux_ptrace_test_ret_to_nx: waitpid returned %ld: %s"),
@@ -310,7 +309,7 @@ linux_child_function (void *child_stack)
   ptrace (PTRACE_TRACEME, 0, (PTRACE_TYPE_ARG3) 0, (PTRACE_TYPE_ARG4) 0);
   kill (getpid (), SIGSTOP);
 
-  /* This code is only reacheable by the child (grandchild's parent)
+  /* This code is only reachable by the child (grandchild's parent)
      process.  */
   _exit (0);
 }

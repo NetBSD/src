@@ -1,4 +1,4 @@
-/*	$NetBSD: ede.c,v 1.2.4.2 2025/08/02 05:53:25 perseant Exp $	*/
+/*	$NetBSD: ede.c,v 1.2.4.3 2026/11/04 23:18:00 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,6 +15,8 @@
 
 /*! \file */
 
+#include <inttypes.h>
+
 #include <isc/mem.h>
 #include <isc/util.h>
 
@@ -25,11 +27,11 @@
 
 static bool
 dns__ede_checkandupdateedeused(dns_edectx_t *edectx, uint16_t code) {
-	if (edectx->edeused & (1 << code)) {
+	if (edectx->edeused & (UINT64_C(1) << code)) {
 		return true;
 	}
 
-	edectx->edeused |= 1 << code;
+	edectx->edeused |= UINT64_C(1) << code;
 	return false;
 }
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2018/06/06 16:11:36 jakllsch Exp $
+#	$NetBSD: Makefile,v 1.1.40.1 2026/11/04 23:27:56 perseant Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ IOCONF=	virtio_pci.ioconf
 SRCS+=	virtio_pci.c
 
 CPPFLAGS+=	-DDIAGNOSTIC
+
+WARNS=	3	# -Wsign-compare issues
 
 .include <bsd.kmodule.mk>

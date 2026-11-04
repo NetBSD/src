@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.34 2022/05/30 14:18:10 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.34.10.1 2026/11/04 23:27:51 perseant Exp $
 
 SRCS+=	bswap16.c bswap32.c
 SRCS+=	htonl.c htons.c ntohl.c ntohs.c

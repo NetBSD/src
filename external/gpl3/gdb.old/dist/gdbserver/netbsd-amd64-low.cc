@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 #include <sys/ptrace.h>
 #include <limits.h>
 
-#include "server.h"
 #include "netbsd-low.h"
 #include "gdbsupport/x86-xstate.h"
 #include "arch/amd64.h"
@@ -64,6 +63,8 @@ enum netbsd_x86_64_gdb_regnum
   AMD64_MXCSR_REGNUM = AMD64_XMM0_REGNUM + 16,
   AMD64_YMM0H_REGNUM,	   /* %ymm0h */
   AMD64_YMM15H_REGNUM = AMD64_YMM0H_REGNUM + 15,
+  /* MPX is deprecated.  Yet we keep this to not give the registers below
+     a new number.  That could break older gdbservers.  */
   AMD64_BND0R_REGNUM = AMD64_YMM15H_REGNUM + 1,
   AMD64_BND3R_REGNUM = AMD64_BND0R_REGNUM + 3,
   AMD64_BNDCFGU_REGNUM,
@@ -192,7 +193,7 @@ netbsd_amd64_target::low_arch_setup ()
   target_desc *tdesc
     = amd64_create_target_description (X86_XSTATE_SSE_MASK, false, false, false);
 
-  init_target_desc (tdesc, amd64_expedite_regs);
+  init_target_desc (tdesc, amd64_expedite_regs, GDB_OSABI_NETBSD);
 
   current_process ()->tdesc = tdesc;
 }

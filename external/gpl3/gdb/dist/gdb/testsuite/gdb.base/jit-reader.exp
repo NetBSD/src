@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -102,12 +102,17 @@ proc jit_reader_test {} {
 
     set any "\[^\r\n\]*"
 
-    clean_restart $jit_host_bin
+    clean_restart
+    gdb_load $jit_host_bin
     gdb_load_shlib $jit_reader_bin
 
     if {$test_verbose > 0} {
 	gdb_test_no_output "set debug jit 1"
     }
+
+    # Just test that this is installed and prints something.
+    gdb_test "show jit-reader-directory" \
+	"JIT reader directory is .*\\."
 
     gdb_test_no_output "jit-reader-load ${jit_reader_bin}" "jit-reader-load"
     gdb_run_cmd

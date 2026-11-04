@@ -1,6 +1,6 @@
 /* Target-dependent code for FT32.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -174,8 +174,8 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
   ULONGEST inst;
   int isize = 0;
   int regnum, pushreg;
-  struct bound_minimal_symbol msymbol;
   const int first_saved_reg = 13;	/* The first saved register.  */
+
   /* PROLOGS are addresses of the subroutine prologs, PROLOGS[n]
      is the address of __prolog_$rN.
      __prolog_$rN pushes registers from 13 through n inclusive.
@@ -195,7 +195,8 @@ ft32_analyze_prologue (CORE_ADDR start_addr, CORE_ADDR end_addr,
 
       snprintf (prolog_symbol, sizeof (prolog_symbol), "__prolog_$r%02d",
 		regnum);
-      msymbol = lookup_minimal_symbol (prolog_symbol, NULL, NULL);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, prolog_symbol);
       if (msymbol.minsym)
 	prologs[regnum] = msymbol.value_address ();
       else
@@ -309,7 +310,7 @@ ft32_skip_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
 		  return sal.end;
 		}
 	    }
-	  /* No useable line symbol.  Use result of prologue parsing method.  */
+	  /* No usable line symbol.  Use result of prologue parsing method.  */
 	  return plg_end;
 	}
     }
@@ -524,16 +525,16 @@ ft32_frame_prev_register (const frame_info_ptr &this_frame,
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind ft32_frame_unwind =
-{
+static const struct frame_unwind_legacy ft32_frame_unwind (
   "ft32 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   ft32_frame_this_id,
   ft32_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Return the base address of this_frame.  */
 
@@ -620,9 +621,7 @@ ft32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 /* Register this machine's init routine.  */
 
-void _initialize_ft32_tdep ();
-void
-_initialize_ft32_tdep ()
+INIT_GDB_FILE (ft32_tdep)
 {
   gdbarch_register (bfd_arch_ft32, ft32_gdbarch_init);
 }

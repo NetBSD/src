@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -82,11 +82,10 @@ gdb_breakpoint [gdb_get_line_number "Inner test breakpoint"]
 gdb_continue_to_breakpoint "Inner test breakpoint"
 
 # Test multiple local blocks.
-gdb_test "bt full no-filters" \
+gdb_test_lines "bt full no-filters" "" \
     ".*#0.*end_func.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*"
-gdb_test "bt full" \
-    ".*#0.*cnuf_dne.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*" \
-    "bt full with filters"
+gdb_test_lines "bt full" "bt full with filters" \
+    ".*#0.*cnuf_dne.*h = 9.*f = 42.*g = 19.*bar = $hex \"Inside block x2\".*d = 15.*e = 14.*foo = $hex \"Inside block\".*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*"
 
 # Test pagination can be aborted even for frame filters.
 gdb_test_no_output "set height 5" "pagination quit - set height limited"
@@ -161,15 +160,12 @@ gdb_test "bt -2" \
 gdb_test "bt 3" \
     ".*#0.*end_func.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\)\[^#\]*More stack frames follow.*" \
     "bt 3 with frame-filter Reverse disabled"
-gdb_test "bt no-filter full" \
-    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*" \
-    "bt no-filters full with Reverse disabled"
-gdb_test "bt full" \
-    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\).*#23.*in func2 \\(f=3\\).*elided = $hex \"Elided frame\".*fb = \{nothing = $hex \"Elided Foo Bar\", f = 84, s = 38\}.*bf = $hex.*" \
-    "bt full with Reverse disabled"
-gdb_test "bt full hide" \
-    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\)\[^#\]*#24.*in func3 \\(i=3\\).*" \
-    "bt full hide with Reverse disabled"
+gdb_test_lines "bt no-filter full" "bt no-filters full with Reverse disabled" \
+    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*"
+gdb_test_lines "bt full" "bt full with Reverse disabled" \
+    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\).*#23.*in func2 \\(f=3\\).*elided = $hex \"Elided frame\".*fb = \{nothing = $hex \"Elided Foo Bar\", f = 84, s = 38\}.*bf = $hex.*"
+gdb_test_lines "bt full hide" "bt full hide with Reverse disabled" \
+    ".*#0.*end_func.*str = $hex \"The End\".*st2 = $hex \"Is Near\".*b = 12.*c = 5.*#1.*in funca \\(\\).*#2.*in funcb \\(j=10\\).*bar = \{a = 42, b = 84\}.*#22.*in func1 \\(\\)\[^#\]*#24.*in func3 \\(i=3\\).*"
 
 # Re-enable Reverse
 gdb_test_no_output "enable frame-filter global Reverse" \

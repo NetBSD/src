@@ -1,6 +1,6 @@
 /* Self tests for ui_file_style
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,6 +38,8 @@ run_tests ()
   SELF_CHECK (style.get_foreground ().is_none ());
   SELF_CHECK (style.get_background ().is_none ());
   SELF_CHECK (style.get_intensity () == ui_file_style::NORMAL);
+  SELF_CHECK (!style.is_italic ());
+  SELF_CHECK (!style.is_underline ());
   SELF_CHECK (!style.is_reverse ());
   SELF_CHECK (style.to_ansi () == "\033[m");
 
@@ -47,6 +49,8 @@ run_tests ()
   SELF_CHECK (style.get_foreground ().is_none ());
   SELF_CHECK (style.get_background ().is_none ());
   SELF_CHECK (style.get_intensity () == ui_file_style::NORMAL);
+  SELF_CHECK (!style.is_italic ());
+  SELF_CHECK (!style.is_underline ());
   SELF_CHECK (!style.is_reverse ());
   /* This particular case does not round-trip identically, but the
      difference is unimportant.  */
@@ -57,8 +61,10 @@ run_tests ()
   SELF_CHECK (style.get_foreground ().is_none ());
   SELF_CHECK (style.get_background ().is_none ());
   SELF_CHECK (style.get_intensity () == ui_file_style::NORMAL);
+  SELF_CHECK (!style.is_italic ());
+  SELF_CHECK (!style.is_underline ());
   SELF_CHECK (style.is_reverse ());
-  SELF_CHECK (style.to_ansi () == "\033[7m");
+  SELF_CHECK (style.to_ansi () == "\033[39;49;22;23;24;7m");
 
   style = ui_file_style ();
   SELF_CHECK (style.parse ("\033[32;1m", &n_read));
@@ -67,8 +73,22 @@ run_tests ()
   SELF_CHECK (style.get_foreground ().get_value () == ui_file_style::GREEN);
   SELF_CHECK (style.get_background ().is_none ());
   SELF_CHECK (style.get_intensity () == ui_file_style::BOLD);
+  SELF_CHECK (!style.is_italic ());
+  SELF_CHECK (!style.is_underline ());
   SELF_CHECK (!style.is_reverse ());
-  SELF_CHECK (style.to_ansi () == "\033[32;1m");
+  SELF_CHECK (style.to_ansi () == "\033[32;49;1;23;24;27m");
+
+  style = ui_file_style ();
+  SELF_CHECK (style.parse ("\033[32;2;3;4m", &n_read));
+  SELF_CHECK (n_read == 11);
+  SELF_CHECK (style.get_foreground ().is_basic ());
+  SELF_CHECK (style.get_foreground ().get_value () == ui_file_style::GREEN);
+  SELF_CHECK (style.get_background ().is_none ());
+  SELF_CHECK (style.get_intensity () == ui_file_style::DIM);
+  SELF_CHECK (style.is_italic ());
+  SELF_CHECK (style.is_underline ());
+  SELF_CHECK (!style.is_reverse ());
+  SELF_CHECK (style.to_ansi () == "\033[32;49;2;3;4;27m");
 
   style = ui_file_style ();
   SELF_CHECK (style.parse ("\033[38;5;112;48;5;249m", &n_read));
@@ -80,8 +100,10 @@ run_tests ()
   style.get_background ().get_rgb (rgb);
   CHECK_RGB (0xb2, 0xb2, 0xb2);
   SELF_CHECK (style.get_intensity () == ui_file_style::NORMAL);
+  SELF_CHECK (!style.is_italic ());
+  SELF_CHECK (!style.is_underline ());
   SELF_CHECK (!style.is_reverse ());
-  SELF_CHECK (style.to_ansi () == "\033[38;5;112;48;5;249m");
+  SELF_CHECK (style.to_ansi () == "\033[38;5;112;48;5;249;22;23;24;27m");
 
   style = ui_file_style ();
   SELF_CHECK (style.parse ("\033[38;2;83;84;85;48;2;0;1;254;2;7m", &n_read));
@@ -93,16 +115,16 @@ run_tests ()
   style.get_background ().get_rgb (rgb);
   CHECK_RGB (0, 1, 254);
   SELF_CHECK (style.get_intensity () == ui_file_style::DIM);
+  SELF_CHECK (!style.is_italic ());
+  SELF_CHECK (!style.is_underline ());
   SELF_CHECK (style.is_reverse ());
-  SELF_CHECK (style.to_ansi () == "\033[38;2;83;84;85;48;2;0;1;254;2;7m");
+  SELF_CHECK (style.to_ansi () == "\033[38;2;83;84;85;48;2;0;1;254;2;23;24;7m");
 }
 
 } /* namespace style */
 } /* namespace selftests */
 
-void _initialize_style_selftest ();
-void
-_initialize_style_selftest ()
+INIT_GDB_FILE (style_selftest)
 {
   selftests::register_test ("style",
 			    selftests::style::run_tests);

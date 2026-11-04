@@ -1,4 +1,4 @@
-/*	$NetBSD: alipm.c,v 1.13 2021/08/07 16:19:14 thorpej Exp $ */
+/*	$NetBSD: alipm.c,v 1.13.12.1 2026/11/04 23:22:04 perseant Exp $ */
 /*	$OpenBSD: alipm.c,v 1.13 2007/05/03 12:19:01 dlg Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.13 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alipm.c,v 1.13.12.1 2026/11/04 23:22:04 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,7 +133,6 @@ alipm_attach(device_t parent, device_t self, void *aux)
 {
 	struct alipm_softc *sc = device_private(self);
 	struct pci_attach_args *pa = aux;
-	struct i2cbus_attach_args iba;
 	pcireg_t iobase, reg;
 	bus_size_t iosize = ALIPM_SMB_SIZE;
 
@@ -145,8 +144,11 @@ alipm_attach(device_t parent, device_t self, void *aux)
 		/* Map I/O space */
 		iobase = pci_conf_read(pa->pa_pc, pa->pa_tag, ALIPM_BASE);
 		sc->sc_iot = pa->pa_iot;
-		if (iobase == 0 ||
-		    bus_space_map(sc->sc_iot, iobase >> 16,
+		if (iobase == 0) {
+			aprint_error_dev(sc->sc_dev, "I/O base not set\n");
+			return;
+		}
+		if (bus_space_map(sc->sc_iot, iobase >> 16,
 		    iosize, 0, &sc->sc_ioh)) {
 			aprint_error_dev(sc->sc_dev, "can't map I/O space\n");
 			return;
@@ -208,9 +210,7 @@ alipm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smb_tag.ic_cookie = sc;
 	sc->sc_smb_tag.ic_exec = alipm_smb_exec;
 
-	memset(&iba, 0, sizeof iba);
-	iba.iba_tag = &sc->sc_smb_tag;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_smb_tag);
 
 	return;
 

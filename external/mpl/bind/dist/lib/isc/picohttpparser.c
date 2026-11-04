@@ -1,4 +1,4 @@
-/*	$NetBSD: picohttpparser.c,v 1.2.6.1 2025/08/02 05:53:54 perseant Exp $	*/
+/*	$NetBSD: picohttpparser.c,v 1.2.6.2 2026/11/04 23:18:15 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009-2014 Kazuho Oku, Tokuhiro Matsuno, Daisuke Murase,
@@ -582,8 +582,10 @@ phr_parse_headers(const char *buf_start, size_t len, struct phr_header *headers,
 enum {
 	CHUNKED_IN_CHUNK_SIZE,
 	CHUNKED_IN_CHUNK_EXT,
+	CHUNKED_IN_CHUNK_HEADER_EXPECT_LF,
 	CHUNKED_IN_CHUNK_DATA,
-	CHUNKED_IN_CHUNK_CRLF,
+	CHUNKED_IN_CHUNK_DATA_EXPECT_CR,
+	CHUNKED_IN_CHUNK_DATA_EXPECT_LF,
 	CHUNKED_IN_TRAILERS_LINE_HEAD,
 	CHUNKED_IN_TRAILERS_LINE_MIDDLE
 };
@@ -648,7 +650,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			}
 			decoder->_hex_count = 0;
 			decoder->_state = CHUNKED_IN_CHUNK_EXT;
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_CHUNK_EXT:
 			/* RFC 7230 A.2 "Line folding in chunk extensions is
 			 * disallowed" */
@@ -656,9 +658,23 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				if (src == bufsz) {
 					goto Exit;
 				}
-				if (buf[src] == '\012') {
+				if (buf[src] == '\015') {
 					break;
+				} else if (buf[src] == '\012') {
+					ret = -1;
+					goto Exit;
 				}
+			}
+			++src;
+			decoder->_state = CHUNKED_IN_CHUNK_HEADER_EXPECT_LF;
+		/* fall through */
+		case CHUNKED_IN_CHUNK_HEADER_EXPECT_LF:
+			if (src == bufsz) {
+				goto Exit;
+			}
+			if (buf[src] != '\012') {
+				ret = -1;
+				goto Exit;
 			}
 			++src;
 			if (decoder->bytes_left_in_chunk == 0) {
@@ -671,7 +687,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				}
 			}
 			decoder->_state = CHUNKED_IN_CHUNK_DATA;
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_CHUNK_DATA: {
 			size_t avail = bufsz - src;
 			if (avail < decoder->bytes_left_in_chunk) {
@@ -690,17 +706,23 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 			src += decoder->bytes_left_in_chunk;
 			dst += decoder->bytes_left_in_chunk;
 			decoder->bytes_left_in_chunk = 0;
-			decoder->_state = CHUNKED_IN_CHUNK_CRLF;
+			decoder->_state = CHUNKED_IN_CHUNK_DATA_EXPECT_CR;
 		}
-		/* fallthru */
-		case CHUNKED_IN_CHUNK_CRLF:
-			for (;; ++src) {
-				if (src == bufsz) {
-					goto Exit;
-				}
-				if (buf[src] != '\015') {
-					break;
-				}
+		/* fall through */
+		case CHUNKED_IN_CHUNK_DATA_EXPECT_CR:
+			if (src == bufsz) {
+				goto Exit;
+			}
+			if (buf[src] != '\015') {
+				ret = -1;
+				goto Exit;
+			}
+			++src;
+			decoder->_state = CHUNKED_IN_CHUNK_DATA_EXPECT_LF;
+		/* fall through */
+		case CHUNKED_IN_CHUNK_DATA_EXPECT_LF:
+			if (src == bufsz) {
+				goto Exit;
 			}
 			if (buf[src] != '\012') {
 				ret = -1;
@@ -722,7 +744,7 @@ phr_decode_chunked(struct phr_chunked_decoder *decoder, char *buf,
 				goto Complete;
 			}
 			decoder->_state = CHUNKED_IN_TRAILERS_LINE_MIDDLE;
-		/* fallthru */
+		/* fall through */
 		case CHUNKED_IN_TRAILERS_LINE_MIDDLE:
 			for (;; ++src) {
 				if (src == bufsz) {
@@ -754,7 +776,9 @@ Exit:
 		if (decoder->_total_overhead >= 100 * 1024 &&
 		    decoder->_total_read - decoder->_total_overhead <
 			    decoder->_total_read / 4)
+		{
 			ret = -1;
+		}
 	}
 	return ret;
 }

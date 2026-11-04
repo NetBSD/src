@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.29.2.1 2025/08/02 05:56:31 perseant Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.29.2.2 2026/11/04 23:21:47 perseant Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.29.2.1 2025/08/02 05:56:31 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.29.2.2 2026/11/04 23:21:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -407,8 +407,14 @@ acpimcfg_init(bus_space_tag_t memt, const struct acpimcfg_ops *ops)
 		offset += sizeof(ACPI_MCFG_ALLOCATION);
 		ama = ACPI_ADD_PTR(ACPI_MCFG_ALLOCATION, mcfg, offset);
 	}
-	if (nsegs == 0)
+	if (nsegs == 0) {
+		aprint_verbose_dev(acpi_sc->sc_dev,
+		    "MCFG: no valid segments found\n");
+		kmem_free(mcfg_segs, sizeof(*mcfg_segs) * mcfg_nsegs);
+		mcfg_segs = NULL;
+		mcfg_nsegs = 0;
 		return ENOENT;
+	}
 
 	for (i = 0; i < nsegs; i++) {
 		seg = &mcfg_segs[i];

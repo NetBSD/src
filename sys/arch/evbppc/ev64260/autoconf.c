@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.17 2012/07/29 18:05:42 mlelstv Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.17.76.1 2026/11/04 23:20:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17 2012/07/29 18:05:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.17.76.1 2026/11/04 23:20:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -130,7 +130,6 @@ device_register(device_t dev, void *aux)
 	if (device_is_a(dev, "gfe") &&
 	    device_is_a(device_parent(dev), "gt") ) {
 		struct marvell_attach_args *mva = aux;
-		prop_data_t mac;
 		char enaddr[ETHER_ADDR_LEN] =
 		    { 0x02, 0x00, 0x04, 0x00, 0x00, 0x04 };
 
@@ -142,14 +141,12 @@ device_register(device_t dev, void *aux)
 			aprint_error("WARNING: unknown mac-no. for %s\n",
 			    device_xname(dev));
 		}
-
-		mac = prop_data_create_data_nocopy(enaddr, ETHER_ADDR_LEN);
-		KASSERT(mac != NULL);
-		if (prop_dictionary_set(dict, "mac-addr", mac) == false)
+		if (! device_setprop_data(dev, "mac-address", enaddr,
+					  ETHER_ADDR_LEN)) {
 			aprint_error(
-			    "WARNING: unable to set mac-addr property for %s\n",
+			    "WARNING: unable to set mac-address property for %s\n",
 			    device_xname(dev));
-		prop_object_release(mac);
+		}
 	}
 	if (device_is_a(dev, "gtpci")) {
 		extern struct gtpci_prot gtpci_prot;

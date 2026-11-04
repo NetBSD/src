@@ -33,7 +33,7 @@
    restart. (or to put it another way, long jump).  In looking at the
    code it may occure to you that, for some interrupts, they could
    return instead of restarting the cpu (eg system_call).  While true
-   (it once was like that) I've decided to make the behavour of all
+   (it once was like that) I've decided to make the behavior of all
    interrupt routines roughly identical.
 
    Because, a cpu's recorded state (ie what is in the cpu structure)

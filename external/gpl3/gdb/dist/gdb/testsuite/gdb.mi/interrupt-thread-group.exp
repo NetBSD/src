@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" $binfile \
 
 save_vars { GDBFLAGS } {
     append GDBFLAGS " -ex \"set non-stop on\" -ex \"set mi-async\""
-    mi_clean_restart $binfile
+    mi_clean_restart $::testfile
 }
 
 mi_detect_async
@@ -54,7 +54,7 @@ mi_send_resuming_command "exec-continue --thread-group i1" \
 
 # We can't run a second inferior on stub targets.  We can still test with one
 # inferior and ensure that the command has the desired effect.
-set use_second_inferior [expr {![use_gdb_stub]}]
+set use_second_inferior [expr {![use_gdb_stub] && [allow_multi_inferior_tests]}]
 
 if { $use_second_inferior } {
     mi_gdb_test "-add-inferior" \

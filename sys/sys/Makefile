@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.183.6.1 2025/08/02 05:57:54 perseant Exp $
+#	$NetBSD: Makefile,v 1.183.6.2 2026/11/04 23:28:04 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -52,7 +52,6 @@ INCS=	acct.h acl.h agpio.h aio.h ansi.h aout_mids.h ataio.h atomic.h \
 
 INCSYMLINKS=\
 	sys/cdbr.h /usr/include/cdbr.h \
-	sys/exec_elf.h /usr/include/elf.h \
 	sys/fcntl.h /usr/include/fcntl.h \
 	sys/md4.h /usr/include/md4.h \
 	sys/md5.h /usr/include/md5.h \

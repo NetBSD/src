@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2023-2024 Free Software Foundation, Inc.
+   Copyright 2023-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -50,6 +50,8 @@ worker_a (void *pArg)
       waitpid (pid, NULL, 0);
       usleep (5);
     }
+
+  return NULL;
 }
 
 static void*
@@ -61,6 +63,8 @@ worker_b (void *pArg)
       usleep (5);  /* break here */
       usleep (5);  /* other line */
     }
+
+  return NULL;
 }
 
 int

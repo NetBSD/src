@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amiga,v 1.111 2018/09/22 12:24:01 rin Exp $
+#	$NetBSD: Makefile.amiga,v 1.111.36.1 2026/11/04 23:20:00 perseant Exp $
 
 # Makefile for NetBSD
 #
@@ -26,12 +26,14 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 AMIGA=		$S/arch/amiga
-GENASSYM_CONF=	${AMIGA}/amiga/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${AMIGA}/amiga/genassym.cf
+
 
 ##
 ## (2) compile settings
 ##
-CPPFLAGS+=	-Damiga -DFPCOPROC
+CPPFLAGS+=	-Damiga
 .if !defined(CMACHFLAGS)
 .include "$S/arch/m68k/Makefile.cmachflags"
 CMACHFLAGS+=	-Wa,-mcpu=68030 -Wa,-m68030 -Wa,-m68851
@@ -47,6 +49,8 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 

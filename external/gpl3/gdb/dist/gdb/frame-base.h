@@ -1,6 +1,6 @@
 /* Definitions for a frame base, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (FRAME_BASE_H)
-#define FRAME_BASE_H 1
+#ifndef GDB_FRAME_BASE_H
+#define GDB_FRAME_BASE_H
 
 class frame_info_ptr;
 struct frame_id;
@@ -32,7 +32,7 @@ struct regcache;
    the NEXT frame's register unwind method, to determine the address
    of THIS frame's `base'.
 
-   The exact meaning of `base' is highly dependant on the type of the
+   The exact meaning of `base' is highly dependent on the type of the
    debug info.  It is assumed that dwarf2, stabs, ... will each
    provide their own methods.
 
@@ -88,4 +88,4 @@ extern void frame_base_set_default (struct gdbarch *gdbarch,
 
 extern const struct frame_base *frame_base_find_by_frame (const frame_info_ptr &this_frame);
 
-#endif
+#endif /* GDB_FRAME_BASE_H */

@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,6 +37,7 @@
 standard_testfile
 
 require can_spawn_for_attach
+require allow_multi_inferior_tests
 
 if { [build_executable "failed to prepare" ${testfile} ${srcfile}] } {
     return
@@ -45,11 +46,11 @@ if { [build_executable "failed to prepare" ${testfile} ${srcfile}] } {
 proc do_test {} {
     save_vars { ::GDBFLAGS } {
 	append ::GDBFLAGS " -ex \"maint set target-non-stop on\""
-	clean_restart $::binfile
+	clean_restart $::testfile
     }
 
     gdb_test -no-prompt-anchor "run &"
-    gdb_test "add-inferior" "Added inferior 2 on connection 1 .*"
+    gdb_test -no-prompt-anchor "add-inferior" "Added inferior 2 on connection 1 .*"
     gdb_test "inferior 2" "Switching to inferior 2 .*"
 
     set spawn_id [spawn_wait_for_attach $::binfile]

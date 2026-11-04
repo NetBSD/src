@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:07 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.58.1 2026/11/04 23:27:53 perseant Exp $
 
 .include "../Makefile.inc"
 
@@ -15,5 +15,8 @@ SRCS+=	ata_raid_nvidia.c
 SRCS+=	ata_raid_via.c
 SRCS+=	ata_raid_jmicron.c
 SRCS+=	ata_raid_intel.c
+
+# -Wsign-compare issues
+WARNS=  3
 
 .include <bsd.kmodule.mk>

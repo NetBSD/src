@@ -1,4 +1,4 @@
-/* $Id: imx23_usbphyreg.h,v 1.1 2013/10/07 17:36:40 matt Exp $ */
+/* $NetBSD: imx23_usbphyreg.h,v 1.1.72.1 2026/11/04 23:20:11 perseant Exp $ */
 
 /*
  * Copyright (c) 2013 The NetBSD Foundation, Inc.

@@ -1,5 +1,5 @@
 /* Header for environment manipulation library.
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_ENVIRON_H
-#define COMMON_ENVIRON_H
+#ifndef GDBSUPPORT_ENVIRON_H
+#define GDBSUPPORT_ENVIRON_H
 
 #include <vector>
 #include <set>
@@ -100,4 +100,4 @@ private:
   std::set<std::string> m_user_unset_env;
 };
 
-#endif /* COMMON_ENVIRON_H */
+#endif /* GDBSUPPORT_ENVIRON_H */

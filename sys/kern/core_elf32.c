@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.67 2021/01/02 02:13:42 rin Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.67.24.1 2026/11/04 23:27:47 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.67 2021/01/02 02:13:42 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.67.24.1 2026/11/04 23:27:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -51,15 +51,18 @@ __KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.67 2021/01/02 02:13:42 rin Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
+#include <sys/types.h>
+
+#include <sys/compat_stub.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/ptrace.h>
-#include <sys/kmem.h>
 #include <sys/kauth.h>
-#include <sys/compat_stub.h>
+#include <sys/kmem.h>
+#include <sys/proc.h>
+#include <sys/ptrace.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 #include <machine/reg.h>
 
@@ -98,7 +101,7 @@ static int	ELFNAMEEND(coredump_notes)(struct lwp *, struct note_state *);
 static int	ELFNAMEEND(coredump_note)(struct lwp *, struct note_state *);
 
 /* The 'note' section names and data are always 4-byte aligned. */
-#define	ELFROUNDSIZE	4	/* XXX Should it be sizeof(Elf_Word)? */
+#define	ELFROUNDSIZE	sizeof(Elf_Word)
 
 #define elf_read_lwpstatus	CONCAT(process_read_lwpstatus, ELFSIZE)
 #define elf_lwpstatus		CONCAT(process_lwpstatus, ELFSIZE)
@@ -227,12 +230,13 @@ ELFNAMEEND(real_coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	ws.npsections = npsections - 1;
 	ws.p = l->l_proc;
 	MODULE_HOOK_CALL(uvm_coredump_walkmap_hook,
-	    (l->l_proc, ELFNAMEEND(coredump_getseghdrs), &ws), ENOSYS, error);
+	    (l->l_proc, ELFNAMEEND(coredump_getseghdrs), &ws),
+	    SET_ERROR(ENOSYS), error);
 	if (error)
 		goto out;
 	if (ws.npsections != 0) {
 		/* A section went away */
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto out;
 	}
 
@@ -248,7 +252,7 @@ ELFNAMEEND(real_coredump)(struct lwp *l, struct coredump_iostate *cookie)
 
 	/* Write the P-section headers followed by the PT_NOTE header */
 	MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_SYSSPACE, psections,
-	    psectionssize), ENOSYS, error);
+	    psectionssize), SET_ERROR(ENOSYS), error);
 	if (error)
 		goto out;
 
@@ -265,7 +269,7 @@ ELFNAMEEND(real_coredump)(struct lwp *l, struct coredump_iostate *cookie)
 		MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_SYSSPACE,
 		    nb->nb_data,
 		    nb->nb_next == NULL ? ns.ns_offset : sizeof nb->nb_data),
-		    ENOSYS, error);
+		    SET_ERROR(ENOSYS), error);
 		if (error)
 			goto out;
 	}
@@ -285,7 +289,7 @@ ELFNAMEEND(real_coredump)(struct lwp *l, struct coredump_iostate *cookie)
 
 		MODULE_HOOK_CALL(coredump_write_hook, (cookie, UIO_USERSPACE,
 		    (void *)(vaddr_t)psections[i].p_vaddr,
-		    psections[i].p_filesz), ENOSYS, error);
+		    psections[i].p_filesz), SET_ERROR(ENOSYS), error);
 		if (error)
 			goto out;
 	}
@@ -311,7 +315,7 @@ ELFNAMEEND(coredump_getseghdrs)(struct uvm_coredump_state *us)
 
 	/* Don't overrun if there are more sections */
 	if (ws->npsections == 0)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	ws->npsections--;
 
 	size = us->end - us->start;

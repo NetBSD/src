@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.380.2.1 2025/08/02 05:55:51 perseant Exp $
+# $NetBSD: GENERIC,v 1.380.2.2 2026/11/04 23:20:54 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.380.2.1 $"
+#ident 		"GENERIC-$Revision: 1.380.2.2 $"
 
 maxusers	32
 
@@ -358,6 +358,7 @@ iic*	at ki2c?
 dbcool* 	at iic?		# dbCool thermal monitor & fan control
 lmtemp* 	at iic?		# temperature sensor, found in PowerBook5,6
 lmenv* 		at iic?		# fan controller, found in Xserve G4
+drivebay* 	at iic?		# drivebays in Xserve G4
 admtemp* 	at iic?		# temperature sensor found in Mini, G5
 psoc* 		at iic?		# fan controller found in TiBooks
 lmu* 		at iic?		# ambient / keyboard lights

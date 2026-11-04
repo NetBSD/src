@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/mips.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "osabi.h"
 #include "regset.h"
 #include "trad-frame.h"
@@ -275,7 +275,7 @@ mips_fbsd_iterate_over_regset_sections (struct gdbarch *gdbarch,
 
 static void
 mips_fbsd_sigframe_init (const struct tramp_frame *self,
-			 frame_info_ptr this_frame,
+			 const frame_info_ptr &this_frame,
 			 struct trad_frame_cache *cache,
 			 CORE_ADDR func)
 {
@@ -367,7 +367,7 @@ static const struct tramp_frame mips_fbsd_sigframe =
 
 static void
 mips64_fbsd_sigframe_init (const struct tramp_frame *self,
-			   frame_info_ptr this_frame,
+			   const frame_info_ptr &this_frame,
 			   struct trad_frame_cache *cache,
 			   CORE_ADDR func)
 {
@@ -468,8 +468,8 @@ static const struct tramp_frame mips64_fbsd_sigframe =
 static CORE_ADDR
 mips_fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol msym
-    = lookup_bound_minimal_symbol ("_mips_rtld_bind");
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, "_mips_rtld_bind");
   if (msym.minsym != nullptr && msym.value_address () == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 

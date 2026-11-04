@@ -1,6 +1,6 @@
 /* Native-dependent code for modern i386 BSD's.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -237,9 +237,7 @@ i386bsd_store_inferior_registers (struct regcache *regcache, int regnum)
     }
 }
 
-void _initialize_i386bsd_nat ();
-void
-_initialize_i386bsd_nat ()
+INIT_GDB_FILE (i386bsd_nat)
 {
   /* To support the recognition of signal handlers, i386-bsd-tdep.c
      hardcodes some constants.  Inclusion of this file means that we

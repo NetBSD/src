@@ -1,0 +1,79 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test a binary that uses MOPS (Memory Operations) instructions.
+# This test is similar to gdb.base/memops-watchpoint.exp, but specifically
+# tests MOPS instructions rather than whatever instructions are used in the
+# system libc's implementation of memset/memcpy/memmove.
+
+require allow_hw_watchpoint_tests allow_aarch64_mops_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  [list debug additional_flags=-march=armv9.3-a]] } {
+    return -1
+}
+
+set linespec ${srcfile}:[gdb_get_line_number "Break here"]
+if ![runto ${linespec}] {
+    return -1
+}
+
+gdb_test "watch -location a\[28\]" \
+    "(Hardware w|W)atchpoint ${decimal}: -location a\\\[28\\\]" \
+    "set watch on a"
+gdb_test "watch -location b\[28\]" \
+    "(Hardware w|W)atchpoint ${decimal}: -location b\\\[28\\\]" \
+    "set watchpoint on b"
+gdb_test "watch -location c\[28\]" \
+    "(Hardware w|W)atchpoint ${decimal}: -location c\\\[28\\\]" \
+    "set watchpoint on c"
+
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "" \
+	 "Hardware watchpoint ${decimal}: -location a\\\[28\\\]" \
+	 "" \
+	 "Old value = 104 'h'" \
+	 "New value = 0 '\\\\000'" \
+	 "$hex in main \\(\\) at .*aarch64-mops-watchpoint.c:$decimal" \
+	 "${decimal}\\s+__asm__ volatile \\(\"setp.*\\\\n\\\\t\""] \
+    "continue until set watchpoint hits"
+
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "" \
+	 "Hardware watchpoint ${decimal}: -location b\\\[28\\\]" \
+	 "" \
+	 "Old value = 101 'e'" \
+	 "New value = 114 'r'" \
+	 "$hex in main \\(\\) at .*aarch64-mops-watchpoint.c:$decimal" \
+	 "${decimal}\\s+__asm__ volatile \\(\"cpyp.*\\\\n\\\\t\""] \
+    "continue until cpy watchpoint hits"
+
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "" \
+	 "Hardware watchpoint ${decimal}: -location c\\\[28\\\]" \
+	 "" \
+	 "Old value = 100 'd'" \
+	 "New value = 114 'r'" \
+	 "$hex in main \\(\\) at .*aarch64-mops-watchpoint.c:$decimal" \
+	 "${decimal}\\s+__asm__ volatile \\(\"cpyfp.*\\\\n\\\\t\""] \
+    "continue until cpyf watchpoint hits"

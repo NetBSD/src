@@ -1,6 +1,6 @@
 /* Self tests for scoped_fd for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -92,9 +92,7 @@ run_tests ()
 } /* namespace scoped_fd */
 } /* namespace selftests */
 
-void _initialize_scoped_fd_selftests ();
-void
-_initialize_scoped_fd_selftests ()
+INIT_GDB_FILE (scoped_fd_selftests)
 {
   selftests::register_test ("scoped_fd",
 			    selftests::scoped_fd::run_tests);

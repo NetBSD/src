@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.38 2022/06/25 13:24:35 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.38.10.1 2026/11/04 23:20:13 perseant Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.

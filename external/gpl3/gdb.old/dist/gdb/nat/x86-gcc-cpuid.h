@@ -3,11 +3,11 @@
  * include this directly, but pull in x86-cpuid.h and use that func.
  */
 
-#ifndef NAT_X86_GCC_CPUID_H
-#define NAT_X86_GCC_CPUID_H
+#ifndef GDB_NAT_X86_GCC_CPUID_H
+#define GDB_NAT_X86_GCC_CPUID_H
 
 /*
- * Copyright (C) 2007-2023 Free Software Foundation, Inc.
+ * Copyright (C) 2007-2024 Free Software Foundation, Inc.
  *
  * This file is free software; you can redistribute it and/or modify it
  * under the terms of the GNU General Public License as published by the
@@ -273,4 +273,4 @@ __get_cpuid_count (unsigned int __leaf, unsigned int __subleaf,
   return 1;
 }
 
-#endif /* NAT_X86_GCC_CPUID_H */
+#endif /* GDB_NAT_X86_GCC_CPUID_H */

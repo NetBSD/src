@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11.2.1 2026/11/04 23:20:18 perseant Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -97,7 +97,7 @@ char		*vmmap;
  *	This is called after mapping has already been enabled
  *	and just syncs the pmap module with what has already been done.
  */
-void
+void __attribute__((no_instrument_function))
 pmap_bootstrap(vaddr_t vstart)
 {
 	vaddr_t	va;
@@ -121,6 +121,7 @@ pmap_bootstrap(vaddr_t vstart)
 	/*
 	 * Count physical memory
 	 */
+	extern vsize_t mem_size;
 	mem_size = 0;
 	for (i = 0; i < NMEM_SEGS; i++) {
 		if (boot_segs[i].start == boot_segs[i].end)

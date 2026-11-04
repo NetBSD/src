@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once2.sh,v 1.8 2022/09/29 07:22:49 skrll Exp $
+#	$NetBSD: t_call_once2.sh,v 1.8.4.1 2026/11/04 23:28:23 perseant Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -155,6 +155,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -pg -o call_once2 test.cpp -pthread
+	case $(uname -p) in
+	vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once2
 }
 
@@ -429,6 +434,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -fpie -pie -o call_once2 test.cpp -pthread
+	case $(uname -p) in
+	alpha)
+		atf_expect_fail "PR port-alpha/60356: pie tests are failing on alpha"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once2
 }
 

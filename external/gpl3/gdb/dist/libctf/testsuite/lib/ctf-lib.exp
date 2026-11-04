@@ -1,5 +1,5 @@
 # Support routines for libctf testsuite.
-#   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+#   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -19,6 +19,51 @@
 # MA 02110-1301, USA.
 
 load_file $srcdir/../../ld/testsuite/lib/ld-lib.exp
+
+# Returns true if the target linker deduplicates CTF.
+proc check_ctf_linker_dedup { } {
+    global ctf_linker_dedup_saved
+
+    if {![info exists ctf_linker_dedup_saved]} {
+	set ctf_linker_dedup_saved 0
+
+	if ([check_ctf_available]) {
+	    global objdump srcdir
+
+	    set basename "tmpdir/ctf_linker_dedups[pid]"
+	    compile_one_cc $srcdir/libctf-lookup/ambiguous-struct-A.c ${basename}-A.o "-gctf -fPIC -c"
+	    compile_one_cc $srcdir/libctf-lookup/ambiguous-struct-B.c ${basename}-B.o "-gctf -fPIC -c"
+	    compile_one_cc "${basename}-A.o ${basename}-B.o" $basename.so "-gctf -fPIC -shared"
+	    if {! [remote_file host exists $basename.so] } {
+		return 0
+	    }
+
+	    # Don't use run_host_cmd: it dumps the entire output into the log,
+	    # even on success.
+	    set cmdret [remote_exec host [concat sh -c [list "$objdump --ctf $basename.so >dump.out 2>dump.err"]] "" "/dev/null"]
+	    set cmdret [lindex $cmdret 0]
+	    remote_upload host "dump.out"
+	    remote_upload host "dump.err"
+	    set dump_out [prune_warnings [file_contents "dump.out"]]
+	    set dump_err [prune_warnings [file_contents "dump.err"]]
+	    remote_file host delete "dump.out" "dump.err"
+	    remote_file build delete "dump.out" "dump.err"
+
+	    if {$cmdret != 0} {
+		verbose -log "failed with $cmdret: stderr: $dump_err"
+		verbose -log "output: $dump_out"
+		return 0;
+	    }
+
+	    remote_file host delete $basename.so ${basename}-A.o ${basename}-B.o
+	    if [regexp {CTF archive member: } $dump_out] {
+		set ctf_linker_dedup_saved 1
+	    }
+	}
+    }
+    return $ctf_linker_dedup_saved
+}
+
 
 proc run_native_host_cmd { command } {
     global link_output
@@ -136,11 +181,13 @@ proc run_lookup_test { name } {
     } else {
 	set file "$srcdir/$subdir/$name"
     }
+    # strip off the srcdir, which contains build host specific pathnames
+    set file4log [string map [list $srcdir/ ""] $file]
 
     set opt_array [slurp_options "${file}.lk"]
     if { $opt_array == -1 } {
 	perror "error reading options from $file.lk"
-	unresolved $subdir/$name
+	unresolved $file4log
 	return
     }
     set run_ld 0
@@ -166,7 +213,7 @@ proc run_lookup_test { name } {
 	}
 	if ![info exists opts($opt_name)] {
 	    perror "unknown option $opt_name in file $file.lk"
-	    unresolved $subdir/$name
+	    unresolved $file4log
 	    return
 	}
 
@@ -175,12 +222,12 @@ proc run_lookup_test { name } {
 
     if { [llength $opts(no_cross)] != 0
 	 && "$TEST_CROSS" eq "yes" } {
-	untested "$subdir/$name not tested when cross-compiling"
+	untested "$file4log not tested when cross-compiling"
 	return
     }
 
     if { [llength $opts(host)] != 0 && ![ishost $opts(host)] } {
-	untested "$subdir/$name only runs on $opts(host)"
+	untested "$file4log only runs on $opts(host)"
 	return
     }
 
@@ -203,10 +250,7 @@ proc run_lookup_test { name } {
 	set shared ""
     }
 
-    set testname $opts(name)
-    if { $opts(name) == "" } {
-	set testname "$subdir/$name"
-    }
+    set testname $file4log
 
     # Compile and link the lookup program.
     set comp_output [prune_warnings [compile_link_one_host_cc $opts(lookup) "tmpdir/lookup" "libctf.la $opts(lookup_link)"]]
@@ -268,6 +312,11 @@ proc run_lookup_test { name } {
 	set results [run_host_cmd tmpdir/lookup $lookup_output]
     } else {
 	set results [run_host_cmd "$opts(wrapper) tmpdir/lookup" $lookup_output]
+    }
+
+    if { [regexp {^UNSUPPORTED: (.*)$} $results -> reason] } {
+	unsupported "$testname: $reason"
+	return 0
     }
 
     set f [open "tmpdir/lookup.out" "w"]

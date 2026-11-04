@@ -1,5 +1,5 @@
 /* Terminal interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (TERMINAL_H)
-#define TERMINAL_H 1
+#ifndef GDB_TERMINAL_H
+#define GDB_TERMINAL_H
 
 struct inferior;
 
@@ -43,4 +43,4 @@ extern void gdb_save_tty_state (void);
    have had a chance to alter it.  */
 extern void set_initial_gdb_ttystate (void);
 
-#endif /* !defined (TERMINAL_H) */
+#endif /* GDB_TERMINAL_H */

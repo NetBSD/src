@@ -1,6 +1,6 @@
 /* Abstract base class inherited by all process_stratum targets
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PROCESS_STRATUM_TARGET_H
-#define PROCESS_STRATUM_TARGET_H
+#ifndef GDB_PROCESS_STRATUM_TARGET_H
+#define GDB_PROCESS_STRATUM_TARGET_H
 
 #include "target.h"
-#include <set>
-#include "gdbsupport/intrusive_list.h"
 #include "gdbsupport/gdb-checked-static-cast.h"
+#include "gdbsupport/unordered_set.h"
 #include "gdbthread.h"
 
 /* Abstract base class inherited by all process_stratum targets.  */
@@ -166,11 +165,12 @@ as_process_stratum_target (target_ops *target)
 
 /* Return a collection of targets that have non-exited inferiors.  */
 
-extern std::set<process_stratum_target *> all_non_exited_process_targets ();
+extern gdb::unordered_set<process_stratum_target *>
+     all_non_exited_process_targets ();
 
 /* Switch to the first inferior (and program space) of TARGET, and
    switch to no thread selected.  */
 
 extern void switch_to_target_no_thread (process_stratum_target *target);
 
-#endif /* !defined (PROCESS_STRATUM_TARGET_H) */
+#endif /* GDB_PROCESS_STRATUM_TARGET_H */

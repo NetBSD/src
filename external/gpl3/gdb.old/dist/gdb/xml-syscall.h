@@ -1,7 +1,7 @@
 /* Functions that provide the mechanism to parse a syscall XML file
    and get its values.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef XML_SYSCALL_H
-#define XML_SYSCALL_H 1
+#ifndef GDB_XML_SYSCALL_H
+#define GDB_XML_SYSCALL_H
 
 /* Function used to set the name of the file which contains
    information about the system calls present in the current
@@ -66,4 +66,4 @@ bool get_syscalls_by_group (struct gdbarch *gdbarch, const char *group,
 
 const char **get_syscall_group_names (struct gdbarch *gdbarch);
 
-#endif /* XML_SYSCALL_H */
+#endif /* GDB_XML_SYSCALL_H */

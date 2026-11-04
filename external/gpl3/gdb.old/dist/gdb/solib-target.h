@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2007-2023 Free Software Foundation, Inc.
+   Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_TARGET_H
-#define SOLIB_TARGET_H
+#ifndef GDB_SOLIB_TARGET_H
+#define GDB_SOLIB_TARGET_H
 
-struct target_so_ops;
-extern const struct target_so_ops solib_target_so_ops;
+struct solib_ops;
+extern const solib_ops solib_target_so_ops;
 
-#endif /* solib-target.h */
+#endif /* GDB_SOLIB_TARGET_H */

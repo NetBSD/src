@@ -1,5 +1,5 @@
 /* chew
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Contributed by steve chamberlain @cygnus
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -132,8 +132,8 @@ int warning;
 string_type stack[STACK];
 string_type *tos;
 
-unsigned int idx = 0; /* Pos in input buffer */
-string_type *ptr; /* and the buffer */
+unsigned int pos_idx = 0; /* Pos in input buffer */
+string_type *buf_ptr; /* and the buffer */
 
 intptr_t istack[STACK];
 intptr_t *isp = &istack[0];
@@ -149,7 +149,7 @@ die (char *msg)
   exit (1);
 }
 
-void *
+static void *
 xmalloc (size_t size)
 {
   void *newmem;
@@ -163,7 +163,7 @@ xmalloc (size_t size)
   return newmem;
 }
 
-void *
+static void *
 xrealloc (void *oldmem, size_t size)
 {
   void *newmem;
@@ -180,7 +180,7 @@ xrealloc (void *oldmem, size_t size)
   return newmem;
 }
 
-char *
+static char *
 xstrdup (const char *s)
 {
   size_t len = strlen (s) + 1;
@@ -200,22 +200,6 @@ static void
 init_string (string_type *buffer)
 {
   init_string_with_size (buffer, DEF_SIZE);
-}
-
-static int
-find (string_type *str, char *what)
-{
-  unsigned int i;
-  char *p;
-  p = what;
-  for (i = 0; i < str->write_idx && *p; i++)
-    {
-      if (*p == str->ptr[i])
-	p++;
-      else
-	p = what;
-    }
-  return (*p == 0);
 }
 
 static void
@@ -853,7 +837,7 @@ icopy_past_newline (void)
   tos++;
   check_range ();
   init_string (tos);
-  idx = copy_past_newline (ptr, idx, tos);
+  pos_idx = copy_past_newline (buf_ptr, pos_idx, tos);
   pc++;
 }
 
@@ -1046,11 +1030,11 @@ get_stuff_in_command (void)
   check_range ();
   init_string (tos);
 
-  while (at (ptr, idx))
+  while (at (buf_ptr, pos_idx))
     {
-      if (iscommand (ptr, idx))
+      if (iscommand (buf_ptr, pos_idx))
 	break;
-      idx = copy_past_newline (ptr, idx, tos);
+      pos_idx = copy_past_newline (buf_ptr, pos_idx, tos);
     }
   pc++;
 }
@@ -1089,7 +1073,7 @@ icatstr (void)
 static void
 skip_past_newline (void)
 {
-  idx = skip_past_newline_1 (ptr, idx);
+  pos_idx = skip_past_newline_1 (buf_ptr, pos_idx);
   pc++;
 }
 
@@ -1120,7 +1104,7 @@ catstrif (void)
   pc++;
 }
 
-char *
+static char *
 nextword (char *string, char **word)
 {
   char *word_start;
@@ -1208,7 +1192,7 @@ nextword (char *string, char **word)
     return NULL;
 }
 
-dict_type *
+static dict_type *
 lookup_word (char *word)
 {
   dict_type *ptr = root;
@@ -1261,15 +1245,15 @@ perform (void)
 {
   tos = stack;
 
-  while (at (ptr, idx))
+  while (at (buf_ptr, pos_idx))
     {
       /* It's worth looking through the command list.  */
-      if (iscommand (ptr, idx))
+      if (iscommand (buf_ptr, pos_idx))
 	{
 	  char *next;
 	  dict_type *word;
 
-	  (void) nextword (addr (ptr, idx), &next);
+	  (void) nextword (addr (buf_ptr, pos_idx), &next);
 
 	  word = lookup_word (next);
 
@@ -1281,16 +1265,16 @@ perform (void)
 	    {
 	      if (warning)
 		fprintf (stderr, "warning, %s is not recognised\n", next);
-	      idx = skip_past_newline_1 (ptr, idx);
+	      pos_idx = skip_past_newline_1 (buf_ptr, pos_idx);
 	    }
 	  free (next);
 	}
       else
-	idx = skip_past_newline_1 (ptr, idx);
+	pos_idx = skip_past_newline_1 (buf_ptr, pos_idx);
     }
 }
 
-dict_type *
+static dict_type *
 newentry (char *word)
 {
   dict_type *new_d = xmalloc (sizeof (*new_d));
@@ -1303,7 +1287,7 @@ newentry (char *word)
   return new_d;
 }
 
-unsigned int
+static unsigned int
 add_to_definition (dict_type *entry, pcu word)
 {
   if (entry->code_end == entry->code_length)
@@ -1317,7 +1301,7 @@ add_to_definition (dict_type *entry, pcu word)
   return entry->code_end++;
 }
 
-void
+static void
 add_intrinsic (char *name, void (*func) (void))
 {
   dict_type *new_d = newentry (xstrdup (name));
@@ -1345,7 +1329,7 @@ add_intrinsic_variable (const char *name, intptr_t *loc)
   add_variable (xstrdup (name), loc);
 }
 
-void
+static void
 compile (char *string)
 {
   /* Add words to the dictionary.  */
@@ -1539,7 +1523,7 @@ main (int ac, char *av[])
   init_string (&pptr);
   init_string (stack + 0);
   tos = stack + 1;
-  ptr = &pptr;
+  buf_ptr = &pptr;
 
   add_intrinsic ("push_text", push_text);
   add_intrinsic ("!", bang);
@@ -1583,7 +1567,7 @@ main (int ac, char *av[])
   catchar (&buffer, '\n');
 
   read_in (&buffer, stdin);
-  remove_noncomments (&buffer, ptr);
+  remove_noncomments (&buffer, buf_ptr);
   for (i = 1; i < (unsigned int) ac; i++)
     {
       if (av[i][0] == '-')

@@ -1,5 +1,5 @@
 /* Support for printing Pascal types for GDB, the GNU debugger.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 /* This file is derived from p-typeprint.c */
 
 #include "event-top.h"
-#include "gdbsupport/gdb_obstack.h"
 #include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"

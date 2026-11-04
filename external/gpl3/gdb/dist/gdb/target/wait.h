@@ -1,6 +1,6 @@
 /* Target wait definitions and prototypes.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_WAIT_H
-#define TARGET_WAIT_H
+#ifndef GDB_TARGET_WAIT_H
+#define GDB_TARGET_WAIT_H
 
 #include "gdbsupport/enum-flags.h"
 
@@ -34,4 +34,4 @@ enum target_wait_flag : unsigned
 
 DEF_ENUM_FLAGS_TYPE (enum target_wait_flag, target_wait_flags);
 
-#endif /* TARGET_WAIT_H */
+#endif /* GDB_TARGET_WAIT_H */

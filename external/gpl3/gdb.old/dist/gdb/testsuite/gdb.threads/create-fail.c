@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2023 Free Software Foundation, Inc.
+   Copyright 2012-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,10 +23,8 @@
 #include <errno.h>
 #include <string.h>
 #include <assert.h>
-#include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
-#include <assert.h>
 #include <unistd.h>
 
 /* Count the number of tasks/threads in the PID thread group.  */

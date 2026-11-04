@@ -1,4 +1,4 @@
-/*	$NetBSD: netwinder_machdep.c,v 1.93 2024/02/21 23:23:06 andvar Exp $	*/
+/*	$NetBSD: netwinder_machdep.c,v 1.93.2.1 2026/11/04 23:21:03 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.93 2024/02/21 23:23:06 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwinder_machdep.c,v 1.93.2.1 2026/11/04 23:21:03 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -199,7 +199,7 @@ static void kcomcnputc(dev_t, int);
 #define IGS_PCI_MEM_VSIZE		0x01000000
 #define IGS_PCI_MEM_BASE		0x08000000
 
-extern struct arm32_pci_chipset footbridge_pci_chipset;
+extern struct md_pci_chipset footbridge_pci_chipset;
 extern struct bus_space footbridge_pci_io_bs_tag;
 extern struct bus_space footbridge_pci_mem_bs_tag;
 extern void footbridge_pci_bs_tag_init(void);
@@ -247,7 +247,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
+/*	cnpollc(true);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

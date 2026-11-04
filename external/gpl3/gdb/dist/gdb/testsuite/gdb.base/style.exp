@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -12,6 +12,8 @@
 #
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+require {!is_remote host}
 
 load_lib gdb-python.exp
 
@@ -70,9 +72,12 @@ proc run_style_tests { } {
     global currently_disabled_style decimal hex
 
     with_ansi_styling_terminal {
+	setenv TERM xterm-256color
+	setenv COLORTERM truecolor
+
 	# Restart GDB with the correct TERM variable setting, this
 	# means that GDB will enable styling.
-	clean_restart_and_disable "restart 1" ${binfile}
+	clean_restart_and_disable "restart 1" $::testfile
 
 	set readnow [readnow]
 
@@ -99,7 +104,8 @@ proc run_style_tests { } {
 
 	set main_expr [limited_style main function]
 	set base_file_expr [limited_style ".*style\\.c" file]
-	set file_expr "$base_file_expr:\[0-9\]+"
+	set line_expr [limited_style $decimal line-number]
+	set file_expr "$base_file_expr:$line_expr"
 	set arg_expr [limited_style "arg." variable]
 
 	# On some embedded targets that don't fully support argc/argv,
@@ -109,12 +115,13 @@ proc run_style_tests { } {
 	gdb_test "frame" \
 	    [multi_line \
 		 "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex.*\\)\\s+at\\s+$file_expr" \
-		 "\[0-9\]+\\s+.*return.* break here .*"]
-	gdb_test "info breakpoints" "$main_expr at $file_expr.*"
+		 "$line_expr\\s+.*return.* break here .*"]
+	gdb_test "info breakpoints" \
+	    ".*[limited_style What title].*$main_expr at $file_expr.*"
 
 	gdb_test_no_output "set style sources off"
 	gdb_test "frame" \
-	    "\r\n\[^\033\]*break here.*" \
+	    "\r\n$line_expr\[^\033\]*break here.*" \
 	    "frame without sources styling"
 	gdb_test_no_output "set style sources on"
 
@@ -139,18 +146,18 @@ proc run_style_tests { } {
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+$arg_expr=$hex\\)" \
 		     "\\s+at\\s+$file_expr" \
-		     "\[0-9\]+\\s+.*return.* break here .*"]
+		     "$line_expr\\s+.*return.* break here .*"]
 	    set re1_styled \
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=$decimal,\\s+" \
 		     "\\s+$arg_expr=$hex.*\\)" \
 		     "\\s+at\\s+$file_expr" \
-		     "\[0-9\]+\\s+.*return.* break here .*"]
+		     "$line_expr\\s+.*return.* break here .*"]
 	    set re2_styled \
 		[multi_line \
 		     "#0\\s+$main_expr\\s+\\($arg_expr=.*" \
 		     "\\s+$arg_expr=$hex.*\\)\\s+at\\s+$file_expr" \
-		     "\[0-9\]+\\s+.*return.* break here .*"]
+		     "$line_expr\\s+.*return.* break here .*"]
 
 	    # The length of the line containing argv containing:
 	    # - 4 leading spaces
@@ -237,8 +244,8 @@ proc run_style_tests { } {
 	    "The ${address_style_expr} foreground color is: ${color}" \
 	    "style name and style word styled using its own style in show style"
 
-	set aliases_expr [limited_style ".*aliases.*" title]
-	set breakpoints_expr [limited_style ".*breakpoints.*" title]
+	set aliases_expr [limited_style ".*aliases.*" command]
+	set breakpoints_expr [limited_style ".*breakpoints.*" command]
 	gdb_test "help" \
 	    [multi_line \
 		 "List of classes of commands:" \
@@ -247,10 +254,10 @@ proc run_style_tests { } {
 		 "${breakpoints_expr} -- Making program stop at certain points\." \
 		 ".*" \
 		] \
-	    "help classes of commands styled with title"
+	    "help classes of commands styled with command"
 
-	set taas_expr  [limited_style ".*taas.*" title]
-	set tfaas_expr  [limited_style ".*tfaas.*" title]
+	set taas_expr  [limited_style ".*taas.*" command]
+	set tfaas_expr  [limited_style ".*tfaas.*" command]
 	set cut_for_thre_expr [limited_style "cut for 'thre" highlight]
 	gdb_test "apropos -v cut for 'thre" \
 	    [multi_line \
@@ -300,7 +307,7 @@ proc run_style_tests { } {
 	gdb_test_no_output "maintenance deprecate p \"new_p\"" \
 	    "maintenance deprecate p \"new_p\" /1/"
 	gdb_test "p 5" \
-	    "Warning: '[limited_style p title]', an alias for the command '[limited_style print title]', is deprecated.*Use '[limited_style new_p title]'.*" \
+	    "Warning: '[limited_style p command]', an alias for the command '[limited_style print command]', is deprecated.*Use '[limited_style new_p command]'.*" \
 	    "p deprecated warning, with replacement"
 
 	# Check that the version string is styled in the output of 'show
@@ -309,6 +316,33 @@ proc run_style_tests { } {
 	set url [limited_style "http:.*html" file]
 	gdb_test "show version" "${vers}.*<$url>.*" \
 	    "'show version' is styled"
+
+	if { $currently_disabled_style != "version" } {
+	    # Check that colors in styling can be set as integer and as RGB hex
+	    # triplet.  Check that the version string is styled in the output of
+	    # 'show version' according to the set colors.
+	    gdb_test_no_output "set style version intensity normal"
+	    gdb_test_no_output "set style version background 255"
+	    gdb_test_no_output "set style version foreground #FED210"
+	    gdb_test "show style version background" \
+		"The \033\\\[38;2;254;210;16;48;5;255;22;23;24;27m.*\".*version.*\".*style.*\033\\\[m background color is: 255" \
+		"Version's 256-color background style"
+	    gdb_test "show style version foreground" \
+		"The \033\\\[38;2;254;210;16;48;5;255;22;23;24;27m.*\".*version.*\".*style.*\033\\\[m foreground color is: #FED210" \
+		"Version's TrueColor foreground style"
+	}
+
+	gdb_test_no_output "set host-charset UTF-8"
+	# Chosen since it will print an error.
+	gdb_test "maint translate-address" \
+	    "❌️ requires argument.*" \
+	    "emoji output"
+
+	gdb_test_no_output "set style error-prefix abcd:" \
+	    "set the error prefix"
+	gdb_test "maint translate-address" \
+	    "abcd:requires argument.*" \
+	    "error prefix"
     }
 }
 
@@ -324,7 +358,7 @@ proc test_disable_disassembler_styling { } {
 
 	# Restart GDB with the correct TERM variable setting, this
 	# means that GDB will enable styling.
-	clean_restart_and_disable "restart 3" $::binfile
+	clean_restart_and_disable "restart 3" $::testfile
 
 	set styled_hex [limited_style $::hex address]
 	set main [limited_style main function]
@@ -411,7 +445,13 @@ proc test_disable_disassembler_styling { } {
 # disassembled instruction part.
 proc get_single_disassembled_insn {} {
     set disasm_line [capture_command_output "x/1i *main" ""]
-    regexp "^\[^:\]+:\\s*(.*)$" $disasm_line whole_match insn
+    set ret [regexp "^\[^:\]+:\\s*(.*)$" $disasm_line whole_match insn]
+
+    if { $ret == 0 } {
+	fail "failed to disassemble main"
+	return ""
+    }
+
     return $insn
 }
 
@@ -433,7 +473,7 @@ proc test_disassembler_error_handling { } {
 
 	# Restart GDB with the correct TERM variable setting, this
 	# means that GDB will enable styling.
-	clean_restart_and_disable "restart 4" $::binfile
+	clean_restart_and_disable "restart 4" $::testfile
 
 	# Disable use of libopcodes for styling.  As this function is
 	# only called when Python Pygments module is available, we
@@ -443,7 +483,10 @@ proc test_disassembler_error_handling { } {
 
 	# Disassemble a single instruction and ensure that the output
 	# has styling markers in it.
-	set insn_before [get_single_disassembled_insn]
+	with_test_prefix "before" {
+	    set insn_before [get_single_disassembled_insn]
+	}
+
 	gdb_assert { [regexp "\033" $insn_before] } \
 	    "have style markers when Pygments is working fine"
 
@@ -461,7 +504,10 @@ proc test_disassembler_error_handling { } {
 	    "setup replacement colorize_disasm function" \
 	    true
 
-	set insn_after [get_single_disassembled_insn]
+	with_test_prefix "after" {
+	    set insn_after [get_single_disassembled_insn]
+	}
+
 	gdb_assert { ![regexp "\033" $insn_after] } \
 	    "have no style markers when Pygments is broken"
     }
@@ -485,10 +531,515 @@ proc test_startup_version_string { } {
     gdb_test "" "${vers}.*" "version is styled at startup"
 }
 
+# Color support is disabled when TERM=dumb and COLORTERM="".
+# All colors are approximated to none when set.
+proc test_colorsupport_monochrome { } {
+    with_test_prefix "colorsupport_monochrome" {
+	with_ansi_styling_terminal {
+	    setenv TERM dumb
+	    gdb_exit
+	    gdb_start
+	    gdb_test "print \$_colorsupport" \
+		"\\\$1 = \"monochrome\"" \
+		"color support is monochrome"
+	    gdb_test_no_output "set style enabled off"
+	    gdb_test_no_output "set style filename foreground none"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: none" \
+	      "none without approximation"
+	    gdb_test_no_output "set style filename foreground blue"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: none" \
+	      "blue approximated to none"
+	}
+    }
+}
+
+# Color support is limited by 8 colors when TERM=ansi and COLORTERM="".
+# All colors are approximated to basic colors when set.
+proc test_colorsupport_8color { } {
+    with_test_prefix "colorsupport_8color" {
+	with_ansi_styling_terminal {
+	    gdb_exit
+	    gdb_start
+	    gdb_test "print \$_colorsupport" \
+		"\033\\\[.*m\\\$1\033\\\[m = \"monochrome,ansi_8color\"" \
+		"color support is 8 color"
+	    gdb_test_no_output "set style enabled off"
+	    gdb_test_no_output "set style filename foreground none"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: none" \
+	      "none without approximation"
+	    gdb_test_no_output "set style filename foreground yellow"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: yellow" \
+	      "yellow without approximation"
+	    gdb_test_no_output "set style filename foreground 9"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: red" \
+	      "9 approximated to red"
+	    gdb_test_no_output "set style filename foreground 118"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: green" \
+	      "118 approximated to green"
+	    gdb_test_no_output "set style filename foreground #000ABC"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: blue" \
+	      "#000ABC approximated to blue"
+	}
+    }
+}
+
+# Color support is limited by 256 colors when TERM=xterm-256color and
+# COLORTERM="".  All colors are approximated by 256 color palette when set.
+proc test_colorsupport_256color { } {
+    with_test_prefix "colorsupport_256color" {
+	with_ansi_styling_terminal {
+	    setenv TERM xterm-256color
+	    gdb_exit
+	    gdb_start
+	    gdb_test "print \$_colorsupport" \
+		"\033\\\[.*m\\\$1\033\\\[m = \"monochrome,ansi_8color,aixterm_16color,xterm_256color\"" \
+		"color support is 256 color"
+	    gdb_test_no_output "set style enabled off"
+	    gdb_test_no_output "set style filename foreground none"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: none" \
+	      "none without approximation"
+	    gdb_test_no_output "set style filename foreground red"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: red" \
+	      "red without approximation"
+	    gdb_test_no_output "set style filename foreground 9"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: 9" \
+	      "9 without approximation"
+	    gdb_test_no_output "set style filename foreground 118"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: 118" \
+	      "118 without approximation"
+	    gdb_test_no_output "set style filename foreground #CD00CD"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: 5" \
+	      "#CD00CD approximated to 5"
+	    gdb_test_no_output "set style filename foreground #FFAF12"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: 214" \
+	      "#FFAF12 approximated to 214"
+	}
+    }
+}
+
+# Color support is limited by 16777216 colors when TERM=xterm-256color and
+# COLORTERM="truecolor".  No approximation needed.
+proc test_colorsupport_truecolor { } {
+    with_test_prefix "colorsupport_truecolor" {
+	with_ansi_styling_terminal {
+	    setenv TERM xterm-256color
+	    setenv COLORTERM truecolor
+	    gdb_exit
+	    gdb_start
+	    gdb_test "print \$_colorsupport" \
+		"\033\\\[.*m\\\$1\033\\\[m = \"monochrome,ansi_8color,aixterm_16color,xterm_256color,rgb_24bit\"" \
+		"color support is truecolor"
+	    gdb_test_no_output "set style enabled off"
+	    gdb_test_no_output "set style filename foreground none"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: none" \
+	      "none without approximation"
+	    gdb_test_no_output "set style filename foreground red"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: red" \
+	      "red without approximation"
+	    gdb_test_no_output "set style filename foreground 9"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: 9" \
+	      "9 without approximation"
+	    gdb_test_no_output "set style filename foreground 118"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: 118" \
+	      "118 without approximation"
+	    gdb_test_no_output "set style filename foreground #CD00CD"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: #CD00CD" \
+	      "#CD00CD without approximation"
+	}
+    }
+}
+
+# Color support is limited by 16777216 colors when TERM=dumb and
+# COLORTERM=24bit.  No approximation needed.  Basic colors replaced with RGB.
+proc test_colorsupport_truecolor_only { } {
+    with_test_prefix "colorsupport_truecolor_only" {
+	with_ansi_styling_terminal {
+	    setenv TERM dumb
+	    setenv COLORTERM truecolor
+	    gdb_exit
+	    gdb_start
+	    gdb_test "print \$_colorsupport" \
+		"\\\$1 = \"monochrome,rgb_24bit\"" \
+		"color support is truecolor only"
+	    gdb_test_no_output "set style enabled off"
+	    gdb_test_no_output "set style filename foreground none"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: none" \
+	      "none without approximation"
+	    gdb_test_no_output "set style filename foreground red"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: #DE382B" \
+	      "red replaced by #DE382B"
+	    gdb_test_no_output "set style filename foreground 9"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: #FF0000" \
+	      "9 replaced by #FF0000"
+	    gdb_test_no_output "set style filename foreground 118"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: #87FF00" \
+	      "118 replaced by #87FF00"
+	    gdb_test_no_output "set style filename foreground #CD00CD"
+	    gdb_test "show style filename foreground" \
+	      "The \"filename\" style foreground color is: #CD00CD" \
+	      "#CD00CD without approximation"
+	}
+    }
+}
+
+# Check that styling is auto-disabled when using a "dumb" terminal,
+# and/or when NO_COLOR is set.
+#
+# Also check that the user gets a warning if they enable styling in a
+# "dumb" terminal, but don't get a warning if they are in an "ansi"
+# terminal and NO_COLOR is set.
+proc test_enable_styling_warning { } {
+    save_vars { env(TERM) env(NO_COLOR) } {
+	foreach_with_prefix no_color { set unset } {
+	    if { $no_color eq "set" } {
+		setenv NO_COLOR "xxx"
+	    } else {
+		unset -nocomplain ::env(NO_COLOR)
+	    }
+
+	    foreach_with_prefix term_type { dumb unset ansi } {
+		if { $term_type eq "dumb" } {
+		    setenv TERM dumb
+		} elseif { $term_type eq "unset" } {
+		    unset -nocomplain ::env(TERM)
+		} elseif { $term_type eq "ansi" } {
+		    setenv TERM ansi
+		}
+
+		set styling_on_re "CLI output styling is enabled\\."
+		set styling_off_re "CLI output styling is disabled\\."
+
+		if { $term_type eq "ansi" } {
+		    if { $no_color eq "unset" } {
+			set init_re $styling_on_re
+		    } else {
+			set init_re $styling_off_re
+		    }
+		    set enable_re ""
+		} else {
+		    set init_re $styling_off_re
+		    set enable_re \
+			"warning: The current terminal doesn't support styling\\.  Styled output might not appear as expected\\."
+		}
+
+
+		clean_restart
+		gdb_test "show style enabled" $init_re
+		gdb_test "set style enabled on" $enable_re
+	    }
+	}
+    }
+}
+
+# Run an 'apropos' command.  Each line of output starts with a
+# non-default style (command style).  Ensure that pagination triggers
+# during the 'apropos' output such that, at the point pagination kicks
+# in, a non-default style is in effect.
+#
+# Then, at the pagination prompt, quit the command.
+#
+# Next, run a command which switches to a different style, and then
+# back to the current style.
+#
+# At one point, a bug in the pagination code would leave the
+# non-default style from the 'apropos' command recorded as the current
+# style, such that the second command would switch back to the earlier
+# style.
+proc test_pagination_cmd_after_quit_styling {} {
+    with_ansi_styling_terminal {
+	clean_restart
+    }
+
+    # We're going to use 'apropos time'.  Check that with a height of
+    # 12 lines, each line starts with a non-default style, and that we
+    # do see the pagination prompt.  This means that there are more
+    # than 12 lines for this command.
+    with_test_prefix "validate apropos output" {
+	gdb_test_no_output "set height 12"
+
+	set saw_pagination_prompt false
+	gdb_test_multiple "apropos time" "" {
+	    -re "^apropos time\r\n" {
+		exp_continue
+	    }
+	    -re "^\033\\\[39;49;1;23;24;27m\[^\r\n\]+\r\n" {
+		exp_continue
+	    }
+	    -re "^$::pagination_prompt$" {
+		set saw_pagination_prompt true
+		send_gdb "q\n"
+		exp_continue
+	    }
+	    -re "^q\r\n" {
+		exp_continue
+	    }
+	    -re "^Quit\r\n" {
+		exp_continue
+	    }
+	    -re "^$::gdb_prompt $" {
+		gdb_assert { $saw_pagination_prompt } $gdb_test_name
+	    }
+	    -re "^\[^\r\n\]+\r\n" {
+		exp_continue
+	    }
+	}
+    }
+
+    # Now reduce the height to 10 and re-run 'apropos time'.  Based on
+    # the previous check, we know that this is going to present the
+    # pagination prompt when a non-default style is in use.
+    gdb_test_no_output "set height 10"
+
+    set saw_pagination_prompt false
+    gdb_test_multiple "apropos time" "" {
+	-re "$::pagination_prompt" {
+	    set saw_pagination_prompt true
+	    send_gdb "q\n"
+	    exp_continue
+	}
+	-re "\r\n$::gdb_prompt $" {
+	    gdb_assert { $saw_pagination_prompt } $gdb_test_name
+	}
+    }
+
+    # The help output for this maintenance command switches to a
+    # different style, and then back to the default.  If the
+    # pagination bug still exists, then this would switch back to the
+    # non-default style that was in use when pagination kicked in
+    # above.
+    gdb_test "maintenance time" \
+	"^\"\033\\\[39;49;1;23;24;27mmaintenance time\033\\\[m\" takes a numeric argument\\."
+}
+
+# Helper for test_pagination_prompt_styling.  Return false if STR, a
+# line that appears immediately before a pagination prompt, matches
+# the pattern for needing a style reset at the end, but does not have
+# the style reset.
+#
+# In all other cases, return true.  So lines that don't match the
+# known pattern for neededing a style reset will always return true,
+# as will lines that match the pattern, and do have the style reset.
+proc previous_line_is_ok { str } {
+
+    # Create a copy of STR with all the '\033' characters removed.
+    # Then compare string lengths to get a count of the '\033'
+    # charactes present in STR.
+    regsub -all "\033" $str {} stripped
+    set count [expr [string length $str] - [string length $stripped]]
+
+    # If STR switched styles, then it _must_ switch back again,
+    # otherwise the pagination prompt will be in the wrong style.
+    # This means that there _must_ be an even number of '\033'
+    # characters in STR.  If there is not then we switched style, but
+    # failed to switch back.
+    if { [expr $count % 2] != 0 } {
+	return false
+    }
+
+    # For lines that don't match this pattern, we cannot comment on
+    # where the style reset should occur, so lets just claim the line
+    # is fine.
+    if { ![regexp "\\s+$::hex - $::hex is \[^\r\n\]+ in \033" $str] } {
+	return true
+    }
+
+    # This line did match the above pattern, so we know that a style
+    # reset _must_ occur at the end of the line.  If it doesn't then
+    # this line is not OK.
+    if { ![regexp "\033\\\[m$" $str] } {
+	return false
+    }
+
+    # All tests passed, this line looks OK.
+    return true
+}
+
+# Test that the pagination prompt is displayed unstyled.  This is done
+# by looking at the 'info files' output and selecting a width that
+# will mean we should get a pagination prompt part way through a
+# styled filename.
+#
+# Then, re-run 'info files' and check that for every pagination
+# prompt, the previous line disables styling as expected.
+proc test_pagination_prompt_styling {} {
+    with_ansi_styling_terminal {
+	clean_restart
+	gdb_load $::binfile
+    }
+
+    if {![runto_main]} {
+	return
+    }
+
+    # Set height so we actually get a pagination prompt.
+    gdb_test_no_output "set height 3"
+
+    # Scan the 'info files' output and set DESIRED_WIDTH such that it
+    # will trigger pagination part-way through a styled filename.
+    set desired_width 0
+    gdb_test_multiple "info files" "find good test width" {
+	-re "^info files\r\n" {
+	    exp_continue
+	}
+
+	-re "^$::pagination_prompt$" {
+	    send_gdb "\n"
+	    exp_continue
+	}
+
+	-re "^$::gdb_prompt $" {
+	}
+
+	-re "^((\\s+$::hex - $::hex is \[^\r\n\]+ in )\[^\r\n\]+)\r\n" {
+	    if { $desired_width == 0 } {
+		set full_line $expect_out(1,string)
+		set inner_line $expect_out(2,string)
+		set desired_width [expr [string length $inner_line] + ([string length $full_line] - [string length $inner_line]) / 2]
+	    }
+	    exp_continue
+	}
+
+	-re "^\[^\r\n\]*\r\n" {
+	    exp_continue
+	}
+    }
+
+    if { $desired_width < [string length $::pagination_prompt_str] + 2 } {
+	# Avoid readline wrapping after printing the pagination prompt.
+	return
+    }
+
+    # Now setup the screen width.
+    gdb_test_no_output "set width $desired_width" \
+	"set width to desired width"
+
+    # Re-run 'info files'.  Check that the content before any
+    # pagination prompt correctly disables styling.
+    set saw_bad_line false
+    set prev_line ""
+    gdb_test_multiple "info files" "check pagination prompt styling" {
+	-re "^info files\r\n" {
+	    exp_continue
+	}
+
+	-re "^$::pagination_prompt$" {
+	    if { ![previous_line_is_ok $prev_line] } {
+		set saw_bad_line true
+	    }
+	    send_gdb "\n"
+	    exp_continue
+	}
+
+	-re "^(\[^\r\n\]+)$::pagination_prompt$" {
+	    set prev_line $expect_out(1,string)
+	    if { ![previous_line_is_ok $prev_line] } {
+		set saw_bad_line true
+	    }
+	    send_gdb "\n"
+	    exp_continue
+	}
+
+	-re "^$::gdb_prompt $" {
+	    gdb_assert { !$saw_bad_line } $gdb_test_name
+	}
+
+	-re "^(\[^\r\n\]*)\r\n" {
+	    set prev_line $expect_out(1,string)
+	    exp_continue
+	}
+    }
+}
+
+# Test that GDB can correctly restore the current style after a
+# pagination prompt.
+#
+# Set the logging file to a garbage string based on LENGTH (is
+# actually 2x LENGTH), then 'show logging file'.  Press return at the
+# pagination prompt, and check that the reset of the filename is
+# styled correctly, and that GDB correctly switches back to the
+# default style once the logging file has finished.
+proc test_pagination_continue_styling_1 { length } {
+    with_ansi_styling_terminal {
+	clean_restart
+	gdb_load $::binfile
+    }
+
+    set filename [string repeat "ax" $length]
+
+    gdb_test_no_output "set logging file $filename"
+
+    gdb_test_no_output "set height 3"
+    gdb_test_no_output "set width 80"
+
+    set saw_bad_styling false
+    gdb_test_multiple "show logging file" "" {
+	-re "^show logging file\r\n" {
+	    exp_continue
+	}
+
+	-re "^The current logfile is \"\033\\\[32;49;22;23;24;27m(?:ax)+\033\\\[m" {
+	    exp_continue
+	}
+
+	-re "^\r\n\033\\\[32;49;22;23;24;27m(?:ax)+\033\\\[m(?=--)" {
+	    exp_continue
+	}
+
+	-re "^\r\n\033\\\[32;49;22;23;24;27m(?:ax)+(?=--)" {
+	    set saw_bad_styling true
+	    exp_continue
+	}
+
+	-re "^\r\n\033\\\[32;49;22;23;24;27m(?:ax)+\033\\\[m\"\\.\r\n" {
+	    exp_continue
+	}
+
+	-re "^$::gdb_prompt $" {
+	    gdb_assert { !$saw_bad_styling } $gdb_test_name
+	}
+
+	-re "^$::pagination_prompt$$" {
+	    send_gdb "\n"
+	    exp_continue
+	}
+    }
+}
+
+# Wrapper around test_pagination_continue_styling_1, calls that
+# function with different lengths.
+proc test_pagination_continue_styling { } {
+    foreach_with_prefix length { 80 160 } {
+	test_pagination_continue_styling_1 $length
+    }
+}
+
 # Check to see if the Python styling of disassembler output is
 # expected or not, this styling requires Python support in GDB, and
 # the Python pygments module to be available.
-clean_restart ${binfile}
+clean_restart
+gdb_load $binfile
 if {[allow_python_tests] && [gdb_py_module_available "pygments"]} {
     set python_disassembly_styling true
 } else {
@@ -502,7 +1053,7 @@ with_test_prefix "all styles enabled" {
 
 # Now, for each style in turn.  Disable that style only and run the
 # test again.  Things in that style should NOT now be styled.
-foreach style { title file function highlight variable \
+foreach style { command title file function highlight variable \
 		    address metadata } {
     set currently_disabled_style $style
     with_test_prefix "disable style $style" {
@@ -519,3 +1070,14 @@ test_disassembler_error_handling
 
 # Finally, check the styling of the version string during startup.
 test_startup_version_string
+
+test_colorsupport_monochrome
+test_colorsupport_8color
+test_colorsupport_256color
+test_colorsupport_truecolor
+test_colorsupport_truecolor_only
+
+test_enable_styling_warning
+test_pagination_cmd_after_quit_styling
+test_pagination_prompt_styling
+test_pagination_continue_styling

@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB and GDBserver.
 
-   Copyright (C) 1990-2023 Free Software Foundation, Inc.
+   Copyright (C) 1990-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "fork-inferior.h"
 #include "target/waitstatus.h"
 #include "gdbsupport/filestuff.h"
@@ -27,6 +26,7 @@
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/signals-state-save-restore.h"
 #include "gdbsupport/gdb_tilde_expand.h"
+#include "gdbsupport/gdb_signals.h"
 #include <vector>
 
 extern char **environ;
@@ -265,29 +265,20 @@ execv_argv::init_for_shell (const char *exec_file,
 /* See nat/fork-inferior.h.  */
 
 pid_t
-fork_inferior (const char *exec_file_arg, const std::string &allargs,
-	       char **env, void (*traceme_fun) (),
-	       gdb::function_view<void (int)> init_trace_fun,
-	       void (*pre_trace_fun) (),
-	       const char *shell_file_arg,
-	       void (*exec_fun)(const char *file, char * const *argv,
-				char * const *env))
+fork_inferior (const char *exec_file, const std::string &allargs, char **env,
+	       traceme_ftype traceme_fun, init_trace_ftype init_trace_fun,
+	       pre_trace_ftype pre_trace_fun, const char *shell_file_arg,
+	       exec_ftype exec_fun)
 {
   pid_t pid;
   /* Set debug_fork then attach to the child while it sleeps, to debug.  */
   int debug_fork = 0;
   const char *shell_file;
-  const char *exec_file;
   char **save_our_env;
   int i;
   int save_errno;
 
-  /* If no exec file handed to us, get it from the exec-file command
-     -- with a good, common error message if none is specified.  */
-  if (exec_file_arg == NULL)
-    exec_file = get_exec_file (1);
-  else
-    exec_file = exec_file_arg;
+  gdb_assert (exec_file != nullptr);
 
   /* 'startup_with_shell' is declared in inferior.h and bound to the
      "set startup-with-shell" option.  If 0, we'll just do a
@@ -330,14 +321,14 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
     {
       /* Expand before forking because between fork and exec, the child
 	 process may only execute async-signal-safe operations.  */
-      inferior_cwd = gdb_tilde_expand (inferior_cwd.c_str ());
+      inferior_cwd = gdb_tilde_expand (inferior_cwd);
     }
 
   /* If there's any initialization of the target layers that must
      happen to prepare to handle the child we're about fork, do it
      now...  */
   if (pre_trace_fun != NULL)
-    (*pre_trace_fun) ();
+    pre_trace_fun ();
 
   /* Create the child process.  Since the child process is going to
      exec(3) shortly afterwards, try to reduce the overhead by
@@ -389,7 +380,7 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
 	 for the inferior.  */
 
       /* "Trace me, Dr. Memory!"  */
-      (*traceme_fun) ();
+      traceme_fun ();
 
       /* The call above set this process (the "child") as debuggable
 	by the original gdb process (the "parent").  Since processes
@@ -412,7 +403,7 @@ fork_inferior (const char *exec_file_arg, const std::string &allargs,
       char **argv = child_argv.argv ();
 
       if (exec_fun != NULL)
-	(*exec_fun) (argv[0], &argv[0], env);
+	exec_fun (argv[0], &argv[0], env);
       else
 	execvp (argv[0], &argv[0]);
 

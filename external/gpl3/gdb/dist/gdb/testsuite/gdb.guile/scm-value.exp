@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2024 Free Software Foundation, Inc.
+# Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -309,7 +309,8 @@ proc test_value_after_death {} {
 
 proc test_subscript_regression {exefile lang} {
     # Start with a fresh gdb.
-    clean_restart ${exefile}
+    clean_restart
+    gdb_load ${exefile}
 
     if ![gdb_guile_runto_main ] {
 	return
@@ -427,7 +428,7 @@ if { [build_inferior "${binfile}" "c"] < 0 } {
 }
 
 # Start with a fresh gdb.
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 gdb_install_guile_utils
 gdb_install_guile_module

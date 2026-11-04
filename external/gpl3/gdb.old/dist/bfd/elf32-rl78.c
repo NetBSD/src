@@ -1,5 +1,5 @@
 /* Renesas RL78 specific support for 32-bit ELF.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -396,18 +396,18 @@ rl78_compute_complex_reloc (unsigned long  r_type,
 {
   int32_t tmp1, tmp2;
   bfd_vma relocation = 0;
-  bfd_reloc_status_type stat = bfd_reloc_ok;
+  bfd_reloc_status_type status = bfd_reloc_ok;
 
   switch (r_type)
     {
     default:
-      stat = bfd_reloc_notsupported;
+      status = bfd_reloc_notsupported;
       break;
 
     case R_RL78_ABS24S_PCREL:
     case R_RL78_ABS16S_PCREL:
     case R_RL78_ABS8S_PCREL:
-      relocation = rl78_stack_pop (&stat);
+      relocation = rl78_stack_pop (&status);
       relocation -= input_section->output_section->vma + input_section->output_offset;
       break;
 
@@ -420,141 +420,141 @@ rl78_compute_complex_reloc (unsigned long  r_type,
     case R_RL78_ABS8:
     case R_RL78_ABS8U:
     case R_RL78_ABS8S:
-      relocation = rl78_stack_pop (&stat);
+      relocation = rl78_stack_pop (&status);
       break;
 
     case R_RL78_ABS16UL:
     case R_RL78_ABS8UL:
-      relocation = rl78_stack_pop (&stat) >> 2;
+      relocation = rl78_stack_pop (&status) >> 2;
       break;;
 
     case R_RL78_ABS16UW:
     case R_RL78_ABS8UW:
-      relocation = rl78_stack_pop (&stat) >> 1;
+      relocation = rl78_stack_pop (&status) >> 1;
       break;
 
       /* The rest of the relocs compute values and then push them onto the stack.  */
     case R_RL78_OPramtop:
     case R_RL78_OPromtop:
     case R_RL78_SYM:
-      rl78_stack_push (symval, &stat);
+      rl78_stack_push (symval, &status);
       break;
 
     case R_RL78_OPneg:
-      tmp1 = rl78_stack_pop (&stat);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 = - tmp1;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPadd:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 += tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPsub:
       /* For the expression "A - B", the assembler pushes A,
 	 then B, then OPSUB.  So the first op we pop is B, not A.  */
-      tmp2 = rl78_stack_pop (&stat);	/* B */
-      tmp1 = rl78_stack_pop (&stat);	/* A */
+      tmp2 = rl78_stack_pop (&status);	/* B */
+      tmp1 = rl78_stack_pop (&status);	/* A */
       tmp1 -= tmp2;		/* A - B */
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPmul:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 *= tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPdiv:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       if (tmp2 != 0)
 	tmp1 /= tmp2;
       else
 	{
 	  tmp1 = 0;
-	  stat = bfd_reloc_overflow;
+	  status = bfd_reloc_overflow;
 	}
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPshla:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 <<= tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPshra:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 >>= tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPsctsize:
-      rl78_stack_push (input_section->size, &stat);
+      rl78_stack_push (input_section->size, &status);
       break;
 
     case R_RL78_OPscttop:
-      rl78_stack_push (input_section->output_section->vma, &stat);
+      rl78_stack_push (input_section->output_section->vma, &status);
       break;
 
     case R_RL78_OPand:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 &= tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPor:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 |= tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPxor:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 ^= tmp2;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPnot:
-      tmp1 = rl78_stack_pop (&stat);
+      tmp1 = rl78_stack_pop (&status);
       tmp1 = ~ tmp1;
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
 
     case R_RL78_OPmod:
-      tmp2 = rl78_stack_pop (&stat);
-      tmp1 = rl78_stack_pop (&stat);
+      tmp2 = rl78_stack_pop (&status);
+      tmp1 = rl78_stack_pop (&status);
       if (tmp2 != 0)
 	tmp1 %= tmp2;
       else
 	{
 	  tmp1 = 0;
-	  stat = bfd_reloc_overflow;
+	  status = bfd_reloc_overflow;
 	}
-      rl78_stack_push (tmp1, &stat);
+      rl78_stack_push (tmp1, &status);
       break;
     }
 
   if (r)
     {
-      if (stat == bfd_reloc_dangerous)
+      if (status == bfd_reloc_dangerous)
 	*error_message = (_("RL78 reloc stack overflow/underflow"));
-      else if (stat == bfd_reloc_overflow)
+      else if (status == bfd_reloc_overflow)
 	{
-	  stat = bfd_reloc_dangerous;
+	  status = bfd_reloc_dangerous;
 	  *error_message = (_("RL78 reloc divide by zero"));
 	}
-      *r = stat;
+      *r = status;
     }
   return relocation;
 }
@@ -1440,8 +1440,8 @@ rl78_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bool
-rl78_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-			       struct bfd_link_info *info)
+rl78_elf_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *splt;
@@ -2106,8 +2106,9 @@ rl78_elf_relax_section (bfd *abfd,
      this section does not have relocs, or if this is not a
      code section.  */
   if (bfd_link_relocatable (link_info)
-      || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_CODE) == 0)
     return true;
 
@@ -2609,8 +2610,8 @@ rl78_elf_relax_section (bfd *abfd,
 
 #define bfd_elf32_bfd_relax_section		rl78_elf_relax_section
 #define elf_backend_check_relocs		rl78_elf_check_relocs
-#define elf_backend_always_size_sections \
-  rl78_elf_always_size_sections
+#define elf_backend_early_size_sections \
+  rl78_elf_early_size_sections
 #define elf_backend_finish_dynamic_sections \
   rl78_elf_finish_dynamic_sections
 

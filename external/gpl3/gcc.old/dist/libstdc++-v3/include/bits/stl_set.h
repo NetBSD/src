@@ -1,6 +1,6 @@
 // Set implementation -*- C++ -*-
 
-// Copyright (C) 2001-2020 Free Software Foundation, Inc.
+// Copyright (C) 2001-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -74,6 +74,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
    *  retrieved in logarithmic time.
    *
    *  @ingroup associative_containers
+   *  @headerfile set
+   *  @since C++98
    *
    *  @tparam _Key  Type of key objects.
    *  @tparam _Compare  Comparison function object type, defaults to less<_Key>.
@@ -252,11 +254,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       : _M_t(_Key_alloc_type(__a)) { }
 
       /// Allocator-extended copy constructor.
-      set(const set& __x, const allocator_type& __a)
+      set(const set& __x, const __type_identity_t<allocator_type>& __a)
       : _M_t(__x._M_t, _Key_alloc_type(__a)) { }
 
       /// Allocator-extended move constructor.
-      set(set&& __x, const allocator_type& __a)
+      set(set&& __x, const __type_identity_t<allocator_type>& __a)
       noexcept(is_nothrow_copy_constructible<_Compare>::value
 	       && _Alloc_traits::_S_always_equal())
       : _M_t(std::move(__x._M_t), _Key_alloc_type(__a)) { }
@@ -604,7 +606,7 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
       { return _M_t._M_reinsert_node_hint_unique(__hint, std::move(__nh)); }
 
       template<typename, typename>
-	friend class std::_Rb_tree_merge_helper;
+	friend struct std::_Rb_tree_merge_helper;
 
       template<typename _Compare1>
 	void

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_359.c,v 1.1.2.1 2025/08/02 05:58:18 perseant Exp $	*/
+/*	$NetBSD: msg_359.c,v 1.1.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_359.c"
 
 // Test for message: missing new-style '\177' or old-style number base [359]
@@ -6,8 +6,8 @@
 /*
  * The first or second character of the snprintb format specifies the number
  * base.  It must be an octal or hexadecimal escape sequence, as the characters
- * 2, 10 and 16 are not printable, and writing '\n' instead of '\x0a' would be
- * misleading.
+ * 8, 10 and 16 are not printable, and writing '\n' instead of '\x0a' would be
+ * misleading to human readers.
  */
 
 /* lint1-extra-flags: -X 351 */

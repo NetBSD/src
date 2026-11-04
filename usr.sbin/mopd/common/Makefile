@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2023/06/03 09:09:21 lukem Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2026/11/04 23:28:53 perseant Exp $
 
 LIBISPRIVATE=	yes
 
@@ -17,5 +17,10 @@ version.c: VERSION
 
 COPTS.print.c+=	-Wno-pointer-sign
 COPTS.pf.c+=	${CC_WNO_STRINGOP_TRUNCATION}
+
+# XXX GCC 14
+.if ${MACHINE} == "alpha" && ${HAVE_GCC:U0} == 14
+COPTS.file.c+=	-O0
+.endif
 
 .include <bsd.lib.mk>

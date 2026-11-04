@@ -1,6 +1,6 @@
 /* TUI display registers in window.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,38 +19,58 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_REGS_H
-#define TUI_TUI_REGS_H
+#ifndef GDB_TUI_TUI_REGS_H
+#define GDB_TUI_TUI_REGS_H
 
+#include "gdbsupport/gdb-checked-static-cast.h"
 #include "tui/tui-data.h"
 #include "reggroups.h"
 
-/* A data item window.  */
+/* Information about the display of a single register.  */
 
-struct tui_data_item_window
+struct tui_register_info
 {
-  tui_data_item_window () = default;
+  tui_register_info (int regno, const frame_info_ptr &frame)
+    : m_regno (regno)
+  {
+    update (frame);
+  }
 
-  DISABLE_COPY_AND_ASSIGN (tui_data_item_window);
+  DISABLE_COPY_AND_ASSIGN (tui_register_info);
 
-  tui_data_item_window (tui_data_item_window &&) = default;
+  tui_register_info (tui_register_info &&) = default;
+
+  void update (const frame_info_ptr &frame);
 
   void rerender (WINDOW *handle, int field_width);
+
+  bool visible () const
+  { return y > 0; }
+
+  bool highlighted () const
+  { return m_highlight; }
 
   /* Location.  */
   int x = 0;
   int y = 0;
-  /* The register number.  */
-  int regno = -1;
-  bool highlight = false;
-  bool visible = false;
   std::string content;
+
+private:
+
+  /* True if currently highlighted.  */
+  bool m_highlight = false;
+
+  /* The register number.  */
+  const int m_regno;
 };
 
 /* The TUI registers window.  */
 struct tui_data_window : public tui_win_info
 {
-  tui_data_window () = default;
+  tui_data_window ()
+  {
+    update_register_data (nullptr);
+  }
 
   DISABLE_COPY_AND_ASSIGN (tui_data_window);
 
@@ -59,9 +79,11 @@ struct tui_data_window : public tui_win_info
     return DATA_NAME;
   }
 
-  void check_register_values (frame_info_ptr frame);
+  void check_register_values (const frame_info_ptr &frame);
 
-  void show_registers (const reggroup *group);
+  /* Set the current register and redisplay the window.  If GROUP is
+     NULL, the general register group will be used.  */
+  void set_register_group (const reggroup *group);
 
   const reggroup *get_current_group () const
   {
@@ -100,9 +122,7 @@ private:
      display off the end of the register display.  */
   void display_reg_element_at_line (int start_element_no, int start_line_no);
 
-  void show_register_group (const reggroup *group,
-			    frame_info_ptr frame,
-			    bool refresh_values_only);
+  void update_register_data (const reggroup *group);
 
   /* Answer the number of the last line in the regs display.  If there
      are no registers (-1) is returned.  */
@@ -117,19 +137,27 @@ private:
      past the register area (-1) is returned.  */
   int first_reg_element_no_inline (int line_no) const;
 
-  /* Delete all the item windows in the data window.  This is usually
-     done when the data window is scrolled.  */
-  void delete_data_content_windows ();
+  void erase_data_content ();
 
-  void erase_data_content (const char *prompt);
-
-  /* Windows that are used to display registers.  */
-  std::vector<tui_data_item_window> m_regs_content;
+  /* Information about each register in the current register group.  */
+  std::vector<tui_register_info> m_regs_content;
   int m_regs_column_count = 0;
   const reggroup *m_current_group = nullptr;
 
   /* Width of each register's display area.  */
   int m_item_width = 0;
+
+  /* Architecture of frame whose registers are being displayed, or
+     nullptr if the display is empty (i.e., there is no frame).  */
+  gdbarch *m_gdbarch = nullptr;
 };
 
-#endif /* TUI_TUI_REGS_H */
+/* Return the instance of the registers window.  */
+
+inline tui_data_window *
+tui_data_win ()
+{
+  return gdb::checked_static_cast<tui_data_window *> (tui_win_list[DATA_WIN]);
+}
+
+#endif /* GDB_TUI_TUI_REGS_H */

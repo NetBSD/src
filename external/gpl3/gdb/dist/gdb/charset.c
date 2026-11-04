@@ -1,6 +1,6 @@
 /* Character set conversion support for GDB.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,6 @@
 #include "charset-list.h"
 #include "gdbsupport/environ.h"
 #include "arch-utils.h"
-#include "gdbsupport/gdb_vecs.h"
 #include <ctype.h>
 
 #ifdef USE_WIN32API
@@ -984,9 +983,7 @@ intermediate_encoding (void)
 
 #endif /* USE_INTERMEDIATE_ENCODING_FUNCTION */
 
-void _initialize_charset ();
-void
-_initialize_charset ()
+INIT_GDB_FILE (charset)
 {
   /* The first element is always "auto".  */
   charsets.charsets.push_back (xstrdup ("auto"));

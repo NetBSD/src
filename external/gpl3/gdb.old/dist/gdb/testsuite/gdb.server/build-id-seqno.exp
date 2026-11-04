@@ -1,0 +1,200 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Setup a .build-id/ based debug directory containing multiple entries
+# for the same build-id, with each entry given a different sequence
+# number.
+#
+# Ensure that GDB will scan over broken symlinks for the same build-id
+# (but different sequence number) to find later working symlinks.
+#
+# This test places the build-id files within a directory next to where
+# gdbserver is started, and places a relative address in the
+# debug-file-directory, in this way we require GDB to find the debug
+# information via gdbserver.
+
+require {!is_remote host}
+
+load_lib gdbserver-support.exp
+
+require allow_gdbserver_tests
+
+standard_testfile
+
+if {[build_executable "failed to prepare" $testfile $srcfile] == -1} {
+    return -1
+}
+
+# Split out BINFILE.debug.  Remove debug from BINFILE.
+if {[gdb_gnu_strip_debug $binfile] != 0} {
+    return -1
+}
+
+# Get the '.build-id/xx/xxx...xxx' part of the filename.
+set build_id_filename [build_id_debug_filename_get $binfile]
+
+# Hide (rename) BINFILE.debug, this should ensure GDB can't find it
+# directly but needs to look for the build-id based file in the debug
+# directory.
+set hidden_debuginfo [standard_output_file "hidden_$testfile.debug"]
+remote_exec build "mv ${binfile}.debug $hidden_debuginfo"
+
+# A filename that doesn't exist.  Some symlinks will point at this
+# file.
+set missing_debuginfo "missing_debuginfo"
+
+# Helper called from gdb_finish when the 'target' is remote.  Ensure the
+# debug directory we create is deleted.
+proc cleanup_remote_target {} {
+    remote_exec target "rm -fr debug/"
+}
+
+if { ![is_remote target] } {
+    set gdbserver_dir [standard_output_file "gdbserver-dir"]/
+} else {
+    lappend gdb_finish_hooks cleanup_remote_target
+    set gdbserver_dir ""
+}
+
+# Copy files to the target (if needed).
+set target_binfile [gdb_remote_download target $binfile]
+set target_debuginfo [gdb_remote_download target $hidden_debuginfo]
+
+# Setup the debug information on the target.
+set debugdir "${gdbserver_dir}debug"
+remote_exec target \
+    "mkdir -p $debugdir/[file dirname $build_id_filename]"
+remote_exec target \
+    "ln -sf $target_debuginfo $debugdir/$build_id_filename"
+
+# Start GDB and load global BINFILE.  If DEBUGINFO_FILE is not the
+# empty string then this contains the '.build-id/xx/xxx....xxxx' part
+# of the filename which we expect GDB to read from the remote target.
+# If DEBUGINFO_FILE is the empty string then we don't expect GDB to
+# find any debug information.
+proc load_binfile_check_debug_is_found { debuginfo_file testname } {
+    with_test_prefix "$testname" {
+	with_timeout_factor 5 {
+	    # Probing for .build-id based debug files on remote
+	    # targets uses the vFile:stat packet by default, though
+	    # there is a work around that avoids this which can be
+	    # used if GDB is connected to an older gdbserver without
+	    # 'stat' support.
+	    #
+	    # Check the work around works by disabling use of the
+	    # vFile:stat packet.
+	    foreach_with_prefix stat_pkt {auto off} {
+		clean_restart
+
+		gdb_test_no_output "set debug-file-directory debug" \
+		    "set debug-file-directory"
+
+		gdb_test_no_output "set sysroot target:"
+
+		gdb_test "set remote hostio-stat-packet $stat_pkt"
+
+		# Make sure we're disconnected, in case we're testing with an
+		# extended-remote board, therefore already connected.
+		gdb_test "disconnect" ".*"
+
+		# Start gdbserver.  This needs to be done after starting GDB.  When
+		# gdbserver is running local to GDB, start gdbserver in a sub-directory,
+		# this prevents GDB from finding the debug information itself.
+		if { ![is_remote target] } {
+		    with_cwd $::gdbserver_dir {
+			set res [gdbserver_start "" $::target_binfile]
+		    }
+		} else {
+		    set res [gdbserver_start "" $::target_binfile]
+		}
+		set gdbserver_protocol [lindex $res 0]
+		set gdbserver_gdbport [lindex $res 1]
+
+		# Connect to gdbserver.  The output will be placed into the global
+		# GDB_TARGET_REMOTE_CMD_MSG, and we'll match against this below.
+		gdb_assert {[gdb_target_cmd $gdbserver_protocol $gdbserver_gdbport] == 0} \
+		    "connect to gdbserver"
+
+		if { $debuginfo_file ne "" } {
+		    gdb_assert { [regexp "Reading symbols from target:debug/[string_to_regexp $debuginfo_file]\\.\\.\\." \
+				      $::gdb_target_remote_cmd_msg] } \
+			"debuginfo was read via build-id"
+		    gdb_assert { [regexp "Reading debug/[string_to_regexp $debuginfo_file] from remote target\\.\\.\\." \
+				      $::gdb_target_remote_cmd_msg] } \
+			"debuginfo was read from remote target"
+		} else {
+		    gdb_assert { [regexp "\\(No debugging symbols found in \[^\r\n\]+/$::testfile\\)" \
+				      $::gdb_target_remote_cmd_msg] }
+		}
+	    }
+	}
+    }
+}
+
+# Return a copy of FILENAME, which should end '.debug', with NUMBER
+# added, e.g. add_seqno 1 "foo.debug" --> "foo.1.debug".
+proc add_seqno { number filename } {
+    return [regsub "\.debug\$" $filename ".${number}.debug"]
+}
+
+# Precompute sequence numbered build-id filenames.
+set build_id_1_filename [add_seqno 1 $build_id_filename]
+set build_id_2_filename [add_seqno 2 $build_id_filename]
+set build_id_3_filename [add_seqno 3 $build_id_filename]
+
+load_binfile_check_debug_is_found $build_id_filename \
+    "find debuginfo with a single build-id file"
+
+remote_exec target "ln -fs $target_debuginfo \
+			$debugdir/$build_id_1_filename"
+remote_exec target "ln -fs $target_debuginfo \
+			$debugdir/$build_id_2_filename"
+remote_exec target "ln -fs $target_debuginfo \
+			$debugdir/$build_id_3_filename"
+
+load_binfile_check_debug_is_found $build_id_filename \
+    "find debuginfo with 4 build-id files"
+
+remote_exec target "ln -fs $missing_debuginfo $debugdir/$build_id_filename"
+
+load_binfile_check_debug_is_found $build_id_1_filename \
+    "find debuginfo, first build-id file is bad"
+
+remote_exec target "ln -fs $missing_debuginfo \
+			$debugdir/$build_id_1_filename"
+remote_exec target "ln -fs $missing_debuginfo \
+			$debugdir/$build_id_3_filename"
+
+load_binfile_check_debug_is_found $build_id_2_filename  \
+    "find debuginfo, first 2 build-id files are bad"
+
+remote_exec target "ln -fs $missing_debuginfo \
+			$debugdir/$build_id_2_filename"
+
+load_binfile_check_debug_is_found ""  \
+    "cannot find debuginfo, all build-id files are bad"
+
+remote_exec target "ln -fs $target_debuginfo \
+			$debugdir/$build_id_3_filename"
+
+load_binfile_check_debug_is_found $build_id_3_filename  \
+    "find debuginfo, last build-id file is good"
+
+remote_exec target "rm -f $debugdir/$build_id_1_filename"
+
+load_binfile_check_debug_is_found ""  \
+    "cannot find debuginfo, file with seqno 1 is missing"

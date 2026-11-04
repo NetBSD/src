@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_subr.s,v 1.2.2.1 2025/08/02 05:55:49 perseant Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.2.2.2 2026/11/04 23:20:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -120,15 +120,21 @@ ENTRY_NOPROFILE(mmu_load_urp51)
 	movl	%d0,%a0@(4)		| set new root table PA
 	pflusha				| flush ATC
 	pmove	%a0@,%crp		| load CRP register
+#ifdef __HAVE_M68K_DYNAMIC_CACR
+	movl	_C_LABEL(cacr_cache_clr),%d0
+#else
 	movl	#CACHE_CLR,%d0
+#endif
 	movc	%d0,%cacr		| invalidate caches
 	rts
 
 #ifdef M68030
 ENTRY_NOPROFILE(mmu_load_tt30)
 	movl	%sp@(4),%a0		| get pointer to TT value array
-	.long 0xf0180800		| pmove %a0@+,%tt0
-	.long 0xf0180c00		| pmove %a0@+,%tt1
+	.long 0xf0100800		| pmove %a0@,%tt0
+	addql	#4,%a0
+	.long 0xf0100c00		| pmove %a0@,%tt1
+	pflusha				| flush ATC
 	rts
 #endif /* M68030 */
 #endif /* M68020 || M68030 */
@@ -178,6 +184,7 @@ ENTRY_NOPROFILE(mmu_load_tt40)
 	.long 0x4e7b0006		| movec %d0,%dtt0
 	movl	%a0@+,%d0		| load DTT1
 	.long 0x4e7b0007		| movec %d0,%dtt1
+	.word 0xf518	 |pflusha	| flush ATC
 	rts
 #endif /* M68040 || M68060 */
 #endif /* M68K_MMU_MOTOROLA */

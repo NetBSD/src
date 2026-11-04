@@ -1,7 +1,8 @@
-#       $NetBSD: Makefile.inc,v 1.3 2010/07/06 05:59:52 mrg Exp $
+#       $NetBSD: Makefile.inc,v 1.3.58.1 2026/11/04 23:19:17 perseant Exp $
 
-.PATH: ${.CURDIR}/dlfcn
+.PATH:	${.PARSEDIR}
 
+DlfcnMakefileParseDir:=${.PARSEDIR}
 CPPFLAGS+=	-I${NETBSDSRCDIR}/libexec/ld.elf_so
-CPPFLAGS+=	-I${.CURDIR}/dlfcn
+CPPFLAGS+=	-I${DlfcnMakefileParseDir}
 SRCS+=		dlfcn_elf.c

@@ -40,6 +40,7 @@
 # -p <port>:     specify port
 # -t <protocol>: specify UDP or TCP
 # -r <num>:      send packet <num> times
+# -b:		 blocking io
 # -d:            dump response packets
 #
 # If not specified, address defaults to 127.0.0.1, port to 53, protocol
@@ -51,6 +52,8 @@ use strict;
 use Getopt::Std;
 use IO::File;
 use IO::Socket;
+use Net::DNS;
+use Net::DNS::Packet;
 
 sub usage {
     print ("Usage: packet.pl [-a address] [-d] [-p port] [-t (tcp|udp)] [-r <repeats>] [file]\n");
@@ -61,8 +64,6 @@ my $sock;
 my $proto;
 
 sub dumppacket {
-    use Net::DNS;
-    use Net::DNS::Packet;
 
     my $rin;
     my $rout;
@@ -96,7 +97,7 @@ sub dumppacket {
 }
 
 my %options={};
-getopts("a:dp:t:r:", \%options);
+getopts("a:bdp:t:r:", \%options);
 
 my $addr = "127.0.0.1";
 $addr = $options{a} if defined $options{a};
@@ -110,6 +111,8 @@ usage if ($proto !~ /^(udp|tcp)$/);
 
 my $repeats = 1;
 $repeats = $options{r} if defined $options{r};
+
+my $blocking = defined $options{b} ? 1 : 0;
 
 my $file = "STDIN";
 if (@ARGV >= 1) {
@@ -132,8 +135,22 @@ my $len = length $data;
 my $output = unpack("H*", $data);
 print ("sending $repeats time(s): $output\n");
 
+
+if (defined $options{d}) {
+    my $request;
+    if ($Net::DNS::VERSION > 0.68) {
+        $request = new Net::DNS::Packet(\$data, 0);
+        $@ and die $@;
+    } else {
+        my $err;
+        ($request, $err) = new Net::DNS::Packet(\$data, 0);
+        $err and die $err;
+    }
+    $request->print;
+}
+
 $sock = IO::Socket::INET->new(PeerAddr => $addr, PeerPort => $port,
-				 Blocking => 0,
+				 Blocking => $blocking,
 				 Proto => $proto,) or die "$!";
 
 STDOUT->autoflush(1);

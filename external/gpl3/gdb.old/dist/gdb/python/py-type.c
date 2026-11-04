@@ -1,6 +1,6 @@
 /* Python interface to types.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "value.h"
 #include "python-internal.h"
 #include "charset.h"
@@ -154,7 +153,7 @@ convert_field (struct type *type, int field)
   if (PyObject_SetAttrString (result.get (), "parent_type", arg.get ()) < 0)
     return NULL;
 
-  if (!field_is_static (&type->field (field)))
+  if (!type->field (field).is_static ())
     {
       const char *attrstring;
 
@@ -197,7 +196,7 @@ convert_field (struct type *type, int field)
   if (PyObject_SetAttrString (result.get (), "name", arg.get ()) < 0)
     return NULL;
 
-  arg.reset (PyBool_FromLong (TYPE_FIELD_ARTIFICIAL (type, field)));
+  arg.reset (PyBool_FromLong (type->field (field).is_artificial ()));
   if (PyObject_SetAttrString (result.get (), "artificial", arg.get ()) < 0)
     return NULL;
 
@@ -208,7 +207,7 @@ convert_field (struct type *type, int field)
   if (PyObject_SetAttrString (result.get (), "is_base_class", arg.get ()) < 0)
     return NULL;
 
-  arg = gdb_py_object_from_longest (TYPE_FIELD_BITSIZE (type, field));
+  arg = gdb_py_object_from_longest (type->field (field).bitsize ());
   if (arg == NULL)
     return NULL;
   if (PyObject_SetAttrString (result.get (), "bitsize", arg.get ()) < 0)
@@ -293,7 +292,7 @@ typy_fields_items (PyObject *self, enum gdbpy_iter_kind kind)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   gdbpy_ref<> type_holder;
@@ -442,6 +441,54 @@ typy_is_signed (PyObject *self, void *closure)
     Py_RETURN_TRUE;
 }
 
+/* Return true if this type is array-like.  */
+
+static PyObject *
+typy_is_array_like (PyObject *self, void *closure)
+{
+  struct type *type = ((type_object *) self)->type;
+  bool result = false;
+
+  try
+    {
+      type = check_typedef (type);
+      result = type->is_array_like ();
+    }
+  catch (const gdb_exception &except)
+    {
+      return gdbpy_handle_gdb_exception (nullptr, except);
+    }
+
+  if (result)
+    Py_RETURN_TRUE;
+  else
+    Py_RETURN_FALSE;
+}
+
+/* Return true if this type is string-like.  */
+
+static PyObject *
+typy_is_string_like (PyObject *self, void *closure)
+{
+  struct type *type = ((type_object *) self)->type;
+  bool result = false;
+
+  try
+    {
+      type = check_typedef (type);
+      result = type->is_string_like ();
+    }
+  catch (const gdb_exception &except)
+    {
+      return gdbpy_handle_gdb_exception (nullptr, except);
+    }
+
+  if (result)
+    Py_RETURN_TRUE;
+  else
+    Py_RETURN_FALSE;
+}
+
 /* Return the type, stripped of typedefs. */
 static PyObject *
 typy_strip_typedefs (PyObject *self, PyObject *args)
@@ -454,7 +501,7 @@ typy_strip_typedefs (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (type);
@@ -475,7 +522,7 @@ typy_get_composite (struct type *type)
 	}
       catch (const gdb_exception &except)
 	{
-	  GDB_PY_HANDLE_EXCEPTION (except);
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
 
       if (!type->is_pointer_or_reference ())
@@ -545,7 +592,7 @@ typy_array_1 (PyObject *self, PyObject *args, int is_vector)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (array);
@@ -579,7 +626,7 @@ typy_pointer (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (type);
@@ -609,12 +656,12 @@ typy_range (PyObject *self, PyObject *args)
     case TYPE_CODE_ARRAY:
     case TYPE_CODE_STRING:
     case TYPE_CODE_RANGE:
-      if (type->bounds ()->low.kind () == PROP_CONST)
+      if (type->bounds ()->low.is_constant ())
 	low = type->bounds ()->low.const_val ();
       else
 	low = 0;
 
-      if (type->bounds ()->high.kind () == PROP_CONST)
+      if (type->bounds ()->high.is_constant ())
 	high = type->bounds ()->high.const_val ();
       else
 	high = 0;
@@ -651,7 +698,7 @@ typy_reference (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (type);
@@ -685,7 +732,7 @@ typy_const (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (type);
@@ -703,7 +750,7 @@ typy_volatile (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (type);
@@ -721,7 +768,7 @@ typy_unqualified (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type_to_type_object (type);
@@ -812,7 +859,7 @@ typy_lookup_typename (const char *type_name, const struct block *block)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return type;
@@ -866,7 +913,7 @@ typy_lookup_type (struct demangle_component *demangled,
 	}
       catch (const gdb_exception &except)
 	{
-	  GDB_PY_HANDLE_EXCEPTION (except);
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
     }
 
@@ -908,7 +955,7 @@ typy_legacy_template_argument (struct type *type, const struct block *block,
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   if (! info)
@@ -957,7 +1004,6 @@ typy_template_argument (PyObject *self, PyObject *args)
   const struct block *block = NULL;
   PyObject *block_obj = NULL;
   struct symbol *sym;
-  struct value *val = NULL;
 
   if (! PyArg_ParseTuple (args, "i|O", &argno, &block_obj))
     return NULL;
@@ -988,7 +1034,7 @@ typy_template_argument (PyObject *self, PyObject *args)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   /* We might not have DW_TAG_template_*, so try to parse the type's
@@ -1014,16 +1060,46 @@ typy_template_argument (PyObject *self, PyObject *args)
       return NULL;
     }
 
+  PyObject *result = nullptr;
   try
     {
-      val = value_of_variable (sym, block);
+      scoped_value_mark free_values;
+      struct value *val = value_of_variable (sym, block);
+      result = value_to_value_object (val);
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
-  return value_to_value_object (val);
+  return result;
+}
+
+/* __repr__ implementation for gdb.Type.  */
+
+static PyObject *
+typy_repr (PyObject *self)
+{
+  const auto type = type_object_to_type (self);
+  if (type == nullptr)
+    return gdb_py_invalid_object_repr (self);
+
+  const char *code = pyty_codes[type->code ()].name;
+  string_file type_name;
+  try
+    {
+      current_language->print_type (type, "", &type_name, -1, 0,
+				    &type_print_raw_options);
+    }
+  catch (const gdb_exception &except)
+    {
+      return gdbpy_handle_gdb_exception (nullptr, except);
+    }
+  auto py_typename = PyUnicode_Decode (type_name.c_str (), type_name.size (),
+				       host_charset (), NULL);
+
+  return PyUnicode_FromFormat ("<%s code=%s name=%U>", Py_TYPE (self)->tp_name,
+			       code, py_typename);
 }
 
 static PyObject *
@@ -1039,7 +1115,7 @@ typy_str (PyObject *self)
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   return PyUnicode_Decode (thetype.c_str (), thetype.size (),
@@ -1075,7 +1151,7 @@ typy_richcompare (PyObject *self, PyObject *other, int op)
 	{
 	  /* If there is a GDB exception, a comparison is not capable
 	     (or trusted), so exit.  */
-	  GDB_PY_HANDLE_EXCEPTION (except);
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
     }
 
@@ -1098,15 +1174,14 @@ struct typy_deleter
        operating on.  */
     gdbpy_enter enter_py;
 
-    htab_up copied_types = create_copied_types_hash ();
+    copied_types_hash_t copied_types;
 
     while (obj)
       {
 	type_object *next = obj->next;
 
-	htab_empty (copied_types.get ());
-
-	obj->type = copy_type_recursive (obj->type, copied_types.get ());
+	copied_types.clear ();
+	obj->type = copy_type_recursive (obj->type, copied_types);
 
 	obj->next = NULL;
 	obj->prev = NULL;
@@ -1189,7 +1264,8 @@ typy_optimized_out (PyObject *self, PyObject *args)
 {
   struct type *type = ((type_object *) self)->type;
 
-  return value_to_value_object (allocate_optimized_out_value (type));
+  scoped_value_mark free_values;
+  return value_to_value_object (value::allocate_optimized_out (type));
 }
 
 /* Return a gdb.Field object for the field named by the argument.  */
@@ -1388,9 +1464,13 @@ type_to_type_object (struct type *type)
       if (type->is_stub ())
 	type = check_typedef (type);
     }
-  catch (...)
+  catch (const gdb_exception_error &)
     {
       /* Just ignore failures in check_typedef.  */
+    }
+  catch (const gdb_exception &except)
+    {
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   type_obj = PyObject_New (type_object, &type_object_type);
@@ -1442,14 +1522,14 @@ gdbpy_lookup_type (PyObject *self, PyObject *args, PyObject *kw)
   return type_to_type_object (type);
 }
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_types (void)
 {
-  if (PyType_Ready (&type_object_type) < 0)
+  if (gdbpy_type_ready (&type_object_type) < 0)
     return -1;
-  if (PyType_Ready (&field_object_type) < 0)
+  if (gdbpy_type_ready (&field_object_type) < 0)
     return -1;
-  if (PyType_Ready (&type_iterator_object_type) < 0)
+  if (gdbpy_type_ready (&type_iterator_object_type) < 0)
     return -1;
 
   for (const auto &item : pyty_codes)
@@ -1458,17 +1538,10 @@ gdbpy_initialize_types (void)
 	return -1;
     }
 
-  if (gdb_pymodule_addobject (gdb_module, "Type",
-			      (PyObject *) &type_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_module, "TypeIterator",
-			      (PyObject *) &type_iterator_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Field",
-				 (PyObject *) &field_object_type);
+  return 0;
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_types);
 
 
 
@@ -1491,7 +1564,11 @@ static gdb_PyGetSetDef type_object_getset[] =
   { "is_scalar", typy_is_scalar, nullptr,
     "Is this a scalar type?", nullptr },
   { "is_signed", typy_is_signed, nullptr,
-    "Is this an signed type?", nullptr },
+    "Is this a signed type?", nullptr },
+  { "is_array_like", typy_is_array_like, nullptr,
+    "Is this an array-like type?", nullptr },
+  { "is_string_like", typy_is_string_like, nullptr,
+    "Is this a string-like type?", nullptr },
   { NULL }
 };
 
@@ -1612,7 +1689,7 @@ PyTypeObject type_object_type =
   0,				  /*tp_getattr*/
   0,				  /*tp_setattr*/
   0,				  /*tp_compare*/
-  0,				  /*tp_repr*/
+  typy_repr,                     /*tp_repr*/
   &type_object_as_number,	  /*tp_as_number*/
   0,				  /*tp_as_sequence*/
   &typy_mapping,		  /*tp_as_mapping*/

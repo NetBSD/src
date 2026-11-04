@@ -1,6 +1,6 @@
 /* TUI layout window management.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,16 +19,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_LAYOUT_H
-#define TUI_TUI_LAYOUT_H
+#ifndef GDB_TUI_TUI_LAYOUT_H
+#define GDB_TUI_TUI_LAYOUT_H
 
 #include "ui-file.h"
 
 #include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "gdbsupport/iterator-range.h"
-
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 
 /* Values that can be returned when handling a request to adjust a
    window's size.  */
@@ -59,8 +58,8 @@ public:
   virtual std::unique_ptr<tui_layout_base> clone () const = 0;
 
   /* Change the size and location of this layout.  When
-     PRESERVE_CMD_WIN_SIZE_P is true the current size of the TUI_CMD_WIN
-     is preserved, otherwise, the TUI_CMD_WIN will resize just like any
+     PRESERVE_CMD_WIN_SIZE_P is true the current size of the command window
+     is preserved, otherwise, the command window will resize just like any
      other window.  */
   virtual void apply (int x, int y, int width, int height,
 		      bool preserve_cmd_win_size_p) = 0;
@@ -350,8 +349,8 @@ extern void tui_regs_layout ();
 extern void tui_remove_some_windows ();
 
 /* Apply the current layout.  When PRESERVE_CMD_WIN_SIZE_P is true the
-   current size of the TUI_CMD_WIN is preserved, otherwise, the TUI_CMD_WIN
-   will resize just like any other window.  */
+   current size of the command window is preserved, otherwise, the command
+   window will resize just like any other window.  */
 extern void tui_apply_current_layout (bool);
 
 /* Adjust the window height of WIN to NEW_HEIGHT.  */
@@ -368,7 +367,7 @@ typedef std::function<tui_win_info * (const char *name)> window_factory;
 
 /* The type for a data structure that maps a window name to that window's
    factory function.  */
-typedef std::unordered_map<std::string, window_factory> window_types_map;
+typedef gdb::unordered_map<std::string, window_factory> window_types_map;
 
 /* Register a new TUI window type.  NAME is the name of the window
    type.  FACTORY is a function that can be called to instantiate the
@@ -418,4 +417,4 @@ using known_window_names_range
 
 extern known_window_names_range all_known_window_names ();
 
-#endif /* TUI_TUI_LAYOUT_H */
+#endif /* GDB_TUI_TUI_LAYOUT_H */

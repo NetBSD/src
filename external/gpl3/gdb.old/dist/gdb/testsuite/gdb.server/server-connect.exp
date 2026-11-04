@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,14 +22,10 @@ load_lib gdbserver-support.exp
 
 standard_testfile normal.c
 
-if {[skip_gdbserver_tests]} {
-    return 0
-}
+require allow_gdbserver_tests
 
 # We want to have control over where we start gdbserver.
-if { [is_remote target] } {
-    return 0
-}
+require {!is_remote target}
 
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile debug] } {
     return -1
@@ -92,6 +88,9 @@ save_vars { GDB_TEST_SOCKETHOST } {
 	    } else {
 		if { $gdbserver_should_fail } {
 		    fail "$test: gdbserver should fail but did not"
+		} elseif { [llength $res] == 0 } {
+		    unsupported $test
+		    continue
 		} else {
 		    pass "$test"
 		}

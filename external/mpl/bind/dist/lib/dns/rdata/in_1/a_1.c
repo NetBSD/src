@@ -1,4 +1,4 @@
-/*	$NetBSD: a_1.c,v 1.10.2.1 2025/08/02 05:53:49 perseant Exp $	*/
+/*	$NetBSD: a_1.c,v 1.10.2.2 2026/11/04 23:18:13 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -161,9 +161,7 @@ tostruct_in_a(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	a->common.rdclass = rdata->rdclass;
-	a->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&a->common, link);
+	DNS_RDATACOMMON_INIT(a, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	n = uint32_fromregion(&region);
@@ -234,7 +232,7 @@ checkowner_in_a(ARGS_CHECKOWNER) {
 		}
 
 		/*
-		 * Handle SPF exists targets when the seperating label is:
+		 * Handle SPF exists targets when the separating label is:
 		 * - "_spf" RFC7208, section 5.7
 		 * - "_spf_verify" RFC7208, Appendix D1
 		 * - "_spf_rate" RFC7208, Appendix D1

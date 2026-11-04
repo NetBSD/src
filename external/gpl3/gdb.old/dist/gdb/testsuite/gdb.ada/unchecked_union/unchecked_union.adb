@@ -1,4 +1,4 @@
---  Copyright 2019-2023 Free Software Foundation, Inc.
+--  Copyright 2019-2024 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 with System;
 with Pck; use Pck;
 
-procedure Foo is
+procedure Unchecked_Union is
    type Key is (Alpha, Beta, Omega);
 
    type Inner(Disc : Key := Omega) is record
@@ -52,4 +52,4 @@ procedure Foo is
 
 begin
    Do_Nothing (Value'Address);          -- BREAK
-end Foo;
+end Unchecked_Union;

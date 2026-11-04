@@ -1,6 +1,6 @@
 // Compatibility symbols for previous versions -*- C++ -*-
 
-// Copyright (C) 2005-2020 Free Software Foundation, Inc.
+// Copyright (C) 2005-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -107,11 +107,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    break;
 		}
 
-	      if (__large_ignore)
-		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
+	      if (__n == __gnu_cxx::__numeric_traits<streamsize>::__max)
+		{
+		  if (__large_ignore)
+		    _M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
 
-	      if (traits_type::eq_int_type(__c, __eof))
-		__err |= ios_base::eofbit;
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
+	      else if (_M_gcount < __n)
+		{
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
 	    }
 	  __catch(__cxxabiv1::__forced_unwind&)
 	    {
@@ -178,11 +186,19 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		    break;
 		}
 
-	      if (__large_ignore)
-		_M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
+	      if (__n == __gnu_cxx::__numeric_traits<streamsize>::__max)
+		{
+		  if (__large_ignore)
+		    _M_gcount = __gnu_cxx::__numeric_traits<streamsize>::__max;
 
-	      if (traits_type::eq_int_type(__c, __eof))
-		__err |= ios_base::eofbit;
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
+	      else if (_M_gcount < __n)
+		{
+		  if (traits_type::eq_int_type(__c, __eof))
+		    __err |= ios_base::eofbit;
+		}
 	    }
 	  __catch(__cxxabiv1::__forced_unwind&)
 	    {
@@ -365,7 +381,6 @@ _GLIBCXX_END_NAMESPACE_VERSION
 // In the future, GLIBCXX_ABI > 6 should remove all uses of
 // _GLIBCXX_*_SYMVER macros in this file.
 
-#ifdef _GLIBCXX_COMPAT_
 #define _GLIBCXX_3_4_SYMVER(XXname, name) \
    extern "C" void \
    _X##name(...) \
@@ -380,11 +395,6 @@ _GLIBCXX_END_NAMESPACE_VERSION
 
 #define _GLIBCXX_ASM_SYMVER(cur, old, version) \
    asm (".symver " #cur "," #old "@@" #version);
-#else
-#define _GLIBCXX_3_4_SYMVER(XXname, name)
-#define _GLIBCXX_3_4_5_SYMVER(XXname, name)
-#define _GLIBCXX_ASM_SYMVER(cur, old, version)
-#endif
 
 #define _GLIBCXX_APPLY_SYMVER _GLIBCXX_3_4_SYMVER
 #include <abi/compatibility.h>

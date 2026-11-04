@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.239.2.1 2025/08/02 05:58:24 perseant Exp $
+#	$NetBSD: Makefile,v 1.239.2.2 2026/11/04 23:28:30 perseant Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 1/7/94
 
 .include <bsd.own.mk>
 
-SUBDIR= aiomixer apply asa at audio audiocfg \
-	banner base64 basename biff bthset btkey btpin \
+SUBDIR= apply asa at atto \
+	banner base64 basename biff \
 	bzip2 bzip2recover c11 c17 c89 c99 cal calendar cap_mkdb cdplay \
 	checknr chflags chpass cksum cmp cleantags col colcrt colrm \
 	column comm compress config crunch csplit ctags cut cvslatest \
@@ -19,24 +19,32 @@ SUBDIR= aiomixer apply asa at audio audiocfg \
 	machine mail make man menuc mesg midiplay midirecord mixerctl \
 	mkcsmapper mkdep mkesdb mkfifo mklocale mktemp mkubootimage \
 	moduli msgc msgs \
-	nbperf nc netgroup netstat newgrp newsyslog nfsstat nice nl nohup \
+	nbperf nc netgroup netstat newgrp newsyslog nice nl nohup \
 	pagesize passwd paste patch pathchk pkill pmap pr \
 	printenv printf progress pwait pwhash qsubst quota radioctl rdist \
-	realpath renice resize rev revoke rfcomm_sppd rlogin rpcgen rpcinfo rs rsh \
+	realpath renice resize rev revoke rlogin rpcgen rpcinfo rs rsh \
 	rup ruptime rusers rwall rwho scmdctl \
-	script sdiff sdpquery sed seq shar shlock \
-	showmount shuffle sockstat sort sortinfo \
+	script sdiff sed seq shar shlock \
+	shuffle sockstat sort sortinfo \
 	spell split stat su sys_info systat \
 	tabs tail talk tcopy tee telnet tftp tic time timeout tip touch \
 	tput \
 	tr true tset tsort tty ul uname unexpand unifdef \
-	uniq units unvis unzip usbhidaction usbhidctl users utoppya \
+	uniq units unvis unzip users utoppya \
 	uudecode uuencode uuidgen vacation vgrind videoctl vis \
 	vmstat vndcompress w \
 	wall wc what whereis who whois \
 	write xargs xinstall xlint yes
 
 SUBDIR+= ../external/zlib/pigz/bin/pigz
+
+.if (${MKAUDIO} != "no")
+SUBDIR+= aiomixer audio audiocfg
+.endif
+
+.if (${MKBLUETOOTH} != "no")
+SUBDIR+= bthset btkey btpin rfcomm_sppd sdpquery 
+.endif
 
 .if (${MKGROFF} == "no")
 SUBDIR+= soelim
@@ -46,9 +54,17 @@ SUBDIR+= soelim
 SUBDIR+= apropos whatis
 .endif
 
+.if (${MKNFS} != "no")
+SUBDIR+= nfsstat showmount
+.endif
+
 .if (${MKRUMP} != "no")
 SUBDIR+= rump_allserver rump_dhcpclient rump_halt rump_server shmif_dumpbus \
 	shmif_pcapin rump_wmd
+.endif
+
+.if (${MKBSDDIFF} != "no")
+SUBDIR+= diff diff3
 .endif
 
 .if (${MKBSDGREP} != "no")
@@ -67,6 +83,10 @@ SUBDIR+= hesinfo
 
 .if (${MKSKEY} != "no")
 SUBDIR+= skey skeyinfo skeyinit
+.endif
+
+.if (${MKUSB} != "no")
+SUBDIR+= usbhidaction usbhidctl
 .endif
 
 .if (${MKYP} != "no")

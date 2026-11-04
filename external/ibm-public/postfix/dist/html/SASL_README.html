@@ -178,7 +178,7 @@ later. </p>
 <p> Dovecot is a POP/IMAP server that has its own configuration to
 authenticate POP/IMAP clients. When the Postfix SMTP server uses
 Dovecot SASL, it reuses parts of this configuration.  Consult the
-<a href="https://wiki.dovecot.org">Dovecot documentation</a> for how
+<a href="https://doc.dovecot.org">Dovecot documentation</a> for how
 to configure and operate the Dovecot authentication server.  </p>
 
 <h4><a name="server_dovecot_comm">Postfix to Dovecot SASL communication</a></h4>
@@ -1377,7 +1377,8 @@ use a particular envelope sender address: </p>
 <blockquote>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-    <strong><a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/controlled_envelope_senders</strong>
+    <strong><a href="postconf.5.html#smtpd_sender_login_maps">smtpd_sender_login_maps</a> = 
+        <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/controlled_envelope_senders</strong>
 
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
         ...
@@ -1401,6 +1402,19 @@ names that own that address: </p>
     @example.net                barney, fred, john@example.com, mary@example.com
 </pre>
 </blockquote>
+
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<p> Execute the command "<b>postmap
+/etc/postfix/controlled_envelope_senders</b>" after you change the
+controlled_envelope_senders file, to (re)build a default-type indexed
+file. Execute "<b>postmap
+<i>type</i>:/etc/postfix/controlled_envelope_senders</b>" to specify
+an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <p> With this, the <code><a href="postconf.5.html#reject_sender_login_mismatch">reject_sender_login_mismatch</a></code>
 restriction above will reject the sender address in the MAIL FROM
@@ -1430,7 +1444,7 @@ REJECT mail from accounts whose credentials have been compromised.
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> = 
         <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> 
-        <a href="postconf.5.html#check_sasl_access">check_sasl_access</a> <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_access
+        <a href="postconf.5.html#check_sasl_access">check_sasl_access</a> <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sasl_access
         <a href="postconf.5.html#permit_sasl_authenticated">permit_sasl_authenticated</a>
         ...
 
@@ -1441,6 +1455,17 @@ REJECT mail from accounts whose credentials have been compromised.
      username@example.com HOLD
 </pre>
 </blockquote>
+
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/sasl_access</b>"
+after you change the sasl_access file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sasl_access</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <h4><a name="id397172">Default  authentication domain</a></h4>
 
@@ -1675,7 +1700,7 @@ second part sets up the username/password information.  </p>
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sasl_passwd
 </pre>
 </blockquote>
 
@@ -1749,8 +1774,16 @@ and before entering an optional chroot jail. </p>
 
 <ul>
 
-<li> <p> Use the <code>postmap</code> command whenever you
-change the <code>/etc/postfix/sasl_passwd</code> file. </p> </li>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
+after changing the sasl_passwd file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sasl_passwd</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p> </li>
 
 <li> <p> If you specify the "<code>[</code>" and "<code>]</code>"
 in the <code><a href="postconf.5.html#relayhost">relayhost</a></code> destination, then you must use the
@@ -1785,9 +1818,10 @@ resort.  </p>
 <pre>
 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
     <a href="postconf.5.html#smtp_sender_dependent_authentication">smtp_sender_dependent_authentication</a> = yes
-    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sender_relay
+    <a href="postconf.5.html#sender_dependent_relayhost_maps">sender_dependent_relayhost_maps</a> = 
+        <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sender_relay
     <a href="postconf.5.html#smtp_sasl_auth_enable">smtp_sasl_auth_enable</a> = yes
-    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/sasl_passwd
+    <a href="postconf.5.html#smtp_sasl_password_maps">smtp_sasl_password_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/sasl_passwd
     <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]
     # Alternative form:
     # <a href="postconf.5.html#relayhost">relayhost</a> = [mail.isp.example]:submission
@@ -1818,19 +1852,25 @@ resort.  </p>
 
 <ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <li> <p> If you are creative, then you can try to combine the two
 tables into one single MySQL database, and configure different
 Postfix queries to extract the appropriate information. </p>
 
-<li> <p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>". </p>
-
 <li> <p> Execute the command "<b>postmap /etc/postfix/sasl_passwd</b>"
-whenever you change the sasl_passwd table. </p>
+after you change the sasl_passwd file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sasl_passwd</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <li> <p> Execute the command "<b>postmap /etc/postfix/sender_relay</b>"
-whenever you change the sender_relay table. </p>
+after you change the sender_relay file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/sender_relay</b>"
+to specify an explicit type.</p>
 
 </ul>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_43.c,v 1.51 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: uipc_syscalls_43.c,v 1.51.36.1 2026/11/04 23:21:35 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1990, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.51 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_syscalls_43.c,v 1.51.36.1 2026/11/04 23:21:35 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -171,6 +171,7 @@ compat_43_sys_recv(struct lwp *l, const struct compat_43_sys_recv_args *uap, reg
 	} */
 	struct sys_recvfrom_args bra;
 
+	memset(&bra, 0, sizeof(bra));
 	SCARG(&bra, s) = SCARG(uap, s);
 	SCARG(&bra, buf) = SCARG(uap, buf);
 	SCARG(&bra, len) = (size_t) SCARG(uap, len);
@@ -273,9 +274,8 @@ compat_43_sys_recvmsg(struct lwp *l, const struct compat_43_sys_recvmsg_args *ua
 		m_free(from);
 
 	if (error != 0)
-		 error = copyout(&omsg, SCARG(uap, msg), sizeof(omsg));
-
-	return error;
+		return error;
+	return copyout(&omsg, SCARG(uap, msg), sizeof(omsg));
 }
 
 int
@@ -289,6 +289,7 @@ compat_43_sys_send(struct lwp *l, const struct compat_43_sys_send_args *uap, reg
 	} */
 	struct sys_sendto_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, s)		= SCARG(uap, s);
 	SCARG(&bsa, buf)	= SCARG(uap, buf);
 	SCARG(&bsa, len)	= SCARG(uap, len);

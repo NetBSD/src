@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/27 03:53:08 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.1.58.1 2026/11/04 23:27:55 perseant Exp $
 
 .include "../Makefile.inc"
 
@@ -10,5 +10,7 @@ IOCONF=	mlx.ioconf
 SRCS+=	mlx.c
 
 CPPFLAGS+=	-DNLD=1
+
+WARNS=	3	# -Wsign-compare issues
 
 .include <bsd.kmodule.mk>

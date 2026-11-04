@@ -1,6 +1,6 @@
 /* Target-dependent definitions for AMD64.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
    Contributed by Jiri Smid, SuSE Labs.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_TDEP_H
-#define AMD64_TDEP_H
+#ifndef GDB_AMD64_TDEP_H
+#define GDB_AMD64_TDEP_H
 
 struct gdbarch;
 class frame_info_ptr;
@@ -66,6 +66,8 @@ enum amd64_regnum
   AMD64_MXCSR_REGNUM = AMD64_XMM0_REGNUM + 16,
   AMD64_YMM0H_REGNUM,		/* %ymm0h */
   AMD64_YMM15H_REGNUM = AMD64_YMM0H_REGNUM + 15,
+  /* MPX is deprecated.  Yet we keep this to not give the registers below
+     a new number.  That could break older gdbservers.  */
   AMD64_BND0R_REGNUM = AMD64_YMM15H_REGNUM + 1,
   AMD64_BND3R_REGNUM = AMD64_BND0R_REGNUM + 3,
   AMD64_BNDCFGU_REGNUM,
@@ -93,7 +95,7 @@ extern displaced_step_copy_insn_closure_up amd64_displaced_step_copy_insn
    struct regcache *regs);
 extern void amd64_displaced_step_fixup
   (struct gdbarch *gdbarch, displaced_step_copy_insn_closure *closure,
-   CORE_ADDR from, CORE_ADDR to, struct regcache *regs);
+   CORE_ADDR from, CORE_ADDR to, struct regcache *regs, bool completed_p);
 
 /* Initialize the ABI for amd64.  Uses DEFAULT_TDESC as fallback
    tdesc, if INFO does not specify one.  */
@@ -144,4 +146,4 @@ extern int amd64nbsd_r_reg_offset[];
 /* Variables exported from amd64-obsd-tdep.c.  */
 extern int amd64obsd_r_reg_offset[];
 
-#endif /* amd64-tdep.h */
+#endif /* GDB_AMD64_TDEP_H */

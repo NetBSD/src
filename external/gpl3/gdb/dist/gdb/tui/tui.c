@@ -1,6 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -21,13 +21,13 @@
 
 #include "event-top.h"
 #include "cli/cli-cmds.h"
+#include "exceptions.h"
 #include "tui/tui.h"
 #include "tui/tui-hooks.h"
 #include "tui/tui-command.h"
 #include "tui/tui-data.h"
 #include "tui/tui-layout.h"
 #include "tui/tui-io.h"
-#include "tui/tui-regs.h"
 #include "tui/tui-status.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
@@ -35,18 +35,14 @@
 #include "tui/tui-source.h"
 #include "target.h"
 #include "frame.h"
-#include "breakpoint.h"
 #include "inferior.h"
 #include "symtab.h"
-#include "source.h"
 #include "terminal.h"
 #include "top.h"
 #include "ui.h"
+#include "observable.h"
 
-#include <ctype.h>
-#include <signal.h>
 #include <fcntl.h>
-#include <setjmp.h>
 
 #include "gdb_curses.h"
 #include "interps.h"
@@ -65,13 +61,18 @@ show_tui_debug (struct ui_file *file, int from_tty,
 }
 
 /* This redefines CTRL if it is not already defined, so it must come
-   after terminal state releated include files like <term.h> and
+   after terminal state related include files like <term.h> and
    "gdb_curses.h".  */
 #include "readline/readline.h"
 
 /* Tells whether the TUI is active or not.  */
 bool tui_active = false;
-static bool tui_finish_init = true;
+
+/* Tells whether the TUI should do deferred curses initialization.
+   If TRIBOOL_TRUE, then yes.  If TRIBOOL_FALSE. then no (because
+   initialization is already done).  If TRIBOOL_UNKNOWN, then no (because
+   initialization failed).  */
+static tribool tui_finish_init = TRIBOOL_TRUE;
 
 enum tui_key_mode tui_current_key_mode = TUI_COMMAND_MODE;
 
@@ -124,6 +125,19 @@ tui_rl_switch_mode (int notused1, int notused2)
 	}
       else
 	{
+	  /* If we type "foo", entering it into the readline buffer
+
+	       (gdb) foo
+			^
+	     and then switch to TUI and back, we may get back
+
+	       (gdb) foo
+		     ^
+	     which is confusing because "foo" is no longer part of the
+	     readline buffer.  Fix this by clearing it before switching to
+	     TUI.  */
+	  rl_clear_visible_line ();
+
 	  /* If tui_enable throws, we'll re-prep below.  */
 	  rl_deprep_terminal ();
 	  tui_enable ();
@@ -391,10 +405,18 @@ tui_enable (void)
   if (tui_active)
     return;
 
+  tui_batch_rendering defer;
+
   /* To avoid to initialize curses when gdb starts, there is a deferred
      curses initialization.  This initialization is made only once
      and the first time the curses mode is entered.  */
-  if (tui_finish_init)
+  if (tui_finish_init == TRIBOOL_UNKNOWN)
+    {
+      /* Initialization failed before, just throw a generic error, don't try
+	 again.  */
+      error (_("Cannot enable the TUI"));
+    }
+  else if (tui_finish_init == TRIBOOL_TRUE)
     {
       WINDOW *w;
       SCREEN *s;
@@ -413,6 +435,9 @@ tui_enable (void)
 	 characters) if we're not outputting to a terminal.  */
       if (!gdb_stderr->isatty ())
 	error (_("Cannot enable the TUI when output is not a terminal"));
+
+      /* Don't try initialization again.  */
+      tui_finish_init = TRIBOOL_UNKNOWN;
 
       s = newterm (NULL, stdout, stdin);
 #ifdef __MINGW32__
@@ -469,10 +494,10 @@ tui_enable (void)
 
       tui_show_frame_info (deprecated_safe_get_selected_frame ());
       tui_set_initial_layout ();
-      tui_set_win_focus_to (TUI_SRC_WIN);
-      keypad (TUI_CMD_WIN->handle.get (), TRUE);
-      wrefresh (TUI_CMD_WIN->handle.get ());
-      tui_finish_init = false;
+      tui_set_win_focus_to (tui_src_win ());
+      keypad (tui_cmd_win ()->handle.get (), TRUE);
+      wrefresh (tui_cmd_win ()->handle.get ());
+      tui_finish_init = TRIBOOL_FALSE;
     }
   else
     {
@@ -514,6 +539,8 @@ tui_enable (void)
   /* Update gdb's knowledge of its terminal.  */
   gdb_save_tty_state ();
   tui_update_gdb_sizes ();
+
+  gdb::observers::tui_enabled.notify (true);
 }
 
 /* Leave the tui mode.
@@ -552,6 +579,8 @@ tui_disable (void)
 
   tui_active = false;
   tui_update_gdb_sizes ();
+
+  gdb::observers::tui_enabled.notify (false);
 }
 
 /* Command wrapper for enabling tui mode.  */
@@ -573,7 +602,7 @@ tui_disable_command (const char *args, int from_tty)
 void
 tui_show_assembly (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
-  tui_suppress_output suppress;
+  tui_batch_rendering suppress;
   tui_add_win_to_layout (DISASSEM_WIN);
   tui_update_source_windows_with_addr (gdbarch, addr);
 }
@@ -594,17 +623,15 @@ bool
 tui_get_command_dimension (unsigned int *width, 
 			   unsigned int *height)
 {
-  if (!tui_active || (TUI_CMD_WIN == NULL))
+  if (!tui_active || (tui_cmd_win () == NULL))
     return false;
   
-  *width = TUI_CMD_WIN->width;
-  *height = TUI_CMD_WIN->height;
+  *width = tui_cmd_win ()->width;
+  *height = tui_cmd_win ()->height;
   return true;
 }
 
-void _initialize_tui ();
-void
-_initialize_tui ()
+INIT_GDB_FILE (tui)
 {
   struct cmd_list_element **tuicmd;
 

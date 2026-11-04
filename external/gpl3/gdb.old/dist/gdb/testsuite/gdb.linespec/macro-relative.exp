@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,15 +16,11 @@
 standard_testfile
 
 # Fission doesn't support macros yet.  Bug 15954.
-if [using_fission] {
-    unsupported "fission"
-    return -1
-}
+require !using_fission
 
-if [is_remote host] {
-    unsupported "compiling on a remote host does not support a filename with directory."
-    return 0
-}
+# Compiling on a remote host does not support a filename with
+# directory.
+require {!is_remote host}
 
 set opts {debug additional_flags=-I. macros}
 

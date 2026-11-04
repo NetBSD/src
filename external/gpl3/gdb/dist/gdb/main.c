@@ -1,6 +1,6 @@
 /* Top level stuff for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "annotate.h"
+#include "exceptions.h"
+#include "gdbsupport/common-inferior.h"
 #include "top.h"
 #include "ui.h"
 #include "target.h"
@@ -57,6 +59,8 @@
 #include "observable.h"
 #include "serial.h"
 #include "cli-out.h"
+#include "bt-utils.h"
+#include "terminal.h"
 
 /* The selected interpreter.  */
 std::string interpreter_p;
@@ -120,7 +124,7 @@ set_gdb_data_directory (const char *new_datadir)
      "../foo" and "../foo" doesn't exist then we'll record $(pwd)/../foo which
      isn't canonical, but that's ok.  */
   if (!IS_ABSOLUTE_PATH (gdb_datadir.c_str ()))
-    gdb_datadir = gdb_abspath (gdb_datadir.c_str ());
+    gdb_datadir = gdb_abspath (gdb_datadir);
 }
 
 /* Relocate a file or directory.  PROGNAME is the name by which gdb
@@ -397,7 +401,7 @@ start_event_loop ()
 
       try
 	{
-	  result = gdb_do_one_event ();
+	  result = current_interpreter ()->do_one_event ();
 	}
       catch (const gdb_exception_forced_quit &ex)
 	{
@@ -418,6 +422,7 @@ start_event_loop ()
 	     get around to resetting the prompt, which leaves readline
 	     in a messed-up state.  Reset it here.  */
 	  current_ui->prompt_state = PROMPT_NEEDED;
+	  current_ui->line_buffer.clear ();
 	  top_level_interpreter ()->on_command_error ();
 	  /* This call looks bizarre, but it is required.  If the user
 	     entered a command that caused an error,
@@ -642,9 +647,9 @@ captured_main_1 (struct captured_main_args *context)
   int save_auto_load;
   int ret = 1;
 
-  const char *no_color = getenv ("NO_COLOR");
-  if (no_color != nullptr && *no_color != '\0')
-    cli_styling = false;
+  /* Check for environment variables which might cause GDB to start with
+     styling disabled.  */
+  disable_styling_from_environment ();
 
 #ifdef HAVE_USEFUL_SBRK
   /* Set this before constructing scoped_command_stats.  */
@@ -670,11 +675,14 @@ captured_main_1 (struct captured_main_args *context)
   /* Ensure stderr is unbuffered.  A Cygwin pty or pipe is implemented
      as a Windows pipe, and Windows buffers on pipes.  */
   setvbuf (stderr, NULL, _IONBF, BUFSIZ);
+
+  windows_initialize_console ();
 #endif
 
   /* Note: `error' cannot be called before this point, because the
      caller will crash when trying to print the exception.  */
   main_ui = new ui (stdin, stdout, stderr);
+  gdb_internal_backtrace_init_str ();
   current_ui = main_ui;
 
   gdb_stdtarg = gdb_stderr;
@@ -702,7 +710,7 @@ captured_main_1 (struct captured_main_args *context)
 
   /* Prefix warning messages with the command name.  */
   gdb::unique_xmalloc_ptr<char> tmp_warn_preprint
-    = xstrprintf ("%s: warning: ", gdb_program_name);
+    = xstrprintf ("%s: ", gdb_program_name);
   warning_pre_print = tmp_warn_preprint.get ();
 
   current_directory = getcwd (NULL, 0);
@@ -763,7 +771,10 @@ captured_main_1 (struct captured_main_args *context)
       OPT_EIX,
       OPT_EIEX,
       OPT_READNOW,
-      OPT_READNEVER
+      OPT_READNEVER,
+#ifdef USE_WIN32API
+      OPT_BINARY_OUTPUT,
+#endif
     };
     /* This struct requires int* in the struct, but write_files is a bool.
        So use this temporary int that we write back after argument parsing.  */
@@ -839,6 +850,9 @@ captured_main_1 (struct captured_main_args *context)
       {"args", no_argument, &set_args, 1},
       {"l", required_argument, 0, 'l'},
       {"return-child-result", no_argument, &return_child_result, 1},
+#ifdef USE_WIN32API
+      {"binary-output", no_argument, 0, OPT_BINARY_OUTPUT},
+#endif
       {0, no_argument, 0, 0}
     };
 
@@ -1012,6 +1026,12 @@ captured_main_1 (struct captured_main_args *context)
 	    }
 	    break;
 
+#ifdef USE_WIN32API
+	  case OPT_BINARY_OUTPUT:
+	    set_output_translation_mode_binary ();
+	    break;
+#endif
+
 	  case '?':
 	    error (_("Use `%s --help' for a complete list of options."),
 		   gdb_program_name);
@@ -1024,7 +1044,7 @@ captured_main_1 (struct captured_main_args *context)
 	quiet = 1;
 
 	/* Disable all output styling when running in batch mode.  */
-	cli_styling = 0;
+	disable_cli_styling ();
       }
   }
 
@@ -1075,7 +1095,8 @@ captured_main_1 (struct captured_main_args *context)
       execarg = argv[optind];
       ++optind;
       current_inferior ()->set_args
-	(gdb::array_view<char * const> (&argv[optind], argc - optind));
+	(gdb::array_view<char * const> (&argv[optind], argc - optind),
+	 startup_with_shell);
     }
   else
     {
@@ -1120,7 +1141,7 @@ captured_main_1 (struct captured_main_args *context)
 
   /* Do these (and anything which might call wrap_here or *_filtered)
      after initialize_all_files() but before the interpreter has been
-     installed.  Otherwize the help/version messages will be eaten by
+     installed.  Otherwise the help/version messages will be eaten by
      the interpreter's output handler.  */
 
   if (print_version)
@@ -1165,7 +1186,7 @@ captured_main_1 (struct captured_main_args *context)
 
   /* Set off error and warning messages with a blank line.  */
   tmp_warn_preprint.reset ();
-  warning_pre_print = _("\nwarning: ");
+  warning_pre_print = "\n";
 
   /* Read and execute the system-wide gdbinit file, if it exists.
      This is done *before* all the command line arguments are
@@ -1232,7 +1253,8 @@ captured_main_1 (struct captured_main_args *context)
 
   if (corearg != NULL)
     {
-      ret = catch_command_errors (core_file_command, corearg,
+      ret = catch_command_errors (core_file_command,
+				  make_quoted_string (corearg).c_str (),
 				  !batch_flag);
     }
   else if (pidarg != NULL)
@@ -1250,16 +1272,18 @@ captured_main_1 (struct captured_main_args *context)
 	  ret = catch_command_errors (attach_command, pid_or_core_arg,
 				      !batch_flag);
 	  if (ret == 0)
-	    ret = catch_command_errors (core_file_command,
-					pid_or_core_arg,
-					!batch_flag);
+	    ret = catch_command_errors
+	      (core_file_command,
+	       make_quoted_string (pid_or_core_arg).c_str (),
+	       !batch_flag);
 	}
       else
 	{
 	  /* Can't be a pid, better be a corefile.  */
-	  ret = catch_command_errors (core_file_command,
-				      pid_or_core_arg,
-				      !batch_flag);
+	  ret = catch_command_errors
+	    (core_file_command,
+	     make_quoted_string (pid_or_core_arg).c_str (),
+	     !batch_flag);
 	}
     }
 
@@ -1267,7 +1291,7 @@ captured_main_1 (struct captured_main_args *context)
     current_inferior ()->set_tty (ttyarg);
 
   /* Error messages should no longer be distinguished with extra output.  */
-  warning_pre_print = _("warning: ");
+  warning_pre_print = "";
 
   /* Read the .gdbinit file in the current directory, *if* it isn't
      the same as the $HOME/.gdbinit file (it should exist, also).  */
@@ -1320,10 +1344,8 @@ captured_main_1 (struct captured_main_args *context)
 }
 
 static void
-captured_main (void *data)
+captured_main (captured_main_args *context)
 {
-  struct captured_main_args *context = (struct captured_main_args *) data;
-
   captured_main_1 (context);
 
   /* NOTE: cagney/1999-11-07: There is probably no reason for not
@@ -1449,8 +1471,13 @@ Remote debugging options:\n\n\
 Other options:\n\n\
   --cd=DIR           Change current directory to DIR.\n\
   --data-directory=DIR, -D\n\
-		     Set GDB's data-directory to DIR.\n\
-"), stream);
+		     Set GDB's data-directory to DIR.\n"
+#ifdef USE_WIN32API
+"\
+  --binary-output    Set the translation mode of stdout/stderr to binary,\n\
+		     disabling CRLF translation.\n"
+#endif
+), stream);
   gdb_puts (_("\n\
 At startup, GDB reads the following early init files and executes their\n\
 commands:\n\
@@ -1490,10 +1517,11 @@ At startup, GDB reads the following init files and executes their commands:\n\
       && local_gdbinit.empty ())
     gdb_printf (stream, _("\
    None found.\n"));
-  gdb_puts (_("\n\
-For more information, type \"help\" from within GDB, or consult the\n\
+  gdb_printf (stream, _("\n\
+For more information, type \"%ps\" from within GDB, or consult the\n\
 GDB manual (available as on-line info or a printed manual).\n\
-"), stream);
+"),
+	      styled_string (command_style.style (), "stream"));
   if (REPORT_BUGS_TO[0] && stream == gdb_stdout)
     gdb_printf (stream, _("\n\
 Report bugs to %ps.\n\

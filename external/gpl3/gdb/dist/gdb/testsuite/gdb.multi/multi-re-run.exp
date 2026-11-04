@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,25 +20,27 @@
 # misbehave, including failing to load libthread_db.so.  See PR
 # gdb/25410.
 
+require allow_multi_inferior_tests
+
 # Build two executables, with different symbols.
 
-set exec1 "multi-re-run-1"
+set testfile1 "multi-re-run-1"
 set srcfile1 multi-re-run-1.c
-set binfile1 [standard_output_file ${exec1}]
+set binfile1 [standard_output_file $testfile1]
 
-set exec2 "multi-re-run-2"
+set testfile2 "multi-re-run-2"
 set srcfile2 multi-re-run-2.c
-set binfile2 [standard_output_file ${exec2}]
+set binfile2 [standard_output_file $testfile2]
 
 with_test_prefix "exec1" {
-    if { [build_executable "failed to prepare" ${exec1} "${srcfile1}" \
+    if { [build_executable "failed to prepare" $testfile1 $srcfile1 \
 	      [list pthreads debug]] } {
 	return -1
     }
 }
 
 with_test_prefix "exec2" {
-    if { [build_executable "failed to prepare" ${exec2} "${srcfile2}" \
+    if { [build_executable "failed to prepare" $testfile2 $srcfile2 \
 	      [list pthreads debug]] } {
 	return -1
     }
@@ -53,7 +55,7 @@ proc test_re_run {re_run_inf} {
     global gdb_prompt
     global last_loaded_file
 
-    clean_restart ${binfile1}
+    clean_restart $::testfile1
 
     delete_breakpoints
 

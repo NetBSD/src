@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.409.2.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.409.2.2 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019, 2023 The NetBSD Foundation, Inc.
@@ -70,39 +70,42 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.409.2.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.409.2.2 2026/11/04 23:27:48 perseant Exp $");
 
-#include "opt_execfmt.h"
-#include "opt_ptrace.h"
-#include "opt_dtrace.h"
-#include "opt_compat_sunos.h"
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_compat_sunos.h"
+#include "opt_dtrace.h"
+#include "opt_execfmt.h"
 #include "opt_pax.h"
+#include "opt_ptrace.h"
 
 #define	SIGPROP		/* include signal properties table */
+
 #include <sys/param.h>
-#include <sys/signalvar.h>
+#include <sys/types.h>
+
+#include <sys/acct.h>
+#include <sys/atomic.h>
+#include <sys/callout.h>
+#include <sys/compat_stub.h>
+#include <sys/cpu.h>
+#include <sys/exec.h>
+#include <sys/exec_elf.h>
+#include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/kauth.h>
+#include <sys/ktrace.h>
+#include <sys/module.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
 #include <sys/ptrace.h>
-#include <sys/systm.h>
-#include <sys/wait.h>
-#include <sys/ktrace.h>
-#include <sys/syslog.h>
-#include <sys/filedesc.h>
-#include <sys/file.h>
-#include <sys/pool.h>
-#include <sys/ucontext.h>
-#include <sys/exec.h>
-#include <sys/kauth.h>
-#include <sys/acct.h>
-#include <sys/callout.h>
-#include <sys/atomic.h>
-#include <sys/cpu.h>
-#include <sys/module.h>
 #include <sys/sdt.h>
-#include <sys/exec_elf.h>
-#include <sys/compat_stub.h>
+#include <sys/signalvar.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/ucontext.h>
+#include <sys/wait.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
@@ -631,7 +634,7 @@ sigput(sigpend_t *sp, struct proc *p, ksiginfo_t *ksi)
 		printf("%s(%d): Signal queue is full signal=%d\n",
 		    p->p_comm, p->p_pid, ksi->ksi_signo);
 #endif
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 	ksi->ksi_flags |= KSI_QUEUED;
 	TAILQ_INSERT_TAIL(&sp->sp_info, ksi, ksi_list);
@@ -689,7 +692,7 @@ sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
  *
  *	Return the first signal number if there are pending signals for the
  *	current LWP.  May be called unlocked provided that LW_PENDSIG is set,
- *	and that the signal has been posted to the appopriate queue before
+ *	and that the signal has been posted to the appropriate queue before
  *	LW_PENDSIG is set.
  *
  *	This should only ever be called with (l == curlwp), unless the
@@ -840,7 +843,7 @@ killpg1(struct lwp *l, ksiginfo_t *ksi, int pgid, int all)
 	}
 out:
 	mutex_exit(&proc_lock);
-	return nfound ? 0 : ESRCH;
+	return nfound ? 0 : SET_ERROR(ESRCH);
 }
 
 /*
@@ -2339,7 +2342,8 @@ coredump_netbsd(struct lwp *l, struct coredump_iostate *iocookie)
 
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_netbsd_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_netbsd_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
@@ -2349,7 +2353,8 @@ coredump_netbsd32(struct lwp *l, struct coredump_iostate *iocookie)
 
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_netbsd32_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_netbsd32_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
@@ -2358,7 +2363,8 @@ coredump_elf32(struct lwp *l, struct coredump_iostate *iocookie)
 {
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_elf32_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_elf32_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 
@@ -2367,7 +2373,8 @@ coredump_elf64(struct lwp *l, struct coredump_iostate *iocookie)
 {
 	int retval;
 
-	MODULE_HOOK_CALL(coredump_elf64_hook, (l, iocookie), ENOSYS, retval);
+	MODULE_HOOK_CALL(coredump_elf64_hook, (l, iocookie),
+	    SET_ERROR(ENOSYS), retval);
 	return retval;
 }
 

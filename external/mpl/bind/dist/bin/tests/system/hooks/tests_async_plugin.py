@@ -9,15 +9,11 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import pytest
 import isctest
-
-pytest.importorskip("dns")
-import dns.message
 
 
 def test_async_hook():
-    msg = dns.message.make_query("example.com.", "A")
+    msg = isctest.query.create("example.com.", "A")
     res = isctest.query.udp(msg, "10.53.0.1")
     # the test-async plugin changes the status of any positive answer to NOTIMP
     isctest.check.notimp(res)

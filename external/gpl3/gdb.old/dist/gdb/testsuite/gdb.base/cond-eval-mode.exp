@@ -1,4 +1,4 @@
-#   Copyright 2012-2023 Free Software Foundation, Inc.
+#   Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,13 @@
 
 # Test 'set breakpoint condition-evaluation' settings
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
 standard_testfile
 
@@ -58,14 +58,19 @@ gdb_test_multiple $test_target $test_target {
 # We now know that the target supports target-side conditional
 # evaluation.  Now make sure we can force-disable the
 # ConditionalBreakpoints RSP feature.
-if [gdb_is_target_remote] {
-    gdb_test_no_output "set remote conditional-breakpoints-packet off"
+if [gdb_protocol_is_remote] {
+    gdb_test \
+	"set remote conditional-breakpoints-packet off" \
+	"Support for the 'ConditionalBreakpoints' packet on the current remote target is set to \"off\"."
 
     gdb_test $test_target "$warning" \
 	"set breakpoint condition-evaluation target, with support disabled"
 
     # Confirm we can re-enable it.
-    gdb_test_no_output "set remote conditional-breakpoints-packet on"
+    gdb_test \
+	"set remote conditional-breakpoints-packet on" \
+	"Support for the 'ConditionalBreakpoints' packet on the current remote target is set to \"on\"."
+
     gdb_test_no_output $test_target "restore $test_target"
 }
 
@@ -78,39 +83,43 @@ proc test_break { break_command } {
     with_test_prefix "$break_command" {
 	delete_breakpoints
 
-	gdb_test "$break_command foo" "reakpoint.* at .*"
+	with_test_prefix "true condition" {
+	    gdb_test "$break_command foo" "reakpoint.* at .*"
 
-	# A condition that evals true.
-	gdb_test "condition \$bpnum cond_global==0" ".*"
+	    # A condition that evals true.
+	    gdb_test "condition \$bpnum cond_global==0" ".*"
 
-	set can_do_cmd 0
+	    set can_do_cmd 0
 
-	set test "continue"
-	gdb_test_multiple $test $test {
-	    -re "You may have requested too many.*$gdb_prompt $" {
-		pass $test
+	    set test "continue"
+	    gdb_test_multiple $test $test {
+		-re "You may have requested too many.*$gdb_prompt $" {
+		    pass $test
+		}
+		-re "Breakpoint .*, foo .*$gdb_prompt $" {
+		    pass $test
+		    set can_do_cmd 1
+		}
 	    }
-	    -re "Breakpoint .*, foo .*$gdb_prompt $" {
-		pass $test
-		set can_do_cmd 1
+
+	    if { !$can_do_cmd } {
+		unsupported "no target support"
+		return
 	    }
 	}
 
-	if { !$can_do_cmd } {
-	    unsupported "no target support"
-	    return
+	with_test_prefix "false condition" {
+	    delete_breakpoints
+
+	    gdb_test "$break_command foo" ".*reakpoint .* at .*"
+
+	    # A condition that evals false.
+	    gdb_test "condition \$bpnum cond_global==1" ".*"
+
+	    gdb_test "b bar" "Breakpoint .* at .*"
+
+	    gdb_test "continue" "Breakpoint .*, bar .*"
 	}
-
-	delete_breakpoints
-
-	gdb_test "$break_command foo" ".*reakpoint .* at .*"
-
-	# A condition that evals false.
-	gdb_test "condition \$bpnum cond_global==1" ".*"
-
-	gdb_test "b bar" "Breakpoint .* at .*"
-
-	gdb_test "continue" "Breakpoint .*, bar .*"
     }
 }
 
@@ -119,49 +128,53 @@ proc test_break { break_command } {
 #
 proc test_watch { watch_command } {
     global gdb_prompt
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
     with_test_prefix "$watch_command" {
-	if {$skip_hw_watchpoint_tests_p} {
+	if {!$allow_hw_watchpoint_tests_p} {
 	    unsupported "no target support"
 	    return
 	}
 
-	delete_breakpoints
+	with_test_prefix "true condition" {
+	    delete_breakpoints
 
-	gdb_test "$watch_command global" ".*atchpoint .*: global.*"
+	    gdb_test "$watch_command global" ".*atchpoint .*: global.*"
 
-	# A condition that evals true.
-	gdb_test "condition \$bpnum cond_global==0" ".*"
+	    # A condition that evals true.
+	    gdb_test "condition \$bpnum cond_global==0" ".*"
 
-	set can_do_cmd 0
+	    set can_do_cmd 0
 
-	set test "continue"
-	gdb_test_multiple $test $test {
-	    -re "You may have requested too many.*$gdb_prompt $" {
-		pass $test
+	    set test "continue"
+	    gdb_test_multiple $test $test {
+		-re "You may have requested too many.*$gdb_prompt $" {
+		    pass $test
+		}
+		-re "atchpoint .*: global.*$gdb_prompt $" {
+		    pass $test
+		    set can_do_cmd 1
+		}
 	    }
-	    -re "atchpoint .*: global.*$gdb_prompt $" {
-		pass $test
-		set can_do_cmd 1
+
+	    if { !$can_do_cmd } {
+		unsupported "no target support"
+		return
 	    }
 	}
 
-	if { !$can_do_cmd } {
-	    unsupported "no target support"
-	    return
+	with_test_prefix "false condition" {
+	    delete_breakpoints
+
+	    gdb_test "$watch_command global" ".*atchpoint .*: global.*"
+
+	    # A condition that evals false.
+	    gdb_test "condition \$bpnum cond_global==1" ".*"
+
+	    gdb_test "b bar" "Breakpoint .* at .*"
+
+	    gdb_test "continue" "Breakpoint .*, bar .*"
 	}
-
-	delete_breakpoints
-
-	gdb_test "$watch_command global" ".*atchpoint .*: global.*"
-
-	# A condition that evals false.
-	gdb_test "condition \$bpnum cond_global==1" ".*"
-
-	gdb_test "b bar" "Breakpoint .* at .*"
-
-	gdb_test "continue" "Breakpoint .*, bar .*"
     }
 }
 

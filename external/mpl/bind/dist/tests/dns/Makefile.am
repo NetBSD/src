@@ -27,11 +27,14 @@ check_PROGRAMS =		\
 	diff_test		\
 	dispatch_test		\
 	dns64_test		\
+	dnssecsignstats_test	\
 	dst_test		\
 	ede_test		\
 	keytable_test		\
+	message_test		\
 	name_test		\
 	nametree_test		\
+	ncache_test		\
 	nsec3_test		\
 	nsec3param_test		\
 	private_test		\
@@ -40,6 +43,7 @@ check_PROGRAMS =		\
 	qpdb_test		\
 	qpzone_test		\
 	rbt_test		\
+	rbtdb_test		\
 	rdata_test		\
 	rdataset_test		\
 	rdatasetstats_test	\

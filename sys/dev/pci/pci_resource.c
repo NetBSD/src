@@ -1,4 +1,4 @@
-/* $NetBSD: pci_resource.c,v 1.4.2.2 2025/08/02 05:56:47 perseant Exp $ */
+/* $NetBSD: pci_resource.c,v 1.4.2.3 2026/11/04 23:22:06 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.4.2.2 2025/08/02 05:56:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_resource.c,v 1.4.2.3 2026/11/04 23:22:06 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -768,6 +768,15 @@ pci_resource_init_device(struct pci_resources *pr,
 			pci_conf_write(pr->pr_pc, pd->pd_tag,
 			    PCI_BAR(pi->pi_bar), 0);
 			continue;
+		}
+		if (pi->pi_base != 0) {
+			/*
+			 * Firmware may have programmed the BAR and left
+			 * IO / memory space disabled. Assume that a non-zero
+			 * BAR means that firmware has already assigned
+			 * resources.
+			 */
+			enabled |= __BIT(pi->pi_type);
 		}
 		if ((enabled & __BIT(pi->pi_type)) == 0) {
 			continue;

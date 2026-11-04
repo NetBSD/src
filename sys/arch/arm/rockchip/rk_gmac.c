@@ -1,4 +1,4 @@
-/* $NetBSD: rk_gmac.c,v 1.22.2.1 2025/08/02 05:55:29 perseant Exp $ */
+/* $NetBSD: rk_gmac.c,v 1.22.2.2 2026/11/04 23:20:13 perseant Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.22.2.1 2025/08/02 05:55:29 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.22.2.2 2026/11/04 23:20:13 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_gmac.c,v 1.22.2.1 2025/08/02 05:55:29 perseant Ex
 
 #include <dev/ic/dwc_gmac_var.h>
 #include <dev/ic/dwc_gmac_reg.h>
+#include <dev/fdt/dwc_gmac_fdt_subr.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/syscon.h>
@@ -497,11 +498,6 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 	/* Rock64 seems to need more time for the reset to complete */
 	delay(100000);
 
-#if notyet
-	if (of_hasprop(phandle, "snps,force_thresh_dma_mode"))
-		sc->sc_flags |= DWC_GMAC_FORCE_THRESH_DMA_MODE;
-#endif
-
 	phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL) {
 		aprint_error(": missing 'phy-mode' property\n");
@@ -546,6 +542,8 @@ rk_gmac_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": GMAC\n");
+
+	dwc_gmac_preattach_fdt(phandle, sc);
 
 	if (dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102) != 0)
 		return;

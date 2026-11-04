@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.43 2024/02/05 22:08:04 andvar Exp $ */
+/* $NetBSD: db_interface.c,v 1.43.2.1 2026/11/04 23:19:57 perseant Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43 2024/02/05 22:08:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.43.2.1 2026/11/04 23:19:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -486,7 +486,7 @@ db_inst_load(int ins)
 	alpha_instruction insn;
 
 	insn.bits = ins;
-	
+
 	/* Loads. */
 	if (insn.mem_format.opcode == op_ldbu ||
 	    insn.mem_format.opcode == op_ldq_u ||

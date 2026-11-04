@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.78.2.1 2025/08/02 05:58:01 perseant Exp $
+# $NetBSD: Makefile,v 1.78.2.2 2026/11/04 23:28:13 perseant Exp $
 
 NOMAN=		# defined
 
@@ -13,12 +13,14 @@ TESTS_C+=	t_clofork
 TESTS_C+=	t_execregs
 TESTS_C+=	t_fcntl
 .if ${MKRUMP} != "no"
+TESTS_C+=	t_fdpass
 TESTS_C+=	t_fdrestart
 .endif
 TESTS_C+=	t_kauth_pr_47598
 TESTS_C+=	t_ksem
 TESTS_C+=	t_lock
 TESTS_C+=	t_lockf
+TESTS_C+=	t_lua
 TESTS_C+=	t_memfd_create
 TESTS_C+=	t_mqueue
 TESTS_C+=	t_nanosleep
@@ -26,6 +28,7 @@ TESTS_C+=	t_open_pr_57260
 TESTS_C+=	t_proccwd
 TESTS_C+=	t_pty
 TESTS_C+=	t_semtimedop
+TESTS_C+=	t_signal_and_fpu
 TESTS_C+=	t_signal_and_sp
 TESTS_C+=	t_sysv
 TESTS_C+=	t_subr_prf
@@ -62,6 +65,7 @@ PROGS+=		h_execsp_static
 PROGS+=		h_fexecve
 PROGS+=		h_fpufork
 PROGS+=		h_getprocpath
+PROGS+=		h_getstack
 PROGS+=		h_ps_strings1
 PROGS+=		h_ps_strings2
 PROGS+=		h_segv
@@ -69,7 +73,17 @@ PROGS+=		h_segv
 SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_interpreter.sh
 
+LDADD.t_fdpass+=	-lrumpnet_local
+LDADD.t_fdpass+=	-lrumpnet_net
+LDADD.t_fdpass+=	-lrumpnet
+LDADD.t_fdpass+=	${LIBRUMPBASE}
+
 LDADD.t_fdrestart+=	-lpthread
+LDADD.t_fdrestart+=	-lrumpkern_tty
+LDADD.t_fdrestart+=	-lrumpvfs
+LDADD.t_fdrestart+=	-lrumpvfs_fifofs
+LDADD.t_fdrestart+=	-lrumpfs_ptyfs
+LDADD.t_fdrestart+=	-lrumpfs_tmpfs
 LDADD.t_fdrestart+=	-lrumpnet_local
 LDADD.t_fdrestart+=	-lrumpnet_net
 LDADD.t_fdrestart+=	-lrumpnet_netinet
@@ -106,11 +120,28 @@ ARCHDIR:=		${.PARSEDIR}/arch/${MACHINE_CPU}
 .endif
 .PATH:			${ARCHDIR}
 
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+X86ARCHDIR:=		${.PARSEDIR}/arch/x86
+.PATH:			${X86ARCHDIR}
+SIG_FPU_DIR=		${X86ARCHDIR}
+.else
+SIG_FPU_DIR=		${ARCHDIR}
+.endif
+
+SRCS.t_signal_and_fpu+=		t_signal_and_fpu.c
+LDADD.t_signal_and_fpu+=	-pthread
+.if exists(${SIG_FPU_DIR}/sig_fpu.c)
+CPPFLAGS.t_signal_and_fpu.c+=	-I${SIG_FPU_DIR} -DHAVE_SIG_FPU_H
+SRCS.t_signal_and_fpu+=		sig_fpu.c
+.endif
+
 .if exists(${ARCHDIR}/stack_pointer.h)
 CPPFLAGS.t_signal_and_sp.c+=	-I${ARCHDIR} -DHAVE_STACK_POINTER_H
 .endif
 
+SRCS.t_signal_and_sp+=		getstack.c
 SRCS.t_signal_and_sp+=		t_signal_and_sp.c
+LDADD.t_signal_and_sp+=		-pthread
 .if exists(${ARCHDIR}/contextspfunc.S)
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_CONTEXTSPFUNC
 SRCS.t_signal_and_sp+=		contextspfunc.S
@@ -122,7 +153,6 @@ SRCS.t_signal_and_sp+=		signalsphandler.S
 .if exists(${ARCHDIR}/threadspfunc.S)
 CPPFLAGS.t_signal_and_sp.c+=	-DHAVE_THREADSPFUNC
 SRCS.t_signal_and_sp+=		threadspfunc.S
-LDADD.t_signal_and_sp+=		-pthread
 .endif
 
 SRCS.h_execsp_dynamic+=		h_execsp.c
@@ -143,6 +173,10 @@ CPPFLAGS.contextspfunc.S+=	-I${NETBSDSRCDIR}/lib/libc/arch/mips
 CPPFLAGS.execsp.S+=		-I${NETBSDSRCDIR}/lib/libc/arch/mips
 CPPFLAGS.signalsphandler.S+=	-I${NETBSDSRCDIR}/lib/libc/arch/mips
 .endif
+
+SRCS.h_getstack+=	h_getstack.c
+SRCS.h_getstack+=	getstack.c
+LDADD.h_getstack+=	-pthread
 
 .PATH:			${NETBSDSRCDIR}/sys/kern
 TESTS_C+=		t_extent

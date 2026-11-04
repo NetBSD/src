@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,30 @@
 # schedule-multiple on" or "set detach-on-fork on".  Test these two resolution
 # methods.
 
-standard_testfile
+standard_testfile .c vforked-prog.c
 
-if { [build_executable "failed to prepare" \
-	${testfile} ${srcfile}] } {
+set binfile ${testfile}-exit
+set binfile2 ${testfile}-exec
+set binfile3 vforked-prog
+
+if { [build_executable "compile $binfile3" $binfile3 $srcfile2] } {
+    untested "failed to compile third test binary"
+    return -1
+}
+
+if { [is_remote target] } {
+    gdb_remote_download target [standard_output_file $binfile3]
+}
+
+set opts [list debug additional_flags=-DTEST_EXIT]
+if { [build_executable "compile ${binfile}" ${binfile} ${srcfile} ${opts}] } {
+    untested "failed to compile first test binary"
+    return
+}
+
+set opts [list debug additional_flags=-DTEST_EXEC]
+if { [build_executable "compile ${binfile2}" ${binfile2} ${srcfile} ${opts}] } {
+    untested "failed to compile second test binary"
     return
 }
 
@@ -31,14 +51,22 @@ if { [build_executable "failed to prepare" \
 # or "schedule-multiple" (the two alternatives the message suggests to the
 # user).
 
-proc do_test { resolution_method } {
-    clean_restart $::binfile
+proc do_test { exec_file resolution_method target_non_stop non_stop } {
+    save_vars { ::GDBFLAGS } {
+	append ::GDBFLAGS " -ex \"maint set target-non-stop ${target_non_stop}\""
+	append ::GDBFLAGS " -ex \"set non-stop ${non_stop}\""
+	clean_restart $exec_file
+    }
 
     gdb_test_no_output "set detach-on-fork off"
 
     if { ![runto_main] } {
 	return
     }
+
+    # Delete the breakpoint on main so we don't bit the breakpoint in
+    # the case that the vfork child performs an exec.
+    delete_breakpoints
 
     gdb_test "break break_parent"
 
@@ -64,7 +92,7 @@ proc do_test { resolution_method } {
 	gdb_test "set schedule-multiple on"
 	gdb_test "continue" "$::inferior_exited_re normally.*" \
 	    "continue to end of inferior 2"
-	gdb_test "inferior 1" ".*Switching to inferior 1.*"
+	gdb_test -no-prompt-anchor "inferior 1" ".*Switching to inferior 1.*"
 	gdb_test "print unblock_parent = 1" " = 1"
     } else {
 	error "invalid resolution method: $resolution_method"
@@ -75,6 +103,16 @@ proc do_test { resolution_method } {
 	"continue to break_parent"
 }
 
-foreach_with_prefix resolution_method {detach-on-fork schedule-multiple} {
-    do_test $resolution_method
+foreach_with_prefix exec_file [list $binfile $binfile2] {
+    foreach_with_prefix target-non-stop {on off} {
+	# This test was written assuming non-stop mode is off.
+	foreach_with_prefix non-stop {off} {
+	    if {!${target-non-stop} && ${non-stop}} {
+		continue
+	    }
+	    foreach_with_prefix resolution_method {detach-on-fork schedule-multiple} {
+		do_test $exec_file $resolution_method ${target-non-stop} ${non-stop}
+	    }
+	}
+    }
 }

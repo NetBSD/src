@@ -1,0 +1,215 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test is a follow on from the test:
+#   gdb.dwarf2/dw2-step-between-inline-func-blocks.exp
+# It is worth reading that test before looking at this one.
+#
+# This test creates a function 'foo' that contains two inline
+# functions 'bar' and 'baz'.  The function 'foo' is split into two
+# ranges.  'bar' is inline in the first range and 'baz' is inline in
+# the second range, but critically, 'baz' starts at the very start of
+# the second range.  The functions are laid out like this:
+#
+#                          (A)       (B)
+# bar:         |------------|
+# baz:                                |---|
+# foo:   |------------------|         |--------|
+#
+# When the inferior reaches address (A) we jump directly to point (B).
+# At that point we expect GDB to tell the user that the inferior is in
+# 'foo'.  GDB should not automatically enter 'baz'.
+#
+# This tests exists because in
+# dw2-step-between-inline-func-blocks.exp, the second range is another
+# part of 'bar' and the jump from (A) to (B) is from one part of 'bar'
+# to the next, in this case GDB does automatically reenter 'bar'.
+# This test checks that GDB isn't too keen to reenter inline
+# functions.
+
+load_lib dwarf.exp
+
+require dwarf2_support
+
+# The source program use 'goto *ADDR' which is a GCC extension.
+require is_c_compiler_gcc
+
+standard_testfile
+
+# This compiles the source file and starts and stops GDB, so run it
+# before calling prepare_for_testing otherwise GDB will have exited.
+get_func_info foo
+
+# Make some DWARF for the test.
+set asm_file [standard_output_file "$::testfile-dw.S"]
+Dwarf::assemble $asm_file {
+    global srcfile
+
+    # Create local varibles like BAR_SRC_* containing the line number
+    # for the souce lines of 'foo' and 'bar' and 'baz'.  These will be
+    # referenced in the generated DWARF.
+    for { set i 1 } { $i <= 2 } { incr i } {
+	set bar_src_$i [gdb_get_line_number "bar line $i"]
+	set baz_src_$i [gdb_get_line_number "baz line $i"]
+    }
+    for { set i 1 } { $i <= 4 } { incr i } {
+	set foo_src_$i [gdb_get_line_number "foo line $i"]
+    }
+
+    # More line numbers needed for the generated DWARF.
+    set foo_decl_line [gdb_get_line_number "foo decl line"]
+    set bar_decl_line [gdb_get_line_number "bar decl line"]
+    set baz_decl_line [gdb_get_line_number "baz decl line"]
+
+    # Labels used to link parts of the DWARF together.
+    declare_labels lines_table bar_label baz_label
+    declare_labels ranges_label_bar ranges_label_baz ranges_label_foo
+
+    cu { version 4 } {
+	compile_unit {
+	    {producer "gcc"}
+	    {language @DW_LANG_C}
+	    {name ${srcfile}}
+	    {comp_dir /tmp}
+	    {stmt_list $lines_table DW_FORM_sec_offset}
+	    {low_pc 0 addr}
+	} {
+	    bar_label: subprogram {
+		{external 1 flag}
+		{name bar}
+		{decl_file 1 data1}
+		{decl_line $bar_decl_line data1}
+		{decl_column 1 data1}
+		{inline 3 data1}
+	    }
+	    baz_label: subprogram {
+		{external 1 flag}
+		{name baz}
+		{decl_file 1 data1}
+		{decl_line $baz_decl_line data1}
+		{decl_column 1 data1}
+		{inline 3 data1}
+	    }
+	    subprogram {
+		{name foo}
+		{decl_file 1 data1}
+		{decl_line $foo_decl_line data1}
+		{decl_column 1 data1}
+		{ranges ${ranges_label_foo} DW_FORM_sec_offset}
+		{external 1 flag}
+	    } {
+		inlined_subroutine {
+		    {abstract_origin %$bar_label}
+		    {call_file 1 data1}
+		    {call_line $foo_src_2 data1}
+		    {ranges ${ranges_label_bar} DW_FORM_sec_offset}
+		}
+		inlined_subroutine {
+		    {abstract_origin %$baz_label}
+		    {call_file 1 data1}
+		    {call_line $foo_src_3 data1}
+		    {ranges ${ranges_label_baz} DW_FORM_sec_offset}
+		}
+	    }
+	}
+    }
+
+    lines {version 2} lines_table {
+	include_dir "$::srcdir/$::subdir"
+	file_name "$srcfile" 1
+	program {
+	    DW_LNE_set_address "foo_label"
+	    line $foo_src_1
+	    DW_LNS_copy
+	    DW_LNE_set_address "foo_label_1"
+	    line $foo_src_2
+	    DW_LNS_copy
+	    DW_LNE_set_address "foo_label_2"
+	    line $bar_src_1
+	    DW_LNS_copy
+	    DW_LNE_set_address "foo_label_3"
+	    line $bar_src_2
+	    DW_LNS_copy
+	    DW_LNE_set_address "foo_label_4"
+	    DW_LNE_end_sequence
+
+	    DW_LNE_set_address "foo_label_6"
+	    line $baz_src_1
+	    DW_LNS_copy
+	    DW_LNE_set_address "foo_label_7"
+	    line $baz_src_2
+	    DW_LNS_copy
+	    DW_LNS_negate_stmt
+	    DW_LNE_set_address "foo_label_7"
+	    line $foo_src_3
+	    DW_LNS_copy
+	    DW_LNS_negate_stmt
+	    DW_LNE_set_address "foo_label_8"
+	    line $foo_src_4
+	    DW_LNS_copy
+	    DW_LNE_set_address $::foo_end
+	    DW_LNE_end_sequence
+	}
+    }
+
+    ranges { } {
+	ranges_label_bar: sequence {
+	    range foo_label_2 foo_label_4
+	}
+	ranges_label_baz: sequence {
+	    range foo_label_6 foo_label_7
+	}
+	ranges_label_foo: sequence {
+	    range foo_label_1 foo_label_4
+	    range foo_label_6 foo_label_9
+	}
+    }
+}
+
+if {[prepare_for_testing "failed to prepare" "${::testfile}" \
+	 [list $srcfile $asm_file] {nodebug}]} {
+    return -1
+}
+
+if ![runto_main] {
+    return -1
+}
+
+gdb_breakpoint bar
+gdb_continue_to_breakpoint "continue to bar line 1" \
+    ".*bar line 1\[^\r\n\]+"
+
+gdb_test "step" ".*bar line 2\[^\r\n\]+" \
+    "step to bar line 2"
+
+# This is the interesting one.  This step will take us over the goto
+# and place the inferior at the start of the second range of 'foo' and
+# at the start of 'baz'.
+#
+# As we started the step in 'bar', GDB should not reenter 'baz'.
+gdb_test "step" ".*foo line 3\[^\r\n\]+" \
+    "step to foo line 3"
+
+# The next step should allow the inferior to enter 'baz'.
+gdb_test "step" ".*baz line 1\[^\r\n\]+" \
+    "step to baz line 1"
+
+# The remaining steps take the inferior through 'baz' and back into
+# 'foo'.
+gdb_test "step" ".*baz line 2\[^\r\n\]+" \
+    "step to baz line 2"
+
+gdb_test "step" ".*foo line 4\[^\r\n\]+" \
+    "step out of bar to foo line 4"

@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded Guile scripts.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,8 +61,8 @@ gdbscm_initialize_auto_load (void)
 {
   add_setshow_boolean_cmd ("guile-scripts", class_support,
 			   &auto_load_guile_scripts, _("\
-Set the debugger's behaviour regarding auto-loaded Guile scripts."), _("\
-Show the debugger's behaviour regarding auto-loaded Guile scripts."), _("\
+Set the debugger's behavior regarding auto-loaded Guile scripts."), _("\
+Show the debugger's behavior regarding auto-loaded Guile scripts."), _("\
 If enabled, auto-loaded Guile scripts are loaded when the debugger reads\n\
 an executable or shared library.\n\
 This options has security implications for untrusted inferiors."),

@@ -1,4 +1,4 @@
-/*	$NetBSD: lubbock_machdep.c,v 1.46 2024/02/20 23:36:02 andvar Exp $ */
+/*	$NetBSD: lubbock_machdep.c,v 1.46.2.1 2026/11/04 23:20:29 perseant Exp $ */
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -112,7 +112,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.46 2024/02/20 23:36:02 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lubbock_machdep.c,v 1.46.2.1 2026/11/04 23:20:29 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -282,7 +282,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-/*	cnpollc(1);*/
+/*	cnpollc(true);*/
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

@@ -1,4 +1,4 @@
-/* $NetBSD: read.c,v 1.92.2.1 2025/08/02 05:58:46 perseant Exp $ */
+/* $NetBSD: read.c,v 1.92.2.2 2026/11/04 23:28:46 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: read.c,v 1.92.2.1 2025/08/02 05:58:46 perseant Exp $");
+__RCSID("$NetBSD: read.c,v 1.92.2.2 2026/11/04 23:28:46 perseant Exp $");
 #endif
 
 #include <ctype.h>
@@ -614,10 +614,8 @@ parse_tspec(const char **pp, char c, bool *osdef)
 		return s == 'u' ? ULONG : LONG;
 	case 'Q':
 		return s == 'u' ? ULLONG : LLONG;
-#ifdef INT128_SIZE
 	case 'J':
 		return s == 'u' ? UINT128 : INT128;
-#endif
 	case 'D':
 		return s == 's' ? FLOAT : (s == 'l' ? LDOUBLE : DOUBLE);
 	case 'V':
@@ -815,14 +813,12 @@ gettlen(const char *cp, const char **epp)
 		else if (s == '\0')
 			t = LLONG;
 		break;
-#ifdef INT128_SIZE
 	case 'J':
 		if (s == 'u')
 			t = UINT128;
 		else if (s == '\0')
 			t = INT128;
 		break;
-#endif
 	case 'D':
 		if (s == 's')
 			t = FLOAT;

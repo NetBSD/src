@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,6 +24,8 @@
 
 standard_testfile
 
+require allow_multi_inferior_tests
+
 require !use_gdb_stub
 
 if {[build_executable "failed to prepare" $testfile $srcfile {debug}]} {
@@ -34,7 +36,7 @@ if {[build_executable "failed to prepare" $testfile $srcfile {debug}]} {
 # Hence, go with the all-stop-on-top-of-non-stop mode.
 save_vars { GDBFLAGS } {
     append GDBFLAGS " -ex \"maint set target-non-stop on\""
-    clean_restart ${binfile}
+    clean_restart ${::testfile}
 }
 
 # Wrap the entire test in a namespace to avoid contaminating other tests.

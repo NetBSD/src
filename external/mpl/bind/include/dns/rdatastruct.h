@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 1998-2025  Internet Systems Consortium, Inc. ("ISC")
+ * Copyright (C) 1998-2026  Internet Systems Consortium, Inc. ("ISC")
  *
  * This Source Code Form is subject to the terms of the Mozilla Public
  * License, v. 2.0. If a copy of the MPL was not distributed with this
@@ -1831,6 +1831,72 @@ dns_rdata_in_https_next(dns_rdata_in_https_t *);
 
 void
 dns_rdata_in_https_current(dns_rdata_in_https_t *, isc_region_t *);
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/* */
+#pragma once
+
+typedef struct dns_rdata_dsync {
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t type;
+	uint8_t scheme;
+	uint16_t port;
+	dns_name_t target;
+} dns_rdata_dsync_t;
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+#pragma once
+
+typedef struct dns_rdata_hhit_t {
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t datalen;
+	unsigned char *data;
+} dns_rdata_hhit_t;
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0. If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+#pragma once
+
+typedef struct dns_rdata_brid_t {
+	dns_rdatacommon_t common;
+	isc_mem_t *mctx;
+	uint16_t datalen;
+	unsigned char *data;
+} dns_rdata_brid_t;
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
  *

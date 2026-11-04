@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.80.2.1 2025/08/02 05:56:23 perseant Exp $
+	$NetBSD: syscalls.master,v 1.80.2.2 2026/11/04 23:21:37 perseant Exp $
 
 ; Derived from sys/compat/linux/arch/*/syscalls.master
 ; and from Linux 2.4.12 arch/arm/kernel/calls.S
@@ -257,7 +257,7 @@
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
 145	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-146	NOARGS		{ ssize_t|sys||writev(int fd, \
+146	STD		{ ssize_t|linux_sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 147	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 148	STD		{ int|linux_sys||fdatasync(int fd); }
@@ -295,7 +295,8 @@
 			    linux_gid16_t egid, linux_gid16_t sgid); }
 171	STD		{ int|linux_sys||getresgid16(linux_gid16_t *rgid, \
 			    linux_gid16_t *egid, linux_gid16_t *sgid); }
-172	UNIMPL		prctl
+172	INDIR		{ int|linux_sys||__prctl(int code, \
+                                  ... void * args[LINUX_SYS_MAXSYSARGS]); }
 173	UNIMPL		rt_sigreturn
 ;173	STD		{ int|linux_sys||rt_sigreturn( \
 ;			    struct linux_rt_sigframe *sfp); }
@@ -519,7 +520,9 @@
 309	UNIMPL		add_key
 310	UNIMPL		request_key
 311	UNIMPL		keyctl
-312	UNIMPL		semtimedop
+312	STD		{ int|linux_sys||semtimedop(int semid, \
+			    struct sembuf *sops, size_t nsops, \
+			    struct linux_timespec *timeout); }
 313	UNIMPL		vserver
 314	UNIMPL		ioptio_set
 315	UNIMPL		ioptio_get

@@ -1,9 +1,9 @@
-.\" $NetBSD: awge.4,v 1.1.14.1 2025/08/02 05:55:13 perseant Exp $
+.\" $NetBSD: awge.4,v 1.1.14.2 2026/11/04 23:19:49 perseant Exp $
 .\"
 .\" written by Maya Rashish, 2019
 .\" This file is in the Public Domain
 .\"
-.Dd March 22, 2025
+.Dd June 10, 2026
 .Dt AWGE 4
 .Os
 .Sh NAME
@@ -15,6 +15,9 @@
 The
 .Nm
 driver provides support for the DesignWare GMAC Ethernet.
+.Pp
+It supports VLAN-sized frames.
+It does not presently provide hardware-based checksumming.
 .Sh SEE ALSO
 .Xr arp 4 ,
 .Xr ifmedia 4 ,
@@ -22,24 +25,22 @@ driver provides support for the DesignWare GMAC Ethernet.
 .Xr netintro 4 ,
 .Xr ifconfig 8
 .Rs
-.%A Synopsys
+.%Q Synopsys
 .%T DesignWare Ethernet GMAC IP
 .%D April, 2019
 .%U https://www.synopsys.com/dw/ipdir.php?ds=dwc_ether_mac10_100_1000_unive
 .Re
 .Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 7.0 .
 The name
 .Nm
 was chosen due to the hardware appearing in Allwinner boards,
 but
 .Nm
 is in use in boards by other manufacturers, e.g., Rockchip.
-.Pp
-The
-.Nm
-device driver was written by
-.An Matt Thomas
-and
-.An Martin Husemann .
-It first appeared in
-.Nx 7.0 .
+.Sh AUTHORS
+.An Matt Thomas Aq Mt gimpy@NetBSD.org
+.An Martin Husemann Aq Mt martin@NetBSD.org

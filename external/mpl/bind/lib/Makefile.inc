@@ -1,10 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.1.16.1 2025/08/02 05:54:20 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.1.16.2 2026/11/04 23:18:26 perseant Exp $
 
 .include "../Makefile.inc"
+
 WARNS?=		2
-# XXX: Should not need these with -Ac23!
-LINTFLAGS+=-Ac23
-LINTFLAGS+=-X89,261	# redeclared
-LINTFLAGS+=-X51	 	# number of params mismatch
-LINTFLAGS+=-X55	 	# constant expression
-LINTFLAGS+=-X323	# continue in do while 0 loop.
+
+LINTFLAGS+=	-Ac23
+LINTFLAGS+=	-X 323	# continue in do while 0 loop

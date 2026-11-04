@@ -1,4 +1,4 @@
-/*	$NetBSD: displayq.c,v 1.34 2009/07/13 19:05:41 roy Exp $	*/
+/*	$NetBSD: displayq.c,v 1.34.58.1 2026/11/04 23:28:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)displayq.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: displayq.c,v 1.34 2009/07/13 19:05:41 roy Exp $");
+__RCSID("$NetBSD: displayq.c,v 1.34.58.1 2026/11/04 23:28:52 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -337,7 +337,7 @@ inform(const char *cf)
 				first = 1;
 			}
 			continue;
-		default: /* some format specifer and file name? */
+		default: /* some format specifier and file name? */
 			if (line[0] < 'a' || line[0] > 'z')
 				continue;
 			if (j == 0 || strcmp(fname, line+1) != 0) {

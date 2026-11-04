@@ -1,4 +1,4 @@
-# $NetBSD: varmod-mtime.mk,v 1.10.2.1 2025/08/02 05:58:39 perseant Exp $
+# $NetBSD: varmod-mtime.mk,v 1.10.2.2 2026/11/04 23:28:39 perseant Exp $
 #
 # Tests for the ':mtime' variable modifier, which maps each word of the
 # expression to that file's modification time.
@@ -55,7 +55,7 @@ not_found_mtime:=	${no/such/file:L:mtime}
 COOKIE=	${TMPDIR:U/tmp}/varmod-mtime.cookie
 _!=	touch ${COOKIE}
 .if ${COOKIE:mtime=0} < ${start}
-.   error ${COOKIE:mtime=0} < ${start}
+.  error ${COOKIE:mtime=0} < ${start}
 .endif
 _!=	rm -f ${COOKIE}
 

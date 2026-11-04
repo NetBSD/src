@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14.12.1 2025/08/02 05:50:45 perseant Exp $
+#	$NetBSD: Makefile,v 1.14.12.2 2026/11/04 23:15:28 perseant Exp $
 
 DRIVER=		xf86-video-nv
 DRIVER_NAME=	nv_drv
@@ -29,6 +29,8 @@ CPPFLAGS+= -DAVOID_VGAHW
 # the new DRM2 code has nvidia support
 #CPPFLAGS+= -DNV_TEST_FOR_KERNEL_DRIVER
 .endif
+
+CPPFLAGS+= -DHAVE_DEV_WSCONS_WSCONSIO_H
 
 # XXX
 COPTS+=		${${ACTIVE_CC} == "gcc":? -Wno-error=cpp :}

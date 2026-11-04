@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -126,7 +126,7 @@ foreach libsepdebug {NO IN SEP} { with_test_prefix "$libsepdebug" {
 		     "1: \\(int\\) a_global = 41" \
 		     "warning: .*b_global.*"  \
 		     "3: \\(int\\) c_global = 43" \
-		    ] "after rerun (2)"
+		    ] "after rerun, 2"
 
     # Now verify that displays which are not in the shared library
     # are not cleared permaturely.

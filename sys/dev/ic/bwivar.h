@@ -1,4 +1,4 @@
-/*	$NetBSD: bwivar.h,v 1.10.52.1 2025/08/02 05:56:41 perseant Exp $	*/
+/*	$NetBSD: bwivar.h,v 1.10.52.2 2026/11/04 23:21:57 perseant Exp $	*/
 /*	$OpenBSD: bwivar.h,v 1.23 2008/02/25 20:36:54 mglocker Exp $	*/
 
 /*
@@ -689,6 +689,9 @@ struct bwi_softc {
 	int			 sc_led_blink;
 	int			 sc_txpwr_calib;
 	int			 sc_debug;	/* BWI_DBG_ */
+
+	/* Firmware info */
+	uint16_t		 sc_fw_rev; /* Last firmware revision */
 
 	struct bpf_if		*sc_drvbpf;
  

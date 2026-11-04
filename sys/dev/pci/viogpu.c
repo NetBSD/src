@@ -1,4 +1,4 @@
-/*	$NetBSD: viogpu.c,v 1.1.4.2 2025/08/02 05:57:00 perseant Exp $ */
+/*	$NetBSD: viogpu.c,v 1.1.4.3 2026/11/04 23:22:29 perseant Exp $ */
 /*	$OpenBSD: viogpu.c,v 1.3 2023/05/29 08:13:35 sf Exp $ */
 
 /*
@@ -275,7 +275,6 @@ viogpu_attach_postintr(device_t self)
 	struct virtio_softc *vsc = sc->sc_virtio;
 	struct wsemuldisplaydev_attach_args waa;
 	struct rasops_info *ri;
-	prop_dictionary_t dict;
 	long defattr;
 	int nsegs;
 	int error;
@@ -361,10 +360,8 @@ viogpu_attach_postintr(device_t self)
 #ifdef WSDISPLAY_MULTICONS
 	sc->is_console = true;
 #else
-	sc->is_console = false;
+	sc->is_console = device_getprop_bool(self, "is_console");
 #endif
-	dict = device_properties(self);
-	prop_dictionary_get_bool(dict, "is_console", &sc->is_console);
 
 	sc->sc_wsd = (struct wsscreen_descr){
 		"std",
@@ -827,7 +824,8 @@ viogpu_init_screen(void *cookie, struct vcons_screen *scr, int existing,
 	ri->ri_rpos = 16;
 	ri->ri_rnum = 8;
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_RESIZE;
+	scr->scr_flags |= VCONS_LOADFONT;
 	rasops_reconfig(ri, sc->sc_fb_height / ri->ri_font->fontheight,
 	    sc->sc_fb_width / ri->ri_font->fontwidth);
 

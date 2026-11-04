@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.149.2.1 2025/08/02 05:55:00 perseant Exp $
+#	$NetBSD: Makefile,v 1.149.2.2 2026/11/04 23:19:33 perseant Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -60,12 +60,10 @@ COPTS+=		-fvisibility=hidden
 .include "$M/Makefile.inc"
 .endif
 
-# Support compat ld.elf_so.
+# Support compat ld.elf_so (compat32 or alternative ABI).
 .if defined(MLIBDIR)
 PROG=		ld.elf_so-${MLIBDIR}
 CPPFLAGS+=	-DRTLD_ARCH_SUBDIR=\"${MLIBDIR}\"
-.	if ${MLIBDIR} == "o32"
-.	endif
 .else
 PROG=		ld.elf_so
 .endif
@@ -119,9 +117,13 @@ CPPFLAGS+=	-DRTLD_LOADER -D_LIBC_INTERNAL
 CPPFLAGS+=	-DGNU_RELRO
 CPPFLAGS+=	-D_RTLD_SOURCE
 CPPFLAGS+=	-DHAVE_INITFINI_ARRAY
-#CPPFLAGS+=	-DDEBUG
+.if ${LDELFSO_MACHINE_ARCH} == "powerpc"
+CPPFLAGS+=	-DRTLD_MAP_OBJECT_FIXUP
+.endif
+CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG
 #CPPFLAGS+=	-DRTLD_DEBUG_RELOC
+#CPPFLAGS+=	-DMALLOC_DEBUG
 .if !empty(LDELFSO_MACHINE_ARCH:Mearm*)
 CPPFLAGS+=	-I${NETBSDSRCDIR}/lib/libexecinfo
 .endif
@@ -164,19 +166,13 @@ STRIPFLAG=
 
 .PATH: $M
 
-
-${PROG}: ${OBJS} ${DPADD}
-	${_MKMSG_LINK} ${PROG}
-	${CC} ${LDFLAGS} -o ${PROG} ${OBJS} ${LDADD}
 .if ${MKDEBUG} != "no"
-	(  ${OBJCOPY} --only-keep-debug ${.TARGET} ${.TARGET}.debug \
-	   && ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-	   --add-gnu-debuglink=${.TARGET}.debug ${.TARGET} \
-	) || (rm -f ${.TARGET}.debug; false)
-
-_PROGDEBUG.${PROG} := ${PROG}.debug
+${PROG}.link:
+.else
+${PROG}:
 .endif
-
+	${_MKTARGET_LINK}
+	${CC} ${LDFLAGS} -o ${.TARGET} ${OBJS} ${LDADD}
 
 .if ${SHLINKINSTALLDIR} != "/usr/libexec"
 SYMLINKS+=	${SHLINKINSTALLDIR}/${PROG} /usr/libexec/${PROG}

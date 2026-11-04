@@ -1,4 +1,4 @@
-/*	$NetBSD: skr_test.c,v 1.3.4.2 2025/08/02 05:54:12 perseant Exp $	*/
+/*	$NetBSD: skr_test.c,v 1.3.4.3 2026/11/04 23:18:23 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -168,7 +168,6 @@ write_record(FILE *fp, dns_rdatatype_t rdtype, const char *rdatastr,
 
 	/* Create a lexer as one is required by dns_rdata_fromtext(). */
 	isc_lex_create(mctx, 64, &lex);
-	specials[0] = 1;
 	specials['('] = 1;
 	specials[')'] = 1;
 	specials['"'] = 1;
@@ -455,8 +454,9 @@ ISC_RUN_TEST_IMPL(skr_read) {
 
 	/* Get the KSK */
 	ISC_LIST_INIT(keys);
-	result = dns_dnssec_findmatchingkeys(
-		dname, NULL, TESTS_DIR "/testdata/skr/", NULL, 0, mctx, &keys);
+	result = dns_dnssec_findmatchingkeys(dname, NULL,
+					     TESTS_DIR "/testdata/skr/", NULL,
+					     0, false, mctx, &keys);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
 	/* Create/read the SKR file */

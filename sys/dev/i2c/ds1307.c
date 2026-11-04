@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.40.6.1 2026/11/04 23:21:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.40.6.1 2026/11/04 23:21:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.40 2023/01/24 07:09:48 mlelstv Exp $");
 #include <dev/sysmon/sysmonvar.h>
 
 #include "ioconf.h"
-#include "opt_dsrtc.h"
 
 struct dsrtc_model {
 	const i2c_addr_t *dm_valid_addrs;
@@ -72,7 +71,6 @@ struct dsrtc_model {
 #define	DSRTC_FLAG_BCD			0x02
 #define	DSRTC_FLAG_TEMP			0x04
 #define DSRTC_FLAG_VBATEN		0x08
-#define	DSRTC_FLAG_YEAR_START_2K	0x10
 #define	DSRTC_FLAG_CLOCK_HOLD_REVERSED	0x20
 };
 
@@ -190,6 +188,7 @@ struct dsrtc_softc {
 	struct todr_chip_handle sc_todr;
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t sc_sensor;
+	unsigned int sc_base_year;
 };
 
 static void	dsrtc_attach(device_t, device_t, void *);
@@ -298,8 +297,6 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	struct dsrtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
 	const struct dsrtc_model *dm;
-	prop_dictionary_t dict = device_properties(self);
-	bool base_2k = FALSE;
 
 	if ((dm = dsrtc_model_by_compat(ia)) == NULL)
 		dm = dsrtc_model_by_number(device_cfdata(self)->cf_flags);
@@ -319,7 +316,7 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_model = *dm;
 	sc->sc_dev = self;
 	sc->sc_open = 0;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	
 	if (dm->dm_flags & DSRTC_FLAG_BCD) {
 		sc->sc_todr.todr_gettime_ymdhms = dsrtc_gettime_ymdhms;
@@ -328,15 +325,9 @@ dsrtc_attach(device_t parent, device_t self, void *arg)
 		sc->sc_todr.todr_gettime = dsrtc_gettime_timeval;
 		sc->sc_todr.todr_settime = dsrtc_settime_timeval;
 	}
-	sc->sc_todr.todr_setwen = NULL;
 
-#ifdef DSRTC_YEAR_START_2K
-	sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;
-#endif
-
-	prop_dictionary_get_bool(dict, "base_year_is_2000", &base_2k);
-	if (base_2k) sc->sc_model.dm_flags |= DSRTC_FLAG_YEAR_START_2K;
-
+	sc->sc_base_year = device_getprop_uint_default(self, "start-year",
+	    POSIX_BASE_YEAR);
 
 	todr_attach(&sc->sc_todr);
 	if ((sc->sc_model.dm_flags & DSRTC_FLAG_TEMP) != 0) {
@@ -483,7 +474,7 @@ dsrtc_write(dev_t dev, struct uio *uio, int flags)
 static int
 dsrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 	struct clock_ymdhms check;
 	int retries;
 
@@ -506,7 +497,7 @@ dsrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 dsrtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 
 	if (dsrtc_clock_write_ymdhms(sc, dt) == 0)
 		return -1;
@@ -566,13 +557,9 @@ dsrtc_clock_read_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_day = bcdtobin(bcd[DSXXXX_DATE] & DSXXXX_DATE_MASK);
 	dt->dt_mon = bcdtobin(bcd[DSXXXX_MONTH] & DSXXXX_MONTH_MASK);
 
-	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
-	if (sc->sc_model.dm_flags & DSRTC_FLAG_YEAR_START_2K)
-		dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + 2000;
-	else {
-		dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + POSIX_BASE_YEAR;
-		if (bcd[DSXXXX_MONTH] & DSXXXX_MONTH_CENTURY)
-			dt->dt_year += 100;
+	dt->dt_year = bcdtobin(bcd[DSXXXX_YEAR]) + sc->sc_base_year;
+	if (bcd[DSXXXX_MONTH] & DSXXXX_MONTH_CENTURY) {
+		dt->dt_year += 100;
 	}
 
 	return 1;
@@ -583,7 +570,7 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 {
 	struct dsrtc_model * const dm = &sc->sc_model;
 	uint8_t bcd[DSXXXX_RTC_SIZE], cmdbuf[2];
-	int error, offset;
+	int error;
 
 	KASSERT(DSXXXX_RTC_SIZE >= dm->dm_rtc_size);
 
@@ -598,14 +585,8 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[DSXXXX_DAY] = bintobcd(dt->dt_wday);
 	bcd[DSXXXX_MONTH] = bintobcd(dt->dt_mon);
 	
-	if (sc->sc_model.dm_flags & DSRTC_FLAG_YEAR_START_2K) {
-		offset = 2000;
-	} else {
-		offset = POSIX_BASE_YEAR;
-	}
-
-	bcd[DSXXXX_YEAR] = bintobcd((dt->dt_year - offset) % 100);
-	if (dt->dt_year - offset >= 100)
+	bcd[DSXXXX_YEAR] = bintobcd((dt->dt_year - sc->sc_base_year) % 100);
+	if (dt->dt_year - sc->sc_base_year >= 100)
 		bcd[DSXXXX_MONTH] |= DSXXXX_MONTH_CENTURY;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
@@ -695,7 +676,7 @@ dsrtc_clock_write_ymdhms(struct dsrtc_softc *sc, struct clock_ymdhms *dt)
 static int
 dsrtc_gettime_timeval(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 	struct timeval check;
 	int retries;
 
@@ -718,7 +699,7 @@ dsrtc_gettime_timeval(struct todr_chip_handle *ch, struct timeval *tv)
 static int
 dsrtc_settime_timeval(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct dsrtc_softc *sc = ch->cookie;
+	struct dsrtc_softc *sc = device_private(ch->todr_dev);
 
 	if (dsrtc_clock_write_timeval(sc, tv->tv_sec) == 0)
 		return -1;

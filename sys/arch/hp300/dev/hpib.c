@@ -1,4 +1,4 @@
-/*	$NetBSD: hpib.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $	*/
+/*	$NetBSD: hpib.c,v 1.45.6.1 2026/11/04 23:20:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.45 2023/01/15 06:19:45 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpib.c,v 1.45.6.1 2026/11/04 23:20:38 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -106,7 +106,7 @@ int	hpibdmathresh = 3;	/* byte count beyond which to attempt dma */
  * probably Amigo, too) are tagged with a 16-bit ID.
  *
  * HP-IB has a 2-level addressing scheme; slave, the analog
- * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unforunately,
+ * of a SCSI ID, and punit, the analog of a SCSI LUN.  Unfortunately,
  * IDs are on a per-slave basis; punits are often used for disk
  * drives that have an accompanying tape drive on the second punit.
  *
@@ -143,7 +143,7 @@ hpibbusattach(device_t parent, device_t self, void *aux)
 	sc->sc_ba = ha->ha_ba;
 	*(ha->ha_softcpp) = sc;			/* XXX */
 
-	hpibreset(device_unit(self));		/* XXX souldn't be here */
+	hpibreset(device_unit(self));		/* XXX shouldn't be here */
 
 	/*
 	 * Initialize the DMA queue entry.
@@ -283,7 +283,7 @@ hpibid(int unit, int slave)
 	 * take forever on slow CPUs.
 	 */
 	ohpibtimeout = hpibtimeout;
-	hpibtimeout = hpibidtimeout * (cpuspeed / 8);
+	hpibtimeout = hpibidtimeout * (cpuspeed_khz / 8000);
 	if (hpibrecv(unit, 31, slave, &id, 2) != 2)
 		id = 0;
 	hpibtimeout = ohpibtimeout;

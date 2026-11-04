@@ -1,4 +1,4 @@
-# Copyright 2003-2023 Free Software Foundation, Inc.
+# Copyright 2003-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 # test running programs
 #
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -32,9 +32,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 # This testcase cannot use runto_main because of the different prompt
 # we get when using annotation level 2.
 #
-if ![target_can_use_run_cmd] {
-    return 0
-}
+require target_can_use_run_cmd
 
 #
 # line number where we need to stop in main
@@ -97,21 +95,30 @@ gdb_expect_list "print class" "$gdb_prompt$" {
 # annotate-exited
 #
 send_gdb "continue\n"
-gdb_expect_list "continue to exit" "$gdb_prompt$" [concat {
-    "\r\n\032\032post-prompt\r\n"
-    "Continuing.\r\n"
-    "\r\n\032\032starting\r\n"
-    "a.x is 1\r\n"
-    "\r\n\032\032exited 0\r\n"} [list "$inferior_exited_re normally.\r\n"] {
-    "\r\n\032\032stopped\r\n"
-}]
+
+set el {}
+lappend el "\r\n\032\032post-prompt\r\n"
+lappend el "Continuing.\r\n"
+lappend el "\r\n\032\032starting\r\n"
+if { $gdb_spawn_id == $inferior_spawn_id } {
+    lappend el "a.x is 1\r\n"
+} else {
+    # Usually we'd handle this using gdb_test_stdio, but that looks too
+    # complicated in combination with annotations, so just ignore the inferior
+    # output.
+}
+lappend el "\r\n\032\032exited 0\r\n"
+lappend el "$inferior_exited_re normally.\r\n"
+lappend el "\r\n\032\032stopped\r\n"
+
+gdb_expect_list "continue to exit" "$gdb_prompt$" $el
 
 #
-# delete all breakpoints
+# delete all breakpoints, watchpoints, tracepoints, and catchpoints
 #
 send_gdb "delete\n"
 gdb_expect {
-  -re ".*Delete all breakpoints. \\(y or n\\) \r\n\032\032query.*$" {
+  -re ".*Delete all breakpoints, watchpoints, tracepoints, and catchpoints. \\(y or n\\) \r\n\032\032query.*$" {
            send_gdb "y\n"
            gdb_expect {
 	     -re "\r\n\032\032post-query\r\n$gdb_prompt$" { pass "delete bps" }

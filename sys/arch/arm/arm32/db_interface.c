@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.65 2023/08/02 14:36:39 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.65.6.1 2026/11/04 23:20:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2023/08/02 14:36:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65.6.1 2026/11/04 23:20:05 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -74,19 +74,16 @@ u_int db_fetch_reg(int, db_regs_t *);
 
 int db_trapper(u_int, u_int, trapframe_t *, int);
 
-int	db_active = 0;
-db_regs_t ddb_regs;	/* register state */
-db_regs_t *ddb_regp;
-
 #ifdef MULTIPROCESSOR
 volatile struct cpu_info *db_onproc;
 volatile struct cpu_info *db_newcpu;
 #endif
 
-
-
-
 #ifdef DDB
+int	db_active = 0;
+db_regs_t ddb_regs;	/* register state */
+db_regs_t *ddb_regp;
+
 /*
  *  kdb_trap - field a TRACE or BPT trap
  */
@@ -141,8 +138,10 @@ kdb_trap(int type, db_regs_t *regs)
 			 */
 			membar_consumer();
 			while (db_onproc != ci) {
-				if (db_onproc == NULL)
+				if (db_onproc == NULL) {
+					ddb_regp = NULL;
 					return 1;
+				}
 #ifdef _ARM_ARCH_6
 				__asm __volatile("wfe");
 				membar_consumer();
@@ -193,6 +192,7 @@ kdb_trap(int type, db_regs_t *regs)
 	}
 #endif
 
+	ddb_regp = NULL;
 	return 1;
 }
 #endif

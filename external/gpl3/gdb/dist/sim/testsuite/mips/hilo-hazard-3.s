@@ -1,4 +1,4 @@
-# Test for mf{hi,lo} -> mult/div/mt{hi,lo} with 2 nops inbetween.
+# Test for mf{hi,lo} -> mult/div/mt{hi,lo} with 2 nops in between.
 #
 # mach:		-mips32r6 -mips64r6 all
 # as:		-mabi=eabi

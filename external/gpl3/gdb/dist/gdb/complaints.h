@@ -1,6 +1,6 @@
 /* Definitions for complaint handling during symbol reading in GDB.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef GDB_COMPLAINTS_H
+#define GDB_COMPLAINTS_H
 
-#if !defined (COMPLAINTS_H)
-#define COMPLAINTS_H
-
-#include <unordered_set>
+#include "gdbsupport/scoped_restore.h"
+#include "gdbsupport/unordered_set.h"
 
 /* Helper for complaint.  */
 extern void complaint_internal (const char *fmt, ...)
@@ -59,7 +59,7 @@ extern void clear_complaints ();
 
 /* Type of collected complaints.  */
 
-typedef std::unordered_set<std::string> complaint_collection;
+typedef gdb::unordered_set<std::string> complaint_collection;
 
 /* A class that can handle calls to complaint from multiple threads.
    When this is instantiated, it hooks into the complaint mechanism,
@@ -109,4 +109,4 @@ private:
 
 extern void re_emit_complaints (const complaint_collection &);
 
-#endif /* !defined (COMPLAINTS_H) */
+#endif /* GDB_COMPLAINTS_H */

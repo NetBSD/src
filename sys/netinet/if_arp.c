@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.313.2.1 2025/08/02 05:57:49 perseant Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.313.2.2 2026/11/04 23:27:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.313.2.1 2025/08/02 05:57:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.313.2.2 2026/11/04 23:27:59 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -157,6 +157,7 @@ static struct nd_domain arp_nd_domain = {
 	.nd_maxretrans = MAX_RETRANS_TIMER,
 	.nd_maxnudhint = 0,	/* max # of subsequent upper layer hints */
 	.nd_maxqueuelen = 1,	/* max # of packets in unresolved ND entries */
+	.nd_gctimer = 24*60*60, /* stale neighbor GC timer duration */
 	.nd_nud_enabled = arp_nud_enabled,
 	.nd_reachable = arp_llinfo_reachable,
 	.nd_retrans = arp_llinfo_retrans,
@@ -733,6 +734,14 @@ arpintr(void *arg __unused)
 		switch (ntohs(ar->ar_pro)) {
 		case ETHERTYPE_IP:
 		case ETHERTYPE_IPTRAILERS:
+			switch (ntohs(ar->ar_op)) {
+			case ARPOP_REQUEST:
+			case ARPOP_REPLY:
+				break;
+			default:
+				ARP_STATINC(ARP_STAT_RCVBADPROTO);
+				goto free;
+			}
 			in_arpinput(m);
 			continue;
 		default:
@@ -789,6 +798,7 @@ in_arpinput(struct mbuf *m)
 		goto out;
 	ah = mtod(m, struct arphdr *);
 	op = ntohs(ah->ar_op);
+	KASSERT(op == ARPOP_REPLY || op == ARPOP_REQUEST);
 
 	if (ah->ar_pln != sizeof(struct in_addr))
 		goto out;
@@ -1056,6 +1066,7 @@ again:
 	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
 	memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
 	la->la_flags |= LLE_VALID;
+	la->la_flags &= ~LLE_UNRESOLVED;
 	la->ln_asked = 0;
 	if (new_state != 0) {
 		la->ln_state = new_state;
@@ -1110,8 +1121,8 @@ reply:
 		la = NULL;
 	}
 	if (op != ARPOP_REQUEST) {
-		if (op == ARPOP_REPLY)
-			ARP_STATINC(ARP_STAT_RCVREPLY);
+		KASSERT(op == ARPOP_REPLY);
+		ARP_STATINC(ARP_STAT_RCVREPLY);
 		goto out;
 	}
 	ARP_STATINC(ARP_STAT_RCVREQUEST);
@@ -1188,6 +1199,7 @@ reply:
 		break;
 	}
 	m->m_pkthdr.len = m->m_len;
+	m->m_pkthdr.csum_flags = 0; /* Clear any in-bound checksum flags. */
 	sa.sa_family = AF_ARP;
 	sa.sa_len = 2;
 	arps = ARP_STAT_GETREF();

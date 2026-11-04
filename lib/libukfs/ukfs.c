@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs.c,v 1.60 2022/04/19 20:32:17 rillig Exp $	*/
+/*	$NetBSD: ukfs.c,v 1.60.4.1 2026/11/04 23:19:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009  Antti Kantee.  All Rights Reserved.
@@ -40,6 +40,7 @@
 #endif
 
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
 #include <sys/sysctl.h>

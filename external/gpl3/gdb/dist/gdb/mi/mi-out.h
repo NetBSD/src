@@ -1,5 +1,5 @@
 /* MI Command Set - MI output generating routines for GDB.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,9 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_OUT_H
-#define MI_MI_OUT_H
+#ifndef GDB_MI_MI_OUT_H
+#define GDB_MI_MI_OUT_H
 
+#include "ui-out.h"
 #include <vector>
 
 struct ui_out;
@@ -61,7 +62,8 @@ protected:
   virtual void do_begin (ui_out_type type, const char *id) override;
   virtual void do_end (ui_out_type type) override;
   virtual void do_field_signed (int fldno, int width, ui_align align,
-				const char *fldname, LONGEST value) override;
+				const char *fldname, LONGEST value,
+				const ui_file_style &style) override;
   virtual void do_field_unsigned (int fldno, int width, ui_align align,
 				  const char *fldname, ULONGEST value)
     override;
@@ -137,7 +139,6 @@ private:
   }
 
   bool m_suppress_field_separator;
-  bool m_suppress_output;
   int m_mi_version;
   std::vector<ui_file *> m_streams;
 };
@@ -151,4 +152,4 @@ std::unique_ptr<mi_ui_out> mi_out_new (const char *mi_version);
 void mi_out_put (ui_out *uiout, struct ui_file *stream);
 void mi_out_rewind (ui_out *uiout);
 
-#endif /* MI_MI_OUT_H */
+#endif /* GDB_MI_MI_OUT_H */

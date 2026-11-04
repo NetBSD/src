@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,31 +15,23 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "tdesc.h"
 #include "regdef.h"
 
 #ifndef IN_PROCESS_AGENT
-
-target_desc::~target_desc ()
-{
-  xfree ((char *) arch);
-  xfree ((char *) osabi);
-}
 
 bool target_desc::operator== (const target_desc &other) const
 {
   if (reg_defs != other.reg_defs)
     return false;
 
-  /* Compare expedite_regs.  */
-  int i = 0;
-  for (; expedite_regs[i] != NULL; i++)
-    {
-      if (strcmp (expedite_regs[i], other.expedite_regs[i]) != 0)
-	return false;
-    }
-  if (other.expedite_regs[i] != NULL)
+  /* Compare the two vectors of expedited registers.  They will only match
+     if the following conditions are met:
+
+     - Both vectors have the same number of elements.
+     - Both vectors contain the same elements.
+     - The elements of both vectors appear in the same order.  */
+  if (expedite_regs != other.expedite_regs)
     return false;
 
   return true;
@@ -61,7 +53,8 @@ void target_desc::accept (tdesc_element_visitor &v) const
 
 void
 init_target_desc (struct target_desc *tdesc,
-		  const char **expedite_regs)
+		  const char **expedite_regs,
+		  enum gdb_osabi osabi)
 {
   int offset = 0;
 
@@ -89,7 +82,15 @@ init_target_desc (struct target_desc *tdesc,
   gdb_assert (2 * tdesc->registers_size + 32 <= PBUFSIZ);
 
 #ifndef IN_PROCESS_AGENT
-  tdesc->expedite_regs = expedite_regs;
+  /* Drop the contents of the previous vector, if any.  */
+  tdesc->expedite_regs.clear ();
+
+  /* Initialize the vector with new expedite registers contents.  */
+  int expedite_count = 0;
+  while (expedite_regs[expedite_count] != nullptr)
+    tdesc->expedite_regs.push_back (expedite_regs[expedite_count++]);
+
+  set_tdesc_osabi (tdesc, osabi);
 #endif
 }
 
@@ -158,7 +159,7 @@ tdesc_compatible_info_arch_name (const tdesc_compatible_info_up &c_info)
 const char *
 tdesc_architecture_name (const struct target_desc *target_desc)
 {
-  return target_desc->arch;
+  return target_desc->arch.get ();
 }
 
 /* See gdbsupport/tdesc.h.  */
@@ -167,7 +168,7 @@ void
 set_tdesc_architecture (struct target_desc *target_desc,
 			const char *name)
 {
-  target_desc->arch = xstrdup (name);
+  target_desc->arch = make_unique_xstrdup (name);
 }
 
 /* See gdbsupport/tdesc.h.  */
@@ -175,15 +176,16 @@ set_tdesc_architecture (struct target_desc *target_desc,
 const char *
 tdesc_osabi_name (const struct target_desc *target_desc)
 {
-  return target_desc->osabi;
+  return target_desc->osabi.get ();
 }
 
 /* See gdbsupport/tdesc.h.  */
 
 void
-set_tdesc_osabi (struct target_desc *target_desc, const char *name)
+set_tdesc_osabi (struct target_desc *target_desc, enum gdb_osabi osabi)
 {
-  target_desc->osabi = xstrdup (name);
+  const char *name = gdbarch_osabi_name (osabi);
+  target_desc->osabi = make_unique_xstrdup (name);
 }
 
 /* See gdbsupport/tdesc.h.  */
@@ -194,7 +196,7 @@ tdesc_get_features_xml (const target_desc *tdesc)
   /* Either .xmltarget or .features is not NULL.  */
   gdb_assert (tdesc->xmltarget != NULL
 	      || (!tdesc->features.empty ()
-		  && tdesc->arch != NULL));
+		  && tdesc_architecture_name (tdesc) != nullptr));
 
   if (tdesc->xmltarget == NULL)
     {

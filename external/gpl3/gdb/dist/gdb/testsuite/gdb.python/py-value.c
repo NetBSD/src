@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2024 Free Software Foundation, Inc.
+   Copyright 2008-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,6 +18,14 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+int long_array[] = {
+   0,  1,  2,  3,  4,  5,  6,  7,  8,  9,
+  10, 11, 12, 13, 14, 15, 16, 17, 18, 19,
+  20, 21, 22, 23, 24, 25, 26, 27, 28, 29,
+  30, 31, 32, 33, 34, 35, 36, 37, 38, 39,
+  40, 41, 42, 43, 44, 45, 46, 47, 48, 49
+};
 
 struct s
 {
@@ -60,6 +68,7 @@ struct Derived : public Base {
 Base *base = new Derived ();
 Derived derived;
 Base &base_ref = derived;
+struct str pod;
 
 void ptr_ref(int*& rptr_int)
 {

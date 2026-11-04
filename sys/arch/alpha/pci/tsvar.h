@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.18 2023/12/04 00:32:10 thorpej Exp $ */
+/* $NetBSD: tsvar.h,v 1.18.2.1 2026/11/04 23:19:58 perseant Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -31,7 +31,6 @@
  *
  */
 
-#include <sys/extent.h>
 #include <sys/vmem_impl.h>
 
 #include <dev/isa/isavar.h>

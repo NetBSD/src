@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,10 @@
 # Check that sending GDB a SIGINT while handling execution control
 # does not interrupt the execution control.
 
+# The way we get the pid of gdb doesn't work with remote host.  We get the
+# pid of the ssh session on build instead.
+require {!is_remote host}
+
 standard_testfile
 
 if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
@@ -30,7 +34,8 @@ if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
 # AFTER_KILL_COND is appended to the breakpoint condition, after "kill
 # -SIGINT $gdb_pid".
 proc test { {after_kill_cond ""} } {
-    clean_restart $::binfile
+    clean_restart
+    gdb_load $::binfile
 
     if {![runto_main]} {
 	return
@@ -40,39 +45,50 @@ proc test { {after_kill_cond ""} } {
 
     set gdb_pid [exp_pid -i [board_info host fileid]]
 
-    # Number of times the breakpoint should be hit before stopping.
-    set num_hits 10
-
-    # A counter used in the breakpoint's condition to ensure that it
-    # causes a stop after NUM_HITS hits.
-    gdb_test "p \$hit_count = 0" " = 0" "reset hit counter"
-
     # Set a breakpoint with a condition that sends a SIGINT to GDB.  This
     # emulates pressing Ctrl-C just while GDB is evaluating the breakpoint
     # condition.
     gdb_test \
-	"break foo if \$hit_count\+\+ == $num_hits || \$_shell(\"kill -INT $gdb_pid\") != 0 $after_kill_cond" \
+	"break foo if \$hit_count\+\+ == 1 || \$_shell(\"kill -INT $gdb_pid\") != 0 $after_kill_cond" \
 	"Breakpoint .*" \
 	"break foo if <condition>"
 
-    # Number of times we've seen GDB print "Quit" followed by the
-    # prompt.  We should see that exactly $NUM_HITS times.
-    set quit_count 0
+    for { set i 0 } { $i < 10 } { incr i } {
+	set done 0
+	with_test_prefix $i {
 
-    gdb_test_multiple "c&" "SIGINT does not interrupt background execution" {
-	-re "^c&\r\nContinuing\\.\r\n$::gdb_prompt " {
-	    exp_continue
-	}
-	-re "^Quit\r\n$::gdb_prompt " {
-	    incr quit_count
-	    verbose -log "quit_count=$quit_count"
-	    exp_continue
-	}
-	-re "^\r\nBreakpoint .*return 0;" {
-	    gdb_assert {$quit_count == $num_hits} $gdb_test_name
-	}
-	-re ".*Asynchronous execution not supported on this target\..*" {
-	    unsupported "$gdb_test_name (asynchronous execution not supported)"
+	    # A counter used in the breakpoint's condition to ensure that it
+	    # causes a stop after one hit.
+	    gdb_test "p \$hit_count = 0" " = 0" "reset hit counter"
+
+	    # Number of times we've seen GDB print "Quit" followed by the
+	    # prompt.  We should see that exactly one time.
+	    set quit_count 0
+
+	    gdb_test_multiple "c&" "SIGINT does not interrupt background execution" {
+		-re "^c&\r\nContinuing\\.\r\n$::gdb_prompt " {
+		    exp_continue
+		}
+		-re "^Quit\r\n$::gdb_prompt " {
+		    incr quit_count
+		    verbose -log "quit_count=$quit_count"
+		    exp_continue
+		}
+		-re "^\r\nBreakpoint .*return 0;" {
+		    gdb_assert {$quit_count == 1} $gdb_test_name
+		}
+		-re ".*Asynchronous execution not supported on this target\..*" {
+		    unsupported "$gdb_test_name (asynchronous execution not supported)"
+		}
+		timeout {
+		    set done 1
+		    fail "$gdb_test_name (timeout)"
+		}
+	    }
+
+	    if { $done } {
+		break
+	    }
 	}
     }
 }

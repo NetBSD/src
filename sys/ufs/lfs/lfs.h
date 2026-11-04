@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.208 2020/03/28 01:08:42 christos Exp $	*/
+/*	$NetBSD: lfs.h,v 1.208.28.1 2026/11/04 23:28:07 perseant Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -158,6 +158,7 @@
 #include <sys/condvar.h>
 #include <sys/mount.h>
 #include <sys/pool.h>
+#include <sys/rbtree.h>
 
 /*
  * Compile-time options for LFS.
@@ -210,7 +211,6 @@
 #ifndef LFS_ATIME_IFILE
 # define LFS_ATIME_IFILE 0 /* Store atime info in ifile (optional in LFSv1) */
 #endif
-#define LFS_MARKV_MAXBLKCNT	65536	/* Max block count for lfs_markv() */
 
 /*
  * Directories
@@ -538,6 +538,7 @@ struct segusage {
 #define SEGUSE_ERROR		0x08	/*  cleaner: do not clean segment */
 #define SEGUSE_EMPTY		0x10	/*  segment is empty */
 #define SEGUSE_INVAL		0x20	/*  segment is invalid */
+#define SEGUSE_READY		0x40	/*  segment is ready for reclaim */
 	uint32_t su_flags;		/* 12: segment flags */
 	uint64_t su_lastmod;		/* 16: last modified timestamp */
 };
@@ -620,11 +621,23 @@ __CTASSERT(__alignof(union iinfo) == __alignof(struct iinfo32));
  * Index file inode entries.
  */
 
-/* magic value for daddrs */
+/* magic values for daddrs */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
+#ifdef DEBUG
+# define LFS_ILLEGAL_DADDR	-1	/* out-of-band daddr */
+# define DADDR_IS_BAD(daddr) \
+	((daddr) == LFS_UNUSED_DADDR || (daddr) == LFS_ILLEGAL_DADDR)
+#else /* ! DEBUG */
+# define LFS_ILLEGAL_DADDR	LFS_UNUSED_DADDR
+# define DADDR_IS_BAD(daddr) ((daddr) == LFS_UNUSED_DADDR)
+#endif /* ! DEBUG */
+
 /* magic value for if_nextfree -- indicate orphaned file */
 #define LFS_ORPHAN_NEXTFREE(fs) \
 	((fs)->lfs_is64 ? ~(uint64_t)0 : ~(uint32_t)0)
+
+#define INUM_IS_BAD(fs, ino) \
+	(ino == LFS_UNUSED_INUM || ino == LFS_ORPHAN_NEXTFREE(fs))
 
 typedef struct ifile64 IFILE64;
 struct ifile64 {
@@ -994,8 +1007,21 @@ typedef uint32_t lfs_bm_t;
 struct segdelta {
 	long segnum;
 	size_t num;
-	LIST_ENTRY(segdelta) list;
+	rb_node_t rb_entry;
 };
+
+/*
+ * Parameters used by the in-kernel cleaner.
+ */
+struct lfs_autoclean_params {
+	size_t size;  /* Size of this structure */
+#define LFS_CLEANMODE_NONE	0x00 /* Auto-cleaner off */
+#define LFS_CLEANMODE_GREEDY	0x01 /* Greedy selector */
+#define LFS_CLEANMODE_CB	0x02 /* Cost-benefit selector */
+	int mode;     /* Which of the autoclean modes to use */
+	int thresh;   /* Low cleaning threshold to use */
+	int target;   /* How many blocks to rewrite before checkpointing */
+} __packed;
 
 /*
  * In-memory super block.
@@ -1013,9 +1039,16 @@ struct lfs {
 
 	struct segment *lfs_sp;		/* current segment being written */
 	struct vnode *lfs_ivnode;	/* vnode for the ifile */
-	uint32_t  lfs_seglock;		/* single-thread the segment writer */
-	pid_t	  lfs_lockpid;		/* pid of lock holder */
-	lwpid_t	  lfs_locklwp;		/* lwp of lock holder */
+
+	/* Preventative lock */
+	uint32_t  lfs_prelock;		/* preventative lock counter */
+	struct lwp *lfs_prelocklwp;	/* LWP of lock holder */
+	kcondvar_t lfs_prelockcv;	/* condvar for cleaner */
+	bool lfs_prelock_unfrag;	/* whether we took fraglock */
+
+	/* Segment lock */
+	uint32_t  lfs_seglock;		/* segment lock counter */
+
 	uint32_t lfs_iocount;		/* number of ios pending */
 	uint32_t lfs_writer;		/* don't allow any dirops to start */
 	uint32_t lfs_dirops;		/* count of active directory ops */
@@ -1025,11 +1058,12 @@ struct lfs {
 	uint32_t lfs_nactive;		/* Number of segments since last ckp */
 	int8_t	  lfs_fmod;		/* super block modified flag */
 	int8_t	  lfs_ronly;		/* mounted read-only flag */
-#define LFS_NOTYET  0x01
-#define LFS_IFDIRTY 0x02
-#define LFS_WARNED  0x04
-#define LFS_UNDIROP 0x08
-	int8_t	  lfs_flags;		/* currently unused flag */
+#define LFS_NOTYET	0x01
+#define LFS_IFDIRTY	0x02
+#define LFS_WARNED	0x04
+#define LFS_UNDIROP	0x08
+#define LFS_MUSTCLEAN	0x10
+	int8_t	  lfs_flags;		/* non-persistent flags */
 	uint16_t lfs_activesb;		/* toggle between superblocks */
 	daddr_t	  lfs_sbactive;		/* disk address of current sb write */
 	struct vnode *lfs_flushvp;	/* vnode being flushed */
@@ -1049,10 +1083,10 @@ struct lfs {
 	struct lfs_res_blk *lfs_resblk;	/* Reserved memory for pageout */
 	TAILQ_HEAD(, inode) lfs_dchainhd; /* dirop vnodes */
 	TAILQ_HEAD(, inode) lfs_pchainhd; /* paging vnodes */
+	TAILQ_HEAD(, inode) lfs_cleanhd; /* vnodes being cleaned */
 #define LFS_RESHASH_WIDTH 17
 	LIST_HEAD(, lfs_res_blk) lfs_reshash[LFS_RESHASH_WIDTH];
 	int	  lfs_pdflush;		/* pagedaemon wants us to flush */
-	uint32_t **lfs_suflags;		/* Segment use flags */
 #ifdef _KERNEL
 	struct pool lfs_clpool;		/* Pool for struct lfs_cluster */
 	struct pool lfs_bpppool;	/* Pool for bpp */
@@ -1064,13 +1098,12 @@ struct lfs {
 	int lfs_sleepers;		/* # procs sleeping this fs */
 	kcondvar_t lfs_sleeperscv;	
 	int lfs_pages;			/* dirty pages blaming this fs */
-	lfs_bm_t *lfs_ino_bitmap;	/* Inuse inodes bitmap */
 	int lfs_nowrap;			/* Suspend log wrap */
 	int lfs_wrappass;		/* Allow first log wrap requester to pass */
 	int lfs_wrapstatus;		/* Wrap status */
 	int lfs_reclino;		/* Inode being reclaimed */
 	daddr_t lfs_startseg;           /* Segment we started writing at */
-	LIST_HEAD(, segdelta) lfs_segdhd;	/* List of pending trunc accounting events */
+	rb_tree_t lfs_segdhd;		/* List of pending trunc accounting events */
 
 #ifdef _KERNEL
 	/* The block device we're mounted on. */
@@ -1105,7 +1138,45 @@ struct lfs {
 	/* Hint from cleaner, only valid if curlwp == um_cleaner_thread. */
 	/* XXX change this to BLOCK_INFO after resorting this file */
 	struct block_info *lfs_cleaner_hint;
+
+	/* Cleaner lock */
+	struct lwp *lfs_cleanlock;	/* LWP of lock holder */
+	kcondvar_t lfs_cleanercv;	/* condvar for cleaner */
+
+	/* Cleaner selection function and params */
+	struct lfs_autoclean_params lfs_autoclean;
+	long (*lfs_clean_selector)(struct lfs *, int, SEGUSE *);
+	uint64_t lfs_clean_accum;
+# define LFS_AUTOCLEAN_STATUS_OFF	0
+# define LFS_AUTOCLEAN_STATUS_ON	1
+	int lfs_autoclean_status;
+	kcondvar_t lfs_cleanquitcv; /* condvar for cleaner quit */
+
+	/* Last cleaned segment */
+	uint32_t lfs_lastcleaned;
 #endif
+};
+
+/*
+ * Structures used to pass information between the partial-segment
+ * parser and its callback functions.
+ */
+struct lfs_inofuncarg {
+	struct lfs *fs;		/* The filesystem */
+	daddr_t offset;		/* Address of the inode block */
+	kauth_cred_t cred;	/* Credential */
+	struct lwp *l;		/* lwp */
+	char *buf;		/* Pre-allocated buffer space */
+	void *arg;		/* Opaque argument to function */
+};
+
+struct lfs_finfofuncarg {
+	struct lfs *fs;		/* The file system */
+	FINFO *finfop;		/* The FINFO structure to parse */
+	daddr_t *offsetp;	/* Address of the first block */
+	kauth_cred_t cred;	/* Credential */
+	struct lwp *l;		/* lwp */
+	void *arg;		/* Opaque argument to function */
 };
 
 /*
@@ -1174,7 +1245,6 @@ struct segment {
 #define SEGM_CKP	0x0001		/* doing a checkpoint */
 #define SEGM_CLEAN	0x0002		/* cleaner call; don't sort */
 #define SEGM_SYNC	0x0004		/* wait for segment */
-#define SEGM_PROT	0x0008		/* don't inactivate at segunlock */
 #define SEGM_PAGEDAEMON	0x0010		/* pagedaemon called us */
 #define SEGM_WRITERD	0x0020		/* LFS writed called us */
 #define SEGM_FORCE_CKP	0x0040		/* Force checkpoint right away */
@@ -1182,7 +1252,8 @@ struct segment {
 #define SEGM_SINGLE	0x0100		/* Opportunistic writevnodes */
 	uint16_t seg_flags;		/* run-time flags for this segment */
 	uint32_t seg_iocount;		/* number of ios pending */
-	int	  ndupino;		/* number of duplicate inodes */
+	uint64_t bytes_written;		/* bytes written */
+	int	gatherblock_loopcount;	/* lfs_gatherblock loop count */
 };
 
 /* Statistics Counters */
@@ -1205,31 +1276,208 @@ struct lfs_stats {	/* Must match sysctl list in lfs_vfsops.h ! */
 	u_int   segs_reclaimed;
 };
 
-/* Fcntls to take the place of the lfs syscalls */
+
+/*
+ * fcntl-related definitions.
+ */
+
+/*
+ * Struct lfs_write_stats is returned by many of the LFS fcntl calls.
+ * It contains the amount of data written directly by the call, as
+ * well as the total amount ths current write offset advanced, both
+ * measured in "fsb" (fragments).
+ */
+struct lfs_write_stats {
+	int direct; /* Direct data written, in frags */
+	int offset; /* Offset difference, in frags */
+};
+
+/*
+ * Update the current segment offset somewhere before the given
+ * segment number.  Primarily used for the old, manual file system
+ * resize method.
+ */
+#define LFCNREWIND	_FCNR_FSPRIV('L', 6, int)
+
+/*
+ * Mark the given segment as temporarily invalid, that is, it should
+ * not be written to unless no other clean segments are available.
+ * Primarily used for the old, manual file system resize method.
+ */
+#define LFCNINVAL	_FCNR_FSPRIV('L', 7, int)
+
+/*
+ * Resize the file system to the given number of segments.  If the
+ * file system is being shrunk, enough clean segments must already
+ * exist to accommodate the size change.
+ */
+#define LFCNRESIZE	_FCNR_FSPRIV('L', 8, int)
+
+/*
+ * Wrap control.
+ *
+ * LFCNWRAPSTOP stops the writer from "wrapping" to the beginning of
+ * the disk when there are no clean segments higher than the current
+ * write offset.  This is primarily used for diagnostic and analysis
+ * purposes.  If an argument of 1 is given, this call waits until the
+ * writer stops.
+ *
+ * LFCNWRAPSTATUS retrieves the status of the wrapping restriction
+ * (going or stopping).
+ *
+ * LFCNWRAPPASS allows the segment selector to pass to the beginning
+ * of the disk, once, while wrapping is suspended.
+ *
+ * LFCNWRAPGO releases the restriction.
+ */
+#define LFCNWRAPSTOP	_FCNR_FSPRIV('L',  9, int)
+#define LFCNWRAPGO	_FCNR_FSPRIV('L', 10, int)
+#define LFCNWRAPPASS	_FCNR_FSPRIV('L', 12, int)
+# define LFS_WRAP_GOING	  0x0
+# define LFS_WRAP_WAITING 0x1
+#define LFCNWRAPSTATUS	_FCNW_FSPRIV('L', 13, int)
+
+/*
+ * Retrieve the file handle of the index file.  It is preferable for the
+ * cleaner to hold the file handle of the index file rather than the file
+ * system root because the latter would prevent a clean unmount.
+ */
+struct lfs_fhandle {
+	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
+};
+#define LFCNIFILEFH	_FCNW_FSPRIV('L', 11, struct lfs_fhandle)
+
+/*
+ * Fcntls to take the place of the historical lfs syscalls.
+ *
+ * LFCNSEGWAIT waits for this file system to advance to a new segment.
+ *
+ * LFCNSEGWAITALL waits for *any* LFS to advance to a new segment.
+ *
+ * LFCNCLEANERINFO retrieves the most current cleaner information
+ * from the kernel.
+ *
+ * LFCNSEGUSE retrieves the current SEGUSE structure for segments
+ * beginning at _start_ and ending at _start_ + _len_ - 1.
+ *
+ * LFCNBMAPV takes a list of blocks, parsed out of the partial-segment
+ * headers, and returns those that have not been relocated.
+ *
+ * LFCNMARKV relocated the specified blocks, writing them at the head
+ * of the log.
+ *
+ * LFCNRECLAIM forces a checkpoint with the intention of reclaiming
+ * empty segments.  The write statistics show the amount of data
+ * written to disk to accomplish this.
+ */
+#define LFS_SEGUSE_MAXCNT	65536	/* Max entry count for LFCNSEGUSE */
+struct lfs_seguse_array {
+	int start;	/* Start segment */
+	size_t len;	/* Length of the array */
+	SEGUSE *seguse; /* Out: array of seguse */
+};
+#define LFS_MARKV_MAXBLKCNT	65536	/* Max block count for lfs_markv() */
 struct lfs_fcntl_markv {
 	BLOCK_INFO *blkiov;	/* blocks to relocate */
 	int blkcnt;		/* number of blocks (limited to 65536) */
 };
-
-#define LFCNSEGWAITALL	_FCNR_FSPRIV('L', 14, struct timeval)
-#define LFCNSEGWAIT	_FCNR_FSPRIV('L', 15, struct timeval)
+#define LFCNSEGWAITALL	_FCNR_FSPRIV ('L', 14, struct timeval)
+#define LFCNSEGWAIT	_FCNR_FSPRIV ('L', 15, struct timeval)
+#define LFCNCLEANERINFO _FCNW_FSPRIV ('L', 22, CLEANERINFO64)
+#define LFCNSEGUSE      _FCNRW_FSPRIV('L', 23, struct lfs_seguse_array)
 #define LFCNBMAPV	_FCNRW_FSPRIV('L', 16, struct lfs_fcntl_markv)
 #define LFCNMARKV	_FCNRW_FSPRIV('L', 17, struct lfs_fcntl_markv)
-#define LFCNRECLAIM	 _FCNO_FSPRIV('L', 4)
+#define LFCNRECLAIM	_FCNW_FSPRIV ('L',  4, struct lfs_write_stats)
 
-struct lfs_fhandle {
-	char space[28];	/* FHANDLE_SIZE_COMPAT (but used from userland too) */
+/*
+ * File defragmentation.
+ *
+ * LFCNFILESTATS returns fragmentation information about the direct blocks
+ * held by the inodes numbered between _ino_ and _ino_ + _len_ - 1.
+ * Two metrics are returned: the total number of discontinuities; and the
+ * sum of the length of the discontinuities, reported in frags.
+ *
+ * LFCNREWRITEFILE rewrites the specified files sequentially,
+ * restoring them to a state with as few discontinuities as possible.
+ *
+ * LFCNSCRAMBLE rewrites every other block of the specified files,
+ * creating as many gaps as possible.  This is primarily used for
+ * testing.
+ */
+#define LFS_FILESTATS_MAXCNT	65536	/* Max entry count for LFCNFILESTATS */
+struct lfs_filestats {
+	ino_t ino;	/* Inode number */
+	off_t nblk;	/* Block count */
+	int dc_count;	/* Count of discontinuities (gaps) */
+	daddr_t dc_sum;	/* Sum of absolute values of gap lengths */
 };
-#define LFCNREWIND       _FCNR_FSPRIV('L', 6, int)
-#define LFCNINVAL        _FCNR_FSPRIV('L', 7, int)
-#define LFCNRESIZE       _FCNR_FSPRIV('L', 8, int)
-#define LFCNWRAPSTOP	 _FCNR_FSPRIV('L', 9, int)
-#define LFCNWRAPGO	 _FCNR_FSPRIV('L', 10, int)
-#define LFCNIFILEFH	 _FCNW_FSPRIV('L', 11, struct lfs_fhandle)
-#define LFCNWRAPPASS	 _FCNR_FSPRIV('L', 12, int)
-# define LFS_WRAP_GOING   0x0
-# define LFS_WRAP_WAITING 0x1
-#define LFCNWRAPSTATUS	 _FCNW_FSPRIV('L', 13, int)
+struct lfs_filestat_req {
+	ino_t ino;	/* Starting inode number */
+	int len;	/* Number of inodes to report */
+	struct lfs_filestats *fss; /* Out: file statistics */
+};
+#define LFCNFILESTATS	_FCNRW_FSPRIV('L', 18, struct lfs_filestat_req)
+
+#define LFS_REWRITE_MAXCNT	65536	/* Max entry count for LFCNREWRITE* */
+struct lfs_inode_array {
+	size_t len;	/* Length of array */
+	ino_t *inodes;	/* Array of inode numbers */
+	struct lfs_write_stats stats; /* Out: frags written */
+};
+#define LFCNREWRITEFILE	_FCNRW_FSPRIV('L', 19, struct lfs_inode_array)
+#define LFCNSCRAMBLE	_FCNRW_FSPRIV('L', 20, struct lfs_inode_array)
+
+/*
+ * Segment rewriting.
+ *
+ * LFCNREWRITESEGS rewrites the live data still contained within the
+ * specified segments.  It is intended to replace the
+ * read/lfs_bmapv/lfs_bmapv combination historically used by the cleaner.
+ */
+struct lfs_segnum_array {
+	size_t len;	/* Length of array */
+	int *segments;	/* Array of segment numbers */
+	struct lfs_write_stats stats; /* Out: frags written */
+};
+#define LFCNREWRITESEGS	_FCNRW_FSPRIV('L', 21, struct lfs_segnum_array)
+
+/*
+ * In-kernel cleaner.
+ *
+ * LFCNAUTOCLEAN directs the in-kernel cleaner process.  Three
+ * parameters are available: cleaning mode, priority threshold, and
+ * cleaning target.
+ *
+ * struct lfs_autoclean_params {
+ *      size_t size;  // Size of this structure
+ * #define LFS_CLEANMODE_NONE   0x00 // Auto-cleaner off
+ * #define LFS_CLEANMODE_GREEDY 0x01 // Greedy selector
+ * #define LFS_CLEANMODE_CB     0x02 // Cost-benefit selector
+ * 	int mode;     // Which of the autoclean modes to use
+ *	int thresh;   // Low cleaning threshold to use
+ *	int target;   // How many blocks to rewrite before checkpointing
+ * };
+ *
+ * The cleaning mode, or strategy, can be given as any of greedy;
+ * cost/benefit using clock time for the time metric; or NONE,
+ * indicating that the in-kernel cleaner should not be used for this
+ * file system.  The default is NONE.
+ *
+ * The priority threshold determines when to stop cleaning.  A
+ * threshold of zero indicates that the cleaner should never pause
+ * from cleaning until there are no segments with dead blocks; a
+ * negative value means the kernel will choose the threshold.
+ *
+ * The "target" parameter describes how many blocks should be written
+ * before a checkpoint.  Too low a value will result in the creation
+ * of many short-lived index file blocks, which might make the cleaner
+ * lose ground; but too high a value might result in the file system
+ * becoming short on clean segments, so that other processes must wait
+ * for a synchronous checkpoint.  A negative value means that the
+ * kernel will choose the target.
+ */
+#define LFCNAUTOCLEAN	_FCNR_FSPRIV('L', 24, struct lfs_autoclean_params)
+
 
 /* Debug segment lock */
 #ifdef notyet

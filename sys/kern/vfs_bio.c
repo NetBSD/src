@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.303.10.1 2025/08/02 05:57:43 perseant Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.303.10.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.303.10.1 2025/08/02 05:57:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.303.10.2 2026/11/04 23:27:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_biohist.h"
@@ -572,7 +572,7 @@ buf_lotsfree(void)
 		return 0;
 
 	/*
-	 * The probabily of getting a new allocation is inversely
+	 * The probability of getting a new allocation is inversely
 	 * proportional  to the current size of the cache above
 	 * the low water mark.  Divide the total first to avoid overflows
 	 * in the product.
@@ -660,7 +660,7 @@ buf_alloc(size_t size)
 			continue;
 		}
 
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (uvm_lwp_is_pagedaemon(curlwp)) {
 			mutex_exit(&bufcache_lock);
 			return NULL;
 		}
@@ -695,7 +695,7 @@ bio_doread(struct vnode *vp, daddr_t blkno, int size, int async)
 	 * getblk() may return NULL if we are the pagedaemon.
 	 */
 	if (bp == NULL) {
-		KASSERT(curlwp == uvm.pagedaemon_lwp);
+		KASSERT(uvm_lwp_is_pagedaemon(curlwp));
 		return NULL;
 	}
 
@@ -1441,10 +1441,31 @@ start:
 		/* Wake anyone trying to lock the old identity. */
 		cv_broadcast(&bp->b_busy);
 	} else {
+ 		/*
+		 * If there is nothing to recycle, try one fresh allocation
+		 * before sleeping while the cache is below its high water mark.
+		 */
+		if (!from_bufq && bufmem < bufmem_hiwater) {
+			mutex_exit(&bufcache_lock);
+			bp = pool_cache_get(buf_cache, PR_NOWAIT);
+			if (bp != NULL) {
+				memset((char *)bp, 0, sizeof(*bp));
+				buf_init(bp);
+				SET(bp->b_cflags, BC_BUSY);
+				mutex_enter(&bufcache_lock);
+#if defined(DIAGNOSTIC)
+				bp->b_freelistindex = -1;
+#endif /* defined(DIAGNOSTIC) */
+				SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
+				return bp;
+			}
+			mutex_enter(&bufcache_lock);
+		}
+
 		/*
 		 * XXX: !from_bufq should be removed.
 		 */
-		if (!from_bufq || curlwp != uvm.pagedaemon_lwp) {
+		if (!from_bufq || !uvm_lwp_is_pagedaemon(curlwp)) {
 			/* wait for a free buffer of any kind */
 			if ((slpflag & PCATCH) != 0)
 				(void)cv_timedwait_sig(&needbuffer_cv,
@@ -2192,7 +2213,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 	SDT_PROBE4(io, kernel, , bbusy__start,  bp, intr, timo, interlock);
 
 	if ((bp->b_cflags & BC_BUSY) != 0) {
-		if (curlwp == uvm.pagedaemon_lwp) {
+		if (uvm_lwp_is_pagedaemon(curlwp)) {
 			error = SET_ERROR(EDEADLK);
 			goto out;
 		}

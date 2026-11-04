@@ -1,6 +1,6 @@
 /* Self tests for the filtered_iterator class.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -125,6 +125,26 @@ test_filtered_iterator ()
   SELF_CHECK (even_ints == expected_even_ints);
 }
 
+/* Same as the above, but using pointers as the iterator base type.  */
+
+static void
+test_filtered_iterator_ptr ()
+{
+  int array[] = { 4, 4, 5, 6, 7, 8, 9 };
+  std::vector<int> even_ints;
+  const std::vector<int> expected_even_ints { 4, 4, 6, 8 };
+
+  filtered_iterator<int *, even_numbers_only> iter
+    (array, array + ARRAY_SIZE (array));
+  filtered_iterator<int *, even_numbers_only> end
+    (array + ARRAY_SIZE (array), array + ARRAY_SIZE (array));
+
+  for (; iter != end; ++iter)
+    even_ints.push_back (*iter);
+
+  SELF_CHECK (even_ints == expected_even_ints);
+}
+
 /* Test operator== and operator!=. */
 
 static void
@@ -152,14 +172,44 @@ test_filtered_iterator_eq ()
   SELF_CHECK (!(iter1 != iter2));
 }
 
+
+/* Same as the above, but using pointers as the iterator base type.  */
+
+static void
+test_filtered_iterator_eq_ptr ()
+{
+  int array[] = { 4, 4, 5, 6, 7, 8, 9 };
+
+  filtered_iterator<int *, even_numbers_only> iter1
+    (array, array + ARRAY_SIZE(array));
+  filtered_iterator<int *, even_numbers_only> iter2
+    (array, array + ARRAY_SIZE(array));
+
+  /* They start equal.  */
+  SELF_CHECK (iter1 == iter2);
+  SELF_CHECK (!(iter1 != iter2));
+
+  /* Advance 1, now they aren't equal (despite pointing to equal values).  */
+  ++iter1;
+  SELF_CHECK (!(iter1 == iter2));
+  SELF_CHECK (iter1 != iter2);
+
+  /* Advance 2, now they are equal again.  */
+  ++iter2;
+  SELF_CHECK (iter1 == iter2);
+  SELF_CHECK (!(iter1 != iter2));
+}
+
 } /* namespace selftests */
 
-void _initialize_filtered_iterator_selftests ();
-void
-_initialize_filtered_iterator_selftests ()
+INIT_GDB_FILE (filtered_iterator_selftests)
 {
   selftests::register_test ("filtered_iterator",
 			    selftests::test_filtered_iterator);
   selftests::register_test ("filtered_iterator_eq",
 			    selftests::test_filtered_iterator_eq);
+  selftests::register_test ("filtered_iterator_ptr",
+			    selftests::test_filtered_iterator_ptr);
+  selftests::register_test ("filtered_iterator_eq_ptr",
+			    selftests::test_filtered_iterator_eq_ptr);
 }

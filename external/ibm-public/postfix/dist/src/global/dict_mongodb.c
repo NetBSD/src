@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mongodb.c,v 1.2.4.2 2025/08/02 05:50:06 perseant Exp $	*/
+/*	$NetBSD: dict_mongodb.c,v 1.2.4.3 2026/11/04 23:14:47 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -566,7 +566,7 @@ DICT   *dict_mongodb_open(const char *name, int open_flags, int dict_flags)
 
     mongoc_uri_destroy(uri);
     mongoc_client_set_error_api(dict_mongodb->client, MONGOC_ERROR_API_VERSION_2);
-    return (DICT_DEBUG (&dict_mongodb->dict));
+    return (&dict_mongodb->dict);
 }
 
 #endif

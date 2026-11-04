@@ -1,6 +1,6 @@
 /* GNU/Linux/PowerPC specific low level interface, for the remote server for
    GDB.
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "linux-low.h"
 
 #include "elf/common.h"
@@ -880,8 +879,7 @@ ppc_target::low_arch_setup ()
   const struct target_desc *tdesc;
   struct regset_info *regset;
   struct ppc_linux_features features = ppc_linux_no_features;
-
-  int tid = lwpid_of (current_thread);
+  int tid = current_thread->id.lwp ();
 
   features.wordsize = ppc_linux_target_wordsize (tid);
 
@@ -894,8 +892,8 @@ ppc_target::low_arch_setup ()
 
   /* The value of current_process ()->tdesc needs to be set for this
      call.  */
-  ppc_hwcap = linux_get_hwcap (features.wordsize);
-  ppc_hwcap2 = linux_get_hwcap2 (features.wordsize);
+  ppc_hwcap = linux_get_hwcap (current_thread->id.pid (), features.wordsize);
+  ppc_hwcap2 = linux_get_hwcap2 (current_thread->id.pid (), features.wordsize);
 
   features.isa205 = ppc_linux_has_isa205 (ppc_hwcap);
 
@@ -1054,8 +1052,8 @@ int
 ppc_target::low_get_thread_area (int lwpid, CORE_ADDR *addr)
 {
   struct lwp_info *lwp = find_lwp_pid (ptid_t (lwpid));
-  struct thread_info *thr = get_lwp_thread (lwp);
-  struct regcache *regcache = get_thread_regcache (thr, 1);
+  thread_info *thr = lwp->thread;
+  regcache *regcache = get_thread_regcache (thr);
   ULONGEST tp = 0;
 
 #ifdef __powerpc64__
@@ -1097,7 +1095,7 @@ is_elfv2_inferior (void)
   const struct target_desc *tdesc = current_process ()->tdesc;
   int wordsize = register_size (tdesc, 0);
 
-  if (!linux_get_auxv (wordsize, AT_PHDR, &phdr))
+  if (!linux_get_auxv (current_thread->id.pid (), wordsize, AT_PHDR, &phdr))
     return def_res;
 
   /* Assume ELF header is at the beginning of the page where program headers
@@ -1609,8 +1607,7 @@ ppc_target::install_fast_tracepoint_jump_pad (CORE_ADDR tpoint,
   const CORE_ADDR entryaddr = *jump_entry;
   int rsz, min_frame, frame_size, tp_reg;
 #ifdef __powerpc64__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-  int is_64 = register_size (regcache->tdesc, 0) == 8;
+  int is_64 = register_size (current_process ()->tdesc, 0) == 8;
   int is_opd = is_64 && !is_elfv2_inferior ();
 #else
   int is_64 = 0, is_opd = 0;
@@ -1872,7 +1869,7 @@ emit_insns (uint32_t *buf, int n)
 
 /* Regardless of endian, register 3 is always high part, 4 is low part.
    These defines are used when the register pair is stored/loaded.
-   Likewise, to simplify code, have a similiar define for 5:6. */
+   Likewise, to simplify code, have a similar define for 5:6. */
 
 #if __BYTE_ORDER == __LITTLE_ENDIAN
 #define TOP_FIRST	"4"
@@ -3381,9 +3378,7 @@ emit_ops *
 ppc_target::emit_ops ()
 {
 #ifdef __powerpc64__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-
-  if (register_size (regcache->tdesc, 0) == 8)
+  if (register_size (current_process ()->tdesc, 0) == 8)
     {
       if (is_elfv2_inferior ())
 	return &ppc64v2_emit_ops_impl;
@@ -3399,8 +3394,7 @@ ppc_target::emit_ops ()
 int
 ppc_target::get_ipa_tdesc_idx ()
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-  const struct target_desc *tdesc = regcache->tdesc;
+  const target_desc *tdesc = current_process ()->tdesc;
 
 #ifdef __powerpc64__
   if (tdesc == tdesc_powerpc_64l)

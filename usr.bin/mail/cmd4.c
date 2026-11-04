@@ -1,4 +1,4 @@
-/*	$NetBSD: cmd4.c,v 1.6 2009/04/11 14:22:32 christos Exp $	*/
+/*	$NetBSD: cmd4.c,v 1.6.58.1 2026/11/04 23:28:36 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)cmd3.c	8.2 (Berkeley) 4/20/95";
 #else
-__RCSID("$NetBSD: cmd4.c,v 1.6 2009/04/11 14:22:32 christos Exp $");
+__RCSID("$NetBSD: cmd4.c,v 1.6.58.1 2026/11/04 23:28:36 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -249,18 +249,19 @@ free_name(struct name *np)
 
 	for (/*EMPTY*/; np; np = next_np) {
 		next_np = np->n_flink;
-		free(next_np);
+		free(np);
 	}
 }
 
 static void
 delsmopts(char *name)
 {
-	struct smopts_s *sp;
+	struct smopts_s *sp, *next;
 	struct smopts_s **last_link;
 
 	last_link = &smoptstbl[hashcase(name)];
-	for (sp = *last_link; sp; sp = sp->s_link) {
+	for (sp = *last_link; sp; sp = next) {
+		next = sp->s_link;
 		if (strcasecmp(sp->s_name, name) == 0) {
 			*last_link = sp->s_link;
 			free_name(sp->s_smopts);

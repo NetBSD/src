@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.12 2016/03/10 20:22:52 martin Exp $	*/
+/*	$NetBSD: srt0.S,v 1.12.54.1 2026/11/04 23:21:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ ENTRY(openfirmware)
 #ifdef TIGHT
 
 /*
- * XXX - Space saving .div & .rem routines (small & non-negative numbres only)
+ * XXX - Space saving .div & .rem routines (small & non-negative numbers only)
  */
 	.align	4
 	.global .div, .udiv

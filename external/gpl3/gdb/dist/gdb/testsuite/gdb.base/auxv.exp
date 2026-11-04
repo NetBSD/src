@@ -1,6 +1,6 @@
 # Test `info auxv' and related functionality.
 
-# Copyright (C) 1992-2024 Free Software Foundation, Inc.
+# Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,8 @@ set core_works [expr [isnative] && ! [is_remote target]]
 
 # Run GDB on the test program up to where it will dump core.
 
-clean_restart ${binfile}
+clean_restart
+gdb_load $binfile
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set width 0"
 

@@ -1,7 +1,7 @@
-/* $NetBSD: acpi_fdt.c,v 1.24.8.1 2025/08/02 05:55:28 perseant Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.24.8.2 2026/11/04 23:20:08 perseant Exp $ */
 
 /*-
- * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2015-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.24.8.1 2025/08/02 05:55:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.24.8.2 2026/11/04 23:20:08 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,7 +130,7 @@ acpi_fdt_poweroff(device_t dev)
 	delay(500000);
 
 	if (psci_available()) {
-		psci_system_off();
+		psci_poweroff();
 	}
 
 #ifdef EFI_RUNTIME

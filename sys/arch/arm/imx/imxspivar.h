@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspivar.h,v 1.3 2019/09/27 02:59:21 hkenken Exp $	*/
+/*	$NetBSD: imxspivar.h,v 1.3.32.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -46,7 +46,6 @@ enum imxspi_type {
 
 struct imxspi_softc {
 	device_t sc_dev;
-	int sc_phandle;
 
 	bus_space_tag_t  sc_iot;
 	bus_space_handle_t sc_ioh;

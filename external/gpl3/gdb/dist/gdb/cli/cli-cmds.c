@@ -1,6 +1,6 @@
 /* GDB CLI commands.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "arch-utils.h"
+#include "exceptions.h"
 #include "readline/tilde.h"
 #include "completer.h"
 #include "target.h"
@@ -50,11 +51,12 @@
 #include "cli/cli-cmds.h"
 #include "cli/cli-style.h"
 #include "cli/cli-utils.h"
-#include "cli/cli-style.h"
+#include "terminal.h"
 
 #include "extension.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/gdb_tilde_expand.h"
+#include "gdbsupport/eintr.h"
 
 #ifdef TUI
 #include "tui/tui.h"
@@ -214,7 +216,7 @@ error_no_arg (const char *why)
 static void
 info_command (const char *arg, int from_tty)
 {
-  help_list (infolist, "info ", all_commands, gdb_stdout);
+  help_list (infolist, "info", all_commands, gdb_stdout);
 }
 
 /* See cli/cli-cmds.h.  */
@@ -422,31 +424,7 @@ complete_command (const char *arg, int from_tty)
     {
       std::string arg_prefix (arg, word - arg);
 
-      if (result.number_matches == 1)
-	printf_unfiltered ("%s%s\n", arg_prefix.c_str (), result.match_list[0]);
-      else
-	{
-	  result.sort_match_list ();
-
-	  for (size_t i = 0; i < result.number_matches; i++)
-	    {
-	      printf_unfiltered ("%s%s",
-				 arg_prefix.c_str (),
-				 result.match_list[i + 1]);
-	      if (quote_char)
-		printf_unfiltered ("%c", quote_char);
-	      printf_unfiltered ("\n");
-	    }
-	}
-
-      if (result.number_matches == max_completions)
-	{
-	  /* ARG_PREFIX and WORD are included in the output so that emacs
-	     will include the message in the output.  */
-	  printf_unfiltered (_("%s%s %s\n"),
-			     arg_prefix.c_str (), word,
-			     get_max_completions_reached_message ());
-	}
+      result.print_matches (arg_prefix, word, quote_char);
     }
 }
 
@@ -856,7 +834,7 @@ echo_command (const char *text, int from_tty)
 	  gdb_printf ("%c", c);
       }
 
-  gdb_stdout->reset_style ();
+  gdb_stdout->emit_style_escape (ui_file_style ());
 
   /* Force this output to appear now.  */
   gdb_flush (gdb_stdout);
@@ -945,7 +923,11 @@ run_under_shell (const char *arg, int from_tty)
     }
 
   if (pid != -1)
-    waitpid (pid, &status, 0);
+    {
+      int ret = gdb::waitpid (pid, &status, 0);
+      if (ret == -1)
+	perror_with_name ("Cannot get status of shell command");
+    }
   else
     error (_("Fork failed"));
   return status;
@@ -968,7 +950,25 @@ shell_escape (const char *arg, int from_tty)
 static void
 shell_command (const char *arg, int from_tty)
 {
+  scoped_restore_tty_state save_restore_gdb_ttystate;
+  restore_initial_gdb_ttystate ();
+
   shell_escape (arg, from_tty);
+}
+
+/* Completion for the shell command.  Currently, this just uses filename
+   completion, but we could, potentially, complete command names from $PATH
+   for the first word, which would make this even more shell like.  */
+
+static void
+shell_command_completer (struct cmd_list_element *ignore,
+			 completion_tracker &tracker,
+			 const char *text, const char * /* word */)
+{
+  tracker.set_use_custom_word_point (true);
+  const char *word
+    = advance_to_filename_maybe_quoted_complete_word_point (tracker, text);
+  filename_maybe_quoted_completer (ignore, tracker, text, word);
 }
 
 static void
@@ -983,7 +983,7 @@ edit_command (const char *arg, int from_tty)
   if (arg == 0)
     {
       set_default_source_symtab_and_line ();
-      sal = get_current_source_symtab_and_line ();
+      sal = get_current_source_symtab_and_line (current_program_space);
     }
 
   /* Bare "edit" edits file with present line.  */
@@ -992,7 +992,8 @@ edit_command (const char *arg, int from_tty)
     {
       if (sal.symtab == 0)
 	error (_("No default source file yet."));
-      sal.line += get_lines_to_list () / 2;
+      if (get_first_line_listed () != 0)
+	sal.line = get_first_line_listed () + get_lines_to_list () / 2;
     }
   else
     {
@@ -1040,16 +1041,23 @@ edit_command (const char *arg, int from_tty)
 	  gdbarch = sal.symtab->compunit ()->objfile ()->arch ();
 	  sym = find_pc_function (sal.pc);
 	  if (sym)
-	    gdb_printf ("%s is in %s (%s:%d).\n",
-			paddress (gdbarch, sal.pc),
-			sym->print_name (),
-			symtab_to_filename_for_display (sal.symtab),
-			sal.line);
+	    gdb_printf ("%ps is in %ps (%ps:%ps).\n",
+			styled_string (address_style.style (),
+				       paddress (gdbarch, sal.pc)),
+			styled_string (function_name_style.style (),
+				       sym->print_name ()),
+			styled_string (file_name_style.style (),
+				       symtab_to_filename_for_display (sal.symtab)),
+			styled_string (line_number_style.style (),
+				       pulongest (sal.line)));
 	  else
-	    gdb_printf ("%s is at %s:%d.\n",
-			paddress (gdbarch, sal.pc),
-			symtab_to_filename_for_display (sal.symtab),
-			sal.line);
+	    gdb_printf ("%ps is at %ps:%ps.\n",
+			styled_string (address_style.style (),
+				       paddress (gdbarch, sal.pc)),
+			styled_string (file_name_style.style (),
+				       symtab_to_filename_for_display (sal.symtab)),
+			styled_string (line_number_style.style (),
+				       pulongest (sal.line)));
 	}
 
       /* If what was given does not imply a symtab, it must be an
@@ -1141,19 +1149,14 @@ pipe_command (const char *arg, int from_tty)
   if (to_shell_command == nullptr)
     error (_("Error launching \"%s\""), shell_command);
 
-  try
-    {
-      stdio_file pipe_file (to_shell_command);
+  int exit_status;
+  {
+    SCOPE_EXIT { exit_status = pclose (to_shell_command); };
 
-      execute_command_to_ui_file (&pipe_file, gdb_cmd.c_str (), from_tty);
-    }
-  catch (...)
-    {
-      pclose (to_shell_command);
-      throw;
-    }
+    stdio_file pipe_file (to_shell_command);
 
-  int exit_status = pclose (to_shell_command);
+    execute_command_to_ui_file (&pipe_file, gdb_cmd.c_str (), from_tty);
+  }
 
   if (exit_status < 0)
     error (_("shell command \"%s\" failed: %s"), shell_command,
@@ -1194,8 +1197,32 @@ pipe_command_completer (struct cmd_list_element *ignore,
       return;
     }
 
-  /* We're past the delimiter.  What follows is a shell command, which
-     we don't know how to complete.  */
+  /* We're past the delimiter now, or at least, DELIM points to the
+     delimiter string.  Update TEXT to point to the start of whatever
+     appears after the delimiter.  */
+  text = skip_spaces (delim + strlen (delimiter));
+
+  /* We really are past the delimiter now, so offer completions.  This is
+     like GDB's "shell" command, currently we only offer filename
+     completion, but in the future this could be improved by offering
+     completion of command names from $PATH.
+
+     What we don't do here is offer completions for the empty string.  It
+     is assumed that the first word after the delimiter is going to be a
+     command name from $PATH, not a filename, so if the user has typed
+     nothing (yet) and tries to complete, there's no point offering a list
+     of files from the current directory.
+
+     Once the user has started to type something though, then we do start
+     offering filename completions.  */
+  if (*text == '\0')
+    return;
+
+  tracker.set_use_custom_word_point (true);
+  tracker.advance_custom_word_point_by (text - org_text);
+  const char *word
+    = advance_to_filename_maybe_quoted_complete_word_point (tracker, text);
+  filename_maybe_quoted_completer (ignore, tracker, text, word);
 }
 
 /* Helper for the list_command function.  Prints the lines around (and
@@ -1239,7 +1266,8 @@ list_command (const char *arg, int from_tty)
       if (get_first_line_listed () == 0 && (arg == nullptr || arg[0] != '.'))
 	{
 	  set_default_source_symtab_and_line ();
-	  list_around_line (arg, get_current_source_symtab_and_line ());
+	  list_around_line
+	    (arg, get_current_source_symtab_and_line (current_program_space));
 	}
 
       /* "l" and "l +" lists the next few lines, unless we're listing past
@@ -1247,7 +1275,8 @@ list_command (const char *arg, int from_tty)
       else if (arg == nullptr || arg[0] == '+')
 	{
 	  set_default_source_symtab_and_line ();
-	  const symtab_and_line cursal = get_current_source_symtab_and_line ();
+	  const symtab_and_line cursal
+	    = get_current_source_symtab_and_line (current_program_space);
 	  if (last_symtab_line (cursal.symtab) >= cursal.line)
 	    print_source_lines (cursal.symtab,
 				source_lines_range (cursal.line), 0);
@@ -1261,7 +1290,8 @@ list_command (const char *arg, int from_tty)
       else if (arg[0] == '-')
 	{
 	  set_default_source_symtab_and_line ();
-	  const symtab_and_line cursal = get_current_source_symtab_and_line ();
+	  const symtab_and_line cursal
+	    = get_current_source_symtab_and_line (current_program_space);
 
 	  if (get_first_line_listed () == 1)
 	    error (_("Already at the start of %s."),
@@ -1294,7 +1324,7 @@ list_command (const char *arg, int from_tty)
 	    {
 	      /* The inferior is not running, so reset the current source
 		 location to the default (usually the main function).  */
-	      clear_current_source_symtab_and_line ();
+	      clear_current_source_symtab_and_line (current_program_space);
 	      try
 		{
 		  set_default_source_symtab_and_line ();
@@ -1304,7 +1334,8 @@ list_command (const char *arg, int from_tty)
 		  error (_("Insufficient debug info for showing source "
 			   "lines at default location"));
 		}
-	      cursal = get_current_source_symtab_and_line ();
+	      cursal
+		= get_current_source_symtab_and_line (current_program_space);
 
 	      gdb_assert (cursal.symtab != nullptr);
 	    }
@@ -1326,7 +1357,8 @@ list_command (const char *arg, int from_tty)
      and clear NO_END; however, if one of the arguments is blank,
      set DUMMY_BEG or DUMMY_END to record that fact.  */
 
-  if (!have_full_symbols () && !have_partial_symbols ())
+  if (!have_full_symbols (current_program_space)
+      && !have_partial_symbols (current_program_space))
     error (_("No symbol table is loaded.  Use the \"file\" command."));
 
   std::vector<symtab_and_line> sals;
@@ -1562,17 +1594,19 @@ print_disassembly (struct gdbarch *gdbarch, const char *name,
 static void
 disassemble_current_function (gdb_disassembly_flags flags)
 {
-  frame_info_ptr frame;
-  struct gdbarch *gdbarch;
-  CORE_ADDR low, high, pc;
-  const char *name;
-  const struct block *block;
+  frame_info_ptr frame = get_selected_frame (_("No frame selected."));
+  struct gdbarch *gdbarch = get_frame_arch (frame);
+  CORE_ADDR pc = get_frame_address_in_block (frame);
 
-  frame = get_selected_frame (_("No frame selected."));
-  gdbarch = get_frame_arch (frame);
-  pc = get_frame_address_in_block (frame);
-  if (find_pc_partial_function (pc, &name, &low, &high, &block) == 0)
+  const general_symbol_info *gsi;
+  const struct block *block;
+  CORE_ADDR low, high;
+  if (find_pc_partial_function_sym (pc, &gsi, &low, &high, &block) == 0)
     error (_("No function contains program counter for selected frame."));
+
+  gdb_assert (gsi != nullptr);
+  const char *name = asm_demangle ? gsi->print_name () : gsi->linkage_name ();
+
 #if defined(TUI)
   /* NOTE: cagney/2003-02-13 The `tui_active' was previously
      `tui_version'.  */
@@ -2140,9 +2174,11 @@ print_sal_location (const symtab_and_line &sal)
   const char *sym_name = NULL;
   if (sal.symbol != NULL)
     sym_name = sal.symbol->print_name ();
-  gdb_printf (_("file: \"%s\", line number: %d, symbol: \"%s\"\n"),
+  gdb_printf (_("file: \"%s\", line number: %ps, symbol: \"%s\"\n"),
 	      symtab_to_filename_for_display (sal.symtab),
-	      sal.line, sym_name != NULL ? sym_name : "???");
+	      styled_string (line_number_style.style (),
+			     pulongest (sal.line)),
+	      sym_name != NULL ? sym_name : "???");
 }
 
 /* Print a list of files and line numbers which a user may choose from
@@ -2405,6 +2441,11 @@ value_from_setting (const setting &var, struct gdbarch *gdbarch)
 
 	return current_language->value_string (gdbarch, value, len);
       }
+    case var_color:
+      {
+	std::string s = var.get<ui_file_style::color> ().to_string ();
+	return current_language->value_string (gdbarch, s.c_str (), s.size ());
+      }
     default:
       gdb_assert_not_reached ("bad var_type");
     }
@@ -2452,6 +2493,7 @@ str_value_from_setting (const setting &var, struct gdbarch *gdbarch)
     case var_pinteger:
     case var_boolean:
     case var_auto_boolean:
+    case var_color:
       {
 	std::string cmd_val = get_setshow_command_value_string (var);
 
@@ -2579,9 +2621,7 @@ shell_internal_fn (struct gdbarch *gdbarch,
     return value::allocate_optimized_out (int_type);
 }
 
-void _initialize_cli_cmds ();
-void
-_initialize_cli_cmds ()
+INIT_GDB_FILE (cli_cmds)
 {
   struct cmd_list_element *c;
 
@@ -2637,7 +2677,7 @@ The debugger's current working directory specifies where scripts and other\n\
 files that can be loaded by GDB are located.\n\
 In order to change the inferior's current working directory, the recommended\n\
 way is to use the \"set cwd\" command."), &cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   add_com ("echo", class_support, echo_command, _("\
 Print a constant string.  Give string as argument.\n\
@@ -2653,9 +2693,9 @@ to be printed or after trailing whitespace."));
 Set mode for script filename extension recognition."), _("\
 Show mode for script filename extension recognition."), _("\
 off  == no filename extension recognition (all sourced files are GDB scripts)\n\
-soft == evaluate script according to filename extension, fallback to GDB script"
-  "\n\
-strict == evaluate script according to filename extension, error if not supported"
+soft == evaluate script according to filename extension, fallback to GDB script\n\
+strict == evaluate script according to filename extension,\n\
+          error if not supported"
   ),
 			NULL,
 			show_script_ext_mode,
@@ -2750,9 +2790,10 @@ as 0 or -1 depending on the setting."),
 			 gdb_setting_internal_fn, NULL);
 
   add_internal_function ("_gdb_maint_setting_str", _("\
-$_gdb_maint_setting_str - returns the value of a GDB maintenance setting as a string.\n\
+$_gdb_maint_setting_str - returns the value of a GDB maintenance setting.\n\
 Usage: $_gdb_maint_setting_str (setting)\n\
 \n\
+Like \"$_gdb_maint_setting\", but the return value is always a string.\n\
 auto-boolean values are \"off\", \"on\", \"auto\".\n\
 boolean values are \"off\", \"on\".\n\
 Some integer settings accept an unlimited value, returned\n\
@@ -2803,7 +2844,7 @@ the previous command number shown."),
     = add_com ("shell", class_support, shell_command, _("\
 Execute the rest of the line as a shell command.\n\
 With no arguments, run an inferior shell."));
-  set_cmd_completer (shell_cmd, filename_completer);
+  set_cmd_completer_handle_brkchars (shell_cmd, shell_command_completer);
 
   add_com_alias ("!", shell_cmd, class_support, 0);
 
@@ -2861,6 +2902,7 @@ This can be changed using \"set listsize\", and the current value\n\
 can be shown using \"show listsize\"."));
 
   add_com_alias ("l", list_cmd, class_files, 1);
+  set_cmd_completer(list_cmd, location_completer);
 
   c = add_com ("disassemble", class_vars, disassemble_command, _("\
 Disassemble a specified section of memory.\n\
@@ -2892,7 +2934,8 @@ you must type \"disassemble 'foo.c'::bar\" and not \"disassemble foo.c:bar\"."))
 
   c = add_com ("make", class_support, make_command, _("\
 Run the ``make'' program using the rest of the line as arguments."));
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
+
   c = add_cmd ("user", no_class, show_user, _("\
 Show definitions of non-python/scheme user defined commands.\n\
 Argument is the name of the user defined command.\n\
@@ -2976,5 +3019,5 @@ Note that the file \"%s\" is read automatically in this way\n\
 when GDB is started."), GDBINIT).release ();
   c = add_cmd ("source", class_support, source_command,
 	       source_help_text, &cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: configure.ac,v 1.107.2.1 2025/08/02 05:58:22 perseant Exp $
+#	$NetBSD: configure.ac,v 1.107.2.2 2026/11/04 23:28:29 perseant Exp $
 #
 # Autoconf definition file for libnbcompat.
 #
@@ -83,7 +83,8 @@ AC_CHECK_HEADERS(sys/ioctl.h sys/mman.h sys/param.h \
 # Find headers that may not be available.
 AC_HEADER_DIRENT()
 AC_CHECK_HEADERS(sys/mtio.h sys/sysmacros.h sys/syslimits.h stdio_ext.h \
-	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h)
+	getopt.h features.h malloc.h sys/poll.h pthread.h stddef.h sys/uio.h \
+	endian.h)
 AC_CHECK_HEADERS(sys/bswap.h machine/bswap.h sys/cdefs.h machine/endian.h \
 	sys/endian.h sys/featuretest.h err.h inttypes.h libgen.h paths.h \
 	libgen.h stdint.h util.h resolv.h arpa/nameser.h,,
@@ -109,7 +110,7 @@ AC_CHECK_HEADERS(netconfig.h,,
 
 # Typedefs.
 AC_TYPE_SIZE_T()
-AC_CHECK_TYPES([id_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
+AC_CHECK_TYPES([id_t, daddr_t, long long, u_long, u_char, u_short, u_int, u_quad_t])
 AC_CHECK_TYPES([uchar_t, ushort_t, uint_t, ulong_t])
 AC_CHECK_TYPE(socklen_t, [AC_DEFINE([HAVE_SOCKLEN_T], 1,
 			  [Define if you have the socklen_t type.])],,
@@ -194,13 +195,14 @@ AC_CHECK_MEMBERS(struct tm.tm_gmtoff,,, [#include <time.h>])
 
 # Global variable decls.
 AC_CHECK_DECLS([asprintf, asnprintf, vasprintf, vasnprintf, vsnprintf, fgetln, fparseln,
-	fpurge, getdelim, getline, snprintf],,, [
+	fpurge, getdelim, getline, snprintf, vsyslog],,, [
 #include <stdio.h>
 ])
 
-AC_CHECK_DECLS([atoll, heapsort, mkdtemp, mkstemp, reallocarr, reallocarray,
-	getsubopt, setenv, strtoi, strtoll, strtou, setprogname, shquote,
-	getprogname],,, [
+AC_CHECK_DECLS([atoll, getsubopt, getprogname, heapsort,
+	mkdtemp, mkstemp, mkstemps,
+	reallocarr, reallocarray,
+	setenv, strtonum, strtoi, strtoll, strtou, setprogname, shquote],,, [
 #include <stdlib.h>
 ])
 
@@ -242,13 +244,15 @@ AC_CHECK_FUNCS(atoll asprintf asnprintf basename devname dirfd dirname \
 	dispatch_semaphore_create \
 	dprintf esetfunc fgetln flock fpurge __fpurge futimes getline \
 	getopt getopt_long group_from_gid gid_from_group \
-	heapsort isblank issetugid lchflags lchmod lchown lutimes mkstemp \
-	mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb pwcache_groupdb \
+	heapsort isblank issetugid lchflags lchmod lchown lutimes \
+	mempcpy mkstemp \
+	mkstemps mkdtemp poll posix_spawn pread putc_unlocked pwcache_userdb \
+	pwcache_groupdb \
 	pwrite raise_default_signal random reallocarr reallocarray setenv \
 	setgroupent setprogname setpassent \
 	snprintb_m snprintf strlcat strlcpy strmode \
-	strcasecmp strncasecmp strndup strnlen strsep strsuftoll strtoi \
-	strtoll strtou \
+	strcasecmp strncasecmp strcasestr strndup strnlen strsep strsuftoll \
+	strtoi strtoll strtou strtonum \
 	user_from_uid uid_from_user vasprintf vasnprintf vsnprintf)
 
 AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
@@ -257,8 +261,8 @@ AC_CHECK_DECLS([user_from_uid, uid_from_user, pwcache_userdb],,,[
 AC_CHECK_DECLS([group_from_gid, gid_from_group, pwcache_groupdb],,,[
 #include <grp.h>
 ])
-AC_CHECK_DECLS([strcasecmp, strncasecmp, strlcpy, strlcat, strndup,
-		strnlen, strsep],,,[
+AC_CHECK_DECLS([strcasecmp, strncasecmp, strcasestr, strlcpy, strlcat, strndup,
+		strnlen, strsep, mempcpy],,,[
 #include <string.h>
 ])
 AC_CHECK_DECLS([strsuftoll, mi_vector_hash],,,[#include <stdlib.h>])
@@ -276,7 +280,7 @@ AC_CHECK_DECLS([err, errc, errx, verrc, verrx, warn, warnc, warnx, vwarnc,
 
 AC_CHECK_DECLS([htobe16, htobe32, htobe64, htole16, htole32, htole64,
 		be16toh, be32toh, be64toh, le16toh, le32toh, le64toh],,,
-		[#include <sys/types.h>])
+		[#include <sys/endian.h>])
 
 AC_CHECK_DECLS([bswap16, bswap32, bswap64],,, [#include <machine/bswap.h>])
 

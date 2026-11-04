@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -130,7 +130,7 @@ extern SIM_RC sim_core_install (SIM_DESC sd);
    such that the byte alignmed of OPTIONAL_BUFFER matches ADDR vis
    (OPTIONAL_BUFFER % 8) == (ADDR % 8)).  It is defined to be a sub-optimal
    hook that allows clients to do nasty things that the interface doesn't
-   accomodate. */
+   accommodate. */
 
 extern void sim_core_attach
 (SIM_DESC sd,
@@ -161,7 +161,7 @@ extern void sim_core_detach
 
    Transfer a variable sized block of raw data between the host and
    target.  Should any problems occur, the number of bytes
-   successfully transfered is returned.
+   successfully transferred is returned.
 
    No host/target byte endian conversion is performed.  No xor-endian
    conversion is performed.
@@ -207,7 +207,7 @@ extern void sim_core_set_xor
 
    Transfer a variable sized block of raw data between the host and
    target.  Should any problems occur, the number of bytes
-   successfully transfered is returned.
+   successfully transferred is returned.
 
    No host/target byte endian conversion is performed.  If applicable
    (WITH_XOR_ENDIAN and xor-endian set), xor-endian conversion *is*
@@ -245,7 +245,7 @@ extern void *sim_core_trans_addr
 /* Fixed sized, processor oriented, read/write.
 
    Transfer a fixed amout of memory between the host and target.  The
-   data transfered is translated from/to host to/from target byte
+   data transferred is translated from/to host to/from target byte
    order (including xor endian).  Should the transfer fail, the
    operation shall abort (no return).
 

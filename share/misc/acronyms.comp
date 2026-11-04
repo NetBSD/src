@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.390.2.1 2025/08/02 05:55:18 perseant Exp $
+$NetBSD: acronyms.comp,v 1.390.2.2 2026/11/04 23:19:53 perseant Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -17,6 +17,7 @@ ACK	acknowledgement
 ACL	access control list
 ACL	active current loop
 ACL	asynchronous connection less
+ACP	access control policy
 ACP	auxiliary control {process,program}
 ACPI	advanced configuration and power interface
 ACS	access control set
@@ -81,6 +82,7 @@ AQM	active queue management
 ARAT	always running APIC timer
 ARC	Advanced RISC Computing
 ARC	adaptive replacement cache
+ARC	Authenticated Received Chain (RFC8617)
 ARC	automatic reference counting
 ARM	Advanced RISC Machines
 ARP	Address Resolution Protocol
@@ -360,6 +362,7 @@ CV	control voltage
 CVE	common vulnerabilities and exposures
 CVS	Concurrent Versions System
 CVSS	Common Vulnerability Scoring System
+CWE	Common Weakness Enumeration
 DA	destination address
 DAA	distributed application architecture
 DAAP	digital audio access protocol
@@ -373,11 +376,13 @@ DAO	disk at once
 DAP	Directory Access Protocol
 DAT	digital audio tape
 DAT	dynamic acceleration technology
+DAU	DNSSEC Algorithm Understood (RFC6975)
 DB	database
 DBA	database administrator
 DBA	dynamic bandwidth allocation
 DBB	data bus buffer
 DBC	design by contract
+DBCS	double-byte character set
 DBL	dynamic buffer limiting
 DBMS	database management system
 DBS	database server
@@ -425,21 +430,25 @@ DGEMM	double precision general matrix multiply
 DGL	data generation language
 DH	Diffie-Hellman
 DHCP	Dynamic Host Configuration Protocol
+DHU	DS Hash Understood (RFC6975)
 DIA	dedicated Internet access
 DIB	device independent bitmap
 DIFS	distributed inter-frame space
 DIMM	dual inline memory module
 DIRT	design in real time
 DKI	driver/kernel interface
+DKIM	DomainKeys Identified Mail
 DL	diode logic
 DL	discrete logarithm
 DL	download
 DLCI	data link connection identifier
+DLIES	Discrete Logarithm Integrated Encryption Scheme
 DLE	data link escape
 DLL	dynamic link library
 DLNA	digital living network alliance
 DLP	discrete logarithm problem
 DMA	direct memory access
+DMARC	Domain-based Message Authentication, Reporting and Conformance
 DMB	data memory barrier (Arm)
 DMI	desktop management interface
 DMS	document management system
@@ -535,6 +544,7 @@ ECDH	elliptic curve Diffie-Hellman
 ECDL	elliptic curve discrete logarithm
 ECDLP	elliptic curve discrete logarithm problem
 ECDSA	elliptic curve digital signature algorithm
+ECIES	Elliptic Curve Integrated Encryption Scheme
 EDDSA	Edwards-curve digital signature algorithm
 ECL	emitter-coupled logic
 ECN	explicit congestion notification
@@ -693,6 +703,7 @@ GPL	[GNU] General Public License
 GPR	general purpose register
 GPS	generalized processor sharing
 GPT	GUID partition table
+GPT	generative pre-trained transformer
 GPU	graphics processing unit
 GR	golden ratio
 GRE	generic routing encapsulation
@@ -790,6 +801,7 @@ IDT	interrupt descriptor table
 IE	Internet Explorer
 IEC	International Electrotechnical Commission
 IEEE	Institute of Electrical and Electronics Engineers
+IES	Integrated Encryption Scheme
 IESG	Internet Engineering Steering Group
 IETF	Internet Engineering Task Force
 IF	intermediate frequency
@@ -889,6 +901,7 @@ KDF	key derivation function
 KEK	key encryption key
 KEM	key encapsulation mechanism
 KLOC	thousand lines of code
+KMIP	Key Management Interoperability Protocol
 KMS	kernel-mode setting
 KPI	kernel programming interface
 KSK	key signing key
@@ -897,6 +910,7 @@ KVM	kernel virtual machine
 KVM	kernel virtual memory
 KVM	keyboard, video, [and] mouse
 L2CAP	link layer control and adaptation protocol
+L4S	Low Latency, Low Loss and Scalable Throughput (RFC9330)
 LAG	link aggregation group
 LAMP	Linux Apache MySQL {Perl,PHP,Python}
 LAN	local area network
@@ -940,6 +954,7 @@ LLD	low-level design
 LLDD	low-level design document
 LLDP	link layer discovery protocol
 LLF	low level format
+LLM	large language model
 LLMNR	link-local multicast name resolution
 LLVM	Low Level Virtual Machine
 LM	long mode
@@ -994,6 +1009,7 @@ MADT	multiple APIC descriptor table
 MAMR	microwave-assisted magnetic recording
 MB	megabyte
 MBA	multi-boot agent
+MBCS	multi-byte character set
 MBR	master boot record
 MBS	megabits per second
 MC	memory controller
@@ -1109,6 +1125,7 @@ MVRP	multiple VLAN registration protocol
 MWE	module width encoding
 MX	mail exchange
 MZM	Majorana zero mode
+N3U	NSEC3 Hash Understood (RFC6975)
 NACK	negative acknowledgement
 NAK	negative acknowledgement
 NAN	neighbor awareness networking
@@ -1163,6 +1180,8 @@ NTP	Network Time Protocol
 NUMA	non-uniform memory access
 NURBS	non-uniform rational basis spline
 NVD	National Vulnerability Database
+NVM	Non-Volatile Memory
+NVME	Non-Volatile Memory Express
 NVMM	NetBSD Virtual Machine Monitor
 NVMM	non-volatile main memory
 NVRAM	non-volatile random access memory
@@ -1219,6 +1238,7 @@ OTP	one time password
 OTP	open telecom platform
 OU	organizational unit
 OUI	organizationally unique identifier
+OVMF	Open Virtual Machine Firmware
 OWASP	Open Web Application Security Project
 OWL	Web Ontology Language
 P2P	PCI to PCI
@@ -1428,6 +1448,7 @@ RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
 RDP	remote desktop protocol
+RDS	Reliable Datagram Sockets
 RDRAM	Rambus DRAM
 RE	regular expression
 REPL	read, evaluate, print, loop
@@ -1499,6 +1520,8 @@ RTP	Real-time Transport Protocol
 RTS	request to send
 RTT	round trip time
 RTTI	run-time type information
+RUA	Reporting URI for Aggregate reports (DKIM)
+RUF	Reporting URI for Forensics reports (DKIM)
 RUP	rational unified process
 RW	Rabin-Williams
 RWM	read-write memory
@@ -1527,6 +1550,8 @@ SASL	simple authentication [and] security layer
 SATA	serial advanced technology attachment
 SAX	simple API for XML
 SB	sound blaster
+SBC	single-board computer
+SBCS	single-byte character set
 SBI	supervisor binary interface
 SBOM	Software Bill of Materials
 SBSA	server base system architecture
@@ -1653,6 +1678,7 @@ SPARQL	SPARQL Protocol and RDF Query Language
 SPD	security policy database
 SPD	serial presence detect
 SPDIF	Sony/Philips digital interface format
+SPF	Sender Policy Framework
 SPI	serial peripheral interface
 SPI	stateful packet inspection
 SPIR	standard portable intermediate representation
@@ -1881,6 +1907,7 @@ VHDCI	very high density cable interconnect
 VID	{VLAN,voltage level} identifier
 VIM	Vi IMproved
 VIPT	virtually indexed, physically tagged
+VIS	Visual Instruction Set
 VIVT	virtually indexed, virtually tagged
 VLAN	virtual local area network
 VLD	variable-length decoding
@@ -1978,6 +2005,7 @@ YP	Yellow Pages
 YTD	year to date
 ZAP	ZFS attribute processor
 ZBR	zone bit recording
+ZDR	Zero Data Retention
 ZFOD	zero-filled on demand
 ZFS	zettabyte file system
 ZIF	zero insertion force

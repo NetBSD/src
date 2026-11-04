@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -46,5 +46,16 @@ with_test_prefix "cmd with trailing control code" {
 	gdb_assert { $results == 1 }
 	set expected_error_msg "Invalid trailing control code in \"$cmd\" command"
 	gdb_assert { [string equal $output $expected_error_msg] }
+    }
+}
+
+# Change the prompt.
+set prompt "(GDB) "
+set prompt_re "\\(GDB\\) $"
+gdb_test -prompt $prompt_re "set prompt $prompt"
+
+gdb_test_multiple "print 1" "" -prompt $prompt_re {
+    -re -wrap " = 1" {
+	pass $gdb_test_name
     }
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2024/01/20 00:15:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.58.2.1 2026/11/04 23:21:06 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 
 #if defined(_KERNEL)
 /* locore.s functions */
-void	doboot(void) __attribute__((__noreturn__));
 int	nmihand(void *);
 
 extern int iscolor;
@@ -248,6 +247,7 @@ extern int iscolor;
 
 #define	INTIOBASE	(0x02000000)
 #define	INTIOTOP	(0x02120000)
+#define	INTIOSIZE	(INTIOTOP - INTIOBASE)
 #define MONOBASE	(0x0b000000)
 #define MONOTOP		(0x0b03a800)
 #define COLORBASE	(0x2c000000)
@@ -262,14 +262,12 @@ extern int iscolor;
 /*
  * Internal IO space:
  *
- * Ranges from 0x400000 to 0x600000 (IIOMAPSIZE).
- *
  * Internal IO space is mapped in the kernel from ``intiobase'' to
  * ``intiolimit'' (defined in locore.s).  Since it is always mapped,
  * conversion between physical and kernel virtual addresses is easy.
  */
 #define	IIOV(pa)	((int)(pa)-INTIOBASE+intiobase)
 #define	IIOP(va)	((int)(va)-intiobase+INTIOBASE)
-#define	IIOMAPSIZE	btoc(INTIOTOP-INTIOBASE)	/* 2mb */
+#define	IIOMAPSIZE	btoc(INTIOSIZE)
 
 #endif	/* _MACHINE_CPU_H_ */

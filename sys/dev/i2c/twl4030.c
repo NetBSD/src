@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $ */
+/* $NetBSD: twl4030.c,v 1.6.24.1 2026/11/04 23:21:56 perseant Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.6 2021/01/27 03:10:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.6.24.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ twl_rtc_enable(struct twl_softc *sc, bool onoff)
 static int
 twl_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct twl_softc *sc = tch->cookie;
+	struct twl_softc *sc = device_private(tch->todr_dev);
 	uint8_t seconds_reg, minutes_reg, hours_reg,
 	    days_reg, months_reg, years_reg, weeks_reg;
 
@@ -197,7 +197,7 @@ twl_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 twl_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct twl_softc *sc = tch->cookie;
+	struct twl_softc *sc = device_private(tch->todr_dev);
 
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
 	twl_rtc_enable(sc, false);
@@ -341,12 +341,8 @@ twl_rtc_attach(struct twl_softc *sc, const int phandle)
 
 	sc->sc_todr.todr_gettime_ymdhms = twl_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = twl_rtc_settime;
-	sc->sc_todr.cookie = sc;
-#ifdef FDT
-	fdtbus_todr_attach(sc->sc_dev, phandle, &sc->sc_todr);
-#else
+	sc->sc_todr.todr_dev = sc->sc_dev;
 	todr_attach(&sc->sc_todr);
-#endif
 }
 
 static void
@@ -382,27 +378,32 @@ twl_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
 	sc->sc_npins = TWL_PIN_COUNT;
 
 	aprint_naive("\n");
 	aprint_normal(": TWL4030");
 
 #ifdef FDT
-	for (int child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
-		if (of_compatible_match(child, gpio_compat_data)) {
-			aprint_normal(", GPIO");
-			twl_gpio_attach(sc, child);
-		} else if (of_compatible_match(child, rtc_compat_data)) {
-			aprint_normal(", RTC");
-			twl_rtc_attach(sc, child);
+	if (devhandle_type(device_handle(self)) == DEVHANDLE_TYPE_OF) {
+		sc->sc_phandle = devhandle_to_of(device_handle(self));
+		for (int child = OF_child(sc->sc_phandle); child;
+		     child = OF_peer(child)) {
+			if (of_compatible_match(child, gpio_compat_data)) {
+				aprint_normal(", GPIO");
+				twl_gpio_attach(sc, child);
+			} else if (of_compatible_match(child,
+						       rtc_compat_data)) {
+				aprint_normal(", RTC");
+				twl_rtc_attach(sc, child);
+			}
 		}
-	}
-#else
-	aprint_normal("\n");
-	twl_gpio_attach(sc, -1);
-	twl_rtc_attach(sc, -1);
+	} else
 #endif
+	{
+		aprint_normal("\n");
+		twl_gpio_attach(sc, -1);
+		twl_rtc_attach(sc, -1);
+	}
 
 	I2C_LOCK(sc);
 	idcode = INT_READ(sc, IDCODE_7_0);

@@ -1,6 +1,6 @@
 <?xml version="1.0"?>
 <!DOCTYPE syscalls_info SYSTEM "gdb-syscalls.dtd">
-<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -346,6 +346,7 @@
   <syscall name="statx" number="332" groups="descriptor,file"/>
   <syscall name="io_pgetevents" number="333"/>
   <syscall name="rseq" number="334"/>
+  <syscall name="uretprobe" number="335"/>
   <syscall name="pidfd_send_signal" number="424" groups="descriptor,signal,process"/>
   <syscall name="io_uring_setup" number="425" groups="descriptor"/>
   <syscall name="io_uring_enter" number="426" groups="descriptor,signal"/>
@@ -384,4 +385,9 @@
   <syscall name="lsm_get_self_attr" number="459"/>
   <syscall name="lsm_set_self_attr" number="460"/>
   <syscall name="lsm_list_modules" number="461"/>
+  <syscall name="mseal" number="462" groups="memory"/>
+  <syscall name="setxattrat" number="463" groups="descriptor,file"/>
+  <syscall name="getxattrat" number="464" groups="descriptor,file"/>
+  <syscall name="listxattrat" number="465" groups="descriptor,file"/>
+  <syscall name="removexattrat" number="466" groups="descriptor,file"/>
 </syscalls_info>

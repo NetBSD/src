@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.14.2.1 2025/08/02 05:53:29 perseant Exp $	*/
+/*	$NetBSD: rdata.c,v 1.14.2.2 2026/11/04 23:18:02 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,13 +54,6 @@
 #include <dns/time.h>
 #include <dns/ttl.h>
 
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
-
 #define RETTOK(x)                                          \
 	do {                                               \
 		isc_result_t _r = (x);                     \
@@ -68,13 +61,6 @@
 			isc_lex_ungettoken(lexer, &token); \
 			return (_r);                       \
 		}                                          \
-	} while (0)
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
 	} while (0)
 
 #define CHECKTOK(op)                                       \
@@ -607,7 +593,7 @@ check_private(isc_buffer_t *source, dns_secalg_t alg) {
 		dns_fixedname_t fixed;
 
 		RETERR(dns_name_fromwire(dns_fixedname_initname(&fixed), source,
-					 DNS_DECOMPRESS_DEFAULT, NULL));
+					 DNS_DECOMPRESS_NEVER, NULL));
 	} else if (alg == DNS_KEYALG_PRIVATEOID) {
 		/*
 		 * Check that we can extract the OID from the start of the

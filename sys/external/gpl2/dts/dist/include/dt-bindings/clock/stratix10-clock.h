@@ -1,6 +1,6 @@
-/*	$NetBSD: stratix10-clock.h,v 1.1.1.2 2020/01/03 14:33:05 skrll Exp $	*/
+/*	$NetBSD: stratix10-clock.h,v 1.1.1.2.32.1 2026/11/04 23:27:16 perseant Exp $	*/
 
-/* SPDX-License-Identifier:	GPL-2.0 */
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2017, Intel Corporation
  */

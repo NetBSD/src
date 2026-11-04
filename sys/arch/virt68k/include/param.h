@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.1 2024/01/02 07:41:01 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.1.2.1 2026/11/04 23:21:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -47,34 +47,26 @@
 #define	_MACHINE 	virt68k
 #define	MACHINE		"virt68k"
 
-#ifdef _KERNEL
-/*
- * Grab the interrupt definitions
- */
-#include <machine/intr.h>
-#endif /* _KERNEL */
-
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
 
-#define	UPAGES		2		/* pages of u-area */
+#ifdef _KERNEL
+#include <machine/intr.h>
 
 #define	MSGBUFSIZE	0x2000		/* 8KB of space before kernel text */
-
-#include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
  * logical pages.
+ *
+ * virt68k is unique among m68k platforms in that it needs to boot with
+ * a fairly large (by m68k standards) minimum memory config (because virtio
+ * burns a lot of pages on DMA rings), and it can also be booted with an
+ * absolutely gigantic (again, by m68k standards) max memory config (3.5GB).
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
+#define	NKMEMPAGES_MAX_UNLIMITED
+#endif /* _KERNEL */
 
-#if defined(_KERNEL) && !defined(_LOCORE)
-extern void delay(unsigned int);
-#define DELAY(n)	delay(n)
-#endif	/* _KERNEL && !_LOCORE */
+#include <m68k/param.h>
 
 #endif	/* !_MACHINE_PARAM_H_ */

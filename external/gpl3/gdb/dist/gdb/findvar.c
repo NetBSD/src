@@ -1,6 +1,6 @@
 /* Find a variable's value in memory, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -124,7 +124,7 @@ symbol_read_needs (struct symbol *sym)
       computed_ops != nullptr)
     return computed_ops->get_symbol_read_needs (sym);
 
-  switch (sym->aclass ())
+  switch (sym->loc_class ())
     {
       /* All cases listed explicitly so that gcc -Wall will detect it if
 	 we failed to consider one.  */
@@ -306,7 +306,7 @@ language_defn::read_var_value (struct symbol *var,
   if (const symbol_computed_ops *computed_ops = var->computed_ops ())
     return computed_ops->read_variable (var, frame);
 
-  switch (var->aclass ())
+  switch (var->loc_class ())
     {
     case LOC_CONST:
       if (is_dynamic_type (type))
@@ -429,7 +429,7 @@ language_defn::read_var_value (struct symbol *var,
 	const symbol_register_ops *reg_ops = var->register_ops ();
 	int regno = reg_ops->register_number (var, get_frame_arch (frame));
 
-	if (var->aclass () == LOC_REGPARM_ADDR)
+	if (var->loc_class () == LOC_REGPARM_ADDR)
 	  addr = value_as_address
 	   (value_from_register (lookup_pointer_type (type), regno, frame));
 	else
@@ -445,12 +445,11 @@ language_defn::read_var_value (struct symbol *var,
 	struct obj_section *obj_section;
 	bound_minimal_symbol bmsym;
 
-	gdbarch_iterate_over_objfiles_in_search_order
-	  (var->arch (),
-	   [var, &bmsym] (objfile *objfile)
+	current_program_space->iterate_over_objfiles_in_search_order
+	  ([var, &bmsym] (objfile *objfile)
 	     {
-		bmsym = lookup_minimal_symbol (var->linkage_name (), nullptr,
-					       objfile);
+		bmsym = lookup_minimal_symbol (current_program_space,
+					       var->linkage_name (), objfile);
 
 		/* Stop if a match is found.  */
 		return bmsym.minsym != nullptr;
@@ -485,7 +484,8 @@ language_defn::read_var_value (struct symbol *var,
 	/* Determine address of TLS variable. */
 	if (obj_section
 	    && (obj_section->the_bfd_section->flags & SEC_THREAD_LOCAL) != 0)
-	  addr = target_translate_tls_address (obj_section->objfile, addr);
+	  addr = target_translate_tls_address (obj_section->objfile, addr,
+					       var->print_name ());
       }
       break;
 
@@ -540,6 +540,24 @@ default_value_from_register (gdbarch *gdbarch, type *type, int regnum,
 
   return value;
 }
+
+/* Default implementation of gdbarch_dwarf2_reg_piece_offset.  Implements
+   DW_OP_bits_piece for DW_OP_piece.  */
+
+ULONGEST
+default_dwarf2_reg_piece_offset (gdbarch *gdbarch, int gdb_regnum, ULONGEST size)
+{
+  ULONGEST reg_size = register_size (gdbarch, gdb_regnum);
+  gdb_assert (size <= reg_size);
+  if (reg_size == size)
+    return 0;
+
+  if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
+    return reg_size - size;
+
+  return 0;
+}
+
 
 /* VALUE must be an lval_register value.  If regnum is the value's
    associated register number, and len the length of the value's type,

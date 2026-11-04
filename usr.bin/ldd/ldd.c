@@ -1,4 +1,4 @@
-/*	$NetBSD: ldd.c,v 1.28 2023/01/04 03:33:54 mrg Exp $	*/
+/*	$NetBSD: ldd.c,v 1.28.2.1 2026/11/04 23:28:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ldd.c,v 1.28 2023/01/04 03:33:54 mrg Exp $");
+__RCSID("$NetBSD: ldd.c,v 1.28.2.1 2026/11/04 23:28:35 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -97,7 +97,9 @@ Obj_Entry *_rtld_objlist;	/* Head of linked list of shared objects */
 Obj_Entry **_rtld_objtail = &_rtld_objlist;
 				/* Link field of last object in list */
 u_int _rtld_objcount;		/* Number of shared objects */
+u_int _rtld_objrelocpending = 1; /* Number of objects pending reloc */
 u_int _rtld_objloads;		/* Number of objects loaded */
+u_int _rtld_objgen;		/* Generation count for _rtld_objlist */
 
 Obj_Entry *_rtld_objmain;	/* The main program shared object */
 size_t _rtld_pagesz;

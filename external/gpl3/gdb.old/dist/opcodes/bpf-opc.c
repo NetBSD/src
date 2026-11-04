@@ -1,1859 +1,522 @@
-/* DO NOT EDIT!  -*- buffer-read-only: t -*- vi:set ro:  */
-/* Instruction opcode table for bpf.
+/* bpf-opc.c - BPF opcodes.
+   Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
-THIS FILE IS MACHINE GENERATED WITH CGEN.
+   Contributed by Oracle Inc.
 
-Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   This file is part of the GNU binutils.
 
-This file is part of the GNU Binutils and/or GDB, the GNU debugger.
-
-   This file is free software; you can redistribute it and/or modify
-   it under the terms of the GNU General Public License as published by
+   This is free software; you can redistribute them and/or modify them
+   under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3, or (at your option)
    any later version.
 
-   It is distributed in the hope that it will be useful, but WITHOUT
-   ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-   or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public
-   License for more details.
+   This program is distributed in the hope that it will be useful, but
+   WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
+   General Public License for more details.
 
-   You should have received a copy of the GNU General Public License along
-   with this program; if not, write to the Free Software Foundation, Inc.,
-   51 Franklin Street - Fifth Floor, Boston, MA 02110-1301, USA.
+   You should have received a copy of the GNU General Public License
+   along with this program; see the file COPYING3. If not,
+   see <http://www.gnu.org/licenses/>.  */
 
-*/
+#include "config.h"
+#include <stdlib.h>
+#include "opcode/bpf.h"
 
-#include "sysdep.h"
-#include "ansidecl.h"
-#include "bfd.h"
-#include "symcat.h"
-#include "bpf-desc.h"
-#include "bpf-opc.h"
-#include "libiberty.h"
+/* Note that the entries in the opcodes table below are accessed
+   sequentially when matching instructions per opcode, and also when
+   parsing.  Please take care to keep the entries sorted
+   accordingly!  */
 
-/* -- opc.c */
-
-/* -- asm.c */
-/* The hash functions are recorded here to help keep assembler code out of
-   the disassembler and vice versa.  */
-
-static int asm_hash_insn_p        (const CGEN_INSN *);
-static unsigned int asm_hash_insn (const char *);
-static int dis_hash_insn_p        (const CGEN_INSN *);
-static unsigned int dis_hash_insn (const char *, CGEN_INSN_INT);
-
-/* Instruction formats.  */
-
-#define F(f) & bpf_cgen_ifld_table[BPF_##f]
-static const CGEN_IFMT ifmt_empty ATTRIBUTE_UNUSED = {
-  0, 0, 0x0, { { 0 } }
-};
-
-static const CGEN_IFMT ifmt_addile ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_CODE) }, { F (F_DSTLE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_addrle ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_CODE) }, { F (F_DSTLE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_negle ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_CODE) }, { F (F_DSTLE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_addibe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_CODE) }, { F (F_SRCBE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_addrbe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_CODE) }, { F (F_SRCBE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_negbe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_CODE) }, { F (F_SRCBE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_endlele ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_CODE) }, { F (F_DSTLE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_endlebe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_CODE) }, { F (F_SRCBE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_lddwle ATTRIBUTE_UNUSED = {
-  64, 128, 0xff, { { F (F_IMM64) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_DSTLE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_lddwbe ATTRIBUTE_UNUSED = {
-  64, 128, 0xff, { { F (F_IMM64) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_SRCBE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_ldabsw ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_REGS) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_ldindwle ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_DSTLE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_ldindwbe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_SRCBE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_ldxwle ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_DSTLE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_ldxwbe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_SRCBE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_stble ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_DSTLE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_stbbe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_MODE) }, { F (F_OP_SIZE) }, { F (F_SRCBE) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_jeqile ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_CODE) }, { F (F_DSTLE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_jeqrle ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_SRCLE) }, { F (F_OP_CODE) }, { F (F_DSTLE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_jeqibe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_CODE) }, { F (F_SRCBE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_jeqrbe ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_DSTBE) }, { F (F_OP_CODE) }, { F (F_SRCBE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_callle ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_REGS) }, { F (F_OP_CODE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_ja ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_REGS) }, { F (F_OP_CODE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-static const CGEN_IFMT ifmt_exit ATTRIBUTE_UNUSED = {
-  64, 64, 0xff, { { F (F_IMM32) }, { F (F_OFFSET16) }, { F (F_REGS) }, { F (F_OP_CODE) }, { F (F_OP_SRC) }, { F (F_OP_CLASS) }, { 0 } }
-};
-
-#undef F
-
-#define A(a) (1 << CGEN_INSN_##a)
-#define OPERAND(op) BPF_OPERAND_##op
-#define MNEM CGEN_SYNTAX_MNEMONIC /* syntax value for mnemonic */
-#define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
-
-/* The instruction table.  */
-
-static const CGEN_OPCODE bpf_cgen_insn_opcode_table[MAX_INSNS] =
+const struct bpf_opcode bpf_opcodes[] =
 {
-  /* Special null first entry.
-     A `num' value of zero is thus invalid.
-     Also, the special `invalid' insn resides here.  */
-  { { 0, 0, 0, 0 }, {{0}}, 0, {0}},
-/* add $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x7 }
-  },
-/* add $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xf }
-  },
-/* add32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x4 }
-  },
-/* add32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xc }
-  },
-/* sub $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x17 }
-  },
-/* sub $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x1f }
-  },
-/* sub32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x14 }
-  },
-/* sub32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x1c }
-  },
-/* mul $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x27 }
-  },
-/* mul $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x2f }
-  },
-/* mul32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x24 }
-  },
-/* mul32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x2c }
-  },
-/* div $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x37 }
-  },
-/* div $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x3f }
-  },
-/* div32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x34 }
-  },
-/* div32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x3c }
-  },
-/* or $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x47 }
-  },
-/* or $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x4f }
-  },
-/* or32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x44 }
-  },
-/* or32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x4c }
-  },
-/* and $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x57 }
-  },
-/* and $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x5f }
-  },
-/* and32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x54 }
-  },
-/* and32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x5c }
-  },
-/* lsh $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x67 }
-  },
-/* lsh $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x6f }
-  },
-/* lsh32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x64 }
-  },
-/* lsh32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x6c }
-  },
-/* rsh $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x77 }
-  },
-/* rsh $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x7f }
-  },
-/* rsh32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x74 }
-  },
-/* rsh32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x7c }
-  },
-/* mod $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x97 }
-  },
-/* mod $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x9f }
-  },
-/* mod32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0x94 }
-  },
-/* mod32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0x9c }
-  },
-/* xor $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xa7 }
-  },
-/* xor $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xaf }
-  },
-/* xor32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xa4 }
-  },
-/* xor32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xac }
-  },
-/* arsh $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xc7 }
-  },
-/* arsh $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xcf }
-  },
-/* arsh32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xc4 }
-  },
-/* arsh32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xcc }
-  },
-/* sdiv $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xe7 }
-  },
-/* sdiv $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xef }
-  },
-/* sdiv32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xe4 }
-  },
-/* sdiv32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xec }
-  },
-/* smod $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xf7 }
-  },
-/* smod $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xff }
-  },
-/* smod32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xf4 }
-  },
-/* smod32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xfc }
-  },
-/* neg $dstle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), 0 } },
-    & ifmt_negle, { 0x87 }
-  },
-/* neg32 $dstle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), 0 } },
-    & ifmt_negle, { 0x84 }
-  },
-/* mov $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xb7 }
-  },
-/* mov $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xbf }
-  },
-/* mov32 $dstle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), 0 } },
-    & ifmt_addile, { 0xb4 }
-  },
-/* mov32 $dstle,$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), 0 } },
-    & ifmt_addrle, { 0xbc }
-  },
-/* add $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x7 }
-  },
-/* add $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xf }
-  },
-/* add32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x4 }
-  },
-/* add32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xc }
-  },
-/* sub $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x17 }
-  },
-/* sub $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x1f }
-  },
-/* sub32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x14 }
-  },
-/* sub32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x1c }
-  },
-/* mul $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x27 }
-  },
-/* mul $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x2f }
-  },
-/* mul32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x24 }
-  },
-/* mul32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x2c }
-  },
-/* div $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x37 }
-  },
-/* div $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x3f }
-  },
-/* div32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x34 }
-  },
-/* div32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x3c }
-  },
-/* or $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x47 }
-  },
-/* or $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x4f }
-  },
-/* or32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x44 }
-  },
-/* or32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x4c }
-  },
-/* and $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x57 }
-  },
-/* and $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x5f }
-  },
-/* and32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x54 }
-  },
-/* and32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x5c }
-  },
-/* lsh $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x67 }
-  },
-/* lsh $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x6f }
-  },
-/* lsh32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x64 }
-  },
-/* lsh32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x6c }
-  },
-/* rsh $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x77 }
-  },
-/* rsh $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x7f }
-  },
-/* rsh32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x74 }
-  },
-/* rsh32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x7c }
-  },
-/* mod $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x97 }
-  },
-/* mod $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x9f }
-  },
-/* mod32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0x94 }
-  },
-/* mod32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0x9c }
-  },
-/* xor $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xa7 }
-  },
-/* xor $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xaf }
-  },
-/* xor32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xa4 }
-  },
-/* xor32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xac }
-  },
-/* arsh $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xc7 }
-  },
-/* arsh $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xcf }
-  },
-/* arsh32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xc4 }
-  },
-/* arsh32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xcc }
-  },
-/* sdiv $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xe7 }
-  },
-/* sdiv $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xef }
-  },
-/* sdiv32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xe4 }
-  },
-/* sdiv32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xec }
-  },
-/* smod $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xf7 }
-  },
-/* smod $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xff }
-  },
-/* smod32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xf4 }
-  },
-/* smod32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xfc }
-  },
-/* neg $dstbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), 0 } },
-    & ifmt_negbe, { 0x87 }
-  },
-/* neg32 $dstbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), 0 } },
-    & ifmt_negbe, { 0x84 }
-  },
-/* mov $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xb7 }
-  },
-/* mov $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xbf }
-  },
-/* mov32 $dstbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), 0 } },
-    & ifmt_addibe, { 0xb4 }
-  },
-/* mov32 $dstbe,$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), 0 } },
-    & ifmt_addrbe, { 0xbc }
-  },
-/* endle $dstle,$endsize */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (ENDSIZE), 0 } },
-    & ifmt_endlele, { 0xd4 }
-  },
-/* endbe $dstle,$endsize */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (ENDSIZE), 0 } },
-    & ifmt_endlele, { 0xdc }
-  },
-/* endle $dstbe,$endsize */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (ENDSIZE), 0 } },
-    & ifmt_endlebe, { 0xd4 }
-  },
-/* endbe $dstbe,$endsize */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (ENDSIZE), 0 } },
-    & ifmt_endlebe, { 0xdc }
-  },
-/* lddw $dstle,$imm64 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM64), 0 } },
-    & ifmt_lddwle, { 0x18 }
-  },
-/* lddw $dstbe,$imm64 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM64), 0 } },
-    & ifmt_lddwbe, { 0x18 }
-  },
-/* ldabsw $imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (IMM32), 0 } },
-    & ifmt_ldabsw, { 0x20 }
-  },
-/* ldabsh $imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (IMM32), 0 } },
-    & ifmt_ldabsw, { 0x28 }
-  },
-/* ldabsb $imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (IMM32), 0 } },
-    & ifmt_ldabsw, { 0x30 }
-  },
-/* ldabsdw $imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (IMM32), 0 } },
-    & ifmt_ldabsw, { 0x38 }
-  },
-/* ldindw $srcle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCLE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwle, { 0x40 }
-  },
-/* ldindh $srcle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCLE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwle, { 0x48 }
-  },
-/* ldindb $srcle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCLE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwle, { 0x50 }
-  },
-/* ldinddw $srcle,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCLE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwle, { 0x58 }
-  },
-/* ldindw $srcbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCBE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwbe, { 0x40 }
-  },
-/* ldindh $srcbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCBE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwbe, { 0x48 }
-  },
-/* ldindb $srcbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCBE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwbe, { 0x50 }
-  },
-/* ldinddw $srcbe,$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (SRCBE), ',', OP (IMM32), 0 } },
-    & ifmt_ldindwbe, { 0x58 }
-  },
-/* ldxw $dstle,[$srcle+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', '[', OP (SRCLE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwle, { 0x61 }
-  },
-/* ldxh $dstle,[$srcle+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', '[', OP (SRCLE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwle, { 0x69 }
-  },
-/* ldxb $dstle,[$srcle+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', '[', OP (SRCLE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwle, { 0x71 }
-  },
-/* ldxdw $dstle,[$srcle+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', '[', OP (SRCLE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwle, { 0x79 }
-  },
-/* stxw [$dstle+$offset16],$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (SRCLE), 0 } },
-    & ifmt_ldxwle, { 0x63 }
-  },
-/* stxh [$dstle+$offset16],$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (SRCLE), 0 } },
-    & ifmt_ldxwle, { 0x6b }
-  },
-/* stxb [$dstle+$offset16],$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (SRCLE), 0 } },
-    & ifmt_ldxwle, { 0x73 }
-  },
-/* stxdw [$dstle+$offset16],$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (SRCLE), 0 } },
-    & ifmt_ldxwle, { 0x7b }
-  },
-/* ldxw $dstbe,[$srcbe+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', '[', OP (SRCBE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwbe, { 0x61 }
-  },
-/* ldxh $dstbe,[$srcbe+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', '[', OP (SRCBE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwbe, { 0x69 }
-  },
-/* ldxb $dstbe,[$srcbe+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', '[', OP (SRCBE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwbe, { 0x71 }
-  },
-/* ldxdw $dstbe,[$srcbe+$offset16] */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', '[', OP (SRCBE), '+', OP (OFFSET16), ']', 0 } },
-    & ifmt_ldxwbe, { 0x79 }
-  },
-/* stxw [$dstbe+$offset16],$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (SRCBE), 0 } },
-    & ifmt_ldxwbe, { 0x63 }
-  },
-/* stxh [$dstbe+$offset16],$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (SRCBE), 0 } },
-    & ifmt_ldxwbe, { 0x6b }
-  },
-/* stxb [$dstbe+$offset16],$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (SRCBE), 0 } },
-    & ifmt_ldxwbe, { 0x73 }
-  },
-/* stxdw [$dstbe+$offset16],$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (SRCBE), 0 } },
-    & ifmt_ldxwbe, { 0x7b }
-  },
-/* stb [$dstle+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stble, { 0x72 }
-  },
-/* sth [$dstle+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stble, { 0x6a }
-  },
-/* stw [$dstle+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stble, { 0x62 }
-  },
-/* stdw [$dstle+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stble, { 0x7a }
-  },
-/* stb [$dstbe+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stbbe, { 0x72 }
-  },
-/* sth [$dstbe+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stbbe, { 0x6a }
-  },
-/* stw [$dstbe+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stbbe, { 0x62 }
-  },
-/* stdw [$dstbe+$offset16],$imm32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (IMM32), 0 } },
-    & ifmt_stbbe, { 0x7a }
-  },
-/* jeq $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x15 }
-  },
-/* jeq $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x1d }
-  },
-/* jeq32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x16 }
-  },
-/* jeq32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x1e }
-  },
-/* jgt $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x25 }
-  },
-/* jgt $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x2d }
-  },
-/* jgt32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x26 }
-  },
-/* jgt32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x2e }
-  },
-/* jge $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x35 }
-  },
-/* jge $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x3d }
-  },
-/* jge32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x36 }
-  },
-/* jge32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x3e }
-  },
-/* jlt $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xa5 }
-  },
-/* jlt $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xad }
-  },
-/* jlt32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xa6 }
-  },
-/* jlt32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xae }
-  },
-/* jle $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xb5 }
-  },
-/* jle $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xbd }
-  },
-/* jle32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xb6 }
-  },
-/* jle32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xbe }
-  },
-/* jset $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x45 }
-  },
-/* jset $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x4d }
-  },
-/* jset32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x46 }
-  },
-/* jset32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x4e }
-  },
-/* jne $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x55 }
-  },
-/* jne $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x5d }
-  },
-/* jne32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x56 }
-  },
-/* jne32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x5e }
-  },
-/* jsgt $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x65 }
-  },
-/* jsgt $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x6d }
-  },
-/* jsgt32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x66 }
-  },
-/* jsgt32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x6e }
-  },
-/* jsge $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x75 }
-  },
-/* jsge $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x7d }
-  },
-/* jsge32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0x76 }
-  },
-/* jsge32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0x7e }
-  },
-/* jslt $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xc5 }
-  },
-/* jslt $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xcd }
-  },
-/* jslt32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xc6 }
-  },
-/* jslt32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xce }
-  },
-/* jsle $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xd5 }
-  },
-/* jsle $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xdd }
-  },
-/* jsle32 $dstle,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqile, { 0xd6 }
-  },
-/* jsle32 $dstle,$srcle,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), ',', OP (SRCLE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrle, { 0xde }
-  },
-/* jeq $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x15 }
-  },
-/* jeq $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x1d }
-  },
-/* jeq32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x16 }
-  },
-/* jeq32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x1e }
-  },
-/* jgt $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x25 }
-  },
-/* jgt $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x2d }
-  },
-/* jgt32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x26 }
-  },
-/* jgt32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x2e }
-  },
-/* jge $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x35 }
-  },
-/* jge $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x3d }
-  },
-/* jge32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x36 }
-  },
-/* jge32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x3e }
-  },
-/* jlt $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xa5 }
-  },
-/* jlt $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xad }
-  },
-/* jlt32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xa6 }
-  },
-/* jlt32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xae }
-  },
-/* jle $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xb5 }
-  },
-/* jle $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xbd }
-  },
-/* jle32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xb6 }
-  },
-/* jle32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xbe }
-  },
-/* jset $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x45 }
-  },
-/* jset $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x4d }
-  },
-/* jset32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x46 }
-  },
-/* jset32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x4e }
-  },
-/* jne $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x55 }
-  },
-/* jne $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x5d }
-  },
-/* jne32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x56 }
-  },
-/* jne32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x5e }
-  },
-/* jsgt $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x65 }
-  },
-/* jsgt $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x6d }
-  },
-/* jsgt32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x66 }
-  },
-/* jsgt32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x6e }
-  },
-/* jsge $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x75 }
-  },
-/* jsge $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x7d }
-  },
-/* jsge32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0x76 }
-  },
-/* jsge32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0x7e }
-  },
-/* jslt $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xc5 }
-  },
-/* jslt $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xcd }
-  },
-/* jslt32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xc6 }
-  },
-/* jslt32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xce }
-  },
-/* jsle $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xd5 }
-  },
-/* jsle $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xdd }
-  },
-/* jsle32 $dstbe,$imm32,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (IMM32), ',', OP (DISP16), 0 } },
-    & ifmt_jeqibe, { 0xd6 }
-  },
-/* jsle32 $dstbe,$srcbe,$disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), ',', OP (SRCBE), ',', OP (DISP16), 0 } },
-    & ifmt_jeqrbe, { 0xde }
-  },
-/* call $disp32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DISP32), 0 } },
-    & ifmt_callle, { 0x85 }
-  },
-/* call $disp32 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DISP32), 0 } },
-    & ifmt_callle, { 0x85 }
-  },
-/* call $dstle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTLE), 0 } },
-    & ifmt_negle, { 0x8d }
-  },
-/* call $dstbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DSTBE), 0 } },
-    & ifmt_negbe, { 0x8d }
-  },
-/* ja $disp16 */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', OP (DISP16), 0 } },
-    & ifmt_ja, { 0x5 }
-  },
-/* exit */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, 0 } },
-    & ifmt_exit, { 0x95 }
-  },
-/* xadddw [$dstle+$offset16],$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (SRCLE), 0 } },
-    & ifmt_ldxwle, { 0xdb }
-  },
-/* xaddw [$dstle+$offset16],$srcle */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTLE), '+', OP (OFFSET16), ']', ',', OP (SRCLE), 0 } },
-    & ifmt_ldxwle, { 0xc3 }
-  },
-/* xadddw [$dstbe+$offset16],$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (SRCBE), 0 } },
-    & ifmt_ldxwbe, { 0xdb }
-  },
-/* xaddw [$dstbe+$offset16],$srcbe */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, ' ', '[', OP (DSTBE), '+', OP (OFFSET16), ']', ',', OP (SRCBE), 0 } },
-    & ifmt_ldxwbe, { 0xc3 }
-  },
-/* brkpt */
-  {
-    { 0, 0, 0, 0 },
-    { { MNEM, 0 } },
-    & ifmt_exit, { 0x8c }
-  },
+  /* id, normal, pseudoc, version, mask, opcodes */
+
+  /* ALU instructions.  */
+  {BPF_INSN_ADDR, "add%W%dr , %sr", "%dr += %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_ADD|BPF_SRC_X},
+  {BPF_INSN_ADDI, "add%W%dr , %i32", "%dr += %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_ADD|BPF_SRC_K},
+  {BPF_INSN_SUBR, "sub%W%dr , %sr", "%dr -= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_SUB|BPF_SRC_X},
+  {BPF_INSN_SUBI, "sub%W%dr , %i32", "%dr -= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_SUB|BPF_SRC_K},
+  {BPF_INSN_MULR, "mul%W%dr , %sr", "%dr *= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_MUL|BPF_SRC_X},
+  {BPF_INSN_MULI, "mul%W%dr , %i32", "%dr *= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_MUL|BPF_SRC_K},
+  {BPF_INSN_SDIVR, "sdiv%W%dr, %sr", "%dr s/= %sr",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_DIV|BPF_SRC_X|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_SDIVI, "sdiv%W%dr , %i32","%dr s/= %i32",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_DIV|BPF_SRC_K|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_SMODR, "smod%W%dr , %sr", "%dr s%%= %sr",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_MOD|BPF_SRC_X|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_SMODI, "smod%W%dr , %i32", "%dr s%%= %i32",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_MOD|BPF_SRC_K|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_DIVR, "div%W%dr , %sr", "%dr /= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_DIV|BPF_SRC_X},
+  {BPF_INSN_DIVI, "div%W%dr , %i32", "%dr /= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_DIV|BPF_SRC_K},
+  {BPF_INSN_MODR, "mod%W%dr , %sr", "%dr %%= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_MOD|BPF_SRC_X},
+  {BPF_INSN_MODI, "mod%W%dr , %i32", "%dr %%= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_MOD|BPF_SRC_K},
+  {BPF_INSN_ORR, "or%W%dr , %sr", "%dr |= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_OR|BPF_SRC_X},
+  {BPF_INSN_ORI, "or%W%dr , %i32", "%dr |= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_OR|BPF_SRC_K},
+  {BPF_INSN_ANDR, "and%W%dr , %sr", "%dr &= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_AND|BPF_SRC_X},
+  {BPF_INSN_ANDI, "and%W%dr , %i32", "%dr &= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_AND|BPF_SRC_K},
+  {BPF_INSN_XORR, "xor%W%dr , %sr", "%dr ^= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_XOR|BPF_SRC_X},
+  {BPF_INSN_XORI, "xor%W%dr , %i32", "%dr ^= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_XOR|BPF_SRC_K},
+  {BPF_INSN_NEGR, "neg%W%dr", "%dr = - %dr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_NEG|BPF_SRC_K},
+  {BPF_INSN_LSHR, "lsh%W%dr , %sr", "%dr <<= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_LSH|BPF_SRC_X},
+  {BPF_INSN_LSHI, "lsh%W%dr , %i32", "%dr <<= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_LSH|BPF_SRC_K},
+  {BPF_INSN_RSHR, "rsh%W%dr , %sr", "%dr >>= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_RSH|BPF_SRC_X},
+  {BPF_INSN_RSHI, "rsh%W%dr , %i32", "%dr >>= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_RSH|BPF_SRC_K},
+  {BPF_INSN_ARSHR, "arsh%W%dr , %sr", "%dr%ws>>= %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_ARSH|BPF_SRC_X},
+  {BPF_INSN_ARSHI, "arsh%W%dr , %i32", "%dr%ws>>= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_ARSH|BPF_SRC_K},
+  {BPF_INSN_MOVS8R, "movs%W%dr , %sr , 8", "%dr%w=%w( s8 )%w%sr",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_MOV|BPF_SRC_X|BPF_OFFSET16_MOVS8},
+  {BPF_INSN_MOVS16R, "movs%W%dr , %sr , 16", "%dr%w=%w( s16 )%w%sr",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_MOV|BPF_SRC_X|BPF_OFFSET16_MOVS16},
+  {BPF_INSN_MOVS32R, "movs%W%dr , %sr , 32", "%dr%w=%w( s32 )%w%sr",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU64|BPF_CODE_MOV|BPF_SRC_X|BPF_OFFSET16_MOVS32},
+  {BPF_INSN_MOVR, "mov%W%dr , %sr", "%dr = %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_MOV|BPF_SRC_X},
+  {BPF_INSN_MOVI, "mov%W%dr , %i32", "%dr = %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU64|BPF_CODE_MOV|BPF_SRC_K},
+
+  /* ALU32 instructions.  */
+  {BPF_INSN_ADD32R, "add32%W%dr , %sr", "%dw += %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_ADD|BPF_SRC_X},
+  {BPF_INSN_ADD32I, "add32%W%dr , %i32", "%dw += %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_ADD|BPF_SRC_K},
+  {BPF_INSN_SUB32R, "sub32%W%dr , %sr", "%dw -= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_SUB|BPF_SRC_X},
+  {BPF_INSN_SUB32I, "sub32%W%dr , %i32", "%dw -= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_SUB|BPF_SRC_K},
+  {BPF_INSN_MUL32R, "mul32%W%dr , %sr", "%dw *= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_MUL|BPF_SRC_X},
+  {BPF_INSN_MUL32I, "mul32%W%dr , %i32", "%dw *= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_MUL|BPF_SRC_K},
+  {BPF_INSN_SDIV32R, "sdiv32%W%dr , %sr", "%dw s/= %sw",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_DIV|BPF_SRC_X|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_SDIV32I, "sdiv32%W%dr , %i32", "%dw s/= %i32",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_DIV|BPF_SRC_K|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_SMOD32R, "smod32%W%dr , %sr", "%dw s%%= %sw",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_MOD|BPF_SRC_X|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_SMOD32I, "smod32%W%dr , %i32", "%dw s%%= %i32",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_MOD|BPF_SRC_K|BPF_OFFSET16_SDIVMOD},
+  {BPF_INSN_DIV32R, "div32%W%dr , %sr", "%dw /= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_DIV|BPF_SRC_X},
+  {BPF_INSN_DIV32I, "div32%W%dr , %i32", "%dw /= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_DIV|BPF_SRC_K},
+  {BPF_INSN_MOD32R, "mod32%W%dr , %sr", "%dw %%= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_MOD|BPF_SRC_X},
+  {BPF_INSN_MOD32I, "mod32%W%dr , %i32", "%dw %%= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_MOD|BPF_SRC_K},
+  {BPF_INSN_OR32R, "or32%W%dr , %sr",  "%dw |= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_OR|BPF_SRC_X},
+  {BPF_INSN_OR32I, "or32%W%dr , %i32", "%dw |= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_OR|BPF_SRC_K},
+  {BPF_INSN_AND32R, "and32%W%dr , %sr", "%dw &= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_AND|BPF_SRC_X},
+  {BPF_INSN_AND32I, "and32%W%dr , %i32", "%dw &= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_AND|BPF_SRC_K},
+  {BPF_INSN_XOR32R, "xor32%W%dr , %sr", "%dw ^= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_XOR|BPF_SRC_X},
+  {BPF_INSN_XOR32I, "xor32%W%dr , %i32", "%dw ^= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_XOR|BPF_SRC_K},
+  {BPF_INSN_NEG32R, "neg32%W%dr", "%dw = - %dw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_NEG|BPF_SRC_K},
+  {BPF_INSN_LSH32R, "lsh32%W%dr , %sr", "%dw <<= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_LSH|BPF_SRC_X},
+  {BPF_INSN_LSH32I, "lsh32%W%dr , %i32", "%dw <<= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_LSH|BPF_SRC_K},
+  {BPF_INSN_RSH32R, "rsh32%W%dr , %sr", "%dw >>= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_RSH|BPF_SRC_X},
+  {BPF_INSN_RSH32I, "rsh32%W%dr , %i32", "%dw >>= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_RSH|BPF_SRC_K},
+  {BPF_INSN_ARSH32R, "arsh32%W%dr , %sr", "%dw%ws>>= %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_ARSH|BPF_SRC_X},
+  {BPF_INSN_ARSH32I, "arsh32%W%dr , %i32", "%dw%Ws>>= %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_ARSH|BPF_SRC_K},
+  {BPF_INSN_MOVS328R, "movs32%W%dr , %sr , 8", "%dw%w=%w( s8 )%w%sw",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_MOV|BPF_SRC_X|BPF_OFFSET16_MOVS8},
+  {BPF_INSN_MOVS3216R, "movs32%W%dr , %sr , 16", "%dw%w=%w( s16 )%w%sw",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_MOV|BPF_SRC_X|BPF_OFFSET16_MOVS16},
+  {BPF_INSN_MOVS3232R, "movs32%W%dr , %sr , 32", "%dw%w=%w( s32 )%w%sw",
+   BPF_V4, BPF_CODE|BPF_OFFSET16, BPF_CLASS_ALU|BPF_CODE_MOV|BPF_SRC_X|BPF_OFFSET16_MOVS32},
+  {BPF_INSN_MOV32R, "mov32%W%dr , %sr", "%dw = %sw",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_MOV|BPF_SRC_X},
+  {BPF_INSN_MOV32I, "mov32%W%dr , %i32", "%dw = %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ALU|BPF_CODE_MOV|BPF_SRC_K},
+
+  /* Endianness conversion instructions.  */
+  {BPF_INSN_ENDLE16, "endle%W%dr , 16", "%dr = le16%w%dr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU|BPF_CODE_END|BPF_SRC_K|BPF_IMM32_END16},
+  {BPF_INSN_ENDLE32, "endle%W%dr , 32", "%dr = le32%w%dr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU|BPF_CODE_END|BPF_SRC_K|BPF_IMM32_END32},
+  {BPF_INSN_ENDLE64, "endle%W%dr , 64", "%dr = le64%w%dr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU|BPF_CODE_END|BPF_SRC_K|BPF_IMM32_END64},
+  {BPF_INSN_ENDBE16, "endbe%W%dr , 16", "%dr = be16%w%dr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU|BPF_CODE_END|BPF_SRC_X|BPF_IMM32_END16},
+  {BPF_INSN_ENDBE32, "endbe%W%dr , 32", "%dr = be32%w%dr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU|BPF_CODE_END|BPF_SRC_X|BPF_IMM32_END32},
+  {BPF_INSN_ENDBE64, "endbe%W%dr , 64", "%dr = be64%w%dr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU|BPF_CODE_END|BPF_SRC_X|BPF_IMM32_END64},
+
+  /* Byte-swap instructions.  */
+  {BPF_INSN_BSWAP16, "bswap%W%dr , 16", "%dr%w=%wbswap16%w%dr",
+   BPF_V4, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU64|BPF_CODE_END|BPF_SRC_K|BPF_IMM32_BSWAP16},
+  {BPF_INSN_BSWAP32, "bswap%W%dr , 32", "%dr%w=%wbswap32%w%dr",
+   BPF_V4, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU64|BPF_CODE_END|BPF_SRC_K|BPF_IMM32_BSWAP32},
+  {BPF_INSN_BSWAP64, "bswap%W%dr , 64", "%dr%w=%wbswap64%w%dr",
+   BPF_V4, BPF_CODE|BPF_IMM32, BPF_CLASS_ALU64|BPF_CODE_END|BPF_SRC_K|BPF_IMM32_BSWAP64},
+
+  /* 64-bit load instruction.  */
+  {BPF_INSN_LDDW, "lddw%W%dr , %i64", "%dr = %i64%wll",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_DW|BPF_MODE_IMM},
+
+  /* Indirect load instructions, designed to be used in socket
+     filters.  */
+  {BPF_INSN_LDINDB, "ldindb%W%sr , %i32", "r0 = * ( u8 * ) skb [ %sr %I32 ]",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_B|BPF_MODE_IND},
+  {BPF_INSN_LDINDH, "ldindh%W%sr , %i32", "r0 = * ( u16 * ) skb [ %sr %I32 ]",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_H|BPF_MODE_IND},
+  {BPF_INSN_LDINDW, "ldindw%W%sr , %i32", "r0 = * ( u32 * ) skb [ %sr %I32 ]",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_W|BPF_MODE_IND},
+
+  /* Absolute load instructions, designed to be used in socket filters.  */
+  {BPF_INSN_LDABSB, "ldabsb%W%i32", "r0 = * ( u8 * ) skb [ %i32 ]",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_B|BPF_MODE_ABS},
+  {BPF_INSN_LDABSH, "ldabsh%W%i32", "r0 = * ( u16 * ) skb [ %i32 ]",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_H|BPF_MODE_ABS},
+  {BPF_INSN_LDABSW, "ldabsw%W%i32", "r0 = * ( u32 * ) skb [ %i32 ]",
+   BPF_V1, BPF_CODE, BPF_CLASS_LD|BPF_SIZE_W|BPF_MODE_ABS},
+
+  /* Generic load instructions (to register.)  */
+  {BPF_INSN_LDXB, "ldxb%W%dr , [ %sr %o16 ]", "%dr = * ( u8 * ) ( %sr %o16 )",
+   BPF_V1, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_B|BPF_MODE_MEM},
+  {BPF_INSN_LDXH, "ldxh%W%dr , [ %sr %o16 ]", "%dr = * ( u16 * ) ( %sr %o16 )",
+   BPF_V1, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_H|BPF_MODE_MEM},
+  {BPF_INSN_LDXW, "ldxw%W%dr , [ %sr %o16 ]", "%dr = * ( u32 * ) ( %sr %o16 )",
+   BPF_V1, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_W|BPF_MODE_MEM},
+  {BPF_INSN_LDXDW, "ldxdw%W%dr , [ %sr %o16 ]","%dr = * ( u64 * ) ( %sr %o16 )",
+   BPF_V1, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_DW|BPF_MODE_MEM},
+
+  /* Generic signed load instructions (to register.)  */
+  {BPF_INSN_LDXSB, "ldxsb%W%dr , [ %sr %o16 ]", "%dr = * ( s8 * ) ( %sr %o16 )",
+   BPF_V4, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_B|BPF_MODE_SMEM},
+  {BPF_INSN_LDXSH, "ldxsh%W%dr , [ %sr %o16 ]", "%dr = * ( s16 * ) ( %sr %o16 )",
+   BPF_V4, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_H|BPF_MODE_SMEM},
+  {BPF_INSN_LDXSW, "ldxsw%W%dr , [ %sr %o16 ]", "%dr = * ( s32 * ) ( %sr %o16 )",
+   BPF_V4, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_W|BPF_MODE_SMEM},
+  {BPF_INSN_LDXSDW, "ldxsdw%W%dr , [ %sr %o16 ]","%dr = * ( s64 * ) ( %sr %o16 )",
+   BPF_V4, BPF_CODE, BPF_CLASS_LDX|BPF_SIZE_DW|BPF_MODE_SMEM},
+
+  /* Generic store instructions (from register.)  */
+  {BPF_INSN_STXBR, "stxb%W[ %dr %o16 ] , %sr", "* ( u8 * ) ( %dr %o16 ) = %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_STX|BPF_SIZE_B|BPF_MODE_MEM},
+  {BPF_INSN_STXHR, "stxh%W[ %dr %o16 ] , %sr", "* ( u16 * ) ( %dr %o16 ) = %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_STX|BPF_SIZE_H|BPF_MODE_MEM},
+  {BPF_INSN_STXWR, "stxw%W[ %dr %o16 ], %sr", "* ( u32 * ) ( %dr %o16 ) = %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_MEM},
+  {BPF_INSN_STXDWR, "stxdw%W[ %dr %o16 ] , %sr", "* ( u64 * ) ( %dr %o16 ) = %sr",
+   BPF_V1, BPF_CODE, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_MEM},
+
+  /* Generic store instructions (from 32-bit immediate.)  */
+  {BPF_INSN_STXBI, "stb%W[ %dr %o16 ] , %i32", "* ( u8 * ) ( %dr %o16 ) = %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ST|BPF_SIZE_B|BPF_MODE_MEM},
+  {BPF_INSN_STXHI, "sth%W[ %dr %o16 ] , %i32", "* ( u16 * ) ( %dr %o16 ) = %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ST|BPF_SIZE_H|BPF_MODE_MEM},
+  {BPF_INSN_STXWI, "stw%W[ %dr %o16 ] , %i32", "* ( u32 * ) ( %dr %o16 ) = %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ST|BPF_SIZE_W|BPF_MODE_MEM},
+  {BPF_INSN_STXDWI, "stdw%W[ %dr %o16 ] , %i32", "* ( u64 * ) ( %dr %o16 ) = %i32",
+   BPF_V1, BPF_CODE, BPF_CLASS_ST|BPF_SIZE_DW|BPF_MODE_MEM},
+
+  /* Compare-and-jump instructions (reg OP reg).  */
+  {BPF_INSN_JAR, "ja%W%d16", "goto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JA|BPF_SRC_K},
+  {BPF_INSN_JEQR, "jeq%W%dr , %sr , %d16", "if%w%dr == %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JEQ|BPF_SRC_X},
+  {BPF_INSN_JGTR, "jgt%W%dr , %sr , %d16", "if%w%dr > %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JGT|BPF_SRC_X},
+  {BPF_INSN_JSGTR, "jsgt%W%dr, %sr , %d16", "if%w%dr s> %sr%wgoto%w%d16",
+      BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSGT|BPF_SRC_X},
+  {BPF_INSN_JGER, "jge%W%dr , %sr , %d16", "if%w%dr >= %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JGE|BPF_SRC_X},
+  {BPF_INSN_JSGER, "jsge%W%dr , %sr , %d16", "if%w%dr s>= %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSGE|BPF_SRC_X},
+  {BPF_INSN_JLTR, "jlt%W%dr , %sr , %d16", "if%w%dr < %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JLT|BPF_SRC_X},
+  {BPF_INSN_JSLTR, "jslt%W%dr , %sr , %d16", "if%w%dr s< %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSLT|BPF_SRC_X},
+  {BPF_INSN_JLER, "jle%W%dr , %sr , %d16", "if%w%dr <= %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JLE|BPF_SRC_X},
+  {BPF_INSN_JSLER, "jsle%W%dr , %sr , %d16", "if%w%dr s<= %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSLE|BPF_SRC_X},
+  {BPF_INSN_JSETR, "jset%W%dr , %sr , %d16", "if%w%dr & %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSET|BPF_SRC_X},
+  {BPF_INSN_JNER, "jne%W%dr , %sr , %d16", "if%w%dr != %sr%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JNE|BPF_SRC_X},
+  {BPF_INSN_CALLR, "call%W%dr", "callx%w%dr",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_CALL|BPF_SRC_X},
+  {BPF_INSN_CALL, "call%W%d32", "call%w%d32",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_CALL|BPF_SRC_K},
+  {BPF_INSN_EXIT, "exit", "exit",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_EXIT|BPF_SRC_K},
+
+  /* Compare-and-jump instructions (reg OP imm).  */
+  {BPF_INSN_JEQI, "jeq%W%dr , %i32 , %d16", "if%w%dr == %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JEQ|BPF_SRC_K},
+  {BPF_INSN_JGTI, "jgt%W%dr , %i32 , %d16", "if%w%dr > %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JGT|BPF_SRC_K},
+  {BPF_INSN_JSGTI, "jsgt%W%dr, %i32 , %d16", "if%w%dr s> %i32%wgoto%w%d16",
+      BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSGT|BPF_SRC_K},
+  {BPF_INSN_JGEI, "jge%W%dr , %i32 , %d16", "if%w%dr >= %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JGE|BPF_SRC_K},
+  {BPF_INSN_JSGEI, "jsge%W%dr , %i32 , %d16", "if%w%dr s>= %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSGE|BPF_SRC_K},
+  {BPF_INSN_JLTI, "jlt%W%dr , %i32 , %d16", "if%w%dr < %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JLT|BPF_SRC_K},
+  {BPF_INSN_JSLTI, "jslt%W%dr , %i32, %d16", "if%w%dr s< %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSLT|BPF_SRC_K},
+  {BPF_INSN_JLEI, "jle%W%dr , %i32 , %d16", "if%w%dr <= %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JLE|BPF_SRC_K},
+  {BPF_INSN_JSLEI, "jsle%W%dr , %i32 , %d16", "if%w%dr s<= %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSLE|BPF_SRC_K},
+  {BPF_INSN_JSETI, "jset%W%dr , %i32 , %d16", "if%w%dr & %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JSET|BPF_SRC_K},
+  {BPF_INSN_JNEI, "jne%W%dr , %i32 , %d16", "if%w%dr != %i32%wgoto%w%d16",
+   BPF_V1, BPF_CODE, BPF_CLASS_JMP|BPF_CODE_JNE|BPF_SRC_K},
+
+  /* 32-bit jump-always.  */
+  {BPF_INSN_JAL, "jal%W%d32", "gotol%w%d32",
+   BPF_V4, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JA|BPF_SRC_K},
+
+  /* 32-bit compare-and-jump instructions (reg OP reg).  */
+  {BPF_INSN_JEQ32R, "jeq32%W%dr , %sr , %d16", "if%w%dw == %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JEQ|BPF_SRC_X},
+  {BPF_INSN_JGT32R, "jgt32%W%dr , %sr , %d16", "if%w%dw > %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JGT|BPF_SRC_X},
+  {BPF_INSN_JSGT32R, "jsgt32%W%dr, %sr , %d16", "if%w%dw s> %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSGT|BPF_SRC_X},
+  {BPF_INSN_JGE32R, "jge32%W%dr , %sr , %d16", "if%w%dw >= %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JGE|BPF_SRC_X},
+  {BPF_INSN_JSGE32R, "jsge32%W%dr , %sr , %d16", "if%w%dw s>= %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSGE|BPF_SRC_X},
+  {BPF_INSN_JLT32R, "jlt32%W%dr , %sr , %d16", "if%w%dw < %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JLT|BPF_SRC_X},
+  {BPF_INSN_JSLT32R, "jslt32%W%dr , %sr , %d16", "if%w%dw s< %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSLT|BPF_SRC_X},
+  {BPF_INSN_JLE32R, "jle32%W%dr , %sr , %d16", "if%w%dw <= %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JLE|BPF_SRC_X},
+  {BPF_INSN_JSLE32R, "jsle32%W%dr , %sr , %d16", "if%w%dw s<= %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSLE|BPF_SRC_X},
+  {BPF_INSN_JSET32R, "jset32%W%dr , %sr , %d16", "if%w%dw & %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSET|BPF_SRC_X},
+  {BPF_INSN_JNE32R, "jne32%W%dr , %sr , %d16", "if%w%dw != %sw%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JNE|BPF_SRC_X},
+
+  /* 32-bit compare-and-jump instructions (reg OP imm).  */
+  {BPF_INSN_JEQ32I, "jeq32%W%dr , %i32 , %d16", "if%w%dw == %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JEQ|BPF_SRC_K},
+  {BPF_INSN_JGT32I, "jgt32%W%dr , %i32 , %d16", "if%w%dw > %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JGT|BPF_SRC_K},
+  {BPF_INSN_JSGT32I, "jsgt32%W%dr, %i32 , %d16", "if%w%dw s> %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSGT|BPF_SRC_K},
+  {BPF_INSN_JGE32I, "jge32%W%dr , %i32 , %d16", "if%w%dw >= %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JGE|BPF_SRC_K},
+  {BPF_INSN_JSGE32I, "jsge32%W%dr , %i32 , %d16", "if%w%dw s>= %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSGE|BPF_SRC_K},
+  {BPF_INSN_JLT32I, "jlt32%W%dr , %i32 , %d16", "if%w%dw < %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JLT|BPF_SRC_K},
+  {BPF_INSN_JSLT32I, "jslt32%W%dr , %i32, %d16", "if%w%dw s< %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSLT|BPF_SRC_K},
+  {BPF_INSN_JLE32I, "jle32%W%dr , %i32 , %d16", "if%w%dw <= %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JLE|BPF_SRC_K},
+  {BPF_INSN_JSLE32I, "jsle32%W%dr , %i32 , %d16", "if%w%dw s<= %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSLE|BPF_SRC_K},
+  {BPF_INSN_JSET32I, "jset32%W%dr , %i32 , %d16", "if%w%dw & %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JSET|BPF_SRC_K},
+  {BPF_INSN_JNE32I, "jne32%W%dr , %i32 , %d16", "if%w%dw != %i32%wgoto%w%d16",
+   BPF_V3, BPF_CODE, BPF_CLASS_JMP32|BPF_CODE_JNE|BPF_SRC_K},
+
+  /* Atomic instructions.  */
+  {BPF_INSN_AADD, "aadd%W[ %dr %o16 ] , %sr", "lock%w* ( u64 * ) ( %dr %o16 ) += %sr",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AADD},
+  {BPF_INSN_AOR, "aor%W[ %dr %o16 ] , %sr", "lock%w* ( u64 * ) ( %dr %o16 ) |= %sr",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AOR},
+  {BPF_INSN_AAND, "aand%W[ %dr %o16 ] , %sr", "lock%w* ( u64 * ) ( %dr %o16 ) &= %sr",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AAND},
+  {BPF_INSN_AXOR, "axor%W[ %dr %o16 ] , %sr", "lock%w* ( u64 * ) ( %dr %o16 ) ^= %sr",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AXOR},
+
+  /* Atomic instructions with fetching.  */
+  {BPF_INSN_AFADD, "afadd%W[ %dr %o16 ] , %sr", "%sr = atomic_fetch_add ( ( u64 * ) ( %dr %o16 ) , %sr )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AFADD},
+  {BPF_INSN_AFOR, "afor%W[ %dr %o16 ] , %sr", "%sr = atomic_fetch_or ( ( u64 * ) ( %dr %o16 ) , %sr )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AFOR},
+  {BPF_INSN_AFAND, "afand%W[ %dr %o16 ] , %sr", "%sr = atomic_fetch_and ( ( u64 * ) ( %dr %o16 ) , %sr )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AFAND},
+  {BPF_INSN_AFXOR, "afxor%W[ %dr %o16 ] , %sr", "%sr = atomic_fetch_xor ( ( u64 * ) ( %dr %o16 ) , %sr )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AFXOR},
+
+  /* Atomic instructions (32-bit.) */
+  {BPF_INSN_AADD32, "aadd32%W[ %dr %o16 ] , %sr", "lock%w* ( u32 * ) ( %dr %o16 ) += %sw",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AADD},
+  {BPF_INSN_AOR32, "aor32%W[ %dr %o16 ] , %sr", "lock%w* ( u32 * ) ( %dr %o16 ) |= %sw",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AOR},
+  {BPF_INSN_AAND32, "aand32%W[ %dr %o16 ] , %sr", "lock%w* ( u32 * ) ( %dr %o16 ) &= %sw",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AAND},
+  {BPF_INSN_AXOR32, "axor32%W[ %dr %o16 ] , %sr", "lock%w* ( u32 * ) ( %dr %o16 ) ^= %sw",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AXOR},
+
+  /* Atomic instructions with fetching (32-bit.) */
+  {BPF_INSN_AFADD32, "afadd32%W[ %dr %o16 ] , %sr", "%sw = atomic_fetch_add ( ( u32 * ) ( %dr %o16 ) , %sw )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AFADD},
+  {BPF_INSN_AFOR32, "afor32%W[ %dr %o16 ] , %sr", "%sw = atomic_fetch_or ( ( u32 * ) ( %dr %o16 ) , %sw )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AFOR},
+  {BPF_INSN_AFAND32, "afand32%W[ %dr %o16 ] , %sr", "%sw = atomic_fetch_and ( ( u32 * ) ( %dr %o16 ) , %sw )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AFAND},
+  {BPF_INSN_AFXOR32, "afxor32%W[ %dr %o16 ] , %sr", "%sw = atomic_fetch_xor ( ( u32 * ) ( %dr %o16 ) , %sw )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AFXOR},
+
+  /* Atomic compare-and-swap, atomic exchange.  */
+  {BPF_INSN_ACMP, "acmp%W[ %dr %o16 ] , %sr", "r0 = cmpxchg_64 ( %dr %o16 , r0 , %sr )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_ACMP},
+  {BPF_INSN_AXCHG, "axchg%W[ %dr %o16 ] , %sr", "%sr = xchg_64 ( %dr %o16 , %sr )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AXCHG},
+
+  /* Atomic compare-and-swap, atomic exchange (32-bit).  */
+  {BPF_INSN_ACMP32, "acmp32%W[ %dr %o16 ], %sr", "w0 = cmpxchg32_32 ( %dr %o16 , w0 , %sw )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_ACMP},
+  {BPF_INSN_AXCHG32, "axchg32%W[ %dr %o16 ], %sr", "%sw = xchg32_32 ( %dr %o16 , %sw )",
+   BPF_V3, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AXCHG},
+
+  /* Old versions of aadd and aadd32.  */
+  {BPF_INSN_AADD, "xadddw%W[ %dr %o16 ] , %sr", "* ( u64 * ) ( %dr %o16 ) += %sr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_DW|BPF_MODE_ATOMIC|BPF_IMM32_AADD},
+  {BPF_INSN_AADD32, "xaddw%W[ %dr %o16 ] , %sr", "* ( u32 * ) ( %dr %o16 ) += %sr",
+   BPF_V1, BPF_CODE|BPF_IMM32, BPF_CLASS_STX|BPF_SIZE_W|BPF_MODE_ATOMIC|BPF_IMM32_AADD},
+
+  /* the brkpt instruction is used by the BPF simulator and it doesn't
+     really belong to the BPF instruction set.  */
+  {BPF_INSN_BRKPT, "brkpt", "brkpt",
+   BPF_XBPF, BPF_CODE, BPF_CLASS_ALU|BPF_SRC_X|BPF_CODE_NEG},
+
+  /* Sentinel.  */
+  {BPF_NOINSN, NULL, NULL, 0, 0UL, 0UL},
 };
 
-#undef A
-#undef OPERAND
-#undef MNEM
-#undef OP
-
-/* Formats for ALIAS macro-insns.  */
-
-#define F(f) & bpf_cgen_ifld_table[BPF_##f]
-#undef F
-
-/* Each non-simple macro entry points to an array of expansion possibilities.  */
-
-#define A(a) (1 << CGEN_INSN_##a)
-#define OPERAND(op) BPF_OPERAND_##op
-#define MNEM CGEN_SYNTAX_MNEMONIC /* syntax value for mnemonic */
-#define OP(field) CGEN_SYNTAX_MAKE_FIELD (OPERAND (field))
-
-/* The macro instruction table.  */
-
-static const CGEN_IBASE bpf_cgen_macro_insn_table[] =
+static bpf_insn_word
+bpf_handle_endianness (bpf_insn_word word, enum bpf_endian endian)
 {
-};
-
-/* The macro instruction opcode table.  */
-
-static const CGEN_OPCODE bpf_cgen_macro_insn_opcode_table[] =
-{
-};
-
-#undef A
-#undef OPERAND
-#undef MNEM
-#undef OP
-
-#ifndef CGEN_ASM_HASH_P
-#define CGEN_ASM_HASH_P(insn) 1
-#endif
-
-#ifndef CGEN_DIS_HASH_P
-#define CGEN_DIS_HASH_P(insn) 1
-#endif
-
-/* Return non-zero if INSN is to be added to the hash table.
-   Targets are free to override CGEN_{ASM,DIS}_HASH_P in the .opc file.  */
-
-static int
-asm_hash_insn_p (const CGEN_INSN *insn ATTRIBUTE_UNUSED)
-{
-  return CGEN_ASM_HASH_P (insn);
-}
-
-static int
-dis_hash_insn_p (const CGEN_INSN *insn)
-{
-  /* If building the hash table and the NO-DIS attribute is present,
-     ignore.  */
-  if (CGEN_INSN_ATTR_VALUE (insn, CGEN_INSN_NO_DIS))
-    return 0;
-  return CGEN_DIS_HASH_P (insn);
-}
-
-#ifndef CGEN_ASM_HASH
-#define CGEN_ASM_HASH_SIZE 127
-#ifdef CGEN_MNEMONIC_OPERANDS
-#define CGEN_ASM_HASH(mnem) (*(unsigned char *) (mnem) % CGEN_ASM_HASH_SIZE)
-#else
-#define CGEN_ASM_HASH(mnem) (*(unsigned char *) (mnem) % CGEN_ASM_HASH_SIZE) /*FIXME*/
-#endif
-#endif
-
-/* It doesn't make much sense to provide a default here,
-   but while this is under development we do.
-   BUFFER is a pointer to the bytes of the insn, target order.
-   VALUE is the first base_insn_bitsize bits as an int in host order.  */
-
-#ifndef CGEN_DIS_HASH
-#define CGEN_DIS_HASH_SIZE 256
-#define CGEN_DIS_HASH(buf, value) (*(unsigned char *) (buf))
-#endif
-
-/* The result is the hash value of the insn.
-   Targets are free to override CGEN_{ASM,DIS}_HASH in the .opc file.  */
-
-static unsigned int
-asm_hash_insn (const char *mnem)
-{
-  return CGEN_ASM_HASH (mnem);
-}
-
-/* BUF is a pointer to the bytes of the insn, target order.
-   VALUE is the first base_insn_bitsize bits as an int in host order.  */
-
-static unsigned int
-dis_hash_insn (const char *buf ATTRIBUTE_UNUSED,
-		     CGEN_INSN_INT value ATTRIBUTE_UNUSED)
-{
-  return CGEN_DIS_HASH (buf, value);
-}
-
-/* Set the recorded length of the insn in the CGEN_FIELDS struct.  */
-
-static void
-set_fields_bitsize (CGEN_FIELDS *fields, int size)
-{
-  CGEN_FIELDS_BITSIZE (fields) = size;
-}
-
-/* Function to call before using the operand instance table.
-   This plugs the opcode entries and macro instructions into the cpu table.  */
-
-void
-bpf_cgen_init_opcode_table (CGEN_CPU_DESC cd)
-{
-  int i;
-  int num_macros = (sizeof (bpf_cgen_macro_insn_table) /
-		    sizeof (bpf_cgen_macro_insn_table[0]));
-  const CGEN_IBASE *ib = & bpf_cgen_macro_insn_table[0];
-  const CGEN_OPCODE *oc = & bpf_cgen_macro_insn_opcode_table[0];
-  CGEN_INSN *insns = xmalloc (num_macros * sizeof (CGEN_INSN));
-
-  /* This test has been added to avoid a warning generated
-     if memset is called with a third argument of value zero.  */
-  if (num_macros >= 1)
-    memset (insns, 0, num_macros * sizeof (CGEN_INSN));
-  for (i = 0; i < num_macros; ++i)
+  if (endian == BPF_ENDIAN_LITTLE)
     {
-      insns[i].base = &ib[i];
-      insns[i].opcode = &oc[i];
-      bpf_cgen_build_insn_regex (& insns[i]);
-    }
-  cd->macro_insn_table.init_entries = insns;
-  cd->macro_insn_table.entry_size = sizeof (CGEN_IBASE);
-  cd->macro_insn_table.num_init_entries = num_macros;
+      /* Endianness groups: 8 | 4 | 4 | 16 | 32  */
 
-  oc = & bpf_cgen_insn_opcode_table[0];
-  insns = (CGEN_INSN *) cd->insn_table.init_entries;
-  for (i = 0; i < MAX_INSNS; ++i)
-    {
-      insns[i].opcode = &oc[i];
-      bpf_cgen_build_insn_regex (& insns[i]);
+      bpf_insn_word code = (word >> 56) & 0xff;
+      bpf_insn_word dst = (word >> 48) & 0xf;
+      bpf_insn_word src = (word >> 52) & 0xf;
+      bpf_insn_word offset16 = (word >> 32) & 0xffff;
+      bpf_insn_word imm32 = word & 0xffffffff;
+
+      return ((code << 56)
+              | dst << 52
+              | src << 48
+              | (offset16 & 0xff) << 40
+              | ((offset16 >> 8) & 0xff) << 32
+              | (imm32 & 0xff) << 24
+              | ((imm32 >> 8) & 0xff) << 16
+              | ((imm32 >> 16) & 0xff) << 8
+              | ((imm32 >> 24) & 0xff));
     }
 
-  cd->sizeof_fields = sizeof (CGEN_FIELDS);
-  cd->set_fields_bitsize = set_fields_bitsize;
+  return word;
+}
 
-  cd->asm_hash_p = asm_hash_insn_p;
-  cd->asm_hash = asm_hash_insn;
-  cd->asm_hash_size = CGEN_ASM_HASH_SIZE;
+const struct bpf_opcode *
+bpf_match_insn (bpf_insn_word word,
+                enum bpf_endian endian,
+                int version)
+{
+  unsigned int i = 0;
 
-  cd->dis_hash_p = dis_hash_insn_p;
-  cd->dis_hash = dis_hash_insn;
-  cd->dis_hash_size = CGEN_DIS_HASH_SIZE;
+  while (bpf_opcodes[i].normal != NULL)
+    {
+      bpf_insn_word cword
+        = bpf_handle_endianness (word, endian);
+
+      /* Attempt match using mask and opcodes.  */
+      if (bpf_opcodes[i].version <= version
+          && (cword & bpf_opcodes[i].mask) == bpf_opcodes[i].opcode)
+        return &bpf_opcodes[i];
+      i++;
+    }
+
+  /* No maching instruction found.  */
+  return NULL;
+}
+
+uint8_t
+bpf_extract_src (bpf_insn_word word, enum bpf_endian endian)
+{
+  word = bpf_handle_endianness (word, endian);
+  return (uint8_t) ((word >> 48) & 0xf);
+}
+
+uint8_t
+bpf_extract_dst (bpf_insn_word word, enum bpf_endian endian)
+{
+  word = bpf_handle_endianness (word, endian);
+  return (uint8_t) ((word >> 52) & 0xf);
+}
+
+int16_t
+bpf_extract_offset16 (bpf_insn_word word, enum bpf_endian endian)
+{
+  word = bpf_handle_endianness (word, endian);
+  return (int16_t) ((word >> 32) & 0xffff);
+}
+
+int32_t
+bpf_extract_imm32 (bpf_insn_word word, enum bpf_endian endian)
+{
+  word = bpf_handle_endianness (word, endian);
+  return (int32_t) (word & 0xffffffff);
+}
+
+int64_t
+bpf_extract_imm64 (bpf_insn_word word1, bpf_insn_word word2,
+                   enum bpf_endian endian)
+{
+  word1 = bpf_handle_endianness (word1, endian);
+  word2 = bpf_handle_endianness (word2, endian);
+  return (int64_t) (((word2 & 0xffffffff) << 32) | (word1 & 0xffffffff));
+}
+
+const struct bpf_opcode *
+bpf_get_opcode (unsigned int index)
+{
+  unsigned int i = 0;
+
+  while (bpf_opcodes[i].normal != NULL && i < index)
+    ++i;
+  return (bpf_opcodes[i].normal == NULL
+          ? NULL
+          : &bpf_opcodes[i]);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_userconf.c,v 1.27 2018/09/16 23:18:55 mrg Exp $	*/
+/*	$NetBSD: subr_userconf.c,v 1.27.36.1 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996 Mats O Jansson <moj@stacken.kth.se>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.27 2018/09/16 23:18:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_userconf.c,v 1.27.36.1 2026/11/04 23:27:50 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,9 +103,9 @@ userconf_more(void)
 	if (userconf_cnt != -1) {
 		if (userconf_cnt == userconf_lines) {
 			printf("-- more --");
-			cnpollc(1);
+			cnpollc(true);
 			c = cngetc();
-			cnpollc(0);
+			cnpollc(false);
 			userconf_cnt = 0;
 			printf("\r            \r");
 		}
@@ -237,7 +237,7 @@ userconf_pdev(short devno)
 	}
 	if (cfp) {
 		l = cd->cf_loc;
-		ia = cfiattr_lookup(cfp->cfp_iattr, 0);
+		ia = cfiattr_lookup(cfp->cfp_iattr, NULL, NULL);
 		KASSERT(ia);
 		ld = ia->ci_locdesc;
 		nld = ia->ci_loclen;
@@ -393,9 +393,9 @@ userconf_change(int devno)
 
 		while (c != 'y' && c != 'Y' && c != 'n' && c != 'N') {
 			printf("change (y/n) ?");
-			cnpollc(1);
+			cnpollc(true);
 			c = cngetc();
-			cnpollc(0);
+			cnpollc(false);
 			printf("\n");
 		}
 
@@ -407,7 +407,8 @@ userconf_change(int devno)
 
 			cd = &cfdata[devno];
 			l = cd->cf_loc;
-			ia = cfiattr_lookup(cd->cf_pspec->cfp_iattr, 0);
+			ia = cfiattr_lookup(cd->cf_pspec->cfp_iattr, NULL,
+			    NULL);
 			KASSERT(ia);
 			ld = ia->ci_locdesc;
 			nld = ia->ci_loclen;

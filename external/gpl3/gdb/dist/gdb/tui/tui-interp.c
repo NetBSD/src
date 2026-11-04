@@ -1,6 +1,6 @@
 /* TUI Interpreter definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,16 +21,11 @@
 #include "interps.h"
 #include "ui.h"
 #include "event-top.h"
-#include "gdbsupport/event-loop.h"
 #include "ui-out.h"
 #include "cli-out.h"
-#include "tui/tui-data.h"
 #include "tui/tui-win.h"
 #include "tui/tui.h"
 #include "tui/tui-io.h"
-#include "infrun.h"
-#include "observable.h"
-#include "gdbthread.h"
 #include "inferior.h"
 #include "main.h"
 
@@ -166,9 +161,7 @@ tui_interp_factory (const char *name)
   return new tui_interp (name);
 }
 
-void _initialize_tui_interp ();
-void
-_initialize_tui_interp ()
+INIT_GDB_FILE (tui_interp)
 {
   interp_factory_register (INTERP_TUI, tui_interp_factory);
 

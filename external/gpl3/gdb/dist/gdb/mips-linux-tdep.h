@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on MIPS processors.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MIPS_LINUX_TDEP_H
-#define MIPS_LINUX_TDEP_H
+#ifndef GDB_MIPS_LINUX_TDEP_H
+#define GDB_MIPS_LINUX_TDEP_H
 
 /* Copied from <asm/elf.h>.  */
 #define ELF_NGREG       45
@@ -113,4 +113,4 @@ extern const struct target_desc *tdesc_mips64_linux;
 extern const struct target_desc *tdesc_mips_dsp_linux;
 extern const struct target_desc *tdesc_mips64_dsp_linux;
 
-#endif /* MIPS_LINUX_TDEP_H */
+#endif /* GDB_MIPS_LINUX_TDEP_H */

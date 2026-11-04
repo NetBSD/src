@@ -1,4 +1,4 @@
-/*	$NetBSD: fstest_lfs.c,v 1.8 2020/06/17 00:16:21 kamil Exp $	*/
+/*	$NetBSD: fstest_lfs.c,v 1.8.8.1 2026/11/04 23:28:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #include <sys/stat.h>
 
 #include <atf-c.h>
+#include <ctype.h>
 #include <pthread.h>
 #include <semaphore.h>
 #include <stdio.h>
@@ -49,6 +50,9 @@
 #include "h_fsmacros.h"
 #include "mount_lfs.h"
 
+/* Use the in-kernel cleaner rather than a separate lfs_cleanerd process */
+#define USE_KERNEL_CLEANER
+
 struct lfstestargs {
 	struct ufs_args ta_uargs;
 	pthread_t ta_cleanerthread;
@@ -59,6 +63,8 @@ struct lfstestargs {
 	char ta_hostpath[MAXPATHLEN];
 };
 
+static const char *image_filename;
+
 int
 lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	void *fspriv)
@@ -68,6 +74,8 @@ lfs_fstest_newfs(const atf_tc_t *tc, void **buf, const char *image, off_t size,
 	static unsigned int num = 0;
 	struct lfstestargs *args;
 
+	image_filename = image;
+	
 	size /= 512;
 	snprintf(cmd, 1024, "newfs_lfs -D -F -s %"PRId64" ./%s >/dev/null",
 	    size, image);
@@ -121,6 +129,7 @@ lfs_fstest_delfs(const atf_tc_t *tc, void *buf)
 	return 0;
 }
 
+#ifndef USE_KERNEL_CLEANER
 static void *
 cleaner(void *arg)
 {
@@ -155,12 +164,17 @@ cleaner(void *arg)
 
 	return NULL;
 }
+#endif /* 0 */
 
 int
 lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 {
 	struct lfstestargs *args = buf;
 	int res;
+#ifdef USE_KERNEL_CLEANER
+	struct lfs_autoclean_params autoclean;
+	int fd;
+#endif /* USE_KERNEL_CLEANER */
 
 	res = rump_sys_mkdir(path, 0777);
 	if (res == -1)
@@ -168,16 +182,34 @@ lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 
 	res = rump_sys_mount(MOUNT_LFS, path, flags, &args->ta_uargs,
 	    sizeof(args->ta_uargs));
-	if (res == -1)
+	if (res == -1) {
+		fprintf(stderr, "sys_mount errno=%d\n", errno);
 		return res;
+	}
 
+#ifdef USE_KERNEL_CLEANER
+	fd = rump_sys_open(path, O_RDONLY);
+	autoclean.size = sizeof(autoclean);
+	autoclean.mode = LFS_CLEANMODE_GREEDY;
+	autoclean.thresh = -1;
+	autoclean.target = -1;
+	res = rump_sys_fcntl(fd, LFCNAUTOCLEAN, &autoclean);
+	if (res) {
+		fprintf(stderr, "LFCNAUTOCLEAN errno=%d\n", errno);
+		return res;
+	}
+	res = rump_sys_close(fd);
+	if (res)
+		return res;
+#else /* ! USE_KERNEL_CLEANER */
 	strcpy(args->ta_mntpath, path);
 	res = pthread_create(&args->ta_cleanerthread, NULL, cleaner, args);
 	if (res)
 		return res;
-
+	
 	/* wait for cleaner to initialize */
 	sem_wait(&args->ta_cleanerloop);
+#endif /* ! USE_KERNEL_CLEANER */
 
 	return 0;
 }
@@ -185,13 +217,42 @@ lfs_fstest_mount(const atf_tc_t *tc, void *buf, const char *path, int flags)
 int
 lfs_fstest_unmount(const atf_tc_t *tc, const char *path, int flags)
 {
-	int res;
+	int res, errors;
+	FILE *pipe, *err;
+	char s[MAXPATHLEN], cmd[1024];
 
 	res = rump_sys_unmount(path, flags);
 	if (res == -1) {
 		return res;
 	}
 
+	sprintf(cmd, "fsck_lfs -n -a -f %s", image_filename);
+	pipe = popen(cmd, "r");
+
+	errors = 0;
+	err = NULL;
+	while (fgets(s, MAXPATHLEN, pipe) != NULL) {
+		if (isdigit((int)s[0])) /* "5 files ... " */
+			continue;
+		if (isspace((int)s[0]) || s[0] == '*')
+			continue;
+		if (strncmp(s, "Alternate", 9) == 0)
+			continue;
+		if (strncmp(s, "ROLL ", 5) == 0)
+			continue;
+		fprintf(stderr, "FSCK: %s", s);
+		if (err == NULL)
+			err = fopen("/tmp/err.out", "w");
+		fprintf(err, "FSCK: %s", s);
+		++errors;
+	}
+	pclose(pipe);
+	if (err)
+		fclose(err);
+	if (errors)
+		return -1;
+
 	res = rump_sys_rmdir(path);
 	return res;
 }
+

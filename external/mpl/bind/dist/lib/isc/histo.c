@@ -1,4 +1,4 @@
-/*	$NetBSD: histo.c,v 1.3.4.2 2025/08/02 05:53:52 perseant Exp $	*/
+/*	$NetBSD: histo.c,v 1.3.4.3 2026/11/04 23:18:14 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -173,7 +173,7 @@ isc_histo_digits_to_bits(uint digits) {
  * one value per bucket. There are CHUNKSIZE values before chunk 1
  * which map to chunk 0, so it also has one value per bucket. (Hence
  * the first two chunks have one value per bucket.) The values in
- * chunk 0 correspond to denormal nubers in floating point terms.
+ * chunk 0 correspond to denormal numbers in floating point terms.
  * They are also the values where `63 - sigbits - clz` would be less
  * than one if denormals were not handled specially.
  *

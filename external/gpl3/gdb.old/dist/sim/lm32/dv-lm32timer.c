@@ -1,7 +1,7 @@
 /*  Lattice Mico32 timer model.
     Contributed by Jon Beniston <jon@beniston.com>
     
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -199,7 +199,6 @@ static void
 lm32timer_finish (struct hw *me)
 {
   struct lm32timer *timers;
-  int i;
 
   timers = HW_ZALLOC (me, struct lm32timer);
   set_hw_data (me, timers);

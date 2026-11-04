@@ -1,4 +1,4 @@
-/*	$NetBSD: bt_open.c,v 1.29 2016/09/24 21:31:25 christos Exp $	*/
+/*	$NetBSD: bt_open.c,v 1.29.26.1 2026/11/04 23:19:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -37,7 +37,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bt_open.c,v 1.29 2016/09/24 21:31:25 christos Exp $");
+__RCSID("$NetBSD: bt_open.c,v 1.29.26.1 2026/11/04 23:19:15 perseant Exp $");
 
 /*
  * Implementation of btree access method for 4.4BSD.
@@ -49,6 +49,7 @@ __RCSID("$NetBSD: bt_open.c,v 1.29 2016/09/24 21:31:25 christos Exp $");
 
 #include "namespace.h"
 #include <sys/stat.h>
+#include <sys/endian.h>
 
 #include <assert.h>
 #include <errno.h>

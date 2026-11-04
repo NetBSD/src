@@ -1,4 +1,4 @@
-/*	$NetBSD: l32_105.c,v 1.9.2.1 2025/08/02 05:53:43 perseant Exp $	*/
+/*	$NetBSD: l32_105.c,v 1.9.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -154,12 +154,12 @@ tostruct_l32(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	l32->common.rdclass = rdata->rdclass;
-	l32->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&l32->common, link);
+	DNS_RDATACOMMON_INIT(l32, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	l32->pref = uint16_fromregion(&region);
+	isc_region_consume(&region, 2);
+	INSIST(region.length == sizeof(l32->l32));
 	n = uint32_fromregion(&region);
 	l32->l32.s_addr = htonl(n);
 	return ISC_R_SUCCESS;

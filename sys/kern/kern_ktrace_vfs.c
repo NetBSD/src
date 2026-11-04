@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ktrace_vfs.c,v 1.3 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: kern_ktrace_vfs.c,v 1.3.16.1 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -61,20 +61,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.3 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ktrace_vfs.c,v 1.3.16.1 2026/11/04 23:27:48 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+
 #include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/namei.h>
-#include <sys/vnode.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/ktrace.h>
-#include <sys/kauth.h>
-
 #include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 /*
  * ktrace system call, the part of the ktrace framework that
@@ -97,7 +98,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 	int fd;
 
 	if (ktrenter(l))
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 
 	if (KTROP(SCARG(uap, ops)) != KTROP_CLEAR) {
 		/*
@@ -119,7 +120,7 @@ sys_ktrace(struct lwp *l, const struct sys_ktrace_args *uap, register_t *retval)
 		if (vp->v_type != VREG) {
 			vn_close(vp, FREAD|FWRITE, l->l_cred);
 			ktrexit(l);
-			return (EACCES);
+			return SET_ERROR(EACCES);
 		}
 		/*
 		 * This uses up a file descriptor slot in the

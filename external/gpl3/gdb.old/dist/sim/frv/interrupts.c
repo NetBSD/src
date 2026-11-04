@@ -1,5 +1,5 @@
 /* frv exception and interrupt support
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -390,7 +390,6 @@ frv_detect_insn_access_interrupts (SIM_CPU *current_cpu, SCACHE *sc)
 {
 
   const CGEN_INSN *insn = sc->argbuf.idesc->idata;
-  SIM_DESC sd = CPU_STATE (current_cpu);
   FRV_VLIW *vliw = CPU_VLIW (current_cpu);
 
   /* Check for vliw constraints.  */
@@ -431,6 +430,7 @@ frv_detect_insn_access_interrupts (SIM_CPU *current_cpu, SCACHE *sc)
       /* Enter the halt state if FSR0.QNE is set and we are executing a
 	 floating point insn, a media insn or an insn which access a FR
 	 register.  */
+      SIM_DESC sd = CPU_STATE (current_cpu);
       SI fsr0 = GET_FSR (0);
       if (GET_FSR_QNE (fsr0)
 	  && (frv_is_float_insn (insn) || frv_is_media_insn (insn)
@@ -808,7 +808,6 @@ set_exception_status_registers (
 )
 {
   struct frv_interrupt *interrupt = & frv_interrupt_table[item->kind];
-  int slot = (item->vpc - previous_vliw_pc) / 4;
   int reg_index = -1;
   int set_ear = 0;
   int set_edr = 0;
@@ -836,7 +835,7 @@ set_exception_status_registers (
 	{
 	case FRV_DIVISION_EXCEPTION:
 	  set_isr_exception_fields (current_cpu, item);
-	  /* fall thru to set reg_index.  */
+	  ATTRIBUTE_FALLTHROUGH;  /* To set reg_index.  */
 	case FRV_COMMIT_EXCEPTION:
 	  /* For fr550, always use ESR0.  */
 	  if (STATE_ARCHITECTURE (sd)->mach == bfd_mach_fr550)
@@ -856,7 +855,7 @@ set_exception_status_registers (
 	  break;
 	case FRV_DATA_ACCESS_EXCEPTION:
 	  set_daec = 1;
-	  /* fall through */
+	  ATTRIBUTE_FALLTHROUGH;
 	case FRV_DATA_ACCESS_MMU_MISS:
 	case FRV_MEM_ADDRESS_NOT_ALIGNED:
 	  /* Get the appropriate ESR, EPCR, EAR and EDR.
@@ -888,7 +887,6 @@ set_exception_status_registers (
 	  break;
 	default:
 	  {
-	    SIM_DESC sd = CPU_STATE (current_cpu);
 	    IADDR pc = CPU_PC_GET (current_cpu);
 	    sim_engine_abort (sd, current_cpu, pc,
 			      "invalid non-strict program interrupt kind: %d\n",

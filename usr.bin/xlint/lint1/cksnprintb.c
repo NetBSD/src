@@ -1,4 +1,4 @@
-/*	$NetBSD: cksnprintb.c,v 1.15 2024/05/12 18:49:36 rillig Exp $	*/
+/*	$NetBSD: cksnprintb.c,v 1.15.2.1 2026/11/04 23:28:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cksnprintb.c,v 1.15 2024/05/12 18:49:36 rillig Exp $");
+__RCSID("$NetBSD: cksnprintb.c,v 1.15.2.1 2026/11/04 23:28:45 perseant Exp $");
 #endif
 
 #include <stdbool.h>
@@ -53,6 +53,7 @@ typedef struct {
 	uint64_t covered;
 	const char *covered_start[64];
 	int covered_len[64];
+	char field_kind;		/* 'f' or 'F' or '\0' */
 } checker;
 
 static int
@@ -131,6 +132,16 @@ check_bit(checker *ck, uint64_t dir_lsb, uint64_t width,
 	if (!(ck->possible_value_bits & field_mask))
 		/* conversion '%.*s' is unreachable by input value */
 		warning(378, len, start);
+}
+
+static bool
+descr_starts_with_identifier(const checker *ck)
+{
+	quoted_iterator it = ck->it;
+
+	return quoted_next(ck->fmt, &it)
+	    && it.value <= 0x7f
+	    && (ch_isalnum((char)it.value) || it.value == '_');
 }
 
 static bool
@@ -213,9 +224,20 @@ check_conversion(checker *ck)
 		warning(362, len(dir), start(dir, fmt));
 
 	bool needs_descr = !(new_style && dir.value == 'F');
+	bool descr_ident = descr_starts_with_identifier(ck);
 	bool seen_descr = parse_description(ck, &dir);
 	bool seen_null = new_style
 	    && quoted_next(ck->fmt, &ck->it) && ck->it.value == 0;
+
+	if (has_bit)
+		ck->field_kind = (char)dir.value;
+	if (ck->field_kind != '\0'
+	    && ((dir.value == '=' && ck->field_kind != 'f')
+		|| (dir.value == ':' && ck->field_kind != 'F'
+		    && !(ck->field_kind == 'f' && !descr_ident))))
+		/* conversion '%.*s' from '%.*s' does not mix with '%c' */
+		warning(386, len(dir), start(dir, fmt),
+		    range(dir, *it), start(dir, fmt), ck->field_kind);
 
 	if (has_bit)
 		check_hex_escape(fmt, bit);

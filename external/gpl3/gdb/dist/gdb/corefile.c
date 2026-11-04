@@ -1,6 +1,6 @@
 /* Core dump and executable file functions above target vector, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -35,6 +35,7 @@
 #include "cli/cli-utils.h"
 #include "gdbarch.h"
 #include "interps.h"
+#include "arch-utils.h"
 
 void
 reopen_exec_file (void)
@@ -51,7 +52,7 @@ reopen_exec_file (void)
 
   /* If the timestamp of the exec file has changed, reopen it.  */
   struct stat st;
-  int res = bfd_stat (exec_bfd, &st);
+  int res = gdb_bfd_stat (exec_bfd, &st);
 
   if (res == 0
       && current_program_space->ebfd_mtime != 0
@@ -70,24 +71,18 @@ validate_files (void)
       if (!core_file_matches_executable_p (current_program_space->core_bfd (),
 					   current_program_space->exec_bfd ()))
 	warning (_("core file may not match specified executable file."));
-      else if (bfd_get_mtime (current_program_space->exec_bfd ())
-	       > bfd_get_mtime (current_program_space->core_bfd ()))
+      else if (gdb_bfd_get_mtime (current_program_space->exec_bfd ())
+	       > gdb_bfd_get_mtime (current_program_space->core_bfd ()))
 	warning (_("exec file is newer than core file."));
     }
 }
 
-/* See gdbsupport/common-inferior.h.  */
+/* See arch-utils.h.  */
 
-const char *
-get_exec_file (int err)
+core_file_exec_context
+default_core_parse_exec_context (struct gdbarch *gdbarch, bfd *cbfd)
 {
-  if (current_program_space->exec_filename != nullptr)
-    return current_program_space->exec_filename.get ();
-  if (!err)
-    return NULL;
-
-  error (_("No executable file specified.\n\
-Use the \"file\" or \"exec-file\" command."));
+  return {};
 }
 
 
@@ -396,9 +391,7 @@ set_gnutarget (const char *newtarget)
   set_gnutarget_command (NULL, 0, NULL);
 }
 
-void _initialize_core ();
-void
-_initialize_core ()
+INIT_GDB_FILE (core)
 {
   cmd_list_element *core_file_cmd
     = add_cmd ("core-file", class_files, core_file_command, _("\
@@ -406,9 +399,8 @@ Use FILE as core dump for examining memory and registers.\n\
 Usage: core-file FILE\n\
 No arg means have no core file.  This command has been superseded by the\n\
 `target core' and `detach' commands."), &cmdlist);
-  set_cmd_completer (core_file_cmd, filename_completer);
+  set_cmd_completer (core_file_cmd, deprecated_filename_completer);
 
-  
   set_show_commands set_show_gnutarget
     = add_setshow_string_noescape_cmd ("gnutarget", class_files,
 				       &gnutarget_string, _("\

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef PROGSPACE_AND_THREAD_H
-#define PROGSPACE_AND_THREAD_H
+#ifndef GDB_PROGSPACE_AND_THREAD_H
+#define GDB_PROGSPACE_AND_THREAD_H
 
 #include "progspace.h"
 #include "gdbthread.h"
@@ -37,4 +37,4 @@ class scoped_restore_current_pspace_and_thread
    current thread, if there's one and it isn't executing.  */
 void switch_to_program_space_and_thread (program_space *pspace);
 
-#endif
+#endif /* GDB_PROGSPACE_AND_THREAD_H */

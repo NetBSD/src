@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC.in,v 1.126 2024/01/29 18:27:10 christos Exp $
+#	$NetBSD: GENERIC.in,v 1.126.2.1 2026/11/04 23:20:19 perseant Exp $
 #
 # Generic atari
 #
@@ -20,11 +20,9 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #endif /* !SMALL030_KERNEL */
 
 #if !defined(SMALL030_KERNEL)
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-unwind-tables -fno-omit-frame-pointer" \
-# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for backtraces \
-in DDB.
+makeoptions	COPTS="-O2 -fno-reorder-blocks"
 #else
-makeoptions	COPTS="-Os -fno-unwind-tables"	# optimize for space
+makeoptions	COPTS="-Os"	# optimize for space
 #endif /* !SMALL030_KERNEL */
 
 #if defined(SMALL030_KERNEL) || \
@@ -62,8 +60,6 @@ options 	FPU_EMULATE	# Support for MC68881/MC68882 emulator
 	defined(HADES_KERNEL) || defined(MILAN_KERNEL)
 options 	M68040		# support for 040
 options 	M68060		# support for 060
-options 	FPSP		# 68040 Floatingpoint support
-options 	M060SP		# MC68060 software support (Required for 060)
 #endif /* ! FALCON_KERNEL & ! SMALL030_KERNEL ... */
 
 #

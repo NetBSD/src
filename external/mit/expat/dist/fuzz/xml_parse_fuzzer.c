@@ -15,7 +15,9 @@
  */
 
 #include <assert.h>
+#include <limits.h> // for INT_MAX
 #include <stdint.h>
+#include <string.h>
 
 #include "expat.h"
 #include "siphash.h"
@@ -33,7 +35,8 @@
 #endif
 
 // 16-byte deterministic hash key.
-static unsigned char hash_key[16] = "FUZZING IS FUN!";
+static unsigned char hash_key_1[16] = "FUZZING IS FUN?";
+static unsigned char hash_key_2[16] = "FUZZING IS FUN!";
 
 static void XMLCALL
 start(void *userData, const XML_Char *name, const XML_Char **atts) {
@@ -58,15 +61,22 @@ may_stop_character_handler(void *userData, const XML_Char *s, int len) {
 static void
 ParseOneInput(XML_Parser p, const uint8_t *data, size_t size) {
   // Set the hash salt using siphash to generate a deterministic hash.
-  struct sipkey *key = sip_keyof(hash_key);
-  XML_SetHashSalt(p, (unsigned long)siphash24(data, size, key));
+  // The salt is 16 bytes and siphash24 produces 8, so the input is hashed
+  // under two keys.
+  const uint64_t first = siphash24(data, size, sip_keyof(hash_key_1));
+  const uint64_t second = siphash24(data, size, sip_keyof(hash_key_2));
+  uint8_t entropy[16];
+  memcpy(entropy, &first, sizeof(first));
+  memcpy(entropy + sizeof(first), &second, sizeof(second));
+  XML_SetHashSalt16Bytes(p, entropy);
   (void)sip24_valid;
 
   XML_SetUserData(p, p);
   XML_SetElementHandler(p, start, end);
   XML_SetCharacterDataHandler(p, may_stop_character_handler);
-  XML_Parse(p, (const XML_Char *)data, size, 0);
-  if (XML_Parse(p, (const XML_Char *)data, size, 1) == XML_STATUS_ERROR) {
+  assert(size <= INT_MAX);
+  XML_Parse(p, (const XML_Char *)data, (int)size, 0);
+  if (XML_Parse(p, (const XML_Char *)data, (int)size, 1) == XML_STATUS_ERROR) {
     XML_ErrorString(XML_GetErrorCode(p));
   }
   XML_GetCurrentLineNumber(p);
@@ -89,15 +99,17 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 
   XML_Parser externalEntityParser
       = XML_ExternalEntityParserCreate(parentParser, "e1", NULL);
-  assert(externalEntityParser);
-  ParseOneInput(externalEntityParser, data, size);
-  XML_ParserFree(externalEntityParser);
+  if (externalEntityParser != NULL) {
+    ParseOneInput(externalEntityParser, data, size);
+    XML_ParserFree(externalEntityParser);
+  }
 
   XML_Parser externalDtdParser
       = XML_ExternalEntityParserCreate(parentParser, NULL, NULL);
-  assert(externalDtdParser);
-  ParseOneInput(externalDtdParser, data, size);
-  XML_ParserFree(externalDtdParser);
+  if (externalDtdParser != NULL) {
+    ParseOneInput(externalDtdParser, data, size);
+    XML_ParserFree(externalDtdParser);
+  }
 
   // finally frees this parser which served as parent
   XML_ParserFree(parentParser);

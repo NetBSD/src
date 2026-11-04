@@ -1,6 +1,6 @@
 /* scoped_fd, automatically close a file descriptor
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SCOPED_FD_H
-#define COMMON_SCOPED_FD_H
+#ifndef GDBSUPPORT_SCOPED_FD_H
+#define GDBSUPPORT_SCOPED_FD_H
 
 #include <unistd.h>
 #include "gdb_file.h"
@@ -84,4 +84,4 @@ private:
   int m_fd;
 };
 
-#endif /* COMMON_SCOPED_FD_H */
+#endif /* GDBSUPPORT_SCOPED_FD_H */

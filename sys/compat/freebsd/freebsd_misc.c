@@ -1,4 +1,4 @@
-/*	$NetBSD: freebsd_misc.c,v 1.34 2021/09/07 11:43:03 riastradh Exp $	*/
+/*	$NetBSD: freebsd_misc.c,v 1.34.10.1 2026/11/04 23:21:36 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Frank van der Linden
@@ -12,11 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *      This product includes software developed for the NetBSD Project
- *      by Frank van der Linden
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -36,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.34 2021/09/07 11:43:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: freebsd_misc.c,v 1.34.10.1 2026/11/04 23:21:36 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -75,6 +71,7 @@ freebsd_sys_msync(struct lwp *l, const struct freebsd_sys_msync_args *uap, regis
 	 * FreeBSD-2.0.5-RELEASE's msync(2) has addtional argument `flags',
 	 * but syscall number is not changed. :-<
 	 */
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, addr) = SCARG(uap, addr);
 	SCARG(&bma, len) = SCARG(uap, len);
 	SCARG(&bma, flags) = SCARG(uap, flags);
@@ -121,6 +118,7 @@ freebsd_sys_mmap(struct lwp *l, const struct freebsd_sys_mmap_args *uap, registe
 		pos = 0;
 	}
 
+	memset(&bma, 0, sizeof(bma));
 	SCARG(&bma, addr) = SCARG(uap, addr);
 	SCARG(&bma, len) = SCARG(uap, len);
 	SCARG(&bma, prot) = prot;

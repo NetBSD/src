@@ -1,4 +1,4 @@
-.\" $NetBSD: moused.8,v 1.9 2016/08/16 02:04:01 uwe Exp $
+.\" $NetBSD: moused.8,v 1.9.26.1 2026/11/04 23:28:54 perseant Exp $
 .\"
 .\" Copyright (c) 1996
 .\"	Mike Pritchard <mpp@FreeBSD.org>.  All rights reserved.
@@ -39,7 +39,7 @@
 .Os
 .Sh NAME
 .Nm moused
-.Nd pass mouse data to mouse mux
+.Nd pass data from a serial mouse to the kernel
 .Sh SYNOPSIS
 .Nm
 .Op Fl DPRacdfs
@@ -48,8 +48,8 @@
 .Op Fl r Ar resolution
 .Op Fl S Ar baudrate
 .Op Fl W Ar devicename
-.Op Fl a Ar X Ns Op ,Y
-.Op Fl m Ar N=M
+.Op Fl a Ar X Ns Op Ic \&, Ns Ar Y
+.Op Fl m Ar N Ns Ic \^= Ns Ar M
 .Op Fl w Ar N
 .Op Fl z Ar target
 .Op Fl t Ar mousetype
@@ -61,18 +61,17 @@
 .Fl p Ar port
 .Fl i Ar info
 .Sh DESCRIPTION
-The mouse daemon
 .Nm
 and the console driver work together to support
-access to serial mice from user programs.
+input from serial mice.
 They virtualize the mouse and provide user programs with mouse data
 in the standard format
 (see
 .Xr wsmouse 4 ) .
 .Pp
 .Nm
-listens to the specified port for mouse data, interprets and then
-passes it via ioctls to the console driver.
+listens to the specified serial port for mouse data, interprets and
+then passes it via ioctls to the console driver.
 It reports translation movement, button press/release events and
 movement of the roller or the wheel if available.
 The roller/wheel movement is reported as
@@ -96,22 +95,25 @@ by pressing the left and right physical buttons simultaneously.
 .It Fl D
 Lower DTR on the serial port.
 This option is valid only if
-.Ar mousesystems
+.Ql mousesystems
 is selected as the protocol type.
 The DTR line may need to be dropped for a 3-button mouse
 to operate in the
-.Ar mousesystems
+.Ql mousesystems
 mode.
 .It Fl E Ar timeout
-When the third button emulation is enabled (see above),
+When the third button emulation is enabled
+.Pq see Fl 3 ,
 .Nm
-waits
+waits at most
 .Ar timeout
-milliseconds at most before deciding whether two buttons are being
+milliseconds before deciding whether two buttons are being
 pressed simultaneously.
 The default timeout is 100 milliseconds.
 .It Fl F Ar rate
-Set the report rate (reports per second) of the device if supported.
+Set the report rate
+.Pq reports per second
+of the device, if supported.
 .It Fl I Ar file
 Write the process id of
 .Nm
@@ -129,7 +131,7 @@ will not be able to print useful information for the serial mouse.
 .It Fl R
 Lower RTS on the serial port.
 This option is valid only if
-.Ar mousesystems
+.Ql mousesystems
 is selected as the protocol type by the
 .Fl t
 option below.
@@ -138,10 +140,11 @@ It is often used with the
 option above.
 Both RTS and DTR lines may need to be dropped for
 a 3-button mouse to operate in the
-.Ar mousesystems
+.Ql mousesystems
 mode.
 .It Fl S Ar baudrate
-Select the baudrate for the serial port (1200 to 9600).
+Select the baud rate for the serial port
+.Pq 1200 to 9600, see also Fl s .
 Not all serial mice support this option.
 .It Fl W Ar devicename
 Select the
@@ -149,7 +152,7 @@ Select the
 control device.
 The default is
 .Pa /dev/wsmuxctl0 .
-.It Fl a Ar X Ns Op ,Y
+.It Fl a Ar X Ns Op Ic \&, Ns Ar Y
 Accelerate or decelerate the mouse input.
 This is a linear acceleration only.
 Values less than 1.0 slow down movement, values greater than 1.0 speed it
@@ -168,31 +171,43 @@ Useful for testing and debugging.
 Print specified information and quit.
 Available pieces of information are:
 .Pp
-.Bl -tag -compact -width modelxxx
-.It Ar port
-Port (device file) name, e.g.\&
+.Bl -tag -width Ql
+.
+.It Li port
+Device file name, e.g.\&
 .Pa /dev/tty00 .
-.It Ar if
-Interface type: serial, bus, inport or ps/2.
-.It Ar type
+.
+.It Li if
+Interface type:
+.Ql serial ,
+.Ql bus ,
+.Ql inport ,
+.Ql ps/2 ,
+.Ql sysmouse ,
+or
+.Ql usb .
+.
+.It Li type
 Protocol type.
-It is one of the types listed under the
+One of the values listed under the
 .Fl t
 option below.
-.It Ar model
+.
+.It Li model
 Mouse model.
-.Nm
-may not always be able to identify the model.
-.It Ar all
+.
+.It Li all
 All of the above items.
 Print port, interface, type and model in this order in one line.
 .El
 .Pp
 If
 .Nm
-cannot determine the requested information, it prints ``unknown'' or
-``generic''.
-.It Fl m Ar N=M
+cannot determine the requested information, it prints
+.Ql unknown
+or
+.Ql generic .
+.It Fl m Ar N Ns Ic \^= Ns Ar M
 Assign the physical button
 .Ar M
 to the logical button
@@ -202,31 +217,33 @@ More than one physical button may be assigned to a logical button at the
 same time.
 In this case the logical button will be down,
 if either of the assigned physical buttons is held down.
-Do not put space around `='.
+Do not put spaces around
+.Ql = .
 .It Fl p Ar port
 Use
 .Ar port
 to communicate with the mouse.
 .It Fl r Ar resolution
 Set the resolution of the device; in Dots Per Inch, or
-.Ar low ,
-.Ar medium-low ,
-.Ar medium-high
+.Ql low ,
+.Ql medium-low ,
+.Ql medium-high ,
 or
-.Ar high .
-This option may not be supported by all the device.
+.Ql high .
+This option may not be supported by all devices.
 .It Fl s
-Select a baudrate of 9600 for the serial line.
+Select a baud rate of 9600 for the serial line
+.Pq see also Fl S .
 Not all serial mice support this option.
 .It Fl t Ar type
 Specify the protocol type of the mouse attached to the port.
 You may explicitly specify a type listed below, or use
-.Ar auto
+.Ql auto
 to let
 .Nm
 automatically select an appropriate protocol for the given mouse.
 If you entirely omit this option on the command line,
-.Fl t Ar auto
+.Sq Fl t Cm auto
 is assumed.
 Under normal circumstances, you need to use this option only if
 .Nm
@@ -238,47 +255,45 @@ option above is implied and Plug and Play COM device enumeration
 procedure will be disabled.
 .Pp
 Valid types for this option are
-listed below.
-.Pp
-For the serial mouse:
-.Bl -tag -compact -width mousesystemsxxx
-.It Ar microsoft
+listed below:
+.Bl -tag -width Li
+.It Li microsoft
 Microsoft serial mouse protocol.
 Most 2-button serial mice use this protocol.
-.It Ar intellimouse
+.It Li intellimouse
 Microsoft IntelliMouse protocol.
 Genius NetMouse, ASCII Mie Mouse, Logitech MouseMan+ and FirstMouse+
 use this protocol too.
 Other mice with a roller/wheel may be compatible with this protocol.
-.It Ar mousesystems
+.It Li mousesystems
 MouseSystems 5-byte protocol.
 3-button mice may use this protocol.
-.It Ar mmseries
+.It Li mmseries
 MM Series mouse protocol.
-.It Ar logitech
+.It Li logitech
 Logitech mouse protocol.
 Note that this is for old Logitech models.
-.Ar mouseman
+.Ql mouseman
 or
-.Ar intellimouse
+.Ql intellimouse
 should be specified for newer models.
-.It Ar mouseman
+.It Li mouseman
 Logitech MouseMan and TrackMan protocol.
 Some 3-button mice may be compatible with this protocol.
 Note that MouseMan+ and FirstMouse+ use
-.Ar intellimouse
+.Ql intellimouse
 protocol rather than this one.
-.It Ar glidepoint
+.It Li glidepoint
 ALPS GlidePoint protocol.
-.It Ar thinkingmouse
+.It Li thinkingmouse
 Kensington ThinkingMouse protocol.
-.It Ar mmhitab
+.It Li mmhitab
 Hitachi tablet protocol.
-.It Ar x10mouseremote
+.It Li x10mouseremote
 X10 MouseRemote.
-.It Ar kidspad
+.It Li kidspad
 Genius Kidspad and Easypad protocol.
-.It Ar versapad
+.It Li versapad
 Interlink VersaPad protocol.
 .El
 .It Fl w Ar N
@@ -292,26 +307,31 @@ You may further map the Z axis movement to virtual buttons by the
 option below.
 .It Fl z Ar target
 Map Z axis (roller/wheel) movement to another axis or to virtual buttons.
+The target virtual buttons need not exist as physical buttons.
+Note that mapping to logical buttons
+.Pq with Fl m
+is carried out after mapping
+from the Z axis movement to the virtual buttons is done.
 Valid
 .Ar target
-maybe:
-.Bl -tag -compact -width x__
-.It Ar x
-.It Ar y
+may be:
+.Pp
+.Bl -tag -compact -width Ar
+.
+.It Cm x
+.It Cm y
 X or Y axis movement will be reported when the Z axis movement is detected.
+.
+.Pp
 .It Ar N
 Report down events for the virtual buttons
 .Ar N
 and
-.Ar N+1
+.Ar N Ns Li \^+1
 respectively when negative and positive Z axis movement
 is detected.
-There do not need to be physical buttons
-.Ar N
-and
-.Ar N+1 .
-Note that mapping to logical buttons is carried out after mapping
-from the Z axis movement to the virtual buttons is done.
+.
+.Pp
 .It Ar N1 N2
 Report down events for the virtual buttons
 .Ar N1
@@ -319,6 +339,8 @@ and
 .Ar N2
 respectively when negative and positive Z axis movement
 is detected.
+.
+.Pp
 .It Ar N1 N2 N3 N4
 This is useful for the mouse with two wheels of which
 the second wheel is used to generate horizontal scroll action,
@@ -353,12 +375,13 @@ As many instances of
 as the number of mice attached to the system may be run
 simultaneously; one instance for each serial mouse.
 .Sh FILES
-.Bl -tag -width /var/run/moused.pid -compact
+.Bl -tag -width Pa -compact
 .It Pa /dev/wsmuxctl0
-default device to control mouse mux
+default
+.Xr wsmux 4
+control device
 .It Pa /var/run/moused.pid
-process id of the currently running
-.Nm
+default PID file
 .El
 .Sh EXAMPLES
 .Dl moused -p /dev/tty00 -i type
@@ -387,7 +410,7 @@ Start
 on the serial port
 .Pa /dev/tty01 .
 The protocol type
-.Ar microsoft
+.Ql microsoft
 is explicitly specified by the
 .Fl t
 option.
@@ -405,7 +428,7 @@ Report negative Z axis (roller) movement as the button 4 pressed
 and positive Z axis movement as the button 5 pressed.
 .Pp
 The mouse daemon is normally enabled by setting
-.Pa moused=YES
+.Ql moused=YES
 in
 .Pa /etc/rc.conf .
 .Sh SEE ALSO
@@ -414,19 +437,21 @@ in
 .Xr rc.conf 5 ,
 .Xr wsmoused 8
 .Sh STANDARDS
+In order to support PnP serial mice
 .Nm
 partially supports
-.Dq Plug and Play External COM Device Specification
-in order to support PnP serial mice.
+.Rs
+.%B Plug and Play External COM Device Specification
+.Re
 However, due to various degrees of conformance to the specification
 by existing serial mice, it does not strictly follow version 1.0
 of the standard.
 Even with this less strict approach, it may not always determine
 an appropriate protocol type for the given serial mouse.
 .Sh HISTORY
-The mouse daemon
+The
 .Nm
-first appeared in
+mouse daemon first appeared in
 .Fx 2.2
 and
 .Nx 1.6 .
@@ -448,8 +473,11 @@ port was done by
 .Aq augustss@NetBSD.org .
 .Sh BUGS
 Many pad devices behave as if the first (left) button were pressed if
-the user `taps' the surface of the pad.
+the user
+.Dq taps
+the surface of the pad.
 In contrast, some ALPS GlidePoint and Interlink VersaPad models
 treat the tapping action as fourth button events.
-Use the option ``-m 1=4'' for these models
-to obtain the same effect as the other pad devices.
+Use the option
+.Ql Fl m Cm 1=4
+for these models to obtain the same effect as the other pad devices.

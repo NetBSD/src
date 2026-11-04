@@ -1,4 +1,4 @@
-/* $NetBSD: term_private.h,v 1.19 2020/06/21 15:05:23 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.19.8.1 2026/11/04 23:19:31 perseant Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
@@ -70,6 +70,12 @@
  * always stored as little endian.
  */
 
+#if HAVE_NBTOOL_CONFIG_H
+# include "nbtool_config.h"
+#endif
+#if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
+# include <sys/endian.h>
+#endif
 #include <sys/types.h>
 #include <assert.h>
 #include <limits.h>

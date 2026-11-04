@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2024 Free Software Foundation, Inc.
+   Copyright 2014-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -30,6 +30,10 @@ class derived : public base
 };
 
 derived d;
+
+typedef const int const_int;
+const_int foo (3);
+const_int &foo_ref (foo);
 
 int
 main (void)

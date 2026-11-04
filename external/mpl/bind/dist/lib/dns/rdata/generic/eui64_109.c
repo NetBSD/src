@@ -1,4 +1,4 @@
-/*	$NetBSD: eui64_109.c,v 1.8.2.1 2025/08/02 05:53:42 perseant Exp $	*/
+/*	$NetBSD: eui64_109.c,v 1.8.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,6 +25,7 @@ fromtext_eui64(ARGS_FROMTEXT) {
 	isc_token_t token;
 	unsigned char eui64[8];
 	unsigned int l0, l1, l2, l3, l4, l5, l6, l7;
+	char buf[sizeof("xx-xx-xx-xx-xx-xx-xx-xx")];
 	int n;
 
 	REQUIRE(type == dns_rdatatype_eui64);
@@ -42,6 +43,17 @@ fromtext_eui64(ARGS_FROMTEXT) {
 	if (n != 8 || l0 > 255U || l1 > 255U || l2 > 255U || l3 > 255U ||
 	    l4 > 255U || l5 > 255U || l6 > 255U || l7 > 255U)
 	{
+		return DNS_R_BADEUI;
+	}
+
+	/*
+	 * Check that leading zeros were present and that there wasn't
+	 * trailing garbage.
+	 */
+	n = snprintf(buf, sizeof(buf),
+		     "%02x-%02x-%02x-%02x-%02x-%02x-%02x-%02x", l0, l1, l2, l3,
+		     l4, l5, l6, l7);
+	if (n != sizeof(buf) - 1 || strcasecmp(DNS_AS_STR(token), buf) != 0) {
 		return DNS_R_BADEUI;
 	}
 
@@ -141,9 +153,7 @@ tostruct_eui64(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	eui64->common.rdclass = rdata->rdclass;
-	eui64->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&eui64->common, link);
+	DNS_RDATACOMMON_INIT(eui64, rdata->type, rdata->rdclass);
 
 	memmove(eui64->eui64, rdata->data, rdata->length);
 	return ISC_R_SUCCESS;

@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -77,7 +77,7 @@ public:
 
   bool supports_read_auxv () override;
 
-  int read_auxv (CORE_ADDR offset, unsigned char *myaddr,
+  int read_auxv (int pid, CORE_ADDR offset, unsigned char *myaddr,
 		 unsigned int len) override;
 
   bool supports_hardware_single_step () override;

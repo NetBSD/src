@@ -1,5 +1,5 @@
 /* Output generating routines for GDB CLI.
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_OUT_H
-#define CLI_OUT_H
+#ifndef GDB_CLI_OUT_H
+#define GDB_CLI_OUT_H
 
 #include "ui-out.h"
 #include <chrono>
@@ -35,6 +35,9 @@ public:
 
   bool can_emit_style_escape () const override;
 
+  ui_file *current_stream () const override
+  { return m_streams.back (); }
+
 protected:
 
   virtual void do_table_begin (int nbrofcols, int nr_rows,
@@ -49,7 +52,8 @@ protected:
   virtual void do_begin (ui_out_type type, const char *id) override;
   virtual void do_end (ui_out_type type) override;
   virtual void do_field_signed (int fldno, int width, ui_align align,
-				const char *fldname, LONGEST value) override;
+				const char *fldname, LONGEST value,
+				const ui_file_style &style) override;
   virtual void do_field_unsigned (int fldno, int width, ui_align align,
 				  const char *fldname, ULONGEST value)
     override;
@@ -104,9 +108,9 @@ private:
 
   /* Stack of progress info.  */
   std::vector<cli_progress_info> m_progress_info;
-  void clear_current_line ();
+  void clear_progress_notify ();
 };
 
 extern void cli_display_match_list (char **matches, int len, int max);
 
-#endif
+#endif /* GDB_CLI_OUT_H */

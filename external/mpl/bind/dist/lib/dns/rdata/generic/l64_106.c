@@ -1,4 +1,4 @@
-/*	$NetBSD: l64_106.c,v 1.8.2.1 2025/08/02 05:53:43 perseant Exp $	*/
+/*	$NetBSD: l64_106.c,v 1.8.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,12 +149,12 @@ tostruct_l64(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	l64->common.rdclass = rdata->rdclass;
-	l64->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&l64->common, link);
+	DNS_RDATACOMMON_INIT(l64, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	l64->pref = uint16_fromregion(&region);
+	isc_region_consume(&region, 2);
+	INSIST(region.length == sizeof(l64->l64));
 	memmove(l64->l64, region.base, region.length);
 	return ISC_R_SUCCESS;
 }

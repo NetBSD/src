@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -22,7 +22,7 @@ set additional_flags [gdb_target_symbol_prefix_flags]
 require gdb_trace_common_supports_arch
 
 with_test_prefix "runtime trace support check" {
-    if { [prepare_for_testing "prepare for testing" ${binfile} $srcfile \
+    if { [prepare_for_testing "prepare for testing" $testfile $srcfile \
 	      [list debug pthreads $additional_flags]] } {
 	return
     }
@@ -37,13 +37,13 @@ with_test_prefix "runtime trace support check" {
     }
 }
 
-proc step_over_tracepoint { binfile trace_type } \
+proc step_over_tracepoint { testfile trace_type } \
 {with_test_prefix "step over $trace_type" \
 {
     global hex
 
     # Start with a fresh gdb.
-    clean_restart $binfile
+    clean_restart $testfile
 
     # Make sure inferior is running in all-stop mode.
     gdb_test_no_output "set non-stop 0"
@@ -63,13 +63,13 @@ proc step_over_tracepoint { binfile trace_type } \
 
 # Set breakpoint and tracepoint at the same address.
 
-proc break_trace_same_addr { binfile trace_type option } \
+proc break_trace_same_addr { testfile trace_type option } \
 {with_test_prefix "$trace_type $option" \
 {
     global hex
 
     # Start with a fresh gdb.
-    clean_restart $binfile
+    clean_restart $testfile
     if ![runto_main] {
 	return -1
     }
@@ -96,19 +96,20 @@ proc break_trace_same_addr { binfile trace_type option } \
 }}
 
 foreach break_always_inserted { "on" "off" } {
-    break_trace_same_addr $binfile "trace" ${break_always_inserted}
+    break_trace_same_addr $testfile "trace" ${break_always_inserted}
 }
 
-step_over_tracepoint $binfile "trace"
+step_over_tracepoint $testfile "trace"
 
 require allow_shlib_tests
 
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 
 # Compile test case again with IPA.
-set binfile_ipa ${binfile}-ipa
-if { [prepare_for_testing "prepare for testing" $binfile_ipa $srcfile \
+set testfile_ipa $testfile-ipa
+if { [prepare_for_testing "prepare for testing" $testfile_ipa $srcfile \
 	  [list debug pthreads $additional_flags shlib=$libipa]] } {
     return
 }
@@ -121,8 +122,8 @@ if { [gdb_test "info sharedlibrary" ".*${remote_libipa}.*" "IPA loaded"] != 0 } 
     untested "could not find IPA lib loaded"
 } else {
     foreach break_always_inserted { "on" "off" } {
-	break_trace_same_addr $binfile_ipa "ftrace" ${break_always_inserted}
+	break_trace_same_addr $testfile_ipa "ftrace" ${break_always_inserted}
     }
 
-    step_over_tracepoint $binfile_ipa "ftrace"
+    step_over_tracepoint $testfile_ipa "ftrace"
 }

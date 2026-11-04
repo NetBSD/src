@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.121 2024/04/05 13:05:41 riastradh Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.121.2.1 2026/11/04 23:28:09 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.121 2024/04/05 13:05:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.121.2.1 2026/11/04 23:28:09 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.121 2024/04/05 13:05:41 riastradh Ex
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/vnode.h>
-#include <sys/disklabel.h>
 #include <sys/ioctl.h>
 #include <sys/fcntl.h>
 #include <sys/conf.h>
@@ -288,6 +287,7 @@ static int
 uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
     unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(ubchist, "vp %#jx off %#jx", (uintptr_t)uobj, offset,
@@ -333,6 +333,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				UVMHIST_LOG(ubchist, "noalloc", 0,0,0,0);
 				return 0;
 			}
+			ticket = uvm_wait_prepare();
 			pg = uvm_pagealloc(uobj, offset, NULL,
 			    UVM_FLAG_COLORMATCH);
 			if (pg == NULL) {
@@ -341,7 +342,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 					return 0;
 				}
 				rw_exit(uobj->vmobjlock);
-				uvm_wait("uvnfp1");
+				uvm_wait("uvnfp1", ticket);
 				uvm_page_array_clear(a);
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				continue;

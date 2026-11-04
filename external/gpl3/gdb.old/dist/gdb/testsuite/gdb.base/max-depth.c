@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2019-2023 Free Software Foundation, Inc.
+   Copyright 2019-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -225,8 +225,17 @@ struct V7 : virtual V4, virtual V5, virtual V6 { int v7 = 1; } v7;
 
 #endif /* __cplusplus */
 
+void Do_nothing (struct s1 sone)
+{
+  /*  This Function does nothing.  */
+}
+
 int
 main ()
 {
+  /*  In targets like AIX, linker optimises out unused global
+      variables.  The do_nothing () function stops the linker
+      from doing so.  */
+  Do_nothing (s1);
   return 0;
 }

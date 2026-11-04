@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
 
 This file documents the internals of the GNU C Preprocessor.
 
-   Copyright (C) 2000-2020 Free Software Foundation, Inc.
+   Copyright (C) 2000-2022 Free Software Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -107,7 +107,7 @@ The Lexer
 Overview
 ========
 
-The lexer is contained in the file 'lex.c'.  It is a hand-coded lexer,
+The lexer is contained in the file 'lex.cc'.  It is a hand-coded lexer,
 and not implemented as a state machine.  It can understand C, C++ and
 Objective-C source code, and has been extended to allow reasonably
 successful preprocessing of assembly language.  The lexer does not make
@@ -810,7 +810,7 @@ starts counting from one.
 translation unit.  With some simple infrastructure, it is straight
 forward to map from this to the original source file and line number
 pair, saving space whenever line number information needs to be saved.
-The code the implements this mapping lies in the files 'line-map.c' and
+The code the implements this mapping lies in the files 'line-map.cc' and
 'line-map.h'.
 
    Command-line macros and assertions are implemented by pushing a
@@ -930,7 +930,7 @@ File Handling
 *************
 
 Fairly obviously, the file handling code of cpplib resides in the file
-'files.c'.  It takes care of the details of file searching, opening,
+'files.cc'.  It takes care of the details of file searching, opening,
 reading and caching, for both the main source file and all the headers
 it recursively includes.
 
@@ -1028,14 +1028,14 @@ Tag Table:
 Node: Top905
 Node: Conventions2743
 Node: Lexer3685
-Ref: Invalid identifiers11599
-Ref: Lexing a line13549
-Node: Hash Nodes18318
-Node: Macro Expansion21197
-Node: Token Spacing30141
-Node: Line Numbering35997
-Node: Guard Macros40082
-Node: Files44873
-Node: Concept Index48339
+Ref: Invalid identifiers11600
+Ref: Lexing a line13550
+Node: Hash Nodes18319
+Node: Macro Expansion21198
+Node: Token Spacing30142
+Node: Line Numbering35998
+Node: Guard Macros40084
+Node: Files44875
+Node: Concept Index48342
 
 End Tag Table

@@ -1,0 +1,53 @@
+options {
+	port @PORT@;
+	pid-file "named.pid";
+	listen-on { 10.53.0.2; };
+	listen-on-v6 { none; };
+	dnssec-validation no;
+};
+
+key "a" {
+	algorithm hmac-sha256;
+	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";
+};
+
+key "b" {
+	algorithm hmac-sha256;
+	secret "hXfwwwiag2QGqblopofai9NuW28q/1rH4CaTnA==";
+};
+
+/*
+ * Reference cycles in remote-servers lists must be skipped, not
+ * followed: named used to recurse into them endlessly and crash on
+ * startup (GL #6287).
+ */
+primaries "loop-direct" { "loop-direct"; 10.53.0.99 port @PORT@; };
+primaries "loop-tail" { 10.53.0.99 port @PORT@; "loop-tail"; };
+primaries "loop-a" { "loop-b"; };
+primaries "loop-b" { "loop-a"; 10.53.0.99 port @PORT@; };
+
+/* Reusing a list outside the active recursion path is not a cycle. */
+primaries "common" { 192.0.2.1; };
+
+zone "cycle-direct" {
+	type secondary;
+	primaries { "loop-direct"; };
+};
+
+zone "cycle-tail" {
+	type secondary;
+	primaries { "loop-tail"; };
+};
+
+zone "cycle-mutual" {
+	type secondary;
+	primaries { "loop-a"; };
+};
+
+zone "repeated-list-references" {
+	type secondary;
+	primaries {
+		"common" key "a";
+		"common" key "b";
+	};
+};

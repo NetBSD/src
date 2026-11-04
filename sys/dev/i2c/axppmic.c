@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.37.8.1 2025/08/02 05:56:39 perseant Exp $ */
+/* $NetBSD: axppmic.c,v 1.37.8.2 2026/11/04 23:21:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.37.8.1 2025/08/02 05:56:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.37.8.2 2026/11/04 23:21:54 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1185,7 +1185,7 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
+	sc->sc_phandle = devhandle_to_of(device_handle(self));
 	sc->sc_conf = c;
 
 	aprint_naive("\n");

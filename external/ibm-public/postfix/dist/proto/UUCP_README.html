@@ -102,6 +102,13 @@ recipients.  The pipe(8) delivery agent executes the <b>uux</b>
 command without assistance from the shell, so there are no problems
 with shell meta characters in command-line parameters.  </p>
 
+<li> <p> Enable <b>transport</b> table lookups: </p>
+
+<pre>
+/etc/postfix/main.cf:
+    transport_maps = lmdb:/etc/postfix/transport
+</pre>
+
 <li> <p> Specify that mail for <i>example.com</i>, should be
 delivered via UUCP, to a host named <i>uucp-host</i>: </p>
 
@@ -111,21 +118,19 @@ delivered via UUCP, to a host named <i>uucp-host</i>: </p>
     .example.com    uucp:uucp-host
 </pre>
 
+<p> Instead of lmdb:, some systems use cdb:, hash:, or dbm:. </p>
+
 <p> See the transport(5) manual page for more details. </p>
 
 <li> <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
-whenever you change the <b>transport</b> file. </p>
+whenever you change the <b>transport</b> file, to (re)build a
+default-type indexed file. Execute "<b>postmap
+<i>type</i>:/etc/postfix/transport</b>" to specify an explicit type.
+</p>
 
-<li> <p> Enable <b>transport</b> table lookups: </p>
-
-<pre>
-/etc/postfix/main.cf:
-    transport_maps = hash:/etc/postfix/transport
-</pre>
-
-<p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what map
-types Postfix supports, use the command "<b>postconf -m</b>". </p>
+<p> The default indexed file type is configured with the
+default_database_type parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <li> <p> Add <i>example.com</i> to the list of domains that your site
 is willing to relay mail for. </p>

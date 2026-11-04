@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXCEPTIONS_H
-#define EXCEPTIONS_H
+#ifndef GDB_EXCEPTIONS_H
+#define GDB_EXCEPTIONS_H
 
 #include "ui-out.h"
 
@@ -31,4 +31,4 @@ extern void exception_fprintf (struct ui_file *file,
 			       const char *prefix,
 			       ...) ATTRIBUTE_PRINTF (3, 4);
 
-#endif
+#endif /* GDB_EXCEPTIONS_H */

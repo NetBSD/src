@@ -1,4 +1,4 @@
-/*	$NetBSD: nextrom.c,v 1.29 2023/02/11 02:33:27 tsutsui Exp $	*/
+/*	$NetBSD: nextrom.c,v 1.29.6.1 2026/11/04 23:21:06 perseant Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,20 +25,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.29 2023/02/11 02:33:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextrom.c,v 1.29.6.1 2026/11/04 23:21:06 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_serial.h"
 
+#include <sys/param.h>
 #include <sys/types.h>
 #include <machine/cpu.h>
 
-#include <next68k/next68k/seglist.h>
+#include <uvm/uvm_extern.h>
+
+#include <m68k/seglist.h>
 #include <next68k/next68k/nextrom.h>
 #include <next68k/dev/intiovar.h>
 
 #ifdef DDB
-#include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #define ELFSIZE 32
@@ -133,7 +135,7 @@ paddr_t rom_reboot_vect;
 int turbo;
 int iscolor;
 
-void
+void  __attribute__((no_instrument_function))
 next68k_bootargs(unsigned char **args)
 {
 #ifdef DDB
@@ -233,7 +235,8 @@ next68k_bootargs(unsigned char **args)
 		int j = 0;
 		char mach;
 		int turbo_l, iscolor_l;
-		paddr_t fbbasepa_l, fblimitpa_l;
+		paddr_t fbbasepa_l;
+		size_t fbmapsize_l;
 
 		if (MONRELOC(char, MG_machine_type) == NeXT_X15) {
 			msize16 = 0x1000000;
@@ -290,20 +293,31 @@ next68k_bootargs(unsigned char **args)
 			iscolor_l = 0;
 		if (turbo_l == 1) {
 			fbbasepa_l  = TURBOFBBASE;
-			fblimitpa_l = (iscolor_l == 1) ?
-			    TURBOCOLORTOP : TURBOMONOTOP;
+			if (iscolor_l) {
+				fbmapsize_l = m68k_round_page(TURBOCOLORTOP);
+			} else {
+				fbmapsize_l = m68k_round_page(TURBOMONOTOP);
+			}
+			fbmapsize_l -= TURBOFBBASE;
 		} else {
 			if (iscolor_l == 1) {
 				fbbasepa_l  = COLORBASE;
-				fblimitpa_l = COLORTOP;
+				fbmapsize_l = m68k_round_page(COLORTOP) -
+				    COLORBASE;
 			} else {
 				fbbasepa_l  = MONOBASE;
-				fblimitpa_l = MONOTOP;
+				fbmapsize_l = m68k_round_page(MONOTOP) -
+				    MONOBASE;
 			}
 		}
 		RELOC(iscolor, int) = iscolor_l;
+		/* XXX clean-up the redundancy at some point. */
 		RELOC(fbbasepa, paddr_t) = fbbasepa_l;
-		RELOC(fblimitpa, paddr_t) = fblimitpa_l;
+		RELOC(fbmapsize, size_t) = fbmapsize_l;
+		RELOC(machine_bootmap[PMBM_I_FB].pmbm_paddr, paddr_t)
+		    = fbbasepa_l;
+		RELOC(machine_bootmap[PMBM_I_FB].pmbm_size, size_t)
+		    = fbmapsize_l;
 
 		for (ix = 0; ix < N_SIMM; ix++) {
 
@@ -323,6 +337,7 @@ next68k_bootargs(unsigned char **args)
 				RELOC(phys_seg_list[j].ps_end, paddr_t) =
 				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
 				    msize16;
+				RELOC(physmem, psize_t) += msize16 >> PGSHIFT;
 				j++;
 			}
 			if ((MONRELOC(char, MG_simm + ix) & SIMM_SIZE) ==
@@ -330,6 +345,7 @@ next68k_bootargs(unsigned char **args)
 				RELOC(phys_seg_list[j].ps_end, paddr_t) =
 				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
 				    msize4;
+				RELOC(physmem, psize_t) += msize4 >> PGSHIFT;
 				j++;
 			}
 			if ((MONRELOC(char, MG_simm+ix) & SIMM_SIZE) ==
@@ -337,6 +353,7 @@ next68k_bootargs(unsigned char **args)
 				RELOC(phys_seg_list[j].ps_end, paddr_t) =
 				    RELOC(phys_seg_list[j].ps_start, paddr_t) +
 				    msize1;
+				RELOC(physmem, psize_t) += msize1 >> PGSHIFT;
 				j++;
 			}
 		}
@@ -348,6 +365,7 @@ next68k_bootargs(unsigned char **args)
 		RELOC(phys_seg_list[j - 1].ps_end, paddr_t) -= 0x2000;
 		RELOC(rom_image_base, paddr_t) =
 		    RELOC(phys_seg_list[j - 1].ps_end, paddr_t);
+		RELOC(physmem, psize_t) -= 0x2000 >> PGSHIFT;
 
 		/* pmap is unhappy if it is not null terminated */
 		for (; j < MAX_PHYS_SEGS; j++) {

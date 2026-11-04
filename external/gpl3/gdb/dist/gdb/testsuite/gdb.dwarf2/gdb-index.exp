@@ -1,4 +1,4 @@
-# Copyright 2013-2024 Free Software Foundation, Inc.
+# Copyright 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,17 +95,27 @@ proc local_add_gdb_index { program } {
 # building an index from a program already using one.
 
 set test "check if index present"
-gdb_test_multiple "mt print objfiles ${testfile}" $test {
+set filter "gdb_index|debug_names|Psymtabs|Cooked"
+set cmd "pipe mt print objfiles ${testfile} | grep -E \"$filter\""
+set cmd_re [string_to_regexp $cmd]
+set testfile_with_index bla
+gdb_test_multiple $cmd $test {
+    -re ^$cmd_re {
+	exp_continue
+    }
     -re "gdb_index.*${gdb_prompt} $" {
-	set binfile_with_index $binfile
+	set testfile_with_index $testfile
+	set binfile_with_index [standard_output_file $testfile_with_index]
 	set host_binfile_with_index [gdb_remote_download host $binfile]
     }
     -re "debug_names.*${gdb_prompt} $" {
-	set binfile_with_index $binfile
+	set testfile_with_index $testfile
+	set binfile_with_index [standard_output_file $testfile_with_index]
 	set host_binfile_with_index [gdb_remote_download host $binfile]
     }
     -re "(Psymtabs|Cooked).*${gdb_prompt} $" {
 	lassign [local_add_gdb_index $binfile] binfile_with_index host_binfile_with_index
+	set testfile_with_index [file tail $binfile_with_index]
 	if { ${binfile_with_index} == "" } {
 	    return -1
 	}
@@ -118,7 +128,7 @@ gdb_test_multiple "mt print objfiles ${testfile}" $test {
 # Ok, we have a copy of $binfile with an index.
 # Restart gdb and verify the index was used.
 
-clean_restart ${binfile_with_index}
+clean_restart $testfile_with_index
 gdb_test "mt print objfiles ${testfile}" \
     "(gdb_index|debug_names).*" \
     "index used"

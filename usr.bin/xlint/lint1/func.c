@@ -1,4 +1,4 @@
-/*	$NetBSD: func.c,v 1.187.2.1 2025/08/02 05:58:46 perseant Exp $	*/
+/*	$NetBSD: func.c,v 1.187.2.2 2026/11/04 23:28:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: func.c,v 1.187.2.1 2025/08/02 05:58:46 perseant Exp $");
+__RCSID("$NetBSD: func.c,v 1.187.2.2 2026/11/04 23:28:45 perseant Exp $");
 #endif
 
 #include <stdlib.h>
@@ -308,11 +308,11 @@ begin_function(sym_t *fsym)
 		symtab_remove_forever(rdsym);
 	}
 
-	if (fsym->s_osdef && !fsym->s_type->t_proto) {
-		if (!allow_trad && hflag &&
+	if (fsym->s_osdef && !fsym->s_type->t_proto && !fsym->s_type->t_identifier_params) {
+		if (!allow_trad &&
 		    (allow_c99 || strcmp(fsym->s_name, "main") != 0))
-			/* function definition is not a prototype */
-			warning(286);
+			/* function definition for '%s' is not a prototype */
+			warning(286, fsym->s_name);
 	}
 
 	if (dcs->d_no_type_specifier)
@@ -395,7 +395,8 @@ named_label(sym_t *sym)
 static void
 check_case_label_bitand(const tnode_t *case_expr, const tnode_t *switch_expr)
 {
-	if (switch_expr->tn_op != BITAND ||
+	if (switch_expr == NULL ||
+	    switch_expr->tn_op != BITAND ||
 	    switch_expr->u.ops.right->tn_op != CON)
 		return;
 
@@ -515,6 +516,37 @@ case_label(tnode_t *tn)
 	check_case_label(tn);
 	expr_free_all();
 	set_reached(true);
+	suppress_fallthrough = true;
+}
+
+void
+case_label_range(tnode_t *ln, tnode_t *rn)
+{
+	if (ln->tn_op == CON && rn->tn_op == CON
+	    && ln->tn_type->t_tspec == rn->tn_type->t_tspec
+	    && is_integer(ln->tn_type->t_tspec)) {
+		uint64_t mask = is_uinteger(ln->tn_type->t_tspec)
+		    ? 1ULL << 63 : 0;
+		if (is_integer(ln->tn_type->t_tspec)) {
+			uint64_t lo = (uint64_t)ln->u.value.u.integer ^ mask;
+			uint64_t hi = (uint64_t)rn->u.value.u.integer ^ mask;
+			if (lo < hi && hi - lo > 1000)
+				hi = 0;
+			for (; lo < hi; lo++) {
+				tnode_t *tn = expr_alloc_tnode();
+				tn->tn_sys = ln->tn_sys;
+				tn->tn_op = CON;
+				tn->tn_type = ln->tn_type;
+				tn->u.value.v_tspec = tn->tn_type->t_tspec;
+				tn->u.value.u.integer = (int64_t)(lo ^ mask);
+				check_case_label(tn);
+			}
+		}
+	}
+	check_case_label(rn);
+	expr_free_all();
+	set_reached(true);
+	suppress_fallthrough = true;
 }
 
 void
@@ -554,15 +586,15 @@ check_controlling_expression(tnode_t *tn, bool is_do_while)
 		/* C99 6.5.15p4 for the ?: operator; see typeok:QUEST */
 		/* C99 6.8.4.1p1 for if statements */
 		/* C99 6.8.5p2 for while, do and for loops */
-		/* controlling expressions must have scalar type */
-		error(204);
+		/* controlling expressions must have scalar type, not '%s' */
+		error(204, type_name(tn->tn_type));
 		return NULL;
 	}
 
 	if (tn != NULL && Tflag
 	    && !is_typeok_bool_compares_with_zero(tn, is_do_while)) {
 		/* controlling expression must be bool, not '%s' */
-		error(333, tn->tn_type->t_is_enum ? type_name(tn->tn_type)
+		error(333, tn->tn_type->t_is_enum ? expr_type_name(tn)
 		    : tspec_name(tn->tn_type->t_tspec));
 	}
 
@@ -615,8 +647,8 @@ stmt_switch_expr(tnode_t *tn)
 	if (tn != NULL)
 		tn = promote(NOOP, false, tn);
 	if (tn != NULL && !is_integer(tn->tn_type->t_tspec)) {
-		/* switch expression must have integral type */
-		error(205);
+		/* switch expression must have integral type, not '%s' */
+		error(205, type_name(tn->tn_type));
 		tn = NULL;
 	}
 	if (tn != NULL && !allow_c90) {

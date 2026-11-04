@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_nat.c,v 1.26.10.1 2025/08/02 05:57:33 perseant Exp $	*/
+/*	$NetBSD: ip_nat.c,v 1.26.10.2 2026/11/04 23:23:00 perseant Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -112,7 +112,7 @@ extern struct ifnet vpnif;
 #if !defined(lint)
 #if defined(__NetBSD__)
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.26.10.1 2025/08/02 05:57:33 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_nat.c,v 1.26.10.2 2026/11/04 23:23:00 perseant Exp $");
 #else
 static const char sccsid[] = "@(#)ip_nat.c	1.11 6/5/96 (C) 1995 Darren Reed";
 static const char rcsid[] = "@(#)Id: ip_nat.c,v 1.1.1.2 2012/07/22 13:45:27 darrenr Exp";
@@ -1792,6 +1792,7 @@ ipf_nat_getent(ipf_main_softc_t *softc, void *data, int getlock)
 		IPFERROR(60029);
 		return ENOMEM;
 	}
+	bzero(ipn, ipns.ipn_dsize);
 
 	if (getlock) {
 		READ_ENTER(&softc->ipf_nat);

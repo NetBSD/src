@@ -1,4 +1,4 @@
-/*	$NetBSD: sent.h,v 1.1.1.1.62.1 2025/08/02 05:50:08 perseant Exp $	*/
+/*	$NetBSD: sent.h,v 1.1.1.1.62.2 2026/11/04 23:14:48 perseant Exp $	*/
 
 #ifndef _SENT_H_INCLUDED_
 #define _SENT_H_INCLUDED_
@@ -31,7 +31,7 @@
 #define SENT_FLAG_NONE	(0)
 
 extern int sent(int, const char *, MSG_STATS *, RECIPIENT *, const char *,
-		        DSN *);
+		        const POL_STATS *, DSN *);
 
 /* LICENSE
 /* .ad
@@ -42,6 +42,9 @@ extern int sent(int, const char *, MSG_STATS *, RECIPIENT *, const char *,
 /*	IBM T.J. Watson Research
 /*	P.O. Box 704
 /*	Yorktown Heights, NY 10598, USA
+/*
+/*	Wietse Venema
+/*	porcupine.org
 /*--*/
 
 #endif

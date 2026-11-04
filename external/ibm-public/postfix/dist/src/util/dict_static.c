@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_static.c,v 1.4 2022/10/08 16:12:50 christos Exp $	*/
+/*	$NetBSD: dict_static.c,v 1.4.4.1 2026/11/04 23:14:57 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -149,5 +149,5 @@ DICT   *dict_static_open(const char *name, int open_flags, int dict_flags)
     dict_static->value = mystrdup(value);
     dict_file_purge_buffers(&dict_static->dict);
 
-    DICT_STATIC_OPEN_RETURN(DICT_DEBUG (&(dict_static->dict)));
+    DICT_STATIC_OPEN_RETURN(&(dict_static->dict));
 }

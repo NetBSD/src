@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_TRAITS_H
-#define COMMON_TRAITS_H
+#ifndef GDBSUPPORT_TRAITS_H
+#define GDBSUPPORT_TRAITS_H
 
 #include <type_traits>
 
@@ -89,54 +89,17 @@ template<typename To, template<typename...> class Op, typename... Args>
 using is_detected_convertible
   = std::is_convertible<detected_t<Op, Args...>, To>;
 
-/* A few trait helpers, mainly stolen from libstdc++.  Uppercase
-   because "and/or", etc. are reserved keywords.  */
+/* A few trait helpers -- standard traits but with slightly nicer
+   names.  Uppercase because "and/or", etc. are reserved keywords.  */
 
 template<typename Predicate>
-struct Not : public std::integral_constant<bool, !Predicate::value>
-{};
+using Not = std::negation<Predicate>;
 
-template<typename...>
-struct Or;
+template<typename ...T>
+using Or = std::disjunction<T...>;
 
-template<>
-struct Or<> : public std::false_type
-{};
-
-template<typename B1>
-struct Or<B1> : public B1
-{};
-
-template<typename B1, typename B2>
-struct Or<B1, B2>
-  : public std::conditional<B1::value, B1, B2>::type
-{};
-
-template<typename B1,typename B2,typename B3, typename... Bn>
-struct Or<B1, B2, B3, Bn...>
-  : public std::conditional<B1::value, B1, Or<B2, B3, Bn...>>::type
-{};
-
-template<typename...>
-struct And;
-
-template<>
-struct And<> : public std::true_type
-{};
-
-template<typename B1>
-struct And<B1> : public B1
-{};
-
-template<typename B1, typename B2>
-struct And<B1, B2>
-  : public std::conditional<B1::value, B2, B1>::type
-{};
-
-template<typename B1, typename B2, typename B3, typename... Bn>
-struct And<B1, B2, B3, Bn...>
-  : public std::conditional<B1::value, And<B2, B3, Bn...>, B1>::type
-{};
+template<typename ...T>
+using And = std::conjunction<T...>;
 
 /* Concepts-light-like helper to make SFINAE logic easier to read.  */
 template<typename Condition>
@@ -147,4 +110,4 @@ template<typename T>
 using RequireLongest = gdb::Requires<gdb::Or<std::is_same<T, LONGEST>,
 					     std::is_same<T, ULONGEST>>>;
 
-#endif /* COMMON_TRAITS_H */
+#endif /* GDBSUPPORT_TRAITS_H */

@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2023 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,21 +15,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_DCACHE_H
-#define TARGET_DCACHE_H
+#ifndef GDB_TARGET_DCACHE_H
+#define GDB_TARGET_DCACHE_H
 
 #include "dcache.h"
+#include "progspace.h"
 
-extern void target_dcache_invalidate (void);
+extern void target_dcache_invalidate (address_space_ref_ptr aspace);
 
-extern DCACHE *target_dcache_get (void);
+extern DCACHE *target_dcache_get (address_space_ref_ptr aspace);
 
-extern DCACHE *target_dcache_get_or_init (void);
+extern DCACHE *target_dcache_get_or_init (address_space_ref_ptr aspace);
 
-extern int target_dcache_init_p (void);
+extern int target_dcache_init_p (address_space_ref_ptr aspace);
 
 extern int stack_cache_enabled_p (void);
 
 extern int code_cache_enabled_p (void);
 
-#endif /* TARGET_DCACHE_H */
+#endif /* GDB_TARGET_DCACHE_H */

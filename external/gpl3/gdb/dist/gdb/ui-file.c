@@ -1,6 +1,6 @@
 /* UI_FILE - a generic STDIO like output stream.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,18 +88,6 @@ ui_file::emit_style_escape (const ui_file_style &style)
 /* See ui-file.h.  */
 
 void
-ui_file::reset_style ()
-{
-  if (can_emit_style_escape ())
-    {
-      m_applied_style = ui_file_style ();
-      this->puts (m_applied_style.to_ansi ().c_str ());
-    }
-}
-
-/* See ui-file.h.  */
-
-void
 ui_file::printchar (int c, int quoter, bool async_safe)
 {
   char buf[4];
@@ -176,32 +164,6 @@ void
 null_file::write_async_safe (const char *buf, long sizeof_buf)
 {
   /* Discard the request.  */
-}
-
-
-
-/* true if the gdb terminal supports styling, and styling is enabled.  */
-
-static bool
-term_cli_styling ()
-{
-  if (!cli_styling)
-    return false;
-
-  const char *term = getenv ("TERM");
-  /* Windows doesn't by default define $TERM, but can support styles
-     regardless.  */
-#ifndef _WIN32
-  if (term == nullptr || !strcmp (term, "dumb"))
-    return false;
-#else
-  /* But if they do define $TERM, let us behave the same as on Posix
-     platforms, for the benefit of programs which invoke GDB as their
-     back-end.  */
-  if (term && !strcmp (term, "dumb"))
-    return false;
-#endif
-  return true;
 }
 
 
@@ -446,7 +408,7 @@ tee_file::can_emit_style_escape ()
 /* See ui-file.h.  */
 
 void
-no_terminal_escape_file::write (const char *buf, long length_buf)
+escape_buffering_file::write (const char *buf, long length_buf)
 {
   std::string copy (buf, length_buf);
   this->puts (copy.c_str ());
@@ -455,7 +417,60 @@ no_terminal_escape_file::write (const char *buf, long length_buf)
 /* See ui-file.h.  */
 
 void
-no_terminal_escape_file::puts (const char *buf)
+escape_buffering_file::puts (const char *buf)
+{
+  std::string local_buffer;
+  if (!m_buffer.empty ())
+    {
+      gdb_assert (m_buffer[0] == '\033');
+      m_buffer += buf;
+      /* If we need to keep buffering, we'll handle that below.  */
+      local_buffer = std::move (m_buffer);
+      buf = local_buffer.c_str ();
+    }
+
+  while (*buf != '\0')
+    {
+      const char *esc = strchr (buf, '\033');
+      if (esc == nullptr)
+	break;
+
+      /* First, write out any prefix.  */
+      if (esc > buf)
+	{
+	  do_write (buf, esc - buf);
+	  buf = esc;
+	}
+
+      int n_read = 0;
+      ansi_escape_result seen = examine_ansi_escape (esc, &n_read);
+      if (seen == ansi_escape_result::INCOMPLETE)
+	{
+	  /* Start buffering.  */
+	  m_buffer = buf;
+	  return;
+	}
+      else if (seen == ansi_escape_result::NO_MATCH)
+	{
+	  /* Just emit the ESC . */
+	  n_read = 1;
+	}
+      else
+	gdb_assert (seen == ansi_escape_result::MATCHED);
+
+      do_write (esc, n_read);
+      buf += n_read;
+    }
+
+  /* If there is any data remaining in BUF, we can flush it now.  */
+  if (*buf != '\0')
+    do_puts (buf);
+}
+
+/* See ui-file.h.  */
+
+void
+no_terminal_escape_file::do_puts (const char *buf)
 {
   while (*buf != '\0')
     {
@@ -473,6 +488,13 @@ no_terminal_escape_file::puts (const char *buf)
 
   if (*buf != '\0')
     this->stdio_file::write (buf, strlen (buf));
+}
+
+void
+no_terminal_escape_file::do_write (const char *buf, long len)
+{
+  std::string copy (buf, len);
+  do_puts (copy.c_str ());
 }
 
 void

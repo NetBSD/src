@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.316.2.1 2025/08/02 05:55:19 perseant Exp $
+#	$NetBSD: bsd.sys.mk,v 1.316.2.2 2026/11/04 23:19:54 perseant Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -29,9 +29,9 @@ CPPFLAGS+=	-Wp,-iremap,${NETBSDSRCDIR}:/usr/src
 CPPFLAGS+=	-Wp,-iremap,${X11SRCDIR}:/usr/xsrc
 
 REPROFLAGS+=	-fdebug-prefix-map=\$$NETBSDSRCDIR=/usr/src
-REPROFLAGS+=	-fmacro-prefix-map=\$$NETBSDSRCDIR=/usr/src
+CREPROFLAGS+=	-fmacro-prefix-map=\$$NETBSDSRCDIR=/usr/src
 REPROFLAGS+=	-fdebug-prefix-map=\$$X11SRCDIR=/usr/xsrc
-REPROFLAGS+=	-fmacro-prefix-map=\$$X11SRCDIR=/usr/xsrc
+CREPROFLAGS+=	-fmacro-prefix-map=\$$X11SRCDIR=/usr/xsrc
 .if defined(MAKEOBJDIRPREFIX)
 NETBSDOBJDIR=	${MAKEOBJDIRPREFIX}${NETBSDSRCDIR}
 .endif
@@ -51,8 +51,9 @@ REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj/(.*)=/usr/obj/\1/\2'
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj\..*=/usr/obj/\1'
 REPROFLAGS+=	-fdebug-regex-map='/usr/src/(.*)/obj\..*/(.*)=/usr/obj/\1/\2'
 
-CFLAGS+=	${REPROFLAGS}
-CXXFLAGS+=	${REPROFLAGS}
+CFLAGS+=	${REPROFLAGS} ${CREPROFLAGS}
+CXXFLAGS+=	${REPROFLAGS} ${CREPROFLAGS}
+FFLAGS+=	${REPROFLAGS}
 .endif
 
 # NetBSD sources use C99 style, with some GCC extensions.
@@ -233,7 +234,7 @@ CFLAGS+=	-Wa,-Av8plus
 .endif
 
 .if !defined(NOGCCERROR)
-.if ${MACHINE_MIPS64}
+.if ${MACHINE_MIPS64} || ${MACHINE_CPU} == "m68k"
 CPUFLAGS+=	-Wa,--fatal-warnings
 .endif
 .endif

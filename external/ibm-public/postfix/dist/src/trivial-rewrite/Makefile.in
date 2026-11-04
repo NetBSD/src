@@ -68,6 +68,7 @@ resolve.o: ../../include/attr.h
 resolve.o: ../../include/check_arg.h
 resolve.o: ../../include/dict.h
 resolve.o: ../../include/domain_list.h
+resolve.o: ../../include/dsn_util.h
 resolve.o: ../../include/htable.h
 resolve.o: ../../include/iostuff.h
 resolve.o: ../../include/mail_addr_find.h

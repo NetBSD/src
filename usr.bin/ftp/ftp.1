@@ -1,6 +1,6 @@
-.\" 	$NetBSD: ftp.1,v 1.154.2.1 2025/08/02 05:58:26 perseant Exp $
+.\" 	$NetBSD: ftp.1,v 1.154.2.2 2026/11/04 23:28:33 perseant Exp $
 .\"
-.\" Copyright (c) 1996-2024 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
 .\"
 .\"	@(#)ftp.1	8.3 (Berkeley) 10/9/94
 .\"
-.Dd November 29, 2024
+.Dd February 7, 2026
 .Dt FTP 1
 .Os
 .Sh NAME
@@ -206,7 +206,7 @@ Causes
 .Nm
 to bypass normal login procedure, and use an anonymous login instead.
 .It Fl b Ar bufsize
-Change the input buffer size to
+Change the buffer size used for parsing HTTP response lines to
 .Ar bufsize
 bytes.
 The default
@@ -469,6 +469,9 @@ Terminate the
 session with the remote server, and
 return to the command interpreter.
 Any defined macros are erased.
+.It Ic connect Ar host Op Ar port
+A synonym for
+.Ic open .
 .It Ic \&cr
 Toggle carriage return stripping during
 .Ic type Cm ascii
@@ -1597,6 +1600,9 @@ verbose is on.
 .It Ic xferbuf Ar size
 Set the size of the socket send and receive buffers to
 .Ar size .
+If
+.Ar size
+is 0, the default values for the operating system are used.
 .It Ic \&? Op Ar command
 A synonym for
 .Ic help .

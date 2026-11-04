@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.310 2022/05/31 08:43:15 andvar Exp $ */
+/*	$NetBSD: wdc.c,v 1.310.10.1 2026/11/04 23:21:59 perseant Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.310 2022/05/31 08:43:15 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.310.10.1 2026/11/04 23:21:59 perseant Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -297,7 +297,7 @@ wdc_drvprobe(struct ata_channel *chp)
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
 	u_int8_t st0 = 0, st1 = 0;
-	int i, j, error, tfd;
+	int i, error, tfd;
 
 	ata_channel_lock(chp);
 	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0) {
@@ -377,13 +377,44 @@ wdc_drvprobe(struct ata_channel *chp)
 		chp->ch_drive[i].n_dmaerrs = NERRS_MAX - 1;
 #endif
 
-		/* If controller can't do 16bit flag the drives as 32bit */
-		if ((atac->atac_cap &
-		    (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) == ATAC_CAP_DATA32) {
+		switch (atac->atac_cap & (ATAC_CAP_DATA16 | ATAC_CAP_DATA32)) {
+		case 0:
+			/*
+			 * Controller can only do 8-bit PIO; we will have
+			 * to issue a SET_FEATURES to put the drive into
+			 * that mode.  If it fails, we will ignore the
+			 * drive.
+			 */
+			aprint_verbose("%s:%d:%d: setting PIO8_EN\n",
+			    device_xname(atac->atac_dev),
+			    chp->ch_channel, i);
+			error = ata_set_pio8(&chp->ch_drive[i],
+			    AT_WAIT | AT_POLL);
+			if (error != CMD_OK) {
+				aprint_error("%s:%d:%d: failed to set "
+					     "8-bit PIO (%d)\n",
+				    device_xname(atac->atac_dev),
+				    chp->ch_channel, i, error);
+				ata_channel_lock(chp);
+				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
+				ata_channel_unlock(chp);
+			}
+			break;
+
+		case ATAC_CAP_DATA32:
+			/*
+			 * If the controller can't do 16-bit, then flag
+			 * the drives as 32-bit.
+			 */
 			ata_channel_lock(chp);
 			chp->ch_drive[i].drive_flags |= ATA_DRIVE_CAP32;
 			ata_channel_unlock(chp);
+			break;
+
+		default:
+			break;
 		}
+
 		if (chp->ch_drive[i].drive_type == ATA_DRIVET_NONE)
 			continue;
 
@@ -467,16 +498,10 @@ wdc_drvprobe(struct ata_channel *chp)
 				    chp->ch_channel, i), DEBUG_PROBE);
 				chp->ch_drive[i].drive_type = ATA_DRIVET_NONE;
 				ata_channel_unlock(chp);
-			} else {
-				for (j = 0; j < chp->ch_ndrives; j++) {
-					if (chp->ch_drive[i].drive_type !=
-					    ATA_DRIVET_NONE) {
-						chp->ch_drive[j].drive_type =
-						    ATA_DRIVET_OLD;
-					}
-				}
-				ata_channel_unlock(chp);
+				continue;
 			}
+			chp->ch_drive[i].drive_type = ATA_DRIVET_OLD;
+			ata_channel_unlock(chp);
 		}
 	}
 }
@@ -561,9 +586,28 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		ATADEBUG_PRINT(("%s:%d: before reset, st0=0x%x, st1=0x%x\n",
 			__func__, chp->ch_channel, st0, st1), DEBUG_PROBE);
 
+		/*
+		 * Is a drive present?  Originally this code tested either
+		 * for 0xff (ISA controller with no drive present; pull-ups
+		 * take reg values high) or "echo", which meant writing to
+		 * the notionally read-only geometry regs and seeing if we
+		 * could read back what we wrote (if a drive is there, we
+		 * will not).  But some PCI controllers don't have the
+		 * 0xff behavior and also share regs internally in a way
+		 * that tricks the echo test, resulting in a 3 second delay
+		 * later before we find no drive.  We conditionally check for
+		 * 0x00 which should catch this case because a drive that's
+		 * actually present should have at least BSY or DRDY set.
+		 */
 		if (st0 == 0xff || st0 == WDSD_IBM)
 			ret_value &= ~0x01;
+		else if (st0 == 0x00 &&
+		    (wdc->cap & WDC_CAPABILITY_ZERO_ABSENT))
+			ret_value &= ~0x01;
 		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
+			ret_value &= ~0x02;
+		else if (st0 == 0x00 &&
+		    (wdc->cap & WDC_CAPABILITY_ZERO_ABSENT))
 			ret_value &= ~0x02;
 		/* Register writability test, drive 0. */
 		if (ret_value & 0x01) {
@@ -1029,7 +1073,7 @@ wdcreset(struct ata_channel *chp, int poll)
 	struct atac_softc *atac = chp->ch_atac;
 	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = &wdc->regs[chp->ch_channel];
-	int drv_mask1, drv_mask2;
+	int drv_mask1 = 0, drv_mask2;
 
 	ata_channel_lock_owned(chp);
 
@@ -1038,8 +1082,9 @@ wdcreset(struct ata_channel *chp, int poll)
 #endif
 	wdc->reset(chp, poll);
 
-	drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE)
-	    ? 0x01 : 0x00;
+	if (chp->ch_ndrives > 0)
+		drv_mask1 = (chp->ch_drive[0].drive_type !=  ATA_DRIVET_NONE)
+		    ? 0x01 : 0x00;
 	if (chp->ch_ndrives > 1)
 		drv_mask1 |= (chp->ch_drive[1].drive_type != ATA_DRIVET_NONE)
 		    ? 0x02 : 0x00;
@@ -1908,6 +1953,26 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 
+	if ((chp->ch_atac->atac_cap & ATAC_CAP_DATA16) == 0) {
+		/*
+		 * ATA_DRIVE_NOSTREAM is used for the IDENTIFY
+		 * command for ... reasons.  Bad reasons, but
+		 * reasons nonetheless.  So, emulate it as if
+		 * it were 16-bit PIO.
+		 */
+		if (flags & ATA_DRIVE_NOSTREAM) {
+			uint8_t *cp = bf;
+			for (size_t i = 0; i < len; i++) {
+				cp[i ^ 1] = bus_space_read_1(wdr->cmd_iot,
+				    wdr->cmd_iohs[wd_data], 0);
+			}
+			return;
+		}
+		bus_space_read_multi_1(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_data], 0, bf, len);
+		return;
+	}
+
 #ifndef __NO_STRICT_ALIGNMENT
 	if ((uintptr_t)bf & 1)
 		goto unaligned;
@@ -1916,6 +1981,24 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #endif
 
 	if (flags & ATA_DRIVE_NOSTREAM) {
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+		/*
+		 * Because consumers of IDENTIFY are too lazy to byte-swap
+		 * their own payload, we have to do it ourselves here.
+		 * XXX THIS IS SO DUMB!  FIX CONSUMERS OF IDENTIFY!!!
+		 *
+		 * Don't even try to deal with 32-bit PIO in this situation.
+		 */
+		KASSERT((flags & ATA_DRIVE_CAP32) == 0);
+		uint16_t *p16 = bf;
+		for (; len > 1; len -= 2) {
+			*p16++ =
+			    bswap16(bus_space_read_2(wdr->cmd_iot,
+						     wdr->cmd_iohs[wd_data],
+						     0));
+		}
+		bf = (void *)p16;
+#else
 		if ((flags & ATA_DRIVE_CAP32) && len > 3) {
 			bus_space_read_multi_4(wdr->data32iot,
 			    wdr->data32ioh, 0, bf, len >> 2);
@@ -1928,6 +2011,7 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 			bf = (char *)bf + (len & ~1);
 			len &= 1;
 		}
+#endif
 	} else {
 		if ((flags & ATA_DRIVE_CAP32) && len > 3) {
 			bus_space_read_multi_stream_4(wdr->data32iot,
@@ -1950,6 +2034,9 @@ wdc_datain_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 #ifndef __NO_STRICT_ALIGNMENT
 unaligned:
 	if (flags & ATA_DRIVE_NOSTREAM) {
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+		KASSERT((flags & ATA_DRIVE_CAP32) == 0);
+#else
 		if (flags & ATA_DRIVE_CAP32) {
 			while (len > 3) {
 				uint32_t val;
@@ -1961,11 +2048,15 @@ unaligned:
 				len -= 4;
 			}
 		}
+#endif
 		while (len > 1) {
 			uint16_t val;
 
 			val = bus_space_read_2(wdr->cmd_iot,
 			    wdr->cmd_iohs[wd_data], 0);
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+			val = bswap16(val);
+#endif
 			memcpy(bf, &val, 2);
 			bf = (char *)bf + 2;
 			len -= 2;
@@ -1999,6 +2090,34 @@ static void
 wdc_dataout_pio(struct ata_channel *chp, int flags, void *bf, size_t len)
 {
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
+
+#if !defined(__BUS_SPACE_HAS_STREAM_METHODS) && _BYTE_ORDER == _BIG_ENDIAN
+	/*
+	 * This should absolutely never be necessary.  If it is, we
+	 * have bigger problems.
+	 */
+	KASSERT((flags & ATA_DRIVE_NOSTREAM) == 0);
+#endif
+
+	if ((chp->ch_atac->atac_cap & ATAC_CAP_DATA16) == 0) {
+		/*
+		 * ATA_DRIVE_NOSTREAM is not exactly expected for
+		 * PIO writes, but emulate it as if it were
+		 * 16-bit PIO.
+		 */
+		if (flags & ATA_DRIVE_NOSTREAM) {
+			uint8_t *cp = bf;
+			for (size_t i = 0; i < len; i++) {
+				bus_space_write_1(wdr->cmd_iot,
+				    wdr->cmd_iohs[wd_data], 0,
+				    cp[i ^ 1]);
+			}
+			return;
+		}
+		bus_space_write_multi_1(wdr->cmd_iot,
+		    wdr->cmd_iohs[wd_data], 0, bf, len);
+		return;
+	}
 
 #ifndef __NO_STRICT_ALIGNMENT
 	if ((uintptr_t)bf & 1)

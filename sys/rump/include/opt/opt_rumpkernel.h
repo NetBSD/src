@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_rumpkernel.h,v 1.8 2022/03/31 01:36:47 yamaguchi Exp $	*/
+/*	$NetBSD: opt_rumpkernel.h,v 1.8.10.1 2026/11/04 23:28:02 perseant Exp $	*/
 
 #ifndef __NetBSD__
 #define __NetBSD__
@@ -38,3 +38,5 @@
 #define ALTQ_CBQ
 
 #define LACP_NOFDX
+
+#define SPPP_FILTER

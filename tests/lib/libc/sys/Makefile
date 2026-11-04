@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.76.2.1 2025/08/02 05:58:06 perseant Exp $
+# $NetBSD: Makefile,v 1.76.2.2 2026/11/04 23:28:18 perseant Exp $
 
 MKMAN=	no
 
@@ -9,6 +9,10 @@ MKMAN=	no
 TESTSDIR=		${TESTSBASE}/lib/libc/sys
 
 TESTS_C+=		t_access
+TESTS_C+=		t_aio_cancel
+TESTS_C+=		t_aio_lio
+TESTS_C+=		t_aio_rw
+TESTS_C+=		t_aio_suspend
 TESTS_C+=		t_bind
 TESTS_C+=		t_chroot
 TESTS_C+=		t_clock_gettime
@@ -36,10 +40,10 @@ TESTS_C+=		t_kevent
 TESTS_C+=		t_kill
 TESTS_C+=		t_link
 TESTS_C+=		t_listen
-TESTS_C+=		t_lwp_ctl
 TESTS_C+=		t_lwp_create
-TESTS_C+=		t_minherit
+TESTS_C+=		t_lwp_ctl
 TESTS_C+=		t_mincore
+TESTS_C+=		t_minherit
 TESTS_C+=		t_mkdir
 TESTS_C+=		t_mkfifo
 TESTS_C+=		t_mknod
@@ -76,11 +80,12 @@ TESTS_C+=		t_setrlimit
 TESTS_C+=		t_setuid
 TESTS_C+=		t_sigaction
 TESTS_C+=		t_sigaltstack
+TESTS_C+=		t_sigio
 TESTS_C+=		t_sigqueue
 TESTS_C+=		t_sigtimedwait
 TESTS_C+=		t_socketpair
-TESTS_C+=		t_swapcontext
 TESTS_C+=		t_stat
+TESTS_C+=		t_swapcontext
 TESTS_C+=		t_syscall
 TESTS_C+=		t_timer_create
 TESTS_C+=		t_timerfd
@@ -96,11 +101,17 @@ TESTS_C+=		t_write
 
 SRCS.t_mprotect=	t_mprotect.c ${SRCS_EXEC_PROT} t_mprotect_helper.c
 
+LDADD.t_aio_cancel+=	-lrt -lpthread
+LDADD.t_aio_suspend+=	-lrt -lpthread
+LDADD.t_aio_rw+=	-lrt -lpthread
+LDADD.t_aio_lio+=	-lrt -lpthread
+
 LDADD.t_eventfd+=	-lpthread
 LDADD.t_getpid+=	-lpthread
 LDADD.t_mmap+=		-lpthread
 LDADD.t_poll+=		-lpthread
 LDADD.t_ptrace_kill+=	-lpthread
+LDADD.t_sigio+=		-lpthread
 LDADD.t_timerfd+=	-lpthread
 
 LDADD.t_ptrace_sigchld+=	-pthread -lm

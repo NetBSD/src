@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.379.2.1 2025/08/02 05:55:22 perseant Exp $ */
+/* $NetBSD: machdep.c,v 1.379.2.2 2026/11/04 23:19:57 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019, 2020 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379.2.1 2025/08/02 05:55:22 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.379.2.2 2026/11/04 23:19:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -725,7 +725,8 @@ nobootinfo:
 	 * Set the kernel sp, reserving space for an (empty) trapframe,
 	 * and make lwp0's trapframe pointer point to it for sanity.
 	 */
-	pcb0->pcb_hw.apcb_ksp = v + USPACE - sizeof(struct trapframe);
+	pcb0->pcb_hw.apcb_ksp = (v + USPACE - sizeof(struct trapframe)) &
+	    ~STACK_ALIGNBYTES;
 	lwp0.l_md.md_tf = (struct trapframe *)pcb0->pcb_hw.apcb_ksp;
 
 	/* Indicate that lwp0 has a CPU. */
@@ -859,15 +860,6 @@ nobootinfo:
 			hwrpb->rpb_intr_freq, hz);
 #endif
 }
-
-#ifdef MODULAR
-/* Push any modules loaded by the boot loader */
-void
-module_init_md(void)
-{
-	/* nada. */
-}
-#endif /* MODULAR */
 
 void
 consinit(void)
@@ -1111,9 +1103,9 @@ haltsys:
 
 #ifdef BOOTKEY
 	printf("hit any key to %s...\n", howto & RB_HALT ? "halt" : "reboot");
-	cnpollc(1);	/* for proper keyboard command handling */
+	cnpollc(true);	/* for proper keyboard command handling */
 	cngetc();
-	cnpollc(0);
+	cnpollc(false);
 	printf("\n");
 #endif
 

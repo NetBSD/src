@@ -5,9 +5,11 @@
 
 /dts-v1/;
 #include "mt8183-kukui-jacuzzi.dtsi"
+#include "mt8183-kukui-audio-ts3a227e-max98357a.dtsi"
 
 / {
 	model = "Google burnet board";
+	chassis-type = "convertible";
 	compatible = "google,burnet", "mediatek,mt8183";
 };
 
@@ -28,3 +30,6 @@
 	};
 };
 
+&i2c2 {
+	i2c-scl-internal-delay-ns = <4100>;
+};

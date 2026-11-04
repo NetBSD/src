@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.216.2.2 2025/08/02 05:55:33 perseant Exp $
+#	$NetBSD: GENERIC64,v 1.216.2.3 2026/11/04 23:20:27 perseant Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -32,10 +32,10 @@ pseudo-device 	openfirm	# /dev/openfirm
 #options 	DEBUG
 #options 	LOCKDEBUG
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
-options 	INCLUDE_CONFIG_FILE
 #options 	UVMHIST		# kernhist for uvm/pmap subsystems
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
+#options 	PMAP_DEBUG
 
 # Heartbeat checks
 options 	HEARTBEAT
@@ -139,6 +139,7 @@ vmt0		at cpu0			# VMware Tools
 # Performance monitors
 armpmu* 	at fdt?
 pseudo-device	tprof
+pseudo-device	lockstat		# lock profiling
 
 # CPU frequency scaling
 cpufreqdt*	at cpu?
@@ -324,6 +325,7 @@ iophy*		at mii? phy ?		# Intel 82553 PHYs
 lxtphy* 	at mii? phy ?		# Level One LXT-970 PHYs
 makphy* 	at mii? phy ?		# Marvell Semiconductor 88E1000 PHYs
 mcommphy*	at mii? phy ?		# Motorcomm YT8511C/YT8511H PHYs
+micphy* 	at mii? phy ?		# Micrel KSZ[89]xxx PHYs
 nsphy*		at mii? phy ?		# NS83840 PHYs
 nsphyter*	at mii? phy ? 		# NS83843 PHYs
 pnaphy* 	at mii? phy ?		# generic HomePNA PHYs
@@ -362,6 +364,7 @@ bsciic* 	at acpi?
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
 imxi2c* 	at fdt? pass 4		# IMX I2C
+mesoniic* 	at fdt?			# Amlogic Meson I2C
 nxpiic* 	at acpi?		# NXP Layerscape I2C
 qcomiic*	at acpi?		# Qualcomm I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
@@ -492,6 +495,7 @@ hdmicec*	at hdmicecbus?
 # Display
 anxdp*		at fdt?			# Analogix-based (e)DP
 anxedp* 	at iic?			# Analogix eDP TX
+bochsfb*	at pci? dev ? function ?	# Bochs framebuffer (QEMU)
 dispcon*	at fdt?			# Display connector devices
 panel*		at fdt?			# Display panels
 dwhdmi* 	at fdt?			# Designware HDMI TX
@@ -585,6 +589,9 @@ virtio* 	at pci? dev ? function ?
 
 include "dev/virtio/virtio.config"
 no viomb* 	at virtio?		# XXX ?
+
+# VMWare devices
+pvscsi* 	at pci? dev ? function?	# PV SCSI device
 
 # SCSI controllers
 mpt*		at pci? dev ? function ?

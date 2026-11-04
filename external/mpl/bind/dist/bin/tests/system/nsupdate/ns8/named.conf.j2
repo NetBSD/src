@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	session-keyfile "session.key";
+	recursion no;
+	minimal-responses no;
+	dnssec-validation no;
+	tkey-gssapi-keytab "dns-other-than-KRB5_KTNAME.keytab";
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "in-addr.arpa" {
+	type primary;
+	file "in-addr.db";
+	update-policy {	grant EXAMPLE.COM krb5-subdomain . PTR; };
+};
+
+zone "example.com" {
+	type primary;
+	file "example.com.db";
+	update-policy {
+		grant EXAMPLE.COM krb5-selfsub . ANY;
+		grant EXAMPLE.COM krb5-subdomain _tcp.example.com SRV;
+	};
+};

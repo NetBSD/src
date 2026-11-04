@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.21.2.1 2026/11/04 23:21:21 perseant Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21.2.1 2026/11/04 23:21:21 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.21 2023/12/20 05:33:18 thorpej Exp $");
 #include <dev/ebus/ebusvar.h>
 
 struct rtc_ebus_softc {
+	device_t		sc_dev;
 	bus_space_tag_t		sc_bt;	/* parent bus tag */
 	bus_space_handle_t	sc_bh;	/* handle for registers */
 	struct todr_chip_handle	sc_todr;/* TODR handle */
@@ -111,6 +112,7 @@ rtcattach_ebus(device_t parent, device_t self, void *aux)
 	struct ebus_attach_args *ea = aux;
 	todr_chip_handle_t handle;
 
+	sc->sc_dev = self;
 	sc->sc_bt = ea->ea_bustag;
 	if (bus_space_map(sc->sc_bt, EBUS_ADDR_FROM_REG(&ea->ea_reg[0]),
 			  ea->ea_reg[0].size, 0, &sc->sc_bh) != 0)
@@ -131,13 +133,9 @@ rtcattach_ebus(device_t parent, device_t self, void *aux)
 
 	/* setup our todr_handle */
 	handle = &sc->sc_todr;
-	handle->cookie = sc;
-	handle->bus_cookie = NULL; /* unused */
-	handle->todr_gettime = NULL;
-	handle->todr_settime = NULL;
+	handle->todr_dev = self;
 	handle->todr_gettime_ymdhms = rtc_gettime_ymdhms;
 	handle->todr_settime_ymdhms = rtc_settime_ymdhms;
-	handle->todr_setwen = NULL; /* not necessary, no idprom to protect */
 
 	todr_attach(handle);
 }
@@ -146,7 +144,7 @@ rtcattach_ebus(device_t parent, device_t self, void *aux)
 static int
 rtc_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct rtc_ebus_softc *sc = handle->cookie;
+	struct rtc_ebus_softc *sc = device_private(handle->todr_dev);
 	u_int year;
 
 	/* update in progress; spin loop */
@@ -181,7 +179,7 @@ rtc_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 static int
 rtc_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct rtc_ebus_softc *sc = handle->cookie;
+	struct rtc_ebus_softc *sc = device_private(handle->todr_dev);
 	u_int year;
 
 	year = dt->dt_year - 1900;

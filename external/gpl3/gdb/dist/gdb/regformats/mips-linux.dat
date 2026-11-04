@@ -3,6 +3,7 @@
 name:mips_linux
 xmltarget:mips-linux.xml
 expedite:r29,pc
+osabi:GNU/Linux
 32:r0
 32:r1
 32:r2

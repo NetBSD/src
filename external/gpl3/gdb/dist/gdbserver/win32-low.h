@@ -1,5 +1,5 @@
 /* Internal interfaces for the Win32 specific target code for gdbserver.
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 
 #include <windows.h>
 #include "nat/windows-nat.h"
+#include "gdbsupport/osabi.h"
 
 struct target_desc;
 
@@ -29,6 +30,12 @@ struct target_desc;
 extern const struct target_desc *win32_tdesc;
 #ifdef __x86_64__
 extern const struct target_desc *wow64_win32_tdesc;
+#endif
+
+#ifdef __CYGWIN__
+constexpr enum gdb_osabi WINDOWS_OSABI = GDB_OSABI_CYGWIN;
+#else
+constexpr enum gdb_osabi WINDOWS_OSABI = GDB_OSABI_WINDOWS;
 #endif
 
 struct win32_target_ops
@@ -94,7 +101,7 @@ class win32_process_target : public process_stratum_target
 public:
 
   int create_inferior (const char *program,
-		       const std::vector<char *> &program_args) override;
+		       const std::string &program_args) override;
 
   int attach (unsigned long pid) override;
 

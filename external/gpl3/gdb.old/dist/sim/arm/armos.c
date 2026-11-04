@@ -31,10 +31,7 @@
 #include <errno.h>
 #include <limits.h>
 #include <string.h>
-
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>		/* For SEEK_SET etc.  */
-#endif
 
 #include "armdefs.h"
 #include "armos.h"
@@ -102,7 +99,6 @@ ARMul_OSInit (ARMul_State * state)
 #ifndef NOOS
 #ifndef VALIDATE
   ARMword instr, i, j;
-  struct OSblock *OSptr = (struct OSblock *) state->OSptr;
 
   if (state->OSptr == NULL)
     {
@@ -114,7 +110,6 @@ ARMul_OSInit (ARMul_State * state)
 	}
     }
 
-  OSptr = (struct OSblock *) state->OSptr;
   state->Reg[13] = ADDRSUPERSTACK;			/* Set up a stack for the current mode...  */
   ARMul_SetReg (state, SVC32MODE,   13, ADDRSUPERSTACK);/* ...and for supervisor mode...  */
   ARMul_SetReg (state, ABORT32MODE, 13, ADDRSUPERSTACK);/* ...and for abort 32 mode...  */
@@ -702,11 +697,13 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	    case AngelSWI_Reason_Remove:
 	      SWIremove (state,
 			 ARMul_ReadWord (state, addr));
+	      break;
 
 	    case AngelSWI_Reason_Rename:
 	      SWIrename (state,
 			 ARMul_ReadWord (state, addr),
 			 ARMul_ReadWord (state, addr + 4));
+	      break;
 	    }
 	}
       else
@@ -835,6 +832,7 @@ ARMul_OSHandleSWI (ARMul_State * state, ARMword number)
 	    }
 	  break;
 	}
+      ATTRIBUTE_FALLTHROUGH;
 
     default:
       unhandled = TRUE;

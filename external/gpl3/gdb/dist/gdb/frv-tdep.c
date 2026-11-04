@@ -1,6 +1,6 @@
 /* Target-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,6 +25,7 @@
 #include "frame.h"
 #include "frame-unwind.h"
 #include "frame-base.h"
+#include "solib-frv.h"
 #include "trad-frame.h"
 #include "dis-asm.h"
 #include "sim-regno.h"
@@ -1062,14 +1063,13 @@ frv_skip_main_prologue (struct gdbarch *gdbarch, CORE_ADDR pc)
     {
       LONGEST displ;
       CORE_ADDR call_dest;
-      struct bound_minimal_symbol s;
 
       displ = ((op & 0xfe000000) >> 7) | (op & 0x0003ffff);
       if ((displ & 0x00800000) != 0)
 	displ |= ~((LONGEST) 0x00ffffff);
 
       call_dest = pc + 4 * displ;
-      s = lookup_minimal_symbol_by_pc (call_dest);
+      bound_minimal_symbol s = lookup_minimal_symbol_by_pc (call_dest);
 
       if (s.minsym != NULL
 	  && s.minsym->linkage_name () != NULL
@@ -1374,14 +1374,14 @@ frv_frame_this_id (const frame_info_ptr &this_frame,
     = frv_frame_unwind_cache (this_frame, this_prologue_cache);
   CORE_ADDR base;
   CORE_ADDR func;
-  struct bound_minimal_symbol msym_stack;
   struct frame_id id;
 
   /* The FUNC is easy.  */
   func = get_frame_func (this_frame);
 
   /* Check if the stack is empty.  */
-  msym_stack = lookup_minimal_symbol ("_stack", NULL, NULL);
+  bound_minimal_symbol msym_stack
+    = lookup_minimal_symbol (current_program_space, "_stack");
   if (msym_stack.minsym && info->base == msym_stack.value_address ())
     return;
 
@@ -1405,15 +1405,16 @@ frv_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind frv_frame_unwind = {
+static const struct frame_unwind_legacy frv_frame_unwind (
   "frv prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   frv_frame_this_id,
   frv_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 frv_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -1554,7 +1555,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     set_gdbarch_convert_from_func_ptr_addr (gdbarch,
 					    frv_convert_from_func_ptr_addr);
 
-  set_gdbarch_so_ops (gdbarch, &frv_so_ops);
+  set_gdbarch_make_solib_ops (gdbarch, make_frv_solib_ops);
 
   /* Hook in ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
@@ -1569,9 +1570,7 @@ frv_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_frv_tdep ();
-void
-_initialize_frv_tdep ()
+INIT_GDB_FILE (frv_tdep)
 {
   gdbarch_register (bfd_arch_frv, frv_gdbarch_init);
 }

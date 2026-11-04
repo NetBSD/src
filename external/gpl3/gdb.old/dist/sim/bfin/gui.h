@@ -1,6 +1,6 @@
 /* Blackfin GUI (SDL) helper code
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -21,7 +21,14 @@
 #ifndef BFIN_GUI_H
 #define BFIN_GUI_H
 
+/* These macros are ugly.  */
 #ifdef HAVE_SDL
+# define _BFIN_GUI_INLINE
+# define _BFIN_GUI_STUB(...) ;
+#else
+# define _BFIN_GUI_INLINE ATTRIBUTE_UNUSED static inline
+# define _BFIN_GUI_STUB(val) { return val; }
+#endif
 
 enum gui_color {
   GUI_COLOR_RGB_565,
@@ -30,21 +37,24 @@ enum gui_color {
   GUI_COLOR_BGR_888,
   GUI_COLOR_RGBA_8888,
 };
-enum gui_color bfin_gui_color (const char *color);
-int bfin_gui_color_depth (enum gui_color color);
+_BFIN_GUI_INLINE
+enum gui_color bfin_gui_color (const char *color)
+  _BFIN_GUI_STUB(GUI_COLOR_RGB_565)
 
+_BFIN_GUI_INLINE
+int bfin_gui_color_depth (enum gui_color color)
+  _BFIN_GUI_STUB(0)
+
+_BFIN_GUI_INLINE
 void *bfin_gui_setup (void *state, int enabled, int height, int width,
-		      enum gui_color color);
+		      enum gui_color color)
+  _BFIN_GUI_STUB(NULL)
 
-unsigned bfin_gui_update (void *state, const void *source, unsigned nr_bytes);
+_BFIN_GUI_INLINE
+unsigned bfin_gui_update (void *state, const void *source, unsigned nr_bytes)
+  _BFIN_GUI_STUB(0)
 
-#else
-
-# define bfin_gui_color(...)		0
-# define bfin_gui_color_depth(...)	0
-# define bfin_gui_setup(...)		NULL
-# define bfin_gui_update(...)		0
-
-#endif
+#undef _BFIN_GUI_INLINE
+#undef _BFIN_GUI_STUB
 
 #endif

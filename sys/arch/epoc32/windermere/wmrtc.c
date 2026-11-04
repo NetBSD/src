@@ -1,4 +1,4 @@
-/*      $NetBSD: wmrtc.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $      */
+/*      $NetBSD: wmrtc.c,v 1.1.76.1 2026/11/04 23:20:26 perseant Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmrtc.c,v 1.1 2013/04/28 12:11:26 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmrtc.c,v 1.1.76.1 2026/11/04 23:20:26 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -96,17 +96,16 @@ wmrtc_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RTC_MRL, 0);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RTC_MRH, 0);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = wmrtc_todr_gettime;
 	sc->sc_todr.todr_settime = wmrtc_todr_settime;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 
 static int
 wmrtc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct wmrtc_softc *sc = ch->cookie;
+	struct wmrtc_softc *sc = device_private(ch->todr_dev);
 
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_DRL) & 0xffff;
 	tv->tv_sec |= (bus_space_read_4(sc->sc_iot, sc->sc_ioh, RTC_DRH) << 16);
@@ -117,7 +116,7 @@ wmrtc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 static int
 wmrtc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct wmrtc_softc *sc = ch->cookie;
+	struct wmrtc_softc *sc = device_private(ch->todr_dev);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RTC_DRL, tv->tv_sec & 0xffff);
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, RTC_DRH,

@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.32.4.1 2025/08/02 05:54:43 perseant Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.32.4.2 2026/11/04 23:19:24 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.32.4.1 2025/08/02 05:54:43 perseant Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.32.4.2 2026/11/04 23:19:24 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -43,8 +43,6 @@ __RCSID("$NetBSD: thread-stub.c,v 1.32.4.1 2025/08/02 05:54:43 perseant Exp $");
 
 #define	__LIBC_THREAD_STUBS
 
-#define pthread_join	__libc_pthread_join
-#define pthread_detach	__libc_pthread_detach
 #include "namespace.h"
 #include "reentrant.h"
 #include "tsd.h"
@@ -70,11 +68,33 @@ do {					\
 #define	CHECK_NOT_THREADED()	/* nothing */
 #endif
 
-__weak_alias(pthread_join, __libc_pthread_join)
-__weak_alias(pthread_detach, __libc_pthread_detach)
+/*
+ * These aliases are probably not necessary but have been there
+ * historically, probably by mistake.
+ */
+__weak_alias(pthread_join, __libc_thr_join)
+__weak_alias(pthread_detach, __libc_thr_detach)
+
+/*
+ * These aliases appear to have been an accident -- nothing has ever
+ * exposed them in a .h file, and they have probably never been used.
+ */
+__strong_alias(__libc_pthread_join, __libc_thr_join)
+__strong_alias(__libc_pthread_detach, __libc_thr_detach)
+
+/*
+ * These aliases are exposed by pthread.h and overridden by libpthread.
+ * This way libraries can have calls to pthread_create/join/detach
+ * without linking against libpthread, but they will fail at runtime in
+ * applications not linked against libpthread.  (Libraries linked
+ * against libpthread themselves, of course, will work, and carry the
+ * dependency to the application.)
+ */
+__weak_alias(__libc_thr_join, __libc_thr_join_stub)
+__weak_alias(__libc_thr_detach, __libc_thr_detach_stub)
 
 int
-pthread_join(pthread_t thread, void **valptr)
+__libc_thr_join_stub(pthread_t thread, void **valptr)
 {
 
 	if (thread == pthread_self())
@@ -83,7 +103,7 @@ pthread_join(pthread_t thread, void **valptr)
 }
 
 int
-pthread_detach(pthread_t thread)
+__libc_thr_detach_stub(pthread_t thread)
 {
 
 	if (thread == pthread_self())
@@ -91,8 +111,14 @@ pthread_detach(pthread_t thread)
 	return ESRCH;
 }
 
-__weak_alias(pthread_setname_np, __libc_mutex_catchall_stub)
+__weak_alias(pthread_setname, __libc_mutex_catchall_stub)
 __weak_alias(pthread_setaffinity_np, __libc_mutex_catchall_stub)
+
+/* thread creation attributes */
+
+__weak_alias(__libc_thr_attr_init, __libc_mutex_catchall_stub)
+__weak_alias(__libc_thr_attr_setdetachstate, __libc_mutex_catchall_stub)
+__weak_alias(__libc_thr_attr_destroy, __libc_mutex_catchall_stub)
 
 /* mutexes */
 
@@ -160,6 +186,40 @@ __libc_mutexattr_catchall_stub(mutexattr_t *ma)
 {
 	/* LINTED deliberate lack of effect */
 	(void)ma;
+
+	CHECK_NOT_THREADED();
+
+	return (0);
+}
+
+/* condition attribute variables */
+
+int __libc_condattr_catchall_stub(condattr_t *);
+int __libc_condattr_setclock_stub(condattr_t *, clockid_t);
+
+__weak_alias(__libc_condattr_init,__libc_condattr_catchall_stub)
+__weak_alias(__libc_condattr_destroy,__libc_condattr_catchall_stub)
+__weak_alias(__libc_condattr_setclock,__libc_condattr_setclock_stub)
+
+int
+__libc_condattr_catchall_stub(condattr_t *a)
+{
+	/* LINTED deliberate lack of effect */
+	(void)a;
+
+	CHECK_NOT_THREADED();
+
+	return (0);
+}
+
+int
+__libc_condattr_setclock_stub(condattr_t *a, clockid_t b)
+{
+	/* LINTED deliberate lack of effect */
+	(void)a;
+
+	/* LINTED deliberate lack of effect */
+	(void)b;
 
 	CHECK_NOT_THREADED();
 
@@ -419,9 +479,9 @@ __libc_thr_create_stub(thr_t *tp, const thrattr_t *ta,
 	/* LINTED deliberate lack of effect */
 	(void)a;
 
-	DIE();
+	CHECK_NOT_THREADED();
 
-	return (EOPNOTSUPP);
+	return EOPNOTSUPP;
 }
 
 __dead void

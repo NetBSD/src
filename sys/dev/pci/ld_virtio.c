@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_virtio.c,v 1.35.2.1 2025/08/02 05:56:46 perseant Exp $	*/
+/*	$NetBSD: ld_virtio.c,v 1.35.2.2 2026/11/04 23:22:06 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35.2.1 2025/08/02 05:56:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_virtio.c,v 1.35.2.2 2026/11/04 23:22:06 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -365,6 +365,16 @@ ld_virtio_attach(device_t parent, device_t self, void *aux)
 	if (features & VIRTIO_BLK_F_SIZE_MAX) {
 		sc->sc_size_max = virtio_read_device_config_4(vsc,
 		    VIRTIO_BLK_CONFIG_SIZE_MAX);
+		if (sc->sc_size_max == 0) {
+			/*
+			 * Note: qemu vhost-user-blk-server.c
+			 * has a known bug to advertize size_max=0.
+			 */
+			aprint_verbose_dev(sc->sc_dev,
+			    "Ignore zero SIZE_MAX and use %d\n",
+			    MAXPHYS);
+			sc->sc_size_max = MAXPHYS;
+		}
 		if (sc->sc_size_max < MAXPHYS/sc->sc_seg_max) {
 			aprint_error_dev(sc->sc_dev,
 			    "Too small SIZE_MAX %d minimum is %d\n",
@@ -492,7 +502,8 @@ ld_virtio_info(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_FREE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -558,7 +569,8 @@ done:
 	while (sc->sc_sync_use != SYNC_DONE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -584,7 +596,7 @@ done:
 		if (id_data[0] == '\0')
 			r = ENOENT;
 		else
-			sc->sc_typename = kmem_strndup(id_data, sizeof(id_data), KM_NOSLEEP);
+			sc->sc_typename = kmem_strndup(id_data, id_len, KM_NOSLEEP);
 	}
 
 	kmem_free(id_data, id_len);
@@ -767,7 +779,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 	r = virtio_enqueue_prep(vsc, vq, &slot);
 	if (r != 0) {
 		if (r == EAGAIN) { /* no free slot; dequeue first */
-			delay(100);
+			while (!virtio_vq_is_enqueued(vsc, vq))
+				delay(100);
 			ld_virtio_vq_done(vq);
 			r = virtio_enqueue_prep(vsc, vq, &slot);
 			if (r != 0)
@@ -820,6 +833,8 @@ ld_virtio_dump(struct ld_softc *ld, void *data, daddr_t blkno, int blkcnt)
 	for ( ; ; ) {
 		int dslot;
 
+		while (!virtio_vq_is_enqueued(vsc, vq))
+			continue;
 		r = virtio_dequeue(vsc, vq, &dslot, NULL);
 		if (r != 0)
 			continue;
@@ -905,7 +920,8 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_FREE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -953,7 +969,8 @@ ld_virtio_flush(struct ld_softc *ld, bool poll)
 	while (sc->sc_sync_use != SYNC_DONE) {
 		if (poll) {
 			mutex_exit(&sc->sc_sync_wait_lock);
-			ld_virtio_vq_done(vq);
+			if (virtio_vq_is_enqueued(vsc, vq))
+				ld_virtio_vq_done(vq);
 			mutex_enter(&sc->sc_sync_wait_lock);
 			continue;
 		}
@@ -1124,6 +1141,10 @@ ld_virtio_discard(struct ld_softc *ld, struct buf *bp)
 }
 
 MODULE(MODULE_CLASS_DRIVER, ld_virtio, "ld,virtio");
+
+#ifdef _MODULE
+#include "ioconf.c"
+#endif
 
 static int
 ld_virtio_modcmd(modcmd_t cmd, void *opaque)

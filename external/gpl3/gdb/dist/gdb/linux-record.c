@@ -1,6 +1,6 @@
 /* Process record and replay target code for GNU/Linux.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -609,7 +609,7 @@ record_linux_system_call (enum gdb_syscall syscall,
     case gdb_sys_setgroups16:
       break;
 
-    case gdb_old_select:
+    case gdb_sys_old_select:
       {
 	unsigned long sz_sel_arg = tdep->size_long + tdep->size_pointer * 4;
 	gdb_byte *a = (gdb_byte *) alloca (sz_sel_arg);
@@ -668,12 +668,12 @@ record_linux_system_call (enum gdb_syscall syscall,
 	return 1;
       break;
 
-    case gdb_old_readdir:
+    case gdb_sys_old_readdir:
       if (record_mem_at_reg (regcache, tdep->arg2, tdep->size_old_dirent))
 	return -1;
       break;
 
-    case gdb_old_mmap:
+    case gdb_sys_old_mmap:
       break;
 
     case gdb_sys_munmap:
@@ -725,6 +725,7 @@ Do you want to stop the program?"),
       break;
 
     case gdb_sys_accept:
+    case gdb_sys_accept4:
     case gdb_sys_getsockname:
     case gdb_sys_getpeername:
       {
@@ -1817,6 +1818,12 @@ Do you want to stop the program?"),
 
     case gdb_sys_clock_gettime:
       if (record_mem_at_reg (regcache, tdep->arg2, tdep->size_timespec))
+	return -1;
+      break;
+
+    case gdb_sys_clock_gettime64:
+      /* Size of struct __timespec64 is 16.  */
+      if (record_mem_at_reg (regcache, tdep->arg2, 16))
 	return -1;
       break;
 

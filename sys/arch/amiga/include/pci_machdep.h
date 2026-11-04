@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_machdep.h,v 1.8 2014/03/29 19:28:26 christos Exp $ */
+/*	$NetBSD: pci_machdep.h,v 1.8.66.1 2026/11/04 23:20:01 perseant Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -49,8 +49,6 @@ struct pci_attach_args;
 typedef struct	amiga_pci_chipset *pci_chipset_tag_t;
 typedef u_long	pcitag_t;
 typedef u_long	pci_intr_handle_t;
-
-extern struct m68k_bus_dma_tag pci_bus_dma_tag;
 
 /*
  * amiga-specific PCI structure and type definitions.

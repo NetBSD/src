@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.733.2.1 2025/08/02 05:55:10 perseant Exp $
+#	$NetBSD: Makefile,v 1.733.2.2 2026/11/04 23:19:47 perseant Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	adbbt.4 adbkbd.4 adbms.4 \
-	adc.4 adm1026hm.4 admtemp.4 adv.4 adw.4 age.4 agp.4 agr.4 ahb.4 ahc.4 \
+	adc.4 adm1026hm.4 admtemp.4 adt7462sm.4 \
+	adv.4 adw.4 age.4 agp.4 agr.4 ahb.4 ahc.4 \
 	ahcisata.4 ahd.4 aht20temp.4 aibs.4 alc.4 ale.4 alipm.4 altmem.4 altq.4 \
 	am2315temp.4 amdgpio.4 amdpm.4 amdtemp.4 amhphy.4 amr.4 aps.4 asus.4 \
 	an.4 aq.4 arcmsr.4 arcofi.4 aria.4 artsata.4 ata.4 atalk.4 ataraid.4 \
@@ -11,8 +12,8 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	auacer.4 audio.4 audiocs.4 auich.4 \
 	auixp.4 autri.4 auvia.4 awi.4 \
 	battery_pmu.4 bba.4 bce.4 bcsp.4 be.4 bge.4 bnx.4 bha.4 \
-	bio.4 bktr.4 bluetooth.4 bmx280thp.4 bmtphy.4 bpf.4 bpfjit.4 \
-	brgphy.4 bridge.4 bthidev.4 bthub.4 btkbd.4 \
+	bio.4 bktr.4 bochsfb.4 bluetooth.4 bmx280thp.4 bmtphy.4 bpf.4 bpfjit.4 \
+	bq4802rtc.4 brgphy.4 bridge.4 bthidev.4 bthub.4 btkbd.4 \
 	btmagic.4 btms.4 btsco.4 btuart.4 \
 	bwfm.4 bwi.4 \
 	cac.4 can.4 canloop.4 cardbus.4 carp.4 cas.4 ccd.4 cd.4 \
@@ -26,7 +27,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	eqos.4 esa.4 esiop.4 esm.4 eso.4 et.4 etphy.4 exphy.4 \
 	fd.4 finsio.4 flash.4 fms.4 fss.4 \
 	fujbp.4 full.4 fxp.4 \
-	gcscaudio.4 gem.4 genfb.4 gentbi.4 geodeide.4 \
+	gcscaudio.4 gem.4 genet.4 genfb.4 gentbi.4 geodeide.4 \
 	glxtphy.4 gpib.4 gpio.4 gpioirq.4 gpiolock.4 gpiopps.4 gpiopwm.4 \
 	gpiosim.4 gre.4 gphyter.4 gscan.4 gsip.4 \
 	hdaudio.4 hifn.4 hme.4 hpacel.4 hpqlb.4 hptide.4 hvn.4 hythygtemp.4 \
@@ -39,7 +40,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	ixg.4 ixl.4 ixpide.4 ixv.4 \
 	jme.4 jmide.4 jmphy.4 joy.4 \
 	kcov.4 kloader.4 kse.4 ksyms.4 kttcp.4 \
-	l2tp.4 lagg.4 lc.4 ld.4 lii.4 lo.4 lua.4 lxtphy.4 \
+	l2tp.4 lagg.4 lc.4 ld.4 led.4 lii.4 lm95221ts.4 lo.4 lua.4 lxtphy.4 \
 	machfb.4 \
 	mainbus.4 makphy.4 malo.4 mbe.4 mca.4 mcclock.4 mcommphy.4 \
 	mcx.4 md.4 mfb.4 mfi.4 mfii.4 mhzc.4 \
@@ -47,18 +48,20 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	mpu.4 mtd.4 mtio.4 msm6242b.4 multicast.4 mvsata.4 \
 	nadb.4 ne.4 neo.4 netintro.4 nfe.4 nfsmb.4 njata.4 njs.4 npflog.4 \
 	nsclpcsio.4 nside.4 nsphy.4 nsphyter.4 ntwoc.4 null.4 \
-	nvme.4 nvmm.4 \
+	nvme.4 nvmm.4 nxp75a.4 \
 	oak.4 oosiop.4 opl.4 options.4 optiide.4 osiop.4 otus.4 \
-	pad.4 pas.4 pcdisplay.4 pcf8563rtc.4 pciide.4 pckbc.4 pckbd.4 pcn.4 \
-	pcppi.4 pcscp.4 pcweasel.4 pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
+	pad.4 pas.4 pcagpio.4 pcdisplay.4 pcf8563rtc.4 pcf8574io.4 pcfrtc.4 \
+	pchtemp.4 \
+	pciide.4 pckbc.4 pckbd.4  pcn.4 pcppi.4 pcscp.4 pcweasel.4 \
+	pdcide.4 pdcsata.4 piixide.4 piixpcib.4 \
 	piixpm.4 pim.4 plip.4 pm3fb.4 pms.4 pmu.4 pnaphy.4 ppbus.4 ppp.4 \
 	pppoe.4 \
-	pseye.4 ptcd.4 ptm.4 pty.4 puc.4 pud.4 puffs.4 pwdog.4 px.4 pxagpio.4 \
-	pxaip.4 pxg.4 qat.4 qe.4 qec.4 qemufwcfg.4 qsphy.4 \
+	pseye.4 ptcd.4 ptm.4 pty.4 puc.4 pud.4 puffs.4 pv.4 pwdog.4 px.4 \
+	pxagpio.4 pxaip.4 pxg.4 qat.4 qe.4 qec.4 qemufwcfg.4 qsphy.4 \
 	r128fb.4 radeonfb.4 \
 	raid.4 ral.4 ray.4 rcons.4 rdcphy.4 re.4 rge.4 rgephy.4 rlphy.4 \
 	rnd.4 route.4 rs5c372rtc.4 rtk.4 rtsx.4 rtw.4 rtwn.4 rum.4 run.4 \
-	s390rtc.4 satalink.4 sbus.4 schide.4 \
+	s390rtc.4 satalink.4 sbus.4 sc16is7xx.4 schide.4 \
 	scmd.4 scmdi2c.4 scmdspi.4 scsi.4 sctp.4 sd.4 se.4 seeprom.4 sem.4 \
 	ses.4 sf.4 sfb.4 sgp40mox.4 sgsmix.4 shb.4 shmif.4 shpcic.4 sht3xtemp.4 \
 	sht4xtemp.4 si70xxtemp.4 siisata.4 siop.4 sip.4 siside.4 sk.4 sl.4 \
@@ -71,7 +74,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	trm.4 tsllux.4 tty.4 tun.4 tqphy.4 twa.4 twe.4 txp.4 \
 	uark.4 ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 umb.4 \
 	umcpmio.4 unix.4 userconf.4 \
-	vald.4 valz.4 veriexec.4 vga.4 vge.4 viaide.4 video.4 \
+	vald.4 valz.4 veriexec.4 veritefb.4 vga.4 vge.4 viaide.4 video.4 \
 	vio9p.4 viogpu.4 viocon.4 vioif.4 viomb.4 viornd.4 vioscsi.4 virt.4 \
 	virtio.4 vether.4 vlan.4 vmmon.4 vmnet.4 vmt.4 vmx.4 vnd.4 voodoofb.4 \
 	vr.4 vte.4 \
@@ -251,6 +254,7 @@ MLINKS+=tty.4 dty.4
 MLINKS+=url.4 urlphy.4
 MLINKS+=usb.4 uhub.4
 MLINKS+=usb.4 usbtask.4
+MLINKS+=virtio.4 virtio_mmio.4
 MLINKS+=wwanc.4 wwan.4
 MLINKS+=wsmux.4 wsmuxctl.4
 MLINKS+=zstty.4 zs.4 zstty.4 zsc.4

@@ -1,4 +1,4 @@
-/*	$NetBSD: deliver_pass.c,v 1.3.4.1 2025/08/02 05:50:06 perseant Exp $	*/
+/*	$NetBSD: deliver_pass.c,v 1.3.4.2 2026/11/04 23:14:47 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -212,13 +212,13 @@ int     deliver_pass(const char *class, const char *service,
 	(void) DSN_SIMPLE(&dsn, "4.3.0", "mail transport unavailable");
 	status = defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
 			      request->queue_id, &request->msg_stats,
-			      rcpt, "none", &dsn);
+			      rcpt, "none", NO_TLS_STATS, &dsn);
     } else if ((status = deliver_pass_final_reply(stream, dsb))
 	       == DELIVER_PASS_UNKNOWN) {
 	(void) DSN_SIMPLE(&dsn, "4.3.0", "unknown mail transport error");
 	status = defer_append(DEL_REQ_TRACE_FLAGS(request->flags),
 			      request->queue_id, &request->msg_stats,
-			      rcpt, "none", &dsn);
+			      rcpt, "none", NO_TLS_STATS, &dsn);
     }
 
     /*

@@ -1,5 +1,5 @@
 \input texinfo
-@c Copyright (C) 1988-2022 Free Software Foundation, Inc.
+@c Copyright (C) 1988-2024 Free Software Foundation, Inc.
 @setfilename bfdint.info
 
 @settitle BFD Internals
@@ -14,7 +14,7 @@
 @copying
 This file documents the internals of the BFD library.
 
-Copyright @copyright{} 1988-2022 Free Software Foundation, Inc.
+Copyright @copyright{} 1988-2024 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -346,10 +346,6 @@ Intel hex format.
 SOM (used on HP/UX).
 @item bfd_target_verilog_flavour
 Verilog memory hex dump format.
-@item bfd_target_os9k_flavour
-os9000.
-@item bfd_target_versados_flavour
-VERSAdos.
 @item bfd_target_msdos_flavour
 MS-DOS.
 @item bfd_target_evax_flavour
@@ -497,22 +493,25 @@ functions which don't easily fit into other categories.
 
 @table @samp
 @item _close_and_cleanup
-Free any target specific information associated with the BFD.  This is
-called when any BFD is closed (the @samp{bfd_write_contents} function
-mentioned earlier is only called for a BFD opened for writing).  Most
-targets use @samp{bfd_alloc} to allocate all target specific
-information, and therefore don't have to do anything in this function.
-This function pointer is typically set to
-@samp{_bfd_generic_close_and_cleanup}, which simply returns true.
+Free any target specific information associated with the BFD that
+isn't freed by @samp{_bfd_free_cached_info}.  This is called when any
+BFD is closed (the @samp{bfd_write_contents} function mentioned
+earlier is only called for a BFD opened for writing).  This function
+pointer is typically set to @samp{_bfd_generic_close_and_cleanup},
+which simply returns true.
 
 @item _bfd_free_cached_info
-Free any cached information associated with the BFD which can be
-recreated later if necessary.  This is used to reduce the memory
-consumption required by programs using BFD.  This is normally called via
-the @samp{bfd_free_cached_info} macro.  It is used by the default
-archive routines when computing the archive map.  Most targets do not
-do anything special for this entry point, and just set it to
-@samp{_bfd_generic_free_cached_info}, which simply returns true.
+This function is designed for use by the generic archive routines, and
+is also called by bfd_close.  After creating the archive map archive
+element bfds don't need symbols and other structures.  Many targets
+use @samp{bfd_alloc} to allocate target specific information and thus
+do not need to do anything special for this entry point, and just set
+it to @samp{_bfd_generic_free_cached_info} which throws away objalloc
+memory for the bfd.  Note that this means the bfd tdata and sections
+are no longer available.  Targets that malloc memory, attaching it to
+the bfd tdata or to section used_by_bfd should implement a target
+version of this function to free that memory before calling
+@samp{_bfd_generic_free_cached_info}.
 
 @item _new_section_hook
 This is called from @samp{bfd_make_section_anyway} whenever a new
@@ -524,19 +523,10 @@ corresponds to an actual section in an actual BFD.
 Get the contents of a section.  This is called from
 @samp{bfd_get_section_contents}.  Most targets set this to
 @samp{_bfd_generic_get_section_contents}, which does a @samp{bfd_seek}
-based on the section's @samp{filepos} field and a @samp{bfd_bread}.  The
+based on the section's @samp{filepos} field and a @samp{bfd_read}.  The
 corresponding field in the target vector is named
 @samp{_bfd_get_section_contents}.
 
-@item _get_section_contents_in_window
-Set a @samp{bfd_window} to hold the contents of a section.  This is
-called from @samp{bfd_get_section_contents_in_window}.  The
-@samp{bfd_window} idea never really caught on, and I don't think this is
-ever called.  Pretty much all targets implement this as
-@samp{bfd_generic_get_section_contents_in_window}, which uses
-@samp{bfd_get_section_contents} to do the right thing.  The
-corresponding field in the target vector is named
-@samp{_bfd_get_section_contents_in_window}.
 @end table
 
 @node BFD target vector copy
@@ -657,7 +647,7 @@ always uses extended name tables anyhow.  The corresponding field in the
 target vector is named @samp{_bfd_truncate_arname}.
 
 @item _write_armap
-Write out the archive symbol table using calls to @samp{bfd_bwrite}.
+Write out the archive symbol table using calls to @samp{bfd_write}.
 This is normally called from the archive @samp{write_contents} routine.
 The corresponding field in the target vector is named @samp{write_armap}
 (no leading underscore).

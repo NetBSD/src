@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun2,v 1.29 2021/08/30 19:01:05 christos Exp $
+# $NetBSD: Makefile.sun2,v 1.29.10.1 2026/11/04 23:21:24 perseant Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 SUN2=		$S/arch/sun2
-GENASSYM_CONF=	${SUN2}/sun2/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${SUN2}/sun2/genassym.cf
 
 ##
 ## (2) compile settings
@@ -49,6 +50,8 @@ KERNMISCMAKEFLAGS=	MACHINE_ARCH=${MACHINE_ARCH}
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 MD_OBJS=	locore.o
 MD_CFILES=
 MD_SFILES=	${SUN2}/sun2/locore.s

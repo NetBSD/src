@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2022 Free Software Foundation, Inc.
 @c Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
@@ -217,6 +217,10 @@ enum plugin_event
    This could happen many times.  The event data is the included file path,
    as a const char* pointer.  */
   PLUGIN_INCLUDE_FILE,
+
+  /* Called when -fanalyzer starts. The event data is an
+     ana::plugin_analyzer_init_iface *.  */
+  PLUGIN_ANALYZER_INIT,
 
   PLUGIN_EVENT_FIRST_DYNAMIC    /* Dummy event used for indexing callback
                                    array.  */
@@ -507,7 +511,7 @@ plugin.so: $(PLUGIN_SOURCE_FILES)
 @end smallexample
 
 A single source file plugin may be built with @code{g++ -I`gcc
--print-file-name=plugin`/include -fPIC -shared -fno-rtti -O2 plugin.c -o
+-print-file-name=plugin`/include -fPIC -shared -fno-rtti -O2 plugin.cc -o
 plugin.so}, using backquote shell syntax to query the @file{plugin}
 directory.
 
@@ -550,7 +554,7 @@ compiler:
 
 @smallexample
 g++ -I`gcc -print-file-name=plugin`/include -shared -Wl,--export-all-symbols \
--o plugin.dll plugin.c `gcc -print-file-name=plugin`/cc1plus.exe.a
+-o plugin.dll plugin.cc `gcc -print-file-name=plugin`/cc1plus.exe.a
 @end smallexample
 
 When a plugin needs to use @command{gengtype}, be sure that both

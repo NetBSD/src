@@ -1,4 +1,4 @@
-# Copyright 2011-2024 Free Software Foundation, Inc.
+# Copyright 2011-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -46,7 +46,8 @@ set jit_solib_srcfile ${srcdir}/${subdir}/${jit_solib_basename}.c
 # On failure, return -1.
 proc compile_jit_dlmain {options} {
     global main_loader_srcfile main_loader_binfile main_loader_basename
-    set options [concat $options debug]
+    set options [concat $options debug \
+	additional_flags=-DJIT_DESCRIPTOR_LINKAGE="static"]
 
     if { [gdb_compile ${main_loader_srcfile} ${main_loader_binfile} \
 	    executable $options] != "" } {
@@ -72,7 +73,8 @@ proc one_jit_test {solib_binfiles_target match_str} {
 	global main_loader_binfile main_loader_srcfile
 	global main_solib_binfile main_solib_binfile_target main_solib_srcfile
 
-	clean_restart $main_loader_binfile
+	clean_restart
+	gdb_load $main_loader_binfile
 	gdb_locate_shlib $main_solib_binfile
 
 	# This is just to help debugging when things fail
@@ -133,7 +135,8 @@ proc one_jit_test {solib_binfiles_target match_str} {
 
 # Compile the main code (which loads the JIT objects) as a shared library.
 if { [compile_jit_elf_main_as_so $main_solib_srcfile $main_solib_binfile \
-	{additional_flags="-DMAIN=jit_dl_main"}] < 0 } {
+	{additional_flags="-DMAIN=jit_dl_main" \
+	    additional_flags="-DJIT_DESCRIPTOR_LINKAGE=static"}] < 0 } {
     return
 }
 

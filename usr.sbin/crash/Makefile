@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.51.2.1 2025/08/02 05:58:48 perseant Exp $
+#	$NetBSD: Makefile,v 1.51.2.2 2026/11/04 23:28:48 perseant Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -19,7 +19,7 @@ DPADD+=	${LIBUTIL} ${LIBKVM} ${LIBEDIT} ${LIBTERMINFO}
     || ${MACHINE_CPU} == "mips" \
     || ${MACHINE_CPU} == "riscv" \
     || ${MACHINE_ARCH} == "alpha" \
-    || ${MACHINE_ARCH} == "m68k" \
+    || ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k" \
     || ${MACHINE_ARCH} == "powerpc" \
     || ${MACHINE_ARCH} == "powerpc64" \
     || ${MACHINE} == "amd64" \
@@ -35,7 +35,7 @@ SRCS+=	db_interface.c
 .elif ${MACHINE_CPU} == "mips"
 SRCS+=	db_interface.c mips_stacktrace.c
 CPPFLAGS+=	-DDDB
-.elif ${MACHINE_ARCH} != "m68k" \
+.elif ${MACHINE_ARCH:S/m68ksf/m68k/} != "m68k" \
    && ${MACHINE_ARCH} != "powerpc" \
    && ${MACHINE_ARCH} != "powerpc64"
 SRCS+=	db_machdep.c
@@ -51,7 +51,12 @@ S=		${.CURDIR}/../../sys
 
 CPPFLAGS+=	-I${.CURDIR} -I${.OBJDIR} -I${S} -fno-strict-aliasing
 CPPFLAGS+=	-DDDB_VERBOSE_HELP -DDB_MAX_LINE=10000000 -D_KMEMUSER
+
+.if ${MACHINE} == "amd64" || ${MACHINE} == "i386"
+CPPFLAGS+=	-DDB_MACHINE_COMMANDS
+.else
 CPPFLAGS+=	-UDB_MACHINE_COMMANDS
+.endif
 
 # XXX
 .if ${MACHINE} == "evbppc"

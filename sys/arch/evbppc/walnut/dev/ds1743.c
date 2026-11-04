@@ -1,7 +1,7 @@
-/*	$NetBSD: ds1743.c,v 1.10 2014/11/20 16:34:25 christos Exp $	*/
+/*	$NetBSD: ds1743.c,v 1.10.56.1 2026/11/04 23:20:36 perseant Exp $	*/
 
 /*
- * Copyright (c) 2001-2002 Wasabi Sysetms, Inc.
+ * Copyright (c) 2001-2002 Wasabi Systems, Inc.
  * Copyright (c) 1998 Mark Brinicombe.
  * Copyright (c) 1998 Causality Limited.
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.10 2014/11/20 16:34:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1743.c,v 1.10.56.1 2026/11/04 23:20:36 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,7 +152,7 @@ dsrtcattach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_gettime_ymdhms = dsrtc_read;
 	sc->sc_todr.todr_settime_ymdhms = dsrtc_write;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 
 #ifdef DEBUG
 	{
@@ -229,7 +229,7 @@ ds1743_unlock(struct dsrtc_softc *sc, u_char key)
 static int
 dsrtc_write(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = tch->cookie;
+	struct dsrtc_softc *sc = device_private(tch->todr_dev);
 	u_char key;
 
 	key = ds1743_lock(sc, DS_CTL_W);
@@ -250,7 +250,7 @@ dsrtc_write(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 static int
 dsrtc_read(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 {
-	struct dsrtc_softc *sc = tch->cookie;
+	struct dsrtc_softc *sc = device_private(tch->todr_dev);
 	u_char key;
 	
 	key = ds1743_lock(sc, DS_CTL_R);

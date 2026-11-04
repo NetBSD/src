@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2007-2023 Free Software Foundation, Inc.
+<!-- Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -13,7 +13,7 @@
   <architecture>rs6000:6000</architecture>
 
   <!-- This description is slightly different from the standard
-       org.gnu.gdb.power.core, to accomodate mq, cnd, and cnt.  -->
+       org.gnu.gdb.power.core, to accommodate mq, cnd, and cnt.  -->
   <feature name="org.gnu.gdb.power.core">
     <reg name="r0" bitsize="32"/>
     <reg name="r1" bitsize="32"/>
@@ -58,7 +58,7 @@
   </feature>
 
   <!-- This description is slightly different from the standard
-       org.gnu.gdb.power.core, to accomodate historical numbering
+       org.gnu.gdb.power.core, to accommodate historical numbering
        for fpscr.  -->
   <feature name="org.gnu.gdb.power.fpu">
     <reg name="f0" bitsize="64" type="ieee_double" regnum="32"/>

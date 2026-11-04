@@ -1,4 +1,4 @@
-#	$NetBSD: files.ata,v 1.31.6.1 2025/08/02 05:56:35 perseant Exp $
+#	$NetBSD: files.ata,v 1.31.6.2 2026/11/04 23:21:48 perseant Exp $
 #
 # Config file and device description for machine-independent devices
 # which attach to ATA busses.  Included by ports that need it.  Ports
@@ -6,7 +6,7 @@
 # appropriate devices.
 
 # ATA disks
-device	wd: disk
+device	wd: disk, bad144
 attach	wd at ata_hl
 file	dev/ata/wd.c			wd			needs-flag
 file	dev/ata/ata_wdc.c		wd & atabus & wdc_common

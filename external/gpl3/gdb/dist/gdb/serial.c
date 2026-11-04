@@ -1,6 +1,6 @@
 /* Generic serial interface routines
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -642,9 +642,7 @@ set_parity (const char *ignore_args, int from_tty, struct cmd_list_element *c)
     serial_parity = GDBPARITY_NONE;
 }
 
-void _initialize_serial ();
-void
-_initialize_serial ()
+INIT_GDB_FILE (serial)
 {
 #if 0
   add_com ("connect", class_obscure, connect_command, _("\

@@ -1,4 +1,4 @@
-# 	$NetBSD: RAMDISK,v 1.33.26.1 2025/08/02 05:55:37 perseant Exp $
+# 	$NetBSD: RAMDISK,v 1.33.26.2 2026/11/04 23:20:38 perseant Exp $
 #
 # kernel config file with memory disk for installation
 #
@@ -77,6 +77,7 @@ no pseudo-device 	carp
 no pseudo-device	npf
 no pseudo-device	ppp
 no pseudo-device	pppoe
+no pseudo-device	sl
 no pseudo-device	tap
 no pseudo-device	tun
 no pseudo-device	gre
@@ -90,5 +91,6 @@ no pseudo-device	accf_data
 no pseudo-device	accf_http
 no pseudo-device	clockctl
 no pseudo-device	ksyms
+no pseudo-device 	swwdog
 no pseudo-device	wsmux
 no pseudo-device 	veriexec

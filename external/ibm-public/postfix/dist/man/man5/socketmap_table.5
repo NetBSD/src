@@ -1,4 +1,4 @@
-.\"	$NetBSD: socketmap_table.5,v 1.3.8.1 2025/08/02 05:49:56 perseant Exp $
+.\"	$NetBSD: socketmap_table.5,v 1.3.8.2 2026/11/04 23:14:42 perseant Exp $
 .\"
 .TH SOCKETMAP_TABLE 5 
 .ad
@@ -21,7 +21,8 @@ Postfix socketmap table lookup client
 .ad
 .fi
 The Postfix mail system uses optional tables for address
-rewriting, mail routing or policy lookup.
+rewriting or mail routing. These tables are usually in
+\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 
 The Postfix socketmap client expects TCP endpoint names of
 the form \fBinet:\fIhost\fB:\fIport\fB:\fIname\fR, or

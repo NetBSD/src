@@ -1,6 +1,6 @@
 /* Rust language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -116,25 +116,28 @@ rust_tuple_type_p (struct type *type)
 }
 
 /* Return true if all non-static fields of a structlike type are in a
-   sequence like __0, __1, __2.  */
+   sequence like 0, 1, 2.  "__" prefixes are also accepted -- rustc
+   emits "__0" but gccrs emits "0".  */
 
 static bool
 rust_underscore_fields (struct type *type)
 {
-  int i, field_number;
-
-  field_number = 0;
+  int field_number = 0;
 
   if (type->code () != TYPE_CODE_STRUCT)
     return false;
-  for (i = 0; i < type->num_fields (); ++i)
+  for (const auto &field : type->fields ())
     {
-      if (!type->field (i).is_static ())
+      if (!field.is_static ())
 	{
 	  char buf[20];
 
-	  xsnprintf (buf, sizeof (buf), "__%d", field_number);
-	  if (strcmp (buf, type->field (i).name ()) != 0)
+	  xsnprintf (buf, sizeof (buf), "%d", field_number);
+
+	  const char *field_name = field.name ();
+	  if (startswith (field_name, "__"))
+	    field_name += 2;
+	  if (strcmp (buf, field_name) != 0)
 	    return false;
 	  field_number++;
 	}
@@ -178,8 +181,6 @@ rust_slice_type_p (const struct type *type)
 static bool
 rust_range_type_p (struct type *type)
 {
-  int i;
-
   if (type->code () != TYPE_CODE_STRUCT
       || type->num_fields () > 2
       || type->name () == NULL
@@ -189,12 +190,12 @@ rust_range_type_p (struct type *type)
   if (type->num_fields () == 0)
     return true;
 
-  i = 0;
+  int field_num = 0;
   if (strcmp (type->field (0).name (), "start") == 0)
     {
       if (type->num_fields () == 1)
 	return true;
-      i = 1;
+      field_num = 1;
     }
   else if (type->num_fields () == 2)
     {
@@ -202,7 +203,7 @@ rust_range_type_p (struct type *type)
       return false;
     }
 
-  return strcmp (type->field (i).name (), "end") == 0;
+  return strcmp (type->field (field_num).name (), "end") == 0;
 }
 
 /* Return true if TYPE is an inclusive range type, otherwise false.
@@ -375,11 +376,11 @@ rust_array_like_element_type (struct type *type)
 {
   /* Caller must check this.  */
   gdb_assert (rust_slice_type_p (type));
-  for (int i = 0; i < type->num_fields (); ++i)
+  for (const auto &field : type->fields ())
     {
-      if (strcmp (type->field (i).name (), "data_ptr") == 0)
+      if (strcmp (field.name (), "data_ptr") == 0)
 	{
-	  struct type *base_type = type->field (i).type ()->target_type ();
+	  struct type *base_type = field.type ()->target_type ();
 	  if (rewrite_slice_type (base_type, nullptr, 0, nullptr))
 	    return nullptr;
 	  return base_type;
@@ -497,7 +498,6 @@ rust_language::val_print_struct
 	(struct value *val, struct ui_file *stream, int recurse,
 	 const struct value_print_options *options) const
 {
-  int i;
   int first_field;
   struct type *type = check_typedef (val->type ());
 
@@ -532,7 +532,7 @@ rust_language::val_print_struct
   opts.deref_ref = false;
 
   first_field = 1;
-  for (i = 0; i < type->num_fields (); ++i)
+  for (int i = 0; i < type->num_fields (); ++i)
     {
       if (type->field (i).is_static ())
 	continue;
@@ -1017,9 +1017,9 @@ rust_internal_print_type (struct type *type, const char *varstring,
 	  }
 	gdb_puts ("{\n", stream);
 
-	for (int i = 0; i < type->num_fields (); ++i)
+	for (const auto &field : type->fields ())
 	  {
-	    const char *name = type->field (i).name ();
+	    const char *name = field.name ();
 
 	    QUIT;
 
@@ -1142,13 +1142,22 @@ rust_slice_type (const char *name, struct type *elt_type,
 
 
 
-/* A helper for rust_evaluate_subexp that handles OP_RANGE.  */
+namespace expr
+{
 
 struct value *
-rust_range (struct type *expect_type, struct expression *exp,
-	    enum noside noside, enum range_flag kind,
-	    struct value *low, struct value *high)
+rust_range_operation::evaluate (struct type *expect_type,
+				struct expression *exp,
+				enum noside noside)
 {
+  auto kind = std::get<0> (m_storage);
+  value *low = nullptr;
+  if (std::get<1> (m_storage) != nullptr)
+    low = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
+  value *high = nullptr;
+  if (std::get<2> (m_storage) != nullptr)
+    high = std::get<2> (m_storage)->evaluate (nullptr, exp, noside);
+
   struct value *addrval, *result;
   CORE_ADDR addr;
   struct type *range_type;
@@ -1225,6 +1234,8 @@ rust_range (struct type *expect_type, struct expression *exp,
   return result;
 }
 
+} /* namespace expr */
+
 /* A helper function to compute the range and kind given a range
    value.  TYPE is the type of the range value.  RANGE is the range
    value.  LOW, HIGH, and KIND are out parameters.  The LOW and HIGH
@@ -1266,20 +1277,23 @@ rust_compute_range (struct type *type, struct value *range,
     }
 }
 
-/* A helper for rust_evaluate_subexp that handles BINOP_SUBSCRIPT.  */
+namespace expr
+{
 
 struct value *
-rust_subscript (struct type *expect_type, struct expression *exp,
-		enum noside noside, bool for_addr,
-		struct value *lhs, struct value *rhs)
+rust_subscript_operation::subscript (struct expression *exp,
+				     enum noside noside, bool for_addr)
 {
+  value *lhs = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
+  value *rhs = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
+
   struct value *result;
   struct type *rhstype;
   LONGEST low, high_bound;
   /* Initialized to appease the compiler.  */
   range_flags kind = RANGE_LOW_BOUND_DEFAULT | RANGE_HIGH_BOUND_DEFAULT;
   LONGEST high = 0;
-  int want_slice = 0;
+  bool want_slice = false;
 
   rhstype = check_typedef (rhs->type ());
   if (rust_range_type_p (rhstype))
@@ -1287,7 +1301,7 @@ rust_subscript (struct type *expect_type, struct expression *exp,
       if (!for_addr)
 	error (_("Can't take slice of array without '&'"));
       rust_compute_range (rhstype, rhs, &low, &high, &kind);
-      want_slice = 1;
+      want_slice = true;
     }
   else
     low = value_as_long (rhs);
@@ -1413,9 +1427,6 @@ rust_subscript (struct type *expect_type, struct expression *exp,
   return result;
 }
 
-namespace expr
-{
-
 struct value *
 rust_unop_ind_operation::evaluate (struct type *expect_type,
 				   struct expression *exp,
@@ -1460,7 +1471,7 @@ eval_op_rust_array (struct type *expect_type, struct expression *exp,
   if (copies < 0)
     error (_("Array with negative number of elements"));
 
-  if (noside == EVAL_NORMAL)
+  if (noside == EVAL_NORMAL && copies > 0)
     return value_array (0, std::vector<value *> (copies, elt));
   else
     {
@@ -1481,7 +1492,7 @@ rust_struct_anon::evaluate (struct type *expect_type,
   value *lhs = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
   int field_number = std::get<0> (m_storage);
 
-  struct type *type = lhs->type ();
+  struct type *type = check_typedef (lhs->type ());
 
   if (type->code () == TYPE_CODE_STRUCT)
     {

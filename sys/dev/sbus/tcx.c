@@ -1,4 +1,4 @@
-/*	$NetBSD: tcx.c,v 1.61.10.1 2025/08/02 05:57:03 perseant Exp $ */
+/*	$NetBSD: tcx.c,v 1.61.10.2 2026/11/04 23:22:33 perseant Exp $ */
 
 /*
  *  Copyright (c) 1996, 1998, 2009 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.61.10.1 2025/08/02 05:57:03 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcx.c,v 1.61.10.2 2026/11/04 23:22:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -92,6 +92,7 @@ struct tcx_softc {
 	short		sc_8bit;	/* true if 8-bit hardware */
 	short		sc_blanked;	/* true if blanked */
 	uint32_t	sc_fbsize;	/* size of the 8bit fb */
+	int		sc_depth;	/* depth of the fb we mmap() */
 	u_char		sc_cmap_red[256];
 	u_char		sc_cmap_green[256];
 	u_char		sc_cmap_blue[256];
@@ -110,7 +111,8 @@ struct wsscreen_descr tcx_defscreendesc = {
 	0, 0,
 	NULL,
 	8, 16,
-	WSSCREEN_WSCOLORS,
+	WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+	WSSCREEN_REVERSE | WSSCREEN_RESIZE,
 };
 
 const struct wsscreen_descr *_tcx_scrlist[] = {
@@ -168,7 +170,10 @@ static void	tcx_init_screen(void *, struct vcons_screen *, int, long *);
 static void	tcx_clearscreen(struct tcx_softc *, int);
 static void	tcx_copyrows(void *, int, int, int);
 static void	tcx_eraserows(void *, int, int, long);
+static void	tcx_erasecols(void *, int, int, int, long);
 static void	tcx_putchar(void *, int, int, u_int, long);
+static int	tcx_allocattr(void *, int, int, int, long *);
+
 static void	tcx_set_video(struct tcx_softc *, int);
 static int	tcx_do_cursor(struct tcx_softc *, struct wsdisplay_cursor *);
 static void	tcx_set_cursor(struct tcx_softc *);
@@ -246,10 +251,12 @@ tcxattach(device_t parent, device_t self, void *args)
 		aprint_normal(" (8-bit only TCX)\n");
 		/* at least the SS4 can have 2MB with a VSIMM */
 		sc->sc_fbsize = 0x100000 * prom_getpropint(node, "vram", 1);
+		sc->sc_depth = 8;
 	} else {
 		aprint_normal(" (S24)\n");
 		/* all S24 I know of have 4MB, non-expandable */
 		sc->sc_fbsize = 0x100000;
+		sc->sc_depth = 32;
 	}
 
 	fb->fb_type.fb_cmsize = 256;
@@ -326,7 +333,7 @@ tcxattach(device_t parent, device_t self, void *args)
 			return;
 		}
 		sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
-	
+
 		/* STIP space */
 		if (sbus_bus_map(sa->sa_bustag,
 			 sc->sc_physaddr[TCX_REG_STIP].oa_space,
@@ -352,7 +359,7 @@ tcxattach(device_t parent, device_t self, void *args)
 			return;
 		}
 		sc->sc_rblit = bus_space_vaddr(sa->sa_bustag, bh);
-	
+
 		/* RSTIP space */
 		if (sbus_bus_map(sa->sa_bustag,
 			 sc->sc_physaddr[TCX_REG_RSTIP].oa_space,
@@ -757,13 +764,36 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    ms->scr_ri.ri_width << 2;
 			}
 			return 0;
-#if 0
+
 		case WSDISPLAYIO_GETCMAP:
-			return tcx_getcmap(sc, (struct wsdisplay_cmap *)data);
+#define	p ((struct wsdisplay_cmap *)data)
+		if (p->index > 256 || p->count > 256 - p->index)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_red[p->index], p->red, p->count) != 0)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_green[p->index], p->green, p->count)
+		    != 0)
+			return EINVAL;
+		if (copyout(&sc->sc_cmap_blue[p->index], p->blue, p->count)
+		    != 0)
+			return EINVAL;
+		return 0;
 
 		case WSDISPLAYIO_PUTCMAP:
-			return tcx_putcmap(sc, (struct wsdisplay_cmap *)data);
-#endif
+		/* copy to software map */
+		if (p->index > 256 || p->count > 256 - p->index)
+			return EINVAL;
+		if (copyin(p->red, &sc->sc_cmap_red[p->index], p->count) != 0)
+			return EINVAL;
+		if (copyin(p->green, &sc->sc_cmap_green[p->index], p->count)
+		    != 0)
+			return EINVAL;
+		if (copyin(p->blue, &sc->sc_cmap_blue[p->index], p->count) != 0)
+			return EINVAL;
+		tcx_loadcmap(sc, p->index, p->count);
+		return 0;
+#undef p
+
 		case WSDISPLAYIO_SMODE:
 			{
 				int new_mode = *(int*)data;
@@ -775,8 +805,14 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 						tcx_init_cmap(sc);
 						tcx_clearscreen(sc, 0);
 						vcons_redraw_screen(ms);
-					} else if (!sc->sc_8bit)
+					} else if (sc->sc_depth == 32) {
+						/*
+						 * make sure we set the control
+						 * bits correctly
+						 */
 						tcx_clearscreen(sc, 3);
+					} else
+						tcx_clearscreen(sc, 0);
 				}
 			}
 			return 0;
@@ -823,6 +859,49 @@ tcx_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 
 				return tcx_do_cursor(sc, cursor);
 			}
+			break;	/* shouldn't ever get here */
+
+		case WSDISPLAYIO_SET_DEPTH:
+		{
+			int new_depth = *(int*)data;
+
+			if (sc->sc_8bit) {
+				return ( new_depth == 8) ? 0 : EINVAL;
+			} else if ((new_depth == 8) || (new_depth == 32)) {
+				sc->sc_depth = new_depth;
+				return 0;
+			}
+			return EINVAL;
+		}
+
+		case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+
+			if (sc->sc_depth == 8) {
+				fbi->fbi_fbsize = sc->sc_fbsize;
+				fbi->fbi_stride = sc->sc_fb.fb_type.fb_width;
+				fbi->fbi_bitsperpixel = 8;
+				fbi->fbi_pixeltype = WSFB_CI;
+			} else {
+				fbi->fbi_fbsize = sc->sc_fbsize * 4;
+				fbi->fbi_stride = sc->sc_fb.fb_type.fb_width * 4;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_pixeltype = WSFB_RGB;
+			}
+			fbi->fbi_width = sc->sc_fb.fb_type.fb_width;
+			fbi->fbi_height = sc->sc_fb.fb_type.fb_height;
+			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 16;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			return 0;
+		}
+
 	}
 	return EPASSTHROUGH;
 }
@@ -834,7 +913,7 @@ tcx_mmap(void *v, void *vs, off_t offset, int prot)
 	struct tcx_softc *sc = vd->cookie;
 
 	/* 'regular' framebuffer mmap()ing */
-	if (sc->sc_8bit) {
+	if (sc->sc_depth == 8) {
 		/* on 8Bit boards hand over the 8 bit aperture */
 		if (offset > sc->sc_fbsize)
 			return -1;
@@ -868,18 +947,21 @@ tcx_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_bits = sc->sc_fbaddr;
 
 	rasops_init(ri, 0, 0);
-	ri->ri_caps = WSSCREEN_WSCOLORS;
+	ri->ri_caps = WSSCREEN_WSCOLORS | WSSCREEN_HILIT | WSSCREEN_UNDERLINE |
+		      WSSCREEN_REVERSE | WSSCREEN_RESIZE;
 	rasops_reconfig(ri, ri->ri_height / ri->ri_font->fontheight,
 		    ri->ri_width / ri->ri_font->fontwidth);
 
+	scr->scr_flags |= VCONS_NO_COPYCOLS | VCONS_NO_CURSOR | VCONS_LOADFONT;
 	/* enable acceleration */
 	ri->ri_ops.copyrows  = tcx_copyrows;
 	ri->ri_ops.eraserows = tcx_eraserows;
+	ri->ri_ops.erasecols = tcx_erasecols;
 	ri->ri_ops.putchar   = tcx_putchar;
+	ri->ri_ops.allocattr   = tcx_allocattr;
 #if 0
 	ri->ri_ops.cursor    = tcx_cursor;
 	ri->ri_ops.copycols  = tcx_copycols;
-	ri->ri_ops.erasecols = tcx_erasecols;
 #endif
 }
 
@@ -906,6 +988,17 @@ tcx_copyrows(void *cookie, int srcrow, int dstrow, int nrows)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct tcx_softc *sc = scr->scr_cookie;
 	int i, last, first, len, dest, leftover;
+
+	if ((ri->ri_crow >= srcrow && ri->ri_crow < (srcrow + nrows)) &&
+	   (ri->ri_flg & RI_CURSOR)) {
+		int ofs = ri->ri_crow * ri->ri_cols + ri->ri_ccol;
+		tcx_putchar(cookie, ri->ri_crow, ri->ri_ccol,
+		    scr->scr_chars[ofs], scr->scr_attrs[ofs]);
+		ri->ri_flg &= ~RI_CURSOR;
+	}
+
+	if (ri->ri_crow >= dstrow && ri->ri_crow < (dstrow + nrows))
+		ri->ri_flg &= ~RI_CURSOR;
 
 	i = ri->ri_width * ri->ri_font->fontheight * nrows;
 	len = i & 0xffffe0;
@@ -953,6 +1046,9 @@ tcx_eraserows(void *cookie, int start, int nrows, long attr)
 	volatile uint64_t temp;
 	int i, last, first, len, leftover;
 
+	if (ri->ri_crow >= start && ri->ri_crow < (start + nrows))
+		ri->ri_flg &= ~RI_CURSOR;
+
 	i = ri->ri_width * ri->ri_font->fontheight * nrows;
 	len = i & 0xffffe0;
 	leftover = i & 0x1f;
@@ -970,8 +1066,58 @@ tcx_eraserows(void *cookie, int start, int nrows, long attr)
 		sc->sc_rstip[i] = temp;
 	}
 }
+
+static void
+tcx_erasecols(void *cookie, int row, int startcol, int ncols, long attr)
+{
+	struct rasops_info *ri = cookie;
+	struct vcons_screen *scr = ri->ri_hw;
+	struct tcx_softc *sc = scr->scr_cookie;
+	volatile uint64_t temp, cmd, rcmd, lcmd;
+	uint32_t pmask;
+	int i, fullsteps, line, dst;
+	int x1 = startcol * ri->ri_font->fontwidth + ri->ri_xorigin;
+	int x2 = (startcol + ncols) * ri->ri_font->fontwidth + ri->ri_xorigin;
+
+	temp = 0x3000000000000000LL | 
+	    ((uint64_t)((ri->ri_devcmap[(attr >> 16) & 0xff]) & 0xff) << 32),
+	dst = ri->ri_width * (ri->ri_font->fontheight * row + ri->ri_yorigin) +
+	      x1;
+	dst &= 0xffffffe0;
+
+	/* see if the whole thing falls into one 32bit chunk */
+	if ((x1 & 0xffe0) == (x2 & 0xffe0)) {
+		/* first zero out pixels on the right */
+		pmask = 0xffffffff << (31 - (x2 & 0x1f));
+		/* then mask out pixels on the left */
+		pmask &= (0xffffffff >> (x1 & 0x1f));
+		cmd = temp | pmask;
+		for (i = 0; i < ri->ri_font->fontheight; i++) {
+			sc->sc_rstip[dst] = cmd;
+			dst += ri->ri_width;
+		}
+	} else {
+		/* at least two writes per line */
+		pmask = 0xffffffff << (31 - (x2 & 0x1f));
+		rcmd = temp | (uint64_t)pmask;
+		pmask = 0xffffffff >> (x1 & 0x1f);
+		lcmd = temp | (uint64_t)pmask;
+		cmd = temp | 0xffffffffLL;
+		dst &= 0xffffffe0;
+		fullsteps = ((x2 >> 5) - (x1 >> 5));
+		fullsteps = fullsteps << 5;
+		for (line = 0; line < ri->ri_font->fontheight; line++) {
+	    		sc->sc_rstip[dst] = lcmd;
+			for (i = 32; i < fullsteps; i+= 32)
+				sc->sc_rstip[dst + i] = cmd;
+			sc->sc_rstip[dst + i] = rcmd;
+			dst += ri->ri_width;
+		}
+	}
+}
+
 /*
- * The stipple engine is 100% retarded. All drawing operations have to start 
+ * The stipple engine is 100% stupid. All drawing operations have to start 
  * at 32 pixel boundaries so we'll have to deal with characters being split.
  */
 
@@ -985,8 +1131,9 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 	volatile uint64_t bg, fg, temp, mask;
 	int addr, i, uc, shift;
 	uint32_t fmask;
-	uint8_t *cdata;
-	uint16_t *wdata;
+	uint8_t *cdata, cc;
+	uint16_t *wdata, w;
+	int bold = (attr & WSATTR_HILIT) != 0;
 
 	addr = ri->ri_xorigin + col * font->fontwidth +
 	    (ri->ri_yorigin + row * font->fontheight) * ri->ri_width;
@@ -1012,38 +1159,74 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 		if (font->fontwidth < 9) {
 			/* byte by byte */
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
-				if (*cdata != 0) {
+				cc = *cdata;
+				if (cc != 0) {
+					if (bold) cc |= cc >> 1;
 					if (shift > 24) {
-						fg = (uint64_t)*cdata >>
-					  	  (shift - 24);
+						fg = (uint64_t)(cc >>
+					  	  (shift - 24));
 					} else {
-						fg = (uint64_t)*cdata <<
-					  	  (24 - shift);
+						fg = (uint64_t)(cc <<
+					  	  (24 - shift));
 					}
 					sc->sc_rstip[addr] = fg | temp;
 				}
 				cdata++;
 				addr += ri->ri_width;
 			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				cc = *cdata;
+				if (cc != 0) {
+					if (bold) cc |= cc >> 1;
+					if (shift > 24) {
+						fg = (uint64_t)(cc >> (shift - 24));
+					} else {
+						fg = (uint64_t)(cc << (24 - shift));
+					}
+					sc->sc_rstip[addr] = fg | temp;
+				}
+			}
 		} else if (font->fontwidth < 17) {
 			/* short by short */
 			wdata = (uint16_t *)cdata;
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
-				if (*wdata != 0) {
+				w = *wdata;
+				if (w != 0) {
+					if (bold) w |= w >> 1;
 					if (shift > 16) {
-						fg = temp | (uint64_t)*wdata >> 
-					  	  (shift - 16);
+						fg = temp | (uint64_t)(w >> 
+					  	  (shift - 16));
 					} else {
-						fg = temp | (uint64_t)*wdata << 
-					  	  (16 - shift);
+						fg = temp | (uint64_t)(w << 
+					  	  (16 - shift));
 					}
 					sc->sc_rstip[addr] = fg;
 				}
 				wdata++;
 				addr += ri->ri_width;
+			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				w = *wdata;
+				if (w != 0) {
+					if (bold) w |= w >> 1;
+					if (shift > 16) {
+						fg = temp | (uint64_t)(w >> 
+					  	  (shift - 16));
+					} else {
+						fg = temp | (uint64_t)(w << 
+					  	  (16 - shift));
+					}
+					sc->sc_rstip[addr] = fg;
+				}
 			}
 		}
 	} else {
@@ -1070,11 +1253,12 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 		if (font->fontwidth < 9) {
 			/* byte by byte */
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
 				sc->sc_rstip[addr + 32] = bgr;
 				bork = *cdata;
 				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
 					fg = (uint64_t)bork >> (shift - 24);
 					sc->sc_rstip[addr] = fg | temp;
 					fgr = (uint64_t)(bork << (52 - shift));
@@ -1083,14 +1267,30 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				cdata++;
 				addr += ri->ri_width;
 			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+				sc->sc_rstip[addr + 32] = temp | maskr;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				sc->sc_rstip[addr + 32] = bgr;
+				bork = *cdata;
+				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
+					fg = (uint64_t)bork >> (shift - 24);
+					sc->sc_rstip[addr] = fg | temp;
+					fgr = (uint64_t)(bork << (52 - shift));
+					sc->sc_rstip[addr] = fgr | temp;
+				}
+			}
 		} else if (font->fontwidth < 17) {
 			/* short by short */
 			wdata = (uint16_t *)cdata;
-			for (i = 0; i < font->fontheight; i++) {
+			for (i = 0; i < font->fontheight - 1; i++) {
 				sc->sc_rstip[addr] = bg;
 				sc->sc_rstip[addr + 32] = bgr;
 				bork = *wdata;
 				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
 					fg = (uint64_t)bork >> (shift - 16);
 					sc->sc_rstip[addr] = fg | temp;
 					fgr = (uint64_t)(bork << (48 - shift));
@@ -1099,9 +1299,40 @@ tcx_putchar(void *cookie, int row, int col, u_int c, long attr)
 				wdata++;
 				addr += ri->ri_width;
 			}
+			if (attr & WSATTR_UNDERLINE) {
+				sc->sc_rstip[addr] = temp | mask;
+				sc->sc_rstip[addr + 32] = temp | maskr;
+			} else {
+				sc->sc_rstip[addr] = bg;
+				sc->sc_rstip[addr + 32] = bgr;
+				bork = *wdata;
+				if (bork != 0) {
+					if (bold) bork |= bork >> 1;
+					fg = (uint64_t)bork >> (shift - 16);
+					sc->sc_rstip[addr] = fg | temp;
+					fgr = (uint64_t)(bork << (48 - shift));
+					sc->sc_rstip[addr + 32] = fgr | temp;
+				}
+			}
 		}
-		
 	}
+}
+
+static int
+tcx_allocattr(void *cookie, int fg0, int bg0, int flg, long *attrp)
+{
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	*attrp = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static int
@@ -1140,7 +1371,7 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 	 * this the screen goes all funky
 	 */
 		int i;
-	
+
 		for (i = 0; i < cur->cmap.count; i++) {
 			bus_space_write_4(sc->sc_bustag, sc->sc_bt, DAC_ADDRESS,
 			    (cur->cmap.index + i + 2) << 24);
@@ -1159,7 +1390,6 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 
 		for (i = 0; i < 128; i += 4) {
 			memcpy(&temp, &cur->mask[i], 4);
-			printf("%08x -> ", temp);
 			poof = ((temp & 0x80808080) >> 7) |
 			       ((temp & 0x40404040) >> 5) |
 			       ((temp & 0x20202020) >> 3) |
@@ -1168,7 +1398,6 @@ tcx_do_cursor(struct tcx_softc *sc, struct wsdisplay_cursor *cur)
 			       ((temp & 0x04040404) << 3) |
 			       ((temp & 0x02020202) << 5) |
 			       ((temp & 0x01010101) << 7);
-			printf("%08x\n", poof);
 			bus_space_write_4(sc->sc_bustag, sc->sc_thc,
 			    THC_CURSOR_1 + i, poof);
 			memcpy(&temp, &cur->image[i], 4);
@@ -1192,8 +1421,8 @@ tcx_set_cursor(struct tcx_softc *sc)
 {
 	uint32_t reg;
 
-	reg = (sc->sc_cursor_x - sc->sc_hotspot_x) << 16 | 
-	     ((sc->sc_cursor_y - sc->sc_hotspot_y) & 0xffff);
+	reg = (((sc->sc_cursor_x - sc->sc_hotspot_x) & 0xfff) << 16) | 
+	     ((sc->sc_cursor_y - sc->sc_hotspot_y) & 0x0fff);
 	bus_space_write_4(sc->sc_bustag, sc->sc_thc, THC_CURSOR_POS, reg);
 }
 

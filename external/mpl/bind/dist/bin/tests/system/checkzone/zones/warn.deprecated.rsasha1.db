@@ -1,0 +1,71 @@
+; File written on Mon Jun 30 14:57:52 2025
+; dnssec-signzone version 9.21.3-dev
+example.		3600	IN SOA	. . (
+					0          ; serial
+					0          ; refresh (0 seconds)
+					0          ; retry (0 seconds)
+					0          ; expire (0 seconds)
+					3600       ; minimum (1 hour)
+					)
+			3600	RRSIG	SOA 5 1 3600 (
+					20901231235959 20250630035752 3495 example.
+					gq16Xp8iCErMp/R6jdzvws3MMvWAMowfYOa5
+					K3Dwo3MXUruWhsDa4XjH3CJIk4LtSRDWcVSj
+					/STy/R4CEvz83/2VMjQ7L73hFZZNVrMHKrLi
+					SfRhnUueOHiYrv8sLM2ZHy0EYM/gULmcX51j
+					j0XJlSf9DfkT/nh3ZwqS+lD/RA+1Gg73xVkS
+					tRh5AZMWAGrjyBMOC0iW9qexqINmM0nR40K7
+					5L+17OL2Ay/Fp7zliN+g9bAEfgITQlFRO32Y
+					sZrPRguzavP5xad4m3GOCAQoTQJpnci7id2u
+					DhIwkh6+7Do3zjZOQy74IvbuPVUS5nVRiEd8
+					XqF3Z7hHMYWWCEdslw== )
+			3600	NS	.
+			3600	RRSIG	NS 5 1 3600 (
+					20901231235959 20250630034615 3495 example.
+					FrY8Bi8StW34PADKfVn2uPDIgDzbhyinoQDw
+					HjklP8PFXvl2VLhroGZy5EfoGQlC+eOL7Ffb
+					ZlKMvSOtGHpIIdqWg6GmGBWqCYoC3EoaFVXh
+					A2SBxOPdcbGbwzVk6MWnrpFRsxwMqX+7vjJg
+					eB7XVh1tZf90N6Yfswfy/UFf5Qbaj69gE7/7
+					Eu3lkNNsFr5UVLPU4K4/dzNalllZjZ++w68T
+					5Y97UmIJH+aXpNndibJU9c25F1/ou5NJLQQN
+					LxyWXIi1CRaF88sjQwXemO8xutnh2b3ULKI0
+					pelDtKThLWWYAMhgMnhr5HktL69++cMZiZ4z
+					3heBavJIPY2QTYOLZw== )
+			3600	NSEC	example. NS SOA RRSIG NSEC DNSKEY
+			3600	RRSIG	NSEC 5 1 3600 (
+					20901231235959 20250630035752 3495 example.
+					N5mNbNXTSbLOya8baU6SaGao8bPquA4rO2hb
+					5mkYjM+wzAJRNKSrViA5Ev7iFJolXKM+NCV3
+					fpKtT+5v8mqhGZf80H1Z7inmAMX+Gz9B0YfO
+					yhmSTD7qnIgoxw+W/dFAeBx18XyCRDBRlGyj
+					2FEqZa46AVuDaYgQoUJLfM4SkOhbsDdDfQV1
+					uQinjRnhvOQEOd0wYRbqR7S8BMqppnahwyai
+					lH5tx8qsBVFTR7P8D5UlTfHCBM+d0VI5jXjt
+					45eCwzqQBTl4ot4Tbc/nGaUvPU5ffkW8fmsk
+					BygQeKd97xPnzK0tt1KJaYGTiqc3UgUId929
+					XniHMB6YmxkpIb2qrg== )
+			3600	DNSKEY	256 3 5 (
+					AwEAAZmABvQsJBvsRu2fMlU1CtN58u7+yO5x
+					ioxkg8O2mH29NDFoMKtxZKlk74+hT8m0aAKV
+					hqEywM9S2NaWEXctv2lF6t/f8E8YJkY+cnLb
+					iZmxuJmScxce8u32KlX0MiKN2JQHIokDTz7m
+					2AqUaLTnERyIXNUHJfHx1nzvhhz4G7TV41Pk
+					U1MSX3gCrgsSQ7IUzLOsyy6iQn4wFml+eXlO
+					qmypFvjRDhmjXAHms3nSOgDmDu6kF+9R0ccL
+					Lh4YAEYZlx2UoDigcEtRfMeYQwb76tC7xAkx
+					EEJAUo+oRkaw2in8kVjpwuXSWF5WlX+Cpie9
+					o3r+4EpI/IV6z63QO9zqMEE=
+					) ; ZSK; alg = RSASHA1 ; key id = 3495
+			3600	RRSIG	DNSKEY 5 1 3600 (
+					20901231235959 20250630034615 3495 example.
+					gpKH6gf+47UNqMlTdtylpSW/yRNEyPtpj7Tu
+					Y939pwRPgQcPBscIwcZzezV0r4y2O5xMTKQ1
+					fQZTidfCwvessYTxYJYSjE1i+pChblLmqY/j
+					JNjwUv0nH9rs8ZSXRSFiqPsC7tl4jBQsD1N+
+					UdV3a/rEFCON1C+KirQlrdSq+/bAic0A4afZ
+					g746kgnLsNCu/FnVucfoOBGaAk6na9dYIt0+
+					l7IKI+4dg+tHsaGdRVv2h2JXO6g1I2LtCiIB
+					FlKxFDCrMFV9+xduLFNnNxVsvnK7RtlAAPo5
+					n4WBinbW5CpGJnc7n/0BknnecqZb63qkQgia
+					50FJvVZCJ4WTZ+Hh0g== )

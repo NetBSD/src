@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.69.28.1 2025/08/02 05:54:28 perseant Exp $	*/
+/*	$NetBSD: util.h,v 1.69.28.2 2026/11/04 23:19:10 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995
@@ -61,6 +61,15 @@ typedef __va_list va_list;
 #define	PW_POLICY_BYPASSWD	1
 #define	PW_POLICY_BYGROUP	2
 
+/* Definitions for the strpct() functions rounding modes */
+#define	STRPCT_RTN		0U	/* Round to nearest */
+#define	STRPCT_RAZ		2U	/* Round away from zero */
+#define	STRPCT_RTZ		3U	/* Round towards zero */
+#define	STRPCT_RTI		6U	/* Round towards +Inf */
+#define	STRPCT_RAI		7U	/* Round away from +Inf (to -Inf) */
+/* Do not alter those 5 values, the implementation depends upon them */
+#define	STRPCT_RQRY		8U	/* Any value not one of the above */
+
 __BEGIN_DECLS
 struct disklabel;
 struct iovec;
@@ -103,10 +112,16 @@ int		openpty(int *, int *, char *, struct termios *,
 time_t		parsedate(const char *, const time_t *, const int *)
     __RENAME(__parsedate50);
 #endif
+
 int		pidfile(const char *);
 pid_t		pidfile_lock(const char *);
 pid_t		pidfile_read(const char *);
 int		pidfile_clean(void);
+int		pidfile_unlock(void);
+int		pidfile_fd(void);
+const char *	pidfile_path(void);
+void		pidfile_unremoveable(void);
+
 int		pidlock(const char *, int, pid_t *, const char *);
 int		pw_abort(void);
 #ifndef __LIBC12_SOURCE__
@@ -136,6 +151,10 @@ int		sockaddr_snprintf(char *, size_t, const char *,
     const struct sockaddr *);
 char 	       *strpct(char *, size_t, uintmax_t, uintmax_t, size_t);
 char 	       *strspct(char *, size_t, intmax_t, intmax_t, size_t);
+char 	       *strpct_r(char *, size_t, uintmax_t, uintmax_t, size_t,
+    uint32_t);
+char 	       *strspct_r(char *,size_t, intmax_t, intmax_t, size_t, uint32_t);
+uint32_t	strpct_round(uint32_t);
 int		string_to_flags(char **, unsigned long *, unsigned long *);
 int		ttyaction(const char *, const char *, const char *);
 int		ttylock(const char *, int, pid_t *);

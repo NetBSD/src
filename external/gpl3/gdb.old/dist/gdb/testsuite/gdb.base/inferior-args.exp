@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 # Test running an inferior with arguments.
 
 # This does not work on boards that don't support inferior arguments.
-if {[target_info exists noargs]} {
-    verbose "skipping gdb.base/inferior-args.exp because of noargs"
-    return
-}
+require {!target_info exists noargs}
 
 standard_testfile .c
 
@@ -31,8 +28,10 @@ if {[build_executable "failed to prepare" $testfile $srcfile \
 proc do_test { method } {
     global binfile hex
 
-    # The second arg is an empty string on purpose.
-    set inferior_args { "first arg" "" "third-arg" }
+    # The second arg is an empty string on purpose.  The last argument
+    # must be the empty argument -- we once had a bug where that
+    # wouldn't work!
+    set inferior_args { "first arg" "" "third-arg" "'" "\"" " " "" }
 
     clean_restart $binfile
 
@@ -112,11 +111,15 @@ proc do_test { method } {
     }
 
     # Now that we are stopped at main, inspect argc/argv.
-    gdb_test "print argc" " = 4"
+    gdb_test "print argc" " = 8"
     gdb_test "print argv\[0\]" " = $hex \".*\""
     gdb_test "print argv\[1\]" " = $hex \"first arg\""
     gdb_test "print argv\[2\]" " = $hex \"\""
     gdb_test "print argv\[3\]" " = $hex \"third-arg\""
+    gdb_test "print argv\[4\]" " = $hex \"'\""
+    gdb_test "print argv\[5\]" " = $hex \"\\\\\"\""
+    gdb_test "print argv\[6\]" " = $hex \" \""
+    gdb_test "print argv\[7\]" " = $hex \"\""
 }
 
 foreach_with_prefix method { "start" "starti" "run" "set args" } {

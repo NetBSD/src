@@ -1,6 +1,6 @@
 /* Native-dependent code for NetBSD.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NBSD_NAT_H
-#define NBSD_NAT_H
+#ifndef GDB_NETBSD_NAT_H
+#define GDB_NETBSD_NAT_H
 
 #include "inf-ptrace.h"
 
@@ -61,4 +61,4 @@ protected:
   void post_startup_inferior (ptid_t ptid) override;
 };
 
-#endif /* netbsd-nat.h */
+#endif /* GDB_NETBSD_NAT_H */

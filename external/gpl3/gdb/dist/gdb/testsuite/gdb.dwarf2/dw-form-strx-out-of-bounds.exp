@@ -1,0 +1,41 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that an out-of-bounds DW_FORM_strx attribute triggers a DWARF error.
+
+# Out of bounds index.
+set int_str_idx 1
+
+# With readnow, the dwarf error is printed during the file command, so skip
+# the test.
+require !readnow
+
+set prepare_for_testing_done 0
+source $srcdir/$subdir/dw-form-strx.exp.tcl
+require {expr $prepare_for_testing_done == 1}
+
+set re_dwarf_error \
+    [string_list_to_regexp \
+	 "DWARF Error: Offset from DW_FORM_GNU_str_index or DW_FORM_strx" \
+	 " pointing outside of .debug_str_offsets section in CU at offset"\
+	 " "]$hex
+set re_in_module \
+    {in module [^\r\n]+}
+set re_in_module [string_to_regexp {[}]$re_in_module[string_to_regexp {]}]
+set re_no_symbol [string_to_regexp {No symbol "global_var" in current context.}]
+gdb_test "ptype global_var" \
+    [multi_line \
+	 "$re_dwarf_error $re_in_module"\
+	 $re_no_symbol]

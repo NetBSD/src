@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2016/09/21 16:25:41 christos Exp $
+#	$NetBSD: Makefile,v 1.17.26.1 2026/11/04 23:28:53 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -17,7 +17,7 @@ CPPFLAGS+=-DNLIST_AOUT
 .elif	${MACHINE_ARCH} == "powerpc"
 CPPFLAGS+=-DNLIST_ELF32
 .elif	${MACHINE_ARCH} == "i386" || \
-	${MACHINE_ARCH} == "m68k" || \
+	${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k" || \
 	${MACHINE_ARCH} == "m68000" || \
 	${MACHINE_ARCH} == "vax" || \
 	${MACHINE_CPU} == "arm"

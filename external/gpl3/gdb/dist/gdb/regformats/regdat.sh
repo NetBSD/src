@@ -1,7 +1,7 @@
 #!/bin/sh -u
 
 # Register protocol definitions for GDB, the GNU debugger.
-# Copyright (C) 2001-2024 Free Software Foundation, Inc.
+# Copyright (C) 2001-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -105,7 +105,7 @@ EOF
 }
 
 
-exec > new-$2
+exec > new-$3
 copyright $1
 echo '#include "regdef.h"'
 echo '#include "tdesc.h"'
@@ -118,6 +118,7 @@ xmlarch=x
 xmlosabi=x
 expedite=x
 feature=x
+osabi=unknown
 exec < $1
 while do_read
 do
@@ -143,7 +144,7 @@ do
   elif test "${type}" = "xmlarch"; then
     xmlarch="${entry}"
     continue
-  elif test "${type}" = "osabi"; then
+  elif test "${type}" = "xmlosabi"; then
     xmlosabi="${entry}"
     continue
   elif test "${type}" = "expedite"; then
@@ -151,6 +152,9 @@ do
     continue
   elif test "${type}" = "feature"; then
     feature="${entry}"
+    continue
+  elif test "${type}" = "osabi"; then
+    osabi="${entry}"
     continue
   elif test "${name}" = x; then
     echo "$0: $1 does not specify \`\`name''." 1>&2
@@ -188,11 +192,13 @@ else
 fi
 echo
 
+osabi_enum=$(grep "${osabi}" "$2" | sed 's/.*(\([^,]\+\),.*/GDB_OSABI_\1/')
+
 cat <<EOF
   result->xmltarget = xmltarget_${name};
 #endif
 
-  init_target_desc (result, expedite_regs_${name});
+  init_target_desc (result, expedite_regs_${name}, ${osabi_enum});
 
   tdesc_${name} = result;
 }
@@ -200,4 +206,4 @@ EOF
 
 # close things off
 exec 1>&2
-mv -- "new-$2" "$2"
+mv -- "new-$3" "$3"

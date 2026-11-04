@@ -1,5 +1,5 @@
 /* Data structures and API for location specs in GDB.
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LOCATION_H
-#define LOCATION_H
+#ifndef GDB_LOCATION_H
+#define GDB_LOCATION_H
 
 #include "symtab.h"
 
@@ -365,4 +365,4 @@ extern location_spec_up
 				    const struct language_defn *language,
 				    explicit_completion_info *completion_info);
 
-#endif /* LOCATION_H */
+#endif /* GDB_LOCATION_H */

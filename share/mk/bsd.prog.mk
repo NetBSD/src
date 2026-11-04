@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.349.2.1 2025/08/02 05:55:19 perseant Exp $
+#	$NetBSD: bsd.prog.mk,v 1.349.2.2 2026/11/04 23:19:53 perseant Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -38,7 +38,7 @@ CLEANFILES+= a.out [Ee]rrs mklog core *.core .gdbinit
 .if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
 CFLAGS+=	${PIE_CFLAGS}
 AFLAGS+=	${PIE_AFLAGS}
-LDFLAGS+=	${"${LDSTATIC.${.TARGET}}" == "-static" :? : ${PIE_LDFLAGS}}
+# PIE_LDFLAGS added on a per-PROG basis below depending on LDSTATIC.${PROG}
 .endif
 
 CFLAGS+=	${COPTS}
@@ -179,7 +179,6 @@ _LIBLIST=\
 	skey \
 	sl \
 	sqlite3 \
-	ssh \
 	ssl \
 	stdc++ \
 	supc++ \
@@ -205,31 +204,36 @@ LIB${_lib:tu}=	${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
 LIBKRB5_LDADD+= -lkrb5 -lcom_err \
 	-lhx509 -lcrypto -lasn1 \
 	-lwind -lheimbase -lcom_err -lroken \
-	-lcrypt -lutil -lpthread
+	-lcrypt -lutil
 LIBKRB5_DPADD+= ${LIBKRB5} ${LIBCOM_ERR} \
 	${LIBHX509} ${LIBCRYPTO} ${LIBASN1} \
 	${LIBWIND} ${LIBHEIMBASE} ${LIBCOM_ERR} ${LIBROKEN} \
-	${LIBCRYPT} ${LIBUTIL} ${LIBPTHREAD}
+	${LIBCRYPT} ${LIBUTIL}
 LIBGSSAPI_LDADD+= -lgssapi -lheimntlm ${LIBKRB5_LDADD}
 LIBGSSAPI_DPADD+= ${LIBGSSAPI} ${LIBHEIMNTLM} ${LIBKRB5_DPADD}
 .endif
 
 .if (${MKLDAP} != "no")
-LIBLDAP_LDADD+= -lldap -llber ${LIBGSSAPI_LDADD} -lssl -lcrypto -lpthread
+LIBLDAP_LDADD+= -lldap -llber ${LIBGSSAPI_LDADD} -lssl -lcrypto
 LIBLDAP_DPADD+= ${LIBLDAP} ${LIBLBER} ${LIBGSSAPI_DPADD} ${LIBSSL} \
-    ${LIBCRYPTO} ${LIBPTHREAD}
+    ${LIBCRYPTO}
 .endif
 
 # PAM applications, if linked statically, need more libraries
 .if (${MKPIC} == "no")
-PAM_STATIC_LDADD+= -lssh
-PAM_STATIC_DPADD+= ${LIBSSH}
+.  if !defined(LIBDO.ssh)	# XXX use PROGDPLIBS instead
+LIBDO.ssh!=	cd ${NETBSDSRCDIR:Q}/crypto/external/bsd/openssh/lib && \
+		${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDO.ssh
+.  endif
+PAM_STATIC_LDADD+= -L${LIBDO.ssh} -lssh
+PAM_STATIC_DPADD+= ${LIBDO.ssh}/libssh.a
 .if (${MKKERBEROS} != "no")
 PAM_STATIC_LDADD+= -lkafs -lkrb5 -lhx509 -lwind -lasn1 \
-	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lpthread -lm
+	-lroken -lcom_err -lheimbase -lcrypto -lsqlite3 -lm
 PAM_STATIC_DPADD+= ${LIBKAFS} ${LIBKRB5} ${LIBHX509} ${LIBWIND} ${LIBASN1} \
 	${LIBROKEN} ${LIBCOM_ERR} ${LIBHEIMBASE} ${LIBCRYPTO} ${LIBSQLITE3} \
-	${LIBPTHREAD} ${LIBM}
+	${LIBM}
 .endif
 .if (${MKSKEY} != "no")
 PAM_STATIC_LDADD+= -lskey
@@ -288,6 +292,15 @@ _PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR} \
 _PROGLDOPTS+=	-Wl,-rpath-link,${DESTDIR}${SHLIBINSTALLDIR} \
 		-L=${SHLIBINSTALLDIR}
 .endif
+
+# XXX Provisional -- we should get this out of PROGDPLIBS for each
+# specific dependency so we can write the directory in one place where
+# the library is defined, and not copy and paste it everywhere the
+# library is used.
+.for _subdir_ in ${PROGDPSUBDIRS:U}
+_PROGLDOPTS+=	-Wl,-rpath,${SHLIBDIR}/${_subdir_} \
+		-L=${SHLIBDIR}/${_subdir_}
+.endfor
 
 __proginstall: .USE
 	${_MKTARGET_INSTALL}
@@ -457,6 +470,9 @@ PAXCTL_FLAGS.${_P}= +a
 _DPADD.${_P}=		${DPADD}    ${DPADD.${_P}}
 _LDADD.${_P}=		${LDADD}    ${LDADD.${_P}}
 _LDFLAGS.${_P}=		${LDFLAGS}  ${LDFLAGS.${_P}}
+.if defined(MKPIE) && (${MKPIE} != "no") && !defined(NOPIE)
+_LDFLAGS.${_P}+=	${"${LDSTATIC.${_P}}" == "-static" :? : ${PIE_LDFLAGS}}
+.endif
 .if ${MKSANITIZER} != "yes"
 # Sanitizers don't support static build.
 _LDSTATIC.${_P}=	${LDSTATIC} ${LDSTATIC.${_P}}
@@ -482,9 +498,29 @@ LOBJS.${_P}+=	${LSRCS:.c=.ln} ${SRCS.${_P}:M*.c:.c=.ln}
 
 ${OBJS.${_P}} ${LOBJS.${_P}}: ${DPSRCS}
 
-${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
-    ${LIBCRTEND} ${_DPADD.${_P}}
-.if !commands(${_P})
+_PROGDEPS.${_P}=.gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} \
+		${LIBCRTBEGIN} ${LIBCRTEND} ${_DPADD.${_P}}
+
+.if commands(${_P}) || commands(${_P}.link)
+
+# Caller has defined their own recipe for the program.  It's up to the
+# caller to produce debug data; we'll just add the dependencies now
+# that OBJS and DPADD are resolved -- if the caller had written `foo:
+# ${OBJS} or `foo.link: ${OBJS}' before including bsd.prog.mk, it would
+# be too early to expand OBJS and would be missing dependencies
+
+${_P} ${_P}.link: ${_PROGDEPS.${_P}}
+
+.else	# !commands(${_P}) && !commands(${_P}.link)
+
+# Default recipe for the program.
+
+.if defined(_PROGDEBUG.${_P})
+CLEANFILES+=	${_P}.link
+${_P}.link: ${_PROGDEPS.${_P}}
+.else	# !defined(_PROGDEBUG.${_P})
+${_P}: ${_PROGDEPS.${_P}}
+.endif
 	${_MKTARGET_LINK}
 	${_CCLINK.${_P}} \
 	    ${_LDFLAGS.${_P}} ${_LDSTATIC.${_P}} -o ${.TARGET} \
@@ -498,6 +534,7 @@ ${_P}: .gdbinit ${LIBCRT0} ${LIBCRTI} ${OBJS.${_P}} ${LIBC} ${LIBCRTBEGIN} \
 .if ${MKSTRIPIDENT} != "no"
 	${OBJCOPY} -R .ident ${.TARGET}
 .endif
+
 .endif	# !commands(${_P})
 
 ${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
@@ -505,13 +542,15 @@ ${_P}.ro: ${OBJS.${_P}} ${_DPADD.${_P}}
 	${CC} ${LDFLAGS:N-pie} -nostdlib -r -Wl,-dc -o ${.TARGET} ${OBJS.${_P}}
 
 .if defined(_PROGDEBUG.${_P})
-${_PROGDEBUG.${_P}}: ${_P}
+${_PROGDEBUG.${_P}}: ${_P}.link
 	${_MKTARGET_CREATE}
-	( ${OBJCOPY} --only-keep-debug --compress-debug-sections \
-	    ${_P} ${_PROGDEBUG.${_P}} && \
-	  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
-		--add-gnu-debuglink=${_PROGDEBUG.${_P}} ${_P} \
-	) || (rm -f ${_PROGDEBUG.${_P}}; false)
+	${OBJCOPY} --only-keep-debug --compress-debug-sections \
+	    ${_P}.link ${.TARGET}
+${_P}: ${_P}.link ${_PROGDEBUG.${_P}}
+	${_MKTARGET_CREATE}
+	${OBJCOPY} --strip-debug -R .gnu_debuglink \
+	    --add-gnu-debuglink=${_PROGDEBUG.${_P}} \
+	    ${_P}.link ${.TARGET}
 .endif
 
 .endif	# defined(OBJS.${_P}) && !empty(OBJS.${_P})			# }

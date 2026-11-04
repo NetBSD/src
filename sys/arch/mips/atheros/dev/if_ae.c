@@ -1,4 +1,4 @@
-/* $NetBSD: if_ae.c,v 1.44.2.1 2025/08/02 05:55:52 perseant Exp $ */
+/* $NetBSD: if_ae.c,v 1.44.2.2 2026/11/04 23:20:57 perseant Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -73,7 +73,7 @@
  * Device driver for the onboard ethernet MAC found on the AR5312
  * chip's AHB bus.
  *
- * This device is very simliar to the tulip in most regards, and
+ * This device is very similar to the tulip in most regards, and
  * the code is directly derived from NetBSD's tulip.c.  However, it
  * is different enough that it did not seem to be a good idea to
  * add further complexity to the tulip driver, so we have our own.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.44.2.1 2025/08/02 05:55:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.44.2.2 2026/11/04 23:20:57 perseant Exp $");
 
 
 #include <sys/param.h>
@@ -217,13 +217,12 @@ ae_match(device_t parent, struct cfdata *cf, void *aux)
 void
 ae_attach(device_t parent, device_t self, void *aux)
 {
-	const uint8_t *enaddr;
-	prop_data_t ea;
 	struct ae_softc *sc = device_private(self);
 	struct arbus_attach_args *aa = aux;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	int i, error;
+	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	sc->sc_dev = self;
 
@@ -234,15 +233,11 @@ ae_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Try to get MAC address.
 	 */
-	ea = prop_dictionary_get(device_properties(sc->sc_dev), "mac-address");
-	if (ea == NULL) {
-		printf("%s: unable to get mac-addr property\n",
+	if (! ether_getaddr(self, enaddr)) {
+		printf("%s: unable to get mac-address\n",
 		    device_xname(sc->sc_dev));
 		return;
 	}
-	KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-	KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-	enaddr = prop_data_data_nocopy(ea);
 
 	/* Announce ourselves. */
 	printf("%s: Ethernet address %s\n", device_xname(sc->sc_dev),

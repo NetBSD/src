@@ -10,14 +10,22 @@
 #	used in "user has moved to \fInew_location\fR" bounce messages.
 #
 #	Normally, the \fBrelocated\fR(5) table is specified as a text file
-#	that serves as input to the \fBpostmap\fR(1) command.
-#	The result, an indexed file in \fBdbm\fR or \fBdb\fR format,
-#	is used for fast searching by the mail system. Execute the command
-#	"\fBpostmap /etc/postfix/relocated\fR" to rebuild an indexed
-#	file after changing the corresponding relocated table.
+#	that serves as input to the \fBpostmap\fR(1) command to create
+#	an indexed file for fast lookup.
+#
+#	Execute the command "\fBpostmap /etc/postfix/relocated\fR" to
+#	rebuild a default-type indexed file after changing the text file,
+#	or execute "\fBpostmap \fItype\fB:/etc/postfix/relocated\fR" to
+#	specify an explicit type.
+#
+#	The default indexed file type is configured with the
+#	default_database_type parameter. Depending on the platform this
+#	may be one of lmdb:, cdb:, hash:, or dbm: (without the trailing
+#       ':').
 #
 #	When the table is provided via other means such as NIS, LDAP
 #	or SQL, the same lookups are done as for ordinary indexed files.
+#	Managing such databases is outside the scope of Postfix.
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions, or lookups
@@ -36,9 +44,10 @@
 # TABLE FORMAT
 # .ad
 # .fi
-#	The input format for the \fBpostmap\fR(1) command is as follows:
 # .IP \(bu
-#	An entry has one of the following form:
+#	By default, Postfix will prepend a hard-coded prefix "5.1.6 User
+#	has moved to " to a table lookup result, and the format for a
+#	table entry is as follows:
 #
 # .nf
 #	     \fIpattern      new_location\fR
@@ -46,6 +55,17 @@
 #
 #	Where \fInew_location\fR specifies contact information such as
 #	an email address, or perhaps a street address or telephone number.
+# .IP \(bu
+#	Postfix 3.11 and later can optionally disable the hard-coded
+#	prefix. Specify "relocated_prefix_enable = no" in main.cf, and
+#	specify relocated_maps entries with your own RFC 3463-compliant
+#	enhanced status code and text, for example:
+#
+# .nf
+#	     \fIpattern\fR      5.1.6 Mailbox has moved to user@example
+#	     \fIpattern\fR      5.2.0 Mailbox is unavailable
+#	     \fIpattern\fR      5.2.1 Mailbox is disabled
+# .fi
 # .IP \(bu
 #	Empty lines and whitespace-only lines are ignored, as
 #	are lines whose first non-whitespace character is a `#'.
@@ -122,6 +142,11 @@
 # .IP "\fBrelocated_maps (empty)\fR"
 #	Optional lookup tables with new contact information for users or
 #	domains that no longer exist.
+# .PP
+#	Available with Postfix version 3.11 and later:
+# .IP "\fBrelocated_prefix_enable (yes)\fR"
+#	Prepend the prefix "\fB5.1.6 User has moved to \fR" to all
+#	relocated_maps lookup results.
 # .PP
 #	Other parameters of interest:
 # .IP "\fBinet_interfaces (all)\fR"

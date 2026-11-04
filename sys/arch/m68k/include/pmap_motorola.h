@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.43 2023/12/31 21:59:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.43.2.1 2026/11/04 23:20:51 perseant Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -76,12 +76,21 @@
 #ifndef	_M68K_PMAP_MOTOROLA_H_
 #define	_M68K_PMAP_MOTOROLA_H_
 
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
+
 #ifdef _KERNEL_OPT
 #include "opt_m68k_arch.h"
 #endif
 
+#include <sys/kcore.h>
+#include <m68k/kcore.h>
+
 #include <machine/cpu.h>
 #include <machine/pte.h>
+
+#define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
 
 /*
  * Pmap stuff
@@ -96,6 +105,14 @@ struct pmap {
 	struct pmap_statistics	pm_stats;	/* pmap statistics */
 	int			pm_ptpages;	/* more stats: PT pages */
 };
+
+/*
+ * pmap-specific data stored in the vm_physmem[] array.
+ */
+struct pmap_physseg {
+	struct pv_header *pvheader;	/* pv table for this seg */
+};
+#define	__HAVE_PMAP_PHYSSEG
 
 /*
  * Root Pointer attributes for Supervisor and User modes.
@@ -137,19 +154,19 @@ struct pmap {
  * so they have different values between 020/030 and 040/060.
  */
 							/*  8KB /  4KB	*/
-#define TIB_SHIFT	(PGSHIFT - 2)			/*   11 /   10	*/
+#define TIB_SHIFT	(PAGE_SHIFT - 2)		/*   11 /   10	*/
 #define TIB_SIZE	(1U << TIB_SHIFT)		/* 2048 / 1024	*/
-#define TIA_SHIFT	(32 - TIB_SHIFT - PGSHIFT)	/*    8 /   10	*/
+#define TIA_SHIFT	(32 - TIB_SHIFT - PAGE_SHIFT)	/*    8 /   10	*/
 #define TIA_SIZE	(1U << TIA_SHIFT)		/*  256 / 1024	*/
 
 #define	MMU51_TCR_BITS	(TCR51_E | TCR51_SRE |				\
-			 __SHIFTIN(PGSHIFT, TCR51_PS) |			\
+			 __SHIFTIN(PAGE_SHIFT, TCR51_PS) |		\
 			 __SHIFTIN(TIA_SHIFT, TCR51_TIA) |		\
 			 __SHIFTIN(TIB_SHIFT, TCR51_TIB))
 #define	MMU40_TCR_BITS	(TCR40_E |					\
-			 __SHIFTIN(PGSHIFT - 12, TCR40_P))
+			 __SHIFTIN(PAGE_SHIFT - 12, TCR40_P))
 
-#define SEGSHIFT	(TIB_SHIFT + PGSHIFT)		/*   24 /   22	*/
+#define SEGSHIFT	(TIB_SHIFT + PAGE_SHIFT)	/*   24 /   22	*/
 
 #define NBSEG30		(1U << SEGSHIFT)
 #define NBSEG40		(1U << SG4_SHIFT2)
@@ -184,11 +201,7 @@ struct pmap {
  * physically contiguous pages for the ST in pmap_motorola.c!
  */
 #define MAXKL2SIZE	32
-#if PAGE_SIZE == 8192	/* NBPG / (SG4_LEV1SIZE * sizeof(st_entry_t)) */
-#define MAXUL2SIZE	16
-#else
-#define MAXUL2SIZE	8
-#endif
+#define MAXUL2SIZE	(8 * (PAGE_SIZE / 0x1000))
 #define l2tobm(n)	(1U << (n))
 #define bmtol2(n)	(ffs(n) - 1)
 
@@ -209,8 +222,6 @@ extern struct pv_header	*pv_table;	/* array of entries, one per page */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
-
 static __inline bool
 pmap_remove_all(struct pmap *pmap)
 {
@@ -218,19 +229,18 @@ pmap_remove_all(struct pmap *pmap)
 	return false;
 }
 
+/* This is at the end of the kernel virtual address space. */
+#ifndef SYSMAP_VA
+#define	SYSMAP_VA	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
+#endif
+
 extern paddr_t		Sysseg_pa;
 extern st_entry_t	*Sysseg;
 extern pt_entry_t	*Sysmap, *Sysptmap;
-#define	SYSMAP_VA	VM_MAX_KERNEL_ADDRESS
 extern vsize_t		Sysptsize;
-extern vsize_t		mem_size;
 extern vaddr_t		virtual_avail, virtual_end;
-extern u_int		protection_codes[];
 #if defined(M68040) || defined(M68060)
 extern u_int		protostfree;
-#endif
-#ifdef CACHE_HAVE_VAC
-extern u_int		pmap_aliasmask;
 #endif
 
 extern char		*vmmap;		/* map for mem, dumps, etc. */
@@ -239,21 +249,118 @@ extern void		*msgbufaddr;
 
 /* for lwp0 uarea initialization after MMU enabled */
 extern vaddr_t		lwp0uarea;
-void	pmap_bootstrap_finalize(void);
+void *	pmap_bootstrap2(void);
 
-vaddr_t	pmap_map(vaddr_t, paddr_t, paddr_t, int);
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
+void	pmap_init_vac(size_t);
 void	pmap_prefer(vaddr_t, vaddr_t *);
 #define	PMAP_PREFER(foff, vap, sz, td)	pmap_prefer((foff), (vap))
 #endif
+
+/*
+ * pmap hook for trap()'s page fault handler.  We don't need to
+ * do anything special, so it just goes to uvm_fault().
+ */
+#define	pmap_fault(m, v, t)	uvm_fault((m), (v), (t))
 
 void	_pmap_set_page_cacheable(struct pmap *, vaddr_t);
 void	_pmap_set_page_cacheinhibit(struct pmap *, vaddr_t);
 int	_pmap_page_is_cacheable(struct pmap *, vaddr_t);
 
+phys_ram_seg_t *pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
+
 paddr_t	vtophys(vaddr_t va);
+
+/* Copy definitions from new pmap_68k.h to ease transition. */
+struct pmap_bootmap {
+	union {
+		vaddr_t		pmbm_vaddr;
+		vaddr_t *	pmbm_vaddr_ptr;
+	};
+	paddr_t			pmbm_paddr;
+	size_t			pmbm_size;
+	int			pmbm_flags;
+};
+
+#define	PMBM_F_VAONLY	__BIT(0)
+#define	PMBM_F_FIXEDVA	__BIT(1)
+#define	PMBM_F_KEEPOUT	__BIT(2)
+#define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
+#define	PMBM_F_CWT	__BIT(4)	/* write-through cacheable mapping */
+#define	PMBM_F_RO	__BIT(5)	/* read-only mapping */
+
+extern struct pmap_bootmap machine_bootmap[];
+bool	pmap_pa_has_static_mapping(paddr_t, size_t, vm_prot_t,
+	    vaddr_t *, int *);
+bool	pmap_va_is_static_mapping(vaddr_t va, size_t);
+
+/* Kernel debugger support functions. */
+struct pmap_db_write_text_context {
+	vaddr_t			pgva;
+	volatile pt_entry_t *	ptep;
+	pt_entry_t		opte;
+};
+bool	pmap_db_write_text_enter(vaddr_t, struct pmap_db_write_text_context *);
+void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
+
+/*
+ * pmap_bootstrap1() may need to relocate global references, and perform
+ * VA <-> PA conversions.  These macros facilitate these conversions, and
+ * can be overridden in <machine/pmap.h> before including <m68k/pmap_68k.h>
+ * if needed.
+ *
+ * The first two macros are specifically for converting addresses within
+ * the confines of pmap_bootstrap1().  We may be running with the MMU off
+ * (and either VA==PA or VA!=PA) or with the MMU on with some mappings.
+ * The default ones are suitable for the "MMU off" case with the relocation
+ * offset passed in the "reloff" variable.
+ *
+ * - PMAP_BOOTSTRAP_RELOC_GLOB() -- relocate a global reference in order
+ *   to access it during bootstrap.
+ *
+ * - PMAP_BOOTSTRAP_RELOC_PA() -- relocate a physical address in order to
+ *   access it during bootstrap.
+ *
+ * The next two macros are intended to convert kernel virtual <-> physical
+ * addresses that will be used in the context of the running kernel once
+ * the MMU is enabled and running on the kernel's ultimate mappings:
+ *
+ * - PMAP_BOOTSTRAP_VA_TO_PA() -- convert a kernel virtual address to
+ *   a physical address using linear relocation.
+ *
+ * - PMAP_BOOTSTRAP_PA_TO_VA() -- and vice versa.
+ */
+#ifndef PMAP_BOOTSTRAP_RELOC_GLOB
+#define	PMAP_BOOTSTRAP_RELOC_GLOB(va)					\
+	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
+#endif
+
+#ifndef PMAP_BOOTSTRAP_RELOC_PA
+#define	PMAP_BOOTSTRAP_RELOC_PA(pa)					\
+	((vaddr_t)(pa))
+#endif
+
+#ifndef PMAP_BOOTSTRAP_VA_TO_PA
+#define	PMAP_BOOTSTRAP_VA_TO_PA(va)					\
+	((((vaddr_t)(va)) - VM_MIN_KERNEL_ADDRESS) + reloff)
+#endif
+
+#ifndef PMAP_BOOTSTRAP_PA_TO_VA
+#define	PMAP_BOOTSTRAP_PA_TO_VA(pa)					\
+	(VM_MIN_KERNEL_ADDRESS + (((paddr_t)(pa)) - reloff))
+#endif
+
+#endif /* ! _MODULE */
+
+/*
+ * Some pmap(9) API macros should be defined here for module(7).
+ * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
+ */
+#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
+
+#endif /* _KERNEL */
 
 #endif /* !_M68K_PMAP_MOTOROLA_H_ */

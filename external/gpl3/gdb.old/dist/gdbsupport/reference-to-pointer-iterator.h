@@ -1,5 +1,5 @@
 /* An iterator wrapper that yields pointers instead of references.
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,7 @@ struct reference_to_pointer_iterator
   using iterator_category = typename IteratorType::iterator_category;
   using difference_type = typename IteratorType::difference_type;
 
-  /* Construct a reference_to_pointer_iterator, passing args to the underyling
+  /* Construct a reference_to_pointer_iterator, passing args to the underlying
      iterator.  */
   template <typename... Args>
   reference_to_pointer_iterator (Args &&...args)
@@ -65,6 +65,24 @@ struct reference_to_pointer_iterator
   self_type &operator++ ()
   {
     ++m_it;
+    return *this;
+  }
+
+  self_type &operator++ (int)
+  {
+    m_it++;
+    return *this;
+  }
+
+  self_type &operator-- ()
+  {
+    --m_it;
+    return *this;
+  }
+
+  self_type &operator-- (int)
+  {
+    m_it--;
     return *this;
   }
 

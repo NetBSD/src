@@ -1,0 +1,4 @@
+#	$NetBSD: list.ext2fs,v 1.1.2.2 2026/11/04 23:19:35 perseant Exp $
+
+PROG	fsck_ext2fs
+PROG	mount_ext2fs

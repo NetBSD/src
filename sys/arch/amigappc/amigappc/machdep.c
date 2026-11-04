@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.54.2.1 2025/08/02 05:55:25 perseant Exp $ */
+/* $NetBSD: machdep.c,v 1.54.2.2 2026/11/04 23:20:02 perseant Exp $ */
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.1 2025/08/02 05:55:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.54.2.2 2026/11/04 23:20:02 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -686,9 +686,9 @@ halt_sys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* for proper keyboard command handling */
+		cnpollc(true);	/* for proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");

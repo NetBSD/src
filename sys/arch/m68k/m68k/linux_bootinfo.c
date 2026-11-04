@@ -1,0 +1,580 @@
+/*	$NetBSD: linux_bootinfo.c,v 1.9.2.2 2026/11/04 23:20:52 perseant Exp $	*/
+
+/*-
+ * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: linux_bootinfo.c,v 1.9.2.2 2026/11/04 23:20:52 perseant Exp $");
+
+#include "opt_ddb.h"
+#include "opt_modular.h"
+#include "opt_md.h"
+
+#include "ksyms.h"
+
+#include <sys/types.h>
+#include <sys/cpu.h>
+#include <sys/rnd.h>
+#include <sys/rndsource.h>
+
+#include <uvm/uvm_extern.h>
+
+#ifdef MEMORY_DISK_DYNAMIC
+#include <dev/md.h>
+#endif
+
+#if NKSYMS || defined(DDB) || defined(MODULAR)
+#define	PRESERVE_KERNEL_SYMBOLS
+#endif
+
+#include <m68k/linux_bootinfo.h>
+
+static struct bootinfo_data	bootinfo_data_store;
+
+#define	RELOC(v, t)	*((t *)PMAP_BOOTSTRAP_RELOC_GLOB(&(v)))
+
+/*
+ * We use always_inline for the parsers that are called from
+ * bootinfo_startup1() to avoid having a global reference to
+ * relocate.
+ */
+
+static inline struct bi_record * __attribute__((always_inline))
+bootinfo_next(struct bi_record *bi)
+{
+	uintptr_t addr = (uintptr_t)bi;
+
+	addr += bi->bi_size;
+	return (struct bi_record *)addr;
+}
+
+#ifndef __mc68010__
+static inline int __attribute__((always_inline))
+bootinfo_get_cpu(struct bi_record *bi)
+{
+	switch (bootinfo_get_u32(bi)) {
+	case BI_CPU_68020:	return CPU_68020;
+	case BI_CPU_68030:	return CPU_68030;
+	case BI_CPU_68040:	return CPU_68040;
+	case BI_CPU_68060:	return CPU_68060;
+	default:		return -666;
+	}
+}
+
+static inline int __attribute__((always_inline))
+bootinfo_get_fpu(struct bi_record *bi)
+{
+	switch (bootinfo_get_u32(bi)) {
+	case BI_FPU_68881:	return FPU_68881;
+	case BI_FPU_68882:	return FPU_68882;
+	case BI_FPU_68040:	return FPU_68040;
+	case BI_FPU_68060:	return FPU_68060;
+	default:		return FPU_UNKNOWN;
+	}
+}
+
+static inline int __attribute__((always_inline))
+bootinfo_get_mmu(struct bi_record *bi)
+{
+	switch (bootinfo_get_u32(bi)) {
+	case BI_MMU_68851:	return MMU_68851;
+	case BI_MMU_68030:	return MMU_68030;
+	case BI_MMU_68040:	return MMU_68040;
+	case BI_MMU_68060:	return MMU_68040;	/* XXX */
+	case BI_MMU_SUN3:	return MMU_SUN;
+	case BI_MMU_APOLLO:	/* DN3000 / DN4000 MMU for 68020 */
+	case BI_MMU_COLDFIRE:
+	default:		return MMU_UNKNOWN;
+	}
+}
+#endif /* ! __mc68010__ */
+
+static inline void __attribute__((always_inline))
+bootinfo_add_mem(struct bootinfo_data *bid, struct bi_record *bi)
+{
+	struct bi_mem_info *m = bootinfo_dataptr(bi);
+
+	if (bid->bootinfo_mem_nsegments == VM_PHYSSEG_MAX) {
+		bid->bootinfo_mem_segments_ignored++;
+		bid->bootinfo_mem_segments_ignored_bytes += m->mem_size;
+	}
+
+	/*
+	 * Make sure the start / size are properly aligned.
+	 */
+	if (m->mem_addr & PAGE_MASK) {
+		m->mem_size -= m->mem_addr & PAGE_MASK;
+		m->mem_addr = m68k_round_page(m->mem_addr);
+	}
+	m->mem_size = m68k_trunc_page(m->mem_size);
+	bid->bootinfo_total_mem_pages += m68k_btop(m->mem_size);
+
+	int i = bid->bootinfo_mem_nsegments++;
+
+	bid->bootinfo_mem_segments[i].ps_start =
+	    bid->bootinfo_mem_segments[i].ps_avail_start = m->mem_addr;
+	bid->bootinfo_mem_segments[i].ps_end =
+	    bid->bootinfo_mem_segments[i].ps_avail_end =
+	    m->mem_addr + m->mem_size;
+}
+
+static inline void __attribute__((always_inline))
+bootinfo_add_initrd(struct bootinfo_data *bid, struct bi_record *bi)
+{
+	struct bi_mem_info *rd = bootinfo_dataptr(bi);
+
+	if (bid->bootinfo_initrd_size == 0) {
+		bid->bootinfo_initrd_start = rd->mem_addr;
+		bid->bootinfo_initrd_size  = rd->mem_size;
+	}
+}
+
+#ifdef PRESERVE_KERNEL_SYMBOLS
+static inline paddr_t __attribute__((always_inline))
+bootinfo_preserve_ksyms(struct bootinfo_data *bid, vaddr_t addr, size_t size,
+    paddr_t nextpa, vaddr_t reloff)
+{
+	bid->bootinfo_ksym_start = PMAP_BOOTSTRAP_PA_TO_VA(addr);
+	bid->bootinfo_ksym_size = size;
+	if (addr + size > nextpa) {
+		nextpa = addr + size;
+	}
+	return nextpa;
+}
+#endif /* PRESERVE_KERNEL_SYMBOLS */
+
+static void
+bootinfo_reserve_initrd(struct bootinfo_data *bid)
+{
+	if (bid->bootinfo_initrd_size == 0) {
+		return;
+	}
+
+	paddr_t initrd_start = bid->bootinfo_initrd_start;
+	paddr_t initrd_end   = bid->bootinfo_initrd_start +
+			       bid->bootinfo_initrd_size;
+	int i;
+
+	/* Page-align the RAM disk start/end. */
+	initrd_end = m68k_round_page(initrd_end);
+	initrd_start = m68k_trunc_page(initrd_start);
+
+	/*
+	 * XXX All if this code assumes that the RAM disk fits within
+	 * XXX a single memory segment.
+	 */
+
+	for (i = 0; i < bid->bootinfo_mem_nsegments; i++) {
+		/* Memory segment start/end already page-aligned. */
+		paddr_t seg_start =
+		    bid->bootinfo_mem_segments[i].ps_avail_start;
+		paddr_t seg_end =
+		    bid->bootinfo_mem_segments[i].ps_avail_end;
+
+		if (initrd_start >= seg_end ||
+		    initrd_end <= seg_start) {
+			/* Does not fall within this segment. */
+			continue;
+		}
+
+		if (initrd_start > seg_start && initrd_end < seg_end) {
+			/* We need to split this segment. */
+			/* XXX */
+			printf("WARNING: ignoring RAM disk that splits "
+			       "memory segment.\n");
+			bid->bootinfo_initrd_size = 0;
+			return;
+		}
+
+		printf("Reserving RAM disk pages %p - %p from memory "
+		       "segment %d.\n", (void *)initrd_start,
+		       (void *)(initrd_end - 1), i);
+
+		if (initrd_start == seg_start) {
+			seg_start = initrd_end;
+		}
+
+		if (initrd_end == seg_end) {
+			seg_end = initrd_start;
+		}
+
+		/* Now adjust the segment. */
+		bid->bootinfo_mem_segments[i].ps_avail_start = seg_start;
+		bid->bootinfo_mem_segments[i].ps_avail_end = seg_end;
+		return;
+	}
+}
+
+/*
+ * bootinfo_startup1 --
+ *	Parse the boot info during early start-up, before the MMU is
+ *	turned on.  Returns the address of the end of the boot info.
+ *
+ *	Because the MMU is not yet enabled, we need to manually relocate
+ *	global references.
+ *
+ *	N.B. nextpa is the physical address where the bootinfo structure
+ *	lives.  We return the first physical address *after* the bootinfo.
+ */
+paddr_t
+bootinfo_startup1(paddr_t nextpa, vaddr_t reloff)
+{
+	const paddr_t bootinfo_pa = nextpa;
+	struct bootinfo_data *bid = (struct bootinfo_data *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(&bootinfo_data_store);
+	struct bi_record *bi;
+
+	/*
+	 * These are physical address for the duration of this function,
+	 * and get converted to virtual addresses when we're done for
+	 * subsequent calls (after the MMU is enabled).
+	 */
+	bid->bootinfo = (struct bi_record *)
+	    PMAP_BOOTSTRAP_RELOC_PA(bootinfo_pa);
+	bid->bootinfo_mem_segments = (phys_seg_list_t *)
+	    PMAP_BOOTSTRAP_RELOC_GLOB(phys_seg_list);
+
+	/* Set some defaults that we might fix up later. */
+#ifdef __mc68010__
+	RELOC(fputype, int) = FPU_NONE;
+	RELOC(cputype, int) = CPU_68010;
+#else
+	RELOC(mmutype, int) = MMU_UNKNOWN;
+#endif /* __mc68010__ */
+
+	for (bi = bid->bootinfo; bi->bi_tag != BI_LAST;
+	     bi = bootinfo_next(bi)) {
+		switch (bi->bi_tag) {
+		case BI_MACHTYPE:
+			bid->bootinfo_machtype = bootinfo_get_u32(bi);
+			break;
+
+#ifndef __mc68010__
+		case BI_CPUTYPE:
+			RELOC(cputype, int) = bootinfo_get_cpu(bi);
+			break;
+
+		case BI_FPUTYPE:
+			RELOC(fputype, int) = bootinfo_get_fpu(bi);
+			break;
+
+		case BI_MMUTYPE:
+			RELOC(mmutype, int) = bootinfo_get_mmu(bi);
+			break;
+#endif /* ! __mc68010__ */
+
+		case BI_MEMCHUNK:
+			bootinfo_add_mem(bid, bi);
+			break;
+
+		case BI_RAMDISK:
+			bootinfo_add_initrd(bid, bi);
+			break;
+
+		default:
+#ifdef PRESERVE_KERNEL_SYMBOLS
+			/*
+			 * For the BI_MACH_FDT machine type, the ELF
+			 * symbols record is a memory record pointing
+			 * to where they are.  We assume they're part
+			 * of the contiguous kernel / bootinfo region,
+			 * and we need to advance nextpa along to
+			 * account for them.
+			 *
+			 * N.B. This record has the PHYSICAL address
+			 * of the ELF symbols.
+			 */
+			if (bid->bootinfo_machtype == BI_MACH_FDT &&
+			    bi->bi_tag == BI_FDT_ELF_SYMS) {
+				struct bi_mem_info *m = bootinfo_dataptr(bi);
+				nextpa = bootinfo_preserve_ksyms(bid,
+				    m->mem_addr, m->mem_size, nextpa, reloff);
+			}
+#endif /* PRESERVE_KERNEL_SYMBOLS */
+			break;
+		}
+	}
+
+#ifndef __mc68010__
+	if (RELOC(mmutype, int) == MMU_UNKNOWN) {
+		switch (RELOC(cputype, int)) {
+		case CPU_68020:
+			/* Must consult machine type. */
+			switch (bid->bootinfo_machtype) {
+			case BI_MACH_SUN3:
+				RELOC(mmutype, int) = MMU_SUN;
+				break;
+
+			default:
+				break;
+			}
+			break;
+
+		case CPU_68030:
+			RELOC(mmutype, int) = MMU_68030;
+			break;
+
+		case CPU_68040:
+		case CPU_68060:		/* XXX */
+			RELOC(mmutype, int) = MMU_68040;
+			break;
+
+		default:
+			break;
+		}
+	}
+#endif /* ! __mc68010__ */
+
+	/* Set bootinfo_end to be just past the BI_LAST record. */
+	paddr_t bi_end = (paddr_t)bootinfo_next(bi);
+	bid->bootinfo_end = PMAP_BOOTSTRAP_PA_TO_VA(bi_end);
+
+	/* Advance nextpa. */
+	if (bi_end > nextpa) {
+		nextpa = bi_end;
+	}
+
+	/* Initialize the physmem variable for the memory found. */
+	RELOC(physmem, psize_t) = bid->bootinfo_total_mem_pages;
+
+	/* Re-initialize these to the virtual addresses. */
+	bid->bootinfo = (struct bi_record *)
+	    PMAP_BOOTSTRAP_PA_TO_VA(bootinfo_pa);
+	bid->bootinfo_mem_segments = phys_seg_list;
+
+	return nextpa;
+}
+
+/*
+ * bootinfo_startup2 --
+ *	Phase 2 of parsing the boot info during early start-up.  This
+ *	time around, the MMU is enabled.
+ *
+ *	The "nextpa" argument is the address of the next page after
+ *	the pre-MMU bootstrap memory allocations.
+ */
+void
+bootinfo_startup2(paddr_t nextpa)
+{
+	struct bootinfo_data *bid = &bootinfo_data_store;
+
+	/*
+	 * If we have a RAM disk, we need to take it out of the
+	 * available memory segments.
+	 */
+	bootinfo_reserve_initrd(bid);
+}
+
+/*
+ * bootinfo_data --
+ *	Return a pointer to the bootinfo_data.
+ */
+struct bootinfo_data *
+bootinfo_data(void)
+{
+	return &bootinfo_data_store;
+}
+
+/*
+ * bootinfo_enumerate --
+ *	Enumerate through the boot info, invoking the specified callback
+ *	for each record.  The callback returns true to keep searching,
+ *	false, to stop.
+ */
+void
+bootinfo_enumerate(bool (*cb)(struct bi_record *, void *), void *ctx)
+{
+	struct bi_record *bi = bootinfo_data_store.bootinfo;
+
+	if (bi == NULL) {
+		return;
+	}
+
+	for (; bi->bi_tag != BI_LAST; bi = bootinfo_next(bi)) {
+		if ((*cb)(bi, ctx) == false) {
+			break;
+		}
+	}
+}
+
+struct bootinfo_find_ctx {
+	uint32_t tag;
+	struct bi_record *result;
+};
+
+static bool
+bootinfo_find_cb(struct bi_record *bi, void *v)
+{
+	struct bootinfo_find_ctx *ctx = v;
+
+	if (bi->bi_tag == ctx->tag) {
+		ctx->result = bi;
+		return false;
+	}
+
+	return true;
+}
+
+/*
+ * bootinfo_find --
+ *	Scan through the boot info looking for the first instance of
+ *	the specified tag.
+ */
+struct bi_record *
+bootinfo_find(uint32_t tag)
+{
+	struct bootinfo_find_ctx ctx = {
+		.tag = tag,
+	};
+
+	bootinfo_enumerate(bootinfo_find_cb, &ctx);
+	return ctx.result;
+}
+
+/*
+ * bootinfo_find_machdep --
+ *	Like bootinfo_find(), but only if the machine type matches.
+ */
+struct bi_record *
+bootinfo_find_machdep(uint32_t mtype, uint32_t tag)
+{
+	return bootinfo_data_store.bootinfo_machtype == mtype ?
+	    bootinfo_find(tag) : NULL;
+}
+
+/*
+ * bootinfo_setup_initrd --
+ *	Check for a BI_RAMDISK record and, if found, set it as
+ *	the root file system.
+ */
+void
+bootinfo_setup_initrd(void)
+{
+#ifdef MEMORY_DISK_DYNAMIC
+	struct bootinfo_data *bid = &bootinfo_data_store;
+
+	if (bid->bootinfo_initrd_size != 0) {
+		paddr_t rdstart, rdend, rdpgoff;
+		vaddr_t rdva, rdoff;
+		vsize_t rdvsize;
+
+		printf("Initializing root RAM disk @ %p - %p\n",
+		    (void *)bid->bootinfo_initrd_start,
+		    (void *)(bid->bootinfo_initrd_start +
+			     bid->bootinfo_initrd_size - 1));
+
+		rdend = m68k_round_page(bid->bootinfo_initrd_start +
+		    bid->bootinfo_initrd_size);
+		rdstart = m68k_trunc_page(bid->bootinfo_initrd_start);
+		rdvsize = rdend - rdstart;
+		rdpgoff = bid->bootinfo_initrd_start & PAGE_MASK;
+
+		rdva = uvm_km_alloc(kernel_map, rdvsize, PAGE_SIZE,
+		    UVM_KMF_VAONLY);
+		if (rdva == 0) {
+			printf("WARNING: Unable to allocate KVA for "
+			       "RAM disk.\n");
+			return;
+		}
+		for (rdoff = 0; rdoff < rdvsize; rdoff += PAGE_SIZE) {
+			pmap_kenter_pa(rdva + rdoff, rdstart + rdoff,
+			    VM_PROT_READ | VM_PROT_WRITE, 0);
+		}
+		md_root_setconf((void *)(rdva + rdpgoff),
+		    bid->bootinfo_initrd_size);
+	}
+#endif /* MEMORY_DISK_DYNAMIC */
+}
+
+/*
+ * bootinfo_setup_rndseed --
+ *	Check for a BI_RNG_SEED record and, if found, use it to
+ *	seed the kernel entropy pool.
+ */
+void
+bootinfo_setup_rndseed(void)
+{
+	static struct krndsource bootinfo_rndsource;
+	struct bi_record *bi = bootinfo_find(BI_RNG_SEED);
+	if (bi != NULL) {
+		struct bi_data *rnd = bootinfo_dataptr(bi);
+		rnd_attach_source(&bootinfo_rndsource, "bootinfo",
+		    RND_TYPE_RNG, RND_FLAG_DEFAULT);
+		rnd_add_data(&bootinfo_rndsource,
+		    rnd->data_bytes, rnd->data_length,
+		    rnd->data_length * NBBY);
+		explicit_memset(rnd->data_bytes, 0, rnd->data_length);
+	}
+}
+
+/*
+ * bootinfo_getarg --
+ *	Get an argument from the BI_COMMAND_LINE bootinfo record.
+ */
+bool
+bootinfo_getarg(const char *var, char *buf, size_t buflen)
+{
+	const size_t varlen = strlen(var);
+	struct bi_record *bi = bootinfo_find(BI_COMMAND_LINE);
+
+	if (bi == NULL) {
+		return false;
+	}
+
+	const char *sp = bootinfo_dataptr(bi);
+	const char *osp = sp;
+	for (;;) {
+		sp = strstr(sp, var);
+		if (sp == NULL) {
+			return false;
+		}
+
+		if (sp != osp &&
+		    sp[-1] != ' ' && sp[-1] != '\t' && sp[-1] != '-') {
+			continue;
+		}
+		sp += varlen;
+		char ch = *sp++;
+		if (ch != '=' && ch != ' ' && ch != '\t' && ch != '\0') {
+			continue;
+		}
+		/* Found it. */
+		break;
+	}
+
+	while (--buflen) {
+		if (*sp == ' ' || *sp == '\t' || *sp == '\0') {
+			break;
+		}
+		*buf++ = *sp++;
+	}
+	*buf = '\0';
+
+	return true;
+}

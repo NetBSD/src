@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -199,13 +199,106 @@ save_vars { env(TERM) } {
 	set env(GDBHISTFILE) "${srcdir}/${subdir}/gdb_history"
 	set env(GDBHISTSIZE) "10"
 
-	gdb_exit
-	gdb_start
-	gdb_reinitialize_dir $srcdir/$subdir
+	clean_restart
 
 	operate_and_get_next "Simple operate-and-get-next, two" \
 	    "p 7" ".* = 7" \
 	    "p 8" ".* = 8" \
 	    "p 9" ".* = 9"
+
+	# Test sending a long command to GDB, a command that requires
+	# multiple terminal lines.  Long ago there was a readline bug
+	# that would cause GDB to crash in this situation.  We force
+	# the bug by setting up a narrow terminal width, and then
+	# sending a long command.
+	clean_restart
+
+	# The number of characters to send in the command.  We
+	# actually send a few more than this; this total is really the
+	# extra characters we add on after sending the command name.
+	set char_total 4500
+	set char_sent 0
+
+	# Adjust the terminal width.  Detect horizontal scrolling, which
+	# happens with stub-termcap.c.
+	set horizontal_scrolling 0
+	set cmd "set width 7"
+	gdb_test_multiple $cmd "" {
+	    -re "^$cmd\r\n$gdb_prompt $" {
+		pass $gdb_test_name
+	    }
+	    -re "^$cmd\r\n<b\\) $" {
+		set horizontal_scrolling 1
+		pass $gdb_test_name
+	    }
+	}
+
+	if { !$horizontal_scrolling } {
+	    # Send the command prefix, then lots of additional characters
+	    # that create a really long command that wraps over multiple
+	    # lines.
+	    send_gdb "help X"
+	    gdb_test_multiple "" "send long command to GDB" {
+		-re "X" {
+		    incr char_sent
+		    if {$char_sent <= $char_total} {
+			send_gdb "X"
+			exp_continue
+		    }
+		}
+		-re "\[ \b\r\n\]" {
+		    exp_continue
+		}
+	    }
+
+	    # Send the final newline so that GDB will process the command.
+	    # Check GDB returns a suitable error.
+	    send_gdb "\n"
+	    gdb_test "" \
+		"Undefined command: \"X+\"\\.  Try \"help\"\\." \
+		"All the characters transferred"
+	}
     }
+}
+
+# Test operate_and_get_next when selecting the last command.
+with_test_prefix "operate_and_get_next last command" {
+    clean_restart
+
+    # Expected output from echo 1\n.
+    set re1 \
+	[multi_line \
+	     "" \
+	     "1"]
+
+    # Expected output from echo 2\n.
+    set re2 \
+	[multi_line \
+	     "" \
+	     "2"]
+
+    # Enter command into history.
+    gdb_test {echo 1\n} $re1 \
+	"enter command"
+
+    # Recall command from history (Ctrl-r, 022), and do operate-and-get-next
+    # (Ctrl-o, 017).  There shouldn't be a prefill, but if there is one,
+    # prevent a possible timeout using -no-prompt-anchor.
+    send_gdb "\022echo 1\017"
+    gdb_test -no-prompt-anchor "" $re1 \
+	"recall command"
+
+    # Regression test for PR32485: Since we recalled the last command, there
+    # shouldn't be a prefil, so check that here.
+    # If there is no prefil, we simple have:
+    #   (gdb) echo 2\n^M
+    #   2^M
+    #   (gdb)
+    # If there is a prefil, we have:
+    #   (gdb) echo 1\necho 2\n^M
+    #   1^M
+    #   echo 2^M
+    #   (gdb)
+    gdb_test {echo 2\n} $re2 \
+	"no prefill"
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: h_pad.c,v 1.3 2019/06/20 12:14:46 isaki Exp $	*/
+/*	$NetBSD: h_pad.c,v 1.3.12.1 2026/11/04 23:28:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -31,6 +31,7 @@
 #include <rump/rump_syscalls.h>
 
 #include <err.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <stdbool.h>
 #include <stdio.h>

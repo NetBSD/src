@@ -1,4 +1,4 @@
-/*	$NetBSD: atexit.c,v 1.32 2017/11/06 14:26:03 joerg Exp $	*/
+/*	$NetBSD: atexit.c,v 1.32.16.1 2026/11/04 23:19:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: atexit.c,v 1.32 2017/11/06 14:26:03 joerg Exp $");
+__RCSID("$NetBSD: atexit.c,v 1.32.16.1 2026/11/04 23:19:23 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "reentrant.h"
@@ -133,7 +133,7 @@ __libc_atexit_init(void)
  * or normal atexit type handler.  The __cxa_atexit() name and arguments
  * are specified by the C++ ABI.  See:
  *
- *	http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
+ *	https://web.archive.org/web/20030222125703/http://www.codesourcery.com/cxx-abi/abi.html#dso-dtor
  */
 #if defined(__ARM_EABI__) && !defined(lint)
 int
@@ -175,7 +175,22 @@ __cxa_atexit_internal(void (*func)(void *), void *arg, void *dso)
 int
 __cxa_atexit(void (*func)(void *), void *arg, void *dso)
 {
+
+	/*
+	 * If this assertion fires, it is because the caller is not
+	 * properly passing &__dso_handle, which is never null, so the
+	 * caller cannot work safely in a shared object.  This is a bug
+	 * in the caller; the caller must be fixed to pass
+	 * &__dso_handle.
+	 *
+	 * If you want to register an atexit handler that is not tied
+	 * to the current shared object, then you must use atexit(3)
+	 * itself, not __cxa_atexit.
+	 *
+	 * DO NOT REMOVE THIS ASSERTION.
+	 */
 	_DIAGASSERT(dso != NULL);
+
 	return (__cxa_atexit_internal(func, arg, dso));
 }
 

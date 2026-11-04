@@ -1,5 +1,5 @@
 /* GNU/Linux/MIPS specific low level interface, for the remote server for GDB.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -188,7 +188,7 @@ mips_read_description (void)
 {
   if (have_dsp < 0)
     {
-      int pid = lwpid_of (current_thread);
+      int pid = current_thread->id.lwp ();
 
       errno = 0;
       ptrace (PTRACE_PEEKUSER, pid, DSP_CONTROL, 0);
@@ -499,7 +499,7 @@ mips_target::low_new_fork (process_info *parent,
 void
 mips_target::low_prepare_to_resume (lwp_info *lwp)
 {
-  ptid_t ptid = ptid_of (get_lwp_thread (lwp));
+  ptid_t ptid = lwp->thread->id;
   struct process_info *proc = find_process_pid (ptid.pid ());
   struct arch_process_info *priv = proc->priv->arch_private;
 
@@ -545,11 +545,10 @@ mips_target::low_insert_point (raw_bkpt_type type, CORE_ADDR addr,
   struct process_info *proc = current_process ();
   struct arch_process_info *priv = proc->priv->arch_private;
   struct pt_watch_regs regs;
-  long lwpid;
+  long lwpid = current_thread->id.lwp ();
   enum target_hw_bp_type watch_type;
   uint32_t irw;
 
-  lwpid = lwpid_of (current_thread);
   if (!mips_linux_read_watch_registers (lwpid,
 					&priv->watch_readback,
 					&priv->watch_readback_valid,
@@ -575,7 +574,7 @@ mips_target::low_insert_point (raw_bkpt_type type, CORE_ADDR addr,
   priv->watch_mirror = regs;
 
   /* Only update the threads of this process.  */
-  for_each_thread (proc->pid, update_watch_registers_callback);
+  proc->for_each_thread (update_watch_registers_callback);
 
   return 0;
 }
@@ -624,7 +623,7 @@ mips_target::low_remove_point (raw_bkpt_type type, CORE_ADDR addr,
 				  &priv->watch_mirror);
 
   /* Only update the threads of this process.  */
-  for_each_thread (proc->pid, update_watch_registers_callback);
+  proc->for_each_thread (update_watch_registers_callback);
 
   return 0;
 }
@@ -640,7 +639,7 @@ mips_target::low_stopped_by_watchpoint ()
   struct arch_process_info *priv = proc->priv->arch_private;
   int n;
   int num_valid;
-  long lwpid = lwpid_of (current_thread);
+  long lwpid = current_thread->id.lwp ();
 
   if (!mips_linux_read_watch_registers (lwpid,
 					&priv->watch_readback,
@@ -668,7 +667,7 @@ mips_target::low_stopped_data_address ()
   struct arch_process_info *priv = proc->priv->arch_private;
   int n;
   int num_valid;
-  long lwpid = lwpid_of (current_thread);
+  long lwpid = current_thread->id.lwp ();
 
   /* On MIPS we don't know the low order 3 bits of the data address.
      GDB does not support remote targets that can't report the

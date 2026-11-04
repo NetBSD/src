@@ -1,4 +1,4 @@
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,10 +17,7 @@ load_lib trace-support.exp
 
 standard_testfile actions.c
 
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} {debug}] } {
     return -1
@@ -120,7 +117,7 @@ proc test_trace_frame_collected { data_source } {
 
 	mi_gdb_test "-trace-frame-collected" \
 	    "\\^done,explicit-variables=\\\[\{name=\"gdb_char_test\",value=\".*\"\}\\\],computed-expressions=\\\[\\\],registers=\\\[$reg_pattern\\\],tvars=\\\[\\\],memory=\\\[\{address=\"$hex\",length=\"1\"\}\\\]"\
-	    "-trace-frame-collected (register)"
+	    "-trace-frame-collected, register"
 
 	mi_gdb_test "-trace-find frame-number 1" \
 	    ".*\\^done,found=\"1\",tracepoint=\"${decimal}\",traceframe=\"1\",frame=\{.*" \

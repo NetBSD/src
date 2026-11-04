@@ -1,4 +1,4 @@
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,13 +98,4 @@ with_test_prefix "in C::f" {
     do_global_tests c
 }
 
-# Another hard-to-guess-the-users-intent bug...
-# It would be really nice if we could query the user!
-with_test_prefix "global collision" {
-    gdb_test_no_output "set language c++"
-    setup_kfail "c++/16463" "*-*-*"
-    gdb_test "print global" "= 3"
-
-    # ... with a simple workaround:
-    gdb_test "print ::global" "= 3"
-}
+gdb_test "print ::global" "= 3"

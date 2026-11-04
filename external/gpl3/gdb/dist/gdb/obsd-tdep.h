@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef OBSD_TDEP_H
-#define OBSD_TDEP_H 1
+#ifndef GDB_OBSD_TDEP_H
+#define GDB_OBSD_TDEP_H
 
 struct gdbarch;
 
 CORE_ADDR obsd_skip_solib_resolver (struct gdbarch *, CORE_ADDR);
 void obsd_init_abi (struct gdbarch_info, struct gdbarch *);
 
-#endif /* obsd-tdep.h */
+#endif /* GDB_OBSD_TDEP_H */

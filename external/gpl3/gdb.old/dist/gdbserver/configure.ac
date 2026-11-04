@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB server.
-dnl Copyright (C) 2000-2023 Free Software Foundation, Inc.
+dnl Copyright (C) 2000-2024 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -46,9 +46,9 @@ AC_PROG_RANLIB
 
 AC_ARG_PROGRAM
 
-# We require a C++11 compiler.  Check if one is available, and if
+# We require a C++17 compiler.  Check if one is available, and if
 # necessary, set CXX_DIALECT to some -std=xxx switch.
-AX_CXX_COMPILE_STDCXX(11, , mandatory)
+AX_CXX_COMPILE_STDCXX(17, , mandatory)
 
 AC_HEADER_STDC
 
@@ -80,13 +80,30 @@ AC_CONFIG_COMMANDS([gdbdepdir],[
 
 ZW_PROG_COMPILER_DEPENDENCIES([CC])
 
-AC_CHECK_HEADERS(termios.h sys/reg.h string.h dnl
-		 sys/procfs.h linux/elf.h dnl
-		 fcntl.h signal.h sys/file.h dnl
-		 sys/ioctl.h netinet/in.h sys/socket.h netdb.h dnl
-		 netinet/tcp.h arpa/inet.h ws2tcpip.h)
+AC_CHECK_HEADERS([ \
+  arpa/inet.h \
+  fcntl.h \
+  linux/elf.h \
+  netdb.h \
+  netinet/in.h \
+  netinet/tcp.h \
+  signal.h \
+  string.h \
+  sys/file.h \
+  sys/ioctl.h \
+  sys/procfs.h \
+  sys/reg.h \
+  sys/socket.h \
+  termios.h \
+  ws2tcpip.h \
+])
+
 AC_FUNC_FORK
-AC_CHECK_FUNCS(pread pwrite pread64)
+AC_CHECK_FUNCS([ \
+  pread \
+  pread64 \
+  pwrite \
+])
 
 # Check the return and argument types of ptrace.
 GDB_AC_PTRACE
@@ -455,6 +472,22 @@ if test x"$STDINT_H" != x; then
   GNULIB_STDINT_H=$GNULIB/$STDINT_H
 fi
 AC_SUBST(GNULIB_STDINT_H)
+
+# Check for libiconv.  It is a requirement for Linux hosts, and others hosts
+# don't use it at all.  Define MAYBE_LIBICONV only if the host is Linux.
+AM_ICONV
+MAYBE_LIBICONV=
+case "$host" in
+  *linux*)
+    if test "$am_cv_func_iconv" != yes; then
+      AC_MSG_ERROR([could not find libiconv (required for host $host)])
+    fi
+
+    MAYBE_LIBICONV="$LIBICONV"
+    ;;
+esac
+
+AC_SUBST(MAYBE_LIBICONV)
 
 AC_CONFIG_FILES([Makefile])
 

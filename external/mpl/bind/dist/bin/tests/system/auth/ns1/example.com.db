@@ -23,3 +23,6 @@ www			CNAME	server.example.net.
 inzone			CNAME	a.example.com.
 a			A	10.53.0.1
 dname			DNAME	@
+
+brid			BRID	\# 2 0000
+hhit			HHIT	\# 2 0000

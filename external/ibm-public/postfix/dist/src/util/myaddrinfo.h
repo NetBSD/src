@@ -1,4 +1,4 @@
-/*	$NetBSD: myaddrinfo.h,v 1.3.8.1 2025/08/02 05:50:19 perseant Exp $	*/
+/*	$NetBSD: myaddrinfo.h,v 1.3.8.2 2026/11/04 23:14:58 perseant Exp $	*/
 
 #ifndef _MYADDRINFO_H_INCLUDED_
 #define _MYADDRINFO_H_INCLUDED_
@@ -61,6 +61,7 @@ struct addrinfo {
   * Modern systems define this in <sys/socket.h>.
   */
 struct sockaddr_storage {
+    sa_family_t ss_family;
     struct sockaddr_in dummy;		/* alignment!! */
 };
 
@@ -215,8 +216,8 @@ extern void myaddrinfo_control(int,...);
  /*
   * sane_sockaddr_to_hostaddr.c
   */
-extern int WARN_UNUSED_RESULT sane_sockaddr_to_hostaddr(const struct sockaddr *,
-	        SOCKADDR_SIZE, MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *, int);
+extern int WARN_UNUSED_RESULT sane_sockaddr_to_hostaddr(struct sockaddr *,
+              SOCKADDR_SIZE *, MAI_HOSTADDR_STR *, MAI_SERVPORT_STR *, int);
 
 /* LICENSE
 /* .ad

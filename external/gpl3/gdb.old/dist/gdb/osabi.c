@@ -1,6 +1,6 @@
 /* OS ABI variant handling for GDB.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,15 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "osabi.h"
 #include "arch-utils.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "command.h"
 #include "gdb_bfd.h"
 
 #include "elf-bfd.h"
+#include "inferior.h"
 
 #ifndef GDB_OSABI_DEFAULT
 #define GDB_OSABI_DEFAULT GDB_OSABI_UNKNOWN
@@ -41,94 +41,6 @@ static const char *gdb_osabi_available_names[GDB_OSABI_INVALID + 3] = {
   NULL
 };
 static const char *set_osabi_string;
-
-/* Names associated with each osabi.  */
-
-struct osabi_names
-{
-  /* The "pretty" name.  */
-
-  const char *pretty;
-
-  /* The triplet regexp, or NULL if not known.  */
-
-  const char *regexp;
-};
-
-/* This table matches the indices assigned to enum gdb_osabi.  Keep
-   them in sync.  */
-static const struct osabi_names gdb_osabi_names[] =
-{
-  { "unknown", NULL },
-  { "none", NULL },
-
-  { "SVR4", NULL },
-  { "GNU/Hurd", NULL },
-  { "Solaris", NULL },
-  { "GNU/Linux", "linux(-gnu[^-]*)?" },
-  { "FreeBSD", NULL },
-  { "NetBSD", NULL },
-  { "OpenBSD", NULL },
-  { "WindowsCE", NULL },
-  { "DJGPP", NULL },
-  { "QNX-Neutrino", NULL },
-  { "Cygwin", NULL },
-  { "Windows", NULL },
-  { "AIX", NULL },
-  { "DICOS", NULL },
-  { "Darwin", NULL },
-  { "OpenVMS", NULL },
-  { "LynxOS178", NULL },
-  { "Newlib", NULL },
-  { "SDE", NULL },
-  { "PikeOS", NULL },
-
-  { "<invalid>", NULL }
-};
-
-const char *
-gdbarch_osabi_name (enum gdb_osabi osabi)
-{
-  if (osabi >= GDB_OSABI_UNKNOWN && osabi < GDB_OSABI_INVALID)
-    return gdb_osabi_names[osabi].pretty;
-
-  return gdb_osabi_names[GDB_OSABI_INVALID].pretty;
-}
-
-/* See osabi.h.  */
-
-const char *
-osabi_triplet_regexp (enum gdb_osabi osabi)
-{
-  if (osabi >= GDB_OSABI_UNKNOWN && osabi < GDB_OSABI_INVALID)
-    return gdb_osabi_names[osabi].regexp;
-
-  return gdb_osabi_names[GDB_OSABI_INVALID].regexp;
-}
-
-/* Lookup the OS ABI corresponding to the specified target description
-   string.  */
-
-enum gdb_osabi
-osabi_from_tdesc_string (const char *name)
-{
-  int i;
-
-  for (i = 0; i < ARRAY_SIZE (gdb_osabi_names); i++)
-    if (strcmp (name, gdb_osabi_names[i].pretty) == 0)
-      {
-	/* See note above: the name table matches the indices assigned
-	   to enum gdb_osabi.  */
-	enum gdb_osabi osabi = (enum gdb_osabi) i;
-
-	if (osabi == GDB_OSABI_INVALID)
-	  return GDB_OSABI_UNKNOWN;
-	else
-	  return osabi;
-      }
-
-  return GDB_OSABI_UNKNOWN;
-}
 
 /* Handler for a given architecture/OS ABI pair.  There should be only
    one handler for a given OS ABI each architecture family.  */
@@ -463,7 +375,6 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
 {
   const char *name;
   unsigned int sectsize;
-  char *note;
 
   name = bfd_section_name (sect);
   sectsize = bfd_section_size (sect);
@@ -477,7 +388,7 @@ generic_elf_osabi_sniff_abi_tag_sections (bfd *abfd, asection *sect,
      compressed section.  But, since note sections are not compressed,
      deferring the reading until we recognize the section avoids any
      error.  */
-  note = (char *) alloca (sectsize);
+  char note[MAX_NOTESZ];
 
   /* .note.ABI-tag notes, used by GNU/Linux and FreeBSD.  */
   if (strcmp (name, ".note.ABI-tag") == 0)
@@ -613,6 +524,35 @@ generic_elf_osabi_sniffer (bfd *abfd)
 
   return osabi;
 }
+
+/* See osabi.h.  */
+
+const char *
+gdbarch_osabi_enum_name (enum gdb_osabi osabi)
+{
+  switch (osabi)
+    {
+#define GDB_OSABI_DEF_FIRST(Enum, Name, Regex)	\
+      case GDB_OSABI_ ## Enum:			\
+	return "GDB_OSABI_" #Enum;
+
+#define GDB_OSABI_DEF(Enum, Name, Regex)	\
+      case GDB_OSABI_ ## Enum:			\
+	return "GDB_OSABI_" #Enum;
+
+#define GDB_OSABI_DEF_LAST(Enum, Name, Regex)	\
+      case GDB_OSABI_ ## Enum:			\
+	return "GDB_OSABI_" #Enum;
+
+#include "gdbsupport/osabi.def"
+
+#undef GDB_OSABI_DEF_LAST
+#undef GDB_OSABI_DEF
+#undef GDB_OSABI_DEF_FIRST
+    }
+
+  gdb_assert_not_reached ();
+}
 
 static void
 set_osabi (const char *args, int from_tty, struct cmd_list_element *c)
@@ -647,7 +587,7 @@ set_osabi (const char *args, int from_tty, struct cmd_list_element *c)
   /* NOTE: At some point (true multiple architectures) we'll need to be more
      graceful here.  */
   gdbarch_info info;
-  if (! gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("Updating OS ABI failed."));
 }
 
@@ -673,10 +613,6 @@ void _initialize_gdb_osabi ();
 void
 _initialize_gdb_osabi ()
 {
-  if (strcmp (gdb_osabi_names[GDB_OSABI_INVALID].pretty, "<invalid>") != 0)
-    internal_error
-      (_("_initialize_gdb_osabi: gdb_osabi_names[] is inconsistent"));
-
   /* Register a generic sniffer for ELF flavoured files.  */
   gdbarch_register_osabi_sniffer (bfd_arch_unknown,
 				  bfd_target_elf_flavour,

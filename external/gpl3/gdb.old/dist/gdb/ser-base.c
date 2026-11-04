@@ -1,6 +1,6 @@
 /* Generic serial interface functions.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "serial.h"
 #include "ser-base.h"
 #include "gdbsupport/event-loop.h"
@@ -148,7 +148,7 @@ run_async_handler_and_reschedule (struct serial *scb)
 /* FD_EVENT: This is scheduled when the input FIFO is empty (and there
    is no pending error).  As soon as data arrives, it is read into the
    input FIFO and the client notified.  The client should then drain
-   the FIFO using readchar().  If the FIFO isn't immediatly emptied,
+   the FIFO using readchar().  If the FIFO isn't immediately emptied,
    push_event() is used to nag the client until it is.  */
 
 static void
@@ -419,7 +419,7 @@ do_ser_base_readchar (struct serial *scb, int timeout)
    pre-reads the input into that FIFO.  Once that has been emptied,
    further data is obtained by polling the input FD using the device
    specific readchar() function.  Note: reschedule() is called after
-   every read.  This is because there is no guarentee that the lower
+   every read.  This is because there is no guarantee that the lower
    level fd_event() poll_event() code (which also calls reschedule())
    will be called.  */
 
@@ -471,7 +471,7 @@ ser_base_readchar (struct serial *scb, int timeout)
   return generic_readchar (scb, timeout, do_ser_base_readchar);
 }
 
-int
+void
 ser_base_write (struct serial *scb, const void *buf, size_t count)
 {
   const char *str = (const char *) buf;
@@ -487,12 +487,11 @@ ser_base_write (struct serial *scb, const void *buf, size_t count)
 	{
 	  if (errno == EINTR)
 	    continue;
-	  return 1;
+	  perror_with_name ("error while writing");
 	}
       count -= cc;
       str += cc;
     }
-  return 0;
 }
 
 int
@@ -514,10 +513,9 @@ ser_base_flush_input (struct serial *scb)
     return SERIAL_ERROR;
 }
 
-int
+void
 ser_base_send_break (struct serial *scb)
 {
-  return 0;
 }
 
 int
@@ -561,10 +559,10 @@ ser_base_print_tty_state (struct serial *scb,
   return;
 }
 
-int
+void
 ser_base_setbaudrate (struct serial *scb, int rate)
 {
-  return 0;			/* Never fails!  */
+  /* Never fails!  */
 }
 
 int

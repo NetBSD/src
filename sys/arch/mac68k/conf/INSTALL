@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.58 2023/01/05 18:48:13 tsutsui Exp $
+#	$NetBSD: INSTALL,v 1.58.6.1 2026/11/04 23:20:53 perseant Exp $
 #
 # INSTALL
 
@@ -6,9 +6,8 @@ include	"arch/mac68k/conf/std.mac68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -fno-omit-frame-pointer"
-	# Optimise for space. Implies -O2. -fno-omit-frame-pointer is
-	# necessary for backtraces in DDB.
+makeoptions	COPTS="-Os"
+	# Optimise for space. Implies -O2.
 
 maxusers	8		# estimated number of users
 
@@ -19,12 +18,12 @@ options 	MEMORY_DISK_ROOT_SIZE=5120	# 2.5 MB
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # CPU support.  At least one is REQUIRED.
+options 	M68060
 options 	M68040
 options 	M68030
 options 	M68020		# Note:  must have 68851 PMMU
 
 # CPU-related options.
-options 	FPSP
 options 	FPU_EMULATE
 
 # Standard system options

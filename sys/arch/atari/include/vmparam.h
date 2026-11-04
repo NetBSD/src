@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.35 2023/01/06 10:28:28 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.35.6.1 2026/11/04 23:20:19 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,61 +41,7 @@
 #ifndef _MACHINE_VMPARAM_H_
 #define _MACHINE_VMPARAM_H_
 
-/*
- * Machine dependent constants for atari
- */
-
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	VM_MAXUSER_ADDRESS
-
-/*
- * Virtual memory related constants, all in bytes
- */
-
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(256*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(256*1024*1024)		/* max stack size */
-#endif
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 16Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 16mb */
-#endif
-
-/*
- * user/kernel map constants
- */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-(NPTEPG * PAGE_SIZE))
-
-/*
- * virtual sizes (bytes) for various kernel submaps
- */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * Our bootloader currently passes up to 2 segments (ST and TT ram).
@@ -110,18 +56,8 @@
 #define	VM_FREELIST_TTRAM	VM_FREELIST_DEFAULT
 #define	VM_FREELIST_STRAM	1
 
-#define	__HAVE_PMAP_PHYSSEG
+#endif /* _KERNEL && !_MODULE */
 
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-struct pmap_physseg {
-	struct pv_header *pvheader;	/* pv table for this seg */
-};
+#include <m68k/vmparam.h>
 
-
-/*
- * number of kernel PT pages (initial only, can grow dynamically)
- */
-#define VM_KERNEL_PT_PAGES	((vsize_t)4)
 #endif /* !_MACHINE_VMPARAM_H_ */

@@ -1,5 +1,5 @@
 /* Interface to prologue value handling for GDB.
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PROLOGUE_VALUE_H
-#define PROLOGUE_VALUE_H
+#ifndef GDB_PROLOGUE_VALUE_H
+#define GDB_PROLOGUE_VALUE_H
 
 /* What sort of value is this?  This determines the interpretation
    of subsequent fields.  */
@@ -327,4 +327,4 @@ private:
   struct area_entry *m_entry;
 };
 
-#endif /* PROLOGUE_VALUE_H */
+#endif /* GDB_PROLOGUE_VALUE_H */

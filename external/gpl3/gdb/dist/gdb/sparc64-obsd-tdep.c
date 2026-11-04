@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/sparc64.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -220,16 +220,16 @@ sparc64obsd_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind sparc64obsd_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc64obsd_frame_unwind (
   "sparc64 openbsd sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc64obsd_frame_this_id,
   sparc64obsd_frame_prev_register,
   NULL,
   sparc64obsd_sigtramp_frame_sniffer
-};
+);
 
 /* Kernel debugging support.  */
 
@@ -304,21 +304,21 @@ sparc64obsd_trapframe_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind sparc64obsd_trapframe_unwind =
-{
+static const struct frame_unwind_legacy sparc64obsd_trapframe_unwind (
   "sparc64 openbsd trap",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc64obsd_trapframe_this_id,
   sparc64obsd_trapframe_prev_register,
   NULL,
   sparc64obsd_trapframe_sniffer
-};
+);
 
 
 /* Threads support.  */
 
-/* Offset wthin the thread structure where we can find %fp and %i7.  */
+/* Offset within the thread structure where we can find %fp and %i7.  */
 #define SPARC64OBSD_UTHREAD_FP_OFFSET	232
 #define SPARC64OBSD_UTHREAD_PC_OFFSET	240
 
@@ -440,8 +440,7 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   obsd_init_abi (info, gdbarch);
 
   /* OpenBSD/sparc64 has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
   set_gdbarch_skip_solib_resolver (gdbarch, obsd_skip_solib_resolver);
 
   /* OpenBSD provides a user-level threads implementation.  */
@@ -449,9 +448,7 @@ sparc64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   bsd_uthread_set_collect_uthread (gdbarch, sparc64obsd_collect_uthread);
 }
 
-void _initialize_sparc64obsd_tdep ();
-void
-_initialize_sparc64obsd_tdep ()
+INIT_GDB_FILE (sparc64obsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_sparc, bfd_mach_sparc_v9,
 			  GDB_OSABI_OPENBSD, sparc64obsd_init_abi);

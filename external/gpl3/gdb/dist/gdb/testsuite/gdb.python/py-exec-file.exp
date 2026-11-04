@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,10 @@ load_lib gdb-python.exp
 
 standard_testfile
 
-set binfile1 ${binfile}-a
-set binfile2 ${binfile}-b
+set testfile1 $testfile-a
+set binfile1 [standard_output_file $testfile1]
+set testfile2 $testfile-b
+set binfile2 [standard_output_file $testfile2]
 
 if {[build_executable "failed to prepare first executable" \
 	 $binfile1 $srcfile]} {
@@ -176,7 +178,7 @@ with_test_prefix "using 'symbol-file' command" {
 
 # Check the executable_changed event when the executable changes on disk.
 with_test_prefix "exec changes on disk" {
-    clean_restart $binfile1
+    clean_restart $::testfile1
 
     setup_exec_change_handler
 

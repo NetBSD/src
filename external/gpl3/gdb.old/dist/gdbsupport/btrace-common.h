@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_BTRACE_COMMON_H
-#define COMMON_BTRACE_COMMON_H
+#ifndef GDBSUPPORT_BTRACE_COMMON_H
+#define GDBSUPPORT_BTRACE_COMMON_H
 
 /* Branch tracing (btrace) is a per-thread control-flow execution trace of the
    inferior.  For presentation purposes, the branch trace is represented as a
@@ -117,6 +117,15 @@ struct btrace_config_pt
      This is unsigned int and not size_t since it is registered as
      control variable for "set record btrace pt buffer-size".  */
   unsigned int size;
+
+  /* Configuration bit for ptwrite packets.
+
+     If both gdb and gdbserver support this, gdb will try to enable ptwrite
+     packets when tracing is started.  */
+  bool ptwrite;
+
+  /* Event tracing setting.  */
+  bool event_tracing;
 };
 
 /* A branch tracing configuration.
@@ -214,7 +223,23 @@ private:
 };
 
 /* Target specific branch trace information.  */
-struct btrace_target_info;
+struct btrace_target_info
+{
+  btrace_target_info (ptid_t ptid) : ptid (ptid)
+    {}
+
+  btrace_target_info (ptid_t ptid, btrace_config conf)
+    : ptid (ptid), conf (conf)
+    {}
+
+  virtual ~btrace_target_info () = default;
+
+  /* The ptid of this thread.  */
+  ptid_t ptid {};
+
+  /* The obtained branch trace configuration.  */
+  btrace_config conf {};
+};
 
 /* Enumeration of btrace read types.  */
 
@@ -260,4 +285,4 @@ extern const char *btrace_format_short_string (enum btrace_format format);
 extern int btrace_data_append (struct btrace_data *dst,
 			       const struct btrace_data *src);
 
-#endif /* COMMON_BTRACE_COMMON_H */
+#endif /* GDBSUPPORT_BTRACE_COMMON_H */

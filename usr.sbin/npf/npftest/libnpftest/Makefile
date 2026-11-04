@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11.8.1 2025/08/02 05:58:53 perseant Exp $
+# $NetBSD: Makefile,v 1.11.8.2 2026/11/04 23:28:55 perseant Exp $
 #
 # Public Domain
 #
@@ -21,6 +21,7 @@ SRCS+=		npf_nat_test.c
 SRCS+=		npf_rid_test.c
 SRCS+=		npf_l2rule_test.c
 SRCS+=		npfl2onlytest.c
+SRCS+=		npf_ext_test.c
 
 SRCS+=		npf_perf_test.c
 

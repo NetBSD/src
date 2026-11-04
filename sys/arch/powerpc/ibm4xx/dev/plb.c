@@ -1,4 +1,4 @@
-/* $NetBSD: plb.c,v 1.25 2023/12/20 15:29:06 thorpej Exp $ */
+/* $NetBSD: plb.c,v 1.25.2.1 2026/11/04 23:21:10 perseant Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.25 2023/12/20 15:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plb.c,v 1.25.2.1 2026/11/04 23:21:10 perseant Exp $");
 
 #include "emac.h"
 #include "locators.h"
@@ -108,6 +108,17 @@ const struct plb_dev plb_devs [] = {
 	{ AMCC405EX,	"opb", },
 	{ AMCC405EX,	"dwctwo", },
 
+	/* AMCC 460EX */
+	{ AMCC460EX,	"cpu", },
+	{ AMCC460EX,	"opb", },
+	{ AMCC460EX,	"ebc", },
+	{ AMCC460EX,	"pcix", },
+	{ AMCC460EX,	"pciex", },	/* PCIE0 */
+	{ AMCC460EX,	"pciex", },	/* PCIE1 */
+	{ AMCC460EX,	"ohci", },
+	{ AMCC460EX,	"ehci", },
+	{ AMCC460EX,	"dwcsata", },
+
 	{ 0,		NULL }
 };
 
@@ -121,7 +132,7 @@ CFATTACH_DECL_NEW(plb, 0, plb_match, plb_attach, NULL, NULL);
  * "generic" DMA struct, nothing special.
  */
 struct powerpc_bus_dma_tag ibm4xx_default_bus_dma_tag = {
-	0,			/* _bounce_thresh */
+	0, 0,			/* _bounce_thresh_min/max */
 	_bus_dmamap_create,
 	_bus_dmamap_destroy,
 	_bus_dmamap_load,

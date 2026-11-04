@@ -1,6 +1,6 @@
 /* Common target-dependent functionality for AArch64.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_AARCH64_H
-#define ARCH_AARCH64_H
+#ifndef GDB_ARCH_AARCH64_H
+#define GDB_ARCH_AARCH64_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -51,6 +51,12 @@ struct aarch64_features
 
   /* Whether SME2 is supported.  */
   bool sme2 = false;
+
+  /* Whether Guarded Control Stack is supported.  */
+  bool gcs = false;
+
+  /* Whether Guarded Control Stack Linux features are supported.  */
+  bool gcs_linux = false;
 };
 
 inline bool operator==(const aarch64_features &lhs, const aarch64_features &rhs)
@@ -60,7 +66,9 @@ inline bool operator==(const aarch64_features &lhs, const aarch64_features &rhs)
     && lhs.mte == rhs.mte
     && lhs.tls == rhs.tls
     && lhs.svq == rhs.svq
-    && lhs.sme2 == rhs.sme2;
+    && lhs.sme2 == rhs.sme2
+    && lhs.gcs == rhs.gcs
+    && lhs.gcs_linux == rhs.gcs_linux;
 }
 
 namespace std
@@ -86,6 +94,10 @@ namespace std
 
       /* SME2 feature.  */
       h = h << 1 | features.sme2;
+
+      h = h << 1 | features.gcs;
+      h = h << 1 | features.gcs_linux;
+
       return h;
     }
   };
@@ -230,4 +242,4 @@ enum aarch64_regnum
 /* Size of the SME2 ZT0 register in bytes.  */
 #define AARCH64_SME2_ZT0_SIZE 64
 
-#endif /* ARCH_AARCH64_H */
+#endif /* GDB_ARCH_AARCH64_H */

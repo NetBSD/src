@@ -1,4 +1,4 @@
-/*	$NetBSD: os.h,v 1.6.2.1 2025/08/02 05:54:01 perseant Exp $	*/
+/*	$NetBSD: os.h,v 1.6.2.2 2026/11/04 23:18:17 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,6 +49,13 @@ mode_t
 isc_os_umask(void);
 /*%<
  * Return umask of the current process as initialized at the program start
+ */
+
+void
+isc_os_kernel(char **name, int *major, int *minor, int *patch);
+/*%<
+ * Fill the running kernel version into major, minor and patch.
+ * If any of these are not available then -1 is returned.
  */
 
 ISC_LANG_ENDDECLS

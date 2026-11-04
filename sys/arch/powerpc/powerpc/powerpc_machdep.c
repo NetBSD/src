@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.86 2022/05/30 14:48:08 rin Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.86.10.1 2026/11/04 23:21:12 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.86 2022/05/30 14:48:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.86.10.1 2026/11/04 23:21:12 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -61,6 +61,7 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.86 2022/05/30 14:48:08 rin Exp
 #include <sys/kmem.h>
 #include <sys/xcall.h>
 #include <sys/ipi.h>
+#include <sys/kcore.h>
 
 #include <dev/mm.h>
 
@@ -71,6 +72,8 @@ __KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.86 2022/05/30 14:48:08 rin Exp
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 #include <powerpc/altivec.h>
 #endif
+#include <powerpc/kcore.h>
+#include <machine/powerpc.h>
 
 #ifdef MULTIPROCESSOR
 #include <powerpc/pic/ipivar.h>
@@ -313,6 +316,13 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 		       NULL, 0,
 		       CTL_MACHDEP, CPU_NO_UNALIGNED, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
+		       CTLTYPE_INT, "pvr", NULL,
+		       NULL,
+		       mfpvr(),
+		       NULL, 0,
+		       CTL_MACHDEP, CPU_PVR, CTL_EOL);
 }
 
 /*
@@ -323,34 +333,76 @@ int dumpsize = 0;			/* size of dump in pages */
 long dumplo = -1;			/* blocks */
 
 /*
+ * Calculate size of machine dependent kernel core dump headers.
+ */
+int
+cpu_dumpsize(void)
+{
+	struct mem_region *mem, *avail;
+	unsigned nreg;
+	int size;
+
+	nreg = 0;
+	mem_regions(&mem, &avail);
+	while (mem->size != 0) {
+		nreg++;
+		mem++;
+	}
+
+	size = ALIGN(sizeof(kcore_seg_t)) +
+	       ALIGN(sizeof(cpu_kcore_hdr_t)) +
+	       ALIGN(nreg * sizeof(phys_ram_seg_t));
+	if (roundup(size, dbtob(1)) != dbtob(1)) {
+		return -1;
+	}
+
+	return 1;
+}
+
+/*
  * This is called by main to set dumplo and dumpsize.
  */
 void
 cpu_dumpconf(void)
 {
-	int nblks;		/* size of dump device */
-	int skip;
+	struct mem_region *mem, *avail;
+	u_long nblks, dumpblks;	/* size of dump area */
 
-	if (dumpdev == NODEV)
+	if (dumpdev == NODEV) {
 		return;
+	}
+
 	nblks = bdev_size(dumpdev);
-	if (nblks <= ctod(1))
+	if (nblks <= ctod(1)) {
 		return;
+	}
 
-	dumpsize = physmem;
+	dumpsize = 0;
+	dumpblks = cpu_dumpsize();
+	if (dumpblks < 0) {
+		goto bad;
+	}
 
-	/* Skip enough blocks at start of disk to preserve an eventual disklabel. */
-	skip = LABELSECTOR + 1;
-	skip += ctod(1) - 1;
-	skip = ctod(dtoc(skip));
-	if (dumplo < skip)
-		dumplo = skip;
+	/* dumpsize is in page units, and doesn't include headers. */
+	mem_regions(&mem, &avail);
+	while (mem->size != 0) {
+		dumpsize += mem->size / PAGE_SIZE;
+		mem++;
+	}
+	dumpblks += ctod(dumpsize);
 
-	/* Put dump at end of partition */
-	if (dumpsize > dtoc(nblks - dumplo))
-		dumpsize = dtoc(nblks - dumplo);
-	if (dumplo < nblks - ctod(dumpsize))
-		dumplo = nblks - ctod(dumpsize);
+	/* If dump won't fit (incl. room for possible label), punt. */
+	if (dumpblks > (nblks - ctod(1))) {
+		goto bad;
+	}
+
+	/* Put dump at end of partition. */
+	dumplo = nblks - dumpblks;
+
+	return;
+
+bad:
+	dumpsize = 0;
 }
 
 /* 
@@ -831,16 +883,6 @@ emulate_mxmsr(struct lwp *l, struct trapframe *tf, uint32_t opcode)
 
 	return 0;
 }
-
-#if defined(MODULAR) && !defined(__PPC_HAVE_MODULE_INIT_MD)
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 bool
 mm_md_direct_mapped_phys(paddr_t pa, vaddr_t *vap)

@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AUXV_H
-#define AUXV_H
+#ifndef GDB_AUXV_H
+#define GDB_AUXV_H
 
 #include "target.h"
 
@@ -48,11 +48,11 @@ extern int svr4_auxv_parse (struct gdbarch *gdbarch, const gdb_byte **readptr,
 
 /* Read auxv data from the current inferior's target stack.  */
 
-extern gdb::optional<gdb::byte_vector> target_read_auxv ();
+extern const std::optional<gdb::byte_vector> &target_read_auxv ();
 
 /* Read auxv data from OPS.  */
 
-extern gdb::optional<gdb::byte_vector> target_read_auxv_raw (target_ops *ops);
+extern std::optional<gdb::byte_vector> target_read_auxv_raw (target_ops *ops);
 
 /* Search AUXV for an entry with a_type matching MATCH.
 
@@ -88,4 +88,4 @@ extern void default_print_auxv_entry (struct gdbarch *gdbarch,
 extern target_xfer_partial_ftype memory_xfer_auxv;
 
 
-#endif
+#endif /* GDB_AUXV_H */

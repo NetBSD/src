@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.8.2.1 2025/08/02 05:53:30 perseant Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.8.2.2 2026/11/04 23:18:03 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,6 +31,8 @@
 #include <dns/ncache.h>
 #include <dns/rdata.h>
 #include <dns/rdataset.h>
+#include <dns/time.h>
+#include <dns/types.h>
 
 static const char *trustnames[] = {
 	"none",		  "pending-additional",
@@ -548,13 +550,14 @@ dns_rdataset_additionaldata(dns_rdataset_t *rdataset,
 }
 
 isc_result_t
-dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name) {
+dns_rdataset_addnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
+			dns_rdatatype_t type) {
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(rdataset->methods != NULL);
 	if (rdataset->methods->addnoqname == NULL) {
 		return ISC_R_NOTIMPLEMENTED;
 	}
-	return (rdataset->methods->addnoqname)(rdataset, name);
+	return (rdataset->methods->addnoqname)(rdataset, name, type);
 }
 
 isc_result_t
@@ -568,30 +571,6 @@ dns__rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 		return ISC_R_NOTIMPLEMENTED;
 	}
 	return (rdataset->methods->getnoqname)(rdataset, name, neg,
-					       negsig DNS__DB_FLARG_PASS);
-}
-
-isc_result_t
-dns_rdataset_addclosest(dns_rdataset_t *rdataset, const dns_name_t *name) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-	if (rdataset->methods->addclosest == NULL) {
-		return ISC_R_NOTIMPLEMENTED;
-	}
-	return (rdataset->methods->addclosest)(rdataset, name);
-}
-
-isc_result_t
-dns__rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-			 dns_rdataset_t *neg,
-			 dns_rdataset_t *negsig DNS__DB_FLARG) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset));
-	REQUIRE(rdataset->methods != NULL);
-
-	if (rdataset->methods->getclosest == NULL) {
-		return ISC_R_NOTIMPLEMENTED;
-	}
-	return (rdataset->methods->getclosest)(rdataset, name, neg,
 					       negsig DNS__DB_FLARG_PASS);
 }
 
@@ -679,17 +658,40 @@ dns_rdataset_trimttl(dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
 	sigrdataset->ttl = ttl;
 }
 
-bool
-dns_rdataset_equals(const dns_rdataset_t *rdataset1,
-		    const dns_rdataset_t *rdataset2) {
-	REQUIRE(DNS_RDATASET_VALID(rdataset1));
-	REQUIRE(DNS_RDATASET_VALID(rdataset2));
+isc_stdtime_t
+dns_rdataset_minresign(dns_rdataset_t *rdataset) {
+	dns_rdata_t rdata = DNS_RDATA_INIT;
+	dns_rdata_rrsig_t sig;
+	int64_t when;
+	isc_result_t result;
 
-	if (rdataset1->methods->equals != NULL &&
-	    rdataset1->methods->equals == rdataset2->methods->equals)
-	{
-		return (rdataset1->methods->equals)(rdataset1, rdataset2);
+	REQUIRE(DNS_RDATASET_VALID(rdataset));
+
+	result = dns_rdataset_first(rdataset);
+	INSIST(result == ISC_R_SUCCESS);
+	dns_rdataset_current(rdataset, &rdata);
+	(void)dns_rdata_tostruct(&rdata, &sig, NULL);
+	if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
+		when = 0;
+	} else {
+		when = dns_time64_from32(sig.timeexpire);
 	}
+	dns_rdata_reset(&rdata);
 
-	return false;
+	result = dns_rdataset_next(rdataset);
+	while (result == ISC_R_SUCCESS) {
+		dns_rdataset_current(rdataset, &rdata);
+		(void)dns_rdata_tostruct(&rdata, &sig, NULL);
+		if ((rdata.flags & DNS_RDATA_OFFLINE) != 0) {
+			goto next_rr;
+		}
+		if (when == 0 || dns_time64_from32(sig.timeexpire) < when) {
+			when = dns_time64_from32(sig.timeexpire);
+		}
+	next_rr:
+		dns_rdata_reset(&rdata);
+		result = dns_rdataset_next(rdataset);
+	}
+	INSIST(result == ISC_R_NOMORE);
+	return (isc_stdtime_t)when;
 }

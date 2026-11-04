@@ -1,4 +1,4 @@
-/*	$NetBSD: c11.c,v 1.7.2.1 2025/08/02 05:58:14 perseant Exp $	*/
+/*	$NetBSD: c11.c,v 1.7.2.2 2026/11/04 23:28:26 perseant Exp $	*/
 # 3 "c11.c"
 
 /*
@@ -6,7 +6,7 @@
  * functions, anonymous struct/union members, and several more.
  */
 
-/* lint1-flags: -Ac11 -w -X 192,231,236,351 */
+/* lint1-flags: -Ac11 -hw -X 192,231,236,351 */
 
 
 int
@@ -127,6 +127,8 @@ void fvla(int m, int C[m][m])
 }
 
 // C11 6.7.6.3p15
+/* expect+2: warning: function declaration for 'fip' is not a prototype [287] */
+/* expect+1: warning: function declaration for 'pfi' is not a prototype [287] */
 int f(void), *fip(), (*pfi)();
 
 // C11 6.7.6.3p17
@@ -161,12 +163,43 @@ double maximum(int n, int m, double a[ ][m]);
 
 void f1(double (* restrict a)[5]);
 void f2(double a[restrict][5]);
-/* expect+1: error: syntax error '3' [249] */
+/* expect+2: error: syntax error '3' [249] */
+/* expect+1: warning: function declaration for 'f3' is not a prototype [287] */
 void f3(double a[restrict 3][5]);
 void f4(double a[restrict static 3][5]);
 
 
 int _Alignas(double) int_aligned_as_double;
+
+
+// C23 6.7.7.4p13 says that "()" is equivalent to "(void)".
+// In C11 6.7.6.3p14, "()" means "no information about the number of types".
+/* expect+1: warning: function declaration for 'function_without_parameters' is not a prototype [287] */
+void function_without_parameters();
+
+
+// Ensure that _Alignas is based on alignment, not on struct size.
+struct mem_1024bit {
+	unsigned char data[1024];
+};
+
+struct alignas_type {
+	unsigned alignas_expr _Alignas(128);
+	unsigned alignas_type _Alignas(struct mem_1024bit);
+};
+
+// The member alignas_expr is at offset 0 with alignment 128,
+// and alignas_type is at offset 4 with alignment max(1, 4).
+/* expect+1: error: negative array dimension (-128) [20] */
+typedef int reveal_sizeof_uint_1024[-(int)sizeof(struct alignas_type)];
+
+
+// C11 6.7p3 allows multiple definitions for the same typedef name.
+// It does not allow redefinition to a different type, but lint accepts it
+// anyway, relying on the compiler to reject this error.
+typedef int number;
+typedef int number;
+typedef double number;
 
 
 // In C11 mode, 'thread_local' is not yet known, but '_Thread_local' is.

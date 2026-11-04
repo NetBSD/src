@@ -1,4 +1,4 @@
-/*	$NetBSD: ns_print.c,v 1.12 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: ns_print.c,v 1.12.4.1 2026/11/04 23:19:20 perseant Exp $	*/
 
 /*
  * Copyright (c) 2004 by Internet Systems Consortium, Inc. ("ISC")
@@ -22,7 +22,7 @@
 #ifdef notdef
 static const char rcsid[] = "Id: ns_print.c,v 1.12 2009/03/03 05:29:58 each Exp";
 #else
-__RCSID("$NetBSD: ns_print.c,v 1.12 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: ns_print.c,v 1.12.4.1 2026/11/04 23:19:20 perseant Exp $");
 #endif
 #endif
 
@@ -48,12 +48,6 @@ __RCSID("$NetBSD: ns_print.c,v 1.12 2022/04/19 20:32:15 rillig Exp $");
 
 #include "port_after.h"
 
-#ifdef SPRINTF_CHAR
-# define SPRINTF(x) ((int)strlen(sprintf/**/x))
-#else
-# define SPRINTF(x) (sprintf x)
-#endif
-
 /* Forward. */
 
 static size_t	prune_origin(const char *name, const char *origin);
@@ -73,6 +67,11 @@ static int	addtab(size_t len, size_t target, int spaced,
 #define	T(x) \
 	do { \
 		if ((x) < 0) \
+			return (-1); \
+	} while (0)
+#define	N(x) \
+	do { \
+		if ((x) == NULL) \
 			return (-1); \
 	} while (0)
 
@@ -152,7 +151,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	 */
 	T(x = ns_format_ttl(ttl, buf, buflen));
 	addlen((size_t)x, &buf, &buflen);
-	len = SPRINTF((tmp, " %s %s", p_class(class), p_type(type)));
+	len = snprintf(tmp, sizeof(tmp), " %s %s", p_class(class),
+	    p_type(type));
 	T(addstr(tmp, (size_t)len, &buf, &buflen));
 	T(spaced = addtab((size_t)(x + len), (size_t)16, spaced, &buf, &buflen));
 
@@ -163,7 +163,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_a:
 		if (rdlen != (size_t)NS_INADDRSZ)
 			goto formerr;
-		(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
+		N(inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen));
 		addlen(strlen(buf), &buf, &buflen);
 		break;
 
@@ -215,7 +215,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		/* Serial number. */
 		t = ns_get32(rdata);  rdata += NS_INT32SZ;
 		T(addstr("\t\t\t\t\t", (size_t)5, &buf, &buflen));
-		len = SPRINTF((tmp, "%lu", t));
+		len = snprintf(tmp, sizeof(tmp), "%lu", t);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		T(spaced = addtab((size_t)len, (size_t)16, spaced, &buf, &buflen));
 		T(addstr("; serial\n", (size_t)9, &buf, &buflen));
@@ -272,7 +272,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		/* Priority. */
 		t = ns_get16(rdata);
 		rdata += NS_INT16SZ;
-		len = SPRINTF((tmp, "%u ", t));
+		len = snprintf(tmp, sizeof(tmp), "%u ", t);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Target. */
@@ -290,7 +290,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		/* Priority. */
 		t = ns_get16(rdata);
 		rdata += NS_INT16SZ;
-		len = SPRINTF((tmp, "%u ", t));
+		len = snprintf(tmp, sizeof(tmp), "%u ", t);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Name1. */
@@ -333,7 +333,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_aaaa:
 		if (rdlen != (size_t)NS_IN6ADDRSZ)
 			goto formerr;
-		(void) inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen);
+		N(inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen));
 		addlen(strlen(buf), &buf, &buflen);
 		break;
 
@@ -341,7 +341,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		char t[255];
 
 		/* XXX protocol format checking? */
-		(void) loc_ntoa(rdata, t);
+		(void) loc_ntoa1(rdata, t, sizeof(t));
 		T(addstr(t, strlen(t), &buf, &buflen));
 		break;
 	    }
@@ -356,7 +356,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		/* Order, Precedence. */
 		order = ns_get16(rdata);	rdata += NS_INT16SZ;
 		preference = ns_get16(rdata);	rdata += NS_INT16SZ;
-		len = SPRINTF((t, "%u %u ", order, preference));
+		len = snprintf(t, sizeof(t), "%u %u ", order, preference);
 		T(addstr(t, (size_t)len, &buf, &buflen));
 
 		/* Flags. */
@@ -398,7 +398,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		priority = ns_get16(rdata);  rdata += NS_INT16SZ;
 		weight   = ns_get16(rdata);  rdata += NS_INT16SZ;
 		port     = ns_get16(rdata);  rdata += NS_INT16SZ;
-		len = SPRINTF((t, "%u %u %u ", priority, weight, port));
+		len = snprintf(t, sizeof(t), "%u %u %u ", priority, weight,
+		    port);
 		T(addstr(t, (size_t)len, &buf, &buflen));
 
 		/* Server. */
@@ -424,12 +425,12 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			goto formerr;
 
 		/* Address. */
-		(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
+		N(inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen));
 		addlen(strlen(buf), &buf, &buflen);
 		rdata += NS_INADDRSZ;
 
 		/* Protocol. */
-		len = SPRINTF((tmp, " %u ( ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), " %u ( ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata += NS_INT8SZ;
 
@@ -446,7 +447,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 						lcnt = 10;
 						spaced = 0;
 					}
-					len = SPRINTF((tmp, "%d ", n));
+					len = snprintf(tmp, sizeof(tmp), "%d ",
+					    n);
 					T(addstr(tmp, (size_t)len, &buf, &buflen));
 					lcnt--;
 				}
@@ -477,8 +479,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		keyflags = ns_get16(rdata);  rdata += NS_INT16SZ;
 		protocol = *rdata++;
 		algorithm = *rdata++;
-		len = SPRINTF((tmp, "0x%04x %u %u",
-			       keyflags, protocol, algorithm));
+		len = snprintf(tmp, sizeof(tmp), "0x%04x %u %u",
+		    keyflags, protocol, algorithm);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Public key data. */
@@ -499,7 +501,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		}
 		if (len > 15)
 			T(addstr(" )", (size_t)2, &buf, &buflen));
-		n = SPRINTF((tmp, " ; key_tag= %u", key_id));
+		n = snprintf(tmp, sizeof(tmp), " ; key_tag= %u", key_id);
 		T(addstr(tmp, (size_t)n, &buf, &buflen));
 
 		break;
@@ -521,25 +523,25 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		algorithm = *rdata++;
 		labels = *rdata++;
 		t = ns_get32(rdata);  rdata += NS_INT32SZ;
-		len = SPRINTF((tmp, "%s %d %d %lu ",
-			       p_type((int)typ), algorithm, labels, t));
+		len = snprintf(tmp, sizeof(tmp), "%s %d %d %lu ",
+		    p_type((int)typ), algorithm, labels, t);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		if (labels > (u_int)dn_count_labels(name))
 			goto formerr;
 
 		/* Signature expiry. */
 		t = ns_get32(rdata);  rdata += NS_INT32SZ;
-		len = SPRINTF((tmp, "%s ", p_secstodate(t)));
+		len = snprintf(tmp, sizeof(tmp), "%s ", p_secstodate(t));
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Time signed. */
 		t = ns_get32(rdata);  rdata += NS_INT32SZ;
-		len = SPRINTF((tmp, "%s ", p_secstodate(t)));
+		len = snprintf(tmp, sizeof(tmp), "%s ", p_secstodate(t));
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Signature Footprint. */
 		footprint = ns_get16(rdata);  rdata += NS_INT16SZ;
-		len = SPRINTF((tmp, "%u ", footprint));
+		len = snprintf(tmp, sizeof(tmp), "%u ", footprint);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Signer's name. */
@@ -576,7 +578,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		n = edata - rdata;
 		for (c = 0; c < n*8; c++)
 			if (NS_NXT_BIT_ISSET(c, rdata)) {
-				len = SPRINTF((tmp, " %s", p_type((int)c)));
+				len = snprintf(tmp, sizeof(tmp), " %s",
+				    p_type((int)c));
 				T(addstr(tmp, (size_t)len, &buf, &buflen));
 			}
 		break;
@@ -593,7 +596,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		key_tag = ns_get16(rdata); rdata += NS_INT16SZ;
 		alg = (u_int) *rdata++;
 
-		len = SPRINTF((tmp1, "%d %d %d ", c_type, key_tag, alg));
+		len = snprintf(tmp1, sizeof(tmp1), "%d %d %d ",
+		    c_type, key_tag, alg);
 		T(addstr(tmp1, (size_t)len, &buf, &buflen));
 		siz = (edata-rdata)*4/3 + 4; /* "+4" accounts for trailing \0 */
 		if (siz > sizeof(base64_cert) * 3/4) {
@@ -637,12 +641,12 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 
 		/* Inception. */
 		t = ns_get32(rdata);  rdata += NS_INT32SZ;
-		len = SPRINTF((tmp, "%s ", p_secstodate(t)));
+		len = snprintf(tmp, sizeof(tmp), "%s ", p_secstodate(t));
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Experation. */
 		t = ns_get32(rdata);  rdata += NS_INT32SZ;
-		len = SPRINTF((tmp, "%s ", p_secstodate(t)));
+		len = snprintf(tmp, sizeof(tmp), "%s ", p_secstodate(t));
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* Mode , Error, Key Size. */
@@ -650,7 +654,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		mode = ns_get16(rdata);  rdata += NS_INT16SZ;
 		err  = ns_get16(rdata);  rdata += NS_INT16SZ;
 		keysize  = ns_get16(rdata);  rdata += NS_INT16SZ;
-		len = SPRINTF((tmp, "%u %u %u ", mode, err, keysize));
+		len = snprintf(tmp, sizeof(tmp), "%u %u %u ", mode, err,
+		    keysize);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		/* XXX need to dump key, print otherdata length & other data */
@@ -667,9 +672,9 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 		n = ns_get16(rdata); rdata += INT16SZ;
 		rdata += n; /*%< sig */
 		n = ns_get16(rdata); rdata += INT16SZ; /*%< original id */
-		sprintf(buf, "%d", ns_get16(rdata));
+		len = snprintf(tmp, sizeof(tmp), "%d", ns_get16(rdata));
 		rdata += INT16SZ;
-		addlen(strlen(buf), &buf, &buflen);
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		break;
 	    }
 
@@ -679,7 +684,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 
 		/* prefix length */
 		if (rdlen == 0U) goto formerr;
-		len = SPRINTF((tmp, "%d ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%d ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		pbit = *rdata;
 		if (pbit > 128) goto formerr;
@@ -691,7 +696,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			if (rdata + pbyte >= edata) goto formerr;
 			memset(&a, 0, sizeof(a));
 			memcpy(&a.s6_addr[pbyte], rdata, sizeof(a) - pbyte);
-			(void) inet_ntop(AF_INET6, &a, buf, (socklen_t)buflen);
+			N(inet_ntop(AF_INET6, &a, buf, (socklen_t)buflen));
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += sizeof(a) - pbyte;
 		}
@@ -707,7 +712,7 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	    }
 
 	case ns_t_opt: {
-		len = SPRINTF((tmp, "%u bytes", class));
+		len = snprintf(tmp, sizeof(tmp), "%u bytes", class);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		break;
 	    }
@@ -721,21 +726,21 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			if (rdlen < 4U) goto formerr;
 			t = ns_get16(rdata);
 			rdata += NS_INT16SZ;
-			len = SPRINTF((tmp, "%u ", t));
+			len = snprintf(tmp, sizeof(tmp), "%u ", t);
 			T(addstr(tmp, (size_t)len, &buf, &buflen));
 		} else
 			if (rdlen < 2U) goto formerr;
 
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		while (rdata < edata) {
-			len = SPRINTF((tmp, "%02X", *rdata));
+			len = snprintf(tmp, sizeof(tmp), "%02X", *rdata);
 			T(addstr(tmp, (size_t)len, &buf, &buflen));
 			rdata++;
 		}
@@ -746,17 +751,17 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 	case ns_t_nsec3param: {
 		u_int t, w, l, j, k, c;
 		
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
 		t = ns_get16(rdata);
 		rdata += NS_INT16SZ;
-		len = SPRINTF((tmp, "%u ", t));
+		len = snprintf(tmp, sizeof(tmp), "%u ", t);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 		t = *rdata++;
@@ -764,7 +769,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			T(addstr("-", 1, &buf, &buflen));
 		} else {
 			while (t-- > 0) {
-				len = SPRINTF((tmp, "%02X", *rdata));
+				len = snprintf(tmp, sizeof(tmp), "%02X",
+				    *rdata);
 				T(addstr(tmp, (size_t)len, &buf, &buflen));
 				rdata++;
 			}
@@ -848,7 +854,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 					if ((rdata[j] & (0x80 >> k)) == 0)
 						continue;
 					c = w * 256 + j * 8 + k;
-					len = SPRINTF((tmp, " %s", p_type((ns_type)c)));
+					len = snprintf(tmp, sizeof(tmp),
+					    " %s", p_type((ns_type)c));
 					T(addstr(tmp, (size_t)len, &buf, &buflen));
 				}
 			}
@@ -872,7 +879,8 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 					if ((rdata[j] & (0x80 >> k)) == 0)
 						continue;
 					c = w * 256 + j * 8 + k;
-					len = SPRINTF((tmp, " %s", p_type((ns_type)c)));
+					len = snprintf(tmp, sizeof(tmp), " %s",
+					    p_type((ns_type)c));
 					T(addstr(tmp, (size_t)len, &buf, &buflen));
 				}
 			}
@@ -946,15 +954,15 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			goto hexify;
 		}
 
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 		
-		len = SPRINTF((tmp, "%u ", *rdata));
+		len = snprintf(tmp, sizeof(tmp), "%u ", *rdata);
 		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata++;
 
@@ -963,12 +971,12 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			T(addstr(".", 1, &buf, &buflen));
 			break;
 		case 1:
-			(void) inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen);
+			N(inet_ntop(AF_INET, rdata, buf, (socklen_t)buflen));
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += 4;
 			break;
 		case 2:
-			(void) inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen);
+			N(inet_ntop(AF_INET6, rdata, buf, (socklen_t)buflen));
 			addlen(strlen(buf), &buf, &buflen);
 			rdata += 16;
 			break;
@@ -1027,11 +1035,12 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
 			const char *str = "record too long to print";
 			T(addstr(str, strlen(str), &buf, &buflen));
 		} else {
-			len = sprintf(tmp, "( %u ", algorithm);
+			len = snprintf(tmp, sizeof(tmp), "( %u ", algorithm);
 			T(addstr(tmp, (size_t)len, &buf, &buflen));
 
 			for (i = 0; i < hip_len; i++) {
-				len = sprintf(tmp, "%02X", *rdata);
+				len = snprintf(tmp, sizeof(tmp), "%02X",
+				    *rdata);
 				T(addstr(tmp, (size_t)len, &buf, &buflen));
 				rdata++;
 			}
@@ -1063,36 +1072,50 @@ ns_sprintrrf(const u_char *msg, size_t msglen,
  formerr:
 	comment = "RR format error";
  hexify: {
-	int n, m;
-	char *p;
+	int n, m, l;
 
-	len = SPRINTF((tmp, "\\# %u%s\t; %s", (unsigned)(edata - rdata),
-		       rdlen != 0U ? " (" : "", comment));
+	len = snprintf(tmp, sizeof(tmp), "\\# %u%s\t; %s",
+	    (unsigned)(edata - rdata), rdlen != 0U ? " (" : "", comment);
+	if (len < 0 || (size_t)len >= sizeof(tmp))
+		goto out;
 	T(addstr(tmp, (size_t)len, &buf, &buflen));
 	while (rdata < edata) {
-		p = tmp;
-		p += SPRINTF((p, "\n\t"));
+		len = snprintf(tmp, sizeof(tmp), "\n\t");
+		if (len < 0 || (size_t)len >= sizeof(tmp))
+			goto out;
 		spaced = 0;
 		n = MIN(16, (int)(edata - rdata));
-		for (m = 0; m < n; m++)
-			p += SPRINTF((p, "%02x ", rdata[m]));
-		T(addstr(tmp, (size_t)(p - tmp), &buf, &buflen));
+		for (m = 0; m < n; m++) {
+			l = snprintf(tmp + len, sizeof(tmp) - len, "%02x ",
+			    rdata[m]);
+			if (l < 0 || (size_t)(l + len) >= sizeof(tmp))
+				goto out;
+			len += l;
+		}
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		if (n < 16) {
 			T(addstr(")", (size_t)1, &buf, &buflen));
-			T(addtab((size_t)(p - tmp + 1), (size_t)48, spaced, &buf, &buflen));
+			T(addtab((size_t)(len + 1), (size_t)48, spaced, &buf, &buflen));
 		}
-		p = tmp;
-		p += SPRINTF((p, "; "));
-		for (m = 0; m < n; m++)
-			*p++ = (isascii(rdata[m]) && isprint(rdata[m]))
+		len = snprintf(tmp, sizeof(tmp), "; ");
+		if (len < 0 || (size_t)len >= sizeof(tmp))
+			goto out;
+		for (m = 0; m < n; m++) {
+			tmp[len++] = (isascii(rdata[m]) && isprint(rdata[m]))
 				? rdata[m]
 				: '.';
-		T(addstr(tmp, (size_t)(p - tmp), &buf, &buflen));
+			if ((size_t)len >= sizeof(tmp))
+				goto out;
+		}
+		T(addstr(tmp, (size_t)len, &buf, &buflen));
 		rdata += n;
 	}
 	_DIAGASSERT(__type_fit(int, buf - obuf));
 	return (int)(buf - obuf);
     }
+out:
+    errno = ENOSPC;
+    return -1;
 }
 
 /* Private. */

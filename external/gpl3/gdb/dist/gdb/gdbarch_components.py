@@ -1,6 +1,6 @@
 # Dynamic architecture support for GDB, the GNU debugger.
 
-# Copyright (C) 1998-2024 Free Software Foundation, Inc.
+# Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -830,6 +830,19 @@ allocate and return a struct value with all value attributes
 )
 
 Method(
+    comment="""
+For a DW_OP_piece located in a register, but not occupying the
+entire register, return the placement of the piece within that
+register as defined by the ABI.
+""",
+    type="ULONGEST",
+    name="dwarf2_reg_piece_offset",
+    params=[("int", "regnum"), ("ULONGEST", "size")],
+    predefault="default_dwarf2_reg_piece_offset",
+    invalid=False,
+)
+
+Method(
     type="CORE_ADDR",
     name="pointer_to_address",
     params=[("struct type *", "type"), ("const gdb_byte *", "buf")],
@@ -1232,18 +1245,55 @@ possible it should be in TARGET_READ_PC instead).
 Method(
     comment="""
 On some architectures, not all bits of a pointer are significant.
-On AArch64, for example, the top bits of a pointer may carry a "tag", which
-can be ignored by the kernel and the hardware.  The "tag" can be regarded as
-additional data associated with the pointer, but it is not part of the address.
+On AArch64 and amd64, for example, the top bits of a pointer may carry a
+"tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+regarded as additional data associated with the pointer, but it is not part
+of the address.
 
 Given a pointer for the architecture, this hook removes all the
-non-significant bits and sign-extends things as needed.  It gets used to remove
-non-address bits from data pointers (for example, removing the AArch64 MTE tag
-bits from a pointer) and from code pointers (removing the AArch64 PAC signature
-from a pointer containing the return address).
+non-significant bits and sign-extends things as needed.  It gets used to
+remove non-address bits from pointers used for watchpoints.
 """,
     type="CORE_ADDR",
-    name="remove_non_address_bits",
+    name="remove_non_address_bits_watchpoint",
+    params=[("CORE_ADDR", "pointer")],
+    predefault="default_remove_non_address_bits",
+    invalid=False,
+)
+
+Method(
+    comment="""
+On some architectures, not all bits of a pointer are significant.
+On AArch64 and amd64, for example, the top bits of a pointer may carry a
+"tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+regarded as additional data associated with the pointer, but it is not part
+of the address.
+
+Given a pointer for the architecture, this hook removes all the
+non-significant bits and sign-extends things as needed.  It gets used to
+remove non-address bits from pointers used for breakpoints.
+""",
+    type="CORE_ADDR",
+    name="remove_non_address_bits_breakpoint",
+    params=[("CORE_ADDR", "pointer")],
+    predefault="default_remove_non_address_bits",
+    invalid=False,
+)
+
+Method(
+    comment="""
+On some architectures, not all bits of a pointer are significant.
+On AArch64 and amd64, for example, the top bits of a pointer may carry a
+"tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+regarded as additional data associated with the pointer, but it is not part
+of the address.
+
+Given a pointer for the architecture, this hook removes all the
+non-significant bits and sign-extends things as needed.  It gets used to
+remove non-address bits from any pointer used to access memory.
+""",
+    type="CORE_ADDR",
+    name="remove_non_address_bits_memory",
     params=[("CORE_ADDR", "pointer")],
     predefault="default_remove_non_address_bits",
     invalid=False,
@@ -1345,7 +1395,7 @@ the condition is true, so that we ensure forward progress when stepping
 past a conditional branch to self.
 """,
     type="std::vector<CORE_ADDR>",
-    name="software_single_step",
+    name="get_next_pcs",
     params=[("struct regcache *", "regcache")],
     predicate=True,
 )
@@ -1381,12 +1431,12 @@ Function(
     invalid=False,
 )
 
-Value(
-    comment="Vtable of solib operations functions.",
-    type="const solib_ops *",
-    name="so_ops",
-    predefault="&solib_target_so_ops",
-    printer="host_address_to_string (gdbarch->so_ops)",
+Function(
+    comment="Return a newly-allocated solib_ops object capable of providing the solibs for this architecture.",
+    type="solib_ops_up",
+    name="make_solib_ops",
+    params=[("program_space *", "pspace")],
+    predefault="make_target_solib_ops",
     invalid=False,
 )
 
@@ -1448,7 +1498,7 @@ Function(
     comment="""
 Process an ELF symbol in the minimal symbol table in a backend-specific
 way.  Normally this hook is supposed to do nothing, however if required,
-then this hook can be used to apply tranformations to symbols that are
+then this hook can be used to apply transformations to symbols that are
 considered special in some way.  For example the MIPS backend uses it
 to interpret `st_other' information to mark compressed code symbols so
 that they can be treated in the appropriate manner in the processing of
@@ -1456,7 +1506,7 @@ the main symbol table and DWARF-2 records.
 """,
     type="void",
     name="elf_make_msymbol_special",
-    params=[("asymbol *", "sym"), ("struct minimal_symbol *", "msym")],
+    params=[("const asymbol *", "sym"), ("struct minimal_symbol *", "msym")],
     predicate=True,
 )
 
@@ -1472,7 +1522,7 @@ Function(
     comment="""
 Process a symbol in the main symbol table in a backend-specific way.
 Normally this hook is supposed to do nothing, however if required,
-then this hook can be used to apply tranformations to symbols that
+then this hook can be used to apply transformations to symbols that
 are considered special in some way.  This is currently used by the
 MIPS backend to make sure compressed code symbols have the ISA bit
 set.  This in turn is needed for symbol values seen in GDB to match
@@ -1688,7 +1738,12 @@ failed, otherwise, return the red length of READBUF.
 """,
     type="ULONGEST",
     name="core_xfer_shared_libraries",
-    params=[("gdb_byte *", "readbuf"), ("ULONGEST", "offset"), ("ULONGEST", "len")],
+    params=[
+        ("struct bfd &", "cbfd"),
+        ("gdb_byte *", "readbuf"),
+        ("ULONGEST", "offset"),
+        ("ULONGEST", "len"),
+    ],
     predicate=True,
 )
 
@@ -1700,7 +1755,12 @@ Return the number of bytes read (zero indicates failure).
 """,
     type="ULONGEST",
     name="core_xfer_shared_libraries_aix",
-    params=[("gdb_byte *", "readbuf"), ("ULONGEST", "offset"), ("ULONGEST", "len")],
+    params=[
+        ("struct bfd &", "cbfd"),
+        ("gdb_byte *", "readbuf"),
+        ("ULONGEST", "offset"),
+        ("ULONGEST", "len"),
+    ],
     predicate=True,
 )
 
@@ -1716,34 +1776,39 @@ How the core target converts a PTID from a core file to a string.
 
 Method(
     comment="""
-How the core target extracts the name of a thread from a core file.
+How the core target extracts the name of a thread from core file CBFD.
 """,
     type="const char *",
     name="core_thread_name",
-    params=[("struct thread_info *", "thr")],
+    params=[("struct bfd &", "cbfd"), ("struct thread_info *", "thr")],
     predicate=True,
 )
 
 Method(
     comment="""
 Read offset OFFSET of TARGET_OBJECT_SIGNAL_INFO signal information
-from core file into buffer READBUF with length LEN.  Return the number
+from core file CBFD into buffer READBUF with length LEN.  Return the number
 of bytes read (zero indicates EOF, a negative value indicates failure).
 """,
     type="LONGEST",
     name="core_xfer_siginfo",
-    params=[("gdb_byte *", "readbuf"), ("ULONGEST", "offset"), ("ULONGEST", "len")],
+    params=[
+        ("struct bfd &", "cbfd"),
+        ("gdb_byte *", "readbuf"),
+        ("ULONGEST", "offset"),
+        ("ULONGEST", "len"),
+    ],
     predicate=True,
 )
 
 Method(
     comment="""
-Read x86 XSAVE layout information from core file into XSAVE_LAYOUT.
+Read x86 XSAVE layout information from core file CBFD into XSAVE_LAYOUT.
 Returns true if the layout was read successfully.
 """,
     type="bool",
     name="core_read_x86_xsave_layout",
-    params=[("x86_xsave_layout &", "xsave_layout")],
+    params=[("struct bfd &", "cbfd"), ("x86_xsave_layout &", "xsave_layout")],
     predicate=True,
 )
 
@@ -1841,7 +1906,7 @@ receive control again (e.g. by placing a software breakpoint instruction into
 the displaced instruction buffer).
 
 The default implementation returns false on all targets that provide a
-gdbarch_software_single_step routine, and true otherwise.
+gdbarch_get_next_pcs routine, and true otherwise.
 """,
     type="bool",
     name="displaced_step_hw_singlestep",
@@ -2076,7 +2141,7 @@ Record architecture-specific information from the symbol table.
 """,
     type="void",
     name="record_special_symbol",
-    params=[("struct objfile *", "objfile"), ("asymbol *", "sym")],
+    params=[("struct objfile *", "objfile"), ("const asymbol *", "sym")],
     predicate=True,
 )
 
@@ -2174,7 +2239,7 @@ For example, on x86 the register indirection is written as:
 
 (%eax) ;; indirecting eax
 
-in this case, this prefix would be the charater `('.
+in this case, this prefix would be the character `('.
 
 Please note that we use the indirection prefix also for register
 displacement, e.g., `4(%eax)' on x86.
@@ -2193,7 +2258,7 @@ For example, on x86 the register indirection is written as:
 
 (%eax) ;; indirecting eax
 
-in this case, this prefix would be the charater `)'.
+in this case, this prefix would be the character `)'.
 
 Please note that we use the indirection suffix also for register
 displacement, e.g., `4(%eax)' on x86.
@@ -2502,35 +2567,18 @@ Implement the "info proc" command.
 
 Method(
     comment="""
-Implement the "info proc" command for core files.  Noe that there
+Implement the "info proc" command for core files.  Note that there
 are two "info_proc"-like methods on gdbarch -- one for core files,
-one for live targets.
+one for live targets.  CBFD is the core file being read from.
 """,
     type="void",
     name="core_info_proc",
-    params=[("const char *", "args"), ("enum info_proc_what", "what")],
-    predicate=True,
-)
-
-Method(
-    comment="""
-Iterate over all objfiles in the order that makes the most sense
-for the architecture to make global symbol searches.
-
-CB is a callback function passed an objfile to be searched.  The iteration stops
-if this function returns nonzero.
-
-If not NULL, CURRENT_OBJFILE corresponds to the objfile being
-inspected when the symbol search was requested.
-""",
-    type="void",
-    name="iterate_over_objfiles_in_search_order",
     params=[
-        ("iterate_over_objfiles_in_search_order_cb_ftype", "cb"),
-        ("struct objfile *", "current_objfile"),
+        ("struct bfd *", "cbfd"),
+        ("const char *", "args"),
+        ("enum info_proc_what", "what"),
     ],
-    predefault="default_iterate_over_objfiles_in_search_order",
-    invalid=False,
+    predicate=True,
 )
 
 Value(
@@ -2776,5 +2824,60 @@ The corefile's bfd is passed through COREFILE_BFD.
     name="use_target_description_from_corefile_notes",
     params=[("struct bfd *", "corefile_bfd")],
     predefault="default_use_target_description_from_corefile_notes",
+    invalid=False,
+)
+
+Method(
+    comment="""
+Examine the core file bfd object CBFD and try to extract the name of
+the current executable and the argument list, which are return in a
+core_file_exec_context object.
+
+If for any reason the details can't be extracted from CBFD then an
+empty context is returned.
+
+It is required that the current inferior be the one associated with
+CBFD, strings are read from the current inferior using target methods
+which all assume current_inferior() is the one to read from.
+""",
+    type="core_file_exec_context",
+    name="core_parse_exec_context",
+    params=[("bfd *", "cbfd")],
+    predefault="default_core_parse_exec_context",
+    invalid=False,
+)
+
+Method(
+    comment="""
+Some targets support special hardware-assisted control-flow protection
+technologies.  For example, the Intel Control-Flow Enforcement Technology
+(Intel CET) on x86 provides a shadow stack and indirect branch tracking.
+To enable shadow stack support for inferior calls the shadow_stack_push
+gdbarch hook has to be provided.  The get_shadow_stack_pointer gdbarch
+hook has to be provided to enable displaced stepping.
+
+Push NEW_ADDR to the shadow stack and update the shadow stack pointer.
+""",
+    type="void",
+    name="shadow_stack_push",
+    params=[("CORE_ADDR", "new_addr"), ("regcache *", "regcache")],
+    predicate=True,
+)
+
+Method(
+    comment="""
+If possible, return the shadow stack pointer.  If the shadow stack
+feature is enabled then set SHADOW_STACK_ENABLED to true, otherwise
+set SHADOW_STACK_ENABLED to false.  This hook has to be provided to enable
+displaced stepping for shadow stack enabled programs.
+On some architectures, the shadow stack pointer is available even if the
+feature is disabled.  So dependent on the target, an implementation of
+this function may return a valid shadow stack pointer, but set
+SHADOW_STACK_ENABLED to false.
+""",
+    type="std::optional<CORE_ADDR>",
+    name="get_shadow_stack_pointer",
+    params=[("regcache *", "regcache"), ("bool &", "shadow_stack_enabled")],
+    predefault="default_get_shadow_stack_pointer",
     invalid=False,
 )

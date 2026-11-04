@@ -1,4 +1,4 @@
-/*	$NetBSD: criov.c,v 1.9 2018/09/03 16:29:37 riastradh Exp $ */
+/*	$NetBSD: criov.c,v 1.9.36.1 2026/11/04 23:28:01 perseant Exp $ */
 /*      $OpenBSD: criov.c,v 1.11 2002/06/10 19:36:43 espie Exp $	*/
 
 /*
@@ -29,21 +29,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.9 2018/09/03 16:29:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: criov.c,v 1.9.36.1 2026/11/04 23:28:01 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+
 #include <sys/errno.h>
-#include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <opencrypto/cryptodev.h>
-int cuio_getindx(struct uio *uio, int loc, int *off);
 
+int cuio_getindx(struct uio *uio, int loc, int *off);
 
 void
 cuio_copydata(struct uio *uio, int off, int len, void *cp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: denode.h,v 1.29 2021/10/23 16:58:17 thorpej Exp $	*/
+/*	$NetBSD: denode.h,v 1.29.10.1 2026/11/04 23:27:45 perseant Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -216,7 +216,7 @@ struct denode {
  * dp is a struct direntry * (external form).
  */
 #define DE_INTERNALIZE32(dep, dp)			\
-	 ((dep)->de_StartCluster |= getushort((dp)->deHighClust) << 16)
+	 ((dep)->de_StartCluster |= (u_long)getushort((dp)->deHighClust) << 16)
 #define DE_INTERNALIZE(dep, dp)				\
 	(memcpy((dep)->de_Name, (dp)->deName, 8),	\
 	 memcpy((dep)->de_Name+8, (dp)->deExtension, 3),\

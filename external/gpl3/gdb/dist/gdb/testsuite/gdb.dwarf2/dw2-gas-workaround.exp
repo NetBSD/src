@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@ load_lib dwarf.exp
 # This test can only be run on targets which support DWARF-2 and use gas.
 require dwarf2_support
 
-standard_testfile dw2-lines.c -dw2.S
+standard_testfile dw2-lines.c -dw2.S -dw2-one-diridx.S
 
 with_shared_gdb {
     set func_info_vars [get_func_info bar]
@@ -33,49 +33,61 @@ proc line_for { l } {
     return [expr $line + 1]
 }
 
-set asm_file [standard_output_file $srcfile2]
-Dwarf::assemble $asm_file {
-    declare_labels Llines
-    global srcdir subdir srcfile objdir
-    global func_info_vars
-    foreach var $func_info_vars {
-	global $var
-    }
+# A helper proc to create the DWARF assembly for the test.
+# If ONE_DIRIDX is true, then the directory table will be limited
+# to one entry.
+proc create_dwarf_assembly {source_file one_diridx} {
+    set asm_file [standard_output_file $source_file]
+    Dwarf::assemble $asm_file {
+	declare_labels Llines
+	global srcdir subdir srcfile objdir
+	global func_info_vars
+	upvar one_diridx one_diridx
+	foreach var $func_info_vars {
+	    global $var
+	}
 
-    cu { version 5 } {
-	compile_unit {
-	    {language @DW_LANG_Mips_Assembler}
-	    {name $srcfile}
-	    {comp_dir $objdir}
-	    {stmt_list $Llines DW_FORM_sec_offset}
-	    {producer "GNU AS 2.35.2"}
-	} {
-	    subprogram {
-		{external 1 flag}
-		{name bar}
-		{low_pc $bar_start addr}
-		{high_pc "$bar_start + $bar_len" addr}
+	cu { version 5 } {
+	    compile_unit {
+		{language @DW_LANG_Mips_Assembler}
+		{name $srcfile}
+		{comp_dir $objdir}
+		{stmt_list $Llines DW_FORM_sec_offset}
+		{producer "GNU AS 2.35.2"}
+	    } {
+		subprogram {
+		    {external 1 flag}
+		    {name bar}
+		    {low_pc $bar_start addr}
+		    {high_pc "$bar_start + $bar_len" addr}
+		}
+	    }
+	}
+
+	lines [list version 5] Llines {
+	    set diridx1 [include_dir "${srcdir}/${subdir}"]
+	    file_name "$srcfile" $diridx1
+	    if {!$one_diridx} {
+		set diridx2 [include_dir "${srcdir}/${subdir}"]
+		file_name "$srcfile" $diridx2
+	    } else {
+		file_name "$srcfile" $diridx1
+	    }
+	    program {
+		DW_LNE_set_address bar_label
+		line [line_for bar_label]
+		DW_LNS_copy
+
+		DW_LNE_set_address $bar_end
+		DW_LNE_end_sequence
 	    }
 	}
     }
 
-    lines [list version 5] Llines {
-	set diridx1 [include_dir "${srcdir}/${subdir}"]
-	set diridx2 [include_dir "${srcdir}/${subdir}"]
-	file_name "$srcfile" $diridx1
-	file_name "$srcfile" $diridx2
-
-	program {
-	    DW_LNE_set_address bar_label
-	    line [line_for bar_label]
-	    DW_LNS_copy
-
-	    DW_LNE_set_address $bar_end
-	    DW_LNE_end_sequence
-	}
-    }
+    return $asm_file
 }
 
+set asm_file [create_dwarf_assembly $srcfile2 false]
 if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  [list $srcfile $asm_file] {nodebug}] } {
     return -1
@@ -90,3 +102,13 @@ gdb_test_multiple "ptype bar" "" {
 	pass $gdb_test_name
     }
 }
+
+# Test whether gdb crashes in the case where the number of
+# directory indexes is only one.
+set asm_file [create_dwarf_assembly $srcfile3 true]
+if {[prepare_for_testing "failed to prepare" ${testfile}-one-diridx \
+	 [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+gdb_test "ptype bar" ".*" "do not crash with only one directory table entry"

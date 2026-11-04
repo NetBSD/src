@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,6 @@
 #include "gdbcore.h"
 #include "coff/internal.h"
 #include "libcoff.h"
-#include "solist.h"
 
 #define CYGWIN_DLL_NAME "cygwin1.dll"
 
@@ -478,7 +477,7 @@ display_one_tib (ptid_t ptid)
   
   tib = (gdb_byte *) alloca (tib_size);
 
-  if (target_get_tib_address (ptid, &thread_local_base) == 0)
+  if (!target_get_tib_address (ptid, &thread_local_base))
     {
       gdb_printf (_("Unable to get thread local base for %s\n"),
 		  target_pid_to_str (ptid).c_str ());
@@ -549,43 +548,6 @@ windows_xfer_shared_library (const char* so_name, CORE_ADDR load_addr,
 
   xml += paddress (gdbarch, load_addr + text_offset);
   xml += "\"/></library>";
-}
-
-/* Implement the "iterate_over_objfiles_in_search_order" gdbarch
-   method.  It searches all objfiles, starting with CURRENT_OBJFILE
-   first (if not NULL).
-
-   On Windows, the system behaves a little differently when two
-   objfiles each define a global symbol using the same name, compared
-   to other platforms such as GNU/Linux for instance.  On GNU/Linux,
-   all instances of the symbol effectively get merged into a single
-   one, but on Windows, they remain distinct.
-
-   As a result, it usually makes sense to start global symbol searches
-   with the current objfile before expanding it to all other objfiles.
-   This helps for instance when a user debugs some code in a DLL that
-   refers to a global variable defined inside that DLL.  When trying
-   to print the value of that global variable, it would be unhelpful
-   to print the value of another global variable defined with the same
-   name, but in a different DLL.  */
-
-static void
-windows_iterate_over_objfiles_in_search_order
-  (gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb,
-   objfile *current_objfile)
-{
-  if (current_objfile)
-    {
-      if (cb (current_objfile))
-	return;
-    }
-
-  for (objfile *objfile : current_program_space->objfiles ())
-    if (objfile != current_objfile)
-      {
-	if (cb (objfile))
-	  return;
-      }
 }
 
 static void
@@ -863,10 +825,30 @@ windows_get_siginfo_type (struct gdbarch *gdbarch)
   return siginfo_type;
 }
 
+/* solib_ops for Windows systems.  */
+
+struct windows_solib_ops : target_solib_ops
+{
+  using target_solib_ops::target_solib_ops;
+
+  void create_inferior_hook (int from_tty) const override;
+  void iterate_over_objfiles_in_search_order
+    (iterate_over_objfiles_in_search_order_cb_ftype cb,
+     objfile *current_objfile) const override;
+};
+
+/* Return a new solib_ops for Windows systems.  */
+
+static solib_ops_up
+make_windows_solib_ops (program_space *pspace)
+{
+  return std::make_unique<windows_solib_ops> (pspace);
+}
+
 /* Implement the "solib_create_inferior_hook" solib_ops method.  */
 
-static void
-windows_solib_create_inferior_hook (int from_tty)
+void
+windows_solib_ops::create_inferior_hook (int from_tty) const
 {
   CORE_ADDR exec_base = 0;
 
@@ -911,7 +893,42 @@ windows_solib_create_inferior_hook (int from_tty)
     }
 }
 
-static solib_ops windows_so_ops;
+/* Implement the "iterate_over_objfiles_in_search_order" gdbarch
+   method.  It searches all objfiles, starting with CURRENT_OBJFILE
+   first (if not NULL).
+
+   On Windows, the system behaves a little differently when two
+   objfiles each define a global symbol using the same name, compared
+   to other platforms such as GNU/Linux for instance.  On GNU/Linux,
+   all instances of the symbol effectively get merged into a single
+   one, but on Windows, they remain distinct.
+
+   As a result, it usually makes sense to start global symbol searches
+   with the current objfile before expanding it to all other objfiles.
+   This helps for instance when a user debugs some code in a DLL that
+   refers to a global variable defined inside that DLL.  When trying
+   to print the value of that global variable, it would be unhelpful
+   to print the value of another global variable defined with the same
+   name, but in a different DLL.  */
+
+void
+windows_solib_ops::iterate_over_objfiles_in_search_order
+  (iterate_over_objfiles_in_search_order_cb_ftype cb,
+   objfile *current_objfile) const
+{
+  if (current_objfile)
+    {
+      if (cb (current_objfile))
+	return;
+    }
+
+  for (objfile *objfile : m_pspace->objfiles ())
+    if (objfile != current_objfile)
+      {
+	if (cb (objfile))
+	  return;
+      }
+}
 
 /* Common parts for gdbarch initialization for the Windows and Cygwin OS
    ABIs.  */
@@ -926,13 +943,7 @@ windows_init_abi_common (struct gdbarch_info info, struct gdbarch *gdbarch)
      `c:\Program Files\Foo App\mydll.dll', for example.  */
   set_gdbarch_has_dos_based_file_system (gdbarch, 1);
 
-  set_gdbarch_iterate_over_objfiles_in_search_order
-    (gdbarch, windows_iterate_over_objfiles_in_search_order);
-
-  windows_so_ops = solib_target_so_ops;
-  windows_so_ops.solib_create_inferior_hook
-    = windows_solib_create_inferior_hook;
-  set_gdbarch_so_ops (gdbarch, &windows_so_ops);
+  set_gdbarch_make_solib_ops (gdbarch, make_windows_solib_ops);
 
   set_gdbarch_get_siginfo_type (gdbarch, windows_get_siginfo_type);
 }
@@ -1151,13 +1162,11 @@ core_process_module_section (bfd *abfd, asection *sect, void *obj)
 
 ULONGEST
 windows_core_xfer_shared_libraries (struct gdbarch *gdbarch,
-				    gdb_byte *readbuf,
+				    struct bfd &cbfd, gdb_byte *readbuf,
 				    ULONGEST offset, ULONGEST len)
 {
   cpms_data data { gdbarch, "<library-list>\n", 0 };
-  bfd_map_over_sections (current_program_space->core_bfd (),
-			 core_process_module_section,
-			 &data);
+  bfd_map_over_sections (&cbfd, core_process_module_section, &data);
   data.xml += "</library-list>\n";
 
   ULONGEST len_avail = data.xml.length ();
@@ -1183,9 +1192,7 @@ windows_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
   return normal_pid_to_str (ptid);
 }
 
-void _initialize_windows_tdep ();
-void
-_initialize_windows_tdep ()
+INIT_GDB_FILE (windows_tdep)
 {
   init_w32_command_list ();
   cmd_list_element *info_w32_thread_information_block_cmd
@@ -1321,10 +1328,9 @@ cygwin_sigwrapper_frame_cache (frame_info_ptr this_frame, void **this_cache)
   return cache;
 }
 
-static struct value *
-cygwin_sigwrapper_frame_prev_register (const frame_info_ptr &this_frame,
-				       void **this_cache,
-				       int regnum)
+struct value *
+cygwin_sigwrapper_frame_unwind::prev_register
+    (const frame_info_ptr &this_frame, void **this_cache, int regnum) const
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   struct cygwin_sigwrapper_frame_cache *cache
@@ -1340,20 +1346,18 @@ cygwin_sigwrapper_frame_prev_register (const frame_info_ptr &this_frame,
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static void
-cygwin_sigwrapper_frame_this_id (const frame_info_ptr &this_frame,
-				 void **this_cache,
-				 struct frame_id *this_id)
+void
+cygwin_sigwrapper_frame_unwind::this_id (const frame_info_ptr &this_frame,
+					 void **this_cache,
+					 struct frame_id *this_id) const
 {
   *this_id = frame_id_build_unavailable_stack (get_frame_func (this_frame));
 }
 
-static int
-cygwin_sigwrapper_frame_sniffer (const struct frame_unwind *self_,
-				 const frame_info_ptr &this_frame,
-				 void **this_cache)
+int
+cygwin_sigwrapper_frame_unwind::sniff (const frame_info_ptr &this_frame,
+					 void **this_cache) const
 {
-  const auto *self = (const struct cygwin_sigwrapper_frame_unwind *) self_;
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
 
   CORE_ADDR pc = get_frame_pc (this_frame);
@@ -1376,7 +1380,7 @@ cygwin_sigwrapper_frame_sniffer (const struct frame_unwind *self_,
 		      paddress (gdbarch, end));
 
   int tlsoffset;
-  cygwin_sigwrapper_frame_analyze (gdbarch, start, end, self->patterns_list,
+  cygwin_sigwrapper_frame_analyze (gdbarch, start, end, patterns_list,
 				   &tlsoffset);
   if (tlsoffset == 0)
     return 0;
@@ -1396,13 +1400,7 @@ cygwin_sigwrapper_frame_sniffer (const struct frame_unwind *self_,
 
 cygwin_sigwrapper_frame_unwind::cygwin_sigwrapper_frame_unwind
   (gdb::array_view<const gdb::array_view<const gdb_byte>> patterns_list)
-    : frame_unwind (),
-      patterns_list (patterns_list)
+    : frame_unwind ("cygwin sigwrapper", NORMAL_FRAME, FRAME_UNWIND_GDB,
+		    nullptr), patterns_list (patterns_list)
 {
-  name = "cygwin sigwrapper";
-  type = NORMAL_FRAME;
-  stop_reason = default_frame_unwind_stop_reason;
-  this_id = cygwin_sigwrapper_frame_this_id;
-  prev_register = cygwin_sigwrapper_frame_prev_register;
-  sniffer = cygwin_sigwrapper_frame_sniffer;
 }

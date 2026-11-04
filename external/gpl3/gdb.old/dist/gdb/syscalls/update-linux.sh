@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -22,7 +22,6 @@
 # ./update-linux.sh amd64-linux.xml.in
 # ./update-linux.sh i386-linux.xml.in -m32
 
-
 if [ $# -lt 1 ]; then
     echo "file argument needed"
     exit 1
@@ -36,12 +35,19 @@ if [ ! -f "$f" ]; then
     exit 1
 fi
 
+startyear=2009
+case "$f" in
+    *aarch64-linux.xml.in)
+	startyear=2015
+	;;
+esac
+
 year=$(date +%Y)
 
 (
     cat <<EOF
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-$year Free Software Foundation, Inc.
+<!-- Copyright (C) $startyear-$year Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -60,12 +66,23 @@ EOF
 
     echo '<syscalls_info>'
 
-    echo '#include <sys/syscall.h>' \
+# There are __NR_ and __NR3264_ prefixed syscall numbers, handle them
+# automatically in this script. Here are the examples of the two types:
+#
+# #define __NR_io_setup 0
+# #define __NR3264_fcntl 25
+
+    echo '#include <asm/unistd.h>' \
 	| gcc -E - -dD "$@" \
-	| grep -E '#define __NR_' \
+	| grep -E '#define (__NR_|__NR3264_)' \
 	| while read -r line; do
-	name=$(echo "$line" | awk '{print $2}' | sed 's/^__NR_//')
-	nr=$(echo "$line" | awk '{print $3}')
+	line=$(echo "$line" | awk '$2 ~ "__NR" && $3 !~ "__NR3264_" {
+	     sub("^#define __NR(3264)?_", ""); print | "sort -k2 -n"}')
+	if [ -z "$line" ]; then
+		continue
+	fi
+	name=$(echo "$line" | awk '{print $1}')
+	nr=$(echo "$line" | awk '{print $2}')
 	echo "  <syscall name=\"$name\" number=\"$nr\"/>"
     done
 

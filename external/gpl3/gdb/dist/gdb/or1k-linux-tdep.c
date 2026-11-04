@@ -1,5 +1,5 @@
 /* Target-dependent code for GNU/Linux on OpenRISC processors.
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #include "osabi.h"
 #include "glibc-tdep.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "solib-svr4.h"
 #include "regset.h"
 #include "tramp-frame.h"
@@ -144,8 +145,7 @@ or1k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   linux_init_abi (info, gdbarch, 0);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -153,7 +153,7 @@ or1k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU/Linux uses the dynamic linker included in the GNU C Library.  */
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 
-  set_gdbarch_software_single_step (gdbarch, or1k_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, or1k_software_single_step);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
@@ -167,9 +167,7 @@ or1k_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
 /* Initialize OpenRISC Linux target support.  */
 
-void _initialize_or1k_linux_tdep ();
-void
-_initialize_or1k_linux_tdep ()
+INIT_GDB_FILE (or1k_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_or1k, 0, GDB_OSABI_LINUX,
 			  or1k_linux_init_abi);

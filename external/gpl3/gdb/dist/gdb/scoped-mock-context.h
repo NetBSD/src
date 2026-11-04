@@ -1,6 +1,6 @@
 /* RAII type to create a temporary mock context.
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SCOPED_MOCK_CONTEXT_H
-#define SCOPED_MOCK_CONTEXT_H
+#ifndef GDB_SCOPED_MOCK_CONTEXT_H
+#define GDB_SCOPED_MOCK_CONTEXT_H
 
 #include "inferior.h"
 #include "gdbthread.h"
@@ -75,7 +75,7 @@ struct scoped_mock_context
   }
 };
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-#endif /* !defined (SCOPED_MOCK_CONTEXT_H) */
+#endif /* GDB_SCOPED_MOCK_CONTEXT_H */

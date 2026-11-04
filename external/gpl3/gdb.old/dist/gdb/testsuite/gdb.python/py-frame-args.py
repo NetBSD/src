@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,6 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 import re
+
 import gdb
 
 
@@ -76,3 +77,17 @@ pretty_printers_dict = {}
 
 register_pretty_printers()
 gdb.pretty_printers.append(lookup_function)
+
+
+class BasicFrameFilter(object):
+    def __init__(self):
+        self.name = "BasicFrameFilter"
+        self.priority = 100
+        self.enabled = True
+        gdb.frame_filters[self.name] = self
+
+    def filter(self, frame_iter):
+        return frame_iter
+
+
+BasicFrameFilter()

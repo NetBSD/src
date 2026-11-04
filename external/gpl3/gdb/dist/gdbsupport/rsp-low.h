@@ -1,6 +1,6 @@
 /* Low-level RSP routines for GDB, the GNU debugger.
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_RSP_LOW_H
-#define COMMON_RSP_LOW_H
+#ifndef GDBSUPPORT_RSP_LOW_H
+#define GDBSUPPORT_RSP_LOW_H
 
 /* Convert number NIB to a hex digit.  */
 
@@ -81,4 +81,4 @@ extern int remote_escape_output (const gdb_byte *buffer, int len_units,
 extern int remote_unescape_input (const gdb_byte *buffer, int len,
 				  gdb_byte *out_buf, int out_maxlen);
 
-#endif /* COMMON_RSP_LOW_H */
+#endif /* GDBSUPPORT_RSP_LOW_H */

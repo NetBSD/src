@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.35 2021/07/24 21:31:32 andvar Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.35.16.1 2026/11/04 23:20:23 perseant Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.35 2021/07/24 21:31:32 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.35.16.1 2026/11/04 23:20:23 perseant Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.35 2021/07/24 21:31:32 andvar E
 
 extern char *etext;
 extern paddr_t avail_start, avail_end;
+extern vaddr_t kernel_reloc_offset;
 
 /*
  * Special purpose kernel virtual addresses, used for mapping
@@ -60,9 +61,9 @@ extern paddr_t avail_start, avail_end;
  */
 void *CADDR1, *CADDR2;
 char *vmmap;
-void *msgbufaddr;
+extern void *msgbufaddr;
 
-void pmap_bootstrap(paddr_t, paddr_t);
+paddr_t pmap_bootstrap1(paddr_t, paddr_t);
 
 /*
  * Bootstrap the VM system.
@@ -75,8 +76,8 @@ void pmap_bootstrap(paddr_t, paddr_t);
  * XXX assumes sizeof(u_int) == sizeof(pt_entry_t)
  * XXX a PIC compiler would make this much easier.
  */
-void
-pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
+paddr_t __attribute__((no_instrument_function))
+pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 {
 	paddr_t lwp0upa, kstpa, kptmpa, kptpa;
 	paddr_t lkptpa;
@@ -84,6 +85,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	st_entry_t protoste, *ste, *este;
 	pt_entry_t protopte, *pte, *epte;
 	u_int stfree = 0;	/* XXX: gcc -Wuninitialized */
+
+	nextpa = m68k_round_page(nextpa);
 
 	/*
 	 * Calculate important physical addresses:
@@ -107,6 +110,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * The KVA corresponding to any of these PAs is:
 	 *	(PA - firstpa + KERNBASE).
 	 */
+	RELOC(kernel_reloc_offset, vaddr_t) = firstpa;
+
 	lwp0upa = nextpa;
 	nextpa += USPACE;
 	if (RELOC(mmutype, int) == MMU_68040)
@@ -120,7 +125,8 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	lkptpa = nextpa;
 	nextpa += PAGE_SIZE;
 	kptpa = nextpa;
-	nptpages = RELOC(Sysptsize, int) + howmany(RELOC(physmem, int), NPTEPG);
+	nptpages = RELOC(Sysptsize, int) +
+	    howmany(RELOC(physmem, psize_t), NPTEPG);
 	nextpa += nptpages * PAGE_SIZE;
 
 	/*
@@ -399,7 +405,7 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 
 	/*
 	 * Remember the u-area address so it can be loaded in the lwp0
-	 * via uvm_lwp_setuarea() later in pmap_bootstrap_finalize().
+	 * via uvm_lwp_setuarea() later in pmap_bootstrap2().
 	 */
 	RELOC(lwp0uarea, vaddr_t) = lwp0upa - firstpa + KERNBASE;
 
@@ -416,11 +422,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 	 * To work around this, we move avail_end back one more
 	 * page so the msgbuf can be preserved.
 	 */
-	RELOC(avail_start, paddr_t) = nextpa;
-	RELOC(avail_end, paddr_t) = firstpa
-	  + m68k_ptob(RELOC(physmem, int))
-	  - m68k_round_page(MSGBUFSIZE)
-	  - PAGE_SIZE; /* if that start of last page??? */
 	RELOC(virtual_avail, vaddr_t) =
 		KERNBASE + (nextpa - firstpa);
 	RELOC(virtual_end, vaddr_t) = VM_MAX_KERNEL_ADDRESS;
@@ -441,4 +442,6 @@ pmap_bootstrap(paddr_t nextpa, paddr_t firstpa)
 		va += m68k_round_page(MSGBUFSIZE);
 		RELOC(virtual_avail, vaddr_t) = va;
 	}
+
+	return nextpa;
 }

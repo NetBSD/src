@@ -1,4 +1,4 @@
-@c Copyright (C) 2008--2024 Free Software Foundation, Inc.
+@c Copyright (C) 2008--2025 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -225,12 +225,14 @@ optional arguments while skipping others.  Example:
 * Finish Breakpoints in Python:: Setting Breakpoints on function return
                                 using Python.
 * Lazy Strings In Python::      Python representation of lazy strings.
+* Colors In Python::            Python representation of colors.
 * Architectures In Python::     Python representation of architectures.
 * Registers In Python::         Python representation of registers.
 * Connections In Python::       Python representation of connections.
 * TUI Windows In Python::       Implementing new TUI windows.
 * Disassembly In Python::       Instruction Disassembly In Python
 * Missing Debug Info In Python:: Handle missing debug info from Python.
+* Missing Objfiles In Python::  Handle objfiles from Python.
 @end menu
 
 @node Basic Python
@@ -255,7 +257,7 @@ Python code must not override these, or even change the options using
 signals, @value{GDBN} will most likely stop working correctly.  Note
 that it is unfortunately common for GUI toolkits to install a
 @code{SIGCHLD} handler.  When creating a new Python thread, you can
-use @code{gdb.block_signals} or @code{gdb.Thread} to handle this
+use @code{gdb.blocked_signals} or @code{gdb.Thread} to handle this
 correctly; see @ref{Threading in GDB}.
 
 @item
@@ -283,7 +285,7 @@ offered for debugging purposes only, expect them to change over time.
 A string containing the python directory (@pxref{Python}).
 @end defvar
 
-@defun gdb.execute (command @r{[}, from_tty @r{[}, to_string@r{]]})
+@defun gdb.execute (command @r{[}, from_tty @r{[}, to_string @w{@r{[}, styling @r{]]]}})
 Evaluate @var{command}, a string, as a @value{GDBN} CLI command.
 If a GDB exception happens while @var{command} runs, it is
 translated as described in @ref{Exception Handling,,Exception Handling}.
@@ -300,6 +302,14 @@ returned as a string.  The default is @code{False}, in which case the
 return value is @code{None}.  If @var{to_string} is @code{True}, the
 @value{GDBN} virtual terminal will be temporarily set to unlimited width
 and height, and its pagination will be disabled; @pxref{Screen Size}.
+
+When @var{styling} is @code{True}, the output, whether sent to
+standard output, or to a string, will have styling applied, if
+@value{GDBN}'s standard output supports styling, and @kbd{show style
+enabled} is @kbd{on}.  When @var{styling} is @code{False} then no
+styling is applied.  The default for @var{styling} is @code{True} when
+@var{to_string} is @code{False}, and @code{False} when @var{to_string}
+is @code{True}.
 @end defun
 
 @defun gdb.breakpoints ()
@@ -469,7 +479,7 @@ call this function and will automatically direct the output to the
 relevant stream.
 @end defun
 
-@defun gdb.flush (@r{[}, stream@r{]})
+@defun gdb.flush (@r{[}stream@r{]})
 Flush the buffer of a @value{GDBN} paginated stream so that the
 contents are displayed immediately.  @value{GDBN} will flush the
 contents of a stream automatically when it encounters a newline in the
@@ -497,6 +507,17 @@ stream values are:
 
 Flushing @code{sys.stdout} or @code{sys.stderr} will automatically
 call this function for the relevant stream.
+@end defun
+
+@defun gdb.warning (text)
+Print a warning message to @value{GDBN}'s standard output stream.  The
+warning message is the warning prefix (@pxref{warning-prefix}), the
+string @w{@samp{warning: }}, and then @var{text}, which must be a
+non-empty string.
+
+Due to the warning prefix, @var{text} should not begin with a capital
+letter (except for proper nouns), and @var{text} should end with a
+period.
 @end defun
 
 @defun gdb.target_charset ()
@@ -644,22 +665,22 @@ threads, you must be careful to only call @value{GDBN}-specific
 functions in the @value{GDBN} thread.  @value{GDBN} provides some
 functions to help with this.
 
-@defun gdb.block_signals ()
+@defun gdb.blocked_signals ()
 As mentioned earlier (@pxref{Basic Python}), certain signals must be
-delivered to the @value{GDBN} main thread.  The @code{block_signals}
+delivered to the @value{GDBN} main thread.  The @code{blocked_signals}
 function returns a context manager that will block these signals on
 entry.  This can be used when starting a new thread to ensure that the
 signals are blocked there, like:
 
 @smallexample
-with gdb.block_signals():
+with gdb.blocked_signals():
    start_new_thread()
 @end smallexample
 @end defun
 
 @deftp {class} gdb.Thread
 This is a subclass of Python's @code{threading.Thread} class.  It
-overrides the @code{start} method to call @code{block_signals}, making
+overrides the @code{start} method to call @code{blocked_signals}, making
 this an easy-to-use drop-in replacement for creating threads that will
 work well in @value{GDBN}.
 @end deftp
@@ -889,7 +910,26 @@ this attribute holds @code{None}.
 @cindex optimized out value in Python
 @defvar Value.is_optimized_out
 This read-only boolean attribute is true if the compiler optimized out
-this value, thus it is not available for fetching from the inferior.
+this value, or any part of this value, and thus it is not available
+for fetching from the inferior.
+@end defvar
+
+@cindex unavailable values in Python
+@defvar Value.is_unavailable
+This read-only boolean attribute is true if this value, or any part of
+this value, is not available to @value{GDBN}.  Where an optimized out
+value has been removed from the program by the compiler, an
+unavailable value does exist in the program, but @value{GDBN} is
+unable to fetch it.
+
+Some reasons why this might occur include, but are not limited to: a
+core file format that @value{GDBN} doesn't fully understand; during
+live debugging if the debug API has no mechanism to access the
+required state, e.g.@: the kernel gives an error when trying to read a
+particular register set; or reading a value from @value{GDBN}'s
+history, when only a partial value was stored, e.g.@: due to the
+@kbd{max-value-size} setting (@pxref{set
+max-value-size,,max-value-size}).
 @end defvar
 
 @defvar Value.type
@@ -1179,7 +1219,7 @@ refer to, @code{False} (the default) if they shouldn't.  Note that, unlike
 for the @code{print} command, references are not automatically expanded
 when using the @code{format_string} method or the @code{str}
 function.  There is no global @code{print} setting to change the default
-behaviour.
+behavior.
 
 @item actual_objects
 @code{True} if the representation of a pointer to an object should
@@ -1278,9 +1318,10 @@ fetched and converted to the given length.
 @end defun
 
 @defun Value.lazy_string (@r{[}encoding @r{[}, length@r{]]})
-If this @code{gdb.Value} represents a string, then this method
-converts the contents to a @code{gdb.LazyString} (@pxref{Lazy Strings
-In Python}).  Otherwise, this method will throw an exception.
+This method attempts to convert this @code{gdb.Value} to a
+@code{gdb.LazyString} (@pxref{Lazy Strings In Python}).  Values of
+array or pointer type can be converted; for other types, this method
+will throw an exception.
 
 If the optional @var{encoding} argument is given, it must be a string
 naming the encoding of the @code{gdb.LazyString}.  Some examples are:
@@ -3011,7 +3052,7 @@ unwinders can derive, though it is not required that unwinders derive
 from this class, so long as any user created unwinder has the required
 @code{name} and @code{enabled} attributes.
 
-@defun gdb.unwinder.Unwinder.__init__(name)
+@defun gdb.unwinder.Unwinder.__init__ (name)
 The @var{name} is a string used to reference this unwinder within some
 @value{GDBN} commands (@pxref{Managing Registered Unwinders}).
 @end defun
@@ -3037,7 +3078,7 @@ most cases this class will be sufficient.
 
 @code{gdb.unwinder.FrameId} has the following method:
 
-@defun gdb.unwinder.FrameId.__init__(sp, pc, special = @code{None})
+@defun gdb.unwinder.FrameId.__init__ (sp, pc, special = @code{None})
 The @var{sp} and @var{pc} arguments are required and should be either
 a @code{gdb.Value} object, or an integer.
 
@@ -4081,6 +4122,16 @@ The @code{gdb.Progspace} that is about to be removed from
 @value{GDBN}.
 @end defvar
 
+@item events.tui_enabled
+This is emitted when the TUI is enabled or disabled.  The event is of
+type @code{gdb.TuiEnabledEvent}, which has a single read-only
+attribute:
+
+@defvar TuiEnabledEvent.enabled
+If the TUI has just been enabled, this is @code{True}; otherwise it is
+@code{False}.
+@end defvar
+
 @end table
 
 @node Threads In Python
@@ -4314,6 +4365,11 @@ A @code{gdb.Record} object has the following methods:
 Move the replay position to the given @var{instruction}.
 @end defun
 
+@defun Record.clear ()
+Clear the trace data of the current recording.  This forces re-decoding of the
+trace for successive commands.
+@end defun
+
 The common @code{gdb.Instruction} class that recording method specific
 instruction objects inherit from, has the following attributes:
 
@@ -4367,6 +4423,19 @@ the current recording method.
 
 @defvar RecordGap.error_string
 A human readable string with the reason for the gap.
+@end defvar
+
+Some @value{GDBN} features write auxiliary information into the execution
+history.  This information is represented by a @code{gdb.RecordAuxiliary} object
+in the instruction list.  It has the following attributes:
+
+@defvar RecordAuxiliary.@var{number}
+An integer identifying this auxiliary.  @var{number} corresponds to the numbers
+seen in @code{record instruction-history} (@pxref{Process Record and Replay}).
+@end defvar
+
+@defvar RecordAuxiliary.data
+A string representation of the auxiliary data.
 @end defvar
 
 A @code{gdb.RecordFunctionSegment} object has the following attributes:
@@ -4486,6 +4555,7 @@ You can implement new @value{GDBN} CLI commands in Python.  A CLI
 command is implemented using an instance of the @code{gdb.Command}
 class, most commonly using a subclass.
 
+@anchor{Command.__init__}
 @defun Command.__init__ (name, command_class @r{[}, completer_class @r{[}, prefix@r{]]})
 The object initializer for @code{Command} registers the new command
 with @value{GDBN}.  This initializer is normally invoked from the
@@ -4515,10 +4585,11 @@ registered.
 
 The help text for the new command is taken from the Python
 documentation string for the command's class, if there is one.  If no
-documentation string is provided, the default value ``This command is
-not documented.'' is used.
+documentation string is provided, the default value @samp{This command
+is not documented.} is used.
 @end defun
 
+@anchor{Command.dont_repeat}
 @cindex don't repeat Python command
 @defun Command.dont_repeat ()
 By default, a @value{GDBN} command is repeated when the user enters a
@@ -4529,6 +4600,7 @@ exception).  This is similar to the user command @code{dont-repeat},
 see @ref{Define, dont-repeat}.
 @end defun
 
+@anchor{Command.invoke}
 @defun Command.invoke (argument, from_tty)
 This method is called by @value{GDBN} when this command is invoked.
 
@@ -4541,6 +4613,17 @@ that the command came from elsewhere.
 
 If this method throws an exception, it is turned into a @value{GDBN}
 @code{error} call.  Otherwise, the return value is ignored.
+
+For non-prefix commands (@pxref{Command.__init__}), the @code{invoke}
+method is required.  For prefix commands the @code{invoke} method is
+optional.  Only prefix commands that need to handle unknown
+sub-commands should implement the @code{invoke} method.
+
+For prefix commands that don't implement @code{invoke}, if the prefix
+command is used without a sub-command name then @value{GDBN} will
+display the help text for every sub-command, unless the prefix command
+is a @kbd{show} sub-command, in which case @value{GDBN} will list the
+values of all sub-commands.
 
 @findex gdb.string_to_argv
 To break @var{argument} up into an argv-like string use
@@ -4921,7 +5004,7 @@ command, a string.  The arguments, @var{arg}, are passed to the
 command.  Each argument must also be a string.
 
 This function returns a Python dictionary whose contents reflect the
-corresponding @sc{GDB/MI} command's output.  Refer to the
+corresponding @sc{gdb/mi} command's output.  Refer to the
 documentation for these commands for details.  Lists are represented
 as Python lists, and tuples are represented as Python dictionaries.
 
@@ -5040,7 +5123,9 @@ string from the parameter's class, if there is one.  If there is no
 documentation string, a default value is used.  The documentation
 string is included in the output of the parameters @code{help set} and
 @code{help show} commands, and should be written taking this into
-account.
+account.  If the documentation string for the parameter's class is the
+empty string then @value{GDBN} will only use @code{Parameter.set_doc}
+or @code{Parameter.show_doc} (see below) in the @kbd{help} output.
 @end defun
 
 @defvar Parameter.set_doc
@@ -5212,7 +5297,105 @@ except the special value -1 is returned for the setting of ``unlimited''.
 @item gdb.PARAM_ENUM
 The value is a string, which must be one of a collection string
 constants provided when the parameter is created.
+
+@findex PARAM_COLOR
+@findex gdb.PARAM_COLOR
+@item gdb.PARAM_COLOR
+The value is @code{gdb.Color} instance.
 @end table
+
+When creating multiple new parameters using @code{gdb.Parameter}, it
+is often desirable to create a prefix command that can be used to
+group related parameters together, for example, if you wished to add
+the parameters @kbd{plugin-name feature-1} and @kbd{plugin-name
+feature-2}, then the @kbd{plugin-name} would need to be a prefix
+command (@pxref{CLI Commands In Python}).
+
+However, when creating parameters, you will almost always need to
+create two prefix commands, one as a @kbd{set} sub-command, and one as
+a @kbd{show} sub-command.  @value{GDBN} provides the
+@code{gdb.ParameterPrefix} helper class to make creation of these two
+prefixes easier.
+
+@defun ParameterPrefix.__init__ (name, command_class, doc = @code{None})
+The object initializer for @code{ParameterPrefix} registers two new
+@code{gdb.Command} prefixes, one as a @kbd{set} sub-command, and the
+other as a @kbd{show} sub-command.
+
+@var{name}, a string, is the name of the new prefix, without either
+@kbd{set} or @kbd{show}, similar to the @var{name} passed to
+@code{gdb.Parameter} (@pxref{Parameters In Python}).  For example, to
+create the prefixes @kbd{set plugin-name} and @kbd{show plugin-name},
+you would pass the string @kbd{plugin-name}.
+
+@var{command_class} should be one of the @samp{COMMAND_} constants
+(@pxref{CLI Commands In Python}).  This argument tells @value{GDBN} how to
+categorize the new parameter prefixes in the help system.
+
+There are a number of ways in which the help text for the two new
+prefix commands can be provided.  If the @var{doc} parameter is not
+@code{None}, then this will be used as the documentation string for
+both prefix commands.
+
+If @var{doc} is @code{None}, but @code{gdb.ParameterPrefix} has been
+sub-classed, then the prefix command documentation will be taken from
+sub-classes documentation string (i.e., the @code{__doc__} attribute).
+
+If @var{doc} is @code{None}, and there is no @code{__doc__} string,
+then the default value @samp{This command is not documented.} is used.
+
+When writing the help text, keep in mind that the same text is used
+for both the @kbd{set} and @kbd{show} prefix commands.
+@end defun
+
+@defun ParameterPrefix.invoke_set (argument, from_tty)
+If a sub-class defines this method, then @value{GDBN} will call this
+when the prefix command is used with an unknown sub-command.  The
+@var{argument} and @var{from_tty} parameters are the same as for
+@code{gdb.Command.invoke} (@pxref{Command.invoke}).
+
+If this method throws an exception, it is turned into a @value{GDBN}
+@code{error} call.  Otherwise, the return value is ignored.
+
+It is not required that a @code{ParameterPrefix} sub-class override
+this method.  Usually, a parameter prefix only exists as a means to
+group related parameters together.  @value{GDBN} handles this use case
+automatically with no need to implement @code{invoke_set}.
+@end defun
+
+@defun ParameterPrefix.invoke_show (argument, from_tty)
+This is like the @code{invoke_set} method, but for the @kbd{show}
+prefix command.  As with @code{invoke_set}, implementation of this
+method is optional, and usually not required.
+@end defun
+
+@cindex don't repeat Python command
+@defun ParameterPrefix.dont_repeat ()
+Like @code{Command.dont_repeat} (@pxref{Command.dont_repeat}), this
+can be called from @code{ParameterPrefix.invoke_set} or
+@code{ParameterPrefix.invoke_show} to prevent the prefix commands from
+being repeated.
+@end defun
+
+Here is a small example that uses @code{gdb.ParameterPrefix} along
+with @code{gdb.Parameter} to create two new parameters
+@kbd{plugin-name feature-1} and @kbd{plugin-name feature-2}.  As
+neither @code{invoke_set} or @code{invoke_show} is needed, this
+example does not sub-class @code{gdb.ParameterPrefix}:
+
+@smallexample
+class ExampleParam(gdb.Parameter):
+   def __init__ (self, name):
+      super ().__init__ (name, gdb.COMMAND_DATA, gdb.PARAM_BOOLEAN)
+      self.value = True
+
+gdb.ParameterPrefix("plugin-name", gdb.COMMAND_NONE,
+                    """An example parameter prefix.
+
+                    This groups together some parameters.""")
+ExampleParam("plugin-name feature-1")
+ExampleParam("plugin-name feature-2")
+@end smallexample
 
 @node Functions In Python
 @subsubsection Writing new convenience functions
@@ -5370,10 +5553,11 @@ The @code{frame_filters} attribute is a dictionary of frame filter
 objects.  @xref{Frame Filter API}, for more information.
 @end defvar
 
-@defvar Progspace.missing_debug_handlers
-The @code{missing_debug_handlers} attribute is a list of the missing
-debug handler objects for this program space.  @xref{Missing Debug
-Info In Python}, for more information.
+@defvar Progspace.missing_file_handlers
+The @code{missing_file_handlers} attribute is a list of tuples.  Each
+tuple holds a missing-file handler object for this program space.  For
+more information, @pxref{Missing Debug Info In Python}, and
+@ref{Missing Objfiles In Python}.
 @end defvar
 
 A program space has the following methods:
@@ -5549,6 +5733,7 @@ Separate debug info objfiles are added with the
 @code{gdb.Objfile.add_separate_debug_file} method, described below.
 @end defvar
 
+@anchor{Objfile.build_id}
 @defvar Objfile.build_id
 The build ID of the objfile as a string.
 If the objfile does not have a build ID then the value is @code{None}.
@@ -6008,6 +6193,11 @@ The block containing this block.  If this parent block does not exist,
 this attribute holds @code{None}.  This attribute is not writable.
 @end defvar
 
+@defvar Block.subblocks
+A list of blocks nested in this block.  If there are no blocks nested,
+this attribute holds an empty list.  This attribute is not writable.
+@end defvar
+
 @defvar Block.global_block
 The global block associated with this block.  This attribute is not
 writable.
@@ -6166,6 +6356,11 @@ of a symbol.  Each address class is a constant defined in the
 @code{gdb} module and described later in this chapter.
 @end defvar
 
+@defvar Symbol.domain
+The domain of the symbol.  Each domain is a constant defined in the
+@code{gdb} module and described later in this chapter.
+@end defvar
+
 @defvar Symbol.needs_frame
 This is @code{True} if evaluating this symbol's value requires a frame
 (@pxref{Frames In Python}) and @code{False} otherwise.  Typically,
@@ -6174,6 +6369,11 @@ local variables will require a frame, but other symbols will not.
 
 @defvar Symbol.is_argument
 @code{True} if the symbol is an argument of a function.
+@end defvar
+
+@defvar Symbol.is_artificial
+@code{True} if the symbol is artificial.  An artificial symbol is one
+that is introduced by the compiler.
 @end defvar
 
 @defvar Symbol.is_constant
@@ -6940,10 +7140,12 @@ A @code{gdb.LazyString} is represented in @value{GDBN} as an
 that will be used to encode that region of memory, and a @code{length}
 to delimit the region of memory that represents the string.  The
 difference between a @code{gdb.LazyString} and a string wrapped within
-a @code{gdb.Value} is that a @code{gdb.LazyString} will be treated
-differently by @value{GDBN} when printing.  A @code{gdb.LazyString} is
+a @code{gdb.Value} is that a @code{gdb.LazyString} will only be
 retrieved and encoded during printing, while a @code{gdb.Value}
 wrapping a string is immediately retrieved and encoded on creation.
+
+A @code{gdb.LazyString} can be created using the
+@code{gdb.Value.lazy_string} method (@pxref{Values From Inferior}).
 
 A @code{gdb.LazyString} object has the following functions:
 
@@ -6980,6 +7182,104 @@ resolve this to the lazy string's character type, use the type's
 @code{target} method.  @xref{Types In Python}.  This attribute is not
 writable.
 @end defvar
+
+@node Colors In Python
+@subsubsection Python representation of colors
+
+@cindex colors in python
+@tindex gdb.Color
+You can assign instance of @code{gdb.Color} to the @code{value} of
+a @code{Parameter} instance created with @code{PARAM_COLOR}.
+
+@code{gdb.Color} may refer to an index from a color palette or contain
+components of a color from some color space.
+
+@defun Color.__init__ (@r{[}value @r{[}, color_space@r{]}@r{]})
+
+@var{value} is @code{None} (meaning the terminal's default color),
+an integer index of a color in palette, tuple with color components
+or a string.  String can be a hex RGB triplet in @samp{#RRGGBB} format
+or one of the following color names:
+@samp{none} (meaning the terminal's default color), @samp{black}, @samp{red},
+@samp{green}, @samp{yellow}, @samp{blue}, @samp{magenta}, @samp{cyan},
+or @samp{white}.
+
+@var{color_space} should be one of the @samp{COLORSPACE_} constants
+listed below.  This argument tells @value{GDBN} which color space
+@var{value} belongs.
+@end defun
+
+@defvar Color.is_none
+This attribute is boolean.  If its value is @code{True} then color is terminal's
+default.
+@end defvar
+
+@defvar Color.is_indexed
+This attribute is boolean.  If its value is @code{True} then color is indexed,
+i.e. belongs to some palette.
+@end defvar
+
+@defvar Color.is_direct
+This attribute is boolean.  If its value is @code{True} then this object
+describes direct colour in the sense of ISO/IEC 8613-6.
+@end defvar
+
+@defvar Color.index
+This attribute exist if @code{is_indexed} is @code{True}.  Its integer value is
+index of a color in a palette.
+@end defvar
+
+@defvar Color.components
+This attribute exist if @code{is_direct} is @code{True}.  Its value is tuple
+with integer components of a color.
+@end defvar
+
+@defun Color.escape_sequence (is_foreground)
+Returns string to change terminal's color to this.
+
+If @var{is_foreground} is @code{True}, then the returned sequence will change
+foreground color.  Otherwise, the returned sequence will change background
+color.
+
+If styling is currently disabled (@pxref{Output Styling,,@kbd{set style
+enabled}}), then this method will return an empty string.
+@end defun
+
+When color is initialized, its color space must be specified.  The
+available color spaces are represented by constants defined in the @code{gdb}
+module:
+
+@table @code
+@findex COLORSPACE_MONOCHROME
+@findex gdb.COLORSPACE_MONOCHROME
+@item gdb.COLORSPACE_MONOCHROME
+Palette with only terminal's default color.
+
+@findex COLORSPACE_ANSI_8COLOR
+@findex gdb.COLORSPACE_ANSI_8COLOR
+@item gdb.COLORSPACE_ANSI_8COLOR
+Palette with eight standard colors of ISO/IEC 6429 "black", "red", "green", etc.
+
+@findex COLORSPACE_AIXTERM_16COLOR
+@findex gdb.COLORSPACE_AIXTERM_16COLOR
+@item gdb.COLORSPACE_AIXTERM_16COLOR
+Palette with 16 colors.  First eight are standard colors of ISO/IEC 6429
+"black", "red", "green", etc.  Next eight are their bright version.
+
+@findex COLORSPACE_XTERM_256COLOR
+@findex gdb.COLORSPACE_XTERM_256COLOR
+@item gdb.COLORSPACE_XTERM_256COLOR
+Palette with 256 colors.  First 16 are from COLORSPACE_AIXTERM_16COLOR.  Next
+216 colors are 6x6x6 RGB cube.  And last 24 colors form grayscale ramp.
+
+@findex COLORSPACE_RGB_24BIT
+@findex gdb.COLORSPACE_RGB_24BIT
+@item gdb.COLORSPACE_RGB_24BIT
+Direct 24-bit RGB colors.
+
+@end table
+
+It is not possible to sub-class the @code{Color} class.
 
 @node Architectures In Python
 @subsubsection Python representation of architectures
@@ -7044,6 +7344,10 @@ If @var{signed} is not specified, it defaults to @code{True}.  If
 
 If the indicated type cannot be found, this function will throw a
 @code{ValueError} exception.
+@end defun
+
+@defun Architecture.void_type ()
+This function returns a void type.
 @end defun
 
 @anchor{gdbpy_architecture_registers}
@@ -7309,7 +7613,7 @@ contains the full contents of the window.  This is similar to calling
 @end defun
 
 The factory function that you supply should return an object
-conforming to the TUI window protocol.  These are the method that can
+conforming to the TUI window protocol.  These are the methods that can
 be called on this object, which is referred to below as the ``window
 object''.  The methods documented below are optional; if the object
 does not implement one of these methods, @value{GDBN} will not attempt
@@ -8137,6 +8441,189 @@ returns a value other than @code{None}, no further handlers are called
 for this objfile.
 @end defun
 
+@node Missing Objfiles In Python
+@subsubsection Missing Objfiles In Python
+@cindex python, handle missing objfiles
+
+When @value{GDBN} opens a core file, for example with the
+@kbd{core-file} command (@pxref{core-file command}), @value{GDBN} will
+attempt to load the corresponding executable and shared libraries.
+Often these files can be found on the local machine, but sometimes
+these files cannot be found, in which case the debugging experience
+will be restricted.
+
+If @value{GDBN} fails to locate a particular file then there is an
+opportunity for a Python extension to step in.  A Python extension can
+potentially locate the missing file using some platform- or
+project-specific steps, and inform @value{GDBN} of its location.  Or a
+Python extension might provide some platform- or project-specific
+advice to the user about how to obtain the missing file.
+
+A missing-objfile Python extension consists of a handler object which
+has the @code{name} and @code{enabled} attributes, and implements the
+@code{__call__} method.  When @value{GDBN} encounters a situation
+where a file cannot be found, but the build-id (@pxref{build ID}) for
+the missing file is known, then the @code{__call__} method is invoked
+to try and find the file.  Full details of how handlers are written
+can be found below.
+
+@subheading The @code{gdb.missing_objfile} Module
+
+@value{GDBN} comes with a @code{gdb.missing_objfile} module which
+contains the following class and global function:
+
+@deftp{class} gdb.missing_objfile.MissingObjfileHandler
+
+@code{MissingObjfileHandler} is a base class from which user-created
+handlers can derive, though it is not required that handlers derive
+from this class, so long as any user created handler has the
+@code{name} and @code{enabled} attributes, and implements the
+@code{__call__} method.
+
+@defun MissingObjfileHandler.__init__ (name)
+The @var{name} is a string used to reference this missing-objfile
+handler within some @value{GDBN} commands.  Valid names consist of the
+characters @samp{[-_a-zA-Z0-9]}, creating a handler with an invalid
+name raises a @code{ValueError} exception.
+@end defun
+
+@defun MissingObjfileHandler.__call__ (pspace, build_id, filename)
+
+Sub-classes must override the @code{__call__} method.  The
+@var{pspace} argument will be a @code{gdb.Progspace}
+(@pxref{Progspaces In Python}), this is the program space in which
+@value{GDBN} is looking for the missing file.
+
+The @var{build_id} argument is a string containing the build-id of the
+file that is missing, this will be in the same format as returned by
+@code{Objfile.build_id} (@pxref{Objfile.build_id}).
+
+The @var{filename} argument contains the name of the file that
+@value{GDBN} is looking for.  This information is provided to allow
+handlers to generate informative messages for the user.  A handler is
+not required to place the missing file at this location.  There might
+already be a file present at this location, but it might not match the
+required build-id, in which case @value{GDBN} will have ignored it.
+In some limited cases @value{GDBN} might not be able to establish the
+@var{filename} of the file it is searching for, in this case
+@value{GDBN} will use a string @samp{with build-id @var{build_id}} as a
+replacement.
+
+The return value from the @code{__call__} method indicates what
+@value{GDBN} should do next.  The possible return values are:
+
+@itemize @bullet
+@item @code{None}
+
+This indicates that this handler could not locate the missing file and
+@value{GDBN} should call any other registered handlers.
+
+@item @code{True}
+
+This indicates that this handler has installed the missing file into a
+location where @value{GDBN} would normally expect to find it.  The
+only location in which @value{GDBN} will look is within the
+@file{.build-id} sub-directory within the @var{debug-file-directory}
+(@pxref{debug-file-directory}).
+
+@value{GDBN} will repeat the normal lookup process, which should now
+find the previously missing file.
+
+If @value{GDBN} still doesn't find file after this second attempt,
+then the Python missing-objfile handlers are not invoked a second
+time, this prevents a badly behaved handler causing @value{GDBN} to
+get stuck in a loop.  @value{GDBN} will continue without the missing
+file, though this will degrade the debugging experience.
+
+@item @code{False}
+
+This indicates that this handler has done everything that it intends
+to do but the missing file could not be found.  @value{GDBN} will not
+call any other registered handlers to look for the missing file.
+@value{GDBN} will continue without the missing file, though this will
+degrade the debugging experience.
+
+@item A string
+
+The returned string should contain a filename.  @value{GDBN} will not
+call any further registered handlers, and will instead use the
+returned filename as the missing file.
+@end itemize
+
+Invoking the @code{__call__} method from this base class will raise a
+@code{NotImplementedError} exception.
+@end defun
+
+@defvar MissingObjfileHandler.name
+A read-only attribute which is a string, the name of this handler
+passed to the @code{__init__} method.
+@end defvar
+
+@defvar MissingObjfileHandler.enabled
+A modifiable attribute containing a boolean; when @code{True}, the
+handler is enabled, and will be used by @value{GDBN}.  When
+@code{False}, the handler has been disabled, and will not be used.
+@end defvar
+@end deftp
+
+@defun gdb.missing_objfile.register_handler (locus, handler, replace=@code{False})
+Register a new missing-objfile handler with @value{GDBN}.
+
+@var{handler} is an instance of a sub-class of
+@code{MissingObjfileHandler}, or at least an instance of an object that
+has the same attributes and methods as @code{MissingObjfileHandler}.
+
+@var{locus} specifies to which handler list to prepend @var{handler}.
+It can be either a @code{gdb.Progspace} (@pxref{Progspaces In Python})
+or @code{None}, in which case the handler is registered globally.  The
+newly registered @var{handler} will be called before any other handler
+from the same locus.  Two handlers in the same locus cannot have the
+same name, an attempt to add a handler with an already existing name
+raises an exception unless @var{replace} is @code{True}, in which case
+the old handler is deleted and the new handler is prepended to the
+selected handler list.
+
+@value{GDBN} first calls the handlers for the current program space,
+and then the globally registered handlers.  As soon as a handler
+returns a value other than @code{None}, no further handlers are
+called.
+@end defun
+
+@subheading Managing Missing-Objfile Handlers
+
+@value{GDBN} defines the following commands to manage registered
+missing-objfile handlers:
+
+@table @code
+
+@kindex info missing-objfile-handlers
+@item info missing-objfile-handlers @r{[} @var{locus} @r{[} @var{name-regexp} @r{]} @r{]}
+Lists all registered missing-objfile handlers.  Arguments @var{locus}
+and @var{name-regexp} are both optional and can be used to filter
+which handlers are listed.
+
+The @var{locus} argument should be either @kbd{global},
+@kbd{progspace}, or the name of an object file.  Only handlers
+registered for the specified locus will be listed.
+
+The @var{name-regexp} is a regular expression used to match against
+handler names.
+
+@kindex disable missing-objfile-handler
+@item disable missing-objfile-handler @r{[} @var{locus} @r{[} @var{name-regexp} @r{]} @r{]}
+The @var{locus} and @var{name-regexp} are interpreted as in @kbd{info
+missing-objfile-handlers} above, but instead of listing the matching
+handlers, all of the matching handlers are disabled.  The
+@code{enabled} field of each matching handler is set to @code{False}.
+
+@kindex enable missing-objfile-handler
+@item enable missing-objfile-handler @r{[} @var{locus} @r{[} @var{name-regexp} @r{]} @r{]}
+The @var{locus} and @var{name-regexp} are interpreted as in @kbd{info
+missing-objfile-handlers} above, but instead of listing the matching
+handlers, all of the matching handlers are enabled.  The
+@code{enabled} field of each matching handler is set to @code{True}.
+@end table
+
 @node Python Auto-loading
 @subsection Python Auto-loading
 @cindex Python auto-loading
@@ -8206,6 +8693,7 @@ registering objfile-specific pretty-printers and frame-filters.
 * gdb.printing::       Building and registering pretty-printers.
 * gdb.types::          Utilities for working with types.
 * gdb.prompt::         Utilities for prompt value substitution.
+* gdb.ptwrite::        Utilities for PTWRITE filter registration.
 @end menu
 
 @node gdb.printing
@@ -8396,3 +8884,153 @@ substitute_prompt ("frame: \f, args: \p@{print frame-arguments@}")
 "frame: main, args: scalars"
 @end smallexample
 @end table
+
+@node gdb.ptwrite
+@subsubsection gdb.ptwrite
+@cindex gdb.ptwrite
+
+This module provides additional functionality for recording programs that
+make use of the @code{PTWRITE} instruction.  @code{PTWRITE} is a x86
+instruction that allows to write values into the Intel Processor Trace
+(@pxref{Process Record and Replay}).
+The @value{NGCC} intrinsics for it are:
+@smallexample
+void _ptwrite32 (unsigned int a)
+void _ptwrite64 (unsigned __int64 a)
+@end smallexample
+
+If an inferior uses the instruction, @value{GDBN} by default inserts the
+raw payload value as auxiliary information into the execution history.
+Auxiliary information is by default printed during
+@code{record instruction-history}, @code{record function-call-history},
+and all stepping commands, and is accessible in Python as a
+@code{RecordAuxiliary} object (@pxref{Recordings In Python}).
+
+@exdent Sample program:
+@smallexample
+@group
+#include <immintrin.h>
+
+void
+ptwrite64 (unsigned long long value)
+@{
+  _ptwrite64 (value);
+@}
+@end group
+
+@group
+int
+main (void)
+@{
+  ptwrite64 (0x42);
+  return 0; /* break here.  */
+@}
+@end group
+@end smallexample
+
+
+@exdent @value{GDBN} output after recording the sample program in pt format:
+@smallexample
+@group
+(gdb) record instruction-history 12,14
+12         0x0040074c <ptwrite64+16>:   ptwrite %rbx
+13           [0x42]
+14         0x00400751 <ptwrite64+21>:   mov -0x8(%rbp),%rbx
+(gdb) record function-call-history
+1       main
+2       ptwrite64
+          [0x42]
+3       main
+@end group
+@end smallexample
+
+The @code{gdb.ptwrite} module allows customizing the default output of
+@code{PTWRITE} auxiliary information.  A custom Python function can be
+registered as the @code{PTWRITE} filter function.  This function will be
+called with the @code{PTWRITE} payload and PC as arguments during trace
+decoding.  The function can return a string, which will be printed by
+@value{GDBN} during the aforementioned commands, or @code{None}, resulting
+in no output.  To register such a filter function, the user needs to
+provide a filter factory function, which returns a new filter function
+object to be called by @value{GDBN}.
+
+@findex gdb.ptwrite.register_filter_factory
+@defun register_filter_factory (filter_factory)
+Used to register the @code{PTWRITE} filter factory.  This filter factory can
+be any callable object that accepts one argument, the current thread as
+a @code{gdb.InferiorThread}.
+It can return None or a callable.  This callable is the @code{PTWRITE} filter
+function for the specified thread.  If @code{None} is returned by the factory
+function, the default auxiliary information will be printed.
+@end defun
+
+@findex gdb.ptwrite.get_filter
+@defun get_filter ()
+Return the currently active @code{PTWRITE} filter function.
+@end defun
+
+An example:
+
+@smallexample
+@group
+(gdb) python-interactive
+>>> class my_filter():
+...    def __init__(self):
+...        self.var = 0
+...    def __call__(self, payload, ip):
+...        self.var += 1
+...        return f"counter: @{self.var@}, ip: @{ip:#x@}"
+...
+>>> def my_filter_factory(thread):
+...    if thread.global_num == 1:
+...        return my_filter()
+...    else:
+...        return None
+...
+>>> import gdb.ptwrite
+>>> gdb.ptwrite.register_filter_factory(my_filter_factory)
+>>>
+@end group
+
+@group
+(gdb) record function-call-history 59,64
+59      pthread_create@@GLIBC_2.2.5
+60      job()
+61      task(void*)
+62      ptwrite64(unsigned long)
+          [counter: 1, ip: 0x401156]
+63      task(void*)
+64      ptwrite32(unsigned int)
+          [counter: 2, ip: 0x40116c]
+@end group
+
+@group
+(gdb) info threads
+* 1    Thread 0x7ffff7fd8740 (LWP 25796) "ptw_threads" task ()
+    at bin/ptwrite/ptw_threads.c:45
+  2    Thread 0x7ffff6eb8700 (LWP 25797) "ptw_threads" task ()
+    at bin/ptwrite/ptw_threads.c:45
+@end group
+
+@group
+(gdb) thread 2
+[Switching to thread 2 (Thread 0x7ffff6eb8700 (LWP 25797))]
+#0  task (arg=0x0) at ptwrite_threads.c:45
+45        return NULL;
+@end group
+
+@group
+(gdb) record function-call-history 10,14
+10    start_thread
+11    task(void*)
+12    ptwrite64(unsigned long)
+        [0x42]
+13    task(void*)
+14    ptwrite32(unsigned int)
+        [0x43]
+@end group
+@end smallexample
+
+This @value{GDBN} feature is dependent on hardware and operating system
+support and requires the Intel Processor Trace decoder library in version
+2.0.0 or newer.

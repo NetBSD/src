@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.9 2024/02/16 17:18:19 andvar Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.9.2.1 2026/11/04 23:19:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.9 2024/02/16 17:18:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.9.2.1 2026/11/04 23:19:54 perseant Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
@@ -57,19 +57,26 @@ struct rtypeinfo {
 	const char *name;
 };
 
+#define RTYPE(type)							\
+	{								\
+		.rtype = R_AARCH64_ ## type,				\
+		.name = "R_AARCH64_" # type,				\
+	}
+
 static const struct rtypeinfo rtypetbl[] = {
-	{ R_AARCH64_ABS64,		"R_AARCH64_ABS64"		},
-	{ R_AARCH64_ADD_ABS_LO12_NC,	"R_AARCH64_ADD_ABS_LO12_NC"	},
-	{ R_AARCH_LDST64_ABS_LO12_NC,	"R_AARCH64_LDST64_ABS_LO12_NC"	},
-	{ R_AARCH_LDST32_ABS_LO12_NC,	"R_AARCH64_LDST32_ABS_LO12_NC"	},
-	{ R_AARCH_LDST16_ABS_LO12_NC,	"R_AARCH64_LDST16_ABS_LO12_NC"	},
-	{ R_AARCH64_LDST8_ABS_LO12_NC,	"R_AARCH64_LDST8_ABS_LO12_NC"	},
-	{ R_AARCH64_ADR_PREL_PG_HI21_NC, "R_AARCH64_ADR_PREL_PG_HI21_NC"},
-	{ R_AARCH64_ADR_PREL_PG_HI21,	"R_AARCH64_ADR_PREL_PG_HI21"	},
-	{ R_AARCH_JUMP26,		"R_AARCH64_JUMP26"		},
-	{ R_AARCH_CALL26,		"R_AARCH64_CALL26"		},
-	{ R_AARCH64_PREL32,		"R_AARCH64_PREL32"		},
-	{ R_AARCH64_PREL16,		"R_AARCH64_PREL16"		}
+	RTYPE(ABS64),
+	RTYPE(ADD_ABS_LO12_NC),
+	RTYPE(LDST128_ABS_LO12_NC),
+	RTYPE(LDST64_ABS_LO12_NC),
+	RTYPE(LDST32_ABS_LO12_NC),
+	RTYPE(LDST16_ABS_LO12_NC),
+	RTYPE(LDST8_ABS_LO12_NC),
+	RTYPE(ADR_PREL_PG_HI21_NC),
+	RTYPE(ADR_PREL_PG_HI21),
+	RTYPE(JUMP26),
+	RTYPE(CALL26),
+	RTYPE(PREL32),
+	RTYPE(PREL16),
 };
 
 static const char *
@@ -218,22 +225,26 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		break;
 	case R_AARCH64_ADD_ABS_LO12_NC:
 	case R_AARCH64_LDST8_ABS_LO12_NC:
-	case R_AARCH_LDST16_ABS_LO12_NC:
-	case R_AARCH_LDST32_ABS_LO12_NC:
-	case R_AARCH_LDST64_ABS_LO12_NC:
+	case R_AARCH64_LDST16_ABS_LO12_NC:
+	case R_AARCH64_LDST32_ABS_LO12_NC:
+	case R_AARCH64_LDST64_ABS_LO12_NC:
+	case R_AARCH64_LDST128_ABS_LO12_NC:
 		switch (rtype) {
 		case R_AARCH64_ADD_ABS_LO12_NC:
 		case R_AARCH64_LDST8_ABS_LO12_NC:
 			shift = 0;
 			break;
-		case R_AARCH_LDST16_ABS_LO12_NC:
+		case R_AARCH64_LDST16_ABS_LO12_NC:
 			shift = 1;
 			break;
-		case R_AARCH_LDST32_ABS_LO12_NC:
+		case R_AARCH64_LDST32_ABS_LO12_NC:
 			shift = 2;
 			break;
-		case R_AARCH_LDST64_ABS_LO12_NC:
+		case R_AARCH64_LDST64_ABS_LO12_NC:
 			shift = 3;
+			break;
+		case R_AARCH64_LDST128_ABS_LO12_NC:
+			shift = 4;
 			break;
 		default:
 			panic("illegal rtype: %d\n", rtype);
@@ -280,8 +291,8 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 		    (immlo << 29) | (immhi << 5));
 		break;
 
-	case R_AARCH_JUMP26:
-	case R_AARCH_CALL26:
+	case R_AARCH64_JUMP26:
+	case R_AARCH64_CALL26:
 		/*
 		 * S + A - P
 		 *  e.g.) b <sym>+<addend>

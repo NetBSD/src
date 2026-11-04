@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_machdep.h,v 1.6 2022/11/24 00:07:49 macallan Exp $ */
+/* $NetBSD: ofw_machdep.h,v 1.6.8.1 2026/11/04 23:21:10 perseant Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -60,6 +60,7 @@ extern int ofw_chosen;		/* cached handle for "/chosen" */
 extern struct OF_translation ofw_translations[OFW_MAX_TRANSLATIONS];
 
 void	ofw_bootstrap(void);
+void	ofw_device_register(device_t dev, void *aux);
 void 	ofprint(const char *, ...);
 
 #endif /* _KERNEL */

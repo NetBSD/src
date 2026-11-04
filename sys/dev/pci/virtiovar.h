@@ -1,4 +1,4 @@
-/*	$NetBSD: virtiovar.h,v 1.29.6.1 2025/08/02 05:57:00 perseant Exp $	*/
+/*	$NetBSD: virtiovar.h,v 1.29.6.2 2026/11/04 23:22:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -72,13 +72,13 @@
 
 struct virtqueue {
 	struct virtio_softc	*vq_owner;
-        unsigned int		vq_num; /* queue size (# of entries) */
+	unsigned int		vq_num; /* queue size (# of entries) */
 	int			vq_index; /* queue number (0, 1, ...) */
 
 	/* vring pointers (KVA) */
-        struct vring_desc	*vq_desc;
-        struct vring_avail	*vq_avail;
-        struct vring_used	*vq_used;
+	struct vring_desc	*vq_desc;
+	struct vring_avail	*vq_avail;
+	struct vring_used	*vq_used;
 	struct vring_desc	*vq_indirect;
 	uint16_t		*vq_used_event;		/* trails avail */
 	uint16_t		*vq_avail_event;	/* trails used  */

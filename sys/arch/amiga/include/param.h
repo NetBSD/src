@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.50 2015/11/12 12:01:53 phx Exp $	*/
+/*	$NetBSD: param.h,v 1.50.54.1 2026/11/04 23:20:01 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,23 +48,11 @@
 #define	MACHINE		"amiga"
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
-
-#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
 /* We need the same btop macro in device drivers for m68k and powerpc */
 #define MD_BTOP(pa)	m68k_btop(pa)
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifdef	_KERNEL
 /*
@@ -77,10 +65,6 @@
  */
 extern volatile unsigned short *amiga_intena_read, *amiga_intena_write;
 
-#ifndef	_LOCORE
-void delay(unsigned int);
-#define	DELAY(x)	delay(x)
-#endif	/* !_LOCORE */
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PARAM_H_ */

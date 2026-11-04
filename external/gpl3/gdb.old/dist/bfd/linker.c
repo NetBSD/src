@@ -1,5 +1,5 @@
 /* linker.c -- BFD linker routines
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain and Ian Lance Taylor, Cygnus Support
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -544,7 +544,9 @@ bfd_wrapped_link_hash_lookup (bfd *abfd,
       char prefix = '\0';
 
       l = string;
-      if (*l == bfd_get_symbol_leading_char (abfd) || *l == info->wrap_char)
+      if (*l
+	  && (*l == bfd_get_symbol_leading_char (abfd)
+	      || *l == info->wrap_char))
 	{
 	  prefix = *l;
 	  ++l;
@@ -571,6 +573,8 @@ bfd_wrapped_link_hash_lookup (bfd *abfd,
 	  strcat (n, WRAP);
 	  strcat (n, l);
 	  h = bfd_link_hash_lookup (info->hash, n, create, true, follow);
+	  if (h != NULL)
+	    h->wrapper_symbol = true;
 	  free (n);
 	  return h;
 	}
@@ -621,8 +625,9 @@ unwrap_hash_lookup (struct bfd_link_info *info,
 {
   const char *l = h->root.string;
 
-  if (*l == bfd_get_symbol_leading_char (input_bfd)
-      || *l == info->wrap_char)
+  if (*l
+      && (*l == bfd_get_symbol_leading_char (input_bfd)
+	  || *l == info->wrap_char))
     ++l;
 
   if (startswith (l, WRAP))
@@ -1675,6 +1680,8 @@ _bfd_generic_link_add_one_symbol (struct bfd_link_info *info,
 	case MIND:
 	  /* Multiple indirect symbols.  This is OK if they both point
 	     to the same symbol.  */
+	  if (h->u.i.link == inh)
+	    break;
 	  if (h->u.i.link->type == bfd_link_hash_defweak)
 	    {
 	      /* It is also OK to redefine a symbol that indirects to
@@ -1686,8 +1693,6 @@ _bfd_generic_link_add_one_symbol (struct bfd_link_info *info,
 	      cycle = true;
 	      break;
 	    }
-	  if (string != NULL && strcmp (h->u.i.link->root.string, string) == 0)
-	    break;
 	  /* Fall through.  */
 	case MDEF:
 	  /* Handle a multiple definition.  */
@@ -1781,6 +1786,14 @@ _bfd_generic_link_add_one_symbol (struct bfd_link_info *info,
 	    {
 	      (*info->callbacks->warning) (info, string, h->root.string,
 					   hash_entry_bfd (h), NULL, 0);
+	      /* PR 31067: If garbage collection is enabled then the
+		 referenced symbol may actually be discarded later on.
+		 This could be very confusing to the user.  So give them
+		 a hint as to what might be happening.  */
+	      if (info->gc_sections)
+		(*info->callbacks->info)
+		  (_("%P: %pB: note: the message above does not take linker garbage collection into account\n"),
+		   hash_entry_bfd (h));
 	      break;
 	    }
 	  /* Fall through.  */
@@ -2360,7 +2373,7 @@ _bfd_generic_reloc_link_order (bfd *abfd,
 
   /* Get the symbol to use for the relocation.  */
   if (link_order->type == bfd_section_reloc_link_order)
-    r->sym_ptr_ptr = link_order->u.reloc.p->u.section->symbol_ptr_ptr;
+    r->sym_ptr_ptr = &link_order->u.reloc.p->u.section->symbol;
   else
     {
       struct generic_link_hash_entry *h;
@@ -2880,27 +2893,38 @@ _bfd_handle_already_linked (asection *sec,
 	   sec->owner, sec);
       else if (sec->size != 0)
 	{
-	  bfd_byte *sec_contents, *l_sec_contents = NULL;
+	  bfd_byte *sec_contents, *l_sec_contents;
 
-	  if (!bfd_malloc_and_get_section (sec->owner, sec, &sec_contents))
+	  if ((sec->flags & SEC_HAS_CONTENTS) == 0
+	      && (l->sec->flags & SEC_HAS_CONTENTS) == 0)
+	    ;
+	  else if ((sec->flags & SEC_HAS_CONTENTS) == 0
+		   || !bfd_malloc_and_get_section (sec->owner, sec,
+						   &sec_contents))
 	    info->callbacks->einfo
 	      /* xgettext:c-format */
 	      (_("%pB: could not read contents of section `%pA'\n"),
 	       sec->owner, sec);
-	  else if (!bfd_malloc_and_get_section (l->sec->owner, l->sec,
-						&l_sec_contents))
-	    info->callbacks->einfo
-	      /* xgettext:c-format */
-	      (_("%pB: could not read contents of section `%pA'\n"),
-	       l->sec->owner, l->sec);
-	  else if (memcmp (sec_contents, l_sec_contents, sec->size) != 0)
-	    info->callbacks->einfo
-	      /* xgettext:c-format */
-	      (_("%pB: duplicate section `%pA' has different contents\n"),
-	       sec->owner, sec);
-
-	  free (sec_contents);
-	  free (l_sec_contents);
+	  else if ((l->sec->flags & SEC_HAS_CONTENTS) == 0
+		   || !bfd_malloc_and_get_section (l->sec->owner, l->sec,
+						   &l_sec_contents))
+	    {
+	      info->callbacks->einfo
+		/* xgettext:c-format */
+		(_("%pB: could not read contents of section `%pA'\n"),
+		 l->sec->owner, l->sec);
+	      free (sec_contents);
+	    }
+	  else
+	    {
+	      if (memcmp (sec_contents, l_sec_contents, sec->size) != 0)
+		info->callbacks->einfo
+		  /* xgettext:c-format */
+		  (_("%pB: duplicate section `%pA' has different contents\n"),
+		   sec->owner, sec);
+	      free (l_sec_contents);
+	      free (sec_contents);
+	    }
 	}
       break;
     }
@@ -3388,6 +3412,7 @@ DESCRIPTION
 .#define bfd_merge_private_bfd_data(ibfd, info) \
 .	BFD_SEND ((info)->output_bfd, _bfd_merge_private_bfd_data, \
 .		  (ibfd, info))
+.
 */
 
 /*
@@ -3532,39 +3557,4 @@ _bfd_nolink_bfd_define_start_stop (struct bfd_link_info *info ATTRIBUTE_UNUSED,
 				   asection *sec)
 {
   return (struct bfd_link_hash_entry *) _bfd_ptr_bfd_null_error (sec->owner);
-}
-
-/* Return false if linker should avoid caching relocation infomation
-   and symbol tables of input files in memory.  */
-
-bool
-_bfd_link_keep_memory (struct bfd_link_info * info)
-{
-  bfd *abfd;
-  bfd_size_type size;
-
-  if (!info->keep_memory)
-    return false;
-
-  if (info->max_cache_size == (bfd_size_type) -1)
-    return true;
-
-  abfd = info->input_bfds;
-  size = info->cache_size;
-  do
-    {
-      if (size >= info->max_cache_size)
-	{
-	  /* Over the limit.  Reduce the memory usage.  */
-	  info->keep_memory = false;
-	  return false;
-	}
-      if (!abfd)
-	break;
-      size += abfd->alloc_size;
-      abfd = abfd->link.next;
-    }
-  while (1);
-
-  return true;
 }

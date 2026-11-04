@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.19 2023/05/22 14:07:24 riastradh Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.19.6.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,14 +80,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.19 2023/05/22 14:07:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.19.6.1 2026/11/04 23:27:49 perseant Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/fcntl.h>
 #include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
@@ -160,9 +163,9 @@ uiomove_frombuf(void *buf, size_t buflen, struct uio *uio)
 
 	if (uio->uio_offset < 0 || /* uio->uio_resid < 0 || */
 	    (offset = uio->uio_offset) != uio->uio_offset)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	if (offset >= buflen)
-		return (0);
+		return 0;
 	return (uiomove((char *)buf + offset, buflen - offset, uio));
 }
 
@@ -404,7 +407,7 @@ copyin_pid(pid_t pid, const void *uaddr, void *kaddr, size_t len)
 	p = proc_find(pid);
 	if (p == NULL) {
 		mutex_exit(&proc_lock);
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 	}
 	mutex_enter(p->p_lock);
 	error = proc_vmspace_getref(p, &vm);
@@ -458,7 +461,7 @@ ufetchstore_aligned(uintptr_t uaddr, size_t size)
 #define	CHECK_ALIGNMENT()						\
 do {									\
 	if (!ufetchstore_aligned((uintptr_t)uaddr, sizeof(*uaddr)))	\
-		return EFAULT;						\
+		return SET_ERROR(EFAULT);				\
 } while (/*CONSTCOND*/0)
 #endif /* __NO_STRICT_ALIGNMENT */
 

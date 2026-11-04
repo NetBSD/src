@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,6 +31,8 @@
 # never returns and the test times out.
 
 standard_testfile
+
+require allow_fork_tests
 
 # Build two programs -- one for fork, and another for vfork.
 set testfile_fork "${testfile}-fork"

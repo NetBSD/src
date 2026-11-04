@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.61 2024/01/06 21:26:43 mlelstv Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.61.2.1 2026/11/04 23:20:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -253,6 +253,10 @@ biosdisk_strategy(void *devdata, int flag, daddr_t dblk, size_t size,
 
 	if (d->ll.type == BIOSDISK_TYPE_CD)
 		dblk = devb2cdb(dblk);
+#if defined(EFIBOOT)
+	if (d->part[0].fstype == FS_ISO9660)
+		dblk = (dblk * ISO_DEFAULT_BLOCK_SIZE) / d->ll.secsize;
+#endif
 
 	dblk += d->boff;
 
@@ -613,16 +617,23 @@ read_minix_subp(struct biosdisk *d, struct disklabel* dflt_lbl,
 	return 0;
 }
 
-#if defined(EFIBOOT) && defined(SUPPORT_CD9660)
+#if defined(SUPPORT_CD9660)
 static int
 check_cd9660(struct biosdisk *d)
 {
 	struct biosdisk_extinfo ed;
 	struct iso_primary_descriptor *vd;
 	daddr_t bno;
+	unsigned int mult;
+
+	if (d->ll.secsize <= ISO_DEFAULT_BLOCK_SIZE && d->ll.secsize >= DEV_BSIZE) {
+		mult = ISO_DEFAULT_BLOCK_SIZE / d->ll.secsize;
+	} else {
+		return -1;
+	}
 
 	for (bno = 16;; bno++) {
-		if (readsects(&d->ll, bno, 1, d->buf, 0))
+		if (readsects(&d->ll, bno * mult, 1 * mult, d->buf, 0))
 			return -1;
 		vd = (struct iso_primary_descriptor *)d->buf;
 		if (memcmp(vd->id, ISO_STANDARD_ID, sizeof vd->id) != 0)
@@ -637,6 +648,10 @@ check_cd9660(struct biosdisk *d)
 
 	if (set_geometry(&d->ll, &ed))
 		return -1;
+
+	bi_wedge.matchblk = bno * mult;
+	bi_wedge.matchnblks = 1 * mult;
+	md5(bi_wedge.matchhash, d->buf, d->ll.secsize * mult);
 
 	memset(d->part, 0, sizeof(d->part));
 	d->part[0].fstype = FS_ISO9660;
@@ -754,7 +769,7 @@ read_label(struct biosdisk *d, daddr_t offset)
 	if (error >= 0)
 		return error;
 
-#if defined(EFIBOOT) && defined(SUPPORT_CD9660)
+#if defined(SUPPORT_CD9660)
 	/* Check CD/DVD */
 	error = check_cd9660(d);
 	if (error >= 0)
@@ -1345,7 +1360,7 @@ biosdisk_find_name(const char *fname, int *biosdev,
 	int part;
 	int ret = -1;
 
-	/* Strip leadinf NAME= and cut after the coloon included */
+	/* Strip leading NAME= and cut after the colon included */
 	strlcpy(name, fname + 5, MAXDEVNAME);
 	sep = strchr(name, ':');
 	if (sep)

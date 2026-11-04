@@ -1,4 +1,4 @@
-/*	$NetBSD: postfix.c,v 1.6.2.1 2025/08/02 05:50:11 perseant Exp $	*/
+/*	$NetBSD: postfix.c,v 1.6.2.2 2026/11/04 23:14:52 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -91,7 +91,14 @@
 /*	with the command specified with $maillog_file_compressor.
 /*	This will not rotate /dev/* files.
 /* .sp
-/*	This feature is available in Postfix 3.4 and later.
+/* .IP "\fBnon-bdb\fR \fIsubcommand\fR"
+/*	Migrate a Postfix configuration that uses Berkeley DB hash:
+/*	or btree: tables, to a configuration that uses lmdb: or a
+/*	combination of cdb: and lmdb:. This is needed because some
+/*	(Linux) distributions have removed Berkeley DB support.
+/*	See postfix-nbdb(1) for documentation.
+/* .sp
+/*	This feature is available in Postfix 3.11 and later.
 /* .IP "\fBtls\fR \fIsubcommand\fR"
 /*	Enable opportunistic TLS in the Postfix SMTP client or
 /*	server, and manage Postfix SMTP server TLS private keys and
@@ -285,6 +292,7 @@
 /*	postconf(1), Postfix configuration utility
 /*	postdrop(1), Postfix mail posting utility
 /*	postfix(1), Postfix control program
+/*	postfix-non-bdb(1), Postfix Non-Berkeley-DB migration
 /*	postfix-tls(1), Postfix TLS management
 /*	postkick(1), trigger Postfix daemon
 /*	postlock(1), Postfix-compatible locking

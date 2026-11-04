@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2008-2023 Free Software Foundation, Inc.
+   Copyright 2008-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat, originally written by Keith Seitz.
 
@@ -260,7 +260,7 @@ public:
   void operator delete[] (void* ptr) { // base::operator delete[]
     free (ptr); }
 
-  base const* operator-> (void) const { // base::opeartor->
+  base const* operator-> (void) const { // base::operator->
     return this; }
 
   int operator->* (base const& b) const { // base::operator->*

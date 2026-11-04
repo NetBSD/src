@@ -1,5 +1,5 @@
 /* Trap handlers for eBPF.
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB, the GNU debugger.
 

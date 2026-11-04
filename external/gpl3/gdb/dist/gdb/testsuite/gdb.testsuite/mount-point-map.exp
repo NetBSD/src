@@ -1,0 +1,49 @@
+# Copyright 2025 Free Software Foundation, Inc.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+set unix_to_win {
+    /bin C:/msys64/usr/bin
+    /c C:
+    / C:/msys64
+}
+
+# Test that FROM is normalized to TO.
+
+proc test {from to} {
+    set got [host_file_normalize_mingw $from $::unix_to_win]
+    verbose -log "input:    $from"
+    verbose -log "expected: $to"
+    verbose -log "got:      $got"
+    gdb_assert {$got == $to} $from
+}
+
+# Drive letters always get a '/' suffix, other Windows file names do
+# not.
+test "/" "C:/msys64"
+test "/c" "C:/"
+test "/bin" "C:/msys64/usr/bin"
+
+# A file name that already starts with a drive letter.
+test "C:/msys64" "C:/msys64"
+
+# A subdir/subfile under each mount.
+test "/foo" "C:/msys64/foo"
+test "/c/foo" "C:/foo"
+test "/bin/foo" "C:/msys64/usr/bin/foo"
+
+# Test slash normalization.
+test "//" "C:/msys64"
+test "/c///foo//bar//" "C:/foo/bar"
+# We don't currently handle UNC paths.
+test "//server///" "C:/msys64/server"

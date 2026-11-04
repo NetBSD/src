@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.149 2020/09/05 16:30:13 riastradh Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.149.26.1 2026/11/04 23:28:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.149 2020/09/05 16:30:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.149.26.1 2026/11/04 23:28:07 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,7 @@ int	locked_queue_waiters = 0;	/* Number of processes waiting on lq */
 kcondvar_t	locked_queue_cv;
 kcondvar_t	lfs_writing_cv;
 kmutex_t	lfs_lock;
+extern kcondvar_t lfs_writerd_cv;
 
 extern int lfs_dostats;
 
@@ -164,11 +165,13 @@ lfs_reservebuf(struct lfs *fs, struct vnode *vp,
 	while (!cantwait && n > 0 && !lfs_fits_buf(fs, n, bytes)) {
 		int error;
 
-		lfs_flush(fs, 0, 0);
+		DLOG((DLOG_FLUSH, "lfs_reservebuf: flush filesystem %p with checkpoint\n", fs));
+		lfs_flush(fs, SEGM_CKP, 0);
 
 		DLOG((DLOG_AVAIL, "lfs_reservebuf: waiting: count=%d, bytes=%ld\n",
 		      locked_queue_count, locked_queue_bytes));
 		++locked_queue_waiters;
+		cv_broadcast(&lfs_writerd_cv);
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
 		--locked_queue_waiters;
@@ -421,7 +424,9 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 	KASSERT(bp->b_cflags & BC_BUSY);
 	KASSERT(flags & BW_CLEAN || !LFS_IS_MALLOC_BUF(bp));
 	KASSERT((bp->b_flags & B_LOCKED) || !(bp->b_oflags & BO_DELWRI));
+	KASSERT(!(flags & BW_CLEAN) || lfs_cleanerlock_held(fs));
 
+	
 	/*
 	 * Don't write *any* blocks if we're mounted read-only, or
 	 * if we are "already unmounted".
@@ -460,14 +465,15 @@ lfs_bwrite_ext(struct buf *bp, int flags)
 		fsb = lfs_numfrags(fs, bp->b_bcount);
 
 		ip = VTOI(vp);
-		mutex_enter(&lfs_lock);
 		if (flags & BW_CLEAN) {
-			LFS_SET_UINO(ip, IN_CLEANING);
+			lfs_setclean(fs, vp);
 		} else {
+			mutex_enter(&lfs_lock);
 			LFS_SET_UINO(ip, IN_MODIFIED);
+			mutex_exit(&lfs_lock);
 		}
-		mutex_exit(&lfs_lock);
-		lfs_sb_subavail(fs, fsb);
+		if ((bp->b_oflags & BO_DELWRI) == 0)
+			lfs_sb_subavail(fs, fsb);
 
 		mutex_enter(&bufcache_lock);
 		mutex_enter(vp->v_interlock);
@@ -533,11 +539,11 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	KASSERT(mutex_owned(&lfs_lock));
 	KDASSERT(fs == NULL || !LFS_SEGLOCK_HELD(fs));
+	KASSERT(!(fs == NULL && only_onefs));
 
 	if (lfs_dostats)
 		++lfs_stats.write_exceeded;
-	/* XXX should we include SEGM_CKP here? */
-	if (lfs_writing && !(flags & SEGM_SYNC)) {
+	if (lfs_writing && !(flags & (SEGM_SYNC|SEGM_CKP))) {
 		DLOG((DLOG_FLUSH, "lfs_flush: not flushing because another flush is active\n"));
 		return;
 	}
@@ -547,21 +553,25 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 	mutex_exit(&lfs_lock);
 
-	if (only_onefs) {
-		KASSERT(fs != NULL);
-		if (vfs_busy(fs->lfs_ivnode->v_mount))
+	if (fs != NULL) {
+		if (!(fs->lfs_flags & LFS_NOTYET)
+			&& vfs_busy(fs->lfs_ivnode->v_mount))
 			goto errout;
 		mutex_enter(&lfs_lock);
 		lfs_flush_fs(fs, flags);
 		mutex_exit(&lfs_lock);
-		vfs_unbusy(fs->lfs_ivnode->v_mount);
-	} else {
+		if (!(fs->lfs_flags & LFS_NOTYET))
+			vfs_unbusy(fs->lfs_ivnode->v_mount);
+	}
+	if (!only_onefs) {
 		locked_fakequeue_count = 0;
 		mountlist_iterator_init(&iter);
 		while ((mp = mountlist_iterator_next(iter)) != NULL) {
 			if (strncmp(&mp->mnt_stat.f_fstypename[0], MOUNT_LFS,
 			    sizeof(mp->mnt_stat.f_fstypename)) == 0) {
 				tfs = VFSTOULFS(mp)->um_lfs;
+				if (tfs == fs)
+					continue;
 				mutex_enter(&lfs_lock);
 				lfs_flush_fs(tfs, flags);
 				mutex_exit(&lfs_lock);
@@ -580,6 +590,52 @@ lfs_flush(struct lfs *fs, int flags, int only_onefs)
 
 #define INOCOUNT(fs) howmany(lfs_sb_getuinodes(fs), LFS_INOPB(fs))
 #define INOBYTES(fs) (lfs_sb_getuinodes(fs) * DINOSIZE(fs))
+
+/*
+ * Determine whether this filesystem, or the global state,
+ * needs to flush.
+ */
+int
+lfs_needsflush(struct lfs *fs)
+{
+	if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS)
+		return 1;
+	if (locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES)
+		return 1;
+	if (lfs_subsys_pages > LFS_MAX_PAGES)
+		return 1;
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs))
+		return 1;
+	if (lfs_dirvcount > LFS_MAX_DIROP)
+		return 1;
+	if (fs->lfs_diropwait > 0)
+		return 1;
+
+	return 0;
+}
+
+/*
+ * As above, but needs to *wait*.
+ */
+int
+lfs_needswait(struct lfs *fs)
+{
+	if (locked_queue_count + INOCOUNT(fs) > LFS_WAIT_BUFS)
+		return 1;
+	if (locked_queue_bytes + INOBYTES(fs) > LFS_WAIT_BYTES)
+		return 1;
+	if (lfs_subsys_pages > LFS_WAIT_PAGES)
+		return 1;
+	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs)) /* XXX */
+		return 1;
+	if (lfs_dirvcount > LFS_MAX_DIROP) /* XXX */
+		return 1;
+	if (fs->lfs_diropwait > 0)
+		return 1;
+
+	return 0;
+}
+		
 
 /*
  * make sure that we don't have too many locked buffers.
@@ -613,13 +669,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	 * Note that a dirop cannot ever reach this code!
 	 */
 	mutex_enter(&lfs_lock);
-	while (fs->lfs_dirops > 0 &&
-	       (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-		locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
-		lfs_subsys_pages > LFS_MAX_PAGES ||
-		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-		lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0))
-	{
+	while (fs->lfs_dirops > 0 && lfs_needswait(fs)) {
 		++fs->lfs_diropwait;
 		mtsleep(&fs->lfs_writer, PRIBIO+1, "bufdirop", 0,
 			&lfs_lock);
@@ -661,11 +711,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		if (--fs->lfs_writer == 0)
 			cv_broadcast(&fs->lfs_diropscv);
 		KASSERT(fs->lfs_dirops == 0);
-	} else if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
-	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
-	    lfs_subsys_pages > LFS_MAX_PAGES ||
-	    fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
+	} else if (lfs_needsflush(fs)) {
 		lfs_flush(fs, flags, 0);
 	} else if (lfs_fs_pagetrip && fs->lfs_pages > lfs_fs_pagetrip) {
 		/*
@@ -676,17 +722,13 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		cv_broadcast(&lfs_writerd_cv);
 	}
 
-	while (locked_queue_count + INOCOUNT(fs) >= LFS_WAIT_BUFS ||
-		locked_queue_bytes + INOBYTES(fs) >= LFS_WAIT_BYTES ||
-		lfs_subsys_pages > LFS_WAIT_PAGES ||
-		fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
-		lfs_dirvcount > LFS_MAX_DIROP) {
-
+	while (lfs_needswait(fs)) {
 		if (lfs_dostats)
 			++lfs_stats.wait_exceeded;
 		DLOG((DLOG_AVAIL, "lfs_check: waiting: count=%d, bytes=%ld\n",
 		      locked_queue_count, locked_queue_bytes));
 		++locked_queue_waiters;
+		cv_broadcast(&lfs_writerd_cv);
 		error = cv_timedwait_sig(&locked_queue_cv, &lfs_lock,
 		    hz * LFS_BUFWAIT);
 		--locked_queue_waiters;
@@ -697,7 +739,7 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 		 * lfs_flush might not flush all the buffers, if some of the
 		 * inodes were locked or if most of them were Ifile blocks
 		 * and we weren't asked to checkpoint.	Try flushing again
-		 * to keep us from blocking indefinitely.
+		 * after waiting, to keep us from blocking indefinitely.
 		 */
 		if (locked_queue_count + INOCOUNT(fs) >= LFS_MAX_BUFS ||
 		    locked_queue_bytes + INOBYTES(fs) >= LFS_MAX_BYTES) {
@@ -735,10 +777,10 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_error = 0;
 	bp->b_resid = 0;
 	bp->b_iodone = lfs_free_aiodone;
-	bp->b_cflags |= BC_BUSY | BC_NOCACHE;
 	bp->b_private = fs;
 
 	mutex_enter(&bufcache_lock);
+	bp->b_cflags |= BC_BUSY | BC_NOCACHE;
 	mutex_enter(vp->v_interlock);
 	bgetvp(vp, bp);
 	mutex_exit(vp->v_interlock);
@@ -752,17 +794,17 @@ lfs_freebuf(struct lfs *fs, struct buf *bp)
 {
 	struct vnode *vp;
 
-	if ((vp = bp->b_vp) != NULL) {
-		mutex_enter(&bufcache_lock);
-		mutex_enter(vp->v_interlock);
+	mutex_enter(&bufcache_lock);
+	vp = bp->b_vp;
+	mutex_enter(vp->v_interlock);
+	if (vp != NULL)
 		brelvp(bp);
-		mutex_exit(vp->v_interlock);
-		mutex_exit(&bufcache_lock);
-	}
+	mutex_exit(vp->v_interlock);
 	if (!(bp->b_cflags & BC_INVAL)) { /* BC_INVAL indicates a "fake" buffer */
 		lfs_free(fs, bp->b_data, LFS_NB_UNKNOWN);
 		bp->b_data = NULL;
 	}
+	mutex_exit(&bufcache_lock);
 	putiobuf(bp);
 }
 

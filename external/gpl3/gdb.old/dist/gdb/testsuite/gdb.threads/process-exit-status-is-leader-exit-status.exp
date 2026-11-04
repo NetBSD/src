@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,6 +41,23 @@ for {set iteration 0} {$iteration < 10} {incr iteration} {
 	    return
 	}
 
-	gdb_test "continue" "\\\[Inferior 1 \\(.*\\) exited with code 01\\\]"
+	gdb_test_multiple "continue" "" {
+	    -re -wrap "\\\[Inferior 1 \\(.*\\) exited with code 01\\\]" {
+		pass $gdb_test_name
+	    }
+
+	    -re -wrap "\\\[Inferior 1 \\(.*\\) exited with code $::decimal\\\]" {
+		set lkv [linux_kernel_version]
+
+		if { [llength $lkv] != 0 } {
+		    if { [version_compare {6 1 0} <= $lkv] } {
+			xfail "$gdb_test_name (PR 29965)"
+			return
+		    }
+		}
+
+		fail $gdb_test_name
+	    }
+	}
     }
 }

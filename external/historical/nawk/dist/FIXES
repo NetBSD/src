@@ -25,6 +25,35 @@ THIS SOFTWARE.
 This file lists all bug fixes, changes, etc., made since the 
 second edition of the AWK book was published in September 2023.
 
+Apr 26, 2026
+	regex fixes: limit the repetition count to 255 like
+	POSIX does to prevent signed integer overflow.
+	prevent a crash when the repetition is the first atom parsed
+	Thanks to Renaud Allard an Todd Miller.
+
+Dec 24, 2025
+	Previously changed and broken rand() implementation
+	restored in run.c with a variant thanks to Henry Spencer.
+
+Aug 04, 2025
+	Fix a syntax issue with /= that caused constants to
+	turn into variables [eg. 42 /= 7]. Thanks to Arnold
+	Robbins.
+
+Jan 14, 2025
+	Fix incorrect error line number issues. unput has
+	no business managing lineno. Thanks to Ozan Yigit.
+
+Jan 05, 2025
+	Fix hex detection in is_valid_number.
+	Fix indirect field specification with non-numeric string
+	eg. $("foo") in indirect. This is not illegal.
+	Thanks to Arnold Robbins.
+
+Jan 01, 2025
+	Fixed openfile to not try to read from a directory.
+	Thanks to Arnold Robbins.
+
 Jul 28, 2024
 	Fixed readcsvrec resize segfault when reading csv records longer
 	than 8k. Thanks to Ozan Yigit.

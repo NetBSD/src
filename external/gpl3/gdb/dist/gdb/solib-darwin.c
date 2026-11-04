@@ -1,6 +1,6 @@
 /* Handle Darwin shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,11 +27,32 @@
 #include "regcache.h"
 #include "gdb_bfd.h"
 
-#include "solist.h"
+#include "solib.h"
 #include "solib-darwin.h"
 
 #include "mach-o.h"
 #include "mach-o/external.h"
+
+/* solib_ops for Darwin systems.  */
+
+struct darwin_solib_ops : public solib_ops
+{
+  using solib_ops::solib_ops;
+
+  void relocate_section_addresses (solib &so, target_section *) const override;
+  void clear_solib (program_space *pspace) const override;
+  void create_inferior_hook (int from_tty) const override;
+  owning_intrusive_list<solib> current_sos () const override;
+  gdb_bfd_ref_ptr bfd_open (const char *pathname) const override;
+};
+
+/* See solib-darwin.h.  */
+
+solib_ops_up
+make_darwin_solib_ops (program_space *pspace)
+{
+  return std::make_unique<darwin_solib_ops> (pspace);
+}
 
 struct gdb_dyld_image_info
 {
@@ -133,7 +154,7 @@ darwin_load_image_infos (struct darwin_info *info)
     (buf + 8 + ptr_type->length (), ptr_type);
 }
 
-/* Link map info to include in an allocated so_list entry.  */
+/* Link map info to include in an allocated solib entry.  */
 
 struct lm_info_darwin final : public lm_info
 {
@@ -146,24 +167,13 @@ struct lm_info_darwin final : public lm_info
 static CORE_ADDR
 lookup_symbol_from_bfd (bfd *abfd, const char *symname)
 {
-  long storage_needed;
-  asymbol **symbol_table;
-  unsigned int number_of_symbols;
-  unsigned int i;
   CORE_ADDR symaddr = 0;
 
-  storage_needed = bfd_get_symtab_upper_bound (abfd);
+  gdb::array_view<asymbol *> symbol_table
+    = gdb_bfd_canonicalize_symtab (abfd, false);
 
-  if (storage_needed <= 0)
-    return 0;
-
-  symbol_table = (asymbol **) xmalloc (storage_needed);
-  number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table);
-
-  for (i = 0; i < number_of_symbols; i++)
+  for (const asymbol *sym : symbol_table)
     {
-      asymbol *sym = symbol_table[i];
-
       if (strcmp (sym->name, symname) == 0
 	  && (sym->section->flags & (SEC_CODE | SEC_DATA)) != 0)
 	{
@@ -172,7 +182,6 @@ lookup_symbol_from_bfd (bfd *abfd, const char *symname)
 	  break;
 	}
     }
-  xfree (symbol_table);
 
   return symaddr;
 }
@@ -200,20 +209,8 @@ find_program_interpreter (void)
   return buf;
 }
 
-/*  Not used.  I don't see how the main symbol file can be found: the
-    interpreter name is needed and it is known from the executable file.
-    Note that darwin-nat.c implements pid_to_exec_file.  */
-
-static int
-open_symbol_file_object (int from_tty)
-{
-  return 0;
-}
-
-/* Build a list of currently loaded shared objects.  See solib-svr4.c.  */
-
-static intrusive_list<solib>
-darwin_current_sos ()
+owning_intrusive_list<solib>
+darwin_solib_ops::current_sos () const
 {
   type *ptr_type
     = builtin_type (current_inferior ()->arch ())->builtin_data_ptr;
@@ -230,7 +227,7 @@ darwin_current_sos ()
 
   image_info_size = ptr_len * 3;
 
-  intrusive_list<solib> sos;
+  owning_intrusive_list<solib> sos;
 
   /* Read infos for each solib.
      The first entry was rumored to be the executable itself, but this is not
@@ -239,18 +236,18 @@ darwin_current_sos ()
   for (int i = 0; i < info->all_image.count; i++)
     {
       CORE_ADDR iinfo = info->all_image.info + i * image_info_size;
-      gdb_byte buf[image_info_size];
+      gdb::byte_vector buf (image_info_size);
       CORE_ADDR load_addr;
       CORE_ADDR path_addr;
       struct mach_o_header_external hdr;
       unsigned long hdr_val;
 
       /* Read image info from inferior.  */
-      if (target_read_memory (iinfo, buf, image_info_size))
+      if (target_read_memory (iinfo, buf.data (), image_info_size))
 	break;
 
-      load_addr = extract_typed_address (buf, ptr_type);
-      path_addr = extract_typed_address (buf + ptr_len, ptr_type);
+      load_addr = extract_typed_address (buf.data (), ptr_type);
+      path_addr = extract_typed_address (buf.data () + ptr_len, ptr_type);
 
       /* Read Mach-O header from memory.  */
       if (target_read_memory (load_addr, (gdb_byte *) &hdr, sizeof (hdr) - 4))
@@ -272,16 +269,15 @@ darwin_current_sos ()
 	break;
 
       /* Create and fill the new struct solib element.  */
-      solib *newobj = new solib;
+      auto &newobj = sos.emplace_back (*this);
 
       auto li = std::make_unique<lm_info_darwin> ();
 
-      newobj->so_name = file_path.get ();
-      newobj->so_original_name = newobj->so_name;
+      newobj.name = file_path.get ();
+      newobj.original_name = newobj.name;
       li->lm_addr = load_addr;
 
-      newobj->lm_info = std::move (li);
-      sos.push_back (*newobj);
+      newobj.lm_info = std::move (li);
     }
 
   return sos;
@@ -333,14 +329,14 @@ darwin_read_exec_load_addr_from_dyld (struct darwin_info *info)
   for (i = 0; i < info->all_image.count; i++)
     {
       CORE_ADDR iinfo = info->all_image.info + i * image_info_size;
-      gdb_byte buf[image_info_size];
+      gdb::byte_vector buf (image_info_size);
       CORE_ADDR load_addr;
 
       /* Read image info from inferior.  */
-      if (target_read_memory (iinfo, buf, image_info_size))
+      if (target_read_memory (iinfo, buf.data (), image_info_size))
 	break;
 
-      load_addr = extract_typed_address (buf, ptr_type);
+      load_addr = extract_typed_address (buf.data (), ptr_type);
       if (darwin_validate_exec_header (load_addr) == load_addr)
 	return load_addr;
     }
@@ -374,15 +370,6 @@ darwin_read_exec_load_addr_at_init (struct darwin_info *info)
   load_addr = extract_unsigned_integer (buf, addr_size, byte_order);
 
   return darwin_validate_exec_header (load_addr);
-}
-
-/* Return 1 if PC lies in the dynamic symbol resolution code of the
-   run time loader.  */
-
-static int
-darwin_in_dynsym_resolve_code (CORE_ADDR pc)
-{
-  return 0;
 }
 
 /* A wrapper for bfd_mach_o_fat_extract that handles reference
@@ -489,10 +476,8 @@ darwin_solib_read_all_image_info_addr (struct darwin_info *info)
   info->all_image_addr = extract_unsigned_integer (buf, len, BFD_ENDIAN_BIG);
 }
 
-/* Shared library startup support.  See documentation in solib-svr4.c.  */
-
-static void
-darwin_solib_create_inferior_hook (int from_tty)
+void
+darwin_solib_ops::create_inferior_hook (int from_tty) const
 {
   /* Everything below only makes sense if we have a running inferior.  */
   if (!target_has_execution ())
@@ -592,8 +577,8 @@ darwin_solib_create_inferior_hook (int from_tty)
     create_solib_event_breakpoint (current_inferior ()->arch (), notifier);
 }
 
-static void
-darwin_clear_solib (program_space *pspace)
+void
+darwin_solib_ops::clear_solib (program_space *pspace) const
 {
   darwin_info *info = get_darwin_info (pspace);
 
@@ -604,8 +589,9 @@ darwin_clear_solib (program_space *pspace)
 /* The section table is built from bfd sections using bfd VMAs.
    Relocate these VMAs according to solib info.  */
 
-static void
-darwin_relocate_section_addresses (solib &so, target_section *sec)
+void
+darwin_solib_ops::relocate_section_addresses (solib &so,
+					      target_section *sec) const
 {
   auto *li = gdb::checked_static_cast<lm_info_darwin *> (so.lm_info.get ());
 
@@ -624,9 +610,9 @@ darwin_relocate_section_addresses (solib &so, target_section *sec)
   if (sec->addr < so.addr_low)
     so.addr_low = sec->addr;
 }
-
-static gdb_bfd_ref_ptr
-darwin_bfd_open (const char *pathname)
+
+gdb_bfd_ref_ptr
+darwin_solib_ops::bfd_open (const char *pathname) const
 {
   int found_file;
 
@@ -654,15 +640,3 @@ darwin_bfd_open (const char *pathname)
 
   return res;
 }
-
-const solib_ops darwin_so_ops =
-{
-  darwin_relocate_section_addresses,
-  nullptr,
-  darwin_clear_solib,
-  darwin_solib_create_inferior_hook,
-  darwin_current_sos,
-  open_symbol_file_object,
-  darwin_in_dynsym_resolve_code,
-  darwin_bfd_open,
-};

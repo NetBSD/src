@@ -1,5 +1,5 @@
 /* .sframe section processing.
-   Copyright (C) 2022 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -193,6 +193,7 @@ _bfd_elf_parse_sframe (bfd *abfd,
   int decerr = 0;
 
   if (sec->size == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || sec->sec_info_type != SEC_INFO_TYPE_NONE)
     {
       /* This file does not contain .sframe information.  */
@@ -206,8 +207,8 @@ _bfd_elf_parse_sframe (bfd *abfd,
       return false;
     }
 
-  /* Read the SFrame unwind information from abfd.  */
-  if (!bfd_malloc_and_get_section (abfd, sec, &sfbuf))
+  /* Read the SFrame stack trace information from abfd.  */
+  if (!_bfd_elf_mmap_section_contents (abfd, sec, &sfbuf))
     goto fail_no_free;
 
   /* Decode the buffer and keep decoded contents for later use.
@@ -240,7 +241,7 @@ fail_no_free:
     abfd, sec);
   return false;
 success:
-  free (sfbuf);
+  _bfd_elf_munmap_section_contents (sec, sfbuf);
   return true;
 }
 
@@ -324,9 +325,11 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
   struct sframe_enc_info *sfe_info;
   sframe_decoder_ctx *sfd_ctx;
   sframe_encoder_ctx *sfe_ctx;
-  unsigned char sfd_ctx_abi_arch;
+  uint8_t sfd_ctx_abi_arch;
   int8_t sfd_ctx_fixed_fp_offset;
   int8_t sfd_ctx_fixed_ra_offset;
+  uint8_t dctx_version;
+  uint8_t ectx_version;
   int encerr = 0;
 
   struct elf_link_hash_table *htab;
@@ -360,7 +363,7 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
       if (!sfd_ctx_abi_arch)
 	return false;
 
-      htab->sfe_info.sfe_ctx = sframe_encode (SFRAME_VERSION_1,
+      htab->sfe_info.sfe_ctx = sframe_encode (SFRAME_VERSION_2,
 					      0, /* SFrame flags.  */
 					      sfd_ctx_abi_arch,
 					      sfd_ctx_fixed_fp_offset,
@@ -399,27 +402,41 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
       return false;
     }
 
+  /* Check that all .sframe sections being linked have the same version.  */
+  dctx_version = sframe_decoder_get_version (sfd_ctx);
+  ectx_version = sframe_encoder_get_version (sfe_ctx);
+  if (dctx_version != SFRAME_VERSION_2 || dctx_version != ectx_version)
+    {
+      _bfd_error_handler
+	(_("input SFrame sections with different format versions prevent"
+	  " .sframe generation"));
+      return false;
+    }
+
+
   /* Iterate over the function descriptor entries and the FREs of the
      function from the decoder context.  Add each of them to the encoder
      context, if suitable.  */
-  unsigned int i = 0, j = 0, cur_fidx = 0;
+  uint32_t i = 0, j = 0, cur_fidx = 0;
 
-  unsigned int num_fidx = sframe_decoder_get_num_fidx (sfd_ctx);
-  unsigned int num_enc_fidx = sframe_encoder_get_num_fidx (sfe_ctx);
+  uint32_t num_fidx = sframe_decoder_get_num_fidx (sfd_ctx);
+  uint32_t num_enc_fidx = sframe_encoder_get_num_fidx (sfe_ctx);
 
   for (i = 0; i < num_fidx; i++)
     {
       unsigned int num_fres = 0;
-      int32_t func_start_address;
+      int32_t func_start_addr;
       bfd_vma address;
       uint32_t func_size = 0;
       unsigned char func_info = 0;
       unsigned int r_offset = 0;
       bool pltn_reloc_by_hand = false;
       unsigned int pltn_r_offset = 0;
+      uint8_t rep_block_size = 0;
 
-      if (!sframe_decoder_get_funcdesc (sfd_ctx, i, &num_fres, &func_size,
-					&func_start_address, &func_info))
+      if (!sframe_decoder_get_funcdesc_v2 (sfd_ctx, i, &num_fres, &func_size,
+					   &func_start_addr, &func_info,
+					   &rep_block_size))
 	{
 	  /* If function belongs to a deleted section, skip editing the
 	     function descriptor entry.  */
@@ -438,10 +455,11 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
 		}
 	      else
 		{
-		  /* Expected to land here for SFrame unwind info as created
-		     for the .plt* sections.  These sections can have upto two
-		     FDE entries.  Although the code should work for > 2,
-		     leaving this assert here for safety.  */
+		  /* Expected to land here when SFrame stack trace info is
+		     created dynamically for the .plt* sections.  These
+		     sections are expected to have upto two SFrame FDE entries.
+		     Although the code should work for > 2,  leaving this
+		     assert here for safety.  */
 		  BFD_ASSERT (num_fidx <= 2);
 		  /* For the first entry, we know the offset of the SFrame FDE's
 		     sfde_func_start_address.  Side note: see how the value
@@ -469,13 +487,13 @@ _bfd_elf_merge_section_sframe (bfd *abfd,
 	      /* FIXME For testing only. Cleanup later.  */
 	      // address += (sec->output_section->vma);
 
-	      func_start_address = address;
+	      func_start_addr = address;
 	    }
 
 	  /* Update the encoder context with updated content.  */
-	  int err = sframe_encoder_add_funcdesc (sfe_ctx, func_start_address,
-						 func_size, func_info,
-						 num_fres);
+	  int err = sframe_encoder_add_funcdesc_v2 (sfe_ctx, func_start_addr,
+						    func_size, func_info,
+						    rep_block_size, num_fres);
 	  cur_fidx++;
 	  BFD_ASSERT (!err);
 	}

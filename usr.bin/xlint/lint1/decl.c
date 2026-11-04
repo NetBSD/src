@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.403.2.1 2025/08/02 05:58:45 perseant Exp $ */
+/* $NetBSD: decl.c,v 1.403.2.2 2026/11/04 23:28:45 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.403.2.1 2025/08/02 05:58:45 perseant Exp $");
+__RCSID("$NetBSD: decl.c,v 1.403.2.2 2026/11/04 23:28:45 perseant Exp $");
 #endif
 
 #include <sys/param.h>
@@ -232,9 +232,7 @@ merge_signedness(tspec_t t, tspec_t s)
 	    : t == INT ? UINT
 	    : t == LONG ? ULONG
 	    : t == LLONG ? ULLONG
-#ifdef INT128_SIZE
 	    : t == INT128 ? UINT128
-#endif
 	    : t;
 }
 
@@ -354,11 +352,8 @@ dcs_add_type(type_t *tp)
 			t = FCOMPLEX;
 		else if (dcs->d_complex_mod == DOUBLE)
 			t = DCOMPLEX;
-		else {
-			/* invalid type for _Complex */
-			error(308);
-			t = DCOMPLEX;	/* just as a fallback */
-		}
+		else if (dcs->d_abstract_type == NO_TSPEC)
+			t = COMPLEX;
 		dcs->d_complex_mod = NO_TSPEC;
 	}
 
@@ -382,11 +377,7 @@ dcs_add_type(type_t *tp)
 		if (dcs->d_sign_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_sign_mod = t;
-#ifdef INT128_SIZE
 	} else if (t == SHORT || t == LONG || t == LLONG || t == INT128) {
-#else
-	} else if (t == SHORT || t == LONG || t == LLONG) {
-#endif
 		if (dcs->d_rank_mod != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_rank_mod = t;
@@ -401,9 +392,11 @@ dcs_add_type(type_t *tp)
 				dcs->d_invalid_type_combination = true;
 			dcs->d_abstract_type = t;
 		}
-	} else if (t == PTR) {
+	} else if (t == PTR || t == FUNC)
 		dcs->d_type = tp;
-	} else {
+	else if (t == COMPLEX && dcs->d_abstract_type == NO_TSPEC)
+		dcs->d_abstract_type = t;
+	else {
 		if (dcs->d_abstract_type != NO_TSPEC)
 			dcs->d_invalid_type_combination = true;
 		dcs->d_abstract_type = t;
@@ -472,11 +465,11 @@ pack_struct_or_union(type_t *tp)
 }
 
 void
-dcs_add_alignas(tnode_t *tn)
+dcs_add_alignas(unsigned int al)
 {
-	dcs->d_mem_align = to_int_constant(tn, true);
-	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec))
-		// FIXME: The type must not be modified.
+	dcs->d_mem_align = al;
+	if (dcs->d_type != NULL && is_struct_or_union(dcs->d_type->t_tspec)
+	    && !dcs->d_finished)
 		dcs->d_type->u.sou->sou_align = dcs->d_mem_align;
 	debug_func_dcs(__func__);
 }
@@ -517,14 +510,8 @@ dcs_add_type_attributes(type_attributes attrs)
 		dcs_set_used();
 	if (attrs.noreturn)
 		dcs->d_noreturn = true;
-	if (attrs.bit_width == 128) {
-#ifdef INT128_SIZE
+	if (attrs.bit_width == 128)
 		dcs->d_rank_mod = INT128;
-#else
-		/* Get as close as possible. */
-		dcs->d_rank_mod = LLONG;
-#endif
-	}
 	if (attrs.bit_width == 64)
 		dcs->d_rank_mod = LLONG;
 }
@@ -663,6 +650,7 @@ dcs_begin_type(void)
 	// keep d_first_dlsym
 	// keep d_last_dlsym
 	dcs->d_func_proto_syms = NULL;
+	dcs->d_finished = false;
 	// keep d_enclosing
 
 	debug_func_dcs(__func__);
@@ -735,6 +723,17 @@ dcs_merge_declaration_specifiers(void)
 	if (t == LDOUBLE && !allow_c90)
 		/* 'long double' requires C90 or later */
 		warning(266);
+	if (t == COMPLEX && c == FLOAT)
+		t = FCOMPLEX;
+	else if (t == COMPLEX && c == DOUBLE)
+		t = DCOMPLEX;
+	else if (t == COMPLEX && c == LDOUBLE)
+		t = LCOMPLEX;
+	else if (t == COMPLEX) {
+		/* invalid type for _Complex */
+		error(308);
+		t = DCOMPLEX;
+	}
 	if (l == LONG && t == DCOMPLEX) {
 		l = NO_TSPEC;
 		t = LCOMPLEX;
@@ -796,6 +795,7 @@ dcs_end_type(void)
 		    & -align_in_bits;
 	}
 
+	dcs->d_finished = true;
 	debug_dcs();
 	debug_leave();
 }
@@ -910,11 +910,10 @@ check_type(sym_t *sym)
 		 * better warning is printed in begin_function().
 		 */
 		if (t == FUNC && !tp->t_proto &&
-		    !(to == NO_TSPEC && sym->s_osdef)) {
-			if (!allow_trad && hflag)
-				/* function declaration is not a prototype */
-				warning(287);
-		}
+		    !(to == NO_TSPEC && sym->s_osdef) &&
+		    !allow_trad && hflag && !allow_c23)
+			/* function declaration for '%s' is not a prototype */
+			warning(287, sym->s_name);
 		if (to == FUNC) {
 			if (t == FUNC || t == ARRAY) {
 				/* function returns invalid type '%s' */
@@ -923,13 +922,10 @@ check_type(sym_t *sym)
 				    t == FUNC ? *tpp : (*tpp)->t_subt, PTR);
 				return;
 			}
-			if (tp->t_const || tp->t_volatile) {
-				/* TODO: Make this a warning in C99 mode as well. */
-				if (!allow_trad && !allow_c99) {	/* XXX or better allow_c90? */
-					/* function cannot return const... */
-					warning(228);
-				}
-			}
+			if (tp->t_const || tp->t_volatile)
+				/* returning the type qualifier '%s' has ... */
+				warning(228,
+				    tp->t_const ? "const" : "volatile");
 		} else if (to == ARRAY) {
 			if (t == FUNC) {
 				/* array of function is invalid */
@@ -1322,7 +1318,7 @@ add_array(sym_t *decl, bool has_dim, int dim)
 
 static type_t *
 block_derive_function(type_t *ret, bool proto, sym_t *params, bool vararg,
-    bool noreturn)
+    bool noreturn, bool identifier_params)
 {
 
 	type_t *tp = block_derive_type(ret, FUNC);
@@ -1331,6 +1327,7 @@ block_derive_function(type_t *ret, bool proto, sym_t *params, bool vararg,
 		tp->u.params = params;
 	tp->t_noreturn = noreturn;
 	tp->t_vararg = vararg;
+	tp->t_identifier_params = identifier_params;
 	debug_step("%s: '%s'", __func__, type_name(tp));
 	return tp;
 }
@@ -1448,7 +1445,8 @@ add_function(sym_t *decl, parameter_list params)
 
 	*tpp = block_derive_function(dcs->d_enclosing->d_type,
 	    params.prototype, params.first, params.vararg,
-	    params.noreturn || dcs->d_enclosing->d_noreturn);
+	    params.noreturn || dcs->d_enclosing->d_noreturn,
+	    params.identifier);
 
 	debug_step("add_function: '%s'", type_name(decl->s_type));
 	debug_dcs_all();
@@ -2132,9 +2130,11 @@ check_redeclaration(sym_t *dsym, bool *dowarn)
 		return true;
 	}
 	if (rdsym->s_scl == TYPEDEF) {
-		/* typedef '%s' redeclared */
-		error(89, dsym->s_name);
-		print_previous_declaration(rdsym);
+		if (!allow_c11) {
+			/* typedef '%s' redeclared */
+			error(89, dsym->s_name);
+			print_previous_declaration(rdsym);
+		}
 		return true;
 	}
 	if (dsym->s_scl == TYPEDEF) {

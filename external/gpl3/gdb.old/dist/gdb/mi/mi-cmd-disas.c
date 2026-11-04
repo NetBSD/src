@@ -1,5 +1,5 @@
 /* MI Command Set - disassemble commands.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions (a Red Hat company).
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "progspace.h"
 #include "target.h"
 #include "value.h"
 #include "mi-cmds.h"
@@ -51,7 +51,7 @@
 	 5 -- disassembly, source (pc-centric) and opcodes.  */
 
 void
-mi_cmd_disassemble (const char *command, char **argv, int argc)
+mi_cmd_disassemble (const char *command, const char *const *argv, int argc)
 {
   struct gdbarch *gdbarch = get_current_arch ();
   struct ui_out *uiout = current_uiout;
@@ -72,7 +72,7 @@ mi_cmd_disassemble (const char *command, char **argv, int argc)
   bool source_seen = false;
 
   /* ... and their corresponding value. */
-  char *file_string = NULL;
+  const char *file_string = NULL;
   int line_num = -1;
   int how_many = -1;
   CORE_ADDR low = 0;
@@ -91,7 +91,7 @@ mi_cmd_disassemble (const char *command, char **argv, int argc)
 
   /* Options processing stuff.  */
   int oind = 0;
-  char *oarg;
+  const char *oarg;
   enum opt
   {
     FILE_OPT, LINE_OPT, NUM_OPT, START_OPT, END_OPT, ADDR_OPT, OPCODES_OPT,
@@ -246,7 +246,7 @@ mi_cmd_disassemble (const char *command, char **argv, int argc)
 
   if (line_seen && file_seen)
     {
-      s = lookup_symtab (file_string);
+      s = lookup_symtab (current_program_space, file_string);
       if (s == NULL)
 	error (_("-data-disassemble: Invalid filename."));
       if (!find_line_pc (s, line_num, &start))

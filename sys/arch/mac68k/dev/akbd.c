@@ -1,4 +1,4 @@
-/*	$NetBSD: akbd.c,v 1.27.10.1 2025/08/02 05:55:49 perseant Exp $	*/
+/*	$NetBSD: akbd.c,v 1.27.10.2 2026/11/04 23:20:53 perseant Exp $	*/
 
 /*
  * Copyright (C) 1998	Colin Wood
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.27.10.1 2025/08/02 05:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: akbd.c,v 1.27.10.2 2026/11/04 23:20:53 perseant Exp $");
 
 #include "opt_adb.h"
 
@@ -113,6 +113,7 @@ struct wskbd_mapdata akbd_keymapdata = {
 	KB_US,
 };
 
+int leds;
 static int akbd_is_console(void);
 
 static int
@@ -437,8 +438,8 @@ blinkleds(struct akbd_softc *ksc)
 	/* make sure that we restore the LED settings */
 	i = 10;
 	do {
-		(void)setleds(ksc, (u_char)0x00);
-	} while (setleds(ksc, (u_char)0x00) && (i-- > 0)); 
+		(void)setleds(ksc, (u_char)origleds);
+	} while (setleds(ksc, (u_char)origleds) && (i-- > 0)); 
 
 	return;
 }
@@ -461,27 +462,47 @@ akbd_enable(void *v, int on)
 void
 akbd_set_leds(void *v, int on)
 {
+	leds = on;
 }
 
 int
 akbd_ioctl(void *v, u_long cmd, void *data, int flag, struct lwp *l)
 {
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	struct akbd_softc *ksc = (struct akbd_softc *) v;
+#endif
+
 	switch (cmd) {
 
 	case WSKBDIO_GTYPE:
 		*(int *)data = WSKBD_TYPE_ADB;
 		return 0;
 	case WSKBDIO_SETLEDS:
+#ifdef notyet
+		setleds(ksc, *(int *)data);
+#else
+		leds = *(int *)data;
+#endif
 		return 0;
 	case WSKBDIO_GETLEDS:
-		*(int *)data = 0;
+#ifdef notyet
+		*(int *)data = getleds(ksc->adbaddr);
+#else
+		*(int *)data = leds;
+#endif
 		return 0;
 	case WSKBDIO_COMPLEXBELL:
 #define d ((struct wskbd_bell_data *)data)
-		mac68k_ring_bell(d->pitch, d->period * hz / 1000, 100);
-		/* comes in as msec, goes out as ticks; volume ignored */
+		/* period: msec in, ticks out; volume is 0-100 */
+		mac68k_ring_bell(d->pitch, d->period * hz / 1000,
+		    d->volume > 100 ? 100 : d->volume);
 #undef d
 		return (0);
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	case WSKBDIO_SETMODE:
+		ksc->sc_rawkbd = *(int *)data == WSKBD_RAW;
+		return (0);
+#endif
 	}
 	/* kbdioctl(...); */
 
@@ -511,6 +532,26 @@ kbd_intr(adb_event_t *event, struct akbd_softc *sc)
 
 	if (adb_polling)
 		polledkey = key;
+#ifdef WSDISPLAY_COMPAT_RAWKBD
+	else if (sc->sc_rawkbd) {
+		char cbuf[2];
+		int s;
+		int j = 0;
+		int c = keyboard[ADBK_KEYVAL(key)][3];
+
+		if (c == 0)			/* XXX */
+			return (0);
+
+		if (c & 0x80)
+			cbuf[j++] = 0xe0;
+
+		cbuf[j++] = (c & 0x7f) | (ADBK_PRESS(key)? 0 : 0x80);
+
+		s = spltty();
+		wskbd_rawinput(sc->sc_wskbddev, cbuf, j);
+		splx(s);
+	}
+#endif
 	else
 		wskbd_input(sc->sc_wskbddev, type, val);
 

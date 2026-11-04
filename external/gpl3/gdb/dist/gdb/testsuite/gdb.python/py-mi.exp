@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2024 Free Software Foundation, Inc.
+# Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {deb
     return -1
 }
 
-if {[mi_clean_restart $binfile]} {
+if {[mi_clean_restart $::testfile]} {
     return
 }
 
@@ -345,7 +345,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}-cxx" \
     return -1
 }
 
-if {[mi_clean_restart ${binfile}-cxx]} {
+if {[mi_clean_restart ${::testfile}-cxx]} {
     return
 }
 

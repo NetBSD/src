@@ -1,6 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_INTERP_H
-#define MI_MI_INTERP_H
+#ifndef GDB_MI_MI_INTERP_H
+#define GDB_MI_MI_INTERP_H
 
 #include "interps.h"
 
@@ -61,7 +61,7 @@ public:
 			  const char *format) override;
   void on_target_resumed (ptid_t ptid) override;
   void on_solib_loaded (const solib &so) override;
-  void on_solib_unloaded (const solib &so) override;
+  void on_solib_unloaded (const solib &so, bool still_in_use) override;
   void on_about_to_proceed () override;
   void on_traceframe_changed (int tfnum, int tpnum) override;
   void on_tsv_created (const trace_state_variable *tsv) override;
@@ -103,7 +103,7 @@ public:
      command was issued.  */
   int mi_proceeded;
 
-  const char *current_token;
+  const char *current_token = nullptr;
 };
 
 /* Output the shared object attributes to UIOUT.  */
@@ -119,4 +119,4 @@ as_mi_interp (struct interp *interp)
   return dynamic_cast<mi_interp *> (interp);
 }
 
-#endif /* MI_MI_INTERP_H */
+#endif /* GDB_MI_MI_INTERP_H */

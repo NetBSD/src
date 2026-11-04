@@ -1,4 +1,4 @@
-/*	$NetBSD: partutil.h,v 1.3 2014/12/29 16:27:43 christos Exp $	*/
+/*	$NetBSD: partutil.h,v 1.3.28.1 2026/11/04 23:19:38 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,9 +34,11 @@
 __BEGIN_DECLS
 struct dkwedge_info;
 struct disk_geom;
+struct stat;
 int getdiskinfo(const char *, int, const char *,
     struct disk_geom *, struct dkwedge_info *);
 int getdisksize(const char *, u_int *, off_t *);
+const char *findspecial(const char *, int);
 __END_DECLS
 
 #endif /* _PARTUTIL_H_ */

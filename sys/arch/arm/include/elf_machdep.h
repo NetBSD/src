@@ -1,17 +1,12 @@
-/*	$NetBSD: elf_machdep.h,v 1.19 2017/11/06 03:47:45 christos Exp $	*/
+/*	$NetBSD: elf_machdep.h,v 1.19.40.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 #ifndef _ARM_ELF_MACHDEP_H_
 #define _ARM_ELF_MACHDEP_H_
 
-#if defined(__ARMEB__)
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#else
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
-#endif
-
-#define ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
-#define ELF64_MACHDEP_ID_CASES                                          \
-		/* no 64-bit ELF machine types supported */
+#if !defined(_SYS_ELFDEFINITIONS_H_)
+/*
+ * ARM ELF psABI symbols and GNU extensions.
+ */
 
 /* Processor specific flags for the ELF header e_flags field.  */
 #define EF_ARM_RELEXEC		0x00000001
@@ -34,15 +29,6 @@
 #define	EF_ARM_EABI_VER3	0x03000000
 #define	EF_ARM_EABI_VER4	0x04000000
 #define	EF_ARM_EABI_VER5	0x05000000
-
-#define	ELF32_MACHDEP_ID_CASES						\
-		case EM_ARM:						\
-			break;
-
-#define	ELF32_MACHDEP_ID	EM_ARM
-
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 /* Processor specific relocation types */
 
@@ -85,9 +71,9 @@
 #define R_ARM_ALU_PCREL_7_0	32
 #define R_ARM_ALU_PCREL_15_8	33
 #define R_ARM_ALU_PCREL_23_15	34
-#define R_ARM_ALU_SBREL_11_0	35
-#define R_ARM_ALU_SBREL_19_12	36
-#define R_ARM_ALU_SBREL_27_20	37	// depcreated
+#define R_ARM_LDR_SBREL_11_0_NC	35	// deprecated
+#define R_ARM_ALU_SBREL_19_12_NC	36	// deprecated
+#define R_ARM_ALU_SBREL_27_20_CK	37	// deprecated
 #define R_ARM_TARGET1		38
 #define R_ARM_SBREL31		39	// deprecated
 #define R_ARM_V4BX		40
@@ -130,12 +116,9 @@
 #define R_ARM_RPC24		254
 #define R_ARM_RBASE		255
 
-#define R_TYPE(name)		__CONCAT(R_ARM_,name)
-
 /* Processor specific program header flags */
 #define PF_ARM_SB		0x10000000
 #define PF_ARM_PI		0x20000000
-#define PF_ARM_ENTRY		0x80000000
 
 /* Processor specific program header types */
 #define PT_ARM_EXIDX		(PT_LOPROC + 1)
@@ -146,6 +129,40 @@
 
 /* Processor specific symbol types */
 #define STT_ARM_TFUNC		STT_LOPROC
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+
+#if defined(__ARMEB__)
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#else
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2LSB
+#endif
+
+#define ELF64_MACHDEP_ENDIANNESS	XXX	/* break compilation */
+#define ELF64_MACHDEP_ID_CASES                                          \
+		/* no 64-bit ELF machine types supported */
+
+#define	ELF32_MACHDEP_ID_CASES						\
+		case EM_ARM:						\
+			break;
+
+#define	ELF32_MACHDEP_ID	EM_ARM
+
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
+
+#define R_TYPE(name)		__CONCAT(R_ARM_,name)
+
+/* Older NetBSD spellings. */
+#define R_ARM_ALU_SBREL_11_0	35
+#define R_ARM_ALU_SBREL_19_12	36
+#define R_ARM_ALU_SBREL_27_20	37	// deprecated
+
+#define PF_ARM_ENTRY		0x80000000
 
 #ifdef _KERNEL
 #ifdef ELFSIZE

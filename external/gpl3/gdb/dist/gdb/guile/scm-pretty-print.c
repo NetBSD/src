@@ -1,6 +1,6 @@
 /* GDB/Scheme pretty-printing.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -597,9 +597,9 @@ ppscm_get_display_hint_enum (SCM printer)
   if (scm_is_string (hint))
     {
       if (gdbscm_is_true (scm_string_equal_p (hint, ppscm_array_string)))
-	return HINT_STRING;
+	return HINT_ARRAY;
       if (gdbscm_is_true (scm_string_equal_p (hint, ppscm_map_string)))
-	return HINT_STRING;
+	return HINT_MAP;
       if (gdbscm_is_true (scm_string_equal_p (hint, ppscm_string_string)))
 	return HINT_STRING;
       return HINT_ERROR;

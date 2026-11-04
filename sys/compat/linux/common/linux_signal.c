@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.89.6.1 2025/08/02 05:56:27 perseant Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.89.6.2 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.89.6.1 2025/08/02 05:56:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.89.6.2 2026/11/04 23:21:39 perseant Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -646,6 +646,13 @@ linux_sys_rt_queueinfo(struct lwp *l, const struct linux_sys_rt_queueinfo_args *
 	int error;
 	linux_siginfo_t info;
 
+	int pid = SCARG(uap, pid);
+
+	if (pid <= 0) {
+		error = ESRCH;
+		return error;
+	}
+
 	error = copyin(SCARG(uap, uinfo), &info, sizeof(info));
 	if (error)
 		return error;
@@ -669,6 +676,7 @@ linux_sys_kill(struct lwp *l, const struct linux_sys_kill_args *uap, register_t 
 	struct sys_kill_args ka;
 	int sig;
 
+	memset(&ka, 0, sizeof(ka));
 	SCARG(&ka, pid) = SCARG(uap, pid);
 	sig = SCARG(uap, signum);
 	if (sig < 0 || sig >= LINUX__NSIG)

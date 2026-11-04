@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40.2.1 2025/08/02 05:58:26 perseant Exp $
+#	$NetBSD: Makefile,v 1.40.2.2 2026/11/04 23:28:33 perseant Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/3/94
 
 .include <bsd.own.mk>
@@ -7,7 +7,7 @@ USE_FORT?= yes	# network client
 
 PROG=	ftp
 SRCS=	cmds.c cmdtab.c complete.c domacro.c fetch.c ftp.c main.c \
-	progressbar.c ruserpass.c util.c
+	progressbar.c ruserpass.c uri.c util.c
 SRCS+=	ssl.c
 
 # Uncomment the following to provide defaults for gate-ftp operation
@@ -20,8 +20,8 @@ CPPFLAGS+=-DNO_EDITCOMPLETE -DNO_ABOUT -DNO_AUTH -DNO_HELP -DNO_STATUS -DNO_DEBU
 LDADD+=	-ledit -lterminfo
 DPADD+=	${LIBEDIT} ${LIBTERMINFO}
 CPPFLAGS+= -DWITH_SSL
-LDADD+= -lssl -lcrypto -lpthread
-DPADD+= ${LIBSSL} ${LIBCRYPTO} ${LIBPTHREAD}
+LDADD+= -lssl -lcrypto
+DPADD+= ${LIBSSL} ${LIBCRYPTO}
 .endif
 
 .if (!defined(SMALLPROG) || defined(SMALLPROG_INET6)) && (${USE_INET6} != "no")
@@ -31,6 +31,8 @@ CPPFLAGS+= -DINET6
 cmds.o fetch.o: version.h
 main.o:	ftp_var.h
 
-CWARNFLAGS.gcc+=	${CC_WNO_FORMAT_OVERFLOW}
+.if ${MACHINE_CPU} == "m68k"
+COPTS.ftp.c+=	-Wno-error=clobbered
+.endif
 
 .include <bsd.prog.mk>

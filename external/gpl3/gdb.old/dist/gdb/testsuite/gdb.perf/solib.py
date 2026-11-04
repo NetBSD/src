@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,8 +16,7 @@
 # This test case is to test the speed of GDB when it is handling the
 # shared libraries of inferior are loaded and unloaded.
 
-from perftest import perftest
-from perftest import measure
+from perftest import measure, perftest
 
 
 class SolibLoadUnload1(perftest.TestCaseWithBasicMeasurements):

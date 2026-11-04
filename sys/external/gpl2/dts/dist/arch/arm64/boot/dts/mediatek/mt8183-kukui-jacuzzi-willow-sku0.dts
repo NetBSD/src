@@ -5,9 +5,11 @@
 
 /dts-v1/;
 #include "mt8183-kukui-jacuzzi-willow.dtsi"
+#include "mt8183-kukui-audio-da7219-max98357a.dtsi"
 
 / {
 	model = "Google willow board sku0";
+	chassis-type = "laptop";
 	compatible = "google,willow-sku0", "google,willow", "mediatek,mt8183";
 };
 

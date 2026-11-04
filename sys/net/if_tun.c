@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.175.2.1 2025/08/02 05:57:47 perseant Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.175.2.2 2026/11/04 23:27:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.175.2.1 2025/08/02 05:57:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.175.2.2 2026/11/04 23:27:57 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -154,7 +154,7 @@ tundetach(void)
 #endif
 		if_clone_attach(&tun_cloner);
 		return EBUSY;
-}
+	}
 
 	mutex_destroy(&tun_softc_lock);
 
@@ -629,7 +629,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		IFQ_ENQUEUE(&ifp->if_snd, m0, error);
 		if (error) {
 			if_statinc(ifp, if_collisions);
-			error = EAFNOSUPPORT;
 			m0 = NULL;
 			goto out;
 		}

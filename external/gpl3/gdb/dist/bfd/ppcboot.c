@@ -1,5 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -474,7 +474,6 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
 
 #define ppcboot_bfd_copy_private_bfd_data _bfd_generic_bfd_copy_private_bfd_data
 #define ppcboot_bfd_merge_private_bfd_data _bfd_generic_bfd_merge_private_bfd_data
-#define ppcboot_init_private_section_data _bfd_generic_init_private_section_data
 #define ppcboot_bfd_copy_private_section_data _bfd_generic_bfd_copy_private_section_data
 #define ppcboot_bfd_copy_private_symbol_data _bfd_generic_bfd_copy_private_symbol_data
 #define ppcboot_bfd_copy_private_header_data _bfd_generic_bfd_copy_private_header_data

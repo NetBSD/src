@@ -1,5 +1,5 @@
 /* Functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 
 #include "macroscope.h"
 #include "symtab.h"
@@ -122,9 +121,9 @@ default_macro_scope (void)
 	 symbol files loaded, then get_current_or_default would raise an
 	 error.  But `set width' shouldn't raise an error just because
 	 it can't decide which scope to macro-expand its argument in.  */
-      struct symtab_and_line cursal
-	= get_current_source_symtab_and_line ();
-      
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
+
       sal.symtab = cursal.symtab;
       sal.line = cursal.line;
     }

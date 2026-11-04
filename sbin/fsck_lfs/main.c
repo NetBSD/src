@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.55 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: main.c,v 1.55.8.1 2026/11/04 23:19:38 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -54,6 +54,7 @@
 #include "exitvalues.h"
 
 int	Uflag;
+extern int asked_question;
 
 static int argtoi(int, const char *, const char *, int);
 static int checkfilesys(const char *, char *, long, int);
@@ -74,7 +75,7 @@ main(int argc, char **argv)
 {
 	int ch;
 	int ret = FSCK_EXIT_OK;
-	const char *optstring = "b:dfi:m:npPqUy";
+	const char *optstring = "ab:dfi:m:npPqUy";
 	bool reallypreen;
 
 	reallypreen = false;
@@ -86,6 +87,9 @@ main(int argc, char **argv)
 	esetfunc(efun);
 	while ((ch = getopt(argc, argv, optstring)) != -1) {
 		switch (ch) {
+		case 'a':
+			aflag++;
+			break;
 		case 'b':
 			skipclean = 0;
 			bflag = argtoi('b', "number", optarg, 0);
@@ -290,7 +294,7 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 		}
 	}
 
-	if (!rerun) {
+	if (!nflag && !rerun) {
 		if (!preen) {
 			if (reply("ROLL FILESYSTEM FORWARD") == 1) {
 				printf("** Phase 6 - Roll Forward\n");
@@ -320,7 +324,8 @@ checkfilesys(const char *filesys, char *mntpt, long auxdata, int child)
 	free(statemap);
 	free((char *)lncntp);
 	if (!fsmodified) {
-		return FSCK_EXIT_OK;
+		return (nflag && asked_question ?
+			FSCK_EXIT_UNRESOLVED : FSCK_EXIT_OK);
 	}
 	if (!preen)
 		printf("\n***** FILE SYSTEM WAS MODIFIED *****\n");
@@ -357,7 +362,7 @@ usage(void)
 {
 
 	(void) fprintf(stderr,
-	    "Usage: %s [-dfpqU] [-b block] [-m mode] [-y | -n] filesystem ...\n",
+	    "Usage: %s [-adfpqU] [-b block] [-i idaddr] [-m mode] [-y | -n] filesystem ...\n",
 	    getprogname());
 	exit(FSCK_EXIT_USAGE);
 }

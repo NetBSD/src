@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if {![runto_main]} {
     return 0
 }
 
-set invalid_register_re "Invalid register .*"
+set invalid_register_re "Invalid register \[^\r\n\]*"
 
 # Fetch all reggroups from 'maint print reggroups'.
 
@@ -39,10 +39,10 @@ proc fetch_reggroups {test} {
 	-re "maint print reggroups\r\n" {
 	    exp_continue
 	}
-	-re "^ Group\[ \t\]+Type\[ \t\]+\r\n" {
+	-re "^Group\[ \t\]+Type\[ \t\]+\r\n" {
 	    exp_continue
 	}
-	-re "^ (\[_0-9a-zA-Z-\]+)\[ \t\]+(user|internal)\[ \t\]+\r\n" {
+	-re "^(\[_0-9a-zA-Z-\]+)\[ \t\]+(user|internal)\[ \t\]+\r\n" {
 	    lappend reggroups $expect_out(1,string)
 	    exp_continue
 	}
@@ -51,6 +51,7 @@ proc fetch_reggroups {test} {
 	}
     }
 
+    verbose -log "found reggroups: $reggroups"
     return $reggroups
 }
 
@@ -78,21 +79,34 @@ proc fetch_reggroup_regs {reggroup test} {
     # xmm0           {v4_float = {0x0, 0x0, 0x0, 0x0}, v2_double = {0x0, ... }}
     #
     set regs {}
-    gdb_test_multiple "info reg $reggroup" $test {
-	-re "info reg $reggroup\r\n" {
+    set have_invalid_register_fail 0
+    set re_regname "\[0-9a-zA-Z_-\]+"
+    set re_hws "\[ \t\]+"
+    set re_hs "\[^\n\r\]+"
+    set re_eol "\r\n"
+    set re_lookahead_eol "(?=$re_eol)"
+    gdb_test_multiple "info reg $reggroup" $test -lbl {
+	-re "^info reg $reggroup" {
 	    exp_continue
 	}
-	-re "^(\[0-9a-zA-Z-\]+)\[ \t\]+(0x\[0-9a-f\]+)\[ \t\]+(\[^\n\r\]+)\r\n" {
+	-re "^${re_eol}($re_regname)$re_hws$::hex$re_hws${re_hs}$re_lookahead_eol" {
 	    lappend regs $expect_out(1,string)
 	    exp_continue
 	}
 	-re $invalid_register_re {
-	    fail "$test (unexpected invalid register response)"
+	    set have_invalid_register_fail 1
+	    exp_continue
 	}
-	-re "$gdb_prompt $" {
-	    pass $test
+	-re -wrap "" {
+	    if { $have_invalid_register_fail } {
+		fail "$test (unexpected invalid register response)"
+	    } else {
+		pass $test
+	    }
 	}
     }
+
+    verbose -log "found regs in reggroup $reggroup: [join $regs]"
     return $regs
 }
 

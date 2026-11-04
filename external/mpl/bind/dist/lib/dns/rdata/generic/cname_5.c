@@ -1,4 +1,4 @@
-/*	$NetBSD: cname_5.c,v 1.8.2.1 2025/08/02 05:53:41 perseant Exp $	*/
+/*	$NetBSD: cname_5.c,v 1.8.2.2 2026/11/04 23:18:09 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,9 +149,7 @@ tostruct_cname(ARGS_TOSTRUCT) {
 	REQUIRE(cname != NULL);
 	REQUIRE(rdata->length != 0);
 
-	cname->common.rdclass = rdata->rdclass;
-	cname->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&cname->common, link);
+	DNS_RDATACOMMON_INIT(cname, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

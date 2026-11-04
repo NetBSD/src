@@ -1,6 +1,6 @@
 /* External/Public TUI Header File.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_H
-#define TUI_TUI_H
+#ifndef GDB_TUI_TUI_H
+#define GDB_TUI_TUI_H
 
 /* Flag to control tui debugging.  */
 
@@ -96,4 +96,4 @@ extern void tui_set_key_mode (enum tui_key_mode mode);
 
 extern bool tui_active;
 
-#endif /* TUI_TUI_H */
+#endif /* GDB_TUI_TUI_H */

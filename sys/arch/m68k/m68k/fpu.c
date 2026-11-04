@@ -1,7 +1,7 @@
-/*	$NetBSD: fpu.c,v 1.1.90.1 2025/08/02 05:55:49 perseant Exp $	*/
+/*	$NetBSD: fpu.c,v 1.1.90.2 2026/11/04 23:20:52 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,36 +34,66 @@
  * Probe for the FPU at early bootstrap.
  */
 
+#include "opt_m68k_arch.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.90.1 2025/08/02 05:55:49 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.1.90.2 2026/11/04 23:20:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
-#include <sys/device.h>
+#include <sys/lwp.h>
 
+#include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/cpu.h>
 #include <machine/frame.h>
+#include <machine/vectors.h>
 
-extern int *nofault;
+/*
+ * This is the default, but may be overridden as we determine
+ * the machine / cpu type before we ever get to fpu_init().
+ *
+ * For systems that lack a coprocessor interface, we just default
+ * to NONE.
+ */
+#ifdef M68K_FPCOPROC
+int	fputype = FPU_UNKNOWN;
+#else
+int	fputype = FPU_NONE;
+#endif
 
-int
-fpu_probe(void)
+void
+fpu_init(void)
 {
+#ifdef M68K_FPCOPROC
 	/*
 	 * A 68881 idle frame is 28 bytes and a 68882's is 60 bytes.
 	 * We, of course, need to have enough room for either.
 	 */
+	struct pcb *pcb = lwp_getpcb(&lwp0);
 	struct fpframe fpframe;
 	label_t faultbuf;
-	uint8_t b;
 
-	nofault = (int *)&faultbuf;
+	/* Make sure lwp0 has a NULL state frame. */
+	memset(&pcb->pcb_fpregs, 0, sizeof(pcb->pcb_fpregs));
+
+	if (fputype != FPU_UNKNOWN) {
+		goto done;
+	}
+
+	nofault = &faultbuf;
 	if (setjmp(&faultbuf)) {
-		nofault = (int *)0;
-		return FPU_NONE;
+		nofault = NULL;
+		fputype = FPU_NONE;
+		/*
+		 * Set up the cached idle frame to mimic the 68881
+		 * for the benefit of cpu_setmcontext().
+		 */
+		fpu_idle_frame.fpf_version = 0x1f;
+		fpu_idle_frame.fpf_fsize = 0x18;
+		return;
 	}
 
 	/*
@@ -72,7 +102,7 @@ fpu_probe(void)
 	 * state, so we can determine which we have by
 	 * examining the size of the FP state frame
 	 */
-	__asm("fnop");
+	__asm volatile("fnop");
 
 	nofault = NULL;
 
@@ -80,38 +110,42 @@ fpu_probe(void)
 	 * Presumably, if we're an 040/060 and did not take exception
 	 * above, we have an FPU.  Don't bother probing.
 	 */
-	if (cputype == CPU_68060)
-		return FPU_68060;
-	if (cputype == CPU_68040)
-		return FPU_68040;
+	if (cputype == CPU_68060) {
+		fputype = FPU_68060;
+	} else if (cputype == CPU_68040) {
+		fputype = FPU_68040;
+	}
 
-	/*
-	 * Presumably, this will not cause a fault--the fnop should
-	 * have if this will.  We save the state in order to get the
-	 * size of the frame.
-	 */
-	__asm("fsave %0@" : : "a" (&fpframe) : "memory");
+	if (fputype == FPU_UNKNOWN) {
+		/*
+		 * fpu_doprobe() will have saved an FP state frame for us,
+		 * and can consult it to intuit the FP type.
+		 *
+		 * The size of a 68881 IDLE frame is 0x18
+		 *         and a 68882 frame is 0x38
+		 */
+		__asm volatile("fsave %0@" : : "a" (&fpframe) : "memory");
+		if (fpframe.fpf_fsize == 0x18) {
+			fputype = FPU_68881;
+		} else if (fpframe.fpf_fsize == 0x38) {
+			fputype = FPU_68882;
+		}
+		/*
+		 * If it's not one of the above, we have no clue
+		 * what it is.
+		 */
+	}
 
-	b = fpframe.fpf_fsize;
-
-	/*
-	 * Now, restore a NULL state to reset the FPU.
-	 */
-	fpframe.fpf_null = 0;
-	fpframe.fpf_idle.fpf_ccr = 0;
-	m68881_restore(&fpframe);
-
-	/*
-	 * The size of a 68881 IDLE frame is 0x18
-	 *         and a 68882 frame is 0x38
-	 */
-	if (b == 0x18)
-		return FPU_68881;
-	if (b == 0x38)
-		return FPU_68882;
-
-	/*
-	 * If it's not one of the above, we have no clue what it is.
-	 */
-	return FPU_UNKNOWN;
+ done:
+	/* Avoid crazy values. */
+	if (fputype < 0 || fputype > FPU_UNKNOWN) {
+		fputype = FPU_UNKNOWN;
+	}
+	if (fputype != FPU_UNKNOWN) {
+		fpu_make_idle_frame();
+		vec_init_fp();
+	}
+#else
+	fputype = FPU_NONE;
+#endif
 }

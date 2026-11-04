@@ -1,6 +1,6 @@
 /* Specific command window processing.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,58 +19,47 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_COMMAND_H
-#define TUI_TUI_COMMAND_H
+#ifndef GDB_TUI_TUI_COMMAND_H
+#define GDB_TUI_TUI_COMMAND_H
 
 #include "tui/tui-data.h"
 
 /* The TUI command window.  */
-struct tui_cmd_window : public tui_win_info
+struct tui_cmd_window
+  : public tui_noscroll_window, tui_nobox_window, tui_always_visible_window
 {
   tui_cmd_window () = default;
 
   DISABLE_COPY_AND_ASSIGN (tui_cmd_window);
-
-  void refresh_window () override
-  {
-  }
 
   const char *name () const override
   {
     return CMD_NAME;
   }
 
-  bool can_scroll () const override
-  {
-    return false;
-  }
-
-  bool can_box () const override
-  {
-    return false;
-  }
-
   void resize (int height, int width, int origin_x, int origin_y) override;
 
-  void make_visible (bool visible) override
+  /* Compute the minimum height of this window.  */
+  virtual int min_height () const override
   {
-    /* The command window can't be made invisible.  */
+    int preferred_min = tui_win_info::min_height ();
+    int max = max_height ();
+    /* If there is enough space to accommodate the preferred minimum height,
+       use it.  Otherwise, use as much as possible.  */
+    return (preferred_min <= max
+	    ? preferred_min
+	    : max);
   }
 
   int start_line = 0;
-
-protected:
-
-  void do_scroll_vertical (int num_to_scroll) override
-  {
-  }
-
-  void do_scroll_horizontal (int num_to_scroll) override
-  {
-  }
 };
 
-/* Refresh the command window.  */
-extern void tui_refresh_cmd_win (void);
+/* Return the instance of the command windows.  */
 
-#endif /* TUI_TUI_COMMAND_H */
+inline tui_cmd_window *
+tui_cmd_win ()
+{
+  return dynamic_cast<tui_cmd_window *> (tui_win_list[CMD_WIN]);
+}
+
+#endif /* GDB_TUI_TUI_COMMAND_H */

@@ -10,7 +10,7 @@
 # information regarding copyright ownership.
 
 import dns.message
-
+import dns.rrset
 import pytest
 
 import isctest

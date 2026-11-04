@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux, architecture independent.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_TDEP_H
-#define LINUX_TDEP_H
+#ifndef GDB_LINUX_TDEP_H
+#define GDB_LINUX_TDEP_H
 
 #include "bfd.h"
 #include "displaced-stepping.h"
@@ -72,7 +72,7 @@ extern displaced_step_prepare_status linux_displaced_step_prepare
 /* Implementation of gdbarch_displaced_step_finish.  */
 
 extern displaced_step_finish_status linux_displaced_step_finish
-  (gdbarch *arch, thread_info *thread, gdb_signal sig);
+  (gdbarch *arch, thread_info *thread, const target_waitstatus &status);
 
 /* Implementation of gdbarch_displaced_step_copy_insn_closure_by_addr.  */
 
@@ -94,7 +94,7 @@ extern int linux_is_uclinux (void);
    parse auxv entries.
 
    On error, 0 is returned.  */
-extern CORE_ADDR linux_get_hwcap (const gdb::optional<gdb::byte_vector> &auxv,
+extern CORE_ADDR linux_get_hwcap (const std::optional<gdb::byte_vector> &auxv,
 				  struct target_ops *target, gdbarch *gdbarch);
 
 /* Same as the above, but obtain all the inputs from the current inferior.  */
@@ -105,7 +105,7 @@ extern CORE_ADDR linux_get_hwcap ();
    parse auxv entries.
 
    On error, 0 is returned.  */
-extern CORE_ADDR linux_get_hwcap2 (const gdb::optional<gdb::byte_vector> &auxv,
+extern CORE_ADDR linux_get_hwcap2 (const std::optional<gdb::byte_vector> &auxv,
 				   struct target_ops *target, gdbarch *gdbarch);
 
 /* Same as the above, but obtain all the inputs from the current inferior.  */
@@ -117,4 +117,4 @@ extern CORE_ADDR linux_get_hwcap2 ();
 extern struct link_map_offsets *linux_ilp32_fetch_link_map_offsets ();
 extern struct link_map_offsets *linux_lp64_fetch_link_map_offsets ();
 
-#endif /* linux-tdep.h */
+#endif /* GDB_LINUX_TDEP_H */

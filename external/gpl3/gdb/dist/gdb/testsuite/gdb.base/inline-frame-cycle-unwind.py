@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024 Free Software Foundation, Inc.
+# Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -65,6 +65,10 @@ class TestUnwinder(Unwinder):
 
         for reg in pending_frame.architecture().registers("general"):
             val = pending_frame.read_register(reg)
+            # Having unavailable registers leads to a fall back to the standard
+            # unwinders.  Don't add unavailable registers to avoid this.
+            if str(val) == "<unavailable>":
+                continue
             unwinder.add_saved_register(reg, val)
         return unwinder
 

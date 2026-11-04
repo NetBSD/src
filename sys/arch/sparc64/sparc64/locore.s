@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.434.2.1 2025/08/02 05:56:10 perseant Exp $	*/
+/*	$NetBSD: locore.s,v 1.434.2.2 2026/11/04 23:21:23 perseant Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -237,6 +237,227 @@
 	ba,a,pt	%xcc, pcbspill_other
 	 nop
 	.align 128
+	.endm
+	
+	.macro SAVE_WINREGS reg1, reg2
+	
+	! Thrashes all input parameter registers
+	
+#ifdef DEBUG
+	
+	! Save window registers
+	mov	%g0, \reg1
+	rdpr	%cansave, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%canrestore, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%otherwin, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%cleanwin, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%cwp, \reg2
+	or	\reg1, \reg2, \reg1
+	sllx	\reg1, 8, \reg1
+	rdpr	%wstate, \reg2
+	or	\reg1, \reg2, \reg1
+	!sllx	\reg1, 8, \reg1
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_WINREGS, \reg2
+	stx	\reg1, [\reg2]
+	
+	rdpr	%cwp, \reg1			! save %cwp for later
+	
+	! window 0 - save local and in registers to trapframe
+	wrpr	0, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW0_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW0_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 1 - save local and in registers to trapframe
+	wrpr	1, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW1_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW1_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+	
+	! window 2 - save local and in registers to trapframe
+	wrpr	2, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW2_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW2_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 3 - save local and in registers to trapframe
+	wrpr	3, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW3_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW3_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 4 - save local and in registers to trapframe
+	wrpr	4, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW4_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW4_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 5 - save local and in registers to trapframe
+	wrpr	5, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW5_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW5_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 6 - save local and in registers to trapframe
+	wrpr	6, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW6_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW6_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	! window 7 - save local and in registers to trapframe
+	wrpr	7, %cwp
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW7_LOCAL, \reg2
+	stx	%l0, [\reg2 + (0*8)]
+	stx	%l1, [\reg2 + (1*8)]
+	stx	%l2, [\reg2 + (2*8)]
+	stx	%l3, [\reg2 + (3*8)]
+	stx	%l4, [\reg2 + (4*8)]
+	stx	%l5, [\reg2 + (5*8)]
+	stx	%l6, [\reg2 + (6*8)]
+	stx	%l7, [\reg2 + (7*8)]
+	set	CPUINFO_VA, \reg2
+	add	\reg2, CI_RW7_IN, \reg2
+	stx	%i0, [\reg2 + (0*8)]
+	stx	%i1, [\reg2 + (1*8)]
+	stx	%i2, [\reg2 + (2*8)]
+	stx	%i3, [\reg2 + (3*8)]
+	stx	%i4, [\reg2 + (4*8)]
+	stx	%i5, [\reg2 + (5*8)]
+	stx	%i6, [\reg2 + (6*8)]
+	stx	%i7, [\reg2 + (7*8)]
+
+	wrpr	\reg1, %cwp			! restore %cwp from previously saved value
+	
+#endif
 	.endm
 	
 #endif
@@ -1095,7 +1316,8 @@ _C_LABEL(trapbase_sun4v):
 	VTRAP(T_TEXTFAULT, sun4v_tl0_itsb_miss)			! 0x009 - inst MMU miss
 	sun4v_trap_entry 26					! 0x00a-0x023
 	CLEANWIN0						! 0x24-0x27 = clean window
-	sun4v_trap_entry 9					! 0x028-0x030			
+	sun4v_trap_entry 8					! 0x028-0x02f			
+	VTRAP(T_DATAFAULT, sun4v_datatrap)	! 0x030 = data access exception (UA 2005)
 	VTRAP(T_DATA_MMU_MISS, sun4v_dtsb_miss)			! 0x031 = data MMU miss
 	sun4v_trap_entry 2					! 0x032-0x033
 	TRAP(T_ALIGN)						! 0x034 = address alignment error
@@ -3343,7 +3565,7 @@ sun4v_tl1_ptbl_miss:
 	bgeu,pt	%xcc, 1f
 	 nop
 
-	/* We had a miss inside rtf_user_fault_start/rtf_user_fault_end block (FILL)
+	/* We had a miss inside rtf_user_fault_start/rtf_user_fault_end block (FILL) */
 	
 	/* Fixup %cwp. */
 	rdpr	%cwp, %g1
@@ -3469,13 +3691,25 @@ pcbspill:
 	lduba	[%g6 + PCB_NSAVED] %asi, %g7		! Fetch current nsaved from the pcb
 	sllx	%g7, 7, %g5				! 8+8 registers each 8 bytes = 128 bytes (2^7)
 	add	%g6, %g5, %g5				! Offset into pcb_rw
-	SPILL	stxa, %g5 + PCB_RW, 8, %asi		! Store the locals and ins 
-	saved
+1:	
+	SPILL	stxa, %g5 + PCB_RW, 8, %asi		! Store the locals and ins
 
-	sllx	%g7, 3, %g5
-	add	%g6, %g5, %g5
+	add	%g5, 16*8, %g5				! Next location for saved register windows
 
-	inc	%g7
+	stxa	%o6, [%g5 + PCB_RW + (14*8)] %asi	! Save %sp so we can write these all out
+	
+	saved						! Increments %cansave and decrements %canrestore
+							! or %otherwin	
+	
+	rdpr	%cwp, %g1				! shift register window forward
+	inc	%g1
+	wrpr	%g1, %cwp
+	inc	%g7					! increment number of saved register windows
+
+	rdpr	%otherwin, %g1				! Check to see if done spill'ing otherwin
+	brnz,pt	%g1, 1b
+	 nop
+
 	stba	%g7, [%g6 + PCB_NSAVED] %asi
 
 	retry
@@ -3487,7 +3721,6 @@ pcbspill_fail:
 
 
 pcbspill_other:
-	
 	set	CPUINFO_VA, %g6
 	ldx	[%g6 + CI_CPCB], %g6
 	
@@ -3533,8 +3766,9 @@ pcbspill_other:
 
 	stxa	%o6, [%g5 + PCB_RW + (14*8)] %asi	! Save %sp so we can write these all out
 	
-	saved						! Increments %cansave and decrements %otherwin
-	
+	saved						! Increments %cansave and decrements %canrestore
+							! or %otherwin	
+
 	rdpr	%cwp, %g1				! shift register window forward
 	inc	%g1
 	wrpr	%g1, %cwp
@@ -7948,6 +8182,26 @@ ENTRY(sparc64_ipi_ccall)
 
 #endif
 
+ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without patching or
+	 * conditionalizing away the MEMBAR instruction on uniprocessor
+	 * builds or boots -- because under virtualization, we still
+	 * have to coordinate with a `device' backed by a hypervisor
+	 * that is potentially on another physical CPU even if we
+	 * observe only one virtual CPU as the guest.
+	 *
+	 * See common/lib/libc/arch/sparc64/atomic/membar_ops.S for why
+	 * we avoid using the delay slot and keep this in sync with the
+	 * implementation of membar_sync there.
+	 */
+	membar	#StoreLoad
+	retl
+	 nop
+END(paravirt_membar_sync)
 
 	.data
 	_ALIGN

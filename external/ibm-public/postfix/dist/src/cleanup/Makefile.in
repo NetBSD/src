@@ -15,7 +15,8 @@ HDRS	=
 TESTSRC	= 
 DEFS	= -I. -I$(INC_DIR) -D$(SYSTYPE)
 CFLAGS	= $(DEBUG) $(OPT) $(DEFS)
-TESTPROG= cleanup_masquerade cleanup_milter cleanup_envelope_test
+TESTPROG= cleanup_masquerade cleanup_milter cleanup_envelope_test \
+	cleanup_message_test
 PROG	= cleanup
 INC_DIR	= ../../include
 LIBS	= ../../lib/lib$(LIB_PREFIX)master$(LIB_SUFFIX) \
@@ -62,10 +63,18 @@ CLEANUP_SIZE_TEST_OBJS = cleanup_envelope.o cleanup_state.o cleanup_out.o \
 cleanup_envelope_test: cleanup_envelope_test.o $(CLEANUP_SIZE_TEST_OBJS) $(LIBS)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(CLEANUP_SIZE_TEST_OBJS) $(LIBS) $(SYSLIBS)
 
-tests:	cleanup_masquerade_test milter_tests test_cleanup_envelope
+CLEANUP_MESG_TEST_OBJS = cleanup_message.o cleanup_state.o cleanup_out.o
+cleanup_message_test: cleanup_message_test.o $(CLEANUP_MESG_TEST_OBJS) $(LIBS)
+	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(CLEANUP_MESG_TEST_OBJS) $(LIBS) $(SYSLIBS)
+
+tests:	cleanup_masquerade_test milter_tests test_cleanup_envelope \
+	test_cleanup_message
 
 test_cleanup_envelope: cleanup_envelope_test
 	$(SHLIB_ENV) $(VALGRIND) ./cleanup_envelope_test
+
+test_cleanup_message: cleanup_message_test
+	$(SHLIB_ENV) $(VALGRIND) ./cleanup_message_test
 
 milter_tests: cleanup_milter_test bug_tests \
 	cleanup_milter_test2 cleanup_milter_test3 cleanup_milter_test4 \
@@ -827,6 +836,7 @@ cleanup_api.o: ../../include/msg_stats.h
 cleanup_api.o: ../../include/myflock.h
 cleanup_api.o: ../../include/mymalloc.h
 cleanup_api.o: ../../include/nvtable.h
+cleanup_api.o: ../../include/pol_stats.h
 cleanup_api.o: ../../include/rec_type.h
 cleanup_api.o: ../../include/recipient_list.h
 cleanup_api.o: ../../include/resolve_clnt.h
@@ -901,6 +911,7 @@ cleanup_bounce.o: ../../include/msg_stats.h
 cleanup_bounce.o: ../../include/myflock.h
 cleanup_bounce.o: ../../include/mymalloc.h
 cleanup_bounce.o: ../../include/nvtable.h
+cleanup_bounce.o: ../../include/pol_stats.h
 cleanup_bounce.o: ../../include/rec_attr_map.h
 cleanup_bounce.o: ../../include/rec_type.h
 cleanup_bounce.o: ../../include/recipient_list.h
@@ -1254,6 +1265,41 @@ cleanup_message.o: ../../include/vstream.h
 cleanup_message.o: ../../include/vstring.h
 cleanup_message.o: cleanup.h
 cleanup_message.o: cleanup_message.c
+cleanup_message_test.o: ../../include/argv.h
+cleanup_message_test.o: ../../include/attr.h
+cleanup_message_test.o: ../../include/been_here.h
+cleanup_message_test.o: ../../include/check_arg.h
+cleanup_message_test.o: ../../include/cleanup_user.h
+cleanup_message_test.o: ../../include/dict.h
+cleanup_message_test.o: ../../include/dsn_mask.h
+cleanup_message_test.o: ../../include/header_body_checks.h
+cleanup_message_test.o: ../../include/header_opts.h
+cleanup_message_test.o: ../../include/hfrom_format.h
+cleanup_message_test.o: ../../include/htable.h
+cleanup_message_test.o: ../../include/mail_conf.h
+cleanup_message_test.o: ../../include/mail_params.h
+cleanup_message_test.o: ../../include/mail_stream.h
+cleanup_message_test.o: ../../include/maps.h
+cleanup_message_test.o: ../../include/match_list.h
+cleanup_message_test.o: ../../include/milter.h
+cleanup_message_test.o: ../../include/mime_state.h
+cleanup_message_test.o: ../../include/msg.h
+cleanup_message_test.o: ../../include/msg_vstream.h
+cleanup_message_test.o: ../../include/myflock.h
+cleanup_message_test.o: ../../include/mymalloc.h
+cleanup_message_test.o: ../../include/nvtable.h
+cleanup_message_test.o: ../../include/rec_type.h
+cleanup_message_test.o: ../../include/record.h
+cleanup_message_test.o: ../../include/resolve_clnt.h
+cleanup_message_test.o: ../../include/string_list.h
+cleanup_message_test.o: ../../include/stringops.h
+cleanup_message_test.o: ../../include/sys_defs.h
+cleanup_message_test.o: ../../include/tok822.h
+cleanup_message_test.o: ../../include/vbuf.h
+cleanup_message_test.o: ../../include/vstream.h
+cleanup_message_test.o: ../../include/vstring.h
+cleanup_message_test.o: cleanup.h
+cleanup_message_test.o: cleanup_message_test.c
 cleanup_milter.o: ../../include/argv.h
 cleanup_milter.o: ../../include/attr.h
 cleanup_milter.o: ../../include/been_here.h
@@ -1366,6 +1412,7 @@ cleanup_out_recipient.o: ../../include/msg_stats.h
 cleanup_out_recipient.o: ../../include/myflock.h
 cleanup_out_recipient.o: ../../include/mymalloc.h
 cleanup_out_recipient.o: ../../include/nvtable.h
+cleanup_out_recipient.o: ../../include/pol_stats.h
 cleanup_out_recipient.o: ../../include/rec_type.h
 cleanup_out_recipient.o: ../../include/recipient_list.h
 cleanup_out_recipient.o: ../../include/resolve_clnt.h

@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_TARGET_H
-#define SOLIB_TARGET_H
+#ifndef GDB_SOLIB_TARGET_H
+#define GDB_SOLIB_TARGET_H
 
-struct solib_ops;
-extern const solib_ops solib_target_so_ops;
+#include "solib.h"
 
-#endif /* solib-target.h */
+/* solib_ops for systems fetching solibs from the target.  */
+
+struct target_solib_ops : solib_ops
+{
+  using solib_ops::solib_ops;
+
+  void relocate_section_addresses (solib &so, target_section *) const override;
+  owning_intrusive_list<solib> current_sos () const override;
+  bool in_dynsym_resolve_code (CORE_ADDR pc) const override;
+};
+
+/* Return a new solib_ops for systems fetching solibs from the target.  */
+
+solib_ops_up make_target_solib_ops (program_space *pspace);
+
+#endif /* GDB_SOLIB_TARGET_H */

@@ -1,10 +1,10 @@
-# $NetBSD: Makefile,v 1.36 2024/04/28 12:49:08 riastradh Exp $
+# $NetBSD: Makefile,v 1.36.2.1 2026/11/04 23:28:14 perseant Exp $
 
 .include <bsd.own.mk>
 
-TESTS_SUBDIRS=	csu libarchive libbluetooth libc libcrypt libcurses \
+TESTS_SUBDIRS=	csu libarchive libc libcrypt libcurses \
 		libexecinfo libi386 libm libnvmm libobjc libposix libppath \
-		libprop libpthread librefuse librt libstdc++ libtre libusbhid \
+		libprop libpthread librefuse librt libstdc++ libtre \
 		libutil libossaudio lua semaphore
 
 TESTS_SUBDIR_INSTALL_ONLY=	libevent
@@ -21,6 +21,10 @@ TESTS_SUBDIRS+= libdes
 ATFFILE_EXTRA_TPS=	liblutok
 .endif
 
+.if (${MKBLUETOOTH} != "no")
+TESTS_SUBDIRS+= libbluetooth
+.endif
+
 .if (${MKSKEY} != "no")
 TESTS_SUBDIRS+= libskey
 .endif
@@ -28,6 +32,10 @@ TESTS_SUBDIRS+= libskey
 .if ${MKSLJIT} != "no"
 TESTS_SUBDIRS+=	libsljit
 TESTS_SUBDIRS+=	libbpfjit
+.endif
+
+.if (${MKUSB} != "no")
+TESTS_SUBDIRS+= libusbhid
 .endif
 
 TESTSDIR=	${TESTSBASE}/lib

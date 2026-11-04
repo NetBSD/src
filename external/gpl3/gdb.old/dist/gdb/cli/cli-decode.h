@@ -1,6 +1,6 @@
 /* Header file for GDB command decoding library.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_DECODE_H
-#define CLI_CLI_DECODE_H
+#ifndef GDB_CLI_CLI_DECODE_H
+#define GDB_CLI_CLI_DECODE_H
 
 /* This file defines the private interfaces for any code implementing
    command internals.  */
@@ -28,6 +28,9 @@
 #include "completer.h"
 #include "gdbsupport/intrusive_list.h"
 #include "gdbsupport/buildargv.h"
+
+/* The allowed length of a line in a documentation string.  */
+constexpr int cli_help_line_length = 80;
 
 /* Not a set/show command.  Note that some commands which begin with
    "set" or "show" might be in this category, if their syntax does
@@ -233,7 +236,7 @@ struct cmd_list_element
   void (*destroyer) (struct cmd_list_element *self, void *context) = nullptr;
 
   /* Setting affected by "set" and "show".  Not used if type is not_set_cmd.  */
-  gdb::optional<setting> var;
+  std::optional<setting> var;
 
   /* Pointer to NULL terminated list of enumerated values (like
      argv).  */
@@ -283,7 +286,7 @@ private:
 extern void help_cmd (const char *, struct ui_file *);
 
 extern void apropos_cmd (struct ui_file *, struct cmd_list_element *,
-			 bool verbose, compiled_regex &, const char *);
+			 bool verbose, compiled_regex &);
 
 /* Used to mark commands that don't do anything.  If we just leave the
    function field NULL, the command is interpreted as a help topic, or
@@ -313,4 +316,4 @@ extern int cli_user_command_p (struct cmd_list_element *);
 
 extern int find_command_name_length (const char *);
 
-#endif /* CLI_CLI_DECODE_H */
+#endif /* GDB_CLI_CLI_DECODE_H */

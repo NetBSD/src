@@ -1,5 +1,5 @@
 /* GDB self-testing.
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SELFTEST_H
-#define COMMON_SELFTEST_H
+#ifndef GDBSUPPORT_SELFTEST_H
+#define GDBSUPPORT_SELFTEST_H
 
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/function-view.h"
@@ -93,4 +93,4 @@ extern void reset ();
       error (_("self-test failed at %s:%d"), __FILE__, __LINE__);	\
   } while (0)
 
-#endif /* COMMON_SELFTEST_H */
+#endif /* GDBSUPPORT_SELFTEST_H */

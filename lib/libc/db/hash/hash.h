@@ -1,4 +1,4 @@
-/*	$NetBSD: hash.h,v 1.17 2020/02/21 22:04:06 kamil Exp $	*/
+/*	$NetBSD: hash.h,v 1.17.10.1 2026/11/04 23:19:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993, 1994
@@ -166,7 +166,7 @@ typedef struct htab	 {		/* Memory resident data structure */
  * the table, we can allocate extra pages.  So, an overflow page number has
  * the top 5 bits indicate which split point and the lower 11 bits indicate
  * which page at that split point is indicated (pages within split points are
- * numberered starting with 1).
+ * numbered starting with 1).
  */
 
 #define SPLITSHIFT	11

@@ -11,13 +11,21 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "headers.*",
         "ns*/example*.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_libnghttp2,
+    isctest.mark.with_fips_dh,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_doth(run_tests_sh):

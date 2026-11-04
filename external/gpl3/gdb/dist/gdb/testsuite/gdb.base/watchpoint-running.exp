@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,7 +43,8 @@ proc test {stop_mode hw} {
 	    # default.
 	    append ::GDBFLAGS " -ex \"maint set target-non-stop on\""
 	}
-	clean_restart $::binfile
+	clean_restart
+	gdb_load $::binfile
     }
 
     gdb_test_no_output "set can-use-hw-watchpoints $hw"
@@ -105,7 +106,7 @@ proc test {stop_mode hw} {
 	    # GDB should transparently temporarily pause the inferior,
 	    # to force it to single step, but it doesn't, so the
 	    # thread continues running free.
-	    setup_kfail gdb/111111 *-*-*
+	    setup_kfail gdb/31833 *-*-*
 
 	    # No point waiting too much for output we know isn't
 	    # coming.

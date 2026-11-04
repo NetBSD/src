@@ -1,4 +1,4 @@
-/* $NetBSD: gmac.h,v 1.3 2020/06/29 23:34:48 riastradh Exp $ */
+/* $NetBSD: gmac.h,v 1.3.26.1 2026/11/04 23:28:01 perseant Exp $ */
 /* OpenBSD: gmac.h,v 1.1 2010/09/22 11:54:23 mikeb Exp */
 
 /*
@@ -19,6 +19,8 @@
 
 #ifndef _GMAC_H_
 #define _GMAC_H_
+
+#include <sys/types.h>
 
 #include <crypto/aes/aes.h>
 

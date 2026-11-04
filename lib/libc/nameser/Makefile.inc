@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2 2024/06/07 20:50:13 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.2.2.1 2026/11/04 23:19:20 perseant Exp $
 
 # net sources
-.PATH: ${.CURDIR}/nameser
+.PATH:	${.PARSEDIR}
 
 SRCS+=	ns_name.c ns_netint.c ns_parse.c ns_print.c \
 	ns_samedomain.c ns_ttl.c

@@ -1,4 +1,4 @@
-/*	$NetBSD: param3.h,v 1.57 2018/03/03 03:19:36 mrg Exp $	*/
+/*	$NetBSD: param3.h,v 1.57.40.1 2026/11/04 23:21:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,9 +49,15 @@
  * logical pages.
  * Note maximum value can't be so large due to limited KVA space as above.
  */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_DEFAULT	((16 * 1024 * 1024) >> PAGE_SHIFT)
 
-/* Use smaller UBC_NWINS to avoid KVA space shortage. */
-#define	UBC_NWINS	128
+#if !defined(__mc68010__)	/* sun68k libsa always builds for 68010 */
+/*
+ * Clamp UBC parameters; the default consume way to much kernel VA space,
+ * and it's in short supply on Sun3.
+ */
+#define	UBC_WINSHIFT	13		/* 8KB */
+#define	UBC_NWINS	128		/* -> 1024KB */
+
 #define	MAXEXEC		1
+#endif

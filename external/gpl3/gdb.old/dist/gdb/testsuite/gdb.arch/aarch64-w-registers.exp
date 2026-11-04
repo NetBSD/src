@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2023 Free Software Foundation, Inc.
+# Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 # Check if the W registers have the expected size and if setting/fetching
 # values from W registers works correctly for both big and little endian.
 
-if {![is_aarch64_target]} {
-    verbose "Skipping ${gdb_test_file_name}."
-    return
-}
+require is_aarch64_target
 
 standard_testfile
 if { [prepare_for_testing "failed to prepare" $testfile $srcfile {nodebug}]} {

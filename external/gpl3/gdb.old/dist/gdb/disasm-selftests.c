@@ -1,6 +1,6 @@
 /* Self tests for disassembler for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "disasm.h"
 #include "gdbsupport/selftest.h"
 #include "selftest-arch.h"
@@ -93,10 +92,9 @@ get_test_insn (struct gdbarch *gdbarch, size_t *len)
       insn = xstormy16_insn;
       *len = sizeof (xstormy16_insn);
       break;
-    case bfd_arch_nios2:
     case bfd_arch_score:
     case bfd_arch_riscv:
-      /* nios2, riscv, and score need to know the current instruction
+      /* riscv and score need to know the current instruction
 	 to select breakpoint instruction.  Give the breakpoint
 	 instruction kind explicitly.  */
       {
@@ -126,7 +124,7 @@ get_test_insn (struct gdbarch *gdbarch, size_t *len)
 	if (info->bits_per_address > sizeof (bfd_vma) * CHAR_BIT)
 	  return insn;
       }
-      /* fall through */
+      [[fallthrough]];
     default:
     generic_case:
       {
@@ -166,7 +164,7 @@ get_test_insn (struct gdbarch *gdbarch, size_t *len)
 		kind = gdbarch_breakpoint_kind_from_pc (gdbarch, &pc);
 		insn = gdbarch_sw_breakpoint_from_kind (gdbarch, kind, &bplen);
 	      }
-	    catch (...)
+	    catch (const gdb_exception_error &)
 	      {
 		continue;
 	      }

@@ -17,27 +17,28 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
 
 <b><a name="description">DESCRIPTION</a></b>
        The  Postfix  mail system uses optional tables for address rewriting or
-       mail routing. These tables are usually in <b>dbm</b> or <b>db</b> format.
+       mail routing. These tables are usually in <b><a href="lmdb_table.5.html">lmdb</a>:</b>, <b><a href="CDB_README.html">cdb</a>:</b>, <b><a href="DATABASE_README.html#types">hash</a>:</b>,  or  <b><a href="DATABASE_README.html#types">dbm</a>:</b>
+       format.
 
-       Alternatively, lookup tables can be specified  as  memcache  instances.
-       To  use memcache lookups, define a memcache source as a lookup table in
+       Alternatively, lookup tables can be specified as memcache instances. To
+       use memcache lookups, define a memcache source as  a  lookup  table  in
        <a href="postconf.5.html">main.cf</a>, for example:
 
            <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="memcache_table.5.html">memcache</a>:/etc/postfix/memcache-aliases.cf
 
-       The file /etc/postfix/memcache-aliases.cf has the same  format  as  the
+       The  file  /etc/postfix/memcache-aliases.cf  has the same format as the
        Postfix <a href="postconf.5.html">main.cf</a> file, and specifies the parameters described below.
 
-       The  Postfix  memcache  client  supports the lookup, update, delete and
-       sequence (first/next) operations. The  sequence  operation  requires  a
+       The Postfix memcache client supports the  lookup,  update,  delete  and
+       sequence  (first/next)  operations.  The  sequence operation requires a
        backup database that supports the operation.
 
 <b><a name="memcache_main_parameters">MEMCACHE MAIN PARAMETERS</a></b>
        <b>memcache (default: inet:localhost:11211)</b>
-              The  memcache  server  (note: singular) that Postfix will try to
-              connect to.  For a TCP server  specify  "inet:"  followed  by  a
+              The memcache server (note: singular) that Postfix  will  try  to
+              connect  to.   For  a  TCP  server specify "inet:" followed by a
               hostname or address, ":", and a port name or number.  Specify an
-              IPv6 address inside "[]".   For  a  UNIX-domain  server  specify
+              IPv6  address  inside  "[]".   For  a UNIX-domain server specify
               "unix:" followed by the socket pathname. Examples:
 
                   memcache = inet:memcache.example.com:11211
@@ -45,15 +46,15 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
                   memcache = inet:[fc00:8d00:189::3]:11211
                   memcache = unix:/path/to/socket
 
-              NOTE:  to  access  a  UNIX-domain  socket  with  the <a href="proxymap.8.html">proxymap(8)</a>
-              server, the socket must be accessible by the unprivileged  post-
+              NOTE: to  access  a  UNIX-domain  socket  with  the  <a href="proxymap.8.html">proxymap(8)</a>
+              server,  the socket must be accessible by the unprivileged post-
               fix user.
 
        <b>backup (default: undefined)</b>
               An optional Postfix database that provides persistent backup for
-              the memcache database. The Postfix memcache client  will  update
-              the  memcache  database whenever it looks up or changes informa-
-              tion in the persistent database. Specify a Postfix  "<a href="DATABASE_README.html">type:table</a>"
+              the  memcache  database. The Postfix memcache client will update
+              the memcache database whenever it looks up or  changes  informa-
+              tion  in the persistent database. Specify a Postfix "<a href="DATABASE_README.html">type:table</a>"
               database. Examples:
 
                   # Non-shared postscreen cache.
@@ -64,41 +65,53 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
 
               Access to remote proxymap servers is under development.
 
-              NOTE  1:  When  sharing  a persistent <a href="postscreen.8.html"><b>postscreen</b>(8)</a> or <a href="verify.8.html"><b>verify</b>(8)</a>
-              cache,     disable     automatic     cache     cleanup      (set
-              *_cache_cleanup_interval  =  0) except with one Postfix instance
+              NOTE 1: When sharing a  persistent  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  or  <a href="verify.8.html"><b>verify</b>(8)</a>
+              cache,      disable     automatic     cache     cleanup     (set
+              *_cache_cleanup_interval = 0) except with one  Postfix  instance
               that will be responsible for cache cleanup.
 
-              NOTE 2: When multiple tables share the same  memcache  database,
-              each  table  should  use  the  <b>key_format</b> feature (see below) to
-              prepend its own unique string to  the  lookup  key.   Otherwise,
+              NOTE  2:  When multiple tables share the same memcache database,
+              each table should use the  <b>key_format</b>  feature  (see  below)  to
+              prepend  its  own  unique  string to the lookup key.  Otherwise,
               automatic <a href="postscreen.8.html"><b>postscreen</b>(8)</a> or <a href="verify.8.html"><b>verify</b>(8)</a> cache cleanup may not work.
 
-              NOTE 3: When the  backup  database  is  accessed  with  "<a href="proxymap.8.html">proxy</a>:"
-              lookups,  the  full backup database name (including the "<a href="proxymap.8.html">proxy</a>:"
+              NOTE  3:  When  the  backup  database  is accessed with "<a href="proxymap.8.html">proxy</a>:"
+              lookups, the full backup database name (including  the  "<a href="proxymap.8.html">proxy</a>:"
               prefix)   must   be   specified   in   the   proxymap   server's
-              <a href="postconf.5.html#proxy_read_maps">proxy_read_maps</a>   or   <a href="postconf.5.html#proxy_write_maps">proxy_write_maps</a>  setting  (depending  on
+              <a href="postconf.5.html#proxy_read_maps">proxy_read_maps</a>  or  <a href="postconf.5.html#proxy_write_maps">proxy_write_maps</a>  setting   (depending   on
               whether the access is read-only or read-write).
 
        <b>flags (default: 0)</b>
-              Optional flags that should  be  stored  along  with  a  memcache
+              Optional  flags  that  should  be  stored  along with a memcache
               update. The flags are ignored when looking up information.
 
        <b>ttl (default: 3600)</b>
               The expiration time in seconds of memcache updates.
 
-              NOTE  1:  When  using  a memcache table as <a href="postscreen.8.html"><b>postscreen</b>(8)</a> or <a href="verify.8.html"><b>ver-</b></a>
-              <a href="verify.8.html"><b>ify</b>(8)</a>  cache  without  persistent  backup,   specify   a   zero
-              *_cache_cleanup_interval  value  with all Postfix instances that
-              use the memcache, and specify the  largest  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  *_ttl
-              value  or  <a href="verify.8.html"><b>verify</b>(8)</a> *_expire_time value as the memcache table's
+              NOTE 1: When using a memcache table  as  <a href="postscreen.8.html"><b>postscreen</b>(8)</a>  or  <a href="verify.8.html"><b>ver-</b></a>
+              <a href="verify.8.html"><b>ify</b>(8)</a>   cache   without   persistent  backup,  specify  a  zero
+              *_cache_cleanup_interval value with all Postfix  instances  that
+              use  the  memcache,  and specify the largest <a href="postscreen.8.html"><b>postscreen</b>(8)</a> *_ttl
+              value or <a href="verify.8.html"><b>verify</b>(8)</a> *_expire_time value as the  memcache  table's
               <b>ttl</b> value.
 
-              NOTE 2: According to memcache protocol  documentation,  a  value
-              greater  than  30 days (2592000 seconds) specifies absolute UNIX
+              NOTE  2:  According  to memcache protocol documentation, a value
+              greater than 30 days (2592000 seconds) specifies  absolute  UNIX
               time. Smaller values are relative to the time of the update.
 
 <b><a name="memcache_key_parameters">MEMCACHE KEY PARAMETERS</a></b>
+       <b>key_digest (default: empty)</b>
+              After  processing  the  <b>key_format</b> setting, and before sending a
+              request to the memcache server, run the key  through  the  named
+              message  digest  algorithm  and  convert the result to lowercase
+              hexadecimal characters. This prevents a  database  access  error
+              when  keys  may  exceed  the  memcache server's key length limit
+              (usually, 250 bytes). Specify the name of a message digest algo-
+              rithm that is supported by OpenSSL, for example, <b>sha256</b>.
+
+              This  feature  is  available  in  Postfix  3.11  and  later, and
+              requires that Postfix is built with TLS support.
+
        <b>key_format (default: %s)</b>
               Format of the lookup and update keys that the  Postfix  memcache
               client  sends to the memcache server.  By default, these are the
@@ -184,7 +197,7 @@ MEMCACHE_TABLE(5)                                            MEMCACHE_TABLE(5)
        The  Postfix  memcache  client  cannot  be  used for security-sensitive
        tables such as <b><a href="postconf.5.html#alias_maps">alias_maps</a></b> (these may contain "<i>|command</i> and "<i>/file/name</i>"
        destinations),  or <b><a href="postconf.5.html#virtual_uid_maps">virtual_uid_maps</a></b>, <b><a href="postconf.5.html#virtual_gid_maps">virtual_gid_maps</a></b> and <b><a href="postconf.5.html#virtual_mailbox_maps">virtual_mail</a>-</b>
-       <b><a href="postconf.5.html#virtual_mailbox_maps">box_maps</a></b> (these specify UNIX process privileges or "<i>/file/name</i>"  desti-
+       <b><a href="postconf.5.html#virtual_mailbox_maps">box_maps</a></b> (these specify UNIX process privileges for "<i>/file/name</i>" desti-
        nations).   In  a typical deployment a memcache database is writable by
        any process that can talk to the memcache server;  in  contrast,  secu-
        rity-sensitive  tables must never be writable by the unprivileged Post-

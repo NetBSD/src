@@ -1,4 +1,4 @@
-/*	$NetBSD: bwireg.h,v 1.4.26.1 2025/08/02 05:56:41 perseant Exp $	*/
+/*	$NetBSD: bwireg.h,v 1.4.26.2 2026/11/04 23:21:57 perseant Exp $	*/
 /*	$OpenBSD: bwireg.h,v 1.7 2007/11/17 16:50:02 mglocker Exp $	*/
 
 /*
@@ -251,7 +251,9 @@
 #define BWI_TXSTATUS_0			0x00000170
 #define BWI_TXSTATUS_0_MORE		(1 << 0)
 #define BWI_TXSTATUS_0_TXID_MASK	0xffff0000
-#define BWI_TXSTATUS_0_INFO(st)		(((st) & 0xfff0) | (((st) & 0xf) >> 1))
+#define BWI_TXSTATUS_0_DATA_TXCNT_MASK	0x0000f000
+#define BWI_TXSTATUS_0_PENDING		0x00000040
+#define BWI_TXSTATUS_0_AMPDU		0x00000020
 #define BWI_TXSTATUS_1			0x00000174
 
 #define BWI_TXRX_CTRL_BASE		0x200

@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,7 +15,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "aarch32.h"
 
 #include "../features/arm/arm-core.c"
@@ -25,7 +24,7 @@
 /* See aarch32.h.  */
 
 target_desc *
-aarch32_create_target_description ()
+aarch32_create_target_description (bool tls)
 {
   target_desc_up tdesc = allocate_target_description ();
 
@@ -39,7 +38,8 @@ aarch32_create_target_description ()
   /* Create a vfpv3 feature, then a blank NEON feature.  */
   regnum = create_feature_arm_arm_vfpv3 (tdesc.get (), regnum);
   tdesc_create_feature (tdesc.get (), "org.gnu.gdb.arm.neon");
-  regnum = create_feature_arm_arm_tls (tdesc.get (), regnum);
+  if (tls)
+    regnum = create_feature_arm_arm_tls (tdesc.get (), regnum);
 
   return tdesc.release ();
 }

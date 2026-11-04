@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2023 Free Software Foundation, Inc.
+   Copyright 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,11 @@
 	.text
 
 .Ltext0:
+#ifdef __arm__
+	.type	p__top__middle__inside.3062, %function
+#else
 	.type	p__top__middle__inside.3062, @function
+#endif
 p__top__middle__inside.3062:
 .LFB4:
 	.file 1 "p.adb"
@@ -26,7 +30,11 @@ p__top__middle__inside.3062:
 .LBE6:
 
 	.globl	p__top
+#ifdef __arm__
+	.type	p__top, %function
+#else
 	.type	p__top, @function
+#endif
 p__top:
 .LFB2:
         .4byte 0
@@ -246,4 +254,8 @@ p__top:
 .Lline1_begin:
         .byte   0
 
+#ifdef __arm__
+	.section	.note.GNU-stack,"",%progbits
+#else
 	.section	.note.GNU-stack,"",@progbits
+#endif

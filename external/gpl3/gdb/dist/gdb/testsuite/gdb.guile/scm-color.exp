@@ -1,0 +1,119 @@
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.
+# It tests GDB parameter support in Guile.
+
+load_lib gdb-guile.exp
+
+require allow_guile_tests
+require {!is_remote host}
+
+# Start GDB with styling support.
+with_ansi_styling_terminal {
+    clean_restart
+}
+
+gdb_install_guile_utils
+gdb_install_guile_module
+
+gdb_test_no_output [concat "guile (define (print_color_attrs c) " \
+    "(display (color-string c)) (display \" \") " \
+    "(display (color-colorspace c)) (display \" \") " \
+    "(display (color-none? c)) (display \" \") " \
+    "(display (color-indexed? c)) (display \" \") " \
+    "(display (color-direct? c)) (newline))"] \
+    "print_color_attrs helper"
+
+gdb_test "guile (print_color_attrs (make-color))" \
+    "none 0 #t #f #f" \
+    "print attrs of a color without params"
+
+gdb_test_no_output "guile (define c (make-color \"green\"))" \
+    "create color from basic name string"
+gdb_test "guile (print_color_attrs c)" "green 1 #f #t #f" \
+    "print attrs of a basic color name"
+gdb_test "guile (print (color-index c))" "2" \
+    "print index of a basic color name"
+
+gdb_test_no_output "guile (define c (make-color 2))" \
+    "create color from basic index"
+gdb_test "guile (print_color_attrs c)" "green 1 #f #t #f" \
+    "print attrs of a basic color"
+gdb_test "guile (print (color-index c))" "2" \
+    "print index of a basic color"
+
+gdb_test_no_output "guile (define c (make-color 14))" \
+    "create color from integer 14"
+gdb_test "guile (print_color_attrs c)" "14 2 #f #t #f" \
+    "print attrs of an color 14"
+gdb_test "guile (print (color-index c))" "14" \
+    "print index of color 14"
+
+gdb_test_no_output "guile (define c (make-color 2 #:color-space COLORSPACE_ANSI_8COLOR))" \
+    "create color from basic index and ansi colorspace"
+gdb_test "guile (print_color_attrs c)" "green 1 #f #t #f" \
+    "print attrs of a basic color with ansi colorspace"
+gdb_test "guile (print (color-index c))" "2" \
+    "print index of a basic color with ansi colorspace"
+
+gdb_test_no_output "guile (define c (make-color 2 #:color-space COLORSPACE_XTERM_256COLOR))" \
+    "create color from basic index and xterm256 colorspace"
+gdb_test "guile (print_color_attrs c)" "2 3 #f #t #f" \
+    "print attrs of a basic color with xterm256 colorspace"
+gdb_test "guile (print (color-index c))" "2" \
+    "print index of a basic color with xterm256 colorspace"
+
+gdb_test_no_output "guile (define c (make-color '(171 205 239) #:color-space COLORSPACE_RGB_24BIT))" \
+    "create color from rgb components"
+gdb_test "guile (print_color_attrs c)" "#ABCDEF 4 #f #f #t" \
+    "print attrs of an RGB color"
+gdb_test "guile (print (color-components c))" "\\(171 205 239\\)" \
+    "print components of an RGB color"
+
+gdb_test_no_output "guile (define c (make-color \"none\"))" \
+    "create color from string none"
+gdb_test "guile (print_color_attrs c)" "none 0 #t #f #f" \
+    "print attrs of a color none"
+
+gdb_test_no_output "guile (define c (make-color \"254\"))" \
+    "create color from string 254"
+gdb_test "guile (print_color_attrs c)" "254 3 #f #t #f" \
+    "print attrs of an color 254"
+gdb_test "guile (print (color-index c))" "254" \
+    "print index of color 254"
+
+gdb_test_no_output "guile (define c_none (make-color \"none\"))" \
+    "save default color"
+gdb_test_no_output "guile (define c_red (make-color \"red\"))" \
+    "save blue color"
+gdb_test_no_output "guile (define c_green (make-color \"green\"))" \
+    "save yellow color"
+gdb_test [concat "guile " \
+    "(display (color-escape-sequence c_red #t)) " \
+    "(display (color-escape-sequence c_green #f)) " \
+    "(display \"red on green\") " \
+    "(display (color-escape-sequence c_none #f)) " \
+    "(display \" red on default\") " \
+    "(display (color-escape-sequence c_none #t)) " \
+    "(newline)"] \
+    "\033\\\[31m\033\\\[42mred on green\033\\\[49m red on default\033\\\[39m" \
+    "escape sequences"
+
+# Ensure that turning styling off means no escape sequences.
+gdb_test_no_output "set style enabled off"
+gdb_test_no_output "guile (display (color-escape-sequence c_red #t))"
+gdb_test_no_output "guile (display (color-escape-sequence c_red #f))"
+gdb_test_no_output "set style enabled on"

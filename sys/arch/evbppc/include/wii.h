@@ -1,4 +1,4 @@
-/* $NetBSD: wii.h,v 1.7.4.1 2025/08/02 05:55:35 perseant Exp $ */
+/* $NetBSD: wii.h,v 1.7.4.2 2026/11/04 23:20:36 perseant Exp $ */
 
 /*-
  * Copyright (c) 2024 Jared McNeill <jmcneill@invisible.ca>
@@ -48,9 +48,6 @@
 #define EFB_BASE			0x08000000
 #define EFB_SIZE			0x00300000	/* 3 MB */
 
-#define BROADWAY_BASE			0x0c000000
-#define BROADWAY_SIZE			0x00000004
-
 #define CP_BASE				0x0c000000
 #define CP_SIZE				0x0c000080
 
@@ -68,6 +65,9 @@
 
 #define WGPIPE_BASE			0x0c008000
 #define WGPIPE_SIZE			0x00000004
+
+#define SI_BASE				0x0d006400
+#define SI_SIZE				0x100
 
 #define EXI_BASE			0x0d006800
 #define EXI_SIZE			0x00000080
@@ -91,9 +91,9 @@
 #define ARM_START			0x13400000
 #define ARM_SIZE			0x00c00000
 
-#define BUS_FREQ_HZ			243000000
-#define CPU_FREQ_HZ			(BUS_FREQ_HZ * 3)
-#define TIMEBASE_FREQ_HZ		(BUS_FREQ_HZ / 4)
+#define WII_BUS_FREQ_HZ			243000000
+#define WII_CPU_FREQ_HZ			(WII_BUS_FREQ_HZ * 3)
+#define WII_TIMEBASE_FREQ_HZ		(WII_BUS_FREQ_HZ / 4)
 
 /* Global memory structure */
 #define GLOBAL_MEM1_SIZE		(GLOBAL_BASE + 0x0028)
@@ -114,12 +114,17 @@
 #define GX_WGPIPE			(GX_BASE + 0x00)
 
 /* Processor IRQs */
+#define PI_IRQ_SI			3
 #define PI_IRQ_EXI			4
 #define PI_IRQ_AI			5
 #define PI_IRQ_DSP			6
+#define PI_IRQ_VI			8
 #define PI_IRQ_HOLLYWOOD		14
 
 /* Hollywood registers */
+#define HW_IPCPPCMSG			(HOLLYWOOD_PRIV_BASE + 0x000)
+#define HW_IPCPPCCTRL			(HOLLYWOOD_PRIV_BASE + 0x004)
+#define  HW_IPCPPCCTRL_X1		__BIT(0)
 #define HW_VIDIM			(HOLLYWOOD_PRIV_BASE + 0x01c)
 #define  VIDIM_E			__BIT(7)
 #define  VIDIM_Y			__BITS(5,3)
@@ -134,6 +139,7 @@
 #define  IOPOH1EN			__BIT(22)
 #define  IOPOH0EN			__BIT(21)
 #define  IOPEHCEN			__BIT(20)
+#define  IOPAESEN			__BIT(18)
 #define HW_AIPPROT			(HOLLYWOOD_PRIV_BASE + 0x070)
 #define  ENAHBIOPI			__BIT(0)
 #define HW_GPIOB_OUT			(HOLLYWOOD_BASE + 0x0c0)
@@ -144,6 +150,7 @@
 #define  DVDVIDEO			__BIT(21)
 #define HW_RESETS			(HOLLYWOOD_PRIV_BASE + 0x194)
 #define  RSTB_IOP			__BIT(23)
+#define  RSTB_DSP			__BIT(22)
 #define  RSTB_IODI			__BIT(17)
 #define  RSTBINB			__BIT(0)
 #define HW_VERSION			(HOLLYWOOD_BASE + 0x214)
@@ -156,7 +163,7 @@
 #define GPIO_SLOT_LED			5
 #define GPIO_DO_EJECT			9
 
-/* Command line protocol */
+/* HBC command line protocol */
 #define WII_ARGV_MAGIC			0x5f617267
 struct wii_argv {
 	uint32_t	magic;

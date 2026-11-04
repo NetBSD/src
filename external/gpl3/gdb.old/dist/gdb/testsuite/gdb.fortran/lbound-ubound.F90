@@ -1,4 +1,4 @@
-! Copyright 2021-2023 Free Software Foundation, Inc.
+! Copyright 2021-2024 Free Software Foundation, Inc.
 !
 ! This program is free software; you can redistribute it and/or modify
 ! it under the terms of the GNU General Public License as published by
@@ -19,28 +19,6 @@
 subroutine do_test (lb, ub)
   integer*4, dimension (:) :: lb
   integer*4, dimension (:) :: ub
-
-  print *, ""
-  print *, "Expected GDB Output:"
-  print *, ""
-
-  write(*, fmt="(A)", advance="no") "LBOUND = ("
-  do i=LBOUND (lb, 1), UBOUND (lb, 1), 1
-     if (i > LBOUND (lb, 1)) then
-        write(*, fmt="(A)", advance="no") ", "
-     end if
-     write(*, fmt="(I0)", advance="no") lb (i)
-  end do
-  write(*, fmt="(A)", advance="yes") ")"
-
-  write(*, fmt="(A)", advance="no") "UBOUND = ("
-  do i=LBOUND (ub, 1), UBOUND (ub, 1), 1
-     if (i > LBOUND (ub, 1)) then
-        write(*, fmt="(A)", advance="no") ", "
-     end if
-     write(*, fmt="(I0)", advance="no") ub (i)
-  end do
-  write(*, fmt="(A)", advance="yes") ")"
 
   print *, ""	! Test Breakpoint
 end subroutine do_test

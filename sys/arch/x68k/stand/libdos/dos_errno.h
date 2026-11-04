@@ -5,7 +5,7 @@
  *	written by ITOH Yasufumi
  *	public domain
  *
- *	$NetBSD: dos_errno.h,v 1.6 2011/02/21 02:31:59 itohy Exp $
+ *	$NetBSD: dos_errno.h,v 1.6.92.1 2026/11/04 23:21:31 perseant Exp $
  */
 
 #ifndef X68K_DOS_ERRNO_H
@@ -21,7 +21,7 @@ const char * __pure dos_strerror(int) __attribute__((const));
 #endif
 
 /*
- * The following block is used by  makstrerror.awk .
+ * The following block is used by  makestrerror.awk .
  * The error number shall be contiguous.
  */
 

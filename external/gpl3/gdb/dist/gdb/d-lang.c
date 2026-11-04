@@ -1,6 +1,6 @@
 /* D language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,9 +38,8 @@ static const char D_MAIN[] = "D main";
 const char *
 d_main_name (void)
 {
-  struct bound_minimal_symbol msym;
-
-  msym = lookup_minimal_symbol (D_MAIN, NULL, NULL);
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, D_MAIN);
   if (msym.minsym != NULL)
     return D_MAIN;
 

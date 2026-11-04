@@ -59,3 +59,6 @@ foo/1.2.3.4: YES
 bar/1.2.3.4: YES
 baz/1.2.3.4: YES
 fool/1.2.3.4: NO
+foo/1.2.3.4: YES
+bar/1.2.3.4: NO
+baz/1.2.3.4: YES

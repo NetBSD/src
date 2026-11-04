@@ -6,23 +6,24 @@ gcc_version := $(shell @get_gcc_base_ver@ $(top_srcdir)/../gcc/BASE-VER)
 DEFS = -D_GNU_SOURCE -D_DEBUG -D__STDC_CONSTANT_MACROS -D__STDC_FORMAT_MACROS -D__STDC_LIMIT_MACROS -DPIC -DCAN_SANITIZE_UB=1 -DUBSAN_CAN_USE_CXXABI=1
 AM_CXXFLAGS = -Wall -W -Wno-unused-parameter -Wwrite-strings -pedantic -Wno-long-long  -fPIC -fno-builtin -fno-exceptions -fno-rtti -fomit-frame-pointer -funwind-tables -fvisibility=hidden -Wno-variadic-macros
 AM_CXXFLAGS += $(LIBSTDCXX_RAW_CXX_CXXFLAGS)
-AM_CXXFLAGS += -std=gnu++11
+AM_CXXFLAGS += -std=gnu++14
 AM_CXXFLAGS += $(EXTRA_CXXFLAGS)
+AM_CCASFLAGS = $(EXTRA_ASFLAGS)
 ACLOCAL_AMFLAGS = -I m4
 
 toolexeclib_LTLIBRARIES = libubsan.la
 
 ubsan_plugin_files = \
-	ubsan_diag.cc \
-	ubsan_flags.cc \
-	ubsan_handlers.cc \
-	ubsan_handlers_cxx.cc \
-	ubsan_init.cc \
-	ubsan_monitor.cc \
-	ubsan_type_hash.cc \
-	ubsan_type_hash_itanium.cc \
-	ubsan_type_hash_win.cc \
-	ubsan_value.cc
+	ubsan_diag.cpp \
+	ubsan_flags.cpp \
+	ubsan_handlers.cpp \
+	ubsan_handlers_cxx.cpp \
+	ubsan_init.cpp \
+	ubsan_monitor.cpp \
+	ubsan_type_hash.cpp \
+	ubsan_type_hash_itanium.cpp \
+	ubsan_type_hash_win.cpp \
+	ubsan_value.cpp
 
 ubsan_files = $(ubsan_plugin_files)
 

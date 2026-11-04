@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_mqueue.c,v 1.2.4.2 2025/08/02 05:56:26 perseant Exp $	*/
+/*	$NetBSD: linux_mqueue.c,v 1.2.4.3 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_mqueue.c,v 1.2.4.2 2025/08/02 05:56:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_mqueue.c,v 1.2.4.3 2026/11/04 23:21:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/filedesc.h>
@@ -108,6 +108,7 @@ linux_sys_mq_unlink(struct lwp *l, const struct linux_sys_mq_unlink_args *uap,
 	} */
 	struct sys_mq_unlink_args args;
 
+	memset(&args, 0, sizeof(args));
 	SCARG(&args, name) = SCARG(uap, name);
 
 	return sys_mq_unlink(l, &args, retval);

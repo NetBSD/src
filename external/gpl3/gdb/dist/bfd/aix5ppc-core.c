@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Written by Tom Rix
    Contributed by Red Hat Inc.
 
@@ -66,8 +66,7 @@ xcoff64_core_p (bfd *abfd)
   if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     goto xcoff64_core_p_error;
 
-  if (sizeof (struct core_dumpxx)
-      != bfd_read (&core, sizeof (struct core_dumpxx), abfd))
+  if (sizeof core != bfd_read (&core, sizeof core, abfd))
     goto xcoff64_core_p_error;
 
   if (bfd_stat (abfd, &statbuf) < 0)
@@ -111,14 +110,16 @@ xcoff64_core_p (bfd *abfd)
       return NULL;
     }
 
-  new_core_hdr = bfd_zalloc (abfd, sizeof (struct core_dumpxx));
+  new_core_hdr = bfd_alloc (abfd, sizeof (*new_core_hdr) + 1);
   if (NULL == new_core_hdr)
     return NULL;
 
-  memcpy (new_core_hdr, &core, sizeof (struct core_dumpxx));
-  /* The core_hdr() macro is no longer used here because it would
-     expand to code relying on gcc's cast-as-lvalue extension,
-     which was removed in gcc 4.0.  */
+  memcpy (new_core_hdr, &core, sizeof (*new_core_hdr));
+
+  /* Ensure core_file_failing_command string is terminated.  This is
+     just to stop buffer overflows on fuzzed files.  */
+  ((char *) new_core_hdr)[sizeof (*new_core_hdr)] = 0;
+
   abfd->tdata.any = new_core_hdr;
 
   /* .stack section.  */

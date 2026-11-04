@@ -1,4 +1,4 @@
-/*	$NetBSD: aaaa_28.c,v 1.10.2.1 2025/08/02 05:53:49 perseant Exp $	*/
+/*	$NetBSD: aaaa_28.c,v 1.10.2.2 2026/11/04 23:18:13 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -173,9 +173,7 @@ tostruct_in_aaaa(ARGS_TOSTRUCT) {
 
 	UNUSED(mctx);
 
-	aaaa->common.rdclass = rdata->rdclass;
-	aaaa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&aaaa->common, link);
+	DNS_RDATACOMMON_INIT(aaaa, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	INSIST(r.length == 16);

@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.105.2.1 2025/08/02 05:56:24 perseant Exp $
+	$NetBSD: syscalls.master,v 1.105.2.2 2026/11/04 23:21:38 perseant Exp $
 
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -277,7 +277,7 @@
 144	NOARGS		{ int|sys|13|msync(void *addr, size_t len, int flags); }
 145	NOARGS		{ ssize_t|sys||readv(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
-146	NOARGS		{ ssize_t|sys||writev(int fd, \
+146	STD		{ ssize_t|linux_sys||writev(int fd, \
 			    const struct iovec *iovp, int iovcnt); }
 147	NOARGS		{ pid_t|sys||getsid(pid_t pid); }
 148	STD		{ int|linux_sys||fdatasync(int fd); }
@@ -315,7 +315,8 @@
 			    linux_gid16_t egid, linux_gid16_t sgid); }
 171	STD		{ int|linux_sys||getresgid16(linux_gid16_t *rgid, \
 			    linux_gid16_t *egid, linux_gid16_t *sgid); }
-172	UNIMPL		prctl
+172	INDIR		{ int|linux_sys||__prctl(int code, \
+                                  ... void * args[LINUX_SYS_MAXSYSARGS]); }
 173	STD		{ int|linux_sys||rt_sigreturn(void); }
 174	STD		{ int|linux_sys||rt_sigaction(int signum, \
 			    const struct linux_sigaction *nsa, \

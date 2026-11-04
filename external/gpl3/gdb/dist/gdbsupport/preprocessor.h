@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_PREPROCESSOR_H
-#define COMMON_PREPROCESSOR_H
+#ifndef GDBSUPPORT_PREPROCESSOR_H
+#define GDBSUPPORT_PREPROCESSOR_H
 
 /* Generally useful preprocessor bits.  */
 
@@ -32,4 +32,4 @@
    includes commas to another macro.  */
 #define ESC_PARENS(...) __VA_ARGS__
 
-#endif /* COMMON_PREPROCESSOR_H */
+#endif /* GDBSUPPORT_PREPROCESSOR_H */

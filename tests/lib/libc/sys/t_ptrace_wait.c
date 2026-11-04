@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.192.2.1 2025/08/02 05:58:07 perseant Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.192.2.2 2026/11/04 23:28:18 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019, 2020 The NetBSD Foundation, Inc.
@@ -26,23 +26,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-/*
- * XXX Hack: Force the use of sys/exec_elf.h, not elfdefinitions.h.
- * Why?
- *
- * - libelf.h and gelf.h are needed for parsing core files in
- *   t_ptrace_core_wait.h.
- *
- * - sys/exec_elf.h is needed for struct netbsd_elfcore_procinfo also
- *   in t_ptrace_core_wait.h.
- *
- * libelf.h and gelf.h pull in elfdefinitions.h, but that conflicts
- * with sys/exec_elf.h on most basic ELF definitions.
- */
-#define	_SYS_ELFDEFINITIONS_H_
-
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.192.2.1 2025/08/02 05:58:07 perseant Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.192.2.2 2026/11/04 23:28:18 perseant Exp $");
 
 #define __LEGACY_PT_LWPINFO
 

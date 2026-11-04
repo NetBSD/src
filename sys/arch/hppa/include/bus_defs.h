@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2024/01/28 09:03:22 macallan Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.3.2.1 2026/11/04 23:20:43 perseant Exp $	*/
 
 /*	$OpenBSD: bus.h,v 1.13 2001/07/30 14:15:59 art Exp $	*/
 
@@ -179,29 +179,11 @@ struct hppa_bus_space_tag {
 };
 typedef const struct hppa_bus_space_tag *bus_space_tag_t;
 
-/* flags for bus space map functions */
-#define BUS_SPACE_MAP_READONLY		0x0008
-#define BUS_SPACE_MAP_NOEXTENT		0x8000  /* no extent ops */
-
-
 /* bus access routines */
 #define	BUS_SPACE_ALIGNED_POINTER(p, t)	ALIGNED_POINTER(p, t)
 
 /* XXX fredette */
 #define	__BUS_SPACE_HAS_STREAM_METHODS
-
-#define	BUS_DMA_WAITOK		0x000	/* safe to sleep (pseudo-flag) */
-#define	BUS_DMA_NOWAIT		0x001	/* not safe to sleep */
-#define	BUS_DMA_ALLOCNOW	0x002	/* perform resource allocation now */
-#define	BUS_DMA_COHERENT	0x004	/* hint: map memory DMA coherent */
-#define	BUS_DMA_STREAMING	0x008	/* hint: sequential, unidirectional */
-#define	BUS_DMA_BUS1		0x010	/* placeholders for bus functions... */
-#define	BUS_DMA_BUS2		0x020
-#define	BUS_DMA_BUS3		0x040
-#define	BUS_DMA_BUS4		0x080
-#define	BUS_DMA_READ		0x100	/* mapping is device -> memory only */
-#define	BUS_DMA_WRITE		0x200	/* mapping is memory -> device only */
-#define	BUS_DMA_NOCACHE		0x400	/* hint: map non-cached memory */
 
 /* For devices that have a 24-bit address space */
 #define	BUS_DMA_24BIT		BUS_DMA_BUS1

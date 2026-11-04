@@ -1,6 +1,6 @@
 /* Scheme interface to stack frames.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,6 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
 #include "block.h"
 #include "frame.h"
 #include "inferior.h"
@@ -835,7 +834,8 @@ gdbscm_frame_read_register (SCM self, SCM register_scm)
 						register_str,
 						strlen (register_str));
 	  if (regnum >= 0)
-	    value = value_of_register (regnum, frame);
+	    value = value_of_register (regnum,
+				       get_next_frame_sentinel_okay (frame));
 	}
     }
   catch (const gdb_exception &ex)
@@ -936,7 +936,7 @@ gdbscm_frame_read_var (SCM self, SCM symbol_scm, SCM rest)
 
 	    if (block == NULL)
 	      block = get_frame_block (frame_info_ptr (frame), NULL);
-	    lookup_sym = lookup_symbol (var_name.get (), block, VAR_DOMAIN,
+	    lookup_sym = lookup_symbol (var_name.get (), block, SEARCH_VFT,
 					NULL);
 	    var = lookup_sym.symbol;
 	    block = lookup_sym.block;

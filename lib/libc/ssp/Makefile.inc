@@ -1,6 +1,6 @@
-#	$NetBSD: Makefile.inc,v 1.6 2023/11/15 03:15:28 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6.2.1 2026/11/04 23:19:22 perseant Exp $
 
-.PATH: ${.CURDIR}/ssp
+.PATH: ${.PARSEDIR}
 
 SSP_SRCS=	gets_chk.c fgets_chk.c memcpy_chk.c memmove_chk.c memset_chk.c \
 		snprintf_chk.c sprintf_chk.c stpcpy_chk.c stpncpy_chk.c \

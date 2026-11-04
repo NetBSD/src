@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -161,9 +161,7 @@ maint_flush_dcache_command (const char *command, int from_tty)
     gdb_printf (_("The dcache was flushed.\n"));
 }
 
-void _initialize_target_dcache ();
-void
-_initialize_target_dcache ()
+INIT_GDB_FILE (target_dcache)
 {
   add_setshow_boolean_cmd ("stack-cache", class_support,
 			   &stack_cache_enabled_1, _("\

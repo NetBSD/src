@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.2.6.1 2025/08/02 05:56:17 perseant Exp $	*/
+/*	$NetBSD: rtc.c,v 1.2.6.2 2026/11/04 23:21:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2.6.1 2025/08/02 05:56:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.2.6.2 2026/11/04 23:21:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -383,7 +383,6 @@ rtc_register(void)
 	static struct todr_chip_handle	tch;
 	tch.todr_gettime_ymdhms = rtc_get_ymdhms;
 	tch.todr_settime_ymdhms = rtc_set_ymdhms;
-	tch.todr_setwen = NULL;
 
 	todr_attach(&tch);
 }

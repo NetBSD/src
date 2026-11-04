@@ -1,4 +1,4 @@
-/* $NetBSD: hypervisor.c,v 1.96.10.1 2025/08/02 05:56:19 perseant Exp $ */
+/* $NetBSD: hypervisor.c,v 1.96.10.2 2026/11/04 23:21:34 perseant Exp $ */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.96.10.1 2025/08/02 05:56:19 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hypervisor.c,v 1.96.10.2 2026/11/04 23:21:34 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,8 +236,6 @@ xen_init_hypercall_page(void)
 	wrmsr(descs[1], (uintptr_t)&hypercall_page - KERNBASE);
 }
 
-uint32_t hvm_start_paddr;
-
 void init_xen_early(void);
 void
 init_xen_early(void)
@@ -247,8 +245,6 @@ init_xen_early(void)
 		return;
 
 	pvh_boot = true;
-
-	hvm_start_info = (void *)((uintptr_t)hvm_start_paddr + KERNBASE);
 
 	if (hvm_start_info->cmdline_paddr != 0) {
 		cmd_line =
@@ -766,8 +762,7 @@ hypervisor_attach(device_t parent, device_t self, void *aux)
 		hac.hac_iba.iba_memt = x86_bus_space_mem;
 		hac.hac_iba.iba_dmat = &isa_bus_dma_tag;
 		hac.hac_iba.iba_ic = NULL; /* No isa DMA yet */
-		config_found(self, &hac.hac_iba, isabusprint,
-		    CFARGS(.iattr = "isabus"));
+		isabus_attach(self, &hac.hac_iba);
 	}
 #endif /* NISA */
 #endif /* NPCI */

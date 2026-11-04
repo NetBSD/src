@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,13 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_LOCATION_H
-#define TUI_TUI_LOCATION_H
-
-#include "tui/tui.h"
-#include "tui/tui.h"
-#include "gdb_curses.h"	/* For WINDOW.  */
-#include "observable.h"
+#ifndef GDB_TUI_TUI_LOCATION_H
+#define GDB_TUI_TUI_LOCATION_H
 
 /* Class used to track the current location that the TUI is displaying.  An
    instance of this class will be created; as events occur within GDB the
@@ -32,9 +27,9 @@
 
 struct tui_location_tracker
 {
-  /* Update the current location with the provided arguments.  Returns true
-     if any of the locator's fields were actually changed, and false
-     otherwise.  */
+  /* Update the current location with the provided arguments.  Returns
+     true if any of the status window's fields were actually changed,
+     and false otherwise.  */
   bool set_location (struct gdbarch *gdbarch,
 		     const struct symtab_and_line &sal,
 		     const char *procname);
@@ -90,4 +85,4 @@ private:
 
 extern tui_location_tracker tui_location;
 
-#endif /* TUI_TUI_LOCATION_H */
+#endif /* GDB_TUI_TUI_LOCATION_H */

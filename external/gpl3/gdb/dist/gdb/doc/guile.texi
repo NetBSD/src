@@ -1,4 +1,4 @@
-@c Copyright (C) 2008--2024 Free Software Foundation, Inc.
+@c Copyright (C) 2008--2025 Free Software Foundation, Inc.
 @c Permission is granted to copy, distribute and/or modify this document
 @c under the terms of the GNU Free Documentation License, Version 1.3 or
 @c any later version published by the Free Software Foundation; with the
@@ -155,6 +155,7 @@ from the Guile interactive prompt.
 * I/O Ports in Guile::       GDB I/O ports
 * Memory Ports in Guile::    Accessing memory through ports and bytevectors
 * Iterators In Guile::       Basic iterator support
+* Colors In Guile::          Colorize output with Guile
 @end menu
 
 @node Basic Guile
@@ -408,6 +409,9 @@ as a symbol.
 
 @item <gdb:value>
 @xref{Values From Inferior In Guile}.
+
+@item <gdb:color>
+@xref{Colors In Guile}.
 @end table
 
 The following @value{GDBN} objects are managed internally so that the
@@ -1768,6 +1772,16 @@ invoking it interactively.  If this function throws an exception,
 it is turned into a @value{GDBN} @code{error} call.
 Otherwise, the return value is ignored.
 
+For non-prefix commands, @var{invoke} is required.  For prefix
+commands @var{invoke} is optional.  Only prefix commands that need to
+handle unknown sub-commands should supply @var{invoke}.
+
+For prefix commands that don't supply @var{invoke}, if the prefix
+command is used without a sub-command name then @value{GDBN} will
+display the help text for every sub-command, unless the prefix command
+is a @kbd{show} sub-command, in which case @value{GDBN} will list the
+values of all sub-commands.
+
 The argument @var{command-class} is one of the @samp{COMMAND_} constants
 defined below.  This argument tells @value{GDBN} how to categorize the
 new command in the help system.  The default is @code{COMMAND_NONE}.
@@ -2094,8 +2108,10 @@ is the @code{<gdb:parameter>} object representing the parameter, and
 This function must return a string, and will be displayed to the user.
 @value{GDBN} will add a trailing newline.
 
-The argument @var{doc} is the help text for the new parameter.
-If there is no documentation string, a default value is used.
+The argument @var{doc} is the help text for the new parameter.  If
+there is no documentation string, a default value is used.  If the
+documentation string is empty, then @value{GDBN} will print just the
+@var{set-doc} and @var{show-doc} strings (see below).
 
 The argument @var{set-doc} is the help text for this parameter's
 @code{set} command.
@@ -2184,6 +2200,14 @@ The value is a filename.  This is just like
 @item PARAM_ENUM
 The value is a string, which must be one of a collection of string
 constants provided when the parameter is created.
+
+@item PARAM_COLOR
+The value is either a string or an unsigned integer.  Integer from 0 to 255
+means index into terminal's color palette.  String can be a hex RGB triplet in
+@samp{#RRGGBB} format or one of the following color names:
+@samp{none} (meaning the terminal's default color), @samp{black}, @samp{red},
+@samp{green}, @samp{yellow}, @samp{blue}, @samp{magenta}, @samp{cyan},
+or @samp{white}.
 @end vtable
 
 @node Progspaces In Guile
@@ -3820,6 +3844,101 @@ Run @var{iterator} until the result of @code{(pred element)} is true
 and return that as the result.  Otherwise return @code{#f}.
 @end deffn
 
+@node Colors In Guile
+@subsubsection Colors In Guile
+
+@cindex guile colors
+@tindex <gdb:color>
+You can assign instance of @code{<gdb:color>} to the value of
+a @code{<gdb:parameter>} object created with @code{PARAM_COLOR}.
+
+@code{<gdb:color>} may refer to an index from color palette or contain
+components of a color from some colorspace.
+
+@deffn {Scheme Procedure} make-color @w{@r{[}value} @
+    @w{@r{[}#:color-space color-space@r{]}@r{]}}
+
+@var{value} is an integer index of a color in palette, tuple with color
+components or a string.  String can be a hex RGB triplet in @samp{#RRGGBB}
+format or one of the following color names:
+@samp{none} (meaning the terminal's default color), @samp{black}, @samp{red},
+@samp{green}, @samp{yellow}, @samp{blue}, @samp{magenta}, @samp{cyan},
+or @samp{white}.
+
+@var{color-space} should be one of the @samp{COLORSPACE_} constants.  This
+argument tells @value{GDBN} which color space @var{value} belongs.
+@end deffn
+
+@deffn {Scheme Procedure} color? object
+Return @code{#t} if @var{object} is a @code{<gdb:color>} object.
+Otherwise return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} color-none? color
+Return @code{#t} if @var{color} is terminal's default.
+Otherwise return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} color-indexed? color
+Return @code{#t} if @var{color} is indexed, i.e. belongs to some palette.
+Otherwise return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} color-direct? color
+Return @code{#t} if @var{color} is direct in the sense of ISO/IEC 8613-6.
+Otherwise return @code{#f}.
+@end deffn
+
+@deffn {Scheme Procedure} color-string color
+Return the textual representation of a @code{<gdb:color>} object.
+@end deffn
+
+@deffn {Scheme Procedure} color-colorspace color
+Return the color space of a @code{<gdb:color>} object.
+@end deffn
+
+@deffn {Scheme Procedure} color-index color
+Return index of the color of a @code{<gdb:color>} object in a palette.
+@end deffn
+
+@deffn {Scheme Procedure} color-components color
+Return components of the direct @code{<gdb:color>} object.
+@end deffn
+
+@deffn {Scheme Procedure} color-escape-sequence color is_foreground
+Return string to change terminal's color to this.
+
+If @var{is_foreground} is @code{#t}, then the returned sequence will change
+foreground color.  Otherwise, the returned sequence will change background
+color.
+
+If styling is currently disabled (@pxref{Output Styling,,@kbd{set style
+enabled}}), then this procedure will return an empty string.
+@end deffn
+
+When color is initialized, its color space must be specified.  The
+available color spaces are represented by constants defined in the @code{gdb}
+module:
+
+@vtable @code
+@item COLORSPACE_MONOCHROME
+Palette with only terminal's default color.
+
+@item COLORSPACE_ANSI_8COLOR
+Palette with eight standard colors of ISO/IEC 6429 "black", "red", "green", etc.
+
+@item COLORSPACE_AIXTERM_16COLOR
+Palette with 16 colors.  First eight are standard colors of ISO/IEC 6429
+"black", "red", "green", etc.  Next eight are their bright version.
+
+@item COLORSPACE_XTERM_256COLOR
+Palette with 256 colors.  First 16 are from COLORSPACE_AIXTERM_16COLOR.  Next
+216 colors are 6x6x6 RGB cube.  And last 24 colors form grayscale ramp.
+
+@item COLORSPACE_RGB_24BIT
+Direct 24-bit RGB colors.
+@end vtable
+
 @node Guile Auto-loading
 @subsection Guile Auto-loading
 @cindex guile auto-loading
@@ -3946,7 +4065,7 @@ Then in gdb:
 (gdb) guile (use-modules (gdb) (gdb types))
 (gdb) guile (define foo-ref (parse-and-eval "foo_ref"))
 (gdb) guile (get-basic-type (value-type foo-ref))
-int
+#<gdb:type int>
 @end smallexample
 @end deffn
 

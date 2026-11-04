@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27.34.1 2025/08/02 05:57:53 perseant Exp $
+#	$NetBSD: Makefile,v 1.27.34.2 2026/11/04 23:28:04 perseant Exp $
 #
 # Public Domain.
 #
@@ -26,7 +26,7 @@ SRCS+=	if_npflog.c
 
 SRCS+=	npf_alg_icmp.c
 
-SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c
+SRCS+=	npf_ext_log.c npf_ext_normalize.c npf_ext_rndblock.c npf_ext_route.c
 
 SRCS+=	npf_component.c
 

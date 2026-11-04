@@ -1,4 +1,4 @@
-/*	$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $	*/
+/*	$NetBSD: gfrtc.c,v 1.5.2.1 2026/11/04 23:21:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.5.2.1 2026/11/04 23:21:52 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: gfrtc.c,v 1.5 2024/03/05 11:19:30 isaki Exp $");
 static int
 gfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct gfrtc_softc *sc = ch->cookie;
+	struct gfrtc_softc *sc = device_private(ch->todr_dev);
 	const uint64_t nsec = gfrtc_get_time(sc);
 
 	tv->tv_sec = nsec / 1000000000;
@@ -75,7 +75,7 @@ gfrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 static int
 gfrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct gfrtc_softc *sc = ch->cookie;
+	struct gfrtc_softc *sc = device_private(ch->todr_dev);
 
 	const uint64_t nsec = (tv->tv_sec * 1000000 + tv->tv_usec) * 1000;
 	const uint32_t hi = (uint32_t)(nsec >> 32);
@@ -103,10 +103,9 @@ gfrtc_attach(struct gfrtc_softc * const sc, bool todr)
 	if (todr) {
 		aprint_normal_dev(sc->sc_dev,
 		    "using as Time of Day Register.\n");
-		sc->sc_todr.cookie = sc;
+		sc->sc_todr.todr_dev = sc->sc_dev;
 		sc->sc_todr.todr_gettime = gfrtc_gettime;
 		sc->sc_todr.todr_settime = gfrtc_settime;
-		sc->sc_todr.todr_setwen = NULL;
 		todr_attach(&sc->sc_todr);
 	}
 }

@@ -7,7 +7,7 @@
 
 /* Main header file for the bfd library -- portable access to object files.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -164,6 +164,14 @@ static inline bool
 startswith (const char *str, const char *prefix)
 {
   return strncmp (str, prefix, strlen (prefix)) == 0;
+}
+
+/* Return true if plugin is enabled.  */
+
+static inline bool
+bfd_plugin_enabled (void)
+{
+  return BFD_SUPPORTS_PLUGINS != 0;
 }
 
 /* Extracted from libbfd.c.  */
@@ -688,8 +696,11 @@ typedef struct bfd_section
   /* Nonzero if this section uses RELA relocations, rather than REL.  */
   unsigned int use_rela_p:1;
 
-  /* Nonzero if this section contents are mmapped, rather than malloced.  */
+  /* Nonzero if section contents are mmapped.  */
   unsigned int mmapped_p:1;
+
+  /* Nonzero if section contents should not be freed.  */
+  unsigned int alloced:1;
 
   /* Bits used by various backends.  The generic code doesn't touch
      these fields.  */
@@ -811,7 +822,6 @@ typedef struct bfd_section
 
   /* A symbol which points at this section only.  */
   struct bfd_symbol *symbol;
-  struct bfd_symbol **symbol_ptr_ptr;
 
   /* Early in the link process, map_head and map_tail are used to build
      a list of input sections attached to an output section.  Later,
@@ -926,6 +936,9 @@ extern asection _bfd_std_section[4];
 #define BFD_COM_SECTION_NAME "*COM*"
 #define BFD_IND_SECTION_NAME "*IND*"
 
+/* GNU object-only section name.  */
+#define GNU_OBJECT_ONLY_SECTION_NAME ".gnu_object_only"
+
 /* Pointer to the common section.  */
 #define bfd_com_section_ptr (&_bfd_std_section[0])
 /* Pointer to the undefined section.  */
@@ -970,57 +983,6 @@ discarded_section (const asection *sec)
 	  && sec->sec_info_type != SEC_INFO_TYPE_MERGE
 	  && sec->sec_info_type != SEC_INFO_TYPE_JUST_SYMS);
 }
-
-#define BFD_FAKE_SECTION(SEC, SYM, NAME, IDX, FLAGS)                   \
-  /* name, next, prev, id,  section_id, index, flags, user_set_vma, */ \
-  {  NAME, NULL, NULL, IDX, 0,          0,     FLAGS, 0,               \
-								       \
-  /* linker_mark, linker_has_input, gc_mark, decompress_status,     */ \
-     0,           0,                1,       0,                        \
-								       \
-  /* segment_mark, sec_info_type, use_rela_p, mmapped_p,           */  \
-     0,            0,             0,          0,                       \
-								       \
-  /* sec_flg0, sec_flg1, sec_flg2, sec_flg3, sec_flg4, sec_flg5,    */ \
-     0,        0,        0,        0,        0,        0,              \
-								       \
-  /* vma, lma, size, rawsize, compressed_size,                      */ \
-     0,   0,   0,    0,       0,                                       \
-								       \
-  /* output_offset, output_section, relocation, orelocation,        */ \
-     0,             &SEC,           NULL,       NULL,                  \
-								       \
-  /* reloc_count, alignment_power, filepos, rel_filepos,            */ \
-     0,           0,               0,       0,                         \
-								       \
-  /* line_filepos, userdata, contents, lineno, lineno_count,        */ \
-     0,            NULL,     NULL,     NULL,   0,                      \
-								       \
-  /* entsize, kept_section, moving_line_filepos,                    */ \
-     0,       NULL,         0,                                         \
-								       \
-  /* target_index, used_by_bfd, constructor_chain, owner,           */ \
-     0,            NULL,        NULL,              NULL,               \
-								       \
-  /* symbol,                    symbol_ptr_ptr,                     */ \
-     (struct bfd_symbol *) SYM, &SEC.symbol,                           \
-								       \
-  /* map_head, map_tail, already_assigned, type                     */ \
-     { NULL }, { NULL }, NULL,             0                           \
-								       \
-    }
-
-/* We use a macro to initialize the static asymbol structures because
-   traditional C does not permit us to initialize a union member while
-   gcc warns if we don't initialize it.
-   the_bfd, name, value, attr, section [, udata]  */
-#ifdef __STDC__
-#define GLOBAL_SYM_INIT(NAME, SECTION) \
-  { 0, NAME, 0, BSF_SECTION_SYM, SECTION, { 0 }}
-#else
-#define GLOBAL_SYM_INIT(NAME, SECTION) \
-  { 0, NAME, 0, BSF_SECTION_SYM, SECTION }
-#endif
 
 void bfd_section_list_clear (bfd *);
 
@@ -1080,11 +1042,12 @@ bool bfd_malloc_and_get_section
    (bfd *abfd, asection *section, bfd_byte **buf);
 
 bool bfd_copy_private_section_data
-   (bfd *ibfd, asection *isec, bfd *obfd, asection *osec);
+   (bfd *ibfd, asection *isec, bfd *obfd, asection *osec,
+    struct bfd_link_info *link_info);
 
-#define bfd_copy_private_section_data(ibfd, isection, obfd, osection) \
+#define bfd_copy_private_section_data(ibfd, isec, obfd, osec, link_info) \
        BFD_SEND (obfd, _bfd_copy_private_section_data, \
-		 (ibfd, isection, obfd, osection))
+		 (ibfd, isec, obfd, osec, link_info))
 bool bfd_generic_is_group_section (bfd *, const asection *sec);
 
 const char *bfd_generic_group_name (bfd *, const asection *sec);
@@ -1260,6 +1223,11 @@ typedef struct _symbol_info
   const char *stab_name;       /* String for stab type.  */
 } symbol_info;
 
+/* An empty string that will not match the address of any other
+   symbol name, even unnamed local symbols which will also have empty
+   string names.  This can be used to flag a symbol as corrupt if its
+   name uses an out of range string table index.  */
+extern const char bfd_symbol_error_name[];
 #define bfd_get_symtab_upper_bound(abfd) \
        BFD_SEND (abfd, _bfd_get_symtab_upper_bound, (abfd))
 
@@ -1797,10 +1765,6 @@ enum bfd_architecture
 #define bfd_mach_aarch64_8R    1
 #define bfd_mach_aarch64_ilp32 32
 #define bfd_mach_aarch64_llp64 64
-  bfd_arch_nios2,     /* Nios II.  */
-#define bfd_mach_nios2         0
-#define bfd_mach_nios2r1       1
-#define bfd_mach_nios2r2       2
   bfd_arch_visium,    /* Visium.  */
 #define bfd_mach_visium        1
   bfd_arch_wasm32,    /* WebAssembly.  */
@@ -1947,7 +1911,8 @@ enum bfd_plugin_format
   {
     bfd_plugin_unknown = 0,
     bfd_plugin_yes = 1,
-    bfd_plugin_no = 2
+    bfd_plugin_yes_unused = 2,
+    bfd_plugin_no = 3
   };
 
 struct bfd_build_id
@@ -1961,7 +1926,8 @@ enum bfd_lto_object_type
     lto_non_object,            /* Not an LTO object.  */
     lto_non_ir_object,         /* An object without LTO IR.  */
     lto_slim_ir_object,        /* A slim LTO IR object.  */
-    lto_fat_ir_object          /* A fat LTO IR object.  */
+    lto_fat_ir_object,         /* A fat LTO IR object.  */
+    lto_mixed_object           /* A mixed LTO IR object.  */
   };
 
 struct bfd_mmapped_entry
@@ -2184,7 +2150,7 @@ struct bfd
   unsigned int read_only : 1;
 
   /* LTO object type.  */
-  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 2;
+  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 3;
 
   /* Set if this BFD is currently being processed by
      bfd_check_format_matches.  This is checked by the cache to
@@ -2215,6 +2181,9 @@ struct bfd
 
   /* The last section on the section list.  */
   struct bfd_section *section_last;
+
+  /* The object-only section on the section list.  */
+  struct bfd_section *object_only_section;
 
   /* The number of sections.  */
   unsigned int section_count;
@@ -2340,6 +2309,16 @@ static inline enum bfd_lto_object_type
 bfd_get_lto_type (const bfd *abfd)
 {
   return abfd->lto_type;
+}
+
+static inline bool
+bfd_lto_slim_symbol_p (const bfd *abfd, const char *name)
+{
+  return (bfd_get_lto_type (abfd) != lto_non_ir_object
+	  && name != NULL
+	  && name[0] == '_'
+	  && name[1] == '_'
+	  && strcmp (name + (name[2] == '_'), "__gnu_lto_slim") == 0);
 }
 
 static inline flagword
@@ -2789,6 +2768,8 @@ bfd_vma bfd_emul_get_commonpagesize (const char *);
 
 char *bfd_demangle (bfd *, const char *, int);
 
+asymbol *bfd_group_signature (asection *group, asymbol **isympp);
+
 /* Extracted from bfdio.c.  */
 bfd_size_type bfd_read (void *, bfd_size_type, bfd *)
 ATTRIBUTE_WARN_UNUSED_RESULT;
@@ -2951,6 +2932,20 @@ const char *bfd_format_string (bfd_format format);
    && bfd_is_abs_section ((H)->u.def.section) \
    && !(H)->rel_from_abs)
 
+bool _bfd_generic_link_add_one_symbol
+   (struct bfd_link_info *info,
+    bfd *abfd,
+    const char *name,
+    flagword flags,
+    asection *section,
+    bfd_vma value,
+    const char *string,
+    bool copy,
+    bool collect,
+    struct bfd_link_hash_entry **hashp);
+
+bool bfd_link_align_section (asection *, unsigned int);
+
 bool bfd_link_split_section (bfd *abfd, asection *sec);
 
 #define bfd_link_split_section(abfd, sec) \
@@ -3005,9 +3000,6 @@ bool bfd_merge_private_bfd_data
 		 (ibfd, info))
 
 /* Extracted from opncls.c.  */
-/* Set to N to open the next N BFDs using an alternate id space.  */
-extern unsigned int bfd_use_reserved_id;
-
 bfd *bfd_fopen (const char *filename, const char *target,
     const char *mode, int fd);
 
@@ -3074,6 +3066,9 @@ bool bfd_fill_in_gnu_debuglink_section
 char *bfd_follow_build_id_debuglink (bfd *abfd, const char *dir);
 
 const char *bfd_set_filename (bfd *abfd, const char *filename);
+
+const char *bfd_extract_object_only_section
+   (bfd *abfd);
 
 /* Extracted from reloc.c.  */
 typedef enum bfd_reloc_status
@@ -6158,60 +6153,6 @@ enum bfd_reloc_code_real
   BFD_RELOC_MSP430_SET_ULEB128,
   BFD_RELOC_MSP430_SUB_ULEB128,
 
-  /* Relocations used by the Altera Nios II core.  */
-  BFD_RELOC_NIOS2_S16,
-  BFD_RELOC_NIOS2_U16,
-  BFD_RELOC_NIOS2_CALL26,
-  BFD_RELOC_NIOS2_IMM5,
-  BFD_RELOC_NIOS2_CACHE_OPX,
-  BFD_RELOC_NIOS2_IMM6,
-  BFD_RELOC_NIOS2_IMM8,
-  BFD_RELOC_NIOS2_HI16,
-  BFD_RELOC_NIOS2_LO16,
-  BFD_RELOC_NIOS2_HIADJ16,
-  BFD_RELOC_NIOS2_GPREL,
-  BFD_RELOC_NIOS2_UJMP,
-  BFD_RELOC_NIOS2_CJMP,
-  BFD_RELOC_NIOS2_CALLR,
-  BFD_RELOC_NIOS2_ALIGN,
-  BFD_RELOC_NIOS2_GOT16,
-  BFD_RELOC_NIOS2_CALL16,
-  BFD_RELOC_NIOS2_GOTOFF_LO,
-  BFD_RELOC_NIOS2_GOTOFF_HA,
-  BFD_RELOC_NIOS2_PCREL_LO,
-  BFD_RELOC_NIOS2_PCREL_HA,
-  BFD_RELOC_NIOS2_TLS_GD16,
-  BFD_RELOC_NIOS2_TLS_LDM16,
-  BFD_RELOC_NIOS2_TLS_LDO16,
-  BFD_RELOC_NIOS2_TLS_IE16,
-  BFD_RELOC_NIOS2_TLS_LE16,
-  BFD_RELOC_NIOS2_TLS_DTPMOD,
-  BFD_RELOC_NIOS2_TLS_DTPREL,
-  BFD_RELOC_NIOS2_TLS_TPREL,
-  BFD_RELOC_NIOS2_COPY,
-  BFD_RELOC_NIOS2_GLOB_DAT,
-  BFD_RELOC_NIOS2_JUMP_SLOT,
-  BFD_RELOC_NIOS2_RELATIVE,
-  BFD_RELOC_NIOS2_GOTOFF,
-  BFD_RELOC_NIOS2_CALL26_NOAT,
-  BFD_RELOC_NIOS2_GOT_LO,
-  BFD_RELOC_NIOS2_GOT_HA,
-  BFD_RELOC_NIOS2_CALL_LO,
-  BFD_RELOC_NIOS2_CALL_HA,
-  BFD_RELOC_NIOS2_R2_S12,
-  BFD_RELOC_NIOS2_R2_I10_1_PCREL,
-  BFD_RELOC_NIOS2_R2_T1I7_1_PCREL,
-  BFD_RELOC_NIOS2_R2_T1I7_2,
-  BFD_RELOC_NIOS2_R2_T2I4,
-  BFD_RELOC_NIOS2_R2_T2I4_1,
-  BFD_RELOC_NIOS2_R2_T2I4_2,
-  BFD_RELOC_NIOS2_R2_X1I7_2,
-  BFD_RELOC_NIOS2_R2_X2L5,
-  BFD_RELOC_NIOS2_R2_F1I5_2,
-  BFD_RELOC_NIOS2_R2_L5I4X1,
-  BFD_RELOC_NIOS2_R2_T1X1I6,
-  BFD_RELOC_NIOS2_R2_T1X1I6_2,
-
   /* PRU LDI 16-bit unsigned data-memory relocation.  */
   BFD_RELOC_PRU_U16,
 
@@ -7093,6 +7034,11 @@ enum bfd_reloc_code_real
      assembler and not (currently) written to any object files.  */
   BFD_RELOC_AARCH64_TLSDESC_LD_LO12_NC,
 
+  /* AArch64 9 bit pc-relative conditional branch and compare & branch.
+     The lowest two bits must be zero and are not stored in the
+     instruction, giving an 11 bit signed byte offset.  */
+  BFD_RELOC_AARCH64_BRANCH9,
+
   /* Tilera TILEPro Relocations.  */
   BFD_RELOC_TILEPRO_COPY,
   BFD_RELOC_TILEPRO_GLOB_DAT,
@@ -7699,7 +7645,6 @@ typedef struct bfd_target
 #define BFD_JUMP_TABLE_COPY(NAME) \
   NAME##_bfd_copy_private_bfd_data, \
   NAME##_bfd_merge_private_bfd_data, \
-  NAME##_init_private_section_data, \
   NAME##_bfd_copy_private_section_data, \
   NAME##_bfd_copy_private_symbol_data, \
   NAME##_bfd_copy_private_header_data, \
@@ -7712,16 +7657,10 @@ typedef struct bfd_target
   /* Called to merge BFD general private data from one object file
      to a common output file when linking.  */
   bool (*_bfd_merge_private_bfd_data) (bfd *, struct bfd_link_info *);
-  /* Called to initialize BFD private section data from one object file
-     to another.  */
-#define bfd_init_private_section_data(ibfd, isec, obfd, osec, link_info) \
-       BFD_SEND (obfd, _bfd_init_private_section_data, \
-		 (ibfd, isec, obfd, osec, link_info))
-  bool (*_bfd_init_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
-					  struct bfd_link_info *);
   /* Called to copy BFD private section data from one object file
      to another.  */
-  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr);
+  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
+					  struct bfd_link_info *);
   /* Called to copy BFD private symbol data from one symbol
      to another.  */
   bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol *,
@@ -8074,6 +8013,13 @@ static inline bool
 bfd_keep_unused_section_symbols (const bfd *abfd)
 {
   return abfd->xvec->keep_unused_section_symbols;
+}
+
+static inline bool
+bfd_target_supports_archives (const bfd *abfd)
+{
+  return (abfd->xvec->_bfd_check_format[bfd_archive]
+	  != abfd->xvec->_bfd_check_format[bfd_unknown]);
 }
 
 bool bfd_set_default_target (const char *name);

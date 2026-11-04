@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 gdb_test_multiline "install new_thread event handler" \
     "python" "" \
@@ -58,10 +57,19 @@ gdb_py_test_silent_cmd "python gdb.selected_thread ().inferior" "test InferiorTh
 
 
 gdb_py_test_silent_cmd "python t0 = gdb.selected_thread ()" "test gdb.selected_thread" 1
-gdb_test "python print (t0)" "\\<gdb.InferiorThread object at 0x\[\[:xdigit:\]\]+>" "verify InferiorThread object"
+gdb_test "python print (t0)" \
+    "<gdb.InferiorThread id=${decimal}\\.${decimal} target-id=\"\[^\r\n\]*\">"
 gdb_test "python print ('result = %s' % t0.num)" " = 1" "test InferiorThread.num"
 gdb_test "python print ('result = %s' % t0.global_num)" " = 1" "test InferiorThread.global_num"
 gdb_test "python print ('result = %s' % str (t0.ptid))" " = \\(\[0-9\]+, \[0-9\]+, \[0-9\]+\\)" "test InferiorThread.ptid"
+
+# Test the InferiorThread.ptid_string attribute.  We don't test the
+# actual string contents as they vary based on target, but we check
+# that we get back a non-empty string.
+gdb_test "python print(type(t0.ptid_string))" "<class 'str'>" \
+    "check that InferiorThread.ptid_string is a string"
+gdb_test "python print(t0.ptid_string)" ".+" \
+    "check that InferiorThread.ptid_string is non-empty"
 
 gdb_py_test_silent_cmd "python i0 = t0.inferior" "test InferiorThread.inferior" 1
 gdb_test "python print ('result = %s' % i0.num)" " = 1" "test Inferior.num"

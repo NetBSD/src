@@ -1,4 +1,4 @@
-.\"	$NetBSD: bounce.8,v 1.4.4.1 2025/08/02 05:49:56 perseant Exp $
+.\"	$NetBSD: bounce.8,v 1.4.4.2 2026/11/04 23:14:42 perseant Exp $
 .\"
 .TH BOUNCE 8 
 .ad
@@ -153,6 +153,14 @@ Available in Postfix 3.10 and later:
 .IP "\fBtls_required_enable (yes)\fR"
 Enable support for the "TLS\-Required: no" message header, defined
 in RFC 8689.
+.PP
+Available in Postfix 3.11 and later:
+.IP "\fBrequiretls_redact_dsn (yes)\fR"
+When sending a delivery status notification for an original
+message received with the REQUIRETLS option, do not send the original
+message body (as if that message was received with "RET=HDRS") and
+do not enforce REQUIRETLS (as if that message was received without
+REQUIRETLS).
 .SH "FILES"
 .na
 .nf

@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.28 2023/06/03 09:09:10 lukem Exp $
+#	$NetBSD: Makefile.inc,v 1.28.2.1 2026/11/04 23:19:21 perseant Exp $
 
 # librpc sources
-.PATH:	${.CURDIR}/rpc
+.PATH:	${.PARSEDIR}
 
 SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 	clnt_bcast.c clnt_dg.c clnt_generic.c clnt_perror.c \

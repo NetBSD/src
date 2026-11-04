@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -93,8 +93,8 @@ struct gdb_xml_parser
     ATTRIBUTE_PRINTF (2, 0);
 
   /* Issue an error message, and stop parsing.  */
-  void verror (const char *format, va_list ap)
-    ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 0);
+  [[noreturn]] void verror (const char *format, va_list ap)
+    ATTRIBUTE_PRINTF (2, 0);
 
   void body_text (const XML_Char *text, int length);
   void start_element (const XML_Char *name, const XML_Char **attrs);
@@ -999,10 +999,7 @@ xml_fetch_content_from_file (const char *filename, const char *dirname)
   return text;
 }
 
-void _initialize_xml_support ();
-void _initialize_xml_support ();
-void
-_initialize_xml_support ()
+INIT_GDB_FILE (xml_support)
 {
   add_setshow_boolean_cmd ("xml", class_maintenance, &debug_xml,
 			   _("Set XML parser debugging."),

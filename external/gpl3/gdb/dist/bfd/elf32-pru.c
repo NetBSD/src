@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI PRU.
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
    Based on elf32-nios2.c
 
@@ -750,7 +750,8 @@ pru_elf32_relocate_section (bfd *output_bfd,
 
       if (sec && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_PRU_NONE,
+					 howto, 0, contents);
 
       /* Nothing more to do unless this is a final link.  */
       if (bfd_link_relocatable (info))
@@ -1559,11 +1560,8 @@ pru_elf32_link_hash_table_create (bfd *abfd)
   if (ret == NULL)
     return NULL;
 
-  if (!_bfd_elf_link_hash_table_init (ret, abfd,
-				      link_hash_newfunc,
-				      sizeof (struct
-					      elf_link_hash_entry),
-				      PRU_ELF_DATA))
+  if (!_bfd_elf_link_hash_table_init (ret, abfd, link_hash_newfunc,
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;

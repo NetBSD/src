@@ -11,6 +11,7 @@
 		rtc0 = "/i2c@7000d000/pmic@3c";
 		rtc1 = "/rtc@7000e000";
 		serial0 = &uarta;
+		serial3 = &uartd;
 	};
 
 	chosen {
@@ -28,7 +29,71 @@
 
 	/* debug port */
 	serial@70006000 {
+		/delete-property/ dmas;
+		/delete-property/ dma-names;
 		status = "okay";
+	};
+
+	serial@70006300 {
+		/delete-property/ reg-shift;
+		status = "okay";
+		compatible = "nvidia,tegra30-hsuart";
+		reset-names = "serial";
+
+		bluetooth {
+			compatible = "brcm,bcm43540-bt";
+			device-wakeup-gpios = <&gpio TEGRA_GPIO(H, 3) GPIO_ACTIVE_HIGH>;
+			shutdown-gpios = <&gpio TEGRA_GPIO(H, 4) GPIO_ACTIVE_HIGH>;
+			interrupt-parent = <&gpio>;
+			interrupts = <TEGRA_GPIO(H, 5) IRQ_TYPE_LEVEL_LOW>;
+			interrupt-names = "host-wakeup";
+		};
+	};
+
+	i2c@7000c400 {
+		status = "okay";
+
+		power-sensor@40 {
+			compatible = "ti,ina3221";
+			reg = <0x40>;
+			#address-cells = <1>;
+			#size-cells = <0>;
+
+			input@0 {
+				reg = <0x0>;
+				label = "VDD_IN";
+				shunt-resistor-micro-ohms = <20000>;
+			};
+
+			input@1 {
+				reg = <0x1>;
+				label = "VDD_GPU";
+				shunt-resistor-micro-ohms = <10000>;
+			};
+
+			input@2 {
+				reg = <0x2>;
+				label = "VDD_CPU";
+				shunt-resistor-micro-ohms = <10000>;
+			};
+		};
+	};
+
+	i2c@7000c500 {
+		status = "okay";
+
+		/* module ID EEPROM */
+		eeprom@50 {
+			compatible = "atmel,24c02";
+			reg = <0x50>;
+
+			label = "module";
+			vcc-supply = <&vdd_1v8>;
+			address-width = <8>;
+			pagesize = <8>;
+			size = <256>;
+			read-only;
+		};
 	};
 
 	i2c@7000d000 {
@@ -49,6 +114,22 @@
 
 			pinctrl-names = "default";
 			pinctrl-0 = <&max77620_default>;
+
+			fps {
+				fps0 {
+					maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
+					maxim,suspend-fps-time-period-us = <1280>;
+				};
+
+				fps1 {
+					maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN1>;
+					maxim,suspend-fps-time-period-us = <1280>;
+				};
+
+				fps2 {
+					maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
+				};
+			};
 
 			max77620_default: pinmux {
 				gpio0 {
@@ -81,22 +162,6 @@
 					pins = "gpio5", "gpio6", "gpio7";
 					function = "gpio";
 					drive-push-pull = <1>;
-				};
-			};
-
-			fps {
-				fps0 {
-					maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
-					maxim,suspend-fps-time-period-us = <1280>;
-				};
-
-				fps1 {
-					maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN1>;
-					maxim,suspend-fps-time-period-us = <1280>;
-				};
-
-				fps2 {
-					maxim,fps-event-source = <MAX77620_FPS_EVENT_SRC_EN0>;
 				};
 			};
 
@@ -265,23 +330,6 @@
 		};
 	};
 
-	i2c@7000c500 {
-		status = "okay";
-
-		/* module ID EEPROM */
-		eeprom@50 {
-			compatible = "atmel,24c02";
-			reg = <0x50>;
-
-			label = "module";
-			vcc-supply = <&vdd_1v8>;
-			address-width = <8>;
-			pagesize = <8>;
-			size = <256>;
-			read-only;
-		};
-	};
-
 	pmc@7000e400 {
 		nvidia,invert-interrupt;
 		nvidia,suspend-mode = <0>;
@@ -293,6 +341,25 @@
 		nvidia,sys-clock-req-active-high;
 	};
 
+	mmc@700b0200 {
+		status = "okay";
+		bus-width = <4>;
+		non-removable;
+		power-gpios = <&gpio TEGRA_GPIO(H, 0) GPIO_ACTIVE_HIGH>;
+		vqmmc-supply = <&vdd_1v8>;
+		vmmc-supply = <&vdd_3v3_sys>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		wifi@1 {
+			compatible = "brcm,bcm4354-fmac", "brcm,bcm4329-fmac";
+			reg = <1>;
+			interrupt-parent = <&gpio>;
+			interrupts = <TEGRA_GPIO(H, 2) IRQ_TYPE_LEVEL_HIGH>;
+			interrupt-names = "host-wake";
+		};
+	};
+
 	/* eMMC */
 	mmc@700b0600 {
 		status = "okay";
@@ -301,7 +368,7 @@
 		vqmmc-supply = <&vdd_1v8>;
 	};
 
-	clk32k_in: clock@0 {
+	clk32k_in: clock-32k {
 		compatible = "fixed-clock";
 		clock-frequency = <32768>;
 		#clock-cells = <0>;
@@ -336,7 +403,7 @@
 		method = "smc";
 	};
 
-	vdd_gpu: regulator@100 {
+	vdd_gpu: regulator-vdd-gpu {
 		compatible = "pwm-regulator";
 		pwms = <&pwm 1 8000>;
 		regulator-name = "VDD_GPU";

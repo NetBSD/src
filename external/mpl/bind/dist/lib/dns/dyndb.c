@@ -1,4 +1,4 @@
-/*	$NetBSD: dyndb.c,v 1.11.2.1 2025/08/02 05:53:25 perseant Exp $	*/
+/*	$NetBSD: dyndb.c,v 1.11.2.2 2026/11/04 23:18:00 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -30,13 +30,6 @@
 #include <dns/types.h>
 #include <dns/view.h>
 #include <dns/zone.h>
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 typedef struct dyndb_implementation dyndb_implementation_t;
 struct dyndb_implementation {

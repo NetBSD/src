@@ -146,7 +146,6 @@ sys.path.append(str(Path(__file__).resolve().parent.parent / "misc"))
 # -- Project information -----------------------------------------------------
 
 project = "BIND 9"
-# pylint: disable=redefined-builtin
 copyright = "2023, Internet Systems Consortium"
 author = "Internet Systems Consortium"
 
@@ -169,6 +168,8 @@ release = version
 
 # -- General configuration ---------------------------------------------------
 
+user_agent = "Mozilla/5.0"
+
 # Add any Sphinx extension module names here, as strings. They can be
 # extensions coming with Sphinx (named 'sphinx.ext.*') or your custom
 # ones.
@@ -184,6 +185,8 @@ exclude_patterns = ["_build", "Thumbs.db", ".DS_Store", "*.inc.rst"]
 
 # The master toctree document.
 master_doc = "index"
+
+smartquotes = False
 
 # -- Options for HTML output -------------------------------------------------
 
@@ -219,6 +222,7 @@ linkcheck_timeout = 10
 linkcheck_ignore = [
     "http://127.0.0.1",
     "https://dl.acm.org",
+    "https://gitlab.gnome.org",
     "https://gitlab.isc.org",
     "https://kb.isc.org",
     "https://simpleicon.com/",

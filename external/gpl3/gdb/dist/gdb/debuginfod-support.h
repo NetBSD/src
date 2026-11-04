@@ -1,5 +1,5 @@
 /* debuginfod utilities for GDB.
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DEBUGINFOD_SUPPORT_H
-#define DEBUGINFOD_SUPPORT_H
+#ifndef GDB_DEBUGINFOD_SUPPORT_H
+#define GDB_DEBUGINFOD_SUPPORT_H
 
 #include "gdbsupport/scoped_fd.h"
 
@@ -105,4 +105,4 @@ extern scoped_fd debuginfod_section_query (const unsigned char *build_id,
 					   const char *section_name,
 					   gdb::unique_xmalloc_ptr<char>
 					     *destname);
-#endif /* DEBUGINFOD_SUPPORT_H */
+#endif /* GDB_DEBUGINFOD_SUPPORT_H */

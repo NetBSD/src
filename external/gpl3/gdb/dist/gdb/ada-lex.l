@@ -1,5 +1,5 @@
 /* FLEX lexer for Ada expressions, for GDB. -*- c++ -*-
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -510,7 +510,7 @@ processReal (struct parser_state *par_state, const char *num0)
    encoded and the resulting name is equal to it.  Similarly, if the name
    starts with '<', it is copied verbatim.  Otherwise, it differs
    from NAME0 in that:
-    + Characters between '...' are transfered verbatim to yylval.ssym.
+    + Characters between '...' are transferred verbatim to yylval.ssym.
     + Trailing "'" characters in quoted sequences are removed (a leading quote is
       preserved to indicate that the name is not to be GNAT-encoded).
     + Unquoted whitespace is removed.
@@ -672,6 +672,7 @@ attributes[] = {
   { "max", TICK_MAX },
   { "min", TICK_MIN },
   { "modulus", TICK_MODULUS },
+  { "object_size", TICK_OBJECT_SIZE },
   { "pos", TICK_POS },
   { "range", TICK_RANGE },
   { "size", TICK_SIZE },

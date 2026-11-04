@@ -76,8 +76,12 @@ openpty
 parsedate
 pidfile
 pidfile_clean
+pidfile_fd
 pidfile_lock
+pidfile_path
 pidfile_read
+pidfile_unlock
+pidfile_unremoveable
 pidlock
 proc_compare
 pw_abort
@@ -105,7 +109,10 @@ snprintb_m
 sockaddr_snprintf
 string_to_flags
 strpct
+strpct_r
+strpct_round
 strspct
+strspct_r
 ttyaction
 ttylock
 ttymsg

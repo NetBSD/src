@@ -1,4 +1,4 @@
-# $NetBSD: t_integration.sh,v 1.84.2.1 2025/08/02 05:58:19 perseant Exp $
+# $NetBSD: t_integration.sh,v 1.84.2.2 2026/11/04 23:28:27 perseant Exp $
 #
 # Copyright (c) 2008, 2010 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -157,6 +157,9 @@ check_lint1()
 atf_test_case lint1
 lint1_head() {
 	atf_set 'require.progs' "$lint1"
+	case $archsubdir in
+	vax|powerpc|mips*) atf_set 'timeout' '400'
+	esac
 }
 lint1_body() {
 	local src

@@ -1,4 +1,4 @@
-/* $NetBSD: vmt.c,v 1.1.2.1 2025/08/02 05:55:20 perseant Exp $ */
+/* $NetBSD: vmt.c,v 1.1.2.2 2026/11/04 23:19:55 perseant Exp $ */
 
 /*
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -30,8 +30,17 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#ifdef _KERNEL_OPT
+#include "acpica.h"
+#endif
+
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/systm.h>
+
+#if NACPICA > 0
+#include <dev/acpi/acpivar.h>
+#endif
 
 #include <dev/vmt/vmtreg.h>
 #include <dev/vmt/vmtvar.h>
@@ -51,6 +60,22 @@ vmt_match(device_t parent, cfdata_t match, void *aux)
 	/* vmt should not attach to more than a single CPU. */
 	if (vmt_attached)
 		return 0;
+
+#if NACPICA > 0
+	/*
+	 * The backdoor is a read of MDCCSR_EL0 with a magic value in x7.
+	 * Probe only when the firmware names VMware; a hypervisor that
+	 * names something else, or nothing, is not one whose API this
+	 * driver knows, and there is nothing to find.  (QEMU 11.1 under
+	 * hvf also trapped the read as an undefined instruction, which is
+	 * fatal in kernel mode.  That was a QEMU bug, since fixed.)  See
+	 * port-arm/60655.
+	 */
+	char hv[sizeof(AcpiGbl_FADT.HypervisorId) + 1];
+	if (!acpi_fadt_hypervisor_id(hv, sizeof(hv)) ||
+	    strncmp(hv, "VMware", 6) != 0)
+		return 0;
+#endif
 
 	return vmt_probe();
 }

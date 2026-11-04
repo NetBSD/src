@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.4 2018/12/01 02:43:43 kamil Exp $
+#	$NetBSD: Makefile.inc,v 1.4.12.1 2026/11/04 23:19:13 perseant Exp $
 
 # Constant database reader/writer
 
-.PATH:	${.CURDIR}/cdb
+.PATH:	${.PARSEDIR}
 .PATH:	${NETBSDSRCDIR}/common/lib/libc/cdb
 
 SRCS+=		cdbr.c cdbw.c
@@ -23,4 +23,6 @@ MLINKS+=	cdbw.3 cdbw_output.3
 MLINKS+=	cdbw.3 cdbw_close.3
 
 # XXX: Fix the code instead
-LINTFLAGS.cdbw.c += -X 132,259,298
+LINTFLAGS.cdbw.c += -X 132,298
+
+COPTS.cdbw.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}

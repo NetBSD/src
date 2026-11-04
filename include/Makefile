@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.146.12.1 2025/08/02 05:54:27 perseant Exp $
+#	$NetBSD: Makefile,v 1.146.12.2 2026/11/04 23:19:09 perseant Exp $
 #	@(#)Makefile	8.2 (Berkeley) 1/4/94
 
 # Doing a make includes builds /usr/include
@@ -9,8 +9,8 @@ NOOBJ=		# defined
 
 INCS=	a.out.h aio.h ar.h assert.h atomic.h \
 	bitstring.h bm.h cdbw.h complex.h cpio.h ctype.h db.h dirent.h \
-	disktab.h dlfcn.h endian.h err.h errno.h fenv.h fmtmsg.h fnmatch.h \
-	fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
+	disktab.h dlfcn.h elf.h endian.h err.h errno.h fenv.h fmtmsg.h \
+	fnmatch.h fstab.h fts.h ftw.h getopt.h glob.h grp.h ifaddrs.h iconv.h \
 	inttypes.h iso646.h kvm.h langinfo.h libgen.h \
 	limits.h link.h link_aout.h link_elf.h locale.h \
 	login_cap.h lwp.h malloc.h math.h md2.h \
@@ -38,6 +38,10 @@ INCS+=	rpcsvc/yp_prot.h rpcsvc/ypclnt.h
 .endif
 
 INCS+=  ssp/ssp.h ssp/stdio.h ssp/string.h ssp/strings.h ssp/unistd.h
+
+.if (${MACHINE_ARCH} == "sparc64")
+INCS+=	vis_proto.h vis_types.h
+.endif
 
 .if (${MACHINE_ARCH} != "vax")
 INCS+=	ieeefp.h

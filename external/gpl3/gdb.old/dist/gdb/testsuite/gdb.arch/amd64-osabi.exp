@@ -1,4 +1,4 @@
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,7 @@
 
 # Verify that gdbarches for i386 variants and osabi none are properly created.
 
-if { ![istarget x86_64-*-* ] } {
-    untested "skipping x86-64 specific test"
-    return
-}
-
+require {istarget x86_64-*-*}
 
 proc test_osabi_none { arch void_ptr_size long_double_size } {
     clean_restart

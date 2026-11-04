@@ -101,6 +101,10 @@ int	npf_ext_normalize_fini(npf_t *);
 int	npf_ext_rndblock_init(npf_t *);
 int	npf_ext_rndblock_fini(npf_t *);
 
+/* Routing */
+int	npf_ext_route_init(npf_t *);
+int	npf_ext_route_fini(npf_t *);
+
 /*
  * ALGs.
  */

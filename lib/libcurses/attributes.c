@@ -1,4 +1,4 @@
-/*	$NetBSD: attributes.c,v 1.35.4.1 2025/08/02 05:54:45 perseant Exp $	*/
+/*	$NetBSD: attributes.c,v 1.35.4.2 2026/11/04 23:19:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: attributes.c,v 1.35.4.1 2025/08/02 05:54:45 perseant Exp $");
+__RCSID("$NetBSD: attributes.c,v 1.35.4.2 2026/11/04 23:19:26 perseant Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -221,9 +221,9 @@ wattr_set(WINDOW *win, attr_t attr, short pair, void *opts)
 int
 wcolor_set(WINDOW *win, short pair, void *opts)
 {
-	__CTRACE(__CTRACE_COLOR, "wolor_set: win %p, pair %d\n", win, pair);
+	__CTRACE(__CTRACE_COLOR, "wcolor_set: win %p, pair %d\n", win, pair);
 
-	if (__predict_false(opts != NULL))
+	if ((__predict_false(win == NULL)) || (__predict_false(opts != NULL)))
 		return ERR;
 
 	__wcolor_set(win, (attr_t) COLOR_PAIR(pair));

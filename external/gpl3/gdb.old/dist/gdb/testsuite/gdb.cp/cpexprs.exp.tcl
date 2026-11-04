@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -678,7 +678,7 @@ add {policyd5::function} \
     {operation_1<T>::function}
 
 # Start the test
-if {[skip_cplus_tests]} { continue }
+if {![allow_cplus_tests]} { continue }
 
 #
 # test running programs
@@ -722,6 +722,8 @@ foreach name [get_functions list] {
 # Test c/v gets recognized even without quoting.
 foreach cv {{} { const} { volatile} { const volatile}} {
   set test "p 'CV::m(int)$cv'"
+  set correct dummy_value
+
   gdb_test_multiple $test $test {
       -re "( = {.*} 0x\[0-9a-f\]+ <CV::m.*>)\r\n$gdb_prompt $" {
 	  # = {void (CV * const, CV::t)} 0x400944 <CV::m(int)>

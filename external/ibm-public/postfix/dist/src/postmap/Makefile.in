@@ -10,6 +10,7 @@ PROG	= postmap
 INC_DIR	= ../../include
 LIBS	= ../../lib/lib$(LIB_PREFIX)global$(LIB_SUFFIX) \
 	../../lib/lib$(LIB_PREFIX)util$(LIB_SUFFIX)
+NOSLEEP = LD_PRELOAD=../../lib/nosleep.so
 
 .c.o:;	$(CC) $(CFLAGS) -c $*.c
 
@@ -27,52 +28,71 @@ update: ../../bin/$(PROG)
 	cp $(PROG) ../../bin
 
 tests:	test1 test2 fail_test quote_test file_test lmdb_abb_test \
-	lmdb_bulk_test lmdb_incr_test cdb_bulk_test
+	lmdb_bulk_test lmdb_incr_test cdb_bulk_test mode_conflict_test \
+	json_tests
 
 root_tests:
 
 test1:	$(PROG) map.in map-abc1.ref map-ghi1.ref map-uABC1.ref
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) map.in
+	rm -f main.cf
+	touch -t 197101010000 main.cf
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . map.in
 	for key in abc ghi; \
 	do \
-	    $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -q $${key} map.in | diff map-$${key}1.ref -; \
+	    $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -q $${key} map.in | diff map-$${key}1.ref -; \
 	done
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -f map.in
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -f map.in
 	for key in ABC; \
 	do \
-	    $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -fq $${key} map.in | diff map-u$${key}1.ref -; \
+	    $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -fq $${key} map.in | diff map-u$${key}1.ref -; \
 	done
-	rm -f map.in.db
+	rm -f map.in.db main.cf
 
 test2:	$(PROG) map.in map-abc2.ref map-ghi2.ref map-uABC2.ref
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) map.in
+	rm -f main.cf
+	touch -t 197101010000 main.cf
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . map.in
 	for key in abc ghi; \
 	do \
-	    echo $${key} | $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -q - map.in | diff map-$${key}2.ref -; \
+	    echo $${key} | $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -q - map.in | diff map-$${key}2.ref -; \
 	done
-	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -f map.in
+	$(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -f map.in
 	for key in ABC; \
 	do \
-	    echo $${key} | $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -fq - map.in | diff map-u$${key}2.ref -; \
+	    echo $${key} | $(SHLIB_ENV) $(VALGRIND) ./$(PROG) -c . -fq - map.in | diff map-u$${key}2.ref -; \
 	done
-	rm -f map.in.db
+	rm -f map.in.db main.cf
 
 fail_test: $(PROG) aliases fail_test.in fail_test.ref
-	-($(SHLIB_ENV) sh fail_test.in || exit 0) >fail_test.tmp 2>&1
+	rm -f main.cf
+	touch -t 197101010000 main.cf
+	-($(SHLIB_ENV) MAIL_CONFIG=. $(NOSLEEP) sh fail_test.in || exit 0) >fail_test.tmp 2>&1
 	diff fail_test.ref fail_test.tmp
-	rm -f fail_test.tmp
+	rm -f fail_test.tmp main.cf
 
 quote_test: $(PROG) aliases quote_test.in quote_test.ref
+	rm -f main.cf
+	touch -t 197101010000 main.cf
 	rm -f quote_test_map.*
-	$(SHLIB_ENV) sh quote_test.in >quote_test.tmp 2>&1
+	$(SHLIB_ENV) MAIL_CONFIG=. sh quote_test.in >quote_test.tmp 2>&1
 	diff quote_test.ref quote_test.tmp
-	rm -f quote_test.tmp quote_test_map.*
+	rm -f quote_test.tmp quote_test_map.* main.cf
 
 file_test: $(PROG) file_test.in file_test.ref
+	rm -f main.cf
+	touch -t 197101010000 main.cf
 	rm -f file_test_map.* postmap-file-1 postmap-file-2
-	$(SHLIB_ENV) sh file_test.in >file_test.tmp 2>&1
+	$(SHLIB_ENV) MAIL_CONFIG=. $(NOSLEEP) sh file_test.in >file_test.tmp 2>&1
 	diff file_test.ref file_test.tmp
-	rm -f file_test.tmp file_test_map.* postmap-file-1 postmap-file-2
+	rm -f file_test.tmp file_test_map.* postmap-file-1 postmap-file-2 \
+	    main.cf
+
+mode_conflict_test: $(PROG) mode_conflict_test.in mode_conflict_test.ref
+	rm -f main.cf
+	touch -t 197101010000 main.cf
+	$(SHLIB_ENV) MAIL_CONFIG=. $(NOSLEEP) sh -x mode_conflict_test.in >mode_conflict_test.tmp 2>&1
+	diff mode_conflict_test.ref mode_conflict_test.tmp
+	rm -f mode_conflict_test.tmp main.cf
 
 cdb_bulk_test: $(PROG)
 	rm -f cdb_bulk.cdb main.cf
@@ -80,15 +100,17 @@ cdb_bulk_test: $(PROG)
 	    sed -e 's/.*/&	&/' -e 10000q| LANG=C sort -u >cdb_bulk
 	touch -t 197101010000 main.cf
 	($(SHLIB_ENV) $(VALGRIND) ./postmap -c . cdb:cdb_bulk; \
-	$(SHLIB_ENV) $(VALGRIND) ./postmap -s cdb:cdb_bulk | \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -c . -s cdb:cdb_bulk | \
 	    LANG=C sort > cdb_bulk.tmp)
 	cmp cdb_bulk cdb_bulk.tmp
 	rm -f cdb_bulk cdb_bulk.tmp cdb_bulk.cdb main.cf
 
 lmdb_abb_test: $(PROG) lmdb_abb lmdb_abb.ref
+	rm -f main.cf
+	touch -t 197101010000 main.cf
 	rm -f lmdb_abb.lmdb
-	($(SHLIB_ENV) $(VALGRIND) ./postmap lmdb:lmdb_abb; \
-	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_abb | sort) >lmdb_abb.tmp 2>&1
+	($(SHLIB_ENV) $(VALGRIND) ./postmap -c . lmdb:lmdb_abb; \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -c . -s lmdb:lmdb_abb | sort) >lmdb_abb.tmp 2>&1
 	diff lmdb_abb.ref lmdb_abb.tmp
 	rm -f lmdb_abb.tmp lmdb_abb.lmdb
 
@@ -99,7 +121,7 @@ lmdb_bulk_test: $(PROG)
 	echo lmdb_map_size=10240 >main.cf
 	touch -t 197101010000 main.cf
 	($(SHLIB_ENV) $(VALGRIND) ./postmap -c . lmdb:lmdb_retry; \
-	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_retry | \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -c . -s lmdb:lmdb_retry | \
 	    LANG=C sort > lmdb_retry.tmp)
 	cmp lmdb_retry lmdb_retry.tmp
 	rm -f lmdb_retry lmdb_retry.tmp lmdb_retry.lmdb main.cf
@@ -111,13 +133,69 @@ lmdb_incr_test: $(PROG)
 	echo lmdb_map_size=10240 >main.cf
 	touch -t 197101010000 main.cf
 	($(SHLIB_ENV) $(VALGRIND) ./postmap -ic . lmdb:lmdb_retry <lmdb_retry; \
-	$(SHLIB_ENV) $(VALGRIND) ./postmap -s lmdb:lmdb_retry | \
+	$(SHLIB_ENV) $(VALGRIND) ./postmap -c . -s lmdb:lmdb_retry | \
 	    LANG=C sort > lmdb_retry.tmp)
 	cmp lmdb_retry lmdb_retry.tmp
 	rm -f lmdb_retry lmdb_retry.tmp lmdb_retry.lmdb main.cf
 
+json_tests: json_query_test json_queries_test json_sequence_test \
+	json_header_test json_body_test
+
+json_query_test: $(PROG)
+	# Exercise code in postmap_query().
+	@echo ; echo RUN json_query_test
+	echo '{"foo": "fooval"}' >json_query.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./$(PROG)  -jq foo \
+		'inline:{{foo = fooval}}' | diff json_query.tmp -
+	($(SHLIB_ENV) ${VALGRIND} ./$(PROG)  -jq bar \
+		'inline:{{foo = fooval}}' || exit 0) | diff /dev/null -
+	rm -f json_query.tmp
+	@echo PASS json_query_test
+
+json_queries_test: $(PROG)
+	# Exercise json formatting in postmap_queries() with non-message input.
+	@echo ; echo RUN json_queries_test
+	echo '{"foo": "fooval"}' >json_queries.tmp
+	(echo foo; echo bar) | $(SHLIB_ENV) ${VALGRIND} \
+		./$(PROG) -jq - 'inline:{{foo = fooval}}' | \
+		diff json_queries.tmp -
+	rm -f json_queries.tmp 
+	@echo PASS json_queries_test
+
+json_sequence_test: $(PROG)
+	# Exercise json formatting in postmap_seq().
+	@echo ; echo RUN json_sequence_test
+	rm -f json_sequence.tmp
+	(echo '{"bar": "barval"}'; echo '{"foo": "fooval"}') |\
+		sort >json_sequence.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./$(PROG) -js \
+		'inline:{{foo = fooval} {bar = barval}}' | sort | \
+		diff json_sequence.tmp -
+	rm -f json_sequence.tmp
+	@echo PASS json_sequence_test
+
+json_header_test: $(PROG)
+	# Exercise json formatting in postmap_queries() in 'header' mode.
+	@echo ; echo RUN json_header_test
+	echo '{"Subject: test": "got subject"}' > json_header.tmp
+	(echo Subject: test; echo body) | $(SHLIB_ENV) ${VALGRIND} ./$(PROG) \
+		-hjq - 'regexp:{{ /Subject/ got subject} { /./ got other }}' | \
+		diff json_header.tmp -
+	rm -f json_header.tmp
+	@echo PASS json_header_test
+
+json_body_test: $(PROG)
+	# Exercise json formatting in postmap_queries() in 'body' mode.
+	@echo ; echo RUN json_body_test
+	echo '{"body": "got other"}' > json_body.tmp
+	(echo Subject: test; echo body) | $(SHLIB_ENV) ${VALGRIND} ./$(PROG) \
+		-bjq - 'regexp:{{ /Subject/ got subject} { /./ got other }}' | \
+		diff json_body.tmp -
+	rm -f json_body.tmp
+	@echo PASS json_body_test
+
 clean:
-	rm -f *.o *core $(PROG) $(TESTPROG) *.tmp junk *.db
+	rm -f *.o *core $(PROG) $(TESTPROG) *.tmp junk *.db main.cf master.cf
 
 tidy:	clean
 

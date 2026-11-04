@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.27.2.1 2025/08/02 05:56:39 perseant Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.27.2.2 2026/11/04 23:21:54 perseant Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.27.2.1 2025/08/02 05:56:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.27.2.2 2026/11/04 23:21:54 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_hvn.h"
@@ -4191,7 +4191,7 @@ hvn_get_rsscaps(struct hvn_softc *sc, int *nrxr)
 
 	/*
 	 * NOTE:
-	 * Toeplitz is at the lowest bit, and it is prefered; so ffs(),
+	 * Toeplitz is at the lowest bit, and it is preferred; so ffs(),
 	 * instead of fls(), is used here.
 	 */
 	hash_fnidx = ffs(caps.ndis_caps & NDIS_RSS_CAP_HASHFUNC_MASK);

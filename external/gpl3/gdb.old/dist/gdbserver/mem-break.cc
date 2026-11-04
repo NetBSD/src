@@ -1,5 +1,5 @@
 /* Memory breakpoint operations for the remote server for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include "regcache.h"
 #include "ax.h"
 
@@ -70,7 +69,7 @@
    software breakpoints, a buffer holding a copy of the instructions
    that would be in memory had not been a breakpoint there (we call
    that the shadow memory of the breakpoint).  We occasionally need to
-   temporarilly uninsert a breakpoint without the client knowing about
+   temporarily uninsert a breakpoint without the client knowing about
    it (e.g., to step over an internal breakpoint), so we keep an
    `inserted' state associated with this low level breakpoint
    structure.  There can only be one such object for a given address.
@@ -976,6 +975,17 @@ static struct gdb_breakpoint *
 find_gdb_breakpoint (char z_type, CORE_ADDR addr, int kind)
 {
   struct process_info *proc = current_process ();
+
+  /* In some situations the current process exits, we inform GDB, but
+     before GDB can acknowledge that the process has exited GDB tries to
+     detach from the inferior.  As part of the detach process GDB will
+     remove all breakpoints, which means we can end up here when the
+     current process has already exited and so PROC is nullptr.  In this
+     case just claim we can't find (and so delete) the breakpoint, GDB
+     will ignore this error during detach.  */
+  if (proc == nullptr)
+    return nullptr;
+
   struct breakpoint *bp;
   enum bkpt_type type = Z_packet_to_bkpt_type (z_type);
 
@@ -1228,7 +1238,7 @@ gdb_condition_true_at_breakpoint_z_type (char z_type, CORE_ADDR addr)
   if (bp->cond_list == NULL)
     return 1;
 
-  ctx.regcache = get_thread_regcache (current_thread, 1);
+  ctx.regcache = get_thread_regcache (current_thread);
   ctx.tframe = NULL;
   ctx.tpoint = NULL;
 
@@ -1350,7 +1360,7 @@ run_breakpoint_commands_z_type (char z_type, CORE_ADDR addr)
   if (bp == NULL)
     return 1;
 
-  ctx.regcache = get_thread_regcache (current_thread, 1);
+  ctx.regcache = get_thread_regcache (current_thread);
   ctx.tframe = NULL;
   ctx.tpoint = NULL;
 
@@ -1392,7 +1402,7 @@ set_single_step_breakpoint (CORE_ADDR stop_at, ptid_t ptid)
 {
   struct single_step_breakpoint *bp;
 
-  gdb_assert (current_ptid.pid () == ptid.pid ());
+  gdb_assert (current_thread->id.pid () == ptid.pid ());
 
   bp = (struct single_step_breakpoint *) set_breakpoint_type_at (single_step_breakpoint,
 								stop_at, NULL);
@@ -1400,9 +1410,9 @@ set_single_step_breakpoint (CORE_ADDR stop_at, ptid_t ptid)
 }
 
 void
-delete_single_step_breakpoints (struct thread_info *thread)
+delete_single_step_breakpoints (thread_info *thread)
 {
-  struct process_info *proc = get_thread_process (thread);
+  process_info *proc = thread->process ();
   struct breakpoint *bp, **bp_link;
 
   bp = proc->breakpoints;
@@ -1411,7 +1421,7 @@ delete_single_step_breakpoints (struct thread_info *thread)
   while (bp)
     {
       if (bp->type == single_step_breakpoint
-	  && ((struct single_step_breakpoint *) bp)->ptid == ptid_of (thread))
+	  && ((struct single_step_breakpoint *) bp)->ptid == thread->id)
 	{
 	  scoped_restore_current_thread restore_thread;
 
@@ -1495,15 +1505,15 @@ uninsert_all_breakpoints (void)
 }
 
 void
-uninsert_single_step_breakpoints (struct thread_info *thread)
+uninsert_single_step_breakpoints (thread_info *thread)
 {
-  struct process_info *proc = get_thread_process (thread);
+  process_info *proc = thread->process ();
   struct breakpoint *bp;
 
   for (bp = proc->breakpoints; bp != NULL; bp = bp->next)
     {
     if (bp->type == single_step_breakpoint
-	&& ((struct single_step_breakpoint *) bp)->ptid == ptid_of (thread))
+	&& ((struct single_step_breakpoint *) bp)->ptid == thread->id)
       {
 	gdb_assert (bp->raw->inserted > 0);
 
@@ -1564,9 +1574,9 @@ reinsert_breakpoints_at (CORE_ADDR pc)
 }
 
 int
-has_single_step_breakpoints (struct thread_info *thread)
+has_single_step_breakpoints (thread_info *thread)
 {
-  struct process_info *proc = get_thread_process (thread);
+  process_info *proc = thread->process ();
   struct breakpoint *bp, **bp_link;
 
   bp = proc->breakpoints;
@@ -1575,7 +1585,7 @@ has_single_step_breakpoints (struct thread_info *thread)
   while (bp)
     {
       if (bp->type == single_step_breakpoint
-	  && ((struct single_step_breakpoint *) bp)->ptid == ptid_of (thread))
+	  && ((struct single_step_breakpoint *) bp)->ptid == thread->id)
 	return 1;
       else
 	{
@@ -1601,15 +1611,15 @@ reinsert_all_breakpoints (void)
 }
 
 void
-reinsert_single_step_breakpoints (struct thread_info *thread)
+reinsert_single_step_breakpoints (thread_info *thread)
 {
-  struct process_info *proc = get_thread_process (thread);
+  process_info *proc = thread->process ();
   struct breakpoint *bp;
 
   for (bp = proc->breakpoints; bp != NULL; bp = bp->next)
     {
       if (bp->type == single_step_breakpoint
-	  && ((struct single_step_breakpoint *) bp)->ptid == ptid_of (thread))
+	  && ((struct single_step_breakpoint *) bp)->ptid == thread->id)
 	{
 	  gdb_assert (bp->raw->inserted > 0);
 
@@ -1988,7 +1998,8 @@ check_mem_write (CORE_ADDR mem_addr, unsigned char *buf,
     delete_disabled_breakpoints ();
 }
 
-/* Delete all breakpoints, and un-insert them from the inferior.  */
+/* Delete all breakpoints, watchpoints, tracepoints, and catchpoints,
+   and un-insert them from the inferior.  */
 
 void
 delete_all_breakpoints (void)
@@ -2010,8 +2021,8 @@ mark_breakpoints_out (struct process_info *proc)
     raw_bp->inserted = 0;
 }
 
-/* Release all breakpoints, but do not try to un-insert them from the
-   inferior.  */
+/* Release all breakpoints, watchpoints, tracepoints, and catchpoints,
+   but do not try to un-insert them from the inferior.  */
 
 void
 free_all_breakpoints (struct process_info *proc)
@@ -2120,21 +2131,21 @@ clone_one_breakpoint (const struct breakpoint *src, ptid_t ptid)
 /* See mem-break.h.  */
 
 void
-clone_all_breakpoints (struct thread_info *child_thread,
-		       const struct thread_info *parent_thread)
+clone_all_breakpoints (thread_info *child_thread,
+		       const thread_info *parent_thread)
 {
   const struct breakpoint *bp;
   struct breakpoint *new_bkpt;
   struct breakpoint *bkpt_tail = NULL;
   struct raw_breakpoint *raw_bkpt_tail = NULL;
-  struct process_info *child_proc = get_thread_process (child_thread);
-  struct process_info *parent_proc = get_thread_process (parent_thread);
+  process_info *child_proc = child_thread->process ();
+  process_info *parent_proc = parent_thread->process ();
   struct breakpoint **new_list = &child_proc->breakpoints;
   struct raw_breakpoint **new_raw_list = &child_proc->raw_breakpoints;
 
   for (bp = parent_proc->breakpoints; bp != NULL; bp = bp->next)
     {
-      new_bkpt = clone_one_breakpoint (bp, ptid_of (child_thread));
+      new_bkpt = clone_one_breakpoint (bp, child_thread->id);
       APPEND_TO_LIST (new_list, new_bkpt, bkpt_tail);
       APPEND_TO_LIST (new_raw_list, new_bkpt->raw, raw_bkpt_tail);
     }

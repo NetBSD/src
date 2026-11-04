@@ -1,5 +1,5 @@
 /* Address ranges.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of the GNU Simulators.
@@ -82,12 +82,12 @@ frob_range (ADDR_RANGE *ar, address_word start, address_word end, int delete_p)
     {
       if (! delete_p)
 	{
-	  /* Try next range if current range preceeds new one and not
+	  /* Try next range if current range precedes new one and not
 	     adjacent or overlapping.  */
 	  if (asr->end < caller->start - 1)
 	    goto next_range;
 
-	  /* Break out if new range preceeds current one and not
+	  /* Break out if new range precedes current one and not
 	     adjacent or overlapping.  */
 	  if (asr->start > caller->end + 1)
 	    break;
@@ -114,11 +114,11 @@ frob_range (ADDR_RANGE *ar, address_word start, address_word end, int delete_p)
 	}
       else /* deleting a range */
 	{
-	  /* Try next range if current range preceeds new one.  */
+	  /* Try next range if current range precedes new one.  */
 	  if (asr->end < caller->start)
 	    goto next_range;
 
-	  /* Break out if new range preceeds current one.  */
+	  /* Break out if new range precedes current one.  */
 	  if (asr->start > caller->end)
 	    break;
 

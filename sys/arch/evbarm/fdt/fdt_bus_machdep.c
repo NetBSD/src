@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_bus_machdep.c,v 1.3 2023/04/07 08:55:31 skrll Exp $ */
+/* $NetBSD: fdt_bus_machdep.c,v 1.3.6.1 2026/11/04 23:20:27 perseant Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.3 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_bus_machdep.c,v 1.3.6.1 2026/11/04 23:20:27 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 

@@ -1,6 +1,6 @@
 /* Common target-dependent functionality for RISC-V
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_RISCV_H
-#define ARCH_RISCV_H
+#ifndef GDB_ARCH_RISCV_H
+#define GDB_ARCH_RISCV_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -119,4 +119,4 @@ const target_desc *riscv_lookup_target_description
 #endif /* GDBSERVER */
 
 
-#endif /* ARCH_RISCV_H */
+#endif /* GDB_ARCH_RISCV_H */

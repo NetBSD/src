@@ -69,6 +69,7 @@ error.o: ../../include/msg.h
 error.o: ../../include/msg_stats.h
 error.o: ../../include/mymalloc.h
 error.o: ../../include/nvtable.h
+error.o: ../../include/pol_stats.h
 error.o: ../../include/recipient_list.h
 error.o: ../../include/sys_defs.h
 error.o: ../../include/sys_exits.h

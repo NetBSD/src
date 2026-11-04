@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.15.24.1 2026/11/04 23:21:56 perseant Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -26,13 +26,8 @@
  * ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-/* XXX */
-#if defined(__arm__) || defined(__aarch64__)
-#include "opt_fdt.h"
-#endif
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.15.24.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -43,10 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.15 2021/01/27 02:29:48 thorpej Exp $")
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/pcf8563reg.h>
-
-#ifdef FDT
-#include <dev/fdt/fdtvar.h>
-#endif
 
 static const struct device_compatible_entry compat_data[] = {
 	{ .compat = "nxp,pcf8563" },
@@ -101,10 +92,9 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = pcf8563rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -122,17 +112,13 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-#ifdef FDT
-	fdtbus_todr_attach(self, ia->ia_cookie, &sc->sc_todr);
-#else
 	todr_attach(&sc->sc_todr);
-#endif
 }
 
 static int
 pcf8563rtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct pcf8563rtc_softc *sc = ch->cookie;
+	struct pcf8563rtc_softc *sc = device_private(ch->todr_dev);
 
 	return pcf8563rtc_clock_read(sc, dt);
 }
@@ -140,7 +126,7 @@ pcf8563rtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 pcf8563rtc_settime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-        struct pcf8563rtc_softc *sc = ch->cookie;
+        struct pcf8563rtc_softc *sc = device_private(ch->todr_dev);
 
 	return pcf8563rtc_clock_write(sc, dt);
 }

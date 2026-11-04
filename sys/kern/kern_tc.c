@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.77.2.1 2025/08/02 05:57:41 perseant Exp $ */
+/* $NetBSD: kern_tc.c,v 1.77.2.2 2026/11/04 23:27:49 perseant Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.77.2.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.77.2.2 2026/11/04 23:27:49 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -59,6 +59,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.77.2.1 2025/08/02 05:57:41 perseant Ex
 #include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/reboot.h>	/* XXX just to get AB_VERBOSE */
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/systm.h>
@@ -103,7 +104,7 @@ struct timehands {
 	struct timecounter	*th_counter;     /* active timecounter */
 	int64_t			th_adjustment;   /* frequency adjustment */
 						 /* (NTP/adjtime) */
-	uint64_t		th_scale;        /* scale factor (counter) */
+	uint64_t		th_scale;        /* scale factor (counter */
 						 /* tick->time) */
 	uint64_t 		th_offset_count; /* offset at last time */
 						 /* update (tc_windup()) */
@@ -299,7 +300,7 @@ sysctl_kern_timecounter_hardware(SYSCTLFN_ARGS)
 
 	if (!cold)
 		mutex_spin_enter(&timecounter_lock);
-	error = EINVAL;
+	error = SET_ERROR(EINVAL);
 	for (newtc = timecounters; newtc != NULL; newtc = newtc->tc_next) {
 		if (strcmp(newname, newtc->tc_name) != 0)
 			continue;
@@ -326,9 +327,9 @@ sysctl_kern_timecounter_choice(SYSCTLFN_ARGS)
 	int error, mods;
 
 	if (newp != NULL)
-		return EPERM;
+		return SET_ERROR(EPERM);
 	if (namelen != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_spin_enter(&timecounter_lock);
  retry:
@@ -804,7 +805,7 @@ tc_detach(struct timecounter *target)
 	}
 	if (tc == NULL) {
 		mutex_spin_exit(&timecounter_lock);
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 	}
 
 	/* And now, remove it. */
@@ -1082,7 +1083,7 @@ pps_ioctl(u_long cmd, void *data, struct pps_state *pps)
 	case PPS_IOC_SETPARAMS:
 		app = (pps_params_t *)data;
 		if (app->mode & ~pps->ppscap)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		pps->ppsparam = *app;
 		return 0;
 	case PPS_IOC_GETPARAMS:
@@ -1103,14 +1104,14 @@ pps_ioctl(u_long cmd, void *data, struct pps_state *pps)
 		epi = (int *)data;
 		/* XXX Only root should be able to do this */
 		if (*epi & ~pps->ppscap)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		pps->kcmode = *epi;
 		return 0;
 #else
-		return EOPNOTSUPP;
+		return SET_ERROR(EOPNOTSUPP);
 #endif
 	default:
-		return EPASSTHROUGH;
+		return SET_ERROR(EPASSTHROUGH);
 	}
 }
 

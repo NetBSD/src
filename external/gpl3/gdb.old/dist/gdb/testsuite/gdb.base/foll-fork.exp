@@ -1,4 +1,4 @@
-#   Copyright 1997-2023 Free Software Foundation, Inc.
+#   Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,10 +15,7 @@
 
 # Test relies on checking follow-fork output. Do not run if gdb debug is
 # enabled as it will be redirected to the log.
-if [gdb_debug_enabled] {
-    untested "debug is enabled"
-    return 0
-}
+require !gdb_debug_enabled
 
 standard_testfile
 
@@ -45,7 +42,7 @@ proc_with_prefix check_fork_catchpoints {} {
   global gdb_prompt
 
   if { ![setup] } {
-      return
+      return 0
   }
 
   # Verify that the system supports "catch fork".
@@ -212,14 +209,21 @@ set reading_in_symbols_re {(?:\r\nReading in symbols for [^\r\n]*)?}
 # Test the ability to catch a fork, specify that the child be
 # followed, and continue.  Make the catchpoint permanent.
 
-proc_with_prefix catch_fork_child_follow {} {
+proc_with_prefix catch_fork_child_follow {second_inferior} {
     global gdb_prompt
     global srcfile
     global reading_in_symbols_re
 
+    if { $second_inferior && [use_gdb_stub] } {
+	return
+    }
+
     if { ![setup] } {
 	return
     }
+
+    # Get rid of the breakpoint at "main".
+    delete_breakpoints
 
     set bp_after_fork [gdb_get_line_number "set breakpoint here"]
 
@@ -230,7 +234,7 @@ proc_with_prefix catch_fork_child_follow {} {
     # Verify that the catchpoint is mentioned in an "info breakpoints",
     # and further that the catchpoint mentions no process id.
     gdb_test "info breakpoints" \
-	".*catchpoint.*keep y.*fork\[\r\n\]+" \
+	".*catchpoint.*keep y.*fork" \
 	"info breakpoints before fork"
 
     gdb_test "continue" \
@@ -249,6 +253,29 @@ proc_with_prefix catch_fork_child_follow {} {
 	"Temporary breakpoint.*, line $bp_after_fork.*" \
 	"set follow-fork child, tbreak"
 
+    if {$second_inferior} {
+	gdb_test "add-inferior" "Added inferior 2.*" "add inferior 2"
+
+	gdb_test "inferior 2" "Switching to inferior 2.*"
+
+	gdb_load $::binfile
+
+	# Start it.  This should not affect inferior 1, given "set
+	# schedule-multiple off" (default).  GDB used to have a bug
+	# where "start" would clear the pending follow fork
+	# information of inferior 1.
+	gdb_test "start" "Starting program.*Temporary breakpoint .*"
+
+	gdb_test "inferior 1" "Switching to inferior 1.*"
+
+	# Verify that the catchpoint is still mentioned in an "info
+	# breakpoints", and further that the catchpoint still shows
+	# the captured process id.
+	gdb_test "info breakpoints" \
+	    ".*catchpoint.*keep y.*fork, process.*" \
+	    "info breakpoints, after starting second inferior"
+    }
+
     set expected_re "\\\[Attaching after.* fork to.*\\\[Detaching after fork from"
     append expected_re ".* at .*$bp_after_fork.*"
     gdb_test "continue" $expected_re "set follow-fork child, hit tbreak"
@@ -262,7 +289,7 @@ proc_with_prefix catch_fork_child_follow {} {
     gdb_test "delete breakpoints" \
 	"" \
 	"set follow-fork child, cleanup" \
-	"Delete all breakpoints. \\(y or n\\) $" \
+	"Delete all breakpoints, watchpoints, tracepoints, and catchpoints. \\(y or n\\) $" \
 	"y"
 }
 
@@ -289,7 +316,7 @@ proc_with_prefix catch_fork_unpatch_child {} {
 	"Catchpoint \[0-9\]* \\(forked process \[0-9\]*\\),.*" \
 	"unpatch child, catch fork"
 
-    # Delete all breakpoints and catchpoints.
+    # Delete all breakpoints, watchpoints, tracepoints, and catchpoints.
     delete_breakpoints
 
     # Force $srcfile as the current GDB source can be in glibc sourcetree.
@@ -366,7 +393,7 @@ proc_with_prefix tcatch_fork_parent_follow {} {
     gdb_test "delete breakpoints" \
 	"" \
 	"set follow-fork parent, cleanup" \
-	"Delete all breakpoints. \\(y or n\\) $" \
+	"Delete all breakpoints, watchpoints, tracepoints, and catchpoints. \\(y or n\\) $" \
 	"y"
 }
 
@@ -431,6 +458,8 @@ foreach_with_prefix follow-fork-mode {"parent" "child"} {
 
 # Catchpoint tests.
 
-catch_fork_child_follow
+foreach_with_prefix second_inferior {false true} {
+    catch_fork_child_follow $second_inferior
+}
 catch_fork_unpatch_child
 tcatch_fork_parent_follow

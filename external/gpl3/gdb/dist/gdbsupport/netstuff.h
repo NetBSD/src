@@ -1,5 +1,5 @@
 /* Operations on network stuff.
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_NETSTUFF_H
-#define COMMON_NETSTUFF_H
+#ifndef GDBSUPPORT_NETSTUFF_H
+#define GDBSUPPORT_NETSTUFF_H
 
 #include <string>
 
@@ -73,4 +73,4 @@ extern parsed_connection_spec
 extern parsed_connection_spec parse_connection_spec (const char *spec,
 						     struct addrinfo *hint);
 
-#endif /* COMMON_NETSTUFF_H */
+#endif /* GDBSUPPORT_NETSTUFF_H */

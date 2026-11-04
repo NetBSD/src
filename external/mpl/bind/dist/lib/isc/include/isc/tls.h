@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.h,v 1.3.6.1 2025/08/02 05:54:03 perseant Exp $	*/
+/*	$NetBSD: tls.h,v 1.3.6.2 2026/11/04 23:18:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -217,7 +217,7 @@ isc_tlsctx_enable_http2client_alpn(isc_tlsctx_t *ctx);
 void
 isc_tlsctx_enable_http2server_alpn(isc_tlsctx_t *ctx);
 /*%<
- * Enable HTTP/2 Application Layer Protocol Negotation for 'ctx'.
+ * Enable HTTP/2 Application Layer Protocol Negotiation for 'ctx'.
  *
  * Requires:
  *\li	'ctx' is not NULL.
@@ -236,7 +236,7 @@ isc_tlsctx_enable_dot_client_alpn(isc_tlsctx_t *ctx);
 void
 isc_tlsctx_enable_dot_server_alpn(isc_tlsctx_t *ctx);
 /*%<
- * Enable DoT Application Layer Protocol Negotation for 'ctx'.
+ * Enable DoT Application Layer Protocol Negotiation for 'ctx'.
  *
  * Requires:
  *\li	'ctx' is not NULL.

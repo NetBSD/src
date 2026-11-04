@@ -11,13 +11,20 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "added.*",
         "deleted.*",
         "ns1/update.txt",
     ]
 )
+
+pytestmark = [
+    isctest.mark.without_tsan,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_dyndb(run_tests_sh):

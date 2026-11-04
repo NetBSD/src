@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.49 2023/09/23 14:40:42 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.49.6.1 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009, 2019, 2023
@@ -32,17 +32,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.49 2023/09/23 14:40:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.49.6.1 2026/11/04 23:27:48 perseant Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/cpu.h>
-#include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/kthread.h>
+#include <sys/msan.h>
 #include <sys/mutex.h>
 #include <sys/sched.h>
-#include <sys/kmem.h>
-#include <sys/msan.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -74,7 +77,7 @@ kthread_create(pri_t pri, int flag, struct cpu_info *ci,
 	uaddr = uvm_uarea_system_alloc(
 	   (flag & (KTHREAD_INTR|KTHREAD_IDLE)) == KTHREAD_IDLE ? ci : NULL);
 	if (uaddr == 0) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	kmsan_orig((void *)uaddr, USPACE, KMSAN_TYPE_POOL, __RET_ADDR);
 	if ((flag & KTHREAD_TS) != 0) {

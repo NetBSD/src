@@ -1,4 +1,4 @@
-/* Copyright 2022-2023 Free Software Foundation, Inc.
+/* Copyright 2022-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -22,6 +22,10 @@ set compiler_info [join {gfortran __GNUC__ __GNUC_MINOR__ __GNUC_PATCHLEVEL__} -
 /* ARM seems to not define a patch version.  */
 #if defined (__ARM_LINUX_COMPILER__)
 set compiler_info [join {armflang __armclang_major__ __armclang_minor__ 0} -]
+#endif
+
+#if defined (__NVCOMPILER_MAJOR__)
+set compiler_info [join {nvfortran __NVCOMPILER_MAJOR__ __NVCOMPILER_MINOR__ __NVCOMPILER_PATCHLEVEL__} -]
 #endif
 
 /* Classic flang and LLVM flang emit their respective macros differently.  */

@@ -1,8 +1,8 @@
-.\"	$NetBSD: bozohttpd.8,v 1.97.2.1 2025/08/02 05:55:00 perseant Exp $
+.\"	$NetBSD: bozohttpd.8,v 1.97.2.2 2026/11/04 23:19:33 perseant Exp $
 .\"
 .\"	$eterna: bozohttpd.8,v 1.101 2011/11/18 01:25:11 mrg Exp $
 .\"
-.\" Copyright (c) 1997-2024 Matthew R. Green
+.\" Copyright (c) 1997-2026 Matthew R. Green
 .\" All rights reserved.
 .\"
 .\" Redistribution and use in source and binary forms, with or without
@@ -26,7 +26,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd November 22, 2024
+.Dd October 7, 2026
 .Dt BOZOHTTPD 8
 .Os
 .Sh NAME
@@ -110,16 +110,21 @@ The
 should be any normal file suffix, and the
 .Ar cgihandler
 should be a full path to an interpreter.
-This option is the only way to enable CGI programs that exist
-outside of the cgibin directory to be executed.
+This option is the only way to enable CGI programs to be executed
+outside of the
+.Ql /cgi-bin
+prefix.
 Multiple
 .Fl C
 options may be passed.
+.Pp
+Note that ordinary script interpreters that are not CGI-aware can not
+be used directly, see the examples below.
 .It Fl c Ar cgibin
 Enables the CGI/1.1 interface.
-The
 .Ar cgibin
-directory is expected to contain the CGI programs to be used.
+is an absolute path to a file system directory expected to contain
+the CGI programs to be used.
 .Nm
 looks for URLs in the form of
 .Ql /cgi-bin/ Ns Ar scriptname
@@ -706,7 +711,7 @@ The focus has always been simplicity and security, with minimal features
 and regular code audits.
 This manual documents
 .Nm
-version 20240428.
+version 20260508.
 .Sh AUTHORS
 .An -nosplit
 .Nm
@@ -724,6 +729,10 @@ provided Range: header support
 .An Marc Balmer
 .Aq Mt mbalmer@NetBSD.org
 added Lua support for dynamic content creation
+.It
+.An D. Bohdan
+.Aq Mt dbohdan@sdf.org
+improved directory views on mobile platforms
 .It
 .An Sean Boudreau
 .Aq Mt seanb@NetBSD.org

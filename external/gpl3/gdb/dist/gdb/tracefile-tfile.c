@@ -1,6 +1,6 @@
 /* Trace file TFILE format support in GDB.
 
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -194,12 +194,12 @@ tfile_write_status (struct trace_file_writer *self,
   if (ts->start_time)
     {
       fprintf (writer->fp, ";starttime:%s",
-      phex_nz (ts->start_time, sizeof (ts->start_time)));
+      phex_nz (ts->start_time));
     }
   if (ts->stop_time)
     {
       fprintf (writer->fp, ";stoptime:%s",
-      phex_nz (ts->stop_time, sizeof (ts->stop_time)));
+      phex_nz (ts->stop_time));
     }
   if (ts->notes != NULL)
     {
@@ -254,7 +254,7 @@ tfile_write_uploaded_tp (struct trace_file_writer *self,
   char buf[MAX_TRACE_UPLOAD];
 
   fprintf (writer->fp, "tp T%x:%s:%c:%x:%x",
-	   utp->number, phex_nz (utp->addr, sizeof (utp->addr)),
+	   utp->number, phex_nz (utp->addr),
 	   (utp->enabled ? 'E' : 'D'), utp->step, utp->pass);
   if (utp->type == bp_fast_tracepoint)
     fprintf (writer->fp, ":F%x", utp->orig_size);
@@ -265,10 +265,10 @@ tfile_write_uploaded_tp (struct trace_file_writer *self,
   fprintf (writer->fp, "\n");
   for (const auto &act : utp->actions)
     fprintf (writer->fp, "tp A%x:%s:%s\n",
-	     utp->number, phex_nz (utp->addr, sizeof (utp->addr)), act.get ());
+	     utp->number, phex_nz (utp->addr), act.get ());
   for (const auto &act : utp->step_actions)
     fprintf (writer->fp, "tp S%x:%s:%s\n",
-	     utp->number, phex_nz (utp->addr, sizeof (utp->addr)), act.get ());
+	     utp->number, phex_nz (utp->addr), act.get ());
   if (utp->at_string)
     {
       encode_source_string (utp->number, utp->addr,
@@ -290,7 +290,7 @@ tfile_write_uploaded_tp (struct trace_file_writer *self,
       fprintf (writer->fp, "tp Z%s\n", buf);
     }
   fprintf (writer->fp, "tp V%x:%s:%x:%s\n",
-	   utp->number, phex_nz (utp->addr, sizeof (utp->addr)),
+	   utp->number, phex_nz (utp->addr),
 	   utp->hit_count,
 	   phex_nz (utp->traceframe_usage,
 		    sizeof (utp->traceframe_usage)));
@@ -462,24 +462,24 @@ tfile_target_open (const char *arg, int from_tty)
   struct uploaded_tsv *uploaded_tsvs = NULL;
 
   target_preopen (from_tty);
-  if (!arg)
+  std::string filename = extract_single_filename_arg (arg);
+  if (filename.empty ())
     error (_("No trace file specified."));
 
-  gdb::unique_xmalloc_ptr<char> filename (tilde_expand (arg));
-  if (!IS_ABSOLUTE_PATH (filename.get ()))
-    filename = make_unique_xstrdup (gdb_abspath (filename.get ()).c_str ());
+  if (!IS_ABSOLUTE_PATH (filename.c_str ()))
+    filename = gdb_abspath (filename);
 
   flags = O_BINARY | O_LARGEFILE;
   flags |= O_RDONLY;
-  scratch_chan = gdb_open_cloexec (filename.get (), flags, 0).release ();
+  scratch_chan = gdb_open_cloexec (filename.c_str (), flags, 0).release ();
   if (scratch_chan < 0)
-    perror_with_name (filename.get ());
+    perror_with_name (filename.c_str ());
 
   /* Looks semi-reasonable.  Toss the old trace file and work on the new.  */
 
   current_inferior ()->unpush_target (&tfile_ops);
 
-  trace_filename = std::move (filename);
+  trace_filename = make_unique_xstrdup (filename.c_str ());
   trace_fd = scratch_chan;
 
   /* Make sure this is clear.  */
@@ -567,7 +567,7 @@ tfile_target_open (const char *arg, int from_tty)
 
   merge_uploaded_tracepoints (&uploaded_tps);
 
-  post_create_inferior (from_tty);
+  post_create_inferior (from_tty, true);
 }
 
 /* Interpret the given line from the definitions part of the trace
@@ -1116,9 +1116,8 @@ tfile_append_tdesc_line (const char *line)
   trace_tdesc += "\n";
 }
 
-void _initialize_tracefile_tfile ();
-void
-_initialize_tracefile_tfile ()
+INIT_GDB_FILE (tracefile_tfile)
 {
-  add_target (tfile_target_info, tfile_target_open, filename_completer);
+  add_target (tfile_target_info, tfile_target_open,
+	      filename_maybe_quoted_completer);
 }

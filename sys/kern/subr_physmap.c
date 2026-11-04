@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_physmap.c,v 1.5 2021/09/06 20:55:08 andvar Exp $	*/
+/*	$NetBSD: subr_physmap.c,v 1.5.10.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,11 +30,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.5 2021/09/06 20:55:08 andvar Exp $");
+__KERNEL_RCSID(1, "$NetBSD: subr_physmap.c,v 1.5.10.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/physmap.h>
+#include <sys/types.h>
+
 #include <sys/kmem.h>
+#include <sys/physmap.h>
+#include <sys/sdt.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_page.h>
@@ -84,7 +87,7 @@ physmap_fill(physmap_t *map, pmap_t pmap, vaddr_t va, vsize_t len)
 
 	if (nsegs == 0) {
 		if (!pmap_extract(pmap, va, &ps->ps_addr)) {
-			return EFAULT;
+			return SET_ERROR(EFAULT);
 		}
 		ps->ps_len = MIN(len, PAGE_SIZE - offset);
 		if (ps->ps_len == len) {
@@ -106,7 +109,7 @@ physmap_fill(physmap_t *map, pmap_t pmap, vaddr_t va, vsize_t len)
 	for (;;) {
 		paddr_t curaddr;
 		if (!pmap_extract(pmap, va, &curaddr)) {
-			return EFAULT;
+			return SET_ERROR(EFAULT);
 		}
 		if (curaddr != lastaddr) {
 			ps++;

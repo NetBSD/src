@@ -1,7 +1,8 @@
 //===-- sanitizer_malloc_mac.inc --------------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -22,14 +23,35 @@
 #include <sys/mman.h>
 
 #include "interception/interception.h"
+#include "sanitizer_common/sanitizer_allocator_dlsym.h"
 #include "sanitizer_common/sanitizer_mac.h"
 
 // Similar code is used in Google Perftools,
 // https://github.com/gperftools/gperftools.
 
 namespace __sanitizer {
+
 extern malloc_zone_t sanitizer_zone;
+
+struct sanitizer_malloc_introspection_t : public malloc_introspection_t {
+  // IMPORTANT: Do not change the order, alignment, or types of these fields to
+  // maintain binary compatibility. You should only add fields to this struct.
+
+  // Used to track changes to the allocator that will affect
+  // zone enumeration.
+  u64 allocator_enumeration_version;
+  uptr allocator_ptr;
+  uptr allocator_size;
+};
+
+u64 GetMallocZoneAllocatorEnumerationVersion() {
+  // This represents the current allocator ABI version.
+  // This field should be incremented every time the Allocator
+  // ABI changes in a way that breaks allocator enumeration.
+  return 0;
 }
+
+}  // namespace __sanitizer
 
 INTERCEPTOR(malloc_zone_t *, malloc_create_zone,
                              vm_size_t start_size, unsigned zone_flags) {
@@ -40,12 +62,10 @@ INTERCEPTOR(malloc_zone_t *, malloc_create_zone,
   malloc_zone_t *new_zone = (malloc_zone_t *)p;
   internal_memcpy(new_zone, &sanitizer_zone, sizeof(sanitizer_zone));
   new_zone->zone_name = NULL;  // The name will be changed anyway.
-  if (GetMacosVersion() >= MACOS_VERSION_LION) {
-    // Prevent the client app from overwriting the zone contents.
-    // Library functions that need to modify the zone will set PROT_WRITE on it.
-    // This matches the behavior of malloc_create_zone() on OSX 10.7 and higher.
-    mprotect(new_zone, allocated_size, PROT_READ);
-  }
+  // Prevent the client app from overwriting the zone contents.
+  // Library functions that need to modify the zone will set PROT_WRITE on it.
+  // This matches the behavior of malloc_create_zone() on OSX 10.7 and higher.
+  mprotect(new_zone, allocated_size, PROT_READ);
   // We're explicitly *NOT* registering the zone.
   return new_zone;
 }
@@ -54,11 +74,9 @@ INTERCEPTOR(void, malloc_destroy_zone, malloc_zone_t *zone) {
   COMMON_MALLOC_ENTER();
   // We don't need to do anything here.  We're not registering new zones, so we
   // don't to unregister.  Just un-mprotect and free() the zone.
-  if (GetMacosVersion() >= MACOS_VERSION_LION) {
-    uptr page_size = GetPageSizeCached();
-    uptr allocated_size = RoundUpTo(sizeof(sanitizer_zone), page_size);
-    mprotect(zone, allocated_size, PROT_READ | PROT_WRITE);
-  }
+  uptr page_size = GetPageSizeCached();
+  uptr allocated_size = RoundUpTo(sizeof(sanitizer_zone), page_size);
+  mprotect(zone, allocated_size, PROT_READ | PROT_WRITE);
   if (zone->zone_name) {
     COMMON_MALLOC_FREE((void *)zone->zone_name);
   }
@@ -68,6 +86,15 @@ INTERCEPTOR(void, malloc_destroy_zone, malloc_zone_t *zone) {
 INTERCEPTOR(malloc_zone_t *, malloc_default_zone, void) {
   COMMON_MALLOC_ENTER();
   return &sanitizer_zone;
+}
+
+INTERCEPTOR(malloc_zone_t *, malloc_zone_from_ptr, const void *ptr) {
+  COMMON_MALLOC_ENTER();
+  size_t size = sanitizer_zone.size(&sanitizer_zone, ptr);
+  if (size) { // Claimed by sanitizer zone?
+    return &sanitizer_zone;
+  }
+  return REAL(malloc_zone_from_ptr)(ptr);
 }
 
 INTERCEPTOR(malloc_zone_t *, malloc_default_purgeable_zone, void) {
@@ -94,11 +121,7 @@ INTERCEPTOR(int, malloc_make_nonpurgeable, void *ptr) {
 
 INTERCEPTOR(void, malloc_set_zone_name, malloc_zone_t *zone, const char *name) {
   COMMON_MALLOC_ENTER();
-  // Allocate |sizeof(COMMON_MALLOC_ZONE_NAME "-") + internal_strlen(name)|
-  // bytes.
-  size_t buflen =
-      sizeof(COMMON_MALLOC_ZONE_NAME "-") + (name ? internal_strlen(name) : 0);
-  InternalScopedString new_name(buflen);
+  InternalScopedString new_name;
   if (name && zone->introspect == sanitizer_zone.introspect) {
     new_name.append(COMMON_MALLOC_ZONE_NAME "-%s", name);
     name = new_name.data();
@@ -170,20 +193,15 @@ void *__sanitizer_mz_malloc(malloc_zone_t *zone, uptr size) {
   return p;
 }
 
+struct DlsymAlloc : public DlSymAllocator<DlsymAlloc> {
+  static bool UseImpl() { return !COMMON_MALLOC_SANITIZER_INITIALIZED; }
+};
+
 extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void *__sanitizer_mz_calloc(malloc_zone_t *zone, size_t nmemb, size_t size) {
-  if (UNLIKELY(!COMMON_MALLOC_SANITIZER_INITIALIZED)) {
-    // Hack: dlsym calls calloc before REAL(calloc) is retrieved from dlsym.
-    const size_t kCallocPoolSize = 1024;
-    static uptr calloc_memory_for_dlsym[kCallocPoolSize];
-    static size_t allocated;
-    size_t size_in_words = ((nmemb * size) + kWordSize - 1) / kWordSize;
-    void *mem = (void*)&calloc_memory_for_dlsym[allocated];
-    allocated += size_in_words;
-    CHECK(allocated < kCallocPoolSize);
-    return mem;
-  }
+  if (DlsymAlloc::Use())
+    return DlsymAlloc::Callocate(nmemb, size);
   COMMON_MALLOC_CALLOC(nmemb, size);
   return p;
 }
@@ -201,11 +219,13 @@ extern "C"
 SANITIZER_INTERFACE_ATTRIBUTE
 void __sanitizer_mz_free(malloc_zone_t *zone, void *ptr) {
   if (!ptr) return;
+  if (DlsymAlloc::PointerIsMine(ptr))
+    return DlsymAlloc::Free(ptr);
   COMMON_MALLOC_FREE(ptr);
 }
 
 #define GET_ZONE_FOR_PTR(ptr) \
-  malloc_zone_t *zone_ptr = malloc_zone_from_ptr(ptr); \
+  malloc_zone_t *zone_ptr = WRAP(malloc_zone_from_ptr)(ptr); \
   const char *zone_name = (zone_ptr == 0) ? 0 : zone_ptr->zone_name
 
 extern "C"
@@ -245,6 +265,13 @@ void *__sanitizer_mz_memalign(malloc_zone_t *zone, size_t align, size_t size) {
   return p;
 }
 
+// This public API exists purely for testing purposes.
+extern "C"
+SANITIZER_INTERFACE_ATTRIBUTE
+malloc_zone_t* __sanitizer_mz_default_zone() {
+  return &sanitizer_zone;
+}
+
 // This function is currently unused, and we build with -Werror.
 #if 0
 void __sanitizer_mz_free_definite_size(
@@ -254,13 +281,48 @@ void __sanitizer_mz_free_definite_size(
 }
 #endif
 
-kern_return_t mi_enumerator(task_t task, void *,
-                            unsigned type_mask, vm_address_t zone_address,
-                            memory_reader_t reader,
+#ifndef COMMON_MALLOC_HAS_ZONE_ENUMERATOR
+#error "COMMON_MALLOC_HAS_ZONE_ENUMERATOR must be defined"
+#endif
+static_assert((COMMON_MALLOC_HAS_ZONE_ENUMERATOR) == 0 ||
+                  (COMMON_MALLOC_HAS_ZONE_ENUMERATOR) == 1,
+              "COMMON_MALLOC_HAS_ZONE_ENUMERATOR must be 0 or 1");
+
+#if COMMON_MALLOC_HAS_ZONE_ENUMERATOR
+// Forward declare and expect the implementation to provided by
+// includer.
+kern_return_t mi_enumerator(task_t task, void *, unsigned type_mask,
+                            vm_address_t zone_address, memory_reader_t reader,
+                            vm_range_recorder_t recorder);
+#else
+// Provide stub implementation that fails.
+kern_return_t mi_enumerator(task_t task, void *, unsigned type_mask,
+                            vm_address_t zone_address, memory_reader_t reader,
                             vm_range_recorder_t recorder) {
-  // Should enumerate all the pointers we have.  Seems like a lot of work.
+  // Not supported.
   return KERN_FAILURE;
 }
+#endif
+
+#ifndef COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT
+#error "COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT must be defined"
+#endif
+static_assert((COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT) == 0 ||
+                  (COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT) == 1,
+              "COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT must be 0 or 1");
+#if COMMON_MALLOC_HAS_EXTRA_INTROSPECTION_INIT
+// Forward declare and expect the implementation to provided by
+// includer.
+void mi_extra_init(
+    sanitizer_malloc_introspection_t *mi);
+#else
+void mi_extra_init(
+    sanitizer_malloc_introspection_t *mi) {
+  // Just zero initialize the fields.
+  mi->allocator_ptr = 0;
+  mi->allocator_size = 0;
+}
+#endif
 
 size_t mi_good_size(malloc_zone_t *zone, size_t size) {
   // I think it's always safe to return size, but we maybe could do better.
@@ -300,8 +362,8 @@ boolean_t mi_zone_locked(malloc_zone_t *zone) {
 
 namespace COMMON_MALLOC_NAMESPACE {
 
-void ReplaceSystemMalloc() {
-  static malloc_introspection_t sanitizer_zone_introspection;
+void InitMallocZoneFields() {
+  static sanitizer_malloc_introspection_t sanitizer_zone_introspection;
   // Ok to use internal_memset, these places are not performance-critical.
   internal_memset(&sanitizer_zone_introspection, 0,
                   sizeof(sanitizer_zone_introspection));
@@ -315,6 +377,13 @@ void ReplaceSystemMalloc() {
   sanitizer_zone_introspection.force_unlock = &mi_force_unlock;
   sanitizer_zone_introspection.statistics = &mi_statistics;
   sanitizer_zone_introspection.zone_locked = &mi_zone_locked;
+
+  // Set current allocator enumeration version.
+  sanitizer_zone_introspection.allocator_enumeration_version =
+      GetMallocZoneAllocatorEnumerationVersion();
+
+  // Perform any sanitizer specific initialization.
+  mi_extra_init(&sanitizer_zone_introspection);
 
   internal_memset(&sanitizer_zone, 0, sizeof(malloc_zone_t));
 
@@ -333,6 +402,10 @@ void ReplaceSystemMalloc() {
   sanitizer_zone.free_definite_size = 0;
   sanitizer_zone.memalign = &__sanitizer_mz_memalign;
   sanitizer_zone.introspect = &sanitizer_zone_introspection;
+}
+
+void ReplaceSystemMalloc() {
+  InitMallocZoneFields();
 
   // Register the zone.
   malloc_zone_register(&sanitizer_zone);

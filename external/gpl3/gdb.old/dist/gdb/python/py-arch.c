@@ -1,6 +1,6 @@
 /* Python interface to architecture
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbarch.h"
 #include "arch-utils.h"
 #include "disasm.h"
@@ -200,8 +199,7 @@ archpy_disassemble (PyObject *self, PyObject *args, PyObject *kw)
 	}
       catch (const gdb_exception &except)
 	{
-	  gdbpy_convert_exception (except);
-	  return NULL;
+	  return gdbpy_handle_gdb_exception (nullptr, except);
 	}
 
       gdbpy_ref<> pc_obj = gdb_py_object_from_ulongest (pc);
@@ -271,15 +269,16 @@ archpy_integer_type (PyObject *self, PyObject *args, PyObject *kw)
 {
   static const char *keywords[] = { "size", "signed", NULL };
   int size;
-  PyObject *is_signed_obj = nullptr;
+  PyObject *is_signed_obj = Py_True;
 
-  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "i|O", keywords,
-					&size, &is_signed_obj))
+  if (!gdb_PyArg_ParseTupleAndKeywords (args, kw, "i|O!", keywords,
+					&size,
+					&PyBool_Type, &is_signed_obj))
     return nullptr;
 
   /* Assume signed by default.  */
-  bool is_signed = (is_signed_obj == nullptr
-		    || PyObject_IsTrue (is_signed_obj));
+  gdb_assert (PyBool_Check (is_signed_obj));
+  bool is_signed = is_signed_obj == Py_True;
 
   struct gdbarch *gdbarch;
   ARCHPY_REQUIRE_VALID (self, gdbarch);
@@ -319,6 +318,21 @@ archpy_integer_type (PyObject *self, PyObject *args, PyObject *kw)
   return type_to_type_object (type);
 }
 
+/* __repr__ implementation for gdb.Architecture.  */
+
+static PyObject *
+archpy_repr (PyObject *self)
+{
+  const auto gdbarch = arch_object_to_gdbarch (self);
+  if (gdbarch == nullptr)
+    return gdb_py_invalid_object_repr (self);
+
+  auto arch_info = gdbarch_bfd_arch_info (gdbarch);
+  return PyUnicode_FromFormat ("<%s arch_name=%s printable_name=%s>",
+			       Py_TYPE (self)->tp_name, arch_info->arch_name,
+			       arch_info->printable_name);
+}
+
 /* Implementation of gdb.architecture_names().  Return a list of all the
    BFD architecture names that GDB understands.  */
 
@@ -344,16 +358,16 @@ gdbpy_all_architecture_names (PyObject *self, PyObject *args)
 
 /* Initializes the Architecture class in the gdb module.  */
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_arch (void)
 {
   arch_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&arch_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Architecture",
-				 (PyObject *) &arch_object_type);
+  return gdbpy_type_ready (&arch_object_type);
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_arch);
+
+
 
 static PyMethodDef arch_object_methods [] = {
   { "name", archpy_name, METH_NOARGS,
@@ -391,7 +405,7 @@ PyTypeObject arch_object_type = {
   0,                                  /* tp_getattr */
   0,                                  /* tp_setattr */
   0,                                  /* tp_compare */
-  0,                                  /* tp_repr */
+  archpy_repr,                        /* tp_repr */
   0,                                  /* tp_as_number */
   0,                                  /* tp_as_sequence */
   0,                                  /* tp_as_mapping */

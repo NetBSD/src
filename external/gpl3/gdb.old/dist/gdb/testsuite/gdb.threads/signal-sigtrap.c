@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2023 Free Software Foundation, Inc.
+   Copyright 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -20,6 +20,8 @@
 #include <pthread.h>
 #include <signal.h>
 
+static pthread_barrier_t barrier;
+
 void
 sigtrap_handler (int sig)
 {
@@ -31,6 +33,13 @@ thread_function (void *arg)
   return NULL;
 }
 
+void *
+thread_function_sync (void *arg)
+{
+  pthread_barrier_wait (&barrier);
+  return thread_function (arg);
+}
+
 int
 main (void)
 {
@@ -38,7 +47,13 @@ main (void)
 
   signal (SIGTRAP, sigtrap_handler);
 
-  pthread_create (&child_thread, NULL, thread_function, NULL);
+  pthread_barrier_init (&barrier, NULL, 2);
+
+  pthread_create (&child_thread, NULL, thread_function_sync, NULL);
+
+  /* Make sure that pthread_create is done once the breakpoint on
+     thread_function triggers.  */
+  pthread_barrier_wait (&barrier);
 
   pthread_join (child_thread, NULL);
 

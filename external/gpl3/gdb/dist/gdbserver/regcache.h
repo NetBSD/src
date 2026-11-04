@@ -1,5 +1,5 @@
 /* Register support routines for the remote server for GDB.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define GDBSERVER_REGCACHE_H
 
 #include "gdbsupport/common-regcache.h"
+#include <memory>
 
 struct thread_info;
 struct target_desc;
@@ -33,51 +34,74 @@ struct regcache : public reg_buffer_common
   /* The regcache's target description.  */
   const struct target_desc *tdesc = nullptr;
 
-  /* Whether the REGISTERS buffer's contents are valid.  If false, we
-     haven't fetched the registers from the target yet.  Not that this
-     register cache is _not_ pass-through, unlike GDB's.  Note that
-     "valid" here is unrelated to whether the registers are available
-     in a traceframe.  For that, check REGISTER_STATUS below.  */
-  int registers_valid = 0;
-  int registers_owned = 0;
+  /* Whether the REGISTERS buffer's contents are fetched.  If false,
+     we haven't fetched the registers from the target yet.  Note that
+     this register cache is _not_ pass-through, unlike GDB's.  Also,
+     note that "fetched" here is unrelated to whether the registers
+     are available in a traceframe.  For that, check REGISTER_STATUS
+     below.  */
+  bool registers_fetched = false;
+  bool registers_owned = false;
   unsigned char *registers = nullptr;
 #ifndef IN_PROCESS_AGENT
-  /* One of REG_UNAVAILABLE or REG_VALID.  */
-  unsigned char *register_status = nullptr;
+  /* Construct a regcache using the register layout described by TDESC.
+
+     The regcache dynamically allocates its register buffer.  */
+  regcache (const target_desc *tdesc);
+
+  /* Destructor.  */
+  ~regcache ();
 #endif
+
+  /* Construct a regcache using the register layout described by TDESC
+     and REGBUF as the register buffer.
+
+     The regcache does *not* take ownership of the buffer.  */
+  regcache (const target_desc *tdesc, unsigned char *regbuf);
+
+  DISABLE_COPY_AND_ASSIGN (regcache);
+
+  /* Clear the register values to all zeros and set the register
+     statuses to STATUS.  */
+  void reset (enum register_status status);
 
   /* See gdbsupport/common-regcache.h.  */
   enum register_status get_register_status (int regnum) const override;
 
+  /* Set the status of register REGNUM to STATUS.  */
+  void set_register_status (int regnum, enum register_status status);
+
+  /* See gdbsupport/common-regcache.h.  */
+  int register_size (int regnum) const override;
+
   /* See gdbsupport/common-regcache.h.  */
   void raw_supply (int regnum, gdb::array_view<const gdb_byte> src) override;
+
+  /* See gdbsupport/common-regcache.h.  */
+  void raw_supply_part_zeroed (int regnum, int offset, size_t size) override;
 
   /* See gdbsupport/common-regcache.h.  */
   void raw_collect (int regnum, gdb::array_view<gdb_byte> dst) const override;
 
   /* See gdbsupport/common-regcache.h.  */
   bool raw_compare (int regnum, const void *buf, int offset) const override;
+
+  /* Copy the contents of SRC into this regcache.  */
+  void copy_from (regcache *src);
+
+private:
+
+#ifndef IN_PROCESS_AGENT
+  /* See gdbsupport/common-regcache.h.  */
+  std::unique_ptr<enum register_status[]> m_register_status;
+#endif
 };
 
-struct regcache *init_register_cache (struct regcache *regcache,
-				      const struct target_desc *tdesc,
-				      unsigned char *regbuf);
-
-void regcache_cpy (struct regcache *dst, struct regcache *src);
-
-/* Create a new register cache for INFERIOR.  */
-
-struct regcache *new_register_cache (const struct target_desc *tdesc);
-
-struct regcache *get_thread_regcache (struct thread_info *thread, int fetch);
-
-/* Release all memory associated with the register cache for INFERIOR.  */
-
-void free_register_cache (struct regcache *regcache);
+regcache *get_thread_regcache (thread_info *thread, bool fetch = true);
 
 /* Invalidate cached registers for one thread.  */
 
-void regcache_invalidate_thread (struct thread_info *);
+void regcache_invalidate_thread (thread_info *);
 
 /* Invalidate cached registers for all threads of the given process.  */
 

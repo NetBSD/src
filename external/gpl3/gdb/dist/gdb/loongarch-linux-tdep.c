@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on LoongArch processors.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of GDB.
@@ -18,15 +18,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "arch/loongarch-syscall.h"
 #include "extract-store-integer.h"
+#include "gdbarch.h"
 #include "glibc-tdep.h"
 #include "inferior.h"
+#include "linux-record.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "loongarch-tdep.h"
+#include "record-full.h"
+#include "regset.h"
 #include "solib-svr4.h"
 #include "target-descriptions.h"
 #include "trad-frame.h"
 #include "tramp-frame.h"
+#include "value.h"
 #include "xml-syscall.h"
 
 /* The syscall's XML filename for LoongArch.  */
@@ -566,6 +573,570 @@ loongarch_linux_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread
   return ret;
 }
 
+static linux_record_tdep loongarch_linux_record_tdep;
+
+/* loongarch_canonicalize_syscall maps syscall ids from the native LoongArch
+   linux set of syscall ids into a canonical set of syscall ids used by
+   process record. */
+
+static enum gdb_syscall
+loongarch_canonicalize_syscall (enum loongarch_syscall syscall_number)
+{
+#define SYSCALL_MAP(SYSCALL)			\
+  case loongarch_sys_ ## SYSCALL:		\
+    return gdb_sys_ ## SYSCALL
+
+#define SYSCALL_MAP_RENAME(SYSCALL, GDB_SYSCALL)	\
+  case loongarch_sys_ ## SYSCALL:			\
+    return GDB_SYSCALL;
+
+#define UNSUPPORTED_SYSCALL_MAP(SYSCALL)	\
+  case loongarch_sys_ ## SYSCALL:		\
+    return gdb_sys_no_syscall
+
+  switch(syscall_number)
+    {
+      SYSCALL_MAP (io_setup);
+      SYSCALL_MAP (io_destroy);
+      SYSCALL_MAP (io_submit);
+      SYSCALL_MAP (io_cancel);
+      SYSCALL_MAP (io_getevents);
+      SYSCALL_MAP (setxattr);
+      SYSCALL_MAP (lsetxattr);
+      SYSCALL_MAP (fsetxattr);
+      SYSCALL_MAP (getxattr);
+      SYSCALL_MAP (lgetxattr);
+      SYSCALL_MAP (fgetxattr);
+      SYSCALL_MAP (listxattr);
+      SYSCALL_MAP (llistxattr);
+      SYSCALL_MAP (flistxattr);
+      SYSCALL_MAP (removexattr);
+      SYSCALL_MAP (lremovexattr);
+      SYSCALL_MAP (fremovexattr);
+      SYSCALL_MAP (getcwd);
+      SYSCALL_MAP (lookup_dcookie);
+      SYSCALL_MAP (eventfd2);
+      SYSCALL_MAP (epoll_create1);
+      SYSCALL_MAP (epoll_ctl);
+      SYSCALL_MAP (epoll_pwait);
+      SYSCALL_MAP (dup);
+      SYSCALL_MAP (dup3);
+      SYSCALL_MAP (fcntl);
+      SYSCALL_MAP (inotify_init1);
+      SYSCALL_MAP (inotify_add_watch);
+      SYSCALL_MAP (inotify_rm_watch);
+      SYSCALL_MAP (ioctl);
+      SYSCALL_MAP (ioprio_set);
+      SYSCALL_MAP (ioprio_get);
+      SYSCALL_MAP (flock);
+      SYSCALL_MAP (mknodat);
+      SYSCALL_MAP (mkdirat);
+      SYSCALL_MAP (unlinkat);
+      SYSCALL_MAP (symlinkat);
+      SYSCALL_MAP (linkat);
+      UNSUPPORTED_SYSCALL_MAP (umount2);
+      SYSCALL_MAP (mount);
+      SYSCALL_MAP (pivot_root);
+      SYSCALL_MAP (nfsservctl);
+      SYSCALL_MAP (statfs);
+      SYSCALL_MAP (truncate);
+      SYSCALL_MAP (ftruncate);
+      SYSCALL_MAP (fallocate);
+      SYSCALL_MAP (faccessat);
+      SYSCALL_MAP (fchdir);
+      SYSCALL_MAP (chroot);
+      SYSCALL_MAP (fchmod);
+      SYSCALL_MAP (fchmodat);
+      SYSCALL_MAP (fchownat);
+      SYSCALL_MAP (fchown);
+      SYSCALL_MAP (openat);
+      SYSCALL_MAP (close);
+      SYSCALL_MAP (vhangup);
+      SYSCALL_MAP (pipe2);
+      SYSCALL_MAP (quotactl);
+      SYSCALL_MAP (getdents64);
+      SYSCALL_MAP (lseek);
+      SYSCALL_MAP (read);
+      SYSCALL_MAP (write);
+      SYSCALL_MAP (readv);
+      SYSCALL_MAP (writev);
+      SYSCALL_MAP (pread64);
+      SYSCALL_MAP (pwrite64);
+      UNSUPPORTED_SYSCALL_MAP (preadv);
+      UNSUPPORTED_SYSCALL_MAP (pwritev);
+      SYSCALL_MAP (sendfile);
+      SYSCALL_MAP (pselect6);
+      SYSCALL_MAP (ppoll);
+      UNSUPPORTED_SYSCALL_MAP (signalfd4);
+      SYSCALL_MAP (vmsplice);
+      SYSCALL_MAP (splice);
+      SYSCALL_MAP (tee);
+      SYSCALL_MAP (readlinkat);
+      SYSCALL_MAP (newfstatat);
+      SYSCALL_MAP (fstat);
+      SYSCALL_MAP (sync);
+      SYSCALL_MAP (fsync);
+      SYSCALL_MAP (fdatasync);
+      SYSCALL_MAP (sync_file_range);
+      UNSUPPORTED_SYSCALL_MAP (timerfd_create);
+      UNSUPPORTED_SYSCALL_MAP (timerfd_settime);
+      UNSUPPORTED_SYSCALL_MAP (timerfd_gettime);
+      UNSUPPORTED_SYSCALL_MAP (utimensat);
+      SYSCALL_MAP (acct);
+      SYSCALL_MAP (capget);
+      SYSCALL_MAP (capset);
+      SYSCALL_MAP (personality);
+      SYSCALL_MAP (exit);
+      SYSCALL_MAP (exit_group);
+      SYSCALL_MAP (waitid);
+      SYSCALL_MAP (set_tid_address);
+      SYSCALL_MAP (unshare);
+      SYSCALL_MAP (futex);
+      SYSCALL_MAP (set_robust_list);
+      SYSCALL_MAP (get_robust_list);
+      SYSCALL_MAP (nanosleep);
+      SYSCALL_MAP (getitimer);
+      SYSCALL_MAP (setitimer);
+      SYSCALL_MAP (kexec_load);
+      SYSCALL_MAP (init_module);
+      SYSCALL_MAP (delete_module);
+      SYSCALL_MAP (timer_create);
+      SYSCALL_MAP (timer_settime);
+      SYSCALL_MAP (timer_gettime);
+      SYSCALL_MAP (timer_getoverrun);
+      SYSCALL_MAP (timer_delete);
+      SYSCALL_MAP (clock_settime);
+      SYSCALL_MAP (clock_gettime);
+      SYSCALL_MAP (clock_getres);
+      SYSCALL_MAP (clock_nanosleep);
+      SYSCALL_MAP (syslog);
+      SYSCALL_MAP (ptrace);
+      SYSCALL_MAP (sched_setparam);
+      SYSCALL_MAP (sched_setscheduler);
+      SYSCALL_MAP (sched_getscheduler);
+      SYSCALL_MAP (sched_getparam);
+      SYSCALL_MAP (sched_setaffinity);
+      SYSCALL_MAP (sched_getaffinity);
+      SYSCALL_MAP (sched_yield);
+      SYSCALL_MAP (sched_get_priority_max);
+      SYSCALL_MAP (sched_get_priority_min);
+      SYSCALL_MAP (sched_rr_get_interval);
+      SYSCALL_MAP (kill);
+      SYSCALL_MAP (tkill);
+      SYSCALL_MAP (tgkill);
+      SYSCALL_MAP (sigaltstack);
+      SYSCALL_MAP (rt_sigsuspend);
+      SYSCALL_MAP (rt_sigaction);
+      SYSCALL_MAP (rt_sigprocmask);
+      SYSCALL_MAP (rt_sigpending);
+      SYSCALL_MAP (rt_sigtimedwait);
+      SYSCALL_MAP (rt_sigqueueinfo);
+      SYSCALL_MAP (rt_sigreturn);
+      SYSCALL_MAP (setpriority);
+      SYSCALL_MAP (getpriority);
+      SYSCALL_MAP (reboot);
+      SYSCALL_MAP (setregid);
+      SYSCALL_MAP (setgid);
+      SYSCALL_MAP (setreuid);
+      SYSCALL_MAP (setuid);
+      SYSCALL_MAP (setresuid);
+      SYSCALL_MAP (getresuid);
+      SYSCALL_MAP (setresgid);
+      SYSCALL_MAP (getresgid);
+      SYSCALL_MAP (setfsuid);
+      SYSCALL_MAP (setfsgid);
+      SYSCALL_MAP (times);
+      SYSCALL_MAP (setpgid);
+      SYSCALL_MAP (getpgid);
+      SYSCALL_MAP (getsid);
+      SYSCALL_MAP (setsid);
+      SYSCALL_MAP (getgroups);
+      SYSCALL_MAP (setgroups);
+      SYSCALL_MAP (uname);
+      SYSCALL_MAP (sethostname);
+      SYSCALL_MAP (setdomainname);
+      SYSCALL_MAP (getrusage);
+      SYSCALL_MAP (umask);
+      SYSCALL_MAP (prctl);
+      SYSCALL_MAP (getcpu);
+      SYSCALL_MAP (gettimeofday);
+      SYSCALL_MAP (settimeofday);
+      SYSCALL_MAP (adjtimex);
+      SYSCALL_MAP (getpid);
+      SYSCALL_MAP (getppid);
+      SYSCALL_MAP (getuid);
+      SYSCALL_MAP (geteuid);
+      SYSCALL_MAP (getgid);
+      SYSCALL_MAP (getegid);
+      SYSCALL_MAP (gettid);
+      SYSCALL_MAP (sysinfo);
+      SYSCALL_MAP (mq_open);
+      SYSCALL_MAP (mq_unlink);
+      SYSCALL_MAP (mq_timedsend);
+      SYSCALL_MAP (mq_timedreceive);
+      SYSCALL_MAP (mq_notify);
+      SYSCALL_MAP (mq_getsetattr);
+      SYSCALL_MAP (msgget);
+      SYSCALL_MAP (msgctl);
+      SYSCALL_MAP (msgrcv);
+      SYSCALL_MAP (msgsnd);
+      SYSCALL_MAP (semget);
+      SYSCALL_MAP (semctl);
+      SYSCALL_MAP (semtimedop);
+      SYSCALL_MAP (semop);
+      SYSCALL_MAP (shmget);
+      SYSCALL_MAP (shmctl);
+      SYSCALL_MAP (shmat);
+      SYSCALL_MAP (shmdt);
+      SYSCALL_MAP (socket);
+      SYSCALL_MAP (socketpair);
+      SYSCALL_MAP (bind);
+      SYSCALL_MAP (listen);
+      SYSCALL_MAP (accept);
+      SYSCALL_MAP (connect);
+      SYSCALL_MAP (getsockname);
+      SYSCALL_MAP (getpeername);
+      SYSCALL_MAP (sendto);
+      SYSCALL_MAP (recvfrom);
+      SYSCALL_MAP (setsockopt);
+      SYSCALL_MAP (getsockopt);
+      SYSCALL_MAP (shutdown);
+      SYSCALL_MAP (sendmsg);
+      SYSCALL_MAP (recvmsg);
+      SYSCALL_MAP (readahead);
+      SYSCALL_MAP (brk);
+      SYSCALL_MAP (munmap);
+      SYSCALL_MAP (mremap);
+      SYSCALL_MAP (add_key);
+      SYSCALL_MAP (request_key);
+      SYSCALL_MAP (keyctl);
+      SYSCALL_MAP (clone);
+      SYSCALL_MAP (execve);
+
+      SYSCALL_MAP_RENAME (mmap, gdb_sys_old_mmap);
+
+      SYSCALL_MAP (fadvise64);
+      SYSCALL_MAP (swapon);
+      SYSCALL_MAP (swapoff);
+      SYSCALL_MAP (mprotect);
+      SYSCALL_MAP (msync);
+      SYSCALL_MAP (mlock);
+      SYSCALL_MAP (munlock);
+      SYSCALL_MAP (mlockall);
+      SYSCALL_MAP (munlockall);
+      SYSCALL_MAP (mincore);
+      SYSCALL_MAP (madvise);
+      SYSCALL_MAP (remap_file_pages);
+      SYSCALL_MAP (mbind);
+      SYSCALL_MAP (get_mempolicy);
+      SYSCALL_MAP (set_mempolicy);
+      SYSCALL_MAP (migrate_pages);
+      SYSCALL_MAP (move_pages);
+      UNSUPPORTED_SYSCALL_MAP (rt_tgsigqueueinfo);
+      UNSUPPORTED_SYSCALL_MAP (perf_event_open);
+      SYSCALL_MAP (accept4);
+      UNSUPPORTED_SYSCALL_MAP (recvmmsg);
+      SYSCALL_MAP (wait4);
+      UNSUPPORTED_SYSCALL_MAP (prlimit64);
+      UNSUPPORTED_SYSCALL_MAP (fanotify_init);
+      UNSUPPORTED_SYSCALL_MAP (fanotify_mark);
+      UNSUPPORTED_SYSCALL_MAP (name_to_handle_at);
+      UNSUPPORTED_SYSCALL_MAP (open_by_handle_at);
+      UNSUPPORTED_SYSCALL_MAP (clock_adjtime);
+      UNSUPPORTED_SYSCALL_MAP (syncfs);
+      UNSUPPORTED_SYSCALL_MAP (setns);
+      UNSUPPORTED_SYSCALL_MAP (sendmmsg);
+      UNSUPPORTED_SYSCALL_MAP (process_vm_readv);
+      UNSUPPORTED_SYSCALL_MAP (process_vm_writev);
+      UNSUPPORTED_SYSCALL_MAP (kcmp);
+      UNSUPPORTED_SYSCALL_MAP (finit_module);
+      UNSUPPORTED_SYSCALL_MAP (sched_setattr);
+      UNSUPPORTED_SYSCALL_MAP (sched_getattr);
+      UNSUPPORTED_SYSCALL_MAP (renameat2);
+      UNSUPPORTED_SYSCALL_MAP (seccomp);
+      SYSCALL_MAP (getrandom);
+      UNSUPPORTED_SYSCALL_MAP (memfd_create);
+      UNSUPPORTED_SYSCALL_MAP (bpf);
+      UNSUPPORTED_SYSCALL_MAP (execveat);
+      UNSUPPORTED_SYSCALL_MAP (userfaultfd);
+      UNSUPPORTED_SYSCALL_MAP (membarrier);
+      UNSUPPORTED_SYSCALL_MAP (mlock2);
+      UNSUPPORTED_SYSCALL_MAP (copy_file_range);
+      UNSUPPORTED_SYSCALL_MAP (preadv2);
+      UNSUPPORTED_SYSCALL_MAP (pwritev2);
+      UNSUPPORTED_SYSCALL_MAP (pkey_mprotect);
+      UNSUPPORTED_SYSCALL_MAP (pkey_alloc);
+      UNSUPPORTED_SYSCALL_MAP (pkey_free);
+      SYSCALL_MAP (statx);
+      UNSUPPORTED_SYSCALL_MAP (io_pgetevents);
+      UNSUPPORTED_SYSCALL_MAP (rseq);
+      UNSUPPORTED_SYSCALL_MAP (kexec_file_load);
+      UNSUPPORTED_SYSCALL_MAP (pidfd_send_signal);
+      UNSUPPORTED_SYSCALL_MAP (io_uring_setup);
+      UNSUPPORTED_SYSCALL_MAP (io_uring_enter);
+      UNSUPPORTED_SYSCALL_MAP (io_uring_register);
+      UNSUPPORTED_SYSCALL_MAP (open_tree);
+      UNSUPPORTED_SYSCALL_MAP (move_mount);
+      UNSUPPORTED_SYSCALL_MAP (fsopen);
+      UNSUPPORTED_SYSCALL_MAP (fsconfig);
+      UNSUPPORTED_SYSCALL_MAP (fsmount);
+      UNSUPPORTED_SYSCALL_MAP (fspick);
+      UNSUPPORTED_SYSCALL_MAP (pidfd_open);
+      UNSUPPORTED_SYSCALL_MAP (clone3);
+      UNSUPPORTED_SYSCALL_MAP (close_range);
+      UNSUPPORTED_SYSCALL_MAP (openat2);
+      UNSUPPORTED_SYSCALL_MAP (pidfd_getfd);
+      UNSUPPORTED_SYSCALL_MAP (faccessat2);
+      UNSUPPORTED_SYSCALL_MAP (process_madvise);
+      UNSUPPORTED_SYSCALL_MAP (epoll_pwait2);
+      UNSUPPORTED_SYSCALL_MAP (mount_setattr);
+      UNSUPPORTED_SYSCALL_MAP (quotactl_fd);
+      UNSUPPORTED_SYSCALL_MAP (landlock_create_ruleset);
+      UNSUPPORTED_SYSCALL_MAP (landlock_add_rule);
+      UNSUPPORTED_SYSCALL_MAP (landlock_restrict_self);
+      UNSUPPORTED_SYSCALL_MAP (process_mrelease);
+      UNSUPPORTED_SYSCALL_MAP (futex_waitv);
+      UNSUPPORTED_SYSCALL_MAP (set_mempolicy_home_node);
+      UNSUPPORTED_SYSCALL_MAP (cachestat);
+      UNSUPPORTED_SYSCALL_MAP (fchmodat2);
+      UNSUPPORTED_SYSCALL_MAP (map_shadow_stack);
+      UNSUPPORTED_SYSCALL_MAP (futex_wake);
+      UNSUPPORTED_SYSCALL_MAP (futex_wait);
+      UNSUPPORTED_SYSCALL_MAP (futex_requeue);
+      UNSUPPORTED_SYSCALL_MAP (statmount);
+      UNSUPPORTED_SYSCALL_MAP (listmount);
+      UNSUPPORTED_SYSCALL_MAP (lsm_get_self_attr);
+      UNSUPPORTED_SYSCALL_MAP (lsm_set_self_attr);
+      UNSUPPORTED_SYSCALL_MAP (lsm_list_modules);
+      UNSUPPORTED_SYSCALL_MAP (mseal);
+      UNSUPPORTED_SYSCALL_MAP (syscalls);
+    default:
+      return gdb_sys_no_syscall;
+    }
+
+#undef SYSCALL_MAP
+#undef SYSCALL_MAP_RENAME
+#undef UNSUPPORTED_SYSCALL_MAP
+}
+
+static int
+loongarch_record_all_but_pc_registers (struct regcache *regcache)
+{
+
+  /* Record General purpose Registers. */
+  for (int i = 0; i < 32; ++i)
+    if (record_full_arch_list_add_reg (regcache, i))
+      return -1;
+
+  /* Record orig_a0 */
+  if (record_full_arch_list_add_reg (regcache, LOONGARCH_ORIG_A0_REGNUM))
+    return -1;
+
+  /* Record badvaddr */
+  if (record_full_arch_list_add_reg (regcache, LOONGARCH_BADV_REGNUM))
+    return -1;
+
+  return 0;
+}
+
+/* Handler for LoongArch architecture system call instruction recording.  */
+
+static int
+loongarch_linux_syscall_record (struct regcache *regcache,
+				unsigned long syscall_number)
+{
+  int ret = 0;
+  enum gdb_syscall syscall_gdb;
+
+  syscall_gdb =
+    loongarch_canonicalize_syscall ((enum loongarch_syscall) syscall_number);
+
+  if (syscall_gdb < 0)
+    {
+      gdb_printf (gdb_stderr,
+		  _("Process record and replay target doesn't "
+		  "support syscall number %s\n"), plongest (syscall_number));
+      return -1;
+    }
+
+  if (syscall_gdb == gdb_sys_sigreturn || syscall_gdb == gdb_sys_rt_sigreturn)
+    return loongarch_record_all_but_pc_registers (regcache);
+
+  ret = record_linux_system_call (syscall_gdb, regcache,
+				  &loongarch_linux_record_tdep);
+
+  if (ret != 0)
+    return ret;
+
+  /* Record the return value of the system call.  */
+  if (record_full_arch_list_add_reg (regcache, LOONGARCH_A0_REGNUM))
+    return -1;
+
+  return 0;
+}
+
+/* Initialize the loongarch_linux_record_tdep. These values are the size
+   of the type that will be used in a system call. They are obtained from
+   Linux Kernel source.  */
+
+static void
+init_loongarch_linux_record_tdep (struct gdbarch *gdbarch)
+{
+  loongarch_linux_record_tdep.size_pointer
+	= gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT;
+  loongarch_linux_record_tdep.size_tms = 32;
+  loongarch_linux_record_tdep.size_loff_t = 8;
+  loongarch_linux_record_tdep.size_flock = 32;
+  loongarch_linux_record_tdep.size_oldold_utsname = 45;
+  loongarch_linux_record_tdep.size_ustat = 32;
+  loongarch_linux_record_tdep.size_old_sigaction = 32;
+  loongarch_linux_record_tdep.size_old_sigset_t = 8;
+  loongarch_linux_record_tdep.size_rlimit = 16;
+  loongarch_linux_record_tdep.size_rusage = 144;
+  loongarch_linux_record_tdep.size_timeval = 16;
+  loongarch_linux_record_tdep.size_timezone = 8;
+  loongarch_linux_record_tdep.size_old_gid_t = 4;
+  loongarch_linux_record_tdep.size_old_uid_t = 4;
+  loongarch_linux_record_tdep.size_fd_set = 128;
+  loongarch_linux_record_tdep.size_old_dirent = 280;
+  loongarch_linux_record_tdep.size_statfs = 120;
+  loongarch_linux_record_tdep.size_statfs64 = 120;
+  loongarch_linux_record_tdep.size_sockaddr = 16;
+  loongarch_linux_record_tdep.size_int
+	    = gdbarch_int_bit (gdbarch) / TARGET_CHAR_BIT;
+  loongarch_linux_record_tdep.size_long
+	    = gdbarch_long_bit (gdbarch) / TARGET_CHAR_BIT;
+  loongarch_linux_record_tdep.size_ulong
+	    = gdbarch_long_bit (gdbarch) / TARGET_CHAR_BIT;
+  loongarch_linux_record_tdep.size_msghdr = 56;
+  loongarch_linux_record_tdep.size_itimerval = 32;
+  loongarch_linux_record_tdep.size_stat = 144;
+  loongarch_linux_record_tdep.size_old_utsname = 325;
+  loongarch_linux_record_tdep.size_sysinfo = 112;
+  loongarch_linux_record_tdep.size_msqid_ds = 120;
+  loongarch_linux_record_tdep.size_shmid_ds = 112;
+  loongarch_linux_record_tdep.size_new_utsname = 390;
+  loongarch_linux_record_tdep.size_timex = 208;
+  loongarch_linux_record_tdep.size_mem_dqinfo = 72;
+  loongarch_linux_record_tdep.size_if_dqblk = 72;
+  loongarch_linux_record_tdep.size_fs_quota_stat = 80;
+  loongarch_linux_record_tdep.size_timespec = 16;
+  loongarch_linux_record_tdep.size_pollfd = 8;
+  loongarch_linux_record_tdep.size_NFS_FHSIZE = 32;
+  loongarch_linux_record_tdep.size_knfsd_fh = 132;
+  loongarch_linux_record_tdep.size_TASK_COMM_LEN = 16;
+  loongarch_linux_record_tdep.size_sigaction = 24;
+  loongarch_linux_record_tdep.size_sigset_t = 8;
+  loongarch_linux_record_tdep.size_siginfo_t = 128;
+  loongarch_linux_record_tdep.size_cap_user_data_t = 8;
+  loongarch_linux_record_tdep.size_stack_t = 24;
+  loongarch_linux_record_tdep.size_off_t = 8;
+  loongarch_linux_record_tdep.size_stat64 = 144;
+  loongarch_linux_record_tdep.size_gid_t = 4;
+  loongarch_linux_record_tdep.size_uid_t = 4;
+  loongarch_linux_record_tdep.size_PAGE_SIZE = 0x4000;
+  loongarch_linux_record_tdep.size_flock64 = 32;
+  loongarch_linux_record_tdep.size_user_desc = 16;
+  loongarch_linux_record_tdep.size_io_event = 32;
+  loongarch_linux_record_tdep.size_iocb = 64;
+  loongarch_linux_record_tdep.size_epoll_event = 12;
+  loongarch_linux_record_tdep.size_itimerspec = 32;
+  loongarch_linux_record_tdep.size_mq_attr = 64;
+  loongarch_linux_record_tdep.size_termios = 36;
+  loongarch_linux_record_tdep.size_termios2 = 44;
+  loongarch_linux_record_tdep.size_pid_t = 4;
+  loongarch_linux_record_tdep.size_winsize = 8;
+  loongarch_linux_record_tdep.size_serial_struct = 72;
+  loongarch_linux_record_tdep.size_serial_icounter_struct = 80;
+  loongarch_linux_record_tdep.size_hayes_esp_config = 12;
+  loongarch_linux_record_tdep.size_size_t = 8;
+  loongarch_linux_record_tdep.size_iovec = 16;
+  loongarch_linux_record_tdep.size_time_t = 8;
+
+  /* These values are the second argument of system call "sys_ioctl".
+     They are obtained from Linux Kernel source.  */
+  loongarch_linux_record_tdep.ioctl_TCGETS = 0x5401;
+  loongarch_linux_record_tdep.ioctl_TCSETS = 0x5402;
+  loongarch_linux_record_tdep.ioctl_TCSETSW = 0x5403;
+  loongarch_linux_record_tdep.ioctl_TCSETSF = 0x5404;
+  loongarch_linux_record_tdep.ioctl_TCGETA = 0x5405;
+  loongarch_linux_record_tdep.ioctl_TCSETA = 0x5406;
+  loongarch_linux_record_tdep.ioctl_TCSETAW = 0x5407;
+  loongarch_linux_record_tdep.ioctl_TCSETAF = 0x5408;
+  loongarch_linux_record_tdep.ioctl_TCSBRK = 0x5409;
+  loongarch_linux_record_tdep.ioctl_TCXONC = 0x540a;
+  loongarch_linux_record_tdep.ioctl_TCFLSH = 0x540b;
+  loongarch_linux_record_tdep.ioctl_TIOCEXCL = 0x540c;
+  loongarch_linux_record_tdep.ioctl_TIOCNXCL = 0x540d;
+  loongarch_linux_record_tdep.ioctl_TIOCSCTTY = 0x540e;
+  loongarch_linux_record_tdep.ioctl_TIOCGPGRP = 0x540f;
+  loongarch_linux_record_tdep.ioctl_TIOCSPGRP = 0x5410;
+  loongarch_linux_record_tdep.ioctl_TIOCOUTQ = 0x5411;
+  loongarch_linux_record_tdep.ioctl_TIOCSTI = 0x5412;
+  loongarch_linux_record_tdep.ioctl_TIOCGWINSZ = 0x5413;
+  loongarch_linux_record_tdep.ioctl_TIOCSWINSZ = 0x5414;
+  loongarch_linux_record_tdep.ioctl_TIOCMGET = 0x5415;
+  loongarch_linux_record_tdep.ioctl_TIOCMBIS = 0x5416;
+  loongarch_linux_record_tdep.ioctl_TIOCMBIC = 0x5417;
+  loongarch_linux_record_tdep.ioctl_TIOCMSET = 0x5418;
+  loongarch_linux_record_tdep.ioctl_TIOCGSOFTCAR = 0x5419;
+  loongarch_linux_record_tdep.ioctl_TIOCSSOFTCAR = 0x541a;
+  loongarch_linux_record_tdep.ioctl_FIONREAD = 0x541b;
+  loongarch_linux_record_tdep.ioctl_TIOCINQ = 0x541b;
+  loongarch_linux_record_tdep.ioctl_TIOCLINUX = 0x541c;
+  loongarch_linux_record_tdep.ioctl_TIOCCONS = 0x541d;
+  loongarch_linux_record_tdep.ioctl_TIOCGSERIAL = 0x541e;
+  loongarch_linux_record_tdep.ioctl_TIOCSSERIAL = 0x541f;
+  loongarch_linux_record_tdep.ioctl_TIOCPKT = 0x5420;
+  loongarch_linux_record_tdep.ioctl_FIONBIO = 0x5421;
+  loongarch_linux_record_tdep.ioctl_TIOCNOTTY = 0x5422;
+  loongarch_linux_record_tdep.ioctl_TIOCSETD = 0x5423;
+  loongarch_linux_record_tdep.ioctl_TIOCGETD = 0x5424;
+  loongarch_linux_record_tdep.ioctl_TCSBRKP = 0x5425;
+  loongarch_linux_record_tdep.ioctl_TIOCTTYGSTRUCT = 0x5426;
+  loongarch_linux_record_tdep.ioctl_TIOCSBRK = 0x5427;
+  loongarch_linux_record_tdep.ioctl_TIOCCBRK = 0x5428;
+  loongarch_linux_record_tdep.ioctl_TIOCGSID = 0x5429;
+  loongarch_linux_record_tdep.ioctl_TCGETS2 = 0x802c542a;
+  loongarch_linux_record_tdep.ioctl_TCSETS2 = 0x402c542b;
+  loongarch_linux_record_tdep.ioctl_TCSETSW2 = 0x402c542c;
+  loongarch_linux_record_tdep.ioctl_TCSETSF2 = 0x402c542d;
+  loongarch_linux_record_tdep.ioctl_TIOCGPTN = 0x80045430;
+  loongarch_linux_record_tdep.ioctl_TIOCSPTLCK = 0x40045431;
+  loongarch_linux_record_tdep.ioctl_FIONCLEX = 0x5450;
+  loongarch_linux_record_tdep.ioctl_FIOCLEX = 0x5451;
+  loongarch_linux_record_tdep.ioctl_FIOASYNC = 0x5452;
+  loongarch_linux_record_tdep.ioctl_TIOCSERCONFIG = 0x5453;
+  loongarch_linux_record_tdep.ioctl_TIOCSERGWILD = 0x5454;
+  loongarch_linux_record_tdep.ioctl_TIOCSERSWILD = 0x5455;
+  loongarch_linux_record_tdep.ioctl_TIOCGLCKTRMIOS = 0x5456;
+  loongarch_linux_record_tdep.ioctl_TIOCSLCKTRMIOS = 0x5457;
+  loongarch_linux_record_tdep.ioctl_TIOCSERGSTRUCT = 0x5458;
+  loongarch_linux_record_tdep.ioctl_TIOCSERGETLSR = 0x5459;
+  loongarch_linux_record_tdep.ioctl_TIOCSERGETMULTI = 0x545a;
+  loongarch_linux_record_tdep.ioctl_TIOCSERSETMULTI = 0x545b;
+  loongarch_linux_record_tdep.ioctl_TIOCMIWAIT = 0x545c;
+  loongarch_linux_record_tdep.ioctl_TIOCGICOUNT = 0x545d;
+  loongarch_linux_record_tdep.ioctl_TIOCGHAYESESP = 0x545e;
+  loongarch_linux_record_tdep.ioctl_TIOCSHAYESESP = 0x545f;
+  loongarch_linux_record_tdep.ioctl_FIOQSIZE = 0x5460;
+
+  /* These values are the second argument of system call "sys_fcntl"
+     and "sys_fcntl64".  They are obtained from Linux Kernel source. */
+  loongarch_linux_record_tdep.fcntl_F_GETLK = 5;
+  loongarch_linux_record_tdep.fcntl_F_GETLK64 = 12;
+  loongarch_linux_record_tdep.fcntl_F_SETLK64 = 13;
+  loongarch_linux_record_tdep.fcntl_F_SETLKW64 = 14;
+
+  loongarch_linux_record_tdep.arg1 = LOONGARCH_A0_REGNUM + 0;
+  loongarch_linux_record_tdep.arg2 = LOONGARCH_A0_REGNUM + 1;
+  loongarch_linux_record_tdep.arg3 = LOONGARCH_A0_REGNUM + 2;
+  loongarch_linux_record_tdep.arg4 = LOONGARCH_A0_REGNUM + 3;
+  loongarch_linux_record_tdep.arg5 = LOONGARCH_A0_REGNUM + 4;
+  loongarch_linux_record_tdep.arg6 = LOONGARCH_A0_REGNUM + 5;
+  loongarch_linux_record_tdep.arg7 = LOONGARCH_A0_REGNUM + 6;
+}
+
 /* Initialize LoongArch Linux ABI info.  */
 
 static void
@@ -575,10 +1146,9 @@ loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   linux_init_abi (info, gdbarch, 0);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 info.bfd_arch_info->bits_per_address == 32
-					 ? linux_ilp32_fetch_link_map_offsets
-					 : linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, (info.bfd_arch_info->bits_per_address == 32
+				? make_linux_ilp32_svr4_solib_ops
+				: make_linux_lp64_svr4_solib_ops));
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -602,13 +1172,18 @@ loongarch_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* Get the syscall number from the arch's register.  */
   set_gdbarch_get_syscall_number (gdbarch, loongarch_linux_get_syscall_number);
+
+  /* Reversible debugging, process record.  */
+  set_gdbarch_process_record (gdbarch, loongarch_process_record);
+
+  /* Syscall record.  */
+  tdep->loongarch_syscall_record = loongarch_linux_syscall_record;
+  init_loongarch_linux_record_tdep (gdbarch);
 }
 
 /* Initialize LoongArch Linux target support.  */
 
-void _initialize_loongarch_linux_tdep ();
-void
-_initialize_loongarch_linux_tdep ()
+INIT_GDB_FILE (loongarch_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_loongarch, bfd_mach_loongarch32,
 			  GDB_OSABI_LINUX, loongarch_linux_init_abi);

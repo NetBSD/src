@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,13 +15,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_AARCH32_H
-#define ARCH_AARCH32_H
+#ifndef GDB_ARCH_AARCH32_H
+#define GDB_ARCH_AARCH32_H
 
 #include "gdbsupport/tdesc.h"
 
 /* Create the AArch32 target description.  */
 
-target_desc *aarch32_create_target_description ();
+target_desc *aarch32_create_target_description (bool tls);
 
-#endif /* aarch32.h.  */
+#endif /* GDB_ARCH_AARCH32_H */

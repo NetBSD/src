@@ -1,5 +1,5 @@
 /* Remote utility routines for the remote server for GDB.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -57,6 +57,8 @@ void decode_m_packet (const char *from, CORE_ADDR * mem_addr_ptr,
 		      unsigned int *len_ptr);
 void decode_M_packet (const char *from, CORE_ADDR * mem_addr_ptr,
 		      unsigned int *len_ptr, unsigned char **to_p);
+void decode_x_packet (const char *from, CORE_ADDR *mem_addr_ptr,
+		      unsigned int *len_ptr);
 int decode_X_packet (char *from, int packet_len, CORE_ADDR * mem_addr_ptr,
 		     unsigned int *len_ptr, unsigned char **to_p);
 int decode_xfer_write (char *buf, int packet_len,

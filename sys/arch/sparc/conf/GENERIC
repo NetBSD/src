@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.273.6.1 2025/08/02 05:56:08 perseant Exp $
+# $NetBSD: GENERIC,v 1.273.6.2 2026/11/04 23:21:20 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.273.6.1 $"
+#ident 		"GENERIC-$Revision: 1.273.6.2 $"
 
 maxusers	32
 
@@ -427,6 +427,7 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 ch*	at scsibus? target ? lun ?		# SCSI changer devices
 ss*	at scsibus? target ? lun ?		# SCSI scanners
 ses*	at scsibus? target ? lun ?		# SCSI SES/SAF-TE
+dse*	at scsibus? target ? lun ?		# DaynaPORT SCSI Ethernet
 uk*	at scsibus? target ? lun ?		# unknown SCSI
 
 
@@ -530,6 +531,9 @@ qe*	at qec?					# Mace Ethernet (10MBd)
 
 ## Happy Meal Ethernet
 hme*	at sbus? slot ? offset ?
+
+## Gigabit Ethernet
+gem*	at sbus? slot ? offset ?
 
 # PCMCIA ethernet devices
 #ep*	at pcmcia?

@@ -276,10 +276,11 @@ extern int __dtraceenabled_libdns___xfrin_start(long);
 #define	LIBDNS_XFRIN_START(arg0, arg1)
 #define	LIBDNS_XFRIN_START_ENABLED() (0)
 
+#endif
+
 
 #ifdef	__cplusplus
 }
-#endif
 #endif
 
 #endif	/* _PROBES_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: el.h,v 1.47.2.1 2025/08/02 05:54:48 perseant Exp $	*/
+/*	$NetBSD: el.h,v 1.47.2.2 2026/11/04 23:19:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -51,14 +51,15 @@
 
 #define	EL_BUFSIZ	((size_t)1024)	/* Maximum line size		*/
 
-#define	HANDLE_SIGNALS	0x001
-#define	NO_TTY		0x002
-#define	EDIT_DISABLED	0x004
-#define	UNBUFFERED	0x008
-#define	NARROW_HISTORY	0x040
-#define	NO_RESET	0x080
-#define	FIXIO		0x100
-#define	FROM_ELLINE	0x200
+#define	HANDLE_SIGNALS		0x001
+#define	NO_TTY			0x002
+#define	EDIT_DISABLED		0x004
+#define	UNBUFFERED		0x008
+#define	NARROW_HISTORY		0x040
+#define	NO_RESET		0x080
+#define	FIXIO			0x100
+#define	FROM_ELLINE		0x200
+#define	MATCH_HIDDEN_FILES	0x400
 
 typedef unsigned char el_action_t;	/* Index to command array	*/
 
@@ -130,7 +131,7 @@ struct editline {
 	el_prompt_t	  el_prompt;	/* Prompt stuff			*/
 	el_prompt_t	  el_rprompt;	/* Prompt stuff			*/
 	el_literal_t	  el_literal;	/* prompt literal bits		*/
-	el_chared_t	  el_chared;	/* Characted editor stuff	*/
+	el_chared_t	  el_chared;	/* Character editor stuff	*/
 	el_map_t	  el_map;	/* Key mapping stuff		*/
 	el_keymacro_t	  el_keymacro;	/* Key binding stuff		*/
 	el_history_t	  el_history;	/* History stuff		*/
@@ -141,6 +142,7 @@ struct editline {
 	ct_buffer_t       el_scratch;   /* Scratch conversion buffer    */
 	ct_buffer_t       el_lgcyconv;  /* Buffer for legacy wrappers   */
 	LineInfo          el_lgcylinfo; /* Legacy LineInfo buffer       */
+	char *		(*el_getenv)(const char *); /* getenv(3) or ... */
 };
 
 libedit_private int	el_editmode(EditLine *, int, const wchar_t **);

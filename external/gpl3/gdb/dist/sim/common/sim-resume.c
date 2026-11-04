@@ -1,5 +1,5 @@
 /* Generic simulator resume.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -35,7 +35,7 @@ has_stepped (SIM_DESC sd,
 }
 
 
-/* Generic resume - assumes the existance of sim_engine_run */
+/* Generic resume - assumes the existence of sim_engine_run */
 
 void
 sim_resume (SIM_DESC sd,

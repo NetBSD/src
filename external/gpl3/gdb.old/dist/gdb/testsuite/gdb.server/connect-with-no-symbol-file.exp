@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@ load_lib gdbserver-support.exp
 
 standard_testfile
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 if { [build_executable "failed to prepare" $testfile $srcfile debug] } {
     return -1
@@ -45,8 +43,11 @@ proc connect_no_symbol_file { sysroot action } {
     global binfile
 
     with_test_prefix "setup" {
+	# Restore original $binfile.
+	gdb_remote_download build $binfile.bak $binfile
+
 	# Copy the symbol file to the target.
-	set target_exec [gdb_remote_download target $binfile.bak $binfile]
+	set target_exec [gdb_remote_download target $binfile]
 
 	# Make sure we're disconnected, in case we're testing with an
 	# extended-remote board, therefore already connected.
@@ -88,10 +89,22 @@ proc connect_no_symbol_file { sysroot action } {
 	}
     }
     gdb_assert $ok "connection to GDBserver succeeded"
+
+    # GDB will register /proc/PID/exe as the executable for some of
+    # these tests.  Once the test has finished the inferior will still
+    # have /proc/PID/exe registered as its executable even though that
+    # file no longer exists (most likely).  GDB will then complain
+    # about the inferior's executable having disappeared.  Silence
+    # these warnings by removing any registered file from the
+    # executable.
+    gdb_test "with confirm off -- file" \
+	[multi_line \
+	     "No executable file now\\." \
+	     "No symbol file now\\."]
 }
 
 # Make sure we have the original symbol file in a safe place to copy from.
-gdb_remote_download host $binfile $binfile.bak
+gdb_remote_download build $binfile $binfile.bak
 
 # Start with no executable loaded.
 clean_restart

@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -362,7 +362,7 @@ for current_line in scan_target_h():
 
     delegators.append(name)
 
-with open("target-delegates.c", "w") as f:
+with open("target-delegates-gen.c", "w") as f:
     print(
         gdbcopyright.copyright(
             "make-target-delegates.py", "Boilerplate target methods for GDB"

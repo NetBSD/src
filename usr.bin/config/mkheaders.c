@@ -1,4 +1,4 @@
-/*	$NetBSD: mkheaders.c,v 1.29.28.1 2025/08/02 05:58:25 perseant Exp $	*/
+/*	$NetBSD: mkheaders.c,v 1.29.28.2 2026/11/04 23:28:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -45,7 +45,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkheaders.c,v 1.29.28.1 2025/08/02 05:58:25 perseant Exp $");
+__RCSID("$NetBSD: mkheaders.c,v 1.29.28.2 2026/11/04 23:28:31 perseant Exp $");
 
 #include <sys/param.h>
 #include <ctype.h>
@@ -136,7 +136,7 @@ fprint_global(FILE *fp, const char *name, long long value)
 	    name, name, name, value);
 }
 
-/* Convert the option argument to a 32bit numder */
+/* Convert the option argument to a 32bit number */
 static unsigned int
 global_hash(const char *str)
 {

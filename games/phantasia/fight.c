@@ -1,4 +1,4 @@
-/*	$NetBSD: fight.c,v 1.15 2021/05/02 12:50:46 rillig Exp $	*/
+/*	$NetBSD: fight.c,v 1.15.8.1 2026/11/04 23:19:09 perseant Exp $	*/
 
 /*
  * fight.c   Phantasia monster fighting routines
@@ -260,7 +260,7 @@ playerhits(void)
 		break;
 
 	case '2':		/* skirmish */
-		/* skirmish affects monter's energy and speed */
+		/* skirmish affects monster's energy and speed */
 		inflict = ROLL(Player.p_might / 3.0 + 3.0, 1.1 * Player.p_might)
 		    + (Player.p_ring.ring_inuse ? Player.p_might : 0.0);
 

@@ -1,7 +1,6 @@
-
 /* Internal type definitions for GDB.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -20,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GDBTYPES_H)
-#define GDBTYPES_H 1
+#ifndef GDB_GDBTYPES_H
+#define GDB_GDBTYPES_H
 
 /* * \page gdbtypes GDB Types
 
@@ -44,25 +43,20 @@
    written such that they can be used as both rvalues and lvalues.
  */
 
-#include "hashtab.h"
 #include "gdbsupport/array-view.h"
-#include "gdbsupport/gdb-hashtab.h"
 #include <optional>
-#include "gdbsupport/offset-type.h"
 #include "gdbsupport/enum-flags.h"
-#include "gdbsupport/underlying.h"
-#include "gdbsupport/print-utils.h"
-#include "gdbsupport/function-view.h"
 #include "dwarf2.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "gmp-utils.h"
+#include "gdbsupport/unordered_map.h"
 
 /* Forward declarations for prototypes.  */
 struct field;
 struct block;
 struct value_print_options;
 struct language_defn;
-struct dwarf2_per_cu_data;
+struct dwarf2_per_cu;
 struct dwarf2_per_objfile;
 struct dwarf2_property_baton;
 
@@ -265,7 +259,7 @@ enum dynamic_prop_kind
 {
   PROP_UNDEFINED, /* Not defined.  */
   PROP_CONST,     /* Constant.  */
-  PROP_ADDR_OFFSET, /* Address offset.  */
+  PROP_FIELD,	  /* Field of a type.  */
   PROP_LOCEXPR,   /* Location expression.  */
   PROP_LOCLIST,    /* Location list.  */
   PROP_VARIANT_PARTS, /* Variant parts.  */
@@ -353,7 +347,7 @@ struct dynamic_prop
   {
     gdb_assert (m_kind == PROP_LOCEXPR
 		|| m_kind == PROP_LOCLIST
-		|| m_kind == PROP_ADDR_OFFSET);
+		|| m_kind == PROP_FIELD);
 
     return m_data.baton;
   }
@@ -370,9 +364,9 @@ struct dynamic_prop
     m_data.baton = baton;
   }
 
-  void set_addr_offset (const dwarf2_property_baton *baton)
+  void set_field (const dwarf2_property_baton *baton)
   {
-    m_kind = PROP_ADDR_OFFSET;
+    m_kind = PROP_FIELD;
     m_data.baton = baton;
   }
 
@@ -486,7 +480,10 @@ enum field_loc_kind
     FIELD_LOC_KIND_ENUMVAL,	/**< enumval */
     FIELD_LOC_KIND_PHYSADDR,	/**< physaddr */
     FIELD_LOC_KIND_PHYSNAME,	/**< physname */
-    FIELD_LOC_KIND_DWARF_BLOCK	/**< dwarf_block */
+    /* A DWARF block that computes the address of the field.  */
+    FIELD_LOC_KIND_DWARF_BLOCK_ADDR,	/**< dwarf_block */
+    /* A DWARF block that computes the bit offset of the field.  */
+    FIELD_LOC_KIND_DWARF_BLOCK_BITPOS,
   };
 
 /* * A discriminant to determine which field in the
@@ -622,6 +619,13 @@ struct field
     return m_loc_kind;
   }
 
+  /* Return true if this location has either "DWARF block" kind.  */
+  bool loc_is_dwarf_block () const
+  {
+    return (m_loc_kind == FIELD_LOC_KIND_DWARF_BLOCK_ADDR
+	    || m_loc_kind == FIELD_LOC_KIND_DWARF_BLOCK_BITPOS);
+  }
+
   LONGEST loc_bitpos () const
   {
     gdb_assert (m_loc_kind == FIELD_LOC_KIND_BITPOS);
@@ -672,13 +676,19 @@ struct field
 
   dwarf2_locexpr_baton *loc_dwarf_block () const
   {
-    gdb_assert (m_loc_kind == FIELD_LOC_KIND_DWARF_BLOCK);
+    gdb_assert (loc_is_dwarf_block ());
     return m_loc.dwarf_block;
   }
 
-  void set_loc_dwarf_block (dwarf2_locexpr_baton *dwarf_block)
+  void set_loc_dwarf_block_addr (dwarf2_locexpr_baton *dwarf_block)
   {
-    m_loc_kind = FIELD_LOC_KIND_DWARF_BLOCK;
+    m_loc_kind = FIELD_LOC_KIND_DWARF_BLOCK_ADDR;
+    m_loc.dwarf_block = dwarf_block;
+  }
+
+  void set_loc_dwarf_block_bitpos (dwarf2_locexpr_baton *dwarf_block)
+  {
+    m_loc_kind = FIELD_LOC_KIND_DWARF_BLOCK_BITPOS;
     m_loc.dwarf_block = dwarf_block;
   }
 
@@ -1070,17 +1080,18 @@ struct type
     this->main_type->m_nfields = num_fields;
   }
 
-  /* Get the fields array of this type.  */
-  struct field *fields () const
-  {
-    return this->main_type->flds_bnds.fields;
-  }
-
   /* Get the field at index IDX.  */
   struct field &field (int idx) const
   {
     gdb_assert (idx >= 0 && idx < num_fields ());
     return this->fields ()[idx];
+  }
+
+  /* Return an array view of the fields.  */
+  gdb::array_view<struct field> fields () const
+  {
+    return gdb::make_array_view (this->main_type->flds_bnds.fields,
+				 num_fields ());
   }
 
   /* Set the fields array of this type.  */
@@ -2460,8 +2471,9 @@ extern struct type *lookup_memberptr_type (struct type *, struct type *);
 extern struct type *lookup_methodptr_type (struct type *);
 
 extern void smash_to_method_type (struct type *type, struct type *self_type,
-				  struct type *to_type, struct field *args,
-				  int nargs, int varargs);
+				  struct type *to_type,
+				  gdb::array_view<struct field> args,
+				  int varargs);
 
 extern void smash_to_memberptr_type (struct type *, struct type *,
 				     struct type *);
@@ -2635,6 +2647,41 @@ extern struct type *resolve_dynamic_type
    "dynamic".  */
 extern bool is_dynamic_type (struct type *type);
 
+/* Resolve any dynamic components of FIELD.  FIELD is updated.
+   ADDR_STACK and FRAME are used where necessary to supply information
+   for the resolution process; see resolve_dynamic_type.
+   Specifically, after calling this, the field's bit position will be
+   a constant, and the field's type will not have dynamic properties.
+
+   This function assumes that FIELD is not a static field.  */
+
+extern void resolve_dynamic_field (struct field &field,
+				   const struct property_addr_info *addr_stack,
+				   const frame_info_ptr &frame);
+
+/* A helper function that handles the DWARF semantics for
+   DW_AT_bit_offset.
+
+   DWARF 3 specified DW_AT_bit_offset in a funny way, making it simple
+   to use on big-endian targets but somewhat difficult for
+   little-endian.  This function handles the logic here.
+
+   While DW_AT_bit_offset was deprecated in DWARF 4 (and removed
+   entirely from DWARF 5), it is still useful because it is the only
+   way to describe a field that appears at a non-constant bit
+   offset.
+
+   FIELD is updated in-place.  It is assumed that FIELD already has a
+   constant bit position.  BIT_OFFSET is the value of the
+   DW_AT_bit_offset attribute, and EXPLICIT_BYTE_SIZE is either the
+   value of a DW_AT_byte_size from the field's DIE -- indicating an
+   explicit size of the enclosing anonymous object -- or it may be 0,
+   indicating that the field's type size should be used.  */
+
+extern void apply_bit_offset_to_field (struct field &field,
+				       LONGEST bit_offset,
+				       LONGEST explicit_byte_size);
+
 extern struct type *check_typedef (struct type *);
 
 extern void check_stub_method_group (struct type *, int);
@@ -2789,10 +2836,10 @@ extern int class_or_union_p (const struct type *);
 
 extern void maintenance_print_type (const char *, int);
 
-extern htab_up create_copied_types_hash ();
+using copied_types_hash_t = gdb::unordered_map<type *, type *>;
 
 extern struct type *copy_type_recursive (struct type *type,
-					 htab_t copied_types);
+					 copied_types_hash_t &copied_types);
 
 extern struct type *copy_type (const struct type *type);
 
@@ -2831,4 +2878,4 @@ extern unsigned int overload_debug;
 
 extern bool is_nocall_function (const struct type *type);
 
-#endif /* GDBTYPES_H */
+#endif /* GDB_GDBTYPES_H */

@@ -1,6 +1,6 @@
 /* Target-dependent code for HP PA-RISC BSD's.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef HPPA_BSD_TDEP_H
-#define HPPA_BSD_TDEP_H
+#ifndef GDB_HPPA_BSD_TDEP_H
+#define GDB_HPPA_BSD_TDEP_H
 
 extern void hppabsd_init_abi (struct gdbarch_info, struct gdbarch *);
 
-#endif /* hppa-bsd-tdep.h */
+#endif /* GDB_HPPA_BSD_TDEP_H */

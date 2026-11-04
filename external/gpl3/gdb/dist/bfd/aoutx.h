@@ -1,5 +1,5 @@
 /* BFD semi-generic back-end for a.out binaries.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -496,20 +496,13 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
 				 struct internal_exec *execp,
 				 bfd_cleanup (*callback_to_real_object_p) (bfd *))
 {
-  struct aout_data_struct *rawptr, *oldrawptr;
+  struct aout_data_struct *rawptr;
   bfd_cleanup result;
-  size_t amt = sizeof (*rawptr);
 
-  rawptr = bfd_zalloc (abfd, amt);
+  rawptr = bfd_zalloc (abfd, sizeof (*rawptr));
   if (rawptr == NULL)
     return NULL;
-
-  oldrawptr = abfd->tdata.aout_data;
   abfd->tdata.aout_data = rawptr;
-
-  /* Copy the contents of the old tdata struct.  */
-  if (oldrawptr != NULL)
-    *abfd->tdata.aout_data = *oldrawptr;
 
   abfd->tdata.aout_data->a.hdr = &rawptr->e;
   /* Copy in the internal_exec struct.  */
@@ -675,7 +668,6 @@ NAME (aout, some_aout_object_p) (bfd *abfd,
 
  error_ret:
   bfd_release (abfd, rawptr);
-  abfd->tdata.aout_data = oldrawptr;
   return NULL;
 }
 
@@ -2115,7 +2107,7 @@ NAME (aout, swap_ext_reloc_out) (bfd *abfd,
       if (symbols != NULL && r_index < bfd_get_symcount (abfd))		\
 	cache_ptr->sym_ptr_ptr = symbols + r_index;			\
       else								\
-	cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;	\
+	cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;		\
       cache_ptr->addend = ad;						\
     }									\
    else									\
@@ -2126,23 +2118,23 @@ NAME (aout, swap_ext_reloc_out) (bfd *abfd,
 	{								\
 	case N_TEXT:							\
 	case N_TEXT | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr = obj_textsec (abfd)->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr = &obj_textsec (abfd)->symbol;		\
 	  cache_ptr->addend = ad - su->textsec->vma;			\
 	  break;							\
 	case N_DATA:							\
 	case N_DATA | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr = obj_datasec (abfd)->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr = &obj_datasec (abfd)->symbol;		\
 	  cache_ptr->addend = ad - su->datasec->vma;			\
 	  break;							\
 	case N_BSS:							\
 	case N_BSS | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr = obj_bsssec (abfd)->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr = &obj_bsssec (abfd)->symbol;		\
 	  cache_ptr->addend = ad - su->bsssec->vma;			\
 	  break;							\
 	default:							\
 	case N_ABS:							\
 	case N_ABS | N_EXT:						\
-	  cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;	\
+	  cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;	\
 	  cache_ptr->addend = ad;					\
 	  break;							\
 	}								\
@@ -2981,9 +2973,6 @@ NAME (aout, link_hash_table_create) (bfd *abfd)
 static bool
 aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 {
-  bool (*add_one_symbol)
-    (struct bfd_link_info *, bfd *, const char *, flagword, asection *,
-     bfd_vma, const char *, bool, bool, struct bfd_link_hash_entry **);
   struct external_nlist *syms;
   bfd_size_type sym_count;
   char *strings;
@@ -3020,10 +3009,6 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
   if (sym_hash == NULL)
     return false;
   obj_aout_sym_hashes (abfd) = sym_hash;
-
-  add_one_symbol = aout_backend_info (abfd)->add_one_symbol;
-  if (add_one_symbol == NULL)
-    add_one_symbol = _bfd_generic_link_add_one_symbol;
 
   p = syms;
   pend = p + sym_count;
@@ -3175,7 +3160,7 @@ aout_link_add_symbols (bfd *abfd, struct bfd_link_info *info)
 	  break;
 	}
 
-      if (! ((*add_one_symbol)
+      if (! (_bfd_generic_link_add_one_symbol
 	     (info, abfd, name, flags, section, value, string, copy, false,
 	      (struct bfd_link_hash_entry **) sym_hash)))
 	return false;
@@ -4731,19 +4716,12 @@ aout_link_input_section (struct aout_final_link_info *flaginfo,
 				  (file_ptr) 0, input_size))
     return false;
 
-  /* Read in the relocs if we haven't already done it.  */
-  if (aout_section_data (input_section) != NULL
-      && aout_section_data (input_section)->relocs != NULL)
-    relocs = aout_section_data (input_section)->relocs;
-  else
+  relocs = flaginfo->relocs;
+  if (rel_size > 0)
     {
-      relocs = flaginfo->relocs;
-      if (rel_size > 0)
-	{
-	  if (bfd_seek (input_bfd, input_section->rel_filepos, SEEK_SET) != 0
-	      || bfd_read (relocs, rel_size, input_bfd) != rel_size)
-	    return false;
-	}
+      if (bfd_seek (input_bfd, input_section->rel_filepos, SEEK_SET) != 0
+	  || bfd_read (relocs, rel_size, input_bfd) != rel_size)
+	return false;
     }
 
   /* Relocate the section contents.  */

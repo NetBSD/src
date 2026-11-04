@@ -1,0 +1,106 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Exercise unwinding AArch64's SVE registers from a signal frame.
+
+require allow_aarch64_sve_tests
+# Remote targets can't communicate vector length changes to GDB via the RSP.
+require !gdb_protocol_is_remote
+
+set first_vl 0
+set second_vl 0
+
+# Find two valid VL values to use in the test.
+# The minimum supported VL is 16 bytes, maximum is 256 bytes, and VL can change
+# in increments of at least 16 bytes.
+for {set i 16} {$i <= 256} {incr i 16} {
+    if {![aarch64_supports_sve_vl $i]} {
+	continue
+    }
+
+    if {$first_vl == 0} {
+	set first_vl $i
+    } elseif {$second_vl == 0} {
+	set second_vl $i
+	break
+    }
+}
+
+if {$first_vl == 0 || $second_vl == 0} {
+    untested "test needs to support at least two vector lengths"
+    return
+}
+
+standard_testfile
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  [list debug additional_flags=-march=armv9-a]] } {
+    return
+}
+
+# We want SIGUSR1 to be delivered normally.
+gdb_test "handle SIGUSR1 nostop" \
+    [multi_line {Signal        Stop	Print	Pass to program	Description} \
+		{SIGUSR1       No	Yes	Yes		User defined signal 1}] \
+    "don't stop for SIGUSR1"
+
+set linespec ${srcfile}:[gdb_get_line_number "Break here."]
+gdb_test_no_output "set args $first_vl $second_vl"
+
+if ![runto ${linespec}] {
+    return
+}
+
+set first_vg [expr $first_vl/8]
+set second_vg [expr $second_vl/8]
+
+gdb_test "print \$vg" ". = $second_vg" "vg was changed"
+
+for {set row 0} {$row < 32} {incr row} {
+    set register_name "\$z${row}\.b\.u"
+    gdb_test "print sizeof $register_name" " = $second_vl" \
+	"size of $register_name in the signal handler"
+    gdb_test "print $register_name" ". = \\{254 <repeats $second_vl times>\\}" \
+	"$register_name contents in signal handler"
+}
+
+for {set row 0} {$row < 16} {incr row} {
+    set register_name "\$p${row}"
+    gdb_test "print $register_name" ". = \\{(0, ){[expr $second_vl/8 - 1]}0\\}" \
+	"$register_name contents in signal handler"
+}
+gdb_test "print \$ffr" ". = \\{(255, ){[expr $second_vl/8 - 1]}255\\}" \
+    "ffr contents in signal handler"
+
+gdb_test "frame function main" \
+    [multi_line "#$decimal  $hex in main \[^\r\n\]+" \
+		"$decimal\[ \t\]+kill \\(getpid \\(\\), SIGUSR1\\);"]
+
+gdb_test "print \$vg" ". = $first_vg" "vg was correctly unwound"
+
+for {set row 0} {$row < 32} {incr row} {
+    set register_name "\$z${row}\.b\.u"
+    gdb_test "print sizeof $register_name" " = $first_vl" \
+	"size of $register_name was correctly unwound"
+    gdb_test "print $register_name" ". = \\{255 <repeats $first_vl times>\\}" \
+	"$register_name contents were correctly unwound"
+}
+
+for {set row 0} {$row < 16} {incr row} {
+    set register_name "\$p${row}"
+    gdb_test "print $register_name" ". = \\{(1, ){[expr $first_vl/8 - 1]}1\\}" \
+	"$register_name contents were correctly unwound"
+}
+gdb_test "print \$ffr" ". = \\{(255, ){[expr $first_vl/8 - 1]}255\\}" \
+    "ffr contents were correctly unwound"

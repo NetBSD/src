@@ -1,6 +1,6 @@
 /* Remote notification in GDB protocol
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef REMOTE_NOTIF_H
-#define REMOTE_NOTIF_H
+#ifndef GDB_REMOTE_NOTIF_H
+#define GDB_REMOTE_NOTIF_H
 
 #include <list>
 #include <memory>
@@ -131,4 +131,4 @@ extern const notif_client notif_client_stop;
 
 extern bool notif_debug;
 
-#endif /* REMOTE_NOTIF_H */
+#endif /* GDB_REMOTE_NOTIF_H */

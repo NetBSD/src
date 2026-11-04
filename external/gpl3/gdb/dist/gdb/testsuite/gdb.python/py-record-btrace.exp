@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -197,4 +197,15 @@ with_test_prefix "level" {
     gdb_test "step" "main ().*" "step two"
     gdb_test "python print(gdb.current_recording().function_call_history\[0\].level)" "1"
     gdb_test "python print(gdb.current_recording().function_call_history\[1\].level)" "0"
+}
+
+# Note:  GDB can incrementally add to the recording from the raw trace data.
+# After a clear(), GDB might not have all the raw trace data available in its
+# buffer to recreate the full recording it had before the clear().
+# So, do this testing last to avoid disturbing subsequent tests.
+with_test_prefix "clear" {
+    gdb_test_no_output "python r.clear()"
+    gdb_test "python insn = r.instruction_history"
+    gdb_test_no_output "python i = insn\[0\]"
+    gdb_test "python print(i.size)" "$decimal"
 }

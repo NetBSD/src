@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -80,12 +80,10 @@ gdb_test_multiple "p some_func ()" "" {
 # debug, to format of which isn't fixed.  All we care about is that
 # GDB is still running afterwards.
 #
-# All of the debug output makes this really slow when testing with the
-# special read1 version of expect, hence the timeout factor.
-with_read1_timeout_factor 10 {
-    gdb_test_no_output "set debug frame on"
-    gdb_test "p some_func ()" ".*" \
-	"repeat p some_func () with frame debug on"
-    gdb_test_no_output "set debug frame off"
-}
+gdb_test_no_output "set debug frame on"
+gdb_test_lines "p some_func ()" \
+    "repeat p some_func () with frame debug on" \
+    ".*"
+gdb_test_no_output "set debug frame off"
+
 gdb_test "p 1 + 2 + 3" " = 6"

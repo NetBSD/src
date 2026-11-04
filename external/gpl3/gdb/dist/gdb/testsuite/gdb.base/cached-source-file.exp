@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2024 Free Software Foundation, Inc.
+# Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -124,7 +124,7 @@ file rename -force -- $bkpsrc $srcfile
 # As before, delay so that at least one second has passed.  GDB still
 # will not spot that the source file has changed, as GDB doesn't do a
 # time check unless the binary has also changed, this delay just
-# allows us to confirm this behaviour.
+# allows us to confirm this behavior.
 sleep 1
 
 # List the printf line again, we should not see the file changes yet

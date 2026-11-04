@@ -1,6 +1,6 @@
 /* GDB hooks for TUI.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,21 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "inferior.h"
-#include "command.h"
-#include "bfd.h"
 #include "symfile.h"
 #include "objfiles.h"
 #include "target.h"
-#include "gdbcore.h"
-#include "gdbsupport/event-loop.h"
-#include "event-top.h"
 #include "frame.h"
 #include "breakpoint.h"
-#include "ui-out.h"
-#include "top.h"
 #include "observable.h"
 #include "source.h"
 #include <unistd.h>
@@ -39,15 +31,10 @@
 
 #include "tui/tui.h"
 #include "tui/tui-hooks.h"
-#include "tui/tui-data.h"
 #include "tui/tui-layout.h"
-#include "tui/tui-io.h"
 #include "tui/tui-regs.h"
-#include "tui/tui-win.h"
-#include "tui/tui-stack.h"
+#include "tui/tui-status.h"
 #include "tui/tui-winsource.h"
-
-#include "gdb_curses.h"
 
 static void
 tui_new_objfile_hook (struct objfile* objfile)
@@ -56,13 +43,10 @@ tui_new_objfile_hook (struct objfile* objfile)
     tui_display_main ();
 }
 
-/* Prevent recursion of deprecated_register_changed_hook().  */
-static bool tui_refreshing_registers = false;
-
 /* Observer for the register_changed notification.  */
 
 static void
-tui_register_changed (frame_info_ptr frame, int regno)
+tui_register_changed (const frame_info_ptr &frame, int regno)
 {
   frame_info_ptr fi;
 
@@ -75,12 +59,7 @@ tui_register_changed (frame_info_ptr frame, int regno)
      up in the other.  So we always use the selected frame here, and ignore
      FRAME.  */
   fi = get_selected_frame (NULL);
-  if (!tui_refreshing_registers)
-    {
-      tui_refreshing_registers = true;
-      TUI_DATA_WIN->check_register_values (fi);
-      tui_refreshing_registers = false;
-    }
+  tui_data_win ()->check_register_values (fi);
 }
 
 /* Breakpoint creation hook.
@@ -127,29 +106,29 @@ tui_refresh_frame_and_register_information ()
   target_terminal::scoped_restore_terminal_state term_state;
   target_terminal::ours_for_output ();
 
-  if (from_stack && has_stack_frames ())
+  if (from_stack)
     {
-      frame_info_ptr fi = get_selected_frame (NULL);
+      frame_info_ptr fi;
+      if (has_stack_frames ())
+	{
+	  fi = get_selected_frame (NULL);
 
-      /* Display the frame position (even if there is no symbols or
-	 the PC is not known).  */
-      bool frame_info_changed_p = tui_show_frame_info (fi);
+	  /* Display the frame position (even if there is no symbols or
+	     the PC is not known).  */
+	  tui_show_frame_info (fi);
+	}
 
       /* Refresh the register window if it's visible.  */
-      if (tui_is_window_visible (DATA_WIN)
-	  && (frame_info_changed_p || from_stack))
-	{
-	  tui_refreshing_registers = true;
-	  TUI_DATA_WIN->check_register_values (fi);
-	  tui_refreshing_registers = false;
-	}
+      if (tui_is_window_visible (DATA_WIN))
+	tui_data_win ()->check_register_values (fi);
     }
-  else if (!from_stack)
+  else
     {
       /* Make sure that the source window is displayed.  */
       tui_add_win_to_layout (SRC_WIN);
 
-      struct symtab_and_line sal = get_current_source_symtab_and_line ();
+      symtab_and_line sal
+	= get_current_source_symtab_and_line (current_program_space);
       tui_update_source_windows_with_line (sal);
     }
 }
@@ -175,6 +154,7 @@ tui_inferior_exit (struct inferior *inf)
   tui_set_key_mode (TUI_COMMAND_MODE);
   tui_show_frame_info (0);
   tui_display_main ();
+  from_stack = true;
 }
 
 /* Observer for the before_prompt notification.  */

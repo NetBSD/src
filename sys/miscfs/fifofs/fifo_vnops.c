@@ -1,4 +1,4 @@
-/*	$NetBSD: fifo_vnops.c,v 1.91 2021/10/11 01:07:36 thorpej Exp $	*/
+/*	$NetBSD: fifo_vnops.c,v 1.91.10.1 2026/11/04 23:27:52 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.91 2021/10/11 01:07:36 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fifo_vnops.c,v 1.91.10.1 2026/11/04 23:27:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,8 @@ struct fifoinfo {
 	int		fi_readers;
 	kcondvar_t	fi_wcv;
 	int		fi_writers;
+	uint64_t	fi_rgen;
+	uint64_t	fi_wgen;
 };
 
 /*
@@ -175,8 +177,9 @@ fifo_open(void *v)
 
 		fip->fi_readers = 0;
 		fip->fi_writers = 0;
-		wso->so_state |= SS_CANTRCVMORE;
-		rso->so_state |= SS_CANTSENDMORE;
+		fip->fi_rgen = 0;
+		fip->fi_wgen = 0;
+		rso->so_state |= SS_CANTRCVMORE;
 		cv_init(&fip->fi_rcv, "fiford");
 		cv_init(&fip->fi_wcv, "fifowr");
 		vp->v_fifoinfo = fip;
@@ -201,17 +204,20 @@ fifo_open(void *v)
 	if (ap->a_mode & FREAD) {
 		if (ap->a_mode & O_NONBLOCK) {
 		} else {
-			while (!soreadable(rso) && fip->fi_writers == 0) {
+			uint64_t wgen = fip->fi_wgen;
+
+			while (fip->fi_writers == 0 && wgen == fip->fi_wgen) {
 				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_rcv,
 				    wso->so_lock);
 				sounlock(wso);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				if (error)
+				if (error && wgen == fip->fi_wgen)
 					goto bad;
 				solock(wso);
 			}
 		}
+		fip->fi_rgen++;
 	}
 	if (ap->a_mode & FWRITE) {
 		if (ap->a_mode & O_NONBLOCK) {
@@ -221,17 +227,20 @@ fifo_open(void *v)
 				goto bad;
 			}
 		} else {
-			while (fip->fi_readers == 0) {
+			const uint64_t rgen = fip->fi_rgen;
+
+			while (fip->fi_readers == 0 && rgen == fip->fi_rgen) {
 				VOP_UNLOCK(vp);
 				error = cv_wait_sig(&fip->fi_wcv,
 				    wso->so_lock);
 				sounlock(wso);
 				vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-				if (error)
+				if (error && rgen == fip->fi_rgen)
 					goto bad;
 				solock(wso);
 			}
 		}
+		fip->fi_wgen++;
 	}
 	sounlock(wso);
 	return (0);
@@ -256,7 +265,6 @@ fifo_read(void *v)
 	struct uio	*uio;
 	struct socket	*rso;
 	int		error, sflags;
-	size_t		startresid;
 
 	uio = ap->a_uio;
 	rso = ap->a_vp->v_fifoinfo->fi_readsock;
@@ -266,15 +274,9 @@ fifo_read(void *v)
 #endif
 	if (uio->uio_resid == 0)
 		return (0);
-	startresid = uio->uio_resid;
 	VOP_UNLOCK(ap->a_vp);
 	sflags = (ap->a_ioflag & IO_NDELAY) ? MSG_NBIO : 0;
 	error = (*rso->so_receive)(rso, NULL, uio, NULL, NULL, &sflags);
-	/*
-	 * Clear EOF indication after first such return.
-	 */
-	if (error == 0 && uio->uio_resid == startresid)
-		rso->so_state &= ~SS_CANTRCVMORE;
 	if (ap->a_ioflag & IO_NDELAY) {
 		if (error == EWOULDBLOCK &&
 		    ap->a_vp->v_fifoinfo->fi_writers == 0)

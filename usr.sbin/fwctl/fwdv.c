@@ -1,4 +1,4 @@
-/*	$NetBSD: fwdv.c,v 1.9 2023/08/10 20:49:20 mrg Exp $	*/
+/*	$NetBSD: fwdv.c,v 1.9.2.1 2026/11/04 23:28:49 perseant Exp $	*/
 /*
  * Copyright (C) 2003
  * 	Hidetoshi Shimokawa. All rights reserved.
@@ -42,6 +42,7 @@
 
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <unistd.h>
 #include <fcntl.h>
 #include <stdio.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.122 2024/03/05 14:15:33 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.122.2.1 2026/11/04 23:21:06 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2024/03/05 14:15:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122.2.1 2026/11/04 23:21:06 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -62,7 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2024/03/05 14:15:33 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
@@ -105,10 +104,11 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.122 2024/03/05 14:15:33 thorpej Exp $"
 
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
+#include <next68k/dev/intiovar.h>
 #include <next68k/next68k/isr.h>
 #include <next68k/next68k/nextrom.h>
 #include <next68k/next68k/rtc.h>
-#include <next68k/next68k/seglist.h>
+#include <m68k/seglist.h>
 
 #include <dev/mm.h>
 
@@ -120,94 +120,39 @@ extern char *esym;
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
 
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
-struct vm_map *phys_map = NULL;
-
-paddr_t msgbufpa;		/* PA of message buffer */
-
-int	maxmem;			/* max memory per process */
-
 extern	u_int lowram;
-extern	short exframesize[];
-
-/* prototypes for local functions */
-void	identifycpu(void);
-void	initcpu(void);
-void	dumpsys(void);
-
-int	cpu_dumpsize(void);
-int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
-void	cpu_init_kcore_hdr(void);
 
 /* functions called from locore.s */
-void next68k_init(void);
-void straytrap(int, u_short);
+void machine_init(paddr_t);
 
 /*
- * Machine-independent crash dump header info.
+ * Default to 33MHz 68040.
  */
-cpu_kcore_hdr_t cpu_kcore_hdr;
-
-/*
- * Memory segments initialized in locore, which are eventually loaded
- * as managed VM pages.
- */
-phys_seg_list_t phys_seg_list[VM_PHYSSEG_MAX];
-
-/*
- * Memory segments to dump.  This is initialized from the phys_seg_list
- * before pages are stolen from it for VM system overhead.  I.e. this
- * covers the entire range of physical memory.
- */
-phys_ram_seg_t mem_clusters[VM_PHYSSEG_MAX];
-int	mem_cluster_cnt;
-
-/*
- * On the 68020/68030, the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68040/68060(?), the value of delay_divisor is roughly
- * 759 / cpuspeed (where cpuspeed is in MHz).
- * XXX -- is the above formula correct?
- */
-int	cpuspeed = 33;		  /* relative cpu speed; XXX skewed on 68040 */
-int	delay_divisor = 759 / 33;  /* delay constant; assume fastest 33 MHz */
+int	delay_divisor = delay_divisor_est40(33);
 
 /****************************************************************/
+
+struct pmap_bootmap machine_bootmap[] = {
+[PMBM_I_INTIO]	=	{ .pmbm_vaddr_ptr = &intiobase,
+			  .pmbm_paddr     = INTIOBASE,
+			  .pmbm_size      = INTIOSIZE,
+			  .pmbm_flags     = PMBM_F_CI },
+
+[PMBM_I_FB]	=	{ .pmbm_vaddr_ptr = &fbbase,
+			  .pmbm_paddr     = 0,	/* filled in by... */
+			  .pmbm_size      = 0,	/* ...next68k_bootargs() */
+			  .pmbm_flags     = PMBM_F_CWT },
+
+			{ .pmbm_vaddr = -1 },
+};
 
 /*
  * Early initialization, before main() is called.
  */
 void
-next68k_init(void)
+machine_init(paddr_t nextpa)
 {
-	int i;
-
-	/*
-	 * Tell the VM system about available physical memory.
-	 */
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		if (phys_seg_list[i].ps_start == phys_seg_list[i].ps_end) {
-			/*
-			 * Segment has been completely gobbled up.
-			 */
-			continue;
-		}
-		/*
-		 * Note the index of the mem cluster is the free
-		 * list we want to put the memory on.
-		 */
-		uvm_page_physload(atop(phys_seg_list[i].ps_start),
-				  atop(phys_seg_list[i].ps_end),
-				  atop(phys_seg_list[i].ps_start),
-				  atop(phys_seg_list[i].ps_end),
-				  VM_FREELIST_DEFAULT);
-	}
+	machine_init_common(nextpa);
 
 	{
 		char *p = rom_boot_arg;
@@ -217,16 +162,6 @@ next68k_init(void)
 				BOOT_FLAG(*p, boothowto);
 		}
 	}
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-	for (i = 0; i < btoc(round_page(MSGBUFSIZE)); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
-	pmap_update(pmap_kernel());
 }
 
 /*
@@ -266,132 +201,45 @@ consinit(void)
 	}
 }
 
-/*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
- */
 void
-cpu_startup(void)
+machine_set_model(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-
-	pmapdebug = 0;
-#endif
-
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
-
-	/*
-	 * Initialize the kernel crash dump header.
-	 */
-	cpu_init_kcore_hdr();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				 VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-}
-
-void
-identifycpu(void)
-{
-	const char *cpu_str, *mmu_str, *fpu_str, *cache_str;
 	extern int turbo;
+	const char *shape_str = "cube";
+	const char *color_str = iscolor ? " Color" : "";
+	const char *turbo_str = turbo ? " Turbo" : "";
 
-	/*
-	 * ...and the CPU type.
-	 */
+	switch (rom_machine_type) {
+	case NeXT_WARP9:	/* 68040 25MHz NeXTstation */
+	case NeXT_WARP9C:	/* 68040 25MHz NeXTstation Color */
+	case NeXT_TURBO_MONO:	/* 68040 33MHz NeXTstation */
+	case NeXT_TURBO_COLOR:	/* 68040 33MHz NeXTstation Color */
+		shape_str = "station";
+		/* FALLTHROUGH */
+	case NeXT_CUBE:		/* 68030 25MHz NeXTcube */
+	case NeXT_X15:		/* 68040 25MHz NeXTcubr */
+	case NeXT_CUBE_TURBO:	/* 68040 33MHz NeXTcube */
+		cpu_setmodel("NeXT%s%s%s", shape_str, color_str, turbo_str);
+		break;
+
+	default:
+		cpu_setmodel("NeXT machine type %d", rom_machine_type);
+		break;
+	}
+
 	switch (cputype) {
 	case CPU_68040:
-		cpu_str = "MC68040";
-		cpuspeed = turbo ? 33 : 25;
-		delay_divisor = 759 / cpuspeed;
+		cpuspeed_khz = (turbo ? 33 : 25) * 1000;
+		delay_divisor = delay_divisor_est40(cpuspeed_khz / 1000);
 		break;
 	case CPU_68030:
-		cpu_str = "MC68030";
-		cpuspeed = 25;
-		delay_divisor = 2048 / cpuspeed;
+		cpuspeed_khz = 25*1000;
+		delay_divisor = delay_divisor_est(cpuspeed_khz / 1000);
 		break;
-#if 0
-	case CPU_68020:
-		cpu_str = "MC68020";
-		break;
-#endif
 	default:
 		printf("\nunknown cputype %d\n", cputype);
 		panic("startup");
 	}
-
-	/*
-	 * ...and the MMU type.
-	 */
-	switch (mmutype) {
-	case MMU_68040:
-	case MMU_68030:
-		mmu_str = "+MMU";
-		break;
-#if 0
-	case MMU_68851:
-		mmu_str = ", MC68851 MMU";
-		break;
-#endif
-	default:
-		printf("%s: unknown MMU type %d\n", cpu_str, mmutype);
-		panic("startup");
-	}
-
-	/*
-	 * ...and the FPU type.
-	 */
-	switch (fputype) {
-	case FPU_68040:
-		fpu_str = "+FPU";
-		break;
-	case FPU_68882:
-		fpu_str = ", MC68882 FPU";
-		break;
-	case FPU_68881:
-		fpu_str = ", MC68881 FPU";
-		break;
-	default:
-		fpu_str = ", unknown FPU";
-	}
-
-	/*
-	 * ...and finally, the cache type.
-	 */
-	if (cputype == CPU_68040)
-		cache_str = ", 4k on-chip physical I/D caches";
-	else
-		cache_str = "";
-
-	cpu_setmodel("NeXT/%s CPU%s%s%s", cpu_str, mmu_str, fpu_str, cache_str);
-	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -415,363 +263,18 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 }
 
-/* See: sig_machdep.c */
-
-int	waittime = -1;
-
 void
-cpu_reboot(int howto, char *bootstr)
+machine_powerdown(void)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is cold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
- haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-#if defined(PANICWAIT) && !defined(DDB)
-	if ((howto & RB_HALT) == 0 && panicstr) {
-		printf("hit any key to reboot...\n");
-		cnpollc(1);
-		(void)cngetc();
-		cnpollc(0);
-		printf("\n");
-	}
-#endif
-
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		poweroff();
-	}
-
-	/* Finally, halt/reboot the system. */
-	if (howto & RB_HALT) {
-		monbootflag = 0x2d680000;				/* "-h" */
-	}
-
-	printf("rebooting...\n");
-	DELAY(1000000);
-	doboot();
-	/*NOTREACHED*/
-}
-
-/*
- * Initialize the kernel crash dump header.
- */
-void
-cpu_init_kcore_hdr(void)
-{
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
-	int i;
-	extern char end[];
-
-	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
-
-	/*
-	 * Initialize the `dispatcher' portion of the header.
-	 */
-	strcpy(h->name, machine);
-	h->page_size = PAGE_SIZE;
-	h->kernbase = KERNBASE;
-
-	/*
-	 * Fill in information about our MMU configuration.
-	 */
-	m->mmutype	= mmutype;
-	m->sg_v		= SG_V;
-	m->sg_frame	= SG_FRAME;
-	m->sg_ishift	= SG_ISHIFT;
-	m->sg_pmask	= SG_PMASK;
-	m->sg40_shift1	= SG4_SHIFT1;
-	m->sg40_mask2	= SG4_MASK2;
-	m->sg40_shift2	= SG4_SHIFT2;
-	m->sg40_mask3	= SG4_MASK3;
-	m->sg40_shift3	= SG4_SHIFT3;
-	m->sg40_addr1	= SG4_ADDR1;
-	m->sg40_addr2	= SG4_ADDR2;
-	m->pg_v		= PG_V;
-	m->pg_frame	= PG_FRAME;
-
-	/*
-	 * Initialize pointer to kernel segment table.
-	 */
-	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
-
-	/*
-	 * Initialize relocation value such that:
-	 *
-	 *	pa = (va - KERNBASE) + reloc
-	 */
-	m->reloc = lowram;
-
-	/*
-	 * Define the end of the relocatable range.
-	 */
-	m->relocend = (uint32_t)end;
-
-	/*
-	 * The next68k has multiple memory segments.
-	 */
-	for (i = 0; i < mem_cluster_cnt; i++) {
-		m->ram_segs[i].start = mem_clusters[i].start;
-		m->ram_segs[i].size  = mem_clusters[i].size;
-	}
-}
-
-/*
- * Compute the size of the machine-dependent crash dump header.
- * Returns size in disk blocks.
- */
-
-#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
-#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
-
-int
-cpu_dumpsize(void)
-{
-
-	return btodb(MDHDRSIZE);
-}
-
-/*
- * Called by dumpsys() to dump the machine-dependent header.
- */
-int
-cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
-{
-	int buf[MDHDRSIZE / sizeof(int)];
-	cpu_kcore_hdr_t *chdr;
-	kcore_seg_t *kseg;
-	int error;
-
-	kseg = (kcore_seg_t *)buf;
-	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
-	    sizeof(int)];
-
-	/* Create the segment header. */
-	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
-
-	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
-	*blknop += btodb(sizeof(buf));
-	return (error);
-}
-
-/*
- * These variables are needed by /sbin/savecore
- */
-uint32_t dumpmag = 0x8fca0101;	/* magic number */
-int	dumpsize = 0;		/* pages */
-long	dumplo = 0;		/* blocks */
-
-/*
- * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first PAGE_SIZE of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
- */
-void
-cpu_dumpconf(void)
-{
-	int chdrsize;	/* size of dump header */
-	int nblks;	/* size of dump area */
-
-	if (dumpdev == NODEV)
-		return;
-	nblks = bdev_size(dumpdev);
-	chdrsize = cpu_dumpsize();
-
-	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
-
-	/*
-	 * Check do see if we will fit.  Note we always skip the
-	 * first PAGE_SIZE in case there is a disk label there.
-	 */
-	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
-		dumpsize = 0;
-		dumplo = -1;
-		return;
-	}
-
-	/*
-	 * Put dump at the end of the partition.
-	 */
-	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
-}
-
-/*
- * Dump physical memory onto the dump device.  Called by cpu_reboot().
- */
-void
-dumpsys(void)
-{
-	const struct bdevsw *bdev;
-	daddr_t blkno;		/* current block to write */
-				/* dump routine */
-	int (*dump)(dev_t, daddr_t, void *, size_t);
-	int pg;			/* page being dumped */
-	vm_offset_t maddr;	/* PA being dumped */
-	int error;		/* error code from (*dump)() */
-
-	/* XXX initialized here because of gcc lossage */
-	maddr = lowram;
-	pg = 0;
-
-	/* Don't put dump messages in msgbuf. */
-	msgbufmapped = 0;
-
-	/* Make sure dump device is valid. */
-	if (dumpdev == NODEV)
-		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return;
-	if (dumpsize == 0) {
-		cpu_dumpconf();
-		if (dumpsize == 0)
-			return;
-	}
-	if (dumplo < 0)
-		return;
-	dump = bdev->d_dump;
-	blkno = dumplo;
-
-	printf("\ndumping to dev 0x%"PRIx64", offset %ld\n", dumpdev, dumplo);
-
-	printf("dump ");
-
-	/* Write the dump header. */
-	error = cpu_dump(dump, &blkno);
-	if (error)
-		goto bad;
-
-	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/PAGE_SIZE)
-		/* print out how many MBs we have dumped */
-		if (pg && (pg % NPGMB) == 0)
-			printf_nolog("%d ", pg / NPGMB);
-#undef NPGMB
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-		pmap_update(pmap_kernel());
-
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
- bad:
-		switch (error) {
-		case 0:
-			maddr += PAGE_SIZE;
-			blkno += btodb(PAGE_SIZE);
-			break;
-
-		case ENXIO:
-			printf("device bad\n");
-			return;
-
-		case EFAULT:
-			printf("device not ready\n");
-			return;
-
-		case EINVAL:
-			printf("area improper\n");
-			return;
-
-		case EIO:
-			printf("i/o error\n");
-			return;
-
-		case EINTR:
-			printf("aborted from console\n");
-			return;
-
-		default:
-			printf("error %d\n", error);
-			return;
-		}
-	}
-	printf("succeeded\n");
+	poweroff();
 }
 
 void
-initcpu(void)
+machine_halt(void)
 {
+	monbootflag = 0x2d680000;	/* "-h" halts instead of reboot */
+	machine_reboot(RB_HALT, NULL);	/* args are ignored */
 }
-
-void
-straytrap(int pc, u_short evec)
-{
-	printf("unexpected trap (vector offset %x) from %x\n",
-	       evec & 0xFFF, pc);
-
-	/* XXX kgdb/ddb entry? */
-}
-
-/* XXX should change the interface, and make one badaddr() function */
-
-int	*nofault;
-
-#if 0
-int
-badaddr(void *addr, int nbytes)
-{
-	int i;
-	label_t faultbuf;
-
-#ifdef lint
-	i = *addr; if (i) return (0);
-#endif
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return(1);
-	}
-
-	switch (nbytes) {
-	case 1:
-		i = *(volatile char *)addr;
-		break;
-
-	case 2:
-		i = *(volatile short *)addr;
-		break;
-
-	case 4:
-		i = *(volatile int *)addr;
-		break;
-
-	default:
-		panic("badaddr: bad request");
-	}
-	nofault = NULL;
-	return (0);
-}
-#endif
 
 /*
  * Level 7 interrupts can be caused by the keyboard or parity errors.
@@ -809,34 +312,3 @@ nmihand(void *frame)
 
 	return 0;
 }
-
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	return ENOEXEC;
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
-}
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif

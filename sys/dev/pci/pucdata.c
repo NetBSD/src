@@ -1,4 +1,4 @@
-/*	$NetBSD: pucdata.c,v 1.116.2.1 2025/08/02 05:57:00 perseant Exp $	*/
+/*	$NetBSD: pucdata.c,v 1.116.2.2 2026/11/04 23:22:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christopher G. Demetriou.  All rights reserved.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.116.2.1 2025/08/02 05:57:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pucdata.c,v 1.116.2.2 2026/11/04 23:22:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2920,6 +2920,15 @@ const struct puc_device_description puc_devices[] = {
 	{   "Intel S1200 UART",
 	    {	PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_S1200_UART, 0, 0 },
 	    {	0xffff,	0xffff,	0,	0	},
+	    {
+		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
+	    },
+	},
+
+	/* Intel C3000 UART */
+	{   "Intel C3000 HS UART",
+	    {   PCI_VENDOR_INTEL, PCI_PRODUCT_INTEL_C3K_HSUART, 0, 0 },
+	    {   0xffff, 0xffff, 0,	0	},
 	    {
 		{ PUC_PORT_TYPE_COM, PCI_BAR0, 0x00, COM_FREQ },
 	    },

@@ -13,7 +13,8 @@
 #	\fBpostmap -q - socketmap:unix:\fIpathname\fB:\fIname\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
-#	rewriting, mail routing or policy lookup.
+#	rewriting or mail routing. These tables are usually in
+#	\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 #
 #	The Postfix socketmap client expects TCP endpoint names of
 #	the form \fBinet:\fIhost\fB:\fIport\fB:\fIname\fR, or

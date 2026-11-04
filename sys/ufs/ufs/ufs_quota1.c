@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_quota1.c,v 1.26 2023/02/22 21:49:45 riastradh Exp $	*/
+/*	$NetBSD: ufs_quota1.c,v 1.26.6.1 2026/11/04 23:28:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993, 1995
@@ -35,23 +35,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.26 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_quota1.c,v 1.26.6.1 2026/11/04 23:28:08 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
-#include <sys/file.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/mount.h>
-#include <sys/kauth.h>
+#include <sys/types.h>
 
-#include <ufs/ufs/quota1.h>
+#include <sys/file.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+
 #include <ufs/ufs/inode.h>
-#include <ufs/ufs/ufsmount.h>
+#include <ufs/ufs/quota1.h>
 #include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_quota.h>
+#include <ufs/ufs/ufsmount.h>
 
 static int chkdqchg(struct inode *, int64_t, kauth_cred_t, int);
 static int chkiqchg(struct inode *, int32_t, kauth_cred_t, int);
@@ -69,7 +72,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 	if ((error = getinoquota(ip)) != 0)
 		return error;
 	if (change == 0)
-		return (0);
+		return 0;
 	if (change < 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
@@ -84,7 +87,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 			dq->dq_flags |= DQ_MOD;
 			mutex_exit(&dq->dq_interlock);
 		}
-		return (0);
+		return 0;
 	}
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if ((dq = ip->i_dquot[i]) == NODQUOT)
@@ -97,7 +100,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 			error = chkdqchg(ip, change, cred, i);
 			mutex_exit(&dq->dq_interlock);
 			if (error != 0)
-				return (error);
+				return error;
 		}
 	}
 	for (i = 0; i < MAXQUOTAS; i++) {
@@ -108,7 +111,7 @@ chkdq1(struct inode *ip, int64_t change, kauth_cred_t cred, int flags)
 		dq->dq_flags |= DQ_MOD;
 		mutex_exit(&dq->dq_interlock);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -133,7 +136,7 @@ chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 			    quotatypes[type]);
 			dq->dq_flags |= DQ_WARN(QL_BLOCK);
 		}
-		return (EDQUOT);
+		return SET_ERROR(EDQUOT);
 	}
 	/*
 	 * If user is over their soft limit for too long, disallow space
@@ -147,7 +150,7 @@ chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "disk quota exceeded");
-			return (0);
+			return 0;
 		}
 		if (time_second > dq->dq_btime) {
 			if ((dq->dq_flags & DQ_WARN(QL_BLOCK)) == 0 &&
@@ -158,10 +161,10 @@ chkdqchg(struct inode *ip, int64_t change, kauth_cred_t cred, int type)
 				    "disk quota exceeded for too long");
 				dq->dq_flags |= DQ_WARN(QL_BLOCK);
 			}
-			return (EDQUOT);
+			return SET_ERROR(EDQUOT);
 		}
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -177,7 +180,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 	if ((error = getinoquota(ip)) != 0)
 		return error;
 	if (change == 0)
-		return (0);
+		return 0;
 	if (change < 0) {
 		for (i = 0; i < MAXQUOTAS; i++) {
 			if ((dq = ip->i_dquot[i]) == NODQUOT)
@@ -192,7 +195,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 			dq->dq_flags |= DQ_MOD;
 			mutex_exit(&dq->dq_interlock);
 		}
-		return (0);
+		return 0;
 	}
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if ((dq = ip->i_dquot[i]) == NODQUOT)
@@ -205,7 +208,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 			error = chkiqchg(ip, change, cred, i);
 			mutex_exit(&dq->dq_interlock);
 			if (error != 0)
-				return (error);
+				return error;
 		}
 	}
 	for (i = 0; i < MAXQUOTAS; i++) {
@@ -216,7 +219,7 @@ chkiq1(struct inode *ip, int32_t change, kauth_cred_t cred, int flags)
 		dq->dq_flags |= DQ_MOD;
 		mutex_exit(&dq->dq_interlock);
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -241,7 +244,7 @@ chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 			    quotatypes[type]);
 			dq->dq_flags |= DQ_WARN(QL_FILE);
 		}
-		return (EDQUOT);
+		return SET_ERROR(EDQUOT);
 	}
 	/*
 	 * If user is over their soft limit for too long, disallow inode
@@ -255,7 +258,7 @@ chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 				uprintf("\n%s: warning, %s %s\n",
 				    ITOV(ip)->v_mount->mnt_stat.f_mntonname,
 				    quotatypes[type], "inode quota exceeded");
-			return (0);
+			return 0;
 		}
 		if (time_second > dq->dq_itime) {
 			if ((dq->dq_flags & DQ_WARN(QL_FILE)) == 0 &&
@@ -266,10 +269,10 @@ chkiqchg(struct inode *ip, int32_t change, kauth_cred_t cred, int type)
 				    "inode quota exceeded for too long");
 				dq->dq_flags |= DQ_WARN(QL_FILE);
 			}
-			return (EDQUOT);
+			return SET_ERROR(EDQUOT);
 		}
 	}
-	return (0);
+	return 0;
 }
 
 int
@@ -283,7 +286,7 @@ quota1_umount(struct mount *mp, int flags)
 		return 0;
 
 	if ((error = vflush(mp, NULLVP, SKIPSYSTEM | flags)) != 0)
-		return (error);
+		return error;
 
 	for (i = 0; i < MAXQUOTAS; i++) {
 		if (ump->um_quotas[i] != NULLVP) {
@@ -312,25 +315,25 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	struct pathbuf *pb;
 
 	if (type < 0 || type >= MAXQUOTAS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (ump->um_flags & UFS_QUOTA2) {
 		uprintf("%s: quotas v2 already enabled\n",
 		    mp->mnt_stat.f_mntonname);
-		return (EBUSY);
+		return SET_ERROR(EBUSY);
 	}
 
 	if (mp->mnt_wapbl != NULL) {
 		printf("%s: quota v1 cannot be used with -o log\n",
 		    mp->mnt_stat.f_mntonname);
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 	}
 
 	vpp = &ump->um_quotas[type];
 
 	pb = pathbuf_create(fname);
 	if (pb == NULL) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	error = vn_open(NULL, pb, 0, FREAD|FWRITE, 0, &vp, NULL, NULL);
 	if (error != 0) {
@@ -342,7 +345,7 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	VOP_UNLOCK(vp);
 	if (vp->v_type != VREG) {
 		(void) vn_close(vp, FREAD|FWRITE, l->l_cred);
-		return (EACCES);
+		return SET_ERROR(EACCES);
 	}
 	if (*vpp != vp)
 		quota1_handle_cmd_quotaoff(l, ump, type);
@@ -405,7 +408,7 @@ quota1_handle_cmd_quotaon(struct lwp *l, struct ufsmount *ump, int type,
 	mutex_exit(&dqlock);
 	if (error)
 		quota1_handle_cmd_quotaoff(l, ump, type);
-	return (error);
+	return error;
 }
 
 /*
@@ -424,14 +427,14 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 	int i, error;
 
 	if (type < 0 || type >= MAXQUOTAS)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	mutex_enter(&dqlock);
 	while ((ump->umq1_qflags[type] & (QTF_CLOSING | QTF_OPENING)) != 0)
 		cv_wait(&dqcv, &dqlock);
 	if ((qvp = ump->um_quotas[type]) == NULLVP) {
 		mutex_exit(&dqlock);
-		return (0);
+		return 0;
 	}
 	ump->umq1_qflags[type] |= QTF_CLOSING;
 	mutex_exit(&dqlock);
@@ -477,7 +480,7 @@ quota1_handle_cmd_quotaoff(struct lwp *l, struct ufsmount *ump, int type)
 	kauth_cred_free(cred);
 	if (i == MAXQUOTAS)
 		mp->mnt_flag &= ~MNT_QUOTA;
-	return (error);
+	return error;
 }
 
 int
@@ -494,7 +497,7 @@ quota1_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 	id = qk->qk_id;
 
 	if (ump->um_quotas[idtype] == NULLVP)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 
 	if (id == QUOTA_DEFAULTID) { /* we want the grace period of id 0 */
 		if ((error = dqget(NULLVP, 0, ump, idtype, &dq)) != 0)
@@ -525,7 +528,7 @@ quota1_handle_cmd_get(struct ufsmount *ump, const struct quotakey *qk,
 		*qv = files;
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -553,7 +556,7 @@ quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	case QUOTA_IDTYPE_GROUP:
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	switch (key->qk_objtype) {
@@ -561,11 +564,11 @@ quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	case QUOTA_OBJTYPE_FILES:
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (ump->um_quotas[key->qk_idtype] == NULLVP)
-		return ENODEV;
+		return SET_ERROR(ENODEV);
 
 	if (key->qk_id == QUOTA_DEFAULTID) {
 		/* just update grace times */
@@ -589,7 +592,7 @@ quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	}
 
 	if ((error = dqget(NULLVP, key->qk_id, ump, key->qk_idtype, &dq)) != 0)
-		return (error);
+		return error;
 	mutex_enter(&dq->dq_interlock);
 	/*
 	 * Copy all but the current values.
@@ -644,7 +647,7 @@ quota1_handle_cmd_put(struct ufsmount *ump, const struct quotakey *key,
 	dq->dq_flags |= DQ_MOD;
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
-	return (0);
+	return 0;
 }
 
 
@@ -661,7 +664,7 @@ setquota1(struct mount *mp, u_long id, int type, struct dqblk *dqb)
 
 
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
-		return (error);
+		return error;
 	dq = ndq;
 	mutex_enter(&dq->dq_interlock);
 	/*
@@ -696,7 +699,7 @@ setquota1(struct mount *mp, u_long id, int type, struct dqblk *dqb)
 	dq->dq_flags |= DQ_MOD;
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
-	return (0);
+	return 0;
 }
 
 /*
@@ -713,9 +716,9 @@ setuse(struct mount *mp, u_long id, int type, void *addr)
 
 	error = copyin(addr, (void *)&usage, sizeof (struct dqblk));
 	if (error)
-		return (error);
+		return error;
 	if ((error = dqget(NULLVP, id, ump, type, &ndq)) != 0)
-		return (error);
+		return error;
 	dq = ndq;
 	mutex_enter(&dq->dq_interlock);
 	/*
@@ -737,7 +740,7 @@ setuse(struct mount *mp, u_long id, int type, void *addr)
 	dq->dq_flags |= DQ_MOD;
 	mutex_exit(&dq->dq_interlock);
 	dqrele(NULLVP, dq);
-	return (0);
+	return 0;
 }
 #endif
 
@@ -761,7 +764,7 @@ q1sync(struct mount *mp)
 		if (ump->um_quotas[i] != NULLVP)
 			break;
 	if (i == MAXQUOTAS)
-		return (0);
+		return 0;
 
 	/*
 	 * Search vnodes associated with this mount point,
@@ -790,7 +793,7 @@ q1sync(struct mount *mp)
 		vput(vp);
 	}
 	vfs_vnode_iterator_destroy(marker);
-	return (0);
+	return 0;
 }
 
 /*
@@ -824,7 +827,7 @@ dq1get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
 	 * quota structure and reflect problem to caller.
 	 */
 	if (error)
-		return (error);
+		return error;
 	/*
 	 * Check for no limit to enforce.
 	 * Initialize time values if necessary.
@@ -838,7 +841,7 @@ dq1get(struct vnode *dqvp, u_long id, struct ufsmount *ump, int type,
 		if (dq->dq_itime == 0)
 			dq->dq_itime = time_second + ump->umq1_itime[type];
 	}
-	return (0);
+	return 0;
 }
 
 /*
@@ -856,7 +859,7 @@ dq1sync(struct vnode *vp, struct dquot *dq)
 		panic("dq1sync: dquot");
 	KASSERT(mutex_owned(&dq->dq_interlock));
 	if ((dq->dq_flags & DQ_MOD) == 0)
-		return (0);
+		return 0;
 	if ((dqvp = dq->dq_ump->um_quotas[dq->dq_type]) == NULLVP)
 		panic("dq1sync: file");
 	KASSERT(dqvp != vp);
@@ -871,8 +874,8 @@ dq1sync(struct vnode *vp, struct dquot *dq)
 	UIO_SETUP_SYSSPACE(&auio);
 	error = VOP_WRITE(dqvp, &auio, 0, dq->dq_ump->um_cred[dq->dq_type]);
 	if (auio.uio_resid && error == 0)
-		error = EIO;
+		error = SET_ERROR(EIO);
 	dq->dq_flags &= ~DQ_MOD;
 	VOP_UNLOCK(dqvp);
-	return (error);
+	return error;
 }

@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MICROBLAZE_TDEP_H
-#define MICROBLAZE_TDEP_H 1
+#ifndef GDB_MICROBLAZE_TDEP_H
+#define GDB_MICROBLAZE_TDEP_H
 
 #include "gdbarch.h"
 
@@ -120,4 +120,4 @@ struct microblaze_frame_cache
    Only used for native debugging.  */
 #define MICROBLAZE_BREAKPOINT {0xb9, 0xcc, 0x00, 0x60}
 
-#endif /* microblaze-tdep.h */
+#endif /* GDB_MICROBLAZE_TDEP_H */

@@ -1,0 +1,63 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib dwarf.exp
+
+# Minimal DWARF-2 unit test
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+standard_testfile .c -2.c
+
+set opts {}
+lappend opts debug
+lappend opts c++
+lappend opts additional_flags=-gdwarf-4
+lappend opts additional_flags=-fdebug-types-section
+
+set opts2 {}
+lappend opts2 debug
+lappend opts2 c++
+lappend opts2 dwarf5
+lappend opts2 additional_flags=-fdebug-types-section
+
+set lopts {}
+lappend lopts debug
+lappend lopts c++
+lappend lopts additional_flags=-nostdlib
+
+if { [prepare_for_testing_full "failed to prepare" \
+	 [list $testfile $lopts \
+	      $srcfile $opts \
+	      $srcfile2 $opts2]] } {
+    return -1
+}
+
+gdb_test_no_output \
+    [join \
+	 [list \
+	      "pipe maint print objfiles" \
+	      "grep -E \"qualified:.*::A$\"" \
+	      "grep -v -E \"(sp1::A|sp1::A::A)$\""] \
+	 "|"]
+
+gdb_test_no_output \
+    [join \
+	 [list \
+	      "pipe maint print objfiles" \
+	      "grep -E \"qualified:.*::B$\"" \
+	      "grep -v -E \"(sp2::B|sp2::B::B)$\""] \
+	 "|"]

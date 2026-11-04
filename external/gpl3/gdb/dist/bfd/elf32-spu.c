@@ -1,6 +1,6 @@
 /* SPU specific support for 32-bit ELF
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -247,15 +247,12 @@ spu_elf_rel9 (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
 static bool
 spu_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct _spu_elf_section_data *sdata;
+  struct _spu_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, sizeof (*sdata));
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -461,8 +458,7 @@ spu_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&htab->elf, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      SPU_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (htab);
       return NULL;
@@ -614,6 +610,7 @@ spu_elf_create_sections (struct bfd_link_info *info)
       memcpy (data + 12 + ((sizeof (SPU_PLUGIN_NAME) + 3) & -4),
 	      bfd_get_filename (info->output_bfd), name_len);
       s->contents = data;
+      s->alloced = 1;
     }
 
   if (htab->params->emit_fixups)
@@ -1969,6 +1966,7 @@ spu_elf_build_stubs (struct bfd_link_info *info)
 						      htab->stub_sec[i]->size);
 	    if (htab->stub_sec[i]->contents == NULL)
 	      return false;
+	    htab->stub_sec[i]->alloced = 1;
 	    htab->stub_sec[i]->rawsize = htab->stub_sec[i]->size;
 	    htab->stub_sec[i]->size = 0;
 	  }
@@ -2003,6 +2001,7 @@ spu_elf_build_stubs (struct bfd_link_info *info)
   htab->ovtab->contents = bfd_zalloc (htab->ovtab->owner, htab->ovtab->size);
   if (htab->ovtab->contents == NULL)
     return false;
+  htab->ovtab->alloced = 1;
 
   p = htab->ovtab->contents;
   if (htab->params->ovly_flavour == ovly_soft_icache)
@@ -2104,6 +2103,7 @@ spu_elf_build_stubs (struct bfd_link_info *info)
 					     htab->init->size);
 	  if (htab->init->contents == NULL)
 	    return false;
+	  htab->init->alloced = 1;
 
 	  h = define_ovtab_symbol (htab, "__icache_fileoff");
 	  if (h == NULL)
@@ -4689,8 +4689,7 @@ spu_elf_auto_overlay (struct bfd_link_info *info)
  file_err:
   bfd_set_error (bfd_error_system_call);
  err_exit:
-  info->callbacks->einfo (_("%F%P: auto overlay error: %E\n"));
-  xexit (1);
+  info->callbacks->fatal (_("%P: auto overlay error: %E\n"));
 }
 
 /* Provide an estimate of total stack required.  */
@@ -4743,7 +4742,7 @@ spu_elf_final_link (bfd *output_bfd, struct bfd_link_info *info)
     info->callbacks->einfo (_("%X%P: stack/lrlive analysis error: %E\n"));
 
   if (!spu_elf_build_stubs (info))
-    info->callbacks->einfo (_("%F%P: can not build overlay stubs: %E\n"));
+    info->callbacks->fatal (_("%P: can not build overlay stubs: %E\n"));
 
   return bfd_elf_final_link (output_bfd, info);
 }
@@ -4939,7 +4938,8 @@ spu_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_SPU_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -5506,6 +5506,7 @@ spu_elf_size_sections (bfd *obfd ATTRIBUTE_UNUSED, struct bfd_link_info *info)
       sfixup->contents = (bfd_byte *) bfd_zalloc (info->input_bfds, size);
       if (sfixup->contents == NULL)
 	return false;
+      sfixup->alloced = 1;
     }
   return true;
 }

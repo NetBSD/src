@@ -1,6 +1,6 @@
 /* MI Internal Functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_MAIN_H
-#define MI_MI_MAIN_H
+#ifndef GDB_MI_MI_MAIN_H
+#define GDB_MI_MI_MAIN_H
 
 struct ui_file;
 
@@ -79,4 +79,4 @@ extern void mi_cmd_fix_breakpoint_script_output (const char *command,
 
 extern int mi_parse_thread_group_id (const char *id);
 
-#endif /* MI_MI_MAIN_H */
+#endif /* GDB_MI_MI_MAIN_H */

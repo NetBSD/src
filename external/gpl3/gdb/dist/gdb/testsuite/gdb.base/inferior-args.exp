@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 
 # This does not work on boards that don't support inferior arguments.
 require {!target_info exists noargs}
+require {expr [have_startup_shell] != -1}
 
 standard_testfile .c
 
@@ -25,15 +26,27 @@ if {[build_executable "failed to prepare" $testfile $srcfile \
     return
 }
 
-proc do_test { method } {
+# STARTUP_WITH_SHELL is either 'on' or 'off' and determines if the
+# inferior is started under a shell or not.  INFERIOR_ARGS is the list
+# of inferior arguments.  EXPECTED_RESULTS is the list of expected
+# results, one for each argument.
+#
+# When STUB_SUITABLE is true this test is suitable for use with
+# gdbserver, i.e. INFERIOR_ARGS can be passed through to
+# gdbserver_start via gdb_run_cmd.  Some of the weird quoting used in
+# some of the tests doesn't seem to play well with gdbserver_start.
+# This is a TCL issue, not a gdbserver issue.  Manually testing with
+# gdbserver shows no problems.  It's just that when we try to invoke
+# gdbserver from TCL the argument quoting gets messed up.  For tests
+# that are problematic, STUB_SUITABLE is false.
+proc do_test { method startup_with_shell inferior_args expected_results \
+		   stub_suitable } {
     global binfile hex
 
-    # The second arg is an empty string on purpose.  The last argument
-    # must be the empty argument -- we once had a bug where that
-    # wouldn't work!
-    set inferior_args { "first arg" "" "third-arg" "'" "\"" " " "" }
+    clean_restart
+    gdb_load $binfile
 
-    clean_restart $binfile
+    gdb_test_no_output "set startup-with-shell $startup_with_shell"
 
     if { $method == "start" } {
 	# The start command does not make sense for a stub.
@@ -80,6 +93,10 @@ proc do_test { method } {
 	    return -1
 	}
 
+	if { [use_gdb_stub] && !$stub_suitable } {
+	    return
+	}
+
 	# The run command does not make sense for a stub, but GDB_RUN_CMD
 	# does the right thing when the target is a stub (start the stub,
 	# connect to it, and "continue").
@@ -110,18 +127,100 @@ proc do_test { method } {
 	error "invalid method $method"
     }
 
+    set argc [expr [llength $expected_results] + 1]
+
     # Now that we are stopped at main, inspect argc/argv.
-    gdb_test "print argc" " = 8"
-    gdb_test "print argv\[0\]" " = $hex \".*\""
-    gdb_test "print argv\[1\]" " = $hex \"first arg\""
-    gdb_test "print argv\[2\]" " = $hex \"\""
-    gdb_test "print argv\[3\]" " = $hex \"third-arg\""
-    gdb_test "print argv\[4\]" " = $hex \"'\""
-    gdb_test "print argv\[5\]" " = $hex \"\\\\\"\""
-    gdb_test "print argv\[6\]" " = $hex \" \""
-    gdb_test "print argv\[7\]" " = $hex \"\""
+    gdb_test "print argc" " = $argc"
+    gdb_test "print argv\[0\]" " = $hex \"\[^\r\n\]+\""
+    for { set i 1 } { $i < $argc } { incr i } {
+	set idx [expr $i - 1]
+	gdb_test "print argv\[$i\]" " = [lindex $expected_results $idx]"
+    }
 }
 
-foreach_with_prefix method { "start" "starti" "run" "set args" } {
-    do_test $method
+set test_desc_list []
+
+# test one
+# --------
+#
+# The second arg is an empty string on purpose.  The last argument
+# must be the empty argument -- we once had a bug where that wouldn't
+# work!
+lappend test_desc_list [list "test one" \
+			    true \
+			    { "first arg" "" "third-arg" "'" "\"" " " "" } \
+			    [list "$hex \"first arg\"" \
+				 "$hex \"\"" \
+				 "$hex \"third-arg\"" \
+				 "$hex \"'\"" \
+				 "$hex \"\\\\\"\"" \
+				 "$hex \" \"" \
+				 "$hex \"\"" ]]
+
+# test two
+# --------
+#
+# The argument being passed here is '"', that is a single double quote
+# contained within single quotes.
+#
+# I build the test descriptor using this mess of code to avoid having
+# unbalanced quotes, which messes up indentation and syntax
+# highlighting within (at least) emacs.  The 'format' of ascii code 34
+# gives us the double quote character.  Then I have to jump through
+# the rest of this mess in order to avoid TCL escaping the quote for
+# me.  It's super important that what we send to GDB is '"' not '\"'.
+set item [list "test two" false]
+set cmd [format "lappend item \{ '%c' '\\%c' \}" 34 34]
+eval $cmd
+set bs "\\\\"
+lappend item [list "$hex \"$bs\"\"" "$hex \"$bs$bs$bs\"\""]
+lappend test_desc_list $item
+
+# test three
+# ----------
+#
+# This test focuses on sending special shell characters within a
+# double quote argument, and each special character is prefixed with a
+# backslash.
+#
+# In a POSIX shell, within a double quoted argument, only $ (dollar),
+# ` (backtick), " (double quote), \ (backslash), and newline can be
+# escaped.  All other backslash characters are literal backslashes.
+#
+# As with the previous test, the double quotes are lost when the
+# arguments are sent through gdbserver_start, as such, this test isn't
+# going to work when using the native-gdbserver board, hence we set
+# the second arguemnt to 'false'.
+lappend test_desc_list [list "test three" \
+			    false \
+			    { "\&" "\<" "\#" "\^" "\>" "\$" "\`" } \
+			    [list "$hex \"\\\\\\\\&\"" \
+				 "$hex \"\\\\\\\\<\"" \
+				 "$hex \"\\\\\\\\#\"" \
+				 "$hex \"\\\\\\\\\\^\"" \
+				 "$hex \"\\\\\\\\>\"" \
+				 "$hex \"\\\$\"" \
+				 "$hex \"`\""]]
+
+# test four
+# ---------
+#
+# This test passes two arguments, a single and double quote, each
+# escaped with a backslash.
+lappend test_desc_list [list "test four" \
+			    true \
+			    { \' \" } \
+			    [list "$hex \"'\"" \
+				 "$hex \"\\\\\"\""]]
+
+foreach desc $test_desc_list {
+    lassign $desc name stub_suitable args re_list
+    with_test_prefix $name {
+	foreach_with_prefix set_method { "start" "starti" "run" "set args" } {
+	    foreach_with_prefix startup_with_shell { on off } {
+		do_test $set_method $startup_with_shell $args $re_list \
+		    $stub_suitable
+	    }
+	}
+    }
 }

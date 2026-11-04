@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2023 Free Software Foundation, Inc.
+# Copyright (C) 2018-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -18,6 +18,8 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
+require allow_python_tests
+
 #
 # Start here
 #
@@ -28,9 +30,6 @@ if {[gdb_compile "$srcdir/$subdir/$srcfile" $binfile executable {debug}] != "" }
 }
 
 mi_clean_restart $binfile
-
-# Skip all tests if Python scripting is not enabled.
-if { [mi_skip_python_tests] } { continue }
 
 set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
 mi_gdb_test "source ${pyfile}" \

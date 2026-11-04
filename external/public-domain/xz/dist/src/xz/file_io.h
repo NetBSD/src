@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       file_io.h
 /// \brief      I/O types and functions
 //
 //  Author:     Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -18,9 +17,22 @@
 #	define IO_BUFFER_SIZE (BUFSIZ & ~7U)
 #endif
 
+#ifdef _MSC_VER
+	// The first one renames both "struct stat" -> "struct _stat64"
+	// and stat() -> _stat64(). The documentation mentions only
+	// "struct __stat64", not "struct _stat64", but the latter
+	// works too.
+#	define stat _stat64
+#	define fstat _fstat64
+#	define off_t __int64
+#endif
+
 
 /// is_sparse() accesses the buffer as uint64_t for maximum speed.
-/// Use an union to make sure that the buffer is properly aligned.
+/// The u32 and u64 members must only be access through this union
+/// to avoid strict aliasing violations. Taking a pointer of u8
+/// should be fine as long as uint8_t maps to unsigned char which
+/// can alias anything.
 typedef union {
 	uint8_t u8[IO_BUFFER_SIZE];
 	uint32_t u32[IO_BUFFER_SIZE / sizeof(uint32_t)];
@@ -43,8 +55,21 @@ typedef struct {
 	/// File descriptor of the target file
 	int dest_fd;
 
+#ifndef TUKLIB_DOSLIKE
+	/// File descriptor of the directory of the target file (which is
+	/// also the directory of the source file)
+	int dir_fd;
+#endif
+
 	/// True once end of the source file has been detected.
 	bool src_eof;
+
+	/// For --flush-timeout: True if at least one byte has been read
+	/// since the previous flush or the start of the file.
+	bool src_has_seen_input;
+
+	/// For --flush-timeout: True when flushing is needed.
+	bool flush_needed;
 
 	/// If true, we look for long chunks of zeros and try to create
 	/// a sparse file.
@@ -80,12 +105,6 @@ extern void io_write_to_user_abort_pipe(void);
 extern void io_no_sparse(void);
 
 
-#ifdef ENABLE_SANDBOX
-/// \brief      main() calls this if conditions for sandboxing have been met.
-extern void io_allow_sandbox(void);
-#endif
-
-
 /// \brief      Open the source file
 extern file_pair *io_open_src(const char *src_name);
 
@@ -108,7 +127,7 @@ extern void io_close(file_pair *pair, bool success);
 ///
 /// \param      pair    File pair having the source file open for reading
 /// \param      buf     Destination buffer to hold the read data
-/// \param      size    Size of the buffer; assumed be smaller than SSIZE_MAX
+/// \param      size    Size of the buffer; must be at most IO_BUFFER_SIZE
 ///
 /// \return     On success, number of bytes read is returned. On end of
 ///             file zero is returned and pair->src_eof set to true.
@@ -129,6 +148,19 @@ extern size_t io_read(file_pair *pair, io_buf *buf, size_t size);
 extern void io_fix_src_pos(file_pair *pair, size_t rewind_size);
 
 
+/// \brief      Seek to the given absolute position in the source file
+///
+/// This calls lseek() and also clears pair->src_eof.
+///
+/// \param      pair    Seekable source file
+/// \param      pos     Offset relative to the beginning of the file,
+///                     from which the data should be read.
+///
+/// \return     On success, false is returned. On error, error message
+///             is printed and true is returned.
+extern bool io_seek_src(file_pair *pair, uint64_t pos);
+
+
 /// \brief      Read from source file from given offset to a buffer
 ///
 /// This is remotely similar to standard pread(). This uses lseek() though,
@@ -142,15 +174,15 @@ extern void io_fix_src_pos(file_pair *pair, size_t rewind_size);
 ///
 /// \return     On success, false is returned. On error, error message
 ///             is printed and true is returned.
-extern bool io_pread(file_pair *pair, io_buf *buf, size_t size, off_t pos);
+extern bool io_pread(file_pair *pair, io_buf *buf, size_t size, uint64_t pos);
 
 
 /// \brief      Writes a buffer to the destination file
 ///
 /// \param      pair    File pair having the destination file open for writing
 /// \param      buf     Buffer containing the data to be written
-/// \param      size    Size of the buffer; assumed be smaller than SSIZE_MAX
+/// \param      size    Size of the buffer; must be at most IO_BUFFER_SIZE
 ///
-/// \return     On success, zero is returned. On error, -1 is returned
-///             and error message printed.
+/// \return     On success, false is returned. On error, error message
+///             is printed and true is returned.
 extern bool io_write(file_pair *pair, const io_buf *buf, size_t size);

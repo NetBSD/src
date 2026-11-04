@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.289.6.1 2025/08/02 05:56:30 perseant Exp $	*/
+/*	$NetBSD: vnd.c,v 1.289.6.2 2026/11/04 23:21:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.289.6.1 2025/08/02 05:56:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.289.6.2 2026/11/04 23:21:46 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -561,7 +561,8 @@ vndstrategy(struct buf *bp)
 		 * thread to add requests, as a wedge on vnd queues
 		 * requests with biodone() -> dkstart() -> vndstrategy().
 		 */
-		if (curlwp != vnd->sc_kthread && curlwp != uvm.pagedaemon_lwp) {
+		if (curlwp != vnd->sc_kthread &&
+		    !uvm_lwp_is_pagedaemon(curlwp)) {
 			while (vnd->sc_pending >= VND_MAXPENDING(vnd))
 				tsleep(&vnd->sc_pending, PRIBIO, "vndpc", 0);
 		}
@@ -853,7 +854,7 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 }
 
 /*
- * Handes the read/write request given in 'bp' using the vnode's VOP_BMAP
+ * Handles the read/write request given in 'bp' using the vnode's VOP_BMAP
  * and VOP_STRATEGY operations.
  *
  * 'obp' is a pointer to the original request fed to the vnd device.

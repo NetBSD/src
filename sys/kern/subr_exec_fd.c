@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.12 2021/06/29 22:40:53 dholland Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.12.16.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,17 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.12 2021/06/29 22:40:53 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.12.16.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/ktrace.h>
 #include <sys/mutex.h>
 #include <sys/namei.h>
+#include <sys/sdt.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
-#include <sys/ktrace.h>
 
 void
 fd_ktrexecfd(void)
@@ -92,7 +94,7 @@ fd_checkstd(void)
 	p = curproc;
 	closed[0] = '\0';
 	if ((fdp = p->p_fd) == NULL)
-		return (0);
+		return 0;
 	dt = atomic_load_consume(&fdp->fd_dt);
 	for (i = 0; i < CHECK_UPTO; i++) {
 		KASSERT(i >= NDFDFILE ||
@@ -102,17 +104,17 @@ fd_checkstd(void)
 		snprintf(which, sizeof(which), ",%d", i);
 		strlcat(closed, which, sizeof(closed));
 		if ((error = fd_allocfile(&fp, &fd)) != 0)
-			return (error);
+			return error;
 		KASSERT(fd < CHECK_UPTO);
 		pb = pathbuf_create("/dev/null");
 		if (pb == NULL) {
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		}
 		error = vn_open(NULL, pb, 0, flags, 0, &vp, NULL, NULL);
 		if (error != 0) {
 			pathbuf_destroy(pb);
 			fd_abort(p, fp, fd);
-			return (error);
+			return error;
 		}
 		fp->f_type = DTYPE_VNODE;
 		fp->f_vnode = vp;
@@ -134,6 +136,6 @@ fd_checkstd(void)
 		mutex_exit(pp->p_lock);
 		mutex_exit(&proc_lock);
 	}
-	return (0);
+	return 0;
 }
 #undef CHECK_UPTO

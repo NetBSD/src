@@ -11,13 +11,20 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "ns1/ddns.key",
         "ns1/update.txt",
     ]
 )
+
+pytestmark = [
+    isctest.mark.without_tsan,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_dlzexternal(run_tests_sh):

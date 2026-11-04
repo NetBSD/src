@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.36.6.1 2025/08/02 05:56:41 perseant Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.36.6.2 2026/11/04 23:21:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -87,6 +87,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: dm9000.c,v 1.36.6.2 2026/11/04 23:21:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -193,8 +194,6 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 	uint8_t b[2];
 	uint16_t io_mode;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	prop_dictionary_t dict;
-	prop_data_t ea;
 
 	dme_read_c(sc, DM9000_VID0, b, 2);
 	sc->sc_vendor_id = le16toh((uint16_t)b[1] << 8 | b[0]);
@@ -214,20 +213,9 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 		    ether_sprintf(enaddr));
 	}
 #endif
-	dict = device_properties(sc->sc_dev);
-	ea = (dict) ? prop_dictionary_get(dict, "mac-address") : NULL;
-	if (ea != NULL) {
-	       /*
-		 * If the MAC address is overridden by a device property,
-		 * use that.
-		 */
-		KASSERT(prop_object_type(ea) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(ea) == ETHER_ADDR_LEN);
-		memcpy(enaddr, prop_data_value(ea), ETHER_ADDR_LEN);
-		aprint_debug_dev(sc->sc_dev, "got MAC address!\n");
-	} else {
+	if (! ether_getaddr(sc->sc_dev, enaddr)) {
 		/*
-		 * If we did not get an externally configure address,
+		 * If we did not get an externally configured address,
 		 * try to read one from the current setup, before
 		 * resetting the chip.
 		 */
@@ -239,7 +227,7 @@ dme_attach(struct dme_softc *sc, const uint8_t *notusedanymore)
 			enaddr[0] = maclo;
 			enaddr[1] = maclo >> 8;
 			enaddr[2] = maclo >> 16;
-			enaddr[3] = maclo >> 26;
+			enaddr[3] = maclo >> 24;
 			enaddr[4] = machi;
 			enaddr[5] = machi >> 8;
 		}
@@ -682,7 +670,8 @@ dme_receive(struct ifnet *ifp)
 {
 	struct dme_softc *sc = ifp->if_softc;
 	struct mbuf *m;
-	uint8_t avail, rsr;
+	uint8_t avail;
+	int rsr;
 
 	DPRINTF(("inside dme_receive\n"));
 
@@ -702,6 +691,14 @@ dme_receive(struct ifnet *ifp)
 			bus_space_write_1(sc->sc_iot, sc->sc_ioh, sc->dme_io,
 				DM9000_MRCMD);
 			rsr = PKT_READ(sc, &m);
+			if (rsr < 0) {
+				/* RX FIFO desync; recover like bad avail */
+				if_statinc(ifp, if_ierrors);
+				printf("%s: Resetting chip\n",
+				    device_xname(sc->sc_dev));
+				dme_reset(sc);
+				break;
+			}
 			if (m == NULL) {
 				/* failed to allocate a receive buffer */
 				RX_DPRINTF(("dme_receive: "
@@ -714,7 +711,7 @@ dme_receive(struct ifnet *ifp)
 				 * discard it and keep track of counters
 				 */
 				RX_DPRINTF(("dme_receive: "
-					"Error reciving frame\n"));
+					"Error receiving frame\n"));
 				if_statinc(ifp, if_ierrors);
 				continue;
 			}
@@ -988,9 +985,13 @@ pkt_read_2(struct dme_softc *sc, struct mbuf **outBuf)
 	frame_length = bus_space_read_2(sc->sc_iot,
 					sc->sc_ioh, sc->dme_data);
 	if (frame_length > ETHER_MAX_LEN) {
-		printf("Got frame of length: %d\n", frame_length);
-		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
-		panic("Something is rotten");
+		/*
+		 * RX FIFO pointer has desynced from the chip
+		 */
+		printf("%s: bogus RX frame length %u, resetting\n",
+		    device_xname(sc->sc_dev), frame_length);
+		*outBuf = NULL;
+		return -1;
 	}
 	RX_DPRINTF(("dme_receive: rx_statux: 0x%x, frame_length: %d\n",
 		rx_status, frame_length));
@@ -1082,9 +1083,11 @@ pkt_read_1(struct dme_softc *sc, struct mbuf **outBuf)
 	frame_length = reg;
 
 	if (frame_length > ETHER_MAX_LEN) {
-		printf("Got frame of length: %d\n", frame_length);
-		printf("ETHER_MAX_LEN is: %d\n", ETHER_MAX_LEN);
-		panic("Something is rotten");
+		/* see pkt_read_2 */
+		printf("%s: bogus RX frame length %u, resetting\n",
+		    device_xname(sc->sc_dev), frame_length);
+		*outBuf = NULL;
+		return -1;
 	}
 	RX_DPRINTF(("dme_receive: "
 		    "rx_statux: 0x%x, frame_length: %d\n",

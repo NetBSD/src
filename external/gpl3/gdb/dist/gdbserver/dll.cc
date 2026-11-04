@@ -1,4 +1,4 @@
-/* Copyright (C) 2002-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -88,13 +88,4 @@ unloaded_dll (process_info *proc, const char *name, CORE_ADDR base_addr)
       proc->all_dlls.erase (iter);
       proc->dlls_changed = true;
     }
-}
-
-void
-clear_dlls (void)
-{
-  for_each_process ([] (process_info *proc)
-    {
-      proc->all_dlls.clear ();
-    });
 }

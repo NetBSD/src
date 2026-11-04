@@ -1,5 +1,5 @@
 # Makefile fragment for building LIBGCC for the TI MSP430 processor.
-# Copyright (C) 2011-2020 Free Software Foundation, Inc.
+# Copyright (C) 2011-2022 Free Software Foundation, Inc.
 # Contributed by Red Hat.
 #
 # This file is part of GCC.
@@ -39,6 +39,11 @@ LIB2ADD = \
 	$(srcdir)/config/msp430/floathidf.c \
 	$(srcdir)/config/msp430/floathisf.c \
 	$(srcdir)/config/msp430/cmpd.c
+
+# 32-bit and F5series hardware multiply have their own version of this function.
+# To handle the case when there is no hardware multiply or only 16-bit hardware
+# multiply, the libgcc version has been copied to lib2mul.c.
+LIB2FUNCS_EXCLUDE += _muldi3
 
 HOST_LIBGCC2_CFLAGS += -Os -ffunction-sections -fdata-sections -mhwmult=none
 

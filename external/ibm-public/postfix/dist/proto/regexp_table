@@ -9,8 +9,8 @@
 #	\fBpostmap -q - regexp:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
-#	rewriting, mail routing, or access control. These tables
-#	are usually in \fBdbm\fR or \fBdb\fR format.
+#	rewriting or mail routing. These tables are usually in
+#	\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 #
 #	Alternatively, lookup tables can be specified in POSIX regular
 #	expression form. In this case, each input is compared against a

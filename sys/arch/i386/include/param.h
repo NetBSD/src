@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.88.18.1 2025/08/02 05:55:44 perseant Exp $	*/
+/*	$NetBSD: param.h,v 1.88.18.2 2026/11/04 23:20:44 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -98,10 +98,6 @@
 #endif
 
 #define	KERNTEXTOFF	(KERNBASE + 0x100000) /* start of kernel text */
-#define	BTOPKERNBASE	(KERNBASE >> PGSHIFT)
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #ifndef UPAGES
 # ifdef DIAGNOSTIC

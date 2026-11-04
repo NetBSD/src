@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.191 2024/03/05 14:15:29 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.191.2.1 2026/11/04 23:20:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2024/03/05 14:15:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191.2.1 2026/11/04 23:20:18 perseant Exp $");
 
 #include "opt_ddb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_mbtype.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
@@ -68,7 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2024/03/05 14:15:29 thorpej Exp $"
 #include <sys/module.h>
 #include <sys/intr.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>
 #include <sys/cpu.h>
 #include <sys/exec_elf.h>
 #include <sys/bus.h>
@@ -85,6 +83,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2024/03/05 14:15:29 thorpej Exp $"
 #include <machine/psl.h>
 #include <machine/pte.h>
 
+#include <m68k/pcr.h>
+
 #include <dev/cons.h>
 #include <dev/mm.h>
 
@@ -93,36 +93,22 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.191 2024/03/05 14:15:29 thorpej Exp $"
 
 #define	DEV_NVRAM	11	/* Nvram minor-number */
 
-static void bootsync(void);
 static void call_sicallbacks(void);
-static void identifycpu(void);
 void	straymfpint(int, u_short);
-void	straytrap(int, u_short);
 
 #ifdef _MILANHW_
 void	nmihandler(void);
 #endif
 
-struct vm_map *phys_map = NULL;
-
-void *	msgbufaddr;
-vaddr_t	msgbufpa;
-
 extern  int   freebufspace;
 extern	u_int lowram;
 
+struct pmap_bootmap machine_bootmap[] = {
+	/* XXX */
+	{ .pmbm_vaddr = -1 },
+};
+
 /*
- * For the fpu emulation and the fpu driver
- */
-int	fputype = 0;
-
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
- /*
  * Console initialization: called early on from main,
  * before vm init or startup.  Do enough configuration
  * to choose and initialize a console.
@@ -137,6 +123,7 @@ consinit(void)
 	 * positioned this at the end of kernel memory segment - map
 	 * and initialize it now.
 	 */
+	extern paddr_t msgbufpa;
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
 		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
@@ -169,61 +156,12 @@ consinit(void)
 #endif
 }
 
-/*
- * cpu_startup: allocate memory for variable-sized tables,
- * initialize CPU, and do autoconfiguration.
- */
+vsize_t		mem_size;
+
 void
-cpu_startup(void)
+machine_set_model(void)
 {
-	char pbuf[9];
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-#endif
-	vaddr_t minaddr, maxaddr;
-	extern vsize_t mem_size;	/* from pmap.c */
-
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
-
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-
-	format_bytes(pbuf, sizeof(pbuf), mem_size);
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-}
-
-/*
- * Info for CTL_HW
- */
-static void
-identifycpu(void)
-{
-	const char *mach, *mmu, *fpu, *cpu;
-	uint32_t pcr;
-	char cputxt[30];
+	const char *mach;
 
 	switch (machineid & ATARI_ANYMACH) {
 	case ATARI_TT:
@@ -243,33 +181,7 @@ identifycpu(void)
 		break;
 	}
 
-	cpu     = "m68k";
-	fputype = fpu_probe();
-	fpu     = fpu_describe(fputype);
-
-	switch (cputype) {
-	case CPU_68060:
-		__asm(".word 0x4e7a,0x0808;"
-		    "movl %%d0,%0" : "=d"(pcr) : : "d0");
-		snprintf(cputxt, sizeof(cputxt), "MC68%s060 rev.%d",
-		    pcr & 0x10000 ? "LC/EC" : "", (pcr >> 8) & 0xff);
-		cpu = cputxt;
-		mmu = "/MMU";
-		break;
-	case CPU_68040:
-		cpu = "MC68040";
-		mmu = "/MMU";
-		break;
-	case CPU_68030:
-		cpu = "MC68030";
-		mmu = "/MMU";
-		break;
-	default: /* XXX */
-		cpu = "MC68020";
-		mmu = " MC68851 MMU";
-	}
-	cpu_setmodel("%s (%s CPU%s%sFPU)", mach, cpu, mmu, fpu);
-	printf("%s\n", cpu_getmodel());
+	cpu_setmodel("%s", mach);
 }
 
 /*
@@ -291,54 +203,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-static int waittime = -1;
-
-static void
-bootsync(void)
-{
-	if (waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-}
-
-void
-cpu_reboot(int howto, char *bootstr)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0)
-		bootsync();
-
-	/*
-	 * Call shutdown hooks. Do this _before_ anything might be
-	 * asked to the user in case nobody is there....
-	 */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	splhigh();			/* extreme priority */
-	if (howto & RB_HALT) {
-		printf("halted\n\n");
-		__asm("	stop	#0x2700");
-	} else {
-		if (howto & RB_DUMP)
-			dumpsys();
-
-		doboot();
-		/*NOTREACHED*/
-	}
-	panic("Boot() should never come here");
-	/*NOTREACHED*/
-}
-
-#define	BYTES_PER_DUMP	PAGE_SIZE	/* Must be a multiple of PAGE_SIZE */
 static vaddr_t	dumpspace;	/* Virt. space to map dumppages	*/
 
 /*
@@ -349,7 +213,7 @@ reserve_dumppages(vaddr_t p)
 {
 
 	dumpspace = p;
-	return p + BYTES_PER_DUMP;
+	return p + PAGE_SIZE;
 }
 
 uint32_t	dumpmag  = 0x8fca0101;	/* magic number for savecore	*/
@@ -427,9 +291,9 @@ dumpsys(void)
 
 #if defined(DDB) || defined(PANICWAIT)
 	printf("Do you want to dump memory? [y]");
-	cnpollc(1);
+	cnpollc(true);
 	i = cngetc();
-	cnpollc(0);
+	cnpollc(false);
 	cnputc(i);
 	switch (i) {
 	case 'n':
@@ -470,17 +334,18 @@ dumpsys(void)
 				printf_nolog("%d ", n / (1024 * 1024));
 
 			/*
-			 * Limit transfer to BYTES_PER_DUMP
+			 * Limit transfer to PAGE_SIZE
 			 */
-			if (n > BYTES_PER_DUMP)
-				n = BYTES_PER_DUMP;
+			if (n > PAGE_SIZE)
+				n = PAGE_SIZE;
 
 			/*
 			 * Map to a VA and write it
 			 */
 			if (maddr != 0) { /* XXX kvtop chokes on this	*/
-				(void)pmap_map(dumpspace, maddr, maddr + n,
-				    VM_PROT_READ);
+				pmap_enter(pmap_kernel(), dumpspace, maddr,
+				    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+				pmap_update(pmap_kernel());
 				error = (*dump)(dumpdev, blkno,
 				    (void *)dumpspace, n);
 				if (error)
@@ -518,57 +383,11 @@ dumpsys(void)
 }
 
 void
-straytrap(int pc, u_short evec)
-{
-	static int prev_evec;
-
-	printf("unexpected trap (vector offset 0x%x) from 0x%x\n",
-	    evec & 0xFFF, pc);
-
-	if (prev_evec == evec) {
-		delay(1000000);
-		prev_evec = 0;
-	} else
-		prev_evec = evec;
-}
-
-void
 straymfpint(int pc, u_short evec)
 {
 
 	printf("unexpected mfp-interrupt (vector offset 0x%x) from 0x%x\n",
 	       evec & 0xFFF, pc);
-}
-
-int	*nofault;
-
-int
-badbaddr(void *addr, int size)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *) 0;
-		return 1;
-	}
-	switch (size) {
-	case 1:
-		i = *(volatile uint8_t *)addr;
-		break;
-	case 2:
-		i = *(volatile uint16_t *)addr;
-		break;
-	case 4:
-		i = *(volatile uint32_t *)addr;
-		break;
-	default:
-		panic("badbaddr: unknown size");
-	}
-	__USE(i);
-	nofault = (int *)0;
-	return 0;
 }
 
 /*
@@ -746,38 +565,6 @@ candbtimer(void)
 {
 
 	crashandburn = 0;
-}
-#endif
-
-/*
- * should only get here, if no standard executable. This can currently
- * only mean, we're reading an old ZMAGIC file without MID, but since Atari
- * ZMAGIC always worked the `right' way (;-)) just ignore the missing
- * MID and proceed to new zmagic code ;-)
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	int error = ENOEXEC;
-#ifdef COMPAT_NOMID
-	struct exec *execp = epp->ep_hdr;
-#endif
-
-#ifdef COMPAT_NOMID
-	if (!((execp->a_midmag >> 16) & 0x0fff)
-	    && execp->a_midmag == ZMAGIC)
-		return exec_aout_prep_zmagic(l->l_proc, epp);
-#endif
-	return error;
-}
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
 }
 #endif
 

@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,10 +78,18 @@ proc do_check_holder {name {flags ""} {show_typedefs 1} {show_methods 1}
 proc do_check_typedef_holder {name {flags ""} {show_typedefs 1} {show_methods 1}
 			      {raw 0}} {
 
-    set contents {
-	{ field public "double a;" }
-	{ field public "ns::scoped_double b;" }
-	{ field public "global_double c;" }
+    if {$raw} {
+	set contents {
+	    { field public "double a;" }
+	    { field public "ns::scoped_double b;" }
+	    { field public "global_double c;" }
+	}
+    } else {
+	set contents {
+	    { field public "class_double a;" }
+	    { field public "class_double b;" }
+	    { field public "class_double c;" }
+	}
     }
 
     if {$show_typedefs} {
@@ -89,8 +97,13 @@ proc do_check_typedef_holder {name {flags ""} {show_typedefs 1} {show_methods 1}
     }
 
     if {$show_methods} {
-	lappend contents { method private "double method1(ns::scoped_double);" }
-	lappend contents { method private "double method2(global_double);" }
+	if {$raw} {
+	    lappend contents { method private "double method1(ns::scoped_double);" }
+	    lappend contents { method private "double method2(global_double);" }
+	} else {
+	    lappend contents { method private "class_double method1(class_double);" }
+	    lappend contents { method private "class_double method2(class_double);" }
+	}
     }
 
     if {$raw} {

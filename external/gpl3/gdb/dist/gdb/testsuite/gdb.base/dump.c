@@ -35,7 +35,7 @@ main()
   for (i = 0; i < ARRSIZE; i++)
     intarray[i] = i+1;
 
-  intstruct.a = 12 * 1;
+  intstruct.a = (12 * 1) << 16;
   intstruct.b = 12 * 2;
   intstruct.c = 12 * 3;
   intstruct.d = 12 * 4;

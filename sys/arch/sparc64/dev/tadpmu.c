@@ -1,4 +1,4 @@
-/*/* $NetBSD: tadpmu.c,v 1.6 2023/12/20 05:33:58 thorpej Exp $ */
+/*/* $NetBSD: tadpmu.c,v 1.6.2.1 2026/11/04 23:21:23 perseant Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz <macallan@netbsd.org>
@@ -368,7 +368,7 @@ tadpmu_intr(void *cookie)
 		switch (d) {
 			case TADPMU_INTR_POWERBUTTON:
 				mutex_enter(&data_lock);
-				ev_data |= TADPMU_EV_PWRBUTT;;
+				ev_data |= TADPMU_EV_PWRBUTT;
 				mutex_exit(&data_lock);
 				break;
 			case TADPMU_INTR_LID:

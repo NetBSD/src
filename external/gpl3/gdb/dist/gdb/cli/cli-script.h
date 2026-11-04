@@ -1,5 +1,5 @@
 /* Header file for GDB CLI command implementation library.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_SCRIPT_H
-#define CLI_CLI_SCRIPT_H
+#ifndef GDB_CLI_CLI_SCRIPT_H
+#define GDB_CLI_CLI_SCRIPT_H
 
 #include "compile/compile.h"
 #include "gdbsupport/function-view.h"
@@ -143,10 +143,12 @@ extern void execute_control_commands (struct command_line *cmdlines,
 
 /* Run execute_control_commands for COMMANDS.  Capture its output into
    the returned string, do not display it to the screen.  BATCH_FLAG
-   will be temporarily set to true.  */
+   will be temporarily set to true.  When TERM_OUT is true the output is
+   collected with terminal behavior (e.g. with styling).  When TERM_OUT is
+   false raw output will be collected (e.g. no styling).  */
 
 extern std::string execute_control_commands_to_string
-    (struct command_line *commands, int from_tty);
+    (struct command_line *commands, int from_tty, bool term_out);
 
 /* Exported to gdb/breakpoint.c */
 
@@ -182,4 +184,14 @@ extern void print_command_trace (const char *cmd, ...)
 
 extern void reset_command_nest_depth (void);
 
-#endif /* CLI_CLI_SCRIPT_H */
+/* Return true if A and B are identical.  Some commands carry around a
+   'void *' compilation context, in this case this function doesn't try to
+   validate if the context is actually the same or not, and will just
+   return false indicating the commands have changed.  That is, a return
+   value of true is a guarantee that the commands are equal, a return
+   value of false means the commands are possibly different (and in most
+   cases are different).  */
+
+extern bool commands_equal (const command_line *a, const command_line *b);
+
+#endif /* GDB_CLI_CLI_SCRIPT_H */

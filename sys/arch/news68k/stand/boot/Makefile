@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2009/03/20 13:59:49 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.27.100.1 2026/11/04 23:21:05 perseant Exp $
 
 NOMAN= # defined
 
@@ -29,7 +29,7 @@ AFLAGS= -D_LOCORE
 CLEANFILES+= ${PROG}.sym
 
 L= ${COMMONOBJ}/lib
-LIBS= ${L}/sa/libsa.a ${L}/kern/libkern.a ${L}/z/libz.a
+LIBS= ${L}/sa/libsa.a ${L}/z/libz.a ${L}/kern/libkern.a
 
 ${PROG}: ${OBJS} ${LIBS}
 	${_MKTARGET_LINK}

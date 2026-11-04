@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_acct.c,v 1.99 2021/12/05 04:35:38 msaitoh Exp $	*/
+/*	$NetBSD: kern_acct.c,v 1.99.10.1 2026/11/04 23:27:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -71,27 +71,29 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.99 2021/12/05 04:35:38 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_acct.c,v 1.99.10.1 2026/11/04 23:27:47 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/syslog.h>
-#include <sys/kernel.h>
-#include <sys/kthread.h>
-#include <sys/kmem.h>
-#include <sys/namei.h>
-#include <sys/errno.h>
-#include <sys/acct.h>
-#include <sys/resourcevar.h>
-#include <sys/ioctl.h>
-#include <sys/tty.h>
-#include <sys/kauth.h>
+#include <sys/types.h>
 
+#include <sys/acct.h>
+#include <sys/errno.h>
+#include <sys/file.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/syscallargs.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/tty.h>
+#include <sys/vnode.h>
 
 /*
  * The routines implemented in this file are described in:
@@ -325,7 +327,7 @@ sys_acct(struct lwp *l, const struct sys_acct_args *uap, register_t *retval)
 		}
 		if (vp->v_type != VREG) {
 			VOP_UNLOCK(vp);
-			error = EACCES;
+			error = SET_ERROR(EACCES);
 			goto bad;
 		}
 		if ((error = VOP_GETATTR(vp, &va, l->l_cred)) != 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.214.2.1 2026/11/04 23:21:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214.2.1 2026/11/04 23:21:26 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -99,7 +99,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.214 2023/12/20 05:18:00 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kcore.h>
 #include <sys/vnode.h>
@@ -149,13 +148,7 @@ extern char etext[];
 const vaddr_t kernbase = KERNBASE3;
 const vaddr_t kern_end = KERN_END3;
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
-struct vm_map *phys_map = NULL;
-
-int	fputype;
-void *	msgbufaddr;
+extern void *msgbufaddr;
 
 /* Virtual page frame for /dev/mem (see mem.c) */
 vaddr_t vmmap;
@@ -163,7 +156,8 @@ vaddr_t vmmap;
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
 
-static void identifycpu(void);
+char	kernel_arch[16] = "sun3";	/* XXX needs a sysctl node */
+
 static void initcpu(void);
 
 /*
@@ -218,30 +212,8 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	char *v;
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	/*
-	 * Initialize message buffer (for kernel printf).
-	 * This is put in physical page zero so it will
-	 * always be in the same place after a reboot.
-	 * Its mapping was prepared in pmap_bootstrap().
-	 * Also, offset some to avoid PROM scribbles.
-	 */
-	v = (char *)KERNBASE3;
-	msgbufaddr = v + MSGBUFOFF;
-	initmsgbuf(msgbufaddr, MSGBUFSIZE);
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-	initfpu();	/* also prints FPU type */
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
+	/* Set the FPU bit in the "system enable register" */
+	enable_fpu(1);
 
 	/*
 	 * Get scratch page for dumpsys().
@@ -250,17 +222,7 @@ cpu_startup(void)
 	if (dumppage == 0)
 		panic("startup: alloc dumppage");
 
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
+	cpu_startup_common();
 
 	/*
 	 * Allocate a virtual page (for use by /dev/mem)
@@ -279,31 +241,11 @@ cpu_startup(void)
 	 * Set up CPU-specific registers, cache, etc.
 	 */
 	initcpu();
-}
 
-/*
- * Info for CTL_HW
- */
-char	machine[16] = MACHINE;		/* from <machine/param.h> */
-char	kernel_arch[16] = "sun3";	/* XXX needs a sysctl node */
-
-/*
- * Determine which Sun3 model we are running on.
- * We have to do this very early on the Sun3 because
- * pmap_bootstrap() needs to know if it should avoid
- * the video memory on the Sun3/50.  Therefore, this
- * function just prints out what we already know.
- */
-void
-identifycpu(void)
-{
-	extern char *cpu_string;	/* XXX */
-
-	/* Other stuff? (VAC, mc6888x version, etc.) */
-	/* Note: miniroot cares about the kernel_arch part. */
-	cpu_setmodel("%s %s", kernel_arch, cpu_string);
-
-	printf("Model: %s\n", cpu_getmodel());
+	if (fputype == FPU_NONE) {
+		/* Might as well turn the enable bit back off. */
+		enable_fpu(0);
+	}
 }
 
 /*
@@ -359,88 +301,29 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 #endif
 }
 
-/* See: sig_machdep.c */
-
-/*
- * Do a sync in preparation for a reboot.
- * XXX - This could probably be common code.
- * XXX - And now, most of it is in vfs_shutdown()
- * XXX - Put waittime checks in there too?
- */
-int waittime = -1;	/* XXX - Who else looks at this? -gwr */
-static void
-reboot_sync(void)
+void
+machine_halt(void)
 {
-
-	/* Check waittime here to localize its use to this function. */
-	if (waittime >= 0)
-		return;
-	waittime = 0;
-	vfs_shutdown();
+	sunmon_halt();
 }
 
-/*
- * Common part of the BSD and SunOS reboot system calls.
- */
-__dead void
-cpu_reboot(int howto, char *user_boot_string)
+void
+machine_reboot(int howto, char *bootstr)
 {
-	char *bs, *p;
+	char *p;
 	char default_boot_string[8];
 
-	/* If system is cold, just halt. (early panic?) */
-	if (cold)
-		goto haltsys;
-
-	/* Un-blank the screen if appropriate. */
-	cnpollc(1);
-
-	if ((howto & RB_NOSYNC) == 0) {
-		reboot_sync();
-		/*
-		 * If we've been adjusting the clock, the todr
-		 * will be out of synch; adjust it now.
-		 *
-		 * XXX - However, if the kernel has been sitting in ddb,
-		 * the time will be way off, so don't set the HW clock!
-		 * XXX - Should do sanity check against HW clock. -gwr
-		 */
-		/* resettodr(); */
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* Write out a crash dump if asked. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-	/* run any shutdown hooks */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	if (howto & RB_HALT) {
-	haltsys:
-		printf("halted.\n");
-		sunmon_halt();
-	}
-
-	/*
-	 * Automatic reboot.
-	 */
-	bs = user_boot_string;
-	if (bs == NULL) {
+	if (bootstr == NULL) {
 		/*
 		 * Build our own boot string with an empty
 		 * boot device/file and (maybe) some flags.
 		 * The PROM will supply the device/file name.
 		 */
-		bs = default_boot_string;
-		*bs = '\0';
+		p = default_boot_string;
+		*p = '\0';
+
 		if (howto & (RB_KDB|RB_ASKNAME|RB_SINGLE)) {
 			/* Append the boot flags. */
-			p = bs;
 			*p++ = ' ';
 			*p++ = '-';
 			if (howto & RB_KDB)
@@ -451,11 +334,9 @@ cpu_reboot(int howto, char *user_boot_string)
 				*p++ = 's';
 			*p = '\0';
 		}
+		bootstr = default_boot_string;
 	}
-	printf("rebooting...\n");
-	sunmon_reboot(bs);
-	for (;;) ;
-	/*NOTREACHED*/
+	sunmon_reboot(bootstr);
 }
 
 /*
@@ -675,29 +556,6 @@ initcpu(void)
 /* XXX: parityenable() ? */
 /* regdump() moved to regdump.c */
 
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine if the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	return ENOEXEC;
-}
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	/* Allow access only in "managed" RAM. */
-	if (pa < avail_start || pa >= avail_end)
-		return EFAULT;
-	return 0;
-}
-
 bool
 mm_md_direct_mapped_phys(paddr_t paddr, vaddr_t *vaddr)
 {
@@ -731,13 +589,3 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		return 0;
 	return EFAULT;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif

@@ -1,0 +1,47 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * DNS64 / RPZ server.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	statistics-file	"named.stats";
+	session-keyfile "session.key";
+	allow-transfer { any; };
+	minimal-responses no;
+	dnssec-validation no;
+	dns64-server "example.localdomain.";
+	dns64 64:ff9b::/96 { };
+	response-policy {
+		zone "rpz";
+	}
+	qname-wait-recurse no ;
+
+	include "../dnsrps.conf";
+	notify-delay 0;
+};
+
+
+logging { category rpz { default_debug; }; };
+{% include "_common/controls.conf.j2" %}
+
+
+zone "." { type hint; file "hints"; };
+
+zone "rpz." {
+	type primary;
+	file "rpz.db";
+	notify no;
+};

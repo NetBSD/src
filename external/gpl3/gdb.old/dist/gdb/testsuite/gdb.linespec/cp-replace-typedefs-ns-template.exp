@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,7 +30,7 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
 gdb_test_no_output "set max-completions unlimited"
 
 # Confirm that the important global namespace typedefs were indeed
-# emited in the debug info.
+# emitted in the debug info.
 gdb_test "ptype NS2" "type = int"
 gdb_test "ptype object" "type = struct NS1::NS2::object {.*"
 gdb_test "ptype Templ1" "type = struct NS1::NS2::Templ1<unsigned int> .*"

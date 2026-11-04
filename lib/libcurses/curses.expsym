@@ -21,7 +21,6 @@ __cursesi_win_free_nsp
 __default_color
 __default_pair
 __delay
-__do_color_init
 __echoit
 __fgetc_resize
 __hash_line

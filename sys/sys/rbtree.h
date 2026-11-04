@@ -1,4 +1,4 @@
-/*	$NetBSD: rbtree.h,v 1.12 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: rbtree.h,v 1.12.2.1 2026/11/04 23:28:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -32,15 +32,23 @@
 #ifndef _SYS_RBTREE_H_
 #define	_SYS_RBTREE_H_
 
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stddef.h>
+#include <stdint.h>
+#else
 #include <sys/types.h>
-#include <sys/queue.h>
-#include <sys/endian.h>
-
-#if !defined(_KERNEL) && !defined(_STANDALONE) && defined(RBDEBUG)
-#include <stdbool.h>
 #endif
 
+#ifdef RBDEBUG
+#include <sys/queue.h>
+#if !defined(_KERNEL) && !defined(_STANDALONE)
+#include <stdbool.h>
+#endif
+#endif
+
+#ifdef __BEGIN_DECLS
 __BEGIN_DECLS
+#endif
 
 typedef struct rb_node {
 	struct rb_node *rb_nodes[2];
@@ -208,6 +216,8 @@ void	rb_tree_check(const rb_tree_t *, bool);
 void	rb_tree_depths(const rb_tree_t *, size_t *);
 #endif
 
+#ifdef __END_DECLS
 __END_DECLS
+#endif
 
 #endif	/* _SYS_RBTREE_H_*/

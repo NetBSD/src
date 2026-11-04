@@ -1,4 +1,4 @@
-/*	$NetBSD: c32rtomb.c,v 1.6.6.2 2025/08/02 05:54:38 perseant Exp $	*/
+/*	$NetBSD: c32rtomb.c,v 1.6.6.3 2026/11/04 23:19:20 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -49,12 +49,13 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: c32rtomb.c,v 1.6.6.2 2025/08/02 05:54:38 perseant Exp $");
+__RCSID("$NetBSD: c32rtomb.c,v 1.6.6.3 2026/11/04 23:19:20 perseant Exp $");
 
 #include "namespace.h"
 
 #include <sys/types.h>		/* broken citrus_*.h */
 #include <sys/queue.h>		/* broken citrus_*.h */
+#include <sys/endian.h>
 
 #include <assert.h>
 #include <errno.h>

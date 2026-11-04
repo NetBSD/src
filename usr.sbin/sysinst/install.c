@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.25 2023/01/06 18:13:40 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.25.2.1 2026/11/04 23:28:58 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -232,6 +232,9 @@ do_install(void)
 
 	if (md_post_extract(&install, false) != 0)
 		goto error;
+
+	/* we have now installed our own trust anchors, so make use of them! */
+	unsetenv("FTPSSLNOVERIFY");
 
 	root_pw_setup();
 #if CHECK_ENTROPY

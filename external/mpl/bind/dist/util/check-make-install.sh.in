@@ -1,0 +1,86 @@
+#!/bin/bash
+#
+# Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+#
+# SPDX-License-Identifier: MPL-2.0
+#
+# This Source Code Form is subject to the terms of the Mozilla Public
+# License, v. 2.0. If a copy of the MPL was not distributed with this
+# file, you can obtain one at https://mozilla.org/MPL/2.0/.
+#
+# See the COPYRIGHT file distributed with this work for additional
+# information regarding copyright ownership.
+
+set -euo pipefail
+
+abs_top_srcdir=@abs_top_srcdir@
+abs_builddir=@abs_builddir@
+# configure expands the directory variables below into references to
+# prefix, exec_prefix and datarootdir, which shellcheck cannot see.
+# shellcheck disable=SC2034
+prefix=@prefix@
+# shellcheck disable=SC2034
+exec_prefix=@exec_prefix@
+# shellcheck disable=SC2034
+datarootdir=@datarootdir@
+includedir=@includedir@
+install_dir="${DESTDIR:-}@prefix@"
+bindir="${DESTDIR:-}@bindir@"
+libdir="${DESTDIR:-}@libdir@"
+mandir="${DESTDIR:-}@mandir@"
+sbindir="${DESTDIR:-}@sbindir@"
+
+headers_to_install() {
+  find "${abs_top_srcdir}/lib" -name "*.h" -or -name "*.h.in" \
+    | sed -n \
+      -e "s|\.h\.in$|\.h|" \
+      -e "s|.*include/|${DESTDIR:-}${includedir}/|p" \
+    | sort -u
+}
+
+status=0
+
+for header in $(headers_to_install); do
+  if [ ! -f "${header}" ]; then
+    echo "Missing $header"
+    status=1
+  fi
+done
+
+named_binary_path="${sbindir}/named"
+if [ ! -x "${named_binary_path}" ]; then
+  echo "ERROR: ${named_binary_path} does not exist or is not executable"
+  status=1
+fi
+
+named_man_page_path="${mandir}/man8/named.8"
+if [ ! -f "${named_man_page_path}" ]; then
+  echo "ERROR: ${named_man_page_path} does not exist"
+  status=1
+fi
+
+# Every installed program must have a manual page installed with it.
+shopt -s nullglob
+
+for program in "${bindir}"/* "${sbindir}"/* "${libdir}"/bind/*.so; do
+  name=$(basename "${program}" .so)
+  man_pages=("${mandir}"/man*/"${name}".?)
+  if [ ${#man_pages[@]} -eq 0 ]; then
+    echo "ERROR: no manual page was installed for ${name}"
+    status=1
+  fi
+done
+
+if [ -n "${DESTDIR:-}" ]; then
+  for expected_subdir in bin include lib sbin share; do
+    echo "${install_dir}/${expected_subdir}" >>"${abs_builddir}/expected_dirs"
+  done
+  find "${install_dir}" -maxdepth 1 -mindepth 1 -type d | sort >"${abs_builddir}/existing_dirs"
+  if ! diff -u "${abs_builddir}/expected_dirs" "${abs_builddir}/existing_dirs"; then
+    echo "ERROR: Contents of DESTDIR do not match expectations"
+    status=1
+  fi
+  rm -f "${abs_builddir}/expected_dirs" "${abs_builddir}/existing_dirs"
+fi
+
+exit "$status"

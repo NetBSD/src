@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -34,6 +34,8 @@ if { $gdbserver == "" } {
 # to spawn the program before opening the connection.
 set spawn_id [remote_spawn target "$gdbserver stdio non-existing-program"]
 
+set eol {[\r\n]}
+
 set msg "gdbserver exits cleanly"
 set saw_exiting 0
 expect {
@@ -45,13 +47,13 @@ expect {
 	exp_continue
     }
     # Likewise, but with startup-with-shell enabled, which is the
-    # default behaviour.
+    # default behavior.
     -re "stdin/stdout redirected.*exec: non-existing-program: not found\r\nDuring startup program exited with code 127\.\r\nExiting\r\n" {
 	set saw_exiting 1
 	exp_continue
     }
     # This is what we get on Windows.
-    -re "Error creating process\r\n\r\nExiting\r\n" {
+    -re "Error creating process.*$eol+Exiting$eol+" {
 	set saw_exiting 1
 	exp_continue
     }

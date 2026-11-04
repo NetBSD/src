@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.16 2021/05/31 14:38:56 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.16.18.1 2026/11/04 23:21:24 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,8 +49,7 @@
  */
 #define	_MACHINE	sun2
 #define	MACHINE		"sun2"
-#define	_MACHINE_ARCH	m68000
-#define	MACHINE_ARCH	"m68000"
+
 #define	MID_MACHINE	MID_M680002K
 
 #define PGSHIFT		11		/* LOG2(NBPG) */
@@ -58,11 +57,7 @@
 #ifdef MSGBUFSIZE
 #error "MSGBUFSIZE is not user-adjustable for this arch"
 #endif
-#define MSGBUFOFF	0x0
-#define MSGBUFSIZE	((NBPG * 4) - MSGBUFOFF)
-
-/* This is needed by ps (actually USPACE). */
-#define	UPAGES		(16384 / NBPG)		/* pages of u-area */
+#define MSGBUFSIZE	(NBPG * 4)
 
 #if defined(_KERNEL) || defined(_STANDALONE)
 
@@ -78,32 +73,13 @@
  */
 #define MCLSHIFT	10
 
-/*
- * XXX fredette - we must define this, otw UBC consumes 8MB of kernel VM.
- * For now, we make it absurdly small, perhaps it can grow later.
- */
-#define	UBC_NWINS	32
-
-#define	MAXEXEC		1
-
 #endif	/* _KERNEL */
 
 #include <m68k/param.h>
 
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-
 #if defined(_KERNEL) && !defined(_LOCORE)
 
 #include <machine/intr.h>
-
-extern void _delay(unsigned);
-#define delay(us)	_delay((us)<<8)
-#define	DELAY(n)	delay(n)
 
 #endif	/* _KERNEL && !_LOCORE */
 #endif	/* !_MACHINE_PARAM_H_ */

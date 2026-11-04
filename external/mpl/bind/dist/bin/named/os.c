@@ -1,4 +1,4 @@
-/*	$NetBSD: os.c,v 1.2.6.1 2025/08/02 05:50:53 perseant Exp $	*/
+/*	$NetBSD: os.c,v 1.2.6.2 2026/11/04 23:15:34 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -915,11 +915,56 @@ named_os_tzset(void) {
 }
 
 #ifdef HAVE_UNAME
-static char unamebuf[sizeof(struct utsname)];
+static char osreleasebuf[256];
+static char
+	unamebuf[sizeof(struct utsname) + sizeof(osreleasebuf) + sizeof(" ()")];
 #else
 static const char unamebuf[] = { "unknown architecture" };
 #endif
 static const char *unamep = NULL;
+
+#ifdef HAVE_UNAME
+static const char *
+getosrelease(void) {
+	FILE *fp;
+	char line[sizeof(osreleasebuf)];
+	char *value;
+	size_t len;
+
+	fp = fopen("/etc/os-release", "r");
+	if (fp == NULL) {
+		fp = fopen("/usr/lib/os-release", "r");
+	}
+	if (fp == NULL) {
+		return "";
+	}
+
+	while (fgets(line, sizeof(line), fp) != NULL) {
+		if (strncmp(line, "PRETTY_NAME=", 12) != 0) {
+			continue;
+		}
+		value = line + 12;
+		len = strlen(value);
+		if (len > 0 && value[len - 1] == '\n') {
+			value[--len] = '\0';
+		}
+		if (len >= 2 && (*value == '"' || *value == '\'') &&
+		    value[len - 1] == *value)
+		{
+			value[len - 1] = '\0';
+			value++;
+		}
+		if (*value == '\0') {
+			continue;
+		}
+		snprintf(osreleasebuf, sizeof(osreleasebuf), " (%s)", value);
+		fclose(fp);
+		return osreleasebuf;
+	}
+	fclose(fp);
+	return "";
+}
+#endif /* ifdef HAVE_UNAME */
 
 static void
 getuname(void) {
@@ -932,8 +977,8 @@ getuname(void) {
 		return;
 	}
 
-	snprintf(unamebuf, sizeof(unamebuf), "%s %s %s %s", uts.sysname,
-		 uts.machine, uts.release, uts.version);
+	snprintf(unamebuf, sizeof(unamebuf), "%s %s %s %s%s", uts.sysname,
+		 uts.machine, uts.release, uts.version, getosrelease());
 #endif /* ifdef HAVE_UNAME */
 	unamep = unamebuf;
 }

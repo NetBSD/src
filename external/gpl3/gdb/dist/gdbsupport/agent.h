@@ -1,6 +1,6 @@
 /* Shared utility routines for GDB to interact with agent.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_AGENT_H
-#define COMMON_AGENT_H
+#ifndef GDBSUPPORT_AGENT_H
+#define GDBSUPPORT_AGENT_H
 
 #include "gdbsupport/preprocessor.h"
 
@@ -65,4 +65,4 @@ bool agent_capability_check (enum agent_capa);
 
 void agent_capability_invalidate (void);
 
-#endif /* COMMON_AGENT_H */
+#endif /* GDBSUPPORT_AGENT_H */

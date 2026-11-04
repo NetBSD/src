@@ -1,4 +1,4 @@
-/*	$NetBSD: utmp_update.c,v 1.14 2023/09/29 12:08:03 christos Exp $	 */
+/*	$NetBSD: utmp_update.c,v 1.14.2.1 2026/11/04 23:19:35 perseant Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 #include <sys/cdefs.h>
 
-__RCSID("$NetBSD: utmp_update.c,v 1.14 2023/09/29 12:08:03 christos Exp $");
+__RCSID("$NetBSD: utmp_update.c,v 1.14.2.1 2026/11/04 23:19:35 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,7 +166,7 @@ main(int argc, char *argv[])
 			    (long)utoldp->ut_pid, (long)ppid);
 	}
 
-	if (seteuid(euid) == 1)
+	if (seteuid(euid) == -1)
 		logerr(errno, "Can't setuid %ld", (long)euid);
 	if (pututxline(utx) == NULL)
 		logerr(errno, "Cannot update utmp entry");

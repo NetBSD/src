@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_obiovar.h,v 1.3 2008/11/20 20:23:05 cliff Exp $	*/
+/*	$NetBSD: gemini_obiovar.h,v 1.3.108.1 2026/11/04 23:20:09 perseant Exp $	*/
 
 /* adapted from:
  *	NetBSD: omap2_obiovar.h,v 1.1 2008/08/27 11:03:10 matt Exp
@@ -16,9 +16,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -60,7 +57,7 @@ typedef struct obio_softc {
 	/* Bus space, DMA, and PCI tags for the PCI bus. */
 	bus_space_handle_t	sc_pcicfg_ioh;
 	struct arm32_bus_dma_tag sc_pci_dmat;
-	struct arm32_pci_chipset sc_pci_chipset;
+	struct md_pci_chipset sc_pci_chipset;
 } obio_softc_t;
 
 extern void gemini_pci_init(pci_chipset_tag_t, void *);

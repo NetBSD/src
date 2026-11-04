@@ -1,5 +1,5 @@
 /* Build symbol tables in GDB's internal format - legacy APIs
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BUILDSYM_LEGACY_H
-#define BUILDSYM_LEGACY_H
+#ifndef GDB_BUILDSYM_LEGACY_H
+#define GDB_BUILDSYM_LEGACY_H
 
 #include "buildsym.h"
 
@@ -70,14 +70,14 @@ extern void push_subfile ();
 
 extern const char *pop_subfile ();
 
-extern struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr,
-						    int section);
+extern struct compunit_symtab *end_compunit_symtab (CORE_ADDR end_addr);
 
 extern struct context_stack *push_context (int desc, CORE_ADDR valu);
 
 extern struct context_stack pop_context ();
 
-extern void record_line (struct subfile *subfile, int line, CORE_ADDR pc);
+extern void record_line (struct subfile *subfile, int line,
+			 unrelocated_addr pc);
 
 extern struct compunit_symtab *start_compunit_symtab (struct objfile *objfile,
 						      const char *name,
@@ -144,4 +144,4 @@ extern struct pending **get_global_symbols ();
 
 extern struct buildsym_compunit *get_buildsym_compunit ();
 
-#endif /* BUILDSYM_LEGACY_H */
+#endif /* GDB_BUILDSYM_LEGACY_H */

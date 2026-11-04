@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.h,v 1.80.10.1 2025/08/02 05:57:51 perseant Exp $	*/
+/*	$NetBSD: nfs.h,v 1.80.10.2 2026/11/04 23:28:00 perseant Exp $	*/
 /*
  * Copyright (c) 1989, 1993, 1995
  *	The Regents of the University of California.  All rights reserved.
@@ -206,7 +206,7 @@ struct nfsd_srvargs {
 	struct uucred	nsd_cr;		/* Cred. uid maps to */
 	int		nsd_authlen;	/* Length of auth string (ret) */
 	u_char		*nsd_authstr;	/* Auth string (ret) */
-	int		nsd_verflen;	/* and the verfier */
+	int		nsd_verflen;	/* and the verifier */
 	u_char		*nsd_verfstr;
 	struct timeval	nsd_timestamp;	/* timestamp from verifier */
 	u_int32_t	nsd_ttl;	/* credential ttl (sec) */
@@ -451,6 +451,8 @@ struct nfssvc_sock {
 	int		ns_sflags;		/* b: */
 	int		ns_cc;			/* b: */
 	int		ns_reclen;		/* b: */
+	int		ns_frag_count;		/* b: */
+	int		ns_streamlen;		/* b: */
 	int		ns_numuids;
 	u_int32_t	ns_sref;		/* g: */
 	SIMPLEQ_HEAD(, nfsrv_descript) ns_sendq; /* s: send reply list */

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.37 2021/10/31 16:23:47 skrll Exp $	*/
+/*	$NetBSD: locore.h,v 1.37.10.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -66,53 +66,62 @@
 #ifdef _LOCORE
 
 #if defined(_ARM_ARCH_6)
-#define IRQdisable	cpsid	i
-#define IRQenable	cpsie	i
-#else
-#define IRQdisable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	orr	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
+#define	IRQ_DISABLE(rTMP)	cpsid	i
+#define	IRQ_ENABLE(rTMP)	cpsie	i
 
-#define IRQenable \
-	stmfd	sp!, {r0} ; \
-	mrs	r0, cpsr ; \
-	bic	r0, r0, #(I32_bit) ; \
-	msr	cpsr_c, r0 ; \
-	ldmfd	sp!, {r0}
+#define	INTERRUPT_DISABLE(rTMP)	cpsid	if
+#define	INTERRUPT_ENABLE(rTMP)	cpsie	if
+#else
+#define	IRQ_DISABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	orr	rTMP, rTMP, #(I32_bit) ;		\
+	msr	cpsr_c, rTMP
+
+#define	IRQ_ENABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	bic	rTMP, rTMP, #(I32_bit) ;		\
+	msr	cpsr_c, rTMP
+
+#define	INTERRUPT_DISABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	orr	rTMP, rTMP, #(I32_bit | F32_bit) ;	\
+	msr	cpsr_c, rTMP
+
+#define	INTERRUPT_ENABLE(rTMP)				\
+	mrs	rTMP, cpsr ;				\
+	bic	rTMP, rTMP, #(I32_bit | F32_bit) ;	\
+	msr	cpsr_c, rTMP
 #endif
 
 #if defined (TPIDRPRW_IS_CURCPU)
-#define GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
-#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#define GET_CURX(rCPU, rLWP)	GET_CURCPU(rCPU); ldr rLWP, [rCPU, #CI_CURLWP]
+#define	GET_CURCPU(rX)		mrc	p15, 0, rX, c13, c0, 4
+#define	GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
+#define	GET_CURX(rCPU, rLWP)	GET_CURCPU(rCPU); ldr rLWP, [rCPU, #CI_CURLWP]
 #elif defined (TPIDRPRW_IS_CURLWP)
-#define GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
+#define	GET_CURLWP(rX)		mrc	p15, 0, rX, c13, c0, 4
 #if defined (MULTIPROCESSOR)
-#define GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
-#define GET_CURX(rCPU, rLWP)	GET_CURLWP(rLWP); ldr rCPU, [rLWP, #L_CPU]
+#define	GET_CURCPU(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_CPU]
+#define	GET_CURX(rCPU, rLWP)	GET_CURLWP(rLWP); ldr rCPU, [rLWP, #L_CPU]
 #elif defined(_ARM_ARCH_7)
-#define GET_CURCPU(rX)		movw rX, #:lower16:cpu_info_store; movt rX, #:upper16:cpu_info_store
-#define GET_CURX(rCPU, rLWP)	GET_CURLWP(rLWP); GET_CURCPU(rCPU)
+#define	GET_CURCPU(rX)		movw rX, #:lower16:cpu_info_store; movt rX, #:upper16:cpu_info_store
+#define	GET_CURX(rCPU, rLWP)	GET_CURLWP(rLWP); GET_CURCPU(rCPU)
 #else
-#define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
-#define GET_CURX(rCPU, rLWP)	GET_CURLWP(rLWP); ldr rCPU, [rLWP, #L_CPU]
+#define	GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
+#define	GET_CURX(rCPU, rLWP)	GET_CURLWP(rLWP); ldr rCPU, [rLWP, #L_CPU]
 #endif
 #elif !defined(MULTIPROCESSOR)
-#define GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
-#define GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
-#define GET_CURX(rCPU, rLWP)	GET_CURCPU(rCPU); ldr rLWP, [rCPU, #CI_CURLWP]
+#define	GET_CURCPU(rX)		ldr rX, =_C_LABEL(cpu_info_store)
+#define	GET_CURLWP(rX)		GET_CURCPU(rX); ldr rX, [rX, #CI_CURLWP]
+#define	GET_CURX(rCPU, rLWP)	GET_CURCPU(rCPU); ldr rLWP, [rCPU, #CI_CURLWP]
 #endif
-#define GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_PCB]
+#define	GET_CURPCB(rX)		GET_CURLWP(rX); ldr rX, [rX, #L_PCB]
 
 #else /* !_LOCORE */
 
 #include <arm/cpufunc.h>
 
-#define IRQdisable __set_cpsr_c(I32_bit, I32_bit);
-#define IRQenable __set_cpsr_c(I32_bit, 0);
+#define	IRQdisable __set_cpsr_c(I32_bit, I32_bit);
+#define	IRQenable __set_cpsr_c(I32_bit, 0);
 
 /*
  * Validate a PC or PSR for a user process.  Used by various system calls
@@ -120,10 +129,10 @@
  */
 
 #ifdef __NO_FIQ
-#define VALID_PSR(psr)						\
+#define	VALID_PSR(psr)						\
     (((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & I32_bit) == 0)
 #else
-#define VALID_PSR(psr)						\
+#define	VALID_PSR(psr)						\
     (((psr) & PSR_MODE) == PSR_USR32_MODE && ((psr) & IF32_bits) == 0)
 #endif
 

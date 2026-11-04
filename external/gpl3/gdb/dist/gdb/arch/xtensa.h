@@ -1,6 +1,6 @@
 /* Common Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_XTENSA_H
-#define ARCH_XTENSA_H
+#ifndef GDB_ARCH_XTENSA_H
+#define GDB_ARCH_XTENSA_H
 
 /* Xtensa ELF core file register set representation ('.reg' section).
    Copied from target-side ELF header <xtensa/elf.h>.  */
@@ -45,4 +45,4 @@ typedef struct
 
 #define C0_NREGS   16	/* Number of A-registers to track in call0 ABI.  */
 
-#endif /* ARCH_XTENSA_H */
+#endif /* GDB_ARCH_XTENSA_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.27.2.1 2025/08/02 05:58:52 perseant Exp $	*/
+/*	$NetBSD: npftest.c,v 1.27.2.2 2026/11/04 23:28:54 perseant Exp $	*/
 
 /*
  * NPF testing framework.
@@ -40,19 +40,21 @@ usage(const char *progname)
 {
 	printf("usage:\n"
 	    "  %s [ -q | -v ] [ -c <config> ] "
-	        "[ -i <interface> ] < -b | -t | -s file >\n"
+	        "[ -i <interface> -s <file> ] -b <benchmark> -p <ncpu>\n"
+	    "  %s [ -q | -v ] [ -i <interface> -s <file> ] -t\n"
 	    "  %s -T <testname> -c <config>\n"
 	    "  %s -L\n"
 	    "where:\n"
-	    "\t-b: benchmark\n"
-	    "\t-t: regression test\n"
+	    "\t-b benchmark\n"
+	    "\t-t regression test\n"
 	    "\t-T <testname>: specific test\n"
 	    "\t-s <file>: pcap stream\n"
 	    "\t-c <config>: NPF configuration file\n"
 	    "\t-i <interface>: primary interface\n"
-	    "\t-L: list testnames and description for -T\n"
-	    "\t-q: quiet mode\n"
-	    "\t-v: verbose mode\n",
+	    "\t-L list testnames and description for -T\n"
+	    "\t-q quiet mode\n"
+	    "\t-v verbose mode\n",
+	    "\t-p set RUMP_NCPU\n",
 	    progname, progname, progname);
 	exit(EXIT_FAILURE);
 }
@@ -69,7 +71,8 @@ describe_tests(void)
 		"nat\tNAT rule processing\n"
 		"guid\tUser/group filtering\n"
 		"ether\tlayer 2 rule processing\n"
-		"l2defpass\tlayer 2 default pass on layer 3 rules\n");
+		"l2defpass\tlayer 2 default pass on layer 3 rules\n"
+		"proc\trule procedure tests\n");
 	exit(EXIT_SUCCESS);
 }
 
@@ -332,7 +335,7 @@ main(int argc, char **argv)
 			tname_matched = true;
 		}
 
-		if (!testname || strcmp("l2defpass", testname) == 0) {
+		if (strcmp("l2defpass", testname) == 0) {
 			ok = rumpns_npf_layer2only_test(verbose);
 			fail |= result(" layer 2 default pass", ok);
 			tname_matched = true;
@@ -348,6 +351,12 @@ main(int argc, char **argv)
 			srandom(1);
 			ok = rumpns_npf_nat_test(verbose);
 			fail |= result("nat", ok);
+			tname_matched = true;
+		}
+
+		if (!testname || strcmp("proc", testname) == 0) {
+			ok = rumpns_npf_procedure_test(verbose);
+			fail |= result("proc", ok);
 			tname_matched = true;
 		}
 	}

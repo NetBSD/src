@@ -1,5 +1,5 @@
 /* MIPS Simulator definition.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of the MIPS sim.
@@ -109,7 +109,7 @@ typedef enum {
 
 /* For some MIPS targets, the HI/LO registers have certain timing
    restrictions in that, for instance, a read of a HI register must be
-   separated by at least three instructions from a preceeding read.
+   separated by at least three instructions from a preceding read.
 
    The struct below is used to record the last access by each of A MT,
    MF or other OP instruction to a HI/LO register.  See mips.igen for
@@ -282,7 +282,7 @@ struct mips_sim_cpu {
 #define simPCOC1         (1 << 18) /* COC[1] from previous */
 #define simDELAYSLOT     (1 << 24) /* 1 = delay slot entry exists */
 #define simSKIPNEXT      (1 << 25) /* 0 = do nothing; 1 = skip instruction */
-#define simSIGINT        (1 << 28)  /* 0 = do nothing; 1 = SIGINT has occured */
+#define simSIGINT        (1 << 28)  /* 0 = do nothing; 1 = SIGINT has occurred */
 #define simJALDELAYSLOT  (1 << 29) /* 1 = in jal delay slot */
 #define simFORBIDDENSLOT (1 << 30) /* 1 = n forbidden slot */
 

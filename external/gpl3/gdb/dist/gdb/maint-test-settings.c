@@ -1,6 +1,6 @@
 /* Maintenance commands for testing the settings framework.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -78,9 +78,7 @@ maintenance_show_test_settings_value_cmd
 }
 
 
-void _initialize_maint_test_settings ();
-void
-_initialize_maint_test_settings ()
+INIT_GDB_FILE (maint_test_settings)
 {
   maintenance_test_settings_filename = "/foo/bar";
 

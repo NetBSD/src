@@ -39,12 +39,18 @@
 /* Define to BFD's default target vector. */
 #undef DEFAULT_BFD_VEC
 
+/* defined if dwarf format was requested. */
+#undef DWARF_FORMAT_AVAILABLE
+
 /* Handle .ctf type-info sections */
 #undef ENABLE_LIBCTF
 
 /* Define to 1 if translation of program messages to the user's native
    language is requested. */
 #undef ENABLE_NLS
+
+/* Additional targets configured into GDB. */
+#undef ENABLE_TARGETS
 
 /* The .gdbearlyinit filename. */
 #undef GDBEARLYINIT
@@ -90,6 +96,9 @@
 /* Define if amd-dbgapi is being linked in. */
 #undef HAVE_AMD_DBGAPI
 
+/* Define to 1 if you have the <asm/termios.h> header file. */
+#undef HAVE_ASM_TERMIOS_H
+
 /* Define to 1 if you have the `btowc' function. */
 #undef HAVE_BTOWC
 
@@ -100,6 +109,9 @@
 /* Define to 1 if you have the Mac OS X function CFPreferencesCopyAppValue in
    the CoreFoundation framework. */
 #undef HAVE_CFPREFERENCESCOPYAPPVALUE
+
+/* Define if compiling support to gdb compile. */
+#undef HAVE_COMPILE
 
 /* Define to 1 if you have the <cursesX.h> header file. */
 #undef HAVE_CURSESX_H
@@ -178,9 +190,6 @@
 /* Define if <sys/procfs.h> has elf_fpregset_t. */
 #undef HAVE_ELF_FPREGSET_T
 
-/* Define to 1 if you have the <elf_hp.h> header file. */
-#undef HAVE_ELF_HP_H
-
 /* Define to 1 if your system has the etext variable. */
 #undef HAVE_ETEXT
 
@@ -240,6 +249,9 @@
 
 /* Define to 1 if you have the <inttypes.h> header file. */
 #undef HAVE_INTTYPES_H
+
+/* Define to 1 if you have the <IOKit/serial/ioss.h> header file. */
+#undef HAVE_IOKIT_SERIAL_IOSS_H
 
 /* Define to 1 if you have the `kinfo_getfile' function. */
 #undef HAVE_KINFO_GETFILE
@@ -481,6 +493,9 @@
 /* Define to 1 if `pl_tdname' is a member of `struct ptrace_lwpinfo'. */
 #undef HAVE_STRUCT_PTRACE_LWPINFO_PL_TDNAME
 
+/* Define to 1 if `variant.ptwrite' is a member of `struct pt_event'. */
+#undef HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE
+
 /* Define to 1 if `enabled' is a member of `struct pt_insn'. */
 #undef HAVE_STRUCT_PT_INSN_ENABLED
 
@@ -583,9 +598,6 @@
 /* Define to 1 if you have the <vfork.h> header file. */
 #undef HAVE_VFORK_H
 
-/* Define to 1 if you have the `waitpid' function. */
-#undef HAVE_WAITPID
-
 /* Define to 1 if you have the <wait.h> header file. */
 #undef HAVE_WAIT_H
 
@@ -635,6 +647,9 @@
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
 #undef LT_OBJDIR
+
+/* defined if mdebug format was requested. */
+#undef MDEBUG_FORMAT_AVAILABLE
 
 /* Name of this package. */
 #undef PACKAGE
@@ -719,9 +734,6 @@
 /* The size of `unsigned __int128', as computed by sizeof. */
 #undef SIZEOF_UNSIGNED___INT128
 
-/* The size of `void *', as computed by sizeof. */
-#undef SIZEOF_VOID_P
-
 /* If using the C implementation of alloca, define if you know the
    direction of stack growth for your system; otherwise it will be
    automatically deduced at runtime.
@@ -732,6 +744,9 @@
 
 /* Define to 1 if you have the ANSI C header files. */
 #undef STDC_HEADERS
+
+/* Which binary file formats were requested at configure time. */
+#undef SUPPORTED_BINARY_FILE_FORMATS
 
 /* automatically load a system-wide gdbinit file */
 #undef SYSTEM_GDBINIT

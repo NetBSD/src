@@ -1,11 +1,11 @@
-# $NetBSD: Makefile.inc,v 1.1 2012/01/22 18:36:18 christos Exp $
+# $NetBSD: Makefile.inc,v 1.1.54.1 2026/11/04 23:19:14 perseant Exp $
 
-.PATH: ${COMPATDIR}/arch/${MACHINE_ARCH}/stdio ${COMPATDIR}/stdio
+.PATH: ${COMPATDIR}/arch/${MACHINE_ARCH:S/m68ksf/m68k/}/stdio ${COMPATDIR}/stdio
 
 SRCS+=		compat_fgetpos.c compat_fsetpos.c
 CPPFLAGS.compat_fgetpos.c+=	-I${COMPATDIR}/../stdio
 CPPFLAGS.compat_fsetpos.c+=	-I${COMPATDIR}/../stdio
-#	$NetBSD: Makefile.inc,v 1.1 2012/01/22 18:36:18 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.1.54.1 2026/11/04 23:19:14 perseant Exp $
 
 .ifndef ABSTOP
 ABSTOP!= cd ${.PARSEDIR}; pwd

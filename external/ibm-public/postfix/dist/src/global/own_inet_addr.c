@@ -1,4 +1,4 @@
-/*	$NetBSD: own_inet_addr.c,v 1.1.1.2.42.1 2025/08/02 05:50:07 perseant Exp $	*/
+/*	$NetBSD: own_inet_addr.c,v 1.1.1.2.42.2 2026/11/04 23:14:48 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -296,11 +296,9 @@ static void inet_addr_list_print(INET_ADDR_LIST *list)
     }
 }
 
-char   *var_inet_interfaces;
-
 int     main(int argc, char **argv)
 {
-    INET_PROTO_INFO *proto_info;
+    const INET_PROTO_INFO *proto_info;
     INET_ADDR_LIST *list;
 
     if (argc != 3)

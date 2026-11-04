@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2024 Free Software Foundation, Inc.
+# Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -243,6 +243,13 @@ with_test_prefix "frame-id 'pc' is invalid" {
     gdb_test_no_output "python captured_pending_frame = None"
     gdb_test "backtrace" \
 	"Python Exception <class 'ValueError'>: invalid literal for int\\(\\) with base 10: 'xyz'\r\n.*"
+}
+
+with_test_prefix "bad object unwinder" {
+    gdb_test_no_output "python obj = bad_object_unwinder(\"bad-object\")"
+    gdb_test_no_output "python gdb.unwinder.register_unwinder(None, obj, replace=True)"
+    gdb_test "backtrace" \
+	"Python Exception <class 'gdb.error'>: an Unwinder should return gdb.UnwindInfo, not Blah\\.\r\n.*"
 }
 
 # Gather information about every frame.

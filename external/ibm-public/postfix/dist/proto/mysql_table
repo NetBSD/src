@@ -2,7 +2,7 @@
 # NAME
 #	mysql_table 5
 # SUMMARY
-#	Postfix MySQL client configuration
+#	Postfix MySQL/MariaDB client configuration
 # SYNOPSIS
 #	\fBpostmap -q "\fIstring\fB" mysql:/etc/postfix/\fIfilename\fR
 #
@@ -10,9 +10,12 @@
 # DESCRIPTION
 #	The Postfix mail system uses optional tables for address
 #	rewriting or mail routing. These tables are usually in
-#	\fBdbm\fR or \fBdb\fR format.
+#	\fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR, or \fBdbm:\fR format.
 #
 #	Alternatively, lookup tables can be specified as MySQL databases.
+#	To find out what types of lookup tables your Postfix system
+#	supports use the "\fBpostconf -m\fR" command.
+#
 #	In order to use MySQL lookups, define a MySQL source as a lookup
 #	table in main.cf, for example:
 # .nf
@@ -22,6 +25,11 @@
 #	The file /etc/postfix/mysql-aliases.cf has the same format as
 #	the Postfix main.cf file, and can specify the parameters
 #	described below.
+#
+#	Even though the component name is 'mysql' in Postfix,
+#	MariaDB/MySQL client and servers can be used interchangeably as
+#	the functionality Postfix relies on is available in both. However,
+#	their code bases may still diverge in the future.
 # LIST MEMBERSHIP
 # .ad
 # .fi
@@ -67,11 +75,10 @@
 #	    hosts = 127.0.0.1
 # .fi
 #
-#	NOTE: if the \fBhosts\fR setting specifies one server, this client
-#	assumes that the target is a load balancer and will reconnect
-#	immediately after a single failure, instead of failing all
-#	requests temporarily. With older versions of this client,
-#	specify the same server twice.
+#	NOTE: if the \fBhosts\fR setting specifies only one server,
+#	this client assumes that the target is a load balancer and
+#	will reconnect immediately after a single failure. With Postfix
+#	versions 3.9 and earlier, specify the same server twice.
 # .IP "\fBuser\fR"
 # .IP "\fBpassword\fR"
 #	The user name and password to log into the mysql server.
@@ -102,11 +109,10 @@
 #	The number of seconds that a database connection will be
 #	skipped after an error.
 #
-#	NOTE: if the \fBhosts\fR setting specifies one server, this client
-#	assumes that the target is a load balancer and will reconnect
-#	immediately after a single failure, instead of failing all
-#	requests temporarily. With older versions of this client,
-#	specify the same server twice.
+#	NOTE: if the \fBhosts\fR setting specifies only one server,
+#	this client assumes that the target is a load balancer and
+#	will reconnect immediately after a single failure. With Postfix
+#	versions 3.9 and earlier, specify the same server twice.
 #
 #	This feature is available in Postfix 3.9 and later.
 # .IP "\fBquery\fR"

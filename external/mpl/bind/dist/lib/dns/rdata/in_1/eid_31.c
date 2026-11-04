@@ -1,4 +1,4 @@
-/*	$NetBSD: eid_31.c,v 1.9.2.1 2025/08/02 05:53:49 perseant Exp $	*/
+/*	$NetBSD: eid_31.c,v 1.9.2.2 2026/11/04 23:18:13 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@ fromtext_in_eid(ARGS_FROMTEXT) {
 	UNUSED(rdclass);
 	UNUSED(callbacks);
 
-	return isc_hex_tobuffer(lexer, target, -2);
+	return isc_hex_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -135,9 +135,7 @@ tostruct_in_eid(ARGS_TOSTRUCT) {
 	REQUIRE(eid != NULL);
 	REQUIRE(rdata->length != 0);
 
-	eid->common.rdclass = rdata->rdclass;
-	eid->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&eid->common, link);
+	DNS_RDATACOMMON_INIT(eid, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &r);
 	eid->eid_len = r.length;

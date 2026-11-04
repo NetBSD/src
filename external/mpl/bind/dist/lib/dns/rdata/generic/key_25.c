@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.12.2.1 2025/08/02 05:53:43 perseant Exp $	*/
+/*	$NetBSD: key_25.c,v 1.12.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,7 +91,7 @@ generic_fromtext_key(ARGS_FROMTEXT) {
 	 */
 	used = isc_buffer_usedlength(target);
 
-	RETERR(isc_base64_tobuffer(lexer, target, -2));
+	RETERR(isc_base64_tobuffer(lexer, target, isc_one_or_more));
 
 	if (alg == DNS_KEYALG_PRIVATEDNS || alg == DNS_KEYALG_PRIVATEOID) {
 		isc_buffer_t b;
@@ -169,7 +169,7 @@ generic_totext_key(ARGS_TOTEXT) {
 		const unsigned char *in = sr.base + 1;
 		ASN1_OBJECT *obj = d2i_ASN1_OBJECT(NULL, &in, *sr.base);
 		INSIST(obj != NULL);
-		int n = i2t_ASN1_OBJECT(algbuf, sizeof(buf), obj);
+		int n = i2t_ASN1_OBJECT(algbuf, sizeof(algbuf), obj);
 		ASN1_OBJECT_free(obj);
 		if (n == -1 || (size_t)n >= sizeof(algbuf)) {
 			dns_secalg_format((dns_secalg_t)algorithm, algbuf,
@@ -417,9 +417,7 @@ tostruct_key(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_key);
 
-	key->common.rdclass = rdata->rdclass;
-	key->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&key->common, link);
+	DNS_RDATACOMMON_INIT(key, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_key(CALL_TOSTRUCT);
 }

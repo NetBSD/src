@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2023 Free Software Foundation, Inc.
+# Copyright (C) 2021-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,18 +22,20 @@
 # though the tui should be disabled.
 
 load_lib gdb-python.exp
+require allow_tui_tests allow_python_tests
 tuiterm_env
 
 standard_testfile
 
-if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
+set flags {}
+lappend flags debug
+lappend_include_file flags $srcdir/lib/attributes.h
+
+if {[build_executable "failed to prepare" ${testfile} ${srcfile} $flags] == -1} {
     return -1
 }
 
 clean_restart
-if {[skip_tui_tests]} {
-    return
-}
 
 # Copy the Python script to where the tests are being run.
 set remote_python_file [gdb_remote_download host \
@@ -47,9 +49,6 @@ proc clean_restart_and_setup { prefix } {
 
 	Term::clean_restart 24 80 $testfile
 
-	# Skip all tests if Python scripting is not enabled.
-	if { [skip_python_tests] } { return 0 }
-
 	# Now source the python script.
 	gdb_test_no_output "source ${remote_python_file}" \
 	    "source ${testfile}.py"
@@ -62,7 +61,7 @@ proc clean_restart_and_setup { prefix } {
 
 	if {![runto_main]} {
 	    perror "test suppressed"
-	    return
+	    return 0
 	}
     }
 
@@ -130,7 +129,7 @@ proc run_test { cleanup_properly } {
     gdb_test "print 2 + 2 + 2" " = 6"
 
     # Now tell the Python code not to check the window is valid before
-    # calling rerended.  The result is the Python code will try to draw to
+    # calling render.  The result is the Python code will try to draw to
     # the screen.  This should throw a Python exception.
     gdb_test_no_output "python perform_valid_check = False"
     set exception_pattern "\r\nPython Exception\[^\n\r\]+TUI window is invalid\[^\n\r\]+"
@@ -151,7 +150,7 @@ proc run_test { cleanup_properly } {
     # Set 'update_title' to True.  The Python script will now try to set
     # the window title when an event occurs (instead of trying to redraw
     # the window). As the window is still not displayed this will again
-    # through an exception.
+    # throw an exception.
     gdb_test_no_output "python update_title = True"
     gdb_test_multiple "next" "next at cli, with an exception for setting the title" {
 	-re -wrap "func \\(5\\);${exception_pattern}" {
@@ -184,7 +183,10 @@ proc run_test { cleanup_properly } {
 
     Term::command "layout test"
     Term::command "tui disable"
+
     send_gdb "tui enable\n"
+    gdb_assert { [Term::wait_for "^$::gdb_prompt tui disable"] } "TUI renabled"
+
     Term::check_box "check for python window" 0 0 80 16
 }
 

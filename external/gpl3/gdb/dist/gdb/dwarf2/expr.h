@@ -1,6 +1,6 @@
 /* DWARF 2 Expression Evaluator.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by Daniel Berlin <dan@dberlin.org>.
 
@@ -19,11 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (DWARF2EXPR_H)
-#define DWARF2EXPR_H
+#ifndef GDB_DWARF2_EXPR_H
+#define GDB_DWARF2_EXPR_H
 
 #include "leb128.h"
 #include "dwarf2/call-site.h"
+#include "dwarf2.h"
 
 struct dwarf2_per_objfile;
 
@@ -54,6 +55,9 @@ enum dwarf_value_location
 /* A piece of an object, as recorded by DW_OP_piece or DW_OP_bit_piece.  */
 struct dwarf_expr_piece
 {
+  /* The DWARF operation for which the piece was created.  */
+  enum dwarf_location_atom op;
+
   enum dwarf_value_location location;
 
   union
@@ -137,7 +141,7 @@ struct dwarf_expr_context
      The ADDR_INFO property can be specified to override the range of
      memory addresses with the passed in buffer.  */
   value *evaluate (const gdb_byte *addr, size_t len, bool as_lval,
-		   dwarf2_per_cu_data *per_cu, const frame_info_ptr &frame,
+		   dwarf2_per_cu *per_cu, const frame_info_ptr &frame,
 		   const struct property_addr_info *addr_info = nullptr,
 		   struct type *type = nullptr,
 		   struct type *subobj_type = nullptr,
@@ -199,7 +203,7 @@ private:
   frame_info_ptr m_frame = nullptr;
 
   /* Compilation unit used for the evaluation.  */
-  dwarf2_per_cu_data *m_per_cu = nullptr;
+  dwarf2_per_cu *m_per_cu = nullptr;
 
   /* Property address info used for the evaluation.  */
   const struct property_addr_info *m_addr_info = nullptr;
@@ -208,7 +212,7 @@ private:
   struct type *address_type () const;
   void push (struct value *value, bool in_stack_memory);
   bool stack_empty_p () const;
-  void add_piece (ULONGEST size, ULONGEST offset);
+  void add_piece (ULONGEST size, ULONGEST offset, enum dwarf_location_atom op);
   void execute_stack_op (const gdb_byte *op_ptr, const gdb_byte *op_end);
   void pop ();
   struct value *fetch (int n);
@@ -252,6 +256,10 @@ private:
      but with the address being 0.  In this situation, we arrange for
      memory reads to come from the passed-in buffer.  */
   void read_mem (gdb_byte *buf, CORE_ADDR addr, size_t length);
+
+  /* Deref ADDR with size SIZE and return a value of type TYPE.
+     If TYPE == nullptr, defaults to this->address_type ().  */
+  value *deref (CORE_ADDR addr, int size, struct type *type = nullptr);
 };
 
 /* Return the value of register number REG (a DWARF register number),
@@ -320,4 +328,4 @@ extern const gdb_byte *safe_read_sleb128 (const gdb_byte *buf,
 extern const gdb_byte *safe_skip_leb128 (const gdb_byte *buf,
 					 const gdb_byte *buf_end);
 
-#endif /* DWARF2EXPR_H */
+#endif /* GDB_DWARF2_EXPR_H */

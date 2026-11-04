@@ -1,6 +1,6 @@
 /* Python interface to register, and register group information.
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbarch.h"
 #include "arch-utils.h"
 #include "reggroups.h"
@@ -427,40 +426,31 @@ gdbpy_parse_register_id (struct gdbarch *gdbarch, PyObject *pyo_reg_id,
 
 /* Initializes the new Python classes from this file in the gdb module.  */
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_registers ()
 {
   register_descriptor_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&register_descriptor_object_type) < 0)
-    return -1;
-  if (gdb_pymodule_addobject
-      (gdb_module, "RegisterDescriptor",
-       (PyObject *) &register_descriptor_object_type) < 0)
+  if (gdbpy_type_ready (&register_descriptor_object_type) < 0)
     return -1;
 
   reggroup_iterator_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&reggroup_iterator_object_type) < 0)
-    return -1;
-  if (gdb_pymodule_addobject
-      (gdb_module, "RegisterGroupsIterator",
-       (PyObject *) &reggroup_iterator_object_type) < 0)
+  if (gdbpy_type_ready (&reggroup_iterator_object_type) < 0)
     return -1;
 
   reggroup_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&reggroup_object_type) < 0)
-    return -1;
-  if (gdb_pymodule_addobject
-      (gdb_module, "RegisterGroup",
-       (PyObject *) &reggroup_object_type) < 0)
+  if (gdbpy_type_ready (&reggroup_object_type) < 0)
     return -1;
 
   register_descriptor_iterator_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&register_descriptor_iterator_object_type) < 0)
+  if (gdbpy_type_ready (&register_descriptor_iterator_object_type) < 0)
     return -1;
-  return (gdb_pymodule_addobject
-	  (gdb_module, "RegisterDescriptorIterator",
-	   (PyObject *) &register_descriptor_iterator_object_type));
+
+  return 0;
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_registers);
+
+
 
 static PyMethodDef register_descriptor_iterator_object_methods [] = {
   { "find", (PyCFunction) register_descriptor_iter_find,

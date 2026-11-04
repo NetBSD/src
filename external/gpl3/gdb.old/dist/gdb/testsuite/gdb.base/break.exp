@@ -1,4 +1,4 @@
-#   Copyright 1988-2023 Free Software Foundation, Inc.
+#   Copyright 1988-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,17 +49,17 @@ proc_with_prefix test_break {} {
     # for general use elsewhere.
     send_gdb "delete breakpoints\n"
     gdb_expect {
-	 -re "Delete all breakpoints.*$" {
+	 -re "Delete all breakpoints, watchpoints, tracepoints, and catchpoints.*$" {
 		send_gdb "y\n"
 		gdb_expect {
 		    -re "$::gdb_prompt $" {
-			fail "delete all breakpoints when none (unexpected prompt)"
+			fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none (unexpected prompt)"
 		    }
-		    timeout	{ fail "delete all breakpoints when none (timeout after unexpected prompt)" }
+		    timeout	{ fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none (timeout after unexpected prompt)" }
 		}
 	    }
-	 -re ".*$::gdb_prompt $"       { pass "delete all breakpoints when none" }
-	timeout	            { fail "delete all breakpoints when none (timeout)" }
+	 -re ".*$::gdb_prompt $"       { pass "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none" }
+	timeout	            { fail "delete all breakpoints, watchpoints, tracepoints, and catchpoints when none (timeout)" }
     }
 
     # test break at function
@@ -476,9 +476,6 @@ proc_with_prefix test_no_break_on_catchpoint {} {
 
 test_no_break_on_catchpoint
 
-# Verify that GDB responds gracefully when asked to set a breakpoint
-# on a nonexistent source line.
-
 proc_with_prefix test_break_nonexistent_line {} {
     clean_restart break
 
@@ -486,9 +483,11 @@ proc_with_prefix test_break_nonexistent_line {} {
 	return
     }
 
+    # Verify that GDB responds gracefully when asked to set a
+    # breakpoint on a nonexistent source line.
     gdb_test_no_output "set breakpoint pending off"
     gdb_test "break 999" \
-	"No line 999 in the current file." \
+	"^No compiled code for line 999 in the current file\\." \
 	"break on non-existent source line"
 }
 

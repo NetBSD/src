@@ -1,19 +1,19 @@
-This is the Postfix 3.10 stable release.
+This is the Postfix 3.11 stable release.
 
-The stable Postfix release is called postfix-3.10.x where 3=major
-release number, 10=minor release number, x=patchlevel. The stable
+The stable Postfix release is called postfix-3.11.x where 3=major
+release number, 11=minor release number, x=patchlevel. The stable
 release never changes except for patches that address bugs or
 emergencies. Patches change the patchlevel and the release date.
 
 New features are developed in snapshot releases. These are called
-postfix-3.11-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+postfix-3.12-yyyymmdd where yyyymmdd is the release date (yyyy=year,
 mm=month, dd=day). Patches are never issued for snapshot releases;
 instead, a new snapshot is released.
 
 The mail_release_date configuration parameter (format: yyyymmdd)
 specifies the release date of a stable release or snapshot release.
 
-If you upgrade from Postfix 3.8 or earlier, please read RELEASE_NOTES-3.9
+If you upgrade from Postfix 3.9 or earlier, please read RELEASE_NOTES-3.10
 before proceeding.
 
 Dual license
@@ -26,175 +26,267 @@ now also distributed with the more recent Eclipse Public License
 license of their choice. Those who are more comfortable with the
 IPL can continue with that license.
 
-Major changes - tls
--------------------
-
-[Forward compatibility 20250212] Support for OpenSSL 3.5 post-quantum
-cryptography. To manage algorithm selection, OpenSSL introduces new
-TLS group syntax that Postfix will not attempt to imitate. Instead,
-Postfix now allows the tls_eecdh_auto_curves and tls_ffdhe_auto_groups
-parameter values to have an empty value. When both are set empty,
-the algorithm selection can be managed through OpenSSL configuration.
-For more, look for "Post-quantum" in the postconf(5) manpage.
-
-[Feature 20250117] Support for the RFC 8689 "TLS-Required: no"
-message header to request delivery of messages such as TLSRPT
-summaries even if the preferred TLS security policy cannot be
-enforced. This limits the Postfix SMTP client to "smtp_tls_security_level
-= may" which does not authenticate server certificates and which
-allows falling back to plaintext.
-
-Support for the REQUIRETLS SMTP service extension remains future work.
-
-[Feature 20240926] Support for the TLSRPT protocol (defined in RFC
-8460). With this, a domain can publish a policy in DNS, and request
-daily summary reports for successful and failed SMTP-over-TLS
-connections to that domain's MX hosts.
-
-Postfix supports TLSRPT summaries for DANE (built-in) and MTA-STS
-(via an smtp_tls_policy_maps plugin). For details, see TLSRPT_README.
-
-Major changes - privacy
------------------------
-
-[Feature 20250205] With "smtpd_hide_client_session = yes", the
-Postfix SMTP server generates a Received: header without client
-session info This setting may be used with the MUA submission
-services (port 465 and 587), but it must not be used with the MTA
-service (port 25).
-
-Depending on the number of recipients, a redacted Received: header
-has one of the following forms:
-
-Received: by mail.example.com (Postfix) id postfix-queue-id
-        for <user@example.com>; Day, dd Mon yyyy hh:mm:ss tz-offset (zone)
-
-Received: by mail.example.com (Postfix) id postfix-queue-id
-        Day, dd Mon yyyy hh:mm:ss tz-offset (zone)
-
-The redacted form hides that a message was received with SMTP, and
-therefore it does not need to provide the information required by
-RFC 5321. It only has to satisfy RFC 5322.
-
-Major changes - rfc2047
------------------------
-
-[Feature 20250105] Support for automatic RFC 2047 encoding of
-non-ASCII "full name" information in Postfix-generated From: message
-headers.  Encoding non-ASCII full names can avoid the need to use
-SMTPUTF8, and therefore can avoid incompatibility with sites that
-do not support SMTPUTF8.
-
-The encoded result looks like "=?charset?Q?gibberish?=: for
-quoted-printable encoding, or "=?charset?B?gibberish?=" for base64
-encoding. Postfix uses quoted-printable for a full name that is
-short or mostly ASCII, and uses base64 otherwise.
-
-Background: when a message without a From: header is submitted with
-the Postfix sendmail(1) command, Postfix may add a From: header and
-use the sender's full name specified with the Postfix sendmail(1)
-"-F" option, with the sendmail(1) "NAME" environment variable, or
-with the GECOS field in the UNIX password database.
-
-This introduces a new configuration parameter "full_name_encoding_charset"
-(default: utf8) which specifies the character set of the full name
-information in the Postfix sendmail(1) "-F" option or "NAME"
-environment variable, or in the GECOS field in the UNIX password
-database. The parameter value becomes part of the encoded full name,
-and informs a Mail User Agent how to display the decoded gibberish.
-
-Major changes - bugfix
-----------------------
-
-[Incompat 20241130] The spawn(8) daemon failed to enforce the command
-time limit. It was sending the SIGKILL signal using the wrong
-effective UID and GID. The pipe(8) daemon has always done this
-right.
-
 Major changes - database
 ------------------------
 
-[Feature 20250207] When mysql: or pgsql: configuration specifies
-a single host, assume that it is a load balancer and reconnect
-immediately after a single failure, instead of failing all requests
-for 60s.
+[Incompat 20260220] The alias_maps and alias_database parameter
+default values have changed from hash:/path/to/aliases (or
+dbm:/path/to/aliases) to $default_database_type:/path/to/aliases.
+This simplifies the migration away from Berkeley DB.
 
-[Feature 20250114] first/next iterator support for cdb: tables, and
-other cdb: table code cleanups by Michael Tokarev.
+[Infrastructure 20260219] Support to migrate a Postfix configuration
+that uses Berkeley DB hash: or btree: tables, to a configuration
+that uses lmdb: or a combination of cdb: and lmdb:. This is needed
+for (Linux) OS distributions that have removed Berkeley DB support.
+See NON_BERKELEYDB_README for manual and automatic migration support.
 
-[Feature 20241024] In a pgsql: client configuration, the setting
-"dbname" is required, but ignored when the setting "hosts" contains
-an URI with a database name.
+Postfix already supports CDB and LMDB for more than 10 years.  It
+may be a good idea to do the migration before you need to upgrade
+to an OS distribution that no longer supports Berkeley DB.
 
-[Feature 20241025] The Postfix pgsql: client configuration now
-allows any well-formed URI prefix as a pgsql: client connection
-target (the PostgreSQL URI parser decides what is allowed). The
-dbname setting is now optional if the hosts setting specifies only
-URIs.
+[Infrastructure 20251226] Tooling to help with the migration away
+from Berkeley DB. 
 
-Major changes - internal protocol
----------------------------------
+The new parameter default_cache_db_type controls the default database
+type for address_verify_map, postscreen_cache_map, and
+smtp_sasl_auth_cache_name, previously hard-coded as 'btree'.
 
-[Incompat 20250116] Postfix needs "postfix reload" after upgrade,
-because of a change in the delivery agent protocol. If this step
-is skipped, Postfix delivery agents will log a warning:
+[Feature 20250321] Safety: the SQLite client now logs a warning
+when a query uses double quotes instead of the Postfix-recommended
+single quotes. Only the recommended form is protected against SQL
+injection.
 
-    unexpected attribute smtputf8 from xxx socket (expecting: sendopts)
+[Feature 20250509] Support to run all memcache lookup keys through
+an OpenSSL digest function. This prevents a database access error
+when lookup keys may exceed the memcache server's key length limit
+(usually, 250 bytes).
 
-where xxx is the delivery agent service name.
+[Feature 20250624] Support for a new "debug:" pseudo lookup table.
+Specify debug:maptype:mapname to encapsulate a maptype:mapname
+lookup table and log all access. This builds on existing but unused
+code to log table access. Contributed by Richard Hansen.
 
-Major changes - milter
-----------------------
+[Infrastructure 20250626] Overhauled in-memory lookup table life-cycle
+management; overhauled sharing/isolation for proxied lookup tables.
 
-[Incompat 20250106] The logging of the Milter 'quarantine' action
-has changed.  Instead of logging "milter triggers HOLD action", it
-logs the reason given by a Milter application, or "default_action"
-if a Milter application was unavailable and the milter_default_action
-parameter or per-Milter "default_action" property specifies
-"quarantine".
+Major changes - deprecation
+---------------------------
 
-[Feature 20250106] The Postfix Milter implementation now logs the
-reason for a 'quarantine' action, instead of "milter triggers HOLD
-action".
+[Feature 20250609] smtp_tls_enforce_peername and lmtp_tls_enforce_peername
+are now officially deprecated. Postfix will log a warning until the
+features are deleted. See DEPRECATION_README for a summary of
+deprecated and deleted features.
 
-- If the quarantine action was requested by a Milter application,
-  Postfix will log the reason given by the application.
+[Feature 20251027] This adds 12 more deprecation warnings for
+parameters that have been renamed in the past, and that still provide
+a backwards-compatible default value for their replacement. The
+parameters deprecated by this change are: authorized_verp_clients,
+fallback_relay, lmtp_per_record_deadline, postscreen_blacklist_action,
+postscreen_dnsbl_ttl, postscreen_dnsbl_whitelist_threshold,
+postscreen_whitelist_interfaces, smtpd_client_connection_limit_exceptions,
+smtp_per_record_deadline, tlsproxy_client_level, tlsproxy_client_policy,
+virtual_maps.
 
-- If the quarantine action was requested with the "milter_default_action"
-  parameter setting or with a per-Milter "default_action" property,
-  Postfix will log "default_action".
+[Feature 20251028] Deprecate the smtp_cname_overrides_servername
+and lmtp_cname_overrides_servername parameters, and delete documentation
+that has been obsolete since Postfix 2.11.
 
 Major changes - logging
 -----------------------
 
-[Feature 20250106] The Postfix Milter implementation now logs the
-reason for a 'quarantine' action, instead of "milter triggers HOLD
-action".
+[Feature 20250910] TLS feature policy status summary in delivery
+status logging. This shows the desired and actual TLS security level
+enforcement status and, if a message requests REQUIRETLS, the
+REQUIRETLS policy enforcement status. For a list of examples see
+https://www.postfix.org/postconf.5.html#smtp_log_tls_feature_status
 
-- If the quarantine action was requested by a Milter application,
-  Postfix will log the reason given by the application.
+[Feature 20251216] After a delivery failure, the bounce daemon
+logged "<old-queue-id>: sender non-delivery notification: <new-queue-id>"
+only if the notification was queued successfully. The bounce daemon
+now always logs this, making Postfix behavior easier to understand.
 
-- If the quarantine action was requested with the "milter_default_action"
-  parameter setting or with a per-Milter "default_action" property,
-  Postfix will log "default_action".
+Visible changes for logfile analyzers:
 
-[Incompat 20250105] The SMTP server now logs the queue ID (or
-"NOQUEUE") when a connection ends abnormally (timeout, lost connection,
-or too many errors).
+- The bounce daemon now logs "<old-queue-id>: sender non-delivery
+notification: <new-queue-id>" BEFORE the cleanup daemon logs activity
+with "<new-queue-id>". Previously, the bounce daemon logged the
+old<=>new queue ID connection later, which made logfile analysis
+more difficult.
 
-[Feature 20250105] The SMTP server now logs the queue ID (or
-"NOQUEUE") when a connection ends abnormally (timeout, lost connection,
-or too many errors).
+- The bounce daemon now logs a logfile record "<old-queue-id>:
+sender notification failed to <address>: <reason>" when the
+notification was not queued. In some cases it will log "<old-queue-id>:
+sender notification failed to <address>" (without the reason). In
+those cases the failure reason was already logged by lower-level
+code, but without the queue ID.
 
-[Incompat 20241104] The cleanup server now logs "queueid: canceled"
-when a message transaction is started but not completed.
+Major changes - management tool integration
+-------------------------------------------
 
-[Feature 20241104] The cleanup server now logs "queueid: canceled"
-when a message transaction is started but not completed. This
-provides a clear signal to logfile collation tools.
+[Feature 20251124] Basic JSON output support with "postconf
+-j|-jM|-jF|-jP", "postalias -jq|-js", "postmap -jq|-js", and
+"postmulti -jl". No support is planned for JSON input support.
 
-[Incompat 20241031] the Dovecot SASL client logging for "Invalid
-authentication mechanism" now includes the name of that mechanism.
+Major changes - milter support
+------------------------------
 
-[Incompat 20241023] Postfix SMTP server 'reject' logging now shows
-the sasl_method, sasl_username, and sasl_sender if available.
+[Feature 20251208] Improved Milter error handling for messages that
+arrive over a long-lived SMTP connection, by changing the default
+milter_default_action from "tempfail" to the new "shutdown" action
+(i.e. disconnect the remote SMTP client).
+
+This avoids a worst-case scenario where after a single Milter error,
+Postfix would tempfail all messages that the client sends over a
+long-lived connection, even if the Milter error was only temporary.
+
+Major changes - mime support
+----------------------------
+
+[Feature 20251104] New non_empty_end_of_header_action parameter
+with the cleanup(8) server action when a primary message header is
+terminated with a non-empty line:
+
+1) fix_quietly: Insert an empty line before the offending text (the
+backwards-compatible default),
+
+2) add_header: Insert a MIME-Error: header before inserting an empty
+line, or
+
+3) reject: Log a "mime-error" and reject the message.
+
+Note that the 'empty line' separator is not used for DKIM signature
+checks. Therefore, adding a missing separator does not break DKIM.
+
+Major changes - mta-sts
+-----------------------
+
+[Feature 20250906] Workaround for an interface mis-match between
+the Postfix SMTP client and MTA-STS policy plugins. This introduces
+a new parameter "smtp_tls_enforce_sts_mx_patterns" (default: "yes").
+The MTA-STS plugin configuration needs to enable TLSRPT support,
+so that it forwards STS policy attributes to Postfix. This works
+even if Postfix TLSRPT support is disabled at build time or at
+runtime.
+
+With the above two configurations, the Postfix SMTP client will
+connect to an MX host only if its name matches any STS policy MX
+host pattern, and will match a server certificate against the MX
+hostname. Otherwise, the old behavior stays in effect: connect to
+any MX host listed in DNS, and match a server certificate against
+any STS policy MX host pattern.
+
+This code was published first in Postfix 3.11, and later back-ported
+to Postfix 3.10.5.
+
+Major changes - portability
+---------------------------
+
+[Feature 20241201] Support for the C23 built-in bool type. Older
+Postfix releases have been updated with a makedefs script that
+disables C23 built-in bool support.
+
+Major changes - postqueue
+-------------------------
+
+[Feature 20251218] the postqueue (and mailq) command now also lists
+recipients in bounce logfiles (in JSON output, this uses a new
+object member 'bounce_reason' instead of the existing 'delay_reason').
+Such recipients have already been deleted from the message queue
+file, but they are still pending the creation of a non-delivery
+status notification message that will be returned to the sender.
+
+Major changes - relocated_maps
+------------------------------
+
+[Feature 20250608] Specify "relocated_prefix_enable = no" to disable
+the hard-coded prefix "5.1.6 User has moved to " that is by default
+prepended to all relocated_maps lookup results. This setting requires
+that the table contains responses with both custom enhanced status
+code (X.Y.Z) and text. For details, see "man 5 relocated" or
+https://www.postfix.org/relocated.5.html .
+
+Major changes - requiretls
+--------------------------
+
+[Feature 20241111] Support for the REQUIRETLS verb in SMTP. This,
+and everything that was added later through 2025, is described in
+REQUIRETLS_README.
+
+[Feature 20250120] After a certificate check fails, or a remote
+SMTP server does not announce REQUIRETLS support, the Postfix SMTP
+client will override the RFC 8689 5.x.x.  status and treat it as a
+soft error, until there are no more alternate MX servers to try.
+
+[Feature 20250827] New parameter requiretls_redact_dsn (default:
+yes) to redact bounce messages as described in RFC 8689 section 5,
+so that they don't need REQUIRETLS support on every hop in the
+return path.
+
+[Feature 20250827] smtp_requiretls_policy and lmtp_requiretls_policy
+for responsible REQUIRETLS policy enforcement. REQUIRETLS must be
+enforced with care, because at this time most domains do not publish
+DANE or MTA-STS policies, and most MTAs and content filters do not
+support REQUIRETLS.
+
+[Feature 20250916] support for a "Require-TLS-ESMTP: yes" header
+to propagate an ESMTP REQUIRETLS request through a FILTER_README
+or SMTPD_PROXY_README style content filter. This header is detected
+or added by the cleanup daemon and by the before-proxy-filter Postfix
+SMTP server. This feature is enabled by default with
+"requiretls_esmtp_header = yes". The Require-TLS-ESMTP header will
+be visible to local and remote recipients. This feature can safely
+be disabled when a configuration does not use REQUIRETLS, or does
+not use FILTER_README or SMTPD_PROXY_README style content filters.
+
+Major changes - smtp server
+---------------------------
+
+[Feature 20250801] smtpd_reject_filter_maps support to selectively
+replace a reject response from the Postfix SMTP server, or from a
+program that replies through the Postfix SMTP server.
+
+Major changes - smtputf8
+------------------------
+
+[Feature 20250122] New Postfix sendmail command option "-O smtputf8"
+to request that deliveries over SMTP use the SMTPUTF8 extension.
+This reuses logic that was introduced for REQUIRETLS.
+
+[Feature 20250824] When a message needs to be delivered with SMTPUTF8,
+but a remote server does not support it, the Postfix SMTP client
+may now try alternate servers instead of returning the message
+immediately. This reuses code that was implemented for REQUIRETLS.
+
+Major changes - tls support
+---------------------------
+
+[Feature 20250623] This changes the Postfix SMTP client
+smtp_tls_security_level default value to "may" if Postfix was built
+with TLS support, and the compatibility_level is 3.11 or higher.
+
+There is no change to the default lmtp_tls_security_level value.
+It remains empty, because there is no default TLS security level
+that makes sense for connections over UNIX-domain and loopback TCP
+and non-loopback TCP sockets.
+
+There also is no equivalent change for Postfix SMTP server TLS
+security levels, because changing smtpd_tls_security_level is not
+sufficient. Server-side TLS requires that at least one private key
+and corresponding public-key certificate chain are configured.
+
+[Feature 20251029] Debugging: depending on OpenSSL build options,
+"posttls-finger -L ssl-debug" will decode TLS handshake messages.
+
+[Feature 20251102] Post-quantum cryptography support: with OpenSSL
+3.5 and later, change the tls_eecdh_auto_curves default value to
+avoid problems with network infrastructure that mis-handles TLS
+hello messages larger than one (Ethernet) TCP segment. This problem
+is more generally known as "protocol ossification".
+
+Major changes - tlsrpt
+----------------------
+
+[Incompat 20250601] the default smtp_tlsrpt_skip_reused_handshakes
+setting was changed from "yes" to "no". The new default is enabled
+with compatibility level >= 3.11.
+

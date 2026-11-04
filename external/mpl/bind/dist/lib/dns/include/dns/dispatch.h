@@ -1,4 +1,4 @@
-/*	$NetBSD: dispatch.h,v 1.7.2.1 2025/08/02 05:53:34 perseant Exp $	*/
+/*	$NetBSD: dispatch.h,v 1.7.2.2 2026/11/04 23:18:05 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -76,8 +76,13 @@ struct dns_dispatchset {
 
 typedef enum dns_dispatchopt {
 	DNS_DISPATCHOPT_FIXEDID = 1 << 0,
-	DNS_DISPATCHOPT_UNSHARED = 1 << 1, /* Don't share this connection */
 } dns_dispatchopt_t;
+
+typedef enum dns_dispatchtype {
+	DNS_DISPATCHTYPE_RESOLVER,
+	DNS_DISPATCHTYPE_REQUEST,
+	DNS_DISPATCHTYPE_XFRIN,
+} dns_dispatchtype_t;
 
 isc_result_t
 dns_dispatchmgr_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr, isc_nm_t *nm,
@@ -153,6 +158,15 @@ dns_dispatchmgr_setavailports(dns_dispatchmgr_t *mgr, isc_portset_t *v4portset,
  */
 
 void
+dns_dispatchmgr_setreusetimeout(dns_dispatchmgr_t *mgr, unsigned int timeout);
+/*%<
+ * Sets the idle timeout (in milliseconds) for a reused outgoing TCP connection.
+ * While a dispatch has no outstanding responses we keep a read pending so a
+ * peer-initiated close is noticed promptly; this bounds how long such an idle
+ * connection is kept open for reuse.
+ */
+
+void
 dns_dispatchmgr_setstats(dns_dispatchmgr_t *mgr, isc_stats_t *stats);
 /*%<
  * Sets statistics counter for the dispatchmgr.  This function is expected to
@@ -187,14 +201,14 @@ dns_dispatch_createudp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *localaddr,
 isc_result_t
 dns_dispatch_createtcp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *localaddr,
 		       const isc_sockaddr_t *destaddr,
-		       dns_transport_t *transport, dns_dispatchopt_t options,
-		       dns_dispatch_t **dispp);
+		       dns_transport_t *transport, dns_dispatchtype_t disptype,
+		       dns_dispatchopt_t options, dns_dispatch_t **dispp);
 /*%<
  * Create a new TCP dns_dispatch.
  *
  * Note: a NULL transport is different from a non-NULL transport of type
  *	 DNS_TRANSPORT_TCP, though currently their behavior is the same.
- *	 This allows for different types of transactions to be seperated
+ *	 This allows for different types of transactions to be separated
  *	 in the future if needed.
  *
  * Requires:
@@ -265,35 +279,6 @@ dns_dispatch_resume(dns_dispentry_t *resp, uint16_t timeout);
  *
  * Requires:
  *\li	'resp' is valid.
- */
-
-isc_result_t
-dns_dispatch_gettcp(dns_dispatchmgr_t *mgr, const isc_sockaddr_t *destaddr,
-		    const isc_sockaddr_t *localaddr, dns_transport_t *transport,
-		    dns_dispatch_t **dispp);
-/*
- * Attempt to connect to a existing TCP connection that was created with
- * parameters that match destaddr, localaddr and transport.
- *
- * If localaddr is NULL, we ignore the dispatch's localaddr when looking
- * for a match.  However, if transport is NULL, then the matching dispatch
- * must also have been created with a NULL transport.
- *
- * Requires:
- *\li	mgr to be valid dispatch manager.
- *
- *\li	dstaddr to be a valid sockaddr.
- *
- *\li	localaddr to be NULL or a valid sockaddr.
- *
- *\li	transport is NULL or a valid transport.
- *
- *\li	dispp to be non NULL and *dispp to be NULL
- *
- * Returns:
- *\li	ISC_R_SUCCESS	-- success.
- *
- *\li	Anything else	-- failure.
  */
 
 typedef void (*dispatch_cb_t)(isc_result_t eresult, isc_region_t *region,

@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.10.2.1 2025/08/02 05:53:23 perseant Exp $	*/
+/*	$NetBSD: db.c,v 1.10.2.2 2026/11/04 23:17:59 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -312,6 +312,57 @@ dns_db_endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 
 	if (db->methods->endload != NULL) {
 		return (db->methods->endload)(db, callbacks);
+	}
+
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+isc_result_t
+dns_db_beginupdate(dns_db_t *db, dns_dbversion_t *ver,
+		   dns_rdatacallbacks_t *callbacks) {
+	/*
+	 * Begin updating 'db'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	if (db->methods->beginupdate != NULL) {
+		return (db->methods->beginupdate)(db, ver, callbacks);
+	}
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+isc_result_t
+dns_db_commitupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	/*
+	 * Commit the update to 'db'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	if (db->methods->commitupdate != NULL) {
+		return (db->methods->commitupdate)(db, callbacks);
+	}
+
+	return ISC_R_NOTIMPLEMENTED;
+}
+
+isc_result_t
+dns_db_abortupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	/*
+	 * Abort the update to 'db'.
+	 */
+
+	REQUIRE(DNS_DB_VALID(db));
+	REQUIRE(dns_db_iszone(db));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	if (db->methods->abortupdate != NULL) {
+		return (db->methods->abortupdate)(db, callbacks);
 	}
 
 	return ISC_R_NOTIMPLEMENTED;
@@ -654,7 +705,8 @@ dns__db_findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	REQUIRE(node != NULL);
 	REQUIRE(DNS_RDATASET_VALID(rdataset));
 	REQUIRE(!dns_rdataset_isassociated(rdataset));
-	REQUIRE(covers == 0 || type == dns_rdatatype_rrsig);
+	REQUIRE(covers == dns_rdatatype_none || type == dns_rdatatype_rrsig ||
+		type == dns_rdatatype_sig);
 	REQUIRE(type != dns_rdatatype_any);
 	REQUIRE(sigrdataset == NULL ||
 		(DNS_RDATASET_VALID(sigrdataset) &&

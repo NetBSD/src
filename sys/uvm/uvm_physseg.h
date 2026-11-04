@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.h,v 1.9 2024/01/13 09:44:42 tnn Exp $ */
+/* $NetBSD: uvm_physseg.h,v 1.9.2.1 2026/11/04 23:28:09 perseant Exp $ */
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -49,7 +49,7 @@
  * No APIs are explicitly #included in uvm_physseg.c
  */
 
-#if defined(UVM_HOTPLUG) /* rbtree impementation */
+#if defined(UVM_HOTPLUG) /* rbtree implementation */
 #define PRIxPHYSSEG "p"
 
 /*

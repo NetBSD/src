@@ -1,6 +1,6 @@
 /* Handle shared libraries for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_DARWIN_H
-#define SOLIB_DARWIN_H
+#ifndef GDB_SOLIB_DARWIN_H
+#define GDB_SOLIB_DARWIN_H
 
-struct solib_ops;
+#include "solib.h"
 
-extern const solib_ops darwin_so_ops;
+/* Return a new solib_ops for Darwin systems.  */
 
-#endif /* solib-darwin.h */
+extern solib_ops_up make_darwin_solib_ops (program_space *pspace);
+
+#endif /* GDB_SOLIB_DARWIN_H */

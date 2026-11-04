@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_WIN_H
-#define TUI_TUI_WIN_H
+#ifndef GDB_TUI_TUI_WIN_H
+#define GDB_TUI_TUI_WIN_H
 
 #include "tui/tui-data.h"
 
@@ -51,8 +51,14 @@ struct cmd_list_element **tui_get_cmd_list (void);
 /* Whether compact source display should be used.  */
 extern bool compact_source;
 
+/* Whether the TUI should intercept terminal mouse events.  */
+extern bool tui_enable_mouse;
+
 /* Whether to style the source and assembly code highlighted by the TUI's
    current position indicator.  */
 extern bool style_tui_current_position;
 
-#endif /* TUI_TUI_WIN_H */
+/* Whether to replace the spaces in the left margin with '_' and '0'.  */
+extern bool tui_left_margin_verbose;
+
+#endif /* GDB_TUI_TUI_WIN_H */

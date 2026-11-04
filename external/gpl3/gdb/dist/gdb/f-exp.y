@@ -1,6 +1,6 @@
 
 /* YACC parser for Fortran expressions, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -754,7 +754,11 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 	|       REAL_S8_KEYWORD
 			{ $$ = parse_f_type (pstate)->builtin_real_s8; }
 	|	REAL_S16_KEYWORD
-			{ $$ = parse_f_type (pstate)->builtin_real_s16; }
+			{ $$ = parse_f_type (pstate)->builtin_real_s16;
+			  if ($$->code () == TYPE_CODE_ERROR)
+			    error (_("unsupported type %s"),
+				   TYPE_SAFE_NAME ($$));
+			}
 	|	COMPLEX_KEYWORD
 			{ $$ = parse_f_type (pstate)->builtin_complex; }
 	|	COMPLEX_S4_KEYWORD
@@ -762,7 +766,11 @@ typebase  /* Implements (approximately): (type-qualifier)* type-specifier */
 	|	COMPLEX_S8_KEYWORD
 			{ $$ = parse_f_type (pstate)->builtin_complex_s8; }
 	|	COMPLEX_S16_KEYWORD 
-			{ $$ = parse_f_type (pstate)->builtin_complex_s16; }
+			{ $$ = parse_f_type (pstate)->builtin_complex_s16;
+			  if ($$->code () == TYPE_CODE_ERROR)
+			    error (_("unsupported type %s"),
+				   TYPE_SAFE_NAME ($$));
+			}
 	|	SINGLE PRECISION
 			{ $$ = parse_f_type (pstate)->builtin_real;}
 	|	DOUBLE PRECISION
@@ -1156,12 +1164,9 @@ push_kind_type (LONGEST val, struct type *type)
   type_stack->push (tp_kind);
 }
 
-/* Called when a type has a '(kind=N)' modifier after it, for example
-   'character(kind=1)'.  The BASETYPE is the type described by 'character'
-   in our example, and KIND is the integer '1'.  This function returns a
-   new type that represents the basetype of a specific kind.  */
+/* Helper function for convert_to_kind_type.  */
 static struct type *
-convert_to_kind_type (struct type *basetype, int kind)
+convert_to_kind_type_1 (struct type *basetype, int kind)
 {
   if (basetype == parse_f_type (pstate)->builtin_character)
     {
@@ -1211,11 +1216,23 @@ convert_to_kind_type (struct type *basetype, int kind)
 	return parse_f_type (pstate)->builtin_integer_s8;
     }
 
-  error (_("unsupported kind %d for type %s"),
-	 kind, TYPE_SAFE_NAME (basetype));
-
-  /* Should never get here.  */
   return nullptr;
+}
+
+/* Called when a type has a '(kind=N)' modifier after it, for example
+   'character(kind=1)'.  The BASETYPE is the type described by 'character'
+   in our example, and KIND is the integer '1'.  This function returns a
+   new type that represents the basetype of a specific kind.  */
+static struct type *
+convert_to_kind_type (struct type *basetype, int kind)
+{
+  struct type *res = convert_to_kind_type_1 (basetype, kind);
+
+  if (res == nullptr || res->code () == TYPE_CODE_ERROR)
+    error (_("unsupported kind %d for type %s"),
+	   kind, TYPE_SAFE_NAME (basetype));
+
+  return res;
 }
 
 struct f_token
@@ -1646,7 +1663,7 @@ yylex (void)
       {
 	result = lookup_symbol (tmp.c_str (), pstate->expression_context_block,
 				domain, NULL);
-	if (result.symbol && result.symbol->aclass () == LOC_TYPEDEF)
+	if (result.symbol && result.symbol->loc_class () == LOC_TYPEDEF)
 	  {
 	    yylval.tsym.type = result.symbol->type ();
 	    return TYPENAME;

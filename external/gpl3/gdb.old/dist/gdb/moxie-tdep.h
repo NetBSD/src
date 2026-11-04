@@ -1,6 +1,6 @@
 /* Target-dependent code for Moxie
  
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MOXIE_TDEP_H
-#define MOXIE_TDEP_H
+#ifndef GDB_MOXIE_TDEP_H
+#define GDB_MOXIE_TDEP_H
 
 #include "gdbarch.h"
 
@@ -42,4 +42,4 @@ enum moxie_regnum
 
 #define MOXIE_NUM_REGS 18
 
-#endif /* moxie-tdep.h */
+#endif /* GDB_MOXIE_TDEP_H */

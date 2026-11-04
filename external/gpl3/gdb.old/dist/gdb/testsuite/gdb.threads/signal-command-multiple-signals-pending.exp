@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@
 
 standard_testfile
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping ${testfile}.exp because of nosignals."
-    return -1
-}
+require {!target_info exists gdb,nosignals}
 
 if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	 executable { debug }] != "" } {
@@ -32,7 +29,7 @@ if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 # scheduler-locking) of the test to perform.
 
 proc test { schedlock } {
-    global srcfile binfile
+    global srcfile binfile tdlabel_re
 
     with_test_prefix "schedlock $schedlock" {
 	clean_restart ${binfile}
@@ -63,7 +60,7 @@ proc test { schedlock } {
 	gdb_test "continue" "all_threads_signalled.*" \
 	    "continue to all_threads signalled"
 
-	gdb_test "info threads" "\\\* 1\[ \t\]+Thread.*" "thread 1 selected"
+	gdb_test "info threads" "\\\* 1\[ \t\]+${tdlabel_re}.*" "thread 1 selected"
 
 	# With schedlock still enabled, let each thread report its
 	# signal.

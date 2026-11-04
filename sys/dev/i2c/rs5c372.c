@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.17 2021/01/30 17:38:27 thorpej Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.17.24.1 2026/11/04 23:21:56 perseant Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.17 2021/01/30 17:38:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.17.24.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,10 +95,9 @@ rs5c372rtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = rs5c372rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = rs5c372rtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 
@@ -110,7 +109,7 @@ rs5c372rtc_attach(device_t parent, device_t self, void *arg)
 static int
 rs5c372rtc_gettime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct rs5c372rtc_softc *sc = ch->cookie;
+	struct rs5c372rtc_softc *sc = device_private(ch->todr_dev);
 
 	return rs5c372rtc_clock_read(sc, dt);
 }
@@ -118,7 +117,7 @@ rs5c372rtc_gettime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 static int
 rs5c372rtc_settime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
-	struct rs5c372rtc_softc *sc = ch->cookie;
+	struct rs5c372rtc_softc *sc = device_private(ch->todr_dev);
 
 	return rs5c372rtc_clock_write(sc, dt);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.4.4.1 2025/08/02 05:53:56 perseant Exp $	*/
+/*	$NetBSD: tls.c,v 1.4.4.2 2026/11/04 23:18:16 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,6 +27,9 @@
 #include <openssl/conf.h>
 #include <openssl/crypto.h>
 #include <openssl/dh.h>
+#if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000
+#include <openssl/engine.h>
+#endif /* if !defined(OPENSSL_NO_ENGINE) && OPENSSL_API_LEVEL < 30000 */
 #include <openssl/err.h>
 #include <openssl/evp.h>
 #include <openssl/opensslv.h>
@@ -56,9 +59,8 @@
 #define COMMON_SSL_OPTIONS \
 	(SSL_OP_NO_COMPRESSION | SSL_OP_NO_SESSION_RESUMPTION_ON_RENEGOTIATION)
 
-static isc_mem_t *isc__tls_mctx = NULL;
-
 #if OPENSSL_VERSION_NUMBER < 0x10100000L
+static isc_mem_t *isc__tls_mctx = NULL;
 static isc_mutex_t *locks = NULL;
 static int nlocks;
 
@@ -79,92 +81,8 @@ isc__tls_set_thread_id(CRYPTO_THREADID *id) {
 }
 #endif
 
-#if !defined(LIBRESSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L
-/*
- * This was crippled with LibreSSL, so just skip it:
- * https://cvsweb.openbsd.org/src/lib/libcrypto/Attic/mem.c
- */
-
-#if ISC_MEM_TRACKLINES
-/*
- * We use the internal isc__mem API here, so we can pass the file and line
- * arguments passed from OpenSSL >= 1.1.0 to our memory functions for better
- * tracking of the OpenSSL allocations.  Without this, we would always just see
- * isc__tls_{malloc,realloc,free} in the tracking output, but with this in place
- * we get to see the places in the OpenSSL code where the allocations happen.
- */
-
-static void *
-isc__tls_malloc_ex(size_t size, const char *file, int line) {
-	return isc__mem_allocate(isc__tls_mctx, size, 0, file,
-				 (unsigned int)line);
-}
-
-static void *
-isc__tls_realloc_ex(void *ptr, size_t size, const char *file, int line) {
-	return isc__mem_reallocate(isc__tls_mctx, ptr, size, 0, file,
-				   (unsigned int)line);
-}
-
-static void
-isc__tls_free_ex(void *ptr, const char *file, int line) {
-	if (ptr == NULL) {
-		return;
-	}
-	if (isc__tls_mctx != NULL) {
-		isc__mem_free(isc__tls_mctx, ptr, 0, file, (unsigned int)line);
-	}
-}
-
-#else /* ISC_MEM_TRACKLINES */
-
-static void *
-isc__tls_malloc_ex(size_t size, const char *file, int line) {
-	UNUSED(file);
-	UNUSED(line);
-	return isc_mem_allocate(isc__tls_mctx, size);
-}
-
-static void *
-isc__tls_realloc_ex(void *ptr, size_t size, const char *file, int line) {
-	UNUSED(file);
-	UNUSED(line);
-	return isc_mem_reallocate(isc__tls_mctx, ptr, size);
-}
-
-static void
-isc__tls_free_ex(void *ptr, const char *file, int line) {
-	UNUSED(file);
-	UNUSED(line);
-	if (ptr == NULL) {
-		return;
-	}
-	if (isc__tls_mctx != NULL) {
-		isc__mem_free(isc__tls_mctx, ptr, 0);
-	}
-}
-
-#endif /* ISC_MEM_TRACKLINES */
-
-#endif /* !defined(LIBRESSL_VERSION_NUMBER) */
-
 void
 isc__tls_initialize(void) {
-	isc_mem_create(&isc__tls_mctx);
-	isc_mem_setname(isc__tls_mctx, "OpenSSL");
-	isc_mem_setdestroycheck(isc__tls_mctx, false);
-
-#if !defined(LIBRESSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= 0x30000000L
-	/*
-	 * CRYPTO_set_mem_(_ex)_functions() returns 1 on success or 0 on
-	 * failure, which means OpenSSL already allocated some memory.  There's
-	 * nothing we can do about it.
-	 */
-	(void)CRYPTO_set_mem_functions(isc__tls_malloc_ex, isc__tls_realloc_ex,
-				       isc__tls_free_ex);
-#endif /* !defined(LIBRESSL_VERSION_NUMBER) && OPENSSL_VERSION_NUMBER >= \
-	  0x30000000L  */
-
 #if OPENSSL_VERSION_NUMBER >= 0x10100000L
 	uint64_t opts = OPENSSL_INIT_ENGINE_ALL_BUILTIN |
 			OPENSSL_INIT_LOAD_CONFIG;
@@ -178,6 +96,10 @@ isc__tls_initialize(void) {
 
 	RUNTIME_CHECK(OPENSSL_init_ssl(opts, NULL) == 1);
 #else
+	isc_mem_create(&isc__tls_mctx);
+	isc_mem_setname(isc__tls_mctx, "OpenSSL");
+	isc_mem_setdestroycheck(isc__tls_mctx, false);
+
 	nlocks = CRYPTO_num_locks();
 	locks = isc_mem_cget(isc__tls_mctx, nlocks, sizeof(locks[0]));
 	isc_mutexblock_init(locks, nlocks);
@@ -231,14 +153,18 @@ isc__tls_shutdown(void) {
 		isc_mem_cput(isc__tls_mctx, locks, nlocks, sizeof(locks[0]));
 		locks = NULL;
 	}
-#endif
 
 	isc_mem_destroy(&isc__tls_mctx);
+#endif
 }
 
 void
 isc__tls_setdestroycheck(bool check) {
+#if OPENSSL_VERSION_NUMBER < 0x10100000L
 	isc_mem_setdestroycheck(isc__tls_mctx, check);
+#else
+	UNUSED(check);
+#endif
 }
 
 void
@@ -528,7 +454,7 @@ isc_tlsctx_createserver(const char *keyfile, const char *certfile,
 
 		X509_set_pubkey(cert, pkey);
 
-		X509_NAME *name = X509_get_subject_name(cert);
+		X509_NAME *name = X509_NAME_dup(X509_get_subject_name(cert));
 
 		X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC,
 					   (const unsigned char *)"AQ", -1, -1,
@@ -543,6 +469,9 @@ isc_tlsctx_createserver(const char *keyfile, const char *certfile,
 					   -1, -1, 0);
 
 		X509_set_issuer_name(cert, name);
+
+		X509_NAME_free(name);
+
 		X509_sign(cert, pkey, EVP_sha256());
 		rv = SSL_CTX_use_certificate(ctx, cert);
 		if (rv != 1) {

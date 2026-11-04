@@ -37,8 +37,8 @@ dig_with_opts a.example. @10.53.0.3 any >dig.out.ns3.1 || status=1
 echo_i "copying in new configurations for ns2 and ns3"
 rm -f ns2/named.conf ns3/named.conf ns2/example.db
 cp -f ns2/example2.db ns2/example.db
-copy_setports ns2/named2.conf.in ns2/named.conf
-copy_setports ns3/named2.conf.in ns3/named.conf
+cp ns2/named2.conf ns2/named.conf
+cp ns3/named2.conf ns3/named.conf
 
 echo_i "reloading ns2 and ns3 with rndc"
 nextpart ns2/named.run >/dev/null
@@ -137,8 +137,8 @@ ret=0
 wait_for_signed() {
   "$DIG" -p "${PORT}" @10.53.0.2 -b 10.53.0.2 +dnssec DNSKEY inline >dig.out.internal
   "$DIG" -p "${PORT}" @10.53.0.2 -b 10.53.0.5 +dnssec DNSKEY inline >dig.out.external
-  grep "ANSWER: 4," dig.out.internal >/dev/null || return 1
-  grep "ANSWER: 4," dig.out.external >/dev/null || return 1
+  grep "ANSWER: 3," dig.out.internal >/dev/null || return 1
+  grep "ANSWER: 3," dig.out.external >/dev/null || return 1
   return 0
 }
 retry_quiet 10 wait_for_signed || ret=1
@@ -151,7 +151,7 @@ status=$((status + ret))
 echo_i "verifying adding of multiple inline zones followed by reconfiguration works"
 
 [ ! -f ns2/zones.conf ] && touch ns2/zones.conf
-copy_setports ns2/named3.conf.in ns2/named.conf
+cp ns2/named3.conf ns2/named.conf
 
 i=1
 while [ $i -lt 50 ]; do

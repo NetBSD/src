@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrin.c,v 1.14.2.1 2025/08/02 05:53:32 perseant Exp $	*/
+/*	$NetBSD: xfrin.c,v 1.14.2.2 2026/11/04 23:18:04 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <isc/async.h>
 #include <isc/atomic.h>
 #include <isc/mem.h>
+#include <isc/queue.h>
 #include <isc/random.h>
 #include <isc/result.h>
 #include <isc/string.h>
@@ -55,14 +56,6 @@
 /*
  * Incoming AXFR and IXFR.
  */
-
-#define CHECK(op)                              \
-	{                                      \
-		result = (op);                 \
-		if (result != ISC_R_SUCCESS) { \
-			goto failure;          \
-		}                              \
-	}
 
 /*%
  * The states of the *XFR state machine.  We handle both IXFR and AXFR
@@ -116,6 +109,8 @@ static isc_mutex_t xfrin_lock = PTHREAD_MUTEX_INITIALIZER;
  * Incoming zone transfer context.
  */
 
+typedef struct dns_ixfr dns_ixfr_t;
+
 struct dns_xfrin {
 	unsigned int magic;
 	isc_mem_t *mctx;
@@ -163,12 +158,11 @@ struct dns_xfrin {
 
 	/* Diff queue */
 	bool diff_running;
-	struct __cds_wfcq_head diff_head;
-	struct cds_wfcq_tail diff_tail;
+	isc_queue_t diff_queue;
 
 	_Atomic xfrin_state_t state;
 	uint32_t expireopt;
-	bool edns, expireoptset;
+	bool edns, expireoptset, retry_axfr;
 	atomic_bool is_ixfr;
 
 	/*
@@ -199,8 +193,6 @@ struct dns_xfrin {
 
 	dns_tsigkey_t *tsigkey; /*%< Key used to create TSIG */
 	isc_buffer_t *lasttsig; /*%< The last TSIG */
-	dst_context_t *tsigctx; /*%< TSIG verification context */
-	unsigned int sincetsig; /*%< recvd since the last TSIG */
 
 	dns_transport_t *transport;
 
@@ -214,7 +206,7 @@ struct dns_xfrin {
 	 */
 	dns_rdatacallbacks_t axfr;
 
-	struct {
+	struct dns_ixfr {
 		uint32_t request_serial;
 		uint32_t current_serial;
 		dns_journal_t *journal;
@@ -236,15 +228,6 @@ struct dns_xfrin {
 
 #define XFRIN_MAGIC    ISC_MAGIC('X', 'f', 'r', 'I')
 #define VALID_XFRIN(x) ISC_MAGIC_VALID(x, XFRIN_MAGIC)
-
-#define XFRIN_WORK_MAGIC    ISC_MAGIC('X', 'f', 'r', 'W')
-#define VALID_XFRIN_WORK(x) ISC_MAGIC_VALID(x, XFRIN_WORK_MAGIC)
-
-typedef struct xfrin_work {
-	unsigned int magic;
-	isc_result_t result;
-	dns_xfrin_t *xfr;
-} xfrin_work_t;
 
 /**************************************************************************/
 /*
@@ -285,7 +268,7 @@ static isc_result_t
 xfrin_start(dns_xfrin_t *xfr);
 
 static void
-xfrin_connect_done(isc_result_t result, isc_region_t *region, void *arg);
+xfrin_connect_done(isc_result_t eresult, isc_region_t *region, void *arg);
 static isc_result_t
 xfrin_send_request(dns_xfrin_t *xfr);
 static void
@@ -305,6 +288,10 @@ static void
 xfrin_idledout(void *);
 static void
 xfrin_minratecheck(void *);
+static void
+xfrin_reset(dns_xfrin_t *xfr);
+static void
+xfrin_ixfrcleanup(dns_xfrin_t *xfr);
 static void
 xfrin_fail(dns_xfrin_t *xfr, isc_result_t result, const char *msg);
 static isc_result_t
@@ -337,11 +324,11 @@ axfr_init(dns_xfrin_t *xfr) {
 	dns_rdatacallbacks_init(&xfr->axfr);
 	CHECK(dns_db_beginload(xfr->db, &xfr->axfr));
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	return result;
 }
 
-static void
+static isc_result_t
 axfr_apply(void *arg);
 
 static isc_result_t
@@ -356,17 +343,8 @@ axfr_putdata(dns_xfrin_t *xfr, dns_diffop_t op, dns_name_t *name, dns_ttl_t ttl,
 	}
 
 	CHECK(dns_zone_checknames(xfr->zone, name, rdata));
-
-	if (dns_diff_size(&xfr->diff) > 128 &&
-	    dns_diff_is_boundary(&xfr->diff, name))
-	{
-		xfrin_work_t work = (xfrin_work_t){
-			.magic = XFRIN_WORK_MAGIC,
-			.result = ISC_R_UNSET,
-			.xfr = xfr,
-		};
-		axfr_apply((void *)&work);
-		CHECK(work.result);
+	if (dns_diff_size(&xfr->diff) > 128) {
+		CHECK(axfr_apply(xfr));
 	}
 
 	CHECK(dns_difftuple_create(xfr->diff.mctx, op, name, ttl, rdata,
@@ -374,50 +352,42 @@ axfr_putdata(dns_xfrin_t *xfr, dns_diffop_t op, dns_name_t *name, dns_ttl_t ttl,
 	dns_diff_append(&xfr->diff, &tuple);
 
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	return result;
 }
 
 /*
  * Store a set of AXFR RRs in the database.
  */
-static void
+static isc_result_t
 axfr_apply(void *arg) {
-	xfrin_work_t *work = arg;
-	REQUIRE(VALID_XFRIN_WORK(work));
-
-	dns_xfrin_t *xfr = work->xfr;
+	dns_xfrin_t *xfr = arg;
 	REQUIRE(VALID_XFRIN(xfr));
 
 	isc_result_t result = ISC_R_SUCCESS;
 	uint64_t records;
 
 	if (atomic_load(&xfr->shuttingdown)) {
-		result = ISC_R_SHUTTINGDOWN;
-		goto failure;
+		CHECK(ISC_R_SHUTTINGDOWN);
 	}
 
 	CHECK(dns_diff_load(&xfr->diff, &xfr->axfr));
 	if (xfr->maxrecords != 0U) {
 		result = dns_db_getsize(xfr->db, xfr->ver, &records, NULL);
 		if (result == ISC_R_SUCCESS && records > xfr->maxrecords) {
-			result = DNS_R_TOOMANYRECORDS;
-			goto failure;
+			CHECK(DNS_R_TOOMANYRECORDS);
 		}
 	}
 
-failure:
+cleanup:
 	dns_diff_clear(&xfr->diff);
-	work->result = result;
+
+	return result;
 }
 
 static void
-axfr_apply_done(void *arg) {
-	xfrin_work_t *work = arg;
-	REQUIRE(VALID_XFRIN_WORK(work));
-
-	dns_xfrin_t *xfr = work->xfr;
-	isc_result_t result = work->result;
+axfr_apply_done(void *arg, isc_result_t result) {
+	dns_xfrin_t *xfr = arg;
 
 	REQUIRE(VALID_XFRIN(xfr));
 
@@ -433,10 +403,8 @@ axfr_apply_done(void *arg) {
 		(void)dns_db_endload(xfr->db, &xfr->axfr);
 	}
 
-failure:
+cleanup:
 	xfr->diff_running = false;
-
-	isc_mem_put(xfr->mctx, work, sizeof(*work));
 
 	if (result == ISC_R_SUCCESS) {
 		if (atomic_load(&xfr->state) == XFRST_AXFR_END) {
@@ -453,14 +421,10 @@ static void
 axfr_commit(dns_xfrin_t *xfr) {
 	REQUIRE(!xfr->diff_running);
 
-	xfrin_work_t *work = isc_mem_get(xfr->mctx, sizeof(*work));
-	*work = (xfrin_work_t){
-		.magic = XFRIN_WORK_MAGIC,
-		.result = ISC_R_UNSET,
-		.xfr = dns_xfrin_ref(xfr),
-	};
+	dns_xfrin_ref(xfr);
 	xfr->diff_running = true;
-	isc_work_enqueue(xfr->loop, axfr_apply, axfr_apply_done, work);
+	isc_work_enqueue(xfr->loop, ISC_WORKLANE_SLOW, axfr_apply,
+			 axfr_apply_done, xfr);
 }
 
 static isc_result_t
@@ -481,7 +445,7 @@ axfr_finalize(dns_xfrin_t *xfr) {
 
 typedef struct ixfr_apply_data {
 	dns_diff_t diff; /*%< Pending database changes */
-	struct cds_wfcq_node wfcq_node;
+	isc_queue_node_t queue_node;
 } ixfr_apply_data_t;
 
 static isc_result_t
@@ -505,7 +469,7 @@ ixfr_init(dns_xfrin_t *xfr) {
 	}
 
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	return result;
 }
 
@@ -526,31 +490,29 @@ ixfr_putdata(dns_xfrin_t *xfr, dns_diffop_t op, dns_name_t *name, dns_ttl_t ttl,
 				   &tuple));
 	dns_diff_append(&xfr->diff, &tuple);
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	return result;
 }
 
 static isc_result_t
-ixfr_begin_transaction(dns_xfrin_t *xfr) {
+ixfr_begin_transaction(dns_ixfr_t *ixfr) {
 	isc_result_t result = ISC_R_SUCCESS;
 
-	if (xfr->ixfr.journal != NULL) {
-		CHECK(dns_journal_begin_transaction(xfr->ixfr.journal));
+	if (ixfr->journal != NULL) {
+		CHECK(dns_journal_begin_transaction(ixfr->journal));
 	}
-failure:
+cleanup:
 	return result;
 }
 
 static isc_result_t
-ixfr_end_transaction(dns_xfrin_t *xfr) {
+ixfr_end_transaction(dns_ixfr_t *ixfr) {
 	isc_result_t result = ISC_R_SUCCESS;
-
-	CHECK(dns_zone_verifydb(xfr->zone, xfr->db, xfr->ver));
 	/* XXX enter ready-to-commit state here */
-	if (xfr->ixfr.journal != NULL) {
-		CHECK(dns_journal_commit(xfr->ixfr.journal));
+	if (ixfr->journal != NULL) {
+		CHECK(dns_journal_commit(ixfr->journal));
 	}
-failure:
+cleanup:
 	return result;
 }
 
@@ -559,54 +521,69 @@ ixfr_apply_one(dns_xfrin_t *xfr, ixfr_apply_data_t *data) {
 	isc_result_t result = ISC_R_SUCCESS;
 	uint64_t records;
 
-	CHECK(ixfr_begin_transaction(xfr));
+	dns_rdatacallbacks_t callbacks;
+	dns_rdatacallbacks_init(&callbacks);
 
-	CHECK(dns_diff_apply(&data->diff, xfr->db, xfr->ver));
+	CHECK(ixfr_begin_transaction(&xfr->ixfr));
+
+	dns_db_beginupdate(xfr->db, xfr->ver, &callbacks);
+
+	CHECK(dns_diff_apply_with_callbacks(&data->diff, &callbacks));
 	if (xfr->maxrecords != 0U) {
 		result = dns_db_getsize(xfr->db, xfr->ver, &records, NULL);
 		if (result == ISC_R_SUCCESS && records > xfr->maxrecords) {
-			result = DNS_R_TOOMANYRECORDS;
-			goto failure;
+			CHECK(DNS_R_TOOMANYRECORDS);
 		}
 	}
 	if (xfr->ixfr.journal != NULL) {
 		CHECK(dns_journal_writediff(xfr->ixfr.journal, &data->diff));
 	}
 
-	result = ixfr_end_transaction(xfr);
+	/*
+	 * At the moment, rdatacallbacks doesn't offer a way to inspect the
+	 * result of a transaction before committing it.
+	 *
+	 * So we need to commit *before* calling dns_zone_verifydb, and rely
+	 * on closeversion to actually do cleanup.
+	 */
+	CHECK(dns_db_commitupdate(xfr->db, &callbacks));
+
+	CHECK(dns_zone_verifydb(xfr->zone, xfr->db, xfr->ver));
+
+	result = ixfr_end_transaction(&xfr->ixfr);
 
 	return result;
-failure:
+cleanup:
+	/*
+	 * For the reason stated above, dns_db_abortupdate must *commit* the
+	 * changes and rely on closeversion to clean them up.
+	 */
+	(void)dns_db_abortupdate(xfr->db, &callbacks);
+
 	/* We need to end the transaction, but keep the previous error */
-	(void)ixfr_end_transaction(xfr);
+	(void)ixfr_end_transaction(&xfr->ixfr);
 
 	return result;
 }
 
-static void
+static isc_result_t
 ixfr_apply(void *arg) {
-	xfrin_work_t *work = arg;
-	dns_xfrin_t *xfr = work->xfr;
+	dns_xfrin_t *xfr = arg;
 	isc_result_t result = ISC_R_SUCCESS;
 
 	REQUIRE(VALID_XFRIN(xfr));
-	REQUIRE(VALID_XFRIN_WORK(work));
 
-	struct __cds_wfcq_head diff_head;
-	struct cds_wfcq_tail diff_tail;
+	isc_queue_t diff_queue;
 
-	/* Initialize local wfcqueue */
-	__cds_wfcq_init(&diff_head, &diff_tail);
+	/* Initialize local queue */
+	isc_queue_init(&diff_queue);
 
-	enum cds_wfcq_ret ret = __cds_wfcq_splice_blocking(
-		&diff_head, &diff_tail, &xfr->diff_head, &xfr->diff_tail);
-	INSIST(ret == CDS_WFCQ_RET_DEST_EMPTY);
+	if (!isc_queue_splice(&diff_queue, &xfr->diff_queue)) {
+		return ISC_R_SUCCESS;
+	}
 
-	struct cds_wfcq_node *node, *next;
-	__cds_wfcq_for_each_blocking_safe(&diff_head, &diff_tail, node, next) {
-		ixfr_apply_data_t *data =
-			caa_container_of(node, ixfr_apply_data_t, wfcq_node);
-
+	ixfr_apply_data_t *data = NULL, *next = NULL;
+	isc_queue_for_each_entry_safe(&diff_queue, data, next, queue_node) {
 		if (atomic_load(&xfr->shuttingdown)) {
 			result = ISC_R_SHUTTINGDOWN;
 		}
@@ -622,39 +599,42 @@ ixfr_apply(void *arg) {
 		isc_mem_put(xfr->mctx, data, sizeof(*data));
 	}
 
-	work->result = result;
+	return result;
 }
 
 static void
-ixfr_apply_done(void *arg) {
-	xfrin_work_t *work = arg;
-	REQUIRE(VALID_XFRIN_WORK(work));
-
-	dns_xfrin_t *xfr = work->xfr;
+ixfr_apply_done(void *arg, isc_result_t result) {
+	dns_xfrin_t *xfr = arg;
 	REQUIRE(VALID_XFRIN(xfr));
-
-	isc_result_t result = work->result;
 
 	if (atomic_load(&xfr->shuttingdown)) {
 		result = ISC_R_SHUTTINGDOWN;
 	}
 
-	if (result != ISC_R_SUCCESS) {
-		goto failure;
-	}
+	CHECK(result);
 
 	/* Reschedule */
-	if (!cds_wfcq_empty(&xfr->diff_head, &xfr->diff_tail)) {
-		isc_work_enqueue(xfr->loop, ixfr_apply, ixfr_apply_done, work);
+	if (!xfr->retry_axfr && !isc_queue_empty(&xfr->diff_queue)) {
+		isc_work_enqueue(xfr->loop, ISC_WORKLANE_SLOW, ixfr_apply,
+				 ixfr_apply_done, xfr);
 		return;
 	}
 
-failure:
+cleanup:
 	xfr->diff_running = false;
 
-	isc_mem_put(xfr->mctx, work, sizeof(*work));
+	/*
+	 * Don't retry with AXFR (even if it was requested) because there was
+	 * an error or the transfer is shutting down. In case if it _was_ an
+	 * error, xfrin_fail() will return a special result code which will
+	 * still result in AXFR retry from the initiator of the transfer after
+	 * the failure has been is logged.
+	 */
+	if (result != ISC_R_SUCCESS) {
+		xfr->retry_axfr = false;
+	}
 
-	if (result == ISC_R_SUCCESS) {
+	if (!xfr->retry_axfr && result == ISC_R_SUCCESS) {
 		dns_db_closeversion(xfr->db, &xfr->ver, true);
 		dns_zone_markdirty(xfr->zone);
 
@@ -664,7 +644,21 @@ failure:
 	} else {
 		dns_db_closeversion(xfr->db, &xfr->ver, false);
 
-		xfrin_fail(xfr, result, "failed while processing responses");
+		if (result != ISC_R_SUCCESS) {
+			xfrin_fail(xfr, result,
+				   "failed while processing responses");
+		}
+	}
+
+	if (xfr->retry_axfr) {
+		xfr->reqtype = dns_rdatatype_soa;
+		atomic_store(&xfr->state, XFRST_SOAQUERY);
+
+		xfrin_reset(xfr);
+		result = xfrin_start(xfr);
+		if (result != ISC_R_SUCCESS) {
+			xfrin_fail(xfr, result, "failed setting up socket");
+		}
 	}
 
 	dns_xfrin_detach(&xfr);
@@ -679,7 +673,7 @@ ixfr_commit(dns_xfrin_t *xfr) {
 	ixfr_apply_data_t *data = isc_mem_get(xfr->mctx, sizeof(*data));
 
 	*data = (ixfr_apply_data_t){ 0 };
-	cds_wfcq_node_init(&data->wfcq_node);
+	isc_queue_node_init(&data->queue_node);
 
 	if (xfr->ver == NULL) {
 		CHECK(dns_db_newversion(xfr->db, &xfr->ver));
@@ -689,21 +683,19 @@ ixfr_commit(dns_xfrin_t *xfr) {
 	/* FIXME: Should we add dns_diff_move() */
 	ISC_LIST_MOVE(data->diff.tuples, xfr->diff.tuples);
 
-	(void)cds_wfcq_enqueue(&xfr->diff_head, &xfr->diff_tail,
-			       &data->wfcq_node);
+	isc_queue_enqueue(&xfr->diff_queue, &data->queue_node);
 
 	if (!xfr->diff_running) {
-		xfrin_work_t *work = isc_mem_get(xfr->mctx, sizeof(*work));
-		*work = (xfrin_work_t){
-			.magic = XFRIN_WORK_MAGIC,
-			.result = ISC_R_UNSET,
-			.xfr = dns_xfrin_ref(xfr),
-		};
+		dns_xfrin_ref(xfr);
 		xfr->diff_running = true;
-		isc_work_enqueue(xfr->loop, ixfr_apply, ixfr_apply_done, work);
+		isc_work_enqueue(xfr->loop, ISC_WORKLANE_SLOW, ixfr_apply,
+				 ixfr_apply_done, xfr);
 	}
 
-failure:
+cleanup:
+	if (result != ISC_R_SUCCESS) {
+		isc_mem_put(xfr->mctx, data, sizeof(*data));
+	}
 	return result;
 }
 
@@ -730,8 +722,7 @@ xfr_rr(dns_xfrin_t *xfr, dns_name_t *name, uint32_t ttl, dns_rdata_t *rdata) {
 		dns_rdatatype_format(rdata->type, buf, sizeof(buf));
 		xfrin_log(xfr, ISC_LOG_NOTICE,
 			  "Unexpected %s record in zone transfer", buf);
-		result = DNS_R_FORMERR;
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	/*
@@ -746,8 +737,7 @@ xfr_rr(dns_xfrin_t *xfr, dns_name_t *name, uint32_t ttl, dns_rdata_t *rdata) {
 		dns_name_format(name, namebuf, sizeof(namebuf));
 		xfrin_log(xfr, ISC_LOG_DEBUG(3), "SOA name mismatch: '%s'",
 			  namebuf);
-		result = DNS_R_NOTZONETOP;
-		goto failure;
+		CHECK(DNS_R_NOTZONETOP);
 	}
 
 redo:
@@ -756,8 +746,7 @@ redo:
 		if (rdata->type != dns_rdatatype_soa) {
 			xfrin_log(xfr, ISC_LOG_NOTICE,
 				  "non-SOA response to SOA query");
-			result = DNS_R_FORMERR;
-			goto failure;
+			CHECK(DNS_R_FORMERR);
 		}
 		end_serial = dns_soa_getserial(rdata);
 		atomic_store_relaxed(&xfr->end_serial, end_serial);
@@ -768,8 +757,7 @@ redo:
 				  "requested serial %u, "
 				  "primary has %" PRIuFAST32 ", not updating",
 				  xfr->ixfr.request_serial, end_serial);
-			result = DNS_R_UPTODATE;
-			goto failure;
+			CHECK(DNS_R_UPTODATE);
 		}
 		atomic_store(&xfr->state, XFRST_GOTSOA);
 		break;
@@ -784,8 +772,7 @@ redo:
 		if (rdata->type != dns_rdatatype_soa) {
 			xfrin_log(xfr, ISC_LOG_NOTICE,
 				  "first RR in zone transfer must be SOA");
-			result = DNS_R_FORMERR;
-			goto failure;
+			CHECK(DNS_R_FORMERR);
 		}
 		/*
 		 * Remember the serial number in the initial SOA.
@@ -806,8 +793,7 @@ redo:
 				  "requested serial %u, "
 				  "primary has %" PRIuFAST32 ", not updating",
 				  xfr->ixfr.request_serial, end_serial);
-			result = DNS_R_UPTODATE;
-			goto failure;
+			CHECK(DNS_R_UPTODATE);
 		}
 		xfr->firstsoa = *rdata;
 		if (xfr->firstsoa_data != NULL) {
@@ -875,8 +861,7 @@ redo:
 					  "IXFR out of sync: "
 					  "expected serial %u, got %u",
 					  xfr->ixfr.current_serial, soa_serial);
-				result = DNS_R_FORMERR;
-				goto failure;
+				CHECK(DNS_R_FORMERR);
 			} else {
 				CHECK(ixfr_commit(xfr));
 				atomic_store(&xfr->state, XFRST_IXFR_DELSOA);
@@ -886,8 +871,7 @@ redo:
 		if (rdata->type == dns_rdatatype_ns &&
 		    dns_name_iswildcard(name))
 		{
-			result = DNS_R_INVALIDNS;
-			goto failure;
+			CHECK(DNS_R_INVALIDNS);
 		}
 		CHECK(ixfr_putdata(xfr, DNS_DIFFOP_ADD, name, ttl, rdata));
 		break;
@@ -912,8 +896,7 @@ redo:
 				xfrin_log(xfr, ISC_LOG_NOTICE,
 					  "start and ending SOA records "
 					  "mismatch");
-				result = DNS_R_FORMERR;
-				goto failure;
+				CHECK(DNS_R_FORMERR);
 			}
 			axfr_commit(xfr);
 			atomic_store(&xfr->state, XFRST_AXFR_END);
@@ -922,13 +905,13 @@ redo:
 		break;
 	case XFRST_AXFR_END:
 	case XFRST_IXFR_END:
-		result = DNS_R_EXTRADATA;
-		goto failure;
+		CHECK(DNS_R_EXTRADATA);
+		break;
 	default:
 		UNREACHABLE();
 	}
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	return result;
 }
 
@@ -1198,12 +1181,17 @@ xfrin_cancelio(dns_xfrin_t *xfr) {
 static void
 xfrin_reset(dns_xfrin_t *xfr) {
 	REQUIRE(VALID_XFRIN(xfr));
+	REQUIRE(!xfr->diff_running);
 
 	xfrin_log(xfr, ISC_LOG_INFO, "resetting");
+
+	xfr->retry_axfr = false;
 
 	if (xfr->lasttsig != NULL) {
 		isc_buffer_free(&xfr->lasttsig);
 	}
+
+	xfrin_ixfrcleanup(xfr);
 
 	dns_diff_clear(&xfr->diff);
 
@@ -1283,7 +1271,7 @@ xfrin_create(isc_mem_t *mctx, dns_zone_t *zone, dns_db_t *db, isc_loop_t *loop,
 	dns_view_weakattach(dns_zone_getview(zone), &xfr->view);
 	dns_name_init(&xfr->name, NULL);
 
-	__cds_wfcq_init(&xfr->diff_head, &xfr->diff_tail);
+	isc_queue_init(&xfr->diff_queue);
 
 	atomic_init(&xfr->is_ixfr, false);
 
@@ -1339,16 +1327,13 @@ xfrin_start(dns_xfrin_t *xfr) {
 
 	dns_dispatchmgr_t *dispmgr = dns_view_getdispatchmgr(xfr->view);
 	if (dispmgr == NULL) {
-		result = ISC_R_SHUTTINGDOWN;
-		goto failure;
+		CHECK(ISC_R_SHUTTINGDOWN);
 	} else {
 		result = dns_dispatch_createtcp(
 			dispmgr, &xfr->sourceaddr, &xfr->primaryaddr,
-			xfr->transport, DNS_DISPATCHOPT_UNSHARED, &xfr->disp);
+			xfr->transport, DNS_DISPATCHTYPE_XFRIN, 0, &xfr->disp);
 		dns_dispatchmgr_detach(&dispmgr);
-		if (result != ISC_R_SUCCESS) {
-			goto failure;
-		}
+		CHECK(result);
 	}
 
 	LIBDNS_XFRIN_START(xfr, xfr->info);
@@ -1409,7 +1394,7 @@ xfrin_start(dns_xfrin_t *xfr) {
 
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	xfrin_cancelio(xfr);
 	dns_xfrin_detach(&xfr);
 
@@ -1431,7 +1416,7 @@ render(dns_message_t *msg, isc_mem_t *mctx, isc_buffer_t *buf) {
 	CHECK(dns_message_rendersection(msg, DNS_SECTION_ADDITIONAL, 0));
 	CHECK(dns_message_renderend(msg));
 	result = ISC_R_SUCCESS;
-failure:
+cleanup:
 	dns_compress_invalidate(&cctx);
 	return result;
 }
@@ -1440,31 +1425,30 @@ failure:
  * A connection has been established.
  */
 static void
-xfrin_connect_done(isc_result_t result, isc_region_t *region ISC_ATTR_UNUSED,
+xfrin_connect_done(isc_result_t eresult, isc_region_t *region ISC_ATTR_UNUSED,
 		   void *arg) {
 	dns_xfrin_t *xfr = (dns_xfrin_t *)arg;
 	char addrtext[ISC_SOCKADDR_FORMATSIZE];
 	char signerbuf[DNS_NAME_FORMATSIZE];
 	const char *signer = "", *sep = "";
 	dns_zonemgr_t *zmgr = NULL;
+	isc_result_t result;
 
 	REQUIRE(VALID_XFRIN(xfr));
 
-	if (atomic_load(&xfr->shuttingdown)) {
-		result = ISC_R_SHUTTINGDOWN;
-	}
+	result = atomic_load(&xfr->shuttingdown) ? ISC_R_SHUTTINGDOWN : eresult;
 
 	LIBDNS_XFRIN_CONNECTED(xfr, xfr->info, result);
 
 	if (result != ISC_R_SUCCESS) {
 		xfrin_fail(xfr, result, "failed to connect");
-		goto failure;
+		goto cleanup;
 	}
 
 	result = dns_dispatch_checkperm(xfr->disp);
 	if (result != ISC_R_SUCCESS) {
 		xfrin_fail(xfr, result, "connected but unable to transfer");
-		goto failure;
+		goto cleanup;
 	}
 
 	zmgr = dns_zone_getmgr(xfr->zone);
@@ -1492,7 +1476,7 @@ xfrin_connect_done(isc_result_t result, isc_region_t *region ISC_ATTR_UNUSED,
 
 	return;
 
-failure:
+cleanup:
 	switch (result) {
 	case ISC_R_NETDOWN:
 	case ISC_R_HOSTDOWN:
@@ -1519,7 +1503,13 @@ failure:
 	}
 
 detach:
-	dns_xfrin_detach(&xfr);
+	/*
+	 * If the connection was successful, then the reference now belongs to
+	 * the receive callback. Otherwise, detach it.
+	 */
+	if (eresult != ISC_R_SUCCESS) {
+		dns_xfrin_detach(&xfr);
+	}
 }
 
 /*
@@ -1684,10 +1674,6 @@ xfrin_send_request(dns_xfrin_t *xfr) {
 	xfr->nbytes_saved = 0;
 
 	msg->id = xfr->id;
-	if (xfr->tsigctx != NULL) {
-		dst_context_destroy(&xfr->tsigctx);
-	}
-
 	CHECK(render(msg, xfr->mctx, &xfr->qbuffer));
 
 	/*
@@ -1710,7 +1696,7 @@ xfrin_send_request(dns_xfrin_t *xfr) {
 	xfrin_log(xfr, ISC_LOG_DEBUG(3), "sending %s request, QID %d",
 		  request_type(xfr), xfr->id);
 
-failure:
+cleanup:
 	dns_message_detach(&msg);
 	if (soatuple != NULL) {
 		dns_difftuple_free(&soatuple);
@@ -1740,7 +1726,7 @@ xfrin_send_done(isc_result_t result, isc_region_t *region, void *arg) {
 
 	xfrin_log(xfr, ISC_LOG_DEBUG(3), "sent request data");
 
-failure:
+cleanup:
 	if (result != ISC_R_SUCCESS) {
 		xfrin_fail(xfr, result, "failed sending request data");
 	}
@@ -1816,7 +1802,6 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	dns_xfrin_t *xfr = (dns_xfrin_t *)arg;
 	dns_message_t *msg = NULL;
 	dns_name_t *name = NULL;
-	const dns_name_t *tsigowner = NULL;
 	isc_buffer_t buffer;
 
 	REQUIRE(VALID_XFRIN(xfr));
@@ -1840,9 +1825,6 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	CHECK(dns_message_settsigkey(msg, xfr->tsigkey));
 	dns_message_setquerytsig(msg, xfr->lasttsig);
 
-	msg->tsigctx = xfr->tsigctx;
-	xfr->tsigctx = NULL;
-
 	dns_message_setclass(msg, xfr->rdclass);
 
 	msg->tcp_continuation = (atomic_load_relaxed(&xfr->nmsg) > 0) ? 1 : 0;
@@ -1864,6 +1846,22 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 
 	LIBDNS_XFRIN_RECV_PARSED(xfr, xfr->info, result);
 
+	/* Authenticate before stateful response handling. */
+	if (result == ISC_R_SUCCESS) {
+		result = dns_message_checksig(msg, xfr->view);
+		if (result != ISC_R_SUCCESS) {
+			xfrin_log(xfr, ISC_LOG_DEBUG(3),
+				  "TSIG check failed: %s",
+				  isc_result_totext(result));
+			goto cleanup;
+		}
+		if (dns_message_gettsigkey(msg) != NULL &&
+		    dns_message_gettsig(msg, NULL) == NULL)
+		{
+			CLEANUP(DNS_R_EXPECTEDTSIG);
+		}
+	}
+
 	if (result != ISC_R_SUCCESS || msg->rcode != dns_rcode_noerror ||
 	    msg->opcode != dns_opcode_query || msg->rdclass != xfr->rdclass)
 	{
@@ -1874,6 +1872,11 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		{
 			xfr->edns = false;
 			dns_message_detach(&msg);
+			/*
+			 * With these states (see the conditions above) the diff
+			 * process can't be currently in the running state, so
+			 * it is safe to reset the 'xfr' and retry right away.
+			 */
 			xfrin_reset(xfr);
 			goto try_again;
 		} else if (result == ISC_R_SUCCESS &&
@@ -1895,7 +1898,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		if (xfr->reqtype == dns_rdatatype_axfr ||
 		    xfr->reqtype == dns_rdatatype_soa)
 		{
-			goto failure;
+			goto cleanup;
 		}
 
 		xfrin_log(xfr, ISC_LOG_DEBUG(3), "got %s, retrying with AXFR",
@@ -1903,6 +1906,12 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	try_axfr:
 		LIBDNS_XFRIN_RECV_TRY_AXFR(xfr, xfr->info, result);
 		dns_message_detach(&msg);
+		/* If there is a running worker thread then delay the retry. */
+		if (xfr->diff_running) {
+			xfr->retry_axfr = true;
+			dns_xfrin_detach(&xfr);
+			return;
+		}
 		xfrin_reset(xfr);
 		xfr->reqtype = dns_rdatatype_soa;
 		atomic_store(&xfr->state, XFRST_SOAQUERY);
@@ -1925,8 +1934,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	if (msg->counts[DNS_SECTION_QUESTION] > 1) {
 		xfrin_log(xfr, ISC_LOG_NOTICE, "too many questions (%u)",
 			  msg->counts[DNS_SECTION_QUESTION]);
-		result = DNS_R_FORMERR;
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	if ((atomic_load(&xfr->state) == XFRST_SOAQUERY ||
@@ -1934,8 +1942,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	    msg->counts[DNS_SECTION_QUESTION] != 1)
 	{
 		xfrin_log(xfr, ISC_LOG_NOTICE, "missing question section");
-		result = DNS_R_FORMERR;
-		goto failure;
+		CHECK(DNS_R_FORMERR);
 	}
 
 	for (result = dns_message_firstname(msg, DNS_SECTION_QUESTION);
@@ -1951,26 +1958,23 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		if (!dns_name_equal(name, &xfr->name)) {
 			xfrin_log(xfr, ISC_LOG_NOTICE,
 				  "question name mismatch");
-			result = DNS_R_FORMERR;
-			goto failure;
+			CHECK(DNS_R_FORMERR);
 		}
 		rds = ISC_LIST_HEAD(name->list);
 		INSIST(rds != NULL);
 		if (rds->type != xfr->reqtype) {
 			xfrin_log(xfr, ISC_LOG_NOTICE,
 				  "question type mismatch");
-			result = DNS_R_FORMERR;
-			goto failure;
+			CHECK(DNS_R_FORMERR);
 		}
 		if (rds->rdclass != xfr->rdclass) {
 			xfrin_log(xfr, ISC_LOG_NOTICE,
 				  "question class mismatch");
-			result = DNS_R_FORMERR;
-			goto failure;
+			CHECK(DNS_R_FORMERR);
 		}
 	}
 	if (result != ISC_R_NOMORE) {
-		goto failure;
+		goto cleanup;
 	}
 
 	/*
@@ -1991,15 +1995,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	if (xfr->reqtype == dns_rdatatype_soa &&
 	    (msg->flags & DNS_MESSAGEFLAG_AA) == 0)
 	{
-		result = DNS_R_NOTAUTHORITATIVE;
-		goto failure;
-	}
-
-	result = dns_message_checksig(msg, xfr->view);
-	if (result != ISC_R_SUCCESS) {
-		xfrin_log(xfr, ISC_LOG_DEBUG(3), "TSIG check failed: %s",
-			  isc_result_totext(result));
-		goto failure;
+		CHECK(DNS_R_NOTAUTHORITATIVE);
 	}
 
 	for (result = dns_message_firstname(msg, DNS_SECTION_ANSWER);
@@ -2007,7 +2003,6 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	     result = dns_message_nextname(msg, DNS_SECTION_ANSWER))
 	{
 		dns_rdataset_t *rds = NULL;
-
 		LIBDNS_XFRIN_RECV_ANSWER(xfr, xfr->info, msg);
 
 		name = NULL;
@@ -2030,12 +2025,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	}
 	CHECK(result);
 
-	if (dns_message_gettsig(msg, &tsigowner) != NULL) {
-		/*
-		 * Reset the counter.
-		 */
-		xfr->sincetsig = 0;
-
+	if (dns_message_gettsig(msg, NULL) != NULL) {
 		/*
 		 * Free the last tsig, if there is one.
 		 */
@@ -2047,16 +2037,6 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		 * Update the last tsig pointer.
 		 */
 		CHECK(dns_message_getquerytsig(msg, xfr->mctx, &xfr->lasttsig));
-	} else if (dns_message_gettsigkey(msg) != NULL) {
-		xfr->sincetsig++;
-		if (xfr->sincetsig > 100 ||
-		    atomic_load_relaxed(&xfr->nmsg) == 0 ||
-		    atomic_load(&xfr->state) == XFRST_AXFR_END ||
-		    atomic_load(&xfr->state) == XFRST_IXFR_END)
-		{
-			result = DNS_R_EXPECTEDTSIG;
-			goto failure;
-		}
 	}
 
 	/*
@@ -2064,13 +2044,6 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 	 */
 	atomic_fetch_add_relaxed(&xfr->nmsg, 1);
 	ISC_XFRIN_ADD(&xfr->nbytes, buffer.used);
-
-	/*
-	 * Take the context back.
-	 */
-	INSIST(xfr->tsigctx == NULL);
-	xfr->tsigctx = msg->tsigctx;
-	msg->tsigctx = NULL;
 
 	if (!xfr->expireoptset && msg->opt != NULL) {
 		get_edns_expire(xfr, msg);
@@ -2095,10 +2068,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		 * Read the next message.
 		 */
 		dns_message_detach(&msg);
-		result = dns_dispatch_getnext(xfr->dispentry);
-		if (result != ISC_R_SUCCESS) {
-			goto failure;
-		}
+		CHECK(dns_dispatch_getnext(xfr->dispentry));
 
 		isc_interval_t interval;
 		isc_interval_set(&interval, dns_zone_getidlein(xfr->zone), 0);
@@ -2109,7 +2079,7 @@ xfrin_recv_done(isc_result_t result, isc_region_t *region, void *arg) {
 		return;
 	}
 
-failure:
+cleanup:
 	if (result != ISC_R_SUCCESS) {
 		xfrin_fail(xfr, result, "failed while receiving responses");
 	}
@@ -2117,8 +2087,26 @@ failure:
 	if (msg != NULL) {
 		dns_message_detach(&msg);
 	}
-	dns_xfrin_detach(&xfr);
 	LIBDNS_XFRIN_RECV_DONE(xfr, xfr->info, result);
+	dns_xfrin_detach(&xfr);
+}
+
+static void
+xfrin_ixfrcleanup(dns_xfrin_t *xfr) {
+	isc_queue_t diff_queue;
+
+	/* Leave the shared queue empty before freeing its entries. */
+	isc_queue_init(&diff_queue);
+	if (!isc_queue_splice(&diff_queue, &xfr->diff_queue)) {
+		return;
+	}
+
+	ixfr_apply_data_t *data = NULL, *next = NULL;
+	isc_queue_for_each_entry_safe(&diff_queue, data, next, queue_node) {
+		/* We need to clear and free all data chunks */
+		dns_diff_clear(&data->diff);
+		isc_mem_put(xfr->mctx, data, sizeof(*data));
+	}
 }
 
 static void
@@ -2171,15 +2159,7 @@ xfrin_destroy(dns_xfrin_t *xfr) {
 		  sep, expireopt);
 
 	/* Cleanup unprocessed IXFR data */
-	struct cds_wfcq_node *node, *next;
-	__cds_wfcq_for_each_blocking_safe(&xfr->diff_head, &xfr->diff_tail,
-					  node, next) {
-		ixfr_apply_data_t *data =
-			caa_container_of(node, ixfr_apply_data_t, wfcq_node);
-		/* We need to clear and free all data chunks */
-		dns_diff_clear(&data->diff);
-		isc_mem_put(xfr->mctx, data, sizeof(*data));
-	}
+	xfrin_ixfrcleanup(xfr);
 
 	/* Cleanup unprocessed AXFR data */
 	dns_diff_clear(&xfr->diff);
@@ -2204,10 +2184,6 @@ xfrin_destroy(dns_xfrin_t *xfr) {
 
 	if (xfr->axfr.add_private != NULL) {
 		(void)dns_db_endload(xfr->db, &xfr->axfr);
-	}
-
-	if (xfr->tsigctx != NULL) {
-		dst_context_destroy(&xfr->tsigctx);
 	}
 
 	if (xfr->name.attributes.dynamic) {

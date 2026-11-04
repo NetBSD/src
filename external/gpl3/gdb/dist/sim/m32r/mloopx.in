@@ -1,6 +1,6 @@
 # Simulator main loop for m32rx. -*- C -*-
 #
-# Copyright 1996-2024 Free Software Foundation, Inc.
+# Copyright 1996-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Simulators.
 #
@@ -107,7 +107,7 @@ emit_parallel (SIM_CPU *current_cpu, PCADDR pc, CGEN_INSN_INT insn,
      with the first insn.  */
   /* ??? Revisit to handle exceptions right.  */
 
-  /* FIXME: No need to handle this parallely if second is nop.  */
+  /* FIXME: No need to handle this parallelly if second is nop.  */
   id = emit_16 (current_cpu, pc, insn >> 16, sc, fast_p, 1);
 
   /* Note that this can never be a cti.  No cti's go in the S pipeline.  */

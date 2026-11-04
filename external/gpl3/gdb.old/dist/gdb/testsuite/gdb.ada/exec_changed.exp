@@ -1,4 +1,4 @@
-# Copyright 2005-2023 Free Software Foundation, Inc.
+# Copyright 2005-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,14 +15,11 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 # This testcase verifies the behavior of the `start' command, which
 # does not work when we use the gdb stub...
-if [use_gdb_stub] {
-    untested "skipping tests due to use_gdb_stub"
-    return
-}
+require !use_gdb_stub
 
 standard_ada_testfile first
 
@@ -89,7 +86,7 @@ if { [gdb_start_cmd] < 0 } {
 
 clean_restart "${binfile}$EXEEXT"
 
-# Ensure we don't accidently use the main symbol cache.
+# Ensure we don't accidentally use the main symbol cache.
 gdb_test_no_output "mt set symbol-cache-size 0"
 
 # Put something in the symbol lookup cache that will get looked up when

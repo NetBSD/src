@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,8 +38,7 @@ proc run_test { args } {
     global mi_gdb_prompt
     global decimal
 
-    gdb_exit
-    if [mi_gdb_start $args] {
+    if [mi_clean_restart "" $args] {
 	return
     }
 
@@ -104,7 +103,7 @@ proc run_test { args } {
 		set seen_first_message true
 		exp_continue
 	    }
-	    -re "\r\n$mi_gdb_prompt" {
+	    -re "$mi_gdb_prompt" {
 		gdb_assert $seen_first_message $gdb_test_name
 	    }
 	}

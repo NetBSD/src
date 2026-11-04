@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SPARC_NAT_H
-#define SPARC_NAT_H 1
+#ifndef GDB_SPARC_NAT_H
+#define GDB_SPARC_NAT_H
 
 #include "target.h"
 
@@ -82,4 +82,4 @@ struct sparc_target : public BaseTarget
   }
 };
 
-#endif /* sparc-nat.h */
+#endif /* GDB_SPARC_NAT_H */

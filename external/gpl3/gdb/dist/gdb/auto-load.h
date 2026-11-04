@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded scripts.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AUTO_LOAD_H
-#define AUTO_LOAD_H 1
+#ifndef GDB_AUTO_LOAD_H
+#define GDB_AUTO_LOAD_H
 
 struct objfile;
 struct program_space;
@@ -79,4 +79,4 @@ extern bool file_is_auto_load_safe (const char *filename);
 extern bool auto_load_gdb_scripts_enabled
   (const struct extension_language_defn *extlang);
 
-#endif /* AUTO_LOAD_H */
+#endif /* GDB_AUTO_LOAD_H */

@@ -1,6 +1,6 @@
 /* Python interface to full record targets.
 
-   Copyright 2016-2024 Free Software Foundation, Inc.
+   Copyright 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PY_RECORD_FULL_H
-#define PYTHON_PY_RECORD_FULL_H
+#ifndef GDB_PYTHON_PY_RECORD_FULL_H
+#define GDB_PYTHON_PY_RECORD_FULL_H
 
 #include "python-internal.h"
 
@@ -28,4 +28,4 @@ extern PyObject *recpy_full_method (PyObject *self, void *value);
 /* Implementation of record.format [str].  */
 extern PyObject *recpy_full_format (PyObject *self, void *value);
 
-#endif /* PYTHON_PY_RECORD_FULL_H */
+#endif /* GDB_PYTHON_PY_RECORD_FULL_H */

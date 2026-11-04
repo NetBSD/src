@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2024 Free Software Foundation, Inc.
+# Copyright (C) 2016-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,19 +18,59 @@
 # Test issuing a command split in multiple lines with continuation
 # characters.
 
-gdb_exit
-gdb_start
+clean_restart
 
-set test "print 1\\\\n + 2"
-gdb_test_multiple "print 1\\\n + 2" $test {
-    -re "^print 1\\\\\r\n \\+ 2\r\n\\\$$decimal = 3\r\n$gdb_prompt $" {
-	pass $test
+set bs "\\"
+set re_bs [string_to_regexp $bs]
+set re_dollar [string_to_regexp $]
+
+set re \
+    [multi_line \
+	 ^[string_to_regexp "print 1$bs"] \
+	 [string_to_regexp " + 2"] \
+	 "$re_dollar$decimal = 3" \
+	 "$gdb_prompt $"]
+gdb_test_multiple "print 1$bs\n + 2" "print 1$bs${bs}n + 2" {
+    -re $re {
+	pass $gdb_test_name
     }
 }
 
-set test "print 1\\\\n2"
-gdb_test_multiple "print 1\\\n2" $test {
-    -re "^print 1\\\\\r\n2\r\n\\\$$decimal = 12\r\n$gdb_prompt $" {
-	pass $test
+set re \
+    [multi_line \
+	 ^[string_to_regexp "print 1$bs"] \
+	 "2" \
+	 "$re_dollar$decimal = 12" \
+	 "$gdb_prompt $"]
+gdb_test_multiple "print 1$bs\n2" "print 1$bs${bs}n2" {
+    -re $re {
+	pass $gdb_test_name
+    }
+}
+
+with_test_prefix "cancel multiline" {
+    send_gdb "print$bs\n 1"
+    gdb_test_multiple "" "setup" {
+	-re "print$re_bs\r\n 1" {
+	    pass $gdb_test_name
+	}
+    }
+
+    send_gdb "\003"
+    gdb_test_multiple "" "cancel" {
+	-re -wrap "" {
+	    pass $gdb_test_name
+	}
+    }
+
+    # Regression test for PR cli/33063.
+    gdb_test_multiple "print 2" "command after cancel" {
+	-re -wrap " = 2" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "" {
+	    # Avoid undefined command error.
+	    fail $gdb_test_name
+	}
     }
 }

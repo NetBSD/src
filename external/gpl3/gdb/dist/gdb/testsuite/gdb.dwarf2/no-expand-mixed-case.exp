@@ -1,0 +1,42 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Searching for "INT" should not cause CU expansion in a C program.
+# PR symtab/31010.
+
+require !readnow
+
+standard_testfile main.c
+
+if {[prepare_for_testing "failed to prepare" $testfile \
+	 $srcfile {debug}]} {
+    return
+}
+
+# Check that no CUs have been expanded yet.
+gdb_test_no_output "maint info symtabs" \
+    "no symtabs before lookup"
+
+# The bug was that this caused CU expansion even though the type does
+# not exist.
+gdb_test "whatis INT" "No symbol \"INT\" in current context."
+
+# Check that no CUs were expanded by the lookup.  This fails with
+# .gdb_index.
+if {[have_index $binfile] == "gdb_index"} {
+    setup_kfail symtab/31363 *-*-*
+}
+gdb_test_no_output "maint info symtabs" \
+    "no symtabs after lookup"

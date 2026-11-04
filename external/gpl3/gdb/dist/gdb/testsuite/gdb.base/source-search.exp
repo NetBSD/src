@@ -1,0 +1,106 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test 'forward-search' and 'reverse-search' commands.  This test
+# relies on some hard-coded line numbers relating to the source file.
+# We could switch to using gdb_get_line_number, but it doesn't feel
+# like that would add much value; just don't change the source file.
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile] } {
+    return
+}
+
+gdb_test "forward-search This testcase is part" \
+    "1\\s+/\\* This testcase is part of GDB, the GNU debugger\\." \
+    "search for first line of the file"
+
+gdb_test "forward-search This testcase is part" \
+    "Expression not found" \
+    "repeated search doesn't find the same first line"
+
+# The 'reverse-search' command starts searching from the line before
+# the last line displayed.  So in this case, the reverse search starts
+# from line 0, i.e. nothing is searched.
+gdb_test "reverse-search This testcase is part" \
+    "Expression not found" \
+    "reverse search doesn't find the first line either"
+
+# List some source lines, and then perform some forward-searches.  The
+# searches start from the first line after the last line displayed.
+gdb_test "list 20" ".*" \
+    "list source code ahead of a forward-search"
+gdb_test "forward-search Line 2" \
+    "25\\s+/\\* Line 25  \\*/" \
+    "first forward-search after a list"
+gdb_test "forward-search Line 2" \
+    "26\\s+/\\* Line 26  \\*/" \
+    "second forward-search after a list"
+gdb_test "forward-search Line 2" \
+    "27\\s+/\\* Line 27  \\*/" \
+    "third forward-search after a list"
+
+# Now reverse-search from where we got too.
+gdb_test "reverse-search Line 2" \
+    "26\\s+/\\* Line 26  \\*/" \
+    "first reverse-search for 'Line 2'"
+gdb_test "reverse-search Line 2" \
+    "25\\s+/\\* Line 25  \\*/" \
+    "second reverse-search for 'Line 2'"
+gdb_test "reverse-search Line 2" \
+    "24\\s+/\\* Line 24  \\*/" \
+    "third reverse-search for 'Line 2'"
+
+# List some source lines, and then perform a reverse-search.  The
+# search starts frm the first line before the last line displayed.
+gdb_test "list 20" ".*" \
+    "list source code ahead of a reverse-search"
+gdb_test "reverse-search Line 2" \
+    "23\\s+/\\* Line 23  \\*/" \
+    "reverse-search after a list"
+
+# List the last lines of the file, then reverse search for the last
+# line.  As reverse-search starts on the line before the last line
+# displayed, this will fail to find the last line.
+gdb_test "list 127"
+gdb_test "reverse-search Last line" \
+    "Expression not found" \
+    "reverse search for the last line fails"
+
+# List some lines from the middle of the file.  Then try an invalid
+# 'list' command.  Finally, check searches pick up from the middle of
+# the file where the first 'list' successfully completed.
+foreach_with_prefix search_direction { forward reverse } {
+    foreach_with_prefix bad_list { out-of-range backwards } {
+	gdb_test "list 50"
+
+	if { $bad_list eq "out-of-range" } {
+	    gdb_test "list 1000" \
+		"Line number 995 out of range; \[^\r\n\]+ has 127 lines\\."
+	} else {
+	    gdb_test_no_output "list 60,50"
+	}
+
+	if { $search_direction eq "forward" } {
+	    set line 55
+	} else {
+	    set line 53
+	}
+
+	gdb_test "${search_direction}-search Line" \
+	    "$line\\s+/\\* Line $line  \\*/"
+    }
+}

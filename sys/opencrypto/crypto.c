@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.131 2022/06/26 22:52:30 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.131.10.1 2026/11/04 23:28:01 perseant Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,24 +53,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.131 2022/06/26 22:52:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.131.10.1 2026/11/04 23:28:01 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/reboot.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/pool.h>
-#include <sys/kthread.h>
-#include <sys/once.h>
-#include <sys/sysctl.h>
-#include <sys/intr.h>
-#include <sys/errno.h>
-#include <sys/module.h>
-#include <sys/xcall.h>
-#include <sys/device.h>
+
 #include <sys/cpu.h>
-#include <sys/percpu.h>
+#include <sys/device.h>
+#include <sys/errno.h>
+#include <sys/intr.h>
 #include <sys/kmem.h>
+#include <sys/kthread.h>
+#include <sys/module.h>
+#include <sys/once.h>
+#include <sys/percpu.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #if defined(_KERNEL_OPT)
 #include "opt_ocf.h"
@@ -180,7 +182,7 @@ struct crypto_crp_ret_qs **crypto_crp_ret_qs_list;
 static inline struct crypto_crp_ret_qs *
 crypto_get_crp_ret_qs(struct cpu_info *ci)
 {
-	u_int cpuid;
+	uint32_t cpuid;
 	struct crypto_crp_ret_qs *qs;
 
 	KASSERT(ci != NULL);
@@ -194,7 +196,7 @@ crypto_get_crp_ret_qs(struct cpu_info *ci)
 static inline void
 crypto_put_crp_ret_qs(struct cpu_info *ci)
 {
-	u_int cpuid;
+	uint32_t cpuid;
 	struct crypto_crp_ret_qs *qs;
 
 	KASSERT(ci != NULL);
@@ -505,9 +507,9 @@ static	int crypto_destroy(bool);
 static	int crypto_invoke(struct cryptop *crp, int hint);
 static	int crypto_kinvoke(struct cryptkop *krp, int hint);
 
-static struct cryptocap *crypto_checkdriver_lock(u_int32_t);
-static struct cryptocap *crypto_checkdriver_uninit(u_int32_t);
-static struct cryptocap *crypto_checkdriver(u_int32_t);
+static struct cryptocap *crypto_checkdriver_lock(uint32_t);
+static struct cryptocap *crypto_checkdriver_uninit(uint32_t);
+static struct cryptocap *crypto_checkdriver(uint32_t);
 static void crypto_driver_lock(struct cryptocap *);
 static void crypto_driver_unlock(struct cryptocap *);
 static void crypto_driver_clear(struct cryptocap *);
@@ -624,7 +626,7 @@ crypto_destroy(bool exit_kthread)
 		percpu_foreach(crypto_crp_qs_percpu, crypto_crp_q_is_busy_pc,
 				   &is_busy);
 		if (is_busy)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		/* FIXME:
 		 * prohibit enqueue to crp_q and crp_kq after here.
 		 */
@@ -636,7 +638,7 @@ crypto_destroy(bool exit_kthread)
 				continue;
 			if (cap->cc_sessions != 0) {
 				mutex_exit(&crypto_drv_mtx);
-				return EBUSY;
+				return SET_ERROR(EBUSY);
 			}
 		}
 		mutex_exit(&crypto_drv_mtx);
@@ -710,7 +712,7 @@ crypto_driver_suitable(struct cryptocap *cap, struct cryptoini *cri)
 static struct cryptocap *
 crypto_select_driver_lock(struct cryptoini *cri, int hard)
 {
-	u_int32_t hid;
+	uint32_t hid;
 	int accept;
 	struct cryptocap *cap, *best;
 	int error = 0;
@@ -783,7 +785,7 @@ again:
 		error = module_autoload("swcrypto", MODULE_CLASS_DRIVER);
 		mutex_enter(&crypto_drv_mtx);
 		if (error == 0) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto again;
 		}
 	}
@@ -795,7 +797,7 @@ again:
  * Create a new session.
  */
 int
-crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
+crypto_newsession(uint64_t *sid, struct cryptoini *cri, int hard)
 {
 	struct cryptocap *cap;
 	int err = EINVAL;
@@ -814,7 +816,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	cap = crypto_select_driver_lock(cri, hard);
 	if (cap != NULL) {
-		u_int32_t hid, lid;
+		uint32_t hid, lid;
 
 		hid = cap - crypto_drivers;
 		KASSERT(hid < 0xffffff);
@@ -845,7 +847,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
 
 	mutex_exit(&crypto_drv_mtx);
 
-	return err;
+	return err ? SET_ERROR(err) : 0;
 }
 
 /*
@@ -853,7 +855,7 @@ crypto_newsession(u_int64_t *sid, struct cryptoini *cri, int hard)
  * driver).
  */
 void
-crypto_freesession(u_int64_t sid)
+crypto_freesession(uint64_t sid)
 {
 	struct cryptocap *cap;
 
@@ -903,7 +905,7 @@ crypto_checkdriver_initialized(const struct cryptocap *cap)
  * support for the algorithms they handle.
  */
 int32_t
-crypto_get_driverid(u_int32_t flags)
+crypto_get_driverid(uint32_t flags)
 {
 	struct cryptocap *newdrv;
 	struct cryptocap *cap = NULL;
@@ -956,7 +958,7 @@ crypto_get_driverid(u_int32_t flags)
 }
 
 static struct cryptocap *
-crypto_checkdriver_lock(u_int32_t hid)
+crypto_checkdriver_lock(uint32_t hid)
 {
 	struct cryptocap *cap;
 
@@ -977,7 +979,7 @@ crypto_checkdriver_lock(u_int32_t hid)
  *     - crypto_drivers[hid] may not be initialized
  */
 static struct cryptocap *
-crypto_checkdriver_uninit(u_int32_t hid)
+crypto_checkdriver_uninit(uint32_t hid)
 {
 
 	KASSERT(mutex_owned(&crypto_drv_mtx));
@@ -995,7 +997,7 @@ crypto_checkdriver_uninit(u_int32_t hid)
  *     - crypto_drivers[hid] may not be initialized
  */
 static struct cryptocap *
-crypto_checkdriver(u_int32_t hid)
+crypto_checkdriver(uint32_t hid)
 {
 
 	KASSERT(mutex_owned(&crypto_drv_mtx));
@@ -1054,7 +1056,7 @@ crypto_driver_clear(struct cryptocap *cap)
  * is called once for each algorithm supported a driver.
  */
 int
-crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
+crypto_kregister(uint32_t driverid, int kalg, uint32_t flags,
     int (*kprocess)(void *, struct cryptkop *, int),
     void *karg)
 {
@@ -1088,7 +1090,7 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
 		}
 		err = 0;
 	} else
-		err = EINVAL;
+		err = SET_ERROR(EINVAL);
 
 	mutex_exit(&crypto_drv_mtx);
 	return err;
@@ -1099,10 +1101,10 @@ crypto_kregister(u_int32_t driverid, int kalg, u_int32_t flags,
  * is called once for each such algorithm supported by a driver.
  */
 int
-crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
-    u_int32_t flags,
-    int (*newses)(void *, u_int32_t*, struct cryptoini*),
-    void (*freeses)(void *, u_int64_t),
+crypto_register(uint32_t driverid, int alg, uint16_t maxoplen,
+    uint32_t flags,
+    int (*newses)(void *, uint32_t*, struct cryptoini*),
+    void (*freeses)(void *, uint64_t),
     int (*process)(void *, struct cryptop *, int),
     void *arg)
 {
@@ -1111,7 +1113,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 
 	cap = crypto_checkdriver_lock(driverid);
 	if (cap == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* NB: algorithms are in the range [1..max] */
 	if (CRYPTO_ALGORITHM_MIN <= alg && alg <= CRYPTO_ALGORITHM_MAX) {
@@ -1142,7 +1144,7 @@ crypto_register(u_int32_t driverid, int alg, u_int16_t maxoplen,
 		}
 		err = 0;
 	} else
-		err = EINVAL;
+		err = SET_ERROR(EINVAL);
 
 	crypto_driver_unlock(cap);
 
@@ -1153,17 +1155,17 @@ static int
 crypto_unregister_locked(struct cryptocap *cap, int alg, bool all)
 {
 	int i;
-	u_int32_t ses;
+	uint32_t ses;
 	bool lastalg = true;
 
 	KASSERT(cap != NULL);
 	KASSERT(mutex_owned(&cap->cc_lock));
 
 	if (alg < CRYPTO_ALGORITHM_MIN || CRYPTO_ALGORITHM_MAX < alg)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (!all && cap->cc_alg[alg] == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	cap->cc_alg[alg] = 0;
 	cap->cc_max_op_len[alg] = 0;
@@ -1201,7 +1203,7 @@ crypto_unregister_locked(struct cryptocap *cap, int alg, bool all)
  * reroute requests.
  */
 int
-crypto_unregister(u_int32_t driverid, int alg)
+crypto_unregister(uint32_t driverid, int alg)
 {
 	int err;
 	struct cryptocap *cap;
@@ -1221,7 +1223,7 @@ crypto_unregister(u_int32_t driverid, int alg)
  * requests.
  */
 int
-crypto_unregister_all(u_int32_t driverid)
+crypto_unregister_all(uint32_t driverid)
 {
 	int err, i;
 	struct cryptocap *cap;
@@ -1242,14 +1244,14 @@ crypto_unregister_all(u_int32_t driverid)
  * the driver is now ready for cryptop's and/or cryptokop's.
  */
 int
-crypto_unblock(u_int32_t driverid, int what)
+crypto_unblock(uint32_t driverid, int what)
 {
 	struct cryptocap *cap;
 	int needwakeup = 0;
 
 	cap = crypto_checkdriver_lock(driverid);
 	if (cap == NULL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if (what & CRYPTO_SYMQ) {
 		needwakeup |= cap->cc_qblocked;
@@ -1440,7 +1442,7 @@ static int
 crypto_kinvoke(struct cryptkop *krp, int hint)
 {
 	struct cryptocap *cap = NULL;
-	u_int32_t hid;
+	uint32_t hid;
 	int error;
 
 	KASSERT(krp != NULL);
@@ -1484,7 +1486,7 @@ crypto_kinvoke(struct cryptkop *krp, int hint)
 		    error);
 		return error;
 	} else {
-		krp->krp_status = ENODEV;
+		krp->krp_status = SET_ERROR(ENODEV);
 		krp->reqcpu = curcpu();
 		crypto_kdone(krp);
 		return 0;
@@ -1557,7 +1559,7 @@ crypto_invoke(struct cryptop *crp, int hint)
 			crypto_driver_unlock(cap);
 			crypto_freesession(crp->crp_sid);
 		}
-		crp->crp_etype = ENODEV;
+		crp->crp_etype = SET_ERROR(ENODEV);
 		crypto_done(crp);
 		return 0;
 	}
@@ -1817,7 +1819,7 @@ cryptointr(void *arg __unused)
 		submit = NULL;
 		hint = 0;
 		TAILQ_FOREACH_SAFE(crp, crp_q, crp_next, cnext) {
-			u_int32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
+			uint32_t hid = CRYPTO_SESID2HID(crp->crp_sid);
 			cap = crypto_checkdriver_lock(hid);
 			if (cap == NULL || cap->cc_process == NULL) {
 				if (cap != NULL)
@@ -2022,7 +2024,7 @@ opencrypto_modcmd(modcmd_t cmd, void *opaque)
 #endif
 		break;
 	default:
-		error = ENOTTY;
+		error = SET_ERROR(ENOTTY);
 	}
 	return error;
 }

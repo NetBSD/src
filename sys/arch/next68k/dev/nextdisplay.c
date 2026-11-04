@@ -1,4 +1,4 @@
-/* $NetBSD: nextdisplay.c,v 1.31 2024/02/02 15:59:30 tsutsui Exp $ */
+/* $NetBSD: nextdisplay.c,v 1.31.2.1 2026/11/04 23:21:05 perseant Exp $ */
 
 /*
  * Copyright (c) 1998 Matt DeBergalis
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.31 2024/02/02 15:59:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nextdisplay.c,v 1.31.2.1 2026/11/04 23:21:05 perseant Exp $");
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
@@ -177,9 +177,8 @@ nextdisplay_init(struct nextdisplay_config *dc, int color)
 
 #if 0
 	printf("intiobase at: %08x\n", intiobase);
-	printf("intiolimit at: %08x\n", intiolimit);
 	printf("videobase at: %08x\n", fbbase);
-	printf("videolimit at: %08x\n", fblimit);
+	printf("video mapsize: %08x\n", fbmapsize);
 
 	printf("virtual fb at: %08x\n", dc->dc_vaddr);
 	printf("physical fb at: %08x\n", dc->dc_paddr);

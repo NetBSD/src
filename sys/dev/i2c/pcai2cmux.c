@@ -1,4 +1,4 @@
-/*	$NetBSD: pcai2cmux.c,v 1.9 2022/07/20 22:58:35 thorpej Exp $	*/
+/*	$NetBSD: pcai2cmux.c,v 1.9.10.1 2026/11/04 23:21:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.9 2022/07/20 22:58:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcai2cmux.c,v 1.9.10.1 2026/11/04 23:21:56 perseant Exp $");
 
 /*
  * Driver for NXP PCA954x / PCA984x I2C switches and multiplexers.
@@ -220,9 +220,10 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 	struct pcaiicmux_bus_info * const bus_info =
 	    &sc->sc_bus_info[bus->busidx];
 
-	switch (bus->handletype) {
-	case I2C_COOKIE_OF:
-		error = fdtbus_get_reg(bus->handle, 0, &addr, NULL);
+	switch (devhandle_type(bus->devhandle)) {
+	case DEVHANDLE_TYPE_OF:
+		error = fdtbus_get_reg(devhandle_to_of(bus->devhandle),
+		    0, &addr, NULL);
 		if (error) {
 			aprint_error_dev(iicmux->sc_dev,
 			    "unable to get reg property for bus %d\n",
@@ -231,10 +232,11 @@ pcaiicmux_get_bus_info(struct iicmux_bus * const bus)
 		}
 		break;
 #if NACPICA > 0
-	case I2C_COOKIE_ACPI: {
+	case DEVHANDLE_TYPE_ACPI: {
 		ACPI_INTEGER val;
 		ACPI_STATUS rv;
-		rv = acpi_eval_integer((ACPI_HANDLE)bus->handle, "_ADR", &val);
+		rv = acpi_eval_integer(devhandle_to_acpi(bus->devhandle),
+		    "_ADR", &val);
 		if (ACPI_FAILURE(rv)) {
 			aprint_error_dev(iicmux->sc_dev,
 			    "unable to evaluate _ADR for bus %d: %s\n",
@@ -347,11 +349,10 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcaiicmux_softc * const sc = device_private(self);
 	struct i2c_attach_args * const ia = aux;
+	devhandle_t devhandle = device_handle(self);
 	int error;
 
 	sc->sc_iicmux.sc_dev = self;
-	sc->sc_iicmux.sc_handle = ia->ia_cookie;
-	sc->sc_iicmux.sc_handletype = ia->ia_cookietype;
 	sc->sc_iicmux.sc_config = &pcaiicmux_config;
 	sc->sc_iicmux.sc_i2c_parent = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
@@ -363,8 +364,8 @@ pcaiicmux_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": PCA954x I2C %s\n",
 	    sc->sc_type->enable_bit ? "mux" : "switch");
 
-	if (ia->ia_cookietype == I2C_COOKIE_OF) {
-		const int phandle = (int)ia->ia_cookie;
+	if (devhandle_type(devhandle) == DEVHANDLE_TYPE_OF) {
+		const int phandle = devhandle_to_of(devhandle);
 		if (of_hasprop(phandle, "i2c-mux-idle-disconnect")) {
 			sc->sc_idle_disconnect = true;
 		}

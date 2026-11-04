@@ -1,6 +1,6 @@
 /* Target-dependent code for the NEC V850 for GDB, the GNU debugger.
 
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -201,7 +201,7 @@ enum
     E_R149_REGNUM,
     E_NUM_OF_V850E2_REGS,
 
-    /* v850e3v5 system registers, selID 1 thru 7.  */
+    /* v850e3v5 system registers, selID 1 through 7.  */
     E_SELID_1_R0_REGNUM = E_NUM_OF_V850E2_REGS,
     E_SELID_1_R31_REGNUM = E_SELID_1_R0_REGNUM + 31,
 
@@ -1047,7 +1047,7 @@ v850_push_dummy_call (struct gdbarch *gdbarch,
 
   /* Now load as many as possible of the first arguments into
      registers, and push the rest onto the stack.  There are 16 bytes
-     in four registers available.  Loop thru args from first to last.  */
+     in four registers available.  Loop through args from first to last.  */
   for (argnum = 0; argnum < nargs; argnum++)
     {
       int len;
@@ -1320,15 +1320,16 @@ v850_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
   *this_id = frame_id_build (cache->saved_regs[E_SP_REGNUM].addr (), cache->pc);
 }
 
-static const struct frame_unwind v850_frame_unwind = {
+static const struct frame_unwind_legacy v850_frame_unwind (
   "v850 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   v850_frame_this_id,
   v850_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 v850_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -1460,9 +1461,7 @@ v850_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_v850_tdep ();
-void
-_initialize_v850_tdep ()
+INIT_GDB_FILE (v850_tdep)
 {
   gdbarch_register (bfd_arch_v850, v850_gdbarch_init);
   gdbarch_register (bfd_arch_v850_rh850, v850_gdbarch_init);

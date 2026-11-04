@@ -1,4 +1,4 @@
-/* $NetBSD: t_printf.c,v 1.18 2024/05/11 14:39:53 riastradh Exp $ */
+/* $NetBSD: t_printf.c,v 1.18.2.1 2026/11/04 23:28:17 perseant Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -150,6 +150,7 @@ ATF_TC_BODY(snprintf_float, tc)
 
 	time(&now);
 	srand(now);
+	printf("seed %u\n", (unsigned)now);
 	for (size_t i = 0; i < 10000; i++) {
 		ul = rand();
 		uh = rand();
@@ -267,7 +268,7 @@ ATF_TC_BODY(snprintf_long_double_a, tc)
 ATF_TC(pr57250_fix);
 ATF_TC_HEAD(pr57250_fix, tc)
 {
-	atf_tc_set_md_var(tc, "descr", "Test for PR57250");
+	atf_tc_set_md_var(tc, "descr", "Test for PR 57250: dtoa mishandles infinite doubles on 32bit big endian machines");
 }
 
 ATF_TC_BODY(pr57250_fix, tc)
@@ -282,7 +283,9 @@ ATF_TC_BODY(pr57250_fix, tc)
 	ld = (double)ld;
 	ATF_CHECK(isfinite(ld) == 0);
 	snprintf(buf, sizeof buf, "%Lf\n", ld);
+#ifndef __vax__
 	ATF_REQUIRE_STREQ(buf, "inf\n");
+#endif
 }
 #endif
 

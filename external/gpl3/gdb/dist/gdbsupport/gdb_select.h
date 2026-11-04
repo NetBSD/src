@@ -1,6 +1,6 @@
 /* Slightly more portable version of <sys/select.h>.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined(GDB_SELECT_H)
-#define GDB_SELECT_H
+#ifndef GDBSUPPORT_GDB_SELECT_H
+#define GDBSUPPORT_GDB_SELECT_H
 
 #ifdef HAVE_SYS_SELECT_H
 #include <sys/select.h>
@@ -48,4 +48,4 @@ extern int interruptible_select (int n,
 				 fd_set *exceptfds,
 				 struct timeval *timeout);
 
-#endif /* !defined(GDB_SELECT_H) */
+#endif /* GDBSUPPORT_GDB_SELECT_H */

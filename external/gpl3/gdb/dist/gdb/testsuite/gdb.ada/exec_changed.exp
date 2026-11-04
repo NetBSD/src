@@ -1,4 +1,4 @@
-# Copyright 2005-2024 Free Software Foundation, Inc.
+# Copyright 2005-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -84,9 +84,9 @@ if { [gdb_start_cmd] < 0 } {
 
 # Try again, this time with just changing the file time of first.
 
-clean_restart "${binfile}$EXEEXT"
+clean_restart "${::testfile}$EXEEXT"
 
-# Ensure we don't accidently use the main symbol cache.
+# Ensure we don't accidentally use the main symbol cache.
 gdb_test_no_output "mt set symbol-cache-size 0"
 
 # Put something in the symbol lookup cache that will get looked up when

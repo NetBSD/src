@@ -1,6 +1,6 @@
 /* MI Interpreter Definitions and Commands for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,9 +20,9 @@
 
 #include "mi-interp.h"
 
+#include "exceptions.h"
 #include "interps.h"
 #include "event-top.h"
-#include "gdbsupport/event-loop.h"
 #include "inferior.h"
 #include "infrun.h"
 #include "ui-out.h"
@@ -34,7 +34,7 @@
 #include "mi-common.h"
 #include "observable.h"
 #include "gdbthread.h"
-#include "solist.h"
+#include "solib.h"
 #include "objfiles.h"
 #include "tracepoint.h"
 #include "cli-out.h"
@@ -720,15 +720,17 @@ mi_interp::on_target_resumed (ptid_t ptid)
 
 /* See mi-interp.h.  */
 
-void
-mi_output_solib_attribs (ui_out *uiout, const solib &solib)
+static void
+mi_output_solib_attribs_1 (ui_out *uiout, const solib &solib,
+			   bool include_symbols_loaded_p)
 {
   gdbarch *gdbarch = current_inferior ()->arch ();
 
-  uiout->field_string ("id", solib.so_original_name);
-  uiout->field_string ("target-name", solib.so_original_name);
-  uiout->field_string ("host-name", solib.so_name);
-  uiout->field_signed ("symbols-loaded", solib.symbols_loaded);
+  uiout->field_string ("id", solib.original_name);
+  uiout->field_string ("target-name", solib.original_name);
+  uiout->field_string ("host-name", solib.name);
+  if (include_symbols_loaded_p)
+    uiout->field_signed ("symbols-loaded", solib.symbols_loaded);
   if (!gdbarch_has_global_solist (current_inferior ()->arch ()))
       uiout->field_fmt ("thread-group", "i%d", current_inferior ()->num);
 
@@ -739,6 +741,14 @@ mi_output_solib_attribs (ui_out *uiout, const solib &solib)
       uiout->field_core_addr ("from", gdbarch, solib.addr_low);
       uiout->field_core_addr ("to", gdbarch, solib.addr_high);
     }
+}
+
+/* See mi-interp.h.  */
+
+void
+mi_output_solib_attribs (ui_out *uiout, const solib &solib)
+{
+  mi_output_solib_attribs_1 (uiout, solib, true);
 }
 
 void
@@ -759,7 +769,7 @@ mi_interp::on_solib_loaded (const solib &solib)
 }
 
 void
-mi_interp::on_solib_unloaded (const solib &solib)
+mi_interp::on_solib_unloaded (const solib &solib, bool still_in_use)
 {
   ui_out *uiout = this->interp_ui_out ();
 
@@ -770,11 +780,9 @@ mi_interp::on_solib_unloaded (const solib &solib)
 
   ui_out_redirect_pop redir (uiout, this->event_channel);
 
-  uiout->field_string ("id", solib.so_original_name);
-  uiout->field_string ("target-name", solib.so_original_name);
-  uiout->field_string ("host-name", solib.so_name);
-  if (!gdbarch_has_global_solist (current_inferior ()->arch ()))
-    uiout->field_fmt ("thread-group", "i%d", current_inferior ()->num);
+  /* Pass false here so that 'symbols-loaded' is not included.  */
+  mi_output_solib_attribs_1 (uiout, solib, false);
+  uiout->field_string ("still-in-use", still_in_use ? "true" : "false");
 
   gdb_flush (this->event_channel);
 }
@@ -927,9 +935,7 @@ mi_interp_factory (const char *name)
   return new mi_interp (name);
 }
 
-void _initialize_mi_interp ();
-void
-_initialize_mi_interp ()
+INIT_GDB_FILE (mi_interp)
 {
   /* The various interpreter levels.  */
   interp_factory_register (INTERP_MI2, mi_interp_factory);

@@ -1,4 +1,4 @@
-/* $Id: imx23_rtcreg.h,v 1.2 2015/01/10 12:16:28 jmcneill Exp $ */
+/* $NetBSD: imx23_rtcreg.h,v 1.2.54.1 2026/11/04 23:20:10 perseant Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

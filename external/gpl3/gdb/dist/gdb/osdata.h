@@ -1,6 +1,6 @@
 /* Routines for handling XML generic OS data provided by target.
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef OSDATA_H
-#define OSDATA_H
+#ifndef GDB_OSDATA_H
+#define GDB_OSDATA_H
 
 #include <vector>
 
@@ -57,4 +57,4 @@ const std::string *get_osdata_column (const osdata_item &item,
    available types of OS data.  */
 void info_osdata (const char *type);
 
-#endif /* OSDATA_H */
+#endif /* GDB_OSDATA_H */

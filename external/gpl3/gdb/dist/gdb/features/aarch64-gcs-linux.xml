@@ -1,0 +1,18 @@
+<?xml version="1.0"?>
+<!-- Copyright (C) 2025 Free Software Foundation, Inc.
+
+     Copying and distribution of this file, with or without modification,
+     are permitted in any medium without royalty provided the copyright
+     notice and this notice are preserved.  -->
+
+<!DOCTYPE feature SYSTEM "gdb-target.dtd">
+<feature name="org.gnu.gdb.aarch64.gcs.linux">
+  <flags id="features_flags" size="8">
+    <field name="PR_SHADOW_STACK_ENABLE" start="0" end="0"/>
+    <field name="PR_SHADOW_STACK_WRITE" start="1" end="1"/>
+    <field name="PR_SHADOW_STACK_PUSH" start="2" end="2"/>
+  </flags>
+
+  <reg name="gcs_features_enabled" bitsize="64" type="features_flags" group="system"/>
+  <reg name="gcs_features_locked" bitsize="64" type="features_flags" group="system"/>
+</feature>

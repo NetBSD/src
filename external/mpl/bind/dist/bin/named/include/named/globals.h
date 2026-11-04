@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.10.2.1 2025/08/02 05:50:54 perseant Exp $	*/
+/*	$NetBSD: globals.h,v 1.10.2.2 2026/11/04 23:15:35 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -80,8 +80,8 @@ EXTERN in_port_t named_g_tlsport       INIT(0);
 EXTERN in_port_t named_g_httpsport     INIT(0);
 EXTERN in_port_t named_g_httpport      INIT(0);
 
-EXTERN in_port_t named_g_http_listener_clients INIT(0);
-EXTERN in_port_t named_g_http_streams_per_conn INIT(0);
+EXTERN uint32_t named_g_http_listener_clients INIT(0);
+EXTERN uint32_t named_g_http_streams_per_conn INIT(0);
 
 EXTERN named_server_t *named_g_server INIT(NULL);
 

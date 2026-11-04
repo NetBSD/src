@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.506.2.1 2025/08/02 05:58:45 perseant Exp $ */
+/* $NetBSD: cgram.y,v 1.506.2.2 2026/11/04 23:28:45 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.506.2.1 2025/08/02 05:58:45 perseant Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.506.2.2 2026/11/04 23:28:45 perseant Exp $");
 #endif
 
 #include <limits.h>
@@ -148,6 +148,15 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	return attr;
 }
 
+static tnode_t *
+unconst_tnode(const tnode_t *p)
+{
+	void *r;
+
+	memcpy(&r, &p, sizeof(r));
+	return r;
+}
+
 #if YYDEBUG && YYBYACC
 #define YYSTYPE_TOSTRING cgram_to_string
 #endif
@@ -175,7 +184,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	buffer	*y_string;
 	qual_ptr *y_qual_ptr;
 	bool	y_seen_statement;
-	struct generic_association *y_generic;
+	struct generic_selection y_generic_selection;
 	array_size y_array_size;
 	bool	y_in_system_header;
 	designation y_designation;
@@ -221,7 +230,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	fprintf(yyo, "function_call(");
 	for (size_t i = 0; i < $$->args_len; i++)
 		fprintf(yyo, "%s%s", i > 0 ? ", " : "",
-		    type_name($$->args[i]->tn_type));
+		    expr_type_name($$->args[i]));
 	fprintf(yyo, ")");
 } <y_arguments>
 %printer { fprintf(yyo, "%s", type_name($$)); } <y_type>
@@ -238,7 +247,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 	fprintf(yyo, "%s *", type_qualifiers_string($$->qualifiers));
 } <y_qual_ptr>
 %printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_seen_statement>
-%printer { fprintf(yyo, "%s", type_name($$->ga_arg)); } <y_generic>
+%printer { fprintf(yyo, "%s", type_name($$.expr_type)); } <y_generic_selection>
 %printer { fprintf(yyo, "%d", $$.dim); } <y_array_size>
 %printer { fprintf(yyo, "%s", $$ ? "yes" : "no"); } <y_in_system_header>
 %printer {
@@ -354,8 +363,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 %type	<y_tnode>	primary_expression
 %type	<y_designation>	member_designator
 %type	<y_tnode>	generic_selection
-%type	<y_generic>	generic_assoc_list
-%type	<y_generic>	generic_association
+%type	<y_generic_selection>	generic_inner
 %type	<y_tnode>	postfix_expression
 %type	<y_tnode>	gcc_statement_expr_list
 %type	<y_tnode>	gcc_statement_expr_item
@@ -363,6 +371,7 @@ new_attribute(const sbuf_t *prefix, const sbuf_t *name,
 %type	<y_arguments>	argument_expression_list
 %type	<y_scl>		storage_class_specifiers
 %type	<y_tnode>	unary_expression
+%type	<y_tnode>	sizeof_argument
 %type	<y_tnode>	cast_expression
 %type	<y_tnode>	expression_opt
 %type	<y_tnode>	conditional_expression
@@ -604,34 +613,46 @@ member_designator:
 
 /* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
 generic_selection:
-	T_GENERIC T_LPAREN assignment_expression T_COMMA
-	    generic_assoc_list T_RPAREN {
+	T_GENERIC {
 		/* generic selection requires C11 or later */
 		c11ism(345);
-		$$ = build_generic_selection($3, $5);
+	} T_LPAREN generic_inner T_RPAREN {
+		$$ = $4.matched != NULL ? $4.matched : $4.fallback;
 	}
 ;
 
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
-generic_assoc_list:
-	generic_association
-|	generic_assoc_list T_COMMA generic_association {
-		$3->ga_prev = $1;
-		$$ = $3;
-	}
-;
+/* The rule 'generic_assoc_list' is inlined into 'generic_inner'. */
+/* The rule 'generic_association' is inlined into 'generic_inner'. */
 
-/* K&R ---, C90 ---, C99 ---, C11 6.5.1.1, C23 6.5.2.1 */
-generic_association:
-	type_name T_COLON assignment_expression {
-		$$ = block_zero_alloc(sizeof(*$$), "generic");
-		$$->ga_arg = $1;
-		$$->ga_result = $3;
+generic_inner:
+	{
+		push_evaluation_mode(EM_TYPE);
+	} assignment_expression {
+		pop_evaluation_mode();
+	} {
+		$$ = (struct generic_selection){
+			/* C23 6.5.2.1p2 */
+			.expr_type = $2 != NULL
+			    ? cconv(unconst_tnode($2))->tn_type
+			    : NULL
+		};
 	}
-|	T_DEFAULT T_COLON assignment_expression {
-		$$ = block_zero_alloc(sizeof(*$$), "generic");
-		$$->ga_arg = NULL;
-		$$->ga_result = $3;
+|	generic_inner T_COMMA type_name T_COLON {
+		$1.assoc_matched = $1.expr_type != NULL && $3 != NULL
+		    && types_compatible($1.expr_type, $3, true, false, NULL);
+		push_evaluation_mode($1.assoc_matched ? EM_EVAL : EM_PARSE);
+	} assignment_expression {
+		pop_evaluation_mode();
+		$$ = $1;
+		if ($$.assoc_matched)
+			$$.matched = $6;
+	}
+|	generic_inner T_COMMA T_DEFAULT T_COLON {
+		push_evaluation_mode($1.matched != NULL ? EM_PARSE : EM_EVAL);
+	} assignment_expression {
+		pop_evaluation_mode();
+		$$ = $1;
+		$$.fallback = $6;
 	}
 ;
 
@@ -799,14 +820,11 @@ unary_expression:
 |	T_EXTENSION cast_expression {	/* GCC c_parser_unary_expression */
 		$$ = $2;
 	}
-|	T_SIZEOF unary_expression {
-		$$ = $2 == NULL ? NULL : build_sizeof($2->tn_type);
-		if ($$ != NULL)
-			check_expr_misc($2,
-			    false, false, false, false, false, true);
-	}
-|	T_SIZEOF T_LPAREN type_name T_RPAREN {
-		$$ = build_sizeof($3);
+|	T_SIZEOF {
+		push_evaluation_mode(EM_TYPE);
+	} sizeof_argument {
+		pop_evaluation_mode();
+		$$ = $3;
 	}
 |	T_ALIGNOF unary_expression {
 		/* non type argument to alignof is a GCC extension */
@@ -818,6 +836,18 @@ unary_expression:
 |	T_ALIGNOF T_LPAREN type_name T_RPAREN {
 		/* TODO: c11ism */
 		$$ = build_alignof($3);
+	}
+;
+
+sizeof_argument:			/* specific to lint */
+	unary_expression {
+		$$ = $1 == NULL ? NULL : build_sizeof($1->tn_type);
+		if ($$ != NULL)
+			check_expr_misc($1,
+			    false, false, false, false, false, true);
+	}
+|	T_LPAREN type_name T_RPAREN {
+		$$ = build_sizeof($2);
 	}
 ;
 
@@ -1057,11 +1087,11 @@ type_attribute_list:
 type_attribute:			/* See C11 6.7 declaration-specifiers */
 	gcc_attribute_specifier
 |	T_ALIGNAS T_LPAREN type_type_specifier T_RPAREN {		/* C11 6.7.5 */
-		dcs_add_alignas(build_sizeof($3));
+		dcs_add_alignas(alignment($3));
 		$$ = no_type_attributes();
 	}
 |	T_ALIGNAS T_LPAREN constant_expression T_RPAREN {	/* C11 6.7.5 */
-		dcs_add_alignas($3);
+		dcs_add_alignas(to_int_constant($3, true));
 		$$ = no_type_attributes();
 	}
 |	T_PACKED {
@@ -1520,9 +1550,7 @@ type_direct_declarator:
 			lint_assert(t == INT || t == UINT);
 			type_t *tp = block_dup_type($$->s_type);
 			tp->t_tspec =
-#ifdef INT128_SIZE
 			    $2.bit_width == 128 ? (t == INT ? INT128 : UINT128) :
-#endif
 			    t == INT ? LLONG : ULLONG;
 			$$->s_type = tp;
 		}
@@ -2080,12 +2108,9 @@ label:
 	}
 |	T_CASE constant_expression T_COLON {
 		case_label($2);
-		suppress_fallthrough = true;
 	}
 |	T_CASE constant_expression T_ELLIPSIS constant_expression T_COLON {
-		/* XXX: We don't fill all cases */
-		case_label($2);
-		suppress_fallthrough = true;
+		case_label_range($2, $4);
 	}
 |	T_DEFAULT T_COLON {
 		default_label();
@@ -2563,7 +2588,7 @@ gcc_attribute:
 		const char *name = $1->sb_name;
 		if (is_either(name, "aligned", "__aligned__")
 		    && $3->args_len == 1)
-			dcs_add_alignas($3->args[0]);
+			dcs_add_alignas(to_int_constant($3->args[0], true));
 		$$ = no_type_attributes();
 		if (is_either(name, "mode", "__mode__")
 		    && $3->args_len == 1

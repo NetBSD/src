@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.50 2020/08/01 02:04:55 riastradh Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.50.26.1 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.50 2020/08/01 02:04:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.50.26.1 2026/11/04 23:27:48 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -71,16 +71,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.50 2020/08/01 02:04:55 riastradh Exp
 #endif
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
+
+#include <sys/bus.h>
+#include <sys/cpu.h>
 #include <sys/fstypes.h>
+#include <sys/intr.h>
+#include <sys/kernel.h>
+#include <sys/ktrace.h>
+#include <sys/module.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-#include <sys/ktrace.h>
-#include <sys/intr.h>
-#include <sys/cpu.h>
-#include <sys/module.h>
-#include <sys/bus.h>
 #include <sys/userconf.h>
 
 bool default_bus_space_is_equal(bus_space_tag_t, bus_space_tag_t);
@@ -122,6 +124,7 @@ __strong_alias(ktr_mib,nullop);
 __strong_alias(ktr_execarg,nullop);
 __strong_alias(ktr_execenv,nullop);
 __strong_alias(ktr_execfd,nullop);
+__strong_alias(ktr_sigmask,nullop);
 
 __strong_alias(sys_fktrace,sys_nosys);	/* Syscalls */
 __strong_alias(sys_ktrace,sys_nosys);
@@ -155,6 +158,10 @@ __weak_alias(userconf_bootinfo, voidop);
 __weak_alias(userconf_init, voidop);
 __weak_alias(userconf_prompt, voidop);
 
+#ifdef MODULAR
+__weak_alias(module_init_md, voidop);
+#endif
+
 __weak_alias(kobj_renamespace, nullop);
 
 __weak_alias(interrupt_get_count, nullop);
@@ -165,6 +172,17 @@ __weak_alias(interrupt_construct_intrids, nullret);
 __weak_alias(interrupt_destruct_intrids, voidop);
 __weak_alias(interrupt_distribute, eopnotsupp);
 __weak_alias(interrupt_distribute_handler, eopnotsupp);
+
+__weak_alias(ipi_register, trueop);	/* just a low non-zero value */
+__weak_alias(ipi_unregister, voidop);
+__weak_alias(ipi_trigger, voidop);
+__weak_alias(ipi_trigger_multi, voidop);
+__weak_alias(ipi_trigger_broadcast, voidop);
+
+__weak_alias(ipi_unicast, trueop);
+__weak_alias(ipi_multicast, voidop);
+__weak_alias(ipi_broadcast, voidop);
+__weak_alias(ipi_wait, voidop);
 
 /*
  * Scheduler activations system calls.  These need to remain until libc's
@@ -230,7 +248,7 @@ sys_nosys(struct lwp *l, const void *v, register_t *retval)
 	mutex_enter(&proc_lock);
 	psignal(l->l_proc, SIGSYS);
 	mutex_exit(&proc_lock);
-	return ENOSYS;
+	return SET_ERROR(ENOSYS);
 }
 
 /*
@@ -240,7 +258,7 @@ int
 enodev(void)
 {
 
-	return (ENODEV);
+	return SET_ERROR(ENODEV);
 }
 
 /*
@@ -250,7 +268,7 @@ int
 enxio(void)
 {
 
-	return (ENXIO);
+	return SET_ERROR(ENXIO);
 }
 
 /*
@@ -260,7 +278,7 @@ int
 enoioctl(void)
 {
 
-	return (ENOTTY);
+	return SET_ERROR(ENOTTY);
 }
 
 /*
@@ -272,7 +290,7 @@ int
 enosys(void)
 {
 
-	return (ENOSYS);
+	return SET_ERROR(ENOSYS);
 }
 
 /*
@@ -283,7 +301,7 @@ int
 eopnotsupp(void)
 {
 
-	return (EOPNOTSUPP);
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 /*
@@ -302,6 +320,15 @@ nullop(void *v)
 {
 
 	return (0);
+}
+
+/*
+ * Generic "true" operation, always returns true (but as an int).
+ */
+int
+trueop(void)
+{
+	return true;
 }
 
 /*

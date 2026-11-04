@@ -1,6 +1,6 @@
 /* DWARF aranges handling
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "dwarf2/aranges.h"
 #include "dwarf2/read.h"
+#include "extract-store-integer.h"
 
 /* See aranges.h.  */
 
@@ -38,10 +39,7 @@ read_addrmap_from_aranges (dwarf2_per_objfile *per_objfile,
   struct gdbarch *gdbarch = objfile->arch ();
   dwarf2_per_bfd *per_bfd = per_objfile->per_bfd;
 
-  std::unordered_map<sect_offset,
-		     dwarf2_per_cu_data *,
-		     gdb::hash_enum<sect_offset>>
-    debug_info_offset_to_per_cu;
+  gdb::unordered_map<sect_offset, dwarf2_per_cu *> debug_info_offset_to_per_cu;
   for (const auto &per_cu : per_bfd->all_units)
     {
       /* A TU will not need aranges, and skipping them here is an easy
@@ -59,8 +57,9 @@ read_addrmap_from_aranges (dwarf2_per_objfile *per_objfile,
       gdb_assert (insertpair.second);
     }
 
-  std::set<sect_offset> debug_info_offset_seen;
+  gdb::unordered_set<sect_offset> debug_info_offset_seen;
   const bfd_endian dwarf5_byte_order = gdbarch_byte_order (gdbarch);
+  const int signed_addr_p = bfd_get_sign_extend_vma (abfd);
   const gdb_byte *addr = section->buffer;
   while (addr < section->buffer + section->size)
     {
@@ -124,7 +123,7 @@ read_addrmap_from_aranges (dwarf2_per_objfile *per_objfile,
 		      sect_offset_str (sect_offset (debug_info_offset)));
 	  return false;
 	}
-      dwarf2_per_cu_data *const per_cu = per_cu_it->second;
+      dwarf2_per_cu *const per_cu = per_cu_it->second;
 
       const uint8_t address_size = *addr++;
       if (address_size < 1 || address_size > 8)
@@ -169,8 +168,13 @@ read_addrmap_from_aranges (dwarf2_per_objfile *per_objfile,
 			  plongest (entry_addr - section->buffer));
 	      return false;
 	    }
-	  ULONGEST start = extract_unsigned_integer (addr, address_size,
-						     dwarf5_byte_order);
+	  ULONGEST start;
+	  if (signed_addr_p)
+	    start = extract_signed_integer (addr, address_size,
+					    dwarf5_byte_order);
+	  else
+	    start = extract_unsigned_integer (addr, address_size,
+					      dwarf5_byte_order);
 	  addr += address_size;
 	  ULONGEST length = extract_unsigned_integer (addr, address_size,
 						      dwarf5_byte_order);

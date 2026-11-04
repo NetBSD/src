@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_flow.c,v 1.86 2024/06/29 12:59:08 riastradh Exp $	*/
+/*	$NetBSD: ip_flow.c,v 1.86.2.1 2026/11/04 23:27:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.86 2024/06/29 12:59:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_flow.c,v 1.86.2.1 2026/11/04 23:27:59 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -116,10 +116,10 @@ static struct work	ipflow_slowtimo_wk;
 static size_t
 ipflow_hash(const struct ip *ip)
 {
-	size_t hash = ip->ip_tos;
+	size_t hash = ip->ip_tos + ip->ip_src.s_addr;
 	size_t idx;
 
-	for (idx = 0; idx < 32; idx += IPFLOW_HASHBITS) {
+	for (idx = 1; idx < 32; idx += IPFLOW_HASHBITS) {
 		hash += (ip->ip_dst.s_addr >> (32 - idx)) +
 		    (ip->ip_src.s_addr >> idx);
 	}
@@ -568,7 +568,7 @@ ipflow_create(struct route *ro, struct mbuf *m)
 	PRT_SLOW_ARM(ipf->ipf_timer, IPFLOW_TIMER);
 
 	/*
-	 * Insert into the approriate bucket of the flow table.
+	 * Insert into the appropriate bucket of the flow table.
 	 */
 	hash = ipflow_hash(ip);
 	IPFLOW_INSERT(hash, ipf);

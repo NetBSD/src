@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_BYTE_VECTOR_H
-#define COMMON_BYTE_VECTOR_H
+#ifndef GDBSUPPORT_BYTE_VECTOR_H
+#define GDBSUPPORT_BYTE_VECTOR_H
 
 #include "gdbsupport/def-vector.h"
 
@@ -60,4 +60,4 @@ using char_vector = gdb::def_vector<char>;
 
 } /* namespace gdb */
 
-#endif /* COMMON_DEF_VECTOR_H */
+#endif /* GDBSUPPORT_BYTE_VECTOR_H */

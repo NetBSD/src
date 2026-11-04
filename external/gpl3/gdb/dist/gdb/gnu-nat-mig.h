@@ -1,5 +1,5 @@
 /* Common things used by the various *gnu-nat.c files
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GNU_NAT_MIG_H
-#define GNU_NAT_MIG_H
+#ifndef GDB_GNU_NAT_MIG_H
+#define GDB_GNU_NAT_MIG_H
 
 #include <mach/boolean.h>
 #include <mach/message.h>
@@ -28,4 +28,4 @@ boolean_t notify_server (mach_msg_header_t *InHeadP,
 boolean_t process_reply_server (mach_msg_header_t *InHeadP,
 				mach_msg_header_t *OutHeadP);
 
-#endif /* GNU_NAT_MIG_H */
+#endif /* GDB_GNU_NAT_MIG_H */

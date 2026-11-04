@@ -1,5 +1,5 @@
 /* Multi-process/thread control defs for GDB, the GNU debugger.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
    Contributed by Lynx Real-Time Systems, Inc.  Los Gatos, CA.
    
 
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDBTHREAD_H
-#define GDBTHREAD_H
+#ifndef GDB_GDBTHREAD_H
+#define GDB_GDBTHREAD_H
 
 struct symtab;
 
@@ -70,10 +70,10 @@ extern bool debug_threads;
    you want.  */
 enum thread_state
 {
-  /* In the frontend's perpective, the thread is stopped.  */
+  /* In the frontend's perspective, the thread is stopped.  */
   THREAD_STOPPED,
 
-  /* In the frontend's perpective, the thread is running.  */
+  /* In the frontend's perspective, the thread is running.  */
   THREAD_RUNNING,
 
   /* The thread is listed, but known to have exited.  We keep it
@@ -216,7 +216,7 @@ struct thread_suspend_state
      - If the thread is running, then this field has its value removed by
        calling stop_pc.reset() (see thread_info::set_executing()).
        Attempting to read a std::optional with no value is undefined
-       behaviour and will trigger an assertion error when _GLIBCXX_DEBUG is
+       behavior and will trigger an assertion error when _GLIBCXX_DEBUG is
        defined, which should make error easier to track down.  */
   std::optional<CORE_ADDR> stop_pc;
 };
@@ -533,7 +533,7 @@ public:
   struct target_waitstatus pending_follow;
 
   /* True if this thread has been explicitly requested to stop.  */
-  int stop_requested = 0;
+  bool stop_requested = false;
 
   /* The initiating frame of a nexting operation, used for deciding
      which exceptions to intercept.  If it is null_frame_id no
@@ -734,8 +734,8 @@ void thread_change_ptid (process_stratum_target *targ,
 
 /* Iterator function to call a user-provided callback function
    once for each known thread.  */
-typedef int (*thread_callback_func) (struct thread_info *, void *);
-extern struct thread_info *iterate_over_threads (thread_callback_func, void *);
+typedef gdb::function_view<bool (struct thread_info *)> thread_callback_func;
+extern struct thread_info *iterate_over_threads (thread_callback_func);
 
 /* Pull in the internals of the inferiors/threads ranges and
    iterators.  Must be done after struct thread_info is defined.  */
@@ -1071,4 +1071,4 @@ extern void thread_try_catch_cmd (thread_info *thr,
 
 extern const char *thread_state_string (enum thread_state state);
 
-#endif /* GDBTHREAD_H */
+#endif /* GDB_GDBTHREAD_H */

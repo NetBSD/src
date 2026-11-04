@@ -244,6 +244,22 @@ cat ${file}.tmp >>${file}
 rm -f ${file}.tmp
 $SIGNER -3 - -Px -Z nonsecify -O full -o ${zone} -f ${file} ${file} $zsk >s.out$n || dumpit s.out$n
 
+# An non OPTOUT NSEC3 zone with a insecure delegation without a NSEC3 record
+setup missing-nsec3-at-insecure-delegation bad
+zsk=$($KEYGEN -a ${DEFAULT_ALGORITHM} ${zone} 2>kg1.out$n) || dumpit kg1.out$n
+ksk=$($KEYGEN -a ${DEFAULT_ALGORITHM} -fK ${zone} 2>kg2.out$n) || dumpit kg2.out$n
+cat unsigned.db $ksk.key $zsk.key >$file
+$SIGNER -3 - -P -O full -o ${zone} -f ${file} ${file} >s.out$n || dumpit s.out$n
+echo "insecure.${zone}. 3600 IN NS a.name.server." >>$file
+
+# An OPTOUT NSEC3 zone with a insecure delegation without a NSEC3 record
+setup no-nsec3-at-insecure-delegation good
+zsk=$($KEYGEN -a ${DEFAULT_ALGORITHM} ${zone} 2>kg1.out$n) || dumpit kg1.out$n
+ksk=$($KEYGEN -a ${DEFAULT_ALGORITHM} -fK ${zone} 2>kg2.out$n) || dumpit kg2.out$n
+cat unsigned.db $ksk.key $zsk.key >$file
+$SIGNER -3 - -P -A -O full -o ${zone} -f ${file} ${file} >s.out$n || dumpit s.out$n
+echo "insecure.${zone}. 3600 IN NS a.name.server." >>$file
+
 # sign and verify with journal file
 setup updated other
 $KEYGEN -a ${DEFAULT_ALGORITHM} ${zone} >kg1.out$n 2>&1 || dumpit kg1.out$n

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.39 2022/03/10 00:14:16 riastradh Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.39.10.1 2026/11/04 23:21:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_SPACE_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.39 2022/03/10 00:14:16 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.39.10.1 2026/11/04 23:21:12 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -56,6 +56,10 @@ __KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.39 2022/03/10 00:14:16 riastradh Exp
 #include <powerpc/oea/pte.h>
 #include <powerpc/oea/spr.h>
 #include <powerpc/oea/sr_601.h>
+#endif
+
+#ifdef PPC_IBM440
+#include <powerpc/ibm4xx/tlb.h>
 #endif
 
 /* read_N */
@@ -503,6 +507,10 @@ memio_mmap(bus_space_tag_t t, bus_addr_t bpa, off_t offset, int prot, int flags)
 	paddr_t ret;
 	/* XXX what about stride? */
 	ret = trunc_page(t->pbs_offset + bpa + offset);
+#ifdef PPC_IBM440
+	if (!ibm4xx_mmap_ok(ret))
+		return -1;
+#endif
 
 #ifdef DEBUG
 	if (ret == 0) {
@@ -665,6 +673,12 @@ memio_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 			pmap_extract(pmap_kernel(), va, &pa);
 		}
 	} else
+		pmap_extract(pmap_kernel(), va, &pa);
+#elif defined(PPC_IBM440)
+	/*
+	 * On 440, bus_space mappings use pinned reserved TLB entries 
+	 */
+	if (!ppc44x_tlb_reverse(va, &pa))
 		pmap_extract(pmap_kernel(), va, &pa);
 #else
 	pmap_extract(pmap_kernel(), va, &pa);

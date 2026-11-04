@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-#include "../lib/unbuffer_output.c"
+#include "unbuffer_output.c"
 
 char buf[100];
 char bigbuf[1000];

@@ -1,4 +1,4 @@
-# Copyright 2007-2024 Free Software Foundation, Inc.
+# Copyright 2007-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -44,7 +44,7 @@ if  { [gdb_compile "${srcdir}/${subdir}/${srcfile2}" "${binfile2}" executable {d
     return -1
 }
 
-if {[mi_clean_restart $binfile]} {
+if {[mi_clean_restart $::testfile]} {
     return
 }
 
@@ -80,7 +80,7 @@ mi_gdb_test "-var-update linteger" \
 
 mi_gdb_test "-var-info-type linteger" \
 	"\\^done,type=\"\"" \
-	"no type for invalid variable linteger (1)"
+	"no type for invalid variable linteger, 1"
 
 # Check global variable is still correct.
 mi_gdb_test "-var-update global_simple" \
@@ -105,7 +105,7 @@ mi_gdb_test "-var-update linteger" \
 
 mi_gdb_test "-var-info-type linteger" \
 	"\\^done,type=\"\"" \
-	"no type for invalid variable linteger (2)"
+	"no type for invalid variable linteger, 2"
 
 # Check global variable are still correct.
 mi_gdb_test "-var-update global_simple" \

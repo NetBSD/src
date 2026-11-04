@@ -1,4 +1,4 @@
-# Copyright 2016-2023 Free Software Foundation, Inc.
+# Copyright 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,16 +16,12 @@
 # Test a C++ reference marked with DW_OP_GNU_implicit_pointer.
 # The referenced value is a global array whose location is a DW_OP_addr.
 
-if [skip_cplus_tests] {
-    return
-}
+require allow_cplus_tests
 
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if ![dwarf2_support] {
-    return 0
-}
+require dwarf2_support
 
 # We'll place the output of Dwarf::assemble in implref-array.S.
 standard_testfile .c .S

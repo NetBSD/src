@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.16.2.1 2025/08/02 05:50:50 perseant Exp $	*/
+/*	$NetBSD: dighost.c,v 1.16.2.2 2026/11/04 23:15:33 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2756,6 +2756,7 @@ send_done(isc_nmhandle_t *handle, isc_result_t eresult, void *arg) {
 		}
 		query_detach(&query);
 		lookup_detach(&l);
+		check_if_done();
 		return;
 	} else if (eresult != ISC_R_SUCCESS) {
 		debug("send failed: %s", isc_result_totext(eresult));
@@ -3029,7 +3030,6 @@ start_tcp(dig_query_t *query) {
 	if (keep != NULL && isc_sockaddr_equal(&keepaddr, &query->sockaddr)) {
 		query->handle = keep;
 		launch_next_query(query);
-		query_detach(&query);
 		return;
 	} else if (keep != NULL) {
 		isc_nmhandle_detach(&keep);
@@ -3400,6 +3400,14 @@ try_next_server(dig_lookup_t *lookup) {
 		return false;
 	}
 
+	/*
+	 * We reach here only when either start_udp or start_tcp fails in
+	 * get_address(), at which point lookup's current_query must be attached
+	 * to the query that just failed. We need to detach it before trying
+	 * the next server similar to, e.g., recv_done().
+	 */
+	query_detach(&lookup->current_query);
+
 	debug("trying next server...");
 
 	if (lookup->tcp_mode) {
@@ -3409,6 +3417,17 @@ try_next_server(dig_lookup_t *lookup) {
 	}
 
 	return true;
+}
+
+/*
+ * Print the lookup's startup banner.  It is skipped in +yaml mode, where
+ * the ";"-prefixed banner is not valid YAML and would corrupt the output.
+ */
+static void
+print_cmdline(const dig_lookup_t *l) {
+	if (!yaml) {
+		printf("%s", l->cmdline);
+	}
 }
 
 static void
@@ -3432,19 +3451,11 @@ force_next(dig_query_t *query) {
 		return;
 	}
 
-	if (l->retries > 1) {
-		l->retries--;
-		debug("making new %s request, %d tries left",
-		      l->tcp_mode ? "TCP" : "UDP", l->retries);
-		requeue_lookup(l, true);
-		lookup_detach(&l);
-		isc_refcount_decrement0(&recvcount);
-		debug("recvcount=%" PRIuFAST32,
-		      isc_refcount_current(&recvcount));
-		query_detach(&query);
-		clear_current_lookup();
-		return;
-	}
+	/*
+	 * We don't retry this server unlike other similar cases such as
+	 * recv_done() because we're here due to get_address() failure,
+	 * which shouldn't be transient.
+	 */
 
 	if (query->readhandle != NULL) {
 		isc_refcount_decrement0(&recvcount);
@@ -3461,7 +3472,7 @@ force_next(dig_query_t *query) {
 
 		dighost_error("no response from %s", buf);
 	} else {
-		printf("%s", l->cmdline);
+		print_cmdline(l);
 		dighost_error("no servers could be reached");
 	}
 
@@ -4138,7 +4149,7 @@ recv_done(isc_nmhandle_t *handle, isc_result_t eresult, isc_region_t *region,
 			 * Otherwise, print the cmdline and an error message,
 			 * and cancel the lookup.
 			 */
-			printf("%s", l->cmdline);
+			print_cmdline(l);
 			dighost_error("no servers could be reached");
 
 			if (exitcode < 9) {
@@ -4831,6 +4842,7 @@ idn_filter(isc_buffer_t *buffer, unsigned int start) {
 	char *dst = NULL;
 	size_t srclen, dstlen;
 	int res;
+	isc_result_t result;
 
 	/*
 	 * Copy name from 'buffer' to 'src' and terminate it with NULL.
@@ -4850,7 +4862,7 @@ idn_filter(isc_buffer_t *buffer, unsigned int start) {
 	}
 	resetlocale(LC_ALL);
 	if (res != IDN2_OK) {
-		return ISC_R_SUCCESS;
+		CLEANUP(ISC_R_SUCCESS);
 	}
 
 	/*
@@ -4858,14 +4870,18 @@ idn_filter(isc_buffer_t *buffer, unsigned int start) {
 	 */
 	dstlen = strlen(dst);
 	if (isc_buffer_length(buffer) < start + dstlen) {
-		return ISC_R_NOSPACE;
+		CLEANUP(ISC_R_NOSPACE);
 	}
 	isc_buffer_subtract(buffer, srclen);
 	memmove(isc_buffer_used(buffer), dst, dstlen);
 	isc_buffer_add(buffer, dstlen);
 
-	idn2_free(dst);
-	return ISC_R_SUCCESS;
+	result = ISC_R_SUCCESS;
+cleanup:
+	if (dst != NULL) {
+		idn2_free(dst);
+	}
+	return result;
 }
 
 /*%

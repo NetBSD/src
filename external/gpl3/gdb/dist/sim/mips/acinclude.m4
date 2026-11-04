@@ -1,4 +1,4 @@
-dnl Copyright (C) 2005-2024 Free Software Foundation, Inc.
+dnl Copyright (C) 2005-2025 Free Software Foundation, Inc.
 dnl
 dnl This program is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -224,7 +224,7 @@ __EOF__
   for fc in ${sim_mips_multi_configs}; do
 
     dnl Split up the entry.  ${c} contains the first three elements.
-    dnl Note: outer sqaure brackets are m4 quotes.
+    dnl Note: outer square brackets are m4 quotes.
     c=`echo ${fc} | sed ['s/:[^:]*$//']`
     bfdmachs=`echo ${fc} | sed 's/.*://'`
     name=`echo ${c} | sed 's/:.*//'`

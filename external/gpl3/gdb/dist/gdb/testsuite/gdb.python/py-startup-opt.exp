@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,7 @@
 # initialized.
 
 require allow_python_tests
+require {!is_remote host}
 
 # Return a list containing two directory paths for newly created home
 # directories.
@@ -78,8 +79,9 @@ proc test_python_settings { exp_state } {
 	# all GDB developers some will test GDB with this environment
 	# variable unset.
 	if { $attr == "dont_write_bytecode" \
-		 && $exp_state == "off"
-		 && [info exists ::env(PYTHONDONTWRITEBYTECODE)] } {
+		 && $exp_state == "off" \
+		 && [info exists ::env(PYTHONDONTWRITEBYTECODE)] \
+		 && $::env(PYTHONDONTWRITEBYTECODE) != "" } {
 	    set answer "on"
 	} else {
 	    set answer $exp_state
@@ -92,6 +94,16 @@ proc test_python_settings { exp_state } {
 	    "else:" "" \
 	    "  print (\"${attr} is off\")" "" \
 	    "end" "${attr} is ${answer}"
+
+	if { $attr == "dont_write_bytecode" } {
+	    set setting dont-write-bytecode
+	} else {
+	    set setting ignore-environment
+	}
+	set show_setting \
+	    "Python's $setting setting is $answer."
+	gdb_test "show python $setting" \
+	    [string_to_regexp $show_setting]
     }
 
     gdb_exit

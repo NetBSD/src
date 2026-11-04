@@ -1,7 +1,7 @@
 /* Functions specific to running gdb native on IA-64 running
    GNU/Linux.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "target.h"
 #include "gdbarch.h"
@@ -491,7 +490,6 @@ supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
 {
   int regi;
   const char *from;
-  const gdb_byte f_zero[16] = { 0 };
   const gdb_byte f_one[16] =
     { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
@@ -500,7 +498,7 @@ supply_fpregset (struct regcache *regcache, const fpregset_t *fpregsetp)
      for fr0/fr1 and always supply their expected values.  */
 
   /* fr0 is always read as zero.  */
-  regcache->raw_supply (IA64_FR0_REGNUM, f_zero);
+  regcache->raw_supply_zeroed (IA64_FR0_REGNUM);
   /* fr1 is always read as one (1.0).  */
   regcache->raw_supply (IA64_FR1_REGNUM, f_one);
 
@@ -693,7 +691,7 @@ ia64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
 {
   CORE_ADDR psr;
   siginfo_t siginfo;
-  struct regcache *regcache = get_current_regcache ();
+  regcache *regcache = get_thread_regcache (inferior_thread ());
 
   if (!linux_nat_get_siginfo (inferior_ptid, &siginfo))
     return false;
@@ -741,20 +739,14 @@ ia64_linux_fetch_register (struct regcache *regcache, int regnum)
   /* r0 cannot be fetched but is always zero.  */
   if (regnum == IA64_GR0_REGNUM)
     {
-      const gdb_byte zero[8] = { 0 };
-
-      gdb_assert (sizeof (zero) == register_size (gdbarch, regnum));
-      regcache->raw_supply (regnum, zero);
+      regcache->raw_supply_zeroed (regnum);
       return;
     }
 
   /* fr0 cannot be fetched but is always zero.  */
   if (regnum == IA64_FR0_REGNUM)
     {
-      const gdb_byte f_zero[16] = { 0 };
-
-      gdb_assert (sizeof (f_zero) == register_size (gdbarch, regnum));
-      regcache->raw_supply (regnum, f_zero);
+      regcache->raw_supply_zeroed (regnum);
       return;
     }
 

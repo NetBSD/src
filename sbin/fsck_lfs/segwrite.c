@@ -1,4 +1,4 @@
-/* $NetBSD: segwrite.c,v 1.48.8.2 2025/09/06 21:51:10 perseant Exp $ */
+/* $NetBSD: segwrite.c,v 1.48.8.3 2026/11/04 23:19:39 perseant Exp $ */
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -685,7 +685,6 @@ lfs_initseg(struct lfs * fs)
 	sp->ibp = NULL;
 	sp->idp = NULL;
 	sp->ninodes = 0;
-	sp->ndupino = 0;
 
 	/* Get a new buffer for SEGSUM and enter it into the buffer list. */
 	sp->cbpp = sp->bpp;
@@ -993,7 +992,6 @@ lfs_segunlock(struct lfs * fs)
 		lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 
 		--fs->lfs_seglock;
-		fs->lfs_lockpid = 0;
 	} else if (fs->lfs_seglock == 0) {
 		errx(EXIT_FAILURE, "Seglock not held");
 	} else {

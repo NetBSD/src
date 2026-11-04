@@ -1,5 +1,5 @@
 /* debuginfod utilities for GDB.
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
 
 #include "diagnostics.h"
 #include <errno.h>
+#include "gdbsupport/cleanups.h"
 #include "gdbsupport/scoped_fd.h"
 #include "debuginfod-support.h"
 #include <optional>
@@ -409,7 +410,7 @@ debuginfod_exec_query (const unsigned char *build_id,
   std::optional<target_terminal::scoped_restore_terminal_state> term_state;
 
   {
-    user_data data ("executable for", filename);
+    user_data data ("file", filename);
 
     debuginfod_set_user_data (c, &data);
     if (target_supports_terminal_ours ())
@@ -423,7 +424,7 @@ debuginfod_exec_query (const unsigned char *build_id,
     debuginfod_set_user_data (c, nullptr);
   }
 
-  print_outcome (fd.get (), "executable for", filename);
+  print_outcome (fd.get (), "file", filename);
 
   if (fd.get () >= 0)
     destname->reset (dname);
@@ -594,9 +595,7 @@ maint_get_debuginfod_download_sections ()
 
 /* Register debuginfod commands.  */
 
-void _initialize_debuginfod ();
-void
-_initialize_debuginfod ()
+INIT_GDB_FILE (debuginfod)
 {
   /* set/show debuginfod */
   add_setshow_prefix_cmd ("debuginfod", class_run,
@@ -624,9 +623,9 @@ When set to \"ask\", prompt whether to enable or disable debuginfod." ),
   add_setshow_string_noescape_cmd ("urls", class_run, _("\
 Set the list of debuginfod server URLs."), _("\
 Show the list of debuginfod server URLs."), _("\
-Manage the space-separated list of debuginfod server URLs that GDB will query \
-when missing debuginfo, executables or source files.\nThe default value is \
-copied from the DEBUGINFOD_URLS environment variable."),
+Manage the space-separated list of debuginfod server URLs that GDB will\n\
+query when missing debuginfo, executables or source files.\n\
+The default value is copied from the DEBUGINFOD_URLS environment variable."),
 				   set_debuginfod_urls,
 				   get_debuginfod_urls,
 				   show_debuginfod_urls,
@@ -657,9 +656,9 @@ query.\nTo disable, set to zero.  Verbose output is displayed by default."),
   add_setshow_boolean_cmd ("download-sections", class_maintenance, _("\
 Set whether debuginfod may download individual ELF/DWARF sections."), _("\
 Show whether debuginfod may download individual ELF/DWARF sections."), _("\
-When enabled, debuginfod may attempt to download individual ELF/DWARF \
-sections from debug info files.\nIf disabled, only whole debug info files \
-may be downloaded."),
+When enabled, debuginfod may attempt to download individual ELF/DWARF\n\
+sections from debug info files.\n\
+If disabled, only whole debug info files may be downloaded."),
 			   maint_set_debuginfod_download_sections,
 			   maint_get_debuginfod_download_sections,
 			   nullptr,

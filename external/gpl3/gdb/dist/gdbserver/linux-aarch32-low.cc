@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -170,7 +170,7 @@ struct regs_info regs_info_aarch32 =
 int
 arm_is_thumb_mode (void)
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 1);
+  regcache *regcache = get_thread_regcache (current_thread);
   unsigned long cpsr;
 
   collect_register_by_name (regcache, "cpsr", &cpsr);

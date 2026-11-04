@@ -1,4 +1,4 @@
-/*	$NetBSD: rfc2047_code.h,v 1.2.4.2 2025/08/02 05:50:08 perseant Exp $	*/
+/*	$NetBSD: rfc2047_code.h,v 1.2.4.3 2026/11/04 23:14:48 perseant Exp $	*/
 
 #ifndef _RFC2047_ENCODE_H_INCLUDED_
 #define _RFC2047_ENCODE_H_INCLUDED_
@@ -25,9 +25,9 @@
 #define RFC2047_HEADER_CONTEXT_PHRASE	(2)
 
 extern char *rfc2047_encode(VSTRING *result, int header_context,
-			              const char *charset,
-			              const char *in, ssize_t len,
-				      const char *out_separator);
+			            const char *charset,
+			            const char *in, ssize_t len,
+			            const char *out_separator);
 
 /* LICENSE
 /* .ad

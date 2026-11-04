@@ -1,4 +1,4 @@
-/*	$NetBSD: postcat.c,v 1.4.4.1 2025/08/02 05:50:10 perseant Exp $	*/
+/*	$NetBSD: postcat.c,v 1.4.4.2 2026/11/04 23:14:50 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -350,6 +350,10 @@ static void postcat(VSTREAM *fp, VSTRING *buffer, int flags)
 	    /* Optional output (here before we update the state machine). */
 	    if (do_print)
 		PRINT_RECORD(flags, offset, rec_type, STR(buffer));
+	    /* Postfix 3.11 maildrop files may have preliminary SIZE record. */
+	    if (strncmp(VSTREAM_PATH(fp), MAIL_QUEUE_MAILDROP "/",
+			sizeof(MAIL_QUEUE_MAILDROP)) == 0)
+		continue;
 	    /* Read the message size/offset for the state machine optimizer. */
 	    if (data_size >= 0 || data_offset >= 0) {
 		msg_warn("file contains multiple size records");

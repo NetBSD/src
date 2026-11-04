@@ -1,4 +1,4 @@
-#	$NetBSD: files.ofppc,v 1.48 2021/05/12 23:22:33 thorpej Exp $
+#	$NetBSD: files.ofppc,v 1.48.18.1 2026/11/04 23:21:06 perseant Exp $
 #
 # NetBSD/ofppc configuration info
 #
@@ -17,6 +17,7 @@ defflag ofb.h		NO_OFB_DEVICE
 
 defflag opt_disksubr.h	RDB_PART
 
+file	arch/ofppc/ofppc/autoconf.c
 file	arch/powerpc/oea/ofw_autoconf.c
 file	arch/powerpc/powerpc/clock.c
 file	arch/ofppc/ofppc/disksubr.c		disk
@@ -78,6 +79,9 @@ file	arch/powerpc/pci/pci_machdep_common.c	pci
 file	arch/powerpc/pci/pci_machdep_ofw.c	pci
 file    arch/powerpc/pci/pci_module.c		pci & modular
 file	dev/ofw/ofw_pci_subr.c			pci
+
+# Freescale MPC5200B on-chip peripherals (EFIKA 5200B and similar).
+include "arch/powerpc/conf/files.mpc5200"
 
 device ofwpci: pcibus
 attach ofwpci at mainbus

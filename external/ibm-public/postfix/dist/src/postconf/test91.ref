@@ -1,0 +1,3 @@
+foo/unix/proxy_write_maps = foo_map
+bar/unix/proxy_write_maps = bar_map
+baz/unix/proxy_write_maps = baz_map

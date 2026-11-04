@@ -1,11 +1,12 @@
-# $NetBSD: Makefile.inc,v 1.13.2.1 2025/08/02 05:33:39 perseant Exp $
+# $NetBSD: Makefile.inc,v 1.13.2.2 2026/11/04 23:07:54 perseant Exp $
 
 USE_LIBEDIT=no
 USE_TUI=yes
 BINDIR=/usr/bin
 WARNS?=		0
 CPPFLAGS+=	-D_KERNTYPES
-GMPDIR=	${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp
+GMPDIR=		${NETBSDSRCDIR}/external/lgpl3/gmp/lib/libgmp
+MPFRDIR=	${NETBSDSRCDIR}/external/lgpl3/mpfr
 
 .include "Makefile.gdb_arch"
 
@@ -22,4 +23,11 @@ DIST:=		${.PARSEDIR}/dist
 # Reduce debugging for these extremely large objects.
 .if ${MKDEBUG:Uno} != "no"
 CXXFLAGS+=      -g1
+.endif
+
+# Enable tas.b usage for __atomic_test_and_set().
+.include <bsd.own.mk>
+
+.if ${MACHINE_CPU} == "sh3"
+CFLAGS+=	-mtas
 .endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.37.2.1 2025/08/02 05:55:49 perseant Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.37.2.2 2026/11/04 23:20:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -42,31 +42,12 @@
 #include "opt_pmap_debug.h"
 #include "opt_m68k_arch.h"
 
-/*
- * NOTICE: This is not a standalone file.  To use it, #include it in
- * your port's locore.s, like so:
- *
- *	#include <m68k/m68k/switch_subr.s>
- *
- * If your port uses one or more non-motorola FPU devices, you must use:
- *
- *      #define _M68K_CUSTOM_FPU_CTX 1
- *
- * before including this file. In this case, you must also provide
- * two assembly sub-routines for saving and restoring FPU context:
- *
- *      ASENTRY(m68k_fpuctx_save)
- *        %a1 -> The PCB of the outgoing thread where fpu state should be saved
- *
- *        %a0 and %a1 must be preserved across the call, but all other
- *        registers are available for use.
- *
- *	ASENTRY(m68k_fpuctx_restore)
- *        %a1 -> The PCB of the incoming thread where fpu state is saved
- *
- *	  All registers except %d0, %d1 and %a0 must be preserved across
- *        the call.
- */
+#include <machine/asm.h>
+
+#include "assym.h"
+
+	.file	"switch_subr.s"
+	.text
 
 	.data
 GLOBAL(curpcb)
@@ -97,10 +78,7 @@ ENTRY(cpu_switchto)
 	movl	%usp,%a2		| grab USP (a2 has been saved)
 	movl	%a2,PCB_USP(%a1)	| and save it
 
-#ifdef _M68K_CUSTOM_FPU_CTX
-	jbsr	_ASM_LABEL(m68k_fpuctx_save)
-#else
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofpsave	| No  Then don't attempt save.
 
@@ -129,8 +107,7 @@ ENTRY(cpu_switchto)
 	fmovem	%fpi,FPF_FPI(%a2)
 #endif
 .Lcpu_switch_nofpsave:
-#endif	/* FPCOPROC */
-#endif	/* !_M68K_CUSTOM_FPU_CTX */
+#endif	/* M68K_FPCOPROC */
 
 	movl	8(%sp),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)	| curlwp = new lwp
@@ -166,12 +143,7 @@ ENTRY(cpu_switchto)
 	movl	PCB_USP(%a1),%a0
 	movl	%a0,%usp		      | and USP
 
-#ifdef _M68K_CUSTOM_FPU_CTX
-	moveml	%d0/%d1,-(%sp)
-	jbsr	_ASM_LABEL(m68k_fpuctx_restore)
-	moveml	(%sp)+,%d0/%d1
-#else
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have an FPU?
 	jeq	.Lcpu_switch_nofprest	| No  Then don't attempt restore.
 
@@ -201,8 +173,7 @@ ENTRY(cpu_switchto)
 #endif
 .Lcpu_switch_resfprest:
 	frestore (%a0)			| restore state
-#endif /* FPCOPROC */
-#endif /* !_M68K_CUSTOM_FPU_CTX */
+#endif /* M68K_FPCOPROC */
 
 .Lcpu_switch_nofprest:
 	movl	%d1,%d0			| return outgoing lwp
@@ -220,10 +191,7 @@ ENTRY(savectx)
 	movl	%a0,PCB_USP(%a1)	| and save it
 	moveml	%d2-%d7/%a2-%a7,PCB_REGS(%a1)	| save non-scratch registers
 
-#ifdef _M68K_CUSTOM_FPU_CTX
-	jbsr	_ASM_LABEL(m68k_fpuctx_save)
-#else
-#ifdef FPCOPROC
+#ifdef M68K_FPCOPROC
 	tstl	_C_LABEL(fputype)	| Do we have FPU?
 	jeq	.Lsavectx_nofpsave	| No?  Then don't save state.
 
@@ -252,21 +220,20 @@ ENTRY(savectx)
 	fmovem	%fpi,FPF_FPI(%a0)
 #endif
 .Lsavectx_nofpsave:
-#endif /* FPCOPROC */
-#endif /* !_M68K_CUSTOM_FPU_CTX */
+#endif /* M68K_FPCOPROC */
 	moveq	#0,%d0			| return 0
 	rts
 
-#if !defined(M68010)
+#ifdef M68K_FPCOPROC
 /*
- * void m68k_make_fpu_idle_frame(void)
+ * void fpu_make_idle_frame(void)
  *
  * On machines with an FPU, generate an "idle" state frame to be
  * used by cpu_setmcontext().
  *
  * Before calling, make sure the machine actually has an FPU ...
  */
-ENTRY(m68k_make_fpu_idle_frame)
+ENTRY(fpu_make_idle_frame)
 	clrl	-(%sp)
 	fnop
 
@@ -278,7 +245,7 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 
 	/* Save the resulting idle frame into the buffer */
-	lea	_C_LABEL(m68k_cached_fpu_idle_frame),%a0
+	lea	_C_LABEL(fpu_idle_frame),%a0
 	fsave	(%a0)
 	fnop
 
@@ -287,13 +254,11 @@ ENTRY(m68k_make_fpu_idle_frame)
 	fnop
 	addql	#4,%sp
 	rts
-#endif
 
 /*
  * Save and restore 68881 state.
  */
-#ifdef FPCOPROC
-ENTRY(m68881_save)
+ENTRY(fpu_save)
 	movl	4(%sp),%a0		| save area pointer
 	fsave	(%a0)			| save state
 #if defined(M68020) || defined(M68030) || defined(M68040)
@@ -321,7 +286,7 @@ ENTRY(m68881_save)
         rts
 #endif
 
-ENTRY(m68881_restore)
+ENTRY(fpu_restore)
 	movl	4(%sp),%a0		| save area pointer
 #if defined(M68020) || defined(M68030) || defined(M68040)
 #if defined(M68060)
@@ -349,7 +314,25 @@ ENTRY(m68881_restore)
 	frestore (%a0)			| restore state
 	rts
 #endif
+
+#else /* ! M68K_FPCOPROC */
+
+#ifdef DIAGNOSTIC
+.L68881panic:
+	.asciz	"m68881 save/restore"
+	.even
 #endif
+
+ENTRY_NOPROFILE(fpu_save)
+GLOBAL(fpu_restore)
+#ifdef  DIAGNOSTIC
+	pea	.L68881panic
+	jbsr	_C_LABEL(panic)
+	/*NOTREACHED*/
+#endif
+	rts
+
+#endif /* M68K_FPCOPROC */
 
 /*
  * lwp_trampoline: call function in register %a2 with %a3 as an arg

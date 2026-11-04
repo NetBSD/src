@@ -1,4 +1,4 @@
-# $NetBSD: t_grep.sh,v 1.7.4.1 2025/08/02 05:58:13 perseant Exp $
+# $NetBSD: t_grep.sh,v 1.7.4.2 2026/11/04 23:28:25 perseant Exp $
 #
 # Copyright (c) 2008, 2009, 2021, 2024 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -118,7 +118,7 @@ word_locale_body()
 	atf_check -o file:"input" \
 	    env LC_ALL=C grep -w "array" "input"
 
-	# XXX: In an UTF-8 locale, GNU Grep treats '[' as a word character.
+	# XXX: In a UTF-8 locale, GNU Grep treats '[' as a word character.
 	atf_check -s exit:1 -o empty \
 	    env LC_ALL="C.UTF-8" grep -w "array" "input"
 }
@@ -359,6 +359,25 @@ pr_58849_body()
 	    grep -Fvx -e __bss_end__ -e _end input
 }
 
+atf_test_case pr_60552 cleanup
+pr_60552_head()
+{
+	atf_set "descr" "Checks case-insensitive UTF-16 matches with color"
+}
+pr_60552_body()
+{
+	local d
+
+	d=$(atf_get_srcdir)
+	atf_check -o ignore grep -i est --color=always "$d/d_pr60552"
+}
+pr_60552_cleanup()
+{
+
+	test -f grep.core || return 0
+	gdb -batch -ex bt grep grep.core
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case basic
@@ -382,4 +401,5 @@ atf_init_test_cases()
 	atf_add_test_case nonexistent
 	atf_add_test_case context2
 	atf_add_test_case pr_58849
+	atf_add_test_case pr_60552
 }

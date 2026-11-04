@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsstream.c,v 1.2.6.1 2025/08/02 05:54:04 perseant Exp $	*/
+/*	$NetBSD: tlsstream.c,v 1.2.6.2 2026/11/04 23:18:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -937,6 +937,7 @@ tlslisten_acceptcb(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	if (tlssock->tlsstream.tls == NULL) {
 		tlssock->closed = true;
 		isc_tlsctx_free(&tlssock->tlsstream.ctx);
+		isc__nmsocket_detach(&tlssock->server);
 		isc__nmsocket_detach(&tlssock);
 		return ISC_R_TLSERROR;
 	}
@@ -956,8 +957,19 @@ tlslisten_acceptcb(isc_nmhandle_t *handle, isc_result_t result, void *cbarg) {
 	handle->sock->tlsstream.tlssocket = tlssock;
 
 	result = initialize_tls(tlssock, true);
-	RUNTIME_CHECK(result == ISC_R_SUCCESS);
-	/* TODO: catch failure code, detach tlssock, and log the error */
+	if (result != ISC_R_SUCCESS) {
+		isc__nmsocket_log(tlssock, ISC_LOG_ERROR,
+				  "TLS initialization failed: %s",
+				  isc_result_totext(result));
+		handle->sock->tlsstream.tlssocket = NULL;
+		isc_nmhandle_detach(&tlssock->outerhandle);
+		tlssock->closed = true;
+		isc_tlsctx_free(&tlssock->tlsstream.ctx);
+		isc__nmsocket_detach(&tlssock->listener);
+		isc__nmsocket_detach(&tlssock->server);
+		isc__nmsocket_detach(&tlssock);
+		return result;
+	}
 
 	tls_try_to_enable_tcp_nodelay(tlssock);
 

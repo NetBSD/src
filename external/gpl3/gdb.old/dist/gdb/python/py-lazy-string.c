@@ -1,6 +1,6 @@
 /* Python interface to lazy strings.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "python-internal.h"
 #include "charset.h"
 #include "value.h"
@@ -104,7 +103,6 @@ static PyObject *
 stpy_convert_to_value (PyObject *self, PyObject *args)
 {
   lazy_string_object *self_string = (lazy_string_object *) self;
-  struct value *val = NULL;
 
   if (self_string->address == 0)
     {
@@ -113,10 +111,14 @@ stpy_convert_to_value (PyObject *self, PyObject *args)
       return NULL;
     }
 
+  PyObject *result = nullptr;
   try
     {
+      scoped_value_mark free_values;
+
       struct type *type = type_object_to_type (self_string->type);
       struct type *realtype;
+      struct value *val;
 
       gdb_assert (type != NULL);
       realtype = check_typedef (type);
@@ -141,13 +143,15 @@ stpy_convert_to_value (PyObject *self, PyObject *args)
 	  val = value_at_lazy (type, self_string->address);
 	  break;
 	}
+
+      result = value_to_value_object (val);
     }
   catch (const gdb_exception &except)
     {
-      GDB_PY_HANDLE_EXCEPTION (except);
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
-  return value_to_value_object (val);
+  return result;
 }
 
 static void
@@ -178,14 +182,6 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
       return NULL;
     }
 
-  if (address == 0 && length != 0)
-    {
-      PyErr_SetString (gdbpy_gdb_memory_error,
-		       _("Cannot create a lazy string with address 0x0, " \
-			 "and a non-zero length."));
-      return NULL;
-    }
-
   if (!type)
     {
       PyErr_SetString (PyExc_RuntimeError,
@@ -212,6 +208,23 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
 	  }
 	break;
       }
+
+    case TYPE_CODE_PTR:
+      if (address == 0)
+	{
+	  if (length > 0)
+	    {
+	      PyErr_SetString (gdbpy_gdb_memory_error,
+			       _("Cannot create a lazy string with address 0x0, " \
+				 "and a non-zero length."));
+	      return nullptr;
+	    }
+	  length = 0;
+	}
+      break;
+
+    default:
+      gdb_assert_not_reached ("invalid type in gdbpy_create_lazy_string_object");
     }
 
   str_obj = PyObject_New (lazy_string_object, &lazy_string_object_type);
@@ -229,14 +242,10 @@ gdbpy_create_lazy_string_object (CORE_ADDR address, long length,
   return (PyObject *) str_obj;
 }
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_lazy_string (void)
 {
-  if (PyType_Ready (&lazy_string_object_type) < 0)
-    return -1;
-
-  Py_INCREF (&lazy_string_object_type);
-  return 0;
+  return gdbpy_type_ready (&lazy_string_object_type);
 }
 
 /* Determine whether the printer object pointed to by OBJ is a
@@ -262,11 +271,9 @@ stpy_lazy_string_elt_type (lazy_string_object *lazy)
     {
     case TYPE_CODE_PTR:
     case TYPE_CODE_ARRAY:
-      return realtype->target_type ();
+      return check_typedef (realtype->target_type ());
     default:
-      /* This is done to preserve existing behaviour.  PR 20769.
-	 E.g., gdb.parse_and_eval("my_int_variable").lazy_string().type.  */
-      return realtype;
+      gdb_assert_not_reached ("invalid lazy string");
     }
 }
 
@@ -290,6 +297,34 @@ gdbpy_extract_lazy_string (PyObject *string, CORE_ADDR *addr,
   *length = lazy->length;
   encoding->reset (lazy->encoding ? xstrdup (lazy->encoding) : NULL);
 }
+
+/* __str__ for LazyString.  */
+
+static PyObject *
+stpy_str (PyObject *self)
+{
+  lazy_string_object *str = (lazy_string_object *) self;
+
+  struct value_print_options opts;
+  get_user_print_options (&opts);
+  opts.addressprint = false;
+
+  string_file stream;
+  try
+    {
+      struct type *type = stpy_lazy_string_elt_type (str);
+      val_print_string (type, str->encoding, str->address, str->length,
+			&stream, &opts);
+    }
+  catch (const gdb_exception &exc)
+    {
+      return gdbpy_handle_gdb_exception (nullptr, exc);
+    }
+
+  return host_string_to_python_string (stream.c_str ()).release ();
+}
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_lazy_string);
 
 
 
@@ -324,7 +359,7 @@ PyTypeObject lazy_string_object_type = {
   0,				  /*tp_as_mapping*/
   0,				  /*tp_hash */
   0,				  /*tp_call*/
-  0,				  /*tp_str*/
+  stpy_str,			  /*tp_str*/
   0,				  /*tp_getattro*/
   0,				  /*tp_setattro*/
   0,				  /*tp_as_buffer*/

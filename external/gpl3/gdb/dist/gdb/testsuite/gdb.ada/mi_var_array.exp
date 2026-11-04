@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,17 +22,14 @@ standard_ada_testfile bar
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-foreach_with_prefix scenario {none all minimal} {
-    set flags {debug}
-    if {$scenario != "none"} {
-	lappend flags additional_flags=-fgnat-encodings=$scenario
-    }
+foreach_gnat_encoding scenario flags {none all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != "" } {
 	return -1
     }
 
-    mi_clean_restart $binfile-$scenario
+    mi_clean_restart $::testfile-$scenario
 
     if {[mi_runto_main] < 0} {
 	return 0

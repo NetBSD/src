@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2023 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -132,8 +132,9 @@ proc do_full_test {} {
 	set pthread_kill ".*"
     }
 
-    for {set i 0} {$i < $thread_count } {incr i} {
-	set thread_num [expr [llength $test_list] - $i]
+    set loop_iterations [llength $test_list]
+    for {set i 0} {$i < $loop_iterations } {incr i} {
+	set thread_num [expr $loop_iterations - $i]
 
 	set type [lindex $test_list $i]
 	if { $type == 1 } {
@@ -237,7 +238,7 @@ proc_with_prefix test_corefile {} {
 
 proc_with_prefix test_gcore {} {
 
-    clean_restart "$::binfile"
+    clean_restart "$::testfile"
 
     gdb_test "handle SIGUSR1 nostop print pass" \
 	".*SIGUSR1.*No.*Yes.*Yes.*User defined signal 1" \
@@ -275,7 +276,7 @@ if [prepare_for_testing "failed to prepare" $testfile $srcfile \
     return -1
 }
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 gdb_test_no_output "set backtrace limit unlimited"
 

@@ -1,6 +1,6 @@
 /* Declarations for debug printing functions.
 
-   Copyright (C) 2014-2023 Free Software Foundation, Inc.
+   Copyright (C) 2014-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_DEBUG_H
-#define COMMON_COMMON_DEBUG_H
+#ifndef GDBSUPPORT_COMMON_DEBUG_H
+#define GDBSUPPORT_COMMON_DEBUG_H
 
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "gdbsupport/preprocessor.h"
 
 #include <stdarg.h>
@@ -138,10 +138,25 @@ struct scoped_debug_start_end
 
   DISABLE_COPY_AND_ASSIGN (scoped_debug_start_end);
 
-  scoped_debug_start_end (scoped_debug_start_end &&other) = default;
+  scoped_debug_start_end (scoped_debug_start_end &&other)
+    : m_debug_enabled (other.m_debug_enabled),
+      m_module (other.m_module),
+      m_func (other.m_func),
+      m_end_prefix (other.m_end_prefix),
+      m_msg (other.m_msg),
+      m_with_format (other.m_with_format),
+      m_must_decrement_print_depth (other.m_must_decrement_print_depth),
+      m_disabled (other.m_disabled)
+  {
+    /* Avoid the moved-from object doing the side-effects in its destructor.  */
+    other.m_disabled = true;
+  }
 
   ~scoped_debug_start_end ()
   {
+    if (m_disabled)
+      return;
+
     if (m_must_decrement_print_depth)
       {
 	gdb_assert (debug_print_depth > 0);
@@ -185,7 +200,7 @@ private:
   const char *m_end_prefix;
 
   /* The result of formatting the format string in the constructor.  */
-  gdb::optional<std::string> m_msg;
+  std::optional<std::string> m_msg;
 
   /* True is a non-nullptr format was passed to the constructor.  */
   bool m_with_format;
@@ -194,6 +209,10 @@ private:
      construction but not during destruction, or vice-versa.  We want to make
      sure there are as many increments are there are decrements.  */
   bool m_must_decrement_print_depth = false;
+
+  /* True if this object was moved from, and the destructor behavior must be
+     inhibited.  */
+  bool m_disabled = false;
 };
 
 /* Implementation of is_debug_enabled when PT is an invokable type.  */
@@ -252,4 +271,4 @@ make_scoped_debug_start_end (PT &&pred, const char *module, const char *func,
 				   __func__, "enter", "exit",	\
 				   nullptr)
 
-#endif /* COMMON_COMMON_DEBUG_H */
+#endif /* GDBSUPPORT_COMMON_DEBUG_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.308 2024/03/05 14:15:35 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.308.2.1 2026/11/04 23:21:24 perseant Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308 2024/03/05 14:15:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.308.2.1 2026/11/04 23:21:24 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2669,13 +2669,6 @@ cpu_intr_p(void)
 
 	return idepth >= 0;
 }
-
-#ifdef MODULAR
-void
-module_init_md(void)
-{
-}
-#endif
 
 int
 mm_md_physacc(paddr_t pa, vm_prot_t prot)

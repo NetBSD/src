@@ -1,5 +1,5 @@
 /* Handling of inferior events for the event loop for GDB, the GNU debugger.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
    This file is part of GDB.
@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "exceptions.h"
 #include "inferior.h"
 #include "infrun.h"
 #include "gdbsupport/event-loop.h"
@@ -73,7 +74,7 @@ inferior_event_handler (enum inferior_event_type event_type)
 	    {
 	      /* If the user was running a foreground execution
 		 command, then propagate the error so that the prompt
-		 can be reenabled.  Otherwise, the user already has
+		 can be re-enabled.  Otherwise, the user already has
 		 the prompt and is typing some unrelated command, so
 		 just inform the user and swallow the exception.  */
 	      if (current_ui->prompt_state == PROMPT_BLOCKED)

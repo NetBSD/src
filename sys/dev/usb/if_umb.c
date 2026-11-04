@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.25.10.1 2025/08/02 05:57:05 perseant Exp $ */
+/*	$NetBSD: if_umb.c,v 1.25.10.2 2026/11/04 23:22:36 perseant Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25.10.1 2025/08/02 05:57:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.25.10.2 2026/11/04 23:22:36 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -641,7 +641,7 @@ umb_ncm_setup(struct umb_softc *sc)
 	usb_device_request_t req;
 	struct ncm_ntb_parameters np;
 
-	/* Query NTB tranfers sizes */
+	/* Query NTB transfers sizes */
 	req.bmRequestType = UT_READ_CLASS_INTERFACE;
 	req.bRequest = NCM_GET_NTB_PARAMETERS;
 	USETW(req.wValue, 0);

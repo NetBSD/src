@@ -56,24 +56,25 @@ LMDB_TABLE(5)                                                    LMDB_TABLE(5)
 
 <b><a name="synchronization">SYNCHRONIZATION</a></b>
        The Postfix LMDB adapter does not use LMDB's built-in  locking  scheme,
-       because  that  would require world-writable lockfiles and would violate
-       the Postfix security model.  Instead, Postfix uses fcntl(2) locks  with
-       whole-file granularity.  Programs that use LMDB's built-in locking pro-
-       tocol will corrupt a Postfix LMDB database or will read garbage.
+       because  that would require world-writable lockfiles and therefore vio-
+       late the Postfix security model.  Instead, Postfix uses fcntl(2)  locks
+       with whole-file granularity.  Programs that use LMDB's built-in locking
+       protocol will corrupt a Postfix LMDB database or will read garbage.
 
        Every Postfix LMDB database read or write transaction must be protected
-       from  start  to end with a shared or exclusive fcntl(2) lock.  A writer
-       may atomically downgrade an exclusive lock to a  shared  lock,  but  it
-       must hold an exclusive lock while opening another write transaction.
+       from  start  to end with a shared or exclusive fcntl(2) lock. A process
+       may atomically downgrade an exclusive lock  to  a  shared  lock  before
+       opening a database read transaction, but it must hold an exclusive lock
+       while opening a write transaction.
 
-       Note  that  fcntl(2)  locks do not protect transactions within the same
-       process against each other.  If a program cannot avoid making  simulta-
-       neous  database  requests,  then  it must protect its transactions with
+       Note that fcntl(2) locks do not protect transactions  within  the  same
+       process  against each other.  If a program cannot avoid making simulta-
+       neous database requests, then it must  protect  its  transactions  with
        in-process locks, in addition to the per-process fcntl(2) locks.
 
 <b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
-       Short-lived programs automatically pick up changes  to  <a href="postconf.5.html">main.cf</a>.   With
-       long-running  daemon programs, Use the command "<b>postfix reload</b>" after a
+       Short-lived  programs  automatically  pick up changes to <a href="postconf.5.html">main.cf</a>.  With
+       long-running daemon programs, Use the command "<b>postfix reload</b>" after  a
        configuration change.
 
        <b><a href="postconf.5.html#lmdb_map_size">lmdb_map_size</a> (16777216)</b>

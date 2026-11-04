@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 2021/05/31 14:38:55 simonb Exp $	*/
+/*	$NetBSD: param.h,v 1.24.18.1 2026/11/04 23:20:51 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,31 +48,93 @@
 /*
  * Machine independent constants for m68k
  */
-#ifndef	MACHINE_ARCH
+#if defined(__mc68010__)
+#define	_MACHINE_ARCH	m68000
+#define	MACHINE_ARCH	"m68000"
+#else
 #define	_MACHINE_ARCH	m68k
 #define	MACHINE_ARCH	"m68k"
-#endif
+#endif /* __mc68010__ */
+
 #ifndef	MID_MACHINE
 #define	MID_MACHINE	MID_M68K
 #endif
+
 #ifndef _KERNEL
 #undef MACHINE
 #define MACHINE "m68k"
 #endif
 
+#if defined(_KERNEL) || defined(_STANDALONE)
+
+	/* XXX this is still needed by the coredump module */
+#define	USPACE		8192		/* sizeof kernel stack + pcb */
+
+#if !defined(_MODULE)
+
+#ifndef KERNBASE
+#define	KERNBASE	0x00000000	/* start of kernel virtual */
+#endif
+
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG-1)	/* byte offset into page */
 
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
-
-#define	USPACE		(UPAGES * NBPG)
+#define	UPAGES		(USPACE >> PGSHIFT)
 
 #ifndef MSGBUFSIZE
-#define MSGBUFSIZE	NBPG		/* default message buffer size */
+#define MSGBUFSIZE	8192		/* default message buffer size */
 #endif
+
+#if defined(__mc68010__)
+/*
+ * Clamp UBC parameters; the default consume way to much kernel VA space,
+ * and it's in short supply on 68010.  (Actually, the defaults exceed the
+ * total available on the 68010.)
+ *
+ * XXX Perhaps these can be tuned upwards eventually?
+ */
+#define	UBC_WINSHIFT	13		/* 8KB */
+#define	UBC_NWINS	32		/* -> 256KB */
+
+/*
+ * Limit the number of concurrent exec(2) calls on 68010, as they
+ * consume kernel VA space.
+ */
+#define	MAXEXEC		1
+
+#define	__NKMEMPAGES_MIN_DEFAULT	((4 * 1024 * 1024) >> PGSHIFT)
+#define	__NKMEMPAGES_MAX_DEFAULT	((8 * 1024 * 1024) >> PGSHIFT)
+
+#else /* ! __mc68010__ */
+
+#define	__NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PGSHIFT)
+#define	__NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PGSHIFT)
+
+#endif /* __mc68010__ */
+
+/*
+ * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
+ * logical pages.
+ */
+#ifndef NKMEMPAGES_MIN_DEFAULT
+#define	NKMEMPAGES_MIN_DEFAULT	__NKMEMPAGES_MIN_DEFAULT
+#endif
+#if !defined(NKMEMPAGES_MAX_UNLIMITED) && !defined(NKMEMPAGES_MAX_DEFAULT)
+#define	NKMEMPAGES_MAX_DEFAULT	__NKMEMPAGES_MAX_DEFAULT
+#endif
+
+/*
+ * Mach-derived conversion macros
+ */
+#define	m68k_round_page(x)	((((vaddr_t)(x)) + PGOFSET) & ~PGOFSET)
+#define	m68k_trunc_page(x)	((vaddr_t)(x) & ~PGOFSET)
+#define	m68k_page_offset(x)	((vaddr_t)(x) & PGOFSET)
+#define	m68k_btop(x)		((vaddr_t)(x) >> PGSHIFT)
+#define	m68k_ptob(x)		((vaddr_t)(x) << PGSHIFT)
+
+#endif /* ! _MODULE */
+
+#endif /* _KERNEL || _STANDALONE */
 
 /*
  * Constants related to network buffer management.
@@ -90,17 +152,11 @@
 
 #define	MCLBYTES	(1 << MCLSHIFT)	/* size of a m_buf cluster */
 
-/*
- * Mach-derived conversion macros
- */
-#define	m68k_round_page(x)	((((vaddr_t)(x)) + PGOFSET) & ~PGOFSET)
-#define	m68k_trunc_page(x)	((vaddr_t)(x) & ~PGOFSET)
-#define	m68k_page_offset(x)	((vaddr_t)(x) & PGOFSET)
-#define	m68k_btop(x)		((vaddr_t)(x) >> PGSHIFT)
-#define	m68k_ptob(x)		((vaddr_t)(x) << PGSHIFT)
+#if defined(_KERNEL)
+void	delay(unsigned int);
+#define	DELAY(us)	delay(us)
 
 /* Default audio blocksize in msec.  See sys/dev/audio/audio.c */
-#if defined(_KERNEL)
 #define	__AUDIO_BLK_MS (40)
 #endif
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22.2.1 2025/08/02 05:54:21 perseant Exp $
+#	$NetBSD: Makefile,v 1.22.2.2 2026/11/04 23:18:26 perseant Exp $
 
 LIB=isc
 #USE_SHLIBDIR=   yes
@@ -19,7 +19,7 @@ DIST_ISC= ${DIST} ${DIST}/netmgr
 
 .PATH.c:	${DIST}/unix ${DIST}/nls ${DIST}/pthreads ${DIST_ISC}
 
-UNIX_SRCS=	backtrace.c dir.c entropy.c errno.c errno2result.c \
+UNIX_SRCS=	backtrace.c dir.c errno.c errno2result.c \
 		file.c interfaceiter.c net.c os.c \
 		stdio.c stdtime.c syslog.c time.c \
 		meminfo.c
@@ -33,10 +33,10 @@ CRYPTO_SRCS=
 
 SRCS=		ascii.c assertions.c async.c base32.c base64.c \
 		commandline.c crc64.c counter.c error.c fips.c \
-		getaddresses.c hash.c hashmap.c heap.c helper.c hex.c histo.c \
+		getaddresses.c hash.c hashmap.c heap.c hex.c histo.c \
 		hmac.c httpd.c ht.c managers.c iterated_hash.c job.c \
 		lex.c lib.c log.c loop.c md.c mem.c \
-		mutexblock.c netaddr.c netscope.c nonce.c parseint.c \
+		mutexblock.c netaddr.c netscope.c parseint.c \
 		picohttpparser.c portset.c proxy2.c quota.c radix.c random.c \
 		ratelimiter.c regex.c \
 		region.c result.c rwlock.c safe.c serial.c signal.c \

@@ -1,0 +1,143 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# We're going to reuse some helper function from the gdbserver library.
+load_lib gdbserver-support.exp
+
+if {![info exists GDBREPLAY]} {
+    set GDBREPLAY [findfile $base_dir/../../gdbserver/gdbreplay]
+}
+
+global GDBREPLAY
+verbose "using GDBREPLAY = $GDBREPLAY" 2
+
+# Check is non empty and we're running on the host.
+proc has_gdbreplay {} {
+    global GDBREPLAY
+    if {$GDBREPLAY == ""} {
+	return false
+    }
+
+    # We currently rely on running gdbreplay on the same machine as
+    # GDB.
+    if {[is_remote target]} {
+	return false
+    }
+
+    return true
+}
+
+# Write the command line used to invocate gdbserver to the cmd file.
+
+proc gdbreplay_write_cmd_file { cmdline } {
+    set logfile [standard_output_file_with_gdb_instance gdbreplay.cmd]
+    set cmd_file [open $logfile w]
+    puts $cmd_file $cmdline
+    catch "close $cmd_file"
+}
+
+# Start gdbreplay using REMOTELOG as the log file.  Return a list of
+# two elements, the protocol and the hostname:port string.  This
+# result list has the same format as gdbserver_start.
+
+proc gdbreplay_start { remotelog } {
+    # Port id -- either specified in baseboard file, or managed here.
+    set portnum [get_portnum]
+
+    # Extract the protocol
+    if [target_info exists gdb_protocol] {
+	set protocol [target_info gdb_protocol]
+    } else {
+	set protocol "remote"
+    }
+
+    # Loop till we find a free port.
+    while 1 {
+	# Fire off the debug agent.
+	set gdbreplay_command "$::GDBREPLAY $remotelog localhost:$portnum"
+
+	gdbreplay_write_cmd_file $gdbreplay_command
+
+	global gdbreplay_spawn_id
+	set gdbreplay_spawn_id [remote_spawn target $gdbreplay_command]
+
+	# Wait for the server to open its TCP socket, so that GDB can connect.
+	expect {
+	    -i $gdbreplay_spawn_id
+	    -timeout 120
+	    -notransfer
+	    -re "Replay logfile using" { }
+	    -re "Can't (bind address|listen on socket): Address already in use\\.\r\n" {
+		verbose -log "Port $portnum is already in use."
+		set other_portnum [get_portnum]
+		if { $other_portnum != $portnum } {
+		    # Bump the port number to avoid the conflict.
+		    wait -i $expect_out(spawn_id)
+		    set portnum $other_portnum
+		    continue
+		}
+	    }
+	    -re ".*: cannot resolve name: .*\r\n" {
+		error "gdbserver cannot resolve name."
+	    }
+	    -re "Can't open socket: Address family not supported by protocol." {
+		return {}
+	    }
+	    timeout {
+		error "Timeout waiting for gdbreplay response."
+	    }
+	}
+	break
+    }
+
+    return [list $protocol "localhost:$portnum"]
+}
+
+# MATCH_REGEXP matches lines from GDB to gdbserver.  Once a match is
+# found then NEWLINE is used to build a replacement line to send from
+# gdbserver to GDB.
+#
+# Examples of MATCH_REGEXP:  "vMustReplyEmpty"
+#
+# Example usage:
+#
+# update_log $logname "${logname}.updated" "vMustReplyEmpty" "E.failed"
+
+proc update_log { filename_in filename_out match_regexp newline } {
+    set fh_in [open $filename_in r]
+    set fh_out [open $filename_out w]
+
+    while { [gets $fh_in line] >= 0 } {
+	# Print the line to the file.
+	puts $fh_out $line
+	if { [regexp $match_regexp $line] } {
+	    # print out NEWLINE.
+	    puts $fh_out "r +\$${newline}"
+
+	    # Don't truncate the file, otherwise gdbreplay will
+	    # close the connection early and this might impact
+	    # what GDB does.  We want GDB to get a chance to
+	    # process the error.
+	    puts $fh_out "c q"
+	    puts $fh_out "w \$qTStatus#49"
+	    puts $fh_out "End of log"
+
+	    break
+	}
+    }
+
+    close $fh_out
+    close $fh_in
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.89 2024/01/19 03:35:31 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.89.2.1 2026/11/04 23:20:52 perseant Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -117,25 +117,29 @@
  *	and to when physical maps must be made correct.
  */
 
+#include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.89 2024/01/19 03:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.89.2.1 2026/11/04 23:20:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/cpu.h>
+#ifndef __HAVE_M68K_BROKEN_RMC
 #include <sys/atomic.h>
+#endif
 
-#include <machine/pte.h>
 #include <machine/pcb.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_physseg.h>
 
 #include <m68k/cacheops.h>
+#include <m68k/mmu.h>
 
 #if !defined(M68K_MMU_MOTOROLA) && !defined(M68K_MMU_HP)
 #error Hit the road, Jack...
@@ -217,7 +221,7 @@ int pmapdebug = PDB_PARANOIA;
  * convert to an m68k protection code.
  */
 #define pte_prot(m, p)	(protection_codes[p])
-u_int	protection_codes[8];
+static u_int protection_codes[8];
 
 /*
  * Kernel page table page management.
@@ -243,6 +247,11 @@ paddr_t		Sysseg_pa;
 st_entry_t	*Sysseg;
 pt_entry_t	*Sysmap, *Sysptmap;
 st_entry_t	*Segtabzero, *Segtabzeropa;
+
+/* # of kernel PT pages (initial only, can grow dynamically) */
+#ifndef VM_KERNEL_PT_PAGES
+#define	VM_KERNEL_PT_PAGES	((vsize_t)2)
+#endif
 vsize_t		Sysptsize = VM_KERNEL_PT_PAGES;
 
 static struct pmap kernel_pmap_store;
@@ -254,7 +263,6 @@ vaddr_t		lwp0uarea;	/* lwp0 u-area VA, initialized in bootstrap */
 
 paddr_t		avail_start;	/* PA of first available physical page */
 paddr_t		avail_end;	/* PA of last available physical page */
-vsize_t		mem_size;	/* memory size in bytes */
 vaddr_t		virtual_avail;  /* VA of first avail page (after kernel bss)*/
 vaddr_t		virtual_end;	/* VA of last avail page (end of kernel AS) */
 int		page_cnt;	/* number of pages managed by VM system */
@@ -263,13 +271,14 @@ bool		pmap_initialized = false;	/* Has pmap_init completed? */
 
 vaddr_t		m68k_uptbase = M68K_PTBASE;
 
+/* Sysmap begins where the managed kernel virtual space ends. */
+vaddr_t		kernel_virtual_max = SYSMAP_VA;
+
 struct pv_header {
 	struct pv_entry		pvh_first;	/* first PV entry */
-	uint16_t		pvh_attrs;	/* attributes:
+	uint32_t		pvh_attrs;	/* attributes:
 						   bits 0-7: PTE bits
 						   bits 8-15: flags */
-	uint16_t		pvh_cimappings;	/* # caller-specified CI
-						   mappings */
 };
 
 #define	PVH_CI		0x10	/* all entries are cache-inhibited */
@@ -279,8 +288,8 @@ struct pv_header *pv_table;
 TAILQ_HEAD(pv_page_list, pv_page) pv_page_freelist;
 int		pv_nfree;
 
-#ifdef CACHE_HAVE_VAC
-u_int		pmap_aliasmask;	/* separation at which VA aliasing ok */
+#ifdef M68K_EC_VAC
+static u_int	pmap_aliasmask;	/* separation at which VA aliasing ok */
 #endif
 #if defined(M68040) || defined(M68060)
 u_int		protostfree;	/* prototype (default) free ST map */
@@ -350,25 +359,44 @@ pmap_load_urp(paddr_t urp)
 	(*pmap_load_urp_func)(urp);
 }
 
+#ifdef M68K_EC_VAC
 /*
- * pmap_bootstrap_finalize:	[ INTERFACE ]
+ * pmap_init_vac:
+ *
+ *	Set up virtually-addressed cache information.  Only relevant
+ *	for the HP MMU.
+ */
+void
+pmap_init_vac(size_t vacsize)
+{
+	KASSERT(pmap_aliasmask == 0);
+	KASSERT(powerof2(vacsize));
+	pmap_aliasmask = vacsize - 1;
+}
+#endif /* M68K_EC_VAC */
+
+/*
+ * PAGE_SIZE should always evaluate to a compile-time constant in this
+ * context.
+ */
+__CTASSERT(PAGE_SIZE != 0);
+
+/*
+ * pmap_bootstrap2:		[ INTERFACE ]
+ *
+ *	Phase 2 of pmap bootstrap.  (Phase 1 is system-specific.)
  *
  *	Initialize lwp0 uarea, curlwp, and curpcb after MMU is turned on,
  *	using lwp0uarea variable saved during pmap_bootstrap().
+ *
+ *	Returns the new kernel %sp value for lwp0.
  */
-void
-pmap_bootstrap_finalize(void)
+void *
+pmap_bootstrap2(void)
 {
 
-#if !defined(amiga) && !defined(atari)
-	/*
-	 * XXX
-	 * amiga and atari have different pmap initialization functions
-	 * and they require this earlier.
-	 */
-	uvmexp.pagesize = NBPG;
+	uvmexp.pagesize = PAGE_SIZE;
 	uvm_md_init();
-#endif
 
 	/*
 	 * Initialize protection array.
@@ -402,6 +430,20 @@ pmap_bootstrap_finalize(void)
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
+
+	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
+	struct trapframe *tf = (struct trapframe *)(lwp0uarea + USPACE) - 1;
+	tf->tf_sr = PSL_USER;
+	lwp0.l_md.md_regs = (int *)tf;
+
+	/*
+	 * Initialize the source/destination control registers for
+	 * movs.
+	 */
+	setsfc(FC_USERD);
+	setdfc(FC_USERD);
+
+	return tf;
 }
 
 /*
@@ -664,33 +706,6 @@ pmap_init(void)
 }
 
 /*
- * pmap_map:
- *
- *	Used to map a range of physical addresses into kernel
- *	virtual address space.
- *
- *	For now, VM is already on, we only need to map the
- *	specified memory.
- *
- *	Note: THIS FUNCTION IS DEPRECATED, AND SHOULD BE REMOVED!
- */
-vaddr_t
-pmap_map(vaddr_t va, paddr_t spa, paddr_t epa, int prot)
-{
-
-	PMAP_DPRINTF(PDB_FOLLOW,
-	    ("pmap_map(%lx, %lx, %lx, %x)\n", va, spa, epa, prot));
-
-	while (spa < epa) {
-		pmap_enter(pmap_kernel(), va, spa, prot, 0);
-		va += PAGE_SIZE;
-		spa += PAGE_SIZE;
-	}
-	pmap_update(pmap_kernel());
-	return va;
-}
-
-/*
  * pmap_create:			[ INTERFACE ]
  *
  *	Create and return a physical map.
@@ -755,7 +770,11 @@ pmap_destroy(pmap_t pmap)
 
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_destroy(%p)\n", pmap));
 
+#ifdef __HAVE_M68K_BROKEN_RMC
+	count = --pmap->pm_count;
+#else
 	count = atomic_dec_uint_nv(&pmap->pm_count);
+#endif
 	if (count == 0) {
 		pmap_release(pmap);
 		pool_put(&pmap_pmap_pool, pmap);
@@ -802,7 +821,11 @@ pmap_reference(pmap_t pmap)
 {
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_reference(%p)\n", pmap));
 
+#ifdef __HAVE_M68K_BROKEN_RMC
+	pmap->pm_count++;
+#else
 	atomic_inc_uint(&pmap->pm_count);
+#endif
 }
 
 /*
@@ -864,7 +887,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	vaddr_t nssva;
 	pt_entry_t *pte;
 	int flags;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	bool firstpage = true, needcflush = false;
 #endif
 
@@ -895,7 +918,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			}
 
 			if (pmap_pte_v(pte)) {
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 				if (pmap_aliasmask) {
 
 					/*
@@ -927,7 +950,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * Didn't do anything, no need for cache flushes
@@ -1062,7 +1085,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		pte = pmap_pte(pmap, sva);
 		while (sva < nssva) {
 			if (pmap_pte_v(pte) && pmap_pte_prot_chg(pte, isro)) {
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 				/*
 				 * Purge kernel side of VAC to ensure we
@@ -1271,7 +1294,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 			npv->pv_ptpmap = NULL;
 			pv->pv_next = npv;
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 			/*
 			 * Since there is another logical mapping for the
@@ -1335,7 +1358,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 	/*
 	 * Assumption: if it is not part of our managed memory
-	 * then it must be device memory which may be volitile.
+	 * then it must be device memory which may be volatile.
 	 */
 	else if (pmap_initialized) {
 		checkpv = cacheable = false;
@@ -1349,7 +1372,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		pmap->pm_stats.wired_count++;
 
 validate:
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	/*
 	 * Purge kernel side of VAC to ensure we get correct state
 	 * of HW bits so we don't clobber them.
@@ -1406,7 +1429,7 @@ validate:
 	*pte = npte;
 	if (!wired && active_pmap(pmap))
 		TBIS(va);
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	/*
 	 * The following is executed if we are entering a second
 	 * (or greater) mapping for a physical page and the mappings
@@ -1473,11 +1496,14 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 */
 
 	npte = pa | pte_prot(pmap, prot) | PG_V | PG_W;
+	if (flags & PMAP_NOCACHE) {
+		npte |= PG_CI;
+	}
 #if defined(M68040) || defined(M68060)
 #if defined(M68020) || defined(M68030)
-	if (mmutype == MMU_68040 && (npte & PG_PROT) == PG_RW)
+	if (mmutype == MMU_68040 && (npte & (PG_PROT|PG_CI)) == PG_RW)
 #else
-	if ((npte & PG_PROT) == PG_RW)
+	if ((npte & (PG_PROT|PG_CI)) == PG_RW)
 #endif
 		npte |= PG_CCB;
 
@@ -1498,14 +1524,14 @@ pmap_kremove(vaddr_t va, vsize_t size)
 	pt_entry_t *pte;
 	vaddr_t nssva;
 	vaddr_t eva = va + size;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	bool firstpage, needcflush;
 #endif
 
 	PMAP_DPRINTF(PDB_FOLLOW|PDB_REMOVE|PDB_PROTECT,
 	    ("pmap_kremove(%lx, %lx)\n", va, size));
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	firstpage = true;
 	needcflush = false;
 #endif
@@ -1535,7 +1561,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 				va += PAGE_SIZE;
 				continue;
 			}
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 			if (pmap_aliasmask) {
 
 				/*
@@ -1566,7 +1592,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 		}
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * In a couple of cases, we don't need to worry about flushing
@@ -1853,7 +1879,7 @@ pmap_zero_page(paddr_t phys)
 	PMAP_DPRINTF(PDB_FOLLOW, ("pmap_zero_page(%lx)\n", phys));
 
 	npte = phys | PG_V;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	if (pmap_aliasmask) {
 
 		/*
@@ -1911,7 +1937,7 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 
 	npte1 = src | PG_RO | PG_V;
 	npte2 = dst | PG_V;
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	if (pmap_aliasmask) {
 
 		/*
@@ -2030,7 +2056,7 @@ pmap_phys_address(paddr_t ppn)
 	return m68k_ptob(ppn);
 }
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 /*
  * pmap_prefer:			[ INTERFACE ]
  *
@@ -2053,7 +2079,7 @@ pmap_prefer(vaddr_t foff, vaddr_t *vap)
 		*vap = va + d;
 	}
 }
-#endif /* CACHE_HAVE_VAC */
+#endif /* M68K_EC_VAC */
 
 /*
  * Miscellaneous support routines follow
@@ -2103,7 +2129,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 			return;
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 	if (pmap_aliasmask && (flags & PRM_CFLUSH)) {
 
 		/*
@@ -2261,7 +2287,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *pte, int flags,
 		pv = &pvh->pvh_first;
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * If only one mapping left we no longer need to cache inhibit
@@ -2394,7 +2420,7 @@ pmap_testbit(paddr_t pa, int bit)
 		return true;
 	}
 
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 	/*
 	 * Flush VAC to get correct state of any hardware maintained bits.
@@ -2438,7 +2464,7 @@ pmap_changebit(paddr_t pa, pt_entry_t set, pt_entry_t mask)
 	pt_entry_t *pte, npte;
 	vaddr_t va;
 	int s;
-#if defined(CACHE_HAVE_VAC) || defined(M68040) || defined(M68060)
+#if defined(M68K_EC_VAC) || defined(M68040) || defined(M68060)
 	bool firstpage = true;
 #endif
 	bool r;
@@ -2472,7 +2498,7 @@ pmap_changebit(paddr_t pa, pt_entry_t set, pt_entry_t mask)
 #endif
 			va = pv->pv_va;
 			pte = pmap_pte(pv->pv_pmap, va);
-#ifdef CACHE_HAVE_VAC
+#ifdef M68K_EC_VAC
 
 			/*
 			 * Flush VAC to ensure we get correct state of HW bits
@@ -2525,6 +2551,7 @@ int
 pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 {
 	paddr_t ptpa;
+	uint64_t ticket;
 	struct vm_page *pg;
 	struct pv_header *pvh;
 	struct pv_entry *pv;
@@ -2657,7 +2684,6 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 #endif
 		splx(s);
 	} else {
-
 		/*
 		 * For user processes we just allocate a page from the
 		 * VM system.  Note that we set the page "wired" count to 1,
@@ -2672,15 +2698,16 @@ pmap_enter_ptpage(pmap_t pmap, vaddr_t va, bool can_fail)
 		PMAP_DPRINTF(PDB_ENTER|PDB_PTPAGE,
 		    ("enter: about to alloc UPT pg at %lx\n", va));
 		rw_enter(uvm_kernel_object->vmobjlock, RW_WRITER);
-		while ((pg = uvm_pagealloc(uvm_kernel_object,
-					   va - vm_map_min(kernel_map),
-					   NULL, UVM_PGA_ZERO)) == NULL) {
+		while (ticket = uvm_wait_prepare(),
+		    (pg = uvm_pagealloc(uvm_kernel_object,
+			va - vm_map_min(kernel_map),
+			NULL, UVM_PGA_ZERO)) == NULL) {
 			rw_exit(uvm_kernel_object->vmobjlock);
 			if (can_fail) {
 				pmap->pm_sref--;
 				return ENOMEM;
 			}
-			uvm_wait("ptpage");
+			uvm_wait("ptpage", ticket);
 			rw_enter(uvm_kernel_object->vmobjlock, RW_WRITER);
 		}
 		rw_exit(uvm_kernel_object->vmobjlock);
@@ -2837,6 +2864,67 @@ pmap_procwr(struct proc	*p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
+#if defined(DDB) || defined(KGDB)
+/*
+ *	Routine:	pmap_db_write_text_enter
+ *
+ *	Function:
+ *		Temporarily map a page of kernel text read-write for the
+ *		kernel debugger.
+ */
+bool
+pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+{
+	volatile pt_entry_t *pte;
+	pt_entry_t oldpte, tmppte;
+
+#ifdef M68K_MMU_HP
+	/*
+	 * Flush the supervisor side of the VAC to
+	 * prevent a cache hit on the old, read-only PTE.
+	 */
+	if (ectype == EC_VIRT)
+		DCIS();
+#endif
+
+	/*
+	 * N.B. we use the 68851 PTE bit names here, but in
+	 * the case of the kernel text, it all works out vis
+	 * a vis the 68040 PTE bits.
+	 *
+	 * Note the mapping is cache-inhibited to save hair.
+	 */
+	pte = kvtopte(pgva);
+	oldpte = *pte;
+	if ((oldpte & DT51_PAGE) == 0) {
+		return false;
+	}
+
+	tmppte = (oldpte & ~PTE51_WP) | PTE51_CI;
+	*pte = tmppte;
+	TBIS(pgva);
+
+	ctx->pgva = pgva;
+	ctx->ptep = pte;
+	ctx->opte = oldpte;
+
+	return true;
+}
+
+/*
+ *	Routine:	pmap_db_write_text_exit
+ *
+ *	Function:
+ *		Undo the effects of pmap_db_write_text_enter().
+ */
+void
+pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+{
+	*ctx->ptep = ctx->opte;
+	TBIS(ctx->pgva);
+}
+#endif /* DDB || KGDB */
+
 void
 _pmap_set_page_cacheable(pmap_t pmap, vaddr_t va)
 {
@@ -2894,6 +2982,70 @@ _pmap_page_is_cacheable(pmap_t pmap, vaddr_t va)
 		return 0;
 
 	return (pmap_pte_ci(pmap_pte(pmap, va)) == 0) ? 1 : 0;
+}
+
+vaddr_t kernel_reloc_offset;
+
+/*
+ * pmap_init_kcore_hdr:
+ *
+ *	Initialize the m68k kernel crash dump header with information
+ *	necessary to perform KVA -> phys translations.
+ *
+ *	Returns a pointer to the crash dump RAM segment entries for
+ *	machine-specific code to initialize.
+ */
+phys_ram_seg_t *
+pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
+{
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	extern char end[];
+
+	memset(h, 0, sizeof(*h));
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = PAGE_SIZE;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype     = mmutype;
+	m->sg_v        = SG_V;
+	m->sg_frame    = SG_FRAME;
+	m->sg_ishift   = SG_ISHIFT;
+	m->sg_pmask    = SG_PMASK;
+	m->sg40_shift1 = SG4_SHIFT1;
+	m->sg40_mask2  = SG4_MASK2;
+	m->sg40_shift2 = SG4_SHIFT2;
+	m->sg40_mask3  = SG4_MASK3;
+	m->sg40_shift3 = SG4_SHIFT3;
+	m->sg40_addr1  = SG4_ADDR1;
+	m->sg40_addr2  = SG4_ADDR2;
+	m->pg_v        = PG_V;
+	m->pg_frame    = PG_FRAME;
+
+	/*
+	 * Initialize pointer to kernel segment table.
+	 */
+	m->sysseg_pa = Sysseg_pa;
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = kernel_reloc_offset;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (uint32_t)end;
+
+	return m->ram_segs;
 }
 
 #ifdef DEBUG
@@ -2995,4 +3147,105 @@ int
 kvtop(void *addr)
 {
 	return (int)vtophys((vaddr_t)addr);
+}
+
+/*
+ * pmap_pa_has_static_mapping:
+ *
+ *	Returns true if the specified PA (and length) has a static
+ *	mapping, and what that mapping is and its properties.
+ */
+bool
+pmap_pa_has_static_mapping(paddr_t pa, size_t len, vm_prot_t prot,
+    vaddr_t *vap, int *flagsp)
+{
+#if defined(M68030) || defined(M68040) || defined(M68060)
+	/* First, check for Transparent Translation. */
+	if (cputype >= CPU_68030 &&
+	    mmu_range_is_tt(pa, len, prot, flagsp)) {
+		*vap = pa;
+		return true;
+	}
+#endif
+
+	const struct pmap_bootmap *pmbm = machine_bootmap;
+	paddr_t lastpg = m68k_btop(pa + (len - 1));
+	paddr_t firstpg = m68k_btop(pa);
+	paddr_t tfirst, tlast;
+	vaddr_t tblva;
+	bool need_write = !!(prot & UVM_PROT_WRITE);
+
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_flags & (PMBM_F_VAONLY|PMBM_F_KEEPOUT)) {
+			continue;
+		}
+		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
+			tblva = pmbm->pmbm_vaddr;
+		} else {
+			tblva = *pmbm->pmbm_vaddr_ptr;
+		}
+		tfirst = m68k_btop(pmbm->pmbm_paddr);
+		tlast = m68k_btop(pmbm->pmbm_paddr + (pmbm->pmbm_size - 1));
+
+		if (firstpg >= tfirst && lastpg <= tlast) {
+			if (need_write &&
+			    (pmbm->pmbm_flags & PMBM_F_RO) != 0) {
+				return false;
+			}
+			*vap = tblva + (pa - pmbm->pmbm_paddr);
+			if (pmbm->pmbm_flags & PMBM_F_CI) {
+				*flagsp = PMAP_NOCACHE;
+			} else {
+				*flagsp = 0;
+			}
+			return true;
+		}
+	}
+
+	return false;
+}
+
+/*
+ * pmap_va_is_static_mapping:
+ *
+ *	Returns true if the specified VA (and length) is a static
+ *	mapping.
+ */
+bool
+pmap_va_is_static_mapping(vaddr_t va, size_t len)
+{
+#if defined(M68030) || defined(M68040) || defined(M68060)
+	int map_flags;
+
+	/* First, check for Transparent Translation. */
+	if (cputype >= CPU_68030 &&
+	    (mmu_range_is_tt(va, len, UVM_PROT_READ, &map_flags) ||
+	     mmu_range_is_tt(va, len, UVM_PROT_WRITE, &map_flags) ||
+	     mmu_range_is_tt(va, len, UVM_PROT_EXEC, &map_flags))) {
+		return true;
+	}
+#endif
+
+	const struct pmap_bootmap *pmbm = machine_bootmap;
+	vaddr_t lastpg = m68k_btop(va + (len - 1));
+	vaddr_t firstpg = m68k_btop(va);
+	vaddr_t tblva, tfirst, tlast;
+	for (; pmbm->pmbm_vaddr != (vaddr_t)-1; pmbm++) {
+		if (pmbm->pmbm_flags & (PMBM_F_VAONLY|PMBM_F_KEEPOUT)) {
+			continue;
+		}
+		if (pmbm->pmbm_flags & PMBM_F_FIXEDVA) {
+			tblva = pmbm->pmbm_vaddr;
+		} else {
+			tblva = *pmbm->pmbm_vaddr_ptr;
+		}
+		tfirst = m68k_btop(tblva);
+		tlast = m68k_btop(tblva + (pmbm->pmbm_size - 1));
+
+		if (firstpg >= tfirst && lastpg <= tlast) {
+			return true;
+		}
+	}
+
+	return false;
 }

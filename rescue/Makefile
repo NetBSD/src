@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2020/04/04 17:57:16 christos Exp $
+#	$NetBSD: Makefile,v 1.42.8.1 2026/11/04 23:19:35 perseant Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -23,6 +23,19 @@ CRUNCHGEN_FLAGS+=-V LDSTATIC="-static" -V NOPIE=
 
 CRUNCHGEN_FLAGS+=-V NOLIBCSANITIZER= -V NOSANITIZER= -V NOMAN=
 
+.if (${MKSSH} != "no")
+# libssh is private, so libssh.a is not installed in DESTDIR, so we
+# have to get it out of the objdir.
+#
+# XXX Should do this differently, and uniformly for all libraries.
+.if !defined(LIBDO.ssh)
+LIBDO.ssh!=	cd ${NETBSDSRCDIR}/crypto/external/bsd/openssh/lib && \
+		${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDO.ssh
+.endif
+CRUNCHGEN_FLAGS+=-L ${LIBDO.ssh}
+.endif		# MKSSH != "no"
+
 RESCUEDIR=	/rescue
 CRUNCHBIN=	rescue
 CRUNCHENV=	RESCUEDIR=${RESCUEDIR}
@@ -38,12 +51,37 @@ LISTS+=		${.CURDIR}/list.${f}
 .endif
 .endfor
 
+RESCUEFSLIST=	adosfs cd9660fs efs ext2fs fdescfs filecorefs kernfs lfs \
+		msdosfs nfs ntfs nullfs overlayfs procfs tmpfs umapfs unionfs
+
+.for f in ${RESCUEFSLIST}
+.if (${MK${f:tu}} != "no")
+LISTS+=		${.CURDIR}/list.${f}
+.endif
+.endfor
+
 .if ${USE_INET6} != "no"
 LISTS+=		${.CURDIR}/list.inet6
 .endif
 
-LISTS+=		${.CURDIR}/list.crypto
+.if ${MKIPSEC} != "no"
+LISTS+=		${.CURDIR}/list.ipsec
+.endif
+
+.if ${MKRAID} != "no"
+LISTS+=		${.CURDIR}/list.raid
+.endif
+
+.if ${MKSSH} != "no"
+LISTS+=		${.CURDIR}/list.ssh
 CRUNCHENV+=	MKKERBEROS=no		# for ssh
+.endif
+
+.if ${MKUSB} != "no"
+LISTS+=		${.CURDIR}/list.usb
+.endif
+
+LISTS+=		${.CURDIR}/list.crypto
 
 LISTS+=		${.CURDIR}/list.ldd
 LDD_ELF32DIR!=	cd ${NETBSDSRCDIR}/usr.bin/ldd/elf32 && ${PRINTOBJDIR}

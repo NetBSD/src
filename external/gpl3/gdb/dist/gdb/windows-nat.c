@@ -1,6 +1,6 @@
 /* Target-vector operations for controlling windows child processes, for GDB.
 
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions, A Red Hat Company.
 
@@ -21,6 +21,7 @@
 
 /* Originally by Steve Chamberlain, sac@cygnus.com */
 
+#include "exceptions.h"
 #include "frame.h"
 #include "inferior.h"
 #include "infrun.h"
@@ -52,9 +53,9 @@
 #include "gdbsupport/gdb_obstack.h"
 #include "gdbthread.h"
 #include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include <unistd.h>
 #include "exec.h"
-#include "solist.h"
 #include "solib.h"
 #include "xml-support.h"
 #include "inttypes.h"
@@ -164,16 +165,6 @@ enum
     FLAG_TRACE_BIT = 0x100,
   };
 #endif
-
-#ifndef CONTEXT_EXTENDED_REGISTERS
-/* This macro is only defined on ia32.  It only makes sense on this target,
-   so define it as zero if not already defined.  */
-#define CONTEXT_EXTENDED_REGISTERS 0
-#endif
-
-#define CONTEXT_DEBUGGER_DR CONTEXT_FULL | CONTEXT_FLOATING_POINT \
-	| CONTEXT_SEGMENTS | CONTEXT_DEBUG_REGISTERS \
-	| CONTEXT_EXTENDED_REGISTERS
 
 #define DR6_CLEAR_VALUE 0xffff0ff0
 
@@ -441,7 +432,12 @@ wait_for_single (HANDLE handle, DWORD howlong)
 {
   while (true)
     {
-      DWORD r = WaitForSingleObject (handle, howlong);
+      /* Using an INFINITE argument to WaitForSingleObject may cause a system
+	 deadlock.  Avoid it by waiting for a bit in a loop instead.  */
+      DWORD milliseconds = howlong == INFINITE ? 100 : howlong;
+      DWORD r = WaitForSingleObject (handle, milliseconds);
+      if (howlong == INFINITE && r == WAIT_TIMEOUT)
+	continue;
       if (r == WAIT_OBJECT_0)
 	return;
       if (r == WAIT_FAILED)
@@ -656,11 +652,10 @@ windows_fetch_one_register (struct regcache *regcache,
   gdb_assert (r >= 0);
   gdb_assert (!th->reload_context);
 
-  char *context_ptr = (char *) &th->context;
-#ifdef __x86_64__
-  if (windows_process.wow64_process)
-    context_ptr = (char *) &th->wow64_context;
-#endif
+  char *context_ptr = windows_process.with_context (th, [] (auto *context)
+    {
+      return (char *) context;
+    });
 
   char *context_offset = context_ptr + windows_process.mappings[r];
   struct gdbarch *gdbarch = regcache->arch ();
@@ -726,42 +721,24 @@ windows_nat_target::fetch_registers (struct regcache *regcache, int r)
 
   if (th->reload_context)
     {
-#ifdef __x86_64__
-      if (windows_process.wow64_process)
+      windows_process.with_context (th, [&] (auto *context)
 	{
-	  th->wow64_context.ContextFlags = CONTEXT_DEBUGGER_DR;
-	  CHECK (Wow64GetThreadContext (th->h, &th->wow64_context));
+	  context->ContextFlags = WindowsContext<decltype(context)>::all;
+	  CHECK (get_thread_context (th->h, context));
 	  /* Copy dr values from that thread.
 	     But only if there were not modified since last stop.
 	     PR gdb/2388 */
 	  if (!th->debug_registers_changed)
 	    {
-	      windows_process.dr[0] = th->wow64_context.Dr0;
-	      windows_process.dr[1] = th->wow64_context.Dr1;
-	      windows_process.dr[2] = th->wow64_context.Dr2;
-	      windows_process.dr[3] = th->wow64_context.Dr3;
-	      windows_process.dr[6] = th->wow64_context.Dr6;
-	      windows_process.dr[7] = th->wow64_context.Dr7;
+	      windows_process.dr[0] = context->Dr0;
+	      windows_process.dr[1] = context->Dr1;
+	      windows_process.dr[2] = context->Dr2;
+	      windows_process.dr[3] = context->Dr3;
+	      windows_process.dr[6] = context->Dr6;
+	      windows_process.dr[7] = context->Dr7;
 	    }
-	}
-      else
-#endif
-	{
-	  th->context.ContextFlags = CONTEXT_DEBUGGER_DR;
-	  CHECK (GetThreadContext (th->h, &th->context));
-	  /* Copy dr values from that thread.
-	     But only if there were not modified since last stop.
-	     PR gdb/2388 */
-	  if (!th->debug_registers_changed)
-	    {
-	      windows_process.dr[0] = th->context.Dr0;
-	      windows_process.dr[1] = th->context.Dr1;
-	      windows_process.dr[2] = th->context.Dr2;
-	      windows_process.dr[3] = th->context.Dr3;
-	      windows_process.dr[6] = th->context.Dr6;
-	      windows_process.dr[7] = th->context.Dr7;
-	    }
-	}
+	});
+
       th->reload_context = false;
     }
 
@@ -784,11 +761,10 @@ windows_store_one_register (const struct regcache *regcache,
 {
   gdb_assert (r >= 0);
 
-  char *context_ptr = (char *) &th->context;
-#ifdef __x86_64__
-  if (windows_process.wow64_process)
-    context_ptr = (char *) &th->wow64_context;
-#endif
+  char *context_ptr = windows_process.with_context (th, [] (auto *context)
+    {
+      return (char *) context;
+    });
 
   struct gdbarch *gdbarch = regcache->arch ();
   i386_gdbarch_tdep *tdep = gdbarch_tdep<i386_gdbarch_tdep> (gdbarch);
@@ -1085,13 +1061,10 @@ static int
 display_selector (HANDLE thread, DWORD sel)
 {
   LDT_ENTRY info;
-  BOOL ret;
-#ifdef __x86_64__
-  if (windows_process.wow64_process)
-    ret = Wow64GetThreadSelectorEntry (thread, sel, &info);
-  else
-#endif
-    ret = GetThreadSelectorEntry (thread, sel, &info);
+  BOOL ret = windows_process.with_context (nullptr, [&] (auto *context)
+    {
+      return get_thread_selector_entry (context, thread, sel, &info);
+    });
   if (ret)
     {
       int base, limit;
@@ -1180,50 +1153,21 @@ display_selectors (const char * args, int from_tty)
 
   if (!args)
     {
-#ifdef __x86_64__
-      if (windows_process.wow64_process)
+      windows_process.with_context (current_windows_thread, [&] (auto *context)
 	{
 	  gdb_puts ("Selector $cs\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->wow64_context.SegCs);
+	  display_selector (current_windows_thread->h, context->SegCs);
 	  gdb_puts ("Selector $ds\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->wow64_context.SegDs);
+	  display_selector (current_windows_thread->h, context->SegDs);
 	  gdb_puts ("Selector $es\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->wow64_context.SegEs);
+	  display_selector (current_windows_thread->h, context->SegEs);
 	  gdb_puts ("Selector $ss\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->wow64_context.SegSs);
+	  display_selector (current_windows_thread->h, context->SegSs);
 	  gdb_puts ("Selector $fs\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->wow64_context.SegFs);
+	  display_selector (current_windows_thread->h, context->SegFs);
 	  gdb_puts ("Selector $gs\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->wow64_context.SegGs);
-	}
-      else
-#endif
-	{
-	  gdb_puts ("Selector $cs\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->context.SegCs);
-	  gdb_puts ("Selector $ds\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->context.SegDs);
-	  gdb_puts ("Selector $es\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->context.SegEs);
-	  gdb_puts ("Selector $ss\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->context.SegSs);
-	  gdb_puts ("Selector $fs\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->context.SegFs);
-	  gdb_puts ("Selector $gs\n");
-	  display_selector (current_windows_thread->h,
-			    current_windows_thread->context.SegGs);
-	}
+	  display_selector (current_windows_thread->h, context->SegGs);
+	});
     }
   else
     {
@@ -1284,65 +1228,36 @@ windows_nat_target::windows_continue (DWORD continue_status, int id,
   for (auto &th : windows_process.thread_list)
     if (id == -1 || id == (int) th->tid)
       {
-#ifdef __x86_64__
-	if (windows_process.wow64_process)
+	windows_process.with_context (th.get (), [&] (auto *context)
 	  {
 	    if (th->debug_registers_changed)
 	      {
-		th->wow64_context.ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-		th->wow64_context.Dr0 = windows_process.dr[0];
-		th->wow64_context.Dr1 = windows_process.dr[1];
-		th->wow64_context.Dr2 = windows_process.dr[2];
-		th->wow64_context.Dr3 = windows_process.dr[3];
-		th->wow64_context.Dr6 = DR6_CLEAR_VALUE;
-		th->wow64_context.Dr7 = windows_process.dr[7];
+		context->ContextFlags
+		  |= WindowsContext<decltype(context)>::debug;
+		context->Dr0 = windows_process.dr[0];
+		context->Dr1 = windows_process.dr[1];
+		context->Dr2 = windows_process.dr[2];
+		context->Dr3 = windows_process.dr[3];
+		context->Dr6 = DR6_CLEAR_VALUE;
+		context->Dr7 = windows_process.dr[7];
 		th->debug_registers_changed = false;
 	      }
-	    if (th->wow64_context.ContextFlags)
+	    if (context->ContextFlags)
 	      {
 		DWORD ec = 0;
 
 		if (GetExitCodeThread (th->h, &ec)
 		    && ec == STILL_ACTIVE)
 		  {
-		    BOOL status = Wow64SetThreadContext (th->h,
-							 &th->wow64_context);
+		    BOOL status = set_thread_context (th->h, context);
 
 		    if (!killed)
 		      CHECK (status);
 		  }
-		th->wow64_context.ContextFlags = 0;
+		context->ContextFlags = 0;
 	      }
-	  }
-	else
-#endif
-	  {
-	    if (th->debug_registers_changed)
-	      {
-		th->context.ContextFlags |= CONTEXT_DEBUG_REGISTERS;
-		th->context.Dr0 = windows_process.dr[0];
-		th->context.Dr1 = windows_process.dr[1];
-		th->context.Dr2 = windows_process.dr[2];
-		th->context.Dr3 = windows_process.dr[3];
-		th->context.Dr6 = DR6_CLEAR_VALUE;
-		th->context.Dr7 = windows_process.dr[7];
-		th->debug_registers_changed = false;
-	      }
-	    if (th->context.ContextFlags)
-	      {
-		DWORD ec = 0;
+	  });
 
-		if (GetExitCodeThread (th->h, &ec)
-		    && ec == STILL_ACTIVE)
-		  {
-		    BOOL status = SetThreadContext (th->h, &th->context);
-
-		    if (!killed)
-		      CHECK (status);
-		  }
-		th->context.ContextFlags = 0;
-	      }
-	  }
 	th->resume ();
       }
     else
@@ -1453,8 +1368,7 @@ windows_nat_target::resume (ptid_t ptid, int step, enum gdb_signal sig)
   th = windows_process.thread_rec (inferior_ptid, DONT_INVALIDATE_CONTEXT);
   if (th)
     {
-#ifdef __x86_64__
-      if (windows_process.wow64_process)
+      windows_process.with_context (th, [&] (auto *context)
 	{
 	  if (step)
 	    {
@@ -1462,53 +1376,25 @@ windows_nat_target::resume (ptid_t ptid, int step, enum gdb_signal sig)
 	      regcache *regcache = get_thread_regcache (inferior_thread ());
 	      struct gdbarch *gdbarch = regcache->arch ();
 	      fetch_registers (regcache, gdbarch_ps_regnum (gdbarch));
-	      th->wow64_context.EFlags |= FLAG_TRACE_BIT;
+	      context->EFlags |= FLAG_TRACE_BIT;
 	    }
 
-	  if (th->wow64_context.ContextFlags)
+	  if (context->ContextFlags)
 	    {
 	      if (th->debug_registers_changed)
 		{
-		  th->wow64_context.Dr0 = windows_process.dr[0];
-		  th->wow64_context.Dr1 = windows_process.dr[1];
-		  th->wow64_context.Dr2 = windows_process.dr[2];
-		  th->wow64_context.Dr3 = windows_process.dr[3];
-		  th->wow64_context.Dr6 = DR6_CLEAR_VALUE;
-		  th->wow64_context.Dr7 = windows_process.dr[7];
+		  context->Dr0 = windows_process.dr[0];
+		  context->Dr1 = windows_process.dr[1];
+		  context->Dr2 = windows_process.dr[2];
+		  context->Dr3 = windows_process.dr[3];
+		  context->Dr6 = DR6_CLEAR_VALUE;
+		  context->Dr7 = windows_process.dr[7];
 		  th->debug_registers_changed = false;
 		}
-	      CHECK (Wow64SetThreadContext (th->h, &th->wow64_context));
-	      th->wow64_context.ContextFlags = 0;
+	      CHECK (set_thread_context (th->h, context));
+	      context->ContextFlags = 0;
 	    }
-	}
-      else
-#endif
-	{
-	  if (step)
-	    {
-	      /* Single step by setting t bit.  */
-	      regcache *regcache = get_thread_regcache (inferior_thread ());
-	      struct gdbarch *gdbarch = regcache->arch ();
-	      fetch_registers (regcache, gdbarch_ps_regnum (gdbarch));
-	      th->context.EFlags |= FLAG_TRACE_BIT;
-	    }
-
-	  if (th->context.ContextFlags)
-	    {
-	      if (th->debug_registers_changed)
-		{
-		  th->context.Dr0 = windows_process.dr[0];
-		  th->context.Dr1 = windows_process.dr[1];
-		  th->context.Dr2 = windows_process.dr[2];
-		  th->context.Dr3 = windows_process.dr[3];
-		  th->context.Dr6 = DR6_CLEAR_VALUE;
-		  th->context.Dr7 = windows_process.dr[7];
-		  th->debug_registers_changed = false;
-		}
-	      CHECK (SetThreadContext (th->h, &th->context));
-	      th->context.ContextFlags = 0;
-	    }
-	}
+	});
     }
 
   /* Allow continuing with the same signal that interrupted us.
@@ -1907,7 +1793,6 @@ windows_nat_target::do_initial_windows_stuff (DWORD pid, bool attaching)
   inf = current_inferior ();
   if (!inf->target_is_pushed (this))
     inf->push_target (this);
-  disable_breakpoints_in_shlibs (current_program_space);
   windows_clear_solib ();
   clear_proceed_status (0);
   init_wait_for_inferior ();
@@ -3208,9 +3093,7 @@ windows_nat_target::thread_name (struct thread_info *thr)
 }
 
 
-void _initialize_windows_nat ();
-void
-_initialize_windows_nat ()
+INIT_GDB_FILE (windows_nat)
 {
   x86_dr_low.set_control = cygwin_set_dr7;
   x86_dr_low.set_addr = cygwin_set_dr;
@@ -3232,9 +3115,9 @@ _initialize_windows_nat ()
 
   add_com ("signal-event", class_run, signal_event_command, _("\
 Signal a crashed process with event ID, to allow its debugging.\n\
-This command is needed in support of setting up GDB as JIT debugger on \
-MS-Windows.  The command should be invoked from the GDB command line using \
-the '-ex' command-line option.  The ID of the event that blocks the \
+This command is needed in support of setting up GDB as JIT debugger on\n\
+MS-Windows.  The command should be invoked from the GDB command line using\n\
+the '-ex' command-line option.  The ID of the event that blocks the\n\
 crashed process will be supplied by the Windows JIT debugging mechanism."));
 
 #ifdef __CYGWIN__
@@ -3309,7 +3192,9 @@ Show whether to display kernel exceptions in child process."), NULL,
 	 that we're missing some functionality.  */
       warning(_("\
 cannot automatically find executable file or library to read symbols.\n\
-Use \"file\" or \"dll\" command to load executable/libraries directly."));
+Use \"%ps\" or \"%ps\" command to load executable/libraries directly."),
+	      styled_string (command_style.style (), "file"),
+	      styled_string (command_style.style (), "dll"));
     }
 }
 
@@ -3382,9 +3267,7 @@ windows_nat_target::thread_alive (ptid_t ptid)
   return WaitForSingleObject (th->h, 0) != WAIT_OBJECT_0;
 }
 
-void _initialize_check_for_gdb_ini ();
-void
-_initialize_check_for_gdb_ini ()
+INIT_GDB_FILE (check_for_gdb_ini)
 {
   char *homedir;
   if (inhibit_gdbinit)

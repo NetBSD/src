@@ -1,0 +1,38 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS6
+
+include "policies/kasp.conf";
+include "policies/csk1.conf";
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	allow-transfer { any; };
+	recursion no;
+	key-directory ".";
+	dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type hint;
+	file "../../_common/root.hint.blackhole";
+};
+
+zone example {
+	type primary;
+	file "example.db";
+	dnssec-policy modified;
+};

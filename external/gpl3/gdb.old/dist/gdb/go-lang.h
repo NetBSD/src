@@ -1,6 +1,6 @@
 /* Go language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GO_LANG_H)
-#define GO_LANG_H 1
+#ifndef GDB_GO_LANG_H
+#define GDB_GO_LANG_H
 
 struct type_print_options;
 
+#include "language.h"
 #include "gdbtypes.h"
 #include "symtab.h"
 #include "value.h"
@@ -62,9 +63,14 @@ extern const char *go_main_name (void);
 
 extern enum go_type go_classify_struct_type (struct type *type);
 
-extern char *go_symbol_package_name (const struct symbol *sym);
+/* Given a symbol, return its package or nullptr if unknown.  */
+extern gdb::unique_xmalloc_ptr<char> go_symbol_package_name
+     (const struct symbol *sym);
 
-extern char *go_block_package_name (const struct block *block);
+/* Return the package that BLOCK is in, or nullptr if there isn't
+   one.  */
+extern gdb::unique_xmalloc_ptr<char> go_block_package_name
+     (const struct block *block);
 
 extern const struct builtin_go_type *builtin_go_type (struct gdbarch *);
 
@@ -138,4 +144,4 @@ public:
   { return true; }
 };
 
-#endif /* !defined (GO_LANG_H) */
+#endif /* GDB_GO_LANG_H */

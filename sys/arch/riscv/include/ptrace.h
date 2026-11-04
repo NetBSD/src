@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.6 2024/05/03 07:11:14 skrll Exp $ */
+/* $NetBSD: ptrace.h,v 1.6.2.1 2026/11/04 23:21:15 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _RISCV_PTRACE_H_
 
 /*
- * RISCV-dependent ptrace definitions.
+ * RISC-V dependent ptrace definitions.
  * Note that PT_STEP is _not_ supported.
  */
 #define PT_GETREGS	(PT_FIRSTMACH + 0)

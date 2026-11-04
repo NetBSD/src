@@ -1,4 +1,4 @@
-#   Copyright 2013-2023 Free Software Foundation, Inc.
+#   Copyright 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile
 set libfile "dprintf-pendshr"
@@ -33,18 +31,14 @@ if { [gdb_compile_shlib $libsrc $lib_sl $lib_opts] != ""
 }
 
 with_test_prefix "without format" {
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
+    clean_restart
 
     gdb_test "dprintf pendfunc" "Format string required" "missing ,FMT"
     gdb_test "dprintf pendfunc," "Format string required" "missing FMT"
 }
 
 with_test_prefix "without symbols" {
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
+    clean_restart
 
     gdb_test \
 	"dprintf pendfunc1, \"x=%d\\n\", x" \

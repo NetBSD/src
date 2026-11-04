@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AMD64.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_LINUX_TDEP_H
-#define AMD64_LINUX_TDEP_H
+#ifndef GDB_AMD64_LINUX_TDEP_H
+#define GDB_AMD64_LINUX_TDEP_H
 
 /* Like for i386 GNU/Linux, there is an extra "register"
    used to control syscall restarting.  */
@@ -30,24 +30,6 @@
 
 /* Total number of registers for GNU/Linux.  */
 #define AMD64_LINUX_NUM_REGS (AMD64_LINUX_ORIG_RAX_REGNUM + 1)
-
-/* Linux target description.  */
-extern struct target_desc *tdesc_amd64_linux;
-extern struct target_desc *tdesc_amd64_avx_linux;
-extern struct target_desc *tdesc_amd64_mpx_linux;
-extern struct target_desc *tdesc_amd64_avx_mpx_linux;
-extern struct target_desc *tdesc_amd64_avx_avx512_linux;
-extern struct target_desc *tdesc_amd64_avx_mpx_avx512_pku_linux;
-
-extern struct target_desc *tdesc_x32_linux;
-extern struct target_desc *tdesc_x32_avx_linux;
-extern struct target_desc *tdesc_x32_avx_avx512_linux;
-
-/* Return the right amd64-linux target descriptions according to
-   XCR0_FEATURES_BIT and IS_X32.  */
-
-const target_desc *amd64_linux_read_description (uint64_t xcr0_features_bit,
-						 bool is_x32);
 
 /* Enum that defines the syscall identifiers for amd64 linux.
    Used for process record/replay, these will be translated into
@@ -604,4 +586,4 @@ enum amd64_x32_syscall {
   amd64_x32_sys_getsockopt = (amd64_x32_syscall_bit + 542),
 };
 
-#endif /* amd64-linux-tdep.h */
+#endif /* GDB_AMD64_LINUX_TDEP_H */

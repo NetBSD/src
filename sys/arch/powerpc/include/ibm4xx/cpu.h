@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.27 2021/11/02 11:21:24 ryo Exp $	*/
+/*	$NetBSD: cpu.h,v 1.27.10.1 2026/11/04 23:21:11 perseant Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -64,6 +64,7 @@ extern void (*md_device_register)(device_t dev, void *aux);
 /* export from ibm4xx/machdep.c */
 extern void (*md_consinit)(void);
 extern void (*md_cpu_startup)(void);
+extern void (*md_powerdown)(void);
 
 /* export from ibm4xx/ibm40x_machdep.c */
 extern void ibm40x_memsize_init(u_int, u_int);
@@ -119,7 +120,7 @@ mfcpr(int reg)
 	return mfdcr(DCR_CPR0_CFGDATA);
 }
 
-static void inline
+static __inline void
 mtsdr(int reg, uint32_t val)
 {
 	mtdcr(DCR_SDR0_CFGADDR, reg);
@@ -139,10 +140,17 @@ extern struct pic_ops pic_uic403;
 extern struct pic_ops pic_uic0;
 extern struct pic_ops pic_uic1;
 extern struct pic_ops pic_uic2;
+extern struct pic_ops pic_uic3;
 
 extern paddr_t msgbuf_paddr;
 extern vaddr_t msgbuf_vaddr;
 extern char msgbuf[MSGBUFSIZE];
+
+void	ibm4xx_blkcpy(void *, const void *, size_t, bool);
+/* #define BLKCPY_SELFTEST */
+#ifdef BLKCPY_SELFTEST
+void	ibm4xx_blkcpy_selftest(void);
+#endif
 #endif /* _KERNEL */
 
 /* Board info dictionary */

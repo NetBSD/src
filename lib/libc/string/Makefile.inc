@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile.inc,v 1.90.2.1 2025/08/02 05:54:42 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.90.2.2 2026/11/04 23:19:23 perseant Exp $
 
 # string sources
-.PATH: ${ARCHDIR}/string ${.CURDIR}/string
+.PATH: ${ARCHDIR}/string ${.PARSEDIR}
 
 # NB: if a .S version of any of these is added in the arch/*/Makefile
 # then the relevant .c file is automatically removed

@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.2.4.2 2025/08/02 05:57:55 perseant Exp $	*/
+/*	$NetBSD: stddef.h,v 1.2.4.3 2026/11/04 23:28:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -33,7 +33,7 @@
 
 /*
  * C99, 7.17: Common definitions <stddef.h>
- * C11, 7.19: Common definitoins <stddef.h>
+ * C11, 7.19: Common definitions <stddef.h>
  * C23, 7.21: Common definitions <stddef.h>
  */
 

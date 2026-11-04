@@ -1,4 +1,4 @@
-/*	$NetBSD: eisavar.h,v 1.25 2021/01/27 04:31:36 thorpej Exp $	*/
+/*	$NetBSD: eisavar.h,v 1.25.24.1 2026/11/04 23:21:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -102,6 +102,16 @@ struct eisabus_attach_args {
 	eisa_chipset_tag_t eba_ec;
 };
 
+int	eisabusprint(void *, const char *);
+
+static inline device_t
+eisabus_attach(device_t dev, struct eisabus_attach_args *eba)
+{
+	return config_found(dev, eba, eisabusprint,
+	    CFARGS(.iattr = "eisabus",
+		   .devhandle = device_handle(dev)));
+}
+
 /*
  * EISA device attach arguments.
  */
@@ -116,8 +126,6 @@ struct eisa_attach_args {
 	u_int8_t	ea_pid[EISA_NPIDREGS];
 	char		ea_idstring[EISA_IDSTRINGLEN];
 };
-
-int	eisabusprint(void *, const char *);
 
 /*
  * EISA Configuration entries, set up by an EISA Configuration Utility.

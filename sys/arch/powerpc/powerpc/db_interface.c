@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.60.8.1 2025/08/02 05:56:01 perseant Exp $ */
+/*	$NetBSD: db_interface.c,v 1.60.8.2 2026/11/04 23:21:12 perseant Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.60.8.1 2025/08/02 05:56:01 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.60.8.2 2026/11/04 23:21:12 perseant Exp $");
 
 #define USERACC
 
@@ -67,7 +67,9 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.60.8.1 2025/08/02 05:56:01 persea
 #define NOCPU   ~0
 volatile u_int ddb_cpu = NOCPU;
 
+#ifdef DDB
 int	db_active = 0;
+#endif
 
 db_regs_t ddb_regs;
 
@@ -248,9 +250,9 @@ kdb_trap(int type, void *v)
 
 #ifdef DDB
 	db_active++;
-	cnpollc(1);
+	cnpollc(true);
 	db_trap(type, 0);
-	cnpollc(0);
+	cnpollc(false);
 	db_active--;
 #endif
 #ifdef KGDB
@@ -640,6 +642,27 @@ db_ppc4xx_dumptlb(db_expr_t addr, bool have_addr, db_expr_t count,
 	int i, zone, tlbsize;
 	u_int zpr, pid, opid, msr;
 	u_long tlblo, tlbhi, tlbmask;
+
+#ifdef PPC_IBM440
+	for (i = 0; i < NTLB; i++) {
+		u_long w0, w1, w2, tid;
+
+		ppc44x_tlb_read(i, &w0, &w1, &w2, &tid);
+
+		if (strchr(modif, 'v') && !(w0 & TLB44_V))
+			continue;
+
+		tlbsize = (w0 & TLB44_SIZE_MASK) >> TLB44_SIZE_SHFT;
+		tlbmask = tlbsize <= TLB44_SIZE_1G ?
+		    ~((1UL << (tlbsize * 2 + 10)) - 1) : ~0UL;
+
+		if (have_addr && ((w0 & tlbmask) != ((u_long)addr & tlbmask)))
+			continue;
+
+		ppc44x_tlb_print(i, w0, w1, w2, tid, db_printf);
+	}
+	return;
+#endif /* PPC_IBM440 */
 
 	zpr = mfspr(SPR_ZPR);
 	for (i = 0; i < NTLB; i++) {

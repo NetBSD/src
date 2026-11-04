@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp $	*/
+/*	$NetBSD: zynq_platform.c,v 1.11.6.1 2026/11/04 23:20:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.11.6.1 2026/11/04 23:20:17 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_platform.c,v 1.11 2023/04/07 08:55:31 skrll Exp
 #include <sys/device.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <uvm/uvm_extern.h>
@@ -215,7 +216,7 @@ zynq_platform_bootstrap(void)
 {
 #if NARML2CC > 0
 	const bus_space_handle_t pl310_bh = ZYNQ_ARM_PL310_BASE;
-	arml2cc_init(&arm_generic_bs_tag, pl310_bh, 0);
+	arml2cc_get_cacheinfo(&arm_generic_bs_tag, pl310_bh, 0);
 #endif
 
 	arm_fdt_cpu_bootstrap();

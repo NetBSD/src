@@ -1,4 +1,4 @@
-/*	$NetBSD: sebuf.c,v 1.20.2.1 2025/08/02 05:56:11 perseant Exp $	*/
+/*	$NetBSD: sebuf.c,v 1.20.2.2 2026/11/04 23:21:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -38,14 +38,14 @@
  *
  * This driver ("sebuf") is the parent of two child drivers:
  *   se: yet another variant of NCR 5380 SCSI H/W
- *   ie: yet anotehr variant of Intel 82586 Ethernet
+ *   ie: yet another variant of Intel 82586 Ethernet
  *
  * The job of this parent is to map the memory and partition it for
  * the two children.  This driver has no device nodes.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.20.2.1 2025/08/02 05:56:11 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sebuf.c,v 1.20.2.2 2026/11/04 23:21:25 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

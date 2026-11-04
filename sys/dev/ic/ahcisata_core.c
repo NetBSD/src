@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.108 2023/09/10 14:04:28 abs Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.108.6.1 2026/11/04 23:21:56 perseant Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.108 2023/09/10 14:04:28 abs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.108.6.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -356,7 +356,7 @@ ahci_attach(struct ahci_softc *sc)
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_cmd_hdr_seg,
 	    sc->sc_cmd_hdr_nseg, dmasize,
-	    &cmdhp, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+	    &cmdhp, BUS_DMA_NOWAIT);
 	if (error) {
 		aprint_error("%s: unable to map command header memory"
 		    ", error=%d\n", AHCINAME(sc), error);
@@ -426,7 +426,7 @@ ahci_attach(struct ahci_softc *sc)
 		}
 		error = bus_dmamem_map(sc->sc_dmat, &achp->ahcic_cmd_tbl_seg,
 		    achp->ahcic_cmd_tbl_nseg, dmasize,
-		    &cmdtblp, BUS_DMA_NOWAIT|BUS_DMA_COHERENT);
+		    &cmdtblp, BUS_DMA_NOWAIT);
 		if (error) {
 			aprint_error("%s: unable to map command table memory"
 			    ", error=%d\n", AHCINAME(sc), error);
@@ -479,7 +479,7 @@ ahci_attach(struct ahci_softc *sc)
 			    (uint64_t)achp->ahcic_bus_cmd_tbl[j]), DEBUG_PROBE);
 			/* The xfer DMA map */
 			error = bus_dmamap_create(sc->sc_dmat, MAXPHYS,
-			    AHCI_NPRD, 0x400000 /* 4MB */, 0,
+			    AHCI_NPRD, AHCI_PRD_DBC_MASK + 1 /* 4MB */, 0,
 			    BUS_DMA_NOWAIT | BUS_DMA_ALLOCNOW,
 			    &achp->ahcic_datad[j]);
 			if (error) {

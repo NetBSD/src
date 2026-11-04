@@ -1,4 +1,4 @@
-/*	$NetBSD: hex.h,v 1.7.2.1 2025/08/02 05:53:59 perseant Exp $	*/
+/*	$NetBSD: hex.h,v 1.7.2.2 2026/11/04 23:18:16 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -90,8 +90,11 @@ isc_hex_tobuffer(isc_lex_t *lexer, isc_buffer_t *target, int length);
  * `target`. If 'length' is non-negative, it is the expected number of
  * encoded octets to convert.
  *
- * If 'length' is -1 then 0 or more encoded octets are expected.
- * If 'length' is -2 then 1 or more encoded octets are expected.
+ * If 'length' is isc_zero_or_more then 0 or more encoded octets are
+ * expected.
+ *
+ * If 'length' is isc_one_or_more then 1 or more encoded octets are
+ * expected.
  *
  * Returns:
  *\li	#ISC_R_BADHEX -- invalid hex encoding

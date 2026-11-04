@@ -1,4 +1,4 @@
-/*	$NetBSD: summitreg.h,v 1.16.4.2 2025/08/02 05:56:42 perseant Exp $	*/
+/*	$NetBSD: summitreg.h,v 1.16.4.3 2026/11/04 23:21:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 2024 Michael Lorenz
@@ -51,6 +51,7 @@
  *   will do it if we're not careful
  */
 #define VISFX_FIFO		0x641440
+#define VISFX_FOEU		0x920400	// Fragment Operation Enable
 #define VISFX_FOE		0x920404	// Fragment Operation Enable
 	#define FOE_TEXTURE	0x00000001
 	#define FOE_SPECULAR	0x00000002
@@ -60,11 +61,28 @@
 	#define FOE_Z_TEST	0x00000020
 	#define FOE_BLEND_ROP	0x00000040	// IBO is used
 	#define FOE_DITHER	0x00000080
+#define VISFX_RBS		0x920860	// STI writes 0xe4 into this on FX5
+						// seems to be another byte swapper
 #define VISFX_IBO		0x921110	// ROP in lowest nibble
+#define	    RopClr 	0x0
+#define	    RopSrc 	0x3
+#define	    RopInv 	0xc
+#define	    RopSet 	0xf
+
 #define VISFX_CBR		0x92111c	// constant colour for blending
 #define VISFX_IAA0		0x921200	// XLUT, 16 entries
 #define VISFX_IAA(n)		(0x921200 + ((n) << 2))
 #define VISFX_OTR		0x921148	// overlay transparency
+
+#define VISFX_FCDA		0x9211d8	// FX5 zeroes this, 
+/*
+ 0x00010000 - some sort of mask
+ 0x00020000 and 0x00040000 - similar patterns, different colours
+ */
+
+#define B2_MBWB			0x921194
+#define B2_MBWC			0x921198
+#define B2_MBWD			0x92119c
 
 #define VISFX_VRAM_WRITE_MODE	0xa00808
 #define VISFX_VRAM_READ_MODE	0xa0080c
@@ -80,11 +98,21 @@
 	#define VISFX_RPH_RTL	0x80000000	// right-to-left
 	#define VISFX_RPH_LTR	0x00000000	// left-to-right
 
+#define B2_BMAP_DBA		0xa008a4
+
 #define VISFX_READ_DATA		0xa41480
 
+/*
+ * HP calls these BINC writes on NGLE
+ * basically, you set write mode, POE, IBO etc., poke your destination
+ * coordinates into VISFX_VRAM_WRITE_DEST, then write pixels into a DATA_*
+ * register, which will perform the programmed operation(s) and move the
+ * destination coordinates
+ */
 #define VISFX_VRAM_WRITE_DATA_INCRX	0xa60000
 #define VISFX_VRAM_WRITE_DATA_INCRY	0xa68000
 #define VISFX_VRAM_WRITE_DEST		0xac1000
+
 #define VISFX_TCR			0xac1024	/* throttle control */
 #define VISFX_CLIP_TL		0xac1050	/* clipping rect, top/left */
 #define VISFX_CLIP_WH		0xac1054	/* clipping rect, w/h */
@@ -92,10 +120,10 @@
 #define VISFX_WRITE_MODE_PLAIN	0x02000000
 #define VISFX_WRITE_MODE_EXPAND	0x050004c0
 #define VISFX_WRITE_MODE_FILL	0x050008c0
-#define VISFX_WRITE_MODE_TRANSPARENT	0x00000800	/* bg is tansparent */
+#define VISFX_WRITE_MODE_TRANSPARENT	0x00000800	/* bg is transparent */
 #define VISFX_WRITE_MODE_MASK		0x00000400	/* apply pixel mask */
 /* 0x00000200 - some pattern */
-/* looks like 0x000000c0 enables fb/bg colours to be applied */
+/* looks like 0x000000c0 enables fg/bg colours to be applied */
 
 #define VISFX_READ_MODE_COPY	0x02000400
 
@@ -120,6 +148,7 @@
 #define IAA_CFS0	0x00000000	/* CFS select */
 #define IAA_CFS1	0x00000100	/* CFS 1 etc. */
 
+/* overlay transparency register */
 #define OTR_T	0x00010000	/* when set 0 is transparent, otherwise 0xff */
 #define OTR_A	0x00000100	/* always transparent */
 #define OTR_L1	0x00000002	/* transparency controlled by CFS17 */
@@ -164,7 +193,7 @@
 #define IBO_MIN		0x600
 #define IBO_MAX		0x700
 
-/* 
+/*
  * here are the blend functions I identified
  * apparently the upper byte in 32bit mode is not implemented on FX2/4/6, and
  * neither is any blend mode that takes the colour value from CBR
@@ -202,7 +231,10 @@
 	#define MPC_HSYNC_OFF	0x01
 #define VISFX_CFS0		0x800100	/* colour function select */
 #define VISFX_CFS(n)		(VISFX_CFS0 + ((n) << 2))
-/* 0 ... 6 for image planes, 7 or bypass, 16 and 17 for overlay */
+/* 
+ * 0 ... 6 for image planes, 7 or bypass, 16 and 17 for overlay
+ * these are selected by IAA* or FATTR registers
+ */
 #define CFS_CR		0x80	// enable color recovery
 #define CFS_332		0x00	// R3G3B2
 #define CFS_8I	 	0x40	// 8bit indexed
@@ -211,4 +243,16 @@
 #define CFS_LUT1	0x01	// LUT 1 etc.
 #define CFS_BYPASS	0x07	// bypass LUT
 
+/* FX5 byte swapping stuff */
+#define B2_DMA_BSCFB	0xaa0408	// byte swapping on buffered FB reads
+#define UB_DMA_UBSCFB	0x6a0c08	// byte swapping on unbuffered FB reads
+#define B2_PDU_BSCFB	0xa4303c	// byte swapping on buffered FB writes
+#define UB_PDU_UBSCFB	0x64303c	// byte swapping on unbuffered FB writes
+#define B2_MFU_BSCTD	0xb08044	// byte swapping on TD registers
+#define B2_MFU_BSCCTL	0xb08048	// byte swapping on TD pair registers
+#define B2_DMA_BSCBLK	0xaa0600	// blanket swapper, 0x01 enables swapping
+#define B2_DMA_BSCSAV	0xaa0640	// blanket swapper with enable bits
+
+#define SWAP_0123	0x1b1b1b1b	// 0b00.01.10.11 -> 0x1b
+#define SWAP_3210	0xe4e4e4e4	// 0b11.10.01.00 -> 0xe4
 #endif	/* SUMMITREG_H */

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on s390.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by D.J. Barrow (djbarrow@de.ibm.com,barrow_dj@yahoo.com)
    for IBM Deutschland Entwicklung GmbH, IBM Corporation.
@@ -29,6 +29,8 @@
 #include "gdbcore.h"
 #include "linux-record.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
+#include "svr4-tls-tdep.h"
 #include "objfiles.h"
 #include "osabi.h"
 #include "regcache.h"
@@ -40,6 +42,7 @@
 #include "target.h"
 #include "trad-frame.h"
 #include "xml-syscall.h"
+#include "inferior.h"
 
 #include "features/s390-linux32v1.c"
 #include "features/s390-linux32v2.c"
@@ -541,15 +544,16 @@ s390_sigtramp_frame_sniffer (const struct frame_unwind *self,
 
 /* S390 sigtramp frame unwinder.  */
 
-static const struct frame_unwind s390_sigtramp_frame_unwind = {
+static const struct frame_unwind_legacy s390_sigtramp_frame_unwind (
   "s390 linux sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   s390_sigtramp_frame_this_id,
   s390_sigtramp_frame_prev_register,
   NULL,
   s390_sigtramp_frame_sniffer
-};
+);
 
 /* Syscall handling.  */
 
@@ -1123,6 +1127,45 @@ s390_init_linux_record_tdep (struct linux_record_tdep *record_tdep,
   record_tdep->ioctl_FIOQSIZE = 0x545e;
 }
 
+/* Fetch and return the TLS DTV (dynamic thread vector) address for PTID.
+   Throw a suitable TLS error if something goes wrong.  */
+
+static CORE_ADDR
+s390_linux_get_tls_dtv_addr (struct gdbarch *gdbarch, ptid_t ptid,
+			     enum svr4_tls_libc libc)
+{
+  /* On S390, the thread pointer is found in two registers A0 and A1
+     (or, using gdb naming, acr0 and acr1) A0 contains the top 32
+     bits of the address and A1 contains the bottom 32 bits.  */
+  regcache *regcache
+    = get_thread_arch_regcache (current_inferior (), ptid, gdbarch);
+  target_fetch_registers (regcache, S390_A0_REGNUM);
+  target_fetch_registers (regcache, S390_A1_REGNUM);
+  ULONGEST thr_ptr_lo, thr_ptr_hi, thr_ptr;
+  if (regcache->cooked_read (S390_A0_REGNUM, &thr_ptr_hi) != REG_VALID
+      || regcache->cooked_read (S390_A1_REGNUM, &thr_ptr_lo) != REG_VALID)
+    throw_error (TLS_GENERIC_ERROR, _("Unable to fetch thread pointer"));
+  thr_ptr = (thr_ptr_hi << 32) + thr_ptr_lo;
+
+  /* The thread pointer points at the TCB (thread control block).  The
+     first two members of this struct are both pointers, where the
+     first will be a pointer to the TCB (i.e.  it points at itself)
+     and the second will be a pointer to the DTV (dynamic thread
+     vector).  There are many other fields too, but the one we care
+     about here is the DTV pointer.  Compute the address of the DTV
+     pointer, fetch it, and convert it to an address.  */
+  CORE_ADDR dtv_ptr_addr
+    = thr_ptr + gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT;
+  gdb::byte_vector buf (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  if (target_read_memory (dtv_ptr_addr, buf.data (), buf.size ()) != 0)
+    throw_error (TLS_GENERIC_ERROR, _("Unable to fetch DTV address"));
+
+  const struct builtin_type *builtin = builtin_type (gdbarch);
+  CORE_ADDR dtv_addr = gdbarch_pointer_to_address
+			 (gdbarch, builtin->builtin_data_ptr, buf.data ());
+  return dtv_addr;
+}
+
 /* Initialize OSABI common for GNU/Linux on 31- and 64-bit systems.  */
 
 static void
@@ -1151,6 +1194,9 @@ s390_linux_init_abi_any (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
+  set_gdbarch_get_thread_local_address (gdbarch,
+					svr4_tls_get_thread_local_address);
+  svr4_tls_register_tls_methods (info, gdbarch, s390_linux_get_tls_dtv_addr);
 
   /* Support reverse debugging.  */
   set_gdbarch_process_record_signal (gdbarch, s390_linux_record_signal);
@@ -1169,8 +1215,7 @@ s390_linux_init_abi_31 (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   s390_linux_init_abi_any (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_S390);
 }
 
@@ -1185,14 +1230,11 @@ s390_linux_init_abi_64 (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   s390_linux_init_abi_any (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
   set_xml_syscall_file_name (gdbarch, XML_SYSCALL_FILENAME_S390X);
 }
 
-void _initialize_s390_linux_tdep ();
-void
-_initialize_s390_linux_tdep ()
+INIT_GDB_FILE (s390_linux_tdep)
 {
   /* Hook us into the OSABI mechanism.  */
   gdbarch_register_osabi (bfd_arch_s390, bfd_mach_s390_31, GDB_OSABI_LINUX,

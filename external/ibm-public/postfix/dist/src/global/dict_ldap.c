@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_ldap.c,v 1.5.2.1 2025/08/02 05:50:06 perseant Exp $	*/
+/*	$NetBSD: dict_ldap.c,v 1.5.2.2 2026/11/04 23:14:47 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -1878,7 +1878,7 @@ DICT   *dict_ldap_open(const char *ldapsource, int open_flags, int dict_flags)
      * Return the new dict_ldap structure.
      */
     dict_ldap->dict.owner = cfg_get_owner(dict_ldap->parser);
-    return (DICT_DEBUG (&dict_ldap->dict));
+    return (&dict_ldap->dict);
 }
 
 #endif

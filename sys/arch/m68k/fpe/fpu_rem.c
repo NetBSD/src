@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_rem.c,v 1.18 2023/11/19 03:58:15 isaki Exp $	*/
+/*	$NetBSD: fpu_rem.c,v 1.18.2.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995  Ken Nakata
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.18 2023/11/19 03:58:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_rem.c,v 1.18.2.1 2026/11/04 23:20:50 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/signal.h>
@@ -101,7 +101,7 @@ abscmp3(const struct fpn *a, const struct fpn *b)
 static struct fpn *
 __fpu_modrem(struct fpemu *fe, int is_mod)
 {
-	static struct fpn X, Y;
+	struct fpn X, Y;
 	struct fpn *x, *y, *r;
 	uint32_t signX, signY, signQ;
 	int j, l, q;

@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,39 +13,6 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Return nul-terminated string read from section SECTION of EXEC.  Return ""
-# if no such section or nul-terminated string was found.  Function is useful
-# for sections ".interp" or ".gnu_debuglink".
-
-proc section_get {exec section} {
-    global subdir
-    set tmp [standard_output_file section_get.tmp]
-    set objcopy_program [gdb_find_objcopy]
-
-    set command "exec $objcopy_program -O binary --set-section-flags $section=A --change-section-address $section=0 -j $section $exec $tmp"
-    verbose -log "command is $command"
-    set result [catch $command output]
-    verbose -log "result is $result"
-    verbose -log "output is $output"
-    if {$result == 1} {
-	return ""
-    }
-    set fi [open $tmp]
-    fconfigure $fi -translation binary
-    set data [read $fi]
-    close $fi
-    file delete $tmp
-    # .interp has size $len + 1 but .gnu_debuglink contains garbage after \000.
-    set len [string first \000 $data]
-    if {$len < 0} {
-	verbose -log "section $section not found"
-	return ""
-    }
-    set retval [string range $data 0 [expr $len - 1]]
-    verbose -log "section $section is <$retval>"
-    return $retval
-}
-
 # Resolve symlinks.
 
 proc symlink_resolve {file} {
@@ -57,7 +24,7 @@ proc symlink_resolve {file} {
 	} else {
 	    set src2 $target
 	}
-	verbose -log "Resolved symlink $file targetting $target as $src2"
+	verbose -log "Resolved symlink $file targeting $target as $src2"
 	set file $src2
 
 	set loop [expr $loop + 1]

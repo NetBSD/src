@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.27 2023/04/12 06:39:15 riastradh Exp $
+#	$NetBSD: files.pci,v 1.27.6.1 2026/11/04 23:21:33 perseant Exp $
 
 device 	aapic
 attach 	aapic at pci
@@ -6,7 +6,8 @@ file 	arch/x86/pci/aapic.c		aapic
 
 file	arch/x86/pci/agp_machdep.c	agp
 
-define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_sis, agp_via
+define	agp_x86: agp_ali, agp_amd, agp_amd64, agp_i810, agp_intel, agp_nvidia,
+		 agp_sis, agp_via
 defflag	AGP_X86
 
 # PCI-Host bridge chipsets
@@ -88,3 +89,8 @@ file	arch/x86/pci/imcsmb/imc.c		imc
 device	imcsmb: i2cbus
 attach	imcsmb at imc
 file	arch/x86/pci/imcsmb/imcsmb.c		imcsmb
+
+# Intel PCH Thermal Subsystem
+device	pchtemp: sysmon_envsys
+attach	pchtemp at pci
+file	arch/x86/pci/pchtemp.c		pchtemp

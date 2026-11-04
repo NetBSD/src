@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_thmap.c,v 1.15 2023/10/17 11:57:20 riastradh Exp $	*/
+/*	$NetBSD: subr_thmap.c,v 1.15.6.1 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2018 Mindaugas Rasiukevicius <rmind at noxt eu>
@@ -88,31 +88,41 @@
  */
 
 #ifdef _KERNEL
+
 #include <sys/cdefs.h>
 #include <sys/param.h>
 #include <sys/types.h>
-#include <sys/thmap.h>
+
+#include <sys/atomic.h>
+#include <sys/cprng.h>
+#include <sys/hash.h>
 #include <sys/kmem.h>
 #include <sys/lock.h>
-#include <sys/atomic.h>
-#include <sys/hash.h>
-#include <sys/cprng.h>
+#include <sys/sdt.h>
+#include <sys/thmap.h>
+
 #define THMAP_RCSID(a) __KERNEL_RCSID(0, a)
+
 #else
-#include <stdio.h>
-#include <stdlib.h>
+
+#include <inttypes.h>
+#include <limits.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <inttypes.h>
+#include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
-#include <limits.h>
+
 #define THMAP_RCSID(a) __RCSID(a)
+
+#define SET_ERROR(e) (e)
 
 #include "thmap.h"
 #include "utils.h"
+
 #endif
 
-THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.15 2023/10/17 11:57:20 riastradh Exp $");
+THMAP_RCSID("$NetBSD: subr_thmap.c,v 1.15.6.1 2026/11/04 23:27:50 perseant Exp $");
 
 #include <crypto/blake2/blake2s.h>
 
@@ -564,7 +574,7 @@ root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 	 * this changes from null.
 	 */
 	if (atomic_load_relaxed(&thmap->root[i])) {
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 	}
 
 	/*
@@ -574,7 +584,7 @@ root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 	 */
 	node = node_create(thmap, NULL);
 	if (__predict_false(node == NULL)) {
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	slot = hashval_getl0slot(thmap, query, leaf);
 	node_insert(node, slot, THMAP_GETOFF(thmap, leaf) | THMAP_LEAF_BIT);
@@ -582,7 +592,7 @@ root_try_put(thmap_t *thmap, const thmap_query_t *query, thmap_leaf_t *leaf)
 again:
 	if (atomic_load_relaxed(&thmap->root[i])) {
 		gc_free(thmap, nptr, THMAP_INODE_LEN);
-		return EEXIST;
+		return SET_ERROR(EEXIST);
 	}
 	/* Release to subsequent consume in find_edge_node(). */
 	expected = THMAP_NULL;

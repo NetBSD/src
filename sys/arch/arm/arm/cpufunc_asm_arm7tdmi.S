@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.8 2022/10/20 06:58:38 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm7tdmi.S,v 1.8.8.1 2026/11/04 23:20:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 John Fremlin
@@ -48,7 +48,7 @@
 /*
  * Context switch.
  *
- * These are the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of pmap_activate()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm7tdmi_setttb)

@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,8 +22,20 @@ require allow_ada_tests
 
 standard_ada_testfile storage
 
-if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" } {
-  return -1
+# Compilation here will fail with gnat-llvm, because at the moment it
+# does not support Scalar_Storage_Order.  However, if that is ever
+# implemented, we want the test to start working.  So, we examine the
+# output before deciding if this is a real failure.
+set output [gdb_compile_ada_1 "${srcfile}" "${binfile}" executable debug]
+if {$output != ""} {
+    if {[regexp "error: reverse storage order .* not supported by LLVM" $output]} {
+	unsupported "scalar storage order not supported"
+    } else {
+	# Otherwise issue the fail.
+	gdb_compile_test $srcfile $output
+    }
+    # Either way we're not running this test.
+    return
 }
 
 clean_restart ${testfile}
@@ -33,10 +45,30 @@ if {![runto "storage.adb:$bp_location"]} {
   return
 }
 
-gdb_test "print V_LE" "= \\(value => 126, another_value => 12, color => green\\)"
+set re "value => 126, another_value => 12, color => green"
 
 # This requires a compiler fix that is in GCC 14.
-if {[gcc_major_version] < 14} {
-    setup_kfail "DW_AT_endianity on enum types" *-*-*
+set have_xfail [expr ![gnat_version_compare >= 14]]
+set re_color "(red|green|blue|$decimal)"
+set re_xfail \
+    "value => $decimal, another_value => $decimal, color => $re_color"
+
+set re_pre [string_to_regexp " = ("]
+set re_post [string_to_regexp ")"]
+set re $re_pre$re$re_post
+set re_xfail $re_pre$re_xfail$re_post
+
+foreach var { V_LE V_BE } {
+    gdb_test_multiple "print $var" "" {
+	-re -wrap $re {
+	    pass $gdb_test_name
+	}
+	-re -wrap $re_xfail {
+	    if { $have_xfail } {
+		xfail $gdb_test_name
+	    } else {
+		fail $gdb_test_name
+	    }
+	}
+    }
 }
-gdb_test "print V_BE" "= \\(value => 126, another_value => 12, color => green\\)"

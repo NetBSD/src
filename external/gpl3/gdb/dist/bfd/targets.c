@@ -1,5 +1,5 @@
 /* Generic target-file-type support for the BFD library.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -282,7 +282,6 @@ BFD_JUMP_TABLE macros.
 .#define BFD_JUMP_TABLE_COPY(NAME) \
 .  NAME##_bfd_copy_private_bfd_data, \
 .  NAME##_bfd_merge_private_bfd_data, \
-.  NAME##_init_private_section_data, \
 .  NAME##_bfd_copy_private_section_data, \
 .  NAME##_bfd_copy_private_symbol_data, \
 .  NAME##_bfd_copy_private_header_data, \
@@ -295,16 +294,10 @@ BFD_JUMP_TABLE macros.
 .  {* Called to merge BFD general private data from one object file
 .     to a common output file when linking.  *}
 .  bool (*_bfd_merge_private_bfd_data) (bfd *, struct bfd_link_info *);
-.  {* Called to initialize BFD private section data from one object file
-.     to another.  *}
-.#define bfd_init_private_section_data(ibfd, isec, obfd, osec, link_info) \
-.	BFD_SEND (obfd, _bfd_init_private_section_data, \
-.		  (ibfd, isec, obfd, osec, link_info))
-.  bool (*_bfd_init_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
-.					   struct bfd_link_info *);
 .  {* Called to copy BFD private section data from one object file
 .     to another.  *}
-.  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr);
+.  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
+.					   struct bfd_link_info *);
 .  {* Called to copy BFD private symbol data from one symbol
 .     to another.  *}
 .  bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol *,
@@ -667,6 +660,13 @@ to find an alternative output format that is suitable.
 .  return abfd->xvec->keep_unused_section_symbols;
 .}
 .
+.static inline bool
+.bfd_target_supports_archives (const bfd *abfd)
+.{
+.  return (abfd->xvec->_bfd_check_format[bfd_archive]
+.	   != abfd->xvec->_bfd_check_format[bfd_unknown]);
+.}
+.
 */
 
 /* All known xvecs (even those that don't compile on all systems).
@@ -676,9 +676,7 @@ to find an alternative output format that is suitable.
 extern const bfd_target aarch64_elf32_be_vec;
 extern const bfd_target aarch64_elf32_le_vec;
 extern const bfd_target aarch64_elf64_be_vec;
-extern const bfd_target aarch64_elf64_be_cloudabi_vec;
 extern const bfd_target aarch64_elf64_le_vec;
-extern const bfd_target aarch64_elf64_le_cloudabi_vec;
 extern const bfd_target aarch64_mach_o_vec;
 extern const bfd_target aarch64_pei_le_vec;
 extern const bfd_target aarch64_pe_le_vec;
@@ -696,8 +694,6 @@ extern const bfd_target arm_elf32_be_vec;
 extern const bfd_target arm_elf32_le_vec;
 extern const bfd_target arm_elf32_fdpic_be_vec;
 extern const bfd_target arm_elf32_fdpic_le_vec;
-extern const bfd_target arm_elf32_nacl_be_vec;
-extern const bfd_target arm_elf32_nacl_le_vec;
 extern const bfd_target arm_elf32_vxworks_be_vec;
 extern const bfd_target arm_elf32_vxworks_le_vec;
 extern const bfd_target arm_mach_o_vec;
@@ -833,8 +829,6 @@ extern const bfd_target nds32_elf32_le_vec;
 extern const bfd_target nds32_elf32_linux_be_vec;
 extern const bfd_target nds32_elf32_linux_le_vec;
 extern const bfd_target nfp_elf64_vec;
-extern const bfd_target nios2_elf32_be_vec;
-extern const bfd_target nios2_elf32_le_vec;
 extern const bfd_target ns32k_aout_pc532mach_vec;
 extern const bfd_target ns32k_aout_pc532nbsd_vec;
 extern const bfd_target or1k_elf32_vec;
@@ -933,7 +927,6 @@ extern const bfd_target wasm32_elf32_vec;
 extern const bfd_target x86_64_coff_vec;
 extern const bfd_target x86_64_elf32_vec;
 extern const bfd_target x86_64_elf64_vec;
-extern const bfd_target x86_64_elf64_cloudabi_vec;
 extern const bfd_target x86_64_elf64_fbsd_vec;
 extern const bfd_target x86_64_elf64_sol2_vec;
 extern const bfd_target x86_64_mach_o_vec;
@@ -991,9 +984,7 @@ static const bfd_target * const _bfd_target_vector[] =
 	&aarch64_elf32_be_vec,
 	&aarch64_elf32_le_vec,
 	&aarch64_elf64_be_vec,
-	&aarch64_elf64_be_cloudabi_vec,
 	&aarch64_elf64_le_vec,
-	&aarch64_elf64_le_cloudabi_vec,
 	&aarch64_mach_o_vec,
 	&aarch64_pe_le_vec,
 	&aarch64_pei_le_vec,
@@ -1217,9 +1208,6 @@ static const bfd_target * const _bfd_target_vector[] =
 	&nfp_elf64_vec,
 #endif
 
-	&nios2_elf32_be_vec,
-	&nios2_elf32_le_vec,
-
 	&ns32k_aout_pc532mach_vec,
 	&ns32k_aout_pc532nbsd_vec,
 
@@ -1348,7 +1336,6 @@ static const bfd_target * const _bfd_target_vector[] =
 	&x86_64_coff_vec,
 	&x86_64_elf32_vec,
 	&x86_64_elf64_vec,
-	&x86_64_elf64_cloudabi_vec,
 	&x86_64_elf64_fbsd_vec,
 	&x86_64_elf64_sol2_vec,
 	&x86_64_mach_o_vec,

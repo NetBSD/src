@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@
 
 # Test bfloat16 support in AVX512 registers
 
-if { [skip_avx512bf16_tests] } {
-    unsupported "target does not support AVX512BF16"
-    return -1
-}
+require allow_avx512bf16_tests
 
 standard_testfile
 

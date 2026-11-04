@@ -5,13 +5,9 @@
 /dts-v1/;
 
 #include "ipq8074.dtsi"
+#include <dt-bindings/gpio/gpio.h>
 
 / {
-	#address-cells = <0x2>;
-	#size-cells = <0x2>;
-
-	interrupt-parent = <&intc>;
-
 	aliases {
 		serial0 = &blsp1_uart5;
 	};
@@ -20,16 +16,16 @@
 		stdout-path = "serial0";
 	};
 
-	memory {
+	memory@40000000 {
 		device_type = "memory";
 		reg = <0x0 0x40000000 0x0 0x20000000>;
 	};
 };
 
 &blsp1_spi1 {
-	status = "ok";
+	status = "okay";
 
-	m25p80@0 {
+	flash@0 {
 		#address-cells = <1>;
 		#size-cells = <1>;
 		compatible = "jedec,spi-nor";
@@ -39,33 +35,33 @@
 };
 
 &blsp1_uart5 {
-	status = "ok";
+	status = "okay";
 };
 
 &pcie0 {
-	status = "ok";
-	perst-gpio = <&tlmm 58 0x1>;
+	status = "okay";
+	perst-gpios = <&tlmm 58 GPIO_ACTIVE_LOW>;
 };
 
 &pcie1 {
-	status = "ok";
-	perst-gpio = <&tlmm 61 0x1>;
+	status = "okay";
+	perst-gpios = <&tlmm 61 GPIO_ACTIVE_LOW>;
 };
 
-&pcie_phy0 {
-	status = "ok";
+&pcie_qmp0 {
+	status = "okay";
 };
 
-&pcie_phy1 {
-	status = "ok";
+&pcie_qmp1 {
+	status = "okay";
 };
 
 &qpic_bam {
-	status = "ok";
+	status = "okay";
 };
 
 &qpic_nand {
-	status = "ok";
+	status = "okay";
 
 	nand@0 {
 		reg = <0>;

@@ -1,6 +1,6 @@
 /* JIT declarations for GDB, the GNU Debugger.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef JIT_H
-#define JIT_H
+#ifndef GDB_JIT_H
+#define GDB_JIT_H
 
 struct inferior;
 struct objfile;
@@ -122,4 +122,4 @@ extern void jit_breakpoint_re_set (void);
 
 extern void jit_event_handler (gdbarch *gdbarch, objfile *jiter);
 
-#endif /* JIT_H */
+#endif /* GDB_JIT_H */

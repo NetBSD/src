@@ -222,7 +222,7 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
               text..." response, in an attempt to confuse bad SMTP clients  so
               that they speak before their turn (pre-greet).
 
-       <b><a href="postconf.5.html#postscreen_greet_wait">postscreen_greet_wait</a> (normal: 6s, overload: 2s)</b>
+       <b><a href="postconf.5.html#postscreen_greet_wait">postscreen_greet_wait</a> (normal: 6s, <a href="STRESS_README.html">overload</a>: 2s)</b>
               The  amount  of  time  that  <a href="postscreen.8.html"><b>postscreen</b>(8)</a> will wait for an SMTP
               client to send a command before its turn, and for DNS  blocklist
               lookup results to arrive (default: up to 2 seconds under stress,
@@ -359,7 +359,7 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
               The  limit  on the total number of commands per SMTP session for
               <a href="postscreen.8.html"><b>postscreen</b>(8)</a>'s built-in SMTP protocol engine.
 
-       <b><a href="postconf.5.html#postscreen_command_time_limit">postscreen_command_time_limit</a> (normal: 300s, overload: 10s)</b>
+       <b><a href="postconf.5.html#postscreen_command_time_limit">postscreen_command_time_limit</a> (normal: 300s, <a href="STRESS_README.html">overload</a>: 10s)</b>
               The  time  limit  to  read   an   entire   command   line   with
               <a href="postscreen.8.html"><b>postscreen</b>(8)</a>'s built-in SMTP protocol engine.
 
@@ -405,7 +405,7 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
 
        <b><a href="postconf.5.html#delay_logging_resolution_limit">delay_logging_resolution_limit</a> (2)</b>
               The maximal number of digits after the decimal point  when  log-
-              ging sub-second delay values.
+              ging delay values.
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
               The location of all postfix administrative commands.
@@ -467,6 +467,9 @@ POSTSCREEN(8)                                                    POSTSCREEN(8)
        Google, Inc.
        111 8th Avenue
        New York, NY 10011, USA
+
+       Wietse Venema
+       porcupine.org
 
                                                                  POSTSCREEN(8)
 </pre> </body> </html>

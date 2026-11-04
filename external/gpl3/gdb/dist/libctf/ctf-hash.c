@@ -1,5 +1,5 @@
 /* Interface to hashtable implementations.
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -164,7 +164,10 @@ ctf_dynhash_create_sized (unsigned long nelems, ctf_hash_fun hash_fun,
   if (key_free || value_free)
     dynhash = malloc (sizeof (ctf_dynhash_t));
   else
-    dynhash = malloc (offsetof (ctf_dynhash_t, key_free));
+    {
+      void *p = malloc (offsetof (ctf_dynhash_t, key_free));
+      dynhash = p;
+    }
   if (!dynhash)
     return NULL;
 
@@ -225,7 +228,10 @@ ctf_hashtab_insert (struct htab *htab, void *key, void *value,
       if (key_free || value_free)
 	*slot = malloc (sizeof (ctf_helem_t));
       else
-	*slot = malloc (offsetof (ctf_helem_t, owner));
+	{
+	  void *p = malloc (offsetof (ctf_helem_t, owner));
+	  *slot = p;
+	}
       if (!*slot)
 	return NULL;
       (*slot)->key = key;
@@ -256,7 +262,7 @@ ctf_dynhash_insert (ctf_dynhash_t *hp, void *key, void *value)
 			     key_free, value_free);
 
   if (!slot)
-    return errno;
+    return -errno;
 
   /* Keep track of the owner, so that the del function can get at the key_free
      and value_free functions.  Only do this if one of those functions is set:
@@ -400,8 +406,9 @@ ctf_dynhash_iter_remove (ctf_dynhash_t *hp, ctf_hash_iter_remove_f fun,
 
 /* Traverse a dynhash in arbitrary order, in _next iterator form.
 
-   Mutating the dynhash while iterating is not supported (just as it isn't for
-   htab_traverse).
+   Adding entries to the dynhash while iterating is not supported (just as it
+   isn't for htab_traverse).  Deleting is fine (see ctf_dynhash_next_remove,
+   below).
 
    Note: unusually, this returns zero on success and a *positive* value on
    error, because it does not take an fp, taking an error pointer would be
@@ -471,6 +478,30 @@ ctf_dynhash_next (ctf_dynhash_t *h, ctf_next_t **it, void **key, void **value)
   ctf_next_destroy (i);
   *it = NULL;
   return ECTF_NEXT_END;
+}
+
+/* Remove the entry most recently returned by ctf_dynhash_next.
+
+   Returns ECTF_NEXT_END if this is impossible (already removed, iterator not
+   initialized, iterator off the end).  */
+
+int
+ctf_dynhash_next_remove (ctf_next_t * const *it)
+{
+  ctf_next_t *i = *it;
+
+  if ((void (*) (void)) ctf_dynhash_next != i->ctn_iter_fun)
+    return ECTF_NEXT_WRONGFUN;
+
+  if (!i)
+    return ECTF_NEXT_END;
+
+  if (i->ctn_n == 0)
+    return ECTF_NEXT_END;
+
+  htab_clear_slot (i->cu.ctn_h->htab, i->u.ctn_hash_slot - 1);
+
+  return 0;
 }
 
 int
@@ -626,7 +657,7 @@ ctf_dynset_insert (ctf_dynset_t *hp, void *key)
   struct htab *htab = (struct htab *) hp;
   void **slot;
 
-  slot = htab_find_slot (htab, key, INSERT);
+  slot = htab_find_slot (htab, key_to_internal (key), INSERT);
 
   if (!slot)
     {
@@ -649,6 +680,12 @@ void
 ctf_dynset_remove (ctf_dynset_t *hp, const void *key)
 {
   htab_remove_elt ((struct htab *) hp, key_to_internal (key));
+}
+
+size_t
+ctf_dynset_elements (ctf_dynset_t *hp)
+{
+  return htab_elements ((struct htab *) hp);
 }
 
 void
@@ -780,7 +817,7 @@ ctf_dynhash_insert_type (ctf_dict_t *fp, ctf_dynhash_t *hp, uint32_t type,
     return EINVAL;
 
   if ((str = ctf_strptr_validate (fp, name)) == NULL)
-    return ctf_errno (fp);
+    return ctf_errno (fp) * -1;
 
   if (str[0] == '\0')
     return 0;		   /* Just ignore empty strings on behalf of caller.  */
@@ -789,6 +826,9 @@ ctf_dynhash_insert_type (ctf_dict_t *fp, ctf_dynhash_t *hp, uint32_t type,
 				 (void *) (ptrdiff_t) type)) == 0)
     return 0;
 
+  /* ctf_dynhash_insert returns a negative error value: negate it for
+     ctf_set_errno.  */
+  ctf_set_errno (fp, err * -1);
   return err;
 }
 

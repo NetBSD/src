@@ -29,6 +29,7 @@ dns__dbiterator_last
 dns__dbiterator_next
 dns__dbiterator_prev
 dns__dbiterator_seek
+dns__dbiterator_seek3
 dns__nta_attach
 dns__nta_detach
 dns__nta_ref
@@ -45,6 +46,7 @@ dns__rbtdb_attachnode
 dns__rbtdb_attachversion
 dns__rbtdb_bindrdataset
 dns__rbtdb_cachemethods
+dns__rbtdb_clean_stale_headers
 dns__rbtdb_closeversion
 dns__rbtdb_create
 dns__rbtdb_createiterator
@@ -78,7 +80,6 @@ dns__rbtnode_release
 dns__rdataset_clone
 dns__rdataset_disassociate
 dns__rdataset_expire
-dns__rdataset_getclosest
 dns__rdataset_getnoqname
 dns__rdatasetiter_current
 dns__rdatasetiter_destroy
@@ -117,10 +118,12 @@ dns_aclenv_detach
 dns_aclenv_ref
 dns_aclenv_set
 dns_aclenv_unref
+dns_adb_addrslimit
 dns_adb_adjustsrtt
 dns_adb_agesrtt
 dns_adb_attach
 dns_adb_beginudpfetch
+dns_adb_cachemin
 dns_adb_cancelfind
 dns_adb_changeflags
 dns_adb_create
@@ -131,6 +134,7 @@ dns_adb_dump
 dns_adb_dumpquota
 dns_adb_ednsto
 dns_adb_endudpfetch
+dns_adb_entrywindow
 dns_adb_findaddrinfo
 dns_adb_findstatus
 dns_adb_flush
@@ -217,6 +221,8 @@ dns_catz_zone_get
 dns_catz_zone_getdefoptions
 dns_catz_zone_getname
 dns_catz_zone_new
+dns_catz_zone_postreconfig
+dns_catz_zone_prereconfig
 dns_catz_zone_ref
 dns_catz_zone_resetdefoptions
 dns_catz_zone_unref
@@ -247,11 +253,14 @@ dns_compress_name
 dns_compress_rollback
 dns_compress_setpermitted
 dns_counter_fromtext
+dns_db_abortupdate
 dns_db_addglue
 dns_db_attach
 dns_db_attachversion
 dns_db_beginload
+dns_db_beginupdate
 dns_db_class
+dns_db_commitupdate
 dns_db_create
 dns_db_createiterator
 dns_db_createsoatuple
@@ -302,10 +311,10 @@ dns_dbiterator_pause
 dns_diff_append
 dns_diff_appendminimal
 dns_diff_apply
+dns_diff_apply_with_callbacks
 dns_diff_applysilently
 dns_diff_clear
 dns_diff_init
-dns_diff_is_boundary
 dns_diff_load
 dns_diff_print
 dns_diff_size
@@ -323,10 +332,10 @@ dns_dispatch_detach
 dns_dispatch_done
 dns_dispatch_getlocaladdress
 dns_dispatch_getnext
-dns_dispatch_gettcp
 dns_dispatch_ref
 dns_dispatch_resume
 dns_dispatch_send
+dns_dispatch_tcppipelining
 dns_dispatch_unref
 dns_dispatchmgr_attach
 dns_dispatchmgr_create
@@ -335,6 +344,7 @@ dns_dispatchmgr_getblackhole
 dns_dispatchmgr_ref
 dns_dispatchmgr_setavailports
 dns_dispatchmgr_setblackhole
+dns_dispatchmgr_setreusetimeout
 dns_dispatchmgr_setstats
 dns_dispatchmgr_unref
 dns_dispatchset_create
@@ -390,10 +400,15 @@ dns_ds_fromkeyrdata
 dns_dsdigest_format
 dns_dsdigest_fromtext
 dns_dsdigest_totext
+dns_dsyncscheme_format
+dns_dsyncscheme_fromtext
+dns_dsyncscheme_totext
 dns_dumpctx_attach
 dns_dumpctx_cancel
 dns_dumpctx_db
 dns_dumpctx_detach
+dns_dumpctx_ref
+dns_dumpctx_unref
 dns_dumpctx_version
 dns_dyndb_cleanup
 dns_dyndb_createctx
@@ -469,6 +484,7 @@ dns_kasp_inlinesigning
 dns_kasp_key_algorithm
 dns_kasp_key_create
 dns_kasp_key_destroy
+dns_kasp_key_format
 dns_kasp_key_keystore
 dns_kasp_key_ksk
 dns_kasp_key_lifetime
@@ -479,6 +495,7 @@ dns_kasp_key_tagmin
 dns_kasp_key_zsk
 dns_kasp_keylist_empty
 dns_kasp_keys
+dns_kasp_manualmode
 dns_kasp_nsec3
 dns_kasp_nsec3flags
 dns_kasp_nsec3iter
@@ -492,6 +509,7 @@ dns_kasp_setcdnskey
 dns_kasp_setdnskeyttl
 dns_kasp_setdsttl
 dns_kasp_setinlinesigning
+dns_kasp_setmanualmode
 dns_kasp_setnsec3
 dns_kasp_setnsec3param
 dns_kasp_setofflineksk
@@ -519,6 +537,7 @@ dns_keydata_todnskey
 dns_keyflags_fromtext
 dns_keymgr_checkds
 dns_keymgr_checkds_id
+dns_keymgr_key_init
 dns_keymgr_key_may_be_purged
 dns_keymgr_offline
 dns_keymgr_rollover
@@ -565,6 +584,8 @@ dns_lctx
 dns_loadctx_attach
 dns_loadctx_cancel
 dns_loadctx_detach
+dns_loadctx_ref
+dns_loadctx_unref
 dns_log_init
 dns_log_setcontext
 dns_master_dump
@@ -618,6 +639,7 @@ dns_message_gettemprdataset
 dns_message_gettimeadjust
 dns_message_gettsig
 dns_message_gettsigkey
+dns_message_hasdname
 dns_message_headertotext
 dns_message_logfmtpacket
 dns_message_logpacket
@@ -739,10 +761,10 @@ dns_nsec3param_toprivate
 dns_nsec_build
 dns_nsec_buildrdata
 dns_nsec_compressbitmap
+dns_nsec_is_legal
 dns_nsec_isset
 dns_nsec_noexistnodata
 dns_nsec_nseconly
-dns_nsec_requiredtypespresent
 dns_nsec_setbit
 dns_nsec_typepresent
 dns_ntatable_add
@@ -941,7 +963,6 @@ dns_rdataclass_fromtext
 dns_rdataclass_ismeta
 dns_rdataclass_totext
 dns_rdataclass_tounknowntext
-dns_rdatalist_addclosest
 dns_rdatalist_addnoqname
 dns_rdatalist_clone
 dns_rdatalist_count
@@ -949,26 +970,25 @@ dns_rdatalist_current
 dns_rdatalist_disassociate
 dns_rdatalist_first
 dns_rdatalist_fromrdataset
-dns_rdatalist_getclosest
 dns_rdatalist_getnoqname
 dns_rdatalist_getownercase
 dns_rdatalist_init
 dns_rdatalist_next
 dns_rdatalist_setownercase
 dns_rdatalist_tordataset
-dns_rdataset_addclosest
+dns_rdataproof_rdatasetmethods
 dns_rdataset_additionaldata
 dns_rdataset_addnoqname
 dns_rdataset_clearprefetch
 dns_rdataset_count
 dns_rdataset_current
-dns_rdataset_equals
 dns_rdataset_first
 dns_rdataset_getownercase
 dns_rdataset_init
 dns_rdataset_invalidate
 dns_rdataset_isassociated
 dns_rdataset_makequestion
+dns_rdataset_minresign
 dns_rdataset_next
 dns_rdataset_setownercase
 dns_rdataset_settrust
@@ -1256,6 +1276,7 @@ dns_ttl_totext
 dns_update_signatures
 dns_update_signaturesinc
 dns_update_soaserial
+dns_update_state_clear
 dns_validator_attach
 dns_validator_cancel
 dns_validator_create
@@ -1573,7 +1594,6 @@ dns_zone_setxfracl
 dns_zone_setxfrsource4
 dns_zone_setxfrsource6
 dns_zone_setzeronosoattl
-dns_zone_signwithkey
 dns_zone_stopxfr
 dns_zone_synckeyzone
 dns_zone_unload
@@ -1640,6 +1660,8 @@ dst__openssl_toresult
 dst__opensslecdsa_init
 dst__openssleddsa_init
 dst__opensslrsa_init
+dst__opensslrsa_shutdown
+dst__privelement_is_nul_terminated
 dst__privstruct_free
 dst__privstruct_parse
 dst__privstruct_writefile
@@ -1765,3 +1787,4 @@ resquery_attach
 resquery_detach
 resquery_ref
 resquery_unref
+update_callback

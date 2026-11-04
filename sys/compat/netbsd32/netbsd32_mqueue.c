@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mqueue.c,v 1.7 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mqueue.c,v 1.7.36.1 2026/11/04 23:21:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.7 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mqueue.c,v 1.7.36.1 2026/11/04 23:21:41 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -93,6 +93,7 @@ netbsd32_mq_unlink(struct lwp *l, const struct netbsd32_mq_unlink_args *uap,
 	} */
 	struct sys_mq_unlink_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(name, const char);
 	return sys_mq_unlink(l, &ua, retval);
 }

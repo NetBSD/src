@@ -1,5 +1,5 @@
 /* Hardware ports.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Andrew Cagney and Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -120,8 +120,8 @@ detach_hw_port_edge (struct hw *me,
 	  && old_edge->dest_port == dest_port
 	  && old_edge->my_port == my_port)
 	{
-	  if (old_edge->disposition == permenant_object)
-	    hw_abort (me, "attempt to delete permenant port edge");
+	  if (old_edge->disposition == permanent_object)
+	    hw_abort (me, "attempt to delete permanent port edge");
 	  *list = old_edge->next;
 	  hw_free (me, old_edge);
 	  return;
@@ -140,7 +140,7 @@ clean_hw_port_edges (struct hw_port_edge **list)
       struct hw_port_edge *old_edge = *list;
       switch (old_edge->disposition)
 	{
-	case permenant_object:
+	case permanent_object:
 	  list = &old_edge->next;
 	  break;
 	case temporary_object:

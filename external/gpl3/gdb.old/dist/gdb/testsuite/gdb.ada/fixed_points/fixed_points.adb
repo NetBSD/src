@@ -1,4 +1,4 @@
---  Copyright 2004-2023 Free Software Foundation, Inc.
+--  Copyright 2004-2024 Free Software Foundation, Inc.
 --
 --  This program is free software; you can redistribute it and/or modify
 --  it under the terms of the GNU General Public License as published by
@@ -57,6 +57,13 @@ procedure Fixed_Points is
 
    FP5_Var : FP5_Type := 3 * Delta5;
 
+
+   Another_Delta : constant := 1.0/(2**63);
+   type Another_Type is delta Another_Delta range -1.0 .. (1.0 - Another_Delta);
+   for  Another_Type'small use Another_Delta;
+   for  Another_Type'size  use 64;
+   Another_Fixed : Another_Type := Another_Delta * 5;
+
 begin
    Base_Object := 1.0/16.0;   -- Set breakpoint here
    Subtype_Object := 1.0/16.0;
@@ -67,4 +74,5 @@ begin
    Do_Nothing (FP3_Var'Address);
    Do_Nothing (FP4_Var'Address);
    Do_Nothing (FP5_Var'Address);
+   Do_Nothing (Another_Fixed'Address);
 end Fixed_Points;

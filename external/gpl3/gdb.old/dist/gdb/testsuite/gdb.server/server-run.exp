@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2005-2023 Free Software Foundation, Inc.
+# Copyright 2005-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@ load_lib gdbserver-support.exp
 
 standard_testfile server.c
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
     return -1
@@ -54,3 +52,36 @@ if { [istarget *-*-linux*] } {
 
 gdb_breakpoint main
 gdb_test "continue" "Breakpoint.* main .*" "continue to main"
+
+if { [istarget "aarch64*-*-*"]
+     || [istarget "arm*-*-*"]
+     || [istarget "csky*-*-*"]
+     || [istarget "loongarch*-*-*"]
+     || [istarget "riscv*-*-*"] } {
+    set pc_regname "pc"
+} elseif { [is_amd64_regs_target] } {
+    set pc_regname "rip"
+} elseif { [is_x86_like_target] } {
+    set pc_regname "eip"
+} elseif { [istarget "tic6x-*-*"] } {
+    set pc_regname "PC"
+}
+
+# Sending the PC register in advance is good practice.  Test that this is
+# actually done for the targets where gdbserver is supposed to.
+set expedited_pc_test_name "send PC as expedited register in stop reply"
+if { [info exists pc_regname] } {
+    set seen_line false
+    gdb_test_multiple "maintenance print remote-registers" \
+	     $expedited_pc_test_name -lbl {
+	-re "${pc_regname}\[\[:space:\]\]+${decimal}.*${decimal}\[\[:space:\]\]+yes" {
+	    set seen_line true
+	    exp_continue
+	}
+	-re "\r\n$gdb_prompt $" {
+	    gdb_assert { $seen_line } $gdb_test_name
+	}
+    }
+} else {
+    untested $expedited_pc_test_name
+}

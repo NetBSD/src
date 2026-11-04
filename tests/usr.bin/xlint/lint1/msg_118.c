@@ -1,39 +1,47 @@
-/*	$NetBSD: msg_118.c,v 1.8 2023/08/26 10:43:53 rillig Exp $	*/
+/*	$NetBSD: msg_118.c,v 1.8.2.1 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_118.c"
 
-/* Test for message: semantics of '%s' change in C90; use explicit cast [118] */
+/* Test for message: '%s' %s '%s' differs between traditional C and C90 [118] */
 
 /* lint1-flags: -hw -X 351 */
+/* lint1-only-if: lp64 */
 
-int
-int_shl_uint(int left, unsigned int right)
+int si;
+unsigned ui;
+long sl;
+unsigned long ul;
+
+void
+test_shl(void)
 {
-	return left << right;
+	si <<= si;
+	si <<= ui;
+	/* expect+1: warning: 'int' <<= 'long' differs between traditional C and C90 [118] */
+	si <<= sl;
+	/* expect+1: warning: 'int' <<= 'unsigned long' differs between traditional C and C90 [118] */
+	si <<= ul;
+
+	si = si << si;
+	si = si << ui;
+	/* expect+1: warning: 'int' << 'long' differs between traditional C and C90 [118] */
+	si = si << sl;
+	/* expect+1: warning: 'int' << 'unsigned long' differs between traditional C and C90 [118] */
+	si = si << ul;
 }
 
-int
-int_shr_uint(int left, unsigned int right)
+void
+test_shr(void)
 {
-	/* expect+1: warning: semantics of '>>' change in C90; use explicit cast [118] */
-	return left >> right;
-}
+	si >>= si;
+	si >>= ui;
+	si >>= sl;
+	si >>= ul;
 
-int
-int_shl_int(int left, int right)
-{
-	return left << right;
+	si = si >> si;
+	/* expect+1: warning: 'int' >> 'unsigned int' differs between traditional C and C90 [118] */
+	si = si >> ui;
+	/* expect+1: warning: 'int' >> 'long' differs between traditional C and C90 [118] */
+	si = si >> sl;
+	/* expect+1: warning: 'int' >> 'unsigned long' differs between traditional C and C90 [118] */
+	si = si >> ul;
 }
-
-/*
- * The behavior of typeok_shl can only be triggered on 64-bit platforms, or
- * in C99 mode, and the above tests require C90 mode.
- *
- * On 32-bit platforms both operands of the '<<' operator are first promoted
- * individually, and since C90 does not know 'long long', the maximum
- * bit-size for an integer type is 32 bits.
- *
- * Because of this difference there is no test for that case since as of
- * 2021-05-04, all lint1 tests must be independent of the target platform and
- * there is no way to toggle individual tests depending on the properties of
- * the target platform.
- */

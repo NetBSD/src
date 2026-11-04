@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -64,10 +64,8 @@ f2 (int x)
 close $fd
 
 # Step 3: Compile the source files.
-if  { [gdb_compile "${srcfiles}" "${binfile}" \
-	   executable {debug additional_flags=-O0}] != "" } {
-    untested "failed to compile"
-    return -1
+if { [build_executable "failed to prepare" $testfile $srcfiles] == -1 } {
+    return
 }
 
 # Step 4: Remove the main.c file.
@@ -101,3 +99,6 @@ Term::command "finish"
 Term::check_box_contents "check source box is empty after return" \
     0 0 80 15 "No Source Available"
 Term::check_contents "Back in main" "Value returned is .* 13"
+
+Term::resize 30 100
+Term::check_box "source box after resize" 0 0 100 19

@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: (GPL-2.0+ OR MIT)
 // Copyright (C) 2016 ARM Ltd.
 
-#include <arm/sunxi-h3-h5.dtsi>
+#include <arm/allwinner/sunxi-h3-h5.dtsi>
 
 #include <dt-bindings/thermal/thermal.h>
 
@@ -217,7 +217,7 @@
 			};
 		};
 
-		gpu_thermal {
+		gpu-thermal {
 			polling-delay-passive = <0>;
 			polling-delay = <0>;
 			thermal-sensors = <&ths 1>;
@@ -231,6 +231,10 @@
 
 &display_clocks {
 	compatible = "allwinner,sun50i-h5-de2-clk";
+};
+
+&mbus {
+	compatible = "allwinner,sun50i-h5-mbus";
 };
 
 &mmc0 {

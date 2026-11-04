@@ -693,7 +693,7 @@ print_run_until_stop_body(lf *file,
 {
   /* Output the function to execute real code:
 
-     Unfortunatly, there are multiple cases to consider vis:
+     Unfortunately, there are multiple cases to consider vis:
 
      <icache> X <smp> X <events> X <keep-running-flag> X ...
 

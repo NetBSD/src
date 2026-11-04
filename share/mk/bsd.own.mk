@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1382.2.3 2025/08/02 05:55:19 perseant Exp $
+#	$NetBSD: bsd.own.mk,v 1.1382.2.4 2026/11/04 23:19:53 perseant Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -14,7 +14,7 @@ MAKECONF?=	/etc/mk.conf
 #
 # CPU model, derived from MACHINE_ARCH
 #
-MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:C/e?arm.*/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
+MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/:S/m68000/m68k/:S/m68ksf/m68k/:C/e?arm.*/arm/:S/powerpc64/powerpc/:S/aarch64eb/aarch64/:S/or1knd/or1k/:C/riscv../riscv/}
 
 .if (${MACHINE_ARCH} == "mips64el" || \
      ${MACHINE_ARCH} == "mips64eb" || \
@@ -23,6 +23,21 @@ MACHINE_CPU=	${MACHINE_ARCH:C/mips.*e[bl]/mips/:C/sh3e[bl]/sh3/:S/coldfire/m68k/
 MACHINE_MIPS64= 	1
 .else
 MACHINE_MIPS64= 	0
+.endif
+
+.if ${MACHINE_ARCH} == "m68ksf"
+BFD_MACHINE_ARCH=m68k
+BINUTILS_MACHINE_ARCH=m68k
+GCC_MACHINE_ARCH=m68k
+GDB_MACHINE_ARCH=m68k
+GMP_MACHINE_ARCH=m68k
+GOMP_MACHINE_ARCH=m68k
+LDELFSO_MACHINE_ARCH=m68k
+LIBC_MACHINE_ARCH=m68k
+LIBEXECINFO_MACHINE_ARCH=m68k
+LIBEXEC_MACHINE_ARCH=m68k
+LIBGCC_MACHINE_ARCH=m68k
+LIBKERN_ARCH=m68k
 .endif
 
 #
@@ -75,7 +90,7 @@ TOOLCHAIN_MISSING?=	no
 #
 # What GCC is used?
 #
-HAVE_GCC?=	12
+HAVE_GCC?=	14
 
 #
 # Platforms that can't run a modern GCC natively
@@ -85,11 +100,11 @@ MKGCCCMDS?=	no
 
 #
 # We import the old gcc as "gcc.old" when upgrading.  EXTERNAL_GCC_SUBDIR is
-# set to the relevant subdirectory in src/external/gpl3 for his HAVE_GCC.
+# set to the relevant subdirectory in src/external/gpl3 for this HAVE_GCC.
 #
-.if ${HAVE_GCC} == 10
+.if ${HAVE_GCC} == 12
 EXTERNAL_GCC_SUBDIR?=	gcc.old
-.elif ${HAVE_GCC} == 12
+.elif ${HAVE_GCC} == 14
 EXTERNAL_GCC_SUBDIR?=	gcc
 .else
 EXTERNAL_GCC_SUBDIR?=	/does/not/exist
@@ -105,20 +120,31 @@ MKGCCCMDS?=	no
 # Other ports don't have vector units GCC can target.
 #
 .if ${MACHINE} == "alpha" || \
-    ${MACHINE} == "vax" || \
     ${MACHINE_CPU} == "m68k" || \
-    ${MACHINE_CPU} == "sh3"
+    ${MACHINE_CPU} == "sh3" || \
+    ${MACHINE} == "vax"
 NOGCCISL=	# defined
 .endif
 
 #
+# Build GCC with libquadmath.
+# E.g.:  grep '#define HAVE_FLOAT128 1' lib/libgfortran/arch/*/config.h
+#
+.if ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "ia64" || \
+    ${MACHINE_ARCH} == "x86_64"
+HAVE_QUADMATH?=	yes
+.endif
+HAVE_QUADMATH?=	no
+
+#
 # What binutils is used?
 #
-HAVE_BINUTILS?= 242
+HAVE_BINUTILS?= 246
 
-.if ${HAVE_BINUTILS} == 242
+.if ${HAVE_BINUTILS} == 246
 EXTERNAL_BINUTILS_SUBDIR=	binutils
-.elif ${HAVE_BINUTILS} == 239
+.elif ${HAVE_BINUTILS} == 245
 EXTERNAL_BINUTILS_SUBDIR=	binutils.old
 .else
 EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
@@ -127,11 +153,11 @@ EXTERNAL_BINUTILS_SUBDIR=	/does/not/exist
 #
 # What GDB is used?
 #
-HAVE_GDB?=	1510
+HAVE_GDB?=	1710
 
-.if ${HAVE_GDB} == 1510
+.if ${HAVE_GDB} == 1710
 EXTERNAL_GDB_SUBDIR=		gdb
-.elif ${HAVE_GDB} == 1320
+.elif ${HAVE_GDB} == 1630
 EXTERNAL_GDB_SUBDIR=		gdb.old
 .else
 EXTERNAL_GDB_SUBDIR=		/does/not/exist
@@ -160,10 +186,11 @@ EXTERNAL_OPENSSL_SUBDIR=/does/not/exist
 #
 # Does the platform support ACPI?
 #
-.if ${MACHINE} == "i386" || \
+.if \
+    ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE} == "amd64" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE_ARCH:Maarch64*}
+    ${MACHINE} == "i386" || \
+    ${MACHINE} == "ia64"
 HAVE_ACPI=	yes
 .else
 HAVE_ACPI=	no
@@ -172,11 +199,12 @@ HAVE_ACPI=	no
 #
 # Does the platform support UEFI?
 #
-.if ${MACHINE} == "i386" || \
-    ${MACHINE} == "amd64" || \
-    ${MACHINE} == "ia64" || \
-    ${MACHINE_ARCH:Mearmv7*} || \
+.if \
     ${MACHINE_ARCH:Maarch64*} || \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE_ARCH:Mearmv7*} || \
+    ${MACHINE} == "i386" || \
+    ${MACHINE} == "ia64" || \
     ${MACHINE_ARCH} == "riscv64"
 HAVE_UEFI=	yes
 .else
@@ -232,29 +260,29 @@ HAVE_LIBGCC_EH?=	yes
 # Coverity does not like SSP
 .if defined(COVERITY_TOP_CONFIG) || \
     ${MACHINE} == "alpha" || \
-    ${MACHINE} == "hppa" || \
     ${MACHINE} == "ia64"
 HAVE_SSP?=	no
 .else
 HAVE_SSP?=	yes
-.if !defined(NOFORT) && ${USE_FORT:Uno} != "no"
-USE_SSP?=	yes
-.endif
+USE_SSP_DEFAULT?=	no
+USE_SSP?=	${!defined(NOFORT) && ${USE_FORT:Uno} != "no":?yes:${USE_SSP_DEFAULT}}
 .endif
 
 #
 # What version of jemalloc we use (100 is the one
 # built-in to libc from 2005 (pre version 3).
 #
-.if ${MACHINE_ARCH} == "vax" || ${MACHINE} == "sun2"
+.if \
+    ${MACHINE_ARCH} == "m68000" || \
+    ${MACHINE_ARCH} == "vax"
 HAVE_JEMALLOC?=		100
 .else
-HAVE_JEMALLOC?=		530
+HAVE_JEMALLOC?=		540
 .endif
 
-.if ${HAVE_JEMALLOC} == 530 || ${HAVE_JEMALLOC} == 100
+.if ${HAVE_JEMALLOC} == 540 || ${HAVE_JEMALLOC} == 100
 EXTERNAL_JEMALLOC_SUBDIR = jemalloc
-.elif ${HAVE_JEMALLOC} == 510
+.elif ${HAVE_JEMALLOC} == 531
 EXTERNAL_JEMALLOC_SUBDIR = jemalloc.old
 .else
 EXTERNAL_JEMALLOC_SUBDIR = /does/not/exist
@@ -326,7 +354,9 @@ USETOOLS?=	yes
 USETOOLS?=	no
 
 
-.if ${MACHINE_ARCH} == "mips" || ${MACHINE_ARCH} == "mips64" || \
+.if \
+    ${MACHINE_ARCH} == "mips" || \
+    ${MACHINE_ARCH} == "mips64" || \
     ${MACHINE_ARCH} == "sh3"
 .BEGIN:
 	@echo "Must set MACHINE_ARCH to one of ${MACHINE_ARCH}eb or ${MACHINE_ARCH}el"
@@ -447,23 +477,31 @@ LDFLAGS+=	--sysroot=/
 .  endif
 .endif
 
-DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 ARM_ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}arm-elf2aout
-M68K_ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
-MIPS_ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
+DBSYM=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-dbsym
 INSTALL=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-install
 LEX=		${TOOLDIR}/bin/${_TOOL_PREFIX}lex
 LINT=		CC=${CC:Q} ${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-lint
 LORDER=		NM=${NM:Q} MKTEMP=${TOOL_MKTEMP:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}lorder
+M68K_ELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
+MIPS_ELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 MKDEP=		CC=${CC:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 MKDEPCXX=	CC=${CXX:Q} ${TOOLDIR}/bin/${_TOOL_PREFIX}mkdep
 PAXCTL=		${TOOLDIR}/bin/${_TOOL_PREFIX}paxctl
 TSORT=		${TOOLDIR}/bin/${_TOOL_PREFIX}tsort -q
 YACC=		${TOOLDIR}/bin/${_TOOL_PREFIX}yacc
 
+GROFF_SHARE_PATH=	${TOOLDIR}/share/groff
+TOOL_GROFF_ENV= \
+    GROFF_ENCODING= \
+    GROFF_BIN_PATH=${TOOLDIR}/lib/groff \
+    GROFF_FONT_PATH=${GROFF_SHARE_PATH}/site-font:${GROFF_SHARE_PATH}/font \
+    GROFF_TMAC_PATH=${GROFF_SHARE_PATH}/site-tmac:${GROFF_SHARE_PATH}/tmac
+
 TOOL_AMIGAAOUT2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-aout2bb
 TOOL_AMIGAELF2BB=	${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-elf2bb
 TOOL_AMIGATXLT=		${TOOLDIR}/bin/${_TOOL_PREFIX}amiga-txlt
+TOOL_ARMELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}arm-elf2aout
 TOOL_ASN1_COMPILE=	${TOOLDIR}/bin/${_TOOL_PREFIX}asn1_compile
 TOOL_AWK=		${TOOLDIR}/bin/${_TOOL_PREFIX}awk
 TOOL_CAP_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}cap_mkdb
@@ -481,6 +519,7 @@ TOOL_DATE=		${TOOLDIR}/bin/${_TOOL_PREFIX}date
 TOOL_DB=		${TOOLDIR}/bin/${_TOOL_PREFIX}db
 TOOL_DISKLABEL=		${TOOLDIR}/bin/${_TOOL_PREFIX}disklabel
 TOOL_DTC=		${TOOLDIR}/bin/${_TOOL_PREFIX}dtc
+TOOL_ELFTOSB=		${TOOLDIR}/bin/${_TOOL_PREFIX}elftosb
 TOOL_EQN=		${TOOLDIR}/bin/${_TOOL_PREFIX}eqn
 TOOL_FDISK=		${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-fdisk
 TOOL_FGEN=		${TOOLDIR}/bin/${_TOOL_PREFIX}fgen
@@ -490,15 +529,8 @@ TOOL_GENCAT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gencat
 TOOL_GMAKE=		${TOOLDIR}/bin/${_TOOL_PREFIX}gmake
 TOOL_GPT=		${TOOLDIR}/bin/${_TOOL_PREFIX}gpt
 TOOL_GREP=		${TOOLDIR}/bin/${_TOOL_PREFIX}grep
-GROFF_SHARE_PATH=	${TOOLDIR}/share/groff
-TOOL_GROFF_ENV= \
-    GROFF_ENCODING= \
-    GROFF_BIN_PATH=${TOOLDIR}/lib/groff \
-    GROFF_FONT_PATH=${GROFF_SHARE_PATH}/site-font:${GROFF_SHARE_PATH}/font \
-    GROFF_TMAC_PATH=${GROFF_SHARE_PATH}/site-tmac:${GROFF_SHARE_PATH}/tmac
 TOOL_GROFF=		${TOOL_GROFF_ENV} ${TOOLDIR}/bin/${_TOOL_PREFIX}groff ${GROFF_FLAGS}
 TOOL_GROPS=		${TOOL_GROFF_ENV} ${TOOLDIR}/lib/groff/grops
-
 TOOL_HEXDUMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}hexdump
 TOOL_HP300MKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hp300-mkboot
 TOOL_HPPAMKBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}hppa-mkboot
@@ -508,9 +540,11 @@ TOOL_INSTALL_INFO=	${TOOLDIR}/bin/${_TOOL_PREFIX}install-info
 TOOL_JOIN=		${TOOLDIR}/bin/${_TOOL_PREFIX}join
 TOOL_LLVM_TBLGEN=	${TOOLDIR}/bin/${_TOOL_PREFIX}llvm-tblgen
 TOOL_M4=		${TOOLDIR}/bin/${_TOOL_PREFIX}m4
+TOOL_M68KELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
 TOOL_MACPPCFIXCOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc-fixcoff
 TOOL_MACPPCINSTALLBOOT=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc_installboot
 TOOL_MACPPCMKBOOTHFS=	${TOOLDIR}/bin/${_TOOL_PREFIX}macppc_mkboothfs
+TOOL_MAKEDOC=		${TOOLDIR}/bin/${_TOOL_PREFIX}makedoc
 TOOL_MAKEFS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makefs
 TOOL_MAKEINFO=		${TOOLDIR}/bin/${_TOOL_PREFIX}makeinfo
 TOOL_MAKEKEYS=		${TOOLDIR}/bin/${_TOOL_PREFIX}makekeys
@@ -521,8 +555,6 @@ TOOL_MANDOC_HTML=	${TOOLDIR}/bin/${_TOOL_PREFIX}mandoc -Thtml
 TOOL_MANDOC_LINT=	${TOOLDIR}/bin/${_TOOL_PREFIX}mandoc -Tlint
 TOOL_MDSETIMAGE=	${TOOLDIR}/bin/${MACHINE_GNU_PLATFORM}-mdsetimage
 TOOL_MENUC=		MENUDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}menuc
-TOOL_ARMELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}arm-elf2aout
-TOOL_M68KELF2AOUT=	${TOOLDIR}/bin/${_TOOL_PREFIX}m68k-elf2aout
 TOOL_MIPSELF2ECOFF=	${TOOLDIR}/bin/${_TOOL_PREFIX}mips-elf2ecoff
 TOOL_MKCSMAPPER=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkcsmapper
 TOOL_MKESDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}mkesdb
@@ -532,7 +564,6 @@ TOOL_MKMAGIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}file
 TOOL_MKNOD=		${TOOLDIR}/bin/${_TOOL_PREFIX}mknod
 TOOL_MKTEMP=		${TOOLDIR}/bin/${_TOOL_PREFIX}mktemp
 TOOL_MKUBOOTIMAGE=	${TOOLDIR}/bin/${_TOOL_PREFIX}mkubootimage
-TOOL_ELFTOSB=		${TOOLDIR}/bin/${_TOOL_PREFIX}elftosb
 TOOL_MSGC=		MSGDEF=${TOOLDIR}/share/misc ${TOOLDIR}/bin/${_TOOL_PREFIX}msgc
 TOOL_MTREE=		${TOOLDIR}/bin/${_TOOL_PREFIX}mtree
 TOOL_MVME68KWRTVID=	${TOOLDIR}/bin/${_TOOL_PREFIX}mvme68k-wrtvid
@@ -541,7 +572,6 @@ TOOL_NCDCS=		${TOOLDIR}/bin/${_TOOL_PREFIX}ibmnws-ncdcs
 TOOL_PAX=		${TOOLDIR}/bin/${_TOOL_PREFIX}pax
 TOOL_PIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}pic
 TOOL_PIGZ=		${TOOLDIR}/bin/${_TOOL_PREFIX}pigz
-TOOL_XZ=		${TOOLDIR}/bin/${_TOOL_PREFIX}xz
 TOOL_PKG_CREATE=	${TOOLDIR}/bin/${_TOOL_PREFIX}pkg_create
 TOOL_POWERPCMKBOOTIMAGE=${TOOLDIR}/bin/${_TOOL_PREFIX}powerpc-mkbootimage
 TOOL_PWD_MKDB=		${TOOLDIR}/bin/${_TOOL_PREFIX}pwd_mkdb
@@ -566,8 +596,9 @@ TOOL_TBL=		${TOOLDIR}/bin/${_TOOL_PREFIX}tbl
 TOOL_TIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}tic
 TOOL_UUDECODE=		${TOOLDIR}/bin/${_TOOL_PREFIX}uudecode
 TOOL_VAXMOPCOPY=	${TOOLDIR}/bin/${_TOOL_PREFIX}vax-mopcopy
-TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
 TOOL_VFONTEDPR=		${TOOLDIR}/libexec/${_TOOL_PREFIX}vfontedpr
+TOOL_VGRIND=		${TOOLDIR}/bin/${_TOOL_PREFIX}vgrind -f
+TOOL_XZ=		${TOOLDIR}/bin/${_TOOL_PREFIX}xz
 TOOL_ZIC=		${TOOLDIR}/bin/${_TOOL_PREFIX}zic
 
 .else	# USETOOLS != yes						# } {
@@ -593,6 +624,7 @@ TOOL_CXX.pcc=		p++
 TOOL_AMIGAAOUT2BB=	amiga-aout2bb
 TOOL_AMIGAELF2BB=	amiga-elf2bb
 TOOL_AMIGATXLT=		amiga-txlt
+TOOL_ARMELF2AOUT=	arm-elf2aout
 TOOL_ASN1_COMPILE=	asn1_compile
 TOOL_AWK=		awk
 TOOL_CAP_MKDB=		cap_mkdb
@@ -610,6 +642,7 @@ TOOL_DATE=		date
 TOOL_DB=		db
 TOOL_DISKLABEL=		disklabel
 TOOL_DTC=		dtc
+TOOL_ELFTOSB=		elftosb
 TOOL_EQN=		eqn
 TOOL_FDISK=		fdisk
 TOOL_FGEN=		fgen
@@ -630,7 +663,9 @@ TOOL_INSTALL_INFO=	install-info
 TOOL_JOIN=		join
 TOOL_LLVM_TBLGEN=	llvm-tblgen
 TOOL_M4=		m4
+TOOL_M68KELF2AOUT=	m68k-elf2aout
 TOOL_MACPPCFIXCOFF=	macppc-fixcoff
+TOOL_MAKEDOC=		makedoc
 TOOL_MAKEFS=		makefs
 TOOL_MAKEINFO=		makeinfo
 TOOL_MAKEKEYS=		makekeys
@@ -641,8 +676,6 @@ TOOL_MANDOC_HTML=	mandoc -Thtml
 TOOL_MANDOC_LINT=	mandoc -Tlint
 TOOL_MDSETIMAGE=	mdsetimage
 TOOL_MENUC=		menuc
-TOOL_ARMELF2AOUT=	arm-elf2aout
-TOOL_M68KELF2AOUT=	m68k-elf2aout
 TOOL_MIPSELF2ECOFF=	mips-elf2ecoff
 TOOL_MKCSMAPPER=	mkcsmapper
 TOOL_MKESDB=		mkesdb
@@ -651,7 +684,6 @@ TOOL_MKMAGIC=		file
 TOOL_MKNOD=		mknod
 TOOL_MKTEMP=		mktemp
 TOOL_MKUBOOTIMAGE=	mkubootimage
-TOOL_ELFTOSB=		elftosb
 TOOL_MSGC=		msgc
 TOOL_MTREE=		mtree
 TOOL_MVME68KWRTVID=	wrtvid
@@ -660,7 +692,6 @@ TOOL_NCDCS=		ncdcs
 TOOL_PAX=		pax
 TOOL_PIC=		pic
 TOOL_PIGZ=		pigz
-TOOL_XZ=		xz
 TOOL_PKG_CREATE=	pkg_create
 TOOL_POWERPCMKBOOTIMAGE=powerpc-mkbootimage
 TOOL_PWD_MKDB=		pwd_mkdb
@@ -684,8 +715,9 @@ TOOL_TBL=		tbl
 TOOL_TIC=		tic
 TOOL_UUDECODE=		uudecode
 TOOL_VAXMOPCOPY=	vax-mopcopy
-TOOL_VGRIND=		vgrind -f
 TOOL_VFONTEDPR=		/usr/libexec/vfontedpr
+TOOL_VGRIND=		vgrind -f
+TOOL_XZ=		xz
 TOOL_ZIC=		zic
 
 .endif	# USETOOLS != yes						# }
@@ -693,9 +725,9 @@ TOOL_ZIC=		zic
 # Standalone code should not be compiled with PIE or CTF
 # Should create a better test
 .if defined(BINDIR) && ${BINDIR} == "/usr/mdec"
-NOPIE=			# defined
 NOCTF=			# defined
-.elif ${MACHINE} == "sun2"
+NOPIE=			# defined
+.elif ${MACHINE_ARCH} == "m68000"
 NOPIE=			# we don't have PIC, so no PIE
 .endif
 
@@ -737,7 +769,10 @@ CC_WNO_ADDRESS_OF_PACKED_MEMBER=${${ACTIVE_CC} == "clang" :? -Wno-error=address-
 				${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 9:? -Wno-address-of-packed-member :}
 
 CC_WNO_ARRAY_BOUNDS=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno-array-bounds :}
+CC_WNO_CALLOC_TRANSPOSED_ARGS=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-calloc-transposed-args :}
 CC_WNO_CAST_FUNCTION_TYPE=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-cast-function-type :}
+CC_WNO_DANGLING_POINTER=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-dangling-pointer :}
+CC_WNO_ENUM_INT_MISMATCH=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wno-enum-int-mismatch :}
 CC_WNO_FORMAT_OVERFLOW=		${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-overflow :}
 CC_WNO_FORMAT_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-format-truncation :}
 CC_WNO_IMPLICIT_FALLTHROUGH=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-implicit-fallthrough :}
@@ -750,9 +785,10 @@ CC_WNO_STRINGOP_OVERREAD=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 12:? -Wno
 CC_WNO_STRINGOP_TRUNCATION=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -Wno-stringop-truncation :}
 
 # relative relocs are only supported in gnu ld for ppc64 and x86
-.if ${MACHINE_ARCH} == "x86_64" || \
+.if \
     ${MACHINE_ARCH} == "i386"  || \
-    ${MACHINE_ARCH} == "powerpc64"
+    ${MACHINE_ARCH} == "powerpc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 LD_PACK_RELATIVE_RELOCS=	-Wl,-z,pack-relative-relocs
 LD_NOPACK_RELATIVE_RELOCS=	-Wl,-z,nopack-relative-relocs
 .endif
@@ -763,12 +799,13 @@ MACHINES.alpha=		alpha
 MACHINES.arm=		acorn32 cats epoc32 evbarm hpcarm \
 			iyonix netwinder shark zaurus
 MACHINES.coldfire=	evbcf
+MACHINES.hppa=		hppa
 MACHINES.i386=		i386
 MACHINES.ia64=		ia64
-MACHINES.hppa=		hppa
-MACHINES.m68000=	sun2
+MACHINES.m68000=	sun2 hb68k
 MACHINES.m68k=		amiga atari cesfic hp300 luna68k mac68k \
 			mvme68k news68k next68k sun3 virt68k x68k
+MACHINES.m68ksf=	mac68k
 MACHINES.mips=		algor arc cobalt emips evbmips ews4800mips \
 			hpcmips mipsco newsmips pmax sbmips sgimips
 MACHINES.or1k=		or1k
@@ -922,8 +959,8 @@ OBJECT_FMT=	ELF
 #
 .if ${TOOLCHAIN_MISSING} != "no"
 MKBINUTILS:= no
-MKGDB:= no
 MKGCC:= no
+MKGDB:= no
 .endif
 
 #
@@ -940,10 +977,8 @@ MKGDB.or1k=	no
 # No kernel modules for or1k (yet)
 MKKMOD.or1k=	no
 
-# No profiling for or1k or risc-v (yet)
+# No profiling for or1k (yet)
 MKPROFILE.or1k=	no
-MKPROFILE.riscv32=no
-MKPROFILE.riscv64=no
 
 #
 # The m68000 port is incomplete.
@@ -951,11 +986,6 @@ MKPROFILE.riscv64=no
 .if ${MACHINE_ARCH} == "m68000"
 NOPIC=		# defined
 MKISCSI=	no
-# XXX GCC 4 outputs mcount() calling sequences that try to load values
-# from over 64KB away and this fails to assemble.
-.if defined(HAVE_GCC)
-NOPROFILE=	# defined
-.endif
 .endif
 
 #
@@ -983,31 +1013,32 @@ SHLIB_VERSION_FILE?= ${.CURDIR}/shlib_version
 GNU_ARCH.aarch64eb=aarch64_be
 GNU_ARCH.coldfire=m5407
 GNU_ARCH.earm=arm
-GNU_ARCH.earmhf=arm
 GNU_ARCH.earmeb=armeb
+GNU_ARCH.earmhf=arm
 GNU_ARCH.earmhfeb=armeb
 GNU_ARCH.earmv4=armv4
 GNU_ARCH.earmv4eb=armv4eb
 GNU_ARCH.earmv5=arm
-GNU_ARCH.earmv5hf=arm
 GNU_ARCH.earmv5eb=armeb
+GNU_ARCH.earmv5hf=arm
 GNU_ARCH.earmv5hfeb=armeb
 GNU_ARCH.earmv6=armv6
-GNU_ARCH.earmv6hf=armv6
 GNU_ARCH.earmv6eb=armv6eb
+GNU_ARCH.earmv6hf=armv6
 GNU_ARCH.earmv6hfeb=armv6eb
 GNU_ARCH.earmv7=armv7
-GNU_ARCH.earmv7hf=armv7
 GNU_ARCH.earmv7eb=armv7eb
+GNU_ARCH.earmv7hf=armv7
 GNU_ARCH.earmv7hfeb=armv7eb
 GNU_ARCH.i386=i486
 GCC_CONFIG_ARCH.i386=i486
 GCC_CONFIG_TUNE.i386=nocona
 GCC_CONFIG_TUNE.x86_64=nocona
 GNU_ARCH.m68000=m68010
+GNU_ARCH.m68ksf=m68k
+GNU_ARCH.mips64eb=mips64
 GNU_ARCH.sh3eb=sh
 GNU_ARCH.sh3el=shle
-GNU_ARCH.mips64eb=mips64
 MACHINE_GNU_ARCH=${GNU_ARCH.${MACHINE_ARCH}:U${MACHINE_ARCH}}
 
 #
@@ -1101,8 +1132,8 @@ _NOVARS= \
 	NONLS \
 	NOOBJ \
 	NOPIC \
-	NOPIE \
 	NOPICINSTALL \
+	NOPIE \
 	NOPROFILE \
 	NORELRO \
 	NOSANITIZER \
@@ -1122,13 +1153,13 @@ MK${var:S/^NO//}:=	no
 #
 # aarch64eb is not yet supported for MKCOMPAT.
 #
-.if ${MACHINE_ARCH} == "x86_64" || \
-    ${MACHINE_ARCH} == "sparc64" || \
+.if \
+    (${MACHINE_ARCH} == "aarch64" && ${HAVE_GCC:U0} == 0) || \
     ${MACHINE_MIPS64} || \
     ${MACHINE_ARCH} == "powerpc64" || \
-    (${MACHINE_ARCH} == "aarch64" && ${HAVE_GCC:U0} == 0) || \
     ${MACHINE_ARCH} == "riscv64" || \
-    ${MACHINE_ARCH:Mearm*}
+    ${MACHINE_ARCH} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64"
 MKCOMPAT?=	yes
 .else
 # Don't let this build where it really isn't supported.
@@ -1140,8 +1171,9 @@ MKCOMPATTESTS:=	no
 MKCOMPATX11:=	no
 .endif
 
-.if ${MACHINE_MIPS64} \
-    || (${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc")
+.if \
+    (${MACHINE} == "evbppc" && ${MACHINE_ARCH} == "powerpc") || \
+    ${MACHINE_MIPS64}
 MKCOMPATMODULES?=	yes
 .else
 MKCOMPATMODULES:=	no
@@ -1157,9 +1189,13 @@ MKSOFTFLOAT?=	yes
 #
 # These platforms always use softfloat.
 #
-.if (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
-    ${MACHINE_ARCH} == "coldfire" || ${MACHINE_CPU} == "or1k" || \
-    ${MACHINE} == "emips" || ${MACHINE_CPU} == "sh3"
+.if \
+    (${MACHINE_CPU} == "arm" && ${MACHINE_ARCH:M*hf*} == "") || \
+    ${MACHINE_ARCH} == "coldfire" || \
+    ${MACHINE} == "emips" || \
+    ${MACHINE_ARCH} == "m68ksf" || \
+    ${MACHINE_CPU} == "or1k" || \
+    ${MACHINE_CPU} == "sh3"
 MKSOFTFLOAT=	yes
 .endif
 
@@ -1167,22 +1203,36 @@ MKSOFTFLOAT=	yes
 SOFTFLOAT_BITS=	32
 .endif
 
+MKSOFTFLOAT?=	no
 #
-# We want to build zfs only for amd64, aarch64 and sparc64 by default for now.
+# Prefer libc's softfloat.c
 #
-.if ${MACHINE} == "amd64" || \
-    ${MACHINE} == "sparc64" || \
-    ${MACHINE_ARCH:Maarch64*}
+.if ${MKSOFTFLOAT} != "no"
+MKLIBCSOFTFLOAT?= yes
+.else
+MKLIBCSOFTFLOAT= no
+.endif
+
+#
+# We want to build zfs only for aarch64{,be}, amd64, riscv64, and sparc64
+# by default for now.
+#
+.if \
+    ${MACHINE_ARCH:Maarch64*} || \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE_ARCH} == "riscv64" || \
+    ${MACHINE} == "sparc64"
 MKZFS?=		yes
 .endif
 
 #
-# DTrace works on amd64, i386, aarch64, and earm*
+# DTrace works on aarch64, earm*, i386, and x86_64
 #
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
+.if \
     ${MACHINE_ARCH} == "aarch64" || \
-    ${MACHINE_ARCH:Mearm*}
+    ${MACHINE_ARCH:Mearm*} || \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
 MKDTRACE?=	yes
 MKCTF?=		yes
 .endif
@@ -1191,37 +1241,41 @@ MKCTF?=		yes
 # PIE is enabled on many platforms by default.
 #
 # Coverity does not like PIE
-.if !defined(COVERITY_TOP_CONFIG) && \
-    (${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64" || \
+.if !defined(COVERITY_TOP_CONFIG) && ( \
     ${MACHINE_ARCH:Maarch64*} || \
     ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_ARCH} == "i386" || \
     ${MACHINE} == "macppc" || \
     ${MACHINE_CPU} == "m68k" || \
     ${MACHINE_CPU} == "mips" || \
     ${MACHINE_CPU} == "sh3" || \
-    ${MACHINE} == "sparc64")
+    ${MACHINE} == "sparc64" || \
+    ${MACHINE_ARCH} == "x86_64" \
+    )
 MKPIE?=		yes
 .else
 MKPIE?=		no
 .endif
 
 #
-# RELRO is enabled on i386, amd64, and aarch64 by default
+# RELRO is enabled on aarch64, amd64, i386, and mip64 by default
 #
 # sync with NORELRO in compat/*/*/bsd.*.mk for the relro-enabled 64-bit
 # platforms with relro-disabled 32-bit compat
 #
-.if ${MACHINE} == "i386" || \
-    ${MACHINE} == "amd64" || \
+.if \
     ${MACHINE_ARCH:Maarch64*} || \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE} == "i386" || \
     ${MACHINE_MIPS64}
 MKRELRO?=	partial
 .else
 MKRELRO?=	no
 .endif
 
-.if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "i386"
+.if \
+    ${MACHINE_ARCH} == "i386" || \
+    ${MACHINE_ARCH} == "x86_64"
 MKSTATICPIE?=	yes
 .else
 MKSTATICPIE?=	no
@@ -1232,10 +1286,18 @@ MKSTATICPIE?=	no
 # Please keep alphabetically sorted with one entry per line.
 #
 _MKVARS.yes= \
+	MKADOSFS \
 	MKARGON2 \
 	MKATF \
+	MKAUDIO \
+	MKAUTOFS \
+	MKBIND \
 	MKBINUTILS \
+	MKBLUETOOTH \
+	MKBSDDIFF \
 	MKBSDTAR \
+	MKCD9660FS \
+	MKCHFS \
 	MKCLEANSRC \
 	MKCLEANVERIFY \
 	MKCOMPLEX \
@@ -1244,19 +1306,28 @@ _MKVARS.yes= \
 	MKDOC \
 	MKDTC \
 	MKDYNAMICROOT \
+	MKEFS \
+	MKEXT2FS \
+	MKFDESCFS \
+	MKFIDO2 \
+	MKFILECOREFS \
 	MKGCC \
 	MKGDB \
 	MKGROFF \
 	MKHESIOD \
+	MKHFS \
 	MKHTML \
 	MKIEEEFP \
 	MKINET6 \
 	MKINFO \
 	MKIPFILTER \
+	MKIPSEC \
 	MKISCSI \
 	MKKERBEROS \
+	MKKERNFS \
 	MKKMOD \
 	MKLDAP \
+	MKLFS \
 	MKLIBSTDCXX \
 	MKLINKLIB \
 	MKLVM \
@@ -1264,23 +1335,95 @@ _MKVARS.yes= \
 	MKMAN \
 	MKMANDOC \
 	MKMDNS \
+	MKMSDOSFS \
+	MKNFS \
+	MKNILFS \
 	MKNLS \
 	MKNPF \
+	MKNTFS \
+	MKNULLFS \
 	MKOBJ \
+	MKOVERLAYFS \
 	MKPAM \
 	MKPF \
 	MKPIC \
 	MKPICLIB \
 	MKPOSTFIX \
+	MKPROCFS \
 	MKPROFILE \
+	MKPTYFS \
+	MKQEMUFWCFG \
+	MKRAID \
 	MKRUMP \
 	MKSHARE \
 	MKSKEY \
+	MKSSH \
 	MKSTATICLIB \
 	MKSTRIPSYM \
+	MKSYSVBFS \
+	MKTMPFS \
+	MKUDF \
+	MKUMAPFS \
 	MKUNBOUND \
+	MKUNIONFS \
+	MKUSB \
+	MKV7FS \
+	MKWLAN \
 	MKX11FONTS \
 	MKYP
+
+#
+# Systems with MACHINE_ARCH == m68000 are extremely limited in terms
+# of available system resources.  Trim down the base set of system
+# features accordingly.
+#
+MKADOSFS.m68000?=	no
+MKAUDIO.m68000?=	no
+MKAUTOFS.m68000?=	no
+MKBIND.m68000?=		no
+MKBLUETOOTH.m68000?=	no
+MKBSDTAR.m68000?=	no
+MKCHFS.m68000?=		no
+MKDTC.m68000?=		no
+MKEFS.m68000?=		no
+MKEXT2FS.m68000?=	no
+MKFDESCFS.m68000?=	no
+MKFIDO2.m68000?=	no
+MKFILECOREFS.m68000?=	no
+MKGROFF.m68000?=	no
+MKHESIOD.m68000?=	no
+MKHFS.m68000?=		no
+MKHTML.m68000?=		no
+MKINET6.m68000?=	no
+MKIPFILTER.m68000?=	no
+MKIPSEC.m68000?=	no
+MKISCSI.m68000?=	no
+MKLDAP.m68000?=		no
+MKLFS.m68000?=		no
+MKLVM.m68000?=		no
+MKMSDOSFS.m68000?=	no
+MKNILFS.m68000?=	no
+MKNPF.m68000?=		no
+MKNTFS.m68000?=		no
+MKNULLFS.m68000?=	no
+MKOVERLAYFS.m68000?=	no
+MKPAM.m68000?=		no
+MKPF.m68000?=		no
+MKPOSTFIX.m68000?=	no
+MKPROCFS.m68000?=	no
+MKQEMUFWCFG.m68000?=	no
+MKRAID.m68000?=		no
+MKRUMP.m68000?=		no
+MKSSH.m68000?=		no
+MKSYSVBFS.m68000?=	no
+MKTMPFS.m68000?=	no
+MKUDF.m68000?=		no
+MKUMAPFS.m68000?=	no
+MKUNBOUND.m68000?=	no
+MKUNIONFS.m68000?=	no
+MKUSB.m68000?=		no
+MKV7FS.m68000?=		no
+MKWLAN.m68000?=		no
 
 .for var in ${_MKVARS.yes}
 ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uyes}}
@@ -1355,27 +1498,30 @@ MKFIRMWARE.sandpoint=		yes
 MKFIRMWARE.sparc64=		yes
 
 # Only install the GPU firmware on DRM-happy systems.
-MKNOUVEAUFIRMWARE.x86_64=	yes
-MKNOUVEAUFIRMWARE.i386=		yes
-MKNOUVEAUFIRMWARE.aarch64=	yes
-MKRADEONFIRMWARE.x86_64=	yes
-MKRADEONFIRMWARE.i386=		yes
-MKRADEONFIRMWARE.aarch64=	yes
 MKAMDGPUFIRMWARE.x86_64=	yes
+MKNOUVEAUFIRMWARE.aarch64=	yes
+MKNOUVEAUFIRMWARE.i386=		yes
+MKNOUVEAUFIRMWARE.x86_64=	yes
+MKRADEONFIRMWARE.aarch64=	yes
+MKRADEONFIRMWARE.i386=		yes
+MKRADEONFIRMWARE.x86_64=	yes
 
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
 
-# Only build devicetree (dtb) files on armv6, armv7, and aarch64.
+# Only build devicetree (dtb) files on armv5, armv6, armv7, aarch64,
+# and risc-v.
 MKDTB.aarch64=			yes
 MKDTB.aarch64eb=		yes
+MKDTB.earmv5=			yes
+MKDTB.earmv5hf=			yes
 MKDTB.earmv6=			yes
-MKDTB.earmv6hf=			yes
 MKDTB.earmv6eb=			yes
+MKDTB.earmv6hf=			yes
 MKDTB.earmv6hfeb=		yes
 MKDTB.earmv7=			yes
-MKDTB.earmv7hf=			yes
 MKDTB.earmv7eb=			yes
+MKDTB.earmv7hf=			yes
 MKDTB.earmv7hfeb=		yes
 MKDTB.riscv32=			yes
 MKDTB.riscv64=			yes
@@ -1405,25 +1551,25 @@ EXTERNAL_MESALIB_DIR?=	MesaLib
 # XXX This knows that MKX11=no is default below, but would
 # require splitting the below loop in two parts.
 .if ${MKX11:Uno} != "no" && ${HAVE_MESA_VER} >= 19
+MKLLVMRT.aarch64=	yes
 MKLLVMRT.amd64=		yes
 MKLLVMRT.i386=		yes
-MKLLVMRT.aarch64=	yes
 .endif
 
 # Just-in-time compiler for bpf, npf acceleration
 MKSLJIT.aarch64=	yes
 MKSLJIT.i386=		yes
 MKSLJIT.sparc=		yes
-#MKSLJIT.sparc64=	yes	# not suppored in sljit (yet?)
 MKSLJIT.x86_64=		yes
-#MKSLJIT.powerpc=	yes	# XXX
-#MKSLJIT.powerpc64=	yes	# XXX
-#MKSLJIT.mipsel=	yes	# XXX
-#MKSLJIT.mipseb=	yes	# XXX
-#MKSLJIT.mips64el=	yes	# XXX
 #MKSLJIT.mips64eb=	yes	# XXX
+#MKSLJIT.mips64el=	yes	# XXX
+#MKSLJIT.mipseb=	yes	# XXX
+#MKSLJIT.mipsel=	yes	# XXX
+#MKSLJIT.powerpc64=	yes	# XXX
+#MKSLJIT.powerpc=	yes	# XXX
 #MKSLJIT.riscv32=	yes	# not until we update sljit
 #MKSLJIT.riscv64=	yes	# not until we update sljit
+#MKSLJIT.sparc64=	yes	# not suppored in sljit (yet?)
 
 # compat with old names
 MKDEBUGKERNEL?=${MKKDEBUG:Uno}
@@ -1437,6 +1583,7 @@ MKDEBUGTOOLS?=${MKTOOLSDEBUG:Uno}
 _MKVARS.no= \
 	MKAMDGPUFIRMWARE \
 	MKARZERO \
+	MKDEBUGKERNEL \
 	MKBSDGREP \
 	MKCATPAGES \
 	MKCOMPATTESTS \
@@ -1485,16 +1632,17 @@ ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uno}}
 # Which platforms build the xorg-server drivers (as opposed
 # to just Xnest and Xvfb.)
 #
-.if ${MACHINE} == "alpha"	|| \
+.if \
+    ${MACHINE} == "alpha"	|| \
     ${MACHINE} == "amd64"	|| \
     ${MACHINE} == "amiga"	|| \
     ${MACHINE} == "bebox"	|| \
     ${MACHINE} == "cats"	|| \
     ${MACHINE} == "dreamcast"	|| \
-    ${MACHINE} == "ews4800mips"	|| \
     ${MACHINE} == "evbarm"	|| \
     ${MACHINE} == "evbmips"	|| \
     ${MACHINE} == "evbppc"	|| \
+    ${MACHINE} == "ews4800mips"	|| \
     ${MACHINE} == "hp300"	|| \
     ${MACHINE} == "hpcarm"	|| \
     ${MACHINE} == "hpcmips"	|| \
@@ -1508,9 +1656,9 @@ ${var}?=	${${var}.${MACHINE_ARCH}:U${${var}.${MACHINE}:Uno}}
     ${MACHINE} == "macppc"	|| \
     ${MACHINE} == "netwinder"	|| \
     ${MACHINE} == "newsmips"	|| \
+    ${MACHINE} == "ofppc"	|| \
     ${MACHINE} == "pmax"	|| \
     ${MACHINE} == "prep"	|| \
-    ${MACHINE} == "ofppc"	|| \
     ${MACHINE} == "sgimips"	|| \
     ${MACHINE} == "shark"	|| \
     ${MACHINE} == "sparc"	|| \
@@ -1562,10 +1710,14 @@ MKOBJDIRS:=	no
 .if ${MKSHARE} == "no"
 MKCATPAGES:=	no
 MKDOC:=		no
-MKINFO:=	no
 MKHTML:=	no
+MKINFO:=	no
 MKMAN:=		no
 MKNLS:=		no
+.endif
+
+.if ${MKUSB} == "no"
+MKFIDO2:=	no
 .endif
 
 .if ${MACHINE_ARCH:Mearm*}
@@ -1680,9 +1832,10 @@ ${var}?= no
 # memory will likely not be in short supply.
 # Since pigz can not create .xz format files currently, disable .xz
 # format if USE_PIGZGZIP is enabled.
-.if ${USE_PIGZGZIP} == "no" && \
-    (${MACHINE} == "amd64" || \
-     ${MACHINE_ARCH:Maarch64*})
+.if ${USE_PIGZGZIP} == "no" && ( \
+    ${MACHINE_ARCH:Maarch64*} || \
+    ${MACHINE} == "amd64" \
+    )
 USE_XZ_SETS?= yes
 .else
 USE_XZ_SETS?= no
@@ -1748,7 +1901,11 @@ X11SRCDIR.${_proto}proto?=		${X11SRCDIRMIT}/${_proto}proto/dist
 
 .if ${HAVE_XORG_SERVER_VER} == "120"
 XORG_SERVER_SUBDIR?=xorg-server
-. if ${MACHINE} == "amd64" || ${MACHINE} == "i386" || ${MACHINE} == "evbarm"
+. if \
+    ${MACHINE} == "amd64" || \
+    ${MACHINE} == "evbarm" || \
+    ${MACHINE} == "evbppc" || \
+    ${MACHINE} == "i386"
 HAVE_XORG_GLAMOR?=	yes
 . endif
 HAVE_XORG_EGL?=		yes
@@ -1886,15 +2043,15 @@ _MKSHECHO?=	echo
 .endif	# ${MAKEVERBOSE} >= 4
 
 _MKMSG_BUILD?=		${_MKMSG} "  build "
-_MKMSG_CREATE?=		${_MKMSG} " create "
 _MKMSG_COMPILE?=	${_MKMSG} "compile "
+_MKMSG_CREATE?=		${_MKMSG} " create "
 _MKMSG_EXECUTE?=	${_MKMSG} "execute "
 _MKMSG_FORMAT?=		${_MKMSG} " format "
 _MKMSG_INSTALL?=	${_MKMSG} "install "
-_MKMSG_LINK?=		${_MKMSG} "   link "
 _MKMSG_LEX?=		${_MKMSG} "    lex "
-_MKMSG_REMOVE?=		${_MKMSG} " remove "
+_MKMSG_LINK?=		${_MKMSG} "   link "
 _MKMSG_REGEN?=		${_MKMSG} "  regen "
+_MKMSG_REMOVE?=		${_MKMSG} " remove "
 _MKMSG_YACC?=		${_MKMSG} "   yacc "
 
 _MKSHMSG_CREATE?=	${_MKSHMSG} " create "
@@ -1902,12 +2059,12 @@ _MKSHMSG_FORMAT?=	${_MKSHMSG} " format "
 _MKSHMSG_INSTALL?=	${_MKSHMSG} "install "
 
 _MKTARGET_BUILD?=	${_MKMSG_BUILD} ${.CURDIR:T}/${.TARGET}
-_MKTARGET_CREATE?=	${_MKMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 _MKTARGET_COMPILE?=	${_MKMSG_COMPILE} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_CREATE?=	${_MKMSG_CREATE} ${.CURDIR:T}/${.TARGET}
 _MKTARGET_FORMAT?=	${_MKMSG_FORMAT} ${.CURDIR:T}/${.TARGET}
 _MKTARGET_INSTALL?=	${_MKMSG_INSTALL} ${.TARGET}
-_MKTARGET_LINK?=	${_MKMSG_LINK} ${.CURDIR:T}/${.TARGET}
 _MKTARGET_LEX?=		${_MKMSG_LEX} ${.CURDIR:T}/${.TARGET}
+_MKTARGET_LINK?=	${_MKMSG_LINK} ${.CURDIR:T}/${.TARGET}
 _MKTARGET_REMOVE?=	${_MKMSG_REMOVE} ${.TARGET}
 _MKTARGET_YACC?=	${_MKMSG_YACC} ${.CURDIR:T}/${.TARGET}
 

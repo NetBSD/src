@@ -1,13 +1,13 @@
-#	$NetBSD: Makefile,v 1.4 2019/09/24 19:19:49 maya Exp $
+#	$NetBSD: Makefile,v 1.4.10.1 2026/11/04 23:15:11 perseant Exp $
 
 .include <bsd.init.mk>
 
 LIB=		expat
 
 .PATH:	${EXPATSRCDIR}/lib
-SRCS=	xmlparse.c xmlrole.c xmltok.c
+SRCS=	random_arc4random.c random_arc4random_buf.c random_dev_urandom.c random_getentropy.c random_getrandom.c xmlparse.c xmlrole.c xmltok.c
 
-INCS=		expat.h expat_external.h
+INCS=		expat.h expat_config.h expat_external.h
 INCSDIR=	/usr/include
 
 CPPFLAGS+=		-I${EXPATSRCDIR} -I${.CURDIR}

@@ -1,5 +1,5 @@
 /* Functions for deciding which macros are currently in scope.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -34,28 +34,29 @@
 struct macro_table *macro_user_macros;
 
 
-gdb::unique_xmalloc_ptr<struct macro_scope>
+macro_scope
 sal_macro_scope (struct symtab_and_line sal)
 {
+  macro_scope result;
   struct macro_source_file *main_file, *inclusion;
   struct compunit_symtab *cust;
 
   if (sal.symtab == NULL)
-    return NULL;
+    return result;
 
   cust = sal.symtab->compunit ();
   if (cust->macro_table () == NULL)
-    return NULL;
+    return result;
 
-  gdb::unique_xmalloc_ptr<struct macro_scope> ms (XNEW (struct macro_scope));
+  macro_scope ms;
 
   main_file = macro_main (cust->macro_table ());
   inclusion = macro_lookup_inclusion (main_file, sal.symtab->filename_for_id);
 
   if (inclusion)
     {
-      ms->file = inclusion;
-      ms->line = sal.line;
+      ms.file = inclusion;
+      ms.line = sal.line;
     }
   else
     {
@@ -73,8 +74,8 @@ sal_macro_scope (struct symtab_and_line sal)
 
 	 For the time being, though, we'll just treat these as
 	 occurring at the end of the main source file.  */
-      ms->file = main_file;
-      ms->line = -1;
+      ms.file = main_file;
+      ms.line = -1;
 
       complaint (_("symtab found for `%s', but that file\n"
 		 "is not covered in the compilation unit's macro information"),
@@ -85,27 +86,23 @@ sal_macro_scope (struct symtab_and_line sal)
 }
 
 
-gdb::unique_xmalloc_ptr<struct macro_scope>
-user_macro_scope (void)
+macro_scope
+user_macro_scope ()
 {
-  gdb::unique_xmalloc_ptr<struct macro_scope> ms (XNEW (struct macro_scope));
-  ms->file = macro_main (macro_user_macros);
-  ms->line = -1;
-  return ms;
+  return { macro_main (macro_user_macros), -1 };
 }
 
-gdb::unique_xmalloc_ptr<struct macro_scope>
-default_macro_scope (void)
+macro_scope
+default_macro_scope ()
 {
   struct symtab_and_line sal;
-  gdb::unique_xmalloc_ptr<struct macro_scope> ms;
   frame_info_ptr frame;
-  CORE_ADDR pc;
+  std::optional<CORE_ADDR> pc;
 
   /* If there's a selected frame, use its PC.  */
   frame = deprecated_safe_get_selected_frame ();
-  if (frame && get_frame_pc_if_available (frame, &pc))
-    sal = find_pc_line (pc, 0);
+  if (frame && (pc = get_frame_pc_if_available (frame)))
+    sal = find_pc_line (*pc, 0);
 
   /* Fall back to the current listing position.  */
   else
@@ -121,15 +118,15 @@ default_macro_scope (void)
 	 symbol files loaded, then get_current_or_default would raise an
 	 error.  But `set width' shouldn't raise an error just because
 	 it can't decide which scope to macro-expand its argument in.  */
-      struct symtab_and_line cursal
-	= get_current_source_symtab_and_line ();
-      
+      symtab_and_line cursal
+	= get_current_source_symtab_and_line (current_program_space);
+
       sal.symtab = cursal.symtab;
       sal.line = cursal.line;
     }
 
-  ms = sal_macro_scope (sal);
-  if (! ms)
+  macro_scope ms = sal_macro_scope (sal);
+  if (!ms.is_valid ())
     ms = user_macro_scope ();
 
   return ms;
@@ -152,9 +149,7 @@ standard_macro_lookup (const char *name, const macro_scope &ms)
   return result;
 }
 
-void _initialize_macroscope ();
-void
-_initialize_macroscope ()
+INIT_GDB_FILE (macroscope)
 {
   macro_user_macros = new_macro_table (NULL, NULL, NULL);
   macro_set_main (macro_user_macros, "<user-defined>");

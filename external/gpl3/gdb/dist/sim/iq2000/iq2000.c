@@ -1,5 +1,5 @@
 /* IQ2000 simulator support code
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
    This file is part of the GNU simulators.

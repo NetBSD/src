@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -144,7 +144,6 @@ ALL_MACHINES = \
 	cpu-mt.lo \
 	cpu-nds32.lo \
 	cpu-nfp.lo \
-	cpu-nios2.lo \
 	cpu-ns32k.lo \
 	cpu-or1k.lo \
 	cpu-pdp11.lo \
@@ -228,7 +227,6 @@ ALL_MACHINES_CFILES = \
 	cpu-mt.c \
 	cpu-nds32.c \
 	cpu-nfp.c \
-	cpu-nios2.c \
 	cpu-ns32k.c \
 	cpu-or1k.c \
 	cpu-pdp11.c \
@@ -291,7 +289,6 @@ BFD32_BACKENDS = \
 	elf-ifunc.lo \
 	elf-m10200.lo \
 	elf-m10300.lo \
-	elf-nacl.lo \
 	elf-sframe.lo \
 	elf-strtab.lo \
 	elf-vxworks.lo \
@@ -333,7 +330,6 @@ BFD32_BACKENDS = \
 	elf32-msp430.lo \
 	elf32-mt.lo \
 	elf32-nds32.lo \
-	elf32-nios2.lo \
 	elf32-or1k.lo \
 	elf32-pj.lo \
 	elf32-ppc.lo \
@@ -426,7 +422,6 @@ BFD32_BACKENDS_CFILES = \
 	elf-ifunc.c \
 	elf-m10200.c \
 	elf-m10300.c \
-	elf-nacl.c \
 	elf-sframe.c \
 	elf-strtab.c \
 	elf-vxworks.c \
@@ -468,7 +463,6 @@ BFD32_BACKENDS_CFILES = \
 	elf32-msp430.c \
 	elf32-mt.c \
 	elf32-nds32.c \
-	elf32-nios2.c \
 	elf32-or1k.c \
 	elf32-pj.c \
 	elf32-ppc.c \
@@ -708,12 +702,12 @@ SOURCE_HFILES = \
 	ecoff-bfd.h ecoffswap.h \
 	elf32-arm.h elf32-avr.h elf32-bfin.h elf32-cr16.h elf32-csky.h \
 	elf32-dlx.h elf32-hppa.h elf32-m68hc1x.h elf32-m68k.h \
-	elf32-metag.h elf32-nds32.h elf32-nios2.h elf32-ppc.h \
+	elf32-metag.h elf32-nds32.h elf32-ppc.h \
 	elf32-rx.h elf32-score.h elf32-sh-relocs.h elf32-spu.h \
 	elf32-tic6x.h elf32-tilegx.h elf32-tilepro.h elf32-v850.h \
 	elf64-hppa.h elf64-ppc.h elf64-tilegx.h \
 	elf-bfd.h elfcode.h elfcore.h elf-hppa.h elf-linker-x86.h \
-	elf-linux-core.h elf-nacl.h elf-s390.h elf-vxworks.h \
+	elf-linux-core.h elf-s390.h elf-vxworks.h \
 	elfxx-aarch64.h elfxx-ia64.h elfxx-mips.h elfxx-riscv.h \
 	elfxx-sparc.h elfxx-tilegx.h elfxx-x86.h elfxx-loongarch.h \
 	genlink.h go32stub.h \

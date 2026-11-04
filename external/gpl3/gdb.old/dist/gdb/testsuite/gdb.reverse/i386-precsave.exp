@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,15 +20,7 @@
 #
 
 # This test suitable only for process record-replay
-if ![supports_process_record] {
-    return
-}
-
-
-if {![is_x86_like_target]} {
-    verbose "Skipping i386 reverse tests."
-    return
-}
+require supports_process_record is_x86_like_target
 
 standard_testfile i386-reverse.c
 set precsave [standard_output_file i386.precsave]
@@ -46,10 +38,8 @@ set end_of_inc_dec_tests [gdb_get_line_number " end inc_dec_tests "]
 
 runto_main
 
-if [supports_process_record] {
-    # Activate process record/replay
-    gdb_test_no_output "record" "turn on process record"
-}
+# Activate process record/replay
+gdb_test_no_output "record" "turn on process record"
 
 global hex
 global decimal

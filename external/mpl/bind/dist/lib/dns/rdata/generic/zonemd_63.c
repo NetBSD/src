@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.c,v 1.6.2.1 2025/08/02 05:53:48 perseant Exp $	*/
+/*	$NetBSD: zonemd_63.c,v 1.6.2.2 2026/11/04 23:18:13 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -258,9 +258,7 @@ tostruct_zonemd(ARGS_TOSTRUCT) {
 	REQUIRE(zonemd != NULL);
 	REQUIRE(rdata->length != 0);
 
-	zonemd->common.rdclass = rdata->rdclass;
-	zonemd->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&zonemd->common, link);
+	DNS_RDATACOMMON_INIT(zonemd, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

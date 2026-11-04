@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastradh Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.70.6.1 2026/11/04 23:19:54 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.70.6.1 2026/11/04 23:19:54 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -76,6 +76,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.70 2023/07/16 21:36:40 riastra
 #include <arm/fdt/arm_fdtvar.h>
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_memory.h>
+#include <dev/fdt/fdt_platform.h>
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -267,7 +268,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 
 #ifdef MODULAR
 	/*
-	 * The aarch64 compilers (gcc & llvm) use R_AARCH_CALL26/R_AARCH_JUMP26
+	 * The aarch64 compilers (gcc & llvm) use R_AARCH64_CALL26/R_AARCH64_JUMP26
 	 * for function calls (bl)/jumps(b). At this time, neither compiler
 	 * supports -mlong-calls therefore the kernel modules should be loaded
 	 * within the maximum range of +/-128MB from kernel text.

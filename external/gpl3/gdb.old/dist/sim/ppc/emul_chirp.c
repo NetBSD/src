@@ -28,9 +28,7 @@
 #include "emul_chirp.h"
 
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #ifndef STATIC_INLINE_EMUL_CHIRP
 #define STATIC_INLINE_EMUL_CHIRP STATIC_INLINE

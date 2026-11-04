@@ -1,6 +1,6 @@
 /* Native debugging support for procfs targets.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PROCFS_H
-#define PROCFS_H
+#ifndef GDB_PROCFS_H
+#define GDB_PROCFS_H
 
 /* Return a ptid for which we guarantee we will be able to find a
    'live' procinfo.  */
 
 extern ptid_t procfs_first_available (void);
 
-#endif /* PROCFS_H */
+#endif /* GDB_PROCFS_H */

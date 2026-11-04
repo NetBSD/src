@@ -1,4 +1,4 @@
-/* $NetBSD: pmap_machdep.c,v 1.20.2.1 2025/08/02 05:56:04 perseant Exp $ */
+/* $NetBSD: pmap_machdep.c,v 1.20.2.2 2026/11/04 23:21:15 perseant Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define	__PMAP_PRIVATE
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_machdep.c,v 1.20.2.1 2025/08/02 05:56:04 perseant Exp $");
+__RCSID("$NetBSD: pmap_machdep.c,v 1.20.2.2 2026/11/04 23:21:15 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -45,6 +45,7 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.20.2.1 2025/08/02 05:56:04 perseant Exp $")
 #include <uvm/uvm.h>
 
 #include <riscv/machdep.h>
+#include <riscv/sbi.h>
 #include <riscv/sysreg.h>
 
 #ifdef VERBOSE_INIT_RISCV
@@ -55,6 +56,13 @@ __RCSID("$NetBSD: pmap_machdep.c,v 1.20.2.1 2025/08/02 05:56:04 perseant Exp $")
 
 vaddr_t pmap_direct_base __read_mostly;
 vaddr_t pmap_direct_end __read_mostly;
+
+#ifdef _LP64
+static pt_entry_t pmap_pte_pbmt_mask __read_mostly;
+static pt_entry_t pmap_pte_pma __read_mostly;
+static pt_entry_t pmap_pte_nc __read_mostly;
+static pt_entry_t pmap_pte_io __read_mostly;
+#endif
 
 void
 pmap_zero_page(paddr_t pa)
@@ -84,6 +92,19 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	KASSERT(false);
 #endif
 }
+
+#ifdef _LP64
+pt_entry_t
+pte_enter_flags_to_pbmt(int flags)
+{
+	if (flags & PMAP_DEV) {
+		return pmap_pte_io;
+	} else if (flags & PMAP_NOCACHE) {
+		return pmap_pte_nc;
+	}
+	return pmap_pte_pma;
+}
+#endif
 
 struct vm_page *
 pmap_md_alloc_poolpage(int flags)
@@ -170,39 +191,6 @@ pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 }
 #endif
 
-
-void
-pmap_md_xtab_activate(struct pmap *pmap, struct lwp *l)
-{
-//	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
-
-//	struct cpu_info * const ci = curcpu();
-	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
-	struct pmap_asid_info * const pai = PMAP_PAI(pmap, ti);
-
-	uint64_t satp =
-#ifdef _LP64
-	    __SHIFTIN(SATP_MODE_SV39, SATP_MODE) |
-#else
-	    __SHIFTIN(SATP_MODE_SV32, SATP_MODE) |
-#endif
-	    __SHIFTIN(pai->pai_asid, SATP_ASID) |
-	    __SHIFTIN(pmap->pm_md.md_ppn, SATP_PPN);
-
-	csr_satp_write(satp);
-
-	if (l && !tlbinfo_asids_p(ti)) {
-		tlb_invalidate_all();
-	}
-}
-
-void
-pmap_md_xtab_deactivate(struct pmap *pmap)
-{
-
-	/* switch to kernel pmap */
-	pmap_md_xtab_activate(pmap_kernel(), NULL);
-}
 
 void
 pmap_md_pdetab_init(struct pmap *pmap)
@@ -296,9 +284,19 @@ pmap_md_grow(pmap_pdetab_t *ptb, vaddr_t va, vsize_t vshift,
 		if (*remaining == 0)
 			return;
 	}
-    #endif
+#endif
 }
 
+void
+pmap_pte_xmae(void)
+{
+#ifdef _LP64
+	pmap_pte_pbmt_mask = PTE_XMAE;
+	pmap_pte_pma       = PTE_XMAE_PMA;
+	pmap_pte_nc        = PTE_XMAE_NC;
+	pmap_pte_io        = PTE_XMAE_IO;
+#endif
+}
 
 void
 pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
@@ -310,12 +308,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 
 	VPRINTF("common ");
 	pmap_bootstrap_common();
-
-#ifdef MULTIPROCESSOR
-	VPRINTF("cpusets ");
-	struct cpu_info * const ci = curcpu();
-	kcpuset_create(&ci->ci_shootdowncpus, true);
-#endif
 
 	VPRINTF("bs_pde %p ", bootstrap_pde);
 
@@ -344,6 +336,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	KASSERT(pm->pm_onproc != NULL);
 	KASSERT(pm->pm_active != NULL);
 
+	struct cpu_info * const ci = curcpu();
 	kcpuset_set(pm->pm_onproc, cpu_index(ci));
 	kcpuset_set(pm->pm_active, cpu_index(ci));
 #endif
@@ -370,7 +363,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 
 	/* Calculate VA address space and roundup to NBSEG tables */
 	kvmsize = roundup(kvmsize, NBSEG);
-
 
 	/*
 	 * Initialize `FYI' variables.	Note we're relying on
@@ -400,7 +392,6 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	/*
 	 * Initialize the pools.
 	 */
-
 	pool_init(&pmap_pmap_pool, PMAP_SIZE, 0, 0, 0, "pmappl",
 	    &pool_allocator_nointr, IPL_NONE);
 
@@ -428,11 +419,13 @@ pmap_kenter_range(vaddr_t va, paddr_t pa, vsize_t size,
 	const vaddr_t eva = MEGAPAGE_ROUND(va + size);
 	const vaddr_t pdetab_mask = PMAP_PDETABSIZE - 1;
 	const vsize_t vshift = SEGSHIFT;
+	const pt_entry_t pbmt_flag = pte_enter_flags_to_pbmt(flags);
 
 	while (sva < eva) {
 		const size_t sidx = (sva >> vshift) & pdetab_mask;
 
-		l1_pte[sidx] = PA_TO_PTE(spa) | PTE_KERN | PTE_HARDWIRED | PTE_RW;
+		l1_pte[sidx] = PA_TO_PTE(spa) | PTE_KERN | PTE_HARDWIRED |
+		    PTE_RW | pbmt_flag;
 		spa += NBSEG;
 		sva += NBSEG;
 	}

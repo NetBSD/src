@@ -1,4 +1,4 @@
-/*	$NetBSD: openpgpkey_61.c,v 1.9.2.1 2025/08/02 05:53:45 perseant Exp $	*/
+/*	$NetBSD: openpgpkey_61.c,v 1.9.2.2 2026/11/04 23:18:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -31,7 +31,7 @@ fromtext_openpgpkey(ARGS_FROMTEXT) {
 	/*
 	 * Keyring.
 	 */
-	return isc_base64_tobuffer(lexer, target, -2);
+	return isc_base64_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -146,9 +146,7 @@ tostruct_openpgpkey(ARGS_TOSTRUCT) {
 	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
-	sig->common.rdclass = rdata->rdclass;
-	sig->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&sig->common, link);
+	DNS_RDATACOMMON_INIT(sig, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

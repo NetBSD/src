@@ -1,6 +1,6 @@
 /* Low level child interface to ptrace.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef INF_PTRACE_H
-#define INF_PTRACE_H
+#ifndef GDB_INF_PTRACE_H
+#define GDB_INF_PTRACE_H
 
 #include "gdbsupport/event-pipe.h"
 #include "inf-child.h"
@@ -113,4 +113,4 @@ private:
 extern pid_t get_ptrace_pid (ptid_t);
 #endif
 
-#endif
+#endif /* GDB_INF_PTRACE_H */

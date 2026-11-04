@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,12 @@ if { $result != 0 || $realsrcfile2 == "" } {
 
 clean_restart ${testfile}
 
-gdb_test "rbreak $realsrcfile2:func" "^Breakpoint 1 at 0x\[0-9a-f\]+: file [string_to_regexp ${subdir}/${srcfile2}], line \[0-9\]+\\.\r\nvoid func\\(void\\);" "rbreak XXX/fullpath-expand-func.c:func"
+gdb_test "rbreak $realsrcfile2:func" \
+    [multi_line \
+	 "Breakpoint 1 at 0x\[0-9a-f\]+: file [string_to_regexp ${subdir}/${srcfile2}], line \[0-9\]+\\." \
+	 "void func\\(void\\);" \
+	 "Successfully created breakpoint 1."] \
+    "rbreak XXX/fullpath-expand-func.c:func"
 
 # Verify the compilation pathnames are as expected:
 gdb_test "list func" "\tfunc \\(void\\)\r\n.*"

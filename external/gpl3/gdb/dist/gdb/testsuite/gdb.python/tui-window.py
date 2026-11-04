@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2024 Free Software Foundation, Inc.
+# Copyright (C) 2020-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,9 @@
 import gdb
 
 the_window = None
+
+
+tui_enabled = False
 
 
 class TestWindow:
@@ -62,3 +65,11 @@ def change_window_title():
 
 
 gdb.register_window_type("fail", failwin)
+
+
+def set_tui_enabled(ev):
+    global tui_enabled
+    tui_enabled = ev.enabled
+
+
+gdb.events.tui_enabled.connect(set_tui_enabled)

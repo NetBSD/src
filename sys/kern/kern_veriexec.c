@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.27 2023/04/09 09:18:09 riastradh Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.27.6.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,32 +29,37 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.27 2023/04/09 09:18:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.27.6.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include "opt_veriexec.h"
 
 #include <sys/param.h>
-#include <sys/mount.h>
+#include <sys/types.h>
+
+#include <sys/conf.h>
+#include <sys/fcntl.h>
+#include <sys/fileassoc.h>
+#include <sys/inttypes.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
-#include <sys/vnode.h>
+#include <sys/md5.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
 #include <sys/once.h>
 #include <sys/proc.h>
+#include <sys/rmd160.h>
 #include <sys/rwlock.h>
-#include <sys/syslog.h>
-#include <sys/sysctl.h>
-#include <sys/inttypes.h>
-#include <sys/verified_exec.h>
+#include <sys/sdt.h>
 #include <sys/sha1.h>
 #include <sys/sha2.h>
-#include <sys/rmd160.h>
-#include <sys/md5.h>
-#include <sys/fileassoc.h>
-#include <sys/kauth.h>
-#include <sys/conf.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/verified_exec.h>
+#include <sys/vnode.h>
+
 #include <miscfs/specfs/specdev.h>
+
 #include <prop/proplib.h>
-#include <sys/fcntl.h>
 
 /* Readable values for veriexec_file_report(). */
 #define	REPORT_ALWAYS		0x01	/* Always print */
@@ -141,17 +146,17 @@ sysctl_kern_veriexec_algorithms(SYSCTLFN_ARGS)
 	const char *p;
 
 	if (newp != NULL)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	if (namelen != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	p = veriexec_fp_names == NULL ? "" : veriexec_fp_names;
 
 	len = strlen(p) + 1;
 
 	if (*oldlenp < len && oldp)
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 
 	if (oldp && (error = copyout(p, oldp, len)) != 0)
 		return error;
@@ -175,7 +180,7 @@ sysctl_kern_veriexec_strict(SYSCTLFN_ARGS)
 		return error;
 
 	if (newval < veriexec_strict)
-		return EPERM;
+		return SET_ERROR(EPERM);
 
 	veriexec_strict = newval;
 
@@ -238,7 +243,7 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 	KASSERT(fp_type != NULL);
 
 	if (veriexec_fpops_lookup(fp_type) != NULL)
-		return (EEXIST);
+		return SET_ERROR(EEXIST);
 
 	ops = kmem_alloc(sizeof(*ops), KM_SLEEP);
 	ops->type = fp_type;
@@ -283,7 +288,7 @@ veriexec_fpops_add(const char *fp_type, size_t hash_len, size_t ctx_size,
 
 	strlcat(veriexec_fp_names, fp_type, veriexec_name_max);
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -383,14 +388,14 @@ veriexec_fpops_lookup(const char *name)
 	struct veriexec_fpops *ops;
 
 	if (name == NULL)
-		return (NULL);
+		return NULL;
 
 	LIST_FOREACH(ops, &veriexec_fpops_list, entries) {
 		if (strcasecmp(name, ops->type) == 0)
-			return (ops);
+			return ops;
 	}
 
-	return (NULL);
+	return NULL;
 }
 
 /*
@@ -419,7 +424,7 @@ veriexec_fp_calc(struct lwp *l, struct vnode *vp, int file_lock_state,
 	if (file_lock_state == VERIEXEC_FILE_UNLOCKED)
 		VOP_UNLOCK(vp);
 	if (error)
-		return (error);
+		return error;
 
 	ctx = kmem_alloc(vfe->ops->context_size, KM_SLEEP);
 	buf = kmem_alloc(PAGE_SIZE, KM_SLEEP);
@@ -454,7 +459,7 @@ bad:
 	kmem_free(ctx, vfe->ops->context_size);
 	kmem_free(buf, PAGE_SIZE);
 
-	return (error);
+	return error;
 }
 
 /* Compare two fingerprints of the same type. */
@@ -584,7 +589,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		*vfep = NULL;
 
 	if (vp->v_type != VREG)
-		return (0);
+		return 0;
 
 	/* Lookup veriexec table entry, save pointer if requested. */
 	vfe = veriexec_get(vp);
@@ -603,9 +608,9 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		if ((veriexec_strict >= VERIEXEC_LOCKDOWN) ||
 		    ((veriexec_strict >= VERIEXEC_IPS) &&
 		     (flag != VERIEXEC_FILE)))
-			return (EPERM);
+			return SET_ERROR(EPERM);
 
-		return (0);
+		return 0;
 	}
 
 	/*
@@ -630,7 +635,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 			veriexec_file_report(vfe, "Fingerprint calculation error.",
 			    name, NULL, REPORT_ALWAYS);
 			rw_exit(&vfe->lock);
-			return (error);
+			return error;
 		}
 		vfe->status = status;
 		rw_downgrade(&vfe->lock);
@@ -643,7 +648,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		/* IPS mode: Enforce access type. */
 		if (veriexec_strict >= VERIEXEC_IPS) {
 			rw_exit(&vfe->lock);
-			return (EPERM);
+			return SET_ERROR(EPERM);
 		}
 	}
 
@@ -672,7 +677,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		/* IDS mode: Deny access on fingerprint mismatch. */
 		if (veriexec_strict >= VERIEXEC_IDS) {
 			rw_exit(&vfe->lock);
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 		}
 
 		break;
@@ -685,7 +690,7 @@ veriexec_file_verify(struct lwp *l, struct vnode *vp, const u_char *name,
 		/* NOTREACHED */
 	}
 
-	return (error);
+	return error;
 }
 
 int
@@ -709,7 +714,7 @@ veriexec_verify(struct lwp *l, struct vnode *vp, const u_char *name, int flag,
 	if (found != NULL)
 		*found = (vfe != NULL) ? true : false;
 
-	return (r);
+	return r;
 }
 
 /*
@@ -731,9 +736,9 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 	if (vfe == NULL) {
 		/* Lockdown mode: Deny access to non-monitored files. */
 		if (veriexec_strict >= VERIEXEC_LOCKDOWN)
-			return (EPERM);
+			return SET_ERROR(EPERM);
 
-		return (0);
+		return 0;
 	}
 
 	veriexec_file_report(vfe, "Remove request.", pathbuf, l,
@@ -741,7 +746,7 @@ veriexec_removechk(struct lwp *l, struct vnode *vp, const char *pathbuf)
 
 	/* IDS mode: Deny removal of monitored files. */
 	if (veriexec_strict >= VERIEXEC_IDS)
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 	else
 		error = veriexec_file_delete(l, vp);
 
@@ -771,7 +776,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		    "`%s', uid=%u, pid=%u: Lockdown mode.\n", fromname, toname,
 		    kauth_cred_geteuid(l->l_cred), l->l_proc->p_pid);
 		rw_exit(&veriexec_op_lock);
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	}
 
 	fvfe = veriexec_get(fromvp);
@@ -792,7 +797,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		    l->l_proc->p_pid, (fvfe != NULL && tvfe != NULL) ?
 		    "files" : "file");
 		rw_exit(&veriexec_op_lock);
-		return (EPERM);
+		return SET_ERROR(EPERM);
 	}
 
 	if (fvfe != NULL) {
@@ -838,7 +843,7 @@ veriexec_renamechk(struct lwp *l, struct vnode *fromvp, const char *fromname,
 		(void)veriexec_file_delete(l, tovp);
 	}
 
-	return (0);
+	return 0;
 }
 
 static void
@@ -996,7 +1001,7 @@ veriexec_raw_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		break;
 	}
 
-	return (result);
+	return result;
 }
 
 /*
@@ -1028,7 +1033,7 @@ veriexec_table_add(struct lwp *l, struct mount *mp)
 		       CTLFLAG_READONLY, CTLTYPE_QUAD, "nentries",
 		       NULL, NULL, 0, &vte->vte_count, 0, CTL_CREATE, CTL_EOL);
 
-	return (vte);
+	return vte;
 }
 
 /*
@@ -1049,17 +1054,17 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	bool ignore_dup = false;
 
 	if (!prop_dictionary_get_string(dict, "file", &file))
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 
 	error = namei_simple_kernel(file, NSM_FOLLOW_NOEMULROOT, &vp);
 	if (error)
-		return (error);
+		return error;
 
 	/* Add only regular files. */
 	if (vp->v_type != VREG) {
 		log(LOG_ERR, "Veriexec: Not adding `%s': Not a regular file.\n",
 		    file);
-		error = EBADF;
+		error = SET_ERROR(EBADF);
 		goto out;
 	}
 
@@ -1071,7 +1076,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	if ((vfe->ops = veriexec_fpops_lookup(fp_type)) == NULL) {
 		log(LOG_ERR, "Veriexec: Invalid or unknown fingerprint type "
 		    "`%s' for file `%s'.\n", fp_type, file);
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -1079,7 +1084,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	    vfe->ops->hash_len) {
 		log(LOG_ERR, "Veriexec: Bad fingerprint length for `%s'.\n",
 		    file);
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -1100,7 +1105,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 		if (extra_flags) {
 			log(LOG_NOTICE, "Veriexec: Contaminated flags `0x%x' "
 			    "for `%s', skipping.\n", extra_flags, file);
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			goto unlock_out;
 		}
 	}
@@ -1133,7 +1138,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	 * entry differs, report the error.
 	 */
 	if ((ovfe = veriexec_get(vp)) != NULL) {
-		error = EEXIST;
+		error = SET_ERROR(EEXIST);
 		if (vfe->type == ovfe->type &&
 		    vfe->status == ovfe->status &&
 		    vfe->ops == ovfe->ops &&
@@ -1168,7 +1173,7 @@ veriexec_file_add(struct lwp *l, prop_dictionary_t dict)
 	if (ignore_dup && error == EEXIST)
 		error = 0;
 
-	return (error);
+	return error;
 }
 
 int
@@ -1178,7 +1183,7 @@ veriexec_table_delete(struct lwp *l, struct mount *mp)
 
 	vte = veriexec_table_lookup(mp);
 	if (vte == NULL)
-		return (ENOENT);
+		return SET_ERROR(ENOENT);
 
 	veriexec_mountspecific_dtor(vte);
 	mount_setspecific(mp, veriexec_mountspecific_key, NULL);
@@ -1194,7 +1199,7 @@ veriexec_file_delete(struct lwp *l, struct vnode *vp)
 
 	vte = veriexec_table_lookup(vp->v_mount);
 	if (vte == NULL)
-		return (ENOENT);
+		return SET_ERROR(ENOENT);
 
 	rw_enter(&veriexec_op_lock, RW_WRITER);
 	error = fileassoc_clear(vp, veriexec_hook);
@@ -1204,7 +1209,7 @@ veriexec_file_delete(struct lwp *l, struct vnode *vp)
 		vte->vte_count--;
 	}
 
-	return (error);
+	return error;
 }
 
 /*
@@ -1234,7 +1239,7 @@ veriexec_convert(struct vnode *vp, prop_dictionary_t rdict)
 	vfe = veriexec_get(vp);
 	if (vfe == NULL) {
 		rw_exit(&veriexec_op_lock);
-		return (ENOENT);
+		return SET_ERROR(ENOENT);
 	}
 
 	rw_enter(&vfe->lock, RW_READER);
@@ -1242,7 +1247,7 @@ veriexec_convert(struct vnode *vp, prop_dictionary_t rdict)
 	rw_exit(&vfe->lock);
 
 	rw_exit(&veriexec_op_lock);
-	return (0);
+	return 0;
 }
 
 int
@@ -1252,7 +1257,7 @@ veriexec_unmountchk(struct mount *mp)
 
 	if ((veriexec_bypass && (veriexec_strict == VERIEXEC_LEARNING))
 	    || doing_shutdown)
-		return (0);
+		return 0;
 
 	rw_enter(&veriexec_op_lock, RW_READER);
 
@@ -1279,7 +1284,7 @@ veriexec_unmountchk(struct mount *mp)
 			    " unmount of \"%s\" with monitored files.\n",
 			    mp->mnt_stat.f_mntonname);
 
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 		} else
 			error = 0;
 		break;
@@ -1289,12 +1294,12 @@ veriexec_unmountchk(struct mount *mp)
 	default:
 		log(LOG_ALERT, "Veriexec: Lockdown mode, preventing unmount "
 		    "of \"%s\".\n", mp->mnt_stat.f_mntonname);
-		error = EPERM;
+		error = SET_ERROR(EPERM);
 		break;
 	}
 
 	rw_exit(&veriexec_op_lock);
-	return (error);
+	return error;
 }
 
 int
@@ -1315,7 +1320,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 		if (veriexec_strict >= VERIEXEC_LOCKDOWN) {
 			log(LOG_ALERT, "Veriexec: Preventing new file "
 			    "creation in `%s'.\n", path);
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 		}
 
 		goto out;
@@ -1336,7 +1341,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 
 		/* IPS mode: Deny write access to monitored files. */
 		if (veriexec_strict >= VERIEXEC_IPS)
-			error = EPERM;
+			error = SET_ERROR(EPERM);
 		else
 			veriexec_file_purge(vfe, VERIEXEC_LOCKED);
 	}
@@ -1346,7 +1351,7 @@ veriexec_openchk(struct lwp *l, struct vnode *vp, const char *path, int fmode)
 
 	rw_exit(&veriexec_op_lock);
  out:
-	return (error);
+	return error;
 }
 
 static void
@@ -1378,7 +1383,7 @@ veriexec_dump(struct lwp *l, prop_array_t rarray)
 	}
 	mountlist_iterator_destroy(iter);
 
-	return (0);
+	return 0;
 }
 
 int
@@ -1398,5 +1403,5 @@ veriexec_flush(struct lwp *l)
 	}
 	mountlist_iterator_destroy(iter);
 
-	return (error);
+	return error;
 }

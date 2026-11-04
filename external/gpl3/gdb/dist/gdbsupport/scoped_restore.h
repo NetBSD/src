@@ -1,6 +1,6 @@
 /* scoped_restore, a simple class for saving and restoring a value
 
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SCOPED_RESTORE_H
-#define COMMON_SCOPED_RESTORE_H
+#ifndef GDBSUPPORT_SCOPED_RESTORE_H
+#define GDBSUPPORT_SCOPED_RESTORE_H
 
 /* Base class for scoped_restore_tmpl.  */
 class scoped_restore_base
@@ -115,4 +115,4 @@ scoped_restore_tmpl<T> make_scoped_restore (T *var, T2 value)
   return scoped_restore_tmpl<T> (var, value);
 }
 
-#endif /* COMMON_SCOPED_RESTORE_H */
+#endif /* GDBSUPPORT_SCOPED_RESTORE_H */

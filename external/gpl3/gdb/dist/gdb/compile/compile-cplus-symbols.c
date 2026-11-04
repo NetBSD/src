@@ -1,6 +1,6 @@
 /* Convert symbols from GDB to GCC
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -53,7 +53,7 @@ convert_one_symbol (compile_cplus_instance *instance,
 
   instance->error_symbol_once (sym.symbol);
 
-  if (sym.symbol->aclass () == LOC_LABEL)
+  if (sym.symbol->loc_class () == LOC_LABEL)
     sym_type = 0;
   else
     sym_type = instance->convert_type (sym.symbol->type ());
@@ -70,7 +70,7 @@ convert_one_symbol (compile_cplus_instance *instance,
       std::string name;
       gdb::unique_xmalloc_ptr<char> symbol_name;
 
-      switch (sym.symbol->aclass ())
+      switch (sym.symbol->loc_class ())
 	{
 	case LOC_TYPEDEF:
 	  if (sym.symbol->type ()->code () == TYPE_CODE_TYPEDEF)
@@ -275,7 +275,7 @@ convert_symbol_sym (compile_cplus_instance *instance,
 
 static void
 convert_symbol_bmsym (compile_cplus_instance *instance,
-		      struct bound_minimal_symbol bmsym)
+		      bound_minimal_symbol bmsym)
 {
   struct minimal_symbol *msym = bmsym.minsym;
   struct objfile *objfile = bmsym.objfile;
@@ -453,9 +453,8 @@ gcc_cplus_symbol_address (void *datum, struct gcc_cp_context *gcc_context,
 	}
       else
 	{
-	  struct bound_minimal_symbol msym;
-
-	  msym = lookup_bound_minimal_symbol (identifier);
+	  bound_minimal_symbol msym
+	    = lookup_minimal_symbol (current_program_space, identifier);
 	  if (msym.minsym != nullptr)
 	    {
 	      if (compile_debug)

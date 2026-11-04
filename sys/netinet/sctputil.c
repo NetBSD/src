@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.19.10.1 2025/08/02 05:57:50 perseant Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.19.10.2 2026/11/04 23:27:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.19.10.1 2025/08/02 05:57:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.19.10.2 2026/11/04 23:27:59 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2991,7 +2991,7 @@ sbappendaddr_nocheck(struct sockbuf *sb, const struct sockaddr *asa,
 	}
 	if (n) {
 		n->m_next = m0;		/* concatenate data to control */
-	}else {
+	} else {
 		control = m0;
 	}
 	if (m)
@@ -3422,7 +3422,7 @@ sctp_release_pr_sctp_chunk(struct sctp_tcb *stcb, struct sctp_tmit_chunk *tp1,
 		 */
 		tp1 = TAILQ_FIRST(&stcb->asoc.send_queue);
 		/*
-		 * recurse throught the send_queue too, starting at the
+		 * recurse through the send_queue too, starting at the
 		 * beginning.
 		 */
 		if (tp1) {

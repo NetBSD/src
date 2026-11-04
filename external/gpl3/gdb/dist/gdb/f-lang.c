@@ -1,6 +1,6 @@
 /* Fortran language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C parser by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -1712,6 +1712,17 @@ f_language::search_name_hash (const char *name) const
 /* See language.h.  */
 
 struct block_symbol
+f_language::lookup_symbol_local (const char *scope,
+				 const char *name,
+				 const struct block *block,
+				 const domain_search_flags domain) const
+{
+  return cp_lookup_symbol_imports (scope, name, block, domain);
+}
+
+/* See language.h.  */
+
+struct block_symbol
 f_language::lookup_symbol_nonlocal (const char *name,
 				    const struct block *block,
 				    const domain_search_flags domain) const
@@ -1825,9 +1836,7 @@ builtin_f_type (struct gdbarch *gdbarch)
 static struct cmd_list_element *set_fortran_list;
 static struct cmd_list_element *show_fortran_list;
 
-void _initialize_f_language ();
-void
-_initialize_f_language ()
+INIT_GDB_FILE (f_language)
 {
   add_setshow_prefix_cmd
     ("fortran", no_class,

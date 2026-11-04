@@ -1,6 +1,6 @@
 /* Pascal language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef P_LANG_H
-#define P_LANG_H
+#ifndef GDB_P_LANG_H
+#define GDB_P_LANG_H
 
 /* This file is derived from c-lang.h */
 
@@ -252,4 +252,4 @@ private:
 				   struct type *type) const;
 };
 
-#endif /* P_LANG_H */
+#endif /* GDB_P_LANG_H */

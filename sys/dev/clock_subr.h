@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.30 2020/01/01 23:07:38 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.30.32.1 2026/11/04 23:21:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2020 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _DEV_CLOCK_SUBR_H_
 
 #include <sys/clock.h>
+#include <sys/device_if.h>
 #include <sys/stdbool.h>
 
 /*
@@ -79,9 +80,9 @@ bintobcd(unsigned int bin)
  */
 struct timeval;
 struct todr_chip_handle {
-	void	*cookie;	/* Device specific data */
-	void	*bus_cookie;	/* Bus specific data */
-	time_t	base_time;	/* Base time (e.g. rootfs time) */
+	device_t todr_dev;	/* Device backing the TOD clock */
+	void	*todr_devaux;	/* Auxillary data (maybe) needed by device */
+	time_t	todr_base_time;	/* Base time (e.g. rootfs time) */
 
 	int	(*todr_gettime)(struct todr_chip_handle *, struct timeval *);
 	int	(*todr_settime)(struct todr_chip_handle *, struct timeval *);

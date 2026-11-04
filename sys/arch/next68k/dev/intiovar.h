@@ -1,4 +1,4 @@
-/*	$NetBSD: intiovar.h,v 1.8 2023/02/11 02:31:34 tsutsui Exp $	*/
+/*	$NetBSD: intiovar.h,v 1.8.6.1 2026/11/04 23:21:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -46,8 +46,6 @@ struct intio_attach_args {
 };
 
 extern	vaddr_t intiobase;
-extern  vaddr_t intiolimit;
 extern	vaddr_t fbbase;
-extern  vaddr_t fblimit;
 extern	paddr_t fbbasepa;
-extern  paddr_t fblimitpa;
+extern	size_t  fbmapsize;

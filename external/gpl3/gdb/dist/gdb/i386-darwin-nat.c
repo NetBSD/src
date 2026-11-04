@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -499,7 +499,7 @@ darwin_check_osabi (darwin_inferior *inf, thread_t thread)
       else
 	info.bfd_arch_info = bfd_lookup_arch (bfd_arch_i386,
 					      bfd_mach_i386_i386);
-      gdbarch_update_p (info);
+      gdbarch_update_p (current_inferior (), info);
     }
 }
 
@@ -631,9 +631,7 @@ darwin_set_sstep (thread_t thread, int enable)
     }
 }
 
-void _initialize_i386_darwin_nat ();
-void
-_initialize_i386_darwin_nat ()
+INIT_GDB_FILE (i386_darwin_nat)
 {
 #ifdef BFD64
   amd64_native_gregset64_reg_offset = amd64_darwin_thread_state_reg_offset;

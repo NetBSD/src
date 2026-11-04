@@ -1,6 +1,6 @@
 // Functional extensions -*- C++ -*-
 
-// Copyright (C) 2002-2020 Free Software Foundation, Inc.
+// Copyright (C) 2002-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -63,6 +63,9 @@
 namespace __gnu_cxx _GLIBCXX_VISIBILITY(default)
 {
 _GLIBCXX_BEGIN_NAMESPACE_VERSION
+
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 
   /** The @c identity_element functions are not part of the C++
    *  standard; SGI provided them as an extension.  Its argument is an
@@ -414,6 +417,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     inline std::const_mem_fun1_ref_t<_Ret, _Tp, _Arg>
     mem_fun1_ref(_Ret (_Tp::*__f)(_Arg) const)
     { return std::const_mem_fun1_ref_t<_Ret, _Tp, _Arg>(__f); }
+
+#pragma GCC diagnostic pop
 
 _GLIBCXX_END_NAMESPACE_VERSION
 } // namespace

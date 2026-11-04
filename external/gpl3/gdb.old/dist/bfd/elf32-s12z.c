@@ -1,5 +1,5 @@
 /* Freescale S12Z-specific support for 32-bit ELF
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
    (Heavily copied from the D10V port by Martin Hunt (hunt@cygnus.com))
 
    This file is part of BFD, the Binary File Descriptor library.

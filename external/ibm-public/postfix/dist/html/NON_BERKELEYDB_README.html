@@ -1,0 +1,899 @@
+<!doctype html public "-//W3C//DTD HTML 4.01 Transitional//EN"
+        "https://www.w3.org/TR/html4/loose.dtd">
+
+<html>
+
+<head>
+
+<title>Postfix Non-Berkeley-DB migration</title>
+
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<link rel='stylesheet' type='text/css' href='postfix-doc.css'>
+
+</head>
+
+<body>
+
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix
+Non-Berkeley-DB migration</h1>
+
+<hr>
+
+<h2> Table of contents </h2>
+
+<p> Note: be sure to visit the on-line version of this text at
+https://www.postfix.org/<a href="NON_BERKELEYDB_README.html">NON_BERKELEYDB_README</a>.html, as support for
+different Postfix versions may be added over time. </p>
+
+<ul>
+
+<li> <a href="#intro">Introduction </a>
+
+<li> <a href="#background">Background </a>
+
+<li> <a href="#build-conf">Skip this if not building Postfix from
+source, or if your system still supports Berkeley DB </a>
+
+<li> <a href="#level-overview"> Migration support level overview </a>
+
+<li> <a href="#disable"> Level 'disable': manual migration </a>
+
+<li> <a href="#enable-redirect"> Level 'enable-redirect': database
+aliasing </a>
+
+<li> <a href="#enable-reindex"> Level 'enable-reindex': redirect
+and automatically generate non-Berkeley-DB indexed files </a>
+
+<li> <a href="#addr-errors">Addressing errors with automatic indexed
+file generation </a>
+
+<li> <a href="#mailman">Appendix: Mailman integration </a>
+
+</ul>
+
+<h2> <a name="intro">Introduction </a> </h2>
+
+<p> (With Postfix 3.10 and earlier, please skip to the "<a
+href="#manual">Manual Migration Process"</a>.) </p>
+
+<p> (Please see the <a href="#mailman">Appendix</a> for Mailman
+integration tips.) </p>
+
+<p> After running the same Postfix configuration for a decade or
+more, there is a rude awakening when you update the OS to a newer
+version that has deleted its support for Berkeley DB. Postfix
+programs fail to open all <a href="DATABASE_README.html#types">hash</a>: and <a href="DATABASE_README.html#types">btree</a>: tables with messages
+like this: </p>
+
+<blockquote>
+<pre>
+Berkeley DB support for '<a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual' is not available
+for this build; see https://www.postfix.org/<a href="NON_BERKELEYDB_README.html">NON_BERKELEYDB_README</a>.html
+for alternatives
+</pre>
+</blockquote>
+
+<p> This document comes to the rescue, with strategies to migrate
+an existing Postfix configuration that uses Berkeley DB <a href="DATABASE_README.html#types">hash</a>: and
+<a href="DATABASE_README.html#types">btree</a>: database files, to an OS distribution that has removed
+Berkeley DB support, with a Postfix configuration that uses <a href="lmdb_table.5.html">lmdb</a>: (or
+a combination of <a href="CDB_README.html">cdb</a>: and <a href="lmdb_table.5.html">lmdb</a>:). <p>
+
+<p> By the way, you don't have to wait until Berkeley DB support
+is removed; your can proactively use the steps described here on a
+system that still has Berkeley DB, to migrate a Postfix configuration
+from Berkeley DB to <a href="lmdb_table.5.html">lmdb</a>: (or a combination of <a href="CDB_README.html">cdb</a>: and <a href="lmdb_table.5.html">lmdb</a>:).
+
+<h2> <a name="background">Background </a> </h2>
+
+<p> Historically, Postfix has used Berkeley DB <a href="DATABASE_README.html#types">hash</a>: and <a href="DATABASE_README.html#types">btree</a>: for
+key-value stores, as indicated in the "With Berkeley DB" table
+column below. In a world without Berkeley DB, good replacements are
+<a href="CDB_README.html">cdb</a>: and <a href="lmdb_table.5.html">lmdb</a>: as indicated in the "No Berkeley DB" column. </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th> Purpose </th> <th> With Berkeley DB </th> <th> No Berkeley
+DB </th> </tr>
+
+<tr> <td> Mostly-static data such as aliases, <a href="postconf.5.html#transport_maps">transport_maps</a>,
+access tables </td> <td> <a href="postconf.5.html#default_database_type">default_database_type</a>=hash </td> <td>
+<a href="postconf.5.html#default_database_type">default_database_type</a>=lmdb or <a href="postconf.5.html#default_database_type">default_database_type</a>=cdb </td>
+</tr>
+
+<tr> <td> Dynamic caches maintained by <a href="postscreen.8.html">postscreen(8)</a>, <a href="verify.8.html">verify(8)</a>,
+<a href="tlsmgr.8.html">tlsmgr(8)</a> </td> <td> <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>=btree </td> <td>
+<a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>=lmdb </td> </tr>
+
+</table>
+
+</blockquote>
+
+<p> The default values for <a href="postconf.5.html#default_database_type">default_database_type</a> and <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>
+may be specified at build time (see the <a href="#build-conf">section
+below</a>, and they may be changed later by editing main.cf, for
+example with the <a href="postconf.1.html">postconf(1)</a> command.) </p>
+
+<p> The sections that follow present three migration strategies
+with different levels of assistance by tooling that was developed
+for Postfix 3.11 and later. </p>
+
+<h2> <a name="build-conf"> Skip this if not building Postfix from
+source, or if your system still supports Berkeley DB. </a> </h2>
+
+<p> <a href="#level-overview">Click here to skip to the next section</a>.
+
+<p> On systems that have removed Berkeley DB support, run "<tt>make
+makefiles</tt>" with a CCARGS value that (also) contains "-DNO_DB",
+and specify appropriate values for <a href="postconf.5.html#default_database_type">default_database_type</a> (lmdb or cdb)
+and <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a> (lmdb). </p>
+
+<p> In the examples below, the "<tt>...</tt>" are place holders any
+dependencies that you build Postfix with, such as CDB, LDAP, LMDB,
+MySQL/MariaDB, OpenSSL, SASL, and so on.
+
+<ul>
+
+<li> <p> Example 1: use <a href="lmdb_table.5.html">lmdb</a>: for both <a href="postconf.5.html#default_database_type">default_database_type</a> (read-mostly
+lookup tables) and <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a> (read-write caches). Terminal
+input is <b>bold</b>, output is <tt>normal</tt> font. </p>
+
+<blockquote> <pre>
+$ <b>make makefiles CCARGS="-DNO_DB ..." \
+    <a href="postconf.5.html#default_database_type">default_database_type</a>=lmdb \
+    <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>=lmdb ... \
+    AUXLIBS...</b>
+</pre>
+</blockquote>
+
+<p> See <a href="LMDB_README.html">LMDB_README</a> for LMDB-specific instructions. </p>
+
+<li> <p> Example 2: alternative form that produces the same result.
+</p>
+
+<blockquote>
+<pre>
+$ <b>export CCARGS="-DNO_DB ..."</b>
+$ <b>export <a href="postconf.5.html#default_database_type">default_database_type</a>=lmdb</b>
+$ <b>export <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>=lmdb</b>
+$ <b>export AUXLIBS...</b>
+...
+$ <b>make makefiles</b>
+</pre>
+</blockquote>
+
+<p> See <a href="LMDB_README.html">LMDB_README</a> for LMDB-specific instructions. </p>
+
+<li> <p> Another alternative is to use cdb for <a href="postconf.5.html#default_database_type">default_database_type</a>
+(read-mostly lookup tables) and lmdb for <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>
+(read-write caches). See <a href="CDB_README.html">CDB_README</a> for CDB-specific instructions. </p>
+
+</ul>
+
+<h2> <a name="level-overview"> Migration support level overview </a> </h2>
+
+<p> The goal of the migration is clear: stop using <a href="DATABASE_README.html#types">hash</a>: and <a href="DATABASE_README.html#types">btree</a>:,
+and use <a href="lmdb_table.5.html">lmdb</a>: or <a href="CDB_README.html">cdb</a>: instead. If your configuration is simple or
+if you are familiar with Postfix configuration, a few "<tt>grep</tt>"
+commands will find all the problems, and a few edits will be easy
+to make. </p>
+
+<p> If, on the other hand, you are not familiar with the details of your
+Postfix configuration, then this document provides options where Postfix
+can help. </p>
+
+<p> Postfix 3.11 introduces multiple levels of migration support.
+You can use the command "<tt><a href="postfix-non-bdb.1.html">postfix non-bdb</a> status</tt>" to view
+the migration support level. This is what the default should look
+like (terminal input is <tt><b>bold</b></tt>, output is <tt>normal</tt>
+font): </p>
+
+<blockquote>
+<pre>
+# <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> status</b>
+disable
+</pre>
+</blockquote>
+
+<p> In increasing order, the support levels are: </p>
+
+<dl>
+
+<dt> <a href="#disable">disable</a> (manual migration) </dt>
+
+<dd> <p> You start up Postfix, watch the <a
+href="DEBUG_README.html#logging">logging</a> when Postfix programs
+fail to open a <a href="DATABASE_README.html#types">hash</a>: or <a href="DATABASE_README.html#types">btree</a>: table, edit Postfix configuration
+files to use <a href="lmdb_table.5.html">lmdb</a>: or <a href="CDB_README.html">cdb</a>:, then run <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a>
+commands to create <a href="lmdb_table.5.html">lmdb</a>: or <a href="CDB_README.html">cdb</a>: indexed database files. Use this
+option if you are familiar with Postfix configuration.  </p>
+
+<p> This will not fix the integration with Mailman versions from
+before <a
+href="https://gitlab.com/mailman/mailman/-/commit/8fa56b72dccd318c171b7f373c13214f43c7d32d">gitlab
+commit 8fa56b72</a> (May 2025) and other software that are broken
+when they want to use "<tt>postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i></tt>".
+Mailman uses this to maintain a table with mailing list contact
+addresses. For that, you need to use the next-up level. </p> </dd>
+
+<dt> <a href="#enable-redirect">enable-redirect</a> (database
+aliasing) </dt>
+
+<dd> <p> This level implicitly redirects a request to access
+<a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i> to $<a href="postconf.5.html#default_database_type">default_database_type</a>:<i>/path/to/file</i>,
+and redirects a request to access a <a href="DATABASE_README.html#types">btree</a>:<i>/path/to/file</i> to
+$<a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>:<i>/path/to/file</i>.  </p>
+
+<p> This still requires manually running <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a>
+commands, but "fixes" the integration with Mailman versions from
+before <a
+href="https://gitlab.com/mailman/mailman/-/commit/8fa56b72dccd318c171b7f373c13214f43c7d32d">gitlab
+commit 8fa56b72</a> (May 2025) and other software when they want
+to use "<tt>postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i>"</tt>, and Berkeley
+DB support is not available. Such commands will implicitly create
+a new <a href="lmdb_table.5.html">lmdb</a>: or <a href="CDB_README.html">cdb</a>: indexed database file, depending on the
+<a href="postconf.5.html#default_database_type">default_database_type</a> value. </p> </dd>
+
+<dt> <a href="#enable-reindex"> enable-reindex </a> (aliasing, plus
+running <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a>)</dt>
+
+<dd> <p> This level implements "<tt>enable-redirect</tt> (database
+aliasing)", and also runs the <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command to create
+a new lmdb or cdb indexed database file. This uses the <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a>
+daemon. </p>
+
+</dl>
+
+<p> The levels <a href="#enable-redirect">enable-redirect</a> and
+<a href="#enable-reindex"> enable-reindex </a> leave some technical
+debt: configurations that still say <a href="DATABASE_README.html#types">hash</a>: or <a href="DATABASE_README.html#types">btree</a>: (even if
+they use <a href="lmdb_table.5.html">lmdb</a>: or <a href="CDB_README.html">cdb</a>: behind the scene). </p>
+
+<ul>
+
+<li> <p> Using these levels gives you extra time to prepare for a
+long-term configuration change that replaces hard-coded instances of <a href="DATABASE_README.html#types">hash</a>:
+with the value of <a href="postconf.5.html#default_database_type">default_database_type</a>, and that replaces <a href="DATABASE_README.html#types">btree</a>: with
+the value of <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>. </p>
+
+<li> <p> Depending on your use of other software that wants to use
+<a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> commands, you may have to permanently
+the leave the <a href="#enable-redirect">enable-redirect</a> level
+active. </p>
+
+</ul>
+
+<p> After this overview, the sections that follow will go into more
+detail. </p>
+
+<h2> <a name="disable"> Level 'disable': manual migration </a> </h2>
+
+<p> (With Postfix 3.10 and earlier please skip to "<a href="#manual">Manual
+Migration Process"</a> below.) </p>
+
+<p> On Postfix 3.11 and later, to disable all non-Berkeley-DB
+migration features use the "<tt><a href="postfix-non-bdb.1.html">postfix non-bdb</a></tt>" command:
+
+<blockquote>
+<pre>
+# <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> disable</b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
+<p> This will edit <a href="postconf.5.html">main.cf</a> to remove a <a href="postconf.5.html#non_bdb_migration_level">non_bdb_migration_level</a> setting
+and the level revert to its implicit default (disable), and will edit
+<a href="master.5.html">master.cf</a> to remove an entry for the <tt>reindex</tt> service. </p>
+
+<p> This setting will cause problems with Mailman versions from
+before <a
+href="https://gitlab.com/mailman/mailman/-/commit/8fa56b72dccd318c171b7f373c13214f43c7d32d">gitlab
+commit 8fa56b72</a> (May 2025) and other software that wants to use
+"<tt>postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i></tt>" (or similar postalias
+commands), and Berkeley DB support is no longer available. In that
+case, you will need the "<tt><a
+href="#enable-redirect">enable-redirect</a></tt>" migration support
+level.
+
+<p> <a name="manual">The manual migration process</a> goes like this: </p>
+
+<table border=1>
+ 
+<tr> <th> <b>Manual Migration Process (all Postfix versions)</b> </th> </tr>
+ 
+<tr> <td>
+
+<ul>
+
+<li> <p> Stop Postfix. </p>
+
+<li> <p> Make lmdb the default for both <a href="postconf.5.html#default_database_type">default_database_type</a>
+(read-mostly lookup tables) and <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a> (read-write
+caches): </p>
+
+<pre>
+# <b>postconf <a href="postconf.5.html#default_database_type">default_database_type</a>=lmdb <a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>=lmdb</b>
+</pre>
+
+<li> <p> Alternatively, make cdb the default for <a href="postconf.5.html#default_database_type">default_database_type</a>
+(read-mostly lookup tables). </p>
+
+<li> <p> Look for <a href="DATABASE_README.html#types">hash</a>: and <a href="DATABASE_README.html#types">btree</a>: references in Postfix
+configuration files. Instead of <tt>/etc/postfix</tt> use the pathname
+in the output from "<tt>postconf -x <a href="postconf.5.html#config_directory">config_directory</a></tt>". </p>
+
+<pre>
+# <b>grep -E -r '(hash|btree):/' /etc/postfix</b>
+</pre>
+
+<p> (Use "egrep" on systems that do not support "grep -E".) </p>
+
+<li> <p> For each instance in the "<tt>grep</tt>" output : </p>
+
+<ol>
+
+<li> <p> Edit the configuration file and replace "hash" with "lmdb"
+or "cdb" (use the same value as the output from "<tt><b>postconf
+-hx <a href="postconf.5.html#default_database_type">default_database_type</a></b></tt>") and replace "btree" with "lmdb".
+</p>
+
+<li> <p> If this instance has no source file (only the ".db" file
+exists), proceed with the next instance of "<tt>grep</tt>" output.
+</p>
+
+<li> <p> Postfix 3.11 and later: if this instance appears in the
+output from "<tt><b>postconf -hPPx '*/*/alias_maps' | sort -u</b></tt>",
+run the <a href="postalias.1.html">postalias(1)</a> command. If this instance is like
+"<a href="lmdb_table.5.html">lmdb</a>:/path/to/source":  </p>
+
+<pre>
+# <b>postalias <a href="lmdb_table.5.html">lmdb</a>:/path/to/source</b>
+</pre>
+
+<p> Instead of "<a href="lmdb_table.5.html">lmdb</a>:" use "<a href="CDB_README.html">cdb</a>:" if the instance is like
+"<tt><a href="CDB_README.html">cdb</a>:/path/to/source</tt>". </p>
+
+<li> <p> Postfix 3.10 and earlier: if this instance appears in the
+output from "<tt><b>postconf -hx <a href="postconf.5.html#alias_maps">alias_maps</a></b></tt>", run the
+<a href="postalias.1.html">postalias(1)</a> command. If this instance is like "<a href="lmdb_table.5.html">lmdb</a>:/path/to/source":
+</p>
+
+<pre>
+# <b>postalias <a href="lmdb_table.5.html">lmdb</a>:/path/to/source</b>
+</pre>
+
+<p> Instead of "<a href="lmdb_table.5.html">lmdb</a>:" use "<a href="CDB_README.html">cdb</a>:" if the instance is like
+"<tt><a href="CDB_README.html">cdb</a>:/path/to/source</tt>". </p>
+
+<li> <p> Otherwise, run the <a href="postmap.1.html">postmap(1)</a> command. If this instance
+is like "<tt><a href="lmdb_table.5.html">lmdb</a>:/path/to/source</tt>": </p>
+
+<pre>
+# <b>postmap <a href="lmdb_table.5.html">lmdb</a>:/path/to/source</b>
+</pre>
+
+<p> Instead of "<a href="lmdb_table.5.html">lmdb</a>:" use "<a href="CDB_README.html">cdb</a>:" if this instance is like
+"<tt><a href="CDB_README.html">cdb</a>:/path/to/source</tt>". </p>
+
+</ol>
+
+<li> <p> Disable inbound network mail, start Postfix, and
+send a test message using the Postfix <a href="sendmail.1.html">sendmail(1)</a> command. </p>
+
+<pre>
+# <b>postconf <a href="postconf.5.html#master_service_disable">master_service_disable</a> = inet</b>
+# <b>postfix start</b>
+# <b>sendmail -bv postmaster</b>
+</pre>
+
+<li> <p> Watch the <a href="DEBUG_README.html#logging">log</a> for
+warnings about files that cannot be opened, find the configuration
+file that still uses "hash" or "btree", and repeat steps 1-5 above.
+</p>
+
+<li> <p> Enable inbound network mail, reload Postfix, and connect
+to the Postfix SMTP network port. </p>
+
+<pre>
+# <b>postconf -X <a href="postconf.5.html#master_service_disable">master_service_disable</a></b>
+# <b>postfix reload</b>
+# <b>telnet <i>hostname</i> 25</b>
+</pre>
+
+<li> <p> Watch the  <a href="DEBUG_README.html#logging">log</a> for
+warnings about files that cannot be opened, find the configuration
+file that still uses "hash" or "btree", and repeat steps 1-5 above.
+</p>
+
+</ul>
+
+</td> </tr> </table>
+
+<h2> <a name="enable-redirect"> Level 'enable-redirect': database
+aliasing (Postfix 3.11 and later)</a> </h2>
+
+<p> This level is enabled with: </p>
+
+<blockquote>
+<pre>
+# <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect</b>
+# <b>postfix reload</b>
+</pre>
+</blockquote>
+
+<p> But you should probably wait and review the "Migration Process"
+below first. </p>
+
+<p> This <tt><a href="postfix-non-bdb.1.html">postfix non-bdb</a></tt>" command edits <a href="postconf.5.html">main.cf</a> to enable
+redirection (aliasing) from Berkeley DB types "hash" and "btree"
+to the non-Berkeley-DB types specified with $<a href="postconf.5.html#default_database_type">default_database_type</a>
+and $<a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a>. Custom redirection may be configured
+with <a href="postconf.5.html#non_bdb_custom_mapping">non_bdb_custom_mapping</a>. This command also edits <a href="master.5.html">master.cf</a> to
+remove an unused <tt>nbdb_reindex</tt> service entry. </p>
+
+<p> The redirection activity is <a
+href="DEBUG_README.html#logging">logged</a> by default, to help
+discovering obsolete configuration. Example: </p>
+
+<blockquote>
+<pre>
+redirecting <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport to <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/transport
+</pre>
+</blockquote>
+
+<p> This logging may be disabled by setting "<a href="postconf.5.html#non_bdb_migration_log_redirect">non_bdb_migration_log_redirect</a>
+= no". </p>
+
+<p> This migration support level will not automatically create
+non-Berkeley-DB indexed database files; if you need that, see "<a
+href="#enable-redirect">enable-redirect</a> below. Instead, Postfix
+programs will log an error as they fail to open an indexed database
+file, and will leave it to the system administrator to run <a href="postmap.1.html">postmap(1)</a>
+or <a href="postalias.1.html">postalias(1)</a> to create that file. </p>
+
+<table border=1> 
+
+<tr> <th> <b>Migration Process with 'enable-redirect' (Postfix 3.11
+and later) </b> </th> </tr>
+
+<tr> <td>
+
+<p> Suspend inbound mail with: </p>
+
+<blockquote>
+<pre>
+# <b>postconf <a href="postconf.5.html#master_service_disable">master_service_disable</a> = inet</b>
+</pre>
+</blockquote>
+
+<p> Enable database redirection: </p>
+
+<blockquote>
+<pre>
+# <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect</b>
+</pre>
+</blockquote>
+
+<p> Start (or reload) Postfix, and send a test message using the
+Postfix <a href="sendmail.1.html">sendmail(1)</a> command. </p>
+
+<blockquote>
+<pre>
+# <b>postfix start</b> (or <B>postfix reload</b>)
+# <b>sendmail -bv postmaster</b>
+</pre>
+</blockquote>
+
+<p> Scan the <a href="DEBUG_README.html#logging">logging</a> for
+failure to open database files. For each instance of
+"<tt><a href="DATABASE_README.html#types">hash</a>:/path/to/source</tt>" or "<tt><a href="DATABASE_README.html#types">btree</a>:/path/to/source</tt>"
+that requires manually running <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a>: </p>
+
+<ul>
+
+<li> <p> If this instance appears in the output from "<tt><b>postconf
+-hPPx '*/*/alias_maps' | sort -u</b></tt>", run the <a href="postalias.1.html">postalias(1)</a>
+command.  If this instance is like "<tt><a href="lmdb_table.5.html">lmdb</a>:/path/to/source</tt>":
+</p>
+
+<pre>
+# <b>postalias <a href="lmdb_table.5.html">lmdb</a>:/path/to/source</b>
+</pre>
+
+<p> Instead of "<a href="lmdb_table.5.html">lmdb</a>:" use "<a href="CDB_README.html">cdb</a>:" if the instance is like
+"<tt><a href="CDB_README.html">cdb</a>:/path/to/source</tt>". </p>
+
+<li> <p> Otherwise, run the <a href="postmap.1.html">postmap(1)</a> command. If this instance
+is like "<tt><a href="lmdb_table.5.html">lmdb</a>:/path/to/source</tt>": </p>
+
+<pre>
+# <b>postmap <a href="lmdb_table.5.html">lmdb</a>:/path/to/source</b>
+</pre>
+
+<p> Instead of "<a href="lmdb_table.5.html">lmdb</a>:" use "<a href="CDB_README.html">cdb</a>:" if this instance is like
+"<tt><a href="CDB_README.html">cdb</a>:/path/to/source</tt>". </p>
+
+</ul>
+
+<p> Resume inbound mail, reload Postfix, and connect to the Postfix
+SMTP network port: </p>
+
+<blockquote>
+<pre>
+# <b>postconf -X <a href="postconf.5.html#master_service_disable">master_service_disable</a></b>
+# <b>postfix reload</b>
+# <b>telnet <i>hostname</i> 25</b>
+</pre>
+</blockquote>
+
+<p> This may reveal a few more problems. Once there are no more
+errors with opening database files for about 24 hours, scan the <a
+href="DEBUG_README.html#logging">log</a> for messages similar to:
+</p>
+ 
+<blockquote>
+<pre>
+redirecting <i>xxx</i>:/path/to/file to <i>yyy</i>:/path/to/file
+</pre>
+</blockquote>
+
+<p> and update the obsolete Postfix configuration settings, replacing
+"<i>xxx</i>:/path/to/file" with "<i>yyy</i>:/path/to/file. </p>
+
+<p> Once there is no more "redirect" logging, and there are no other
+programs (such as Mailman, see <a href="#mailman">Appendix</a>
+below) that want to use "postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i>", then
+you can turn off non-Berkeley-DB migration support (see "<a
+href="#disable">disable</a>" above).  </p>
+
+</td> </tr> </table>
+
+<p> This migration support level will fix problems with Mailman
+versions from before May 2025 and other software that wants to use
+"<tt>postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i></tt>". With database
+redirection, such commands will implicitly create an indexed file
+for $<a href="postconf.5.html#default_database_type">default_database_type</a>:<i>/path/to/file</i> (similar aliasing
+happens for postalias commands). </p>
+
+<p> The command "<tt><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect</tt>" will
+refuse to make any changes when <a href="postconf.5.html#default_database_type">default_database_type</a> or
+<a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a> specify a <a href="DATABASE_README.html#types">hash</a>: or <a href="DATABASE_README.html#types">btree</a>: type.
+
+<h2> <a name="enable-reindex"> Level 'enable-reindex': redirect and
+automatically generate non-Berkeley-DB indexed files (Postfix 3.11
+and later)</a> </h2>
+
+<p> <i> NOTE: this level should be used only temporarily to generate
+most of the non-Berkeley-DB indexed files that Postfix needs.
+Leaving this enabled may expose the system to privilege-escalation
+attacks.  There are no security concerns for using enable-redirect.
+</i> </p>
+
+<p> This level is enabled with: </p>
+
+<blockquote>
+<pre>
+# <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-reindex</b>
+</pre>
+</blockquote>
+
+<p> But you should probably wait and review the "Migration Process"
+below first. </p>
+
+<p>This <a href="postfix-non-bdb.1.html">postfix non-bdb</a> command edits <a href="postconf.5.html">main.cf</a> to set the non-Berkeley-DB
+migration support level, and <a href="master.5.html">master.cf</a> to add or replace an
+<tt>nbdb-reindex</tt> service entry. </p>
+
+<p> The resulting configuration implements not only the functionality
+of <a href="#enable-redirect"> enable-redirect</a>, but also tries
+to automatically create a non-Berkeley-DB indexed database file
+when a daemon program wants to access a file that does not exist.
+This uses the <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a> daemon to run <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a>
+commands for databases that satisfy basic requirements to block
+privilege-escalation attacks. The number of requirements is large,
+but mainly, database files and their parent directory must not allow
+write access for group or other users, and their pathnames must
+match a list of trusted directory prefixes.  The complete list of
+requirements is documented in <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a>.  <p>
+
+This command immediately generates non-Berkeley-DB indexed files
+for command-line programs that lack privileges to send requests to
+the <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a> indexing server. This applies to "<a href="DATABASE_README.html#types">hash</a>:" and
+"<a href="DATABASE_README.html#types">btree</a>:" tables that are used by <a href="postqueue.1.html">postqueue(1)</a> and <a href="sendmail.1.html">sendmail(1)</a> as
+configured with <a href="postconf.5.html#authorized_flush_users">authorized_flush_users</a> and <a href="postconf.5.html#authorized_mailq_users">authorized_mailq_users</a>,
+and used by <a href="sendmail.1.html">sendmail(1)</a> and <a href="postdrop.1.html">postdrop(1)</a> as configured with
+<a href="postconf.5.html#authorized_submit_users">authorized_submit_users</a> and <a href="postconf.5.html#local_login_sender_maps">local_login_sender_maps</a>.  </p>
+
+<p> The command "<tt><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-reindex</tt>" will
+refuse to make any changes when <a href="postconf.5.html#default_database_type">default_database_type</a> or
+<a href="postconf.5.html#default_cache_db_type">default_cache_db_type</a> specify a <a href="DATABASE_README.html#types">hash</a>: or <a href="DATABASE_README.html#types">btree</a>: type.
+
+<table border=1> 
+
+<tr> <th> <b>Migration Process with 'enable-reindex' (Postfix 3.11
+and later)</b> </th> </tr>
+
+<tr> <td>
+
+<p> Suspend inbound mail with: </p>
+ 
+<blockquote>
+<pre>
+# <b>postconf <a href="postconf.5.html#master_service_disable">master_service_disable</a> = inet</b>
+</pre>
+</blockquote>
+
+<p> Enable automatic re-indexing: </p>
+
+<blockquote>
+<pre>
+# <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-reindex</b>
+</pre>
+</blockquote>
+ 
+<p> Start (or reload) Postfix, and send a test message using the
+Postfix <a href="sendmail.1.html">sendmail(1)</a> command. </p>
+
+<blockquote>
+<pre>
+# <b>postfix start</b> (or <B>postfix reload</b>)
+# <b>sendmail -bv postmaster</b>
+</pre>
+</blockquote>
+
+<p> The <a href="nbdb_reindexd.8.html">nbdb_reindexd(8)</a> daemon will <a
+href="DEBUG_README.html#logging">log</a> when it successfully runs
+a <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command.  Examples, for a system with
+"<tt><a href="postconf.5.html#default_database_type">default_database_type</a> = lmdb</tt>": </p>
+
+<blockquote>
+<pre>
+successfully executed 'postmap <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/transport' as uid 0
+successfully executed 'postalias <a href="lmdb_table.5.html">lmdb</a>:/etc/aliases' as uid 0
+</pre>
+</blockquote>
+
+<p> If Postfix programs <a href="DEBUG_README.html#logging">logs</a>
+error messages like: </p>
+
+<blockquote>
+<pre>
+could not execute command <i>xxx...</i>
+</pre>
+</blockquote>
+
+<p> see the section "<a href="addr-errors">Addressing errors
+with automatic indexed file generation</a>" for the most likely
+errors that Postfix programs may log. </p>
+
+<p> Once there are no more errors from Postfix programs, resume
+inbound mail, reload Postfix, and connect to the Postfix SMTP network
+port: </p>
+
+<blockquote>
+<pre>
+# <b>postconf -X <a href="postconf.5.html#master_service_disable">master_service_disable</a></b>
+# <b>postfix reload</b>
+# <b>telnet <i>hostname</i> 25</b>
+</pre>
+</blockquote>
+
+<p> This may reveal a few more problems. Once there are no more
+errors from Postfix programs for about 24 hours, turn off automatic
+index generation by reducing the support level to <tt>enable-redirect</tt>
+with: </p>
+
+<blockquote>
+<pre>
+# <a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect
+# postfix reload
+</pre>
+</blockquote>
+
+<p> Then, scan the <a href="DEBUG_README.html#logging">log</a> for
+instances similar to: </p>
+ 
+<blockquote>
+<pre>
+redirecting <i>xxx</i>:/path/to/file to <i>yyy</i>:/path/to/file
+</pre>
+</blockquote>
+ 
+<p> and update the obsolete Postfix configuration settings, replacing
+"<i>xxx</i>:/path/to/file" with "<i>yyy</i>:/path/to/file. </p>
+
+<p> Once there is no more "redirect" logging, and there are no other
+programs (such as Mailman, see <a href="#mailman">Appendix</a>
+below) that want to use "postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i>", then
+you can turn off non-Berkeley-DB migration support (see "<a
+href="#disable">disable</a>" above).  You will have keep Postfix
+configured with "<tt>enable-redirect</tt>" until Mailman can be
+updated to a version that supports other Postfix database types.
+</p>
+
+</td> </tr> </table>
+
+<h2> <a name="addr-errors">Addressing errors with automatic
+indexed file generation </a> </h2>
+
+<h3> Unexpected pathname errors </h3>
+
+<p> Depending on the location of your Postfix lookup tables, Postfix
+programs may <a href="DEBUG_README.html#logging">log</a> a request
+to add a trusted directory to the directories listed with
+<a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">non_bdb_migration_allow_root_prefixes</a> or
+<a href="postconf.5.html#non_bdb_migration_allow_user_prefixes">non_bdb_migration_allow_user_prefixes</a>. </p>
+
+<p> Example, with line breaks added for readability: </p>
+
+<blockquote>
+<pre>
+could not execute command 'postmap <a href="lmdb_table.5.html">lmdb</a>:/path/to/file': table
+/path/to/file has an unexpected pathname;
+
+to allow automatic indexing as root, append its parent directory
+to the <a href="postconf.5.html#non_bdb_migration_allow_root_prefixes">non_bdb_migration_allow_root_prefixes</a> setting (current setting
+is: "/etc /usr/local/etc");
+
+alternatively, execute the failed command by hand
+</pre>
+</blockquote>
+
+<p> You have two options: </p>
+
+<ol>
+
+<li> <p> If you think that the suggested change is safe, update the
+setting as proposed and execute "<tt>postfix reload</tt>". </p>
+
+<li> <p> Alternatively, you can execute the failed <a href="postmap.1.html">postmap(1)</a> or
+<a href="postalias.1.html">postalias(1)</a> command by hand, and Postfix will not log the same error
+again. </p>
+
+</ol>
+
+<p> A similar request may be logged when a file needs to be indexed as
+a non-root user. </p>
+
+<h3> Unexpected file or directory owner or permissions </h3>
+
+<p> Other errors may be <a href="DEBUG_README.html#logging">logged</a>
+when a database file or directory has an unexpected owner, or when
+it is writable by group or by other users. </p>
+
+<p> Example with line breaks added for readability: </p>
+
+<blockquote>
+<pre>
+could not execute command 'postmap <a href="lmdb_table.5.html">lmdb</a>:/path/to/file': legacy
+indexed file '/path/to/file.db' is owned by uid '0', but parent
+directory '/path/to' is owned or writable by other user;
+
+to allow automatic indexing, correct the ownership or permissions;
+
+alternatively, execute the failed command by hand
+</pre>
+</blockquote>
+
+<p> Again, you have two options: </p>
+
+<ol>
+
+<li> <p> Fix the ownership or permission error. </p>
+
+<li> <p> Execute the failed <a href="postmap.1.html">postmap(1)</a> or <a href="postalias.1.html">postalias(1)</a> command by
+hand, and Postfix will not log the same error again. </p>
+
+</ol>
+
+<h2> <a name="mailman">Appendix: Mailman integration </a> </h2>
+
+<p> This section has instructions to migrate an existing Mailman
+configuration that wants to use commands like "postmap
+<a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i>".  Mailman uses such commands to maintain
+tables with mailing list contact addresses and domain names. This
+will break on systems that no longer have Berkeley DB support. </p>
+
+<p> Solutions: </p>
+
+<ul>
+
+<li> <p> (Not recommended) Upgrade to a Mailman version that contains
+<a
+href="https://gitlab.com/mailman/mailman/-/commit/8fa56b72dccd318c171b7f373c1321
+4f43c7d32d">gitlab commit 8fa56b72</a> (May 2025). Unfortunately,
+this has not yet been widely adopted by OS distributions. </p>
+
+<li> <p> Avoid Mailman changes, and use Postfix migration support
+described below. In a nutshell, the postmap command will execute
+the command "postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/file</i>" as if the command
+specifies <a href="lmdb_table.5.html">lmdb</a>:<i>/path/to/file</i> (or <a href="CDB_README.html">cdb</a>:, depending on Postfix
+configuration). </p>
+
+</ul>
+
+<p> With Mailman3 the integration with Postfix using LMTP may look
+like: </p>
+
+<blockquote>
+<pre>
+/var/lib/mailman3/data/postfix_domains      (domain names)
+/var/lib/mailman3/data/postfix_domains.db   (Berkeley DB hash file)
+/var/lib/mailman3/data/postfix_lmtp         (transport map)
+/var/lib/mailman3/data/postfix_lmtp.db      (Berkeley DB hash file)
+</pre>
+</blockquote>
+
+<blockquote> <i> Caution: the data directory may contain other files
+with names ending in "<tt>.db</tt>" that are not part of the
+Mailman-Postfix integration. Do not tamper with the other files. </i>
+</blockquote>
+
+<p> The relevant Postfix migration levels are: </p>
+
+<dl> <dt> <a href="#enable-redirect">enable-redirect</a> (redirect hash:
+to <a href="lmdb_table.5.html">lmdb</a>: or <a href="CDB_README.html">cdb</a>:) </dt>
+
+<dd> <p> Command: <tt> # <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect</b></tt> </p>
+
+<p> This will fix the problem that Mailman wants to use commands like
+"<tt>postmap <a href="DATABASE_README.html#types">hash</a>:<i>/path/to/</i>postfix_domains</tt>" and "<tt>postmap
+<a href="DATABASE_README.html#types">hash</a>:<i>/path/to</i>/postfix_lmtp</tt>". </p>
+
+<p> Instead of complaining about an unsupported database type, these
+postmap commands will implicitly create "<tt>.lmdb</tt>" indexed
+files like (<a href="lmdb_table.5.html">lmdb</a>:<i>/path/to</i>/postfix_domains or
+<a href="lmdb_table.5.html">lmdb</a>:<i>/path/to</i>/postfix_lmtp, or their <a href="CDB_README.html">cdb</a>: versions depending
+on the Postfix <a href="postconf.5.html#default_database_type">default_database_type</a> setting). </p>
+
+<p> This will not fix the problem that Postfix wants to
+use databases like <a href="DATABASE_README.html#types">hash</a>:<i>/path/to</i>/postfix_domains
+and <a href="DATABASE_README.html#types">hash</a>::<i>/path/to</i>/postfix_lmtp. With <a
+href="#enable-redirect">enable-redirect</a>, these will redirect to
+"<tt>.lmdb</tt>" indexed files (good) but those files do not yet exist
+(bad). You will need to create them by hand with commands like: </p>
+
+<pre>
+# <b>postmap <a href="lmdb_table.5.html">lmdb</a>:<i>/path/to</i>/postfix_domains</b>
+# <b>postmap <a href="lmdb_table.5.html">lmdb</a>:<i>/path/to</i>/postfix_lmtp</b>
+</pre>
+
+<p> After this, no further human action will be needed. When Mailman
+needs to update these files, it will invoke postmap commands that
+will work as promised above. Leave the Postfix migration level at <a
+href="#enable-reindex">enable-reindex</a> until you can upgrade to a
+newer Mailman version that supports Postfix with non-Berkeley
+databases. </p>
+
+</dd>
+
+<dt><a href="#enable-reindex">enable-reindex</a> (also automatically
+run postmap commands)</dt>
+
+<dd> <p> Command: <tt> # <b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect</b></tt> </p>
+
+<p> In addition to "<a href="#enable-redirect">enable-redirect</a>",
+Postfix will also try to run commands like "<tt>postmap
+<a href="lmdb_table.5.html">lmdb</a>:<i>/path/to</i>/postfix_domains</tt>" and "<tt>postmap
+<a href="lmdb_table.5.html">lmdb</a>:<i>/path/to</i>/postfix_lmtp</tt>". There will be some delay
+depending on the amount of mailing list traffic; you may want to post
+a test message to make the postmap commands happen sooner. </p>
+
+<p> Postfix will <a href="DEBUG_README.html#logging">log</a> the
+postmap commands (or will log a request to make some configuration
+changes; see "<a href="addr-errors">Addressing errors with automatic
+indexed file generation</a>" above). </p>
+
+<p> <i>Note: once these "postmap" commands have completed,
+you should reduce the migration support level with the command
+"<b><a href="postfix-non-bdb.1.html">postfix non-bdb</a> enable-redirect</b>".  For security reasons the <a
+href="#enable-reindex">enable-reindex</a> level should not be permanently
+enabled. </i> </p>
+
+</dl>
+
+</body>
+
+</html>

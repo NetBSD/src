@@ -1,4 +1,4 @@
-/*	$NetBSD: dsclock.c,v 1.7 2015/02/18 16:47:58 macallan Exp $	*/
+/*	$NetBSD: dsclock.c,v 1.7.54.1 2026/11/04 23:21:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.7 2015/02/18 16:47:58 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dsclock.c,v 1.7.54.1 2026/11/04 23:21:18 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -96,6 +96,7 @@ dsclock_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
+	sc->sc_dev = self;
 	sc->sc_rtct = normal_memt;
 	if ((err = bus_space_map(sc->sc_rtct, ma->ma_addr, 0x1ffff,
 	    BUS_SPACE_MAP_LINEAR, &sc->sc_rtch)) != 0) {
@@ -104,10 +105,9 @@ dsclock_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_todrch.cookie = sc;
+	sc->sc_todrch.todr_dev = self;
 	sc->sc_todrch.todr_gettime_ymdhms = dsclock_gettime_ymdhms;
 	sc->sc_todrch.todr_settime_ymdhms = dsclock_settime_ymdhms;
-	sc->sc_todrch.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todrch);
 }
@@ -118,7 +118,7 @@ dsclock_attach(device_t parent, device_t self, void *aux)
 static int
 dsclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 {
-	struct dsclock_softc *sc = todrch->cookie;
+	struct dsclock_softc *sc = device_private(todrch->todr_dev);
 	ds1286_todregs regs;
 	int s;
 
@@ -160,7 +160,7 @@ dsclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 static int
 dsclock_settime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 {
-	struct dsclock_softc *sc = todrch->cookie;
+	struct dsclock_softc *sc = device_private(todrch->todr_dev);
 	ds1286_todregs regs;
 	int s;
 

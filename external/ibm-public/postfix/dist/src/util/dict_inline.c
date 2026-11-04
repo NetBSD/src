@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_inline.c,v 1.4.4.1 2025/08/02 05:50:18 perseant Exp $	*/
+/*	$NetBSD: dict_inline.c,v 1.4.4.2 2026/11/04 23:14:57 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -112,7 +112,7 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
     /*
      * Reuse the "internal" dictionary type.
      */
-    dict = dict_open3(DICT_TYPE_HT, name, open_flags, dict_flags);
+    dict = dict_ht_open(name, open_flags, dict_flags);
     dict_type_override(dict, DICT_TYPE_INLINE);
     while ((nameval = mystrtokq(&cp, CHARS_COMMA_SP, CHARS_BRACE)) != 0) {
 	if (nameval[0] == CHARS_BRACE[0])
@@ -148,5 +148,5 @@ DICT   *dict_inline_open(const char *name, int open_flags, int dict_flags)
     dict->owner.status = DICT_OWNER_TRUSTED;
 
     dict_file_purge_buffers(dict);
-    DICT_INLINE_RETURN(DICT_DEBUG (dict));
+    DICT_INLINE_RETURN(dict);
 }

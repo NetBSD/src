@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,11 +17,13 @@
 
 set ws "\[\r\n\t \]+"
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .cc
 
 set flags [list debug c++]
+lappend flags additional_flags=-std=c++11
+
 if { [test_compiler_info gcc-*] && [gcc_major_version] >= 10 } {
     # Work around PR gcc/101452.
     lappend flags additional_flags=-DGCC_BUG
@@ -639,7 +641,8 @@ foreach t [list "int" "char" "Empty<int>"] {
     gdb_test "break Foozle::fogey<$t>" "Breakpoint.*at.* \\(3 locations\\)"
     foreach u [list "int" "char" "Empty<int>"] {
 	gdb_breakpoint "Foozle<$t>::fogey<$u>" message
-	gdb_breakpoint "Foozle<$t>::fogey<$u> ($u)" message
+	gdb_assert { [gdb_breakpoint "Foozle<$t>::fogey<$u> ($u)" no-message] } \
+	    "break Foozle<$t>::fogey<$u> ($u), success"
     }
 }
 
@@ -665,10 +668,14 @@ foreach t [list "Empty" "Foozle"] {
 
     # Try a specific instance, both with and without whitespace
     # after the template-template parameter.
-    gdb_breakpoint "operator< <$tt> ($tt&, $tt&)" message
-    gdb_breakpoint "operator< <$tt > ($tt&, $tt&)" message
-    gdb_breakpoint "operator<< <$tt> ($tt&, $tt&)" message
-    gdb_breakpoint "operator<< <$tt > ($tt&, $tt&)" message
+    set loc "operator< <$tt> ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
+    set loc "operator< <$tt > ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
+    set loc "operator<< <$tt> ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
+    set loc "operator<< <$tt > ($tt&, $tt&)"
+    gdb_assert { [gdb_breakpoint $loc no-message] } "break $loc, success"
 }
 
 # Test that "-qualified" finds no matching locations.

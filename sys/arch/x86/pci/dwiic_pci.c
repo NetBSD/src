@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic_pci.c,v 1.10.2.1 2025/08/02 05:56:17 perseant Exp $ */
+/* $NetBSD: dwiic_pci.c,v 1.10.2.2 2026/11/04 23:21:33 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10.2.1 2025/08/02 05:56:17 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10.2.2 2026/11/04 23:21:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwiic_pci.c,v 1.10.2.1 2025/08/02 05:56:17 perseant 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_pci.h>
 #include <dev/acpi/acpi_util.h>
-#include <dev/acpi/acpi_i2c.h>
 
 #include <dev/ic/dwiic_var.h>
 #include <arch/x86/pci/lpssreg.h>
@@ -68,7 +67,6 @@ struct pci_dwiic_softc {
 	struct dwiic_softc	sc_dwiic;
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_ptag;
-	struct acpi_devnode	*sc_acpinode;
 };
 
 #define VIDDID(a, b) PCI_ID_CODE(PCI_VENDOR_ ## a, PCI_PRODUCT_ ## a ## _ ## b)
@@ -273,26 +271,10 @@ pci_dwiic_attach(device_t parent, device_t self, void *aux)
 	lpss_write(sc, LPSS_REMAP_HI,
 	    pci_conf_read(sc->sc_pc, sc->sc_ptag, PCI_BAR0 + 0x4));
 
-#ifdef I2C_USE_ACPI
-	sc->sc_acpinode = acpi_pcidev_find(0 /*XXX segment*/,
-	    pa->pa_bus, pa->pa_device, pa->pa_function);
-#else
-	sc->sc_acpinode = NULL;
-#endif
-
-	if (sc->sc_acpinode) {
-#ifdef I2C_USE_ACPI
-		sc->sc_dwiic.sc_iba.iba_child_devices =
-		    acpi_enter_i2c_devs(NULL, sc->sc_acpinode);
-#endif
-	} else {
-		aprint_verbose_dev(self, "no matching ACPI node\n");
-	}
-
 	if (!dwiic_attach(&sc->sc_dwiic))
 		goto out;
 
-	config_found(self, &sc->sc_dwiic.sc_iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_dwiic.sc_i2c_tag);
 
 	pmf_device_register(self, dwiic_suspend, dwiic_resume);
 

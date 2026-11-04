@@ -1,5 +1,5 @@
 /* PowerPC-specific support for 32-bit ELF
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -52,6 +52,10 @@ static bfd_reloc_status_type ppc_elf_addr16_ha_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
 static bfd_reloc_status_type ppc_elf_unhandled_reloc
   (bfd *, arelent *, asymbol *, void *, asection *, bfd *, char **);
+
+#ifndef ARRAY_SIZE
+#define ARRAY_SIZE(a) (sizeof (a) / sizeof ((a)[0]))
+#endif
 
 /* Branch prediction bit for branch taken relocs.  */
 #define BRANCH_PREDICT_BIT 0x200000
@@ -702,13 +706,10 @@ ppc_elf_howto_init (void)
 {
   unsigned int i, type;
 
-  for (i = 0;
-       i < sizeof (ppc_elf_howto_raw) / sizeof (ppc_elf_howto_raw[0]);
-       i++)
+  for (i = 0; i < ARRAY_SIZE (ppc_elf_howto_raw); i++)
     {
       type = ppc_elf_howto_raw[i].type;
-      if (type >= (sizeof (ppc_elf_howto_table)
-		   / sizeof (ppc_elf_howto_table[0])))
+      if (type >= ARRAY_SIZE (ppc_elf_howto_table))
 	abort ();
       ppc_elf_howto_table[type] = &ppc_elf_howto_raw[i];
     }
@@ -870,9 +871,7 @@ ppc_elf_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 {
   unsigned int i;
 
-  for (i = 0;
-       i < sizeof (ppc_elf_howto_raw) / sizeof (ppc_elf_howto_raw[0]);
-       i++)
+  for (i = 0; i < ARRAY_SIZE (ppc_elf_howto_raw); i++)
     if (ppc_elf_howto_raw[i].name != NULL
 	&& strcasecmp (ppc_elf_howto_raw[i].name, r_name) == 0)
       return &ppc_elf_howto_raw[i];
@@ -894,7 +893,8 @@ ppc_elf_info_to_howto (bfd *abfd,
     ppc_elf_howto_init ();
 
   r_type = ELF32_R_TYPE (dst->r_info);
-  if (r_type >= R_PPC_max)
+  if (r_type >= ARRAY_SIZE (ppc_elf_howto_table)
+      || ppc_elf_howto_table[r_type] == NULL)
     {
       /* xgettext:c-format */
       _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
@@ -904,19 +904,6 @@ ppc_elf_info_to_howto (bfd *abfd,
     }
 
   cache_ptr->howto = ppc_elf_howto_table[r_type];
-
-  /* Just because the above assert didn't trigger doesn't mean that
-     ELF32_R_TYPE (dst->r_info) is necessarily a valid relocation.  */
-  if (cache_ptr->howto == NULL)
-    {
-      /* xgettext:c-format */
-      _bfd_error_handler (_("%pB: unsupported relocation type %#x"),
-			  abfd, r_type);
-      bfd_set_error (bfd_error_bad_value);
-
-      return false;
-    }
-
   return true;
 }
 
@@ -1052,8 +1039,7 @@ struct ppc_elf_obj_tdata
 static bool
 ppc_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct ppc_elf_obj_tdata),
-				  PPC32_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct ppc_elf_obj_tdata));
 }
 
 /* When defaulting arch/mach, decode apuinfo to find a better match.  */
@@ -2279,8 +2265,7 @@ ppc_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      ppc_elf_link_hash_newfunc,
-				      sizeof (struct ppc_elf_link_hash_entry),
-				      PPC32_ELF_DATA))
+				      sizeof (struct ppc_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4352,7 +4337,7 @@ ppc_elf_tls_setup (bfd *obfd, struct bfd_link_info *info)
 		      _bfd_elf_strtab_delref (elf_hash_table (info)->dynstr,
 					      opt->dynstr_index);
 		      if (!bfd_elf_link_record_dynamic_symbol (info, opt))
-			return false;
+			return NULL;
 		    }
 		  htab->tls_get_addr = opt;
 		}
@@ -4987,7 +4972,7 @@ add_stub_sym (struct plt_entry *ent,
   len3 = 0;
   if (ent->sec)
     len3 = strlen (ent->sec->name);
-  name = bfd_malloc (len1 + len2 + len3 + 9);
+  name = bfd_alloc (info->output_bfd, len1 + len2 + len3 + 9);
   if (name == NULL)
     return false;
   sprintf (name, "%08x", (unsigned) ent->addend & 0xffffffff);
@@ -5504,6 +5489,7 @@ ppc_elf_late_size_sections (bfd *output_bfd,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -5883,6 +5869,7 @@ ppc_elf_late_size_sections (bfd *output_bfd,
       s->contents = bfd_zalloc (htab->elf.dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->elf.dynamic_sections_created)
@@ -6629,26 +6616,15 @@ ppc_elf_relax_section (bfd *abfd,
     {
       /* Append sufficient NOP relocs so we can write out relocation
 	 information for the trampolines.  */
-      Elf_Internal_Shdr *rel_hdr;
-      Elf_Internal_Rela *new_relocs = bfd_malloc ((changes + isec->reloc_count)
-						  * sizeof (*new_relocs));
-      unsigned ix;
-
-      if (!new_relocs)
+      size_t old_size = isec->reloc_count * sizeof (*internal_relocs);
+      size_t extra_size = changes * sizeof (*internal_relocs);
+      internal_relocs = bfd_realloc (internal_relocs, old_size + extra_size);
+      elf_section_data (isec)->relocs = internal_relocs;
+      if (!internal_relocs)
 	goto error_return;
-      memcpy (new_relocs, internal_relocs,
-	      isec->reloc_count * sizeof (*new_relocs));
-      for (ix = changes; ix--;)
-	{
-	  irel = new_relocs + ix + isec->reloc_count;
-
-	  irel->r_info = ELF32_R_INFO (0, R_PPC_NONE);
-	}
-      if (internal_relocs != elf_section_data (isec)->relocs)
-	free (internal_relocs);
-      elf_section_data (isec)->relocs = new_relocs;
+      memset ((char *) internal_relocs + old_size, 0, extra_size);
       isec->reloc_count += changes;
-      rel_hdr = _bfd_elf_single_rel_hdr (isec);
+      Elf_Internal_Shdr *rel_hdr = _bfd_elf_single_rel_hdr (isec);
       rel_hdr->sh_size += changes * rel_hdr->sh_entsize;
     }
   else if (elf_section_data (isec)->relocs != internal_relocs)
@@ -7099,12 +7075,11 @@ ppc_elf_relocate_section (bfd *output_bfd,
 	  /* For relocs against symbols from removed linkonce sections,
 	     or sections discarded by a linker script, we just want the
 	     section contents zeroed.  Avoid any special processing.  */
-	  howto = NULL;
-	  if (r_type < R_PPC_max)
-	    howto = ppc_elf_howto_table[r_type];
-
-	  _bfd_clear_contents (howto, input_bfd, input_section,
-			       contents, rel->r_offset);
+	  if (r_type < ARRAY_SIZE (ppc_elf_howto_table)
+	      && ppc_elf_howto_table[r_type] != NULL)
+	    _bfd_clear_contents (ppc_elf_howto_table[r_type],
+				 input_bfd, input_section,
+				 contents, rel->r_offset);
 	  wrel->r_offset = rel->r_offset;
 	  wrel->r_info = 0;
 	  wrel->r_addend = 0;
@@ -7664,7 +7639,7 @@ ppc_elf_relocate_section (bfd *output_bfd,
       addend = rel->r_addend;
       save_unresolved_reloc = unresolved_reloc;
       howto = NULL;
-      if (r_type < R_PPC_max)
+      if (r_type < ARRAY_SIZE (ppc_elf_howto_table))
 	howto = ppc_elf_howto_table[r_type];
 
       tls_type = 0;
@@ -9153,15 +9128,6 @@ ppc_elf_relocate_section (bfd *output_bfd,
 
       rel_hdr = _bfd_elf_single_rel_hdr (input_section->output_section);
       rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;
-      if (rel_hdr->sh_size == 0)
-	{
-	  /* It is too late to remove an empty reloc section.  Leave
-	     one NONE reloc.
-	     ??? What is wrong with an empty section???  */
-	  rel_hdr->sh_size = rel_hdr->sh_entsize;
-	  deleted -= 1;
-	  wrel++;
-	}
       relend = wrel;
       rel_hdr = _bfd_elf_single_rel_hdr (input_section);
       rel_hdr->sh_size -= rel_hdr->sh_entsize * deleted;

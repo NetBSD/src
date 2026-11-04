@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstap_test.c,v 1.2.6.1 2025/08/02 05:54:11 perseant Exp $	*/
+/*	$NetBSD: dnstap_test.c,v 1.2.6.2 2026/11/04 23:18:22 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #define UNIT_TESTING
@@ -63,6 +64,7 @@ setup(void **state) {
 	 * the testdata was originally generated.
 	 */
 	setenv("TZ", "PDT8", 1);
+	tzset();
 
 	setup_loopmgr(state);
 
@@ -92,7 +94,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_create) {
 			       &dtenv);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	if (dtenv != NULL) {
-		dns_dt_detach(&dtenv);
+		dns_dtenv_detach(&dtenv);
 	}
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
@@ -108,7 +110,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_create) {
 			       &dtenv);
 	assert_int_equal(result, ISC_R_SUCCESS);
 	if (dtenv != NULL) {
-		dns_dt_detach(&dtenv);
+		dns_dtenv_detach(&dtenv);
 	}
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
@@ -125,7 +127,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_create) {
 	assert_int_equal(result, ISC_R_FAILURE);
 	assert_null(dtenv);
 	if (dtenv != NULL) {
-		dns_dt_detach(&dtenv);
+		dns_dtenv_detach(&dtenv);
 	}
 	if (fopt != NULL) {
 		fstrm_iothr_options_destroy(&fopt);
@@ -171,7 +173,7 @@ ISC_LOOP_TEST_IMPL(dns_dt_send) {
 			       &dtenv);
 	assert_int_equal(result, ISC_R_SUCCESS);
 
-	dns_dt_attach(dtenv, &view->dtenv);
+	dns_dtenv_attach(dtenv, &view->dtenv);
 	view->dttypes = DNS_DTTYPE_ALL;
 
 	/*
@@ -260,8 +262,8 @@ ISC_LOOP_TEST_IMPL(dns_dt_send) {
 			    m);
 	}
 
-	dns_dt_detach(&view->dtenv);
-	dns_dt_detach(&dtenv);
+	dns_dtenv_detach(&view->dtenv);
+	dns_dtenv_detach(&dtenv);
 	dns_view_detach(&view);
 
 	result = dns_dt_open(TAPFILE, dns_dtmode_file, mctx, &handle);

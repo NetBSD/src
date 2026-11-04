@@ -1,6 +1,6 @@
 /* Displaced stepping related things.
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DISPLACED_STEPPING_H
-#define DISPLACED_STEPPING_H
+#ifndef GDB_DISPLACED_STEPPING_H
+#define GDB_DISPLACED_STEPPING_H
 
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/byte-vector.h"
@@ -168,7 +168,7 @@ struct displaced_step_buffers
 					 CORE_ADDR &displaced_pc);
 
   displaced_step_finish_status finish (gdbarch *arch, thread_info *thread,
-				       gdb_signal sig);
+				       const target_waitstatus &status);
 
   const displaced_step_copy_insn_closure *
     copy_insn_closure_by_addr (CORE_ADDR addr);
@@ -207,4 +207,4 @@ private:
   std::vector<displaced_step_buffer> m_buffers;
 };
 
-#endif /* DISPLACED_STEPPING_H */
+#endif /* GDB_DISPLACED_STEPPING_H */

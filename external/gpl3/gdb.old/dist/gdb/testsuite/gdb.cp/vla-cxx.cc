@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2023 Free Software Foundation, Inc.
+   Copyright 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,6 +40,10 @@ int main(int argc, char **argv)
   typedef typeof (vla) &vlareftypedef;
   vlareftypedef vlaref2 (vla);
   container c;
+  typeof (vla) *ptr = nullptr;
+
+  // Before pointer assignment.
+  ptr = &vla;
 
   for (int i = 0; i < z; ++i)
     vla[i] = 5 + 2 * i;

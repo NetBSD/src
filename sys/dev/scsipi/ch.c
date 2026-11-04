@@ -1,4 +1,4 @@
-/*	$NetBSD: ch.c,v 1.95 2021/09/26 14:57:19 thorpej Exp $	*/
+/*	$NetBSD: ch.c,v 1.95.10.1 2026/11/04 23:22:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.95 2021/09/26 14:57:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ch.c,v 1.95.10.1 2026/11/04 23:22:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,7 +541,7 @@ ch_interpret_sense(struct scsipi_xfer *xs)
 		return (EJUSTRETURN);
 
 	/*
-	 * We're only interested in condtions that
+	 * We're only interested in conditions that
 	 * indicate potential inventory violation.
 	 *
 	 * We use ASC/ASCQ codes for this.
@@ -917,7 +917,7 @@ ch_usergetelemstatus(struct ch_softc *sc,
 		ces.ces_ascq = desc->sense_qual;
 
 		/*
-		 * For Data Transport elemenets, get the SCSI ID and LUN,
+		 * For Data Transport elements, get the SCSI ID and LUN,
 		 * and attempt to map them to a device name if they're
 		 * on the same SCSI bus.
 		 */

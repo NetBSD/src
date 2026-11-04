@@ -1,6 +1,6 @@
 include $(top_srcdir)/Makefile.top
 
-EXTRA_DIST = convert-trs-to-junit.py
+EXTRA_DIST = convert_trs_to_junit.py
 
 SUBDIRS = system
 

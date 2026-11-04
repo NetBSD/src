@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.123.2.1 2026/11/04 23:21:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,9 +105,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123.2.1 2026/11/04 23:21:27 perseant Exp $");
 
 #include "opt_ddb.h"
+#include "opt_kgdb.h"
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
@@ -127,8 +128,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.123 2024/05/11 06:37:54 andvar Exp $");
 #include <machine/pte.h>
 #include <machine/vmparam.h>
 #include <m68k/cacheops.h>
+#include <m68k/mmu_51.h>
+#include <m68k/seglist.h>
 
-#include <sun3/sun3/cache.h>
 #include <sun3/sun3/machdep.h>
 
 #include "pmap_pvt.h"
@@ -245,11 +247,6 @@ static struct pmap	kernel_pmap;
 struct pmap		*const kernel_pmap_ptr = &kernel_pmap;
 
 /*
- * This holds the CRP currently loaded into the MMU.
- */
-struct mmu_rootptr kernel_crp;
-
-/*
  * Just all around global variables.
  */
 static TAILQ_HEAD(a_pool_head_struct, a_tmgr_struct) a_pool;
@@ -278,9 +275,6 @@ paddr_t	avail_start, avail_end;
 /* This keep track of the end of the contiguously mapped range. */
 vaddr_t virtual_contig_end;
 
-/* Physical address used by pmap_next_page() */
-paddr_t avail_next;
-
 /* These are used by pmap_copy_page(), etc. */
 vaddr_t tmp_vpages[2];
 
@@ -300,6 +294,7 @@ struct pool	pmap_pmap_pool;
  * RAM, this list will have only one entry, which will describe the entire
  * range of available memory.
  */
+__CTASSERT(SUN3X_NPHYS_RAM_SEGS <= VM_PHYSSEG_MAX);
 struct pmap_physmem_struct avail_mem[SUN3X_NPHYS_RAM_SEGS];
 u_int total_phys_mem;
 
@@ -487,10 +482,10 @@ pa2pv(paddr_t pa)
 	int idx;
 
 	bank = &avail_mem[0];
-	while (pa >= bank->pmem_end)
+	while (pa >= bank->pmem_seg->ps_end)
 		bank = bank->pmem_next;
 
-	pa -= bank->pmem_start;
+	pa -= bank->pmem_seg->ps_start;
 	idx = bank->pmem_pvbase + m68k_btop(pa);
 #ifdef	PMAP_DEBUG
 	if ((idx < 0) || (idx >= physmem))
@@ -573,7 +568,6 @@ bool pmap_stroll(pmap_t, vaddr_t, a_tmgr_t **, b_tmgr_t **, c_tmgr_t **,
 void pmap_bootstrap_copyprom(void);
 void pmap_takeover_mmu(void);
 void pmap_bootstrap_setprom(void);
-static void pmap_page_upload(void);
 
 #ifdef PMAP_DEBUG
 /* Debugging function definitions */
@@ -605,15 +599,17 @@ static INLINE void pmap_release(pmap_t);
  *           system implement pmap_steal_memory() is redundant.
  *           Don't release this code without removing one or the other!
  */
-void
+paddr_t
 pmap_bootstrap(vaddr_t nextva)
 {
 	struct physmemory *membank;
 	struct pmap_physmem_struct *pmap_membank;
 	vaddr_t va, eva;
 	paddr_t pa;
+	paddr_t nextpa;
 	int b, c, i, j;	/* running table counts */
 	int size, resvmem;
+	extern void *msgbufaddr;
 
 	/*
 	 * This function is called by __bootstrap after it has
@@ -648,24 +644,28 @@ pmap_bootstrap(vaddr_t nextva)
 	 *    pmem_next member must be set to NULL.
 	 */
 	membank = romVectorPtr->v_physmemory;
-	pmap_membank = avail_mem;
 	total_phys_mem = 0;
 
+	/* Build up the pmap's copy of the membank list. */
+	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
+		pmap_membank = &avail_mem[i];
+		pmap_membank->pmem_next = &avail_mem[i + 1];
+		pmap_membank->pmem_seg = &phys_seg_list[i];
+	}
+	pmap_membank->pmem_next = NULL;
+	pmap_membank = avail_mem;
+
 	for (;;) { /* break on !membank */
-		pmap_membank->pmem_start = membank->address;
-		pmap_membank->pmem_end = membank->address + membank->size;
+		pmap_membank->pmem_seg->ps_start = membank->address;
+		pmap_membank->pmem_seg->ps_end =
+		    membank->address + membank->size;
 		total_phys_mem += membank->size;
 		membank = membank->next;
 		if (!membank)
 			break;
-		/* This silly syntax arises because pmap_membank
-		 * is really a pre-allocated array, but it is put into
-		 * use as a linked list.
-		 */
-		pmap_membank->pmem_next = pmap_membank + 1;
 		pmap_membank = pmap_membank->pmem_next;
 	}
-	/* This is the last element. */
+	/* Terminate the list early if not all banks are populated. */
 	pmap_membank->pmem_next = NULL;
 
 	/*
@@ -676,16 +676,12 @@ pmap_bootstrap(vaddr_t nextva)
 	physmem = btoc(total_phys_mem);
 
 	/*
-	 * Avail_end is set to the first byte of physical memory
-	 * after the end of the last bank.  We use this only to
-	 * determine if a physical address is "managed" memory.
-	 * This address range should be reduced to prevent the
-	 * physical pages needed by the PROM monitor from being used
-	 * in the VM system.
+	 * Clamp the last bank to account for the PROM's reserved
+	 * pages.
 	 */
 	resvmem = total_phys_mem - *(romVectorPtr->memoryAvail);
 	resvmem = m68k_round_page(resvmem);
-	avail_end = pmap_membank->pmem_end - resvmem;
+	pmap_membank->pmem_seg->ps_end -= resvmem;
 
 	/*
 	 * First allocate enough kernel MMU tables to map all
@@ -792,19 +788,12 @@ pmap_bootstrap(vaddr_t nextva)
 	 * Now that we are done with pmap_bootstrap_alloc(), we
 	 * must save the virtual and physical addresses of the
 	 * end of the linearly mapped range, which are stored in
-	 * virtual_contig_end and avail_start, respectively.
-	 * These variables will never change after this point.
+	 * virtual_contig_end and nextpa, respectively (nextpa is
+	 * used to initialize avail_start later). These variables
+	 * will never change after this point.
 	 */
 	virtual_contig_end = virtual_avail;
-	avail_start = virtual_avail - KERNBASE3X;
-
-	/*
-	 * `avail_next' is a running pointer used by pmap_next_page() to
-	 * keep track of the next available physical page to be handed
-	 * to the VM system during its initialization, in which it
-	 * asks for physical pages, one at a time.
-	 */
-	avail_next = avail_start;
+	nextpa = virtual_avail - KERNBASE3X;
 
 	/*
 	 * Now allocate some virtual addresses, but not the physical pages
@@ -823,15 +812,17 @@ pmap_bootstrap(vaddr_t nextva)
 	pmap_init_pv();
 
 	/*
-	 * Fill in the kernel_pmap structure and kernel_crp.
+	 * Fill in the kernel_pmap structure and the prototype CRP.
 	 */
 	kernAphys = mmu_vtop(kernAbase);
 	kernel_pmap.pm_a_tmgr = NULL;
 	kernel_pmap.pm_a_phys = kernAphys;
 	kernel_pmap.pm_refcount = 1; /* always in use */
 
-	kernel_crp.rp_attr = MMU_LONG_DTE_LU | MMU_DT_LONG;
-	kernel_crp.rp_addr = kernAphys;
+	/*
+	 * protorp[] is initialized in mmu_subr.s.  We are not using
+	 * the SRP at all; everything uses the CRP in this implementation.
+	 */
 
 	/*
 	 * Now pmap_enter_kernel() may be used safely and will be
@@ -853,6 +844,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * the address is assigned to this global pointer in cpu_startup().
 	 * It is non-cached, mostly due to paranoia.
 	 */
+	msgbufaddr = (void *)va;
 	pmap_enter_kernel(va, pa|PMAP_NC, VM_PROT_ALL);
 	va += PAGE_SIZE;
 	pa += PAGE_SIZE;
@@ -878,7 +870,7 @@ pmap_bootstrap(vaddr_t nextva)
 	 * This includes: data, BSS, symbols, and everything in the
 	 * contiguous memory used by pmap_bootstrap_alloc()
 	 */
-	for (; pa < avail_start; va += PAGE_SIZE, pa += PAGE_SIZE)
+	for (; pa < nextpa; va += PAGE_SIZE, pa += PAGE_SIZE)
 		pmap_enter_kernel(va, pa, VM_PROT_READ|VM_PROT_WRITE);
 
 	/*
@@ -894,7 +886,7 @@ pmap_bootstrap(vaddr_t nextva)
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_md_init();
 
-	pmap_page_upload();
+	return nextpa;
 }
 
 
@@ -939,7 +931,8 @@ pmap_alloc_pv(void)
 	total_mem = 0;
 	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
 		avail_mem[i].pmem_pvbase = m68k_btop(total_mem);
-		total_mem += avail_mem[i].pmem_end - avail_mem[i].pmem_start;
+		total_mem += avail_mem[i].pmem_seg->ps_end -
+		    avail_mem[i].pmem_seg->ps_start;
 		if (avail_mem[i].pmem_next == NULL)
 			break;
 	}
@@ -1030,8 +1023,7 @@ pmap_bootstrap_copyprom(void)
 void
 pmap_takeover_mmu(void)
 {
-
-	loadcrp(&kernel_crp);
+	mmu_load_urp51(kernAphys);
 }
 
 /* pmap_bootstrap_setprom()			INTERNAL
@@ -1754,8 +1746,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * new mappings, so no need to flush anything.
 		 */
 		if (pmap == current_pmap()) {
-			kernel_crp.rp_addr = pmap->pm_a_phys;
-			loadcrp(&kernel_crp);
+			mmu_load_urp51(pmap->pm_a_phys);
 		}
 
 		if (!wired)
@@ -2579,9 +2570,8 @@ pmap_release(pmap_t pmap)
 	 */
 	if (pmap->pm_a_tmgr != NULL) {
 		/* First make sure we are not using it! */
-		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
-			kernel_crp.rp_addr = kernAphys;
-			loadcrp(&kernel_crp);
+		if (protorp[1] == pmap->pm_a_phys) {
+			mmu_load_urp51(kernAphys);
 		}
 #ifdef	PMAP_DEBUG /* XXX - todo! */
 		/* XXX - Now complain... */
@@ -2958,6 +2948,18 @@ pmap_extract(pmap_t pmap, vaddr_t va, paddr_t *pap)
 	return true;
 }
 
+/* pmap_phys_address
+ **
+ * Return the physical address corresponding to the specified
+ * cookie.  Used by the device pager to decode a device driver's
+ * mmap entry point return value.
+ */
+paddr_t
+pmap_phys_address(paddr_t addr)
+{
+	return addr;
+}
+
 /* pmap_remove_kernel		INTERNAL
  **
  * Remove the mapping of a range of virtual addresses from the kernel map.
@@ -3012,9 +3014,8 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 	 * with the default 'kernel' map.
 	 */
 	if (pmap_remove_a(pmap->pm_a_tmgr, sva, eva)) {
-		if (kernel_crp.rp_addr == pmap->pm_a_phys) {
-			kernel_crp.rp_addr = kernAphys;
-			loadcrp(&kernel_crp);
+		if (protorp[1] == pmap->pm_a_phys) {
+			mmu_load_urp51(kernAphys);
 			/* will do TLB flush below */
 		}
 		pmap->pm_a_tmgr = NULL;
@@ -3481,26 +3482,6 @@ pmap_bootstrap_aalign(int size)
 	}
 }
 
-/* pmap_pa_exists
- **
- * Used by the /dev/mem driver to see if a given PA is memory
- * that can be mapped.  (The PA is not in a hole.)
- */
-int
-pmap_pa_exists(paddr_t pa)
-{
-	int i;
-
-	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
-		if ((pa >= avail_mem[i].pmem_start) &&
-			(pa <  avail_mem[i].pmem_end))
-			return 1;
-		if (avail_mem[i].pmem_next == NULL)
-			break;
-	}
-	return 0;
-}
-
 /* Called only from locore.s and pmap.c */
 void	_pmap_switch(pmap_t pmap);
 
@@ -3528,10 +3509,9 @@ _pmap_switch(pmap_t pmap)
 	 * then this will NOT flush the TLB.
 	 */
 	rootpa = pmap->pm_a_phys;
-	if (kernel_crp.rp_addr != rootpa) {
+	if (protorp[1] != rootpa) {
 		DPRINT(("pmap_activate(%p)\n", pmap));
-		kernel_crp.rp_addr = rootpa;
-		loadcrp(&kernel_crp);
+		mmu_load_urp51(rootpa);
 		TBIAU();
 	}
 }
@@ -3578,9 +3558,9 @@ pmap_kcore_hdr(struct sun3x_kcore_hdr *sh)
 	sh->contig_end = virtual_contig_end;
 	sh->kernCbase = (u_long)kernCbase;
 	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
-		spa = avail_mem[i].pmem_start;
+		spa = avail_mem[i].pmem_seg->ps_start;
 		spa = m68k_trunc_page(spa);
-		len = avail_mem[i].pmem_end - spa;
+		len = avail_mem[i].pmem_seg->ps_end - spa;
 		len = m68k_round_page(len);
 		sh->ram_segs[i].start = spa;
 		sh->ram_segs[i].size  = len;
@@ -3599,34 +3579,6 @@ pmap_virtual_space(vaddr_t *vstart, vaddr_t *vend)
 
 	*vstart = virtual_avail;
 	*vend = virtual_end;
-}
-
-/*
- * Provide memory to the VM system.
- *
- * Assume avail_start is always in the
- * first segment as pmap_bootstrap does.
- */
-static void
-pmap_page_upload(void)
-{
-	paddr_t	a, b;	/* memory range */
-	int i;
-
-	/* Supply the memory in segments. */
-	for (i = 0; i < SUN3X_NPHYS_RAM_SEGS; i++) {
-		a = atop(avail_mem[i].pmem_start);
-		b = atop(avail_mem[i].pmem_end);
-		if (i == 0)
-			a = atop(avail_start);
-		if (avail_mem[i].pmem_end > avail_end)
-			b = atop(avail_end);
-
-		uvm_page_physload(a, b, a, b, VM_FREELIST_DEFAULT);
-
-		if (avail_mem[i].pmem_next == NULL)
-			break;
-	}
 }
 
 /* pmap_count			INTERFACE
@@ -3745,6 +3697,54 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
+#if defined(DDB) || defined(KGDB)
+/*
+ *	Routine:	pmap_db_write_text_enter
+ *
+ *	Function:
+ *		Temporarily map a page of kernel text read-write for the
+ *		kernel debugger.
+ */
+bool
+pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+{
+	int oldpte, tmppte;
+
+#ifdef HAVECACHE
+	if (cache_size) {
+		cache_flush_page(pgva);
+	}
+#endif
+
+	oldpte = get_pte(pgva);
+	if ((oldpte & PG_VALID) == 0) {
+		return false;
+	}
+
+	/* Make the pte writable and non-cached. */
+	tmppte = oldpte;
+	tmppte &= ~MMU_SHORT_PTE_WP;
+	tmppte |= MMU_SHORT_PTE_CI;
+	set_pte(pgva, tmppte);
+
+	ctx->pgva = pgva;
+	ctx->opte = oldpte;
+
+	return true;
+}
+
+/*
+ *	Routine:	pmap_db_write_text_exit
+ *
+ *	Function:
+ *		Undo the effects of pmap_db_write_text_enter().
+ */
+void
+pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+{
+	set_pte(ctx->pgva, ctx->opte);
+}
+#endif /* DDB || KGDB */
 
 #ifdef	PMAP_DEBUG
 /************************** DEBUGGING ROUTINES **************************

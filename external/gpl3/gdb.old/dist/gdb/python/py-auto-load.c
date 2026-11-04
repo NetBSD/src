@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded scripts.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "top.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "objfiles.h"
 #include "python.h"
 #include "auto-load.h"
@@ -53,16 +52,17 @@ gdbpy_auto_load_enabled (const struct extension_language_defn *extlang)
 static void
 info_auto_load_python_scripts (const char *pattern, int from_tty)
 {
-  auto_load_info_scripts (pattern, from_tty, &extension_language_python);
+  auto_load_info_scripts (current_program_space, pattern, from_tty,
+			  &extension_language_python);
 }
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_auto_load (void)
 {
   add_setshow_boolean_cmd ("python-scripts", class_support,
 			   &auto_load_python_scripts, _("\
-Set the debugger's behaviour regarding auto-loaded Python scripts."), _("\
-Show the debugger's behaviour regarding auto-loaded Python scripts."), _("\
+Set the debugger's behavior regarding auto-loaded Python scripts."), _("\
+Show the debugger's behavior regarding auto-loaded Python scripts."), _("\
 If enabled, auto-loaded Python scripts are loaded when the debugger reads\n\
 an executable or shared library.\n\
 This options has security implications for untrusted inferiors."),
@@ -73,10 +73,10 @@ This options has security implications for untrusted inferiors."),
   set_show_commands auto_load_scripts_cmds
     = add_setshow_boolean_cmd ("auto-load-scripts", class_support,
 			       &auto_load_python_scripts, _("\
-Set the debugger's behaviour regarding auto-loaded Python scripts, "
+Set the debugger's behavior regarding auto-loaded Python scripts, "
 								 "deprecated."),
 			       _("\
-Show the debugger's behaviour regarding auto-loaded Python scripts, "
+Show the debugger's behavior regarding auto-loaded Python scripts, "
 								 "deprecated."),
 			       NULL, NULL, show_auto_load_python_scripts,
 			       &setlist, &showlist);
@@ -95,3 +95,5 @@ Print the list of automatically loaded Python scripts, deprecated."));
 
   return 0;
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_auto_load);

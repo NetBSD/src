@@ -1,6 +1,6 @@
 /* Python interface to inferior stop events.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -74,8 +74,7 @@ py_print_bpstat (bpstat *bs, enum gdb_signal stop_signal)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return nullptr;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 
   gdbpy_ref<> dict = uiout.result ();

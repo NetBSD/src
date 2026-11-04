@@ -73,6 +73,7 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 #endif
 	npf = npfk_create(0, &npftest_mbufops, &npftest_ifops, NULL);
 	npfk_thread_register(npf);
+
 	npf_setkernctx(npf);
 
 	npf_state_setsampler(npf_state_sample);
@@ -87,6 +88,18 @@ void
 npf_test_fini(void)
 {
 	npf_t *npf = npf_getkernctx();
+	int ret;
+
+	ret = npf_config_read_enter(npf);
+	npf_config_procs_null(npf);
+	npf_config_read_exit(npf, ret);
+
+	ret = npf_ext_log_fini(npf);
+	assert(ret == 0);
+	ret = npf_ext_normalize_fini(npf);
+	assert(ret == 0);
+	ret = npf_ext_route_fini(npf);
+	assert(ret == 0);
 
 	npfk_thread_unregister(npf);
 	npfk_destroy(npf);
@@ -99,13 +112,24 @@ npf_test_load(const void *buf, size_t len, bool verbose)
 	npf_error_t error;
 	int ret;
 
+	npf_t* npf = npf_getkernctx();
+
 	npf_dict = nvlist_unpack(buf, len, 0);
 	if (!npf_dict) {
 		printf("%s: could not unpack the nvlist\n", __func__);
 		return EINVAL;
 	}
 	load_npf_config_ifs(npf_dict, verbose);
-	ret = npfk_load(npf_getkernctx(), npf_dict, &error);
+
+	/* register the npf extensions */
+	ret = npf_ext_log_init(npf);
+	assert(ret == 0);
+	ret = npf_ext_normalize_init(npf);
+	assert(ret == 0);
+	ret = npf_ext_route_init(npf);
+	assert(ret == 0);
+
+	ret = npfk_load(npf, npf_dict, &error);
 	nvlist_destroy(npf_dict);
 	return ret;
 }

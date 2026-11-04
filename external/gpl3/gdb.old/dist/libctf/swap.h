@@ -1,5 +1,5 @@
 /* Interface to byteswapping functions.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -67,7 +67,9 @@ bswap_64 (uint64_t v)
 /* < C11? define away static assertions.  */
 
 #if !defined (__STDC_VERSION__) || __STDC_VERSION__ < 201112L
+#ifndef _Static_assert
 #define _Static_assert(cond, err)
+#endif
 #endif
 
 /* Swap the endianness of something.  */

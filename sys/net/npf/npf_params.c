@@ -26,7 +26,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.6 2023/02/12 13:21:28 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_params.c,v 1.6.6.1 2026/11/04 23:27:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -76,10 +76,10 @@ npf_param_thmap_alloc(size_t len)
 }
 
 static void
-npf_param_thmap_free(uintptr_t addr, size_t len)  
+npf_param_thmap_free(uintptr_t addr, size_t len)
 {
         kmem_free((void *)addr, len);
-} 
+}
 
 static const thmap_ops_t npf_param_thmap_ops = {
         .alloc = npf_param_thmap_alloc,

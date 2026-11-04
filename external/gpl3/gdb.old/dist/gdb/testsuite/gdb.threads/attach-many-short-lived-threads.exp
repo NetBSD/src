@@ -1,4 +1,4 @@
-# Copyright 2008-2023 Free Software Foundation, Inc.
+# Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -49,9 +49,7 @@ if {[bad_dejagnu]} {
     return 0
 }
 
-if {![can_spawn_for_attach]} {
-    return 0
-}
+require can_spawn_for_attach
 
 standard_testfile
 
@@ -76,7 +74,7 @@ proc test {} {
 		    # Seen when "set debug libthread_db" is on.
 		    exp_continue
 		}
-		-re "warning: Cannot attach to lwp $decimal: Operation not permitted" {
+		-re "Cannot attach to lwp $decimal: Operation not permitted" {
 		    # On Linux, PTRACE_ATTACH sometimes fails with
 		    # EPERM, even though /proc/PID/status indicates
 		    # the thread is running.
@@ -96,6 +94,10 @@ proc test {} {
 		-re "Attaching to program.*process $testpid.*$gdb_prompt $" {
 		    pass $test
 		}
+	    }
+
+	    if { $eperm } {
+		continue
 	    }
 
 	    # Sleep a bit and try updating the thread list.  We should
@@ -139,9 +141,32 @@ proc test {} {
 	    # attach.
 	    sleep 2
 
+	    set re_pr26286 \
+		[multi_line \
+		     [string_to_regexp \
+			  "Program terminated with signal SIGTRAP, Trace/breakpoint trap."] \
+		     [string_to_regexp \
+			  "The program no longer exists."]]
+
 	    set bps 3
+	    set exited 0
 	    for {set bp 1} { $bp <= $bps } { incr bp } {
-		gdb_test "continue" "Breakpoint.*" "break at break_fn: $bp"
+		gdb_test_multiple "continue" "break at break_fn: $bp" {
+		    -re -wrap "$re_pr26286" {
+			kfail threads/26286 $gdb_test_name
+			set exited 1
+		    }
+		    -re -wrap "Breakpoint.*" {
+			pass $gdb_test_name
+		    }
+		}
+		if { $exited } {
+		    break
+		}
+	    }
+
+	    if { $exited } {
+		return
 	    }
 
 	    if {$attempt < $attempts} {

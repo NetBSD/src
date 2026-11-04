@@ -1,6 +1,6 @@
 /* DWARF 2 low-level section code
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -24,11 +24,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/section.h"
 #include "gdb_bfd.h"
 #include "objfiles.h"
 #include "complaints.h"
+#include "dwarf2/error.h"
 
 void
 dwarf2_section_info::overflow_complaint () const
@@ -141,8 +141,9 @@ dwarf2_section_info::read (struct objfile *objfile)
       gdb_assert (sectp != NULL);
       if ((sectp->flags & SEC_RELOC) != 0)
 	{
-	  error (_("Dwarf Error: DWP format V2 with relocations is not"
-		   " supported in section %s [in module %s]"),
+	  error (_(DWARF_ERROR_PREFIX
+		   "DWP format V2 with relocations is not supported"
+		   " in section %s [in module %s]"),
 		 get_name (), get_file_name ());
 	}
       containing_section->read (objfile);
@@ -182,10 +183,10 @@ dwarf2_section_info::read (struct objfile *objfile)
   gdb_assert (abfd != NULL);
 
   if (bfd_seek (abfd, sectp->filepos, SEEK_SET) != 0
-      || bfd_bread (buf, size, abfd) != size)
+      || bfd_read (buf, size, abfd) != size)
     {
-      error (_("Dwarf Error: Can't read DWARF data"
-	       " in section %s [in module %s]"),
+      error (_(DWARF_ERROR_PREFIX
+	       "Can't read DWARF data in section %s [in module %s]"),
 	     bfd_section_name (sectp), bfd_get_filename (abfd));
     }
 }
@@ -198,10 +199,12 @@ dwarf2_section_info::read_string (struct objfile *objfile, LONGEST str_offset,
   if (buffer == NULL)
     {
       if (get_bfd_section () == nullptr)
-	error (_("Dwarf Error: %s used without required section"),
+	error (_(DWARF_ERROR_PREFIX
+		 "%s used without required section"),
 	       form_name);
       else
-	error (_("Dwarf Error: %s used without %s section [in module %s]"),
+	error (_(DWARF_ERROR_PREFIX
+		 "%s used without %s section [in module %s]"),
 	       form_name, get_name (), get_file_name ());
     }
   if (str_offset >= size)

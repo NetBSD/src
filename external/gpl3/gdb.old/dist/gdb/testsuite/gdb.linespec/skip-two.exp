@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,10 +20,7 @@ set execfile $testfile
 set baseone base/one/thefile.cc
 set basetwo base/two/thefile.cc
 
-if {[skip_cplus_tests]} {
-    unsupported "skipping C++ tests"
-    return
-}
+require allow_cplus_tests
 
 if {[prepare_for_testing "failed to prepare" $execfile \
 	 [list $srcfile $baseone $basetwo] \

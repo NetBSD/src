@@ -1,4 +1,4 @@
-/* $NetBSD: meson_i2c.c,v 1.2.4.2 2025/08/02 05:55:26 perseant Exp $ */
+/* $NetBSD: meson_i2c.c,v 1.2.4.3 2026/11/04 23:20:04 perseant Exp $ */
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.2.4.2 2025/08/02 05:55:26 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: meson_i2c.c,v 1.2.4.3 2026/11/04 23:20:04 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -349,7 +349,7 @@ mesoni2c_intr(void *arg)
 			if (sc->sc_sendingCmd && sc->sc_datalen) {
 				/*
 				 * We've just finished transfering the command
-				 * bytes, we must now tranfer the data.
+				 * bytes, we must now transfer the data.
 				 */
 				sc->sc_curlen = sc->sc_datalen;
 				sc->sc_curop = sc->sc_op;
@@ -517,7 +517,6 @@ mesoni2c_attach(device_t parent, device_t self, void *aux)
 	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
 	sc->sc_ic.ic_exec = mesoni2c_exec;
-	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
 
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
+	iicbus_attach(self, &sc->sc_ic);
 }

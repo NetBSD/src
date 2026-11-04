@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_epoll.c,v 1.4 2023/07/30 18:31:13 christos Exp $	*/
+/*	$NetBSD: sys_epoll.c,v 1.4.6.1 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause
@@ -28,7 +28,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.4 2023/07/30 18:31:13 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_epoll.c,v 1.4.6.1 2026/11/04 23:27:50 perseant Exp $");
 
 
 #include <sys/param.h>
@@ -103,6 +103,7 @@ sys_epoll_create1(struct lwp *l, const struct sys_epoll_create1_args *uap,
 	if ((SCARG(uap, flags) & ~(EPOLL_CLOEXEC)) != 0)
 		return EINVAL;
 
+	memset(&kqa, 0, sizeof(kqa));
 	SCARG(&kqa, flags) = 0;
 	if (SCARG(uap, flags) & EPOLL_CLOEXEC)
 		SCARG(&kqa, flags) |= O_CLOEXEC;
@@ -547,7 +548,7 @@ epoll_delete_all_events(register_t *retval, int epfd, int fd)
 }
 
 /*
- * Interate through all the knotes and recover a directed graph on
+ * Iterate through all the knotes and recover a directed graph on
  * which kqueues are watching each other.
  *
  * If edges is NULL, the number of edges is still counted but no graph

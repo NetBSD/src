@@ -1,4 +1,4 @@
-/* Copyright (C) 2016-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,7 +26,7 @@ static void
 arm_pikeos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, arm_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, arm_software_single_step);
 }
 
 /* The ARM PikeOS OSABI sniffer (see gdbarch_register_osabi_sniffer).
@@ -36,8 +36,6 @@ arm_pikeos_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 static enum gdb_osabi
 arm_pikeos_osabi_sniffer (bfd *abfd)
 {
-  long number_of_symbols;
-  long i;
   int pikeos_stack_found = 0;
   int pikeos_stack_size_found = 0;
 
@@ -50,20 +48,15 @@ arm_pikeos_osabi_sniffer (bfd *abfd)
      OS ABI sniffers are called before the minimal symtabs are
      created. So inspect the symbol table using BFD.  */
 
-  long storage_needed = bfd_get_symtab_upper_bound (abfd);
-  if (storage_needed <= 0)
+  gdb::array_view<asymbol *> symbol_table
+    = gdb_bfd_canonicalize_symtab (abfd, false);
+
+  if (symbol_table.empty ())
     return GDB_OSABI_UNKNOWN;
 
-  gdb::unique_xmalloc_ptr<asymbol *> symbol_table
-    ((asymbol **) xmalloc (storage_needed));
-  number_of_symbols = bfd_canonicalize_symtab (abfd, symbol_table.get ());
-
-  if (number_of_symbols <= 0)
-    return GDB_OSABI_UNKNOWN;
-
-  for (i = 0; i < number_of_symbols; i++)
+  for (const asymbol *sym : symbol_table)
     {
-      const char *name = bfd_asymbol_name (symbol_table.get ()[i]);
+      const char *name = bfd_asymbol_name (sym);
 
       if (strcmp (name, "_vm_stack") == 0
 	  || strcmp (name, "__p4_stack") == 0)
@@ -80,9 +73,7 @@ arm_pikeos_osabi_sniffer (bfd *abfd)
     return GDB_OSABI_UNKNOWN;
 }
 
-void _initialize_arm_pikeos_tdep ();
-void
-_initialize_arm_pikeos_tdep ()
+INIT_GDB_FILE (arm_pikeos_tdep)
 {
   /* Register the sniffer for the PikeOS targets.  */
   gdbarch_register_osabi_sniffer (bfd_arch_arm, bfd_target_elf_flavour,

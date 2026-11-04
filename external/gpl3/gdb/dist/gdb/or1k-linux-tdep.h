@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on OpenRISC.
 
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef OR1K_LINUX_TDEP_H
-#define OR1K_LINUX_TDEP_H
+#ifndef GDB_OR1K_LINUX_TDEP_H
+#define GDB_OR1K_LINUX_TDEP_H
 
 /* Target descriptions.  */
 extern struct target_desc *tdesc_or1k_linux;
 
-#endif /* OR1K_LINUX_TDEP_H */
+#endif /* GDB_OR1K_LINUX_TDEP_H */

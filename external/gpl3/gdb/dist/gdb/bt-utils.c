@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,6 +40,17 @@ gdb_internal_backtrace_set_cmd (const char *args, int from_tty,
 #endif
 }
 
+/* See bt-utils.h.  */
+
+void
+sig_write (const char *msg)
+{
+  if (gdb_stderr == nullptr || gdb_stderr->fd () == -1)
+    std::ignore = ::write (2, msg, strlen (msg));
+  else
+    gdb_stderr->write_async_safe (msg, strlen (msg));
+}
+
 #ifdef GDB_PRINT_INTERNAL_BACKTRACE
 #ifdef GDB_PRINT_INTERNAL_BACKTRACE_USING_LIBBACKTRACE
 
@@ -52,11 +63,6 @@ libbacktrace_error (void *data, const char *errmsg, int errnum)
      skip printing a backtrace in this case.  */
   if (errnum < 0)
     return;
-
-  const auto sig_write = [] (const char *msg) -> void
-  {
-    gdb_stderr->write_async_safe (msg, strlen (msg));
-  };
 
   sig_write ("error creating backtrace: ");
   sig_write (errmsg);
@@ -77,11 +83,6 @@ static int
 libbacktrace_print (void *data, uintptr_t pc, const char *filename,
 		    int lineno, const char *function)
 {
-  const auto sig_write = [] (const char *msg) -> void
-  {
-    gdb_stderr->write_async_safe (msg, strlen (msg));
-  };
-
   /* Buffer to print addresses and line numbers into.  An 8-byte address
      with '0x' prefix and a null terminator requires 20 characters.  This
      also feels like it should be enough to represent line numbers in most
@@ -128,16 +129,14 @@ gdb_internal_backtrace_1 ()
 static void
 gdb_internal_backtrace_1 ()
 {
-  const auto sig_write = [] (const char *msg) -> void
-  {
-    gdb_stderr->write_async_safe (msg, strlen (msg));
-  };
-
   /* Allow up to 25 frames of backtrace.  */
   void *buffer[25];
   int frames = backtrace (buffer, ARRAY_SIZE (buffer));
 
-  backtrace_symbols_fd (buffer, frames, gdb_stderr->fd ());
+  int fd = ((gdb_stderr == nullptr || gdb_stderr->fd () == -1)
+	    ? 2
+	    : gdb_stderr->fd ());
+  backtrace_symbols_fd (buffer, frames, fd);
   if (frames == ARRAY_SIZE (buffer))
     sig_write (_("Backtrace might be incomplete.\n"));
 }
@@ -145,7 +144,22 @@ gdb_internal_backtrace_1 ()
 #else
 #error "unexpected internal backtrace policy"
 #endif
+
+static const char *str_backtrace = "----- Backtrace -----\n";
+static const char *str_backtrace_unavailable = "Backtrace unavailable\n";
+
 #endif /* GDB_PRINT_INTERNAL_BACKTRACE */
+
+/* See bt-utils.h.  */
+
+void
+gdb_internal_backtrace_init_str ()
+{
+#ifdef GDB_PRINT_INTERNAL_BACKTRACE
+  str_backtrace = _("----- Backtrace -----\n");
+  str_backtrace_unavailable = _("Backtrace unavailable\n");
+#endif
+}
 
 /* See bt-utils.h.  */
 
@@ -156,17 +170,9 @@ gdb_internal_backtrace ()
     return;
 
 #ifdef GDB_PRINT_INTERNAL_BACKTRACE
-  const auto sig_write = [] (const char *msg) -> void
-  {
-    gdb_stderr->write_async_safe (msg, strlen (msg));
-  };
+  sig_write (str_backtrace);
 
-  sig_write (_("----- Backtrace -----\n"));
-
-  if (gdb_stderr->fd () > -1)
-    gdb_internal_backtrace_1 ();
-  else
-    sig_write (_("Backtrace unavailable\n"));
+  gdb_internal_backtrace_1 ();
 
   sig_write ("---------------------\n");
 #endif

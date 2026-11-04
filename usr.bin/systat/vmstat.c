@@ -1,4 +1,4 @@
-/*	$NetBSD: vmstat.c,v 1.92 2023/03/28 00:00:30 kre Exp $	*/
+/*	$NetBSD: vmstat.c,v 1.92.2.1 2026/11/04 23:28:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1983, 1989, 1992, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 1/12/94";
 #endif
-__RCSID("$NetBSD: vmstat.c,v 1.92 2023/03/28 00:00:30 kre Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.92.2.1 2026/11/04 23:28:43 perseant Exp $");
 #endif /* not lint */
 
 /*
@@ -783,10 +783,7 @@ putint(int n, int l, int c, int w)
 	}
 	(void)snprintf(b, sizeof b, "%*d", w, n);
 	if ((int)strlen(b) > w) {
-		if (display_mode == TIME)
-			hline('*', w);
-		else
-			puthumanint(n, l, c, w);
+		puthumanint(n, l, c, w);
 		return;
 	}
 	addstr(b);

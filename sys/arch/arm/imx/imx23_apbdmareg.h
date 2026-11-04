@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdmareg.h,v 1.3 2015/01/10 12:13:00 jmcneill Exp $ */
+/* $NetBSD: imx23_apbdmareg.h,v 1.3.54.1 2026/11/04 23:20:09 perseant Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

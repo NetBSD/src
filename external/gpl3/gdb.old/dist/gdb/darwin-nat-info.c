@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -27,12 +27,11 @@
    the future.  It'd be good to remove this at some point when compiling on
    Tiger is no longer important.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "gdbcore.h"
 #include "value.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "inferior.h"
 #include "gdbarch.h"
 
@@ -570,9 +569,10 @@ darwin_debug_regions (task_t task, mach_vm_address_t address, int max)
 
       if (print)
 	{
+	  gdbarch *arch = current_inferior ()->arch ();
 	  gdb_printf (_("%s-%s %s/%s  %s %s %s"),
-		      paddress (target_gdbarch (), prev_address),
-		      paddress (target_gdbarch (), prev_address + prev_size),
+		      paddress (arch, prev_address),
+		      paddress (arch, prev_address + prev_size),
 		      unparse_protection (prev_info.protection),
 		      unparse_protection (prev_info.max_protection),
 		      unparse_inheritance (prev_info.inheritance),
@@ -618,7 +618,7 @@ darwin_debug_regions_recurse (task_t task)
 
   ui_out_emit_table table_emitter (uiout, 9, -1, "regions");
 
-  if (gdbarch_addr_bit (target_gdbarch ()) <= 32)
+  if (gdbarch_addr_bit (current_inferior ()->arch ()) <= 32)
     {
       uiout->table_header (10, ui_left, "start", "Start");
       uiout->table_header (10, ui_left, "end", "End");
@@ -630,7 +630,7 @@ darwin_debug_regions_recurse (task_t task)
     }
   uiout->table_header (3, ui_left, "min-prot", "Min");
   uiout->table_header (3, ui_left, "max-prot", "Max");
-  uiout->table_header (5, ui_left, "inheritence", "Inh");
+  uiout->table_header (5, ui_left, "inheritance", "Inh");
   uiout->table_header (9, ui_left, "share-mode", "Shr");
   uiout->table_header (1, ui_left, "depth", "D");
   uiout->table_header (3, ui_left, "submap", "Sm");
@@ -654,14 +654,15 @@ darwin_debug_regions_recurse (task_t task)
 
       {
 	ui_out_emit_tuple tuple_emitter (uiout, "regions-row");
+	gdbarch *arch = current_inferior ()->arch ();
 
-	uiout->field_core_addr ("start", target_gdbarch (), r_start);
-	uiout->field_core_addr ("end", target_gdbarch (), r_start + r_size);
+	uiout->field_core_addr ("start", arch, r_start);
+	uiout->field_core_addr ("end", arch, r_start + r_size);
 	uiout->field_string ("min-prot",
 			     unparse_protection (r_info.protection));
 	uiout->field_string ("max-prot",
 			     unparse_protection (r_info.max_protection));
-	uiout->field_string ("inheritence",
+	uiout->field_string ("inheritance",
 			     unparse_inheritance (r_info.inheritance));
 	uiout->field_string ("share-mode",
 			     unparse_share_mode (r_info.share_mode));
@@ -723,8 +724,8 @@ info_mach_region_command (const char *exp, int from_tty)
   struct inferior *inf;
 
   expression_up expr = parse_expression (exp);
-  val = evaluate_expression (expr.get ());
-  if (TYPE_IS_REFERENCE (value_type (val)))
+  val = expr->evaluate ();
+  if (TYPE_IS_REFERENCE (val->type ()))
     {
       val = value_ind (val);
     }

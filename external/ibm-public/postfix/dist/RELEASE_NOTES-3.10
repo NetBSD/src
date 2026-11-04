@@ -1,0 +1,200 @@
+This is the Postfix 3.10 stable release.
+
+The stable Postfix release is called postfix-3.10.x where 3=major
+release number, 10=minor release number, x=patchlevel. The stable
+release never changes except for patches that address bugs or
+emergencies. Patches change the patchlevel and the release date.
+
+New features are developed in snapshot releases. These are called
+postfix-3.11-yyyymmdd where yyyymmdd is the release date (yyyy=year,
+mm=month, dd=day). Patches are never issued for snapshot releases;
+instead, a new snapshot is released.
+
+The mail_release_date configuration parameter (format: yyyymmdd)
+specifies the release date of a stable release or snapshot release.
+
+If you upgrade from Postfix 3.8 or earlier, please read RELEASE_NOTES-3.9
+before proceeding.
+
+Dual license
+------------
+
+As of Postfix 3.2.5 this software is distributed with a dual license:
+in addition to the historical IBM Public License (IPL) 1.0, it is
+now also distributed with the more recent Eclipse Public License
+(EPL) 2.0. Recipients can choose to take the software under the
+license of their choice. Those who are more comfortable with the
+IPL can continue with that license.
+
+Major changes - tls
+-------------------
+
+[Forward compatibility 20250212] Support for OpenSSL 3.5 post-quantum
+cryptography. To manage algorithm selection, OpenSSL introduces new
+TLS group syntax that Postfix will not attempt to imitate. Instead,
+Postfix now allows the tls_eecdh_auto_curves and tls_ffdhe_auto_groups
+parameter values to have an empty value. When both are set empty,
+the algorithm selection can be managed through OpenSSL configuration.
+For more, look for "Post-quantum" in the postconf(5) manpage.
+
+[Feature 20250117] Support for the RFC 8689 "TLS-Required: no"
+message header to request delivery of messages such as TLSRPT
+summaries even if the preferred TLS security policy cannot be
+enforced. This limits the Postfix SMTP client to "smtp_tls_security_level
+= may" which does not authenticate server certificates and which
+allows falling back to plaintext.
+
+Support for the REQUIRETLS SMTP service extension remains future work.
+
+[Feature 20240926] Support for the TLSRPT protocol (defined in RFC
+8460). With this, a domain can publish a policy in DNS, and request
+daily summary reports for successful and failed SMTP-over-TLS
+connections to that domain's MX hosts.
+
+Postfix supports TLSRPT summaries for DANE (built-in) and MTA-STS
+(via an smtp_tls_policy_maps plugin). For details, see TLSRPT_README.
+
+Major changes - privacy
+-----------------------
+
+[Feature 20250205] With "smtpd_hide_client_session = yes", the
+Postfix SMTP server generates a Received: header without client
+session info This setting may be used with the MUA submission
+services (port 465 and 587), but it must not be used with the MTA
+service (port 25).
+
+Depending on the number of recipients, a redacted Received: header
+has one of the following forms:
+
+Received: by mail.example.com (Postfix) id postfix-queue-id
+        for <user@example.com>; Day, dd Mon yyyy hh:mm:ss tz-offset (zone)
+
+Received: by mail.example.com (Postfix) id postfix-queue-id
+        Day, dd Mon yyyy hh:mm:ss tz-offset (zone)
+
+The redacted form hides that a message was received with SMTP, and
+therefore it does not need to provide the information required by
+RFC 5321. It only has to satisfy RFC 5322.
+
+Major changes - rfc2047
+-----------------------
+
+[Feature 20250105] Support for automatic RFC 2047 encoding of
+non-ASCII "full name" information in Postfix-generated From: message
+headers.  Encoding non-ASCII full names can avoid the need to use
+SMTPUTF8, and therefore can avoid incompatibility with sites that
+do not support SMTPUTF8.
+
+The encoded result looks like "=?charset?Q?gibberish?=: for
+quoted-printable encoding, or "=?charset?B?gibberish?=" for base64
+encoding. Postfix uses quoted-printable for a full name that is
+short or mostly ASCII, and uses base64 otherwise.
+
+Background: when a message without a From: header is submitted with
+the Postfix sendmail(1) command, Postfix may add a From: header and
+use the sender's full name specified with the Postfix sendmail(1)
+"-F" option, with the sendmail(1) "NAME" environment variable, or
+with the GECOS field in the UNIX password database.
+
+This introduces a new configuration parameter "full_name_encoding_charset"
+(default: utf8) which specifies the character set of the full name
+information in the Postfix sendmail(1) "-F" option or "NAME"
+environment variable, or in the GECOS field in the UNIX password
+database. The parameter value becomes part of the encoded full name,
+and informs a Mail User Agent how to display the decoded gibberish.
+
+Major changes - bugfix
+----------------------
+
+[Incompat 20241130] The spawn(8) daemon failed to enforce the command
+time limit. It was sending the SIGKILL signal using the wrong
+effective UID and GID. The pipe(8) daemon has always done this
+right.
+
+Major changes - database
+------------------------
+
+[Feature 20250207] When mysql: or pgsql: configuration specifies
+a single host, assume that it is a load balancer and reconnect
+immediately after a single failure, instead of failing all requests
+for 60s.
+
+[Feature 20250114] first/next iterator support for cdb: tables, and
+other cdb: table code cleanups by Michael Tokarev.
+
+[Feature 20241024] In a pgsql: client configuration, the setting
+"dbname" is required, but ignored when the setting "hosts" contains
+an URI with a database name.
+
+[Feature 20241025] The Postfix pgsql: client configuration now
+allows any well-formed URI prefix as a pgsql: client connection
+target (the PostgreSQL URI parser decides what is allowed). The
+dbname setting is now optional if the hosts setting specifies only
+URIs.
+
+Major changes - internal protocol
+---------------------------------
+
+[Incompat 20250116] Postfix needs "postfix reload" after upgrade,
+because of a change in the delivery agent protocol. If this step
+is skipped, Postfix delivery agents will log a warning:
+
+    unexpected attribute smtputf8 from xxx socket (expecting: sendopts)
+
+where xxx is the delivery agent service name.
+
+Major changes - milter
+----------------------
+
+[Incompat 20250106] The logging of the Milter 'quarantine' action
+has changed.  Instead of logging "milter triggers HOLD action", it
+logs the reason given by a Milter application, or "default_action"
+if a Milter application was unavailable and the milter_default_action
+parameter or per-Milter "default_action" property specifies
+"quarantine".
+
+[Feature 20250106] The Postfix Milter implementation now logs the
+reason for a 'quarantine' action, instead of "milter triggers HOLD
+action".
+
+- If the quarantine action was requested by a Milter application,
+  Postfix will log the reason given by the application.
+
+- If the quarantine action was requested with the "milter_default_action"
+  parameter setting or with a per-Milter "default_action" property,
+  Postfix will log "default_action".
+
+Major changes - logging
+-----------------------
+
+[Feature 20250106] The Postfix Milter implementation now logs the
+reason for a 'quarantine' action, instead of "milter triggers HOLD
+action".
+
+- If the quarantine action was requested by a Milter application,
+  Postfix will log the reason given by the application.
+
+- If the quarantine action was requested with the "milter_default_action"
+  parameter setting or with a per-Milter "default_action" property,
+  Postfix will log "default_action".
+
+[Incompat 20250105] The SMTP server now logs the queue ID (or
+"NOQUEUE") when a connection ends abnormally (timeout, lost connection,
+or too many errors).
+
+[Feature 20250105] The SMTP server now logs the queue ID (or
+"NOQUEUE") when a connection ends abnormally (timeout, lost connection,
+or too many errors).
+
+[Incompat 20241104] The cleanup server now logs "queueid: canceled"
+when a message transaction is started but not completed.
+
+[Feature 20241104] The cleanup server now logs "queueid: canceled"
+when a message transaction is started but not completed. This
+provides a clear signal to logfile collation tools.
+
+[Incompat 20241031] the Dovecot SASL client logging for "Invalid
+authentication mechanism" now includes the name of that mechanism.
+
+[Incompat 20241023] Postfix SMTP server 'reject' logging now shows
+the sasl_method, sasl_username, and sasl_sender if available.

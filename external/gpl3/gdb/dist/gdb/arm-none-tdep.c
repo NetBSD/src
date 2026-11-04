@@ -1,6 +1,6 @@
 /* none on ARM target support.
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -204,9 +204,7 @@ arm_none_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
 /* Initialize ARM bare-metal target support.  */
 
-void _initialize_arm_none_tdep ();
-void
-_initialize_arm_none_tdep ()
+INIT_GDB_FILE (arm_none_tdep)
 {
   gdbarch_register_osabi (bfd_arch_arm, 0, GDB_OSABI_NONE,
 			  arm_none_init_abi);

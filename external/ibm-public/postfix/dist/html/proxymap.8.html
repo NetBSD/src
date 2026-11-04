@@ -45,50 +45,59 @@ PROXYMAP(8)                                                        PROXYMAP(8)
 
        The <a href="proxymap.8.html"><b>proxymap</b>(8)</a> server implements the following requests:
 
-       <b>open</b> <i>maptype:mapname flags</i>
-              Open the table with type <i>maptype</i> and name <i>mapname</i>, as controlled
-              by  <i>flags</i>.  The  reply  includes the <i>maptype</i> dependent flags (to
-              distinguish a fixed string table from a regular  expression  ta-
-              ble).
+       <b>open</b> <i>maptype:mapname instance-flags</i>
+              Open the table with type <i>maptype</i> and name <i>mapname</i>, with  initial
+              dictionary  flags  <i>instance-flags</i>. The reply contains the actual
+              dictionary flags (for example, to distinguish a fixed-string ta-
+              ble from a regular-expression table).
 
-       <b>lookup</b> <i>maptype:mapname flags key</i>
-              Look  up  the data stored under the requested key.  The reply is
-              the request completion status code and the lookup result  value.
-              The  <i>maptype:mapname</i>  and  <i>flags</i>  are  the same as with the <b>open</b>
+       <b>lookup</b> <i>maptype:mapname instance-flags request-flags key</i>
+              Look  up  the data stored under the requested key using the dic-
+              tionary flags in <i>request-flags</i>.  The reply contains the  request
+              completion  status code, the resulting dictionary flags, and the
+              lookup result value.  The <i>maptype:mapname</i> and <i>instance-flags</i> are
+              the same as with the <b>open</b> request.
+
+       <b>update</b> <i>maptype:mapname instance-flags request-flags key value</i>
+              Update the data stored under the requested key using the dictio-
+              nary flags in <i>request-flags</i>.  The  reply  contains  the  request
+              completion  status code and the resulting dictionary flags.  The
+              <i>maptype:mapname</i> and <i>instance-flags</i> are the same as with the <b>open</b>
               request.
 
-       <b>update</b> <i>maptype:mapname flags key value</i>
-              Update the data stored under the requested key.   The  reply  is
-              the  request  completion  status  code.  The <i>maptype:mapname</i> and
-              <i>flags</i> are the same as with the <b>open</b> request.
-
-              To implement single-updater maps, specify a process limit  of  1
+              To  implement  single-updater maps, specify a process limit of 1
               in the <a href="master.5.html">master.cf</a> file entry for the <b>proxywrite</b> service.
 
               This request is supported in Postfix 2.5 and later.
 
-       <b>delete</b> <i>maptype:mapname flags key</i>
-              Delete  the  data  stored under the requested key.  The reply is
-              the request completion status  code.   The  <i>maptype:mapname</i>  and
-              <i>flags</i> are the same as with the <b>open</b> request.
+       <b>delete</b> <i>maptype:mapname instance-flags request-flags key</i>
+              Delete the data stored under the requested key, using  the  dic-
+              tionary  flags in <i>request-flags</i>.  The reply contains the request
+              completion status code and the resulting dictionary flags.   The
+              <i>maptype:mapname</i> and <i>instance-flags</i> are the same as with the <b>open</b>
+              request.
 
               This request is supported in Postfix 2.5 and later.
 
-       <b>sequence</b> <i>maptype:mapname flags function</i>
-              Iterate  over  the  specified  database.  The <i>function</i> is one of
-              DICT_SEQ_FUN_FIRST  or  DICT_SEQ_FUN_NEXT.   The  reply  is  the
-              request  completion  status  code  and  a  lookup key and result
-              value, if found.
+       <b>sequence</b> <i>maptype:mapname instance-flags request-flags function</i>
+              Iterate over the specified database, using the dictionary  flags
+              in  <i>request-flags</i>.  The <i>function</i> is either DICT_SEQ_FUN_FIRST or
+              DICT_SEQ_FUN_NEXT.  The reply contains  the  request  completion
+              status  code,  the  resulting dictionary flags, and a lookup key
+              and  result   value   if   found.    The   <i>maptype:mapname</i>   and
+              <i>instance-flags</i> are the same as with the <b>open</b> request.
 
               This request is supported in Postfix 2.9 and later.
+
+       Not implemented: close
+              There is no <b>close</b> request, nor are tables implicitly closed when
+              a client disconnects. The purpose is to share tables among  mul-
+              tiple  client  processes.  Due  to the absence of an explicit or
+              implicit <b>close</b>, updates are forced to be synchronous.
 
        The request completion status is one of OK, RETRY, NOKEY (lookup failed
        because  the  key  was not found), BAD (malformed request) or DENY (the
        table is not approved for proxy read or update access).
-
-       There is no <b>close</b> command, nor are  tables  implicitly  closed  when  a
-       client  disconnects.  The  purpose  is  to  share tables among multiple
-       client processes.
 
 <b><a name="server_process_management">SERVER PROCESS MANAGEMENT</a></b>
        <a href="proxymap.8.html"><b>proxymap</b>(8)</a> servers run under control by the Postfix <a href="master.8.html"><b>master</b>(8)</a>  server.
@@ -218,6 +227,9 @@ PROXYMAP(8)                                                        PROXYMAP(8)
        Google, Inc.
        111 8th Avenue
        New York, NY 10011, USA
+
+       Wietse Venema
+       porcupine.org
 
                                                                    PROXYMAP(8)
 </pre> </body> </html>

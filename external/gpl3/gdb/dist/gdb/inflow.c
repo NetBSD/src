@@ -1,5 +1,5 @@
 /* Low level interface to ptrace, for GDB when running under Unix.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -49,11 +49,29 @@
 
 static void pass_signal (int);
 
+static int gdb_has_a_terminal (void);
+
 static void child_terminal_ours_1 (target_terminal_state);
 
 /* Record terminal status separately for debugger and inferior.  */
 
 static struct serial *stdin_serial;
+
+/* See terminal.h.  */
+
+scoped_restore_tty_state::scoped_restore_tty_state ()
+{
+  if (gdb_has_a_terminal ())
+    m_ttystate = serial_get_tty_state (stdin_serial);
+}
+
+/* See terminal.h.  */
+
+scoped_restore_tty_state::~scoped_restore_tty_state ()
+{
+  if (m_ttystate != nullptr)
+    serial_set_tty_state (stdin_serial, m_ttystate);
+}
 
 /* Terminal related info we need to keep track of.  Each inferior
    holds an instance of this structure --- we save it whenever the
@@ -161,6 +179,15 @@ set_initial_gdb_ttystate (void)
       our_terminal_info.process_group = tcgetpgrp (0);
 #endif
     }
+}
+
+/* See terminal.h.  */
+
+void
+restore_initial_gdb_ttystate ()
+{
+  if (initial_gdb_ttystate != nullptr)
+    serial_set_tty_state (stdin_serial, initial_gdb_ttystate);
 }
 
 /* Does GDB have a terminal (on stdin)?  */
@@ -944,9 +971,7 @@ initialize_stdin_serial (void)
   stdin_serial = serial_fdopen (0);
 }
 
-void _initialize_inflow ();
-void
-_initialize_inflow ()
+INIT_GDB_FILE (inflow)
 {
   add_info ("terminal", info_terminal_command,
 	    _("Print inferior's saved terminal status."));

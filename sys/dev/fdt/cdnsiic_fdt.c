@@ -1,4 +1,4 @@
-/* $NetBSD: cdnsiic_fdt.c,v 1.1 2022/11/05 17:31:37 jmcneill Exp $ */
+/* $NetBSD: cdnsiic_fdt.c,v 1.1.8.1 2026/11/04 23:21:50 perseant Exp $ */
 
 /*-
  * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: cdnsiic_fdt.c,v 1.1 2022/11/05 17:31:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cdnsiic_fdt.c,v 1.1.8.1 2026/11/04 23:21:50 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -94,9 +94,7 @@ cdnsiic_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	fdtbus_register_i2c_controller(&sc->sc_ic, phandle);
-
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_ic, iicbus_print);
+	iicbus_attach(self, &sc->sc_ic);
 }
 
 CFATTACH_DECL_NEW(cdnsiic_fdt, sizeof(struct cdnsiic_softc),

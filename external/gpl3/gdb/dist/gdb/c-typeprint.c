@@ -1,5 +1,5 @@
 /* Support for printing C and C++ types for GDB, the GNU debugger.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
-#include "gdbsupport/gdb_obstack.h"
 #include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -252,8 +251,8 @@ cp_type_print_method_args (struct type *mtype, const char *prefix,
 			   enum language language,
 			   const struct type_print_options *flags)
 {
-  struct field *args = mtype->fields ();
-  int nargs = mtype->num_fields ();
+  auto args = mtype->fields ();
+  int nargs = args.size ();
   int varargs = mtype->has_varargs ();
   int i;
 
@@ -516,16 +515,15 @@ c_type_print_args (struct type *type, struct ui_file *stream,
 		   int linkage_name, enum language language,
 		   const struct type_print_options *flags)
 {
-  int i;
   int printed_any = 0;
 
   gdb_printf (stream, "(");
 
-  for (i = 0; i < type->num_fields (); i++)
+  for (const auto &field : type->fields ())
     {
       struct type *param_type;
 
-      if (type->field (i).is_artificial () && linkage_name)
+      if (field.is_artificial () && linkage_name)
 	continue;
 
       if (printed_any)
@@ -534,7 +532,7 @@ c_type_print_args (struct type *type, struct ui_file *stream,
 	  stream->wrap_here (4);
 	}
 
-      param_type = type->field (i).type ();
+      param_type = field.type ();
 
       if (language == language_cplus && linkage_name)
 	{
@@ -816,7 +814,7 @@ c_type_print_template_args (const struct type_print_options *flags,
     {
       struct symbol *sym = TYPE_TEMPLATE_ARGUMENT (type, i);
 
-      if (sym->aclass () != LOC_TYPEDEF)
+      if (sym->loc_class () != LOC_TYPEDEF)
 	continue;
 
       if (first)

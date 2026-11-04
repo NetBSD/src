@@ -1,5 +1,5 @@
 /* Common things used by the various *gnu-nat.c files
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    Written by Miles Bader <miles@gnu.ai.mit.edu>
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GNU_NAT_H
-#define GNU_NAT_H
+#ifndef GDB_GNU_NAT_H
+#define GDB_GNU_NAT_H
 
 /* Work around conflict between Mach's 'thread_info' function, and GDB's
    'thread_info' class.  Make the former available as 'mach_thread_info'.  */
@@ -188,4 +188,4 @@ private:
 /* The final/concrete instance.  */
 extern gnu_nat_target *gnu_target;
 
-#endif /* GNU_NAT_H */
+#endif /* GDB_GNU_NAT_H */

@@ -1,7 +1,7 @@
-/*	$NetBSD: util.c,v 1.167.2.1 2025/08/02 05:58:27 perseant Exp $	*/
+/*	$NetBSD: util.c,v 1.167.2.2 2026/11/04 23:28:33 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1997-2023 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -64,7 +64,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.167.2.1 2025/08/02 05:58:27 perseant Exp $");
+__RCSID("$NetBSD: util.c,v 1.167.2.2 2026/11/04 23:28:33 perseant Exp $");
 #endif /* not lint */
 
 /*
@@ -1081,40 +1081,18 @@ strsuftoi(const char *arg)
 void
 setupsockbufsize(int sock)
 {
-	socklen_t slen;
 
-	if (0 == rcvbuf_size) {
-		slen = sizeof(rcvbuf_size);
-		if (getsockopt(sock, SOL_SOCKET, SO_RCVBUF,
-		    (void *)&rcvbuf_size, &slen) == -1)
-			err(1, "Unable to determine rcvbuf size");
-		if (rcvbuf_size <= 0)
-			rcvbuf_size = 8 * 1024;
-		if (rcvbuf_size > 8 * 1024 * 1024)
-			rcvbuf_size = 8 * 1024 * 1024;
-		DPRINTF("setupsockbufsize: rcvbuf_size determined as %d\n",
-		    rcvbuf_size);
-	}
-	if (0 == sndbuf_size) {
-		slen = sizeof(sndbuf_size);
-		if (getsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-		    (void *)&sndbuf_size, &slen) == -1)
-			err(1, "Unable to determine sndbuf size");
-		if (sndbuf_size <= 0)
-			sndbuf_size = 8 * 1024;
-		if (sndbuf_size > 8 * 1024 * 1024)
-			sndbuf_size = 8 * 1024 * 1024;
-		DPRINTF("setupsockbufsize: sndbuf_size determined as %d\n",
-		    sndbuf_size);
+	if (sndbuf_size > 0) {
+		if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
+		    (void *)&sndbuf_size, sizeof(sndbuf_size)) == -1)
+			warn("Unable to set sndbuf size %d", sndbuf_size);
 	}
 
-	if (setsockopt(sock, SOL_SOCKET, SO_SNDBUF,
-	    (void *)&sndbuf_size, sizeof(sndbuf_size)) == -1)
-		warn("Unable to set sndbuf size %d", sndbuf_size);
-
-	if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
-	    (void *)&rcvbuf_size, sizeof(rcvbuf_size)) == -1)
-		warn("Unable to set rcvbuf size %d", rcvbuf_size);
+	if (rcvbuf_size > 0) {
+		if (setsockopt(sock, SOL_SOCKET, SO_RCVBUF,
+		    (void *)&rcvbuf_size, sizeof(rcvbuf_size)) == -1)
+			warn("Unable to set rcvbuf size %d", rcvbuf_size);
+	}
 }
 
 /*
@@ -1307,6 +1285,10 @@ isipv6addr(const char *addr)
  *	-1	error occurred
  *	-2	EOF encountered
  *	-3	line was too long
+ *
+ * TODO: handle EINTR? fgets() might fail with EINTR and not handle partial
+ * line reads. However, this function is either used with stdin or local
+ * files, so not fixing at this time.
  */
 int
 get_line(FILE *stream, char *buf, size_t buflen, const char **errormsg)
@@ -1494,6 +1476,58 @@ int
 ftp_poll(struct pollfd *fds, int nfds, int timeout)
 {
 	return poll(fds, nfds, timeout);
+}
+
+/*
+ * Internal version of getc(3) that retries EINTR/EAGAIN errors,
+ * and if fin_errno != NULL, sets fin_errno to errno on other conditions.
+ */
+int
+ftp_getc(FILE * fin, int * fin_errno)
+{
+	int res;
+
+	while ((res = getc(fin)) == EOF) {
+		if (feof(fin))
+			break;		/* return EOF */
+		if (ferror(fin)) {
+			if ((errno == EINTR) || (errno == EAGAIN)) {
+					/* retry on EINTR or EAGAIN */
+				clearerr(fin);
+				continue;
+			}
+			if (fin_errno != NULL)
+				*fin_errno = errno;
+		}
+		break;			/* return all other errors */
+	}
+	return res;
+}
+
+/*
+ * Internal version of putc(3) that retries EINTR/EAGAIN errors,
+ * and if fout_errno != NULL, sets fout_errno to errno on other conditions.
+ */
+int
+ftp_putc(int c, FILE * fout, int * fout_errno)
+{
+	int res;
+
+	while ((res = putc(c, fout)) == EOF) {
+		if (feof(fout))
+			break;		/* return EOF */
+		if (ferror(fout)) {
+			if ((errno == EINTR) || (errno == EAGAIN)) {
+					/* retry on EINTR or EAGAIN */
+				clearerr(fout);
+				continue;
+			}
+			if (fout_errno != NULL)
+				*fout_errno = errno;
+		}
+		break;			/* return all other errors */
+	}
+	return res;
 }
 
 /*

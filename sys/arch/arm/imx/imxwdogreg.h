@@ -1,3 +1,5 @@
+/*	$NetBSD: imxwdogreg.h,v 1.3.56.1 2026/11/04 23:20:11 perseant Exp $	*/
+
 /*-
  * Copyright (c) 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.

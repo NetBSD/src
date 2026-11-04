@@ -3,16 +3,33 @@
 curdir=$(pwd)
 helper=$(atf_get_srcdir)/h_nullmnt
 
+# helper function to check for kernel support
+have_nullfs_support()
+{
+	for t in $( sysctl -n vfs.generic.fstypes )
+	do
+		case "$t" in
+		  null)	return 0;;
+		esac
+	done
+
+	return 1
+}
+
 # common test body
 #    $1 = directory of file to monitor
 #    $2 = directory of file to update/modify
 
 nullmnt_common()
-{    
+{
+	if ! have_nullfs_support; then
+		atf_skip "nullfs not supported"
+	fi
+
 	mkdir ${curdir}/lower_dir
 	mkdir ${curdir}/upper_dir
 	mount -t null ${curdir}/lower_dir ${curdir}/upper_dir || \
-		atf_skip "nullfs not supported"
+		atf_fail "could not mount nullfs"
 	rm -f ${curdir}/lower_dir/afile
 	touch ${curdir}/lower_dir/afile
 

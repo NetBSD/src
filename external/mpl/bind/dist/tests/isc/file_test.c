@@ -1,4 +1,4 @@
-/*	$NetBSD: file_test.c,v 1.2.6.1 2025/08/02 05:54:15 perseant Exp $	*/
+/*	$NetBSD: file_test.c,v 1.2.6.2 2026/11/04 23:18:23 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -32,8 +32,8 @@
 
 #include <tests/isc.h>
 
-#define NAME	  "internal"
-#define SHA	  "3bed2cb3a3acf7b6a8ef408420cc682d5520e26976d354254f528c965612054f"
+#define NAME "internal"
+#define SHA  "3bed2cb3a3acf7b6a8ef408420cc682d5520e26976d354254f528c965612054f"
 #define TRUNC_SHA "3bed2cb3a3acf7b6"
 
 #define BAD1	 "in/internal"

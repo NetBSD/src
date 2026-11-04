@@ -1,6 +1,6 @@
 // -*- C++ -*- C forwarding header.
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1847,7 +1847,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #if __cplusplus >= 201703L
 
   // [c.math.hypot3], three-dimensional hypotenuse
-#define __cpp_lib_hypot 201603
+#define __cpp_lib_hypot 201603L
 
   template<typename _Tp>
     inline _Tp
@@ -1885,7 +1885,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     }
 #endif // C++17
 
-#if __cplusplus > 201703L
+#if __cplusplus >= 202002L
   // linear interpolation
 # define __cpp_lib_interpolate 201902L
 
@@ -1893,7 +1893,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     constexpr _Fp
     __lerp(_Fp __a, _Fp __b, _Fp __t) noexcept
     {
-      if (__a <= 0 && __b >= 0 || __a >= 0 && __b <= 0)
+      if ((__a <= 0 && __b >= 0) || (__a >= 0 && __b <= 0))
 	return __t * __b + (1 - __t) * __a;
 
       if (__t == 1)
@@ -1902,7 +1902,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // Exact at __t=0, monotonic except near __t=1,
       // bounded, determinate, and consistent:
       const _Fp __x = __a + __t * (__b - __a);
-      return __t > 1 == __b > __a
+      return (__t > 1) == (__b > __a)
 	? (__b < __x ? __x : __b)
 	: (__b > __x ? __x : __b);  // monotonic near __t=1
     }

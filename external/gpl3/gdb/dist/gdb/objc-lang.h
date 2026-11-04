@@ -1,6 +1,6 @@
 /* Objective-C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined(OBJC_LANG_H)
-#define OBJC_LANG_H
+#ifndef GDB_OBJC_LANG_H
+#define GDB_OBJC_LANG_H
 
 struct stoken;
 
@@ -48,4 +48,4 @@ struct symbol *lookup_struct_typedef (const char *name,
 				      const struct block *block,
 				      int noerr);
 
-#endif
+#endif /* GDB_OBJC_LANG_H */

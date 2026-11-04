@@ -1,5 +1,5 @@
 /* Native debugging support for Intel x86 running DJGPP.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Written by Robert Hoehne.
 
    This file is part of GDB.
@@ -681,10 +681,8 @@ go32_nat_target::create_inferior (const char *exec_file,
   int result;
   const char *args = allargs.c_str ();
 
-  /* If no exec file handed to us, get it from the exec-file command -- with
-     a good, common error message if none is specified.  */
-  if (exec_file == 0)
-    exec_file = get_exec_file (1);
+  if (exec_file == nullptr)
+    no_executable_specified_error ();
 
   resume_signal = -1;
   resume_is_step = 0;
@@ -699,7 +697,7 @@ go32_nat_target::create_inferior (const char *exec_file,
 		      "not enough memory.\n"));
 
   /* Parse the command line and create redirections.  */
-  if (strpbrk (args, "<>"))
+  if (strpbrk (args, "<>") != nullptr)
     {
       if (redir_cmdline_parse (args, &child_cmd) == 0)
 	args = child_cmd.command;
@@ -2059,9 +2057,7 @@ go32_pte_for_address (const char *arg, int from_tty)
 
 static struct cmd_list_element *info_dos_cmdlist = NULL;
 
-void _initialize_go32_nat ();
-void
-_initialize_go32_nat ()
+INIT_GDB_FILE (go32_nat)
 {
   x86_dr_low.set_control = go32_set_dr7;
   x86_dr_low.set_addr = go32_set_dr;

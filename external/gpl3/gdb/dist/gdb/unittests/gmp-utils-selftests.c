@@ -1,6 +1,6 @@
 /* Self tests of the gmp-utils API.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -155,7 +155,7 @@ gdb_mpz_as_integer_out_of_range ()
    to provide a bit more information about the kind of values
    that were used when the check failed.  This makes the writing
    of the tests a little more verbose, but the debugging in case
-   of problems should hopefuly be easier.  */
+   of problems should hopefully be easier.  */
 
 template<typename T>
 void
@@ -287,7 +287,7 @@ gdb_mpz_read_min_max ()
    to provide a bit more information about the kind of values
    that were used when the check failed.  This makes the writing
    of the tests a little more verbose, but the debugging in case
-   of problems should hopefuly be easier.  */
+   of problems should hopefully be easier.  */
 
 template<typename T>
 T
@@ -384,7 +384,7 @@ gdb_mpz_write_min_max ()
    to provide a bit more information about the kind of values
    that were used when the check failed.  This makes the writing
    of the tests a little more verbose, but the debugging in case
-   of problems should hopefuly be easier.  */
+   of problems should hopefully be easier.  */
 
 static void
 read_fp_test (int unscaled, const gdb_mpq &scaling_factor,
@@ -498,10 +498,7 @@ gdb_mpq_write_fixed_point ()
 
 }
 
-void _initialize_gmp_utils_selftests ();
-
-void
-_initialize_gmp_utils_selftests ()
+INIT_GDB_FILE (gmp_utils_selftests)
 {
   selftests::register_test ("gdb_mpz_as_integer",
 			    selftests::gdb_mpz_as_integer);

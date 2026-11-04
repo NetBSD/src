@@ -1,5 +1,5 @@
 /* Support for printing Ada types for GDB, the GNU debugger.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,14 +16,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "bfd.h"
 #include "event-top.h"
 #include "gdbtypes.h"
 #include "value.h"
 #include "c-lang.h"
 #include "cli/cli-style.h"
 #include "typeprint.h"
-#include "target-float.h"
 #include "ada-lang.h"
 #include <ctype.h>
 
@@ -704,7 +702,7 @@ print_variant_part (const variant_part &part,
     name = "?";
   else
     {
-      name = type->field (part.discriminant_index).name ();;
+      name = type->field (part.discriminant_index).name ();
       discr_type = type->field (part.discriminant_index).type ();
     }
 

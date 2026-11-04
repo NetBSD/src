@@ -364,3 +364,23 @@ Postfix  Postfix legacy TLS Support
  with cipher ECDHE RSA AES256 GCM SHA384 256 256 bits 
  TLSv1 2 with cipher ECDHE RSA AES256 GCM SHA384 256 256 bits 
  The recommended socket location is still to be determined A good socket location would be under the Postfix queue directory for example smtp_tlsrpt_socket_name run tlsrpt tlsrpt sock The advantage of using a relative name is that it
+enhanced status code and text format 45 number number text 
+opportunistic  opportunistic starttls
+ li The general format is tls feature feature 
+ li p The general format is tt tls feature feature tt 
+ li p When a feature is enclosed in tt tt and tt tt 
+ li p When tt tt is prepended to a feature the policy
+ tt none tt tt may tt tt encrypt tt etc Other
+ tt tls i level i requiretls tt where tt tt 
+where tt tt indicates the kind of policy violation described
+tt  tt tls i level i requiretls noencryption tt or
+ xn mumble mumble Punycode A label form that Postfix needs 
+ xn mumble mumble Punycode A label form that Postfix needs Note if you specify the domain list outside main cf then the automatic name expansions and Punycode conversions will not happen you will need to enter real domain names and will
+ pre pre 
+ contains the xn mumble mumble Punycode A label form that Postfix needs 
+ domain_to_ascii returns the xn mumble mumble Punycode A label form that Postfix needs This works around a limitation that may be eliminated in a future Postfix version 
+smtp_requiretls_policy smtp_requiretls_policy inline 
+ xn mumble mumble Punycode A label form that Postfix needs This works around a limitation that may be eliminated in a future Postfix version 
+in tt tt p 
+mynetworks mynetworks lmdb etc postfix network_table
+ 44 enable redirect redirect hash to lmdb or cdb 

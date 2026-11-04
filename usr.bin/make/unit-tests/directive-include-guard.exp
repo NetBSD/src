@@ -18,6 +18,8 @@ Parse_PushInput: variable-if-spaced.tmp:1
 Parse_PushInput: variable-if-spaced.tmp:1
 Parse_PushInput: variable-if-parenthesized.tmp:1
 Parse_PushInput: variable-if-parenthesized.tmp:1
+Parse_PushInput: variable-if-without-space.tmp:1
+Skipping 'variable-if-without-space.tmp' because 'VARIABLE_IF_WITHOUT_SPACE' is defined
 Parse_PushInput: variable-ifdef-negated.tmp:1
 Parse_PushInput: variable-ifdef-negated.tmp:1
 Parse_PushInput: variable-name-mismatch.tmp:1

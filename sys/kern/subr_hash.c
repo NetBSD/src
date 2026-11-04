@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_hash.c,v 1.12 2021/06/13 14:58:49 simonb Exp $	*/
+/*	$NetBSD: subr_hash.c,v 1.12.16.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,15 +37,18 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.12 2021/06/13 14:58:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_hash.c,v 1.12.16.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
+
 #include <sys/bitops.h>
 #include <sys/kmem.h>
-#include <sys/systm.h>
 #include <sys/pslist.h>
 #include <sys/rwlock.h>
+#include <sys/sdt.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
 static int hashstat_sysctl(SYSCTLFN_PROTO);
 
@@ -134,7 +137,7 @@ hashinit(u_int elements, enum hashtype htype, bool waitok, u_long *hashmask)
 }
 
 /*
- * Free memory from hash table previosly allocated via hashinit().
+ * Free memory from hash table previously allocated via hashinit().
  */
 void
 hashdone(void *hashtbl, enum hashtype htype, u_long hashmask)
@@ -211,7 +214,7 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 
 		if (h == NULL) {
 			/* Can't QUERY one hash without supplying the hash name. */
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		query = true;
 		error = sysctl_copyinstr(l, h->hash_name, queryname, 
@@ -244,7 +247,7 @@ hashstat_sysctl(SYSCTLFN_ARGS)
 	sysctl_relock();
 
 	if (query && written == 0)	/* query not found? */
-		error = ENOENT;
+		error = SET_ERROR(ENOENT);
 
 	*oldlenp = written;
 	return error;

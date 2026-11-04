@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $ */
+/* $NetBSD: motoi2c.c,v 1.13.10.1 2026/11/04 23:21:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,11 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $");
-
-#if defined(__arm__) || defined(__aarch64__)
-#include "opt_fdt.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.13.10.1 2026/11/04 23:21:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -46,10 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.13 2022/07/22 23:43:23 thorpej Exp $")
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/motoi2creg.h>
 #include <dev/i2c/motoi2cvar.h>
-
-#ifdef FDT
-#include <dev/fdt/fdtvar.h>
-#endif
 
 #ifdef DEBUG
 int motoi2c_debug = 0;
@@ -92,8 +84,6 @@ void
 motoi2c_attach(struct motoi2c_softc *sc,
     const struct motoi2c_settings *settings)
 {
-	struct i2cbus_attach_args iba;
-
 	if (settings == NULL) {
 		sc->sc_settings = motoi2c_default_settings;
 	} else {
@@ -109,9 +99,6 @@ motoi2c_attach(struct motoi2c_softc *sc,
 	sc->sc_i2c.ic_acquire_bus = motoi2c_acquire_bus;
 	sc->sc_i2c.ic_release_bus = motoi2c_release_bus;
 	sc->sc_i2c.ic_exec = motoi2c_exec;
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	iba.iba_child_devices = sc->sc_child_devices;
 
 	if ((sc->sc_flags & MOTOI2C_F_ENABLE_INV) != 0) {
 		sc->sc_enable_mask = 0;
@@ -127,15 +114,7 @@ motoi2c_attach(struct motoi2c_softc *sc,
 	I2C_WRITE(I2CADR, sc->sc_settings.i2c_adr);	/* our slave address */
 	motoi2c_clear_status(sc, I2C_READ(I2CSR));
 
-#ifdef FDT
-	if (sc->sc_phandle != 0) {
-		fdtbus_register_i2c_controller(&sc->sc_i2c, sc->sc_phandle);
-		fdtbus_attach_i2cbus(sc->sc_dev, sc->sc_phandle, &sc->sc_i2c,
-		    iicbus_print);
-	} else
-#endif
-	config_found(sc->sc_dev, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 static int

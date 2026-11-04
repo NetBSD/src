@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.72 2021/10/20 03:08:18 thorpej Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.72.10.1 2026/11/04 23:27:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.72 2021/10/20 03:08:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.72.10.1 2026/11/04 23:27:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -726,7 +726,7 @@ layer_reclaim(void *v)
 	if (vp == lmp->layerm_rootvp) {
 		/*
 		 * Oops! We no longer have a root node. Most likely reason is
-		 * that someone forcably unmunted the underlying fs.
+		 * that someone forcibly unmounted the underlying fs.
 		 *
 		 * Now getting the root vnode will fail. We're dead. :-(
 		 */

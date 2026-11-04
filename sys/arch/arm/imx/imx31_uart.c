@@ -1,3 +1,5 @@
+/* $NetBSD: imx31_uart.c,v 1.3.40.1 2026/11/04 23:20:11 perseant Exp $ */
+
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.

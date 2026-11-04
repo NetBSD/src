@@ -1,4 +1,4 @@
-/*	$NetBSD: xfrout.c,v 1.14.2.1 2025/08/02 05:54:09 perseant Exp $	*/
+/*	$NetBSD: xfrout.c,v 1.14.2.2 2026/11/04 23:18:20 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -48,6 +48,8 @@
 #include <ns/stats.h>
 #include <ns/xfrout.h>
 
+#include "pfilter.h"
+
 /*! \file
  * \brief
  * Outgoing AXFR and IXFR.
@@ -82,7 +84,7 @@
 			      "bad zone transfer request: %s (%s)", msg, \
 			      isc_result_totext(code));                  \
 		if (result != ISC_R_SUCCESS)                             \
-			goto failure;                                    \
+			goto cleanup;                                    \
 	} while (0)
 
 #define FAILQ(code, msg, question, rdclass)                                  \
@@ -97,14 +99,7 @@
 			      "bad zone transfer request: '%s/%s': %s (%s)", \
 			      _buf1, _buf2, msg, isc_result_totext(code));   \
 		if (result != ISC_R_SUCCESS)                                 \
-			goto failure;                                        \
-	} while (0)
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
+			goto cleanup;                                        \
 	} while (0)
 
 /**************************************************************************/
@@ -251,7 +246,7 @@ ixfr_rrstream_create(isc_mem_t *mctx, const char *journal_filename,
 	*sp = (rrstream_t *)s;
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	ixfr_rrstream_destroy((rrstream_t **)(void *)&s);
 	return result;
 }
@@ -332,7 +327,7 @@ axfr_rrstream_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *ver,
 	*sp = (rrstream_t *)s;
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	axfr_rrstream_destroy((rrstream_t **)(void *)&s);
 	return result;
 }
@@ -452,7 +447,7 @@ soa_rrstream_create(isc_mem_t *mctx, dns_db_t *db, dns_dbversion_t *ver,
 	*sp = (rrstream_t *)s;
 	return ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	soa_rrstream_destroy((rrstream_t **)(void *)&s);
 	return result;
 }
@@ -753,6 +748,7 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 	bool is_poll = false;
 	bool is_dlz = false;
 	bool is_ixfr = false;
+	bool is_quota_applied = false;
 	bool useviewacl = false;
 	uint32_t begin_serial = 0, current_serial;
 
@@ -769,16 +765,6 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 
 	ns_client_log(client, DNS_LOGCATEGORY_XFER_OUT, NS_LOGMODULE_XFER_OUT,
 		      ISC_LOG_DEBUG(6), "%s request", mnemonic);
-	/*
-	 * Apply quota.
-	 */
-	result = isc_quota_acquire(&client->manager->sctx->xfroutquota);
-	if (result != ISC_R_SUCCESS) {
-		isc_log_write(XFROUT_COMMON_LOGARGS, ISC_LOG_WARNING,
-			      "%s request denied: %s", mnemonic,
-			      isc_result_totext(result));
-		goto max_quota;
-	}
 
 	/*
 	 * Interpret the question section.
@@ -833,7 +819,8 @@ ns_xfr_start(ns_client_t *client, dns_rdatatype_t reqtype) {
 					      ISC_LOG_ERROR,
 					      "zone transfer '%s/%s' denied",
 					      _buf1, _buf2);
-				goto failure;
+				pfilter_notify(result, client, "zonexfr");
+				goto cleanup;
 			}
 			if (result != ISC_R_SUCCESS) {
 				FAILQ(DNS_R_NOTAUTH, "non-authoritative zone",
@@ -950,6 +937,19 @@ got_soa:
 	}
 
 	/*
+	 * Apply quota after ACL is checked, so that unauthorized clients
+	 * can not starve the authorized clients.
+	 */
+	result = isc_quota_acquire(&client->manager->sctx->xfroutquota);
+	if (result != ISC_R_SUCCESS) {
+		isc_log_write(XFROUT_COMMON_LOGARGS, ISC_LOG_WARNING,
+			      "%s request denied: %s", mnemonic,
+			      isc_result_totext(result));
+		goto cleanup;
+	}
+	is_quota_applied = true;
+
+	/*
 	 * Look up the requesting server in the peer table.
 	 */
 	isc_netaddr_fromsockaddr(&na, &client->peeraddr);
@@ -1036,7 +1036,8 @@ got_soa:
 			xfrout_log1(client, question_name, question_class,
 				    ISC_LOG_INFO,
 				    "IXFR version not in journal, "
-				    "falling back to AXFR");
+				    "falling back to AXFR (serial %u)",
+				    begin_serial);
 			mnemonic = "AXFR-style IXFR";
 			goto axfr_fallback;
 		}
@@ -1086,7 +1087,7 @@ have_stream:
 	CHECK(dns_message_getquerytsig(request, mctx, &tsigbuf));
 	/*
 	 * Create the xfrout context object.  This transfers the ownership
-	 * of "stream", "db", "ver", and "quota" to the xfrout context object.
+	 * of "stream", "db" and "ver" to the xfrout context object.
 	 */
 
 	if (is_dlz) {
@@ -1174,7 +1175,7 @@ have_stream:
 
 	result = ISC_R_SUCCESS;
 
-failure:
+cleanup:
 	if (result == DNS_R_REFUSED) {
 		inc_stats(client, zone, ns_statscounter_xfrrej);
 	}
@@ -1201,10 +1202,13 @@ failure:
 	}
 
 	if (xfr != NULL) {
+		/* The quota will be released in xfrout_ctx_destroy(). */
+		INSIST(is_quota_applied);
 		xfrout_fail(xfr, result, "setting up zone transfer");
 	} else if (result != ISC_R_SUCCESS) {
-		isc_quota_release(&client->manager->sctx->xfroutquota);
-	max_quota:
+		if (is_quota_applied) {
+			isc_quota_release(&client->manager->sctx->xfroutquota);
+		}
 		ns_client_log(client, DNS_LOGCATEGORY_XFER_OUT,
 			      NS_LOGMODULE_XFER_OUT, ISC_LOG_DEBUG(3),
 			      "zone transfer setup failed");
@@ -1284,7 +1288,7 @@ xfrout_ctx_create(isc_mem_t *mctx, ns_client_t *client, unsigned int id,
 	xfr->txmemlen = len;
 
 	/*
-	 * These MUST be after the last "goto failure;" / CHECK to
+	 * These MUST be after the last "goto cleanup;" / CHECK to
 	 * prevent a double free by the caller.
 	 */
 	xfr->stream = stream;
@@ -1524,8 +1528,7 @@ sendstream(xfrout_ctx_t *xfr) {
 					   "(%d bytes)",
 					   size);
 				/* XXX DNS_R_RRTOOLARGE? */
-				result = ISC_R_NOSPACE;
-				goto failure;
+				CHECK(ISC_R_NOSPACE);
 			}
 			break;
 		}
@@ -1623,7 +1626,7 @@ sendstream(xfrout_ctx_t *xfr) {
 	/* Advance lasttsig to be the last TSIG generated */
 	CHECK(dns_message_getquerytsig(msg, xfr->mctx, &xfr->lasttsig));
 
-failure:
+cleanup:
 	if (tcpmsg != NULL) {
 		dns_message_detach(&tcpmsg);
 	}

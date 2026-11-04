@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.443 2024/04/13 12:28:01 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.443.2.1 2026/11/04 23:20:05 perseant Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -193,7 +193,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.443 2024/04/13 12:28:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.443.2.1 2026/11/04 23:20:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -470,11 +470,6 @@ EVCNT_ATTACH_STATIC(pmap_ev_activations);
 #define	PMAPCOUNT(x)	((void)0)
 #endif
 
-#ifdef ARM_MMU_EXTENDED
-void pmap_md_pdetab_activate(pmap_t, struct lwp *);
-void pmap_md_pdetab_deactivate(pmap_t pm);
-#endif
-
 /*
  * pmap copy/zero page, and mem(5) hook point
  */
@@ -666,8 +661,8 @@ int	pmap_needs_pte_sync;
  */
 struct pv_entry {
 	SLIST_ENTRY(pv_entry) pv_link;	/* next pv_entry */
-	pmap_t		pv_pmap;        /* pmap where mapping lies */
-	vaddr_t		pv_va;          /* virtual address for mapping */
+	pmap_t		pv_pmap;	/* pmap where mapping lies */
+	vaddr_t		pv_va;		/* virtual address for mapping */
 	u_int		pv_flags;       /* flags */
 };
 
@@ -2438,7 +2433,7 @@ pmap_clearbit(struct vm_page_md *md, paddr_t pa, u_int maskbits)
 				 *
 				 * Don't turn caching on again if this is a
 				 * modified emulation. This would be
-				 * inconsitent with the settings created by
+				 * inconsistent with the settings created by
 				 * pmap_vac_me_harder(). Otherwise, it's safe
 				 * to re-enable cacheing.
 				 *
@@ -4913,75 +4908,6 @@ pmap_unwire(pmap_t pm, vaddr_t va)
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
-#ifdef ARM_MMU_EXTENDED
-void
-pmap_md_pdetab_activate(pmap_t pm, struct lwp *l)
-{
-	UVMHIST_FUNC(__func__);
-	struct cpu_info * const ci = curcpu();
-	struct pmap_asid_info * const pai = PMAP_PAI(pm, cpu_tlb_info(ci));
-
-	UVMHIST_CALLARGS(maphist, "pm %#jx (pm->pm_l1_pa %08jx asid %ju)",
-	    (uintptr_t)pm, pm->pm_l1_pa, pai->pai_asid, 0);
-
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only
-	 * has non-global mappings.  To prevent speculation from doing
-	 * evil things we disable translation table walks using TTBR0
-	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
-	 * Once both are set, table walks are reenabled.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	isb();
-
-	pmap_tlb_asid_acquire(pm, l);
-
-	cpu_setttb(pm->pm_l1_pa, pai->pai_asid);
-	/*
-	 * Now we can reenable tablewalks since the CONTEXTIDR and TTRB0
-	 * have been updated.
-	 */
-	isb();
-
-	if (pm != pmap_kernel()) {
-		armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
-	}
-	cpu_cpwait();
-
-	KASSERTMSG(ci->ci_pmap_asid_cur == pai->pai_asid, "%u vs %u",
-	    ci->ci_pmap_asid_cur, pai->pai_asid);
-	ci->ci_pmap_cur = pm;
-}
-
-void
-pmap_md_pdetab_deactivate(pmap_t pm)
-{
-
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(maphist, "pm %#jx", (uintptr_t)pm, 0, 0, 0);
-
-	kpreempt_disable();
-	struct cpu_info * const ci = curcpu();
-	/*
-	 * Disable translation table walks from TTBR0 while no pmap has been
-	 * activated.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	isb();
-	pmap_tlb_asid_deactivate(pm);
-	cpu_setttb(pmap_kernel()->pm_l1_pa, KERNEL_PID);
-	isb();
-
-	ci->ci_pmap_cur = pmap_kernel();
-	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
-	    ci->ci_pmap_asid_cur);
-	kpreempt_enable();
-}
-#endif
-
-
 #if defined(EFI_RUNTIME)
 void
 pmap_activate_efirt(void)
@@ -4998,16 +4924,10 @@ pmap_activate_efirt(void)
 
 	PMAPCOUNT(activations);
 
-	/*
-	 * Assume that TTBR1 has only global mappings and TTBR0 only
-	 * has non-global mappings.  To prevent speculation from doing
-	 * evil things we disable translation table walks using TTBR0
-	 * before setting the CONTEXTIDR (ASID) or new TTBR0 value.
-	 * Once both are set, table walks are reenabled.
-	 */
-	const uint32_t old_ttbcr = armreg_ttbcr_read();
-	armreg_ttbcr_write(old_ttbcr | TTBCR_S_PD0);
-	isb();
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 
 	armreg_contextidr_write(pai->pai_asid);
 	armreg_ttbr_write(pm->pm_l1_pa |
@@ -5018,21 +4938,39 @@ pmap_activate_efirt(void)
 	 */
 	isb();
 
+	const uint32_t old_ttbcr = armreg_ttbcr_read();
 	armreg_ttbcr_write(old_ttbcr & ~TTBCR_S_PD0);
 
 	ci->ci_pmap_asid_cur = pai->pai_asid;
 	ci->ci_pmap_cur = pm;
+
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) == 0
+	);
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
 
 #endif
 
+static inline void
+pmap_blockuserspace(bool flag)
+{
+#if \
+    defined(CPU_SA110) || defined(CPU_SA1100) || \
+    defined(CPU_SA1110) || defined(CPU_IXP12X0) || \
+    defined(CPU_XSCALE)
+
+	extern int block_userspace_access;
+
+	block_userspace_access = flag ? 1 : 0;
+#endif
+}
 
 void
 pmap_activate(struct lwp *l)
 {
-	extern int block_userspace_access;
 	pmap_t npm = l->l_proc->p_vmspace->vm_map.pmap;
 
 	UVMHIST_FUNC(__func__);
@@ -5085,7 +5023,8 @@ pmap_activate(struct lwp *l)
 #endif /* !ARM_MMU_EXTENDED */
 
 	PMAPCOUNT(activations);
-	block_userspace_access = 1;
+
+	pmap_blockuserspace(true);
 
 #ifndef ARM_MMU_EXTENDED
 	/*
@@ -5143,7 +5082,17 @@ pmap_activate(struct lwp *l)
 #endif
 
 #ifdef ARM_MMU_EXTENDED
-	pmap_md_pdetab_activate(npm, l);
+	/*
+	 * While a vmspace is being recycled in uvmspace_exec and the pmap
+	 * is marked pm_remove_all = true amap_wipeout may voluntarily
+	 * preempt allowing other LWPs to be activate. When returning to
+	 * the recylcing process we can skip acquiring an ASID and activating it
+	 * as it'll happen in pmap_update.
+	 */
+	if (__predict_true(!npm->pm_remove_all)) {
+		/* this calls pmap_md_asid_activate */
+		pmap_tlb_asid_acquire(npm, l);
+	}
 #else
 	cpu_domains(ndacr);
 	if (npm == pmap_kernel() || npm == rpm) {
@@ -5166,7 +5115,7 @@ pmap_activate(struct lwp *l)
 	restore_interrupts(oldirqstate);
 #endif /* ARM_MMU_EXTENDED */
 
-	block_userspace_access = 0;
+	pmap_blockuserspace(false);
 
 #ifndef ARM_MMU_EXTENDED
  all_done:
@@ -5203,7 +5152,12 @@ pmap_deactivate(struct lwp *l)
 
 #ifdef ARM_MMU_EXTENDED
 	KASSERT(kpreempt_disabled());
-	pmap_md_pdetab_deactivate(pm);
+	pmap_tlb_asid_deactivate(pm);
+
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 #else
 	/*
 	 * If the process is exiting, make sure pmap_activate() does
@@ -5241,6 +5195,11 @@ pmap_deactivate_efirt(void)
 
 	KASSERTMSG(ci->ci_pmap_asid_cur == KERNEL_PID, "ci_pmap_asid_cur %u",
 	    ci->ci_pmap_asid_cur);
+
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+	);
 
 	UVMHIST_LOG(maphist, " <-- done", 0, 0, 0, 0);
 }
@@ -5297,8 +5256,14 @@ pmap_update(pmap_t pm)
 	if (__predict_false(pm->pm_remove_all)) {
 		pm->pm_remove_all = false;
 
+		KASSERT(
+		    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+		    (armreg_ttbcr_read() & TTBCR_S_PD0) != 0
+		);
+
 		KASSERT(pm != pmap_kernel());
-		pmap_md_pdetab_activate(pm, curlwp);
+		/* this calls pmap_md_asid_activate */
+		pmap_tlb_asid_acquire(pm, curlwp);
 	}
 
 	if (arm_has_mpext_p)
@@ -5344,6 +5309,7 @@ pmap_remove_all(pmap_t pm)
 #ifdef PMAP_CACHE_VIVT
 	pmap_cache_wbinv_all(pm, PVF_EXEC);
 #endif
+
 #ifdef ARM_MMU_EXTENDED
 #ifdef MULTIPROCESSOR
 	struct cpu_info * const ci = curcpu();
@@ -7841,7 +7807,7 @@ pmap_pte_init_armv7(void)
 	 * visibility by subsequent translation table walks.  That means we can
 	 * map everything shareable and cached and the right thing will happen.
 	 */
-        if (__SHIFTOUT(armreg_mmfr3_read(), __BITS(23,20))) {
+	if (__SHIFTOUT(armreg_mmfr3_read(), __BITS(23,20))) {
 		pmap_needs_pte_sync = 0;
 
 		/*
@@ -8249,7 +8215,7 @@ arm_pmap_alloc_poolpage(int flags)
 void
 pmap_md_tlb_info_attach(struct pmap_tlb_info *ti, struct cpu_info *ci)
 {
-        /* nothing */
+	/* nothing */
 }
 
 int
@@ -8314,9 +8280,9 @@ pmap_unmap_poolpage(vaddr_t va)
 	cpu_idcache_wbinv_range(va, PAGE_SIZE);
 #endif
 #if defined(KERNEL_BASE_VOFFSET)
-        return va - KERNEL_BASE_VOFFSET;
+	return va - KERNEL_BASE_VOFFSET;
 #else
-        return va - KERNEL_BASE + physical_start;
+	return va - KERNEL_BASE + physical_start;
 #endif
 }
 #endif /* __HAVE_MM_MD_DIRECT_MAPPED_PHYS */

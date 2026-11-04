@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -47,6 +47,6 @@ gdb_breakpoint $line
 gdb_continue_to_breakpoint "fn_return" ".*at-fn_return.*"
 
 # Confirm thread 2 is really gone.
-gdb_test "info threads 2" "No threads match '2'\\."
+gdb_test "info threads 2" "No threads matched\\."
 
 gdb_continue_to_end "" continue 1

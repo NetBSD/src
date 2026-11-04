@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -42,7 +42,8 @@ proc test {always_inserted sw_watchpoint} {
     global gdb_prompt
     global srcfile binfile
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     if {![runto_main]} {
 	return -1
@@ -134,7 +135,7 @@ proc test {always_inserted sw_watchpoint} {
 	        unsupported "failed to stop at permanent breakpoint"
 		return
 	    }
-	    -re "Program received signal SIGTRAP.*$gdb_prompt $" {
+	    -re "received signal SIGTRAP.*$gdb_prompt $" {
 	    	pass $test
 	    }
 	}
@@ -174,7 +175,7 @@ proc test {always_inserted sw_watchpoint} {
 	# disabled, it should act as if we hadn't created it in the first
 	# place.  IOW, we should get a random signal, and, the breakpoint's
 	# command should not run.
-	gdb_test "continue" "Program received signal SIGTRAP.*" \
+	gdb_test "continue" "received signal SIGTRAP.*" \
 	    "disabled permanent breakpoint doesn't explain stop"
 
 	gdb_test "info breakpoints" \

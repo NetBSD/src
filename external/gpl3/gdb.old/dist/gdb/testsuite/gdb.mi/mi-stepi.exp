@@ -1,4 +1,4 @@
-# Copyright 1999-2023 Free Software Foundation, Inc.
+# Copyright 1999-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,25 +41,25 @@ proc test_stepi_nexti {} {
     set line [mi_execute_to "exec-step-instruction" "end-stepping-range" "main" "" \
                   ".*basics.c" "\[0-9\]+" "" "step-instruction at main"]
     if { $line >= $line_main_body && $line <= $line_main_hello } {
- 		pass "step-instruction at main (line check)"
+		pass "step-instruction at main, line check"
     } else {
-        fail "step-instruction at main (line check)"
+	fail "step-instruction at main, line check"
     }    
 
     set line [mi_execute_to "exec-next-instruction" "end-stepping-range" "main" "" \
                   ".*basics.c" "\[0-9\]+" "" "next-instruction at main"]
     if { $line >= $line_main_body && $line <= $line_main_hello } {
-        pass "next-instruction at main (line check)"
+	pass "next-instruction at main, line check"
     } else {
-        fail "next-instruction at main (line check)"
+	fail "next-instruction at main, line check"
     }
 
     set line [mi_execute_to "exec-next-instruction" "end-stepping-range" "main" "" \
                   ".*basics.c" "\[0-9\]+" "" "next-instruction at main 2"]
     if { $line >= $line_main_body && $line <= $line_main_hello } {
-        pass "next-instruction at main 2 (line check)"
+	pass "next-instruction at main 2, line check"
     } else {
-        fail "next-instruction at main 2 (line check)"
+	fail "next-instruction at main 2, line check"
     }
 }
 
@@ -68,4 +68,3 @@ mi_runto_main
 test_stepi_nexti
 
 mi_gdb_exit
-return 0

@@ -1,6 +1,6 @@
 # cpexprs.exp - C++ expressions tests
 #
-# Copyright 2008-2024 Free Software Foundation, Inc.
+# Copyright 2008-2025 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -28,17 +28,33 @@ proc test_breakpoint {func} {
     delete_breakpoints
     if { ! [gdb_breakpoint test_function] } {
 	fail "set test_function breakpoint for $func"
-    } elseif { [gdb_test "continue" \
-		    "Continuing.\r\n\r\nBreakpoint $DEC+,.*test_function.*" \
-		    "continue to test_function for $func"] != 0 } {
-    } else {
-	gdb_breakpoint "$func"
-	set i [expr {[string last : $func] + 1}]
-	set efunc [string_to_regexp [string range $func $i end]]
-	gdb_test "continue" \
-	    "Continuing.\r\n\r\nBreakpoint $DEC+,.*$efunc.*" \
-	    "continue to $func"
+	return
     }
+
+    # Accept any input between "Continuing" and the breakpoint hit, as
+    # on Cygwin, we may see a "New Thread" notification.  This is the
+    # Cygwin runtime spawning its own internal threads.
+    if { [gdb_test "continue" \
+	      "Continuing.\r\n.*Breakpoint $DEC+,.*test_function.*" \
+	      "continue to test_function for $func"] != 0 } {
+	return
+    }
+
+    # On some systems, the in-charge and not-in-charge dtors of a
+    # class may end up with the same address, so setting a breakpoint
+    # at a dtor like base::~base only finds one location.  On other
+    # systems (e.g. Cygwin), the two dtors for the same class may have
+    # different addresses, so we find two locations for the
+    # breakpoint.  Thus, expect that the breakpoint hit may or may not
+    # report a location number.
+    set bp_re "$DEC+(\.$DEC+)?"
+
+    gdb_breakpoint "$func"
+    set i [expr {[string last : $func] + 1}]
+    set efunc [string_to_regexp [string range $func $i end]]
+    gdb_test "continue" \
+	"Continuing.\r\n.*Breakpoint $bp_re,.*$efunc.*" \
+	"continue to $func"
 }
 
 # Add a function to the list of tested functions

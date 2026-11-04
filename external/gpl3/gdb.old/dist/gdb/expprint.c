@@ -1,6 +1,6 @@
 /* Print in infix form a struct expression.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,14 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
 #include "value.h"
 #include "language.h"
 #include "parser-defs.h"
-#include "user-regs.h"		/* For user_reg_map_regnum_to_name.  */
+#include "user-regs.h"
 #include "target.h"
 #include "block.h"
 #include "objfiles.h"
@@ -36,29 +35,6 @@
 
 #include <ctype.h>
 
-/* Default name for the standard operator OPCODE (i.e., one defined in
-   the definition of enum exp_opcode).  */
-
-const char *
-op_name (enum exp_opcode opcode)
-{
-  switch (opcode)
-    {
-    default:
-      {
-	static char buf[30];
-
-	xsnprintf (buf, sizeof (buf), "<unknown %d>", opcode);
-	return buf;
-      }
-#define OP(name)	\
-    case name:		\
-      return #name ;
-#include "std-operator.def"
-#undef OP
-    }
-}
-
 /* Meant to be used in debug sessions, so don't export it in a header file.  */
 extern void ATTRIBUTE_USED debug_exp (struct expression *exp);
 
@@ -68,17 +44,39 @@ void
 ATTRIBUTE_USED
 debug_exp (struct expression *exp)
 {
-  exp->op->dump (gdb_stdlog, 0);
+  exp->dump (gdb_stdlog);
   gdb_flush (gdb_stdlog);
 }
 
 namespace expr
 {
 
+bool
+check_objfile (const struct block *block, struct objfile *objfile)
+{
+  return check_objfile (block->objfile (), objfile);
+}
+
 void
 dump_for_expression (struct ui_file *stream, int depth, enum exp_opcode op)
 {
-  gdb_printf (stream, _("%*sOperation: %s\n"), depth, "", op_name (op));
+  gdb_printf (stream, _("%*sOperation: "), depth, "");
+
+  switch (op)
+    {
+    default:
+      gdb_printf (stream, "<unknown %d>", op);
+      break;
+
+#define OP(name)	\
+    case name:		\
+      gdb_puts (#name, stream); \
+      break;
+#include "std-operator.def"
+#undef OP
+    }
+
+  gdb_puts ("\n", stream);
 }
 
 void
@@ -103,6 +101,12 @@ dump_for_expression (struct ui_file *stream, int depth, CORE_ADDR addr)
 }
 
 void
+dump_for_expression (struct ui_file *stream, int depth, const gdb_mpz &val)
+{
+  gdb_printf (stream, _("%*sConstant: %s\n"), depth, "", val.str ().c_str ());
+}
+
+void
 dump_for_expression (struct ui_file *stream, int depth, internalvar *ivar)
 {
   gdb_printf (stream, _("%*sInternalvar: $%s\n"), depth, "",
@@ -114,6 +118,7 @@ dump_for_expression (struct ui_file *stream, int depth, symbol *sym)
 {
   gdb_printf (stream, _("%*sSymbol: %s\n"), depth, "",
 	      sym->print_name ());
+  dump_for_expression (stream, depth + 1, sym->type ());
 }
 
 void

@@ -1,0 +1,181 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test is meant to reproduce a bug occurring in those specific
+# circumstances:
+#
+#  - Split DWARF (debug info in a .dwo file)
+#  - A type unit in the .dwo file, with a corresponding stub in the main file
+#  - A GDB index
+#  - We evaluate a DWARF expression in the context of that type unit
+#
+# The test doesn't create a GDB index, but that can be done by running it
+# with the cc-with-gdb-index board.
+
+load_lib dwarf.exp
+
+require dwarf2_support
+
+standard_testfile .c -dw.S
+
+set asm_file [standard_output_file $srcfile2]
+
+Dwarf::assemble $asm_file {
+    set outdir [standard_output_file ""]
+    set cu_debug_addr_label "invalid"
+
+    # Debug info in the DWO file.
+
+    # Definition of "int".
+    tu {
+	fission 1
+	version 4
+    } 0xCAFE1 the_type_1 {
+	type_unit {} {
+	    the_type_1: base_type {
+		{DW_AT_byte_size 4 DW_FORM_sdata}
+		{DW_AT_encoding  @DW_ATE_signed}
+		{DW_AT_name      int}
+	    }
+	}
+    }
+
+    # Definition of structure type "struct_type".
+    tu {
+	fission 1
+	version 4
+    } 0xCAFE2 the_type_2 {
+	type_unit {} {
+	    the_type_2: DW_TAG_structure_type {
+		{DW_AT_name struct_type}
+		{DW_AT_byte_size 4 DW_FORM_data1}
+	    } {
+		DW_TAG_member {
+			{DW_AT_name field}
+			{DW_AT_type 0xCAFE1 DW_FORM_ref_sig8}
+
+			{DW_AT_data_member_location {
+			    # In order to coax GDB to actually run this
+			    # expression in the evaluator, it needs to contain
+			    # something that will make decode_locdesc unable
+			    # to reduce it to a constant.  That's what these 3
+			    # operations (which are ultimately a no-op) are for.
+			    # Note that there is an implicit
+			    # DW_OP_push_object_address done before the
+			    # expression is evaluated.
+			    DW_OP_dup
+			    DW_OP_deref_size 1
+			    DW_OP_drop
+			} SPECIAL_expr}
+		}
+	    }
+	}
+    }
+
+    # Definition of the CU.
+    cu {
+	fission 1
+	version 4
+    } {
+	set cu_debug_addr_label [debug_addr_label]
+
+	compile_unit {
+	    {DW_AT_GNU_dwo_id 0xF00D DW_FORM_data8}
+	} {
+	    DW_TAG_variable {
+		{DW_AT_name global_var}
+		{DW_AT_type 0xCAFE2 DW_FORM_ref_sig8}
+		{DW_AT_location {
+		    DW_OP_GNU_addr_index [gdb_target_symbol buf]
+		} SPECIAL_expr}
+	    }
+	}
+    }
+
+    # Debug info in the main file.
+
+    # Stub for "int" type unit.
+    tu {
+	version 4
+    } 0xCAFE1 "" {
+	type_unit {
+	    {DW_AT_GNU_dwo_name ${::gdb_test_file_name}.dwo DW_FORM_strp}
+	    {DW_AT_comp_dir ${outdir}}
+	} {
+	}
+    }
+
+    # Stub for "struct_type" type unit.
+    tu {
+	version 4
+    } 0xCAFE2 "" {
+	type_unit {
+	    {DW_AT_GNU_dwo_name ${::gdb_test_file_name}.dwo DW_FORM_strp}
+	    {DW_AT_comp_dir ${outdir}}
+	} {
+	}
+    }
+
+    # Stub for the CU.
+    cu {
+	version 4
+    } {
+	compile_unit {
+	    {DW_AT_GNU_dwo_name ${::gdb_test_file_name}.dwo DW_FORM_strp}
+	    {DW_AT_comp_dir ${outdir}}
+	    {DW_AT_GNU_dwo_id 0xF00D DW_FORM_data8}
+	    {DW_AT_GNU_addr_base $cu_debug_addr_label}
+	} {}
+    }
+}
+
+set object_file [standard_output_file ${testfile}.o]
+if { [build_executable_and_dwo_files "${testfile}.exp" ${binfile} {nodebug} \
+	  [list $asm_file {nodebug split-dwo} ${object_file}] \
+	  [list $srcfile {nodebug}]] } {
+    return -1
+}
+
+proc run_test { testfile } {
+    clean_restart ${testfile}
+
+    # This print would cause the DW_AT_data_member_location expression to be
+    # evaluated and cause the crash.
+    gdb_test "print/x global_var" " = {field = 0x11222211}"
+}
+
+run_test $testfile
+
+# Try adding a gdb-index and dwarf-5 style index, and then rerun the test.
+foreach_with_prefix index_type { gdb dwarf5 } {
+    set binfile_with_index ${binfile}-idx-${index_type}
+    set testfile_with_index ${testfile}-idx-${index_type}
+
+    remote_exec build "cp $binfile $binfile_with_index"
+
+    if { $index_type eq "gdb" } {
+	set style ""
+    } else {
+	set style "-dwarf-5"
+    }
+
+    # This is expected to fail if the binary already has an index.
+    if {[ensure_gdb_index $binfile_with_index $style] != 1} {
+	unsupported "couldn't add $index_type index"
+	return
+    }
+
+    run_test $testfile_with_index
+}

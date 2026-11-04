@@ -1,5 +1,5 @@
 /* BPF simulator support code header
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    Contributed by Oracle Inc.
 

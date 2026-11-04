@@ -1,4 +1,4 @@
-/*	$NetBSD: hooks.c,v 1.10.2.1 2025/08/02 05:54:08 perseant Exp $	*/
+/*	$NetBSD: hooks.c,v 1.10.2.2 2026/11/04 23:18:20 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,14 +34,6 @@
 #include <ns/hooks.h>
 #include <ns/log.h>
 #include <ns/query.h>
-
-#define CHECK(op)                              \
-	do {                                   \
-		result = (op);                 \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	} while (0)
 
 struct ns_plugin {
 	isc_mem_t *mctx;
@@ -225,6 +217,9 @@ ns_plugin_register(const char *modpath, const char *parameters, const void *cfg,
 
 	isc_log_write(ns_lctx, NS_LOGCATEGORY_GENERAL, NS_LOGMODULE_HOOKS,
 		      ISC_LOG_INFO, "registering plugin '%s'", modpath);
+
+	CHECK(plugin->check_func(parameters, cfg, cfg_file, cfg_line, mctx,
+				 lctx, actx));
 
 	CHECK(plugin->register_func(parameters, cfg, cfg_file, cfg_line, mctx,
 				    lctx, actx, view->hooktable,

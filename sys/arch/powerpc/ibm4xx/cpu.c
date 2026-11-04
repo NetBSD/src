@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.39 2022/10/05 08:18:00 rin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.39.8.1 2026/11/04 23:21:09 perseant Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,20 +36,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39 2022/10/05 08:18:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.39.8.1 2026/11/04 23:21:09 perseant Exp $");
+
+#include "opt_ppcarch.h"
+#ifdef PPC_IBM440
+#include "opt_ppc4xx.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
+#include <sys/sysctl.h>
 
 #include <uvm/uvm_extern.h>
 
 #include <prop/proplib.h>
 
+#include <machine/psl.h>
+
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/dev/plbvar.h>
+#ifdef PPC_IBM440
+#include <powerpc/ibm4xx/amcc460ex.h>
+#include <powerpc/ibm4xx/ibm4xx_460ex_pll.h>
+#ifdef PPC4XX_L2CACHE
+#include <powerpc/ibm4xx/ibm4xx_460ex_l2.h>
+#endif
+#endif
 
 struct cputab {
 	u_int version;
@@ -210,13 +225,23 @@ static const struct cputab models[] = {
 			.icache_line_size = 32,
 		}
 	}, {
-		.version = PVR_405EX, 
-		.mask = 0xffff0000, 
+		.version = PVR_405EX,
+		.mask = 0xffff0000,
 		.name = "405EX",
 		.ci = {
 			.dcache_size = 16384,
 			.dcache_line_size = 32,
 			.icache_size = 16384,
+			.icache_line_size = 32,
+		}
+	}, {
+		.version = PVR_460EX,
+		.mask = 0xffff0000,
+		.name = "460EX",
+		.ci = {
+			.dcache_size = 32768,
+			.dcache_line_size = 32,
+			.icache_size = 32768,
 			.icache_line_size = 32,
 		}
 	}, {
@@ -255,6 +280,40 @@ struct cpu_info cpu_info[1] = {
 
 bool cpufound;
 
+/*
+ * Idle the CPU using the 4xx wait state.
+ *
+ * Note that... unlike classic PPC's MSR[POW], 4xx does NOT clear WE 
+ * in the saved SRR1 on interrupt
+ */
+extern int powersave;
+
+static void
+ibm4xx_idlespin(void)
+{
+
+	KASSERT(mfmsr() & PSL_EE);
+
+	if (powersave > 0)
+		mtmsr(mfmsr() | PSL_WE);
+}
+
+SYSCTL_SETUP(sysctl_machdep_powersave_setup, "sysctl machdep.powersave setup")
+{
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "powersave",
+	    SYSCTL_DESCR("Idle CPU using the wait state (MSR[WE])"),
+	    NULL, 0, &powersave, 0,
+	    CTL_MACHDEP, CPU_POWERSAVE, CTL_EOL);
+}
+
 static int
 cpumatch(device_t parent, cfdata_t cf, void *aux)
 {
@@ -282,6 +341,12 @@ cpuattach(device_t parent, device_t self, void *aux)
 	cpufound = true;
 	ncpus++;
 
+	/*
+	 * Use the wait-state idle loop, controllable via machdep.powersave.
+	 */
+	ci->ci_idlespin = ibm4xx_idlespin;
+	powersave = 0; /* off by default */
+
 	const u_int pvr = mfpvr();
 	for (cp = models; cp->name != NULL; cp++) {
 		if ((pvr & cp->mask) == cp->version) {
@@ -308,6 +373,29 @@ cpuattach(device_t parent, device_t self, void *aux)
 	    ci->ci_ci.icache_size / 1024, ci->ci_ci.icache_line_size);
 	aprint_normal_dev(self, "%uKB/%uB L1 data cache\n",
 	    ci->ci_ci.dcache_size / 1024, ci->ci_ci.dcache_line_size);
+
+#ifdef PPC_IBM440
+	if ((pvr >> 16) == AMCC460EX) {
+		u_int base_mhz;
+
+#ifdef PPC4XX_L2CACHE
+		ibm4xx_460ex_l2cache_enable();
+		if (ibm4xx_460ex_l2_enabled) {
+			aprint_normal_dev(self, "256KB/32B L2 cache, "
+			    "write-through, snooping\n");
+			aprint_verbose_dev(self, "L2C0_CFG %#x SNP0 %#x SNP1 %#x\n",
+			    ibm4xx_460ex_l2_cfg, mfdcr(DCR_L2C0_SNP0),
+			    mfdcr(DCR_L2C0_SNP1));
+		} else
+			aprint_error_dev(self, "L2 cache not enabled "
+			    "(L2C0_CFG %#x)\n", ibm4xx_460ex_l2_cfg);
+#endif
+		base_mhz = ibm4xx_460ex_base_clock(processor_freq);
+		if (base_mhz != 0)
+			aprint_normal_dev(self, "%uMHz PLL clock\n",
+			    base_mhz);
+	}
+#endif
 }
 
 /*

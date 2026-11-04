@@ -1,4 +1,4 @@
-/* $NetBSD: acpi.c,v 1.56 2024/05/12 23:00:21 msaitoh Exp $ */
+/* $NetBSD: acpi.c,v 1.56.2.1 2026/11/04 23:28:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998 Doug Rabson
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: acpi.c,v 1.56 2024/05/12 23:00:21 msaitoh Exp $");
+__RCSID("$NetBSD: acpi.c,v 1.56.2.1 2026/11/04 23:28:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -170,7 +170,7 @@ static const char *TCPA_pcclient_strings[] = {
 	"CMOS",
 	"NVRAM",
 	"Option ROM Execute",
-	"Option ROM Configurateion",
+	"Option ROM Configuration",
 	"<undefined>",
 	"Option ROM Microcode Update ",
 	"S-CRTM Version String",
@@ -697,7 +697,7 @@ acpi_print_hest_generic(ACPI_HEST_GENERIC *data)
 {
 	acpi_print_hest_header(&data->Header);
 	if (data->RelatedSourceId != 0xffff)
-		printf("\tReleated SourceId=%d\n", data->RelatedSourceId);
+		printf("\tRelated SourceId=%d\n", data->RelatedSourceId);
 	printf("\tEnabled={%s}\n", data->Enabled ? "YES" : "NO");
 	printf("\tNumber of Records to pre-allocate=%u\n",
 		data->RecordsToPreallocate);
@@ -4139,7 +4139,7 @@ acpi_dump_bytes(uint8_t *p, uint32_t len, unsigned int ntabs)
 				printf("\n");
 				acpi_print_tabs(ntabs);
 				printf(" ");
-			}else if (i % 16 == 0)
+			} else if (i % 16 == 0)
 				printf(" ");
 			printf("%c", (p[i] >= ' ' && p[i] <= '~') ? p[i] : '.');
 		} else {

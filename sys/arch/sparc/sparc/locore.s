@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.285.2.1 2025/08/02 05:56:09 perseant Exp $	*/
+/*	$NetBSD: locore.s,v 1.285.2.2 2026/11/04 23:21:21 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2782,7 +2782,7 @@ lev14_softint:
 	 ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG0)], %l3	! prefetch 1st arg
 
 /*
- * Fast flush handlers. xcalled from other CPUs throught soft interrupt 14
+ * Fast flush handlers. xcalled from other CPUs through soft interrupt 14
  * On entry:	%l6 = CPUINFO_VA
  *		%l3 = first argument
  *
@@ -5916,7 +5916,7 @@ _ENTRY(_C_LABEL(no_asyncflt_regs))
 _ENTRY(_C_LABEL(hypersparc_pure_vcache_flush))
 	/*
 	 * Flush entire on-chip instruction cache, which is
-	 * a pure vitually-indexed/virtually-tagged cache.
+	 * a pure virtually-indexed/virtually-tagged cache.
 	 */
 	retl
 	 sta	%g0, [%g0] ASI_HICACHECLR
@@ -6000,6 +6000,25 @@ ENTRY_NOPROFILE(__cpu_simple_lock)
 Lpanic_spunout:
 	.asciz	"cpu%d: stuck on lock@%x"
 	_ALIGN
+
+ENTRY(paravirt_membar_sync)
+	/*
+	 * Store-before-load ordering with respect to matching logic
+	 * on the hypervisor side.
+	 *
+	 * This is the same as membar_sync, but without
+	 * conditionalizing away the LDSTUB instruction on uniprocessor
+	 * builds -- because under virtualization, we still have to
+	 * coordinate with a `device' backed by a hypervisor that is
+	 * potentially on another physical CPU even if we observe only
+	 * one virtual CPU as the guest.
+	 *
+	 * Sync with membar_sync in
+	 * common/lib/libc/arch/sparc/atomic/membar_ops.S.
+	 */
+	retl
+	 ldstub	[%sp - 4], %g0	/* makeshift store-before-load barrier */
+END(paravirt_membar_sync)
 
 #if defined(KGDB) || defined(DDB) || defined(DIAGNOSTIC)
 /*

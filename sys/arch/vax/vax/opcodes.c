@@ -1,3 +1,4 @@
+/*	$NetBSD: opcodes.c,v 1.3.46.1 2026/11/04 23:21:29 perseant Exp $	*/
 /*	$OpenBSD: opcodes.c,v 1.1 2002/05/16 07:37:44 miod Exp $	*/
 
 /*
@@ -31,6 +32,9 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: opcodes.c,v 1.3.46.1 2026/11/04 23:21:29 perseant Exp $");
+
 #include <sys/param.h>
 #include <sys/types.h>
 
@@ -58,7 +62,7 @@
  *	h: H_floating
  *	r: Register
  *	x: first data type specified by instruction
- *	y: second data type spcified by instructin
+ *	y: second data type specified by instruction
  *	-: no-args
  *	?: unknown (variable?)
  */

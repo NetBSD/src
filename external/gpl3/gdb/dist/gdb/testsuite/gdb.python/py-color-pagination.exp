@@ -1,0 +1,137 @@
+# Copyright (C) 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the GDB testsuite.  It tests gdb.Color and how this
+# interacts with GDB's pagination system.
+
+load_lib gdb-python.exp
+
+require allow_python_tests
+require {!is_remote host}
+
+standard_testfile
+
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+
+set str "<[string repeat - 78]>"
+
+# These define all the default attributes for a style: background
+# color, intensity, italics, and underlined.
+set other_attr ";49;22;23;24;27"
+
+# These colors set the foreground color only.  Everything else is the
+# default.
+set black "(?:\033\\\[30${other_attr}m)"
+set red "(?:\033\\\[31${other_attr}m)"
+set green "(?:\033\\\[32${other_attr}m)"
+set yellow "(?:\033\\\[33${other_attr}m)"
+set blue "(?:\033\\\[34${other_attr}m)"
+set magenta "(?:\033\\\[35${other_attr}m)"
+set cyan "(?:\033\\\[36${other_attr}m)"
+set white "(?:\033\\\[37${other_attr}m)"
+
+set any_color "(?:${black}|${red}|${green}|${yellow}|${blue}|${magenta}|${cyan}|${white})"
+
+# Run the command 'TYPE-fill MODE' which fills the screen with output and
+# triggers the pagination prompt.  Check that styling is applied correctly
+# to the output.
+proc test_pagination { type mode } {
+
+    # Start with a fresh GDB, but enable color support.
+    with_ansi_styling_terminal {
+	clean_restart
+    }
+
+    gdb_test_no_output "source $::pyfile" "source the script"
+
+    gdb_test_no_output "set width 80"
+    gdb_test_no_output "set height 15"
+
+    set saw_bad_color_handling false
+    set expected_restore_color ""
+    set last_color ""
+    gdb_test_multiple "$type-fill $mode" "" {
+	-re "^$type-fill $mode\r\n" {
+	    exp_continue
+	}
+
+	-re "^(${::any_color})(${::any_color})$::str" {
+	    # After a continuation prompt GDB will restore the previous
+	    # color, and then we immediately switch to a new color.
+	    set restored_color $expect_out(1,string)
+	    if { $restored_color ne $expected_restore_color } {
+		set saw_bad_color_handling true
+	    }
+	    set last_color $expect_out(2,string)
+	    exp_continue
+	}
+
+	-re "^(${::any_color})$::str" {
+	    # This pattern matches printing STR in all cases that are not
+	    # immediately after a pagination prompt.  In this case there is
+	    # a single escape sequence to set the color.
+	    set last_color $expect_out(1,string)
+	    exp_continue
+	}
+
+	-re "^\033\\\[${::decimal}m$::str" {
+	    # This catches the case where the color's escape sequence has
+	    # not been converted back into a full style.  This indicates
+	    # something went wrong in the pager_file::puts function.
+	    set saw_bad_color_handling true
+	    exp_continue
+	}
+
+	-re "^\033\\\[m$::pagination_prompt$" {
+	    # After a pagination prompt we expect GDB to restore the last
+	    # color.
+	    set expected_restore_color $last_color
+
+	    # Send '\n' to view more output.
+	    send_gdb "\n"
+	    exp_continue
+	}
+
+	-re "^$::pagination_prompt$" {
+	    # After a pagination prompt we expect GDB to restore the last
+	    # color.
+	    set expected_restore_color $last_color
+
+	    # If we didn't see a color reset sequence before the pagination
+	    # prompt, then the prompt will have been printed in the wrong
+	    # color, this is a GDB bug.
+	    set saw_bad_color_handling true
+
+	    # Send '\n' to view more output.
+	    send_gdb "\n"
+	    exp_continue
+	}
+
+	-re "^\r\n" {
+	    # The matches the newline sent to the continuation prompt.
+	    exp_continue
+	}
+
+	-re "^\033\\\[m\r\n$::gdb_prompt $" {
+	    gdb_assert { !$saw_bad_color_handling } $gdb_test_name
+	}
+    }
+}
+
+foreach_with_prefix type { color } {
+    foreach_with_prefix mode { write print } {
+	test_pagination $type $mode
+    }
+}

@@ -1,5 +1,5 @@
 /*	$KAME: sctp_structs.h,v 1.13 2005/03/06 16:04:18 itojun Exp $	*/
-/*	$NetBSD: sctp_structs.h,v 1.4 2023/08/10 06:44:12 andvar Exp $ */
+/*	$NetBSD: sctp_structs.h,v 1.4.6.1 2026/11/04 23:27:59 perseant Exp $ */
 
 #ifndef __SCTP_STRUCTS_H__
 #define __SCTP_STRUCTS_H__
@@ -388,7 +388,7 @@ struct sctp_association {
 	/* various verification tag information */
 	u_int32_t my_vtag;	/*
 				 * The tag to be used. if assoc is
-				 * re-initited by remote end, and
+				 * re-initiated by remote end, and
 				 * I have unlocked this will be
 				 * regenerated to a new random value.
 				 */
@@ -548,7 +548,7 @@ struct sctp_association {
 	u_int16_t streamoutcnt;
 
 	/* my maximum number of retrans of INIT and SEND */
-	/* copied from SCTP but should be individually setable */
+	/* copied from SCTP but should be individually settable */
 	u_int16_t max_init_times;
 	u_int16_t max_send_times;
 

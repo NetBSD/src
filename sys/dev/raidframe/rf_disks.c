@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_disks.c,v 1.95 2023/09/25 16:16:50 oster Exp $	*/
+/*	$NetBSD: rf_disks.c,v 1.95.6.1 2026/11/04 23:22:32 perseant Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -60,7 +60,7 @@
  ***************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.95 2023/09/25 16:16:50 oster Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_disks.c,v 1.95.6.1 2026/11/04 23:22:32 perseant Exp $");
 
 #include <dev/raidframe/raidframevar.h>
 
@@ -439,6 +439,7 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			   instead?  (this one, if we find it, will be
 			   marked as failed once the set configures)
 			*/
+			RF_AutoConfig_t *best_ac = NULL;
 
 			ac = auto_config;
 			while(ac!=NULL) {
@@ -447,18 +448,24 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 					goto fail;
 				}
 				if (ac->clabel->column == c) {
-					/* it's this one...
-					   flag it as 'used', so we
-					   don't free it later. */
-					ac->flag = 1;
-#if DEBUG
-					printf("Found(low mod_counter): %s at %d\n",
-					       ac->devname,c);
-#endif
-
-					break;
+					if (best_ac == NULL ||
+					    ac->clabel->mod_counter >
+					    best_ac->clabel->mod_counter) {
+						best_ac = ac;
+					}
 				}
 				ac=ac->next;
+			}
+			if (best_ac != NULL) {
+				ac = best_ac;
+				/* it's this one...
+				   flag it as 'used', so we
+				   don't free it later. */
+				ac->flag = 1;
+#if DEBUG
+				printf("Found(low mod_counter): %s at %d\n",
+				       ac->devname,c);
+#endif
 			}
 		}
 
@@ -469,6 +476,8 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 			diskPtr->blockSize = ac->clabel->blockSize;
 			diskPtr->numBlocks =
 			    rf_component_label_numblocks(ac->clabel);
+			diskPtr->partitionSize =
+			    rf_component_label_partitionsize(ac->clabel);
 			/* Note: rf_protectedSectors is already
 			   factored into numBlocks here */
 			raidPtr->raid_cinfo[c].ci_vp = ac->vp;
@@ -540,19 +549,61 @@ rf_AutoConfigureDisks(RF_Raid_t *raidPtr, RF_Config_t *cfgPtr,
 		raidPtr->numFailures = numFailuresThisRow;
 	}
 
-	/* close the device for the ones that didn't get used */
-
+	/*
+	 * Attach any remaining components that were not used in the active
+	 * array (i.e. components that were superseded in their column by a
+	 * spare with a higher mod_counter) as rf_ds_spared so their vnodes
+	 * remain open and they cannot form a rogue RAID set during
+	 * recursive-RAID rescans.
+	 */
 	ac = auto_config;
 	while(ac!=NULL) {
 		if (ac->flag == 0) {
-			vn_lock(ac->vp, LK_EXCLUSIVE | LK_RETRY);
-			VOP_CLOSE(ac->vp, FREAD | FWRITE, NOCRED);
-			vput(ac->vp);
-			ac->vp = NULL;
+			if (raidPtr->numSpare < RF_MAXSPARE) {
+				RF_RowCol_t sparecol =
+				    raidPtr->numCol + raidPtr->numSpare;
+
+				diskPtr = &disks[sparecol];
+				diskPtr->blockSize = ac->clabel->blockSize;
+				diskPtr->numBlocks =
+				    rf_component_label_numblocks(ac->clabel);
+				diskPtr->partitionSize =
+				    rf_component_label_partitionsize(
+					ac->clabel);
+				raidPtr->raid_cinfo[sparecol].ci_vp = ac->vp;
+				raidPtr->raid_cinfo[sparecol].ci_dev = ac->dev;
+
+				memcpy(raidget_component_label(raidPtr,
+				    sparecol), ac->clabel,
+				    sizeof(*ac->clabel));
+				snprintf(diskPtr->devname,
+				    sizeof(diskPtr->devname),
+				    "/dev/%s", ac->devname);
+				diskPtr->auto_configured = 1;
+				diskPtr->dev = ac->dev;
+				diskPtr->numBlocks = diskPtr->numBlocks *
+				    rf_sizePercentage / 100;
+				diskPtr->status = rf_ds_spared;
+
+				printf("raid%d: attaching spared component %s "
+				    "(column %d, mod_counter %d < %d)\n",
+				    raidPtr->raidid, diskPtr->devname,
+				    ac->clabel->column,
+				    ac->clabel->mod_counter, mod_counter);
+
+				ac->flag = 1;
+				raidPtr->numSpare++;
+				raidPtr->maxQueue = raidPtr->numSpare;
+			} else {
+				vn_lock(ac->vp, LK_EXCLUSIVE | LK_RETRY);
+				VOP_CLOSE(ac->vp, FREAD | FWRITE, NOCRED);
+				vput(ac->vp);
+				ac->vp = NULL;
 #if DEBUG
-			printf("Released %s from auto-config set.\n",
-			       ac->devname);
+				printf("Released %s from auto-config set.\n",
+				       ac->devname);
 #endif
+			}
 		}
 		ac = ac->next;
 	}
@@ -988,16 +1039,14 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
 	RF_DiskQueue_t *spareQueues;
 	RF_RaidDisk_t *disks;
+	RF_ComponentLabel_t *clabel;
+	char *p;
 	int ret;
 	unsigned int bs;
 	int spare_number;
+	bool reusing = false;
 
 	ret=0;
-
-	if (raidPtr->numSpare >= RF_MAXSPARE) {
-		RF_ERRORMSG1("Too many spares: %d\n", raidPtr->numSpare);
-		return(EINVAL);
-	}
 
 	rf_lock_mutex2(raidPtr->mutex);
 	while (raidPtr->changing_components == 1) {
@@ -1009,7 +1058,47 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	/* the beginning of the spares... */
 	disks = &raidPtr->Disks[raidPtr->numCol];
 
-	spare_number = raidPtr->numSpare;
+	p = rf_find_non_white(sparePtr->component_name);
+	if (p[strlen(p) - 1] == '\n') {
+		p[strlen(p) - 1] = '\0';
+	}
+
+	spare_number = -1;
+	for (int i = 0; i < raidPtr->numSpare; i++) {
+		if (strcmp(disks[i].devname, p) == 0) {
+			spare_number = i;
+			reusing = true;
+			break;
+		}
+	}
+
+	if (reusing) {
+		struct vnode *vp;
+		int acd;
+
+		if (disks[spare_number].status != rf_ds_spared &&
+		    disks[spare_number].status != rf_ds_failed) {
+			ret = EBUSY;
+			goto out;
+		}
+		rf_SuspendNewRequestsAndWait(raidPtr);
+		vp = raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp;
+		acd = disks[spare_number].auto_configured;
+		raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp =
+		    NULL;
+		raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_dev = 0;
+		disks[spare_number].auto_configured = 0;
+		rf_close_component(raidPtr, vp, acd);
+		rf_ResumeNewRequests(raidPtr);
+	} else {
+		if (raidPtr->numSpare >= RF_MAXSPARE) {
+			RF_ERRORMSG1("Too many spares: %d\n",
+			    raidPtr->numSpare);
+			ret = EINVAL;
+			goto out;
+		}
+		spare_number = raidPtr->numSpare;
+	}
 
 	ret = rf_ConfigureDisk(raidPtr, sparePtr->component_name,
 			       &disks[spare_number],
@@ -1021,6 +1110,8 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 		RF_ERRORMSG1("Warning: spare disk %s failed TUR\n",
 			     sparePtr->component_name);
 		rf_close_component(raidPtr, raidPtr->raid_cinfo[raidPtr->numCol+spare_number].ci_vp, 0);
+		raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp =
+		    NULL;
 		ret=EINVAL;
 		goto fail;
 	} else {
@@ -1040,6 +1131,8 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	if (disks[spare_number].blockSize != bs) {
 		RF_ERRORMSG3("Block size of %d on spare disk %s is not the same as on other disks (%d)\n", disks[spare_number].blockSize, disks[spare_number].devname, bs);
 		rf_close_component(raidPtr, raidPtr->raid_cinfo[raidPtr->numCol+spare_number].ci_vp, 0);
+		raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp =
+		    NULL;
 		ret = EINVAL;
 		goto fail;
 	}
@@ -1049,6 +1142,8 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 			     disks[spare_number].blockSize,
 			     raidPtr->sectorsPerDisk);
 		rf_close_component(raidPtr, raidPtr->raid_cinfo[raidPtr->numCol+spare_number].ci_vp, 0);
+		raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp =
+		    NULL;
 		ret = EINVAL;
 		goto fail;
 	} else {
@@ -1061,6 +1156,24 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 
 			disks[spare_number].numBlocks = raidPtr->sectorsPerDisk;
 		}
+	}
+
+	/*
+	 * Clear any stale component label on the spare and verify that
+	 * the disk is writable before making it available.
+	 */
+	clabel = raidget_component_label(raidPtr,
+	    raidPtr->numCol + spare_number);
+	memset(clabel, 0, sizeof(*clabel));
+	ret = raidflush_component_label(raidPtr,
+	    raidPtr->numCol + spare_number);
+	if (ret) {
+		rf_close_component(raidPtr,
+		    raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp,
+		    0);
+		raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp =
+		    NULL;
+		goto fail;
 	}
 
 	/*
@@ -1092,9 +1205,13 @@ rf_add_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	}
 
 fail:
+	if (ret != 0 && reusing) {
+		disks[spare_number].status = rf_ds_failed;
+	}
+out:
 	rf_lock_mutex2(raidPtr->mutex);
 
-	if (ret == 0) {
+	if (ret == 0 && !reusing) {
 		raidPtr->numSpare++;
 	}
 
@@ -1109,13 +1226,13 @@ int
 rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 {
 	int spare_number;
-	int i;
+	int i, acd;
 	RF_RaidDisk_t *disk;
 	struct vnode *vp;
 	int ret = EINVAL;
 
 	spare_number = sparePtr->column - raidPtr->numCol;
-	if (spare_number < 0 || spare_number > raidPtr->numSpare)
+	if (spare_number < 0 || spare_number >= raidPtr->numSpare)
 		return(ret);
 
 	rf_lock_mutex2(raidPtr->mutex);
@@ -1129,13 +1246,24 @@ rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 
 	disk = &raidPtr->Disks[raidPtr->numCol + spare_number];
 	if (disk->status != rf_ds_spare &&
-	    disk->status != rf_ds_failed) {
+	    disk->status != rf_ds_failed &&
+	    disk->status != rf_ds_spared) {
 		printf("Spare is in use %d\n", disk->status);
 		ret = EBUSY;
 		goto out;
 	}
 
 	vp = raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp;
+	acd = disk->auto_configured;
+	if (vp != NULL) {
+		RF_ComponentLabel_t *clabel;
+
+		clabel = raidget_component_label(raidPtr,
+		    raidPtr->numCol + spare_number);
+		memset(clabel, 0, sizeof(*clabel));
+		(void)raidflush_component_label(raidPtr,
+		    raidPtr->numCol + spare_number);
+	}
 	raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_vp = NULL;
 	raidPtr->raid_cinfo[raidPtr->numCol + spare_number].ci_dev = 0;
 
@@ -1143,10 +1271,11 @@ rf_remove_hot_spare(RF_Raid_t *raidPtr, RF_SingleComponent_t *sparePtr)
 	disk->auto_configured = 0;
 	disk->dev = 0;
 	disk->numBlocks = 0;
+	disk->partitionSize = 0;
 	disk->status = rf_ds_failed;
 	snprintf(disk->devname, sizeof(disk->devname),
 		 "absent_spare%d", spare_number);
-	rf_close_component(raidPtr, vp, 0);
+	rf_close_component(raidPtr, vp, acd);
 
 	rf_lock_mutex2(raidPtr->mutex);
 
@@ -1183,6 +1312,7 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 	RF_RaidDisk_t *disk;
 	RF_RowCol_t col = component->column;
 	struct vnode *vp;
+	int acd;
 	int ret = EINVAL;
 
 	if (col < 0 || col >= raidPtr->numCol)
@@ -1209,6 +1339,14 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 	}
 
 	vp = raidPtr->raid_cinfo[col].ci_vp;
+	acd = disk->auto_configured;
+	if (vp != NULL) {
+		RF_ComponentLabel_t *clabel;
+
+		clabel = raidget_component_label(raidPtr, col);
+		memset(clabel, 0, sizeof(*clabel));
+		(void)raidflush_component_label(raidPtr, col);
+	}
 	raidPtr->raid_cinfo[col].ci_vp = NULL;
 	raidPtr->raid_cinfo[col].ci_dev = 0;
 
@@ -1216,9 +1354,10 @@ rf_delete_component(RF_Raid_t *raidPtr, RF_SingleComponent_t *component)
 	disk->auto_configured = 0;
 	disk->dev = 0;
 	disk->numBlocks = 0;
+	disk->partitionSize = 0;
 	snprintf(disk->devname, sizeof(disk->devname), "component%d", col);
 
-	rf_close_component(raidPtr, vp, 0);
+	rf_close_component(raidPtr, vp, acd);
 
 	ret = 0;
 out:
@@ -1258,44 +1397,28 @@ rf_incorporate_hot_spare(RF_Raid_t *raidPtr,
 void
 rf_swap_components(RF_Raid_t *raidPtr, int a, int b)
 {
-	char tmpdevname[56]; /* 56 is from raidframevar.h */
-	RF_ComponentLabel_t tmp_ci_label;
-	dev_t tmp_ci_dev, tmp_dev;
-	int tmp_status;
-	struct vnode *tmp_ci_vp;
-
+	RF_RaidDisk_t tmp_disk;
+	struct raidcinfo tmp_cinfo;
+	dev_t tmp_qdev;
 
 	/* This function *MUST* be called with all IO suspended. */
-	RF_ASSERT(raidPtr->accesses_suspended == 0);
-	
-	/* Swap the component names... */
-	snprintf(tmpdevname, sizeof(tmpdevname), "%s", raidPtr->Disks[a].devname);
-	snprintf(raidPtr->Disks[a].devname, sizeof(raidPtr->Disks[a].devname), "%s", raidPtr->Disks[b].devname);
-	snprintf(raidPtr->Disks[b].devname, sizeof(raidPtr->Disks[b].devname), "%s", tmpdevname);
+	RF_ASSERT(raidPtr->accesses_suspended > 0);
 
-	/* and the vp */
-	tmp_ci_vp = raidPtr->raid_cinfo[a].ci_vp;
-	raidPtr->raid_cinfo[a].ci_vp = raidPtr->raid_cinfo[b].ci_vp;
-	raidPtr->raid_cinfo[b].ci_vp = tmp_ci_vp;
+	/* Swap the disk structures */
+	tmp_disk = raidPtr->Disks[a];
+	raidPtr->Disks[a] = raidPtr->Disks[b];
+	raidPtr->Disks[b] = tmp_disk;
 
-	/* and the ci dev */
-	tmp_ci_dev = raidPtr->raid_cinfo[a].ci_dev;
-	raidPtr->raid_cinfo[a].ci_dev = raidPtr->raid_cinfo[b].ci_dev;
-	raidPtr->raid_cinfo[b].ci_dev = tmp_ci_dev;
+	/* Swap the raid_cinfo structures (vp, ci_dev, ci_label) */
+	tmp_cinfo = raidPtr->raid_cinfo[a];
+	raidPtr->raid_cinfo[a] = raidPtr->raid_cinfo[b];
+	raidPtr->raid_cinfo[b] = tmp_cinfo;
 
-	/* the dev itself */
-	tmp_dev = raidPtr->Disks[a].dev;
-	raidPtr->Disks[a].dev = raidPtr->Disks[b].dev;
-	raidPtr->Disks[b].dev = tmp_dev;
-
-	/* the component label */
-	tmp_ci_label = raidPtr->raid_cinfo[a].ci_label;
-	raidPtr->raid_cinfo[a].ci_label = raidPtr->raid_cinfo[b].ci_label;
-	raidPtr->raid_cinfo[b].ci_label = tmp_ci_label;
-
-	/* and the status */
-	tmp_status = raidPtr->Disks[a].status;
-	raidPtr->Disks[a].status = raidPtr->Disks[b].status;
-	raidPtr->Disks[b].status = tmp_status;
+	/* Keep the disk queue dev_t in sync */
+	if (raidPtr->Queues != NULL) {
+		tmp_qdev = raidPtr->Queues[a].dev;
+		raidPtr->Queues[a].dev = raidPtr->Queues[b].dev;
+		raidPtr->Queues[b].dev = tmp_qdev;
+	}
 }
 

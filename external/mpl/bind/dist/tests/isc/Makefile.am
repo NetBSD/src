@@ -39,7 +39,6 @@ check_PROGRAMS =	\
 	proxyudp_test	\
 	quota_test	\
 	radix_test	\
-	random_test	\
 	ratelimiter_test\
 	regex_test	\
 	result_test	\
@@ -57,6 +56,7 @@ check_PROGRAMS =	\
 	tls_test	\
 	tlsdns_test	\
 	udp_test	\
+	url_test	\
 	work_test
 
 if HAVE_LIBNGHTTP2
@@ -145,10 +145,6 @@ proxyudp_test_SOURCES =	\
 	netmgr_common.h \
 	netmgr_common.c \
 	uv_wrap.h
-
-random_test_LDADD =	\
-	$(LDADD)	\
-	-lm
 
 tcp_test_CPPFLAGS =	\
 	$(AM_CPPFLAGS)	\

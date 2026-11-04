@@ -1,27 +1,27 @@
-#	$NetBSD: Makefile,v 1.6 2012/01/22 18:36:16 christos Exp $
+#	$NetBSD: Makefile,v 1.6.52.1 2026/11/04 23:19:14 perseant Exp $
 #	@(#)Makefile	8.2 (Berkeley) 2/3/94
 #
 
-.include "${.CURDIR}/../Makefile.inc"
+.include "${.PARSEDIR}/../Makefile.inc"
 
-LIB=		cold
-CPPFLAGS+=	-I${.CURDIR}/../include -I${.CURDIR}/..
-CPPFLAGS+=	-I${.CURDIR}/../arch/${ARCHSUBDIR}
+#LIB=		cold
+CompatMakefileParseDir:=${.PARSEDIR}
+CPPFLAGS+=	-I${CompatMakefileParseDir}/../include
+CPPFLAGS+=	-I${CompatMakefileParseDir}/..
+CPPFLAGS+=	-I${CompatMakefileParseDir}/../arch/${ARCHSUBDIR}
 
-COMPATDIR=${.CURDIR}
+.include "${LIBCDIR}/Makefile.inc"
 
-.include "${.CURDIR}/Makefile.inc"
+.include "${LIBCDIR}/db/Makefile.inc"
+.include "${LIBCDIR}/gen/Makefile.inc"
+.include "${LIBCDIR}/locale/Makefile.inc"
+.include "${LIBCDIR}/net/Makefile.inc"
+.include "${LIBCDIR}/rpc/Makefile.inc"
+.include "${LIBCDIR}/stdio/Makefile.inc"
+.include "${LIBCDIR}/stdlib/Makefile.inc"
+.include "${LIBCDIR}/sys/Makefile.inc"
 
-.include "${.CURDIR}/db/Makefile.inc"
-.include "${.CURDIR}/gen/Makefile.inc"
-.include "${.CURDIR}/locale/Makefile.inc"
-.include "${.CURDIR}/net/Makefile.inc"
-.include "${.CURDIR}/rpc/Makefile.inc"
-.include "${.CURDIR}/stdio/Makefile.inc"
-.include "${.CURDIR}/stdlib/Makefile.inc"
-.include "${.CURDIR}/sys/Makefile.inc"
-
-COMPATARCHDIR=${.CURDIR}/arch/${ARCHSUBDIR}
+COMPATARCHDIR=${CompatMakefileParseDir}/arch/${ARCHSUBDIR}
 .PATH: ${COMPATARCHDIR}/gen ${COMPATARCHDIR}/sys
 
 .include <bsd.lib.mk>

@@ -11,13 +11,20 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "rndc.out.*",
         "ns2/example*.db",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_geoip2,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_geoip2(run_tests_sh):

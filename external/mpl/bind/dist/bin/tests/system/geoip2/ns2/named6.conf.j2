@@ -1,0 +1,87 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS2
+
+options {
+	{% include_indented "_common/options-dual.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+	geoip-directory "../data";
+};
+
+{% include "_common/controls.conf.j2" %}
+
+view one {
+	match-clients { geoip city "Redwood City"; };
+	zone "example" {
+		type primary;
+		file "example1.db";
+	};
+};
+
+view two {
+	match-clients { geoip city "Santa Cruz"; };
+	zone "example" {
+		type primary;
+		file "example2.db";
+	};
+};
+
+view three {
+	match-clients { geoip city "Oklahoma City"; };
+	zone "example" {
+		type primary;
+		file "example3.db";
+	};
+};
+
+view four {
+	match-clients { geoip city "Ashland"; };
+	zone "example" {
+		type primary;
+		file "example4.db";
+	};
+};
+
+view five {
+	match-clients { geoip city "Atlanta"; };
+	zone "example" {
+		type primary;
+		file "example5.db";
+	};
+};
+
+view six {
+	match-clients { geoip city "Morrison"; };
+	zone "example" {
+		type primary;
+		file "example6.db";
+	};
+};
+
+view seven {
+	match-clients { geoip city "Ketchikan"; };
+	zone "example" {
+		type primary;
+		file "example7.db";
+	};
+};
+
+view none {
+	match-clients { any; };
+	zone "example" {
+		type primary;
+		file "example.db.in";
+	};
+};

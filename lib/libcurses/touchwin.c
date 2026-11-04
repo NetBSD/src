@@ -1,4 +1,4 @@
-/*	$NetBSD: touchwin.c,v 1.34.4.1 2025/08/02 05:54:47 perseant Exp $	*/
+/*	$NetBSD: touchwin.c,v 1.34.4.2 2026/11/04 23:19:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)touchwin.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: touchwin.c,v 1.34.4.1 2025/08/02 05:54:47 perseant Exp $");
+__RCSID("$NetBSD: touchwin.c,v 1.34.4.2 2026/11/04 23:19:26 perseant Exp $");
 #endif
 #endif				/* not lint */
 
@@ -110,7 +110,7 @@ is_wintouched(WINDOW *win)
 	int y, maxy;
 
 	__CTRACE(__CTRACE_LINE, "is_wintouched: (%p, maxy %d)\n", win,
-	    win->maxy);
+	    (win != NULL) ? win->maxy : 0);
 	if (__predict_false(win == NULL))
 		return FALSE;
 

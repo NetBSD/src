@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsv2.h,v 1.5 2023/12/12 09:12:55 mlelstv Exp $	*/
+/*	$NetBSD: nfsv2.h,v 1.5.2.1 2026/11/04 23:27:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -125,7 +125,7 @@ struct nfsv2_time {
 };
 
 /*
- * File attributes and setable attributes.
+ * File attributes and settable attributes.
  */
 struct nfsv2_fattr {
 	n_long	fa_type;

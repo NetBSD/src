@@ -1,4 +1,4 @@
-# Copyright 2002-2024 Free Software Foundation, Inc.
+# Copyright 2002-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,6 +16,7 @@
 # This file was written by Michael Snyder (msnyder@redhat.com)
 # This is a test for the gdb command "generate-core-file".
 
+require gcore_cmd_available
 
 standard_testfile
 
@@ -57,7 +58,8 @@ if {!$core_supported} {
 }
 
 # Now restart gdb and load the corefile.
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 set core_loaded [gdb_core_cmd "$corefile" "re-load generated corefile"]
 if { $core_loaded == -1 } {

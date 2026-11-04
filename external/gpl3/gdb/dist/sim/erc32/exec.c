@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -314,7 +314,7 @@ mul64 (uint32_t n1, uint32_t n2, uint32_t *result_hi, uint32_t *result_lo, int m
   hi =   (((n1 >> 16) & 0xFFFF) * ((n2 >> 16) & 0xFFFF));
   
   /* We now need to add all of these results together, taking care
-     to propogate the carries from the additions: */
+     to propagate the carries from the additions: */
   reg_lo = add32 (lo, (mid1 << 16), &carry);
   reg_hi = carry;
   reg_lo = add32 (reg_lo, (mid2 << 16), &carry);

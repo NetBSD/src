@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.319 2024/02/09 22:08:33 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.319.2.1 2026/11/04 23:21:24 perseant Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.319 2024/02/09 22:08:33 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.319.2.1 2026/11/04 23:21:24 perseant Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -102,7 +102,7 @@ extern int pseg_set_real(struct pmap *, vaddr_t, int64_t, paddr_t);
  * writable we set the TLB_REAL_W bit for the trap handler.
  *
  * Whenever we take a TLB miss trap, the trap handler will set the TLB_ACCESS
- * bit in the approprate TTE in the page table.  Whenever we take a protection
+ * bit in the appropriate TTE in the page table.  Whenever we take a protection
  * fault, if the TLB_REAL_W bit is set then we flip both the TLB_W and TLB_MOD
  * bits to enable writing and mark the page as modified.
  *
@@ -1274,7 +1274,7 @@ cpu_pmap_prepare(struct cpu_info *ci, bool initial)
 		 * Initially share ctxbusy with the boot cpu, the
 		 * cpu will replace it as soon as it runs (and can
 		 * probe the number of available contexts itself).
-		 * Untill then only context 0 (aka kernel) will be
+		 * Until then only context 0 (aka kernel) will be
 		 * referenced anyway.
 		 */
 		ci->ci_numctx = curcpu()->ci_numctx;
@@ -1475,8 +1475,11 @@ pmap_create(void)
 	pm->pm_refs = 1;
 	TAILQ_INIT(&pm->pm_ptps);
 	if (pm != pmap_kernel()) {
-		while (!pmap_get_page(&pm->pm_physaddr)) {
-			uvm_wait("pmap_create");
+		uint64_t ticket;
+
+		while (ticket = uvm_wait_prepare(),
+		    !pmap_get_page(&pm->pm_physaddr)) {
+			uvm_wait("pmap_create", ticket);
 		}
 		pm->pm_segs = (paddr_t *)(u_long)pm->pm_physaddr;
 	}

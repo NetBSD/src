@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,18 +35,19 @@ if {![runto "local.adb:$bp_location"]} {
 # name of the enum, either "e1" or "e2".
 proc print_three {which_enum value} {
     # We don't know which in order gdb will print the constants, so
-    # adapt to either.
+    # adapt to either.  Accept "local." prefix for older versions of
+    # GNAT.
     set menu1 [multi_line \
 		   "Multiple matches for three" \
 		   "\\\[0\\\] cancel" \
-		   "\\\[1\\\] local\\.e2'\\(three\\) \\(enumeral\\)" \
-		   "\\\[2\\\] local\\.e1'\\(three\\) \\(enumeral\\)" \
+		   "\\\[1\\\] (local\\.)?e2'\\(three\\) \\(enumeral\\)" \
+		   "\\\[2\\\] (local\\.)?e1'\\(three\\) \\(enumeral\\)" \
 		   "> $"]
     set menu2 [multi_line \
 		   "Multiple matches for three" \
 		   "\\\[0\\\] cancel" \
-		   "\\\[1\\\] local\\.e1'\\(three\\) \\(enumeral\\)" \
-		   "\\\[2\\\] local\\.e2'\\(three\\) \\(enumeral\\)" \
+		   "\\\[1\\\] (local\\.)?e1'\\(three\\) \\(enumeral\\)" \
+		   "\\\[2\\\] (local\\.)?e2'\\(three\\) \\(enumeral\\)" \
 		   "> $"]
 
     set index -1

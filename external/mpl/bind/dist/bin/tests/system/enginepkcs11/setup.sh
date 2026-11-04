@@ -40,13 +40,9 @@ keyfromlabel() {
   dir="$4"
   shift 4
 
-  $KEYFRLAB $ENGINE_ARG -K $dir -a $alg -l "pkcs11:token=softhsm2-enginepkcs11;object=${id}-${zone};pin-source=$PWD/ns1/pin" "$@" $zone >>keyfromlabel.out.$zone.$id 2>keyfromlabel.err.$zone.$id || return 1
+  $KEYFRLAB $ENGINE_ARG -K $dir -a $alg -y -l "pkcs11:token=softhsm2-enginepkcs11;object=${id}-${zone};pin-source=$PWD/ns1/pin" "$@" $zone >>keyfromlabel.out.$zone.$id 2>keyfromlabel.err.$zone.$id || return 1
   cat keyfromlabel.out.$zone.$id
 }
-
-# Setup ns1.
-copy_setports ns1/named.conf.in ns1/named.conf
-sed -e "s/@ENGINE_ARGS@/${ENGINE_ARG}/g" <ns1/named.args.in >ns1/named.args
 
 mkdir ns1/keys
 
@@ -179,10 +175,6 @@ zone "${alg}.split" {
 EOF
   fi
 done
-
-# Setup ns2 (with views).
-copy_setports ns2/named.conf.in ns2/named.conf
-sed -e "s/@ENGINE_ARGS@/${ENGINE_ARG}/g" <ns2/named.args.in >ns2/named.args
 
 mkdir ns2/keys
 

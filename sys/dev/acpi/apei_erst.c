@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_erst.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $	*/
+/*	$NetBSD: apei_erst.c,v 1.3.2.1 2026/11/04 23:21:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.3 2024/03/22 20:48:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_erst.c,v 1.3.2.1 2026/11/04 23:21:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -121,7 +121,7 @@ static const char *apei_erst_instruction[] = {
 /*
  * apei_erst_instreg
  *
- *	Table of which isntructions use a register operand.
+ *	Table of which instructions use a register operand.
  *
  *	Must match apei_erst_instfunc.
  */
@@ -290,8 +290,8 @@ apei_erst_attach(struct apei_softc *sc)
 
 	/* XXX define this format somewhere */
 	snprintb(attrbuf, sizeof(attrbuf), "\177\020"
-	    "\001"	"NVRAM\0"
-	    "\002"	"SLOW\0"
+	    "b\001"	"NVRAM\0"
+	    "b\002"	"SLOW\0"
 	    "\0", attr);
 
 	aprint_normal_dev(sc->sc_dev, "ERST: %"PRIu64" records in error log"

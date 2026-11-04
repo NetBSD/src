@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.7 2022/10/26 23:38:07 riastradh Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.7.8.1 2026/11/04 23:20:14 perseant Exp $ */
 
 /*-
  * Copyright (c) 2013-2021 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.7 2022/10/26 23:38:07 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.7.8.1 2026/11/04 23:20:14 perseant Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -58,6 +58,7 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.7 2022/10/26 23:38:07 riastradh Ex
 #include <dev/cons.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <arm/samsung/sscom_reg.h>
 

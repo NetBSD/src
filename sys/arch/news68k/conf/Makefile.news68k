@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.24 2023/10/06 21:10:12 andvar Exp $
+#	$NetBSD: Makefile.news68k,v 1.24.6.1 2026/11/04 23:21:03 perseant Exp $
 #
 # Makefile for NetBSD
 #
@@ -29,7 +29,8 @@ NEED_OWN_INSTALL_TARGET?=no
 S=		../../../..
 .endif
 NEWS68K=	$S/arch/news68k
-GENASSYM_CONF=	${NEWS68K}/news68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${NEWS68K}/news68k/genassym.cf
 
 ##
 ## (2) compile settings
@@ -46,6 +47,7 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
 
 MD_OBJS=	locore.o
 MD_LIBS=	${FPSP}

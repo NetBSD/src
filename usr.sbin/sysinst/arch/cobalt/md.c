@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.16 2022/06/11 16:25:23 tsutsui Exp $ */
+/*	$NetBSD: md.c,v 1.16.4.1 2026/11/04 23:28:59 perseant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -46,7 +46,7 @@
 #include "menu_defs.h"
 
 /*
- * Firmware reognizes only Linux Ext2 REV 0, so we have to have
+ * Firmware recognizes only Linux Ext2 REV 0, so we have to have
  * a Linux Ext2 fs to store our native bootloader.
  */
 static int nobootfs = 0;

@@ -1,6 +1,6 @@
 /* Handle set and show GDB commands.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -27,6 +27,7 @@
 #include "cli/cli-decode.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-setshow.h"
+#include "cli/cli-style.h"
 #include "cli/cli-utils.h"
 
 /* Return true if the change of command parameter should be notified.  */
@@ -137,10 +138,14 @@ deprecated_show_value_hack (struct ui_file *ignore_file,
     {
     case var_string:
     case var_string_noescape:
-    case var_optional_filename:
-    case var_filename:
     case var_enum:
       gdb_printf ((" is \"%s\".\n"), value);
+      break;
+
+    case var_optional_filename:
+    case var_filename:
+      gdb_printf ((" is \"%ps\".\n"),
+		  styled_string (file_name_style.style (), value));
       break;
 
     default:
@@ -443,6 +448,13 @@ do_set_command (const char *arg, int from_tty, struct cmd_list_element *c)
 	option_changed = c->var->set<const char *> (match);
       }
       break;
+    case var_color:
+      {
+	ui_file_style::color color = parse_var_color (arg);
+	ui_file_style::color approx_color = color.approximate (colorsupport ());
+	option_changed = c->var->set<ui_file_style::color> (approx_color);
+      }
+      break;
     default:
       error (_("gdb internal error: bad var_type in do_setshow_command"));
     }
@@ -520,6 +532,14 @@ do_set_command (const char *arg, int from_tty, struct cmd_list_element *c)
 	  interps_notify_param_changed
 	    (name, c->var->get<const char *> ());
 	  break;
+	case var_color:
+	  {
+	    const ui_file_style::color &color
+	      = c->var->get<ui_file_style::color> ();
+	    interps_notify_param_changed
+	      (name, color.to_string ().c_str ());
+	  }
+	  break;
 	case var_boolean:
 	  {
 	    const char *opt = c->var->get<bool> () ? "on" : "off";
@@ -583,6 +603,12 @@ get_setshow_command_value_string (const setting &var)
 	const char *value = var.get<const char *> ();
 	if (value != nullptr)
 	  stb.puts (value);
+      }
+      break;
+    case var_color:
+      {
+	const ui_file_style::color &value = var.get<ui_file_style::color> ();
+	stb.puts (value.to_string ().c_str ());
       }
       break;
     case var_boolean:
@@ -681,6 +707,7 @@ cmd_show_list (struct cmd_list_element *list, int from_tty)
   struct ui_out *uiout = current_uiout;
 
   ui_out_emit_tuple tuple_emitter (uiout, "showlist");
+  const ui_file_style cmd_style = command_style.style ();
   for (; list != NULL; list = list->next)
     {
       /* We skip show command aliases to avoid showing duplicated values.  */
@@ -701,15 +728,18 @@ cmd_show_list (struct cmd_list_element *list, int from_tty)
 	{
 	  ui_out_emit_tuple option_emitter (uiout, "option");
 
-	  if (list->prefix != nullptr)
+	  if (!uiout->is_mi_like_p () && list->prefix != nullptr)
 	    {
 	      /* If we find a prefix, output it (with "show " skipped).  */
 	      std::string prefixname = list->prefix->prefixname ();
-	      prefixname = (!list->prefix->is_prefix () ? ""
-			    : strstr (prefixname.c_str (), "show ") + 5);
-	      uiout->text (prefixname);
+	      if (startswith (prefixname, "show "))
+		prefixname = prefixname.substr (5);
+	      /* In non-MI mode, we include the full name here.  */
+	      prefixname += list->name;
+	      uiout->field_string ("name", prefixname, cmd_style);
 	    }
-	  uiout->field_string ("name", list->name);
+	  else
+	    uiout->field_string ("name", list->name, cmd_style);
 	  uiout->text (":  ");
 	  if (list->type == show_cmd)
 	    do_show_command (NULL, from_tty, list);

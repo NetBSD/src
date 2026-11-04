@@ -9,11 +9,13 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+import os
+
 import pytest
 
 import isctest.mark
 
-pytestmark = pytest.mark.extra_artifacts(
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "dsset-*",
@@ -52,7 +54,19 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
+pytestmark = [
+    isctest.mark.with_pkcs11_provider,
+    isctest.mark.softhsm2_environment,
+    EXTRA_ARTIFACTS,
+]
 
-@isctest.mark.flaky(max_runs=3)  # GL#4605
+
+def bootstrap():
+    return {
+        "ENGINE_ARG": os.getenv("ENGINE_ARG", ""),
+    }
+
+
+@pytest.mark.flaky(max_runs=5)  # GL#4605
 def test_enginepkcs11(run_tests_sh):
     run_tests_sh()

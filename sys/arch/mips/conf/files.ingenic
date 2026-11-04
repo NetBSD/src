@@ -1,4 +1,4 @@
-#	$NetBSD: files.ingenic,v 1.10 2017/05/21 06:49:13 skrll Exp $
+#	$NetBSD: files.ingenic,v 1.10.48.1 2026/11/04 23:20:57 perseant Exp $
 
 file	arch/mips/mips/bus_dma.c
 file	arch/mips/mips/locore_ingenic.S

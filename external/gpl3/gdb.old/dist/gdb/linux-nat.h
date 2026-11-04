@@ -1,6 +1,6 @@
 /* Native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_NAT_H
-#define LINUX_NAT_H
+#ifndef GDB_LINUX_NAT_H
+#define GDB_LINUX_NAT_H
 
 #include "nat/linux-nat.h"
 #include "inf-ptrace.h"
@@ -68,8 +68,6 @@ public:
 
   const char *thread_name (struct thread_info *) override;
 
-  struct address_space *thread_address_space (ptid_t) override;
-
   bool stopped_by_watchpoint () override;
 
   bool stopped_data_address (CORE_ADDR *) override;
@@ -80,7 +78,9 @@ public:
   bool stopped_by_hw_breakpoint () override;
   bool supports_stopped_by_hw_breakpoint () override;
 
-  void thread_events (int) override;
+  void thread_events (bool) override;
+
+  bool supports_set_thread_options (gdb_thread_options options) override;
 
   bool can_async_p () override;
 
@@ -103,7 +103,7 @@ public:
 		   int flags, int mode, int warn_if_slow,
 		   fileio_error *target_errno) override;
 
-  gdb::optional<std::string>
+  std::optional<std::string>
     fileio_readlink (struct inferior *inf,
 		     const char *filename,
 		     fileio_error *target_errno) override;
@@ -128,6 +128,8 @@ public:
   void post_attach (int) override;
 
   void follow_fork (inferior *, ptid_t, target_waitkind, bool, bool) override;
+
+  void follow_clone (ptid_t) override;
 
   std::vector<static_tracepoint_marker>
     static_tracepoint_markers_by_strid (const char *id) override;
@@ -160,6 +162,12 @@ public:
 
   /* The method to call, if any, when a new clone event is detected.  */
   virtual void low_new_clone (struct lwp_info *parent, pid_t child_lwp)
+  {}
+
+  /* The method to call, if any, when we have a new (from run/attach,
+     not fork) process to debug.  The process is ptrace-stopped when
+     this is called.  */
+  virtual void low_init_process (pid_t pid)
   {}
 
   /* The method to call, if any, when a process is no longer
@@ -232,7 +240,9 @@ struct lwp_info : intrusive_list_node<lwp_info>
   /* The last resume GDB requested on this thread.  */
   resume_kind last_resume_kind = resume_continue;
 
-  /* If non-zero, a pending wait status.  */
+  /* If non-zero, a pending wait status.  A pending process exit is
+     recorded in WAITSTATUS, because W_EXITCODE(0,0) happens to be
+     0.  */
   int status = 0;
 
   /* When 'stopped' is set, this is where the lwp last stopped, with
@@ -260,9 +270,10 @@ struct lwp_info : intrusive_list_node<lwp_info>
   /* Non-zero if we expect a duplicated SIGINT.  */
   int ignore_sigint = 0;
 
-  /* If WAITSTATUS->KIND != TARGET_WAITKIND_SPURIOUS, the waitstatus
-     for this LWP's last event.  This may correspond to STATUS above,
-     or to a local variable in lin_lwp_wait.  */
+  /* If WAITSTATUS->KIND != TARGET_WAITKIND_IGNORE, the waitstatus for
+     this LWP's last event.  This usually corresponds to STATUS above,
+     however because W_EXITCODE(0,0) happens to be 0, a process exit
+     will be recorded here, while 'status == 0' is ambiguous.  */
   struct target_waitstatus waitstatus;
 
   /* Signal whether we are in a SYSCALL_ENTRY or
@@ -293,9 +304,6 @@ lwp_info_range all_lwps ();
 /* Same as the above, but safe against deletion while iterating.  */
 
 lwp_info_safe_range all_lwps_safe ();
-
-/* Does the current host support PTRACE_GETREGSET?  */
-extern enum tribool have_ptrace_getregset;
 
 /* Called from the LWP layer to inform the thread_db layer that PARENT
    spawned CHILD.  Both LWPs are currently stopped.  This function
@@ -334,4 +342,4 @@ void linux_nat_switch_fork (ptid_t new_ptid);
    uninitialized in such case).  */
 bool linux_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo);
 
-#endif /* LINUX_NAT_H */
+#endif /* GDB_LINUX_NAT_H */

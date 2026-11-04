@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ if { [build_executable "failed to prepare" ${testfile} ${srcfile} $options] } {
 proc_with_prefix check_x87_regs_around_init {} {
     global binfile
 
-    clean_restart ${binfile}
+    clean_restart ${::testfile}
 
     # Get things started.
     if {![runto_main]} {
@@ -115,7 +115,7 @@ proc_with_prefix check_x87_regs_around_init {} {
 proc_with_prefix check_setting_mxcsr_before_enable {} {
     global binfile gdb_prompt
 
-    clean_restart ${binfile}
+    clean_restart ${::testfile}
 
     if {![runto_main]} {
 	return 0
@@ -149,7 +149,7 @@ proc_with_prefix check_setting_mxcsr_before_enable {} {
 proc_with_prefix check_setting_x87_regs_before_enable {} {
     global binfile
 
-    clean_restart ${binfile}
+    clean_restart ${::testfile}
 
     if {![runto_main]} {
 	return 0

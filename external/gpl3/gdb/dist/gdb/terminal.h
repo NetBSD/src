@@ -1,5 +1,5 @@
 /* Terminal interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (TERMINAL_H)
-#define TERMINAL_H 1
+#ifndef GDB_TERMINAL_H
+#define GDB_TERMINAL_H
+
+#include "serial.h"
 
 struct inferior;
 
@@ -43,4 +45,28 @@ extern void gdb_save_tty_state (void);
    have had a chance to alter it.  */
 extern void set_initial_gdb_ttystate (void);
 
-#endif /* !defined (TERMINAL_H) */
+/* Restore initial tty state.  */
+extern void restore_initial_gdb_ttystate (void);
+
+/* An RAII-based object that saves the tty state, and then restores it again
+   when this object is destroyed.  */
+class scoped_restore_tty_state
+{
+public:
+  scoped_restore_tty_state ();
+  ~scoped_restore_tty_state ();
+
+  DISABLE_COPY_AND_ASSIGN (scoped_restore_tty_state);
+
+private:
+  /* The saved tty state.  This can remain NULL even after the constructor
+     has run if serial_get_tty_state fails to fetch the tty state.  */
+  serial_ttystate m_ttystate = nullptr;
+};
+
+#ifdef USE_WIN32API
+/* Set translation mode of stdout/stderr to binary.  */
+extern void set_output_translation_mode_binary ();
+#endif
+
+#endif /* GDB_TERMINAL_H */

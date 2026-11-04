@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.78.2.1 2025/08/02 05:56:46 perseant Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.78.2.2 2026/11/04 23:22:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.78.2.1 2025/08/02 05:56:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.78.2.2 2026/11/04 23:22:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,7 +574,6 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	int ntxsegs, i, rseg, error;
 	uint32_t chipid, reg;
 	uint8_t enaddr[ETHER_ADDR_LEN];
-	prop_object_t obj;
 	bool is_vmware;
 	char intrbuf[PCI_INTRSTR_LEN];
 
@@ -630,9 +629,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	 * from the CSRs (assuming that boot firmware has written
 	 * it there).
 	 */
-	obj = prop_dictionary_get(device_properties(sc->sc_dev),
-				  "am79c970-no-eeprom");
-	if (prop_bool_true(obj)) {
+	if (device_getprop_bool(sc->sc_dev, "am79c970-no-eeprom")) {
 		for (i = 0; i < 3; i++) {
 			uint32_t val;
 			val = pcn_csr_read(sc, LE_CSR12 + i);
@@ -640,9 +637,26 @@ pcn_attach(device_t parent, device_t self, void *aux)
 			enaddr[2 * i + 1] = (val >> 8) & 0xff;
 		}
 	} else {
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			enaddr[i] = bus_space_read_1(sc->sc_st, sc->sc_sh,
+		/*
+		 * Read the address ROM 4 bytes at a time; works on
+		 * real hardware, and accommodates some emulators which
+		 * believe that after pcn_reset(), we are in DWIO mode
+		 * where byte access is not supported.
+		 */
+		for (i = 0; i < ETHER_ADDR_LEN; i+= 4) {
+			uint32_t word;
+			word = bus_space_read_4(sc->sc_st, sc->sc_sh,
 			    PCN32_APROM + i);
+			enaddr[i] = word & 0xff;
+			if (i + 1 < ETHER_ADDR_LEN) {
+				enaddr[i + 1] = (word >> 8) & 0xff;
+			}
+			if (i + 2 < ETHER_ADDR_LEN) {
+				enaddr[i + 2] = (word >> 16) & 0xff;
+			}
+			if (i + 3 < ETHER_ADDR_LEN) {
+				enaddr[i + 3] = (word >> 24) & 0xff;
+			}
 		}
 	}
 
@@ -666,9 +680,8 @@ pcn_attach(device_t parent, device_t self, void *aux)
 	 * limit the number of Tx segments.
 	 */
 	if (is_vmware) {
+		device_setprop_bool(sc->sc_dev, "am79c970-vmware-tx-bug", true);
 		ntxsegs = PCN_NTXSEGS_VMWARE;
-		prop_dictionary_set_bool(device_properties(sc->sc_dev),
-					 "am79c970-vmware-tx-bug", TRUE);
 		aprint_verbose_dev(self,
 		    "VMware Tx segment count bug detected\n");
 	} else {

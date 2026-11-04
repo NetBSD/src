@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -91,7 +91,8 @@ proc do_prepare_inferior { } {
 proc do_test { var_value { var_name "" } { var_name_match "" } { var_value_match "" } } {
     global binfile test_var_name
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     if { $var_name == "" } {
 	set var_name $test_var_name
@@ -146,7 +147,8 @@ with_test_prefix "strange named var" {
 proc test_set_unset_vars { } {
     global binfile
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     with_test_prefix "set 3 environment variables" {
 	# Set some environment variables
@@ -205,7 +207,8 @@ with_test_prefix "test set/unset of vars" {
 proc test_unset { } {
     global hex decimal binfile gdb_prompt
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     do_prepare_inferior
 
@@ -234,7 +237,8 @@ proc test_unset { } {
 	}
 
 	with_test_prefix "set-then-unset" {
-	    clean_restart $binfile
+	    clean_restart
+	    gdb_load $binfile
 
 	    # Test if setting and then unsetting $HOME works.
 	    gdb_test_no_output "set environment HOME = test" "set HOME as test"

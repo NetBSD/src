@@ -1,4 +1,4 @@
-/*	$NetBSD: view.c,v 1.15.2.1 2025/08/02 05:53:32 perseant Exp $	*/
+/*	$NetBSD: view.c,v 1.15.2.2 2026/11/04 23:18:04 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -67,13 +67,6 @@
 #include <dns/zone.h>
 #include <dns/zt.h>
 
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
-
 #define DNS_VIEW_DELONLYHASH 111
 
 /*%
@@ -88,7 +81,7 @@
 #define DEFAULT_EDNS_BUFSIZE 1232
 
 isc_result_t
-dns_view_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
+dns_view_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr ISC_ATTR_UNUSED,
 		dns_dispatchmgr_t *dispatchmgr, dns_rdataclass_t rdclass,
 		const char *name, dns_view_t **viewp) {
 	dns_view_t *view = NULL;
@@ -152,7 +145,7 @@ dns_view_create(isc_mem_t *mctx, isc_loopmgr_t *loopmgr,
 
 	dns_tsigkeyring_create(view->mctx, &view->dynamickeys);
 
-	view->failcache = dns_badcache_new(view->mctx, loopmgr);
+	view->failcache = dns_badcache_new(view->mctx);
 
 	isc_mutex_init(&view->new_zone_lock);
 
@@ -386,7 +379,7 @@ destroy(dns_view_t *view) {
 	}
 #ifdef HAVE_DNSTAP
 	if (view->dtenv != NULL) {
-		dns_dt_detach(&view->dtenv);
+		dns_dtenv_detach(&view->dtenv);
 	}
 #endif /* HAVE_DNSTAP */
 	dns_view_setnewzones(view, false, NULL, NULL, 0ULL);

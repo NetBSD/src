@@ -1,5 +1,5 @@
 /* Helper routines for C++ support in GDB.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
    Namespace support contributed by David Carlton.
@@ -19,11 +19,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CP_SUPPORT_H
-#define CP_SUPPORT_H
+#ifndef GDB_CP_SUPPORT_H
+#define GDB_CP_SUPPORT_H
 
 #include "symtab.h"
-#include "gdbsupport/gdb_vecs.h"
 #include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/array-view.h"
 #include <vector>
@@ -63,6 +62,10 @@ struct demangle_parse_info
 
   /* Any memory used during processing.  */
   auto_obstack obstack;
+
+  /* True if the parser had to add a dummy '()' at the end of the
+     input text to make it parse.  */
+  bool added_parens = false;
 
   /* Any other objects referred to by this object, and whose storage
      lifetime must be linked.  */
@@ -146,7 +149,7 @@ extern struct block_symbol
 			      const struct block *block,
 			      const domain_search_flags domain);
 
-extern struct block_symbol cp_lookup_symbol_imports_or_template
+extern struct block_symbol cp_lookup_symbol_imports
      (const char *scope,
       const char *name,
       const struct block *block,
@@ -209,4 +212,4 @@ extern char *gdb_cplus_demangle_print (int options,
 
 extern const char *find_toplevel_char (const char *s, char c);
 
-#endif /* CP_SUPPORT_H */
+#endif /* GDB_CP_SUPPORT_H */

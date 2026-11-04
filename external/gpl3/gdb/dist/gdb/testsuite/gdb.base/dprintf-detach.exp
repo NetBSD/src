@@ -1,4 +1,4 @@
-#   Copyright 2014-2024 Free Software Foundation, Inc.
+#   Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,8 @@ proc dprintf_detach_test { breakpoint_always_inserted dprintf_style disconnected
 
     with_test_prefix "$test_prefix" {
 	# Start with a clean gdb
-	clean_restart ${binfile}
+	clean_restart
+	gdb_load $binfile
 
 	gdb_test_no_output "set breakpoint always-inserted ${breakpoint_always_inserted}"
 	gdb_test_no_output "set dprintf-style ${dprintf_style}"
@@ -68,7 +69,8 @@ proc dprintf_detach_test { breakpoint_always_inserted dprintf_style disconnected
 	gdb_exit
 
 	# Check that the process still exists by attaching a new gdb to it.
-	clean_restart ${binfile}
+	clean_restart
+	gdb_load $binfile
 	set test "re-attach to inferior"
 	set is_gdbserver [target_is_gdbserver]
 

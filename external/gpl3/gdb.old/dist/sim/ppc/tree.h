@@ -35,7 +35,7 @@
    This function accepts a printf style formatted string as the
    argument that describes the entry.  Any properties or interrupt
    connections added to a device tree using this function are marked
-   as having a permenant disposition.  When the tree is (re)
+   as having a permanent disposition.  When the tree is (re)
    initialized they will be restored to their initial value.
 
    */

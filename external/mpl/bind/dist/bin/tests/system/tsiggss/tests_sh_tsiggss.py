@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "authsock.pid",
         "nsupdate.out*",
@@ -23,6 +25,12 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/update.txt",
     ]
 )
+
+pytestmark = [
+    isctest.mark.with_gssapi,
+    isctest.mark.with_fips_dh,
+    EXTRA_ARTIFACTS,
+]
 
 
 def test_tsiggss(run_tests_sh):

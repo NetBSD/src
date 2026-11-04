@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.11.2.1 2026/11/04 23:20:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11 2023/12/20 00:40:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.11.2.1 2026/11/04 23:20:00 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ char	*vmmap;
  *	This is called after mapping has already been enabled
  *	and just syncs the pmap module with what has already been done.
  */
-void
+void __attribute__((no_instrument_function))
 pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 {
 	vaddr_t va;
@@ -179,8 +179,6 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 			break;		/* Only two segments enabled */
 	}
 
-	mem_size = physmem << PGSHIFT;
-
 	avail_start = firstaddr;
 	avail_end   = toads;
 
@@ -197,7 +195,7 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 	SYSMAP(void *	,CADDR1	 ,1			)
 	SYSMAP(void *	,CADDR2	 ,1			)
 	SYSMAP(void *	,vmmap	 ,1			)
-	SYSMAP(void *	,msgbufaddr ,btoc(MSGBUFSIZE)	)
+	SYSMAP(void *	,msgbufaddr ,btoc(m68k_round_page(MSGBUFSIZE))	)
 
 	DCIS();
 

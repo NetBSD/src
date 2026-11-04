@@ -1,4 +1,4 @@
-# Copyright (C) 2024 Free Software Foundation, Inc.
+# Copyright (C) 2024-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ set testpid [spawn_id_get_pid $test_spawn_id]
 # Wait a bit for the leader thread to exit, before attaching.
 sleep 2
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 # Save this early as we may not be able to talk with GDBserver anymore
 # when we need to check it.
@@ -41,30 +41,22 @@ set is_gdbserver [target_is_gdbserver]
 set attached 0
 
 gdb_test_multiple "attach $testpid" "attach" {
-    -re "Attaching to process $testpid failed.*" {
+    -re -wrap "Attaching to process $testpid failed.*" {
 	# GNU/Linux gdbserver.  Linux ptrace does not let you attach
 	# to zombie threads.
 	setup_kfail "gdb/31555" *-*-linux*
 	fail $gdb_test_name
     }
-    -re "warning: process $testpid is a zombie - the process has already terminated.*" {
+    -re -wrap "warning: process $testpid is a zombie - the process has already terminated.*" {
 	# Native GNU/Linux.  Linux ptrace does not let you attach to
 	# zombie threads.
 	setup_kfail "gdb/31555" *-*-linux*
 	fail $gdb_test_name
     }
-    -re "Attaching to program: $escapedbinfile, process $testpid.*$gdb_prompt $" {
+    -re -wrap "Attaching to program: $escapedbinfile, process $testpid.*" {
 	pass $gdb_test_name
 	set attached 1
     }
-}
-
-# With gdbserver, after we failed to attach, we hit PR server/31554:
-#  print $_inferior_thread_count
-#  Remote connection closed
-#  (gdb) KFAIL: gdb.threads/leader-exit-attach.exp: get valueof "$_inferior_thread_count"
-if {!$attached && $is_gdbserver} {
-    setup_kfail "server/31554" "*-*-*"
 }
 
 set thread_count [get_valueof "" "\$_inferior_thread_count" -1]

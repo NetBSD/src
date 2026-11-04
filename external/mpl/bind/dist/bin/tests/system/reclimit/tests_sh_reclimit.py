@@ -13,7 +13,7 @@ import pytest
 
 import isctest.mark
 
-pytestmark = pytest.mark.extra_artifacts(
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "dsset-signed.",
@@ -25,8 +25,13 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
+pytestmark = [
+    isctest.mark.with_ipv6,
+    EXTRA_ARTIFACTS,
+]
+
 
 # The reclimit is known to be quite unstable. GL #1587
-@isctest.mark.flaky(max_runs=2)
+@pytest.mark.flaky(max_runs=2)
 def test_reclimit(run_tests_sh):
     run_tests_sh()

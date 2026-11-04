@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21.2.1 2025/08/02 05:58:10 perseant Exp $
+# $NetBSD: Makefile,v 1.21.2.2 2026/11/04 23:28:19 perseant Exp $
 #
 
 NOMAN=		# defined
@@ -9,8 +9,10 @@ NOMAN=		# defined
 
 SUBDIR+=	helper_dso1
 SUBDIR+=	helper_dso3
+SUBDIR+=	helper_recurdso
 SUBDIR+=	.WAIT
 SUBDIR+=	helper_dso2
+SUBDIR+=	helper_recurdso2
 SUBDIR+=	.WAIT
 SUBDIR+=	helper_ifunc_dso
 SUBDIR+=	helper_symver_dso0
@@ -35,6 +37,8 @@ SUBDIR+=	helper_use_static
 
 TESTSDIR=	${TESTSBASE}/libexec/ld.elf_so
 
+TESTS_C+=	t_dladdr
+TESTS_C+=	t_dlclose_thread
 TESTS_C+=	t_dlerror-cleared
 TESTS_C+=	t_dlerror-false
 TESTS_C+=	t_dlinfo
@@ -47,10 +51,17 @@ TESTS_C+=	t_ifunc_now
 TESTS_C+=	t_rtld_r_debug
 TESTS_C+=	t_rtld_r_debug_nopie
 TESTS_C+=	t_tls_extern
+TESTS_C+=	t_tls_alignment
+
+LDFLAGS.t_dladdr+=		-Wl,-export-dynamic
 
 SRCS.t_ifunc_now=		t_ifunc.c
 SRCS.t_ifunc_norelro=		t_ifunc.c
 SRCS.t_ifunc_norelro_now=	t_ifunc.c
+
+LDADD.t_dlclose_thread+=	-lpthread
+LDADD.t_dlclose_thread+=	-Wl,-rpath,${TESTSDIR}
+LDADD.t_dlclose_thread+=	-Wl,--export-dynamic
 
 LDADD.t_ifunc+=			${${MKRELRO} != "no":?-Wl,-z,relro:}
 LDADD.t_ifunc_now+=		${${MKRELRO} != "no":?-Wl,-z,relro:} -Wl,-z,now
@@ -125,8 +136,10 @@ SRCS.h_r_rel_pack=	h_r_rel.c
 SRCS.h_r_rel_nopack=	h_r_rel.c
 
 h_r_rel_pack: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
-LDFLAGS.h_r_rel_pack=	${LD_PACK_RELATIVE_RELOCS}
-LDFLAGS.h_r_rel_nopack=	${LD_NOPACK_RELATIVE_RELOCS}
+h_r_rel_pack.link: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+COPTS.h_r_rel.c+=	-fpie
+LDFLAGS.h_r_rel_pack=	-pie ${LD_PACK_RELATIVE_RELOCS}
+LDFLAGS.h_r_rel_nopack=	-pie ${LD_NOPACK_RELATIVE_RELOCS}
 
 .include <bsd.test.mk>
 

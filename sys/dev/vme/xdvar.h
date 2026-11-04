@@ -1,4 +1,4 @@
-/*	$NetBSD: xdvar.h,v 1.13 2012/10/27 17:18:38 chs Exp $	*/
+/*	$NetBSD: xdvar.h,v 1.13.76.1 2026/11/04 23:22:39 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -109,7 +109,7 @@ struct xd_softc {
 	u_char nhead;			/* number of heads */
 	u_char nsect;			/* number of sectors per track */
 	u_char hw_spt;			/* as above, but includes spare sectors */
-	struct dkbad dkb;		/* bad144 sectors */
+	struct bad144_context *bad144;	/* bad144 sectors */
 };
 
 /*

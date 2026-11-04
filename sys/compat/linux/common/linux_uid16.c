@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_uid16.c,v 1.4 2014/05/20 17:31:18 njoly Exp $	*/
+/*	$NetBSD: linux_uid16.c,v 1.4.64.1 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.4 2014/05/20 17:31:18 njoly Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_uid16.c,v 1.4.64.1 2026/11/04 23:21:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -62,6 +62,7 @@ linux_sys_chown16(struct lwp *l, const struct linux_sys_chown16_args *uap, regis
 	} */
 	struct sys___posix_chown_args bca;
 
+	memset(&bca, 0, sizeof(bca));
 	SCARG(&bca, path) = SCARG(uap, path);
 	SCARG(&bca, uid) = LINUXTOBSD_UID(SCARG(uap, uid));
 	SCARG(&bca, gid) = LINUXTOBSD_GID(SCARG(uap, gid));
@@ -79,6 +80,7 @@ linux_sys_fchown16(struct lwp *l, const struct linux_sys_fchown16_args *uap, reg
 	} */
 	struct sys___posix_fchown_args bfa;
 
+	memset(&bfa, 0, sizeof(bfa));
 	SCARG(&bfa, fd) = SCARG(uap, fd);
 	SCARG(&bfa, uid) = LINUXTOBSD_UID(SCARG(uap, uid));
 	SCARG(&bfa, gid) = LINUXTOBSD_GID(SCARG(uap, gid));
@@ -96,6 +98,7 @@ linux_sys_lchown16(struct lwp *l, const struct linux_sys_lchown16_args *uap, reg
 	} */
 	struct sys___posix_lchown_args bla;
 
+	memset(&bla, 0, sizeof(bla));
 	SCARG(&bla, path) = SCARG(uap, path);
 	SCARG(&bla, uid) = LINUXTOBSD_UID(SCARG(uap, uid));
 	SCARG(&bla, gid) = LINUXTOBSD_GID(SCARG(uap, gid));
@@ -112,6 +115,7 @@ linux_sys_setreuid16(struct lwp *l, const struct linux_sys_setreuid16_args *uap,
 	} */
 	struct sys_setreuid_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, ruid) = LINUXTOBSD_UID(SCARG(uap, ruid));
 	SCARG(&bsa, euid) = LINUXTOBSD_UID(SCARG(uap, euid));
 
@@ -127,6 +131,7 @@ linux_sys_setregid16(struct lwp *l, const struct linux_sys_setregid16_args *uap,
 	} */
 	struct sys_setregid_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, rgid) = LINUXTOBSD_GID(SCARG(uap, rgid));
 	SCARG(&bsa, egid) = LINUXTOBSD_GID(SCARG(uap, egid));
 
@@ -143,6 +148,7 @@ linux_sys_setresuid16(struct lwp *l, const struct linux_sys_setresuid16_args *ua
 	} */
 	struct linux_sys_setresuid_args lsa;
 
+	memset(&lsa, 0, sizeof(lsa));
 	SCARG(&lsa, ruid) = LINUXTOBSD_UID(SCARG(uap, ruid));
 	SCARG(&lsa, euid) = LINUXTOBSD_UID(SCARG(uap, euid));
 	SCARG(&lsa, suid) = LINUXTOBSD_UID(SCARG(uap, suid));
@@ -160,6 +166,7 @@ linux_sys_setresgid16(struct lwp *l, const struct linux_sys_setresgid16_args *ua
 	} */
 	struct linux_sys_setresgid_args lsa;
 
+	memset(&lsa, 0, sizeof(lsa));
 	SCARG(&lsa, rgid) = LINUXTOBSD_GID(SCARG(uap, rgid));
 	SCARG(&lsa, egid) = LINUXTOBSD_GID(SCARG(uap, egid));
 	SCARG(&lsa, sgid) = LINUXTOBSD_GID(SCARG(uap, sgid));
@@ -281,7 +288,8 @@ linux_sys_setgroups16(struct lwp *l, const struct linux_sys_setgroups16_args *ua
 
 	if (ngroups > COMPAT_NGROUPS16)
 		return EINVAL;
-	error = copyin(SCARG(uap, gidset), lset, ngroups);
+	CTASSERT(COMPAT_NGROUPS16 <= SIZE_MAX/sizeof(lset[0]));
+	error = copyin(SCARG(uap, gidset), lset, ngroups * sizeof(lset[0]));
 	if (error != 0)
 		return error;
 

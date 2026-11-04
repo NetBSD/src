@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,7 @@
 # - have inlined copy ctor
 # - have deleted destructor
 
-if {[skip_cplus_tests]} {
-    untested "c++ test skipped"
-    return
-}
+require allow_cplus_tests
 
 standard_testfile .cc
 
@@ -75,22 +72,22 @@ gdb_test "print cbvDtorDel (*dtorDel)" \
 
 # Test that GDB calls the correct copy ctor
 gdb_test "print cbvFourCCtor (fourCctor_c0v0)" "13" \
-    "call cbvFourCCtor (c0v0)"
+    "call cbvFourCCtor, c0v0"
 gdb_test "print fourCctor_c0v0.x" "2" \
     "cbv argument 'twoCctor_c0v0' should not change"
 
 gdb_test "print cbvFourCCtor (fourCctor_c1v0)" "14" \
-    "call cbvFourCCtor (c1v0)"
+    "call cbvFourCCtor, c1v0"
 gdb_test "print fourCctor_c1v0.x" "2" \
     "cbv argument 'twoCctor_c1v0' should not change"
 
 gdb_test "print cbvFourCCtor (fourCctor_c0v1)" "15" \
-    "call cbvFourCCtor (c0v1)"
+    "call cbvFourCCtor, c0v1"
 gdb_test "print fourCctor_c0v1.x" "2" \
     "cbv argument 'twoCctor_c0v1' should not change"
 
 gdb_test "print cbvFourCCtor (fourCctor_c1v1)" "16" \
-    "call cbvFourCCtor (c1v1)"
+    "call cbvFourCCtor, c1v1"
 gdb_test "print fourCctor_c1v1.x" "2" \
     "cbv argument 'twoCctor_c1v1' should not change"
 

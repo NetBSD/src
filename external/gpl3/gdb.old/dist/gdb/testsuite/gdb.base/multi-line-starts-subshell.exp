@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,4 +52,4 @@ gdb_test_multiple "if 1\nshell ${shell_cmd}\nend\nPS1=\"$shell_prompt\"" $test {
 }
 
 # Check that we restore input in GDB correctly.
-gdb_test "print 1" "^print 1\r\n.. = 1" "gdb input still works"
+gdb_test "print 1" "^\\\$$decimal = 1" "gdb input still works"

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.104.2.1 2026/11/04 23:21:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.104.2.1 2026/11/04 23:21:26 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.104 2024/01/13 18:51:38 thorpej Exp $"
 #include <machine/cpu.h>
 #include <machine/db_machdep.h>
 #include <machine/dvma.h>
+#include <machine/fcode.h>
 #include <machine/idprom.h>
 #include <machine/leds.h>
 #include <machine/mon.h>
@@ -87,27 +88,17 @@ int mmutype = MMU_SUN;
  */
 
 u_char cpu_machine_id = 0;
-const char *cpu_string = NULL;
+const char *cpu_string;
 int cpu_has_vme = 0;
 
-/*
- * XXX - Should empirically estimate the divisor...
- * Note that the value of delay_divisor is roughly
- * 2048 / cpuclock	(where cpuclock is in MHz).
- */
-int delay_divisor = 82;		/* assume the fastest (3/260) */
+int delay_divisor = delay_divisor_est(25); /* assume the fastest (3/260) */
 
 extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
-void _bootstrap(void);
-
-static void _verify_hardware(void);
-static void _vm_init(void);
+void *_bootstrap(void);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
-static void _save_symtab(void);
-
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
@@ -174,11 +165,14 @@ _save_symtab(void)
  * things that may be needed very early (lwp0 upages).
  * Once that is done, pmap_bootstrap() is called to do the
  * usual preparations for our use of the MMU.
+ *
+ * Returns the new kernel %sp value for lwp0.
  */
-static void
+static void *
 _vm_init(void)
 {
 	vaddr_t nextva;
+	paddr_t nextpa;
 
 	/*
 	 * First preserve our symbol table, which might have been
@@ -205,17 +199,22 @@ _vm_init(void)
 	 */
 	memset((void *)nextva, 0, USPACE);
 	uvm_lwp_setuarea(&lwp0, nextva);
-
-	nextva += USPACE;
-
-	/*
-	 * Now that lwp0 exists, make it the "current" one.
-	 */
 	curlwp = &lwp0;
 	curpcb = lwp_getpcb(&lwp0);
 
+	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
+	struct trapframe *tf = (struct trapframe *)(nextva + USPACE) - 1;
+	tf->tf_sr = PSL_USER;
+	lwp0.l_md.md_regs = (int *)tf;
+
+	nextva += USPACE;
+
 	/* This does most of the real work. */
-	pmap_bootstrap(nextva);
+	nextpa = pmap_bootstrap(nextva);
+
+	machine_init_common(nextpa);
+
+	return tf;
 }
 
 /*
@@ -240,39 +239,49 @@ _verify_hardware(void)
 		sunmon_abort();
 	}
 
+	/*
+	 * XXX Should really calibrate the delay_divisor against a
+	 * XXX timer, but it's been this way for a long time.
+	 */
+
 	cpu_machine_id = machtype;
 	switch (cpu_machine_id) {
 
 	case ID_SUN3_50 :
 		cpu_match++;
 		cpu_string = "50";
-		delay_divisor = 128;	/* 16 MHz */
+		cpuspeed_khz = 16000;
+		delay_divisor = delay_divisor_est(16);
 		break;
 
 	case ID_SUN3_60 :
 		cpu_match++;
 		cpu_string = "60";
-		delay_divisor = 102;	/* 20 MHz */
+		cpuspeed_khz = 20000;
+		delay_divisor = delay_divisor_est(20);
 		break;
 
 	case ID_SUN3_110:
 		cpu_match++;
 		cpu_string = "110";
-		delay_divisor = 120;	/* 17 MHz */
+		cpuspeed_khz = 16670;
+		delay_divisor = delay_divisor_est(17);
 		cpu_has_vme = true;
 		break;
 
 	case ID_SUN3_160:
 		cpu_match++;
 		cpu_string = "160";
-		delay_divisor = 120;	/* 17 MHz */
+		cpuspeed_khz = 16670;
+		delay_divisor = delay_divisor_est(17);
 		cpu_has_vme = true;
 		break;
 
 	case ID_SUN3_260:
 		cpu_match++;
 		cpu_string = "260";
-		delay_divisor = 82;	/* 25 MHz */
+		cpuspeed_khz = 25000;
+		delay_divisor = delay_divisor_est(25);
 		cpu_has_vme = true;
 #ifdef	HAVECACHE
 		cache_size = 0x10000;	/* 64K */
@@ -282,7 +291,8 @@ _verify_hardware(void)
 	case ID_SUN3_E  :
 		cpu_match++;
 		cpu_string = "E";
-		delay_divisor = 102;	/* 20 MHz  XXX: Correct? */
+		cpuspeed_khz = 20000;
+		delay_divisor = delay_divisor_est(20); /* XXX 20MHz correct? */
 		cpu_has_vme = true;
 		break;
 
@@ -303,7 +313,7 @@ _verify_hardware(void)
  * hp300 port (and other m68k) but which we prefer to do in C code.
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
-void
+void *
 _bootstrap(void)
 {
 	extern struct consdev consdev_prom;	/* XXX */
@@ -327,7 +337,7 @@ _bootstrap(void)
 	_verify_hardware();
 
 	/* Handle kernel mapping, pmap_bootstrap(), etc. */
-	_vm_init();
+	void *ksp = _vm_init();
 
 	/*
 	 * Find and save OBIO mappings needed early,
@@ -352,4 +362,13 @@ _bootstrap(void)
 	 * Needs idprom_init and obio_init earlier.
 	 */
 	leds_init();
+
+	/*
+	 * Initialize the source/destination control registers for
+	 * movs.
+	 */
+	setsfc(FC_USERD);
+	setdfc(FC_USERD);
+
+	return ksp;
 }

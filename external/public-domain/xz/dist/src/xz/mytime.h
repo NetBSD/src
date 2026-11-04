@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       mytime.h
 /// \brief      Time handling functions
 //
 //  Author:     Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -21,8 +20,10 @@
 extern uint64_t opt_flush_timeout;
 
 
-/// \brief      True when flushing is needed due to expired timeout
-extern bool flush_needed;
+#ifdef USE_SIGTSTP_HANDLER
+/// \brief      Signal handler for SIGTSTP
+extern void mytime_sigtstp_handler(int sig);
+#endif
 
 
 /// \brief      Store the time when (de)compression was started
@@ -43,5 +44,5 @@ extern void mytime_set_flush_time(void);
 ///
 /// This returns -1 if no timed flushing is used.
 ///
-/// The return value is inteded for use with poll().
+/// The return value is intended for use with poll().
 extern int mytime_get_flush_timeout(void);

@@ -125,8 +125,9 @@ Then start GDB (preferably in a different screen or window) and use the
 
 Repeat the same sequence of user commands to GDB that you gave in the
 original debug session.  GDB should not be able to tell that it is talking
-to GDBreplay rather than a real target, all other things being equal.  Note
-that GDBreplay echos the command lines to stderr, as well as the contents of
-the packets it sends and receives.  The last command echoed by GDBreplay is
-the next command that needs to be typed to GDB to continue the session in
-sync with the original session.
+to GDBreplay rather than a real target, all other things being equal.
+
+As GDBreplay communicates with GDB, it outputs only the commands
+it expects from GDB. The --debug-logging option turns printing the
+remotelogfile to stderr on. GDBreplay then echos the command lines
+to stderr, as well as the contents of the packets it sends and receives.

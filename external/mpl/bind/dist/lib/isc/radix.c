@@ -1,4 +1,4 @@
-/*	$NetBSD: radix.c,v 1.9.2.1 2025/08/02 05:53:55 perseant Exp $	*/
+/*	$NetBSD: radix.c,v 1.9.2.2 2026/11/04 23:18:15 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -460,8 +460,8 @@ isc_radix_insert(isc_radix_tree_t *radix, isc_radix_node_t **target,
 		}
 		INSIST(node->data[RADIX_V4] == NULL &&
 		       node->node_num[RADIX_V4] == -1 &&
-		       node->data[RADIX_V4] == NULL &&
-		       node->node_num[RADIX_V4] == -1);
+		       node->data[RADIX_V6] == NULL &&
+		       node->node_num[RADIX_V6] == -1);
 		if (source != NULL) {
 			/* Merging node */
 			for (i = 0; i < RADIX_FAMILIES; i++) {

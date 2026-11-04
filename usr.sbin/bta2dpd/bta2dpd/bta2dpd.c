@@ -1,4 +1,4 @@
-/* $NetBSD: bta2dpd.c,v 1.9 2023/06/24 05:26:01 msaitoh Exp $ */
+/* $NetBSD: bta2dpd.c,v 1.9.2.1 2026/11/04 23:28:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -66,7 +66,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD");
+__RCSID("$NetBSD: bta2dpd.c,v 1.9.2.1 2026/11/04 23:28:47 perseant Exp $");
 
 #include <sys/ioctl.h>
 #include <sys/types.h>

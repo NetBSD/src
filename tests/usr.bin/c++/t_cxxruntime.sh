@@ -1,4 +1,4 @@
-#	$NetBSD: t_cxxruntime.sh,v 1.7.4.1 2025/08/02 05:58:12 perseant Exp $
+#	$NetBSD: t_cxxruntime.sh,v 1.7.4.2 2026/11/04 23:28:23 perseant Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -99,18 +99,17 @@ EOF
 }
 
 cxxruntime_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <cstdlib>
 #include <iostream>
 int main(void) {std::cout << "hello world" << std::endl;exit(0);}
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -static -pg -o hello test.cpp
+	case $(uname -p) in
+	mips*|riscv*)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
 }
 
@@ -126,12 +125,6 @@ cxxruntime_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
-
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
 
 	cat > test.cpp << EOF
 #include <cstdlib>
@@ -205,12 +198,6 @@ EOF
 }
 
 cxxruntime_pic_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <cstdlib>
 int callpic(void);
@@ -225,6 +212,12 @@ EOF
 	    c++ -pg -fPIC -shared -o libtest.so pic.cpp
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o hello test.cpp -L. -ltest
+
+	case $(uname -p) in
+	*arm*|i?86|mips*|powerpc*|sparc|vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello
@@ -243,12 +236,6 @@ cxxruntime_pic_profile_32_body() {
 		fi
 	fi
 
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <cstdlib>
 int callpic(void);
@@ -263,6 +250,12 @@ EOF
 	    c++ -m32 -pg -fPIC -shared -o libtest.so pic.cpp
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -m32 -pg -o hello test.cpp -L. -ltest
+
+	case $(uname -p) in
+	x86_64)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello world\n" ./hello

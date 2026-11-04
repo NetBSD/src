@@ -1,6 +1,6 @@
 /* Self tests for frame_info_ptr.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -66,9 +66,7 @@ test_user_created_frame ()
 
 } /* namespace selftests */
 
-void _initialize_frame_info_ptr_selftests ();
-void
-_initialize_frame_info_ptr_selftests ()
+INIT_GDB_FILE (frame_info_ptr_selftests)
 {
   selftests::register_test ("frame_info_ptr_user",
 			    selftests::test_user_created_frame);

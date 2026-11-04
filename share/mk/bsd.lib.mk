@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.lib.mk,v 1.405.2.2 2025/08/02 05:55:18 perseant Exp $
+#	$NetBSD: bsd.lib.mk,v 1.405.2.3 2026/11/04 23:19:53 perseant Exp $
 #	@(#)bsd.lib.mk	8.3 (Berkeley) 4/22/94
 
 .include <bsd.init.mk>
@@ -154,9 +154,9 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 # add additional suffixes not exported.
 # .po is used for profiling object files.
 # .pico is used for PIC object files.
-.SUFFIXES: .out .a .ln .pico .po .go .o .s .S .c .cc .cpp .cxx .C .m .F .f .r .y .l .cl .p .h
+.SUFFIXES: .out .a .ln .pico .po .go .o .s .S .c .cc .cpp .cxx .C .m .r .y .l .cl .p .h
 .SUFFIXES: .sh .m4 .m
-
+.SUFFIXES: ${_FORTRAN_SUFFIXES_NOCPP} ${_FORTRAN_SUFFIXES_CPP}
 
 # Set PICFLAGS to cc flags for producing position-independent code,
 # if not already set.
@@ -177,8 +177,13 @@ SHLIB_FULLVERSION=${SHLIB_MAJOR}
 PICFLAGS ?= -fPIC
 
 .if ${MKPICLIB} != "no"
-CSHLIBFLAGS+= ${PICFLAGS} ${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
+CSHLIBFLAGS+= ${PICFLAGS}
 .endif
+
+# Building all static libraries with sanitizer flags allows them to be
+# successfully linked into instrumented dynamic binaries, as well as
+# private libraries linked directly into executables.
+CFLAGS+=	${SANITIZERFLAGS} ${LIBCSANITIZERFLAGS}
 
 .if defined(CSHLIBFLAGS) && !empty(CSHLIBFLAGS)
 MKSHLIBOBJS= yes
@@ -190,8 +195,9 @@ MKSHLIBOBJS= no
 .if (${MKDEBUG:Uno} != "no" && !defined(NODEBUG)) && \
     (!defined(CFLAGS) || empty(CFLAGS:M-g*)) && \
     (!defined(CXXFLAGS) || empty(CXXFLAGS:M-g*))
-# We only add -g to the shared library objects
-# because we don't currently split .a archives.
+# Only add -g to the shared library objects because as there's no facility
+# to separate the debuginfo like shared libraries, except for private the
+# libraries that are linked into executables only.
 CSHLIBFLAGS+=	-g
 .if ${LIBISPRIVATE} != "no"
 CFLAGS+=	-g
@@ -262,7 +268,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .c.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.c} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${CSHLIBFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPSHLIBOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -287,39 +293,70 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .cc.pico .cpp.pico .cxx.pico .C.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.cc} ${COPTS.${.IMPSRC:T}} ${CPUFLAGS.${.IMPSRC:T}} ${CPPFLAGS.${.IMPSRC:T}} ${CSHLIBFLAGS} ${CSHLIBFLAGS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPSHLIBOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.o:
+${_FORTRAN_SUFFIXES_NOCPP:=.o}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${.IMPSRC} ${OBJECT_TARGET}
+	${COMPILE.f} ${FOPTS.${.IMPSRC:T}} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.po:
+${_FORTRAN_SUFFIXES_NOCPP:=.po}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${PROFFLAGS} ${PGFLAGS} ${.IMPSRC} ${OBJECT_TARGET}
+	${COMPILE.f} ${PROFFLAGS} ${FOPTS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.go:
+${_FORTRAN_SUFFIXES_NOCPP:=.go}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${DEBUGFLAGS} -g ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${DEBUGFLAGS} ${FOPTS.${.IMPSRC:T}} -g ${.IMPSRC} -o ${.TARGET}
 
-.f.pico:
+${_FORTRAN_SUFFIXES_NOCPP:=.pico}:
 	${_MKTARGET_COMPILE}
-	${COMPILE.f} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.f} ${FOPTS.${.IMPSRC:T}} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPFOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
 
-.f.ln:
+${_FORTRAN_SUFFIXES_NOCPP:=.ln}:
+	${_MKTARGET_COMPILE}
+	@echo Skipping lint for Fortran libraries.
+
+${_FORTRAN_SUFFIXES_CPP:=.o}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${FOPTS.${.IMPSRC:T}} ${.IMPSRC} ${OBJECT_TARGET}
+	${CTFCONVERT_RUN}
+.if defined(LIBSTRIPFOBJS)
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
+
+${_FORTRAN_SUFFIXES_CPP:=.po}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${PROFFLAGS} ${FOPTS.${.IMPSRC:T}} ${PGFLAGS} ${.IMPSRC} ${OBJECT_TARGET}
+	${CTFCONVERT_RUN}
+.if defined(LIBSTRIPFOBJS)
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
+
+${_FORTRAN_SUFFIXES_CPP:=.go}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${DEBUGFLAGS} ${FOPTS.${.IMPSRC:T}} -g ${.IMPSRC} -o ${.TARGET}
+
+${_FORTRAN_SUFFIXES_CPP:=.pico}:
+	${_MKTARGET_COMPILE}
+	${COMPILE.F} ${FOPTS.${.IMPSRC:T}} ${PICFLAGS} ${.IMPSRC} -o ${.TARGET}
+.if defined(LIBSTRIPFOBJS)
+	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
+.endif
+
+${_FORTRAN_SUFFIXES_CPP:=.ln}:
 	${_MKTARGET_COMPILE}
 	@echo Skipping lint for Fortran libraries.
 
@@ -348,7 +385,7 @@ LIBSTRIPSHLIBOBJS=	yes
 
 .m.pico:
 	${_MKTARGET_COMPILE}
-	${COMPILE.m} ${CSHLIBFLAGS} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
+	${COMPILE.m} ${CSHLIBFLAGS} ${CSHLIBFLAGS.${.IMPSRC:T}} ${OBJCOPTS.${.IMPSRC:T}} ${.IMPSRC} -o ${.TARGET}
 .if defined(LIBSTRIPOBJCOBJS)
 	${OBJCOPY} ${OBJCOPYLIBFLAGS} ${.TARGET}
 .endif
@@ -425,11 +462,14 @@ _LIB.so.debug:=${_LIB.so.full}.debug
 .endif
 .endif
 
-_DEST.LIB:=${DESTDIR}${LIBDIR}
-_DEST.OBJ:=${DESTDIR}${_LIBSODIR}
-_DEST.LINT:=${DESTDIR}${LINTLIBDIR}
-_DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}
-_DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}
+LIBSUBDIR?=		# empty
+_LIBSLASHSUBDIR=	${"${LIBSUBDIR}" == "":?:/${LIBSUBDIR}}
+
+_DEST.LIB:=${DESTDIR}${LIBDIR}${_LIBSLASHSUBDIR}
+_DEST.OBJ:=${DESTDIR}${_LIBSODIR}${_LIBSLASHSUBDIR}
+_DEST.LINT:=${DESTDIR}${LINTLIBDIR}${_LIBSLASHSUBDIR}
+_DEST.DEBUG:=${DESTDIR}${DEBUGDIR}${LIBDIR}${_LIBSLASHSUBDIR}
+_DEST.ODEBUG:=${DESTDIR}${DEBUGDIR}${_LIBSODIR}${_LIBSLASHSUBDIR}
 
 .if ${MKPIC} == "no" || (defined(LDSTATIC) && ${LDSTATIC} != "") \
     || ${MAKELINKLIB} != "no" || ${MAKESTATICLIB} != "no"
@@ -456,13 +496,13 @@ LOBJS+=${LSRCS:.c=.ln} ${SRCS:M*.c:.c=.ln}
 libinstall::
 .endif
 
-.if ${MKDEBUGLIB} != "no"
+.if ${MKDEBUGLIB} != "no" && ${MAKELINKLIB} != "no"
 _LIBS+=${_LIB_g.a}
 GOBJS+=${OBJS:.o=.go}
 DEBUGFLAGS?=-DDEBUG
 .endif
 
-.if ${MKPROFILE} != "no"
+.if ${MKPROFILE} != "no" && ${MAKELINKLIB} != "no"
 _LIBS+=${_LIB_p.a}
 POBJS+=${OBJS:.o=.po}
 PROFFLAGS?=-DGPROF -DPROF
@@ -585,6 +625,22 @@ _LIBLDOPTS+=	-Wl,-x
 _LIBLDOPTS+=	-Wl,-X
 .endif
 
+# XXX Provisional -- we should get this out of LIBDPLIBS for each
+# specific dependency so we can write the directory in one place where
+# the library is defined, and not copy and paste it everywhere the
+# library is used.
+#
+# XXX BEWARE: This should only be used by libraries that are private,
+# to link against libraries that are private.  If you are tempted to
+# use this in a library that we expose for applications to link
+# against, you need to find another way -- you can't link a library
+# against private dependencies without transitively exposing them to
+# applications.
+.for _subdir_ in ${LIBDPSUBDIRS:U}
+_LIBLDOPTS+=	-Wl,-rpath,${SHLIBDIR}/${_subdir_} \
+		-L=${SHLIBDIR}/${_subdir_}
+.endfor
+
 # gcc -shared now adds -lc automatically. For libraries other than libc and
 # libgcc* we add as a dependency the installed shared libc. For libc and
 # libgcc* we avoid adding libc as a dependency by using -nostdlib. Note that
@@ -646,7 +702,7 @@ ${_LIB.so.debug}: ${_LIB.so.link}
 	) || (rm -f ${.TARGET}; false)
 ${_LIB.so.full}: ${_LIB.so.link} ${_LIB.so.debug}
 	${_MKTARGET_CREATE}
-	(  ${OBJCOPY} --strip-debug -p -R .gnu_debuglink \
+	(  ${OBJCOPY} --strip-debug -R .gnu_debuglink \
 	    --add-gnu-debuglink=${_LIB.so.debug} \
 	    ${_LIB.so.link} ${_LIB.so.full}.tmp && \
 	    ${MV} ${_LIB.so.full}.tmp ${_LIB.so.full} \
@@ -725,7 +781,7 @@ _EXPSYM_IGNORE+=		${_EXPSYM_IGNORE.${MACHINE_CPU}}
 realall: ${_LIB.so.full}.diffsym
 ${_LIB.so.full}.diffsym: ${LIB_EXPSYM} ${_LIB.so.full}.actsym
 	${_MKTARGET_CREATE}
-	if diff -u ${.ALLSRC} >${.TARGET}.tmp; then \
+	@if diff -u ${.ALLSRC} >${.TARGET}.tmp; then \
 		${MV} ${.TARGET}.tmp ${.TARGET}; \
 	else \
 		ret=$$?; \
@@ -821,7 +877,7 @@ ${_DEST.LIB}/${_LIB.a}: ${_LIB.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKPROFILE} != "no"
+.if ${MKPROFILE} != "no" && ${MAKELINKLIB} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB_p.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_p.a}
 
@@ -838,7 +894,7 @@ ${_DEST.LIB}/${_LIB_p.a}: ${_LIB_p.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKDEBUGLIB} != "no"
+.if ${MKDEBUGLIB} != "no" && ${MAKELINKLIB} != "no"
 libinstall:: ${_DEST.LIB}/${_LIB_g.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_g.a}
 
@@ -855,7 +911,7 @@ ${_DEST.LIB}/${_LIB_g.a}: ${_LIB_g.a} __archiveinstall
 .endif
 .endif
 
-.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no"
+.if ${MKPIC} != "no" && ${MKPICINSTALL} != "no" && !defined(NOPICINSTALL)
 libinstall:: ${_DEST.LIB}/${_LIB_pic.a}
 .PRECIOUS: ${_DEST.LIB}/${_LIB_pic.a}
 

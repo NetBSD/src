@@ -1,6 +1,6 @@
 /* Routines for name->symbol lookups in GDB.
    
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    Contributed by David Carlton <carlton@bactrian.org> and by Kealia,
    Inc.
@@ -26,7 +26,7 @@
 #include "buildsym.h"
 #include "dictionary.h"
 #include "gdbsupport/gdb-safe-ctype.h"
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 #include "language.h"
 
 /* This file implements dictionaries, which are tables that associate
@@ -915,29 +915,12 @@ struct multidictionary
   unsigned short n_allocated_dictionaries;
 };
 
-/* A hasher for enum language.  Injecting this into std is a convenience
-   when using unordered_map with C++11.  */
-
-namespace std
-{
-  template<> struct hash<enum language>
-  {
-    typedef enum language argument_type;
-    typedef std::size_t result_type;
-
-    result_type operator() (const argument_type &l) const noexcept
-    {
-      return static_cast<result_type> (l);
-    }
-  };
-} /* namespace std */
-
 /* A helper function to collate symbols on the pending list by language.  */
 
-static std::unordered_map<enum language, std::vector<symbol *>>
+static gdb::unordered_map<enum language, std::vector<symbol *>>
 collate_pending_symbols_by_language (const struct pending *symbol_list)
 {
-  std::unordered_map<enum language, std::vector<symbol *>> nsyms;
+  gdb::unordered_map<enum language, std::vector<symbol *>> nsyms;
 
   for (const pending *list_counter = symbol_list;
        list_counter != nullptr; list_counter = list_counter->next)
@@ -960,7 +943,7 @@ mdict_create_hashed (struct obstack *obstack,
 {
   struct multidictionary *retval
     = XOBNEW (obstack, struct multidictionary);
-  std::unordered_map<enum language, std::vector<symbol *>> nsyms
+  gdb::unordered_map<enum language, std::vector<symbol *>> nsyms
     = collate_pending_symbols_by_language (symbol_list);
 
   /* Loop over all languages and create/populate dictionaries.  */
@@ -969,14 +952,9 @@ mdict_create_hashed (struct obstack *obstack,
   retval->n_allocated_dictionaries = nsyms.size ();
 
   int idx = 0;
-  for (const auto &pair : nsyms)
-    {
-      enum language language = pair.first;
-      std::vector<symbol *> symlist = pair.second;
-
-      retval->dictionaries[idx++]
-	= dict_create_hashed (obstack, language, symlist);
-    }
+  for (const auto &[language, symlist] : nsyms)
+    retval->dictionaries[idx++] = dict_create_hashed (obstack, language,
+						      symlist);
 
   return retval;
 }
@@ -1005,7 +983,7 @@ mdict_create_linear (struct obstack *obstack,
 {
   struct multidictionary *retval
     = XOBNEW (obstack, struct multidictionary);
-  std::unordered_map<enum language, std::vector<symbol *>> nsyms
+  gdb::unordered_map<enum language, std::vector<symbol *>> nsyms
     = collate_pending_symbols_by_language (symbol_list);
 
   /* Loop over all languages and create/populate dictionaries.  */
@@ -1014,14 +992,9 @@ mdict_create_linear (struct obstack *obstack,
   retval->n_allocated_dictionaries = nsyms.size ();
 
   int idx = 0;
-  for (const auto &pair : nsyms)
-    {
-      enum language language = pair.first;
-      std::vector<symbol *> symlist = pair.second;
-
-      retval->dictionaries[idx++]
-	= dict_create_linear (obstack, language, symlist);
-    }
+  for (const auto &[language, symlist] : nsyms)
+    retval->dictionaries[idx++] = dict_create_linear (obstack, language,
+						      symlist);
 
   return retval;
 }
@@ -1149,13 +1122,11 @@ void
 mdict_add_pending (struct multidictionary *mdict,
 		   const struct pending *symbol_list)
 {
-  std::unordered_map<enum language, std::vector<symbol *>> nsyms
+  gdb::unordered_map<enum language, std::vector<symbol *>> nsyms
     = collate_pending_symbols_by_language (symbol_list);
 
-  for (const auto &pair : nsyms)
+  for (const auto &[language, symlist] : nsyms)
     {
-      enum language language = pair.first;
-      std::vector<symbol *> symlist = pair.second;
       struct dictionary *dict = find_language_dictionary (mdict, language);
 
       if (dict == nullptr)

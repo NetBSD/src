@@ -1,6 +1,6 @@
 /* Self tests for gdb_environ for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -297,9 +297,7 @@ run_tests ()
 } /* namespace gdb_environ */
 } /* namespace selftests */
 
-void _initialize_environ_selftests ();
-void
-_initialize_environ_selftests ()
+INIT_GDB_FILE (environ_selftests)
 {
   selftests::register_test ("gdb_environ",
 			    selftests::gdb_environ_tests::run_tests);

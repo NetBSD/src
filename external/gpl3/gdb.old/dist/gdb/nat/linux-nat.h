@@ -1,6 +1,6 @@
 /* Code for native debugging support for GNU/Linux (LWP layer).
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_NAT_H
-#define NAT_LINUX_NAT_H
+#ifndef GDB_NAT_LINUX_NAT_H
+#define GDB_NAT_LINUX_NAT_H
 
 #include "gdbsupport/function-view.h"
 #include "target/waitstatus.h"
@@ -35,6 +35,9 @@ struct arch_lwp_info;
    PTRACE_O_TRACESYSGOOD syscall events doesn't return SIGTRAP, but
    instead SIGTRAP with bit 7 set.  */
 #define SYSCALL_SIGTRAP (SIGTRAP | 0x80)
+
+/* Does the current host support PTRACE_GETREGSET?  */
+extern tribool have_ptrace_getregset;
 
 /* Return the ptid of the current lightweight process.  With NPTL
    threads and LWPs map 1:1, so this is equivalent to returning the
@@ -91,4 +94,4 @@ extern void linux_stop_lwp (struct lwp_info *lwp);
 
 extern int lwp_is_stepping (struct lwp_info *lwp);
 
-#endif /* NAT_LINUX_NAT_H */
+#endif /* GDB_NAT_LINUX_NAT_H */

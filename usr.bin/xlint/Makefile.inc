@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2024/03/29 08:35:31 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.29.2.1 2026/11/04 23:28:45 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -27,5 +27,5 @@ CFLAGS+=	${ACTIVE_CC:Mgcc:%=-ftrapv}
 
 LINTFLAGS+=	-aa	# warn about all lossy conversions
 LINTFLAGS+=	-e	# strict enum mode
-LINTFLAGS+=	-T	# strict bool mode
+LINTFLAGS+=	${ACTIVE_CC:Mgcc:%=-T}	# strict bool mode
 LINTFLAGS+=	-w	# treat warnings as errors

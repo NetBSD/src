@@ -33,10 +33,13 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/migrate.c,v 1.16 2005/09/01 02:42:52 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: migrate.c,v 1.35.12.1 2025/08/02 05:55:06 perseant Exp $");
+__RCSID("$NetBSD: migrate.c,v 1.35.12.2 2026/11/04 23:19:39 perseant Exp $");
 #endif
 
 #include <sys/types.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #include <sys/param.h>
 #define FSTYPENAMES
 #define MBRPTYPENAMES

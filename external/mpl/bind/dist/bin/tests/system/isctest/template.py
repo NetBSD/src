@@ -11,13 +11,78 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Any, Dict, Optional, Union
+from re import compile as Re
+from typing import TYPE_CHECKING, Any
+
+import re
 
 import jinja2
+import jinja2.ext
+import jinja2.nodes
+import jinja2.parser
 
 from .log import debug
 from .vars import ALL
+
+if TYPE_CHECKING:
+    from .zone import Zone as _SetupZone
+
+NS_DIR_RE = Re(r"^(a?ns([0-9]+))/")
+
+
+class IncludeIndented(jinja2.ext.Extension):
+    """
+    `{% include_indented "template" %}` — like `{% include %}`, but keeps the
+    inserted block aligned with the tag's own indentation, which a plain
+    include cannot do. The tag's leading whitespace is detected at parse time
+    and the tag expands to the equivalent of
+
+        {% filter indent(leading_whitespace) %}{% include ... %}{% endfilter %}
+
+    so the runtime semantics are exactly those of the builtin include and
+    indent. Only whitespace may precede the tag on its line: that leading
+    whitespace indents the first included line (which is why lstrip_blocks
+    must stay disabled), the indent filter indents the rest.
+    """
+
+    tags = {"include_indented"}
+
+    def parse(self, parser: jinja2.parser.Parser) -> jinja2.nodes.Node:
+        lineno = parser.stream.expect("name:include_indented").lineno
+        template = parser.parse_expression()
+        indent = self._tag_indentation(parser, lineno)
+        include = jinja2.nodes.Include(template, True, False, lineno=lineno)
+        indent_filter = jinja2.nodes.Filter(
+            None,  # filled in with the block contents by the compiler
+            "indent",
+            [jinja2.nodes.Const(indent)],
+            [jinja2.nodes.Keyword("first", jinja2.nodes.Const(False))],
+            None,
+            None,
+            lineno=lineno,
+        )
+        return jinja2.nodes.FilterBlock([include], indent_filter, lineno=lineno)
+
+    def _tag_indentation(self, parser: jinja2.parser.Parser, lineno: int) -> str:
+        if parser.name is None or self.environment.loader is None:
+            parser.fail(
+                "include_indented requires a loader-backed template "
+                "to detect its indentation",
+                lineno,
+            )
+        source, _, _ = self.environment.loader.get_source(self.environment, parser.name)
+        line = source.splitlines()[lineno - 1]
+        match = re.match(
+            rf"([ \t]*){re.escape(self.environment.block_start_string)}", line
+        )
+        if match is None:
+            parser.fail(
+                "include_indented must be preceded by indentation only",
+                lineno,
+            )
+        return match.group(1)
 
 
 class TemplateEngine:
@@ -25,7 +90,7 @@ class TemplateEngine:
     Engine for rendering jinja2 templates in system test directories.
     """
 
-    def __init__(self, directory: Union[str, Path], env_vars=ALL):
+    def __init__(self, directory: str | Path, env_vars=ALL):
         """
         Initialize the template engine for `directory`, optionally overriding
         the `env_vars` that will be used when rendering the templates (defaults
@@ -34,17 +99,36 @@ class TemplateEngine:
         self.directory = Path(directory)
         self.env_vars = dict(env_vars)
         self.j2env = jinja2.Environment(
-            loader=jinja2.FileSystemLoader(str(self.directory)),
+            loader=jinja2.ChoiceLoader(
+                [
+                    jinja2.FileSystemLoader(self.directory),
+                    jinja2.PrefixLoader(
+                        {
+                            "_common": jinja2.FileSystemLoader(
+                                Path(ALL["srcdir"]) / "_common"
+                            ),
+                        }
+                    ),
+                ]
+            ),
             undefined=jinja2.StrictUndefined,
             variable_start_string="@",
             variable_end_string="@",
+            trim_blocks=True,
+            keep_trailing_newline=True,
+            extensions=[IncludeIndented],
         )
+        # allow instantiating the template dataclasses in jinja2 templates when
+        # using {% set %}
+        self.j2env.globals["Nameserver"] = Nameserver
+        self.j2env.globals["TrustAnchor"] = TrustAnchor
+        self.j2env.globals["Zone"] = Zone
 
     def render(
         self,
         output: str,
-        data: Optional[Dict[str, Any]] = None,
-        template: Optional[str] = None,
+        data: dict[str, Any] | None = None,
+        template: str | None = None,
     ) -> None:
         """
         Render `output` file from jinja `template` and fill in the `data`. The
@@ -52,30 +136,105 @@ class TemplateEngine:
         variables which the engine was initialized with are also filled in. In
         case of a variable name clash, `data` has precedence.
         """
+        available = self.j2env.list_templates()
         if template is None:
             template = f"{output}.j2.manual"
-            if not Path(template).is_file():
+            if template not in available:
                 template = f"{output}.j2"
-        if not Path(template).is_file():
-            raise RuntimeError('No jinja2 template found for "{output}"')
+        if template not in available:
+            raise RuntimeError(f'No jinja2 template found for "{output}"')
 
         if data is None:
-            data = self.env_vars
+            data = {**self.env_vars}
         else:
             data = {**self.env_vars, **data}
+
+        # directory-specific "ns" var
+        if "ns" not in data:
+            match = NS_DIR_RE.search(output)
+            if match:
+                data["ns"] = Nameserver(match.group(1))
 
         debug("rendering template `%s` to file `%s`", template, output)
         stream = self.j2env.get_template(template).stream(data)
         stream.dump(output, encoding="utf-8")
 
-    def render_auto(self):
+    def render_auto(self, data: dict[str, Any] | None = None):
         """
-        Render all *.j2 templates with default values and write the output to
-        files without the .j2 extensions.
+        Render all *.j2 templates with default (and optionally the provided)
+        values and write the output to files without the .j2 extensions.
         """
         templates = [
             str(filepath.relative_to(self.directory))
             for filepath in self.directory.rglob("*.j2")
         ]
         for template in templates:
-            self.render(template[:-3])
+            self.render(template[:-3], data)
+
+
+@dataclass
+class Nameserver:
+
+    name: str
+    num: int | None = None
+    ip: str | None = None
+    ip6: str | None = None
+
+    def __post_init__(self):
+        if self.num is None:
+            match = re.search(r"\d+", self.name)
+            assert match
+            self.num = int(match.group(0))
+        if self.ip is None:
+            self.ip = f"10.53.0.{self.num}"
+        if self.ip6 is None:
+            self.ip6 = f"fd92:7065:b8e:ffff::{self.num}"
+
+
+NS1 = Nameserver("ns1")
+NS2 = Nameserver("ns2")
+NS3 = Nameserver("ns3")
+NS4 = Nameserver("ns4")
+NS5 = Nameserver("ns5")
+NS6 = Nameserver("ns6")
+NS7 = Nameserver("ns7")
+NS8 = Nameserver("ns8")
+NS9 = Nameserver("ns9")
+NS10 = Nameserver("ns10")
+NS11 = Nameserver("ns11")
+NO_NS = Nameserver(".", 0, "", "")
+
+
+@dataclass
+class Zone:
+
+    name: str
+    ns: Nameserver
+    type: str = "primary"
+    filepath: Path | None = field(default=None)
+
+    def __post_init__(self) -> None:
+        if self.filepath is None:
+            base = "root" if self.name == "." else self.name
+            self.filepath = Path(f"zones/{base}.db")
+
+
+@dataclass
+class TrustAnchor:
+    domain: str
+    type: str
+    contents: str
+
+
+def zones(zone_list: "list[_SetupZone]") -> dict[str, Zone]:
+    """
+    Convert a list of zone.Zone instances to a {name: Zone} dict for templates.
+
+    The returned dict maps zone names to plain template Zone instances, suitable
+    for use as the ``zones`` variable in jinja2 templates. The ``filepath`` of
+    each template zone is set to the actual zone file (signed or unsigned).
+    """
+    return {
+        z.name: Zone(name=z.name, ns=z.ns, type=z.type, filepath=z.filepath)
+        for z in zone_list
+    }

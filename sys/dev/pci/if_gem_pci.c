@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.52.26.1 2025/08/02 05:56:45 perseant Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.52.26.2 2026/11/04 23:22:05 perseant Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.52.26.1 2025/08/02 05:56:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.52.26.2 2026/11/04 23:22:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,6 +87,40 @@ CFATTACH_DECL3_NEW(gem_pci, sizeof(struct gem_pci_softc),
     gem_pci_match, gem_pci_attach, gem_pci_detach, NULL, NULL, NULL,
     DVF_DETACH_SHUTDOWN);
 
+#define	SUNW(p)		PCI_ID_CODE(PCI_VENDOR_SUN, (p))
+#define	AAPL(p)		PCI_ID_CODE(PCI_VENDOR_APPLE, (p))
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .id = SUNW(PCI_PRODUCT_SUN_GEMNETWORK),
+	  .value = GEM_SUN_GEM },
+
+	{ .id = SUNW(PCI_PRODUCT_SUN_ERINETWORK),
+	  .value = GEM_SUN_ERI },
+
+	{ .id = AAPL(PCI_PRODUCT_APPLE_GMAC),
+	  .value = GEM_APPLE_GMAC },
+
+	{ .id = AAPL(PCI_PRODUCT_APPLE_GMAC2),
+	  .value = GEM_APPLE_GMAC },
+
+	{ .id = AAPL(PCI_PRODUCT_APPLE_GMAC3),
+	  .value = GEM_APPLE_GMAC },
+
+	{ .id = AAPL(PCI_PRODUCT_APPLE_SHASTA_GMAC),
+	  .value = GEM_APPLE_GMAC },
+
+	{ .id = AAPL(PCI_PRODUCT_APPLE_INTREPID2_GMAC),
+	  .value = GEM_APPLE_GMAC },
+
+	{ .id = AAPL(PCI_PRODUCT_APPLE_K2_GMAC),
+	  .value = GEM_APPLE_K2_GMAC },
+
+	PCI_COMPAT_EOL
+};
+
+#undef SUNW
+#undef AAPL
+
 /*
  * Attach routines need to be split out to different bus-specific files.
  */
@@ -96,23 +130,7 @@ gem_pci_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK))
-		return (1);
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE &&
-	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3 ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
-	     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC))
-		return (1);
-
-
-	return (0);
+	return pci_compatible_match(pa, compat_data);
 }
 
 static inline int
@@ -150,7 +168,7 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = aux;
 	struct gem_pci_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
-	prop_data_t data;
+	const struct device_compatible_entry *dce;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_space_handle_t	romh;
 	uint8_t			*buf;
@@ -183,7 +201,10 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 	if (pa->pa_intrpin == 0)
 		pa->pa_intrpin = 1;
 
-	sc->sc_variant = GEM_UNKNOWN;
+	dce = pci_compatible_lookup(pa, compat_data);
+	KASSERT(dce != NULL);
+	sc->sc_variant = (u_int)dce->value;
+	aprint_debug_dev(sc->sc_dev, "variant = %u\n", sc->sc_variant);
 
 	if (pci_dma64_available(pa))
 		sc->sc_dmatag = pa->pa_dmat64;
@@ -191,27 +212,6 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 		sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sc_flags |= GEM_PCI;
-
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SUN) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_GEMNETWORK)
-			sc->sc_variant = GEM_SUN_GEM;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_SUN_ERINETWORK)
-			sc->sc_variant = GEM_SUN_ERI;
-	} else if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_APPLE) {
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC2 ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_GMAC3 ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_SHASTA_GMAC ||
-		     PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_INTREPID2_GMAC)
-			sc->sc_variant = GEM_APPLE_GMAC;
-		if (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_APPLE_K2_GMAC)
-			sc->sc_variant = GEM_APPLE_K2_GMAC;
-	}
-
-	if (sc->sc_variant == GEM_UNKNOWN) {
-		aprint_error_dev(sc->sc_dev, "unknown adaptor\n");
-		return;
-	}
 
 #define PCI_GEM_BASEADDR	(PCI_MAPREG_START + 0x00)
 
@@ -231,16 +231,12 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	buf = kmem_alloc(GEM_TMP_BUFSIZE, KM_SLEEP);
+	buf = kmem_zalloc(GEM_TMP_BUFSIZE, KM_SLEEP);
 
-	if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
-	    "mac-address")) != NULL) {
-		memcpy(enaddr, prop_data_value(data), ETHER_ADDR_LEN);
+	if (ether_getaddr(sc->sc_dev, enaddr)) {
 		got_addr = 1;
-		if ((data = prop_dictionary_get(device_properties(sc->sc_dev),
-		    "shared-pins")) != NULL) {
-			memcpy(buf, prop_data_value(data),
-			    prop_data_size(data));
+		if (device_getprop_data(sc->sc_dev, "shared-pins",
+					buf, GEM_TMP_BUFSIZE) > 0) {
 			if (isserdes(buf)) {
 				sc->sc_flags |= GEM_SERDES;
 			}

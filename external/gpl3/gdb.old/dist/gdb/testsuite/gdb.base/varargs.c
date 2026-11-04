@@ -8,7 +8,7 @@
 #include <stdio.h>
 #include <stdarg.h>
 
-#include "../lib/unbuffer_output.c"
+#include "unbuffer_output.c"
 
 int find_max1(int, ...);
 int find_max2(int, int, ...);

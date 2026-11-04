@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.275.2.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.275.2.2 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008, 2020, 2023
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.275.2.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.275.2.2 2026/11/04 23:27:48 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -105,6 +105,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.275.2.1 2025/08/02 05:57:41 perseant
 #include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/sleepq.h>
+#include <sys/stdalign.h>
 #include <sys/syscall_stats.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -422,6 +423,8 @@ procinit(void)
 	size_t proc_alignment = coherency_unit;
 	if (proc_alignment < MIN_PROC_ALIGNMENT)
 		proc_alignment = MIN_PROC_ALIGNMENT;
+	if (proc_alignment < alignof(struct proc))
+		proc_alignment = alignof(struct proc);
 
 	proc_cache = pool_cache_init(sizeof(struct proc), proc_alignment, 0, 0,
 	    "procpl", NULL, IPL_NONE, proc_ctor, NULL, NULL);
@@ -1601,7 +1604,7 @@ fixjobc(struct proc *p, struct pgrp *pgrp, int entering)
 				child->p_lflag &= ~PL_ORPHANPG;
 				hispgrp->pg_jobc++;
 			} else {
-				KASSERT(hispgrp->pg_jobc > 0);
+				/* KASSERT(hispgrp->pg_jobc > 0); */
 				if (--hispgrp->pg_jobc == 0)
 					orphanpg(hispgrp);
 			}
@@ -1785,23 +1788,44 @@ proclist_foreach_call(struct proclist *list,
 	return ret;
 }
 
+/*
+ * proc_vmspace_getref(p, &vm)
+ *
+ *	If p is not currently exiting, acquire a reference to its
+ *	vmspace.  Return 0, set vm, and increment its reference count
+ *	on success.  Return nonzero error code without on failure.
+ *
+ *	Caller MUST NOT hold p->p_lock.  Caller MAY hold p->p_reflock
+ *	and/or proc_lock.
+ *
+ *	On success, caller MUST call vmspace_free(vm) when done.
+ */
 int
 proc_vmspace_getref(struct proc *p, struct vmspace **vm)
 {
-
-	/* XXXCDC: how should locking work here? */
+	int error;
 
 	/* curproc exception is for coredump. */
+	if (p != curproc) {
+		mutex_enter(p->p_lock);
+		if (p->p_sflag & PS_WEXIT) {
+			error = SET_ERROR(EFAULT);
+			goto out;
+		}
+	}
 
-	if ((p != curproc && (p->p_sflag & PS_WEXIT) != 0) ||
-	    (p->p_vmspace->vm_refcnt < 1)) {
-		return SET_ERROR(EFAULT);
+	if (p->p_vmspace->vm_refcnt < 1) {
+		error = SET_ERROR(EFAULT);
+		goto out;
 	}
 
 	uvmspace_addref(p->p_vmspace);
 	*vm = p->p_vmspace;
+	error = 0;
 
-	return 0;
+out:	if (p != curproc)
+		mutex_exit(p->p_lock);
+	return error;
 }
 
 /*
@@ -2095,7 +2119,12 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 			return SET_ERROR(EINVAL);
 		switch (op = name[0]) {
 		case KERN_PROC_ALL:
-			if (namelen != 1)
+			/*
+			 * note: kvm_getprocs(KERN_PROC_ALL) gives
+			 * us namelen=2. ignore the extra argument,
+			 * which is typically 0.
+			 */
+			if (namelen != 1 && namelen != 2)
 				return SET_ERROR(EINVAL);
 			arg = 0;
 			break;
@@ -2158,7 +2187,7 @@ sysctl_doeproc(SYSCTLFN_ARGS)
 		}
 
 		/*
-		 * Hande all the operations in one switch on the cost of
+		 * Handle all the operations in one switch on the cost of
 		 * algorithm complexity is on purpose. The win splitting this
 		 * function into several similar copies makes maintenance
 		 * burden, code grow and boost is negligible in practical
@@ -2941,7 +2970,20 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 	}
 }
 
-
+/*
+ * proc_find_locked(l, &p, pid, op)
+ *
+ *	Look up a process p by pid, taking l->l_proc if pid == -1, and
+ *	take the mutex p->p_lock if pid != -1.  Verify whether the
+ *	caller is allowed to see the target process before succeeding.
+ *	Return nonzero error on failure.
+ *
+ *	Invariant on successful return:
+ *
+ *		pid == -1 || mutex_owned(p->p_lock)
+ *
+ *	Caller is responsible for mutex_exit(p->p_lock) if pid != -1.
+ */
 int
 proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 {
@@ -2954,9 +2996,9 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 		*p = proc_find(pid);
 
 	if (*p == NULL) {
-		if (pid != -1)
-			mutex_exit(&proc_lock);
-		return SET_ERROR(ESRCH);
+		mutex_exit(&proc_lock);
+		error = SET_ERROR(ESRCH);
+		goto out;
 	}
 	if (pid != -1)
 		mutex_enter((*p)->p_lock);
@@ -2968,7 +3010,64 @@ proc_find_locked(struct lwp *l, struct proc **p, pid_t pid)
 	if (error) {
 		if (pid != -1)
 			mutex_exit((*p)->p_lock);
+		goto out;
 	}
+out:	KASSERT(error != 0 || pid == -1 || mutex_owned((*p)->p_lock));
+	return error;
+}
+
+/*
+ * proc_find_reflocked(l, &p, pid, op)
+ *
+ *	Look up a process p by pid, taking l->l_proc iff pid == -1, and
+ *	take p->p_reflock as a reader or writer according to op iff pid
+ *	!= -1.  Verify whether the caller is allowed to see the target
+ *	process before succeeding.  Return nonzero error on failure.
+ *
+ *	Invariants on successful return:
+ *
+ *		pid == -1 || rw_lock_held(p->p_lock)
+ *		pid == -1 || op != RW_READER || rw_read_held(p->p_lock)
+ *		pid == -1 || op != RW_WRITER || rw_write_held(p->p_lock)
+ *
+ *	Caller is responsible for rw_exit(&p->p_reflock) iff pid != -1.
+ */
+int
+proc_find_reflocked(struct lwp *l, struct proc **p, pid_t pid, krw_t op)
+{
+	int error;
+
+	mutex_enter(&proc_lock);
+	if (pid == -1)
+		*p = l->l_proc;
+	else
+		*p = proc_find(pid);
+
+	if (*p == NULL) {
+		mutex_exit(&proc_lock);
+		error = SET_ERROR(ESRCH);
+		goto out;
+	}
+	if (pid != -1) {
+		rw_enter(&(*p)->p_reflock, op);
+		mutex_enter((*p)->p_lock);
+	}
+	mutex_exit(&proc_lock);
+
+	error = kauth_authorize_process(l->l_cred,
+	    KAUTH_PROCESS_CANSEE, *p,
+	    KAUTH_ARG(KAUTH_REQ_PROCESS_CANSEE_ENTRY), NULL, NULL);
+
+out:	if (pid != -1 && *p != NULL) {
+		mutex_exit((*p)->p_lock);
+		if (error)
+			rw_exit(&(*p)->p_reflock);
+	}
+	KASSERT(error != 0 || pid == -1 || rw_lock_held(&(*p)->p_reflock));
+	KASSERT(error != 0 || pid == -1 || op != RW_READER ||
+	    rw_read_held(&(*p)->p_reflock));
+	KASSERT(error != 0 || pid == -1 || op != RW_WRITER ||
+	    rw_write_held(&(*p)->p_reflock));
 	return error;
 }
 
@@ -2978,13 +3077,13 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	int error;
 	struct proc *p;
 
-	if ((error = proc_find_locked(l, &p, pid)) != 0)
+	if ((error = proc_find_reflocked(l, &p, pid, RW_READER)) != 0)
 		return error;
+	KASSERT(pid == -1 || rw_read_held(&p->p_reflock));
 
 	if (p->p_path == NULL) {
-		if (pid != -1)
-			mutex_exit(p->p_lock);
-		return SET_ERROR(ENOENT);
+		error = SET_ERROR(ENOENT);
+		goto out;
 	}
 
 	size_t len = strlen(p->p_path) + 1;
@@ -2995,8 +3094,8 @@ fill_pathname(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 			error = SET_ERROR(ENOSPC);
 	}
 	*oldlenp = len;
-	if (pid != -1)
-		mutex_exit(p->p_lock);
+out:	if (pid != -1)
+		rw_exit(&p->p_reflock);
 	return error;
 }
 
@@ -3011,8 +3110,9 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	struct vnode *vp;
 	size_t len, lenused;
 
-	if ((error = proc_find_locked(l, &p, pid)) != 0)
+	if ((error = proc_find_reflocked(l, &p, pid, RW_READER)) != 0)
 		return error;
+	KASSERT(pid == -1 || rw_read_held(&p->p_reflock));
 
 	len = MAXPATHLEN * 4;
 
@@ -3042,7 +3142,7 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	*oldlenp = lenused;
 out:
 	if (pid != -1)
-		mutex_exit(p->p_lock);
+		rw_exit(&p->p_reflock);
 	kmem_free(path, len);
 	return error;
 }

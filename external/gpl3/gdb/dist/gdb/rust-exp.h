@@ -1,6 +1,6 @@
 /* Definitions for Rust expressions
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RUST_EXP_H
-#define RUST_EXP_H
+#ifndef GDB_RUST_EXP_H
+#define GDB_RUST_EXP_H
 
 #include "expop.h"
 
@@ -33,14 +33,6 @@ extern struct value *eval_op_rust_array (struct type *expect_type,
 					 enum exp_opcode opcode,
 					 struct value *ncopies,
 					 struct value *elt);
-extern struct value *rust_subscript (struct type *expect_type,
-				     struct expression *exp,
-				     enum noside noside, bool for_addr,
-				     struct value *lhs, struct value *rhs);
-extern struct value *rust_range (struct type *expect_type,
-				 struct expression *exp,
-				 enum noside noside, enum range_flag kind,
-				 struct value *low, struct value *high);
 
 namespace expr
 {
@@ -75,22 +67,26 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    value *arg1 = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
-    value *arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-    return rust_subscript (expect_type, exp, noside, false, arg1, arg2);
+    return subscript (exp, noside, false);
   }
 
   value *slice (struct type *expect_type,
 		struct expression *exp,
 		enum noside noside)
   {
-    value *arg1 = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
-    value *arg2 = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-    return rust_subscript (expect_type, exp, noside, true, arg1, arg2);
+    return subscript (exp, noside, true);
   }
 
   enum exp_opcode opcode () const override
   { return BINOP_SUBSCRIPT; }
+
+private:
+
+  /* Helper function that does the work of evaluation.  FOR_ADDR is
+     true if we're evaluating a slice.  */
+  value *subscript (struct expression *exp, enum noside noside,
+		    bool for_addr);
+
 };
 
 class rust_unop_addr_operation
@@ -126,17 +122,7 @@ public:
 
   value *evaluate (struct type *expect_type,
 		   struct expression *exp,
-		   enum noside noside) override
-  {
-    auto kind = std::get<0> (m_storage);
-    value *low = nullptr;
-    if (std::get<1> (m_storage) != nullptr)
-      low = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-    value *high = nullptr;
-    if (std::get<2> (m_storage) != nullptr)
-      high = std::get<2> (m_storage)->evaluate (nullptr, exp, noside);
-    return rust_range (expect_type, exp, noside, kind, low, high);
-  }
+		   enum noside noside) override;
 
   enum exp_opcode opcode () const override
   { return OP_RANGE; }
@@ -226,4 +212,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* RUST_EXP_H */
+#endif /* GDB_RUST_EXP_H */

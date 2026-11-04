@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_funcs.h,v 1.3.6.1 2025/08/02 05:56:03 perseant Exp $	*/
+/*	$NetBSD: bus_funcs.h,v 1.3.6.2 2026/11/04 23:21:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -117,10 +117,10 @@
  * Allocation and deallocation operations.
  */
 #define	bus_space_alloc(t, rs, re, s, a, b, c, ap, hp)			\
-	(*(t)->bs_alloc)((t)->bs_cookie, (rs), (re), (s), (a), (b),	\
+	(*(t)->bs_alloc)((t), (rs), (re), (s), (a), (b),		\
 	    (c), (ap), (hp))
 #define	bus_space_free(t, h, s)						\
-	(*(t)->bs_free)((t)->bs_cookie, (h), (s))
+	(*(t)->bs_free)((t), (h), (s))
 
 /*
  * Get kernel virtual address for ranges mapped BUS_SPACE_MAP_LINEAR.
@@ -132,7 +132,7 @@
  * MMap bus space for a user application.
  */
 #define bus_space_mmap(t, a, o, p, f)					\
-	(*(t)->bs_mmap)((t)->bs_cookie, (a), (o), (p), (f))
+	(*(t)->bs_mmap)((t), (a), (o), (p), (f))
 
 /*
  * Bus barrier operations.
@@ -669,9 +669,6 @@ void bus_dmamap_sync(bus_dma_tag_t, bus_dmamap_t, bus_addr_t, bus_size_t, int);
 	(*(t)->_dmatag_destroy)(t)
 
 #ifdef _RISCV_BUS_DMA_PRIVATE
-
-int	riscv_dma_range_intersect(struct riscv_dma_range *, int,
-	    paddr_t pa, psize_t size, paddr_t *pap, psize_t *sizep);
 
 int	_bus_dmamap_create(bus_dma_tag_t, bus_size_t, int, bus_size_t,
 	    bus_size_t, int, bus_dmamap_t *);

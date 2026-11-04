@@ -1,4 +1,4 @@
-/*	$NetBSD: queries.c,v 1.29.2.1 2025/08/02 05:58:19 perseant Exp $	*/
+/*	$NetBSD: queries.c,v 1.29.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "queries.c"
 
 /*
@@ -17,7 +17,7 @@
 
 /* lint1-extra-flags: -q 1,2,3,4,5,6,7,8,9,10 */
 /* lint1-extra-flags: -q 11,12,13,14,15,16,17,18,19,20 */
-/* lint1-extra-flags: -q 21,22,23,24 */
+/* lint1-extra-flags: -q 21,22,23,24,25 */
 /* lint1-extra-flags: -X 351 */
 
 typedef unsigned char u8_t;
@@ -103,10 +103,10 @@ Q3(int i, unsigned u)
 	i = u;
 
 	/* expect+2: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
-	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int promoted from unsigned char' to 'unsigned short' [Q3] */
 	u16 += u8;
 	/* expect+2: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
-	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int promoted from unsigned short' to 'unsigned int' [Q3] */
 	u32 += u16;
 }
 
@@ -132,8 +132,8 @@ Q4(signed char *ptr, int i, unsigned long long ull, size_t sz)
 	u32 &= s32;
 
 	/* expect+3: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
-	/* expect+2: usual arithmetic conversion for '&' from 'int' to 'unsigned int' [Q4] */
-	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+2: usual arithmetic conversion for '&' from 'int promoted from unsigned char' to 'unsigned int' [Q4] */
+	/* expect+1: implicit conversion changes sign from 'int promoted from unsigned char' to 'unsigned int' [Q3] */
 	u32 = u32 & u8;
 
 	s8 = ptr[sz];
@@ -422,9 +422,9 @@ Q12(void)
 		return;
 
 	/* expect+5: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
-	/* expect+4: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	/* expect+4: implicit conversion changes sign from 'int promoted from unsigned char' to 'unsigned short' [Q3] */
 	/* expect+3: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
-	/* expect+2: implicit conversion changes sign from 'int' to 'unsigned int' [Q3] */
+	/* expect+2: implicit conversion changes sign from 'int promoted from unsigned short' to 'unsigned int' [Q3] */
 	/* expect+1: comma operator with types 'unsigned short' and 'unsigned int' [Q12] */
 	u16 += u8, u32 += u16;
 }
@@ -569,3 +569,26 @@ typedef struct struct_tag struct_typedef, *struct_ptr;
 typedef union union_tag union_typedef, *union_ptr;
 typedef int int_typedef, *int_pointer;
 typedef void (function_typedef)(int), (*function_ptr)(int);
+
+// Negating the minimum value of a signed integer type invokes undefined
+// behavior.
+void
+Q25_negation_of_signed_integer(void)
+{
+	// No warning since the promoted s8 cannot be INT_MIN.
+	s8 = -s8;
+	/* expect+2: implicit conversion changes sign from 'unsigned char' to 'int' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned char' [Q3] */
+	u8 = -u8;
+	// No warning since the promoted s16 cannot be INT_MIN.
+	s16 = -s16;
+	/* expect+2: implicit conversion changes sign from 'unsigned short' to 'int' [Q3] */
+	/* expect+1: implicit conversion changes sign from 'int' to 'unsigned short' [Q3] */
+	u16 = -u16;
+	/* expect+1: negation of signed 'int' [Q25] */
+	s32 = -s32;
+	u32 = -u32;
+	/* expect+1: negation of signed 'long long' [Q25] */
+	s64 = -s64;
+	u64 = -u64;
+}

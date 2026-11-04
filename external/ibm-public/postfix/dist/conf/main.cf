@@ -1,4 +1,4 @@
-#	$NetBSD: main.cf,v 1.10.2.1 2025/08/02 05:49:49 perseant Exp $
+#	$NetBSD: main.cf,v 1.10.2.2 2026/11/04 23:14:38 perseant Exp $
 #
 # Global Postfix configuration file. This file lists only a subset
 # of all parameters. For the syntax, and for a complete parameter
@@ -33,7 +33,7 @@
 #
 # The level below is what should be used with new (not upgrade) installs.
 #
-compatibility_level = 3.10
+compatibility_level = 3.11
 
 # On NetBSD we are built without EAI support, so we must disable utf8
 smtputf8_enable=no
@@ -145,10 +145,6 @@ mail_owner = postfix
 #inet_interfaces = all
 #inet_interfaces = $myhostname
 #inet_interfaces = $myhostname, localhost
-
-# NetBSD is IPv6-capable.  Use all available address families.
-#
-inet_protocols = all
 
 # The proxy_interfaces parameter specifies the network interface
 # addresses that this mail system receives mail on by way of a
@@ -695,4 +691,15 @@ sample_directory = /usr/share/examples/postfix
 # readme_directory: The location of the Postfix README files.
 #
 readme_directory = /usr/share/examples/postfix
-#inet_protocols = ipv4
+
+# shlib_directory: The location of the Postfix *.so library files and
+# database plugins.
+shlib_directory = /usr/lib/postfix
+
+# meta_directory: The location of non-executable files that are shared
+# between multiple Postfix instances.
+meta_directory = /usr/libexec/postfix
+
+# NetBSD is IPv6-capable.  Use all available address families.
+#
+inet_protocols = all

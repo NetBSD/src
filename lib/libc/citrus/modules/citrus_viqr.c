@@ -1,4 +1,4 @@
-/* $NetBSD: citrus_viqr.c,v 1.6 2013/05/28 16:57:56 joerg Exp $ */
+/* $NetBSD: citrus_viqr.c,v 1.6.40.1 2026/11/04 23:19:14 perseant Exp $ */
 
 /*-
  * Copyright (c)2006 Citrus Project,
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: citrus_viqr.c,v 1.6 2013/05/28 16:57:56 joerg Exp $");
+__RCSID("$NetBSD: citrus_viqr.c,v 1.6.40.1 2026/11/04 23:19:14 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <sys/queue.h>
@@ -147,11 +147,9 @@ mnemonic_list_find(mnemonic_list_t *ml, int ch)
 }
 
 static mnemonic_t *
-mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
+mnemonic_create_internal(mnemonic_t *parent, int ascii, wchar_t value)
 {
 	mnemonic_t *m;
-
-	_DIAGASSERT(parent != NULL);
 
 	m = malloc(sizeof(*m));
 	if (m != NULL) {
@@ -162,6 +160,21 @@ mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
 	}
 
 	return m;
+}
+
+static mnemonic_t *
+mnemonic_create_root(int ascii, wchar_t value)
+{
+
+	return mnemonic_create_internal(NULL, ascii, value);
+}
+
+static mnemonic_t *
+mnemonic_create(mnemonic_t *parent, int ascii, wchar_t value)
+{
+
+	_DIAGASSERT(parent != NULL);
+	return mnemonic_create_internal(parent, ascii, value);
 }
 
 static int
@@ -205,11 +218,11 @@ mnemonic_append_child(mnemonic_t *m, const char *s,
 static void
 mnemonic_destroy(mnemonic_t *m)
 {
-	mnemonic_t *m0;
+	mnemonic_t *m0, *n;
 
 	_DIAGASSERT(m != NULL);
 
-	TAILQ_FOREACH(m0, &m->child, entry)
+	TAILQ_FOREACH_SAFE(m0, &m->child, entry, n)
 		mnemonic_destroy(m0);
 	free(m);
 }
@@ -221,9 +234,11 @@ typedef struct {
 } _VIQREncodingInfo;
 
 typedef struct {
-	int chlen;
+	unsigned char chlen;
 	char ch[MB_LEN_MAX];
 } _VIQRState;
+
+__CTASSERT(__arraycount(((_VIQRState *)0)->ch) <= CHAR_MAX);
 
 typedef struct {
 	_VIQREncodingInfo	ei;
@@ -315,12 +330,15 @@ _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
 	i = 0;
 	m = ei->mroot;
 	for (escape = 0;;) {
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
+		_DIAGASSERT(i <= psenc->chlen);
 		if (psenc->chlen == i) {
 			if (n-- < 1) {
 				*s = s0;
 				*nresult = (size_t)-2;
 				return 0;
 			}
+			_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 			psenc->ch[psenc->chlen++] = *s0++;
 		}
 		ch = (unsigned char)psenc->ch[i++];
@@ -345,6 +363,8 @@ _citrus_VIQR_mbrtowc_priv(_VIQREncodingInfo * __restrict ei,
 	}
 	if (ch == ESCAPE && m != ei->mroot)
 		++i;
+	_DIAGASSERT(i <= psenc->chlen);
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	psenc->chlen -= i;
 	memmove(&psenc->ch[0], &psenc->ch[i], psenc->chlen);
 	wc = (m == ei->mroot) ? (wchar_t)ch : m->value;
@@ -371,7 +391,11 @@ _citrus_VIQR_wcrtomb_priv(_VIQREncodingInfo * __restrict ei,
 	_DIAGASSERT(nresult != NULL);
 
 	switch (psenc->chlen) {
-	case 0: case 1:
+	case 0:
+		break;
+	case 1:
+		if (n-- < 1)
+			goto e2big;
 		break;
 	default:
 		return EINVAL;
@@ -395,6 +419,7 @@ _citrus_VIQR_wcrtomb_priv(_VIQREncodingInfo * __restrict ei,
 			psenc->chlen = 0;
 			m = NULL;
 		}
+		_DIAGASSERT(psenc->chlen < __arraycount(psenc->ch));
 		psenc->ch[psenc->chlen++] = ch;
 	} else {
 		p = mnemonic_ext_find(wc, &mnemonic_ext[0], mnemonic_ext_size);
@@ -407,10 +432,13 @@ mnemonic_found:
 			while (*p != '\0') {
 				if (n-- < 1)
 					goto e2big;
+				_DIAGASSERT(psenc->chlen <
+				    __arraycount(psenc->ch));
 				psenc->ch[psenc->chlen++] = *p++;
 			}
 		}
 	}
+	_DIAGASSERT(psenc->chlen <= sizeof(psenc->ch));
 	memcpy(s, psenc->ch, psenc->chlen);
 	*nresult = psenc->chlen;
 	if (m == ei->mroot) {
@@ -503,7 +531,7 @@ _citrus_VIQR_encoding_module_init(_VIQREncodingInfo * __restrict ei,
 
 	ei->mb_cur_max = 1;
 	ei->invalid = (wchar_t)-1;
-	ei->mroot = mnemonic_create(NULL, '\0', ei->invalid);
+	ei->mroot = mnemonic_create_root('\0', ei->invalid);
 	if (ei->mroot == NULL)
 		return ENOMEM;
 	for (i = 0; i < sizeof(mnemonic_rfc1456) / sizeof(const char *); ++i) {

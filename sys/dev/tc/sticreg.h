@@ -1,4 +1,4 @@
-/* 	$NetBSD: sticreg.h,v 1.9 2008/09/08 23:36:54 gmcgarry Exp $	*/
+/* 	$NetBSD: sticreg.h,v 1.9.120.1 2026/11/04 23:22:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@ struct stic_regs {
 
 /*
  * Bit definitions for stic_regs::int.  Three four-bit wide fields, for
- * error (E), vertical-blank (V), and packet-done (P) intererupts,
+ * error (E), vertical-blank (V), and packet-done (P) interrupts,
  * respectively.  The low-order three bits of each field are interrupt
  * enable, condition flagged, and nybble write enable.  The top bit of each
  * field is unused.
@@ -239,7 +239,7 @@ struct stic_regs {
 
 /*
  * On DMA: reading from a STIC poll register causes load & execution of
- * the packet at the correspoinding physical address.  Either STAMP_OK
+ * the packet at the corresponding physical address.  Either STAMP_OK
  * or STAMP_BUSY will be returned to indicate status.
  *
  * The STIC sees only 23-bits (8MB) of address space.  Bits 21-22 in

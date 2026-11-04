@@ -1,4 +1,487 @@
 News for the tz database
+ 
+Release 2026e - 2026-09-29 17:14:38 -0700
+
+  Briefly:
+    Manitoba moves to permanent -05 on 2026-10-31.
+
+  Changes to future timestamps
+
+    Manitoba’s 2026-03-08 spring forward was its last foreseeable clock
+    change, as it moved to permanent -05 thereafter.  Model this with
+    its traditional abbreviation EST.  Although the change to
+    permanent -05 legally takes place on 2026-10-31, temporarily model
+    the change to occur on 2026-11-01 at 02:00 for the same reason as
+    other recent temporary hacks.  (Caution: see “NOTE FOR 2026b
+    TEMPORARY HACK FOR CLDR AND CANADA” below.)
+
+      As the change affects both America/Winnipeg and its backward
+      compatibility link, the obsolescent setting TZ="Canada/Central"
+      will now use the abbreviation EST for affected timestamps,
+      akin to TZ="Canada/Pacific" behavior introduced in 2026b.
+
+      Another TZDB release may be needed soon if any of the portions of
+      northwestern Ontario historically aligned with America/Winnipeg do
+      not follow.  For now, given the short leadtime with Manitoba’s
+      announcement, assume that they will, to avoid creating new zones
+      that may not be needed if no divergence occurs.
+
+  Changes to past timestamps
+
+    In 1925 Ireland fell back on 09-20 not 10-04 (thanks to Stan Ulbrych).
+
+  Changes to commentary
+
+    Discussion on timekeeping practices in northwestern Ontario has been
+    expanded in light of Manitoba’s recent announcement.  It is not yet
+    known whether or to what extent these areas may adapt their own
+    timekeeping practices in response.
+
+
+Release 2026d - 2026-09-11 15:21:07 -0700
+
+  Briefly:
+    Canada’s Northwest Territories moved to permanent -06 on 2026-08-21.
+    Obsolescent settings like TZ="EST5EDT" now conform better to POSIX.
+    Fix security, performance and porting bugs in zic and localtime.
+
+  Changes to future timestamps
+
+    Canada’s Northwest Territories will not fall back on 2026-11-01
+    and will stay on -06 year-round, matching Alberta’s recent change.
+    Model this with its traditional abbreviation CST.  Although the
+    change to permanent -06 legally took place on 2026-08-21,
+    temporarily model the change to occur on 2026-11-01 at 02:00
+    for the same reason as other recent temporary hacks.  (Caution:
+    see “NOTE FOR 2026b TEMPORARY HACK FOR CLDR AND CANADA” below.)
+    This affects only America/Inuvik as the rest of the territory is
+    covered by America/Edmonton, for which the equivalent change was
+    released in 2026c.
+
+  Changes to past timestamps
+
+    Colombia’s 1992-05-02 spring forward was at 00:00, not 24:00.
+
+    Iran’s 1979-05-26 spring forward was at 00:00, not 24:00.
+    (Thanks to N.F. Hase.)
+
+    The backward-compatibility names EST5EDT, CST6CDT, MST7MDT, and
+    PST8PDT now conform better to POSIX.  For example, EST5EDT now
+    always uses the abbreviation "EST" for standard time (now always 5
+    hours behind UT) and "EDT" for daylight saving time, whereas it
+    formerly had different UT offsets before standard time was
+    introduced and sometimes used abbreviations like "LMT", "EWT" and
+    "EPT", all contrary to POSIX.  Also, though not required by POSIX
+    these names now use US federal rules rather than rules of places
+    like New York, reverting to 2024a behavior.  This change affects
+    only timestamps before 1966-10-30 at 01:00 standard time.
+
+  Other data changes
+
+    The temporary hacks used for North American timekeeping changes
+    now work around a libstdc++ std::chrono bug in GCC 14.1-14.4,
+    15.1-15.2, and 16.1; see GCC bug 124851.  This data change does
+    not affect TZif files or timestamps.  The change does not work
+    around the related but less serious GCC bugs 116110 and 124513.
+    These GCC bugs are all fixed in GCC 16.2.
+
+  Changes to code
+
+    zic now rejects Link targets that would have invalid names, and
+    more efficiently processes Expires, Leap and Rule lines with years
+    far in the past or future.  (Thanks to Darren Carreras.)
+
+    zic now ports to systems that report lack of link support via
+    EINVAL, ENOSYS or EPERM errno values. (Thanks to Tom Lane.)
+
+    When tzset and related functions encounter a TZif file that is too
+    large for them, they now consistently fail instead of sometimes
+    silently ignoring excess parts of the file.
+
+    localtime-related functions no longer mishandle extreme timestamps
+    when given TZif files holding some unlikely timezone histories.
+    (Problem reported by David Sarkisyan.)
+
+    localtime-related functions no longer check the values of TZif
+    files’ standard/wall and UT/local indicators, which these
+    functions have not used since 2026a’s removal of the old
+    posixrules feature.
+
+    tzcode has been ported to Haiku.
+
+    localtime.c now works again by default on AIX and DragonFly BSD.
+
+    zic now rejects ‘:’ and ‘\’ in Zone and Link names when running on
+    Microsoft Windows.  (Problem reported by David Diaz.)
+
+  Changes to documentation
+
+    URLs for release tarballs in tz-link.html have been updated to
+    reflect their new canonical URLs on data.iana.org.
+
+
+Release 2026c - 2026-07-08 10:23:58 -0700
+ 
+  Briefly:
+    Alberta moved to permanent -06 on 2026-06-18.
+    Morocco moves to permanent +00 on 2026-09-20.
+    More integer overflow bugs have been fixed in zic.
+
+  Changes to future timestamps
+
+    Alberta’s 2026-03-08 spring forward was its last foreseeable clock
+    change, as it moved to permanent -06 thereafter.  (Thanks to Roozbeh
+    Pournader and others.)  Model this with its traditional abbreviation
+    CST.  Although the change to permanent -06 legally took place on
+    2026-06-18, temporarily model the change to occur on 2026-11-01 at
+    02:00 instead, for the same reason we introduced a similarly
+    temporary hack for British Columbia in 2026b.  (Caution: see
+    “NOTE FOR 2026b TEMPORARY HACK FOR CLDR AND CANADA” below.)
+
+      As the change affects both America/Edmonton and its backward
+      compatibility link, the obsolescent setting TZ="Canada/Mountain"
+      will now use the abbreviation CST for affected timestamps,
+      akin to TZ="Canada/Pacific" behavior introduced in 2026b.
+
+      Although another TZDB release will likely be needed soon because
+      Northwest Territories will likely follow Alberta, the legal
+      formalities have not yet taken place.
+
+    Morocco plans to move back to permanent UTC, without daylight
+    saving time transitions, on 2026-09-20 at 02:00.  This also
+    affects Western Sahara.
+
+  Changes to code
+
+    zic no longer overflows integers when processing outlandish input
+    like ‘Zone Ouch 0 - LMT 9223372036854775807’, ‘Zone Ouch 0
+    2562047788015215 LMT’, ‘Zone Ouch -2562047788015215:30:08 - LMT’,
+    and ‘Zone Ouch -2562047788015215:30:08 - %%z’.  This avoids
+    undefined behavior in C.  (Problems reported by Naveed Khan.)
+
+    On platforms that have EFTYPE, tzalloc now fails with errno set to
+    EFTYPE, not EINVAL, if it detects that the TZif file has an
+    invalid format or is not a regular file.  Formerly it did this
+    only on NetBSD, and only when the file was not a regular file.
+
+    Unprivileged programs no longer require TZif files to be regular
+    files or reject relative names containing ".." components.  This
+    reverts to the more-permissive 2025b behavior, as the stricter
+    behavior did not catch on in FreeBSD.
+
+    zic now reports any failure to remove a temporary file when
+    cleaning up after a previous failure.  (Problem reported by Tom
+    Lane.)
+
+  Changes to commentary
+
+    Northwest Territories is expected to move to permanent -06 prior to
+    2026-11-01 02:00, when clocks would otherwise fall back.  (Thanks to
+    Tim Parenti and James Bellaire.)  Model this with its traditional
+    abbreviation CST.  Unfortunately the change is not yet official, so
+    it is currently present only as comments that can be uncommented as
+    needed.
+
+  Changes to build procedure
+
+    The undocumented ‘typecheck’ Makefile check rule has been removed.
+    It stopped working in 2025a and evidently nobody noticed.
+    The rule was superseded by ‘check_time_t_alternatives’ in 2013d.
+
+
+Release 2026b - 2026-04-22 23:06:43 -0700
+
+  Briefly:
+    British Columbia moved to permanent -07 on 2026-03-09.
+    zic no longer mishandles a last transition to a new time type.
+    Some more overflow bugs have been fixed in zic.
+
+  Changes to future timestamps
+
+    British Columbia’s 2026-03-08 spring forward was its last
+    foreseeable clock change, as it moved to permanent -07 thereafter.
+    (Thanks to Arthur David Olson.)  Although the change to permanent
+    -07 legally took place on 2026-03-09, temporarily model the change
+    to occur on 2026-11-01 at 02:00 instead.  This works around a
+    limitation in CLDR 48.1 (2026-01-08).  This temporary hack is
+    planned to be removed after CLDR is fixed.
+
+      To match longstanding practice for -07 standard time in North
+      America, such as for America/Dawson, America/Dawson_Creek,
+      America/Fort_Nelson and America/Whitehorse, affected BC
+      timestamps use the abbreviation MST.  As the change affects both
+      America/Vancouver and its backward compatibility link, the
+      obsolescent setting TZ="Canada/Pacific" will now use the
+      abbreviation MST.  Future TZDB releases may change the
+      abbreviation if something else becomes popular across areas
+      observing -07, and may change it to "-07" if no alphabetic
+      consensus emerges.
+
+  Changes to code
+
+    zic no longer mishandles a last transition to a new time type.
+    NOTE FOR 2026b TEMPORARY HACK FOR CLDR AND CANADA:
+    This zic fix is needed for the temporary hack (mentioned above)
+    that works around the Canadian timekeeping bug in Unicode CLDR.
+    Without the fix, the temporary hack causes zic versions 2023d
+    through 2026a, in their default mode that generates slim output,
+    to generate a TZif file that violates Internet RFC 9636 §3.3.
+    The buggy file in turn causes some TZif readers, including tzcode
+    itself, to ignore America/Vancouver’s 2026-11-01 02:00 transition
+    from PDT (tm_isdst=1) to MST (tm_isdst=0).  Although the buggy
+    file does not cause any known TZif reader to mishandle UT offsets,
+    caution is advised when using zic 2023d through 2026a to compile
+    data from more-recent tz releases.  To work around this problem
+    when using these older zic versions, use ‘zic -b fat’.
+
+    zic no longer overflows a buffer when generating a TZ string like
+    "PST-167:59:58PDT-167:59:59,M11.5.6/-167:59:59,M12.5.6/-167:59:59",
+    which can occur with adversarial input.  (Thanks to Naveed Khan.)
+
+    zic no longer generates a longer TZif file than necessary when
+    an earlier time zone abbreviation is a suffix of a later one.
+    As a nice side effect, zic no longer overflows a buffer when given
+    a long series of abbreviations, each a suffix of the next.
+    (Buffer overflow reported by Arthur Chan.)
+
+    zic no longer overflows an int when processing input like ‘Zone
+    Ouch 2147483648:00:00 - LMT’.  The int overflow can lead to buffer
+    overflow in adversarial cases.  (Thanks to Naveed Khan.)
+
+    zic now checks for signals more often.
+
+
+Release 2026a - 2026-03-01 22:59:49 -0800
+
+  Briefly:
+    Moldova has used EU transition times since 2022.
+    The “right” TZif files are no longer installed by default.
+    -DTZ_RUNTIME_LEAPS=0 disables runtime support for leap seconds.
+    TZif files are no longer limited to 50 bytes of abbreviations.
+    zic is no longer limited to 50 leap seconds.
+    Several integer overflow bugs have been fixed.
+
+  Changes to past and future timestamps
+
+    Since 2022 Moldova has observed EU transition times, that is, it
+    has sprung forward at 03:00, not 02:00, and has fallen back at
+    04:00, not 03:00.  (Thanks to Heitor David Pinto.)
+
+  Changes to data
+
+    Remove Europe/Chisinau from zonenow.tab, as it now agrees with
+    Europe/Athens for future timestamps.
+
+  Changes to build procedure
+
+    The Makefile no longer by default installs an alternate set
+    of TZif files for system clocks that count leap seconds.
+    Install with ‘make REDO=posix_right’ to get the old default,
+    which is rarely used in major downstream distributions.
+    If your system clock counts leap seconds (contrary to POSIX),
+    it is better to install with ‘make REDO=right_only’.
+    This change does not affect the leapseconds file, which is still
+    installed as before.
+
+    The Makefile’s POSIXRULES option, which was declared obsolete in
+    release 2019b, has been removed.  The Makefile’s build procedure
+    thus no longer optionally installs the obsolete posixrules file.
+
+  Changes to code
+
+    Compiling with the new option -DTZ_RUNTIME_LEAPS=0 disables
+    runtime support for leap seconds.  Although this conforms to
+    POSIX, shrinks tzcode’s attack surface, and is more efficient,
+    it fails to support Internet RFC 9636’s leap seconds.
+
+    zic now can generate, and localtime.c can now use, TZif files that
+    hold up to 256 bytes of abbreviations, counting trailing NULs.
+    The previous limit was 50 bytes, and some tzdata TZif files were
+    already consuming 40 bytes.  zic -v warns if it generates a file
+    that exceeds the old 50-byte limit.
+
+    zic -L can now generate TZif files with more than 50 leap seconds.
+    This helps test TZif readers not limited to 50 leap seconds, as
+    tzcode’s localtime.c is; it has little immediate need for
+    practical timekeeping as there have been only 27 leap seconds and
+    possibly there will be no more, due to planned changes to UTC.
+    zic -v warns if its output exceeds the old 50-second limit.
+
+    localtime.c no longer accesses the posixrules file generated by
+    zic -p.  Hence for obsolete and nonconforming settings like
+    TZ="AST4ADT" it now typically falls back on US DST rules, rather
+    than attempting to override this fallback with the contents of the
+    posixrules file.  This removes library support that was declared
+    obsolete in release 2019b, and fixes some undefined behavior.
+    (Undefined behavior reported by Naveed Khan.)
+
+    The posix2time, posix2time_z, time2posix, and time2posix_z
+    functions now set errno=EOVERFLOW and return ((time_t) -1) if the
+    result is not representable.  Formerly they had undefined behavior
+    that could in practice result in crashing, looping indefinitely,
+    or returning an incorrect result.  As before, these functions are
+    defined only when localtime.c is compiled with the -DSTD_INSPIRED
+    option.
+
+    Some other undefined behavior, triggered by TZif files containing
+    outlandish but conforming UT offsets or leap second corrections,
+    has also been fixed.  (Some of these bugs reported by Naveed Khan.)
+
+    localtime.c no longer rejects TZif files that exactly fit in its
+    internal structures, fixing off-by-one typos introduced in 2014g.
+
+    zic no longer generates a no-op transition when
+    simultaneous Rule and Zone changes cancel each other out.
+    This occurs in tzdata only in Asia/Tbilisi on 1997-03-30.
+    (Thanks to Renchunhui for a test case showing the bug.)
+
+    zic no longer assumes you can fflush a read-only stream.
+    (Problem reported by Christos Zoulas.)
+
+    zic no longer generates UT offsets equal to -2**31 and localtime.c
+    no longer accepts them, as they can cause trouble in both
+    localtime.c and its callers.  RFC 9636 prohibits such offsets.
+
+    zic -p now warns that the -p option is obsolete and likely
+    ineffective.
+
+
+Release 2025c - 2025-12-10 14:42:37 -0800
+
+  Briefly:
+    Several code changes for compatibility with FreeBSD.
+
+  Changes to past timestamps
+
+    Baja California agreed with California’s DST rules in 1953 and in
+    1961 through 1975, instead of observing standard time all year.
+    (Thanks to Alois Treindl.)
+
+  Changes to build procedure
+
+    Files in distributed tarballs now have correct commit times.
+    Formerly, the committer’s time zone was incorrectly ignored.
+
+    Distribution products (*.asc, *.gz, and *.lz) now have
+    reproducible timestamps.  Formerly, only the contents of the
+    compressed tarballs had reproducible timestamps.
+
+    By default, distributed formatted man pages (*.txt) now use UTF-8
+    and are left-adjusted more consistently.  A new Makefile macro
+    MANFLAGS can override these defaults.  (Thanks to G. Branden
+    Robinson for inspiring these changes.)
+
+  Changes to code
+
+    An unset TZ is no longer invalid when /etc/localtime is missing,
+    and is abbreviated "UTC" not "-00".  This reverts to 2024b behavior.
+    (Problem and patch reported by Dag-Erling Smørgrav.)
+
+    New function offtime_r, short for fixed-offset localtime_rz.
+    It is defined if STD_INSPIRED is defined.
+    (Patch from Dag-Erling Smørgrav.)
+
+    tzset etc. are now more cautious about questionable TZ settings.
+    Privileged programs now reject TZ settings that start with '/',
+    unless they are TZDEFAULT (default "/etc/localtime") or
+    start with TZDIR then '/' (default "/usr/share/zoneinfo/").
+    Unprivileged programs now require files to be regular files
+    and reject relative names containing ".." directory components;
+    formerly, only privileged programs did those two things.
+    These changes were inspired by similar behavior in FreeBSD.
+    On NetBSD, unprivileged programs now use O_REGULAR to check
+    whether a TZ setting starting with '/' names a regular file,
+    avoiding a minor security race still present elsewhere.
+    TZ strings taken from tzalloc arguments are now treated with
+    no less caution than TZ strings taken from the environment, as
+    the old undocumented behavior would have been hard to explain.
+    tzset etc. no longer use the ‘access’ system call to check access;
+    instead they now use the system calls issetugid, getauxval,
+    getresuid/getresgid, and geteuid/getegid/getuid/getgid (whichever
+    first works) to test whether a program is privileged.
+    Compile with -DHAVE_SYS_AUXV_H=[01] to enable or disable
+    <sys/auxv.h> which (if it defines AT_SECURE) enables getauxval,
+    and compile with -DHAVE_ISSETUGID=[01], -DHAVE_GETRESUID=[01], and
+    -DHAVE_GETEUID=[01] to enable or disable the other calls’ use.
+
+    The new CFLAGS option -DTZ_CHANGE_INTERVAL=N makes tzset etc.
+    check for TZif file changes if the in-memory data are N seconds
+    old or more, and are derived from the TZ environment variable.
+    This is intended for platforms that want tzset etc. to reflect
+    changes to whatever file TZ selects (including changes to
+    /etc/localtime if TZ is unset).  If N is negative (the default)
+    these checks are omitted; this is the traditional behavior.
+
+    The new CFLAGS options -DHAVE_STRUCT_STAT_ST_CTIM=0 and
+    -DHAVE_STRUCT_TIMESPEC=0 port to non-POSIX.1-2008 platforms
+    that lack st_ctim and struct timespec, respectively.
+    On these platforms, the code falls back on st_ctime to
+    implement -DTZ_CHANGE_INTERVAL=N.
+
+    tzset etc. now treat ' ' like '_' in time zone abbreviations,
+    just as they treat other invalid bytes.  This continues the
+    transition begun in release 96k, which removed spaces in tzdata
+    because the spaces break time string parsers.
+
+    The new CFLAGS option -DTHREAD_PREFER_SINGLE causes tzcode
+    in single-threaded processes to avoid locks, as FreeBSD does.
+    This can save time in single-threaded apps.  The threadedness
+    testing costs CPU time and energy in multi-threaded apps.
+    New options -DHAVE___ISTHREADED and -DHAVE_SYS_SINGLE_THREADED_H
+    can help configure how to test for single-threadedness.
+
+    The new CFLAGS option -DTHREAD_RWLOCK uses read-write locks, as
+    macOS does, instead of mutexes.  This saves real time when TZ is
+    rarely changing and many threads call tzcode simultaneously.
+    It costs more CPU time and energy.
+
+    The new CFLAGS option -DTHREAD_TM_MULTI causes localtime to return
+    a pointer to thread-specific memory, as FreeBSD does, instead of
+    to the same memory in all threads.  This supports nonportable
+    programs that incorrectly use localtime instead of localtime_r.
+    This option affects gmtime and offtime similarly to localtime.
+    Because the corresponding storage is freed on thread exit, this
+    option is incompatible with POSIX.1-2024 and earlier.  It also
+    costs CPU time and memory.
+
+    tzfree now preserves errno, consistently with POSIX.1-2024 ‘free’.
+
+    tzcode now uses mempcpy if available, guessing its availability.
+    Compile with -DHAVE_MEMPCPY=1 or 0 to override the guess.
+
+    tzcode now uses strnlen to improve asymptotic performance a bit.
+    Compile with -DHAVE_STRNLEN=0 if your platform lacks it.
+
+    tzcode now hand-declares unistd.h-provided symbols like getopt
+    if HAVE_UNISTD_H=0, not if HAVE_POSIX_DECLS=0.
+
+    tzset etc. now have an experimental OPENAT_TZDIR option;
+    see Makefile and localtime.c for details.
+
+    On platforms like GNU/Hurd that do not define PATH_MAX,
+    exceedingly long TZ strings no longer fail merely because they
+    exceed an arbitrary file name length limit imposed by tzcode.
+
+    zic has new options inspired by FreeBSD.  ‘-D’ skips creation of
+    output ancestor directories, ‘-m MODE’ sets output files’ mode,
+    and ‘-u OWNER[:GROUP]’ sets output files’ owner and group.
+
+    zic now uses the fdopen function, which was standardized by
+    POSIX.1-1988 and is now safe to use in portable code.
+    This replaces its use of the older umask function, which
+    complicated maintenance.
+
+  Changes to commentary
+
+    The leapseconds file contains commentary about the IERS and NIST
+    last-modified and expiration timestamps for leap second data.
+    (Thanks to Judah Levine.)
+
+    Commentary now also uses characters from the set –‘’“”•≤ as this
+    can be useful and should work with current applications.  This
+    also affects data in iso3166.tab and zone1970.tab, which now
+    contain strings like “Côte d’Ivoire” instead of “Côte d'Ivoire”.
+
 
 Release 2025b - 2025-03-22 13:40:46 -0700
 
@@ -282,7 +765,7 @@ Release 2024a - 2024-02-01 09:28:56 -0800
     The leap-seconds.list file is now copied from the IERS instead of
     from its downstream counterpart at NIST, as the IERS version is
     now in the public domain too and tends to be more up-to-date.
-    (Thanks to Martin Burnicki for liaisoning with the IERS.)
+    (Thanks to Martin Burnicki for liaising with the IERS.)
 
   Changes to documentation
 
@@ -1445,7 +1928,7 @@ Release 2020a - 2020-04-23 16:03:47 -0700
     zic -L now supports an Expires line in the leapseconds file, and
     truncates the TZif output accordingly.  This propagates leap
     second expiration information into the TZif file, and avoids the
-    abovementioned localtime.c bug as well as similar bugs present in
+    localtime.c bug mentioned above, as well as similar bugs present in
     many client implementations.  If no Expires line is present, zic
     -L instead truncates the TZif output based on the #expires comment
     present in leapseconds files distributed by tzdb 2018f and later;
@@ -6402,7 +6885,7 @@ few (e.g., code2012c-data2012d) have tarballs with mixed version
 numbers.  Recent releases also come in an experimental format
 consisting of a single tarball tzdb-R.tar.lz with extra data.
 
-Release timestamps are taken from the release's commit (for newer,
+A release’s timestamp is taken from the release’s commit (for newer,
 Git-based releases), from the newest file in the tarball (for older
 releases, where this info is available) or from the email announcing
 the release (if all else fails; these are marked with a time zone

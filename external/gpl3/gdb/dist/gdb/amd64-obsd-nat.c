@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -127,9 +127,7 @@ amd64obsd_supply_pcb (struct regcache *regcache, struct pcb *pcb)
 
 static amd64_bsd_nat_target<obsd_nat_target> the_amd64_obsd_nat_target;
 
-void _initialize_amd64obsd_nat ();
-void
-_initialize_amd64obsd_nat ()
+INIT_GDB_FILE (amd64obsd_nat)
 {
   amd64_native_gregset32_reg_offset = amd64obsd32_r_reg_offset;
   amd64_native_gregset32_num_regs = ARRAY_SIZE (amd64obsd32_r_reg_offset);

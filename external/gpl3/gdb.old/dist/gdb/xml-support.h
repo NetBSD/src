@@ -1,6 +1,6 @@
 /* Helper routines for parsing XML using Expat.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,13 +18,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#ifndef XML_SUPPORT_H
-#define XML_SUPPORT_H
+#ifndef GDB_XML_SUPPORT_H
+#define GDB_XML_SUPPORT_H
 
 #include "gdbsupport/gdb_obstack.h"
 #include "gdbsupport/xml-utils.h"
 #include "gdbsupport/byte-vector.h"
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "gdbsupport/function-view.h"
 
 struct gdb_xml_parser;
@@ -49,7 +49,7 @@ LONGEST xml_builtin_xfer_partial (const char *filename,
 
 /* Callback to fetch a new XML file, based on the provided HREF.  */
 
-using xml_fetch_another = gdb::function_view<gdb::optional<gdb::char_vector>
+using xml_fetch_another = gdb::function_view<std::optional<gdb::char_vector>
 					     (const char * /* href */)>;
 
 /* Append the expansion of TEXT after processing <xi:include> tags in
@@ -191,8 +191,9 @@ void gdb_xml_debug (struct gdb_xml_parser *parser, const char *format, ...)
 /* Issue an error message from one of PARSER's handlers, and stop
    parsing.  */
 
-void gdb_xml_error (struct gdb_xml_parser *parser, const char *format, ...)
-  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
+[[noreturn]] void gdb_xml_error (struct gdb_xml_parser *parser,
+				 const char *format, ...)
+  ATTRIBUTE_PRINTF (2, 3);
 
 /* Find the attribute named NAME in the set of parsed attributes
    ATTRIBUTES.  Returns NULL if not found.  */
@@ -230,7 +231,7 @@ ULONGEST gdb_xml_parse_ulongest (struct gdb_xml_parser *parser,
    the text.  If something goes wrong, return an uninstantiated optional
    and warn.  */
 
-extern gdb::optional<gdb::char_vector> xml_fetch_content_from_file
+extern std::optional<gdb::char_vector> xml_fetch_content_from_file
     (const char *filename, const char *dirname);
 
-#endif
+#endif /* GDB_XML_SUPPORT_H */

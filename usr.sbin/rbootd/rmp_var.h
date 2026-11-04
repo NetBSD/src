@@ -1,4 +1,4 @@
-/*	$NetBSD: rmp_var.h,v 1.11 2011/02/08 20:20:28 rmind Exp $	*/
+/*	$NetBSD: rmp_var.h,v 1.11.56.1 2026/11/04 23:28:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1992 The University of Utah and the Center
@@ -41,6 +41,8 @@
  * from: Utah Hdr: rmp_var.h 3.1 92/07/06
  * Author: Jeff Forys, University of Utah CSS
  */
+
+#include <arpa/inet.h>
 
 /*
  *  Possible values for "rmp_type" fields.
@@ -106,7 +108,7 @@
 			 (2*sizeof(u_int8_t)+sizeof(u_int16_t)+sizeof(u_word)))
 
 /*
- * This protocol defines some field sizes as "rest of ethernet packet".
+ * This protocol defines some field sizes as "rest of Ethernet packet".
  * There is no easy way to specify this in C, so we use a one character
  * field to denote it, and index past it to the end of the packet.
  */

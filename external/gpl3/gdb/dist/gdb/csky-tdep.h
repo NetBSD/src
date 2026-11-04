@@ -1,6 +1,6 @@
 /* Target-dependent code for the CSKY architecture, for GDB.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CSKY_TDEP_H
-#define CSKY_TDEP_H
+#ifndef GDB_CSKY_TDEP_H
+#define GDB_CSKY_TDEP_H
 
 #include "gdbarch.h"
 
@@ -390,4 +390,4 @@ enum csky_regnum
 #define CSKY_LRW_T1_PC_8    0x2ea8d
 #define CSKY_JMP_T1_VS_NOP  0x6c037834
 
-#endif
+#endif /* GDB_CSKY_TDEP_H */

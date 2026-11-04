@@ -1,4 +1,4 @@
-/* $Id: imx23_digctl.c,v 1.2 2019/10/18 04:09:01 msaitoh Exp $ */
+/* $NetBSD: imx23_digctl.c,v 1.2.32.1 2026/11/04 23:20:10 perseant Exp $ */
 
 /*
 * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,157 +37,93 @@
 #include <sys/errno.h>
 #include <sys/timetc.h>
 
+#include <dev/fdt/fdtvar.h>
+
 #include <arm/imx/imx23_digctlreg.h>
-#include <arm/imx/imx23_digctlvar.h>
 #include <arm/imx/imx23var.h>
 
-typedef struct digctl_softc {
-	device_t sc_dev;
+struct imx23_digctl_softc {
 	bus_space_tag_t sc_iot;
 	bus_space_handle_t sc_hdl;
-} *digctl_softc_t;
+	struct timecounter sc_tc;
+};
 
-static int	digctl_match(device_t, cfdata_t, void *);
-static void	digctl_attach(device_t, device_t, void *);
-static int	digctl_activate(device_t, enum devact);
-
-static void     digctl_reset(struct digctl_softc *);
-static void     digctl_init(struct digctl_softc *);
+static int	imx23_digctl_match(device_t, cfdata_t, void *);
+static void	imx23_digctl_attach(device_t, device_t, void *);
 
 /* timecounter. */
-static u_int digctl_tc_get_timecount(struct timecounter *);
+static u_int imx23_digctl_tc_get_timecount(struct timecounter *);
 
-static digctl_softc_t _sc = NULL;
-
-CFATTACH_DECL3_NEW(digctl,
-        sizeof(struct digctl_softc),
-        digctl_match,
-        digctl_attach,
-        NULL,
-        digctl_activate,
-        NULL,
-        NULL,
-        0
-);
-
-static struct timecounter tc_useconds;
+CFATTACH_DECL_NEW(imx23digctl, sizeof(struct imx23_digctl_softc),
+		  imx23_digctl_match, imx23_digctl_attach, NULL, NULL);
 
 #define DCTL_RD(sc, reg)                                                 \
         bus_space_read_4(sc->sc_iot, sc->sc_hdl, (reg))
 #define DCTL_WR(sc, reg, val)                                            \
         bus_space_write_4(sc->sc_iot, sc->sc_hdl, (reg), (val))
 
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "fsl,imx23-digctl" },
+	DEVICE_COMPAT_EOL
+};
+
 static int
-digctl_match(device_t parent, cfdata_t match, void *aux)
+imx23_digctl_match(device_t parent, cfdata_t match, void *aux)
 {
-	struct apb_attach_args *aa = aux;
+	struct fdt_attach_args * const faa = aux;
 
-	if ((aa->aa_addr == HW_DIGCTL_BASE) && (aa->aa_size == HW_DIGCTL_SIZE))
-		return 1;
-
-	return 0;
+	return of_compatible_match(faa->faa_phandle, compat_data);
 }
 
 static void
-digctl_attach(device_t parent, device_t self, void *aux)
+imx23_digctl_attach(device_t parent, device_t self, void *aux)
 {
-	struct digctl_softc *sc = device_private(self);
-	struct apb_attach_args *aa = aux;
-	static int digctl_attached = 0;
+	struct imx23_digctl_softc * const sc = device_private(self);
+	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
 
-	sc->sc_dev = self;
-	sc->sc_iot = aa->aa_iot;
-	
-	if (digctl_attached) {
-		aprint_error_dev(sc->sc_dev, "already attached\n");
+	sc->sc_iot = faa->faa_bst;
+
+	bus_addr_t addr;
+	bus_size_t size;
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
+		aprint_error(": couldn't get register address\n");
+		return;
+	}
+	if (bus_space_map(faa->faa_bst, addr, size, 0, &sc->sc_hdl)) {
+		aprint_error(": couldn't map registers\n");
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
-	    &sc->sc_hdl))
-	{
-		aprint_error_dev(sc->sc_dev, "Unable to map bus space\n");
-		return;
-	}
-
-	digctl_reset(sc);
-	digctl_init(sc);
-
+	aprint_naive("\n");
 	aprint_normal("\n");
 
 	/*
 	 * Setup timecounter to use digctl microseconds counter.
 	 */
-	tc_useconds.tc_get_timecount = digctl_tc_get_timecount;
-	tc_useconds.tc_poll_pps = NULL;
-	tc_useconds.tc_counter_mask = 0xffffffff; /* 32bit counter. */
-	tc_useconds.tc_frequency = 1000000;       /* @ 1MHz */
-	tc_useconds.tc_name = "digctl";
-	tc_useconds.tc_quality = 100;
+	sc->sc_tc.tc_get_timecount = imx23_digctl_tc_get_timecount;
+	sc->sc_tc.tc_poll_pps = NULL;
+	sc->sc_tc.tc_counter_mask = 0xffffffff; /* 32bit counter. */
+	sc->sc_tc.tc_frequency = 1000000;       /* @ 1MHz */
+	sc->sc_tc.tc_name = "digctl";
+	sc->sc_tc.tc_quality = 100;
+	sc->sc_tc.tc_priv = sc;
 
 	/* Enable counter. */
 	DCTL_WR(sc, HW_DIGCTL_CTRL_CLR, HW_DIGCTL_CTRL_XTAL24M_GATE);
 
-	tc_init(&tc_useconds);
+	tc_init(&sc->sc_tc);
 
-	digctl_attached = 1;
-
-	return;
-}
-
-static int
-digctl_activate(device_t self, enum devact act)
-{
-
-	return EOPNOTSUPP;
-}
-
-/*
- * Inspired by i.MX23 RM "39.3.10 Correct Way to Soft Reset a Block"
- */
-static void
-digctl_reset(struct digctl_softc *sc)
-{
-        return;
-}
-
-static void    
-digctl_init(struct digctl_softc *sc)
-{
-	_sc = sc;
-	return;
-}
-
-/*
- * Control USB controller clocks.
- */
-void
-digctl_usb_clkgate(int value)
-{
-	struct digctl_softc *sc = _sc;
-
-	if (sc == NULL) {
-		aprint_error("digctl is not initialized");
-		return;
-	}
-
-	if (value) {
-		/* Clocks OFF. */
-		DCTL_WR(sc, HW_DIGCTL_CTRL_SET, HW_DIGCTL_CTRL_USB_CLKGATE);
-	} else {
-		/* Clocks ON. */
-		DCTL_WR(sc, HW_DIGCTL_CTRL_CLR, HW_DIGCTL_CTRL_USB_CLKGATE);
-	}
-
-	return;
+	/* Enable USB clocks */
+	DCTL_WR(sc, HW_DIGCTL_CTRL_CLR, HW_DIGCTL_CTRL_USB_CLKGATE);
 }
 
 /*
  *
  */
 static u_int
-digctl_tc_get_timecount(struct timecounter *tc)
+imx23_digctl_tc_get_timecount(struct timecounter *tc)
 {
-	struct digctl_softc *sc = _sc;
+	struct imx23_digctl_softc * const sc = tc->tc_priv;
 	return DCTL_RD(sc, HW_DIGCTL_MICROSECONDS);
 }

@@ -1,6 +1,6 @@
 /* CLI utilities.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_CLI_UTILS_H
-#define CLI_CLI_UTILS_H
+#ifndef GDB_CLI_CLI_UTILS_H
+#define GDB_CLI_CLI_UTILS_H
 
 #include "completer.h"
 
@@ -82,7 +82,7 @@ public:
   /* STRING is the string to be parsed.  */
   void init (const char *string);
 
-  /* While processing a range, this fuction is called iteratively; At
+  /* While processing a range, this function is called iteratively; At
      each call it will return the next value in the range.
 
      At the beginning of parsing a range, the char pointer
@@ -225,4 +225,4 @@ struct qcs_flags
    message.  */
 extern void validate_flags_qcs (const char *which_command, qcs_flags *flags);
 
-#endif /* CLI_CLI_UTILS_H */
+#endif /* GDB_CLI_CLI_UTILS_H */

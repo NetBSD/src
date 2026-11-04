@@ -1,5 +1,5 @@
 /* Serial interface for a pipe to a separate program
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
 
@@ -236,9 +236,7 @@ static const struct serial_ops pipe_ops =
   ser_unix_write_prim
 };
 
-void _initialize_ser_pipe ();
-void
-_initialize_ser_pipe ()
+INIT_GDB_FILE (ser_pipe)
 {
   serial_add_interface (&pipe_ops);
 }

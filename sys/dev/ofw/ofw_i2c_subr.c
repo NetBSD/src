@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $	*/
+/*	$NetBSD: ofw_i2c_subr.c,v 1.1.26.1 2026/11/04 23:22:03 perseant Exp $	*/
 
 /*
  * Copyright 1998
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1.26.1 2026/11/04 23:22:03 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -49,9 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_i2c_subr.c,v 1.1 2021/02/04 20:19:09 thorpej Exp
  * device properties.
  * This is used by the i2c bus attach code to do direct configuration.
  */
-void
-of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
-    int addr_shift)
+prop_array_t
+of_copy_i2c_devs(int ofnode, size_t cell_size, int addr_shift)
 {
 	int node, len;
 	char name[32];
@@ -60,6 +59,7 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 	uint64_t addr;
 	prop_array_t array = NULL;
 	prop_dictionary_t dev;
+	devhandle_t child_devhandle;
 
 	for (node = OF_child(ofnode); node; node = OF_peer(node)) {
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0)
@@ -95,15 +95,13 @@ of_enter_i2c_devs(prop_dictionary_t props, int ofnode, size_t cell_size,
 		dev = prop_dictionary_create();
 		prop_dictionary_set_string(dev, "name", name);
 		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", node);
-		prop_dictionary_set_uint32(dev, "cookietype", I2C_COOKIE_OF);
+		child_devhandle = devhandle_from_of(devhandle_invalid(), node);
+		prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
+		    sizeof(child_devhandle));
 		of_to_dataprop(dev, node, "compatible", "compatible");
 		prop_array_add(array, dev);
 		prop_object_release(dev);
 	}
 
-	if (array != NULL) {
-		prop_dictionary_set(props, "i2c-child-devices", array);
-		prop_object_release(array);
-	}
+	return array;
 }

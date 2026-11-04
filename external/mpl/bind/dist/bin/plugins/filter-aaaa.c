@@ -1,4 +1,4 @@
-/*	$NetBSD: filter-aaaa.c,v 1.10.2.1 2025/08/02 05:50:55 perseant Exp $	*/
+/*	$NetBSD: filter-aaaa.c,v 1.10.2.2 2026/11/04 23:15:36 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -49,14 +49,6 @@
 #include <ns/log.h>
 #include <ns/query.h>
 #include <ns/types.h>
-
-#define CHECK(op)                              \
-	do {                                   \
-		result = (op);                 \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	} while (0)
 
 /*
  * Possible values for the settings of filter-aaaa-on-v4 and

@@ -1,6 +1,6 @@
 /* Python interface to inferior events.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,20 +17,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PY_STOPEVENT_H
-#define PYTHON_PY_STOPEVENT_H
+#ifndef GDB_PYTHON_PY_STOPEVENT_H
+#define GDB_PYTHON_PY_STOPEVENT_H
 
 #include "py-event.h"
 
-extern gdbpy_ref<> create_stop_event_object (PyTypeObject *py_type);
-extern void stop_evpy_dealloc (PyObject *self);
+extern gdbpy_ref<> create_stop_event_object (PyTypeObject *py_type,
+					     const gdbpy_ref<> &dict);
 
 extern int emit_stop_event (struct bpstat *bs,
 			    enum gdb_signal stop_signal);
 
-extern gdbpy_ref<> create_breakpoint_event_object (PyObject *breakpoint_list,
+extern gdbpy_ref<> create_breakpoint_event_object (const gdbpy_ref<> &dict,
+						   PyObject *breakpoint_list,
 						   PyObject *first_bp);
 
-extern gdbpy_ref<> create_signal_event_object (enum gdb_signal stop_signal);
+extern gdbpy_ref<> create_signal_event_object (const gdbpy_ref<> &dict,
+					       enum gdb_signal stop_signal);
 
-#endif /* PYTHON_PY_STOPEVENT_H */
+#endif /* GDB_PYTHON_PY_STOPEVENT_H */

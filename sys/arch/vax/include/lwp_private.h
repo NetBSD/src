@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp_private.h,v 1.1.4.2 2025/08/02 05:56:13 perseant Exp $	*/
+/*	$NetBSD: lwp_private.h,v 1.1.4.3 2026/11/04 23:21:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@ static __inline void *
 __lwp_getprivate_fast(void)
 {
 	register void *tcb __asm("r0");
-	__asm("chmk %0" :: "i"(SYS__lwp_getprivate) : "r0");
+	__asm("chmk %1" : "=r"(tcb) : "i"(SYS__lwp_getprivate));
 	return tcb;
 }
 

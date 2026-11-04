@@ -1,4 +1,4 @@
-/*	$NetBSD: tkey_249.c,v 1.9.2.1 2025/08/02 05:53:47 perseant Exp $	*/
+/*	$NetBSD: tkey_249.c,v 1.9.2.2 2026/11/04 23:18:12 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -428,9 +428,7 @@ tostruct_tkey(ARGS_TOSTRUCT) {
 	REQUIRE(tkey != NULL);
 	REQUIRE(rdata->length != 0);
 
-	tkey->common.rdclass = rdata->rdclass;
-	tkey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&tkey->common, link);
+	DNS_RDATACOMMON_INIT(tkey, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &sr);
 

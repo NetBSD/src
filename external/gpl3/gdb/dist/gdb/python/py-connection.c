@@ -1,6 +1,6 @@
 /* Python interface to inferiors.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,8 +27,7 @@
 #include "arch-utils.h"
 #include "remote.h"
 #include "charset.h"
-
-#include <map>
+#include "gdbsupport/unordered_map.h"
 
 /* The Python object that represents a connection.  */
 
@@ -65,8 +64,8 @@ extern PyTypeObject remote_connection_object_type
 /* A map between process_stratum targets and the Python object representing
    them.  We actually hold a gdbpy_ref around the Python object so that
    reference counts are handled correctly when entries are deleted.  */
-static std::map<process_stratum_target *,
-		gdbpy_ref<connection_object>> all_connection_objects;
+static gdb::unordered_map<process_stratum_target *,
+			  gdbpy_ref<connection_object>> all_connection_objects;
 
 /* Return a reference to a gdb.TargetConnection object for TARGET.  If
    TARGET is nullptr then a reference to None is returned.
@@ -287,18 +286,10 @@ connpy_get_connection_details (PyObject *self, void *closure)
 static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_connection (void)
 {
-  if (PyType_Ready (&connection_object_type) < 0)
+  if (gdbpy_type_ready (&connection_object_type) < 0)
     return -1;
 
-  if (gdb_pymodule_addobject (gdb_module, "TargetConnection",
-			      (PyObject *) &connection_object_type) < 0)
-    return -1;
-
-  if (PyType_Ready (&remote_connection_object_type) < 0)
-    return -1;
-
-  if (gdb_pymodule_addobject (gdb_module, "RemoteTargetConnection",
-			      (PyObject *) &remote_connection_object_type) < 0)
+  if (gdbpy_type_ready (&remote_connection_object_type) < 0)
     return -1;
 
   return 0;
@@ -350,7 +341,7 @@ struct py_send_packet_callbacks : public send_remote_packet_callbacks
      It is important that the result is inspected immediately after sending
      a packet to the remote, and any error fetched,  calling any other
      Python functions that might clear the error state, or rely on an error
-     not being set will cause undefined behaviour.  */
+     not being set will cause undefined behavior.  */
 
   gdbpy_ref<> result () const
   {
@@ -431,16 +422,13 @@ connpy_send_packet (PyObject *self, PyObject *args, PyObject *kw)
     }
   catch (const gdb_exception &except)
     {
-      gdbpy_convert_exception (except);
-      return nullptr;
+      return gdbpy_handle_gdb_exception (nullptr, except);
     }
 }
 
 /* Global initialization for this file.  */
 
-void _initialize_py_connection ();
-void
-_initialize_py_connection ()
+INIT_GDB_FILE (py_connection)
 {
   gdb::observers::connection_removed.attach (connpy_connection_removed,
 					     "py-connection");

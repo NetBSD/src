@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: tegra_platform.c,v 1.28.6.1 2026/11/04 23:20:12 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "ukbd.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.28.6.1 2026/11/04 23:20:12 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_platform.c,v 1.28 2023/04/07 08:55:30 skrll Ex
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -153,7 +154,7 @@ tegra_platform_device_register(device_t self, void *aux)
 
 	if (device_is_a(self, "tegrafb") &&
 	    match_bootconf_option(boot_args, "console", "fb")) {
-		prop_dictionary_set_bool(dict, "is_console", true);
+		device_setprop_bool(self, "is_console", true);
 #if NUKBD > 0
 		ukbd_cnattach();
 #endif

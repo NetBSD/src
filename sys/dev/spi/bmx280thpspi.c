@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpspi.c,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
+/*	$NetBSD: bmx280thpspi.c,v 1.1.8.1 2026/11/04 23:22:34 perseant Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.1 2022/12/03 01:04:43 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.1.8.1 2026/11/04 23:22:34 perseant Exp $");
 
 /*
  * SPI driver for the Bosch BMP280 / BME280 sensor.
@@ -42,24 +42,19 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280thpspi.c,v 1.1 2022/12/03 01:04:43 brad Exp $"
 #include <dev/ic/bmx280reg.h>
 #include <dev/ic/bmx280var.h>
 
-extern void	bmx280_attach(struct bmx280_sc *);
+struct bmx280_spi_softc {
+	struct bmx280_sc	sc_bmx280;
+	spi_handle_t		sc_sh;
+};
+
+#define	BMX280_TO_SPI(sc)	\
+	container_of((sc), struct bmx280_spi_softc, sc_bmx280)
 
 static int 	bmx280thpspi_match(device_t, cfdata_t, void *);
 static void 	bmx280thpspi_attach(device_t, device_t, void *);
 static int 	bmx280thpspi_detach(device_t, int);
 
-#define BMX280_DEBUG
-#ifdef BMX280_DEBUG
-#define DPRINTF(s, l, x) \
-    do { \
-	if (l <= s->sc_bmx280debug) \
-	    printf x; \
-    } while (/*CONSTCOND*/0)
-#else
-#define DPRINTF(s, l, x)
-#endif
-
-CFATTACH_DECL_NEW(bmx280thpspi, sizeof(struct bmx280_sc),
+CFATTACH_DECL_NEW(bmx280thpspi, sizeof(struct bmx280_spi_softc),
     bmx280thpspi_match, bmx280thpspi_attach, bmx280thpspi_detach, NULL);
 
 /* The SPI interface of the chip, assuming that it has managed to get into that
@@ -71,8 +66,8 @@ CFATTACH_DECL_NEW(bmx280thpspi, sizeof(struct bmx280_sc),
  */
 
 static int
-bmx280thpspi_read_reg_direct(struct spi_handle *sh, uint8_t reg,
-    uint8_t *buf, size_t rlen)
+bmx280thpspi_read_reg_direct(spi_handle_t sh, uint8_t reg, uint8_t *buf,
+    size_t rlen)
 {
 	int err = 0;
 	uint8_t rreg = reg | 0x80;
@@ -88,9 +83,12 @@ bmx280thpspi_read_reg_direct(struct spi_handle *sh, uint8_t reg,
 }
 
 static int
-bmx280thpspi_read_reg(struct bmx280_sc *sc, uint8_t reg, uint8_t *buf, size_t rlen)
+bmx280thpspi_read_reg(struct bmx280_sc *sc, uint8_t reg, uint8_t *buf,
+    size_t rlen)
 {
-	return bmx280thpspi_read_reg_direct(sc->sc_sh, reg, buf, rlen);
+	struct bmx280_spi_softc *ssc = BMX280_TO_SPI(sc);
+
+	return bmx280thpspi_read_reg_direct(ssc->sc_sh, reg, buf, rlen);
 }
 
 /* SPI writes to this device are normal enough.  You send the register
@@ -98,7 +96,7 @@ bmx280thpspi_read_reg(struct bmx280_sc *sc, uint8_t reg, uint8_t *buf, size_t rl
  * data.  These pairs can be repeated as many times as you like.
  */
 static int
-bmx280thpspi_write_reg_direct(struct spi_handle *sh, uint8_t *buf, size_t slen)
+bmx280thpspi_write_reg_direct(spi_handle_t sh, uint8_t *buf, size_t slen)
 {
 	int err = 0;
 	int i;
@@ -120,21 +118,30 @@ bmx280thpspi_write_reg_direct(struct spi_handle *sh, uint8_t *buf, size_t slen)
 static int
 bmx280thpspi_write_reg(struct bmx280_sc *sc, uint8_t *buf, size_t slen)
 {
-	return bmx280thpspi_write_reg_direct(sc->sc_sh, buf, slen);
+	struct bmx280_spi_softc *ssc = BMX280_TO_SPI(sc);
+
+	return bmx280thpspi_write_reg_direct(ssc->sc_sh, buf, slen);
 }
 
 /* These are to satisfy the common code */
 static int
-bmx280thpspi_acquire_bus(struct bmx280_sc *sc)
+bmx280thpspi_acquire_bus(struct bmx280_sc *sc __unused)
 {
 	return 0;
 }
 
 static void
-bmx280thpspi_release_bus(struct bmx280_sc *sc)
+bmx280thpspi_release_bus(struct bmx280_sc *sc __unused)
 {
 	return;
 }
+
+static const struct bmx280_accessfuncs bmx280_spi_accessfuncs = {
+	.acquire_bus	=	bmx280thpspi_acquire_bus,
+	.release_bus	=	bmx280thpspi_release_bus,
+	.read_reg	=	bmx280thpspi_read_reg,
+	.write_reg	=	bmx280thpspi_write_reg,
+};
 
 /* Nothing more is done here.  Assumptions on whether or not
  * the SPI interface is set up may not be proper.... for better
@@ -145,38 +152,34 @@ bmx280thpspi_release_bus(struct bmx280_sc *sc)
 static int
 bmx280thpspi_match(device_t parent, cfdata_t match, void *aux)
 {
-	const bool matchdebug = false;
+	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	if (matchdebug) {
-		printf("Trying to match\n");
+	if (spi_use_direct_match(sa, bmx280_compat_data, &match_result)) {
+		return match_result;
 	}
 
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
 bmx280thpspi_attach(device_t parent, device_t self, void *aux)
 {
-	struct bmx280_sc *sc;
-	struct spi_attach_args *sa;
+	struct bmx280_spi_softc *ssc = device_private(self);
+	struct bmx280_sc *sc = &ssc->sc_bmx280;
+	struct spi_attach_args *sa = aux;
 	int error;
 
-	sa = aux;
-	sc = device_private(self);
-
 	sc->sc_dev = self;
-	sc->sc_sh = sa->sa_handle;
-	sc->sc_bmx280debug = 0;
-	sc->sc_func_acquire_bus = &bmx280thpspi_acquire_bus;
-	sc->sc_func_release_bus = &bmx280thpspi_release_bus;
-	sc->sc_func_read_register = &bmx280thpspi_read_reg;
-	sc->sc_func_write_register = &bmx280thpspi_write_reg;
+	sc->sc_funcs = &bmx280_spi_accessfuncs;
+
+	ssc->sc_sh = sa->sa_handle;
 
 	/* Configure for 1MHz and SPI mode 0 according to the data sheet.
 	 * The chip will actually handle a number of different modes and
 	 * can go a lot faster, just use this for now...
 	 */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
 		return;
 	}
@@ -185,21 +188,12 @@ bmx280thpspi_attach(device_t parent, device_t self, void *aux)
 	 * will probably not work out.
 	 */
 	bmx280_attach(sc);
-
-	return;
 }
 
-/* These really do not do a whole lot, as SPI devices do not seem to work
- * as modules.
- */
 static int
 bmx280thpspi_detach(device_t self, int flags)
 {
-	struct bmx280_sc *sc;
+	struct bmx280_spi_softc *ssc = device_private(self);
 
-	sc = device_private(self);
-
-	mutex_destroy(&sc->sc_mutex);
-
-	return 0;
+	return bmx280_detach(&ssc->sc_bmx280, flags);
 }

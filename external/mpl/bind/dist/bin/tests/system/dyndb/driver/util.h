@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.5.2.1 2025/08/02 05:51:48 perseant Exp $	*/
+/*	$NetBSD: util.h,v 1.5.2.2 2026/11/04 23:16:16 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,16 +40,3 @@
 #include <dns/types.h>
 
 #include "log.h"
-
-#define CLEANUP_WITH(result_code)       \
-	do {                            \
-		result = (result_code); \
-		goto cleanup;           \
-	} while (0)
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)

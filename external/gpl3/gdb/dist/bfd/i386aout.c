@@ -1,5 +1,5 @@
 /* BFD back-end for i386 a.out binaries.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -79,7 +79,6 @@ static const struct aout_backend_data MY (backend_data) =
   MY (set_sizes),
   1,				/* Exec header not counted.  */
   0,				/* Add_dynamic_symbols.  */
-  0,				/* Add_one_symbol.  */
   0,				/* Link_dynamic_object.  */
   0,				/* Write_dynamic_symbol.  */
   0,				/* Check_dynamic_reloc.  */

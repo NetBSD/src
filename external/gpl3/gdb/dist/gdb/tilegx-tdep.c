@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -900,16 +900,17 @@ tilegx_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
   return cache->base;
 }
 
-static const struct frame_unwind tilegx_frame_unwind = {
+static const struct frame_unwind_legacy tilegx_frame_unwind (
   "tilegx prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   tilegx_frame_this_id,
   tilegx_frame_prev_register,
   NULL,                        /* const struct frame_data *unwind_data  */
   default_frame_sniffer,       /* frame_sniffer_ftype *sniffer  */
   NULL                         /* frame_prev_pc_ftype *prev_pc  */
-};
+);
 
 static const struct frame_base tilegx_frame_base = {
   &tilegx_frame_unwind,
@@ -1020,9 +1021,7 @@ tilegx_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_tilegx_tdep ();
-void
-_initialize_tilegx_tdep ()
+INIT_GDB_FILE (tilegx_tdep)
 {
   gdbarch_register (bfd_arch_tilegx, tilegx_gdbarch_init);
 }

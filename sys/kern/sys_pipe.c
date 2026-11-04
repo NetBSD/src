@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pipe.c,v 1.167.2.1 2025/08/02 05:57:42 perseant Exp $	*/
+/*	$NetBSD: sys_pipe.c,v 1.167.2.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009, 2023 The NetBSD Foundation, Inc.
@@ -55,29 +55,32 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.167.2.1 2025/08/02 05:57:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pipe.c,v 1.167.2.2 2026/11/04 23:27:50 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/fcntl.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/filio.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/ttycom.h>
-#include <sys/stat.h>
-#include <sys/poll.h>
-#include <sys/signalvar.h>
-#include <sys/vnode.h>
-#include <sys/uio.h>
-#include <sys/select.h>
 #include <sys/mount.h>
+#include <sys/pipe.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/select.h>
+#include <sys/signalvar.h>
+#include <sys/stat.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
-#include <sys/pipe.h>
+#include <sys/systm.h>
+#include <sys/ttycom.h>
+#include <sys/uio.h>
+#include <sys/vnode.h>
 
 static int	pipe_read(file_t *, off_t *, struct uio *, kauth_cred_t, int);
 static int	pipe_write(file_t *, off_t *, struct uio *, kauth_cred_t, int);
@@ -126,12 +129,13 @@ static u_int	nbigpipe = 0;
  */
 static u_int	amountpipekva = 0;
 
-static void	pipeclose(struct pipe *);
+static void	pipeclose(struct file *, struct pipe *);
+static void	pipefree(struct pipe *);
 static void	pipe_free_kmem(struct pipe *);
 static int	pipe_create(struct pipe **, pool_cache_t, struct timespec *);
 static int	pipelock(struct pipe *, bool);
 static inline void pipeunlock(struct pipe *);
-static void	pipeselwakeup(struct pipe *, struct pipe *, int);
+static void	pipeselwakeup(struct pipe *, int);
 static int	pipespace(struct pipe *, int);
 static int	pipe_ctor(void *, void *, int);
 static void	pipe_dtor(void *, void *);
@@ -213,7 +217,7 @@ pipe1(struct lwp *l, int *fildes, int flags)
 	proc_t *p;
 
 	if (flags & ~(O_CLOEXEC|O_CLOFORK|O_NONBLOCK|O_NOSIGPIPE))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	p = curproc;
 	rpipe = wpipe = NULL;
 	getnanotime(&nt);
@@ -254,14 +258,16 @@ pipe1(struct lwp *l, int *fildes, int flags)
 
 	fd_affix(p, rf, fildes[0]);
 	fd_affix(p, wf, fildes[1]);
-	return (0);
+	return 0;
 free3:
 	fd_abort(p, rf, fildes[0]);
 free2:
-	pipeclose(wpipe);
-	pipeclose(rpipe);
+	if (wpipe)
+		pipefree(wpipe);
+	if (rpipe)
+		pipefree(rpipe);
 
-	return (error);
+	return error;
 }
 
 /*
@@ -285,7 +291,7 @@ pipespace(struct pipe *pipe, int size)
 		buffer = (void *)uvm_km_alloc(kernel_map, round_page(size),
 		    0, UVM_KMF_PAGEABLE);
 		if (buffer == NULL)
-			return (ENOMEM);
+			return SET_ERROR(ENOMEM);
 		atomic_add_int(&amountpipekva, size);
 	}
 
@@ -296,7 +302,7 @@ pipespace(struct pipe *pipe, int size)
 	pipe->pipe_buffer.in = 0;
 	pipe->pipe_buffer.out = 0;
 	pipe->pipe_buffer.cnt = 0;
-	return (0);
+	return 0;
 }
 
 /*
@@ -366,13 +372,27 @@ pipeunlock(struct pipe *pipe)
 }
 
 /*
- * Select/poll wakeup. This also sends SIGIO to peer connected to
- * 'sigpipe' side of pipe.
+ * pipeselwakeup(pipe, code)
+ *
+ *	Activity has happened on pipe's peer oncausing I/O to be
+ *	available on pipe, so:
+ *
+ *	1. Wake any threads waiting in select/poll on pipe.
+ *
+ *	2. Deliver SIGIO to any process (group) configured to receive
+ *	   notifications about I/O on pipe.
+ *
+ *	`code' is a siginfo_t si_code value in the POLL_* namespace for
+ *	the type of notification the waiters will receive, and it
+ *	should match the direction of the pipe -- POLL_OUT/POLL_ERR
+ *	with the writer side, POLL_IN/POLL_HUP with the reader side.
  */
 static void
-pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
+pipeselwakeup(struct pipe *pipe, int code)
 {
 	int band;
+
+	KASSERT(mutex_owned(pipe->pipe_lock));
 
 	switch (code) {
 	case POLL_IN:
@@ -395,12 +415,12 @@ pipeselwakeup(struct pipe *selp, struct pipe *sigp, int code)
 		break;
 	}
 
-	selnotify(&selp->pipe_sel, band, NOTE_SUBMIT);
+	selnotify(&pipe->pipe_sel, band, NOTE_SUBMIT);
 
-	if (sigp == NULL || (sigp->pipe_state & PIPE_ASYNC) == 0)
+	if ((pipe->pipe_state & PIPE_ASYNC) == 0)
 		return;
 
-	fownsignal(sigp->pipe_pgid, SIGIO, code, band, selp);
+	fownsignal(pipe->pipe_pgid, SIGIO, code, band, pipe);
 }
 
 static int
@@ -408,6 +428,7 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
     int flags)
 {
 	struct pipe *rpipe = fp->f_pipe;
+	struct pipe *wpipe;
 	struct pipebuf *bp = &rpipe->pipe_buffer;
 	kmutex_t *lock = rpipe->pipe_lock;
 	int error;
@@ -427,10 +448,10 @@ pipe_read(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	 */
 	if ((fp->f_flag & FNONBLOCK) != 0) {
 		if (__predict_false(uio->uio_resid == 0))
-			return (0);
+			return 0;
 		if (atomic_load_relaxed(&bp->cnt) == 0 &&
 		    (atomic_load_relaxed(&rpipe->pipe_state) & PIPE_EOF) == 0)
-			return (EAGAIN);
+			return SET_ERROR(EAGAIN);
 	}
 
 	mutex_enter(lock);
@@ -487,6 +508,9 @@ again:
 		/*
 		 * Detect EOF condition.
 		 * Read returns 0 on EOF, no need to set error.
+		 *
+		 * XXX Why rpipe->pipe_state and not wpipe->pipe_state?
+		 * XXX Distinguish reader-closed from writer-closed?
 		 */
 		if (rpipe->pipe_state & PIPE_EOF)
 			break;
@@ -495,7 +519,7 @@ again:
 		 * Don't block on non-blocking I/O.
 		 */
 		if (fp->f_flag & FNONBLOCK) {
-			error = EAGAIN;
+			error = SET_ERROR(EAGAIN);
 			break;
 		}
 
@@ -506,20 +530,17 @@ again:
 		 */
 		pipeunlock(rpipe);
 
-#if 1   /* XXX (dsl) I'm sure these aren't needed here ... */
-		/*
-		 * We want to read more, wake up select/poll.
-		 */
-		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_OUT);
-
 		/*
 		 * If the "write-side" is blocked, wake it up now.
 		 */
-		cv_broadcast(&rpipe->pipe_wcv);
-#endif
+		KASSERT((rpipe->pipe_state & PIPE_EOF) == 0);
+		KASSERT(rpipe->pipe_peer != NULL);
+		wpipe = rpipe->pipe_peer;
+		pipeselwakeup(wpipe, POLL_OUT);
+		cv_broadcast(&wpipe->pipe_wcv);
 
 		if (wakeup_state & PIPE_RESTART) {
-			error = ERESTART;
+			error = SET_ERROR(ERESTART);
 			goto unlocked_error;
 		}
 
@@ -538,11 +559,11 @@ again:
 unlocked_error:
 	--rpipe->pipe_busy;
 	if (rpipe->pipe_busy == 0) {
-		rpipe->pipe_state &= ~PIPE_RESTART;
 		cv_broadcast(&rpipe->pipe_draincv);
 	}
 	if (bp->cnt < MINPIPESIZE) {
-		cv_broadcast(&rpipe->pipe_wcv);
+		if ((wpipe = rpipe->pipe_peer) != NULL)
+			cv_broadcast(&wpipe->pipe_wcv);
 	}
 
 	/*
@@ -552,12 +573,13 @@ unlocked_error:
 	 */
 	if ((bp->size - bp->cnt) >= PIPE_BUF
 	    && (ocnt != bp->cnt || (rpipe->pipe_state & PIPE_SIGNALR))) {
-		pipeselwakeup(rpipe, rpipe->pipe_peer, POLL_OUT);
+		if ((wpipe = rpipe->pipe_peer) != NULL)
+			pipeselwakeup(wpipe, POLL_OUT);
 		rpipe->pipe_state &= ~PIPE_SIGNALR;
 	}
 
 	mutex_exit(lock);
-	return (error);
+	return error;
 }
 
 static int
@@ -571,34 +593,36 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	unsigned int wakeup_state = 0;
 
 	/* We want to write to our peer */
-	rpipe = fp->f_pipe;
-	lock = rpipe->pipe_lock;
+	wpipe = fp->f_pipe;
+	lock = wpipe->pipe_lock;
 	error = 0;
 
 	mutex_enter(lock);
-	wpipe = rpipe->pipe_peer;
+	rpipe = wpipe->pipe_peer;
 
 	/*
 	 * Detect loss of pipe read side, issue SIGPIPE if lost.
+	 *
+	 * After this, once we busy wpipe, the peer rpipe will remain
+	 * stable (though may have PIPE_EOF set) until we unbusy it.
 	 */
-	if (wpipe == NULL || (wpipe->pipe_state & PIPE_EOF) != 0) {
+	if (rpipe == NULL || (rpipe->pipe_state & PIPE_EOF) != 0) {
 		mutex_exit(lock);
-		return EPIPE;
+		return SET_ERROR(EPIPE);
 	}
 	++wpipe->pipe_busy;
 
 	/* Acquire the long-term pipe lock */
-	if ((error = pipelock(wpipe, true)) != 0) {
+	if ((error = pipelock(rpipe, true)) != 0) {
 		--wpipe->pipe_busy;
 		if (wpipe->pipe_busy == 0) {
-			wpipe->pipe_state &= ~PIPE_RESTART;
 			cv_broadcast(&wpipe->pipe_draincv);
 		}
 		mutex_exit(lock);
-		return (error);
+		return error;
 	}
 
-	bp = &wpipe->pipe_buffer;
+	bp = &rpipe->pipe_buffer;
 
 	/*
 	 * If it is advantageous to resize the pipe buffer, do so.
@@ -607,7 +631,7 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 	    (nbigpipe < maxbigpipes) &&
 	    (bp->size <= PIPE_SIZE) && (bp->cnt == 0)) {
 
-		if (pipespace(wpipe, BIG_PIPE_SIZE) == 0)
+		if (pipespace(rpipe, BIG_PIPE_SIZE) == 0)
 			atomic_inc_uint(&nbigpipe);
 	}
 
@@ -675,13 +699,13 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			/*
 			 * If the "read-side" has been blocked, wake it up now.
 			 */
-			cv_broadcast(&wpipe->pipe_rcv);
+			cv_broadcast(&rpipe->pipe_rcv);
 
 			/*
 			 * Don't block on non-blocking I/O.
 			 */
 			if (fp->f_flag & FNONBLOCK) {
-				error = EAGAIN;
+				error = SET_ERROR(EAGAIN);
 				break;
 			}
 
@@ -690,25 +714,30 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 			 * wake up select/poll.
 			 */
 			if (bp->cnt)
-				pipeselwakeup(wpipe, wpipe, POLL_IN);
+				pipeselwakeup(rpipe, POLL_IN);
 
 			if (wakeup_state & PIPE_RESTART) {
-				error = ERESTART;
+				error = SET_ERROR(ERESTART);
 				break;
 			}
 
 			/*
 			 * If read side wants to go away, we just issue a signal
 			 * to ourselves.
+			 *
+			 * XXX Shouldn't this happen before we uiomove anything?
+			 *
+			 * XXX Why rpipe->pipe_state and not wpipe->pipe_state?
+			 * XXX Distinguish reader-closed from writer-closed?
 			 */
-			if (wpipe->pipe_state & PIPE_EOF) {
-				error = EPIPE;
+			if (rpipe->pipe_state & PIPE_EOF) {
+				error = SET_ERROR(EPIPE);
 				break;
 			}
 
-			pipeunlock(wpipe);
+			pipeunlock(rpipe);
 			error = cv_wait_sig(&wpipe->pipe_wcv, lock);
-			(void)pipelock(wpipe, false);
+			(void)pipelock(rpipe, false);
 			if (error != 0)
 				break;
 			wakeup_state = wpipe->pipe_state;
@@ -717,36 +746,40 @@ pipe_write(file_t *fp, off_t *offset, struct uio *uio, kauth_cred_t cred,
 
 	--wpipe->pipe_busy;
 	if (wpipe->pipe_busy == 0) {
-		wpipe->pipe_state &= ~PIPE_RESTART;
 		cv_broadcast(&wpipe->pipe_draincv);
 	}
 	if (bp->cnt > 0) {
-		cv_broadcast(&wpipe->pipe_rcv);
+		cv_broadcast(&rpipe->pipe_rcv);
 	}
 
 	/*
 	 * Don't return EPIPE if I/O was successful
+	 *
+	 * XXX Shouldn't we avoid returning _any_ error if we
+	 * transmitted _any_ positive number of bytes?  Or does that
+	 * happen downstream of here, and if so, why do we need to do
+	 * that here?
 	 */
 	if (error == EPIPE && bp->cnt == 0 && uio->uio_resid == 0)
 		error = 0;
 
 	if (error == 0)
-		getnanotime(&wpipe->pipe_mtime);
+		getnanotime(&rpipe->pipe_mtime);
 
 	/*
 	 * We have something to offer, wake up select/poll.
 	 */
 	if (bp->cnt)
-		pipeselwakeup(wpipe, wpipe, POLL_IN);
+		pipeselwakeup(rpipe, POLL_IN);
 
 	/*
 	 * Arrange for next read(2) to do a signal.
 	 */
-	wpipe->pipe_state |= PIPE_SIGNALR;
+	rpipe->pipe_state |= PIPE_SIGNALR;
 
-	pipeunlock(wpipe);
+	pipeunlock(rpipe);
 	mutex_exit(lock);
-	return (error);
+	return error;
 }
 
 /*
@@ -761,7 +794,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 	switch (cmd) {
 
 	case FIONBIO:
-		return (0);
+		return 0;
 
 	case FIOASYNC:
 		mutex_enter(lock);
@@ -771,13 +804,13 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 			pipe->pipe_state &= ~PIPE_ASYNC;
 		}
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case FIONREAD:
 		mutex_enter(lock);
 		*(int *)data = pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case FIONWRITE:
 		/* Look at other side */
@@ -788,7 +821,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 		else
 			*(int *)data = pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case FIONSPACE:
 		/* Look at other side */
@@ -800,7 +833,7 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 			*(int *)data = pipe->pipe_buffer.size -
 			    pipe->pipe_buffer.cnt;
 		mutex_exit(lock);
-		return (0);
+		return 0;
 
 	case TIOCSPGRP:
 	case FIOSETOWN:
@@ -811,51 +844,68 @@ pipe_ioctl(file_t *fp, u_long cmd, void *data)
 		return fgetown(pipe->pipe_pgid, cmd, data);
 
 	}
-	return (EPASSTHROUGH);
+	return EPASSTHROUGH;
 }
 
 int
 pipe_poll(file_t *fp, int events)
 {
-	struct pipe *rpipe = fp->f_pipe;
-	struct pipe *wpipe;
-	int eof = 0;
+	struct pipe *pipe = fp->f_pipe;
+	struct pipe *ppipe;
 	int revents = 0;
 
-	mutex_enter(rpipe->pipe_lock);
-	wpipe = rpipe->pipe_peer;
+	mutex_enter(pipe->pipe_lock);
+	ppipe = pipe->pipe_peer;
 
-	if (events & (POLLIN | POLLRDNORM))
-		if ((rpipe->pipe_buffer.cnt > 0) ||
-		    (rpipe->pipe_state & PIPE_EOF))
+	if (fp->f_flag & FREAD) {
+		struct pipe *rpipe = pipe;
+
+		/*
+		 * If the writer has been closed, then we can always
+		 * read (possibly returning EOF) without blocking, so
+		 * set POLLIN|POLLRDNORM if requested, and set POLLHUP
+		 * unsolicited to notify reader of the fact.
+		 *
+		 * Otherwise, we can only read without blocking if
+		 * there are bytes in the buffer.
+		 */
+		if (rpipe->pipe_state & PIPE_EOF) {
 			revents |= events & (POLLIN | POLLRDNORM);
+			revents |= POLLHUP;
+		} else if (rpipe->pipe_buffer.cnt > 0) {
+			revents |= events & (POLLIN | POLLRDNORM);
+		}
+	} else if (fp->f_flag & FWRITE) {
+		struct pipe *wpipe = pipe;
+		struct pipe *rpipe = ppipe;
 
-	eof |= (rpipe->pipe_state & PIPE_EOF);
-
-	if (wpipe == NULL)
-		revents |= events & (POLLOUT | POLLWRNORM);
-	else {
-		if (events & (POLLOUT | POLLWRNORM))
-			if ((wpipe->pipe_state & PIPE_EOF) || (
-			     (wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt) >= PIPE_BUF))
-				revents |= events & (POLLOUT | POLLWRNORM);
-
-		eof |= (wpipe->pipe_state & PIPE_EOF);
+		/*
+		 * If the reader has been closed, then any writes will
+		 * immediately fail with EPIPE, so report
+		 * POLLOUT|POLLWRNORM if requested and POLLERR
+		 * unsolicited.
+		 *
+		 * Otherwise, we can only write without blocking if
+		 * there are at least PIPE_BUF bytes free in the
+		 * buffer.
+		 */
+		if (rpipe == NULL || (wpipe->pipe_state & PIPE_EOF) != 0) {
+			revents |= events & (POLLOUT | POLLWRNORM);
+			revents |= POLLERR;
+		} else if (rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt >=
+		    PIPE_BUF) {
+			revents |= events & (POLLOUT | POLLWRNORM);
+		}
+	} else {
+		panic("file %p pipe %p invalid direction flag 0x%x",
+		    fp, pipe, fp->f_flag);
 	}
 
-	if (wpipe == NULL || eof)
-		revents |= POLLHUP;
+	if (revents == 0)
+		selrecord(curlwp, &pipe->pipe_sel);
+	mutex_exit(pipe->pipe_lock);
 
-	if (revents == 0) {
-		if (events & (POLLIN | POLLRDNORM))
-			selrecord(curlwp, &rpipe->pipe_sel);
-
-		if (events & (POLLOUT | POLLWRNORM))
-			selrecord(curlwp, &wpipe->pipe_sel);
-	}
-	mutex_exit(rpipe->pipe_lock);
-
-	return (revents);
+	return revents;
 }
 
 static int
@@ -891,8 +941,8 @@ pipe_close(file_t *fp)
 	struct pipe *pipe = fp->f_pipe;
 
 	fp->f_pipe = NULL;
-	pipeclose(pipe);
-	return (0);
+	pipeclose(fp, pipe);
+	return 0;
 }
 
 static void
@@ -907,8 +957,11 @@ pipe_restart(file_t *fp)
 	 */
 	mutex_enter(pipe->pipe_lock);
 	pipe->pipe_state |= PIPE_RESTART;
-	/* Wakeup both cvs, maybe we only need one, but maybe there are some
-	 * other paths where wakeup is needed, and it saves deciding which! */
+	/*
+	 * At most one of these is in use at any time, depending on
+	 * whether fp->f_flag has FREAD or FWRITE set, but there's no
+	 * harm in waking both here.
+	 */
 	cv_broadcast(&pipe->pipe_rcv);
 	cv_broadcast(&pipe->pipe_wcv);
 	mutex_exit(pipe->pipe_lock);
@@ -923,7 +976,7 @@ pipe_fpathconf(struct file *fp, int name, register_t *retval)
 		*retval = PIPE_BUF;
 		return 0;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 }
 
@@ -931,7 +984,7 @@ static int
 pipe_posix_fadvise(struct file *fp, off_t offset, off_t len, int advice)
 {
 
-	return ESPIPE;
+	return SET_ERROR(ESPIPE);
 }
 
 static void
@@ -957,13 +1010,10 @@ pipe_free_kmem(struct pipe *pipe)
  * Shutdown the pipe.
  */
 static void
-pipeclose(struct pipe *pipe)
+pipeclose(struct file *fp, struct pipe *pipe)
 {
 	kmutex_t *lock;
 	struct pipe *ppipe;
-
-	if (pipe == NULL)
-		return;
 
 	KASSERT(cv_is_valid(&pipe->pipe_rcv));
 	KASSERT(cv_is_valid(&pipe->pipe_wcv));
@@ -971,33 +1021,78 @@ pipeclose(struct pipe *pipe)
 	KASSERT(cv_is_valid(&pipe->pipe_lkcv));
 
 	lock = pipe->pipe_lock;
-	if (lock == NULL)
-		/* Must have failed during create */
-		goto free_resources;
+	KASSERT(lock != NULL);
 
 	mutex_enter(lock);
-	pipeselwakeup(pipe, pipe, POLL_HUP);
 
 	/*
-	 * If the other side is blocked, wake it up saying that
-	 * we want to close it down.
+	 * fd_close has issued .fo_restart to wake all waiters on this
+	 * side of the pipe, blocked new references, and waited for all
+	 * references to drain, so it should not be possible for there
+	 * to be any waiters remaining.  (Only one of the condvars was
+	 * ever in use anyway depending on whether this is the reader
+	 * side or the writer side of the pipe.)
 	 */
+	KASSERT(!cv_has_waiters(&pipe->pipe_rcv));
+	KASSERT(!cv_has_waiters(&pipe->pipe_wcv));
+
+	/*
+	 * There may, however, be threads waiting in select/poll for
+	 * I/O to be ready on this side of the pipe.  Wake them (but
+	 * don't send SIGIO as pipeselwakeup does) so they can fail
+	 * with EBADF/POLLNVAL.
+	 */
+	selnotify(&pipe->pipe_sel, 0, NOTE_SUBMIT);
+
+	/*
+	 * If the other side is busy, wake it up saying that
+	 * we want to close it down, which will prevent peers
+	 * from starting new I/O.  Once it is no longer busy,
+	 * disconnect it.
+	 */
+	KASSERT(pipe->pipe_peer != NULL || (pipe->pipe_state & PIPE_EOF) != 0);
 	pipe->pipe_state |= PIPE_EOF;
-	if (pipe->pipe_busy) {
-		while (pipe->pipe_busy) {
-			cv_broadcast(&pipe->pipe_wcv);
-			cv_wait_sig(&pipe->pipe_draincv, lock);
-		}
-	}
-
-	/*
-	 * Disconnect from peer.
-	 */
 	if ((ppipe = pipe->pipe_peer) != NULL) {
-		pipeselwakeup(ppipe, ppipe, POLL_HUP);
+		if (fp->f_flag & FREAD) {
+			struct pipe *wpipe = ppipe;
+
+			pipeselwakeup(wpipe, POLL_ERR);
+		} else if (fp->f_flag & FWRITE) {
+			struct pipe *rpipe = ppipe;
+
+			pipeselwakeup(rpipe, POLL_HUP);
+		} else {
+			panic("file %p pipe %p invalid direction flag 0x%x",
+			    fp, pipe, fp->f_flag);
+		}
+
 		ppipe->pipe_state |= PIPE_EOF;
-		cv_broadcast(&ppipe->pipe_rcv);
-		ppipe->pipe_peer = NULL;
+		if (ppipe->pipe_busy) {
+			cv_broadcast(&ppipe->pipe_rcv);
+			cv_broadcast(&ppipe->pipe_wcv);
+			while (ppipe->pipe_busy) {
+				cv_wait(&ppipe->pipe_draincv, lock);
+
+				/*
+				 * After the cv_wait, another thread
+				 * may have concurrently closed ppipe,
+				 * with two effects:
+				 *
+				 * 1. ppipe may now be invalid, so we
+				 *    MUST NOT touch it.
+				 *
+				 * 2. pipe->pipe_peer may have been set
+				 *    to null (under the common mutex),
+				 *    so we can detect this case.
+				 */
+				KASSERT(pipe->pipe_peer == NULL ||
+				    pipe->pipe_peer == ppipe);
+				if ((ppipe = pipe->pipe_peer) == NULL)
+					break;
+			}
+		}
+		if (ppipe)
+			ppipe->pipe_peer = NULL;
 	}
 
 	/*
@@ -1011,15 +1106,22 @@ pipeclose(struct pipe *pipe)
 
 	KASSERT((pipe->pipe_state & PIPE_LOCKFL) == 0);
 	mutex_exit(lock);
-	mutex_obj_free(lock);
 
 	/*
 	 * Free resources.
 	 */
-    free_resources:
+	pipefree(pipe);
+}
+
+static void
+pipefree(struct pipe *pipe)
+{
+
 	pipe->pipe_pgid = 0;
 	pipe->pipe_state = PIPE_SIGNALR;
 	pipe->pipe_peer = NULL;
+	if (pipe->pipe_lock)
+		mutex_obj_free(pipe->pipe_lock);
 	pipe->pipe_lock = NULL;
 	pipe_free_kmem(pipe);
 	if (pipe->pipe_kmem != 0) {
@@ -1039,27 +1141,23 @@ filt_pipedetach(struct knote *kn)
 	lock = pipe->pipe_lock;
 
 	mutex_enter(lock);
-
-	switch(kn->kn_filter) {
-	case EVFILT_WRITE:
-		/* Need the peer structure, not our own. */
-		pipe = pipe->pipe_peer;
-
-		/* If reader end already closed, just return. */
-		if (pipe == NULL) {
-			mutex_exit(lock);
-			return;
-		}
-
-		break;
-	default:
-		/* Nothing to do. */
-		break;
-	}
-
 	KASSERT(kn->kn_hook == pipe);
 	selremove_knote(&pipe->pipe_sel, kn);
 	mutex_exit(lock);
+}
+
+static void
+filt_pipenodetach(struct knote *kn)
+{
+	/* not attached, nothing to do */
+}
+
+static int
+filt_pipewrongend(struct knote *kn, long hint)
+{
+
+	/* Never ready! */
+	return 0;
 }
 
 static int
@@ -1071,6 +1169,8 @@ filt_piperead(struct knote *kn, long hint)
 
 	if ((hint & NOTE_SUBMIT) == 0) {
 		mutex_enter(rpipe->pipe_lock);
+	} else {
+		KASSERT(mutex_owned(rpipe->pipe_lock));
 	}
 	wpipe = rpipe->pipe_peer;
 	kn->kn_data = rpipe->pipe_buffer.cnt;
@@ -1085,6 +1185,8 @@ filt_piperead(struct knote *kn, long hint)
 
 	if ((hint & NOTE_SUBMIT) == 0) {
 		mutex_exit(rpipe->pipe_lock);
+	} else {
+		KASSERT(mutex_owned(rpipe->pipe_lock));
 	}
 	return rv;
 }
@@ -1092,29 +1194,40 @@ filt_piperead(struct knote *kn, long hint)
 static int
 filt_pipewrite(struct knote *kn, long hint)
 {
-	struct pipe *rpipe = ((file_t *)kn->kn_obj)->f_pipe;
-	struct pipe *wpipe;
+	struct pipe *wpipe = ((file_t *)kn->kn_obj)->f_pipe;
+	struct pipe *rpipe;
 	int rv;
 
 	if ((hint & NOTE_SUBMIT) == 0) {
-		mutex_enter(rpipe->pipe_lock);
+		mutex_enter(wpipe->pipe_lock);
+	} else {
+		KASSERT(mutex_owned(wpipe->pipe_lock));
 	}
-	wpipe = rpipe->pipe_peer;
+	rpipe = wpipe->pipe_peer;
 
-	if ((wpipe == NULL) || (wpipe->pipe_state & PIPE_EOF)) {
+	if ((rpipe == NULL) || (rpipe->pipe_state & PIPE_EOF)) {
 		kn->kn_data = 0;
 		knote_set_eof(kn, 0);
 		rv = 1;
 	} else {
-		kn->kn_data = wpipe->pipe_buffer.size - wpipe->pipe_buffer.cnt;
+		kn->kn_data = rpipe->pipe_buffer.size - rpipe->pipe_buffer.cnt;
 		rv = kn->kn_data >= PIPE_BUF;
 	}
 
 	if ((hint & NOTE_SUBMIT) == 0) {
-		mutex_exit(rpipe->pipe_lock);
+		mutex_exit(wpipe->pipe_lock);
+	} else {
+		KASSERT(mutex_owned(wpipe->pipe_lock));
 	}
 	return rv;
 }
+
+static const struct filterops pipe_wrongendfiltops = {
+	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
+	.f_attach = NULL,
+	.f_detach = filt_pipenodetach,
+	.f_event = filt_pipewrongend,
+};
 
 static const struct filterops pipe_rfiltops = {
 	.f_flags = FILTEROP_ISFD | FILTEROP_MPSAFE,
@@ -1143,27 +1256,31 @@ pipe_kqfilter(file_t *fp, struct knote *kn)
 
 	switch (kn->kn_filter) {
 	case EVFILT_READ:
+		if ((fp->f_flag & FREAD) == 0) {
+			kn->kn_fop = &pipe_wrongendfiltops;
+			mutex_exit(lock);
+			return 0;
+		}
 		kn->kn_fop = &pipe_rfiltops;
 		break;
 	case EVFILT_WRITE:
-		kn->kn_fop = &pipe_wfiltops;
-		pipe = pipe->pipe_peer;
-		if (pipe == NULL) {
-			/* Other end of pipe has been closed. */
+		if ((fp->f_flag & FWRITE) == 0) {
+			kn->kn_fop = &pipe_wrongendfiltops;
 			mutex_exit(lock);
-			return (EBADF);
+			return 0;
 		}
+		kn->kn_fop = &pipe_wfiltops;
 		break;
 	default:
 		mutex_exit(lock);
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	kn->kn_hook = pipe;
 	selrecord_knote(&pipe->pipe_sel, kn);
 	mutex_exit(lock);
 
-	return (0);
+	return 0;
 }
 
 /*

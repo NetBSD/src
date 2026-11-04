@@ -19,7 +19,3 @@ cp ns2/zone.template.db ns2/zone000001.example.db
 cp ns2/zone.template.db ns2/zone000002.example.db
 cp ns2/zone.template.db ns2/zone000003.example.db
 cp ns2/zone.template.db ns2/zone000004.example.db
-
-copy_setports ns2/named.conf.in ns2/named.conf
-copy_setports ns3/named.conf.in ns3/named.conf
-copy_setports ns4/named.conf.in ns4/named.conf

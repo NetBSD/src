@@ -1,4 +1,4 @@
-/*	$NetBSD: nsec.h,v 1.7.2.1 2025/08/02 05:53:36 perseant Exp $	*/
+/*	$NetBSD: nsec.h,v 1.7.2.2 2026/11/04 23:18:06 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -25,7 +25,12 @@
 #include <dns/name.h>
 #include <dns/types.h>
 
-#define DNS_NSEC_BUFFERSIZE (DNS_NAME_MAXWIRE + 8192 + 512)
+/*
+ * max compressed bitmap size:
+ * 256 windows * (window number + window length + bitmap (max 256 bits))
+ */
+#define DNS_NSEC_MAXCBMSIZE (256 * ((256 / 8) + 2))
+#define DNS_NSEC_BUFFERSIZE (DNS_NAME_MAXWIRE + DNS_NSEC_MAXCBMSIZE)
 
 ISC_LANG_BEGINDECLS
 
@@ -116,13 +121,21 @@ dns_nsec_noexistnodata(dns_rdatatype_t type, const dns_name_t *name,
  */
 
 bool
-dns_nsec_requiredtypespresent(dns_rdataset_t *rdataset);
-/*
- * Return true if all the NSEC records in rdataset have both
- * NSEC and RRSIG present.
+dns_nsec_is_legal(dns_rdataset_t *rdataset, const dns_name_t *name);
+/**<
+ * \brief
+ * Validates a rdataset of type NSEC.
  *
- * Requires:
+ * This functions checks for the following in the given rdataset:
+ * \li All NSEC records have both NSEC and RRSIG present
+ * \li All NSEC entries are under the `name`
+ *
+ * \par Requires:
  * \li	rdataset to be a NSEC rdataset.
+ * \li  `name` is a valid dns_name_t
+ *
+ * \retval true if all the checks pass
+ * \retval false otherwise
  */
 
 ISC_LANG_ENDDECLS

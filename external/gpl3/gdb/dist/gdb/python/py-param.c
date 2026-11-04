@@ -1,6 +1,6 @@
 /* GDB parameters implemented in Python
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,7 @@
 #include "completer.h"
 #include "language.h"
 #include "arch-utils.h"
+#include "py-color.h"
 
 /* Python parameter types as in PARM_CONSTANTS below.  */
 
@@ -43,6 +44,7 @@ enum py_param_types
   param_zuinteger,
   param_zuinteger_unlimited,
   param_enum,
+  param_color,
 };
 
 /* Translation from Python parameters to GDB variable types.  Keep in the
@@ -69,7 +71,8 @@ param_to_var[] =
   { var_integer },
   { var_uinteger },
   { var_pinteger, pinteger_unlimited_literals },
-  { var_enum }
+  { var_enum },
+  { var_color }
 };
 
 /* Parameter constants and their values.  */
@@ -90,6 +93,7 @@ static struct {
   { "PARAM_ZUINTEGER", param_zuinteger },
   { "PARAM_ZUINTEGER_UNLIMITED", param_zuinteger_unlimited },
   { "PARAM_ENUM", param_enum },
+  { "PARAM_COLOR", param_color },
   { NULL, 0 }
 };
 
@@ -114,6 +118,9 @@ union parmpy_variable
 
   /* Hold a string, for enums.  */
   const char *cstringval;
+
+  /* Hold a color.  */
+  ui_file_style::color color;
 };
 
 /* A GDB parameter.  */
@@ -157,6 +164,8 @@ make_setting (parmpy_object *s)
     return setting (type, s->value.stringval);
   else if (var_type_uses<const char *> (type))
     return setting (type, &s->value.cstringval);
+  else if (var_type_uses<ui_file_style::color> (s->type))
+    return setting (s->type, &s->value.color);
   else
     gdb_assert_not_reached ("unhandled var type");
 }
@@ -247,6 +256,19 @@ set_parameter_value (parmpy_object *self, PyObject *value)
 	self->value.cstringval = self->enumeration[i];
 	break;
       }
+
+    case var_color:
+      {
+	if (gdbpy_is_color (value))
+	  self->value.color = gdbpy_get_color (value);
+	else
+	  {
+	    PyErr_SetString (PyExc_RuntimeError,
+			     _("color argument must be a gdb.Color object."));
+	    return -1;
+	  }
+      }
+      break;
 
     case var_boolean:
       if (! PyBool_Check (value))
@@ -473,7 +495,11 @@ get_doc_string (PyObject *object, enum doc_string_type doc_type,
 	}
     }
 
-  if (result == nullptr)
+  /* For the set/show docs, if these strings are empty then we set then to
+     a non-empty string.  This ensures that the command has some sane
+     documentation for its 'help' text.  */
+  if (result == nullptr
+      || (doc_type != doc_string_description && *result == '\0'))
     {
       if (doc_type == doc_string_description)
 	result.reset (xstrdup (_("This command is not documented.")));
@@ -707,6 +733,15 @@ add_setshow_generic (enum var_types type, const literal_def *extra_literals,
 				       get_show_value, set_list, show_list);
       break;
 
+    case var_color:
+      /* Initialize the value, just in case.  */
+      self->value.color = ui_file_style::NONE;
+      commands = add_setshow_color_cmd (cmd_name.get (), cmdclass,
+					&self->value.color, set_doc,
+					show_doc, help_doc, get_set_value,
+					get_show_value, set_list, show_list);
+      break;
+
     default:
       gdb_assert_not_reached ("Unhandled parameter class.");
     }
@@ -830,7 +865,8 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
       && parmclass != param_string && parmclass != param_string_noescape
       && parmclass != param_optional_filename && parmclass != param_filename
       && parmclass != param_zinteger && parmclass != param_zuinteger
-      && parmclass != param_zuinteger_unlimited && parmclass != param_enum)
+      && parmclass != param_zuinteger_unlimited && parmclass != param_enum
+      && parmclass != param_color)
     {
       PyErr_SetString (PyExc_RuntimeError,
 		       _("Invalid parameter class argument."));
@@ -854,7 +890,7 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
   extra_literals = param_to_var[parmclass].extra_literals;
   obj->type = type;
   obj->extra_literals = extra_literals;
-  memset (&obj->value, 0, sizeof (obj->value));
+  obj->value = {}; /* zeros initialization */
 
   if (var_type_uses<std::string> (obj->type))
     obj->value.stringval = new std::string;
@@ -872,6 +908,18 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
   show_doc = get_doc_string (self, doc_string_show, name);
   doc = get_doc_string (self, doc_string_description, cmd_name.get ());
 
+  /* The set/show docs should always be a non-empty string.  */
+  gdb_assert (set_doc != nullptr && *set_doc != '\0');
+  gdb_assert (show_doc != nullptr && *show_doc != '\0');
+
+  /* For the DOC string only, if it is the empty string, then we convert it
+     to NULL.  This means GDB will not even display a blank line for this
+     part of the help text, instead the set/show line is all the user will
+     get.  */
+  gdb_assert (doc != nullptr);
+  if (*doc == '\0')
+    doc = nullptr;
+
   Py_INCREF (self);
 
   try
@@ -885,8 +933,7 @@ parmpy_init (PyObject *self, PyObject *args, PyObject *kwds)
   catch (const gdb_exception &except)
     {
       Py_DECREF (self);
-      gdbpy_convert_exception (except);
-      return -1;
+      return gdbpy_handle_gdb_exception (-1, except);
     }
 
   return 0;
@@ -901,6 +948,8 @@ parmpy_dealloc (PyObject *obj)
 
   if (var_type_uses<std::string> (parm_obj->type))
     delete parm_obj->value.stringval;
+  else if (var_type_uses<ui_file_style::color> (parm_obj->type))
+    parm_obj->value.color.~color();
 }
 
 /* Initialize the 'parameters' module.  */
@@ -910,7 +959,7 @@ gdbpy_initialize_parameters (void)
   int i;
 
   parmpy_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&parmpy_object_type) < 0)
+  if (gdbpy_type_ready (&parmpy_object_type) < 0)
     return -1;
 
   set_doc_cst = PyUnicode_FromString ("set_doc");
@@ -928,8 +977,7 @@ gdbpy_initialize_parameters (void)
 	return -1;
     }
 
-  return gdb_pymodule_addobject (gdb_module, "Parameter",
-				 (PyObject *) &parmpy_object_type);
+  return 0;
 }
 
 GDBPY_INITIALIZE_FILE (gdbpy_initialize_parameters);

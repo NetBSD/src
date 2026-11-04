@@ -1,4 +1,14 @@
 static const struct dis386 evex_len_table[][3] = {
+  /* EVEX_LEN_0F7E_P_1_W_0  */
+  {
+    { "vmovd",	{ XMScalar, EXd }, 0 },
+  },
+
+  /* EVEX_LEN_0FD6_P_2_W_0 */
+  {
+    { "vmovd",	{ EXdS, XMScalar }, 0 },
+  },
+
   /* EVEX_LEN_0F3816 */
   {
     { Bad_Opcode },
@@ -13,18 +23,18 @@ static const struct dis386 evex_len_table[][3] = {
     { VEX_W_TABLE (EVEX_W_0F3819_L_n) },
   },
 
-  /* EVEX_LEN_0F381A_M_0 */
+  /* EVEX_LEN_0F381A */
   {
     { Bad_Opcode },
-    { VEX_W_TABLE (EVEX_W_0F381A_M_0_L_n) },
-    { VEX_W_TABLE (EVEX_W_0F381A_M_0_L_n) },
+    { VEX_W_TABLE (EVEX_W_0F381A_L_n) },
+    { VEX_W_TABLE (EVEX_W_0F381A_L_n) },
   },
 
-  /* EVEX_LEN_0F381B_M_0 */
+  /* EVEX_LEN_0F381B */
   {
     { Bad_Opcode },
     { Bad_Opcode },
-    { VEX_W_TABLE (EVEX_W_0F381B_M_0_L_2) },
+    { VEX_W_TABLE (EVEX_W_0F381B_L_2) },
   },
 
   /* EVEX_LEN_0F3836 */
@@ -34,32 +44,32 @@ static const struct dis386 evex_len_table[][3] = {
     { "vperm%DQ",	{ XM, Vex, EXx }, PREFIX_DATA },
   },
 
-  /* EVEX_LEN_0F385A_M_0 */
+  /* EVEX_LEN_0F385A */
   {
     { Bad_Opcode },
-    { VEX_W_TABLE (EVEX_W_0F385A_M_0_L_n) },
-    { VEX_W_TABLE (EVEX_W_0F385A_M_0_L_n) },
+    { VEX_W_TABLE (EVEX_W_0F385A_L_n) },
+    { VEX_W_TABLE (EVEX_W_0F385A_L_n) },
   },
 
-  /* EVEX_LEN_0F385B_M_0 */
+  /* EVEX_LEN_0F385B */
   {
     { Bad_Opcode },
     { Bad_Opcode },
-    { VEX_W_TABLE (EVEX_W_0F385B_M_0_L_2) },
+    { VEX_W_TABLE (EVEX_W_0F385B_L_2) },
   },
 
-  /* EVEX_LEN_0F38C6_M_0 */
+  /* EVEX_LEN_0F38C6 */
   {
     { Bad_Opcode },
     { Bad_Opcode },
-    { REG_TABLE (REG_EVEX_0F38C6_M_0_L_2) },
+    { REG_TABLE (REG_EVEX_0F38C6_L_2) },
   },
 
-  /* EVEX_LEN_0F38C7_M_0 */
+  /* EVEX_LEN_0F38C7 */
   {
     { Bad_Opcode },
     { Bad_Opcode },
-    { REG_TABLE (REG_EVEX_0F38C7_M_0_L_2) },
+    { REG_TABLE (REG_EVEX_0F38C7_L_2) },
   },
 
   /* EVEX_LEN_0F3A00 */
@@ -144,5 +154,15 @@ static const struct dis386 evex_len_table[][3] = {
     { Bad_Opcode },
     { VEX_W_TABLE (EVEX_W_0F3A43_L_n) },
     { VEX_W_TABLE (EVEX_W_0F3A43_L_n) },
+  },
+
+  /* EVEX_LEN_MAP5_6E */
+  {
+    { PREFIX_TABLE (PREFIX_EVEX_MAP5_6E_L_0) },
+  },
+
+  /* EVEX_LEN_MAP5_7E */
+  {
+    { PREFIX_TABLE (PREFIX_EVEX_MAP5_7E_L_0) },
   },
 };

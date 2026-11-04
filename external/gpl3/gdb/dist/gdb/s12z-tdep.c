@@ -1,5 +1,5 @@
 /* Target-dependent code for the S12Z, for the GDB.
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -441,16 +441,17 @@ s12z_frame_prev_register (const frame_info_ptr &this_frame,
 }
 
 /* Data structures for the normal prologue-analysis-based unwinder.  */
-static const struct frame_unwind s12z_frame_unwind = {
+static const struct frame_unwind_legacy s12z_frame_unwind (
   "s12z prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   s12z_frame_this_id,
   s12z_frame_prev_register,
   NULL,
   default_frame_sniffer,
-  NULL,
-};
+  NULL
+);
 
 
 constexpr gdb_byte s12z_break_insn[] = {0x00};
@@ -661,9 +662,7 @@ s12z_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_s12z_tdep ();
-void
-_initialize_s12z_tdep ()
+INIT_GDB_FILE (s12z_tdep)
 {
   gdbarch_register (bfd_arch_s12z, s12z_gdbarch_init, NULL);
 }

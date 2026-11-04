@@ -1,6 +1,6 @@
 /* Ravenscar SPARC target support.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SPARC_RAVENSCAR_THREAD_H
-#define SPARC_RAVENSCAR_THREAD_H
+#ifndef GDB_SPARC_RAVENSCAR_THREAD_H
+#define GDB_SPARC_RAVENSCAR_THREAD_H
 
 struct gdbarch;
 
 extern void register_sparc_ravenscar_ops (struct gdbarch *gdbarch);
-#endif
+#endif /* GDB_SPARC_RAVENSCAR_THREAD_H */

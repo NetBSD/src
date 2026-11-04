@@ -1,4 +1,4 @@
-#   Copyright 2002-2024 Free Software Foundation, Inc.
+#   Copyright 2002-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,7 +27,7 @@ if {[is_remote host]} {
 
 if  { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	   executable \
-	   [list debug "additional_flags=-DOUTDIR=\"$outdir/\""]] != "" } {
+	   [list debug additional_flags=[quote_for_host -DOUTDIR_=$outdir/]]] != "" } {
     untested "failed to compile"
     return -1
 }
@@ -41,7 +41,8 @@ system "rm -rf [standard_output_file *.fileio.test]"
 set oldtimeout $timeout
 set timeout [expr "$timeout + 60"]
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 gdb_test_no_output "set print sevenbit-strings"
 gdb_test_no_output "set print address off"
 gdb_test_no_output "set width 0"
@@ -149,23 +150,23 @@ gdb_test continue \
 
 gdb_test continue \
 "Continuing\\..*isatty 1:.*OK$stop_msg" \
-"Isatty (stdin)"
+"Isatty, stdin"
 
 gdb_test continue \
 "Continuing\\..*isatty 2:.*OK$stop_msg" \
-"Isatty (stdout)"
+"Isatty, stdout"
 
 gdb_test continue \
 "Continuing\\..*isatty 3:.*OK$stop_msg" \
-"Isatty (stderr)"
+"Isatty, stderr"
 
 gdb_test continue \
 "Continuing\\..*isatty 4:.*OK$stop_msg" \
-"Isatty (invalid fd)"
+"Isatty, invalid fd"
 
 gdb_test continue \
 "Continuing\\..*isatty 5:.*OK$stop_msg" \
-"Isatty (open file)"
+"Isatty, open file"
 
 gdb_test_no_output "set debug remote 1"
 set msg "System says shell is not available"

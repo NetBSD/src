@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support, prototypes.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARM_LINUX_TDEP_H
-#define ARM_LINUX_TDEP_H
+#ifndef GDB_ARM_LINUX_TDEP_H
+#define GDB_ARM_LINUX_TDEP_H
 
 struct regset;
 struct regcache;
@@ -67,4 +67,4 @@ void arm_linux_collect_nwfpe (const struct regset *regset,
 #define HWCAP_VFPv3     8192
 #define HWCAP_VFPv3D16  16384
 
-#endif /* ARM_LINUX_TDEP_H */
+#endif /* GDB_ARM_LINUX_TDEP_H */

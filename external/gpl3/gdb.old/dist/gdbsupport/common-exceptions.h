@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_EXCEPTIONS_H
-#define COMMON_COMMON_EXCEPTIONS_H
+#ifndef GDBSUPPORT_COMMON_EXCEPTIONS_H
+#define GDBSUPPORT_COMMON_EXCEPTIONS_H
 
 #include <setjmp.h>
 #include <new>
@@ -26,12 +26,16 @@
 #include <string>
 #include <functional>
 
+#include "gdbsupport/underlying.h"
+
 /* Reasons for calling throw_exceptions().  NOTE: all reason values
    must be different from zero.  enum value 0 is reserved for internal
    use as the return value from an initial setjmp().  */
 
 enum return_reason
   {
+    /* SIGTERM sent to GDB.  */
+    RETURN_FORCED_QUIT = -3,
     /* User interrupt.  */
     RETURN_QUIT = -2,
     /* Any other error.  */
@@ -42,9 +46,10 @@ enum return_reason
 
 typedef enum
 {
+  RETURN_MASK_FORCED_QUIT = RETURN_MASK (RETURN_FORCED_QUIT),
   RETURN_MASK_QUIT = RETURN_MASK (RETURN_QUIT),
   RETURN_MASK_ERROR = RETURN_MASK (RETURN_ERROR),
-  RETURN_MASK_ALL = (RETURN_MASK_QUIT | RETURN_MASK_ERROR)
+  RETURN_MASK_ALL = (RETURN_MASK_FORCED_QUIT | RETURN_MASK_QUIT | RETURN_MASK_ERROR)
 } return_mask;
 
 /* Describe all exceptions.  */
@@ -197,7 +202,7 @@ struct hash<gdb_exception>
 {
   size_t operator() (const gdb_exception &exc) const
   {
-    size_t result = exc.reason + exc.error;
+    size_t result = to_underlying (exc.reason) + to_underlying (exc.error);
     if (exc.message != nullptr)
       result += std::hash<std::string> {} (*exc.message);
     return result;
@@ -294,6 +299,21 @@ struct gdb_exception_quit : public gdb_exception
   }
 };
 
+struct gdb_exception_forced_quit : public gdb_exception
+{
+  gdb_exception_forced_quit (const char *fmt, va_list ap)
+    ATTRIBUTE_PRINTF (2, 0)
+    : gdb_exception (RETURN_FORCED_QUIT, GDB_NO_ERROR, fmt, ap)
+  {
+  }
+
+  explicit gdb_exception_forced_quit (gdb_exception &&ex) noexcept
+    : gdb_exception (std::move (ex))
+  {
+    gdb_assert (ex.reason == RETURN_FORCED_QUIT);
+  }
+};
+
 /* An exception type that inherits from both std::bad_alloc and a gdb
    exception.  This is necessary because operator new can only throw
    std::bad_alloc, and OTOH, we want exceptions thrown due to memory
@@ -316,25 +336,26 @@ struct gdb_quit_bad_alloc
 /* Throw an exception (as described by "struct gdb_exception"),
    landing in the inner most containing exception handler established
    using TRY/CATCH.  */
-extern void throw_exception (gdb_exception &&exception)
-     ATTRIBUTE_NORETURN;
+[[noreturn]] extern void throw_exception (gdb_exception &&exception);
 
 /* Throw an exception by executing a LONG JUMP to the inner most
    containing exception handler established using TRY_SJLJ.  Necessary
    in some cases where we need to throw GDB exceptions across
    third-party library code (e.g., readline).  */
-extern void throw_exception_sjlj (const struct gdb_exception &exception)
-     ATTRIBUTE_NORETURN;
+[[noreturn]] extern void throw_exception_sjlj (const gdb_exception &exception);
 
 /* Convenience wrappers around throw_exception that throw GDB
    errors.  */
-extern void throw_verror (enum errors, const char *fmt, va_list ap)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 0);
-extern void throw_vquit (const char *fmt, va_list ap)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 0);
-extern void throw_error (enum errors error, const char *fmt, ...)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (2, 3);
-extern void throw_quit (const char *fmt, ...)
-     ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
+[[noreturn]] extern void throw_verror (enum errors, const char *fmt,
+				       va_list ap)
+  ATTRIBUTE_PRINTF (2, 0);
+[[noreturn]] extern void throw_vquit (const char *fmt, va_list ap)
+  ATTRIBUTE_PRINTF (1, 0);
+[[noreturn]] extern void throw_error (enum errors error, const char *fmt, ...)
+  ATTRIBUTE_PRINTF (2, 3);
+[[noreturn]] extern void throw_quit (const char *fmt, ...)
+  ATTRIBUTE_PRINTF (1, 2);
+[[noreturn]] [[noreturn]] extern void throw_forced_quit (const char *fmt, ...)
+  ATTRIBUTE_PRINTF (1, 2);
 
-#endif /* COMMON_COMMON_EXCEPTIONS_H */
+#endif /* GDBSUPPORT_COMMON_EXCEPTIONS_H */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -94,9 +94,7 @@ amd64_windows_segment_register_p (int regnum)
   return regnum >= AMD64_CS_REGNUM && regnum <= AMD64_GS_REGNUM;
 }
 
-void _initialize_amd64_windows_nat ();
-void
-_initialize_amd64_windows_nat ()
+INIT_GDB_FILE (amd64_windows_nat)
 {
   x86_set_debug_register_length (8);
 }

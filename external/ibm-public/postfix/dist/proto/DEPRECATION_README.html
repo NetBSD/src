@@ -104,11 +104,94 @@ detailed description. </p>
 </th> <th> Removed <br> in version </th> <th> Replacement </th>
 </tr>
 
+<tr> <td> <a href="#renamed"> authorized_verp_clients </a> </td>
+<td align="center"> 3.11 </td> <td align="center"> - </td> <td>
+smtpd_authorized_verp_clients </td> </tr>
+
+<tr> <td> <a href="#renamed"> fallback_relay </a> </td> <td
+align="center"> 3.11 </td> <td align="center"> - </td> <td>
+smtp_fallback_relay </td> </tr>
+
+<tr> <td> <a href="#renamed"> lmtp_per_record_deadline </a> </td>
+<td align="center"> 3.11 </td> <td align="center"> - </td> <td>
+lmtp_per_request_deadline </td> </tr>
+
+<tr> <td> <a href="#renamed"> postscreen_blacklist_action </a> </td>
+<td align="center"> 3.11 </td> <td align="center"> - </td> <td>
+postscreen_denylist_action </td> </tr>
+
+<tr> <td> <a href="#renamed"> postscreen_dnsbl_ttl </a> </td> <td
+align="center"> 3.11 </td> <td align="center"> - </td> <td>
+postscreen_dnsbl_max_ttl </td> </tr>
+
+<tr> <td> <a href="#renamed"> postscreen_dnsbl_whitelist_threshold
+</a> </td> <td align="center"> 3.11 </td> <td align="center"> -
+</td> <td> 
+postscreen_dnsbl_allowlist_threshold </td> </tr>
+
+<tr> <td> <a href="#renamed"> postscreen_whitelist_interfaces </a>
+</td> <td align="center"> 3.11 </td> <td align="center"> - </td>
+<td> postscreen_allowlist_interfaces </td> </tr>
+
+<tr> <td> <a href="#renamed"> smtpd_client_connection_limit_exceptions
+</a> </td> <td align="center"> 3.11 </td> <td align="center"> -
+</td> <td>
+smtpd_client_event_limit_exceptions </td> </tr>
+
+<tr> <td> <a href="#renamed"> smtpd_per_record_deadline </a> </td>
+<td align="center"> 3.11 </td> <td align="center"> - </td> <td>
+smtpd_per_request_deadline </td> </tr>
+
+<tr> <td> <a href="#renamed"> smtp_per_record_deadline </a> </td>
+<td align="center"> 3.11 </td> <td align="center"> - </td> <td>
+smtp_per_request_deadline </td> </tr>
+
+<tr> <td> <a href="#renamed"> tlsproxy_client_level </a> </td> <td
+align="center"> 3.11 </td> <td align="center"> - </td> <td>
+tlsproxy_client_security_level </td> </tr>
+
+<tr> <td> <a href="#renamed"> tlsproxy_client_policy </a> </td> <td
+align="center"> 3.11 </td> <td align="center"> - </td> <td>
+tlsproxy_client_policy_maps </td> </tr>
+
+<tr> <td> <a href="#renamed"> virtual_maps </a> </td> <td align="center">
+3.11 </td> <td align="center"> - </td> <td> virtual_alias_maps </td>
+</tr>
+
+<!--
+
+<tr> <td> <a href="#tls_xdhx_auto">
+tls_eecdh_auto_curves </a> </td> <td align="center"> 3.11
+</td> <td align="center"> - </td> <td> do not specify with OpenSSL 3.5 or later
+</td> </tr>
+
+<tr> <td> <a href="#tls_xdhx_auto">
+tls_ffdhe_auto_groups </a> </td> <td align="center"> 3.11
+</td> <td align="center"> - </td> <td> do not specify with OpenSSL 3.5 or later
+</td> </tr>
+
+-->
+
+<tr> <td> <a href="#cname_overrides_servername">
+smtp_cname_overrides_servername </a> </td> <td align="center"> 3.11
+</td> <td align="center"> - </td> <td> do not specify (leave at default)
+</td> </tr>
+
+<tr> <td> <a href="#cname_overrides_servername">
+lmtp_cname_overrides_servername </a> </td> <td align="center"> 3.11
+</td> <td align="center"> - </td> <td> do not specify (leave at default)
+</td> </tr>
+
+<tr> <td> <a href="#xxx_tls_enforce_peername">
+<i>xxx</i>_tls_enforce_peername </a> </td> <td align="center"> 3.11
+</td> <td align="center"> - </td> <td> <i>xxx</i>_tls_security_level
+</td> </tr>
+
 <tr> <td> <a href="#disable_dns_lookups"> disable_dns_lookups </a>
 </td> <td align="center"> 3.9 </td> <td align="center"> - </td>
 <td> smtp_dns_support_level </td> </tr>
 
-<tr> <td> <a href="#xxx_enforce_tls"> <i>xxx</i>_use_tls </a> </td>
+<tr> <td> <a href="#xxx_use_tls"> <i>xxx</i>_use_tls </a> </td>
 <td align="center"> 3.9 </td> <td align="center"> - </td> <td>
 <i>xxx</i>_tls_security_level </td> </tr>
 
@@ -144,6 +227,143 @@ reject_rbl_client </td> </tr>
 <tr> <td> <a href="#permit_naked_ip_address"> permit_naked_ip_address
 </a> </td> <td align="center"> 2.0 </td> <td align="center"> 3.9
 </td> <td> permit_mynetworks, permit_sasl_authenticated </td> </tr>
+
+</table>
+
+</blockquote>
+
+<h3> <a name="renamed"> Parameters that have been renamed for
+consistency </a> </h3>
+
+<p> The postconf(1) command logs one or more of the following: </p>
+
+<ul>
+
+<li> support for parameter "authorized_verp_clients" will be removed;
+instead, specify "smtpd_authorized_verp_clients" </li>
+
+<li> support for parameter "fallback_relay" will be removed; instead,
+specify "smtp_fallback_relay" </li>
+
+<li> support for parameter "lmtp_per_record_deadline" will be
+removed; instead, specify "lmtp_per_request_deadline" </li>
+
+<li> support for parameter "postscreen_blacklist_action" will be
+removed; instead, specify "postscreen_denylist_action" </li>
+
+<li> support for parameter "postscreen_dnsbl_ttl" will be removed;
+instead, specify "postscreen_dnsbl_max_ttl" </li>
+
+<li> support for parameter "postscreen_dnsbl_whitelist_threshold"
+will be removed; instead, specify "postscreen_dnsbl_allowlist_threshold"
+</li>
+
+<li> support for parameter "postscreen_whitelist_interfaces" will
+be removed; instead, specify "postscreen_allowlist_interfaces" </li>
+
+<li> support for parameter "smtpd_client_connection_limit_exceptions"
+will be removed; instead, specify "smtpd_client_event_limit_exceptions"
+</li>
+
+<li> support for parameter "smtp_per_record_deadline" will be
+removed; instead, specify "smtp_per_request_deadline" </li>
+
+<li> support for parameter "tlsproxy_client_level" will be removed;
+instead, specify "tlsproxy_client_security_level" </li>
+
+<li> support for parameter "tlsproxy_client_policy" will be removed;
+instead, specify "tlsproxy_client_policy_maps" </li>
+
+<li> support for parameter "virtual_maps" will be removed; instead,
+specify "virtual_alias_maps" </li>
+
+</ul>
+
+<p> The above parameters have been renamed for consistency with other
+parameters. For backwards compatibility, the old parameter values are
+used as the default value for the new parameters, but they will
+eventually be removed to eliminate clutter and confusion  </p>
+
+<p> To silence these warning messages, edit main.cf or master.cf,
+and replace each obsolete parameter name with its replacement. </p>
+
+<!--
+
+<h3> <a name="tls_xdhx_auto"> Obsolete auto group/curve configuration
+</a> </h3>
+
+<p> The postconf(1) command logs one of the following: </p>
+
+<ul>
+
+<li> support for parameter "tls_eecdh_auto_curves" will be removed;
+instead, do not specify with OpenSSL 3.5 or later
+
+<li> support for parameter "tls_ffdhe_auto_groups" will be removed;
+instead, do not specify with OpenSSL 3.5 or later
+
+</ul>
+
+<p> The empty value is the default setting for both as of Postfix
+3.11, when compiled with OpenSSL 3.5 or later. See tls_config_file
+for a configuration example </p>
+
+-->
+
+<h3> <a name="cname_overrides_servername"> Obsolete CNAME override
+for peer name configuration </a> </h3>
+
+<p> The postconf(1) command logs one of the following: </p>
+
+<ul>
+
+<li> support for parameter "smtp_cname_overrides_servername" will be
+removed; instead, do not specify
+
+<li> support for parameter "lmtp_cname_overrides_servername" will be
+removed; instead, do not specify
+
+</ul>
+
+<p> These features control whether a DNS CNAME record can override
+the server peer name that Postfix will use for policy lookup or for
+certificate verification. This behavior is disabled by default as of
+Postfix 2.11, because it no longer solves a real problem. </p>
+
+<h3> <a name="xxx_tls_enforce_peername"> Obsolete TLS peer name
+match configuration </a> </h3>
+
+<p> The postconf(1) command logs one of the following: </p>
+
+<ul>
+
+<li> support for parameter "lmtp_tls_enforce_peername" will be
+removed; instead, specify "lmtp_tls_security_level"
+
+<li> support for parameter "smtp_tls_enforce_peername" will be
+removed; instead, specify "smtp_tls_security_level"
+
+</ul>
+
+<p> There are similarly-named parameters and warnings for postscreen(8)
+and tlsproxy(8), but those parameters should rarely be specified
+by hand. </p>
+
+<p> Replace obsolete configuration with its replacement: </p>
+
+<blockquote>
+
+<table border="1">
+
+<tr> <th width="33%"> Goal </th> <th width="33%"> Obsolete configuration </th> <th> Replacement configuration </th> </tr>
+
+<tr> <td> Enforce peer name match with server certificate </td>
+<td> <i>xxx</i>_enforce_peername = yes </td> <td> <i>xxx</i>_security_level
+= verify <br> <i>xxx</i>_security_level = secure </td> </tr>
+
+<tr> <td> Disable peer name match with server certificate </td>
+<td> <i>xxx</i>_enforce_peername = no </td> <td> <i>xxx</i>_security_level
+= may <br> <i>xxx</i>_security_level = encrypt </td> </tr>
 
 </table>
 

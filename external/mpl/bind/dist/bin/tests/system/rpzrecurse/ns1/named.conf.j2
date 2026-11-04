@@ -1,0 +1,62 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	session-keyfile "session.key";
+	recursion no;
+	dnssec-validation no;
+	querylog yes;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "test.example.org" {
+	type primary;
+	file "example.db";
+};
+
+zone "l0" {
+	type primary;
+	file "db.l0";
+};
+
+zone "l1.l0" {
+	type primary;
+	file "db.l1.l0";
+};
+
+zone "l2.l1.l0" {
+	type primary;
+	file "does-not-exist";
+};
+
+zone "test1.example.net" {
+	type primary;
+	file "test1.example.net.db";
+};
+
+zone "test2.example.net" {
+	type primary;
+	file "test2.example.net.db";
+};
+
+zone "example.com" {
+	type primary;
+	file "example.com.db";
+};

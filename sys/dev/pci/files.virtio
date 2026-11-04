@@ -1,4 +1,8 @@
-#	$NetBSD: files.virtio,v 1.2.32.1 2025/08/02 05:56:45 perseant Exp $
+#	$NetBSD: files.virtio,v 1.2.32.2 2026/11/04 23:22:04 perseant Exp $
+
+# Please DO NOT add new virtio drivers here.  New virtio drivers go in
+# sys/dev/virtio/ and eventually all the drivers that are here should
+# be moved there.  Only the virtio@pci attachment should live here.
 
 # VirtIO
 device	virtio {}
@@ -26,6 +30,7 @@ file	dev/pci/viornd.c	viornd
 device	vioscsi: scsi
 attach	vioscsi at virtio
 file	dev/pci/vioscsi.c	vioscsi
+defparam opt_vioscsi.h	VIOSCSI_MAX_TARGET VIOSCSI_MAX_LUN
 
 device	vio9p
 attach	vio9p at virtio

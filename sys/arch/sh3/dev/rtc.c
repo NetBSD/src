@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.11 2023/12/20 15:34:45 thorpej Exp $ */
+/*	$NetBSD: rtc.c,v 1.11.2.1 2026/11/04 23:21:19 perseant Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11 2023/12/20 15:34:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.11.2.1 2026/11/04 23:21:19 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -71,7 +71,6 @@ static int rtc_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 #ifndef SH3_RTC_BASEYEAR
 #define SH3_RTC_BASEYEAR	1900
 #endif
-u_int sh3_rtc_baseyear = SH3_RTC_BASEYEAR;
 
 static int
 rtc_match(device_t parent, cfdata_t cfp, void *aux)
@@ -86,7 +85,6 @@ rtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct rtc_softc *sc;
 	uint8_t r;
-	prop_number_t prop_rtc_baseyear;
 #ifdef RTC_DEBUG
 	char bits[128];
 #endif
@@ -119,22 +117,13 @@ rtc_attach(device_t parent, device_t self, void *aux)
 	/* Clock runs, no periodic interrupts, no 30-sec adjustment */
 	_reg_write_1(SH_(RCR2), SH_RCR2_ENABLE | SH_RCR2_START);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = rtc_settime_ymdhms;
 
-	prop_rtc_baseyear = prop_dictionary_get(device_properties(self),
-	    "sh3_rtc_baseyear");
-	if (prop_rtc_baseyear != NULL) {
-		sh3_rtc_baseyear =
-		    (u_int)prop_number_integer_value(prop_rtc_baseyear);
-#ifdef RTC_DEBUG
-		aprint_debug_dev(self,
-		    "using baseyear %u passed via device property\n",
-		    sh3_rtc_baseyear);
-#endif
-	}
-	sc->sc_year0 = sh3_rtc_baseyear;
+	sc->sc_year0 = device_getprop_uint_default(self, "start-year",
+	    SH3_RTC_BASEYEAR);
+	aprint_debug_dev(self, "using start-year %u\n", sc->sc_year0);
 
 	todr_attach(&sc->sc_todr);
 
@@ -153,7 +142,7 @@ rtc_attach(device_t parent, device_t self, void *aux)
 static int
 rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *sc = h->cookie;
+	struct rtc_softc *sc = device_private(h->todr_dev);
 	unsigned int year;
 	int retry = 8;
 
@@ -222,7 +211,7 @@ rtc_gettime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 static int
 rtc_settime_ymdhms(todr_chip_handle_t h, struct clock_ymdhms *dt)
 {
-	struct rtc_softc *sc = h->cookie;
+	struct rtc_softc *sc = device_private(h->todr_dev);
 	unsigned int year;
 	uint8_t r;
 

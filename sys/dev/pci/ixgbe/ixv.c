@@ -1,4 +1,4 @@
-/* $NetBSD: ixv.c,v 1.196.2.1 2025/08/02 05:57:01 perseant Exp $ */
+/* $NetBSD: ixv.c,v 1.196.2.2 2026/11/04 23:22:30 perseant Exp $ */
 
 /******************************************************************************
 
@@ -35,7 +35,7 @@
 /*$FreeBSD: head/sys/dev/ixgbe/if_ixv.c 331224 2018-03-19 20:55:05Z erj $*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.196.2.1 2025/08/02 05:57:01 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixv.c,v 1.196.2.2 2026/11/04 23:22:30 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2413,7 +2413,7 @@ ixv_configure_ivars(struct ixgbe_softc *sc)
  * ixv_init_stats
  *
  *   The VF stats registers never have a truly virgin
- *   starting point, so this routine save initial vaules to
+ *   starting point, so this routine save initial values to
  *   last_<REGNAME>.
  ************************************************************************/
 static void
@@ -2482,12 +2482,13 @@ ixv_sysctl_interrupt_rate_handler(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node = *rnode;
 	struct ix_queue *que = (struct ix_queue *)node.sysctl_data;
-	struct ixgbe_softc *sc = que->sc;
+	struct ixgbe_softc *sc;
 	uint32_t reg, usec, rate;
 	int error;
 
 	if (que == NULL)
 		return 0;
+	sc = que->sc;
 	reg = IXGBE_READ_REG(&que->sc->hw, IXGBE_VTEITR(que->msix));
 	usec = ((reg & 0x0FF8) >> 3);
 	if (usec > 0)

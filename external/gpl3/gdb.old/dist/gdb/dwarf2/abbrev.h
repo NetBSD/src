@@ -1,6 +1,6 @@
 /* DWARF abbrev table
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -27,7 +27,10 @@
 #ifndef GDB_DWARF2_ABBREV_H
 #define GDB_DWARF2_ABBREV_H
 
-#include "hashtab.h"
+#include "dwarf2.h"
+#include "gdbsupport/gdb_obstack.h"
+#include "gdbsupport/unordered_set.h"
+#include "types.h"
 
 struct attr_abbrev
 {
@@ -60,7 +63,12 @@ struct abbrev_info
 struct abbrev_table;
 typedef std::unique_ptr<struct abbrev_table> abbrev_table_up;
 
-/* Top level data structure to contain an abbreviation table.  */
+/* Top level data structure to contain an abbreviation table.
+
+   In DWARF version 2, the description of the debugging information is
+   stored in a separate .debug_abbrev section.  Before we read any
+   dies from a section we read in all abbreviations and install them
+   in a hash table.  */
 
 struct abbrev_table
 {
@@ -74,14 +82,13 @@ struct abbrev_table
   /* Look up an abbrev in the table.
      Returns NULL if the abbrev is not found.  */
 
-  const struct abbrev_info *lookup_abbrev (unsigned int abbrev_number) const
+  const abbrev_info *lookup_abbrev (unsigned int abbrev_number) const
   {
-    struct abbrev_info search;
-    search.number = abbrev_number;
+    if (auto iter = m_abbrevs.find (abbrev_number);
+	iter != m_abbrevs.end ())
+      return *iter;
 
-    return (struct abbrev_info *) htab_find_with_hash (m_abbrevs.get (),
-						       &search,
-						       abbrev_number);
+    return nullptr;
   }
 
   /* Where the abbrev table came from.
@@ -92,15 +99,47 @@ struct abbrev_table
 
 private:
 
-  abbrev_table (sect_offset off, struct dwarf2_section_info *sect);
+  abbrev_table (sect_offset off, struct dwarf2_section_info *sect)
+    : sect_off (off),
+      section (sect)
+  {}
 
   DISABLE_COPY_AND_ASSIGN (abbrev_table);
 
   /* Add an abbreviation to the table.  */
-  void add_abbrev (struct abbrev_info *abbrev);
+  void add_abbrev (const abbrev_info *abbrev)
+  { m_abbrevs.emplace (abbrev); }
 
-  /* Hash table of abbrevs.  */
-  htab_up m_abbrevs;
+  struct abbrev_info_number_eq
+  {
+    using is_transparent = void;
+
+    bool operator() (unsigned int number,
+		     const abbrev_info *abbrev) const noexcept
+    { return number == abbrev->number; }
+
+    bool operator() (const abbrev_info *lhs,
+		     const abbrev_info *rhs) const noexcept
+    { return (*this) (lhs->number, rhs); }
+  };
+
+  struct abbrev_info_number_hash
+  {
+    using is_transparent = void;
+
+    std::size_t operator() (unsigned int number) const noexcept
+    { return std::hash<unsigned int> () (number); }
+
+    std::size_t operator() (const abbrev_info *abbrev) const noexcept
+    { return (*this) (abbrev->number); }
+
+  };
+
+  /* Hash table of abbrev, identified by their number.  */
+  gdb::unordered_set<const abbrev_info *,
+  		     abbrev_info_number_hash,
+		     abbrev_info_number_eq>
+    m_abbrevs;
 
   /* Storage for the abbrev table.  */
   auto_obstack m_abbrev_obstack;

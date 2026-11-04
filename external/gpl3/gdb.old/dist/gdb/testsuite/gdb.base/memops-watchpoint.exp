@@ -1,0 +1,161 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test a binary that uses standard libc memory operation functions.  They are
+# frequently optimized with specialized instructions, so make sure GDB behaves
+# correctly in their presence.
+
+standard_testfile
+set options "-fno-builtin-memset -fno-builtin-memcpy -fno-builtin-memmove"
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  [list debug additional_flags=$options]] } {
+    return -1
+}
+
+set linespec ${srcfile}:[gdb_get_line_number "Break here"]
+if ![runto ${linespec}] {
+    return -1
+}
+
+gdb_test "watch -location a\[28\]" \
+    "(Hardware w|W)atchpoint ${decimal}: -location a\\\[28\\\]" \
+    "set watch on a"
+gdb_test "watch -location b\[28\]" \
+    "(Hardware w|W)atchpoint ${decimal}: -location b\\\[28\\\]" \
+    "set watchpoint on b"
+gdb_test "watch -location c\[28\]" \
+    "(Hardware w|W)atchpoint ${decimal}: -location c\\\[28\\\]" \
+    "set watchpoint on c"
+
+# For the tests below, split the pattern matching in two parts: one for the
+# watchpoint trigger, and another for the line showing the function name.
+# This is to allow the tests to work if there's a properly named symbol for
+# the function, even if there's no libc debug info.
+
+set saw_watch_trigger 0
+set saw_function 0
+set is_supported 1
+set message "continue until memset watchpoint hits"
+set watch_trigger \
+	[multi_line \
+	     "Continuing\\." \
+	     "" \
+	     "(Hardware w|W)atchpoint ${decimal}: -location a\\\[28\\\]" \
+	     "" \
+	     "Old value = 104 'h'" \
+	     "New value = 0 '\\\\000'"]
+gdb_test_multiple "continue" $message {
+    -re $watch_trigger {
+	set saw_watch_trigger 1
+	exp_continue
+    }
+    -re ".*memset.* \\(\\) at .*:$decimal\r\n" {
+	set saw_function 1
+	exp_continue
+    }
+    -re ".*memset.* \\(\\) from .*libc\[^\r\n\]+\r\n" {
+	set saw_function 1
+	exp_continue
+    }
+    -re "in \\?\\? \\(\\) from .*libc\[^\r\n\]+\r\n" {
+	set is_supported 0
+	unsupported "symbol for memset not found"
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { $is_supported } {
+	    setup_kfail breakpoints/31665 arm*-*-linux*
+	    gdb_assert { $saw_watch_trigger && $saw_function } $message
+	}
+    }
+}
+
+# Note: Some architectures use memmove for memcpy.
+set saw_watch_trigger 0
+set saw_function 0
+set is_supported 1
+set message "continue until memcpy watchpoint hits"
+set watch_trigger \
+	[multi_line \
+	     "Continuing\\." \
+	     "" \
+	     "(Hardware w|W)atchpoint ${decimal}: -location b\\\[28\\\]" \
+	     "" \
+	     "Old value = 101 'e'" \
+	     "New value = 114 'r'"]
+gdb_test_multiple "continue" $message {
+    -re $watch_trigger {
+	set saw_watch_trigger 1
+	exp_continue
+    }
+    -re ".*(memcpy|memmove).* \\(\\) at .*:$decimal\r\n" {
+	set saw_function 1
+	exp_continue
+    }
+    -re ".*(memcpy|memmove).* \\(\\) from .*libc\[^\r\n\]+\r\n" {
+	set saw_function 1
+	exp_continue
+    }
+    -re "in \\?\\? \\(\\) from .*libc\[^\r\n\]+\r\n" {
+	set is_supported 0
+	unsupported "symbol for memcpy not found"
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { $is_supported } {
+	    setup_kfail breakpoints/31665 arm*-*-linux*
+	    gdb_assert { $saw_watch_trigger && $saw_function } $message
+	}
+    }
+}
+
+# Note: Some architectures use memcpy for memmove.
+set saw_watch_trigger 0
+set saw_function 0
+set is_supported 1
+set message "continue until memmove watchpoint hits"
+set watch_trigger \
+	[multi_line \
+	     "Continuing\\." \
+	     "" \
+	     "(Hardware w|W)atchpoint ${decimal}: -location c\\\[28\\\]" \
+	     "" \
+	     "Old value = 100 'd'" \
+	     "New value = 114 'r'"]
+gdb_test_multiple "continue" $message {
+    -re $watch_trigger {
+	set saw_watch_trigger 1
+	exp_continue
+    }
+    -re ".*(memcpy|memmove).* \\(\\) at .*:$decimal\r\n" {
+	set saw_function 1
+	exp_continue
+    }
+    -re ".*(memcpy|memmove).* \\(\\) from .*libc\[^\r\n\]+\r\n" {
+	set saw_function 1
+	exp_continue
+    }
+    -re "in \\?\\? \\(\\) from .*libc\[^\r\n\]+\r\n" {
+	set is_supported 0
+	unsupported "symbol for memmove not found"
+	exp_continue
+    }
+    -re "$gdb_prompt $" {
+	if { $is_supported } {
+	    setup_kfail breakpoints/31665 arm*-*-linux*
+	    gdb_assert { $saw_watch_trigger && $saw_function } $message
+	}
+    }
+}

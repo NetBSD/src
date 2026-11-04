@@ -1,6 +1,6 @@
 /* SystemTap probe support for GDB.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (STAP_PROBE_H)
-#define STAP_PROBE_H 1
+#ifndef GDB_STAP_PROBE_H
+#define GDB_STAP_PROBE_H
 
 #include "parser-defs.h"
 
@@ -66,4 +66,4 @@ struct stap_parse_info
   int inside_paren_p;
 };
 
-#endif /* !defined (STAP_PROBE_H) */
+#endif /* GDB_STAP_PROBE_H */

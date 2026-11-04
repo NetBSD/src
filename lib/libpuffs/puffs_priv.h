@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_priv.h,v 1.46 2022/01/22 07:35:26 pho Exp $	*/
+/*	$NetBSD: puffs_priv.h,v 1.46.4.1 2026/11/04 23:19:30 perseant Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008 Antti Kantee.  All Rights Reserved.
@@ -206,13 +206,10 @@ struct puffs_newinfo {
 };
 
 #define PUFFS_MAKEKCRED(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
 	const struct puffs_kcred *to = (const void *)from
 #define PUFFS_MAKECRED(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
 	const struct puffs_cred *to = (const void *)from
 #define PUFFS_KCREDTOCRED(to, from)					\
-	/*LINTED: tnilxnaht, the cast is ok */				\
 	to = (void *)from
 
 __BEGIN_DECLS

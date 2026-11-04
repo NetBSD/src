@@ -1,5 +1,5 @@
 /* Common target-dependent definitions for NetBSD systems.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
    Contributed by Wasabi Systems, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NBSD_TDEP_H
-#define NBSD_TDEP_H
+#ifndef GDB_NETBSD_TDEP_H
+#define GDB_NETBSD_TDEP_H
 
 int nbsd_pc_in_sigtramp (CORE_ADDR, const char *);
 
@@ -44,4 +44,4 @@ extern void nbsd_info_proc_mappings_entry (int addr_bit, ULONGEST kve_start,
 					   int kve_flags, int kve_protection,
 					   const char *kve_path);
 
-#endif /* NBSD_TDEP_H */
+#endif /* GDB_NETBSD_TDEP_H */

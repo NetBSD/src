@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2023 Free Software Foundation, Inc.
+# Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,7 @@
 # registers are then checked against the saved values, because the
 # abort should have reverted the registers to these values.
 
-if {![istarget "powerpc*-*-linux*"]} {
-    verbose "Skipping PowerPC test for HTM registers."
-    return
-}
+require {istarget "powerpc*-*-linux*"}
 
 standard_testfile .c .gen.c
 

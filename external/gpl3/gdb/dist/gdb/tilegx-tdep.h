@@ -1,6 +1,6 @@
 /* Target-dependent code for the Tilera TILE-Gx processor.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TILEGX_TDEP_H
-#define TILEGX_TDEP_H
+#ifndef GDB_TILEGX_TDEP_H
+#define GDB_TILEGX_TDEP_H
 
 /* TILE-Gx has 56 general purpose registers (R0 - R52, TP, SP, LR),
    plus 8 special general purpose registers (network and ZERO),
@@ -107,4 +107,4 @@ enum tilegx_regnum
 
 enum { tilegx_reg_size = 8 };
 
-#endif /* tilegx-tdep.h */
+#endif /* GDB_TILEGX_TDEP_H */

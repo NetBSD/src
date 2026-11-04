@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Free Software Foundation, Inc.
+# Copyright 1999-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -164,10 +164,11 @@ gdb_load_timed $binfile "limit" 0
 # Get the size of random_data table (defaults to 48K).
 set sizeof_random_data [get_sizeof "random_data" 48*1024]
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 #
-# Part THREE: Check the upload behavour
+# Part THREE: Check the upload behavior.
 #
 if {![runto_main]} {
     return

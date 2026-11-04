@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupts.c,v 1.10 2023/12/20 15:29:05 thorpej Exp $ */
+/*	$NetBSD: interrupts.c,v 1.10.2.1 2026/11/04 23:20:56 perseant Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.10 2023/12/20 15:29:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupts.c,v 1.10.2.1 2026/11/04 23:20:56 perseant Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -65,6 +65,7 @@ const char *compat[] = {
 static int 
 init_openpic(int pass_through)
 {
+	struct pic_ops *opic;
 	uint32_t reg[5];
 	uint32_t obio_base, pic_base;
 	int      pic, macio;
@@ -100,7 +101,15 @@ init_openpic(int pass_through)
 	aprint_debug("pic-base: %08x\n", pic_base);
 
 	aprint_normal("found openpic PIC at %08x\n", pic_base);
-	setup_openpic(oea_mapiodev(pic_base, 0x40000), pass_through);
+	opic = setup_openpic(oea_mapiodev(pic_base, 0x40000), pass_through);
+	/*
+	 * on G5s we have to map the openpic into our address space so its 
+	 * virtual address will be different from its physical address
+	 * so, in order to find this openpic by its physical address even on G5
+	 * we need to set its pic_cookie by hand
+	 */
+	if (opic != NULL)
+		opic->pic_cookie = (void *)pic_base;
 
 	return TRUE;
 }
@@ -121,6 +130,9 @@ init_openpic(int pass_through)
  *   models have both openpic and u3_ht, on those openpic handles IPIs and
  *   normal IRQs while the u3_ht is cascaded and can be used for MSI. On G5s
  *   that have no openpic the u3_ht handles all interrupts, IPIs and MSI
+ * - just to be annoying, on G5s that have both PICs the ki2c under /u3 has its
+ *   interrupt hooked to the HT PIC, while all other interrupts go to the normal
+ *   openpic
  */
 void
 init_interrupt(void)
@@ -161,4 +173,66 @@ done:
 		setup_hammerhead_ipi();
 #endif
 #endif /*MULTIPROCESSOR*/
+}
+
+/*
+ * this is for extracting an interrupt number, and optional type and description
+ * for non-PCI devices from OpenFirmware, taking care to check which interrupt
+ * controller the device is connected to
+ */
+int
+OF_get_intr(int node, char *buf, int buflen, int *type)
+{
+	int intr[2], irq, intrparent;
+	uint32_t picbase;
+
+	if(OF_getprop(node, "interrupts", intr, 8) != 8) {
+		aprint_error(": can't find interrupt\n");
+		return -1;
+	}
+	irq = intr[0];
+
+	if (type != NULL) {
+		*type = (intr[1] & 1) ? IST_LEVEL : IST_EDGE;
+	}
+
+	/*
+	 * on some G5 we have two openpics, one in mac-io, one in /u3
+	 * in order to get interrupts we need to know which one we're
+	 * connected to
+	 */
+	if (OF_getprop(node, "interrupt-parent", &intrparent, 4) == 4) {
+		uint32_t preg[8];
+		struct pic_ops *pic;
+
+		if(OF_getprop(intrparent, "reg", preg, 8) > 4) {
+			/* now look for a pic with that base... */
+			picbase = preg[0];
+			if ((picbase & 0x80000000) == 0) {
+				/* some OF versions have the openpic's reg as
+				 * an offset into mac-io just to be annoying */
+				int mio = OF_parent(intrparent);
+				if (OF_getprop(mio, "ranges", preg, 20) == 20)
+					picbase += preg[3];
+			}
+			pic = find_pic_by_cookie((void *)picbase);
+			if (pic != NULL) {
+				irq = intr[0];
+				if (buf != NULL) {
+					snprintf(buf, buflen, "%s irq %d",
+					    pic->pic_name, irq);
+				}
+				irq += pic->pic_intrbase;
+				return irq;
+			}
+		}
+		/* if we get here we couldn't find a matching PIC */
+		aprint_error("failed to find a PIC for node %08x\n",
+		    intrparent);
+		return -1;
+	}
+	if (buf != NULL) {
+		snprintf(buf, buflen, "irq %d", irq);
+	}
+	return irq;
 }

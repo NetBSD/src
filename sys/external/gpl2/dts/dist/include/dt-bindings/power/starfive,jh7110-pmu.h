@@ -1,3 +1,5 @@
+/*	$NetBSD: starfive,jh7110-pmu.h,v 1.1.2.1 2026/11/04 23:27:35 perseant Exp $	*/
+
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
  * Copyright (C) 2022-2023 StarFive Technology Co., Ltd.

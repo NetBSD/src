@@ -1,6 +1,6 @@
 /* MI Command Set.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -30,11 +30,9 @@
 #include "mi-cmds.h"
 #include "mi-parse.h"
 #include "mi-getopt.h"
-#include "mi-console.h"
 #include "ui-out.h"
 #include "mi-out.h"
 #include "interps.h"
-#include "gdbsupport/event-loop.h"
 #include "event-top.h"
 #include "gdbcore.h"
 #include "value.h"
@@ -45,7 +43,6 @@
 #include "language.h"
 #include "valprint.h"
 #include "osdata.h"
-#include "gdbsupport/gdb_splay_tree.h"
 #include "tracepoint.h"
 #include "ada-lang.h"
 #include "linespec.h"
@@ -60,9 +57,8 @@
 #include <chrono>
 #include "progspace-and-thread.h"
 #include "gdbsupport/rsp-low.h"
-#include <algorithm>
-#include <set>
-#include <map>
+#include "gdbsupport/unordered_map.h"
+#include "gdbsupport/unordered_set.h"
 
 enum
   {
@@ -254,15 +250,6 @@ proceed_thread (struct thread_info *thread, int pid)
   proceed ((CORE_ADDR) -1, GDB_SIGNAL_DEFAULT);
 }
 
-static int
-proceed_thread_callback (struct thread_info *thread, void *arg)
-{
-  int pid = *(int *)arg;
-
-  proceed_thread (thread, pid);
-  return 0;
-}
-
 static void
 exec_continue (const char *const *argv, int argc)
 {
@@ -292,7 +279,11 @@ exec_continue (const char *const *argv, int argc)
 	      pid = inf->pid;
 	    }
 
-	  iterate_over_threads (proceed_thread_callback, &pid);
+	  iterate_over_threads ([&] (struct thread_info *thread)
+	    {
+	      proceed_thread (thread, pid);
+	      return false;
+	    });
 	  disable_commit_resumed.reset_and_commit ();
 	}
       else
@@ -345,21 +336,6 @@ mi_cmd_exec_continue (const char *command, const char *const *argv, int argc)
     exec_continue (argv, argc);
 }
 
-static int
-interrupt_thread_callback (struct thread_info *thread, void *arg)
-{
-  int pid = *(int *)arg;
-
-  if (thread->state != THREAD_RUNNING)
-    return 0;
-
-  if (thread->ptid.pid () != pid)
-    return 0;
-
-  target_stop (thread->ptid);
-  return 0;
-}
-
 /* Interrupt the execution of the target.  Note how we must play
    around with the token variables, in order to display the current
    token in the result of the interrupt command, and the previous
@@ -389,7 +365,17 @@ mi_cmd_exec_interrupt (const char *command, const char *const *argv, int argc)
       scoped_disable_commit_resumed disable_commit_resumed
 	("interrupting all threads of thread group");
 
-      iterate_over_threads (interrupt_thread_callback, &inf->pid);
+      iterate_over_threads ([&] (struct thread_info *thread)
+	{
+	  if (thread->state != THREAD_RUNNING)
+	    return false;
+
+	  if (thread->ptid.pid () != inf->pid)
+	    return false;
+
+	  target_stop (thread->ptid);
+	  return false;
+	});
     }
   else
     {
@@ -482,18 +468,6 @@ mi_cmd_exec_run (const char *command, const char *const *argv, int argc)
     }
 }
 
-
-static int
-find_thread_of_process (struct thread_info *ti, void *p)
-{
-  int pid = *(int *)p;
-
-  if (ti->ptid.pid () == pid && ti->state != THREAD_EXITED)
-    return 1;
-
-  return 0;
-}
-
 void
 mi_cmd_target_detach (const char *command, const char *const *argv, int argc)
 {
@@ -532,7 +506,10 @@ mi_cmd_target_detach (const char *command, const char *const *argv, int argc)
 
       /* Pick any thread in the desired process.  Current
 	 target_detach detaches from the parent of inferior_ptid.  */
-      tp = iterate_over_threads (find_thread_of_process, &pid);
+      tp = iterate_over_threads ([&] (struct thread_info *ti)
+	{
+	  return ti->ptid.pid () == pid && ti->state != THREAD_EXITED;
+	});
       if (!tp)
 	error (_("Thread group is empty"));
 
@@ -604,43 +581,15 @@ mi_cmd_thread_info (const char *command, const char *const *argv, int argc)
   print_thread_info (current_uiout, argv[0], -1);
 }
 
-struct collect_cores_data
-{
-  int pid;
-  std::set<int> cores;
-};
-
-static int
-collect_cores (struct thread_info *ti, void *xdata)
-{
-  struct collect_cores_data *data = (struct collect_cores_data *) xdata;
-
-  if (ti->ptid.pid () == data->pid)
-    {
-      int core = target_core_of_thread (ti->ptid);
-
-      if (core != -1)
-	data->cores.insert (core);
-    }
-
-  return 0;
-}
-
-struct print_one_inferior_data
-{
-  int recurse;
-  const std::set<int> *inferiors;
-};
-
 static void
 print_one_inferior (struct inferior *inferior, bool recurse,
-		    const std::set<int> &ids)
+		    const gdb::unordered_set<int> &ids)
 {
   struct ui_out *uiout = current_uiout;
 
   if (ids.empty () || (ids.find (inferior->pid) != ids.end ()))
     {
-      struct collect_cores_data data;
+      gdb::unordered_set<int> cores;
       ui_out_emit_tuple tuple_emitter (uiout, NULL);
 
       uiout->field_fmt ("id", "i%d", inferior->num);
@@ -651,23 +600,29 @@ print_one_inferior (struct inferior *inferior, bool recurse,
       if (inferior->pid != 0)
 	uiout->field_signed ("pid", inferior->pid);
 
-      if (inferior->pspace->exec_filename != nullptr)
-	{
-	  uiout->field_string ("executable",
-			       inferior->pspace->exec_filename.get ());
-	}
+      if (inferior->pspace->exec_filename () != nullptr)
+	uiout->field_string ("executable", inferior->pspace->exec_filename ());
 
       if (inferior->pid != 0)
 	{
-	  data.pid = inferior->pid;
-	  iterate_over_threads (collect_cores, &data);
+	  iterate_over_threads ([&] (struct thread_info *ti)
+	    {
+	      if (ti->ptid.pid () == inferior->pid)
+		{
+		  int core = target_core_of_thread (ti->ptid);
+
+		  if (core != -1)
+		    cores.insert (core);
+		}
+	      return false;
+	    });
 	}
 
-      if (!data.cores.empty ())
+      if (!cores.empty ())
 	{
 	  ui_out_emit_list list_emitter (uiout, "cores");
 
-	  for (int b : data.cores)
+	  for (int b : cores)
 	    uiout->field_signed (NULL, b);
 	}
 
@@ -693,13 +648,13 @@ output_cores (struct ui_out *uiout, const char *field_name, const char *xcores)
 }
 
 static void
-list_available_thread_groups (const std::set<int> &ids, int recurse)
+list_available_thread_groups (const gdb::unordered_set<int> &ids, int recurse)
 {
   struct ui_out *uiout = current_uiout;
 
   /* This keeps a map from integer (pid) to vector of struct osdata_item.
      The vector contains information about all threads for the given pid.  */
-  std::map<int, std::vector<osdata_item>> tree;
+  gdb::unordered_map<int, std::vector<osdata_item>> tree;
 
   /* get_osdata will throw if it cannot return data.  */
   std::unique_ptr<osdata> data = get_osdata ("processes");
@@ -776,7 +731,7 @@ mi_cmd_list_thread_groups (const char *command, const char *const *argv,
   struct ui_out *uiout = current_uiout;
   int available = 0;
   int recurse = 0;
-  std::set<int> ids;
+  gdb::unordered_set<int> ids;
 
   enum opt
   {
@@ -2080,7 +2035,7 @@ mi_cmd_execute (struct mi_parse *parse)
 	error (_("Invalid thread group for the --thread-group option"));
 
       set_current_inferior (inf);
-      /* This behaviour means that if --thread-group option identifies
+      /* This behavior means that if --thread-group option identifies
 	 an inferior with multiple threads, then a random one will be
 	 picked.  This is not a problem -- frontend should always
 	 provide --thread if it wishes to operate on a specific
@@ -2133,10 +2088,7 @@ mi_cmd_execute (struct mi_parse *parse)
 
   std::optional<scoped_restore_current_language> lang_saver;
   if (parse->language != language_unknown)
-    {
-      lang_saver.emplace ();
-      set_language (parse->language);
-    }
+    lang_saver.emplace (parse->language);
 
   current_context = parse;
 
@@ -2266,7 +2218,7 @@ timestamp (struct mi_timestamp *tv)
   using namespace std::chrono;
 
   tv->wallclock = steady_clock::now ();
-  run_time_clock::now (tv->utime, tv->stime);
+  get_run_time (tv->utime, tv->stime, run_time_scope::process);
 }
 
 static void
@@ -2816,9 +2768,7 @@ mi_parse_thread_group_id (const char *id)
   return (int) num;
 }
 
-void _initialize_mi_main ();
-void
-_initialize_mi_main ()
+INIT_GDB_FILE (mi_main)
 {
   set_show_commands mi_async_cmds
     = add_setshow_boolean_cmd ("mi-async", class_run,

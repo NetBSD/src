@@ -1,6 +1,6 @@
 /*******************************************************************************
- * $Revision: 1.1.1.1.2.1 $
- * $Date: 2025/08/02 05:46:32 $
+ * $Revision: 1.1.1.1.2.2 $
+ * $Date: 2026/11/04 23:13:20 $
  * $Author: perseant $
  *
  * Contents: A streambuf which uses the GNU readline library for line I/O

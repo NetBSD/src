@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.648.2.1 2025/08/02 05:58:46 perseant Exp $	*/
+/*	$NetBSD: tree.c,v 1.648.2.2 2026/11/04 23:28:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.648.2.1 2025/08/02 05:58:46 perseant Exp $");
+__RCSID("$NetBSD: tree.c,v 1.648.2.2 2026/11/04 23:28:46 perseant Exp $");
 #endif
 
 #include <float.h>
@@ -107,6 +107,27 @@ u64_fill_right(uint64_t x)
 	x |= x >> 16;
 	x |= x >> 32;
 	return x;
+}
+
+static unsigned
+u64_width(uint64_t x)
+{
+	unsigned m = 0;
+	if (x >> 32 != 0)
+		x >>= 32, m += 32;
+	if (x >> 16 != 0)
+		x >>= 16, m += 16;
+	if (x >> 8 != 0)
+		x >>= 8, m += 8;
+	if (x >> 4 != 0)
+		x >>= 4, m += 4;
+	if (x >> 2 != 0)
+		x >>= 2, m += 2;
+	if (x >> 1 != 0)
+		x >>= 1, m++;
+	if (x > 0)
+		m++;
+	return m;
 }
 
 static int
@@ -486,6 +507,99 @@ ic_cvt(const type_t *ntp, const type_t *otp, integer_constraints a)
 }
 
 static integer_constraints
+ic_unsigned_range(uint64_t minimum, uint64_t maximum)
+{
+	integer_constraints c;
+	lint_assert(minimum <= maximum);
+	c.smin = maximum <= INT64_MAX ? (int64_t)minimum : INT64_MIN;
+	c.smax = maximum <= INT64_MAX ? (int64_t)maximum : INT64_MAX;
+	c.umin = minimum;
+	c.umax = maximum;
+	c.bclr = ~c.umax;
+	return c;
+}
+
+static integer_constraints
+ic_signed_range(int64_t minimum, int64_t maximum)
+{
+	integer_constraints c;
+	lint_assert(minimum <= maximum);
+	c.smin = minimum;
+	c.smax = maximum;
+	c.umin = minimum >= 0 ? (uint64_t)minimum : 0;
+	c.umax = minimum >= 0 ? (uint64_t)maximum : UINT64_MAX;
+	c.bclr = ~c.umax;
+	return c;
+}
+
+static integer_constraints
+ic_call(const function_call *call)
+{
+	if (!(call->func->tn_op == ADDR
+	    && call->func->u.ops.left->tn_op == NAME))
+		goto any;
+
+	const char *name = call->func->u.ops.left->u.sym->s_name;
+
+	if (strcmp(name, "strlen") == 0
+	    || strcmp(name, "strcspn") == 0
+	    || strcmp(name, "strspn") == 0
+	    || strcmp(name, "strlcpy") == 0
+	    || strcmp(name, "strlcat") == 0)
+		return ic_unsigned_range(0, INT_MAX - 1);
+	if ((strcmp(name, "read") == 0 || strcmp(name, "write") == 0)
+	    && call->args_len == 3
+	    && call->args[2]->tn_op == CON
+	    && is_uinteger(call->args[2]->tn_type->t_tspec)
+	    && call->args[2]->u.value.u.integer >= 0)
+		return ic_signed_range(-1, call->args[2]->u.value.u.integer);
+
+	// https://gcc.gnu.org/onlinedocs/gcc/Bit-Operation-Builtins.html
+	if (strcmp(name, "__builtin_clz") == 0
+	    || strcmp(name, "__builtin_ctz") == 0
+	    || strcmp(name, "__builtin_clrsb") == 0)
+		return ic_unsigned_range(0, INT_SIZE - 1);
+	if (strcmp(name, "__builtin_ffs") == 0
+	    || strcmp(name, "__builtin_popcount") == 0)
+		return ic_unsigned_range(0, INT_SIZE);
+	if (strcmp(name, "__builtin_clzl") == 0
+	    || strcmp(name, "__builtin_ctzl") == 0
+	    || strcmp(name, "__builtin_clrsbl") == 0)
+		return ic_unsigned_range(0, LONG_SIZE - 1);
+	if (strcmp(name, "__builtin_ffsl") == 0
+	    || strcmp(name, "__builtin_popcountl") == 0)
+		return ic_unsigned_range(0, LONG_SIZE);
+	if (strcmp(name, "__builtin_clzll") == 0
+	    || strcmp(name, "__builtin_ctzll") == 0
+	    || strcmp(name, "__builtin_clrsbll") == 0)
+		return ic_unsigned_range(0, LLONG_SIZE - 1);
+	if (strcmp(name, "__builtin_ffsll") == 0
+	    || strcmp(name, "__builtin_popcountll") == 0)
+		return ic_unsigned_range(0, LLONG_SIZE);
+	if ((strcmp(name, "__builtin_clzg") == 0
+	    || strcmp(name, "__builtin_ctzg") == 0
+	    || strcmp(name, "__builtin_clrsbg") == 0)
+	    && call->args_len == 1
+	    && is_integer(call->args[0]->tn_type->t_tspec))
+		return ic_unsigned_range(0,
+		    width_in_bits(call->args[0]->tn_type) - 1);
+	if ((strcmp(name, "__builtin_ffsg") == 0
+	    || strcmp(name, "__builtin_popcountg") == 0)
+	    && call->args_len == 1
+	    && is_integer(call->args[0]->tn_type->t_tspec))
+		return ic_unsigned_range(0,
+		    width_in_bits(call->args[0]->tn_type));
+	if (strcmp(name, "__builtin_parity") == 0
+	    || strcmp(name, "__builtin_parityl") == 0
+	    || strcmp(name, "__builtin_parityll") == 0
+	    || strcmp(name, "__builtin_parityg") == 0)
+		return ic_unsigned_range(0, 1);
+
+any:
+	return ic_any(call->func->tn_type->t_subt->t_subt);
+}
+
+static integer_constraints
 ic_expr(const tnode_t *tn)
 {
 	integer_constraints lc, rc;
@@ -546,6 +660,8 @@ ic_expr(const tnode_t *tn)
 			return ic_any(tn->tn_type);
 		lc = ic_expr(tn->u.ops.left);
 		return ic_cvt(tn->tn_type, tn->u.ops.left->tn_type, lc);
+	case CALL:
+		return ic_call(tn->u.call);
 	default:
 		return ic_any(tn->tn_type);
 	}
@@ -556,6 +672,47 @@ possible_bits(const tnode_t *tn)
 {
 	return ~ic_expr(tn).bclr;
 }
+
+
+static struct {
+	size_t len;
+	size_t cap;
+	evaluation_mode *items;
+} evaluation_modes;
+
+/* Push the minimum of the given mode and the already active mode. */
+void
+push_evaluation_mode(evaluation_mode m)
+{
+	if (evaluation_modes.len >= evaluation_modes.cap) {
+		evaluation_modes.cap = 2 * evaluation_modes.cap + 16;
+		evaluation_modes.items = xrealloc(
+		    evaluation_modes.items,
+		    evaluation_modes.cap * sizeof(*evaluation_modes.items));
+	}
+
+	evaluation_mode top = evaluation_modes.len > 0
+	    ? evaluation_modes.items[evaluation_modes.len - 1]
+	    : EM_EVAL;
+	evaluation_modes.items[evaluation_modes.len++] =
+	    (int)top < (int)m ? top : m;
+}
+
+void
+pop_evaluation_mode(void)
+{
+	evaluation_modes.len--;
+}
+
+bool
+is_evaluation_mode(evaluation_mode m)
+{
+	evaluation_mode top = evaluation_modes.len > 0
+	    ? evaluation_modes.items[evaluation_modes.len - 1]
+	    : EM_EVAL;
+	return (int)top >= (int)m;
+}
+
 
 bool
 attributes_contain(const attribute_list *attrs, const char *str)
@@ -580,15 +737,15 @@ block_derive_type(type_t *tp, tspec_t t)
 }
 
 /*
- * Derive 'pointer to tp' or 'function returning tp'.
+ * Derive 'pointer to tp'.
  * The memory is freed at the end of the current expression.
  */
-type_t *
-expr_derive_type(type_t *tp, tspec_t t)
+static type_t *
+expr_derive_ptr_type(type_t *tp)
 {
 
 	type_t *tp2 = expr_zero_alloc(sizeof(*tp2), "type");
-	tp2->t_tspec = t;
+	tp2->t_tspec = PTR;
 	tp2->t_subt = tp;
 	return tp2;
 }
@@ -715,6 +872,26 @@ is_compiler_builtin(const char *name)
 	if (strncmp(name, "_mm_", 4) == 0)
 		return true;
 
+	// https://clang.llvm.org/docs/LanguageExtensions.html#c11-atomic-builtins
+	if (strcmp(name, "__c11_atomic_init") == 0 ||
+	    strcmp(name, "__c11_atomic_thread_fence") == 0 ||
+	    strcmp(name, "__c11_atomic_signal_fence") == 0 ||
+	    strcmp(name, "__c11_atomic_is_lock_free ") == 0 ||
+	    strcmp(name, "__c11_atomic_store") == 0 ||
+	    strcmp(name, "__c11_atomic_load") == 0 ||
+	    strcmp(name, "__c11_atomic_exchange") == 0 ||
+	    strcmp(name, "__c11_atomic_compare_exchange_strong") == 0 ||
+	    strcmp(name, "__c11_atomic_compare_exchange_weak") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_add") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_sub") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_and") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_or") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_xor") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_nand ") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_max") == 0 ||
+	    strcmp(name, "__c11_atomic_fetch_min") == 0)
+		return true;
+
 	return false;
 }
 
@@ -833,23 +1010,6 @@ build_string(buffer *lit)
 	return n;
 }
 
-tnode_t *
-build_generic_selection(const tnode_t *expr,
-			struct generic_association *sel)
-{
-	tnode_t *default_result = NULL;
-
-	for (; sel != NULL; sel = sel->ga_prev) {
-		if (expr != NULL &&
-		    types_compatible(sel->ga_arg, expr->tn_type,
-			false, false, NULL))
-			return sel->ga_result;
-		if (sel->ga_arg == NULL)
-			default_result = sel->ga_result;
-	}
-	return default_result;
-}
-
 static bool
 is_out_of_char_range(const tnode_t *tn)
 {
@@ -922,10 +1082,10 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (rn->u.value.u.integer < 0) {
 			/* operator '%s' compares '%s' with '%s' */
 			warning(162, op_name(op),
-			    type_name(ln->tn_type), "negative constant");
+			    expr_type_name(ln), "negative constant");
 		} else if (op == LT || op == GE)
 			/* operator '%s' compares '%s' with '%s' */
-			warning(162, op_name(op), type_name(ln->tn_type), "0");
+			warning(162, op_name(op), expr_type_name(ln), "0");
 		return;
 	}
 	if (is_uinteger(rt) && !is_uinteger(lt) &&
@@ -933,19 +1093,17 @@ check_integer_comparison(op_t op, tnode_t *ln, tnode_t *rn)
 		if (ln->u.value.u.integer < 0) {
 			/* operator '%s' compares '%s' with '%s' */
 			warning(162, op_name(op),
-			    "negative constant", type_name(rn->tn_type));
+			    "negative constant", expr_type_name(rn));
 		} else if (op == GT || op == LE)
 			/* operator '%s' compares '%s' with '%s' */
-			warning(162, op_name(op), "0", type_name(rn->tn_type));
+			warning(162, op_name(op), "0", expr_type_name(rn));
 		return;
 	}
 }
 
 static const tspec_t arith_rank[] = {
 	LDOUBLE, DOUBLE, FLOAT,
-#ifdef INT128_SIZE
 	UINT128, INT128,
-#endif
 	ULLONG, LLONG,
 	ULONG, LONG,
 	UINT, INT,
@@ -1011,7 +1169,7 @@ apply_usual_arithmetic_conversions(op_t op, tnode_t *tn, tspec_t t)
 	if (tn->tn_op != CON) {
 		/* usual arithmetic conversion for '%s' from '%s' to '%s' */
 		query_message(4, op_name(op),
-		    type_name(tn->tn_type), type_name(ntp));
+		    expr_type_name(tn), type_name(ntp));
 	}
 	return convert(op, 0, ntp, tn);
 }
@@ -1037,7 +1195,7 @@ balance(op_t op, tnode_t **lnp, tnode_t **rnp)
 	    && is_integer(lt) && (*lnp)->tn_op != CON
 	    && is_floating(t) && (*rnp)->tn_op == CON)
 		/* comparing integer '%s' to floating point constant %Lg */
-		warning(379, type_name((*lnp)->tn_type),
+		warning(379, expr_type_name(*lnp),
 		    (*rnp)->u.value.u.floating);
 
 	if (t != lt)
@@ -1065,7 +1223,7 @@ build_address(bool sys, tnode_t *tn)
 		return tn->u.ops.left;
 	}
 
-	return build_op(ADDR, sys, expr_derive_type(tn->tn_type, PTR),
+	return build_op(ADDR, sys, expr_derive_ptr_type(tn->tn_type),
 	    tn, NULL);
 }
 
@@ -1085,15 +1243,17 @@ fold_unsigned_integer(op_t op, uint64_t l, uint64_t r,
 		return l * r;
 	case DIV:
 		if (r == 0) {
-			/* division by 0 */
-			error(139);
+			if (is_evaluation_mode(EM_EVAL))
+				/* division by 0 */
+				error(139);
 			return max_value;
 		}
 		return l / r;
 	case MOD:
 		if (r == 0) {
-			/* modulus by 0 */
-			error(140);
+			if (is_evaluation_mode(EM_EVAL))
+				/* modulus by 0 */
+				error(140);
 			return 0;
 		}
 		return l % r;
@@ -1158,8 +1318,9 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		return l * r;
 	case DIV:
 		if (r == 0) {
-			/* division by 0 */
-			error(139);
+			if (is_evaluation_mode(EM_EVAL))
+				/* division by 0 */
+				error(139);
 			return max_value;
 		}
 		if (l == min_value && r == -1) {
@@ -1169,8 +1330,9 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 		return l / r;
 	case MOD:
 		if (r == 0) {
-			/* modulus by 0 */
-			error(140);
+			if (is_evaluation_mode(EM_EVAL))
+				/* modulus by 0 */
+				error(140);
 			return 0;
 		}
 		if (l == min_value && r == -1) {
@@ -1201,7 +1363,7 @@ fold_signed_integer(op_t op, int64_t l, int64_t r,
 	case SHL:
 		/* TODO: warn about out-of-bounds 'r'. */
 		/* TODO: warn about overflow. */
-		return l << (r & 63);
+		return (int64_t)((uint64_t)l << (r & 63));
 	case SHR:
 		/* TODO: warn about out-of-bounds 'r'. */
 		return s64_shr(l, r & 63);
@@ -1258,7 +1420,7 @@ fold_constant_integer(tnode_t *tn)
 				    op_name(tn->tn_op), (uintmax_t)l);
 			}
 			/* '%s' overflows '%s' */
-			warning(141, buf, type_name(tn->tn_type));
+			warning(141, buf, expr_type_name(tn));
 		}
 	} else {
 		int64_t max_value = (int64_t)(mask >> 1);
@@ -1281,7 +1443,7 @@ fold_constant_integer(tnode_t *tn)
 				    op_name(tn->tn_op), (intmax_t)l);
 			}
 			/* '%s' overflows '%s' */
-			warning(141, buf, type_name(tn->tn_type));
+			warning(141, buf, expr_type_name(tn));
 		}
 	}
 
@@ -1312,13 +1474,13 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	else if (ln->tn_type->t_tspec != PTR) {
 		lint_assert(!allow_c90);
 		lint_assert(is_integer(ln->tn_type->t_tspec));
-		ln = convert(NOOP, 0, expr_derive_type(gettyp(VOID), PTR), ln);
+		ln = convert(NOOP, 0, expr_derive_ptr_type(gettyp(VOID)), ln);
 	}
 
 	tnode_t *ctn = build_integer_constant(PTRDIFF_TSPEC,
 	    rn->u.sym->u.s_member.sm_offset_in_bits / CHAR_SIZE);
 
-	type_t *ptr_tp = expr_derive_type(rn->tn_type, PTR);
+	type_t *ptr_tp = expr_derive_ptr_type(rn->tn_type);
 	tnode_t *ntn = build_op(PLUS, sys, ptr_tp, ln, ctn);
 	if (ln->tn_op == CON)
 		ntn = fold_constant_integer(ntn);
@@ -1329,6 +1491,17 @@ build_struct_access(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 		ntn->tn_lvalue = false;
 
 	return ntn;
+}
+
+static bool
+may_be_signed_min(const tnode_t *tn)
+{
+	if (!is_integer(tn->tn_type->t_tspec))
+		return false;
+	if (is_uinteger(tn->tn_type->t_tspec))
+		return false;
+	integer_constraints c = ic_expr(tn);
+	return c.smin == si_min_value(tn->tn_type);
 }
 
 /*
@@ -1444,6 +1617,10 @@ check_enum_array_index(const tnode_t *ln, const tnode_t *rn)
 	     strstr(max_ec->s_name, "max") != NULL ||
 	     strstr(max_ec->s_name, "NUM") != NULL ||
 	     strstr(max_ec->s_name, "num") != NULL ||
+	     strncmp(max_ec->s_name, "COUNT_", 6) == 0 ||
+	     str_ends_with(max_ec->s_name, "_COUNT") ||
+	     strncmp(max_ec->s_name, "LAST_", 5) == 0 ||
+	     str_ends_with(max_ec->s_name, "_end") ||
 	     strncmp(max_ec->s_name, "N_", 2) == 0))
 		return;
 
@@ -1704,8 +1881,8 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 
 	if (op == SHLASS && hflag && allow_trad && allow_c90
 	    && portable_rank_cmp(lt, rt) < 0)
-		/* semantics of '%s' change in C90; ... */
-		warning(118, "<<=");
+		/* '%s' %s '%s' differs between traditional C and C90 */
+		warning(118, tspec_name(lt), "<<=", tspec_name(rt));
 
 	if (op != SHLASS && op != SHRASS
 	    && (op == ASSIGN || lt != PTR)
@@ -1724,7 +1901,7 @@ build_assignment(op_t op, bool sys, tnode_t *ln, tnode_t *rn)
 	    types_compatible(ln->tn_type, rn->tn_type, false, false, NULL) &&
 	    is_cast_redundant(rn)) {
 		/* redundant cast from '%s' to '%s' before assignment */
-		query_message(7, type_name(rn->u.ops.left->tn_type),
+		query_message(7, expr_type_name(rn->u.ops.left),
 		    type_name(rn->tn_type));
 	}
 
@@ -1927,8 +2104,9 @@ fold_constant_floating(tnode_t *tn)
 		break;
 	case DIV:
 		if (rv == 0.0) {
-			/* division by 0 */
-			error(139);
+			if (is_evaluation_mode(EM_EVAL))
+				/* division by 0 */
+				error(139);
 			v->u.floating = floating_error_value(t, lv);
 		} else {
 			v->u.floating = lv / rv;
@@ -2059,6 +2237,12 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	case ARROW:
 		ntn = build_struct_access(op, sys, ln, rn);
 		break;
+	case UMINUS:
+		if (any_query_enabled && may_be_signed_min(ln))
+			/* negation of signed '%s' */
+			query_message(25, expr_type_name(ln));
+		ntn = build_op(op, sys, ln->tn_type, ln, rn);
+		break;
 	case INCAFT:
 	case DECAFT:
 	case INCBEF:
@@ -2100,7 +2284,7 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 	case COMMA:
 		/* comma operator with types '%s' and '%s' */
 		query_message(12,
-		    type_name(ln->tn_type), type_name(rn->tn_type));
+		    expr_type_name(ln), expr_type_name(rn));
 		/* FALLTHROUGH */
 	case QUEST:
 		ntn = build_op(op, sys, rn->tn_type, ln, rn);
@@ -2114,14 +2298,14 @@ build_binary(tnode_t *ln, op_t op, bool sys, tnode_t *rn)
 		if ((op == NOT || op == LOGAND || op == LOGOR)
 		    && ln->tn_op == ASSIGN && ln->u.ops.right->tn_op == CON) {
 			/* constant assignment of type '%s' in operand ... */
-			warning(382, type_name(ln->tn_type), op_name(op),
+			warning(382, expr_type_name(ln), op_name(op),
 			    is_nonzero_val(&ln->u.ops.right->u.value)
 			    ? "true" : "false");
 		}
 		if ((op == LOGAND || op == LOGOR)
 		    && rn->tn_op == ASSIGN && rn->u.ops.right->tn_op == CON) {
 			/* constant assignment of type '%s' in operand ... */
-			warning(382, type_name(rn->tn_type), op_name(op),
+			warning(382, expr_type_name(rn), op_name(op),
 			    is_nonzero_val(&rn->u.ops.right->u.value)
 			    ? "true" : "false");
 		}
@@ -2307,17 +2491,17 @@ struct_or_union_member(tnode_t *tn, op_t op, sym_t *msym)
 		if (op == POINT) {
 			if (!allow_c90)
 				/* left operand of '.' must be struct ... */
-				warning(103, type_name(tn->tn_type));
+				warning(103, expr_type_name(tn));
 			else
 				/* left operand of '.' must be struct ... */
-				error(103, type_name(tn->tn_type));
+				error(103, expr_type_name(tn));
 		} else {
 			if (!allow_c90 && tn->tn_type->t_tspec == PTR)
 				/* left operand of '->' must be pointer ... */
-				warning(104, type_name(tn->tn_type));
+				warning(104, expr_type_name(tn));
 			else
 				/* left operand of '->' must be pointer ... */
-				error(104, type_name(tn->tn_type));
+				error(104, expr_type_name(tn));
 		}
 	} else {
 		if (!allow_c90)
@@ -2367,7 +2551,7 @@ cconv(tnode_t *tn)
 			gnuism(114, "", op_name(ADDR));
 		}
 		tn = build_op(ADDR, tn->tn_sys,
-		    expr_derive_type(tn->tn_type->t_subt, PTR), tn, NULL);
+		    expr_derive_ptr_type(tn->tn_type->t_subt), tn, NULL);
 	}
 
 	if (tn->tn_type->t_tspec == FUNC)
@@ -2560,69 +2744,85 @@ typeok_minus(op_t op,
 }
 
 static void
-typeok_shr(op_t op,
-	   const tnode_t *ln, tspec_t lt,
+typeok_shr(const tnode_t *ln, tspec_t lt,
 	   const tnode_t *rn, tspec_t rt)
 {
 	tspec_t olt = before_conversion(ln)->tn_type->t_tspec;
 	tspec_t ort = before_conversion(rn)->tn_type->t_tspec;
 
-	/* operands have integer types (checked in typeok) */
-	if (pflag && !is_uinteger(olt)) {
+	if (is_uinteger(olt))
+		return;
+
+	if (pflag) {
 		integer_constraints lc = ic_expr(ln);
 		if (lc.bclr >> 63 != 0)
 			return;
 
 		if (ln->tn_op != CON)
-			/* bitwise '%s' on signed value possibly nonportable */
-			warning(117, op_name(op));
+			/* bitwise '%s' on signed '%s' possibly nonportable */
+			warning(117, ">>", expr_type_name(ln));
 		else if (ln->u.value.u.integer < 0)
-			/* bitwise '%s' on signed value nonportable */
-			warning(120, op_name(op));
-	} else if (allow_trad && allow_c90 &&
-	    !is_uinteger(olt) && is_uinteger(ort)) {
-		/* The left operand would become unsigned in traditional C. */
-		if (hflag && (ln->tn_op != CON || ln->u.value.u.integer < 0)) {
-			/* semantics of '%s' change in C90; use ... */
-			warning(118, op_name(op));
-		}
-	} else if (allow_trad && allow_c90 &&
-	    !is_uinteger(olt) && !is_uinteger(ort) &&
-	    portable_rank_cmp(lt, rt) < 0) {
-		/*
-		 * In traditional C, the left operand would be extended
-		 * (possibly sign-extended) and then shifted.
-		 */
-		if (hflag && (ln->tn_op != CON || ln->u.value.u.integer < 0)) {
-			/* semantics of '%s' change in C90; use ... */
-			warning(118, op_name(op));
-		}
+			/* bitwise '%s' on signed '%s' nonportable */
+			warning(120, ">>", expr_type_name(ln));
+		return;
 	}
+
+	/* The left operand would become unsigned in traditional C. */
+	if (allow_trad && allow_c90 && hflag && is_uinteger(ort)
+	    && !(ln->tn_op == CON && ln->u.value.u.integer >= 0))
+		/* '%s' %s '%s' differs between traditional C and C90 */
+		warning(118, tspec_name(lt), ">>", tspec_name(rt));
+
+	/*
+	 * In traditional C, the left operand would be extended
+	 * (possibly sign-extended) and then shifted.
+	 */
+	if (allow_trad && allow_c90 && hflag && !is_uinteger(ort)
+	    && portable_rank_cmp(lt, rt) < 0
+	    && !(ln->tn_op == CON && ln->u.value.u.integer >= 0))
+		/* '%s' %s '%s' differs between traditional C and C90 */
+		warning(118, tspec_name(lt), ">>", tspec_name(rt));
+}
+
+// C90 does not mention signed shift-left. Later standards mention that case
+// but leave open whether 'uint8_t << 24' is supposed to have an unsigned or a
+// signed result type. It depends on whether E1 is interpreted to be the left
+// operand's type before or after integral promotions.
+static void
+typeok_shl_signed_to_msb(const tnode_t *ln, const tnode_t *rn)
+{
+	integer_constraints lc = ic_expr(ln);
+	int64_t n;
+	unsigned lw = width_in_bits(ln->tn_type);
+	if (!is_uinteger(ln->tn_type->t_tspec)
+	    && ln->tn_op != CON
+	    && ((lc.smin == 0 && lc.smax != 0 && lc.smax != INT64_MAX
+		    && (lc.smax & (lc.smax + 1)) == 0)
+		|| (lc.smin != INT64_MAX && lc.smax != INT64_MIN
+		    && lc.smin + 1 == -lc.smax))
+	    && rn->tn_op == CON
+	    && (n = rn->u.value.u.integer, 1 <= n && n <= lw)
+	    && u64_width((uint64_t)lc.smax - (uint64_t)lc.smin) + n == lw)
+		/* bitwise '%s' on signed '%s' possibly nonportable */
+		warning(117, "<<", expr_type_name(ln));
 }
 
 static void
-typeok_shl(op_t op, tspec_t lt, tspec_t rt)
+typeok_shl(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	/*
-	 * C90 does not perform balancing for shift operations, but traditional
-	 * C does. If the width of the right operand is greater than the width
-	 * of the left operand, then in traditional C the left operand would be
-	 * extended to the width of the right operand. For SHL this may result
-	 * in different results.
+	 * Traditional C performs the usual arithmetic conversions on the
+	 * operands, C90 and later don't.
 	 */
-	if (portable_rank_cmp(lt, rt) < 0) {
-		/*
-		 * XXX If both operands are constant, make sure that there is
-		 * really a difference between C90 and traditional C.
-		 */
-		if (hflag && allow_trad && allow_c90)
-			/* semantics of '%s' change in C90; use ... */
-			warning(118, op_name(op));
-	}
+	if (hflag && allow_trad && allow_c90 && portable_rank_cmp(lt, rt) < 0)
+		/* '%s' %s '%s' differs between traditional C and C90 */
+		warning(118, tspec_name(lt), "<<", tspec_name(rt));
+
+	typeok_shl_signed_to_msb(ln, rn);
 }
 
 static void
-typeok_shift(const type_t *ltp, tspec_t lt, const tnode_t *rn, tspec_t rt)
+typeok_shift(const tnode_t *ln, tspec_t lt, const tnode_t *rn, tspec_t rt)
 {
 	if (rn->tn_op != CON)
 		return;
@@ -2632,12 +2832,13 @@ typeok_shift(const type_t *ltp, tspec_t lt, const tnode_t *rn, tspec_t rt)
 		warning(121);
 	else if ((uint64_t)rn->u.value.u.integer == size_in_bits(lt))
 		/* shift amount %u equals bit-size of '%s' */
-		warning(267, (unsigned)rn->u.value.u.integer, type_name(ltp));
+		warning(267,
+		    (unsigned)rn->u.value.u.integer, expr_type_name(ln));
 	else if ((uint64_t)rn->u.value.u.integer > size_in_bits(lt)) {
 		/* shift amount %llu is greater than bit-size %llu of '%s' */
 		warning(122, (unsigned long long)rn->u.value.u.integer,
 		    (unsigned long long)size_in_bits(lt),
-		    tspec_name(lt));
+		    expr_type_name(ln));
 	}
 }
 
@@ -2807,7 +3008,7 @@ typeok_colon(const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	if (lt == VOID || rt == VOID) {
 		if (lt != VOID || rt != VOID)
 			/* incompatible types '%s' and '%s' in conditional */
-			warning(126, type_name(ltp), type_name(rtp));
+			warning(126, expr_type_name(ln), expr_type_name(rn));
 		return true;
 	}
 
@@ -2817,7 +3018,7 @@ typeok_colon(const tnode_t *ln, const type_t *ltp, tspec_t lt,
 	}
 
 	/* incompatible types '%s' and '%s' in conditional */
-	error(126, type_name(ltp), type_name(rtp));
+	error(126, expr_type_name(ln), expr_type_name(rn));
 	return false;
 }
 
@@ -3188,11 +3389,9 @@ has_side_effect(const tnode_t *tn) /* NOLINT(misc-no-recursion) */
 	if (op == CVT && tn->tn_type->t_tspec == VOID)
 		return has_side_effect(tn->u.ops.left);
 
-	/* XXX: Why not has_side_effect(tn->u.ops.left) as well? */
 	if (op == LOGAND || op == LOGOR)
 		return has_side_effect(tn->u.ops.right);
 
-	/* XXX: Why not has_side_effect(tn->u.ops.left) as well? */
 	if (op == QUEST)
 		return has_side_effect(tn->u.ops.right);
 
@@ -3273,12 +3472,12 @@ typeok_op(op_t op, const function_call *call, int arg,
 	case MINUS:
 		return typeok_minus(op, ltp, lt, rtp, rt);
 	case SHL:
-		typeok_shl(op, lt, rt);
+		typeok_shl(ln, lt, rn, rt);
 		goto shift;
 	case SHR:
-		typeok_shr(op, ln, lt, rn, rt);
+		typeok_shr(ln, lt, rn, rt);
 	shift:
-		typeok_shift(ltp, lt, rn, rt);
+		typeok_shift(ln, lt, rn, rt);
 		break;
 	case LT:
 	case LE:
@@ -3318,8 +3517,8 @@ typeok_op(op_t op, const function_call *call, int arg,
 	case SHRASS:
 		if (pflag && !is_uinteger(lt) &&
 		    !(!allow_c90 && is_uinteger(rt))) {
-			/* bitwise '%s' on signed value possibly nonportable */
-			warning(117, op_name(op));
+			/* bitwise '%s' on signed '%s' possibly nonportable */
+			warning(117, op_name(op), expr_type_name(rn));
 		}
 		goto assign;
 	case ANDASS:
@@ -3380,8 +3579,9 @@ check_enum_type_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			break;
 		default:
 			/* enum type mismatch: '%s' '%s' '%s' */
-			warning(130, type_name(ln->tn_type), op_name(op),
-			    type_name(rn->tn_type));
+			warning(130, expr_type_name(before_conversion(ln)),
+			    op_name(op),
+			    expr_type_name(before_conversion(rn)));
 			break;
 		}
 	} else if (Pflag && eflag && mp->m_comparison && op != EQ && op != NE)
@@ -3408,20 +3608,20 @@ check_enum_int_mismatch(op_t op, int arg, const tnode_t *ln, const tnode_t *rn)
 			return;
 		}
 		/* initialization of '%s' with '%s' */
-		warning(277, type_name(ln->tn_type), type_name(rn->tn_type));
+		warning(277, type_name(ln->tn_type), expr_type_name(rn));
 		break;
 	case FARG:
 		/* combination of '%s' and '%s', arg #%d */
 		warning(278,
-		    type_name(ln->tn_type), type_name(rn->tn_type), arg);
+		    type_name(ln->tn_type), expr_type_name(rn), arg);
 		break;
 	case RETURN:
 		/* combination of '%s' and '%s' in return */
-		warning(279, type_name(ln->tn_type), type_name(rn->tn_type));
+		warning(279, type_name(ln->tn_type), expr_type_name(rn));
 		break;
 	default:
 		/* combination of '%s' and '%s', op '%s' */
-		warning(242, type_name(ln->tn_type), type_name(rn->tn_type),
+		warning(242, type_name(ln->tn_type), expr_type_name(rn),
 		    op_name(op));
 		break;
 	}
@@ -3546,13 +3746,6 @@ promote(op_t op, bool farg, tnode_t *tn)
 	ntp->t_is_enum = otp->t_is_enum;
 	if (ntp->t_is_enum)
 		ntp->u.enumer = otp->u.enumer;
-	ntp->t_bitfield = otp->t_bitfield;
-	if (ntp->t_bitfield) {
-		ntp->t_bit_field_width = otp->t_bit_field_width;
-		ntp->t_bit_field_offset = otp->t_bit_field_offset;
-	}
-	if (ntp->t_bitfield && is_uinteger(ot) && !is_uinteger(nt))
-		ntp->t_bit_field_width++;
 	return convert(op, 0, ntp, tn);
 }
 
@@ -3561,17 +3754,18 @@ check_lossy_floating_to_integer_conversion(
     op_t op, int arg, const type_t *tp, const tnode_t *tn)
 {
 	long double x = tn->u.value.u.floating;
-	integer_constraints ic = ic_any(tp);
+	long double oob = powl(2.0L,
+	    width_in_bits(tp) - (is_uinteger(tp->t_tspec) ? 0 : 1));
 	if (is_uinteger(tp->t_tspec)
-	    ? x >= ic.umin && x <= ic.umax && x == (uint64_t)x
-	    : x >= ic.smin && x <= ic.smax && x == (int64_t)x)
+	    ? x >= 0.0L && x < oob && x == (uint64_t)x
+	    : x >= -oob && x < oob && x == (int64_t)x)
 		return;
 	if (op == FARG)
-		/* lossy conversion of %Lg to '%s', arg #%d */
-		warning(380, x, type_name(tp), arg);
+		/* lossy conversion of %Lg (%La) to '%s', arg #%d */
+		warning(380, x, x, type_name(tp), arg);
 	else
-		/* lossy conversion of %Lg to '%s' */
-		warning(381, x, type_name(tp));
+		/* lossy conversion of %Lg (%La) to '%s' */
+		warning(381, x, x, type_name(tp));
 }
 
 static void
@@ -3585,7 +3779,7 @@ convert_integer_from_floating(
 	else
 		/* implicit conversion from floating point '%s' to ... */
 		query_message(1, type_name(tn->tn_type), type_name(tp));
-	if (tn->tn_op == CON)
+	if (tn->tn_op == CON && op != CVT)
 		check_lossy_floating_to_integer_conversion(op, arg, tp, tn);
 }
 
@@ -3657,7 +3851,7 @@ check_prototype_conversion(int arg, tspec_t nt, tspec_t ot, type_t *tp,
 
 	if (should_warn_about_prototype_conversion(nt, ot, ptn)) {
 		/* argument %d is converted from '%s' to '%s' ... */
-		warning(259, arg, type_name(tn->tn_type), type_name(tp));
+		warning(259, arg, expr_type_name(tn), type_name(tp));
 	}
 }
 
@@ -3702,9 +3896,7 @@ should_warn_about_integer_conversion(const type_t *ntp, tspec_t nt,
 	if (aflag > 0 && portable_rank_cmp(nt, ot) < 0) {
 		if (ot == LONG || ot == ULONG
 		    || ot == LLONG || ot == ULLONG
-#ifdef INT128_SIZE
 		    || ot == INT128 || ot == UINT128
-#endif
 		    || aflag > 1)
 			return !can_represent(ntp, otn);
 	}
@@ -3742,20 +3934,17 @@ convert_integer_from_integer(op_t op, int arg, tspec_t nt, tspec_t ot,
 	}
 
 	if (should_warn_about_integer_conversion(tp, nt, tn, ot)) {
-		if (op == FARG) {
+		if (op == FARG)
 			/* conversion from '%s' to '%s' may lose ... */
-			warning(298,
-			    type_name(tn->tn_type), type_name(tp), arg);
-		} else {
+			warning(298, expr_type_name(tn), type_name(tp), arg);
+		else
 			/* conversion from '%s' to '%s' may lose accuracy */
-			warning(132,
-			    type_name(tn->tn_type), type_name(tp));
-		}
+			warning(132, expr_type_name(tn), type_name(tp));
 	}
 
 	if (is_uinteger(nt) != is_uinteger(ot))
 		/* implicit conversion changes sign from '%s' to '%s' */
-		query_message(3, type_name(tn->tn_type), type_name(tp));
+		query_message(3, expr_type_name(tn), type_name(tp));
 }
 
 static void
@@ -4484,7 +4673,7 @@ cast(tnode_t *tn, bool sys, type_t *tp)
 	if (any_query_enabled
 	    && types_compatible(tp, tn->tn_type, false, false, NULL))
 		/* no-op cast from '%s' to '%s' */
-		query_message(6, type_name(tn->tn_type), type_name(tp));
+		query_message(6, expr_type_name(tn), type_name(tp));
 
 	tn = convert(CVT, 0, tp, tn);
 	tn->tn_cast = true;
@@ -4494,7 +4683,7 @@ cast(tnode_t *tn, bool sys, type_t *tp)
 
 invalid_cast:
 	/* invalid cast from '%s' to '%s' */
-	error(147, type_name(tn->tn_type), type_name(tp));
+	error(147, expr_type_name(tn), type_name(tp));
 	return NULL;
 }
 
@@ -4528,7 +4717,7 @@ add_function_argument(function_call *call, tnode_t *arg)
  * the type of the parameter.
  */
 static tnode_t *
-check_prototype_argument(const function_call *call, int arg,
+convert_prototype_argument(const function_call *call, int arg,
     type_t *tp, tnode_t *tn)
 {
 	tnode_t *ln = xcalloc(1, sizeof(*ln));
@@ -4544,16 +4733,11 @@ check_prototype_argument(const function_call *call, int arg,
 	return tn;
 }
 
-/*
- * Check types of all function arguments and insert conversions,
- * if necessary.
- */
 static void
-check_function_arguments(const function_call *call)
+convert_function_arguments(const function_call *call)
 {
 	type_t *ftp = call->func->tn_type->t_subt;
 
-	/* get # of parameters in the prototype */
 	int npar = 0;
 	for (const sym_t *p = ftp->u.params; p != NULL; p = p->s_next)
 		npar++;
@@ -4570,7 +4754,6 @@ check_function_arguments(const function_call *call)
 	for (int i = 0; i < narg; i++) {
 		tnode_t *arg = call->args[i];
 
-		/* some things which are always not allowed */
 		tspec_t at = arg->tn_type->t_tspec;
 		if (at == VOID) {
 			/* void expressions may not be arguments, arg #%d */
@@ -4593,7 +4776,8 @@ check_function_arguments(const function_call *call)
 		call->args[i] = arg;
 
 		arg = param != NULL
-		    ? check_prototype_argument(call, i + 1, param->s_type, arg)
+		    ? convert_prototype_argument(call,
+			i + 1, param->s_type, arg)
 		    : promote(NOOP, true, arg);
 		call->args[i] = arg;
 
@@ -4652,11 +4836,11 @@ build_function_call(tnode_t *func, bool sys, function_call *call)
 	if (func->tn_type->t_tspec != PTR ||
 	    func->tn_type->t_subt->t_tspec != FUNC) {
 		/* cannot call '%s', must be a function */
-		error(149, type_name(func->tn_type));
+		error(149, expr_type_name(func));
 		return NULL;
 	}
 
-	check_function_arguments(call);
+	convert_function_arguments(call);
 
 	tnode_t *ntn = expr_alloc_tnode();
 	ntn->tn_op = CALL;

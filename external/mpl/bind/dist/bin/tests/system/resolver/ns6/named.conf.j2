@@ -1,0 +1,80 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS6
+
+options {
+	{% include_indented "_common/options-dual.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+	querylog yes;
+	statistics-file "named.stats";
+	max-udp-size 4096;
+	responselog no;
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "example.net" {
+	type primary;
+	file "example.net.db.signed";
+	allow-update { any; };
+};
+
+zone "ds.example.net" {
+	type primary;
+	file "ds.example.net.db.signed";
+	allow-update { any; };
+};
+
+zone "to-be-removed.tld" {
+	type primary;
+	file "to-be-removed.tld.db";
+	allow-update { any; };
+};
+
+zone "broken" {
+	type primary;
+	file "broken.db";
+	allow-update { any; };
+};
+
+zone "redirect.com" {
+	type primary;
+	file "redirect.com.db";
+};
+
+zone "tld1" {
+	type primary;
+	file "tld1.db";
+};
+
+zone "no-edns-version.tld" {
+	type primary;
+	file "no-edns-version.tld.db";
+};
+
+zone "fetch.tld" {
+	type primary;
+	file "fetch.tld.db";
+};
+
+zone "targetns" {
+	type primary;
+	file "targetns.db";
+};
+
+{% include "_common/controls.conf.j2" %}

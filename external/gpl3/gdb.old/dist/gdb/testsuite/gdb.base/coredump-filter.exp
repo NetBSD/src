@@ -1,4 +1,4 @@
-# Copyright 2015-2023 Free Software Foundation, Inc.
+# Copyright 2015-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -105,14 +105,23 @@ proc test_disasm { core address should_fail } {
 	    return
 	}
 
+	# If GDB managed to auto-load an executable based on the core
+	# file, then unload it now.
+	gdb_test "with confirm off -- file" \
+	    [multi_line \
+		 "^No executable file now\\." \
+		 "No symbol file now\\."] \
+	    "ensure no executable is loaded"
+
 	if { $should_fail == 1 } {
 	    remote_exec host "mv -f $hide_binfile $binfile"
-	    gdb_test "x/i \$pc" "=> $hex:\tCannot access memory at address $hex" \
-		"disassemble function with corefile and without a binary"
+	    set re "Cannot access memory at address $hex"
 	} else {
-	    gdb_test "x/i \$pc" "=> $hex:\t\[^C\].*" \
-		"disassemble function with corefile and without a binary"
+	    set re "\[^C\].*"
 	}
+
+	gdb_test "x/i \$pc" "=> $hex:\t${re}" \
+	    "disassemble function with corefile and without a binary"
     }
 
     with_test_prefix "with binary" {

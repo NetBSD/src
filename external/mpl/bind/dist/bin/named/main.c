@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.16.2.1 2025/08/02 05:50:53 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.16.2.2 2026/11/04 23:15:34 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -53,6 +53,8 @@
 #include <dns/view.h>
 
 #include <dlz/dlz_dlopen_driver.h>
+
+#include "ns/pfilter.h"
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 #include <gperftools/profiler.h>
@@ -122,6 +124,11 @@ extern unsigned int dns_zone_mkey_hour;
 extern unsigned int dns_zone_mkey_day;
 extern unsigned int dns_zone_mkey_month;
 
+extern unsigned int dns_adb_entrywindow;
+extern unsigned int dns_adb_cachemin;
+extern size_t dns_dispatch_tcppipelining;
+extern size_t dns_adb_addrslimit;
+
 static bool want_stats = false;
 static char program_name[NAME_MAX] = "named";
 static char absolute_conffile[PATH_MAX];
@@ -144,6 +151,7 @@ static bool noedns = false;
 static bool nonearest = false;
 static bool nosoa = false;
 static bool notcp = false;
+static bool rpzslow = false;
 static bool sigvalinsecs = false;
 static bool transferinsecs = false;
 static bool transferslowly = false;
@@ -791,6 +799,8 @@ parse_T_opt(char *option) {
 		if (dns_zone_mkey_month < dns_zone_mkey_day) {
 			named_main_earlyfatal("bad mkeytimer");
 		}
+	} else if (!strcmp(option, "rpzslow")) {
+		rpzslow = true;
 	} else if (!strcmp(option, "sigvalinsecs")) {
 		sigvalinsecs = true;
 	} else if (!strcmp(option, "transferinsecs")) {
@@ -801,6 +811,24 @@ parse_T_opt(char *option) {
 		transferstuck = true;
 	} else if (!strncmp(option, "tat=", 4)) {
 		named_g_tat_interval = atoi(option + 4);
+	} else if (!strncmp(option, "adbentrywindow=", 15)) {
+		dns_adb_entrywindow = atoi(option + 15);
+	} else if (!strncmp(option, "adbcachemin=", 12)) {
+		dns_adb_cachemin = atoi(option + 12);
+	} else if (!strncmp(option, "tcppipelining=", 14)) {
+		size_t pipelining = atoi(option + 14);
+		if (pipelining < 1) {
+			named_main_earlyfatal("tcppipelining must be at "
+					      "least 1");
+		}
+		dns_dispatch_tcppipelining = pipelining;
+	} else if (!strncmp(option, "adbaddrslimit=", 14)) {
+		size_t adb_addrslimit = atoi(option + 14);
+		if (adb_addrslimit < 1) {
+			named_main_earlyfatal("adbaddrslimit must be at "
+					      "least 1");
+		}
+		dns_adb_addrslimit = adb_addrslimit;
 	} else {
 		fprintf(stderr, "unknown -T flag '%s'\n", option);
 	}
@@ -821,7 +849,7 @@ parse_port(char *arg) {
 		value = arg + 6;
 		ptype = HTTPSPORT;
 	} else if (strncmp(arg, "http=", 5) == 0) {
-		value = arg + 6;
+		value = arg + 5;
 		ptype = HTTPPORT;
 	}
 
@@ -1058,6 +1086,7 @@ setup(void) {
 	ns_server_t *sctx;
 #ifdef HAVE_LIBSCF
 	char *instance = NULL;
+	isc_mem_t *smf_mctx = NULL;
 #endif /* ifdef HAVE_LIBSCF */
 
 	/*
@@ -1075,8 +1104,13 @@ setup(void) {
 	named_os_opendevnull();
 
 #ifdef HAVE_LIBSCF
-	/* Check if named is under smf control, before chroot. */
-	result = named_smf_get_instance(&instance, 0, named_g_mctx);
+	/*
+	 * Check if named is under smf control, before chroot.  This runs
+	 * long before create_managers() sets up named_g_mctx, so use a
+	 * private memory context for the instance name.
+	 */
+	isc_mem_create(&smf_mctx);
+	result = named_smf_get_instance(&instance, 0, smf_mctx);
 	/* We don't care about instance, just check if we got one. */
 	if (result == ISC_R_SUCCESS) {
 		named_smf_got_instance = 1;
@@ -1084,8 +1118,9 @@ setup(void) {
 		named_smf_got_instance = 0;
 	}
 	if (instance != NULL) {
-		isc_mem_free(named_g_mctx, instance);
+		isc_mem_free(smf_mctx, instance);
 	}
+	isc_mem_destroy(&smf_mctx);
 #endif /* HAVE_LIBSCF */
 
 	/*
@@ -1370,6 +1405,9 @@ setup(void) {
 	if (notcp) {
 		ns_server_setoption(sctx, NS_SERVER_NOTCP, true);
 	}
+	if (rpzslow) {
+		ns_server_setoption(sctx, NS_SERVER_RPZSLOW, true);
+	}
 	if (sigvalinsecs) {
 		ns_server_setoption(sctx, NS_SERVER_SIGVALINSECS, true);
 	}
@@ -1540,6 +1578,9 @@ main(int argc, char *argv[]) {
 	named_os_init(program_name);
 
 	parse_command_line(argc, argv);
+
+	// Should we have a command line flag?
+	pfilter_enable();
 
 #ifdef ENABLE_AFL
 	if (named_g_fuzz_type != isc_fuzz_none) {

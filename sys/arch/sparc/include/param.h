@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.75.6.1 2025/08/02 05:56:08 perseant Exp $ */
+/*	$NetBSD: param.h,v 1.75.6.2 2026/11/04 23:21:21 perseant Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -86,7 +86,6 @@ extern int nbpg, pgofset, pgshift;
 #define PROM_LOADADDR	0x00004000	/* where the prom loads us */
 #define	KERNTEXTOFF	(KERNBASE+PROM_LOADADDR)/* start of kernel text */
 
-#define	SSIZE		1		/* initial stack size in pages */
 #define	USPACE		8192
 
 /*

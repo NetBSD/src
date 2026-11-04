@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2016/09/26 22:37:32 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2026/11/04 23:15:28 perseant Exp $
 
 .if ${MACHINE} == "i386" || \
     ${MACHINE} == "amd64" || \
-    ${MACHINE} == "evbarm"
+    ${MACHINE} == "evbarm" || \
+    ${MACHINE} == "evbppc"
 SUBDIR=	modesetting
 .endif
 

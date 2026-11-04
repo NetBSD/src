@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.26 2019/04/03 22:10:49 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.26.36.1 2026/11/04 23:20:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 Christopher G. Demetriou.  All rights reserved.
@@ -97,12 +97,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26 2019/04/03 22:10:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.26.36.1 2026/11/04 23:20:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
-#include <sys/dkbad.h>
 #include <sys/disklabel.h>
 #include <sys/syslog.h>
 #include <sys/device.h>
@@ -131,9 +130,9 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 	struct buf *bp;
 	struct disklabel *dlp;
 	const char *msg = NULL;
-	int cyl, netbsdpartoff, i, found = 0;
+	int cyl, netbsdpartoff;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 
 	if (lp->d_secsize == 0)
 		lp->d_secsize = DEV_BSIZE;
@@ -212,49 +211,8 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *),
 		else {
 			*lp = *dlp;
 			msg = NULL;
-			found = 1;
 			break;
 		}
-	}
-
-	if (msg != NULL || found == 0)
-		goto done;
-
-	/* obtain bad sector table if requested and present */
-	if (osdep && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *bdp = &osdep->bad;
-		struct dkbad *db;
-
-		i = 0;
-		do {
-			/* read a bad sector table */
-			bp->b_oflags &= ~(BO_DONE);
-			bp->b_flags |= B_READ;
-			bp->b_blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEV_BSIZE)
-				bp->b_blkno *= lp->d_secsize / DEV_BSIZE;
-			else
-				bp->b_blkno /= DEV_BSIZE / lp->d_secsize;
-			bp->b_bcount = lp->d_secsize;
-			bp->b_cylinder = lp->d_ncylinders - 1;
-			(*strat)(bp);
-
-			/* if successful, validate, otherwise try another */
-			if (biowait(bp)) {
-				msg = "bad sector table I/O error";
-			} else {
-				db = (struct dkbad *)(bp->b_data);
-#define DKBAD_MAGIC 0x4321
-				if (db->bt_mbz == 0
-					&& db->bt_flag == DKBAD_MAGIC) {
-					msg = NULL;
-					*bdp = *db;
-					break;
-				} else
-					msg = "bad sector table corrupted";
-			}
-		} while (bp->b_error != 0 && (i += 2) < 10 &&
-			i < lp->d_nsectors);
 	}
 
 done:

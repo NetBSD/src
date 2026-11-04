@@ -1,4 +1,4 @@
-/*	$NetBSD: qp_test.c,v 1.2.4.2 2025/08/02 05:54:12 perseant Exp $	*/
+/*	$NetBSD: qp_test.c,v 1.2.4.3 2026/11/04 23:18:22 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -180,7 +180,7 @@ ISC_RUN_TEST_IMPL(qpkey_sort) {
 static void
 check_leaf(void *uctx, void *pval, uint32_t ival) {
 	uint32_t *items = uctx;
-	assert_in_range(ival, 1, ITER_ITEMS - 1);
+	assert_uint_in_range(ival, 1, ITER_ITEMS - 1);
 	assert_ptr_equal(items + ival, pval);
 }
 
@@ -232,7 +232,7 @@ ISC_RUN_TEST_IMPL(qpiter) {
 
 		item[ival] = ival;
 
-		inserted = n = 0;
+		inserted = 0;
 
 		/* randomly insert or remove */
 		dns_qpkey_t key;
@@ -252,7 +252,7 @@ ISC_RUN_TEST_IMPL(qpiter) {
 		while (dns_qpiter_next(&qpi, NULL, &pval, &ival) ==
 		       ISC_R_SUCCESS)
 		{
-			assert_in_range(ival, prev + 1, ITER_ITEMS - 1);
+			assert_uint_in_range(ival, prev + 1, ITER_ITEMS - 1);
 			assert_int_equal(ival, item[ival]);
 			assert_ptr_equal(pval, &item[ival]);
 			order[inserted++] = ival;

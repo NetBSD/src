@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,10 +27,12 @@ foreach func_name { foo bar } {
     }
 }
 
-set binary_foo [standard_output_file "${testfile}-foo"]
-set binary_bar [standard_output_file "${testfile}-bar"]
+set testfile_foo $testfile-foo
+set testfile_bar $testfile-bar
+set binary_foo [standard_output_file $testfile_foo]
+set binary_bar [standard_output_file $testfile_bar]
 
-clean_restart $binary_foo
+clean_restart $testfile_foo
 
 if ![runto_main] {
    return -1
@@ -40,7 +42,23 @@ if ![runto_main] {
 # for the program space and architecture (these will be selected based
 # on the current inferior).
 set main_addr [get_hexadecimal_valueof "&main" "UNKNOWN"]
-set next_addr [format 0x%x [expr $main_addr + 1]]
+require {!string equal $main_addr {UNKNOWN}}
+
+set next_addr "UNKNOWN"
+gdb_test_multiple "info break 1" "" {
+    -re -wrap " y +($hex) +in .*" {
+	set next_addr $expect_out(1,string)
+	set next_addr [regsub {^0x0+} $next_addr "0x"]
+	pass $gdb_test_name
+    }
+}
+if { $next_addr == "UNKNOWN" || $next_addr == $main_addr } {
+    set next_addr [format 0x%x [expr $main_addr + 1]]
+}
+
+verbose -log "main_addr: $main_addr"
+verbose -log "next_addr: $next_addr"
+
 
 foreach_with_prefix symbol_filename { on off } {
     gdb_test_no_output "set print symbol-filename ${symbol_filename}"
@@ -56,7 +74,7 @@ foreach_with_prefix symbol_filename { on off } {
 	"gdb.format_address, result should have no offset"
 
     gdb_test "python print(\"Got: \" + gdb.format_address($next_addr))" \
-	"Got: $next_addr <main\\+1${filename_pattern}>" \
+	"Got: $next_addr <main\\+$decimal${filename_pattern}>" \
 	"gdb.format_address, result should have an offset"
 }
 

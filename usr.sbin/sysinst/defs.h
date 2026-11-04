@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.92.2.1 2025/08/02 05:58:55 perseant Exp $	*/
+/*	$NetBSD: defs.h,v 1.92.2.2 2026/11/04 23:28:58 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -645,7 +645,6 @@ extern char dist_tgz_postfix[SSTRSIZE];
 /* needed prototypes */
 void set_menu_numopts(int, int);
 void remove_color_options(void);
-void remove_https_options(void);
 #ifdef CHECK_ENTROPY
 bool do_add_entropy(void);
 size_t entropy_needed(void);
@@ -666,7 +665,7 @@ bool	md_check_partitions(struct install_partition_desc*);
 #ifdef HAVE_GPT
 /*
  * New GPT partitions have been written, update bootloader or remember
- * data untill needed in md_post_newfs
+ * data until needed in md_post_newfs
  */
 bool	md_gpt_post_write(struct disk_partitions*, part_id root_id,
 	    bool root_is_new, part_id efi_id, bool efi_is_new);
@@ -919,6 +918,8 @@ bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
 void	free_install_desc(struct install_partition_desc*);
 bool	may_swap_if_not_sdmmc(const char*);
+void	redirect_console(int, int);
+void	discard_console_output(void);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
@@ -1027,6 +1028,7 @@ void	save_kb_encoding(void);
 /* from configmenu.c */
 void	do_configmenu(struct install_partition_desc*);
 void	root_pw_setup(void);
+void	do_time_and_date_setup(const char *);
 
 /* from checkrc.c */
 int	check_rcvar(const char *);

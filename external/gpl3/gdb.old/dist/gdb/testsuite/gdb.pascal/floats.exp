@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -87,7 +87,7 @@ gdb_test "print r + (-1)" " = 0\\.2(499.*|5|500.*)"
 gdb_test "print r + (-5)" " = -3\\.7(499.*|5|500.*)"
 gdb_test "print r + (-10)" " = -8\\.7(499.*|5|500.*)"
 
-# Test substraction
+# Test subtraction
 gdb_test "print r - s" " = -0\\.9(499.*|5|500.*)"
 gdb_test "print r - t" " = 4\\.4(499.*|5|500.*)"
 

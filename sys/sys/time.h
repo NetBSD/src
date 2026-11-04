@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.81.2.1 2025/08/02 05:57:55 perseant Exp $	*/
+/*	$NetBSD: time.h,v 1.81.2.2 2026/11/04 23:28:06 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -49,6 +49,10 @@ struct timeval {
 #include <sys/timespec.h>
 
 #if defined(_NETBSD_SOURCE)
+/*
+ * TIMEVAL_TO_TIMESPEC: exact conversion
+ * TIMESPEC_TO_TIMEVAL: round down sub us
+ */
 #define	TIMEVAL_TO_TIMESPEC(tv, ts) do {				\
 	(ts)->tv_sec = (tv)->tv_sec;					\
 	(ts)->tv_nsec = (tv)->tv_usec * 1000;				\

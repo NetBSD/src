@@ -1,4 +1,4 @@
-/* $NetBSD: quota1_subr.c,v 1.8 2023/02/22 21:49:45 riastradh Exp $ */
+/* $NetBSD: quota1_subr.c,v 1.8.6.1 2026/11/04 23:28:08 perseant Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,12 +26,14 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.8 2023/02/22 21:49:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota1_subr.c,v 1.8.6.1 2026/11/04 23:28:08 perseant Exp $");
 
 #include <sys/types.h>
-#include <machine/limits.h>
 
 #include <sys/quota.h>
+
+#include <machine/limits.h>
+
 #include <ufs/ufs/quota1.h>
 
 static uint64_t

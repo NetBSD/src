@@ -1,4 +1,4 @@
-#	$NetBSD: files.hp300,v 1.97.2.1 2025/08/02 05:55:37 perseant Exp $
+#	$NetBSD: files.hp300,v 1.97.2.2 2026/11/04 23:20:38 perseant Exp $
 #
 # hp300-specific configuration info
 
@@ -8,17 +8,17 @@ maxpartitions 8
 maxusers 2 8 64
 
 # SPU configuration options.
-defflag	opt_spuconf.h	HP320: M68020, M68K_MMU_HP
+defflag	opt_spuconf.h	HP320: M68020, M68K_MMU_HP, M68K_EC_VAC
 defflag	opt_spuconf.h	HP330: M68020, M68K_MMU_68851
-defflag	opt_spuconf.h	HP350: M68020, M68K_MMU_HP
+defflag	opt_spuconf.h	HP350: M68020, M68K_MMU_HP, M68K_EC_VAC
 
 defflag	opt_spuconf.h	HP340: M68030
-defflag	opt_spuconf.h	HP345: M68030
+defflag	opt_spuconf.h	HP345: M68030, M68K_EC_PAC
 defflag	opt_spuconf.h	HP360: M68030
 defflag	opt_spuconf.h	HP362: M68030
-defflag	opt_spuconf.h	HP370: M68030
-defflag	opt_spuconf.h	HP375: M68030
-defflag	opt_spuconf.h	HP400: M68030
+defflag	opt_spuconf.h	HP370: M68030, M68K_EC_PAC
+defflag	opt_spuconf.h	HP375: M68030, M68K_EC_PAC
+defflag	opt_spuconf.h	HP400: M68030, M68K_EC_PAC
 
 defflag	opt_spuconf.h	HP380: M68040
 defflag	opt_spuconf.h	HP382: M68040
@@ -85,7 +85,7 @@ device	dma
 attach	dma at intio
 file	arch/hp300/dev/dma.c			dma
 
-# Apollo Utilility Chip (a.k.a. "Frodo") found on 4xx workstations
+# Apollo Utility Chip (a.k.a. "Frodo") found on 4xx workstations
 device	frodo { offset = -1 }
 attach	frodo at intio
 file	arch/hp300/dev/frodo.c		frodo
@@ -229,45 +229,15 @@ file	dev/md_root.c			memory_disk_hooks
 file	arch/hp300/hp300/autoconf.c
 file	arch/hp300/hp300/bus_space.c
 file	arch/hp300/hp300/clock.c
-file	arch/hp300/hp300/dkbad.c
 file	arch/hp300/hp300/machdep.c
 file	arch/hp300/hp300/leds.c			useleds
-file	arch/hp300/hp300/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file	arch/hp300/hp300/trap.c
-file	arch/hp300/hp300/disksubr.c
-file	arch/m68k/m68k/cacheops.c
-file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
-file	arch/m68k/m68k/fpu.c			compile-with "${M68K_KERN_FPU}"
-file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/hp300/hp300/pmap_bootstrap.c	!__have_new_pmap_68k
+file	arch/m68k/m68k/delay.s
+file	arch/m68k/m68k/dumpsys.c
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
-file	arch/m68k/m68k/m68k_trap.c
-file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
-file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vectors.c
-file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
-
-# Emulation modules
-# 6888x emulator (FPU_EMULATE)
-include "arch/m68k/fpe/files.fpe"
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include	"compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include	"compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c		compat_linux
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
+file	kern/subr_disk_4bsd.c
 
 include	"arch/hp300/conf/majors.hp300"

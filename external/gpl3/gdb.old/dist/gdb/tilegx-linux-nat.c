@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux TILE-Gx.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
 #include "regcache.h"
@@ -58,7 +57,7 @@ static tilegx_linux_nat_target the_tilegx_linux_nat_target;
 
 /* Mapping between the general-purpose registers in `struct user'
    format and GDB's register array layout.  Note that we map the
-   first 56 registers (0 thru 55) one-to-one.  GDB maps the pc to
+   first 56 registers (0 through 55) one-to-one.  GDB maps the pc to
    slot 64, but ptrace returns it in slot 56.  */
 static const int regmap[] =
 {
@@ -73,7 +72,7 @@ static const int regmap[] =
   56, 58
 };
 
-/* Transfering the general-purpose registers between GDB, inferiors
+/* Transferring the general-purpose registers between GDB, inferiors
    and core files.  */
 
 /* Fill GDB's register array with the general-purpose register values
@@ -106,7 +105,7 @@ fill_gregset (const struct regcache* regcache,
       regcache->raw_collect (i, regp + regmap[i]);
 }
 
-/* Transfering floating-point registers between GDB, inferiors and cores.  */
+/* Transferring floating-point registers between GDB, inferiors and cores.  */
 
 /* Fill GDB's register array with the floating-point register values in
    *FPREGSETP.  */

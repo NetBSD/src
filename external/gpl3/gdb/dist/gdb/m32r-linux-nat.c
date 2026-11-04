@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -66,7 +66,7 @@ static int regmap[] = {
 
 
 
-/* Transfering the general-purpose registers between GDB, inferiors
+/* Transferring the general-purpose registers between GDB, inferiors
    and core files.  */
 
 /* Fill GDB's register array with the general-purpose register values
@@ -176,7 +176,7 @@ store_regs (const struct regcache *regcache, int tid, int regno)
 
 
 
-/* Transfering floating-point registers between GDB, inferiors and cores.  
+/* Transferring floating-point registers between GDB, inferiors and cores.
    Since M32R has no floating-point registers, these functions do nothing.  */
 
 void
@@ -234,9 +234,7 @@ m32r_linux_nat_target::store_registers (struct regcache *regcache, int regno)
   internal_error (_("Got request to store bad register number %d."), regno);
 }
 
-void _initialize_m32r_linux_nat ();
-void
-_initialize_m32r_linux_nat ()
+INIT_GDB_FILE (m32r_linux_nat)
 {
   /* Register the target.  */
   linux_target = &the_m32r_linux_nat_target;

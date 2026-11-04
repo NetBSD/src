@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.27 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.27.26.1 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -270,6 +270,12 @@ pte_modified_p(pt_entry_t pte)
 }
 
 static inline bool
+pte_referenced_p(pt_entry_t pte)
+{
+	return false;
+}
+
+static inline bool
 pte_global_p(pt_entry_t pte)
 {
 	return (pte & MIPS_MMU(PG_G)) != 0;
@@ -330,19 +336,27 @@ pte_nv_entry(bool kernel_p)
 }
 
 static inline pt_entry_t
-pte_prot_downgrade(pt_entry_t pte, vm_prot_t prot)
+pte_prot_downgrade(pt_entry_t pte, vm_prot_t newprot)
 {
+	KASSERT((newprot & VM_PROT_READ) != 0);
+
 	const uint32_t ro_bit = MIPS_MMU(PG_RO);
 	const uint32_t rw_bit = MIPS_MMU(PG_D);
 
-	return (pte & ~(ro_bit|rw_bit))
-	    | ((prot & VM_PROT_WRITE) ? rw_bit : ro_bit);
+	return (pte & ~(ro_bit | rw_bit))
+	    | ((newprot & VM_PROT_WRITE) ? rw_bit : ro_bit);
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pte)
+pte_clear_modify(pt_entry_t pte)
 {
 	return pte & ~MIPS_MMU(PG_D);
+}
+
+static inline pt_entry_t
+pte_clear_reference(pt_entry_t pte)
+{
+	return pte;
 }
 
 static inline pt_entry_t

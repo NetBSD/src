@@ -1,7 +1,8 @@
 //===-- sanitizer_atomic_clang.h --------------------------------*- C++ -*-===//
 //
-// This file is distributed under the University of Illinois Open Source
-// License. See LICENSE.TXT for details.
+// Part of the LLVM Project, under the Apache License v2.0 with LLVM Exceptions.
+// See https://llvm.org/LICENSE.txt for license information.
+// SPDX-License-Identifier: Apache-2.0 WITH LLVM-exception
 //
 //===----------------------------------------------------------------------===//
 //
@@ -33,16 +34,16 @@ namespace __sanitizer {
 // See http://www.cl.cam.ac.uk/~pes20/cpp/cpp0xmappings.html
 // for mappings of the memory model to different processors.
 
-INLINE void atomic_signal_fence(memory_order) {
+inline void atomic_signal_fence(memory_order) {
   __asm__ __volatile__("" ::: "memory");
 }
 
-INLINE void atomic_thread_fence(memory_order) {
+inline void atomic_thread_fence(memory_order) {
   __sync_synchronize();
 }
 
 template<typename T>
-INLINE typename T::Type atomic_fetch_add(volatile T *a,
+inline typename T::Type atomic_fetch_add(volatile T *a,
     typename T::Type v, memory_order mo) {
   (void)mo;
   DCHECK(!((uptr)a % sizeof(*a)));
@@ -50,7 +51,7 @@ INLINE typename T::Type atomic_fetch_add(volatile T *a,
 }
 
 template<typename T>
-INLINE typename T::Type atomic_fetch_sub(volatile T *a,
+inline typename T::Type atomic_fetch_sub(volatile T *a,
     typename T::Type v, memory_order mo) {
   (void)mo;
   DCHECK(!((uptr)a % sizeof(*a)));
@@ -58,7 +59,7 @@ INLINE typename T::Type atomic_fetch_sub(volatile T *a,
 }
 
 template<typename T>
-INLINE typename T::Type atomic_exchange(volatile T *a,
+inline typename T::Type atomic_exchange(volatile T *a,
     typename T::Type v, memory_order mo) {
   DCHECK(!((uptr)a % sizeof(*a)));
   if (mo & (memory_order_release | memory_order_acq_rel | memory_order_seq_cst))
@@ -70,7 +71,7 @@ INLINE typename T::Type atomic_exchange(volatile T *a,
 }
 
 template <typename T>
-INLINE bool atomic_compare_exchange_strong(volatile T *a, typename T::Type *cmp,
+inline bool atomic_compare_exchange_strong(volatile T *a, typename T::Type *cmp,
                                            typename T::Type xchg,
                                            memory_order mo) {
   typedef typename T::Type Type;
@@ -83,7 +84,7 @@ INLINE bool atomic_compare_exchange_strong(volatile T *a, typename T::Type *cmp,
 }
 
 template<typename T>
-INLINE bool atomic_compare_exchange_weak(volatile T *a,
+inline bool atomic_compare_exchange_weak(volatile T *a,
                                          typename T::Type *cmp,
                                          typename T::Type xchg,
                                          memory_order mo) {
@@ -93,10 +94,16 @@ INLINE bool atomic_compare_exchange_weak(volatile T *a,
 }  // namespace __sanitizer
 
 // This include provides explicit template instantiations for atomic_uint64_t
-// on MIPS32, which does not directly support 8 byte atomics. It has to
+// on platforms, which do not directly support 8 byte atomics. It has to
 // proceed the template definitions above.
-#if defined(_MIPS_SIM) && defined(_ABIO32)
-  #include "sanitizer_atomic_clang_mips.h"
+#if defined(_MIPS_SIM) && defined(_ABIO32) && _MIPS_SIM == _ABIO32
+#  include "sanitizer_atomic_clang_mips.h"
+#endif
+#if SANITIZER_NETBSD
+#  include <machine/types.h>
+#  ifndef __HAVE_ATOMIC64_OPS
+#    include "sanitizer_atomic_clang_mips.h"
+#  endif
 #endif
 
 #undef ATOMIC_ORDER

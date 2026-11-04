@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_start.S,v 1.9.66.1 2025/08/02 05:55:33 perseant Exp $	*/
+/*	$NetBSD: gemini_start.S,v 1.9.66.2 2026/11/04 23:20:28 perseant Exp $	*/
 
 /*
  * Machine dependent startup code for GEMINI boards.
@@ -67,9 +67,6 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Microsoft
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
  * WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
@@ -91,7 +88,7 @@
 #include <arm/armreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: gemini_start.S,v 1.9.66.1 2025/08/02 05:55:33 perseant Exp $")
+RCSID("$NetBSD: gemini_start.S,v 1.9.66.2 2026/11/04 23:20:28 perseant Exp $")
 
 
 #if defined(VERBOSE_INIT_ARM)

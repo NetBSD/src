@@ -1,0 +1,44 @@
+; File written on Wed Jul  2 14:27:34 2025
+; dnssec-signzone version 9.21.3-dev
+example.		3600	IN SOA	. . (
+					0          ; serial
+					0          ; refresh (0 seconds)
+					0          ; retry (0 seconds)
+					0          ; expire (0 seconds)
+					3600       ; minimum (1 hour)
+					)
+			3600	RRSIG	SOA 13 1 3600 (
+					20901231235959 20250630042051 46204 example.
+					iC+sFesZi+uurPGRfP7faPfmQcHlQcz4oGKP
+					4Fqq6/ePy9s+FYpL6LILjnB9iPxc0w3BBvsd
+					PArExFsuaKcWgQ== )
+			3600	NS	.
+			3600	RRSIG	NS 13 1 3600 (
+					20901231235959 20250630042051 46204 example.
+					q2qPtVYQsku7j5xqLyIleldPLnhJjvbjMkcb
+					XtnV2djkM1swGkZp67u4l7GHr9/b9lcM848w
+					t+AfDiT2Mak9Lg== )
+			3600	NSEC	example. NS SOA RRSIG NSEC DNSKEY CDS
+			3600	RRSIG	NSEC 13 1 3600 (
+					20901231235959 20250702032734 46204 example.
+					aPkaoO9OMYZwldpUPJeqFZoGCc8XQcmQHig2
+					zJmp2Qv2QGRH1faoWosYy5jwQskxtpoyE0Eh
+					yxEoUhHZNCKogQ== )
+			3600	DNSKEY	256 3 13 (
+					Il3F88buwuAwswJl70b4xh8werV/2a2cDo6x
+					joU5+1H2dRXE/XRt4CEipBdt8Ss4fr8s6jBE
+					5CT4INCzzeTuZQ==
+					) ; ZSK; alg = ECDSAP256SHA256 ; key id = 46204
+			3600	RRSIG	DNSKEY 13 1 3600 (
+					20901231235959 20250630042051 46204 example.
+					KQWGucJalgX/cANLv0/g0LNweGdeE7gs8rrx
+					9yOiZqciu7wCfyRgk5ED1pNXOXsTqtIA0OGa
+					OmTOsXrBWly7ng== )
+			3600	CDS	46204 13 1 (
+					712DD9926EDF2A5E81E76D3BC5F5637BEA06
+					2E67 )
+			3600	RRSIG	CDS 13 1 3600 (
+					20901231235959 20250702032734 46204 example.
+					nS9qKdj0dfWNe6U0ttuKSMiKMhxLq4Yo6WPT
+					9j/cmjbaOdKO1DBoDxzZ7G4M34msvBcKq31L
+					mn8qUlrzSOfD9A== )

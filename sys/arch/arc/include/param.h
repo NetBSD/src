@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 2019/04/07 03:42:31 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.33.36.1 2026/11/04 23:20:03 perseant Exp $	*/
 /*      $OpenBSD: param.h,v 1.9 1997/04/30 09:54:15 niklas Exp $ */
 
 /*
@@ -57,7 +57,6 @@
  *	Etc
  */
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 /* bytes to disk blocks */
 #define	btodb(x)	((x) >> DEV_BSHIFT)

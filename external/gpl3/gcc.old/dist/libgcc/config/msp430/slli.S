@@ -1,4 +1,4 @@
-;   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+;   Copyright (C) 2012-2022 Free Software Foundation, Inc.
 ;   Contributed by Red Hat.
 ; 
 ; This file is free software; you can redistribute it and/or modify it
@@ -64,6 +64,21 @@ __mspabi_slli:
 #else
 	RET
 #endif
+
+#ifdef __MSP430X__
+	.section	.text.__gnu_mspabi_sllp
+1:	ADDA	#-1,R13
+	ADDA	R12,R12
+	.global	__gnu_mspabi_sllp
+__gnu_mspabi_sllp:
+	CMP	#0,R13
+	JNZ	1b
+#ifdef __MSP430X_LARGE__
+	RETA
+#else
+	RET
+#endif /* __MSP430X_LARGE__ */
+#endif /* __MSP430X__ */
 
 /* Logical Left Shift - R12:R13 -> R12:R13.  */
 

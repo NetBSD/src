@@ -1,4 +1,4 @@
-/* $NetBSD: pxa2x0_lcd.h,v 1.11 2022/03/09 23:09:15 andvar Exp $ */
+/* $NetBSD: pxa2x0_lcd.h,v 1.11.10.1 2026/11/04 23:20:18 perseant Exp $ */
 /*
  * Copyright (c) 2002  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -39,7 +39,7 @@
 #include <dev/rasops/rasops.h>
 #include <sys/bus.h>
 
-/* LCD Contoroller */
+/* LCD Controller */
 
 struct	lcd_dma_descriptor {
 	uint32_t	fdadr;	/* next frame descriptor */

@@ -1,6 +1,6 @@
 /* Common target dependent code for GNU/Linux on PPC systems.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_PPC_LINUX_COMMON_H
-#define ARCH_PPC_LINUX_COMMON_H
+#ifndef GDB_ARCH_PPC_LINUX_COMMON_H
+#define GDB_ARCH_PPC_LINUX_COMMON_H
 
 struct target_desc;
 
@@ -75,4 +75,4 @@ const struct ppc_linux_features ppc_linux_no_features = {
 const struct target_desc * ppc_linux_match_description
 (struct ppc_linux_features features);
 
-#endif /* ARCH_PPC_LINUX_COMMON_H */
+#endif /* GDB_ARCH_PPC_LINUX_COMMON_H */

@@ -1,6 +1,6 @@
 /* Fork a Unix child process, and set up to debug it, for GDB.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.
 
@@ -153,9 +153,7 @@ show_startup_with_shell (struct ui_file *file, int from_tty,
 	      value);
 }
 
-void _initialize_fork_child ();
-void
-_initialize_fork_child ()
+INIT_GDB_FILE (fork_child)
 {
   add_setshow_filename_cmd ("exec-wrapper", class_run, &exec_wrapper, _("\
 Set a wrapper for running programs.\n\

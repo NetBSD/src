@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD/hppa.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "target.h"
@@ -56,11 +55,10 @@ hppaobsd_fpregset_supplies_p (int regnum)
 static void
 hppaobsd_supply_gregset (struct regcache *regcache, const void *gregs)
 {
-  gdb_byte zero[4] = { 0 };
   const char *regs = gregs;
   int regnum;
 
-  regcache->raw_supply (HPPA_R0_REGNUM, &zero);
+  regcache->raw_supply_zeroed (HPPA_R0_REGNUM);
   for (regnum = HPPA_R1_REGNUM; regnum <= HPPA_R31_REGNUM; regnum++)
     regcache->raw_supply (regnum, regs + regnum * 4);
 

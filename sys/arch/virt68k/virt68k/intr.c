@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.3.2.1 2025/08/02 05:56:15 perseant Exp $	*/
+/*	$NetBSD: intr.c,v 1.3.2.2 2026/11/04 23:21:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.2.1 2025/08/02 05:56:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.3.2.2 2026/11/04 23:21:30 perseant Exp $");
 
 #define _VIRT68K_INTR_PRIVATE
 
@@ -269,7 +269,7 @@ intr_string(void *v, char *buf, size_t bufsize)
 #define	VEC_AVINTR	0x18
 
 void
-intr_dispatch(struct clockframe frame)
+m68k_intr_autovec(struct clockframe frame)
 {
 	const int ipl = VECO_TO_VECI(frame.cf_vo) - VEC_AVINTR;
 	const int pic = ipl_to_pic(ipl);

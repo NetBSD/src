@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,8 @@ proc start_gdb_and_runto_main { target_async target_non_stop } {
 	append ::GDBFLAGS \
 	    " -ex \"maintenance set target-async ${target_async}\""
 
-	clean_restart ${::binfile}
+	clean_restart
+	gdb_load $::binfile
     }
 
     if { ![runto_main] } {
@@ -131,7 +132,13 @@ proc_with_prefix run_cond_hits_segfault_test { async_p non_stop_p } {
 	[multi_line \
 	     "Continuing\\." \
 	     "" \
-	     "Program received signal SIGSEGV, Segmentation fault\\." \
+	     [string cat \
+		  [string_to_regexp \
+		       "Program received signal SIGSEGV, Segmentation fault."] \
+		  "("] \
+	     [string cat \
+		  [string_to_regexp "Address not mapped to object."] \
+		  ")?"] \
 	     "${::hex} in func_segfault \\(\\) at \[^\r\n\]+:${::segv_line}" \
 	     "${::decimal}\\s+\[^\r\n\]+Segfault here\[^\r\n\]+" \
 	     "Error in testing condition for breakpoint ${bp_1_num}:" \
@@ -161,7 +168,13 @@ proc_with_prefix run_call_hits_segfault_test { async_p non_stop_p } {
     gdb_test "call func_segfault ()" \
 	[multi_line \
 	     "" \
-	     "Program received signal SIGSEGV, Segmentation fault\\." \
+	     [string cat \
+		  [string_to_regexp \
+		       "Program received signal SIGSEGV, Segmentation fault."] \
+		  "("] \
+	     [string cat \
+		  [string_to_regexp "Address not mapped to object."] \
+		  ")?"] \
 	     "${::hex} in func_segfault \\(\\) at \[^\r\n\]+:${::segv_line}" \
 	     "${::decimal}\\s+\[^\r\n\]+Segfault here\[^\r\n\]+" \
 	     "The program being debugged was signaled while in a function called from GDB\\." \

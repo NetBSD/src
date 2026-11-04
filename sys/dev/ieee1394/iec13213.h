@@ -1,4 +1,4 @@
-/*	$NetBSD: iec13213.h,v 1.6 2014/03/28 04:09:19 htodd Exp $	*/
+/*	$NetBSD: iec13213.h,v 1.6.68.1 2026/11/04 23:22:00 perseant Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -70,7 +70,7 @@
 /*
  * CSR keys
  * 00 - 2F: defined by CSR architecture standards.
- * 30 - 37: defined by BUS starndards
+ * 30 - 37: defined by BUS standards
  * 38 - 3F: defined by Vendor/Specifier
  */
 #define CSRKEY_MASK	0x3f

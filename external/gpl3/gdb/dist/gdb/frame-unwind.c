@@ -1,6 +1,6 @@
 /* Definitions for frame unwinder, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,51 +29,27 @@
 #include "gdbarch.h"
 #include "dwarf2/frame-tailcall.h"
 #include "cli/cli-cmds.h"
+#include "cli/cli-option.h"
 #include "inferior.h"
 
-struct frame_unwind_table_entry
+/* Conversion list between the enum for frame_unwind_class and
+   string.  */
+static const char * unwind_class_conversion[] =
 {
-  const struct frame_unwind *unwinder;
-  struct frame_unwind_table_entry *next;
+  "GDB",
+  "EXTENSION",
+  "DEBUGINFO",
+  "ARCH",
+  nullptr
 };
 
-struct frame_unwind_table
+/* Default sniffers, that must always be the first in the unwinder list,
+   no matter the architecture.  */
+static constexpr std::initializer_list<const frame_unwind *>
+  standard_unwinders =
 {
-  struct frame_unwind_table_entry *list = nullptr;
-  /* The head of the OSABI part of the search list.  */
-  struct frame_unwind_table_entry **osabi_head = nullptr;
-};
-
-static const registry<gdbarch>::key<struct frame_unwind_table>
-     frame_unwind_data;
-
-/* A helper function to add an unwinder to a list.  LINK says where to
-   install the new unwinder.  The new link is returned.  */
-
-static struct frame_unwind_table_entry **
-add_unwinder (struct obstack *obstack, const struct frame_unwind *unwinder,
-	      struct frame_unwind_table_entry **link)
-{
-  *link = OBSTACK_ZALLOC (obstack, struct frame_unwind_table_entry);
-  (*link)->unwinder = unwinder;
-  return &(*link)->next;
-}
-
-static struct frame_unwind_table *
-get_frame_unwind_table (struct gdbarch *gdbarch)
-{
-  struct frame_unwind_table *table = frame_unwind_data.get (gdbarch);
-  if (table != nullptr)
-    return table;
-
-  table = new frame_unwind_table;
-
-  /* Start the table out with a few default sniffers.  OSABI code
-     can't override this.  */
-  struct frame_unwind_table_entry **link = &table->list;
-
-  struct obstack *obstack = gdbarch_obstack (gdbarch);
-  link = add_unwinder (obstack, &dummy_frame_unwind, link);
+  &dummy_frame_unwind,
+#if defined(DWARF_FORMAT_AVAILABLE)
   /* The DWARF tailcall sniffer must come before the inline sniffer.
      Otherwise, we can end up in a situation where a DWARF frame finds
      tailcall information, but then the inline sniffer claims a frame
@@ -81,48 +57,73 @@ get_frame_unwind_table (struct gdbarch *gdbarch)
      safe to do always because the tailcall sniffer can only ever be
      activated if the newer frame was created using the DWARF
      unwinder, and it also found tailcall information.  */
-  link = add_unwinder (obstack, &dwarf2_tailcall_frame_unwind, link);
-  link = add_unwinder (obstack, &inline_frame_unwind, link);
+  &dwarf2_tailcall_frame_unwind,
+#endif
+  &inline_frame_unwind,
+};
 
-  /* The insertion point for OSABI sniffers.  */
-  table->osabi_head = link;
-  frame_unwind_data.set (gdbarch, table);
+/* If an unwinder should be prepended to the list, this is the
+   index in which it should be inserted.  */
+static constexpr int prepend_unwinder_index = standard_unwinders.size ();
 
-  return table;
+static const registry<gdbarch>::key<std::vector<const frame_unwind *>>
+     frame_unwind_data;
+
+/* Retrieve the list of frame unwinders available in GDBARCH.
+   If this list is empty, it is initialized before being returned.  */
+static std::vector<const frame_unwind *> &
+get_frame_unwind_table (struct gdbarch *gdbarch)
+{
+  std::vector<const frame_unwind *> *table = frame_unwind_data.get (gdbarch);
+  if (table == nullptr)
+    table = frame_unwind_data.emplace (gdbarch,
+				       standard_unwinders.begin (),
+				       standard_unwinders.end ());
+  return *table;
+}
+
+static const char *
+frame_unwinder_class_str (frame_unwind_class uclass)
+{
+  gdb_assert (uclass < UNWIND_CLASS_NUMBER);
+  return unwind_class_conversion[uclass];
+}
+
+/* Case insensitive search for a frame_unwind_class based on the given
+   string.  */
+static enum frame_unwind_class
+str_to_frame_unwind_class (const char *class_str)
+{
+  for (int i = 0; i < UNWIND_CLASS_NUMBER; i++)
+    {
+      if (strcasecmp (unwind_class_conversion[i], class_str) == 0)
+	return (frame_unwind_class) i;
+    }
+
+  error (_("Unknown frame unwind class: %s"), class_str);
 }
 
 void
 frame_unwind_prepend_unwinder (struct gdbarch *gdbarch,
 				const struct frame_unwind *unwinder)
 {
-  struct frame_unwind_table *table = get_frame_unwind_table (gdbarch);
-  struct frame_unwind_table_entry *entry;
+  std::vector<const frame_unwind *> &table = get_frame_unwind_table (gdbarch);
 
-  /* Insert the new entry at the start of the list.  */
-  entry = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct frame_unwind_table_entry);
-  entry->unwinder = unwinder;
-  entry->next = (*table->osabi_head);
-  (*table->osabi_head) = entry;
+  table.insert (table.begin () + prepend_unwinder_index, unwinder);
 }
 
 void
 frame_unwind_append_unwinder (struct gdbarch *gdbarch,
 			      const struct frame_unwind *unwinder)
 {
-  struct frame_unwind_table *table = get_frame_unwind_table (gdbarch);
-  struct frame_unwind_table_entry **ip;
-
-  /* Find the end of the list and insert the new entry there.  */
-  for (ip = table->osabi_head; (*ip) != NULL; ip = &(*ip)->next);
-  (*ip) = GDBARCH_OBSTACK_ZALLOC (gdbarch, struct frame_unwind_table_entry);
-  (*ip)->unwinder = unwinder;
+  get_frame_unwind_table (gdbarch).push_back (unwinder);
 }
 
 /* Call SNIFFER from UNWINDER.  If it succeeded set UNWINDER for
-   THIS_FRAME and return 1.  Otherwise the function keeps THIS_FRAME
-   unchanged and returns 0.  */
+   THIS_FRAME and return true.  Otherwise the function keeps THIS_FRAME
+   unchanged and returns false.  */
 
-static int
+static bool
 frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
 			  const struct frame_unwind *unwinder)
 {
@@ -134,8 +135,8 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
 
   try
     {
-      frame_debug_printf ("trying unwinder \"%s\"", unwinder->name);
-      res = unwinder->sniffer (unwinder, this_frame, this_cache);
+      frame_debug_printf ("trying unwinder \"%s\"", unwinder->name ());
+      res = unwinder->sniff (this_frame, this_cache);
     }
   catch (const gdb_exception &ex)
     {
@@ -157,7 +158,7 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
 	     thus most unwinders aren't able to determine if they're
 	     the best fit.  Keep trying.  Fallback prologue unwinders
 	     should always accept the frame.  */
-	  return 0;
+	  return false;
 	}
       throw;
     }
@@ -165,7 +166,7 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
   if (res)
     {
       frame_debug_printf ("yes");
-      return 1;
+      return true;
     }
   else
     {
@@ -173,7 +174,7 @@ frame_unwind_try_unwinder (const frame_info_ptr &this_frame, void **this_cache,
       /* Don't set *THIS_CACHE to NULL here, because sniffer has to do
 	 so.  */
       frame_cleanup_after_sniffer (this_frame);
-      return 0;
+      return false;
     }
   gdb_assert_not_reached ("frame_unwind_try_unwinder");
 }
@@ -188,28 +189,46 @@ frame_unwind_find_by_frame (const frame_info_ptr &this_frame, void **this_cache)
   FRAME_SCOPED_DEBUG_ENTER_EXIT;
   frame_debug_printf ("this_frame=%d", frame_relative_level (this_frame));
 
+  /* If we see a disabled unwinder, we assume some test is being run on
+     GDB, and we don't want to internal_error at the end of this function.  */
+  bool seen_disabled_unwinder = false;
+  /* Lambda to factor out the logic of checking if an unwinder is enabled,
+     testing it and otherwise recording if we saw a disable unwinder.  */
+  auto test_unwinder = [&] (const struct frame_unwind *unwinder)
+    {
+      if (unwinder == nullptr)
+	return false;
+
+      if (!unwinder->enabled ())
+	{
+	  seen_disabled_unwinder = true;
+	  return false;
+	}
+
+      return frame_unwind_try_unwinder (this_frame,
+					this_cache,
+					unwinder);
+    };
+
+  if (test_unwinder (target_get_unwinder ()))
+    return;
+
+  if (test_unwinder (target_get_tailcall_unwinder ()))
+    return;
+
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
-  struct frame_unwind_table *table = get_frame_unwind_table (gdbarch);
-  struct frame_unwind_table_entry *entry;
-  const struct frame_unwind *unwinder_from_target;
+  std::vector<const frame_unwind *> &table = get_frame_unwind_table (gdbarch);
+  for (const auto &unwinder : table)
+    {
+      if (test_unwinder (unwinder))
+	return;
+    }
 
-  unwinder_from_target = target_get_unwinder ();
-  if (unwinder_from_target != NULL
-      && frame_unwind_try_unwinder (this_frame, this_cache,
-				   unwinder_from_target))
-    return;
-
-  unwinder_from_target = target_get_tailcall_unwinder ();
-  if (unwinder_from_target != NULL
-      && frame_unwind_try_unwinder (this_frame, this_cache,
-				   unwinder_from_target))
-    return;
-
-  for (entry = table->list; entry != NULL; entry = entry->next)
-    if (frame_unwind_try_unwinder (this_frame, this_cache, entry->unwinder))
-      return;
-
-  internal_error (_("frame_unwind_find_by_frame failed"));
+  if (seen_disabled_unwinder)
+    error (_("Required frame unwinder may have been disabled"
+	     ", see 'maint info frame-unwinders'"));
+  else
+    internal_error (_("frame_unwind_find_by_frame failed"));
 }
 
 /* A default frame sniffer which always accepts the frame.  Used by
@@ -313,14 +332,26 @@ frame_unwind_got_constant (const frame_info_ptr &frame, int regnum,
 }
 
 struct value *
-frame_unwind_got_bytes (const frame_info_ptr &frame, int regnum, const gdb_byte *buf)
+frame_unwind_got_bytes (const frame_info_ptr &frame, int regnum,
+			gdb::array_view<const gdb_byte> buf)
 {
   struct gdbarch *gdbarch = frame_unwind_arch (frame);
   struct value *reg_val;
 
   reg_val = value::zero (register_type (gdbarch, regnum), not_lval);
-  memcpy (reg_val->contents_raw ().data (), buf,
-	  register_size (gdbarch, regnum));
+  gdb::array_view<gdb_byte> val_contents = reg_val->contents_raw ();
+
+  /* The value's contents buffer is zeroed on allocation so if buf is
+     smaller, the remaining space will be filled with zero.
+
+     This can happen when unwinding through signal frames.  For example, if
+     an AArch64 program doesn't use SVE, then the Linux kernel will only
+     save in the signal frame the first 128 bits of the vector registers,
+     which is their minimum size, even if the vector length says they're
+     bigger.  */
+  gdb_assert (buf.size () <= val_contents.size ());
+
+  memcpy (val_contents.data (), buf.data (), buf.size ());
   return reg_val;
 }
 
@@ -341,42 +372,303 @@ frame_unwind_got_address (const frame_info_ptr &frame, int regnum,
   return reg_val;
 }
 
+/* See frame-unwind.h.  */
+
+enum unwind_stop_reason
+frame_unwind_legacy::stop_reason (const frame_info_ptr &this_frame,
+				  void **this_prologue_cache) const
+{
+  return m_stop_reason (this_frame, this_prologue_cache);
+}
+
+/* See frame-unwind.h.  */
+
+void
+frame_unwind_legacy::this_id (const frame_info_ptr &this_frame,
+			      void **this_prologue_cache,
+			      struct frame_id *id) const
+{
+  return m_this_id (this_frame, this_prologue_cache, id);
+}
+
+/* See frame-unwind.h.  */
+
+struct value *
+frame_unwind_legacy::prev_register (const frame_info_ptr &this_frame,
+				    void **this_prologue_cache,
+				    int regnum) const
+{
+  return m_prev_register (this_frame, this_prologue_cache, regnum);
+}
+
+/* See frame-unwind.h.  */
+
+int
+frame_unwind_legacy::sniff (const frame_info_ptr &this_frame,
+			    void **this_prologue_cache) const
+{
+  return m_sniffer (this, this_frame, this_prologue_cache);
+}
+
+/* See frame-unwind.h.  */
+
+void
+frame_unwind_legacy::dealloc_cache (frame_info *self, void *this_cache) const
+{
+  if (m_dealloc_cache != nullptr)
+    m_dealloc_cache (self, this_cache);
+}
+
+/* See frame-unwind.h.  */
+
+struct gdbarch *
+frame_unwind_legacy::prev_arch (const frame_info_ptr &this_frame,
+				void **this_prologue_cache) const
+{
+  if (m_prev_arch == nullptr)
+    return frame_unwind::prev_arch (this_frame, this_prologue_cache);
+  return m_prev_arch (this_frame, this_prologue_cache);
+}
+
 /* Implement "maintenance info frame-unwinders" command.  */
 
 static void
 maintenance_info_frame_unwinders (const char *args, int from_tty)
 {
   gdbarch *gdbarch = current_inferior ()->arch ();
-  struct frame_unwind_table *table = get_frame_unwind_table (gdbarch);
+  std::vector<const frame_unwind *> &table = get_frame_unwind_table (gdbarch);
 
   ui_out *uiout = current_uiout;
-  ui_out_emit_table table_emitter (uiout, 2, -1, "FrameUnwinders");
+  ui_out_emit_table table_emitter (uiout, 4, -1, "FrameUnwinders");
   uiout->table_header (27, ui_left, "name", "Name");
   uiout->table_header (25, ui_left, "type", "Type");
+  uiout->table_header (9, ui_left, "class", "Class");
+  uiout->table_header (8, ui_left, "enabled", "Enabled");
   uiout->table_body ();
 
-  for (struct frame_unwind_table_entry *entry = table->list; entry != NULL;
-       entry = entry->next)
+  for (const auto &unwinder : table)
     {
-      const char *name = entry->unwinder->name;
-      const char *type = frame_type_str (entry->unwinder->type);
-
       ui_out_emit_list tuple_emitter (uiout, nullptr);
-      uiout->field_string ("name", name);
-      uiout->field_string ("type", type);
+      uiout->field_string ("name", unwinder->name ());
+      uiout->field_string ("type", frame_type_str (unwinder->type ()));
+      uiout->field_string ("class", frame_unwinder_class_str (
+					unwinder->unwinder_class ()));
+      uiout->field_string ("enabled", unwinder->enabled () ? "Y" : "N");
       uiout->text ("\n");
     }
 }
 
-void _initialize_frame_unwind ();
-void
-_initialize_frame_unwind ()
+/* Options for disabling frame unwinders.  */
+struct maint_frame_unwind_options
+{
+  std::string unwinder_name;
+  const char *unwinder_class = nullptr;
+  bool all = false;
+};
+
+static const gdb::option::option_def maint_frame_unwind_opt_defs[] = {
+
+  gdb::option::flag_option_def<maint_frame_unwind_options> {
+    "all",
+    [] (maint_frame_unwind_options *opt) { return &opt->all; },
+    N_("Change the state of all unwinders")
+  },
+  gdb::option::string_option_def<maint_frame_unwind_options> {
+    "name",
+    [] (maint_frame_unwind_options *opt) { return &opt->unwinder_name; },
+    nullptr,
+    N_("The name of the unwinder to have its state changed")
+  },
+  gdb::option::enum_option_def<maint_frame_unwind_options> {
+    "class",
+    unwind_class_conversion,
+    [] (maint_frame_unwind_options *opt) { return &opt->unwinder_class; },
+    nullptr,
+    N_("The class of unwinders to have their states changed")
+  }
+};
+
+static inline gdb::option::option_def_group
+make_frame_unwind_enable_disable_options (maint_frame_unwind_options *opts)
+{
+  return {{maint_frame_unwind_opt_defs}, opts};
+}
+
+/* Helper function to both enable and disable frame unwinders.
+   If ENABLE is true, this call will be enabling unwinders,
+   otherwise the unwinders will be disabled.  */
+static void
+enable_disable_frame_unwinders (const char *args, int from_tty, bool enable)
+{
+  if (args == nullptr)
+    {
+      if (enable)
+	error (_("Specify which frame unwinder(s) should be enabled"));
+      else
+	error (_("Specify which frame unwinder(s) should be disabled"));
+    }
+
+  struct gdbarch* gdbarch = current_inferior ()->arch ();
+  std::vector<const frame_unwind *> unwinder_list
+    = get_frame_unwind_table (gdbarch);
+
+  maint_frame_unwind_options opts;
+  gdb::option::process_options
+    (&args, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_ERROR,
+     make_frame_unwind_enable_disable_options (&opts));
+
+  if ((opts.all && !opts.unwinder_name.empty ())
+      || (opts.all && opts.unwinder_class != nullptr)
+      || (!opts.unwinder_name.empty () && opts.unwinder_class != nullptr))
+    error (_("Options are mutually exclusive"));
+
+  /* First see if the user wants to change all unwinders.  */
+  if (opts.all)
+    {
+      for (const frame_unwind *u : unwinder_list)
+	u->set_enabled (enable);
+
+      reinit_frame_cache ();
+      return;
+    }
+
+  /* If user entered a specific unwinder name, handle it here.  If the
+     unwinder is already at the expected state, error out.  */
+  if (!opts.unwinder_name.empty ())
+    {
+      bool did_something = false;
+      for (const frame_unwind *unwinder : unwinder_list)
+	{
+	  if (strcasecmp (unwinder->name (),
+			  opts.unwinder_name.c_str ()) == 0)
+	    {
+	      if (unwinder->enabled () == enable)
+		{
+		  if (unwinder->enabled ())
+		    error (_("unwinder %s is already enabled"),
+			     unwinder->name ());
+		  else
+		    error (_("unwinder %s is already disabled"),
+			     unwinder->name ());
+		}
+	      unwinder->set_enabled (enable);
+
+	      did_something = true;
+	      break;
+	    }
+	}
+      if (!did_something)
+	error (_("couldn't find unwinder named %s"),
+	       opts.unwinder_name.c_str ());
+    }
+  else
+    {
+      if (opts.unwinder_class == nullptr)
+	opts.unwinder_class = args;
+      enum frame_unwind_class dclass = str_to_frame_unwind_class
+	(opts.unwinder_class);
+      for (const frame_unwind *unwinder: unwinder_list)
+	{
+	  if (unwinder->unwinder_class () == dclass)
+	    unwinder->set_enabled (enable);
+	}
+    }
+
+  reinit_frame_cache ();
+}
+
+/* Completer for the "maint frame-unwinder enable|disable" commands.  */
+
+static void
+enable_disable_frame_unwinders_completer (struct cmd_list_element *ignore,
+					  completion_tracker &tracker,
+					  const char *text,
+					  const char * /*word*/)
+{
+  maint_frame_unwind_options opts;
+  const auto group = make_frame_unwind_enable_disable_options (&opts);
+
+  const char *start = text;
+  if (gdb::option::complete_options
+      (tracker, &text, gdb::option::PROCESS_OPTIONS_UNKNOWN_IS_OPERAND, group))
+    return;
+
+  /* Only complete a class name as a stand-alone operand when no options
+     are given.  */
+  if (start == text)
+    complete_on_enum (tracker, unwind_class_conversion, text, text);
+  return;
+}
+
+/* Implement "maint frame-unwinder disable" command.  */
+static void
+maintenance_disable_frame_unwinders (const char *args, int from_tty)
+{
+  enable_disable_frame_unwinders (args, from_tty, false);
+}
+
+/* Implement "maint frame-unwinder enable" command.  */
+static void
+maintenance_enable_frame_unwinders (const char *args, int from_tty)
+{
+  enable_disable_frame_unwinders (args, from_tty, true);
+}
+
+INIT_GDB_FILE (frame_unwind)
 {
   /* Add "maint info frame-unwinders".  */
   add_cmd ("frame-unwinders",
 	   class_maintenance,
 	   maintenance_info_frame_unwinders,
-	   _("List the frame unwinders currently in effect, "
-	     "starting with the highest priority."),
+	   _("\
+List the frame unwinders currently in effect.\n\
+Unwinders are listed starting with the highest priority."),
 	   &maintenanceinfolist);
+
+  /* Add "maint frame-unwinder disable/enable".  */
+  static struct cmd_list_element *maint_frame_unwinder;
+
+  add_basic_prefix_cmd ("frame-unwinder", class_maintenance,
+			_("Commands handling frame unwinders."),
+			&maint_frame_unwinder, 0, &maintenancelist);
+
+  cmd_list_element *c
+    = add_cmd ("disable", class_maintenance, maintenance_disable_frame_unwinders,
+	       _("\
+Disable one or more frame unwinder(s).\n\
+Usage: maint frame-unwinder disable [-all | -name NAME | [-class] CLASS]\n\
+\n\
+These are the meanings of the options:\n\
+\t-all    - All available unwinders will be disabled\n\
+\t-name   - NAME is the exact name of the frame unwinder to be disabled\n\
+\t-class  - CLASS is the class of unwinders to be disabled. Valid classes are:\n\
+\t\tGDB       - Unwinders added by GDB core;\n\
+\t\tEXTENSION - Unwinders added by extension languages;\n\
+\t\tDEBUGINFO - Unwinders that handle debug information;\n\
+\t\tARCH      - Unwinders that use architecture-specific information;\n\
+\n\
+UNWINDER and NAME are case insensitive."),
+	       &maint_frame_unwinder);
+  set_cmd_completer_handle_brkchars (c,
+				     enable_disable_frame_unwinders_completer);
+
+  c =
+    add_cmd ("enable", class_maintenance, maintenance_enable_frame_unwinders,
+	     _("\
+Enable one or more frame unwinder(s).\n\
+Usage: maint frame-unwinder enable [-all | -name NAME | [-class] CLASS]\n\
+\n\
+These are the meanings of the options:\n\
+\t-all    - All available unwinders will be enabled\n\
+\t-name   - NAME is the exact name of the frame unwinder to be enabled\n\
+\t-class  - CLASS is the class of unwinders to be enabled. Valid classes are:\n\
+\t\tGDB       - Unwinders added by GDB core;\n\
+\t\tEXTENSION - Unwinders added by extension languages;\n\
+\t\tDEBUGINFO - Unwinders that handle debug information;\n\
+\t\tARCH      - Unwinders that use architecture-specific information;\n\
+\n\
+UNWINDER and NAME are case insensitive."),
+	     &maint_frame_unwinder);
+  set_cmd_completer_handle_brkchars (c,
+				     enable_disable_frame_unwinders_completer);
 }

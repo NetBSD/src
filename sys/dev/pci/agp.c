@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.88 2022/05/22 11:27:35 andvar Exp $	*/
+/*	$NetBSD: agp.c,v 1.88.10.1 2026/11/04 23:22:03 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,27 +65,26 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.88 2022/05/22 11:27:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.88.10.1 2026/11/04 23:22:03 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/malloc.h>
-#include <sys/kernel.h>
-#include <sys/device.h>
-#include <sys/conf.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
 #include <sys/agpio.h>
-#include <sys/proc.h>
+#include <sys/bus.h>
+#include <sys/conf.h>
+#include <sys/device.h>
+#include <sys/fcntl.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
+#include <sys/malloc.h>
 #include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
+#include <dev/pci/agpreg.h>
+#include <dev/pci/agpvar.h>
+#include <dev/pci/pcidevs.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
-#include <dev/pci/agpvar.h>
-#include <dev/pci/agpreg.h>
-#include <dev/pci/pcidevs.h>
-
-#include <sys/bus.h>
 
 MALLOC_DEFINE(M_AGP, "AGP", "AGP memory");
 
@@ -109,11 +108,12 @@ static bool agp_resume(device_t, const pmf_qual_t *);
 
 #include "agp_ali.h"
 #include "agp_amd.h"
+#include "agp_amd64.h"
 #include "agp_i810.h"
 #include "agp_intel.h"
+#include "agp_nvidia.h"
 #include "agp_sis.h"
 #include "agp_via.h"
-#include "agp_amd64.h"
 
 const struct agp_product {
 	uint32_t	ap_vendor;
@@ -226,6 +226,13 @@ const struct agp_product {
 	  agp_amd64_match,	agp_amd64_attach },
 	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE3_250_PCHB,
 	  agp_amd64_match,	agp_amd64_attach },
+#endif
+
+#if NAGP_NVIDIA > 0
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE_PCHB,
+	  NULL,			agp_nvidia_attach },
+	{ PCI_VENDOR_NVIDIA,	PCI_PRODUCT_NVIDIA_NFORCE2_PCHB,
+	  NULL,			agp_nvidia_attach },
 #endif
 
 #if NAGP_AMD64 > 0
@@ -446,8 +453,7 @@ agp_generic_detach(struct agp_softc *sc)
 static int
 agpdev_match(const struct pci_attach_args *pa)
 {
-	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
-	    PCI_SUBCLASS(pa->pa_class) == PCI_SUBCLASS_DISPLAY_VGA)
+	if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY)
 		if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_AGP,
 		    NULL, NULL))
 		return 1;

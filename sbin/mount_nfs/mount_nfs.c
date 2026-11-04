@@ -1,4 +1,4 @@
-/*	$NetBSD: mount_nfs.c,v 1.75.2.1 2025/08/02 05:55:07 perseant Exp $	*/
+/*	$NetBSD: mount_nfs.c,v 1.75.2.2 2026/11/04 23:19:40 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1992, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)mount_nfs.c	8.11 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: mount_nfs.c,v 1.75.2.1 2025/08/02 05:55:07 perseant Exp $");
+__RCSID("$NetBSD: mount_nfs.c,v 1.75.2.2 2026/11/04 23:19:40 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -101,6 +101,7 @@ __RCSID("$NetBSD: mount_nfs.c,v 1.75.2.1 2025/08/02 05:55:07 perseant Exp $");
 #define ALTF_TIMEO	0x00400000
 #define ALTF_RETRANS	0x00800000
 #define ALTF_UDP	0x01000000
+#define ALTF_NOWCCMSG	0x02000000
 
 static const struct mntopt mopts[] = {
 	MOPT_STDOPTS,
@@ -130,6 +131,7 @@ static const struct mntopt mopts[] = {
 	{ "readahead", 0, ALTF_READAHEAD, 1 },
 	{ "deadthresh", 0, ALTF_DEADTHRESH, 1 },
 	{ "timeo", 0, ALTF_TIMEO, 1 },
+	{ "wccmsg", 1, ALTF_NOWCCMSG, 1 },
 	MOPT_NULL,
 
 };
@@ -291,6 +293,8 @@ mount_nfs_parseargs(int argc, char *argv[],
 				nfsargsp->flags |= NFSMNT_INT;
 			if (altflags & ALTF_NOAC)
 				nfsargsp->flags |= NFSMNT_NOAC;
+			if (altflags & ALTF_NOWCCMSG)
+				nfsargsp->flags |= NFSMNT_NOWCCMSG;
 			if (altflags & (ALTF_NFSV3|ALTF_NQNFS)) {
 				if (force2)
 					conflicting();

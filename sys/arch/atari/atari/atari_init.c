@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.113.2.1 2026/11/04 23:20:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.113.2.1 2026/11/04 23:20:18 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -49,10 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp 
 #include <sys/buf.h>
 #include <sys/msgbuf.h>
 #include <sys/mbuf.h>
-#include <sys/extent.h>
 #include <sys/protosw.h>
 #include <sys/domain.h>
-#include <sys/dkbad.h>
 #include <sys/reboot.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
@@ -71,9 +69,11 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp 
 #include <machine/acia.h>
 #include <machine/kcore.h>
 #include <machine/intr.h>
+#include <machine/vectors.h>
 
 #include <m68k/cpu.h>
 #include <m68k/cacheops.h>
+#include <m68k/pcr.h>
 
 #include <atari/atari/stalloc.h>
 #include <atari/dev/clockvar.h>
@@ -81,7 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.113 2024/02/10 18:43:51 andvar Exp 
 
 #include "pci.h"
 
-void start_c(int, u_int, u_int, u_int, char *);
+void *start_c(int, u_int, u_int, u_int, char *);
 static void atari_hwinit(void);
 static void cpu_init_kcorehdr(paddr_t, paddr_t);
 static void initcpu(void);
@@ -194,7 +194,7 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
  */
 int kernel_copyback = 1;
 
-void
+void *
 start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
     char *esym_addr)
 	/* id:			 Machine id			*/
@@ -597,10 +597,14 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 */
 	pmap_bootstrap(vstart);
 
+#if defined(M68030)
 	/*
-	 * Prepare to enable the MMU.
-	 * Setup and load SRP (see pmap.h)
+	 * Prepare the SRP prototype before relocating the kernel.
+	 * The relocated copy must contain the root table address
+	 * when the MMU is enabled.
 	 */
+	protorp[1] = Sysseg_pa;
+#endif
 
 	cpu_init_kcorehdr(kbase, Sysseg_pa);
 
@@ -642,8 +646,9 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 #endif
 	{
 #if defined(M68030)
-		protorp[1] = Sysseg_pa;		/* + segtable address */
-		__asm volatile ("pmove %0@,%%srp" : : "a" (&protorp[0]));
+		__asm volatile ("pmove %0@,%%srp"
+		    :
+		    : "a" (&protorp[0]), "m" (protorp[0]), "m" (protorp[1]));
 		/*
 		 * setup and load TC register.
 		 * enable_cpr, enable_srp, pagesize=8k,
@@ -651,14 +656,14 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		 */
 		u_int tc = MMU51_TCR_BITS;
 		__asm volatile ("pflusha" : : );
-		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc));
+		__asm volatile ("pmove %0@,%%tc" : : "a" (&tc), "m" (tc));
 #endif /* M68030 */
 	}
 
 	/*
 	 * Initialize the "u-area" pages etc.
 	 */
-	pmap_bootstrap_finalize();
+	void *ksp = pmap_bootstrap2();
 
 	/*
 	 * Get the hardware into a defined state
@@ -688,6 +693,8 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 	 * Initialize interrupt mapping.
 	 */
 	intr_init();
+
+	return ksp;
 }
 
 #if defined(_MILANHW_)
@@ -716,7 +723,7 @@ milan_probe_bank_1(paddr_t start_paddr)
 	base[MB_END(16)] = MAGIC_16M;
 
 	/* check bus error at the end of 32MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(32)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(32))) {
 		/* bus error; assume no memory there */
 		goto out16;
 	}
@@ -732,7 +739,7 @@ milan_probe_bank_1(paddr_t start_paddr)
 	mb = 32;
 
 	/* check bus error at the end of 64MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(64)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(64))) {
 		/* bus error; assume no memory there */
 		goto out32;
 	}
@@ -772,7 +779,7 @@ milan_probe_bank(paddr_t start_paddr)
 	base = (uint8_t *)start_paddr;
 
 	/* check bus error at the end of 4MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(4)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(4))) {
 		/* bus error; assume no memory there */
 		goto out;
 	}
@@ -793,7 +800,7 @@ milan_probe_bank(paddr_t start_paddr)
 	mb = 4;
 
 	/* check bus error at the end of 8MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(8)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(8))) {
 		/* bus error; assume no memory there */
 		goto out4;
 	}
@@ -809,7 +816,7 @@ milan_probe_bank(paddr_t start_paddr)
 	mb = 8;
 
 	/* check bus error at the end of 16MB region */
-	if (badbaddr(__UNVOLATILE(base + MB_END(16)), sizeof(uint8_t))) {
+	if (badbaddr(base + MB_END(16))) {
 		/* bus error; assume no memory there */
 		goto out8;
 	}
@@ -848,18 +855,17 @@ set_machtype(void)
 
 #else
 	stio_addr = 0xff8000;	/* XXX: For TT & Falcon only */
-	if (badbaddr((void *)__UNVOLATILE(&MFP2->mf_gpip), sizeof(char))) {
+	if (badbaddr(&MFP2->mf_gpip)) {
 		/*
 		 * Watch out! We can also have a Hades with < 16Mb
 		 * RAM here...
 		 */
-		if (!badbaddr((void *)__UNVOLATILE(&MFP->mf_gpip),
-		    sizeof(char))) {
+		if (!badbaddr(&MFP->mf_gpip)) {
 			machineid |= ATARI_FALCON;
 			return;
 		}
 	}
-	if (!badbaddr((void *)(PCI_CONFB_PHYS + PCI_CONFM_PHYS), sizeof(char)))
+	if (!badbaddr((void *)(PCI_CONFB_PHYS + PCI_CONFM_PHYS)))
 		machineid |= ATARI_HADES;
 	else
 		machineid |= ATARI_TT;
@@ -1294,89 +1300,20 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 #endif /* M68040 */
 
 #if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
+int m68060_pcr_init = PCR_ESS;	/* make this patchable */
 #endif
 
 static void
 initcpu(void)
 {
-	typedef void trapfun(void);
-
-	switch (cputype) {
-
 #if defined(M68060)
-	case CPU_68060:
-		{
-			extern trapfun	*vectab[256];
-			extern trapfun	buserr60, addrerr4060, fpfault;
-#if defined(M060SP)
-			extern u_int8_t FP_CALL_TOP[], I_CALL_TOP[];
-#else
-			extern trapfun illinst;
-#endif
-
-			__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
-					"d"(m68060_pcr_init):"d0" );
-
-			/* bus/addrerr vectors */
-			vectab[2] = buserr60;
-			vectab[3] = addrerr4060;
-
-#if defined(M060SP)
-			/* integer support */
-			vectab[61] = (trapfun *)&I_CALL_TOP[128 + 0x00];
-
-			/* floating point support */
-			/*
-			 * XXX maybe we really should run-time check for the
-			 * stack frame format here:
-			 */
-			vectab[11] = (trapfun *)&FP_CALL_TOP[128 + 0x30];
-
-			vectab[55] = (trapfun *)&FP_CALL_TOP[128 + 0x38];
-			vectab[60] = (trapfun *)&FP_CALL_TOP[128 + 0x40];
-
-			vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
-			vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
-			vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
-			vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
-			vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
-			vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
-#else
-			vectab[61] = illinst;
-#endif
-			vectab[48] = fpfault;
-		}
-		break;
-#endif /* defined(M68060) */
-#if defined(M68040)
-	case CPU_68040:
-		{
-			extern trapfun	*vectab[256];
-			extern trapfun	buserr40, addrerr4060;
-
-			/* bus/addrerr vectors */
-			vectab[2] = buserr40;
-			vectab[3] = addrerr4060;
-		}
-		break;
-#endif /* defined(M68040) */
-#if defined(M68030) || defined(M68020)
-	case CPU_68030:
-	case CPU_68020:
-		{
-			extern trapfun	*vectab[256];
-			extern trapfun	buserr2030, addrerr2030;
-
-			/* bus/addrerr vectors */
-			vectab[2] = buserr2030;
-			vectab[3] = addrerr2030;
-		}
-		break;
-#endif /* defined(M68030) || defined(M68020) */
+	if (cputype == CPU_68060) {
+		__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
+				"d"(m68060_pcr_init):"d0" );
 	}
-
-	DCIS();
+#endif
+	/* Initialize the vector table. */
+	vec_init();
 }
 
 #ifdef DEBUG

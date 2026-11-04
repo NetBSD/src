@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx.seq,v 1.17 2022/06/27 22:41:29 andvar Exp $	*/
+/*	$NetBSD: aic79xx.seq,v 1.17.10.1 2026/11/04 23:22:01 perseant Exp $	*/
 
 /*
  * Adaptec U320 device driver firmware for Linux and FreeBSD.
@@ -444,7 +444,7 @@ BEGIN_CRITICAL;
 	shr	SELOID, 4, SCB_SCSIID;
 	/*
 	 * If we want to send a message to the device, ensure
-	 * we are selecting with atn irregardless of our packetized
+	 * we are selecting with atn regardless of our packetized
 	 * agreement.  Since SPI4 only allows target reset or PPR
 	 * messages if this is a packetized connection, the change
 	 * to our negotiation table entry for this selection will
@@ -1622,7 +1622,7 @@ export seq_isr:
 		 *
 		 * First instruction in an ISR cannot be a branch on
 		 * Rev A.  Snapshot LQISTAT2 so the status is not missed
-		 * and deffer the test by one instruction.
+		 * and defer the test by one instruction.
 		 */
 		mov	REG_ISR, LQISTAT2;
 		test	REG_ISR, LQIWORKONLQ jz main_isr;

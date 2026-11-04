@@ -1,6 +1,6 @@
 /* The configure generated header settings.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -25,6 +25,9 @@
 /* Include gnulib's various configure tests.  */
 #include "gnulib/config.h"
 
+/* This comes from gnulib.  Export it until ansidecl.h handles it.  */
+#define ATTRIBUTE_FALLTHROUGH _GL_ATTRIBUTE_FALLTHROUGH
+
 /* Reset macros that our config.h will provide.  */
 #undef PACKAGE
 #undef PACKAGE_BUGREPORT
@@ -35,7 +38,7 @@
 #undef PACKAGE_VERSION
 
 /* Include common sim's various configure tests.  */
-#ifndef SIM_COMMON_BUILD
+#ifndef SIM_TOPDIR_BUILD
 #include "../config.h"
 #else
 #include "config.h"

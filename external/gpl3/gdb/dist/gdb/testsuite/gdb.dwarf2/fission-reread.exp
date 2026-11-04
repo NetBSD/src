@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,26 +43,56 @@ if [build_executable_and_dwo_files "$testfile.exp" "${binfile}" $options \
     return -1
 }
 
-clean_restart
-gdb_load_no_complaints $binfile
+# Load FILENAME, perform some basic tests to confirm that the debug
+# information has been found, then unload FILENAME.
+proc run_test { filename } {
+    clean_restart
+    gdb_load_no_complaints $filename
 
-gdb_test "break -q main" "Breakpoint.*at.*"
+    gdb_test "break -q main" "Breakpoint.*at.*"
 
-gdb_test "ptype baz" "type = class foo {.*"
+    gdb_test "ptype baz" "type = class foo \{.*"
 
-# If we get this far gdb didn't crash, nor did an error occur.
-pass $testfile
+    # If we get this far gdb didn't crash, nor did an error occur.
+    pass "load executable without crashing"
 
-gdb_unload
-# If we get this far gdb didn't crash, nor did an error occur.
-pass "$testfile - unload"
+    gdb_unload
 
-# Test-case for PR24620: Delete the .dwo file and verify that
-# save gdb-index doesn't crash.
+    # If we get this far gdb didn't crash, nor did an error occur.
+    pass "unload executable without crashing"
+}
+
+# Run the tests with BINFILE as it was built by default.
+run_test $binfile
+
+# Try adding a gdb-index and dwarf-5 style index, and then rerun the test.
+foreach_with_prefix index_type { gdb dwarf5 } {
+    set binfile_with_index ${binfile}-idx-${index_type}
+
+    remote_exec build "cp $binfile $binfile_with_index"
+
+    if { $index_type eq "gdb" } {
+	set style ""
+    } else {
+	set style "-dwarf-5"
+    }
+
+    # This is expected to fail if the binary already has an index.
+    if {[ensure_gdb_index $binfile_with_index $style] != 1} {
+	unsupported "couldn't add $index_type index"
+	break
+    }
+
+    run_test $binfile_with_index
+}
+
+# Test-case for PR24620: Delete the .dwo file and verify that save
+# gdb-index doesn't crash.  This uses the original compilatin result,
+# without any index added by the above block.
 remote_file target delete $dwo
 save_vars { GDBFLAGS } {
     append GDBFLAGS " -iex \"maint set dwarf synchronous on\""
-    clean_restart $binfile
+    clean_restart $testfile
 }
 set output_dir [standard_output_file ""]
 set cmd "save gdb-index"

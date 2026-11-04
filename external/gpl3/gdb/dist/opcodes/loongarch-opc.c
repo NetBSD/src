@@ -1,5 +1,5 @@
 /* LoongArch opcode support.
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Loongson Ltd.
 
    This file is part of the GNU opcodes library.
@@ -24,7 +24,8 @@
 
 struct loongarch_ASEs_option LARCH_opts =
 {
-  .relax = 1
+  .relax = 1,
+  .thin_add_sub = 0
 };
 
 size_t
@@ -123,6 +124,38 @@ const char *const loongarch_x_normal_name[32] =
   "$xr8",  "$xr9",  "$xr10", "$xr11", "$xr12", "$xr13", "$xr14", "$xr15",
   "$xr16", "$xr17", "$xr18", "$xr19", "$xr20", "$xr21", "$xr22", "$xr23",
   "$xr24", "$xr25", "$xr26", "$xr27", "$xr28", "$xr29", "$xr30", "$xr31",
+};
+
+const char *const loongarch_r_cfi_name[32] =
+{
+  "r0",  "r1",  "r2",  "r3",  "r4",  "r5",  "r6",  "r7",
+  "r8",  "r9",  "r10", "r11", "r12", "r13", "r14", "r15",
+  "r16", "r17", "r18", "r19", "r20", "r21", "r22", "r23",
+  "r24", "r25", "r26", "r27", "r28", "r29", "r30", "r31",
+};
+
+const char *const loongarch_r_cfi_name_alias[32] =
+{
+  "zero", "ra", "tp", "sp", "a0", "a1", "a2", "a3",
+  "a4",   "a5", "a6", "a7", "t0", "t1", "t2", "t3",
+  "t4",   "t5", "t6", "t7", "t8", "r21","fp", "s0",
+  "s1",   "s2", "s3", "s4", "s5", "s6", "s7", "s8",
+};
+
+const char *const loongarch_f_cfi_name[32] =
+{
+  "f0",  "f1",  "f2",  "f3",  "f4",  "f5",  "f6",  "f7",
+  "f8",  "f9",  "f10", "f11", "f12", "f13", "f14", "f15",
+  "f16", "f17", "f18", "f19", "f20", "f21", "f22", "f23",
+  "f24", "f25", "f26", "f27", "f28", "f29", "f30", "f31",
+};
+
+const char *const loongarch_f_cfi_name_alias[32] =
+{
+  "fa0", "fa1", "fa2",  "fa3",  "fa4",  "fa5",  "fa6",  "fa7",
+  "ft0", "ft1", "ft2",  "ft3",  "ft4",  "ft5",  "ft6",  "ft7",
+  "ft8", "ft9", "ft10", "ft11", "ft12", "ft13", "ft14", "ft15",
+  "fs0", "fs1", "fs2",  "fs3",  "fs4",  "fs5",  "fs6",  "fs7",
 };
 
 /* Can not use xx_pa for abs.  */
@@ -421,6 +454,9 @@ static struct loongarch_opcode loongarch_macro_opcodes[] =
 static struct loongarch_opcode loongarch_alias_opcodes[] =
 {
   /* match,	mask,		name,		format,				macro,	include, exclude, pinfo.  */
+  { 0x00006000, 0xffffffe0,	"rdcntvl.w",	"r0:5",				0,	0, 0, INSN_DIS_ALIAS }, /* rdtimel.w rd, zero */
+  { 0x00006000, 0xfffffc1f,	"rdcntid.w",	"r5:5",				0,	0, 0, INSN_DIS_ALIAS }, /* rdtimel.w zero, rj */
+  { 0x00006400, 0xffffffe0,	"rdcntvh.w",	"r0:5",				0,	0, 0, INSN_DIS_ALIAS }, /* rdtimeh.w rd, zero */
   { 0x00150000,	0xfffffc00,	"move",		"r0:5,r5:5",			0,	0, 0, INSN_DIS_ALIAS }, /* or rd, rj, zero */
   { 0x02800000, 0xffc003e0,	"li.w",		"r0:5,s10:12",			0,	0, 0, INSN_DIS_ALIAS }, /* addi.w rd, zero, simm */
   { 0x02c00000, 0xffc003e0,	"li.d",		"r0:5,s10:12",			0,	0, 0, INSN_DIS_ALIAS }, /* addi.d rd, zero, simm */
@@ -461,7 +497,10 @@ static struct loongarch_opcode loongarch_fix_opcodes[] =
   { 0x00005400, 0xfffffc00,	"bitrev.d",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00005800, 0xfffffc00,	"ext.w.h",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00005c00, 0xfffffc00,	"ext.w.b",	"r0:5,r5:5",			0,			0,	0,	0 },
+  { 0x0,	0x0,		"rdcntvl.w",	"r",				"rdtimel.w %1,$r0",	0,	0,	0 },
+  { 0x0,	0x0,		"rdcntid.w",	"r",				"rdtimel.w $r0,%1",	0,	0,	0 },
   { 0x00006000, 0xfffffc00,	"rdtimel.w",	"r0:5,r5:5",			0,			0,	0,	0 },
+  { 0x0,	0x0,		"rdcntvh.w",	"r",				"rdtimeh.w %1,$r0",	0,	0,	0 },
   { 0x00006400, 0xfffffc00,	"rdtimeh.w",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00006800, 0xfffffc00,	"rdtime.d",	"r0:5,r5:5",			0,			0,	0,	0 },
   { 0x00006c00, 0xfffffc00,	"cpucfg",	"r0:5,r5:5",			0,			0,	0,	0 },

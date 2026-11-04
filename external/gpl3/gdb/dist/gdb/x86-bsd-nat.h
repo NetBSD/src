@@ -1,6 +1,6 @@
 /* Native-dependent code for x86 BSD's.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_BSD_NAT_H
-#define X86_BSD_NAT_H
+#ifndef GDB_X86_BSD_NAT_H
+#define GDB_X86_BSD_NAT_H
 
 #include "x86-nat.h"
 
@@ -43,4 +43,4 @@ class x86bsd_nat_target : public BaseTarget
 };
 #endif /* HAVE_PT_GETDBREGS */
 
-#endif /* x86-bsd-nat.h */
+#endif /* GDB_X86_BSD_NAT_H */

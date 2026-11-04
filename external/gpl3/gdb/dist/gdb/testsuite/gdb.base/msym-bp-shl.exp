@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,7 +55,8 @@ proc test {debug} {
 	return
     }
 
-    clean_restart $bin
+    clean_restart
+    gdb_load $bin
     gdb_load_shlib $lib
 
     # Should find two locations: the static foo in the

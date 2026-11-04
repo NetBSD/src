@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -33,7 +33,7 @@
    disks file system.  The operations would be implemented using the
    basic block I/O model provided by the disk.
 
-   This model includes methods that faciliate the creation of device
+   This model includes methods that facilitate the creation of device
    instance and (should a given device support it) standard operations
    on those instances.
 

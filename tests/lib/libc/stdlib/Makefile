@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34.2.1 2025/08/02 05:58:06 perseant Exp $
+# $NetBSD: Makefile,v 1.34.2.2 2026/11/04 23:28:17 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -42,5 +42,7 @@ DPADD.t_strtod+=		${LIBM}
 
 LDADD.t_getenv_thread=	-lpthread
 LDADD.t_mktemp+=	-Wl,--no-fatal-warnings
+
+COPTS.h_getopt_long.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.test.mk>

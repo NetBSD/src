@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.16.36.1 2026/11/04 23:20:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -34,7 +34,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16.36.1 2026/11/04 23:20:53 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,6 +45,8 @@ __KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.16 2019/04/11 14:38:06 kamil Exp $
 #include <sys/syscallargs.h>
 
 #include <machine/cpu.h>
+
+#ifndef __mc68010__
 #include <m68k/cacheops.h>
 
 /* XXX should be in an include file somewhere */
@@ -71,7 +73,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 	int error = 0;
 
 #if defined(M68040) || defined(M68060)
-	if (mmutype == MMU_68040) {
+	if (cputype >= CPU_68040) {
 		int inc = 0;
 		bool doall = false;
 		paddr_t pa = 0;
@@ -92,7 +94,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 				addr = addr & ~0xf;
 				inc = 16;
 			} else {
-				addr = addr & ~PGOFSET;
+				addr = m68k_trunc_page(addr);
 				inc = PAGE_SIZE;
 			}
 		}
@@ -154,11 +156,13 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 		} while (addr < end);
 		return (error);
 	}
-#endif
+#endif /* M68040 || M68060 */
+
+	/* XXX What about EC_VIRT machines? */
 	switch (req) {
 	case CC_EXTPURGE|CC_PURGE:
 	case CC_EXTPURGE|CC_FLUSH:
-#if defined(CACHE_HAVE_PAC)
+#if defined(M68K_EC_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		/* fall into... */
@@ -168,7 +172,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 		DCIU();
 		break;
 	case CC_EXTPURGE|CC_IPURGE:
-#if defined(CACHE_HAVE_PAC)
+#if defined(M68K_EC_PAC)
 		if (ectype == EC_PHYS)
 			PCIA();
 		else
@@ -185,15 +189,7 @@ cachectl1(u_long req, vaddr_t addr, size_t len, struct proc *p)
 	return error;
 }
 
-int
-sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap, register_t *retval)
-{
-
-	return ENOSYS;
-}
-
-#if defined(amiga) || defined(x68k)
-
+#if defined(amiga) || defined(x68k)	/* XXX XXX XXX */
 /*
  * DMA cache control
  */
@@ -216,14 +212,14 @@ dma_cachectl(void *addr, int len)
 		addr = (void *)((vaddr_t)addr & ~0xf);
 		inc = 16;
 	} else {
-		addr = (void *)((vaddr_t)addr & ~PGOFSET);
+		addr = (void *)m68k_trunc_page(addr);
 		inc = PAGE_SIZE;
 	}
 	do {
 		/*
 		 * Convert to physical address.
 		 */
-		if (pa == 0 || ((vaddr_t)addr & PGOFSET) == 0) {
+		if (pa == 0 || ((vaddr_t)addr & PAGE_MASK) == 0) {
 			pa = kvtop(addr);
 		}
 		if (inc == 16) {
@@ -240,3 +236,13 @@ dma_cachectl(void *addr, int len)
 	return 0;
 }
 #endif	/* defined(amiga) || defined(x68k) */
+
+#endif /* ! __mc68010__ */
+
+int
+sys_sysarch(struct lwp *l, const struct sys_sysarch_args *uap,
+    register_t *retval)
+{
+
+	return ENOSYS;
+}

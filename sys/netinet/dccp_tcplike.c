@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tcplike.c,v 1.19 2005/07/27 06:27:25 nishida Exp $	*/
-/*	$NetBSD: dccp_tcplike.c,v 1.5 2022/05/22 11:27:36 andvar Exp $ */
+/*	$NetBSD: dccp_tcplike.c,v 1.5.10.1 2026/11/04 23:27:59 perseant Exp $ */
 
 /*
  * Copyright (c) 2003 Magnus Erixzon
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.5 2022/05/22 11:27:36 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tcplike.c,v 1.5.10.1 2026/11/04 23:27:59 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -311,7 +311,7 @@ tcplike_send_free(void *ccb)
 }
 
 /*
- * Ask TCPlike wheter one can send a packet or not 
+ * Ask TCPlike whether one can send a packet or not 
  * args: ccb  -  ccb block for current connection 
  * returns: 0 if ok, else <> 0.
  */ 

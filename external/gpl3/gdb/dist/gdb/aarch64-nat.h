@@ -1,6 +1,6 @@
 /* Native-dependent code for AArch64.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_NAT_H
-#define AARCH64_NAT_H
+#ifndef GDB_AARCH64_NAT_H
+#define GDB_AARCH64_NAT_H
 
 #include "breakpoint.h"
 #include "nat/aarch64-hw-point.h"
@@ -92,10 +92,6 @@ struct aarch64_nat_target : public BaseTarget
   int remove_hw_breakpoint (struct gdbarch *gdbarch,
 			    struct bp_target_info *bp_tgt) override
   { return aarch64_remove_hw_breakpoint (gdbarch, bp_tgt); }
-
-  bool watchpoint_addr_within_range (CORE_ADDR addr, CORE_ADDR start,
-				     int length) override
-  { return start <= addr && start + length - 1 >= addr; }
 };
 
-#endif /* AARCH64_NAT_H */
+#endif /* GDB_AARCH64_NAT_H */

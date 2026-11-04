@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.290.2.1 2025/08/02 05:57:45 perseant Exp $
+#	$NetBSD: Makefile,v 1.290.2.2 2026/11/04 23:27:53 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -102,6 +102,7 @@ SUBDIR+=	if_ncm
 SUBDIR+=	if_npflog
 SUBDIR+=	if_ppp
 SUBDIR+=	if_pppoe
+# SUBDIR+=	if_rsu
 SUBDIR+=	if_run
 SUBDIR+=	if_sl
 SUBDIR+=	if_smsc
@@ -144,6 +145,7 @@ SUBDIR+=	npf_alg_icmp
 SUBDIR+=	npf_ext_log
 SUBDIR+=	npf_ext_normalize
 SUBDIR+=	npf_ext_rndblock
+SUBDIR+=	npf_ext_route
 SUBDIR+=	ntfs
 SUBDIR+=	null
 SUBDIR+=	onewire
@@ -249,6 +251,7 @@ SUBDIR+=	hdaudioverbose
 SUBDIR+=	hpet
 SUBDIR+=	ichsmb
 SUBDIR+=	odcm
+SUBDIR+=	pchtemp
 SUBDIR+=	powernow
 SUBDIR+=	tco
 SUBDIR+=	tprof_x86
@@ -480,19 +483,23 @@ SUBDIR+=	imcsmb
 SUBDIR+=	iscsi
 .endif
 
-# For now, all of these are disabled, pending resolution of how to deal
-# with attachment-specific modules and bus-specific modules (as opposed
+# For now, all of these are  built but not installed, pending resolution
+# of how to deal with attachment- and bus-specific modules (as opposed
 # to machine- or architecture-specific modules)
+#
+# See also PR kern/59716
 
 .if 0
 SUBDIR+=	aac
 SUBDIR+=	amr
 SUBDIR+=	ataraid
 SUBDIR+=	cac
-SUBDIR+=	cac_eisa
-SUBDIR+=	cac_pci
+#SUBDIR+=	cac_eisa
+#SUBDIR+=	cac_pci
 SUBDIR+=	emuxki
 SUBDIR+=	if_aq
+SUBDIR+=	if_igc
+SUBDIR+=	if_rge
 SUBDIR+=	if_vioif
 SUBDIR+=	if_vmx
 SUBDIR+=	ld
@@ -506,8 +513,8 @@ SUBDIR+=	ld_sdmmc
 SUBDIR+=	ld_twa
 SUBDIR+=	ld_twe
 SUBDIR+=	ld_virtio
-SUBDIR+=	mlx
-SUBDIR+=	mlx_eisa
+#SUBDIR+=	mlx
+#SUBDIR+=	mlx_eisa
 SUBDIR+=	mlx_pci
 SUBDIR+=	ld_nvme
 SUBDIR+=	nvme

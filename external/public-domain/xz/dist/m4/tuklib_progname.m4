@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: 0BSD
+
+#############################################################################
 #
 # SYNOPSIS
 #
@@ -11,15 +14,16 @@
 #   This .m4 file is needed allow this module to use glibc's
 #   program_invocation_name.
 #
-# COPYING
+#############################################################################
 #
-#   Author: Lasse Collin
+# Author: Lasse Collin
 #
-#   This file has been put into the public domain.
-#   You can do whatever you want with this file.
-#
+#############################################################################
 
 AC_DEFUN_ONCE([TUKLIB_PROGNAME], [
 AC_REQUIRE([TUKLIB_COMMON])
-AC_CHECK_DECLS([program_invocation_name], [], [], [#include <errno.h>])
+AC_CHECK_DECL([program_invocation_name], [AC_DEFINE(
+	[HAVE_PROGRAM_INVOCATION_NAME], [1],
+	[Define to 1 if 'program_invocation_name' is declared in <errno.h>.])],
+	[], [#include <errno.h>])
 ])dnl

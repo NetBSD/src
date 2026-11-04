@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.59.2.1 2025/08/02 05:50:41 perseant Exp $
+#	$NetBSD: Makefile,v 1.59.2.2 2026/11/04 23:15:25 perseant Exp $
 
 # build libraries for xorg
 
@@ -37,7 +37,9 @@ SUBDIR+=libvdpau \
 	.WAIT
 .endif
 SUBDIR+=libXi libXxf86vm \
-	libGL${OLD_SUFFIX} libXScrnSaver libXfont libXfont2 \
+	.WAIT
+# libGL depends upon libXxf86vm
+SUBDIR+=libGL${OLD_SUFFIX} libXScrnSaver libXfont libXfont2 \
 	libXinerama libXmu libXmuu libXpm libXrender \
 	libXres libXtst libXvMC libXvMCW libXv libXxf86dga \
 	libxkbui \

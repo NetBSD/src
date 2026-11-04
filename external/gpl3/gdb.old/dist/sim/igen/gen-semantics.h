@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,6 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef IGEN_GEN_SEMANTICS_H
+#define IGEN_GEN_SEMANTICS_H
 
 /* Creates the files semantics.[hc].
 
@@ -34,9 +36,9 @@
 
 	o	cached - separate cracker and semantic
 
-		Two independant functions are created.  Firstly the
+		Two independent functions are created.  Firstly the
 		function that cracks an instruction entering it into a
-		cache and secondly the semantic function propper that
+		cache and secondly the semantic function proper that
 		uses the cache.
 
 	o	cached - semantic + cracking semantic
@@ -102,3 +104,5 @@ extern void print_semantic_body
    const insn_entry *instruction,
    const opcode_bits *expanded_bits,
    const insn_opcodes *opcodes);
+
+#endif /* IGEN_GEN_SEMANTICS_H */

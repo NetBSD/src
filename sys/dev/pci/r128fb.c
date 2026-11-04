@@ -1,4 +1,4 @@
-/*	$NetBSD: r128fb.c,v 1.45 2022/09/25 17:52:25 thorpej Exp $	*/
+/*	$NetBSD: r128fb.c,v 1.45.10.1 2026/11/04 23:22:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 2007, 2012 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.45 2022/09/25 17:52:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r128fb.c,v 1.45.10.1 2026/11/04 23:22:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,6 +180,7 @@ r128fb_match(device_t parent, cfdata_t match, void *aux)
 	/* only cards tested on so far - likely need a list */
 	if ((PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE1AGP4XT) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE3AGP4XT) ||
+	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGEVRAGP) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGEGLPCI) ||
 	    (PCI_PRODUCT(pa->pa_id) == PCI_PRODUCT_ATI_RAGE_MOB_M3_AGP))
 		return 100;
@@ -348,7 +349,7 @@ r128fb_attach(device_t parent, device_t self, void *aux)
 		aprint_verbose("%s: LVDS output is active, enabling backlight"
 			       " control\n", device_xname(self));
 	} else
-		sc->sc_have_backlight = 0;	
+		sc->sc_have_backlight = 0;
 
 	aa.console = is_console;
 	aa.scrdata = &sc->sc_screenlist;
@@ -453,7 +454,7 @@ r128fb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return 0;
 		}
 		return EPASSTHROUGH;
-	
+
 	case WSDISPLAYIO_GET_EDID: {
 		struct wsdisplayio_edid_info *d = data;
 		return wsdisplayio_get_edid(sc->sc_dev, d);
@@ -479,7 +480,7 @@ r128fb_mmap(void *v, void *vs, off_t offset, int prot)
 	/* 'regular' framebuffer mmap()ing */
 	if (offset < sc->sc_fbsize) {
 		pa = bus_space_mmap(sc->sc_memt, sc->sc_fb + offset, 0, prot,
-		    BUS_SPACE_MAP_LINEAR);
+		    BUS_SPACE_MAP_LINEAR | BUS_SPACE_MAP_PREFETCHABLE);
 		return pa;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: syscall.S,v 1.14 2020/04/18 23:55:50 thorpej Exp $	*/
+/*	$NetBSD: syscall.S,v 1.14.8.1 2026/11/04 23:19:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -36,7 +36,7 @@
 
 #include <machine/asm.h>
 #if defined(SYSLIBC_SCCS) && !defined(lint)
-	RCSID("$NetBSD: syscall.S,v 1.14 2020/04/18 23:55:50 thorpej Exp $")
+	RCSID("$NetBSD: syscall.S,v 1.14.8.1 2026/11/04 23:19:12 perseant Exp $")
 #endif /* SYSLIBC_SCCS and not lint */
 
 #include "SYS.h"
@@ -50,6 +50,6 @@ ENTRY(_syscall)
 	jc	err
 	ret
 err:
-	jmp	CERROR
+	_SYSCALL_ERR
 END(_syscall)
 WEAK_ALIAS(syscall,_syscall)

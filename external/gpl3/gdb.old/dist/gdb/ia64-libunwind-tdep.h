@@ -1,6 +1,6 @@
 /* Frame unwinder for ia64 frames with libunwind frame information.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    Contributed by Jeff Johnston.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef IA64_LIBUNWIND_TDEP_H
-#define IA64_LIBUNWIND_TDEP_H 1
+#ifndef GDB_IA64_LIBUNWIND_TDEP_H
+#define GDB_IA64_LIBUNWIND_TDEP_H
 
 class frame_info_ptr;
 struct frame_id;
@@ -48,19 +48,19 @@ struct libunwind_descr
 };
 
 int libunwind_frame_sniffer (const struct frame_unwind *self,
-			     frame_info_ptr this_frame,
+			     const frame_info_ptr &this_frame,
 			     void **this_cache);
 			  
 int libunwind_sigtramp_frame_sniffer (const struct frame_unwind *self,
-				      frame_info_ptr this_frame,
+				      const frame_info_ptr &this_frame,
 				      void **this_cache);
 
 void libunwind_frame_set_descr (struct gdbarch *arch,
 				struct libunwind_descr *descr);
 
-void libunwind_frame_this_id (frame_info_ptr this_frame, void **this_cache,
+void libunwind_frame_this_id (const frame_info_ptr &this_frame, void **this_cache,
 			      struct frame_id *this_id);
-struct value *libunwind_frame_prev_register (frame_info_ptr this_frame,
+struct value *libunwind_frame_prev_register (const frame_info_ptr &this_frame,
 					     void **this_cache, int regnum);
 void libunwind_frame_dealloc_cache (frame_info_ptr self, void *cache);
 
@@ -76,4 +76,4 @@ int libunwind_get_reg_special (struct gdbarch *gdbarch,
 			       readable_regcache *regcache,
 			       int regnum, void *buf);
 
-#endif /* IA64_LIBUNWIND_TDEP_H */
+#endif /* GDB_IA64_LIBUNWIND_TDEP_H */

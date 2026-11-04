@@ -1,0 +1,55 @@
+# Copyright (C) 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Compile a c++ file using a .c extension, and check that pygments uses c++
+# highlighting instead of c highlighting.
+
+require allow_python_tests
+
+load_lib gdb-python.exp
+
+standard_testfile py-source-styling-2.c
+
+set line_number [gdb_get_line_number "List this line."]
+
+set opts {}
+lappend opts debug
+lappend opts c++
+
+if { [build_executable "failed to build" $testfile $srcfile $opts] == -1 } {
+    return
+}
+
+with_ansi_styling_terminal {
+    clean_restart
+}
+
+gdb_test_no_output "maint set gnu-source-highlight enabled off"
+
+gdb_load $binfile
+
+require {gdb_py_module_available pygments}
+
+gdb_test_no_output "set style enabled on"
+
+gdb_test_multiple "list $line_number" "Styling of c++ keyword try" {
+    -re -wrap "  try\r\n.*" {
+	# Unstyled.
+	fail $gdb_test_name
+    }
+    -re -wrap "" {
+	pass $gdb_test_name
+    }
+}

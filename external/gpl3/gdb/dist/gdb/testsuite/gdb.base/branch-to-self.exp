@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,22 @@ with_test_prefix "single-step" {
     gdb_test "break ${testfile}.c:${line_num}" "Breakpoint .*" \
 	"set breakpoint"
     gdb_continue_to_breakpoint "hit breakpoint"
-    gdb_test "si" ".*${testfile}.c:${line_num}.*"
+
+    set stepi_count 1
+    gdb_test_multiple "stepi" "" {
+	-re -wrap ".*${testfile}.c:${line_num}.*" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "" {
+	    if { $stepi_count == 10 } {
+		fail $gdb_test_name
+	    } else {
+		incr stepi_count
+		send_gdb "stepi\n"
+		exp_continue
+	    }
+	}
+    }
 }
 
 with_test_prefix "break-cond" {

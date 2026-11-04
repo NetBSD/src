@@ -1,4 +1,4 @@
-# Copyright 2023 Free Software Foundation, Inc.
+# Copyright 2023-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 standard_testfile .c .S
 
@@ -95,17 +93,17 @@ if { $break_addr == "" } {
     return
 }
 
-# Get the "foo_label" address.
+# Get the "bar_label" address.
 
-set foo_label_addr ""
-gdb_test_multiple "print /x &foo_label" "" {
+set bar_label_addr ""
+gdb_test_multiple "print /x &bar_label" "" {
     -re -wrap "= ($hex)" {
-	set foo_label_addr $expect_out(1,string)
+	set bar_label_addr $expect_out(1,string)
 	pass $gdb_test_name
     }
 }
 
-if { $foo_label_addr == "" } {
+if { $bar_label_addr == "" } {
     return
 }
 
@@ -117,4 +115,4 @@ gdb_test "print &foo_end == &bar_label" " = 1"
 # Check that the breakpoint is set at the expected address.  Regression test
 # for PR30369.
 
-gdb_assert { $break_addr == $foo_label_addr }
+gdb_assert { $break_addr < $bar_label_addr }

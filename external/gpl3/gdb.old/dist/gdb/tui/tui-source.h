@@ -1,6 +1,6 @@
 /* TUI display source window.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,19 +19,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_SOURCE_H
-#define TUI_TUI_SOURCE_H
+#ifndef GDB_TUI_TUI_SOURCE_H
+#define GDB_TUI_TUI_SOURCE_H
 
+#include "gdbsupport/gdb-checked-static-cast.h"
 #include "tui/tui-data.h"
 #include "tui-winsource.h"
-
-struct symtab;
 
 /* A TUI source window.  */
 
 struct tui_source_window : public tui_source_window_base
 {
-  tui_source_window () = default;
+  tui_source_window ();
+  ~tui_source_window ();
 
   DISABLE_COPY_AND_ASSIGN (tui_source_window);
 
@@ -46,7 +46,7 @@ struct tui_source_window : public tui_source_window_base
 
   bool showing_source_p (const char *filename) const;
 
-  void maybe_update (frame_info_ptr fi, symtab_and_line sal) override;
+  void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) override;
 
   void erase_source_content () override
   {
@@ -82,6 +82,17 @@ private:
 
   /* It is the resolved form as returned by symtab_to_fullname.  */
   gdb::unique_xmalloc_ptr<char> m_fullname;
+
+  /* A token used to register and unregister an observer.  */
+  gdb::observers::token m_src_observable;
 };
 
-#endif /* TUI_TUI_SOURCE_H */
+/* Return the instance of the source window.  */
+
+inline tui_source_window *
+tui_src_win ()
+{
+  return gdb::checked_static_cast<tui_source_window *> (tui_win_list[SRC_WIN]);
+}
+
+#endif /* GDB_TUI_TUI_SOURCE_H */

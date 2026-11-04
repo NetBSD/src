@@ -1,4 +1,4 @@
-/*	$NetBSD: kernhist.h,v 1.27 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: kernhist.h,v 1.27.2.1 2026/11/04 23:28:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -47,12 +47,12 @@
 
 struct kern_history_ent {
 	struct bintime bt; 		/* time stamp */
-	uint32_t cpunum;
+	uint32_t cpunum;		/* cpu number */
+	uint32_t call;			/* function call number */
 	const char *fmt;		/* printf format */
 	size_t fmtlen;			/* length of printf format */
 	const char *fn;			/* function name */
 	size_t fnlen;			/* length of function name */
-	uint32_t call;			/* function call number */
 	uintmax_t v[4];			/* values */
 };
 
@@ -114,13 +114,13 @@ LIST_HEAD(kern_history_head, kern_history);
 #define	MAXHISTS		32
 
 /* and these are the bit values of each history */
-#define	KERNHIST_UVMMAPHIST	0x00000001	/* maphist */
-#define	KERNHIST_UVMPDHIST	0x00000002	/* pdhist */
-#define	KERNHIST_UVMUBCHIST	0x00000004	/* ubchist */
-#define	KERNHIST_UVMLOANHIST	0x00000008	/* loanhist */
-#define	KERNHIST_USBHIST	0x00000010	/* usbhist */
-#define	KERNHIST_SCDEBUGHIST	0x00000020	/* scdebughist */
-#define	KERNHIST_BIOHIST	0x00000040	/* biohist */
+#define	KERNHIST_UVMMAPHIST	__BIT(0)	/* maphist */
+#define	KERNHIST_UVMPDHIST	__BIT(1)	/* pdhist */
+#define	KERNHIST_UVMUBCHIST	__BIT(2)	/* ubchist */
+#define	KERNHIST_UVMLOANHIST	__BIT(3)	/* loanhist */
+#define	KERNHIST_USBHIST	__BIT(4)	/* usbhist */
+#define	KERNHIST_SCDEBUGHIST	__BIT(5)	/* scdebughist */
+#define	KERNHIST_BIOHIST	__BIT(6)	/* biohist */
 
 #ifdef _KERNEL
 
@@ -173,7 +173,7 @@ do { \
 	.f = 0, \
 	.e = (struct kern_history_ent *) (BUF), \
 	.s = 0, \
-	/* BUF will inititalized to zeroes by being in .bss */ \
+	/* BUF will be initialized to zeroes by being in .bss */ \
 }
 
 #ifndef KERNHIST_DELAY
@@ -184,11 +184,11 @@ do { \
 extern int kernhist_print_enabled;
 #define KERNHIST_PRINTNOW(E) \
 do { \
-		if (kernhist_print_enabled) { \
-			kernhist_entry_print(E, printf); \
-			if (KERNHIST_DELAY != 0) \
-				DELAY(KERNHIST_DELAY); \
-		} \
+	if (kernhist_print_enabled) { \
+		kernhist_entry_print(E, printf); \
+		if (KERNHIST_DELAY != 0) \
+			DELAY(KERNHIST_DELAY); \
+	} \
 } while (0)
 #else
 #define KERNHIST_PRINTNOW(E) /* nothing */

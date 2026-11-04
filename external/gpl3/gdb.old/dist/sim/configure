@@ -634,16 +634,51 @@ ac_includes_default="\
 
 ac_header_list=
 ac_func_list=
-enable_option_checking=no
 ac_subst_vars='am__EXEEXT_FALSE
 am__EXEEXT_TRUE
 LTLIBOBJS
-include_makefile
 SIM_RX_CYCLE_ACCURATE_FLAGS
 SIM_RISCV_BITSIZE
+sim_ppc_model_issue
+sim_ppc_default_model
+sim_ppc_model
+sim_ppc_monitor
+sim_ppc_float
+sim_ppc_timebase
+sim_ppc_bitsize
+sim_ppc_igen_smp
+sim_ppc_smp
+sim_ppc_xor_endian
+sim_ppc_hw_obj
+sim_ppc_hw_src
+sim_ppc_icache
+sim_ppc_filter
+sim_ppc_jump
+sim_ppc_decode_mechanism
+sim_ppc_dup
+sim_ppc_switch
+sim_ppc_opcode
+sim_ppc_line_nr
+SIM_MIPS_GEN_MODE_MULTI_FALSE
+SIM_MIPS_GEN_MODE_MULTI_TRUE
+SIM_MIPS_GEN_MODE_M16_FALSE
+SIM_MIPS_GEN_MODE_M16_TRUE
+SIM_MIPS_GEN_MODE_SINGLE_FALSE
+SIM_MIPS_GEN_MODE_SINGLE_TRUE
+SIM_MIPS_MULTI_OBJ
+SIM_MIPS_MULTI_SRC
+SIM_MIPS_MULTI_IGEN_CONFIGS
+SIM_MIPS_IGEN_ITABLE_FLAGS
+SIM_MIPS_GEN
+SIM_MIPS_M16_FLAGS
+SIM_MIPS_SINGLE_FLAGS
+SIM_MIPS_FPU_BITSIZE
+SIM_MIPS_BITSIZE
+SIM_MIPS_SUBTARGET
 SIM_FRV_TRAPDUMP_FLAGS
-sim_float
-sim_bitsize
+SIM_CFLAG_WNO_UNUSED_BUT_SET_VARIABLE
+SIM_CFLAG_WNO_SHADOW_LOCAL
+IGEN_FLAGS_SMP
 SIM_INLINE
 SIM_HW_SOCKSER
 SIM_HW_CFLAGS
@@ -654,8 +689,6 @@ cgendir
 CGEN_MAINT
 ENABLE_SIM_FALSE
 ENABLE_SIM_TRUE
-SIM_ENABLE_IGEN_FALSE
-SIM_ENABLE_IGEN_TRUE
 SIM_ENABLE_ARCH_examples_FALSE
 SIM_ENABLE_ARCH_examples_TRUE
 CC_FOR_TARGET_EXAMPLE_SYNACOR
@@ -726,7 +759,6 @@ SIM_ENABLE_ARCH_mips_TRUE
 CC_FOR_TARGET_MIPS
 LD_FOR_TARGET_MIPS
 AS_FOR_TARGET_MIPS
-subdirs
 SIM_ENABLE_ARCH_microblaze_FALSE
 SIM_ENABLE_ARCH_microblaze_TRUE
 CC_FOR_TARGET_MICROBLAZE
@@ -820,10 +852,7 @@ AS_FOR_TARGET_AARCH64
 LD_FOR_TARGET
 AS_FOR_TARGET
 CC_FOR_TARGET
-SIM_COMMON_BUILD_FALSE
-SIM_COMMON_BUILD_TRUE
 SIM_ENABLED_ARCHES
-SIM_SUBDIRS
 SIM_PRIMARY_TARGET
 AM_BACKSLASH
 AM_DEFAULT_VERBOSITY
@@ -962,6 +991,8 @@ PACKAGE_NAME
 PATH_SEPARATOR
 SHELL
 SIM_TOOLCHAIN_VARS
+BUILD_WERROR_CFLAGS
+BUILD_WARN_CFLAGS
 WERROR_CFLAGS
 WARN_CFLAGS'
 ac_subst_files=''
@@ -992,12 +1023,31 @@ enable_sim_inline
 enable_sim_profile
 enable_sim_reserved_bits
 enable_sim_scache
+enable_sim_smp
 enable_sim_stdio
 enable_sim_trace
 enable_werror
 enable_build_warnings
 enable_sim_build_warnings
 enable_sim_frv_trapdump
+enable_sim_ppc_bitsize
+enable_sim_ppc_decode_mechanism
+enable_sim_ppc_default_model
+enable_sim_ppc_duplicate
+enable_sim_ppc_filter
+enable_sim_ppc_float
+enable_sim_ppc_hardware
+enable_sim_ppc_icache
+enable_sim_ppc_jump
+enable_sim_ppc_line_nr
+enable_sim_ppc_model
+enable_sim_ppc_model_issue
+enable_sim_ppc_monitor
+enable_sim_ppc_opcode
+enable_sim_ppc_smp
+enable_sim_ppc_switch
+enable_sim_ppc_timebase
+enable_sim_ppc_xor_endian
 enable_sim_rx_cycle_accurate
 '
       ac_precious_vars='build_alias
@@ -1110,8 +1160,7 @@ CC_FOR_TARGET_V850
 AS_FOR_TARGET_EXAMPLE_SYNACOR
 LD_FOR_TARGET_EXAMPLE_SYNACOR
 CC_FOR_TARGET_EXAMPLE_SYNACOR'
-ac_subdirs_all='mips
-ppc'
+
 
 # Initialize some variables set by options.
 ac_init_help=
@@ -1769,6 +1818,8 @@ Optional Features:
                           instruction
   --enable-sim-scache=size
                           Specify simulator execution cache size
+  --enable-sim-smp=n      Specify number of processors to configure for
+                          (default 1)
   --enable-sim-stdio      Specify whether to use stdio for console
                           input/output
   --enable-sim-trace=opts Enable tracing of simulated programs
@@ -1779,6 +1830,42 @@ Optional Features:
                           gcc is used
   --enable-sim-frv-trapdump
                           Make unknown traps dump the registers
+  --enable-sim-ppc-bitsize=n
+                          Specify target bitsize (32 or 64).
+  --enable-sim-ppc-decode-mechanism=which
+                          Specify the instruction decode mechanism.
+  --enable-sim-ppc-default-model=which
+                          Specify default PowerPC to model.
+  --enable-sim-ppc-duplicate
+                          Expand (duplicate) semantic functions.
+  --enable-sim-ppc-filter=rule
+                          Specify filter rules.
+  --enable-sim-ppc-float  Specify whether the target has hard, soft, altivec
+                          or e500 floating point.
+  --enable-sim-ppc-hardware=list
+                          Specify the hardware to be included in the build.
+  --enable-sim-ppc-icache=size
+                          Specify instruction-decode cache size and type.
+  --enable-sim-ppc-jump   Jump between semantic code (instead of call/return).
+  --enable-sim-ppc-line-nr=opts
+                          Generate extra CPP code that references source
+                          rather than generated code
+  --enable-sim-ppc-model=which
+                          Specify PowerPC to model.
+  --enable-sim-ppc-model-issue
+                          Specify whether to simulate model specific actions
+  --enable-sim-ppc-monitor=mon
+                          Specify whether to enable monitoring events.
+  --enable-sim-ppc-opcode=which
+                          Override default opcode lookup.
+  --enable-sim-ppc-smp=n  Specify number of processors to configure for.
+  --enable-sim-ppc-switch Use a switch instead of a table for instruction
+                          call.
+  --enable-sim-ppc-timebase
+                          Specify whether the PPC timebase is supported.
+  --enable-sim-ppc-xor-endian=n
+                          Specify number bytes involved in PowerPC XOR
+                          bi-endian mode (default 8).
   --disable-sim-rx-cycle-accurate
                           Disable cycle accurate simulation (faster runtime)
 
@@ -2156,97 +2243,6 @@ fi
 
 } # ac_fn_c_try_cpp
 
-# ac_fn_c_check_header_mongrel LINENO HEADER VAR INCLUDES
-# -------------------------------------------------------
-# Tests whether HEADER exists, giving a warning if it cannot be compiled using
-# the include files in INCLUDES and setting the cache variable VAR
-# accordingly.
-ac_fn_c_check_header_mongrel ()
-{
-  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
-  if eval \${$3+:} false; then :
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-else
-  # Is the header compilable?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 usability" >&5
-$as_echo_n "checking $2 usability... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-$4
-#include <$2>
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_header_compiler=yes
-else
-  ac_header_compiler=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_compiler" >&5
-$as_echo "$ac_header_compiler" >&6; }
-
-# Is the header present?
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking $2 presence" >&5
-$as_echo_n "checking $2 presence... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <$2>
-_ACEOF
-if ac_fn_c_try_cpp "$LINENO"; then :
-  ac_header_preproc=yes
-else
-  ac_header_preproc=no
-fi
-rm -f conftest.err conftest.i conftest.$ac_ext
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_header_preproc" >&5
-$as_echo "$ac_header_preproc" >&6; }
-
-# So?  What about this header?
-case $ac_header_compiler:$ac_header_preproc:$ac_c_preproc_warn_flag in #((
-  yes:no: )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&5
-$as_echo "$as_me: WARNING: $2: accepted by the compiler, rejected by the preprocessor!" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-    ;;
-  no:yes:* )
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: present but cannot be compiled" >&5
-$as_echo "$as_me: WARNING: $2: present but cannot be compiled" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     check for missing prerequisite headers?" >&5
-$as_echo "$as_me: WARNING: $2:     check for missing prerequisite headers?" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: see the Autoconf documentation" >&5
-$as_echo "$as_me: WARNING: $2: see the Autoconf documentation" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&5
-$as_echo "$as_me: WARNING: $2:     section \"Present But Cannot Be Compiled\"" >&2;}
-    { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: $2: proceeding with the compiler's result" >&5
-$as_echo "$as_me: WARNING: $2: proceeding with the compiler's result" >&2;}
-( $as_echo "## -------------------------------------------------------------------------------------- ##
-## Report this to https://sourceware.org/bugzilla/enter_bug.cgi?product=gdb&component=sim ##
-## -------------------------------------------------------------------------------------- ##"
-     ) | sed "s/^/$as_me: WARNING:     /" >&2
-    ;;
-esac
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for $2" >&5
-$as_echo_n "checking for $2... " >&6; }
-if eval \${$3+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  eval "$3=\$ac_header_compiler"
-fi
-eval ac_res=\$$3
-	       { $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_res" >&5
-$as_echo "$ac_res" >&6; }
-fi
-  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
-
-} # ac_fn_c_check_header_mongrel
-
 # ac_fn_c_try_run LINENO
 # ----------------------
 # Try to link conftest.$ac_ext, and return whether this succeeded. Assumes
@@ -2589,6 +2585,189 @@ $as_echo "$ac_res" >&6; }
   eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
 
 } # ac_fn_c_check_type
+
+# ac_fn_c_compute_int LINENO EXPR VAR INCLUDES
+# --------------------------------------------
+# Tries to find the compile-time value of EXPR in a program that includes
+# INCLUDES, setting VAR accordingly. Returns whether the value could be
+# computed
+ac_fn_c_compute_int ()
+{
+  as_lineno=${as_lineno-"$1"} as_lineno_stack=as_lineno_stack=$as_lineno_stack
+  if test "$cross_compiling" = yes; then
+    # Depending upon the size, compute the lo and hi bounds.
+cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+static int test_array [1 - 2 * !(($2) >= 0)];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_lo=0 ac_mid=0
+  while :; do
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+static int test_array [1 - 2 * !(($2) <= $ac_mid)];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_hi=$ac_mid; break
+else
+  as_fn_arith $ac_mid + 1 && ac_lo=$as_val
+			if test $ac_lo -le $ac_mid; then
+			  ac_lo= ac_hi=
+			  break
+			fi
+			as_fn_arith 2 '*' $ac_mid + 1 && ac_mid=$as_val
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  done
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+static int test_array [1 - 2 * !(($2) < 0)];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_hi=-1 ac_mid=-1
+  while :; do
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+static int test_array [1 - 2 * !(($2) >= $ac_mid)];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_lo=$ac_mid; break
+else
+  as_fn_arith '(' $ac_mid ')' - 1 && ac_hi=$as_val
+			if test $ac_mid -le $ac_hi; then
+			  ac_lo= ac_hi=
+			  break
+			fi
+			as_fn_arith 2 '*' $ac_mid && ac_mid=$as_val
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  done
+else
+  ac_lo= ac_hi=
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+# Binary search between lo and hi bounds.
+while test "x$ac_lo" != "x$ac_hi"; do
+  as_fn_arith '(' $ac_hi - $ac_lo ')' / 2 + $ac_lo && ac_mid=$as_val
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+int
+main ()
+{
+static int test_array [1 - 2 * !(($2) <= $ac_mid)];
+test_array [0] = 0;
+return test_array [0];
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  ac_hi=$ac_mid
+else
+  as_fn_arith '(' $ac_mid ')' + 1 && ac_lo=$as_val
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+done
+case $ac_lo in #((
+?*) eval "$3=\$ac_lo"; ac_retval=0 ;;
+'') ac_retval=1 ;;
+esac
+  else
+    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+$4
+static long int longval () { return $2; }
+static unsigned long int ulongval () { return $2; }
+#include <stdio.h>
+#include <stdlib.h>
+int
+main ()
+{
+
+  FILE *f = fopen ("conftest.val", "w");
+  if (! f)
+    return 1;
+  if (($2) < 0)
+    {
+      long int i = longval ();
+      if (i != ($2))
+	return 1;
+      fprintf (f, "%ld", i);
+    }
+  else
+    {
+      unsigned long int i = ulongval ();
+      if (i != ($2))
+	return 1;
+      fprintf (f, "%lu", i);
+    }
+  /* Do not output a trailing newline, as this causes \r\n confusion
+     on some platforms.  */
+  return ferror (f) || fclose (f) != 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  echo >>conftest.val; read $3 <conftest.val; ac_retval=0
+else
+  ac_retval=1
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+rm -f conftest.val
+
+  fi
+  eval $as_lineno_stack; ${as_lineno_stack:+:} unset as_lineno
+  as_fn_set_status $ac_retval
+
+} # ac_fn_c_compute_int
 cat >config.log <<_ACEOF
 This file contains any messages produced by compilers while
 running configure, to aid debugging if configure makes a mistake.
@@ -2877,7 +3056,6 @@ as_fn_append ac_header_list " dlfcn.h"
 as_fn_append ac_header_list " fcntl.h"
 as_fn_append ac_header_list " fpu_control.h"
 as_fn_append ac_header_list " termios.h"
-as_fn_append ac_header_list " unistd.h"
 as_fn_append ac_header_list " utime.h"
 as_fn_append ac_header_list " linux/if_tun.h"
 as_fn_append ac_header_list " linux/mii.h"
@@ -2891,7 +3069,6 @@ as_fn_append ac_header_list " sys/mount.h"
 as_fn_append ac_header_list " sys/param.h"
 as_fn_append ac_header_list " sys/resource.h"
 as_fn_append ac_header_list " sys/socket.h"
-as_fn_append ac_header_list " sys/stat.h"
 as_fn_append ac_header_list " sys/statfs.h"
 as_fn_append ac_header_list " sys/termio.h"
 as_fn_append ac_header_list " sys/termios.h"
@@ -3090,6 +3267,8 @@ _ACEOF
 
 ac_config_headers="$ac_config_headers config.h"
 
+
+. $srcdir/../bfd/development.sh
 
 ac_aux_dir=
 for ac_dir in "$srcdir" "$srcdir/.." "$srcdir/../.."; do
@@ -4081,7 +4260,6 @@ ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
-
 ac_ext=c
 ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
@@ -4218,6 +4396,7 @@ ac_cpp='$CPP $CPPFLAGS'
 ac_compile='$CC -c $CFLAGS $CPPFLAGS conftest.$ac_ext >&5'
 ac_link='$CC -o conftest$ac_exeext $CFLAGS $CPPFLAGS $LDFLAGS conftest.$ac_ext $LIBS >&5'
 ac_compiler_gnu=$ac_cv_c_compiler_gnu
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for grep that handles long lines and -e" >&5
@@ -4479,67 +4658,6 @@ fi
 done
 
 
-
-  ac_fn_c_check_header_mongrel "$LINENO" "minix/config.h" "ac_cv_header_minix_config_h" "$ac_includes_default"
-if test "x$ac_cv_header_minix_config_h" = xyes; then :
-  MINIX=yes
-else
-  MINIX=
-fi
-
-
-  if test "$MINIX" = yes; then
-
-$as_echo "#define _POSIX_SOURCE 1" >>confdefs.h
-
-
-$as_echo "#define _POSIX_1_SOURCE 2" >>confdefs.h
-
-
-$as_echo "#define _MINIX 1" >>confdefs.h
-
-  fi
-
-
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether it is safe to define __EXTENSIONS__" >&5
-$as_echo_n "checking whether it is safe to define __EXTENSIONS__... " >&6; }
-if ${ac_cv_safe_to_define___extensions__+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-
-#         define __EXTENSIONS__ 1
-          $ac_includes_default
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_safe_to_define___extensions__=yes
-else
-  ac_cv_safe_to_define___extensions__=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_safe_to_define___extensions__" >&5
-$as_echo "$ac_cv_safe_to_define___extensions__" >&6; }
-  test $ac_cv_safe_to_define___extensions__ = yes &&
-    $as_echo "#define __EXTENSIONS__ 1" >>confdefs.h
-
-  $as_echo "#define _ALL_SOURCE 1" >>confdefs.h
-
-  $as_echo "#define _GNU_SOURCE 1" >>confdefs.h
-
-  $as_echo "#define _POSIX_PTHREAD_SEMANTICS 1" >>confdefs.h
-
-  $as_echo "#define _TANDEM_SOURCE 1" >>confdefs.h
-
-
 test "$program_prefix" != NONE &&
   program_transform_name="s&^&$program_prefix&;$program_transform_name"
 # Use a double $ so make ignores it.
@@ -4642,7 +4760,6 @@ test -z "$INSTALL_PROGRAM" && INSTALL_PROGRAM='${INSTALL}'
 test -z "$INSTALL_SCRIPT" && INSTALL_SCRIPT='${INSTALL}'
 
 test -z "$INSTALL_DATA" && INSTALL_DATA='${INSTALL} -m 644'
-
 
 
 
@@ -5360,10 +5477,6 @@ _ACEOF
 fi
 
 done
-
-
-
-
 
 
 
@@ -6664,7 +6777,7 @@ irix5* | irix6* | nonstopux*)
   ;;
 
 # This must be Linux ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
   lt_cv_deplibs_check_method=pass_all
   ;;
 
@@ -6738,6 +6851,11 @@ sysv4 | sysv4.3*)
   ;;
 
 tpf*)
+  lt_cv_deplibs_check_method=pass_all
+  ;;
+vxworks*)
+  # Assume VxWorks cross toolchains are built on Linux, possibly
+  # as canadian for Windows hosts.
   lt_cv_deplibs_check_method=pass_all
   ;;
 esac
@@ -8243,23 +8361,25 @@ _LT_EOF
 fi
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $lt_cv_ld_force_load" >&5
 $as_echo "$lt_cv_ld_force_load" >&6; }
-    case $host_os in
-    rhapsody* | darwin1.[012])
+    # Allow for Darwin 4-7 (macOS 10.0-10.3) although these are not expect to
+    # build without first building modern cctools / linker.
+    case $host_cpu-$host_os in
+    *-rhapsody* | *-darwin1.[012])
       _lt_dar_allow_undefined='${wl}-undefined ${wl}suppress' ;;
-    darwin1.*)
+    *-darwin1.*)
       _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
-    darwin*) # darwin 5.x on
-      # if running on 10.5 or later, the deployment target defaults
-      # to the OS version, if on x86, and 10.4, the deployment
-      # target defaults to 10.4. Don't you love it?
-      case ${MACOSX_DEPLOYMENT_TARGET-10.0},$host in
-	10.0,*86*-darwin8*|10.0,*-darwin[91]*)
-	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
+    *-darwin*)
+      # darwin 5.x (macOS 10.1) onwards we only need to adjust when the
+      # deployment target is forced to an earlier version.
+      case ${MACOSX_DEPLOYMENT_TARGET-UNSET},$host in
+	UNSET,*-darwin[89]*|UNSET,*-darwin[12][0123456789]*)
+	  ;;
 	10.[012][,.]*)
-	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress' ;;
-	10.*)
-	  _lt_dar_allow_undefined='${wl}-undefined ${wl}dynamic_lookup' ;;
-      esac
+	  _lt_dar_allow_undefined='${wl}-flat_namespace ${wl}-undefined ${wl}suppress'
+	  ;;
+	*)
+	  ;;
+     esac
     ;;
   esac
     if test "$lt_cv_apple_cc_single_mod" = "yes"; then
@@ -8570,9 +8690,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_dev" "ac_cv_member_struct_stat_st_dev" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_dev" = xyes; then :
 
@@ -8585,9 +8703,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_ino" "ac_cv_member_struct_stat_st_ino" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_ino" = xyes; then :
 
@@ -8600,9 +8716,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_mode" "ac_cv_member_struct_stat_st_mode" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_mode" = xyes; then :
 
@@ -8615,9 +8729,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_nlink" "ac_cv_member_struct_stat_st_nlink" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_nlink" = xyes; then :
 
@@ -8630,9 +8742,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_uid" "ac_cv_member_struct_stat_st_uid" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_uid" = xyes; then :
 
@@ -8645,9 +8755,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_gid" "ac_cv_member_struct_stat_st_gid" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_gid" = xyes; then :
 
@@ -8660,9 +8768,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_rdev" "ac_cv_member_struct_stat_st_rdev" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_rdev" = xyes; then :
 
@@ -8675,9 +8781,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_size" "ac_cv_member_struct_stat_st_size" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_size" = xyes; then :
 
@@ -8690,9 +8794,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_blksize" "ac_cv_member_struct_stat_st_blksize" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_blksize" = xyes; then :
 
@@ -8705,9 +8807,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_blocks" "ac_cv_member_struct_stat_st_blocks" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_blocks" = xyes; then :
 
@@ -8720,9 +8820,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_atime" "ac_cv_member_struct_stat_st_atime" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_atime" = xyes; then :
 
@@ -8735,9 +8833,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_mtime" "ac_cv_member_struct_stat_st_mtime" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_mtime" = xyes; then :
 
@@ -8750,9 +8846,7 @@ fi
 ac_fn_c_check_member "$LINENO" "struct stat" "st_ctime" "ac_cv_member_struct_stat_st_ctime" "#ifdef HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 "
 if test "x$ac_cv_member_struct_stat_st_ctime" = xyes; then :
 
@@ -8787,6 +8881,349 @@ _ACEOF
 
 fi
 
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of void *" >&5
+$as_echo_n "checking size of void *... " >&6; }
+if ${ac_cv_sizeof_void_p+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (void *))" "ac_cv_sizeof_void_p"        "$ac_includes_default"; then :
+
+else
+  if test "$ac_cv_type_void_p" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (void *)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_void_p=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_void_p" >&5
+$as_echo "$ac_cv_sizeof_void_p" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_VOID_P $ac_cv_sizeof_void_p
+_ACEOF
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct statfs" >&5
+$as_echo_n "checking for struct statfs... " >&6; }
+if ${sim_cv_struct_statfs+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#ifdef HAVE_SYS_PARAM_H
+#include <sys/param.h>
+#endif
+#ifdef HAVE_SYS_MOUNT_H
+#include <sys/mount.h>
+#endif
+#ifdef HAVE_SYS_VFS_H
+#include <sys/vfs.h>
+#endif
+#ifdef HAVE_SYS_STATFS_H
+#include <sys/statfs.h>
+#endif
+int
+main ()
+{
+
+  struct statfs s;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_struct_statfs="yes"
+else
+  sim_cv_struct_statfs="no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_struct_statfs" >&5
+$as_echo "$sim_cv_struct_statfs" >&6; }
+if test x"sim_cv_struct_statfs" = x"yes"; then :
+
+$as_echo "#define HAVE_STRUCT_STATFS 1" >>confdefs.h
+
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking if union semun defined" >&5
+$as_echo_n "checking if union semun defined... " >&6; }
+if ${sim_cv_has_union_semun+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/sem.h>
+int
+main ()
+{
+
+  union semun arg;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_has_union_semun="yes"
+else
+  sim_cv_has_union_semun="no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_has_union_semun" >&5
+$as_echo "$sim_cv_has_union_semun" >&6; }
+if test x"$sim_cv_has_union_semun" = x"yes"; then :
+
+$as_echo "#define HAVE_UNION_SEMUN 1" >>confdefs.h
+
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether System V semaphores are supported" >&5
+$as_echo_n "checking whether System V semaphores are supported... " >&6; }
+if ${sim_cv_sysv_sem+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+  #include <sys/types.h>
+  #include <sys/ipc.h>
+  #include <sys/sem.h>
+#ifndef HAVE_UNION_SEMUN
+  union semun {
+    int val;
+    struct semid_ds *buf;
+    ushort *array;
+  };
+#endif
+int
+main ()
+{
+
+  union semun arg;
+  int id = semget(IPC_PRIVATE, 1, IPC_CREAT|0400);
+  if (id == -1)
+    return 1;
+  arg.val = 0; /* avoid implicit type cast to union */
+  if (semctl(id, 0, IPC_RMID, arg) == -1)
+    return 1;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_sysv_sem="yes"
+else
+  sim_cv_sysv_sem="no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_sysv_sem" >&5
+$as_echo "$sim_cv_sysv_sem" >&6; }
+if test x"$sim_cv_sysv_sem" = x"yes"; then :
+
+$as_echo "#define HAVE_SYSV_SEM 1" >>confdefs.h
+
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking whether System V shared memory is supported" >&5
+$as_echo_n "checking whether System V shared memory is supported... " >&6; }
+if ${sim_cv_sysv_shm+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/ipc.h>
+#include <sys/shm.h>
+int
+main ()
+{
+
+  int id = shmget(IPC_PRIVATE, 1, IPC_CREAT|0400);
+  if (id == -1)
+    return 1;
+  if (shmctl(id, IPC_RMID, 0) == -1)
+    return 1;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_sysv_shm="yes"
+else
+  sim_cv_sysv_shm="no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_sysv_shm" >&5
+$as_echo "$sim_cv_sysv_shm" >&6; }
+if test x"$sim_cv_sysv_shm" = x"yes"; then :
+
+$as_echo "#define HAVE_SYSV_SHM 1" >>confdefs.h
+
+
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct termios" >&5
+$as_echo_n "checking for struct termios... " >&6; }
+if ${sim_cv_termios_struct+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/termios.h>
+int
+main ()
+{
+
+  static struct termios x;
+  x.c_iflag = 0;
+  x.c_oflag = 0;
+  x.c_cflag = 0;
+  x.c_lflag = 0;
+  x.c_cc[NCCS] = 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_termios_struct="yes"
+else
+  sim_cv_termios_struct="no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_termios_struct" >&5
+$as_echo "$sim_cv_termios_struct" >&6; }
+if test $sim_cv_termios_struct = yes; then
+
+$as_echo "#define HAVE_TERMIOS_STRUCTURE 1" >>confdefs.h
+
+fi
+
+if test "$sim_cv_termios_struct" = "yes"; then
+  if ${sim_cv_termios_cline+:} false; then :
+  $as_echo_n "(cached) " >&6
+fi
+
+  ac_fn_c_check_member "$LINENO" "struct termios" "c_line" "ac_cv_member_struct_termios_c_line" "
+#include <sys/types.h>
+#include <sys/termios.h>
+
+"
+if test "x$ac_cv_member_struct_termios_c_line" = xyes; then :
+  sim_cv_termios_cline="yes"
+else
+  sim_cv_termios_cline="no"
+fi
+
+  if test $sim_cv_termios_cline = yes; then
+
+$as_echo "#define HAVE_TERMIOS_CLINE 1" >>confdefs.h
+
+  fi
+else
+  sim_cv_termios_cline=no
+fi
+
+if test "$sim_cv_termios_struct" != "yes"; then
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for struct termio" >&5
+$as_echo_n "checking for struct termio... " >&6; }
+if ${sim_cv_termio_struct+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+#include <sys/types.h>
+#include <sys/termio.h>
+int
+main ()
+{
+
+  static struct termio x;
+  x.c_iflag = 0;
+  x.c_oflag = 0;
+  x.c_cflag = 0;
+  x.c_lflag = 0;
+  x.c_cc[NCC] = 0;
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_termio_struct="yes"
+else
+  sim_cv_termio_struct="no"
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_termio_struct" >&5
+$as_echo "$sim_cv_termio_struct" >&6; }
+  if test $sim_cv_termio_struct = yes; then
+
+$as_echo "#define HAVE_TERMIO_STRUCTURE 1" >>confdefs.h
+
+  fi
+else
+  sim_cv_termio_struct=no
+fi
+
+if test "$sim_cv_termio_struct" = "yes"; then
+  if ${sim_cv_termio_cline+:} false; then :
+  $as_echo_n "(cached) " >&6
+fi
+
+  ac_fn_c_check_member "$LINENO" "struct termio" "c_line" "ac_cv_member_struct_termio_c_line" "
+#include <sys/types.h>
+#include <sys/termio.h>
+
+"
+if test "x$ac_cv_member_struct_termio_c_line" = xyes; then :
+  sim_cv_termio_cline="yes"
+else
+  sim_cv_termio_cline="no"
+fi
+
+  if test $sim_cv_termio_cline = yes; then
+
+$as_echo "#define HAVE_TERMIO_CLINE 1" >>confdefs.h
+
+  fi
+else
+  sim_cv_termio_cline=no
+fi
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking type of array argument to getgroups" >&5
 $as_echo_n "checking type of array argument to getgroups... " >&6; }
@@ -10221,7 +10658,7 @@ _LT_EOF
       archive_expsym_cmds='sed "s,^,_," $export_symbols >$output_objdir/$soname.expsym~$CC -shared $pic_flag $libobjs $deplibs $compiler_flags ${wl}-h,$soname ${wl}--retain-symbols-file,$output_objdir/$soname.expsym ${wl}--image-base,`expr ${RANDOM-$$} % 4096 / 2 \* 262144 + 1342177280` -o $lib'
       ;;
 
-    gnu* | linux* | tpf* | k*bsd*-gnu | kopensolaris*-gnu)
+    gnu* | linux* | tpf* | k*bsd*-gnu | kopensolaris*-gnu | uclinuxfdpiceabi)
       tmp_diet=no
       if test "$host_os" = linux-dietlibc; then
 	case $cc_basename in
@@ -10730,7 +11167,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       if test "$GCC" = yes && test "$with_gnu_ld" = no; then
 	case $host_cpu in
 	hppa*64*)
-	  archive_cmds='$CC -shared ${wl}+h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
+	  archive_cmds='$CC -shared ${wl}+h ${wl}$soname ${wl}+nodefaultrpath -o $lib $libobjs $deplibs $compiler_flags'
 	  ;;
 	ia64*)
 	  archive_cmds='$CC -shared -fPIC ${wl}+h ${wl}$soname ${wl}+nodefaultrpath -o $lib $libobjs $deplibs $compiler_flags'
@@ -10742,7 +11179,7 @@ if test -z "$aix_libpath"; then aix_libpath="/usr/lib:/lib"; fi
       else
 	case $host_cpu in
 	hppa*64*)
-	  archive_cmds='$CC -b ${wl}+h ${wl}$soname -o $lib $libobjs $deplibs $compiler_flags'
+	  archive_cmds='$CC -b ${wl}+h ${wl}$soname ${wl}+nodefaultrpath -o $lib $libobjs $deplibs $compiler_flags'
 	  ;;
 	ia64*)
 	  archive_cmds='$CC -b ${wl}+h ${wl}$soname ${wl}+nodefaultrpath -o $lib $libobjs $deplibs $compiler_flags'
@@ -11742,7 +12179,12 @@ linux*oldld* | linux*aout* | linux*coff*)
   ;;
 
 # This must be Linux ELF.
-linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu*)
+
+# uclinux* changes (here and below) have been submitted to the libtool
+# project, but have not yet been accepted: they are GCC-local changes
+# for the time being.  (See
+# https://lists.gnu.org/archive/html/libtool-patches/2018-05/msg00000.html)
+linux* | k*bsd*-gnu | kopensolaris*-gnu | gnu* | uclinuxfdpiceabi)
   version_type=linux
   need_lib_prefix=no
   need_version=no
@@ -11990,6 +12432,25 @@ uts4*)
   shlibpath_var=LD_LIBRARY_PATH
   ;;
 
+# Shared libraries for VwWorks, >= 7 only at this stage
+# and (fpic) still incompatible with "large" code models
+# in a few configurations. Only for RTP mode in any case,
+# and upon explicit request at configure time.
+vxworks7*)
+  dynamic_linker=no
+  case ${with_multisubdir}-${enable_shared} in
+    *large*)
+      ;;
+    *mrtp*-yes)
+      version_type=linux
+      need_lib_prefix=no
+      need_version=no
+      library_names_spec='${libname}${release}${shared_ext}$versuffix ${libname}${release}${shared_ext}$major $libname${shared_ext}'
+      soname_spec='${libname}${release}${shared_ext}$major'
+      dynamic_linker="$host_os module_loader"
+      ;;
+  esac
+  ;;
 *)
   dynamic_linker=no
   ;;
@@ -12431,7 +12892,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12434 "configure"
+#line 12895 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -12537,7 +12998,7 @@ else
   lt_dlunknown=0; lt_dlno_uscore=1; lt_dlneed_uscore=2
   lt_status=$lt_dlunknown
   cat > conftest.$ac_ext <<_LT_EOF
-#line 12540 "configure"
+#line 13001 "configure"
 #include "confdefs.h"
 
 #if HAVE_DLFCN_H
@@ -13056,7 +13517,7 @@ if test "$ac_res" != no; then :
 
 fi
 
-if test "${ac_cv_lib_dl_dlopen}" = "yes"; then
+if test "${ac_cv_search_dlopen}" = "none required" || test "${ac_cv_lib_dl_dlopen}" = "yes"; then
 
 pkg_failed=no
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sdl2" >&5
@@ -13496,6 +13957,210 @@ fi
 
   READLINE_CFLAGS=
 fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a known getopt prototype in unistd.h" >&5
+$as_echo_n "checking for a known getopt prototype in unistd.h... " >&6; }
+if ${sim_cv_decl_getopt_unistd_h+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+#include <unistd.h>
+int
+main ()
+{
+extern int getopt (int, char *const*, const char *);
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+  sim_cv_decl_getopt_unistd_h=yes
+else
+  sim_cv_decl_getopt_unistd_h=no
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_decl_getopt_unistd_h" >&5
+$as_echo "$sim_cv_decl_getopt_unistd_h" >&6; }
+if test $sim_cv_decl_getopt_unistd_h = yes; then
+
+$as_echo "#define HAVE_DECL_GETOPT 1" >>confdefs.h
+
+fi
+
+
+
+
+ac_fn_c_check_decl "$LINENO" "ffs" "ac_cv_have_decl_ffs" "$ac_includes_default"
+if test "x$ac_cv_have_decl_ffs" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_FFS $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "asprintf" "ac_cv_have_decl_asprintf" "$ac_includes_default"
+if test "x$ac_cv_have_decl_asprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_ASPRINTF $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "vasprintf" "ac_cv_have_decl_vasprintf" "$ac_includes_default"
+if test "x$ac_cv_have_decl_vasprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VASPRINTF $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "snprintf" "ac_cv_have_decl_snprintf" "$ac_includes_default"
+if test "x$ac_cv_have_decl_snprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_SNPRINTF $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "vsnprintf" "ac_cv_have_decl_vsnprintf" "$ac_includes_default"
+if test "x$ac_cv_have_decl_vsnprintf" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_VSNPRINTF $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "strtol" "ac_cv_have_decl_strtol" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtol" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOL $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "strtoul" "ac_cv_have_decl_strtoul" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtoul" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOUL $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "strtoll" "ac_cv_have_decl_strtoll" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtoll" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOLL $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "strtoull" "ac_cv_have_decl_strtoull" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strtoull" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRTOULL $ac_have_decl
+_ACEOF
+
+ac_fn_c_check_decl "$LINENO" "strverscmp" "ac_cv_have_decl_strverscmp" "$ac_includes_default"
+if test "x$ac_cv_have_decl_strverscmp" = xyes; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_STRVERSCMP $ac_have_decl
+_ACEOF
+
+    ac_fn_c_check_type "$LINENO" "long long" "ac_cv_type_long_long" "$ac_includes_default"
+if test "x$ac_cv_type_long_long" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_LONG_LONG 1
+_ACEOF
+
+# The cast to long int works around a bug in the HP C Compiler
+# version HP92453-01 B.11.11.23709.GP, which incorrectly rejects
+# declarations like `int a3[[(sizeof (unsigned char)) >= 0]];'.
+# This bug is HP SR number 8606223364.
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking size of long long" >&5
+$as_echo_n "checking size of long long... " >&6; }
+if ${ac_cv_sizeof_long_long+:} false; then :
+  $as_echo_n "(cached) " >&6
+else
+  if ac_fn_c_compute_int "$LINENO" "(long int) (sizeof (long long))" "ac_cv_sizeof_long_long"        "$ac_includes_default"; then :
+
+else
+  if test "$ac_cv_type_long_long" = yes; then
+     { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error 77 "cannot compute sizeof (long long)
+See \`config.log' for more details" "$LINENO" 5; }
+   else
+     ac_cv_sizeof_long_long=0
+   fi
+fi
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_sizeof_long_long" >&5
+$as_echo "$ac_cv_sizeof_long_long" >&6; }
+
+
+
+cat >>confdefs.h <<_ACEOF
+#define SIZEOF_LONG_LONG $ac_cv_sizeof_long_long
+_ACEOF
+
+
+fi
+
+
+  as_ac_Symbol=`$as_echo "ac_cv_have_decl_basename(char *)" | $as_tr_sh`
+ac_fn_c_check_decl "$LINENO" "basename(char *)" "$as_ac_Symbol" "$ac_includes_default"
+if eval test \"x\$"$as_ac_Symbol"\" = x"yes"; then :
+  ac_have_decl=1
+else
+  ac_have_decl=0
+fi
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_DECL_BASENAME $ac_have_decl
+_ACEOF
+
+
 
 
 
@@ -14216,24 +14881,14 @@ fi
 SIM_PRIMARY_TARGET=
 
 
-SIM_SUBDIRS=
-
-
 SIM_ENABLED_ARCHES=
 
 
-SIM_COMMON_BUILD_TRUE=
-SIM_COMMON_BUILD_FALSE='#'
-
-
-
-ac_config_files="$ac_config_files Make-common.sim:common/Make-common.in"
-
+ENABLE_SIM=no
 
 
 
 if test "${enable_sim}" != no; then
-  sim_igen=no
   for targ in `echo $target $enable_targets | sed 's/,/ /g'`
   do
       sim_enable_arch_aarch64=false
@@ -14242,20 +14897,12 @@ if test "${enable_sim}" != no; then
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=aarch64
       fi
-        as_fn_append SIM_ENABLED_ARCHES " aarch64"
-      ac_config_files="$ac_config_files aarch64/Makefile.sim:aarch64/Makefile.in"
-
-    ac_config_commands="$ac_config_commands aarch64/Makefile"
-
-    as_fn_append SIM_SUBDIRS " aarch64"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " aarch64"
   ac_config_files="$ac_config_files aarch64/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-aarch64"
 
 
       sim_enable_arch_aarch64=true
-
       ;;
   esac
   { $as_echo "$as_me:${as_lineno-$LINENO}: checking where to find the target cc" >&5
@@ -14406,27 +15053,18 @@ else
   SIM_ENABLE_ARCH_aarch64_FALSE=
 fi
 
-
-      sim_enable_arch_arm=false
+  sim_enable_arch_arm=false
   case "${targ}" in
     all|arm*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=arm
       fi
-        as_fn_append SIM_ENABLED_ARCHES " arm"
-      ac_config_files="$ac_config_files arm/Makefile.sim:arm/Makefile.in"
-
-    ac_config_commands="$ac_config_commands arm/Makefile"
-
-    as_fn_append SIM_SUBDIRS " arm"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " arm"
   ac_config_files="$ac_config_files arm/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-arm"
 
 
       sim_enable_arch_arm=true
-
       ;;
   esac
 
@@ -14450,27 +15088,18 @@ else
   SIM_ENABLE_ARCH_arm_FALSE=
 fi
 
-
-      sim_enable_arch_avr=false
+  sim_enable_arch_avr=false
   case "${targ}" in
     all|avr*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=avr
       fi
-        as_fn_append SIM_ENABLED_ARCHES " avr"
-      ac_config_files="$ac_config_files avr/Makefile.sim:avr/Makefile.in"
-
-    ac_config_commands="$ac_config_commands avr/Makefile"
-
-    as_fn_append SIM_SUBDIRS " avr"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " avr"
   ac_config_files="$ac_config_files avr/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-avr"
 
 
       sim_enable_arch_avr=true
-
       ;;
   esac
 
@@ -14494,27 +15123,18 @@ else
   SIM_ENABLE_ARCH_avr_FALSE=
 fi
 
-
-      sim_enable_arch_bfin=false
+  sim_enable_arch_bfin=false
   case "${targ}" in
     all|bfin-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=bfin
       fi
-        as_fn_append SIM_ENABLED_ARCHES " bfin"
-      ac_config_files="$ac_config_files bfin/Makefile.sim:bfin/Makefile.in"
-
-    ac_config_commands="$ac_config_commands bfin/Makefile"
-
-    as_fn_append SIM_SUBDIRS " bfin"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " bfin"
   ac_config_files="$ac_config_files bfin/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-bfin"
 
 
       sim_enable_arch_bfin=true
-
       ;;
   esac
 
@@ -14538,27 +15158,18 @@ else
   SIM_ENABLE_ARCH_bfin_FALSE=
 fi
 
-
-      sim_enable_arch_bpf=false
+  sim_enable_arch_bpf=false
   case "${targ}" in
     all|bpf-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=bpf
       fi
-        as_fn_append SIM_ENABLED_ARCHES " bpf"
-      ac_config_files="$ac_config_files bpf/Makefile.sim:bpf/Makefile.in"
-
-    ac_config_commands="$ac_config_commands bpf/Makefile"
-
-    as_fn_append SIM_SUBDIRS " bpf"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " bpf"
   ac_config_files="$ac_config_files bpf/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-bpf"
 
 
       sim_enable_arch_bpf=true
-
       ;;
   esac
 
@@ -14582,27 +15193,18 @@ else
   SIM_ENABLE_ARCH_bpf_FALSE=
 fi
 
-
-      sim_enable_arch_cr16=false
+  sim_enable_arch_cr16=false
   case "${targ}" in
     all|cr16*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=cr16
       fi
-        as_fn_append SIM_ENABLED_ARCHES " cr16"
-      ac_config_files="$ac_config_files cr16/Makefile.sim:cr16/Makefile.in"
-
-    ac_config_commands="$ac_config_commands cr16/Makefile"
-
-    as_fn_append SIM_SUBDIRS " cr16"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " cr16"
   ac_config_files="$ac_config_files cr16/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-cr16"
 
 
       sim_enable_arch_cr16=true
-
       ;;
   esac
 
@@ -14626,27 +15228,18 @@ else
   SIM_ENABLE_ARCH_cr16_FALSE=
 fi
 
-
-      sim_enable_arch_cris=false
+  sim_enable_arch_cris=false
   case "${targ}" in
     all|cris-*-* | crisv32-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=cris
       fi
-        as_fn_append SIM_ENABLED_ARCHES " cris"
-      ac_config_files="$ac_config_files cris/Makefile.sim:cris/Makefile.in"
-
-    ac_config_commands="$ac_config_commands cris/Makefile"
-
-    as_fn_append SIM_SUBDIRS " cris"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " cris"
   ac_config_files="$ac_config_files cris/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-cris"
 
 
       sim_enable_arch_cris=true
-
       ;;
   esac
 
@@ -14670,27 +15263,18 @@ else
   SIM_ENABLE_ARCH_cris_FALSE=
 fi
 
-
-      sim_enable_arch_d10v=false
+  sim_enable_arch_d10v=false
   case "${targ}" in
     all|d10v-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=d10v
       fi
-        as_fn_append SIM_ENABLED_ARCHES " d10v"
-      ac_config_files="$ac_config_files d10v/Makefile.sim:d10v/Makefile.in"
-
-    ac_config_commands="$ac_config_commands d10v/Makefile"
-
-    as_fn_append SIM_SUBDIRS " d10v"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " d10v"
   ac_config_files="$ac_config_files d10v/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-d10v"
 
 
       sim_enable_arch_d10v=true
-
       ;;
   esac
 
@@ -14714,27 +15298,18 @@ else
   SIM_ENABLE_ARCH_d10v_FALSE=
 fi
 
-
-      sim_enable_arch_frv=false
+  sim_enable_arch_frv=false
   case "${targ}" in
     all|frv-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=frv
       fi
-        as_fn_append SIM_ENABLED_ARCHES " frv"
-      ac_config_files="$ac_config_files frv/Makefile.sim:frv/Makefile.in"
-
-    ac_config_commands="$ac_config_commands frv/Makefile"
-
-    as_fn_append SIM_SUBDIRS " frv"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " frv"
   ac_config_files="$ac_config_files frv/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-frv"
 
 
       sim_enable_arch_frv=true
-
       ;;
   esac
 
@@ -14758,27 +15333,18 @@ else
   SIM_ENABLE_ARCH_frv_FALSE=
 fi
 
-
-      sim_enable_arch_ft32=false
+  sim_enable_arch_ft32=false
   case "${targ}" in
     all|ft32-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=ft32
       fi
-        as_fn_append SIM_ENABLED_ARCHES " ft32"
-      ac_config_files="$ac_config_files ft32/Makefile.sim:ft32/Makefile.in"
-
-    ac_config_commands="$ac_config_commands ft32/Makefile"
-
-    as_fn_append SIM_SUBDIRS " ft32"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " ft32"
   ac_config_files="$ac_config_files ft32/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-ft32"
 
 
       sim_enable_arch_ft32=true
-
       ;;
   esac
 
@@ -14802,27 +15368,18 @@ else
   SIM_ENABLE_ARCH_ft32_FALSE=
 fi
 
-
-      sim_enable_arch_h8300=false
+  sim_enable_arch_h8300=false
   case "${targ}" in
     all|h8300*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=h8300
       fi
-        as_fn_append SIM_ENABLED_ARCHES " h8300"
-      ac_config_files="$ac_config_files h8300/Makefile.sim:h8300/Makefile.in"
-
-    ac_config_commands="$ac_config_commands h8300/Makefile"
-
-    as_fn_append SIM_SUBDIRS " h8300"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " h8300"
   ac_config_files="$ac_config_files h8300/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-h8300"
 
 
       sim_enable_arch_h8300=true
-
       ;;
   esac
 
@@ -14846,27 +15403,18 @@ else
   SIM_ENABLE_ARCH_h8300_FALSE=
 fi
 
-
-      sim_enable_arch_iq2000=false
+  sim_enable_arch_iq2000=false
   case "${targ}" in
     all|iq2000-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=iq2000
       fi
-        as_fn_append SIM_ENABLED_ARCHES " iq2000"
-      ac_config_files="$ac_config_files iq2000/Makefile.sim:iq2000/Makefile.in"
-
-    ac_config_commands="$ac_config_commands iq2000/Makefile"
-
-    as_fn_append SIM_SUBDIRS " iq2000"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " iq2000"
   ac_config_files="$ac_config_files iq2000/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-iq2000"
 
 
       sim_enable_arch_iq2000=true
-
       ;;
   esac
 
@@ -14890,27 +15438,18 @@ else
   SIM_ENABLE_ARCH_iq2000_FALSE=
 fi
 
-
-      sim_enable_arch_lm32=false
+  sim_enable_arch_lm32=false
   case "${targ}" in
     all|lm32-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=lm32
       fi
-        as_fn_append SIM_ENABLED_ARCHES " lm32"
-      ac_config_files="$ac_config_files lm32/Makefile.sim:lm32/Makefile.in"
-
-    ac_config_commands="$ac_config_commands lm32/Makefile"
-
-    as_fn_append SIM_SUBDIRS " lm32"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " lm32"
   ac_config_files="$ac_config_files lm32/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-lm32"
 
 
       sim_enable_arch_lm32=true
-
       ;;
   esac
 
@@ -14934,27 +15473,18 @@ else
   SIM_ENABLE_ARCH_lm32_FALSE=
 fi
 
-
-      sim_enable_arch_m32c=false
+  sim_enable_arch_m32c=false
   case "${targ}" in
     all|m32c-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=m32c
       fi
-        as_fn_append SIM_ENABLED_ARCHES " m32c"
-      ac_config_files="$ac_config_files m32c/Makefile.sim:m32c/Makefile.in"
-
-    ac_config_commands="$ac_config_commands m32c/Makefile"
-
-    as_fn_append SIM_SUBDIRS " m32c"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " m32c"
   ac_config_files="$ac_config_files m32c/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-m32c"
 
 
       sim_enable_arch_m32c=true
-
       ;;
   esac
 
@@ -14978,27 +15508,18 @@ else
   SIM_ENABLE_ARCH_m32c_FALSE=
 fi
 
-
-      sim_enable_arch_m32r=false
+  sim_enable_arch_m32r=false
   case "${targ}" in
     all|m32r-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=m32r
       fi
-        as_fn_append SIM_ENABLED_ARCHES " m32r"
-      ac_config_files="$ac_config_files m32r/Makefile.sim:m32r/Makefile.in"
-
-    ac_config_commands="$ac_config_commands m32r/Makefile"
-
-    as_fn_append SIM_SUBDIRS " m32r"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " m32r"
   ac_config_files="$ac_config_files m32r/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-m32r"
 
 
       sim_enable_arch_m32r=true
-
       ;;
   esac
 
@@ -15022,27 +15543,18 @@ else
   SIM_ENABLE_ARCH_m32r_FALSE=
 fi
 
-
-      sim_enable_arch_m68hc11=false
+  sim_enable_arch_m68hc11=false
   case "${targ}" in
     all|m68hc11-*-*|m6811-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=m68hc11
       fi
-        as_fn_append SIM_ENABLED_ARCHES " m68hc11"
-      ac_config_files="$ac_config_files m68hc11/Makefile.sim:m68hc11/Makefile.in"
-
-    ac_config_commands="$ac_config_commands m68hc11/Makefile"
-
-    as_fn_append SIM_SUBDIRS " m68hc11"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " m68hc11"
   ac_config_files="$ac_config_files m68hc11/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-m68hc11"
 
 
       sim_enable_arch_m68hc11=true
-
       ;;
   esac
 
@@ -15066,27 +15578,18 @@ else
   SIM_ENABLE_ARCH_m68hc11_FALSE=
 fi
 
-
-      sim_enable_arch_mcore=false
+  sim_enable_arch_mcore=false
   case "${targ}" in
     all|mcore-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=mcore
       fi
-        as_fn_append SIM_ENABLED_ARCHES " mcore"
-      ac_config_files="$ac_config_files mcore/Makefile.sim:mcore/Makefile.in"
-
-    ac_config_commands="$ac_config_commands mcore/Makefile"
-
-    as_fn_append SIM_SUBDIRS " mcore"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " mcore"
   ac_config_files="$ac_config_files mcore/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-mcore"
 
 
       sim_enable_arch_mcore=true
-
       ;;
   esac
 
@@ -15110,27 +15613,18 @@ else
   SIM_ENABLE_ARCH_mcore_FALSE=
 fi
 
-
-      sim_enable_arch_microblaze=false
+  sim_enable_arch_microblaze=false
   case "${targ}" in
     all|microblaze*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=microblaze
       fi
-        as_fn_append SIM_ENABLED_ARCHES " microblaze"
-      ac_config_files="$ac_config_files microblaze/Makefile.sim:microblaze/Makefile.in"
-
-    ac_config_commands="$ac_config_commands microblaze/Makefile"
-
-    as_fn_append SIM_SUBDIRS " microblaze"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " microblaze"
   ac_config_files="$ac_config_files microblaze/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-microblaze"
 
 
       sim_enable_arch_microblaze=true
-
       ;;
   esac
 
@@ -15154,26 +15648,18 @@ else
   SIM_ENABLE_ARCH_microblaze_FALSE=
 fi
 
-
-      sim_enable_arch_mips=false
+  sim_enable_arch_mips=false
   case "${targ}" in
     all|mips*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=mips
       fi
-        as_fn_append SIM_ENABLED_ARCHES " mips"
-
-
-subdirs="$subdirs mips"
-
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " mips"
   ac_config_files="$ac_config_files mips/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-mips"
 
 
       sim_enable_arch_mips=true
-      sim_igen=yes
       ;;
   esac
 
@@ -15197,27 +15683,18 @@ else
   SIM_ENABLE_ARCH_mips_FALSE=
 fi
 
-
-      sim_enable_arch_mn10300=false
+  sim_enable_arch_mn10300=false
   case "${targ}" in
     all|mn10300*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=mn10300
       fi
-        as_fn_append SIM_ENABLED_ARCHES " mn10300"
-      ac_config_files="$ac_config_files mn10300/Makefile.sim:mn10300/Makefile.in"
-
-    ac_config_commands="$ac_config_commands mn10300/Makefile"
-
-    as_fn_append SIM_SUBDIRS " mn10300"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " mn10300"
   ac_config_files="$ac_config_files mn10300/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-mn10300"
 
 
       sim_enable_arch_mn10300=true
-      sim_igen=yes
       ;;
   esac
 
@@ -15241,27 +15718,18 @@ else
   SIM_ENABLE_ARCH_mn10300_FALSE=
 fi
 
-
-      sim_enable_arch_moxie=false
+  sim_enable_arch_moxie=false
   case "${targ}" in
     all|moxie-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=moxie
       fi
-        as_fn_append SIM_ENABLED_ARCHES " moxie"
-      ac_config_files="$ac_config_files moxie/Makefile.sim:moxie/Makefile.in"
-
-    ac_config_commands="$ac_config_commands moxie/Makefile"
-
-    as_fn_append SIM_SUBDIRS " moxie"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " moxie"
   ac_config_files="$ac_config_files moxie/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-moxie"
 
 
       sim_enable_arch_moxie=true
-
       ;;
   esac
 
@@ -15285,27 +15753,18 @@ else
   SIM_ENABLE_ARCH_moxie_FALSE=
 fi
 
-
-      sim_enable_arch_msp430=false
+  sim_enable_arch_msp430=false
   case "${targ}" in
     all|msp430*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=msp430
       fi
-        as_fn_append SIM_ENABLED_ARCHES " msp430"
-      ac_config_files="$ac_config_files msp430/Makefile.sim:msp430/Makefile.in"
-
-    ac_config_commands="$ac_config_commands msp430/Makefile"
-
-    as_fn_append SIM_SUBDIRS " msp430"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " msp430"
   ac_config_files="$ac_config_files msp430/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-msp430"
 
 
       sim_enable_arch_msp430=true
-
       ;;
   esac
 
@@ -15329,27 +15788,18 @@ else
   SIM_ENABLE_ARCH_msp430_FALSE=
 fi
 
-
-      sim_enable_arch_or1k=false
+  sim_enable_arch_or1k=false
   case "${targ}" in
     all|or1k*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=or1k
       fi
-        as_fn_append SIM_ENABLED_ARCHES " or1k"
-      ac_config_files="$ac_config_files or1k/Makefile.sim:or1k/Makefile.in"
-
-    ac_config_commands="$ac_config_commands or1k/Makefile"
-
-    as_fn_append SIM_SUBDIRS " or1k"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " or1k"
   ac_config_files="$ac_config_files or1k/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-or1k"
 
 
       sim_enable_arch_or1k=true
-
       ;;
   esac
 
@@ -15373,24 +15823,18 @@ else
   SIM_ENABLE_ARCH_or1k_FALSE=
 fi
 
-
-      sim_enable_arch_ppc=false
+  sim_enable_arch_ppc=false
   case "${targ}" in
     all|powerpc*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=ppc
       fi
-        as_fn_append SIM_ENABLED_ARCHES " ppc"
-      subdirs="$subdirs ppc"
-
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " ppc"
   ac_config_files="$ac_config_files ppc/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-ppc"
 
 
       sim_enable_arch_ppc=true
-
       ;;
   esac
 
@@ -15414,27 +15858,18 @@ else
   SIM_ENABLE_ARCH_ppc_FALSE=
 fi
 
-
-      sim_enable_arch_pru=false
+  sim_enable_arch_pru=false
   case "${targ}" in
     all|pru*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=pru
       fi
-        as_fn_append SIM_ENABLED_ARCHES " pru"
-      ac_config_files="$ac_config_files pru/Makefile.sim:pru/Makefile.in"
-
-    ac_config_commands="$ac_config_commands pru/Makefile"
-
-    as_fn_append SIM_SUBDIRS " pru"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " pru"
   ac_config_files="$ac_config_files pru/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-pru"
 
 
       sim_enable_arch_pru=true
-
       ;;
   esac
 
@@ -15458,27 +15893,18 @@ else
   SIM_ENABLE_ARCH_pru_FALSE=
 fi
 
-
-      sim_enable_arch_riscv=false
+  sim_enable_arch_riscv=false
   case "${targ}" in
     all|riscv*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=riscv
       fi
-        as_fn_append SIM_ENABLED_ARCHES " riscv"
-      ac_config_files="$ac_config_files riscv/Makefile.sim:riscv/Makefile.in"
-
-    ac_config_commands="$ac_config_commands riscv/Makefile"
-
-    as_fn_append SIM_SUBDIRS " riscv"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " riscv"
   ac_config_files="$ac_config_files riscv/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-riscv"
 
 
       sim_enable_arch_riscv=true
-
       ;;
   esac
 
@@ -15502,27 +15928,18 @@ else
   SIM_ENABLE_ARCH_riscv_FALSE=
 fi
 
-
-      sim_enable_arch_rl78=false
+  sim_enable_arch_rl78=false
   case "${targ}" in
     all|rl78-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=rl78
       fi
-        as_fn_append SIM_ENABLED_ARCHES " rl78"
-      ac_config_files="$ac_config_files rl78/Makefile.sim:rl78/Makefile.in"
-
-    ac_config_commands="$ac_config_commands rl78/Makefile"
-
-    as_fn_append SIM_SUBDIRS " rl78"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " rl78"
   ac_config_files="$ac_config_files rl78/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-rl78"
 
 
       sim_enable_arch_rl78=true
-
       ;;
   esac
 
@@ -15546,27 +15963,18 @@ else
   SIM_ENABLE_ARCH_rl78_FALSE=
 fi
 
-
-      sim_enable_arch_rx=false
+  sim_enable_arch_rx=false
   case "${targ}" in
     all|rx-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=rx
       fi
-        as_fn_append SIM_ENABLED_ARCHES " rx"
-      ac_config_files="$ac_config_files rx/Makefile.sim:rx/Makefile.in"
-
-    ac_config_commands="$ac_config_commands rx/Makefile"
-
-    as_fn_append SIM_SUBDIRS " rx"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " rx"
   ac_config_files="$ac_config_files rx/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-rx"
 
 
       sim_enable_arch_rx=true
-
       ;;
   esac
 
@@ -15590,27 +15998,18 @@ else
   SIM_ENABLE_ARCH_rx_FALSE=
 fi
 
-
-      sim_enable_arch_sh=false
+  sim_enable_arch_sh=false
   case "${targ}" in
     all|sh*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=sh
       fi
-        as_fn_append SIM_ENABLED_ARCHES " sh"
-      ac_config_files="$ac_config_files sh/Makefile.sim:sh/Makefile.in"
-
-    ac_config_commands="$ac_config_commands sh/Makefile"
-
-    as_fn_append SIM_SUBDIRS " sh"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " sh"
   ac_config_files="$ac_config_files sh/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-sh"
 
 
       sim_enable_arch_sh=true
-
       ;;
   esac
 
@@ -15634,27 +16033,18 @@ else
   SIM_ENABLE_ARCH_sh_FALSE=
 fi
 
-
-      sim_enable_arch_erc32=false
+  sim_enable_arch_erc32=false
   case "${targ}" in
     all|sparc-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=erc32
       fi
-        as_fn_append SIM_ENABLED_ARCHES " erc32"
-      ac_config_files="$ac_config_files erc32/Makefile.sim:erc32/Makefile.in"
-
-    ac_config_commands="$ac_config_commands erc32/Makefile"
-
-    as_fn_append SIM_SUBDIRS " erc32"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " erc32"
   ac_config_files="$ac_config_files erc32/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-erc32"
 
 
       sim_enable_arch_erc32=true
-
       ;;
   esac
 
@@ -15678,27 +16068,18 @@ else
   SIM_ENABLE_ARCH_erc32_FALSE=
 fi
 
-
-      sim_enable_arch_v850=false
+  sim_enable_arch_v850=false
   case "${targ}" in
     all|v850*-*-*)
       if test "${targ}" = "${target}"; then
         SIM_PRIMARY_TARGET=v850
       fi
-        as_fn_append SIM_ENABLED_ARCHES " v850"
-      ac_config_files="$ac_config_files v850/Makefile.sim:v850/Makefile.in"
-
-    ac_config_commands="$ac_config_commands v850/Makefile"
-
-    as_fn_append SIM_SUBDIRS " v850"
-
+        ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " v850"
   ac_config_files="$ac_config_files v850/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-v850"
 
 
       sim_enable_arch_v850=true
-      sim_igen=yes
       ;;
   esac
 
@@ -15736,16 +16117,9 @@ fi
 
 as_fn_append SIM_TOOLCHAIN_VARS " AS_FOR_TARGET_EXAMPLE_SYNACOR LD_FOR_TARGET_EXAMPLE_SYNACOR CC_FOR_TARGET_EXAMPLE_SYNACOR"
 
-      as_fn_append SIM_ENABLED_ARCHES " example-synacor"
-      ac_config_files="$ac_config_files example-synacor/Makefile.sim:example-synacor/Makefile.in"
-
-    ac_config_commands="$ac_config_commands example-synacor/Makefile"
-
-    as_fn_append SIM_SUBDIRS " example-synacor"
-
+      ENABLE_SIM=yes
+  as_fn_append SIM_ENABLED_ARCHES " example-synacor"
   ac_config_files="$ac_config_files example-synacor/.gdbinit:common/gdbinit.in"
-
-    ac_config_commands="$ac_config_commands depdir-example-synacor"
 
 
   fi
@@ -15758,15 +16132,7 @@ else
 fi
 
 fi
- if test "$sim_igen" = "yes"; then
-  SIM_ENABLE_IGEN_TRUE=
-  SIM_ENABLE_IGEN_FALSE='#'
-else
-  SIM_ENABLE_IGEN_TRUE='#'
-  SIM_ENABLE_IGEN_FALSE=
-fi
-
- if test -n "$SIM_SUBDIRS"; then
+ if test "$ENABLE_SIM" = "yes"; then
   ENABLE_SIM_TRUE=
   ENABLE_SIM_FALSE='#'
 else
@@ -15819,6 +16185,9 @@ $as_echo "$sim_assert" >&6; }
 cgen_maint=no
 cgen=guile
 cgendir='$(srcdir)/../../cgen'
+if test -r ${srcdir}/../cgen/iformat.scm; then
+    cgendir='$(srcdir)/../cgen'
+fi
 # Check whether --enable-cgen-maint was given.
 if test "${enable_cgen_maint+set}" = set; then :
   enableval=$enable_cgen_maint; case "${enableval}" in
@@ -16066,6 +16435,32 @@ _ACEOF
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_scache" >&5
 $as_echo "$sim_scache" >&6; }
 
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking number of sim cpus to support" >&5
+$as_echo_n "checking number of sim cpus to support... " >&6; }
+default_sim_smp="0"
+sim_smp="$default_sim_smp"
+# Check whether --enable-sim-smp was given.
+if test "${enable_sim_smp+set}" = set; then :
+  enableval=$enable_sim_smp; case "${enableval}" in
+  yes)	sim_smp="5";;
+  no)	sim_smp="0";;
+  *)	sim_smp="$enableval";;
+esac
+fi
+IGEN_FLAGS_SMP="-N ${sim_smp}"
+
+if test "x$sim_smp" = x0; then :
+
+else
+
+cat >>confdefs.h <<_ACEOF
+#define WITH_SMP $sim_smp
+_ACEOF
+
+fi
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_smp" >&5
+$as_echo "$sim_smp" >&6; }
+
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim stdio debug behavior" >&5
 $as_echo_n "checking for sim stdio debug behavior... " >&6; }
 sim_stdio="0"
@@ -16115,7 +16510,6 @@ _ACEOF
 { $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_trace" >&5
 $as_echo "$sim_trace" >&6; }
 
-
 # Check whether --enable-werror was given.
 if test "${enable_werror+set}" = set; then :
   enableval=$enable_werror; case "${enableval}" in
@@ -16126,7 +16520,7 @@ if test "${enable_werror+set}" = set; then :
 fi
 
 
-if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" ; then
+if test "${GCC}" = yes -a -z "${ERROR_ON_WARNING}" && $development; then
   ERROR_ON_WARNING=yes
 fi
 
@@ -16135,23 +16529,58 @@ if test "${ERROR_ON_WARNING}" = yes ; then
   WERROR_CFLAGS="-Werror"
 fi
 
-build_warnings="-Wall -Wdeclaration-after-statement -Wpointer-arith
--Wno-unused -Wunused-value -Wunused-function
+build_warnings="-Wall -Wpointer-arith
+-Wno-unused -Wunused-value -Wunused-variable -Wunused-function
 -Wno-switch -Wno-char-subscripts
--Wempty-body -Wunused-but-set-parameter
--Wno-error=maybe-uninitialized
+-Wempty-body -Wunused-but-set-parameter -Wunused-but-set-variable
+-Wno-sign-compare -Wno-error=maybe-uninitialized
+-Wno-error=deprecated-register
+-Wimplicit-fallthrough=5
+-Wduplicated-cond
+-Wshadow=local
 -Wmissing-declarations
+"
+build_warnings="$build_warnings
+-Wdeclaration-after-statement
+-Wdeprecated-non-prototype
+-Wimplicit-function-declaration
+-Wimplicit-int
+-Wincompatible-function-pointer-types
+-Wincompatible-pointer-types
+-Wint-conversion
+-Wmisleading-indentation
+-Wmissing-parameter-type
 -Wmissing-prototypes
--Wdeclaration-after-statement -Wmissing-parameter-type
+-Wold-style-declaration
+-Wold-style-definition
 -Wpointer-sign
--Wold-style-declaration -Wold-style-definition
+-Wreturn-mismatch
+-Wreturn-type
+-Wshift-negative-value
+-Wstrict-prototypes
+-Wno-enum-conversion
+"
+build_build_warnings="
+-Wno-stringop-truncation
+-Wno-implicit-fallthrough
+-Wno-shadow=local
 "
 
-# Enable -Wno-format by default when using gcc on mingw since many
-# GCC versions complain about %I64.
 case "${host}" in
-  *-*-mingw32*) build_warnings="$build_warnings -Wno-format" ;;
-  *) build_warnings="$build_warnings -Wformat-nonliteral" ;;
+  *-*-mingw32*)
+    # Enable -Wno-format by default when using gcc on mingw since many
+    # GCC versions complain about %I64.
+    build_warnings="$build_warnings -Wno-format" ;;
+  *-*-solaris*)
+    # Solaris 11.4 <python2.7/ceval.h> uses #pragma no_inline that GCC
+    # doesn't understand.
+    build_warnings="$build_warnings -Wno-unknown-pragmas"
+    # Solaris 11 <unistd.h> marks vfork deprecated.
+    build_warnings="$build_warnings -Wno-deprecated-declarations" ;;
+  *)
+    # Note that gcc requires -Wformat for -Wformat-nonliteral to work,
+    # but there's a special case for this below.
+    build_warnings="$build_warnings -Wformat-nonliteral" ;;
 esac
 
 # Check whether --enable-build-warnings was given.
@@ -16185,19 +16614,33 @@ if test x"$silent" != x"yes" && test x"$build_warnings" != x""; then
 fi
 fi
 WARN_CFLAGS=""
+BUILD_WARN_CFLAGS=""
 if test "x${build_warnings}" != x -a "x$GCC" = xyes
 then
-    { $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler warning flags" >&5
+
+
+            { $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler warning flags" >&5
 $as_echo_n "checking compiler warning flags... " >&6; }
     # Separate out the -Werror flag as some files just cannot be
     # compiled with it enabled.
     for w in ${build_warnings}; do
 	case $w in
 	-Werr*) WERROR_CFLAGS=-Werror ;;
-	*) # Check that GCC accepts it
-	    saved_CFLAGS="$CFLAGS"
-	    CFLAGS="$CFLAGS -Werror $w"
-	    cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+	*)       w="$w"
+  case $w in
+  -Wno-*)
+    wtest=`echo $w | sed 's/-Wno-/-W/g'` ;;
+  -Wformat-nonliteral)
+            w="-Wformat $w"
+    wtest="$w"
+    ;;
+  *)
+    wtest=$w ;;
+  esac
+
+    saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror $wtest"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
 int
@@ -16212,47 +16655,149 @@ if ac_fn_c_try_compile "$LINENO"; then :
   WARN_CFLAGS="${WARN_CFLAGS} $w"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-	    CFLAGS="$saved_CFLAGS"
+  CFLAGS="$saved_CFLAGS"
+ ;;
 	esac
     done
     { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${WARN_CFLAGS} ${WERROR_CFLAGS}" >&5
 $as_echo "${WARN_CFLAGS} ${WERROR_CFLAGS}" >&6; }
-fi
 
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for a known getopt prototype in unistd.h" >&5
-$as_echo_n "checking for a known getopt prototype in unistd.h... " >&6; }
-if ${sim_cv_decl_getopt_unistd_h+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
+        if test "x$cross_compiling" = "xno"; then :
+  	SAVE_WARN_CFLAGS=$WARN_CFLAGS
+	build_warnings=$build_build_warnings
+	    { $as_echo "$as_me:${as_lineno-$LINENO}: checking compiler warning flags" >&5
+$as_echo_n "checking compiler warning flags... " >&6; }
+    # Separate out the -Werror flag as some files just cannot be
+    # compiled with it enabled.
+    for w in ${build_warnings}; do
+	case $w in
+	-Werr*) WERROR_CFLAGS=-Werror ;;
+	*)       w="$w"
+  case $w in
+  -Wno-*)
+    wtest=`echo $w | sed 's/-Wno-/-W/g'` ;;
+  -Wformat-nonliteral)
+            w="-Wformat $w"
+    wtest="$w"
+    ;;
+  *)
+    wtest=$w ;;
+  esac
+
+    saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror $wtest"
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-#include <unistd.h>
+
 int
 main ()
 {
-extern int getopt (int, char *const*, const char *);
+
   ;
   return 0;
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-  sim_cv_decl_getopt_unistd_h=yes
-else
-  sim_cv_decl_getopt_unistd_h=no
+  WARN_CFLAGS="${WARN_CFLAGS} $w"
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$saved_CFLAGS"
+ ;;
+	esac
+    done
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: ${WARN_CFLAGS} ${WERROR_CFLAGS}" >&5
+$as_echo "${WARN_CFLAGS} ${WERROR_CFLAGS}" >&6; }
+
+	BUILD_WARN_CFLAGS=$WARN_CFLAGS
+	WARN_CFLAGS=$SAVE_WARN_CFLAGS
+	BUILD_WERROR_CFLAGS=$WERROR_CFLAGS
+
 fi
 
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_cv_decl_getopt_unistd_h" >&5
-$as_echo "$sim_cv_decl_getopt_unistd_h" >&6; }
-if test $sim_cv_decl_getopt_unistd_h = yes; then
+          { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -Wno-shadow=local is supported" >&5
+$as_echo_n "checking whether -Wno-shadow=local is supported... " >&6; }
+        w="-Wno-shadow=local"
+  case $w in
+  -Wno-*)
+    wtest=`echo $w | sed 's/-Wno-/-W/g'` ;;
+  -Wformat-nonliteral)
+            w="-Wformat $w"
+    wtest="$w"
+    ;;
+  *)
+    wtest=$w ;;
+  esac
 
-$as_echo "#define HAVE_DECL_GETOPT 1" >>confdefs.h
+    saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror $wtest"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+        SIM_CFLAG_WNO_SHADOW_LOCAL=-Wno-shadow=local
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$saved_CFLAGS"
+
+  { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether -Wno-unused-but-set-variable is supported" >&5
+$as_echo_n "checking whether -Wno-unused-but-set-variable is supported... " >&6; }
+        w="-Wno-unused-but-set-variable"
+  case $w in
+  -Wno-*)
+    wtest=`echo $w | sed 's/-Wno-/-W/g'` ;;
+  -Wformat-nonliteral)
+            w="-Wformat $w"
+    wtest="$w"
+    ;;
+  *)
+    wtest=$w ;;
+  esac
+
+    saved_CFLAGS="$CFLAGS"
+  CFLAGS="$CFLAGS -Werror $wtest"
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+
+  ;
+  return 0;
+}
+_ACEOF
+if ac_fn_c_try_compile "$LINENO"; then :
+        SIM_CFLAG_WNO_UNUSED_BUT_SET_VARIABLE=-Wno-unused-but-set-variable
+
+
+    { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
+$as_echo "yes" >&6; }
+
+else
+  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
+$as_echo "no" >&6; }
+fi
+rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+  CFLAGS="$saved_CFLAGS"
 
 fi
-
-
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking whether sim frv should dump cpu state on unknown traps" >&5
@@ -16274,6 +16819,662 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
+
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking mips subtarget" >&5
+$as_echo_n "checking mips subtarget... " >&6; }
+SIM_MIPS_SUBTARGET=
+case ${target} in #(
+  mips64vr*-*-*) :
+    SIM_MIPS_SUBTARGET="-DTARGET_ENABLE_FR=1" ;; #(
+  mips*tx39*) :
+    SIM_MIPS_SUBTARGET="-DSUBTARGET_R3900=1" ;; #(
+  mips*-sde-elf*) :
+    SIM_MIPS_SUBTARGET="-DTARGET_ENABLE_FR=1" ;; #(
+  mips*-mti-elf*) :
+    SIM_MIPS_SUBTARGET="-DTARGET_ENABLE_FR=1" ;; #(
+  mipsisa32*-*-*) :
+    SIM_MIPS_SUBTARGET="-DTARGET_ENABLE_FR=1" ;; #(
+  mipsisa64*-*-*) :
+    SIM_MIPS_SUBTARGET="-DTARGET_ENABLE_FR=1" ;; #(
+  *) :
+     ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: ${SIM_MIPS_SUBTARGET:-none}" >&5
+$as_echo "${SIM_MIPS_SUBTARGET:-none}" >&6; }
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking mips bitsize" >&5
+$as_echo_n "checking mips bitsize... " >&6; }
+SIM_MIPS_BITSIZE=64
+case ${target} in #(
+  mips*-sde-elf*) :
+    SIM_MIPS_BITSIZE=64 ;; #(
+  mips*-mti-elf*) :
+    SIM_MIPS_BITSIZE=64 ;; #(
+  mips64*-*-*) :
+    SIM_MIPS_BITSIZE=64 ;; #(
+  mips16*-*-*) :
+    SIM_MIPS_BITSIZE=64 ;; #(
+  mipsisa32*-*-*) :
+    SIM_MIPS_BITSIZE=32 ;; #(
+  mipsisa64*-*-*) :
+    SIM_MIPS_BITSIZE=64 ;; #(
+  mips*-*-*) :
+    SIM_MIPS_BITSIZE=32 ;; #(
+  *) :
+     ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $SIM_MIPS_BITSIZE" >&5
+$as_echo "$SIM_MIPS_BITSIZE" >&6; }
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking mips fpu bitsize" >&5
+$as_echo_n "checking mips fpu bitsize... " >&6; }
+SIM_MIPS_FPU_BITSIZE=64
+case ${target} in #(
+  mips*tx39*) :
+    SIM_MIPS_FPU_BITSIZE=32 ;; #(
+  mips*-sde-elf*) :
+    SIM_MIPS_FPU_BITSIZE=64 ;; #(
+  mips*-mti-elf*) :
+    SIM_MIPS_FPU_BITSIZE=64 ;; #(
+  mipsisa32*-*-*) :
+    SIM_MIPS_FPU_BITSIZE=64 ;; #(
+  mipsisa64*-*-*) :
+    SIM_MIPS_FPU_BITSIZE=64 ;; #(
+  mips*-*-*) :
+    SIM_MIPS_FPU_BITSIZE=32 ;; #(
+  *) :
+     ;;
+esac
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $SIM_MIPS_FPU_BITSIZE" >&5
+$as_echo "$SIM_MIPS_FPU_BITSIZE" >&6; }
+
+
+SIM_MIPS_GEN=SINGLE
+sim_mips_single_machine="-M mipsIV"
+sim_mips_m16_machine="-M mips16,mipsIII"
+sim_mips_single_filter="32,64,f"
+sim_mips_m16_filter="16"
+case ${target} in #(
+  mips*tx39*) :
+        SIM_MIPS_GEN=SINGLE
+    sim_mips_single_filter="32,f"
+    sim_mips_single_machine="-M r3900" ;; #(
+  mips64vr41*) :
+        SIM_MIPS_GEN=M16
+    sim_mips_single_machine="-M vr4100"
+    sim_mips_m16_machine="-M vr4100" ;; #(
+  mips64*) :
+        SIM_MIPS_GEN=MULTI
+    sim_mips_multi_configs="\
+      vr4100:mipsIII,mips16,vr4100:32,64:mips4100,mips4111\
+      vr4120:mipsIII,mips16,vr4120:32,64:mips4120\
+      vr5000:mipsIV:32,64,f:mips4300,mips5000,mips8000\
+      vr5400:mipsIV,vr5400:32,64,f:mips5400\
+      vr5500:mipsIV,vr5500:32,64,f:mips5500"
+    sim_mips_multi_default=mips5000 ;; #(
+  mips*-sde-elf* | mips*-mti-elf*) :
+        SIM_MIPS_GEN=MULTI
+    sim_mips_multi_configs="\
+      micromips:micromips64,micromipsdsp:32,64,f:mips_micromips\
+      mipsisa64r2:mips64r2,mips16,mips16e,mdmx,dsp,dsp2,mips3d,smartmips:32,64,f:mipsisa32r2,mipsisa64r2,mipsisa32r5,mipsisa64r5\
+      mipsisa64r6:mips64r6:32,64,f:mipsisa32r6,mipsisa64r6"
+    sim_mips_multi_default=mipsisa64r2 ;; #(
+  mips16*) :
+        SIM_MIPS_GEN=M16 ;; #(
+  mipsisa32r2*) :
+        SIM_MIPS_GEN=MULTI
+    sim_mips_multi_configs="\
+      micromips:micromips32,micromipsdsp:32,f:mips_micromips\
+      mips32r2:mips32r2,mips3d,mips16,mips16e,mdmx,dsp,dsp2,smartmips:32,f:mipsisa32r2"
+    sim_mips_multi_default=mipsisa32r2 ;; #(
+  mipsisa32r6*) :
+        SIM_MIPS_GEN=SINGLE
+    sim_mips_single_machine="-M mips32r6"
+    sim_mips_single_filter="32,f" ;; #(
+  mipsisa32*) :
+        SIM_MIPS_GEN=M16
+    sim_mips_single_machine="-M mips32,mips16,mips16e,smartmips"
+    sim_mips_m16_machine="-M mips16,mips16e,mips32"
+    sim_mips_single_filter="32,f" ;; #(
+  mipsisa64r2*) :
+        SIM_MIPS_GEN=M16
+    sim_mips_single_machine="-M mips64r2,mips3d,mips16,mips16e,mdmx,dsp,dsp2"
+    sim_mips_m16_machine="-M mips16,mips16e,mips64r2" ;; #(
+  mipsisa64r6*) :
+        SIM_MIPS_GEN=SINGLE
+    sim_mips_single_machine="-M mips64r6" ;; #(
+  mipsisa64sb1*) :
+        SIM_MIPS_GEN=SINGLE
+    sim_mips_single_machine="-M mips64,mips3d,sb1" ;; #(
+  mipsisa64*) :
+        SIM_MIPS_GEN=M16
+    sim_mips_single_machine="-M mips64,mips3d,mips16,mips16e,mdmx"
+    sim_mips_m16_machine="-M mips16,mips16e,mips64" ;; #(
+  mips*lsi*) :
+        SIM_MIPS_GEN=M16
+    sim_mips_single_machine="-M mipsIII,mips16"
+    sim_mips_m16_machine="-M mips16,mipsIII"
+    sim_mips_single_filter="32,f" ;; #(
+  mips*) :
+        SIM_MIPS_GEN=SINGLE
+    sim_mips_single_filter="32,f" ;; #(
+  *) :
+     ;;
+esac
+
+SIM_MIPS_IGEN_ITABLE_FLAGS=
+SIM_MIPS_MULTI_SRC=
+SIM_MIPS_MULTI_OBJ=
+SIM_MIPS_MULTI_IGEN_CONFIGS=
+if test "x$SIM_MIPS_GEN" = x"MULTI"; then :
+      if test -z "${sim_mips_multi_configs}" || test -z "${sim_mips_multi_default}"; then :
+      as_fn_error $? "Error in configure.ac: MULTI simulator not set up correctly" "$LINENO" 5
+fi
+
+    as_dir=mips; as_fn_mkdir_p
+  rm -f mips/multi-include.h mips/multi-run.c
+  sim_mips_seen_default=no
+
+  cat << __EOF__ > mips/multi-run.c
+/* Main entry point for MULTI simulators.
+   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+   --
+
+   This file was generated by sim/mips/configure.  */
+
+#include "sim-main.h"
+#include "multi-include.h"
+#include "bfd/elf-bfd.h"
+#include "bfd/elfxx-mips.h"
+#include "elf/mips.h"
+
+#define SD sd
+#define CPU cpu
+
+void
+sim_engine_run (SIM_DESC sd,
+		int next_cpu_nr,
+		int nr_cpus,
+		int signal) /* ignore */
+{
+  int mach;
+
+  if (STATE_ARCHITECTURE (sd) == NULL)
+    mach = bfd_mach_${sim_mips_multi_default};
+  else if (elf_elfheader (STATE_PROG_BFD (sd))->e_flags
+	   & EF_MIPS_ARCH_ASE_MICROMIPS)
+    mach = bfd_mach_mips_micromips;
+  else
+  {
+     mach = _bfd_elf_mips_mach (elf_elfheader (STATE_PROG_BFD (sd))->e_flags);
+     if (!mach)
+       mach = STATE_ARCHITECTURE (SD)->mach;
+  }
+
+  switch (mach)
+    {
+__EOF__
+
+  for fc in ${sim_mips_multi_configs}; do
+
+            c=`echo ${fc} | sed 's/:[^:]*$//'`
+    bfdmachs=`echo ${fc} | sed 's/.*://'`
+    name=`echo ${c} | sed 's/:.*//'`
+    machine=`echo ${c} | sed 's/.*:\(.*\):.*/\1/'`
+    filter=`echo ${c} | sed 's/.*://'`
+
+                                            as_fn_append SIM_MIPS_IGEN_ITABLE_FLAGS " -F ${filter} -M ${machine}"
+
+        case ${c} in #(
+  *:*mips16*:*) :
+    		ws="m32 m16"
+
+				as_fn_append SIM_MIPS_MULTI_SRC " mips/m16${name}_run.c"
+	as_fn_append SIM_MIPS_MULTI_OBJ " mips/m16${name}_run.o"
+	as_fn_append SIM_MIPS_IGEN_ITABLE_FLAGS " -F 16"
+	 ;; #(
+  *:*micromips32*:*) :
+    			ws="micromips_m32 micromips16 micromips32"
+
+				as_fn_append SIM_MIPS_MULTI_SRC " mips/micromips${name}_run.c"
+	as_fn_append SIM_MIPS_MULTI_OBJ " mips/micromips${name}_run.o"
+	as_fn_append SIM_MIPS_IGEN_ITABLE_FLAGS " -F 16,32"
+	 ;; #(
+  *:*micromips64*:*) :
+    			ws="micromips_m64 micromips16 micromips64"
+
+				as_fn_append SIM_MIPS_MULTI_SRC " mips/micromips${name}_run.c"
+	as_fn_append SIM_MIPS_MULTI_OBJ " mips/micromips${name}_run.o"
+	as_fn_append SIM_MIPS_IGEN_ITABLE_FLAGS " -F 16,32,64"
+	 ;; #(
+  *) :
+    ws=m32 ;;
+esac
+
+            for w in ${ws}; do
+      for base in engine icache idecode model semantics support; do
+	as_fn_append SIM_MIPS_MULTI_SRC " mips/${w}${name}_${base}.c"
+	as_fn_append SIM_MIPS_MULTI_SRC " mips/${w}${name}_${base}.h"
+	as_fn_append SIM_MIPS_MULTI_OBJ " mips/${w}${name}_${base}.o"
+      done
+      as_fn_append SIM_MIPS_MULTI_IGEN_CONFIGS " ${w}${c}"
+    done
+
+            echo "#include \"${w}${name}_engine.h\"" >> mips/multi-include.h
+
+        for mach in `echo ${bfdmachs} | sed 's/,/ /g'`; do
+      echo "    case bfd_mach_${mach}:" >> mips/multi-run.c
+      if test "x$mach" = x"${sim_mips_multi_default}"; then :
+  	echo "    default:" >> mips/multi-run.c
+	sim_mips_seen_default=yes
+
+fi
+    done
+    echo "      ${w}${name}_engine_run (sd, next_cpu_nr, nr_cpus, signal);" \
+      >> mips/multi-run.c
+    echo "      break;" >> mips/multi-run.c
+  done
+
+    if test "x$sim_mips_seen_default" = xno; then :
+      as_fn_error $? "Error in configure.ac: \${sim_mips_multi_configs} doesn't have an entry for \${sim_mips_multi_default}" "$LINENO" 5
+fi
+
+  cat << __EOF__ >> mips/multi-run.c
+    }
+}
+__EOF__
+
+else
+    SIM_MIPS_IGEN_ITABLE_FLAGS='$(SIM_MIPS_SINGLE_FLAGS)'
+  if test "x$SIM_MIPS_GEN" = x"M16"; then :
+  as_fn_append SIM_MIPS_IGEN_ITABLE_FLAGS ' $(SIM_MIPS_M16_FLAGS)'
+fi
+
+fi
+SIM_MIPS_SINGLE_FLAGS="-F ${sim_mips_single_filter} ${sim_mips_single_machine}"
+SIM_MIPS_M16_FLAGS="-F ${sim_mips_m16_filter} ${sim_mips_m16_machine}"
+
+
+
+
+
+
+
+ if test "$SIM_MIPS_GEN" = "SINGLE"; then
+  SIM_MIPS_GEN_MODE_SINGLE_TRUE=
+  SIM_MIPS_GEN_MODE_SINGLE_FALSE='#'
+else
+  SIM_MIPS_GEN_MODE_SINGLE_TRUE='#'
+  SIM_MIPS_GEN_MODE_SINGLE_FALSE=
+fi
+
+ if test "$SIM_MIPS_GEN" = "M16"; then
+  SIM_MIPS_GEN_MODE_M16_TRUE=
+  SIM_MIPS_GEN_MODE_M16_FALSE='#'
+else
+  SIM_MIPS_GEN_MODE_M16_TRUE='#'
+  SIM_MIPS_GEN_MODE_M16_FALSE=
+fi
+
+ if test "$SIM_MIPS_GEN" = "MULTI"; then
+  SIM_MIPS_GEN_MODE_MULTI_TRUE=
+  SIM_MIPS_GEN_MODE_MULTI_FALSE='#'
+else
+  SIM_MIPS_GEN_MODE_MULTI_TRUE='#'
+  SIM_MIPS_GEN_MODE_MULTI_FALSE=
+fi
+
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc bitsize settings" >&5
+$as_echo_n "checking for sim ppc bitsize settings... " >&6; }
+# Check whether --enable-sim-ppc-bitsize was given.
+if test "${enable_sim_ppc_bitsize+set}" = set; then :
+  enableval=$enable_sim_ppc_bitsize; case "${enableval}" in
+  32|64) sim_ppc_bitsize="-DWITH_TARGET_WORD_BITSIZE=$enableval";;
+  *)	 as_fn_error $? "\"--enable-sim-ppc-bitsize was given $enableval.  Expected 32 or 64\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_bitsize=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_bitsize" >&5
+$as_echo "$sim_ppc_bitsize" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc decode mechanism" >&5
+$as_echo_n "checking for sim ppc decode mechanism... " >&6; }
+# Check whether --enable-sim-ppc-decode-mechanism was given.
+if test "${enable_sim_ppc_decode_mechanism+set}" = set; then :
+  enableval=$enable_sim_ppc_decode_mechanism; case "${enableval}" in
+  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-ppc-decode-mechanism=file\"" "$LINENO" 5;;
+  array|switch|padded-switch|goto-switch)	sim_ppc_decode_mechanism="-T ${enableval}";;
+  *)		as_fn_error $? "\"File $enableval is not an opcode rules file\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_decode_mechanism=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_decode_mechanism" >&5
+$as_echo "$sim_ppc_decode_mechanism" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc default model" >&5
+$as_echo_n "checking for sim ppc default model... " >&6; }
+# Check whether --enable-sim-ppc-default-model was given.
+if test "${enable_sim_ppc_default_model+set}" = set; then :
+  enableval=$enable_sim_ppc_default_model; case "${enableval}" in
+  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-ppc-default-model=model\"" "$LINENO" 5;;
+  *)		sim_ppc_default_model="-DWITH_DEFAULT_MODEL=${enableval}";;
+esac
+else
+  sim_ppc_default_model=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_default_model" >&5
+$as_echo "$sim_ppc_default_model" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc duplicate settings" >&5
+$as_echo_n "checking for sim ppc duplicate settings... " >&6; }
+# Check whether --enable-sim-ppc-duplicate was given.
+if test "${enable_sim_ppc_duplicate+set}" = set; then :
+  enableval=$enable_sim_ppc_duplicate; case "${enableval}" in
+  yes)	sim_ppc_dup="-E";;
+  no)	sim_ppc_dup="";;
+  *)	as_fn_error $? "\"--enable-sim-ppc-duplicate does not take a value\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_dup="-E"
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_dup" >&5
+$as_echo "$sim_ppc_dup" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc filter rules" >&5
+$as_echo_n "checking for sim ppc filter rules... " >&6; }
+# Check whether --enable-sim-ppc-filter was given.
+if test "${enable_sim_ppc_filter+set}" = set; then :
+  enableval=$enable_sim_ppc_filter; case "${enableval}" in
+  yes)	as_fn_error $? "\"--enable-sim-ppc-filter must be specified with a rule to filter or no\"" "$LINENO" 5;;
+  no)	sim_ppc_filter="";;
+  *)	sim_ppc_filter="-F $enableval";;
+esac
+else
+  sim_ppc_filter="-F 32,f,o"
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_filter" >&5
+$as_echo "$sim_ppc_filter" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc float settings" >&5
+$as_echo_n "checking for sim ppc float settings... " >&6; }
+# Check whether --enable-sim-ppc-float was given.
+if test "${enable_sim_ppc_float+set}" = set; then :
+  enableval=$enable_sim_ppc_float; case "${enableval}" in
+  yes | hard)	sim_ppc_float="-DWITH_FLOATING_POINT=HARD_FLOATING_POINT";;
+  no | soft)	sim_ppc_float="-DWITH_FLOATING_POINT=SOFT_FLOATING_POINT";;
+  altivec)      sim_ppc_float="-DWITH_ALTIVEC" ; sim_ppc_filter="${sim_ppc_filter},av" ;;
+  *spe*|*simd*) sim_ppc_float="-DWITH_E500" ; sim_ppc_filter="${sim_ppc_filter},e500" ;;
+  *)		as_fn_error $? "\"Unknown value $enableval passed to --enable-sim-ppc-float\"" "$LINENO" 5;;
+esac
+else
+  case "${target}" in
+  *altivec*) sim_ppc_float="-DWITH_ALTIVEC" ; sim_ppc_filter="${sim_ppc_filter},av" ;;
+  *spe*|*simd*)	sim_ppc_float="-DWITH_E500" ; sim_ppc_filter="${sim_ppc_filter},e500" ;;
+  *) sim_ppc_float=""
+esac
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_float" >&5
+$as_echo "$sim_ppc_float" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc hardware settings" >&5
+$as_echo_n "checking for sim ppc hardware settings... " >&6; }
+hardware="cpu,memory,nvram,iobus,htab,disk,trace,register,vm,init,core,pal,com,eeprom,opic,glue,phb,ide,sem,shm"
+# Check whether --enable-sim-ppc-hardware was given.
+if test "${enable_sim_ppc_hardware+set}" = set; then :
+  enableval=$enable_sim_ppc_hardware; case "${enableval}" in
+  yes)	;;
+  no)	as_fn_error $? "\"List of hardware must be specified for --enable-sim-ppc-hardware\"" "$LINENO" 5;;
+  ,*)   hardware="${hardware}${enableval}";;
+  *,)   hardware="${enableval}${hardware}";;
+  *)	hardware="${enableval}"'';;
+esac
+fi
+
+sim_ppc_hw_src=`echo $hardware | sed -e 's/,/.c hw_/g' -e 's/^/hw_/' -e s'/$/.c/'`
+sim_ppc_hw_obj=`echo $sim_ppc_hw_src | sed -e 's/\.c/.o/g'`
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $hardware" >&5
+$as_echo "$hardware" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc icache settings" >&5
+$as_echo_n "checking for sim ppc icache settings... " >&6; }
+# Check whether --enable-sim-ppc-icache was given.
+if test "${enable_sim_ppc_icache+set}" = set; then :
+  enableval=$enable_sim_ppc_icache; icache="-R"
+ case "${enableval}" in
+  yes)		icache="1024"; sim_ppc_icache="-I $icache";;
+  no)		sim_ppc_icache="-R";;
+  *) icache=1024
+     sim_ppc_icache="-"
+     for x in `echo "${enableval}" | sed -e "s/,/ /g"`; do
+       case "$x" in
+         define)	sim_ppc_icache="${sim_ppc_icache}R";;
+         semantic)	sim_ppc_icache="${sim_ppc_icache}C";;
+	 insn)		sim_ppc_icache="${sim_ppc_icache}S";;
+	 0*|1*|2*|3*|4*|5*|6*|7*|8*|9*)	icache=$x;;
+         *)		as_fn_error $? "\"Unknown value $x for --enable-sim-ppc-icache\"" "$LINENO" 5;;
+       esac
+     done
+     sim_ppc_icache="${sim_ppc_icache}I $icache";;
+esac
+else
+  sim_ppc_icache="-CSRI 1024"
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_icache" >&5
+$as_echo "$sim_ppc_icache" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc jump settings" >&5
+$as_echo_n "checking for sim ppc jump settings... " >&6; }
+# Check whether --enable-sim-ppc-jump was given.
+if test "${enable_sim_ppc_jump+set}" = set; then :
+  enableval=$enable_sim_ppc_jump; case "${enableval}" in
+  yes)	sim_ppc_jump="-J";;
+  no)	sim_ppc_jump="";;
+  *)	as_fn_error $? "\"--enable-sim-ppc-jump does not take a value\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_jump=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_jump" >&5
+$as_echo "$sim_ppc_jump" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc source debug line numbers" >&5
+$as_echo_n "checking for sim ppc source debug line numbers... " >&6; }
+# Check whether --enable-sim-ppc-line-nr was given.
+if test "${enable_sim_ppc_line_nr+set}" = set; then :
+  enableval=$enable_sim_ppc_line_nr; case "${enableval}" in
+  yes)	sim_ppc_line_nr="";;
+  no)	sim_ppc_line_nr="-L";;
+  *)	as_fn_error $? "\"--enable-sim-ppc-line-nr does not take a value\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_line_nr=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_line_nr" >&5
+$as_echo "$sim_ppc_line_nr" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc model" >&5
+$as_echo_n "checking for sim ppc model... " >&6; }
+# Check whether --enable-sim-ppc-model was given.
+if test "${enable_sim_ppc_model+set}" = set; then :
+  enableval=$enable_sim_ppc_model; case "${enableval}" in
+  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-ppc-model=model\"" "$LINENO" 5;;
+  *)		sim_ppc_model="-DWITH_MODEL=${enableval}";;
+esac
+else
+  sim_ppc_model=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_model" >&5
+$as_echo "$sim_ppc_model" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc model issue" >&5
+$as_echo_n "checking for sim ppc model issue... " >&6; }
+# Check whether --enable-sim-ppc-model-issue was given.
+if test "${enable_sim_ppc_model_issue+set}" = set; then :
+  enableval=$enable_sim_ppc_model_issue; case "${enableval}" in
+  yes)	sim_ppc_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_PROCESS";;
+  no)	sim_ppc_model_issue="-DWITH_MODEL_ISSUE=MODEL_ISSUE_IGNORE";;
+  *)	as_fn_error $? "\"--enable-sim-ppc-model-issue does not take a value\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_model_issue=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_model_issue" >&5
+$as_echo "$sim_ppc_model_issue" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc event monitoring" >&5
+$as_echo_n "checking for sim ppc event monitoring... " >&6; }
+# Check whether --enable-sim-ppc-monitor was given.
+if test "${enable_sim_ppc_monitor+set}" = set; then :
+  enableval=$enable_sim_ppc_monitor; case "${enableval}" in
+  yes)		sim_ppc_monitor="-DWITH_MON='MONITOR_INSTRUCTION_ISSUE | MONITOR_LOAD_STORE_UNIT'";;
+  no)		sim_ppc_monitor="-DWITH_MON=0";;
+  instruction)	sim_ppc_monitor="-DWITH_MON=MONITOR_INSTRUCTION_ISSUE";;
+  memory)	sim_ppc_monitor="-DWITH_MON=MONITOR_LOAD_STORE_UNIT";;
+  *)		as_fn_error $? "\"Unknown value $enableval passed to --enable-sim-ppc-mon\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_monitor=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_monitor" >&5
+$as_echo "$sim_ppc_monitor" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc opcode lookup settings" >&5
+$as_echo_n "checking for sim ppc opcode lookup settings... " >&6; }
+# Check whether --enable-sim-ppc-opcode was given.
+if test "${enable_sim_ppc_opcode+set}" = set; then :
+  enableval=$enable_sim_ppc_opcode; case "${enableval}" in
+  yes|no)	as_fn_error $? "\"No value supplied for --enable-sim-ppc-opcode=file\"" "$LINENO" 5;;
+  *)		if test -f "${srcdir}/${enableval}"; then
+		  sim_ppc_opcode="${enableval}"
+		elif test -f "${srcdir}/dc-${enableval}"; then
+		  sim_ppc_opcode="dc-${enableval}"
+		else
+		  as_fn_error $? "\"File $enableval is not an opcode rules file\"" "$LINENO" 5
+		fi;;
+esac
+else
+  sim_ppc_opcode="dc-complex"
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_opcode" >&5
+$as_echo "$sim_ppc_opcode" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc smp settings" >&5
+$as_echo_n "checking for sim ppc smp settings... " >&6; }
+# Check whether --enable-sim-ppc-smp was given.
+if test "${enable_sim_ppc_smp+set}" = set; then :
+  enableval=$enable_sim_ppc_smp; case "${enableval}" in
+  yes)	sim_ppc_smp="-DWITH_SMP=5" ; sim_ppc_igen_smp="-N 5";;
+  no)	sim_ppc_smp="-DWITH_SMP=0" ; sim_ppc_igen_smp="-N 0";;
+  *)	sim_ppc_smp="-DWITH_SMP=$enableval" ; sim_ppc_igen_smp="-N $enableval";;
+esac
+else
+  sim_ppc_smp="-DWITH_SMP=5" ; sim_ppc_igen_smp="-N 5"
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_smp" >&5
+$as_echo "$sim_ppc_smp" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc switch table settings" >&5
+$as_echo_n "checking for sim ppc switch table settings... " >&6; }
+# Check whether --enable-sim-ppc-switch was given.
+if test "${enable_sim_ppc_switch+set}" = set; then :
+  enableval=$enable_sim_ppc_switch; case "${enableval}" in
+  yes)	sim_ppc_switch="-DWITH_SPREG_SWITCH_TABLE";;
+  no)	sim_ppc_switch="";;
+  *)	as_fn_error $? "\"--enable-sim-ppc-switch does not take a value\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_switch=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_switch" >&5
+$as_echo "$sim_ppc_switch" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc timebase" >&5
+$as_echo_n "checking for sim ppc timebase... " >&6; }
+# Check whether --enable-sim-ppc-timebase was given.
+if test "${enable_sim_ppc_timebase+set}" = set; then :
+  enableval=$enable_sim_ppc_timebase; case "${enableval}" in
+  yes)	sim_ppc_timebase="-DWITH_TIME_BASE=1";;
+  no)	sim_ppc_timebase="-DWITH_TIME_BASE=0";;
+  *)	as_fn_error $? "\"--enable-sim-ppc-timebase does not take a value\"" "$LINENO" 5;;
+esac
+else
+  sim_ppc_timebase=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_timebase" >&5
+$as_echo "$sim_ppc_timebase" >&6; }
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for sim ppc xor endian settings" >&5
+$as_echo_n "checking for sim ppc xor endian settings... " >&6; }
+# Check whether --enable-sim-ppc-xor-endian was given.
+if test "${enable_sim_ppc_xor_endian+set}" = set; then :
+  enableval=$enable_sim_ppc_xor_endian; case "${enableval}" in
+  yes)	sim_ppc_xor_endian="-DWITH_XOR_ENDIAN=8";;
+  no)	sim_ppc_xor_endian="-DWITH_XOR_ENDIAN=0";;
+  *)	sim_ppc_xor_endian="-DWITH_XOR_ENDIAN=$enableval";;
+esac
+else
+  sim_ppc_xor_endian=""
+fi
+
+{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $sim_ppc_xor_endian" >&5
+$as_echo "$sim_ppc_xor_endian" >&6; }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking riscv bitsize" >&5
@@ -16310,10 +17511,7 @@ fi
 
 
 
-include_makefile="include"
-
-
-ac_config_files="$ac_config_files arch-subdir.mk Makefile .gdbinit:gdbinit.in"
+ac_config_files="$ac_config_files Makefile .gdbinit:gdbinit.in"
 
 cat >confcache <<\_ACEOF
 # This file is a shell script that caches the results of configure
@@ -16581,16 +17779,24 @@ if test -z "${SIM_ENABLE_ARCH_examples_TRUE}" && test -z "${SIM_ENABLE_ARCH_exam
   as_fn_error $? "conditional \"SIM_ENABLE_ARCH_examples\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
-if test -z "${SIM_ENABLE_IGEN_TRUE}" && test -z "${SIM_ENABLE_IGEN_FALSE}"; then
-  as_fn_error $? "conditional \"SIM_ENABLE_IGEN\" was never defined.
-Usually this means the macro was only invoked conditionally." "$LINENO" 5
-fi
 if test -z "${ENABLE_SIM_TRUE}" && test -z "${ENABLE_SIM_FALSE}"; then
   as_fn_error $? "conditional \"ENABLE_SIM\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 if test -z "${SIM_ENABLE_HW_TRUE}" && test -z "${SIM_ENABLE_HW_FALSE}"; then
   as_fn_error $? "conditional \"SIM_ENABLE_HW\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SIM_MIPS_GEN_MODE_SINGLE_TRUE}" && test -z "${SIM_MIPS_GEN_MODE_SINGLE_FALSE}"; then
+  as_fn_error $? "conditional \"SIM_MIPS_GEN_MODE_SINGLE\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SIM_MIPS_GEN_MODE_M16_TRUE}" && test -z "${SIM_MIPS_GEN_MODE_M16_FALSE}"; then
+  as_fn_error $? "conditional \"SIM_MIPS_GEN_MODE_M16\" was never defined.
+Usually this means the macro was only invoked conditionally." "$LINENO" 5
+fi
+if test -z "${SIM_MIPS_GEN_MODE_MULTI_TRUE}" && test -z "${SIM_MIPS_GEN_MODE_MULTI_FALSE}"; then
+  as_fn_error $? "conditional \"SIM_MIPS_GEN_MODE_MULTI\" was never defined.
 Usually this means the macro was only invoked conditionally." "$LINENO" 5
 fi
 
@@ -17437,38 +18643,6 @@ fi
 
 
 AMDEP_TRUE="$AMDEP_TRUE" ac_aux_dir="$ac_aux_dir"
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
-ac_aux_dir=$ac_aux_dir DEPDIR=$DEPDIR
 
 _ACEOF
 
@@ -17481,132 +18655,38 @@ do
     "config.h") CONFIG_HEADERS="$CONFIG_HEADERS config.h" ;;
     "libtool") CONFIG_COMMANDS="$CONFIG_COMMANDS libtool" ;;
     "depfiles") CONFIG_COMMANDS="$CONFIG_COMMANDS depfiles" ;;
-    "Make-common.sim") CONFIG_FILES="$CONFIG_FILES Make-common.sim:common/Make-common.in" ;;
-    "aarch64/Makefile.sim") CONFIG_FILES="$CONFIG_FILES aarch64/Makefile.sim:aarch64/Makefile.in" ;;
-    "aarch64/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS aarch64/Makefile" ;;
     "aarch64/.gdbinit") CONFIG_FILES="$CONFIG_FILES aarch64/.gdbinit:common/gdbinit.in" ;;
-    "depdir-aarch64") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-aarch64" ;;
-    "arm/Makefile.sim") CONFIG_FILES="$CONFIG_FILES arm/Makefile.sim:arm/Makefile.in" ;;
-    "arm/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS arm/Makefile" ;;
     "arm/.gdbinit") CONFIG_FILES="$CONFIG_FILES arm/.gdbinit:common/gdbinit.in" ;;
-    "depdir-arm") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-arm" ;;
-    "avr/Makefile.sim") CONFIG_FILES="$CONFIG_FILES avr/Makefile.sim:avr/Makefile.in" ;;
-    "avr/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS avr/Makefile" ;;
     "avr/.gdbinit") CONFIG_FILES="$CONFIG_FILES avr/.gdbinit:common/gdbinit.in" ;;
-    "depdir-avr") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-avr" ;;
-    "bfin/Makefile.sim") CONFIG_FILES="$CONFIG_FILES bfin/Makefile.sim:bfin/Makefile.in" ;;
-    "bfin/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS bfin/Makefile" ;;
     "bfin/.gdbinit") CONFIG_FILES="$CONFIG_FILES bfin/.gdbinit:common/gdbinit.in" ;;
-    "depdir-bfin") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-bfin" ;;
-    "bpf/Makefile.sim") CONFIG_FILES="$CONFIG_FILES bpf/Makefile.sim:bpf/Makefile.in" ;;
-    "bpf/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS bpf/Makefile" ;;
     "bpf/.gdbinit") CONFIG_FILES="$CONFIG_FILES bpf/.gdbinit:common/gdbinit.in" ;;
-    "depdir-bpf") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-bpf" ;;
-    "cr16/Makefile.sim") CONFIG_FILES="$CONFIG_FILES cr16/Makefile.sim:cr16/Makefile.in" ;;
-    "cr16/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS cr16/Makefile" ;;
     "cr16/.gdbinit") CONFIG_FILES="$CONFIG_FILES cr16/.gdbinit:common/gdbinit.in" ;;
-    "depdir-cr16") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-cr16" ;;
-    "cris/Makefile.sim") CONFIG_FILES="$CONFIG_FILES cris/Makefile.sim:cris/Makefile.in" ;;
-    "cris/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS cris/Makefile" ;;
     "cris/.gdbinit") CONFIG_FILES="$CONFIG_FILES cris/.gdbinit:common/gdbinit.in" ;;
-    "depdir-cris") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-cris" ;;
-    "d10v/Makefile.sim") CONFIG_FILES="$CONFIG_FILES d10v/Makefile.sim:d10v/Makefile.in" ;;
-    "d10v/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS d10v/Makefile" ;;
     "d10v/.gdbinit") CONFIG_FILES="$CONFIG_FILES d10v/.gdbinit:common/gdbinit.in" ;;
-    "depdir-d10v") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-d10v" ;;
-    "frv/Makefile.sim") CONFIG_FILES="$CONFIG_FILES frv/Makefile.sim:frv/Makefile.in" ;;
-    "frv/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS frv/Makefile" ;;
     "frv/.gdbinit") CONFIG_FILES="$CONFIG_FILES frv/.gdbinit:common/gdbinit.in" ;;
-    "depdir-frv") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-frv" ;;
-    "ft32/Makefile.sim") CONFIG_FILES="$CONFIG_FILES ft32/Makefile.sim:ft32/Makefile.in" ;;
-    "ft32/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS ft32/Makefile" ;;
     "ft32/.gdbinit") CONFIG_FILES="$CONFIG_FILES ft32/.gdbinit:common/gdbinit.in" ;;
-    "depdir-ft32") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-ft32" ;;
-    "h8300/Makefile.sim") CONFIG_FILES="$CONFIG_FILES h8300/Makefile.sim:h8300/Makefile.in" ;;
-    "h8300/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS h8300/Makefile" ;;
     "h8300/.gdbinit") CONFIG_FILES="$CONFIG_FILES h8300/.gdbinit:common/gdbinit.in" ;;
-    "depdir-h8300") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-h8300" ;;
-    "iq2000/Makefile.sim") CONFIG_FILES="$CONFIG_FILES iq2000/Makefile.sim:iq2000/Makefile.in" ;;
-    "iq2000/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS iq2000/Makefile" ;;
     "iq2000/.gdbinit") CONFIG_FILES="$CONFIG_FILES iq2000/.gdbinit:common/gdbinit.in" ;;
-    "depdir-iq2000") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-iq2000" ;;
-    "lm32/Makefile.sim") CONFIG_FILES="$CONFIG_FILES lm32/Makefile.sim:lm32/Makefile.in" ;;
-    "lm32/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS lm32/Makefile" ;;
     "lm32/.gdbinit") CONFIG_FILES="$CONFIG_FILES lm32/.gdbinit:common/gdbinit.in" ;;
-    "depdir-lm32") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-lm32" ;;
-    "m32c/Makefile.sim") CONFIG_FILES="$CONFIG_FILES m32c/Makefile.sim:m32c/Makefile.in" ;;
-    "m32c/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS m32c/Makefile" ;;
     "m32c/.gdbinit") CONFIG_FILES="$CONFIG_FILES m32c/.gdbinit:common/gdbinit.in" ;;
-    "depdir-m32c") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-m32c" ;;
-    "m32r/Makefile.sim") CONFIG_FILES="$CONFIG_FILES m32r/Makefile.sim:m32r/Makefile.in" ;;
-    "m32r/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS m32r/Makefile" ;;
     "m32r/.gdbinit") CONFIG_FILES="$CONFIG_FILES m32r/.gdbinit:common/gdbinit.in" ;;
-    "depdir-m32r") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-m32r" ;;
-    "m68hc11/Makefile.sim") CONFIG_FILES="$CONFIG_FILES m68hc11/Makefile.sim:m68hc11/Makefile.in" ;;
-    "m68hc11/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS m68hc11/Makefile" ;;
     "m68hc11/.gdbinit") CONFIG_FILES="$CONFIG_FILES m68hc11/.gdbinit:common/gdbinit.in" ;;
-    "depdir-m68hc11") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-m68hc11" ;;
-    "mcore/Makefile.sim") CONFIG_FILES="$CONFIG_FILES mcore/Makefile.sim:mcore/Makefile.in" ;;
-    "mcore/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS mcore/Makefile" ;;
     "mcore/.gdbinit") CONFIG_FILES="$CONFIG_FILES mcore/.gdbinit:common/gdbinit.in" ;;
-    "depdir-mcore") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-mcore" ;;
-    "microblaze/Makefile.sim") CONFIG_FILES="$CONFIG_FILES microblaze/Makefile.sim:microblaze/Makefile.in" ;;
-    "microblaze/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS microblaze/Makefile" ;;
     "microblaze/.gdbinit") CONFIG_FILES="$CONFIG_FILES microblaze/.gdbinit:common/gdbinit.in" ;;
-    "depdir-microblaze") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-microblaze" ;;
     "mips/.gdbinit") CONFIG_FILES="$CONFIG_FILES mips/.gdbinit:common/gdbinit.in" ;;
-    "depdir-mips") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-mips" ;;
-    "mn10300/Makefile.sim") CONFIG_FILES="$CONFIG_FILES mn10300/Makefile.sim:mn10300/Makefile.in" ;;
-    "mn10300/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS mn10300/Makefile" ;;
     "mn10300/.gdbinit") CONFIG_FILES="$CONFIG_FILES mn10300/.gdbinit:common/gdbinit.in" ;;
-    "depdir-mn10300") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-mn10300" ;;
-    "moxie/Makefile.sim") CONFIG_FILES="$CONFIG_FILES moxie/Makefile.sim:moxie/Makefile.in" ;;
-    "moxie/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS moxie/Makefile" ;;
     "moxie/.gdbinit") CONFIG_FILES="$CONFIG_FILES moxie/.gdbinit:common/gdbinit.in" ;;
-    "depdir-moxie") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-moxie" ;;
-    "msp430/Makefile.sim") CONFIG_FILES="$CONFIG_FILES msp430/Makefile.sim:msp430/Makefile.in" ;;
-    "msp430/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS msp430/Makefile" ;;
     "msp430/.gdbinit") CONFIG_FILES="$CONFIG_FILES msp430/.gdbinit:common/gdbinit.in" ;;
-    "depdir-msp430") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-msp430" ;;
-    "or1k/Makefile.sim") CONFIG_FILES="$CONFIG_FILES or1k/Makefile.sim:or1k/Makefile.in" ;;
-    "or1k/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS or1k/Makefile" ;;
     "or1k/.gdbinit") CONFIG_FILES="$CONFIG_FILES or1k/.gdbinit:common/gdbinit.in" ;;
-    "depdir-or1k") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-or1k" ;;
     "ppc/.gdbinit") CONFIG_FILES="$CONFIG_FILES ppc/.gdbinit:common/gdbinit.in" ;;
-    "depdir-ppc") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-ppc" ;;
-    "pru/Makefile.sim") CONFIG_FILES="$CONFIG_FILES pru/Makefile.sim:pru/Makefile.in" ;;
-    "pru/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS pru/Makefile" ;;
     "pru/.gdbinit") CONFIG_FILES="$CONFIG_FILES pru/.gdbinit:common/gdbinit.in" ;;
-    "depdir-pru") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-pru" ;;
-    "riscv/Makefile.sim") CONFIG_FILES="$CONFIG_FILES riscv/Makefile.sim:riscv/Makefile.in" ;;
-    "riscv/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS riscv/Makefile" ;;
     "riscv/.gdbinit") CONFIG_FILES="$CONFIG_FILES riscv/.gdbinit:common/gdbinit.in" ;;
-    "depdir-riscv") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-riscv" ;;
-    "rl78/Makefile.sim") CONFIG_FILES="$CONFIG_FILES rl78/Makefile.sim:rl78/Makefile.in" ;;
-    "rl78/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS rl78/Makefile" ;;
     "rl78/.gdbinit") CONFIG_FILES="$CONFIG_FILES rl78/.gdbinit:common/gdbinit.in" ;;
-    "depdir-rl78") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-rl78" ;;
-    "rx/Makefile.sim") CONFIG_FILES="$CONFIG_FILES rx/Makefile.sim:rx/Makefile.in" ;;
-    "rx/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS rx/Makefile" ;;
     "rx/.gdbinit") CONFIG_FILES="$CONFIG_FILES rx/.gdbinit:common/gdbinit.in" ;;
-    "depdir-rx") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-rx" ;;
-    "sh/Makefile.sim") CONFIG_FILES="$CONFIG_FILES sh/Makefile.sim:sh/Makefile.in" ;;
-    "sh/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS sh/Makefile" ;;
     "sh/.gdbinit") CONFIG_FILES="$CONFIG_FILES sh/.gdbinit:common/gdbinit.in" ;;
-    "depdir-sh") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-sh" ;;
-    "erc32/Makefile.sim") CONFIG_FILES="$CONFIG_FILES erc32/Makefile.sim:erc32/Makefile.in" ;;
-    "erc32/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS erc32/Makefile" ;;
     "erc32/.gdbinit") CONFIG_FILES="$CONFIG_FILES erc32/.gdbinit:common/gdbinit.in" ;;
-    "depdir-erc32") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-erc32" ;;
-    "v850/Makefile.sim") CONFIG_FILES="$CONFIG_FILES v850/Makefile.sim:v850/Makefile.in" ;;
-    "v850/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS v850/Makefile" ;;
     "v850/.gdbinit") CONFIG_FILES="$CONFIG_FILES v850/.gdbinit:common/gdbinit.in" ;;
-    "depdir-v850") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-v850" ;;
-    "example-synacor/Makefile.sim") CONFIG_FILES="$CONFIG_FILES example-synacor/Makefile.sim:example-synacor/Makefile.in" ;;
-    "example-synacor/Makefile") CONFIG_COMMANDS="$CONFIG_COMMANDS example-synacor/Makefile" ;;
     "example-synacor/.gdbinit") CONFIG_FILES="$CONFIG_FILES example-synacor/.gdbinit:common/gdbinit.in" ;;
-    "depdir-example-synacor") CONFIG_COMMANDS="$CONFIG_COMMANDS depdir-example-synacor" ;;
-    "arch-subdir.mk") CONFIG_FILES="$CONFIG_FILES arch-subdir.mk" ;;
     "Makefile") CONFIG_FILES="$CONFIG_FILES Makefile" ;;
     ".gdbinit") CONFIG_FILES="$CONFIG_FILES .gdbinit:gdbinit.in" ;;
 
@@ -18936,398 +20016,6 @@ $as_echo X"$file" |
   done
 }
  ;;
-    "aarch64/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/aarch64:
-		p
-	}' \
-	<Make-common.sim >aarch64/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >aarch64/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r aarch64/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r aarch64/Makesim2.tmp' \
-	<aarch64/Makefile.sim >aarch64/Makefile
- rm -f aarch64/Makesim1.tmp aarch64/Makesim2.tmp
- ;;
-    "depdir-aarch64":C) $SHELL $ac_aux_dir/mkinstalldirs aarch64/$DEPDIR ;;
-    "arm/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/arm:
-		p
-	}' \
-	<Make-common.sim >arm/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >arm/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r arm/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r arm/Makesim2.tmp' \
-	<arm/Makefile.sim >arm/Makefile
- rm -f arm/Makesim1.tmp arm/Makesim2.tmp
- ;;
-    "depdir-arm":C) $SHELL $ac_aux_dir/mkinstalldirs arm/$DEPDIR ;;
-    "avr/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/avr:
-		p
-	}' \
-	<Make-common.sim >avr/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >avr/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r avr/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r avr/Makesim2.tmp' \
-	<avr/Makefile.sim >avr/Makefile
- rm -f avr/Makesim1.tmp avr/Makesim2.tmp
- ;;
-    "depdir-avr":C) $SHELL $ac_aux_dir/mkinstalldirs avr/$DEPDIR ;;
-    "bfin/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/bfin:
-		p
-	}' \
-	<Make-common.sim >bfin/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >bfin/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r bfin/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r bfin/Makesim2.tmp' \
-	<bfin/Makefile.sim >bfin/Makefile
- rm -f bfin/Makesim1.tmp bfin/Makesim2.tmp
- ;;
-    "depdir-bfin":C) $SHELL $ac_aux_dir/mkinstalldirs bfin/$DEPDIR ;;
-    "bpf/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/bpf:
-		p
-	}' \
-	<Make-common.sim >bpf/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >bpf/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r bpf/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r bpf/Makesim2.tmp' \
-	<bpf/Makefile.sim >bpf/Makefile
- rm -f bpf/Makesim1.tmp bpf/Makesim2.tmp
- ;;
-    "depdir-bpf":C) $SHELL $ac_aux_dir/mkinstalldirs bpf/$DEPDIR ;;
-    "cr16/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/cr16:
-		p
-	}' \
-	<Make-common.sim >cr16/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >cr16/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r cr16/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r cr16/Makesim2.tmp' \
-	<cr16/Makefile.sim >cr16/Makefile
- rm -f cr16/Makesim1.tmp cr16/Makesim2.tmp
- ;;
-    "depdir-cr16":C) $SHELL $ac_aux_dir/mkinstalldirs cr16/$DEPDIR ;;
-    "cris/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/cris:
-		p
-	}' \
-	<Make-common.sim >cris/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >cris/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r cris/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r cris/Makesim2.tmp' \
-	<cris/Makefile.sim >cris/Makefile
- rm -f cris/Makesim1.tmp cris/Makesim2.tmp
- ;;
-    "depdir-cris":C) $SHELL $ac_aux_dir/mkinstalldirs cris/$DEPDIR ;;
-    "d10v/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/d10v:
-		p
-	}' \
-	<Make-common.sim >d10v/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >d10v/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r d10v/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r d10v/Makesim2.tmp' \
-	<d10v/Makefile.sim >d10v/Makefile
- rm -f d10v/Makesim1.tmp d10v/Makesim2.tmp
- ;;
-    "depdir-d10v":C) $SHELL $ac_aux_dir/mkinstalldirs d10v/$DEPDIR ;;
-    "frv/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/frv:
-		p
-	}' \
-	<Make-common.sim >frv/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >frv/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r frv/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r frv/Makesim2.tmp' \
-	<frv/Makefile.sim >frv/Makefile
- rm -f frv/Makesim1.tmp frv/Makesim2.tmp
- ;;
-    "depdir-frv":C) $SHELL $ac_aux_dir/mkinstalldirs frv/$DEPDIR ;;
-    "ft32/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/ft32:
-		p
-	}' \
-	<Make-common.sim >ft32/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >ft32/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r ft32/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r ft32/Makesim2.tmp' \
-	<ft32/Makefile.sim >ft32/Makefile
- rm -f ft32/Makesim1.tmp ft32/Makesim2.tmp
- ;;
-    "depdir-ft32":C) $SHELL $ac_aux_dir/mkinstalldirs ft32/$DEPDIR ;;
-    "h8300/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/h8300:
-		p
-	}' \
-	<Make-common.sim >h8300/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >h8300/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r h8300/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r h8300/Makesim2.tmp' \
-	<h8300/Makefile.sim >h8300/Makefile
- rm -f h8300/Makesim1.tmp h8300/Makesim2.tmp
- ;;
-    "depdir-h8300":C) $SHELL $ac_aux_dir/mkinstalldirs h8300/$DEPDIR ;;
-    "iq2000/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/iq2000:
-		p
-	}' \
-	<Make-common.sim >iq2000/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >iq2000/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r iq2000/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r iq2000/Makesim2.tmp' \
-	<iq2000/Makefile.sim >iq2000/Makefile
- rm -f iq2000/Makesim1.tmp iq2000/Makesim2.tmp
- ;;
-    "depdir-iq2000":C) $SHELL $ac_aux_dir/mkinstalldirs iq2000/$DEPDIR ;;
-    "lm32/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/lm32:
-		p
-	}' \
-	<Make-common.sim >lm32/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >lm32/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r lm32/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r lm32/Makesim2.tmp' \
-	<lm32/Makefile.sim >lm32/Makefile
- rm -f lm32/Makesim1.tmp lm32/Makesim2.tmp
- ;;
-    "depdir-lm32":C) $SHELL $ac_aux_dir/mkinstalldirs lm32/$DEPDIR ;;
-    "m32c/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/m32c:
-		p
-	}' \
-	<Make-common.sim >m32c/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >m32c/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r m32c/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r m32c/Makesim2.tmp' \
-	<m32c/Makefile.sim >m32c/Makefile
- rm -f m32c/Makesim1.tmp m32c/Makesim2.tmp
- ;;
-    "depdir-m32c":C) $SHELL $ac_aux_dir/mkinstalldirs m32c/$DEPDIR ;;
-    "m32r/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/m32r:
-		p
-	}' \
-	<Make-common.sim >m32r/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >m32r/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r m32r/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r m32r/Makesim2.tmp' \
-	<m32r/Makefile.sim >m32r/Makefile
- rm -f m32r/Makesim1.tmp m32r/Makesim2.tmp
- ;;
-    "depdir-m32r":C) $SHELL $ac_aux_dir/mkinstalldirs m32r/$DEPDIR ;;
-    "m68hc11/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/m68hc11:
-		p
-	}' \
-	<Make-common.sim >m68hc11/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >m68hc11/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r m68hc11/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r m68hc11/Makesim2.tmp' \
-	<m68hc11/Makefile.sim >m68hc11/Makefile
- rm -f m68hc11/Makesim1.tmp m68hc11/Makesim2.tmp
- ;;
-    "depdir-m68hc11":C) $SHELL $ac_aux_dir/mkinstalldirs m68hc11/$DEPDIR ;;
-    "mcore/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/mcore:
-		p
-	}' \
-	<Make-common.sim >mcore/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >mcore/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r mcore/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r mcore/Makesim2.tmp' \
-	<mcore/Makefile.sim >mcore/Makefile
- rm -f mcore/Makesim1.tmp mcore/Makesim2.tmp
- ;;
-    "depdir-mcore":C) $SHELL $ac_aux_dir/mkinstalldirs mcore/$DEPDIR ;;
-    "microblaze/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/microblaze:
-		p
-	}' \
-	<Make-common.sim >microblaze/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >microblaze/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r microblaze/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r microblaze/Makesim2.tmp' \
-	<microblaze/Makefile.sim >microblaze/Makefile
- rm -f microblaze/Makesim1.tmp microblaze/Makesim2.tmp
- ;;
-    "depdir-microblaze":C) $SHELL $ac_aux_dir/mkinstalldirs microblaze/$DEPDIR ;;
-    "depdir-mips":C) $SHELL $ac_aux_dir/mkinstalldirs mips/$DEPDIR ;;
-    "mn10300/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/mn10300:
-		p
-	}' \
-	<Make-common.sim >mn10300/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >mn10300/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r mn10300/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r mn10300/Makesim2.tmp' \
-	<mn10300/Makefile.sim >mn10300/Makefile
- rm -f mn10300/Makesim1.tmp mn10300/Makesim2.tmp
- ;;
-    "depdir-mn10300":C) $SHELL $ac_aux_dir/mkinstalldirs mn10300/$DEPDIR ;;
-    "moxie/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/moxie:
-		p
-	}' \
-	<Make-common.sim >moxie/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >moxie/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r moxie/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r moxie/Makesim2.tmp' \
-	<moxie/Makefile.sim >moxie/Makefile
- rm -f moxie/Makesim1.tmp moxie/Makesim2.tmp
- ;;
-    "depdir-moxie":C) $SHELL $ac_aux_dir/mkinstalldirs moxie/$DEPDIR ;;
-    "msp430/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/msp430:
-		p
-	}' \
-	<Make-common.sim >msp430/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >msp430/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r msp430/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r msp430/Makesim2.tmp' \
-	<msp430/Makefile.sim >msp430/Makefile
- rm -f msp430/Makesim1.tmp msp430/Makesim2.tmp
- ;;
-    "depdir-msp430":C) $SHELL $ac_aux_dir/mkinstalldirs msp430/$DEPDIR ;;
-    "or1k/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/or1k:
-		p
-	}' \
-	<Make-common.sim >or1k/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >or1k/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r or1k/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r or1k/Makesim2.tmp' \
-	<or1k/Makefile.sim >or1k/Makefile
- rm -f or1k/Makesim1.tmp or1k/Makesim2.tmp
- ;;
-    "depdir-or1k":C) $SHELL $ac_aux_dir/mkinstalldirs or1k/$DEPDIR ;;
-    "depdir-ppc":C) $SHELL $ac_aux_dir/mkinstalldirs ppc/$DEPDIR ;;
-    "pru/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/pru:
-		p
-	}' \
-	<Make-common.sim >pru/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >pru/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r pru/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r pru/Makesim2.tmp' \
-	<pru/Makefile.sim >pru/Makefile
- rm -f pru/Makesim1.tmp pru/Makesim2.tmp
- ;;
-    "depdir-pru":C) $SHELL $ac_aux_dir/mkinstalldirs pru/$DEPDIR ;;
-    "riscv/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/riscv:
-		p
-	}' \
-	<Make-common.sim >riscv/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >riscv/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r riscv/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r riscv/Makesim2.tmp' \
-	<riscv/Makefile.sim >riscv/Makefile
- rm -f riscv/Makesim1.tmp riscv/Makesim2.tmp
- ;;
-    "depdir-riscv":C) $SHELL $ac_aux_dir/mkinstalldirs riscv/$DEPDIR ;;
-    "rl78/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/rl78:
-		p
-	}' \
-	<Make-common.sim >rl78/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >rl78/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r rl78/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r rl78/Makesim2.tmp' \
-	<rl78/Makefile.sim >rl78/Makefile
- rm -f rl78/Makesim1.tmp rl78/Makesim2.tmp
- ;;
-    "depdir-rl78":C) $SHELL $ac_aux_dir/mkinstalldirs rl78/$DEPDIR ;;
-    "rx/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/rx:
-		p
-	}' \
-	<Make-common.sim >rx/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >rx/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r rx/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r rx/Makesim2.tmp' \
-	<rx/Makefile.sim >rx/Makefile
- rm -f rx/Makesim1.tmp rx/Makesim2.tmp
- ;;
-    "depdir-rx":C) $SHELL $ac_aux_dir/mkinstalldirs rx/$DEPDIR ;;
-    "sh/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/sh:
-		p
-	}' \
-	<Make-common.sim >sh/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >sh/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r sh/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r sh/Makesim2.tmp' \
-	<sh/Makefile.sim >sh/Makefile
- rm -f sh/Makesim1.tmp sh/Makesim2.tmp
- ;;
-    "depdir-sh":C) $SHELL $ac_aux_dir/mkinstalldirs sh/$DEPDIR ;;
-    "erc32/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/erc32:
-		p
-	}' \
-	<Make-common.sim >erc32/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >erc32/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r erc32/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r erc32/Makesim2.tmp' \
-	<erc32/Makefile.sim >erc32/Makefile
- rm -f erc32/Makesim1.tmp erc32/Makesim2.tmp
- ;;
-    "depdir-erc32":C) $SHELL $ac_aux_dir/mkinstalldirs erc32/$DEPDIR ;;
-    "v850/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/v850:
-		p
-	}' \
-	<Make-common.sim >v850/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >v850/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r v850/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r v850/Makesim2.tmp' \
-	<v850/Makefile.sim >v850/Makefile
- rm -f v850/Makesim1.tmp v850/Makesim2.tmp
- ;;
-    "depdir-v850":C) $SHELL $ac_aux_dir/mkinstalldirs v850/$DEPDIR ;;
-    "example-synacor/Makefile":C) sed -n \
-	-e '/^## COMMON_PRE_/,/^## End COMMON_PRE_/ {
-		/^srcdir = / s:$:/example-synacor:
-		p
-	}' \
-	<Make-common.sim >example-synacor/Makesim1.tmp
- sed -n -e '/^## COMMON_POST_/,/^## End COMMON_POST_/ p' <Make-common.sim >example-synacor/Makesim2.tmp
- sed -e '/^## COMMON_PRE_/ r example-synacor/Makesim1.tmp' \
-	-e '/^## COMMON_POST_/ r example-synacor/Makesim2.tmp' \
-	<example-synacor/Makefile.sim >example-synacor/Makefile
- rm -f example-synacor/Makesim1.tmp example-synacor/Makesim2.tmp
- ;;
-    "depdir-example-synacor":C) $SHELL $ac_aux_dir/mkinstalldirs example-synacor/$DEPDIR ;;
 
   esac
 done # for ac_tag
@@ -19360,151 +20048,6 @@ if test "$no_create" != yes; then
   # Use ||, not &&, to avoid exiting from the if with $? = 1, which
   # would make configure fail if this is the last instruction.
   $ac_cs_success || as_fn_exit 1
-fi
-
-#
-# CONFIG_SUBDIRS section.
-#
-if test "$no_recursion" != yes; then
-
-  # Remove --cache-file, --srcdir, and --disable-option-checking arguments
-  # so they do not pile up.
-  ac_sub_configure_args=
-  ac_prev=
-  eval "set x $ac_configure_args"
-  shift
-  for ac_arg
-  do
-    if test -n "$ac_prev"; then
-      ac_prev=
-      continue
-    fi
-    case $ac_arg in
-    -cache-file | --cache-file | --cache-fil | --cache-fi \
-    | --cache-f | --cache- | --cache | --cach | --cac | --ca | --c)
-      ac_prev=cache_file ;;
-    -cache-file=* | --cache-file=* | --cache-fil=* | --cache-fi=* \
-    | --cache-f=* | --cache-=* | --cache=* | --cach=* | --cac=* | --ca=* \
-    | --c=*)
-      ;;
-    --config-cache | -C)
-      ;;
-    -srcdir | --srcdir | --srcdi | --srcd | --src | --sr)
-      ac_prev=srcdir ;;
-    -srcdir=* | --srcdir=* | --srcdi=* | --srcd=* | --src=* | --sr=*)
-      ;;
-    -prefix | --prefix | --prefi | --pref | --pre | --pr | --p)
-      ac_prev=prefix ;;
-    -prefix=* | --prefix=* | --prefi=* | --pref=* | --pre=* | --pr=* | --p=*)
-      ;;
-    --disable-option-checking)
-      ;;
-    *)
-      case $ac_arg in
-      *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
-      esac
-      as_fn_append ac_sub_configure_args " '$ac_arg'" ;;
-    esac
-  done
-
-  # Always prepend --prefix to ensure using the same prefix
-  # in subdir configurations.
-  ac_arg="--prefix=$prefix"
-  case $ac_arg in
-  *\'*) ac_arg=`$as_echo "$ac_arg" | sed "s/'/'\\\\\\\\''/g"` ;;
-  esac
-  ac_sub_configure_args="'$ac_arg' $ac_sub_configure_args"
-
-  # Pass --silent
-  if test "$silent" = yes; then
-    ac_sub_configure_args="--silent $ac_sub_configure_args"
-  fi
-
-  # Always prepend --disable-option-checking to silence warnings, since
-  # different subdirs can have different --enable and --with options.
-  ac_sub_configure_args="--disable-option-checking $ac_sub_configure_args"
-
-  ac_popdir=`pwd`
-  for ac_dir in : $subdirs; do test "x$ac_dir" = x: && continue
-
-    # Do not complain, so a configure script can configure whichever
-    # parts of a large source tree are present.
-    test -d "$srcdir/$ac_dir" || continue
-
-    ac_msg="=== configuring in $ac_dir (`pwd`/$ac_dir)"
-    $as_echo "$as_me:${as_lineno-$LINENO}: $ac_msg" >&5
-    $as_echo "$ac_msg" >&6
-    as_dir="$ac_dir"; as_fn_mkdir_p
-    ac_builddir=.
-
-case "$ac_dir" in
-.) ac_dir_suffix= ac_top_builddir_sub=. ac_top_build_prefix= ;;
-*)
-  ac_dir_suffix=/`$as_echo "$ac_dir" | sed 's|^\.[\\/]||'`
-  # A ".." for each directory in $ac_dir_suffix.
-  ac_top_builddir_sub=`$as_echo "$ac_dir_suffix" | sed 's|/[^\\/]*|/..|g;s|/||'`
-  case $ac_top_builddir_sub in
-  "") ac_top_builddir_sub=. ac_top_build_prefix= ;;
-  *)  ac_top_build_prefix=$ac_top_builddir_sub/ ;;
-  esac ;;
-esac
-ac_abs_top_builddir=$ac_pwd
-ac_abs_builddir=$ac_pwd$ac_dir_suffix
-# for backward compatibility:
-ac_top_builddir=$ac_top_build_prefix
-
-case $srcdir in
-  .)  # We are building in place.
-    ac_srcdir=.
-    ac_top_srcdir=$ac_top_builddir_sub
-    ac_abs_top_srcdir=$ac_pwd ;;
-  [\\/]* | ?:[\\/]* )  # Absolute name.
-    ac_srcdir=$srcdir$ac_dir_suffix;
-    ac_top_srcdir=$srcdir
-    ac_abs_top_srcdir=$srcdir ;;
-  *) # Relative name.
-    ac_srcdir=$ac_top_build_prefix$srcdir$ac_dir_suffix
-    ac_top_srcdir=$ac_top_build_prefix$srcdir
-    ac_abs_top_srcdir=$ac_pwd/$srcdir ;;
-esac
-ac_abs_srcdir=$ac_abs_top_srcdir$ac_dir_suffix
-
-
-    cd "$ac_dir"
-
-    # Check for guested configure; otherwise get Cygnus style configure.
-    if test -f "$ac_srcdir/configure.gnu"; then
-      ac_sub_configure=$ac_srcdir/configure.gnu
-    elif test -f "$ac_srcdir/configure"; then
-      ac_sub_configure=$ac_srcdir/configure
-    elif test -f "$ac_srcdir/configure.in"; then
-      # This should be Cygnus configure.
-      ac_sub_configure=$ac_aux_dir/configure
-    else
-      { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: no configuration information is in $ac_dir" >&5
-$as_echo "$as_me: WARNING: no configuration information is in $ac_dir" >&2;}
-      ac_sub_configure=
-    fi
-
-    # The recursion is here.
-    if test -n "$ac_sub_configure"; then
-      # Make the cache file name correct relative to the subdirectory.
-      case $cache_file in
-      [\\/]* | ?:[\\/]* ) ac_sub_cache_file=$cache_file ;;
-      *) # Relative name.
-	ac_sub_cache_file=$ac_top_build_prefix$cache_file ;;
-      esac
-
-      { $as_echo "$as_me:${as_lineno-$LINENO}: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&5
-$as_echo "$as_me: running $SHELL $ac_sub_configure $ac_sub_configure_args --cache-file=$ac_sub_cache_file --srcdir=$ac_srcdir" >&6;}
-      # The eval makes quoting arguments work.
-      eval "\$SHELL \"\$ac_sub_configure\" $ac_sub_configure_args \
-	   --cache-file=\"\$ac_sub_cache_file\" --srcdir=\"\$ac_srcdir\"" ||
-	as_fn_error $? "$ac_sub_configure failed for $ac_dir" "$LINENO" 5
-    fi
-
-    cd "$ac_popdir"
-  done
 fi
 if test -n "$ac_unrecognized_opts" && test "$enable_option_checking" != no; then
   { $as_echo "$as_me:${as_lineno-$LINENO}: WARNING: unrecognized options: $ac_unrecognized_opts" >&5

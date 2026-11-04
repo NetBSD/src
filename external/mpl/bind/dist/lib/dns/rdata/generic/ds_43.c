@@ -1,4 +1,4 @@
-/*	$NetBSD: ds_43.c,v 1.11.2.1 2025/08/02 05:53:41 perseant Exp $	*/
+/*	$NetBSD: ds_43.c,v 1.11.2.2 2026/11/04 23:18:09 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -305,9 +305,7 @@ tostruct_ds(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_ds);
 	REQUIRE(ds != NULL);
 
-	ds->common.rdclass = rdata->rdclass;
-	ds->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&ds->common, link);
+	DNS_RDATACOMMON_INIT(ds, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_ds(CALL_TOSTRUCT);
 }

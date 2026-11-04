@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcireg.h,v 1.40.2.1 2025/08/02 05:57:05 perseant Exp $	*/
+/*	$NetBSD: ehcireg.h,v 1.40.2.2 2026/11/04 23:22:35 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001, 2004 The NetBSD Foundation, Inc.
@@ -299,6 +299,9 @@ typedef struct ehci_sitd_t {
 	volatile ehci_link_t	sitd_back;
 	volatile uint32_t	sitd_buffer_hi[EHCI_SITD_BUFFERS];
 } ehci_sitd_t;
+#define EHCI_SITD_ALLOC_ALIGN	MAX(EHCI_SITD_ALIGN, CACHE_LINE_SIZE)
+#define EHCI_SITD_SIZE		(roundup(sizeof(ehci_sitd_t), EHCI_SITD_ALLOC_ALIGN))
+#define EHCI_SITD_CHUNK		(EHCI_PAGE_SIZE / EHCI_SITD_SIZE)
 
 /* Queue Element Transfer Descriptor */
 #define EHCI_QTD_NBUFFERS	5

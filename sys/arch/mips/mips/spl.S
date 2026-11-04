@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.20 2023/05/22 06:50:52 skrll Exp $	*/
+/*	$NetBSD: spl.S,v 1.20.6.1 2026/11/04 23:20:59 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <mips/asm.h>
 #include <mips/cpuregs.h>
 
-RCSID("$NetBSD: spl.S,v 1.20 2023/05/22 06:50:52 skrll Exp $")
+RCSID("$NetBSD: spl.S,v 1.20.6.1 2026/11/04 23:20:59 perseant Exp $")
 
 #include "assym.h"
 
@@ -72,8 +72,8 @@ _splraise:
 	NOP_L					# load delay
 	INT_L	v0, CPU_INFO_CPL(a3)		# get current IPL from cpu_info
 	NOP_L					# load delay
-	sltu	v1, a1, v0			# newipl < curipl
-	bnez	v1, 1f				# yes, don't change.
+	sltu	v1, v0, a1			# curipl < newipl
+	beqz	v1, 1f				# no, already at or above target
 	 nop					#  branch delay
 	mfc0	v1, MIPS_COP_0_STATUS		# fetch status register
 	MFC0_HAZARD				# load delay
@@ -393,18 +393,18 @@ END(_splsw_splcheck)
 	.rdata
 	.globl _C_LABEL(std_splsw)
 _C_LABEL(std_splsw):
-        PTR_WORD _C_LABEL(_splsw_splhigh)
-        PTR_WORD _C_LABEL(_splsw_splsched)
-        PTR_WORD _C_LABEL(_splsw_splvm)
-        PTR_WORD _C_LABEL(_splsw_splsoftserial)
-        PTR_WORD _C_LABEL(_splsw_splsoftnet)
-        PTR_WORD _C_LABEL(_splsw_splsoftbio)
-        PTR_WORD _C_LABEL(_splsw_splsoftclock)
-        PTR_WORD _C_LABEL(_splsw_splraise)
-        PTR_WORD _C_LABEL(_splsw_spl0)
-        PTR_WORD _C_LABEL(_splsw_splx)
-        PTR_WORD _C_LABEL(_splsw_splhigh_noprof)
-        PTR_WORD _C_LABEL(_splsw_splx_noprof)
+	PTR_WORD _C_LABEL(_splsw_splhigh)
+	PTR_WORD _C_LABEL(_splsw_splsched)
+	PTR_WORD _C_LABEL(_splsw_splvm)
+	PTR_WORD _C_LABEL(_splsw_splsoftserial)
+	PTR_WORD _C_LABEL(_splsw_splsoftnet)
+	PTR_WORD _C_LABEL(_splsw_splsoftbio)
+	PTR_WORD _C_LABEL(_splsw_splsoftclock)
+	PTR_WORD _C_LABEL(_splsw_splraise)
+	PTR_WORD _C_LABEL(_splsw_spl0)
+	PTR_WORD _C_LABEL(_splsw_splx)
+	PTR_WORD _C_LABEL(_splsw_splhigh_noprof)
+	PTR_WORD _C_LABEL(_splsw_splx_noprof)
 	PTR_WORD _C_LABEL(_splsw_setsoftintr)
 	PTR_WORD _C_LABEL(_splsw_clrsoftintr)
 	PTR_WORD _C_LABEL(_splsw_splintr)

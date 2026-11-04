@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,8 @@
 # This file is part of the gdb testsuite.
 
 
-if { ![istarget i?86-*-*] && ![istarget x86_64-*-* ] } {
-    verbose "Skipping x86 AVX512 tests."
-    return
-}
+require {is_any_target i?86-*-* x86_64-*-*}
+require {have_compile_flag -mavx512f}
 
 standard_testfile
 

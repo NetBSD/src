@@ -1,4 +1,4 @@
-/* $NetBSD: ti_tptc.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: ti_tptc.c,v 1.2.24.1 2026/11/04 23:20:17 perseant Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_tptc.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_tptc.c,v 1.2.24.1 2026/11/04 23:20:17 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,11 +65,20 @@ ti_tptc_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
 
+	if (of_hasprop(phandle, "power-domains")) {
+		/* clocks are configured through fdt_powerdomain */
+		if (fdtbus_powerdomain_enable(phandle) != 0) {
+			aprint_error(": couldn't enable powerdomain\n");
+			return;
+		}
+	} else {
+		/* clock are configured through the prcm system  */
+		if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
+			aprint_error(": couldn't enable module\n");
+			return;
+		}
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": EDMA Transfer Controller\n");
-
-        if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
-                aprint_error_dev(self, "couldn't enable module\n");
-                return;
-        }
 }

@@ -1276,6 +1276,29 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
+# The answer is wildcard-expanded, so it is cached with a NOQNAME proof,
+# and it is partially excluded, so it is filtered rather than synthesized.
+# 10.53.0.8 is the only client for which break-dnssec is in effect, which
+# is what lets a +dnssec query reach the filtering path at all.
+echo_i "checking partially-excluded wildcard AAAA lookup in signed zone works with +dnssec ($n)"
+ret=0
+$DIG $DIGOPTS +dnssec a.wild-partially-excluded.signed. @10.53.0.2 -b 10.53.0.8 aaaa >dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n >/dev/null || ret=1
+grep "ANSWER: 1," dig.out.ns2.test$n >/dev/null || ret=1
+grep "2001::4" dig.out.ns2.test$n >/dev/null || ret=1
+grep "2001:eeee::4" dig.out.ns2.test$n >/dev/null && ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+echo_i "checking ns2 survived the partially-excluded wildcard lookup ($n)"
+ret=0
+$DIG $DIGOPTS aaaa-only.signed. @10.53.0.2 -b 10.53.0.2 aaaa >dig.out.ns2.test$n || ret=1
+grep "status: NOERROR" dig.out.ns2.test$n >/dev/null || ret=1
+n=$((n + 1))
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
 echo_i "checking reverse mapping ($n)"
 ret=0
 $DIG $DIGOPTS -x 2001:aaaa::10.0.0.1 @10.53.0.2 >dig.out.ns2.test$n || ret=1
@@ -1407,7 +1430,7 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-copy_setports ns1/named.conf2.in ns1/named.conf
+cp ns1/named2.conf ns1/named.conf
 rndc_reload ns1 10.53.0.1
 
 echo_i "checking 'dig +dns64prefix' with multiple prefixes ($n)"
@@ -1419,7 +1442,7 @@ n=$((n + 1))
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
-copy_setports ns1/named.conf3.in ns1/named.conf
+cp ns1/named3.conf ns1/named.conf
 rndc_reload ns1 10.53.0.1
 
 echo_i "checking 'dig +dns64prefix' with no prefixes ($n)"

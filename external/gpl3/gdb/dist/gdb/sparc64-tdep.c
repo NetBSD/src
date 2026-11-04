@@ -1,6 +1,6 @@
 /* Target-dependent code for UltraSPARC.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -529,9 +529,7 @@ adi_assign_command (const char *args, int from_tty)
   do_assign (next_address, cnt, version);
 }
 
-void _initialize_sparc64_adi_tdep ();
-void
-_initialize_sparc64_adi_tdep ()
+INIT_GDB_FILE (sparc64_adi_tdep)
 {
   add_basic_prefix_cmd ("adi", class_support,
 			_("ADI version related commands."),
@@ -786,7 +784,7 @@ static const char * const sparc64_register_names[] =
 #define SPARC64_NUM_REGS ARRAY_SIZE (sparc64_register_names)
 
 /* We provide the aliases %d0..%d62 and %q0..%q60 for the floating
-   registers as "psuedo" registers.  */
+   registers as "pseudo" registers.  */
 
 static const char * const sparc64_pseudo_register_names[] =
 {
@@ -1135,16 +1133,16 @@ sparc64_frame_prev_register (const frame_info_ptr &this_frame, void **this_cache
   return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind sparc64_frame_unwind =
-{
+static const struct frame_unwind_legacy sparc64_frame_unwind (
   "sparc64 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   sparc64_frame_this_id,
   sparc64_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 
 static CORE_ADDR
@@ -1884,7 +1882,6 @@ sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
   int sparc32 = (gdbarch_ptr_bit (gdbarch) == 32);
   const gdb_byte *regs = (const gdb_byte *) gregs;
-  gdb_byte zero[8] = { 0 };
   int i;
 
   if (sparc32)
@@ -1947,7 +1944,7 @@ sparc64_supply_gregset (const struct sparc_gregmap *gregmap,
     }
 
   if (regnum == SPARC_G0_REGNUM || regnum == -1)
-    regcache->raw_supply (SPARC_G0_REGNUM, &zero);
+    regcache->raw_supply_zeroed (SPARC_G0_REGNUM);
 
   if ((regnum >= SPARC_G1_REGNUM && regnum <= SPARC_O7_REGNUM) || regnum == -1)
     {

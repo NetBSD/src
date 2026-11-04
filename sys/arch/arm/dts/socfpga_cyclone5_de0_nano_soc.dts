@@ -1,6 +1,6 @@
 
 
-#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/socfpga_cyclone5_de0_nano_soc.dts"
+#include "../../../external/gpl2/dts/dist/arch/arm/boot/dts/intel/socfpga/socfpga_cyclone5_de0_nano_soc.dts"
 
 / {
 	soc {
@@ -17,8 +17,6 @@
 		usb@ffb40000 {
 			dr_mode = "host";
 		};
-		watchdog@ffd02000 {
-			resets = <&rst L4WD0_RESET>;
-		};
+
 	};
 };

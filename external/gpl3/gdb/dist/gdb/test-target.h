@@ -1,6 +1,6 @@
 /* A mock process_stratum target_ops
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TEST_TARGET_H
-#define TEST_TARGET_H
+#ifndef GDB_TEST_TARGET_H
+#define GDB_TEST_TARGET_H
 
 #include "process-stratum-target.h"
 
@@ -59,7 +59,7 @@ public:
   }
 };
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-#endif /* !defined (TEST_TARGET_H) */
+#endif /* GDB_TEST_TARGET_H */

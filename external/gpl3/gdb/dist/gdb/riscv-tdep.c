@@ -1,6 +1,6 @@
 /* Target-dependent code for the RISC-V architecture, for GDB.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,8 +54,11 @@
 #include "observable.h"
 #include "prologue-value.h"
 #include "arch/riscv.h"
+#include "record-full.h"
 #include "riscv-ravenscar-thread.h"
 #include "gdbsupport/gdb-safe-ctype.h"
+
+#include <vector>
 
 /* The stack must be 16-byte aligned.  */
 #define SP_ALIGNMENT 16
@@ -133,6 +136,11 @@ static const char *riscv_feature_name_vector = "org.gnu.gdb.riscv.vector";
 
 /* The current set of options to be passed to the disassembler.  */
 static std::string riscv_disassembler_options;
+
+/* When true, prefer to show register names in their numeric form (eg. x28).
+   When false, show them in their abi form (eg. t3).  */
+
+static bool numeric_register_names = false;
 
 /* Cached information about a frame.  */
 
@@ -226,11 +234,9 @@ struct riscv_register_feature
 
     /* Look in FEATURE for a register with a name from this classes names
        list.  If the register is found then register its number with
-       TDESC_DATA and add all its aliases to the ALIASES list.
-       PREFER_FIRST_NAME_P is used when deciding which aliases to create.  */
+       TDESC_DATA and add all its aliases to the ALIASES list.  */
     bool check (struct tdesc_arch_data *tdesc_data,
 		const struct tdesc_feature *feature,
-		bool prefer_first_name_p,
 		std::vector<riscv_pending_register_alias> *aliases) const;
   };
 
@@ -265,7 +271,6 @@ bool
 riscv_register_feature::register_info::check
 	(struct tdesc_arch_data *tdesc_data,
 	 const struct tdesc_feature *feature,
-	 bool prefer_first_name_p,
 	 std::vector<riscv_pending_register_alias> *aliases) const
 {
   for (const char *name : this->names)
@@ -276,16 +281,11 @@ riscv_register_feature::register_info::check
 	{
 	  /* We know that the target description mentions this
 	     register.  In RISCV_REGISTER_NAME we ensure that GDB
-	     always uses the first name for each register, so here we
-	     add aliases for all of the remaining names.  */
-	  int start_index = prefer_first_name_p ? 1 : 0;
-	  for (int i = start_index; i < this->names.size (); ++i)
-	    {
-	      const char *alias = this->names[i];
-	      if (alias == name && !prefer_first_name_p)
-		continue;
-	      aliases->emplace_back (alias, (void *) &this->regnum);
-	    }
+	     always refers to the register by its user-configured name.
+	     Here, we add aliases for all possible names, so that
+	     the user can refer to the register by any of them.  */
+	  for (const char *alias : this->names)
+	    aliases->emplace_back (alias, (void *) &this->regnum);
 	  return true;
 	}
     }
@@ -342,6 +342,8 @@ struct riscv_xreg_feature : public riscv_register_feature
   const char *register_name (int regnum) const
   {
     gdb_assert (regnum >= RISCV_ZERO_REGNUM && regnum <= m_registers.size ());
+    if (numeric_register_names && (regnum <= RISCV_ZERO_REGNUM + 31))
+      return m_registers[regnum].names[1];
     return m_registers[regnum].names[0];
   }
 
@@ -360,7 +362,7 @@ struct riscv_xreg_feature : public riscv_register_feature
     bool seen_an_optional_reg_p = false;
     for (const auto &reg : m_registers)
       {
-	bool found = reg.check (tdesc_data, feature_cpu, true, aliases);
+	bool found = reg.check (tdesc_data, feature_cpu, aliases);
 
 	bool is_optional_reg_p = (reg.regnum >= RISCV_ZERO_REGNUM + 16
 				  && reg.regnum < RISCV_ZERO_REGNUM + 32);
@@ -444,6 +446,8 @@ struct riscv_freg_feature : public riscv_register_feature
     gdb_assert (regnum >= RISCV_FIRST_FP_REGNUM
 		&& regnum <= RISCV_LAST_FP_REGNUM);
     regnum -= RISCV_FIRST_FP_REGNUM;
+    if (numeric_register_names && (regnum <= 31))
+      return m_registers[regnum].names[1];
     return m_registers[regnum].names[0];
   }
 
@@ -469,7 +473,7 @@ struct riscv_freg_feature : public riscv_register_feature
        are missing this is not fatal.  */
     for (const auto &reg : m_registers)
       {
-	bool found = reg.check (tdesc_data, feature_fpu, true, aliases);
+	bool found = reg.check (tdesc_data, feature_fpu, aliases);
 
 	bool is_ctrl_reg_p = reg.regnum > RISCV_LAST_FP_REGNUM;
 
@@ -543,7 +547,7 @@ struct riscv_virtual_feature : public riscv_register_feature
     /* We don't check the return value from the call to check here, all the
        registers in this feature are optional.  */
     for (const auto &reg : m_registers)
-      reg.check (tdesc_data, feature_virtual, true, aliases);
+      reg.check (tdesc_data, feature_virtual, aliases);
 
     return true;
   }
@@ -583,7 +587,7 @@ struct riscv_csr_feature : public riscv_register_feature
     /* We don't check the return value from the call to check here, all the
        registers in this feature are optional.  */
     for (const auto &reg : m_registers)
-      reg.check (tdesc_data, feature_csr, true, aliases);
+      reg.check (tdesc_data, feature_csr, aliases);
 
     return true;
   }
@@ -683,7 +687,7 @@ struct riscv_vector_feature : public riscv_register_feature
     /* Check all of the vector registers are present.  */
     for (const auto &reg : m_registers)
       {
-	if (!reg.check (tdesc_data, feature_vector, true, aliases))
+	if (!reg.check (tdesc_data, feature_vector, aliases))
 	  return false;
       }
 
@@ -734,6 +738,18 @@ show_use_compressed_breakpoints (struct ui_file *file, int from_tty,
   gdb_printf (file,
 	      _("Debugger's use of compressed breakpoints is set "
 		"to %s.\n"), value);
+}
+
+/* The show callback for 'show riscv numeric-register-names'.  */
+
+static void
+show_numeric_register_names (struct ui_file *file, int from_tty,
+			     struct cmd_list_element *c,
+			     const char *value)
+{
+  gdb_printf (file,
+	      _("Displaying registers with their numeric names is %s.\n"),
+	      value);
 }
 
 /* The set and show lists for 'set riscv' and 'show riscv' prefixes.  */
@@ -918,17 +934,18 @@ riscv_register_name (struct gdbarch *gdbarch, int regnum)
   if (name[0] == '\0')
     return name;
 
-  /* We want GDB to use the ABI names for registers even if the target
-     gives us a target description with the architectural name.  For
-     example we want to see 'ra' instead of 'x1' whatever the target
-     description called it.  */
+  /* We want GDB to use the user-configured names for registers even
+     if the target gives us a target description with something different.
+     For example, we want to see 'ra' if numeric_register_names is false,
+     or 'x1' if numeric_register_names is true - regardless of what the
+     target description called it.  */
   if (regnum >= RISCV_ZERO_REGNUM && regnum < RISCV_FIRST_FP_REGNUM)
     return riscv_xreg_feature.register_name (regnum);
 
-  /* Like with the x-regs we prefer the abi names for the floating point
-     registers.  If the target doesn't have floating point registers then
-     the tdesc_register_name call above should have returned an empty
-     string.  */
+  /* Like with the x-regs we refer to the user configuration for the
+     floating point register names.  If the target doesn't have floating
+     point registers then the tdesc_register_name call above should have
+     returned an empty string.  */
   if (regnum >= RISCV_FIRST_FP_REGNUM && regnum <= RISCV_LAST_FP_REGNUM)
     {
       gdb_assert (riscv_has_fp_regs (gdbarch));
@@ -1015,7 +1032,7 @@ riscv_pseudo_register_write (struct gdbarch *gdbarch,
   if (regnum == tdep->fflags_regnum || regnum == tdep->frm_regnum)
     {
       int fcsr_regnum = RISCV_CSR_FCSR_REGNUM;
-      gdb_byte raw_buf[register_size (gdbarch, fcsr_regnum)];
+      gdb::byte_vector raw_buf (register_size (gdbarch, fcsr_regnum));
 
       regcache->raw_read (fcsr_regnum, raw_buf);
 
@@ -1655,6 +1672,11 @@ public:
   int imm_signed () const
   { return m_imm.s; }
 
+  /* Fetch instruction from target memory at ADDR, return the content of
+     the instruction, and update LEN with the instruction length.  */
+  static ULONGEST fetch_instruction (struct gdbarch *gdbarch,
+				     CORE_ADDR addr, int *len);
+
 private:
 
   /* Extract 5 bit register field at OFFSET from instruction OPCODE.  */
@@ -1799,11 +1821,6 @@ private:
     m_rs1 = decode_register_index_short (ival, OP_SH_CRS1S);
     m_rs2 = decode_register_index_short (ival, OP_SH_CRS2S);
   }
-
-  /* Fetch instruction from target memory at ADDR, return the content of
-     the instruction, and update LEN with the instruction length.  */
-  static ULONGEST fetch_instruction (struct gdbarch *gdbarch,
-				     CORE_ADDR addr, int *len);
 
   /* The length of the instruction in bytes.  Should be 2 or 4.  */
   int m_length;
@@ -2857,8 +2874,12 @@ static void
 riscv_call_arg_scalar_int (struct riscv_arg_info *ainfo,
 			   struct riscv_call_info *cinfo)
 {
+  auto lang_req = language_pass_by_reference (ainfo->type);
+
   if (TYPE_HAS_DYNAMIC_LENGTH (ainfo->type)
-      || ainfo->length > (2 * cinfo->xlen))
+      || ainfo->length > (2 * cinfo->xlen)
+      || !lang_req.trivially_copy_constructible
+      || !lang_req.trivially_destructible)
     {
       /* Argument is going to be passed by reference.  */
       ainfo->argloc[0].loc_type
@@ -3900,18 +3921,18 @@ riscv_frame_prev_register (const frame_info_ptr &this_frame,
    are the fallback unwinder (DWARF unwinder is used first), we use the
    default frame sniffer, which always accepts the frame.  */
 
-static const struct frame_unwind riscv_frame_unwind =
-{
+static const struct frame_unwind_legacy riscv_frame_unwind (
   /*.name          =*/ "riscv prologue",
   /*.type          =*/ NORMAL_FRAME,
+  /*.unwinder_class=*/FRAME_UNWIND_ARCH,
   /*.stop_reason   =*/ default_frame_unwind_stop_reason,
   /*.this_id       =*/ riscv_frame_this_id,
   /*.prev_register =*/ riscv_frame_prev_register,
   /*.unwind_data   =*/ NULL,
   /*.sniffer       =*/ default_frame_sniffer,
   /*.dealloc_cache =*/ NULL,
-  /*.prev_arch     =*/ NULL,
-};
+  /*.prev_arch     =*/ NULL
+);
 
 /* Extract a set of required target features out of ABFD.  If ABFD is
    nullptr then a RISCV_GDBARCH_FEATURES is returned in its default state.  */
@@ -4142,6 +4163,20 @@ riscv_gnu_triplet_regexp (struct gdbarch *gdbarch)
   return "riscv(32|64)?";
 }
 
+/* Implement the "print_insn" gdbarch method.  */
+
+static int
+riscv_print_insn (bfd_vma addr, struct disassemble_info *info)
+{
+  /* Initialize the BFD section to enable ISA string detection depending on the
+     object in scope.  */
+  struct obj_section *s = find_pc_section (addr);
+  if (s != nullptr)
+    info->section = s->the_bfd_section;
+
+  return default_print_insn (addr, info);
+}
+
 /* Implementation of `gdbarch_stap_is_single_operand', as defined in
    gdbarch.h.  */
 
@@ -4170,7 +4205,7 @@ static const char *const stap_register_indirection_suffixes[] =
 };
 
 /* Initialize the current architecture based on INFO.  If possible,
-   re-use an architecture from ARCHES, which is a list of
+   reuse an architecture from ARCHES, which is a list of
    architectures already created during this debugging session.
 
    Called e.g. at program startup, when reading a core file, and when
@@ -4408,12 +4443,18 @@ riscv_gdbarch_init (struct gdbarch_info info,
 					  disassembler_options_riscv ());
   set_gdbarch_disassembler_options (gdbarch, &riscv_disassembler_options);
 
+  /* Disassembler print_insn.  */
+  set_gdbarch_print_insn (gdbarch, riscv_print_insn);
+
   /* SystemTap Support.  */
   set_gdbarch_stap_is_single_operand (gdbarch, riscv_stap_is_single_operand);
   set_gdbarch_stap_register_indirection_prefixes
     (gdbarch, stap_register_indirection_prefixes);
   set_gdbarch_stap_register_indirection_suffixes
     (gdbarch, stap_register_indirection_suffixes);
+
+  /* Process record-replay */
+  set_gdbarch_process_record (gdbarch, riscv_process_record);
 
   /* Hook in OS ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
@@ -4754,9 +4795,7 @@ riscv_supply_regset (const struct regset *regset,
     }
 }
 
-void _initialize_riscv_tdep ();
-void
-_initialize_riscv_tdep ()
+INIT_GDB_FILE (riscv_tdep)
 {
   riscv_init_reggroups ();
 
@@ -4832,4 +4871,724 @@ this option can be used."),
 				show_use_compressed_breakpoints,
 				&setriscvcmdlist,
 				&showriscvcmdlist);
+
+  add_setshow_boolean_cmd ("numeric-register-names", no_class,
+			  &numeric_register_names,
+			  _("\
+Set displaying registers with numeric names instead of abi names."), _("\
+Show whether registers are displayed with numeric names instead of abi names."),
+			  _("\
+When enabled, registers will be shown with their numeric names (such as x28)\n\
+instead of their abi names (such as t0).\n\
+Also consider using the 'set disassembler-options numeric' command for the\n\
+equivalent change in the disassembler output."),
+			  NULL,
+			  show_numeric_register_names,
+			  &setriscvcmdlist,
+			  &showriscvcmdlist);
+}
+
+/* A wrapper to read register under number regnum to address addr.
+   Returns false if error happened and makes warning.  */
+
+static bool
+try_read (struct regcache *regcache, int regnum, ULONGEST &addr)
+{
+  gdb_assert (regcache != nullptr);
+
+  if (regcache->raw_read (regnum, &addr)
+      != register_status::REG_VALID)
+    {
+      warning (_("Can not read at address %s"), hex_string (addr));
+      return false;
+    }
+  return true;
+}
+
+/* Helper class to record instruction.  */
+
+class riscv_recorded_insn final
+{
+public:
+  /* Type for saved register.  */
+  using regnum_type = int;
+  /* Type for saved memory.  First is address, second is length.  */
+  using memory_type = std::pair<CORE_ADDR, int>;
+
+  /* Enum class that represents which type does recording belong to.  */
+  enum class record_type
+  {
+    UNKNOWN,
+    ORDINARY,
+
+    /* Corner cases.  */
+    ECALL,
+    EBREAK,
+    SRET,
+    MRET,
+  };
+
+private:
+  /* Type for set of registers that need to be saved.  */
+  using recorded_regs = std::vector<regnum_type>;
+  /* Type for set of memory records that need to be saved.  */
+  using recorded_mems = std::vector<memory_type>;
+
+  /* Type for memory address, extracted from memory_type.  */
+  using mem_addr = decltype (std::declval<memory_type> ().first);
+  /* Type for memory length, extracted from memory_type.  */
+  using mem_len = decltype (std::declval<memory_type> ().second);
+
+  /* Record type of current instruction.  */
+  record_type m_record_type = record_type::UNKNOWN;
+
+  /* Flag that represents was there an error in current recording.  */
+  bool m_error_occured = false;
+
+  /* Set of registers that need to be recorded.  */
+  recorded_regs m_regs;
+  /* Set of memory chunks that need to be recorded.  */
+  recorded_mems m_mems;
+
+  /* Width in bytes of the general purpose registers for GDBARCH,
+     where recording is happening.  */
+  int m_xlen = 0;
+
+  /* Helper for decode 16-bit instruction RS1.  */
+  static regnum_type
+  decode_crs1_short (ULONGEST opcode) noexcept
+  {
+    return ((opcode >> OP_SH_CRS1S) & OP_MASK_CRS1S) + 8;
+  }
+
+  /* Helper for decode 16-bit instruction RS2.  */
+  static regnum_type
+  decode_crs2_short (ULONGEST opcode) noexcept
+  {
+    return ((opcode >> OP_SH_CRS2S) & OP_MASK_CRS2S) + 8;
+  }
+
+  /* Helper for decode 16-bit instruction CRS1.  */
+  static regnum_type
+  decode_crs1 (ULONGEST opcode) noexcept
+  {
+    return ((opcode >> OP_SH_RD) & OP_MASK_RD);
+  }
+
+  /* Helper for decode 16-bit instruction CRS2.  */
+  static regnum_type
+  decode_crs2 (ULONGEST opcode) noexcept
+  {
+    return ((opcode >> OP_SH_CRS2) & OP_MASK_CRS2);
+  }
+
+  /* Helper for decode 32-bit instruction RD.  */
+  static regnum_type
+  decode_rd (ULONGEST ival) noexcept
+  {
+    return (ival >> OP_SH_RD) & OP_MASK_RD;
+  }
+
+  /* Helper for decode 32-bit instruction RS1.  */
+  static regnum_type
+  decode_rs1 (ULONGEST ival) noexcept
+  {
+    return (ival >> OP_SH_RS1) & OP_MASK_RS1;
+  }
+
+  /* Helper for decode 32-bit instruction RS2.  */
+  static regnum_type
+  decode_rs2 (ULONGEST ival) noexcept
+  {
+    return (ival >> OP_SH_RS2) & OP_MASK_RS2;
+  }
+
+  /* Helper for decode 32-bit instruction CSR.  */
+  static regnum_type
+  decode_csr (ULONGEST ival) noexcept
+  {
+    return (ival >> OP_SH_CSR) & OP_MASK_CSR;
+  }
+
+  /* Set any record type.  Always returns true.  */
+  bool
+  set_record_type (record_type type) noexcept
+  {
+    m_record_type = type;
+    return true;
+  }
+
+  /* Set ordinary record type.  Always returns true.  */
+  bool
+  set_ordinary_record_type () noexcept
+  {
+    m_record_type = record_type::ORDINARY;
+    return true;
+  }
+
+  /* Set error happened.  Always returns false.  */
+  bool
+  set_error () noexcept
+  {
+    m_error_occured = true;
+    return false;
+  }
+
+  /* Check if current recording has an error.  */
+  bool
+  has_error () const noexcept
+  {
+    return m_error_occured;
+  }
+
+  /* Reads register.  Sets error and returns false if error happened.  */
+  bool
+  read_reg (struct regcache *regcache, regnum_type reg,
+	    ULONGEST &addr) noexcept
+  {
+    gdb_assert (regcache != nullptr);
+
+    if (!try_read (regcache, reg, addr))
+      return set_error ();
+    return true;
+  }
+
+  /* Save register.  Returns true or aborts if exception happened.  */
+  bool
+  save_reg (regnum_type regnum) noexcept
+  {
+    m_regs.emplace_back (regnum);
+    return true;
+  }
+
+  /* Save memory chunk.  Returns true or aborts if exception happened.  */
+  bool
+  save_mem (mem_addr addr, mem_len len) noexcept
+  {
+    m_mems.emplace_back (addr, len);
+    return true;
+  }
+
+  /* Returns true if instruction needs only saving pc.  */
+  static bool
+  need_save_pc (ULONGEST ival) noexcept
+  {
+    return (is_beq_insn (ival) || is_bne_insn (ival) || is_blt_insn (ival)
+	   || is_bge_insn (ival) || is_bltu_insn (ival) || is_bgeu_insn (ival)
+	   || is_fence_insn (ival) || is_pause_insn (ival)
+	   || is_fence_i_insn (ival) || is_wfi_insn (ival)
+	   || is_sfence_vma_insn (ival));
+  }
+
+  /* Returns true if instruction is classified.  */
+  bool
+  try_save_pc (ULONGEST ival) noexcept
+  {
+    if (!need_save_pc (ival))
+      return false;
+
+    return set_ordinary_record_type ();
+  }
+
+  /* Returns true if instruction needs only saving pc and rd.  */
+  static bool
+  need_save_pc_rd (ULONGEST ival) noexcept
+  {
+    return (is_lui_insn (ival) || is_auipc_insn (ival) || is_jal_insn (ival)
+	   || is_jalr_insn (ival) || is_lb_insn (ival) || is_lh_insn (ival)
+	   || is_lw_insn (ival) || is_lbu_insn (ival) || is_lhu_insn (ival)
+	   || is_addi_insn (ival) || is_slti_insn (ival)
+	   || is_sltiu_insn (ival) || is_xori_insn (ival) || is_ori_insn (ival)
+	   || is_andi_insn (ival) || is_slli_rv32_insn (ival)
+	   || is_srli_rv32_insn (ival) || is_srai_rv32_insn (ival)
+	   || is_add_insn (ival) || is_sub_insn (ival) || is_sll_insn (ival)
+	   || is_slt_insn (ival) || is_sltu_insn (ival) || is_xor_insn (ival)
+	   || is_srl_insn (ival) || is_sra_insn (ival) || is_or_insn (ival)
+	   || is_and_insn (ival) || is_lwu_insn (ival) || is_ld_insn (ival)
+	   || is_slli_insn (ival) || is_srli_insn (ival) || is_srai_insn (ival)
+	   || is_addiw_insn (ival) || is_slliw_insn (ival)
+	   || is_srliw_insn (ival) || is_sraiw_insn (ival)
+	   || is_addw_insn (ival) || is_subw_insn (ival) || is_sllw_insn (ival)
+	   || is_srlw_insn (ival) || is_sraw_insn (ival) || is_mul_insn (ival)
+	   || is_mulh_insn (ival) || is_mulhsu_insn (ival)
+	   || is_mulhu_insn (ival) || is_div_insn (ival) || is_divu_insn (ival)
+	   || is_rem_insn (ival) || is_remu_insn (ival) || is_mulw_insn (ival)
+	   || is_divw_insn (ival) || is_divuw_insn (ival)
+	   || is_remw_insn (ival) || is_remuw_insn (ival)
+	   || is_lr_w_insn (ival) || is_lr_d_insn (ival)
+	   || is_fcvt_w_s_insn (ival) || is_fcvt_wu_s_insn (ival)
+	   || is_fmv_x_s_insn (ival) || is_feq_s_insn (ival)
+	   || is_flt_s_insn (ival) || is_fle_s_insn (ival)
+	   || is_fclass_s_insn (ival) || is_fcvt_l_s_insn (ival)
+	   || is_fcvt_lu_s_insn (ival) || is_feq_d_insn (ival)
+	   || is_flt_d_insn (ival) || is_fle_d_insn (ival)
+	   || is_fclass_d_insn (ival) || is_fcvt_w_d_insn (ival)
+	   || is_fcvt_wu_d_insn (ival) || is_fcvt_l_d_insn (ival)
+	   || is_fcvt_lu_d_insn (ival) || is_fmv_x_d_insn (ival));
+  }
+
+  /* Returns true if instruction is classified.  This function can set
+     m_error_occured.  */
+  bool
+  try_save_pc_rd (ULONGEST ival) noexcept
+  {
+    if (!need_save_pc_rd (ival))
+      return false;
+
+    return (!save_reg (decode_rd (ival)) || set_ordinary_record_type ());
+  }
+
+  /* Returns true if instruction needs only saving pc and
+     floating point rd.  */
+  static bool
+  need_save_pc_fprd (ULONGEST ival) noexcept
+  {
+    return (is_flw_insn (ival) || is_fmadd_s_insn (ival)
+	   || is_fmsub_s_insn (ival) || is_fnmsub_s_insn (ival)
+	   || is_fnmadd_s_insn (ival) || is_fadd_s_insn (ival)
+	   || is_fsub_s_insn (ival) || is_fmul_s_insn (ival)
+	   || is_fdiv_s_insn (ival) || is_fsqrt_s_insn (ival)
+	   || is_fsgnj_s_insn (ival) || is_fsgnjn_s_insn (ival)
+	   || is_fsgnjx_s_insn (ival) || is_fmin_s_insn (ival)
+	   || is_fmax_s_insn (ival) || is_fcvt_s_w_insn (ival)
+	   || is_fcvt_s_wu_insn (ival) || is_fmv_s_x_insn (ival)
+	   || is_fcvt_s_l_insn (ival) || is_fcvt_s_lu_insn (ival)
+	   || is_fld_insn (ival) || is_fmadd_d_insn (ival)
+	   || is_fmsub_d_insn (ival) || is_fnmsub_d_insn (ival)
+	   || is_fnmadd_d_insn (ival) || is_fadd_d_insn (ival)
+	   || is_fsub_d_insn (ival) || is_fmul_d_insn (ival)
+	   || is_fdiv_d_insn (ival) || is_fsqrt_d_insn (ival)
+	   || is_fsgnj_d_insn (ival) || is_fsgnjn_d_insn (ival)
+	   || is_fsgnjx_d_insn (ival) || is_fmin_d_insn (ival)
+	   || is_fmax_d_insn (ival) || is_fcvt_s_d_insn (ival)
+	   || is_fcvt_d_s_insn (ival) || is_fcvt_d_w_insn (ival)
+	   || is_fcvt_d_wu_insn (ival) || is_fcvt_d_l_insn (ival)
+	   || is_fcvt_d_lu_insn (ival) || is_fmv_d_x_insn (ival));
+  }
+
+  /* Returns true if instruction is classified.  This function can set
+     m_error_occured.  */
+  bool
+  try_save_pc_fprd (ULONGEST ival) noexcept
+  {
+    if (!need_save_pc_fprd (ival))
+      return false;
+
+    return (!save_reg (RISCV_FIRST_FP_REGNUM + decode_rd (ival))
+	   || set_ordinary_record_type ());
+  }
+
+  /* Returns true if instruction needs only saving pc, rd and csr.  */
+  static bool
+  need_save_pc_rd_csr (ULONGEST ival) noexcept
+  {
+    return (is_csrrw_insn (ival) || is_csrrs_insn (ival) || is_csrrc_insn (ival)
+	   || is_csrrwi_insn (ival) || is_csrrsi_insn (ival)
+	   || is_csrrci_insn (ival));
+  }
+
+  /* Returns true if instruction is classified.  This function can set
+     m_error_occured.  */
+  bool
+  try_save_pc_rd_csr (ULONGEST ival) noexcept
+  {
+    if (!need_save_pc_rd_csr (ival))
+      return false;
+
+    return (!save_reg (decode_rd (ival))
+	   || !save_reg (RISCV_FIRST_CSR_REGNUM + decode_csr (ival))
+	   || set_ordinary_record_type ());
+  }
+
+  /* Returns the size of the memory chunk that needs to be saved if the
+     instruction belongs to the group that needs only saving pc and memory.
+     Otherwise returns 0.  */
+  static mem_len
+  need_save_pc_mem (ULONGEST ival) noexcept
+  {
+    if (is_sb_insn (ival))
+      return 1;
+    if (is_sh_insn (ival))
+      return 2;
+    if (is_sw_insn (ival) || is_fsw_insn (ival))
+      return 4;
+    if (is_sd_insn (ival) || is_fsd_insn (ival))
+      return 8;
+    return 0;
+  }
+
+  /* Returns true if instruction is classified.  This function can set
+     m_error_occured.  */
+  bool
+  try_save_pc_mem (ULONGEST ival, struct regcache *regcache) noexcept
+  {
+    gdb_assert (regcache != nullptr);
+
+    mem_addr addr = mem_addr{};
+    mem_len len = need_save_pc_mem (ival);
+    if (len <= 0)
+      return false;
+
+    mem_len offset = EXTRACT_STYPE_IMM (ival);
+    return (!read_reg (regcache, decode_rs1 (ival), addr)
+	   || !save_mem (addr + offset, len) || set_ordinary_record_type ());
+  }
+
+  /* Returns the size of the memory chunk that needs to be saved if the
+     instruction belongs to the group that needs only saving pc, rd and memory.
+     Otherwise returns 0.  */
+  static mem_len
+  need_save_pc_rd_mem (ULONGEST ival) noexcept
+  {
+    if (is_sc_w_insn (ival) || is_amoswap_w_insn (ival)
+	|| is_amoadd_w_insn (ival) || is_amoxor_w_insn (ival)
+	|| is_amoand_w_insn (ival) || is_amoor_w_insn (ival)
+	|| is_amomin_w_insn (ival) || is_amomax_w_insn (ival)
+	|| is_amominu_w_insn (ival) || is_amomaxu_w_insn (ival))
+      return 4;
+    if (is_sc_d_insn (ival) || is_amoswap_d_insn (ival)
+	|| is_amoadd_d_insn (ival) || is_amoxor_d_insn (ival)
+	|| is_amoand_d_insn (ival) || is_amoor_d_insn (ival)
+	|| is_amomin_d_insn (ival) || is_amomax_d_insn (ival)
+	|| is_amominu_d_insn (ival) || is_amomaxu_d_insn (ival))
+      return 8;
+    return 0;
+  }
+
+  /* Returns true if instruction is classified.  This function can set
+     m_error_occured.  */
+  bool
+  try_save_pc_rd_mem (ULONGEST ival, struct regcache *regcache) noexcept
+  {
+    gdb_assert (regcache != nullptr);
+
+    mem_len len = need_save_pc_rd_mem (ival);
+    mem_addr addr = 0;
+    if (len <= 0)
+      return false;
+
+    return (!read_reg (regcache, decode_rs1 (ival), addr)
+	   || !save_mem (addr, len) || !save_reg (decode_rd (ival))
+	   || set_ordinary_record_type ());
+  }
+
+  /* Returns true if instruction is successfully recordered.  The length of
+     the instruction must be equal 4 bytes.  */
+  bool
+  record_insn_len4 (ULONGEST ival, struct regcache *regcache) noexcept
+  {
+    gdb_assert (regcache != nullptr);
+
+    if (is_ecall_insn (ival))
+      {
+	return set_record_type (record_type::ECALL);
+      }
+
+    if (is_ebreak_insn (ival))
+      {
+	return set_record_type (record_type::EBREAK);
+      }
+
+    if (is_sret_insn (ival))
+      {
+	return (!save_reg (RISCV_CSR_SSTATUS_REGNUM)
+	       || !save_reg (RISCV_CSR_MEPC_REGNUM)
+	       || set_record_type (record_type::SRET));
+      }
+
+    if (is_mret_insn (ival))
+      {
+	return (!save_reg (RISCV_CSR_MSTATUS_REGNUM)
+	       || !save_reg (RISCV_CSR_MEPC_REGNUM)
+	       || set_record_type (record_type::MRET));
+      }
+
+    if (try_save_pc (ival) || try_save_pc_rd (ival) || try_save_pc_fprd (ival)
+	|| try_save_pc_rd_csr (ival) || try_save_pc_mem (ival, regcache)
+	|| try_save_pc_rd_mem (ival, regcache))
+      return !has_error ();
+
+    warning (_("Currently this instruction with len 4(%s) is unsupported"),
+	     hex_string (ival));
+    return false;
+  }
+
+  /* Returns true if instruction is successfully recordered.  The length of
+     the instruction must be equal 2 bytes.  */
+  bool
+  record_insn_len2 (ULONGEST ival, struct regcache *regcache) noexcept
+  {
+    gdb_assert (regcache != nullptr);
+
+    mem_addr addr = mem_addr{};
+
+    /* The order here is very important, because
+       opcodes of some instructions may be the same.  */
+
+    if (is_c_addi4spn_insn (ival) || is_c_lw_insn (ival)
+	|| (m_xlen == 8 && is_c_ld_insn (ival)))
+      return (!save_reg (decode_crs2_short (ival))
+	     || set_ordinary_record_type ());
+
+    if (is_c_fld_insn (ival) || (m_xlen == 4 && is_c_flw_insn (ival)))
+      return (!save_reg (RISCV_FIRST_FP_REGNUM + decode_crs2_short (ival))
+	     || set_ordinary_record_type ());
+
+    if (is_c_fsd_insn (ival) || (m_xlen == 8 && is_c_sd_insn (ival)))
+      {
+	ULONGEST offset = ULONGEST{EXTRACT_CLTYPE_LD_IMM (ival)};
+	return (!read_reg (regcache, decode_crs1_short (ival), addr)
+	       || !save_mem (addr + offset, 8) || set_ordinary_record_type ());
+      }
+
+    if ((m_xlen == 4 && is_c_fsw_insn (ival)) || is_c_sw_insn (ival))
+      {
+	ULONGEST offset = ULONGEST{EXTRACT_CLTYPE_LW_IMM (ival)};
+	return (!read_reg (regcache, decode_crs1_short (ival), addr)
+	       || !save_mem (addr + offset, 4) || set_ordinary_record_type ());
+      }
+
+    if (is_c_nop_insn (ival))
+      return set_ordinary_record_type ();
+
+    if (is_c_addi_insn (ival))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (m_xlen == 4 && is_c_jal_insn (ival))
+      return (!save_reg (RISCV_RA_REGNUM) || set_ordinary_record_type ());
+
+    if ((m_xlen == 8 && is_c_addiw_insn (ival)) || is_c_li_insn (ival))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (is_c_addi16sp_insn (ival))
+      return (!save_reg (RISCV_SP_REGNUM) || set_ordinary_record_type ());
+
+    if (is_c_lui_insn (ival))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (is_c_srli_insn (ival) || is_c_srai_insn (ival) || is_c_andi_insn (ival)
+	|| is_c_sub_insn (ival) || is_c_xor_insn (ival) || is_c_or_insn (ival)
+	|| is_c_and_insn (ival) || (m_xlen == 8 && is_c_subw_insn (ival))
+	|| (m_xlen == 8 && is_c_addw_insn (ival)))
+      return (!save_reg (decode_crs1_short (ival))
+	     || set_ordinary_record_type ());
+
+    if (is_c_j_insn (ival) || is_c_beqz_insn (ival) || is_c_bnez_insn (ival))
+      return set_ordinary_record_type ();
+
+    if (is_c_slli_insn (ival))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (is_c_fldsp_insn (ival) || (m_xlen == 4 && is_c_flwsp_insn (ival)))
+      return (!save_reg (RISCV_FIRST_FP_REGNUM + decode_crs1 (ival))
+	     || set_ordinary_record_type ());
+
+    if (is_c_lwsp_insn (ival) || (m_xlen == 8 && is_c_ldsp_insn (ival)))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (is_c_jr_insn (ival))
+      return set_ordinary_record_type ();
+
+    if (is_c_mv_insn (ival))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (is_c_ebreak_insn (ival))
+      {
+	return set_record_type (record_type::EBREAK);
+      }
+
+    if (is_c_jalr_insn (ival))
+      return (!save_reg (RISCV_RA_REGNUM) || set_ordinary_record_type ());
+
+    if (is_c_add_insn (ival))
+      return (!save_reg (decode_crs1 (ival)) || set_ordinary_record_type ());
+
+    if (is_c_fsdsp_insn (ival) || (m_xlen == 8 && is_c_sdsp_insn (ival)))
+      {
+	ULONGEST offset = ULONGEST{EXTRACT_CSSTYPE_SDSP_IMM (ival)};
+	return (!read_reg (regcache, RISCV_SP_REGNUM, addr)
+	       || !save_mem (addr + offset, 8) || set_ordinary_record_type ());
+      }
+
+    if (is_c_swsp_insn (ival) || (m_xlen == 4 && is_c_fswsp_insn (ival)))
+      {
+	ULONGEST offset = ULONGEST{EXTRACT_CSSTYPE_SWSP_IMM (ival)};
+	return (!read_reg (regcache, RISCV_SP_REGNUM, addr)
+	       || !save_mem (addr + offset, 4) || set_ordinary_record_type ());
+      }
+
+    warning (_("Currently this instruction with len 2(%s) is unsupported"),
+	     hex_string (ival));
+    return false;
+  }
+
+public:
+  /* Iterator for registers that need to be recorded.  */
+  using regs_iter = recorded_regs::const_iterator;
+  /* Iterator for memory chunks that need to be recorded.  */
+  using mems_iter = recorded_mems::const_iterator;
+
+  /* Record instruction at address addr.  Returns false if error happened.  */
+  bool
+  record (gdbarch *gdbarch, struct regcache *regcache, CORE_ADDR addr) noexcept
+  {
+    gdb_assert (gdbarch != nullptr);
+    gdb_assert (regcache != nullptr);
+
+    int m_length = 0;
+    ULONGEST ival = 0;
+    m_xlen = riscv_isa_xlen (gdbarch);
+
+    /* Since fetch_instruction can throw an exception,
+       it must be wrapped in a try-catch block.  */
+    try
+      {
+	ival = riscv_insn::fetch_instruction (gdbarch, addr, &m_length);
+      }
+    catch (const gdb_exception_error &ex)
+      {
+	warning ("%s", ex.what ());
+	return false;
+      }
+    if (!save_reg (RISCV_PC_REGNUM))
+      return false;
+
+    if (m_length == 4)
+      return record_insn_len4 (ival, regcache);
+
+    if (m_length == 2)
+      return record_insn_len2 (ival, regcache);
+
+    /* 6 bytes or more.  If the instruction is longer than 8 bytes, we don't
+       have full instruction bits in ival.  At least, such long instructions
+       are not defined yet, so just ignore it.  */
+    gdb_assert (m_length > 0 && m_length % 2 == 0);
+
+    warning (_("Can not record unknown instruction (opcode = %s)"),
+	     hex_string (ival));
+    return false;
+  }
+
+  /* Get record type of instruction.  */
+  record_type
+  get_record_type () const noexcept
+  {
+    return m_record_type;
+  }
+
+  /* Returns an iterator to the beginning of the registers that need
+     to be saved.  */
+  regs_iter
+  regs_begin () const noexcept
+  {
+    return m_regs.begin ();
+  }
+
+  /* Returns an iterator to the end of the registers that need
+     to be saved.  */
+  regs_iter
+  regs_end () const noexcept
+  {
+    return m_regs.end ();
+  }
+
+  /* Returns an iterator to the beginning of the memory chunks that need
+     to be saved.  */
+  mems_iter
+  mems_begin () const noexcept
+  {
+    return m_mems.begin ();
+  }
+
+  /* Returns an iterator to the end of the memory chunks that need
+     to be saved.  */
+  mems_iter
+  mems_end () const noexcept
+  {
+    return m_mems.end ();
+  }
+};
+
+/* A helper function to record instruction using record API.  */
+
+static int
+riscv_record_insn_details (struct gdbarch *gdbarch, struct regcache *regcache,
+			   const riscv_recorded_insn &insn)
+{
+  gdb_assert (gdbarch != nullptr);
+  gdb_assert (regcache != nullptr);
+
+  riscv_gdbarch_tdep *tdep = gdbarch_tdep<riscv_gdbarch_tdep> (gdbarch);
+  auto regs_begin = insn.regs_begin ();
+  auto regs_end = insn.regs_end ();
+  if (std::any_of (regs_begin,
+		   regs_end,
+		   [&regcache] (auto &&reg_it)
+		   {
+		     return record_full_arch_list_add_reg (regcache, reg_it);
+		   }))
+    return -1;
+
+  auto mems_begin = insn.mems_begin ();
+  auto mems_end = insn.mems_end ();
+  if (std::any_of (mems_begin,
+		   mems_end,
+		   [] (auto &&mem_it)
+		   {
+		     return record_full_arch_list_add_mem (mem_it.first,
+							   mem_it.second);
+		   }))
+    return -1;
+
+  switch (insn.get_record_type ())
+    {
+    case riscv_recorded_insn::record_type::ORDINARY:
+    case riscv_recorded_insn::record_type::EBREAK:
+    case riscv_recorded_insn::record_type::SRET:
+    case riscv_recorded_insn::record_type::MRET:
+      break;
+
+    case riscv_recorded_insn::record_type::ECALL:
+      {
+	if (!tdep->riscv_syscall_record)
+	  {
+	    warning (_("Syscall record is not supported"));
+	    return -1;
+	  }
+	ULONGEST reg_val = ULONGEST{};
+	if (!try_read (regcache, RISCV_A7_REGNUM, reg_val))
+	  return -1;
+	return tdep->riscv_syscall_record (regcache, reg_val);
+      }
+
+    default:
+      return -1;
+    }
+  return 0;
+}
+
+/* Parse the current instruction and record the values of the registers and
+   memory that will be changed in current instruction to record_arch_list.
+   Return -1 if something is wrong.  */
+
+int
+riscv_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
+		      CORE_ADDR addr)
+{
+  gdb_assert (gdbarch != nullptr);
+  gdb_assert (regcache != nullptr);
+
+  riscv_recorded_insn insn;
+  if (!insn.record (gdbarch, regcache, addr))
+    {
+      record_full_arch_list_add_end ();
+      return -1;
+    }
+
+  int ret_val = riscv_record_insn_details (gdbarch, regcache, insn);
+
+  if (record_full_arch_list_add_end ())
+    return -1;
+
+  return ret_val;
 }

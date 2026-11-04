@@ -1,5 +1,5 @@
 /* mmap.c -- Memory allocation with mmap.
-   Copyright (C) 2012-2020 Free Software Foundation, Inc.
+   Copyright (C) 2012-2022 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Google.
 
 Redistribution and use in source and binary forms, with or without
@@ -41,6 +41,10 @@ POSSIBILITY OF SUCH DAMAGE.  */
 
 #include "backtrace.h"
 #include "internal.h"
+
+#ifndef HAVE_DECL_GETPAGESIZE
+extern int getpagesize (void);
+#endif
 
 /* Memory allocation on systems that provide anonymous mmap.  This
    permits the backtrace functions to be invoked from a signal

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Xtensa port of GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1496,17 +1496,16 @@ xtensa_frame_prev_register (const frame_info_ptr &this_frame,
 }
 
 
-static const struct frame_unwind
-xtensa_unwind =
-{
+static const struct frame_unwind_legacy xtensa_unwind (
   "xtensa prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   xtensa_frame_this_id,
   xtensa_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 xtensa_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -1768,7 +1767,7 @@ xtensa_push_dummy_call (struct gdbarch *gdbarch,
 	      arg_type = builtin_type (gdbarch)->builtin_long;
 	      arg = value_cast (arg_type, arg);
 	    }
-	  /* Aligment is equal to the type length for the basic types.  */
+	  /* Alignment is equal to the type length for the basic types.  */
 	  info->align = arg_type->length ();
 	  break;
 
@@ -3239,8 +3238,7 @@ xtensa_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, xtensa_iterate_over_regset_sections);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 
   /* Hook in the ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
@@ -3254,9 +3252,7 @@ xtensa_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
   error (_("xtensa_dump_tdep(): not implemented"));
 }
 
-void _initialize_xtensa_tdep ();
-void
-_initialize_xtensa_tdep ()
+INIT_GDB_FILE (xtensa_tdep)
 {
   gdbarch_register (bfd_arch_xtensa, xtensa_gdbarch_init, xtensa_dump_tdep);
   xtensa_init_reggroups ();
@@ -3266,7 +3262,7 @@ _initialize_xtensa_tdep ()
 			     &xtensa_debug_level,
 			    _("Set Xtensa debugging."),
 			    _("Show Xtensa debugging."), _("\
-When non-zero, Xtensa-specific debugging is enabled. \
+When non-zero, Xtensa-specific debugging is enabled.\n\
 Can be 1, 2, 3, or 4 indicating the level of debugging."),
 			     NULL,
 			     NULL,

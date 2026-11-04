@@ -1,6 +1,6 @@
 /* Self tests for gdb_tilde_expand
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "gdbsupport/selftest.h"
 #include <cstdlib>
 
@@ -45,7 +44,7 @@ do_test ()
      does not exist, gdb_tilde expand must still be able to do the tilde
      expansion.  */
   SELF_CHECK (gdb_tilde_expand ("~/non/existent/directory")
-              == home + "/non/existent/directory");
+	      == home + "/non/existent/directory");
 
   /* gdb_tilde_expand only expands tilde and does not try to do any other
      substitution.  */
@@ -63,7 +62,7 @@ do_test ()
       const std::string user (c_user);
       SELF_CHECK (gdb_tilde_expand (("~" + user).c_str ()) == home);
       SELF_CHECK (gdb_tilde_expand (("~" + user + "/a/b").c_str ())
-                  == home + "/a/b");
+		  == home + "/a/b");
     }
 
   /* Check that an error is thrown when trying to expand home of a unknown
@@ -77,8 +76,8 @@ do_test ()
     {
       SELF_CHECK (e.error == GENERIC_ERROR);
       SELF_CHECK
-        (*e.message
-         == "Could not find a match for '~no_one_should_have_that_login'.");
+	(*e.message
+	 == "Could not find a match for '~no_one_should_have_that_login'.");
     }
 }
 

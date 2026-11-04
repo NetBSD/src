@@ -1,4 +1,4 @@
-/*	$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $	*/
+/*	$NetBSD: wgconfig.c,v 1.6.2.1 2026/11/04 23:29:03 perseant Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $");
+__RCSID("$NetBSD: wgconfig.c,v 1.6.2.1 2026/11/04 23:29:03 perseant Exp $");
 
 #include <sys/ioctl.h>
 
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: wgconfig.c,v 1.6 2023/05/07 16:05:07 oster Exp $");
 
 #include <prop/proplib.h>
 
-#define PROP_BUFFER_LEN	4096
+#define PROP_BUFFER_LEN	16384
 #define KEY_LEN			32
 #define KEY_BASE64_LEN		44
 
@@ -560,10 +560,11 @@ handle_option_endpoint(const char *_addr_port, prop_dictionary_t prop_dict)
 
 	memset(&hints, 0, sizeof(hints));
 	hints.ai_family = AF_UNSPEC;
-	hints.ai_flags = AI_NUMERICHOST;
+//	hints.ai_flags = AI_NUMERICHOST;
 	error = getaddrinfo(addr, port, &hints, &res);
 	if (error)
-		errx(EXIT_FAILURE, "getaddrinfo: %s", gai_strerror(error));
+		errx(EXIT_FAILURE, "getaddrinfo: %s:%s (%s)", addr, port,
+		    gai_strerror(error));
 
 	if (!prop_dictionary_set_data(prop_dict, "endpoint",
 		res->ai_addr, res->ai_addrlen))

@@ -1,5 +1,5 @@
 /* Interface to C preprocessor macro tables for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
    Contributed by Red Hat, Inc.
 
    This file is part of GDB.
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MACROTAB_H
-#define MACROTAB_H
+#ifndef GDB_MACROTAB_H
+#define GDB_MACROTAB_H
 
 #include "gdbsupport/function-view.h"
 
@@ -95,7 +95,7 @@ struct macro_definition;
    line info, but not in macro info.  This means that GDB's symtabs
    (built from the former, among other things) may mention filenames
    that the #inclusion tree (built from the latter) doesn't have any
-   record of.  See macroscope.c:sal_macro_scope for how to accomodate
+   record of.  See macroscope.c:sal_macro_scope for how to accommodate
    this.
 
    It's worth noting that libcpp has a simpler way of representing all
@@ -242,25 +242,22 @@ struct macro_source_file *macro_lookup_inclusion
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
    we #defined a preprocessor symbol named NAME, whose replacement
    string is REPLACEMENT.  This function makes copies of NAME and
-   REPLACEMENT; the caller is responsible for freeing them.  */
+   REPLACEMENT.  */
 void macro_define_object (struct macro_source_file *source, int line,
 			  const char *name, const char *replacement);
 
 
-/* Record an function-like #definition (i.e., one with a parameter list).
+/* Record a function-like #definition (i.e., one with a parameter list).
 
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
-   we #defined a preprocessor symbol named NAME, with ARGC arguments
-   whose names are given in ARGV, whose replacement string is REPLACEMENT.  If
-   the macro takes a variable number of arguments, then ARGC should be
-   one greater than the number of named arguments, and ARGV[ARGC-1]
-   should be the string "...".  This function makes its own copies of
-   NAME, ARGV, and REPLACEMENT; the caller is responsible for freeing
-   them.  */
-void macro_define_function (struct macro_source_file *source, int line,
-			    const char *name, int argc, const char **argv,
+   we #defined a preprocessor symbol named NAME, with argument names given by
+   ARGV, whose replacement string is REPLACEMENT.  If the macro takes a variable
+   number of arguments, then the last element of ARGV should be the string
+   "...".  This function makes copies of NAME, ARGV, and REPLACEMENT.  */
+void macro_define_function (macro_source_file *source, int line,
+			    const char *name,
+			    const std::vector<std::string> &argv,
 			    const char *replacement);
-
 
 /* Record an #undefinition.
    Record in SOURCE's macro table that, at line number LINE in SOURCE,
@@ -361,4 +358,4 @@ void macro_for_each_in_scope (struct macro_source_file *file, int line,
    of macro filenames printing was "absolute".  */
 extern std::string macro_source_fullname (struct macro_source_file *file);
 
-#endif /* MACROTAB_H */
+#endif /* GDB_MACROTAB_H */

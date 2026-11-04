@@ -40,7 +40,7 @@
    resulting dead code.  That dead code being the calculations that,
    as it turned out were not in the end needed.
 
-   64bit arrithemetic is used firstly because it allows the use of
+   64bit arithmetic is used firstly because it allows the use of
    gcc's efficient long long operators (typically efficiently output
    inline) and secondly because the resultant answer will contain in
    the low 32bits the answer while in the high 32bits is either carry
@@ -48,7 +48,7 @@
 
 /* 64bit target expressions:
 
-   Unfortunatly 128bit arrithemetic isn't that common.  Consequently
+   Unfortunately 128bit arithmetic isn't that common.  Consequently
    the 32/64 bit trick can not be used.  Instead all calculations are
    required to retain carry/overflow information in separate
    variables.  Even with this restriction it is still possible for the
@@ -57,8 +57,8 @@
 
 
 /* Macro's to type cast 32bit constants to 64bits */
-#define SIGNED64(val)   ((int64_t)(int32_t)(val))
-#define UNSIGNED64(val) ((uint64_t)(uint32_t)(val))
+#define ALU_SIGNED64(val)   ((int64_t)(int32_t)(val))
+#define ALU_UNSIGNED64(val) ((uint64_t)(uint32_t)(val))
 
 
 /* Start a section of ALU code */
@@ -134,14 +134,14 @@ do { \
 #if (WITH_TARGET_WORD_BITSIZE == 64)
 #define ALU_ADD(val) \
 do { \
-  uint64_t alu_lo = (UNSIGNED64(alu_val) \
-		       + UNSIGNED64(val)); \
+  uint64_t alu_lo = (ALU_UNSIGNED64(alu_val) \
+		       + ALU_UNSIGNED64(val)); \
   signed alu_carry = ((alu_lo & BIT(31)) != 0); \
   alu_carry_val = (alu_carry_val \
-		   + UNSIGNED64(EXTRACTED(val, 0, 31)) \
+		   + ALU_UNSIGNED64(EXTRACTED(val, 0, 31)) \
 		   + alu_carry); \
   alu_overflow_val = (alu_overflow_val \
-		      + SIGNED64(EXTRACTED(val, 0, 31)) \
+		      + ALU_SIGNED64(EXTRACTED(val, 0, 31)) \
 		      + alu_carry); \
   alu_val = alu_val + val; \
 } while (0)

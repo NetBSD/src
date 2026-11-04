@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.22.2.1 2026/11/04 23:20:34 perseant Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22 2024/03/05 14:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.22.2.1 2026/11/04 23:20:34 perseant Exp $");
 
 #define __INTR_PRIVATE
 
@@ -186,7 +186,7 @@ static rmiclfw_psb_id_t rmiclfw_psb_id[] = {
 /*
  * storage for fixed extent used to allocate physical address regions
  * because extent(9) start and end values are u_long, they are only
- * 32 bits on a 32 bit kernel, which is insuffucuent since XLS physical
+ * 32 bits on a 32 bit kernel, which is insufficient since XLS physical
  * address is 40 bits wide.  So the "physaddr" map stores regions
  * in units of megabytes.
  */
@@ -612,7 +612,7 @@ rmixl_physaddr_init(void)
 	/*
 	 * grab regions per DRAM BARs
 	 */
-	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) { 
+	for (u_int i=0; i < RMIXL_SBC_DRAM_NBARS; i++) {
 		r = RMIXL_IOREG_READ(RMIXL_SBC_DRAM_BAR(i));
 		if ((r & RMIXL_DRAM_BAR_STATUS) == 0)
 			continue;	/* not enabled */
@@ -751,7 +751,7 @@ mem_clusters_init(
 	rmixlfw_mmap_t *avail_mem_map)
 {
 	rmixlfw_mmap_t *map = NULL;
-	const char *mapname;
+	const char *mapname __diagused;
 	uint64_t sz;
 	uint64_t sum;
 	u_int cnt;
@@ -880,7 +880,7 @@ rmixl_get_wakeup_info(struct rmixl_config *rcp)
 	__asm__ volatile(
 		".set push"				"\n"
 		".set noreorder"			"\n"
-		".set mips64"				"\n" 
+		".set mips64"				"\n"
 		"dmfc0	%0, $22, 7"			"\n"
 		".set pop"				"\n"
 			: "=r"(scratch_7));
@@ -1022,9 +1022,9 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");

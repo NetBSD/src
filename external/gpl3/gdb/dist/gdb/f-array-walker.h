@@ -1,4 +1,4 @@
-/* Copyright (C) 2020-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
 /* Support classes to wrap up the process of iterating over a
    multi-dimensional Fortran array.  */
 
-#ifndef F_ARRAY_WALKER_H
-#define F_ARRAY_WALKER_H
+#ifndef GDB_F_ARRAY_WALKER_H
+#define GDB_F_ARRAY_WALKER_H
 
 #include "gdbtypes.h"
 #include "f-lang.h"
@@ -95,7 +95,7 @@ private:
 
 /* A base class used by fortran_array_walker.  There's no virtual methods
    here, sub-classes should just override the functions they want in order
-   to specialise the behaviour to their needs.  The functionality
+   to specialise the behavior to their needs.  The functionality
    provided in these default implementations will visit every array
    element, but do nothing for each element.  */
 
@@ -298,4 +298,4 @@ private:
   int m_nss;
 };
 
-#endif /* F_ARRAY_WALKER_H */
+#endif /* GDB_F_ARRAY_WALKER_H */

@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GCORE 1"
-.TH GCORE 1 "2024-07-07" "gdb-15.1" "GNU Development Tools"
+.TH GCORE 1 "2025-12-20" "gdb-17.1" "GNU Development Tools"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -142,7 +142,8 @@
 gcore \- Generate a core file of a running program
 .SH "SYNOPSIS"
 .IX Header "SYNOPSIS"
-gcore [\-a] [\-o \fIprefix\fR] \fIpid1\fR [\fIpid2\fR...\fIpidN\fR]
+gcore [\-v | \-\-version] [\-h | \-\-help] [\-a] [\-o \fIprefix\fR] [\-d \fIdirectory\fR]
+      \fIpid1\fR [\fIpid2\fR...\fIpidN\fR]
 .SH "DESCRIPTION"
 .IX Header "DESCRIPTION"
 Generate core dumps of one or more running programs with process IDs
@@ -165,7 +166,27 @@ The optional argument \fIprefix\fR specifies the prefix to be used
 when composing the file names of the core dumps.  The file name is
 composed as \fI\fIprefix\fI.\fIpid\fI\fR, where \fIpid\fR is the
 process \s-1ID\s0 of the running program being analyzed by \fBgcore\fR.
-If not specified, \fIprefix\fR defaults to \fIgcore\fR.
+If not specified, \fIprefix\fR defaults to \fIcore\fR.
+.IP "\fB\-d\fR \fIdirectory\fR" 4
+.IX Item "-d directory"
+Use \fIdirectory\fR as the data directory when invoking \s-1GDB\s0 for running
+the gcore command. This argument is optional.
+.IP "\fB\-\-help\fR" 4
+.IX Item "--help"
+.PD 0
+.IP "\fB\-h\fR" 4
+.IX Item "-h"
+.PD
+List all options, with brief explanations.
+.IP "\fB\-\-version\fR" 4
+.IX Item "--version"
+.PD 0
+.IP "\fB\-v\fR" 4
+.IX Item "-v"
+.PD
+Print version information and then exit.
+.SH "ENVIRONMENT"
+.IX Header "ENVIRONMENT"
 .SH "SEE ALSO"
 .IX Header "SEE ALSO"
 The full documentation for \s-1GDB\s0 is maintained as a Texinfo manual.
@@ -182,7 +203,7 @@ should give you access to the complete manual.
 Richard M. Stallman and Roland H. Pesch, July 1991.
 .SH "COPYRIGHT"
 .IX Header "COPYRIGHT"
-Copyright (c) 1988\-2024 Free Software Foundation, Inc.
+Copyright (c) 1988\-2025 Free Software Foundation, Inc.
 .PP
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the \s-1GNU\s0 Free Documentation License, Version 1.3 or

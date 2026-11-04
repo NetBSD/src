@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2014/07/26 19:30:45 dholland Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.1.40.1 2026/11/04 23:29:00 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -51,6 +51,6 @@ message dobootblks
 }
 
 message set_kernel_1
-{Núcleo (WALNUT)}
+{Núcleo (NINTENDO)}
 message set_kernel_2
-{Núcleo (OPENBLOCKS266)}
+{Núcleo (NINTENDO.MP)}

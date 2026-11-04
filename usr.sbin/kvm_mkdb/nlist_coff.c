@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_coff.c,v 1.8 2003/11/12 13:31:07 grant Exp $ */
+/* $NetBSD: nlist_coff.c,v 1.8.108.1 2026/11/04 23:28:51 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: nlist_coff.c,v 1.8 2003/11/12 13:31:07 grant Exp $");
+__RCSID("$NetBSD: nlist_coff.c,v 1.8.108.1 2026/11/04 23:28:51 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -111,7 +111,7 @@ create_knlist_coff(name, db)
 		warn("%s", kfile);
 		punt();
 	}
-	if (st.st_size > SIZE_T_MAX)
+	if (st.st_size > SIZE_MAX)
 		BAD;
 
 	/*

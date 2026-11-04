@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_inotify.c,v 1.6.2.1 2025/08/02 05:56:25 perseant Exp $	*/
+/*	$NetBSD: linux_inotify.c,v 1.6.2.2 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.6.2.1 2025/08/02 05:56:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_inotify.c,v 1.6.2.2 2026/11/04 23:21:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -292,6 +292,7 @@ do_inotify_init(struct lwp *l, register_t *retval, int flags)
 	ifd->ifd_wds = kmem_zalloc(ifd->ifd_nwds * sizeof(*ifd->ifd_wds),
 	KM_SLEEP);
 
+	memset(&kqa, 0, sizeof(kqa));
 	SCARG(&kqa, flags) = 0;
 	if (flags & LINUX_IN_NONBLOCK)
 		SCARG(&kqa, flags) |= O_NONBLOCK;
@@ -494,6 +495,7 @@ linux_sys_inotify_add_watch(struct lwp *l,
 		 * If we do not have a descriptor to wd's file, we
 		 * need to open the watch descriptor.
 		 */
+		memset(&oa, 0, sizeof(oa));
 		SCARG(&oa, path) = SCARG(uap, pathname);
 		SCARG(&oa, mode) = 0;
 		SCARG(&oa, flags) = O_RDONLY;
@@ -751,8 +753,8 @@ do_kevent_to_inotify(int32_t wd, uint32_t mask, uint32_t cookie,
 
 	if (name != NULL) {
 		buf->ie_event.len = strlen(name) + 1;
-		KASSERT(buf->ie_event.len < sizeof(buf->ie_name));
-		strcpy(buf->ie_name, name);
+		KASSERT(buf->ie_event.len <= sizeof(buf->ie_name));
+		strlcpy(buf->ie_name, name, sizeof(buf->ie_name));
 	}
 
 	++(*nbuf);
@@ -872,9 +874,14 @@ get_inotify_dir_entries(int wd, bool needs_lock)
 		}
 
 		currdep = &de;
-		while ((char *)currdep < ((char *)&de) + done) {
+		while ((char *)currdep < ((char *)&de) + done && i < decount) {
+			size_t namlen = MIN(currdep->d_namlen,
+			    sizeof(idep->ide_entries[i].name) - 1);
+
 			idep->ide_entries[i].fileno = currdep->d_fileno;
-			strcpy(idep->ide_entries[i].name, currdep->d_name);
+			memcpy(idep->ide_entries[i].name, currdep->d_name,
+			    namlen);
+			idep->ide_entries[i].name[namlen] = '\0';
 
 			currdep = _DIRENT_NEXT(currdep);
 			i++;

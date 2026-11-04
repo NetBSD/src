@@ -1,6 +1,6 @@
 /* Functions and data responsible for forking the inferior process.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_FORK_INFERIOR_H
-#define NAT_FORK_INFERIOR_H
+#ifndef GDB_NAT_FORK_INFERIOR_H
+#define GDB_NAT_FORK_INFERIOR_H
 
 #include <string>
 #include "gdbsupport/function-view.h"
@@ -31,6 +31,13 @@ struct process_stratum_target;
    implementations.  */
 #define START_INFERIOR_TRAPS_EXPECTED 1
 
+using traceme_ftype = gdb::function_view<void ()>;
+using init_trace_ftype = gdb::function_view<void (int /* pid */)>;
+using pre_trace_ftype = gdb::function_view<void ()>;
+using exec_ftype = gdb::function_view<void (const char * /* file */,
+					    char * const * /* argv */,
+					    char * const * /* env */)>;
+
 /* Start an inferior Unix child process and sets inferior_ptid to its
    pid.  EXEC_FILE is the file to run.  ALLARGS is a string containing
    the arguments to the program.  ENV is the environment vector to
@@ -42,13 +49,12 @@ struct process_stratum_target;
    made static to ensure that they survive the vfork call.  */
 extern pid_t fork_inferior (const char *exec_file_arg,
 			    const std::string &allargs,
-			    char **env, void (*traceme_fun) (),
-			    gdb::function_view<void (int)> init_trace_fun,
-			    void (*pre_trace_fun) (),
+			    char **env,
+			    traceme_ftype traceme_fun,
+			    init_trace_ftype init_trace_fun,
+			    pre_trace_ftype pre_trace_fun,
 			    const char *shell_file_arg,
-			    void (*exec_fun) (const char *file,
-					      char * const *argv,
-					      char * const *env));
+			    exec_ftype exec_fun);
 
 /* Accept NTRAPS traps from the inferior.
 
@@ -78,13 +84,12 @@ extern void gdb_flush_out_err ();
 /* Report an error that happened when starting to trace the inferior
    (i.e., when the "traceme_fun" callback is called on fork_inferior)
    and bail out.  This function does not return.  */
-extern void trace_start_error (const char *fmt, ...)
-  ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF (1, 2);
+[[noreturn]] extern void trace_start_error (const char *fmt, ...)
+  ATTRIBUTE_PRINTF (1, 2);
 
 /* Like "trace_start_error", but the error message is constructed by
    combining STRING with the system error message for errno.  This
    function does not return.  */
-extern void trace_start_error_with_name (const char *string)
-  ATTRIBUTE_NORETURN;
+[[noreturn]] extern void trace_start_error_with_name (const char *string);
 
-#endif /* NAT_FORK_INFERIOR_H */
+#endif /* GDB_NAT_FORK_INFERIOR_H */

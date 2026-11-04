@@ -1,4 +1,4 @@
-# Copyright 1992-2024 Free Software Foundation, Inc.
+# Copyright 1992-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -385,7 +385,8 @@ proc test_only_end {} {
 proc test_list_invalid_args {} {
     global binfile
 
-    clean_restart ${binfile}
+    clean_restart
+    gdb_load $binfile
     gdb_test "list -INVALID" \
 	"invalid explicit location argument, \"-INVALID\"" \
 	"first use of \"list -INVALID\""
@@ -393,7 +394,8 @@ proc test_list_invalid_args {} {
 	"invalid explicit location argument, \"-INVALID\"" \
 	"second use of \"list -INVALID\""
 
-    clean_restart ${binfile}
+    clean_restart
+    gdb_load $binfile
     gdb_test "list +INVALID" "Function \"\\+INVALID\" not defined." \
 	"first use of \"list +INVALID\""
     gdb_test "list +INVALID" "Function \"\\+INVALID\" not defined." \
@@ -499,7 +501,8 @@ proc test_list {command listsize1 listsize2 linerange1 linerange2} {
     with_test_prefix "$command after stop: $listsize1, $listsize2" {
 	global binfile
 
-	clean_restart $binfile
+	clean_restart
+	gdb_load $binfile
 	if {![runto_main]} {
 	    return
 	}

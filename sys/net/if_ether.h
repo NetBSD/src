@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ether.h,v 1.91 2024/02/05 21:46:06 andvar Exp $	*/
+/*	$NetBSD: if_ether.h,v 1.91.2.1 2026/11/04 23:27:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1993
@@ -212,8 +212,8 @@ struct ethercom {
 #define	ETHERCAP_VLAN_MTU	0x00000001 /* VLAN-compatible MTU */
 #define	ETHERCAP_VLAN_HWTAGGING	0x00000002 /* hardware VLAN tag support */
 #define	ETHERCAP_JUMBO_MTU	0x00000004 /* 9000 byte MTU supported */
-#define	ETHERCAP_VLAN_HWFILTER	0x00000008 /* iface hw can filter vlan tag */
-#define	ETHERCAP_EEE		0x00000010 /* Energy Efficiency Ethernet */
+#define	ETHERCAP_VLAN_HWFILTER	0x00000008 /* iface hw can filter VLAN tag */
+#define	ETHERCAP_EEE		0x00000010 /* Energy-Efficient Ethernet */
 #define	ETHERCAP_MASK		0x0000001f
 
 #define	ECCAPBITS		\
@@ -239,6 +239,8 @@ struct ether_multi_sysctl {
 };
 
 #ifdef	_KERNEL
+#include <sys/device.h>
+
 /*
  * Flags for ec_flags
  */
@@ -249,6 +251,8 @@ extern const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN];
 extern const uint8_t ethermulticastaddr_slowprotocols[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_min[ETHER_ADDR_LEN];
 extern const uint8_t ether_ipmulticast_max[ETHER_ADDR_LEN];
+
+bool	ether_getaddr(device_t, uint8_t [ETHER_ADDR_LEN]);
 
 void	ether_set_ifflags_cb(struct ethercom *, ether_cb_t);
 void	ether_set_vlan_cb(struct ethercom *, ether_vlancb_t);

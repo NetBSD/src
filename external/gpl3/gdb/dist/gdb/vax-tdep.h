@@ -1,6 +1,6 @@
 /* Target-dependent code for the VAX.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef VAX_TDEP_H
-#define VAX_TDEP_H
+#ifndef GDB_VAX_TDEP_H
+#define GDB_VAX_TDEP_H
 
 /* Register numbers of various important registers.  */
 
@@ -36,4 +36,4 @@ enum vax_regnum
 /* Number of machine registers.  */
 #define VAX_NUM_REGS 17
 
-#endif /* vax-tdep.h */
+#endif /* GDB_VAX_TDEP_H */

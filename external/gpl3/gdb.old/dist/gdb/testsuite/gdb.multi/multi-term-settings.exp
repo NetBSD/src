@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,9 +25,7 @@
 
 standard_testfile
 
-if ![can_spawn_for_attach] {
-    return 0
-}
+require can_spawn_for_attach
 
 if [build_executable "failed to prepare" $testfile $srcfile {debug}] {
     return -1
@@ -96,7 +94,7 @@ proc create_inferior {which_inf inf_how} {
 		 "attach"] == 0} {
 
 	    # The program is now stopped, but if testing against
-	    # gdbserver, then the inferior's output emmitted before it
+	    # gdbserver, then the inferior's output emitted before it
 	    # stopped isn't flushed unless we explicitly do so,
 	    # because it is on a different spawn_id.  Do it now, to
 	    # avoid confusing tests further below.

@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.188.2.1 2025/08/02 05:57:54 perseant Exp $ */
+/* $NetBSD: device.h,v 1.188.2.2 2026/11/04 23:28:05 perseant Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -235,6 +235,9 @@ static const struct device_call_descriptor __CONCAT(_c_,_descriptor) = {\
 };									\
 _DEVICE_CALL_REGISTER(_g_, _c_)
 
+#define	SYSDFLT_DEVICE_CALL_REGISTER(_n_, _c_)				\
+	DEVICE_CALL_REGISTER(sysdflt_device_calls, _n_, _c_)
+
 struct devhandle_impl {
 	devhandle_type_t		type;
 	const struct devhandle_impl *	super;
@@ -253,6 +256,7 @@ struct device;
  */
 #define	DVF_PRIV_ALLOC		0x0002	/* device private storage != device */
 #define	DVF_DETACH_SHUTDOWN	0x0080	/* device detaches safely at shutdown */
+#define	DVF_NO_PARTITIONS	0x0100	/* (disk) device doesn't have partitions */
 
 #ifdef _KERNEL
 TAILQ_HEAD(devicelist, device);
@@ -430,12 +434,25 @@ struct cfdriver __CONCAT(name,_cd) = {					\
 }
 
 /*
+ * The cfattachiattr associates a cfattach (which normally does not
+ * carry interface attribute information) with a cfiattrdata (because
+ * in very rare cases, it may need to).
+ */
+struct cfattachiattr {
+	LIST_ENTRY(cfattachiattr) cfia_list;  /* entry on global list */
+	struct cfattach *cfia_attach;         /* ptr to cfattach */
+	const struct cfiattrdata *cfia_iattr; /* associated iattr data */
+};
+
+/*
  * The cfattachinit is a data structure used to associate a list of
  * cfattach's with cfdrivers as found in the static kernel configuration.
  */
 struct cfattachinit {
-	const char *cfai_name;		 /* driver name */
+	const char *cfai_name;             /* driver name */
 	struct cfattach * const *cfai_list;/* list of attachments */
+	                                   /* associated iattrs (if any */
+	struct cfattachiattr * const *cfai_iattrs;
 };
 
 /*
@@ -535,7 +552,8 @@ int	config_cfdata_detach(cfdata_t);
 
 struct cfdriver *config_cfdriver_lookup(const char *);
 struct cfattach *config_cfattach_lookup(const char *, const char *);
-const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *);
+const struct cfiattrdata *cfiattr_lookup(const char *, const struct cfdriver *,
+					 const struct cfattach *);
 
 const char *cfdata_ifattr(const struct cfdata *);
 
@@ -602,6 +620,7 @@ device_t	device_parent(device_t);
 bool		device_is_active(device_t);
 bool		device_activation(device_t, devact_level_t);
 bool		device_is_enabled(device_t);
+bool		device_has_partitions(device_t);
 bool		device_has_power(device_t);
 int		device_locator(device_t, u_int);
 void		*device_private(device_t);
@@ -721,6 +740,50 @@ int		device_call_generic(device_t, devhandle_t,
 	device_call_generic((dev), device_handle(dev), &(call)->generic)
 #define	devhandle_call(handle, call)					\
 	device_call_generic(NULL, (handle), &(call)->generic)
+
+/*
+ * Device property infrastructure.
+ */
+bool		device_hasprop(device_t, const char *);
+ssize_t		device_getproplen(device_t, const char *);
+int		device_getpropencoding(device_t, const char *);
+prop_type_t	device_getproptype(device_t, const char *);
+
+ssize_t		device_getprop_data(device_t, const char *, void *, size_t);
+ssize_t		device_getprop_string(device_t, const char *, char *, size_t);
+bool		device_getprop_bool(device_t, const char *);
+
+void *		device_getprop_data_alloc(device_t, const char *, size_t *);
+char *		device_getprop_string_alloc(device_t, const char *, size_t *);
+
+bool		device_getprop_int(device_t, const char *, int *);
+bool		device_getprop_uint(device_t, const char *, unsigned int *);
+bool		device_getprop_int32(device_t, const char *, int32_t *);
+bool		device_getprop_uint32(device_t, const char *, uint32_t *);
+bool		device_getprop_int64(device_t, const char *, int64_t *);
+bool		device_getprop_uint64(device_t, const char *, uint64_t *);
+
+int		device_getprop_int_default(device_t, const char *, int);
+unsigned int	device_getprop_uint_default(device_t, const char *,
+		    unsigned int);
+int32_t		device_getprop_int32_default(device_t, const char *, int32_t);
+uint32_t	device_getprop_uint32_default(device_t, const char *, uint32_t);
+int64_t		device_getprop_int64_default(device_t, const char *, int64_t);
+uint64_t	device_getprop_uint64_default(device_t, const char *, uint64_t);
+
+bool		device_setprop_data(device_t, const char *, const void *,
+		    size_t);
+bool		device_setprop_string(device_t, const char *, const char *);
+bool		device_setprop_bool(device_t, const char *, bool);
+
+bool		device_setprop_int(device_t, const char *, int);
+bool		device_setprop_uint(device_t, const char *, unsigned int);
+bool		device_setprop_int32(device_t, const char *, int32_t);
+bool		device_setprop_uint32(device_t, const char *, uint32_t);
+bool		device_setprop_int64(device_t, const char *, int64_t);
+bool		device_setprop_uint64(device_t, const char *, uint64_t);
+
+void		device_delprop(device_t, const char *);
 
 #endif /* _KERNEL */
 

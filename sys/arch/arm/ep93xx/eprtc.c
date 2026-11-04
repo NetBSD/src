@@ -1,4 +1,4 @@
-/*	$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $	*/
+/*	$NetBSD: eprtc.c,v 1.7.10.1 2026/11/04 23:20:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.7.10.1 2026/11/04 23:20:08 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: eprtc.c,v 1.7 2021/11/21 08:25:26 skrll Exp $");
 #include <arm/ep93xx/eprtcreg.h>
 
 struct eprtc_softc {
+	device_t		sc_dev;
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct todr_chip_handle	sc_todr;
@@ -66,6 +67,7 @@ eprtc_attach(device_t parent, device_t self, void *aux)
 	struct epsoc_attach_args *sa = aux;
 
 	printf("\n");
+	sc->sc_dev = self;
 	sc->sc_iot = sa->sa_iot;
 
 	if (bus_space_map(sa->sa_iot, sa->sa_addr,
@@ -74,17 +76,16 @@ eprtc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = eprtc_gettime;
 	sc->sc_todr.todr_settime = eprtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 
 static int
 eprtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct eprtc_softc *sc = ch->cookie;
+	struct eprtc_softc *sc = device_private(ch->todr_dev);
 
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, EP93XX_RTC_Data);
 	tv->tv_usec = 0;
@@ -94,7 +95,7 @@ eprtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 static int
 eprtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 {
-	struct eprtc_softc *sc = ch->cookie;
+	struct eprtc_softc *sc = device_private(ch->todr_dev);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, EP93XX_RTC_Load, tv->tv_sec);
 	return 0;

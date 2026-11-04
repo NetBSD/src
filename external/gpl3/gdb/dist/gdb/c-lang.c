@@ -1,6 +1,6 @@
 /* C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -337,17 +337,17 @@ c_get_string (struct value *value, gdb::unique_xmalloc_ptr<gdb_byte> *buffer,
 	addr = value_as_address (value);
 
       /* Prior to the fix for PR 16196 read_string would ignore fetchlimit
-	 if length > 0.  The old "broken" behaviour is the behaviour we want:
+	 if length > 0.  The old "broken" behavior is the behavior we want:
 	 The caller may want to fetch 100 bytes from a variable length array
 	 implemented using the common idiom of having an array of length 1 at
 	 the end of a struct.  In this case we want to ignore the declared
 	 size of the array.  However, it's counterintuitive to implement that
-	 behaviour in read_string: what does fetchlimit otherwise mean if
-	 length > 0.  Therefore we implement the behaviour we want here:
+	 behavior in read_string: what does fetchlimit otherwise mean if
+	 length > 0.  Therefore we implement the behavior we want here:
 	 If *length > 0, don't specify a fetchlimit.  This preserves the
-	 previous behaviour.  We could move this check above where we know
+	 previous behavior.  We could move this check above where we know
 	 whether the array is declared with a fixed size, but we only want
-	 to apply this behaviour when calling read_string.  PR 16286.  */
+	 to apply this behavior when calling read_string.  PR 16286.  */
       if (*length > 0)
 	fetchlimit = UINT_MAX;
 
@@ -484,13 +484,6 @@ convert_hex (struct type *type, const char *p,
   return p;
 }
 
-#define ADVANCE					\
-  do {						\
-    ++p;					\
-    if (p == limit)				\
-      error (_("Malformed escape sequence"));	\
-  } while (0)
-
 /* Convert an escape sequence to a target format.  TYPE is the target
    character type to use, and DEST_CHARSET is the name of the target
    character set.  The backslash of the escape sequence is at *P, and
@@ -502,18 +495,29 @@ static const char *
 convert_escape (struct type *type, const char *dest_charset,
 		const char *p, const char *limit, struct obstack *output)
 {
+  auto advance = [&] ()
+    {
+      ++p;
+      if (p == limit)
+	error (_("Malformed escape sequence"));
+    };
+
   /* Skip the backslash.  */
-  ADVANCE;
+  advance ();
 
   switch (*p)
     {
     case '\\':
-      obstack_1grow (output, '\\');
+      /* Convert the backslash itself.  This is probably overkill but
+	 it doesn't hurt to do the full conversion.  */
+      convert_between_encodings (host_charset (), dest_charset,
+				 (const gdb_byte *) p, 1, 1,
+				 output, translit_none);
       ++p;
       break;
 
     case 'x':
-      ADVANCE;
+      advance ();
       if (!ISXDIGIT (*p))
 	error (_("\\x used with no following hex digits."));
       p = convert_hex (type, p, limit, output);
@@ -535,7 +539,7 @@ convert_escape (struct type *type, const char *dest_charset,
       {
 	int length = *p == 'u' ? 4 : 8;
 
-	ADVANCE;
+	advance ();
 	if (!ISXDIGIT (*p))
 	  error (_("\\u used with no following hex digits"));
 	p = convert_ucn (p, limit, dest_charset, output, length);
@@ -807,22 +811,6 @@ public:
   }
 
   /* See language.h.  */
-  std::unique_ptr<compile_instance> get_compile_instance () const override
-  {
-    return c_get_compile_context ();
-  }
-
-  /* See language.h.  */
-  std::string compute_program (compile_instance *inst,
-			       const char *input,
-			       struct gdbarch *gdbarch,
-			       const struct block *expr_block,
-			       CORE_ADDR expr_pc) const override
-  {
-    return c_compute_program (inst, input, gdbarch, expr_block, expr_pc);
-  }
-
-  /* See language.h.  */
 
   bool can_print_type_offsets () const override
   {
@@ -943,22 +931,6 @@ public:
   }
 
   /* See language.h.  */
-  std::unique_ptr<compile_instance> get_compile_instance () const override
-  {
-    return cplus_get_compile_context ();
-  }
-
-  /* See language.h.  */
-  std::string compute_program (compile_instance *inst,
-			       const char *input,
-			       struct gdbarch *gdbarch,
-			       const struct block *expr_block,
-			       CORE_ADDR expr_pc) const override
-  {
-    return cplus_compute_program (inst, input, gdbarch, expr_block, expr_pc);
-  }
-
-  /* See language.h.  */
   unsigned int search_name_hash (const char *name) const override
   {
     return cp_search_name_hash (name);
@@ -1010,6 +982,17 @@ public:
   char *class_name_from_physname (const char *physname) const override
   {
     return cp_class_name_from_physname (physname);
+  }
+
+  /* See language.h.  */
+
+  struct block_symbol lookup_symbol_local
+       (const char *scope,
+	const char *name,
+	const struct block *block,
+	const domain_search_flags domain) const override
+  {
+    return cp_lookup_symbol_imports (scope, name, block, domain);
   }
 
   /* See language.h.  */

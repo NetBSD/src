@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25.2.1 2025/08/02 05:50:41 perseant Exp $
+#	$NetBSD: Makefile,v 1.25.2.2 2026/11/04 23:15:25 perseant Exp $
 
 USE_FORT?=	yes # data-driven bugs?
 
@@ -114,7 +114,7 @@ PKGCONFIG=	freetype2
 PKGDIST.freetype2=	${.CURDIR}
 PKGCONFIG_VERSION.freetype2=	23:0:17
 
-.if ${MACHINE_ARCH} == "m68k" && ${HAVE_GCC:U0} == 12
+.if ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k" && ${HAVE_GCC:U0} >= 12
 COPTS.ftlzw.c+=	-fno-stack-protector
 .endif
 

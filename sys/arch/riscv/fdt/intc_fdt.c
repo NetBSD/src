@@ -1,4 +1,4 @@
-/*	$NetBSD: intc_fdt.c,v 1.6.2.1 2025/08/02 05:56:02 perseant Exp $	*/
+/*	$NetBSD: intc_fdt.c,v 1.6.2.2 2026/11/04 23:21:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.6.2.1 2025/08/02 05:56:02 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intc_fdt.c,v 1.6.2.2 2026/11/04 23:21:14 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -234,8 +234,8 @@ intc_fdt_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
 		return false;
 
 	const u_int source = be32toh(specifier[0]);
-	snprintf(buf, buflen, "cpu%u/%s #%u", cpu_index(sc->sc_ci),
-	    intc_sources[source], source);
+	snprintf(buf, buflen, "cpu%u (hart %lu)/%s #%u", cpu_index(sc->sc_ci),
+	    sc->sc_hartid, intc_sources[source], source);
 
 	return true;
 }

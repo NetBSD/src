@@ -1,4 +1,4 @@
-# $NetBSD: opt-debug-file.mk,v 1.10.2.2 2025/08/02 05:58:35 perseant Exp $
+# $NetBSD: opt-debug-file.mk,v 1.10.2.3 2026/11/04 23:28:38 perseant Exp $
 #
 # Tests for the -dF command line option, which redirects the debug log
 # to a file instead of writing it to stderr.
@@ -50,8 +50,8 @@ DEBUG_OUTPUT:=	${:!cat opt-debug-file.debuglog!:S,\$,\$\$,g}
 
 # See Parse_Error.
 .MAKEFLAGS: -dFstdout
-# expect+1: This goes to stderr only, once.
-.  info This goes to stderr only, once.
+# expect+1: This goes to stdout only, once.
+.  info This goes to stdout only, once.
 .MAKEFLAGS: -dFstderr
 # expect+1: This goes to stderr only, once.
 .  info This goes to stderr only, once.

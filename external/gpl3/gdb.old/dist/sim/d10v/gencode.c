@@ -42,7 +42,7 @@ write_template (void)
   struct d10v_opcode *opcode;
   int i,j;
 
-  printf ("#include \"sim-main.h\"\n");
+  printf ("#include \"d10v-sim.h\"\n");
   printf ("#include \"simops.h\"\n");
 
   for (opcode = (struct d10v_opcode *)d10v_opcodes; opcode->name; opcode++)
@@ -103,6 +103,7 @@ write_opcodes (void)
   
   /* write out opcode table */
   printf ("#include \"sim-main.h\"\n");
+  printf ("#include \"d10v-sim.h\"\n");
   printf ("#include \"simops.h\"\n\n");
   printf ("struct simops Simops[] = {\n");
   

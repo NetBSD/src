@@ -1,4 +1,4 @@
-/*	$NetBSD: scores.c,v 1.26 2021/05/02 12:50:46 rillig Exp $	*/
+/*	$NetBSD: scores.c,v 1.26.8.1 2026/11/04 23:19:09 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -43,6 +43,7 @@
  */
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>

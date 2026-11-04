@@ -5,7 +5,7 @@
 
 <head>
 
-<title>Postfix MySQL Howto</title>
+<title>Postfix MySQL/MariaDB Howto</title>
 
 <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 <link rel='stylesheet' type='text/css' href='postfix-doc.css'>
@@ -14,18 +14,23 @@
 
 <body>
 
-<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix MySQL Howto</h1>
+<h1><img src="postfix-logo.jpg" width="203" height="98" ALT="">Postfix MySQL/MariaDB Howto</h1>
 
 <hr>
 
 <h2>Introduction</h2>
 
-<p> The Postfix mysql map type allows you to hook up Postfix to a
-MySQL database. This implementation allows for multiple mysql
+<p> The Postfix mysql map type allows you to hook up Postfix to
+MySQL or MariaDB databases. This implementation allows for multiple
 databases: you can use one for a <a href="virtual.5.html">virtual(5)</a> table, one for an
 <a href="access.5.html">access(5)</a> table, and one for an <a href="aliases.5.html">aliases(5)</a> table if you want.  You
 can specify multiple servers for the same database, so that Postfix
 can switch to a good database server if one goes bad.  </p>
+
+<p> Even though the component name is 'mysql' in Postfix, MariaDB/MySQL
+client and servers can be used interchangeably as the functionality
+Postfix relies on is available in both. However, the code bases may
+still diverge in the future. </p>
 
 <p> Busy mail servers using mysql maps will generate lots of
 concurrent mysql clients, so the mysql server(s) should be run with
@@ -48,6 +53,13 @@ which can be obtained from: </p>
 
 <blockquote>
     <p> <a href="https://www.mysql.com/downloads/">https://www.mysql.com/downloads/</a> </p>
+</blockquote>
+
+<p> Many Linux distributions compile Postfix MySQL support using
+the equivalent client library from MariaDB: </p>
+
+<blockquote>
+    <p> <a href="https://mariadb.org/connector-c/">https://mariadb.org/connector-c/</a> </p>
 </blockquote>
 
 <p> In order to build Postfix with mysql map support, you will need to add

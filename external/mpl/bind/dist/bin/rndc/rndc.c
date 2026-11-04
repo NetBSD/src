@@ -1,4 +1,4 @@
-/*	$NetBSD: rndc.c,v 1.11.2.1 2025/08/02 05:50:56 perseant Exp $	*/
+/*	$NetBSD: rndc.c,v 1.11.2.2 2026/11/04 23:15:36 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -116,6 +116,10 @@ command is one of the following:\n\
   dnssec -status zone [class [view]]\n\
 		Show the DNSSEC signing state for the specified zone.\n\
 		Requires the zone to have a dnssec-policy.\n\
+  dnssec -step zone [class [view]]\n\
+		Run the key manager for a zone configured with a\n\
+		dnssec-policy in manual mode, executing the operations that\n\
+		had previously been blocked (if any).\n\
   dnstap -reopen\n\
 		Close, truncate and re-open the DNSTAP output file.\n\
   dnstap -roll [count]\n\

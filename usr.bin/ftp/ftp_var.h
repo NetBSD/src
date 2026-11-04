@@ -1,7 +1,7 @@
-/*	$NetBSD: ftp_var.h,v 1.88.2.1 2025/08/02 05:58:27 perseant Exp $	*/
+/*	$NetBSD: ftp_var.h,v 1.88.2.2 2026/11/04 23:28:33 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1996-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -101,7 +101,6 @@
 #endif
 
 #include <sys/param.h>
-#include <sys/queue.h>
 
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -167,19 +166,12 @@ enum {
 };
 
 /*
- * Custom HTTP headers
- */
-struct entry {
-	SLIST_ENTRY(entry)	entries;
-	const char		*header;
-};
-SLIST_HEAD(http_headers, entry);
-
-/*
  * Global defines
  */
 #define	FTPBUFLEN	(16 * 1024)
 #define	MAX_IN_PORT_T	0xffffU
+#define	XFERBUFMIN	(1 * 1024)	/* 1 KiB max read()/write() */
+#define	XFERBUFMAX	(128 * 1024)	/* 128 KiB max read()/write() */
 
 #define	HASHBYTES	1024	/* default mark for `hash' command */
 #define	DEFAULTINCR	1024	/* default increment for `rate' command */
@@ -263,6 +255,7 @@ GLOBAL	int	epsv4bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	epsv6;		/* use EPSV/EPRT on IPv6 connections */
 GLOBAL	int	epsv6bad;	/* EPSV doesn't work on the current server */
 GLOBAL	int	editing;	/* command line editing enabled */
+GLOBAL	StringList *custom_headers;	/* stringlist with custom HTTP headers */
 GLOBAL	int	features[FEAT_max];	/* remote FEATures supported */
 
 #ifndef NO_EDITCOMPLETE
@@ -305,8 +298,8 @@ GLOBAL	int	mflag;		/* flag: if != 0, then active multi command */
 
 GLOBAL	int	options;	/* used during socket creation */
 
-GLOBAL	int	sndbuf_size;	/* socket send buffer size */
-GLOBAL	int	rcvbuf_size;	/* socket receive buffer size */
+GLOBAL	int	sndbuf_size;	/* socket send buffer size; 0 = autoscale */
+GLOBAL	int	rcvbuf_size;	/* socket receive buffer size; 0 = autoscale */
 
 GLOBAL	int	macnum;		/* number of defined macros */
 GLOBAL	struct macel macros[16];
@@ -331,7 +324,6 @@ GLOBAL	int	 data;
 
 extern	struct cmd		cmdtab[];
 extern	struct option		optiontab[];
-extern	struct http_headers	custom_headers;
 
 extern	size_t ftp_buflen;
 

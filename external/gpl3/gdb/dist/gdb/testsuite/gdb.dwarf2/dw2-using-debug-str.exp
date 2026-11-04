@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -98,6 +98,18 @@ if ![runto_main] {
 # field names, all of which are stored in the .debug_str section.
 gdb_test "p global_var" " = \\{aa = 0, bb = 0, cc = 0\\}"
 
+# If we have a .gdb_index already, this test isn't going to work,
+# because the .gdb_index reader doesn't check for .debug_str.
+if {[get_index_type $testfile] == "gdb"} {
+    untested ".gdb_index does not handle this case"
+    return
+}
+
+# objcopy, even with --dump-section, will try to open the executable
+# for writing.  To avoid "text file busy", exit gdb here, stopping the
+# inferior as a side effect.
+gdb_exit
+
 set host_binfile [gdb_remote_download host $binfile]
 
 # Verify that the executable actually contains a .debug_str section, before
@@ -131,10 +143,10 @@ clean_restart
 gdb_test_no_output "maint set dwarf synchronous on"
 
 set line1 "Reading symbols from \[^\r\n\]+"
-set dwarf_error "Dwarf Error: DW_FORM_strp used without required section"
+set dwarf_error "DWARF Error: DW_FORM_strp used without required section"
 
 # This pattern is hit when GDB does not use -readnow (i.e. the default
-# behaviour).
+# behavior).
 set pattern1 \
     [multi_line \
          $line1 \

@@ -1,6 +1,6 @@
 /* General utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include <ctype.h>
 #include "gdbsupport/gdb_wait.h"
+#include "gdbsupport/scoped_signal_handler.h"
 #include "event-top.h"
 #include "gdbthread.h"
 #include "fnmatch.h"
@@ -53,7 +54,6 @@
 #include "top.h"
 #include "ui.h"
 #include "main.h"
-#include "solist.h"
 
 #include "inferior.h"
 
@@ -80,6 +80,8 @@
 #include "gdbsupport/buildargv.h"
 #include "pager.h"
 #include "run-on-main-thread.h"
+#include "gdbsupport/gdb_tilde_expand.h"
+#include "gdbsupport/eintr.h"
 
 void (*deprecated_error_begin_hook) (void);
 
@@ -116,7 +118,7 @@ show_sevenbit_strings (struct ui_file *file, int from_tty,
 
 /* String to be printed before warning messages, if any.  */
 
-const char *warning_pre_print = "\nwarning: ";
+const char *warning_pre_print = "\n";
 
 bool pagination_enabled = true;
 static void
@@ -173,8 +175,9 @@ vwarning (const char *string, va_list args)
 	  term_state.emplace ();
 	  target_terminal::ours_for_output ();
 	}
-      if (warning_pre_print)
-	gdb_puts (warning_pre_print, gdb_stderr);
+      gdb_puts (warning_pre_print, gdb_stderr);
+      print_warning_prefix (gdb_stderr);
+      gdb_puts (_("warning: "), gdb_stderr);
       gdb_vprintf (gdb_stderr, string, args);
       gdb_printf (gdb_stderr, "\n");
     }
@@ -192,7 +195,7 @@ verror (const char *string, va_list args)
 
 /* Emit a message and abort.  */
 
-static void ATTRIBUTE_NORETURN
+[[noreturn]] static void
 abort_with_message (const char *msg)
 {
   if (current_ui == NULL)
@@ -379,7 +382,7 @@ internal_vproblem (struct internal_problem *problem,
 #endif
 
   /* Create a string containing the full error/warning message.  Need
-     to call query with this full string, as otherwize the reason
+     to call query with this full string, as otherwise the reason
      (error/warning) and question become separated.  Format using a
      style similar to a compiler error message.  Include extra detail
      so that the user knows that they are living on the edge.  */
@@ -596,11 +599,11 @@ add_internal_problem_command (struct internal_problem *problem)
   if (problem->user_settable_should_dump_core)
     {
       std::string set_core_doc
-	= string_printf (_("Set whether GDB should create a core file of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Set whether GDB should dump core "
+			   "when %s is detected."), problem->name);
       std::string show_core_doc
-	= string_printf (_("Show whether GDB will create a core file of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Show whether GDB should dump core "
+			   "when %s is detected."), problem->name);
       add_setshow_enum_cmd ("corefile", class_maintenance,
 			    internal_problem_modes,
 			    &problem->should_dump_core,
@@ -616,11 +619,11 @@ add_internal_problem_command (struct internal_problem *problem)
   if (problem->user_settable_should_print_backtrace)
     {
       std::string set_bt_doc
-	= string_printf (_("Set whether GDB should print a backtrace of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Set whether GDB should show backtrace "
+			   "when %s is detected."), problem->name);
       std::string show_bt_doc
-	= string_printf (_("Show whether GDB will print a backtrace of "
-			   "GDB when %s is detected."), problem->name);
+	= string_printf (_("Show whether GDB should show backtrace "
+			   "when %s is detected."), problem->name);
       add_setshow_boolean_cmd ("backtrace", class_maintenance,
 			       &problem->should_print_backtrace,
 			       set_bt_doc.c_str (),
@@ -818,7 +821,9 @@ defaulted_query (const char *ctlstr, const char defchar, va_list args)
     }
 
   /* Format the question outside of the loop, to avoid reusing args.  */
-  std::string question = string_vprintf (ctlstr, args);
+  string_file tem (gdb_stdout->can_emit_style_escape ());
+  gdb_vprintf (&tem, ctlstr, args);
+  std::string question = tem.release ();
   std::string prompt
     = string_printf (_("%s%s(%s or %s) %s"),
 		     annotation_level > 1 ? "\n\032\032pre-query\n" : "",
@@ -1281,6 +1286,14 @@ set_screen_width_and_height (int width, int height)
   set_width ();
 }
 
+/* Import termcap variable UP (instead of readline private variable
+   _rl_term_up, which we're trying to avoid, see PR build/10723).  The UP
+   variable doesn't seem be part of the regular termcap interface, but rather
+   curses-specific.  But if it's missing in the termcap library, then readline
+   provides a fallback version.  Let's assume the fallback is not part of the
+   private readline interface.  */
+extern "C" char *UP;
+
 /* Implement "maint info screen".  */
 
 static void
@@ -1339,6 +1352,46 @@ maintenance_info_screen (const char *args, int from_tty)
 	      _("Number of lines environment thinks "
 		"are in a page is %s (LINES).\n"),
 	      getenv ("LINES"));
+
+  bool have_up = UP != nullptr && *UP != '\0';
+
+  /* Fetch value of readline variable horizontal-scroll-mode.  */
+  const char *horizontal_scroll_mode_value
+    = rl_variable_value ("horizontal-scroll-mode");
+  bool force_horizontal_scroll_mode
+    = (horizontal_scroll_mode_value != nullptr
+       && strcmp (horizontal_scroll_mode_value, "on") == 0);
+
+  const char *mode = nullptr;
+  const char *reason = nullptr;
+  if (batch_flag)
+    {
+      mode = "unsupported";
+      reason = "gdb batch mode";
+    }
+  else if (!have_up)
+    {
+      mode = "unsupported";
+      reason = "terminal is not Cursor Up capable";
+    }
+  else if (force_horizontal_scroll_mode)
+    {
+      mode = "disabled";
+      reason = "horizontal-scroll-mode";
+    }
+  else if (readline_hidden_cols)
+    {
+      mode = "readline";
+      reason = "terminal is not auto wrap capable, last column reserved";
+    }
+  else
+    {
+      mode = "terminal";
+      reason = "terminal is auto wrap capable";
+    }
+
+  gdb_printf (gdb_stdout, _("Readline wrapping mode: %s (%s).\n"), mode,
+	      reason);
 }
 
 void
@@ -1348,21 +1401,28 @@ pager_file::emit_style_escape (const ui_file_style &style)
     {
       m_applied_style = style;
       if (m_paging)
-	m_stream->emit_style_escape (style);
+	{
+	  /* Previous style changes will have been sent to m_stream via
+	     escape sequences encoded in the m_wrap_buffer.  As a result,
+	     the m_stream->m_applied_style will not have been updated.
+
+	     If we now use m_stream->emit_style_escape, then the required
+	     style might not actually be emitted as the requested style
+	     might happen to match the out of date value in
+	     m_stream->m_applied_style.
+
+	     Instead, send the style change directly using m_stream->puts.
+
+	     However, we track what style is currently applied to the
+	     underlying stream in m_stream_style, this is updated whenever
+	     m_wrap_buffer is flushed to the underlying stream.  And so, if
+	     the style we are applying matches what we know is currently
+	     applied to the underlying stream, then we can skip sending
+	     this style to the stream.  */
+	  this->set_stream_style (m_applied_style);
+	}
       else
 	m_wrap_buffer.append (style.to_ansi ());
-    }
-}
-
-/* See pager.h.  */
-
-void
-pager_file::reset_style ()
-{
-  if (can_emit_style_escape ())
-    {
-      m_applied_style = ui_file_style ();
-      m_wrap_buffer.append (m_applied_style.to_ansi ());
     }
 }
 
@@ -1383,8 +1443,8 @@ pager_file::prompt_for_continue ()
 
   scoped_restore save_paging = make_scoped_restore (&m_paging, true);
 
-  /* Clear the current styling.  */
-  m_stream->emit_style_escape (ui_file_style ());
+  /* Clear the current styling on ourselves and the managed stream.  */
+  this->emit_style_escape (ui_file_style ());
 
   if (annotation_level > 1)
     m_stream->puts (("\n\032\032pre-prompt-for-continue\n"));
@@ -1467,6 +1527,7 @@ pager_file::flush_wrap_buffer ()
   if (!m_paging && !m_wrap_buffer.empty ())
     {
       m_stream->puts (m_wrap_buffer.c_str ());
+      m_stream_style = m_applied_style;
       m_wrap_buffer.clear ();
     }
 }
@@ -1583,10 +1644,7 @@ begin_line (void)
 void
 pager_file::puts (const char *linebuffer)
 {
-  const char *lineptr;
-
-  if (linebuffer == 0)
-    return;
+  gdb_assert (linebuffer != nullptr);
 
   /* Don't do any filtering or wrapping if both are disabled.  */
   if (batch_flag
@@ -1617,8 +1675,7 @@ pager_file::puts (const char *linebuffer)
      when this is necessary; prompt user for new page when this is
      necessary.  */
 
-  lineptr = linebuffer;
-  while (*lineptr)
+  while (*linebuffer != '\0')
     {
       /* Possible new page.  Note that PAGINATION_DISABLED_FOR_COMMAND
 	 might be set during this loop, so we must continue to check
@@ -1628,39 +1685,54 @@ pager_file::puts (const char *linebuffer)
 	  && lines_printed >= lines_allowed)
 	prompt_for_continue ();
 
-      while (*lineptr && *lineptr != '\n')
+      while (*linebuffer != '\0' && *linebuffer != '\n')
 	{
 	  int skip_bytes;
 
 	  /* Print a single line.  */
-	  if (*lineptr == '\t')
+	  if (*linebuffer == '\t')
 	    {
 	      m_wrap_buffer.push_back ('\t');
 	      /* Shifting right by 3 produces the number of tab stops
 		 we have already passed, and then adding one and
 		 shifting left 3 advances to the next tab stop.  */
 	      chars_printed = ((chars_printed >> 3) + 1) << 3;
-	      lineptr++;
+	      linebuffer++;
 	    }
-	  else if (*lineptr == '\033'
-		   && skip_ansi_escape (lineptr, &skip_bytes))
+	  else if (*linebuffer == '\033'
+		   && skip_ansi_escape (linebuffer, &skip_bytes))
 	    {
-	      m_wrap_buffer.append (lineptr, skip_bytes);
-	      /* Note that we don't consider this a character, so we
+	      /* We don't consider escape sequences as characters, so we
 		 don't increment chars_printed here.  */
-	      lineptr += skip_bytes;
+
+	      size_t style_len;
+	      ui_file_style style;
+	      if (style.parse (linebuffer, &style_len)
+		  && style_len <= skip_bytes)
+		{
+		  this->emit_style_escape (style);
+
+		  linebuffer += style_len;
+		  skip_bytes -= style_len;
+		}
+
+	      if (skip_bytes > 0)
+		{
+		  m_wrap_buffer.append (linebuffer, skip_bytes);
+		  linebuffer += skip_bytes;
+		}
 	    }
-	  else if (*lineptr == '\r')
+	  else if (*linebuffer == '\r')
 	    {
-	      m_wrap_buffer.push_back (*lineptr);
+	      m_wrap_buffer.push_back (*linebuffer);
 	      chars_printed = 0;
-	      lineptr++;
+	      linebuffer++;
 	    }
 	  else
 	    {
-	      m_wrap_buffer.push_back (*lineptr);
+	      m_wrap_buffer.push_back (*linebuffer);
 	      chars_printed++;
-	      lineptr++;
+	      linebuffer++;
 	    }
 
 	  if (chars_printed >= chars_per_line)
@@ -1687,7 +1759,8 @@ pager_file::puts (const char *linebuffer)
 		     current applied style to how it was at the WRAP_COLUMN
 		     location.  */
 		  m_applied_style = m_wrap_style;
-		  m_stream->emit_style_escape (ui_file_style ());
+		  this->set_stream_style (ui_file_style ());
+
 		  /* If we aren't actually wrapping, don't output
 		     newline -- if chars_per_line is right, we
 		     probably just overflowed anyway; if it's wrong,
@@ -1715,7 +1788,7 @@ pager_file::puts (const char *linebuffer)
 
 		  /* Having finished inserting the wrapping we should
 		     restore the style as it was at the WRAP_COLUMN.  */
-		  m_stream->emit_style_escape (m_wrap_style);
+		  this->set_stream_style (m_wrap_style);
 
 		  /* The WRAP_BUFFER will still contain content, and that
 		     content might set some alternative style.  Restore
@@ -1730,17 +1803,17 @@ pager_file::puts (const char *linebuffer)
 		  m_wrap_column = 0;	/* And disable fancy wrap */
 		}
 	      else if (did_paginate)
-		m_stream->emit_style_escape (save_style);
+		this->emit_style_escape (save_style);
 	    }
 	}
 
-      if (*lineptr == '\n')
+      if (*linebuffer == '\n')
 	{
 	  chars_printed = 0;
 	  wrap_here (0); /* Spit out chars, cancel further wraps.  */
 	  lines_printed++;
 	  m_stream->puts ("\n");
-	  lineptr++;
+	  linebuffer++;
 	}
     }
 
@@ -1751,7 +1824,7 @@ void
 pager_file::write (const char *buf, long length_buf)
 {
   /* We have to make a string here because the pager uses
-     skip_ansi_escape, which requires NUL-termination.  */
+     examine_ansi_escape, which requires NUL-termination.  */
   std::string str (buf, length_buf);
   this->puts (str.c_str ());
 }
@@ -3295,7 +3368,7 @@ gdb_argv_as_array_view_test ()
    argument.  */
 
 std::string
-ldirname (const char *filename)
+gdb_ldirname (const char *filename)
 {
   std::string dirname;
   const char *base = lbasename (filename);
@@ -3337,51 +3410,6 @@ parse_pid_to_attach (const char *args)
   return pid;
 }
 
-/* Substitute all occurrences of string FROM by string TO in *STRINGP.  *STRINGP
-   must come from xrealloc-compatible allocator and it may be updated.  FROM
-   needs to be delimited by IS_DIR_SEPARATOR or DIRNAME_SEPARATOR (or be
-   located at the start or end of *STRINGP.  */
-
-void
-substitute_path_component (char **stringp, const char *from, const char *to)
-{
-  char *string = *stringp, *s;
-  const size_t from_len = strlen (from);
-  const size_t to_len = strlen (to);
-
-  for (s = string;;)
-    {
-      s = strstr (s, from);
-      if (s == NULL)
-	break;
-
-      if ((s == string || IS_DIR_SEPARATOR (s[-1])
-	   || s[-1] == DIRNAME_SEPARATOR)
-	  && (s[from_len] == '\0' || IS_DIR_SEPARATOR (s[from_len])
-	      || s[from_len] == DIRNAME_SEPARATOR))
-	{
-	  char *string_new;
-
-	  string_new
-	    = (char *) xrealloc (string, (strlen (string) + to_len + 1));
-
-	  /* Relocate the current S pointer.  */
-	  s = s - string + string_new;
-	  string = string_new;
-
-	  /* Replace from by to.  */
-	  memmove (&s[to_len], &s[from_len], strlen (&s[from_len]) + 1);
-	  memcpy (s, to, to_len);
-
-	  s += to_len;
-	}
-      else
-	s++;
-    }
-
-  *stringp = string;
-}
-
 #ifdef HAVE_WAITPID
 
 #ifdef SIGALRM
@@ -3416,35 +3444,19 @@ wait_to_die_with_timeout (pid_t pid, int *status, int timeout)
   if (timeout > 0)
     {
 #ifdef SIGALRM
-#if defined (HAVE_SIGACTION) && defined (SA_RESTART)
-      struct sigaction sa, old_sa;
-
-      sa.sa_handler = sigalrm_handler;
-      sigemptyset (&sa.sa_mask);
-      sa.sa_flags = 0;
-      sigaction (SIGALRM, &sa, &old_sa);
-#else
-      sighandler_t ofunc;
-
-      ofunc = signal (SIGALRM, sigalrm_handler);
-#endif
+      scoped_signal_handler<SIGALRM> alarm_restore (sigalrm_handler);
 
       alarm (timeout);
 #endif
 
-      waitpid_result = waitpid (pid, status, 0);
+      waitpid_result = gdb::waitpid (pid, status, 0);
 
 #ifdef SIGALRM
       alarm (0);
-#if defined (HAVE_SIGACTION) && defined (SA_RESTART)
-      sigaction (SIGALRM, &old_sa, NULL);
-#else
-      signal (SIGALRM, ofunc);
-#endif
 #endif
     }
   else
-    waitpid_result = waitpid (pid, status, WNOHANG);
+    waitpid_result = gdb::waitpid (pid, status, WNOHANG);
 
   if (waitpid_result == pid)
     return pid;
@@ -3454,8 +3466,8 @@ wait_to_die_with_timeout (pid_t pid, int *status, int timeout)
 
 #endif /* HAVE_WAITPID */
 
-/* Provide fnmatch compatible function for FNM_FILE_NAME matching of host files.
-   Both FNM_FILE_NAME and FNM_NOESCAPE must be set in FLAGS.
+/* Provide fnmatch compatible function for matching of host files.
+   FNM_NOESCAPE must be set in FLAGS.
 
    It handles correctly HAVE_DOS_BASED_FILE_SYSTEM and
    HAVE_CASE_INSENSITIVE_FILE_SYSTEM.  */
@@ -3463,8 +3475,6 @@ wait_to_die_with_timeout (pid_t pid, int *status, int timeout)
 int
 gdb_filename_fnmatch (const char *pattern, const char *string, int flags)
 {
-  gdb_assert ((flags & FNM_FILE_NAME) != 0);
-
   /* It is unclear how '\' escaping vs. directory separator should coexist.  */
   gdb_assert ((flags & FNM_NOESCAPE) != 0);
 
@@ -3667,6 +3677,23 @@ copy_bitwise (gdb_byte *dest, ULONGEST dest_offset,
     }
 }
 
+/* See utils.h.  */
+
+std::string
+extract_single_filename_arg (const char *args)
+{
+  if (args == nullptr)
+    return {};
+
+  std::string filename = extract_string_maybe_quoted (&args);
+  args = skip_spaces (args);
+  if (*args != '\0')
+    error (_("Junk after filename \"%s\": %s"), filename.c_str (), args);
+  if (!filename.empty ())
+    filename = gdb_tilde_expand (filename.c_str ());
+  return filename;
+}
+
 #if GDB_SELF_TEST
 static void
 test_assign_set_return_if_changed ()
@@ -3704,9 +3731,7 @@ test_assign_set_return_if_changed ()
 }
 #endif
 
-void _initialize_utils ();
-void
-_initialize_utils ()
+INIT_GDB_FILE (utils)
 {
   add_setshow_uinteger_cmd ("width", class_support, &chars_per_line, _("\
 Set number of characters where GDB should wrap lines of its output."), _("\

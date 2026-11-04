@@ -1,4 +1,4 @@
-/*	$NetBSD: mca_machdep.c,v 1.5.24.1 2025/08/02 05:56:06 perseant Exp $	*/
+/*	$NetBSD: mca_machdep.c,v 1.5.24.2 2026/11/04 23:21:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.5.24.1 2025/08/02 05:56:06 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mca_machdep.c,v 1.5.24.2 2026/11/04 23:21:16 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -262,7 +262,7 @@ mca_disk_unbusy(void)
 /*
  * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  * MCA DMA specific stuff. We use ISA routines for bulk of the work,
- * since MCA shares much of the charasteristics with it. We just hook
+ * since MCA shares much of the characteristics with it. We just hook
  * the DMA channel initialization and kick MCA DMA controller appropriately.
  * -=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-=-
  */

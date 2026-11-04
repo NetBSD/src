@@ -1,5 +1,5 @@
 /* MIPS-specific support for ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    Most of the information added by Ian Lance Taylor, Cygnus Support,
    <ian@cygnus.com>.
@@ -593,8 +593,6 @@ struct mips_elf_obj_tdata
 
   /* The Irix 5 support uses two virtual sections, which represent
      text/data symbols defined in dynamic objects.  */
-  asymbol *elf_data_symbol;
-  asymbol *elf_text_symbol;
   asection *elf_data_section;
   asection *elf_text_section;
 
@@ -1376,8 +1374,7 @@ mips_elf_link_hash_newfunc (struct bfd_hash_entry *entry,
 bool
 _bfd_mips_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct mips_elf_obj_tdata),
-				  MIPS_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct mips_elf_obj_tdata));
 }
 
 /* MIPS ELF uses a special find_nearest_line routine in order the
@@ -1414,16 +1411,12 @@ _bfd_mips_elf_free_cached_info (bfd *abfd)
 bool
 _bfd_mips_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct _mips_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  struct _mips_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -1953,7 +1946,7 @@ mips_elf_add_la25_intro (struct mips_elf_la25_stub *stub,
 
   /* Make sure that any padding goes before the stub.  */
   align = input_section->alignment_power;
-  if (!bfd_set_section_alignment (s, align))
+  if (!bfd_link_align_section (s, align))
     return false;
   if (align > 3)
     s->size = (1 << align) - 8;
@@ -1990,7 +1983,7 @@ mips_elf_add_la25_trampoline (struct mips_elf_la25_stub *stub,
       asection *input_section = stub->h->root.root.u.def.section;
       s = htab->add_stub_section (".text", NULL,
 				  input_section->output_section);
-      if (s == NULL || !bfd_set_section_alignment (s, 4))
+      if (s == NULL || !bfd_link_align_section (s, 4))
 	return false;
       htab->strampoline = s;
     }
@@ -2301,6 +2294,17 @@ lo16_reloc_p (int r_type)
 }
 
 static inline bool
+tls_hi16_reloc_p (int r_type)
+{
+  return (r_type == R_MIPS_TLS_DTPREL_HI16
+	  || r_type == R_MIPS_TLS_TPREL_HI16
+	  || r_type == R_MIPS16_TLS_DTPREL_HI16
+	  || r_type == R_MIPS16_TLS_TPREL_HI16
+	  || r_type == R_MICROMIPS_TLS_DTPREL_HI16
+	  || r_type == R_MICROMIPS_TLS_TPREL_HI16);
+}
+
+static inline bool
 mips16_call_reloc_p (int r_type)
 {
   return r_type == R_MIPS16_26 || r_type == R_MIPS16_CALL16;
@@ -2606,23 +2610,23 @@ _bfd_mips_elf_lo16_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
      addend is adjusted for the fact that the low part is sign
      extended.  For example, an addend of 0x38000 would have 0x0004 in
      the high part and 0x8000 (=0xff..f8000) in the low part.
-     To extract the actual addend, calculate (a)
-     ((hi & 0xffff) << 16) + ((lo & 0xffff) ^ 0x8000) - 0x8000.
-     We will be applying (symbol + addend) & 0xffff to the low insn,
-     and we want to apply (b) (symbol + addend + 0x8000) >> 16 to the
-     high insn (the +0x8000 adjusting for when the applied low part is
-     negative).  Substituting (a) into (b) and recognising that
-     (hi & 0xffff) is already in the high insn gives a high part
-     addend adjustment of (lo & 0xffff) ^ 0x8000.  */
-  vallo = (bfd_get_32 (abfd, location) & 0xffff) ^ 0x8000;
+     To extract the actual addend, calculate
+     ((hi & 0xffff) << 16) + ((lo & 0xffff) ^ 0x8000) - 0x8000.  */
+  vallo = _bfd_mips_elf_sign_extend (bfd_get_32 (abfd, location) & 0xffff, 16);
   _bfd_mips_elf_reloc_shuffle (abfd, reloc_entry->howto->type, false,
 			       location);
+  /* Add in the separate addend, if any.  Since we are REL here this
+     will have been set and the in-place addend cleared if we have
+     been called from GAS via `bfd_install_relocation'.  */
+  vallo += reloc_entry->addend;
 
   tdata = mips_elf_tdata (abfd);
   while (tdata->mips_hi16_list != NULL)
     {
       bfd_reloc_status_type ret;
       struct mips_hi16 *hi;
+      bfd_vma addhi;
+      bfd_vma addlo;
 
       hi = tdata->mips_hi16_list;
 
@@ -2638,7 +2642,19 @@ _bfd_mips_elf_lo16_reloc (bfd *abfd, arelent *reloc_entry, asymbol *symbol,
       else if (hi->rel.howto->type == R_MICROMIPS_GOT16)
 	hi->rel.howto = MIPS_ELF_RTYPE_TO_HOWTO (abfd, R_MICROMIPS_HI16, false);
 
-      hi->rel.addend += vallo;
+      /* We will be applying (symbol + addend) & 0xffff to the low insn,
+	 and we want to apply (symbol + addend + 0x8000) >> 16 to the
+	 high insn (the +0x8000 adjusting for when the applied low part is
+	 negative).  */
+      addhi = (hi->rel.addend + 0x8000) & ~(bfd_vma) 0xffff;
+      addlo = vallo;
+
+      /* For a PC-relative relocation the PCLO16 part of the addend
+	 is relative to its PC and not ours, so we need to adjust it.  */
+      if (hi->rel.howto->type == R_MIPS_PCHI16)
+	addlo -= reloc_entry->address - hi->rel.address;
+
+      hi->rel.addend = addhi + _bfd_mips_elf_sign_extend (addlo & 0xffff, 16);
 
       ret = _bfd_mips_elf_generic_reloc (abfd, &hi->rel, symbol, hi->data,
 					 hi->input_section, output_bfd,
@@ -2713,6 +2729,29 @@ _bfd_mips_elf_generic_reloc (bfd *abfd ATTRIBUTE_UNUSED, arelent *reloc_entry,
 
       /* Add in the separate addend, if any.  */
       val += reloc_entry->addend;
+
+      /* The high 16 bits of the addend are stored in the high insn, the
+	 low 16 bits in the low insn, but there is a catch:  You can't
+	 just concatenate the high and low parts.  The high part of the
+	 addend is adjusted for the fact that the low part is sign
+	 extended.  For example, an addend of 0x38000 would have 0x0004 in
+	 the high part and 0x8000 (=0xff..f8000) in the low part.
+	 We will be applying (symbol + addend) & 0xffff to the low insn,
+	 and we want to apply (symbol + addend + 0x8000) >> 16 to the
+	 high insn (the +0x8000 adjusting for when the applied low part is
+	 negative).  Analogously for the higher parts of a 64-bit addend.  */
+      if (reloc_entry->howto->bitsize == 16
+	  && reloc_entry->howto->rightshift % 16 == 0)
+#ifdef BFD64
+	val += 0x800080008000ULL >> (48 - reloc_entry->howto->rightshift);
+#else
+	{
+	  if (reloc_entry->howto->rightshift <= 16)
+	    val += 0x8000 >> (16 - reloc_entry->howto->rightshift);
+	  else
+	    abort ();
+	}
+#endif
 
       /* Add VAL to the relocation field.  */
       _bfd_mips_elf_reloc_unshuffle (abfd, reloc_entry->howto->type, false,
@@ -7913,11 +7952,8 @@ _bfd_mips_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	  /* Initialize the section.  */
 
 	  mips_elf_tdata (abfd)->elf_text_section = elf_text_section;
-	  mips_elf_tdata (abfd)->elf_text_symbol = elf_text_symbol;
 
 	  elf_text_section->symbol = elf_text_symbol;
-	  elf_text_section->symbol_ptr_ptr = &mips_elf_tdata (abfd)->elf_text_symbol;
-
 	  elf_text_section->name = ".text";
 	  elf_text_section->flags = SEC_NO_FLAGS;
 	  elf_text_section->output_section = NULL;
@@ -7954,11 +7990,8 @@ _bfd_mips_elf_add_symbol_hook (bfd *abfd, struct bfd_link_info *info,
 	  /* Initialize the section.  */
 
 	  mips_elf_tdata (abfd)->elf_data_section = elf_data_section;
-	  mips_elf_tdata (abfd)->elf_data_symbol = elf_data_symbol;
 
 	  elf_data_section->symbol = elf_data_symbol;
-	  elf_data_section->symbol_ptr_ptr = &mips_elf_tdata (abfd)->elf_data_symbol;
-
 	  elf_data_section->name = ".data";
 	  elf_data_section->flags = SEC_NO_FLAGS;
 	  elf_data_section->output_section = NULL;
@@ -8290,14 +8323,44 @@ mips_elf_add_lo16_rel_addend (bfd *abfd,
   bfd_vma l;
 
   r_type = ELF_R_TYPE (abfd, rel->r_info);
-  if (mips16_reloc_p (r_type))
-    lo16_type = R_MIPS16_LO16;
-  else if (micromips_reloc_p (r_type))
-    lo16_type = R_MICROMIPS_LO16;
-  else if (r_type == R_MIPS_PCHI16)
-    lo16_type = R_MIPS_PCLO16;
-  else
-    lo16_type = R_MIPS_LO16;
+  switch (r_type)
+    {
+    case R_MIPS_HI16:
+    case R_MIPS_GOT16:
+      lo16_type = R_MIPS_LO16;
+      break;
+    case R_MIPS_PCHI16:
+      lo16_type = R_MIPS_PCLO16;
+      break;
+    case R_MIPS_TLS_DTPREL_HI16:
+      lo16_type = R_MIPS_TLS_DTPREL_LO16;
+      break;
+    case R_MIPS_TLS_TPREL_HI16:
+      lo16_type = R_MIPS_TLS_TPREL_LO16;
+      break;
+    case R_MIPS16_HI16:
+    case R_MIPS16_GOT16:
+      lo16_type = R_MIPS16_LO16;
+      break;
+    case R_MIPS16_TLS_DTPREL_HI16:
+      lo16_type = R_MIPS16_TLS_DTPREL_LO16;
+      break;
+    case R_MIPS16_TLS_TPREL_HI16:
+      lo16_type = R_MIPS16_TLS_TPREL_LO16;
+      break;
+    case R_MICROMIPS_HI16:
+    case R_MICROMIPS_GOT16:
+      lo16_type = R_MICROMIPS_LO16;
+      break;
+    case R_MICROMIPS_TLS_DTPREL_HI16:
+      lo16_type = R_MICROMIPS_TLS_DTPREL_LO16;
+      break;
+    case R_MICROMIPS_TLS_TPREL_HI16:
+      lo16_type = R_MICROMIPS_TLS_TPREL_LO16;
+      break;
+    default:
+      abort ();
+    }
 
   /* The combined value is the sum of the HI16 addend, left-shifted by
      sixteen bits, and the LO16 addend, sign extended.  (Usually, the
@@ -8326,6 +8389,10 @@ mips_elf_add_lo16_rel_addend (bfd *abfd,
 				contents);
 
   l <<= lo16_howto->rightshift;
+  /* For a PC-relative relocation the PCLO16 part of the addend
+     is relative to its PC and not ours, so we need to adjust it.  */
+  if (r_type == R_MIPS_PCHI16)
+    l = (l - (lo16_relocation->r_offset - rel->r_offset)) & 0xffff;
   l = _bfd_mips_elf_sign_extend (l, 16);
 
   *addend <<= 16;
@@ -9460,13 +9527,13 @@ _bfd_mips_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 	     Encourage better cache usage by aligning.  We do this
 	     lazily to avoid pessimizing traditional objects.  */
 	  if (htab->root.target_os != is_vxworks
-	      && !bfd_set_section_alignment (htab->root.splt, 5))
+	      && !bfd_link_align_section (htab->root.splt, 5))
 	    return false;
 
 	  /* Make sure that .got.plt is word-aligned.  We do this lazily
 	     for the same reason as above.  */
-	  if (!bfd_set_section_alignment (htab->root.sgotplt,
-					  MIPS_ELF_LOG_FILE_ALIGN (dynobj)))
+	  if (!bfd_link_align_section (htab->root.sgotplt,
+				       MIPS_ELF_LOG_FILE_ALIGN (dynobj)))
 	    return false;
 
 	  /* On non-VxWorks targets, the first two entries in .got.plt
@@ -10014,6 +10081,7 @@ _bfd_mips_elf_late_size_sections (bfd *output_bfd,
 	    = strlen (ELF_DYNAMIC_INTERPRETER (output_bfd)) + 1;
 	  s->contents
 	    = (bfd_byte *) ELF_DYNAMIC_INTERPRETER (output_bfd);
+	  s->alloced = 1;
 	}
 
       /* Figure out the size of the PLT header if we know that we
@@ -10190,6 +10258,7 @@ _bfd_mips_elf_late_size_sections (bfd *output_bfd,
 	  bfd_set_error (bfd_error_no_memory);
 	  return false;
 	}
+      s->alloced = 1;
     }
 
   if (htab->root.dynamic_sections_created)
@@ -10411,7 +10480,7 @@ mips_reloc_against_discarded_section (bfd *output_bfd,
   do
     {
        RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					(*rel), count, (*relend),
+					(*rel), count, (*relend), R_MIPS_NONE,
 					howto, i, contents);
     }
   while (0);
@@ -10519,7 +10588,8 @@ _bfd_mips_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	      if (hi16_reloc_p (r_type)
 		  || (got16_reloc_p (r_type)
 		      && mips_elf_local_relocation_p (input_bfd, rel,
-						      local_sections)))
+						      local_sections))
+		  || tls_hi16_reloc_p (r_type))
 		{
 		  if (!mips_elf_add_lo16_rel_addend (input_bfd, input_section,
 						     rel, relend,
@@ -10557,7 +10627,9 @@ _bfd_mips_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 	  if (!rela_relocation_p && rel->r_addend)
 	    {
 	      addend += rel->r_addend;
-	      if (hi16_reloc_p (r_type) || got16_reloc_p (r_type))
+	      if (hi16_reloc_p (r_type)
+		  || got16_reloc_p (r_type)
+		  || tls_hi16_reloc_p (r_type))
 		addend = mips_elf_high (addend);
 	      else if (r_type == R_MIPS_HIGHER)
 		addend = mips_elf_higher (addend);
@@ -13455,7 +13527,7 @@ _bfd_elf_mips_get_relocated_section_contents
 		     * bfd_octets_per_byte (input_bfd, input_section));
 	      _bfd_clear_contents ((*parent)->howto, input_bfd,
 				   input_section, data, off);
-	      (*parent)->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      (*parent)->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      (*parent)->addend = 0;
 	      (*parent)->howto = &none_howto;
 	      r = bfd_reloc_ok;
@@ -14456,8 +14528,7 @@ _bfd_mips_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      mips_elf_link_hash_newfunc,
-				      sizeof (struct mips_elf_link_hash_entry),
-				      MIPS_ELF_DATA))
+				      sizeof (struct mips_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -15419,6 +15490,7 @@ _bfd_mips_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 
 	  o->size = c * sizeof (Elf32_External_gptab);
 	  o->contents = (bfd_byte *) ext_tab;
+	  o->alloced = 1;
 
 	  /* Skip this section later on (I don't think this currently
 	     matters, but someday it might).  */

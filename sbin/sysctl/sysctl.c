@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.165 2023/04/02 18:15:24 ryo Exp $ */
+/*	$NetBSD: sysctl.c,v 1.165.2.1 2026/11/04 23:19:44 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.165 2023/04/02 18:15:24 ryo Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.165.2.1 2026/11/04 23:19:44 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -444,7 +444,7 @@ canonicalize(const char *i, char *o)
 {
 	const char *t;
 	char p[SYSCTL_NAMELEN + 1];
-	int l;
+	size_t l;
 
 	if (i[0] != *sep) {
 		o[0] = '/';
@@ -579,7 +579,7 @@ appendprintf(char **bp, size_t *lbp, const char *fmt, ...)
 	r = vsnprintf(*bp, *lbp, fmt, ap);
 	va_end(ap);
 	if (r < 0 || (size_t)r > *lbp)
-		r = *lbp;
+		r = (int)*lbp;
 	*bp += r;
 	*lbp -= r;
 }
@@ -2264,7 +2264,7 @@ kern_cp_time(HANDLER_ARGS)
 		rc = prog_sysctlbyname("hw.ncpu", &n, &sz, NULL, 0);
 		if (rc != 0)
 			return; /* XXX print an error, eh? */
-		n++; /* Add on space for the sum. */
+		n++; /* Add one space for the sum. */
 		sz = n * sizeof(u_int64_t) * CPUSTATES;
 	}
 	else {
@@ -2605,7 +2605,6 @@ machdep_diskinfo(HANDLER_ARGS)
 	lim = dl->dl_nnativedisks;
 	ni = dl->dl_nativedisks;
 	bi = dl->dl_biosdisks;
-	/* LINTED -- pointer casts are tedious */
 	if ((char *)&ni[lim] != (char *)dl + sz) {
 		sysctlperror("%s: size mismatch\n", gsname);
 		return;
@@ -2756,6 +2755,7 @@ bitmask_scan(const void *v, bitmap *o)
 }
 
 
+/* ARGSUSED */
 static void
 reserve(HANDLER_ARGS)
 {

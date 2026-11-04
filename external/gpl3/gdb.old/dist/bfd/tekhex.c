@@ -1,5 +1,5 @@
 /* BFD backend for Extended Tektronix Hex Format  objects.
-   Copyright (C) 1992-2022 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support <sac@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -361,6 +361,7 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 {
   asection *section, *alt_section;
   unsigned int len;
+  bfd_vma addr;
   bfd_vma val;
   char sym[17];			/* A symbol can only be 16chars long.  */
 
@@ -368,20 +369,16 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
     {
     case '6':
       /* Data record - read it and store it.  */
-      {
-	bfd_vma addr;
+      if (!getvalue (&src, &addr, src_end))
+	return false;
 
-	if (!getvalue (&src, &addr, src_end))
-	  return false;
-
-	while (*src && src < src_end - 1)
-	  {
-	    insert_byte (abfd, HEX (src), addr);
-	    src += 2;
-	    addr++;
-	  }
-	return true;
-      }
+      while (*src && src < src_end - 1)
+	{
+	  insert_byte (abfd, HEX (src), addr);
+	  src += 2;
+	  addr++;
+	}
+      return true;
 
     case '3':
       /* Symbol record, read the segment.  */
@@ -395,7 +392,7 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 	  if (!n)
 	    return false;
 	  memcpy (n, sym, len + 1);
-	  section = bfd_make_section (abfd, n);
+	  section = bfd_make_section_old_way (abfd, n);
 	  if (section == NULL)
 	    return false;
 	}
@@ -406,13 +403,16 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 	    {
 	    case '1':		/* Section range.  */
 	      src++;
-	      if (!getvalue (&src, &section->vma, src_end))
+	      if (!getvalue (&src, &addr, src_end))
 		return false;
 	      if (!getvalue (&src, &val, src_end))
 		return false;
-	      if (val < section->vma)
-		val = section->vma;
-	      section->size = val - section->vma;
+	      if (bfd_is_const_section (section))
+		break;
+	      section->vma = addr;
+	      if (val < addr)
+		val = addr;
+	      section->size = val - addr;
 	      /* PR 17512: file: objdump-s-endless-loop.tekhex.
 		 Check for overlarge section sizes.  */
 	      if (section->size & 0x80000000)
@@ -455,6 +455,8 @@ first_phase (bfd *abfd, int type, char *src, char * src_end)
 		  new_symbol->symbol.flags = BSF_LOCAL;
 		if (stype == '2' || stype == '6')
 		  new_symbol->symbol.section = bfd_abs_section_ptr;
+		else if (bfd_is_const_section (section))
+		  ;
 		else if (stype == '3' || stype == '7')
 		  {
 		    if ((section->flags & SEC_DATA) == 0)
@@ -515,7 +517,7 @@ pass_over (bfd *abfd, bool (*func) (bfd *, int, char *, char *))
   bool is_eof = false;
 
   /* To the front of the file.  */
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return false;
 
   while (! is_eof)
@@ -524,15 +526,15 @@ pass_over (bfd *abfd, bool (*func) (bfd *, int, char *, char *))
       char type;
 
       /* Find first '%'.  */
-      is_eof = (bool) (bfd_bread (src, (bfd_size_type) 1, abfd) != 1);
+      is_eof = bfd_read (src, 1, abfd) != 1;
       while (!is_eof && *src != '%')
-	is_eof = (bool) (bfd_bread (src, (bfd_size_type) 1, abfd) != 1);
+	is_eof = bfd_read (src, 1, abfd) != 1;
 
       if (is_eof)
 	break;
 
       /* Fetch the type and the length and the checksum.  */
-      if (bfd_bread (src, (bfd_size_type) 5, abfd) != 5)
+      if (bfd_read (src, 5, abfd) != 5)
 	return false;
 
       type = src[2];
@@ -546,7 +548,7 @@ pass_over (bfd *abfd, bool (*func) (bfd *, int, char *, char *))
       if (chars_on_line >= MAXCHUNK)
 	return false;
 
-      if (bfd_bread (src, (bfd_size_type) chars_on_line, abfd) != chars_on_line)
+      if (bfd_read (src, chars_on_line, abfd) != chars_on_line)
 	return false;
 
       /* Put a null at the end.  */
@@ -607,17 +609,21 @@ tekhex_object_p (bfd *abfd)
 
   tekhex_init ();
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0
-      || bfd_bread (b, (bfd_size_type) 4, abfd) != 4)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0
+      || bfd_read (b, 4, abfd) != 4)
     return NULL;
 
   if (b[0] != '%' || !ISHEX (b[1]) || !ISHEX (b[2]) || !ISHEX (b[3]))
     return NULL;
 
-  tekhex_mkobject (abfd);
+  if (!tekhex_mkobject (abfd))
+    return NULL;
 
   if (!pass_over (abfd, first_phase))
-    return NULL;
+    {
+      bfd_release (abfd, abfd->tdata.tekhex_data);
+      return NULL;
+    }
 
   return _bfd_no_cleanup;
 }
@@ -719,24 +725,13 @@ writevalue (char **dst, bfd_vma value)
   int len;
   int shift;
 
-  for (len = 8, shift = 28; shift; shift -= 4, len--)
-    {
-      if ((value >> shift) & 0xf)
-	{
-	  *p++ = len + '0';
-	  while (len)
-	    {
-	      *p++ = digs[(value >> shift) & 0xf];
-	      shift -= 4;
-	      len--;
-	    }
-	  *dst = p;
-	  return;
+  for (len = BFD_ARCH_SIZE / 4, shift = len * 4 - 4; len > 1; shift -= 4, len--)
+    if ((value >> shift) & 0xf)
+      break;
 
-	}
-    }
-  *p++ = '1';
-  *p++ = '0';
+  *p++ = digs[len & 0xf];
+  for (; len; shift -= 4, len--)
+    *p++ = digs[(value >> shift) & 0xf];
   *dst = p;
 }
 
@@ -747,22 +742,14 @@ writesym (char **dst, const char *sym)
   int len = (sym ? strlen (sym) : 0);
 
   if (len >= 16)
+    len = 16;
+  else if (len == 0)
     {
-      *p++ = '0';
-      len = 16;
-    }
-  else
-    {
-      if (len == 0)
-	{
-	  *p++ = '1';
-	  sym = "$";
-	  len = 1;
-	}
-      else
-	*p++ = digs[len];
+      len = 1;
+      sym = "$";
     }
 
+  *p++ = digs[len & 0xf];
   while (len--)
     *p++ = *sym++;
 
@@ -788,11 +775,11 @@ out (bfd *abfd, int type, char *start, char *end)
   sum += sum_block[(unsigned char) front[2]];
   sum += sum_block[(unsigned char) front[3]];	/* Type.  */
   TOHEX (front + 4, sum);
-  if (bfd_bwrite (front, (bfd_size_type) 6, abfd) != 6)
+  if (bfd_write (front, 6, abfd) != 6)
     abort ();
   end[0] = '\n';
   wrlen = end - start + 1;
-  if (bfd_bwrite (start, wrlen, abfd) != wrlen)
+  if (bfd_write (start, wrlen, abfd) != wrlen)
     abort ();
 }
 
@@ -897,7 +884,7 @@ tekhex_write_object_contents (bfd *abfd)
     }
 
   /* And the terminator.  */
-  if (bfd_bwrite ("%0781010\n", (bfd_size_type) 9, abfd) != 9)
+  if (bfd_write ("%0781010\n", 9, abfd) != 9)
     abort ();
   return true;
 }
@@ -991,7 +978,6 @@ tekhex_print_symbol (bfd *abfd,
 #define tekhex_bfd_copy_link_hash_symbol_type	    _bfd_generic_copy_link_hash_symbol_type
 #define tekhex_bfd_final_link			    _bfd_generic_final_link
 #define tekhex_bfd_link_split_section		    _bfd_generic_link_split_section
-#define tekhex_get_section_contents_in_window	    _bfd_generic_get_section_contents_in_window
 #define tekhex_bfd_link_check_relocs		    _bfd_generic_link_check_relocs
 
 const bfd_target tekhex_vec =

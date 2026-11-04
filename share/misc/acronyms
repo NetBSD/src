@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.315.2.1 2025/08/02 05:55:18 perseant Exp $
+$NetBSD: acronyms,v 1.315.2.2 2026/11/04 23:19:53 perseant Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -99,6 +99,7 @@ CFY	calling for you
 CG	center of gravity
 CHANOPS	channel operator status
 CIA	central intelligence agency
+CLM	career-limiting move
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
@@ -169,12 +170,14 @@ FCFS	first come, first served
 FCOL	for crying out loud
 FFS	free for shipping
 FITB	fill in the blank
+FKA	formerly known as
 FNO	for nerds only
 FNO	from now on
 FOC	free of charge
 FPS	first person shooter
 FPS	frames per second
 FQA	frequently questioned answer
+FR	for real
 FRAND	fair, reasonable, and non-discriminatory
 FSDO	for some definition of
 FSVO	for some value of
@@ -307,6 +310,7 @@ IW	it's worse
 IWBNI	it would be nice if
 IYD	in your dreams
 IYKWIM	if you know what I mean
+IYKYK	if you know you know
 IYSS	if you say so
 IYSWIM	if you see what I mean
 J/K	just kidding
@@ -365,6 +369,10 @@ MD	Mega Drive
 MDMA	methylenedioxy methamphetamine
 MFW	my face when
 MIA	missing in action
+ML	Marxism-Leninism
+MLM	men-loving-men
+MLM	multi-level marketing
+MLM	Marxism-Leninism-Maoism
 MLPR	mobile license plate reader
 MMB	message me back
 MO	modus operandi
@@ -414,6 +422,7 @@ NXT	next
 NYPA	not your personal army
 O2W	off to work
 OAO	over and out
+OBE	overtaken by events
 OBV	obviously
 OBVS	obviously
 ODTW	others do the work (cf. "otdw source")
@@ -626,6 +635,7 @@ WAFWOT	what a foolish waste of time
 WAG	wild-ass guess
 WB	welcome back
 WCPGW	what could possibly go wrong
+WDYM	what do you mean
 WDYMBT	what do you mean by that
 WELC	working effectively with legacy code
 WFH	working from home
@@ -646,6 +656,7 @@ WTH	{what,when,where,who,why} the hell
 WTS	{waiting,want,willing} to sell
 WTT	{waiting,want,willing} to trade
 WWJD	what would Jesus do?
+WWYD	what would you do?
 YAGNI	you ain't gonna need it
 YALIMO	you are lame, in my opinion
 YAOTM	yet another off-topic message

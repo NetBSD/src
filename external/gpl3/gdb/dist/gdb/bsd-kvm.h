@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BSD_KVM_H
-#define BSD_KVM_H
+#ifndef GDB_BSD_KVM_H
+#define GDB_BSD_KVM_H
 
 struct pcb;
 struct regcache;
@@ -30,4 +30,4 @@ struct regcache;
 extern void
   bsd_kvm_add_target (int (*supply_pcb)(struct regcache *, struct pcb *));
 
-#endif /* bsd-kvm.h */
+#endif /* GDB_BSD_KVM_H */

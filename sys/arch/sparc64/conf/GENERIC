@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.240.2.1 2025/08/02 05:56:09 perseant Exp $
+# $NetBSD: GENERIC,v 1.240.2.2 2026/11/04 23:21:22 perseant Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.240.2.1 $"
+#ident		"GENERIC-$Revision: 1.240.2.2 $"
 
 maxusers	64
 
@@ -240,12 +240,22 @@ clock*	at ebus?
 ## DS1287 compatible clock found on ebus on Netra X1 and other systems.
 rtc*	at ebus?
 
+## bq4802 compatible clock found on ebus on Ultra 45.
+bq4802rtc* 	at ebus?
+
+## env-monitor found on ebus on Ultra 45 and Fire V245.
+envmon* 	at ebus?
+
 ## Timer chip found on 4/300, sun4c, sun4m and (some) sun4u systems.
 timer*	at mainbus0				# sun4c
 
 ## found in schizo-based systems
 jbusi2c* 	at mainbus0
 iic* 	at jbusi2c?
+
+## Found in pyro-based systems
+firei2c* 	at mainbus0
+iic* 	at firei2c?
 
 # Virtual devices for sun4v systems.
 vrtc0	at vbus?
@@ -336,6 +346,7 @@ ahc*	at pci? dev ? function ?	# Adaptec [23]94x, aic78x0 SCSI
 bha*	at pci? dev ? function ?	# BusLogic 9xx SCSI UT
 dpt*	at pci? dev ? function ?	# DPT SmartCache/SmartRAID UT
 iha*	at pci? dev ? function ?	# Initio INIC-940/950 SCSI
+mpii*	at pci? dev ? function ?	# LSI Message Passing Interface II
 mpt*	at pci? dev ? function ?	# LSILogic 9x9 and 53c1030
 njs*	at pci? dev ? function ?	# Workbit NinjaSCSI-32
 pcscp*	at pci? dev ? function ?	# AMD 53c974 PCscsi-PCI SCSI
@@ -431,6 +442,10 @@ pseudo-device	accf_http		# "httpready" accept filter
 pseudo-device	vnd
 #options 	VND_COMPRESSION		# compressed vnd(4)
 
+## RAID control device driver
+
+pseudo-device 	bio
+
 ## Concatenated and striped disks; with this, you can create a software-based
 ## disk array similar to a "RAID 0" setup.  See ccd(4).
 
@@ -439,6 +454,7 @@ pseudo-device	ccd
 ## Cryptographic disk devices.  See cgd(4).
 
 pseudo-device	cgd
+options		AES_BEAR64		# 64-bit optimized AES encryption
 
 ## RAIDframe disk driver: software RAID driver.  See raid(4).
 
@@ -502,6 +518,7 @@ gem*	at pci? dev ? function ?	# Apple GMAC and Sun ERI gigabit enet
 gem*	at sbus? slot ? offset ?
 gsip*	at pci? dev ? function ?	# National Semiconductor DP83820 GigE
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
+ixl*	at pci?						# Intel 700 Series Ethernet UT
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet UT
@@ -549,6 +566,7 @@ tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
 ukphy*	at mii? phy ?			# generic unknown PHYs
 
 # PCI USB controllers
+xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
 ehci*	at pci? dev ? function ?	# Enhanced Host Controller
 ohci*	at pci? dev ? function ?	# Open Host Controller
 uhci*	at pci? dev ? function ?	# Universal Host Controller (Intel)
@@ -826,9 +844,14 @@ ecadc*		at iic? addr?	# envctrl/envctrltwo on E250/E450
 lmtemp* 	at iic? addr?
 tda*		at iic? addr?	# fan control on SB1000/2000
 dbcool* 	at iic? addr?	# SB25000
+nxp75a* 	at iic? addr?	# U45
+lm95221ts* 	at iic? addr?	# U45
+adt7462sm* 	at iic? addr?	# U45
 seeprom*	at iic? addr?	# i2c-at24c64 fru's
 pcagpio* 	at iic? addr?	# V210/V240 GPIO's
 pcf8574io* 	at iic? addr?	# E250 GPIO's
+
+auxfan* 	at iic? addr?	# iic fan sensor found on SB2500
 
 ### Other pseudo-devices
 

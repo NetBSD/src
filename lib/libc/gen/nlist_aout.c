@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_aout.c,v 1.23 2012/03/21 15:32:26 christos Exp $ */
+/* $NetBSD: nlist_aout.c,v 1.23.44.1 2026/11/04 23:19:17 perseant Exp $ */
 
 /*
  * Copyright (c) 1989, 1993
@@ -66,12 +66,13 @@
 #if 0
 static char sccsid[] = "@(#)nlist.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: nlist_aout.c,v 1.23 2012/03/21 15:32:26 christos Exp $");
+__RCSID("$NetBSD: nlist_aout.c,v 1.23.44.1 2026/11/04 23:19:17 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -115,7 +116,7 @@ __fdnlist_aout(int fd, struct nlist *list)
 	stroff = symoff + symsize;
 
 	/* Check for files too large to mmap. */
-	if ((uintmax_t)(st.st_size - stroff) > (uintmax_t)SIZE_T_MAX) {
+	if ((uintmax_t)(st.st_size - stroff) > (uintmax_t)SIZE_MAX) {
 		errno = EFBIG;
 		return (-1);
 	}

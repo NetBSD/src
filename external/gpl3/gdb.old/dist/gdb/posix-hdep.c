@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbsupport/event-loop.h"
 #include "gdbsupport/gdb_select.h"
 #include "inferior.h"
@@ -65,6 +64,7 @@ static c_c_handler_ftype *current_handler;
 static void
 handler_wrapper (int num)
 {
+  scoped_restore restore_errno = make_scoped_restore (&errno);
   signal (num, handler_wrapper);
   if (current_handler != SIG_IGN)
     current_handler (num);

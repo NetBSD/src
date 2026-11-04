@@ -1,4 +1,4 @@
-/*	$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $	*/
+/*	$NetBSD: jbus-i2c.c,v 1.7.12.1 2026/11/04 23:21:22 perseant Exp $	*/
 
 /*
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.7 2021/08/07 16:19:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jbus-i2c.c,v 1.7.12.1 2026/11/04 23:21:22 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -133,7 +133,6 @@ jbusi2c_attach(device_t parent, device_t self, void *aux)
 static void
 jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 {
-	struct i2cbus_attach_args iba;
 	prop_array_t cfg;
 	prop_dictionary_t dev;
 	prop_dictionary_t dict = device_properties(sc->sc_dev);
@@ -154,6 +153,8 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 	prop_dictionary_set(dict, "i2c-child-devices", cfg);
 	prop_object_release(cfg);
 	while (devs != 0) {
+		devhandle_t child_devhandle;
+
 		if (OF_getprop(devs, "name", name, 256) <= 0)
 			goto skip;
 		memset(compat, 0, sizeof(compat));
@@ -170,15 +171,15 @@ jbusi2c_setup_i2c(struct jbusi2c_softc *sc)
 		prop_dictionary_set_data(dev, "compatible", compat,
 		    strlen(compat)+1);
 		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", devs);
+		child_devhandle = devhandle_from_of(devhandle_invalid(), devs);
+		prop_dictionary_set_data(dev, "devhandle", &child_devhandle,
+		    sizeof(child_devhandle));
 		prop_array_add(cfg, dev);
 		prop_object_release(dev);
 	skip:
 		devs = OF_peer(devs);
 	}
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(sc->sc_dev, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(sc->sc_dev, &sc->sc_i2c);
 }
 
 static inline void

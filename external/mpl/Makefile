@@ -1,7 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2023/08/26 05:58:49 riastradh Exp $
+#	$NetBSD: Makefile,v 1.5.2.1 2026/11/04 23:15:29 perseant Exp $
 
 .include <bsd.own.mk>
 
-SUBDIR=	bind dhcp mozilla-certdata
+SUBDIR=	dhcp mozilla-certdata
+
+.if (${MKBIND} != "no")
+SUBDIR+= bind
+.endif
 
 .include <bsd.subdir.mk>

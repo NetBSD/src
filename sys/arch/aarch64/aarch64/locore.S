@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.93.2.1 2025/08/02 05:55:20 perseant Exp $	*/
+/*	$NetBSD: locore.S,v 1.93.2.2 2026/11/04 23:19:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -35,10 +35,9 @@
 #include "opt_multiprocessor.h"
 
 #include <aarch64/asm.h>
-#include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.93.2.1 2025/08/02 05:55:20 perseant Exp $")
+RCSID("$NetBSD: locore.S,v 1.93.2.2 2026/11/04 23:19:54 perseant Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -73,10 +72,40 @@ RCSID("$NetBSD: locore.S,v 1.93.2.1 2025/08/02 05:55:20 perseant Exp $")
 #define DPRINT(string)		PRINT(string)
 #define DPRINTREG(str, reg)	mov x19,reg; PRINT(str); mov x0,x19; bl print_x0
 #define DPRINTSREG(str, reg)	mrs x19,reg; PRINT(str); mov x0,x19; bl print_x0
-#else
+
+#define CPU_DPRINT(str)			\
+	bl	locore_lock_enter;	\
+	bl	printcpu;		\
+	DPRINT(str);			\
+	bl	locore_lock_exit
+
+/*
+ * CPU_DPRINTREG macro use x19 internally. x0-x15 may be broken.
+ * x27 for cpuindex.
+ */
+#define CPU_DPRINTREG(str,reg)		\
+	mov	x19, reg;		\
+	bl	locore_lock_enter;	\
+	bl	printcpu;		\
+	PRINT(str);			\
+	mov	x0, x19;		\
+	bl	print_x0;		\
+	bl	locore_lock_exit
+
+#define CPU_DPRINTSREG(str, reg)	\
+	mrs	x19, reg;		\
+	CPU_DPRINTREG(str, x19)
+
+#else /* DEBUG_LOCORE && EARLYCONS */
+
 #define DPRINT(string)
 #define DPRINTREG(str, reg)
 #define DPRINTSREG(str, reg)
+
+#define CPU_DPRINT(str)
+#define CPU_DPRINTREG(str,reg)
+#define CPU_DPRINTSREG(str, reg)
+
 #endif
 
 #define PRINT(string)	bl xprint; .asciz string; .align 2
@@ -105,7 +134,13 @@ ASENTRY_NP(aarch64_start)
 	bcc	1f
 	/* EL2 registers can be accessed in EL2 or higher */
 	DPRINTSREG("SCTLR_EL2        = ", sctlr_el2)
+	DPRINTSREG("TCR_EL2          = ", tcr_el2)
 	DPRINTSREG("HCR_EL2          = ", hcr_el2)
+	DPRINTSREG("VTTBR_EL2        = ", vttbr_el2)
+	DPRINTSREG("MAIR_EL2         = ", mair_el2)
+#if 0
+	DPRINTSREG("ICH_VTR_EL2      = ", ich_vtr_el2)
+#endif
 1:
 	DPRINTSREG("SPSR_EL1         = ", spsr_el1)
 	DPRINTSREG("CNTFREQ_EL0      = ", cntfrq_el0)
@@ -127,7 +162,6 @@ ASENTRY_NP(aarch64_start)
 	lsr	x20, x20, #2
 	DPRINTREG("CurrentEL        = ", x20)
 #endif /* LOCORE_EL2 */
-
 
 	bl	mmu_disable
 	bl	init_sysregs
@@ -237,8 +271,6 @@ ASEND(aarch64_start)
 
 
 init_sysregs:
-	stp	x0, lr, [sp, #-16]!
-
 	/* init debug registers */
 	msr	mdscr_el1, xzr
 	msr	oslar_el1, xzr
@@ -254,10 +286,6 @@ init_sysregs:
 	mov	x0, #CNTKCTL_EL0VCTEN
 	msr	cntkctl_el1, x0
 
-	/* any exception not masked */
-	msr	daif, xzr
-
-	ldp	x0, lr, [sp], #16
 	ret
 
 
@@ -331,41 +359,12 @@ locore_lock_exit:
 /* print "[CPU$x27] " (x27 for cpuindex) */
 printcpu:
 	stp	x0, lr, [sp, #-16]!
-	PRINT("[CPU");			\
-	mov	x0, x27;		\
-	bl	_printdec_x0;		\
-	PRINT("] ");			\
+	PRINT("[CPU")
+	mov	x0, x27
+	bl	_printdec_x0
+	PRINT("] ")
 	ldp	x0, lr, [sp], #16
 	ret
-
-#define CPU_DPRINT(str)			\
-	bl	locore_lock_enter;	\
-	bl	printcpu;		\
-	DPRINT(str);			\
-	bl	locore_lock_exit
-
-/*
- * CPU_DPRINTREG macro use x19 internally. x0-x15 may be broken.
- * x27 for cpuindex.
- */
-#define CPU_DPRINTREG(str,reg)		\
-	mov	x19, reg;		\
-	bl	locore_lock_enter;	\
-	bl	printcpu;		\
-	PRINT(str);			\
-	mov	x0, x19;		\
-	bl	print_x0;		\
-	bl	locore_lock_exit
-
-#define CPU_DPRINTSREG(str, reg)	\
-	mrs	x19, reg;		\
-	CPU_DPRINTREG(str, x19)
-
-#else /* DEBUG_LOCORE */
-
-#define CPU_DPRINT(str)
-#define CPU_DPRINTREG(str,reg)
-#define CPU_DPRINTSREG(str, reg)
 
 #endif /* DEBUG_LOCORE */
 
@@ -434,7 +433,10 @@ ENTRY_NP(cpu_mpstart)
 	bcc	1f
 	/* EL2 registers can be accessed in EL2 or higher */
 	CPU_DPRINTSREG("SCTLR_EL2        = ", sctlr_el2)
+	CPU_DPRINTSREG("TCR_EL2          = ", tcr_el2)
 	CPU_DPRINTSREG("HCR_EL2          = ", hcr_el2)
+	CPU_DPRINTSREG("VTTBR_EL2        = ", vttbr_el2)
+	CPU_DPRINTSREG("MAIR_EL2         = ", mair_el2)
 1:
 	CPU_DPRINTSREG("SPSR_EL1         = ", spsr_el1)
 	CPU_DPRINTSREG("SCTLR_EL1        = ", sctlr_el1)
@@ -465,16 +467,16 @@ ENTRY_NP(cpu_mpstart)
 mp_vstart:
 	hint	0x24		/* bti j */
 
+	/* Set SP to VA */
+	adrl	x0, kern_vtopdiff
+	ldr	x0, [x0]
+	add	sp, sp, x0
+
 	CPU_DPRINTREG("PC               = ", x20)
 	CPU_DPRINTREG("SP               = ", sp)
 
 	CPU_DPRINTSREG("TTBR0            = ", ttbr0_el1)
 	CPU_DPRINTSREG("TTBR1            = ", ttbr1_el1)
-
-	/* Set SP to VA */
-	adrl	x0, kern_vtopdiff
-	ldr	x0, [x0]
-	add	sp, sp, x0
 
 	/* disable TTBR0 - CPU_DPRINT{,REG,SREG} no longer work after this */
 	mrs	x0, tcr_el1
@@ -482,8 +484,9 @@ mp_vstart:
 	msr	tcr_el1, x0
 	isb
 
-	tlbi	vmalle1is
-	dsb	ish
+	/* Invalidate local TLB */
+	tlbi	vmalle1
+	dsb	nsh
 	isb
 
 	/* set exception vector */
@@ -584,14 +587,14 @@ END(cpu_mpstart)
 
 
 /*
- * xprint - print strings pointed by $PC(LR)
- *          and return to the end of string.
- *          "\n" will be replaced "\r\n"
- * e.g.)
+ * xprint - print the string pointed to by $PC(LR), and return to the next
+ *          instruction after the end of the string.
+ *          "\n" is replaced with "\r\n"
+ * e.g.
  *    bl        xprint      <- call
- *    .ascii    "Hello\n\0" <- wouldn't return here
+ *    .ascii    "Hello\n\0" <- doesn't return here
  *    .align    2
- *    nop                   <- return to here
+ *    nop                   <- returns to here
  *
  */
 xprint:
@@ -806,7 +809,6 @@ load_ttbrs:
 	msr	ttbr1_el1, x1
 	ret
 
-
 init_mmutable:
 	stp	x26, lr, [sp, #-16]!
 
@@ -912,14 +914,9 @@ mmu_disable:
 mmu_enable:
 	dsb	sy
 
-	/* Invalidate all TLB */
-	dsb	ishst
-#ifdef MULTIPROCESSOR
-	tlbi	vmalle1is
-#else
+	/* Invalidate local TLB */
 	tlbi	vmalle1
-#endif
-	dsb	ish
+	dsb	nsh
 	isb
 
 	ldr	x0, mair_setting
@@ -947,7 +944,6 @@ mmu_enable:
 	isb
 
 	ret
-
 
 	.align 3
 mair_setting:
@@ -996,7 +992,6 @@ tcr_setting:
 #define SCTLR_SA_CONFIG		0
 #endif
 
-
 sctlr_set:
 	.quad ( \
 	    SCTLR_LSMAOE |  /* Load/Store Multiple Atomicity and Ordering */ \
@@ -1011,6 +1006,7 @@ sctlr_set:
 	    SCTLR_SED |     /* SETEND instruction disable */ \
 	    SCTLR_C |       /* Cache enable */ \
 	    SCTLR_M |       /* MMU Enable */ \
+	    SCTLR_EOS |     /* RES1 if no FEAT_ExS */ \
 	    SCTLR_SA0_CONFIG | \
 	    SCTLR_SA_CONFIG | \
 	    SCTLR_A_CONFIG | \
@@ -1021,7 +1017,7 @@ sctlr_clear:
 	    SCTLR_WXN |     /* Write permission implies Execute Never (W^X) */ \
 	    SCTLR_UMA |     /* EL0 Controls access to interrupt masks */ \
 	    SCTLR_ITD |     /* IT instruction disable */ \
-	    SCTLR_nAA |     /* ? */ \
+	    SCTLR_nAA |     /* Non-aligned access. FEAT_LSE2 */ \
 	    SCTLR_CP15BEN | /* CP15 barrier enable */ \
 	    SCTLR_SA0 |     /* Enable EL0 stack alignment check */ \
 	    SCTLR_SA |      /* Enable SP alignment check */ \

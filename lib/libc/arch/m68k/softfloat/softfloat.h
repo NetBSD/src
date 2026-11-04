@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat.h,v 1.7 2014/09/01 07:33:31 matt Exp $	*/
+/*	$NetBSD: softfloat.h,v 1.7.28.1 2026/11/04 23:19:12 perseant Exp $	*/
 
 /* This is a derivative work. */
 
@@ -56,10 +56,13 @@ Software IEC/IEEE floating-point types.
 typedef unsigned int float32;
 typedef unsigned long long float64;
 #ifdef FLOATX80
+#define X80SHIFT	16
+#define X80M68K
+
 typedef struct {
-    unsigned short high;
+    unsigned long high;
     unsigned long long low;
-} floatx80;
+}__packed floatx80;
 #endif
 #ifdef FLOAT128
 typedef struct {
@@ -216,7 +219,9 @@ flag float64_lt( float64, float64 );
 flag float64_eq_signaling( float64, float64 );
 flag float64_le_quiet( float64, float64 );
 flag float64_lt_quiet( float64, float64 );
+#if !defined(SOFTFLOAT_FOR_GCC) || defined(SOFTFLOATM68K_FOR_GCC)
 flag float64_is_signaling_nan( float64 );
+#endif
 
 #ifdef FLOATX80
 
@@ -255,6 +260,12 @@ floatx80 floatx80_mul( floatx80, floatx80 );
 floatx80 floatx80_div( floatx80, floatx80 );
 floatx80 floatx80_rem( floatx80, floatx80 );
 floatx80 floatx80_sqrt( floatx80 );
+flag floatx80_eq_internal( floatx80, floatx80 );
+flag floatx80_le_internal( floatx80, floatx80 );
+flag floatx80_lt_internal( floatx80, floatx80 );
+flag floatx80_eq_signaling_internal( floatx80, floatx80 );
+flag floatx80_le_quiet_internal( floatx80, floatx80 );
+flag floatx80_lt_quiet_internal( floatx80, floatx80 );
 flag floatx80_eq( floatx80, floatx80 );
 flag floatx80_le( floatx80, floatx80 );
 flag floatx80_lt( floatx80, floatx80 );

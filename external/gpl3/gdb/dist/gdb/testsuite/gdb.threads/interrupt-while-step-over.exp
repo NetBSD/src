@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2024 Free Software Foundation, Inc.
+# Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -67,7 +67,7 @@ proc return_if_nonzero { result } {
     }
 }
 
-# Do one iteration of "c -a& -> interrupt -a".  Return zero on sucess,
+# Do one iteration of "c -a& -> interrupt -a".  Return zero on success,
 # and non-zero if some test fails.
 
 proc test_one_iteration {} {
@@ -169,7 +169,7 @@ proc testdriver {displaced} {
 
     save_vars { GDBFLAGS } {
 	append GDBFLAGS " -ex \"set non-stop on\""
-	clean_restart $binfile
+	clean_restart $::testfile
     }
 
     gdb_test_no_output "set displaced-stepping $displaced"

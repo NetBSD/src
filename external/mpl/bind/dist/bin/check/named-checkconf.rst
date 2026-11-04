@@ -21,7 +21,7 @@ named-checkconf - named configuration file syntax checking tool
 Synopsis
 ~~~~~~~~
 
-:program:`named-checkconf` [**-achjlvz**] [**-p** [**-x** ]] [**-t** directory] {filename}
+:program:`named-checkconf` [**-achjklvz**] [**-p** [**-x** ]] [**-t** directory] {filename}
 
 Description
 ~~~~~~~~~~~
@@ -55,6 +55,12 @@ Options
 .. option:: -j
 
    When loading a zonefile, this option instructs :iscman:`named` to read the journal if it exists.
+
+.. option:: -k
+
+   Check the `dnssec-policy`'s DNSSEC keys against the key files in
+   the `key-directory`.  This is useful when checking a `named.conf`
+   to ensure a DNSSEC policy matches the existing keys.
 
 .. option:: -l
 

@@ -1,4 +1,4 @@
-.\" $NetBSD: col.1,v 1.11 2020/11/01 22:27:15 christos Exp $
+.\" $NetBSD: col.1,v 1.11.8.1 2026/11/04 23:28:31 perseant Exp $
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -54,16 +54,21 @@ The
 utility reads from the standard input and writes to the standard output.
 .Pp
 The options are as follows:
-.Bl -tag -width indent
+.Bl -tag -width Fl
 .It Fl b
 Do not output any backspaces, printing only the last character
 written to each column position.
 .It Fl f
-Forward half line feeds are permitted (``fine'' mode).
+Forward half line feeds are permitted
+.Po
+.Dq fine
+mode
+.Pc .
 Normally characters printed on a half line boundary are printed
 on the following line.
 .It Fl h
-Do not output multiple spaces instead of tabs (default).
+Output tabs instead of multiple spaces.
+This is the default.
 .It Fl l Ar num
 Buffer at least
 .Ar num
@@ -151,12 +156,12 @@ We can use
 .Nm
 to filter the output of
 .Xr man 1
-and remove the backspace characters (
-.Em ^H
-) before searching for some text:
-.Bd -literal -offset indent
-man ls | col -b | grep HISTORY
-.Ed
+and remove the backspace characters
+.Pq Em ^H
+before searching for some text:
+.Pp
+.Dl man ls | col -b | grep HISTORY
+.
 .Sh SEE ALSO
 .Xr expand 1
 .Sh STANDARDS

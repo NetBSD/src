@@ -1,4 +1,4 @@
-/*	$NetBSD: wait.h,v 1.38 2022/08/07 11:06:19 andvar Exp $	*/
+/*	$NetBSD: wait.h,v 1.38.10.1 2026/11/04 23:28:06 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993, 1994
@@ -141,6 +141,7 @@
 #define	WAIT_MYPGRP	0	/* any process in my process group */
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 /*
  * Deprecated:

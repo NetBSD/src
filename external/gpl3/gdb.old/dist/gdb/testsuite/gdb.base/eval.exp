@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,3 +20,19 @@ gdb_test_no_output "set \$a = 10" "initialize \$a."
 
 gdb_test "eval \"echo %d\\n\", \$a++" "10" "first eval."
 gdb_test "eval \"echo %d\\n\", \$a*2" "22" "second eval."
+
+gdb_test_no_output "set var \$hi = \"Hi\""
+gdb_test {eval "echo %s, %s%c\n", $hi, "mom", '!'} "Hi, mom!"
+
+set listsize_value -1
+gdb_test_multiple "show listsize" "get listsize value" {
+    -re "Number of source lines gdb will list by default is (\[0-9\]+)\.\r\n$gdb_prompt $" {
+	set listsize_value $expect_out(1,string)
+    }
+}
+
+if {$listsize_value > -1} {
+    gdb_test {eval "echo %s\n", $_gdb_setting_str("listsize")} $listsize_value
+} else {
+    send_log "warning: could not get listsize\n"
+}

@@ -62,19 +62,25 @@ What Is A Security Bug?
   (either from the GDB command line, a GDB configuration file, or from
   the GDB prompt) are considered security bugs.
 
-  GDB will check for and load multiple configuration files.  When
-  initially started GDB can load user- and system-specific
-  configuration files, this is done unconditionally as it is assumed
-  these files are under control of the user and are always safe to
-  load.
+  GDB will check for and load multiple configuration files, sometimes
+  referred to as extension scripts or plugins.  When initially started
+  GDB can load user-specific and/or system-specific configuration files,
+  this is done unconditionally as it is assumed these files are under
+  control of the user and are always safe to load.  All of these files
+  are treated as trusted input, meaning GDB makes no attempt to sanitize
+  commands and has no sandboxing or other protections against effects of
+  commands run by any automatically loaded file.  It is up to the user to
+  audit files against documentation provided by the relevant projects to
+  protect against malicious commands.  If executing commands provided by
+  the GDB project generates undocumented side effects, this is a bug.  For
+  that bug to be considered a security bug, it must meet other definitions
+  of security bugs outlined in this document.
 
-  GDB can also load per-project and per-program configuration files,
-  this is done when a program to debug is loaded into GDB.  These
-  configuration files will only be loaded if the user has given GDB
-  permission to load these files.  Any bug in GDB which allows
-  per-project or per-program configuration files to be loaded without
-  permission having been granted by the user is considered a security
-  bug.
+  GDB can also load per-project and/or per-program configuration files
+  when a program is loaded for debugging.  Such files will only be loaded
+  if the user has given GDB permission to load them.  Any bug in GDB which
+  allows per-project or per-program configuration files to be loaded without
+  permission having been granted by the user is considered a security bug.
 
   When gdbserver is started, if it is passed a program on its command
   line then that program will be started, but paused before executing
@@ -101,6 +107,25 @@ What Is Not A Security Bug
   In the context of local debugging, when GDB is used to execute a
   program, the program runs with the same privileges as GDB itself.
 
+  GDB is not meant to be offered as a service (that is, offered
+  over an insecure connection to non-local users), and so denial of
+  service attacks targeting GDB itself, or other bugs that target
+  this use case, are not considered a security bug.
+
+  By the same token, simply triggering an internal error in GDB is not
+  considered a security bug, since GDB has detected an issue and
+  handled it in a non-exploitable manner.  If it can be demonstrated
+  that some bug other than the internal error happens, this other bug
+  should be evaluated independently of the error, and may be a security
+  bug if it fits some of the definitions in this document.
+
+  GDB provides 3 different turing complete languages, Guile, Python
+  and direct access to the shell.  Making use of these languages can
+  have unknown effects, including outside of the GDB process.  Such
+  effects will only be considered security bugs if they fit some of the
+  definitions in this document and the effect can only be reproduced
+  when executed in the GDB environment.
+
   Any issues that arise from running an untrusted program outside of a
   secure environment are not security bugs in GDB.  Any issues that
   arise from running an untrusted program through GDB inside a secure
@@ -110,7 +135,7 @@ What Is Not A Security Bug
   It is possible for a program to detect when it is run under GDB and
   to change its behavior so that unwanted behavior may only appear
   when a program is run under GDB.  Any issues that arise due to an
-  untrusted program detecting GDB and changing its behaviour are not
+  untrusted program detecting GDB and changing its behavior are not
   security issues in GDB unless the issue also meet some other
   definition of a security bug.
 
@@ -166,7 +191,7 @@ Security Realities Of The GDB Project
 
   There are known bugs in GDB related to loading malformed executables
   and parsing the debug information, a consequence of these bugs is
-  that a malicious program could trigger undefined behaviour in GDB,
+  that a malicious program could trigger undefined behavior in GDB,
   which could be used to trigger arbitrary code execution.
 
   Given these risks, the advice of the GDB project is that, when using
@@ -174,7 +199,7 @@ Security Realities Of The GDB Project
   environment.
 
   As there are already known bugs in GDB relating to undefined
-  behaviour triggered from malformed programs, further bugs in this
+  behavior triggered from malformed programs, further bugs in this
   area should still be reported, but are unlikely to be given high
   priority.  Bugs in GDB that are triggered by well-formed programs
   should also be reported, and are likely to be treated as higher

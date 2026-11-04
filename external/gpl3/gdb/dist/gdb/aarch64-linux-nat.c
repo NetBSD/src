@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -51,6 +51,7 @@
 #include "gdb_proc_service.h"
 #include "arch-utils.h"
 
+#include "arch/aarch64-gcs-linux.h"
 #include "arch/aarch64-mte-linux.h"
 
 #include "nat/aarch64-mte-linux-ptrace.h"
@@ -496,12 +497,11 @@ fetch_tlsregs_from_thread (struct regcache *regcache)
   gdb_assert (regno != -1);
   gdb_assert (tdep->tls_register_count > 0);
 
-  uint64_t tpidrs[tdep->tls_register_count];
-  memset(tpidrs, 0, sizeof(tpidrs));
+  std::vector<uint64_t> tpidrs (tdep->tls_register_count);
 
   struct iovec iovec;
-  iovec.iov_base = tpidrs;
-  iovec.iov_len = sizeof (tpidrs);
+  iovec.iov_base = tpidrs.data ();
+  iovec.iov_len = tpidrs.size () * sizeof (tpidrs[0]);
 
   int tid = get_ptrace_pid (regcache->ptid ());
   if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_TLS, &iovec) != 0)
@@ -524,8 +524,7 @@ store_tlsregs_to_thread (struct regcache *regcache)
   gdb_assert (regno != -1);
   gdb_assert (tdep->tls_register_count > 0);
 
-  uint64_t tpidrs[tdep->tls_register_count];
-  memset(tpidrs, 0, sizeof(tpidrs));
+  std::vector<uint64_t> tpidrs (tdep->tls_register_count);
 
   for (int i = 0; i < tdep->tls_register_count; i++)
     {
@@ -536,12 +535,73 @@ store_tlsregs_to_thread (struct regcache *regcache)
     }
 
   struct iovec iovec;
-  iovec.iov_base = &tpidrs;
-  iovec.iov_len = sizeof (tpidrs);
+  iovec.iov_base = tpidrs.data ();
+  iovec.iov_len = tpidrs.size () * sizeof (tpidrs[0]);
 
   int tid = get_ptrace_pid (regcache->ptid ());
   if (ptrace (PTRACE_SETREGSET, tid, NT_ARM_TLS, &iovec) != 0)
     perror_with_name (_("unable to store TLS register"));
+}
+
+/* Fill GDB's register array with the GCS register values from
+   the current thread.  */
+
+static void
+fetch_gcsregs_from_thread (regcache *regcache)
+{
+  aarch64_gdbarch_tdep *tdep
+    = gdbarch_tdep<aarch64_gdbarch_tdep> (regcache->arch ());
+
+  gdb_assert (tdep->gcs_reg_base != -1);
+  gdb_assert (tdep->gcs_linux_reg_base != -1);
+
+  user_gcs user_gcs;
+  iovec iovec;
+
+  iovec.iov_base = &user_gcs;
+  iovec.iov_len = sizeof (user_gcs);
+
+  int tid = get_ptrace_pid (regcache->ptid ());
+  if (ptrace (PTRACE_GETREGSET, tid, NT_ARM_GCS, &iovec) != 0)
+    perror_with_name (_("Unable to fetch GCS registers"));
+
+  regcache->raw_supply (tdep->gcs_reg_base, &user_gcs.gcspr_el0);
+  regcache->raw_supply (tdep->gcs_linux_reg_base, &user_gcs.features_enabled);
+  regcache->raw_supply (tdep->gcs_linux_reg_base + 1,
+			&user_gcs.features_locked);
+}
+
+/* Store to the current thread the valid GCS register set in the GDB's
+   register array.  */
+
+static void
+store_gcsregs_to_thread (regcache *regcache)
+{
+  aarch64_gdbarch_tdep *tdep
+    = gdbarch_tdep<aarch64_gdbarch_tdep> (regcache->arch ());
+
+  gdb_assert (tdep->gcs_reg_base != -1);
+  gdb_assert (tdep->gcs_linux_reg_base != -1);
+
+  if (REG_VALID != regcache->get_register_status (tdep->gcs_reg_base)
+      || REG_VALID != regcache->get_register_status (tdep->gcs_linux_reg_base)
+      || REG_VALID
+	   != regcache->get_register_status (tdep->gcs_linux_reg_base + 1))
+    return;
+
+  user_gcs user_gcs;
+  regcache->raw_collect (tdep->gcs_reg_base, &user_gcs.gcspr_el0);
+  regcache->raw_collect (tdep->gcs_linux_reg_base, &user_gcs.features_enabled);
+  regcache->raw_collect (tdep->gcs_linux_reg_base + 1,
+			 &user_gcs.features_locked);
+
+  iovec iovec;
+  iovec.iov_base = &user_gcs;
+  iovec.iov_len = sizeof (user_gcs);
+
+  int tid = get_ptrace_pid (regcache->ptid ());
+  if (ptrace (PTRACE_SETREGSET, tid, NT_ARM_GCS, &iovec) != 0)
+    perror_with_name (_("Unable to store GCS registers"));
 }
 
 /* The AArch64 version of the "fetch_registers" target_ops method.  Fetch
@@ -579,6 +639,9 @@ aarch64_fetch_registers (struct regcache *regcache, int regno)
 
       if (tdep->has_sme2 ())
 	fetch_zt_from_thread (regcache);
+
+      if (tdep->has_gcs_linux ())
+	fetch_gcsregs_from_thread (regcache);
     }
   /* General purpose register?  */
   else if (regno < AARCH64_V0_REGNUM)
@@ -611,6 +674,11 @@ aarch64_fetch_registers (struct regcache *regcache, int regno)
 	   && regno >= tdep->tls_regnum_base
 	   && regno < tdep->tls_regnum_base + tdep->tls_register_count)
     fetch_tlsregs_from_thread (regcache);
+  /* GCS register?  */
+  else if (tdep->has_gcs_linux ()
+	   && (regno == tdep->gcs_reg_base || regno == tdep->gcs_linux_reg_base
+	       || regno == tdep->gcs_linux_reg_base + 1))
+    fetch_gcsregs_from_thread (regcache);
 }
 
 /* A version of the "fetch_registers" target_ops method used when running
@@ -682,6 +750,9 @@ aarch64_store_registers (struct regcache *regcache, int regno)
 
       if (tdep->has_sme2 ())
 	store_zt_to_thread (regcache);
+
+      if (tdep->has_gcs_linux ())
+	store_gcsregs_to_thread (regcache);
     }
   /* General purpose register?  */
   else if (regno < AARCH64_V0_REGNUM)
@@ -708,6 +779,11 @@ aarch64_store_registers (struct regcache *regcache, int regno)
 	   && regno >= tdep->tls_regnum_base
 	   && regno < tdep->tls_regnum_base + tdep->tls_register_count)
     store_tlsregs_to_thread (regcache);
+  /* GCS register?  */
+  else if (tdep->has_gcs_linux ()
+	   && (regno == tdep->gcs_reg_base || regno == tdep->gcs_linux_reg_base
+	       || regno == tdep->gcs_linux_reg_base + 1))
+    store_gcsregs_to_thread (regcache);
 
   /* PAuth registers are read-only.  */
 }
@@ -883,6 +959,7 @@ aarch64_linux_nat_target::read_description ()
      active or not.  */
   features.vq = aarch64_sve_get_vq (tid);
   features.pauth = hwcap & AARCH64_HWCAP_PACA;
+  features.gcs = features.gcs_linux = hwcap & HWCAP_GCS;
   features.mte = hwcap2 & HWCAP2_MTE;
   features.tls = aarch64_tls_register_count (tid);
   /* SME feature check.  */
@@ -945,7 +1022,7 @@ aarch64_linux_nat_target::stopped_data_address (CORE_ADDR *addr_p)
      kernel can potentially be tagged addresses.  */
   struct gdbarch *gdbarch = thread_architecture (inferior_ptid);
   const CORE_ADDR addr_trap
-    = gdbarch_remove_non_address_bits (gdbarch, (CORE_ADDR) siginfo.si_addr);
+    = aarch64_remove_non_address_bits (gdbarch, (CORE_ADDR) siginfo.si_addr);
 
   /* Check if the address matches any watched address.  */
   state = aarch64_get_debug_reg_state (inferior_ptid.pid ());
@@ -1070,9 +1147,7 @@ aarch64_linux_nat_target::is_address_tagged (gdbarch *gdbarch, CORE_ADDR address
   return gdbarch_tagged_address_p (gdbarch, address);
 }
 
-void _initialize_aarch64_linux_nat ();
-void
-_initialize_aarch64_linux_nat ()
+INIT_GDB_FILE (aarch64_linux_nat)
 {
   aarch64_initialize_hw_point ();
 

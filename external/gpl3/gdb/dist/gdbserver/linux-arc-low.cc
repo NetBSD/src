@@ -1,6 +1,6 @@
 /* Target dependent code for the remote server for GNU/Linux ARC.
 
-   Copyright 2020-2024 Free Software Foundation, Inc.
+   Copyright 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -114,7 +114,7 @@ arc_linux_read_description (void)
   target_desc_up tdesc = arc_create_target_description (features);
 
   static const char *expedite_regs[] = { "sp", "status32", nullptr };
-  init_target_desc (tdesc.get (), expedite_regs);
+  init_target_desc (tdesc.get (), expedite_regs, GDB_OSABI_LINUX);
 
   return tdesc.release ();
 }
@@ -218,7 +218,7 @@ arc_fill_gregset (struct regcache *regcache, void *buf)
   collect_register_by_name (regcache, "pc", &(regbuf->scratch.ret));
 
   /* Currently ARC Linux ptrace doesn't allow writes to status32 because
-     some of its bits are kernel mode-only and shoudn't be writable from
+     some of its bits are kernel mode-only and shouldn't be writable from
      user-space.  Writing status32 from debugger could be useful, though,
      so ability to write non-privileged bits will be added to kernel
      sooner or later.  */
@@ -282,7 +282,7 @@ arc_store_gregset (struct regcache *regcache, const void *buf)
   unsigned long pcl = regbuf->stop_pc & ~3L;
   supply_register_by_name (regcache, "pcl", &pcl);
 
-  /* Other auxilliary registers.  */
+  /* Other auxiliary registers.  */
   supply_register_by_name (regcache, "status32", &(regbuf->scratch.status32));
 
   /* BTA.  */

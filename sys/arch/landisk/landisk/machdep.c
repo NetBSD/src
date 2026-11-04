@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.24 2024/03/05 14:15:32 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.24.2.1 2026/11/04 23:20:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.24.2.1 2026/11/04 23:20:48 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -187,7 +187,7 @@ landisk_startup(int howto, void *bi)
 	memcpy(bootinfo, bi, sizeof(struct bootinfo));
 	boothowto = howto;
 
-	/* Initilize CPU ops. */
+	/* Initialize CPU ops. */
 	sh_cpu_init(CPU_ARCH_SH4, CPU_PRODUCT_7751R);	
 
 	/* Initialize console */
@@ -494,14 +494,3 @@ InitializeBsc(void)
 	_reg_write_2(SH4_FRQCR, FRQCR_VAL);
 }
 #endif /* !DONT_INIT_BSC */
-
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */

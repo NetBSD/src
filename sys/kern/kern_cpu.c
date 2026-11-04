@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.97.6.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.97.6.2 2026/11/04 23:27:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.97.6.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.97.6.2 2026/11/04 23:27:47 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -68,25 +68,28 @@ __KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.97.6.1 2025/08/02 05:57:41 perseant E
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/idle.h>
-#include <sys/sched.h>
-#include <sys/intr.h>
+#include <sys/types.h>
+
+#include <sys/callout.h>
 #include <sys/conf.h>
 #include <sys/cpu.h>
 #include <sys/cpuio.h>
-#include <sys/proc.h>
-#include <sys/percpu.h>
-#include <sys/kernel.h>
-#include <sys/kauth.h>
-#include <sys/xcall.h>
-#include <sys/pool.h>
-#include <sys/kmem.h>
-#include <sys/select.h>
-#include <sys/namei.h>
-#include <sys/callout.h>
-#include <sys/pcu.h>
 #include <sys/heartbeat.h>
+#include <sys/idle.h>
+#include <sys/intr.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/namei.h>
+#include <sys/pcu.h>
+#include <sys/percpu.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/sched.h>
+#include <sys/sdt.h>
+#include <sys/select.h>
+#include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -211,7 +214,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 			break;
 		if (cs->cs_id >= maxcpus ||
 		    (ci = cpu_lookup(cs->cs_id)) == NULL) {
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 			break;
 		}
 		cpu_setintr(ci, cs->cs_intr);	/* XXX neglect errors */
@@ -225,7 +228,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 		cs->cs_id = id;
 		if (cs->cs_id >= maxcpus ||
 		    (ci = cpu_lookup(id)) == NULL) {
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 			break;
 		}
 		if ((ci->ci_schedstate.spc_flags & SPCF_OFFLINE) != 0)
@@ -250,7 +253,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 				break;
 		}
 		if (ci == NULL)
-			error = ESRCH;
+			error = SET_ERROR(ESRCH);
 		else
 			*(int *)data = cpu_index(ci);
 		break;
@@ -431,7 +434,7 @@ cpu_setstate(struct cpu_info *ci, bool online)
 			nonline++;
 		}
 		if (nonline == 1)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		func = (xcfunc_t)cpu_xc_offline;
 	}
 
@@ -443,7 +446,7 @@ cpu_setstate(struct cpu_info *ci, bool online)
 	} else {
 		if ((spc->spc_flags & SPCF_OFFLINE) == 0) {
 			/* If was not set offline, then it is busy */
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		}
 		ncpuonline--;
 	}
@@ -483,9 +486,9 @@ cpu_is_better(struct cpu_info *ci1, struct cpu_info *ci2)
 
 	if ((ci1_flags & SPCF_1STCLASS) != 0 &&
 	    (ci2_flags & SPCF_1STCLASS) == 0)
-		return ci1;
+		return true;
 
-	return ci2;
+	return false;
 }
 
 #if defined(__HAVE_INTR_CONTROL)
@@ -533,7 +536,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 		func = (xcfunc_t)cpu_xc_intr;
 	} else {
 		if (CPU_IS_PRIMARY(ci))	/* XXX kern/45117 */
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		if ((spc->spc_flags & SPCF_NOINTR) != 0)
 			return 0;
 		/*
@@ -549,7 +552,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 			nintr++;
 		}
 		if (nintr == 0)
-			return EBUSY;
+			return SET_ERROR(EBUSY);
 		func = (xcfunc_t)cpu_xc_nointr;
 	}
 
@@ -559,7 +562,7 @@ cpu_setintr(struct cpu_info *ci, bool intr)
 		KASSERT((spc->spc_flags & SPCF_NOINTR) == 0);
 	} else if ((spc->spc_flags & SPCF_NOINTR) == 0) {
 		/* If was not set offline, then it is busy */
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 
 	/* Direct interrupts away from the CPU and record the change. */
@@ -572,7 +575,7 @@ int
 cpu_setintr(struct cpu_info *ci, bool intr)
 {
 
-	return EOPNOTSUPP;
+	return SET_ERROR(EOPNOTSUPP);
 }
 
 u_int
@@ -606,13 +609,13 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 
 	sc->sc_blobsize = firmware_get_size(fwh);
 	if (sc->sc_blobsize == 0) {
-		error = EFTYPE;
+		error = SET_ERROR(EFTYPE);
 		firmware_close(fwh);
 		goto err0;
 	}
 	sc->sc_blob = firmware_malloc(sc->sc_blobsize);
 	if (sc->sc_blob == NULL) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		firmware_close(fwh);
 		goto err0;
 	}

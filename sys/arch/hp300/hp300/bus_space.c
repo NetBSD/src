@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.22 2023/04/21 23:01:59 tsutsui Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.22.6.1 2026/11/04 23:20:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,24 +34,22 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.22 2023/04/21 23:01:59 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.22.6.1 2026/11/04 23:20:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/extent.h>
+#include <sys/vmem.h>
 
 #include <machine/autoconf.h>
 #include <machine/bus.h>
 
 #include <uvm/uvm_extern.h>
 
-extern int *nofault;
-
 int
 bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
     bus_space_handle_t *bshp)
 {
-	vaddr_t kva;
+	vmem_addr_t kva;
 	vsize_t offset;
 	int error;
 
@@ -73,16 +71,20 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 	 */
 	offset = m68k_page_offset(bpa);
 	size = m68k_round_page(offset + size);
-	error = extent_alloc(extio_ex, size, PAGE_SIZE, 0,
-	    EX_FAST | EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0),
-	    &kva);
-	if (error)
+	error = vmem_alloc(extio_arena, size, VM_BESTFIT | VM_NOSLEEP, &kva);
+	if (error) {
 		return error;
+	}
 
-	/*
-	 * Map the range.  The range is always cache-inhibited on the hp300.
-	 */
-	physaccess((void *)kva, (void *)bpa, size, PG_RW|PG_CI);
+	vaddr_t va = kva;
+	vaddr_t eva = kva + size;
+	bpa = m68k_trunc_page(bpa);
+	while (va < eva) {
+		pmap_kenter_pa(va, bpa, VM_PROT_READ | VM_PROT_WRITE,
+		    PMAP_NOCACHE);
+		va += PAGE_SIZE;
+		bpa += PAGE_SIZE;
+	}
 
 	/*
 	 * All done.
@@ -135,24 +137,18 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t bsh, bus_size_t size)
 	offset = m68k_page_offset(bsh);
 	size = m68k_round_page(offset + size);
 
-#ifdef DIAGNOSTIC
-	if (bsh < (vaddr_t)extiobase ||
-	    bsh >= ((vaddr_t)extiobase + ptoa(EIOMAPSIZE)))
-		panic("%s: bad bus space handle", __func__);
-#endif
+	KASSERT(bsh >= (vaddr_t)extiobase);
+	KASSERT(bsh < ((vaddr_t)extiobase + ptoa(EIOMAPSIZE)));
 
 	/*
 	 * Unmap the range.
 	 */
-	physunaccess((void *)kva, size);
+	pmap_kremove(kva, size);
 
 	/*
-	 * Free it from the extio extent map.
+	 * Free it from the extio arena.
 	 */
-	if (extent_free(extio_ex, kva, size,
-	    EX_NOWAIT | (extio_ex_malloc_safe ? EX_MALLOCOK : 0)))
-		printf("%s: kva 0x%lx size 0x%lx: "
-		    "can't free region\n", __func__, (u_long)bsh, size);
+	vmem_free(extio_arena, kva, size);
 }
 
 int
@@ -171,8 +167,8 @@ hp300_bus_space_probe(bus_space_tag_t t, bus_space_handle_t bsh,
 	label_t faultbuf;
 	int i;
 
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		nofault = NULL;
 		return 0;
 	}

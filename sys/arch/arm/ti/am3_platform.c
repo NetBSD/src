@@ -1,13 +1,14 @@
-/* $NetBSD: am3_platform.c,v 1.4 2023/04/07 08:55:30 skrll Exp $ */
+/* $NetBSD: am3_platform.c,v 1.4.6.1 2026/11/04 23:20:16 perseant Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.4 2023/04/07 08:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.4.6.1 2026/11/04 23:20:16 perseant Exp $");
 
 #include <sys/param.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 

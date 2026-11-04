@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.624.2.2 2025/08/02 05:58:29 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.624.2.3 2026/11/04 23:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -111,7 +111,7 @@
 #include "trace.h"
 
 /*	"@(#)main.c	8.3 (Berkeley) 3/19/94"	*/
-MAKE_RCSID("$NetBSD: main.c,v 1.624.2.2 2025/08/02 05:58:29 perseant Exp $");
+MAKE_RCSID("$NetBSD: main.c,v 1.624.2.3 2026/11/04 23:28:37 perseant Exp $");
 #if defined(MAKE_NATIVE)
 __COPYRIGHT("@(#) Copyright (c) 1988, 1989, 1990, 1993 "
 	    "The Regents of the University of California.  "
@@ -182,8 +182,9 @@ usage(void)
 	(void)fprintf(stderr,
 "usage: %.*s [-BeikNnqrSstWwX]\n"
 "            [-C directory] [-D variable] [-d flags] [-f makefile]\n"
-"            [-I directory] [-J private] [-j max_jobs] [-m directory] [-T file]\n"
-"            [-V variable] [-v variable] [variable=value] [target ...]\n",
+"            [-I directory] [-J private] [-j max_jobs] [-m directory]\n"
+"            [-T file] [-V variable] [-v variable]\n"
+"            [variable=value ...] [target ...]\n",
 	    (int)prognameLen, progname);
 	exit(2);
 }
@@ -386,8 +387,8 @@ MainParseArgJobsInternal(const char *argvalue)
 		    progname, argvalue, curdir);
 		exit(2);
 	}
-	if ((fcntl(tokenPoolReader, F_GETFD, 0) < 0) ||
-	    (fcntl(tokenPoolWriter, F_GETFD, 0) < 0)) {
+	if (fcntl(tokenPoolReader, F_GETFD, 0) < 0 ||
+	    fcntl(tokenPoolWriter, F_GETFD, 0) < 0) {
 		tokenPoolReader = -1;
 		tokenPoolWriter = -1;
 		bogusJflag = true;
@@ -412,7 +413,7 @@ MainParseArgJobs(const char *arg)
 		double d;
 
 		if (*p == 'C')
-			d = (opts.maxJobs > 0) ? opts.maxJobs : 1;
+			d = opts.maxJobs > 0 ? opts.maxJobs : 1;
 		else if (*p == '.') {
 			d = strtod(arg, &end);
 			p = end;
@@ -460,8 +461,6 @@ static bool
 MainParseOption(char c, const char *argvalue)
 {
 	switch (c) {
-	case '\0':
-		break;
 	case 'B':
 		opts.compatMake = true;
 		Global_Append(MAKEFLAGS, "-B");
@@ -597,7 +596,7 @@ MainParseArgs(int argc, char **argv)
 	bool inOption, dashDash = false;
 
 	const char *optspecs = "BC:D:I:J:NST:V:WXd:ef:ij:km:nqrstv:w";
-/* Can't actually use getopt(3) because rescanning is not portable */
+	/* Can't actually use getopt(3) because rescanning is not portable */
 
 rearg:
 	inOption = false;
@@ -1206,7 +1205,6 @@ InitMaxJobs(void)
 		    "Invalid internal option \"-J\" in \"%s\"; "
 		    "see the manual page",
 		    curdir);
-		PrintStackTrace(true);
 		return;
 	}
 	if (forceJobs || opts.compatMake ||
@@ -1298,6 +1296,10 @@ ReadFirstDefaultMakefile(void)
 	free(prefs);
 }
 
+#ifndef MAKE_SAVE_DOLLARS_DEFAULT
+# define MAKE_SAVE_DOLLARS_DEFAULT "yes"
+#endif
+
 /*
  * Initialize variables such as MAKE, MACHINE, .MAKEFLAGS.
  * Initialize a few modules.
@@ -1345,6 +1347,8 @@ main_Init(int argc, char **argv)
 	Global_Set("MACHINE", machine);
 	Global_Set("MACHINE_ARCH", machine_arch);
 #ifdef MAKE_VERSION
+	Global_Set_ReadOnly(".MAKE.VERSION", MAKE_VERSION);
+	/* for backwards compatibility */
 	Global_Set("MAKE_VERSION", MAKE_VERSION);
 #endif
 	Global_Set_ReadOnly(".newline", "\n");
@@ -1360,6 +1364,7 @@ main_Init(int argc, char **argv)
 #else
 	Global_Set_ReadOnly(".MAKE.JOBS.C", "no");
 #endif
+	Global_Set(MAKE_SAVE_DOLLARS, MAKE_SAVE_DOLLARS_DEFAULT);
 
 	CmdOpts_Init();
 	allPrecious = false;	/* Remove targets when interrupted */
@@ -1687,7 +1692,7 @@ ReadMakefile(const char *fname)
 		 * placement of the setting here means it gets set to the last
 		 * makefile specified, as it is set by SysV make.
 		 */
-found:
+	found:
 		if (!doing_depend)
 			Var_Set(SCOPE_INTERNAL, "MAKEFILE", fname);
 		Parse_File(fname, fd);
@@ -1780,7 +1785,6 @@ Cmd_Exec(const char *cmd, char **error)
 
 		(void)execv(shellPath, UNCONST(args));
 		_exit(1);
-		/* NOTREACHED */
 
 	case -1:
 		*error = str_concat3("Couldn't exec \"", cmd, "\"");
@@ -1888,7 +1892,7 @@ Fatal(const char *fmt, ...)
 	va_end(ap);
 	(void)fprintf(stderr, "\n");
 	(void)fflush(stderr);
-	PrintStackTrace(true);
+	PrintStackTrace(stderr, true);
 
 	PrintOnError(NULL, "\n");
 
@@ -2191,7 +2195,7 @@ mkTempFile(const char *pattern, char *tfile, size_t tfile_sz)
 	int fd;
 
 	if (pattern == NULL)
-		pattern = "makeXXXXXX";
+		pattern = "makeXXXXXXXXXX";
 	if (tmpdir == NULL)
 		tmpdir = getTmpdir();
 	if (tfile == NULL) {

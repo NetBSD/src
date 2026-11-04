@@ -1,7 +1,7 @@
 # Check that carry for addition and subtraction works.
 # mach: pru
 
-# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2025 Free Software Foundation, Inc.
 # Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 #
 # This file is part of the GNU simulators.

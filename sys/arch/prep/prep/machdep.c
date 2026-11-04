@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.79 2024/03/05 14:15:34 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.79.2.1 2026/11/04 23:21:13 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79 2024/03/05 14:15:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.79.2.1 2026/11/04 23:21:13 perseant Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_openpic.h"
@@ -273,9 +273,9 @@ halt_sys:
                 printf("\n");
                 printf("The operating system has halted.\n");
                 printf("Please press any key to reboot.\n\n");
-                cnpollc(1);	/* for proper keyboard command handling */
+                cnpollc(true);	/* for proper keyboard command handling */
                 cngetc();
-                cnpollc(0);
+                cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");
@@ -354,7 +354,7 @@ prep_setup_openpic(PPC_DEVICE *dev)
 		openpic_write(OPENPIC_TIMER_FREQ, busfreq/8);
 		primary_pic = 1;
 		/* set up the IVR as a cascade on openpic 0 */
-		intr_establish(16, IST_LEVEL, IPL_HIGH, pic_handle_intr,
+		intr_establish(16, IST_LEVEL_HIGH, IPL_HIGH, pic_handle_intr,
 		    isa_pic);
 		oea_install_extint(pic_ext_intr);
 #ifdef MULTIPROCESSOR
@@ -397,7 +397,7 @@ setup_ivr(PPC_DEVICE *dev)
 			continue;
 		/* otherwise we have a memory packet */
 		addr = le64dec(&pa->PPCData[4]) & ~(PAGE_SIZE-1);
-		prep_intr_reg_off = le64dec(&pa->PPCData[4]) & (PAGE_SIZE-1); 
+		prep_intr_reg_off = le64dec(&pa->PPCData[4]) & (PAGE_SIZE-1);
 		prep_intr_reg = (vaddr_t)mapiodev(addr, PAGE_SIZE, false);
 		if (!prep_intr_reg)
 			panic("startup: no room for interrupt register");
@@ -406,7 +406,7 @@ setup_ivr(PPC_DEVICE *dev)
 }
 
 /*
- * There are a few things that need setting up early on in the prep 
+ * There are a few things that need setting up early on in the prep
  * architecture.  Foremost of these is the MPIC (if present) and the
  * l2 cache controller.  This is a cut-down version of pnpbus_search()
  * that looks for specific devices, and sets them up accordingly.

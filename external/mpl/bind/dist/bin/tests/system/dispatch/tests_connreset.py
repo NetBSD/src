@@ -11,11 +11,10 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-import pytest
-import isctest
-
-pytest.importorskip("dns")
 import dns.message
+import pytest
+
+import isctest
 
 pytestmark = pytest.mark.extra_artifacts(
     [

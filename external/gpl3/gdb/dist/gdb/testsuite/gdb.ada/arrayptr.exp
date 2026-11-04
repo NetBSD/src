@@ -1,4 +1,4 @@
-# Copyright 2008-2024 Free Software Foundation, Inc.
+# Copyright 2008-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@ require allow_ada_tests
 
 standard_ada_testfile foo
 
-foreach_with_prefix scenario {all minimal} {
-    set flags [list debug additional_flags=-fgnat-encodings=$scenario]
+foreach_gnat_encoding scenario flags {all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != ""} {
 	return -1
@@ -33,14 +33,15 @@ foreach_with_prefix scenario {all minimal} {
 	return
     }
 
+    # Accept "foo." prefix for older versions of GNAT.
     gdb_test "print string_p" \
-	"= \\(foo\\.string_access\\) 0x\[0-9a-zA-Z\]+"
+	"= \\((foo\\.)?string_access\\) 0x\[0-9a-zA-Z\]+"
 
     gdb_test "print string_p(3..4)" "= \"ll\""
 
-    gdb_test "print null_string" "= \\(foo\\.string_access\\) 0x0"
+    gdb_test "print null_string" "= \\((foo\\.)?string_access\\) 0x0"
 
-    gdb_test "print arr_ptr" "= \\(access foo\\.little_array\\) 0x\[0-9a-zA-Z\]+"
+    gdb_test "print arr_ptr" "= \\(access (foo\\.)?little_array\\) 0x\[0-9a-zA-Z\]+"
 
     gdb_test "print arr_ptr(2)" "= 22"
 
@@ -55,7 +56,7 @@ foreach_with_prefix scenario {all minimal} {
 
     # GNAT >= 12.0 has the needed fix here.
     set xfail_expected 0
-    if {$scenario == "minimal" && ![test_compiler_info {gcc-1[2-9]-*}]} {
+    if {$scenario == "minimal" && [gnat_version_compare < 12]} {
 	set xfail_expected 1
     }
 

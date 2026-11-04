@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.21.2.1 2025/08/02 05:56:34 perseant Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.21.2.2 2026/11/04 23:21:47 perseant Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.21.2.1 2025/08/02 05:56:34 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.21.2.2 2026/11/04 23:21:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -93,6 +93,21 @@ static const struct sdhc_acpi_slot {
 	{ .hid = "80865ACA",		 .type = SLOT_TYPE_SD },
 	{ .hid = "80865ACC",		 .type = SLOT_TYPE_EMMC },
 	{ .hid = "80865AD0",		 .type = SLOT_TYPE_SD },
+
+	/*
+	 * Broadcom BRCM5D12 (eMMC/SD on Raspberry Pi 5)
+	 *
+	 * These entries need to be before 80860F14 so that UEFI's
+	 * default compatibility mode of "BRCMSTB _HID + Bay Trail _CID"
+	 * matches here and not the "80860F14" entries below.
+	 */
+	{ .hid = "BRCM5D12", .uid = "0", .type = SLOT_TYPE_SD,
+					 .flags = SDHC_FLAG_NO_PWR0 |
+						  SDHC_FLAG_NO_1_8_V },
+	{ .hid = "BRCM5D12", .uid = "1", .type = SLOT_TYPE_EMMC,
+					 .flags = SDHC_FLAG_NO_PWR0 |
+						  SDHC_FLAG_NO_1_8_V },
+
 	{ .hid = "80860F14", .uid = "1", .type = SLOT_TYPE_EMMC },
 	{ .hid = "80860F14", .uid = "3", .type = SLOT_TYPE_SD },
 	{ .hid = "80860F16",   		 .type = SLOT_TYPE_SD },
@@ -108,6 +123,7 @@ static const struct sdhc_acpi_slot {
 	{ .hid = "RKCP0D40",		 .type = SLOT_TYPE_SD,
 					 .flags = SDHC_FLAG_32BIT_ACCESS |
 						  SDHC_FLAG_8BIT_MODE |
+						  SDHC_FLAG_NO_PWR0 |
 						  SDHC_FLAG_SINGLE_POWER_WRITE },
 
 	/* Generic IDs last */

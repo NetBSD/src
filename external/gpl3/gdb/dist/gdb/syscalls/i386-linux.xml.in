@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -466,4 +466,9 @@
   <syscall name="lsm_get_self_attr" number="459"/>
   <syscall name="lsm_set_self_attr" number="460"/>
   <syscall name="lsm_list_modules" number="461"/>
+  <syscall name="mseal" number="462"/>
+  <syscall name="setxattrat" number="463"/>
+  <syscall name="getxattrat" number="464"/>
+  <syscall name="listxattrat" number="465"/>
+  <syscall name="removexattrat" number="466"/>
 </syscalls_info>

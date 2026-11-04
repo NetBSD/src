@@ -1,6 +1,6 @@
 /* Handle different target file systems for GDB, the GNU Debugger.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -76,9 +76,7 @@ is \"%s\".\n"),
 		value);
 }
 
-void _initialize_filesystem ();
-void
-_initialize_filesystem ()
+INIT_GDB_FILE (filesystem)
 {
   add_setshow_enum_cmd ("target-file-system-kind",
 			class_files,

@@ -1,5 +1,5 @@
 /* Base class of intrusively reference-counted objects.
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_REFCOUNTED_OBJECT_H
-#define COMMON_REFCOUNTED_OBJECT_H
+#ifndef GDBSUPPORT_REFCOUNTED_OBJECT_H
+#define GDBSUPPORT_REFCOUNTED_OBJECT_H
 
 /* Base class of intrusively reference-countable objects.
    Incrementing and decrementing the reference count is an external
@@ -67,4 +67,21 @@ struct refcounted_object_ref_policy
   }
 };
 
-#endif /* COMMON_REFCOUNTED_OBJECT_H */
+/* A policy class to interface gdb::ref_ptr with a refcounted_object, that
+   deletes the object once the refcount reaches 0..  */
+
+template<typename T>
+struct refcounted_object_delete_ref_policy
+{
+  static void incref (T *obj)
+  { obj->incref (); }
+
+  static void decref (T *obj)
+  {
+    obj->decref ();
+    if (obj->refcount () == 0)
+      delete obj;
+  }
+};
+
+#endif /* GDBSUPPORT_REFCOUNTED_OBJECT_H */

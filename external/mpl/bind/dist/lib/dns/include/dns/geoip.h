@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip.h,v 1.8.2.1 2025/08/02 05:53:34 perseant Exp $	*/
+/*	$NetBSD: geoip.h,v 1.8.2.2 2026/11/04 23:18:06 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -107,6 +107,9 @@ bool
 dns_geoip_match(const isc_netaddr_t	    *reqaddr,
 		const dns_geoip_databases_t *geoip,
 		const dns_geoip_elem_t	    *elt);
+
+void
+dns_geoip_invalidate(void);
 
 ISC_LANG_ENDDECLS
 

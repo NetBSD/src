@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.46 2020/02/01 19:41:49 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.46.30.1 2026/11/04 23:20:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -76,69 +76,7 @@
 #ifndef _MAC68K_VMPARAM_H_
 #define	_MAC68K_VMPARAM_H_
 
-/*
- * Machine dependent constants for mac68k -- mostly derived from hp300.
- */
-
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
- * USRSTACK is the top (end) of the user stack.
- *
- * NOTE: HP300 uses HIGHPAGES == (0x100000/PAGE_SIZE) for HP/UX compatibility.
- * Do we care?  Obviously not at the moment.
- */
-#define	USRSTACK	(-HIGHPAGES*PAGE_SIZE)	/* Start of user stack */
-#define	BTOPUSRSTACK	(0x100000-HIGHPAGES)	/* btop(USRSTACK) */
-#define P1PAGES		0x100000
-#define HIGHPAGES	3			/* UPAGES */
-
-/*
- * Virtual memory related constants, all in bytes
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(32*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(64*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		(32*1024*1024)		/* max stack size */
-#endif
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * Mach derived constants
- */
-
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)(USRSTACK))
-#define VM_MAX_ADDRESS		((vaddr_t)(0-(UPAGES*PAGE_SIZE)))
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
@@ -155,16 +93,8 @@
 #define	VM_PHYSSEG_MAX		2
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_BIGFIRST
 
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
+#endif /* _KERNEL && !_MODULE */
 
-#define	__HAVE_PMAP_PHYSSEG
-
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-struct pmap_physseg {
-	struct pv_header *pvheader;	/* pv table for this seg */
-};
+#include <m68k/vmparam.h>
 
 #endif /* _MAC68K_VMPARAM_H_ */

@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux x86 (i386 and x86-64).
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,7 @@
 
 #include "x86-nat.h"
 #ifndef __x86_64__
-#include "i386-linux-nat.h"
+#include "nat/i386-linux.h"
 #endif
 #include "x86-linux-nat.h"
 #include "i386-linux-tdep.h"
@@ -41,6 +41,8 @@
 #include "nat/x86-linux.h"
 #include "nat/x86-linux-dregs.h"
 #include "nat/linux-ptrace.h"
+#include "x86-tdep.h"
+#include "nat/x86-linux-tdesc.h"
 
 /* linux_nat_target::low_new_fork implementation.  */
 
@@ -90,127 +92,25 @@ x86_linux_nat_target::post_startup_inferior (ptid_t ptid)
   linux_nat_target::post_startup_inferior (ptid);
 }
 
-#ifdef __x86_64__
-/* Value of CS segment register:
-     64bit process: 0x33
-     32bit process: 0x23  */
-#define AMD64_LINUX_USER64_CS 0x33
-
-/* Value of DS segment register:
-     LP64 process: 0x0
-     X32 process: 0x2b  */
-#define AMD64_LINUX_X32_DS 0x2b
-#endif
-
 /* Get Linux/x86 target description from running target.  */
 
 const struct target_desc *
 x86_linux_nat_target::read_description ()
 {
-  int tid;
-  int is_64bit = 0;
-#ifdef __x86_64__
-  int is_x32;
-#endif
-  static uint64_t xcr0;
-  uint64_t xcr0_features_bits;
+  /* The x86_linux_tdesc_for_tid call only reads xcr0 the first time it is
+     called.  Also it checks the enablement state of features which are
+     not configured in xcr0, such as CET shadow stack.  Once the supported
+     features are identified, the XSTATE_BV_STORAGE value is configured
+     accordingly and preserved for subsequent calls of this function.  */
+  static uint64_t xstate_bv_storage;
 
   if (inferior_ptid == null_ptid)
     return this->beneath ()->read_description ();
 
-  tid = inferior_ptid.pid ();
+  int tid = inferior_ptid.pid ();
 
-#ifdef __x86_64__
-  {
-    unsigned long cs;
-    unsigned long ds;
-
-    /* Get CS register.  */
-    errno = 0;
-    cs = ptrace (PTRACE_PEEKUSER, tid,
-		 offsetof (struct user_regs_struct, cs), 0);
-    if (errno != 0)
-      perror_with_name (_("Couldn't get CS register"));
-
-    is_64bit = cs == AMD64_LINUX_USER64_CS;
-
-    /* Get DS register.  */
-    errno = 0;
-    ds = ptrace (PTRACE_PEEKUSER, tid,
-		 offsetof (struct user_regs_struct, ds), 0);
-    if (errno != 0)
-      perror_with_name (_("Couldn't get DS register"));
-
-    is_x32 = ds == AMD64_LINUX_X32_DS;
-
-    if (sizeof (void *) == 4 && is_64bit && !is_x32)
-      error (_("Can't debug 64-bit process with 32-bit GDB"));
-  }
-#elif HAVE_PTRACE_GETFPXREGS
-  if (have_ptrace_getfpxregs == -1)
-    {
-      elf_fpxregset_t fpxregs;
-
-      if (ptrace (PTRACE_GETFPXREGS, tid, 0, (int) &fpxregs) < 0)
-	{
-	  have_ptrace_getfpxregs = 0;
-	  have_ptrace_getregset = TRIBOOL_FALSE;
-	  return i386_linux_read_description (X86_XSTATE_X87_MASK);
-	}
-    }
-#endif
-
-  if (have_ptrace_getregset == TRIBOOL_UNKNOWN)
-    {
-      uint64_t xstateregs[(X86_XSTATE_SSE_SIZE / sizeof (uint64_t))];
-      struct iovec iov;
-
-      iov.iov_base = xstateregs;
-      iov.iov_len = sizeof (xstateregs);
-
-      /* Check if PTRACE_GETREGSET works.  */
-      if (ptrace (PTRACE_GETREGSET, tid,
-		  (unsigned int) NT_X86_XSTATE, &iov) < 0)
-	have_ptrace_getregset = TRIBOOL_FALSE;
-      else
-	{
-	  have_ptrace_getregset = TRIBOOL_TRUE;
-
-	  /* Get XCR0 from XSAVE extended state.  */
-	  xcr0 = xstateregs[(I386_LINUX_XSAVE_XCR0_OFFSET
-			     / sizeof (uint64_t))];
-
-	  m_xsave_layout = x86_fetch_xsave_layout (xcr0, x86_xsave_length ());
-	}
-    }
-
-  /* Check the native XCR0 only if PTRACE_GETREGSET is available.  If
-     PTRACE_GETREGSET is not available then set xcr0_features_bits to
-     zero so that the "no-features" descriptions are returned by the
-     switches below.  */
-  if (have_ptrace_getregset == TRIBOOL_TRUE)
-    xcr0_features_bits = xcr0 & X86_XSTATE_ALL_MASK;
-  else
-    xcr0_features_bits = 0;
-
-  if (is_64bit)
-    {
-#ifdef __x86_64__
-      return amd64_linux_read_description (xcr0_features_bits, is_x32);
-#endif
-    }
-  else
-    {
-      const struct target_desc * tdesc
-	= i386_linux_read_description (xcr0_features_bits);
-
-      if (tdesc == NULL)
-	tdesc = i386_linux_read_description (X86_XSTATE_SSE_MASK);
-
-      return tdesc;
-    }
-
-  gdb_assert_not_reached ("failed to return tdesc");
+  return x86_linux_tdesc_for_tid (tid, &xstate_bv_storage,
+				  &this->m_xsave_layout);
 }
 
 
@@ -315,9 +215,46 @@ x86_linux_get_thread_area (pid_t pid, void *addr, unsigned int *base_addr)
 }
 
 
-void _initialize_x86_linux_nat ();
+/* See x86-linux-nat.h.  */
+
 void
-_initialize_x86_linux_nat ()
+x86_linux_fetch_ssp (regcache *regcache, const int tid)
+{
+  uint64_t ssp = 0x0;
+  iovec iov {&ssp, sizeof (ssp)};
+
+  /* The shadow stack may be enabled and disabled at runtime.  Reading the
+     ssp might fail as shadow stack was not activated for the current
+     thread.  We don't want to show a warning but silently return.  The
+     register will be shown as unavailable for the user.  */
+  if (ptrace (PTRACE_GETREGSET, tid, NT_X86_SHSTK, &iov) != 0)
+    return;
+
+  x86_supply_ssp (regcache, ssp);
+}
+
+/* See x86-linux-nat.h.  */
+
+void
+x86_linux_store_ssp (const regcache *regcache, const int tid)
+{
+  uint64_t ssp = 0x0;
+  iovec iov {&ssp, sizeof (ssp)};
+  x86_collect_ssp (regcache, ssp);
+
+  /* Dependent on the target the ssp register can be unavailable or
+     nullptr when shadow stack is supported by HW and the Linux kernel but
+     not enabled for the current thread.  In case of nullptr, GDB tries to
+     restore the shadow stack pointer after an inferior call.  The ptrace
+     call with PTRACE_SETREGSET will fail here with errno ENODEV.  We
+     don't want to throw an error in this case but silently continue.  */
+  errno = 0;
+  if ((ptrace (PTRACE_SETREGSET, tid, NT_X86_SHSTK, &iov) != 0)
+      && (errno != ENODEV))
+    perror_with_name (_("Failed to write pl3_ssp register"));
+}
+
+INIT_GDB_FILE (x86_linux_nat)
 {
   /* Initialize the debug register function vectors.  */
   x86_dr_low.set_control = x86_linux_dr_set_control;

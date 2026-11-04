@@ -1,6 +1,6 @@
 /* TUI window generic functions.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_WIN_H
-#define TUI_TUI_WIN_H
+#ifndef GDB_TUI_TUI_WIN_H
+#define GDB_TUI_TUI_WIN_H
 
 #include "tui/tui-data.h"
 
@@ -61,4 +61,4 @@ extern bool style_tui_current_position;
 /* Whether to replace the spaces in the left margin with '_' and '0'.  */
 extern bool tui_left_margin_verbose;
 
-#endif /* TUI_TUI_WIN_H */
+#endif /* GDB_TUI_TUI_WIN_H */

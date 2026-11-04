@@ -1,4 +1,4 @@
-/*	$NetBSD: apbus.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $ */
+/*	$NetBSD: apbus.c,v 1.21.12.1 2026/11/04 23:20:58 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -29,7 +29,7 @@
 /* catch-all for on-chip peripherals */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.21 2021/08/07 16:18:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apbus.c,v 1.21.12.1 2026/11/04 23:20:58 perseant Exp $");
 
 #include "locators.h"
 #define	_MIPS_BUS_DMA_PRIVATE
@@ -133,10 +133,10 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	apbus_init();
 
 #ifdef INGENIC_DEBUG
-	printf("core ctrl:   %08x\n", MFC0(12, 2));
-	printf("core status: %08x\n", MFC0(12, 3));
-	printf("REIM: %08x\n", MFC0(12, 4));
-	printf("ID: %08x\n", MFC0(15, 1));
+	printf("core ctrl:   %08x\n", mips_cp0_corectrl_read());
+	printf("core status: %08x\n", mips_cp0_corestatus_read());
+	printf("REIM: %08x\n", mips_cp0_corereim_read());
+	printf("ID: %08x\n", mipsNN_cp0_ebase_read());
 #endif
 	/* assuming we're using MPLL */
 	mpll = readreg(JZ_CPMPCR);
@@ -229,7 +229,7 @@ apbus_attach(device_t parent, device_t self, void *aux)
 	gpio_as_dev0(1, 30);
 	gpio_as_dev0(1, 31);
 
-#ifndef INGENIC_DEBUG
+#ifdef INGENIC_DEBUG
 	printf("JZ_CLKGR0 %08x\n", readreg(JZ_CLKGR0));
 	printf("JZ_CLKGR1 %08x\n", readreg(JZ_CLKGR1));
 	printf("JZ_SPCR0  %08x\n", readreg(JZ_SPCR0));
@@ -282,6 +282,23 @@ apbus_print(void *aux, const char *pnp)
 	if ((pnp == NULL) && (aa->aa_irq != -1))
 		aprint_normal(" irq %d", aa->aa_irq);
 	return (UNCONF);
+}
+
+/*
+ * Program a CGU clock divider register
+ */
+int
+ingenic_cdr_set(uint32_t clkreg, uint32_t val)
+{
+	int timo;
+
+	writereg(clkreg, val | CDR_CE);
+	for (timo = 1000; timo > 0; timo--) {
+		if ((readreg(clkreg) & CDR_BUSY) == 0)
+			return 0;
+		delay(10);
+	}
+	return ETIMEDOUT;
 }
 
 #define CHIP	   		apbus

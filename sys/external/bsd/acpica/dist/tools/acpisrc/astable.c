@@ -4,117 +4,9 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
- *
- * 2. License
- *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights. You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
- *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code. No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision. In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change. Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee. Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution. In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE. ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT, ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES. INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS. INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES. THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government. In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************
- *
- * Alternatively, you may choose to be licensed under the terms of the
- * following license:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -131,23 +23,23 @@
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Alternatively, you may choose to be licensed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
- *
- *****************************************************************************/
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #include "acpisrc.h"
 
@@ -197,7 +89,7 @@ ACPI_STRING_TABLE           StandardDataTypes[] = {
 char                        EmptyHeader[] = "";
 char                        DualLicenseHeader[] =
 "/*\n"
-" * Copyright (C) 2000 - 2023, Intel Corp.\n"
+" * Copyright (C) 2000 - 2026, Intel Corp.\n"
 " * All rights reserved.\n"
 " *\n"
 " * Redistribution and use in source and binary forms, with or without\n"
@@ -321,7 +213,31 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_DMTABLE_DATA",                   SRC_TYPE_STRUCT},
     {"ACPI_DMTABLE_INFO",                   SRC_TYPE_STRUCT},
     {"ACPI_DMTABLE_HANDLER",                SRC_TYPE_SIMPLE},
+    {"ACPI_EFI_ALLOCATE_TYPE",              SRC_TYPE_STRUCT},
+    {"ACPI_EFI_BOOT_SERVICES",              SRC_TYPE_STRUCT},
+    {"ACPI_EFI_CONFIGURATION_TABLE",        SRC_TYPE_STRUCT},
+    {"ACPI_EFI_DEVICE_PATH",                SRC_TYPE_STRUCT},
+    {"ACPI_EFI_FILE_HANDLE",                SRC_TYPE_STRUCT},
+    {"ACPI_EFI_FILE_INFO",                  SRC_TYPE_STRUCT},
+    {"ACPI_EFI_FILE_IO_INTERFACE",          SRC_TYPE_STRUCT},
     {"ACPI_EFI_FILE",                       SRC_TYPE_SIMPLE},
+    {"ACPI_EFI_FILE_STRUCT",                SRC_TYPE_STRUCT},
+    {"ACPI_EFI_GUID",                       SRC_TYPE_STRUCT},
+    {"ACPI_EFI_INPUT_KEY",                  SRC_TYPE_STRUCT},
+    {"ACPI_EFI_INTERFACE_TYPE",             SRC_TYPE_STRUCT},
+    {"ACPI_EFI_LOADED_IMAGE",               SRC_TYPE_STRUCT},
+    {"ACPI_EFI_LOCATE_SEARCH_TYPE",         SRC_TYPE_STRUCT},
+    {"ACPI_EFI_MEMORY_DESCRIPTOR",          SRC_TYPE_STRUCT},
+    {"ACPI_EFI_MEMORY_TYPE",                SRC_TYPE_STRUCT},
+    {"ACPI_EFI_OPEN_PROTOCOL_INFORMATION_ENTRY", SRC_TYPE_STRUCT},
+    {"ACPI_EFI_PCI_IO_PROTOCOL_CONFIG_ACCESS", SRC_TYPE_STRUCT},
+    {"ACPI_EFI_PCI_IO_PROTOCOL_WIDTH",      SRC_TYPE_STRUCT},
+    {"ACPI_EFI_PCI_IO",                     SRC_TYPE_STRUCT},
+    {"ACPI_EFI_RUNTIME_SERVICES",           SRC_TYPE_STRUCT},
+    {"ACPI_EFI_SYSTEM_TABLE",               SRC_TYPE_STRUCT},
+    {"ACPI_EFI_TABLE_HEADER",               SRC_TYPE_STRUCT},
+    {"ACPI_EFI_TIME_CAPABILITIES",          SRC_TYPE_STRUCT},
+    {"ACPI_EFI_TIME",                       SRC_TYPE_STRUCT},
     {"ACPI_EVALUATE_INFO",                  SRC_TYPE_STRUCT},
     {"ACPI_EVENT_HANDLER",                  SRC_TYPE_SIMPLE},
     {"ACPI_EVENT_STATUS",                   SRC_TYPE_SIMPLE},
@@ -342,6 +258,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_FIXED_EVENT_INFO",               SRC_TYPE_STRUCT},
     {"ACPI_FFH_INFO",                       SRC_TYPE_STRUCT},
     {"ACPI_GBL_EVENT_HANDLER",              SRC_TYPE_SIMPLE},
+    {"ACPI_GED_HANDLER_INFO",               SRC_TYPE_STRUCT},
     {"ACPI_GENERIC_ADDRESS",                SRC_TYPE_STRUCT},
     {"ACPI_GENERIC_STATE",                  SRC_TYPE_UNION},
     {"ACPI_GET_DEVICES_INFO",               SRC_TYPE_STRUCT},
@@ -349,6 +266,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_GPE_BLOCK_INFO",                 SRC_TYPE_STRUCT},
     {"ACPI_GPE_CALLBACK",                   SRC_TYPE_SIMPLE},
     {"ACPI_GPE_DEVICE_INFO",                SRC_TYPE_STRUCT},
+    {"ACPI_GPE_DISPATCH_INFO",              SRC_TYPE_STRUCT},
     {"ACPI_GPE_EVENT_INFO",                 SRC_TYPE_STRUCT},
     {"ACPI_GPE_HANDLER",                    SRC_TYPE_SIMPLE},
     {"ACPI_GPE_HANDLER_INFO",               SRC_TYPE_STRUCT},
@@ -372,6 +290,8 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_INTERPRETER_MODE",               SRC_TYPE_SIMPLE},
     {"ACPI_IO_ADDRESS",                     SRC_TYPE_SIMPLE},
     {"ACPI_IO_ATTRIBUTE",                   SRC_TYPE_STRUCT},
+    {"ACPI_KEYP_CONFIG_UNIT",               SRC_TYPE_STRUCT},
+    {"ACPI_KEYP_RP_INFO",                   SRC_TYPE_STRUCT},
     {"ACPI_LPIT_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_LPIT_IO",                        SRC_TYPE_STRUCT},
     {"ACPI_LPIT_NATIVE",                    SRC_TYPE_STRUCT},
@@ -433,6 +353,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_OPERAND_OBJECT",                 SRC_TYPE_UNION},
     {"ACPI_OSD_HANDLER",                    SRC_TYPE_SIMPLE},
     {"ACPI_OSD_EXEC_CALLBACK",              SRC_TYPE_SIMPLE},
+    {"ACPI_OS_SEMAPHORE_INFO",              SRC_TYPE_STRUCT},
     {"ACPI_OWNER_ID",                       SRC_TYPE_SIMPLE},
     {"ACPI_PACKAGE_INFO",                   SRC_TYPE_STRUCT},
     {"ACPI_PACKAGE_INFO2",                  SRC_TYPE_STRUCT},
@@ -442,6 +363,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_PARSE_OBJ_ASL",                  SRC_TYPE_STRUCT},
     {"ACPI_PARSE_OBJ_COMMON",               SRC_TYPE_STRUCT},
     {"ACPI_PARSE_OBJ_NAMED",                SRC_TYPE_STRUCT},
+    {"ACPI_PARSE_OBJECT_LIST",              SRC_TYPE_STRUCT},
     {"ACPI_PARSE_OBJECT",                   SRC_TYPE_UNION},
     {"ACPI_PARSE_STATE",                    SRC_TYPE_STRUCT},
     {"ACPI_PARSE_UPWARDS",                  SRC_TYPE_SIMPLE},
@@ -469,9 +391,11 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_RASF_PATROL_SCRUB_PARAMETER",    SRC_TYPE_STRUCT},
     {"ACPI_RASF_SHARED_MEMORY",             SRC_TYPE_STRUCT},
     {"ACPI_RAS2_PARAMETER_BLOCK",           SRC_TYPE_STRUCT},
-    {"ACPI_RAS2_PATROL_SCRUB_PARAMETER",    SRC_TYPE_STRUCT},
+    {"ACPI_RAS2_PATROL_SCRUB_PARAM",        SRC_TYPE_STRUCT},
+    {"ACPI_RAS2_PCC_DESC",                  SRC_TYPE_STRUCT},
     {"ACPI_RAS2_LA2PA_TRANSLATION_PARAM",   SRC_TYPE_STRUCT},
-    {"ACPI_RAS2_SHARED_MEMORY",             SRC_TYPE_STRUCT},
+    {"ACPI_RAS2_SHMEM",                     SRC_TYPE_STRUCT},
+    {"ACPI_REFERENCE_CLASSES",              SRC_TYPE_STRUCT},
     {"ACPI_REGION_WALK_INFO",               SRC_TYPE_STRUCT},
     {"ACPI_REPAIR_FUNCTION",                SRC_TYPE_SIMPLE},
     {"ACPI_REPAIR_INFO",                    SRC_TYPE_STRUCT},
@@ -482,6 +406,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_RESOURCE_ADDRESS16",             SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_ADDRESS32",             SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_ADDRESS64",             SRC_TYPE_STRUCT},
+    {"ACPI_RESOURCE_CLOCK_INPUT",           SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_COMMON_SERIALBUS",      SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_CSI2_SERIALBUS",        SRC_TYPE_STRUCT},
     {"ACPI_RESOURCE_EXTENDED_ADDRESS64",    SRC_TYPE_STRUCT},
@@ -527,7 +452,10 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_SEMAPHORE",                      SRC_TYPE_SIMPLE},
     {"ACPI_SERIAL_INFO",                    SRC_TYPE_STRUCT},
     {"ACPI_SIGNAL_FATAL_INFO",              SRC_TYPE_STRUCT},
+    {"ACPI_SIMPLE_INPUT_INTERFACE",         SRC_TYPE_STRUCT},
     {"ACPI_SIMPLE_REPAIR_INFO",             SRC_TYPE_STRUCT},
+    {"ACPI_SIMPLE_TEXT_OUTPUT_INTERFACE",   SRC_TYPE_STRUCT},
+    {"ACPI_SIMPLE_TEXT_OUTPUT_MODE",        SRC_TYPE_STRUCT},
     {"ACPI_SIZE",                           SRC_TYPE_SIMPLE},
     {"ACPI_SLEEP_FUNCTION",                 SRC_TYPE_SIMPLE},
     {"ACPI_SLEEP_FUNCTIONS",                SRC_TYPE_STRUCT},
@@ -537,6 +465,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_STRING",                         SRC_TYPE_SIMPLE},
     {"ACPI_STRING_TABLE",                   SRC_TYPE_STRUCT},
     {"ACPI_SUBTABLE_HEADER",                SRC_TYPE_STRUCT},
+    {"ACPI_SUBTBL_HDR_16",                  SRC_TYPE_STRUCT},
     {"ACPI_SYSTEM_INFO",                    SRC_TYPE_STRUCT},
     {"ACPI_TABLE_DESC",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_HANDLER",                  SRC_TYPE_SIMPLE},
@@ -581,6 +510,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"AML_RESOURCE_ADDRESS32",              SRC_TYPE_STRUCT},
     {"AML_RESOURCE_ADDRESS64",              SRC_TYPE_STRUCT},
     {"AML_RESOURCE_COMMON_SERIALBUS",       SRC_TYPE_STRUCT},
+    {"AML_RESOURCE_CLOCK_INPUT",            SRC_TYPE_STRUCT},
     {"AML_RESOURCE_CSI2_SERIALBUS",         SRC_TYPE_STRUCT},
     {"AML_RESOURCE_DMA",                    SRC_TYPE_STRUCT},
     {"AML_RESOURCE_END_DEPENDENT",          SRC_TYPE_STRUCT},
@@ -641,6 +571,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ASL_RESOURCE_INFO",                   SRC_TYPE_STRUCT},
     {"ASL_RESOURCE_NODE",                   SRC_TYPE_STRUCT},
     {"ASL_WALK_CALLBACK",                   SRC_TYPE_SIMPLE},
+    {"ASL_WALK_INFO",                       SRC_TYPE_STRUCT},
     {"ASL_XREF_INFO",                       SRC_TYPE_STRUCT},
     {"UINT64_OVERLAY",                      SRC_TYPE_UNION},
     {"UINT64_STRUCT",                       SRC_TYPE_STRUCT},
@@ -650,7 +581,9 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
      */
     {"ACPI_TABLE_AEST",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_AGDI",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_APMT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_ASF",                      SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_ASPT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_BDAT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_BERT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_BGRT",                     SRC_TYPE_STRUCT},
@@ -664,8 +597,10 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_TABLE_DBGP",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_DMAR",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_DRTM",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_DTPR",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_ECDT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_EINJ",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_ERDT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_ERST",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_FACS",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_FADT",                     SRC_TYPE_STRUCT},
@@ -676,12 +611,15 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_TABLE_HPET",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_IBFT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_IORT",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_IOVT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_IVRS",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_KEYP",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MADT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MCFG",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MCHI",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MPAM",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MPST",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_MRRM",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MSCT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_MSDM",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_NFIT",                     SRC_TYPE_STRUCT},
@@ -692,13 +630,19 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_TABLE_PMTT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_PPTT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_PRMT",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_RAS2",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_RASF",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_RGRT",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_RHCT",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_RIMT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_RSDP",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_RSDT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_S3PT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_SBST",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_SDEI",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_SDEV",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_SVKL",                     SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_SWFT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_SLIC",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_SLIT",                     SRC_TYPE_STRUCT},
     {"ACPI_TABLE_SPCR",                     SRC_TYPE_STRUCT},
@@ -726,15 +670,23 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_AEST_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_AEST_MEMORY",                    SRC_TYPE_STRUCT},
     {"ACPI_AEST_NODE_INTERFACE",            SRC_TYPE_STRUCT},
+    {"ACPI_AEST_NODE_INTERFACE_16K",        SRC_TYPE_STRUCT},
+    {"ACPI_AEST_NODE_INTERFACE_4K",         SRC_TYPE_STRUCT},
+    {"ACPI_AEST_NODE_INTERFACE_64K",        SRC_TYPE_STRUCT},
+    {"ACPI_AEST_NODE_INTERFACE_COMMON",     SRC_TYPE_STRUCT},
+    {"ACPI_AEST_NODE_INTERFACE_HEADER",     SRC_TYPE_STRUCT},
     {"ACPI_AEST_NODE_INTERRUPT",            SRC_TYPE_STRUCT},
     {"ACPI_AEST_NODE_INTERRUPT_V2",         SRC_TYPE_STRUCT},
+    {"ACPI_AEST_PCIE",                      SRC_TYPE_STRUCT},
     {"ACPI_AEST_PROCESSOR",                 SRC_TYPE_STRUCT},
     {"ACPI_AEST_PROCESSOR_CACHE",           SRC_TYPE_STRUCT},
     {"ACPI_AEST_PROCESSOR_GENERIC",         SRC_TYPE_STRUCT},
     {"ACPI_AEST_PROCESSOR_TLB",             SRC_TYPE_STRUCT},
+    {"ACPI_AEST_PROXY",                     SRC_TYPE_STRUCT},
     {"ACPI_AEST_SMMU",                      SRC_TYPE_STRUCT},
     {"ACPI_AEST_VENDOR",                    SRC_TYPE_STRUCT},
     {"ACPI_AEST_VENDOR_V2",                 SRC_TYPE_STRUCT},
+    {"ACPI_APMT_NODE",                      SRC_TYPE_STRUCT},
     {"ACPI_ASF_ADDRESS",                    SRC_TYPE_STRUCT},
     {"ACPI_ASF_ALERT",                      SRC_TYPE_STRUCT},
     {"ACPI_ASF_ALERT_DATA",                 SRC_TYPE_STRUCT},
@@ -743,33 +695,69 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_ASF_INFO",                       SRC_TYPE_STRUCT},
     {"ACPI_ASF_REMOTE",                     SRC_TYPE_STRUCT},
     {"ACPI_ASF_RMCP",                       SRC_TYPE_STRUCT},
+    {"ACPI_ASPT_ACPI_MBOX_REGS",            SRC_TYPE_STRUCT},
+    {"ACPI_ASPT_GLOBAL_REGS",               SRC_TYPE_STRUCT},
+    {"ACPI_ASPT_HEADER",                    SRC_TYPE_STRUCT},
+    {"ACPI_ASPT_SEV_MBOX_REGS",             SRC_TYPE_STRUCT},
     {"ACPI_BERT_REGION",                    SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_DSEMTS",                    SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_DSIS",                      SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_DSLBIS",                    SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_DSMAS",                     SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_DSMSCIS",                   SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_HEADER",                    SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_SSLBE",                     SRC_TYPE_STRUCT},
+    {"ACPI_CDAT_SSLBIS",                    SRC_TYPE_STRUCT},
+    {"ACPI_CEDT_CFMWS",                     SRC_TYPE_STRUCT},
+    {"ACPI_CEDT_CFMWS_TARGET_ELEMENT",      SRC_TYPE_STRUCT},
     {"ACPI_CEDT_CHBS",                      SRC_TYPE_STRUCT},
+    {"ACPI_CEDT_CXIMS",                     SRC_TYPE_STRUCT},
+    {"ACPI_CEDT_CXIMS_TARGET_ELEMENT",      SRC_TYPE_STRUCT},
     {"ACPI_CEDT_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_CPEP_POLLING",                   SRC_TYPE_STRUCT},
     {"ACPI_CSRT_GROUP",                     SRC_TYPE_STRUCT},
     {"ACPI_CSRT_DESCRIPTOR",                SRC_TYPE_STRUCT},
     {"ACPI_CSRT_SHARED_INFO",               SRC_TYPE_STRUCT},
     {"ACPI_DBG2_DEVICE",                    SRC_TYPE_STRUCT},
+    {"ACPI_DBG2_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_DMAR_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_DMAR_DEVICE_SCOPE",              SRC_TYPE_STRUCT},
     {"ACPI_DMAR_ANDD",                      SRC_TYPE_STRUCT},
     {"ACPI_DMAR_ATSR",                      SRC_TYPE_STRUCT},
     {"ACPI_DMAR_RHSA",                      SRC_TYPE_STRUCT},
+    {"ACPI_DMAR_SATC",                      SRC_TYPE_STRUCT},
+    {"ACPI_DMAR_SIDP",                      SRC_TYPE_STRUCT},
     {"ACPI_DMAR_HARDWARE_UNIT",             SRC_TYPE_STRUCT},
+    {"ACPI_DMAR_PCI_PATH",                  SRC_TYPE_STRUCT},
     {"ACPI_DMAR_RESERVED_MEMORY",           SRC_TYPE_STRUCT},
     {"ACPI_DRTM_DPS_ID",                    SRC_TYPE_STRUCT},
     {"ACPI_DRTM_RESOURCE",                  SRC_TYPE_STRUCT},
     {"ACPI_DRTM_RESOURCE_LIST",             SRC_TYPE_STRUCT},
     {"ACPI_DRTM_VTABLE_LIST",               SRC_TYPE_STRUCT},
     {"ACPI_EINJ_ENTRY",                     SRC_TYPE_STRUCT},
+    {"ACPI_EINJ_ERROR_TYPE_WITH_ADDR",      SRC_TYPE_STRUCT},
     {"ACPI_EINJ_TRIGGER",                   SRC_TYPE_STRUCT},
+    {"ACPI_EINJ_VENDOR",                    SRC_TYPE_STRUCT},
+    {"ACPI_ENTRY_TYPES",                    SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_RMDD",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_CACD",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_DACD",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_DACD_PATHS",                SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_CMRC",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_MMRC",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_MARC",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_CARC",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_CMRD",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_IBRD",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_IBAD",                      SRC_TYPE_STRUCT},
+    {"ACPI_ERDT_CARD",                      SRC_TYPE_STRUCT},
     {"ACPI_ERST_ENTRY",                     SRC_TYPE_STRUCT},
     {"ACPI_ERST_INFO",                      SRC_TYPE_STRUCT},
     {"ACPI_FPDT_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_FPDT_BOOT",                      SRC_TYPE_STRUCT},
     {"ACPI_FPDT_BOOT_POINTER",              SRC_TYPE_STRUCT},
     {"ACPI_FPDT_S3PT_POINTER",              SRC_TYPE_STRUCT},
+    {"ACPI_GTDT_EL2",                       SRC_TYPE_STRUCT},
     {"ACPI_GTDT_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_GTDT_TIMER_BLOCK",               SRC_TYPE_STRUCT},
     {"ACPI_GTDT_TIMER_ENTRY",               SRC_TYPE_STRUCT},
@@ -801,6 +789,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_IBFT_TARGET",                    SRC_TYPE_STRUCT},
     {"ACPI_IORT_ID_MAPPING",                SRC_TYPE_STRUCT},
     {"ACPI_IORT_ITS_GROUP",                 SRC_TYPE_STRUCT},
+    {"ACPI_IORT_IWB",                       SRC_TYPE_STRUCT},
     {"ACPI_IORT_MEMORY_ACCESS",             SRC_TYPE_STRUCT},
     {"ACPI_IORT_NAMED_COMPONENT",           SRC_TYPE_STRUCT},
     {"ACPI_IORT_NODE",                      SRC_TYPE_STRUCT},
@@ -811,26 +800,45 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_IORT_PMCG",                      SRC_TYPE_STRUCT},
     {"ACPI_IORT_RMR",                       SRC_TYPE_STRUCT},
     {"ACPI_IORT_RMR_DESC",                  SRC_TYPE_STRUCT},
+    {"ACPI_IOVT_HEADER",                    SRC_TYPE_STRUCT},
+    {"ACPI_IOVT_IOMMU",                     SRC_TYPE_STRUCT},
+    {"ACPI_IOVT_DEVICE_ENTRY",              SRC_TYPE_STRUCT},
     {"ACPI_IVRS_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_IVRS_HARDWARE",                  SRC_TYPE_STRUCT},
+    {"ACPI_IVRS_HARDWARE1",                 SRC_TYPE_STRUCT},
+    {"ACPI_IVRS_HARDWARE2",                 SRC_TYPE_STRUCT},
     {"ACPI_IVRS_DE_HEADER",                 SRC_TYPE_STRUCT},
     {"ACPI_IVRS_DEVICE4",                   SRC_TYPE_STRUCT},
     {"ACPI_IVRS_DEVICE8A",                  SRC_TYPE_STRUCT},
     {"ACPI_IVRS_DEVICE8B",                  SRC_TYPE_STRUCT},
     {"ACPI_IVRS_DEVICE8C",                  SRC_TYPE_STRUCT},
+    {"ACPI_IVRS_DEVICE_HID",                SRC_TYPE_STRUCT},
     {"ACPI_IVRS_MEMORY",                    SRC_TYPE_STRUCT},
     {"ACPI_MADT_ADDRESS_OVERRIDE",          SRC_TYPE_STRUCT},
+    {"ACPI_MADT_APLIC",                     SRC_TYPE_STRUCT},
+    {"ACPI_MADT_BIO_PIC",                   SRC_TYPE_STRUCT},
+    {"ACPI_MADT_CORE_PIC",                  SRC_TYPE_STRUCT},
+    {"ACPI_MADT_EIO_PIC",                   SRC_TYPE_STRUCT},
     {"ACPI_MADT_GENERIC_MSI_FRAME",         SRC_TYPE_STRUCT},
     {"ACPI_MADT_GENERIC_REDISTRIBUTOR",     SRC_TYPE_STRUCT},
+    {"ACPI_MADT_GENERIC_TRANSLATOR",        SRC_TYPE_STRUCT},
+    {"ACPI_MADT_GICV5_IRS",                 SRC_TYPE_STRUCT},
+    {"ACPI_MADT_GICv5_ITS",                 SRC_TYPE_STRUCT},
+    {"ACPI_MADT_GICv5_ITS_TRANSLATE",       SRC_TYPE_STRUCT},
     {"ACPI_MADT_HEADER",                    SRC_TYPE_STRUCT},
+    {"ACPI_MADT_HT_PIC",                    SRC_TYPE_STRUCT},
+    {"ACPI_MADT_IMSIC",                     SRC_TYPE_STRUCT},
     {"ACPI_MADT_IO_APIC",                   SRC_TYPE_STRUCT},
     {"ACPI_MADT_IO_SAPIC",                  SRC_TYPE_STRUCT},
+    {"ACPI_MADT_LIO_PIC",                   SRC_TYPE_STRUCT},
     {"ACPI_MADT_LOCAL_APIC",                SRC_TYPE_STRUCT},
     {"ACPI_MADT_LOCAL_APIC_NMI",            SRC_TYPE_STRUCT},
     {"ACPI_MADT_LOCAL_APIC_OVERRIDE",       SRC_TYPE_STRUCT},
     {"ACPI_MADT_LOCAL_SAPIC",               SRC_TYPE_STRUCT},
     {"ACPI_MADT_LOCAL_X2APIC",              SRC_TYPE_STRUCT},
     {"ACPI_MADT_LOCAL_X2APIC_NMI",          SRC_TYPE_STRUCT},
+    {"ACPI_MADT_LPC_PIC",                   SRC_TYPE_STRUCT},
+    {"ACPI_MADT_MSI_PIC",                   SRC_TYPE_STRUCT},
     {"ACPI_MADT_GENERIC_DISTRIBUTOR",       SRC_TYPE_STRUCT},
     {"ACPI_MADT_GENERIC_INTERRUPT",         SRC_TYPE_STRUCT},
     {"ACPI_MADT_INTERRUPT_OVERRIDE",        SRC_TYPE_STRUCT},
@@ -838,16 +846,30 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_MADT_NMI_SOURCE",                SRC_TYPE_STRUCT},
     {"ACPI_MADT_MULTIPROC_WAKEUP",          SRC_TYPE_STRUCT},
     {"ACPI_MADT_MULTIPROC_WAKEUP_MAILBOX",  SRC_TYPE_STRUCT},
+    {"ACPI_MADT_OEM_DATA",                  SRC_TYPE_STRUCT},
+    {"ACPI_MADT_PLIC",                      SRC_TYPE_STRUCT},
     {"ACPI_MADT_PROCESSOR_APIC",            SRC_TYPE_STRUCT},
+    {"ACPI_MADT_RINTC",                     SRC_TYPE_STRUCT},
     {"ACPI_MCFG_ALLOCATION",                SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_FUNC_DEPS",                 SRC_TYPE_STRUCT},
     {"ACPI_MPAM_MSC_NODE",                  SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_ACPI_INTERFACE",   SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_CACHE_LOCATOR",    SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_GENERIC_LOCATOR",  SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_INTERCONNECT_INTERFACE", SRC_TYPE_STRUCT},
     {"ACPI_MPAM_RESOURCE_LOCATOR",          SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_MEMCACHE_INTERFACE", SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_MEMORY_LOCATOR",   SRC_TYPE_STRUCT},
     {"ACPI_MPAM_RESOURCE_NODE",             SRC_TYPE_STRUCT},
+    {"ACPI_MPAM_RESOURCE_SMMU_INTERFACE",   SRC_TYPE_STRUCT},
+    {"ACPI_MPST_CHANNEL",                   SRC_TYPE_STRUCT},
+    {"ACPI_MRRM_MEM_RANGE_ENTRY",           SRC_TYPE_STRUCT},
     {"ACPI_MPST_COMPONENT",                 SRC_TYPE_STRUCT},
     {"ACPI_MPST_DATA_HDR",                  SRC_TYPE_STRUCT},
     {"ACPI_MPST_POWER_DATA",                SRC_TYPE_STRUCT},
     {"ACPI_MPST_POWER_NODE",                SRC_TYPE_STRUCT},
     {"ACPI_MPST_POWER_STATE",               SRC_TYPE_STRUCT},
+    {"ACPI_MPST_SHARED",                    SRC_TYPE_STRUCT},
     {"ACPI_MSCT_PROXIMITY",                 SRC_TYPE_STRUCT},
     {"ACPI_NFIT_CAPABILITIES",              SRC_TYPE_STRUCT},
     {"ACPI_NFIT_CONTROL_REGION",            SRC_TYPE_STRUCT},
@@ -897,15 +919,31 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_PRMT_MODULE_HEADER",             SRC_TYPE_STRUCT},
     {"ACPI_PRMT_MODULE_INFO",               SRC_TYPE_STRUCT},
     {"ACPI_PRMT_HANDLER_INFO",              SRC_TYPE_STRUCT},
+    {"ACPI_RHCT_CMO_NODE",                  SRC_TYPE_STRUCT},
+    {"ACPI_RHCT_HART_INFO",                 SRC_TYPE_STRUCT},
+    {"ACPI_RHCT_ISA_STRING",                SRC_TYPE_STRUCT},
+    {"ACPI_RHCT_MMU_NODE",                  SRC_TYPE_STRUCT},
+    {"ACPI_RHCT_NODE_HEADER",               SRC_TYPE_STRUCT},
+    {"ACPI_RIMT_ID_MAPPING",                SRC_TYPE_STRUCT},
+    {"ACPI_RIMT_IOMMU",                     SRC_TYPE_STRUCT},
+    {"ACPI_RIMT_IOMMU_WIRE_GSI",            SRC_TYPE_STRUCT},
+    {"ACPI_RIMT_NODE",                      SRC_TYPE_STRUCT},
+    {"ACPI_RIMT_PCIE_RC",                   SRC_TYPE_STRUCT},
+    {"ACPI_RIMT_PLATFORM_DEVICE",           SRC_TYPE_STRUCT},
     {"ACPI_RSDP_COMMON",                    SRC_TYPE_STRUCT},
     {"ACPI_RSDP_EXTENSION",                 SRC_TYPE_STRUCT},
     {"ACPI_S3PT_RESUME",                    SRC_TYPE_STRUCT},
     {"ACPI_S3PT_SUSPEND",                   SRC_TYPE_STRUCT},
+    {"ACPI_SDEV_COMPONENT",                 SRC_TYPE_STRUCT},
     {"ACPI_SDEV_HEADER",                    SRC_TYPE_STRUCT},
+    {"ACPI_SDEV_ID_COMPONENT",              SRC_TYPE_STRUCT},
+    {"ACPI_SDEV_MEM_COMPONENT",             SRC_TYPE_STRUCT},
     {"ACPI_SDEV_NAMESPACE",                 SRC_TYPE_STRUCT},
     {"ACPI_SDEV_PCIE",                      SRC_TYPE_STRUCT},
     {"ACPI_SDEV_PCIE_PATH",                 SRC_TYPE_STRUCT},
+    {"ACPI_SDEV_SECURE_COMPONENT",          SRC_TYPE_STRUCT},
     {"ACPI_SVKL_KEY",                       SRC_TYPE_STRUCT},
+    {"ACPI_SWFT_FILE",                      SRC_TYPE_STRUCT},
     {"ACPI_SRAT_CPU_AFFINITY",              SRC_TYPE_STRUCT},
     {"ACPI_SRAT_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_SRAT_GIC_ITS_AFFINITY",          SRC_TYPE_STRUCT},
@@ -914,11 +952,15 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"ACPI_SRAT_MEM_AFFINITY",              SRC_TYPE_STRUCT},
     {"ACPI_SRAT_X2APIC_CPU_AFFINITY",       SRC_TYPE_STRUCT},
     {"ACPI_SRAT_RINTC_AFFINITY",            SRC_TYPE_STRUCT},
+    {"ACPI_TABLE_TCPA_HDR",                 SRC_TYPE_STRUCT},
     {"ACPI_TABLE_TCPA_CLIENT",              SRC_TYPE_STRUCT},
     {"ACPI_TABLE_TCPA_SERVER",              SRC_TYPE_STRUCT},
     {"ACPI_TPM2_TRAILER",                   SRC_TYPE_STRUCT},
     {"ACPI_TPM23_TRAILER",                  SRC_TYPE_STRUCT},
     {"ACPI_TPM2_ARM_SMC",                   SRC_TYPE_STRUCT},
+    {"ACPI_TPR_AUX_SR",                     SRC_TYPE_STRUCT},
+    {"ACPI_TPR_INSTANCE",                   SRC_TYPE_STRUCT},
+    {"ACPI_TPR_SERIALIZE_REQUEST",          SRC_TYPE_STRUCT},
     {"ACPI_VIOT_HEADER",                    SRC_TYPE_STRUCT},
     {"ACPI_VIOT_PCI_RANGE",                 SRC_TYPE_STRUCT},
     {"ACPI_VIOT_MMIO",                      SRC_TYPE_STRUCT},
@@ -932,6 +974,7 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     {"DT_FIELD",                            SRC_TYPE_STRUCT},
     {"DT_SUBTABLE",                         SRC_TYPE_STRUCT},
     {"DT_WALK_CALLBACK",                    SRC_TYPE_SIMPLE},
+    {"DT_TABLE_UNIT",                       SRC_TYPE_STRUCT},
 
     /* iASL preprocessor */
 
@@ -949,9 +992,11 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
     /* AcpiHelp utility */
 
     {"AH_AML_OPCODE",                       SRC_TYPE_STRUCT},
+    {"AH_AML_TYPE",                         SRC_TYPE_STRUCT},
     {"AH_ASL_OPERATOR",                     SRC_TYPE_STRUCT},
     {"AH_ASL_KEYWORD",                      SRC_TYPE_STRUCT},
     {"AH_DEVICE_ID",                        SRC_TYPE_STRUCT},
+    {"AH_DIRECTIVE_INFO",                   SRC_TYPE_STRUCT},
     {"AH_PREDEFINED_NAME",                  SRC_TYPE_STRUCT},
     {"AH_TABLE",                            SRC_TYPE_STRUCT},
     {"AH_UUID",                             SRC_TYPE_STRUCT},
@@ -964,6 +1009,11 @@ ACPI_TYPED_IDENTIFIER_TABLE           AcpiIdentifiers[] = {
 
     {"EXTERNAL_FIND_INFO",                  SRC_TYPE_STRUCT},
     {"OSL_TABLE_INFO",                      SRC_TYPE_STRUCT},
+
+    {"DIRECTIVE_INFO",                      SRC_TYPE_STRUCT},
+    {"HISTORY_INFO",                        SRC_TYPE_STRUCT},
+    {"INIT_FILE_ENTRY",                     SRC_TYPE_STRUCT},
+    {"NFIT_DEVICE_HANDLE",                  SRC_TYPE_STRUCT},
 
     {NULL, 0}
 };
@@ -1244,8 +1294,8 @@ ACPI_CONVERSION_TABLE       LicenseConversionTable =
 
 ACPI_STRING_TABLE           CustomReplacements[] =
 {
-    {"(c) 1999 - 2021",     "(c) 1999 - 2024",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
-    {"(c) 2006 - 2021",     "(c) 2006 - 2023",         REPLACE_WHOLE_WORD}, /* Test suites */
+    {"(c) 1999 - 2025",     "(c) 1999 - 2026",         REPLACE_WHOLE_WORD}, /* Main ACPICA source */
+    {"(c) 2006 - 2023",     "(c) 2006 - 2026",         REPLACE_WHOLE_WORD}, /* Test suites */
 
 #if 0
     {"SUPPORT, ASSISTANCE", "SUPPORT, ASSISTANCE",     REPLACE_WHOLE_WORD}, /* Fix intel header */

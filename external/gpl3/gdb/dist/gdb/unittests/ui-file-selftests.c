@@ -1,6 +1,6 @@
 /* Self tests for ui_file
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,6 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "gdbsupport/scoped_restore.h"
 #include "gdbsupport/selftest.h"
 #include "ui-file.h"
 
@@ -52,9 +53,7 @@ run_tests ()
 } /* namespace file*/
 } /* namespace selftests */
 
-void _initialize_ui_file_selftest ();
-void
-_initialize_ui_file_selftest ()
+INIT_GDB_FILE (ui_file_selftest)
 {
   selftests::register_test ("ui-file",
 			    selftests::file::run_tests);

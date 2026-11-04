@@ -325,11 +325,11 @@ sub construct_ans_command {
 
 	if (-e "$testdir/$server/ans.py") {
 		$ENV{'PYTHONPATH'} = $testdir . ":" . $builddir;
-		$command = "$PYTHON -u ans.py 10.53.0.$n $queryport";
+		$command = "$PYTHON -u -m $test.$server.ans 10.53.0.$n $queryport";
 	} elsif (-e "$testdir/$server/ans.pl") {
 		$command = "$PERL ans.pl";
 	} else {
-		$command = "$PERL $srcdir/ans.pl 10.53.0.$n";
+		die "unable to find ans.pl or ans.py in \"$testdir/$server\"\n";
 	}
 
 	if ($options) {

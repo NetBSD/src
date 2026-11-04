@@ -1,0 +1,79 @@
+# This testcase is part of GDB, the GNU debugger.
+
+# Copyright 2022-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Generate binaries imitating different ways source file paths can be passed to
+# compilers.  Test printing macros from those binaries.
+
+load_lib dwarf.exp
+
+require dwarf2_support
+
+# The do_test proc comes from macro-source-path.exp.tcl.
+source $srcdir/$subdir/macro-source-path.exp.tcl
+
+# When adding a test here, please consider adding an equivalent case to
+# `gdb.base/macro-source-path.exp`.
+
+# The following tests are based on the output of `clang-14 -gdwarf-5
+# -fdebug-macro -g3 <file>` (using its built-in assembler)
+
+## test.c
+do_test filename 5 "test.c" 0 {
+    "/tmp/cwd"
+} {
+    {"test.c" 0}
+}
+
+## ./test.c
+do_test dot-filename 5 "test.c" 1 {
+    "/tmp/cwd"
+    "."
+} {
+    {"test.c" 0}
+    {"test.c" 1}
+}
+
+## ../cwd/test.c
+do_test dot-dot-cwd 5 "../cwd/test.c" 0 {
+    "/tmp/cwd"
+} {
+    {"../cwd/test.c" 0}
+}
+
+## /tmp/cwd/test.c
+do_test absolute-cwd  5 "/tmp/cwd/test.c" 1 {
+    "/tmp/cwd"
+} {
+    {"/tmp/cwd/test.c" 0}
+    {"test.c" 0}
+}
+
+## ../other/test.c
+do_test dot-dot-other 5 "../other/test.c" 0 {
+    "/tmp/cwd"
+} {
+    {"../other/test.c" 0}
+}
+
+## /tmp/other/test.c
+do_test absolute-other 5 "/tmp/other/test.c" 1 {
+    "/tmp/cwd"
+    "/tmp"
+} {
+    {"/tmp/other/test.c" 0}
+    {"other/test.c" 1}
+}

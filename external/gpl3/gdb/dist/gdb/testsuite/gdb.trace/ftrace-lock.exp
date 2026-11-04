@@ -1,4 +1,4 @@
-# Copyright 2015-2024 Free Software Foundation, Inc.
+# Copyright 2015-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -32,7 +32,7 @@ set options [list debug pthreads [gdb_target_symbol_prefix_flags] \
 	     additional_flags=-DNUM_THREADS=$NUM_THREADS]
 
 with_test_prefix "runtime trace support check" {
-    if { [prepare_for_testing "prepare for testing" ${binfile}-check \
+    if { [prepare_for_testing "prepare for testing" ${testfile}-check \
 	      $srcfile $options] } {
 	return
     }
@@ -48,13 +48,14 @@ with_test_prefix "runtime trace support check" {
 }
 
 # Compile the test case with the in-process agent library.
+require allow_in_proc_agent
 set libipa [get_in_proc_agent]
 set remote_libipa [gdb_load_shlib $libipa]
 
 lappend options shlib=$libipa
 
 if { [prepare_for_testing "prepare for testing with libipa" \
-	  $binfile $srcfile $options] } {
+	  $testfile $srcfile $options] } {
     return
 }
 

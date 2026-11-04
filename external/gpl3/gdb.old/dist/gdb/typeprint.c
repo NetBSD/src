@@ -1,6 +1,6 @@
 /* Language independent support for printing types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,16 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbsupport/gdb_obstack.h"
-#include "bfd.h"		/* Binary File Description */
+#include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
 #include "value.h"
 #include "gdbcore.h"
 #include "command.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "target.h"
 #include "language.h"
 #include "cp-abi.h"
@@ -125,7 +124,7 @@ void
 print_offset_data::update (struct type *type, unsigned int field_idx,
 			   struct ui_file *stream)
 {
-  if (field_is_static (&type->field (field_idx)))
+  if (type->field (field_idx).is_static ())
     {
       print_spaces (indentation, stream);
       return;
@@ -149,11 +148,11 @@ print_offset_data::update (struct type *type, unsigned int field_idx,
 
   maybe_print_hole (stream, bitpos, "hole");
 
-  if (TYPE_FIELD_PACKED (type, field_idx)
+  if (type->field (field_idx).is_packed ()
       || offset_bitpos % TARGET_CHAR_BIT != 0)
     {
       /* We're dealing with a bitfield.  Print the bit offset.  */
-      fieldsize_bit = TYPE_FIELD_BITSIZE (type, field_idx);
+      fieldsize_bit = type->field (field_idx).bitsize ();
 
       unsigned real_bitpos = bitpos + offset_bitpos;
 
@@ -195,49 +194,16 @@ print_offset_data::finish (struct type *type, int level,
 
 
 
-/* A hash function for a typedef_field.  */
-
-static hashval_t
-hash_typedef_field (const void *p)
-{
-  const struct decl_field *tf = (const struct decl_field *) p;
-
-  return htab_hash_string (TYPE_SAFE_NAME (tf->type));
-}
-
-/* An equality function for a typedef field.  */
-
-static int
-eq_typedef_field (const void *a, const void *b)
-{
-  const struct decl_field *tfa = (const struct decl_field *) a;
-  const struct decl_field *tfb = (const struct decl_field *) b;
-
-  return types_equal (tfa->type, tfb->type);
-}
-
 /* See typeprint.h.  */
 
 void
 typedef_hash_table::recursively_update (struct type *t)
 {
-  int i;
-
-  for (i = 0; i < TYPE_TYPEDEF_FIELD_COUNT (t); ++i)
-    {
-      struct decl_field *tdef = &TYPE_TYPEDEF_FIELD (t, i);
-      void **slot;
-
-      slot = htab_find_slot (m_table.get (), tdef, INSERT);
-      /* Only add a given typedef name once.  Really this shouldn't
-	 happen; but it is safe enough to do the updates breadth-first
-	 and thus use the most specific typedef.  */
-      if (*slot == NULL)
-	*slot = tdef;
-    }
+  for (int i = 0; i < TYPE_TYPEDEF_FIELD_COUNT (t); ++i)
+    m_table.emplace (&TYPE_TYPEDEF_FIELD (t, i));
 
   /* Recurse into superclasses.  */
-  for (i = 0; i < TYPE_N_BASECLASSES (t); ++i)
+  for (int i = 0; i < TYPE_N_BASECLASSES (t); ++i)
     recursively_update (TYPE_BASECLASS (t, i));
 }
 
@@ -251,7 +217,6 @@ typedef_hash_table::add_template_parameters (struct type *t)
   for (i = 0; i < TYPE_N_TEMPLATE_ARGUMENTS (t); ++i)
     {
       struct decl_field *tf;
-      void **slot;
 
       /* We only want type-valued template parameters in the hash.  */
       if (TYPE_TEMPLATE_ARGUMENT (t, i)->aclass () != LOC_TYPEDEF)
@@ -261,43 +226,8 @@ typedef_hash_table::add_template_parameters (struct type *t)
       tf->name = TYPE_TEMPLATE_ARGUMENT (t, i)->linkage_name ();
       tf->type = TYPE_TEMPLATE_ARGUMENT (t, i)->type ();
 
-      slot = htab_find_slot (m_table.get (), tf, INSERT);
-      if (*slot == NULL)
-	*slot = tf;
+      m_table.emplace (tf);
     }
-}
-
-/* See typeprint.h.  */
-
-typedef_hash_table::typedef_hash_table ()
-  : m_table (htab_create_alloc (10, hash_typedef_field, eq_typedef_field,
-				NULL, xcalloc, xfree))
-{
-}
-
-/* Helper function for typedef_hash_table::copy.  */
-
-static int
-copy_typedef_hash_element (void **slot, void *nt)
-{
-  htab_t new_table = (htab_t) nt;
-  void **new_slot;
-
-  new_slot = htab_find_slot (new_table, *slot, INSERT);
-  if (*new_slot == NULL)
-    *new_slot = *slot;
-
-  return 1;
-}
-
-/* See typeprint.h.  */
-
-typedef_hash_table::typedef_hash_table (const typedef_hash_table &table)
-{
-  m_table.reset (htab_create_alloc (10, hash_typedef_field, eq_typedef_field,
-				    NULL, xcalloc, xfree));
-  htab_traverse_noresize (table.m_table.get (), copy_typedef_hash_element,
-			  m_table.get ());
 }
 
 /* Look up the type T in the global typedef hash.  If it is found,
@@ -309,39 +239,28 @@ const char *
 typedef_hash_table::find_global_typedef (const struct type_print_options *flags,
 					 struct type *t)
 {
-  char *applied;
-  void **slot;
-  struct decl_field tf, *new_tf;
-
   if (flags->global_typedefs == NULL)
     return NULL;
 
-  tf.name = NULL;
-  tf.type = t;
-
-  slot = htab_find_slot (flags->global_typedefs->m_table.get (), &tf, INSERT);
-  if (*slot != NULL)
-    {
-      new_tf = (struct decl_field *) *slot;
-      return new_tf->name;
-    }
+  if (auto it = flags->global_typedefs->m_table.find (t);
+      it != flags->global_typedefs->m_table.end ())
+    return (*it)->name;
 
   /* Put an entry into the hash table now, in case
      apply_ext_lang_type_printers recurses.  */
-  new_tf = XOBNEW (&flags->global_typedefs->m_storage, struct decl_field);
+  decl_field *new_tf
+    = XOBNEW (&flags->global_typedefs->m_storage, struct decl_field);
   new_tf->name = NULL;
   new_tf->type = t;
 
-  *slot = new_tf;
+  flags->global_typedefs->m_table.emplace (new_tf);
 
-  applied = apply_ext_lang_type_printers (flags->global_printers, t);
+  gdb::unique_xmalloc_ptr<char> applied
+    = apply_ext_lang_type_printers (flags->global_printers, t);
 
-  if (applied != NULL)
-    {
-      new_tf->name = obstack_strdup (&flags->global_typedefs->m_storage,
-				     applied);
-      xfree (applied);
-    }
+  if (applied != nullptr)
+    new_tf->name = obstack_strdup (&flags->global_typedefs->m_storage,
+				   applied.get ());
 
   return new_tf->name;
 }
@@ -354,15 +273,9 @@ typedef_hash_table::find_typedef (const struct type_print_options *flags,
 {
   if (flags->local_typedefs != NULL)
     {
-      struct decl_field tf, *found;
-
-      tf.name = NULL;
-      tf.type = t;
-      htab_t table = flags->local_typedefs->m_table.get ();
-      found = (struct decl_field *) htab_find (table, &tf);
-
-      if (found != NULL)
-	return found->name;
+      if (auto iter = flags->local_typedefs->m_table.find (t);
+	  iter != flags->local_typedefs->m_table.end ())
+	return (*iter)->name;
     }
 
   return find_global_typedef (flags, t);
@@ -454,7 +367,7 @@ whatis_exp (const char *exp, int show)
 	{
 	  int seen_one = 0;
 
-	  for (++exp; *exp && !isspace (*exp); ++exp)
+	  for (++exp; *exp && !isspace ((unsigned char)*exp); ++exp)
 	    {
 	      switch (*exp)
 		{
@@ -500,7 +413,7 @@ whatis_exp (const char *exp, int show)
 
 	  if (!*exp && !seen_one)
 	    error (_("flag expected"));
-	  if (!isspace (*exp))
+	  if (!isspace ((unsigned char)*exp))
 	    error (_("expected space after format"));
 	  exp = skip_spaces (exp);
 	}
@@ -514,10 +427,10 @@ whatis_exp (const char *exp, int show)
 	 "whatis" prints the type of the expression without stripping
 	 any typedef level.  "ptype" always strips all levels of
 	 typedefs.  */
-      val = evaluate_type (expr.get ());
-      type = value_type (val);
+      val = expr->evaluate_type ();
+      type = val->type ();
 
-      if (show == -1 && expr->first_opcode () == OP_TYPE)
+      if (show == -1 && expr->type_p ())
 	{
 	  /* The user expression names a type directly.  */
 
@@ -536,7 +449,13 @@ whatis_exp (const char *exp, int show)
   else
     {
       val = access_value_history (0);
-      type = value_type (val);
+      type = val->type ();
+    }
+
+  if (flags.print_offsets && is_dynamic_type (type))
+    {
+      warning (_("ptype/o does not work with dynamic types; disabling '/o'"));
+      flags.print_offsets = 0;
     }
 
   get_user_print_options (&opts);
@@ -560,10 +479,10 @@ whatis_exp (const char *exp, int show)
   std::unique_ptr<ext_lang_type_printers> printer_holder;
   if (!flags.raw)
     {
-      table_holder.reset (new typedef_hash_table);
+      table_holder = std::make_unique<typedef_hash_table> ();
       flags.global_typedefs = table_holder.get ();
 
-      printer_holder.reset (new ext_lang_type_printers);
+      printer_holder = std::make_unique<ext_lang_type_printers> ();
       flags.global_printers = printer_holder.get ();
     }
 
@@ -705,8 +624,8 @@ maintenance_print_type (const char *type_name, int from_tty)
   if (type_name != NULL)
     {
       expression_up expr = parse_expression (type_name);
-      struct value *val = evaluate_type (expr.get ());
-      struct type *type = value_type (val);
+      struct value *val = expr->evaluate_type ();
+      struct type *type = val->type ();
 
       if (type != nullptr)
 	recursive_dump_type (type, 0);
@@ -839,9 +758,9 @@ Available FLAGS are:\n\
   /T    print typedefs defined in a class\n\
   /o    print offsets and sizes of fields in a struct (like pahole)\n\
   /x    use hexadecimal notation when displaying sizes and offsets\n\
-        of struct members\n\
+	of struct members\n\
   /d    use decimal notation when displaying sizes and offsets\n\
-        of struct members "));
+	of struct members"));
   set_cmd_completer (c, expression_completer);
 
   c = add_com ("whatis", class_vars, whatis_command,
@@ -873,8 +792,8 @@ Show printing of typedefs defined in classes."), NULL,
   add_setshow_zuinteger_unlimited_cmd ("nested-type-limit", no_class,
 				       &print_nested_type_limit,
 				       _("\
-Set the number of recursive nested type definitions to print \
-(\"unlimited\" or -1 to show all)."), _("\
+Set the number of recursive nested type definitions to print.\n\
+Use \"unlimited\" or -1 to show all."), _("\
 Show the number of recursive nested type definitions to print."), NULL,
 				       set_print_type_nested_types,
 				       show_print_type_nested_types,

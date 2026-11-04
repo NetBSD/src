@@ -1,5 +1,5 @@
 /* AArch64-specific support for NN-bit ELF.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -112,7 +112,7 @@
   allocate space for one relocation on the slot. Record the GOT offset
   for this symbol.
 
-  elfNN_aarch64_size_dynamic_sections ()
+  elfNN_aarch64_late_size_sections ()
 
   Iterate all input BFDS, look for in the local symbol data structure
   constructed earlier for local TLS symbols and allocate them double
@@ -478,7 +478,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ABS64),	/* name */
 	 false,			/* partial_inplace */
-	 ALL_ONES,		/* src_mask */
+	 0,			/* src_mask */
 	 ALL_ONES,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -493,7 +493,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ABS32),	/* name */
 	 false,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -508,7 +508,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ABS16),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -523,7 +523,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (PREL64),	/* name */
 	 false,			/* partial_inplace */
-	 ALL_ONES,		/* src_mask */
+	 0,			/* src_mask */
 	 ALL_ONES,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -538,7 +538,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (PREL32),	/* name */
 	 false,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -553,7 +553,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (PREL16),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -571,7 +571,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G0),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -586,7 +586,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -601,7 +601,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -616,7 +616,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G1_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -631,7 +631,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G2),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -646,7 +646,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G2_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -661,7 +661,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_UABS_G3),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -680,7 +680,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_SABS_G0),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -695,7 +695,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_SABS_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -710,7 +710,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_SABS_G2),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -728,7 +728,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G0),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -743,7 +743,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -758,7 +758,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -773,7 +773,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G1_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -788,7 +788,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G2),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -803,7 +803,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G2_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -818,7 +818,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_PREL_G3),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 true),		/* pcrel_offset */
 
@@ -836,7 +836,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LD_PREL_LO19),	/* name */
 	 false,			/* partial_inplace */
-	 0x7ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x7ffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -851,7 +851,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ADR_PREL_LO21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -866,7 +866,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ADR_PREL_PG_HI21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -881,7 +881,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ADR_PREL_PG_HI21_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -896,7 +896,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ADD_ABS_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -911,7 +911,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LDST8_ABS_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,				/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -928,7 +928,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TSTBR14),	/* name */
 	 false,			/* partial_inplace */
-	 0x3fff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3fff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -943,7 +943,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (CONDBR19),	/* name */
 	 false,			/* partial_inplace */
-	 0x7ffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x7ffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -958,7 +958,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (JUMP26),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -973,7 +973,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (CALL26),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -988,7 +988,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LDST16_ABS_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffe,			/* src_mask */
+	 0,			/* src_mask */
 	 0xffe,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1003,7 +1003,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LDST32_ABS_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc,			/* src_mask */
+	 0,			/* src_mask */
 	 0xffc,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1018,7 +1018,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LDST64_ABS_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xff8,			/* src_mask */
+	 0,			/* src_mask */
 	 0xff8,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1033,7 +1033,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LDST128_ABS_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xff0,			/* src_mask */
+	 0,			/* src_mask */
 	 0xff0,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1049,7 +1049,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,		/* special_function */
 	 AARCH64_R_STR (GOT_LD_PREL19),	/* name */
 	 false,				/* partial_inplace */
-	 0xffffe0,			/* src_mask */
+	 0,				/* src_mask */
 	 0xffffe0,			/* dst_mask */
 	 true),				/* pcrel_offset */
 
@@ -1065,7 +1065,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (ADR_GOT_PAGE),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1080,7 +1080,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LD64_GOT_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xff8,			/* src_mask */
+	 0,			/* src_mask */
 	 0xff8,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1095,7 +1095,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LD32_GOT_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc,			/* src_mask */
+	 0,			/* src_mask */
 	 0xffc,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1110,7 +1110,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_GOTOFF_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1125,7 +1125,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (MOVW_GOTOFF_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1140,7 +1140,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LD64_GOTOFF_LO15),	/* name */
 	 false,			/* partial_inplace */
-	 0x7ff8,			/* src_mask */
+	 0,				/* src_mask */
 	 0x7ff8,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1156,7 +1156,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LD32_GOTPAGE_LO14),	/* name */
 	 false,			/* partial_inplace */
-	 0x5ffc,		/* src_mask */
+	 0,			/* src_mask */
 	 0x5ffc,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1172,7 +1172,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (LD64_GOTPAGE_LO15),	/* name */
 	 false,			/* partial_inplace */
-	 0x7ff8,		/* src_mask */
+	 0,			/* src_mask */
 	 0x7ff8,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1188,7 +1188,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSGD_ADR_PAGE21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1202,7 +1202,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSGD_ADR_PREL21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1217,7 +1217,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSGD_ADD_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1232,7 +1232,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSGD_MOVW_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1247,7 +1247,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSGD_MOVW_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1261,7 +1261,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSIE_ADR_GOTTPREL_PAGE21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1275,7 +1275,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSIE_LD64_GOTTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xff8,			/* src_mask */
+	 0,			/* src_mask */
 	 0xff8,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1289,7 +1289,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSIE_LD32_GOTTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc,			/* src_mask */
+	 0,			/* src_mask */
 	 0xffc,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1303,7 +1303,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSIE_LD_GOTTPREL_PREL19),	/* name */
 	 false,			/* partial_inplace */
-	 0x1ffffc,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1ffffc,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1317,7 +1317,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSIE_MOVW_GOTTPREL_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1331,7 +1331,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSIE_MOVW_GOTTPREL_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1346,7 +1346,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_ADD_DTPREL_HI12),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1361,7 +1361,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_ADD_DTPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1376,7 +1376,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_ADD_DTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1391,7 +1391,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_ADD_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1407,7 +1407,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_ADR_PAGE21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1421,7 +1421,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_ADR_PREL21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1436,7 +1436,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST16_DTPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x1ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1451,7 +1451,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST16_DTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x1ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1466,7 +1466,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST32_DTPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1481,7 +1481,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST32_DTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1496,7 +1496,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST64_DTPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1511,7 +1511,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST64_DTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x7fc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x7fc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1526,7 +1526,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST8_DTPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1541,7 +1541,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_LDST8_DTPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1556,7 +1556,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_MOVW_DTPREL_G0),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1571,7 +1571,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_MOVW_DTPREL_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1586,7 +1586,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_MOVW_DTPREL_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1601,7 +1601,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_MOVW_DTPREL_G1_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1616,7 +1616,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLD_MOVW_DTPREL_G2),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1630,7 +1630,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_MOVW_TPREL_G2),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1644,7 +1644,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_MOVW_TPREL_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1658,7 +1658,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_MOVW_TPREL_G1_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1672,7 +1672,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_MOVW_TPREL_G0),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1686,7 +1686,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_MOVW_TPREL_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1700,7 +1700,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_ADD_TPREL_HI12),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1714,7 +1714,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_ADD_TPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1728,7 +1728,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_ADD_TPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1743,7 +1743,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST16_TPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x1ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1758,7 +1758,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST16_TPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x1ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1773,7 +1773,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST32_TPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1788,7 +1788,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST32_TPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1803,7 +1803,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST64_TPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x7fc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x7fc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1818,7 +1818,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST64_TPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x7fc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x7fc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1833,7 +1833,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST8_TPREL_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1848,7 +1848,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSLE_LDST8_TPREL_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0x3ffc00,		/* src_mask */
+	 0,			/* src_mask */
 	 0x3ffc00,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1862,7 +1862,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_LD_PREL19),	/* name */
 	 false,			/* partial_inplace */
-	 0x0ffffe0,		/* src_mask */
+	 0,			/* src_mask */
 	 0x0ffffe0,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1876,7 +1876,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_ADR_PREL21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1892,7 +1892,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_ADR_PAGE21),	/* name */
 	 false,			/* partial_inplace */
-	 0x1fffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0x1fffff,		/* dst_mask */
 	 true),			/* pcrel_offset */
 
@@ -1907,7 +1907,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_LD64_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0xff8,			/* src_mask */
+	 0,			/* src_mask */
 	 0xff8,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1922,7 +1922,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_LD32_LO12_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffc,			/* src_mask */
+	 0,			/* src_mask */
 	 0xffc,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1937,7 +1937,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_ADD_LO12),	/* name */
 	 false,			/* partial_inplace */
-	 0xfff,			/* src_mask */
+	 0,			/* src_mask */
 	 0xfff,			/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1951,7 +1951,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_OFF_G1),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -1965,7 +1965,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (TLSDESC_OFF_G0_NC),	/* name */
 	 false,			/* partial_inplace */
-	 0xffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -2021,7 +2021,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (COPY),	/* name */
 	 true,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -2035,7 +2035,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (GLOB_DAT),	/* name */
 	 true,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -2049,7 +2049,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (JUMP_SLOT),	/* name */
 	 true,			/* partial_inplace */
-	 0xffffffff,		/* src_mask */
+	 0,			/* src_mask */
 	 0xffffffff,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -2063,7 +2063,7 @@ static reloc_howto_type elfNN_aarch64_howto_table[] =
 	 bfd_elf_generic_reloc,	/* special_function */
 	 AARCH64_R_STR (RELATIVE),	/* name */
 	 true,			/* partial_inplace */
-	 ALL_ONES,		/* src_mask */
+	 0,			/* src_mask */
 	 ALL_ONES,		/* dst_mask */
 	 false),		/* pcrel_offset */
 
@@ -2354,6 +2354,9 @@ elfNN_aarch64_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
    name can be changed. The only requirement is the %s be present.  */
 #define STUB_ENTRY_NAME   "__%s_veneer"
 
+/* Stub name for a BTI landing stub.  */
+#define BTI_STUB_ENTRY_NAME   "__%s_bti_veneer"
+
 /* The name of the dynamic interpreter.  This is put in the .interp
    section.  */
 #define ELF_DYNAMIC_INTERPRETER     "/lib/ld.so.1"
@@ -2406,6 +2409,12 @@ static const uint32_t aarch64_long_branch_stub[] =
   0x00000000,
 };
 
+static const uint32_t aarch64_bti_direct_branch_stub[] =
+{
+  0xd503245f,			/*	bti	c */
+  0x14000000,			/*	b	<label> */
+};
+
 static const uint32_t aarch64_erratum_835769_stub[] =
 {
   0x00000000,    /* Placeholder for multiply accumulate.  */
@@ -2427,6 +2436,7 @@ enum elf_aarch64_stub_type
   aarch64_stub_none,
   aarch64_stub_adrp_branch,
   aarch64_stub_long_branch,
+  aarch64_stub_bti_direct_branch,
   aarch64_stub_erratum_835769_veneer,
   aarch64_stub_erratum_843419_veneer,
 };
@@ -2454,6 +2464,9 @@ struct elf_aarch64_stub_hash_entry
 
   /* Destination symbol type */
   unsigned char st_type;
+
+  /* The target is also a stub.  */
+  bool double_stub;
 
   /* Where this stub is being called from, or, in the case of combined
      stub sections, the first input section in the group.  */
@@ -2513,33 +2526,6 @@ struct elf_aarch64_local_symbol
   bfd_vma tlsdesc_got_jump_table_offset;
 };
 
-struct elf_aarch64_obj_tdata
-{
-  struct elf_obj_tdata root;
-
-  /* local symbol descriptors */
-  struct elf_aarch64_local_symbol *locals;
-
-  /* Zero to warn when linking objects with incompatible enum sizes.  */
-  int no_enum_size_warning;
-
-  /* Zero to warn when linking objects with incompatible wchar_t sizes.  */
-  int no_wchar_size_warning;
-
-  /* All GNU_PROPERTY_AARCH64_FEATURE_1_AND properties.  */
-  uint32_t gnu_and_prop;
-
-  /* Zero to warn when linking objects with incompatible
-     GNU_PROPERTY_AARCH64_FEATURE_1_BTI.  */
-  int no_bti_warn;
-
-  /* PLT type based on security.  */
-  aarch64_plt_type plt_type;
-};
-
-#define elf_aarch64_tdata(bfd)				\
-  ((struct elf_aarch64_obj_tdata *) (bfd)->tdata.any)
-
 #define elf_aarch64_locals(bfd) (elf_aarch64_tdata (bfd)->locals)
 
 #define is_aarch64_elf(bfd)				\
@@ -2550,8 +2536,7 @@ struct elf_aarch64_obj_tdata
 static bool
 elfNN_aarch64_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_aarch64_obj_tdata),
-				  AARCH64_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_aarch64_obj_tdata));
 }
 
 #define elf_aarch64_hash_entry(ent) \
@@ -2679,6 +2664,11 @@ struct elf_aarch64_link_hash_table
   unsigned int top_index;
   asection **input_list;
 
+  /* True when two stubs are added where one targets the other, happens
+     when BTI stubs are inserted and then the stub layout must not change
+     during elfNN_aarch64_build_stubs.  */
+  bool has_double_stub;
+
   /* JUMP_SLOT relocs for variant PCS symbols may be present.  */
   int variant_pcs;
 
@@ -2688,6 +2678,19 @@ struct elf_aarch64_link_hash_table
   /* Used by local STT_GNU_IFUNC symbols.  */
   htab_t loc_hash_table;
   void * loc_hash_memory;
+
+  /* Array of relative relocs to be emitted in DT_RELR format.  */
+  bfd_size_type relr_alloc;
+  bfd_size_type relr_count;
+  struct relr_entry
+  {
+    asection *sec;
+    bfd_vma off;
+  } *relr;
+  /* Sorted output addresses of above relative relocs.  */
+  bfd_vma *relr_sorted;
+  /* Layout recomputation count.  */
+  bfd_size_type relr_layout_iter;
 };
 
 /* Create an entry in an AArch64 ELF linker hash table.  */
@@ -2749,14 +2752,9 @@ stub_hash_newfunc (struct bfd_hash_entry *entry,
 
       /* Initialize the local fields.  */
       eh = (struct elf_aarch64_stub_hash_entry *) entry;
-      eh->adrp_offset = 0;
-      eh->stub_sec = NULL;
-      eh->stub_offset = 0;
-      eh->target_value = 0;
-      eh->target_section = NULL;
-      eh->stub_type = aarch64_stub_none;
-      eh->h = NULL;
-      eh->id_sec = NULL;
+      memset (&eh->stub_sec, 0,
+	      (sizeof (struct elf_aarch64_stub_hash_entry)
+	       - offsetof (struct elf_aarch64_stub_hash_entry, stub_sec)));
     }
 
   return entry;
@@ -2917,7 +2915,7 @@ elfNN_aarch64_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init
       (&ret->root, abfd, elfNN_aarch64_link_hash_newfunc,
-       sizeof (struct elf_aarch64_link_hash_entry), AARCH64_ELF_DATA))
+       sizeof (struct elf_aarch64_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2972,14 +2970,6 @@ aarch64_relocate (unsigned int r_type, bfd *input_bfd, asection *input_section,
   return _bfd_aarch64_elf_put_addend (input_bfd,
 				      input_section->contents + offset, r_type,
 				      howto, value) == bfd_reloc_ok;
-}
-
-static enum elf_aarch64_stub_type
-aarch64_select_branch_stub (bfd_vma value, bfd_vma place)
-{
-  if (aarch64_valid_for_adrp_p (value, place))
-    return aarch64_stub_adrp_branch;
-  return aarch64_stub_long_branch;
 }
 
 /* Determine the type of stub needed, if any, for a call.  */
@@ -3251,25 +3241,32 @@ aarch64_build_one_stub (struct bfd_hash_entry *gen_entry,
   bfd_vma veneer_entry_loc;
   bfd_signed_vma branch_offset = 0;
   unsigned int template_size;
+  unsigned int pad_size = 0;
   const uint32_t *template;
   unsigned int i;
   struct bfd_link_info *info;
+  struct elf_aarch64_link_hash_table *htab;
 
   /* Massage our args to the form they really have.  */
   stub_entry = (struct elf_aarch64_stub_hash_entry *) gen_entry;
 
   info = (struct bfd_link_info *) in_arg;
+  htab = elf_aarch64_hash_table (info);
 
   /* Fail if the target section could not be assigned to an output
      section.  The user should fix his linker script.  */
   if (stub_entry->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
 			      "Retry without "
 			      "--enable-non-contiguous-regions.\n"),
 			    stub_entry->target_section);
 
   stub_sec = stub_entry->stub_sec;
+
+  /* The layout must not change when a stub may be the target of another.  */
+  if (htab->has_double_stub)
+    BFD_ASSERT (stub_entry->stub_offset == stub_sec->size);
 
   /* Make a note of the offset within the stubs for this entry.  */
   stub_entry->stub_offset = stub_sec->size;
@@ -3289,7 +3286,14 @@ aarch64_build_one_stub (struct bfd_hash_entry *gen_entry,
 
       /* See if we can relax the stub.  */
       if (aarch64_valid_for_adrp_p (sym_value, place))
-	stub_entry->stub_type = aarch64_select_branch_stub (sym_value, place);
+	{
+	  stub_entry->stub_type = aarch64_stub_adrp_branch;
+
+	  /* Avoid the relaxation changing the layout.  */
+	  if (htab->has_double_stub)
+	    pad_size = sizeof (aarch64_long_branch_stub)
+		       - sizeof (aarch64_adrp_branch_stub);
+	}
     }
 
   switch (stub_entry->stub_type)
@@ -3301,6 +3305,10 @@ aarch64_build_one_stub (struct bfd_hash_entry *gen_entry,
     case aarch64_stub_long_branch:
       template = aarch64_long_branch_stub;
       template_size = sizeof (aarch64_long_branch_stub);
+      break;
+    case aarch64_stub_bti_direct_branch:
+      template = aarch64_bti_direct_branch_stub;
+      template_size = sizeof (aarch64_bti_direct_branch_stub);
       break;
     case aarch64_stub_erratum_835769_veneer:
       template = aarch64_erratum_835769_stub;
@@ -3320,6 +3328,7 @@ aarch64_build_one_stub (struct bfd_hash_entry *gen_entry,
       loc += 4;
     }
 
+  template_size += pad_size;
   template_size = (template_size + 7) & ~7;
   stub_sec->size += template_size;
 
@@ -3342,6 +3351,12 @@ aarch64_build_one_stub (struct bfd_hash_entry *gen_entry,
 	 value itself.  */
       if (!aarch64_relocate (AARCH64_R (PRELNN), stub_bfd, stub_sec,
 			     stub_entry->stub_offset + 16, sym_value + 12))
+	BFD_FAIL ();
+      break;
+
+    case aarch64_stub_bti_direct_branch:
+      if (!aarch64_relocate (AARCH64_R (JUMP26), stub_bfd, stub_sec,
+			     stub_entry->stub_offset + 4, sym_value))
 	BFD_FAIL ();
       break;
 
@@ -3375,7 +3390,8 @@ aarch64_build_one_stub (struct bfd_hash_entry *gen_entry,
 }
 
 /* As above, but don't actually build the stub.  Just bump offset so
-   we know stub section sizes.  */
+   we know stub section sizes and record the offset for each stub so
+   a stub can target another stub (needed for BTI direct branch stub).  */
 
 static bool
 aarch64_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
@@ -3396,6 +3412,9 @@ aarch64_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
     case aarch64_stub_long_branch:
       size = sizeof (aarch64_long_branch_stub);
       break;
+    case aarch64_stub_bti_direct_branch:
+      size = sizeof (aarch64_bti_direct_branch_stub);
+      break;
     case aarch64_stub_erratum_835769_veneer:
       size = sizeof (aarch64_erratum_835769_stub);
       break;
@@ -3411,8 +3430,18 @@ aarch64_size_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
     }
 
   size = (size + 7) & ~7;
+  stub_entry->stub_offset = stub_entry->stub_sec->size;
   stub_entry->stub_sec->size += size;
   return true;
+}
+
+/* Output is BTI compatible.  */
+
+static bool
+elf_aarch64_bti_p (bfd *output_bfd)
+{
+  return elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
+       & GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
 }
 
 /* External entry points for sizing and building linker stubs.  */
@@ -3620,6 +3649,54 @@ group_sections (struct elf_aarch64_link_hash_table *htab,
 
 #undef PREV_SEC
 #undef PREV_SEC
+
+#define AARCH64_HINT(insn) (((insn) & 0xfffff01f) == 0xd503201f)
+#define AARCH64_PACIASP 0xd503233f
+#define AARCH64_PACIBSP 0xd503237f
+#define AARCH64_BTI_C   0xd503245f
+#define AARCH64_BTI_J   0xd503249f
+#define AARCH64_BTI_JC  0xd50324df
+
+/* True if the inserted stub does not break BTI compatibility.  */
+
+static bool
+aarch64_bti_stub_p (struct bfd_link_info *info,
+		    struct elf_aarch64_stub_hash_entry *stub_entry)
+{
+  /* Stubs without indirect branch are BTI compatible.  */
+  if (stub_entry->stub_type != aarch64_stub_adrp_branch
+      && stub_entry->stub_type != aarch64_stub_long_branch)
+    return true;
+
+  /* Return true if the target instruction is compatible with BR x16.  */
+
+  struct elf_aarch64_link_hash_table *globals = elf_aarch64_hash_table (info);
+  asection *section = stub_entry->target_section;
+  bfd_byte loc[4];
+  file_ptr off = stub_entry->target_value;
+  bfd_size_type count = sizeof (loc);
+
+  /* PLT code is not generated yet, so treat it specially.
+     Note: Checking elf_aarch64_obj_tdata.plt_type & PLT_BTI is not
+     enough because it only implies BTI in the PLT0 and tlsdesc PLT
+     entries. Normal PLT entries don't have BTI in a shared library
+     (because such PLT is normally not called indirectly and adding
+     the BTI when a stub targets a PLT would change the PLT layout
+     and it's too late for that here).  */
+  if (section == globals->root.splt)
+    memcpy (loc, globals->plt_entry, count);
+  else if (!bfd_get_section_contents (section->owner, section, loc, off, count))
+    return false;
+
+  uint32_t insn = bfd_getl32 (loc);
+  if (!AARCH64_HINT (insn))
+    return false;
+  return insn == AARCH64_BTI_C
+	 || insn == AARCH64_PACIASP
+	 || insn == AARCH64_BTI_JC
+	 || insn == AARCH64_BTI_J
+	 || insn == AARCH64_PACIBSP;
+}
 
 #define AARCH64_BITS(x, pos, n) (((x) >> (pos)) & ((1 << (n)) - 1))
 
@@ -4080,7 +4157,10 @@ _bfd_aarch64_resize_stubs (struct elf_aarch64_link_hash_table *htab)
       /* Ignore non-stub sections.  */
       if (!strstr (section->name, STUB_SUFFIX))
 	continue;
-      section->size = 0;
+
+      /* Add space for a branch.  Add 8 bytes to keep section 8 byte aligned,
+	 as long branch stubs contain a 64-bit address.  */
+      section->size = 8;
     }
 
   bfd_hash_traverse (&htab->stub_hash_table, aarch64_size_one_stub, htab);
@@ -4091,10 +4171,9 @@ _bfd_aarch64_resize_stubs (struct elf_aarch64_link_hash_table *htab)
       if (!strstr (section->name, STUB_SUFFIX))
 	continue;
 
-      /* Add space for a branch.  Add 8 bytes to keep section 8 byte aligned,
-	 as long branch stubs contain a 64-bit address.  */
-      if (section->size)
-	section->size += 8;
+      /* Empty stub section.  */
+      if (section->size == 8)
+	section->size = 0;
 
       /* Ensure all stub sections have a size which is a multiple of
 	 4096.  This is important in order to ensure that the insertion
@@ -4265,11 +4344,382 @@ _bfd_aarch64_erratum_843419_scan (bfd *input_bfd, asection *section,
 }
 
 
-/* Determine and set the size of the stub section for a final link.
+/* Add stub entries for calls.
 
    The basic idea here is to examine all the relocations looking for
    PC-relative calls to a target that is unreachable with a "bl"
    instruction.  */
+
+static bool
+_bfd_aarch64_add_call_stub_entries (bool *stub_changed, bfd *output_bfd,
+				    struct bfd_link_info *info)
+{
+  struct elf_aarch64_link_hash_table *htab = elf_aarch64_hash_table (info);
+  bool need_bti = elf_aarch64_bti_p (output_bfd);
+  bfd *input_bfd;
+
+  for (input_bfd = info->input_bfds; input_bfd != NULL;
+       input_bfd = input_bfd->link.next)
+    {
+      Elf_Internal_Shdr *symtab_hdr;
+      asection *section;
+      Elf_Internal_Sym *local_syms = NULL;
+
+      if (!is_aarch64_elf (input_bfd)
+	  || (input_bfd->flags & BFD_LINKER_CREATED) != 0)
+	continue;
+
+      /* We'll need the symbol table in a second.  */
+      symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
+      if (symtab_hdr->sh_info == 0)
+	continue;
+
+      /* Walk over each section attached to the input bfd.  */
+      for (section = input_bfd->sections;
+	   section != NULL; section = section->next)
+	{
+	  Elf_Internal_Rela *internal_relocs, *irelaend, *irela;
+
+	  /* If there aren't any relocs, then there's nothing more to do.  */
+	  if ((section->flags & SEC_RELOC) == 0
+	      || section->reloc_count == 0
+	      || (section->flags & SEC_CODE) == 0)
+	    continue;
+
+	  /* If this section is a link-once section that will be
+	     discarded, then don't create any stubs.  */
+	  if (section->output_section == NULL
+	      || section->output_section->owner != output_bfd)
+	    continue;
+
+	  /* Get the relocs.  */
+	  internal_relocs
+	    = _bfd_elf_link_read_relocs (input_bfd, section, NULL,
+					 NULL, info->keep_memory);
+	  if (internal_relocs == NULL)
+	    goto error_ret_free_local;
+
+	  /* Now examine each relocation.  */
+	  irela = internal_relocs;
+	  irelaend = irela + section->reloc_count;
+	  for (; irela < irelaend; irela++)
+	    {
+	      unsigned int r_type, r_indx;
+	      enum elf_aarch64_stub_type stub_type;
+	      struct elf_aarch64_stub_hash_entry *stub_entry;
+	      struct elf_aarch64_stub_hash_entry *stub_entry_bti;
+	      asection *sym_sec;
+	      bfd_vma sym_value;
+	      bfd_vma destination;
+	      struct elf_aarch64_link_hash_entry *hash;
+	      const char *sym_name;
+	      char *stub_name;
+	      char *stub_name_bti;
+	      const asection *id_sec;
+	      const asection *id_sec_bti;
+	      unsigned char st_type;
+	      bfd_size_type len;
+
+	      r_type = ELFNN_R_TYPE (irela->r_info);
+	      r_indx = ELFNN_R_SYM (irela->r_info);
+
+	      if (r_type >= (unsigned int) R_AARCH64_end)
+		{
+		  bfd_set_error (bfd_error_bad_value);
+		error_ret_free_internal:
+		  if (elf_section_data (section)->relocs == NULL)
+		    free (internal_relocs);
+		  goto error_ret_free_local;
+		}
+
+	      /* Only look for stubs on unconditional branch and
+		 branch and link instructions.  */
+	      if (r_type != (unsigned int) AARCH64_R (CALL26)
+		  && r_type != (unsigned int) AARCH64_R (JUMP26))
+		continue;
+
+	      /* Now determine the call target, its name, value,
+		 section.  */
+	      sym_sec = NULL;
+	      sym_value = 0;
+	      destination = 0;
+	      hash = NULL;
+	      sym_name = NULL;
+	      if (r_indx < symtab_hdr->sh_info)
+		{
+		  /* It's a local symbol.  */
+		  Elf_Internal_Sym *sym;
+		  Elf_Internal_Shdr *hdr;
+
+		  if (local_syms == NULL)
+		    {
+		      local_syms
+			= (Elf_Internal_Sym *) symtab_hdr->contents;
+		      if (local_syms == NULL)
+			local_syms
+			  = bfd_elf_get_elf_syms (input_bfd, symtab_hdr,
+						  symtab_hdr->sh_info, 0,
+						  NULL, NULL, NULL);
+		      if (local_syms == NULL)
+			goto error_ret_free_internal;
+		    }
+
+		  sym = local_syms + r_indx;
+		  hdr = elf_elfsections (input_bfd)[sym->st_shndx];
+		  sym_sec = hdr->bfd_section;
+		  if (!sym_sec)
+		    /* This is an undefined symbol.  It can never
+		       be resolved.  */
+		    continue;
+
+		  if (ELF_ST_TYPE (sym->st_info) != STT_SECTION)
+		    sym_value = sym->st_value;
+		  destination = (sym_value + irela->r_addend
+				 + sym_sec->output_offset
+				 + sym_sec->output_section->vma);
+		  st_type = ELF_ST_TYPE (sym->st_info);
+		  sym_name
+		    = bfd_elf_string_from_elf_section (input_bfd,
+						       symtab_hdr->sh_link,
+						       sym->st_name);
+		}
+	      else
+		{
+		  int e_indx;
+
+		  e_indx = r_indx - symtab_hdr->sh_info;
+		  hash = ((struct elf_aarch64_link_hash_entry *)
+			  elf_sym_hashes (input_bfd)[e_indx]);
+
+		  while (hash->root.root.type == bfd_link_hash_indirect
+			 || hash->root.root.type == bfd_link_hash_warning)
+		    hash = ((struct elf_aarch64_link_hash_entry *)
+			    hash->root.root.u.i.link);
+
+		  if (hash->root.root.type == bfd_link_hash_defined
+		      || hash->root.root.type == bfd_link_hash_defweak)
+		    {
+		      struct elf_aarch64_link_hash_table *globals =
+			elf_aarch64_hash_table (info);
+		      sym_sec = hash->root.root.u.def.section;
+		      sym_value = hash->root.root.u.def.value;
+		      /* For a destination in a shared library,
+			 use the PLT stub as target address to
+			 decide whether a branch stub is
+			 needed.  */
+		      if (globals->root.splt != NULL && hash != NULL
+			  && hash->root.plt.offset != (bfd_vma) - 1)
+			{
+			  sym_sec = globals->root.splt;
+			  sym_value = hash->root.plt.offset;
+			  if (sym_sec->output_section != NULL)
+			    destination = (sym_value
+					   + sym_sec->output_offset
+					   + sym_sec->output_section->vma);
+			}
+		      else if (sym_sec->output_section != NULL)
+			destination = (sym_value + irela->r_addend
+				       + sym_sec->output_offset
+				       + sym_sec->output_section->vma);
+		    }
+		  else if (hash->root.root.type == bfd_link_hash_undefined
+			   || (hash->root.root.type
+			       == bfd_link_hash_undefweak))
+		    {
+		      /* For a shared library, use the PLT stub as
+			 target address to decide whether a long
+			 branch stub is needed.
+			 For absolute code, they cannot be handled.  */
+		      struct elf_aarch64_link_hash_table *globals =
+			elf_aarch64_hash_table (info);
+
+		      if (globals->root.splt != NULL && hash != NULL
+			  && hash->root.plt.offset != (bfd_vma) - 1)
+			{
+			  sym_sec = globals->root.splt;
+			  sym_value = hash->root.plt.offset;
+			  if (sym_sec->output_section != NULL)
+			    destination = (sym_value
+					   + sym_sec->output_offset
+					   + sym_sec->output_section->vma);
+			}
+		      else
+			continue;
+		    }
+		  else
+		    {
+		      bfd_set_error (bfd_error_bad_value);
+		      goto error_ret_free_internal;
+		    }
+		  st_type = ELF_ST_TYPE (hash->root.type);
+		  sym_name = hash->root.root.root.string;
+		}
+
+	      /* Determine what (if any) linker stub is needed.  */
+	      stub_type = aarch64_type_of_stub (section, irela, sym_sec,
+						st_type, destination);
+	      if (stub_type == aarch64_stub_none)
+		continue;
+
+	      /* Support for grouping stub sections.  */
+	      id_sec = htab->stub_group[section->id].link_sec;
+
+	      /* Get the name of this stub.  */
+	      stub_name = elfNN_aarch64_stub_name (id_sec, sym_sec, hash,
+						   irela);
+	      if (!stub_name)
+		goto error_ret_free_internal;
+
+	      stub_entry =
+		aarch64_stub_hash_lookup (&htab->stub_hash_table,
+					  stub_name, false, false);
+	      if (stub_entry != NULL)
+		{
+		  /* The proper stub has already been created.  */
+		  free (stub_name);
+
+		  /* Always update this stub's target since it may have
+		     changed after layout.  */
+		  stub_entry->target_value = sym_value + irela->r_addend;
+
+		  if (stub_entry->double_stub)
+		    {
+		      /* Update the target of both stubs.  */
+
+		      id_sec_bti = htab->stub_group[sym_sec->id].link_sec;
+		      stub_name_bti =
+			elfNN_aarch64_stub_name (id_sec_bti, sym_sec, hash,
+						 irela);
+		      if (!stub_name_bti)
+			goto error_ret_free_internal;
+		      stub_entry_bti =
+			aarch64_stub_hash_lookup (&htab->stub_hash_table,
+						  stub_name_bti, false, false);
+		      BFD_ASSERT (stub_entry_bti != NULL);
+		      free (stub_name_bti);
+		      stub_entry_bti->target_value = stub_entry->target_value;
+		      stub_entry->target_value = stub_entry_bti->stub_offset;
+		    }
+		  continue;
+		}
+
+	      stub_entry = _bfd_aarch64_add_stub_entry_in_group
+		(stub_name, section, htab);
+	      if (stub_entry == NULL)
+		{
+		  free (stub_name);
+		  goto error_ret_free_internal;
+		}
+
+	      stub_entry->target_value = sym_value + irela->r_addend;
+	      stub_entry->target_section = sym_sec;
+	      stub_entry->stub_type = stub_type;
+	      stub_entry->h = hash;
+	      stub_entry->st_type = st_type;
+
+	      if (sym_name == NULL)
+		sym_name = "unnamed";
+	      len = sizeof (STUB_ENTRY_NAME) + strlen (sym_name);
+	      stub_entry->output_name = bfd_alloc (htab->stub_bfd, len);
+	      if (stub_entry->output_name == NULL)
+		{
+		  free (stub_name);
+		  goto error_ret_free_internal;
+		}
+
+	      snprintf (stub_entry->output_name, len, STUB_ENTRY_NAME,
+			sym_name);
+
+	      /* A stub with indirect jump may break BTI compatibility, so
+		 insert another stub with direct jump near the target then.  */
+	      if (need_bti && !aarch64_bti_stub_p (info, stub_entry))
+		{
+		  id_sec_bti = htab->stub_group[sym_sec->id].link_sec;
+
+		  /* If the stub with indirect jump and the BTI stub are in
+		     the same stub group: change the indirect jump stub into
+		     a BTI stub since a direct branch can reach the target.
+		     The BTI landing pad is still needed in case another
+		     stub indirectly jumps to it.  */
+		  if (id_sec_bti == id_sec)
+		    {
+		      stub_entry->stub_type = aarch64_stub_bti_direct_branch;
+		      goto skip_double_stub;
+		    }
+
+		  stub_entry->double_stub = true;
+		  htab->has_double_stub = true;
+
+		  stub_name_bti =
+		    elfNN_aarch64_stub_name (id_sec_bti, sym_sec, hash, irela);
+		  if (!stub_name_bti)
+		    {
+		      free (stub_name);
+		      goto error_ret_free_internal;
+		    }
+
+		  stub_entry_bti =
+		    aarch64_stub_hash_lookup (&htab->stub_hash_table,
+					      stub_name_bti, false, false);
+		  if (stub_entry_bti != NULL)
+		    BFD_ASSERT (stub_entry_bti->stub_type
+				== aarch64_stub_bti_direct_branch);
+		  else
+		    {
+		      stub_entry_bti =
+			_bfd_aarch64_add_stub_entry_in_group (stub_name_bti,
+							      sym_sec, htab);
+		      if (stub_entry_bti == NULL)
+			{
+			  free (stub_name);
+			  free (stub_name_bti);
+			  goto error_ret_free_internal;
+			}
+
+		      stub_entry_bti->target_value =
+			sym_value + irela->r_addend;
+		      stub_entry_bti->target_section = sym_sec;
+		      stub_entry_bti->stub_type =
+			aarch64_stub_bti_direct_branch;
+		      stub_entry_bti->h = hash;
+		      stub_entry_bti->st_type = st_type;
+
+		      len = sizeof (BTI_STUB_ENTRY_NAME) + strlen (sym_name);
+		      stub_entry_bti->output_name = bfd_alloc (htab->stub_bfd,
+							       len);
+		      if (stub_entry_bti->output_name == NULL)
+			{
+			  free (stub_name);
+			  free (stub_name_bti);
+			  goto error_ret_free_internal;
+			}
+		      snprintf (stub_entry_bti->output_name, len,
+				BTI_STUB_ENTRY_NAME, sym_name);
+		    }
+
+		  /* Update the indirect call stub to target the BTI stub.  */
+		  stub_entry->target_value = 0;
+		  stub_entry->target_section = stub_entry_bti->stub_sec;
+		  stub_entry->stub_type = stub_type;
+		  stub_entry->h = NULL;
+		  stub_entry->st_type = STT_FUNC;
+		}
+skip_double_stub:
+	      *stub_changed = true;
+	    }
+
+	  /* We're done with the internal relocs, free them.  */
+	  if (elf_section_data (section)->relocs == NULL)
+	    free (internal_relocs);
+	}
+    }
+  return true;
+ error_ret_free_local:
+  return false;
+}
+
+
+/* Determine and set the size of the stub section for a final link.  */
 
 bool
 elfNN_aarch64_size_stubs (bfd *output_bfd,
@@ -4282,7 +4732,6 @@ elfNN_aarch64_size_stubs (bfd *output_bfd,
 {
   bfd_size_type stub_group_size;
   bool stubs_always_before_branch;
-  bool stub_changed = false;
   struct elf_aarch64_link_hash_table *htab = elf_aarch64_hash_table (info);
   unsigned int num_erratum_835769_fixes = 0;
 
@@ -4357,285 +4806,19 @@ elfNN_aarch64_size_stubs (bfd *output_bfd,
       (*htab->layout_sections_again) ();
     }
 
-  while (1)
+  for (;;)
     {
-      bfd *input_bfd;
+      bool stub_changed = false;
 
-      for (input_bfd = info->input_bfds;
-	   input_bfd != NULL; input_bfd = input_bfd->link.next)
-	{
-	  Elf_Internal_Shdr *symtab_hdr;
-	  asection *section;
-	  Elf_Internal_Sym *local_syms = NULL;
-
-	  if (!is_aarch64_elf (input_bfd)
-	      || (input_bfd->flags & BFD_LINKER_CREATED) != 0)
-	    continue;
-
-	  /* We'll need the symbol table in a second.  */
-	  symtab_hdr = &elf_tdata (input_bfd)->symtab_hdr;
-	  if (symtab_hdr->sh_info == 0)
-	    continue;
-
-	  /* Walk over each section attached to the input bfd.  */
-	  for (section = input_bfd->sections;
-	       section != NULL; section = section->next)
-	    {
-	      Elf_Internal_Rela *internal_relocs, *irelaend, *irela;
-
-	      /* If there aren't any relocs, then there's nothing more
-		 to do.  */
-	      if ((section->flags & SEC_RELOC) == 0
-		  || section->reloc_count == 0
-		  || (section->flags & SEC_CODE) == 0)
-		continue;
-
-	      /* If this section is a link-once section that will be
-		 discarded, then don't create any stubs.  */
-	      if (section->output_section == NULL
-		  || section->output_section->owner != output_bfd)
-		continue;
-
-	      /* Get the relocs.  */
-	      internal_relocs
-		= _bfd_elf_link_read_relocs (input_bfd, section, NULL,
-					     NULL, info->keep_memory);
-	      if (internal_relocs == NULL)
-		goto error_ret_free_local;
-
-	      /* Now examine each relocation.  */
-	      irela = internal_relocs;
-	      irelaend = irela + section->reloc_count;
-	      for (; irela < irelaend; irela++)
-		{
-		  unsigned int r_type, r_indx;
-		  enum elf_aarch64_stub_type stub_type;
-		  struct elf_aarch64_stub_hash_entry *stub_entry;
-		  asection *sym_sec;
-		  bfd_vma sym_value;
-		  bfd_vma destination;
-		  struct elf_aarch64_link_hash_entry *hash;
-		  const char *sym_name;
-		  char *stub_name;
-		  const asection *id_sec;
-		  unsigned char st_type;
-		  bfd_size_type len;
-
-		  r_type = ELFNN_R_TYPE (irela->r_info);
-		  r_indx = ELFNN_R_SYM (irela->r_info);
-
-		  if (r_type >= (unsigned int) R_AARCH64_end)
-		    {
-		      bfd_set_error (bfd_error_bad_value);
-		    error_ret_free_internal:
-		      if (elf_section_data (section)->relocs == NULL)
-			free (internal_relocs);
-		      goto error_ret_free_local;
-		    }
-
-		  /* Only look for stubs on unconditional branch and
-		     branch and link instructions.  */
-		  if (r_type != (unsigned int) AARCH64_R (CALL26)
-		      && r_type != (unsigned int) AARCH64_R (JUMP26))
-		    continue;
-
-		  /* Now determine the call target, its name, value,
-		     section.  */
-		  sym_sec = NULL;
-		  sym_value = 0;
-		  destination = 0;
-		  hash = NULL;
-		  sym_name = NULL;
-		  if (r_indx < symtab_hdr->sh_info)
-		    {
-		      /* It's a local symbol.  */
-		      Elf_Internal_Sym *sym;
-		      Elf_Internal_Shdr *hdr;
-
-		      if (local_syms == NULL)
-			{
-			  local_syms
-			    = (Elf_Internal_Sym *) symtab_hdr->contents;
-			  if (local_syms == NULL)
-			    local_syms
-			      = bfd_elf_get_elf_syms (input_bfd, symtab_hdr,
-						      symtab_hdr->sh_info, 0,
-						      NULL, NULL, NULL);
-			  if (local_syms == NULL)
-			    goto error_ret_free_internal;
-			}
-
-		      sym = local_syms + r_indx;
-		      hdr = elf_elfsections (input_bfd)[sym->st_shndx];
-		      sym_sec = hdr->bfd_section;
-		      if (!sym_sec)
-			/* This is an undefined symbol.  It can never
-			   be resolved.  */
-			continue;
-
-		      if (ELF_ST_TYPE (sym->st_info) != STT_SECTION)
-			sym_value = sym->st_value;
-		      destination = (sym_value + irela->r_addend
-				     + sym_sec->output_offset
-				     + sym_sec->output_section->vma);
-		      st_type = ELF_ST_TYPE (sym->st_info);
-		      sym_name
-			= bfd_elf_string_from_elf_section (input_bfd,
-							   symtab_hdr->sh_link,
-							   sym->st_name);
-		    }
-		  else
-		    {
-		      int e_indx;
-
-		      e_indx = r_indx - symtab_hdr->sh_info;
-		      hash = ((struct elf_aarch64_link_hash_entry *)
-			      elf_sym_hashes (input_bfd)[e_indx]);
-
-		      while (hash->root.root.type == bfd_link_hash_indirect
-			     || hash->root.root.type == bfd_link_hash_warning)
-			hash = ((struct elf_aarch64_link_hash_entry *)
-				hash->root.root.u.i.link);
-
-		      if (hash->root.root.type == bfd_link_hash_defined
-			  || hash->root.root.type == bfd_link_hash_defweak)
-			{
-			  struct elf_aarch64_link_hash_table *globals =
-			    elf_aarch64_hash_table (info);
-			  sym_sec = hash->root.root.u.def.section;
-			  sym_value = hash->root.root.u.def.value;
-			  /* For a destination in a shared library,
-			     use the PLT stub as target address to
-			     decide whether a branch stub is
-			     needed.  */
-			  if (globals->root.splt != NULL && hash != NULL
-			      && hash->root.plt.offset != (bfd_vma) - 1)
-			    {
-			      sym_sec = globals->root.splt;
-			      sym_value = hash->root.plt.offset;
-			      if (sym_sec->output_section != NULL)
-				destination = (sym_value
-					       + sym_sec->output_offset
-					       +
-					       sym_sec->output_section->vma);
-			    }
-			  else if (sym_sec->output_section != NULL)
-			    destination = (sym_value + irela->r_addend
-					   + sym_sec->output_offset
-					   + sym_sec->output_section->vma);
-			}
-		      else if (hash->root.root.type == bfd_link_hash_undefined
-			       || (hash->root.root.type
-				   == bfd_link_hash_undefweak))
-			{
-			  /* For a shared library, use the PLT stub as
-			     target address to decide whether a long
-			     branch stub is needed.
-			     For absolute code, they cannot be handled.  */
-			  struct elf_aarch64_link_hash_table *globals =
-			    elf_aarch64_hash_table (info);
-
-			  if (globals->root.splt != NULL && hash != NULL
-			      && hash->root.plt.offset != (bfd_vma) - 1)
-			    {
-			      sym_sec = globals->root.splt;
-			      sym_value = hash->root.plt.offset;
-			      if (sym_sec->output_section != NULL)
-				destination = (sym_value
-					       + sym_sec->output_offset
-					       +
-					       sym_sec->output_section->vma);
-			    }
-			  else
-			    continue;
-			}
-		      else
-			{
-			  bfd_set_error (bfd_error_bad_value);
-			  goto error_ret_free_internal;
-			}
-		      st_type = ELF_ST_TYPE (hash->root.type);
-		      sym_name = hash->root.root.root.string;
-		    }
-
-		  /* Determine what (if any) linker stub is needed.  */
-		  stub_type = aarch64_type_of_stub (section, irela, sym_sec,
-						    st_type, destination);
-		  if (stub_type == aarch64_stub_none)
-		    continue;
-
-		  /* Support for grouping stub sections.  */
-		  id_sec = htab->stub_group[section->id].link_sec;
-
-		  /* Get the name of this stub.  */
-		  stub_name = elfNN_aarch64_stub_name (id_sec, sym_sec, hash,
-						       irela);
-		  if (!stub_name)
-		    goto error_ret_free_internal;
-
-		  stub_entry =
-		    aarch64_stub_hash_lookup (&htab->stub_hash_table,
-					      stub_name, false, false);
-		  if (stub_entry != NULL)
-		    {
-		      /* The proper stub has already been created.  */
-		      free (stub_name);
-		      /* Always update this stub's target since it may have
-			 changed after layout.  */
-		      stub_entry->target_value = sym_value + irela->r_addend;
-		      continue;
-		    }
-
-		  stub_entry = _bfd_aarch64_add_stub_entry_in_group
-		    (stub_name, section, htab);
-		  if (stub_entry == NULL)
-		    {
-		      free (stub_name);
-		      goto error_ret_free_internal;
-		    }
-
-		  stub_entry->target_value = sym_value + irela->r_addend;
-		  stub_entry->target_section = sym_sec;
-		  stub_entry->stub_type = stub_type;
-		  stub_entry->h = hash;
-		  stub_entry->st_type = st_type;
-
-		  if (sym_name == NULL)
-		    sym_name = "unnamed";
-		  len = sizeof (STUB_ENTRY_NAME) + strlen (sym_name);
-		  stub_entry->output_name = bfd_alloc (htab->stub_bfd, len);
-		  if (stub_entry->output_name == NULL)
-		    {
-		      free (stub_name);
-		      goto error_ret_free_internal;
-		    }
-
-		  snprintf (stub_entry->output_name, len, STUB_ENTRY_NAME,
-			    sym_name);
-
-		  stub_changed = true;
-		}
-
-	      /* We're done with the internal relocs, free them.  */
-	      if (elf_section_data (section)->relocs == NULL)
-		free (internal_relocs);
-	    }
-	}
+      if (!_bfd_aarch64_add_call_stub_entries (&stub_changed, output_bfd, info))
+	return false;
 
       if (!stub_changed)
-	break;
+	return true;
 
       _bfd_aarch64_resize_stubs (htab);
-
-      /* Ask the linker to do its stuff.  */
       (*htab->layout_sections_again) ();
-      stub_changed = false;
     }
-
-  return true;
-
- error_ret_free_local:
-  return false;
 }
 
 /* Build all the stubs associated with the current output file.  The
@@ -4813,7 +4996,7 @@ bfd_elfNN_aarch64_set_options (struct bfd *output_bfd,
 			       int fix_erratum_835769,
 			       erratum_84319_opts fix_erratum_843419,
 			       int no_apply_dynamic_relocs,
-			       aarch64_bti_pac_info bp_info)
+			       const aarch64_protection_opts *sw_protections)
 {
   struct elf_aarch64_link_hash_table *globals;
 
@@ -4830,19 +5013,32 @@ bfd_elfNN_aarch64_set_options (struct bfd *output_bfd,
   elf_aarch64_tdata (output_bfd)->no_enum_size_warning = no_enum_warn;
   elf_aarch64_tdata (output_bfd)->no_wchar_size_warning = no_wchar_warn;
 
-  switch (bp_info.bti_type)
-    {
-    case BTI_WARN:
-      elf_aarch64_tdata (output_bfd)->no_bti_warn = 0;
-      elf_aarch64_tdata (output_bfd)->gnu_and_prop
-	|= GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
-      break;
+  /* Note: gnu_property_aarch64_feature_1_and was initialized to 0 by
+     bfd_zalloc().  */
+  if (sw_protections->plt_type & PLT_BTI)
+    elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
+      |= GNU_PROPERTY_AARCH64_FEATURE_1_BTI;
 
-    default:
+  switch (sw_protections->gcs_type)
+    {
+    case GCS_ALWAYS:
+      elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
+	|= GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      break;
+    case GCS_NEVER:
+      elf_aarch64_tdata (output_bfd)->gnu_property_aarch64_feature_1_and
+	&= ~GNU_PROPERTY_AARCH64_FEATURE_1_GCS;
+      break;
+    case GCS_IMPLICIT:
+      /* GCS feature on the output bfd will be deduced from input objects.  */
       break;
     }
-  elf_aarch64_tdata (output_bfd)->plt_type = bp_info.plt_type;
-  setup_plt_values (link_info, bp_info.plt_type);
+
+  elf_aarch64_tdata (output_bfd)->sw_protections = *sw_protections;
+  elf_aarch64_tdata (output_bfd)->n_bti_issues = 0;
+  elf_aarch64_tdata (output_bfd)->n_gcs_issues = 0;
+
+  setup_plt_values (link_info, sw_protections->plt_type);
 }
 
 static bfd_vma
@@ -5539,7 +5735,7 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 	    /* xgettext:c-format */
 	    (_("%pB: relocation %s against STT_GNU_IFUNC "
 	       "symbol `%s' isn't handled by %s"), input_bfd,
-	     howto->name, name, __FUNCTION__);
+	     howto->name, name, __func__);
 	  bfd_set_error (bfd_error_bad_value);
 	  return bfd_reloc_notsupported;
 
@@ -5712,11 +5908,9 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 
     case BFD_RELOC_AARCH64_NN:
 
-      /* When generating a shared object or relocatable executable, these
-	 relocations are copied into the output file to be resolved at
-	 run time.  */
-      if (((bfd_link_pic (info)
-	    || globals->root.is_relocatable_executable)
+      /* When generating a shared library or PIE, these relocations
+	 are copied into the output file to be resolved at run time.  */
+      if ((bfd_link_pic (info)
 	   && (input_section->flags & SEC_ALLOC)
 	   && (h == NULL
 	       || (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
@@ -5775,6 +5969,16 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 		       || !(bfd_link_pie (info) || SYMBOLIC_BIND (info, h))
 		       || !h->def_regular))
 	    outrel.r_info = ELFNN_R_INFO (h->dynindx, r_type);
+	  else if (info->enable_dt_relr
+		   && input_section->alignment_power != 0
+		   && rel->r_offset % 2 == 0)
+	    {
+	      /* Don't emit a relative relocation that is packed, only
+		 apply the addend.  */
+	      return _bfd_final_link_relocate (howto, input_bfd, input_section,
+					       contents, rel->r_offset, value,
+					       signed_addend);
+	    }
 	  else
 	    {
 	      int symbol;
@@ -6041,7 +6245,8 @@ elfNN_aarch64_final_link_relocate (reloc_howto_type *howto,
 						     addend, weak_undef_p);
       }
 
-      if (relative_reloc)
+      /* Emit relative relocations, but not if they are packed (DT_RELR).  */
+      if (relative_reloc && !info->enable_dt_relr)
 	{
 	  asection *s;
 	  Elf_Internal_Rela outrel;
@@ -6779,8 +6984,12 @@ elfNN_aarch64_relocate_section (bfd *output_bfd,
 
 	  /* An object file might have a reference to a local
 	     undefined symbol.  This is a daft object file, but we
-	     should at least do something about it.  */
+	     should at least do something about it.  NONE and NULL
+	     relocations do not use the symbol and are explicitly
+	     allowed to use an undefined one, so allow those.
+	     Likewise for relocations against STN_UNDEF.  */
 	  if (r_type != R_AARCH64_NONE && r_type != R_AARCH64_NULL
+	      && r_symndx != STN_UNDEF
 	      && bfd_is_und_section (sec)
 	      && ELF_ST_BIND (sym->st_info) != STB_WEAK)
 	    (*info->callbacks->undefined_symbol)
@@ -8036,7 +8245,7 @@ elfNN_aarch64_maybe_function_sym (const asymbol *sym, asection *sec,
     return 0;
 
   size = (sym->flags & BSF_SYNTHETIC) ? 0 : elf_sym->internal_elf_sym.st_size;
-  
+
   if (!(sym->flags & BSF_SYNTHETIC))
     switch (ELF_ST_TYPE (elf_sym->internal_elf_sym.st_info))
       {
@@ -8054,7 +8263,7 @@ elfNN_aarch64_maybe_function_sym (const asymbol *sym, asection *sec,
 	default:
 	  return 0;
       }
-  
+
   if ((sym->flags & BSF_LOCAL)
       && bfd_is_aarch64_special_symbol_name (sym->name,
 					     BFD_AARCH64_SPECIAL_SYM_TYPE_ANY))
@@ -8254,94 +8463,6 @@ elfNN_aarch64_modify_headers (bfd *abfd,
   return _bfd_elf_modify_headers (abfd, info);
 }
 
-/* A structure used to record a list of sections, independently
-   of the next and prev fields in the asection structure.  */
-typedef struct section_list
-{
-  asection *sec;
-  struct section_list *next;
-  struct section_list *prev;
-}
-section_list;
-
-/* Unfortunately we need to keep a list of sections for which
-   an _aarch64_elf_section_data structure has been allocated.  This
-   is because it is possible for functions like elfNN_aarch64_write_section
-   to be called on a section which has had an elf_data_structure
-   allocated for it (and so the used_by_bfd field is valid) but
-   for which the AArch64 extended version of this structure - the
-   _aarch64_elf_section_data structure - has not been allocated.  */
-static section_list *sections_with_aarch64_elf_section_data = NULL;
-
-static void
-record_section_with_aarch64_elf_section_data (asection *sec)
-{
-  struct section_list *entry;
-
-  entry = bfd_malloc (sizeof (*entry));
-  if (entry == NULL)
-    return;
-  entry->sec = sec;
-  entry->next = sections_with_aarch64_elf_section_data;
-  entry->prev = NULL;
-  if (entry->next != NULL)
-    entry->next->prev = entry;
-  sections_with_aarch64_elf_section_data = entry;
-}
-
-static struct section_list *
-find_aarch64_elf_section_entry (asection *sec)
-{
-  struct section_list *entry;
-  static struct section_list *last_entry = NULL;
-
-  /* This is a short cut for the typical case where the sections are added
-     to the sections_with_aarch64_elf_section_data list in forward order and
-     then looked up here in backwards order.  This makes a real difference
-     to the ld-srec/sec64k.exp linker test.  */
-  entry = sections_with_aarch64_elf_section_data;
-  if (last_entry != NULL)
-    {
-      if (last_entry->sec == sec)
-	entry = last_entry;
-      else if (last_entry->next != NULL && last_entry->next->sec == sec)
-	entry = last_entry->next;
-    }
-
-  for (; entry; entry = entry->next)
-    if (entry->sec == sec)
-      break;
-
-  if (entry)
-    /* Record the entry prior to this one - it is the entry we are
-       most likely to want to locate next time.  Also this way if we
-       have been called from
-       unrecord_section_with_aarch64_elf_section_data () we will not
-       be caching a pointer that is about to be freed.  */
-    last_entry = entry->prev;
-
-  return entry;
-}
-
-static void
-unrecord_section_with_aarch64_elf_section_data (asection *sec)
-{
-  struct section_list *entry;
-
-  entry = find_aarch64_elf_section_entry (sec);
-
-  if (entry)
-    {
-      if (entry->prev != NULL)
-	entry->prev->next = entry->next;
-      if (entry->next != NULL)
-	entry->next->prev = entry->prev;
-      if (entry == sections_with_aarch64_elf_section_data)
-	sections_with_aarch64_elf_section_data = entry->next;
-      free (entry);
-    }
-}
-
 
 typedef struct
 {
@@ -8435,6 +8556,13 @@ aarch64_map_one_stub (struct bfd_hash_entry *gen_entry, void *in_arg)
       if (!elfNN_aarch64_output_map_sym (osi, AARCH64_MAP_INSN, addr))
 	return false;
       if (!elfNN_aarch64_output_map_sym (osi, AARCH64_MAP_DATA, addr + 16))
+	return false;
+      break;
+    case aarch64_stub_bti_direct_branch:
+      if (!elfNN_aarch64_output_stub_sym (osi, stub_name, addr,
+	  sizeof (aarch64_bti_direct_branch_stub)))
+	return false;
+      if (!elfNN_aarch64_output_map_sym (osi, AARCH64_MAP_INSN, addr))
 	return false;
       break;
     case aarch64_stub_erratum_835769_veneer:
@@ -8532,50 +8660,16 @@ elfNN_aarch64_output_arch_local_syms (bfd *output_bfd,
 static bool
 elfNN_aarch64_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      _aarch64_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  _aarch64_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
-
-  record_section_with_aarch64_elf_section_data (sec);
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
 
-
-static void
-unrecord_section_via_map_over_sections (bfd *abfd ATTRIBUTE_UNUSED,
-					asection *sec,
-					void *ignore ATTRIBUTE_UNUSED)
-{
-  unrecord_section_with_aarch64_elf_section_data (sec);
-}
-
-static bool
-elfNN_aarch64_close_and_cleanup (bfd *abfd)
-{
-  if (abfd->sections)
-    bfd_map_over_sections (abfd,
-			   unrecord_section_via_map_over_sections, NULL);
-
-  return _bfd_elf_close_and_cleanup (abfd);
-}
-
-static bool
-elfNN_aarch64_bfd_free_cached_info (bfd *abfd)
-{
-  if (abfd->sections)
-    bfd_map_over_sections (abfd,
-			   unrecord_section_via_map_over_sections, NULL);
-
-  return _bfd_free_cached_info (abfd);
-}
 
 /* Create dynamic sections. This is different from the ARM backend in that
    the got, plt, gotplt and their relocation sections are all created in the
@@ -8972,12 +9066,376 @@ elfNN_aarch64_allocate_local_ifunc_dynrelocs (void **slot, void *inf)
   return elfNN_aarch64_allocate_ifunc_dynrelocs (h, inf);
 }
 
+/* Record a relative relocation that will be emitted packed (DT_RELR).
+   Called after relocation sections are sized, so undo the size accounting
+   for this relocation.  */
+
+static bool
+record_relr (struct elf_aarch64_link_hash_table *htab, asection *sec,
+	     bfd_vma off, asection *sreloc)
+{
+  /* Undo the relocation section size accounting.  */
+  BFD_ASSERT (sreloc->size >= RELOC_SIZE (htab));
+  sreloc->size -= RELOC_SIZE (htab);
+  /* The packing format uses the last bit of the address so that
+     must be aligned.  We don't pack relocations that may not be
+     aligned even though the final output address could end up
+     aligned, to avoid complex sizing logic for a rare case.  */
+  BFD_ASSERT (off % 2 == 0 && sec->alignment_power > 0);
+  if (htab->relr_count >= htab->relr_alloc)
+    {
+      if (htab->relr_alloc == 0)
+	htab->relr_alloc = 4096;
+      else
+	htab->relr_alloc *= 2;
+      htab->relr = bfd_realloc (htab->relr,
+				htab->relr_alloc * sizeof (*htab->relr));
+      if (htab->relr == NULL)
+	return false;
+    }
+  htab->relr[htab->relr_count].sec = sec;
+  htab->relr[htab->relr_count].off = off;
+  htab->relr_count++;
+  return true;
+}
+
+/* Follow elfNN_aarch64_allocate_dynrelocs, but only record relative
+   relocations against the GOT and undo their previous size accounting.  */
+
+static bool
+record_relr_dyn_got_relocs (struct elf_link_hash_entry *h, void *inf)
+{
+
+  if (h->root.type == bfd_link_hash_indirect)
+    return true;
+  if (h->root.type == bfd_link_hash_warning)
+    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+  if (h->type == STT_GNU_IFUNC && h->def_regular)
+    return true;
+  if (h->got.refcount <= 0)
+    return true;
+  if (elf_aarch64_hash_entry (h)->got_type != GOT_NORMAL)
+    return true;
+
+  struct bfd_link_info *info = (struct bfd_link_info *) inf;
+  struct elf_aarch64_link_hash_table *htab = elf_aarch64_hash_table (info);
+
+  if ((ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+       || h->root.type != bfd_link_hash_undefweak)
+      && bfd_link_pic (info)
+      /* Undefined weak symbol in static PIE resolves to 0 without
+	 any dynamic relocations.  */
+      && !UNDEFWEAK_NO_DYNAMIC_RELOC (info, h))
+    {
+      bool relative_reloc = SYMBOL_REFERENCES_LOCAL (info, h)
+			    && !bfd_is_abs_symbol (&h->root);
+      if (relative_reloc)
+	if (!record_relr (htab, htab->root.sgot, h->got.offset,
+			  htab->root.srelgot))
+	  return false;
+    }
+  return true;
+}
+
+/* Record packed relative relocs against the GOT for local symbols.
+   Undo the size accounting of elfNN_aarch64_late_size_sections.  */
+
+static bool
+record_relr_local_got_relocs (bfd *input_bfd, struct bfd_link_info *info)
+{
+  struct elf_aarch64_local_symbol *locals;
+  Elf_Internal_Shdr *symtab_hdr;
+  struct elf_aarch64_link_hash_table *htab;
+
+  if (!bfd_link_pic (info))
+    return true;
+
+  locals = elf_aarch64_locals (input_bfd);
+  if (locals == NULL)
+    return true;
+
+  symtab_hdr = &elf_symtab_hdr (input_bfd);
+  htab = elf_aarch64_hash_table (info);
+  for (unsigned int i = 0; i < symtab_hdr->sh_info; i++)
+    {
+      bfd_vma off = locals[i].got_offset;
+      if (locals[i].got_refcount <= 0)
+	continue;
+      if ((locals[i].got_type & GOT_NORMAL) == 0)
+	continue;
+
+      /* FIXME: If the local symbol is in SHN_ABS then emitting
+	 a relative relocation is not correct, but it seems to
+	 be wrong in elfNN_aarch64_final_link_relocate too.  */
+      if (!record_relr (htab, htab->root.sgot, off, htab->root.srelgot))
+	return false;
+    }
+  return true;
+}
+
+/* Follows the logic of elfNN_aarch64_relocate_section to decide which
+   relocations will become relative and possible to pack.  Ignore
+   relocations against the GOT, those are handled separately per-symbol.
+   Undo the size accounting of the packed relocations and record them
+   so the relr section can be sized later.  */
+
+static bool
+record_relr_non_got_relocs (bfd *input_bfd, struct bfd_link_info *info,
+			    asection *sec)
+{
+  const Elf_Internal_Rela *relocs;
+  const Elf_Internal_Rela *rel;
+  const Elf_Internal_Rela *rel_end;
+  asection *sreloc;
+  struct elf_aarch64_link_hash_table *htab;
+  Elf_Internal_Shdr *symtab_hdr;
+  struct elf_link_hash_entry **sym_hashes;
+
+  if (sec->reloc_count == 0)
+    return true;
+  if ((sec->flags & (SEC_RELOC | SEC_ALLOC | SEC_DEBUGGING))
+      != (SEC_RELOC | SEC_ALLOC))
+    return true;
+  if (sec->alignment_power == 0)
+    return true;
+  if (discarded_section (sec))
+    return true;
+  sreloc = elf_section_data (sec)->sreloc;
+  if (sreloc == NULL)
+    return true;
+  htab = elf_aarch64_hash_table (info);
+  symtab_hdr = &elf_symtab_hdr (input_bfd);
+  sym_hashes = elf_sym_hashes (input_bfd);
+  relocs = _bfd_elf_link_info_read_relocs (input_bfd, info, sec, NULL, NULL,
+					   info->keep_memory);
+  BFD_ASSERT (relocs != NULL);
+  rel_end = relocs + sec->reloc_count;
+  for (rel = relocs; rel < rel_end; rel++)
+    {
+      unsigned int r_symndx = ELFNN_R_SYM (rel->r_info);
+      unsigned int r_type = ELFNN_R_TYPE (rel->r_info);
+
+      bfd_reloc_code_real_type bfd_r_type
+	= elfNN_aarch64_bfd_reloc_from_type (input_bfd, r_type);
+      /* Handle relocs that can become R_AARCH64_RELATIVE,
+	 but not ones against the GOT as those are handled
+	 separately per-symbol.  */
+      if (bfd_r_type != BFD_RELOC_AARCH64_NN)
+	continue;
+      /* Can only pack relocation against an aligned address.  */
+      if (rel->r_offset % 2 != 0)
+	continue;
+
+      struct elf_link_hash_entry *h = NULL;
+      asection *def_sec = NULL;
+      bool resolved_to_zero = false;
+      if (r_symndx < symtab_hdr->sh_info)
+	{
+	  /* A local symbol.  */
+	  Elf_Internal_Sym *isym;
+	  isym = bfd_sym_from_r_symndx (&htab->root.sym_cache,
+					input_bfd, r_symndx);
+	  BFD_ASSERT (isym != NULL);
+	  if (ELF_ST_TYPE (isym->st_info) == STT_GNU_IFUNC)
+	    continue;
+	  def_sec = bfd_section_from_elf_index (input_bfd, isym->st_shndx);
+	}
+      else
+	{
+	  h = sym_hashes[r_symndx - symtab_hdr->sh_info];
+	  while (h->root.type == bfd_link_hash_indirect
+		 || h->root.type == bfd_link_hash_warning)
+	    h = (struct elf_link_hash_entry *) h->root.u.i.link;
+
+	  /* Filter out symbols that cannot have a relative reloc.  */
+	  if (h->dyn_relocs == NULL)
+	    continue;
+	  if (bfd_is_abs_symbol (&h->root))
+	    continue;
+	  if (h->type == STT_GNU_IFUNC)
+	    continue;
+
+	  if (h->root.type == bfd_link_hash_defined
+	      || h->root.type == bfd_link_hash_defweak)
+	    def_sec = h->root.u.def.section;
+	  resolved_to_zero = UNDEFWEAK_NO_DYNAMIC_RELOC (info, h);
+	}
+      if (def_sec != NULL && discarded_section (def_sec))
+	continue;
+      /* Same logic as in elfNN_aarch64_final_link_relocate.
+	 Except conditionals trimmed that cannot result a reltive reloc.  */
+      if (bfd_link_pic (info)
+	  && (h == NULL
+	      || (ELF_ST_VISIBILITY (h->other) == STV_DEFAULT
+		  && !resolved_to_zero)
+	      || h->root.type != bfd_link_hash_undefweak))
+	{
+	  if (h != NULL
+	      && h->dynindx != -1
+	      && (!(bfd_link_pie (info) || SYMBOLIC_BIND (info, h))
+		  || !h->def_regular))
+	    continue;
+	  if (!record_relr (htab, sec, rel->r_offset, sreloc))
+	    return false;
+	}
+    }
+  return true;
+}
+
+static int
+cmp_relr_addr (const void *p, const void *q)
+{
+  const bfd_vma *a = p;
+  const bfd_vma *b = q;
+  return *a < *b ? -1 : *a > *b ? 1 : 0;
+}
+
+/* Produce a malloc'd sorted array of reloc addresses in htab->relr_sorted.
+   Returns false on allocation failure.  */
+
+static bool
+sort_relr (struct bfd_link_info *info,
+	   struct elf_aarch64_link_hash_table *htab)
+{
+  if (htab->relr_count == 0)
+    return true;
+
+  bfd_vma *addr = htab->relr_sorted;
+  if (addr == NULL)
+    {
+      addr = bfd_malloc (htab->relr_count * sizeof (*addr));
+      if (addr == NULL)
+	return false;
+      htab->relr_sorted = addr;
+    }
+
+  for (bfd_size_type i = 0; i < htab->relr_count; i++)
+    {
+      bfd_vma off = _bfd_elf_section_offset (info->output_bfd, info,
+					     htab->relr[i].sec,
+					     htab->relr[i].off);
+      addr[i] = htab->relr[i].sec->output_section->vma
+		+ htab->relr[i].sec->output_offset
+		+ off;
+    }
+  qsort (addr, htab->relr_count, sizeof (*addr), cmp_relr_addr);
+  return true;
+}
+
+/* Size of a relr entry and a relocated location.  */
+#define RELR_SZ (ARCH_SIZE / 8)
+/* Number of consecutive locations a relr bitmap entry references.  */
+#define RELR_N (ARCH_SIZE - 1)
+
+/* Size .relr.dyn whenever the layout changes, the number of packed
+   relocs are unchanged but the packed representation can.  */
+
+bool
+elfNN_aarch64_size_relative_relocs (struct bfd_link_info *info,
+				   bool *need_layout)
+{
+  struct elf_aarch64_link_hash_table *htab = elf_aarch64_hash_table (info);
+  asection *srelrdyn = htab->root.srelrdyn;
+  *need_layout = false;
+
+  if (!sort_relr (info, htab))
+    return false;
+  bfd_vma *addr = htab->relr_sorted;
+
+  BFD_ASSERT (srelrdyn != NULL);
+  bfd_size_type oldsize = srelrdyn->size;
+  srelrdyn->size = 0;
+  for (bfd_size_type i = 0; i < htab->relr_count; )
+    {
+      bfd_vma base = addr[i];
+      i++;
+      srelrdyn->size += RELR_SZ;
+      base += RELR_SZ;
+      for (;;)
+	{
+	  bfd_size_type start_i = i;
+	  while (i < htab->relr_count
+		 && addr[i] - base < RELR_N * RELR_SZ
+		 && (addr[i] - base) % RELR_SZ == 0)
+	    i++;
+	  if (i == start_i)
+	    break;
+	  srelrdyn->size += RELR_SZ;
+	  base += RELR_N * RELR_SZ;
+	}
+    }
+  if (srelrdyn->size != oldsize)
+    {
+      *need_layout = true;
+      /* Stop after a few iterations in case the layout does not converge,
+	 we can do this when the size would shrink.  */
+      if (htab->relr_layout_iter++ > 5 && srelrdyn->size < oldsize)
+	{
+	  srelrdyn->size = oldsize;
+	  *need_layout = false;
+	}
+    }
+  return true;
+}
+
+/* Emit the .relr.dyn section after it is sized and the layout is fixed.  */
+
+bool
+elfNN_aarch64_finish_relative_relocs (struct bfd_link_info *info)
+{
+  struct elf_aarch64_link_hash_table *htab = elf_aarch64_hash_table (info);
+  asection *srelrdyn = htab->root.srelrdyn;
+  bfd *dynobj = htab->root.dynobj;
+
+  if (srelrdyn == NULL || srelrdyn->size == 0)
+    return true;
+  srelrdyn->contents = bfd_alloc (dynobj, srelrdyn->size);
+  if (srelrdyn->contents == NULL)
+    return false;
+  bfd_vma *addr = htab->relr_sorted;
+  bfd_byte *loc = srelrdyn->contents;
+  for (bfd_size_type i = 0; i < htab->relr_count; )
+    {
+      bfd_vma base = addr[i];
+      i++;
+      bfd_put_NN (dynobj, base, loc);
+      loc += RELR_SZ;
+      base += RELR_SZ;
+      for (;;)
+	{
+	  bfd_vma bits = 0;
+	  while (i < htab->relr_count)
+	    {
+	      bfd_vma delta = addr[i] - base;
+	      if (delta >= RELR_N * RELR_SZ || delta % RELR_SZ != 0)
+		break;
+	      bits |= (bfd_vma) 1 << (delta / RELR_SZ);
+	      i++;
+	    }
+	  if (bits == 0)
+	    break;
+	  bfd_put_NN (dynobj, (bits << 1) | 1, loc);
+	  loc += RELR_SZ;
+	  base += RELR_N * RELR_SZ;
+	}
+    }
+  free (addr);
+  htab->relr_sorted = NULL;
+  /* Pad any excess with 1's, a do-nothing encoding.  */
+  while (loc < srelrdyn->contents + srelrdyn->size)
+    {
+      bfd_put_NN (dynobj, 1, loc);
+      loc += RELR_SZ;
+    }
+  return true;
+}
+
 /* This is the most important function of all . Innocuosly named
    though !  */
 
 static bool
-elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				     struct bfd_link_info *info)
+elfNN_aarch64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				  struct bfd_link_info *info)
 {
   struct elf_aarch64_link_hash_table *htab;
   bfd *dynobj;
@@ -8988,7 +9446,8 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   htab = elf_aarch64_hash_table ((info));
   dynobj = htab->root.dynobj;
 
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->root.dynamic_sections_created)
     {
@@ -9021,8 +9480,7 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  for (p = (struct elf_dyn_relocs *)
 	       (elf_section_data (s)->local_dynrel); p != NULL; p = p->next)
 	    {
-	      if (!bfd_is_abs_section (p->sec)
-		  && bfd_is_abs_section (p->sec->output_section))
+	      if (discarded_section (p->sec))
 		{
 		  /* Input section has been discarded, either because
 		     it is a copy of a linkonce section or due to
@@ -9146,6 +9604,27 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	}
     }
 
+  /* Record the relative relocations that will be packed and undo the
+     size allocation for them in .rela.*. The size of .relr.dyn will be
+     computed later iteratively since it depends on the final layout.  */
+  if (info->enable_dt_relr && !bfd_link_relocatable (info))
+    {
+      elf_link_hash_traverse (&htab->root, record_relr_dyn_got_relocs, info);
+
+      for (ibfd = info->input_bfds; ibfd != NULL; ibfd = ibfd->link.next)
+	{
+	  if (!is_aarch64_elf (ibfd))
+	    continue;
+
+	  for (s = ibfd->sections; s != NULL; s = s->next)
+	    if (!record_relr_non_got_relocs (ibfd, info, s))
+	      return false;
+
+	  if (!record_relr_local_got_relocs (ibfd, info))
+	    return false;
+	}
+    }
+
   /* Init mapping symbols information to use later to distingush between
      code and data while scanning for errata.  */
   if (htab->fix_erratum_835769 || htab->fix_erratum_843419)
@@ -9184,6 +9663,19 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	     to copy relocs into the output file.  */
 	  if (s != htab->root.srelplt)
 	    s->reloc_count = 0;
+	}
+      else if (s == htab->root.srelrdyn)
+	{
+	  /* Remove .relr.dyn based on relr_count, not size, since
+	     it is not sized yet.  */
+	  if (htab->relr_count == 0)
+	    s->flags |= SEC_EXCLUDE;
+	  else
+	    /* Force dynamic tags for relocs even if there are no
+	       .rela* relocs, required for setting DT_TEXTREL.  */
+	    relocs = true;
+	  /* Allocate contents later.  */
+	  continue;
 	}
       else
 	{
@@ -9238,16 +9730,18 @@ elfNN_aarch64_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	      && !add_dynamic_entry (DT_AARCH64_VARIANT_PCS, 0))
 	    return false;
 
-	  if ((elf_aarch64_tdata (output_bfd)->plt_type == PLT_BTI_PAC)
+	  aarch64_plt_type plt_type
+	    = elf_aarch64_tdata (output_bfd)->sw_protections.plt_type;
+	  if ((plt_type == PLT_BTI_PAC)
 	      && (!add_dynamic_entry (DT_AARCH64_BTI_PLT, 0)
 		  || !add_dynamic_entry (DT_AARCH64_PAC_PLT, 0)))
 	    return false;
 
-	  else if ((elf_aarch64_tdata (output_bfd)->plt_type == PLT_BTI)
+	  else if ((plt_type == PLT_BTI)
 		   && !add_dynamic_entry (DT_AARCH64_BTI_PLT, 0))
 	    return false;
 
-	  else if ((elf_aarch64_tdata (output_bfd)->plt_type == PLT_PAC)
+	  else if ((plt_type == PLT_PAC)
 		   && !add_dynamic_entry (DT_AARCH64_PAC_PLT, 0))
 	    return false;
 	}
@@ -9331,7 +9825,7 @@ elfNN_aarch64_create_small_pltn_entry (struct elf_link_hash_entry *h,
 
   /* First instruction in BTI enabled PLT stub is a BTI
      instruction so skip it.  */
-  if (elf_aarch64_tdata (output_bfd)->plt_type & PLT_BTI
+  if (elf_aarch64_tdata (output_bfd)->sw_protections.plt_type & PLT_BTI
       && elf_elfheader (output_bfd)->e_type == ET_EXEC)
     plt_entry = plt_entry + 4;
 
@@ -9390,8 +9884,8 @@ elfNN_aarch64_create_small_pltn_entry (struct elf_link_hash_entry *h,
    _TLS_MODULE_BASE_, if needed.  */
 
 static bool
-elfNN_aarch64_always_size_sections (bfd *output_bfd,
-				    struct bfd_link_info *info)
+elfNN_aarch64_early_size_sections (bfd *output_bfd,
+				   struct bfd_link_info *info)
 {
   asection *tls_sec;
 
@@ -9472,7 +9966,7 @@ elfNN_aarch64_finish_dynamic_symbol (bfd *output_bfd,
 	  || plt == NULL
 	  || gotplt == NULL
 	  || relplt == NULL)
-	return false;
+	abort ();
 
       elfNN_aarch64_create_small_pltn_entry (h, htab, output_bfd, info);
       if (!h->def_regular)
@@ -9542,8 +10036,10 @@ elfNN_aarch64_finish_dynamic_symbol (bfd *output_bfd,
 	{
 	  if (!(h->def_regular || ELF_COMMON_DEF_P (h)))
 	    return false;
-
 	  BFD_ASSERT ((h->got.offset & 1) != 0);
+	  /* Don't emit relative relocs if they are packed.  */
+	  if (info->enable_dt_relr)
+	    goto skip_got_reloc;
 	  rela.r_info = ELFNN_R_INFO (0, AARCH64_R (RELATIVE));
 	  rela.r_addend = (h->root.u.def.value
 			   + h->root.u.def.section->output_section->vma
@@ -9563,6 +10059,7 @@ elfNN_aarch64_finish_dynamic_symbol (bfd *output_bfd,
       loc += htab->root.srelgot->reloc_count++ * RELOC_SIZE (htab);
       bfd_elfNN_swap_reloca_out (output_bfd, &rela, loc);
     }
+skip_got_reloc:
 
   if (h->needs_copy)
     {
@@ -9656,7 +10153,7 @@ elfNN_aarch64_init_small_plt0_entry (bfd *output_bfd ATTRIBUTE_UNUSED,
   /* First instruction in BTI enabled PLT stub is a BTI
      instruction so skip it.  */
   bfd_byte *plt0_entry = htab->root.splt->contents;
-  if (elf_aarch64_tdata (output_bfd)->plt_type & PLT_BTI)
+  if (elf_aarch64_tdata (output_bfd)->sw_protections.plt_type & PLT_BTI)
     plt0_entry = plt0_entry + 4;
 
   /* Fill in the top 21 bits for this: ADRP x16, PLT_GOT + n * 8.
@@ -9755,7 +10252,8 @@ elfNN_aarch64_finish_dynamic_sections (bfd *output_bfd,
 	  const bfd_byte *entry = elfNN_aarch64_tlsdesc_small_plt_entry;
 	  htab->tlsdesc_plt_entry_size = PLT_TLSDESC_ENTRY_SIZE;
 
-	  aarch64_plt_type type = elf_aarch64_tdata (output_bfd)->plt_type;
+	  aarch64_plt_type type
+	    = elf_aarch64_tdata (output_bfd)->sw_protections.plt_type;
 	  if (type == PLT_BTI || type == PLT_BTI_PAC)
 	    {
 	      entry = elfNN_aarch64_tlsdesc_small_plt_bti_entry;
@@ -9880,6 +10378,7 @@ get_plt_type (bfd *abfd)
   bfd_byte *contents, *extdyn, *extdynend;
   asection *sec = bfd_get_section_by_name (abfd, ".dynamic");
   if (!sec
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || sec->size < sizeof (ElfNN_External_Dyn)
       || !bfd_malloc_and_get_section (abfd, sec, &contents))
     return ret;
@@ -9920,7 +10419,7 @@ elfNN_aarch64_get_synthetic_symtab (bfd *abfd,
 				    asymbol **dynsyms,
 				    asymbol **ret)
 {
-  elf_aarch64_tdata (abfd)->plt_type = get_plt_type (abfd);
+  elf_aarch64_tdata (abfd)->sw_protections.plt_type = get_plt_type (abfd);
   return _bfd_elf_get_synthetic_symtab (abfd, symcount, syms,
 					dynsymcount, dynsyms, ret);
 }
@@ -9935,19 +10434,21 @@ elfNN_aarch64_plt_sym_val (bfd_vma i, const asection *plt,
   size_t plt0_size = PLT_ENTRY_SIZE;
   size_t pltn_size = PLT_SMALL_ENTRY_SIZE;
 
-  if (elf_aarch64_tdata (plt->owner)->plt_type == PLT_BTI_PAC)
+  aarch64_plt_type plt_type
+    = elf_aarch64_tdata (plt->owner)->sw_protections.plt_type;
+  if (plt_type == PLT_BTI_PAC)
     {
       if (elf_elfheader (plt->owner)->e_type == ET_EXEC)
 	pltn_size = PLT_BTI_PAC_SMALL_ENTRY_SIZE;
       else
 	pltn_size = PLT_PAC_SMALL_ENTRY_SIZE;
     }
-  else if (elf_aarch64_tdata (plt->owner)->plt_type == PLT_BTI)
+  else if (plt_type == PLT_BTI)
     {
       if (elf_elfheader (plt->owner)->e_type == ET_EXEC)
 	pltn_size = PLT_BTI_SMALL_ENTRY_SIZE;
     }
-  else if (elf_aarch64_tdata (plt->owner)->plt_type == PLT_PAC)
+  else if (plt_type == PLT_PAC)
     {
       pltn_size = PLT_PAC_SMALL_ENTRY_SIZE;
     }
@@ -9995,12 +10496,20 @@ elfNN_aarch64_backend_symbol_processing (bfd *abfd, asymbol *sym)
 static bfd *
 elfNN_aarch64_link_setup_gnu_properties (struct bfd_link_info *info)
 {
-  uint32_t prop = elf_aarch64_tdata (info->output_bfd)->gnu_and_prop;
-  bfd *pbfd = _bfd_aarch64_elf_link_setup_gnu_properties (info, &prop);
-  elf_aarch64_tdata (info->output_bfd)->gnu_and_prop = prop;
-  elf_aarch64_tdata (info->output_bfd)->plt_type
-    |= (prop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI) ? PLT_BTI : 0;
-  setup_plt_values (info, elf_aarch64_tdata (info->output_bfd)->plt_type);
+  bfd *pbfd = _bfd_aarch64_elf_link_setup_gnu_properties (info);
+
+  /* When BTI is forced on the command line, information flows from plt_type to
+     outprop, so plt_type has already been set and outprop don't have any effect
+     on plt_type.
+     Whereas if BTI is inferred from the input bfds, information flows from
+     outprop to plt_type.  If the property GNU_PROPERTY_AARCH64_FEATURE_1_BTI
+     has been set on all the input bfds, then BTI is set on the output bfd and
+     plt_type is updated accordingly.  */
+  struct elf_aarch64_obj_tdata * tdata = elf_aarch64_tdata (info->output_bfd);
+  uint32_t outprop = tdata->gnu_property_aarch64_feature_1_and;
+  if (outprop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)
+    tdata->sw_protections.plt_type |= PLT_BTI;
+  setup_plt_values (info, tdata->sw_protections.plt_type);
   return pbfd;
 }
 
@@ -10013,36 +10522,45 @@ elfNN_aarch64_merge_gnu_properties (struct bfd_link_info *info,
 				       elf_property *aprop,
 				       elf_property *bprop)
 {
-  uint32_t prop
-    = elf_aarch64_tdata (info->output_bfd)->gnu_and_prop;
+  uint32_t outprop
+    = elf_aarch64_tdata (info->output_bfd)->gnu_property_aarch64_feature_1_and;
 
-  /* If output has been marked with BTI using command line argument, give out
-     warning if necessary.  */
   /* Properties are merged per type, hence only check for warnings when merging
      GNU_PROPERTY_AARCH64_FEATURE_1_AND.  */
-  if (((aprop && aprop->pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND)
-	|| (bprop && bprop->pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND))
-      && (prop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)
-      && (!elf_aarch64_tdata (info->output_bfd)->no_bti_warn))
+  if ((aprop && aprop->pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND)
+   || (bprop && bprop->pr_type == GNU_PROPERTY_AARCH64_FEATURE_1_AND))
     {
-      if ((aprop && !(aprop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
-	   || !aprop)
+      const aarch64_protection_opts *sw_protections
+	= &elf_aarch64_tdata (info->output_bfd)->sw_protections;
+      aarch64_feature_marking_report bti_report = sw_protections->bti_report;
+      aarch64_feature_marking_report gcs_report = sw_protections->gcs_report;
+
+      /* If output has been marked with BTI using command line argument, give
+	 out warning if necessary.  */
+      if ((outprop & GNU_PROPERTY_AARCH64_FEATURE_1_BTI)
+	  && (bti_report != MARKING_NONE))
 	{
-	  _bfd_error_handler (_("%pB: warning: BTI turned on by -z force-bti when "
-				"all inputs do not have BTI in NOTE section."),
-			      abfd);
+	  if (!aprop || !(aprop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
+	    _bfd_aarch64_elf_check_bti_report (info, abfd);
+	  if (!bprop || !(bprop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
+	    _bfd_aarch64_elf_check_bti_report (info, bbfd);
 	}
-      if ((bprop && !(bprop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_BTI))
-	   || !bprop)
+
+      /* If the output has been marked with GCS using '-z gcs' and the input is
+	 missing GCS feature tag, throw a warning/error in accordance with
+	 -z gcs-report=warning/error.  */
+      if ((outprop & GNU_PROPERTY_AARCH64_FEATURE_1_GCS)
+	  && gcs_report != MARKING_NONE)
 	{
-	  _bfd_error_handler (_("%pB: warning: BTI turned on by -z force-bti when "
-				"all inputs do not have BTI in NOTE section."),
-			      bbfd);
+	  if (!aprop || !(aprop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_GCS))
+	    _bfd_aarch64_elf_check_gcs_report (info, abfd);
+	  if (!bprop || !(bprop->u.number & GNU_PROPERTY_AARCH64_FEATURE_1_GCS))
+	    _bfd_aarch64_elf_check_gcs_report (info, bbfd);
 	}
     }
 
   return  _bfd_aarch64_elf_merge_gnu_properties (info, abfd, aprop,
-						 bprop, prop);
+						 bprop, outprop);
 }
 
 /* We use this so we can override certain functions
@@ -10080,15 +10598,10 @@ const struct elf_size_info elfNN_aarch64_size_info =
 };
 
 #define ELF_ARCH			bfd_arch_aarch64
+#define ELF_TARGET_ID			AARCH64_ELF_DATA
 #define ELF_MACHINE_CODE		EM_AARCH64
 #define ELF_MAXPAGESIZE			0x10000
 #define ELF_COMMONPAGESIZE		0x1000
-
-#define bfd_elfNN_close_and_cleanup		\
-  elfNN_aarch64_close_and_cleanup
-
-#define bfd_elfNN_bfd_free_cached_info		\
-  elfNN_aarch64_bfd_free_cached_info
 
 #define bfd_elfNN_bfd_is_target_special_symbol	\
   elfNN_aarch64_is_target_special_symbol
@@ -10126,8 +10639,8 @@ const struct elf_size_info elfNN_aarch64_size_info =
 #define elf_backend_adjust_dynamic_symbol	\
   elfNN_aarch64_adjust_dynamic_symbol
 
-#define elf_backend_always_size_sections	\
-  elfNN_aarch64_always_size_sections
+#define elf_backend_early_size_sections		\
+  elfNN_aarch64_early_size_sections
 
 #define elf_backend_check_relocs		\
   elfNN_aarch64_check_relocs
@@ -10182,8 +10695,8 @@ const struct elf_size_info elfNN_aarch64_size_info =
 #define elf_backend_modify_headers		\
   elfNN_aarch64_modify_headers
 
-#define elf_backend_size_dynamic_sections	\
-  elfNN_aarch64_size_dynamic_sections
+#define elf_backend_late_size_sections		\
+  elfNN_aarch64_late_size_sections
 
 #define elf_backend_size_info			\
   elfNN_aarch64_size_info
@@ -10199,6 +10712,12 @@ const struct elf_size_info elfNN_aarch64_size_info =
 
 #define elf_backend_merge_gnu_properties	\
   elfNN_aarch64_merge_gnu_properties
+
+#define elf_backend_size_relative_relocs	\
+  elfNN_aarch64_size_relative_relocs
+
+#define elf_backend_finish_relative_relocs	\
+  elfNN_aarch64_finish_relative_relocs
 
 #define elf_backend_can_refcount       1
 #define elf_backend_can_gc_sections    1

@@ -1,4 +1,4 @@
-/*	$NetBSD: disasm.c,v 1.16 2024/02/07 04:20:26 msaitoh Exp $	*/
+/*	$NetBSD: disasm.c,v 1.16.2.1 2026/11/04 23:19:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -27,11 +27,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.16 2024/02/07 04:20:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disasm.c,v 1.16.2.1 2026/11/04 23:19:54 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/bitops.h>
+#include <sys/endian.h>
 
 #include <arch/aarch64/aarch64/disasm.h>
 

@@ -1,6 +1,6 @@
 /* Disassemble support for GDB.
 
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,21 +17,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "event-top.h"
+#include "gdbsupport/unordered_set.h"
 #include "target.h"
 #include "value.h"
 #include "ui-out.h"
 #include "disasm.h"
 #include "gdbcore.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "dis-asm.h"
 #include "source.h"
-#include "safe-ctype.h"
+#include "gdbsupport/gdb-safe-ctype.h"
 #include <algorithm>
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "valprint.h"
 #include "cli/cli-style.h"
+#include "objfiles.h"
+#include "inferior.h"
 
 /* Disassemble functions.
    FIXME: We should get rid of all the duplicate code in gdb that does
@@ -58,7 +61,8 @@ show_use_libopcodes_styling  (struct ui_file *file, int from_tty,
 			      struct cmd_list_element *c,
 			      const char *value)
 {
-  gdb_non_printing_memory_disassembler dis (target_gdbarch ());
+  gdbarch *arch = current_inferior ()->arch ();
+  gdb_non_printing_memory_disassembler dis (arch);
   bool supported = dis.disasm_info ()->created_styled_output;
 
   if (supported || !use_libopcodes_styling)
@@ -70,7 +74,7 @@ show_use_libopcodes_styling  (struct ui_file *file, int from_tty,
 	 turned on!  */
       gdb_printf (file, _("Use of libopcodes styling support is \"off\""
 			  " (not supported on architecture \"%s\")\n"),
-		  gdbarch_bfd_arch_info (target_gdbarch ())->printable_name);
+		  gdbarch_bfd_arch_info (arch)->printable_name);
     }
 }
 
@@ -80,7 +84,8 @@ static void
 set_use_libopcodes_styling (const char *args, int from_tty,
 			    struct cmd_list_element *c)
 {
-  gdb_non_printing_memory_disassembler dis (target_gdbarch ());
+  gdbarch *arch = current_inferior ()->arch ();
+  gdb_non_printing_memory_disassembler dis (arch);
   bool supported = dis.disasm_info ()->created_styled_output;
 
   /* If the current architecture doesn't support libopcodes styling then we
@@ -92,7 +97,7 @@ set_use_libopcodes_styling (const char *args, int from_tty,
     {
       use_libopcodes_styling_option = use_libopcodes_styling;
       error (_("Use of libopcodes styling not supported on architecture \"%s\"."),
-	     gdbarch_bfd_arch_info (target_gdbarch ())->printable_name);
+	     gdbarch_bfd_arch_info (arch)->printable_name);
     }
   else
     use_libopcodes_styling = use_libopcodes_styling_option;
@@ -118,73 +123,25 @@ struct deprecated_dis_line_entry
 
 struct dis_line_entry
 {
+  dis_line_entry (struct symtab *symtab, int line) noexcept
+    : symtab (symtab),
+      line (line)
+  {}
+
+  bool operator== (const dis_line_entry &other) const noexcept
+  { return this->symtab == other.symtab && this->line == other.line; }
+
   struct symtab *symtab;
   int line;
 };
 
 /* Hash function for dis_line_entry.  */
 
-static hashval_t
-hash_dis_line_entry (const void *item)
+struct dis_line_entry_hash
 {
-  const struct dis_line_entry *dle = (const struct dis_line_entry *) item;
-
-  return htab_hash_pointer (dle->symtab) + dle->line;
-}
-
-/* Equal function for dis_line_entry.  */
-
-static int
-eq_dis_line_entry (const void *item_lhs, const void *item_rhs)
-{
-  const struct dis_line_entry *lhs = (const struct dis_line_entry *) item_lhs;
-  const struct dis_line_entry *rhs = (const struct dis_line_entry *) item_rhs;
-
-  return (lhs->symtab == rhs->symtab
-	  && lhs->line == rhs->line);
-}
-
-/* Create the table to manage lines for mixed source/disassembly.  */
-
-static htab_t
-allocate_dis_line_table (void)
-{
-  return htab_create_alloc (41,
-			    hash_dis_line_entry, eq_dis_line_entry,
-			    xfree, xcalloc, xfree);
-}
-
-/* Add a new dis_line_entry containing SYMTAB and LINE to TABLE.  */
-
-static void
-add_dis_line_entry (htab_t table, struct symtab *symtab, int line)
-{
-  void **slot;
-  struct dis_line_entry dle, *dlep;
-
-  dle.symtab = symtab;
-  dle.line = line;
-  slot = htab_find_slot (table, &dle, INSERT);
-  if (*slot == NULL)
-    {
-      dlep = XNEW (struct dis_line_entry);
-      dlep->symtab = symtab;
-      dlep->line = line;
-      *slot = dlep;
-    }
-}
-
-/* Return non-zero if SYMTAB, LINE are in TABLE.  */
-
-static int
-line_has_code_p (htab_t table, struct symtab *symtab, int line)
-{
-  struct dis_line_entry dle;
-
-  dle.symtab = symtab;
-  dle.line = line;
-  return htab_find (table, &dle) != NULL;
-}
+  std::size_t operator() (const dis_line_entry &x) const noexcept
+  { return std::hash<symtab *> () (x.symtab) + std::hash<int> () (x.line); }
+};
 
 /* Wrapper of target_read_code.  */
 
@@ -193,7 +150,12 @@ gdb_disassembler_memory_reader::dis_asm_read_memory
   (bfd_vma memaddr, gdb_byte *myaddr, unsigned int len,
    struct disassemble_info *info) noexcept
 {
-  return target_read_code (memaddr, myaddr, len);
+  auto res = catch_exceptions<int, -1> ([&]
+    {
+      return target_read_code (memaddr, myaddr, len);
+    });
+
+  return res;
 }
 
 /* Wrapper of memory_error.  */
@@ -572,7 +534,7 @@ do_mixed_source_and_assembly_deprecated
 {
   int newlines = 0;
   int nlines;
-  struct linetable_entry *le;
+  const struct linetable_entry *le;
   struct deprecated_dis_line_entry *mle;
   struct symtab_and_line sal;
   int i;
@@ -592,19 +554,26 @@ do_mixed_source_and_assembly_deprecated
   mle = (struct deprecated_dis_line_entry *)
     alloca (nlines * sizeof (struct deprecated_dis_line_entry));
 
+  struct objfile *objfile = symtab->compunit ()->objfile ();
+
+  unrelocated_addr unrel_low
+    = unrelocated_addr (low - objfile->text_section_offset ());
+  unrelocated_addr unrel_high
+    = unrelocated_addr (high - objfile->text_section_offset ());
+
   /* Copy linetable entries for this function into our data
      structure, creating end_pc's and setting out_of_order as
      appropriate.  */
 
   /* First, skip all the preceding functions.  */
 
-  for (i = 0; i < nlines - 1 && le[i].pc < low; i++);
+  for (i = 0; i < nlines - 1 && le[i].unrelocated_pc () < unrel_low; i++);
 
   /* Now, copy all entries before the end of this function.  */
 
-  for (; i < nlines - 1 && le[i].pc < high; i++)
+  for (; i < nlines - 1 && le[i].unrelocated_pc () < unrel_high; i++)
     {
-      if (le[i].line == le[i + 1].line && le[i].pc == le[i + 1].pc)
+      if (le[i] == le[i + 1])
 	continue;		/* Ignore duplicates.  */
 
       /* Skip any end-of-function markers.  */
@@ -614,19 +583,19 @@ do_mixed_source_and_assembly_deprecated
       mle[newlines].line = le[i].line;
       if (le[i].line > le[i + 1].line)
 	out_of_order = 1;
-      mle[newlines].start_pc = le[i].pc;
-      mle[newlines].end_pc = le[i + 1].pc;
+      mle[newlines].start_pc = le[i].pc (objfile);
+      mle[newlines].end_pc = le[i + 1].pc (objfile);
       newlines++;
     }
 
   /* If we're on the last line, and it's part of the function,
      then we need to get the end pc in a special way.  */
 
-  if (i == nlines - 1 && le[i].pc < high)
+  if (i == nlines - 1 && le[i].unrelocated_pc () < unrel_high)
     {
       mle[newlines].line = le[i].line;
-      mle[newlines].start_pc = le[i].pc;
-      sal = find_pc_line (le[i].pc, 0);
+      mle[newlines].start_pc = le[i].pc (objfile);
+      sal = find_pc_line (le[i].pc (objfile), 0);
       mle[newlines].end_pc = sal.end;
       newlines++;
     }
@@ -642,8 +611,8 @@ do_mixed_source_and_assembly_deprecated
 
   ui_out_emit_list asm_insns_list (uiout, "asm_insns");
 
-  gdb::optional<ui_out_emit_tuple> outer_tuple_emitter;
-  gdb::optional<ui_out_emit_list> inner_list_emitter;
+  std::optional<ui_out_emit_tuple> outer_tuple_emitter;
+  std::optional<ui_out_emit_list> inner_list_emitter;
 
   for (i = 0; i < newlines; i++)
     {
@@ -731,7 +700,14 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
      but if that text is for code that will be disassembled later, then
      we'll want to defer printing it until later with its associated code.  */
 
-  htab_up dis_line_table (allocate_dis_line_table ());
+  gdb::unordered_set<dis_line_entry, dis_line_entry_hash> dis_line_table;
+
+  struct objfile *objfile = main_symtab->compunit ()->objfile ();
+
+  unrelocated_addr unrel_low
+    = unrelocated_addr (low - objfile->text_section_offset ());
+  unrelocated_addr unrel_high
+    = unrelocated_addr (high - objfile->text_section_offset ());
 
   pc = low;
 
@@ -746,10 +722,10 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
   first_le = NULL;
 
   /* Skip all the preceding functions.  */
-  for (i = 0; i < nlines && le[i].pc < low; i++)
+  for (i = 0; i < nlines && le[i].unrelocated_pc () < unrel_low; i++)
     continue;
 
-  if (i < nlines && le[i].pc < high)
+  if (i < nlines && le[i].unrelocated_pc () < unrel_high)
     first_le = &le[i];
 
   /* Add lines for every pc value.  */
@@ -763,7 +739,7 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
       pc += length;
 
       if (sal.symtab != NULL)
-	add_dis_line_entry (dis_line_table.get (), sal.symtab, sal.line);
+	dis_line_table.emplace (sal.symtab, sal.line);
     }
 
   /* Second pass: print the disassembly.
@@ -792,8 +768,8 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
 
   ui_out_emit_list asm_insns_emitter (uiout, "asm_insns");
 
-  gdb::optional<ui_out_emit_tuple> tuple_emitter;
-  gdb::optional<ui_out_emit_list> list_emitter;
+  std::optional<ui_out_emit_tuple> tuple_emitter;
+  std::optional<ui_out_emit_list> list_emitter;
 
   last_symtab = NULL;
   last_line = 0;
@@ -836,11 +812,9 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
 		  /* Several preceding source lines.  Print the trailing ones
 		     not associated with code that we'll print later.  */
 		  for (l = sal.line - 1; l > last_line; --l)
-		    {
-		      if (line_has_code_p (dis_line_table.get (),
-					   sal.symtab, l))
-			break;
-		    }
+		    if (dis_line_table.contains ({sal.symtab, l}))
+		      break;
+
 		  if (l < sal.line - 1)
 		    {
 		      start_preceding_line_to_display = l + 1;
@@ -876,7 +850,10 @@ do_mixed_source_and_assembly (struct gdbarch *gdbarch,
 		 output includes the source specs for each line.  */
 	      if (sal.symtab != NULL)
 		{
-		  uiout->text (symtab_to_filename_for_display (sal.symtab));
+		  auto filename = symtab_to_filename_for_display (sal.symtab);
+		  uiout->message ("%ps",
+				  styled_string (file_name_style.style (),
+						 filename));
 		}
 	      else
 		uiout->text ("unknown");
@@ -1075,7 +1052,7 @@ gdb_print_insn_1 (struct gdbarch *gdbarch, CORE_ADDR vma,
 		  struct disassemble_info *info)
 {
   /* Call into the extension languages to do the disassembly.  */
-  gdb::optional<int> length = ext_lang_print_insn (gdbarch, vma, info);
+  std::optional<int> length = ext_lang_print_insn (gdbarch, vma, info);
   if (length.has_value ())
     return *length;
 
@@ -1107,7 +1084,7 @@ gdb_disassembler::print_insn (CORE_ADDR memaddr,
      this output.  */
   if (length > 0 && use_ext_lang_for_styling ())
     {
-      gdb::optional<std::string> ext_contents;
+      std::optional<std::string> ext_contents;
       ext_contents = ext_lang_colorize_disasm (m_buffer.string (), arch ());
       if (ext_contents.has_value ())
 	m_buffer = std::move (*ext_contents);
@@ -1131,7 +1108,7 @@ gdb_disassembler::print_insn (CORE_ADDR memaddr,
 	     To do this we perform an in-place new, but this time turn on
 	     the styling support, then we can re-disassembly the
 	     instruction, and gain any minimal styling GDB might add.  */
-	  gdb_static_assert ((std::is_same<decltype (m_buffer),
+	  static_assert ((std::is_same<decltype (m_buffer),
 			      string_file>::value));
 	  gdb_assert (!m_buffer.term_out ());
 	  m_buffer.~string_file ();
@@ -1273,20 +1250,20 @@ gdb_buffered_insn_length (struct gdbarch *gdbarch,
   return result;
 }
 
-char *
+const char *
 get_disassembler_options (struct gdbarch *gdbarch)
 {
-  char **disassembler_options = gdbarch_disassembler_options (gdbarch);
-  if (disassembler_options == NULL)
-    return NULL;
-  return *disassembler_options;
+  std::string *disassembler_options = gdbarch_disassembler_options (gdbarch);
+  if (disassembler_options == nullptr || disassembler_options->empty ())
+    return nullptr;
+  return disassembler_options->c_str ();
 }
 
 void
 set_disassembler_options (const char *prospective_options)
 {
   struct gdbarch *gdbarch = get_current_arch ();
-  char **disassembler_options = gdbarch_disassembler_options (gdbarch);
+  std::string *disassembler_options = gdbarch_disassembler_options (gdbarch);
   const disasm_options_and_args_t *valid_options_and_args;
   const disasm_options_t *valid_options;
   gdb::unique_xmalloc_ptr<char> prospective_options_local
@@ -1299,11 +1276,8 @@ set_disassembler_options (const char *prospective_options)
      to reset their disassembler options to NULL.  */
   if (options == NULL)
     {
-      if (disassembler_options != NULL)
-	{
-	  free (*disassembler_options);
-	  *disassembler_options = NULL;
-	}
+      if (disassembler_options != nullptr)
+	disassembler_options->clear ();
       return;
     }
 
@@ -1355,8 +1329,7 @@ set_disassembler_options (const char *prospective_options)
 	}
     }
 
-  free (*disassembler_options);
-  *disassembler_options = xstrdup (options);
+  *disassembler_options = options;
 }
 
 static void

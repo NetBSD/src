@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -67,7 +67,7 @@ print_run_body (lf *file, const gen_entry *table)
 {
   /* Output the function to execute real code:
 
-     Unfortunatly, there are multiple cases to consider vis:
+     Unfortunately, there are multiple cases to consider vis:
 
      <icache> X <smp>
 

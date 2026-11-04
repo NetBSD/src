@@ -1,6 +1,6 @@
 owner=trusted (uid=2147483647)
 > flags
-dict flags fixed|lock|replace|utf8_request|utf8_active
+dict flags fixed|lock|dup_replace|utf8_request|utf8_active
 > verbose
 > get foo
 foo: not found

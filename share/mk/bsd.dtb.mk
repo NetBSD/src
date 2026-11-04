@@ -1,7 +1,6 @@
-#	$NetBSD: bsd.dtb.mk,v 1.3 2021/06/02 10:28:21 jmcneill Exp $
+#	$NetBSD: bsd.dtb.mk,v 1.3.6.1 2026/11/04 23:19:53 perseant Exp $
 
 .include <bsd.init.mk>
-.include <bsd.own.mk>
 
 ##### Default values
 .if !defined(S)
@@ -42,7 +41,16 @@ DTSDIR+=$S/external/gpl2/dts/dist/arch/${_arch}/boot/dts/${DTSSUBDIR}
 
 DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 
-.SUFFIXES: .dtb .dts
+.for _d in ${DTS}
+DTBSCMD_${_d}:=		${MAKE} -C ${ARCHDTSDIR}/${DTSSUBDIR} ${DTSMAKEVARS} -v ${_d:S/.dtb/-dtbs/}
+DTOVERLAYS_${_d}:=	${DTBSCMD_${_d}:sh}
+DTOVERLAYS+=		${DTOVERLAYS_${_d}}
+.if empty(DTOVERLAYS_${_d})
+DTSBASE+=${_d}
+.endif
+.endfor
+
+.SUFFIXES: .dtb .dts .dtbo .dtso
 
 .dts.dtb:
 	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
@@ -50,9 +58,16 @@ DTSPATH=${DTSINC} ${DTSDIR} ${.OBJDIR}/dts
 	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
 	    -p ${DTSPADDING} -b 0 -@ -o ${.TARGET}
 
-.PATH.dts: ${DTSDIR}
+.dtso.dtbo:
+	${CPP} -P -xassembler-with-cpp ${DTSPATH:@v@-I ${v}@} \
+	    -include ${.IMPSRC} /dev/null | \
+	${TOOL_DTC} ${DTSPATH:@v@-i ${v}@} -I dts -O dtb \
+	    -p ${DTSPADDING} -b 0 -@ -o ${.TARGET}
 
-DTB= 		 ${DTS:.dts=.dtb}
+.PATH.dts: ${DTSDIR}
+.PATH.dtso: ${DTSDIR}
+
+DTB= 		${DTSBASE:.dts=.dtb} ${DTOVERLAYS:.dtso=.dtbo}
 
 dtb:		${DTB}
 
@@ -63,6 +78,11 @@ DTBINSTDIR=	${DTBDIR}
 .endif
 
 dtbinstall:	dtb
+.if defined(DTSSUBDIR)
+.if ${DTSSUBDIR:M*/*} != ""
+	${INSTALL_DIR} ${DESTDIR}${DTBINSTDIR:H}
+.endif
+.endif
 	${INSTALL_DIR} ${DESTDIR}${DTBINSTDIR}
 .for _dtb in ${DTB}
 	${_MKSHMSG_INSTALL} ${_dtb}
@@ -83,6 +103,10 @@ dtbinstall:	dtb
 
 dtblist:
 .if defined(DTSSUBDIR)
+.if ${DTSSUBDIR:M*/*} != ""
+	@echo ".${DTBINSTDIR:H}\t\tdtb-base-boot\tdtb" | \
+	    ${TOOL_SED} 's/\\t/	/g'
+.endif
 	@echo ".${DTBINSTDIR}\t\tdtb-base-boot\tdtb" | \
 	    ${TOOL_SED} 's/\\t/	/g'
 .for _dtb in ${DTB_NOSUBDIR}

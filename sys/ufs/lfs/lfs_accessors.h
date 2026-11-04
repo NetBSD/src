@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_accessors.h,v 1.51 2022/04/24 20:32:44 rillig Exp $	*/
+/*	$NetBSD: lfs_accessors.h,v 1.51.10.1 2026/11/04 23:28:07 perseant Exp $	*/
 
 /*  from NetBSD: lfs.h,v 1.165 2015/07/24 06:59:32 dholland Exp  */
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
@@ -661,15 +661,31 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 	((lfs_sb_getnseg(fs) + SEGUPB(fs) - 1) / lfs_sb_getsepb(fs))
 
 #ifdef _KERNEL
-# define SHARE_IFLOCK(F) 						\
+# define EXCL_IFLOCK(F) 						\
   do {									\
-	rw_enter(&(F)->lfs_iflock, RW_READER);				\
+	KASSERT(!mutex_owned(&lfs_lock));				\
+	rw_enter(&(F)->lfs_iflock, RW_WRITER);				\
   } while(0)
-# define UNSHARE_IFLOCK(F)						\
+# define UNEXCL_IFLOCK(F)						\
   do {									\
 	rw_exit(&(F)->lfs_iflock);					\
   } while(0)
+# define SHARE_IFLOCK(F) 						\
+  do {									\
+	KASSERT(!mutex_owned(&lfs_lock));				\
+	if (!rw_write_held(&(F)->lfs_iflock)) {				\
+		rw_enter(&(F)->lfs_iflock, RW_READER);			\
+	}								\
+  } while(0)
+# define UNSHARE_IFLOCK(F)						\
+  do {									\
+	if (!rw_write_held(&(F)->lfs_iflock)) {				\
+		rw_exit(&(F)->lfs_iflock);				\
+	}								\
+  } while(0)
 #else /* ! _KERNEL */
+# define EXCL_IFLOCK(F)
+# define UNEXCL_IFLOCK(F)
 # define SHARE_IFLOCK(F)
 # define UNSHARE_IFLOCK(F)
 #endif /* ! _KERNEL */
@@ -689,16 +705,18 @@ lfs_iblock_set(STRUCT_LFS *fs, void *block, unsigned ix, daddr_t val)
 			((IN) & (lfs_sb_getsepb(F) - 1)));		\
 	else								\
 		(SP) = (SEGUSE *)(BP)->b_data + ((IN) % lfs_sb_getsepb(F)); \
-	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_WRITESEGENTRY(SP, F, IN, BP) do {				\
-	if ((SP)->su_nbytes == 0)					\
-		(SP)->su_flags |= SEGUSE_EMPTY;				\
-	else								\
-		(SP)->su_flags &= ~SEGUSE_EMPTY;			\
-	(F)->lfs_suflags[(F)->lfs_activesb][(IN)] = (SP)->su_flags;	\
+	if (((BP)->b_flags & B_GATHERED) == 0)			 	\
+		(F)->lfs_flags |= LFS_IFDIRTY;				\
 	LFS_BWRITE_LOG(BP);						\
+	UNSHARE_IFLOCK(F);						\
+} while (0)
+
+#define LFS_RELEASESEGENTRY(SP, F, IN, BP) do {				\
+	brelse((BP), 0);						\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 /*
@@ -823,19 +841,22 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 #define IFILE_ENTRYSIZE(fs) \
 	((fs)->lfs_is64 ? sizeof(IFILE64) : sizeof(IFILE32))
 
+/* No valid inode number can be as high as this */
+#ifdef _KERNEL
+# define LFS_MAXINO(fs) (((fs->lfs_ivnode->v_size >> lfs_sb_getbshift(fs)) \
+			- lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) \
+	* lfs_sb_getifpb(fs))
+#define LFS_ASSERT_MAXINO(fs, ino) KASSERTMSG(ino < LFS_MAXINO(fs),	\
+	"inode %jd >= max %jd", (intmax_t)(ino), (intmax_t)LFS_MAXINO(fs));
+
+#endif
+
 /*
  * LFSv1 compatibility code is not allowed to touch if_atime, since it
  * may not be mapped!
  */
 /* Read in the block with a specific inode from the ifile. */
-#define	LFS_IENTRY(IP, F, IN, BP) do {					\
-	int _e;								\
-	SHARE_IFLOCK(F);						\
-	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
-	if ((_e = bread((F)->lfs_ivnode,				\
-	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
-	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
-		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
+#define LFS_IENTRY_INBLOCK(IP, F, IN, BP) do {				\
 	if ((F)->lfs_is64) {						\
 		(IP) = (IFILE *)((IFILE64 *)(BP)->b_data +		\
 				 (IN) % lfs_sb_getifpb(F));		\
@@ -846,7 +867,16 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 		(IP) = (IFILE *)((IFILE_V1 *)(BP)->b_data +		\
 				 (IN) % lfs_sb_getifpb(F));		\
 	}								\
-	UNSHARE_IFLOCK(F);						\
+} while (0)
+#define	LFS_IENTRY(IP, F, IN, BP) do {					\
+	int _e;								\
+	SHARE_IFLOCK(F);						\
+	VTOI((F)->lfs_ivnode)->i_state |= IN_ACCESS;			\
+	if ((_e = bread((F)->lfs_ivnode,				\
+	(IN) / lfs_sb_getifpb(F) + lfs_sb_getcleansz(F) + lfs_sb_getsegtabsz(F), \
+	lfs_sb_getbsize(F), 0, &(BP))) != 0)				\
+		panic("lfs: ifile ino %d read %d", (int)(IN), _e);	\
+	LFS_IENTRY_INBLOCK(IP, F, IN, BP);				\
 } while (0)
 #define LFS_IENTRY_NEXT(IP, F) do { \
 	if ((F)->lfs_is64) {						\
@@ -856,6 +886,16 @@ lfs_ii_setblock(STRUCT_LFS *fs, IINFO *iip, uint64_t block)
 	} else {							\
 		(IP) = (IFILE *)((IFILE_V1 *)(IP) + 1);			\
 	}								\
+} while (0)
+#define LFS_WRITEIENTRY(IP, F, IN, BP) do {				\
+	if (((BP)->b_flags & B_GATHERED) == 0)				\
+		(F)->lfs_flags |= LFS_IFDIRTY;				\
+	LFS_BWRITE_LOG(BP);						\
+	UNSHARE_IFLOCK(F);						\
+} while (0)
+#define LFS_RELEASEIENTRY(IP, F, IN, BP) do {				\
+	brelse((BP), 0);						\
+	UNSHARE_IFLOCK(F);						\
 } while (0)
 
 #define LFS_DEF_IF_ACCESSOR(type, type32, field) \
@@ -996,10 +1036,13 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 	if (lfs_sb_getversion(FS) > 1) {				\
 		LFS_CLEANERINFO((CIP), (FS), (BP));			\
 		lfs_ci_setfree_head(FS, CIP, VAL);			\
-		LFS_BWRITE_LOG(BP);					\
+		if ((VAL) == LFS_UNUSED_INUM)				\
+			lfs_ci_setfree_tail(FS, CIP, VAL);		\
 		mutex_enter(&lfs_lock);					\
-		(FS)->lfs_flags |= LFS_IFDIRTY;				\
+		if (((BP)->b_flags & B_GATHERED) == 0)		 	\
+			(FS)->lfs_flags |= LFS_IFDIRTY;			\
 		mutex_exit(&lfs_lock);					\
+		LFS_BWRITE_LOG(BP);					\
 	}								\
 } while (0)
 
@@ -1012,10 +1055,13 @@ lfs_ci_shiftdirtytoclean(STRUCT_LFS *fs, CLEANERINFO *cip, unsigned num)
 #define LFS_PUT_TAILFREE(FS, CIP, BP, VAL) do {				\
 	LFS_CLEANERINFO((CIP), (FS), (BP));				\
 	lfs_ci_setfree_tail(FS, CIP, VAL);				\
-	LFS_BWRITE_LOG(BP);						\
+	if ((VAL) == LFS_UNUSED_INUM)					\
+		lfs_ci_setfree_head(FS, CIP, VAL);			\
 	mutex_enter(&lfs_lock);						\
-	(FS)->lfs_flags |= LFS_IFDIRTY;					\
+	if (((BP)->b_flags & B_GATHERED) == 0)				\
+		(FS)->lfs_flags |= LFS_IFDIRTY;				\
 	mutex_exit(&lfs_lock);						\
+	LFS_BWRITE_LOG(BP);						\
 } while (0)
 
 /*
@@ -1417,7 +1463,7 @@ lfs_blocks_fromfinfo(STRUCT_LFS *fs, union lfs_blocks *bp, FINFO *fip)
 	firstblock = (char *)fip + FINFOSIZE(fs);
 	if (fs->lfs_is64) {
 		bp->b64 = (int64_t *)firstblock;
-	}  else {
+	} else {
 		bp->b32 = (int32_t *)firstblock;
 	}
 }

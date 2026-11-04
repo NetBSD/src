@@ -1,5 +1,5 @@
 /* Target description definitions for remote server for GDB.
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,6 +20,7 @@
 #define GDBSERVER_TDESC_H
 
 #include "gdbsupport/tdesc.h"
+#include "gdbsupport/osabi.h"
 
 #include "regdef.h"
 #include <vector>
@@ -40,9 +41,9 @@ struct target_desc final : tdesc_element
   std::vector<tdesc_feature_up> features;
 
 #ifndef IN_PROCESS_AGENT
-  /* An array of register names.  These are the "expedite" registers:
+  /* A vector of register names.  These are the "expedite" registers:
      registers whose values are sent along with stop replies.  */
-  const char **expedite_regs = NULL;
+  std::vector<std::string> expedite_regs;
 
   /* Defines what to return when looking for the "target.xml" file in
      response to qXfer:features:read.  Its contents can either be
@@ -54,17 +55,15 @@ struct target_desc final : tdesc_element
   mutable const char *xmltarget = NULL;
 
   /* The value of <architecture> element in the XML, replying GDB.  */
-  const char *arch = NULL;
+  gdb::unique_xmalloc_ptr<char> arch;
 
   /* The value of <osabi> element in the XML, replying GDB.  */
-  const char *osabi = NULL;
+  gdb::unique_xmalloc_ptr<char> osabi;
 
 public:
   target_desc ()
     : registers_size (0)
   {}
-
-  ~target_desc ();
 
   bool operator== (const target_desc &other) const;
 
@@ -83,10 +82,11 @@ void copy_target_description (struct target_desc *dest,
 			      const struct target_desc *src);
 
 /* Initialize TDESC, and then set its expedite_regs field to
-   EXPEDITE_REGS.  */
+   EXPEDITE_REGS and its osabi to OSABI.  */
 
 void init_target_desc (struct target_desc *tdesc,
-		       const char **expedite_regs);
+		       const char **expedite_regs,
+		       enum gdb_osabi osabi);
 
 /* Return the current inferior's target description.  Never returns
    NULL.  */

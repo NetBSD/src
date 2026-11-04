@@ -1,6 +1,6 @@
 /* Producer string parsers for GDB.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PRODUCER_H
-#define PRODUCER_H
+#ifndef GDB_PRODUCER_H
+#define GDB_PRODUCER_H
 
 /* Check for GCC >= 4.x according to the symtab->producer string.  Return minor
    version (x) of 4.x in such case.  If it is not GCC or it is GCC older than
@@ -50,4 +50,8 @@ extern bool producer_is_llvm (const char *producer);
    Sets MAJOR and MINOR accordingly, if not NULL.  */
 extern bool producer_is_clang (const char *producer, int *major, int *minor);
 
-#endif
+/* Return true if the supplied producer string matches the ARM
+   RealView compiler (armcc).  */
+extern bool producer_is_realview (const char *producer);
+
+#endif /* GDB_PRODUCER_H */

@@ -1,10 +1,10 @@
-#	$NetBSD: files.i2c,v 1.126.8.1 2025/08/02 05:56:39 perseant Exp $
+#	$NetBSD: files.i2c,v 1.126.8.2 2026/11/04 23:21:55 perseant Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
 define	i2cexec
 
-device	iic { [addr = -1] } : i2c_bitbang
+device	iic { [addr = -1] }
 attach	iic at i2cbus
 file	dev/i2c/i2c.c				iic	needs-flag
 file	dev/i2c/i2c_exec.c			iic | i2cbus | i2cexec
@@ -55,7 +55,7 @@ file	dev/i2c/cx24227.c			cx24227
 #
 # I2C master devices
 #
-define	motoi2c
+define	motoi2c: fdt_i2c
 file	dev/i2c/motoi2c.c			motoi2c
 define	mvi2c
 file	dev/i2c/gttwsi_core.c			mvi2c
@@ -85,7 +85,7 @@ attach	pcf8563rtc at iic
 file	dev/i2c/pcf8563.c			pcf8563rtc
 
 # Philips PCF8583 Real Time Clock
-device	pcfrtc
+device	pcfrtc: sysmon_envsys
 attach	pcfrtc at iic
 file	dev/i2c/pcf8583.c			pcfrtc
 
@@ -124,7 +124,6 @@ file	dev/i2c/lm87.c				lmenv
 device	dsrtc: sysmon_envsys
 attach	dsrtc at iic
 file	dev/i2c/ds1307.c			dsrtc
-defflag opt_dsrtc.h				DSRTC_YEAR_START_2K
 
 # Xicor X1226 Real Time Clock
 device	xrtc
@@ -198,11 +197,18 @@ attach	ibmhawk at iic
 file	dev/i2c/ibmhawk.c		ibmhawk
 
 # TI TPS65217
-device	tps65217pmic { }: sysmon_envsys
+device	tps65217pmic { }: fdt_regulator, sysmon_envsys
 device	tps65217reg: tps65217pmic
 attach	tps65217pmic at iic
 attach	tps65217reg at tps65217pmic
 file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
+
+# Linear Technology LTC3589
+#device	ltc3589pmic { }: fdt_regulator, sysmon_envsys
+#device	ltc3589reg: ltc3589pmic
+#attach	ltc3589pmic at iic
+#attach	ltc3589reg at ltc3589pmic
+#file	dev/i2c/ltc3589pmic.c		ltc3589pmic
 
 # Microchip MCP23008 / MCP23017 I/O Expander
 attach	mcpgpio at iic with mcpgpio_i2c
@@ -224,7 +230,7 @@ attach  mpl115a at iic
 file    dev/i2c/mpl115a.c		mpl115a
 
 # AXP20x Power Management Unit
-device	axp20x { }: sysmon_envsys
+device	axp20x { }: fdt_power, fdt_regulator, sysmon_envsys
 device	axp20xreg: axp20x
 attach	axp20x at iic
 attach	axp20xreg at axp20x
@@ -236,7 +242,7 @@ attach	axp22x at iic
 file	dev/i2c/axp22x.c			axp22x
 
 # X-Powers AXP Power Management IC
-device	axppmic { }: sysmon_envsys, sysmon_taskq
+device	axppmic { }: fdt_gpio, fdt_power, fdt_regulator, sysmon_envsys, sysmon_taskq
 device	axpreg: axppmic
 attach	axppmic at iic
 attach	axpreg at axppmic
@@ -248,8 +254,10 @@ attach	axp809pm at iic
 file	dev/i2c/axp809.c			axp809pm	needs-flag
 
 # AC100 integrated audio codec and RTC
-device	ac100ic
+device	ac100ic { }: fdt
 attach	ac100ic at iic
+device	ac100rtc
+attach	ac100rtc at ac100ic
 file	dev/i2c/ac100.c				ac100ic		needs-flag
 
 # ACT8846 Power Management Unit
@@ -263,7 +271,7 @@ attach	titemp at iic
 file	dev/i2c/titemp.c			titemp
 
 # AMS AS3722 Power Management IC
-device	as3722pmic { }: sysmon_wdog
+device	as3722pmic { }: fdt_power, fdt_regulator, sysmon_wdog
 device	as3722reg: as3722pmic
 attach	as3722pmic at iic
 attach	as3722reg at as3722pmic
@@ -275,12 +283,12 @@ attach	tcakp at iic
 file	dev/i2c/tcakp.c				tcakp
 
 # MAXIM MAX77620 Power Management IC
-device	max77620pmic
+device	max77620pmic: fdt_gpio
 attach	max77620pmic at iic
 file	dev/i2c/max77620.c			max77620pmic
 
 # Texas Instruments TCA9539 I/O Expander
-device	tcagpio
+device	tcagpio: fdt_gpio
 attach	tcagpio at iic
 file	dev/i2c/tcagpio.c			tcagpio
 
@@ -295,7 +303,7 @@ attach am2315temp at iic
 file dev/i2c/am2315.c				am2315temp
 
 # Silergy SY8106A regulator
-device	sy8106a
+device	sy8106a: fdt_regulator
 attach	sy8106a at iic
 file	dev/i2c/sy8106a.c			sy8106a
 
@@ -354,12 +362,12 @@ attach tea5767radio at iic
 file dev/i2c/tea5767.c				tea5767radio
 
 # Fairchild FAN53555 / Silergy SY82x regulator
-device	fan53555reg
+device	fan53555reg: fdt_regulator
 attach	fan53555reg at iic
 file	dev/i2c/fan53555.c			fan53555reg
 
 # Rockchip Power Management IC
-device	rkpmic { }
+device	rkpmic { }: fdt_clock, fdt_power, fdt_regulator
 device	rkreg: rkpmic
 attach	rkpmic at iic
 attach	rkreg at rkpmic
@@ -376,28 +384,28 @@ file	dev/i2c/anxedp.c			anxedp
 makeoptions	anxedp	"CPPFLAGS.anxedp"+="${CPPFLAGS.drmkms}"
 
 # NXP PCA954x / PCA984x I2C switch / mux controllers
-device	pcaiicmux: i2cbus, i2cmux
+device	pcaiicmux: fdt_gpio, i2cbus, i2cmux
 attach	pcaiicmux at iic
 file	dev/i2c/pcai2cmux.c			pcaiicmux
 
 # NXP PCA9685 16-channel, 12-bit PWM Fm+ LED controller
-device	pcapwm: pwm
+device	pcapwm: fdt_clock, fdt_pwm
 attach	pcapwm at iic
 file	dev/i2c/pca9685.c			pcapwm
 
 # TI TWL4030 Power Management IC
-device	twl
+device	twl: fdt_gpio
 attach	twl at iic
 file	dev/i2c/twl4030.c			twl
 
 # NXP TDA19988 HDMI encoder
-device	tdahdmi: edid, videomode, drmkms, drmkms_i2c
+device	tdahdmi: fdt_pinctrl, edid, videomode, drmkms, drmkms_i2c
 attach	tdahdmi at iic
 file	dev/i2c/tda19988.c			tdahdmi
 makeoptions	tdahdmi	"CPPFLAGS.tdahdmi"+="${CPPFLAGS.drmkms}"
 
 # Everest Semi ES8316 Low Power Audio CODEC
-device	es8316ac
+device	es8316ac: fdt_dai
 attach	es8316ac at iic
 file	dev/i2c/es8316ac.c			es8316ac
 
@@ -451,11 +459,30 @@ attach ds2482ow at iic
 file dev/i2c/ds2482ow.c				ds2482ow
 
 # Onsemi FUSB302B USB-C power controller
-device fusbtc
+device fusbtc: fdt_regulator
 attach fusbtc at iic
 file dev/i2c/fusbtc.c				fusbtc
 
 # EMC-210x and EMC-230x fan controllers
-device emcfan: gpiobus, sysmon_envsys
+device emcfan: fdt_clock, gpiobus, sysmon_envsys
 attach emcfan at iic
 file dev/i2c/emcfan.c				emcfan
+
+# NXP SC16IS7xx UART bridge
+attach sc16is7xx at iic with sc16is7xxi2c
+file dev/i2c/sc16is7xxi2c.c			sc16is7xxi2c
+
+# Texas Instruments LM95221 temperature sensor
+device	lm95221ts: sysmon_envsys
+attach	lm95221ts at iic
+file	dev/i2c/lm95221.c			lm95221ts
+
+# NXP LM75A temperature sensor
+device	nxp75a: sysmon_envsys
+attach	nxp75a at iic
+file	dev/i2c/nxp75a.c			nxp75a
+
+# ADM7462 system monitor
+device	adt7462sm: sysmon_envsys
+attach	adt7462sm at iic
+file	dev/i2c/adt7462.c			adt7462sm

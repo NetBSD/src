@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2007-2024 Free Software Foundation, Inc.
+# Copyright 2007-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,6 +18,8 @@
 # Test that the event messages printed when using 'set print
 # inferior-events [on,off]', 'set follow-fork-mode [child,parent]' and
 # 'set detach-on-fork [on,off]' are the correct ones.
+
+require allow_fork_tests
 
 # This test relies on "run", so it cannot run on target remote stubs.
 require !use_gdb_stub
@@ -71,7 +73,8 @@ set i 0
 foreach_with_prefix print_inferior_events { "on" "off" } {
     foreach_with_prefix follow_fork_mode { "child" "parent" } {
 	foreach_with_prefix detach_on_fork { "on" "off" } {
-	    clean_restart $binfile
+	    clean_restart
+	    gdb_load $binfile
 	    gdb_test_no_output "set print inferior-events $print_inferior_events"
 	    gdb_test_no_output "set follow-fork-mode $follow_fork_mode"
 	    gdb_test_no_output "set detach-on-fork $detach_on_fork"

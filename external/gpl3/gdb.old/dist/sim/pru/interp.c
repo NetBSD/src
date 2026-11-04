@@ -1,5 +1,5 @@
 /* Simulator for the Texas Instruments PRU processor
-   Copyright 2009-2023 Free Software Foundation, Inc.
+   Copyright 2009-2024 Free Software Foundation, Inc.
    Inspired by the Microblaze simulator
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 
@@ -130,6 +130,8 @@ write_regval (uint32_t val, uint32_t *reg, uint32_t regsel)
 static uint32_t
 imem_wordaddr_to_byteaddr (SIM_CPU *cpu, uint16_t wa)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   return (((uint32_t) wa << 2) & IMEM_ADDR_MASK) | PC_ADDR_SPACE_MARKER;
 }
 
@@ -147,6 +149,7 @@ static inline void
 pru_reg2dmem (SIM_CPU *cpu, uint32_t addr, unsigned int nbytes,
 	      int regn, int regb)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   /* GDB assumes unconditional access to all memories, so enable additional
      checks only in standalone mode.  */
   bool standalone = (STATE_OPEN_KIND (CPU_STATE (cpu)) == SIM_OPEN_STANDALONE);
@@ -196,6 +199,7 @@ static inline void
 pru_dmem2reg (SIM_CPU *cpu, uint32_t addr, unsigned int nbytes,
 	      int regn, int regb)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   /* GDB assumes unconditional access to all memories, so enable additional
      checks only in standalone mode.  */
   bool standalone = (STATE_OPEN_KIND (CPU_STATE (cpu)) == SIM_OPEN_STANDALONE);
@@ -247,6 +251,7 @@ pru_dmem2reg (SIM_CPU *cpu, uint32_t addr, unsigned int nbytes,
 static void
 set_initial_gprs (SIM_CPU *cpu)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   int i;
 
   /* Set up machine just out of reset.  */
@@ -325,6 +330,8 @@ static void
 pru_sim_xin_mac (SIM_DESC sd, SIM_CPU *cpu, unsigned int rd_regn,
 		 unsigned int rdb, unsigned int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   if (rd_regn < 25 || (rd_regn * 4 + rdb + length) > (27 + 1) * 4)
     sim_io_error (sd, "XIN MAC: invalid transfer regn=%u.%u, length=%u\n",
 		  rd_regn, rdb, length);
@@ -348,6 +355,8 @@ static void
 pru_sim_xin (SIM_DESC sd, SIM_CPU *cpu, unsigned int wba,
 	     unsigned int rd_regn, unsigned int rdb, unsigned int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   if (wba == 0)
     {
       pru_sim_xin_mac (sd, cpu, rd_regn, rdb, length);
@@ -393,6 +402,7 @@ static void
 pru_sim_xout_mac (SIM_DESC sd, SIM_CPU *cpu, unsigned int rd_regn,
 		  unsigned int rdb, unsigned int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   const int modereg_accessed = (rd_regn == 25);
 
   /* Multiple Accumulate.  */
@@ -453,6 +463,8 @@ static void
 pru_sim_xout (SIM_DESC sd, SIM_CPU *cpu, unsigned int wba,
 	      unsigned int rd_regn, unsigned int rdb, unsigned int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   if (wba == 0)
     {
       pru_sim_xout_mac (sd, cpu, rd_regn, rdb, length);
@@ -482,6 +494,8 @@ static void
 pru_sim_xchg (SIM_DESC sd, SIM_CPU *cpu, unsigned int wba,
 	      unsigned int rd_regn, unsigned int rdb, unsigned int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   if (wba == XFRID_SCRATCH_BANK_0 || wba == XFRID_SCRATCH_BANK_1
 	   || wba == XFRID_SCRATCH_BANK_2 || wba == XFRID_SCRATCH_BANK_PEER)
     {
@@ -508,6 +522,7 @@ pru_sim_xchg (SIM_DESC sd, SIM_CPU *cpu, unsigned int wba,
 static void
 pru_sim_syscall (SIM_DESC sd, SIM_CPU *cpu)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   /* If someday TI confirms that the "reserved" HALT opcode fields
      can be used for extra arguments, then maybe we can embed
      the syscall number there.  Until then, let's use R1.  */
@@ -525,6 +540,7 @@ static void
 sim_step_once (SIM_DESC sd)
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   const struct pru_opcode *op;
   uint32_t inst;
   uint32_t _RDVAL, OP2;	/* intermediate values.  */
@@ -635,16 +651,20 @@ sim_engine_run (SIM_DESC sd,
 static sim_cia
 pru_pc_get (sim_cpu *cpu)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   /* Present PC as byte address.  */
-  return imem_wordaddr_to_byteaddr (cpu, cpu->pru_cpu.pc);
+  return imem_wordaddr_to_byteaddr (cpu, pru_cpu->pc);
 }
 
 /* Implement callback for standard CPU_PC_STORE routine.  */
 static void
 pru_pc_set (sim_cpu *cpu, sim_cia pc)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   /* PC given as byte address.  */
-  cpu->pru_cpu.pc = imem_byteaddr_to_wordaddr (cpu, pc);
+  pru_cpu->pc = imem_byteaddr_to_wordaddr (cpu, pc);
 }
 
 
@@ -652,6 +672,8 @@ pru_pc_set (sim_cpu *cpu, sim_cia pc)
 static int
 pru_store_register (SIM_CPU *cpu, int rn, const void *memory, int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
+
   if (rn < NUM_REGS && rn >= 0)
     {
       if (length == 4)
@@ -675,6 +697,7 @@ pru_store_register (SIM_CPU *cpu, int rn, const void *memory, int length)
 static int
 pru_fetch_register (SIM_CPU *cpu, int rn, void *memory, int length)
 {
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   long ival;
 
   if (rn < NUM_REGS && rn >= 0)
@@ -751,7 +774,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all_extra (sd, 0, sizeof (struct pru_regset)) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;
@@ -831,8 +854,9 @@ sim_create_inferior (SIM_DESC sd, struct bfd *prog_bfd,
 		     char * const *argv, char * const *env)
 {
   SIM_CPU *cpu = STATE_CPU (sd, 0);
+  struct pru_regset *pru_cpu = PRU_SIM_CPU (cpu);
   host_callback *cb = STATE_CALLBACK (sd);
-  SIM_ADDR addr;
+  bfd_vma addr;
 
   addr = bfd_get_start_address (prog_bfd);
 

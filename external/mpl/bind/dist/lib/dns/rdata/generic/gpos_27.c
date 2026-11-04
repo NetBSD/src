@@ -1,4 +1,4 @@
-/*	$NetBSD: gpos_27.c,v 1.8.2.1 2025/08/02 05:53:42 perseant Exp $	*/
+/*	$NetBSD: gpos_27.c,v 1.8.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,9 +134,7 @@ tostruct_gpos(ARGS_TOSTRUCT) {
 	REQUIRE(gpos != NULL);
 	REQUIRE(rdata->length != 0);
 
-	gpos->common.rdclass = rdata->rdclass;
-	gpos->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&gpos->common, link);
+	DNS_RDATACOMMON_INIT(gpos, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	gpos->long_len = uint8_fromregion(&region);

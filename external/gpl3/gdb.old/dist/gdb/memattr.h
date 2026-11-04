@@ -1,6 +1,6 @@
 /* Memory attributes support, for GDB.
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MEMATTR_H
-#define MEMATTR_H
+#ifndef GDB_MEMATTR_H
+#define GDB_MEMATTR_H
 
 enum mem_access_mode
 {
@@ -129,4 +129,4 @@ extern struct mem_region *lookup_mem_region (CORE_ADDR);
 
 void invalidate_target_mem_regions (void);
 
-#endif	/* MEMATTR_H */
+#endif /* GDB_MEMATTR_H */

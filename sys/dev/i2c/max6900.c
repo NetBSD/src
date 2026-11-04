@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.18.32.1 2025/08/02 05:56:40 perseant Exp $	*/
+/*	$NetBSD: max6900.c,v 1.18.32.2 2026/11/04 23:21:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.18.32.1 2025/08/02 05:56:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.18.32.2 2026/11/04 23:21:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,12 +118,9 @@ maxrtc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_open = 0;
 
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = maxrtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = maxrtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
@@ -280,7 +277,7 @@ static int max6900_rtc_offset[] = {
 static int
 maxrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct maxrtc_softc *sc = ch->cookie;
+	struct maxrtc_softc *sc = device_private(ch->todr_dev);
 	u_int8_t bcd[MAX6900_BURST_LEN], cmdbuf[1];
 	int i, error;
 
@@ -337,7 +334,7 @@ maxrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 maxrtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct maxrtc_softc *sc = ch->cookie;
+	struct maxrtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t bcd[MAX6900_BURST_LEN], cmdbuf[2];
 	uint8_t init_seconds, final_seconds;
 	int i, error;

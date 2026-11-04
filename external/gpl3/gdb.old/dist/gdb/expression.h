@@ -1,6 +1,6 @@
 /* Definitions for expressions stored in reversed prefix form, for GDB.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (EXPRESSION_H)
-#define EXPRESSION_H 1
+#ifndef GDB_EXPRESSION_H
+#define GDB_EXPRESSION_H
 
 #include "gdbtypes.h"
+#include "symtab.h"
 
 /* While parsing expressions we need to track the innermost lexical block
    that we encounter.  In some situations we need to track the innermost
@@ -146,6 +147,11 @@ public:
   virtual bool uses_objfile (struct objfile *objfile) const
   { return false; }
 
+  /* Some expression nodes represent a type, not a value.  This method
+     should be overridden to return 'true' in these situations.  */
+  virtual bool type_p () const
+  { return false; }
+
   /* Generate agent expression bytecodes for this operation.  */
   void generate_ax (struct expression *exp, struct agent_expr *ax,
 		    struct axs_value *value,
@@ -214,10 +220,26 @@ struct expression
     op->dump (stream, 0);
   }
 
+  /* Call the type_p method on the outermost sub-expression of this
+     expression, and return the result.  */
+  bool type_p () const
+  { return op->type_p (); }
+
+  /* Return true if this expression uses OBJFILE (and will become
+     dangling when OBJFILE is unloaded), otherwise return false.
+     OBJFILE must not be a separate debug info file.  */
+  bool uses_objfile (struct objfile *objfile) const;
+
   /* Evaluate the expression.  EXPECT_TYPE is the context type of the
      expression; normally this should be nullptr.  NOSIDE controls how
      evaluation is performed.  */
-  struct value *evaluate (struct type *expect_type, enum noside noside);
+  struct value *evaluate (struct type *expect_type = nullptr,
+			  enum noside noside = EVAL_NORMAL);
+
+  /* Evaluate an expression, avoiding all memory references
+     and getting a value whose type alone is correct.  */
+  struct value *evaluate_type ()
+  { return evaluate (nullptr, EVAL_AVOID_SIDE_EFFECTS); }
 
   /* Language it was entered in.  */
   const struct language_defn *language_defn;
@@ -228,12 +250,81 @@ struct expression
 
 typedef std::unique_ptr<expression> expression_up;
 
+/* When parsing expressions we track the innermost block that was
+   referenced.  */
+
+class innermost_block_tracker
+{
+public:
+  innermost_block_tracker (innermost_block_tracker_types types
+			   = INNERMOST_BLOCK_FOR_SYMBOLS)
+    : m_types (types),
+      m_innermost_block (NULL)
+  { /* Nothing.  */ }
+
+  /* Update the stored innermost block if the new block B is more inner
+     than the currently stored block, or if no block is stored yet.  The
+     type T tells us whether the block B was for a symbol or for a
+     register.  The stored innermost block is only updated if the type T is
+     a type we are interested in, the types we are interested in are held
+     in M_TYPES and set during RESET.  */
+  void update (const struct block *b, innermost_block_tracker_types t);
+
+  /* Overload of main UPDATE method which extracts the block from BS.  */
+  void update (const struct block_symbol &bs)
+  {
+    update (bs.block, INNERMOST_BLOCK_FOR_SYMBOLS);
+  }
+
+  /* Return the stored innermost block.  Can be nullptr if no symbols or
+     registers were found during an expression parse, and so no innermost
+     block was defined.  */
+  const struct block *block () const
+  {
+    return m_innermost_block;
+  }
+
+private:
+  /* The type of innermost block being looked for.  */
+  innermost_block_tracker_types m_types;
+
+  /* The currently stored innermost block found while parsing an
+     expression.  */
+  const struct block *m_innermost_block;
+};
+
+/* Flags that can affect the parsers.  */
+
+enum parser_flag
+{
+  /* This flag is set if the expression is being evaluated in a
+     context where a 'void' result type is expected.  Parsers are free
+     to ignore this, or to use it to help with overload resolution
+     decisions.  */
+  PARSER_VOID_CONTEXT = (1 << 0),
+
+  /* This flag is set if a top-level comma terminates the
+     expression.  */
+  PARSER_COMMA_TERMINATES = (1 << 1),
+
+  /* This flag is set if the parser should print debugging output as
+     it parses.  For yacc-based parsers, this translates to setting
+     yydebug.  */
+  PARSER_DEBUG = (1 << 2),
+
+  /* Normally the expression-parsing functions like parse_exp_1 will
+     attempt to find a context block if one is not passed in.  If set,
+     this flag suppresses this search and uses a null context for the
+     parse.  */
+  PARSER_LEAVE_BLOCK_ALONE = (1 << 3),
+};
+DEF_ENUM_FLAGS_TYPE (enum parser_flag, parser_flags);
+
 /* From parse.c */
 
-class innermost_block_tracker;
 extern expression_up parse_expression (const char *,
 				       innermost_block_tracker * = nullptr,
-				       bool void_context_p = false);
+				       parser_flags flags = 0);
 
 extern expression_up parse_expression_with_language (const char *string,
 						     enum language lang);
@@ -259,9 +350,9 @@ struct expr_completion_base
 extern expression_up parse_expression_for_completion
      (const char *, std::unique_ptr<expr_completion_base> *completer);
 
-class innermost_block_tracker;
 extern expression_up parse_exp_1 (const char **, CORE_ADDR pc,
-				  const struct block *, int,
+				  const struct block *,
+				  parser_flags flags,
 				  innermost_block_tracker * = nullptr);
 
 /* From eval.c */
@@ -278,10 +369,6 @@ extern struct value *evaluate_subexp_do_call (expression *exp,
 					      gdb::array_view<value *> argvec,
 					      const char *function_name,
 					      type *default_return_type);
-
-/* From expprint.c */
-
-extern const char *op_name (enum exp_opcode opcode);
 
 /* In an OP_RANGE expression, either bound could be empty, indicating
    that its value is by default that of the corresponding bound of the
@@ -310,4 +397,4 @@ enum range_flag : unsigned
 
 DEF_ENUM_FLAGS_TYPE (enum range_flag, range_flags);
 
-#endif /* !defined (EXPRESSION_H) */
+#endif /* GDB_EXPRESSION_H */

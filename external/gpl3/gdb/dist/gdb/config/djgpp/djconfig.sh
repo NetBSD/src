@@ -5,7 +5,7 @@
 # configuring other GNU programs for DJGPP.
 #
 #=====================================================================
-# Copyright (C) 1997-2024 Free Software Foundation, Inc.
+# Copyright (C) 1997-2025 Free Software Foundation, Inc.
 #
 # Originally written by Robert Hoehne, revised by Eli Zaretskii.
 # This file is part of GDB.
@@ -123,7 +123,7 @@ do
 done
 
 # Now set the config shell. It is really needed, that the shell
-# points to a shell with full path and also it must conatain the
+# points to a shell with full path and also it must contain the
 # .exe suffix. I assume here, that bash is installed. If not,
 # install it. Additionally, the pathname must not contain a
 # drive letter, so use the /dev/x/foo format supported by versions

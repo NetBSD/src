@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.sun3,v 1.111 2023/06/03 08:52:57 lukem Exp $
+# $NetBSD: Makefile.sun3,v 1.111.6.1 2026/11/04 23:21:25 perseant Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 SUN3=		$S/arch/sun3
-GENASSYM_CONF=	${SUN3}/${MACHTYPE}/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${SUN3}/${MACHTYPE}/genassym.cf
 
 ##
 ## (2) compile settings
@@ -45,14 +46,14 @@ OPT_MODULAR=   %MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 MD_OBJS=	locore.o
 MD_CFILES=
 MD_SFILES=	${SUN3}/${MACHTYPE}/locore.s
 
 locore.o: ${SUN3}/${MACHTYPE}/locore.s
 	${NORMAL_S}
-
-.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
 
 ##
 ## (5) link settings

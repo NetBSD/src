@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.52.2.1 2025/08/02 05:57:05 perseant Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.52.2.2 2026/11/04 23:22:35 perseant Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -79,8 +79,6 @@ typedef struct ehci_soft_itd {
 #define ehci_soft_sitd_t ehci_soft_itd_t
 #define ehci_soft_sitd ehci_soft_itd
 #define sc_softsitds sc_softitds
-#define EHCI_SITD_SIZE (roundup(sizeof(struct ehci_soft_sitd), EHCI_SITD_ALIGN))
-#define EHCI_SITD_CHUNK (EHCI_PAGE_SIZE / EHCI_SITD_SIZE)
 
 struct ehci_xfer {
 	struct usbd_xfer ex_xfer;
@@ -172,6 +170,7 @@ typedef struct ehci_softc {
 #define EHCIF_DROPPED_INTR_WORKAROUND	0x01
 #define EHCIF_ETTF			0x02 /* Emb. Transaction Translater func. */
 #define EHCIF_32BIT_ACCESS		0x04 /* 32-bit MMIO access req'd */
+#define EHCIF_SB600_ASYNCLIST_RELOAD	0x08 /* SB600 quirk (PR/57359) */
 
 	uint32_t sc_cmd;		/* shadow of cmd reg during suspend */
 

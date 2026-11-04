@@ -1,5 +1,5 @@
 /* A "next" iterator for GDB, the GNU debugger.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_NEXT_ITERATOR_H
-#define COMMON_NEXT_ITERATOR_H
+#ifndef GDBSUPPORT_NEXT_ITERATOR_H
+#define GDBSUPPORT_NEXT_ITERATOR_H
 
 #include "gdbsupport/iterator-range.h"
 
@@ -77,4 +77,4 @@ private:
 template <typename T>
 using next_range = iterator_range<next_iterator<T>>;
 
-#endif /* COMMON_NEXT_ITERATOR_H */
+#endif /* GDBSUPPORT_NEXT_ITERATOR_H */

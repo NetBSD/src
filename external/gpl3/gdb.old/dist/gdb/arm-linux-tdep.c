@@ -1,6 +1,6 @@
 /* GNU/Linux on ARM target support.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "target.h"
 #include "value.h"
 #include "gdbtypes.h"
@@ -60,7 +60,7 @@
 
 /* Under ARM GNU/Linux the traditional way of performing a breakpoint
    is to execute a particular software interrupt, rather than use a
-   particular undefined instruction to provoke a trap.  Upon exection
+   particular undefined instruction to provoke a trap.  Upon execution
    of the software interrupt the kernel stops the inferior with a
    SIGTRAP, and wakes the debugger.  */
 
@@ -98,15 +98,16 @@ static const gdb_byte arm_linux_thumb2_le_breakpoint[] = { 0xf0, 0xf7, 0x00, 0xa
 
    The location of saved registers in this buffer (in particular the PC
    to use after longjmp is called) varies depending on the ABI (in 
-   particular the FP model) and also (possibly) the C Library.
-
-   For glibc, eglibc, and uclibc the following holds:  If the FP model is 
-   SoftVFP or VFP (which implies EABI) then the PC is at offset 9 in the 
-   buffer.  This is also true for the SoftFPA model.  However, for the FPA 
-   model the PC is at offset 21 in the buffer.  */
+   particular the FP model) and also (possibly) the C Library.  */
 #define ARM_LINUX_JB_ELEMENT_SIZE	ARM_INT_REGISTER_SIZE
+/* For the FPA model the PC is at offset 21 in the buffer.  */
 #define ARM_LINUX_JB_PC_FPA		21
-#define ARM_LINUX_JB_PC_EABI		9
+/* For glibc 2.20 and later the PC is at offset 1, see glibc commit 80a56cc3ee
+   ("ARM: Add SystemTap probes to longjmp and setjmp.").
+   For newlib and uclibc, this is not correct, we need osabi settings to deal
+   with those, see PR31854 and PR31856.  Likewise for older versions of
+   glibc.  */
+#define ARM_LINUX_JB_PC_EABI		1
 
 /*
    Dynamic Linking on ARM GNU/Linux
@@ -277,7 +278,7 @@ static struct arm_get_next_pcs_ops arm_linux_get_next_pcs_ops = {
 };
 
 static void
-arm_linux_sigtramp_cache (frame_info_ptr this_frame,
+arm_linux_sigtramp_cache (const frame_info_ptr &this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func, int regs_offset)
 {
@@ -300,7 +301,7 @@ arm_linux_sigtramp_cache (frame_info_ptr this_frame,
 /* See arm-linux.h for stack layout details.  */
 static void
 arm_linux_sigreturn_init (const struct tramp_frame *self,
-			  frame_info_ptr this_frame,
+			  const frame_info_ptr &this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func)
 {
@@ -320,7 +321,7 @@ arm_linux_sigreturn_init (const struct tramp_frame *self,
 
 static void
 arm_linux_rt_sigreturn_init (const struct tramp_frame *self,
-			  frame_info_ptr this_frame,
+			  const frame_info_ptr &this_frame,
 			  struct trad_frame_cache *this_cache,
 			  CORE_ADDR func)
 {
@@ -343,7 +344,7 @@ arm_linux_rt_sigreturn_init (const struct tramp_frame *self,
 
 static void
 arm_linux_restart_syscall_init (const struct tramp_frame *self,
-				frame_info_ptr this_frame,
+				const frame_info_ptr &this_frame,
 				struct trad_frame_cache *this_cache,
 				CORE_ADDR func)
 {
@@ -732,7 +733,7 @@ arm_linux_core_read_description (struct gdbarch *gdbarch,
 				 struct target_ops *target,
 				 bfd *abfd)
 {
-  gdb::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
+  std::optional<gdb::byte_vector> auxv = target_read_auxv_raw (target);
   CORE_ADDR arm_hwcap = linux_get_hwcap (auxv, target, gdbarch);
 
   if (arm_hwcap & HWCAP_VFP)
@@ -740,7 +741,7 @@ arm_linux_core_read_description (struct gdbarch *gdbarch,
       /* NEON implies VFPv3-D32 or no-VFP unit.  Say that we only support
 	 Neon with VFPv3-D32.  */
       if (arm_hwcap & HWCAP_NEON)
-	return aarch32_read_description ();
+	return aarch32_read_description (false);
       else if ((arm_hwcap & (HWCAP_VFPv3 | HWCAP_VFPv3D16)) == HWCAP_VFPv3)
 	return arm_read_description (ARM_FP_TYPE_VFPV3, false);
 
@@ -756,7 +757,7 @@ arm_linux_core_read_description (struct gdbarch *gdbarch,
    will return to ARM or Thumb code.  Return 0 if it is not a
    rt_sigreturn/sigreturn syscall.  */
 static int
-arm_linux_sigreturn_return_addr (frame_info_ptr frame,
+arm_linux_sigreturn_return_addr (const frame_info_ptr &frame,
 				 unsigned long svc_number,
 				 CORE_ADDR *pc, int *is_thumb)
 {
@@ -813,6 +814,32 @@ arm_linux_sigreturn_next_pc (struct regcache *regcache,
   return next_pc;
 }
 
+/* Return true if we're at execve syscall-exit-stop.  */
+
+static bool
+is_execve_syscall_exit (struct regcache *regs)
+{
+  ULONGEST reg = -1;
+
+  /* Check that lr is 0.  */
+  regcache_cooked_read_unsigned (regs, ARM_LR_REGNUM, &reg);
+  if (reg != 0)
+    return false;
+
+  /* Check that r0-r8 is 0.  */
+  for (int i = 0; i <= 8; ++i)
+    {
+      reg = -1;
+      regcache_cooked_read_unsigned (regs, ARM_A1_REGNUM + i, &reg);
+      if (reg != 0)
+	return false;
+    }
+
+  return true;
+}
+
+#define arm_sys_execve 11
+
 /* At a ptrace syscall-stop, return the syscall number.  This either
    comes from the SWI instruction (OABI) or from r7 (EABI).
 
@@ -830,6 +857,9 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
   int is_thumb;
   ULONGEST svc_number = -1;
 
+  if (is_execve_syscall_exit (regs))
+    return arm_sys_execve;
+
   regcache_cooked_read_unsigned (regs, ARM_PC_REGNUM, &pc);
   regcache_cooked_read_unsigned (regs, ARM_PS_REGNUM, &cpsr);
   is_thumb = (cpsr & t_bit) != 0;
@@ -845,9 +875,14 @@ arm_linux_get_syscall_number (struct gdbarch *gdbarch,
 
       /* PC gets incremented before the syscall-stop, so read the
 	 previous instruction.  */
-      unsigned long this_instr = 
-	read_memory_unsigned_integer (pc - 4, 4, byte_order_for_code);
-
+      unsigned long this_instr;
+      {
+	ULONGEST val;
+	if (!safe_read_memory_unsigned_integer (pc - 4, 4, byte_order_for_code,
+						&val))
+	  return -1;
+	this_instr = val;
+      }
       unsigned long svc_operand = (0x00ffffff & this_instr);
 
       if (svc_operand)
@@ -869,8 +904,10 @@ static CORE_ADDR
 arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
 {
   CORE_ADDR next_pc = 0;
-  CORE_ADDR pc = regcache_read_pc (self->regcache);
-  int is_thumb = arm_is_thumb (self->regcache);
+  regcache *regcache
+    = gdb::checked_static_cast<struct regcache *> (self->regcache);
+  CORE_ADDR pc = regcache_read_pc (regcache);
+  int is_thumb = arm_is_thumb (regcache);
   ULONGEST svc_number = 0;
 
   if (is_thumb)
@@ -880,7 +917,7 @@ arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
     }
   else
     {
-      struct gdbarch *gdbarch = self->regcache->arch ();
+      struct gdbarch *gdbarch = regcache->arch ();
       enum bfd_endian byte_order_for_code = 
 	gdbarch_byte_order_for_code (gdbarch);
       unsigned long this_instr = 
@@ -903,8 +940,7 @@ arm_linux_get_next_pcs_syscall_next_pc (struct arm_get_next_pcs *self)
     {
       /* SIGRETURN or RT_SIGRETURN may affect the arm thumb mode, so
 	 update IS_THUMB.   */
-      next_pc = arm_linux_sigreturn_next_pc (self->regcache, svc_number,
-					     &is_thumb);
+      next_pc = arm_linux_sigreturn_next_pc (regcache, svc_number, &is_thumb);
     }
 
   /* Addresses for calling Thumb functions have the bit 0 set.  */
@@ -1011,9 +1047,6 @@ arm_linux_copy_svc (struct gdbarch *gdbarch, struct regcache *regs,
 	  inferior_thread ()->control.step_resume_breakpoint
 	    = set_momentary_breakpoint (gdbarch, sal, get_frame_id (frame),
 					bp_step_resume).release ();
-
-	  /* set_momentary_breakpoint invalidates FRAME.  */
-	  frame = NULL;
 
 	  /* We need to make sure we actually insert the momentary
 	     breakpoint set above.  */
@@ -1133,10 +1166,10 @@ arm_linux_displaced_step_copy_insn (struct gdbarch *gdbarch,
 static int
 arm_stap_is_single_operand (struct gdbarch *gdbarch, const char *s)
 {
-  return (*s == '#' || *s == '$' || isdigit (*s) /* Literal number.  */
+  return (*s == '#' || *s == '$' || isdigit ((unsigned char)*s) /* Literal number.  */
 	  || *s == '[' /* Register indirection or
 			  displacement.  */
-	  || isalpha (*s)); /* Register value.  */
+	  || isalpha ((unsigned char)*s)); /* Register value.  */
 }
 
 /* This routine is used to parse a special token in ARM's assembly.
@@ -1168,7 +1201,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
       start = tmp;
 
       /* Register name.  */
-      while (isalnum (*tmp))
+      while (isalnum ((unsigned char)*tmp))
 	++tmp;
 
       if (*tmp != ',')
@@ -1178,7 +1211,7 @@ arm_stap_parse_special_token (struct gdbarch *gdbarch,
       regname = (char *) alloca (len + 2);
 
       offset = 0;
-      if (isdigit (*start))
+      if (isdigit ((unsigned char)*start))
 	{
 	  /* If we are dealing with a register whose name begins with a
 	     digit, it means we should prefix the name with the letter
@@ -1265,7 +1298,7 @@ arm_canonicalize_syscall (int syscall)
     case 8: return gdb_sys_creat;
     case 9: return gdb_sys_link;
     case 10: return gdb_sys_unlink;
-    case 11: return gdb_sys_execve;
+    case arm_sys_execve: return gdb_sys_execve;
     case 12: return gdb_sys_chdir;
     case 13: return gdb_sys_time;
     case 14: return gdb_sys_mknod;
@@ -1612,6 +1645,8 @@ arm_canonicalize_syscall (int syscall)
     case 379: return gdb_sys_finit_module;
       */
     case 384: return gdb_sys_getrandom;
+    case 397: return gdb_sys_statx;
+    case 403: return gdb_sys_clock_gettime64;
     case 983041: /* ARM_breakpoint */ return gdb_sys_no_syscall;
     case 983042: /* ARM_cacheflush */ return gdb_sys_no_syscall;
     case 983043: /* ARM_usr26 */ return gdb_sys_no_syscall;
@@ -1688,7 +1723,7 @@ arm_linux_syscall_record (struct regcache *regcache, unsigned long svc_number)
 /* Implement the skip_trampoline_code gdbarch method.  */
 
 static CORE_ADDR
-arm_linux_skip_trampoline_code (frame_info_ptr frame, CORE_ADDR pc)
+arm_linux_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
 {
   CORE_ADDR target_pc = arm_skip_stub (frame, pc);
 

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Matsushita MN10300 for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -29,6 +29,7 @@
 #include "trad-frame.h"
 #include "tramp-frame.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "gdbarch.h"
 
 /* Transliterated from <asm-mn10300/elf.h>...  */
@@ -707,16 +708,13 @@ am33_linux_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_iterate_over_regset_sections
     (gdbarch, am33_iterate_over_regset_sections);
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_ilp32_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
 
   tramp_frame_prepend_unwinder (gdbarch, &am33_linux_sigframe);
   tramp_frame_prepend_unwinder (gdbarch, &am33_linux_rt_sigframe);
 }
 
-void _initialize_mn10300_linux_tdep ();
-void
-_initialize_mn10300_linux_tdep ()
+INIT_GDB_FILE (mn10300_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_mn10300, 0,
 			  GDB_OSABI_LINUX, am33_linux_init_osabi);

@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.283.2.1 2025/08/02 05:57:51 perseant Exp $	*/
+/*	$NetBSD: key.c,v 1.283.2.2 2026/11/04 23:28:00 perseant Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.283.2.1 2025/08/02 05:57:51 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.283.2.2 2026/11/04 23:28:00 perseant Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -129,6 +129,8 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.283.2.1 2025/08/02 05:57:51 perseant Exp $
 #define SAVLUT_NHASH		128
 #endif
 
+#define PFKEY_ALIGNED8(a) (((a) % 8) == 0)
+
 percpu_t *pfkeystat_percpu;
 
 /*
@@ -199,7 +201,7 @@ static u_int32_t acq_seq = 0;
  *     setsockopt(IP_IPSEC_POLICY)
  *   - Such policies (SPs) are set to a socket (PCB) and also inserted to
  *     the key_spd.socksplist list (not the key_spd.splist)
- *   - Such a policy is destroyed when a corresponding socket is destroed,
+ *   - Such a policy is destroyed when a corresponding socket is destroyed,
  *     however, a socket can be destroyed in softint so we cannot destroy
  *     it directly instead we just mark it DEAD and delay the destruction
  *     until GC by the timer
@@ -552,7 +554,7 @@ SYSCTL_INT(_net_key, KEYCTL_SPI_TRY,		spi_trycnt,	CTLFLAG_RW, \
 SYSCTL_INT(_net_key, KEYCTL_SPI_MIN_VALUE,	spi_minval,	CTLFLAG_RW, \
 	&key_spi_minval,	0,	"");
 
-/* maximun spi value to allocate automatically. */
+/* maximum spi value to allocate automatically. */
 SYSCTL_INT(_net_key, KEYCTL_SPI_MAX_VALUE,	spi_maxval,	CTLFLAG_RW, \
 	&key_spi_maxval,	0,	"");
 
@@ -1873,18 +1875,21 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 	struct ipsecrequest **p_isr = &newsp->req;
 
 	/* validity check */
-	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0)) {
+	if (PFKEY_EXTLEN(xpl0) < sizeof(*xpl0) + sizeof(*xisr)) {
 		IPSECLOG(LOG_DEBUG, "Invalid msg length.\n");
 		*error = EINVAL;
 		goto free_exit;
 	}
 
 	tlen = PFKEY_EXTLEN(xpl0) - sizeof(*xpl0);
+	CTASSERT(PFKEY_ALIGNED8(sizeof(*xpl0)));
 	xisr = (const struct sadb_x_ipsecrequest *)(xpl0 + 1);
 
-	while (tlen > 0) {
+	while (tlen >= sizeof(*xisr)) {
 		/* length check */
-		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr)) {
+		if (xisr->sadb_x_ipsecrequest_len < sizeof(*xisr) ||
+		    xisr->sadb_x_ipsecrequest_len > tlen ||
+		    !PFKEY_ALIGNED8(xisr->sadb_x_ipsecrequest_len)) {
 			IPSECLOG(LOG_DEBUG, "invalid ipsecrequest length.\n");
 			*error = EINVAL;
 			goto free_exit;
@@ -1991,26 +1996,82 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 		 * This behavior is used by NAT-T enabled ipsecif(4).
 		 */
 		if (xisr->sadb_x_ipsecrequest_len > sizeof(*xisr)) {
+			size_t resid = xisr->sadb_x_ipsecrequest_len -
+			    sizeof(*xisr);
 			const struct sockaddr *paddr;
+			socklen_t addrlen;
 
-			paddr = (const struct sockaddr *)(xisr + 1);
-
-			/* validity check */
-			if (paddr->sa_len > sizeof((*p_isr)->saidx.src)) {
+			if (sizeof(*paddr) > resid) {
 				IPSECLOG(LOG_DEBUG, "invalid request "
 				    "address length.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
+			paddr = (const struct sockaddr *)(xisr + 1);
+
+			/* validity check */
+			if (paddr->sa_len < sizeof(*paddr) ||
+			    paddr->sa_len > resid ||
+			    paddr->sa_len > sizeof((*p_isr)->saidx.src)) {
+				IPSECLOG(LOG_DEBUG, "invalid request src "
+				    "address length.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			switch (paddr->sa_family) {
+#ifdef INET
+			case AF_INET:
+				addrlen = sizeof(struct sockaddr_in);
+				break;
+#endif
+#ifdef INET6
+			case AF_INET6:
+				addrlen = sizeof(struct sockaddr_in6);
+				break;
+#endif
+			default:
+				IPSECLOG(LOG_DEBUG, "invalid request src "
+				    "address family.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			if (addrlen != paddr->sa_len) {
+				IPSECLOG(LOG_DEBUG, "wrong reqeust src "
+				    "address length for family.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
 			memcpy(&(*p_isr)->saidx.src, paddr, paddr->sa_len);
 
+			resid -= paddr->sa_len;
+			if (sizeof(*paddr) > resid) {
+				IPSECLOG(LOG_DEBUG, "invalid request "
+				    "address length after src.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
 			paddr = (const struct sockaddr *)((const char *)paddr
 			    + paddr->sa_len);
 
 			/* validity check */
-			if (paddr->sa_len > sizeof((*p_isr)->saidx.dst)) {
-				IPSECLOG(LOG_DEBUG, "invalid request "
+			if (paddr->sa_len < sizeof(*paddr) ||
+			    paddr->sa_len > resid ||
+			    paddr->sa_len > sizeof((*p_isr)->saidx.dst)) {
+				IPSECLOG(LOG_DEBUG, "invalid request dst "
 				    "address length.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			if (paddr->sa_family !=
+			    (*p_isr)->saidx.src.sa.sa_family) {
+				IPSECLOG(LOG_DEBUG, "mismatched src/dst "
+				    " address family.\n");
+				*error = EINVAL;
+				goto free_exit;
+			}
+			if (addrlen != paddr->sa_len) {
+				IPSECLOG(LOG_DEBUG, "wrong reqeust dst "
+				    "address length for family.\n");
 				*error = EINVAL;
 				goto free_exit;
 			}
@@ -2023,12 +2084,7 @@ _key_msg2sp(const struct sadb_x_policy *xpl0, size_t len, int *error,
 		p_isr = &(*p_isr)->next;
 		tlen -= xisr->sadb_x_ipsecrequest_len;
 
-		/* validity check */
-		if (tlen < 0) {
-			IPSECLOG(LOG_DEBUG, "becoming tlen < 0.\n");
-			*error = EINVAL;
-			goto free_exit;
-		}
+		KASSERTMSG(tlen >= 0, "tlen=%d", tlen);
 
 		xisr = (const struct sadb_x_ipsecrequest *)((const char *)xisr +
 		    xisr->sadb_x_ipsecrequest_len);
@@ -2071,7 +2127,7 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 {
 	struct sadb_x_policy *xpl;
 	int tlen;
-	char *p;
+	char *p0, *p;
 	struct mbuf *m;
 
 	KASSERT(sp != NULL);
@@ -2086,6 +2142,9 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 
 	m->m_len = tlen;
 	m->m_next = NULL;
+	p0 = m->m_data;
+	KASSERT(sizeof(struct sadb_x_policy) <= tlen);
+	KASSERT((uintptr_t)p0 % _Alignof(struct sadb_x_policy) == 0);
 	xpl = mtod(m, struct sadb_x_policy *);
 	memset(xpl, 0, tlen);
 
@@ -2096,7 +2155,9 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 	xpl->sadb_x_policy_id = sp->id;
 	if (sp->origin == IPSEC_SPORIGIN_KERNEL)
 		xpl->sadb_x_policy_flags |= IPSEC_POLICY_FLAG_ORIGIN_KERNEL;
+	CTASSERT(PFKEY_ALIGNED8(sizeof(*xpl)));
 	p = (char *)xpl + sizeof(*xpl);
+	KASSERT(PFKEY_ALIGNED8(p - p0));
 
 	/* if is the policy for ipsec ? */
 	if (sp->policy == IPSEC_POLICY_IPSEC) {
@@ -2104,24 +2165,40 @@ key_sp2msg(const struct secpolicy *sp, int mflag)
 		struct ipsecrequest *isr;
 
 		for (isr = sp->req; isr != NULL; isr = isr->next) {
+			const unsigned len = sizeof(*xisr)
+			    + isr->saidx.src.sa.sa_len
+			    + isr->saidx.dst.sa.sa_len;
+			const unsigned pad = PFKEY_ALIGN8(len) - len;
 
+			KASSERT(PFKEY_ALIGNED8(p - p0));
+			KASSERT(PFKEY_ALIGN8(len) <= tlen - (p - p0));
+
+			KASSERT(sizeof(*xisr) <= tlen - (p - p0));
 			xisr = (struct sadb_x_ipsecrequest *)p;
 
 			xisr->sadb_x_ipsecrequest_proto = isr->saidx.proto;
 			xisr->sadb_x_ipsecrequest_mode = isr->saidx.mode;
 			xisr->sadb_x_ipsecrequest_level = isr->level;
 			xisr->sadb_x_ipsecrequest_reqid = isr->saidx.reqid;
-
 			p += sizeof(*xisr);
+
+			KASSERT(isr->saidx.src.sa.sa_len <= tlen - (p - p0));
 			memcpy(p, &isr->saidx.src, isr->saidx.src.sa.sa_len);
 			p += isr->saidx.src.sa.sa_len;
-			memcpy(p, &isr->saidx.dst, isr->saidx.dst.sa.sa_len);
-			p += isr->saidx.src.sa.sa_len;
 
-			xisr->sadb_x_ipsecrequest_len =
-			    PFKEY_ALIGN8(sizeof(*xisr)
-			    + isr->saidx.src.sa.sa_len
-			    + isr->saidx.dst.sa.sa_len);
+			KASSERT(isr->saidx.dst.sa.sa_len <= tlen - (p - p0));
+			memcpy(p, &isr->saidx.dst, isr->saidx.dst.sa.sa_len);
+			p += isr->saidx.dst.sa.sa_len;
+
+			KASSERT(pad <= tlen - (p - p0));
+			memset(p, 0, pad);
+			p += pad;
+
+			KASSERT(p == (char *)xisr + PFKEY_ALIGN8(len));
+			KASSERT(PFKEY_ALIGNED8(p - p0));
+			xisr->sadb_x_ipsecrequest_len = PFKEY_ALIGN8(len);
+			KASSERT(p == (char *)xisr +
+			    xisr->sadb_x_ipsecrequest_len);
 		}
 	}
 

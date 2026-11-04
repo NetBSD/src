@@ -1,6 +1,6 @@
 /* frv simulator machine independent profiling code.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU simulators.
@@ -598,14 +598,14 @@ request_complete (SIM_CPU *cpu, CACHE_QUEUE_ELEMENT *q)
 }
 
 /* Run the insn and data caches through the given number of cycles, taking
-   note of load requests which are fullfilled as a result.  */
+   note of load requests which are fulfilled as a result.  */
 static void
 run_caches (SIM_CPU *cpu, int cycles)
 {
   FRV_CACHE* data_cache = CPU_DATA_CACHE (cpu);
   FRV_CACHE* insn_cache = CPU_INSN_CACHE (cpu);
   int i;
-  /* For each cycle, run the caches, noting which requests have been fullfilled
+  /* For each cycle, run the caches, noting which requests have been fulfilled
      and submitting new requests on their designated cycles.  */
   for (i = 0; i < cycles; ++i)
     {
@@ -1991,7 +1991,7 @@ slot_names[] =
 };
 
 static void
-print_parallel (SIM_CPU *cpu, int verbose)
+print_parallel (SIM_CPU *cpu, bool verbose)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   PROFILE_DATA *p = CPU_PROFILE_DATA (cpu);
@@ -2057,7 +2057,7 @@ print_parallel (SIM_CPU *cpu, int verbose)
 }
 
 void
-frv_profile_info (SIM_CPU *cpu, int verbose)
+frv_profile_info (SIM_CPU *cpu, bool verbose)
 {
   /* FIXME: Need to add smp support.  */
   PROFILE_DATA *p = CPU_PROFILE_DATA (cpu);

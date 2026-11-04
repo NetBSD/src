@@ -1,4 +1,4 @@
-/*	$NetBSD: srv_33.c,v 1.8.2.1 2025/08/02 05:53:50 perseant Exp $	*/
+/*	$NetBSD: srv_33.c,v 1.8.2.2 2026/11/04 23:18:14 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -270,9 +270,7 @@ tostruct_in_srv(ARGS_TOSTRUCT) {
 	REQUIRE(srv != NULL);
 	REQUIRE(rdata->length != 0);
 
-	srv->common.rdclass = rdata->rdclass;
-	srv->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&srv->common, link);
+	DNS_RDATACOMMON_INIT(srv, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

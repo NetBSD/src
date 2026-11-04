@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SER_TCP_H
-#define SER_TCP_H
+#ifndef GDB_SER_TCP_H
+#define GDB_SER_TCP_H
 
 struct serial;
 
@@ -28,4 +28,4 @@ extern int net_read_prim (struct serial *scb, size_t count);
 extern int net_write_prim (struct serial *scb, const void *buf, size_t count);
 extern void ser_tcp_send_break (struct serial *scb);
 
-#endif
+#endif /* GDB_SER_TCP_H */

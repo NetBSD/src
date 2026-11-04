@@ -1,5 +1,5 @@
 /* YACC parser for C expressions, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -1210,10 +1210,11 @@ variable:	name_not_typename
 			      std::string arg = copy_name ($1.stoken);
 
 			      bound_minimal_symbol msymbol
-				= lookup_bound_minimal_symbol (arg.c_str ());
+				= lookup_minimal_symbol (current_program_space, arg.c_str ());
 			      if (msymbol.minsym == NULL)
 				{
-				  if (!have_full_symbols () && !have_partial_symbols ())
+				  if (!have_full_symbols (current_program_space)
+				      && !have_partial_symbols (current_program_space))
 				    error (_("No symbol table is loaded.  Use the \"file\" command."));
 				  else
 				    error (_("No symbol \"%s\" in current context."),
@@ -3076,15 +3077,11 @@ classify_name (struct parser_state *par_state, const struct block *block,
 
   std::string copy = copy_name (yylval.sval);
 
-  /* Initialize this in case we *don't* use it in this call; that way
-     we can refer to it unconditionally below.  */
-  memset (&is_a_field_of_this, 0, sizeof (is_a_field_of_this));
-
   bsym = lookup_symbol (copy.c_str (), block, SEARCH_VFT,
 			par_state->language ()->name_of_this ()
 			? &is_a_field_of_this : NULL);
 
-  if (bsym.symbol && bsym.symbol->aclass () == LOC_BLOCK)
+  if (bsym.symbol && bsym.symbol->loc_class () == LOC_BLOCK)
     {
       yylval.ssym.sym = bsym;
       yylval.ssym.is_a_field_of_this = is_a_field_of_this.type != NULL;
@@ -3121,10 +3118,8 @@ classify_name (struct parser_state *par_state, const struct block *block,
 	  || is_quoted_name)
 	{
 	  /* See if it's a file name. */
-	  struct symtab *symtab;
-
-	  symtab = lookup_symtab (copy.c_str ());
-	  if (symtab)
+	  if (auto symtab = lookup_symtab (current_program_space, copy.c_str ());
+	      symtab != nullptr)
 	    {
 	      yylval.bval
 		= symtab->compunit ()->blockvector ()->static_block ();
@@ -3134,7 +3129,7 @@ classify_name (struct parser_state *par_state, const struct block *block,
 	}
     }
 
-  if (bsym.symbol && bsym.symbol->aclass () == LOC_TYPEDEF)
+  if (bsym.symbol && bsym.symbol->loc_class () == LOC_TYPEDEF)
     {
       yylval.tsym.type = bsym.symbol->type ();
       return TYPENAME;
@@ -3184,7 +3179,7 @@ classify_name (struct parser_state *par_state, const struct block *block,
   if (bsym.symbol == NULL
       && par_state->language ()->la_language == language_cplus
       && is_a_field_of_this.type == NULL
-      && lookup_minimal_symbol (copy.c_str (), NULL, NULL).minsym == NULL)
+      && lookup_minimal_symbol (current_program_space, copy.c_str ()).minsym == nullptr)
     return UNKNOWN_CPP_NAME;
 
   return NAME;
@@ -3229,7 +3224,7 @@ classify_inner_name (struct parser_state *par_state,
       return ERROR;
     }
 
-  switch (yylval.ssym.sym.symbol->aclass ())
+  switch (yylval.ssym.sym.symbol->loc_class ())
     {
     case LOC_BLOCK:
     case LOC_LABEL:
@@ -3432,18 +3427,18 @@ c_parse (struct parser_state *par_state)
   c_parse_state cstate;
   scoped_restore cstate_restore = make_scoped_restore (&cpstate, &cstate);
 
-  gdb::unique_xmalloc_ptr<struct macro_scope> macro_scope;
+  macro_scope macro_scope;
 
   if (par_state->expression_context_block)
     macro_scope
       = sal_macro_scope (find_pc_line (par_state->expression_context_pc, 0));
   else
     macro_scope = default_macro_scope ();
-  if (! macro_scope)
+  if (!macro_scope.is_valid ())
     macro_scope = user_macro_scope ();
 
   scoped_restore restore_macro_scope
-    = make_scoped_restore (&expression_macro_scope, macro_scope.get ());
+    = make_scoped_restore (&expression_macro_scope, &macro_scope);
 
   scoped_restore restore_yydebug = make_scoped_restore (&yydebug,
 							par_state->debug);

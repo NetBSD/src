@@ -1,6 +1,6 @@
 /* Support for printing Fortran types for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    Contributed by Motorola.  Adapted from the C version by Farooq Butt
    (fmbutt@engage.sps.mot.com).
@@ -21,8 +21,6 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "event-top.h"
-#include "gdbsupport/gdb_obstack.h"
-#include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -301,8 +299,6 @@ void
 f_language::f_type_print_base (struct type *type, struct ui_file *stream,
 			       int show, int level) const
 {
-  int index;
-
   QUIT;
 
   stream->wrap_here (4);
@@ -416,28 +412,30 @@ f_language::f_type_print_base (struct type *type, struct ui_file *stream,
       if (show > 0)
 	f_type_print_derivation_info (type, stream);
 
-      gdb_puts (" ", stream);
-
-      gdb_puts (type->name (), stream);
+      if (type->name () != nullptr)
+	{
+	  gdb_puts (" ", stream);
+	  gdb_puts (type->name (), stream);
+	}
 
       /* According to the definition,
 	 we only print structure elements in case show > 0.  */
       if (show > 0)
 	{
 	  gdb_puts ("\n", stream);
-	  for (index = 0; index < type->num_fields (); index++)
+	  for (const auto &field : type->fields ())
 	    {
-	      f_type_print_base (type->field (index).type (), stream,
-				 show - 1, level + 4);
+	      f_type_print_base (field.type (), stream, show - 1, level + 4);
 	      gdb_puts (" :: ", stream);
-	      fputs_styled (type->field (index).name (),
+	      fputs_styled (field.name (),
 			    variable_name_style.style (), stream);
-	      f_type_print_varspec_suffix (type->field (index).type (),
+	      f_type_print_varspec_suffix (field.type (),
 					   stream, show - 1, 0, 0, 0, false);
 	      gdb_puts ("\n", stream);
 	    }
 	  gdb_printf (stream, "%*sEnd Type ", level, "");
-	  gdb_puts (type->name (), stream);
+	  if (type->name () != nullptr)
+	    gdb_puts (type->name (), stream);
 	}
       break;
 

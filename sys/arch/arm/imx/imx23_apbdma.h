@@ -1,4 +1,4 @@
-/* $Id: imx23_apbdma.h,v 1.1 2012/11/20 19:06:12 jkunz Exp $ */
+/* $NetBSD: imx23_apbdma.h,v 1.1.78.1 2026/11/04 23:20:09 perseant Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2024 Free Software Foundation, Inc.
+   Copyright 2012-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -42,6 +42,7 @@ class B : public A {
   int arg0_func ();
   int arg1_func (int arg1);
   int arg2_func (int arg1, int arg2);
+  char operator[] (int num);
 };
 
 int B::static_func ()
@@ -62,6 +63,11 @@ int B::arg1_func (int arg1)
 int B::arg2_func (int arg1, int arg2)
 {
   return a * arg1 + arg2;
+}
+
+char B::operator[] (int num)
+{
+  return a + num;
 }
 
 struct X

@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -128,5 +128,5 @@ save_vars { GDBFLAGS } {
     }
 }
 
-set re "Dwarf Error: .debug_types section not supported in dwz file"
+set re "DWARF Error: .debug_types section not supported in dwz file"
 gdb_assert { [regexp $re $gdb_file_cmd_msg] } "Dwarf Error message"

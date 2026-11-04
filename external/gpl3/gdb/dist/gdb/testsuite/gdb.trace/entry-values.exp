@@ -1,4 +1,4 @@
-# Copyright 2013-2024 Free Software Foundation, Inc.
+# Copyright 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ if  {[gdb_compile [list ${binfile}1.o] \
     return -1
 }
 
-clean_restart ${binfile}1
+clean_restart ${testfile}1
 
 set returned_from_foo ""
 
@@ -53,6 +53,8 @@ if { [istarget "arm*-*-*"] || [istarget "aarch64*-*-*"] } {
     # returns.  The only exception is JALRC, in which case execution
     # resumes from `insn1' instead.
     set call_insn {jalrc|[jb]al[sxr]*[ \t][^\r\n]+\r\n}
+} elseif { [istarget "riscv64*-*-*"] } {
+    set call_insn jal
 } else {
     set call_insn "call"
 }
@@ -171,7 +173,7 @@ gdb_continue_to_breakpoint "foo"
 
 gdb_test_no_output "set print entry-values both"
 
-gdb_test_sequence "bt" "bt (1)" {
+gdb_test_sequence "bt" "bt, 1" {
     "\[\r\n\]#0 .* foo \\(i=[-]?[0-9]+, i@entry=2, j=[-]?[0-9]+, j@entry=3\\)"
     "\[\r\n\]#1 .* bar \\(i=<optimized out>, i@entry=<optimized out>\\)"
     "\[\r\n\]#2 .* \.?main \\(\\)"
@@ -183,7 +185,7 @@ gdb_test_sequence "bt" "bt (1)" {
 gdb_test_no_output "set var *(int *) &global1=10"
 gdb_test_no_output "set var *(int *) &global2=11"
 
-gdb_test_sequence "bt" "bt (2)" {
+gdb_test_sequence "bt" "bt, 2" {
     "\[\r\n\]#0 .* foo \\(i=[-]?[0-9]+, i@entry=10, j=[-]?[0-9]+, j@entry=11\\)"
     "\[\r\n\]#1 .* bar \\(i=<optimized out>, i@entry=<optimized out>\\)"
     "\[\r\n\]#2 .* \.?main \\(\\)"
@@ -191,7 +193,7 @@ gdb_test_sequence "bt" "bt (2)" {
 
 # Restart GDB and trace.
 
-clean_restart $binfile
+clean_restart $testfile
 
 load_lib "trace-support.exp"
 

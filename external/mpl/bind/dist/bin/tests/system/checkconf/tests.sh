@@ -297,6 +297,9 @@ l=$(grep "missing 'file' entry" <checkconf.out$n.2 | wc -l)
 $CHECKCONF inline-bad.conf >checkconf.out$n.3 2>&1 && ret=1
 l=$(grep "missing 'file' entry" <checkconf.out$n.3 | wc -l)
 [ $l -eq 1 ] || ret=1
+$CHECKCONF inline-inherit.conf >checkconf.out$n.3 2>&1 && ret=1
+l=$(grep "missing 'file' entry" <checkconf.out$n.3 | wc -l)
+[ $l -eq 1 ] || ret=1
 if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
@@ -545,6 +548,7 @@ $CHECKCONF -l good.conf \
   | grep -v "is not implemented" \
   | grep -v "is not recommended" \
   | grep -v "no longer exists" \
+  | grep -v "recursion will be disabled" \
   | grep -v "is obsolete" >checkconf.out$n || ret=1
 diff good.zonelist checkconf.out$n >diff.out$n || ret=1
 if [ $ret -ne 0 ]; then
@@ -647,7 +651,7 @@ if [ $RSASHA1_SUPPORTED = 0 ]; then
   expect=2
 else
   conf=kasp-bad-nsec3-iter.conf
-  expect=3
+  expect=5
 fi
 $CHECKCONF $conf >checkconf.out$n 2>&1 && ret=1
 grep "dnssec-policy: nsec3 iterations value 1 not allowed, must be zero" <checkconf.out$n >/dev/null || ret=1
@@ -727,6 +731,20 @@ if [ $ret -ne 0 ]; then echo_i "failed"; fi
 status=$((status + ret))
 
 n=$((n + 1))
+echo_i "checking named-checkconf kasp deprecated algorithms and digests ($n)"
+ret=0
+if [ $RSASHA1_SUPPORTED = 0 ]; then
+  $CHECKCONF kasp-deprecated-fips.conf >checkconf.out$n 2>&1 || ret=1
+else
+  $CHECKCONF kasp-deprecated.conf >checkconf.out$n 2>&1 || ret=1
+  grep "dnssec-policy: DNSSEC algorithm rsasha1 is deprecated" checkconf.out$n >/dev/null || ret=1
+  grep "dnssec-policy: DNSSEC algorithm nsec3rsasha1 is deprecated" checkconf.out$n >/dev/null || ret=1
+fi
+grep "dnssec-policy: deprecated CDS digest-type sha1" checkconf.out$n >/dev/null || ret=1
+if [ $ret -ne 0 ]; then echo_i "failed"; fi
+status=$((status + ret))
+
+n=$((n + 1))
 echo_i "check that a good 'kasp' configuration is accepted ($n)"
 ret=0
 $CHECKCONF good-kasp.conf >checkconf.out$n 2>/dev/null || ret=1
@@ -785,6 +803,17 @@ echo_i "check that 'check-wildcard yes;' warns as configured ($n)"
 ret=0
 $CHECKCONF -z check-wildcard.conf >checkconf.out$n 2>&1 || ret=1
 grep -F "warning: ownername 'foo.*.check-wildcard' contains an non-terminal wildcard" checkconf.out$n >/dev/null || ret=1
+if [ $ret != 0 ]; then
+  echo_i "failed"
+  ret=1
+fi
+status=$((status + ret))
+
+n=$((n + 1))
+echo_i "check 'recursion yes;' is warned and disabled in a non-IN view ($n)"
+ret=0
+$CHECKCONF warn-chaos-recursion.conf >checkconf.out$n 2>&1 || ret=1
+grep -F "recursion will be disabled" checkconf.out$n >/dev/null || ret=1
 if [ $ret != 0 ]; then
   echo_i "failed"
   ret=1

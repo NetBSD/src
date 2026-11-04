@@ -1,4 +1,4 @@
-/*	$NetBSD: chacha_ref.c,v 1.1 2020/07/25 22:46:34 riastradh Exp $	*/
+/*	$NetBSD: chacha_ref.c,v 1.1.26.1 2026/11/04 23:21:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
 
 #include "chacha_ref.h"
 
-static uint32_t
+static inline uint32_t
 rol32(uint32_t u, unsigned c)
 {
 

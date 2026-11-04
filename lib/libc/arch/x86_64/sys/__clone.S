@@ -1,4 +1,4 @@
-/*	$NetBSD: __clone.S,v 1.5.36.1 2025/08/02 05:54:34 perseant Exp $	*/
+/*	$NetBSD: __clone.S,v 1.5.36.2 2026/11/04 23:19:13 perseant Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -89,5 +89,5 @@ ENTRY(__clone)
 5:
 	popq	%r13
 	popq	%r12
-	jmp	CERROR
+	_SYSCALL_ERR
 END(__clone)

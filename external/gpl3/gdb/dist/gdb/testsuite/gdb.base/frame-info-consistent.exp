@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -95,11 +95,12 @@ proc compare_frames {frames} {
     }
 }
 
-proc test {dwarf_unwinder} {
+proc test {enable} {
 
-    clean_restart $::binfile
+    clean_restart
+    gdb_load $::binfile
 
-    gdb_test_no_output "maint set dwarf unwinder $dwarf_unwinder"
+    gdb_test_no_output "maint frame-unwinder $enable DEBUGINFO"
 
     if {![runto_main]} {
 	return 0
@@ -134,6 +135,6 @@ proc test {dwarf_unwinder} {
     }
 }
 
-foreach_with_prefix dwarf {"off" "on"} {
-    test $dwarf
+foreach_with_prefix action {"disable" "enable"} {
+    test $action
 }

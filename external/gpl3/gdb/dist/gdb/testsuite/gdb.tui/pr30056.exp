@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -72,16 +72,15 @@ save_vars { env(LC_ALL) } {
 	# Send ^C to clear the command line.
 	send_gdb "\003"
     } else {
-	# Sending ^C currently doesn't abort the i-search. PR cli/30498 is
-	# open about this.
-	kfail cli/30498 $test
+	# Sending ^C currently doesn't abort the i-search.
+	fail $test
 
-	# At this point we don't have a reponsive prompt.  Send ^G to abort
+	# At this point we don't have a responsive prompt.  Send ^G to abort
 	# the i-search.
 	send_gdb "\007"
     }
 
-    # We need a reponsive prompt here, to deal with the "monitor exit"
+    # We need a responsive prompt here, to deal with the "monitor exit"
     # that native-extended-gdbserver will send.  Check that we have a
     # responsive prompt.
     Term::command "echo \\n"

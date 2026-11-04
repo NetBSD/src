@@ -1,4 +1,4 @@
-/*   $NetBSD: add_wch.c,v 1.9.12.1 2025/08/02 05:54:45 perseant Exp $ */
+/*   $NetBSD: add_wch.c,v 1.9.12.2 2026/11/04 23:19:26 perseant Exp $ */
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: add_wch.c,v 1.9.12.1 2025/08/02 05:54:45 perseant Exp $");
+__RCSID("$NetBSD: add_wch.c,v 1.9.12.2 2026/11/04 23:19:26 perseant Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -92,12 +92,13 @@ mvwadd_wch(WINDOW *win, int y, int x, const cchar_t *wch)
 int
 wadd_wch(WINDOW *win, const cchar_t *wch)
 {
-	int y = win->cury;
+	int y;
 	__LINE *lnp = NULL;
 
 	if (__predict_false(win == NULL))
 		return ERR;
 
+	y = win->cury;
 #ifdef DEBUG
 	int i;
 	int x = win->curx;

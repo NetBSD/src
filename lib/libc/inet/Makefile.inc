@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.inc,v 1.2 2014/01/16 20:31:43 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.2.38.1 2026/11/04 23:19:19 perseant Exp $
 
 # net sources
-.PATH: ${.CURDIR}/inet
+.PATH: ${.PARSEDIR}
 
 SRCS+=	inet_addr.c inet_cidr_ntop.c \
 	inet_cidr_pton.c inet_lnaof.c inet_makeaddr.c \

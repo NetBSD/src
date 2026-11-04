@@ -1,6 +1,6 @@
 /* Scheme interface to types.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,7 +20,7 @@
 /* See README file in this directory for implementation notes, coding
    conventions, et.al.  */
 
-#include "defs.h"
+#include "top.h"
 #include "arch-utils.h"
 #include "value.h"
 #include "gdbtypes.h"
@@ -94,8 +94,8 @@ struct tyscm_deleter
       return;
 
     gdb_assert (htab != nullptr);
-    htab_up copied_types = create_copied_types_hash ();
-    htab_traverse_noresize (htab, tyscm_copy_type_recursive, copied_types.get ());
+    copied_types_hash_t copied_types;
+    htab_traverse_noresize (htab, tyscm_copy_type_recursive, &copied_types);
     htab_delete (htab);
   }
 };
@@ -131,6 +131,10 @@ tyscm_type_name (struct type *type)
       current_language->print_type (type, "", &stb, -1, 0,
 				    &type_print_raw_options);
       return stb.release ();
+    }
+  catch (const gdb_exception_forced_quit &except)
+    {
+      quit_force (NULL, 0);
     }
   catch (const gdb_exception &except)
     {
@@ -371,12 +375,11 @@ static int
 tyscm_copy_type_recursive (void **slot, void *info)
 {
   type_smob *t_smob = (type_smob *) *slot;
-  htab_t copied_types = (htab_t) info;
+  copied_types_hash_t &copied_types = *static_cast<copied_types_hash_t *> (info);
   htab_t htab;
   eqable_gdb_smob **new_slot;
   type_smob t_smob_for_lookup;
 
-  htab_empty (copied_types);
   t_smob->type = copy_type_recursive (t_smob->type, copied_types);
 
   /* The eq?-hashtab that the type lived in is going away.
@@ -822,12 +825,12 @@ gdbscm_type_range (SCM self)
     case TYPE_CODE_ARRAY:
     case TYPE_CODE_STRING:
     case TYPE_CODE_RANGE:
-      if (type->bounds ()->low.kind () == PROP_CONST)
+      if (type->bounds ()->low.is_constant ())
 	low = type->bounds ()->low.const_val ();
       else
 	low = 0;
 
-      if (type->bounds ()->high.kind () == PROP_CONST)
+      if (type->bounds ()->high.is_constant ())
 	high = type->bounds ()->high.const_val ();
       else
 	high = 0;
@@ -1208,7 +1211,7 @@ gdbscm_field_artificial_p (SCM self)
     = tyscm_get_field_smob_arg_unsafe (self, SCM_ARG1, FUNC_NAME);
   struct field *field = tyscm_field_smob_to_field (f_smob);
 
-  return scm_from_bool (FIELD_ARTIFICIAL (*field));
+  return scm_from_bool (field->is_artificial ());
 }
 
 /* (field-baseclass? <gdb:field>) -> boolean

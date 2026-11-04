@@ -1,5 +1,5 @@
 /* ELF program property support.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -28,37 +28,93 @@
 #include "libbfd.h"
 #include "elf-bfd.h"
 
+/* Find a property.  */
+elf_property_list *
+_bfd_elf_find_property (elf_property_list *l,
+			unsigned int type,
+			elf_property_list **prev)
+{
+  if (prev != NULL)
+    *prev = NULL;
+
+  /* The properties are supposed to be sorted in the list.  */
+  for (elf_property_list *n = l; n != NULL; n = n->next)
+    {
+      if (type == n->property.pr_type)
+	return n;
+      else if (type < n->property.pr_type)
+	break;
+      else if (prev != NULL)
+	*prev = n;
+    }
+  return NULL;
+}
+
+/* Insert a property into the list after prev.  */
+static elf_property_list *
+_bfd_elf_insert_property (elf_property_list *l,
+			  elf_property_list *what,
+			  elf_property_list *prev)
+{
+  if (l == NULL) // First node.
+    return what;
+
+  if (prev == NULL) // Prepend.
+    {
+      what->next = l;
+      return what;
+    }
+
+  what->next = prev->next;
+  prev->next = what;
+  return l;
+}
+
+/* Remove a property from the list after prev.  */
+static elf_property_list *
+_bfd_elf_remove_property (elf_property_list *l,
+			  elf_property_list *what,
+			  elf_property_list *prev)
+{
+  if (l == NULL)
+    return l;
+
+  if (prev == NULL) // Pop front
+    {
+      BFD_ASSERT (what == l);
+      l = what->next;
+    }
+  else
+    prev->next = what->next;
+
+  what->next = NULL;
+  return l;
+}
+
 /* Get a property, allocate a new one if needed.  */
 
 elf_property *
 _bfd_elf_get_property (bfd *abfd, unsigned int type, unsigned int datasz)
 {
-  elf_property_list *p, **lastp;
-
   if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
     {
       /* Never should happen.  */
       abort ();
     }
 
-  /* Keep the property list in order of type.  */
-  lastp = &elf_properties (abfd);
-  for (p = *lastp; p; p = p->next)
+  elf_property_list *prev;
+  elf_property_list *p =
+    _bfd_elf_find_property (elf_properties (abfd), type, &prev);
+  if (p != NULL)  /* Reuse the existing entry.  */
     {
-      /* Reuse the existing entry.  */
-      if (type == p->property.pr_type)
+      if (datasz > p->property.pr_datasz)
 	{
-	  if (datasz > p->property.pr_datasz)
-	    {
-	      /* This can happen when mixing 32-bit and 64-bit objects.  */
-	      p->property.pr_datasz = datasz;
-	    }
-	  return &p->property;
+	  /* This can happen when mixing 32-bit and 64-bit objects.  */
+	  p->property.pr_datasz = datasz;
 	}
-      else if (type < p->property.pr_type)
-	break;
-      lastp = &p->next;
+      return &p->property;
     }
+
   p = (elf_property_list *) bfd_alloc (abfd, sizeof (*p));
   if (p == NULL)
     {
@@ -66,11 +122,14 @@ _bfd_elf_get_property (bfd *abfd, unsigned int type, unsigned int datasz)
 			  abfd);
       _exit (EXIT_FAILURE);
     }
+
   memset (p, 0, sizeof (*p));
   p->property.pr_type = type;
   p->property.pr_datasz = datasz;
-  p->next = *lastp;
-  *lastp = p;
+
+  elf_properties (abfd) =
+    _bfd_elf_insert_property (elf_properties (abfd), p, prev);
+
   return &p->property;
 }
 
@@ -177,6 +236,20 @@ _bfd_elf_parse_gnu_properties (bfd *abfd, Elf_Internal_Note *note)
 	      prop->pr_kind = property_number;
 	      goto next;
 
+	    case GNU_PROPERTY_MEMORY_SEAL:
+	      if (datasz != 0)
+		{
+		  _bfd_error_handler
+		    (_("warning: %pB: corrupt memory sealing size: 0x%x"),
+		     abfd, datasz);
+		  /* Clear all properties.  */
+		  elf_properties (abfd) = NULL;
+		  return false;
+		}
+	      prop = _bfd_elf_get_property (abfd, type, datasz);
+	      prop->pr_kind = property_number;
+	      goto next;
+
 	    default:
 	      if ((type >= GNU_PROPERTY_UINT32_AND_LO
 		   && type <= GNU_PROPERTY_UINT32_AND_HI)
@@ -254,6 +327,7 @@ elf_merge_gnu_properties (struct bfd_link_info *info, bfd *abfd, bfd *bbfd,
       /* FALLTHROUGH */
 
     case GNU_PROPERTY_NO_COPY_ON_PROTECTED:
+    case GNU_PROPERTY_MEMORY_SEAL:
       /* Return TRUE if APROP is NULL to indicate that BPROP should
 	 be added to ABFD.  */
       return aprop == NULL;
@@ -342,23 +416,16 @@ static elf_property *
 elf_find_and_remove_property (elf_property_list **listp,
 			      unsigned int type, bool rm)
 {
-  elf_property_list *list;
+  elf_property_list *prev;
+  elf_property_list *p = _bfd_elf_find_property (*listp, type, &prev);
+  if (p == NULL)
+    return NULL;
 
-  for (list = *listp; list; list = list->next)
-    {
-      if (type == list->property.pr_type)
-	{
-	  /* Remove this property.  */
-	  if (rm)
-	    *listp = list->next;
-	  return &list->property;
-	}
-      else if (type < list->property.pr_type)
-	break;
-      listp = &list->next;
-    }
+  if (rm)
+    *listp = _bfd_elf_remove_property (*listp, p, prev);
 
-  return NULL;
+  /* FIXME: we leak memory with this approach.  */
+  return &p->property;
 }
 
 /* Merge GNU property list *LISTP in ABFD with FIRST_PBFD.  */
@@ -607,6 +674,47 @@ elf_write_gnu_properties (struct bfd_link_info *info,
     }
 }
 
+static asection *
+_bfd_elf_link_create_gnu_property_sec (struct bfd_link_info *info, bfd *elf_bfd,
+				       unsigned int elfclass)
+{
+  asection *sec;
+
+  sec = bfd_make_section_with_flags (elf_bfd,
+				     NOTE_GNU_PROPERTY_SECTION_NAME,
+				     (SEC_ALLOC
+				      | SEC_LOAD
+				      | SEC_IN_MEMORY
+				      | SEC_READONLY
+				      | SEC_HAS_CONTENTS
+				      | SEC_DATA));
+  if (sec == NULL
+      || !bfd_set_section_alignment (sec, elfclass == ELFCLASS64 ? 3 : 2))
+    info->callbacks->fatal (_("%P: failed to create %s\n"),
+			    NOTE_GNU_PROPERTY_SECTION_NAME);
+
+  elf_section_type (sec) = SHT_NOTE;
+  return sec;
+}
+
+/* Prune empty generic properties.  */
+
+static void
+elf_prune_empty_properties (elf_property_list **pp)
+{
+  elf_property_list *p;
+
+  while ((p = *pp) != NULL)
+    if ((p->property.pr_type < GNU_PROPERTY_LOPROC
+	 || p->property.pr_type >= GNU_PROPERTY_LOUSER)
+	&& p->property.pr_datasz != 0
+	&& p->property.pr_kind == property_number
+	&& p->property.u.number == 0)
+      *pp = p->next;
+    else
+      pp = &p->next;
+}
+
 /* Set up GNU properties.  Return the first relocatable ELF input with
    GNU properties if found.  Otherwise, return NULL.  */
 
@@ -656,23 +764,7 @@ _bfd_elf_link_setup_gnu_properties (struct bfd_link_info *info)
       /* Support -z indirect-extern-access.  */
       if (first_pbfd == NULL)
 	{
-	  sec = bfd_make_section_with_flags (elf_bfd,
-					     NOTE_GNU_PROPERTY_SECTION_NAME,
-					     (SEC_ALLOC
-					      | SEC_LOAD
-					      | SEC_IN_MEMORY
-					      | SEC_READONLY
-					      | SEC_HAS_CONTENTS
-					      | SEC_DATA));
-	  if (sec == NULL)
-	    info->callbacks->einfo (_("%F%P: failed to create GNU property section\n"));
-
-	  if (!bfd_set_section_alignment (sec,
-					  elfclass == ELFCLASS64 ? 3 : 2))
-	    info->callbacks->einfo (_("%F%pA: failed to align section\n"),
-				    sec);
-
-	  elf_section_type (sec) = SHT_NOTE;
+	  sec = _bfd_elf_link_create_gnu_property_sec (info, elf_bfd, elfclass);
 	  first_pbfd = elf_bfd;
 	  has_properties = true;
 	}
@@ -688,6 +780,31 @@ _bfd_elf_link_setup_gnu_properties (struct bfd_link_info *info)
       else
 	p->u.number
 	  |= GNU_PROPERTY_1_NEEDED_INDIRECT_EXTERN_ACCESS;
+    }
+
+  if (elf_bfd != NULL)
+    {
+      if (info->memory_seal)
+	{
+	  /* Support -z no-memory-seal.  */
+	  if (first_pbfd == NULL)
+	    {
+	      sec = _bfd_elf_link_create_gnu_property_sec (info, elf_bfd, elfclass);
+	      first_pbfd = elf_bfd;
+	      has_properties = true;
+	    }
+
+	  p = _bfd_elf_get_property (first_pbfd, GNU_PROPERTY_MEMORY_SEAL, 0);
+	  if (p->pr_kind == property_unknown)
+	    {
+	      /* Create GNU_PROPERTY_NO_MEMORY_SEAL.  */
+	      p->u.number = GNU_PROPERTY_MEMORY_SEAL;
+	      p->pr_kind = property_number;
+	    }
+	}
+      else
+	elf_find_and_remove_property (&elf_properties (elf_bfd),
+				      GNU_PROPERTY_MEMORY_SEAL, true);
     }
 
   /* Do nothing if there is no .note.gnu.property section.  */
@@ -778,22 +895,6 @@ _bfd_elf_link_setup_gnu_properties (struct bfd_link_info *info)
       if (bed->fixup_gnu_properties)
 	bed->fixup_gnu_properties (info, &elf_properties (first_pbfd));
 
-      if (elf_properties (first_pbfd) == NULL)
-	{
-	  /* Discard .note.gnu.property section if all properties have
-	     been removed.  */
-	  sec->output_section = bfd_abs_section_ptr;
-	  return NULL;
-	}
-
-      /* Compute the section size.  */
-      list = elf_properties (first_pbfd);
-      size = elf_get_gnu_property_section_size (list, align_size);
-
-      /* Update .note.gnu.property section now.  */
-      sec->size = size;
-      contents = (bfd_byte *) bfd_zalloc (first_pbfd, size);
-
       if (info->indirect_extern_access <= 0)
 	{
 	  /* Get GNU_PROPERTY_1_NEEDED properties.  */
@@ -817,10 +918,29 @@ _bfd_elf_link_setup_gnu_properties (struct bfd_link_info *info)
 	    }
 	}
 
+      elf_prune_empty_properties (&elf_properties (first_pbfd));
+
+      if (elf_properties (first_pbfd) == NULL)
+	{
+	  /* Discard .note.gnu.property section if all properties have
+	     been removed.  */
+	  sec->output_section = bfd_abs_section_ptr;
+	  return NULL;
+	}
+
+      /* Compute the section size.  */
+      list = elf_properties (first_pbfd);
+      size = elf_get_gnu_property_section_size (list, align_size);
+
+      /* Update .note.gnu.property section now.  */
+      sec->size = size;
+      contents = (bfd_byte *) bfd_zalloc (first_pbfd, size);
+
       elf_write_gnu_properties (info, first_pbfd, contents, list, size,
 				align_size);
 
       /* Cache the section contents for elf_link_input_bfd.  */
+      sec->alloced = 1;
       elf_section_data (sec)->this_hdr.contents = contents;
 
       /* If GNU_PROPERTY_NO_COPY_ON_PROTECTED is set, protected data

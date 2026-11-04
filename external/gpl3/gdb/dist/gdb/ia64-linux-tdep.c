@@ -1,6 +1,6 @@
 /* Target-dependent code for the IA-64 for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,6 +26,7 @@
 #include "solib-svr4.h"
 #include "symtab.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "regset.h"
 
 #include <ctype.h>
@@ -174,7 +175,6 @@ ia64_linux_supply_fpregset (const struct regset *regset,
 			    struct regcache *regcache,
 			    int regnum, const void *regs, size_t len)
 {
-  const gdb_byte f_zero[16] = { 0 };
   const gdb_byte f_one[16] =
     { 0, 0, 0, 0, 0, 0, 0, 0x80, 0xff, 0xff, 0, 0, 0, 0, 0, 0 };
 
@@ -184,7 +184,7 @@ ia64_linux_supply_fpregset (const struct regset *regset,
      did the same.  So ignore whatever might be recorded in fpregset_t
      for fr0/fr1 and always supply their expected values.  */
   if (regnum == -1 || regnum == IA64_FR0_REGNUM)
-    regcache->raw_supply (IA64_FR0_REGNUM, f_zero);
+    regcache->raw_supply_zeroed (IA64_FR0_REGNUM);
   if (regnum == -1 || regnum == IA64_FR1_REGNUM)
     regcache->raw_supply (IA64_FR1_REGNUM, f_one);
 }
@@ -236,8 +236,7 @@ ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
@@ -258,9 +257,7 @@ ia64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 				      ia64_linux_stap_is_single_operand);
 }
 
-void _initialize_ia64_linux_tdep ();
-void
-_initialize_ia64_linux_tdep ()
+INIT_GDB_FILE (ia64_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_ia64, 0, GDB_OSABI_LINUX,
 			  ia64_linux_init_abi);

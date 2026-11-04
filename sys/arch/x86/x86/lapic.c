@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.90.2.1 2025/08/02 05:56:18 perseant Exp $	*/
+/*	$NetBSD: lapic.c,v 1.90.2.2 2026/11/04 23:21:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2020 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.90.2.1 2025/08/02 05:56:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.90.2.2 2026/11/04 23:21:33 perseant Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -645,7 +645,8 @@ lapic_calibrate_timer(bool secondpass)
 
 	KASSERT(ci == &cpu_info_primary);
 
-	aprint_debug_dev(ci->ci_dev, "[re]calibrating local timer\n");
+	aprint_debug_dev(ci->ci_dev, "%scalibrating local timer\n",
+	    secondpass ? "re" : "");
 
 	/*
 	 * Configure timer to one-shot, interrupt masked,

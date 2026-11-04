@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.58.2.1 2025/08/02 05:55:56 perseant Exp $	*/
+/*	$NetBSD: machdep.c,v 1.58.2.2 2026/11/04 23:21:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.2.1 2025/08/02 05:55:56 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.58.2.2 2026/11/04 23:21:00 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_memsize.h"
@@ -282,7 +282,7 @@ initSH3(void *pc, u_int bim, int32_t bip)	/* XXX return address */
 	/* Start to determine heap area */
 	kernend = (vaddr_t)sh3_round_page(end + symbolsize);
 
-	/* Initilize CPU ops. */
+	/* Initialize CPU ops. */
 #if defined(SH7708R)
 	sh_cpu_init(CPU_ARCH_SH3, CPU_PRODUCT_7708R);
 #elif defined(SH7708)
@@ -824,16 +824,6 @@ lookup_bootinfo(unsigned int type)
 
 	return NULL;
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */
 
 #if defined(MMEYE_EPC_WDT)
 callout_t epc_wdtc;

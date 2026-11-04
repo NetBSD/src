@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.6.6.1 2025/08/02 05:55:45 perseant Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.6.6.2 2026/11/04 23:20:46 perseant Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -461,7 +461,7 @@ mbi_cmdline(struct multiboot_package *mbp, void *buf)
 	const char fmt[] = "%s %s";
 
 	/* +1 for trailing \0 */
-	cmdlen = snprintf(NULL, SIZE_T_MAX, fmt, mbp->mbp_file, mbp->mbp_args)
+	cmdlen = snprintf(NULL, SIZE_MAX, fmt, mbp->mbp_file, mbp->mbp_args)
 	       + 1;
 	len = sizeof(*mbt) + cmdlen;
 
@@ -485,7 +485,7 @@ mbi_boot_loader_name(struct multiboot_package *mbp, void *buf)
 
 
 	/* +1 for trailing \0 */
-	strlen = snprintf(NULL, SIZE_T_MAX, fmt,
+	strlen = snprintf(NULL, SIZE_MAX, fmt,
 			  bootprog_name, bootprog_rev, bootprog_kernrev)
 	       + 1;
 	len = sizeof(*mbt) + strlen;
@@ -1351,7 +1351,7 @@ exec_multiboot2(struct multiboot_package *mbp)
 		 * catch page allocation made for other tags.
 		 */
 		MULTIBOOT_TAG_TYPE_EFI_MMAP,
-#endif /* EFIGOOT */
+#endif /* EFIBOOT */
 		MULTIBOOT_TAG_TYPE_MMAP,
 		MULTIBOOT_TAG_TYPE_END, /* Must be last */
 	};

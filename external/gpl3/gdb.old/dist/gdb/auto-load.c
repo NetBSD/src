@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded scripts.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,9 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <ctype.h>
 #include "auto-load.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "progspace.h"
 #include "gdbsupport/gdb_regex.h"
 #include "ui-out.h"
@@ -28,7 +28,6 @@
 #include "observable.h"
 #include "objfiles.h"
 #include "cli/cli-script.h"
-#include "gdbcmd.h"
 #include "cli/cli-cmds.h"
 #include "cli/cli-decode.h"
 #include "cli/cli-setshow.h"
@@ -478,19 +477,23 @@ file_is_auto_load_safe (const char *filename)
 
       gdb_printf (_("\
 To enable execution of this file add\n\
-\tadd-auto-load-safe-path %s\n\
+\t%p[add-auto-load-safe-path %s%p]\n\
 line to your configuration file \"%ps\".\n\
 To completely disable this security protection add\n\
-\tset auto-load safe-path /\n\
+\t%ps\n\
 line to your configuration file \"%ps\".\n\
 For more information about this security protection see the\n\
 \"Auto-loading safe path\" section in the GDB manual.  E.g., run from the shell:\n\
 \tinfo \"(gdb)Auto-loading safe path\"\n"),
-		       filename_real.get (),
-		       styled_string (file_name_style.style (),
-				      home_config.c_str ()),
-		       styled_string (file_name_style.style (),
-				      home_config.c_str ()));
+		  command_style.style ().ptr (),
+		  filename_real.get (),
+		  nullptr,
+		  styled_string (file_name_style.style (),
+				 home_config.c_str ()),
+		  styled_string (command_style.style (),
+				 "set auto-load safe-path /"),
+		  styled_string (file_name_style.style (),
+				 home_config.c_str ()));
       advice_printed = true;
     }
 
@@ -706,12 +709,9 @@ maybe_add_script_text (struct auto_load_pspace_info *pspace_info,
 /* Clear the table of loaded section scripts.  */
 
 static void
-clear_section_scripts (void)
+clear_section_scripts (program_space *pspace)
 {
-  struct program_space *pspace = current_program_space;
-  struct auto_load_pspace_info *info;
-
-  info = auto_load_pspace_data.get (pspace);
+  auto_load_pspace_info *info = auto_load_pspace_data.get (pspace);
   if (info != NULL && info->loaded_script_files != NULL)
     auto_load_pspace_data.clear (pspace);
 }
@@ -788,11 +788,11 @@ auto_load_objfile_script_1 (struct objfile *objfile, const char *realname,
       /* Add this script to the hash table too so
 	 "info auto-load ${lang}-scripts" can print it.  */
       pspace_info
-	= get_auto_load_pspace_data_for_loading (current_program_space);
+	= get_auto_load_pspace_data_for_loading (objfile->pspace ());
       maybe_add_script_file (pspace_info, is_safe, debugfile, debugfile,
 			     language);
 
-      /* To preserve existing behaviour we don't check for whether the
+      /* To preserve existing behavior we don't check for whether the
 	 script was already in the table, and always load it.
 	 It's highly unlikely that we'd ever load it twice,
 	 and these scripts are required to be idempotent under multiple
@@ -856,7 +856,7 @@ auto_load_objfile_script (struct objfile *objfile,
   struct objfile *parent = objfile->separate_debug_objfile_backlink;
   if (parent != nullptr)
     {
-      unsigned long crc32;
+      uint32_t crc32;
       gdb::unique_xmalloc_ptr<char> debuglink
 	(bfd_get_debug_link_info (parent->obfd.get (), &crc32));
 
@@ -917,7 +917,7 @@ source_script_file (struct auto_load_pspace_info *pspace_info,
       return;
     }
 
-  gdb::optional<open_script> opened = find_and_open_script (file,
+  std::optional<open_script> opened = find_and_open_script (file,
 							    1 /*search_path*/);
 
   if (opened)
@@ -984,7 +984,7 @@ execute_script_contents (struct auto_load_pspace_info *pspace_info,
       buf = name_holder.c_str ();
       for (p = buf; *p != '\0'; ++p)
 	{
-	  if (isspace (*p))
+	  if (isspace ((unsigned char)*p))
 	    break;
 	}
       /* We don't allow nameless scripts, they're not helpful to the user.  */
@@ -1052,12 +1052,10 @@ static void
 source_section_scripts (struct objfile *objfile, const char *section_name,
 			const char *start, const char *end)
 {
-  const char *p;
-  struct auto_load_pspace_info *pspace_info;
+  auto_load_pspace_info *pspace_info
+    = get_auto_load_pspace_data_for_loading (objfile->pspace ());
 
-  pspace_info = get_auto_load_pspace_data_for_loading (current_program_space);
-
-  for (p = start; p < end; ++p)
+  for (const char *p = start; p < end; ++p)
     {
       const char *entry;
       const struct extension_language_defn *language;
@@ -1121,29 +1119,30 @@ auto_load_section_scripts (struct objfile *objfile, const char *section_name)
 {
   bfd *abfd = objfile->obfd.get ();
   asection *scripts_sect;
-  bfd_byte *data = NULL;
 
   scripts_sect = bfd_get_section_by_name (abfd, section_name);
   if (scripts_sect == NULL
       || (bfd_section_flags (scripts_sect) & SEC_HAS_CONTENTS) == 0)
     return;
 
-  if (!bfd_get_full_section_contents (abfd, scripts_sect, &data))
+  gdb::byte_vector data;
+  if (!gdb_bfd_get_full_section_contents (abfd, scripts_sect, &data))
     warning (_("Couldn't read %s section of %ps"),
 	     section_name,
 	     styled_string (file_name_style.style (),
 			    bfd_get_filename (abfd)));
   else
     {
-      gdb::unique_xmalloc_ptr<bfd_byte> data_holder (data);
-
-      char *p = (char *) data;
-      source_section_scripts (objfile, section_name, p,
-			      p + bfd_section_size (scripts_sect));
+      const char *p = (const char *) data.data ();
+      source_section_scripts (objfile, section_name, p, p + data.size ());
     }
 }
 
-/* Load any auto-loaded scripts for OBJFILE.  */
+/* Load any auto-loaded scripts for OBJFILE.
+
+   Two flavors of auto-loaded scripts are supported.
+   1) based on the path to the objfile
+   2) from .debug_gdb_scripts section  */
 
 void
 load_auto_scripts_for_objfile (struct objfile *objfile)
@@ -1163,25 +1162,6 @@ load_auto_scripts_for_objfile (struct objfile *objfile)
 
   /* Load any scripts mentioned in AUTO_SECTION_NAME (.debug_gdb_scripts).  */
   auto_load_section_scripts (objfile, AUTO_SECTION_NAME);
-}
-
-/* This is a new_objfile observer callback to auto-load scripts.
-
-   Two flavors of auto-loaded scripts are supported.
-   1) based on the path to the objfile
-   2) from .debug_gdb_scripts section  */
-
-static void
-auto_load_new_objfile (struct objfile *objfile)
-{
-  if (!objfile)
-    {
-      /* OBJFILE is NULL when loading a new "main" symbol-file.  */
-      clear_section_scripts ();
-      return;
-    }
-
-  load_auto_scripts_for_objfile (objfile);
 }
 
 /* Collect scripts to be printed in a vec.  */
@@ -1264,15 +1244,14 @@ print_scripts (const std::vector<loaded_script *> &scripts)
    PATTERN.  FROM_TTY is the usual GDB boolean for user interactivity.  */
 
 void
-auto_load_info_scripts (const char *pattern, int from_tty,
-			const struct extension_language_defn *language)
+auto_load_info_scripts (program_space *pspace, const char *pattern,
+			int from_tty, const extension_language_defn *language)
 {
   struct ui_out *uiout = current_uiout;
-  struct auto_load_pspace_info *pspace_info;
 
   dont_repeat ();
 
-  pspace_info = get_auto_load_pspace_data (current_program_space);
+  auto_load_pspace_info *pspace_info = get_auto_load_pspace_data (pspace);
 
   if (pattern && *pattern)
     {
@@ -1349,7 +1328,8 @@ auto_load_info_scripts (const char *pattern, int from_tty,
 static void
 info_auto_load_gdb_scripts (const char *pattern, int from_tty)
 {
-  auto_load_info_scripts (pattern, from_tty, &extension_language_gdb);
+  auto_load_info_scripts (current_program_space, pattern, from_tty,
+			  &extension_language_gdb);
 }
 
 /* Implement 'info auto-load local-gdbinit'.  */
@@ -1536,9 +1516,11 @@ _initialize_auto_load ()
     python_name_help, guile_name_help;
   const char *suffix;
 
-  gdb::observers::new_objfile.attach (auto_load_new_objfile,
-                                      auto_load_new_objfile_observer_token,
-                                      "auto-load");
+  gdb::observers::new_objfile.attach (load_auto_scripts_for_objfile,
+				      auto_load_new_objfile_observer_token,
+				      "auto-load");
+  gdb::observers::all_objfiles_removed.attach (clear_section_scripts,
+					       "auto-load");
   add_setshow_boolean_cmd ("gdb-scripts", class_support,
 			   &auto_load_gdb_scripts, _("\
 Enable or disable auto-loading of canned sequences of commands scripts."), _("\
@@ -1649,7 +1631,7 @@ This option has security implications for untrusted inferiors."),
 See the commands 'set auto-load safe-path' and 'show auto-load safe-path' to\n\
 access the current full list setting."),
 		 &cmdlist);
-  set_cmd_completer (cmd, filename_completer);
+  set_cmd_completer (cmd, deprecated_filename_completer);
 
   cmd = add_cmd ("add-auto-load-scripts-directory", class_support,
 		 add_auto_load_dir,
@@ -1658,7 +1640,7 @@ access the current full list setting."),
 See the commands 'set auto-load scripts-directory' and\n\
 'show auto-load scripts-directory' to access the current full list setting."),
 		 &cmdlist);
-  set_cmd_completer (cmd, filename_completer);
+  set_cmd_completer (cmd, deprecated_filename_completer);
 
   add_setshow_boolean_cmd ("auto-load", class_maintenance,
 			   &debug_auto_load, _("\

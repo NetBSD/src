@@ -107,6 +107,8 @@
 # .IP \fB-DNO_SNPRINTF\fR
 #	Use sprintf() instead of snprintf(). By default, Postfix
 #	uses snprintf() except on ancient systems.
+# .IP \fB-DNO_STDBOOL\fR
+#	Don't use <stdbool.h>. This is usually auto-detected.
 # .RE
 # .IP \fBDEBUG=\fIdebug_level\fR
 #	Specifies a non-default debugging level. The default is \fB-g\fR.
@@ -160,10 +162,10 @@
 #	supported in this context:
 #
 #	command_directory config_directory daemon_directory
-#	data_directory default_database_type html_directory
-#	mail_spool_directory mailq_path manpage_directory meta_directory
-#	newaliases_path queue_directory readme_directory sendmail_path
-#	shlib_directory openssl_path
+#	data_directory default_cache_db_type default_database_type
+#	html_directory mail_spool_directory mailq_path manpage_directory
+#	meta_directory newaliases_path queue_directory readme_directory
+#	sendmail_path shlib_directory openssl_path
 #
 #	See the postconf(5) manpage for a description of these
 #	parameters.
@@ -351,6 +353,24 @@ case "$SYSTEM.$RELEASE" in
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC} -shared"}
 		;;
+   FreeBSD.15*)	SYSTYPE=FREEBSD15
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
+   FreeBSD.16*)	SYSTYPE=FREEBSD16
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
  DragonFly.*)	SYSTYPE=DRAGONFLY
 		;;
   OpenBSD.2*)	SYSTYPE=OPENBSD2
@@ -386,9 +406,18 @@ case "$SYSTEM.$RELEASE" in
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC} -shared"}
 		;;
+  OpenBSD.8*)	SYSTYPE=OPENBSD8
+		: ${CC=cc}
+		: ${SHLIB_SUFFIX=.so.1.0}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC} -shared"}
+		;;
   ekkoBSD.1*)	SYSTYPE=EKKOBSD1
 		;;
-   NetBSD.1*)	SYSTYPE=NETBSD1
+   NetBSD.1.*)	SYSTYPE=NETBSD1
 		;;
    NetBSD.2*)	SYSTYPE=NETBSD2
 		;;
@@ -431,6 +460,22 @@ case "$SYSTEM.$RELEASE" in
 		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
    NetBSD.10*)	SYSTYPE=NETBSD10
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
+		;;
+   NetBSD.11*)	SYSTYPE=NETBSD11
+		: ${SHLIB_SUFFIX=.so}
+		: ${SHLIB_CFLAGS=-fPIC}
+		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
+		: ${SHLIB_RPATH='-Wl,-rpath,${SHLIB_DIR}'}
+		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
+		: ${PLUGIN_LD="${CC-gcc} -shared"}
+		;;
+   NetBSD.12*)	SYSTYPE=NETBSD12
 		: ${SHLIB_SUFFIX=.so}
 		: ${SHLIB_CFLAGS=-fPIC}
 		: ${SHLIB_LD="${CC-gcc} -shared"' -Wl,-soname,${LIB}'}
@@ -575,6 +620,7 @@ case "$SYSTEM.$RELEASE" in
 			# by including <db.h> and by linking with -ldb
 			echo "No <db.h> include file found." 1>&2
 			echo "Install the appropriate db*-devel package first." 1>&2
+			echo "Alternatively, build with CCARGS=\"-NO_DB ...\"" 1>&2
 			exit 1
 		    fi
 		    SYSLIBS="-ldb"
@@ -639,7 +685,7 @@ EOF
 		: ${SHLIB_ENV="LD_LIBRARY_PATH=`pwd`/lib"}
 		: ${PLUGIN_LD="${CC-gcc} -shared"}
 		;;
-    Linux.[3456].*)
+    Linux.[34567].*)
 		SYSTYPE=LINUX$RELEASE_MAJOR
 		case "$CCARGS" in
 		 *-DNO_DB*) ;;
@@ -655,6 +701,8 @@ EOF
 			# by including <db.h> and by linking with -ldb
 			echo "No <db.h> include file found." 1>&2
 			echo "Install the appropriate db*-devel package first." 1>&2
+			echo "Alternatively, build with CCARGS=\"-NO_DB ...\"" 1>&2
+			echo "See: https://www.postfix.org/NON_BERKELEYDB_README.html#build-conf" 1>&2
 			exit 1
 		    fi
 		    SYSLIBS="-ldb"
@@ -693,6 +741,7 @@ EOF
 			# by including <db.h> and by linking with -ldb
 			echo "No <db.h> include file found." 1>&2
 			echo "Install the appropriate db*-devel package first." 1>&2
+			echo "Alternatively, build with CCARGS=\"-NO_DB ...\"" 1>&2
 			exit 1
 		    fi
 		    SYSLIBS="-ldb"
@@ -960,6 +1009,21 @@ case "$CCARGS" in
 		;;
 esac
 
+# C23 introduces a new built-in type 'bool' which breaks past Postfix
+# practice. Other compilers provide emulation. Don't try to guess where
+# the compiler hides <stbool.h>.
+case "$CCARGS" in
+ *-DNO_STDBOOL*) ;;
+ *) cat >makedefs.test.c <<'EOF'
+#include <stdbool.h>
+bool x;
+EOF
+    ${CC-gcc} -c makedefs.test.c >/dev/null 2>&1 ||
+	CCARGS="$CCARGS -DNO_STDBOOL"
+    rm -f makedefs.test.[co]
+    ;;
+esac
+
 # Defaults that can be overruled (make makefiles CC=cc OPT=-O6 DEBUG=)
 # Disable optimizations by default when compiling for Purify. Disable
 # optimizations by default with gcc 2.8, until the compiler is known to
@@ -1107,9 +1171,10 @@ do
     esac
 done
 
+default_cache_db_type_macro=DEF_CACHE_DB_TYPE
 default_database_type_macro=DEF_DB_TYPE
 
-for parm_name in default_database_type
+for parm_name in default_cache_db_type default_database_type
 do
     eval parm_val=\"\$$parm_name\"
     eval parm_macro=\"\$${parm_name}_macro\"
@@ -1304,6 +1369,80 @@ do
 	test "$opt" = "$allowed" && exit 0
     done; exit 1) || error "invalid option '$opt' in POSTFIX_INSTALL_OPTS"
 done
+
+# If -DNO_DB is specified then 'hash' and 'btree' will be unavailable.
+
+check_no_db_overrides()
+{
+    trap 'rm -f makedefs.test makedefs.test.[co]' 0 1 2 3 15
+        cat src/util/sys_defs.h >makedefs.test.c
+        cat >>makedefs.test.c <<'EOF'
+#include <stdlib.h>
+#include <stdio.h>
+#include <string.h>
+int     main(void)
+{
+    struct def_info {
+	const char *mac_name;
+	const char *parm_name;
+	const char *def_type;
+	const char *problem;
+    };
+    struct def_info def_infos[] = {
+	{"DEF_DB_TYPE", "default_database_type", DEF_DB_TYPE},
+	{"DEF_CACHE_DB_TYPE", "default_cache_db_type", DEF_CACHE_DB_TYPE},
+    };
+    const char *bdb_types[] = {"hash", "btree"};
+    struct def_info *pdef_info;
+    const char *const * pbdb_type;
+    const char *three_bs = "\\\\\\";
+    int     status = 0;
+
+    for (pdef_info = def_infos; pdef_info < def_infos + 2; pdef_info++) {
+	for (pbdb_type = bdb_types; pbdb_type < bdb_types + 2; pbdb_type++) {
+	    if (strcmp(pdef_info->def_type, *pbdb_type) == 0) {
+		pdef_info->problem = *pbdb_type;
+		status = 1;
+	    }
+	}
+    }
+    if (status != 0) {
+	fprintf(stderr, "\nBuilding with -DNO_DB, but at least one default "
+		"setting still\nrequires 'hash' or 'btree':\n");
+	for (pdef_info = def_infos; pdef_info < def_infos + 2; pdef_info++) {
+	    if (pdef_info->problem) {
+		fprintf(stderr, "  %s=%s\n", pdef_info->parm_name,
+			pdef_info->problem);
+	    }
+	}
+	fprintf(stderr, "\nTo fix, specify types other than 'hash' or 'btree', "
+			"for example:\n  make makefiles ... \\\n    ");
+	for (pdef_info = def_infos; pdef_info < def_infos + 2; pdef_info++) {
+	    if (pdef_info->problem) {
+		fprintf(stderr, " %s=lmdb", pdef_info->parm_name);
+	    }
+	}
+	fprintf(stderr, " ...\n\nOr, using older syntax:\n");
+	fprintf(stderr, "  make makefiles ... \\\n    CCARGS=\"$CCARGS -DNO_DB");
+	for (pdef_info = def_infos; pdef_info < def_infos + 2; pdef_info++) {
+	    if (pdef_info->problem) {
+		fprintf(stderr, " -D%s=%s\"lmdb%s\"",
+			pdef_info->mac_name, three_bs, three_bs);
+	    }
+	}
+	fprintf(stderr, " ...\" ...\n\n");
+    }
+    exit(status);
+}
+EOF
+    eval ${CC-gcc} ${CCARGS} -D$SYSTYPE -o makedefs.test makedefs.test.c || exit 1
+    ./makedefs.test || exit 1
+    rm -f makedefs.test makedefs.test.[co]
+}
+
+case "$CCARGS" in
+ *-DNO_DB*) check_no_db_overrides || exit 1;;
+esac
 
 # Finally...
 

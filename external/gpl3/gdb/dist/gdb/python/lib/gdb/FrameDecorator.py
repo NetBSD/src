@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -174,7 +174,7 @@ class FrameDecorator(_FrameDecoratorBase):
     sub-classed from FrameDecorator.  If Decorator1 just overrides the
     'function' method, then all of the other methods are carried out
     by the super-class FrameDecorator.  But Decorator2 may have
-    overriden other methods, so FrameDecorator will look at the
+    overridden other methods, so FrameDecorator will look at the
     'base' parameter and defer to that class's methods.  And so on,
     down the chain."""
 
@@ -284,6 +284,9 @@ class FrameVars(object):
                     # We use an 'elif' here because is_variable
                     # returns False for arguments as well.  Anyway,
                     # don't include non-variables here.
+                    continue
+                elif sym.is_artificial:
+                    # Skip artificial symbols.
                     continue
                 lvars.append(SymValueWrapper(frame, sym))
 

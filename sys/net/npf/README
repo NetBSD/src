@@ -1,4 +1,4 @@
-$NetBSD: README,v 1.1.40.1 2025/08/02 05:57:48 perseant Exp $
+$NetBSD: README,v 1.1.40.2 2026/11/04 23:27:58 perseant Exp $
 
 This directory contains kernel source for NPF, the NetBSD Packet
 Filter, but the README also applies to:
@@ -12,6 +12,6 @@ Filter, but the README also applies to:
 
 Previously, NetBSD considered https://github.com/rmind/npf/ to be the
 upstream location.  There is no obligation to file PRs when changing
-npf in NetBSD.  Please avoid unecessary divergence in order to ease
+npf in NetBSD.  Please avoid unnecessary divergence in order to ease
 future syncing from this repo, but this caution should not block
 improvements.

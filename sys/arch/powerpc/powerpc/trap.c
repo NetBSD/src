@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.165 2023/12/15 09:31:02 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.165.2.1 2026/11/04 23:21:13 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -35,7 +35,7 @@
 #define	__UCAS_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2023/12/15 09:31:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165.2.1 2026/11/04 23:21:13 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altivec.h"
@@ -71,6 +71,9 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.165 2023/12/15 09:31:02 rin Exp $");
 
 static int emulate_privileged(struct lwp *, struct trapframe *);
 static int fix_unaligned(struct lwp *, struct trapframe *);
+#ifdef PPC_IBMESPRESSO
+static int fix_stwcx(struct lwp *, struct trapframe *);
+#endif
 static inline vaddr_t setusr(vaddr_t, size_t *);
 static inline void unsetusr(void);
 
@@ -437,8 +440,15 @@ vm_signal:
 					break;
 				}
 				ksi.ksi_code = ILL_PRVOPC;
-			} else
+			} else {
+#ifdef PPC_IBMESPRESSO
+				if (fix_stwcx(l, tf)) {
+					tf->tf_srr0 += 4;
+					break;
+				}
+#endif
 				ksi.ksi_code = ILL_ILLOPC;
+			}
 			if (cpu_printfataltraps
 			    && (p->p_slflag & PSL_TRACED) == 0
 			    && !sigismember(&p->p_sigctx.ps_sigcatch,
@@ -489,9 +499,9 @@ brain_damage2:
 #endif
 #ifdef TRAP_PANICWAIT
 		printf("Press a key to panic.\n");
-		cnpollc(1);
+		cnpollc(true);
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 #endif
 		panic("trap");
 	}
@@ -1169,7 +1179,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 const struct dsi_info*
 get_dsi_info(register_t dsisr)
 {
-    static const struct dsi_info dsi[] = 
+    static const struct dsi_info dsi[] =
 	{
 	    /* data cache block zero */
 	    {EXC_ALI_DCBZ, 0},
@@ -1197,9 +1207,9 @@ get_dsi_info(register_t dsisr)
 	    {EXC_ALI_LWZUX,     DSI_OP_ZERO|DSI_OP_UPDATE|DSI_OP_INDEXED},
 
 	    /* store words */
-	    {EXC_ALI_STW,   0},				  
-	    {EXC_ALI_STWU,  DSI_OP_UPDATE},		  
-	    {EXC_ALI_STWX,  DSI_OP_INDEXED},		  
+	    {EXC_ALI_STW,   0},
+	    {EXC_ALI_STWU,  DSI_OP_UPDATE},
+	    {EXC_ALI_STWX,  DSI_OP_INDEXED},
 	    {EXC_ALI_STWUX, DSI_OP_UPDATE|DSI_OP_INDEXED},
 
 	    /* load byte-reversed */
@@ -1258,7 +1268,7 @@ get_dsi_info(register_t dsisr)
 	    {EXC_ALI_STWCX, DSI_OP_INDEXED},  /* lwarx */
 
 #ifdef PPC_OEA64
-	    /* 64 bit, load word algebriac */ 
+	    /* 64 bit, load word algebriac */
 	    {EXC_ALI_LWAX,  DSI_OP_ALGEBRAIC|DSI_OP_INDEXED},
 	    {EXC_ALI_LWAUX, DSI_OP_ALGEBRAIC|DSI_OP_UPDATE|DSI_OP_INDEXED},
 
@@ -1285,3 +1295,54 @@ get_dsi_info(register_t dsisr)
     }
     return 0;
 }
+
+#ifdef PPC_IBMESPRESSO
+static int
+fix_stwcx(struct lwp *l, struct trapframe *tf)
+{
+	struct faultbuf env;
+	union instr instr;
+	vaddr_t uva, p;
+	size_t len;
+	uint32_t cr;
+
+	if (copyin((void *)tf->tf_srr0, &instr.i_int, sizeof(instr)) != 0) {
+		printf("trap: copyin of 0x%08lx failed\n", tf->tf_srr0);
+		return 0;
+	}
+
+	if (instr.i_any.i_opcd != OPC_integer_31 ||
+	    instr.i_x.i_xo != OPC31_STWCX) {
+		return 0;
+	}
+	KASSERT(instr.i_x.i_rc == 0);
+
+	if (setfault(&env) != 0) {
+		unsetusr();
+		curpcb->pcb_onfault = 0;
+		printf("trap: stwcx. emulate failed\n");
+		return 0;
+	}
+
+	uva = (instr.i_x.i_ra ? tf->tf_ureg.r_fixreg[instr.i_x.i_ra] : 0) +
+	      tf->tf_ureg.r_fixreg[instr.i_x.i_rb];
+	p = setusr(uva, &len);
+
+	asm volatile(
+	    "dcbst	0, %1		\n"
+	    "stwcx.	%2, 0, %1	\n"
+	    "mfcr	%0		\n"
+	    : "=r" (cr)
+	    : "r" (p),
+	      "r" (tf->tf_ureg.r_fixreg[instr.i_x.i_rs])
+	    : "cr0", "memory"
+	);
+
+	tf->tf_ureg.r_cr &= ~0xf0000000;
+	tf->tf_ureg.r_cr |= (cr & 0xf0000000);
+
+	unsetusr();
+	curpcb->pcb_onfault = 0;
+	return 1;
+}
+#endif

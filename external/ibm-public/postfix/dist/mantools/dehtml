@@ -6,4 +6,4 @@ do
     /*) lynx -width=256 -dump file://$i;;
      *) lynx -width=256 -dump file://`pwd`/$i;;
     esac
-done | grep -v 'file:///'
+done | grep -E -v '(file|https?)://'

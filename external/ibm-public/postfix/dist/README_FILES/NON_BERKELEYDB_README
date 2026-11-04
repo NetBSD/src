@@ -1,0 +1,658 @@
+PPoossttffiixx NNoonn--BBeerrkkeelleeyy--DDBB mmiiggrraattiioonn
+
+-------------------------------------------------------------------------------
+
+TTaabbllee ooff ccoonntteennttss
+
+Note: be sure to visit the on-line version of this text at https://
+www.postfix.org/NON_BERKELEYDB_README.html, as support for different Postfix
+versions may be added over time.
+
+  * Introduction
+  * Background
+  * Skip this if not building Postfix from source, or if your system still
+    supports Berkeley DB
+  * Migration support level overview
+  * Level 'disable': manual migration
+  * Level 'enable-redirect': database aliasing
+  * Level 'enable-reindex': redirect and automatically generate non-Berkeley-DB
+    indexed files
+  * Addressing errors with automatic indexed file generation
+  * Appendix: Mailman integration
+
+IInnttrroodduuccttiioonn
+
+(With Postfix 3.10 and earlier, please skip to the "Manual Migration Process".)
+
+(Please see the Appendix for Mailman integration tips.)
+
+After running the same Postfix configuration for a decade or more, there is a
+rude awakening when you update the OS to a newer version that has deleted its
+support for Berkeley DB. Postfix programs fail to open all hash: and btree:
+tables with messages like this:
+
+    Berkeley DB support for 'hash:/etc/postfix/virtual' is not available
+    for this build; see https://www.postfix.org/NON_BERKELEYDB_README.html
+    for alternatives
+
+This document comes to the rescue, with strategies to migrate an existing
+Postfix configuration that uses Berkeley DB hash: and btree: database files, to
+an OS distribution that has removed Berkeley DB support, with a Postfix
+configuration that uses lmdb: (or a combination of cdb: and lmdb:).
+
+By the way, you don't have to wait until Berkeley DB support is removed; your
+can proactively use the steps described here on a system that still has
+Berkeley DB, to migrate a Postfix configuration from Berkeley DB to lmdb: (or a
+combination of cdb: and lmdb:).
+
+BBaacckkggrroouunndd
+
+Historically, Postfix has used Berkeley DB hash: and btree: for key-value
+stores, as indicated in the "With Berkeley DB" table column below. In a world
+without Berkeley DB, good replacements are cdb: and lmdb: as indicated in the
+"No Berkeley DB" column.
+
+     _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+    |PPuurrppoossee           |WWiitthh BBeerrkkeelleeyy DDBB           |NNoo BBeerrkkeelleeyy DDBB            |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Mostly-static data|                           |default_database_type=lmdb|
+    |such as aliases,  |default_database_type=hash |or                        |
+    |transport_maps,   |                           |default_database_type=cdb |
+    |access tables     |                           |                          |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+    |Dynamic caches    |                           |                          |
+    |maintained by     |                           |                          |
+    |postscreen(8),    |default_cache_db_type=btree|default_cache_db_type=lmdb|
+    |verify(8), tlsmgr |                           |                          |
+    |(8)               |                           |                          |
+    |_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+The default values for default_database_type and default_cache_db_type may be
+specified at build time (see the section below, and they may be changed later
+by editing main.cf, for example with the postconf(1) command.)
+
+The sections that follow present three migration strategies with different
+levels of assistance by tooling that was developed for Postfix 3.11 and later.
+
+SSkkiipp tthhiiss iiff nnoott bbuuiillddiinngg PPoossttffiixx ffrroomm ssoouurrccee,, oorr iiff yyoouurr ssyysstteemm ssttiillll ssuuppppoorrttss
+BBeerrkkeelleeyy DDBB..
+
+Click here to skip to the next section.
+
+On systems that have removed Berkeley DB support, run "make makefiles" with a
+CCARGS value that (also) contains "-DNO_DB", and specify appropriate values for
+default_database_type (lmdb or cdb) and default_cache_db_type (lmdb).
+
+In the examples below, the "..." are place holders any dependencies that you
+build Postfix with, such as CDB, LDAP, LMDB, MySQL/MariaDB, OpenSSL, SASL, and
+so on.
+
+  * Example 1: use lmdb: for both default_database_type (read-mostly lookup
+    tables) and default_cache_db_type (read-write caches). Terminal input is
+    bboolldd, output is normal font.
+
+        $ mmaakkee mmaakkeeffiilleess CCCCAARRGGSS==""--DDNNOO__DDBB ......"" \\
+            ddeeffaauulltt__ddaattaabbaassee__ttyyppee==llmmddbb \\
+            ddeeffaauulltt__ccaacchhee__ddbb__ttyyppee==llmmddbb ...... \\
+            AAUUXXLLIIBBSS......
+
+    See LMDB_README for LMDB-specific instructions.
+
+  * Example 2: alternative form that produces the same result.
+
+        $ eexxppoorrtt CCCCAARRGGSS==""--DDNNOO__DDBB ......""
+        $ eexxppoorrtt ddeeffaauulltt__ddaattaabbaassee__ttyyppee==llmmddbb
+        $ eexxppoorrtt ddeeffaauulltt__ccaacchhee__ddbb__ttyyppee==llmmddbb
+        $ eexxppoorrtt AAUUXXLLIIBBSS......
+        ...
+        $ mmaakkee mmaakkeeffiilleess
+
+    See LMDB_README for LMDB-specific instructions.
+
+  * Another alternative is to use cdb for default_database_type (read-mostly
+    lookup tables) and lmdb for default_cache_db_type (read-write caches). See
+    CDB_README for CDB-specific instructions.
+
+MMiiggrraattiioonn ssuuppppoorrtt lleevveell oovveerrvviieeww
+
+The goal of the migration is clear: stop using hash: and btree:, and use lmdb:
+or cdb: instead. If your configuration is simple or if you are familiar with
+Postfix configuration, a few "grep" commands will find all the problems, and a
+few edits will be easy to make.
+
+If, on the other hand, you are not familiar with the details of your Postfix
+configuration, then this document provides options where Postfix can help.
+
+Postfix 3.11 introduces multiple levels of migration support. You can use the
+command "postfix non-bdb status" to view the migration support level. This is
+what the default should look like (terminal input is bboolldd, output is normal
+font):
+
+    # ppoossttffiixx nnoonn--bbddbb ssttaattuuss
+    disable
+
+In increasing order, the support levels are:
+
+disable (manual migration)
+    You start up Postfix, watch the logging when Postfix programs fail to open
+    a hash: or btree: table, edit Postfix configuration files to use lmdb: or
+    cdb:, then run postmap(1) or postalias(1) commands to create lmdb: or cdb:
+    indexed database files. Use this option if you are familiar with Postfix
+    configuration.
+
+    This will not fix the integration with Mailman versions from before gitlab
+    commit 8fa56b72 (May 2025) and other software that are broken when they
+    want to use "postmap hash:/path/to/file". Mailman uses this to maintain a
+    table with mailing list contact addresses. For that, you need to use the
+    next-up level.
+
+enable-redirect (database aliasing)
+    This level implicitly redirects a request to access hash:/path/to/file to
+    $default_database_type:/path/to/file, and redirects a request to access a
+    btree:/path/to/file to $default_cache_db_type:/path/to/file.
+
+    This still requires manually running postmap(1) or postalias(1) commands,
+    but "fixes" the integration with Mailman versions from before gitlab commit
+    8fa56b72 (May 2025) and other software when they want to use "postmap hash:
+    /path/to/file", and Berkeley DB support is not available. Such commands
+    will implicitly create a new lmdb: or cdb: indexed database file, depending
+    on the default_database_type value.
+
+enable-reindex (aliasing, plus running postmap(1) or postalias(1))
+    This level implements "enable-redirect (database aliasing)", and also runs
+    the postmap(1) or postalias(1) command to create a new lmdb or cdb indexed
+    database file. This uses the nbdb_reindexd(8) daemon.
+
+The levels enable-redirect and enable-reindex leave some technical debt:
+configurations that still say hash: or btree: (even if they use lmdb: or cdb:
+behind the scene).
+
+  * Using these levels gives you extra time to prepare for a long-term
+    configuration change that replaces hard-coded instances of hash: with the
+    value of default_database_type, and that replaces btree: with the value of
+    default_cache_db_type.
+
+  * Depending on your use of other software that wants to use postmap(1) or
+    postalias(1) commands, you may have to permanently the leave the enable-
+    redirect level active.
+
+After this overview, the sections that follow will go into more detail.
+
+LLeevveell ''ddiissaabbllee'':: mmaannuuaall mmiiggrraattiioonn
+
+(With Postfix 3.10 and earlier please skip to "Manual Migration Process"
+below.)
+
+On Postfix 3.11 and later, to disable all non-Berkeley-DB migration features
+use the "postfix non-bdb" command:
+
+    # ppoossttffiixx nnoonn--bbddbb ddiissaabbllee
+    # ppoossttffiixx rreellooaadd
+
+This will edit main.cf to remove a non_bdb_migration_level setting and the
+level revert to its implicit default (disable), and will edit master.cf to
+remove an entry for the reindex service.
+
+This setting will cause problems with Mailman versions from before gitlab
+commit 8fa56b72 (May 2025) and other software that wants to use "postmap hash:/
+path/to/file" (or similar postalias commands), and Berkeley DB support is no
+longer available. In that case, you will need the "enable-redirect" migration
+support level.
+
+The manual migration process goes like this:
+
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+|MMaannuuaall MMiiggrraattiioonn PPrroocceessss ((aallll PPoossttffiixx vveerrssiioonnss))                              |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|                                                                             |
+|  * Stop Postfix.                                                            |
+|                                                                             |
+|  * Make lmdb the default for both default_database_type (read-mostly lookup |
+|    tables) and default_cache_db_type (read-write caches):                   |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff ddeeffaauulltt__ddaattaabbaassee__ttyyppee==llmmddbb ddeeffaauulltt__ccaacchhee__ddbb__ttyyppee==llmmddbb         |
+|                                                                             |
+|  * Alternatively, make cdb the default for default_database_type (read-     |
+|    mostly lookup tables).                                                   |
+|                                                                             |
+|  * Look for hash: and btree: references in Postfix configuration files.     |
+|    Instead of /etc/postfix use the pathname in the output from "postconf -  |
+|    x config_directory".                                                     |
+|                                                                             |
+|                                                                             |
+|    # ggrreepp --EE --rr ''((hhaasshh||bbttrreeee)):://'' //eettcc//ppoossttffiixx                               |
+|                                                                             |
+|    (Use "egrep" on systems that do not support "grep -E".)                  |
+|                                                                             |
+|  * For each instance in the "grep" output :                                 |
+|                                                                             |
+|                                                                             |
+|     1. Edit the configuration file and replace "hash" with "lmdb" or "cdb"  |
+|        (use the same value as the output from "ppoossttccoonnff --hhxx                 |
+|        ddeeffaauulltt__ddaattaabbaassee__ttyyppee") and replace "btree" with "lmdb".             |
+|                                                                             |
+|     2. If this instance has no source file (only the ".db" file exists),    |
+|        proceed with the next instance of "grep" output.                     |
+|                                                                             |
+|     3. Postfix 3.11 and later: if this instance appears in the output from  |
+|        "ppoossttccoonnff --hhPPPPxx ''**//**//aalliiaass__mmaappss'' || ssoorrtt --uu", run the postalias(1)    |
+|        command. If this instance is like "lmdb:/path/to/source":            |
+|                                                                             |
+|                                                                             |
+|        # ppoossttaalliiaass llmmddbb:://ppaatthh//ttoo//ssoouurrccee                                     |
+|                                                                             |
+|        Instead of "lmdb:" use "cdb:" if the instance is like "cdb:/path/to/ |
+|        source".                                                             |
+|                                                                             |
+|     4. Postfix 3.10 and earlier: if this instance appears in the output from|
+|        "ppoossttccoonnff --hhxx aalliiaass__mmaappss", run the postalias(1) command. If this     |
+|        instance is like "lmdb:/path/to/source":                             |
+|                                                                             |
+|                                                                             |
+|        # ppoossttaalliiaass llmmddbb:://ppaatthh//ttoo//ssoouurrccee                                     |
+|                                                                             |
+|        Instead of "lmdb:" use "cdb:" if the instance is like "cdb:/path/to/ |
+|        source".                                                             |
+|                                                                             |
+|     5. Otherwise, run the postmap(1) command. If this instance is like      |
+|        "lmdb:/path/to/source":                                              |
+|                                                                             |
+|                                                                             |
+|        # ppoossttmmaapp llmmddbb:://ppaatthh//ttoo//ssoouurrccee                                       |
+|                                                                             |
+|        Instead of "lmdb:" use "cdb:" if this instance is like "cdb:/path/to/|
+|        source".                                                             |
+|                                                                             |
+|                                                                             |
+|  * Disable inbound network mail, start Postfix, and send a test message     |
+|    using the Postfix sendmail(1) command.                                   |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff mmaasstteerr__sseerrvviiccee__ddiissaabbllee == iinneett                                 |
+|    # ppoossttffiixx ssttaarrtt                                                          |
+|    # sseennddmmaaiill --bbvv ppoossttmmaasstteerr                                                |
+|                                                                             |
+|  * Watch the log for warnings about files that cannot be opened, find the   |
+|    configuration file that still uses "hash" or "btree", and repeat steps 1-|
+|    5 above.                                                                 |
+|                                                                             |
+|  * Enable inbound network mail, reload Postfix, and connect to the Postfix  |
+|    SMTP network port.                                                       |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff --XX mmaasstteerr__sseerrvviiccee__ddiissaabbllee                                     |
+|    # ppoossttffiixx rreellooaadd                                                         |
+|    # tteellnneett hhoossttnnaammee 2255                                                     |
+|                                                                             |
+|  * Watch the log for warnings about files that cannot be opened, find the   |
+|    configuration file that still uses "hash" or "btree", and repeat steps 1-|
+|    5 above.                                                                 |
+|                                                                             |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+LLeevveell ''eennaabbllee--rreeddiirreecctt'':: ddaattaabbaassee aalliiaassiinngg ((PPoossttffiixx 33..1111 aanndd llaatteerr))
+
+This level is enabled with:
+
+    # ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeddiirreecctt
+    # ppoossttffiixx rreellooaadd
+
+But you should probably wait and review the "Migration Process" below first.
+
+This postfix non-bdb" command edits main.cf to enable redirection (aliasing)
+from Berkeley DB types "hash" and "btree" to the non-Berkeley-DB types
+specified with $default_database_type and $default_cache_db_type. Custom
+redirection may be configured with non_bdb_custom_mapping. This command also
+edits master.cf to remove an unused nbdb_reindex service entry.
+
+The redirection activity is logged by default, to help discovering obsolete
+configuration. Example:
+
+    redirecting hash:/etc/postfix/transport to lmdb:/etc/postfix/transport
+
+This logging may be disabled by setting "non_bdb_migration_log_redirect = no".
+
+This migration support level will not automatically create non-Berkeley-DB
+indexed database files; if you need that, see "enable-redirect below. Instead,
+Postfix programs will log an error as they fail to open an indexed database
+file, and will leave it to the system administrator to run postmap(1) or
+postalias(1) to create that file.
+
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+|MMiiggrraattiioonn PPrroocceessss wwiitthh ''eennaabbllee--rreeddiirreecctt'' ((PPoossttffiixx 33..1111 aanndd llaatteerr))            |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|Suspend inbound mail with:                                                   |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff mmaasstteerr__sseerrvviiccee__ddiissaabbllee == iinneett                                 |
+|                                                                             |
+|                                                                             |
+|Enable database redirection:                                                 |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeddiirreecctt                                        |
+|                                                                             |
+|                                                                             |
+|Start (or reload) Postfix, and send a test message using the Postfix sendmail|
+|(1) command.                                                                 |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttffiixx ssttaarrtt (or ppoossttffiixx rreellooaadd)                                      |
+|    # sseennddmmaaiill --bbvv ppoossttmmaasstteerr                                                |
+|                                                                             |
+|                                                                             |
+|Scan the logging for failure to open database files. For each instance of    |
+|"hash:/path/to/source" or "btree:/path/to/source" that requires manually     |
+|running postmap(1) or postalias(1):                                          |
+|                                                                             |
+|                                                                             |
+|  * If this instance appears in the output from "ppoossttccoonnff --hhPPPPxx ''**//**//        |
+|    aalliiaass__mmaappss'' || ssoorrtt --uu", run the postalias(1) command. If this instance is|
+|    like "lmdb:/path/to/source":                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttaalliiaass llmmddbb:://ppaatthh//ttoo//ssoouurrccee                                         |
+|                                                                             |
+|    Instead of "lmdb:" use "cdb:" if the instance is like "cdb:/path/to/     |
+|    source".                                                                 |
+|                                                                             |
+|  * Otherwise, run the postmap(1) command. If this instance is like "lmdb:/  |
+|    path/to/source":                                                         |
+|                                                                             |
+|                                                                             |
+|    # ppoossttmmaapp llmmddbb:://ppaatthh//ttoo//ssoouurrccee                                           |
+|                                                                             |
+|    Instead of "lmdb:" use "cdb:" if this instance is like "cdb:/path/to/    |
+|    source".                                                                 |
+|                                                                             |
+|                                                                             |
+|Resume inbound mail, reload Postfix, and connect to the Postfix SMTP network |
+|port:                                                                        |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff --XX mmaasstteerr__sseerrvviiccee__ddiissaabbllee                                     |
+|    # ppoossttffiixx rreellooaadd                                                         |
+|    # tteellnneett hhoossttnnaammee 2255                                                     |
+|                                                                             |
+|                                                                             |
+|This may reveal a few more problems. Once there are no more errors with      |
+|opening database files for about 24 hours, scan the log for messages similar |
+|to:                                                                          |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    redirecting xxx:/path/to/file to yyy:/path/to/file                       |
+|                                                                             |
+|                                                                             |
+|and update the obsolete Postfix configuration settings, replacing "xxx:/path/|
+|to/file" with "yyy:/path/to/file.                                            |
+|                                                                             |
+|Once there is no more "redirect" logging, and there are no other programs    |
+|(such as Mailman, see Appendix below) that want to use "postmap hash:/path/  |
+|to/file", then you can turn off non-Berkeley-DB migration support (see       |
+|"disable" above).                                                            |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+This migration support level will fix problems with Mailman versions from
+before May 2025 and other software that wants to use "postmap hash:/path/to/
+file". With database redirection, such commands will implicitly create an
+indexed file for $default_database_type:/path/to/file (similar aliasing happens
+for postalias commands).
+
+The command "postfix non-bdb enable-redirect" will refuse to make any changes
+when default_database_type or default_cache_db_type specify a hash: or btree:
+type.
+
+LLeevveell ''eennaabbllee--rreeiinnddeexx'':: rreeddiirreecctt aanndd aauuttoommaattiiccaallllyy ggeenneerraattee nnoonn--BBeerrkkeelleeyy--DDBB
+iinnddeexxeedd ffiilleess ((PPoossttffiixx 33..1111 aanndd llaatteerr))
+
+NOTE: this level should be used only temporarily to generate most of the non-
+Berkeley-DB indexed files that Postfix needs. Leaving this enabled may expose
+the system to privilege-escalation attacks. There are no security concerns for
+using enable-redirect.
+
+This level is enabled with:
+
+    # ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeiinnddeexx
+
+But you should probably wait and review the "Migration Process" below first.
+
+This postfix non-bdb command edits main.cf to set the non-Berkeley-DB migration
+support level, and master.cf to add or replace an nbdb-reindex service entry.
+
+The resulting configuration implements not only the functionality of enable-
+redirect, but also tries to automatically create a non-Berkeley-DB indexed
+database file when a daemon program wants to access a file that does not exist.
+This uses the nbdb_reindexd(8) daemon to run postmap(1) or postalias(1)
+commands for databases that satisfy basic requirements to block privilege-
+escalation attacks. The number of requirements is large, but mainly, database
+files and their parent directory must not allow write access for group or other
+users, and their pathnames must match a list of trusted directory prefixes. The
+complete list of requirements is documented in nbdb_reindexd(8).
+
+This command immediately generates non-Berkeley-DB indexed files for command-
+line programs that lack privileges to send requests to the nbdb_reindexd(8)
+indexing server. This applies to "hash:" and "btree:" tables that are used by
+postqueue(1) and sendmail(1) as configured with authorized_flush_users and
+authorized_mailq_users, and used by sendmail(1) and postdrop(1) as configured
+with authorized_submit_users and local_login_sender_maps.
+
+The command "postfix non-bdb enable-reindex" will refuse to make any changes
+when default_database_type or default_cache_db_type specify a hash: or btree:
+type.
+ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ 
+|MMiiggrraattiioonn PPrroocceessss wwiitthh ''eennaabbllee--rreeiinnddeexx'' ((PPoossttffiixx 33..1111 aanndd llaatteerr))             |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+|Suspend inbound mail with:                                                   |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff mmaasstteerr__sseerrvviiccee__ddiissaabbllee == iinneett                                 |
+|                                                                             |
+|                                                                             |
+|Enable automatic re-indexing:                                                |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeiinnddeexx                                         |
+|                                                                             |
+|                                                                             |
+|Start (or reload) Postfix, and send a test message using the Postfix sendmail|
+|(1) command.                                                                 |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttffiixx ssttaarrtt (or ppoossttffiixx rreellooaadd)                                      |
+|    # sseennddmmaaiill --bbvv ppoossttmmaasstteerr                                                |
+|                                                                             |
+|                                                                             |
+|The nbdb_reindexd(8) daemon will log when it successfully runs a postmap(1)  |
+|or postalias(1) command. Examples, for a system with "default_database_type =|
+|lmdb":                                                                       |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    successfully executed 'postmap lmdb:/etc/postfix/transport' as uid 0     |
+|    successfully executed 'postalias lmdb:/etc/aliases' as uid 0             |
+|                                                                             |
+|                                                                             |
+|If Postfix programs logs error messages like:                                |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    could not execute command xxx...                                         |
+|                                                                             |
+|                                                                             |
+|see the section "Addressing errors with automatic indexed file generation"   |
+|for the most likely errors that Postfix programs may log.                    |
+|                                                                             |
+|Once there are no more errors from Postfix programs, resume inbound mail,    |
+|reload Postfix, and connect to the Postfix SMTP network port:                |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # ppoossttccoonnff --XX mmaasstteerr__sseerrvviiccee__ddiissaabbllee                                     |
+|    # ppoossttffiixx rreellooaadd                                                         |
+|    # tteellnneett hhoossttnnaammee 2255                                                     |
+|                                                                             |
+|                                                                             |
+|This may reveal a few more problems. Once there are no more errors from      |
+|Postfix programs for about 24 hours, turn off automatic index generation by  |
+|reducing the support level to enable-redirect with:                          |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    # postfix non-bdb enable-redirect                                        |
+|    # postfix reload                                                         |
+|                                                                             |
+|                                                                             |
+|Then, scan the log for instances similar to:                                 |
+|                                                                             |
+|                                                                             |
+|                                                                             |
+|    redirecting xxx:/path/to/file to yyy:/path/to/file                       |
+|                                                                             |
+|                                                                             |
+|and update the obsolete Postfix configuration settings, replacing "xxx:/path/|
+|to/file" with "yyy:/path/to/file.                                            |
+|                                                                             |
+|Once there is no more "redirect" logging, and there are no other programs    |
+|(such as Mailman, see Appendix below) that want to use "postmap hash:/path/  |
+|to/file", then you can turn off non-Berkeley-DB migration support (see       |
+|"disable" above). You will have keep Postfix configured with "enable-        |
+|redirect" until Mailman can be updated to a version that supports other      |
+|Postfix database types.                                                      |
+|_ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ _ |
+
+AAddddrreessssiinngg eerrrroorrss wwiitthh aauuttoommaattiicc iinnddeexxeedd ffiillee ggeenneerraattiioonn
+
+UUnneexxppeecctteedd ppaatthhnnaammee eerrrroorrss
+
+Depending on the location of your Postfix lookup tables, Postfix programs may
+log a request to add a trusted directory to the directories listed with
+non_bdb_migration_allow_root_prefixes or non_bdb_migration_allow_user_prefixes.
+
+Example, with line breaks added for readability:
+
+    could not execute command 'postmap lmdb:/path/to/file': table
+    /path/to/file has an unexpected pathname;
+
+    to allow automatic indexing as root, append its parent directory
+    to the non_bdb_migration_allow_root_prefixes setting (current setting
+    is: "/etc /usr/local/etc");
+
+    alternatively, execute the failed command by hand
+
+You have two options:
+
+ 1. If you think that the suggested change is safe, update the setting as
+    proposed and execute "postfix reload".
+
+ 2. Alternatively, you can execute the failed postmap(1) or postalias(1)
+    command by hand, and Postfix will not log the same error again.
+
+A similar request may be logged when a file needs to be indexed as a non-root
+user.
+
+UUnneexxppeecctteedd ffiillee oorr ddiirreeccttoorryy oowwnneerr oorr ppeerrmmiissssiioonnss
+
+Other errors may be logged when a database file or directory has an unexpected
+owner, or when it is writable by group or by other users.
+
+Example with line breaks added for readability:
+
+    could not execute command 'postmap lmdb:/path/to/file': legacy
+    indexed file '/path/to/file.db' is owned by uid '0', but parent
+    directory '/path/to' is owned or writable by other user;
+
+    to allow automatic indexing, correct the ownership or permissions;
+
+    alternatively, execute the failed command by hand
+
+Again, you have two options:
+
+ 1. Fix the ownership or permission error.
+
+ 2. Execute the failed postmap(1) or postalias(1) command by hand, and Postfix
+    will not log the same error again.
+
+AAppppeennddiixx:: MMaaiillmmaann iinntteeggrraattiioonn
+
+This section has instructions to migrate an existing Mailman configuration that
+wants to use commands like "postmap hash:/path/to/file". Mailman uses such
+commands to maintain tables with mailing list contact addresses and domain
+names. This will break on systems that no longer have Berkeley DB support.
+
+Solutions:
+
+  * (Not recommended) Upgrade to a Mailman version that contains gitlab commit
+    8fa56b72 (May 2025). Unfortunately, this has not yet been widely adopted by
+    OS distributions.
+
+  * Avoid Mailman changes, and use Postfix migration support described below.
+    In a nutshell, the postmap command will execute the command "postmap hash:/
+    path/to/file" as if the command specifies lmdb:/path/to/file (or cdb:,
+    depending on Postfix configuration).
+
+With Mailman3 the integration with Postfix using LMTP may look like:
+
+    /var/lib/mailman3/data/postfix_domains      (domain names)
+    /var/lib/mailman3/data/postfix_domains.db   (Berkeley DB hash file)
+    /var/lib/mailman3/data/postfix_lmtp         (transport map)
+    /var/lib/mailman3/data/postfix_lmtp.db      (Berkeley DB hash file)
+
+    Caution: the data directory may contain other files with names ending in
+    ".db" that are not part of the Mailman-Postfix integration. Do not tamper
+    with the other files.
+
+The relevant Postfix migration levels are:
+
+enable-redirect (redirect hash: to lmdb: or cdb:)
+    Command: # ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeddiirreecctt
+
+    This will fix the problem that Mailman wants to use commands like "postmap
+    hash:/path/to/postfix_domains" and "postmap hash:/path/to/postfix_lmtp".
+
+    Instead of complaining about an unsupported database type, these postmap
+    commands will implicitly create ".lmdb" indexed files like (lmdb:/path/to/
+    postfix_domains or lmdb:/path/to/postfix_lmtp, or their cdb: versions
+    depending on the Postfix default_database_type setting).
+
+    This will not fix the problem that Postfix wants to use databases like
+    hash:/path/to/postfix_domains and hash::/path/to/postfix_lmtp. With enable-
+    redirect, these will redirect to ".lmdb" indexed files (good) but those
+    files do not yet exist (bad). You will need to create them by hand with
+    commands like:
+
+    # ppoossttmmaapp llmmddbb:://ppaatthh//ttoo//ppoossttffiixx__ddoommaaiinnss
+    # ppoossttmmaapp llmmddbb:://ppaatthh//ttoo//ppoossttffiixx__llmmttpp
+
+    After this, no further human action will be needed. When Mailman needs to
+    update these files, it will invoke postmap commands that will work as
+    promised above. Leave the Postfix migration level at enable-reindex until
+    you can upgrade to a newer Mailman version that supports Postfix with non-
+    Berkeley databases.
+
+enable-reindex (also automatically run postmap commands)
+    Command: # ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeddiirreecctt
+
+    In addition to "enable-redirect", Postfix will also try to run commands
+    like "postmap lmdb:/path/to/postfix_domains" and "postmap lmdb:/path/to/
+    postfix_lmtp". There will be some delay depending on the amount of mailing
+    list traffic; you may want to post a test message to make the postmap
+    commands happen sooner.
+
+    Postfix will log the postmap commands (or will log a request to make some
+    configuration changes; see "Addressing errors with automatic indexed file
+    generation" above).
+
+    Note: once these "postmap" commands have completed, you should reduce the
+    migration support level with the command "ppoossttffiixx nnoonn--bbddbb eennaabbllee--rreeddiirreecctt".
+    For security reasons the enable-reindex level should not be permanently
+    enabled.
+

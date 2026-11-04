@@ -1,6 +1,6 @@
 /* Self tests for tracepoint-related code for GDB, the GNU debugger.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -60,9 +60,7 @@ test_parse_static_tracepoint_marker_definition ()
 } /* namespace tracepoint_tests */
 } /* namespace selftests */
 
-void _initialize_tracepoint_selftests ();
-void
-_initialize_tracepoint_selftests ()
+INIT_GDB_FILE (tracepoint_selftests)
 {
   selftests::register_test
     ("parse_static_tracepoint_marker_definition",

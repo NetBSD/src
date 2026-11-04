@@ -1,6 +1,6 @@
 /* CLI options framework, for GDB.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_OPTION_H
-#define CLI_OPTION_H 1
+#ifndef GDB_CLI_CLI_OPTION_H
+#define GDB_CLI_CLI_OPTION_H
 
 #include <optional>
 #include "gdbsupport/array-view.h"
@@ -91,6 +91,7 @@ public:
       int *(*integer) (const option_def &, void *ctx);
       const char **(*enumeration) (const option_def &, void *ctx);
       std::string *(*string) (const option_def &, void *ctx);
+      ui_file_style::color *(*color) (const option_def &, void *ctx);
     }
   var_address;
 
@@ -308,6 +309,46 @@ struct string_option_def : option_def
   }
 };
 
+/* A var_filename command line option.  */
+
+template<typename Context>
+struct filename_option_def : option_def
+{
+  filename_option_def (const char *long_option_,
+		       std::string *(*get_var_address_cb_) (Context *),
+		       show_value_ftype *show_cmd_cb_,
+		       const char *set_doc_,
+		       const char *show_doc_ = nullptr,
+		       const char *help_doc_ = nullptr)
+    : option_def (long_option_, var_filename, nullptr,
+		  (erased_get_var_address_ftype *) get_var_address_cb_,
+		  show_cmd_cb_,
+		  set_doc_, show_doc_, help_doc_)
+  {
+    var_address.string = detail::get_var_address<std::string, Context>;
+  }
+};
+
+/* A var_color command line option.  */
+
+template<typename Context>
+struct color_option_def : option_def
+{
+  color_option_def (const char *long_option_,
+		    ui_file_style::color *(*get_var_address_cb_) (Context *),
+		    show_value_ftype *show_cmd_cb_,
+		    const char *set_doc_,
+		    const char *show_doc_ = nullptr,
+		    const char *help_doc_ = nullptr)
+    : option_def (long_option_, var_color, nullptr,
+		  (erased_get_var_address_ftype *) get_var_address_cb_,
+		  show_cmd_cb_,
+		  set_doc_, show_doc_, help_doc_)
+  {
+    var_address.color = detail::get_var_address<ui_file_style::color, Context>;
+  }
+};
+
 /* A group of options that all share the same context pointer to pass
    to the options' get-current-value callbacks.  */
 struct option_def_group
@@ -379,4 +420,4 @@ extern void add_setshow_cmds_for_options (command_class cmd_class, void *data,
 } /* namespace option */
 } /* namespace gdb */
 
-#endif /* CLI_OPTION_H */
+#endif /* GDB_CLI_CLI_OPTION_H */

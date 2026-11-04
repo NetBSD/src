@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec.h,v 1.9.2.1 2025/08/02 05:53:34 perseant Exp $	*/
+/*	$NetBSD: dnssec.h,v 1.9.2.2 2026/11/04 23:18:06 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -148,12 +148,16 @@ dns_dnssec_sign(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 isc_result_t
 dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
 		  bool ignoretime, unsigned int maxbits, isc_mem_t *mctx,
-		  dns_rdata_t *sigrdata, dns_name_t *wild);
+		  dns_rdata_t *sigrdata, dns_name_t *wild,
+		  dns_name_t *wildsigner);
 /*%<
  *	Verifies the RRSIG record covering this rdataset signed by a specific
  *	key.  This does not determine if the key's owner is authorized to sign
  *	this record, as this requires a resolver or database.
  *	If 'ignoretime' is true, temporal validity will not be checked.
+ *
+ *	If 'set' is of type NSEC, this function also verifies that the
+ *	Next Name is a subdomain of the Signer's Name from 'sigrdata'.
  *
  *	'maxbits' specifies the maximum number of rsa exponent bits accepted.
  *
@@ -163,20 +167,26 @@ dns_dnssec_verify(const dns_name_t *name, dns_rdataset_t *set, dst_key_t *key,
  *\li		'key' is a valid key
  *\li		'mctx' is not NULL
  *\li		'sigrdata' is a valid rdata containing a SIG record
- *\li		'wild' if non-NULL then is a valid and has a buffer.
+ *\li		'wild' if non-NULL then is a valid name and has a buffer.
+ *\li		'wildsigner' if non-NULL then is a valid name and has a buffer.
  *
  *	Returns:
  *\li		#ISC_R_SUCCESS
  *\li		#ISC_R_NOMEMORY
  *\li		#DNS_R_FROMWILDCARD - the signature is valid and is from
  *			a wildcard expansion.  dns_dnssec_verify2() only.
- *			'wild' contains the name of the wildcard if non-NULL.
+ *			'wild', if non-NULL, contains the name of the wildcard.
+ *			'wildsigner', if non-NULL, contains the 'signer' name
+ *			from the RRSIG signing the wildcard.
  *\li		#DNS_R_SIGINVALID - the signature fails to verify
  *\li		#DNS_R_SIGEXPIRED - the signature has expired
  *\li		#DNS_R_SIGFUTURE - the signature's validity period has not begun
  *\li		#DNS_R_KEYUNAUTHORIZED - the key cannot sign this data (either
  *			it is not a zone key or its flags prevent
  *			authentication)
+ *
+ *\li		#DNS_R_NOVALIDNSEC - the NSEC rdata is not valid
+ *\li		#DNS_R_KEYUNAUTHORIZED - the key cannot sign this data
  *\li		DST_R_*
  */
 
@@ -287,12 +297,15 @@ dns_dnssec_get_hints(dns_dnsseckey_t *key, isc_stdtime_t now);
 isc_result_t
 dns_dnssec_findmatchingkeys(const dns_name_t *origin, dns_kasp_t *kasp,
 			    const char *keydir, dns_keystorelist_t *keystores,
-			    isc_stdtime_t now, isc_mem_t *mctx,
+			    isc_stdtime_t now, bool rrtypekey, isc_mem_t *mctx,
 			    dns_dnsseckeylist_t *keylist);
 /*%<
  * Search for K* key files matching the name in 'origin'. If 'kasp' is not
  * NULL, search in the directories used in 'keystores'. Otherwise search in the
  * key-directory 'keydir'.
+ *
+ * If 'rrtypekey' is true, then KEY type keys are matched (e.g. for SIG(0)),
+ * otherwise DNSKEY type keys are matched for DNSSEC.
  *
  * Append all such keys, along with use hints gleaned from their
  * metadata, onto 'keylist'.  Skip any unsupported algorithms.

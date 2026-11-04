@@ -1,5 +1,5 @@
 /* BFD library support routines for the Renesas / SuperH SH architecture.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
    Hacked by Steve Chamberlain of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -117,9 +117,6 @@ sh_get_arch_from_bfd_mach (unsigned long mach)
     else
       i++;
 
-  /* Machine not found.   */
-  BFD_FAIL();
-
   return SH_ARCH_UNKNOWN_ARCH;
 }
 
@@ -138,9 +135,6 @@ sh_get_arch_up_from_bfd_mach (unsigned long mach)
       return bfd_to_arch_table[i].arch_up;
     else
       i++;
-
-  /* Machine not found.  */
-  BFD_FAIL();
 
   return SH_ARCH_UNKNOWN_ARCH;
 }

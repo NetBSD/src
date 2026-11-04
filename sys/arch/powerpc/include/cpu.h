@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.124 2023/07/26 06:36:20 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.124.6.1 2026/11/04 23:21:10 perseant Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -402,6 +402,7 @@ void	icache_inv(vaddr_t, vsize_t);
 void *	mapiodev(paddr_t, psize_t, bool);
 void	unmapiodev(vaddr_t, vsize_t);
 
+struct trapframe;
 int	emulate_mxmsr(struct lwp *, struct trapframe *, uint32_t);
 
 #ifdef MULTIPROCESSOR
@@ -454,6 +455,8 @@ void	cpu_need_proftick(struct lwp *);
 
 void	cpu_fixup_stubs(void);
 
+int	cpu_dumpsize(void);
+
 #if !defined(PPC_IBM4XX) && !defined(PPC_BOOKE) && !defined(_MODULE)
 int	cpu_get_dfs(void);
 void	cpu_set_dfs(int);
@@ -462,6 +465,7 @@ void	oea_init(void (*)(void));
 void	oea_startup(const char *);
 void	oea_dumpsys(void);
 void	oea_install_extint(void (*)(void));
+void	oea_install_extint_vec(void (*)(void), u_int);
 paddr_t	kvtop(void *);
 
 extern paddr_t msgbuf_paddr;
@@ -508,5 +512,6 @@ void	__syncicache(void *, size_t);
 #define	CPU_EXECPROT		11	/* bool: PROT_EXEC works */
 #define	CPU_FPU			12
 #define	CPU_NO_UNALIGNED	13	/* No HW support for unaligned access */
+#define	CPU_PVR			14	/* int: processor version */
 
 #endif	/* _POWERPC_CPU_H_ */

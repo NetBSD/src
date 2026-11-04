@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.70 2024/03/05 14:15:35 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.70.2.1 2026/11/04 23:21:17 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70 2024/03/05 14:15:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.70.2.1 2026/11/04 23:21:17 perseant Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -132,7 +132,7 @@ initppc(u_int startkernel, u_int endkernel, u_int args, void *btinfo)
 		memcpy(bootinfo, btinfo, sizeof(bootinfo));
 	else
 		args = RB_SINGLE;	/* boot via S-record loader */
-		
+
 	meminfo = lookup_bootinfo(BTINFO_MEMORY);
 	if (meminfo)
 		memsize = meminfo->memsize & ~PGOFSET;
@@ -297,7 +297,7 @@ lookup_bootinfo(int type)
 	struct btinfo_common *help = (struct btinfo_common *)bootinfo;
 
 	if (help->next == 0)
-		return (NULL);	/* bootinfo[] was not made */ 
+		return (NULL);	/* bootinfo[] was not made */
 	do {
 		bt = help;
 		if (bt->type == type)
@@ -365,28 +365,28 @@ cpu_reboot(int howto, char *what)
 
 	boothowto = howto;
 	if ((howto & RB_NOSYNC) == 0 && syncing == 0) {
-		syncing = 1; 
+		syncing = 1;
 		vfs_shutdown();		/* sync */
-	}	    
-	
+	}
+
 	/* Disable intr */
 	/* splhigh(); */
-	
+
 	/* Do dump if requested */
 	if ((howto & (RB_DUMP | RB_HALT)) == RB_DUMP)
 		oea_dumpsys();
-	
+
 	doshutdownhooks();
 
 	pmf_system_shutdown(boothowto);
-	 
+
 	if ((howto & RB_POWERDOWN) == RB_HALT) {
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* for proper keyboard command handling */
-		cngetc();  
-		cnpollc(0);
+		cnpollc(true);	/* for proper keyboard command handling */
+		cngetc();
+		cnpollc(false);
 		howto = RB_AUTOBOOT;
 	}
 
@@ -420,7 +420,7 @@ module_init_md(void)
 	bi = (struct bi_modulelist_entry *)(module + 1);
 	biend = bi + module->num;
 	while (bi < biend) {
-		printf("module %s at 0x%08x size %x\n", 
+		printf("module %s at 0x%08x size %x\n",
 		    bi->kmod, bi->base, bi->len);
 		/* module_prime(bi->kmod, (void *)bi->base, bi->len); */
 		bi += 1;

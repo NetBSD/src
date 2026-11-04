@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.53 2024/02/28 18:55:11 jakllsch Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.53.2.1 2026/11/04 23:22:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.53 2024/02/28 18:55:11 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.53.2.1 2026/11/04 23:22:05 perseant Exp $");
 
 #include <sys/types.h>
 
@@ -99,6 +99,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
 	    RTK_8168,
 	    "RealTek 8168/8111 PCIe Gigabit Ethernet" },
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168_2,
+	    RTK_8168,
+	    "RealTek 8161 PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_NCUBE, PCI_PRODUCT_NCUBE_TG3648,
 	    RTK_8168,
 	    "TP-Link TG-3468 v2 (RTL8168) Gigabit Ethernet" },
@@ -303,6 +306,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 		aprint_error("\n");
 		return;
 	}
+	pci_intr_setattr(pc, psc->sc_ih, PCI_INTR_MPSAFE, true);
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
 	re_attach(sc);

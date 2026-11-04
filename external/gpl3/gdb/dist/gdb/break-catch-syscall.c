@@ -1,6 +1,6 @@
 /* Everything about syscall catchpoints, for GDB.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,7 +19,6 @@
 
 #include <ctype.h>
 #include "breakpoint.h"
-#include "cli/cli-cmds.h"
 #include "inferior.h"
 #include "cli/cli-utils.h"
 #include "annotate.h"
@@ -423,7 +422,7 @@ catch_syscall_command_1 (const char *arg, int from_tty,
   struct syscall s;
   struct gdbarch *gdbarch = get_current_arch ();
 
-  /* Checking if the feature if supported.  */
+  /* Checking if the feature is supported.  */
   if (gdbarch_get_syscall_number_p (gdbarch) == 0)
     error (_("The feature 'catch syscall' is not supported on \
 this architecture yet."));
@@ -570,9 +569,7 @@ clear_syscall_counts (struct inferior *inf)
   inf_data->syscalls_counts.clear ();
 }
 
-void _initialize_break_catch_syscall ();
-void
-_initialize_break_catch_syscall ()
+INIT_GDB_FILE (break_catch_syscall)
 {
   gdb::observers::inferior_exit.attach (clear_syscall_counts,
 					"break-catch-syscall");

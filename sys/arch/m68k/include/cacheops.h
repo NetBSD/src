@@ -1,4 +1,4 @@
-/*	$NetBSD: cacheops.h,v 1.16 2010/06/06 04:50:07 mrg Exp $	*/
+/*	$NetBSD: cacheops.h,v 1.16.96.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -34,6 +34,23 @@
 
 #include "opt_m68k_arch.h"
 
+#if defined(__mc68010__)
+
+/*
+ * None of these are relevant on the 68010, but generic m68k code
+ * may reference them.
+ */
+
+#define	DCIA()		__nothing
+#define	DCIAS(pa)	__nothing
+#define	DCIS()		__nothing
+#define	DCIU()		__nothing
+#define	ICIA()		__nothing
+#define	ICPA()		__nothing
+#define	PCIA()		__nothing
+
+#else /* ! __mc68010__ */
+
 #if notyet /* XXX */
 #include <machine/cpuconf.h>
 #endif
@@ -42,6 +59,8 @@
 #include <m68k/cacheops_30.h>
 #include <m68k/cacheops_40.h>
 #include <m68k/cacheops_60.h>
+
+/* XXX MMU and cache operations should not be intermingled. */
 
 #define M68K_CACHEOPS_NTYPES (defined(M68K_CACHEOPS_MACHDEP) + \
 	defined(M68020) + defined(M68030) + defined(M68040) + defined(M68060))
@@ -57,10 +76,12 @@
 #define	ICIA()		ICIA_20()
 #define	ICPA()		ICPA_20()
 #define	PCIA()		PCIA_20()
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 #define	TBIA()		TBIA_20()
 #define	TBIAS()		TBIAS_20()
 #define	TBIAU()		TBIAU_20()
 #define	TBIS(va)	TBIS_20((va))
+#endif
 
 #elif defined(M68030)
 
@@ -71,10 +92,12 @@
 #define	ICIA()		ICIA_30()
 #define	ICPA()		ICPA_30()
 #define	PCIA()		PCIA_30()
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 #define	TBIA()		TBIA_30()
 #define	TBIAS()		TBIAS_30()
 #define	TBIAU()		TBIAU_30()
 #define	TBIS(va)	TBIS_30((va))
+#endif
 
 #elif defined(M68040)
 
@@ -85,10 +108,12 @@
 #define	ICIA()		ICIA_40()
 #define	ICPA()		ICPA_40()
 #define	PCIA()		PCIA_40()
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 #define	TBIA()		TBIA_40()
 #define	TBIAS()		TBIAS_40()
 #define	TBIAU()		TBIAU_40()
 #define	TBIS(va)	TBIS_40((va))
+#endif
 
 #elif defined(M68060)
 
@@ -99,10 +124,12 @@
 #define	ICIA()		ICIA_60()
 #define	ICPA()		ICPA_60()
 #define	PCIA()		PCIA_60()
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 #define	TBIA()		TBIA_60()
 #define	TBIAS()		TBIAS_60()
 #define	TBIAU()		TBIAU_60()
 #define	TBIS(va)	TBIS_60((va))
+#endif
 
 #endif
 
@@ -115,10 +142,12 @@
 #define	ICIA()		_ICIA()
 #define	ICPA()		_ICPA()
 #define	PCIA()		_PCIA()
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 #define	TBIA()		_TBIA()
 #define	TBIAS()		_TBIAS()
 #define	TBIAU()		_TBIAU()
 #define	TBIS(va)	_TBIS((va))
+#endif
 
 #endif /* M68K_CACHEOPS_NTYPES == 1 */
 
@@ -129,14 +158,14 @@ void	_DCIU(void);
 void	_ICIA(void);
 void	_ICPA(void);
 void	_PCIA(void);
+#if defined(M68K_MMU_MOTOROLA) || defined(M68K_MMU_HP)
 void	_TBIA(void);
 void	_TBIAS(void);
 void	_TBIAU(void);
 void	_TBIS(vaddr_t);
-
+#endif
 
 #if defined(M68040) || defined(M68060)
-
 /*
  * These cache ops are identical between M68040 and M68060
  * and not available on M68020 and M68030 so no need to check cputype.
@@ -149,7 +178,8 @@ void	_TBIS(vaddr_t);
 #define	DCPP(pa)	DCPP_40(pa)
 #define	DCFL(pa)	DCFL_40(pa)
 #define	DCFP(pa)	DCFP_40(pa)
-
 #endif
+
+#endif /* __mc68010__ */
 
 #endif /* _M68K_CACHEOPS_H_ */

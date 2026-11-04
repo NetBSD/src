@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_fixup.c,v 1.5 2021/11/01 21:28:02 andvar Exp $	*/
+/*	$NetBSD: pci_fixup.c,v 1.5.10.1 2026/11/04 23:21:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -491,35 +491,4 @@ mspcic_pci_fixup(int depth, pcitag_t starttag, int *maxbus, uint32_t *io,
 	printf("  io used %08x to %08x\n", startio, *(io) - 1);
 	printf("  mem used %08x to %08x\n", startmem, *(mem) - 1);
 #endif
-}
-
-/* ======================================================================
- *
- *			PCI device fixup for autoconf
- */
-
-void
-set_pci_props(device_t dev)
-{
-	struct idprom *idp;
-	uint8_t eaddr[ETHER_ADDR_LEN];
-	prop_dictionary_t dict;
-	prop_data_t blob;
-
-	/*
-	 * We only handle network devices.
-	 * XXX: We have to set the ethernet address for HME cards here.  If
-	 * we leave this to the driver attachment, we will crash when trying
-	 * to map the 16MB Ebus device in if_hme_pci.c.
-	 */
-	if (!(device_is_a(dev, "le") || device_is_a(dev, "hme") ||
-	   device_is_a(dev, "be") || device_is_a(dev, "ie")))
-		return;
-
-	idp = prom_getidprom();
-	memcpy(eaddr, idp->idp_etheraddr, 6);
-	dict = device_properties(dev);
-	blob = prop_data_create_data(eaddr, ETHER_ADDR_LEN);
-	prop_dictionary_set(dict, "mac-address", blob);
-	prop_object_release(blob);
 }

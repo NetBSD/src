@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9.2.1 2025/08/02 05:50:41 perseant Exp $
+# $NetBSD: Makefile,v 1.9.2.2 2026/11/04 23:15:26 perseant Exp $
 
 # Transparent struct/union broken
 NOLINT=yes
@@ -1212,7 +1212,7 @@ COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
 # XXXGCC12
-.if ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k"
 COPTS.st_glsl_to_tgsi.cpp += -O1
 COPTS.vl_bicubic_filter.c += -O1
 COPTS.nir_opt_algebraic.c += -Os -fno-jump-tables

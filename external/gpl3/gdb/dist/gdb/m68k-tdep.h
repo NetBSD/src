@@ -1,6 +1,6 @@
 /* Target-dependent code for the Motorola 68000 series.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef M68K_TDEP_H
-#define M68K_TDEP_H
+#ifndef GDB_M68K_TDEP_H
+#define GDB_M68K_TDEP_H
 
 #include "gdbarch.h"
 
@@ -111,4 +111,4 @@ extern void m68k_svr4_init_abi (struct gdbarch_info, struct gdbarch *);
 
 extern int m68kbsd_fpreg_offset (struct gdbarch *gdbarch, int regnum);
 
-#endif /* m68k-tdep.h */
+#endif /* GDB_M68K_TDEP_H */

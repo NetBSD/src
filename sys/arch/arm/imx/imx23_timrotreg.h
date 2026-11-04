@@ -1,4 +1,4 @@
-/* $Id: imx23_timrotreg.h,v 1.1 2012/11/20 19:06:14 jkunz Exp $ */
+/* $NetBSD: imx23_timrotreg.h,v 1.1.78.1 2026/11/04 23:20:10 perseant Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

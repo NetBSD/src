@@ -1,4 +1,4 @@
-/*	$NetBSD: gftfb.c,v 1.14.2.1 2025/08/02 05:55:42 perseant Exp $	*/
+/*	$NetBSD: gftfb.c,v 1.14.2.2 2026/11/04 23:20:42 perseant Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -46,7 +46,8 @@
 
 #include <dev/ic/stireg.h>
 #include <dev/ic/stivar.h>
-
+#include <dev/ic/nglereg.h>
+#include <hppa/dev/sti_pci_var.h>
 #include "opt_gftfb.h"
 
 #ifdef GFTFB_DEBUG
@@ -81,10 +82,7 @@ struct	gftfb_softc {
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
 	kmutex_t sc_hwlock;
-	uint32_t sc_hwmode;
-#define HW_FB	0
-#define HW_FILL	1
-#define HW_BLIT	2
+	uint32_t sc_sba, sc_dba;
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
@@ -95,12 +93,8 @@ struct	gftfb_softc {
 CFATTACH_DECL_NEW(gftfb, sizeof(struct gftfb_softc),
     gftfb_match, gftfb_attach, NULL, NULL);
 
-int	gftfb_readbar(struct sti_softc *, struct pci_attach_args *, u_int, int);
-int	gftfb_check_rom(struct gftfb_softc *, struct pci_attach_args *);
 void	gftfb_enable_rom(struct sti_softc *);
 void	gftfb_disable_rom(struct sti_softc *);
-void	gftfb_enable_rom_internal(struct gftfb_softc *);
-void	gftfb_disable_rom_internal(struct gftfb_softc *);
 
 void 	gftfb_setup(struct gftfb_softc *);
 
@@ -114,9 +108,6 @@ int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
 int	sti_screen_setup(struct sti_screen *, int);
 void	sti_describe_screen(struct sti_softc *, struct sti_screen *);
-
-#define PCI_ROM_SIZE(mr)                                                \
-            (PCI_MAPREG_ROM_ADDR(mr) & -PCI_MAPREG_ROM_ADDR(mr))
 
 /* wsdisplay stuff */
 static int	gftfb_ioctl(void *, void *, u_long, void *, int,
@@ -132,12 +123,15 @@ static int 	gftfb_putpalreg(struct gftfb_softc *, uint8_t, uint8_t,
 
 static void	gftfb_rectfill(struct gftfb_softc *, int, int, int, int,
 			    uint32_t);
+static void	gftfb_rectfill_a(void *, int, int, int, int, long);
+
 static void	gftfb_bitblt(void *, int, int, int, int, int,
 			    int, int);
 
 static void	gftfb_cursor(void *, int, int, int);
 static void	gftfb_putchar(void *, int, int, u_int, long);
 static void	gftfb_putchar_aa(void *, int, int, u_int, long);
+static int	gftfb_allocattr(void *, int, int, int, long *);
 static void	gftfb_copycols(void *, int, int, int, int);
 static void	gftfb_erasecols(void *, int, int, int, long);
 static void	gftfb_copyrows(void *, int, int, int);
@@ -211,6 +205,59 @@ gftfb_write1(struct gftfb_softc *sc, uint32_t offset, uint8_t val)
 	bus_space_write_1(memt, memh, offset, val);
 }
 
+static inline void
+gftfb_wait(struct gftfb_softc *sc)
+{
+	uint8_t stat;
+
+	do {
+		stat = gftfb_read1(sc, NGLE_BUSY);
+		if (stat == 0)
+			stat = gftfb_read1(sc, NGLE_BUSY);
+	} while (stat != 0);
+}
+
+static inline void
+gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
+{
+	uint32_t reg;
+
+	do {
+		reg = gftfb_read4(sc, NGLE_FIFO);
+	} while (reg < slots);
+}
+
+static inline void
+gftfb_sba(struct gftfb_softc *sc, uint32_t mode)
+{
+	if (sc->sc_sba != mode) {
+		gftfb_wait(sc);
+		gftfb_write4(sc, NGLE_SBA, mode);
+		sc->sc_sba = mode;
+	}
+}
+
+static inline void
+gftfb_dba(struct gftfb_softc *sc, uint32_t mode)
+{
+	if (sc->sc_dba != mode) {
+		gftfb_wait_fifo(sc, 2);
+		gftfb_write4(sc, NGLE_DBA, mode);
+		sc->sc_dba = mode;
+	}
+}
+
+static inline void
+gftfb_both(struct gftfb_softc *sc, uint32_t mode)
+{
+	if ((sc->sc_dba != mode) || (sc->sc_sba != mode)) {
+		gftfb_wait(sc);
+		gftfb_write4(sc, NGLE_BAboth, mode);
+		sc->sc_dba = mode;
+		sc->sc_sba = mode;
+	}
+}
+
 void
 gftfb_attach(device_t parent, device_t self, void *aux)
 {
@@ -219,6 +266,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 	struct sti_rom *rom;
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
+	bus_size_t romsize;
 	unsigned long defattr = 0;
 	int ret, is_console = 0;
 
@@ -235,7 +283,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	if (gftfb_check_rom(sc, paa) != 0)
+	if (sti_pci_check_rom(&sc->sc_base, paa, &sc->sc_romh, &romsize) != 0)
 		return;
 
 	ret = sti_pci_is_console(paa, sc->sc_base. bases);
@@ -259,6 +307,8 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
+
+	//bus_space_unmap(paa->pa_memt, sc->sc_romh, romsize);
 
 	aprint_normal_dev(sc->sc_dev, "%s at %dx%d\n", sc->sc_scr.name,
 	    sc->sc_width, sc->sc_height);
@@ -293,6 +343,7 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_gc.gc_bitblt = gftfb_bitblt;
 	sc->sc_gc.gc_blitcookie = sc;
+	sc->sc_gc.gc_rectfill = gftfb_rectfill_a;
 	sc->sc_gc.gc_rop = RopSrc;
 
 	vcons_init_screen(&sc->vd, &sc->sc_console_screen, 1, &defattr);
@@ -335,267 +386,19 @@ gftfb_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Grovel the STI ROM image.
- */
-int
-gftfb_check_rom(struct gftfb_softc *spc, struct pci_attach_args *pa)
-{
-	struct sti_softc *sc = &spc->sc_base;
-	pcireg_t address, mask;
-	bus_space_handle_t romh;
-	bus_size_t romsize, subsize, stiromsize;
-	bus_addr_t selected, offs, suboffs;
-	uint32_t tmp;
-	int i;
-	int rc;
-
-	/* sort of inline sti_pci_enable_rom(sc) */
-	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
-	    ~PCI_MAPREG_ROM_ENABLE);
-	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, address);
-	sc->sc_flags |= STI_ROM_ENABLED;
-	/*
-	 * Map the complete ROM for now.
-	 */
-
-	romsize = PCI_ROM_SIZE(mask);
-	DPRINTF(("%s: mapping rom @ %lx for %lx\n", __func__,
-	    (long)PCI_MAPREG_ROM_ADDR(address), (long)romsize));
-
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address), romsize,
-	    0, &romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map PCI ROM (%d)\n", rc);
-		goto fail2;
-	}
-
-	gftfb_disable_rom_internal(spc);
-	/*
-	 * Iterate over the ROM images, pick the best candidate.
-	 */
-
-	selected = (bus_addr_t)-1;
-	for (offs = 0; offs < romsize; offs += subsize) {
-		gftfb_enable_rom_internal(spc);
-		/*
-		 * Check for a valid ROM header.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x55aa0000) {
-			gftfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM header signature (%08x)\n",
-				     tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		/*
-		 * Check ROM type.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 4);
-		tmp = le32toh(tmp);
-		if (tmp != 0x00000001) {	/* 1 == STI ROM */
-			gftfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM type (%08x)\n", tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		subsize = (bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x0c);
-		subsize <<= 9;
-
-#ifdef GFTFB_DEBUG
-		gftfb_disable_rom_internal(spc);
-		DPRINTF(("ROM offset %08x size %08x type %08x",
-		    (u_int)offs, (u_int)subsize, tmp));
-		gftfb_enable_rom_internal(spc);
-#endif
-
-		/*
-		 * Check for a valid ROM data structure.
-		 * We do not need it except to know what architecture the ROM
-		 * code is for.
-		 */
-
-		suboffs = offs +(bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x18);
-		tmp = bus_space_read_4(pa->pa_memt, romh, suboffs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x50434952) {	/* PCIR */
-			gftfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev, "invalid PCI data"
-				    " signature (%08x)\n", tmp);
-				rc = EINVAL;
-			} else {
-				DPRINTF((" invalid PCI data signature %08x\n",
-				    tmp));
-				continue;
-			}
-		}
-
-		tmp = bus_space_read_1(pa->pa_memt, romh, suboffs + 0x14);
-		gftfb_disable_rom_internal(spc);
-		DPRINTF((" code %02x", tmp));
-
-		switch (tmp) {
-#ifdef __hppa__
-		case 0x10:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-#ifdef __i386__
-		case 0x00:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-		default:
-			DPRINTF((" (wrong architecture)"));
-			break;
-		}
-		DPRINTF(("%s\n", selected == offs ? " -> SELECTED" : ""));
-	}
-
-	if (selected == (bus_addr_t)-1) {
-		if (rc == 0) {
-			aprint_error_dev(sc->sc_dev, "found no ROM with "
-			    "correct microcode architecture\n");
-			rc = ENOEXEC;
-		}
-		goto fail;
-	}
-
-	/*
-	 * Read the STI region BAR assignments.
-	 */
-
-	gftfb_enable_rom_internal(spc);
-	offs = selected +
-	    (bus_addr_t)bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
-	for (i = 0; i < STI_REGION_MAX; i++) {
-		rc = gftfb_readbar(sc, pa, i,
-		    bus_space_read_1(pa->pa_memt, romh, offs + i));
-		if (rc != 0)
-			goto fail;
-	}
-
-	/*
-	 * Find out where the STI ROM itself lies, and its size.
-	 */
-
-	offs = selected +
-	    (bus_addr_t)bus_space_read_4(pa->pa_memt, romh, selected + 0x08);
-	stiromsize = (bus_addr_t)bus_space_read_4(pa->pa_memt, romh,
-	    offs + 0x18);
-	stiromsize = le32toh(stiromsize);
-	gftfb_disable_rom_internal(spc);
-
-	/*
-	 * Replace our mapping with a smaller mapping of only the area
-	 * we are interested in.
-	 */
-
-	DPRINTF(("remapping rom @ %lx for %lx\n",
-	    (long)(PCI_MAPREG_ROM_ADDR(address) + offs), (long)stiromsize));
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address) + offs,
-	    stiromsize, 0, &spc->sc_romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map STI ROM (%d)\n",
-		    rc);
-		goto fail2;
-	}
- 	gftfb_disable_rom_internal(spc);
-	sc->sc_flags &= ~STI_ROM_ENABLED;
-
-	return 0;
-
-fail:
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-fail2:
-	gftfb_disable_rom_internal(spc);
-
-	return rc;
-}
-
-/*
- * Decode a BAR register.
- */
-int
-gftfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa, u_int region,
-    int bar)
-{
-	bus_addr_t addr;
-	bus_size_t size;
-	uint32_t cf;
-	int rc;
-
-	if (bar == 0) {
-		sc->bases[region] = 0;
-		return (0);
-	}
-
-#ifdef DIAGNOSTIC
-	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
-		gftfb_disable_rom(sc);
-		printf("%s: unexpected bar %02x for region %d\n",
-		    device_xname(sc->sc_dev), bar, region);
-		gftfb_enable_rom(sc);
-	}
-#endif
-
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
-
-	rc = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, PCI_MAPREG_TYPE(cf),
-	    &addr, &size, NULL);
-
-	if (rc != 0) {
-		gftfb_disable_rom(sc);
-		aprint_error_dev(sc->sc_dev, "invalid bar %02x for region %d\n",
-		    bar, region);
-		gftfb_enable_rom(sc);
-		return (rc);
-	}
-
-	sc->bases[region] = addr;
-	return (0);
-}
-
-/*
  * Enable PCI ROM.
  */
-void
-gftfb_enable_rom_internal(struct gftfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 gftfb_enable_rom(struct sti_softc *sc)
 {
 	struct gftfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		gftfb_enable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address |= PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	SET(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -603,51 +406,29 @@ gftfb_enable_rom(struct sti_softc *sc)
 /*
  * Disable PCI ROM.
  */
-void
-gftfb_disable_rom_internal(struct gftfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address &= ~PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 gftfb_disable_rom(struct sti_softc *sc)
 {
 	struct gftfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		gftfb_disable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address &= ~PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	CLR(sc->sc_flags, STI_ROM_ENABLED);
 }
 
 static inline void
-gftfb_wait(struct gftfb_softc *sc)
-{
-	uint8_t stat;
-
-	do {
-		stat = gftfb_read1(sc, NGLE_REG_15b0);
-		if (stat == 0)
-			stat = gftfb_read1(sc, NGLE_REG_15b0);
-	} while (stat != 0);
-}
-
-static inline void
 gftfb_setup_fb(struct gftfb_softc *sc)
 {
+	gftfb_both(sc, BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINapp0I, 0));
+	gftfb_write4(sc, NGLE_IBO, 
+	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, 1, 0, 0));
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_10,
-	    BA(IndexedDcd, Otc04, Ots08, AddrByte, 0, BINapp0I, 0));
-	gftfb_write4(sc, NGLE_REG_14, 0x83000300);
-	gftfb_wait(sc);
-	gftfb_write1(sc, NGLE_REG_16b1, 1);
-	sc->sc_hwmode = HW_FB;
+	gftfb_write1(sc, NGLE_CONTROL_FB, 1);
 }
 
 void
@@ -658,12 +439,11 @@ gftfb_setup(struct gftfb_softc *sc)
 	bus_space_handle_t memh = rom->regh[2];
 	int i;
 
-	sc->sc_hwmode = HW_FB;
 	sc->sc_hot_x = 0;
 	sc->sc_hot_y = 0;
 	sc->sc_enabled = 0;
 	sc->sc_video_on = 1;
-
+	sc->sc_sba = sc->sc_dba = 0;
 
 	/* set Bt458 read mask register to all planes */
 	gftfb_wait(sc);
@@ -674,76 +454,75 @@ gftfb_setup(struct gftfb_softc *sc)
 
 	/* attr. planes */
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_11, 0x2ea0d000);
-	gftfb_write4(sc, NGLE_REG_14, 0x23000302);
-	gftfb_write4(sc, NGLE_REG_12, NGLE_ARTIST_CMAP0);
-	gftfb_write4(sc, NGLE_REG_8, 0xffffffff);
+	gftfb_dba(sc, 
+	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINattr, 0));
+	gftfb_write4(sc, NGLE_IBO,
+	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0, 1, 0));
+	gftfb_write4(sc, NGLE_CPR, NGLE_ARTIST_CMAP0);
+	gftfb_write4(sc, NGLE_TRANSFER_DATA, 0xffffffff);
 
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_6, 0x00000000);
-	gftfb_write4(sc, NGLE_REG_9,
+	gftfb_write4(sc, NGLE_DST_XY, 0x00000000);
+	gftfb_write4(sc, NGLE_RECT_SIZE_START,
 	    (sc->sc_scr.scr_cfg.scr_width << 16) | sc->sc_scr.scr_cfg.scr_height);
 	/*
 	 * blit into offscreen memory to force flush previous - apparently
 	 * some chips have a bug this works around
 	 */
-	gftfb_write4(sc, NGLE_REG_6, 0x05000000);
-	gftfb_write4(sc, NGLE_REG_9, 0x00040001);
+	gftfb_write4(sc, NGLE_DST_XY, 0x05000000);
+	gftfb_write4(sc, NGLE_RECT_SIZE_START, 0x00040001);
 
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_12, 0x00000000);
+	gftfb_write4(sc, NGLE_CPR, 0x00000000);
 
 	gftfb_setup_fb(sc);
 
 	/* make sure video output is enabled */
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_21,
-	    gftfb_read4(sc, NGLE_REG_21) | 0x0a000000);
-	gftfb_write4(sc, NGLE_REG_27,
-	    gftfb_read4(sc, NGLE_REG_27) | 0x00800000);
+	gftfb_write4(sc, NGLE_EG_MISCVID,
+	    gftfb_read4(sc, NGLE_EG_MISCVID) | MISCVID_VIDEO_ON);
+	gftfb_write4(sc, NGLE_EG_MISCCTL,
+	    gftfb_read4(sc, NGLE_EG_MISCCTL) | MISCCTL_VIDEO_ON);
 
 	/* initialize cursor sprite */
 	gftfb_wait(sc);
 
 	/* cursor mask */
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_14, 0x300);
-	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
-	gftfb_write4(sc, NGLE_REG_11,
-	    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcmask, 0));
-	gftfb_write4(sc, NGLE_REG_3, 0);
+	gftfb_write4(sc, NGLE_IBO, 0x300);
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+	gftfb_dba(sc, BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcmask, 0));
+	gftfb_write4(sc, NGLE_BINC_DST, 0);
 	for (i = 0; i < 64; i++) {
-		gftfb_write4(sc, NGLE_REG_4, 0xffffffff);
-		gftfb_write4(sc, NGLE_REG_5, 0xffffffff);
+		gftfb_write4(sc, NGLE_BINC_DATA_R, 0xffffffff);
+		gftfb_write4(sc, NGLE_BINC_DATA_DL, 0xffffffff);
 	}
 
 	/* cursor image */
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_14, 0x300);
-	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
-	gftfb_write4(sc, NGLE_REG_11,
-	    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcursor, 0));
-	gftfb_write4(sc, NGLE_REG_3, 0);
+	gftfb_write4(sc, NGLE_IBO, 0x300);
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+	gftfb_dba(sc, BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcursor, 0));
+	gftfb_write4(sc, NGLE_BINC_DST, 0);
 	for (i = 0; i < 64; i++) {
-		gftfb_write4(sc, NGLE_REG_4, 0xff00ff00);
-		gftfb_write4(sc, NGLE_REG_5, 0xff00ff00);
+		gftfb_write4(sc, NGLE_BINC_DATA_R, 0xff00ff00);
+		gftfb_write4(sc, NGLE_BINC_DATA_DL, 0xff00ff00);
 	}
 
 	/* colour map */
+	gftfb_both(sc, BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
+	gftfb_write4(sc, NGLE_IBO, 
+	    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc, 0, 0));
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
-	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
-	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+	gftfb_write4(sc, NGLE_BINC_DST, 0);
+	gftfb_write4(sc, NGLE_BINC_DATA_R, 0);
+	gftfb_write4(sc, NGLE_BINC_DATA_R, 0);
+	gftfb_write4(sc, NGLE_BINC_DATA_R, 0x000000ff);	/* BG */
+	gftfb_write4(sc, NGLE_BINC_DATA_R, 0x00ff0000);	/* FG */
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_3, 0);
-	gftfb_write4(sc, NGLE_REG_4, 0);
-	gftfb_write4(sc, NGLE_REG_4, 0);
-	gftfb_write4(sc, NGLE_REG_4, 0x000000ff);	/* BG */
-	gftfb_write4(sc, NGLE_REG_4, 0x00ff0000);	/* FG */
-	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_2, 0);
-	gftfb_write4(sc, NGLE_REG_26, 0x80008004);
+	gftfb_write4(sc, NGLE_BINC_SRC, 0);
+	gftfb_write4(sc, NGLE_EG_LUTBLT, 0x80008004);
 	gftfb_setup_fb(sc);
 
 	gftfb_move_cursor(sc, 100, 100);
@@ -813,7 +592,8 @@ gftfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    (ms->scr_defattr >> 16) & 0xff]);
 				vcons_redraw_screen(ms);
 				gftfb_set_video(sc, 1);
-			}
+			} else
+				gftfb_setup_fb(sc);
 		}
 		}
 		return 0;
@@ -907,7 +687,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB |
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_FULLCLEAR |
 		     RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
 
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
@@ -926,6 +706,7 @@ gftfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = gftfb_eraserows;
 	ri->ri_ops.erasecols = gftfb_erasecols;
 	ri->ri_ops.cursor = gftfb_cursor;
+	ri->ri_ops.allocattr = gftfb_allocattr;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = gftfb_putchar_aa;
 	} else
@@ -1015,50 +796,30 @@ gftfb_putpalreg(struct gftfb_softc *sc, uint8_t idx, uint8_t r, uint8_t g,
     uint8_t b)
 {
 	mutex_enter(&sc->sc_hwlock);
-	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_10,
-	    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
-	gftfb_write4(sc, NGLE_REG_14, 0x03000300);
-	gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+	gftfb_both(sc, BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
+	gftfb_write4(sc, NGLE_IBO, 0x03000300);
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 
 	gftfb_wait(sc);
-	gftfb_write4(sc, NGLE_REG_3, 0x400 | (idx << 2));
-	gftfb_write4(sc, NGLE_REG_4, (r << 16) | (g << 8) | b);
+	gftfb_write4(sc, NGLE_BINC_DST, 0x400 | (idx << 2));
+	gftfb_write4(sc, NGLE_BINC_DATA_R, (r << 16) | (g << 8) | b);
 
-	gftfb_write4(sc, NGLE_REG_2, 0x400);
-	gftfb_write4(sc, NGLE_REG_26, 0x80000100);
+	gftfb_write4(sc, NGLE_BINC_SRC, 0x400);
+	gftfb_write4(sc, NGLE_EG_LUTBLT, 0x80000100);
 	gftfb_setup_fb(sc);
 	mutex_exit(&sc->sc_hwlock);
 	return 0;
 }
 
 static inline void
-gftfb_wait_fifo(struct gftfb_softc *sc, uint32_t slots)
-{
-	uint32_t reg;
-
-	do {
-		reg = gftfb_read4(sc, NGLE_REG_34);
-	} while (reg < slots);
-}
-
-static inline void
 gftfb_fillmode(struct gftfb_softc *sc)
 {
-	if (sc->sc_hwmode != HW_FILL) {
-		gftfb_wait_fifo(sc, 3);
-		/* plane mask */
-		gftfb_write4(sc, NGLE_REG_13, 0xff);
-		/* bitmap op */
-		gftfb_write4(sc, NGLE_REG_14,
-		    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0,
-		        0, 0));
-		/* dst bitmap access */
-		gftfb_write4(sc, NGLE_REG_11,
-		    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I,
-			0));
-		sc->sc_hwmode = HW_FILL;
-	}
+	gftfb_dba(sc,
+	    BA(IndexedDcd, Otc32, OtsIndirect, AddrLong, 0, BINapp0I, 0));
+	gftfb_wait_fifo(sc, 3);
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xff);
+	gftfb_write4(sc, NGLE_IBO,
+	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, 0, 0, 0));
 }
 
 static void
@@ -1069,14 +830,21 @@ gftfb_rectfill(struct gftfb_softc *sc, int x, int y, int wi, int he,
 
 	gftfb_wait_fifo(sc, 4);
 
-	/* transfer data */
-	gftfb_write4(sc, NGLE_REG_8, 0xffffffff);
-	gftfb_write4(sc, NGLE_REG_35, bg);
-	/* dst XY */
-	gftfb_write4(sc, NGLE_REG_6, (x << 16) | y);
-	/* len XY start */
-	gftfb_write4(sc, NGLE_REG_9, (wi << 16) | he);
+	gftfb_write4(sc, NGLE_TRANSFER_DATA, 0xffffffff);
+	gftfb_write4(sc, NGLE_FG, bg);
+	gftfb_write4(sc, NGLE_DST_XY, (x << 16) | y);
+	gftfb_write4(sc, NGLE_RECT_SIZE_START, (wi << 16) | he);
 
+}
+
+static void
+gftfb_rectfill_a(void *cookie, int dstx, int dsty,
+    int width, int height, long attr)
+{
+	struct gftfb_softc *sc = cookie;
+
+	gftfb_rectfill(sc, dstx, dsty, width, height,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
 }
 
 static void
@@ -1085,19 +853,14 @@ gftfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
 {
 	struct gftfb_softc *sc = cookie;
 
-	if (sc->sc_hwmode != HW_BLIT) {
-		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_10,
-		    BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
-		sc->sc_hwmode = HW_BLIT;
-	}
+	gftfb_both(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
 	gftfb_wait_fifo(sc, 5);
-	gftfb_write4(sc, NGLE_REG_14,
+	gftfb_write4(sc, NGLE_IBO,
 	   IBOvals(rop, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
-	gftfb_write4(sc, NGLE_REG_13, 0xff);
-	gftfb_write4(sc, NGLE_REG_24, (xs << 16) | ys);
-	gftfb_write4(sc, NGLE_REG_7, (wi << 16) | he);
-	gftfb_write4(sc, NGLE_REG_25, (xd << 16) | yd);
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xff);
+	gftfb_write4(sc, NGLE_SRC_XY, (xs << 16) | ys);
+	gftfb_write4(sc, NGLE_SIZE, (wi << 16) | he);
+	gftfb_write4(sc, NGLE_BLT_DST_START, (xd << 16) | yd);
 }
 
 static void
@@ -1157,8 +920,8 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct gftfb_softc *sc = scr->scr_cookie;
 	void *data;
-	int i, x, y, wi, he, rv = GC_NOPE;
-	uint32_t bg, fg, mask;
+	int i, x, y, wi, he;
+	uint32_t bg, fg, mask, cmask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1177,52 +940,87 @@ gftfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	y = ri->ri_yorigin + row * he;
 
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	/* if we're drawing a space we're done here */
 	if (c == 0x20) {
 		gftfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			gftfb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
-
-
-	rv = glyphcache_try(&sc->sc_gc, c, x, y, attr);
-	if (rv == GC_OK)
-		return;
 
 	data = WSFONT_GLYPH(c, font);
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
+	/*
+	 * rectangle fills are implemented as colour expansion by the hardware,
+	 * so we can use the same settings and avoid a bunch of writes to DBA
+	 */
 	gftfb_fillmode(sc);
-	gftfb_wait_fifo(sc, 3);
 
-	/* character colour */
-	gftfb_write4(sc, NGLE_REG_35, fg);
-	gftfb_write4(sc, NGLE_REG_36, bg);
-	/* dst XY */
-	gftfb_write4(sc, NGLE_REG_6, (x << 16) | y);
+	gftfb_wait_fifo(sc, 4);
 
-	if (ri->ri_font->stride == 1) {
-		uint8_t *data8 = data;
-		for (i = 0; i < he; i++) {
-			gftfb_wait_fifo(sc, 2);
-			mask = *data8;
-			gftfb_write4(sc, NGLE_REG_8, mask << 24);
-			gftfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
-			data8++;
+	gftfb_write4(sc, NGLE_FG, fg);
+	gftfb_write4(sc, NGLE_BG, bg);
+	/* pixel address in 32bit since we're in AddrLong mode */
+	gftfb_write4(sc, NGLE_BINC_DST, (x << 2) | (y << 13));
+	/* make a mask covering the character width */
+	cmask = 0xffffffff << (32 - wi);
+	gftfb_write4(sc, NGLE_BINC_MASK, cmask);
+	/*
+	 * ...and now we hammer pixel data into BINC, moving down.
+	 * Unlike FX, we *can* overrun the pipeline with BINC writes,
+	 * especially with colour expansion while scrolling.
+	 * HCRX seems to have a 32 entry pipeline, let's assume we won't
+	 * encounter fonts taller than that for now...
+	 */
+	if (he > 31) {
+		gftfb_wait(sc);
+	} else
+		gftfb_wait_fifo(sc, he);
+
+	if (attr & WSATTR_HILIT) {
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				mask |= mask >> 1;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				mask |= mask >> 1;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
+				data16++;
+			}
 		}
 	} else {
-		uint16_t *data16 = data;
-		for (i = 0; i < he; i++) {
-			gftfb_wait_fifo(sc, 2);
-			mask = *data16;
-			gftfb_write4(sc, NGLE_REG_8, mask << 16);
-			gftfb_write4(sc, NGLE_REG_9, (wi << 16) | 1);
-			data16++;
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				gftfb_write4(sc, NGLE_BINC_DATA_D, mask << 16);
+				data16++;
+			}
 		}
 	}
 
-	if (rv == GC_ADD)
-		glyphcache_add(&sc->sc_gc, c, x, y);
+	if (attr & WSATTR_UNDERLINE) {
+		gftfb_wait_fifo(sc, 2);
+		gftfb_write4(sc, NGLE_BINC_DST,
+		    (x << 2) | ((y + he - 2) << 13));
+		gftfb_write4(sc, NGLE_BINC_DATA_D, cmask);
+	}
 }
 
 static void
@@ -1234,6 +1032,10 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct gftfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE;
 	uint32_t bg;
+	uint32_t latch = 0, bg8, fg8, pixel, mask;
+	int i, line, r, g, b, aval;
+	int r1, g1, b1, r0, g0, b0, fgo, bgo;
+	uint8_t *data8;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
 		return;
@@ -1255,6 +1057,8 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		gftfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			glyphcache_underline(&sc->sc_gc, x, y, attr);
 		return;
 	}
 
@@ -1262,11 +1066,99 @@ gftfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	if (rv == GC_OK)
 		return;
 
-	if (sc->sc_hwmode != HW_FB) gftfb_setup_fb(sc);
-	sc->sc_putchar(cookie, row, col, c, attr);
+	gftfb_dba(sc, BA(IndexedDcd, Otc04, Ots08, AddrLong, 0, BINapp0I, 0));
+	gftfb_wait_fifo(sc, 6);
+	gftfb_write4(sc, NGLE_PLANEMASK, 0xff);
+	gftfb_write4(sc, NGLE_IBO,
+	    IBOvals(RopSrc, 0, BitmapExtent08, 1, DataDynamic, MaskOtc, 0, 0));
+
+	/*
+	 * we need the RGB colours here, so get offsets into rasops_cmap
+	 */
+	fgo = ((attr >> 24) & 0xf) * 3;
+	bgo = ((attr >> 16) & 0xf) * 3;
+
+	r0 = rasops_cmap[bgo];
+	r1 = rasops_cmap[fgo];
+	g0 = rasops_cmap[bgo + 1];
+	g1 = rasops_cmap[fgo + 1];
+	b0 = rasops_cmap[bgo + 2];
+	b1 = rasops_cmap[fgo + 2];
+#define R3G3B2(r, g, b) ((r & 0xe0) | ((g >> 3) & 0x1c) | (b >> 6))
+	bg8 = R3G3B2(r0, g0, b0);
+	fg8 = R3G3B2(r1, g1, b1);
+
+	/*
+	 * This is for masking off pixels at the end of a line if it's not a
+	 * multiple of 4. Would be nice if we knew where the clipping registers
+	 * live...
+	 */
+	mask = 0xf0000000 << (4 - (wi & 3));
+
+	data8 = WSFONT_GLYPH(c, font);
+
+	for (line = 0; line < he; line++) {
+		/* setup BINC write */
+		gftfb_wait_fifo(sc, wi / 2);
+		gftfb_write4(sc, NGLE_BINC_DST, (x << 2) | ((y + line) << 13));
+		gftfb_write4(sc, NGLE_BINC_MASK, 0xffffffff);
+		for (i = 0; i < wi; i++) {
+			aval = *data8;
+			if (aval == 0) {
+				pixel = bg8;
+			} else if (aval == 255) {
+				pixel = fg8;
+			} else {
+				r = aval * r1 + (255 - aval) * r0;
+				g = aval * g1 + (255 - aval) * g0;
+				b = aval * b1 + (255 - aval) * b0;
+				pixel = ((r & 0xe000) >> 8) |
+					((g & 0xe000) >> 11) |
+					((b & 0xc000) >> 14);
+			}
+			latch = (latch << 8) | pixel;
+			/* write in 32bit chunks */
+			if ((i & 3) == 3) {
+				gftfb_write4(sc, NGLE_BINC_DATA_R, latch);
+				latch = 0;
+			}
+			data8++;
+		}
+		/* if we have pixels left in latch write them out */
+		if ((i & 3) != 0) {
+			latch = latch << ((4 - (i & 3)) << 3);
+			/* make sure we write only the pixels in the latch */
+			gftfb_write4(sc, NGLE_BINC_MASK, mask);
+			gftfb_write4(sc, NGLE_BINC_DATA_R, latch);
+		}
+	}
 
 	if (rv == GC_ADD)
 		glyphcache_add(&sc->sc_gc, c, x, y);
+	if (attr & WSATTR_UNDERLINE)
+		glyphcache_underline(&sc->sc_gc, x, y, attr);
+}
+
+static int
+gftfb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static void
@@ -1351,10 +1243,17 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if ((sc->sc_locked == 0) && (sc->sc_mode == WSDISPLAYIO_MODE_EMUL)) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if (row == 0 && nrows == ri->ri_rows) {
+			x = 0;
+			y = 0;
+			width = sc->sc_width;
+			height = sc->sc_height;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		gftfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);
@@ -1369,7 +1268,7 @@ gftfb_eraserows(void *cookie, int row, int nrows, long fillattr)
  * like most hw info, xf86 3.3 -> nglehdw.h was used as documentation
  * problem is, the PCI EG doesn't quite behave like an S9000_ID_ARTIST
  * the cursor position register behaves like the one on HCRX while using
- * the same address as Artist, incuding the enable bit and weird handling
+ * the same address as Artist, including the enable bit and weird handling
  * of negative coordinates. The rest of it, colour map, sprite image etc.,
  * behave like Artist.
  */
@@ -1389,7 +1288,7 @@ gftfb_move_cursor(struct gftfb_softc *sc, int x, int y)
 	pos = (x << 16) | y;
 	if (sc->sc_enabled) pos |= 0x80000000;
 	gftfb_wait_fifo(sc, 2);
-	gftfb_write4(sc, NGLE_REG_17, pos);
+	gftfb_write4(sc, NGLE_EG_CURSOR, pos);
 }
 
 static int
@@ -1418,21 +1317,22 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 		copyin(cur->cmap.green, g, 2);
 		copyin(cur->cmap.red, r, 2);
 		mutex_enter(&sc->sc_hwlock);
-		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_10,
+		gftfb_both(sc,
 		    BA(FractDcd, Otc24, Ots08, Addr24, 0, BINcmap, 0));
-		gftfb_write4(sc, NGLE_REG_14, 0x03000300);
-		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
+		gftfb_write4(sc, NGLE_IBO, 
+		    IBOvals(RopSrc, 0, BitmapExtent08, 0, DataDynamic, MaskOtc,
+		    0, 0));
+		gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
 		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_3, 0);
-		gftfb_write4(sc, NGLE_REG_4, 0);
-		gftfb_write4(sc, NGLE_REG_4, 0);
+		gftfb_write4(sc, NGLE_BINC_DST, 0);
+		gftfb_write4(sc, NGLE_BINC_DATA_R, 0);
+		gftfb_write4(sc, NGLE_BINC_DATA_R, 0);
 		rgb = (r[0] << 16) | (g[0] << 8) | b[0];
-		gftfb_write4(sc, NGLE_REG_4, rgb);	/* BG */
+		gftfb_write4(sc, NGLE_BINC_DATA_R, rgb);	/* BG */
 		rgb = (r[1] << 16) | (g[1] << 8) | b[1];
-		gftfb_write4(sc, NGLE_REG_4, rgb);	/* FG */
-		gftfb_write4(sc, NGLE_REG_2, 0);
-		gftfb_write4(sc, NGLE_REG_26, 0x80008004);
+		gftfb_write4(sc, NGLE_BINC_DATA_R, rgb);	/* FG */
+		gftfb_write4(sc, NGLE_BINC_SRC, 0);
+		gftfb_write4(sc, NGLE_EG_LUTBLT, 0x80008004);
 		gftfb_setup_fb(sc);
 		mutex_exit(&sc->sc_hwlock);
 
@@ -1443,11 +1343,11 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 
 		copyin(cur->mask, buffer, 512);
 		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_14, 0x300);
-		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
-		gftfb_write4(sc, NGLE_REG_11,
+		gftfb_write4(sc, NGLE_IBO, 0x300);
+		gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+		gftfb_dba(sc,
 		    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcmask, 0));
-		gftfb_write4(sc, NGLE_REG_3, 0);
+		gftfb_write4(sc, NGLE_BINC_DST, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1466,7 +1366,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_4, latch);
+			gftfb_write4(sc, NGLE_BINC_DATA_R, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1484,16 +1384,16 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_5, latch);
+			gftfb_write4(sc, NGLE_BINC_DATA_DL, latch);
 		}
 
 		copyin(cur->image, buffer, 512);
 		gftfb_wait(sc);
-		gftfb_write4(sc, NGLE_REG_14, 0x300);
-		gftfb_write4(sc, NGLE_REG_13, 0xffffffff);
-		gftfb_write4(sc, NGLE_REG_11,
+		gftfb_write4(sc, NGLE_IBO, 0x300);
+		gftfb_write4(sc, NGLE_PLANEMASK, 0xffffffff);
+		gftfb_dba(sc,
 		    BA(IndexedDcd, Otc32, 0, AddrLong, 0, BINcursor, 0));
-		gftfb_write4(sc, NGLE_REG_3, 0);
+		gftfb_write4(sc, NGLE_BINC_DST, 0);
 		for (i = 0; i < 128; i += 2) {
 			latch = 0;
 			tmp = buffer[i] & 0x80808080;
@@ -1512,7 +1412,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_4, latch);
+			gftfb_write4(sc, NGLE_BINC_DATA_R, latch);
 			latch = 0;
 			tmp = buffer[i + 1] & 0x80808080;
 			latch |= tmp >> 7;
@@ -1530,7 +1430,7 @@ gftfb_do_cursor(struct gftfb_softc *sc, struct wsdisplay_cursor *cur)
 			latch |= tmp << 5;
 			tmp = buffer[i + 1] & 0x01010101;
 			latch |= tmp << 7;
-			gftfb_write4(sc, NGLE_REG_5, latch);
+			gftfb_write4(sc, NGLE_BINC_DATA_DL, latch);
 		}
 		gftfb_setup_fb(sc);
 	}
@@ -1548,14 +1448,14 @@ gftfb_set_video(struct gftfb_softc *sc, int on)
 
 	gftfb_wait(sc);
 	if (on) {
-		gftfb_write4(sc, NGLE_REG_21,
-		    gftfb_read4(sc, NGLE_REG_21) | 0x0a000000);
-		gftfb_write4(sc, NGLE_REG_27,
-		    gftfb_read4(sc, NGLE_REG_27) | 0x00800000);
+		gftfb_write4(sc, NGLE_EG_MISCVID,
+		    gftfb_read4(sc, NGLE_EG_MISCVID) | MISCVID_VIDEO_ON);
+		gftfb_write4(sc, NGLE_EG_MISCCTL,
+		    gftfb_read4(sc, NGLE_EG_MISCCTL) | MISCCTL_VIDEO_ON);
 	} else {
-		gftfb_write4(sc, NGLE_REG_21,
-		    gftfb_read4(sc, NGLE_REG_21) &  ~0x0a000000);
-		gftfb_write4(sc, NGLE_REG_27,
-		    gftfb_read4(sc, NGLE_REG_27) & ~0x00800000);
+		gftfb_write4(sc, NGLE_EG_MISCVID,
+		    gftfb_read4(sc, NGLE_EG_MISCVID) &  ~MISCVID_VIDEO_ON);
+		gftfb_write4(sc, NGLE_EG_MISCCTL,
+		    gftfb_read4(sc, NGLE_EG_MISCCTL) & ~MISCCTL_VIDEO_ON);
 	}
 }

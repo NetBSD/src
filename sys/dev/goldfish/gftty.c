@@ -1,4 +1,4 @@
-/*	$NetBSD: gftty.c,v 1.3 2024/01/06 17:52:43 thorpej Exp $	*/
+/*	$NetBSD: gftty.c,v 1.3.2.1 2026/11/04 23:21:52 perseant Exp $	*/
 
 /*-     
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.3 2024/01/06 17:52:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.3.2.1 2026/11/04 23:21:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -139,7 +139,7 @@ gftty_reset_rxptrs(struct gftty_softc *sc)
 
 /*
  * gftty_attach --
- *	Attach a Goldfish virual TTY.
+ *	Attach a Goldfish virtual TTY.
  */
 void
 gftty_attach(struct gftty_softc *sc)
@@ -242,12 +242,7 @@ bool
 gftty_is_console(struct gftty_softc *sc)
 {
 	if (cn_tab == &gftty_consdev) {
-		bool val;
-
-		if (prop_dictionary_get_bool(device_properties(sc->sc_dev),
-					     "is-console", &val)) {
-			return val;
-		}
+		return device_getprop_bool(sc->sc_dev, "is-console");
 	}
 	return false;
 }
@@ -374,7 +369,7 @@ gftty_rx(struct gftty_softc *sc)
 
 /*
  * gftty_softrx --
- *	Software interrupt to comple Rx processing.
+ *	Software interrupt to complete Rx processing.
  */
 static void
 gftty_softrx(void *v)
@@ -382,7 +377,7 @@ gftty_softrx(void *v)
 	struct gftty_softc *sc = v;
 	struct tty *tp = sc->sc_tty;
 	int i, len;
-	char *cp;
+	unsigned char *cp;
 
 	ttylock(tp);
 	cp = sc->sc_rxbuf;

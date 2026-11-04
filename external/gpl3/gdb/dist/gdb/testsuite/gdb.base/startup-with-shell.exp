@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,8 @@ require !use_gdb_stub
 # (via dejagnu) yet.
 require {!is_remote target}
 
+require {expr [have_startup_shell] != -1}
+
 standard_testfile
 
 if { [build_executable "failed to prepare" $testfile $srcfile debug] } {
@@ -40,49 +42,125 @@ run_on_host \
 proc initial_setup_simple { startup_with_shell run_args } {
     global hex decimal binfile unique_file
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     gdb_test_no_output "set startup-with-shell $startup_with_shell"
+    gdb_test_no_output "set print characters unlimited"
 
     gdb_test_no_output "set args $run_args" \
 	"set args \$run_args"
 
-    set test "inferior started"
-    if { [runto_main] } {
-	pass $test
-    } else {
-	fail $test
+    return [runto_main]
+}
+
+# Start GDB, set the inferior arguments to ARGS, and then run to main.
+# Once at main, read the first argument from the inferior and compare
+# it to ON_RE if startup-with-shell is on, otherwise compare to
+# OFF_RE.
+#
+# If PROBLEMATIC_ON is true then when startup-with-shell is on we
+# expect the comparison to fail, so setup an xfail.
+#
+# TESTNAME is a string used in the test names.
+proc run_test { args on_re off_re testname { problematic_on false } } {
+    foreach startup_with_shell { "on" "off" } {
+	with_test_prefix "$testname, startup_with_shell: ${startup_with_shell}" {
+	    if {![initial_setup_simple $startup_with_shell $args]} {
+		return -1
+	    }
+
+	    if { $startup_with_shell } {
+		set re $on_re
+		set problematic $problematic_on
+	    } else {
+		set re $off_re
+		set problematic false
+	    }
+
+	    if { $problematic } {
+		setup_xfail "*-*-*" gdb/28392
+	    }
+
+	    gdb_test "print argv\[1\]" "\\\$$::decimal = $::hex $re" $testname
+	}
     }
 }
 
+# This is like the run_test proc except that RE is used as the
+# expected argument regexp when startup-with-shell is both on and off.
+# For the other arguments, see run_test.
+proc run_test_same { args re testname } {
+    run_test $args $re $re $testname
+}
+
+# The regexp to match a single '\' character.
+set bs "\\\\"
+
+# Are we using 'remote' or 'extended-remote' protocol?
+set is_remote_p [gdb_protocol_is_remote]
+
 ## Run the actual tests
 
-with_test_prefix "startup_with_shell = on; run_args = *.unique-extension" {
-    initial_setup_simple "on" "$unique_file_dir/*.unique-extension"
-    gdb_test_no_output "set print characters unlimited"
-    gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"$unique_file\"" \
-	"first argument expanded"
-}
+run_test "$unique_file_dir/*.unique-extension" \
+    "\"$unique_file\"" \
+    "\"$unique_file_dir/\\\*\.unique-extension\"" \
+    "arg is glob" \
+    $is_remote_p
 
-with_test_prefix "startup_with_shell = off; run_args = *.unique-extension" {
-    initial_setup_simple "off" "$unique_file_dir/*.unique-extension"
-    gdb_test_no_output "set print characters unlimited"
-    gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"$unique_file_dir/\\\*\.unique-extension\"" \
-	"first argument not expanded"
-}
+run_test_same "$unique_file_dir/\\*.unique-extension" \
+    "\"$unique_file_dir/\\\*\.unique-extension\"" \
+    "arg is escaped glob"
 
-with_test_prefix "startup_with_shell = on; run_args = \$TEST" {
+save_vars { env(TEST) } {
     set env(TEST) "1234"
-    initial_setup_simple "on" "\$TEST"
-    gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"1234\"" \
-	"testing first argument"
-    unset env(TEST)
+    run_test "\$TEST" \
+	"\"1234\"" \
+	"\"\\\$TEST\"" \
+	"arg is shell variable" \
+	$is_remote_p
+
+    run_test_same "\\\$TEST" \
+	"\"\\\$TEST\"" \
+	"arg is escaped shell variable"
 }
 
-with_test_prefix "startup_with_shell = off; run_args = \$TEST" {
-    set env(TEST) "1234"
-    initial_setup_simple "off" "\$TEST"
-    gdb_test "print argv\[1\]" "\\\$$decimal = $hex \"\\\$TEST\"" \
-	"testing first argument"
-    unset env(TEST)
-}
+run_test_same "\"\\a\"" \
+    "\"${bs}${bs}a\"" \
+    "retain backslash in double quote arg"
+
+run_test_same "'\\a'" \
+    "\"${bs}${bs}a\"" \
+    "retain backslash in single quote arg"
+
+run_test_same "\"\\\$\"" \
+    "\"\\\$\"" \
+    "'\$' can be escaped in double quote arg"
+
+run_test_same "'\\\$'" \
+    "\"${bs}${bs}\\\$\"" \
+    "'\$' is not escaped in single quote arg"
+
+run_test_same "\"\\`\"" \
+    "\"\\`\"" \
+    "'`' can be escaped in double quote arg"
+
+run_test_same "'\\`'" \
+    "\"${bs}${bs}`\"" \
+    "'`' is not escaped in single quote arg"
+
+run_test_same "\"\\\"\"" \
+    "\"${bs}\"\"" \
+    "'\"' can be escaped in double quote arg"
+
+run_test_same "'\\\"'" \
+    "\"${bs}${bs}${bs}\"\"" \
+    "'\"' is not escaped in single quote arg"
+
+run_test_same "\"\\\\\"" \
+    "\"${bs}${bs}\"" \
+    "'\\' can be escaped in double quote arg"
+
+run_test_same "'\\\\'" \
+    "\"${bs}${bs}${bs}${bs}\"" \
+    "'\\' is not escaped in single quote arg"

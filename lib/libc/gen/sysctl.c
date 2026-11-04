@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $	*/
+/*	$NetBSD: sysctl.c,v 1.38.8.1 2026/11/04 23:19:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.2 (Berkeley) 1/4/94";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.38.8.1 2026/11/04 23:19:17 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: sysctl.c,v 1.38 2021/03/30 15:31:51 rillig Exp $");
 #include <paths.h>
 #include <stdio.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 #include "extern.h"
 
@@ -106,6 +107,11 @@ user_sysctl(const int *name, unsigned int namelen,
 	void *oldp, size_t *oldlenp,
 	const void *newp, size_t newlen)
 {
+#ifndef SMALL
+#define X(a)	a
+#else
+#define	X(a)	""
+#endif
 #define _INT(s, n, v, d) {					\
 	.sysctl_flags = CTLFLAG_IMMEDIATE|CTLFLAG_PERMANENT|	\
 			CTLTYPE_INT|SYSCTL_VERSION,		\
@@ -113,24 +119,25 @@ user_sysctl(const int *name, unsigned int namelen,
 	.sysctl_name = (s),					\
 	.sysctl_num = (n),					\
 	.sysctl_un.scu_idata = (v),				\
-	.sysctl_desc = (d),					\
+	.sysctl_desc = X(d),					\
+	}
+
+#define _STRING(s, n, v, d) {					\
+	.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|CTLTYPE_STRING, \
+	.sysctl_size = sizeof(v),				\
+	.sysctl_name = (s),					\
+	.sysctl_num = (n),					\
+	.sysctl_data = __UNCONST(v),				\
+	.sysctl_desc = X(d),					\
 	}
 
 	/*
 	 * the nodes under the "user" node
 	 */
 	static const struct sysctlnode sysctl_usermib[] = {
-		{
-			.sysctl_flags = SYSCTL_VERSION|CTLFLAG_PERMANENT|
-				CTLTYPE_STRING,
-			.sysctl_size = sizeof(_PATH_STDPATH),
-			.sysctl_name = "cs_path",
-			.sysctl_num = USER_CS_PATH,
-			.sysctl_data = __UNCONST(_PATH_STDPATH),
-			.sysctl_desc = __UNCONST(
-				"A value for the PATH environment variable "
-				"that finds all the standard utilities"),
-		},
+		_STRING("cs_path", USER_CS_PATH, _PATH_STDPATH,
+			"A value for the PATH environment variable "
+			"that finds all the standard utilities"),
 		_INT("bc_base_max", USER_BC_BASE_MAX, BC_BASE_MAX,
 		     "The maximum ibase/obase values in the bc(1) utility"),
 		_INT("bc_dim_max", USER_BC_DIM_MAX, BC_DIM_MAX,
@@ -227,14 +234,34 @@ user_sysctl(const int *name, unsigned int namelen,
 		_INT("stream_max", USER_STREAM_MAX, FOPEN_MAX,
 		     "The minimum maximum number of streams that a process "
 		     "may have open at any one time"),
-		_INT("tzname_max", USER_TZNAME_MAX, NAME_MAX,
-		     "The minimum maximum number of types supported for the "
-		     "name of a timezone"),
+		_INT("tzname_max", USER_TZNAME_MAX, _TZNAME_MAXIMUM,
+		     "The minimum maximum number of bytes supported for the "
+		     "name of a timezone abbreviation"),
 		_INT("atexit_max", USER_ATEXIT_MAX, -1,
 		     "The maximum number of functions that may be registered "
 		     "with atexit(3)"),
+
+#ifdef USER_OSTYPE_VALUE
+		_STRING("ostype", USER_OSTYPE, USER_OSTYPE_VALUE,
+		     "The name of the operating system"),
+#endif
+#ifdef USER_OSREVISION_VALUE
+		_INT("osrevision", USER_OSREVISION, USER_OSREVISION_VALUE,
+		     "A numeric representation of the OS version"),
+#endif
+#ifdef USER_OSRELEASE_VALUE
+		_STRING("osrelease", USER_OSRELEASE, USER_OSRELEASE_VALUE,
+		     "The system version of the libraries & utilities"),
+#endif
+#ifdef USER_BUILDTIME_VALUE
+		_STRING("built", USER_BUILDTIME, USER_BUILDTIME_VALUE,
+		     "The date & time (UTC) at which libc was last built "
+		     "- if with a trailing '!' the reproducible build time"),
+#endif
 	};
+#undef X
 #undef _INT
+#undef _STRING
 
 	static const int clen = sizeof(sysctl_usermib) /
 		sizeof(sysctl_usermib[0]);

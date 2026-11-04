@@ -1,5 +1,5 @@
 # This testcase is part of GDB, the GNU debugger.
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,9 +20,7 @@ load_lib gdbserver-support.exp
 
 standard_testfile server.c
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
     return -1
@@ -35,6 +33,8 @@ gdb_test "disconnect" ".*"
 gdbserver_run ""
 
 proc test_file_transfer { filename description } {
+    set host_filename [gdb_remote_download host $filename]
+
     set up_server up-server
     set down_server down-server
 
@@ -42,11 +42,9 @@ proc test_file_transfer { filename description } {
 	set down_server [standard_output_file $down_server]
     }
 
-    if {![is_remote host]} {
-	set up_server [standard_output_file $up_server]
-    }
+    set up_server [host_standard_output_file $up_server]
 
-    gdb_test "remote put \"$filename\" $down_server" \
+    gdb_test "remote put \"$host_filename\" $down_server" \
 	"Successfully sent .*" "put $description"
     gdb_test "remote get $down_server $up_server" \
 	"Successfully fetched .*" "get $description"
@@ -54,7 +52,7 @@ proc test_file_transfer { filename description } {
     if { ![is_remote target] } {
 	# If we can check the target copy of the file, do that too.
 	# This should catch symmetric errors in upload and download.
-	set result [remote_exec host "cmp -s $filename $down_server"]
+	set result [remote_exec build "cmp -s $filename $down_server"]
 	if { [lindex $result 0] == 0 } {
 	    pass "compare intermediate $description"
 	} else {
@@ -62,7 +60,7 @@ proc test_file_transfer { filename description } {
 	}
     }
 
-    set result [remote_exec host "cmp -s $filename $up_server"]
+    set result [remote_exec host "cmp -s $host_filename $up_server"]
     if { [lindex $result 0] == 0 } {
 	pass "compare $description"
     } else {

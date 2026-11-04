@@ -1,4 +1,4 @@
-# Copyright (C) 2011-2023 Free Software Foundation, Inc.
+# Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,17 +20,12 @@
 
 # Test relies on checking gdb debug output. Do not run if gdb debug is
 # enabled as any debug will be redirected to the log.
-if [gdb_debug_enabled] {
-    return
-}
+require !gdb_debug_enabled
 
 standard_testfile
 set executable ${testfile}
 
-if [target_info exists gdb,nosignals] {
-    verbose "Skipping ${testfile}.exp because of nosignals."
-    return -1
-}
+require {!target_info exists gdb,nosignals}
 
 if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
 	 executable [list debug "incdir=${objdir}"]] != "" } {

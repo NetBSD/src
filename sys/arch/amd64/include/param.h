@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.38.26.1 2025/08/02 05:55:24 perseant Exp $	*/
+/*	$NetBSD: param.h,v 1.38.26.2 2026/11/04 23:19:59 perseant Exp $	*/
 
 #ifdef __x86_64__
 
@@ -58,16 +58,12 @@
  */
 #define	KERNBASE	0xffffffff80000000 /* start of kernel virtual space */
 #define	KERNTEXTOFF	0xffffffff80200000 /* start of kernel text */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #define KERNTEXTOFF_HI	0xffffffff
 #define KERNTEXTOFF_LO	0x80200000
 
 #define KERNBASE_HI	0xffffffff
 #define KERNBASE_LO	0x80000000
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #if defined(KASAN) || defined(KMSAN)
 #define UPAGES_KxSAN	3

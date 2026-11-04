@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280var.h,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
+/*	$NetBSD: bmx280var.h,v 1.1.8.1 2026/11/04 23:21:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -46,12 +46,21 @@ struct bmx280_calibration_blob {
 	int8_t dig_H6;
 };
 
+struct bmx280_sc;
+
+struct bmx280_accessfuncs {
+	int		(*acquire_bus)(struct bmx280_sc *);
+	void		(*release_bus)(struct bmx280_sc *);
+	int		(*read_reg)(struct bmx280_sc *, uint8_t, uint8_t *,
+			    size_t);
+	int		(*write_reg)(struct bmx280_sc *, uint8_t *, size_t);
+};
+
 struct bmx280_sc {
 	int 		sc_bmx280debug;
 	device_t 	sc_dev;
-	i2c_tag_t 	sc_tag;
-	i2c_addr_t 	sc_addr;
-	struct spi_handle *sc_sh;
+	const struct bmx280_accessfuncs *sc_funcs;
+
 	kmutex_t 	sc_mutex;
 	int 		sc_numsensors;
 	struct sysmon_envsys *sc_sme;
@@ -69,11 +78,6 @@ struct bmx280_sc {
 	int		sc_waitfactor_t;
 	int		sc_waitfactor_p;
 	int		sc_waitfactor_h;
-	void		(*sc_func_attach)(struct bmx280_sc *);
-	int		(*sc_func_acquire_bus)(struct bmx280_sc *);
-	void		(*sc_func_release_bus)(struct bmx280_sc *);
-	int		(*sc_func_read_register)(struct bmx280_sc *, uint8_t, uint8_t *, size_t);
-	int		(*sc_func_write_register)(struct bmx280_sc *, uint8_t *, size_t);
 };
 
 struct bmx280_sensor {
@@ -90,5 +94,10 @@ struct bmx280_irr_list {
 	const int	text;
 	uint8_t		mask;
 };
+
+extern const struct device_compatible_entry bmx280_compat_data[];
+
+void	bmx280_attach(struct bmx280_sc *);
+int	bmx280_detach(struct bmx280_sc *, int);
 
 #endif

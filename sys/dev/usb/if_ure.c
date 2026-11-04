@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.60 2024/05/12 17:17:56 christos Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.60.2.1 2026/11/04 23:22:36 perseant Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.60 2024/05/12 17:17:56 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.60.2.1 2026/11/04 23:22:36 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -76,7 +76,9 @@ static const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_TPLINK,  USB_PRODUCT_TPLINK_UE300 },
 };
 
-#define URE_BUFSZ	(16 * 1024)
+#define URE_TX_BUFSZ		(16 * 1024)
+#define URE_RX_BUFSZ_16K	(16 * 1024)
+#define URE_RX_BUFSZ_32K	(32 * 1024)
 
 static void	ure_reset(struct usbnet *);
 static uint32_t	ure_txcsum(struct mbuf *);
@@ -584,7 +586,7 @@ ure_rtl8153_init(struct usbnet *un)
 	    ~URE_LED_MODE_MASK);
 
 	if ((un->un_flags & URE_FLAG_VER_5C10) &&
-	    un->un_udev->ud_speed != USB_SPEED_SUPER)
+	    un->un_udev->ud_speed < USB_SPEED_SUPER)
 		val = URE_LPM_TIMER_500MS;
 	else
 		val = URE_LPM_TIMER_500US;
@@ -765,7 +767,7 @@ ure_init_fifo(struct usbnet *un)
 	/* Configure Rx FIFO threshold and coalescing. */
 	ure_write_4(un, URE_PLA_RXFIFO_CTRL0, URE_MCU_TYPE_PLA,
 	    URE_RXFIFO_THR1_NORMAL);
-	if (un->un_udev->ud_speed == USB_SPEED_FULL) {
+	if (un->un_udev->ud_speed <= USB_SPEED_FULL) {
 		rx_fifo1 = URE_RXFIFO_THR2_FULL;
 		rx_fifo2 = URE_RXFIFO_THR3_FULL;
 	} else {
@@ -810,6 +812,9 @@ ure_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	if (uaa->uaa_product == USB_PRODUCT_REALTEK_RTL8152)
+		un->un_flags |= URE_FLAG_8152;
+
 	un->un_dev = self;
 	un->un_udev = dev;
 	un->un_sc = un;
@@ -818,8 +823,13 @@ ure_attach(device_t parent, device_t self, void *aux)
 	un->un_tx_xfer_flags = USBD_FORCE_SHORT_XFER;
 	un->un_rx_list_cnt = URE_RX_LIST_CNT;
 	un->un_tx_list_cnt = URE_TX_LIST_CNT;
-	un->un_rx_bufsz = URE_BUFSZ;
-	un->un_tx_bufsz = URE_BUFSZ;
+	un->un_tx_bufsz = URE_TX_BUFSZ;
+	if (un->un_udev->ud_speed < USB_SPEED_SUPER ||
+	    (un->un_flags & URE_FLAG_8152) != 0) {
+		un->un_rx_bufsz = URE_RX_BUFSZ_16K;
+	} else {
+		un->un_rx_bufsz = URE_RX_BUFSZ_32K;
+	}
 
 #define URE_CONFIG_NO	1 /* XXX */
 	error = usbd_set_config_no(dev, URE_CONFIG_NO, 1);
@@ -828,9 +838,6 @@ ure_attach(device_t parent, device_t self, void *aux)
 		    usbd_errstr(error));
 		return; /* XXX */
 	}
-
-	if (uaa->uaa_product == USB_PRODUCT_REALTEK_RTL8152)
-		un->un_flags |= URE_FLAG_8152;
 
 #define URE_IFACE_IDX  0 /* XXX */
 	error = usbd_device2interface_handle(dev, URE_IFACE_IDX, &un->un_iface);
@@ -902,6 +909,10 @@ ure_attach(device_t parent, device_t self, void *aux)
 	else
 		ure_read_mem(un, URE_PLA_BACKUP, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
+	/* 
+	 * Some chips don't provide a viable MAC address, e.g., what's present
+	 * on the NanoPi R1 and R2S.
+	 */
 	if (ETHER_IS_ZERO(eaddr)) {
 		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;
@@ -921,20 +932,21 @@ ure_attach(device_t parent, device_t self, void *aux)
 	 * be handled in software for some cases.
 	 */
 	ifp->if_capabilities = IFCAP_CSUM_IPv4_Tx |
-	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
-#ifdef INET6
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx;
-#endif
-	if (un->un_flags & ~URE_FLAG_VER_4C00) {
+	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx |
+	    IFCAP_CSUM_TCPv6_Tx | IFCAP_CSUM_UDPv6_Tx;
+
+	if (!(un->un_flags & URE_FLAG_VER_4C00))
 		ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx |
 		    IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_UDPv4_Rx |
 		    IFCAP_CSUM_TCPv6_Rx | IFCAP_CSUM_UDPv6_Rx;
-	}
 	struct ethercom *ec = usbnet_ec(un);
 	ec->ec_capabilities = ETHERCAP_VLAN_MTU;
 #ifdef notyet
 	ec->ec_capabilities |= ETHERCAP_JUMBO_MTU;
 #endif
+
+	if (!(un->un_flags & URE_FLAG_8152))
+		unm.un_mii_flags = MIIF_DOPAUSE;
 
 	unm.un_mii_phyloc = un->un_phyno;
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,

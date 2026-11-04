@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -67,7 +67,11 @@ print_gen_entry_path (const line_ref *line,
       if (table->top->model != NULL)
 	print (line, "%s", table->top->model->name);
       else
-	print (line, "");
+	{
+	  /* We don't want to output things, but we want the side-effects they
+	     might have (e.g. checking line != NULL).  */
+	  print (line, "%s", "");
+	}
     }
   else
     {
@@ -640,7 +644,7 @@ insns_bit_useless (const insn_list *insns, const decode_table *rule, int bit_nr)
 
   /* Given only one constant value has been found, check through all
      the instructions to see if at least one conditional makes it
-     usefull */
+     useful */
   if (value >= 0 && is_useless)
     {
       for (entry = insns; entry != NULL; entry = entry->next)
@@ -977,7 +981,7 @@ gen_entry_expand_opcode (gen_entry *table,
 						     condition->field->last);
 					  /* this is a requirement of
 					     a conditonal field
-					     refering to another field */
+					     referring to another field */
 					  ASSERT ((condition->field->first -
 						   condition->field->last) ==
 						  (first_pos - last_pos));
@@ -1242,7 +1246,7 @@ gen_entry_expand_insns (gen_entry *table)
 	  print_gen_entry_insns (table, warning,
 				 "was not uniquely decoded",
 				 "decodes to the same entry");
-	  error (NULL, "");
+	  error (NULL, "unrecoverable\n");
 	}
       return;
     }
@@ -1385,7 +1389,7 @@ gen_entry_expand_insns (gen_entry *table)
 		warning (NULL,
 			 ": Applying rule just copied all instructions\n");
 		print_gen_entry_insns (entry, warning, "Copied", NULL);
-		error (NULL, "");
+		error (NULL, "unrecoverable\n");
 	      }
 	  }
       }

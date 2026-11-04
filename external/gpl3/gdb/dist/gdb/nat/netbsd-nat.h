@@ -1,6 +1,6 @@
 /* Internal interfaces for the NetBSD code.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_NETBSD_NAT_H
-#define NAT_NETBSD_NAT_H
+#ifndef GDB_NAT_NETBSD_NAT_H
+#define GDB_NAT_NETBSD_NAT_H
 
 #include "gdbsupport/function-view.h"
 
@@ -91,4 +91,4 @@ extern int read_memory (pid_t pid, unsigned char *readbuf, CORE_ADDR offset,
 			size_t len, size_t *xfered_len);
 }
 
-#endif
+#endif /* GDB_NAT_NETBSD_NAT_H */

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,13 @@
 
 load_lib gdb-guile.exp
 
+require allow_guile_tests
+
 standard_testfile
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
     return -1
 }
-
-# Skip all tests if Guile scripting is not enabled.
-if { [skip_guile_tests] } { continue }
 
 # The following tests require execution.
 
@@ -92,9 +91,9 @@ gdb_test "guile (print (eq? bframe (newest-frame)))" \
     #t "newest frame -vs- newest frame"
 
 gdb_test "guile (print (eq? f0 f1))" \
-    "#f" "test equality comparison (false)"
+    "#f" "test equality comparison, false"
 gdb_test "guile (print (eq? f0 f0))" \
-    "#t" "test equality comparison (true)"
+    "#t" "test equality comparison, true"
 gdb_test "guile (print (frame-valid? f0))" \
     "#t" "test frame-valid?"
 gdb_test "guile (print (frame-name f0))" \

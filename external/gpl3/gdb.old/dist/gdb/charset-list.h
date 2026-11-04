@@ -1,6 +1,6 @@
 /* List of character set names for GDB.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CHARSET_LIST_H
-#define CHARSET_LIST_H
+#ifndef GDB_CHARSET_LIST_H
+#define GDB_CHARSET_LIST_H
 
 /* Note that the first entry must always be "auto".
    The remaining entries were created by running this script:
@@ -1192,4 +1192,4 @@
 "WS2", \
 "YU",
 
-#endif /* CHARSET_LIST_H */
+#endif /* GDB_CHARSET_LIST_H */

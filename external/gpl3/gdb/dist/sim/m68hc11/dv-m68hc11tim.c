@@ -1,5 +1,5 @@
 /*  dv-m68hc11tim.c -- Simulation of the 68HC11 timer devices.
-    Copyright (C) 1999-2024 Free Software Foundation, Inc.
+    Copyright (C) 1999-2025 Free Software Foundation, Inc.
     Written by Stephane Carrez (stcarrez@nerim.fr)
     (From a driver model Contributed by Cygnus Solutions.)
 
@@ -351,7 +351,7 @@ m68hc11tim_timer_event (struct hw *me, void *data)
 
           compare = (m68hc11_cpu->ios[i] << 8) + m68hc11_cpu->ios[i + 1];
 
-          /* See if compare is reached; handle wrap arround.  */
+          /* See if compare is reached; handle wrap around.  */
           if ((compare >= tcnt_prev && compare <= tcnt && tcnt_prev < tcnt)
               || (compare >= tcnt_prev && tcnt_prev > tcnt)
               || (compare < tcnt && tcnt_prev > tcnt))

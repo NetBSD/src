@@ -1,5 +1,5 @@
 /* Internal interfaces for the Windows code
-   Copyright (C) 1995-2023 Free Software Foundation, Inc.
+   Copyright (C) 1995-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,18 +16,24 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_WINDOWS_NAT_H
-#define NAT_WINDOWS_NAT_H
+#ifndef GDB_NAT_WINDOWS_NAT_H
+#define GDB_NAT_WINDOWS_NAT_H
 
 #include <windows.h>
 #include <psapi.h>
 #include <vector>
 
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "target/waitstatus.h"
 
 #define STATUS_WX86_BREAKPOINT 0x4000001F
 #define STATUS_WX86_SINGLE_STEP 0x4000001E
+
+#ifndef CONTEXT_EXTENDED_REGISTERS
+/* This macro is only defined on ia32.  It only makes sense on this target,
+   so define it as zero if not already defined.  */
+#define CONTEXT_EXTENDED_REGISTERS 0
+#endif
 
 namespace windows_nat
 {
@@ -246,9 +252,28 @@ struct windows_process_info
      remove it from the list of pending stops, set 'current_event', and
      return it.  Otherwise, return an empty optional.  */
 
-  gdb::optional<pending_stop> fetch_pending_stop (bool debug_events);
+  std::optional<pending_stop> fetch_pending_stop (bool debug_events);
 
   const char *pid_to_exec_file (int);
+
+  template<typename Function>
+  auto with_context (windows_thread_info *th, Function function)
+  {
+#ifdef __x86_64__
+    if (wow64_process)
+      return function (th != nullptr ? &th->wow64_context : nullptr);
+    else
+#endif
+      return function (th != nullptr ? &th->context : nullptr);
+  }
+
+  DWORD *context_flags_ptr (windows_thread_info *th)
+  {
+    return with_context (th, [] (auto *context)
+      {
+	return &context->ContextFlags;
+      });
+  }
 
 private:
 
@@ -433,6 +458,98 @@ extern DeleteProcThreadAttributeList_ftype *DeleteProcThreadAttributeList;
 
 extern bool disable_randomization_available ();
 
+/* Helper classes to get the correct ContextFlags values based on the
+   used type (CONTEXT or WOW64_CONTEXT).  */
+
+template<typename Context>
+struct WindowsContext;
+
+template<>
+struct WindowsContext<CONTEXT *>
+{
+  static constexpr DWORD control  = CONTEXT_CONTROL;
+  static constexpr DWORD floating = CONTEXT_FLOATING_POINT;
+  static constexpr DWORD debug    = CONTEXT_DEBUG_REGISTERS;
+  static constexpr DWORD extended = CONTEXT_EXTENDED_REGISTERS;
+  static constexpr DWORD full	  = CONTEXT_FULL;
+  static constexpr DWORD all	  = (CONTEXT_FULL
+				     | CONTEXT_FLOATING_POINT
+				     | CONTEXT_SEGMENTS
+				     | CONTEXT_DEBUG_REGISTERS
+				     | CONTEXT_EXTENDED_REGISTERS);
+};
+
+#ifdef __x86_64__
+template<>
+struct WindowsContext<WOW64_CONTEXT *>
+{
+  static constexpr DWORD control  = WOW64_CONTEXT_CONTROL;
+  static constexpr DWORD floating = WOW64_CONTEXT_FLOATING_POINT;
+  static constexpr DWORD debug	  = WOW64_CONTEXT_DEBUG_REGISTERS;
+  static constexpr DWORD extended = WOW64_CONTEXT_EXTENDED_REGISTERS;
+  static constexpr DWORD full	  = WOW64_CONTEXT_FULL;
+  static constexpr DWORD all	  = WOW64_CONTEXT_ALL;
+};
+#endif
+
+/* Overloaded helper functions to call the correct function based on the used
+   type (CONTEXT or WOW64_CONTEXT).  */
+
+static inline BOOL
+get_thread_context (HANDLE h, CONTEXT *context)
+{
+  return GetThreadContext (h, context);
+}
+
+static inline BOOL
+set_thread_context (HANDLE h, CONTEXT *context)
+{
+  return SetThreadContext (h, context);
+}
+
+static inline BOOL
+get_thread_selector_entry (CONTEXT *, HANDLE thread, DWORD sel,
+			   LDT_ENTRY *info)
+{
+  return GetThreadSelectorEntry (thread, sel, info);
+}
+
+static inline BOOL
+enum_process_modules (CONTEXT *, HANDLE process,
+		      HMODULE *modules, DWORD size, LPDWORD needed)
+{
+  return EnumProcessModules (process, modules, size, needed);
+}
+
+#ifdef __x86_64__
+static inline BOOL
+get_thread_context (HANDLE h, WOW64_CONTEXT *context)
+{
+  return Wow64GetThreadContext (h, context);
+}
+
+static inline BOOL
+set_thread_context (HANDLE h, WOW64_CONTEXT *context)
+{
+  return Wow64SetThreadContext (h, context);
+}
+
+static inline BOOL
+get_thread_selector_entry (WOW64_CONTEXT *, HANDLE thread, DWORD sel,
+			   LDT_ENTRY *info)
+{
+  return Wow64GetThreadSelectorEntry (thread, sel, info);
+}
+
+static inline BOOL
+enum_process_modules (WOW64_CONTEXT *, HANDLE process,
+		      HMODULE *modules, DWORD size, LPDWORD needed)
+{
+  return EnumProcessModulesEx (process, modules, size, needed,
+			       LIST_MODULES_32BIT);
+}
+#endif
+
 /* Load any functions which may not be available in ancient versions
    of Windows.  */
 
@@ -440,4 +557,4 @@ extern bool initialize_loadable ();
 
 }
 
-#endif
+#endif /* GDB_NAT_WINDOWS_NAT_H */

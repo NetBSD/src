@@ -11,7 +11,7 @@ initialize_tdesc_sparc64_solaris (void)
   target_desc_up result = allocate_target_description ();
   set_tdesc_architecture (result.get (), bfd_scan_arch ("sparc:v9"));
 
-  set_tdesc_osabi (result.get (), osabi_from_tdesc_string ("Solaris"));
+  set_tdesc_osabi (result.get (), GDB_OSABI_SOLARIS);
 
   struct tdesc_feature *feature;
 

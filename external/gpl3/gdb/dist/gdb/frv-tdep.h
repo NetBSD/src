@@ -1,5 +1,5 @@
 /* Architecture-dependent code for the Fujitsu FR-V, for GDB, the GNU Debugger.
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef FRV_TDEP_H
-#define FRV_TDEP_H
+#ifndef GDB_FRV_TDEP_H
+#define GDB_FRV_TDEP_H
 
 /* Enumerate the possible ABIs for FR-V.  */
 enum frv_abi
@@ -118,7 +118,4 @@ CORE_ADDR frv_fdpic_find_canonical_descriptor (CORE_ADDR entry_point);
    needed for TLS support.  */
 CORE_ADDR frv_fetch_objfile_link_map (struct objfile *objfile);
 
-struct solib_ops;
-extern const solib_ops frv_so_ops;
-
-#endif /* FRV_TDEP_H */
+#endif /* GDB_FRV_TDEP_H */

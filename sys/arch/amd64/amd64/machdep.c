@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.369.2.1 2025/08/02 05:55:23 perseant Exp $	*/
+/*	$NetBSD: machdep.c,v 1.369.2.2 2026/11/04 23:19:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.2.1 2025/08/02 05:55:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.369.2.2 2026/11/04 23:19:58 perseant Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -328,6 +328,9 @@ int dumpsys_seg(paddr_t, paddr_t);
 void init_bootspace(void);
 void init_slotspace(void);
 void init_x86_64(paddr_t);
+
+static int cpu_getmcontext_xsave(struct lwp *, mcontext_t *, unsigned *,
+    const struct xsave_header *, size_t, struct xsave_header *);
 
 /*
  * Machine-dependent startup code
@@ -583,6 +586,73 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	sigexit(curlwp, SIGILL);
 }
 
+/*
+ * sendsig_siginfo(ksi, mask)
+ *
+ *	Set up a stack frame and registers for signal delivery with the
+ *	given siginfo and signal mask.
+ *
+ *	The stack frame layout is as follows, with XSAVE parts omitted
+ *	(and _UC_XSAVE clear in uc_flags) if the process doesn't have
+ *	XSAVE state to restore:
+ *
+ *	        / +-----------------------+
+ *	       |  | (other XSAVE stuff)   |
+ *	       |  | --------------------- |
+ *	       |  | Hi16_ZMM              |
+ *	       |  | --------------------- |
+ *	 XSAVE <  | ZMM_Hi256             |
+ *	       |  | --------------------- |
+ *	       |  | YMM_Hi128             |
+ *	       |  *-----------------------* \
+ *	       |  | FXSAVE in ucontext_t  |  |
+ *	        \ *-----------------------*  > ucontext_t
+ *	          | rest of ucontext_t    |  |
+ *	          +-----------------------+ /
+ *	          | siginfo_t             |
+ *	          +-----------------------+ =0 (mod 16)
+ *	          | return address        |
+ *	          +-----------------------+ <--- rsp on signal handler entry
+ *
+ *	Additionally, when XSAVE is in use, there is a pointer to the
+ *	XSAVE area in some architecturally unused padding in the FXSAVE
+ *	area.  This is important because on i386, the XSAVE area
+ *	_cannot_ overlap the ucontext_t owing to past ABI constraints,
+ *	so applications running on both i386 and amd64 can use the same
+ *	code to get the XSAVE pointer (and for 11.0, but not any
+ *	earlier or later versions, the XSAVE pointer was also needed
+ *	for signal handlers to write registers back on amd64 because
+ *	the XSAVE area and the ucontext_t did not overlap).
+ *
+ *	The overlap of the FXSAVE section in the XSAVE area and the
+ *	FXSAVE section in ucontext_t is tricky but important: signal
+ *	handlers use it to read, and potentially write back, the x87
+ *	and xmm registers.  Consider an application with two parts
+ *	(e.g., a new library that uses an AVX512 optimization once it
+ *	is available, and an old part running unmodified existing code
+ *	predating NetBSD's AVX512 support):
+ *
+ *	1. Uses the high 16 zmm registers.
+ *	2. (a) Uses _only_ x87/xmm registers, and
+ *	   (b) has a signal handler that reads and writes them back.
+ *
+ *	After part (1), the system will consider XSAVE necessary to
+ *	save and restore the high 16 zmm registers, even if -- as is
+ *	customary when using the ymm or low 16 zmm registers -- the
+ *	application issues VZEROUPPER when part (1) is done.  For this
+ *	application to work without changing the signal handler in part
+ *	(2)(b) to teach it about the XSAVE pointer -- i.e., for
+ *	compatibility with existing code -- the XSAVE area and the
+ *	ucontext_t MUST overlap.  (11.0 would copy out the FXSAVE area
+ *	to both locations so that unmodified signal handlers could
+ *	_read_ the x87/xmm registers, but _writeback_ would be
+ *	ignored.)
+ *
+ *	For more background, see:
+ *
+ *	PR kern/60539: XSAVE changes break ucontext userspace API
+ *	https://gnats.NetBSD.org/60539
+ */
 void
 sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 {
@@ -594,6 +664,9 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigframe_siginfo *fp, frame;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	struct trapframe *tf = l->l_md.md_regs;
+	const struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
+	struct xsave_header *user_xsave = NULL;
 	char *sp;
 
 	KASSERT(mutex_owned(p->p_lock));
@@ -604,16 +677,99 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	    (SIGACTION(p, sig).sa_flags & SA_ONSTACK) != 0;
 
 	/* Allocate space for the signal handler context. */
-	if (onstack)
+	if (onstack) {
+		KASSERT(l->l_sigstk.ss_size >= MINSIGSTKSZ);
 		sp = ((char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size);
-	else
+	} else {
 		/* AMD64 ABI 128-bytes "red zone". */
 		sp = (char *)tf->tf_rsp - 128;
+	}
 
+	/*
+	 * The maximum amount of space we might use, including padding
+	 * for alignment, had better fit in MINSIGSTKSZ.
+	 *
+	 * If this changes because you have increased XSAVE_MAX_BYTES,
+	 * you need to work out the ABI change for MINSIGSTKSZ.
+	 */
+	__CTASSERT(8 + STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo) +
+	    (XSAVE_ALIGN - 1) + XSAVE_MAX_BYTES <= MINSIGSTKSZ);
+
+	/*
+	 * Find whether we need to allocate a separate XSAVE area,
+	 * because the user program has used extended CPU state beyond
+	 * the x87/SSE registers, or whether we can get by with just an
+	 * FXSAVE area.
+	 */
+	if (process_xsave_needed_p(l)) {
+		enum {
+			overlap = (sizeof(struct sigframe_siginfo) -
+			    offsetof(struct sigframe_siginfo,
+				sf_uc.uc_mcontext.__fpregs)),
+		};
+
+		process_read_xsave(l, &xsavebuf, &xsavelen);
+		KASSERT(xsavebuf != NULL);
+		KASSERT(xsavelen <= XSAVE_MAX_BYTES);
+		CTASSERT(overlap <= XSAVE_MAX_BYTES);
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= xsavelen);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= overlap);
+		sp -= MAX(xsavelen, overlap);
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(!onstack ||
+		    sp - (char *)l->l_sigstk.ss_sp >= XSAVE_ALIGN - 1);
+		sp = (char *)((uintptr_t)sp & ~(XSAVE_ALIGN - 1));
+
+		KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+		KASSERT(((uintptr_t)sp & (XSAVE_ALIGN - 1)) == 0);
+		user_xsave = (void *)sp;
+
+		CTASSERT((overlap % XSAVE_ALIGN) == 0);
+		CTASSERT((overlap & STACK_ALIGNBYTES) == 0);
+		CTASSERT(((overlap - sizeof(struct sigframe_siginfo)) &
+			STACK_ALIGNBYTES) == (STACK_ALIGNBYTES + 1) - 8);
+		sp += overlap;
+	}
+
+	/*
+	 * Reserve space for a struct sigframe_siginfo.  The first
+	 * member is a return address, as if we are entering a
+	 * procedure with a CALL instruction with a stack frame aligned
+	 * to a multiple of 16 bytes; the rest of the structure is that
+	 * stack frame.  So make sure the structure starts at an
+	 * address congruent to 8 modulo 16.
+	 */
+	KASSERT(!onstack || sp >= (char *)l->l_sigstk.ss_sp);
+	KASSERT(!onstack || (size_t)(sp - (char *)l->l_sigstk.ss_sp) >=
+	    8 + STACK_ALIGNBYTES + sizeof(struct sigframe_siginfo));
 	sp -= sizeof(struct sigframe_siginfo);
 	/* Round down the stackpointer to a multiple of 16 for the ABI. */
-	fp = (struct sigframe_siginfo *)(((unsigned long)sp &
-		~STACK_ALIGNBYTES) - 8);
+	if (((uintptr_t)sp & STACK_ALIGNBYTES) ==
+	    (STACK_ALIGNBYTES + 1) - 8) {
+		fp = (struct sigframe_siginfo *)sp;
+	} else {
+		fp = (struct sigframe_siginfo *)(((uintptr_t)sp &
+			~STACK_ALIGNBYTES) - 8);
+	}
+	KASSERT(!onstack || (char *)fp >= (char *)l->l_sigstk.ss_sp);
+	KASSERT(((uintptr_t)fp & STACK_ALIGNBYTES) ==
+	    (STACK_ALIGNBYTES + 1) - 8);
+
+	/*
+	 * If we have to use XSAVE, the FXSAVE area of the ucontext_t
+	 * on the user's stack must line up with the FXSAVE subarea of
+	 * the XSAVE area on the user's stack.
+	 */
+	KASSERT(xsavebuf == 0 ||
+	    (((uintptr_t)&fp->sf_uc.uc_mcontext.__fpregs & (XSAVE_ALIGN - 1))
+		== 0));
+	KASSERT(xsavebuf == 0 || (uintptr_t)user_xsave ==
+	    (uintptr_t)&fp->sf_uc.uc_mcontext.__fpregs);
 
 	memset(&frame, 0, sizeof(frame));
 	frame.sf_ra = (uint64_t)ps->sa_sigdesc[sig].sd_tramp;
@@ -627,8 +783,23 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	mutex_exit(p->p_lock);
 	cpu_getmcontext(l, &frame.sf_uc.uc_mcontext, &frame.sf_uc.uc_flags);
+
+	/*
+	 * If we have to use XSAVE, copy out the part of it past the
+	 * FXSAVE area separately -- and be ready to bail if it failed.
+	 */
+	if (xsavebuf) {
+		KASSERT((void *)&fp->sf_uc.uc_mcontext.__fpregs ==
+		    (void *)user_xsave);
+		error = cpu_getmcontext_xsave(l, &frame.sf_uc.uc_mcontext,
+		    &frame.sf_uc.uc_flags, xsavebuf, xsavelen, user_xsave);
+		if (error != 0)
+			goto relock;
+	}
+
 	/* Copyout all the fp regs, the signal handler might expect them. */
 	error = copyout(&frame, fp, sizeof frame);
+relock:
 	mutex_enter(p->p_lock);
 
 	if (error != 0) {
@@ -736,7 +907,7 @@ haltsys:
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* for proper keyboard command handling */
+		cnpollc(true);	/* for proper keyboard command handling */
 		if (cngetc() == 0) {
 			/* no console attached, so just hlt */
 			printf("No keyboard - cannot reboot after all.\n");
@@ -744,7 +915,7 @@ haltsys:
 				x86_hlt();
 			}
 		}
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n");
@@ -1962,17 +2133,17 @@ init_x86_64(paddr_t first_avail)
 			ist = 3;
 			break;
 		case 3:
-		case 4:			
+		case 4:
 			sel = SEL_UPL;
 			break;
 		case 8:	/* double fault */
 			ist = 2;
 			break;
-#ifdef XENPV			
+#ifdef XENPV
 		case 18: /* MCA */
 			sel |= 0x4; /* Auto EOI/mask */
 			break;
-#endif /* XENPV */			
+#endif /* XENPV */
 		default:
 			break;
 		}
@@ -2123,8 +2294,62 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, unsigned int *flags)
 	mcp->_mc_tlsbase = (uintptr_t)l->l_private;
 	*flags |= _UC_TLSBASE;
 
-	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs);
+	process_read_fpregs_xmm(l, (struct fxsave *)&mcp->__fpregs.__fxsave);
 	*flags |= _UC_FPU;
+}
+
+/*
+ * cpu_getmcontext_xsave(l, mcp, flags, xsavebuf, xsavelen, user_xsave)
+ *
+ *	Copy out xsavebuf[512..xsavelen) to user_xsave[512..xsavelen),
+ *	set mcp to point at it, and set _UC_XSAVE in *flags.  Caller:
+ *
+ *	- must have already initialized the FXSAVE area of mcontext_t,
+ *	- must have already set _UC_FPU in *flags,
+ *	- must have arranged user_xsave[0..512) to overlap with the
+ *	  FXSAVE area of mcontext_t, and
+ *	- must subsequently copy out the mcontext_t updated with a
+ *	  pointer/length to the XSAVE area.
+ *
+ *	May fail if the copyout fails.
+ */
+static int
+cpu_getmcontext_xsave(struct lwp *l, mcontext_t *mcp, unsigned int *flags,
+    const struct xsave_header *xsavebuf, size_t xsavelen,
+    struct xsave_header *user_xsave)
+{
+	enum { fxsavelen = sizeof(mcp->__fpregs.__fxsave) };
+	int error;
+
+	CTASSERT(fxsavelen == 512);
+
+	KASSERT(*flags & _UC_FPU);
+	KASSERT(fxsavelen <= xsavelen);
+	KDASSERT(memcmp(&mcp->__fpregs.__fxsave, xsavebuf, fxsavelen) == 0);
+
+	/*
+	 * Copy out the part of the XSAVE area that doesn't overlap.
+	 */
+	error = copyout((const char *)xsavebuf + fxsavelen,
+	    (char *)user_xsave + fxsavelen, xsavelen - fxsavelen);
+	if (error != 0)
+		return error;
+
+	/*
+	 * Record a pointer to the real XSAVE area in the
+	 * architecturally unused bits mcontext_t's FXSAVE area.
+	 */
+	mcp->__fpregs.__xsave.__xsaveptr = (__greg_t)(uintptr_t)user_xsave;
+	mcp->__fpregs.__xsave.__xsavelen = (__greg_t)xsavelen;
+
+	/*
+	 * Set the _UC_XSAVE flag so cpu_setmcontext will be able to
+	 * restore the full state from the XSAVE area.
+	 */
+	*flags |= _UC_XSAVE;
+
+	/* Success! */
+	return 0;
 }
 
 int
@@ -2133,15 +2358,43 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 	struct trapframe *tf = l->l_md.md_regs;
 	const __greg_t *gr = mcp->__gregs;
 	struct proc *p = l->l_proc;
+	struct xsave_header *xsavebuf = NULL;
+	size_t xsavelen = 0;
 	int error;
 	int64_t rflags;
 
 	CTASSERT(sizeof (mcontext_t) == 26 * 8 + 8 + 512);
 
+	/*
+	 * If there's an external XSAVE area, copy it in and validate
+	 * it before we irreversibly modify the trapframe.
+	 *
+	 * We could check the length against the state components
+	 * included, but we currently don't: if it's truncated, it will
+	 * be as if the truncated part were zero-filled -- this is
+	 * implemented in process_write_xsave, called a little below.
+	 */
+	if ((flags & _UC_XSAVE) != 0) {
+		const struct xsave_header *user_xsave =
+		    (void *)(uintptr_t)mcp->__fpregs.__xsave.__xsaveptr;
+
+		xsavelen = mcp->__fpregs.__xsave.__xsavelen;
+		error = process_verify_xsavelen(l, xsavelen);
+		if (error != 0)
+			goto out;
+		xsavebuf = kmem_alloc(xsavelen, KM_SLEEP);
+		error = copyin(user_xsave, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+		error = process_verify_xsave(l, xsavebuf, xsavelen);
+		if (error != 0)
+			goto out;
+	}
+
 	if ((flags & _UC_CPU) != 0) {
 		error = cpu_mcontext_validate(l, mcp);
 		if (error != 0)
-			return error;
+			goto out;
 
 		tf->tf_rdi  = gr[_REG_RDI];
 		tf->tf_rsi  = gr[_REG_RSI];
@@ -2175,8 +2428,13 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_md.md_flags |= MDL_IRET;
 	}
 
-	if ((flags & _UC_FPU) != 0)
-		process_write_fpregs_xmm(l, (const struct fxsave *)&mcp->__fpregs);
+	if ((flags & _UC_XSAVE) != 0) {
+		KASSERT(xsavebuf != NULL);
+		process_write_xsave(l, xsavebuf, xsavelen);
+	} else if ((flags & _UC_FPU) != 0) {
+		process_write_fpregs_xmm(l,
+		    (const struct fxsave *)&mcp->__fpregs.__fxsave);
+	}
 
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);
@@ -2188,7 +2446,12 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
 		l->l_sigstk.ss_flags &= ~SS_ONSTACK;
 	mutex_exit(p->p_lock);
 
-	return 0;
+	/* Success! */
+	error = 0;
+
+out:	if (xsavebuf)
+		kmem_free(xsavebuf, xsavelen);
+	return error;
 }
 
 int
@@ -2275,7 +2538,11 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 
 	if (v >= bootspace.smodule && v < bootspace.emodule) {
 		*handled = true;
-		if (!uvm_map_checkprot(module_map, v, v + 1, prot)) {
+		vm_map_lock_read(module_map);
+		const bool allowed =
+		    uvm_map_checkprot(module_map, v, v + 1, prot);
+		vm_map_unlock_read(module_map);
+		if (!allowed) {
 			return EFAULT;
 		}
 	} else {

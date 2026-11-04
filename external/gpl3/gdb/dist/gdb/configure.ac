@@ -1,5 +1,5 @@
 dnl Autoconf configure script for GDB, the GNU debugger.
-dnl Copyright (C) 1995-2024 Free Software Foundation, Inc.
+dnl Copyright (C) 1995-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is part of GDB.
 dnl
@@ -184,8 +184,51 @@ AS_HELP_STRING([--enable-targets=TARGETS], [alternative target configurations]),
   yes | "") AC_MSG_ERROR(enable-targets option must specify target names or 'all')
             ;;
   no)       enable_targets= ;;
-  *)        enable_targets=$enableval ;;
+  *)
+	enable_targets=$enableval
+	AC_DEFINE_UNQUOTED(ENABLE_TARGETS, "$enable_targets",
+			   Additional targets configured into GDB. )
+	;;
 esac])
+
+AC_ARG_ENABLE(binary_file_formats,
+	      AS_HELP_STRING([--enable-binary-file-formats=FORMATS],
+			     [enable support for selected file formats (default 'all')
+			      available formats: coff, dbx, elf, macho, mips, xcoff, all]),
+[case "${enableval}" in
+ yes | "") AC_MSG_ERROR(enable-binary-file-formats option must specify file formats or 'all')
+            ;;
+  no)       enable_binary_file_formats= ;;
+  *)        enable_binary_file_formats=$enableval ;;
+esac], [enable_binary_file_formats=all])
+
+# Check whether to support mdebug/ecoff debug information.
+AC_ARG_ENABLE(gdb-mdebug-support,
+AS_HELP_STRING([--enable-gdb-mdebug-support],
+	       [Enable support for the mdebug debuginfo format (default 'yes')]),
+[GDB_CHECK_YES_NO_VAL([$enableval], [--enable-gdb-mdebug-support])],
+[enable_gdb_mdebug_support=yes])
+
+if test "x${enable_gdb_mdebug_support}" != "xno"; then
+    CONFIG_SRCS="$CONFIG_SRCS mdebugread.c"
+    CONFIG_OBS="$CONFIG_OBS mdebugread.o"
+    AC_DEFINE(MDEBUG_FORMAT_AVAILABLE, 1,
+	      [defined if mdebug format was requested.])
+fi
+
+# Check whether to support dwarf debug information
+AC_ARG_ENABLE(gdb-dwarf-support,
+AS_HELP_STRING([--enable-gdb-dwarf-support],
+	       [Enable support for the dwarf debuginfo format (default 'yes')]),
+[GDB_CHECK_YES_NO_VAL([$enableval], [--enable-gdb-dwarf-support])],
+[enable_gdb_dwarf_support=yes])
+
+if test "x${enable_gdb_dwarf_support}" != "xno"; then
+    AC_DEFINE(DWARF_FORMAT_AVAILABLE, 1,
+	      [defined if dwarf format was requested.])
+    CONFIG_SRCS="$CONFIG_SRCS \$(DWARF2_SRCS)"
+    CONFIG_OBS="$CONFIG_OBS \$(DWARF2_OBS)"
+fi
 
 BFD_64_BIT
 
@@ -207,10 +250,21 @@ TARGET_OBS=
 all_targets=
 HAVE_NATIVE_GCORE_TARGET=
 
+# File formats that will be enabled based on the selected
+# target(s).  These are chosen because they are required to
+# compile one or more of the selected targets.
+target_formats=
+
+# If all targets were requested, this is all formats that should
+# accompany them.  These are just the ones required for compilation
+# to succeed, not the formats suggested based on targets.
+all_target_formats="coff xcoff"
+
 for targ_alias in `echo $target_alias $enable_targets | sed 's/,/ /g'`
 do
   if test "$targ_alias" = "all"; then
     all_targets=true
+    target_formats=$all_target_formats
   else
     # Canonicalize the secondary target names.
     result=`$ac_config_sub $targ_alias 2>/dev/null`
@@ -236,7 +290,7 @@ do
     done
 
     # Check whether this target needs 64-bit CORE_ADDR
-    if test x${enable_64_bit_bfd} = xno; then
+    if test x${have_64_bit_bfd} = xno; then
       . ${srcdir}/../bfd/config.bfd
     fi
 
@@ -249,12 +303,18 @@ do
 done
 
 if test x${all_targets} = xtrue; then
-  if test x${enable_64_bit_bfd} = xyes; then
+  if test x${have_64_bit_bfd} = xyes; then
     TARGET_OBS='$(ALL_TARGET_OBS) $(ALL_64_TARGET_OBS)'
   else
     TARGET_OBS='$(ALL_TARGET_OBS)'
   fi
 fi
+
+HAVE_GSTACK=0
+if test $gdb_native = yes; then
+   HAVE_GSTACK=1
+fi
+AC_SUBST(HAVE_GSTACK)
 
 # AMD debugger API support.
 
@@ -281,7 +341,7 @@ if test "$gdb_require_amd_dbgapi" = true \
   # stability until amd-dbgapi hits 1.0, but for convenience, still check for
   # greater or equal that version.  It can be handy when testing with a newer
   # version of the library.
-  PKG_CHECK_MODULES([AMD_DBGAPI], [amd-dbgapi >= 0.68.0],
+  PKG_CHECK_MODULES([AMD_DBGAPI], [amd-dbgapi >= 0.75.0],
 		    [has_amd_dbgapi=yes], [has_amd_dbgapi=no])
 
   if test "$has_amd_dbgapi" = "yes"; then
@@ -729,8 +789,8 @@ AC_DEFUN([AC_TRY_LIBPYTHON],
   found_usable_python=no
   AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include "Python.h"]],
                                  [[
-				    #if PY_MAJOR_VERSION != 3
-				    # error "We only support Python 3"
+				    #if PY_VERSION_HEX < 0x03040000
+				    # error "Minimum supported Python version is 3.4"
 				    #endif
 				    Py_Initialize ();
 				 ]])],
@@ -797,7 +857,7 @@ else
         python_prefix=
       fi
       if test ! -x "${python_prog}"; then
-        # Fall back to gdb 7.0/7.1 behaviour.
+        # Fall back to gdb 7.0/7.1 behavior.
         python_prog=missing
         python_prefix=${with_python}
       fi
@@ -1202,6 +1262,34 @@ AC_SUBST(GUILE_LIBS)
 AM_CONDITIONAL(HAVE_GUILE, test "${have_libguile}" != no)
 
 # ---------------------------- #
+# Check for compile support.   #
+# ---------------------------- #
+
+AC_ARG_ENABLE([gdb-compile],
+    AS_HELP_STRING([--enable-gdb-compile],
+	      [enable support for the compile subsystem, default 'yes']),
+	      [GDB_CHECK_YES_NO_VAL([$enableval], [--enable-gdb-compile])],
+	      [enable_gdb_compile=default])
+
+if test "${enable_gdb_compile}" = "default"; then
+    enable_gdb_compile=${enable_gdb_dwarf_support}
+    AC_MSG_WARN([Defaulting compile support to '${enable_gdb_dwarf_support}'])
+fi
+
+if test "${enable_gdb_compile}" = "yes"; then
+    if test "${enable_gdb_dwarf_support}" = "no"; then
+	AC_MSG_ERROR([enabling gdb compile requires dwarf support])
+    fi
+    AC_DEFINE(HAVE_COMPILE, 1, [Define if compiling support to gdb compile.])
+    CONFIG_OBS="$CONFIG_OBS \$(SUBDIR_GCC_COMPILE_OBS)"
+else
+    # Even if compile support is not enabled, we need this file to define
+    # the "compile" command.
+    CONFIG_OBS="$CONFIG_OBS compile/compile.o"
+    CONFIG_SRCS="$CONFIG_SRCS compile/compile.c"
+fi
+
+# ---------------------------- #
 # Check for source highlight.  #
 # ---------------------------- #
 
@@ -1288,21 +1376,40 @@ AC_SUBST(SRCHIGH_CFLAGS)
 # Checks for header files.  #
 # ------------------------- #
 
-AC_HEADER_STDC
-# elf_hp.h is for HP/UX 64-bit shared library support.
-AC_CHECK_HEADERS([nlist.h machine/reg.h \
-                  thread_db.h \
-		  sys/file.h sys/filio.h sys/ioctl.h sys/param.h \
-		  sys/procctl.h sys/resource.h sys/ptrace.h ptrace.h \
-		  sys/reg.h sys/debugreg.h \
-		  termios.h elf_hp.h])
+AC_CHECK_HEADERS([ \
+  IOKit/serial/ioss.h \
+  asm/termios.h \
+  machine/reg.h \
+  nlist.h \
+  ptrace.h \
+  sys/debugreg.h \
+  sys/file.h \
+  sys/filio.h \
+  sys/ioctl.h \
+  sys/param.h \
+  sys/procctl.h \
+  sys/ptrace.h \
+  sys/reg.h \
+  sys/resource.h \
+  termios.h \
+  thread_db.h \
+])
+
 AC_CHECK_HEADERS(sys/user.h, [], [],
 [#if HAVE_SYS_PARAM_H
 # include <sys/param.h>
 #endif
 ])
 
-AC_CHECK_HEADERS(curses.h cursesX.h ncurses.h ncursesw/ncurses.h ncurses/ncurses.h ncurses/term.h)
+AC_CHECK_HEADERS([ \
+  curses.h \
+  cursesX.h \
+  ncurses.h \
+  ncurses/ncurses.h \
+  ncurses/term.h \
+  ncursesw/ncurses.h \
+])
+
 AC_CHECK_HEADERS(term.h, [], [],
 [#if HAVE_CURSES_H
 # include <curses.h>
@@ -1347,13 +1454,28 @@ AC_C_BIGENDIAN
 # Checks for library functions.  #
 # ------------------------------ #
 
-AC_CHECK_FUNCS([getuid getgid \
-		pread pread64 pwrite resize_term \
-		getpgid setsid \
-		sigsetmask \
-		ttrace wresize setlocale iconvlist libiconvlist btowc \
-		setrlimit getrlimit posix_madvise waitpid \
-		use_default_colors])
+AC_CHECK_FUNCS([ \
+  btowc \
+  getgid \
+  getpgid \
+  getrlimit \
+  getuid \
+  iconvlist \
+  libiconvlist \
+  posix_madvise \
+  pread \
+  pread64 \
+  pwrite \
+  resize_term \
+  setlocale \
+  setrlimit \
+  setsid \
+  sigsetmask \
+  ttrace \
+  use_default_colors \
+  wresize \
+])
+
 AM_LANGINFO_CODESET
 
 # Check the return and argument types of ptrace.
@@ -1850,32 +1972,87 @@ fi
 # Note that WIN32APILIBS is set by GDB_AC_COMMON.
 WIN32LIBS="$WIN32LIBS $WIN32APILIBS"
 
+# Object files to be used when building with support for all file formats.
+# This should not have elf or macho, as support for those formats depends
+# on BFD enabling them as well.
+all_binary_file_srcs="\$(dbx_SRCS) \$(mips_SRCS) \$(coff_SRCS) \$(xcoff_SRCS)"
+
+bfd_supports_elf=no
 # Add ELF support to GDB, but only if BFD includes ELF support.
-GDB_AC_CHECK_BFD([for ELF support in BFD], gdb_cv_var_elf,
+GDB_AC_CHECK_BFD([for ELF support in BFD], gdb_cv_var_bfd_elf,
                  [bfd_get_elf_phdr_upper_bound (NULL)], elf-bfd.h)
-if test "$gdb_cv_var_elf" = yes; then
-  CONFIG_OBS="$CONFIG_OBS elfread.o stap-probe.o dtrace-probe.o \
-		gcore-elf.o elf-none-tdep.o"
+if test "$gdb_cv_var_bfd_elf" = yes; then
+  CONFIG_OBS="$CONFIG_OBS gcore-elf.o elf-none-tdep.o"
   AC_DEFINE(HAVE_ELF, 1,
 	    [Define if ELF support should be included.])
-  # -ldl is provided by bfd/Makfile.am (LIBDL) <PLUGINS>.
+  # -ldl is provided by bfd/Makefile.am (LIBDL) <PLUGINS>.
   if test "$plugins" = "yes"; then
     AC_SEARCH_LIBS(dlopen, dl)
   fi
+  bfd_supports_elf=yes
+  all_binary_file_srcs="$all_binary_file_srcs \$(elf_SRCS)"
 fi
 
 # Add macho support to GDB, but only if BFD includes it.
-GDB_AC_CHECK_BFD([for Mach-O support in BFD], gdb_cv_var_macho,
+bfd_supports_macho=no
+GDB_AC_CHECK_BFD([for Mach-O support in BFD], gdb_cv_var_bfd_macho,
                  [bfd_mach_o_lookup_command (NULL, 0, NULL)], mach-o.h)
-if test "$gdb_cv_var_macho" = yes; then
-  CONFIG_OBS="$CONFIG_OBS machoread.o"
+if test "$gdb_cv_var_bfd_macho" = yes; then
+  bfd_supports_macho=yes
+  all_binary_file_srcs="$all_binary_file_srcs \$(macho_SRCS)"
 fi
+
+FORMAT_SRCS=
+
+if test "$enable_binary_file_formats" != "all"; then
+    # Formats that are required by some requested target(s).
+    # Warn users that they are added, so no one is surprised.
+    for req in $target_formats; do
+	case ,$enable_binary_file_formats, in
+	*,$req,*)
+	    # Do nothing.
+	    ;;
+	*)
+	    AC_MSG_WARN("$req is required to support one or more requested targets.  Adding it")
+	    enable_binary_file_formats="${enable_binary_file_formats},$req"
+	    ;;
+	esac
+    done
+
+    AC_DEFINE_UNQUOTED(SUPPORTED_BINARY_FILE_FORMATS, "$enable_binary_file_formats",
+		       Which binary file formats were requested at configure time. )
+fi
+
+enable_binary_file_formats=$(echo $enable_binary_file_formats | sed 's/,/ /g')
+
+# Go through all requested and required binary file formats to compile
+# GDB, and double check that we can compile them.
+for format in $enable_binary_file_formats
+do
+    if test "$format" = "elf" && test "$bfd_supports_elf" != "yes"; then
+	    AC_MSG_ERROR("elf support was requested, but BFD does not support it.");
+    elif test "$format" = "macho" && test "$bfd_supports_macho" != "yes"; then
+	    AC_MSG_ERROR("Mach-O support was requested, but BFD does not support it.");
+    fi
+
+    if test "$format" = "all"; then
+	FORMAT_SRCS="$all_binary_file_srcs"
+	# We don't break here in case the user requested Mach-O or ELF, but
+	# BFD is not configured to support it.  If we were to break, we would
+	# silently drop the requested support instead of erroring out.
+    else
+	fmt=$(echo "$format _SRCS" | sed 's/ //')
+	FORMAT_SRCS="$FORMAT_SRCS \$($fmt)"
+    fi
+done
+
+AC_SUBST(FORMAT_SRCS)
 
 # Add any host-specific objects to GDB.
 CONFIG_OBS="${CONFIG_OBS} ${gdb_host_obs}"
 
 # If building on ELF, look for lzma support for embedded compressed debug info.
-if test "$gdb_cv_var_elf" = yes; then
+if test "$gdb_cv_var_bfd_elf" = yes; then
   AC_ARG_WITH(lzma,
     AS_HELP_STRING([--with-lzma], [support lzma compression (auto/yes/no)]),
     [], [with_lzma=auto])
@@ -2136,7 +2313,7 @@ AC_MSG_CHECKING([whether to use babeltrace])
 AC_MSG_RESULT([$with_babeltrace])
 
 if test "x$with_babeltrace" = "xno"; then
-  AC_MSG_WARN([babletrace support disabled; GDB is unable to read CTF data.])
+  AC_MSG_WARN([babeltrace support disabled; GDB is unable to read CTF data.])
 else
   # Append -Werror to CFLAGS so that configure can catch the warning
   # "assignment from incompatible pointer type", which is related to
@@ -2225,7 +2402,9 @@ GDB_AC_SELFTEST([
 
 GDB_AC_TRANSFORM([gdb], [GDB_TRANSFORM_NAME])
 GDB_AC_TRANSFORM([gcore], [GCORE_TRANSFORM_NAME])
-AC_CONFIG_FILES([gcore], [chmod +x gcore])
+AC_CONFIG_FILES([gcore.in:gcore-1.in])
+AC_CONFIG_FILES([gstack.in:gstack-1.in])
+AC_CONFIG_FILES([gdb-add-index.in:contrib/gdb-add-index.sh])
 AC_CONFIG_FILES([Makefile gdb-gdb.gdb gdb-gdb.py doc/Makefile data-directory/Makefile])
 
 AC_OUTPUT

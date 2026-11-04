@@ -75,13 +75,13 @@ rpz_dnsrps_LDADD =		\
 TESTS =				\
 	rpz			\
 	rpzrecurse		\
-	serve-stale		\
+	serve_stale		\
 	timeouts		\
 	upforwd			\
 	acl			\
 	additional		\
 	addzone			\
-	allow-query		\
+	allow_query		\
 	auth			\
 	autosign		\
 	builtin			\
@@ -95,6 +95,7 @@ TESTS =				\
 	checkds			\
 	checknames		\
 	checkzone		\
+	cname_recursion		\
 	cookie			\
 	cpu			\
 	database		\
@@ -113,14 +114,14 @@ TESTS =				\
 	ednscompliance		\
 	emptyzones		\
 	enginepkcs11		\
-	filter-aaaa		\
+	filters			\
 	fetchlimit		\
 	formerr			\
 	forward			\
 	geoip2			\
 	glue			\
 	idna			\
-	include-multiplecfg	\
+	include_multiplecfg	\
 	inline			\
 	integrity		\
 	ixfr			\
@@ -143,6 +144,7 @@ TESTS =				\
 	names			\
 	notify			\
 	nsec3			\
+	nsec_wildcard_wrong_zone \
 	nslookup		\
 	nsupdate		\
 	nzd2nzf			\
@@ -151,7 +153,7 @@ TESTS =				\
 	proxy			\
 	pipelined		\
 	qmin			\
-	query-source		\
+	query_source		\
 	reclimit		\
 	redirect		\
 	resolver		\
@@ -177,7 +179,7 @@ TESTS =				\
 	synthfromdnssec		\
 	tcp			\
 	tools			\
-	transport-acl		\
+	transport_acl		\
 	tsig			\
 	tsiggss			\
 	ttl			\
@@ -219,4 +221,4 @@ LOG_COMPILER = $(srcdir)/run.sh
 test-local: check
 
 clean-local::
-	-find -L . -mindepth 1 -maxdepth 1 -type d -name "*_*" -and -not -name "_common" -exec rm -rf {} \;
+	-find -L . -mindepth 1 -maxdepth 1 -type d -name "*-*" -exec rm -rf {} \;

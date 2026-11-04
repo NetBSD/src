@@ -1,5 +1,5 @@
 /* Implementation of the RANDOM intrinsics
-   Copyright (C) 2002-2020 Free Software Foundation, Inc.
+   Copyright (C) 2002-2022 Free Software Foundation, Inc.
    Contributed by Lars Segerlund <seger@linuxmail.org>,
    Steve Kargl and Janne Blomqvist.
 
@@ -76,6 +76,16 @@ iexport_proto(random_r16);
 
 extern void arandom_r16 (gfc_array_r16 *);
 export_proto(arandom_r16);
+
+#endif
+
+#ifdef HAVE_GFC_REAL_17
+
+extern void random_r17 (GFC_REAL_17 *);
+iexport_proto(random_r17);
+
+extern void arandom_r17 (gfc_array_r17 *);
+export_proto(arandom_r17);
 
 #endif
 
@@ -158,6 +168,27 @@ rnumber_16 (GFC_REAL_16 *f, GFC_UINTEGER_8 v1, GFC_UINTEGER_8 v2)
   v2 = v2 & mask;
   *f = (GFC_REAL_16) v1 * GFC_REAL_16_LITERAL(0x1.p-64)
     + (GFC_REAL_16) v2 * GFC_REAL_16_LITERAL(0x1.p-128);
+}
+#endif
+
+#ifdef HAVE_GFC_REAL_17
+
+/* For REAL(KIND=16), we only need to mask off the lower bits.  */
+
+static void
+rnumber_17 (GFC_REAL_17 *f, GFC_UINTEGER_8 v1, GFC_UINTEGER_8 v2)
+{
+  GFC_UINTEGER_8 mask;
+#if GFC_REAL_17_RADIX == 2
+  mask = ~ (GFC_UINTEGER_8) 0u << (128 - GFC_REAL_17_DIGITS);
+#elif GFC_REAL_17_RADIX == 16
+  mask = ~ (GFC_UINTEGER_8) 0u << ((32 - GFC_REAL_17_DIGITS) * 4);
+#else
+#error "GFC_REAL_17_RADIX has unknown value"
+#endif
+  v2 = v2 & mask;
+  *f = (GFC_REAL_17) v1 * GFC_REAL_17_LITERAL(0x1.p-64)
+    + (GFC_REAL_17) v2 * GFC_REAL_17_LITERAL(0x1.p-128);
 }
 #endif
 
@@ -445,6 +476,28 @@ iexport(random_r16);
 
 #endif
 
+/*  This function produces a REAL(16) value from the uniform distribution
+    with range [0,1).  */
+
+#ifdef HAVE_GFC_REAL_17
+
+void
+random_r17 (GFC_REAL_17 *x)
+{
+  GFC_UINTEGER_8 r1, r2;
+  prng_state* rs = get_rand_state();
+
+  if (unlikely (!rs->init))
+    init_rand_state (rs, false);
+  r1 = prng_next (rs);
+  r2 = prng_next (rs);
+  rnumber_17 (x, r1, r2);
+}
+iexport(random_r17);
+
+
+#endif
+
 /*  This function fills a REAL(4) array with values from the uniform
     distribution with range [0,1).  */
 
@@ -719,10 +772,84 @@ arandom_r16 (gfc_array_r16 *x)
 
 #endif
 
+#ifdef HAVE_GFC_REAL_17
+
+/*  This function fills a REAL(16) array with values from the uniform
+    distribution with range [0,1).  */
+
+void
+arandom_r17 (gfc_array_r17 *x)
+{
+  index_type count[GFC_MAX_DIMENSIONS];
+  index_type extent[GFC_MAX_DIMENSIONS];
+  index_type stride[GFC_MAX_DIMENSIONS];
+  index_type stride0;
+  index_type dim;
+  GFC_REAL_17 *dest;
+  prng_state* rs = get_rand_state();
+
+  dest = x->base_addr;
+
+  dim = GFC_DESCRIPTOR_RANK (x);
+
+  for (index_type n = 0; n < dim; n++)
+    {
+      count[n] = 0;
+      stride[n] = GFC_DESCRIPTOR_STRIDE(x,n);
+      extent[n] = GFC_DESCRIPTOR_EXTENT(x,n);
+      if (extent[n] <= 0)
+        return;
+    }
+
+  stride0 = stride[0];
+
+  if (unlikely (!rs->init))
+    init_rand_state (rs, false);
+
+  while (dest)
+    {
+      /* random_r17 (dest);  */
+      uint64_t r1 = prng_next (rs);
+      uint64_t r2 = prng_next (rs);
+      rnumber_17 (dest, r1, r2);
+
+      /* Advance to the next element.  */
+      dest += stride0;
+      count[0]++;
+      /* Advance to the next source element.  */
+      index_type n = 0;
+      while (count[n] == extent[n])
+        {
+          /* When we get to the end of a dimension, reset it and increment
+             the next dimension.  */
+          count[n] = 0;
+          /* We could precalculate these products, but this is a less
+             frequently used path so probably not worth it.  */
+          dest -= stride[n] * extent[n];
+          n++;
+          if (n == dim)
+            {
+              dest = NULL;
+              break;
+            }
+          else
+            {
+              count[n]++;
+              dest += stride[n];
+            }
+        }
+    }
+}
+
+#endif
+
 
 /* Number of elements in master_state array.  */
 #define SZU64 (sizeof (master_state.s) / sizeof (uint64_t))
 
+/* Equivalent number of elements in an array of GFC_INTEGER_{4,8}.  */
+#define SZ_IN_INT_4 (SZU64 * (sizeof (uint64_t) / sizeof (GFC_INTEGER_4)))
+#define SZ_IN_INT_8 (SZU64 * (sizeof (uint64_t) / sizeof (GFC_INTEGER_8)))
 
 /* Keys for scrambling the seed in order to avoid poor seeds.  */
 
@@ -751,14 +878,13 @@ void
 random_seed_i4 (GFC_INTEGER_4 *size, gfc_array_i4 *put, gfc_array_i4 *get)
 {
   uint64_t seed[SZU64];
-#define SZ (sizeof (master_state.s) / sizeof (GFC_INTEGER_4))
 
   /* Check that we only have one argument present.  */
   if ((size ? 1 : 0) + (put ? 1 : 0) + (get ? 1 : 0) > 1)
     runtime_error ("RANDOM_SEED should have at most one argument present.");
 
   if (size != NULL)
-    *size = SZ;
+    *size = SZ_IN_INT_4;
 
   prng_state* rs = get_rand_state();
 
@@ -770,7 +896,7 @@ random_seed_i4 (GFC_INTEGER_4 *size, gfc_array_i4 *put, gfc_array_i4 *get)
 	runtime_error ("Array rank of GET is not 1.");
 
       /* If the array is too small, abort.  */
-      if (GFC_DESCRIPTOR_EXTENT(get,0) < (index_type) SZ)
+      if (GFC_DESCRIPTOR_EXTENT(get,0) < (index_type) SZ_IN_INT_4)
 	runtime_error ("Array size of GET is too small.");
 
       if (!rs->init)
@@ -780,8 +906,9 @@ random_seed_i4 (GFC_INTEGER_4 *size, gfc_array_i4 *put, gfc_array_i4 *get)
       scramble_seed (seed, rs->s);
 
       /*  Then copy it back to the user variable.  */
-      for (size_t i = 0; i < SZ ; i++)
-	memcpy (&(get->base_addr[(SZ - 1 - i) * GFC_DESCRIPTOR_STRIDE(get,0)]),
+      for (size_t i = 0; i < SZ_IN_INT_4 ; i++)
+	memcpy (&(get->base_addr[(SZ_IN_INT_4 - 1 - i) *
+				 GFC_DESCRIPTOR_STRIDE(get,0)]),
 		(unsigned char*) seed + i * sizeof(GFC_UINTEGER_4),
                sizeof(GFC_UINTEGER_4));
     }
@@ -805,13 +932,14 @@ random_seed_i4 (GFC_INTEGER_4 *size, gfc_array_i4 *put, gfc_array_i4 *get)
         runtime_error ("Array rank of PUT is not 1.");
 
       /* If the array is too small, abort.  */
-      if (GFC_DESCRIPTOR_EXTENT(put,0) < (index_type) SZ)
+      if (GFC_DESCRIPTOR_EXTENT(put,0) < (index_type) SZ_IN_INT_4)
         runtime_error ("Array size of PUT is too small.");
 
       /*  We copy the seed given by the user.  */
-      for (size_t i = 0; i < SZ; i++)
+      for (size_t i = 0; i < SZ_IN_INT_4; i++)
 	memcpy ((unsigned char*) seed + i * sizeof(GFC_UINTEGER_4),
-		&(put->base_addr[(SZ - 1 - i) * GFC_DESCRIPTOR_STRIDE(put,0)]),
+		&(put->base_addr[(SZ_IN_INT_4 - 1 - i) *
+				 GFC_DESCRIPTOR_STRIDE(put,0)]),
 		sizeof(GFC_UINTEGER_4));
 
       /* We put it after scrambling the bytes, to paper around users who
@@ -823,7 +951,6 @@ random_seed_i4 (GFC_INTEGER_4 *size, gfc_array_i4 *put, gfc_array_i4 *get)
 
   __gthread_mutex_unlock (&random_lock);
     }
-#undef SZ
 }
 iexport(random_seed_i4);
 
@@ -837,9 +964,8 @@ random_seed_i8 (GFC_INTEGER_8 *size, gfc_array_i8 *put, gfc_array_i8 *get)
   if ((size ? 1 : 0) + (put ? 1 : 0) + (get ? 1 : 0) > 1)
     runtime_error ("RANDOM_SEED should have at most one argument present.");
 
-#define SZ (sizeof (master_state.s) / sizeof (GFC_INTEGER_8))
   if (size != NULL)
-    *size = SZ;
+    *size = SZ_IN_INT_8;
 
   prng_state* rs = get_rand_state();
 
@@ -851,7 +977,7 @@ random_seed_i8 (GFC_INTEGER_8 *size, gfc_array_i8 *put, gfc_array_i8 *get)
 	runtime_error ("Array rank of GET is not 1.");
 
       /* If the array is too small, abort.  */
-      if (GFC_DESCRIPTOR_EXTENT(get,0) < (index_type) SZ)
+      if (GFC_DESCRIPTOR_EXTENT(get,0) < (index_type) SZ_IN_INT_8)
 	runtime_error ("Array size of GET is too small.");
 
       if (!rs->init)
@@ -861,7 +987,7 @@ random_seed_i8 (GFC_INTEGER_8 *size, gfc_array_i8 *put, gfc_array_i8 *get)
       scramble_seed (seed, rs->s);
 
       /*  This code now should do correct strides.  */
-      for (size_t i = 0; i < SZ; i++)
+      for (size_t i = 0; i < SZ_IN_INT_8; i++)
 	memcpy (&(get->base_addr[i * GFC_DESCRIPTOR_STRIDE(get,0)]), &seed[i],
 		sizeof (GFC_UINTEGER_8));
     }
@@ -885,11 +1011,11 @@ random_seed_i8 (GFC_INTEGER_8 *size, gfc_array_i8 *put, gfc_array_i8 *get)
         runtime_error ("Array rank of PUT is not 1.");
 
       /* If the array is too small, abort.  */
-      if (GFC_DESCRIPTOR_EXTENT(put,0) < (index_type) SZ)
+      if (GFC_DESCRIPTOR_EXTENT(put,0) < (index_type) SZ_IN_INT_8)
         runtime_error ("Array size of PUT is too small.");
 
       /*  This code now should do correct strides.  */
-      for (size_t i = 0; i < SZ; i++)
+      for (size_t i = 0; i < SZ_IN_INT_8; i++)
 	memcpy (&seed[i], &(put->base_addr[i * GFC_DESCRIPTOR_STRIDE(put,0)]),
 		sizeof (GFC_UINTEGER_8));
 

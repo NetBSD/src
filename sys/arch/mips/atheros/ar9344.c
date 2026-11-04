@@ -1,4 +1,4 @@
-/* $NetBSD: ar9344.c,v 1.5 2014/05/29 14:41:26 skrll Exp $ */
+/* $NetBSD: ar9344.c,v 1.5.64.1 2026/11/04 23:20:56 perseant Exp $ */
 
 /*
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -48,7 +48,7 @@
  * family.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.5 2014/05/29 14:41:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ar9344.c,v 1.5.64.1 2026/11/04 23:20:56 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -196,14 +196,10 @@ static void
 addprop_data(device_t dev, const char *name, const uint8_t *data,
     int len)
 {
-	prop_data_t	pd;
-	pd = prop_data_create_data(data, len);
-	KASSERT(pd != NULL);
-	if (prop_dictionary_set(device_properties(dev), name, pd) == FALSE) {
+	if (! device_setprop_data(dev, name, data, len)) {
 		printf("WARNING: unable to set %s property for %s\n",
 		    name, device_xname(dev));
 	}
-	prop_object_release(pd);
 }
 #endif
 
@@ -256,7 +252,7 @@ ar9344_device_register(device_t dev, void *aux)
 		} else
 			return;
 
-		addprop_data(dev, "mac-addr", enaddr, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enaddr, ETHER_ADDR_LEN);
 	}
 
 #if 0
@@ -268,7 +264,7 @@ ar9344_device_register(device_t dev, void *aux)
 		else
 			return;
 
-		addprop_data(dev, "mac-addr", enet, ETHER_ADDR_LEN);
+		addprop_data(dev, "mac-address", enet, ETHER_ADDR_LEN);
 
 		addprop_integer(dev, "wmac-rev",
 		    GETRESET(AR9344_RESET_SREV));

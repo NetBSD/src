@@ -4,117 +4,9 @@
  *
  *****************************************************************************/
 
-/******************************************************************************
- *
- * 1. Copyright Notice
- *
- * Some or all of this work - Copyright (c) 1999 - 2024, Intel Corp.
+/*
+ * Copyright (C) 2000 - 2026, Intel Corp.
  * All rights reserved.
- *
- * 2. License
- *
- * 2.1. This is your license from Intel Corp. under its intellectual property
- * rights. You may have additional license terms from the party that provided
- * you this software, covering your right to use that party's intellectual
- * property rights.
- *
- * 2.2. Intel grants, free of charge, to any person ("Licensee") obtaining a
- * copy of the source code appearing in this file ("Covered Code") an
- * irrevocable, perpetual, worldwide license under Intel's copyrights in the
- * base code distributed originally by Intel ("Original Intel Code") to copy,
- * make derivatives, distribute, use and display any portion of the Covered
- * Code in any form, with the right to sublicense such rights; and
- *
- * 2.3. Intel grants Licensee a non-exclusive and non-transferable patent
- * license (with the right to sublicense), under only those claims of Intel
- * patents that are infringed by the Original Intel Code, to make, use, sell,
- * offer to sell, and import the Covered Code and derivative works thereof
- * solely to the minimum extent necessary to exercise the above copyright
- * license, and in no event shall the patent license extend to any additions
- * to or modifications of the Original Intel Code. No other license or right
- * is granted directly or by implication, estoppel or otherwise;
- *
- * The above copyright and patent license is granted only if the following
- * conditions are met:
- *
- * 3. Conditions
- *
- * 3.1. Redistribution of Source with Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification with rights to further distribute source must include
- * the above Copyright Notice, the above License, this list of Conditions,
- * and the following Disclaimer and Export Compliance provision. In addition,
- * Licensee must cause all Covered Code to which Licensee contributes to
- * contain a file documenting the changes Licensee made to create that Covered
- * Code and the date of any change. Licensee must include in that file the
- * documentation of any changes made by any predecessor Licensee. Licensee
- * must include a prominent statement that the modification is derived,
- * directly or indirectly, from Original Intel Code.
- *
- * 3.2. Redistribution of Source with no Rights to Further Distribute Source.
- * Redistribution of source code of any substantial portion of the Covered
- * Code or modification without rights to further distribute source must
- * include the following Disclaimer and Export Compliance provision in the
- * documentation and/or other materials provided with distribution. In
- * addition, Licensee may not authorize further sublicense of source of any
- * portion of the Covered Code, and must include terms to the effect that the
- * license from Licensee to its licensee is limited to the intellectual
- * property embodied in the software Licensee provides to its licensee, and
- * not to intellectual property embodied in modifications its licensee may
- * make.
- *
- * 3.3. Redistribution of Executable. Redistribution in executable form of any
- * substantial portion of the Covered Code or modification must reproduce the
- * above Copyright Notice, and the following Disclaimer and Export Compliance
- * provision in the documentation and/or other materials provided with the
- * distribution.
- *
- * 3.4. Intel retains all right, title, and interest in and to the Original
- * Intel Code.
- *
- * 3.5. Neither the name Intel nor any other trademark owned or controlled by
- * Intel shall be used in advertising or otherwise to promote the sale, use or
- * other dealings in products derived from or relating to the Covered Code
- * without prior written authorization from Intel.
- *
- * 4. Disclaimer and Export Compliance
- *
- * 4.1. INTEL MAKES NO WARRANTY OF ANY KIND REGARDING ANY SOFTWARE PROVIDED
- * HERE. ANY SOFTWARE ORIGINATING FROM INTEL OR DERIVED FROM INTEL SOFTWARE
- * IS PROVIDED "AS IS," AND INTEL WILL NOT PROVIDE ANY SUPPORT, ASSISTANCE,
- * INSTALLATION, TRAINING OR OTHER SERVICES. INTEL WILL NOT PROVIDE ANY
- * UPDATES, ENHANCEMENTS OR EXTENSIONS. INTEL SPECIFICALLY DISCLAIMS ANY
- * IMPLIED WARRANTIES OF MERCHANTABILITY, NONINFRINGEMENT AND FITNESS FOR A
- * PARTICULAR PURPOSE.
- *
- * 4.2. IN NO EVENT SHALL INTEL HAVE ANY LIABILITY TO LICENSEE, ITS LICENSEES
- * OR ANY OTHER THIRD PARTY, FOR ANY LOST PROFITS, LOST DATA, LOSS OF USE OR
- * COSTS OF PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES, OR FOR ANY INDIRECT,
- * SPECIAL OR CONSEQUENTIAL DAMAGES ARISING OUT OF THIS AGREEMENT, UNDER ANY
- * CAUSE OF ACTION OR THEORY OF LIABILITY, AND IRRESPECTIVE OF WHETHER INTEL
- * HAS ADVANCE NOTICE OF THE POSSIBILITY OF SUCH DAMAGES. THESE LIMITATIONS
- * SHALL APPLY NOTWITHSTANDING THE FAILURE OF THE ESSENTIAL PURPOSE OF ANY
- * LIMITED REMEDY.
- *
- * 4.3. Licensee shall not export, either directly or indirectly, any of this
- * software or system incorporating such software without first obtaining any
- * required license or other approval from the U. S. Department of Commerce or
- * any other agency or department of the United States Government. In the
- * event Licensee exports any such software from the United States or
- * re-exports any such software from a foreign destination, Licensee shall
- * ensure that the distribution and export/re-export of the software is in
- * compliance with all laws, regulations, orders, or other restrictions of the
- * U.S. Export Administration Regulations. Licensee agrees that neither it nor
- * any of its subsidiaries will export/re-export any technical data, process,
- * software, or service, directly or indirectly, to any country for which the
- * United States government or any agency thereof requires an export license,
- * other governmental approval, or letter of assurance, without first obtaining
- * such license, approval or letter.
- *
- *****************************************************************************
- *
- * Alternatively, you may choose to be licensed under the terms of the
- * following license:
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -131,23 +23,23 @@
  *    of any contributors may be used to endorse or promote products derived
  *    from this software without specific prior written permission.
  *
+ * Alternatively, this software may be distributed under the terms of the
+ * GNU General Public License ("GPL") version 2 as published by the Free
+ * Software Foundation.
+ *
+ * NO WARRANTY
  * THIS SOFTWARE IS PROVIDED BY THE COPYRIGHT HOLDERS AND CONTRIBUTORS
  * "AS IS" AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT
  * LIMITED TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR
  * A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO EVENT SHALL THE COPYRIGHT
- * OWNER OR CONTRIBUTORS BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL,
- * SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT
- * LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE,
- * DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED AND ON ANY
- * THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY, OR TORT
- * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
- * OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
- *
- * Alternatively, you may choose to be licensed under the terms of the
- * GNU General Public License ("GPL") version 2 as published by the Free
- * Software Foundation.
- *
- *****************************************************************************/
+ * HOLDERS OR CONTRIBUTORS BE LIABLE FOR SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+ * DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+ * OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+ * HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+ * STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+ * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGES.
+ */
 
 #include "acpi.h"
 #include "accommon.h"
@@ -1011,7 +903,8 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoDmarScope[] =
 {
     {ACPI_DMT_DMAR_SCOPE, ACPI_DMARS_OFFSET (EntryType),            "Device Scope Type", 0},
     {ACPI_DMT_UINT8,    ACPI_DMARS_OFFSET (Length),                 "Entry Length", DT_LENGTH},
-    {ACPI_DMT_UINT16,   ACPI_DMARS_OFFSET (Reserved),               "Reserved", 0},
+    {ACPI_DMT_UINT8,    ACPI_DMARS_OFFSET (Flags),                  "Flags", 0},
+    {ACPI_DMT_UINT8,    ACPI_DMARS_OFFSET (Reserved),               "Reserved", 0},
     {ACPI_DMT_UINT8,    ACPI_DMARS_OFFSET (EnumerationId),          "Enumeration ID", 0},
     {ACPI_DMT_UINT8,    ACPI_DMARS_OFFSET (Bus),                    "PCI Bus Number", 0},
     ACPI_DMT_TERMINATOR
@@ -1024,7 +917,8 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoDmarScope[] =
 ACPI_DMTABLE_INFO           AcpiDmTableInfoDmar0[] =
 {
     {ACPI_DMT_UINT8,    ACPI_DMAR0_OFFSET (Flags),                  "Flags", 0},
-    {ACPI_DMT_UINT8,    ACPI_DMAR0_OFFSET (Reserved),               "Reserved", 0},
+    {ACPI_DMT_UINT8,    ACPI_DMAR0_OFFSET (Size),                   "Size (decoded below)", 0},
+    {ACPI_DMT_FLAGS4_0, ACPI_DMAR0_FLAG_OFFSET (Size,0),            "Size (pages, log2)", 0},
     {ACPI_DMT_UINT16,   ACPI_DMAR0_OFFSET (Segment),                "PCI Segment Number", 0},
     {ACPI_DMT_UINT64,   ACPI_DMAR0_OFFSET (Address),                "Register Base Address", 0},
     ACPI_DMT_TERMINATOR
@@ -1071,7 +965,7 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoDmar4[] =
     ACPI_DMT_TERMINATOR
 };
 
-/* 5: Hardware Unit Definition */
+/* 5: SoC Integrated Address Translation Cache */
 
 ACPI_DMTABLE_INFO           AcpiDmTableInfoDmar5[] =
 {
@@ -1080,6 +974,16 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoDmar5[] =
     {ACPI_DMT_UINT16,   ACPI_DMAR5_OFFSET (Segment),                "PCI Segment Number", 0},
     ACPI_DMT_TERMINATOR
 };
+
+/* 6: SoC Integrated Device Property */
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoDmar6[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_DMAR6_OFFSET (Reserved),               "Reserved", 0},
+    {ACPI_DMT_UINT16,   ACPI_DMAR6_OFFSET (Segment),                "PCI Segment Number", 0},
+    ACPI_DMT_TERMINATOR
+};
+
 
 /*******************************************************************************
  *
@@ -1143,6 +1047,44 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoDrtm2[] =
 
 /*******************************************************************************
  *
+ * DTPR - DMA TXT Protection Ranges Table
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoDtpr[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_DTPR_OFFSET (Flags),                  "Flags (reserved)", 0},
+    {ACPI_DMT_UINT32,   ACPI_DTPR_OFFSET (InsCnt),                 "Instance Count", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoDtprInstance[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_DTPR_INST_OFFSET (Flags),             "Instance control flags (reserved)", 0},
+    {ACPI_DMT_UINT32,   ACPI_DTPR_INST_OFFSET (TprCnt),            "Number of TPR ranges in instance", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoDtprArr[] =
+{
+    {ACPI_DMT_UINT64,   ACPI_DTPR_ARR_OFFSET (Base),               "TPR Base Address", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoDtprSerializeReq0[] =
+{
+    {ACPI_DMT_UINT32, ACPI_DTPR_AUX_SR_OFFSET (SrlCnt),             "Number of serialization registers", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoDtprSerializeReq1[] =
+{
+    {ACPI_DMT_UINT64, ACPI_DTPR_SR_OFFSET (SrRegister),            "Serialize Request register", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+/*******************************************************************************
+ *
  * ECDT - Embedded Controller Boot Resources Table
  *
  ******************************************************************************/
@@ -1184,6 +1126,276 @@ ACPI_DMTABLE_INFO           AcpiDmTableInfoEinj0[] =
     {ACPI_DMT_GAS,      ACPI_EINJ0_OFFSET (RegisterRegion),         "Register Region", 0},
     {ACPI_DMT_UINT64,   ACPI_EINJ0_OFFSET (Value),                  "Value", 0},
     {ACPI_DMT_UINT64,   ACPI_EINJ0_OFFSET (Mask),                   "Mask", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * ERDT - Enhanced Resource Director Technology table
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdt[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_ERDT_OFFSET (MaxClos),                 "Maximum supported CLOSID", 0},
+    {ACPI_DMT_BUF24,    ACPI_ERDT_OFFSET (Reserved),                "Reserved", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * ERDT - Common Subtable Header
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtHdr[] =
+{
+    {ACPI_DMT_ERDT,     ACPI_ERDT_HDR_OFFSET (Type),                "Type", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_HDR_OFFSET (Length),              "Length", DT_LENGTH},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - ERDT Resource Management Domain Description subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtRmdd[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_ERDT_RMDD_OFFSET      (Flags),              "Flags (decoded below)", DT_FLAG},
+    {ACPI_DMT_FLAG0,    ACPI_ERDT_RMDD_FLAG_OFFSET (Flags,0),            "L3 Domain", 0},
+    {ACPI_DMT_FLAG1,    ACPI_ERDT_RMDD_FLAG_OFFSET (Flags,0),            "I/O L3 Domain", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_RMDD_OFFSET      (IO_l3_Slices),       "I/O L3 Slices", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_RMDD_OFFSET      (IO_l3_Sets),         "I/O L3 Sets", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_RMDD_OFFSET      (IO_l3_Ways),         "I/O L3 Ways", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_RMDD_OFFSET      (Reserved),           "Reserved", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_RMDD_OFFSET      (DomainId),           "Domain ID", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_RMDD_OFFSET      (MaxRmid),            "Maximum supported RMID", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_RMDD_OFFSET      (CregBase),           "Control Register Base Address", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_RMDD_OFFSET      (CregSize),           "Control Register Base Size", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - CACD CPU Agent Collection Description subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtCacd[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CACD_OFFSET (Reserved),                "Reserved", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CACD_OFFSET (DomainId),                "Domain ID", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtCacdX2apic[] =
+{
+    {ACPI_DMT_UINT32,   0,                                               "X2ApicID", DT_OPTIONAL},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - DACD Device Agent Collection Description subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtDacd[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_ERDT_DACD_OFFSET (Reserved),                "Reserved", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_DACD_OFFSET (DomainId),                "Domain ID", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtDacdScope[] =
+{
+    {ACPI_DMT_UINT8,    ACPI_ERDT_DACD_PATH_OFFSET (Header.Type),        "PCIType", DT_OPTIONAL},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_DACD_PATH_OFFSET (Header.Length),      "Length", DT_OPTIONAL},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_DACD_PATH_OFFSET (Segment),            "Segment", DT_OPTIONAL},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_DACD_PATH_OFFSET (Reserved),           "Reserved", DT_OPTIONAL},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_DACD_PATH_OFFSET (StartBus),           "StartBus", DT_OPTIONAL},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtDacdPath[] =
+{
+    {ACPI_DMT_UINT8,    0,                                               "Path", DT_OPTIONAL},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - Cache Monitoring Registers for CPU Agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtCmrc[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CMRC_OFFSET (Reserved1),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CMRC_OFFSET (Flags),                   "Flags", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_CMRC_OFFSET (IndexFn),                 "Register Index Function", 0},
+    {ACPI_DMT_BUF11,    ACPI_ERDT_CMRC_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_CMRC_OFFSET (CmtRegBase),              "CMT Register Base Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CMRC_OFFSET (CmtRegSize),              "CMT Register Size", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CMRC_OFFSET (ClumpSize),               "Clump Size", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CMRC_OFFSET (ClumpStride),             "Clump Stride", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_CMRC_OFFSET (UpScale),                 "Upscale factor", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - Memory-bandwidth Monitoring Registers for CPU agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtMmrc[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_ERDT_MMRC_OFFSET (Reserved1),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_MMRC_OFFSET (Flags),                   "Flags", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_MMRC_OFFSET (IndexFn),                 "Register Index Function", 0},
+    {ACPI_DMT_BUF11,    ACPI_ERDT_MMRC_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_MMRC_OFFSET (RegBase),                 "MBM Register Base Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_MMRC_OFFSET (RegSize),                 "MBM Register Size", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_MMRC_OFFSET (CounterWidth),            "MBM Counter Width", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_MMRC_OFFSET (UpScale),                 "Upscale factor", 0},
+    {ACPI_DMT_UINT56,   ACPI_ERDT_MMRC_OFFSET (Reserved3),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_MMRC_OFFSET (CorrFactorListLen),       "Corr Factor List Length", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtMmrcCorrFactor[] =
+{
+    {ACPI_DMT_UINT32,   0,                                               "CorrFactor", DT_OPTIONAL},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - Memory-bandwidth Allocation Registers for CPU agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtMarc[] =
+{
+    {ACPI_DMT_UINT16,   ACPI_ERDT_MARC_OFFSET (Reserved1),               "Reserved", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_MARC_OFFSET (Flags),                   "Flags", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_MARC_OFFSET (IndexFn),                 "Register Index Function", 0},
+    {ACPI_DMT_UINT56,   ACPI_ERDT_MARC_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_MARC_OFFSET (RegBaseOpt),              "MBA Register Opt Base Address", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_MARC_OFFSET (RegBaseMin),              "MBA Register Min Base Address", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_MARC_OFFSET (RegBaseMax),              "MBA Register Max Base Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_MARC_OFFSET (MbaRegSize),              "MBA Register Size", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_MARC_OFFSET (MbaCtrlRange),            "MBA Control Range", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - Cache Allocation Registers for CPU Agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtCarc[] =
+{
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - Cache Monitoring Registers for Device Agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtCmrd[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CMRD_OFFSET (Reserved1),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CMRD_OFFSET (Flags),                   "Flags", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_CMRD_OFFSET (IndexFn),                 "Register Index Function", 0},
+    {ACPI_DMT_BUF11,    ACPI_ERDT_CMRD_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_CMRD_OFFSET (RegBase),                 "CMRD Register Base Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CMRD_OFFSET (RegSize),                 "CMRD Register Size", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CMRD_OFFSET (CmtRegOff),               "Register Offset", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CMRD_OFFSET (CmtClumpSize),            "Clump Size", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_CMRD_OFFSET (UpScale),                 "Upscale factor", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - O Bandwidth Monitoring Registers for Device Agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtIbrd[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_ERDT_IBRD_OFFSET (Reserved1),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_IBRD_OFFSET (Flags),                   "Flags", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_IBRD_OFFSET (IndexFn),                 "Register Index Function", 0},
+    {ACPI_DMT_BUF11,    ACPI_ERDT_IBRD_OFFSET (Reserved2),               "Reserved", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_IBRD_OFFSET (RegBase),                 "IBRD Register Base Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_IBRD_OFFSET (RegSize),                 "IBRD Register Size", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_IBRD_OFFSET (TotalBwOffset),           "TotalBw Offset", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_IBRD_OFFSET (IOMissBwOffset),          "IO Miss Offset", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_IBRD_OFFSET (TotalBwClump),            "TotalBw Clump", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_IBRD_OFFSET (IOMissBwClump),           "IO Miss Clump", 0},
+    {ACPI_DMT_UINT56,   ACPI_ERDT_IBRD_OFFSET (Reserved3),               "Reserved", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_IBRD_OFFSET (CounterWidth),            "Counter Width", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_IBRD_OFFSET (UpScale),                 "Upscale factor", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_IBRD_OFFSET (CorrFactorListLen),       "Corr Factor List Length", 0},
+    ACPI_DMT_TERMINATOR
+};
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtIbrdCorrFactor[] =
+{
+    {ACPI_DMT_UINT32,   0,                                               "CorrFactor", DT_OPTIONAL},
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - O bandwidth Allocation Registers for Device Agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtIbad[] =
+{
+    ACPI_DMT_TERMINATOR
+};
+
+
+/*******************************************************************************
+ *
+ * RMDD - Cache Allocation Registers for Device Agents subtable
+ *
+ ******************************************************************************/
+
+ACPI_DMTABLE_INFO           AcpiDmTableInfoErdtCard[] =
+{
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CARD_OFFSET (Reserved1),               "Reserved", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CARD_OFFSET (Flags),                   "Flags", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CARD_OFFSET (ContentionMask),          "ContentionMask", 0},
+    {ACPI_DMT_UINT8,    ACPI_ERDT_CARD_OFFSET (IndexFn),                 "Register Index Function", 0},
+    {ACPI_DMT_UINT56,   ACPI_ERDT_CARD_OFFSET (Reserved2),               "Register Index Function", 0},
+    {ACPI_DMT_UINT64,   ACPI_ERDT_CARD_OFFSET (RegBase),                 "CARD Register Base Address", 0},
+    {ACPI_DMT_UINT32,   ACPI_ERDT_CARD_OFFSET (RegSize),                 "CARD Register Size", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CARD_OFFSET (CatRegOffset),            "CARD Register Offset", 0},
+    {ACPI_DMT_UINT16,   ACPI_ERDT_CARD_OFFSET (CatRegBlockSize),         "CARD Register Block Size", 0},
+
     ACPI_DMT_TERMINATOR
 };
 

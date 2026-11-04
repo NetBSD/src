@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k.h,v 1.27 2024/01/13 00:44:42 thorpej Exp $	*/
+/*	$NetBSD: m68k.h,v 1.27.2.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,12 +54,13 @@
  */
 
 #ifdef _KERNEL
+
+#include <uvm/uvm_prot.h>	/* for vm_prot_t */
+
 /*
  * All m68k ports must provide these globals.
  */
 extern	int cputype;		/* CPU on this host */
-extern	int ectype;		/* external cache on this host */
-extern	int fputype;		/* FPU on this host */
 extern	int mmutype;		/* MMU on this host */
 #endif	/* _KERNEL */
 
@@ -83,7 +84,12 @@ extern	int mmutype;		/* MMU on this host */
 #define	FPU_68060	4	/* 68060 on-chip FPU */
 #define	FPU_UNKNOWN	5	/* placeholder; unknown FPU */
 
-/* values for mmutype (assigned for quick testing) */
+/*
+ * values for mmutype (assigned for quick testing).  Assembly
+ * code relies on this ordering, so do not change it!
+ */
+#define	MMU_UNKNOWN	-5	/* unknown MMU type */
+#define	MMU_CUSTOM	-4	/* bespoke machine-specific MMU */
 #define	MMU_68060	-3	/* 68060 on-chip MMU */
 #define	MMU_68040	-2	/* 68040 on-chip MMU */
 #define	MMU_68030	-1	/* 68030 on-chip subset of 68851 */
@@ -93,6 +99,44 @@ extern	int mmutype;		/* MMU on this host */
 
 
 #ifdef _KERNEL
+
+/*
+ * Delay divisor estimation for 68020/6830, 68040, and 68060,
+ * based on CPU clock frequency.  This is based on a x1024
+ * delay magnification factor.
+ *
+ * These provide a reasonable starting point; it is always
+ * best to calibrate the delay_divisor against a known clock
+ * source, if possible, a known-rate counter or a timer of
+ * some sort where expiration can be checked reliably.  When
+ * picking a default, it's safest to assume the fastest machine
+ * you're likely to see, which may result in longer delays,
+ * but is a safer bet if those delays are needed for minimum
+ * hardware timings, etc.
+ *
+ * When calibrating the delay_divisor, it is best to start
+ * assuming a slower CPU, which results in a larger delay
+ * divisor and the delay loop completing more quickly.  The
+ * calibration loop can then check to see if the reference
+ * has reached the desired value.  If it has not, decrement
+ * the delay_divisor, thus slowing down the delay loop, and
+ * try again.  For this purpose, we provide a "weight" macro
+ * that drags down the estimated lower CPU speed boundary
+ * by (very) roughly 10%.
+ *
+ * Note that the delay_divisor_est*() macros are reciprocal; given
+ * a calibrated delay_divisor value, you can use that to get the
+ * rough CPU speed in MHz.
+ */
+#define	DELAY_MAGSHIFT		10
+#define	DELAY_MAGFACTOR		(1 << DELAY_MAGSHIFT)
+#define	DELAY_MAXVAL		(0xffffffffU >> DELAY_MAGSHIFT)
+#define	delay_divisor_est(x)	((DELAY_MAGFACTOR * 8) / (x))
+#define	delay_divisor_est40(x)	((DELAY_MAGFACTOR * 3) / (x))
+#define	delay_divisor_est60(x)	((DELAY_MAGFACTOR * 1) / (x))
+#define	delay_calibration_weight(x) ((x) - ((x) / 10))
+
+extern int delay_divisor;
 
 struct pcb;
 struct trapframe;
@@ -105,8 +149,8 @@ void	zeropage(void *addr);
 
 /* switch_subr.s */
 void	lwp_trampoline(void);
-void	m68881_save(struct fpframe *);
-void	m68881_restore(struct fpframe *);
+void	fpu_save(struct fpframe *);
+void	fpu_restore(struct fpframe *);
 void	savectx(struct pcb *);
 
 /* w16copy.s */
@@ -114,7 +158,47 @@ void	w16zero(void *, u_int);
 void	w16copy(const void *, void *, u_int);
 
 /* fpu.c */
-int	fpu_probe(void);
+extern	int fputype;		/* FPU on this host */
+void	fpu_init(void);
+
+/* m68k_machdep.c */
+extern	int ectype;
+extern	int ecsize;
+extern	int cpuspeed_khz;
+extern	int fpuspeed_khz;
+void	machine_init_common(paddr_t);
+void	machine_set_model(void);
+#ifdef __HAVE_M68K_MACHINE_PRINT_MODEL
+void	machine_print_model(void (*)(const char *, ...)
+			    __printflike(1, 2));
+#endif
+void	cpu_startup_common(void);
+#ifdef __HAVE_CPU_STARTUP_PRINT_MACHINE_MODEL
+void	cpu_startup_print_machine_model(void (*)(const char *, ...)
+					__printflike(1, 2));
+#endif
+#ifdef __HAVE_CPU_STARTUP_PRINT_TOTAL_MEMORY
+void	cpu_startup_print_total_memory(void (*)(const char *, ...)
+				       __printflike(1, 2));
+#endif
+int	cpu_reboot_poll_console(bool);
+void	cpu_reboot_common(int, char *) __dead;
+void	machine_powerdown_default(void);
+void	machine_powerdown(void);
+void	machine_halt_default(void);
+void	machine_halt(void);
+void	machine_reboot(int, char *);
+void	bootsync(void);
+int	mm_md_physacc_regular(paddr_t, vm_prot_t);
+
+/* m68k_trap.c */
+extern label_t *nofault;
+bool	badaddr_read(volatile void *, size_t, void *);
+bool	badaddr_write(volatile void *, size_t, uintmax_t);
+
+#define	badaddr(a)		badaddr_read((a), 2, NULL)
+#define	badbaddr(a)		badaddr_read((a), 1, NULL)
+#define	badaddr_sz(a, s)	badaddr_read((a), (s), NULL)
 
 /* regdump.c */
 void	regdump(struct trapframe *, int);

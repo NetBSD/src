@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -26,7 +26,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable debug] != "" } {
     return -1
 }
 
-mi_clean_restart $binfile
+mi_clean_restart $::testfile
 
 if {[mi_runto_main] < 0} {
     return 0
@@ -41,9 +41,10 @@ mi_continue_to_line \
 # The value of NUMCHILD may vary on different systems.  Use generic $decimal
 # to match possible values.
 set re_ok "\\^done,name=\"A_String_Access\",numchild=\"$decimal\",.*"
-set re_error "\\^error,msg=\"Value out of range\.\".*"
+set re_error "\\^error,msg=\"Value out of range\\.\".*"
+set re_error2 "\\^error,msg=\"Cannot access memory at address $hex\""
 mi_gdb_test "-var-create A_String_Access * A_String_Access" \
-    "($re_ok|$re_error)" \
+    "($re_ok|$re_error|$re_error2)" \
     "Create varobj"
 
 set bp_location [gdb_get_line_number "STOP2" ${testdir}/mi_access.adb]
@@ -51,11 +52,18 @@ mi_continue_to_line \
     "mi_access.adb:$bp_location" \
     "stop at stop 2"
 
+# A helper to quote some expected output, then arrange for the package
+# component to be optional.
+proc optional_quote {out} {
+    set out [string_to_regexp $out]
+    return [regsub -all "pck\\\\." $out "(pck\\.)?"]
+}
+
 # If the  VAROBJ_UPDATE_RESULT.TYPE is true, the new_type and new_num_children
 # strings and values will be printed.  This currently happens on PowerPC but
 # not X86-64.
 set re_default [string_to_regexp {^done,changelist=[{name="A_String_Access",in_scope="true",type_changed="false",has_more="0"}]}]
-set re_varobj_update_result_type [string_to_regexp {^done,changelist=[{name="A_String_Access",in_scope="true",type_changed="true",new_type="pck.string_access",new_num_children="1",has_more="0"}]}]
+set re_varobj_update_result_type [optional_quote {^done,changelist=[{name="A_String_Access",in_scope="true",type_changed="true",new_type="pck.string_access",new_num_children="1",has_more="0"}]}]
 mi_gdb_test "-var-update A_String_Access" \
     "($re_default|$re_varobj_update_result_type)" \
     "update at stop 2"
@@ -70,5 +78,5 @@ mi_continue_to_line \
     "stop at stop 3"
 
 mi_gdb_test "-var-update A_String_Access" \
-    [string_to_regexp {^done,changelist=[{name="A_String_Access",in_scope="true",type_changed="true",new_type="pck.string_access",new_num_children="0",has_more="0"}]}] \
+    [optional_quote {^done,changelist=[{name="A_String_Access",in_scope="true",type_changed="true",new_type="pck.string_access",new_num_children="0",has_more="0"}]}] \
     "update at stop 3"

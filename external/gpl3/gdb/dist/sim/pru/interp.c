@@ -1,5 +1,5 @@
 /* Simulator for the Texas Instruments PRU processor
-   Copyright 2009-2024 Free Software Foundation, Inc.
+   Copyright 2009-2025 Free Software Foundation, Inc.
    Inspired by the Microblaze simulator
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
 

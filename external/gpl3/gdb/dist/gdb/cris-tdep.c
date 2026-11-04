@@ -1,6 +1,6 @@
 /* Target dependent code for CRIS, for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB.
    Written by Hendrik Ruijter, Stefan Andersson, and Orjan Friberg.
@@ -435,16 +435,16 @@ cris_sigtramp_frame_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind cris_sigtramp_frame_unwind =
-{
+static const struct frame_unwind_legacy cris_sigtramp_frame_unwind (
   "cris sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   cris_sigtramp_frame_this_id,
   cris_sigtramp_frame_prev_register,
   NULL,
   cris_sigtramp_frame_sniffer
-};
+);
 
 static int
 crisv32_single_step_through_delay (struct gdbarch *gdbarch,
@@ -900,16 +900,16 @@ cris_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
   return sp;
 }
 
-static const struct frame_unwind cris_frame_unwind = 
-{
+static const struct frame_unwind_legacy cris_frame_unwind (
   "cris prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   cris_frame_this_id,
   cris_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 cris_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -1467,7 +1467,7 @@ cris_register_size (struct gdbarch *gdbarch, int regno)
 }
 
 /* Nonzero if regno should not be fetched from the target.  This is the case
-   for unimplemented (size 0) and non-existant registers.  */
+   for unimplemented (size 0) and non-existent registers.  */
 
 static int
 cris_cannot_fetch_register (struct gdbarch *gdbarch, int regno)
@@ -1508,7 +1508,7 @@ cris_cannot_store_register (struct gdbarch *gdbarch, int regno)
 }
 
 /* Nonzero if regno should not be fetched from the target.  This is the case
-   for unimplemented (size 0) and non-existant registers.  */
+   for unimplemented (size 0) and non-existent registers.  */
 
 static int
 crisv32_cannot_fetch_register (struct gdbarch *gdbarch, int regno)
@@ -3339,7 +3339,7 @@ get_data_from_address (unsigned short *inst, CORE_ADDR address,
   return value;
 }
 
-/* Handles the assign addresing mode for the ADD, SUB, CMP, AND, OR and MOVE 
+/* Handles the assign addressing mode for the ADD, SUB, CMP, AND, OR and MOVE
    instructions.  The MOVE instruction is the move from source to register.  */
 
 static void 
@@ -3398,7 +3398,7 @@ three_operand_add_sub_cmp_and_or_op (unsigned short inst,
   inst_env->disable_interrupt = 0;
 }
 
-/* Handles the index addresing mode for the ADD, SUB, CMP, AND, OR and MOVE
+/* Handles the index addressing mode for the ADD, SUB, CMP, AND, OR and MOVE
    instructions.  The MOVE instruction is the move from source to register.  */
 
 static void 
@@ -3425,7 +3425,7 @@ handle_prefix_index_mode_for_aritm_op (unsigned short inst,
   inst_env->disable_interrupt = 0;
 }
 
-/* Handles the autoincrement and indirect addresing mode for the ADD, SUB,
+/* Handles the autoincrement and indirect addressing mode for the ADD, SUB,
    CMP, AND OR and MOVE instruction.  The MOVE instruction is the move from
    source to register.  */
 
@@ -3816,9 +3816,7 @@ static void cris_iterate_over_regset_sections (struct gdbarch *gdbarch,
       &cris_regset, NULL, cb_data);
 }
 
-void _initialize_cris_tdep ();
-void
-_initialize_cris_tdep ()
+INIT_GDB_FILE (cris_tdep)
 {
   gdbarch_register (bfd_arch_cris, cris_gdbarch_init, cris_dump_tdep);
   
@@ -3883,7 +3881,7 @@ set_cris_version (const char *ignore_args, int from_tty,
   usr_cmd_cris_version_valid = 1;
   
   /* Update the current architecture, if needed.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("cris_gdbarch_update: failed to update architecture."));
 }
 
@@ -3894,7 +3892,7 @@ set_cris_mode (const char *ignore_args, int from_tty,
   struct gdbarch_info info;
 
   /* Update the current architecture, if needed.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error ("cris_gdbarch_update: failed to update architecture.");
 }
 
@@ -3905,7 +3903,7 @@ set_cris_dwarf2_cfi (const char *ignore_args, int from_tty,
   struct gdbarch_info info;
 
   /* Update the current architecture, if needed.  */
-  if (!gdbarch_update_p (info))
+  if (!gdbarch_update_p (current_inferior (), info))
     internal_error (_("cris_gdbarch_update: failed to update architecture."));
 }
 
@@ -3995,7 +3993,7 @@ cris_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
       set_gdbarch_cannot_store_register (gdbarch, cris_cannot_store_register);
       set_gdbarch_cannot_fetch_register (gdbarch, cris_cannot_fetch_register);
 
-      set_gdbarch_software_single_step (gdbarch, cris_software_single_step);
+      set_gdbarch_get_next_pcs (gdbarch, cris_software_single_step);
       break;
 
     case 32:

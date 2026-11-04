@@ -1,4 +1,4 @@
-/*	$NetBSD: urcu.h,v 1.2.4.2 2025/08/02 05:54:03 perseant Exp $	*/
+/*	$NetBSD: urcu.h,v 1.2.4.3 2026/11/04 23:18:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -29,9 +29,20 @@
 #include <urcu-bp.h>
 #endif
 
-#include <urcu-pointer.h>
-
+#if HAVE_URCU_ASSERT_H
+#include <urcu/assert.h>
+#endif
+#if HAVE_URCU_UATOMIC_H
+#include <urcu/uatomic.h>
+#endif
 #include <urcu/compiler.h>
+#include <urcu/futex.h>
+#include <urcu/list.h>
+#if HAVE_URCU_POINTER_H
+#include <urcu/pointer.h>
+#else
+#include <urcu-pointer.h>
+#endif
 #include <urcu/rculfhash.h>
 #include <urcu/rculist.h>
 #include <urcu/wfstack.h>
@@ -141,3 +152,45 @@
 
 #endif /* !defined(caa_container_of_check_null) */
 /* clang-format on */
+
+#ifdef __SANITIZE_THREAD__
+
+/*
+ * Restore the behaviour removed in
+ * https://github.com/urcu/userspace-rcu/commit/5cd787d0f953182a23d340669b20b150fd50c18c
+ * as we only use CMM_LOAD_SHARED() and CMM_STORE_SHARED() with atomic types.
+ */
+
+#undef CMM_LOAD_SHARED
+#define CMM_LOAD_SHARED(x) \
+	__atomic_load_n(cmm_cast_volatile(&(x)), __ATOMIC_RELAXED)
+
+#undef _CMM_LOAD_SHARED
+#define _CMM_LOAD_SHARED(x) CMM_LOAD_SHARED(x)
+
+#undef CMM_STORE_SHARED
+#define CMM_STORE_SHARED(x, v)                                \
+	__extension__({                                       \
+		__typeof__(v) _v = (v);                       \
+		__atomic_store_n(cmm_cast_volatile(&(x)), _v, \
+				 __ATOMIC_RELAXED);           \
+		_v;                                           \
+	})
+
+#undef _CMM_STORE_SHARED
+#define _CMM_STORE_SHARED(x, v) CMM_STORE_SHARED(x, v)
+
+#endif /* __SANITIZE_THREAD */
+
+#if !defined(uatomic_load) || !defined(uatomic_store)
+#define uatomic_load(ptr, mo)	  uatomic_read(ptr)
+#define uatomic_store(ptr, v, mo) uatomic_set(ptr, v)
+
+#define CMM_RELAXED __ATOMIC_RELAXED
+#define CMM_CONSUME __ATOMIC_CONSUME
+#define CMM_ACQUIRE __ATOMIC_ACQUIRE
+#define CMM_RELEASE __ATOMIC_RELEASE
+#define CMM_ACQ_REL __ATOMIC_ACQ_REL
+#define CMM_SEQ_CST __ATOMIC_SEQ_CST
+
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $ */
+/*	$NetBSD: cuda.c,v 1.30.6.1 2026/11/04 23:20:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.30.6.1 2026/11/04 23:20:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,7 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: cuda.c,v 1.30 2023/09/06 08:14:42 macallan Exp $");
 #include <machine/autoconf.h>
 #include <machine/pio.h>
 #include <dev/clock_subr.h>
+
 #include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_calls.h>
+#include <dev/i2c/i2c_enum.h>
 
 #include <macppc/dev/viareg.h>
 #include <macppc/dev/cudavar.h>
@@ -81,6 +84,13 @@ struct cuda_softc {
 	struct i2c_controller sc_i2c;
 	bus_space_tag_t sc_memt;
 	bus_space_handle_t sc_memh;
+
+	/*
+	 * We provide our own i2c device enumeration method, so we
+	 * need to subclass our device handle.
+	 */
+	struct devhandle_impl sc_devhandle_impl;
+
 	int sc_node;
 	int sc_state;
 	int sc_waiting;
@@ -148,6 +158,48 @@ static	int cuda_adb_set_handler(void *, void (*)(void *, int, uint8_t *), void *
 static int cuda_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
+static const struct i2c_deventry cuda_i2c_devices[] = {
+	{ .name		=	"videopll",
+	  .compat	=	"aapl,valkyrie-videopll",
+	  .addr		=	0x50,
+	  .data		=	"/valkyrie" },
+
+	{ .name		=	"sgsmix",
+	  .compat	=	"st,tda7433",
+	  .addr		=	0x8a,
+	  .data		=	"/perch" },
+
+	I2C_DEVENTRY_EOL
+};
+
+static bool
+cuda_i2cdev_callback(device_t dev, devhandle_t call_handle,
+    const struct i2c_deventry *entry, devhandle_t *child_devhandlep)
+{
+	return (OF_finddevice((const char *)entry->data) != -1);
+}
+
+static int
+cuda_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct i2c_enumerate_devices_args *args = v;
+
+	return i2c_enumerate_deventries(dev, call_handle, args,
+	    cuda_i2c_devices, cuda_i2cdev_callback);
+}
+
+static device_call_t
+cuda_devhandle_lookup_device_call(devhandle_t handle, const char *name,
+    devhandle_t *call_handlep)
+{
+	if (strcmp(name, I2C_ENUMERATE_DEVICES_STR) == 0) {
+		return cuda_i2c_enumerate_devices;
+	}
+
+	/* Defer everything else to the "super". */
+	return NULL;
+}
+
 static int
 cuda_match(device_t parent, struct cfdata *cf, void *aux)
 {
@@ -171,11 +223,7 @@ cuda_attach(device_t parent, device_t self, void *aux)
 {
 	struct confargs *ca = aux;
 	struct cuda_softc *sc = device_private(self);
-	struct i2cbus_attach_args iba;
 	static struct cuda_attach_args caa;
-	prop_dictionary_t dict = device_properties(self);
-	prop_dictionary_t dev;
-	prop_array_t cfg;
 	int irq = ca->ca_intr[0];
 	int node, i, child;
 	char name[32];
@@ -242,7 +290,7 @@ cuda_attach(device_t parent, device_t self, void *aux)
 
 			sc->sc_todr.todr_gettime = cuda_todr_get;
 			sc->sc_todr.todr_settime = cuda_todr_set;
-			sc->sc_todr.cookie = sc;
+			sc->sc_todr.todr_dev = self;
 			todr_attach(&sc->sc_todr);
 		} 
 		child = OF_peer(child);
@@ -255,37 +303,19 @@ cuda_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	config_found(self, &caa, cuda_print, CFARGS_NONE);
 #endif
-	cfg = prop_array_create();
-	prop_dictionary_set(dict, "i2c-child-devices", cfg);
-	prop_object_release(cfg);
 
-	/* we don't have OF nodes for i2c devices so we have to make our own */
-
-	node = OF_finddevice("/valkyrie");
-	if (node != -1) {
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", "videopll");
-		prop_dictionary_set_uint32(dev, "addr", 0x50);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
-	}
-
-	node = OF_finddevice("/perch");
-	if (node != -1) {
-		dev = prop_dictionary_create();
-		prop_dictionary_set_string(dev, "name", "sgsmix");
-		prop_dictionary_set_uint32(dev, "addr", 0x8a);
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
-	}
-
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
+	/*
+	 * There are no OF nodes for our I2C devices, so we provide
+	 * our own enumeration method.
+	 */
 	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = cuda_i2c_exec;
-	config_found(self, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+
+	iicbus_attach_with_devhandle(self, &sc->sc_i2c,
+	    devhandle_subclass(device_handle(self),
+			       &sc->sc_devhandle_impl,
+			       cuda_devhandle_lookup_device_call));
 
 	if (cuda0 == NULL)
 		cuda0 = &caa;
@@ -777,7 +807,7 @@ cuda_todr_handler(void *cookie, int len, uint8_t *data)
 static int
 cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct cuda_softc *sc = tch->cookie;
+	struct cuda_softc *sc = device_private(tch->todr_dev);
 	int cnt = 0;
 	uint8_t cmd[] = { CUDA_PSEUDO, CMD_READ_RTC};
 
@@ -816,7 +846,7 @@ cuda_todr_get(todr_chip_handle_t tch, struct timeval *tvp)
 static int
 cuda_todr_set(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct cuda_softc *sc = tch->cookie;
+	struct cuda_softc *sc = device_private(tch->todr_dev);
 	uint32_t sec;
 	uint8_t cmd[] = {CUDA_PSEUDO, CMD_WRITE_RTC, 0, 0, 0, 0};
 

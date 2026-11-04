@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,41 +23,91 @@
 
 require allow_dlmopen_tests
 
-standard_testfile
+# Don't use 'dlmopen.c' as the source file name, glibc also has a file
+# with that name.  Within our tests, we set the source directory search
+# path order to:
+#
+#    (1) the test source directory,
+#    (2) the compilation directory, and then
+#    (3) the current working directory.
+#
+# Because (1) is first when we try to place a breakpoint on
+# 'dlmopen.c', if the test source file has that name, then GDB will
+# find both the test source file, and the source file from glibc.
+#
+# We could work around this by making (2) first in the source
+# directory list, but that only works when the glibc source is
+# installed.  If it isn't then GDB will try the compilation directory,
+# fail to find the source, then try the test source directory, get a
+# hit, and so still confuse the two files.
+#
+# You might think the problem can be solved by specifying the absolute
+# path to the source file.  This doesn't work because the glibc file
+# has its filename recorded as just "dlmopen.c", as such GDB has to
+# figure out an absolute path to the file (if possible).  The absolute
+# path is figured out based on where GDB can find a matching file in
+# the source directory list, and because of the confusion above, GDB
+# will usually think the test 'dlmopen.c' and the glibc 'dlmopen.c'
+# are actually the same file.
+#
+# The conclusion is that it is just easier to rename the test source
+# file to avoid conflicts with glibc.
+
+standard_testfile -main.c -lib.c -lib-dep.c
 
 set basename_lib dlmopen-lib
-set srcfile_lib $srcdir/$subdir/$basename_lib.c
+set srcfile_lib $srcfile2
 set binfile_lib1 [standard_output_file $basename_lib.1.so]
 set binfile_lib2 [standard_output_file $basename_lib.2.so]
-set srcfile_lib_dep $srcdir/$subdir/$basename_lib-dep.c
+set srcfile_lib_dep $srcfile3
 set binfile_lib_dep [standard_output_file $basename_lib-dep.so]
 
-if { [gdb_compile_shlib $srcfile_lib_dep $binfile_lib_dep {debug}] != "" } {
-    untested "failed to prepare shlib"
-    return -1
+if { [build_executable "build shlib dep" $binfile_lib_dep $srcfile_lib_dep \
+	  {debug shlib}] == -1 } {
+    return
 }
 
-if { [gdb_compile_shlib $srcfile_lib $binfile_lib1 \
-	  [list debug shlib_load libs=$binfile_lib_dep]] != "" } {
-    untested "failed to prepare shlib"
-    return -1
+if { [build_executable "build shlib" $binfile_lib1 $srcfile_lib \
+	  [list debug shlib_load shlib libs=$binfile_lib_dep]] == -1 } {
+    return
 }
 
-if { [gdb_compile_shlib $srcfile_lib $binfile_lib2 \
-	  [list debug shlib_load libs=$binfile_lib_dep]] != "" } {
-    untested "failed to prepare shlib"
-    return -1
+if { [build_executable "build shlib" $binfile_lib2 $srcfile_lib \
+	  [list debug shlib_load shlib libs=$binfile_lib_dep]] == -1 } {
+    return
 }
 
-if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
+if { [build_executable "failed to build" $testfile $srcfile \
 	  [list additional_flags=-DDSO1_NAME=\"$binfile_lib1\" \
 	       additional_flags=-DDSO2_NAME=\"$binfile_lib2\" \
 	       shlib_load debug]] } {
-    return -1
+    return
 }
 
-if { ![runto_main] } {
-    return -1
+# Some locations needed by the tests.
+set bp_inc [gdb_get_line_number "bp.inc" $srcfile_lib]
+set bp_main [gdb_get_line_number "bp.main" $srcfile]
+
+# Figure out the file name for the dynamic linker.
+set dyln_name [section_get $binfile .interp]
+if { $dyln_name eq "" } {
+    unsupported "couldn't find dynamic linker name"
+    return
+}
+
+# If the dynamic linker path contains a symlink, some instances show the real
+# path instead of the original path.  Accept both.
+lassign [remote_exec target realpath "$dyln_name"] realpath_ret dyln_realpath_name
+
+if { $realpath_ret == 0 } {
+    set dyln_realpath_name [string trim $dyln_realpath_name]
+} else {
+    set dyln_realpath_name "not-a-valid-path"
+}
+
+# Return true if FILENAME is the dynamic linker.  Otherwise return false.
+proc is_dyln { filename } {
+    return [expr {$filename eq $::dyln_name || $filename eq $::dyln_realpath_name}]
 }
 
 # Check that 'info shared' show NUM occurrences of DSO.
@@ -66,7 +116,7 @@ proc check_dso_count { dso num } {
 
     set count 0
     gdb_test_multiple "info shared" "info shared" {
-	-re "$hex  $hex  Yes \[^\r\n\]*$dso\r\n" {
+	-re "$hex  $hex  \($::decimal\\s+\)\?Yes \[^\r\n\]*$dso\r\n" {
 	    # use longer form so debug remote does not interfere
 	    set count [expr $count + 1]
 	    exp_continue
@@ -130,41 +180,269 @@ proc test_dlmopen {} {
     }
 }
 
-# Remove the pause.  We only need it for the attach test.
-gdb_test "print wait_for_gdb = 0" "\\\$1 = 0"
+# Setup for calling 'test_dlmopen', this is the version of the test
+# that doesn't use 'attach'.
+proc test_dlmopen_no_attach {} {
+    clean_restart
+    gdb_load $::binfile
 
-# Break in the to-be-loaded library and at the end of main.
-set bp_inc [gdb_get_line_number "bp.inc" $srcfile_lib]
-set bp_main [gdb_get_line_number "bp.main" $srcfile]
+    if { ![runto_main] } {
+	return
+    }
 
-delete_breakpoints
-gdb_breakpoint $srcfile_lib:$bp_inc allow-pending
-gdb_breakpoint $srcfile:$bp_main
-
-test_dlmopen
-
-# Try the same again when attaching after dlmopen().
-require can_spawn_for_attach
-
-clean_restart $binfile
-
-# Start the test program.
-set test_spawn_id [spawn_wait_for_attach $binfile]
-set testpid [spawn_id_get_pid $test_spawn_id]
-
-# Attach.
-if { ![gdb_attach $testpid] } {
-    return
-}
-
-with_test_prefix "attach" {
-    # Remove the pause.  We no longer need it.
+    # Remove the pause.  We only need it for the attach test.
     gdb_test "print wait_for_gdb = 0" "\\\$1 = 0"
 
-    # Set the same breakpoints again.  This time, however, we do not allow the
-    # breakpoint to be pending since the library has already been loaded.
-    gdb_breakpoint $srcfile_lib:$bp_inc
-    gdb_breakpoint $srcfile:$bp_main
+    # Break in the to-be-loaded library and at the end of main.
+    delete_breakpoints
+    gdb_breakpoint $::srcfile_lib:$::bp_inc allow-pending
+    gdb_breakpoint $::srcfile:$::bp_main
 
     test_dlmopen
 }
+
+# Setup for calling 'test_dlmopen', this is the version of the test
+# that does use 'attach'.
+proc test_dlmopen_with_attach {} {
+    if { ![can_spawn_for_attach] } {
+	unsupported "cannot run attach tests"
+	return
+    }
+
+    clean_restart
+    gdb_load $::binfile
+
+    # Start the test program.
+    set test_spawn_id [spawn_wait_for_attach $::binfile]
+    set testpid [spawn_id_get_pid $test_spawn_id]
+
+    # Attach.
+    if { ![gdb_attach $testpid] } {
+	return
+    }
+
+    with_test_prefix "attach" {
+	# Remove the pause.  We no longer need it.
+	gdb_test "print wait_for_gdb = 0" "\\\$1 = 0"
+
+	# Set the same breakpoints again.  This time, however, we do not allow the
+	# breakpoint to be pending since the library has already been loaded.
+	gdb_breakpoint $::srcfile_lib:$::bp_inc
+	gdb_breakpoint $::srcfile:$::bp_main
+
+	test_dlmopen
+    }
+}
+
+# Run 'info sharedlibrary' and count the number of mappings that look
+# like they might be the dynamic linker.  This will only work for
+# Linux right now.
+proc get_dyld_info {} {
+    if { ![istarget *-linux*] } {
+	return [list 0 ""]
+    }
+
+    set dyld_count 0
+    set dyld_start_addr ""
+    gdb_test_multiple "info sharedlibrary" "" {
+	-re "From\\s+To\\s+\(Linker NS\\s+\)?Syms\\s+Read\\s+Shared Object Library\r\n" {
+	    exp_continue
+	}
+	-re "^($::hex)\\s+$::hex\\s+\(\#$::decimal\\s+\)?\[^/\]+(/\[^\r\n\]+)\r\n" {
+	    set addr $expect_out(1,string)
+	    set lib $expect_out(3,string)
+
+	    if { [is_dyln $lib] } {
+		# This looks like it might be the dynamic linker.
+		incr dyld_count
+		if { $dyld_start_addr eq "" } {
+		    set dyld_start_addr $addr
+		} elseif { $dyld_start_addr ne $addr } {
+		    set dyld_start_addr "MULTIPLE"
+		}
+	    }
+
+	    exp_continue
+	}
+	-re "\\(\\*\\): Shared library is missing debugging information\\.\r\n" {
+	    exp_continue
+	}
+	-re "^$::gdb_prompt $" {
+	}
+    }
+
+    if { $dyld_start_addr eq "MULTIPLE" } {
+	set dyld_start_addr ""
+    }
+
+    return [list $dyld_count $dyld_start_addr]
+}
+
+# The inferior for this test causes the dynamic linker to be appear
+# multiple times in the inferior's shared library list, but (at least
+# with glibc), the dynamic linker is really only mapped in once.  That
+# is, each of the dynamic linker instances that appear in the 'info
+# sharedlibrary' output, will have the same address range.
+#
+# This test creates a user breakpoint in the dynamic linker, and then
+# runs over the dlcose calls, which unmap all but one of the dynamic
+# linker instances.
+#
+# The expectation is that the user breakpoint in the dynamic linker
+# should still be active.  Older versions of GDB had a bug where the
+# breakpoint would become pending.
+proc_with_prefix test_solib_unmap_events { } {
+
+    # This test relies on finding the dynamic linker library, and is
+    # currently written assuming Linux.
+    if { ![istarget *-linux*] } {
+	unsupport "cannot find dynamic linker library on this target"
+	return
+    }
+
+    clean_restart
+    gdb_load $::binfile
+
+    if { ![runto_main] } {
+	return
+    }
+
+    # Check that before any of our dlopen/dlmopen calls, we can find a
+    # single copy of the dynamic linker in the shared library list.
+    set dyld_info [get_dyld_info]
+    set dyld_count [lindex $dyld_info 0]
+    if { $dyld_count != 1 } {
+	unsupported "initial dyld state appears strange"
+	return
+    }
+
+    # Continue the inferior until all solib are loaded.
+    set alarm_lineno [gdb_get_line_number "alarm" $::srcfile]
+    gdb_breakpoint ${::srcfile}:${alarm_lineno}
+    gdb_continue_to_breakpoint "all solib are now loaded"
+
+    # Check that we have multiple copies of dynamic linker loaded, and
+    # that the dynamic linker is only loaded at a single address.
+    set dyld_info [get_dyld_info]
+    set dyld_count [lindex $dyld_info 0]
+    set dyld_start_addr [lindex $dyld_info 1]
+
+    # If we didn't find a suitable dynamic linker address, or we
+    # didn't find multiple copies of the dynamic linker, then
+    # something has gone wrong with the test setup.
+    if { $dyld_count < 2 } {
+	unsupported "multiple copies of the dynamic linker not found"
+	return
+    }
+    if { $dyld_start_addr eq "" } {
+	unsupported "unable to find suitable dynamic linker start address"
+	return
+    }
+
+    # Check the address we found is (likely) writable.
+    gdb_test_multiple "x/1i $dyld_start_addr" "check b/p address" {
+	-re -wrap "Cannot access memory at address \[^\r\n\]+" {
+	    unsupported "dynamic linker address is not accessible"
+	    return
+	}
+	-re -wrap "" {
+	}
+    }
+
+    # Create a breakpoint within the dynamic linker.  It is pretty unlikely
+    # that this breakpoint will ever be hit, but just in case it is, make it
+    # conditional, with a condition that will never be true.  All we really
+    # care about for this test is whether the breakpoint will be made
+    # pending or not (it should not).
+    gdb_test "break *$dyld_start_addr if (0)" \
+	"Breakpoint $::decimal at $::hex\[^\r\n\]+" \
+	"create breakpoint within dynamic linker"
+    set bpnum [get_integer_valueof "\$bpnum" INVALID "get bpnum"]
+
+    # Now continue until the 'bp.main' location, this will unload some
+    # copies, but not all copies, of the dynamic linker.
+    gdb_test "print wait_for_gdb = 0" " = 0"
+    set bp_main [gdb_get_line_number "bp.main" $::srcfile]
+
+    gdb_breakpoint $::srcfile:$bp_main
+    gdb_continue_to_breakpoint "stop at bp.main"
+
+    # At one point, GDB would incorrectly mark the breakpoints in the
+    # dynamic linker as pending when some instances of the library were
+    # unloaded, despite there really only being one copy of the dynamic
+    # linker actually loaded into the inferior's address space.
+    set hs {[^\r\n]}
+    set re_pass \
+	[multi_line \
+	     "" \
+	     [join \
+		  [list \
+		       "$bpnum" "breakpoint" "keep" "y" "$::hex$hs+"] \
+		  {\s+}] \
+	     [string cat \
+		  {\s+} \
+		  [string_to_regexp "stop only if (0)"] \
+		  ([string_to_regexp " (target evals)"])?]]
+    gdb_test "info breakpoints $bpnum" $re_pass "check b/p status"
+
+    # With all the dlclose calls now complete, we should be back to a
+    # single copy of the dynamic linker.
+    set dyld_info [get_dyld_info]
+    set dyld_count [lindex $dyld_info 0]
+    gdb_assert { $dyld_count == 1 } \
+	"one dynamic linker found after dlclose calls"
+}
+
+# Check that we can 'next' over the dlclose calls without GDB giving any
+# warnings or errors.
+proc_with_prefix test_next_over_dlclose {} {
+    clean_restart
+    gdb_load $::binfile
+
+    if { ![runto_main] } {
+	return
+    }
+
+    set dlclose_lineno [gdb_get_line_number "dlclose" $::srcfile]
+    gdb_breakpoint $::srcfile:$dlclose_lineno
+    gdb_breakpoint $::srcfile:$::bp_main
+
+    # Remove the pause.  We no longer need it.
+    gdb_test "print wait_for_gdb = 0" "\\\$1 = 0"
+
+    set loc_re [multi_line \
+		    "\[^\r\n\]+/[string_to_regexp $::srcfile]:$dlclose_lineno" \
+		    "$dlclose_lineno\\s+dlclose \[^\r\n\]+"]
+
+    # This loop mirrors the loop in dlmopen.c where the inferior performs
+    # four calls to dlclose.  Here we continue to the dlclose, and then use
+    # 'next' to step over the call.  As part of the 'next' GDB will insert
+    # breakpoints to catch longjmps into the multiple copies of libc which
+    # have been loaded.  Each dlclose call will cause a copy of libc to be
+    # unloaded, which should disable the longjmp breakpoint that GDB
+    # previously inserted.
+    #
+    # At one point a bug in GDB meant that we failed to correctly disable
+    # the longjmp breakpoints and GDB would try to remove the breakpoint
+    # from a library after it had been unloaded, which would trigger a
+    # warning.
+    for { set i 0 } { $i < 4 } { incr i } {
+	gdb_continue_to_breakpoint "continue to dlclose $i" $loc_re
+	gdb_test "next" "^$::decimal\\s+for \\(dl = 0;\[^\r\n\]+\\)" \
+	    "next over dlclose $i"
+    }
+
+    # Just to confirm that we are where we think we are, continue to the
+    # final 'return' line in main.  If this isn't hit then we likely went
+    # wrong earlier.
+    gdb_continue_to_breakpoint "continue to final return" \
+	[multi_line \
+	     "\[^\r\n\]+/[string_to_regexp $::srcfile]:$::bp_main" \
+	     "$::bp_main\\s+return 0;\[^\r\n\]+"]
+}
+
+# Run the actual tests.
+test_dlmopen_no_attach
+test_dlmopen_with_attach
+test_solib_unmap_events
+test_next_over_dlclose

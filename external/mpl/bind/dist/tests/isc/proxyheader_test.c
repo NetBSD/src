@@ -1,4 +1,4 @@
-/*	$NetBSD: proxyheader_test.c,v 1.2.4.2 2025/08/02 05:54:16 perseant Exp $	*/
+/*	$NetBSD: proxyheader_test.c,v 1.2.4.3 2026/11/04 23:18:24 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -428,6 +428,18 @@ ISC_RUN_TEST_IMPL(proxyheader_direct_test) {
 
 	cbarg = (dummy_handler_cbarg_t){ 0 };
 	region.base = (uint8_t *)proxy_v2_header;
+	region.length = sizeof(proxy_v2_header);
+	result = isc_proxy2_header_handle_directly(
+		&region, proxy2_handler_dummy, &cbarg);
+	assert_true(result == ISC_R_SUCCESS);
+	assert_true(cbarg.no_more_calls == 0);
+	verify_proxy_v2_header(NULL, &cbarg);
+
+	uint8_t proxy_v2_header_misaligned[sizeof(proxy_v2_header) + 1];
+	memmove(&proxy_v2_header_misaligned[1], proxy_v2_header,
+		sizeof(proxy_v2_header));
+	cbarg = (dummy_handler_cbarg_t){ 0 };
+	region.base = (uint8_t *)&proxy_v2_header_misaligned[1];
 	region.length = sizeof(proxy_v2_header);
 	result = isc_proxy2_header_handle_directly(
 		&region, proxy2_handler_dummy, &cbarg);
@@ -1171,6 +1183,7 @@ ISC_RUN_TEST_IMPL(proxyheader_tlv_data_test) {
 	region.length = sizeof(zerodata);
 	result = isc_proxy2_append_tlv(&databuf, ISC_PROXY2_TLV_TYPE_NOOP,
 				       &region);
+	assert_int_equal(result, ISC_R_SUCCESS);
 	isc_buffer_subtract(&databuf, region.length / 2);
 	isc_buffer_usedregion(&databuf, &region);
 	result = isc_proxy2_tlv_data_verify(&region);

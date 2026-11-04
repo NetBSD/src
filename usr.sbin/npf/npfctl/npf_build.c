@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.56.2.1 2025/08/02 05:58:52 perseant Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.56.2.2 2026/11/04 23:28:54 perseant Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -310,16 +310,25 @@ npfctl_build_fam(npf_bpf_t *ctx, sa_family_t family,
 }
 
 static void
-npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
+build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 {
-	npfctl_bpf_group_enter(ctx, (opts & MATCH_INVERT) != 0);
-	for (unsigned i = 0; i < npfvar_get_count(vars); i++) {
-		const unsigned type = npfvar_get_type(vars, i);
-		void *data = npfvar_get_data(vars, type, i);
+	size_t var_cnt = npfvar_get_count(vars);
+	for (unsigned i = 0; i < var_cnt; i++) {
+		const unsigned type = npfvar_getfilt_type(vars, i);
+		void *data = npfvar_getfilt_data(vars, type, i);
 
 		assert(data != NULL);
 
 		switch (type) {
+		case NPFVAR_VAR_ID: {
+			/* allow us to go through nested variables ourselves */
+			npfvar_t *rvp = npfvar_lookup(data);
+			if (rvp == NULL)
+				yyerror("variable not found");
+
+			build_vars(ctx, family, rvp, opts);
+			break;
+		}
 		case NPFVAR_FAM: {
 			fam_addr_mask_t *fam = data;
 			npfctl_build_fam(ctx, family, fam, opts);
@@ -345,6 +354,13 @@ npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
 			yyerror("unexpected %s", npfvar_type(type));
 		}
 	}
+}
+
+static void
+npfctl_build_vars(npf_bpf_t *ctx, sa_family_t family, npfvar_t *vars, int opts)
+{
+	npfctl_bpf_group_enter(ctx, (opts & MATCH_INVERT) != 0);
+	build_vars(ctx, family, vars, opts);
 	npfctl_bpf_group_exit(ctx);
 }
 
@@ -819,6 +835,16 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
     const char *pcap_filter, const char *rproc)
 {
 	nl_rule_t *rl, *cg;
+	const filt_opts_t empty_fopts = {
+		.uid = { .id = { 0, 0 }, .op = NPF_OP_NONE },
+		.gid = { .id = { 0, 0 }, .op = NPF_OP_NONE },
+		.layer = NPF_RULE_LAYER_3,
+		.fo_finvert = true,
+		.fo_tinvert = true
+	};
+
+	if (fopts == NULL)
+		fopts = &empty_fopts;
 
 	attr |= (npf_conf ? 0 : NPF_RULE_DYNAMIC);
 
@@ -830,6 +856,9 @@ npfctl_build_rule(uint32_t attr, const char *ifname, sa_family_t family,
 	if (npf_conf) {
 		cg = current_group[rule_nesting_level];
 		attr |= npf_rule_layer_compat(cg, fopts->layer);
+	} else {
+		/* set the layer bit directly for dynamic rules */
+		attr |= fopts->layer;
 	}
 
 	if (attr & NPF_RULE_LAYER_2 && attr & (NPF_RULE_RETRST | NPF_RULE_RETICMP))
@@ -1179,6 +1208,7 @@ void
 npfctl_build_table(const char *tname, unsigned type, const char *fname)
 {
 	nl_table_t *tl;
+	int error;
 
 	if (type == NPF_TABLE_CONST && !fname) {
 		yyerror("table type 'const' must be loaded from a file");
@@ -1187,8 +1217,13 @@ npfctl_build_table(const char *tname, unsigned type, const char *fname)
 	tl = npfctl_load_table(tname, npfctl_tid_counter++, type, fname, NULL);
 	assert(tl != NULL);
 
-	if (npf_table_insert(npf_conf, tl)) {
+	error = npf_table_insert(npf_conf, tl);
+	if (error == EEXIST) {
 		yyerror("table '%s' is already defined", tname);
+	} else if (error && type == NPF_TABLE_CONST) {
+		yyerror(" failed to insert table '%s', duplicate entries?", tname);
+	} else if (error) {
+		yyerror(" failed to insert table '%s'", tname);
 	}
 }
 

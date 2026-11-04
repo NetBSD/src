@@ -1,4 +1,4 @@
-/*	$NetBSD: zz9kreg.h,v 1.1 2023/05/03 13:49:30 phx Exp $ */
+/*	$NetBSD: zz9kreg.h,v 1.1.6.1 2026/11/04 23:20:01 perseant Exp $ */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -276,7 +276,7 @@
 #define ZZ9K_VOLTAGE_AUX		0xE2
 #define ZZ9K_VOLTAGE_CORE		0xE4
 
-/* Misccellaneous */
+/* Miscellaneous */
 #define ZZ9K_PRINT_CHR			0xF0
 #define ZZ9K_PRINT_HEX			0xF2
 #define ZZ9K_AUDIO_CONFIG		0xF4

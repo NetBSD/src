@@ -1,6 +1,6 @@
 /* Machine independent support for Solaris /proc (process file system) for GDB.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    Written by Michael Snyder at Cygnus Solutions.
    Based on work by Fred Fish, Stu Grossman, Geoff Noer, and others.
@@ -46,6 +46,7 @@
 #include "gdbsupport/scoped_fd.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/buildargv.h"
+#include "gdbsupport/eintr.h"
 #include "cli/cli-style.h"
 
 /* This module provides the interface between GDB and the
@@ -205,7 +206,7 @@ procfs_target::auxv_parse (const gdb_byte **readptr,
    concerning a /proc process.  There should be exactly one procinfo
    for each process, and since GDB currently can debug only one
    process at a time, that means there should be only one procinfo.
-   All of the LWP's of a process can be accessed indirectly thru the
+   All of the LWP's of a process can be accessed indirectly through the
    single process procinfo.
 
    However, against the day when GDB may debug more than one process,
@@ -2062,8 +2063,9 @@ wait_again:
 	    {
 	      int wait_retval;
 
-	      /* /proc file not found; presumably child has terminated.  */
-	      wait_retval = ::wait (&wstat); /* "wait" for the child's exit.  */
+	      /* /proc file not found; presumably child has terminated.  Wait
+		 for the child's exit.  */
+	      wait_retval = gdb::wait (&wstat);
 
 	      /* Wrong child?  */
 	      if (wait_retval != inf->pid)
@@ -2150,7 +2152,7 @@ wait_again:
 		      }
 		    else
 		      {
-			int temp = ::wait (&wstat);
+			int temp = gdb::wait (&wstat);
 
 			/* FIXME: shouldn't I make sure I get the right
 			   event from the right process?  If (for
@@ -2560,9 +2562,9 @@ unconditionally_kill_inferior (procinfo *pi)
 #if 0
       int status, ret;
 
-      ret = waitpid (pi->pid, &status, 0);
+      ret = gdb::waitpid (pi->pid, &status, 0);
 #else
-      wait (NULL);
+      gdb::wait (NULL);
 #endif
     }
 }
@@ -2760,6 +2762,9 @@ procfs_target::create_inferior (const char *exec_file,
 				const std::string &allargs,
 				char **env, int from_tty)
 {
+  if (exec_file == nullptr)
+    no_executable_specified_error ();
+
   const char *shell_file = get_shell ();
   char *tryname;
   int pid;
@@ -3442,9 +3447,7 @@ proc_untrace_sysexit_cmd (const char *args, int from_tty)
   proc_trace_syscalls (args, from_tty, PR_SYSEXIT, FLAG_RESET);
 }
 
-void _initialize_procfs ();
-void
-_initialize_procfs ()
+INIT_GDB_FILE (procfs)
 {
   add_com ("proc-trace-entry", no_class, proc_trace_sysentry_cmd,
 	   _("Give a trace of entries into the syscall."));
@@ -3545,21 +3548,17 @@ procfs_corefile_thread_callback (procinfo *pi, procinfo *thread, void *data)
   return 0;
 }
 
-static int
-find_signalled_thread (struct thread_info *info, void *data)
+static bool
+find_signalled_thread (struct thread_info *info)
 {
-  if (info->stop_signal () != GDB_SIGNAL_0
-      && info->ptid.pid () == inferior_ptid.pid ())
-    return 1;
-
-  return 0;
+  return (info->stop_signal () != GDB_SIGNAL_0
+	  && info->ptid.pid () == inferior_ptid.pid ());
 }
 
 static enum gdb_signal
 find_stop_signal (void)
 {
-  struct thread_info *info =
-    iterate_over_threads (find_signalled_thread, NULL);
+  struct thread_info *info = iterate_over_threads (find_signalled_thread);
 
   if (info)
     return info->stop_signal ();
@@ -3577,11 +3576,12 @@ procfs_target::make_corefile_notes (bfd *obfd, int *note_size)
   gdb::unique_xmalloc_ptr<char> note_data;
   enum gdb_signal stop_signal;
 
-  if (get_exec_file (0))
+  if (const auto exec_filename = current_program_space->exec_filename ();
+      exec_filename != nullptr)
     {
-      strncpy (fname, lbasename (get_exec_file (0)), sizeof (fname));
+      strncpy (fname, lbasename (exec_filename), sizeof (fname));
       fname[sizeof (fname) - 1] = 0;
-      strncpy (psargs, get_exec_file (0), sizeof (psargs));
+      strncpy (psargs, exec_filename, sizeof (psargs));
       psargs[sizeof (psargs) - 1] = 0;
 
       const std::string &inf_args = current_inferior ()->args ();

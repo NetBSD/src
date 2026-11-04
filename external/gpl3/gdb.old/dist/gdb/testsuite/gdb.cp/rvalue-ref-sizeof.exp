@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 
 standard_testfile .cc
 
-if {[skip_cplus_tests]} { return }
+require allow_cplus_tests
 
 if {[prepare_for_testing ${testfile}.exp $testfile $srcfile \
     {debug c++ additional_flags="-std=gnu++11"}] } {

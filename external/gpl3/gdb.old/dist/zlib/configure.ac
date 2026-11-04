@@ -7,7 +7,7 @@ if test -n "${with_target_subdir}"; then
   AM_ENABLE_MULTILIB(, ..)
 fi
 
-AC_CANONICAL_SYSTEM
+AC_CANONICAL_TARGET
 
 # This works around an automake problem.
 mkinstalldirs="`cd $ac_aux_dir && ${PWDCMD-pwd}`/mkinstalldirs"
@@ -60,7 +60,7 @@ m4_rename_force([real_PRECIOUS],[_AC_ARG_VAR_PRECIOUS])
 
 AC_SUBST(CFLAGS)
 
-AC_PROG_LIBTOOL
+LT_INIT
 
 # Find CPP now so that any conditional tests below won't do it and
 # thereby make the resulting definitions conditional.
@@ -121,11 +121,26 @@ else
   multilib_arg=
 fi
 
+# Enable --enable-host-shared.
 AC_ARG_ENABLE(host-shared,
 [AS_HELP_STRING([--enable-host-shared],
-		[build host code as shared libraries])],
-[PICFLAG=-fPIC], [PICFLAG=])
-AC_SUBST(PICFLAG)
+		[build host code as shared libraries])])
+AC_SUBST(enable_host_shared)
 
+# Enable --enable-host-pie.
+AC_ARG_ENABLE(host-pie,
+[AS_HELP_STRING([--enable-host-pie],
+		[build host code as PIE])])
+AC_SUBST(enable_host_pie)
+
+if test x$enable_host_shared = xyes; then
+  PICFLAG=-fPIC
+elif test x$enable_host_pie = xyes; then
+  PICFLAG=-fPIE
+else
+  PICFLAG=
+fi
+
+AC_SUBST(PICFLAG)
 AC_CONFIG_FILES([Makefile])
 AC_OUTPUT

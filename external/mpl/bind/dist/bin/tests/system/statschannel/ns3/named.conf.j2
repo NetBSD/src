@@ -1,0 +1,51 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options/sources-dual.conf.j2" %}
+	{% include_indented "_common/options/server.conf.j2" %}
+	{% include_indented "_common/options/listen.conf.j2" %}
+	tls-port @TLSPORT@;
+	recursion no;
+	dnssec-validation no;
+	notify no;
+	minimal-responses no;
+	version none;  // make statistics independent of the version number
+	allow-new-zones yes;
+};
+
+statistics-channels { inet @ns.ip@ port @EXTRAPORT1@ allow { localhost; }; };
+
+{% include "_common/controls.conf.j2" %}
+
+server fd92:7065:b8e:ffff::1 {
+	tcp-only yes;
+};
+
+zone "example" {
+	type secondary;
+	file "example.db";
+	primaries { 10.53.0.1; };
+};
+
+zone "example-tcp" {
+	type secondary;
+	file "example-tcp.db";
+	primaries { fd92:7065:b8e:ffff::1; };
+};
+
+zone "example-tls" {
+	type secondary;
+	file "example-tls.db";
+	primaries { fd92:7065:b8e:ffff::1 tls ephemeral; };
+};

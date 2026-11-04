@@ -1,4 +1,4 @@
-/*	$NetBSD: isns_util.h,v 1.2 2011/08/17 10:08:43 christos Exp $	*/
+/*	$NetBSD: isns_util.h,v 1.2.54.1 2026/11/04 23:19:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2004,2009 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 
 #ifndef _ISNS_UTIL_H_
 #define _ISNS_UTIL_H_
+
+#include <arpa/inet.h>
 
 #define isns_ntohs	ntohs
 #define isns_htons	htons

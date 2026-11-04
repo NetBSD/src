@@ -7,6 +7,7 @@ mime_state: header_token: boundary = Boundary-00=_mvhpFky0yqNhsa4
 mime_state: PUSH boundary Boundary-00=_mvhpFky0yqNhsa4
 MAIN 95	|Content-Type: Multipart/Mixed;
   boundary="Boundary-00=_mvhpFky0yqNhsa4"
+mime_state: warning: primary header was terminated with non-empty line: junk in primary header
 HEADER END
 mime_state: garbage in primary header
 BODY N 0	|
@@ -42,4 +43,5 @@ BODY N 135	|Blah
 BODY N 140	|
 BODY END
 mime_state: warning: improper message/* or multipart/* encoding domain
+mime_state: warning: non-empty end-of-header
 mime_state: POP boundary Boundary-00=_mvhpFky0yqNhsa4

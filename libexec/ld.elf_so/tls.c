@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.19.2.1 2025/08/02 05:55:01 perseant Exp $	*/
+/*	$NetBSD: tls.c,v 1.19.2.2 2026/11/04 23:19:33 perseant Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.19.2.1 2025/08/02 05:55:01 perseant Exp $");
+__RCSID("$NetBSD: tls.c,v 1.19.2.2 2026/11/04 23:19:33 perseant Exp $");
 
 /*
  * Thread-local storage
@@ -58,6 +58,9 @@ __RCSID("$NetBSD: tls.c,v 1.19.2.1 2025/08/02 05:55:01 perseant Exp $");
 static struct tls_tcb *_rtld_tls_allocate_locked(void);
 static void *_rtld_tls_module_allocate(struct tls_tcb *, size_t);
 
+/* A macro to test correct alignment of a pointer. */
+#define ALIGNED_P(ptr, algnmt)	((algnmt) == 0 || ((uintptr_t)(ptr) & ((algnmt) - 1)) == 0)
+
 /*
  * DTV offset
  *
@@ -71,8 +74,44 @@ static void *_rtld_tls_module_allocate(struct tls_tcb *, size_t);
 #define	TLS_DTV_OFFSET	0
 #endif
 
+/*
+ * Alignment of the static data
+ *
+ * In Variant I, the thread pointer (TP) can be anchored in three ways
+ * depending on the architecture. It either points
+ *
+ * - directly to the TCB (e.g. Arm, and AArch64); or
+ * - at a specific "biased" offset within the data (e.g. PowerPC), or
+ *   directly at the data (e.g. RISC-V). These architectures define
+ *   __HAVE___LWP_SETTCB to handle the offset
+ *
+ * An area of memory with the correct alignment is allocated and the
+ * struct tcb placed as follows for each case above
+ *
+ * - at the start of the aligned memory with data starting at the first
+ *   object's required alignment.
+ * - just below the second max alignment boundary so that data starts
+ *   on the second max alignment boundary.
+ *
+ * The code is written such that obj->tlsoffset is always relative to
+ * the end of the struct tcb. Maybe this is suboptimal?
+ *
+ */
+
+#if defined(__HAVE_TLS_VARIANT_I) && !defined(__HAVE___LWP_SETTCB)
+#define _RTLD_TLS_INITIAL_OFFSET	sizeof(struct tls_tcb)
+#endif
+
+#ifndef _RTLD_TLS_INITIAL_OFFSET
+#define _RTLD_TLS_INITIAL_OFFSET		0
+#endif
+
 static size_t _rtld_tls_static_space;	/* Static TLS space allocated */
-static size_t _rtld_tls_static_offset;	/* Next offset for static TLS to use */
+static size_t _rtld_tls_static_offset =
+	_RTLD_TLS_INITIAL_OFFSET;	/* Next offset for static TLS to use */
+static size_t _rtld_tls_static_max_align =
+    MAX(alignof(max_align_t), alignof(struct tls_tcb));
+
 size_t _rtld_tls_dtv_generation = 1;	/* Bumped on each load of obj w/ TLS */
 size_t _rtld_tls_max_index = 1;		/* Max index into up-to-date DTV */
 
@@ -209,10 +248,12 @@ _rtld_tls_initial_allocation(void)
 	_rtld_tls_static_space = _rtld_tls_static_offset +
 	    RTLD_STATIC_TLS_RESERVATION;
 
-#ifndef __HAVE_TLS_VARIANT_I
+#ifdef __HAVE_TLS_VARIANT_II
 	_rtld_tls_static_space = roundup2(_rtld_tls_static_space,
-	    alignof(max_align_t));
+	    _rtld_tls_static_max_align);
+	assert(ALIGNED_P(_rtld_tls_static_space, _rtld_tls_static_max_align));
 #endif
+
 	dbg(("_rtld_tls_static_space %zu", _rtld_tls_static_space));
 
 	tcb = _rtld_tls_allocate_locked();
@@ -243,17 +284,43 @@ _rtld_tls_allocate_locked(void)
 	Obj_Entry *obj;
 	struct tls_tcb *tcb;
 	uint8_t *p, *q;
+	uint8_t *lo __debugused, *hi __debugused; /* bounds of TLS space */
 
-	p = xcalloc(_rtld_tls_static_space + sizeof(struct tls_tcb));
+#ifdef __HAVE_TLS_VARIANT_II
+	assert(ALIGNED_P(_rtld_tls_static_space, _rtld_tls_static_max_align));
+#endif
+
+	p = xmalloc_aligned(_rtld_tls_static_space + sizeof(struct tls_tcb),
+	    _rtld_tls_static_max_align, 0);
+	assert(ALIGNED_P(p, _rtld_tls_static_max_align));
+
+	memset(p, 0, _rtld_tls_static_space + sizeof(struct tls_tcb));
 #ifdef __HAVE_TLS_VARIANT_I
+#ifdef __HAVE___LWP_SETTCB
+	if (_rtld_tls_static_max_align > sizeof(struct tls_tcb))
+		p += _rtld_tls_static_max_align - sizeof(struct tls_tcb);
+#endif
+	assert(ALIGNED_P(p, alignof(struct tls_tcb)));
 	tcb = (struct tls_tcb *)p;
 	p += sizeof(struct tls_tcb);
+#ifdef __HAVE___LWP_SETTCB
+	assert(ALIGNED_P(p, _rtld_tls_static_max_align));
 #else
+	assert((uintptr_t)p % _rtld_tls_static_max_align ==
+	    sizeof(struct tls_tcb) % _rtld_tls_static_max_align);
+#endif
+	lo = p;
+#else
+	lo = p;
 	p += _rtld_tls_static_space;
+	assert(ALIGNED_P(p, _rtld_tls_static_max_align));
+	assert(ALIGNED_P(p, alignof(struct tls_tcb)));
 	tcb = (struct tls_tcb *)p;
 	tcb->tcb_self = tcb;
 #endif
-	dbg(("lwp %d tls tcb %p", _lwp_self(), tcb));
+	hi = lo + _rtld_tls_static_space;
+	dbg(("lwp %d tls tcb %p p %p", _lwp_self(), tcb, p));
+	dbg(("tls range [%p,%p)", lo, hi));
 	/*
 	 * "2 +" because the first element is the generation and the second
 	 * one is the maximum index.
@@ -265,14 +332,38 @@ _rtld_tls_allocate_locked(void)
 
 	for (obj = _rtld_objlist; obj != NULL; obj = obj->next) {
 		if (obj->tls_static) {
+			dbg(("%s: [lwp %d] tls offset=0x%zx size=0x%zx"
+				" initsize=0x%zx align=0x%zx",
+				obj->path, _lwp_self(),
+				obj->tlsoffset, obj->tlssize,
+				obj->tlsinitsize, obj->tlsalign));
+			assert(obj->tlsinitsize <= obj->tlssize);
+			assert(obj->tlsoffset <= _rtld_tls_static_space);
+			assert(obj->tlssize <= _rtld_tls_static_space);
 #ifdef __HAVE_TLS_VARIANT_I
+			assert(obj->tlsoffset <= _rtld_tls_static_space -
+			    obj->tlssize);
 			q = p + obj->tlsoffset;
 #else
+			assert(obj->tlssize <= obj->tlsoffset);
 			q = p - obj->tlsoffset;
 #endif
-			dbg(("%s: [lwp %d] tls dtv %p index %zu offset %zu",
+			dbg(("%s: [lwp %d] tls dtv %p-%p index %zu "
+			    "offset 0x%zx alignment 0x%zx tlsinit %p%s",
 			    obj->path, _lwp_self(),
-			    q, obj->tlsindex, obj->tlsoffset));
+			    q, q + obj->tlsinitsize, obj->tlsindex,
+			    obj->tlsoffset, obj->tlsalign, obj->tlsinit,
+			    (obj->tlssize == 0 || ALIGNED_P(q, obj->tlsalign))
+				? "" : " BAD ALIGNMENT"));
+
+			assert(lo <= q);
+			assert(q + obj->tlssize <= hi);
+			assert(obj->tlssize == 0 || obj->tlsalign != 0);
+			assert(obj->tlssize == 0 ||
+			    (obj->tlsalign & (obj->tlsalign - 1)) == 0);
+			assert(obj->tlssize == 0 ||
+			    ALIGNED_P(q, obj->tlsalign));
+
 			if (obj->tlsinitsize)
 				memcpy(q, obj->tlsinit, obj->tlsinitsize);
 			tcb->tcb_dtv[obj->tlsindex] = q;
@@ -369,15 +460,34 @@ _rtld_tls_module_allocate(struct tls_tcb *tcb, size_t idx)
 		_rtld_die();
 	}
 	if (obj->tls_static) {
+		uint8_t *lo __debugused, *hi __debugused;
+
+		assert(obj->tlsoffset <= _rtld_tls_static_space);
+		assert(obj->tlssize <= _rtld_tls_static_space);
 #ifdef __HAVE_TLS_VARIANT_I
+		assert(obj->tlsoffset <= _rtld_tls_static_space -
+		    obj->tlssize);
 		p = (uint8_t *)tcb + obj->tlsoffset + sizeof(struct tls_tcb);
+		lo = (uint8_t *)tcb + sizeof(struct tls_tcb);
+		hi = lo + _rtld_tls_static_space;
 #else
+		assert(obj->tlssize <= obj->tlsoffset);
 		p = (uint8_t *)tcb - obj->tlsoffset;
+		hi = (uint8_t *)tcb;
+		lo = hi - _rtld_tls_static_space;
 #endif
+		assert(ALIGNED_P(p, obj->tlsalign));
+		assert(lo <= p);
+		assert(p + obj->tlssize <= hi);
 		return p;
 	}
 
-	p = xmalloc(obj->tlssize);
+	assert(obj->tlsinitsize <= obj->tlssize);
+	assert(obj->tlssize == 0 || obj->tlsalign != 0);
+	assert(obj->tlssize == 0 ||
+	    (obj->tlsalign & (obj->tlsalign - 1)) == 0);
+
+	p = xmalloc_aligned(obj->tlssize, obj->tlsalign, 0);
 	memcpy(p, obj->tlsinit, obj->tlsinitsize);
 	memset(p + obj->tlsinitsize, 0, obj->tlssize - obj->tlsinitsize);
 
@@ -401,11 +511,28 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 {
 	size_t offset, next_offset;
 
+	/*
+	 * If this object uses dynamic TLS only, the caller shouldn't
+	 * be trying to allocate a static TLS offset.
+	 */
 	if (obj->tls_dynamic)
 		return -1;
 
+	/*
+	 * If we have already allocated a static TLS offset, nothing
+	 * more to do.
+	 */
 	if (obj->tls_static)
 		return 0;
+
+	/*
+	 * If the TLS size is zero, not much to do here -- choose zero
+	 * offset (always valid) and mark the object as having
+	 * allocated a static TLS offset.
+	 *
+	 * XXX Is it a problem for multiple objects to have the same
+	 * TLS offset?
+	 */
 	if (obj->tlssize == 0) {
 		obj->tlsoffset = 0;
 		obj->tls_static = 1;
@@ -415,10 +542,20 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 #ifdef __HAVE_TLS_VARIANT_I
 	offset = roundup2(_rtld_tls_static_offset, obj->tlsalign);
 	next_offset = offset + obj->tlssize;
+#ifdef __HAVE___LWP_GETTCB_FAST
+	assert(ALIGNED_P(offset, obj->tlsalign));
+#else
+	offset -= sizeof(struct tls_tcb);
+	assert(obj->tlsalign == 0 ||
+	    offset % obj->tlsalign ==
+	    (-(ptrdiff_t)sizeof(struct tls_tcb)) % obj->tlsalign);
+	assert(ALIGNED_P(offset + sizeof(struct tls_tcb), obj->tlsalign));
+#endif
 #else
 	offset = roundup2(_rtld_tls_static_offset + obj->tlssize,
 	    obj->tlsalign);
 	next_offset = offset;
+	assert(ALIGNED_P(offset, obj->tlsalign));
 #endif
 
 	/*
@@ -443,9 +580,20 @@ _rtld_tls_offset_allocate(Obj_Entry *obj)
 			return -1;
 		}
 	}
+	if (obj->tlsalign > _rtld_tls_static_max_align) {
+		_rtld_tls_static_max_align = obj->tlsalign;
+	}
+	assert(_rtld_tls_static_max_align != 0);
+	assert((_rtld_tls_static_max_align & (_rtld_tls_static_max_align - 1))
+	    == 0);
+	assert(ALIGNED_P(_rtld_tls_static_max_align, obj->tlsalign));
+	assert(ALIGNED_P(_rtld_tls_static_max_align, alignof(max_align_t)));
+	assert(ALIGNED_P(_rtld_tls_static_max_align, alignof(struct tls_tcb)));
+
 	obj->tlsoffset = offset;
-	dbg(("%s: static tls offset 0x%zx size %zu\n",
-	    obj->path, obj->tlsoffset, obj->tlssize));
+	dbg(("%s: static tls offset 0x%zx size %zu align %zu (%zx/%zx)",
+	    obj->path, obj->tlsoffset, obj->tlssize, obj->tlsalign,
+	    _rtld_tls_static_offset, next_offset));
 	_rtld_tls_static_offset = next_offset;
 	obj->tls_static = 1;
 

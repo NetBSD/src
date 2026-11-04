@@ -1,6 +1,6 @@
 /* Target-dependent code for X86-based targets.
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "x86-tdep.h"
 #include "symtab.h"
 
@@ -43,7 +42,7 @@ bool
 x86_in_indirect_branch_thunk (CORE_ADDR pc, const char * const *register_names,
 			      int lo, int hi)
 {
-  struct bound_minimal_symbol bmfun = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol bmfun = lookup_minimal_symbol_by_pc (pc);
   if (bmfun.minsym == nullptr)
     return false;
 

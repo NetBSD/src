@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_ARM_H
-#define ARCH_ARM_H
+#ifndef GDB_ARCH_ARM_H
+#define GDB_ARCH_ARM_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -194,6 +194,23 @@ struct reg_buffer_common;
    first halfword is INST1.  */
 int thumb_insn_size (unsigned short inst1);
 
+/* Returns true if COND always evaluates to true.  */
+
+static inline bool
+condition_always_true (unsigned long cond)
+{
+  return cond == INST_AL || cond == INST_NV;
+}
+
+/* Returns true if cond of INSN always evaluates to true.  */
+
+static inline bool
+insn_condition_always_true (uint32_t insn)
+{
+  unsigned long cond = bits (insn, 28, 31);
+  return condition_always_true (cond);
+}
+
 /* Returns true if the condition evaluates to true.  */
 int condition_true (unsigned long cond, unsigned long status_reg);
 
@@ -227,4 +244,4 @@ target_desc *arm_create_target_description (arm_fp_type fp_type, bool tls);
 
 target_desc *arm_create_mprofile_target_description (arm_m_profile_type m_type);
 
-#endif /* ARCH_ARM_H */
+#endif /* GDB_ARCH_ARM_H */

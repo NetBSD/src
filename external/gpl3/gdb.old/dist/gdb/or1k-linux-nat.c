@@ -1,5 +1,5 @@
 /* Native-dependent code for GNU/Linux OpenRISC.
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "regcache.h"
 #include "gregset.h"
 #include "linux-nat.h"
@@ -107,7 +106,7 @@ fill_gregset (const struct regcache *regcache, prgregset_t *gregs, int regnum)
     regcache->raw_collect (OR1K_NPC_REGNUM, regp + 32);
 }
 
-/* Transfering floating-point registers between GDB, inferiors and cores.
+/* Transferring floating-point registers between GDB, inferiors and cores.
    Since OpenRISC floating-point registers are the same as GPRs these do
    nothing.  */
 

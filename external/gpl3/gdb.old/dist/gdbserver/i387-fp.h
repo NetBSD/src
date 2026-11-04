@@ -1,5 +1,5 @@
 /* i387-specific utility functions, for the remote server for GDB.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,8 @@
 #ifndef GDBSERVER_I387_FP_H
 #define GDBSERVER_I387_FP_H
 
+struct x86_xsave_layout;
+
 void i387_cache_to_fsave (struct regcache *regcache, void *buf);
 void i387_fsave_to_cache (struct regcache *regcache, const void *buf);
 
@@ -28,6 +30,8 @@ void i387_fxsave_to_cache (struct regcache *regcache, const void *buf);
 void i387_cache_to_xsave (struct regcache *regcache, void *buf);
 void i387_xsave_to_cache (struct regcache *regcache, const void *buf);
 
-extern unsigned long long x86_xcr0;
+/* Set the XSAVE mask and fetch the XSAVE layout via CPUID.  */
+
+std::pair<uint64_t *, x86_xsave_layout *> i387_get_xsave_storage ();
 
 #endif /* GDBSERVER_I387_FP_H */

@@ -1,4 +1,4 @@
-# Copyright (C) 2023 Free Software Foundation, Inc.
+# Copyright (C) 2023-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,12 +16,12 @@
 # Test "start" for D.
 
 load_lib d-support.exp
-
-if { [skip_d_tests] } { continue }
+require allow_d_tests
+require {can_compile d}
 
 # This testcase verifies the behavior of the `start' command, which
 # does not work when we use the gdb stub...
-require use_gdb_stub 0
+require !use_gdb_stub
 
 standard_testfile simple.d
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug d}]} {

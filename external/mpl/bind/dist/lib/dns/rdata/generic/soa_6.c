@@ -1,4 +1,4 @@
-/*	$NetBSD: soa_6.c,v 1.8.2.1 2025/08/02 05:53:47 perseant Exp $	*/
+/*	$NetBSD: soa_6.c,v 1.8.2.2 2026/11/04 23:18:12 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -315,9 +315,7 @@ tostruct_soa(ARGS_TOSTRUCT) {
 	REQUIRE(soa != NULL);
 	REQUIRE(rdata->length != 0);
 
-	soa->common.rdclass = rdata->rdclass;
-	soa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&soa->common, link);
+	DNS_RDATACOMMON_INIT(soa, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 

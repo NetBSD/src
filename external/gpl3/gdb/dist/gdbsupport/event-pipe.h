@@ -1,6 +1,6 @@
 /* Event pipe for GDB, the GNU debugger.
 
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_EVENT_PIPE_H
-#define COMMON_EVENT_PIPE_H
+#ifndef GDBSUPPORT_EVENT_PIPE_H
+#define GDBSUPPORT_EVENT_PIPE_H
 
 /* An event pipe used as a waitable file in the event loop in place of
    some other event associated with a signal.  The handler for the
@@ -57,4 +57,4 @@ private:
   int m_fds[2] = { -1, -1 };
 };
 
-#endif /* COMMON_EVENT_PIPE_H */
+#endif /* GDBSUPPORT_EVENT_PIPE_H */

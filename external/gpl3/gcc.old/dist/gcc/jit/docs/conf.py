@@ -41,7 +41,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'libgccjit'
-copyright = u'2014-2020 Free Software Foundation, Inc.'
+copyright = u'2014-2022 Free Software Foundation, Inc.'
 
 # GCC-specific: extract version information from "gcc" src subdir for
 # use in "version" and "release" below.
@@ -244,7 +244,7 @@ man_pages = [
 #  dir menu entry, description, category)
 texinfo_documents = [
   ('index', 'libgccjit', u'libgccjit Documentation',
-   u'David Malcolm', 'libgccjit', 'One line description of project.',
+   u'David Malcolm', 'libgccjit', 'GCC-based Just In Time compiler library.',
    'Miscellaneous'),
 ]
 

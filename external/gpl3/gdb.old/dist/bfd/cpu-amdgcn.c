@@ -1,6 +1,6 @@
 /* BFD support for the AMDGCN GPU architecture.
 
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -52,7 +52,10 @@ static const bfd_arch_info_type arch_info_struct[] =
   N (bfd_mach_amdgcn_gfx1012, "amdgcn:gfx1012", false, NN (7)),
   N (bfd_mach_amdgcn_gfx1030, "amdgcn:gfx1030", false, NN (8)),
   N (bfd_mach_amdgcn_gfx1031, "amdgcn:gfx1031", false, NN (9)),
-  N (bfd_mach_amdgcn_gfx1032, "amdgcn:gfx1032", false, NULL)
+  N (bfd_mach_amdgcn_gfx1032, "amdgcn:gfx1032", false, NN (10)),
+  N (bfd_mach_amdgcn_gfx1100, "amdgcn:gfx1100", false, NN (11)),
+  N (bfd_mach_amdgcn_gfx1101, "amdgcn:gfx1101", false, NN (12)),
+  N (bfd_mach_amdgcn_gfx1102, "amdgcn:gfx1102", false, NULL)
 };
 
 const bfd_arch_info_type bfd_amdgcn_arch =

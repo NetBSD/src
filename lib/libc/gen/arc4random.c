@@ -1,4 +1,4 @@
-/*	$NetBSD: arc4random.c,v 1.34.2.1 2025/08/02 05:54:36 perseant Exp $	*/
+/*	$NetBSD: arc4random.c,v 1.34.2.2 2026/11/04 23:19:17 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,7 +51,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: arc4random.c,v 1.34.2.1 2025/08/02 05:54:36 perseant Exp $");
+__RCSID("$NetBSD: arc4random.c,v 1.34.2.2 2026/11/04 23:19:17 perseant Exp $");
 
 #include "namespace.h"
 #include "reentrant.h"
@@ -620,7 +620,7 @@ static void
 arc4random_atfork_child(void)
 {
 
-	mutex_unlock(&arc4random_global.lock);
+	mutex_init(&arc4random_global.lock, NULL);
 }
 
 #ifdef _REENTRANT

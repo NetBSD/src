@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.217.2.1 2025/08/02 05:54:36 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.217.2.2 2026/11/04 23:19:17 perseant Exp $
 #	from: @(#)Makefile.inc	8.6 (Berkeley) 5/4/95
 
 # gen sources
-.PATH: ${ARCHDIR}/gen ${.CURDIR}/gen
+.PATH: ${ARCHDIR}/gen ${.PARSEDIR}
 
 .if ${RUMPRUN} != "yes"
 SRCS+=	_errno.c daemon.c
@@ -25,7 +25,7 @@ SRCS+=	alarm.c alphasort.c arc4random.c assert.c asysctl.c \
 	nice.c nlist.c nlist_aout.c nlist_coff.c nlist_ecoff.c nlist_elf32.c \
 	nlist_elf64.c opendir.c pause.c popen.c posix_spawn_sched.c \
 	posix_spawn_fileactions.c posix_spawnp.c psignal.c pthread_atfork.c \
-	ptree.c pwcache.c pw_scan.c raise.c randomid.c rb.c readdir.c \
+	ptree.c pwcache.c pw_scan.c raise.c randomid.c rbtree.c readdir.c \
 	rewinddir.c scandir.c seekdir.c setdomainname.c \
 	sethostname.c setjmperr.c setmode.c setproctitle.c setprogname.c \
 	shquote.c shquotev.c sighold.c sigignore.c siginterrupt.c \
@@ -212,8 +212,17 @@ CPPFLAGS.isctype.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.tolower_.c+=	-I${LIBCDIR}/locale
 CPPFLAGS.toupper_.c+=	-I${LIBCDIR}/locale
 
+
 errlist.c: errlist.awk ${NETBSDSRCDIR}/sys/sys/errno.h
 	${TOOL_AWK} -f ${.ALLSRC} > ${.TARGET}
+
+.if empty(${.TARGET:M*clean*})
+USER_VERSIONS!= DATE=${TOOL_DATE} SED=${TOOL_SED}			\
+	$${HOST_SH:-sh} ${LIBCDIR}/gen/grab-version.sh "${NETBSDSRCDIR}"
+.endif
+
+CPPFLAGS.sysctl.c+=${USER_VERSIONS}
+sysctl.o: /dev/null
 
 LINTFLAGS.rb.c += -X 231	# XXX: marked as unused already why?
 LINTFLAGS.siglist.c += -X 351	# XXX: renames

@@ -326,7 +326,7 @@ All the mail to these two accounts is forwarded to an inside address.
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
 3 
 4 /etc/postfix/virtual:
 5     postmaster      postmaster@example.com
@@ -369,8 +369,8 @@ is the real purpose of the firewall email function. </p>
  9b        <a href="postconf.5.html#permit_mynetworks">permit_mynetworks</a> <a href="postconf.5.html#reject_unauth_destination">reject_unauth_destination</a>
 10b        ...spam blocking rules....
 <br>
-11     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/relay_recipients
-12     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
+11     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/relay_recipients
+12     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/transport
 13 
 14 /etc/postfix/relay_recipients:
 15     user1@example.com   x
@@ -409,15 +409,27 @@ default "smtp" delivery transport. </p>
 
 </ul>
 
-<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/virtual</b>"
+whenever you change the virtual file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>"
+to specify an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <p> Execute the command "<b>postmap /etc/postfix/relay_recipients</b>"
-whenever you change the relay_recipients table. </p>
+whenever you change the relay_recipients file, to (re)build a
+default-type indexed file. Execute "<b>postmap
+<i>type</i>:/etc/postfix/relay_recipients</b>" to specify an explicit
+type.</p>
 
 <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
-whenever you change the transport table. </p>
+whenever you change the transport file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/transport</b>"
+to specify an explicit type. </p>
 
 <p> In some installations, there may be separate instances of Postfix
 processing inbound and outbound mail on a multi-homed firewall. The
@@ -447,7 +459,7 @@ follows:  </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+2     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
 3 
 4 /etc/postfix/virtual:
 5     root     root@localhost
@@ -466,8 +478,16 @@ matches $<a href="postconf.5.html#inet_interfaces">inet_interfaces</a> or $<a hr
 
 </ul>
 
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>" after
-editing the file. </p>
+editing the virtual file, to (re)build a default-type indexed file.
+Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>" to specify
+an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <h2><a name="intranet">Running Postfix behind a firewall</a></h2>
 
@@ -489,7 +509,7 @@ discussed in the first half of this document. </p>
 <blockquote>
 <pre>
  1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
- 2     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
+ 2     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/transport
  3     <a href="postconf.5.html#relayhost">relayhost</a> =
  4     # Optional for a machine that isn't "always on"
  5     #<a href="postconf.5.html#fallback_relay">fallback_relay</a> = [gateway.example.com]
@@ -522,12 +542,17 @@ directly, and gives undeliverable mail to a gateway.  </p>
 
 </ul>
 
-<p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>". </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
 
-<p> Execute the command "<b>postmap /etc/postfix/transport</b>" whenever
-you edit the transport table. </p>
+<p> Execute the command "<b>postmap /etc/postfix/transport</b>"
+whenever you edit the transport file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/transport</b>"
+to specify an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
+
 
 <h2><a name="backup">Configuring Postfix as primary or backup MX host for a remote site</a></h2>
 
@@ -561,7 +586,7 @@ is all you need: </p>
 11     # You must specify your NAT/proxy external address.
 12     #<a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> = 1.2.3.4
 13 
-14     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/relay_recipients
+14     <a href="postconf.5.html#relay_recipient_maps">relay_recipient_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/relay_recipients
 15 
 16 /etc/postfix/relay_recipients:
 17     user1@the.backed-up.domain.tld   x
@@ -576,7 +601,7 @@ need the above, plus: </p>
 <blockquote>
 <pre>
 20 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-21     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/transport
+21     <a href="postconf.5.html#transport_maps">transport_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/transport
 22 
 23 /etc/postfix/transport:
 24     the.backed-up.domain.tld       relay:[their.mail.host.tld]
@@ -613,12 +638,22 @@ relay_recipients table. </p>
 
 </ul>
 
-<p> Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>". </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
+
+<p> Execute the command "<b>postmap /etc/postfix/relay_recipients</b>"
+whenever you change the relay_recipients file, to (re)build a
+default-type indexed file. Execute "<b>postmap
+<i>type</i>:/etc/postfix/relay_recipients</b>" to specify an explicit
+type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <p> Execute the command "<b>postmap /etc/postfix/transport</b>"
-whenever you change the transport table. </p>
+whenever you change the transport file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/transport</b>"
+to specify an explicit type. </p>
 
 <p> NOTE for Postfix &lt; 2.2: Do not use the <a href="postconf.5.html#fallback_relay">fallback_relay</a> feature
 when relaying mail
@@ -760,7 +795,7 @@ discussed in the first half of this document. </p>
 <blockquote>
 <pre>
 1 /etc/postfix/<a href="postconf.5.html">main.cf</a>:
-2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/generic
+2     <a href="postconf.5.html#smtp_generic_maps">smtp_generic_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/generic
 3 
 4 /etc/postfix/generic:
 5     his@localdomain.local             hisaccount@hisisp.example
@@ -785,12 +820,16 @@ that the ISP supports "+" style address extensions). </p>
 
 </ul>
 
-<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
 
 <p> Execute the command "<b>postmap /etc/postfix/generic</b>"
-whenever you change the generic table. </p>
+whenever you change the generic file, to (re)build a default-type
+indexed file. Execute  "<b>postmap <i>type</i>:/etc/postfix/generic</b>"
+to specify an explicit type.</p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <h3>Solution 2: Postfix version 2.1 and earlier </h3>
 
@@ -811,9 +850,9 @@ discussed in the first half of this document. </p>
  2     <a href="postconf.5.html#myhostname">myhostname</a> = hostname.localdomain
  3     <a href="postconf.5.html#mydomain">mydomain</a> = localdomain
  4 
- 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/canonical
+ 5     <a href="postconf.5.html#canonical_maps">canonical_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/canonical
  6 
- 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="DATABASE_README.html#types">hash</a>:/etc/postfix/virtual
+ 7     <a href="postconf.5.html#virtual_alias_maps">virtual_alias_maps</a> = <a href="lmdb_table.5.html">lmdb</a>:/etc/postfix/virtual
  8 
  9 /etc/postfix/canonical:
 10     your-login-name    your-account@your-isp.com
@@ -842,15 +881,21 @@ but is convenient.
 
 </ul>
 
-<p>Specify <b>dbm</b> instead of <b>hash</b> if your system uses
-<b>dbm</b> files instead of <b>db</b> files. To find out what lookup
-tables Postfix supports, use the command "<b>postconf -m</b>".  </p>
+<p> Instead of <a href="lmdb_table.5.html">lmdb</a>:, some systems use <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>:. </p>
 
 <p> Execute the command "<b>postmap /etc/postfix/canonical</b>"
-whenever you change the canonical table. </p>
+whenever you change the canonical file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/canonical</b>"
+to specify an explicit type. </p>
+
+<p> The default indexed file type is configured with the
+<a href="postconf.5.html#default_database_type">default_database_type</a> parameter. To list available explicit types, 
+execute the command "<b>postconf -m</b>".</p>
 
 <p> Execute the command "<b>postmap /etc/postfix/virtual</b>"
-whenever you change the virtual table. </p>
+whenever you change the virtual file, to (re)build a default-type
+indexed file. Execute "<b>postmap <i>type</i>:/etc/postfix/virtual</b>"
+to specify an explicit type. </p>
 
 </body>
 

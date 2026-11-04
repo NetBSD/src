@@ -1,4 +1,4 @@
-# Copyright (C) 2022-2024 Free Software Foundation, Inc.
+# Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,27 +13,66 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This file is part of the GDB testsuite.  It checks for memory leaks
-# associated with allocating and deallocation gdb.Inferior objects.
+# Test related to source code highlighting and Python.  Includes a
+# test for using the Pygments module as a fall back to GNU source
+# highlight.
+#
+# This script also includes tests for handling a non-uft-8 character
+# with both Pygments highlighting, and with gdb.execute (when using
+# the list command).
+
+require allow_python_tests
 
 load_lib gdb-python.exp
 
 standard_testfile
 
-with_ansi_styling_terminal {
-    # We need an ANSI-capable terminal to get the output, additionally
-    # we need to set LC_ALL so GDB knows the terminal is UTF-8
-    # capable, otherwise we'll get a UnicodeEncodeError trying to
-    # encode the output.
-    if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
-	return -1
+if { [build_executable "failed to build" ${testfile} ${srcfile}] == -1 } {
+    return
+}
+
+set line_number [gdb_get_line_number "List this line."]
+
+# Helper proc.  Run CMD, which should produce a source listing, and
+# check if the source code is styled or not.  EXPECT_STYLED indicates
+# if we expect the source listing to be styled or not.
+proc check_source_listing_styling { cmd expect_styled { testname "" } } {
+    if { $testname eq "" } {
+	set testname $cmd
     }
 
-    if { ![allow_python_tests] } { continue }
+    set seen_style_escape false
+    gdb_test_multiple $cmd $testname {
+	-re -wrap "Python Exception.*" {
+	    fail $gdb_test_name
+	    return
+	}
+	-re "\033" {
+	    set seen_style_escape true
+	    exp_continue
+	}
+	-re "$::gdb_prompt $" {
+	    gdb_assert { $seen_style_escape == $expect_styled } \
+		$gdb_test_name
+	}
+    }
+}
+
+# Check that the Python pygments module can be used for source
+# highlighting when GNU source highlight is not available (or is
+# disabled, as is done in this test).
+proc test_pygments_styling {} {
+    clean_restart $::testfile
+
+    # Remote host boards disable styling via GDB's command line.  Turn
+    # it back on now.
+    if {[is_remote host]} {
+	gdb_test "set style enabled on"
+    }
 
     if { ![gdb_py_module_available "pygments"] } {
 	unsupported "pygments module not available"
-	return -1
+	return
     }
 
     if ![runto_main] {
@@ -44,19 +83,102 @@ with_ansi_styling_terminal {
 
     gdb_test "maint flush source-cache" "Source cache flushed\\."
 
-    set seen_style_escape false
-    set line_number [gdb_get_line_number "List this line."]
-    gdb_test_multiple "list ${line_number}" "" {
-	-re "Python Exception.*" {
-	    fail $gdb_test_name
-	}
-	-re "\033" {
-	    set seen_style_escape true
-	    exp_continue
-	}
-	-re "$gdb_prompt $" {
-	    gdb_assert { $seen_style_escape }
-	    pass $gdb_test_name
-	}
+    check_source_listing_styling "list $::line_number" true
+}
+
+# Use gdb.execute to list source code containing non-utf-8 character.
+# Check that initially GDB fails to convert the source code to a
+# string, then set the correct host encoding, and try again.  This
+# time the conversion should succeed.
+proc test_gdb_execute_non_utf8_source {} {
+    clean_restart $::testfile
+
+    # The default host charset is utf-8, the source code contains a
+    # non-utf-8 character, so this will fail.
+    gdb_test \
+	"python source = gdb.execute('list $::line_number', True, True)" \
+	[multi_line \
+	     "Python Exception <class 'UnicodeDecodeError'>: 'ascii' codec can't decode byte 0xc0 in position 250: ordinal not in range\\(128\\)" \
+	     "Error occurred in Python: 'ascii' codec can't decode byte 0xc0 in position 250: ordinal not in range\\(128\\)"] \
+	"gdb.execute fails to convert result to string"
+
+    # Set the correct host charset, and try the conversion again.
+    gdb_test_no_output "set host-charset ISO-8859-1"
+    gdb_test_no_output \
+	"python source = gdb.execute('list $::line_number', True, True)" \
+	"gdb.execute does convert result to string"
+
+    # Check that we captured something that looks like the expected source.
+    gdb_test "python print(source)" ".*List this line.*"
+}
+
+# Use gdb.execute() to list source code.  Alternate between asking for
+# styled, and unstyled source code.  In some cases we ask for the
+# output to be returned via a string, and in other cases we ask for
+# the output to be sent straight to stdout.
+proc_with_prefix test_source_cache_style_tracking {} {
+    clean_restart $::testfile
+
+    # Remote host boards disable styling via GDB's command line.  Turn
+    # it back on now.
+    if {[is_remote host]} {
+	gdb_test "set style enabled on"
     }
+
+    gdb_test_no_output "set host-charset ISO-8859-1"
+
+    # Commands which return styled, and non-styled source code mixed
+    # together.  This ensures that the source cache will need to keep
+    # discarding the entry with the wrong styling mode.  All of these
+    # gdb.execute calls send their output via a string.
+    check_source_listing_styling \
+	"python print(gdb.execute('list $::line_number', to_string=True), end='')" \
+	false
+    check_source_listing_styling \
+	"python print(gdb.execute('list $::line_number', to_string=True, styling=True), end='')" \
+	true
+    foreach from_tty { True False } {
+	check_source_listing_styling \
+	    "python print(gdb.execute('list $::line_number', $from_tty, True), end='')" \
+	    false
+	check_source_listing_styling \
+	    "python print(gdb.execute('list $::line_number', $from_tty, True, True), end='')" \
+	    true
+	check_source_listing_styling \
+	    "python print(gdb.execute('list $::line_number', $from_tty, True, False), end='')" \
+	    false
+    }
+
+    # The same again, but this time the output is sent directly to
+    # stdout.
+    check_source_listing_styling \
+	"python gdb.execute('list $::line_number')" \
+	true
+    check_source_listing_styling \
+	"python gdb.execute('list $::line_number', to_string=False, styling=False)" \
+	false
+    check_source_listing_styling \
+	"python gdb.execute('list $::line_number', to_string=False, styling=True)" \
+	true
+    foreach from_tty { True False } {
+	check_source_listing_styling \
+	    "python gdb.execute('list $::line_number', $from_tty, False, False)" \
+	    false
+	check_source_listing_styling \
+	    "python gdb.execute('list $::line_number', $from_tty, False, True)" \
+	    true
+	check_source_listing_styling \
+	    "python gdb.execute('list $::line_number', $from_tty, False)" \
+	    true
+    }
+}
+
+# We need an ANSI-capable terminal to get the output, additionally we
+# need to set LC_ALL so GDB knows the terminal is UTF-8 capable,
+# otherwise we'll get a UnicodeEncodeError trying to encode the
+# output.
+with_ansi_styling_terminal {
+    test_pygments_styling
+    test_gdb_execute_non_utf8_source
+    test_source_cache_style_tracking
 }

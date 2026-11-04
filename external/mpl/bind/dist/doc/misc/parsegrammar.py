@@ -59,6 +59,7 @@ end node, key "_mapbody" denotes a nested map.
     }
 }
 """
+
 import fileinput
 import json
 import re

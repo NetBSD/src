@@ -1,12 +1,12 @@
-/*	$NetBSD: getether.c,v 1.9.58.1 2025/08/02 05:58:48 perseant Exp $	*/
+/*	$NetBSD: getether.c,v 1.9.58.2 2026/11/04 23:28:47 perseant Exp $	*/
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: getether.c,v 1.9.58.1 2025/08/02 05:58:48 perseant Exp $");
+__RCSID("$NetBSD: getether.c,v 1.9.58.2 2026/11/04 23:28:47 perseant Exp $");
 #endif
 
 /*
- * getether.c : get the ethernet address of an interface
+ * getether.c : get the Ethernet address of an interface
  *
  * All of this code is quite system-specific.  As you may well
  * guess, it took a good bit of detective work to figure out!

@@ -1,4 +1,4 @@
-/* $NetBSD: fusbtc.c,v 1.1.4.2 2025/08/02 05:56:39 perseant Exp $ */
+/* $NetBSD: fusbtc.c,v 1.1.4.3 2026/11/04 23:21:55 perseant Exp $ */
 /* $OpenBSD: fusbtc.c,v 1.1 2019/05/11 14:43:27 patrick Exp $ */
 /*
  * Copyright (c) 2019 Patrick Wildt <patrick@blueri.se>
@@ -27,7 +27,7 @@
 #include <dev/fdt/fdtvar.h>
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fusbtc.c,v 1.1.4.2 2025/08/02 05:56:39 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fusbtc.c,v 1.1.4.3 2026/11/04 23:21:55 perseant Exp $");
 
 /* #define FUSB_DEBUG */
 
@@ -263,7 +263,7 @@ fusbtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
-	sc->sc_phandle = ia->ia_cookie;
+	sc->sc_phandle = devhandle_to_of(device_handle(self));
 
 	sc->sc_vbus = fdtbus_regulator_acquire(sc->sc_phandle, "vbus-supply");
 	sc->sc_drp_mode = FUSB_CONTROL2_MODE_NONE;

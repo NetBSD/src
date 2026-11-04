@@ -1,3 +1,5 @@
+/* $NetBSD: imxgpioreg.h,v 1.2.98.1 2026/11/04 23:20:11 perseant Exp $ */
+
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.

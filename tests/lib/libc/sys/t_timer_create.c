@@ -1,4 +1,4 @@
-/*	$NetBSD: t_timer_create.c,v 1.5.28.1 2025/08/02 05:58:07 perseant Exp $ */
+/*	$NetBSD: t_timer_create.c,v 1.5.28.2 2026/11/04 23:28:18 perseant Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <unistd.h>
 
 #include "h_macros.h"
+
+#define	TIME_MAX	__type_max(time_t)
 
 static timer_t t;
 static sig_atomic_t expired;
@@ -428,6 +430,8 @@ ATF_TC_BODY(timer_invalidtime, tc)
 		[3] = { .it_value = {1, 0}, .it_interval = {-1, 0} },
 		[4] = { .it_value = {1, 0}, .it_interval = {0, -1} },
 		[5] = { .it_value = {1, 0}, .it_interval = {0, 1000000001} },
+		[6] = { .it_value = {TIME_MAX - 1, 0}, .it_interval = {0, 0} },
+		[7] = { .it_value = {TIME_MAX, 0}, .it_interval = {0, 0} },
 	};
 	struct timespec now;
 	sigset_t sigs, mask;

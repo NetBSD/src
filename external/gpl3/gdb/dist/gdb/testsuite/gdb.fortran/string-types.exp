@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -52,7 +52,7 @@ with_test_prefix "third breakpoint, first time" {
     # Continue to the third breakpoint.
     gdb_continue_to_breakpoint "continue"
     gdb_test "print s" " = 'foo'"
-    gdb_test "ptype s" "type = character \\(3\\)"
+    gdb_test "ptype s" "type = character\\*3"
 }
 
 with_test_prefix "third breakpoint, second time" {
@@ -65,5 +65,5 @@ with_test_prefix "third breakpoint, second time" {
     # by most users, so seems good enough.
     gdb_continue_to_breakpoint "continue"
     gdb_test "print s" " = 'foo\\\\n\\\\t\\\\r\\\\000bar'"
-    gdb_test "ptype s" "type = character \\(10\\)"
+    gdb_test "ptype s" "type = character\\*10"
 }

@@ -22,10 +22,8 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/root.db",
         "ns1/root.db.signed",
         "ns2/named-tls.conf",
-        "ns2/options-tls.conf",
         "ns3/trusted.conf",
         "ns4/named-tls.conf",
-        "ns4/options-tls.conf",
         "ns9/named_dump.db",
     ]
 )

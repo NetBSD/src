@@ -1,4 +1,4 @@
-/* Copyright (C) 1992-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_DCACHE_H
-#define TARGET_DCACHE_H
+#ifndef GDB_TARGET_DCACHE_H
+#define GDB_TARGET_DCACHE_H
 
 #include "dcache.h"
 #include "progspace.h"
@@ -33,4 +33,4 @@ extern int stack_cache_enabled_p (void);
 
 extern int code_cache_enabled_p (void);
 
-#endif /* TARGET_DCACHE_H */
+#endif /* GDB_TARGET_DCACHE_H */

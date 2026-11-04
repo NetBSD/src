@@ -1,5 +1,5 @@
 /* Simulation code for the CR16 processor.
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of simulators.
 
@@ -20,18 +20,6 @@
 #define SIM_MAIN_H
 
 #include "sim-basics.h"
-
-typedef long int           word;
-typedef unsigned long int  uword;
-
 #include "sim-base.h"
-#include "bfd.h"
-
-#include "cr16_sim.h"
-
-struct _sim_cpu {
-
-  sim_cpu_base base;
-};
 
 #endif

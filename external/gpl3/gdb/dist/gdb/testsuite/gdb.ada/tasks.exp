@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -55,11 +55,11 @@ gdb_test "watch j task 1 task 3" "You can specify only one task\\."
 
 # Check that attempting to combine 'task' and 'thread' gives an error.
 gdb_test "break break_me task 1 thread 1" \
-    "You can specify only one of thread or task\\."
+    "You can specify only one of thread, inferior, or task\\."
 gdb_test "break break_me thread 1 task 1" \
-    "You can specify only one of thread or task\\."
+    "You can specify only one of thread, inferior, or task\\."
 gdb_test "break break_me inferior 1 task 1" \
-    "You can specify only one of inferior or task\\."
+    "You can specify only one of thread, inferior, or task\\."
 gdb_test "watch j task 1 thread 1" \
     "You can specify only one of thread or task\\."
 gdb_test "watch j thread 1 task 1" \

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.233.6.1 2025/08/02 05:57:57 perseant Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.233.6.2 2026/11/04 23:28:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -298,7 +298,7 @@ struct vmtotal;
 #define	UVM_PCTPARAM_SHIFT	8
 #define	UVM_PCTPARAM_SCALE	(1 << UVM_PCTPARAM_SHIFT)
 #define	UVM_PCTPARAM_APPLY(pct, x) \
-	(((x) * (pct)->pct_scaled) >> UVM_PCTPARAM_SHIFT)
+	(((uint64_t)(x) * (pct)->pct_scaled) >> UVM_PCTPARAM_SHIFT)
 struct uvm_pctparam {
 	int pct_pct;	/* percent [0, 100] */ /* should be the first member */
 	int pct_scaled;
@@ -408,7 +408,7 @@ struct uvmexp {
 	int pdreact;	/* number of pages daemon reactivated since boot */
 	int pdbusy;	/* number of times daemon found a busy page */
 	int pdpageouts;	/* number of times daemon started a pageout */
-	int pdpending;	/* number of times daemon got a pending pagout */
+	int pdpending;	/* unused: number of times daemon got a pending pageout */
 	int pddeact;	/* number of pages daemon deactivates */
 	int pdreanon;	/* anon pages reactivated due to thresholds */
 	int pdrefile;	/* file pages reactivated due to thresholds */
@@ -492,7 +492,7 @@ struct uvmexp_sysctl {
 	int64_t	pdreact;
 	int64_t	pdbusy;
 	int64_t	pdpageouts;
-	int64_t	pdpending;
+	int64_t	pdpending;		/* unused */
 	int64_t	pddeact;
 	int64_t	anonpages;
 	int64_t	filepages;
@@ -637,8 +637,7 @@ struct uvm_voaddr {
  * macros
  */
 
-#define vm_resident_count(vm) (pmap_resident_count((vm)->vm_map.pmap))
-
+#define vm_resident_count(vm) uvm_resident_count(vm)
 
 /* vm_machdep.c */
 int		vmapbuf(struct buf *, vsize_t);
@@ -688,6 +687,7 @@ vaddr_t			uvm_lwp_getuarea(lwp_t *);
 void			uvm_lwp_setuarea(lwp_t *, vaddr_t);
 int			uvm_vslock(struct vmspace *, void *, size_t, vm_prot_t);
 void			uvm_vsunlock(struct vmspace *, void *, size_t);
+long			uvm_resident_count(struct vmspace *);
 void			uvm_cpu_attach(struct cpu_info *);
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd18xx.c,v 1.33 2024/06/02 13:28:44 andvar Exp $	*/
+/*	$NetBSD: cd18xx.c,v 1.33.2.1 2026/11/04 23:21:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -92,7 +92,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.33 2024/06/02 13:28:44 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd18xx.c,v 1.33.2.1 2026/11/04 23:21:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -1040,7 +1040,7 @@ cdtty_hwiflow(struct cd18xx_softc *sc, struct cdtty_port *p)
 }
 
 /*
- * indiviual interrupt routines.
+ * individual interrupt routines.
  */
 
 /*

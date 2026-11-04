@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.21 2024/01/15 03:07:14 thorpej Exp $
+#	$NetBSD: files.cesfic,v 1.21.2.1 2026/11/04 23:20:23 perseant Exp $
 #
 # cesfic-specific configuration info
 
@@ -53,27 +53,10 @@ file	arch/cesfic/cesfic/autoconf.c
 file	arch/cesfic/cesfic/clock.c
 file	arch/cesfic/cesfic/machdep.c
 file	arch/cesfic/cesfic/pmap_bootstrap.c
-file	arch/cesfic/cesfic/trap.c
-file	arch/m68k/m68k/cacheops.c
-file	arch/m68k/m68k/db_memrw.c		ddb | kgdb
-file	arch/m68k/m68k/kgdb_machdep.c		kgdb
+file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s
-file	arch/m68k/m68k/m68k_trap.c
-file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
-file	arch/m68k/m68k/procfs_machdep.c		procfs
-file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vectors.c
-file	arch/m68k/m68k/vm_machdep.c
 
 file	dev/cons.c
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include	"compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
 
 include "arch/cesfic/conf/majors.cesfic"

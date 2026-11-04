@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iavf.c,v 1.18.2.1 2025/08/02 05:56:45 perseant Exp $	*/
+/*	$NetBSD: if_iavf.c,v 1.18.2.2 2026/11/04 23:22:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.18.2.1 2025/08/02 05:56:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iavf.c,v 1.18.2.2 2026/11/04 23:22:05 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -2255,7 +2255,7 @@ iavf_txr_alloc(struct iavf_softc *sc, unsigned int qid)
 	    device_xname(sc->sc_dev), qid);
 
 	iavf_evcnt_attach(&txr->txr_defragged,
-	    txr->txr_name, "m_defrag successed");
+	    txr->txr_name, "m_defrag succeeded");
 	iavf_evcnt_attach(&txr->txr_defrag_failed,
 	    txr->txr_name, "m_defrag failed");
 	iavf_evcnt_attach(&txr->txr_pcqdrop,

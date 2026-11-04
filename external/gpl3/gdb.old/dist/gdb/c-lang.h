@@ -1,6 +1,6 @@
 /* C language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,14 +18,16 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
-#if !defined (C_LANG_H)
-#define C_LANG_H 1
+#ifndef GDB_C_LANG_H
+#define GDB_C_LANG_H
 
 struct ui_file;
 struct language_arch_info;
 struct type_print_options;
 struct parser_state;
+struct compile_instance;
 
+#include "compile/compile.h"
 #include "value.h"
 #include "macroexp.h"
 #include "gdbsupport/enum-flags.h"
@@ -172,4 +174,4 @@ extern std::string cplus_compute_program (compile_instance *inst,
 
 extern gdb::unique_xmalloc_ptr<char> c_canonicalize_name (const char *name);
 
-#endif /* !defined (C_LANG_H) */
+#endif /* GDB_C_LANG_H */

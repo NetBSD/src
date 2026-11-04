@@ -1,6 +1,6 @@
 /* Output generating routines for GDB CLI.
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions.
    Written by Fernando Nasser for Cygnus.
@@ -20,13 +20,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "ui-out.h"
 #include "cli-out.h"
 #include "completer.h"
 #include "readline/readline.h"
 #include "cli/cli-style.h"
-#include "top.h"
+#include "ui.h"
 
 /* These are the CLI output functions */
 
@@ -74,7 +73,7 @@ cli_ui_out::do_table_header (int width, ui_align alignment,
     return;
 
   do_field_string (0, width, alignment, 0, col_hdr.c_str (),
-		   ui_file_style ());
+		   title_style.style ());
 }
 
 /* Mark beginning of a list */
@@ -95,13 +94,14 @@ cli_ui_out::do_end (ui_out_type type)
 
 void
 cli_ui_out::do_field_signed (int fldno, int width, ui_align alignment,
-			     const char *fldname, LONGEST value)
+			     const char *fldname, LONGEST value,
+			     const ui_file_style &style)
 {
   if (m_suppress_output)
     return;
 
   do_field_string (fldno, width, alignment, fldname, plongest (value),
-		   ui_file_style ());
+		   style);
 }
 
 /* output an unsigned field */
@@ -299,7 +299,7 @@ cli_ui_out::do_progress_notify (const std::string &msg,
 				double howmuch, double total)
 {
   int chars_per_line = get_chars_per_line ();
-  struct ui_file *stream = m_streams.back ();
+  struct ui_file *stream = get_unbuffered (m_streams.back ());
   cli_progress_info &info (m_progress_info.back ());
 
   if (chars_per_line > MAX_CHARS_PER_LINE)
@@ -378,14 +378,17 @@ cli_ui_out::do_progress_notify (const std::string &msg,
   return;
 }
 
-/* Clear the current line of the most recent progress update.  Overwrites
-   the current line with whitespace.  */
+/* Clear do_progress_notify output from the current line.  Overwrites the
+   notification with whitespace.  */
 
 void
-cli_ui_out::clear_current_line ()
+cli_ui_out::clear_progress_notify ()
 {
-  struct ui_file *stream = m_streams.back ();
+  struct ui_file *stream = get_unbuffered (m_streams.back ());
   int chars_per_line = get_chars_per_line ();
+
+  scoped_restore save_pagination
+    = make_scoped_restore (&pagination_enabled, false);
 
   if (!stream->isatty ()
       || !current_ui->input_interactive_p ()
@@ -410,10 +413,12 @@ void
 cli_ui_out::do_progress_end ()
 {
   struct ui_file *stream = m_streams.back ();
-  m_progress_info.pop_back ();
+  cli_progress_info &info (m_progress_info.back ());
 
-  if (stream->isatty ())
-    clear_current_line ();
+  if (stream->isatty () && info.state != progress_update::START)
+    clear_progress_notify ();
+
+  m_progress_info.pop_back ();
 }
 
 /* local functions */
@@ -490,7 +495,7 @@ cli_mld_flush (const struct match_list_displayer *displayer)
   fflush (rl_outstream);
 }
 
-EXTERN_C void _rl_erase_entire_line (void);
+extern "C" void _rl_erase_entire_line (void);
 
 /* CLI version of displayer.erase_entire_line.  */
 

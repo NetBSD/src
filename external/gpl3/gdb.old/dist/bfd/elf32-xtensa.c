@@ -1,5 +1,5 @@
 /* Xtensa-specific support for 32-bit ELF.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -665,8 +665,7 @@ struct elf_xtensa_obj_tdata
 static bool
 elf_xtensa_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_xtensa_obj_tdata),
-				  XTENSA_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_xtensa_obj_tdata));
 }
 
 /* Xtensa ELF linker hash table.  */
@@ -741,8 +740,7 @@ elf_xtensa_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      elf_xtensa_link_hash_newfunc,
-				      sizeof (struct elf_xtensa_link_hash_entry),
-				      XTENSA_ELF_DATA))
+				      sizeof (struct elf_xtensa_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1557,8 +1555,8 @@ elf_xtensa_allocate_local_got_size (struct bfd_link_info *info)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+elf_xtensa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			       struct bfd_link_info *info)
 {
   struct elf_xtensa_link_hash_table *htab;
   bfd *dynobj, *abfd;
@@ -1575,7 +1573,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
   dynobj = elf_hash_table (info)->dynobj;
   if (dynobj == NULL)
-    abort ();
+    return true;
   srelgot = htab->elf.srelgot;
   srelplt = htab->elf.srelplt;
 
@@ -1780,8 +1778,7 @@ elf_xtensa_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 }
 
 static bool
-elf_xtensa_always_size_sections (bfd *output_bfd,
-				 struct bfd_link_info *info)
+elf_xtensa_early_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   struct elf_xtensa_link_hash_table *htab;
   asection *tls_sec;
@@ -5230,6 +5227,13 @@ literal_value_equal (const literal_value *src1,
      (if undefined or weak).  */
   h1 = r_reloc_get_hash_entry (&src1->r_rel);
   h2 = r_reloc_get_hash_entry (&src2->r_rel);
+
+  /* Keep start_stop literals always unique to avoid dropping it due to them
+     having late initialization.
+     Now they are equal because initialized with zeroed values.  */
+  if (h2 && h2->start_stop)
+      return false;
+
   if (r_reloc_is_defined (&src1->r_rel)
       && (final_static_link
 	  || ((!h1 || h1->root.type != bfd_link_hash_defweak)
@@ -6095,16 +6099,12 @@ struct elf_xtensa_section_data
 static bool
 elf_xtensa_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct elf_xtensa_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  struct elf_xtensa_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -10064,7 +10064,7 @@ translate_reloc_bfd_fix (reloc_bfd_fix *fix)
      location.  Otherwise, the relocation should move within the
      section.  */
 
-  removed = false;
+  removed = NULL;
   if (is_operand_relocation (fix->src_type))
     {
       /* Check if the original relocation is against a literal being
@@ -10135,7 +10135,7 @@ translate_reloc (const r_reloc *orig_rel, r_reloc *new_rel, asection *sec)
 
   target_offset = orig_rel->target_offset;
 
-  removed = false;
+  removed = NULL;
   if (is_operand_relocation (ELF32_R_TYPE (orig_rel->rela.r_info)))
     {
       /* Check if the original relocation is against a literal being
@@ -11246,7 +11246,7 @@ xtensa_add_names (const char *base, const char *suffix)
 
 static int linkonce_len = sizeof (".gnu.linkonce.") - 1;
 
-static char *
+char *
 xtensa_property_section_name (asection *sec, const char *base_name,
 			      bool separate_sections)
 {
@@ -11324,38 +11324,6 @@ xtensa_get_property_section (asection *sec, const char *base_name)
   if (!prop_sec)
     prop_sec = xtensa_get_separate_property_section (sec, base_name, false);
 
-  return prop_sec;
-}
-
-
-asection *
-xtensa_make_property_section (asection *sec, const char *base_name)
-{
-  char *prop_sec_name;
-  asection *prop_sec;
-
-  /* Check if the section already exists.  */
-  prop_sec_name = xtensa_property_section_name (sec, base_name,
-						elf32xtensa_separate_props);
-  prop_sec = bfd_get_section_by_name_if (sec->owner, prop_sec_name,
-					 match_section_group,
-					 (void *) elf_group_name (sec));
-  /* If not, create it.  */
-  if (! prop_sec)
-    {
-      flagword flags = (SEC_RELOC | SEC_HAS_CONTENTS | SEC_READONLY);
-      flags |= (bfd_section_flags (sec)
-		& (SEC_LINK_ONCE | SEC_LINK_DUPLICATES));
-
-      prop_sec = bfd_make_section_anyway_with_flags
-	(sec->owner, strdup (prop_sec_name), flags);
-      if (! prop_sec)
-	return 0;
-
-      elf_group_name (prop_sec) = elf_group_name (sec);
-    }
-
-  free (prop_sec_name);
   return prop_sec;
 }
 
@@ -11537,8 +11505,8 @@ static const struct bfd_elf_special_section elf_xtensa_special_sections[] =
 #define elf_backend_object_p		     elf_xtensa_object_p
 #define elf_backend_reloc_type_class	     elf_xtensa_reloc_type_class
 #define elf_backend_relocate_section	     elf_xtensa_relocate_section
-#define elf_backend_size_dynamic_sections    elf_xtensa_size_dynamic_sections
-#define elf_backend_always_size_sections     elf_xtensa_always_size_sections
+#define elf_backend_late_size_sections	     elf_xtensa_late_size_sections
+#define elf_backend_early_size_sections	     elf_xtensa_early_size_sections
 #define elf_backend_omit_section_dynsym      _bfd_elf_omit_section_dynsym_all
 #define elf_backend_special_sections	     elf_xtensa_special_sections
 #define elf_backend_action_discarded	     elf_xtensa_action_discarded

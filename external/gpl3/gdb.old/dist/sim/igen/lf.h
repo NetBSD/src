@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,7 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef IGEN_LF_H
+#define IGEN_LF_H
+
 #include "ansidecl.h"
+#include "misc.h"
 
 /* LF: Line Numbered Output Stream */
 
@@ -43,7 +47,7 @@ lf_file_references;
 
 
 /* Open the file NAME for writing ("-" for stdout).  Use REAL_NAME
-   when refering to the opened file.  Line number information (in the
+   when referring to the opened file.  Line number information (in the
    output) can be suppressed with FILE_REFERENCES ==
    LF_OMIT_REFERENCES.  TYPE is to determine the formatting of some of
    the print messages below. */
@@ -115,3 +119,5 @@ extern int lf_print__function_type_function
   (lf *file,
    print_function * print_type,
    const char *prefix, const char *trailing_space);
+
+#endif /* IGEN_LF_H */

@@ -1,6 +1,6 @@
 /* Unwinder test program.
 
-   Copyright 2003-2023 Free Software Foundation, Inc.
+   Copyright 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 

@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,11 @@ require allow_guile_tests
 
 standard_testfile .cc
 
-if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+set flags {}
+lappend flags debug
+lappend flags c++
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $flags] } {
     return -1
 }
 
@@ -59,3 +63,8 @@ gdb_test "guile (define bad-enum-htab (make-enum-hashtable #f))" \
 gdb_test "guile (define bad-enum-htab (make-enum-hashtable (lookup-type \"int\")))" \
     "Wrong type argument in position 1 \\(expecting enum\\): #<gdb:type int>.*" \
     "make-enum-hashtable from int"
+
+gdb_test_no_output "guile (define foo-ref (parse-and-eval \"foo_ref\"))" \
+    "get foo-ref value"
+gdb_test "guile (get-basic-type (value-type foo-ref))" "#<gdb:type int>" \
+    "check get-basic-type"

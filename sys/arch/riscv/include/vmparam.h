@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.14 2023/05/07 12:41:48 skrll Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.14.6.1 2026/11/04 23:21:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #endif
 
 /*
- * Machine dependent VM constants for RISCV.
+ * Machine dependent VM constants for RISC-V.
  */
 
 /*
@@ -49,6 +49,25 @@
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
+
+#ifdef _LP64
+/*
+ * Default pager_map of 16MB is awfully small.  There is plenty
+ * of VA so use it.
+ */
+#define	PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
+#endif
 
 /*
  * USRSTACK is the top (end) of the user stack.
@@ -125,12 +144,6 @@
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)0xffffffd000000000)
 
 #else		/* Sv32 */
-/*
- * kernel virtual space layout:
- *   0x8000_0000  -   64GiB  KERNEL VM Space (inc. text/data/bss)
- *  (0x4000_0000      +1GiB) KERNEL VM start of KVA
- *  (0x0000_0000      64GiB) reserved
- */
 
 /*
  * kernel virtual space layout without direct map (common case)
@@ -154,13 +167,12 @@
  *
  */
 
-
-
 #define VM_MAXUSER_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffff_ffff_8000_0000 */
 #define VM_MIN_KERNEL_ADDRESS	((vaddr_t)-0x7fffffff-1)/* 0xffff_ffff_8000_0000 */
 #define VM_MAX_KERNEL_ADDRESS	((vaddr_t)-0x10000000)	/* 0xffff_ffff_f000_0000 */
 
 #endif
+
 #define VM_KERNEL_BASE		VM_MIN_KERNEL_ADDRESS
 #define VM_KERNEL_SIZE		0x2000000	/* 32 MiB (8 / 16 megapages) */
 #define VM_KERNEL_DTB_BASE	(VM_KERNEL_BASE + VM_KERNEL_SIZE)

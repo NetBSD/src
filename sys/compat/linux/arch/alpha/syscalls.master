@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.107.2.1 2025/08/02 05:56:21 perseant Exp $
+	$NetBSD: syscalls.master,v 1.107.2.2 2026/11/04 23:21:37 perseant Exp $
 ;
 ;	@(#)syscalls.master	8.1 (Berkeley) 7/19/93
 
@@ -254,8 +254,8 @@
 119	UNIMPL
 120	NOARGS		{ ssize_t|sys||readv(int fd, const struct iovec *iovp, \
 				int iovcnt); }
-121	NOARGS		{ ssize_t|sys||writev(int fd, const struct iovec *iovp, \
-				int iovcnt); }
+121	STD		{ ssize_t|linux_sys||writev(int fd, \
+			    const struct iovec *iovp, int iovcnt); }
 122	STD		{ int|linux_sys||osf1_settimeofday(struct osf1_timeval *tv, \
 			    struct osf1_timezone *tzp); }
 123	NOARGS		{ int|sys||__posix_fchown(int fd, uid_t uid, \
@@ -558,7 +558,8 @@
 345	UNIMPL		pciconfig_read
 346	UNIMPL		pciconfig_write
 347	UNIMPL		query_module
-348	UNIMPL		prctl
+348	INDIR		{ int|linux_sys||__prctl(int code, \
+                                  ... void * args[LINUX_SYS_MAXSYSARGS]); }
 349	STD		{ int|linux_sys||pread(int fd, char *buf, \
 			    size_t nbyte, off_t offset); }
 350	STD		{ int|linux_sys||pwrite(int fd, char *buf, \
@@ -687,7 +688,9 @@
 422	STD		{ int|linux_sys||clock_nanosleep(clockid_t which, \
 			    int flags, struct linux_timespec *rqtp, \
 			    struct linux_timespec *rmtp); }
-423	UNIMPL		semtimedop
+423	STD		{ int|linux_sys||semtimedop(int semid, \
+			    struct sembuf *sops, size_t nsops, \
+			    struct linux_timespec *timeout); }
 424	STD		{ int|linux_sys||tgkill(int tgid, int tid, int sig); }
 425	STD		{ int|linux_sys||stat64(const char *path, \
 			    struct linux_stat64 *sp); }

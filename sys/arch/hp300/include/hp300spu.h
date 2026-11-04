@@ -1,4 +1,4 @@
-/*	$NetBSD: hp300spu.h,v 1.17 2024/05/13 00:08:49 msaitoh Exp $	*/
+/*	$NetBSD: hp300spu.h,v 1.17.2.1 2026/11/04 23:20:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@
 
 #if defined (_KERNEL) && !defined(_LOCORE)
 extern	int machineid;		/* CPU model */
-extern	int cpuspeed;		/* CPU speed, in MHz */
 extern	int mmuid;		/* MMU id */
 #endif /* _KERNEL && ! _LOCORE */
 
@@ -95,10 +94,22 @@ extern	int mmuid;		/* MMU id */
 #if defined(M68K_MMU_HP)
 #define	CACHE_HAVE_VAC
 #define M68K_VAC
+#ifndef M68K_EC_VAC
+#error M68K_EC_VAC should be defined
+#endif
+#ifndef M68K_EC
+#error M68K_EC should be defined
+#endif
 #endif
 
 #if defined(HP345) || defined(HP370) || defined(HP375) || defined(HP400)
 #define	CACHE_HAVE_PAC
+#ifndef M68K_EC_PAC
+#error M68K_EC_PAC should be defined
+#endif
+#ifndef M68K_EC
+#error M68K_EC should be defined
+#endif
 #endif
 
 #endif /* _KERNEL */

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,7 +25,8 @@ if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 # Test "maint with".  VALUES is a list of values.  A nested "with" is
 # performed with each combination of pair of values from this list.
@@ -178,7 +179,8 @@ with_test_prefix "user-defined" {
 
 # Check repeating.
 with_test_prefix "repeat" {
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     # "with" with no command reinvokes the previous command.
     gdb_test "with language ada" \
@@ -209,7 +211,8 @@ with_test_prefix "repeat" {
 
 # Basic run control.
 with_test_prefix "run control" {
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     if ![runto_main] {
 	return
@@ -238,7 +241,7 @@ with_test_prefix "errors" {
 
     # Try ambiguous settings.
     gdb_test "with w" \
-	"Ambiguous set command \"w\": watchdog, width, write\\."
+	"Ambiguous set command \"w\": warn-language-frame-mismatch, watchdog, width, write\\."
     gdb_test "with print m" \
 	"Ambiguous set print command \"m\": max-depth, max-symbolic-offset, memory-tag-violations\\."
 

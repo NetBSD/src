@@ -1,6 +1,6 @@
 /* Python interface to instruction objects.
 
-   Copyright 2017-2024 Free Software Foundation, Inc.
+   Copyright 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PY_INSTRUCTION_H
-#define PYTHON_PY_INSTRUCTION_H
+#ifndef GDB_PYTHON_PY_INSTRUCTION_H
+#define GDB_PYTHON_PY_INSTRUCTION_H
 
 #include "python-internal.h"
 
@@ -32,4 +32,4 @@
 
 extern PyTypeObject *py_insn_get_insn_type ();
 
-#endif /* PYTHON_PY_INSTRUCTION_H */
+#endif /* GDB_PYTHON_PY_INSTRUCTION_H */

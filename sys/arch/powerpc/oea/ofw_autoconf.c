@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.26 2023/09/23 21:26:16 andvar Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.26.6.1 2026/11/04 23:21:11 perseant Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.26 2023/09/23 21:26:16 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.26.6.1 2026/11/04 23:21:11 perseant Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -65,10 +65,13 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.26 2023/09/23 21:26:16 andvar Exp
 #include <dev/wscons/wsdisplayvar.h>
 #include <dev/rasops/rasops.h>
 #include <powerpc/oea/ofw_rasconsvar.h>
+#include <powerpc/ofw_machdep.h>
 
 #include <machine/pci_machdep.h>
 
 #include <prop/proplib.h>
+
+#include "wsdisplay.h"
 
 extern char bootpath[256];
 char cbootpath[256];
@@ -230,7 +233,7 @@ canonicalize_bootpath(void)
  * known OF boot device.
  */
 void
-device_register(device_t dev, void *aux)
+ofw_device_register(device_t dev, void *aux)
 {
 	static device_t parent;
 	static char *bp = bootpath + 1, *cp = cbootpath;
@@ -381,12 +384,6 @@ device_register(device_t dev, void *aux)
 				/* setup display properties for fb driver */
 				prop_dictionary_set_bool(dict, "is_console", 0);
 				copy_disp_props(dev, node, dict);
-			}
-			if (pci_class == PCI_CLASS_NETWORK) {
-				of_to_dataprop(dict, node, "local-mac-address",
-				    "mac-address");
-				of_to_dataprop(dict, node, "shared-pins",
-				    "shared-pins");
 			}
 		}
 #ifdef macppc

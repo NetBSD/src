@@ -1,4 +1,4 @@
-/*	$NetBSD: reverse.c,v 1.23 2011/09/03 10:59:11 christos Exp $	*/
+/*	$NetBSD: reverse.c,v 1.23.54.1 2026/11/04 23:28:43 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)reverse.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: reverse.c,v 1.23 2011/09/03 10:59:11 christos Exp $");
+__RCSID("$NetBSD: reverse.c,v 1.23.54.1 2026/11/04 23:28:43 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -79,7 +79,7 @@ reverse(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (style != REVERSE && off == 0)
 		return;
 
-	if (S_ISREG(sbp->st_mode))
+	if (S_ISREG(sbp->st_mode) && sbp->st_size > 0)
 		r_reg(fp, style, off, sbp);
 	else
 		switch(style) {
@@ -113,7 +113,7 @@ r_reg(FILE *fp, enum STYLE style, off_t off, struct stat *sbp)
 	if (!(size = sbp->st_size))
 		return;
 
-	if ((uint64_t)size > SIZE_T_MAX) {
+	if ((uint64_t)size > SIZE_MAX) {
 			/* XXX: need a cleaner way to check this on amd64 */
 		errno = EFBIG;
 		xerr(0, "%s", fname);

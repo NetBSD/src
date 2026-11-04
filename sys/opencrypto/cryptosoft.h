@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.h,v 1.7 2011/02/10 21:00:42 drochner Exp $ */
+/*	$NetBSD: cryptosoft.h,v 1.7.92.1 2026/11/04 23:28:01 perseant Exp $ */
 /*	$OpenBSD: cryptosoft.h,v 1.10 2002/04/22 23:10:09 deraadt Exp $	*/
 
 /*
@@ -25,18 +25,25 @@
 #ifndef _CRYPTO_CRYPTOSOFT_H_
 #define _CRYPTO_CRYPTOSOFT_H_
 
+#include <sys/types.h>
+
+struct cryptodesc;
+struct cryptop;
+struct swcr_auth_hash;
+struct swcr_enc_xform;
+
 /* Software session entry */
 struct swcr_data {
 	int		sw_alg;		/* Algorithm */
 	union {
 		struct {
-			u_int8_t	 *SW_ictx;
-			u_int8_t	 *SW_octx;
-			u_int32_t	 SW_klen;
+			uint8_t	 *SW_ictx;
+			uint8_t	 *SW_octx;
+			uint32_t	 SW_klen;
 			const struct swcr_auth_hash *SW_axf;
 		} SWCR_AUTH;
 		struct {
-			u_int8_t	 *SW_kschedule;
+			uint8_t	 *SW_kschedule;
 			const struct swcr_enc_xform *SW_exf;
 		} SWCR_ENC;
 		struct {

@@ -1,3 +1,20 @@
+2023-11-30  Rainer Orth  <ro@CeBiTec.Uni-Bielefeld.DE>
+
+	* hwcaps.m4 (GCC_CHECK_ASSEMBLER_HWCAP): Require
+	AC_CANONICAL_TARGET.
+
+2023-11-15  Arsen Arsenović  <arsen@aarsen.me>
+
+	* intlmacosx.m4: Import from gettext-0.22 (serial 8).
+	* gettext.m4: Sync with gettext-0.22 (serial 77).
+	* gettext-sister.m4 (ZW_GNU_GETTEXT_SISTER_DIR): Load gettexts
+	uninstalled-config.sh, or call AM_GNU_GETTEXT if missing.
+	* iconv.m4: Sync with gettext-0.22 (serial 26).
+
+2022-12-31  Nick Clifton  <nickc@redhat.com>
+
+	* 2.40 branch created.
+
 2022-07-08  Nick Clifton  <nickc@redhat.com>
 
 	* 2.39 branch created.

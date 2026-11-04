@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.35 2024/03/05 14:15:34 thorpej Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.35.2.1 2026/11/04 23:21:08 perseant Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.35 2024/03/05 14:15:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.35.2.1 2026/11/04 23:21:08 perseant Exp $");
 
 #include "ksyms.h"
 
@@ -203,7 +203,7 @@ booke_cpu_startup(const char *model)
 	/*
 	 * Register the tlb's evcnts
 	 */
-	pmap_tlb_info_evcnt_attach(curcpu()->ci_tlb_info);
+	pmap_tlb_info_evcnt_attach(cpu_tlb_info(curcpu()));
 
 	/*
 	 * Set up the board properties database.
@@ -284,9 +284,9 @@ cpu_reboot(int howto, char *what)
 	if (howto & RB_HALT) {
 		printf("The operating system has halted.\n"
 		    "Press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting\n\n");
@@ -641,7 +641,7 @@ sort_data(uint64_t *data, size_t count)
 			 * (module 65536) to achieve the division.
 			 *
 			 * iN = 2^16 / 1.24733... = 52540
-			 * x / N == (x * iN) / 65536 
+			 * x / N == (x * iN) / 65536
 			 */
 			gap = (gap * 52540) / 65536;
 		}

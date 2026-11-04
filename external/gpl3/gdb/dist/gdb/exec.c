@@ -1,6 +1,6 @@
 /* Work with executable files, for GDB. 
 
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -44,7 +44,7 @@
 
 #include <ctype.h>
 #include <sys/stat.h>
-#include "solist.h"
+#include "solib.h"
 #include <algorithm>
 #include "gdbsupport/pathstuff.h"
 #include "cli/cli-style.h"
@@ -143,7 +143,10 @@ static void
 exec_target_open (const char *args, int from_tty)
 {
   target_preopen (from_tty);
-  exec_file_attach (args, from_tty);
+
+  std::string filename = extract_single_filename_arg (args);
+  exec_file_attach (filename.empty () ? nullptr : filename.c_str (),
+		    from_tty);
 }
 
 /* This is the target_close implementation.  Clears all target
@@ -215,28 +218,32 @@ validate_exec_file (int from_tty)
   if (exec_file_mismatch_mode == exec_file_mismatch_off)
     return;
 
-  const char *current_exec_file = get_exec_file (0);
-  struct inferior *inf = current_inferior ();
-  /* Try to determine a filename from the process itself.  */
-  const char *pid_exec_file = target_pid_to_exec_file (inf->pid);
-  bool build_id_mismatch = false;
-
-  /* If we cannot validate the exec file, return.  */
-  if (current_exec_file == NULL || pid_exec_file == NULL)
+  /* If there's no current executable, then there's nothing to
+     validate against, so we're done.  */
+  const char *current_exec_file = current_program_space->exec_filename ();
+  if (current_exec_file == nullptr)
     return;
 
-  /* Try validating via build-id, if available.  This is the most
-     reliable check.  */
+  /* Try to determine a filename from the process itself.  If we
+     cannot get an executable from the process, then no validation is
+     possible.  */
+  const char *pid_exec_file
+    = target_pid_to_exec_file (current_inferior ()->pid);
+  if (pid_exec_file == nullptr)
+    return;
 
-  /* In case current_exec_file was changed, reopen_exec_file ensures
-     an up to date build_id (will do nothing if the file timestamp
-     did not change).  If exec file changed, reopen_exec_file has
-     allocated another file name, so get_exec_file again.  */
+  /* In case current_exec_file was changed, reopen_exec_file ensures an up
+     to date build_id (will do nothing if the file timestamp did not
+     change).  If exec file changed, reopen_exec_file has allocated another
+     file name, so get_exec_file again.  */
   reopen_exec_file ();
-  current_exec_file = get_exec_file (0);
+  current_exec_file = current_program_space->exec_filename ();
 
+  /* Try validating via build-id, if available.  This is the most reliable
+     check.  */
   const bfd_build_id *exec_file_build_id
     = build_id_bfd_get (current_program_space->exec_bfd ());
+  bool build_id_mismatch = false;
   if (exec_file_build_id != nullptr)
     {
       /* Prepend the target prefix, to force gdb_bfd_open to open the
@@ -294,7 +301,7 @@ validate_exec_file (int from_tty)
 	      symbol_file_add_main (exec_file_target.c_str (), add_flags);
 	      exec_file_attach (exec_file_target.c_str (), from_tty);
 	    }
-	  catch (gdb_exception_error &err)
+	  catch (const gdb_exception_error &err)
 	    {
 	      warning (_("loading %ps %s"),
 		       styled_string (file_name_style.style (),
@@ -314,7 +321,7 @@ exec_file_locate_attach (int pid, int defer_bp_reset, int from_tty)
   symfile_add_flags add_flags = 0;
 
   /* Do nothing if we already have an executable filename.  */
-  if (get_exec_file (0) != NULL)
+  if (current_program_space->exec_filename () != nullptr)
     return;
 
   /* Try to determine a filename from the process itself.  */
@@ -324,12 +331,21 @@ exec_file_locate_attach (int pid, int defer_bp_reset, int from_tty)
       warning (_("No executable has been specified and target does not "
 		 "support\n"
 		 "determining executable automatically.  "
-		 "Try using the \"file\" command."));
+		 "Try using the \"%ps\" command."),
+	       styled_string (command_style.style (), "file"));
       return;
     }
 
   gdb::unique_xmalloc_ptr<char> exec_file_host
     = exec_file_find (exec_file_target, NULL);
+  if (exec_file_host == nullptr)
+    {
+      warning (_("No executable has been specified, and target executable "
+		 "%ps could not be found.  Try using the \"%ps\" command."),
+	       styled_string (file_name_style.style (), exec_file_target),
+	       styled_string (command_style.style (), "file"));
+      return;
+    }
 
   if (defer_bp_reset)
     add_flags |= SYMFILE_DEFER_BP_RESET;
@@ -456,15 +472,15 @@ exec_file_attach (const char *filename, int from_tty)
 
       /* gdb_realpath_keepfile resolves symlinks on the local
 	 filesystem and so cannot be used for "target:" files.  */
-      gdb_assert (current_program_space->exec_filename == nullptr);
+      gdb_assert (current_program_space->exec_filename () == nullptr);
       if (load_via_target)
-	current_program_space->exec_filename
-	  = (make_unique_xstrdup
+	current_program_space->set_exec_filename
+	  (make_unique_xstrdup
 	     (bfd_get_filename (current_program_space->exec_bfd ())));
       else
-	current_program_space->exec_filename
-	  = make_unique_xstrdup (gdb_realpath_keepfile
-				   (scratch_pathname).c_str ());
+	current_program_space->set_exec_filename
+	  (make_unique_xstrdup (gdb_realpath_keepfile
+				  (scratch_pathname).c_str ()));
 
       if (!bfd_check_format_matches (current_program_space->exec_bfd (),
 				     bfd_object, &matching))
@@ -480,7 +496,7 @@ exec_file_attach (const char *filename, int from_tty)
 	= build_section_table (current_program_space->exec_bfd ());
 
       current_program_space->ebfd_mtime
-	= bfd_get_mtime (current_program_space->exec_bfd ());
+	= gdb_bfd_get_mtime (current_program_space->exec_bfd ());
 
       validate_files ();
 
@@ -502,6 +518,15 @@ exec_file_attach (const char *filename, int from_tty)
 				   bfd_get_filename (curr_bfd)) == 0)));
 
   gdb::observers::executable_changed.notify (current_program_space, reload_p);
+}
+
+/* See exec.h.  */
+
+void
+no_executable_specified_error ()
+{
+  error (_("No executable file specified.\n\
+Use the \"file\" or \"exec-file\" command."));
 }
 
 /*  Process the first arg in ARGS as the new exec file.
@@ -628,13 +653,13 @@ program_space::add_target_sections (struct objfile *objfile)
   gdb_assert (objfile != nullptr);
 
   /* Compute the number of sections to add.  */
-  for (obj_section *osect : objfile->sections ())
+  for (obj_section &osect : objfile->sections ())
     {
-      if (bfd_section_size (osect->the_bfd_section) == 0)
+      if (bfd_section_size (osect.the_bfd_section) == 0)
 	continue;
 
-      m_target_sections.emplace_back (osect->addr (), osect->endaddr (),
-				      osect->the_bfd_section, objfile);
+      m_target_sections.emplace_back (osect.addr (), osect.endaddr (),
+				      osect.the_bfd_section, objfile);
     }
 }
 
@@ -1052,9 +1077,7 @@ exec_target::find_memory_regions (find_memory_region_ftype func, void *data)
   return objfile_find_memory_regions (this, func, data);
 }
 
-void _initialize_exec ();
-void
-_initialize_exec ()
+INIT_GDB_FILE (exec)
 {
   struct cmd_list_element *c;
 
@@ -1065,14 +1088,14 @@ and it is the program executed when you use the `run' command.\n\
 If FILE cannot be found as specified, your execution directory path\n\
 ($PATH) is searched for a command of that name.\n\
 No arg means to have no executable file and no symbols."), &cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, filename_maybe_quoted_completer);
 
   c = add_cmd ("exec-file", class_files, exec_file_command, _("\
 Use FILE as program for getting contents of pure memory.\n\
 If FILE cannot be found as specified, your execution directory path\n\
 is searched for a command of that name.\n\
 No arg means have no executable file."), &cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, filename_maybe_quoted_completer);
 
   add_com ("section", class_files, set_section_command, _("\
 Change the base address of section SECTION of the exec file to ADDR.\n\
@@ -1110,5 +1133,6 @@ will be loaded as well."),
 			show_exec_file_mismatch_command,
 			&setlist, &showlist);
 
-  add_target (exec_target_info, exec_target_open, filename_completer);
+  add_target (exec_target_info, exec_target_open,
+	      filename_maybe_quoted_completer);
 }

@@ -1,5 +1,5 @@
 /* opncls.c -- open and close a BFD.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -45,18 +45,9 @@ SUBSECTION
 	Functions for opening and closing
 */
 
-/* Counters used to initialize the bfd identifier.  */
+/* Counter used to initialize the unique bfd identifier.  */
 
 static unsigned int bfd_id_counter = 0;
-static unsigned int bfd_reserved_id_counter = 0;
-
-/*
-EXTERNAL
-.{* Set to N to open the next N BFDs using an alternate id space.  *}
-.extern unsigned int bfd_use_reserved_id;
-.
-*/
-unsigned int bfd_use_reserved_id = 0;
 
 /* fdopen is a loser -- we should use stdio exclusively.  Unfortunately
    if we do that we can't use fcntl.  */
@@ -82,26 +73,16 @@ _bfd_new_bfd (void)
     return NULL;
 
   if (!bfd_lock ())
-    return NULL;
-  if (bfd_use_reserved_id)
-    {
-      nbfd->id = --bfd_reserved_id_counter;
-      --bfd_use_reserved_id;
-    }
-  else
-    nbfd->id = bfd_id_counter++;
+    goto loser;
+  nbfd->id = bfd_id_counter++;
   if (!bfd_unlock ())
-    {
-      free (nbfd);
-      return NULL;
-    }
+    goto loser;
 
   nbfd->memory = objalloc_create ();
   if (nbfd->memory == NULL)
     {
       bfd_set_error (bfd_error_no_memory);
-      free (nbfd);
-      return NULL;
+      goto loser;
     }
 
   nbfd->arch_info = &bfd_default_arch_struct;
@@ -109,14 +90,16 @@ _bfd_new_bfd (void)
   if (!bfd_hash_table_init_n (& nbfd->section_htab, bfd_section_hash_newfunc,
 			      sizeof (struct section_hash_entry), 13))
     {
-      objalloc_free ((struct objalloc *) nbfd->memory);
-      free (nbfd);
-      return NULL;
+      objalloc_free (nbfd->memory);
+      goto loser;
     }
 
   nbfd->archive_plugin_fd = -1;
-
   return nbfd;
+
+ loser:
+  free (nbfd);
+  return NULL;
 }
 
 static const struct bfd_iovec opncls_iovec;
@@ -163,30 +146,15 @@ _bfd_new_bfd_contained_in (bfd *obfd)
 static void
 _bfd_delete_bfd (bfd *abfd)
 {
-#ifdef USE_MMAP
-  if (abfd->xvec
-      && abfd->xvec->flavour == bfd_target_elf_flavour)
-    {
-      asection *sec;
-      for (sec = abfd->sections; sec != NULL; sec = sec->next)
-	if (sec->mmapped_p)
-	  munmap (elf_section_data (sec)->contents_addr,
-		  elf_section_data (sec)->contents_size);
-    }
-#endif
-
   /* Give the target _bfd_free_cached_info a chance to free memory.  */
   if (abfd->memory && abfd->xvec)
     bfd_free_cached_info (abfd);
 
   /* The target _bfd_free_cached_info may not have done anything..  */
+  if (abfd->section_htab.memory)
+    bfd_hash_table_free (&abfd->section_htab);
   if (abfd->memory)
-    {
-      bfd_hash_table_free (&abfd->section_htab);
-      objalloc_free ((struct objalloc *) abfd->memory);
-    }
-  else
-    free ((char *) bfd_get_filename (abfd));
+    objalloc_free (abfd->memory);
 
 #ifdef USE_MMAP
   struct bfd_mmapped *mmapped, *next;
@@ -218,41 +186,15 @@ DESCRIPTION
 bool
 _bfd_free_cached_info (bfd *abfd)
 {
-  if (abfd->memory)
-    {
-      const char *filename = bfd_get_filename (abfd);
-      if (filename)
-	{
-	  /* We can't afford to lose the bfd filename when freeing
-	     abfd->memory, because that would kill the cache.c scheme
-	     of closing and reopening files in order to limit the
-	     number of open files.  To reopen, you need the filename.
-	     And indeed _bfd_compute_and_write_armap calls
-	     _bfd_free_cached_info to free up space used by symbols
-	     and by check_format_matches.  Which we want to continue
-	     doing to handle very large archives.  Later the archive
-	     elements are copied, which might require reopening files.
-	     We also want to keep using objalloc memory for the
-	     filename since that allows the name to be updated
-	     without either leaking memory or implementing some sort
-	     of reference counted string for copies of the filename.  */
-	  size_t len = strlen (filename) + 1;
-	  char *copy = bfd_malloc (len);
-	  if (copy == NULL)
-	    return false;
-	  memcpy (copy, filename, len);
-	  abfd->filename = copy;
-	}
-      bfd_hash_table_free (&abfd->section_htab);
-      objalloc_free ((struct objalloc *) abfd->memory);
+  if (abfd->section_htab.memory)
+    bfd_hash_table_free (&abfd->section_htab);
 
-      abfd->sections = NULL;
-      abfd->section_last = NULL;
-      abfd->outsymbols = NULL;
-      abfd->tdata.any = NULL;
-      abfd->usrdata = NULL;
-      abfd->memory = NULL;
-    }
+  abfd->sections = NULL;
+  abfd->section_last = NULL;
+  abfd->section_count = 0;
+  abfd->outsymbols = NULL;
+  abfd->tdata.any = NULL;
+  abfd->usrdata = NULL;
 
   return true;
 }
@@ -958,7 +900,6 @@ bfd_close_all_done (bfd *abfd)
     _maybe_make_executable (abfd);
 
   _bfd_delete_bfd (abfd);
-  _bfd_clear_error_data ();
 
   return ret;
 }
@@ -1071,10 +1012,18 @@ bfd_make_readable (bfd *abfd)
       return false;
     }
 
-  if (! BFD_SEND_FMT (abfd, _bfd_write_contents, (abfd)))
+  if (!BFD_SEND_FMT (abfd, _bfd_write_contents, (abfd)))
     return false;
 
-  if (! BFD_SEND (abfd, _close_and_cleanup, (abfd)))
+  if (!BFD_SEND (abfd, _bfd_free_cached_info, (abfd)))
+    return false;
+
+  if (!BFD_SEND (abfd, _close_and_cleanup, (abfd)))
+    return false;
+
+  _bfd_free_cached_info (abfd);
+  if (!bfd_hash_table_init_n (&abfd->section_htab, bfd_section_hash_newfunc,
+			      sizeof (struct section_hash_entry), 13))
     return false;
 
   abfd->arch_info = &bfd_default_arch_struct;
@@ -1085,20 +1034,17 @@ bfd_make_readable (bfd *abfd)
   abfd->origin = 0;
   abfd->opened_once = false;
   abfd->output_has_begun = false;
-  abfd->section_count = 0;
   abfd->usrdata = NULL;
   abfd->cacheable = false;
   abfd->mtime_set = false;
 
   abfd->target_defaulted = true;
   abfd->direction = read_direction;
-  abfd->sections = 0;
   abfd->symcount = 0;
   abfd->outsymbols = 0;
   abfd->tdata.any = 0;
   abfd->size = 0;
 
-  bfd_section_list_clear (abfd);
   bfd_check_format (abfd, bfd_object);
 
   return true;
@@ -1783,7 +1729,7 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
   debuglink_size &= ~3;
   debuglink_size += 4;
 
-  contents = (char *) bfd_malloc (debuglink_size);
+  contents = bfd_malloc (debuglink_size);
   if (contents == NULL)
     {
       /* XXX Should we delete the section from the bfd ?  */
@@ -1796,14 +1742,9 @@ bfd_fill_in_gnu_debuglink_section (bfd *abfd,
 
   bfd_put_32 (abfd, crc32, contents + crc_offset);
 
-  if (! bfd_set_section_contents (abfd, sect, contents, 0, debuglink_size))
-    {
-      /* XXX Should we delete the section from the bfd ?  */
-      free (contents);
-      return false;
-    }
-
-  return true;
+  bool ret = bfd_set_section_contents (abfd, sect, contents, 0, debuglink_size);
+  free (contents);
+  return ret;
 }
 
 /* Finds the build-id associated with @var{abfd}.  If the build-id is
@@ -2074,4 +2015,70 @@ bfd_set_filename (bfd *abfd, const char *filename)
   abfd->filename = n;
 
   return n;
+}
+
+/*
+FUNCTION
+	bfd_extract_object_only_section
+
+SYNOPSIS
+	const char *bfd_extract_object_only_section
+	  (bfd *abfd);
+
+DESCRIPTION
+
+	Takes a @var{ABFD} and extract the .gnu_object_only section into
+	a temporary file.
+
+RETURNS
+	The name of the temporary file is returned if all is ok.
+	Otherwise <<NULL>> is returned and bfd_error is set.
+*/
+
+const char *
+bfd_extract_object_only_section (bfd *abfd)
+{
+  asection *sec = abfd->object_only_section;
+  const char *name;
+  FILE *file;
+  bfd_byte *memhunk = NULL;
+  size_t off, size;
+  bfd_error_type err;
+
+  /* Get a temporary object-only file.  */
+  name = make_temp_file (".obj-only.o");
+
+  /* Open the object-only file.  */
+  file = _bfd_real_fopen (name, FOPEN_WB);
+  if (!bfd_get_full_section_contents (abfd, sec, &memhunk))
+    {
+      err = bfd_get_error ();
+
+loser:
+      free (memhunk);
+      fclose (file);
+      unlink (name);
+      bfd_set_error (err);
+      return NULL;
+    }
+
+  off = 0;
+  size = sec->size;
+  while (off != size)
+    {
+      size_t written, nwrite = size - off;
+
+      written = fwrite (memhunk + off, 1, nwrite, file);
+      if (written < nwrite && ferror (file))
+	{
+	  err = bfd_error_system_call;
+	  goto loser;
+	}
+
+      off += written;
+    }
+
+  free (memhunk);
+  fclose (file);
+  return name;
 }

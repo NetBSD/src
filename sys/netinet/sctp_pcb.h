@@ -1,5 +1,5 @@
 /*	$KAME: sctp_pcb.h,v 1.21 2005/07/16 01:18:47 suz Exp $	*/
-/*	$NetBSD: sctp_pcb.h,v 1.8 2023/06/02 08:51:48 andvar Exp $ */
+/*	$NetBSD: sctp_pcb.h,v 1.8.6.1 2026/11/04 23:27:59 perseant Exp $ */
 
 #ifndef __SCTP_PCB_H__
 #define __SCTP_PCB_H__
@@ -220,7 +220,7 @@ struct sctp_epinfo {
 extern uint32_t sctp_pegs[SCTP_NUMBER_OF_PEGS];
 /*
  * Here we have all the relevant information for each SCTP entity created.
- * We will need to modify this as approprate. We also need to figure out
+ * We will need to modify this as appropriate. We also need to figure out
  * how to access /dev/random.
  */
 struct sctp_pcb {
@@ -677,7 +677,7 @@ void sctp_move_pcb_and_assoc(struct sctp_inpcb *, struct sctp_inpcb *,
 /*
  * For this call ep_addr, the to is the destination endpoint address
  * of the peer (relative to outbound). The from field is only used if
- * the TCP model is enabled and helps distingush amongst the subset
+ * the TCP model is enabled and helps distinguish amongst the subset
  * bound (non-boundall). The TCP model MAY change the actual ep field,
  * this is why it is passed.
  */

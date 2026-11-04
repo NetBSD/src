@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_history.c,v 1.19 2019/10/09 05:59:51 skrll Exp $	 */
+/*	$NetBSD: kern_history.c,v 1.19.32.1 2026/11/04 23:27:48 perseant Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.19 2019/10/09 05:59:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.19.32.1 2026/11/04 23:27:48 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kernhist.h"
@@ -43,13 +43,16 @@ __KERNEL_RCSID(0, "$NetBSD: kern_history.c,v 1.19 2019/10/09 05:59:51 skrll Exp 
 #include "opt_biohist.h"
 #include "opt_sysctl.h"
 
-#include <sys/atomic.h>
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
 #include <sys/cpu.h>
-#include <sys/sysctl.h>
 #include <sys/kernhist.h>
 #include <sys/kmem.h>
+#include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef UVMHIST
 #include <uvm/uvm.h>
@@ -436,9 +439,9 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 	 * valid history rnode
 	 */
 	if (newp)
-		return EPERM;
+		return SET_ERROR(EPERM);
 	if (namelen != 1 || name[0] != CTL_EOL)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/* Find the correct kernhist for this sysctl node */
 	LIST_FOREACH(h, &kern_histories, list) {
@@ -446,7 +449,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 			break;
 	}
 	if (h == NULL)
-		return ENOENT;
+		return SET_ERROR(ENOENT);
 
 	/*
 	 * Worst case is two string pointers per history entry, plus
@@ -547,7 +550,7 @@ sysctl_kernhist_helper(SYSCTLFN_ARGS)
 
 	/* If copyout was successful but only partial, report ENOMEM */
 	if (error == 0 && *oldlenp < bufsize)
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 
 	*oldlenp = bufsize;	/* inform userland of space requirements */
 

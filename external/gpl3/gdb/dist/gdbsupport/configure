@@ -10704,118 +10704,6 @@ $as_echo "$ac_cv_path_SED" >&6; }
   # Set the 'development' global.
   . $srcdir/../bfd/development.sh
 
-  { $as_echo "$as_me:${as_lineno-$LINENO}: checking for ANSI C header files" >&5
-$as_echo_n "checking for ANSI C header files... " >&6; }
-if ${ac_cv_header_stdc+:} false; then :
-  $as_echo_n "(cached) " >&6
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-#include <stdarg.h>
-#include <string.h>
-#include <float.h>
-
-int
-main ()
-{
-
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_compile "$LINENO"; then :
-  ac_cv_header_stdc=yes
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
-
-if test $ac_cv_header_stdc = yes; then
-  # SunOS 4.x string.h does not declare mem*, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <string.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "memchr" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # ISC 2.0.2 stdlib.h does not declare free, contrary to ANSI.
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-
-_ACEOF
-if (eval "$ac_cpp conftest.$ac_ext") 2>&5 |
-  $EGREP "free" >/dev/null 2>&1; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f conftest*
-
-fi
-
-if test $ac_cv_header_stdc = yes; then
-  # /bin/cc in Irix-4.0.5 gets non-ANSI ctype macros unless using -ansi.
-  if test "$cross_compiling" = yes; then :
-  :
-else
-  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <ctype.h>
-#include <stdlib.h>
-#if ((' ' & 0x0FF) == 0x020)
-# define ISLOWER(c) ('a' <= (c) && (c) <= 'z')
-# define TOUPPER(c) (ISLOWER(c) ? 'A' + ((c) - 'a') : (c))
-#else
-# define ISLOWER(c) \
-		   (('a' <= (c) && (c) <= 'i') \
-		     || ('j' <= (c) && (c) <= 'r') \
-		     || ('s' <= (c) && (c) <= 'z'))
-# define TOUPPER(c) (ISLOWER(c) ? ((c) | 0x40) : (c))
-#endif
-
-#define XOR(e, f) (((e) && !(f)) || (!(e) && (f)))
-int
-main ()
-{
-  int i;
-  for (i = 0; i < 256; i++)
-    if (XOR (islower (i), ISLOWER (i))
-	|| toupper (i) != TOUPPER (i))
-      return 2;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_run "$LINENO"; then :
-
-else
-  ac_cv_header_stdc=no
-fi
-rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
-  conftest.$ac_objext conftest.beam conftest.$ac_ext
-fi
-
-fi
-fi
-{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $ac_cv_header_stdc" >&5
-$as_echo "$ac_cv_header_stdc" >&6; }
-if test $ac_cv_header_stdc = yes; then
-
-$as_echo "#define STDC_HEADERS 1" >>confdefs.h
-
-fi
-
   # The Ultrix 4.2 mips builtin alloca declared by alloca.h only works
 # for constant arguments.  Useless!
 { $as_echo "$as_me:${as_lineno-$LINENO}: checking for working alloca.h" >&5
@@ -11048,7 +10936,25 @@ $as_echo "#define HAVE_LANGINFO_CODESET 1" >>confdefs.h
   fi
 
 
-  for ac_header in linux/perf_event.h locale.h memory.h signal.h 		   sys/resource.h sys/socket.h 		   sys/un.h sys/wait.h 		   thread_db.h wait.h 		   termios.h 		   dlfcn.h 		   linux/elf.h proc_service.h 		   poll.h sys/poll.h sys/select.h
+for ac_header in  \
+  dlfcn.h \
+  linux/elf.h \
+  linux/perf_event.h  \
+  locale.h \
+  memory.h \
+  poll.h \
+  proc_service.h \
+  signal.h \
+  sys/poll.h \
+  sys/resource.h \
+  sys/select.h \
+  sys/socket.h \
+  sys/un.h \
+  sys/wait.h \
+  termios.h \
+  thread_db.h \
+  wait.h \
+
 do :
   as_ac_Header=`$as_echo "ac_cv_header_$ac_header" | $as_tr_sh`
 ac_fn_c_check_header_mongrel "$LINENO" "$ac_header" "$as_ac_Header" "$ac_includes_default"
@@ -11510,9 +11416,25 @@ if test "$ac_res" != no; then :
 
 fi
 
-  for ac_func in fdwalk getrlimit pipe pipe2 poll socketpair sigaction \
-		  ptrace64 sbrk setns sigaltstack sigprocmask \
-		  setpgid setpgrp getrusage getauxval sigtimedwait
+  for ac_func in  \
+    fdwalk \
+    getauxval \
+    getrlimit \
+    getrusage \
+    pipe \
+    pipe2 \
+    poll \
+    ptrace64 \
+    sbrk \
+    setns \
+    setpgid \
+    setpgrp \
+    sigaction \
+    sigaltstack \
+    sigprocmask \
+    sigtimedwait \
+    socketpair \
+
 do :
   as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
 ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
@@ -12993,6 +12915,17 @@ _ACEOF
 
 fi
 
+      ac_fn_c_check_member "$LINENO" "struct pt_event" "variant.ptwrite" "ac_cv_member_struct_pt_event_variant_ptwrite" "#include <intel-pt.h>
+"
+if test "x$ac_cv_member_struct_pt_event_variant_ptwrite" = xyes; then :
+
+cat >>confdefs.h <<_ACEOF
+#define HAVE_STRUCT_PT_EVENT_VARIANT_PTWRITE 1
+_ACEOF
+
+
+fi
+
       LIBS=$save_LIBS
     fi
   fi
@@ -13903,6 +13836,22 @@ else
 fi
 
 
+for ac_func in  \
+    waitpid \
+    wait
+
+do :
+  as_ac_var=`$as_echo "ac_cv_func_$ac_func" | $as_tr_sh`
+ac_fn_c_check_func "$LINENO" "$ac_func" "$as_ac_var"
+if eval test \"x\$"$as_ac_var"\" = x"yes"; then :
+  cat >>confdefs.h <<_ACEOF
+#define `$as_echo "HAVE_$ac_func" | $as_tr_cpp` 1
+_ACEOF
+
+fi
+done
+
+
 # Check the return and argument types of ptrace.
 
 
@@ -14172,23 +14121,37 @@ if test "${ERROR_ON_WARNING}" = yes ; then
 fi
 
 # The options we'll try to enable.
-build_warnings="-Wall -Wpointer-arith \
--Wno-unused -Wunused-value -Wunused-variable -Wunused-function \
--Wno-switch -Wno-char-subscripts \
--Wempty-body -Wunused-but-set-parameter -Wunused-but-set-variable \
--Wno-sign-compare -Wno-error=maybe-uninitialized \
--Wno-mismatched-tags \
--Wno-error=deprecated-register \
--Wsuggest-override \
--Wimplicit-fallthrough=5 \
--Wduplicated-cond \
--Wshadow=local \
+build_warnings=" \
+-Wall \
 -Wdeprecated-copy \
 -Wdeprecated-copy-dtor \
--Wredundant-move \
+-Wduplicated-cond \
+-Wempty-body \
+-Wimplicit-fallthrough=5 \
 -Wmissing-declarations \
+-Wno-char-subscripts \
+-Wno-error=deprecated-register \
+-Wno-mismatched-tags \
+-Wno-sign-compare -Wno-error=maybe-uninitialized \
+-Wno-switch \
+-Wno-unused \
+-Wpointer-arith \
+-Wredundant-move \
+-Wshadow=local \
 -Wstrict-null-sentinel \
--Wno-vla-cxx-extension \
+-Wsuggest-override \
+-Wunused-but-set-parameter \
+-Wunused-but-set-variable \
+-Wunused-const-variable=1 \
+-Wunused-function \
+-Wunused-label \
+-Wunused-lambda-capture \
+-Wunused-local-typedefs \
+-Wunused-member-function \
+-Wunused-private-field \
+-Wunused-value \
+-Wunused-variable \
+-Wvla \
 "
 
 # The -Wmissing-prototypes flag will be accepted by GCC, but results

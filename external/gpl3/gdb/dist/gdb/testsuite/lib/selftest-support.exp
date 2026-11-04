@@ -1,4 +1,4 @@
-# Copyright 2003-2024 Free Software Foundation, Inc.
+# Copyright 2003-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,7 +16,7 @@
 # Find a pathname to a file that we would execute if the shell was asked
 # to run $arg using the current PATH.
 
-proc find_gdb { arg } {
+proc _selftest_find_gdb { arg } {
 
     # If the arg directly specifies an existing executable file, then
     # simply use it.
@@ -36,71 +36,169 @@ proc find_gdb { arg } {
     return $arg
 }
 
+# Return true if the GDB under test is installed (as opposed to a GDB in its
+# build directory).
+
+proc _selftest_gdb_is_installed {} {
+    # If GDB_DATA_DIRECTORY is empty, assume that it is an installed GDB.  It is
+    # not a perfectly accurate check, but should be good enough.
+    return [expr {"$::GDB_DATA_DIRECTORY" == ""}]
+}
+
+# Return true if the libtool binary is present on the host.
+
+proc _selftest_has_libtool {} {
+    lassign [remote_exec host "sh -c \"command -v libtool\""] status output
+    return [expr {$status == 0}]
+}
+
+# If GDB is executed from a build tree, run libtool to obtain the real
+# executable path for EXECUTABLE, which may be a libtool wrapper.  Return
+# the path on success.  On failure, issue an UNTESTED test result and return
+# an empty string.
+#
+# If GDB is executed from an installed location, return EXECUTABLE unchanged.
+#
+# If libtool is not present on the host system, return EXECUTABLE unchanged.
+# The test might still work, because the GDB binary is not always a libtool
+# wrapper.
+
+proc selftest_libtool_get_real_gdb_executable { executable } {
+    if [_selftest_gdb_is_installed] {
+	return $executable
+    }
+
+    if ![_selftest_has_libtool] {
+	return $executable
+    }
+
+    lassign [remote_exec host libtool "--mode=execute echo -n $executable"] \
+	status executable
+
+    if { $status != 0 } {
+	untested "failed to run libtool"
+	return ""
+    }
+
+    return $executable
+}
+
+# Return true if EXECUTABLE has debug info.
+#
+# If it doesn't, or if it's not possible to determine, issue an UNTESTED test
+# result and return false.
+
+proc _selftest_check_executable_debug_info { executable } {
+    set ::gdb_file_cmd_debug_info "unset"
+    set result true
+
+    # On Cygwin (at least), gdb/gdb.exe is a libtool wrapper (which happens to
+    # be a PE executable).  The real binary is gdb/.libs/gdb.exe.  If we load
+    # gdb/gdb.exe, we won't see any debug info and conclude that we can't run
+    # the test.  Obtain the real executable path using libtool.
+    #
+    # At the time of writing, we don't see a libtool wrapper generated on Linux.
+    # But if there was one, it would be a shell script, and it would not be
+    # possible to load it in gdb.  This conversion would therefore also be
+    # necessary.
+    #
+    # If testing against an installed GDB, then there won't be a libtool
+    # wrapper, no need to convert.
+    set executable [selftest_libtool_get_real_gdb_executable $executable]
+
+    if { $executable == "" } {
+	# selftest_libtool_get_real_gdb_executable already records an UNTESTED
+	# on failure.
+	return false
+    }
+
+    gdb_start
+
+    if {[gdb_load $executable] != 0} {
+	untested "failed to load executable when checking for debug info"
+	set result false
+    }
+
+    if {$::gdb_file_cmd_debug_info != "debug"} {
+	untested "no debug information, skipping testcase."
+	set result false
+    }
+
+    gdb_exit
+
+    return $result
+}
+
 # A helper proc that sets up for self-testing.
-# EXECUTABLE is the gdb to use.
-# FUNCTION is the function to break in, either captured_main
-# or captured_command_loop.
+#
+# Assumes that the inferior GDB is already loaded in the top-level GDB.
+#
 # Return 0 in case of success, -1 in case of failure, and -2 in case of
 # skipping the test-case.
 
-proc selftest_setup { executable function } {
+proc _selftest_setup { } {
     global gdb_prompt
     global INTERNAL_GDBFLAGS
 
-    # load yourself into the debugger
-
-    global gdb_file_cmd_debug_info
-    set gdb_file_cmd_debug_info "unset"
-
-    set result [gdb_load $executable]
-
-    if {$result != 0} {
-	return -1
-    }
-
-    if {$gdb_file_cmd_debug_info != "debug"} {
-	untested "no debug information, skipping testcase."
-	return -2
-    }
-
-    # Set a breakpoint at $function.
+    # Set a breakpoint at main
+    set function main
     if { [gdb_breakpoint $function "no-message"] != 1 } {
 	untested "Cannot set breakpoint at $function, skipping testcase."
 	return -2
     }
 
+    # Debugging on Windows shows random threads starting and exiting,
+    # interfering with the tests.  Disable them, since they are not useful here.
+    gdb_test_no_output "set print thread-events off"
+
     # run yourself
 
     set description "run until breakpoint at $function"
+    set re_hs {[^\r\n]+}
+    set re_args [string cat \
+		     [string_to_regexp "("] \
+		     $re_hs \
+		     [string_to_regexp ")"]]
+    set re_pass \
+	[multi_line \
+	     "Starting program: $re_hs" \
+	     ".*" \
+	     [string cat "Breakpoint $::decimal, $function $re_args at" \
+		  " ${re_hs}gdb.c:$re_hs"] \
+	     ".*"]
+    set re_xfail \
+	[multi_line \
+	     "Starting program: $re_hs" \
+	     ".*" \
+	     "Breakpoint $::decimal, $function $re_args$re_hs" \
+	     ".*"]
     gdb_test_multiple "run $INTERNAL_GDBFLAGS" "$description" {
-        -re "Starting program.*Breakpoint \[0-9\]+,.*$function \\(.*\\).* at .*main.c:.*$gdb_prompt $" {
-            pass "$description"
-        }
-        -re "Starting program.*Breakpoint \[0-9\]+,.*$function \\(.*\\).*$gdb_prompt $" {
-            xfail "$description (line numbers scrambled?)"
-        }
-        -re "vfork: No more processes.*$gdb_prompt $" {
-            fail "$description (out of virtual memory)"
-            return -1
-        }
-        -re ".*$gdb_prompt $" {
-            fail "$description"
-            return -1
-        }
+	-re -wrap $re_pass {
+	    pass $description
+	}
+	-re -wrap $re_xfail {
+	    xfail "$description (line numbers scrambled?)"
+	}
+	-re -wrap "vfork: No more processes.*" {
+	    fail "$description (out of virtual memory)"
+	    return -1
+	}
+	-re -wrap "" {
+	    fail $description
+	    return -1
+	}
     }
 
     return 0
 }
 
-# Prepare for running a self-test by moving the GDB executable to a
-# location where we can use it as the inferior.  Return the filename
-# of the new location.
+# Return the location of the gdb executable to test.
 #
 # If the current testing setup is not suitable for running a
 # self-test, then return an empty string.
 proc selftest_prepare {} {
     # Are we testing with a remote board?  In that case, the target
-    # won't have access to the GDB's auxilliary data files
+    # won't have access to the GDB's auxiliary data files
     # (data-directory, etc.).  It's simpler to just skip.
     if { [is_remote target]  || [is_remote host] } {
 	return
@@ -114,52 +212,54 @@ proc selftest_prepare {} {
 
     # ... or with a stub-like server?  I.e., gdbserver + "target
     # remote"?  In that case we won't be able to pass command line
-    # arguments to GDB, and selftest_setup wants to do exactly that.
+    # arguments to GDB, and _selftest_setup wants to do exactly that.
     if [use_gdb_stub] {
 	return
     }
 
-    # Run the test with self.  Copy the file executable file in case
-    # this OS doesn't like to edit its own text space.
-
-    set gdb_fullpath [find_gdb $::GDB]
-
-    if {[is_remote host]} {
-	set xgdb x$::tool
-    } else {
-	set xgdb [standard_output_file x$::tool]
-    }
-
-    # Remove any old copy lying around.
-    remote_file host delete $xgdb
-
-    set filename [remote_download host $gdb_fullpath $xgdb]
-
-    return $filename
+    return [_selftest_find_gdb $::GDB]
 }
 
 # A simple way to run some self-tests.
 
-proc do_self_tests {function body} {
+proc do_self_tests {body} {
     set file [selftest_prepare]
     if { $file eq "" } {
 	return
     }
 
-    gdb_start
+    # Check if the gdb executable has debug info.
+    if { ![_selftest_check_executable_debug_info $file] } {
+	return
+    }
+
+    # FILE might be a libtool wrapper.  In order to debug the real thing, pass
+    # FILE on the command-line of the top-level gdb, and run under
+    # `libtool --mode=execute.  libtool will replace FILE with the path to the
+    # real executable and set any path required for it to find its dependent
+    # libraries.
+    #
+    # If testing against an installed GDB, there won't be a libtool wrapper.
+    save_vars { ::GDB ::GDBFLAGS } {
+	if { ![_selftest_gdb_is_installed] && [_selftest_has_libtool] } {
+	    set ::GDB "libtool --mode=execute $::GDB"
+	}
+
+	set ::GDBFLAGS "$::GDBFLAGS $file"
+	gdb_start
+    }
 
     # When debugging GDB with GDB, some operations can take a relatively long
     # time, especially if the build is non-optimized.  Bump the timeout for the
     # duration of the test.
     with_timeout_factor 10 {
-	set result [selftest_setup $file $function]
+	set result [_selftest_setup]
 	if {$result == 0} {
 	    set result [uplevel $body]
 	}
     }
 
     gdb_exit
-    catch "remote_file host delete $file"
 
     if {$result == -1} {
 	warning "Couldn't test self"

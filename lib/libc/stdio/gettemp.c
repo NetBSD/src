@@ -1,4 +1,4 @@
-/*	$NetBSD: gettemp.c,v 1.22.2.1 2025/08/02 05:54:40 perseant Exp $	*/
+/*	$NetBSD: gettemp.c,v 1.22.2.2 2026/11/04 23:19:23 perseant Exp $	*/
 
 /*
  * Copyright (c) 1987, 1993
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)mktemp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: gettemp.c,v 1.22.2.1 2025/08/02 05:54:40 perseant Exp $");
+__RCSID("$NetBSD: gettemp.c,v 1.22.2.2 2026/11/04 23:19:23 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -47,12 +47,33 @@ __RCSID("$NetBSD: gettemp.c,v 1.22.2.1 2025/08/02 05:54:40 perseant Exp $");
 #include <fcntl.h>
 #include <string.h>
 
-#ifndef	O_CLOFORK			/*XXX temporary */
-#define	O_CLOFORK 0			/*XXX temporary */
-#endif					/*XXX temporary */
-
 static const unsigned char padchar[] =
 "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz";
+
+#ifndef O_DIRECT
+#define O_DIRECT 0
+#endif
+#ifndef O_CLOFORK
+#define O_CLOFORK 0
+#endif
+
+#if HAVE_NBTOOL_CONFIG_H
+static uint32_t
+arc4random_uniform(uint32_t upper_bound)
+{
+	if (upper_bound == 0)
+		return 0;
+
+	uint32_t r;
+	uint32_t limit = RAND_MAX - (RAND_MAX % upper_bound);
+
+	do
+		r = (uint32_t)rand();
+	while (r >= limit);
+
+	return r % upper_bound;
+}
+#endif
 
 int
 GETTEMP(char *path, int *doopen, int domkdir, int slen, int oflags)

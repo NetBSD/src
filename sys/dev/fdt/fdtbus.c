@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.46 2022/03/04 08:19:06 skrll Exp $ */
+/* $NetBSD: fdtbus.c,v 1.46.10.1 2026/11/04 23:21:52 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.46 2022/03/04 08:19:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.46.10.1 2026/11/04 23:21:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -341,7 +341,11 @@ fdt_add_child(device_t bus, const int child, struct fdt_attach_args *faa,
 	node->n_cfpass = -1;
 	node->n_cf = NULL;
 	node->n_order = order;
-	node->n_faa = *faa;
+	if (faa != NULL) {
+		node->n_faa = *faa;
+	} else {
+		memset(&node->n_faa, 0, sizeof(node->n_faa));
+	}
 	node->n_faa.faa_phandle = child;
 	node->n_faa.faa_name = node->n_name;
 	node->n_faa.faa_bst = fdt_get_bus_tag(node);
@@ -475,13 +479,7 @@ fdt_pre_attach(struct fdt_node *node)
 static void
 fdt_post_attach(struct fdt_node *node)
 {
-	char buf[FDT_MAX_PATH];
-	prop_dictionary_t dict;
 	int error;
-
-	dict = device_properties(node->n_dev);
-	if (fdtbus_get_path(node->n_phandle, buf, sizeof(buf)))
-		prop_dictionary_set_string(dict, "fdt-path", buf);
 
 	if (node->n_pinctrl_init) {
 		aprint_debug_dev(node->n_bus, "set default config for %s\n", node->n_name);

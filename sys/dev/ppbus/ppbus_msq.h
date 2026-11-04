@@ -1,4 +1,4 @@
-/* $NetBSD: ppbus_msq.h,v 1.7 2008/04/15 15:02:29 cegger Exp $ */
+/* $NetBSD: ppbus_msq.h,v 1.7.130.1 2026/11/04 23:22:31 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998 Nicolas Souchu
@@ -57,7 +57,7 @@ struct ppbus_microseq {
 	union ppbus_insarg arg[PPBUS_MS_MAXARGS];  /* arguments */
 };
 
-/* Microseqences used for GET/PUT operations */
+/* Microsequences used for GET/PUT operations */
 struct ppbus_xfer {
 	struct ppbus_microseq *loop;            /* the loop microsequence */
 };
@@ -120,7 +120,7 @@ struct ppbus_xfer {
 #define MS_NULL		0
 #define MS_UNKNOWN	MS_NULL
 
-/* predifined parameters */
+/* predefined parameters */
 #define MS_ACCUM	-1	/* use accum previously set by MS_OP_SET */
 
 /* these are register numbers according to our PC-like parallel port model */
@@ -176,10 +176,10 @@ struct ppbus_xfer {
 /* delay in microseconds */
 #define MS_DELAY(udelay) { MS_OP_DELAY, {{ udelay }}}
 
-/* asynchroneous delay in ms */
+/* asynchronous delay in ms */
 #define MS_ADELAY(mdelay) { MS_OP_ADELAY, {{ mdelay }}}
 
-/* return from submicrosequence execution or microseqence execution */
+/* return from submicrosequence execution or microsequence execution */
 #define MS_SUBRET(code)	{ MS_OP_SUBRET,	{{ code }}}
 #define MS_RET(code)	{ MS_OP_RET, {{ code }}}
 

@@ -1,5 +1,5 @@
 /* DWARF 2 support.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Adapted from gdb/dwarf2read.c by Gavin Koch of Cygnus Solutions
    (gavin@cygnus.com).
@@ -292,12 +292,6 @@ struct dwarf2_debug
   /* Per-file stuff.  */
   struct dwarf2_debug_file f, alt;
 
-  /* Pointer to the original bfd for which debug was loaded.  This is what
-     we use to compare and so check that the cached debug data is still
-     valid - it saves having to possibly dereference the gnu_debuglink each
-     time.  */
-  bfd *orig_bfd;
-
   /* If the most recent call to bfd_find_nearest_line was given an
      address in an inlined function, preserve a pointer into the
      calling chain for subsequent calls to bfd_find_inliner_info to
@@ -314,6 +308,9 @@ struct dwarf2_debug
 
   /* Array of sections with adjusted VMA.  */
   struct adjusted_section *adjusted_sections;
+
+  /* Used to validate the cached debug data.  */
+  unsigned int orig_bfd_id;
 
   /* Number of times find_line is called.  This is used in
      the heuristic for enabling the info hash tables.  */
@@ -1725,12 +1722,17 @@ mangle_style (int lang)
     {
     case DW_LANG_Ada83:
     case DW_LANG_Ada95:
+    case DW_LANG_Ada2005:
+    case DW_LANG_Ada2012:
       return DMGL_GNAT;
 
     case DW_LANG_C_plus_plus:
     case DW_LANG_C_plus_plus_03:
     case DW_LANG_C_plus_plus_11:
     case DW_LANG_C_plus_plus_14:
+    case DW_LANG_C_plus_plus_17:
+    case DW_LANG_C_plus_plus_20:
+    case DW_LANG_C_plus_plus_23:
       return DMGL_GNU_V3;
 
     case DW_LANG_Java:
@@ -1751,12 +1753,17 @@ mangle_style (int lang)
     case DW_LANG_Cobol74:
     case DW_LANG_Cobol85:
     case DW_LANG_Fortran77:
+    case DW_LANG_Fortran18:
+    case DW_LANG_Fortran23:
     case DW_LANG_Pascal83:
     case DW_LANG_PLI:
     case DW_LANG_C99:
     case DW_LANG_UPC:
     case DW_LANG_C11:
+    case DW_LANG_C17:
+    case DW_LANG_C23:
     case DW_LANG_Mips_Assembler:
+    case DW_LANG_Assembly:
     case DW_LANG_Upc:
     case DW_LANG_HP_Basic91:
     case DW_LANG_HP_IMacro:
@@ -5401,7 +5408,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 
   if (stash != NULL)
     {
-      if (stash->orig_bfd == abfd
+      if (stash->orig_bfd_id == abfd->id
 	  && section_vma_same (abfd, stash))
 	{
 	  /* Check that we did previously find some debug information
@@ -5425,7 +5432,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	return false;
       *pinfo = stash;
     }
-  stash->orig_bfd = abfd;
+  stash->orig_bfd_id = abfd->id;
   stash->debug_sections = debug_sections;
   stash->f.syms = symbols;
   if (!save_section_vma (abfd, stash))
@@ -5506,7 +5513,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
   if (! find_debug_info (debug_bfd, debug_sections, msec))
     {
       /* Case 1: only one info section.  */
-      total_size = msec->size;
+      total_size = bfd_get_section_limit_octets (debug_bfd, msec);
       if (! read_section (debug_bfd, &stash->debug_sections[debug_info],
 			  symbols, 0,
 			  &stash->f.dwarf_info_buffer, &total_size))
@@ -5521,13 +5528,14 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	{
 	  if (bfd_section_size_insane (debug_bfd, msec))
 	    goto restore_vma;
+	  bfd_size_type readsz = bfd_get_section_limit_octets (debug_bfd, msec);
 	  /* Catch PR25070 testcase overflowing size calculation here.  */
-	  if (total_size + msec->size < total_size)
+	  if (total_size + readsz < total_size)
 	    {
 	      bfd_set_error (bfd_error_no_memory);
 	      goto restore_vma;
 	    }
-	  total_size += msec->size;
+	  total_size += readsz;
 	}
 
       stash->f.dwarf_info_buffer = (bfd_byte *) bfd_malloc (total_size);
@@ -5539,10 +5547,8 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 	   msec;
 	   msec = find_debug_info (debug_bfd, debug_sections, msec))
 	{
-	  bfd_size_type size;
-
-	  size = msec->size;
-	  if (size == 0)
+	  bfd_size_type readsz = bfd_get_section_limit_octets (debug_bfd, msec);
+	  if (readsz == 0)
 	    continue;
 
 	  if (!(bfd_simple_get_relocated_section_contents
@@ -5550,7 +5556,7 @@ _bfd_dwarf2_slurp_debug_info (bfd *abfd, bfd *debug_bfd,
 		 symbols)))
 	    goto restore_vma;
 
-	  total_size += size;
+	  total_size += readsz;
 	}
     }
 

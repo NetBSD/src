@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_test.c,v 1.2.6.1 2025/08/02 05:54:12 perseant Exp $	*/
+/*	$NetBSD: tsig_test.c,v 1.2.6.2 2026/11/04 23:18:23 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -39,14 +39,6 @@
 #include <tests/dns.h>
 
 #define TEST_ORIGIN "test"
-
-#define CHECK(r)                               \
-	{                                      \
-		result = (r);                  \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	}
 
 static int
 setup_test(void **state) {
@@ -448,7 +440,16 @@ tsig_tcp(isc_stdtime_t now, isc_result_t expected_result, bool mangle_sig) {
 		assert_int_equal(msg->verified_sig, 1);
 		assert_int_equal(msg->tsigstatus, dns_tsigerror_badtime);
 		break;
+	case DNS_R_TSIGVERIFYFAILURE:
+		assert_int_equal(result, DNS_R_TSIGVERIFYFAILURE);
+		assert_int_equal(msg->verified_sig, 0);
+		assert_int_equal(msg->tsigstatus, dns_tsigerror_badsig);
+		break;
 	default:
+		if (debug) {
+			fprintf(stderr, "# result = %s\n",
+				isc_result_totext(result));
+		}
 		UNREACHABLE();
 	}
 
@@ -500,7 +501,46 @@ ISC_RUN_TEST_IMPL(tsig_badtime) {
 }
 
 ISC_RUN_TEST_IMPL(tsig_badsig) {
-	tsig_tcp(isc_stdtime_now(), DNS_R_TSIGERRORSET, true);
+	tsig_tcp(isc_stdtime_now(), DNS_R_TSIGVERIFYFAILURE, true);
+}
+
+/*
+ * dns_tsigkey_delete() must be idempotent: a second call on a key
+ * that has already been removed from the keyring is a no-op and must
+ * not touch the key's refcount.
+ */
+static void
+tsig_delete(bool generated) {
+	dns_fixedname_t fkeyname;
+	dns_name_t *keyname = dns_fixedname_initname(&fkeyname);
+
+	isc_result_t result = dns_name_fromstring(keyname, "tsig-key",
+						  dns_rootname, 0, NULL);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	dns_tsigkeyring_t *ring = NULL;
+	dns_tsigkeyring_create(mctx, &ring);
+	assert_non_null(ring);
+
+	dns_tsigkey_t *key = NULL;
+	result = dns_tsigkey_createfromkey(keyname, DST_ALG_HMACSHA256, NULL,
+					   generated, false, NULL, 0, 0, mctx,
+					   &key);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	result = dns_tsigkeyring_add(ring, key);
+	assert_int_equal(result, ISC_R_SUCCESS);
+
+	dns_tsigkey_delete(ring, key);
+	dns_tsigkey_delete(ring, key);
+
+	dns_tsigkey_detach(&key);
+	dns_tsigkeyring_detach(&ring);
+}
+
+ISC_RUN_TEST_IMPL(tsig_delete) {
+	tsig_delete(false);
+	tsig_delete(true);
 }
 
 /* Tests the dns__tsig_algvalid function */
@@ -519,9 +559,11 @@ ISC_RUN_TEST_IMPL(algvalid) {
 }
 
 ISC_TEST_LIST_START
-ISC_TEST_ENTRY_CUSTOM(tsig_tcp, setup_test, teardown_test)
-ISC_TEST_ENTRY_CUSTOM(tsig_badtime, setup_test, teardown_test)
 ISC_TEST_ENTRY(algvalid)
+ISC_TEST_ENTRY_CUSTOM(tsig_badsig, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tsig_badtime, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tsig_delete, setup_test, teardown_test)
+ISC_TEST_ENTRY_CUSTOM(tsig_tcp, setup_test, teardown_test)
 ISC_TEST_LIST_END
 
 ISC_TEST_MAIN

@@ -1,0 +1,75 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test some code which relies on GDB interpreting the DW_AT_entry_pc
+# correctly in order to place the breakpoints.  This was tested with
+# versions of GCC between 8.4 and 14.2 and in all cases the entry_pc
+# was required.
+#
+# Testing with Clang 9.0.1 and 15.0.2 seemed to indicate that the
+# Clang generated code didn't depend on the entry_pc being parsed.
+
+# Older versions of GCC, those prior to the -gstatement-frontiers work
+# added in 8.x, would generate DW_AT_entry_pc values pointing to the
+# first instruction of an inlined function.  This first instruction
+# could then be reordered such that the first instruction might be
+# executed even when the actual call to the inline function ended up
+# being skipped.  GDB can then hit a breakpoint for a function that
+# ends up never being called.
+#
+# This test is specifically testing that GDB correctly handles the
+# case where DW_AT_entry_pc is not the first instruction of an inlined
+# function, as can be the case in gcc 8.x with the
+# -gstatement-frontiers work in place.
+require {expr ![is_c_compiler_gcc] || [supports_statement_frontiers]}
+
+standard_testfile
+
+set options {debug optimize=-O2}
+lappend_include_file options $srcdir/lib/attributes.h
+if { [supports_statement_frontiers] } {
+    lappend options additional_flags=-gstatement-frontiers
+}
+
+if { [prepare_for_testing "failed to prepare" $binfile $srcfile $options] } {
+    return
+}
+
+if ![runto_main] {
+    return
+}
+
+# This test makes use of inline functions.
+get_debug_format
+if { [skip_inline_frame_tests] } {
+    untested "skipping inline frame tests"
+    return
+}
+
+gdb_breakpoint "bar"
+set bp_bar_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		   "get number of bar breakpoint"]
+
+gdb_breakpoint "foo"
+set bp_foo_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		   "get number of foo breakpoint"]
+
+gdb_test "continue" \
+    "Breakpoint ${bp_bar_num}(?:\\.$decimal)?, bar .*" "continue to bar"
+
+gdb_test "continue" \
+    "Breakpoint ${bp_foo_num}(?:\\.$decimal)?, foo .*" "continue to foo"
+
+gdb_continue_to_end

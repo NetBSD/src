@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,10 +18,7 @@
 # Tests decoding of various sparc64 registers.
 # At the moment, only few registers are tested, but more can be added in future.
 
-if {![istarget "sparc64*-*-linux*"]} {
-    verbose "Skipping sparc64 register tests."
-    return 0
-}
+require {istarget "sparc64*-*-linux*"}
 
 standard_testfile .S
 

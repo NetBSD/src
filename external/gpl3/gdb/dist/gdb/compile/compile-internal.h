@@ -1,5 +1,5 @@
 /* Header file for GDB compile command and supporting functions.
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,8 +14,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMPILE_COMPILE_INTERNAL_H
-#define COMPILE_COMPILE_INTERNAL_H
+#ifndef GDB_COMPILE_COMPILE_INTERNAL_H
+#define GDB_COMPILE_COMPILE_INTERNAL_H
 
 #include "gcc-c-interface.h"
 #include "gdbsupport/gdb-hashtab.h"
@@ -80,4 +80,43 @@ private:
   std::string m_object_file;
 };
 
-#endif /* COMPILE_COMPILE_INTERNAL_H */
+struct compile_instance;
+
+/* Create a new instance of the C compiler and return it.  This
+   function never returns NULL, but rather throws an exception on
+   failure.  This is suitable for use as the
+   language_defn::get_compile_instance method.  */
+
+extern std::unique_ptr<compile_instance> c_get_compile_context ();
+
+/* Create a new instance of the C++ compiler and return it.  This
+   function never returns NULL, but rather throws an exception on
+   failure.  This is suitable for use as the
+   language_defn::get_compile_instance method.  */
+
+extern std::unique_ptr<compile_instance> cplus_get_compile_context ();
+
+/* This takes the user-supplied text and returns a new bit of code to
+   compile.
+
+   This is used as the compute_program language method; see that
+   for a description of the arguments.  */
+
+extern std::string c_compute_program (compile_instance *inst,
+				      const char *input,
+				      struct gdbarch *gdbarch,
+				      const struct block *expr_block,
+				      CORE_ADDR expr_pc);
+
+/* This takes the user-supplied text and returns a new bit of code to compile.
+
+   This is used as the compute_program language method; see that
+   for a description of the arguments.  */
+
+extern std::string cplus_compute_program (compile_instance *inst,
+					  const char *input,
+					  struct gdbarch *gdbarch,
+					  const struct block *expr_block,
+					  CORE_ADDR expr_pc);
+
+#endif /* GDB_COMPILE_COMPILE_INTERNAL_H */

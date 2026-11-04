@@ -1,5 +1,5 @@
 /* Support for printing Modula 2 types for GDB, the GNU debugger.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
 
 #include "event-top.h"
 #include "language.h"
-#include "gdbsupport/gdb_obstack.h"
 #include "bfd.h"
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -27,8 +26,6 @@
 #include "gdbcore.h"
 #include "m2-lang.h"
 #include "target.h"
-#include "language.h"
-#include "demangle.h"
 #include "c-lang.h"
 #include "typeprint.h"
 #include "cp-abi.h"

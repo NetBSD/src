@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.107.2.2 2025/08/02 05:55:33 perseant Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.107.2.3 2026/11/04 23:20:27 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.107.2.2 2025/08/02 05:55:33 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.107.2.3 2026/11/04 23:20:27 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bootconfig.h"
@@ -93,8 +93,10 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.107.2.2 2025/08/02 05:55:33 persea
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_boot.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/fdt_private.h>
 #include <dev/fdt/fdt_memory.h>
+#include <dev/fdt/fdt_platform.h>
 
 #ifdef EFI_RUNTIME
 #include <arm/arm/efi_runtime.h>
@@ -353,7 +355,7 @@ initarm(void *arg)
 	/* Cannot map memory above 4GB (remove last page as well) */
 	const uint64_t memory_limit = 0x100000000ULL - PAGE_SIZE;
 	if (memory_end > memory_limit) {
-		fdt_memory_remove_range(memory_limit , memory_end);
+		fdt_memory_remove_range(memory_limit, memory_end - memory_limit);
 		memory_end = memory_limit;
 	}
 #endif
@@ -509,8 +511,7 @@ fdt_device_register(device_t self, void *aux)
 
 		if (PCI_CLASS(pa->pa_class) == PCI_CLASS_DISPLAY &&
 		    !found_pci_console) {
-			prop_dictionary_t dict = device_properties(self);
-			prop_dictionary_set_bool(dict, "is_console", true);
+			device_setprop_bool(self, "is_console", true);
 			found_pci_console = true;
 		}
 	}

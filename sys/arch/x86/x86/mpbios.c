@@ -1,4 +1,4 @@
-/*	$NetBSD: mpbios.c,v 1.71.10.1 2025/08/02 05:56:18 perseant Exp $	*/
+/*	$NetBSD: mpbios.c,v 1.71.10.2 2026/11/04 23:21:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.71.10.1 2025/08/02 05:56:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpbios.c,v 1.71.10.2 2026/11/04 23:21:33 perseant Exp $");
 
 #include "acpica.h"
 #include "lapic.h"
@@ -568,7 +568,7 @@ compute_entry_count(const uint8_t *entry, const uint8_t *end)
 			panic("%s: Unknown MP Config Entry %d\n", __func__,
 				(int)*entry);
 		}
-		entry += mp_conf[*entry].length;;
+		entry += mp_conf[*entry].length;
 		nentries++;
 	}
 	return (uint16_t)(nentries);

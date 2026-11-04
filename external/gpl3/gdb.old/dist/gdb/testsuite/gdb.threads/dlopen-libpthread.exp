@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,7 +13,8 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if {![isnative] || ![istarget *-linux*] || [skip_shlib_tests]} {
+require isnative allow_shlib_tests
+if {![istarget *-linux*]} {
     return 0
 }
 
@@ -40,22 +41,53 @@ if { ![runto_main] } {
     return -1
 }
 
-set test "info probes all rtld rtld_map_complete"
-gdb_test_multiple $test $test {
-    -re "\[ \t\]rtld_map_complete\[ \t\]+0x\[0-9a-f\]+.*\r\n$gdb_prompt $" {
-	pass $test
+set probe_names {}
+# Fedora 17 name.  There's specific code in
+# svr4_find_and_create_probe_breakpoints to deal with this.
+lappend probe_names rtld_map_complete
+# Upstream name.
+lappend probe_names map_complete
+
+set have_probe 0
+foreach probe_name $probe_names {
+    set cmd "info probes all rtld ^$probe_name$"
+    gdb_test_multiple $cmd "" {
+	-re -wrap "\[ \t\]$probe_name\[ \t\]+0x\[0-9a-f\]+.*" {
+	    set have_probe 1
+	}
+	-re -wrap "No probes matched\\." {
+	}
     }
-    -re "No probes matched\\.\r\n$gdb_prompt $" {
-	xfail $test
-	untested "no matching probes"
-	return
-    }
+}
+
+if { !$have_probe } {
+    untested "no matching probes"
+    return -1
+}
+
+# We link the exec without -lpthread, but libpthread.so may already be loaded at main
+# due to LD_PRELOAD.
+set libpthread_maybe_preloaded 0
+set binfile [standard_output_file $executable]
+if { [has_dependency $binfile /libpthread\\.so] == 1 } {
+    set libpthread_maybe_preloaded 1
+}
+
+# We link the shlib with -lpthread, but since glibc 2.34 libpthread has been
+# merged with libc, so libpthread.so may not be a dependency.
+set libpthread_missing 0
+if { [has_dependency $binfile_lib /libpthread\\.so] == 0 } {
+    set libpthread_missing 1
 }
 
 set test "libpthread.so not found"
 gdb_test_multiple "info sharedlibrary" $test {
     -re "/libpthread\\.so.*\r\n$gdb_prompt $" {
-	fail $test
+	if { $libpthread_maybe_preloaded } {
+	    unsupported $test
+	} else {
+	    fail $test
+	}
     }
     -re "/libc\\.so.*\r\n$gdb_prompt $" {
 	pass $test
@@ -70,4 +102,6 @@ gdb_breakpoint "notify"
 # Cannot find new threads: generic error
 gdb_continue_to_breakpoint "notify" ".* notify-here .*"
 
-gdb_test "info sharedlibrary" {/libpthread\.so.*} "libpthread.so found"
+if { !$libpthread_missing } {
+    gdb_test "info sharedlibrary" {/libpthread\.so.*} "libpthread.so found"
+}

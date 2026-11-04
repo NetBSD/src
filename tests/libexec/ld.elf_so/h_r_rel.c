@@ -1,4 +1,4 @@
-/*	$NetBSD: h_r_rel.c,v 1.1.4.2 2025/08/02 05:58:10 perseant Exp $	*/
+/*	$NetBSD: h_r_rel.c,v 1.1.4.3 2026/11/04 23:28:19 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -27,8 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: h_r_rel.c,v 1.1.4.2 2025/08/02 05:58:10 perseant Exp $");
+__RCSID("$NetBSD: h_r_rel.c,v 1.1.4.3 2026/11/04 23:28:19 perseant Exp $");
 
+#include <stddef.h>
 #include <stdio.h>
 
 /*

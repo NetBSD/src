@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.c,v 1.8.2.1 2025/08/02 05:53:46 perseant Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.8.2.2 2026/11/04 23:18:12 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -206,9 +206,7 @@ tostruct_rt(ARGS_TOSTRUCT) {
 	REQUIRE(rt != NULL);
 	REQUIRE(rdata->length != 0);
 
-	rt->common.rdclass = rdata->rdclass;
-	rt->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&rt->common, link);
+	DNS_RDATACOMMON_INIT(rt, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

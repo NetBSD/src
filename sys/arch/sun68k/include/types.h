@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.3 2024/01/15 17:40:35 thorpej Exp $	*/
+/*	$NetBSD: types.h,v 1.3.2.1 2026/11/04 23:21:27 perseant Exp $	*/
 
 #include <m68k/types.h>
 
@@ -8,3 +8,5 @@
 #define	__HAVE_MM_MD_READWRITE
 #define	__HAVE_NO_PMAP_STATS
 #define	__HAVE_M68K_INTR_VECTORED
+#define	__HAVE_M68K_PRIVATE_MSGSBUF
+#define	__HAVE_M68K_MACHINE_PRINT_MODEL

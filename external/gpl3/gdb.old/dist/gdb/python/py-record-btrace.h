@@ -1,6 +1,6 @@
 /* Python interface to btrace record targets.
 
-   Copyright 2016-2023 Free Software Foundation, Inc.
+   Copyright 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PY_RECORD_BTRACE_H
-#define PYTHON_PY_RECORD_BTRACE_H
+#ifndef GDB_PYTHON_PY_RECORD_BTRACE_H
+#define GDB_PYTHON_PY_RECORD_BTRACE_H
 
 #include "python-internal.h"
 
@@ -30,6 +30,9 @@ extern PyObject *recpy_bt_format (PyObject *self, void *closure);
 
 /* Implementation of record.goto (instruction) -> None.  */
 extern PyObject *recpy_bt_goto (PyObject *self, PyObject *value);
+
+/* Implementation of BtraceRecord.clear (self) -> None.  */
+extern PyObject *recpy_bt_clear (PyObject *self, PyObject *args);
 
 /* Implementation of record.instruction_history [list].  */
 extern PyObject *recpy_bt_instruction_history (PyObject *self, void *closure);
@@ -88,4 +91,7 @@ extern PyObject *recpy_bt_func_prev (PyObject *self, void *closure);
 /* Implementation of RecordFunctionSegment.next [RecordFunctionSegment].  */
 extern PyObject *recpy_bt_func_next (PyObject *self, void *closure);
 
-#endif /* PYTHON_PY_RECORD_BTRACE_H */
+/* Implementation of RecordAuxiliary.decoded [str].  */
+extern PyObject *recpy_bt_aux_data (PyObject *self, void *closure);
+
+#endif /* GDB_PYTHON_PY_RECORD_BTRACE_H */

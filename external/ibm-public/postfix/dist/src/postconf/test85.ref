@@ -1,0 +1,8 @@
+{"foo/unix/service": "foo"}
+{"foo/unix/type": "unix"}
+{"foo/unix/private": "-"}
+{"foo/unix/unprivileged": "n"}
+{"foo/unix/chroot": "n"}
+{"foo/unix/wakeup": "-"}
+{"foo/unix/process_limit": "0"}
+{"foo/unix/command": "other -o mydestination=example.net -o whatever=example.net"}

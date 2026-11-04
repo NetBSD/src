@@ -1,6 +1,6 @@
 /* Target-dependent code for the Toshiba MeP for GDB, the GNU debugger.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -60,7 +60,7 @@
 /* A quick recap for GDB hackers not familiar with the whole Toshiba
    Media Processor story:
 
-   The MeP media engine is a configureable processor: users can design
+   The MeP media engine is a configurable processor: users can design
    their own coprocessors, implement custom instructions, adjust cache
    sizes, select optional standard facilities like add-and-saturate
    instructions, and so on.  Then, they can build custom versions of
@@ -2061,15 +2061,16 @@ mep_frame_prev_register (const frame_info_ptr &this_frame,
 }
 
 
-static const struct frame_unwind mep_frame_unwind = {
+static const struct frame_unwind_legacy mep_frame_unwind (
   "mep prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   mep_frame_this_id,
   mep_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 
 /* Return values.  */
@@ -2458,9 +2459,7 @@ mep_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_mep_tdep ();
-void
-_initialize_mep_tdep ()
+INIT_GDB_FILE (mep_tdep)
 {
   mep_csr_reggroup = reggroup_new ("csr", USER_REGGROUP);
   mep_cr_reggroup  = reggroup_new ("cr", USER_REGGROUP); 

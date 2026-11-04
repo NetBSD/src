@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD, architecture-independent.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "auxv.h"
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "gdbcore.h"
 #include "inferior.h"
@@ -25,7 +26,6 @@
 #include "regcache.h"
 #include "regset.h"
 #include "gdbthread.h"
-#include "objfiles.h"
 #include "xml-syscall.h"
 #include <sys/socket.h>
 #include <arpa/inet.h>
@@ -33,6 +33,7 @@
 #include "elf-bfd.h"
 #include "fbsd-tdep.h"
 #include "gcore-elf.h"
+#include "arch-utils.h"
 
 /* This enum is derived from FreeBSD's <sys/signal.h>.  */
 
@@ -547,7 +548,8 @@ fbsd_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid)
    string in a static buffer.  */
 
 static const char *
-fbsd_core_thread_name (struct gdbarch *gdbarch, struct thread_info *thr)
+fbsd_core_thread_name (struct gdbarch *gdbarch, bfd &cbfd,
+		       struct thread_info *thr)
 {
   static char buf[80];
   struct bfd_section *section;
@@ -563,16 +565,15 @@ fbsd_core_thread_name (struct gdbarch *gdbarch, struct thread_info *thr)
 	 extract the null-terminated name from the start of the
 	 note.  */
       thread_section_name section_name (".thrmisc", thr->ptid);
-      bfd *cbfd = current_program_space->core_bfd ();
 
-      section = bfd_get_section_by_name (cbfd, section_name.c_str ());
+      section = bfd_get_section_by_name (&cbfd, section_name.c_str ());
       if (section != NULL && bfd_section_size (section) > 0)
 	{
 	  /* Truncate the name if it is longer than "buf".  */
 	  size = bfd_section_size (section);
 	  if (size > sizeof buf - 1)
 	    size = sizeof buf - 1;
-	  if (bfd_get_section_contents (cbfd, section, buf, (file_ptr) 0, size)
+	  if (bfd_get_section_contents (&cbfd, section, buf, (file_ptr) 0, size)
 	      && buf[0] != '\0')
 	    {
 	      buf[size] = '\0';
@@ -581,7 +582,7 @@ fbsd_core_thread_name (struct gdbarch *gdbarch, struct thread_info *thr)
 		 as its thread name instead of an empty name if a name
 		 has not been set explicitly.  Return a NULL name in
 		 that case.  */
-	      if (strcmp (buf, elf_tdata (cbfd)->core->program) != 0)
+	      if (strcmp (buf, elf_tdata (&cbfd)->core->program) != 0)
 		return buf;
 	    }
 	}
@@ -593,8 +594,8 @@ fbsd_core_thread_name (struct gdbarch *gdbarch, struct thread_info *thr)
 /* Implement the "core_xfer_siginfo" gdbarch method.  */
 
 static LONGEST
-fbsd_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf,
-			ULONGEST offset, ULONGEST len)
+fbsd_core_xfer_siginfo (struct gdbarch *gdbarch, struct bfd &cbfd,
+			gdb_byte *readbuf, ULONGEST offset, ULONGEST len)
 {
   size_t siginfo_size;
 
@@ -606,13 +607,12 @@ fbsd_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf,
     return -1;
 
   thread_section_name section_name (".note.freebsdcore.lwpinfo", inferior_ptid);
-  bfd *cbfd = current_program_space->core_bfd ();
-  asection *section = bfd_get_section_by_name (cbfd, section_name.c_str ());
+  asection *section = bfd_get_section_by_name (&cbfd, section_name.c_str ());
   if (section == NULL)
     return -1;
 
   gdb_byte buf[4];
-  if (!bfd_get_section_contents (cbfd, section, buf,
+  if (!bfd_get_section_contents (&cbfd, section, buf,
 				 LWPINFO_OFFSET + LWPINFO_PL_FLAGS, 4))
     return -1;
 
@@ -629,21 +629,18 @@ fbsd_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf,
   else
     siginfo_offset = LWPINFO_OFFSET + LWPINFO64_PL_SIGINFO;
 
-  if (!bfd_get_section_contents (cbfd, section, readbuf,
+  if (!bfd_get_section_contents (&cbfd, section, readbuf,
 				 siginfo_offset + offset, len))
     return -1;
 
   return len;
 }
 
-static int
-find_signalled_thread (struct thread_info *info, void *data)
+static bool
+find_signalled_thread (struct thread_info *info)
 {
-  if (info->stop_signal () != GDB_SIGNAL_0
-      && info->ptid.pid () == inferior_ptid.pid ())
-    return 1;
-
-  return 0;
+  return (info->stop_signal () != GDB_SIGNAL_0
+	  && info->ptid.pid () == inferior_ptid.pid ());
 }
 
 /* Return a byte_vector containing the contents of a core dump note
@@ -684,9 +681,9 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
 
   gdb_assert (gdbarch_iterate_over_regset_sections_p (gdbarch));
 
-  if (get_exec_file (0))
+  if (current_program_space->exec_filename () != nullptr)
     {
-      const char *fname = lbasename (get_exec_file (0));
+      const char *fname = lbasename (current_program_space->exec_filename ());
       std::string psargs = fname;
 
       const std::string &infargs = current_inferior ()->args ();
@@ -717,7 +714,7 @@ fbsd_make_corefile_notes (struct gdbarch *gdbarch, bfd *obfd, int *note_size)
     signalled_thr = curr_thr;
   else
     {
-      signalled_thr = iterate_over_threads (find_signalled_thread, NULL);
+      signalled_thr = iterate_over_threads (find_signalled_thread);
       if (signalled_thr == NULL)
 	signalled_thr = curr_thr;
     }
@@ -1017,12 +1014,11 @@ fbsd_info_proc_files_entry (int kf_type, int kf_fd, int kf_flags,
   gdb_printf ("\n");
 }
 
-/* Implement "info proc files" for a corefile.  */
+/* Implement "info proc files" for corefile CBFD.  */
 
 static void
-fbsd_core_info_proc_files (struct gdbarch *gdbarch)
+fbsd_core_info_proc_files (struct gdbarch *gdbarch, bfd *cbfd)
 {
-  bfd *cbfd = current_program_space->core_bfd ();
   asection *section = bfd_get_section_by_name (cbfd, ".note.freebsdcore.files");
   if (section == NULL)
     {
@@ -1145,15 +1141,14 @@ fbsd_info_proc_mappings_entry (int addr_bit, ULONGEST kve_start,
     }
 }
 
-/* Implement "info proc mappings" for a corefile.  */
+/* Implement "info proc mappings" for corefile CBFD.  */
 
 static void
-fbsd_core_info_proc_mappings (struct gdbarch *gdbarch)
+fbsd_core_info_proc_mappings (struct gdbarch *gdbarch, bfd *cbfd)
 {
   asection *section;
   unsigned char *descdata, *descend;
   size_t note_size;
-  bfd *cbfd = current_program_space->core_bfd ();
 
   section = bfd_get_section_by_name (cbfd, ".note.freebsdcore.vmmap");
   if (section == NULL)
@@ -1196,15 +1191,14 @@ fbsd_core_info_proc_mappings (struct gdbarch *gdbarch)
 }
 
 /* Fetch the pathname of a vnode for a single file descriptor from the
-   file table core note.  */
+   file table core note in CBFD.  */
 
 static gdb::unique_xmalloc_ptr<char>
-fbsd_core_vnode_path (struct gdbarch *gdbarch, int fd)
+fbsd_core_vnode_path (struct gdbarch *gdbarch, bfd *cbfd, int fd)
 {
   asection *section;
   unsigned char *descdata, *descend;
   size_t note_size;
-  bfd *cbfd = current_program_space->core_bfd ();
 
   section = bfd_get_section_by_name (cbfd, ".note.freebsdcore.files");
   if (section == NULL)
@@ -1244,14 +1238,12 @@ fbsd_core_vnode_path (struct gdbarch *gdbarch, int fd)
   return nullptr;
 }
 
-/* Helper function to read a struct timeval.  */
+/* Helper function to read a struct timeval from core file CBFD.  */
 
 static void
-fbsd_core_fetch_timeval (struct gdbarch *gdbarch, unsigned char *data,
-			 LONGEST &sec, ULONGEST &usec)
+fbsd_core_fetch_timeval (struct gdbarch *gdbarch, bfd *cbfd,
+			 unsigned char *data, LONGEST &sec, ULONGEST &usec)
 {
-  bfd *cbfd = current_program_space->core_bfd ();
-
   if (gdbarch_addr_bit (gdbarch) == 64)
     {
       sec = bfd_get_signed_64 (cbfd, data);
@@ -1269,12 +1261,11 @@ fbsd_core_fetch_timeval (struct gdbarch *gdbarch, unsigned char *data,
     }
 }
 
-/* Print out the contents of a signal set.  */
+/* Print out the contents of a signal set SIGSET in core file CBFD.  */
 
 static void
-fbsd_print_sigset (const char *descr, unsigned char *sigset)
+fbsd_print_sigset (bfd *cbfd, const char *descr, unsigned char *sigset)
 {
-  bfd *cbfd = current_program_space->core_bfd ();
   gdb_printf ("%s: ", descr);
   for (int i = 0; i < SIG_WORDS; i++)
     gdb_printf ("%08x ",
@@ -1282,10 +1273,10 @@ fbsd_print_sigset (const char *descr, unsigned char *sigset)
   gdb_printf ("\n");
 }
 
-/* Implement "info proc status" for a corefile.  */
+/* Implement "info proc status" for corefile CBFD.  */
 
 static void
-fbsd_core_info_proc_status (struct gdbarch *gdbarch)
+fbsd_core_info_proc_status (struct gdbarch *gdbarch, bfd *cbfd)
 {
   const struct kinfo_proc_layout *kp;
   asection *section;
@@ -1294,7 +1285,6 @@ fbsd_core_info_proc_status (struct gdbarch *gdbarch)
   size_t note_size;
   ULONGEST value;
   LONGEST sec;
-  bfd *cbfd = current_program_space->core_bfd ();
 
   section = bfd_get_section_by_name (cbfd, ".note.freebsdcore.proc");
   if (section == NULL)
@@ -1389,25 +1379,25 @@ fbsd_core_info_proc_status (struct gdbarch *gdbarch)
   value = bfd_get (long_bit, cbfd,
 		   descdata + kp->ki_rusage_ch + kp->ru_majflt);
   gdb_printf ("Major faults, children: %s\n", pulongest (value));
-  fbsd_core_fetch_timeval (gdbarch,
+  fbsd_core_fetch_timeval (gdbarch, cbfd,
 			   descdata + kp->ki_rusage + kp->ru_utime,
 			   sec, value);
   gdb_printf ("utime: %s.%06d\n", plongest (sec), (int) value);
-  fbsd_core_fetch_timeval (gdbarch,
+  fbsd_core_fetch_timeval (gdbarch, cbfd,
 			   descdata + kp->ki_rusage + kp->ru_stime,
 			   sec, value);
   gdb_printf ("stime: %s.%06d\n", plongest (sec), (int) value);
-  fbsd_core_fetch_timeval (gdbarch,
+  fbsd_core_fetch_timeval (gdbarch, cbfd,
 			   descdata + kp->ki_rusage_ch + kp->ru_utime,
 			   sec, value);
   gdb_printf ("utime, children: %s.%06d\n", plongest (sec), (int) value);
-  fbsd_core_fetch_timeval (gdbarch,
+  fbsd_core_fetch_timeval (gdbarch, cbfd,
 			   descdata + kp->ki_rusage_ch + kp->ru_stime,
 			   sec, value);
   gdb_printf ("stime, children: %s.%06d\n", plongest (sec), (int) value);
   gdb_printf ("'nice' value: %d\n",
 	      (int) bfd_get_signed_8 (core_bfd, descdata + kp->ki_nice));
-  fbsd_core_fetch_timeval (gdbarch, descdata + kp->ki_start, sec, value);
+  fbsd_core_fetch_timeval (gdbarch, cbfd, descdata + kp->ki_start, sec, value);
   gdb_printf ("Start time: %s.%06d\n", plongest (sec), (int) value);
   gdb_printf ("Virtual memory size: %s kB\n",
 	      pulongest (bfd_get (addr_bit, cbfd,
@@ -1428,15 +1418,15 @@ fbsd_core_info_proc_status (struct gdbarch *gdbarch)
 	      pulongest (bfd_get (long_bit, cbfd,
 				  descdata + kp->ki_rusage
 				  + kp->ru_maxrss)));
-  fbsd_print_sigset ("Ignored Signals", descdata + kp->ki_sigignore);
-  fbsd_print_sigset ("Caught Signals", descdata + kp->ki_sigcatch);
+  fbsd_print_sigset (cbfd, "Ignored Signals", descdata + kp->ki_sigignore);
+  fbsd_print_sigset (cbfd, "Caught Signals", descdata + kp->ki_sigcatch);
 }
 
 /* Implement the "core_info_proc" gdbarch method.  */
 
 static void
-fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
-		     enum info_proc_what what)
+fbsd_core_info_proc (struct gdbarch *gdbarch, struct bfd *cbfd,
+		     const char *args, enum info_proc_what what)
 {
   bool do_cmdline = false;
   bool do_cwd = false;
@@ -1484,7 +1474,6 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
       return;
     }
 
-  bfd *cbfd = current_program_space->core_bfd ();
   pid = bfd_core_file_pid (cbfd);
   if (pid != 0)
     gdb_printf (_("process %d\n"), pid);
@@ -1502,7 +1491,7 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
   if (do_cwd)
     {
       gdb::unique_xmalloc_ptr<char> cwd =
-	fbsd_core_vnode_path (gdbarch, KINFO_FILE_FD_TYPE_CWD);
+	fbsd_core_vnode_path (gdbarch, cbfd, KINFO_FILE_FD_TYPE_CWD);
       if (cwd)
 	gdb_printf ("cwd = '%s'\n", cwd.get ());
       else
@@ -1511,18 +1500,18 @@ fbsd_core_info_proc (struct gdbarch *gdbarch, const char *args,
   if (do_exe)
     {
       gdb::unique_xmalloc_ptr<char> exe =
-	fbsd_core_vnode_path (gdbarch, KINFO_FILE_FD_TYPE_TEXT);
+	fbsd_core_vnode_path (gdbarch, cbfd, KINFO_FILE_FD_TYPE_TEXT);
       if (exe)
 	gdb_printf ("exe = '%s'\n", exe.get ());
       else
 	warning (_("unable to read executable path name"));
     }
   if (do_files)
-    fbsd_core_info_proc_files (gdbarch);
+    fbsd_core_info_proc_files (gdbarch, cbfd);
   if (do_mappings)
-    fbsd_core_info_proc_mappings (gdbarch);
+    fbsd_core_info_proc_mappings (gdbarch, cbfd);
   if (do_status)
-    fbsd_core_info_proc_status (gdbarch);
+    fbsd_core_info_proc_status (gdbarch, cbfd);
 }
 
 /* Print descriptions of FreeBSD-specific AUXV entries to FILE.  */
@@ -1942,7 +1931,8 @@ fbsd_get_syscall_number (struct gdbarch *gdbarch, thread_info *thread)
 static LONGEST
 fbsd_read_integer_by_name (struct gdbarch *gdbarch, const char *name)
 {
-  bound_minimal_symbol ms = lookup_minimal_symbol (name, NULL, NULL);
+  bound_minimal_symbol ms
+    = lookup_minimal_symbol (current_program_space, name);
   if (ms.minsym == NULL)
     error (_("Unable to resolve symbol '%s'"), name);
 
@@ -2033,21 +2023,23 @@ fbsd_get_thread_local_address (struct gdbarch *gdbarch, CORE_ADDR dtv_addr,
 {
   LONGEST tls_index = fbsd_get_tls_index (gdbarch, lm_addr);
 
-  gdb_byte buf[gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT];
-  if (target_read_memory (dtv_addr, buf, sizeof buf) != 0)
+  gdb::byte_vector buf (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  if (target_read_memory (dtv_addr, buf.data (), buf.size ()) != 0)
     throw_error (TLS_GENERIC_ERROR,
 		 _("Cannot find thread-local variables on this target"));
 
   const struct builtin_type *builtin = builtin_type (gdbarch);
-  CORE_ADDR addr = gdbarch_pointer_to_address (gdbarch,
-					       builtin->builtin_data_ptr, buf);
+  CORE_ADDR addr
+    = gdbarch_pointer_to_address (gdbarch, builtin->builtin_data_ptr,
+				  buf.data ());
 
   addr += (tls_index + 1) * builtin->builtin_data_ptr->length ();
-  if (target_read_memory (addr, buf, sizeof buf) != 0)
+  if (target_read_memory (addr, buf.data (), buf.size ()) != 0)
     throw_error (TLS_GENERIC_ERROR,
 		 _("Cannot find thread-local variables on this target"));
 
-  addr = gdbarch_pointer_to_address (gdbarch, builtin->builtin_data_ptr, buf);
+  addr = gdbarch_pointer_to_address (gdbarch, builtin->builtin_data_ptr,
+				     buf.data ());
   return addr + offset;
 }
 
@@ -2056,7 +2048,8 @@ fbsd_get_thread_local_address (struct gdbarch *gdbarch, CORE_ADDR dtv_addr,
 CORE_ADDR
 fbsd_skip_solib_resolver (struct gdbarch *gdbarch, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol msym = lookup_bound_minimal_symbol ("_rtld_bind");
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, "_rtld_bind");
   if (msym.minsym != nullptr && msym.value_address () == pc)
     return frame_unwind_caller_pc (get_current_frame ());
 
@@ -2357,6 +2350,137 @@ fbsd_vdso_range (struct gdbarch *gdbarch, struct mem_range *range)
   return range->length != 0;
 }
 
+/* Try to extract the inferior arguments, environment, and executable name
+   from CBFD.  */
+
+static core_file_exec_context
+fbsd_corefile_parse_exec_context_1 (struct gdbarch *gdbarch, bfd *cbfd)
+{
+  gdb_assert (gdbarch != nullptr);
+
+  /* If there's no core file loaded then we're done.  */
+  if (cbfd == nullptr)
+    return {};
+
+  int ptr_bytes = gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT;
+
+  /* Find the .auxv section in the core file. The BFD library creates this
+     for us from the AUXV note when the BFD is opened.  If the section
+     can't be found then there's nothing more we can do.  */
+  struct bfd_section * section = bfd_get_section_by_name (cbfd, ".auxv");
+  if (section == nullptr)
+    return {};
+
+  /* Grab the contents of the .auxv section.  If we can't get the contents
+     then there's nothing more we can do.  */
+  bfd_size_type size = bfd_section_size (section);
+  if (bfd_section_size_insane (cbfd, section))
+    return {};
+  gdb::byte_vector contents (size);
+  if (!bfd_get_section_contents (cbfd, section, contents.data (), 0, size))
+    return {};
+
+  /* Read AT_FREEBSD_ARGV, the address of the argument string vector.  */
+  CORE_ADDR argv_addr;
+  if (target_auxv_search (contents, current_inferior ()->top_target (),
+			  gdbarch, AT_FREEBSD_ARGV, &argv_addr) != 1)
+    return {};
+
+  /* Read AT_FREEBSD_ARGV, the address of the environment string vector.  */
+  CORE_ADDR envv_addr;
+  if (target_auxv_search (contents, current_inferior ()->top_target (),
+			  gdbarch, AT_FREEBSD_ENVV, &envv_addr) != 1)
+    return {};
+
+  /* Read the AT_EXECPATH string.  It's OK if we can't get this
+     information.  */
+  gdb::unique_xmalloc_ptr<char> execpath;
+  CORE_ADDR execpath_string_addr;
+  if (target_auxv_search (contents, current_inferior ()->top_target (),
+			  gdbarch, AT_FREEBSD_EXECPATH,
+			  &execpath_string_addr) == 1)
+    execpath = target_read_string (execpath_string_addr, INT_MAX);
+
+  /* The byte order.  */
+  enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+
+  /* On FreeBSD the command the user ran is found in argv[0].  When we
+     read the first argument we place it into EXECFN.  */
+  gdb::unique_xmalloc_ptr<char> execfn;
+
+  /* Read strings from AT_FREEBSD_ARGV until we find a NULL marker.  The
+     first argument is placed into EXECFN as the command name.  */
+  std::vector<gdb::unique_xmalloc_ptr<char>> arguments;
+  CORE_ADDR str_addr;
+  while ((str_addr
+	  = (CORE_ADDR) read_memory_unsigned_integer (argv_addr, ptr_bytes,
+						      byte_order)) != 0)
+    {
+      gdb::unique_xmalloc_ptr<char> str
+	= target_read_string (str_addr, INT_MAX);
+      if (str == nullptr)
+	return {};
+
+      if (execfn == nullptr)
+	execfn = std::move (str);
+      else
+	arguments.emplace_back (std::move (str));
+
+      argv_addr += ptr_bytes;
+    }
+
+  /* Read strings from AT_FREEBSD_ENVV until we find a NULL marker.  */
+  std::vector<gdb::unique_xmalloc_ptr<char>> environment;
+  while ((str_addr
+	  = (uint64_t) read_memory_unsigned_integer (envv_addr, ptr_bytes,
+						     byte_order)) != 0)
+    {
+      gdb::unique_xmalloc_ptr<char> str
+	= target_read_string (str_addr, INT_MAX);
+      if (str == nullptr)
+	return {};
+
+      environment.emplace_back (std::move (str));
+      envv_addr += ptr_bytes;
+    }
+
+  return core_file_exec_context (std::move (execfn),
+				 std::move (execpath),
+				 std::move (arguments),
+				 std::move (environment));
+}
+
+/* See elf-corelow.h.  */
+
+static core_file_exec_context
+fbsd_corefile_parse_exec_context (struct gdbarch *gdbarch, bfd *cbfd)
+{
+  /* Catch and discard memory errors.
+
+     If the core file format is not as we expect then we can easily trigger
+     a memory error while parsing the core file.  We don't want this to
+     prevent the user from opening the core file; the information provided
+     by this function is helpful, but not critical, debugging can continue
+     without it.  Instead just give a warning and return an empty context
+     object.  */
+  try
+    {
+      return fbsd_corefile_parse_exec_context_1 (gdbarch, cbfd);
+    }
+  catch (const gdb_exception_error &ex)
+    {
+      if (ex.error == MEMORY_ERROR)
+	{
+	  warning
+	    (_("failed to parse execution context from corefile: %s"),
+	     ex.message->c_str ());
+	  return {};
+	}
+      else
+	throw;
+    }
+}
+
 /* Return the address range of the vDSO for the current inferior.  */
 
 static int
@@ -2400,4 +2524,6 @@ fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* `catch syscall' */
   set_xml_syscall_file_name (gdbarch, "syscalls/freebsd.xml");
   set_gdbarch_get_syscall_number (gdbarch, fbsd_get_syscall_number);
+  set_gdbarch_core_parse_exec_context (gdbarch,
+				       fbsd_corefile_parse_exec_context);
 }

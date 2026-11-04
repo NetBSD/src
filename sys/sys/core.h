@@ -1,4 +1,4 @@
-/*	$NetBSD: core.h,v 1.12 2009/08/20 22:07:49 he Exp $	*/
+/*	$NetBSD: core.h,v 1.12.100.1 2026/11/04 23:28:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _SYS_CORE_H_
 #define _SYS_CORE_H_
+
+#include <sys/endian.h> /* ntohl(3) */
 
 #define COREMAGIC	0507
 #define CORESEGMAGIC	0510

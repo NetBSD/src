@@ -1,6 +1,6 @@
 /* Perform non-arithmetic operations on values, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -40,14 +40,10 @@
 #include "observable.h"
 #include "objfiles.h"
 #include "extension.h"
-#include "gdbtypes.h"
 #include "gdbsupport/byte-vector.h"
 #include "typeprint.h"
 
 /* Local functions.  */
-
-static int typecmp (bool staticp, bool varargs, int nargs,
-		    struct field t1[], const gdb::array_view<value *> t2);
 
 static struct value *search_struct_field (const char *, struct value *, 
 					  struct type *, int);
@@ -129,8 +125,8 @@ find_function_in_inferior (const char *name, struct objfile **objf_p)
     }
   else
     {
-      struct bound_minimal_symbol msymbol = 
-	lookup_bound_minimal_symbol (name);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, name);
 
       if (msymbol.minsym != NULL)
 	{
@@ -1487,7 +1483,7 @@ value_coerce_to_target (struct value *val)
    nonzero lower bound.
 
    FIXME: A previous comment here indicated that this routine should
-   be substracting the array's lower bound.  It's not clear to me that
+   be subtracting the array's lower bound.  It's not clear to me that
    this is correct.  Given an array subscripting operation, it would
    certainly work to do the adjustment here, essentially computing:
 
@@ -1696,6 +1692,9 @@ value_array (int lowbound, gdb::array_view<struct value *> elemvec)
   /* Validate that the bounds are reasonable and that each of the
      elements have the same size.  */
 
+  if (elemvec.empty ())
+    error (_("size of the array element must not be zero"));
+
   typelength = type_length_units (elemvec[0]->enclosing_type ());
   for (struct value *other : elemvec.slice (1))
     {
@@ -1764,7 +1763,7 @@ value_string (const gdb_byte *ptr, ssize_t count, struct type *char_type)
 
 
 /* See if we can pass arguments in T2 to a function which takes arguments
-   of types T1.  T1 is a list of NARGS arguments, and T2 is an array_view
+   of types T1.  T1 is an array_view of arguments, and T2 is an array_view
    of the values we're trying to pass.  If some arguments need coercion of
    some sort, then the coerced values are written into T2.  Return value is
    0 if the arguments could be matched, or the position at which they
@@ -1781,8 +1780,8 @@ value_string (const gdb_byte *ptr, ssize_t count, struct type *char_type)
    requested operation is type secure, shouldn't we?  FIXME.  */
 
 static int
-typecmp (bool staticp, bool varargs, int nargs,
-	 struct field t1[], gdb::array_view<value *> t2)
+typecmp (bool staticp, bool varargs,
+	 gdb::array_view<struct field> t1, gdb::array_view<value *> t2)
 {
   int i;
 
@@ -1792,7 +1791,7 @@ typecmp (bool staticp, bool varargs, int nargs,
     t2 = t2.slice (1);
 
   for (i = 0;
-       (i < nargs) && t1[i].type ()->code () != TYPE_CODE_VOID;
+       (i < t1.size ()) && t1[i].type ()->code () != TYPE_CODE_VOID;
        i++)
     {
       struct type *tt1, *tt2;
@@ -2225,7 +2224,6 @@ search_struct_method (const char *name, struct value **arg1p,
 		gdb_assert (args.has_value ());
 		if (!typecmp (TYPE_FN_FIELD_STATIC_P (f, j),
 			      TYPE_FN_FIELD_TYPE (f, j)->has_varargs (),
-			      TYPE_FN_FIELD_TYPE (f, j)->num_fields (),
 			      TYPE_FN_FIELD_ARGS (f, j), *args))
 		  {
 		    if (TYPE_FN_FIELD_VIRTUAL_P (f, j))
@@ -2418,47 +2416,42 @@ value_struct_elt (struct value **argp,
   return v;
 }
 
-/* Given *ARGP, a value of type structure or union, or a pointer/reference
+/* Given VAL, a value of type structure or union, or a pointer/reference
    to a structure or union, extract and return its component (field) of
    type FTYPE at the specified BITPOS.
    Throw an exception on error.  */
 
 struct value *
-value_struct_elt_bitpos (struct value **argp, int bitpos, struct type *ftype,
-			 const char *err)
+value_struct_elt_bitpos (struct value *val, int bitpos, struct type *ftype)
 {
   struct type *t;
   int i;
 
-  *argp = coerce_array (*argp);
+  val = coerce_array (val);
 
-  t = check_typedef ((*argp)->type ());
+  t = check_typedef (val->type ());
 
   while (t->is_pointer_or_reference ())
     {
-      *argp = value_ind (*argp);
-      if (check_typedef ((*argp)->type ())->code () != TYPE_CODE_FUNC)
-	*argp = coerce_array (*argp);
-      t = check_typedef ((*argp)->type ());
+      val = value_ind (val);
+      if (check_typedef (val->type ())->code () != TYPE_CODE_FUNC)
+	val = coerce_array (val);
+      t = check_typedef (val->type ());
     }
 
   if (t->code () != TYPE_CODE_STRUCT
       && t->code () != TYPE_CODE_UNION)
-    error (_("Attempt to extract a component of a value that is not a %s."),
-	   err);
+    error (_("Attempt to extract a component of non-aggregate value."));
 
   for (i = TYPE_N_BASECLASSES (t); i < t->num_fields (); i++)
     {
       if (!t->field (i).is_static ()
 	  && bitpos == t->field (i).loc_bitpos ()
 	  && types_equal (ftype, t->field (i).type ()))
-	return (*argp)->primitive_field (0, i, t);
+	return val->primitive_field (0, i, t);
     }
 
   error (_("No field with matching bitpos and type."));
-
-  /* Never hit.  */
-  return NULL;
 }
 
 /* Search through the methods of an object (and its bases) to find a
@@ -3829,7 +3822,7 @@ value_maybe_namespace_elt (const struct type *curtype,
   if (sym.symbol == NULL)
     return NULL;
   else if ((noside == EVAL_AVOID_SIDE_EFFECTS)
-	   && (sym.symbol->aclass () == LOC_TYPEDEF))
+	   && (sym.symbol->loc_class () == LOC_TYPEDEF))
     result = value::allocate (sym.symbol->type ());
   else
     result = value_of_variable (sym.symbol, sym.block);
@@ -4165,9 +4158,7 @@ cast_into_complex (struct type *type, struct value *val)
     error (_("cannot cast non-number to complex"));
 }
 
-void _initialize_valops ();
-void
-_initialize_valops ()
+INIT_GDB_FILE (valops)
 {
   add_setshow_boolean_cmd ("overload-resolution", class_support,
 			   &overload_resolution, _("\

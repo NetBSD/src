@@ -2,7 +2,7 @@
    Written by Fred Fish <fnf@cygnus.com>
    Rewritten by Jim Blandy <jimb@cygnus.com>
 
-   Copyright (C) 1999-2023 Free Software Foundation, Inc.
+   Copyright (C) 1999-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BCACHE_H
-#define BCACHE_H 1
+#ifndef GDB_BCACHE_H
+#define GDB_BCACHE_H
 
 /* A bcache is a data structure for factoring out duplication in
    read-only structures.  You give the bcache some string of bytes S.
@@ -152,7 +152,26 @@ struct bcache
      were newly added to the cache, or to false if the bytes were
      found in the cache.  */
 
-  const void *insert (const void *addr, int length, bool *added = nullptr);
+  template<typename T, typename = gdb::Requires<std::is_trivially_copyable<T>>>
+  const T *insert (const T *addr, int length, bool *added = nullptr)
+  {
+    return (const T *) this->insert ((const void *) addr, length, added);
+  }
+
+  /* Find a copy of OBJECT in this bcache.  If BCACHE has never seen
+     those bytes before, add a copy of them to BCACHE.  In either
+     case, return a pointer to BCACHE's copy of that string.  Since
+     the cached value is meant to be read-only, return a const buffer.
+     If ADDED is not NULL, set *ADDED to true if the bytes were newly
+     added to the cache, or to false if the bytes were found in the
+     cache.  */
+
+  template<typename T, typename = gdb::Requires<std::is_trivially_copyable<T>>>
+  const T *insert (const T &object, bool *added = nullptr)
+  {
+    return (const T *) this->insert ((const void *) &object, sizeof (object),
+				     added);
+  }
 
   /* Print statistics on this bcache's memory usage and efficacity at
      eliminating duplication.  TYPE should be a string describing the
@@ -172,6 +191,10 @@ protected:
   virtual int compare (const void *left, const void *right, int length);
 
 private:
+
+  /* Implementation of the templated 'insert' methods.  */
+
+  const void *insert (const void *addr, int length, bool *added);
 
   /* All the bstrings are allocated here.  */
   struct obstack m_cache {};
@@ -207,4 +230,4 @@ private:
 
 } /* namespace gdb */
 
-#endif /* BCACHE_H */
+#endif /* GDB_BCACHE_H */

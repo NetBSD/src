@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -246,7 +246,7 @@ print_semantic_body (lf *file,
     }
 
   /* Architecture expects a REG to be zero.  Instead of having to
-     check every read to see if it is refering to that REG just zap it
+     check every read to see if it is referring to that REG just zap it
      at the start of every instruction */
   if (options.gen.zero_reg)
     {

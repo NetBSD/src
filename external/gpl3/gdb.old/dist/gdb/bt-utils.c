@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,11 +15,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "bt-utils.h"
 #include "command.h"
-#include "gdbcmd.h"
-#include "top.h"
+#include "cli/cli-cmds.h"
+#include "ui.h"
 #include "cli/cli-decode.h"
 
 /* See bt-utils.h.  */
@@ -146,7 +145,22 @@ gdb_internal_backtrace_1 ()
 #else
 #error "unexpected internal backtrace policy"
 #endif
+
+static const char *str_backtrace = "----- Backtrace -----\n";
+static const char *str_backtrace_unavailable = "Backtrace unavailable\n";
+
 #endif /* GDB_PRINT_INTERNAL_BACKTRACE */
+
+/* See bt-utils.h.  */
+
+void
+gdb_internal_backtrace_init_str ()
+{
+#ifdef GDB_PRINT_INTERNAL_BACKTRACE
+  str_backtrace = _("----- Backtrace -----\n");
+  str_backtrace_unavailable = _("Backtrace unavailable\n");
+#endif
+}
 
 /* See bt-utils.h.  */
 
@@ -162,12 +176,12 @@ gdb_internal_backtrace ()
     gdb_stderr->write_async_safe (msg, strlen (msg));
   };
 
-  sig_write (_("----- Backtrace -----\n"));
+  sig_write (str_backtrace);
 
   if (gdb_stderr->fd () > -1)
     gdb_internal_backtrace_1 ();
   else
-    sig_write (_("Backtrace unavailable\n"));
+    sig_write (str_backtrace_unavailable);
 
   sig_write ("---------------------\n");
 #endif

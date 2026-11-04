@@ -1,4 +1,4 @@
-/* $NetBSD: quota2_subr.c,v 1.7 2023/08/24 14:56:03 andvar Exp $ */
+/* $NetBSD: quota2_subr.c,v 1.7.6.1 2026/11/04 23:28:08 perseant Exp $ */
 /*-
   * Copyright (c) 2010, 2011 Manuel Bouyer
   * All rights reserved.
@@ -26,16 +26,16 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.7 2023/08/24 14:56:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: quota2_subr.c,v 1.7.6.1 2026/11/04 23:28:08 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/time.h>
 
-#include <ufs/ufs/dinode.h>
-#include <ufs/ffs/fs.h>
 #include <ufs/ffs/ffs_extern.h>
-#include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ffs/fs.h>
+#include <ufs/ufs/dinode.h>
 #include <ufs/ufs/quota2.h>
+#include <ufs/ufs/ufs_bswap.h>
 
 #ifndef _KERNEL
 #include <string.h>

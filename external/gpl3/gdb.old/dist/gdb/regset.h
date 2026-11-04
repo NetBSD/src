@@ -1,6 +1,6 @@
 /* Manage register sets.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef REGSET_H
-#define REGSET_H 1
+#ifndef GDB_REGSET_H
+#define GDB_REGSET_H
 
 struct gdbarch;
 struct regcache;
@@ -52,4 +52,4 @@ struct regset
 #define REGSET_VARIABLE_SIZE 1	/* Accept a larger regset section size
 				   in a core file without warning.  */
 
-#endif /* regset.h */
+#endif /* GDB_REGSET_H */

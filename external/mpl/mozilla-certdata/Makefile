@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2023/08/26 05:47:53 riastradh Exp $
+#	$NetBSD: Makefile,v 1.1.4.1 2026/11/04 23:18:27 perseant Exp $
 #
 
 .include <bsd.own.mk>
 
 .if ${MKSHARE} != "no"
 SUBDIR=	share
-.include <bsd.subdir.mk>
 .endif
+.include <bsd.subdir.mk>

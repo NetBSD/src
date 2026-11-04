@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.h,v 1.7.2.1 2025/08/02 05:50:49 perseant Exp $	*/
+/*	$NetBSD: keygen.h,v 1.7.2.2 2026/11/04 23:15:32 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -24,6 +24,9 @@
 #include <dns/secalg.h>
 
 ISC_LANG_BEGINDECLS
+
+void
+makesafe_keyname(const char *keyname, char *namebuf, size_t length);
 
 void
 generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,

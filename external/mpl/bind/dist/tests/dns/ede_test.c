@@ -1,4 +1,4 @@
-/*	$NetBSD: ede_test.c,v 1.2.4.2 2025/08/02 05:54:11 perseant Exp $	*/
+/*	$NetBSD: ede_test.c,v 1.2.4.3 2026/11/04 23:18:22 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -54,7 +54,7 @@ dns_ede_test_equals(const ede_test_expected_t *expected, size_t expected_count,
 		uint16_t code;
 		const unsigned char *txt;
 
-		assert_in_range(count, 0, expected_count);
+		assert_uint_in_range(count, 0, expected_count);
 		assert_int_equal(edns->code, DNS_OPT_EDE);
 
 		code = ISC_U8TO16_BE(edns->value);
@@ -148,7 +148,7 @@ ISC_RUN_TEST_IMPL(dns_ede_test_infocode_range) {
 	dns_ede_init(mctx, &edectx);
 
 	dns_ede_add(&edectx, 1, NULL);
-	expect_assert_failure(dns_ede_add(&edectx, 32, NULL));
+	expect_assert_failure(dns_ede_add(&edectx, DNS_EDE_MAX_CODE + 1, NULL));
 
 	const ede_test_expected_t expected[] = {
 		{ .code = 1, .txt = NULL },

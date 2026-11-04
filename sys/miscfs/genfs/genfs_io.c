@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.104 2024/04/05 13:05:40 riastradh Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.104.2.1 2026/11/04 23:27:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.104 2024/04/05 13:05:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.104.2.1 2026/11/04 23:27:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -878,7 +878,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	struct uvm_page_array a;
 	bool wasclean, needs_clean;
 	bool async = (origflags & PGO_SYNCIO) == 0;
-	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
+	bool pagedaemon = uvm_lwp_is_pagedaemon(curlwp);
 	struct mount *trans_mp;
 	int flags;
 	bool modified;		/* if we write out any pages */
@@ -1444,6 +1444,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	const bool lazy = (flags & PGO_LAZY) == 0;
 	const bool iowrite = rw == UIO_WRITE;
 	const int brw = iowrite ? B_WRITE : B_READ;
+	const bool pgdaemon = uvm_lwp_is_pagedaemon(curlwp);
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(ubchist);
 
 	UVMHIST_LOG(ubchist, "vp %#jx kva %#jx len 0x%jx flags 0x%jx",
@@ -1469,6 +1470,10 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	skipbytes = 0;
 	KASSERT(bytes != 0);
 
+	mbp = getiobuf(vp, !pgdaemon);
+	if (mbp == NULL) {
+		return ENOMEM;
+	}
 	if (iowrite) {
 		/*
 		 * why += 2?
@@ -1478,7 +1483,6 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		vp->v_numoutput += 2;
 		mutex_exit(vp->v_interlock);
 	}
-	mbp = getiobuf(vp, true);
 	UVMHIST_LOG(ubchist, "vp %#jx mbp %#jx num now %jd bytes 0x%jx",
 	    (uintptr_t)vp, (uintptr_t)mbp, vp->v_numoutput, bytes);
 	mbp->b_bufsize = len;
@@ -1492,7 +1496,7 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		mbp->b_flags = brw;
 		mbp->b_iodone = NULL;
 	}
-	if (curlwp == uvm.pagedaemon_lwp)
+	if (uvm_lwp_is_pagedaemon(curlwp))
 		BIO_SETPRIO(mbp, BPRIO_TIMELIMITED);
 	else if (async || lazy)
 		BIO_SETPRIO(mbp, BPRIO_TIMENONCRITICAL);
@@ -1558,7 +1562,11 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 		} else {
 			UVMHIST_LOG(ubchist, "vp %#jx bp %#jx num now %jd",
 			    (uintptr_t)vp, (uintptr_t)bp, vp->v_numoutput, 0);
-			bp = getiobuf(vp, true);
+			bp = getiobuf(vp, !pgdaemon);
+			if (bp == NULL) {
+				error = ENOMEM;
+				goto loopdone;
+			}
 			nestiobuf_setup(mbp, bp, offset - startoffset, iobytes);
 		}
 		bp->b_lblkno = 0;

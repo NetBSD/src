@@ -1,4 +1,4 @@
-/* $NetBS$ */
+/* $NetBSD: qcompep.h,v 1.2.4.3 2026/11/04 23:21:47 perseant Exp $ */
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
  *

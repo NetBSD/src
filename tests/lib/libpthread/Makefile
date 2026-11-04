@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.16.2.1 2025/08/02 05:58:09 perseant Exp $
+# $NetBSD: Makefile,v 1.16.2.2 2026/11/04 23:28:19 perseant Exp $
 
 NOMAN=		# defined
 
@@ -68,6 +68,7 @@ SRCS.h_thread_local_dtor= h_thread_local_dtor.cpp
 FILESDIR=	${TESTSDIR}
 FILES=		d_mach
 
-SUBDIR=		dlopen
+TESTS_SUBDIRS+=	dlopen
+TESTS_SUBDIRS+=	weak
 
 .include <bsd.test.mk>

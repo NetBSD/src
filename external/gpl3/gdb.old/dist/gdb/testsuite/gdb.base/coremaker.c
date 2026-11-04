@@ -1,4 +1,4 @@
-/* Copyright 1992-2023 Free Software Foundation, Inc.
+/* Copyright 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,7 +45,7 @@ int coremaker_data = 1;	/* In Data section */
 int coremaker_bss;	/* In BSS section */
 
 /* Place a chunk of memory before coremaker_ro to improve the chances
-   that coremaker_ro will end up on it's own page.  See:
+   that coremaker_ro will end up on its own page.  See:
 
    https://sourceware.org/pipermail/gdb-patches/2020-May/168168.html
    https://sourceware.org/pipermail/gdb-patches/2020-May/168170.html  */

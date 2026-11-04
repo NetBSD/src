@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.149 2023/12/29 09:17:37 wiz Exp $
+#	$NetBSD: sys.mk,v 1.149.2.1 2026/11/04 23:19:54 perseant Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -7,7 +7,10 @@
 
 unix?=		We run NetBSD.
 
-.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .f .F .r .p .l .y .sh
+.SUFFIXES: .a .o .ln .s .S .c .cc .cpp .cxx .C .r .p .l .y .sh
+_FORTRAN_SUFFIXES_NOCPP=.f .for .ftn .f90 .f95 .f03 .f08
+_FORTRAN_SUFFIXES_CPP=	.F .FOR .fpp .FPP .FTN .F90 .F95 .F03 .F08
+.SUFFIXES: ${_FORTRAN_SUFFIXES_NOCPP} ${_FORTRAN_SUFFIXES_CPP}
 
 .LIBS:		.a
 
@@ -29,7 +32,8 @@ CC?=		cc
 .if ${MACHINE_ARCH} == "sh3el" || ${MACHINE_ARCH} == "sh3eb"
 # -O2 is too -falign-* zealous for low-memory sh3 machines
 DBG?=	-Os -freorder-blocks
-.elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68000"
+.elif ${MACHINE_ARCH} == "m68k" || ${MACHINE_ARCH} == "m68ksf" || \
+    ${MACHINE_ARCH} == "m68000"
 # -freorder-blocks (enabled by -O2) produces much bigger code
 DBG?=	-O2 -fno-reorder-blocks
 .elif ${MACHINE_ARCH} == "coldfire"
@@ -56,7 +60,7 @@ CTFCONVERT_RUN	?= ${defined(CTFCONVERT):?${CTFCONVERT} ${CTFFLAGS} -o ${.TARGET}
 CXX?=		c++
 # Strip flags unsupported by C++ compilers
 # Remove -Wsystem-headers because C++ headers aren't clean of warnings
-CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9]:N-Wold-style-definition:N-Wno-format-zero-length:N-Wsystem-headers}
+CXXFLAGS?=	${CFLAGS:N-Wno-traditional:N-Wstrict-prototypes:N-Wmissing-prototypes:N-Wno-pointer-sign:N-ffreestanding:N-std=gnu[0-9][0-9x]:N-Wold-style-definition:N-Wno-format-zero-length:N-Wsystem-headers}
 
 # Use the sources, as the seed... Normalize all paths...
 __ALLSRC1=	${empty(DESTDIR):?${.ALLSRC}:${.ALLSRC:S|^${DESTDIR}|^destdir|}}
@@ -154,22 +158,22 @@ YACC.y?=	${YACC} ${YFLAGS}
 	rm -f ${.PREFIX}.o
 
 # Fortran/Ratfor
-.f:
+${_FORTRAN_SUFFIXES_NOCPP}:
 	${COMPILE_LINK.f} ${EXEC_TARGET} ${.IMPSRC} ${LDLIBS}
-.f.o:
+${_FORTRAN_SUFFIXES_NOCPP:=.o}:
 	${COMPILE.f} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
-.f.a:
+${_FORTRAN_SUFFIXES_NOCPP:=.a}:
 	${COMPILE.f} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
 	rm -f ${.PREFIX}.o
 
-.F:
+${_FORTRAN_SUFFIXES_CPP}:
 	${COMPILE_LINK.F} ${EXEC_TARGET} ${.IMPSRC} ${LDLIBS}
-.F.o:
+${_FORTRAN_SUFFIXES_CPP:=.o}:
 	${COMPILE.F} ${.IMPSRC} ${OBJECT_TARGET}
 	${CTFCONVERT_RUN}
-.F.a:
+${_FORTRAN_SUFFIXES_CPP:=.a}:
 	${COMPILE.F} ${.IMPSRC}
 	${AR} ${ARFLAGS} ${.TARGET} ${.PREFIX}.o
 	rm -f ${.PREFIX}.o

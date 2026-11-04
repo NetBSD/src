@@ -1,6 +1,6 @@
 /* KVX assembler/disassembler support.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of GNU Binutils.
@@ -140,13 +140,13 @@ struct kvx_pseudo_relocs
   struct kvx_reloc *kreloc;
 };
 
-typedef struct symbol symbolS;
+struct symbol;
 
 struct pseudo_func
 {
   const char *name;
 
-  symbolS *sym;
+  struct symbol *sym;
   struct kvx_pseudo_relocs pseudo_relocs;
 };
 

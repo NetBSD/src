@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -114,7 +114,7 @@ struct pstate {
     uint64_t          pwdtime;	/* Cycles in power-down mode */
     uint64_t          nstore;	/* Number of load instructions */
     uint64_t          nload;	/* Number of store instructions */
-    uint64_t          nannul;	/* Number of annuled instructions */
+    uint64_t          nannul;	/* Number of annulled instructions */
     uint64_t          nbranch;	/* Number of branch instructions */
     uint32_t          ildreg;	/* Destination of last load instruction */
     uint64_t          ildtime;	/* Last time point for load dependency */

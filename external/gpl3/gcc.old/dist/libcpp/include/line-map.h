@@ -1,5 +1,5 @@
 /* Map (unsigned int) keys to (source file, line, column) triples.
-   Copyright (C) 2001-2020 Free Software Foundation, Inc.
+   Copyright (C) 2001-2022 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify it
 under the terms of the GNU General Public License as published by the
@@ -72,6 +72,7 @@ enum lc_reason
   LC_RENAME,		/* Other reason for name change.  */
   LC_RENAME_VERBATIM,	/* Likewise, but "" != stdin.  */
   LC_ENTER_MACRO,	/* Begin macro expansion.  */
+  LC_MODULE,		/* A (C++) Module.  */
   /* FIXME: add support for stringize and paste.  */
   LC_HWM /* High Water Mark.  */
 };
@@ -82,7 +83,7 @@ enum lc_reason
 
    This key only has meaning in relation to a line_maps instance.  Within
    gcc there is a single line_maps instance: "line_table", declared in
-   gcc/input.h and defined in gcc/input.c.
+   gcc/input.h and defined in gcc/input.cc.
 
    The values of the keys are intended to be internal to libcpp,
    but for ease-of-understanding the implementation, they are currently
@@ -439,7 +440,8 @@ struct GTY((tag ("1"))) line_map_ordinary : public line_map {
 
   /* Location from whence this line map was included.  For regular
      #includes, this location will be the last location of a map.  For
-     outermost file, this is 0.  */
+     outermost file, this is 0.  For modules it could be anywhere
+     within a map.  */
   location_t included_from;
 
   /* Size is 20 or 24 bytes, no padding  */
@@ -658,6 +660,15 @@ ORDINARY_MAP_IN_SYSTEM_HEADER_P (const line_map_ordinary *ord_map)
   return ord_map->sysp;
 }
 
+/* TRUE if this line map is for a module (not a source file).  */
+
+inline bool
+MAP_MODULE_P (const line_map *map)
+{
+  return (MAP_ORDINARY_P (map)
+	  && linemap_check_ordinary (map)->reason == LC_MODULE);
+}
+
 /* Get the filename of ordinary map MAP.  */
 
 inline const char *
@@ -781,6 +792,9 @@ public:
   /* If true, prints an include trace a la -H.  */
   bool trace_includes;
 
+  /* True if we've seen a #line or # 44 "file" directive.  */
+  bool seen_line_directive;
+
   /* Highest location_t "given out".  */
   location_t highest_location;
 
@@ -792,20 +806,17 @@ public:
   unsigned int max_column_hint;
 
   /* The allocator to use when resizing 'maps', defaults to xrealloc.  */
-  line_map_realloc reallocator;
+  line_map_realloc GTY((callback)) reallocator;
 
   /* The allocators' function used to know the actual size it
      allocated, for a certain allocation size requested.  */
-  line_map_round_alloc_size_func round_alloc_size;
+  line_map_round_alloc_size_func GTY((callback)) round_alloc_size;
 
   struct location_adhoc_data_map location_adhoc_data_map;
 
   /* The special location value that is used as spelling location for
      built-in tokens.  */
   location_t builtin_location;
-
-  /* True if we've seen a #line or # 44 "file" directive.  */
-  bool seen_line_directive;
 
   /* The default value of range_bits in ordinary line maps.  */
   unsigned int default_range_bits;
@@ -1020,13 +1031,11 @@ LINEMAPS_LAST_ALLOCATED_MACRO_MAP (const line_maps *set)
   return (line_map_macro *)LINEMAPS_LAST_ALLOCATED_MAP (set, true);
 }
 
-extern location_t get_combined_adhoc_loc (class line_maps *,
-					       location_t,
-					       source_range,
-					       void *);
+extern location_t get_combined_adhoc_loc (line_maps *, location_t,
+					  source_range, void *);
 extern void *get_data_from_adhoc_loc (const line_maps *, location_t);
 extern location_t get_location_from_adhoc_loc (const line_maps *,
-						    location_t);
+					       location_t);
 
 extern source_range get_range_from_loc (line_maps *set, location_t loc);
 
@@ -1039,8 +1048,7 @@ pure_location_p (line_maps *set, location_t loc);
 /* Given location LOC within SET, strip away any packed range information
    or ad-hoc information.  */
 
-extern location_t get_pure_location (line_maps *set,
-					  location_t loc);
+extern location_t get_pure_location (line_maps *set, location_t loc);
 
 /* Combine LOC and BLOCK, giving a combined adhoc location.  */
 
@@ -1075,6 +1083,9 @@ extern void linemap_check_files_exited (class line_maps *);
 extern location_t linemap_line_start
 (class line_maps *set, linenum_type to_line,  unsigned int max_column_hint);
 
+/* Allocate a raw block of line maps, zero initialized.  */
+extern line_map *line_map_new_raw (line_maps *, bool, unsigned);
+
 /* Add a mapping of logical source line to physical source file and
    line number. This function creates an "ordinary map", which is a
    map that records locations of tokens that are not part of macro
@@ -1092,6 +1103,40 @@ extern const line_map *linemap_add
   (class line_maps *, enum lc_reason, unsigned int sysp,
    const char *to_file, linenum_type to_line);
 
+/* Create a macro map.  A macro map encodes source locations of tokens
+   that are part of a macro replacement-list, at a macro expansion
+   point. See the extensive comments of struct line_map and struct
+   line_map_macro, in line-map.h.
+
+   This map shall be created when the macro is expanded. The map
+   encodes the source location of the expansion point of the macro as
+   well as the "original" source location of each token that is part
+   of the macro replacement-list. If a macro is defined but never
+   expanded, it has no macro map.  SET is the set of maps the macro
+   map should be part of.  MACRO_NODE is the macro which the new macro
+   map should encode source locations for.  EXPANSION is the location
+   of the expansion point of MACRO. For function-like macros
+   invocations, it's best to make it point to the closing parenthesis
+   of the macro, rather than the the location of the first character
+   of the macro.  NUM_TOKENS is the number of tokens that are part of
+   the replacement-list of MACRO.  */
+const line_map_macro *linemap_enter_macro (line_maps *, cpp_hashnode *,
+					   location_t, unsigned int);
+
+/* Create a source location for a module.  The creator must either do
+   this after the TU is tokenized, or deal with saving and restoring
+   map state.  */
+
+extern location_t linemap_module_loc
+  (line_maps *, location_t from, const char *name);
+extern void linemap_module_reparent
+  (line_maps *, location_t loc, location_t new_parent);
+
+/* Restore the linemap state such that the map at LWM-1 continues.
+   Return start location of the new map.  */
+extern unsigned linemap_module_restore
+  (line_maps *, unsigned lwm);
+
 /* Given a logical source location, returns the map which the
    corresponding (source file, line, column) triplet can be deduced
    from. Since the set is built chronologically, the logical lines are
@@ -1100,6 +1145,8 @@ extern const line_map *linemap_add
    function returns NULL.  */
 extern const line_map *linemap_lookup
   (const line_maps *, location_t);
+
+unsigned linemap_lookup_macro_index (const line_maps *, location_t);
 
 /* Returns TRUE if the line table set tracks token locations across
    macro expansion, FALSE otherwise.  */
@@ -1223,6 +1270,12 @@ LINEMAP_SYSP (const line_map_ordinary *ord_map)
 {
   return ord_map->sysp;
 }
+
+const struct line_map *first_map_in_common (line_maps *set,
+					    location_t loc0,
+					    location_t loc1,
+					    location_t *res_loc0,
+					    location_t *res_loc1);
 
 /* Return a positive value if PRE denotes the location of a token that
    comes before the token of POST, 0 if PRE denotes the location of
@@ -1617,6 +1670,12 @@ class rich_location
   /* Destructor.  */
   ~rich_location ();
 
+  /* The class manages the memory pointed to by the elements of
+     the M_FIXIT_HINTS vector and is not meant to be copied or
+     assigned.  */
+  rich_location (const rich_location &) = delete;
+  void operator= (const rich_location &) = delete;
+
   /* Accessors.  */
   location_t get_loc () const { return get_loc (0); }
   location_t get_loc (unsigned int idx) const;
@@ -1728,6 +1787,18 @@ class rich_location
   const diagnostic_path *get_path () const { return m_path; }
   void set_path (const diagnostic_path *path) { m_path = path; }
 
+  /* A flag for hinting that the diagnostic involves character encoding
+     issues, and thus that it will be helpful to the user if we show some
+     representation of how the characters in the pertinent source lines
+     are encoded.
+     The default is false (i.e. do not escape).
+     When set to true, non-ASCII bytes in the pertinent source lines will
+     be escaped in a manner controlled by the user-supplied option
+     -fdiagnostics-escape-format=, so that the user can better understand
+     what's going on with the encoding in their source file.  */
+  bool escape_on_output_p () const { return m_escape_on_output; }
+  void set_escape_on_output (bool flag) { m_escape_on_output = flag; }
+
 private:
   bool reject_impossible_fixit (location_t where);
   void stop_supporting_fixits ();
@@ -1745,13 +1816,14 @@ protected:
   int m_column_override;
 
   bool m_have_expanded_location;
+  bool m_seen_impossible_fixit;
+  bool m_fixits_cannot_be_auto_applied;
+  bool m_escape_on_output;
+
   expanded_location m_expanded_location;
 
   static const int MAX_STATIC_FIXIT_HINTS = 2;
   semi_embedded_vec <fixit_hint *, MAX_STATIC_FIXIT_HINTS> m_fixit_hints;
-
-  bool m_seen_impossible_fixit;
-  bool m_fixits_cannot_be_auto_applied;
 
   const diagnostic_path *m_path;
 };
@@ -2034,8 +2106,8 @@ enum location_aspect
 
 /* The rich_location class requires a way to expand location_t instances.
    We would directly use expand_location_to_spelling_point, which is
-   implemented in gcc/input.c, but we also need to use it for rich_location
-   within genmatch.c.
+   implemented in gcc/input.cc, but we also need to use it for rich_location
+   within genmatch.cc.
    Hence we require client code of libcpp to implement the following
    symbol.  */
 extern expanded_location

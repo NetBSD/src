@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.131 2024/01/18 05:12:30 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.131.2.1 2026/11/04 23:21:02 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -61,7 +61,7 @@
  */
 	.data
 	.space	PAGE_SIZE
-ASLOCAL(tmpstk)
+ASGLOBAL(tmpstk)
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
@@ -166,9 +166,21 @@ ASENTRY_NOPROFILE(start)
 
 	ASRELOC(Lbrdid2mach,%a0)
 Lbrdmatch:
+	/*
+	 * Board type entries look like:
+	 *
+	 *	.word	board-id	|  2
+	 *	.word	cpu-type	| +2
+	 *	.word	mmu-type	| +2
+	 *	.word	fpu-type	| +2
+	 *	.long	init-func	| +4 --> 12 bytes
+	 *
+	 * We advance past the board ID when we compare it, meaning that
+	 * we have 10 bytes to skip if we don't get a match.
+	 */
 	cmpw	%a0@+,%d0
 	jbeq	Lgotmatch
-	addw	#0x12,%a0		| Each entry is 20-2 bytes long
+	addw	#10,%a0	
 	tstw	%a0@
 	jbne	Lbrdmatch
 
@@ -282,18 +294,18 @@ Linit147:
 	 */
 	RELOC(intiobase_phys, %a0);
 	movl	#INTIOBASE147,%a0@
-	RELOC(intiotop_phys, %a0);
-	movl	#INTIOTOP147,%a0@
+	RELOC(intiosize, %a0);
+	movl	#INTIOSIZE147,%a0@
 
 	/* initialise list of physical memory segments for pmap_bootstrap */
 	RELOC(phys_seg_list, %a0)
-	movl	%a5,%a0@		| phys_seg_list[0].ps_start
+	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
 	movl	0xfffe0774,%d1		| End + 1 of onboard memory
-	movl	%d1,%a0@(4)		| phys_seg_list[0].ps_end
-	clrl	%a0@(8)			| phys_seg_list[0].ps_startpage
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
 
 	/* offboard RAM */
-	clrl	%a0@(0x0c)		| phys_seg_list[1].ps_start
+	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
+	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffe0764,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
@@ -303,12 +315,12 @@ Linit147:
 	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
 	cmpl	%d1,%d0			| Quick and dirty validity check
 	jbcs	Loff_ok			| Yup, looks good.
-	movel	%a0@(4),%d1		| Just use onboard RAM otherwise
+	RELOC(phys_seg_list, %a0)
+	movel	%a0@(PS_END),%d1	| Just use onboard RAM otherwise
 	jbra	Lsavmaxmem
 Loff_ok:
-	movl	%d0,%a0@(0x0c)		| phys_seg_list[1].ps_start
-	movl	%d1,%a0@(0x10)		| phys_seg_list[1].ps_end
-	clrl	%a0@(0x14)		| phys_seg_list[1].ps_startpage
+	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -320,13 +332,7 @@ Lclearoff:
 	clrl	%a0@+			| zap a word
 	cmpl	%a0,%d1			| reached end?
 	jbne	Lclearoff
-
-Lsavmaxmem:
-	moveq	#PGSHIFT,%d2
-	lsrl	%d2,%d1			| convert to page (click) number
-	RELOC(maxmem, %a0)
-	movl	%d1,%a0@		| save as maxmem
-	jra	Lstart1
+	jra	Lsavmaxmem		| save maxmem and continue with boot
 #endif
 
 #if defined(MVME162) || defined(MVME172)
@@ -475,35 +481,35 @@ Lis1xx_common:
 	 */
 	RELOC(intiobase_phys, %a0);
 	movl	#INTIOBASE1xx,%a0@
-	RELOC(intiotop_phys, %a0);
-	movl	#INTIOTOP1xx,%a0@
+	RELOC(intiosize, %a0);
+	movl	#INTIOSIZE1xx,%a0@
 
 	/*
 	 * Initialise first physical memory segment with onboard RAM details
 	 */
 	RELOC(phys_seg_list, %a0)
-	movl	%a5,%a0@		| phys_seg_list[0].ps_start
-	movl	%d1,%a0@(4)		| phys_seg_list[0].ps_end
-	clrl	%a0@(8)			| phys_seg_list[0].ps_startpage
+	movl	%a5,%a0@(PS_START)	| phys_seg_list[0].ps_start
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[0].ps_end
 
 	/* offboard RAM */
-	clrl	%a0@(0x0c)		| phys_seg_list[1].ps_start
+	lea	%a0@(SIZEOF_PHYSSEGLIST),%a0
+	clrl	%a0@(PS_START)		| phys_seg_list[1].ps_start
 	movl	#PAGE_SIZE-1,%d0
 	addl	0xfffc0000,%d0		| Start of offboard segment
 	andl	#-PAGE_SIZE,%d0		| Round up to page boundary
-	jbeq	Ldone1xx		| Jump if none defined
+	jbeq	Lsavmaxmem		| Jump if none defined
 	movl	#PAGE_SIZE,%d1		| Note: implicit '+1'
 	addl	0xfffc0004,%d1		| End of offboard segment
 	andl	#-PAGE_SIZE,%d1		| Round up to page boundary
 	cmpl	%d1,%d0			| Quick and dirty validity check
 	jbcs	Lramsave1xx		| Yup, looks good.
-	movel	%a0@(4),%d1		| Just use onboard RAM otherwise
-	jbra	Ldone1xx
+	RELOC(phys_seg_list, %a0)
+	movel	%a0@(PS_END),%d1	| Just use onboard RAM otherwise
+	jbra	Lsavmaxmem
 
 Lramsave1xx:
-	movl	%d0,%a0@(0x0c)		| phys_seg_list[1].ps_start
-	movl	%d1,%a0@(0x10)		| phys_seg_list[1].ps_end
-	clrl	%a0@(0x14)		| phys_seg_list[1].ps_startpage
+	movl	%d0,%a0@(PS_START)	| phys_seg_list[1].ps_start
+	movl	%d1,%a0@(PS_END)	| phys_seg_list[1].ps_end
 
 	/*
 	 * Offboard RAM needs to be cleared to zero to initialise parity
@@ -515,138 +521,65 @@ Lramclr1xx:
 	clrl	%a0@+			| zap a word
 	cmpl	%a0,%d1			| reached end?
 	jbne	Lramclr1xx
-
-Ldone1xx:
-	moveq	#PGSHIFT,%d2
-	lsrl	%d2,%d1			| convert to page (click) number
-	RELOC(maxmem, %a0)
-	movl	%d1,%a0@		| save as maxmem
-
-	/* FALLTHROUGH to Lstart1 */
 #endif
 
+Lsavmaxmem:
+	moveq	#PGSHIFT,%d2
+	lsrl	%d2,%d1			| convert to page (click) number
+	RELOC(physmem, %a0)
+	movl	%d1,%a0@		| save into physmem
 
-Lstart1:
-/* initialize source/destination control registers for movs */
-	moveq	#FC_USERD,%d0		| user space
-	movc	%d0,%sfc		|   as source
-	movc	%d0,%dfc		|   and destination of transfers
 /*
  * configure kernel and lwp0 VA space so we can get going
  */
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel text/data syms
-	movl	%a0@,%d2
+	movl	%a0@,%a4
+	tstl	%a4
 	jne	Lstart2
 #endif
-	movl	#_C_LABEL(end),%d2	| end of static kernel text/data
+	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
 Lstart2:
-	addl	#PAGE_SIZE-1,%d2
-	andl	#PG_FRAME,%d2		| round to a page
-	movl	%d2,%a4
 	addl	%a5,%a4			| convert to PA
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
-	RELOC(pmap_bootstrap,%a0)
-	jbsr	%a0@			| pmap_bootstrap(firstpa, nextpa)
+	RELOC(pmap_bootstrap1,%a0)
+	jbsr	%a0@			| pmap1_bootstrap1(nextpa, reloff)
 	addql	#8,%sp
+
+	/*
+	 * Updated nextpa returned in %d0.  We need to squirrel
+	 * that away in a callee-saved register to use later,
+	 * after the MMU is enabled.
+	 */
+	movl	%d0, %d7
+
+	/* NOTE: %d7 is now off-limits!! */
 
 /*
  * Enable the MMU.
- * Since the kernel is mapped logical == physical, we just turn it on.
+ * Since the kernel is mapped logical == physical, there is no prep
+ * work to do.
  */
-	RELOC(Sysseg_pa, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
-	.long	0x4e7b1807		| movc d1,srp
-	jra	Lstploaddone
-Lmotommu1:
-#ifdef M68030
-	RELOC(protorp, %a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-#endif /* M68030 */
-Lstploaddone:
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu2		| no, skip
-	moveq	#0,%d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
-	.long	0x4e7b0007		| movc d0,dtt1
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	movl	#0x8000,%d0
-	.long	0x4e7b0003		| movc d0,tc
-#ifdef M68060
-	RELOC(cputype, %a0)
-	cmpl	#CPU_68060,%a0@		| 68060?
-	jne	Lnot060cache
-	movl	#1,%d0
-	.long	0x4e7b0808		| movcl d0,pcr
-	movl	#0xa0808000,%d0
-	movc	%d0,%cacr		| enable store buffer, both caches
-	jmp	Lenab1
-Lnot060cache:
-#endif
-	movl	#0x80008000,%d0
-	movc	%d0,%cacr		| turn on both caches
-	jmp	Lenab1
-Lmotommu2:
-	pflusha
-	movl	#MMU51_TCR_BITS,%sp@-	| value to load TC with
-	pmove	%sp@,%tc		| load it
+#include <m68k/m68k/mmu_enable.s>
 
 /*
  * Should be running mapped from this point on
  */
-Lenab1:
-/* Point the CPU VBR at our vector table */
+Lmmuenabled:
 	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
-/* call final pmap setup */
-	jbsr	_C_LABEL(pmap_bootstrap_finalize)
-/* set kernel stack, user SP */
-	movl	_C_LABEL(lwp0uarea),%a1	| get lwp0 uarea
-	lea	%a1@(USPACE-4),%sp	| set kernel stack to end of area
-	movl	#USRSTACK-4,%a2
-	movl	%a2,%usp		| init user SP
-	tstl	_C_LABEL(fputype)	| Have an FPU?
-	jeq	Lenab2			| No, skip.
-	clrl	%a1@(PCB_FPCTX)		| ensure null FP context
-	movl	%a1,%sp@-
-	jbsr	_C_LABEL(m68881_restore) | restore it (does not kill a1)
-	addql	#4,%sp
-Lenab2:
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Ltbia040		| yes, cache already on
-	pflusha
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
-	jra	Lenab3
-Ltbia040:
-	.word	0xf518
-Lenab3:
-/*
- * final setup for C code:
- * Create a fake exception frame so that cpu_lwp_fork() can copy it.
- * main() nevers returns; we exit to user mode from a forked process
- * later on.
- */
-	jbsr	_C_LABEL(mvme68k_init)	| additional pre-main initialization
-	movw	#PSL_LOWIPL,%sr		| lower SPL
-	clrw	%sp@-			| vector offset/frame type
-	clrl	%sp@-			| PC - filled in by "execve"
-	movw	#PSL_USER,%sp@-		| in user mode
-	clrl	%sp@-			| stack adjust count and padding
-	lea	%sp@(-64),%sp		| construct space for D0-D7/A0-A7
-	lea	_C_LABEL(lwp0),%a0	| save pointer to frame
-	movl	%sp,%a0@(L_MD_REGS)	|   in lwp0.l_md.md_regs
 
-	jra	_C_LABEL(main)		| main()
+	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
+	jbsr	_C_LABEL(pmap_bootstrap2)
+	movl	%a0,%sp			| now running on lwp0's stack
+	movl	#0,%a6			| terminate the stack back trace
+
+	movl	%d7,%sp@-		| push nextpa saved above
+	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
+	addql	#4,%sp
+	movw	#PSL_LOWIPL,%sr		| lower SPL
+	jra	_C_LABEL(main)		| main() (never returns)
 
 #if defined(MVME162) || defined(MVME167) || defined(MVME172) || defined(MVME177)
 /*
@@ -684,364 +617,16 @@ Lmemc040berr:
 #endif
 
 /*
- * Trap/interrupt vector routines
- */
-#include <m68k/m68k/trap_subr.s>
-
-/*
- * Use common m68k bus error and address error handlers.
- */
-#include <m68k/m68k/busaddrerr.s>
-
-/*
- * FP exceptions.
- */
-ENTRY_NOPROFILE(fpfline)
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
-	jne	Lfp_unimp		| no, skip FPSP
-	cmpw	#0x202c,%sp@(6)		| format type 2?
-	jne	_C_LABEL(illinst)	| no, not an FP emulation
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unimp)	| yes, go handle it
-#else
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#endif
-Lfp_unimp:
-#endif /* M68040 */
-	jra	_C_LABEL(illinst)
-
-ENTRY_NOPROFILE(fpunsupp)
-#if defined(M68040)
-	cmpl	#FPU_68040,_C_LABEL(fputype) | 68040 FPU?
-	jne	Lfp_unsupp		| No, skip FPSP
-#ifdef FPSP
-	jmp	_ASM_LABEL(fpsp_unsupp)	| yes, go handle it
-#else
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save registers
-	moveq	#T_FPEMULD,%d0		| denote as FP emulation trap
-	jra	_ASM_LABEL(fault)	| do it
-#endif
-Lfp_unsupp:
-#endif /* M68040 */
-	jra	_C_LABEL(illinst)
-
-/*
- * Handles all other FP coprocessor exceptions.
- * Note that since some FP exceptions generate mid-instruction frames
- * and may cause signal delivery, we need to test for stack adjustment
- * after the trap call.
- */
-ENTRY_NOPROFILE(fpfault)
-	clrl	%sp@-		| stack adjust count
-	moveml	#0xFFFF,%sp@-	| save user registers
-	movl	%usp,%a0	| and save
-	movl	%a0,%sp@(FR_SP)	|   the user stack pointer
-	clrl	%sp@-		| no VA arg
-	movl	_C_LABEL(curpcb),%a0 | current pcb
-	lea	%a0@(PCB_FPCTX),%a0 | address of FP savearea
-	fsave	%a0@		| save state
-#if defined(M68040) || defined(M68060)
-	/* always null state frame on 68040, 68060 */
-	cmpl	#FPU_68040,_C_LABEL(fputype)
-	jge	Lfptnull
-#endif
-	tstb	%a0@		| null state frame?
-	jeq	Lfptnull	| yes, safe
-	clrw	%d0		| no, need to tweak BIU
-	movb	%a0@(1),%d0	| get frame size
-	bset	#3,%a0@(0,%d0:w) | set exc_pend bit of BIU
-Lfptnull:
-	fmovem	%fpsr,%sp@-	| push fpsr as code argument
-	frestore %a0@		| restore state
-	movl	#T_FPERR,%sp@-	| push type arg
-	jra	_ASM_LABEL(faultstkadj) | call trap and deal with stack cleanup
-
-
-/*
- * Other exceptions only cause four and six word stack frame and require
- * no post-trap stack adjustment.
- */
-
-ENTRY_NOPROFILE(badtrap)
-	moveml	#0xC0C0,%sp@-		| save scratch regs
-	movw	%sp@(22),%sp@-		| push exception vector info
-	clrw	%sp@-
-	movl	%sp@(22),%sp@-		| and PC
-	jbsr	_C_LABEL(straytrap)	| report
-	addql	#8,%sp			| pop args
-	moveml	%sp@+,#0x0303		| restore regs
-	jra	_ASM_LABEL(rei)		| all done
-
-ENTRY_NOPROFILE(trap0)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-		| save user registers
-	movl	%usp,%a0		| save the user SP
-	movl	%a0,%sp@(FR_SP)		|   in the savearea
-	movl	%d0,%sp@-		| push syscall number
-	jbsr	_C_LABEL(syscall)	| handle it
-	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	Lrei1			| Yup, go deal with it.
-	movl	%sp@(FR_SP),%a0		| grab and restore
-	movl	%a0,%usp		|   user SP
-	moveml	%sp@+,#0x7FFF		| restore most registers
-	addql	#8,%sp			| pop SP and stack adjust
-	rte
-
-/*
- * Trap 12 is the entry point for the cachectl "syscall" (both HPUX & BSD)
- *	cachectl(command, addr, length)
- * command in d0, addr in a1, length in d1
- */
-ENTRY_NOPROFILE(trap12)
-	movl	_C_LABEL(curlwp),%a0
-	movl	%a0@(L_PROC),%sp@-	| push current proc pointer
-	movl	%d1,%sp@-		| push length
-	movl	%a1,%sp@-		| push addr
-	movl	%d0,%sp@-		| push command
-	jbsr	_C_LABEL(cachectl1)	| do it
-	lea	%sp@(16),%sp		| pop args
-	jra	_ASM_LABEL(rei)		| all done
-
-/*
- * Trace (single-step) trap.  Kernel-mode is special.
- * User mode traps are simply passed on to trap().
- */
-ENTRY_NOPROFILE(trace)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRACE,%d0
-
-	| Check PSW and see what happen.
-	|   T=0 S=0	(should not happen)
-	|   T=1 S=0	trace trap from user mode
-	|   T=0 S=1	trace trap on a trap instruction
-	|   T=1 S=1	trace trap from system mode (kernel breakpoint)
-
-	movw	%sp@(FR_HW),%d1		| get PSW
-	notw	%d1			| XXX no support for T0 on 680[234]0
-	andw	#PSL_TS,%d1		| from system mode (T=1, S=1)?
-	jeq	Lkbrkpt			| yes, kernel breakpoint
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-/*
- * Trap 15 is used for:
- *	- GDB breakpoints (in user programs)
- *	- KGDB breakpoints (in the kernel)
- *	- trace traps for SUN binaries (not fully supported yet)
- * User mode traps are simply passed to trap().
- */
-ENTRY_NOPROFILE(trap15)
-	clrl	%sp@-			| stack adjust count
-	moveml	#0xFFFF,%sp@-
-	moveq	#T_TRAP15,%d0
-	movw	%sp@(FR_HW),%d1		| get PSW
-	andw	#PSL_S,%d1		| from system mode?
-	jne	Lkbrkpt			| yes, kernel breakpoint
-	jra	_ASM_LABEL(fault)	| no, user-mode fault
-
-Lkbrkpt: | Kernel-mode breakpoint or trace trap. (d0=trap_type)
-	| Save the system sp rather than the user sp.
-	movw	#PSL_HIGHIPL,%sr	| lock out interrupts
-	lea	%sp@(FR_SIZE),%a6	| Save stack pointer
-	movl	%a6,%sp@(FR_SP)		|  from before trap
-
-	| If were are not on tmpstk switch to it.
-	| (so debugger can change the stack pointer)
-	movl	%a6,%d1
-	cmpl	#_ASM_LABEL(tmpstk),%d1
-	jls	Lbrkpt2			| already on tmpstk
-	| Copy frame to the temporary stack
-	movl	%sp,%a0			| a0=src
-	lea	_ASM_LABEL(tmpstk)-96,%a1 | a1=dst
-	movl	%a1,%sp			| sp=new frame
-	movql	#FR_SIZE,%d1
-Lbrkpt1:
-	movl	%a0@+,%a1@+
-	subql	#4,%d1
-	jbgt	Lbrkpt1
-
-Lbrkpt2:
-	| Call the trap handler for the kernel debugger.
-	| Do not call trap() to do it, so that we can
-	| set breakpoints in trap() if we want.  We know
-	| the trap type is either T_TRACE or T_BREAKPOINT.
-	| If we have both DDB and KGDB, let KGDB see it first,
-	| because KGDB will just return 0 if not connected.
-	| Save args in d2, a2
-	movl	%d0,%d2			| trap type
-	movl	%sp,%a2			| frame ptr
-#ifdef KGDB
-	| Let KGDB handle it (if connected)
-	movl	%a2,%sp@-		| push frame ptr
-	movl	%d2,%sp@-		| push trap type
-	jbsr	_C_LABEL(kgdb_trap)	| handle the trap
-	addql	#8,%sp			| pop args
-	cmpl	#0,%d0			| did kgdb handle it?
-	jne	Lbrkpt3			| yes, done
-#endif
-#ifdef DDB
-	| Let DDB handle it
-	movl	%a2,%sp@-		| push frame ptr
-	movl	%d2,%sp@-		| push trap type
-	jbsr	_C_LABEL(kdb_trap)	| handle the trap
-	addql	#8,%sp			| pop args
-#endif
-	/* Sun 3 drops into PROM here. */
-Lbrkpt3:
-	| The stack pointer may have been modified, or
-	| data below it modified (by kgdb push call),
-	| so push the hardware frame at the current sp
-	| before restoring registers and returning.
-
-	movl	%sp@(FR_SP),%a0		| modified sp
-	lea	%sp@(FR_SIZE),%a1	| end of our frame
-	movl	%a1@-,%a0@-		| copy 2 longs with
-	movl	%a1@-,%a0@-		| ... predecrement
-	movl	%a0,%sp@(FR_SP)		| sp = h/w frame
-	moveml	%sp@+,#0x7FFF		| restore all but sp
-	movl	%sp@,%sp		| ... and sp
-	rte				| all done
-
-/*
- * Emulation of VAX REI instruction.
- *
- * This code deals with checking for and servicing ASTs
- * (profiling, scheduling).
- * After identifying that we need an AST we drop the IPL to allow device
- * interrupts.
- *
- * This code is complicated by the fact that sendsig may have been called
- * necessitating a stack cleanup.
- */
-ASENTRY_NOPROFILE(rei)
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jeq	Ldorte			| Nope. Just return.
-	btst	#5,%sp@			| Returning to kernel mode?
-	jne	Ldorte			| Yup. Can't do ASTs
-	movw	#PSL_LOWIPL,%sr		| lower SPL
-	clrl	%sp@-			| stack adjust
-	moveml	#0xFFFF,%sp@-		| save all registers
-	movl	%usp,%a1		| including
-	movl	%a1,%sp@(FR_SP)		|    the users SP
-Lrei1:	clrl	%sp@-			| VA == none
-	clrl	%sp@-			| code == none
-	movl	#T_ASTFLT,%sp@-		| type == async system trap
-	pea	%sp@(12)		| fp == address of trap frame
-	jbsr	_C_LABEL(trap)		| go handle it
-	lea	%sp@(16),%sp		| pop value args
-	movl	%sp@(FR_SP),%a0		| restore user SP
-	movl	%a0,%usp		|   from save area
-	movw	%sp@(FR_ADJ),%d0	| need to adjust stack?
-	jne	Laststkadj		| yes, go to it
-	moveml	%sp@+,#0x7FFF		| no, restore most user regs
-	addql	#8,%sp			| toss SP and stack adjust
-Ldorte:	rte				| and do real RTE
-
-Laststkadj:
-	lea	%sp@(FR_HW),%a1		| pointer to HW frame
-	addql	#8,%a1			| source pointer
-	movl	%a1,%a0			| source
-	addw	%d0,%a0			|  + hole size = dest pointer
-	movl	%a1@-,%a0@-		| copy
-	movl	%a1@-,%a0@-		|  8 bytes
-	movl	%a0,%sp@(FR_SP)		| new SSP
-	moveml	%sp@+,#0x7FFF		| restore user registers
-	movl	%sp@,%sp		| and our SP
-	rte				| and do real RTE
-
-/*
- * Primitives
- */
-
-/*
- * Use common m68k process/lwp switch and context save subroutines.
- */
-#define	FPCOPROC	/* XXX: Temp. Reqd. */
-#include <m68k/m68k/switch_subr.s>
-
-
-#if defined(M68040) || defined(M68060)
-ENTRY(suline)
-	movl	%sp@(4),%a0		| address to write
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	movl	#Lslerr,%a1@(PCB_ONFAULT) | where to return to on a fault
-	movl	%sp@(8),%a1		| address of line
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	movl	%a1@+,%d0		| get lword
-	movsl	%d0,%a0@+		| put lword
-	nop				| sync
-	moveq	#0,%d0			| indicate no fault
-	jra	Lsldone
-Lslerr:
-	moveq	#-1,%d0
-Lsldone:
-	movl	_C_LABEL(curpcb),%a1	| current pcb
-	clrl	%a1@(PCB_ONFAULT)	| clear fault address
-	rts
-#endif
-
-
-ENTRY(ecacheon)
-	rts
-
-ENTRY(ecacheoff)
-	rts
-
-/*
- * _delay(unsigned N)
- *
- * Delay for at least (N/1024) microseconds.
- * This routine depends on the variable:  delay_divisor
- * which should be set based on the CPU clock rate.
- */
-ENTRY_NOPROFILE(_delay)
-	| d0 = arg = (usecs << 10)
-	movl	%sp@(4),%d0
-	| d1 = delay_divisor
-	movl	_C_LABEL(delay_divisor),%d1
-	jra	L_delay			/* Jump into the loop! */
-
-	/*
-	 * Align the branch target of the loop to a half-line (8-byte)
-	 * boundary to minimize cache effects.  This guarantees both
-	 * that there will be no prefetch stalls due to cache line burst
-	 * operations and that the loop will run from a single cache
-	 * half-line.
-	 */
-#ifdef __ELF__
-	.align	8
-#else
-	.align	3
-#endif
-L_delay:
-	subl	%d1,%d0
-	jgt	L_delay
-	rts
-
-/*
  * Handle the nitty-gritty of rebooting the machine.
  * Basically we just turn off the MMU, restore the Bug's initial VBR
  * and either return to Bug or jump through the ROM reset vector
  * depending on how the system was halted.
  */
-ENTRY_NOPROFILE(doboot)
+ENTRY_NOPROFILE(machine_reboot)
 	movw	#PSL_HIGHIPL,%sr
 	movl	_C_LABEL(boothowto),%d1	| load howto
 	movl	%sp@(4),%d2		| arg
+	andl	#RB_HALT,%d2		| %d2 == 0 -> autoboot, else halt
 	movl	_C_LABEL(saved_vbr),%d3	| Fetch Bug's original VBR value
 	movl	_C_LABEL(machineid),%d4	| What type of board is this?
 	movl	#CACHE_OFF,%d0
@@ -1094,6 +679,7 @@ Lsboot: /* sboot */
 	jmp 	0x4000			| back to sboot
 1:	jmp	0x400a			| tell sboot to reboot us
 
+STRONG_ALIAS(machine_halt,machine_reboot)
 
 /*
  * Misc. global variables.
@@ -1109,9 +695,6 @@ GLOBAL(mmutype)
 GLOBAL(cputype)
 	.long	CPU_68030	| default to CPU_68030
 
-GLOBAL(fputype)
-	.long	FPU_68882	| default to FPU_68882
-
 /*
  * Information from first stage boot program
  */
@@ -1124,14 +707,18 @@ GLOBAL(bootctrllun)
 GLOBAL(bootaddr)
 	.long	0
 
+/*
+ * machine_bootmap[] interleaved with intio*-related variables.
+ * intiobase_phys and intiosize are initialized at run-time.
+ */
 GLOBAL(intiobase)
 	.long	0		| KVA of base of internal IO space
-
-GLOBAL(intiolimit)
-	.long	0		| KVA of end of internal IO space
-
+GLOBAL(machine_bootmap)
+	.long	_C_LABEL(intiobase) | [0].pmbm_vaddr_ptr = &intiobase
 GLOBAL(intiobase_phys)
-	.long	0		| PA of board's I/O registers
+	.long	0		| [0].pmbm_paddr = PA of internal I/O space
+GLOBAL(intiosize)
+	.long	0		| [0].pmbm_size = size of internal I/O space
+	.long	PMBM_F_CI	| [0].pmbm_flags = cache-inhibited mapping
+	.long	-1		| [1].pmbm_vaddr = end of list
 
-GLOBAL(intiotop_phys)
-	.long	0		| PA of top of board's I/O registers

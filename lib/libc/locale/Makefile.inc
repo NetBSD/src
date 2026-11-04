@@ -1,8 +1,8 @@
 #	from: @(#)Makefile.inc	5.1 (Berkeley) 2/18/91
-#	$NetBSD: Makefile.inc,v 1.65.8.1 2025/08/02 05:54:37 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.65.8.2 2026/11/04 23:19:20 perseant Exp $
 
 # locale sources
-.PATH: ${ARCHDIR}/locale ${.CURDIR}/locale
+.PATH: ${ARCHDIR}/locale ${.PARSEDIR}
 
 SRCS+=	setlocale.c __mb_cur_max.c \
 	duplocale.c global_locale.c fix_grouping.c \
@@ -22,10 +22,11 @@ CPPFLAGS.mbrtoc32.c+=		-I${LIBCDIR}/citrus
 
 # citrus multibyte locale support
 # we have quirk for libc.a - see the last part of lib/libc/Makefile
-CPPFLAGS+=	-DWITH_RUNE -I${.CURDIR}
+CPPFLAGS+=	-DWITH_RUNE -I${LIBCDIR}
 SRCS+=	_wctrans.c _wctype.c rune.c runetable.c \
 	multibyte_c90.c multibyte_amd1.c iswctype_mb.c
 CPPFLAGS.rune.c+=		-I${LIBCDIR}/citrus
+CPPFLAGS.rune.c+=		-I${LIBCDIR}/gen	# ctype_guard.h
 CPPFLAGS.runetable.c+=		-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_c90.c+=	-I${LIBCDIR}/citrus
 CPPFLAGS.multibyte_amd1.c+=	-I${LIBCDIR}/citrus

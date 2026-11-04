@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ioctl.c,v 1.59.10.1 2025/08/02 05:56:25 perseant Exp $	*/
+/*	$NetBSD: linux_ioctl.c,v 1.59.10.2 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.59.10.1 2025/08/02 05:56:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ioctl.c,v 1.59.10.2 2026/11/04 23:21:39 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "sequencer.h"
@@ -94,6 +94,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 				com |= IOC_OUT;
 			if (SCARG(uap, com) & IOC_OUT)
 				com |= IOC_IN;
+			memset(&ua, 0, sizeof(ua));
 			SCARG(&ua, fd) = SCARG(uap, fd);
 			SCARG(&ua, com) = SCARG(uap, com);
 			SCARG(&ua, com) &= ~IOC_DIRMASK;
@@ -122,6 +123,7 @@ linux_sys_ioctl(struct lwp *l, const struct linux_sys_ioctl_args *uap, register_
 			com |= IOC_OUT;
 		if (SCARG(uap, com) & IOC_OUT)
 			com |= IOC_IN;
+		memset(&ua, 0, sizeof(ua));
 		SCARG(&ua, fd) = SCARG(uap, fd);
 		SCARG(&ua, com) = SCARG(uap, com);
 		SCARG(&ua, com) &= ~IOC_DIRMASK;

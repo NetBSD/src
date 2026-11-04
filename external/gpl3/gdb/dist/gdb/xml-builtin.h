@@ -1,6 +1,6 @@
 /* Header file for builtin XML files.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef XML_BUILTIN_H
-#define XML_BUILTIN_H
+#ifndef GDB_XML_BUILTIN_H
+#define GDB_XML_BUILTIN_H
 
 /* The text of compiled-in XML documents, from xml-builtin.c
    (generated).  */
 
 extern const char *const xml_builtin[][2];
 
-#endif /* XML_BUILTIN_H */
+#endif /* GDB_XML_BUILTIN_H */

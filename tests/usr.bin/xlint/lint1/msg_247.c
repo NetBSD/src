@@ -1,12 +1,8 @@
-/*	$NetBSD: msg_247.c,v 1.33.2.1 2025/08/02 05:58:17 perseant Exp $	*/
+/*	$NetBSD: msg_247.c,v 1.33.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_247.c"
 
 // Test for message: pointer cast from '%s' to unrelated '%s' [247]
 
-//
-// The word 'may' in the message text means that the trouble is not necessarily
-// on this platform with its specific type sizes, but on other platforms.
-//
 // See also:
 //	msg_247_ilp32_ldbl64.c
 //	msg_247_lp64_ldbl128.c
@@ -176,7 +172,7 @@ lh_OPENSSL_STRING_new(void)
 	 */
 	return (struct lhash_st_OPENSSL_STRING *)OPENSSL_LH_new();
 }
-# 180 "msg_247.c" 2
+# 176 "msg_247.c" 2
 
 void sink(const void *);
 

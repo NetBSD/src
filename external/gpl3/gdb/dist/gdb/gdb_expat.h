@@ -1,6 +1,6 @@
 /* Slightly more portable version of <expat.h>.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined(GDB_EXPAT_H)
-#define GDB_EXPAT_H
+#ifndef GDB_GDB_EXPAT_H
+#define GDB_GDB_EXPAT_H
 
 #include <expat.h>
 
@@ -35,4 +35,4 @@
 #define XMLCALL
 #endif
 
-#endif /* !defined(GDB_EXPAT_H) */
+#endif /* GDB_GDB_EXPAT_H */

@@ -1,6 +1,6 @@
 /* Target-dependent code for the Z80.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -356,8 +356,8 @@ z80_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR pc_beg, CORE_ADDR pc_end,
   /* stage2: check for FP saving scheme */
   if (prologue[pos] == 0xcd) /* call nn */
     {
-      struct bound_minimal_symbol msymbol;
-      msymbol = lookup_minimal_symbol ("__sdcc_enter_ix", NULL, NULL);
+      bound_minimal_symbol msymbol
+	= lookup_minimal_symbol (current_program_space, "__sdcc_enter_ix");
       if (msymbol.minsym)
 	{
 	  value = msymbol.value_address ();
@@ -621,8 +621,8 @@ z80_frame_unwind_cache (const frame_info_ptr &this_frame,
 		break; /* found */
 	      for (i = sizeof(names)/sizeof(*names)-1; i >= 0; --i)
 		{
-		  struct bound_minimal_symbol msymbol;
-		  msymbol = lookup_minimal_symbol (names[i], NULL, NULL);
+		  bound_minimal_symbol msymbol
+		    = lookup_minimal_symbol (current_program_space, names[i]);
 		  if (!msymbol.minsym)
 		    continue;
 		  if (addr == msymbol.value_address ())
@@ -719,8 +719,8 @@ z80_breakpoint_kind_from_pc (struct gdbarch *gdbarch, CORE_ADDR *pcptr)
   static int addr = -1;
   if (addr == -1)
     {
-      struct bound_minimal_symbol bh;
-      bh = lookup_minimal_symbol ("_break_handler", NULL, NULL);
+      bound_minimal_symbol bh
+	= lookup_minimal_symbol (current_program_space, "_break_handler");
       if (bh.minsym)
 	addr = bh.value_address ();
       else
@@ -894,14 +894,13 @@ read_target_long_array (CORE_ADDR memaddr, unsigned int *myaddr,
 static int
 z80_read_overlay_region_table ()
 {
-  struct bound_minimal_symbol novly_regions_msym;
-  struct bound_minimal_symbol ovly_region_table_msym;
   struct gdbarch *gdbarch;
   int word_size;
   enum bfd_endian byte_order;
 
   z80_free_overlay_region_table ();
-  novly_regions_msym = lookup_minimal_symbol ("_novly_regions", NULL, NULL);
+  bound_minimal_symbol novly_regions_msym
+    = lookup_minimal_symbol (current_program_space, "_novly_regions");
   if (! novly_regions_msym.minsym)
     {
       error (_("Error reading inferior's overlay table: "
@@ -910,7 +909,8 @@ z80_read_overlay_region_table ()
       return 0;
     }
 
-  ovly_region_table_msym = lookup_bound_minimal_symbol ("_ovly_region_table");
+  bound_minimal_symbol ovly_region_table_msym
+    = lookup_minimal_symbol (current_program_space, "_ovly_region_table");
   if (! ovly_region_table_msym.minsym)
     {
       error (_("Error reading inferior's overlay table: couldn't find "
@@ -962,11 +962,11 @@ z80_overlay_update_1 (struct obj_section *osect)
 
   /* we have interest for sections with same VMA */
   for (objfile *objfile : current_program_space->objfiles ())
-    for (obj_section *sect : objfile->sections ())
-      if (section_is_overlay (sect))
+    for (obj_section &sect : objfile->sections ())
+      if (section_is_overlay (&sect))
 	{
-	  sect->ovly_mapped = (lma == bfd_section_lma (sect->the_bfd_section));
-	  i |= sect->ovly_mapped; /* true, if at least one section is mapped */
+	  sect.ovly_mapped = (lma == bfd_section_lma (sect.the_bfd_section));
+	  i |= sect.ovly_mapped; /* true, if at least one section is mapped */
 	}
   return i;
 }
@@ -985,18 +985,18 @@ z80_overlay_update (struct obj_section *osect)
 
   /* Update all sections, even if only one was requested.  */
   for (objfile *objfile : current_program_space->objfiles ())
-    for (obj_section *sect : objfile->sections ())
+    for (obj_section &sect : objfile->sections ())
       {
-	if (!section_is_overlay (sect))
+	if (!section_is_overlay (&sect))
 	  continue;
 
-	asection *bsect = sect->the_bfd_section;
+	asection *bsect = sect.the_bfd_section;
 	bfd_vma lma = bfd_section_lma (bsect);
 	bfd_vma vma = bfd_section_vma (bsect);
 
 	for (int i = 0; i < cache_novly_regions; ++i)
 	  if (cache_ovly_region_table[i][Z80_VMA] == vma)
-	    sect->ovly_mapped =
+	    sect.ovly_mapped =
 	      (cache_ovly_region_table[i][Z80_MAPPED_TO_LMA] == lma);
       }
 }
@@ -1063,11 +1063,10 @@ z80_insn_is_jump (struct gdbarch *gdbarch, CORE_ADDR addr)
   return 0;
 }
 
-static const struct frame_unwind
-z80_frame_unwind =
-{
+static const struct frame_unwind_legacy z80_frame_unwind (
   "z80",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   z80_frame_this_id,
   z80_frame_prev_register,
@@ -1075,7 +1074,7 @@ z80_frame_unwind =
   default_frame_sniffer
   /*dealloc_cache*/
   /*prev_arch*/
-};
+);
 
 /* Initialize the gdbarch struct for the Z80 arch */
 static struct gdbarch *
@@ -1174,7 +1173,7 @@ z80_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_skip_prologue (gdbarch, z80_skip_prologue);
   set_gdbarch_inner_than (gdbarch, core_addr_lessthan); // falling stack
 
-  set_gdbarch_software_single_step (gdbarch, z80_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, z80_software_single_step);
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, z80_breakpoint_kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, z80_sw_breakpoint_from_kind);
   set_gdbarch_insn_is_call (gdbarch, z80_insn_is_call);
@@ -1332,14 +1331,14 @@ ez80_ddfd_insn_table[] =
   { 0007, 0307, 2, insn_default }, //"ld rr,(ii+d)"
   { 0061, 0377, 2, insn_default }, //"ld ii,(ii+d)"
   /* common instructions */
-  { 0011, 0367, 2, insn_default }, //"add ii,rr"
+  { 0011, 0317, 1, insn_default }, //"add ii,rr"
   { 0041, 0377, 3, insn_default }, //"ld ii,nn"
   { 0042, 0367, 3, insn_default }, //"ld (nn),ii", "ld ii,(nn)"
   { 0043, 0367, 1, insn_default }, //"inc ii", "dec ii"
   { 0044, 0366, 1, insn_default }, //"inc/dec iih/iil"
   { 0046, 0367, 2, insn_default }, //"ld iih,n", "ld iil,n"
   { 0064, 0376, 2, insn_default }, //"inc (ii+d)", "dec (ii+d)"
-  { 0066, 0377, 2, insn_default }, //"ld (ii+d),n"
+  { 0066, 0377, 3, insn_default }, //"ld (ii+d),n"
   { 0166, 0377, 0, insn_default }, //not an instruction
   { 0160, 0370, 2, insn_default }, //"ld (ii+d),r"
   { 0104, 0306, 1, insn_default }, //"ld r,iih", "ld r,iil"
@@ -1361,7 +1360,7 @@ ez80_adl_ddfd_insn_table[] =
 {
   { 0007, 0307, 2, insn_default }, //"ld rr,(ii+d)"
   { 0061, 0377, 2, insn_default }, //"ld ii,(ii+d)"
-  { 0011, 0367, 1, insn_default }, //"add ii,rr"
+  { 0011, 0317, 1, insn_default }, //"add ii,rr"
   { 0041, 0377, 4, insn_default }, //"ld ii,nn"
   { 0042, 0367, 4, insn_default }, //"ld (nn),ii", "ld ii,(nn)"
   { 0043, 0367, 1, insn_default }, //"inc ii", "dec ii"
@@ -1456,10 +1455,7 @@ z80_get_insn_info (struct gdbarch *gdbarch, const gdb_byte *buf, int *size)
   while (1);
 }
 
-extern initialize_file_ftype _initialize_z80_tdep;
-
-void
-_initialize_z80_tdep ()
+INIT_GDB_FILE (z80_tdep)
 {
   gdbarch_register (bfd_arch_z80, z80_gdbarch_init);
   initialize_tdesc_z80 ();

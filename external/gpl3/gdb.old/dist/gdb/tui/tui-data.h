@@ -1,6 +1,6 @@
 /* TUI data manipulation routines.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,12 +19,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_DATA_H
-#define TUI_TUI_DATA_H
+#ifndef GDB_TUI_TUI_DATA_H
+#define GDB_TUI_TUI_DATA_H
 
 #include "tui/tui.h"
-#include "gdb_curses.h"	/* For WINDOW.  */
-#include "observable.h"
+#include "gdb_curses.h"
 
 /* A deleter that calls delwin.  */
 struct curses_deleter
@@ -49,7 +48,8 @@ protected:
      window's contents.  */
   virtual void rerender ();
 
-  virtual void make_window ();
+  /* Create the curses window.  */
+  void make_window ();
 
 public:
   tui_win_info (tui_win_info &&) = default;
@@ -88,6 +88,18 @@ public:
     return true;
   }
 
+  /* Return the width of the box.  */
+  int box_width () const
+  {
+    return can_box () ? 1 : 0;
+  }
+
+  /* Return the size of the box.  */
+  int box_size () const
+  {
+    return 2 * box_width ();
+  }
+
   /* Resize this window.  The parameters are used to set the window's
      size and position.  */
   virtual void resize (int height, int width,
@@ -103,13 +115,6 @@ public:
   virtual bool can_focus () const
   {
     return true;
-  }
-
-  /* Disable output until the next call to doupdate.  */
-  void no_refresh ()
-  {
-    if (handle != nullptr)
-      wnoutrefresh (handle.get ());
   }
 
   /* Called after the tab width has been changed.  */
@@ -146,6 +151,22 @@ public:
 
   void check_and_display_highlight_if_needed ();
 
+  /* A helper function to change the title and then redraw the
+     surrounding box, if needed.  */
+  void set_title (std::string &&new_title);
+
+  /* Return a reference to the current window title.  */
+  const std::string &title () const
+  { return m_title; }
+
+  /* Clear the window, maybe draw the border, and then display string
+     STR centered in the window, abbreviated if necessary.  */
+  void center_string (const char *str);
+
+  /* Display string STR in the window at the current cursor position,
+     abbreviated if necessary.  */
+  void display_string (const char *str) const;
+
   /* Window handle.  */
   std::unique_ptr<WINDOW, curses_deleter> handle;
   /* Window width.  */
@@ -155,9 +176,6 @@ public:
   /* Origin of window.  */
   int x = 0;
   int y = 0;
-
-  /* Window title to display.  */
-  std::string title;
 
   /* Is this window highlighted?  */
   bool is_highlighted = false;
@@ -171,6 +189,77 @@ protected:
   /* Scroll the contents horizontally.  This is only called via
      left_scroll and right_scroll.  */
   virtual void do_scroll_horizontal (int num_to_scroll) = 0;
+
+private:
+  /* Window title to display.  */
+  std::string m_title;
+};
+
+/* A TUI window that doesn't scroll.  */
+
+struct tui_noscroll_window : public virtual tui_win_info
+{
+public:
+  virtual bool can_scroll () const final override
+  {
+    return false;
+  }
+
+protected:
+  virtual void do_scroll_vertical (int num_to_scroll) final override
+  {
+  }
+
+  /* Scroll the contents horizontally.  This is only called via
+     left_scroll and right_scroll.  */
+  virtual void do_scroll_horizontal (int num_to_scroll) final override
+  {
+  }
+};
+
+/* A TUI window that cannot have focus.  */
+
+struct tui_nofocus_window : public virtual tui_win_info
+{
+public:
+  virtual bool can_focus () const final override
+  {
+    return false;
+  }
+};
+
+/* A TUI window that occupies a single line.  */
+
+struct tui_oneline_window : public virtual tui_win_info
+{
+  int max_height () const final override
+  {
+    return 1;
+  }
+
+  int min_height () const final override
+  {
+    return 1;
+  }
+};
+
+/* A TUI window that has no border.  */
+
+struct tui_nobox_window : public virtual tui_win_info
+{
+  bool can_box () const final override
+  {
+    return false;
+  }
+};
+
+/* A TUI window that is always visible.  */
+
+struct tui_always_visible_window : public virtual tui_win_info
+{
+  virtual void make_visible (bool visible) final override
+  {
+  }
 };
 
 /* Constant definitions.  */
@@ -182,12 +271,6 @@ protected:
 
 /* Global Data.  */
 extern struct tui_win_info *tui_win_list[MAX_MAJOR_WINDOWS];
-
-#define TUI_SRC_WIN     ((tui_source_window *) tui_win_list[SRC_WIN])
-#define TUI_DISASM_WIN	((tui_disasm_window *) tui_win_list[DISASSEM_WIN])
-#define TUI_DATA_WIN    ((tui_data_window *) tui_win_list[DATA_WIN])
-#define TUI_CMD_WIN     ((tui_cmd_window *) tui_win_list[CMD_WIN])
-#define TUI_STATUS_WIN  ((tui_locator_window *) tui_win_list[STATUS_WIN])
 
 /* All the windows that are currently instantiated, in layout
    order.  */
@@ -214,4 +297,4 @@ extern struct tui_win_info *tui_prev_win (struct tui_win_info *);
 
 extern unsigned int tui_tab_width;
 
-#endif /* TUI_TUI_DATA_H */
+#endif /* GDB_TUI_TUI_DATA_H */

@@ -1,6 +1,6 @@
 /* DWARF index writing support for GDB.
 
-   Copyright (C) 2018-2023 Free Software Foundation, Inc.
+   Copyright (C) 2018-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF_INDEX_WRITE_H
-#define DWARF_INDEX_WRITE_H
+#ifndef GDB_DWARF2_INDEX_WRITE_H
+#define GDB_DWARF2_INDEX_WRITE_H
 
 #include "dwarf2/read.h"
 #include "dwarf2/public.h"
@@ -33,7 +33,7 @@
    same, but for the dwz file's index.  */
 
 extern void write_dwarf_index
-  (dwarf2_per_objfile *per_objfile, const char *dir, const char *basename,
+  (dwarf2_per_bfd *per_bfd, const char *dir, const char *basename,
    const char *dwz_basename, dw_index_kind index_kind);
 
-#endif /* DWARF_INDEX_WRITE_H */
+#endif /* GDB_DWARF2_INDEX_WRITE_H */

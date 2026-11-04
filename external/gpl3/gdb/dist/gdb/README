@@ -17,7 +17,7 @@ Unpacking and Installation -- quick overview
 'gdb-VERSION.tar.gz', where VERSION is the version of GDB.
 
    The GDB debugger sources, the generic GNU include
-files, the BFD ("binary file description") library, the readline
+files, the BFD ("Binary File Descriptor") library, the readline
 library, and other libraries all have directories of their own
 underneath the gdb-VERSION directory.  The idea is that a variety of GNU
 tools can share a common copy of these things.  Be aware of variation
@@ -354,7 +354,6 @@ explanation of `configure'.
                [--srcdir=PATH]
                [--target=TARGET]
 	       [--host=HOST]
-	       [HOST]
 
 You may introduce options with a single `-' rather than `--' if you
 prefer; but you may abbreviate option names if you use `--'.  Some
@@ -380,19 +379,30 @@ more obscure GDB `configure' options are not listed here.
      directories below PATH.
 
 `--host=HOST'
-     Configure GDB to run on the specified HOST.
+     Configure GDB to run on the specified HOST.  If you omit this,
+     GDB will guess; it's quite accurate.
+
+     The guess is done by running the `config.guess' script, which can
+     be found in the root of the binutils-gdb source tree.
 
      There is no convenient way to generate a list of all available
      hosts.
 
-`HOST ...'
-     Same as `--host=HOST'.  If you omit this, GDB will guess; it's
-     quite accurate.
-
 `--target=TARGET'
-     Configure GDB for cross-debugging programs running on the specified
-     TARGET.  Without this option, GDB is configured to debug programs
-     that run on the same machine (HOST) as GDB itself.
+     Configure GDB for cross-debugging programs running on the
+     specified TARGET.  One way in which GDB supports cross-debugging
+     is through the 'target remote' and 'target extended-remote'
+     commands for remote debugging.  See the 'Remote debugging'
+     section below.
+
+     If this option is not specified, the default is the value of
+     HOST, see `--host' above.
+
+     When TARGET matches HOST, GDB will be configured with support for
+     native debugging of programs running on the same machine as GDB.
+
+     When TARGET and HOST are different, GDB will only include support
+     for cross-debugging programs running on TARGET.
 
      There is no convenient way to generate a list of all available
      targets.
@@ -400,8 +410,36 @@ more obscure GDB `configure' options are not listed here.
 `--enable-targets=TARGET,TARGET,...'
 `--enable-targets=all`
      Configure GDB for cross-debugging programs running on the
-     specified list of targets.  The special value `all' configures
+     specified list of targets in addition to the target specified
+     with `--target' (see above).  The special value `all' configures
      GDB for debugging programs running on any target it supports.
+
+     There is no convenient way to generate a list of all available
+     targets.
+
+`--enable-binary-file-formats=FORMAT,FORMAT,...'
+`--enable-binary-file-formats=all'
+    Configure GDB to only be be able to read selected file formats.
+    The special value "all" causes all file formats to be compiled
+    in, and is the the default behavior of the option.  This option
+    is meant for advanced users who are sure of what they expect,
+    if you are unsure which options you will need on your debugging
+    sessions, we recommend that you not use this feature.  The
+    accepted options are:
+      * coff: Main format on Windows systems, this is required to
+        compile with windows target support;
+      * dbx (also known as a.out): Legacy file format, this is
+        recommended if you know you will be dealing with this
+        file format;
+      * elf: Main format on Linux systems, this is heavily
+        recommended when compiling with linux support;
+      * macho: Main format on MacOS systems, this is heavily
+        recommended when compiling for those targets;
+      * mips (also known as ecoff): Main file format for targets
+        running on MIPS CPUs, this is heavily recommended when
+        supporting those targets;
+      * xcoff: Main format on AIX systems, this is required to
+        compile for AIX targets and rs6000 CPUs.
 
 `--with-gdb-datadir=PATH'
      Set the GDB-specific data directory.  GDB will look here for
@@ -427,6 +465,16 @@ more obscure GDB `configure' options are not listed here.
      Build GDB with the text-mode full-screen user interface (TUI).
      Requires a curses library (ncurses and cursesX are also
      supported).
+
+`--disable-gdb-compile'
+    Build GDB without support for the 'compile' command. DWARF support
+    is required for this feature.
+
+`--disable-gdb-dwarf-support'
+    Build GDB without support for reading DWARF debug information.
+
+`--disable-gdb-mdebug-support'
+    Build GDB without support for reading mdebug debug information.
 
 `--with-curses'
      Use the curses library instead of the termcap library, for
@@ -516,7 +564,7 @@ more obscure GDB `configure' options are not listed here.
      GDB scripting much more powerful than the restricted CLI
      scripting language.  If your host does not have Python installed,
      you can find it on `http://www.python.org/download/'.  The oldest
-     version of Python supported by GDB is 3.2.  The optional argument
+     version of Python supported by GDB is 3.4.  The optional argument
      PYTHON is used to find the Python headers and libraries.  It can
      be either the name of a Python executable, or the name of the
      directory in which Python is installed.
@@ -616,6 +664,15 @@ other GNU tools recursively.
 
 Remote debugging
 =================
+
+   Remote debugging is when GDB runs on one machine type (see `--host'
+above), while debugging applications running on a possibly different
+machine using the 'target remote' or 'target extended-remote'
+commands.  The `--target' and `--enable-targets' configure options
+control which targets GDB can debug.  Remote debugging is one way in
+which GDB can support cross-debugging.  GDB runs on a machine of type
+HOST (see `--host' configure option) but can remote debug a machine of
+type TARGET (see `--target' and `--enable-targets' configure options).
 
    The files m68k-stub.c, i386-stub.c, and sparc-stub.c are examples
 of remote stubs to be used with remote.c.  They are designed to run

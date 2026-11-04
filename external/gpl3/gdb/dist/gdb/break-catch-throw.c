@@ -1,6 +1,6 @@
 /* Everything about catch/throw catchpoints, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,17 +20,13 @@
 #include "arch-utils.h"
 #include <ctype.h>
 #include "breakpoint.h"
-#include "cli/cli-cmds.h"
+#include "exceptions.h"
 #include "inferior.h"
 #include "annotate.h"
 #include "valprint.h"
 #include "cli/cli-utils.h"
-#include "completer.h"
-#include "gdbsupport/gdb_obstack.h"
 #include "mi/mi-common.h"
-#include "linespec.h"
 #include "probe.h"
-#include "objfiles.h"
 #include "cp-abi.h"
 #include "gdbsupport/gdb_regex.h"
 #include "cp-support.h"
@@ -81,10 +77,10 @@ struct exception_catchpoint : public code_breakpoint
 				     _("invalid type-matching regexp")))
   {
     pspace = current_program_space;
-    re_set ();
+    re_set (pspace);
   }
 
-  void re_set () override;
+  void re_set (program_space *pspace) override;
   enum print_stop_action print_it (const bpstat *bs) const override;
   bool print_one (const bp_location **) const override;
   void print_mention () const override;
@@ -197,7 +193,7 @@ exception_catchpoint::check_status (struct bpstat *bs)
 /* Implement the 're_set' method.  */
 
 void
-exception_catchpoint::re_set ()
+exception_catchpoint::re_set (program_space *pspace)
 {
   std::vector<symtab_and_line> sals;
   struct program_space *filter_pspace = current_program_space;
@@ -499,9 +495,7 @@ static const struct internalvar_funcs exception_funcs =
 
 
 
-void _initialize_break_catch_throw ();
-void
-_initialize_break_catch_throw ()
+INIT_GDB_FILE (break_catch_throw)
 {
   /* Add catch and tcatch sub-commands.  */
   add_catch_command ("catch", _("\

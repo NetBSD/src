@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -141,7 +141,7 @@ extern enum bfd_endian current_target_byte_order;
    expect to see (VEA includes things like coherency and the time
    base) while OEA is what an operating system expects to see.  By
    setting these to specific values, the build process is able to
-   eliminate non relevent environment code.
+   eliminate non relevant environment code.
 
    STATE_ENVIRONMENT(sd) specifies which of vea or oea is required for
    the current runtime.

@@ -1,4 +1,4 @@
-/* $NetBSD: elf_machdep.h,v 1.2 2017/11/06 03:47:47 christos Exp $ */
+/* $NetBSD: elf_machdep.h,v 1.2.42.1 2026/11/04 23:21:07 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,20 +32,7 @@
 #ifndef _OR1K_ELF_MACHDEP_H_
 #define _OR1K_ELF_MACHDEP_H_
 
-#define	ELF32_MACHDEP_ID	EM_OR1K
-
-#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
-#define ELF64_MACHDEP_ENDIANNESS	xxx
-
-#define ELF32_MACHDEP_ID_CASES                                          \
-		case EM_OR1K:					\
-			break;
-
-#define	ELF64_MACHDEP_ID_CASES
-
-#define	KERN_ELFSIZE		32
-#define ARCH_ELFSIZE		32	/* MD native binary size */
-
+#if !defined(_SYS_ELFDEFINITIONS_H_)
 /* Processor specific flags for the ELF header e_flags field.  */
 
 #define EF_OR1K_NODELAY		0x00000001
@@ -66,7 +53,7 @@
 #define R_OR1K_8_PCREL		11	// (A - P) & 0xff
 #define R_OR1K_GOTPC_HI16	12
 #define R_OR1K_GOTPC_LO16	13
-#define R_OR1K_GOT15		14
+#define R_OR1K_GOT16		14
 #define R_OR1K_PLT26		15
 #define R_OR1K_GOTOFF_HI16	16
 #define R_OR1K_GOTOFF_LO16	17
@@ -87,6 +74,25 @@
 #define R_OR1K_TLS_TPOFF	32
 #define R_OR1K_TLS_DTPOFF	33
 #define R_OR1K_TLS_DTPMOD	34
+
+#endif /* !defined(_SYS_ELFDEFINITIONS_H_) */
+
+/*
+ * Local symbols.
+ */
+#define	ELF32_MACHDEP_ID	EM_OR1K
+
+#define ELF32_MACHDEP_ENDIANNESS	ELFDATA2MSB
+#define ELF64_MACHDEP_ENDIANNESS	xxx
+
+#define ELF32_MACHDEP_ID_CASES                                          \
+		case EM_OR1K:					\
+			break;
+
+#define	ELF64_MACHDEP_ID_CASES
+
+#define	KERN_ELFSIZE		32
+#define ARCH_ELFSIZE		32	/* MD native binary size */
 
 #define R_TYPE(name)		R_OR1K_ ## name
 #define R_TLS_TYPE(name)	R_OR1K_ ## name ## 64

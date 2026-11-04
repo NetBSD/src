@@ -1,7 +1,9 @@
-/*	$NetBSD: msg_383.c,v 1.4.4.2 2025/08/02 05:58:19 perseant Exp $	*/
+/*	$NetBSD: msg_383.c,v 1.4.4.3 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_383.c"
 
 // Test for message: passing '%s' as argument %d to '%s' discards '%s' [383]
+//
+// See message 275, which is about a cast that discards the 'const' qualifier.
 
 /* lint1-extra-flags: -X 351 */
 

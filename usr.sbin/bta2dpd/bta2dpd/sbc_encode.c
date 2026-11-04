@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.13 2023/07/21 02:11:18 nat Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.13.2.1 2026/11/04 23:28:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -36,6 +36,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <errno.h>
+#include <endian.h>
 #include <stdbool.h>
 #include <stdlib.h>
 #include <string.h>

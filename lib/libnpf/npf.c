@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.52.2.1 2025/08/02 05:54:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.52.2.2 2026/11/04 23:19:29 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -672,6 +672,12 @@ npf_ext_param_string(nl_ext_t *ext, const char *key, const char *val)
 	nvlist_add_string(ext->ext_dict, key, val);
 }
 
+void
+npf_ext_param_binary(nl_ext_t *ext, const char *key, const void *val, size_t len)
+{
+	nvlist_add_binary(ext->ext_dict, key, val, len);
+}
+
 /*
  * RULE INTERFACE.
  */
@@ -1252,6 +1258,7 @@ _npf_table_build_const(nl_table_t *tl)
 		free(buf);
 		goto out;
 	}
+	memcpy(buf, cdb, len);
 	munmap(cdb, len);
 
 	/*
@@ -1259,6 +1266,9 @@ _npf_table_build_const(nl_table_t *tl)
 	 */
 	nvlist_move_binary(tl->table_dict, "data", buf, len);
 	error = nvlist_error(tl->table_dict);
+	if (!error) {
+		nvlist_free(tl->table_dict, "entries");
+	}
 out:
 	if (fd != -1) {
 		close(fd);

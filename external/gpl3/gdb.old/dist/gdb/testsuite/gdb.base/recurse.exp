@@ -1,4 +1,4 @@
-# Copyright 1992-2023 Free Software Foundation, Inc.
+# Copyright 1992-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,13 +15,13 @@
 
 # This file was written by Jeff Law. (law@cs.utah.edu)
 
-# The skip_hw_watchpoint_tests checks if watchpoints are supported by the
+# The allow_hw_watchpoint_tests checks if watchpoints are supported by the
 # processor.  On PowerPC, the check runs a small test program under gdb
 # to determine if the Power processor supports HW watchpoints.  The check
 # must be done before starting the test so as to not disrupt the execution
 # of the actual test.
 
-set skip_hw_watchpoint_tests_p [skip_hw_watchpoint_tests]
+set allow_hw_watchpoint_tests_p [allow_hw_watchpoint_tests]
 
 standard_testfile
 
@@ -32,9 +32,9 @@ if {[prepare_for_testing "failed to prepare" $testfile $srcfile debug]} {
 proc recurse_tests {} {
 
     # Disable hardware watchpoints if necessary.
-    global skip_hw_watchpoint_tests_p
+    global allow_hw_watchpoint_tests_p
 
-    if {$skip_hw_watchpoint_tests_p} {
+    if {!$allow_hw_watchpoint_tests_p} {
 	 gdb_test_no_output "set can-use-hw-watchpoints 0" ""
     }
 
@@ -52,15 +52,15 @@ proc recurse_tests {} {
 
 	# Continue inward for a few iterations
 	gdb_test "continue" "Breakpoint.* recurse \\(a=9\\).*" \
-	    "continue to recurse (a = 9)"
+	    "continue to recurse, a = 9"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=8\\).*" \
-	    "continue to recurse (a = 8)"
+	    "continue to recurse, a = 8"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=7\\).*" \
-	    "continue to recurse (a = 7)"
+	    "continue to recurse, a = 7"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=6\\).*" \
-	    "continue to recurse (a = 6)"
+	    "continue to recurse, a = 6"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=5\\).*" \
-	    "continue to recurse (a = 5)"
+	    "continue to recurse, a = 5"
 
 	# Put a watchpoint on another instance of b
 	# First we need to step over the assignment of b, so it has a known
@@ -76,13 +76,13 @@ proc recurse_tests {} {
 
 	# Continue inward for a few iterations
 	gdb_test "continue" "Breakpoint.* recurse \\(a=4\\).*" \
-	    "continue to recurse (a = 4)"
+	    "continue to recurse, a = 4"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=3\\).*" \
-	    "continue to recurse (a = 3)"
+	    "continue to recurse, a = 3"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=2\\).*" \
-	    "continue to recurse (a = 2)"
+	    "continue to recurse, a = 2"
 	gdb_test "continue" "Breakpoint.* recurse \\(a=1\\).*" \
-	    "continue to recurse (a = 1)"
+	    "continue to recurse, a = 1"
 
 	# Continue until second set of b (second instance).
 	gdb_test "continue" \

@@ -1,5 +1,5 @@
 /* Generic BFD library interface and support routines.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -65,7 +65,8 @@ EXTERNAL
 .  {
 .    bfd_plugin_unknown = 0,
 .    bfd_plugin_yes = 1,
-.    bfd_plugin_no = 2
+.    bfd_plugin_yes_unused = 2,
+.    bfd_plugin_no = 3
 .  };
 .
 .struct bfd_build_id
@@ -79,7 +80,8 @@ EXTERNAL
 .    lto_non_object,		{* Not an LTO object.  *}
 .    lto_non_ir_object,		{* An object without LTO IR.  *}
 .    lto_slim_ir_object,	{* A slim LTO IR object.  *}
-.    lto_fat_ir_object		{* A fat LTO IR object.  *}
+.    lto_fat_ir_object,		{* A fat LTO IR object.  *}
+.    lto_mixed_object		{* A mixed LTO IR object.  *}
 .  };
 .
 .struct bfd_mmapped_entry
@@ -305,7 +307,7 @@ CODE_FRAGMENT
 .  unsigned int read_only : 1;
 .
 .  {* LTO object type.  *}
-.  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 2;
+.  ENUM_BITFIELD (bfd_lto_object_type) lto_type : 3;
 .
 .  {* Set if this BFD is currently being processed by
 .     bfd_check_format_matches.  This is checked by the cache to
@@ -336,6 +338,9 @@ CODE_FRAGMENT
 .
 .  {* The last section on the section list.  *}
 .  struct bfd_section *section_last;
+.
+.  {* The object-only section on the section list.  *}
+.  struct bfd_section *object_only_section;
 .
 .  {* The number of sections.  *}
 .  unsigned int section_count;
@@ -463,6 +468,16 @@ EXTERNAL
 .bfd_get_lto_type (const bfd *abfd)
 .{
 .  return abfd->lto_type;
+.}
+.
+.static inline bool
+.bfd_lto_slim_symbol_p (const bfd *abfd, const char *name)
+.{
+.  return (bfd_get_lto_type (abfd) != lto_non_ir_object
+.	   && name != NULL
+.	   && name[0] == '_'
+.	   && name[1] == '_'
+.	   && strcmp (name + (name[2] == '_'), "__gnu_lto_slim") == 0);
 .}
 .
 .static inline flagword
@@ -704,6 +719,12 @@ EXTERNAL
 #define EXIT_FAILURE 1
 #endif
 
+#ifdef TLS
+#define THREAD_LOCAL TLS
+#else
+#define THREAD_LOCAL
+#endif
+
 
 /* provide storage for subsystem, stack and heap data which may have been
    passed in on the command line.  Ld puts this data into a bfd_link_info
@@ -767,11 +788,6 @@ CODE_FRAGMENT
 .
 */
 
-static TLS bfd_error_type bfd_error;
-static TLS bfd_error_type input_error;
-static TLS bfd *input_bfd;
-static TLS char *_bfd_error_buf;
-
 const char *const bfd_errmsgs[] =
 {
   N_("no error"),
@@ -798,6 +814,19 @@ const char *const bfd_errmsgs[] =
   N_("error reading %s: %s"),
   N_("#<invalid error code>")
 };
+
+static THREAD_LOCAL bfd_error_type bfd_error;
+static THREAD_LOCAL char *_bfd_error_buf;
+
+/* Free any data associated with the BFD error.  */
+
+static void
+_bfd_clear_error_data (void)
+{
+  bfd_error = bfd_error_no_error;
+  free (_bfd_error_buf);
+  _bfd_error_buf = NULL;
+}
 
 /*
 FUNCTION
@@ -857,12 +886,12 @@ bfd_set_input_error (bfd *input, bfd_error_type error_tag)
 {
   /* This is an error that occurred during bfd_close when writing an
      archive, but on one of the input files.  */
-  bfd_error = bfd_error_on_input;
   _bfd_clear_error_data ();
-  input_bfd = input;
-  input_error = error_tag;
-  if (input_error >= bfd_error_on_input)
+  if (error_tag >= bfd_error_on_input)
     abort ();
+  if (bfd_asprintf (_(bfd_errmsgs[bfd_error_on_input]),
+		    bfd_get_filename (input), bfd_errmsg (error_tag)))
+    bfd_error = bfd_error_on_input;
 }
 
 /*
@@ -884,16 +913,7 @@ bfd_errmsg (bfd_error_type error_tag)
   extern int errno;
 #endif
   if (error_tag == bfd_error_on_input)
-    {
-      const char *msg = bfd_errmsg (input_error);
-      char *ret = bfd_asprintf (_(bfd_errmsgs[error_tag]),
-				bfd_get_filename (input_bfd), msg);
-      if (ret)
-	return ret;
-
-      /* Ick, what to do on out of memory?  */
-      return msg;
-    }
+    return _bfd_error_buf;
 
   if (error_tag == bfd_error_system_call)
     return xstrerror (errno);
@@ -928,24 +948,6 @@ bfd_perror (const char *message)
   else
     fprintf (stderr, "%s: %s\n", message, bfd_errmsg (bfd_get_error ()));
   fflush (stderr);
-}
-
-/*
-INTERNAL_FUNCTION
-	_bfd_clear_error_data
-
-SYNOPSIS
-	void _bfd_clear_error_data (void);
-
-DESCRIPTION
-	Free any data associated with the BFD error.
-*/
-
-void
-_bfd_clear_error_data (void)
-{
-  free (_bfd_error_buf);
-  _bfd_error_buf = NULL;
 }
 
 /*
@@ -1089,8 +1091,14 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
 	      ptr += 2;
 	    }
 
+	  /* There is a clash between Microsoft's non-standard I64
+	     and I32 integer length modifiers and glibc's
+	     non-standard I flag.  */
+	  const char *printf_flag_chars
+	    = sizeof PRId64 == sizeof "I64d" ? "-+ #0'" : "-+ #0'I";
+
 	  /* Move past flags.  */
-	  while (strchr ("-+ #0'I", *ptr))
+	  while (strchr (printf_flag_chars, *ptr))
 	    *sptr++ = *ptr++;
 
 	  if (*ptr == '*')
@@ -1139,6 +1147,22 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
 		/* Handle explicit numeric value.  */
 		while (ISDIGIT (*ptr))
 		  *sptr++ = *ptr++;
+	    }
+	  if (sizeof PRId64 == sizeof "I64d" && *ptr =='I')
+	    {
+	      if (ptr[1] == '6' && ptr[2] == '4')
+		{
+		  wide_width = 3;
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		}
+	      else if (ptr[1] == '3' && ptr[2] == '2')
+		{
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		  *sptr++ = *ptr++;
+		}
 	    }
 	  while (strchr ("hlL", *ptr))
 	    {
@@ -1191,14 +1215,17 @@ _bfd_doprnt (bfd_print_callback print, void *stream, const char *format,
 			PRINT_TYPE (long, l);
 			break;
 		      case 2:
+			if (sizeof PRId64 == sizeof "I64d")
+			  {
+			    /* Convert any %ll to %I64.  */
+			    sptr[-3] = 'I';
+			    sptr[-2] = '6';
+			    sptr[-1] = '4';
+			    *sptr++ = ptr[-1];
+			    *sptr = '\0';
+			  }
+			/* Fall through.  */
 		      default:
-#if defined (__MSVCRT__)
-			sptr[-3] = 'I';
-			sptr[-2] = '6';
-			sptr[-1] = '4';
-			*sptr++ = ptr[-1];
-			*sptr = '\0';
-#endif
 			PRINT_TYPE (long long, ll);
 			break;
 		      }
@@ -1321,8 +1348,14 @@ _bfd_doprnt_scan (const char *format, va_list ap, union _bfd_doprnt_args *args)
 	      ptr += 2;
 	    }
 
+	  /* There is a clash between Microsoft's non-standard I64
+	     and I32 integer length modifiers and glibc's
+	     non-standard I flag.  */
+	  const char *printf_flag_chars
+	    = sizeof PRId64 == sizeof "I64d" ? "-+ #0'" : "-+ #0'I";
+
 	  /* Move past flags.  */
-	  while (strchr ("-+ #0'I", *ptr))
+	  while (strchr (printf_flag_chars, *ptr))
 	    ptr++;
 
 	  if (*ptr == '*')
@@ -1370,6 +1403,17 @@ _bfd_doprnt_scan (const char *format, va_list ap, union _bfd_doprnt_args *args)
 		/* Handle explicit numeric value.  */
 		while (ISDIGIT (*ptr))
 		  ptr++;
+	    }
+
+	  if (sizeof PRId64 == sizeof "I64d" && *ptr =='I')
+	    {
+	      if (ptr[1] == '6' && ptr[2] == '4')
+		{
+		  wide_width = 3;
+		  ptr += 3;
+		}
+	      else if (ptr[1] == '3' && ptr[2] == '2')
+		ptr += 3;
 	    }
 	  while (strchr ("hlL", *ptr))
 	    {
@@ -1651,7 +1695,7 @@ _bfd_per_xvec_warn (struct per_xvec_messages *messages, size_t alloc)
    error_handler_sprintf; when NULL, _bfd_error_internal will be used
    instead.  */
 
-static TLS struct per_xvec_messages *error_handler_messages;
+static THREAD_LOCAL struct per_xvec_messages *error_handler_messages;
 
 /* A special value for error_handler_messages that indicates that the
    error should simply be ignored.  */
@@ -1918,10 +1962,7 @@ DESCRIPTION
 unsigned int
 bfd_init (void)
 {
-  bfd_error = bfd_error_no_error;
-  input_bfd = NULL;
   _bfd_clear_error_data ();
-  input_error = bfd_error_no_error;
   _bfd_error_internal = error_handler_fprintf;
   _bfd_assert_handler = _bfd_default_assert_handler;
 
@@ -1956,6 +1997,23 @@ static bfd_lock_unlock_fn_type unlock_fn;
 static void *lock_data;
 
 /*
+INTERNAL_FUNCTION
+	_bfd_threading_enabled
+
+SYNOPSIS
+	bool _bfd_threading_enabled (void);
+
+DESCRIPTION
+	Return true if threading is enabled, false if not.
+*/
+
+bool
+_bfd_threading_enabled (void)
+{
+  return lock_fn != NULL;
+}
+
+/*
 FUNCTION
 	bfd_thread_init
 
@@ -1970,16 +2028,20 @@ DESCRIPTION
 	Initialize BFD threading.  The functions passed in will be
 	used to lock and unlock global data structures.  This may only
 	be called a single time in a given process.  Returns true on
-	success and false on error.  DATA is passed verbatim to the
-	lock and unlock functions.  The lock and unlock functions
-	should return true on success, or set the BFD error and return
-	false on failure.
+	success and false on error.  On error, the caller should
+	assume that BFD cannot be used by multiple threads.  DATA is
+	passed verbatim to the lock and unlock functions.  The lock
+	and unlock functions should return true on success, or set the
+	BFD error and return false on failure.  Note also that the
+	lock must be a recursive lock: BFD may attempt to acquire the
+	lock when it is already held by the current thread.
 */
 
 bool
 bfd_thread_init (bfd_lock_unlock_fn_type lock, bfd_lock_unlock_fn_type unlock,
 		 void *data)
 {
+#ifdef TLS
   /* Both functions must be set, and this cannot have been called
      before.  */
   if (lock == NULL || unlock == NULL || unlock_fn != NULL)
@@ -1992,6 +2054,12 @@ bfd_thread_init (bfd_lock_unlock_fn_type lock, bfd_lock_unlock_fn_type unlock,
   unlock_fn = unlock;
   lock_data = data;
   return true;
+#else /* TLS */
+  /* If thread-local storage wasn't found by configure, we disallow
+     threaded operation.  */
+  bfd_set_error (bfd_error_invalid_operation);
+  return false;
+#endif /* TLS */
 }
 
 /*
@@ -2993,4 +3061,42 @@ _bfd_get_link_info (bfd *abfd)
     return NULL;
 
   return elf_link_info (abfd);
+}
+
+/*
+FUNCTION
+	bfd_group_signature
+
+SYNOPSIS
+	asymbol *bfd_group_signature (asection *group, asymbol **isympp);
+
+DESCRIPTION
+	Return a pointer to the symbol used as a signature for GROUP.
+*/
+
+asymbol *
+bfd_group_signature (asection *group, asymbol **isympp)
+{
+  bfd *abfd = group->owner;
+  Elf_Internal_Shdr *ghdr;
+
+  /* PR 20089: An earlier error may have prevented us from loading the
+     symbol table.  */
+  if (isympp == NULL)
+    return NULL;
+
+  if (bfd_get_flavour (abfd) != bfd_target_elf_flavour)
+    return NULL;
+
+  ghdr = &elf_section_data (group)->this_hdr;
+  if (ghdr->sh_link == elf_onesymtab (abfd))
+    {
+      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      Elf_Internal_Shdr *symhdr = &elf_symtab_hdr (abfd);
+
+      if (ghdr->sh_info > 0
+	  && ghdr->sh_info < symhdr->sh_size / bed->s->sizeof_sym)
+	return isympp[ghdr->sh_info - 1];
+    }
+  return NULL;
 }

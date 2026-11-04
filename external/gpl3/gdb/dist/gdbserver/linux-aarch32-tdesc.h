@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,4 +26,4 @@ const target_desc * aarch32_linux_read_description ();
 
 bool is_aarch32_linux_description (const target_desc *tdesc);
 
-#endif /* linux-aarch32-tdesc.h.  */
+#endif /* GDBSERVER_LINUX_AARCH32_TDESC_H */

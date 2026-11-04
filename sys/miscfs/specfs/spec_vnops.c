@@ -1,4 +1,4 @@
-/*	$NetBSD: spec_vnops.c,v 1.218.6.1 2025/08/02 05:57:45 perseant Exp $	*/
+/*	$NetBSD: spec_vnops.c,v 1.218.6.2 2026/11/04 23:27:53 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.218.6.1 2025/08/02 05:57:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spec_vnops.c,v 1.218.6.2 2026/11/04 23:27:53 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1661,7 +1661,7 @@ spec_close(void *v)
 
 		/*
 		 * If the vnode is locked, then we are in the midst
-		 * of forcably closing the device, otherwise we only
+		 * of forcibly closing the device, otherwise we only
 		 * close on last reference.
 		 */
 		mode = S_IFCHR;

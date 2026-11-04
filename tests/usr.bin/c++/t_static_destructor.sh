@@ -1,4 +1,4 @@
-#	$NetBSD: t_static_destructor.sh,v 1.6.4.1 2025/08/02 05:58:12 perseant Exp $
+#	$NetBSD: t_static_destructor.sh,v 1.6.4.2 2026/11/04 23:28:23 perseant Exp $
 #
 # Copyright (c) 2017 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -27,6 +27,64 @@
 # ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
+
+mktest() {
+	cat > $@.cpp << EOF
+#include <iostream>
+struct A {
+	int i;
+	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
+	~A() {std::cout << "DTOR A:" << i << std::endl;}
+};
+struct B {
+	A *m_a;
+	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
+	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
+};
+int $@(void) {struct B b;return 0;}
+EOF
+}
+
+check() {
+	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" $@
+}
+
+ccmain() {
+	atf_check -s exit:0 -o ignore -e ignore c++ $@ -o main main.cpp
+	check ./main
+}
+
+
+mkmain() {
+	cat > main.cpp << EOF
+#include <cstdlib>
+int $@(void);
+int main(void) {$@();exit(0);}
+EOF
+}
+
+cclib() {
+	atf_check -s exit:0 -o ignore -e ignore \
+	    c++ "$@" -fPIC -shared -o libpic.so pic.cpp
+}
+
+check32() {
+	# check whether this arch is 64bit
+	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
+		atf_skip "this is not a 64 bit architecture"
+		return 1
+	fi
+	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
+		atf_skip "c++ -m32 not supported on this architecture"
+		return 1
+	else
+		if fgrep -q _LP64 ./def32; then
+			atf_fail "c++ -m32 does not generate netbsd32 binaries"
+			return 1
+		fi
+	fi
+	return 0
+}
 
 atf_test_case static_destructor
 static_destructor_head() {
@@ -89,260 +147,72 @@ static_destructor32_head() {
 }
 
 static_destructor_body() {
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -o hello test.cpp
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	mktest main
+	ccmain
 }
 
 static_destructor_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
+	mktest main
+	case $(uname -p) in
+	riscv*)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
 		;;
 	esac
-
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -static -pg -o hello test.cpp
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	ccmain -static -pg
 }
 
 static_destructor_profile_32_body() {
-	# check whether this arch is 64bit
-	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
-		atf_skip "this is not a 64 bit architecture"
-	fi
-	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
-		atf_skip "c++ -m32 not supported on this architecture"
-	else
-		if fgrep -q _LP64 ./def32; then
-			atf_fail "c++ -m32 does not generate netbsd32 binaries"
-		fi
-	fi
+	check32 || return
 
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -static -m32 -pg -o hello test.cpp
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	mktest main
+	ccmain -static -pg -m32
 }
 
 
 static_destructor_static_body() {
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -static -o hello test.cpp
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	mktest main
+	ccmain -static
 }
 
 static_destructor_pic_body() {
-	cat > test.cpp << EOF
-#include <cstdlib>
-int callpic(void);
-int main(void) {callpic();exit(0);}
-EOF
-	cat > pic.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int callpic(void) {struct B b;}
-EOF
-
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -fPIC -shared -o libtest.so pic.cpp
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -o hello test.cpp -L. -ltest
-
-	export LD_LIBRARY_PATH=.
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	mktest pic
+	mkmain pic
+	cclib
+	ccmain -L${PWD} -Wl,-R${PWD} -lpic
 }
 
 static_destructor_pic_32_body() {
-	# check whether this arch is 64bit
-	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
-		atf_skip "this is not a 64 bit architecture"
-	fi
-	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
-		atf_skip "c++ -m32 not supported on this architecture"
-	else
-		if fgrep -q _LP64 ./def32; then
-			atf_fail "c++ -m32 does not generate netbsd32 binaries"
-		fi
-	fi
-
-	cat > test.cpp << EOF
-#include <cstdlib>
-int callpic(void);
-int main(void) {callpic();exit(0);}
-EOF
-	cat > pic.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int callpic(void) {struct B b;}
-EOF
-
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -m32 -fPIC -shared -o libtest.so pic.cpp
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -m32 -o hello test.cpp -L. -ltest
-
-	export LD_LIBRARY_PATH=.
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	check32 || return
+	mktest pic
+	mkmain pic
+	cclib -m32
+	ccmain -m32 -L${PWD} -Wl,-R${PWD} -lpic
 }
 
 static_destructor_pic_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
+	mktest pic
+	mkmain pic
+	cclib -pg 
+	case $(uname -p) in
+	i?86|powerpc*|sparc|vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
 		;;
 	esac
-
-	cat > test.cpp << EOF
-#include <cstdlib>
-int callpic(void);
-int main(void) {callpic();exit(0);}
-EOF
-	cat > pic.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int callpic(void) {struct B b;}
-EOF
-
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -pg -fPIC -shared -o libtest.so pic.cpp
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -pg -o hello test.cpp -L. -ltest
-
-	export LD_LIBRARY_PATH=.
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	ccmain -pg -L${PWD} -Wl,-R${PWD} -lpic
 }
 
 static_destructor_pic_profile_32_body() {
-	# check whether this arch is 64bit
-	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
-		atf_skip "this is not a 64 bit architecture"
-	fi
-	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
-		atf_skip "c++ -m32 not supported on this architecture"
-	else
-		if fgrep -q _LP64 ./def32; then
-			atf_fail "c++ -m32 does not generate netbsd32 binaries"
-		fi
-	fi
+	check32 || return
 
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
+	mktest pic
+	mkmain pic
+	cclib -m32 -pg 
+	case $(uname -p) in
+	x86_64)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
 		;;
 	esac
-
-	cat > test.cpp << EOF
-#include <cstdlib>
-int callpic(void);
-int main(void) {callpic();exit(0);}
-EOF
-	cat > pic.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int callpic(void) {struct B b;}
-EOF
-
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -m32 -pg -fPIC -shared -o libtest.so pic.cpp
-	atf_check -s exit:0 -o ignore -e ignore \
-	    c++ -m32 -pg -o hello test.cpp -L. -ltest
-
-	export LD_LIBRARY_PATH=.
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	ccmain -m32 -pg -L${PWD} -Wl,-R${PWD} -lpic
 }
 
 static_destructor_pie_body() {
@@ -350,53 +220,16 @@ static_destructor_pie_body() {
 	if ! c++ -pie -dM -E - < /dev/null 2>/dev/null >/dev/null; then
 		atf_skip "c++ -pie not supported on this architecture"
 	fi
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -fpie -pie -o hello test.cpp
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	mktest main
+	ccmain -fpie -pie 
 }
 
 static_destructor32_body() {
-	# check whether this arch is 64bit
-	if ! c++ -dM -E - < /dev/null | fgrep -q _LP64; then
-		atf_skip "this is not a 64 bit architecture"
-	fi
-	if ! c++ -m32 -dM -E - < /dev/null 2>/dev/null > ./def32; then
-		atf_skip "c++ -m32 not supported on this architecture"
-	else
-		if fgrep -q _LP64 ./def32; then
-			atf_fail "c++ -m32 does not generate netbsd32 binaries"
-		fi
-	fi
+	check32 || return
 
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
-	atf_check -s exit:0 -o ignore -e ignore c++ -o hello32 -m32 test.cpp
-	atf_check -s exit:0 -o ignore -e ignore c++ -o hello64 test.cpp
+	mktest main
+	atf_check -s exit:0 -o ignore -e ignore c++ -o hello32 -m32 main.cpp
+	atf_check -s exit:0 -o ignore -e ignore c++ -o hello64 main.cpp
 	file -b ./hello32 > ./ftype32
 	file -b ./hello64 > ./ftype64
 	if diff ./ftype32 ./ftype64 >/dev/null; then
@@ -406,26 +239,10 @@ EOF
 	cat ./ftype32
 	echo "While native (64bit) binaries are:"
 	cat ./ftype64
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello32
-
-	# do another test with static 32bit binaries
-	cat > test.cpp << EOF
-#include <iostream>
-struct A {
-	int i;
-	A(int i):i(i){std::cout << "CTOR A" << std::endl;}
-	~A() {std::cout << "DTOR A:" << i << std::endl;}
-};
-struct B {
-	A *m_a;
-	B(){static A s_a(10);m_a=&s_a;std::cout << "CTOR B" << std::endl;}
-	~B(){std::cout << "DTOR B:" << (*m_a).i << std::endl;(*m_a).i = 20;}
-};
-int main(void) {struct B b;return 0;}
-EOF
+	check ./hello32
 	atf_check -s exit:0 -o ignore -e ignore c++ -o hello -m32 \
-	    -static test.cpp
-	atf_check -s exit:0 -o inline:"CTOR A\nCTOR B\nDTOR B:10\nDTOR A:20\n" ./hello
+	    -static main.cpp
+	check ./hello
 }
 
 atf_init_test_cases()

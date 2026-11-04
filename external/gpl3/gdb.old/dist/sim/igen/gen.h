@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -19,6 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#ifndef IGEN_GEN_H
+#define IGEN_GEN_H
 
 typedef struct _opcode_field opcode_field;
 struct _opcode_field
@@ -214,3 +216,5 @@ extern void print_sim_engine_abort (lf *file, const char *message);
 extern void print_include (lf *file, igen_module module);
 extern void print_include_inline (lf *file, igen_module module);
 extern void print_includes (lf *file);
+
+#endif /* IGEN_GEN_H */

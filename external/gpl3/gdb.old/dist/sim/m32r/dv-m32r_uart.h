@@ -1,6 +1,6 @@
 /* UART model.
 
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions and Mike Frysinger.
 
    This file is part of simulators.

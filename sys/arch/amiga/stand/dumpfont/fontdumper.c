@@ -1,7 +1,7 @@
-/*	$NetBSD: fontdumper.c,v 1.4 2002/01/26 13:21:11 aymeric Exp $	*/
+/*	$NetBSD: fontdumper.c,v 1.4.242.1 2026/11/04 23:20:02 perseant Exp $	*/
 
 /*
- * Routine to allow user to select from available fonts that fit restricitons of
+ * Routine to allow user to select from available fonts that fit restrictions of
  * NetBSD display code and then dump that font in the format for inclusion in
  * the kernel. Only character values 32-255 are dumped.
  *

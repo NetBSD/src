@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.128.6.2 2025/08/02 05:56:18 perseant Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.128.6.3 2026/11/04 23:21:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.128.6.2 2025/08/02 05:56:18 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.128.6.3 2026/11/04 23:21:33 perseant Exp $");
 
 #include "opt_xen.h"
 
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.128.6.2 2025/08/02 05:56:18 perseant 
 
 #include <crypto/aes/aes_impl.h>
 #include <crypto/aes/arch/x86/aes_ni.h>
-#include <crypto/aes/arch/x86/aes_sse2.h>
+#include <crypto/aes/arch/x86/aes_sse2_4x32.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>
 #include <crypto/aes/arch/x86/aes_via.h>
 #include <crypto/chacha/arch/x86/chacha_sse2.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.128.6.2 2025/08/02 05:56:18 perseant 
 #include <uvm/uvm_extern.h>
 
 #include <machine/cpu.h>
+#include <machine/frame.h>
 #include <machine/pio.h>
 #include <machine/specialreg.h>
 
@@ -486,6 +487,7 @@ cpu_probe_winchip(struct cpu_info *ci)
 static void
 cpu_probe_c3(struct cpu_info *ci)
 {
+	const struct x86_cache_info *cp;
 	u_int family, model, stepping, descs[4], lfunc, msr;
 	struct x86_cache_info *cai;
 
@@ -676,15 +678,39 @@ cpu_probe_c3(struct cpu_info *ci)
 	x86_cpuid(0x80000006, descs);
 
 	cai = &ci->ci_cinfo[CAI_L2CACHE];
-	if (family > 6 || model >= 9) {
-		cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
-		cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
-		cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
-	} else {
+	if (family == 6 && model < 9) {
+		// Pre-Nehemiah L2 cache mapping.
 		cai->cai_totalsize = VIA_L2_ECX_C_SIZE(descs[2]);
 		cai->cai_associativity = VIA_L2_ECX_C_ASSOC(descs[2]);
 		cai->cai_linesize = VIA_L2_ECX_C_LS(descs[2]);
+		return;
 	}
+
+	// Nehemiah, Esther, and Isaiah before CNQ use AMD-style cache encoding.
+	// It will be overridden by `cpuid leaf 4` (including L1) if available.
+	cai->cai_totalsize = VIA_L2N_ECX_C_SIZE(descs[2]);
+	cai->cai_associativity = VIA_L2N_ECX_C_ASSOC(descs[2]);
+	cai->cai_linesize = VIA_L2N_ECX_C_LS(descs[2]);
+	cp = cpu_cacheinfo_lookup(amd_cpuid_l2l3cache_assoc_info,
+		cai->cai_associativity);
+	if (cp != NULL)
+		cai->cai_associativity = cp->cai_associativity;
+	else
+		cai->cai_associativity = 0;	/* XXX Unknown/reserved */
+
+	// Late VIA models (CNQ and later) and Zhaoxin CPUs prefer `cpuid leaf 4'.
+	if (cpuid_level < 4)
+		return;
+
+	/* Parse the cache info from `cpuid leaf 4', if we have it. */
+	cpu_dcp_cacheinfo(ci, 4);
+
+	if (cpuid_level < 7)
+		return;
+
+	/* XXX: Disable SMAP for now, as it causes a page fault during boot. */
+	cpu_feature[5]  &= ~CPUID_SEF_SMAP;
+	ci->ci_feat_val[5] &= ~CPUID_SEF_SMAP;
 }
 
 static void
@@ -835,11 +861,28 @@ cpu_probe_fpu(struct cpu_info *ci)
 	 * Get the size of the save area with those features enabled
 	 * with the second CPUID.
 	 *
-	 * (Let's hope the features don't change!)
+	 * Verify the save area requires no userland ABI change.  If
+	 * this panic fires, then either
+	 *
+	 * (a) the CPU is inconsistent with the architectural
+	 *     documentation of the XSAVE state sizes, or
+	 *
+	 * (b) NetBSD's requested features XCR0_FPU have been extended
+	 *     to require more state than will fit in the current value
+	 *     of MINSIGSTKSZ, which will need to be raised with a
+	 *     compatibility mechanism so that old programs compiled
+	 *     with the old value will continue to work (just without
+	 *     access to the new extended CPU state).
 	 */
 	x86_cpuid2(0x0d, 0, descs);
-	if (descs[1] > x86_fpu_save_size)
+	if (descs[1] > x86_fpu_save_size) {
+		if (descs[1] > XSAVE_MAX_BYTES) {
+			panic("XSAVE size >=%"PRIx32
+			    " exceeds ABI maximum %zu",
+			    descs[1], (size_t)XSAVE_MAX_BYTES);
+		}
 		x86_fpu_save_size = descs[1];
+	}
 
 	/* Get component offsets and sizes for the save area */
 	for (i = XSAVE_YMM_Hi128; i < __arraycount(x86_xsave_offsets); i++) {
@@ -1011,7 +1054,7 @@ cpu_probe(struct cpu_info *ci)
 		    (cpu_feature[1] & CPUID2_SSSE3))
 			aes_md_init(&aes_ssse3_impl);
 		else if (i386_has_sse && i386_has_sse2)
-			aes_md_init(&aes_sse2_impl);
+			aes_md_init(&aes_sse2_4x32_impl);
 
 		/* ChaCha */
 		if (i386_has_sse && i386_has_sse2)

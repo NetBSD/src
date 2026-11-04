@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.98.2.1 2026/11/04 23:21:58 perseant Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.98 2024/06/29 12:11:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.98.2.1 2026/11/04 23:21:58 perseant Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -655,8 +655,8 @@ mb86960_start(struct ifnet *ifp)
 		/*
 		 * Txb_count and txb_free co-works to manage the
 		 * transmission buffer.  Txb_count keeps track of the
-		 * used potion of the buffer, while txb_free does unused
-		 * potion.  So, as long as the driver runs properly,
+		 * used portion of the buffer, while txb_free does unused
+		 * portion.  So, as long as the driver runs properly,
 		 * txb_count is zero if and only if txb_free is same
 		 * as txb_size (which represents whole buffer.)
 		 */
@@ -964,7 +964,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 	 * or, worse, by a broken MB86960 chip.
 	 */
 	for (i = 0; i < FE_MAX_RECV_COUNT; i++) {
-		/* Stop the iterration if 86960 indicates no packets. */
+		/* Stop the iteration if 86960 indicates no packets. */
 		if (bus_space_read_1(bst, bsh, FE_DLCR5) & FE_D5_BUFEMP)
 			break;
 
@@ -1620,7 +1620,7 @@ mb86960_setmode(struct mb86960_softc *sc)
 		 *
 		 * Promiscuous mode is used solely by BPF, and BPF only
 		 * listens to valid (no error) packets.  So, we ignore
-		 * errornous ones even in this mode.
+		 * erroneous ones even in this mode.
 		 */
 		bus_space_write_1(bst, bsh, FE_DLCR5,
 		    sc->proto_dlcr5 | FE_D5_AFM0 | FE_D5_AFM1);

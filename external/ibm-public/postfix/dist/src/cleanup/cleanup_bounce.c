@@ -1,4 +1,4 @@
-/*	$NetBSD: cleanup_bounce.c,v 1.2.24.1 2025/08/02 05:50:03 perseant Exp $	*/
+/*	$NetBSD: cleanup_bounce.c,v 1.2.24.2 2026/11/04 23:14:45 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -77,7 +77,7 @@ static void cleanup_bounce_append(CLEANUP_STATE *state, RECIPIENT *rcpt,
      */
     if (bounce_append(BOUNCE_FLAG_CLEAN, state->queue_id,
 		      CLEANUP_MSG_STATS(&stats, state),
-		      rcpt, "none", dsn) != 0) {
+		      rcpt, "none", NO_TLS_STATS, dsn) != 0) {
 	state->errs |= CLEANUP_STAT_WRITE;
     }
 }

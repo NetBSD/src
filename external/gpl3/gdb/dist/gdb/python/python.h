@@ -1,6 +1,6 @@
 /* Python/gdb header for generic use in gdb
 
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PYTHON_H
-#define PYTHON_PYTHON_H
+#ifndef GDB_PYTHON_PYTHON_H
+#define GDB_PYTHON_PYTHON_H
 
 #include "extension.h"
 
@@ -34,4 +34,4 @@ extern cmd_list_element *python_cmd_element;
    at other times.  */
 extern struct objfile *gdbpy_current_objfile;
 
-#endif /* PYTHON_PYTHON_H */
+#endif /* GDB_PYTHON_PYTHON_H */

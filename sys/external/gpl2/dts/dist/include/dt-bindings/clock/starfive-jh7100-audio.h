@@ -1,3 +1,5 @@
+/*	$NetBSD: starfive-jh7100-audio.h,v 1.1.2.1 2026/11/04 23:27:16 perseant Exp $	*/
+
 /* SPDX-License-Identifier: GPL-2.0 OR MIT */
 /*
  * Copyright (C) 2021 Emil Renner Berthing <kernel@esmil.dk>

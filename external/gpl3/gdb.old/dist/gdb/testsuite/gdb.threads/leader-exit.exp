@@ -1,4 +1,4 @@
-# Copyright (C) 2007-2023 Free Software Foundation, Inc.
+# Copyright (C) 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if [target_info exists gdb,nointerrupts] {
-    verbose "Skipping leader-exit.exp because of nointerrupts."
-    return
-}
+require {!target_info exists gdb,nointerrupts}
 
 # Exit of the thread group leader should not break GDB.
 
@@ -37,7 +34,7 @@ gdb_breakpoint [gdb_get_line_number "break-here"]
 gdb_continue_to_breakpoint "break-here" ".* break-here .*"
 
 gdb_test "info threads" \
-	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n\\* 2 *Thread \[^\r\n\]* at \[^\r\n\]*" \
+	 "\r\n\[ \t\]*Id\[ \t\]+Target\[ \t\]+Id\[ \t\]+Frame\[ \t\]*\r\n\\* 2 *${tdlabel_re} \[^\r\n\]* at \[^\r\n\]*" \
 	 "single thread has been left"
 
 # Test that ctrl-c works even if the leader has exited.

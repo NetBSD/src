@@ -1,5 +1,5 @@
 /* Support for the generic parts of most COFF variants, for BFD.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -909,7 +909,9 @@ fill_comdat_hash (bfd *abfd)
   if (! _bfd_coff_get_external_symbols (abfd))
     return true;
 
-  esymstart = esym = (bfd_byte *) obj_coff_external_syms (abfd);
+  esymstart = esym = obj_coff_external_syms (abfd);
+  if (esym == NULL)
+    return true;
   esymend = esym + obj_raw_syment_count (abfd) * bfd_coff_symesz (abfd);
 
   for (struct internal_syment isym;
@@ -1516,11 +1518,6 @@ CODE_FRAGMENT
 .    (bfd *, struct bfd_link_info *, bfd *, asection *,
 .     struct internal_reloc *, bool *);
 .
-.  bool (*_bfd_coff_link_add_one_symbol)
-.    (struct bfd_link_info *, bfd *, const char *, flagword,
-.     asection *, bfd_vma, const char *, bool, bool,
-.     struct bfd_link_hash_entry **);
-.
 .  bool (*_bfd_coff_link_output_has_begun)
 .    (bfd *, struct coff_final_link_info *);
 .
@@ -1659,10 +1656,6 @@ INTERNAL
 .#define bfd_coff_adjust_symndx(obfd, info, ibfd, sec, rel, adjustedp)\
 .  ((coff_backend_info (abfd)->_bfd_coff_adjust_symndx)\
 .   (obfd, info, ibfd, sec, rel, adjustedp))
-.#define bfd_coff_link_add_one_symbol(info, abfd, name, flags, section,\
-.				      value, string, cp, coll, hashp)\
-.  ((coff_backend_info (abfd)->_bfd_coff_link_add_one_symbol)\
-.   (info, abfd, name, flags, section, value, string, cp, coll, hashp))
 .
 .#define bfd_coff_link_output_has_begun(a,p) \
 .  ((coff_backend_info (a)->_bfd_coff_link_output_has_begun) (a, p))
@@ -5313,7 +5306,7 @@ coff_slurp_reloc_table (bfd * abfd, sec_ptr asect, asymbol ** symbols)
 		/* xgettext:c-format */
 		(_("%pB: warning: illegal symbol index %ld in relocs"),
 		 abfd, dst.r_symndx);
-	      cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      ptr = NULL;
 	    }
 	  else
@@ -5325,7 +5318,7 @@ coff_slurp_reloc_table (bfd * abfd, sec_ptr asect, asymbol ** symbols)
 	}
       else
 	{
-	  cache_ptr->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  cache_ptr->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  ptr = NULL;
 	}
 
@@ -5513,10 +5506,6 @@ dummy_reloc16_extra_cases (bfd *abfd ATTRIBUTE_UNUSED,
 #define coff_adjust_symndx NULL
 #endif
 
-#ifndef coff_link_add_one_symbol
-#define coff_link_add_one_symbol _bfd_generic_link_add_one_symbol
-#endif
-
 #ifndef coff_link_output_has_begun
 
 static bool
@@ -5615,7 +5604,7 @@ static const bfd_coff_backend_data bfd_coff_std_swap_table ATTRIBUTE_UNUSED =
   coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
   coff_classify_symbol, coff_compute_section_file_positions,
   coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-  coff_adjust_symndx, coff_link_add_one_symbol,
+  coff_adjust_symndx,
   coff_link_output_has_begun, coff_final_link_postscript,
   bfd_pe_print_pdata
 };
@@ -5656,7 +5645,7 @@ static const bfd_coff_backend_data ticoff0_swap_table =
   coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
   coff_classify_symbol, coff_compute_section_file_positions,
   coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-  coff_adjust_symndx, coff_link_add_one_symbol,
+  coff_adjust_symndx,
   coff_link_output_has_begun, coff_final_link_postscript,
   bfd_pe_print_pdata
 };
@@ -5698,7 +5687,7 @@ static const bfd_coff_backend_data ticoff1_swap_table =
   coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
   coff_classify_symbol, coff_compute_section_file_positions,
   coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-  coff_adjust_symndx, coff_link_add_one_symbol,
+  coff_adjust_symndx,
   coff_link_output_has_begun, coff_final_link_postscript,
   bfd_pe_print_pdata	/* huh */
 };
@@ -5941,7 +5930,7 @@ static const bfd_coff_backend_data bigobj_swap_table =
   coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
   coff_classify_symbol, coff_compute_section_file_positions,
   coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-  coff_adjust_symndx, coff_link_add_one_symbol,
+  coff_adjust_symndx,
   coff_link_output_has_begun, coff_final_link_postscript,
   bfd_pe_print_pdata	/* huh */
 };
@@ -5967,8 +5956,6 @@ static const bfd_coff_backend_data bigobj_swap_table =
 #ifndef coff_bfd_copy_private_header_data
 #define coff_bfd_copy_private_header_data   _bfd_generic_bfd_copy_private_header_data
 #endif
-
-#define coff_init_private_section_data	    _bfd_generic_init_private_section_data
 
 #ifndef coff_bfd_copy_private_section_data
 #define coff_bfd_copy_private_section_data  _bfd_generic_bfd_copy_private_section_data
@@ -6146,9 +6133,9 @@ const bfd_target VAR =							\
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */ \
 									\
   /* Data conversion functions.  */					\
-  bfd_getb64, bfd_getb_signed_64, bfd_putb64,				\
-  bfd_getb32, bfd_getb_signed_32, bfd_putb32,				\
-  bfd_getb16, bfd_getb_signed_16, bfd_putb16,				\
+  bfd_getl64, bfd_getl_signed_64, bfd_putl64,				\
+  bfd_getl32, bfd_getl_signed_32, bfd_putl32,				\
+  bfd_getl16, bfd_getl_signed_16, bfd_putl16,				\
 									\
   /* Header conversion functions.  */					\
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,				\

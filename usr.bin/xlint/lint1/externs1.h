@@ -1,4 +1,4 @@
-/*	$NetBSD: externs1.h,v 1.230.2.1 2025/08/02 05:58:46 perseant Exp $	*/
+/*	$NetBSD: externs1.h,v 1.230.2.2 2026/11/04 23:28:45 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -32,6 +32,9 @@
  */
 
 #include <signal.h>
+
+/* tyname.c */
+const char *expr_type_name(const tnode_t *);
 
 /*
  * main1.c
@@ -221,7 +224,7 @@ void dcs_add_storage_class(scl_t);
 void dcs_add_type(type_t *);
 void dcs_add_qualifiers(type_qualifiers);
 void dcs_add_type_attributes(type_attributes);
-void dcs_add_alignas(tnode_t *);
+void dcs_add_alignas(unsigned int);
 void dcs_add_packed(void);
 void dcs_set_used(void);
 void begin_declaration_level(decl_level_kind);
@@ -278,13 +281,10 @@ int to_int_constant(tnode_t *, bool);
  */
 const tnode_t *before_conversion(const tnode_t *);
 type_t *block_derive_type(type_t *, tspec_t);
-type_t *expr_derive_type(type_t *, tspec_t);
 bool is_compiler_builtin(const char *);
 tnode_t *build_constant(type_t *, val_t *);
 tnode_t *build_name(sym_t *, bool);
 tnode_t *build_string(buffer *);
-tnode_t *build_generic_selection(const tnode_t *,
-		    struct generic_association *);
 
 tnode_t *build_binary(tnode_t *, op_t, bool, tnode_t *);
 tnode_t *build_unary(op_t, bool, tnode_t *);
@@ -317,6 +317,10 @@ void do_statement_expr(tnode_t *);
 tnode_t *end_statement_expr(void);
 bool in_statement_expr(void);
 
+void push_evaluation_mode(evaluation_mode);
+void pop_evaluation_mode(void);
+bool is_evaluation_mode(evaluation_mode);
+
 /*
  * func.c
  */
@@ -345,6 +349,7 @@ void begin_function(sym_t *);
 void end_function(void);
 void named_label(sym_t *);
 void case_label(tnode_t *);
+void case_label_range(tnode_t *, tnode_t *);
 void default_label(void);
 void stmt_if_expr(tnode_t *);
 void stmt_if_then_stmt(void);

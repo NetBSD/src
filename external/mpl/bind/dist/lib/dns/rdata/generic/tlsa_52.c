@@ -1,4 +1,4 @@
-/*	$NetBSD: tlsa_52.c,v 1.10.2.1 2025/08/02 05:53:47 perseant Exp $	*/
+/*	$NetBSD: tlsa_52.c,v 1.10.2.2 2026/11/04 23:18:12 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -63,7 +63,7 @@ generic_fromtext_tlsa(ARGS_FROMTEXT) {
 	/*
 	 * Certificate Association Data.
 	 */
-	return isc_hex_tobuffer(lexer, target, -2);
+	return isc_hex_tobuffer(lexer, target, isc_one_or_more);
 }
 
 static isc_result_t
@@ -266,9 +266,7 @@ tostruct_tlsa(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_tlsa);
 	REQUIRE(tlsa != NULL);
 
-	tlsa->common.rdclass = rdata->rdclass;
-	tlsa->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&tlsa->common, link);
+	DNS_RDATACOMMON_INIT(tlsa, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_tlsa(CALL_TOSTRUCT);
 }

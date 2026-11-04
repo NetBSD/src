@@ -1,4 +1,4 @@
-# Copyright 2007-2023 Free Software Foundation, Inc.
+# Copyright 2007-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,11 @@
 #
 # PR c++/9489.
 
-if { [skip_cplus_tests] } { continue }
-if { [skip_shlib_tests] } { continue }
+require allow_cplus_tests allow_shlib_tests
 
 standard_testfile .cc gdb2384-base.cc
+
+include_file gdb2384-base.h
 
 set sofile [standard_output_file gdb2384-base.so]
 

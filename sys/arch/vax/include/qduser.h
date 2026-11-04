@@ -1,4 +1,4 @@
-/*	$NetBSD: qduser.h,v 1.5.180.1 2025/08/02 05:56:13 perseant Exp $	*/
+/*	$NetBSD: qduser.h,v 1.5.180.2 2026/11/04 23:21:28 perseant Exp $	*/
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
  * All rights reserved.
@@ -451,7 +451,7 @@ struct qdinput {
 
 	struct prg_cursor {
 
-	    unsigned short acc_factor;	/* cursor aceleration factor */
+	    unsigned short acc_factor;	/* cursor acceleration factor */
 	    unsigned short threshold;	/* threshold to trigger acc at */
 	};
 

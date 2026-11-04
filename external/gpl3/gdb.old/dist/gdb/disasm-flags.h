@@ -1,6 +1,6 @@
 /* Disassemble flags for GDB.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DISASM_FLAGS_H
-#define DISASM_FLAGS_H
+#ifndef GDB_DISASM_FLAGS_H
+#define GDB_DISASM_FLAGS_H
 
 #include "gdbsupport/enum-flags.h"
 
@@ -34,8 +34,8 @@ enum gdb_disassembly_flag : unsigned
     DISASSEMBLY_SOURCE = (0x1 << 5),
     DISASSEMBLY_SPECULATIVE = (0x1 << 6),
     DISASSEMBLY_RAW_BYTES = (0x1 << 7),
+    DISASSEMBLY_OMIT_AUX_INSN = (0x1 << 8),
   };
 DEF_ENUM_FLAGS_TYPE (enum gdb_disassembly_flag, gdb_disassembly_flags);
 
-#endif /* DISASM_FLAGS_H */
-
+#endif /* GDB_DISASM_FLAGS_H */

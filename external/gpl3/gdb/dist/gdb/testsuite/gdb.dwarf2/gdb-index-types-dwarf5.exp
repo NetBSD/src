@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ standard_testfile
 
 set flags {}
 lappend flags {additional_flags=-fdebug-types-section}
-lappend flags {additional_flags=-gdwarf-5}
+lappend flags {dwarf5}
 
 if { [prepare_for_testing "failed to prepare" ${testfile} \
 	  $srcfile $flags] } {
@@ -29,7 +29,7 @@ if { [ensure_gdb_index $binfile] != 1 } {
     return -1
 }
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 # Verify that .gdb_index section is not ignored.
 set index [have_index $binfile]

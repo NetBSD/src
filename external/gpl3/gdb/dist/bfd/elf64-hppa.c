@@ -1,5 +1,5 @@
 /* Support for HPPA 64-bit ELF
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -296,8 +296,7 @@ elf64_hppa_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&htab->root, abfd,
 				      hppa64_link_hash_newfunc,
-				      sizeof (struct elf64_hppa_link_hash_entry),
-				      HPPA64_ELF_DATA))
+				      sizeof (struct elf64_hppa_link_hash_entry)))
     {
       free (htab);
       return NULL;
@@ -1560,6 +1559,7 @@ elf64_hppa_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 	  BFD_ASSERT (sec != NULL);
 	  sec->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  sec->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  sec->alloced = 1;
 	}
     }
   else
@@ -1810,6 +1810,7 @@ elf64_hppa_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 	  sec->contents = (bfd_byte *) bfd_zalloc (dynobj, sec->size);
 	  if (sec->contents == NULL)
 	    return false;
+	  sec->alloced = 1;
 	}
     }
 
@@ -3864,7 +3865,8 @@ elf64_hppa_relocate_section (bfd *output_bfd,
 
       if (sym_sec != NULL && discarded_section (sym_sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_PARISC_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;

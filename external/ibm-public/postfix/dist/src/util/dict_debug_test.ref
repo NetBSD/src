@@ -1,0 +1,51 @@
+>>> dict_open 'debug:' read
+./dict_open: fatal: open dictionary: expecting "type:name" form instead of "debug:"
+>>> dict_open 'debug:missing_colon_and_name' read
+./dict_open: fatal: open dictionary: expecting "type:name" form instead of "missing_colon_and_name"
+>>> dict_open 'debug:static:{space in name}' read
+owner=trusted (uid=2147483647)
+> get k
+./dict_open: static:{space in name} lookup: "k" = "space in name"
+k=space in name
+>>> dict_open 'debug:debug:static:value' read
+owner=trusted (uid=2147483647)
+> get k
+./dict_open: static:value lookup: "k" = "value"
+./dict_open: debug:static:value lookup: "k" = "value"
+k=value
+>>> dict_open 'debug:internal:name' write
+owner=trusted (uid=2147483647)
+> get k
+./dict_open: internal:name lookup: "k" = "not_found"
+k: not found
+> put k=v
+./dict_open: internal:name update: "k" = "v": success
+> get k
+./dict_open: internal:name lookup: "k" = "v"
+k=v
+> first
+./dict_open: internal:name sequence: "k" = "v"
+k=v
+> next
+./dict_open: internal:name sequence: found EOF
+not found
+> del k
+./dict_open: internal:name delete: "k": success
+k: deleted
+> get k
+./dict_open: internal:name lookup: "k" = "not_found"
+k: not found
+> del k
+./dict_open: internal:name delete: "k": failed
+k: not found
+> first
+./dict_open: internal:name sequence: found EOF
+not found
+>>> dict_open 'debug:fail:{oh no}' read
+owner=trusted (uid=2147483647)
+> get k
+./dict_open: fail:{oh no} lookup: "k" = "error"
+k: error
+> first
+./dict_open: fail:{oh no} sequence: found EOF
+error

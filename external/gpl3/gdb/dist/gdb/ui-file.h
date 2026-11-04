@@ -1,5 +1,5 @@
 /* UI_FILE - a generic STDIO like output stream.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef UI_FILE_H
-#define UI_FILE_H
+#ifndef GDB_UI_FILE_H
+#define GDB_UI_FILE_H
 
 #include <string>
 #include "ui-style.h"
@@ -82,10 +82,10 @@ public:
   virtual bool isatty ()
   { return false; }
 
-  /* true indicates terminal output behaviour such as cli_styling.
+  /* true indicates terminal output behavior such as cli_styling.
      This default implementation indicates to do terminal output
-     behaviour if the UI_FILE is a tty.  A derived class can override
-     TERM_OUT to have cli_styling behaviour without being a tty.  */
+     behavior if the UI_FILE is a tty.  A derived class can override
+     TERM_OUT to have cli_styling behavior without being a tty.  */
   virtual bool term_out ()
   { return isatty (); }
 
@@ -122,9 +122,6 @@ public:
 
   /* Emit an ANSI style escape for STYLE.  */
   virtual void emit_style_escape (const ui_file_style &style);
-
-  /* Rest the current output style to the empty style.  */
-  virtual void reset_style ();
 
   /* Print STR, bypassing any paging that might be done by this
      ui_file.  Note that nearly no code should call this -- it's
@@ -171,9 +168,9 @@ class string_file : public ui_file
 {
 public:
   /* Construct a string_file to collect 'raw' output, i.e. without
-     'terminal' behaviour such as cli_styling.  */
+     'terminal' behavior such as cli_styling.  */
   string_file () : m_term_out (false) {};
-  /* If TERM_OUT, construct a string_file with terminal output behaviour
+  /* If TERM_OUT, construct a string_file with terminal output behavior
      such as cli_styling)
      else collect 'raw' output like the previous constructor.  */
   explicit string_file (bool term_out) : m_term_out (term_out) {};
@@ -353,12 +350,6 @@ public:
     m_two->emit_style_escape (style);
   }
 
-  void reset_style () override
-  {
-    m_one->reset_style ();
-    m_two->reset_style ();
-  }
-
   void puts_unfiltered (const char *str) override
   {
     m_one->puts_unfiltered (str);
@@ -371,28 +362,58 @@ private:
   ui_file *m_two;
 };
 
+/* A ui_file implementation that buffers terminal escape sequences.
+   Note that this does not buffer in general -- it only buffers when
+   an incomplete but potentially recognizable escape sequence is
+   started.  */
+
+class escape_buffering_file : public stdio_file
+{
+public:
+  using stdio_file::stdio_file;
+
+  /* Like the stdio_file methods but these forward to do_write and
+     do_puts, respectively.  */
+  void write (const char *buf, long length_buf) override final;
+  void puts (const char *linebuffer) override final;
+
+  /* This class does not override 'flush'.  While it does have an
+     internal buffer, it does not really make sense to flush the
+     buffer until an escape sequence has been fully processed.  */
+
+protected:
+
+  /* Called to output some text.  If the text contains a recognizable
+     terminal escape sequence, then it is guaranteed to be complete.
+     "Recognizable" here means that examine_ansi_escape did not return
+     INCOMPLETE.  */
+  virtual void do_puts (const char *buf) = 0;
+  virtual void do_write (const char *buf, long len) = 0;
+
+private:
+
+  /* Buffer used only for incomplete escape sequences.  */
+  std::string m_buffer;
+};
+
 /* A ui_file implementation that filters out terminal escape
    sequences.  */
 
-class no_terminal_escape_file : public stdio_file
+class no_terminal_escape_file : public escape_buffering_file
 {
 public:
   no_terminal_escape_file ()
   {
   }
 
-  /* Like the stdio_file methods, but these filter out terminal escape
-     sequences.  */
-  void write (const char *buf, long length_buf) override;
-  void puts (const char *linebuffer) override;
-
   void emit_style_escape (const ui_file_style &style) override
   {
   }
 
-  void reset_style () override
-  {
-  }
+protected:
+
+  void do_puts (const char *linebuffer) override;
+  void do_write (const char *buf, long len) override;
 };
 
 /* A base class for ui_file types that wrap another ui_file.  */
@@ -418,10 +439,6 @@ public:
 
   void emit_style_escape (const ui_file_style &style) override
   { m_stream->emit_style_escape (style); }
-
-  /* Rest the current output style to the empty style.  */
-  void reset_style () override
-  { m_stream->reset_style (); }
 
   int fd () const override
   { return m_stream->fd (); }
@@ -467,4 +484,4 @@ private:
   bool m_needs_timestamp = true;
 };
 
-#endif
+#endif /* GDB_UI_FILE_H */

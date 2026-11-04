@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@ load_lib gdbserver-support.exp
 
 standard_testfile
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 if { [build_executable "failed to prepare" $::testfile $::srcfile \
 	  {debug}] } {
@@ -31,9 +29,11 @@ if { [build_executable "failed to prepare" $::testfile $::srcfile \
 # Don't use $binfile arg, to make sure we use the remote file target:$binfile.
 clean_restart
 
+set target_binfile [gdb_remote_download target $binfile]
+
 # Start gdbserver, and connect to it, twice.
 foreach_with_prefix session {first second} {
-    lassign [gdbserver_start "" "$binfile"] unused gdbserver_address
+    lassign [gdbserver_start "" "$target_binfile"] unused gdbserver_address
     gdb_test "disconnect"
     set res [gdb_target_cmd "remote" $gdbserver_address]
     gdb_assert { $res == 0 } "gdbserver started"

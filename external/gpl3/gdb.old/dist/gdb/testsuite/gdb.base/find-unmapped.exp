@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -78,7 +78,10 @@ if {[target_info gdb_protocol] == "remote"
     || [target_info gdb_protocol] == "extended-remote"} {
     test_not_found 0
     with_test_prefix "search-memory-packet off" {
-	gdb_test_no_output "set remote search-memory-packet off"
+	gdb_test \
+	    "set remote search-memory-packet off" \
+	    "Support for the 'qSearch:memory' packet on the current remote target is set to \"off\"."
+
 	test_not_found 0
     }
 } else {

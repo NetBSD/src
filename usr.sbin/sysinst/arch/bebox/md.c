@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.10 2022/01/29 16:01:17 martin Exp $ */
+/*	$NetBSD: md.c,v 1.10.4.1 2026/11/04 23:28:59 perseant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -215,7 +215,7 @@ md_mbr_update_check(struct disk_partitions *parts, mbr_info_t *mbri)
 #ifdef HAVE_GPT
 /*
  * New GPT partitions have been written, update bootloader or remember
- * data untill needed in md_post_newfs
+ * data until needed in md_post_newfs
  */
 bool
 md_gpt_post_write(struct disk_partitions *parts, part_id root_id,

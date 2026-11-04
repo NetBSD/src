@@ -1,0 +1,334 @@
+# Copyright 2023-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests related to pending breakpoints in a multi-inferior environment.
+
+require allow_shlib_tests !use_gdb_stub
+
+standard_testfile
+
+set libname $testfile-lib
+set srcfile_lib $srcdir/$subdir/$libname.c
+set binfile_lib [standard_output_file $libname.so]
+
+if { [gdb_compile_shlib $srcfile_lib $binfile_lib {}] != "" } {
+    untested "failed to compile shared library 1"
+    return -1
+}
+
+set binfile_lib_target [gdb_download_shlib $binfile_lib]
+
+if { [build_executable "failed to prepare" $testfile $srcfile \
+	  [list debug \
+	       additional_flags=-DSHLIB_NAME=\"$binfile_lib_target\" \
+	       shlib_load]] } {
+    return -1
+}
+
+# Start two inferiors, both running the same test binary.  The arguments
+# INF_1_STOP and INF_2_STOP are source code patterns that are passed to
+# gdb_get_line_number to figure out where each inferior should be stopped.
+#
+# This proc does a clean_restart and leaves inferior 2 selected.  Also the
+# 'breakpoint pending' flag is enabled, so pending breakpoints can be created
+# without GDB prompting the user.
+proc do_test_setup { inf_1_stop inf_2_stop } {
+    clean_restart ${::testfile}
+
+    gdb_locate_shlib $::binfile_lib
+
+    if {![runto_main]} {
+	return false
+    }
+
+    gdb_breakpoint [gdb_get_line_number ${inf_1_stop}] temporary
+    gdb_continue_to_breakpoint "move inferior 1 into position"
+
+    gdb_test "add-inferior -exec ${::binfile}" \
+	"Added inferior 2.*" "add inferior 2"
+    gdb_test "inferior 2" "Switching to inferior 2 .*" "switch to inferior 2"
+
+    if {![runto_main]} {
+	return false
+    }
+
+    gdb_breakpoint [gdb_get_line_number ${inf_2_stop}] temporary
+    gdb_continue_to_breakpoint "move inferior 2 into position"
+
+    gdb_test_no_output "set breakpoint pending on"
+
+    return true
+}
+
+# Create a breakpoint on the function 'foo' in THREAD.  It is expected
+# that the breakpoint created will be pending, this is checked by
+# running the 'info breakpoints' command.
+#
+# Returns the number for the newly created breakpoint.
+proc do_create_pending_foo_breakpoint { {thread "1.1"} } {
+    gdb_test "break foo thread $thread" \
+	[multi_line \
+	     "Function \"foo\" not defined\\." \
+	     "Breakpoint $::decimal \\(foo\\) pending\."] \
+	"set pending thread-specific breakpoint"
+    set bpnum [get_integer_valueof "\$bpnum" "*INVALID*" \
+		   "get number for thread-specific breakpoint on foo"]
+    gdb_test "info breakpoints $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	     "\\s+stop only in thread [string_to_regexp $thread]"] \
+	"check thread-specific breakpoint is initially pending"
+
+    return $bpnum
+}
+
+# Create a breakpoint on the function 'foo' in THREAD.  It is expected
+# that the breakpoint created will not be pending, this is checked by
+# running the 'info breakpoints' command.
+#
+# Returns the number for the newly created breakpoint.
+proc do_create_foo_breakpoint { {thread "1.1"} } {
+    gdb_test "break foo thread $thread" \
+	"Breakpoint $::decimal at $::hex" \
+	"set thread-specific breakpoint"
+    set bpnum [get_integer_valueof "\$bpnum" "*INVALID*" \
+		   "get number for thread-specific breakpoint on foo"]
+    gdb_test "info breakpoints $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+$::hex\\s+<foo\[^>\]*> inf $::decimal" \
+	     "\\s+stop only in thread [string_to_regexp $thread]"] \
+	"check thread-specific breakpoint is initially pending"
+
+    return $bpnum
+}
+
+# Check that when a breakpoint is in the pending state, but that breakpoint
+# does have some locations (those locations themselves are pending), GDB
+# doesn't display the inferior list in the 'info breakpoints' output.
+proc_with_prefix test_no_inf_display {} {
+    do_test_setup "Break before open" "Break before open"
+
+    # Create a breakpoint on 'foo'.  As the shared library (that
+    # contains foo) has not been loaded into any inferior yet, then
+    # there will be no locations and the breakpoint will be created
+    # pending.  Pass the 'allow-pending' flag so the gdb_breakpoint
+    # correctly expects the new breakpoint to be pending.
+    gdb_breakpoint "foo" allow-pending
+    set bpnum [get_integer_valueof "\$bpnum" "*INVALID*" \
+		   "get foo breakpoint number"]
+
+    # Check the 'info breakpoints' output; the breakpoint is pending with
+    # no 'inf X' appearing at the end of the line.
+    gdb_test "info breakpoint $bpnum" \
+	"$bpnum\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	"check info bp before locations have been created"
+
+    # Now select inferior 1 and allow the inferior to run forward to the
+    # point where a breakpoint location for foo will have been created.
+    gdb_test "inferior 1" "Switching to inferior 1 .*"
+    gdb_breakpoint [gdb_get_line_number "Break after open"] temporary
+    gdb_continue_to_breakpoint \
+	"move inferior 1 until a location has been added"
+
+    # Check the 'info breakpoints' output.  Notice we display the inferior
+    # list at the end of the breakpoint line.
+    gdb_test "info breakpoint $bpnum" \
+	"$bpnum\\s+breakpoint\\s+keep\\s+y\\s+$::hex\\s+<foo\[^>\]*>\\s+inf 1" \
+	"check info breakpoints while breakpoint is inserted"
+
+    # Continue inferior 1 until the shared library has been unloaded.  The
+    # breakpoint on 'foo' will return to the pending state.  We will need to
+    # 'continue' twice as the first time will hit the 'foo' breakpoint.
+    gdb_breakpoint [gdb_get_line_number "Break after close"] temporary
+    gdb_continue_to_breakpoint "hit the breakpoint in foo"
+    gdb_continue_to_breakpoint "after close library"
+
+    # Check the 'info breakpoints' output, check there is no 'inf 1' at the
+    # end of the breakpoint line.
+    gdb_test "info breakpoint $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	     "\\s+breakpoint already hit 1 time"] \
+	"check info breakpoints while breakpoint is pending"
+}
+
+# Setup two inferiors.  In #1 the symbol 'foo' has not yet been
+# loaded, while in #2 the symbol 'foo' has been loaded.
+#
+# Create a thread-specific breakpoint on 'foo' tied to a thread in
+# inferior #1, the breakpoint should be pending -- 'foo' is not yet
+# loaded in #1.
+#
+# Now move inferior #1 forward until 'foo' is loaded, check the
+# breakpoint is no longer pending.
+#
+# Move inferior #1 forward more until 'foo' is unloaded, check that
+# the breakpoint returns to the pending state.
+proc_with_prefix test_pending_toggle { } {
+
+    do_test_setup "Break before open" "Break before close"
+
+    set bpnum [do_create_pending_foo_breakpoint]
+
+    # Now return to inferior 1 and continue until the shared library is
+    # loaded, the breakpoint should become non-pending.
+    gdb_test "inferior 1" "Switching to inferior 1 .*" \
+	"switch back to inferior 1"
+    gdb_continue_to_breakpoint "stop in foo in inferior 1" "foo \\(\\) .*"
+
+    gdb_test "info breakpoint $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+$::hex <foo\[^>\]*> inf 1" \
+	     "\\s+stop only in thread 1\\.1" \
+	     "\\s+breakpoint already hit 1 time"] \
+	"check thread-specific breakpoint is no longer pending"
+
+    gdb_breakpoint [gdb_get_line_number "Break after close"] temporary
+    gdb_continue_to_breakpoint "close library"
+    gdb_test "info breakpoints $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	     "\\s+stop only in thread 1\\.1" \
+	     "\\s+breakpoint already hit 1 time"] \
+	"check thread-specific breakpoint is pending again"
+}
+
+# Create a Python variable VAR and set it to the gdb.Breakpoint object
+# corresponding to the breakpoint numbered BPNUM.  If THREAD is not
+# the empty string then THREAD should be an integer, check that
+# gdb.Breakpoint.thread is set to the value of THREAD.  Otherwise, if
+# THREAD is the empty string, check that gdb.Breakpoint.thread is set
+# to None.
+proc py_find_breakpoint { var bpnum {thread ""} } {
+    gdb_test_no_output \
+	"python ${var}=\[b for b in gdb.breakpoints() if b.number == $bpnum\]\[0\]" \
+	"find Python gdb.Breakpoint object"
+    if { $thread ne "" } {
+	gdb_test_no_output "python assert(${var}.thread == ${thread})" \
+	    "check thread attribute is currently correct"
+    } else {
+	gdb_test_no_output "python assert(${var}.thread is None)" \
+	    "check thread attribute is currently correct"
+    }
+}
+
+# Setup two inferiors.  In #1 the symbol 'foo' has not yet been
+# loaded, while in #2 the symbol 'foo' has been loaded.
+#
+# Create a thread-specific breakpoint on 'foo' tied to a thread in
+# inferior #1, the breakpoint should be pending -- 'foo' is not yet
+# loaded in #1.
+#
+# Use Python to change the thread of the thread-specific breakpoint to
+# a thread in inferior #2, at this point the thread should gain a
+# location and become non-pending.
+#
+# Set the thread back to a thread in inferior #1, the breakpoint
+# should return to the pending state.
+proc_with_prefix py_test_toggle_thread {} {
+    do_test_setup "Break before open" "Break after open"
+
+    set bpnum [do_create_pending_foo_breakpoint]
+
+    py_find_breakpoint "bp" $bpnum 1
+
+    gdb_test_no_output "python bp.thread = 2" \
+	"change thread on thread-specific breakpoint"
+    gdb_test "info breakpoint $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+$::hex <foo\[^>\]*> inf 2" \
+	     "\\s+stop only in thread 2\\.1"] \
+	"check thread-specific breakpoint now has a location"
+
+    gdb_test_no_output "set call_count = 2" "set call_count in inferior 2"
+    gdb_continue_to_breakpoint "stop at foo in inferior 2" "foo \\(\\) .*"
+
+    gdb_test_no_output "python bp.thread = 1" \
+	"restore thread on thread-specific breakpoint"
+    gdb_test "info breakpoints $bpnum" \
+	[multi_line \
+	     "$bpnum\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	     "\\s+stop only in thread 1\\.1" \
+	     "\\s+breakpoint already hit 1 time"] \
+	"check thread-specific breakpoint has returned to pending"
+
+    gdb_breakpoint [gdb_get_line_number "Break after close"] temporary
+    gdb_continue_to_breakpoint "stop after close in inferior 2" \
+	".* Break after close\\. .*"
+
+    gdb_test "inferior 1" "Switching to inferior 1 .*" \
+	"switch to inferior 1"
+    gdb_continue_to_breakpoint "stop at foo in inferior 1" "foo \\(\\) .*"
+}
+
+# Setup two inferiors.  Both inferiors have the symbol 'foo'
+# available.
+#
+# Create a thread-specific breakpoint on 'foo' tied to a thread in
+# inferior #1, the breakpoint should not be pending, but will only
+# have a single location, the location in inferior #1.
+#
+# Use Python to change the thread of the thread-specific breakpoint to
+# None.  At this point the breakpoint should gain a second location, a
+# location in inferior #2.
+proc_with_prefix py_test_clear_thread {} {
+    do_test_setup "Break after open" "Break after open"
+
+    set bpnum [do_create_foo_breakpoint]
+
+    py_find_breakpoint "bp" $bpnum 1
+
+    gdb_test_no_output "python bp.thread = None" \
+	"clear thread on thread-specific breakpoint"
+    gdb_test "info breakpoints $bpnum" \
+	[multi_line \
+	     "${bpnum}\\s+breakpoint\\s+keep y\\s+<MULTIPLE>\\s*" \
+	     "${bpnum}\\.1\\s+y\\s+${::hex}\\s+<foo\[^>\]*> inf $::decimal" \
+	     "${bpnum}\\.2\\s+y\\s+${::hex}\\s+<foo\[^>\]*> inf $::decimal"] \
+	"check for a location in both inferiors"
+
+    gdb_continue_to_breakpoint "stop at foo in inferior 2" "foo \\(\\) .*"
+    gdb_test_no_output "set call_count = 2" "set call_count in inferior 2"
+
+    gdb_test "inferior 1" "Switching to inferior 1 .*" \
+	"switch to inferior 1"
+    gdb_continue_to_breakpoint "stop at foo in inferior 1" "foo \\(\\) .*"
+    gdb_test_no_output "set call_count = 2" "set call_count in inferior 1"
+
+    gdb_test_no_output "python bp.thread = 2"
+    gdb_test "info breakpoints $bpnum" \
+	[multi_line \
+	     "${bpnum}\\s+breakpoint\\s+keep y\\s+${::hex}\\s+<foo\[^>\]*> inf 2" \
+	     "\\s+stop only in thread 2\\.1" \
+	     "\\s+breakpoint already hit 2 times"] \
+	"check for a location only in inferior 2"
+
+    gdb_breakpoint [gdb_get_line_number "Break after close"] temporary
+    gdb_continue_to_breakpoint "stop after close in inferior 1" \
+	".* Break after close\\. .*"
+
+    gdb_test "inferior 2" "Switching to inferior 2 .*" \
+	"switch back to inferior 2"
+    gdb_continue_to_breakpoint "stop at foo again in inferior 2" \
+	"foo \\(\\) .*"
+}
+
+# Run all the tests.
+test_no_inf_display
+test_pending_toggle
+if { [allow_python_tests] } {
+    py_test_toggle_thread
+    py_test_clear_thread
+}

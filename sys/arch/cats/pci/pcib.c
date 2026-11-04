@@ -1,4 +1,4 @@
-/*	$NetBSD: pcib.c,v 1.18 2021/08/07 16:18:47 thorpej Exp $	*/
+/*	$NetBSD: pcib.c,v 1.18.12.1 2026/11/04 23:20:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18 2021/08/07 16:18:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcib.c,v 1.18.12.1 2026/11/04 23:20:23 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -111,5 +111,5 @@ pcib_callback(device_t self)
 #if NISADMA > 0
 	iba.iba_dmat = &isa_bus_dma_tag;
 #endif
-	config_found(self, &iba, isabusprint, CFARGS_NONE);
+	isabus_attach(self, &iba);
 }

@@ -1,6 +1,6 @@
 /* Path manipulation routines for GDB and gdbserver.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_PATHSTUFF_H
-#define COMMON_PATHSTUFF_H
+#ifndef GDBSUPPORT_PATHSTUFF_H
+#define GDBSUPPORT_PATHSTUFF_H
 
 #include "gdbsupport/byte-vector.h"
 #include "gdbsupport/array-view.h"
@@ -29,6 +29,9 @@
 #include <array>
 
 /* Path utilities.  */
+
+/* String containing the current directory (what getwd would return).  */
+extern char *current_directory;
 
 /* Return the real path of FILENAME, expanding all the symbolic links.
 
@@ -47,14 +50,30 @@ extern std::string gdb_realpath_keepfile (const char *filename);
    PATH cannot be NULL or the empty string.
    This does not resolve symlinks however, use gdb_realpath for that.
 
-   Contrary to "gdb_realpath", this function uses CURRENT_DIRECTORY
-   for the path expansion.  This may lead to scenarios the current
-   working directory (CWD) is different than CURRENT_DIRECTORY.
+   Contrary to "gdb_realpath", this function uses CWD for the path
+   expansion.  This may lead to scenarios the current working
+   directory is different than CWD.
 
-   If CURRENT_DIRECTORY is NULL, this function returns a copy of
-   PATH.  */
+   If CWD is NULL, this function returns a copy of PATH.  */
 
-extern std::string gdb_abspath (const char *path);
+extern std::string gdb_abspath (const char *path,
+				const char *cwd = current_directory);
+
+/* Overload of gdb_abspath which takes std::string.  */
+
+static inline std::string
+gdb_abspath (const std::string &path)
+{
+  return gdb_abspath (path.c_str ());
+}
+
+/* Overload of gdb_abspath which takes gdb::unique_xmalloc_ptr<char>.  */
+
+static inline std::string
+gdb_abspath (const gdb::unique_xmalloc_ptr<char> &path)
+{
+  return gdb_abspath (path.get ());
+}
 
 /* If the path in CHILD is a child of the path in PARENT, return a
    pointer to the first component in the CHILD's pathname below the
@@ -64,8 +83,10 @@ extern const char *child_path (const char *parent, const char *child);
 
 /* Join elements in PATHS into a single path.
 
-   The first element can be absolute or relative.  All the others must be
-   relative.  */
+   The first element can be absolute or relative.  Only a single directory
+   separator will be placed between elements of PATHS, if one element ends
+   with a directory separator, or an element starts with a directory
+   separator, then these will be collapsed into a single separator.  */
 
 extern std::string path_join (gdb::array_view<const char *> paths);
 
@@ -76,7 +97,7 @@ std::string
 path_join (Args... paths)
 {
   /* It doesn't make sense to join less than two paths.  */
-  gdb_static_assert (sizeof... (Args) >= 2);
+  static_assert (sizeof... (Args) >= 2);
 
   std::array<const char *, sizeof... (Args)> path_array
     { paths... };
@@ -159,7 +180,4 @@ extern const char *get_shell ();
 
 extern gdb::char_vector make_temp_filename (const std::string &f);
 
-/* String containing the current directory (what getwd would return).  */
-extern char *current_directory;
-
-#endif /* COMMON_PATHSTUFF_H */
+#endif /* GDBSUPPORT_PATHSTUFF_H */

@@ -1,0 +1,50 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+load_lib "ada.exp"
+
+require allow_ada_tests
+
+standard_ada_testfile prog
+
+if {[gdb_compile_ada "${srcfile}" "${binfile}" executable {debug}] != ""} {
+    return -1
+}
+
+clean_restart ${testfile}
+
+set bp_location [gdb_get_line_number "STOP" ${testdir}/prog.adb]
+runto "prog.adb:$bp_location"
+
+foreach type {boolean color simple small_int} {
+    # Log all the values for easier debugging.
+    gdb_test "print ${type}_val'object_size" " = $decimal"
+    gdb_test "print ${type}'object_size" " = $decimal"
+    gdb_test "print ${type}_size" " = $decimal"
+    gdb_test "print ${type}_type_size" " = $decimal"
+
+    gdb_test "print ${type}_val'object_size = ${type}_size" " = true"
+    gdb_test "print ${type}'object_size = ${type}_type_size" " = true"
+
+    gdb_test "print ${type}'size" "gdb cannot apply 'Size to a type"
+}
+
+gdb_test "print rec_val'object_size" " = $decimal"
+gdb_test "print rec'object_size" "cannot apply 'Object_Size to dynamic type"
+
+# Check that 'Size can be applied to values, regardless of whether
+# their declared type is dynamic.
+gdb_test "print static_blob'size = static_blob_size" " = true"
+gdb_test "print dynamic_blob'size = dynamic_blob_size" " = true"

@@ -1,6 +1,6 @@
 /* Linux-dependent part of branch trace support for GDB, and GDBserver.
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -19,8 +19,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_BTRACE_H
-#define NAT_LINUX_BTRACE_H
+#ifndef GDB_NAT_LINUX_BTRACE_H
+#define GDB_NAT_LINUX_BTRACE_H
 
 #include "gdbsupport/btrace-common.h"
 #include "gdbsupport/gdb-checked-static-cast.h"
@@ -86,4 +86,4 @@ extern enum btrace_error linux_read_btrace (struct btrace_data *btrace,
 extern const struct btrace_config *
   linux_btrace_conf (const struct btrace_target_info *);
 
-#endif /* NAT_LINUX_BTRACE_H */
+#endif /* GDB_NAT_LINUX_BTRACE_H */

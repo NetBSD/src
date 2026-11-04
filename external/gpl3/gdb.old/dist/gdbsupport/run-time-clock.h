@@ -1,5 +1,5 @@
 /* User/system CPU time clocks that follow the std::chrono interface.
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_RUN_TIME_CLOCK_H
-#define COMMON_RUN_TIME_CLOCK_H
+#ifndef GDBSUPPORT_RUN_TIME_CLOCK_H
+#define GDBSUPPORT_RUN_TIME_CLOCK_H
 
 #include <chrono>
 
@@ -72,4 +72,4 @@ struct run_time_clock
 		   system_cpu_time_clock::time_point &system) noexcept;
 };
 
-#endif /* COMMON_RUN_TIME_CLOCK_H */
+#endif /* GDBSUPPORT_RUN_TIME_CLOCK_H */

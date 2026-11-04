@@ -1,0 +1,8 @@
+{% include '_common/zones/soa.partial.db.j2' %}
+{% include '_common/zones/ns.partial.db.j2' %}
+
+; This NSEC3PARAM record is valid but the DNSKEY has an NSEC-only algorithm
+{% raw %}
+@		NSEC3PARAM 1 0 0 -
+@		DNSKEY 257 3 5 BEAAAAOlYGw53D+f01yCL5JsP0SB6EjYrnd0JYRBooAaGPT+Q0kpiN+7GviFh+nIazoB8e2Yv7mupgqkmIjObdcbGstYpUltdECdNpNmBvASKB9SBdtGeRvXXpORi3Qyxb9kHGG7SpzyYbc+KDVKnzYHB94pvqu3ZZpPFPBFtCibp/mkhw==
+{% endraw %}

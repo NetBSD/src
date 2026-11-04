@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.55.4.1 2025/08/02 05:58:03 perseant Exp $
+# $NetBSD: Makefile,v 1.55.4.2 2026/11/04 23:28:16 perseant Exp $
 
 NOMAN=		# defined
 
@@ -46,6 +46,7 @@ TESTS_C+=	t_timespec_get
 TESTS_C+=	t_ttyname
 TESTS_C+=	t_vis
 
+PROGS+=		h_ctype_abuse
 PROGS+=		h_execsig
 
 .if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
@@ -57,6 +58,7 @@ CPPFLAGS.t_ctype.c+=	\
 	${"${MKPIC}" == "no" || "${LDSTATIC:U}" == "-static":?-D_CTYPE_GUARD_PAGE=0:}
 CPPFLAGS.t_siginfo.c+=-D__TEST_FENV
 COPTS.t_fpsetround.c+=${${ACTIVE_CC} == "gcc":? -frounding-math :}
+CPPFLAGS.t_fpclassify.c+=-D__TEST_FENV
 
 LDADD.t_siginfo+=	-lm
 DPADD.t_siginfo+=	${LIBM}

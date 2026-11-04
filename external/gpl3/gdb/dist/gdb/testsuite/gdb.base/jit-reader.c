@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -61,6 +61,18 @@ read_debug_info (struct gdb_reader_funcs *self,
 		   (GDB_CORE_ADDR) symfile->function_stack_mangle.begin,
 		   (GDB_CORE_ADDR) symfile->function_stack_mangle.end,
 		   "jit_function_stack_mangle");
+
+  /* Add some line table information.  This ensures that GDB can handle
+     accepting this information, and can scan the table.  However, this
+     information is constructed such that none of the tests actually hit any
+     of these line entries.  */
+  struct gdb_line_mapping mangle_lines[] =
+    {
+      { 1, (GDB_CORE_ADDR) symfile->function_stack_mangle.begin + 0 },
+      { 0, (GDB_CORE_ADDR) symfile->function_stack_mangle.begin + 1 },
+    };
+  int mangle_nlines = sizeof (mangle_lines) / sizeof (mangle_lines[0]);
+  cbs->line_mapping_add (cbs, symtab, mangle_nlines, mangle_lines);
 
   cbs->block_open (cbs, symtab, NULL,
 		   (GDB_CORE_ADDR) symfile->function_add.begin,

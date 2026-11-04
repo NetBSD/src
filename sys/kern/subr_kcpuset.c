@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcpuset.c,v 1.20 2023/09/23 18:21:11 ad Exp $	*/
+/*	$NetBSD: subr_kcpuset.c,v 1.20.6.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2023 The NetBSD Foundation, Inc.
@@ -41,16 +41,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.20 2023/09/23 18:21:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kcpuset.c,v 1.20.6.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
 #include <sys/atomic.h>
 #include <sys/intr.h>
-#include <sys/sched.h>
 #include <sys/kcpuset.h>
 #include <sys/kmem.h>
+#include <sys/sched.h>
+#include <sys/sdt.h>
 
 /* Number of CPUs to support. */
 #define	KC_MAXCPUS		roundup2(MAXCPUS, 32)
@@ -291,7 +292,7 @@ kcpuset_copyin(const cpuset_t *ucp, kcpuset_t *kcp, size_t len)
 	KASSERT(kc->kc_next == NULL);
 
 	if (len > kc_bitsize) { /* XXX */
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	return copyin(ucp, kcp, len);
 }
@@ -306,7 +307,7 @@ kcpuset_copyout(kcpuset_t *kcp, cpuset_t *ucp, size_t len)
 	KASSERT(kc->kc_next == NULL);
 
 	if (len > kc_bitsize) { /* XXX */
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	return copyout(kcp, ucp, len);
 }

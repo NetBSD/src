@@ -1,0 +1,48 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation no;
+};
+
+key int {
+	algorithm @DEFAULT_HMAC@;
+	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";
+};
+
+key ext {
+	algorithm @DEFAULT_HMAC@;
+	secret "FrSt77yPTFx6hTs4i2tKLB9LmE0=";
+};
+
+{% include "_common/controls.conf.j2" %}
+
+view internal {
+	match-clients { key "int"; };
+
+	zone "test" {
+		type primary;
+		update-policy { grant int zonesub any; };
+		file "test.db";
+		ixfr-from-differences yes;
+	};
+};
+
+view external {
+	match-clients { key "ext"; };
+
+	zone "test" {
+		in-view internal;
+	};
+};

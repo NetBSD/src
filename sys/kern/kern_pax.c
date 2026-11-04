@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_pax.c,v 1.63 2022/10/26 23:22:38 riastradh Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.63.8.1 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*
  * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,24 +57,27 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.63 2022/10/26 23:22:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.63.8.1 2026/11/04 23:27:48 perseant Exp $");
 
 #include "opt_pax.h"
 
 #include <sys/param.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/bitops.h>
+#include <sys/cprng.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/pax.h>
-#include <sys/sysctl.h>
+#include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
+#include <sys/pax.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/sdt.h>
+#include <sys/sysctl.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
-#include <sys/queue.h>
-#include <sys/bitops.h>
-#include <sys/kauth.h>
-#include <sys/cprng.h>
 
 #ifdef PAX_ASLR_DEBUG
 #define PAX_DPRINTF(_fmt, args...) \
@@ -449,7 +452,7 @@ pax_mprotect_validate(
 			    __func__, file, line,
 			    p->p_pid, l->l_lid, p->p_comm);
 #endif
-		return EACCES;
+		return SET_ERROR(EACCES);
 	}
 	return 0;
 }
@@ -732,7 +735,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name, bool crashed)
 		return 0;
 
 	if (vp == NULL)
-		return EFAULT;	
+		return SET_ERROR(EFAULT);
 
 	/* Fast-path if starting a program we don't know. */
 	if ((p = vp->v_segvguard) == NULL && !crashed)
@@ -821,7 +824,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name, bool crashed)
 			log(LOG_ALERT, "PaX Segvguard: [%s] Preventing "
 			    "execution due to repeated segfaults.\n", name ?
 			    name : "unknown");
-			return EPERM;
+			return SET_ERROR(EPERM);
 		}
 	}
 

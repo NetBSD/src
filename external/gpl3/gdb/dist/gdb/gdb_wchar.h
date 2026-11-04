@@ -1,5 +1,5 @@
 /* Wide characters for gdb
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_WCHAR_H
-#define GDB_WCHAR_H
+#ifndef GDB_GDB_WCHAR_H
+#define GDB_GDB_WCHAR_H
 
 /* We handle three different modes here.
    
@@ -132,4 +132,4 @@ typedef int gdb_wint_t;
 
 #endif
 
-#endif /* GDB_WCHAR_H */
+#endif /* GDB_GDB_WCHAR_H */

@@ -1,0 +1,66 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that the 'Starting program' message is correctly flushed to
+# the TUI terminal as soon as it is available.
+
+require allow_tui_tests
+require target_can_use_run_cmd
+
+tuiterm_env
+
+standard_testfile
+
+if {[build_executable "failed to prepare" ${testfile} ${srcfile}] == -1} {
+    return -1
+}
+
+Term::clean_restart 24 80 $testfile
+
+if {![Term::enter_tui]} {
+    unsupported "TUI not supported"
+    return
+}
+
+# Pick a name for a marker file, and ensure it doesn't exist.
+set marker_file [standard_output_file "marker"]
+file delete $marker_file
+
+# Run the inferior, which will create MARKER_FILE.
+send_gdb "run \"$marker_file\"\n"
+
+# Spin until MARKER_FILE appears.
+while { ! [file exists $marker_file] } {
+    sleep 1
+}
+
+# We now know that the inferior has started, and that the 'Starting
+# program: ' string should have been printed to the terminal.  Don't
+# use Term::wait_for here as there will be no prompt after the
+# 'Starting program' message.
+gdb_assert {[Term::wait_for_region_contents 0 16 80 7 "Starting program: "]} \
+    "starting program message has appeared"
+
+# Delete MARKER_FILE.  This will cause the inferior to exit.
+file delete $marker_file
+
+# Now wait for the prompt, and check that the inferior exited message
+# appeared.
+gdb_assert {[Term::wait_for ""]} \
+    "wait for prompt after inferior exits"
+Term::check_region_contents \
+    "check for inferior exited message" \
+    0 16 80 8 \
+    "\\\[Inferior $decimal \[^\r\n\]+ exited normally\\\]"

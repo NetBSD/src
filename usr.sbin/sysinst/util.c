@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.77 2024/04/25 11:25:08 hannken Exp $	*/
+/*	$NetBSD: util.c,v 1.77.2.1 2026/11/04 23:28:58 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -188,10 +188,15 @@ struct cd_info {
 	char menu[100];
 };
 static struct cd_info cds[MAX_CD_INFOS];
+#ifdef HAVE_DVD_IMAGE
+static bool have_warned_compat_missing;
+#endif
 
 /* flags whether to offer the respective options (depending on helper
    programs available on install media */
 int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
+
+int console_tty = -1;	/* tty where console is currently redirected */
 
 /*
  * local prototypes
@@ -228,8 +233,14 @@ init_set_status(int flags)
 
 	for (i = 0; i < __arraycount(sets_valid); i++)
 		set_status[sets_valid[i]] = SET_VALID;
-	for (i = 0; i < nelem_selected; i++)
+	for (i = 0; i < nelem_selected; i++) {
+#ifdef MD_ALLOW_DEFAULT_SET
+		if (!MD_ALLOW_DEFAULT_SET(sets_selected[i]))
+			continue;
+#endif
+
 		set_status[sets_selected[i]] |= SET_SELECTED;
+	}
 
 	set_status[SET_GROUP] = SET_VALID;
 
@@ -813,6 +824,11 @@ set_all_none(menudesc *menu, void *arg, int set, int clr)
 			nested++;
 			continue;
 		}
+#ifdef MD_ALLOW_DEFAULT_SET
+		if (set)
+			if (!MD_ALLOW_DEFAULT_SET(set))
+				continue;
+#endif
 		set_status[dist->set] = (set_status[dist->set] & ~clr) | set;
 	}
 	return 0;
@@ -964,6 +980,30 @@ customise_sets(void)
 	free_menu(menu_no);
 }
 
+#ifdef HAVE_DVD_IMAGE
+static bool
+is_compat_or_debug_set(distinfo *dist)
+{
+#ifdef HAVE_BASE32
+	if (strcmp(dist->name, "base32") == 0) return true;
+#endif
+#ifdef HAVE_BASE64
+	if (strcmp(dist->name, "base64") == 0) return true;
+#endif
+#ifdef HAVE_DEBUG32
+	if (strcmp(dist->name, "debug32") == 0) return true;
+#endif
+#ifdef HAVE_DEBUG64
+	if (strcmp(dist->name, "debug64") == 0) return true;
+#endif
+	if (strcmp(dist->name, "debug") == 0) return true;
+	if (strcmp(dist->name, "tests") == 0) return true;
+	if (strcmp(dist->name, "manhtml") == 0) return true;
+
+	return false;
+}
+#endif
+
 /*
  * Extract_file **REQUIRES** an absolute path in ext_dir.  Any code
  * that sets up xfer_dir for use by extract_file needs to put in the
@@ -1025,6 +1065,22 @@ extract_file_to(distinfo *dist, int update, const char *dest_dir,
 
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
+
+#ifdef HAVE_DVD_IMAGE
+			if (fetch_fn == NULL && is_compat_or_debug_set(dist)) {
+				if (!have_warned_compat_missing) {
+					have_warned_compat_missing = true;
+
+					char *err = str_arg_subst(
+					    msg_string(MSG_opt_set_not_found),
+					    1, &dist->name);
+					hit_enter_to_continue(err, NULL);
+					free(err);
+				}
+				goto set_ok;
+			}
+#endif
+
 			if (do_stats)
 				tarstats.nnotfound++;
 
@@ -1080,6 +1136,10 @@ extract_file_to(distinfo *dist, int update, const char *dest_dir,
 		run_program(0, "rm %s", path);
 		/* Plausibly we should unlink an empty xfer_dir as well */
 	}
+
+#ifdef HAVE_DVD_IMAGE
+set_ok:
+#endif
 
 	set_status[dist->set] |= SET_INSTALLED;
 	if (do_stats)
@@ -1423,6 +1483,9 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 	/* reset failure/success counters */
 	memset(&tarstats, 0, sizeof(tarstats));
+#ifdef HAVE_DVD_IMAGE
+	have_warned_compat_missing = false;
+#endif
 
 	/* Find out which files to "get" if we get files. */
 
@@ -2049,12 +2112,11 @@ del_rc_conf(const char *value)
 				hit_enter_to_continue(MSG_rcconf_delete_failed,
 				    NULL);
 			}
-		} else {
-			(void)unlink(bakname);
 		}
 	}
 
 done:
+	(void)unlink(bakname);
 	(void)unlink(tempname);
 	free(rcconf);
 	free(tempname);
@@ -2683,3 +2745,48 @@ may_swap_if_not_sdmmc(const char *disk)
 	return strncmp(parent, "sdmmc", 5) != 0;
 }
 #endif
+
+/*
+ * Redirect console output to the pty associated with master/slave
+ */
+void
+redirect_console(int master, int slave) {
+	static int do_tioccons = 2;
+	/* Try to get console output into our pipe */
+	if (do_tioccons) {
+		/* Turn off any existing console redirection */
+		if (console_tty != -1) {
+			int off = 0;
+			ioctl(console_tty, TIOCCONS, &off);
+			console_tty = -1;
+		}
+		if (ioctl(slave, TIOCCONS, &do_tioccons) == 0) {
+			console_tty = slave;
+			if (do_tioccons == 2) {
+				/* test our output - we don't want it grabbed */
+				write(1, " \b", 2);
+				ioctl(master, FIONREAD, &do_tioccons);
+				if (do_tioccons != 0) {
+					do_tioccons = 0;
+					ioctl(slave, TIOCCONS, &do_tioccons);
+					console_tty = -1;
+				} else
+					do_tioccons = 1;
+			}
+		}
+	}
+}
+
+/*
+ * Redirect console output to nowhere
+ */
+void
+discard_console_output(void) {
+	static int master = -1, slave = -1;
+	if (slave == -1)
+		/* Return value ignored */
+		openpty(&master, &slave, NULL, NULL, NULL);
+	if (slave == -1)
+		return;
+	redirect_console(master, slave);
+}

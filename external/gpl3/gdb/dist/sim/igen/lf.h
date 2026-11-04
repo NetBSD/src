@@ -1,6 +1,6 @@
 /* The IGEN simulator generator for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney.
 
@@ -47,7 +47,7 @@ lf_file_references;
 
 
 /* Open the file NAME for writing ("-" for stdout).  Use REAL_NAME
-   when refering to the opened file.  Line number information (in the
+   when referring to the opened file.  Line number information (in the
    output) can be suppressed with FILE_REFERENCES ==
    LF_OMIT_REFERENCES.  TYPE is to determine the formatting of some of
    the print messages below. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.147 2024/03/05 14:15:29 thorpej Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.147.2.1 2026/11/04 23:20:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.147 2024/03/05 14:15:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.147.2.1 2026/11/04 23:20:05 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.147 2024/03/05 14:15:29 thorpej 
 
 #if defined(FDT)
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 #include <arch/evbarm/fdt/platform.h>
@@ -253,7 +254,8 @@ bootsync(void)
 {
 	static bool bootsyncdone = false;
 
-	if (bootsyncdone) return;
+	if (bootsyncdone)
+		return;
 
 	bootsyncdone = true;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>
 
@@ -81,7 +81,7 @@ btrace_data::fini ()
       return;
     }
 
-  internal_error (_("Unkown branch trace format."));
+  internal_error (_("Unknown branch trace format."));
 }
 
 /* See btrace-common.h.  */
@@ -101,7 +101,7 @@ btrace_data::empty () const
       return (variant.pt.size == 0);
     }
 
-  internal_error (_("Unkown branch trace format."));
+  internal_error (_("Unknown branch trace format."));
 }
 
 /* See btrace-common.h.  */
@@ -184,5 +184,5 @@ btrace_data_append (struct btrace_data *dst,
       return 0;
     }
 
-  internal_error (_("Unkown branch trace format."));
+  internal_error (_("Unknown branch trace format."));
 }

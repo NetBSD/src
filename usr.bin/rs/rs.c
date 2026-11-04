@@ -1,4 +1,4 @@
-/*	$NetBSD: rs.c,v 1.17 2023/08/10 20:36:29 mrg Exp $	*/
+/*	$NetBSD: rs.c,v 1.17.2.1 2026/11/04 23:28:42 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)rs.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: rs.c,v 1.17 2023/08/10 20:36:29 mrg Exp $");
+__RCSID("$NetBSD: rs.c,v 1.17.2.1 2026/11/04 23:28:42 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -295,9 +295,12 @@ prepfile(void)
 	if (flags & SQUEEZE) {
 		if (flags & TRANSPOSE)
 			for (ep = elem, i = 0; i < ocols; i++) {
-				for (j = 0; j < orows; j++)
+				for (j = 0; j < orows; j++) {
+					if (ep - elem >= nelem)
+						break;
 					if ((n = strlen(*ep++)) > max)
 						max = n;
+				}
 				colwidths[i] = max + gutter;
 			}
 		else

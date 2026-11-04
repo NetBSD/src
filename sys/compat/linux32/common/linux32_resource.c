@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_resource.c,v 1.13 2021/12/02 04:29:49 ryo Exp $ */
+/*	$NetBSD: linux32_resource.c,v 1.13.10.1 2026/11/04 23:21:40 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.13 2021/12/02 04:29:49 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_resource.c,v 1.13.10.1 2026/11/04 23:21:40 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,14 +174,15 @@ linux32_sys_getpriority(struct lwp *l, const struct linux32_sys_getpriority_args
 	} */
 	struct sys_getpriority_args bsa;
 	int error;
-		 
+
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, which) = SCARG(uap, which);
 	SCARG(&bsa, who) = SCARG(uap, who);
 
 	if ((error = sys_getpriority(l, &bsa, retval)))
 		return error;
-   
+
 	*retval = NZERO - *retval;
-	
+
 	return 0;
-} 
+}

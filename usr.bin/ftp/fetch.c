@@ -1,7 +1,7 @@
-/*	$NetBSD: fetch.c,v 1.239.2.1 2025/08/02 05:58:26 perseant Exp $	*/
+/*	$NetBSD: fetch.c,v 1.239.2.2 2026/11/04 23:28:33 perseant Exp $	*/
 
 /*-
- * Copyright (c) 1997-2024 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997-2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fetch.c,v 1.239.2.1 2025/08/02 05:58:26 perseant Exp $");
+__RCSID("$NetBSD: fetch.c,v 1.239.2.2 2026/11/04 23:28:33 perseant Exp $");
 #endif /* not lint */
 
 /*
@@ -55,7 +55,6 @@ __RCSID("$NetBSD: fetch.c,v 1.239.2.1 2025/08/02 05:58:26 perseant Exp $");
 #include <arpa/ftp.h>
 #include <arpa/inet.h>
 
-#include <assert.h>
 #include <ctype.h>
 #include <err.h>
 #include <errno.h>
@@ -69,6 +68,7 @@ __RCSID("$NetBSD: fetch.c,v 1.239.2.1 2025/08/02 05:58:26 perseant Exp $");
 
 #include "ssl.h"
 #include "ftp_var.h"
+#include "uri.h"
 #include "version.h"
 
 typedef enum {
@@ -358,17 +358,20 @@ base64_encode(const unsigned char *clear, size_t len, unsigned char *encoded)
 {
 	static const unsigned char enc[] =
 	    "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-	unsigned char	*cp;
+	unsigned char	*cp, c0, c1, c2;
 	size_t	 i;
 
 	cp = encoded;
 	for (i = 0; i < len; i += 3) {
-		*(cp++) = enc[((clear[i + 0] >> 2))];
-		*(cp++) = enc[((clear[i + 0] << 4) & 0x30)
-			    | ((clear[i + 1] >> 4) & 0x0f)];
-		*(cp++) = enc[((clear[i + 1] << 2) & 0x3c)
-			    | ((clear[i + 2] >> 6) & 0x03)];
-		*(cp++) = enc[((clear[i + 2]	 ) & 0x3f)];
+		c0 = clear[i + 0];
+		c1 = i + 1 < len ? clear[i + 1] : 0;
+		c2 = i + 2 < len ? clear[i + 2] : 0;
+		*(cp++) = enc[((c0 >> 2))];
+		*(cp++) = enc[((c0 << 4) & 0x30)
+			    | ((c1 >> 4) & 0x0f)];
+		*(cp++) = enc[((c1 << 2) & 0x3c)
+			    | ((c2 >> 6) & 0x03)];
+		*(cp++) = enc[((c2     ) & 0x3f)];
 	}
 	*cp = '\0';
 	while (i-- > len)
@@ -865,7 +868,7 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
     const struct urlinfo *ui)
 {
 	const char *leading = hasleading ? ", " : "  (";
-	struct entry *np;
+	size_t i;
 
 	if (isproxy) {
 		if (verbose) {
@@ -883,8 +886,10 @@ print_get(FETCH *fin, int hasleading, int isproxy, const struct urlinfo *oui,
 	print_host(fin, ui);
 	fetch_printf(fin, "Accept: */*\r\n");
 	fetch_printf(fin, "Connection: close\r\n");
-	SLIST_FOREACH(np, &custom_headers, entries) {
-		fetch_printf(fin, "%s\r\n", np->header);
+	for (i = 0; i < custom_headers->sl_cur; i++) {
+		fetch_printf(fin, "%s\r\n", custom_headers->sl_str[i]);
+		DPRINTF("%s: sending custom header `%s'\n", __func__,
+		    custom_headers->sl_str[i]);
 	}
 
 	if (restart_point) {
@@ -1188,7 +1193,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			if (! (token = match_token(&cp, "chunked"))) {
 				warnx(
 			    "Unsupported transfer encoding `%s'",
-				    token);
+				    cp);
 				goto cleanup_fetch_url;
 			}
 			(*ischunked)++;
@@ -1199,7 +1204,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			|| match_token(&cp, "WWW-Authenticate:")) {
 			if (! (token = match_token(&cp, "Basic"))) {
 				DPRINTF("%s: skipping unknown auth "
-				    "scheme `%s'\n", __func__, token);
+				    "scheme `%s'\n", __func__, cp);
 				continue;
 			}
 			FREEPTR(*auth);
@@ -1231,6 +1236,11 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			"No redirection Location provided by server");
 			goto cleanup_fetch_url;
 		}
+		if (STRNEQUAL(location, FILE_URL)) {
+			warnx("Unsupported redirection Location `%s'",
+			    location);
+			goto cleanup_fetch_url;
+		}
 		if (redirect_loop++ > 5) {
 			warnx("Too many redirections requested");
 			goto cleanup_fetch_url;
@@ -1245,6 +1255,7 @@ negotiate_connection(FETCH *fin, const char *url, const char *penv,
 			if (verbose)
 				fprintf(ttyout, "Redirected to %s\n",
 				    location);
+			location = make_absurl(location, url);
 			*rval = go_fetch(location, ui);
 		}
 		goto cleanup_fetch_url;
@@ -1334,7 +1345,7 @@ connectmethod(FETCH *fin, const char *url, const char *penv,
 			if (!(token = match_token(&cp, "Basic"))) {
 				DPRINTF(
 				    "%s: skipping unknown auth scheme `%s'\n",
-				    __func__, token);
+				    __func__, cp);
 				continue;
 			}
 			FREEPTR(*auth);
@@ -1529,7 +1540,7 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 			fputs("\n", ttyout);
 		}
 		if (0 == rcvbuf_size) {
-			rcvbuf_size = 8 * 1024; /* XXX */
+			rcvbuf_size = XFERBUFMAX;
 		}
 	} else {				/* ftp:// or http:// URLs */
 		int hasleading;
@@ -1696,12 +1707,17 @@ fetch_url(const char *url, const char *proxyenv, char *proxyauth,
 	oldquit = xsignal(SIGQUIT, psummary);
 	oldint = xsignal(SIGINT, aborthttp);
 
-	assert(rcvbuf_size > 0);
-	if ((size_t)rcvbuf_size > bufsize) {
+			/* Resize xferbuf to clamped rcvbuf_size */
+	if (bufsize == 0 || (size_t)rcvbuf_size != bufsize) {
 		if (xferbuf)
 			(void)free(xferbuf);
-		bufsize = rcvbuf_size;
+		if (rcvbuf_size == 0)
+			bufsize = XFERBUFMAX;
+		else
+			bufsize = MAX(XFERBUFMIN, MIN(rcvbuf_size, XFERBUFMAX));
 		xferbuf = ftp_malloc(bufsize);
+		DPRINTF("resized xferbuf to bufsize %zu using rcvbuf_size %d\n",
+		    bufsize, rcvbuf_size);
 	}
 
 	bytes = 0;

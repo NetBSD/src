@@ -1,7 +1,8 @@
-# $NetBSD: files.fdt,v 1.3.6.1 2025/08/02 05:56:02 perseant Exp $
+# $NetBSD: files.fdt,v 1.3.6.2 2026/11/04 23:21:14 perseant Exp $
 
 include	"dev/pckbport/files.pckbport"
 
+file	dev/fdt/fdt_platform.c
 file	arch/riscv/fdt/cpus_fdt.c
 file	arch/riscv/fdt/fdt_dma_machdep.c
 file	arch/riscv/fdt/riscv_platform.c
@@ -16,8 +17,3 @@ file	arch/riscv/fdt/clint_fdt.c		clint_fdt
 device	intc: fdt
 attach	intc at fdt with intc_fdt
 file	arch/riscv/fdt/intc_fdt.c		intc_fdt
-
-# Generic PCI host controller
-device	pcihost: pcibus
-attach	pcihost at fdt with pcihost_fdt
-file	arch/riscv/fdt/pcihost_fdt.c		pcihost_fdt

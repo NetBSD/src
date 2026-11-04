@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2023/06/03 09:09:11 lukem Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2026/11/04 23:19:32 perseant Exp $
 
 WARNS=	3
 
@@ -17,7 +17,7 @@ SRCS=	adler32.c compress.c crc32.c deflate.c infback.c inffast.c \
 	gzlib.c gzread.c gzclose.c
 MAN=	zlib.3
 
-CPPFLAGS+=	-I${ZLIBDIR}
+CPPFLAGS+=	-I${ZLIBDIR} -DZLIB_CONST
 CLEANFILES+=	minigzip
 
 INCS=		zconf.h zlib.h

@@ -1,4 +1,4 @@
-/*	$NetBSD: float.h,v 1.23.2.1 2025/08/02 05:55:48 perseant Exp $	*/
+/*	$NetBSD: float.h,v 1.23.2.2 2026/11/04 23:20:50 perseant Exp $	*/
 
 #ifndef _M68K_FLOAT_H_
 #define _M68K_FLOAT_H_
@@ -9,10 +9,10 @@
  * LDBL_MIN is half the x86 LDBL_MIN, even though both are 12-byte
  * floats with the same base properties and both allegedly
  * IEEE-compliant, because both these representations materialize the
- * top (integer-part) bit of the mantissa. But on m68k if the exponent
- * is 0 and the integer bit is set, it's a regular number, whereas on
- * x86 it's called a pseudo-denormal and apparently treated as a
- * denormal, so it doesn't count as a valid value for LDBL_MIN.
+ * top (integer-part) bit of the significand.  But on m68k if the
+ * exponent is 0 and the integer bit is set, it's a regular number,
+ * whereas on x86 it's called a pseudo-denormal and apparently treated
+ * as a denormal, so it doesn't count as a valid value for LDBL_MIN.
  *
  * x86 citation: Intel 64 and IA-32 Architectures Software Developer's
  * Manual, vol. 1 (Order Number: 253665-077US, April 2022), Sec. 8.2.2
@@ -28,7 +28,8 @@
  * x86/include/float.h also gets updated.
  */
 
-#if defined(__LDBL_MANT_DIG__)
+#if defined(__LDBL_MANT_DIG__) && \
+			!(defined(__m68k__) && !defined(__HAVE_68881__))
 #define LDBL_MANT_DIG	__LDBL_MANT_DIG__
 #define LDBL_EPSILON	__LDBL_EPSILON__
 #define LDBL_DIG	__LDBL_DIG__

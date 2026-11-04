@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.122 2024/01/07 07:58:33 isaki Exp $
+#	$NetBSD: INSTALL,v 1.122.2.1 2026/11/04 23:21:30 perseant Exp $
 
 #
 #	INSTALL -- installation kernel.
@@ -8,9 +8,9 @@ include "arch/x68k/conf/std.x68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.122 $"
+#ident 		"INSTALL-$Revision: 1.122.2.1 $"
 
-makeoptions	COPTS="-Os -fno-unwind-tables" # Optimise for space. Implies -O2
+makeoptions	COPTS="-Os" # Optimise for space. Implies -O2
 
 maxusers	4
 
@@ -39,8 +39,6 @@ options 	M68060
 
 options 	EXTENDED_MEMORY		# support for >16MB memory
 options 	FPU_EMULATE		# software fpu emulation for MC68030
-options 	FPSP			# floating point emulation for MC68040
-options 	M060SP			# int/fp emulation for MC68060
 #options 	JUPITER			# support for "Jupiter-X" accelerator
 #options 	ZSCONSOLE,ZSCN_SPEED="9600"	# use serial console
 
@@ -203,7 +201,7 @@ fd*	at fdc0 unit ?			# builtin floppy drives
 ## SCSI devices
 scsirom0 at intio0				# SCSI BIOS
 scsirom1 at intio0				# SCSI BIOS
-spc*	at scsirom?				# genuin SCSI
+spc*	at scsirom?				# genuine SCSI
 scsibus* at spc?
 mha0	at scsirom?				# Mankai MK-HA1 (Mach-2)
 scsibus* at mha0

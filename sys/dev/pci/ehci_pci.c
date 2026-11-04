@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_pci.c,v 1.77.2.1 2025/08/02 05:56:45 perseant Exp $	*/
+/*	$NetBSD: ehci_pci.c,v 1.77.2.2 2026/11/04 23:22:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.77.2.1 2025/08/02 05:56:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_pci.c,v 1.77.2.2 2026/11/04 23:22:04 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -168,17 +168,6 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	DPRINTF(("%s: offs=%d\n", device_xname(self), sc->sc.sc_offs));
 	EOWRITE4(&sc->sc, EHCI_USBINTR, 0);
 
-	/* Handle quirks */
-	switch (quirk) {
-	case EHCI_PCI_QUIRK_AMD_SB600:
-		ehci_apply_amd_quirks(sc);
-		break;
-	case EHCI_PCI_QUIRK_AMD_SB700:
-		if (pci_find_device(NULL, ehci_sb700_match))
-			ehci_apply_amd_quirks(sc);
-		break;
-	}
-
 	pcireg_t intr = pci_conf_read(pc, tag, PCI_INTERRUPT_REG);
 	int pin = PCI_INTERRUPT_PIN(intr);
 
@@ -187,6 +176,18 @@ ehci_pci_attach(device_t parent, device_t self, void *aux)
 	csr |= PCI_COMMAND_MASTER_ENABLE;
 	csr &= ~(pin ? PCI_COMMAND_INTERRUPT_DISABLE : 0);
 	pci_conf_write(pc, tag, PCI_COMMAND_STATUS_REG, csr);
+
+	/* Handle quirks */
+	switch (quirk) {
+	case EHCI_PCI_QUIRK_AMD_SB600:
+		ehci_apply_amd_quirks(sc);
+		sc->sc.sc_flags |= EHCIF_SB600_ASYNCLIST_RELOAD;
+		break;
+	case EHCI_PCI_QUIRK_AMD_SB700:
+		if (pci_find_device(NULL, ehci_sb700_match))
+			ehci_apply_amd_quirks(sc);
+		break;
+	}
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0) != 0) {

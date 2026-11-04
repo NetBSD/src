@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_el2.S,v 1.9.10.1 2025/08/02 05:55:20 perseant Exp $	*/
+/*	$NetBSD: locore_el2.S,v 1.9.10.2 2026/11/04 23:19:54 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2012-2014 Andrew Turner
@@ -29,10 +29,9 @@
  */
 
 #include <aarch64/asm.h>
-#include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore_el2.S,v 1.9.10.1 2025/08/02 05:55:20 perseant Exp $")
+RCSID("$NetBSD: locore_el2.S,v 1.9.10.2 2026/11/04 23:19:54 perseant Exp $")
 
 /*
  * For use in #include "locore_el2.S".
@@ -70,7 +69,7 @@ in_el2:
 
 no_el2_host_mode:
 	/* EL1 will be AArch64. */
-	mov	x2, #(HCR_RW)
+	mov	x2, #HCR_EL2_RW
 	msr	hcr_el2, x2
 
 	/* Mirror the Virtualization Process ID Register. */
@@ -81,8 +80,15 @@ no_el2_host_mode:
 	mrs	x2, mpidr_el1
 	msr	vmpidr_el2, x2
 
+	/* Set the bits that need to be 1 in SCTLR_EL2. */
+	ldr	x2, .Lsctlr_el2_res1
+	mrs	x1, sctlr_el2
+	and	x1, x1, #(SCTLR_EE | SCTLR_E0E)	/* keep SCTLR_EL2.{EE,E0E} */
+	orr	x2, x2, x1
+	msr	sctlr_el2, x2
+
 	/* Set the bits that need to be 1 in SCTLR_EL1. */
-	ldr	x2, .Lsctlr_res1
+	ldr	x2, .Lsctlr_el1_res1
 	mrs	x1, sctlr_el1
 	and	x1, x1, #(SCTLR_EE | SCTLR_E0E)	/* keep SCTLR_EL1.{EE,E0E} */
 	orr	x2, x2, x1
@@ -96,14 +102,14 @@ no_el2_host_mode:
 	isb
 
 	/* Don't trap to EL2 on access to various registers. */
-	mov	x2, #CPTR_RES1
+	mov	x2, #CPTR_EL2_NVHE_RES1
 	msr	cptr_el2, x2
 
 	/* Don't trap to EL2 on CP15 traps. */
 	msr	hstr_el2, xzr
 
 	/* Enable access to the physical timers at EL1. */
-	mov	x2, #(CNTHCTL_EL1PCTEN | CNTHCTL_EL1PCEN)
+	mov	x2, #(CNTHCTL_NVHE_EL1PCTEN | CNTHCTL_NVHE_EL1PCEN)
 	msr	cnthctl_el2, x2
 
 	/* Set the counter offset to a known value. */
@@ -124,16 +130,11 @@ no_el2_host_mode:
 	/* GIC[3:0] == 0001 - GIC CPU interface via special regs. supported */
 	cmp	x2, #ID_AA64PFR0_EL1_GIC_CPUIF_EN
 	b.ne	2f
-#ifdef __clang__
-#define ICC_SRE_EL2 icc_sre_el2
-#else
-#define ICC_SRE_EL2 S3_4_C12_C9_5
-#endif
 
-	mrs	x2, ICC_SRE_EL2
-	orr	x2, x2, #ICC_SRE_EL2_EN	/* Enable access from insecure EL1 */
-	orr	x2, x2, #ICC_SRE_EL2_SRE	/* Enable system registers */
-	msr	ICC_SRE_EL2, x2
+	mrs	x2, icc_sre_el2			/* Enable... */
+	orr	x2, x2, #ICC_SRE_EL2_EN		/*  access from insecure EL1 */
+	orr	x2, x2, #ICC_SRE_EL2_SRE	/*  system registers */
+	msr	icc_sre_el2, x2
 2:
 
 	/* Keep the stack pointer. */
@@ -142,13 +143,27 @@ no_el2_host_mode:
 
 	/* Set the address to return to. */
 	msr	elr_el2, lr
-	isb
 
+	/*
+	 * An isb is not required before eret if
+	 * SCTLR_EL2.EOS=1 [bit 11] (RES1)
+	 */
 	eret
 
 	.align 3
-.Lsctlr_res1:
+.Lsctlr_el1_res1:
 	.quad SCTLR_RES1
+.Lsctlr_el2_res1:
+	.quad (								\
+	    __BIT(28) | /* nTLSMD when FEAT_LSMAOC */			\
+	    __BIT(23) | /* SPAN */					\
+	    __BIT(22) | /* EIS */					\
+	    __BIT(18) | /* nTWE */					\
+	    __BIT(16) | /* nTWI */					\
+	    __BIT(11) | /* EOS */					\
+	     __BIT(5) | /* CP15BEN */					\
+	     __BIT(4)   /* SA0 */					\
+	)
 
 #define	VECT_EMPTY	\
 	.align 7;	\

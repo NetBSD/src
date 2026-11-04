@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_pci.c,v 1.71.6.1 2025/08/02 05:56:44 perseant Exp $	*/
+/*	$NetBSD: ahcisata_pci.c,v 1.71.6.2 2026/11/04 23:22:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.71.6.1 2025/08/02 05:56:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_pci.c,v 1.71.6.2 2026/11/04 23:22:04 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ahcisata_pci.h"
@@ -187,9 +187,9 @@ static const struct ahci_pci_quirk ahci_pci_quirks[] = {
 	{ PCI_VENDOR_ATI, PCI_PRODUCT_ATI_SB700_SATA_STORAGE,
 	    AHCI_QUIRK_BADPMP | AHCI_QUIRK_BADNCQ },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_SATA,
-	    AHCI_QUIRK_BADPMP },
+	    AHCI_QUIRK_BADPMP | AHCI_QUIRK_BADNCQ },
 	{ PCI_VENDOR_VIATECH, PCI_PRODUCT_VIATECH_VT8251_AHCI,
-	    AHCI_QUIRK_BADPMP },
+	    AHCI_QUIRK_BADPMP | AHCI_QUIRK_BADNCQ },
 	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_01,
 	    AHCI_PCI_QUIRK_FORCE },
 	{ PCI_VENDOR_ASMEDIA, PCI_PRODUCT_ASMEDIA_ASM1061_02,
@@ -280,6 +280,18 @@ ahci_pci_match(device_t parent, cfdata_t match, void *aux)
 
 	int bar = ahci_pci_abar(pa);
 	pcireg_t memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, bar);
+	/* Sanity check for BAR5. */
+	if ((bar == PCI_BAR5) &&
+	    (PCI_MAPREG_MEM_TYPE(memtype) == PCI_MAPREG_MEM_TYPE_64BIT)) {
+		/*
+		 *  It doesn't conform the AHCI specification. The AHCI
+		 * specification says it's 32bit BAR. According to the PCI
+		 * specification, if a BAR is the lower 32-bit register of a
+		 * 64-bit register, the next register represents the upper 32
+		 * bits. However, BARs only go up to 5, and there is no BAR 6.
+		 */
+		return 0;
+	}
 	if (pci_mapreg_map(pa, bar, memtype, 0, &regt, &regh, NULL, &size) != 0)
 		return 0;
 

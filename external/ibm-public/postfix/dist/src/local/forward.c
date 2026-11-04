@@ -1,4 +1,4 @@
-/*	$NetBSD: forward.c,v 1.4.4.1 2025/08/02 05:50:08 perseant Exp $	*/
+/*	$NetBSD: forward.c,v 1.4.4.2 2026/11/04 23:14:49 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -165,9 +165,10 @@ static FORWARD_INFO *forward_open(DELIVER_REQUEST *request, const char *sender)
 #define FORWARD_CLEANUP_FLAGS \
 	(CLEANUP_FLAG_BOUNCE | CLEANUP_FLAG_MASK_INTERNAL \
 	| smtputf8_autodetect(MAIL_SRC_MASK_FORWARD) \
+	| ((request->sendopts & SOPT_REQUIRETLS_ESMTP) ? \
+	CLEANUP_FLAG_REQTLS : 0) \
 	| ((request->sendopts & SMTPUTF8_FLAG_REQUESTED) ? \
 	CLEANUP_FLAG_SMTPUTF8 : 0))
-	/* TODO(wietse) REQUIRETLS. */
 
     attr_print(cleanup, ATTR_FLAG_NONE,
 	       SEND_ATTR_INT(MAIL_ATTR_FLAGS, FORWARD_CLEANUP_FLAGS),

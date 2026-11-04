@@ -1,4 +1,4 @@
-/*	$NetBSD: mm58167.c,v 1.17 2022/09/25 18:43:32 thorpej Exp $	*/
+/*	$NetBSD: mm58167.c,v 1.17.10.1 2026/11/04 23:21:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.17 2022/09/25 18:43:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mm58167.c,v 1.17.10.1 2026/11/04 23:21:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ mm58167_attach(struct mm58167_softc *sc)
 
 	handle = &sc->_mm58167_todr_handle;
 	memset(handle, 0, sizeof(*handle));
-	handle->cookie = sc;
+	handle->todr_dev = sc->mm58167_dev;
 	handle->todr_gettime_ymdhms = mm58167_gettime_ymdhms;
 	handle->todr_settime_ymdhms = mm58167_settime_ymdhms;
 	return handle;
@@ -80,7 +80,7 @@ mm58167_attach(struct mm58167_softc *sc)
 int
 mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mm58167_softc *sc = handle->cookie;
+	struct mm58167_softc *sc = device_private(handle->todr_dev);
 	struct clock_ymdhms dt_reasonable;
 	struct timeval now;
 	int s;
@@ -124,7 +124,7 @@ mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		 * Assume called from inittodr(9) on boot and
 		 * use file system time set in inittodr(9).
 		 */
-		clock_secs_to_ymdhms(handle->base_time, &dt_reasonable);
+		clock_secs_to_ymdhms(handle->todr_base_time, &dt_reasonable);
 	}
 
 	/*
@@ -230,7 +230,7 @@ mm58167_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 int
 mm58167_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
-	struct mm58167_softc *sc = handle->cookie;
+	struct mm58167_softc *sc = device_private(handle->todr_dev);
 	int s;
 	uint8_t byte_value;
 

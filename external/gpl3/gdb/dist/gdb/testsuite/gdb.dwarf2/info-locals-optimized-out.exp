@@ -1,4 +1,4 @@
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,11 @@ Dwarf::assemble $asm_file {
 		    {name "opt_out"}
 		    {type :$int_type_label}
 		}
+		DW_TAG_variable {
+		    {name const_bytes}
+		    {type :$int_type_label}
+		    {const_value "\x01\x01\x01\x01" DW_FORM_block1}
+		}
 	    }
 	}
     }
@@ -67,5 +72,14 @@ if ![runto_main] {
     return -1
 }
 
+set lines [gdb_get_lines "info locals"]
+
 # Make sure "info locals" shows optimized out variables.
-gdb_test "info locals" ".*opt_out = <optimized out>.*" "info local shows optimized out variable"
+gdb_assert \
+    { [regexp [string_to_regexp "opt_out = <optimized out>"] $lines] } \
+    "info locals shows optimized out variable"
+
+# Regression test for PR cli/32525.
+gdb_assert \
+    { [regexp [string_to_regexp "const_bytes = 16843009"] $lines] } \
+    "info locals shows DW_FORM_block1 variable"

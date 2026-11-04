@@ -1,4 +1,4 @@
-/*	$NetBSD: marvell_start.S,v 1.14 2022/05/20 15:11:07 rin Exp $ */
+/*	$NetBSD: marvell_start.S,v 1.14.10.1 2026/11/04 23:20:29 perseant Exp $ */
 /*
  * Copyright (C) 2005, 2006 WIDE Project and SOUM Corporation.
  * All rights reserved.
@@ -66,7 +66,7 @@
 #include <evbarm/marvell/marvellreg.h>
 #include "assym.h"
 
-RCSID("$NetBSD: marvell_start.S,v 1.14 2022/05/20 15:11:07 rin Exp $")
+RCSID("$NetBSD: marvell_start.S,v 1.14.10.1 2026/11/04 23:20:29 perseant Exp $")
 
 #ifndef SDRAM_START
 #define SDRAM_START	0x00000000
@@ -91,7 +91,7 @@ RCSID("$NetBSD: marvell_start.S,v 1.14 2022/05/20 15:11:07 rin Exp $")
 
 /*
  * Kernel start routine for Marvell boards
- * this code is excuted at the very first after the kernel is loaded
+ * this code is executed at the very first after the kernel is loaded
  * by U-Boot.
  */
 	.text

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.231.2.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.231.2.2 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,33 +68,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.231.2.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.231.2.2 2026/11/04 23:27:48 perseant Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
+#include <sys/acct.h>
+#include <sys/atomic.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
+#include <sys/kauth.h>
 #include <sys/kernel.h>
-#include <sys/pool.h>
+#include <sys/ktrace.h>
 #include <sys/mount.h>
+#include <sys/pool.h>
 #include <sys/proc.h>
+#include <sys/ptrace.h>
 #include <sys/ras.h>
 #include <sys/resourcevar.h>
-#include <sys/vnode.h>
-#include <sys/file.h>
-#include <sys/acct.h>
-#include <sys/ktrace.h>
 #include <sys/sched.h>
+#include <sys/sdt.h>
 #include <sys/signalvar.h>
 #include <sys/syscall.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
 #include <sys/syscallargs.h>
+#include <sys/systm.h>
 #include <sys/uidinfo.h>
-#include <sys/sdt.h>
-#include <sys/ptrace.h>
+#include <sys/vnode.h>
 
 /*
  * DTrace SDT provider definitions
@@ -160,15 +162,15 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 	/*
 	 * We don't support the CLONE_PTRACE flag.
 	 */
-	if (SCARG(uap, flags) & (CLONE_PTRACE))
-		return EINVAL;
+	if (SCARG(uap, flags) & CLONE_PTRACE)
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Linux enforces CLONE_VM with CLONE_SIGHAND, do same.
 	 */
 	if (SCARG(uap, flags) & CLONE_SIGHAND
 	    && (SCARG(uap, flags) & CLONE_VM) == 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	flags = 0;
 
@@ -185,7 +187,7 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 
 	sig = SCARG(uap, flags) & CLONE_CSIGNAL;
 	if (sig < 0 || sig >= _NSIG)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Linux doesn't have close-on-fork yet, so we don't
@@ -196,7 +198,7 @@ sys___clone(struct lwp *l, const struct sys___clone_args *uap,
 	 */
 	if ((flags & FORK_SHAREFILES) != 0) {
 		if (l->l_fd != NULL && l->l_fd->fd_foclose)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 	}
 
 	/*
@@ -286,7 +288,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 			tablefull("proc", "increase kern.maxproc or NPROC");
 		if (forkfsleep)
 			kpause("forkmx", false, forkfsleep, NULL);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 
 	/*
@@ -301,7 +303,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 			atomic_dec_uint(&nprocs);
 			if (forkfsleep)
 				kpause("forkulim", false, forkfsleep, NULL);
-			return EAGAIN;
+			return SET_ERROR(EAGAIN);
 		}
 	}
 
@@ -314,7 +316,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	if (__predict_false(uaddr == 0)) {
 		(void)chgproccnt(uid, -1);
 		atomic_dec_uint(&nprocs);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 
 	/* Allocate new proc. */
@@ -327,7 +329,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 		(void)chgproccnt(uid, -1);
 		mutex_exit(p1->p_lock);
 		atomic_dec_uint(&nprocs);
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 
 	/*

@@ -1,6 +1,6 @@
 /* Signal trampoline unwinder, for GDB the GNU Debugger.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "tramp-frame.h"
+#include "extract-store-integer.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
 #include "symtab.h"
@@ -40,7 +40,7 @@ struct tramp_frame_cache
 };
 
 static struct trad_frame_cache *
-tramp_frame_cache (frame_info_ptr this_frame,
+tramp_frame_cache (const frame_info_ptr &this_frame,
 		   void **this_cache)
 {
   struct tramp_frame_cache *tramp_cache
@@ -58,7 +58,7 @@ tramp_frame_cache (frame_info_ptr this_frame,
 }
 
 static void
-tramp_frame_this_id (frame_info_ptr this_frame,
+tramp_frame_this_id (const frame_info_ptr &this_frame,
 		     void **this_cache,
 		     struct frame_id *this_id)
 {
@@ -69,7 +69,7 @@ tramp_frame_this_id (frame_info_ptr this_frame,
 }
 
 static struct value *
-tramp_frame_prev_register (frame_info_ptr this_frame,
+tramp_frame_prev_register (const frame_info_ptr &this_frame,
 			   void **this_cache,
 			   int prev_regnum)
 {
@@ -81,7 +81,7 @@ tramp_frame_prev_register (frame_info_ptr this_frame,
 
 static CORE_ADDR
 tramp_frame_start (const struct tramp_frame *tramp,
-		   frame_info_ptr this_frame, CORE_ADDR pc)
+		   const frame_info_ptr &this_frame, CORE_ADDR pc)
 {
   struct gdbarch *gdbarch = get_frame_arch (this_frame);
   enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
@@ -121,7 +121,7 @@ tramp_frame_start (const struct tramp_frame *tramp,
 
 static int
 tramp_frame_sniffer (const struct frame_unwind *self,
-		     frame_info_ptr this_frame,
+		     const frame_info_ptr &this_frame,
 		     void **this_cache)
 {
   const struct tramp_frame *tramp = self->unwind_data->tramp_frame;
@@ -170,5 +170,6 @@ tramp_frame_prepend_unwinder (struct gdbarch *gdbarch,
   unwinder->stop_reason = default_frame_unwind_stop_reason;
   unwinder->this_id = tramp_frame_this_id;
   unwinder->prev_register = tramp_frame_prev_register;
+  unwinder->prev_arch = tramp_frame->prev_arch;
   frame_unwind_prepend_unwinder (gdbarch, unwinder);
 }

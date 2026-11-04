@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.13 2024/02/23 23:45:54 thorpej Exp $ */
+/* $NetBSD: spivar.h,v 1.13.2.1 2026/11/04 23:22:34 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -44,7 +44,9 @@
 #ifndef	_DEV_SPI_SPIVAR_H_
 #define	_DEV_SPI_SPIVAR_H_
 
+#include <sys/device.h>
 #include <sys/queue.h>
+#include <sys/uio.h> /* for iovec */
 
 /*
  * Serial Peripheral Interface bus.  This is a 4-wire bus common for
@@ -54,6 +56,8 @@
 
 struct spi_handle;
 struct spi_transfer;
+
+typedef struct spi_handle *spi_handle_t;
 
 #define	SPI_MODE_CPHA	__BIT(0)
 #define	SPI_MODE_CPOL	__BIT(1)
@@ -73,6 +77,11 @@ struct spi_transfer;
 #define	SPI_FREQ_kHz(x)	((x) * 1000)
 #define	SPI_FREQ_MHz(x)	((x) * 1000000)
 
+/* Additional transfer mode flags. */
+#define	SPI_F_3WIRE	__BIT(0)	/* requires 3-wire mode */
+#define	SPI_F_CS_HIGH	__BIT(1)	/* chip select is active-high */
+#define	SPI_F_LSB	__BIT(2)	/* transfer LSB first */
+
 struct spi_controller {
 	void	*sct_cookie;	/* controller private data */
 	int	sct_nslaves;
@@ -80,23 +89,20 @@ struct spi_controller {
 	int	(*sct_transfer)(void *, struct spi_transfer *);
 };
 
-int spibus_print(void *, const char *);
+int	spibus_print(void *, const char *);
 
-/* one per chip select */
 struct spibus_attach_args {
-	struct spi_controller	*sba_controller;
-	prop_array_t		sba_child_devices;
+	const struct spi_controller *sba_controller;
 };
 
 struct spi_attach_args {
-	struct spi_handle	*sa_handle;
-	/* only set if using direct config */
-	int		sa_ncompat;	/* number of pointers in the
-					   ia_compat array */
-	const char **	sa_compat;	/* chip names */
-	prop_dictionary_t sa_prop;	/* dictionary for this device */
+	spi_handle_t	sa_handle;
 
-	uintptr_t	sa_cookie;	/* OF node in openfirmware machines */
+	/* only set if using direct config */
+	const char	*sa_name;	/* name of the device */
+	const char	*sa_clist;	/* compatible strlist */
+	size_t		sa_clist_size;	/* size of compatible strlist */
+	devhandle_t	sa_devhandle;	/* device handle for the device */
 };
 
 /*
@@ -148,22 +154,54 @@ SIMPLEQ_HEAD(spi_transq, spi_transfer);
 #define	SPI_F_DONE		0x0001
 #define	SPI_F_ERROR		0x0002
 
-int spi_compatible_match(const struct spi_attach_args *, const cfdata_t,
-			  const struct device_compatible_entry *);
+static inline device_t
+spibus_attach(device_t dev, const struct spi_controller *sct)
+{
+	struct spibus_attach_args sba = {
+		.sba_controller = sct,
+	};
+	return config_found(dev, &sba, spibus_print,
+	    CFARGS(.iattr = "spibus",
+		   .devhandle = device_handle(dev)));
+}
+
+/*
+ * Constants to indicate the quality of a match made by a driver's
+ * match routine, from lowest to highest:
+ *
+ *	-- Default indirect match; rely on kernel config file.
+ *
+ *	-- Direct-config match by "compatible" string.
+ */
+#define	SPI_MATCH_DEFAULT		1
+#define	SPI_MATCH_DIRECT_COMPATIBLE	10	/* ...and up */
+
+bool	spi_use_direct_match(const struct spi_attach_args *,
+	    const struct device_compatible_entry *, int *);
+int	spi_compatible_match(const struct spi_attach_args *,
+	    const struct device_compatible_entry *);
 const struct device_compatible_entry *
-    spi_compatible_lookup(const struct spi_attach_args *,
-			  const struct device_compatible_entry *);
-int spi_configure(device_t, struct spi_handle *, int, int);
-int spi_transfer(struct spi_handle *, struct spi_transfer *);
-void spi_transfer_init(struct spi_transfer *);
-void spi_chunk_init(struct spi_chunk *, int, const uint8_t *, uint8_t *);
-void spi_transfer_add(struct spi_transfer *, struct spi_chunk *);
-void spi_wait(struct spi_transfer *);
-void spi_done(struct spi_transfer *, int);
+	spi_compatible_lookup(const struct spi_attach_args *,
+	    const struct device_compatible_entry *);
+
+int	spi_configure(device_t, spi_handle_t, int, int);
+int	spi_transfer(spi_handle_t, struct spi_transfer *);
+void	spi_transfer_init(struct spi_transfer *);
+void	spi_chunk_init(struct spi_chunk *, int, const uint8_t *, uint8_t *);
+void	spi_transfer_add(struct spi_transfer *, struct spi_chunk *);
+void	spi_wait(struct spi_transfer *);
+void	spi_done(struct spi_transfer *, int);
 
 /* convenience wrappers */
-int spi_send(struct spi_handle *, int, const uint8_t *);
-int spi_recv(struct spi_handle *, int, uint8_t *);
-int spi_send_recv(struct spi_handle *, int, const uint8_t *, int, uint8_t *);
+struct spi_chunk_q {
+	struct spi_chunk chunk;
+	SIMPLEQ_ENTRY(spi_chunk_q) chunk_q;
+};
+
+int	spi_send(spi_handle_t, int, const uint8_t *);
+int	spi_recv(spi_handle_t, int, uint8_t *);
+int	spi_send_recv(spi_handle_t, int, const uint8_t *, int, uint8_t *);
+int	spi_send_and_recv(spi_handle_t, int, const uint8_t *, int, uint8_t *);
+int	spi_sendv(spi_handle_t, const struct iovec *, int);
 
 #endif	/* _DEV_SPI_SPIVAR_H_ */

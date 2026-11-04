@@ -1,4 +1,4 @@
-# Copyright (C) 2020-2024 Free Software Foundation, Inc.
+# Copyright (C) 2020-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -43,6 +43,9 @@ if {![Term::enter_tui]} {
     return
 }
 
+Term::command "python print('tui_enabled=' + str(tui_enabled))"
+Term::check_contents "tui start event" "tui_enabled=True"
+
 Term::command "layout test"
 Term::check_contents "test title" \
     "This Is The Title"
@@ -63,3 +66,8 @@ Term::resize 51 51
 Term::check_contents "Window was updated" "Test: 2"
 
 Term::command "layout fail"
+
+Term::command "tui disable"
+gdb_test "python print('tui_enabled=' + str(tui_enabled))" \
+    "tui_enabled=False" \
+    "tui disable event"

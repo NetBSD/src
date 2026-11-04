@@ -1,4 +1,4 @@
-/*	$NetBSD: device.c,v 1.13.28.1 2025/08/02 05:58:50 perseant Exp $	*/
+/*	$NetBSD: device.c,v 1.13.28.2 2026/11/04 23:28:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 1993-95 Mats O Jansson.  All rights reserved.
@@ -26,7 +26,7 @@
 
 #include "port.h"
 #ifndef lint
-__RCSID("$NetBSD: device.c,v 1.13.28.1 2025/08/02 05:58:50 perseant Exp $");
+__RCSID("$NetBSD: device.c,v 1.13.28.2 2026/11/04 23:28:53 perseant Exp $");
 #endif
 
 #include "os.h"
@@ -41,7 +41,7 @@ struct	if_info *iflist;		/* Interface List		*/
 void	deviceOpen(const char *, u_short, int);
 
 /*
- * Return ethernet address for interface
+ * Return Ethernet address for interface
  */
 
 void

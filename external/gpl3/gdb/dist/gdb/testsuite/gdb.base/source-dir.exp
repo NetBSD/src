@@ -1,4 +1,4 @@
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@ proc test_truncated_comp_dir {} {
     #     /some/path/to/gdb/build/testsuite/
     # We are going to copy the source file out of the source tree into
     # a location like this:
-    #     /some/path/to/gdb/build/testsuite/output/gdb.base/soure-dir/
+    #     /some/path/to/gdb/build/testsuite/output/gdb.base/source-dir/
     #
     # We will then switch to this directory and compile the source
     # file, however, we will ask GCC to remove this prefix from the
@@ -87,11 +87,12 @@ proc test_truncated_comp_dir {} {
         return
     }
 
-    set working_dir [standard_output_file ""]
+    set working_dir [build_standard_output_file ""]
     with_cwd $working_dir {
-	set strip_dir [file normalize "${working_dir}/../.."]
+	set strip_dir [build_file_normalize "${working_dir}/../.."]
+	set h_strip_dir [host_file_normalize $strip_dir]
 
-	set new_srcfile [standard_output_file ${srcfile}]
+	set new_srcfile [build_standard_output_file ${srcfile}]
 	set fd [open "$new_srcfile" w]
 	puts $fd "int
 	main ()
@@ -100,8 +101,17 @@ proc test_truncated_comp_dir {} {
 	}"
 	close $fd
 
+	# We ask GCC to remove both the build and host views of the
+	# path, because we don't know which one GCC uses.  E.g., we're
+	# testing on MSYS2 with an MSYS2 cross-compiler that targets
+	# MinGW, then the path GCC uses is a Unix path.  If OTOH we're
+	# testing on MSYS2 with a native Windows compiler, then the
+	# path GCC uses is a Windows path.
 	set options \
-	    "debug additional_flags=-fdebug-prefix-map=${strip_dir}="
+	    [list \
+		 "debug" \
+		 "additional_flags=-fdebug-prefix-map=${strip_dir}=" \
+		 "additional_flags=-fdebug-prefix-map=${h_strip_dir}="]
 	if  { [gdb_compile "${srcfile}" "${binfile}" \
 		   executable ${options}] != "" } {
 	    untested "failed to compile"
@@ -109,7 +119,8 @@ proc test_truncated_comp_dir {} {
 	}
     }
 
-    clean_restart ${binfile}
+    clean_restart
+    gdb_load $binfile
 
     if { [ishost *-*-mingw*] } {
         gdb_test_no_output "set directories \$cdir;\$cwd"
@@ -133,9 +144,9 @@ proc test_truncated_comp_dir {} {
 	 "Does not include preprocessor macro info." ] \
 	"info source before setting directory search list"
 
-    gdb_test "dir $strip_dir" \
+    gdb_test "dir $h_strip_dir" \
 	[search_dir_list [list \
-			      "$strip_dir" \
+			      "$h_strip_dir" \
 			      "\\\$cdir" \
 			      "\\\$cwd"]] \
 	"setup source path search directory"
@@ -146,17 +157,23 @@ proc test_truncated_comp_dir {} {
 			 "4\[ \t\]+return 0;" \
 			 "5\[ \t\]+\\}" ]
 
-    gdb_test "info source" \
-	[multi_line \
-	     "Current source file is ${srcfile}" \
-	     "Compilation directory is \[^\n\r\]+" \
-	     "Located in ${new_srcfile}" \
-	     "Contains 5 lines." \
-	     "Source language is c." \
-	     "Producer is \[^\n\r\]+" \
-	     "\[^\n\r\]+" \
-	     "\[^\n\r\]+" ] \
-	"info source after setting directory search list"
+    set re [multi_line \
+		"Current source file is ${srcfile}" \
+		"Compilation directory is \[^\n\r\]+" \
+		"Located in (\[^\n\r\]+)" \
+		"Contains 5 lines." \
+		"Source language is c." \
+		"Producer is \[^\n\r\]+" \
+		"\[^\n\r\]+" \
+		"\[^\n\r\]+"]
+    set test "info source after setting directory search list"
+    gdb_test_multiple "info source" $test {
+	-re -wrap "$re" {
+	    set host_new_srcfile [host_file_normalize $new_srcfile]
+	    set host_location [host_file_sanitize $expect_out(1,string)]
+	    gdb_assert {$host_new_srcfile eq $host_location} $gdb_test_name
+	}
+    }
 }
 
 proc test_change_search_directory_with_empty_dirname {} {

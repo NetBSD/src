@@ -1,4 +1,4 @@
-/*	$NetBSD: cds_59.c,v 1.9.2.1 2025/08/02 05:53:40 perseant Exp $	*/
+/*	$NetBSD: cds_59.c,v 1.9.2.2 2026/11/04 23:18:09 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,9 +91,7 @@ tostruct_cds(ARGS_TOSTRUCT) {
 	/*
 	 * Checked by generic_tostruct_ds().
 	 */
-	cds->common.rdclass = rdata->rdclass;
-	cds->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&cds->common, link);
+	DNS_RDATACOMMON_INIT(cds, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_ds(CALL_TOSTRUCT);
 }

@@ -1,4 +1,4 @@
-# Copyright 2020-2023 Free Software Foundation, Inc.
+# Copyright 2020-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,11 +16,11 @@
 load_lib "ada.exp"
 load_lib "gdb-python.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile p
 
-set old_gcc [expr [test_compiler_info {gcc-[0-7]-*}]]
+set old_gcc [gnat_version_compare <= 7]
 
 proc gdb_test_with_xfail { cmd re re_xfail msg } {
     global scenario old_gcc
@@ -40,8 +40,8 @@ proc gdb_test_with_xfail { cmd re re_xfail msg } {
     }
 }
 
-foreach_with_prefix scenario {all minimal} {
-    set flags [list debug additional_flags=-fgnat-encodings=$scenario]
+foreach_gnat_encoding scenario flags {all minimal} {
+    lappend flags debug
 
     if {[gdb_compile_ada "${srcfile}" "${binfile}-${scenario}" executable $flags] != ""} {
 	return -1
@@ -78,7 +78,7 @@ foreach_with_prefix scenario {all minimal} {
 	"print second array slice"
 
     # This is only supported for the DWARF encoding.
-    if {$scenario == "minimal" && ![skip_python_tests]} {
+    if {$scenario == "minimal" && [allow_python_tests]} {
 	gdb_test_no_output \
 	    "python o = gdb.parse_and_eval('objects')" \
 	    "fetch value for python"

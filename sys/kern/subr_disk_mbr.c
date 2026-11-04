@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.58.6.1 2025/08/02 05:57:42 perseant Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.58.6.2 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.58.6.1 2025/08/02 05:57:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.58.6.2 2026/11/04 23:27:49 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbr.h"
@@ -62,20 +62,22 @@ __KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.58.6.1 2025/08/02 05:57:42 perse
 #endif /* _KERNEL_OPT */
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/buf.h>
-#include <sys/bootblock.h>
-#include <sys/disklabel.h>
-#include <sys/disk.h>
-#include <sys/syslog.h>
-#include <sys/vnode.h>
-#include <sys/fcntl.h>
-#include <sys/conf.h>
-#include <sys/cdio.h>
-#include <sys/dkbad.h>
-#include <fs/udf/ecma167-udf.h>
+#include <sys/types.h>
 
+#include <sys/bootblock.h>
+#include <sys/buf.h>
+#include <sys/cdio.h>
+#include <sys/conf.h>
+#include <sys/disk.h>
+#include <sys/disklabel.h>
+#include <sys/fcntl.h>
 #include <sys/kauth.h>
+#include <sys/sdt.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+
+#include <fs/udf/ecma167-udf.h>
 
 typedef struct mbr_partition mbr_partition_t;
 
@@ -463,41 +465,6 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 		xxx->label_sector = a.label_sector;
 #endif
 
-	/* Obtain bad sector table if requested and present */
-#ifdef __HAVE_DISKLABEL_DKBAD
-	if (rval == SCAN_FOUND && osdep && (lp->d_flags & D_BADSECT)) {
-		struct dkbad *bdp, *db;
-		int blkno;
-
-		bdp = &osdep->bad;
-		i = 0;
-		rval = SCAN_ERROR;
-		do {
-			/* read a bad sector table */
-			blkno = lp->d_secperunit - lp->d_nsectors + i;
-			if (lp->d_secsize > DEV_BSIZE)
-				blkno *= lp->d_secsize / DEV_BSIZE;
-			else
-				blkno /= DEV_BSIZE / lp->d_secsize;
-			/* if successful, validate, otherwise try another */
-			if (read_sector(&a, blkno, 1)) {
-				a.msg = "bad sector table I/O error";
-				continue;
-			}
-			db = (struct dkbad *)(a.bp->b_data);
-#define DKBAD_MAGIC 0x4321
-			if (db->bt_mbz != 0 || db->bt_flag != DKBAD_MAGIC) {
-				a.msg = "bad sector table corrupted";
-				continue;
-			}
-			rval = SCAN_FOUND;
-			*bdp = *db;
-			break;
-		} while (a.bp->b_error && (i += 2) < 10 &&
-			i < lp->d_nsectors);
-	}
-#endif /* __HAVE_DISKLABEL_DKBAD */
-
 	brelse(a.bp, 0);
 	if (rval == SCAN_ERROR || rval == SCAN_CONTINUE)
 		return a.msg;
@@ -518,13 +485,16 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 	    dp->mbrp_type == MBR_PTYPE_NETBSD) {
 		rval = validate_label(a, ptn_base);
 
-#if RAW_PART == 3
-		/* Put actual location where we found the label into ptn 2 */
-		if (rval == SCAN_FOUND || a->lp->d_partitions[2].p_size == 0) {
+		/*
+		 * If RAW_PART == 3 ('d'), put actual location where we found
+		 * the label into ptn 2 ('c').
+		 */
+		if (RAW_PART == 3 &&
+		    (rval == SCAN_FOUND ||
+		     a->lp->d_partitions[2].p_size == 0)) {
 			a->lp->d_partitions[2].p_size = le32toh(dp->mbrp_size);
 			a->lp->d_partitions[2].p_offset = ptn_base;
 		}
-#endif
 
 		/* If we got a netbsd label look no further */
 		if (rval == SCAN_FOUND)
@@ -725,7 +695,7 @@ writedisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp,
 	validate_label(&a, 0);
 
 	if (a.written == 0 && a.error == 0)
-		a.error = ESRCH;
+		a.error = SET_ERROR(ESRCH);
 
 	brelse(a.bp, 0);
 	return a.error;

@@ -1,5 +1,5 @@
 /* collection of junk waiting time to sort out
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by Red Hat
 
 This file is part of the GNU Simulators.
@@ -266,7 +266,7 @@ enum frv_ec
 
 /* FR-V Interrupt.
    This struct contains enough information to describe a particular interrupt
-   occurance.  */
+   occurrence.  */
 struct frv_interrupt
 {
   enum frv_interrupt_kind  kind;

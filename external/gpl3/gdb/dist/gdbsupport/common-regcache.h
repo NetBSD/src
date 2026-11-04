@@ -1,6 +1,6 @@
 /* Cache and manage the values of registers
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_REGCACHE_H
-#define COMMON_COMMON_REGCACHE_H
+#ifndef GDBSUPPORT_COMMON_REGCACHE_H
+#define GDBSUPPORT_COMMON_REGCACHE_H
 
 struct reg_buffer_common;
 
@@ -35,10 +35,10 @@ enum register_status : signed char
 
     /* The register value is unavailable.  E.g., we're inspecting a
        traceframe, and this register wasn't collected.  Note that this
-       is different a different "unavailable" from saying the register
-       does not exist in the target's architecture --- in that case,
-       the target should have given us a target description that does
-       not include the register in the first place.  */
+       "unavailable" is different from saying the register does not
+       exist in the target's architecture --- in that case, the target
+       should have given us a target description that does not include
+       the register in the first place.  */
     REG_UNAVAILABLE = -1
   };
 
@@ -47,11 +47,6 @@ enum register_status : signed char
    the client.  */
 
 extern reg_buffer_common *get_thread_regcache_for_ptid (ptid_t ptid);
-
-/* Return the size of register numbered N in REGCACHE.  This function
-   must be provided by the client.  */
-
-extern int regcache_register_size (const reg_buffer_common *regcache, int n);
 
 /* Read the PC register.  This function must be provided by the
    client.  */
@@ -78,6 +73,9 @@ struct reg_buffer_common
      buffer.  */
   virtual register_status get_register_status (int regnum) const = 0;
 
+  /* Return the size of register numbered REGNUM in this buffer.  */
+  virtual int register_size (int regnum) const = 0;
+
   /* Supply register REGNUM, whose contents are stored in SRC, to this register
      buffer.  */
   virtual void raw_supply (int regnum, gdb::array_view<const gdb_byte> src)
@@ -90,11 +88,13 @@ struct reg_buffer_common
   }
 
   void raw_supply (int regnum, const gdb_byte *src)
-  {
-    raw_supply (regnum,
-		gdb::make_array_view (src,
-				      regcache_register_size (this, regnum)));
-  }
+  { raw_supply (regnum, gdb::make_array_view (src, register_size (regnum))); }
+
+  /* Supply part of register REGNUM with zeroed value.  Start at OFFSET in
+     the register, with size SIZE.  The rest of the register is left
+     untouched.  */
+  virtual void raw_supply_part_zeroed (int regnum, int offset, size_t size)
+    = 0;
 
   /* Collect register REGNUM from this register buffer and store its contents in
      DST.  */
@@ -108,11 +108,7 @@ struct reg_buffer_common
   };
 
   void raw_collect (int regnum, gdb_byte *dst)
-  {
-    raw_collect (regnum,
-		 gdb::make_array_view (dst,
-				       regcache_register_size (this, regnum)));
-  }
+  { raw_collect (regnum, gdb::make_array_view (dst, register_size (regnum))); }
 
   /* Compare the contents of the register stored in the regcache (ignoring the
      first OFFSET bytes) to the contents of BUF (without any offset).  Returns
@@ -120,4 +116,4 @@ struct reg_buffer_common
   virtual bool raw_compare (int regnum, const void *buf, int offset) const = 0;
 };
 
-#endif /* COMMON_COMMON_REGCACHE_H */
+#endif /* GDBSUPPORT_COMMON_REGCACHE_H */

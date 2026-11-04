@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,20 @@
 
 standard_testfile .c
 
-set opts [list debug additional_flags=-fshort-enums]
+set opts {}
+lappend opts debug
+lappend opts additional_flags=-fshort-enums
+# Without -nostdlib, on arm we run into:
+#
+#   ld: warning: enum_cond.o uses variable-size enums yet the output is to use
+#     32-bit enums; use of enum values across objects may fail
+#
+# due to conflicting values for Tag_ABI_enum_size between enum_cond.o and
+# linked-in objects.  Work around this by using -nostdlib, making sure there's
+# just one object, and no such conflict can happen.
+lappend opts additional_flags=-nostdlib
+lappend opts additional_flags=-DHAVE_BUILTIN_TRAP=[have_builtin_trap]
+
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $opts] != "" } {
     untested "failed to compile"
     return -1

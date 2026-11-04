@@ -1,6 +1,6 @@
 /* Blackfin Memory Management Unit (MMU) model.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -144,7 +144,7 @@ bfin_mmu_io_write_buffer (struct hw *me, const void *source,
       *valuep = value;
       if (value)
 	{
-	  bu32 addr = mmu->sram_base_address   |
+	  bu32 sram_addr = mmu->sram_base_address   |
 	    ((value >> (26 - 11)) & (1 << 11)) | /* addr bit 11 (Way0/Way1)   */
 	    ((value >> (24 - 21)) & (1 << 21)) | /* addr bit 21 (Data/Inst)   */
 	    ((value >> (23 - 15)) & (1 << 15)) | /* addr bit 15 (Data Bank)   */
@@ -157,9 +157,9 @@ bfin_mmu_io_write_buffer (struct hw *me, const void *source,
 	    hw_abort (me, "DTEST_COMMAND bits undefined");
 
 	  if (value & TEST_WRITE)
-	    sim_write (hw_system (me), addr, mmu->dtest_data, 8);
+	    sim_write (hw_system (me), sram_addr, mmu->dtest_data, 8);
 	  else
-	    sim_read (hw_system (me), addr, mmu->dtest_data, 8);
+	    sim_read (hw_system (me), sram_addr, mmu->dtest_data, 8);
 	}
       break;
     default:
@@ -451,7 +451,7 @@ _mmu_check_addr (SIM_CPU *cpu, bu32 addr, bool write, bool inst, int size)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   struct bfin_mmu *mmu;
-  bu32 *fault_status, *fault_addr, *mem_control, *cplb_addr, *cplb_data;
+  bu32 *mem_control, *cplb_addr, *cplb_data;
   bu32 faults;
   bool supv, do_excp, dag1;
   int i, hits;
@@ -469,8 +469,6 @@ _mmu_check_addr (SIM_CPU *cpu, bu32 addr, bool write, bool inst, int size)
     }
 
   mmu = MMU_STATE (cpu);
-  fault_status = inst ? &mmu->icplb_fault_status : &mmu->dcplb_fault_status;
-  fault_addr = inst ? &mmu->icplb_fault_addr : &mmu->dcplb_fault_addr;
   mem_control = inst ? &mmu->imem_control : &mmu->dmem_control;
   cplb_addr = inst ? &mmu->icplb_addr[0] : &mmu->dcplb_addr[0];
   cplb_data = inst ? &mmu->icplb_data[0] : &mmu->dcplb_data[0];

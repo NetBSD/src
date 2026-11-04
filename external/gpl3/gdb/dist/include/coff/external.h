@@ -1,17 +1,17 @@
 /* external.h  -- External COFF structures
-   
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
    the Free Software Foundation; either version 3 of the License, or
    (at your option) any later version.
-   
+
    This program is distributed in the hope that it will be useful,
    but WITHOUT ANY WARRANTY; without even the implied warranty of
    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
    GNU General Public License for more details.
-   
+
    You should have received a copy of the GNU General Public License
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
@@ -21,41 +21,41 @@
 #define COFF_EXTERNAL_H
 
 #ifndef DO_NOT_DEFINE_FILHDR
-/********************** FILE HEADER **********************/
+
+#define FILHDR	struct external_filehdr
+#define FILHSZ	20
 
 struct external_filehdr
-  {
-    char f_magic[2];	/* magic number			*/
-    char f_nscns[2];	/* number of sections		*/
-    char f_timdat[4];	/* time & date stamp		*/
-    char f_symptr[4];	/* file pointer to symtab	*/
-    char f_nsyms[4];	/* number of symtab entries	*/
-    char f_opthdr[2];	/* sizeof(optional hdr)		*/
-    char f_flags[2];	/* flags			*/
-  };
-
-#define	FILHDR	struct external_filehdr
-#define	FILHSZ	20
+{
+  char f_magic[2];	/* magic number			*/
+  char f_nscns[2];	/* number of sections		*/
+  char f_timdat[4];	/* time & date stamp		*/
+  char f_symptr[4];	/* file pointer to symtab	*/
+  char f_nsyms[4];	/* number of symtab entries	*/
+  char f_opthdr[2];	/* sizeof(optional hdr)		*/
+  char f_flags[2];	/* flags			*/
+};
 #endif
 
 #ifndef DO_NOT_DEFINE_AOUTHDR
-/********************** AOUT "OPTIONAL HEADER" **********************/
-
-typedef struct external_aouthdr
-  {
-    char magic[2];	/* type of file				*/
-    char vstamp[2];	/* version stamp			*/
-    char tsize[4];	/* text size in bytes, padded to FW bdry*/
-    char dsize[4];	/* initialized data "  "		*/
-    char bsize[4];	/* uninitialized data "   "		*/
-    char entry[4];	/* entry pt.				*/
-    char text_start[4];	/* base of text used for this file 	*/
-    char data_start[4];	/* base of data used for this file 	*/
-  } ATTRIBUTE_PACKED
-AOUTHDR;
 
 #define AOUTHDRSZ 28
 #define AOUTSZ 28
+
+typedef struct external_aouthdr
+{
+  char magic[2];	/* type of file				*/
+  char vstamp[2];	/* version stamp			*/
+  char tsize[4];	/* text size in bytes, padded to FW bdry*/
+  char dsize[4];	/* initialized data "  "		*/
+  char bsize[4];	/* uninitialized data "   "		*/
+  char entry[4];	/* entry pt.				*/
+  char text_start[4];	/* base of text used for this file	*/
+  char data_start[4];	/* base of data used for this file	*/
+} ATTRIBUTE_PACKED
+AOUTHDR;
+
+#define AOUTHDRSZ64 24
 
 typedef struct external_aouthdr64
 {
@@ -65,32 +65,30 @@ typedef struct external_aouthdr64
   char dsize[4];	/* Initialized data "  ".		*/
   char bsize[4];	/* Uninitialized data "   ".		*/
   char entry[4];	/* Entry pt.				*/
-  char text_start[4];	/* Base of text used for this file. 	*/
+  char text_start[4];	/* Base of text used for this file.	*/
 }
 AOUTHDR64;
-#define AOUTHDRSZ64	24
 
 #endif /* not DO_NOT_DEFINE_AOUTHDR */
 
 #ifndef DO_NOT_DEFINE_SCNHDR
-/********************** SECTION HEADER **********************/
+
+#define SCNHDR	struct external_scnhdr
+#define SCNHSZ	40
 
 struct external_scnhdr
-  {
-    char s_name[8];	/* section name				*/
-    char s_paddr[4];	/* physical address, aliased s_nlib 	*/
-    char s_vaddr[4];	/* virtual address			*/
-    char s_size[4];	/* section size				*/
-    char s_scnptr[4];	/* file ptr to raw data for section 	*/
-    char s_relptr[4];	/* file ptr to relocation		*/
-    char s_lnnoptr[4];	/* file ptr to line numbers		*/
-    char s_nreloc[2];	/* number of relocation entries		*/
-    char s_nlnno[2];	/* number of line number entries	*/
-    char s_flags[4];	/* flags				*/
-  };
-
-#define	SCNHDR	struct external_scnhdr
-#define	SCNHSZ	40
+{
+  char s_name[8];	/* section name				*/
+  char s_paddr[4];	/* physical address, aliased s_nlib	*/
+  char s_vaddr[4];	/* virtual address			*/
+  char s_size[4];	/* section size				*/
+  char s_scnptr[4];	/* file ptr to raw data for section	*/
+  char s_relptr[4];	/* file ptr to relocation		*/
+  char s_lnnoptr[4];	/* file ptr to line numbers		*/
+  char s_nreloc[2];	/* number of relocation entries		*/
+  char s_nlnno[2];	/* number of line number entries	*/
+  char s_flags[4];	/* flags				*/
+};
 
 /* Names of "special" sections.  */
 
@@ -103,11 +101,12 @@ struct external_scnhdr
 
 #ifndef DO_NOT_DEFINE_LINENO
 
-/********************** LINE NUMBERS **********************/
-
 #ifndef L_LNNO_SIZE
 #error  L_LNNO_SIZE needs to be defined
 #endif
+
+#define LINENO	struct external_lineno
+#define LINESZ	(4 + L_LNNO_SIZE)
 
 /* 1 line number entry for every "breakpointable" source line in a section.
    Line numbers are grouped on a per function basis; first entry in a function
@@ -124,9 +123,6 @@ struct external_lineno
   char l_lnno[L_LNNO_SIZE];	/* line number		*/
 };
 
-#define	LINENO	struct external_lineno
-#define	LINESZ	(4 + L_LNNO_SIZE)
-
 #if L_LNNO_SIZE == 4
 #define GET_LINENO_LNNO(abfd, ext)      H_GET_32 (abfd,      (ext->l_lnno))
 #define PUT_LINENO_LNNO(abfd, val, ext) H_PUT_32 (abfd, val, (ext->l_lnno))
@@ -139,15 +135,11 @@ struct external_lineno
 #endif /* not DO_NOT_DEFINE_LINENO */
 
 #ifndef DO_NOT_DEFINE_SYMENT
-/********************** SYMBOLS **********************/
 
 #define E_SYMNMLEN	8	/* # characters in a symbol name	*/
-#ifndef E_FILNMLEN
-#define E_FILNMLEN	14
-#endif
-#define E_DIMNUM	4	/* # array dimensions in auxiliary entry */
+#define SYMESZ	18
 
-struct external_syment 
+typedef struct external_syment
 {
   union
   {
@@ -165,10 +157,8 @@ struct external_syment
   char e_type[2];
   char e_sclass[1];
   char e_numaux[1];
-} ATTRIBUTE_PACKED ;
-
-#define	SYMENT	struct external_syment
-#define	SYMESZ	18	
+} ATTRIBUTE_PACKED
+SYMENT;
 
 #ifndef N_BTMASK
 #define N_BTMASK	0xf
@@ -190,12 +180,16 @@ struct external_syment
 
 #ifndef DO_NOT_DEFINE_AUXENT
 
-union external_auxent
+#define E_FILNMLEN	14	/* # characters in a file name		*/
+#define E_DIMNUM	4	/* # array dimensions in auxiliary entry */
+#define AUXESZ	18
+
+typedef union external_auxent
 {
   struct
   {
     char x_tagndx[4];		/* str, un, or enum tag indx */
-    
+
     union
     {
       struct
@@ -203,66 +197,66 @@ union external_auxent
 	char  x_lnno[2]; /* declaration line number */
 	char  x_size[2]; /* str/union/array size */
       } x_lnsz;
-      
+
       char x_fsize[4];	/* size of function */
-      
+
     } x_misc;
-    
+
     union
     {
-      struct 		/* if ISFCN, tag, or .bb */
+      struct		/* if ISFCN, tag, or .bb */
       {
 	char x_lnnoptr[4];	/* ptr to fcn line # */
 	char x_endndx[4];	/* entry ndx past block end */
       } x_fcn;
-      
-      struct 		/* if ISARY, up to 4 dimen. */
+
+      struct		/* if ISARY, up to 4 dimen. */
       {
 	char x_dimen[E_DIMNUM][2];
       } x_ary;
-      
+
     } x_fcnary;
-    
+
     char x_tvndx[2];	/* tv index */
-    
+
   } x_sym;
-  
+
   union
   {
-    char x_fname[E_FILNMLEN];
-    
+    /* Make x_fname the full auxent size, so that if coff/pe.h
+       redefines E_FILNMLEN from 14 to 18 we don't trigger sanitisers
+       accessing x_fname.  Beware use of sizeof (x_file.x_fname).  */
+    char x_fname[AUXESZ];
+
     struct
     {
       char x_zeroes[4];
       char x_offset[4];
     } x_n;
-    
+
   } x_file;
-  
+
   struct
   {
     char x_scnlen[4];	/* section length */
     char x_nreloc[2];	/* # relocation entries */
     char x_nlinno[2];	/* # line numbers */
 #ifdef INCLUDE_COMDAT_FIELDS_IN_AUXENT
-    char x_checksum[4];		   /* section COMDAT checksum	      */
-    char x_associated[2];	   /* COMDAT associated section index */
-    char x_comdat[1];		   /* COMDAT selection number	      */
-#endif    
+    char x_checksum[4];		/* section COMDAT checksum		*/
+    char x_associated[2];	/* COMDAT associated section index	*/
+    char x_comdat[1];		/* COMDAT selection number		*/
+#endif
   } x_scn;
-  
+
+  /* info about .tv section (in auxent of symbol .tv).  */
   struct
   {
     char x_tvfill[4];	/* tv fill value */
     char x_tvlen[2];	/* length of .tv */
     char x_tvran[2][2];	/* tv range */
-  } x_tv;		/* info about .tv section (in auxent of symbol .tv)) */
-} ATTRIBUTE_PACKED ;
-
-#define	AUXENT	union external_auxent
-#define	AUXESZ	18
-
-#define _ETEXT	"etext"
+  } x_tv;
+} ATTRIBUTE_PACKED
+AUXENT;
 
 #endif /* not DO_NOT_DEFINE_AUXENT */
 

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24 2024/05/20 09:48:42 martin Exp $
+#	$NetBSD: Makefile,v 1.24.2.1 2026/11/04 23:19:31 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -22,9 +22,11 @@ INCSDIR=	/usr/include
 .if !defined(SMALLPROG)
 CPPFLAGS+=	-DTERMINFO_COMPILE -DTERMINFO_DB -DTERMINFO_COMPAT
 SRCS+=		compile.c
+
+COPTS.compile.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 .endif
 
-COPTS.tparm.c = -Wno-format-nonliteral
+COPTS.tparm.c+=		-Wno-format-nonliteral
 
 MAN=		terminfo.3 terminfo.5
 MLINKS=		terminfo.3 setupterm.3 \

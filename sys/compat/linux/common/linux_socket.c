@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.155.6.1 2025/08/02 05:56:27 perseant Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.155.6.2 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.155.6.1 2025/08/02 05:56:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.155.6.2 2026/11/04 23:21:39 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -125,7 +125,7 @@ static int linux_get_sa(struct lwp *, int, struct sockaddr_big *,
 static int linux_sa_put(struct osockaddr *osa);
 static int linux_to_bsd_msg_flags(int);
 static int bsd_to_linux_msg_flags(int);
-static void linux_to_bsd_msghdr(const struct linux_msghdr *, struct msghdr *);
+static int linux_to_bsd_msghdr(const struct linux_msghdr *, struct msghdr *);
 static void bsd_to_linux_msghdr(const struct msghdr *, struct linux_msghdr *);
 
 static const int linux_to_bsd_domain_[LINUX_AF_MAX] = {
@@ -323,7 +323,7 @@ linux_sys_socket(struct lwp *l, const struct linux_sys_socket_args *uap, registe
 	struct sys___socket30_args bsa;
 	int error;
 
-
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, protocol) = SCARG(uap, protocol);
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
@@ -375,6 +375,7 @@ linux_sys_socketpair(struct lwp *l, const struct linux_sys_socketpair_args *uap,
 	} */
 	struct sys_socketpair_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, domain) = linux_to_bsd_domain(SCARG(uap, domain));
 	if (SCARG(&bsa, domain) == -1)
 		return EINVAL;
@@ -437,22 +438,60 @@ linux_sys_sendto(struct lwp *l, const struct linux_sys_sendto_args *uap, registe
 	return do_sys_sendmsg(l, SCARG(uap, s), &msg, bflags, retval);
 }
 
-static void
+static int
 linux_to_bsd_msghdr(const struct linux_msghdr *lmsg, struct msghdr *bmsg)
 {
+
+	/*
+	 * Verify no integer truncation of the inputs.  For overly
+	 * large inputs, fail with the same error codes Linux uses.
+	 */
+	if (lmsg->msg_namelen < 0)
+		return EINVAL;
+	CTASSERT(!__type_is_signed(__typeof(lmsg->msg_iovlen)));
+	if (lmsg->msg_iovlen > UIO_MAXIOV)
+		return EMSGSIZE;
+	CTASSERT(!__type_is_signed(__typeof(lmsg->msg_controllen)));
+	if (lmsg->msg_controllen > __type_max(__typeof(bmsg->msg_controllen)))
+		return ENOBUFS;
+
 	memset(bmsg, 0, sizeof(*bmsg));
 	bmsg->msg_name = lmsg->msg_name;
-	bmsg->msg_namelen = lmsg->msg_namelen;
+	bmsg->msg_namelen = MIN(lmsg->msg_namelen,
+	    sizeof(struct sockaddr_storage));
 	bmsg->msg_iov = lmsg->msg_iov;
 	bmsg->msg_iovlen = lmsg->msg_iovlen;
 	bmsg->msg_control = lmsg->msg_control;
 	bmsg->msg_controllen = lmsg->msg_controllen;
 	bmsg->msg_flags = lmsg->msg_flags;
+
+	return 0;
 }
 
 static void
 bsd_to_linux_msghdr(const struct msghdr *bmsg, struct linux_msghdr *lmsg)
 {
+
+	/*
+	 * Assert no truncation on the way out.
+	 *
+	 * - msg_namelen should have been preserved or shortened by
+	 *   copyout_sockname.
+	 * - msg_iovlen should have been preserved and previously
+	 *   confirmed by linux_to_bsd_msghdr to lie in [0,UIO_MAXIOV].
+	 * - msg_controllen can always be faithfully converted from BSD
+	 *   struct msghdr to Linux struct msghdr without truncation.
+	 */
+	CTASSERT(__type_min(__typeof(bmsg->msg_namelen)) == 0);
+	KASSERT(bmsg->msg_namelen <= __type_max(__typeof(lmsg->msg_namelen)));
+	CTASSERT(__type_min(__typeof(lmsg->msg_iovlen)) <= 0);
+	KASSERT(lmsg->msg_iovlen >= 0);
+	KASSERT(lmsg->msg_iovlen <= UIO_MAXIOV);
+	CTASSERT(__type_min(__typeof(lmsg->msg_controllen)) <=
+	    __type_min(__typeof(bmsg->msg_controllen)));
+	CTASSERT(__type_max(__typeof(lmsg->msg_controllen)) >=
+	    __type_max(__typeof(bmsg->msg_controllen)));
+
 	memset(lmsg, 0, sizeof(*lmsg));
 	lmsg->msg_name = bmsg->msg_name;
 	lmsg->msg_namelen = bmsg->msg_namelen;
@@ -482,7 +521,9 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	error = copyin(SCARG(uap, msg), &lmsg, sizeof(lmsg));
 	if (error)
 		return error;
-	linux_to_bsd_msghdr(&lmsg, &msg);
+	error = linux_to_bsd_msghdr(&lmsg, &msg);
+	if (error)
+		return error;
 
 	msg.msg_flags = MSG_IOVUSRSPACE;
 
@@ -509,7 +550,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 	if (LINUX_CMSG_FIRSTHDR(&lmsg)) {
 		struct linux_cmsghdr l_cmsg, *l_cc;
 		struct cmsghdr *cmsg;
-		ssize_t resid = msg.msg_controllen;
+		socklen_t resid = msg.msg_controllen;
 		size_t clen, cidx = 0, cspace;
 
 		ctl_mbuf = m_get(M_WAIT, MT_CONTROL);
@@ -518,15 +559,34 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 		l_cc = LINUX_CMSG_FIRSTHDR(&lmsg);
 		do {
+			if (resid < sizeof(l_cmsg)) {
+				error = EINVAL;
+				goto done;
+			}
 			error = copyin(l_cc, &l_cmsg, sizeof(l_cmsg));
 			if (error)
 				goto done;
 
 			/*
 			 * Sanity check the control message length.
+			 * If either:
+			 *
+			 * 1. aligning it would overflow socklen_t, or
+			 * 2. aligning it exceeds msg_controllen, or
+			 * 3. adding the delta would overflow socklen_t, or
+			 * 4. it's not enough for a struct cmsghdr,
+			 *
+			 * then fail with EINVAL.
 			 */
-			if (l_cmsg.cmsg_len > resid
-			    || l_cmsg.cmsg_len < sizeof l_cmsg) {
+			CTASSERT(LINUX_CMSG_ALIGN(1) <=
+			    __type_max(__typeof(resid)));
+			if ((l_cmsg.cmsg_len >= __type_max(__typeof(resid)) -
+				LINUX_CMSG_ALIGN(1)) ||
+			    (LINUX_CMSG_ALIGN(l_cmsg.cmsg_len) > resid) ||
+			    (l_cmsg.cmsg_len >
+				__type_max(__typeof(cmsg->cmsg_len)) -
+				LINUX_CMSG_ALIGN_DELTA) ||
+			    (l_cmsg.cmsg_len < sizeof(l_cmsg))) {
 				error = EINVAL;
 				goto done;
 			}
@@ -654,12 +714,21 @@ linux_sys_recvfrom(struct lwp *l, const struct linux_sys_recvfrom_args *uap, reg
 		syscallarg(int *) fromlenaddr;
 	} */
 	int		error;
+	int		bflags;
 	struct sys_recvfrom_args bra;
 
+	/*
+	 * Translate message flags.
+	 */
+	bflags = linux_to_bsd_msg_flags(SCARG(uap, flags));
+	if (bflags < 0)
+		return EINVAL;
+
+	memset(&bra, 0, sizeof(bra));
 	SCARG(&bra, s) = SCARG(uap, s);
 	SCARG(&bra, buf) = SCARG(uap, buf);
 	SCARG(&bra, len) = SCARG(uap, len);
-	SCARG(&bra, flags) = SCARG(uap, flags);
+	SCARG(&bra, flags) = bflags;
 	SCARG(&bra, from) = (struct sockaddr *) SCARG(uap, from);
 	SCARG(&bra, fromlenaddr) = (socklen_t *)SCARG(uap, fromlenaddr);
 
@@ -675,7 +744,8 @@ linux_sys_recvfrom(struct lwp *l, const struct linux_sys_recvfrom_args *uap, reg
 static int
 linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control)
 {
-	int dlen, error = 0;
+	socklen_t dlen;
+	int error = 0;
 	struct cmsghdr *cmsg;
 	struct linux_cmsghdr linux_cmsg;
 	struct mbuf *m;
@@ -702,17 +772,24 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		 * 2. different alignment of CMSG_DATA on some archs
 		 */
 		memset(&linux_cmsg, 0, sizeof(linux_cmsg));
+		CTASSERT(LINUX_CMSG_ALIGN_DELTA >= 0);
+		CTASSERT(CMSG_LEN(0) ==
+		    sizeof(linux_cmsg) + LINUX_CMSG_ALIGN_DELTA);
+		KASSERTMSG(cmsg->cmsg_len >= CMSG_LEN(0),
+		    "cmsg->cmsg_len=%u", cmsg->cmsg_len);
 		linux_cmsg.cmsg_len = cmsg->cmsg_len - LINUX_CMSG_ALIGN_DELTA;
+		KASSERTMSG(linux_cmsg.cmsg_len >= sizeof(linux_cmsg),
+		    "linux_cmsg.cmsg_len=%zu", linux_cmsg.cmsg_len);
 		linux_cmsg.cmsg_level = cmsg->cmsg_level;
 		linux_cmsg.cmsg_type = cmsg->cmsg_type;
 
 		dlen = q_end - q;
 		if (linux_cmsg.cmsg_len > dlen) {
 			/* Not enough room for the parameter */
-			dlen -= sizeof linux_cmsg;
-			if (dlen <= 0)
+			if (dlen < sizeof linux_cmsg)
 				/* Discard if header wont fit */
 				break;
+			dlen -= sizeof linux_cmsg;
 			mp->msg_flags |= MSG_CTRUNC;
 			if (linux_cmsg.cmsg_level == SOL_SOCKET
 			    && linux_cmsg.cmsg_type == SCM_RIGHTS)
@@ -720,6 +797,21 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 				break;
 		} else
 			dlen = linux_cmsg.cmsg_len - sizeof linux_cmsg;
+
+		/*
+		 * NetBSD will not create a cmsg record whose header
+		 * length plus aligned content length would overflow
+		 * socklen_t.  This justifies computing
+		 * LINUX_CMSG_SPACE(dlen) (and LINUX_CMSG_LEN) below
+		 * without overflow.
+		 */
+		CTASSERT(LINUX_CMSG_SPACE(1) <= CMSG_SPACE(1));
+		CTASSERT(CMSG_SPACE(0) <=
+		    __type_max(__typeof(cmsg->cmsg_len)));
+		KASSERTMSG((dlen <= __type_max(__typeof(dlen)) -
+			CMSG_SPACE(0)),
+		    "dlen=%u", dlen);
+		CTASSERT(LINUX_CMSG_LEN(1) <= LINUX_CMSG_SPACE(1));
 
 		switch (linux_cmsg.cmsg_level) {
 		case SOL_SOCKET:
@@ -744,16 +836,14 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 		/* There can be padding between the header and data... */
 		error = copyout(&linux_cmsg, q, sizeof linux_cmsg);
 		if (error != 0) {
-			error = copyout(CCMSG_DATA(cmsg), q + sizeof linux_cmsg,
-			    dlen);
+			break;
 		}
+		error = copyout(CCMSG_DATA(cmsg), q + sizeof linux_cmsg, dlen);
 		if (error != 0) {
-			/* We must free all the SCM_RIGHTS */
-			m = control;
 			break;
 		}
 		m = m->m_next;
-		if (m == NULL || q + LINUX_CMSG_SPACE(dlen) > q_end) {
+		if (m == NULL || LINUX_CMSG_SPACE(dlen) > q_end - q) {
 			q += LINUX_CMSG_LEN(dlen);
 			break;
 		}
@@ -761,6 +851,10 @@ linux_copyout_msg_control(struct lwp *l, struct msghdr *mp, struct mbuf *control
 	}
 
   done:
+	if (error) {
+		/* We must free all the SCM_RIGHTS */
+		m = control;
+	}
 	free_control_mbuf(l, control, m);
 
 	mp->msg_controllen = q - (char *)mp->msg_control;
@@ -782,8 +876,10 @@ linux_sys_recvmsg(struct lwp *l, const struct linux_sys_recvmsg_args *uap, regis
 
 	error = copyin(SCARG(uap, msg), &lmsg, sizeof(lmsg));
 	if (error)
-		return (error);
-	linux_to_bsd_msghdr(&lmsg, &msg);
+		return error;
+	error = linux_to_bsd_msghdr(&lmsg, &msg);
+	if (error)
+		return error;
 
 	msg.msg_flags = linux_to_bsd_msg_flags(SCARG(uap, flags));
 	if (msg.msg_flags < 0) {
@@ -1043,6 +1139,7 @@ linux_sys_setsockopt(struct lwp *l, const struct linux_sys_setsockopt_args *uap,
 	struct sys_setsockopt_args bsa;
 	int name;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, s) = SCARG(uap, s);
 	SCARG(&bsa, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bsa, val) = SCARG(uap, optval);
@@ -1117,6 +1214,7 @@ linux_sys_getsockopt(struct lwp *l, const struct linux_sys_getsockopt_args *uap,
 	struct sys_getsockopt_args bga;
 	int name;
 
+	memset(&bga, 0, sizeof(bga));
 	SCARG(&bga, s) = SCARG(uap, s);
 	SCARG(&bga, level) = linux_to_bsd_sopt_level(SCARG(uap, level));
 	SCARG(&bga, val) = SCARG(uap, optval);
@@ -1447,6 +1545,8 @@ linux_ioctl_socket(struct lwp *l, const struct linux_sys_ioctl_args *uap, regist
 	com = SCARG(uap, com);
 	retval[0] = 0;
 
+	memset(&ia, 0, sizeof(ia));
+
 	switch (com) {
 	case LINUX_SIOCGIFNAME:
 		error = linux_getifname(l, retval, SCARG(uap, data));
@@ -1736,7 +1836,7 @@ linux_sys_recv(struct lwp *l, const struct linux_sys_recv_args *uap, register_t 
 	} */
 	struct sys_recvfrom_args bra;
 
-
+	memset(&bra, 0, sizeof(bra));
 	SCARG(&bra, s) = SCARG(uap, s);
 	SCARG(&bra, buf) = SCARG(uap, buf);
 	SCARG(&bra, len) = (size_t) SCARG(uap, len);
@@ -1758,6 +1858,7 @@ linux_sys_send(struct lwp *l, const struct linux_sys_send_args *uap, register_t 
 	} */
 	struct sys_sendto_args bsa;
 
+	memset(&bsa, 0, sizeof(bsa));
 	SCARG(&bsa, s)		= SCARG(uap, s);
 	SCARG(&bsa, buf)	= SCARG(uap, buf);
 	SCARG(&bsa, len)	= SCARG(uap, len);
@@ -1780,6 +1881,7 @@ linux_sys_accept(struct lwp *l, const struct linux_sys_accept_args *uap, registe
 	int error;
 	struct sys_accept_args baa;
 
+	memset(&baa, 0, sizeof(baa));
 	SCARG(&baa, s)		= SCARG(uap, s);
 	SCARG(&baa, name)	= (struct sockaddr *) SCARG(uap, name);
 	SCARG(&baa, anamelen)	= (unsigned int *) SCARG(uap, anamelen);
@@ -1863,7 +1965,9 @@ linux_sys_sendmmsg(struct lwp *l, const struct linux_sys_sendmmsg_args *uap,
 		error = copyin(SCARG(uap, msgvec) + dg, &lmsg, sizeof(lmsg));
 		if (error)
 			break;
-		linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		error = linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		if (error)
+			break;
 
 		msg->msg_flags = flags;
 
@@ -1915,6 +2019,7 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 
 	if (SCARG(uap, timeout)) {
 		error = copyin(SCARG(uap, timeout), &lts, sizeof(lts));
+		if (error)
 			return error;
 		ts.tv_sec = lts.tv_sec;
 		ts.tv_nsec = lts.tv_nsec;
@@ -1947,7 +2052,9 @@ linux_sys_recvmmsg(struct lwp *l, const struct linux_sys_recvmmsg_args *uap,
 		error = copyin(SCARG(uap, msgvec) + dg, &lmsg, sizeof(lmsg));
 		if (error)
 			break;
-		linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		error = linux_to_bsd_msghdr(&lmsg.msg_hdr, &bmsg.msg_hdr);
+		if (error)
+			break;
 		msg->msg_flags = flags & ~MSG_WAITFORONE;
 
 		if (from != NULL) {

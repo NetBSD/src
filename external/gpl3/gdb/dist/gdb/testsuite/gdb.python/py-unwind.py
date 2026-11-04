@@ -1,4 +1,4 @@
-# Copyright (C) 2015-2024 Free Software Foundation, Inc.
+# Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -265,6 +265,26 @@ class validating_unwinder(Unwinder):
 
         old_info["matched"] = True
         return None
+
+
+class bad_object_unwinder(Unwinder):
+    def __init__(self, name):
+        super().__init__(name)
+
+    def __call__(self, pending_frame):
+
+        if pending_frame.level() != 1:
+            return None
+
+        class Blah:
+            def __init__(self):
+                pass
+
+            @property
+            def __class__(self):
+                raise RuntimeError("error in Blah.__class__")
+
+        return Blah()
 
 
 print("Python script imported")

@@ -31,7 +31,7 @@
 #ifndef lint
 __COPYRIGHT("@(#) Copyright (c) 2005\
  The NetBSD Foundation, Inc.  All rights reserved.");
-__RCSID("$NetBSD: seq.c,v 1.14.2.1 2025/08/02 05:58:43 perseant Exp $");
+__RCSID("$NetBSD: seq.c,v 1.14.2.2 2026/11/04 23:28:43 perseant Exp $");
 #endif /* not lint */
 
 #include <ctype.h>
@@ -459,7 +459,7 @@ int
 decimal_places(const char *number)
 {
 	int places = 0;
-	char *dp;
+	const char *dp;
 
 	/* look for a decimal point */
 	if ((dp = strstr(number, decimal_point))) {

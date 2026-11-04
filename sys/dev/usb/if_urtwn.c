@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.109.2.1 2025/08/02 05:57:05 perseant Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.109.2.2 2026/11/04 23:22:36 perseant Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.109.2.1 2025/08/02 05:57:05 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.109.2.2 2026/11/04 23:22:36 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -760,6 +760,7 @@ urtwn_alloc_rx_list(struct urtwn_softc *sc)
 			data = &sc->rx_data[j][i];
 
 			data->sc = sc;	/* Backpointer for callbacks. */
+			data->pidx = j;
 
 			error = usbd_create_xfer(sc->rx_pipe[j], URTWN_RXBUFSZ,
 			    0, 0, &data->xfer);
@@ -961,21 +962,29 @@ urtwn_do_async(struct urtwn_softc *sc, void (*cb)(struct urtwn_softc *, void *),
 	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
 	urtwn_cmdq_invariants(sc);
+
+	if (sc->sc_dying) {
+		mutex_spin_exit(&sc->sc_task_mtx);
+		splx(s);
+		return;
+	}
+
 	cmd = &ring->cmd[ring->cur];
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
-	ring->cur = (ring->cur + 1) % URTWN_HOST_CMD_RING_COUNT;
 
 	/*
 	 * Schedule a task to process the command if need be.
 	 */
-	if (!sc->sc_dying) {
-		if (ring->queued == URTWN_HOST_CMD_RING_COUNT)
-			device_printf(sc->sc_dev, "command queue overflow\n");
-		else if (ring->queued++ == 0)
+	if (ring->queued == URTWN_HOST_CMD_RING_COUNT)
+		device_printf(sc->sc_dev, "command queue overflow\n");
+	else {
+		ring->cur = (ring->cur + 1) % URTWN_HOST_CMD_RING_COUNT;
+		if (ring->queued++ == 0)
 			schedtask = true;
 	}
+
 	mutex_spin_exit(&sc->sc_task_mtx);
 	splx(s);
 
@@ -2554,7 +2563,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	size_t pidx = data->pidx;
 	uint32_t rxdw0;
 	uint8_t *buf;
-	int len, totlen, pktlen, infosz, npkts;
+	int len, totlen, pktlen, infosz, npkts, pktspacing;
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
 	DPRINTFN(DBG_RX, "status=%jd", status, 0, 0, 0);
@@ -2591,8 +2600,13 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (npkts != 0)
 		rnd_add_uint32(&sc->rnd_source, npkts);
 
+	if (ISSET(sc->chip, URTWN_CHIP_92EU))
+		pktspacing = 8;
+	else
+		pktspacing = 128;
+
 	/* Process all of them. */
-	while (npkts-- > 0) {
+	while (npkts-- > 0 && len > 0) {
 		if (__predict_false(len < (int)sizeof(*stat))) {
 			DPRINTFN(DBG_RX, "len(%jd) is short than header",
 			    len, 0, 0, 0);
@@ -2620,8 +2634,7 @@ urtwn_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		/* Process 802.11 frame. */
 		urtwn_rx_frame(sc, buf, pktlen);
 
-		/* Next chunk is 128-byte aligned. */
-		totlen = roundup2(totlen, 128);
+		totlen = roundup2(totlen, pktspacing);
 		buf += totlen;
 		len -= totlen;
 	}
@@ -3002,6 +3015,7 @@ urtwn_start(struct ifnet *ifp)
 			device_printf(sc->sc_dev,
 			    "unable to transmit packet\n");
 			if_statinc(ifp, if_oerrors);
+			urtwn_put_tx_data(sc, data);
 			continue;
 		}
 		m_freem(m);
@@ -3367,7 +3381,7 @@ urtwn_llt_init(struct urtwn_softc *sc)
 	if (sc->chip & URTWN_CHIP_88E)
 		pktbuf_count = R88E_TXPKTBUF_COUNT;
 	else if (sc->chip & URTWN_CHIP_92EU)
-		pktbuf_count = R88E_TXPKTBUF_COUNT;
+		pktbuf_count = R92E_TXPKTBUF_COUNT;
 	else
 		pktbuf_count = R92C_TXPKTBUF_COUNT;
 

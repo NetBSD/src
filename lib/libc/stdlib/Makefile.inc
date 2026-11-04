@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.99.2.1 2025/08/02 05:54:41 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.99.2.2 2026/11/04 23:19:23 perseant Exp $
 #	from: @(#)Makefile.inc	8.3 (Berkeley) 2/4/95
 
 # stdlib sources
-.PATH: ${ARCHDIR}/stdlib ${.CURDIR}/stdlib
+.PATH: ${ARCHDIR}/stdlib ${.PARSEDIR}
 
 SRCS+=	_env.c _rand48.c \
 	a64l.c abort.c atexit.c atof.c atoi.c atol.c atoll.c \
@@ -33,7 +33,7 @@ SRCS+= erand48_ieee754.c
 SRCS+=	jemalloc.c aligned_alloc.c
 .      endif 
 .   else
-SRCS+=	malloc.c
+SRCS+=	malloc.c aligned_alloc.c
 .   endif
 .endif
 

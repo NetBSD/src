@@ -1,0 +1,57 @@
+require allow_tui_tests
+
+tuiterm_env
+
+if { [ishost *-*-*bsd*] } {
+    # We need support for alternate screen, and xterm doesn't have it.
+    set term xterm-clear
+} else {
+    set term xterm
+}
+
+Term::with_term $term {
+    Term::clean_restart 12 40
+}
+
+if {![Term::prepare_for_tui]} {
+    unsupported "TUI not supported"
+    return 0
+}
+
+# Generate prompt.
+Term::gen_prompt
+
+# Move to last line.
+for { set i 1 } { $i <= 11 } { incr i } {
+    send_gdb "\n"
+    Term::wait_for ""
+}
+
+# Type "foo".
+send_gdb "foo"
+set line { 0 11 40 1 }
+gdb_assert { [Term::wait_for_region_contents {*}$line "^$gdb_prompt foo"] } \
+    "type foo"
+
+# Enter TUI.
+send_gdb "\030\001"
+gdb_assert { [Term::wait_for ""] } "enter TUI"
+
+# Exit TUI.
+send_gdb "\030\001"
+gdb_assert { [Term::wait_for ""] } "exit TUI"
+
+# Type b.
+send_gdb "b"
+gdb_assert { [Term::wait_for_region_contents {*}$line "^$gdb_prompt b"] } \
+    "type b"
+
+# Check that we don't see "boo".
+gdb_assert { ![Term::check_region_contents_p {*}$line "^$gdb_prompt boo"] } \
+    "no boo"
+Term::dump_screen
+
+# We need an empty prompt here, to deal with the "monitor exit" that
+# native-extended-gdbserver will send.  Send a backspace.
+send_gdb "\010"
+Term::wait_for ""

@@ -1,4 +1,4 @@
-/*      $NetBSD: ninebuf.c,v 1.9 2019/10/28 02:59:25 ozaki-r Exp $	*/
+/*      $NetBSD: ninebuf.c,v 1.9.10.1 2026/11/04 23:28:56 perseant Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninebuf.c,v 1.9 2019/10/28 02:59:25 ozaki-r Exp $");
+__RCSID("$NetBSD: ninebuf.c,v 1.9.10.1 2026/11/04 23:28:56 perseant Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -37,6 +37,7 @@ __RCSID("$NetBSD: ninebuf.c,v 1.9 2019/10/28 02:59:25 ozaki-r Exp $");
 
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <stdlib.h>
 #include <util.h>
 #include <unistd.h>

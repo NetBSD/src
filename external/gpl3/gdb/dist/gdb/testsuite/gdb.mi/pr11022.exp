@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,7 +29,7 @@ proc test_memory_changed_observer { mi_command } {
     with_test_prefix "${mi_command}" {
 	global srcfile binfile
 
-	mi_clean_restart $binfile
+	mi_clean_restart $::testfile
 	mi_runto_main
 
 	set line_number [gdb_get_line_number "break here"]

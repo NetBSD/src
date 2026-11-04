@@ -1,4 +1,4 @@
-#	$NetBSD: shlib_version,v 1.296.2.1 2025/08/02 05:54:31 perseant Exp $
+#	$NetBSD: shlib_version,v 1.296.2.2 2026/11/04 23:19:11 perseant Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
 # things we wish to do on next major version bump:
@@ -43,7 +43,7 @@
 # - redo stdin/stdout/stderr to not require copy relocations
 # - move gethostbyname to a compat library
 # - remove badly hidden gethostbyname_r
-# - decide whether soft-float should support fenv.h, including thread-local contett
+# - decide whether soft-float should support fenv.h, including thread-local context
 # - stop all math functions from setting errno
 # - boot obsolete signal functions to libcompat
 # - remove exect(3) API - tracing functionality has been moved to the kernel
@@ -54,5 +54,10 @@
 # - the syscall stubs for the (obsolete) lfs syscalls should be removed
 # - remove tzsetwall(3), upstream has removed it
 # - move *rand48* to libcompat
+# - move humanize_number/dehumanize_number to libutil
+# - delete __ssp_protected_* symbols, which never should have been defined
+#   (see PR lib/60858: fortuitous embarrassment: fortify is all kinds
+#   of busted, https://gnats.NetBSD.org/60858)
+#
 major=12
-minor=223
+minor=224

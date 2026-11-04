@@ -347,7 +347,7 @@ test_gr\@:
 	test_fr_iimmed	\val,fr31
 	.endm
 
-; Test CPR agains an immediate value
+; Test CPR against an immediate value
 	.macro test_cpr_limmed valh vall reg
 	addi		sp,-4,gr31
 	stc		\reg,@(gr31,gr0)

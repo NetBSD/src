@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -62,7 +62,7 @@
 #
 # If the target has non-continuable watchpoints, while GDB thinks it
 # has continuable watchpoints, GDB will see a watchpoint trigger,
-# notice no value changed, and immediatly continue the target.  Now,
+# notice no value changed, and immediately continue the target.  Now,
 # either the target manages to step-over the watchpoint transparently,
 # and GDB thus fails to present to value change to the user, or, the
 # watchpoint will keep re-triggering, with the program never making
@@ -129,7 +129,8 @@ proc test {always_inserted} {
 
     with_test_prefix "always-inserted $always_inserted" {
 
-	clean_restart $binfile
+	clean_restart
+	gdb_load $binfile
 
 	if {![runto_main]} {
 	    return

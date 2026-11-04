@@ -651,3 +651,22 @@ proc slurp_options { file } {
     close $f
     return $opt_array
 }
+
+proc prune_warnings_extra { text } {
+
+    regsub -all "(^|\n)(\[^\n\]*: warning:\[^\n\]*missing \\.note\\.GNU-stack section\[^\n\]*\n?)+" $text "\\1" text
+    regsub -all "(^|\n)(\[^\n\]*: NOTE: This behaviour is deprecated\[^\n\]*\n?)+" $text "\\1" text
+
+    regsub -all "(^|\n)(\[^\n\]*: warning:\[^\n\]*has a LOAD segment with RWX permissions\[^\n\]*\n?)+" $text "\\1" text
+
+    return $text
+}
+
+if { [info procs saved-prune_warnings] == [list] } {
+    rename prune_warnings saved-prune_warnings
+    proc prune_warnings { text } {
+	set text [saved-prune_warnings $text]
+	set text [prune_warnings_extra $text]
+	return $text
+    }
+}

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_FUNCTION_VIEW_H
-#define COMMON_FUNCTION_VIEW_H
+#ifndef GDBSUPPORT_FUNCTION_VIEW_H
+#define GDBSUPPORT_FUNCTION_VIEW_H
 
 /* function_view is a polymorphic type-erasing wrapper class that
    encapsulates a non-owning reference to arbitrary callable objects.
@@ -448,4 +448,4 @@ auto make_function_view (Callable &&callable)
 
 } /* namespace gdb */
 
-#endif
+#endif /* GDBSUPPORT_FUNCTION_VIEW_H */

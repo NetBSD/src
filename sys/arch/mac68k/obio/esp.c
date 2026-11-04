@@ -1,4 +1,4 @@
-/*	$NetBSD: esp.c,v 1.64 2022/08/15 12:16:25 rin Exp $	*/
+/*	$NetBSD: esp.c,v 1.64.10.1 2026/11/04 23:20:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Jason R. Thorpe.
@@ -43,10 +43,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *	This product includes software developed by Peter Galbavy
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -81,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.64 2022/08/15 12:16:25 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esp.c,v 1.64.10.1 2026/11/04 23:20:54 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -734,7 +731,6 @@ esp_quick_dma_go(struct ncr53c9x_softc *sc)
 {
 	struct esp_softc *esc = (struct esp_softc *)sc;
 	extern long mac68k_a2_fromfault;
-	extern int *nofault;
 	label_t faultbuf;
 	uint16_t volatile *pdma;
 	uint16_t *addr;
@@ -756,8 +752,8 @@ restart_dmago:
 		    (long) addr, (long) len, esc->sc_datain);
 	}
 #endif
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
+	nofault = &faultbuf;
+	if (setjmp(nofault)) {
 		int	i = 0;
 
 		nofault = NULL;

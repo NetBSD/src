@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.18 2021/08/07 16:19:11 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.18.12.1 2026/11/04 23:21:55 perseant Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.18 2021/08/07 16:19:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.18.12.1 2026/11/04 23:21:55 perseant Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -123,7 +123,6 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh,
 		   const bus_size_t *regmap)
 {
 	struct gttwsi_softc * const sc = device_private(self);
-	prop_dictionary_t cfg = device_properties(self);
 
 	aprint_naive("\n");
 	aprint_normal(": Marvell TWSI controller\n");
@@ -135,8 +134,6 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh,
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, device_xname(self));
-
-	prop_dictionary_get_bool(cfg, "iflg-rwc", &sc->sc_iflg_rwc);
 
 	sc->sc_started = false;
 	iic_tag_init(&sc->sc_i2c);
@@ -158,13 +155,8 @@ void
 gttwsi_config_children(device_t self)
 {
 	struct gttwsi_softc * const sc = device_private(self);
-	struct i2cbus_attach_args iba;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-
-	config_found(sc->sc_dev, &iba, iicbus_print,
-	    CFARGS(.iattr = "i2cbus"));
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 int

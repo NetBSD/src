@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AUXV_H
-#define AUXV_H
+#ifndef GDB_AUXV_H
+#define GDB_AUXV_H
 
 #include "target.h"
 
@@ -88,4 +88,4 @@ extern void default_print_auxv_entry (struct gdbarch *gdbarch,
 extern target_xfer_partial_ftype memory_xfer_auxv;
 
 
-#endif
+#endif /* GDB_AUXV_H */

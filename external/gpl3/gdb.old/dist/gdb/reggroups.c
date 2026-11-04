@@ -1,6 +1,6 @@
 /* Register groupings for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -19,13 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
 #include "reggroups.h"
 #include "gdbtypes.h"
 #include "regcache.h"
 #include "command.h"
-#include "gdbcmd.h"		/* For maintenanceprintlist.  */
+#include "cli/cli-cmds.h"
 #include "gdbsupport/gdb_obstack.h"
 
 /* See reggroups.h.  */
@@ -187,16 +186,19 @@ reggroup_find (struct gdbarch *gdbarch, const char *name)
 /* Dump out a table of register groups for the current architecture.  */
 
 static void
-reggroups_dump (struct gdbarch *gdbarch, struct ui_file *file)
+reggroups_dump (gdbarch *gdbarch, ui_out *out)
 {
-  static constexpr const char *fmt = " %-10s %-10s\n";
-
-  gdb_printf (file, fmt, "Group", "Type");
+  ui_out_emit_table table (out, 2, -1, "RegGroups");
+  out->table_header (10, ui_left, "group", "Group");
+  out->table_header (10, ui_left, "type", "Type");
+  out->table_body ();
 
   for (const struct reggroup *group : gdbarch_reggroups (gdbarch))
     {
+      ui_out_emit_tuple tuple_emitter (out, nullptr);
+
       /* Group name.  */
-      const char *name = group->name ();
+      out->field_string ("group", group->name ());
 
       /* Group type.  */
       const char *type;
@@ -215,8 +217,8 @@ reggroups_dump (struct gdbarch *gdbarch, struct ui_file *file)
 
       /* Note: If you change this, be sure to also update the
 	 documentation.  */
-
-      gdb_printf (file, fmt, name, type);
+      out->field_string ("type", type);
+      out->text ("\n");
     }
 }
 
@@ -228,14 +230,15 @@ maintenance_print_reggroups (const char *args, int from_tty)
   struct gdbarch *gdbarch = get_current_arch ();
 
   if (args == NULL)
-    reggroups_dump (gdbarch, gdb_stdout);
+    reggroups_dump (gdbarch, current_uiout);
   else
     {
       stdio_file file;
 
       if (!file.open (args, "w"))
 	perror_with_name (_("maintenance print reggroups"));
-      reggroups_dump (gdbarch, &file);
+      ui_out_redirect_pop redirect (current_uiout, &file);
+      reggroups_dump (gdbarch, current_uiout);
     }
 }
 

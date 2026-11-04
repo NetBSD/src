@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -27,9 +27,7 @@
 # but to verify the correct output response to MI operations.
 #
 
-if ![supports_reverse] {
-    return
-}
+require supports_reverse
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
@@ -98,11 +96,8 @@ proc test_controlled_execution_reverse {} {
 	"reverse finish from callme"
 
     # Test exec-reverse-next
-    #   It takes two steps to get back to the previous line,
-    #   as the first step moves us to the start of the current line,
-    #   and the one after that moves back to the previous line.
 
-    mi_execute_to "exec-next --reverse 2" \
+    mi_execute_to "exec-next --reverse" \
  	"end-stepping-range" "main" "" \
  	"basics.c" $line_main_hello "" \
  	"reverse next to get over the call to do_nothing"
@@ -159,7 +154,7 @@ proc test_controlled_execution_reverse {} {
         "reverse-continue at callee3"
 
     mi_execute_to "exec-continue --reverse" \
-        "" "main" "" \
+        "no-history" "main" "" \
         "basics.c" $line_main_body "" \
         "reverse-continue at main"
 }
@@ -167,4 +162,3 @@ proc test_controlled_execution_reverse {} {
 test_controlled_execution_reverse
 
 mi_gdb_exit
-return 0

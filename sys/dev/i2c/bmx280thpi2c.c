@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280thpi2c.c,v 1.1 2022/12/03 01:04:43 brad Exp $	*/
+/*	$NetBSD: bmx280thpi2c.c,v 1.1.8.1 2026/11/04 23:21:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.1 2022/12/03 01:04:43 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.1.8.1 2026/11/04 23:21:55 perseant Exp $");
 
 /*
  * I2C driver for the Bosch BMP280 / BME280 sensor.
@@ -42,25 +42,21 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280thpi2c.c,v 1.1 2022/12/03 01:04:43 brad Exp $"
 #include <dev/ic/bmx280reg.h>
 #include <dev/ic/bmx280var.h>
 
-extern void	bmx280_attach(struct bmx280_sc *);
+struct bmx280_i2c_softc {
+	struct bmx280_sc	sc_bmx280;
+	i2c_tag_t		sc_tag;
+	i2c_addr_t		sc_addr;
+};
+
+#define	BMX280_TO_I2C(sc)	\
+	container_of((sc), struct bmx280_i2c_softc, sc_bmx280)
 
 static int 	bmx280thpi2c_poke(i2c_tag_t, i2c_addr_t, bool);
 static int 	bmx280thpi2c_match(device_t, cfdata_t, void *);
 static void 	bmx280thpi2c_attach(device_t, device_t, void *);
 static int 	bmx280thpi2c_detach(device_t, int);
 
-#define BMX280_DEBUG
-#ifdef BMX280_DEBUG
-#define DPRINTF(s, l, x) \
-    do { \
-	if (l <= s->sc_bmx280debug) \
-	    printf x; \
-    } while (/*CONSTCOND*/0)
-#else
-#define DPRINTF(s, l, x)
-#endif
-
-CFATTACH_DECL_NEW(bmx280thpi2c, sizeof(struct bmx280_sc),
+CFATTACH_DECL_NEW(bmx280thpi2c, sizeof(struct bmx280_i2c_softc),
     bmx280thpi2c_match, bmx280thpi2c_attach, bmx280thpi2c_detach, NULL);
 
 /* For the BMX280, a read consists of writing on the I2C bus
@@ -90,12 +86,13 @@ static int
 bmx280thpi2c_read_register(struct bmx280_sc *sc, uint8_t reg,
     uint8_t *buf, size_t blen)
 {
+	struct bmx280_i2c_softc *isc = BMX280_TO_I2C(sc);
 	int error;
 
 	KASSERT(blen > 0);
 
-	error = bmx280thpi2c_read_register_direct(sc->sc_tag, sc->sc_addr, reg,
-	    buf, blen);
+	error = bmx280thpi2c_read_register_direct(isc->sc_tag, isc->sc_addr,
+	    reg, buf, blen);
 
 	return error;
 }
@@ -106,16 +103,16 @@ bmx280thpi2c_read_register(struct bmx280_sc *sc, uint8_t reg,
  */
 
 static int
-bmx280thpi2c_write_register(struct bmx280_sc *sc,
-    uint8_t *buf, size_t blen)
+bmx280thpi2c_write_register(struct bmx280_sc *sc, uint8_t *buf, size_t blen)
 {
+	struct bmx280_i2c_softc *isc = BMX280_TO_I2C(sc);
 	int error;
 
 	KASSERT(blen > 0);
 	/* XXX - there should be a KASSERT for blen at least
 	   being an even number */
 
-	error = iic_exec(sc->sc_tag,I2C_OP_WRITE_WITH_STOP,sc->sc_addr,NULL,0,
+	error = iic_exec(isc->sc_tag,I2C_OP_WRITE_WITH_STOP,isc->sc_addr,NULL,0,
 	    buf,blen,0);
 
 	return error;
@@ -124,14 +121,25 @@ bmx280thpi2c_write_register(struct bmx280_sc *sc,
 static int
 bmx280thpi2c_acquire_bus(struct bmx280_sc *sc)
 {
-	return(iic_acquire_bus(sc->sc_tag, 0));
+	struct bmx280_i2c_softc *isc = BMX280_TO_I2C(sc);
+
+	return(iic_acquire_bus(isc->sc_tag, 0));
 }
 
 static void
 bmx280thpi2c_release_bus(struct bmx280_sc *sc)
 {
-	iic_release_bus(sc->sc_tag, 0);
+	struct bmx280_i2c_softc *isc = BMX280_TO_I2C(sc);
+
+	iic_release_bus(isc->sc_tag, 0);
 }
+
+static const struct bmx280_accessfuncs bmx280_i2c_accessfuncs = {
+	.acquire_bus	=	bmx280thpi2c_acquire_bus,
+	.release_bus	=	bmx280thpi2c_release_bus,
+	.read_reg	=	bmx280thpi2c_read_register,
+	.write_reg	=	bmx280thpi2c_write_register,
+};
 
 static int
 bmx280thpi2c_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
@@ -148,14 +156,15 @@ bmx280thpi2c_poke(i2c_tag_t tag, i2c_addr_t addr, bool matchdebug)
 }
 
 static int
-bmx280thpi2c_match(device_t parent, cfdata_t match, void *aux)
+bmx280thpi2c_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
 	int error, match_result;
 	const bool matchdebug = false;
 
-	if (iic_use_direct_match(ia, match, NULL, &match_result))
+	if (iic_use_direct_match(ia, cf, bmx280_compat_data, &match_result)) {
 		return match_result;
+	}
 
 	/* indirect config - check for configured address */
 	if (ia->ia_addr != BMX280_TYPICAL_ADDR_1 &&
@@ -181,51 +190,25 @@ bmx280thpi2c_match(device_t parent, cfdata_t match, void *aux)
 static void
 bmx280thpi2c_attach(device_t parent, device_t self, void *aux)
 {
-	struct bmx280_sc *sc;
-	struct i2c_attach_args *ia;
-
-	ia = aux;
-	sc = device_private(self);
+	struct bmx280_i2c_softc *isc = device_private(self);
+	struct bmx280_sc *sc = &isc->sc_bmx280;
+	struct i2c_attach_args *ia = aux;
 
 	sc->sc_dev = self;
-	sc->sc_tag = ia->ia_tag;
-	sc->sc_addr = ia->ia_addr;
-	sc->sc_bmx280debug = 0;
-	sc->sc_func_acquire_bus = &bmx280thpi2c_acquire_bus;
-	sc->sc_func_release_bus = &bmx280thpi2c_release_bus;
-	sc->sc_func_read_register = &bmx280thpi2c_read_register;
-	sc->sc_func_write_register = &bmx280thpi2c_write_register;
+	sc->sc_funcs = &bmx280_i2c_accessfuncs;
 
-	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
+	isc->sc_tag = ia->ia_tag;
+	isc->sc_addr = ia->ia_addr;
 
 	bmx280_attach(sc);
-
-	return;
 }
 
 static int
 bmx280thpi2c_detach(device_t self, int flags)
 {
-	struct bmx280_sc *sc;
+	struct bmx280_i2c_softc *isc = device_private(self);
 
-	sc = device_private(self);
-
-	mutex_enter(&sc->sc_mutex);
-
-	/* Remove the sensors */
-	if (sc->sc_sme != NULL) {
-		sysmon_envsys_unregister(sc->sc_sme);
-		sc->sc_sme = NULL;
-	}
-	mutex_exit(&sc->sc_mutex);
-
-	/* Remove the sysctl tree */
-	sysctl_teardown(&sc->sc_bmx280log);
-
-	/* Remove the mutex */
-	mutex_destroy(&sc->sc_mutex);
-
-	return 0;
+	return bmx280_detach(&isc->sc_bmx280, flags);
 }
 
 MODULE(MODULE_CLASS_DRIVER, bmx280thpi2c, "iic,bmx280thp");

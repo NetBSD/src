@@ -1,6 +1,6 @@
 /* Handle ROCm Code Objects for GDB, the GNU Debugger.
 
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -26,10 +26,10 @@
 #include "event-top.h"
 #include "gdbsupport/fileio.h"
 #include "inferior.h"
+#include "linux-tdep.h"
 #include "observable.h"
 #include "solib.h"
 #include "solib-svr4.h"
-#include "solist.h"
 #include "symfile.h"
 
 #include <unordered_map>
@@ -154,7 +154,77 @@ struct solib_info
 /* Per-inferior data key.  */
 static const registry<inferior>::key<solib_info> rocm_solib_data;
 
-static solib_ops rocm_solib_ops;
+/* solib_ops for ROCm systems.  */
+
+struct rocm_solib_ops : public solib_ops
+{
+  /* HOST_OPS is the host solib_ops that rocm_solib_ops hijacks / wraps,
+     in order to provide support for ROCm code objects.  */
+  explicit rocm_solib_ops (program_space *pspace, solib_ops_up host_ops)
+    : solib_ops (pspace), m_host_ops (std::move (host_ops))
+  {
+  }
+
+  /* The methods implemented by rocm_solib_ops.  */
+  owning_intrusive_list<solib> current_sos () const override;
+  void create_inferior_hook (int from_tty) const override;
+  gdb_bfd_ref_ptr bfd_open (const char *pathname) const override;
+  void relocate_section_addresses (solib &so, target_section *) const override;
+  void handle_event () const override;
+
+  /* Implement the following methods just to forward the calls to the host
+     solib_ops.  We currently need to implement all the methods that
+     svr4_solib_ops implements.  */
+  void clear_so (const solib &so) const override
+  { return m_host_ops->clear_so (so); }
+
+  void clear_solib (program_space *pspace) const override
+  { return m_host_ops->clear_solib (pspace); }
+
+  bool open_symbol_file_object (int from_tty) const override
+  { return m_host_ops->open_symbol_file_object (from_tty); }
+
+  bool in_dynsym_resolve_code (CORE_ADDR pc) const override
+  { return m_host_ops->in_dynsym_resolve_code (pc); }
+
+  bool same (const solib &gdb, const solib &inferior) const override
+  { return m_host_ops->same (gdb, inferior); }
+
+  bool keep_data_in_core (CORE_ADDR vaddr, unsigned long size) const override
+  { return m_host_ops->keep_data_in_core (vaddr, size); }
+
+  void update_breakpoints () const override
+  { return m_host_ops->update_breakpoints (); }
+
+  std::optional<CORE_ADDR> find_solib_addr (solib &so) const override
+  { return m_host_ops->find_solib_addr (so); }
+
+  bool supports_namespaces () const override
+  { return true; }
+
+  int find_solib_ns (const solib &so) const override
+  { return m_host_ops->find_solib_ns (so); }
+
+  int num_active_namespaces () const override
+  { return m_host_ops->num_active_namespaces (); }
+
+  std::vector<const solib *> get_solibs_in_ns (int nsid) const override
+  { return m_host_ops->get_solibs_in_ns (nsid); }
+
+  void iterate_over_objfiles_in_search_order
+    (iterate_over_objfiles_in_search_order_cb_ftype cb,
+     objfile *current_objfile) const override
+  {
+    return m_host_ops->iterate_over_objfiles_in_search_order
+      (cb, current_objfile);
+  }
+
+private:
+  owning_intrusive_list<solib>
+  solibs_from_rocm_sos (const std::vector<rocm_so> &sos) const;
+
+  solib_ops_up m_host_ops;
+};
 
 /* Fetch the solib_info data for INF.  */
 
@@ -171,13 +241,13 @@ get_solib_info (inferior *inf)
 
 /* Relocate section addresses.  */
 
-static void
-rocm_solib_relocate_section_addresses (solib &so,
-				       struct target_section *sec)
+void
+rocm_solib_ops::relocate_section_addresses (solib &so,
+					    struct target_section *sec) const
 {
   if (!is_amdgpu_arch (gdbarch_from_bfd (so.abfd.get ())))
     {
-      svr4_so_ops.relocate_section_addresses (so, sec);
+      m_host_ops->relocate_section_addresses (so, sec);
       return;
     }
 
@@ -188,36 +258,34 @@ rocm_solib_relocate_section_addresses (solib &so,
 
 static void rocm_update_solib_list ();
 
-static void
-rocm_solib_handle_event ()
+void
+rocm_solib_ops::handle_event () const
 {
-  /* Since we sit on top of svr4_so_ops, we might get called following an event
-     concerning host libraries.  We must therefore forward the call.  If the
-     event was for a ROCm code object, it will be a no-op.  On the other hand,
+  /* Since we sit on top of a host solib_ops, we might get called following an
+     event concerning host libraries.  We must therefore forward the call.  If
+     the event was for a ROCm code object, it will be a no-op.  On the other hand
      if the event was for host libraries, rocm_update_solib_list will be
      essentially be a no-op (it will reload the same code object list as was
      previously loaded).  */
-  svr4_so_ops.handle_event ();
+  m_host_ops->handle_event ();
 
   rocm_update_solib_list ();
 }
 
-/* Create so_list objects from rocm_so objects in SOS.  */
+/* Create solib objects from rocm_so objects in SOS.  */
 
-static intrusive_list<solib>
-so_list_from_rocm_sos (const std::vector<rocm_so> &sos)
+owning_intrusive_list<solib>
+rocm_solib_ops::solibs_from_rocm_sos (const std::vector<rocm_so> &sos) const
 {
-  intrusive_list<solib> dst;
+  owning_intrusive_list<solib> dst;
 
   for (const rocm_so &so : sos)
     {
-      solib *newobj = new solib;
-      newobj->lm_info = std::make_unique<lm_info_svr4> (*so.lm_info);
+      auto &newobj = dst.emplace_back (*this);
 
-      newobj->so_name = so.name;
-      newobj->so_original_name = so.unique_name;
-
-      dst.push_back (*newobj);
+      newobj.lm_info = std::make_unique<lm_info_svr4> (*so.lm_info);
+      newobj.name = so.name;
+      newobj.original_name = so.unique_name;
     }
 
   return dst;
@@ -226,11 +294,11 @@ so_list_from_rocm_sos (const std::vector<rocm_so> &sos)
 /* Build a list of `struct solib' objects describing the shared
    objects currently loaded in the inferior.  */
 
-static intrusive_list<solib>
-rocm_solib_current_sos ()
+owning_intrusive_list<solib>
+rocm_solib_ops::current_sos () const
 {
   /* First, retrieve the host-side shared library list.  */
-  intrusive_list<solib> sos = svr4_so_ops.current_sos ();
+  owning_intrusive_list<solib> sos = m_host_ops->current_sos ();
 
   /* Then, the device-side shared library list.  */
   std::vector<rocm_so> &dev_sos = get_solib_info (current_inferior ())->solib_list;
@@ -238,13 +306,13 @@ rocm_solib_current_sos ()
   if (dev_sos.empty ())
     return sos;
 
-  intrusive_list<solib> dev_so_list = so_list_from_rocm_sos (dev_sos);
+  owning_intrusive_list<solib> dev_solibs = solibs_from_rocm_sos (dev_sos);
 
   if (sos.empty ())
-    return dev_so_list;
+    return dev_solibs;
 
   /* Append our libraries to the end of the list.  */
-  sos.splice (std::move (dev_so_list));
+  sos.splice (std::move (dev_solibs));
 
   return sos;
 }
@@ -405,7 +473,7 @@ protected:
 
   /* Snapshot of the original ELF image taken during load.  This is done to
      support the situation where an inferior uses an in-memory image, and
-     releases or re-uses this memory before GDB is done using it.  */
+     releases or reuses this memory before GDB is done using it.  */
   gdb::byte_vector m_objfile_image;
 
   LONGEST size () override
@@ -582,12 +650,12 @@ rocm_bfd_iovec_open (bfd *abfd, inferior *inferior)
     }
 }
 
-static gdb_bfd_ref_ptr
-rocm_solib_bfd_open (const char *pathname)
+gdb_bfd_ref_ptr
+rocm_solib_ops::bfd_open (const char *pathname) const
 {
   /* Handle regular files with SVR4 open.  */
   if (strstr (pathname, "://") == nullptr)
-    return svr4_so_ops.bfd_open (pathname);
+    return m_host_ops->bfd_open (pathname);
 
   auto open = [] (bfd *nbfd) -> gdb_bfd_iovec_base *
   {
@@ -671,12 +739,12 @@ rocm_solib_bfd_open (const char *pathname)
   return abfd;
 }
 
-static void
-rocm_solib_create_inferior_hook (int from_tty)
+void
+rocm_solib_ops::create_inferior_hook (int from_tty) const
 {
   get_solib_info (current_inferior ())->solib_list.clear ();
 
-  svr4_so_ops.solib_create_inferior_hook (from_tty);
+  m_host_ops->create_inferior_hook (from_tty);
 }
 
 static void
@@ -706,6 +774,9 @@ rocm_update_solib_list ()
       return;
     }
 
+  gdb::unique_xmalloc_ptr<amd_dbgapi_code_object_id_t> code_object_list_holder
+    (code_object_list);
+
   for (size_t i = 0; i < count; ++i)
     {
       CORE_ADDR l_addr;
@@ -725,7 +796,8 @@ rocm_update_solib_list ()
 
       gdb::unique_xmalloc_ptr<char> uri_bytes_holder (uri_bytes);
 
-      lm_info_svr4_up li = std::make_unique<lm_info_svr4> ();
+      /* Pass a dummy debug base.  */
+      lm_info_svr4_up li = std::make_unique<lm_info_svr4> (-1);
       li->l_addr = l_addr;
 
       /* Generate a unique name so that code objects with the same URI but
@@ -736,30 +808,17 @@ rocm_update_solib_list ()
 
       sos.emplace_back (uri_bytes, std::move (unique_name), std::move (li));
     }
-
-  xfree (code_object_list);
-
-  if (rocm_solib_ops.current_sos == NULL)
-    {
-      /* Override what we need to.  */
-      rocm_solib_ops = svr4_so_ops;
-      rocm_solib_ops.current_sos = rocm_solib_current_sos;
-      rocm_solib_ops.solib_create_inferior_hook
-	= rocm_solib_create_inferior_hook;
-      rocm_solib_ops.bfd_open = rocm_solib_bfd_open;
-      rocm_solib_ops.relocate_section_addresses
-	= rocm_solib_relocate_section_addresses;
-      rocm_solib_ops.handle_event = rocm_solib_handle_event;
-
-      /* Engage the ROCm so_ops.  */
-      set_gdbarch_so_ops (current_inferior ()->arch (), &rocm_solib_ops);
-    }
 }
 
 static void
 rocm_solib_target_inferior_created (inferior *inf)
 {
   get_solib_info (inf)->solib_list.clear ();
+
+  auto prev_ops = inf->pspace->release_solib_ops ();
+  auto rocm_ops
+    = std::make_unique<rocm_solib_ops> (inf->pspace, std::move (prev_ops));
+  inf->pspace->set_solib_ops (std::move (rocm_ops));
 
   rocm_update_solib_list ();
 
@@ -768,11 +827,24 @@ rocm_solib_target_inferior_created (inferior *inf)
   solib_add (nullptr, 0, auto_solib_add);
 }
 
-/* -Wmissing-prototypes */
-extern initialize_file_ftype _initialize_rocm_solib;
+static void
+rocm_solib_target_inferior_execd (inferior *exec_inf, inferior *follow_inf)
+{
+  /* Engage the ROCm so_ops, but only if dbgapi is attached to the inferior
+     (avoiding remote inferiors and core file debugging).  */
+  if (get_amd_dbgapi_process_id (follow_inf) == AMD_DBGAPI_PROCESS_NONE)
+    return;
 
-void
-_initialize_rocm_solib ()
+  auto pspace = follow_inf->pspace;
+  auto prev_ops = pspace->release_solib_ops ();
+  auto rocm_ops
+    = std::make_unique<rocm_solib_ops> (pspace, std::move (prev_ops));
+  pspace->set_solib_ops (std::move (rocm_ops));
+
+  get_solib_info (exec_inf)->solib_list.clear ();
+}
+
+INIT_GDB_FILE (rocm_solib)
 {
   /* The dependency on the amd-dbgapi exists because solib-rocm's
      inferior_created observer needs amd-dbgapi to have attached the process,
@@ -781,4 +853,8 @@ _initialize_rocm_solib ()
     (rocm_solib_target_inferior_created,
      "solib-rocm",
      { &get_amd_dbgapi_target_inferior_created_observer_token () });
+
+  gdb::observers::inferior_execd.attach
+    (rocm_solib_target_inferior_execd, "solib-rocm",
+     { &get_amd_dbgapi_target_inferior_execd_observer_token () });
 }

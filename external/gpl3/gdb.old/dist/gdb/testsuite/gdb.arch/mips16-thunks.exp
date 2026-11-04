@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -25,10 +25,7 @@
 # toolchain for a subset of ABIs, so we need to check that a MIPS16
 # executable can be built and run at all before we attempt the actual test.
 
-if {![istarget "mips*-*-*"]} {
-    verbose "Skipping MIPS16 thunk support tests."
-    return
-}
+require {istarget "mips*-*-*"}
 
 # A helper to set caller's SRCFILE and OBJFILE based on FILENAME and SUFFIX.
 proc set_src_and_obj { filename { suffix "" } } {

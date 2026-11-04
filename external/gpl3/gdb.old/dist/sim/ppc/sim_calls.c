@@ -124,30 +124,32 @@ sim_load (SIM_DESC sd, const char *prog, bfd *abfd, int from_tty)
 }
 
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR mem, void *buf, int length)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buf, uint64_t length)
 {
   int result = psim_read_memory(simulator, MAX_NR_PROCESSORS,
-				buf, mem, length);
-  TRACE(trace_gdb, ("sim_read(mem=0x%lx, buf=%p, length=%d) = %d\n",
-		    (long)mem, buf, length, result));
+				buf, addr, length);
+  TRACE(trace_gdb,
+	("sim_read(addr=0x%" PRIx64 ", buf=%p, length=%" PRIx64 ") = %d\n",
+	 addr, buf, length, result));
   return result;
 }
 
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR mem, const void *buf, int length)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buf, uint64_t length)
 {
   int result = psim_write_memory(simulator, MAX_NR_PROCESSORS,
-				 buf, mem, length,
+				 buf, addr, length,
 				 1/*violate_ro*/);
-  TRACE(trace_gdb, ("sim_write(mem=0x%lx, buf=%p, length=%d) = %d\n",
-		    (long)mem, buf, length, result));
+  TRACE(trace_gdb,
+	("sim_write(addr=0x%" PRIx64 ", buf=%p, length=%" PRIx64 ") = %d\n",
+	 addr, buf, length, result));
   return result;
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   TRACE(trace_gdb, ("sim_info(verbose=%d) called\n", verbose));
   psim_print_info (simulator, verbose);

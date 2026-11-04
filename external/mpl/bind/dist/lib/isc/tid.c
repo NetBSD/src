@@ -1,4 +1,4 @@
-/*	$NetBSD: tid.c,v 1.2.4.2 2025/08/02 05:53:56 perseant Exp $	*/
+/*	$NetBSD: tid.c,v 1.2.4.3 2026/11/04 23:18:16 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -13,7 +13,6 @@
  * information regarding copyright ownership.
  */
 
-#include <stdlib.h>
 #include <sys/types.h>
 #include <unistd.h>
 
@@ -46,7 +45,9 @@ isc__tid_init(uint32_t tid) {
 void
 isc__tid_initcount(uint32_t count) {
 	REQUIRE(tid_count == 0 || tid_count == count);
-	tid_count = count;
+	if (tid_count == 0) {
+		tid_count = count;
+	}
 }
 
 /**

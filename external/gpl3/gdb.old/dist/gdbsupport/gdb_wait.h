@@ -1,5 +1,5 @@
 /* Standard wait macros.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,14 +16,14 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_WAIT_H
-#define COMMON_GDB_WAIT_H
+#ifndef GDBSUPPORT_GDB_WAIT_H
+#define GDBSUPPORT_GDB_WAIT_H
 
 #ifdef HAVE_SYS_WAIT_H
-#include <sys/wait.h> /* POSIX */
+#include <sys/wait.h>
 #else
 #ifdef HAVE_WAIT_H
-#include <wait.h> /* legacy */
+#include <wait.h>
 #endif
 #endif
 
@@ -99,12 +99,8 @@ extern int windows_status_to_termsig (unsigned long);
 
 /* These are not defined in POSIX, but are used by our programs.  */
 
-#ifndef	WSETEXIT
-# ifdef	W_EXITCODE
-#define	WSETEXIT(w,status) ((w) = W_EXITCODE(status,0))
-# else
-#define WSETEXIT(w,status) ((w) = (0 | ((status) << 8)))
-# endif
+#ifndef W_EXITCODE
+#define W_EXITCODE(status, sig) ((status) << 8 | (sig))
 #endif
 
 #ifndef W_STOPCODE
@@ -132,4 +128,4 @@ extern int windows_status_to_termsig (unsigned long);
 #define __WCLONE	0x80000000 /* Wait for cloned process.  */
 #endif
 
-#endif /* COMMON_GDB_WAIT_H */
+#endif /* GDBSUPPORT_GDB_WAIT_H */

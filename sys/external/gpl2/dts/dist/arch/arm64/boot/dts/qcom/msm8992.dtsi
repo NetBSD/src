@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-only
-/* Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
+/*
+ * Copyright (c) 2013-2016, The Linux Foundation. All rights reserved.
  */
 
 #include "msm8994.dtsi"
@@ -10,12 +11,30 @@
 /delete-node/ &cpu6_map;
 /delete-node/ &cpu7_map;
 
-&rpmcc {
-	compatible = "qcom,rpmcc-msm8992";
+&gcc {
+	compatible = "qcom,gcc-msm8992";
 };
 
-&tcsr_mutex {
-	compatible = "qcom,sfpb-mutex";
+&mmcc {
+	compatible = "qcom,mmcc-msm8992";
+
+	assigned-clock-rates = <800000000>,
+			       <808000000>,
+			       <1020000000>,
+			       <960000000>,
+			       <800000000>;
+};
+
+&ocmem {
+	reg = <0xfdd00000 0x2000>, <0xfec00000 0x100000>;
+
+	gmu-sram@0 {
+		reg = <0x0 0x80000>;
+	};
+};
+
+&rpmcc {
+	compatible = "qcom,rpmcc-msm8992", "qcom,rpmcc";
 };
 
 &timer {

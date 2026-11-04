@@ -1,6 +1,6 @@
 # $FreeBSD: head/lib/libc/posix1e/Makefile.inc 338745 2018-09-18 01:40:37Z brd $
 
-.PATH: ${.CURDIR}/posix1e ${NETBSDSRCDIR}/sys/kern
+.PATH: ${.PARSEDIR} ${NETBSDSRCDIR}/sys/kern
 
 CPPFLAGS+=-D_ACL_PRIVATE
 

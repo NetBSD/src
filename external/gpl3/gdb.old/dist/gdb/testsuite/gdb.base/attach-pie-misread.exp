@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,10 +14,9 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 # This test only works on GNU/Linux.
-if { ![isnative] || [is_remote host] || [use_gdb_stub]
-     || ![istarget *-linux*] || [skip_shlib_tests]} {
-    return
-}
+require !use_gdb_stub isnative allow_shlib_tests
+require {!is_remote host}
+require {istarget *-linux*}
 
 load_lib prelink-support.exp
 

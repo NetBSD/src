@@ -1,3 +1,5 @@
+/*	$NetBSD: arcbios_calls.S,v 1.4.26.1 2026/11/04 23:21:48 perseant Exp $	*/
+
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,9 +32,12 @@
 #include <sys/cdefs.h>
 #include <machine/asm.h>
 
+#include <mips/asm.h>
+#include <mips/cpuregs.h>
+
 #include "assym.h"
 
-RCSID("$NetBSD: arcbios_calls.S,v 1.4 2020/05/30 03:16:31 tsutsui Exp $")
+RCSID("$NetBSD: arcbios_calls.S,v 1.4.26.1 2026/11/04 23:21:48 perseant Exp $")
 
 	.text
 	.set noreorder
@@ -54,7 +59,15 @@ NESTED(arcbios_4orless_args, CALLFRAME_SIZ, ra)
 	REG_S	ra, CALLFRAME_RA(sp)
 	REG_S	s0, CALLFRAME_SP(sp)
 
+	/* Enable FPU - see PR port-sgimips/60204 */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	or	k0, MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
+	COP0_HAZARD_FPUENABLE
+
 	PTR_L	t9, _C_LABEL(ARCBIOS)
+	nop
 	PTR_ADDU t9, t0
 	INT_L	t9, 0(t9)
 	nop
@@ -63,6 +76,12 @@ NESTED(arcbios_4orless_args, CALLFRAME_SIZ, ra)
 	 move	s0, MIPS_CURLWP
 
 	FIX_V0
+
+	/* Disable FPU */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	and	k0, ~MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
 
 	move	MIPS_CURLWP, s0
 
@@ -95,7 +114,15 @@ NESTED(arcbios_5to8_args, CALLFRAME2_SIZ, ra)
 	INT_S	a7, 28(sp)			# save 8th arg on stack (o32)
 #endif
 
+	/* Enable FPU - see PR port-sgimips/60204 */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	or	k0, MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
+	COP0_HAZARD_FPUENABLE
+
 	PTR_L	t9, _C_LABEL(ARCBIOS)
+	nop
 	PTR_ADDU t9, t0
 	INT_L	t9, 0(t9)
 	nop
@@ -104,6 +131,12 @@ NESTED(arcbios_5to8_args, CALLFRAME2_SIZ, ra)
 	 move	s0, MIPS_CURLWP
 
 	FIX_V0
+
+	/* Disable FPU */
+	mfc0	k0, MIPS_COP_0_STATUS
+	MFC0_HAZARD
+	and	k0, ~MIPS_SR_COP_1_BIT
+	mtc0	k0, MIPS_COP_0_STATUS
 
 	move	MIPS_CURLWP, s0
 

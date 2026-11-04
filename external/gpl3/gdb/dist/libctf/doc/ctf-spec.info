@@ -1,7 +1,7 @@
 This is ctf-spec.info, produced by makeinfo version 6.8 from
 ctf-spec.texi.
 
-Copyright (C) 2021-2024 Free Software Foundation, Inc.
+Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU General Public License, Version 3 or any
@@ -467,7 +467,7 @@ typedef struct ctf_stype
     uint32_t ctt_size;
     uint32_t ctt_type;
   };
-} ctf_type_t;
+} ctf_stype_t;
 
    If 'ctt_size' is the #define 'CTF_LSIZE_SENT', 0xffffffff, this type
 is described by a 'ctf_type_t': otherwise, a 'ctf_stype_t'.
@@ -675,7 +675,7 @@ Kind   Macro              Purpose
                           
 3      'CTF_K_POINTER'    A pointer.  *Note Pointers typedefs and cvr-quals::.
                           
-4      'CTF_K_ARRAY'      An array.  *Note Arrays::.
+4      'CTF_K_ARRAY'      An array or SIMD vector.  *Note Arrays::.
                           
 5      'CTF_K_FUNCTION'   A function pointer.  *Note Function pointers::.
                           
@@ -820,7 +820,8 @@ Offset   Name                Description
 3        'CTF_FP_CPLX'       This is a 'Complex float'.
 4        'CTF_FP_DCPLX'      This is a 'Complex double'.
 5        'CTF_FP_LDCPLX'     This is a 'Complex long double'.
-6        'CTF_FP_LDOUBLE'    This is a 'long double'.
+6        'CTF_FP_LDOUBLE'    This is a 'long double', or quad-precision IEEE 754-2008
+                             '__float128'.
 7        'CTF_FP_INTRVL'     This is a 'float' interval type, a Solaris-specific extension.
                              Unused: will be recycled.
 8        'CTF_FP_DINTRVL'    This is a 'double' interval type, a Solaris-specific
@@ -942,6 +943,11 @@ Arrays are encoded as types of kind 'CTF_K_ARRAY' in a 'ctf_stype_t'.
 Both size and kind for arrays are zero.  The variable-length data is a
 'ctf_array_t': 'vlen' in the info word should be disregarded and is
 always zero.
+
+   SIMD vectors are also encoded as types of kind 'CTF_K_ARRAY' in a
+'ctf_stype_t'.  Both size and kind for arrays are zero.  The
+variable-length data is a 'ctf_array_t': 'vlen' in the info word should
+be disregarded and is always zero.
 
 typedef struct ctf_array
 {
@@ -1356,9 +1362,9 @@ Index
 * Complex, unsigned float:               Floating-point types. (line  6)
 * const:                                 Pointers typedefs and cvr-quals.
                                                                (line  6)
-* cta_contents:                          Arrays.               (line 20)
-* cta_index:                             Arrays.               (line 22)
-* cta_nelems:                            Arrays.               (line 29)
+* cta_contents:                          Arrays.               (line 25)
+* cta_index:                             Arrays.               (line 27)
+* cta_nelems:                            Arrays.               (line 34)
 * cte_name:                              Enums.                (line 21)
 * cte_value:                             Enums.                (line 24)
 * CTF header:                            CTF header.           (line  6)
@@ -1372,10 +1378,10 @@ Index
 * ctf_archive_modent_t:                  CTF archive.          (line 83)
 * ctf_archive_modent_t, ctf_offset:      CTF archive.          (line 88)
 * ctf_archive_modent_t, name_offset:     CTF archive.          (line 86)
-* ctf_array_t:                           Arrays.               (line 18)
-* ctf_array_t, cta_contents:             Arrays.               (line 20)
-* ctf_array_t, cta_index:                Arrays.               (line 22)
-* ctf_array_t, cta_nelems:               Arrays.               (line 29)
+* ctf_array_t:                           Arrays.               (line 23)
+* ctf_array_t, cta_contents:             Arrays.               (line 25)
+* ctf_array_t, cta_index:                Arrays.               (line 27)
+* ctf_array_t, cta_nelems:               Arrays.               (line 34)
 * CTF_CHAR:                              Integer types.        (line 53)
 * ctf_enum_t:                            Enums.                (line 18)
 * ctf_enum_t, cte_name:                  Enums.                (line 21)
@@ -1383,16 +1389,16 @@ Index
 * CTF_FP_BITS:                           Floating-point types. (line 28)
 * CTF_FP_CPLX:                           Floating-point types. (line 47)
 * CTF_FP_DCPLX:                          Floating-point types. (line 48)
-* CTF_FP_DIMAGRY:                        Floating-point types. (line 60)
-* CTF_FP_DINTRVL:                        Floating-point types. (line 54)
+* CTF_FP_DIMAGRY:                        Floating-point types. (line 61)
+* CTF_FP_DINTRVL:                        Floating-point types. (line 55)
 * CTF_FP_DOUBLE:                         Floating-point types. (line 46)
 * CTF_FP_ENCODING:                       Floating-point types. (line 21)
-* CTF_FP_IMAGRY:                         Floating-point types. (line 58)
-* CTF_FP_INTRVL:                         Floating-point types. (line 52)
+* CTF_FP_IMAGRY:                         Floating-point types. (line 59)
+* CTF_FP_INTRVL:                         Floating-point types. (line 53)
 * CTF_FP_LDCPLX:                         Floating-point types. (line 49)
-* CTF_FP_LDIMAGRY:                       Floating-point types. (line 62)
-* CTF_FP_LDINTRVL:                       Floating-point types. (line 56)
-* CTF_FP_LDOUBLE:                        Floating-point types. (line 50)
+* CTF_FP_LDIMAGRY:                       Floating-point types. (line 63)
+* CTF_FP_LDINTRVL:                       Floating-point types. (line 57)
+* CTF_FP_LDOUBLE:                        Floating-point types. (line 51)
 * CTF_FP_OFFSET:                         Floating-point types. (line 25)
 * CTF_FP_SINGLE:                         Floating-point types. (line 45)
 * CTF_F_COMPRESS:                        CTF file-wide flags.  (line 17)
@@ -1617,10 +1623,10 @@ Index
 * struct ctf_archive_modent:             CTF archive.          (line 83)
 * struct ctf_archive_modent, ctf_offset: CTF archive.          (line 88)
 * struct ctf_archive_modent, name_offset: CTF archive.         (line 86)
-* struct ctf_array:                      Arrays.               (line 18)
-* struct ctf_array, cta_contents:        Arrays.               (line 20)
-* struct ctf_array, cta_index:           Arrays.               (line 22)
-* struct ctf_array, cta_nelems:          Arrays.               (line 29)
+* struct ctf_array:                      Arrays.               (line 23)
+* struct ctf_array, cta_contents:        Arrays.               (line 25)
+* struct ctf_array, cta_index:           Arrays.               (line 27)
+* struct ctf_array, cta_nelems:          Arrays.               (line 34)
 * struct ctf_enum:                       Enums.                (line 18)
 * struct ctf_enum, cte_name:             Enums.                (line 21)
 * struct ctf_enum, cte_value:            Enums.                (line 24)
@@ -1706,12 +1712,12 @@ Index
 * unsigned long:                         Integer types.        (line  6)
 * unsigned long long:                    Integer types.        (line  6)
 * unsigned short:                        Integer types.        (line  6)
-* Unused bits:                           Floating-point types. (line 52)
-* Unused bits <1>:                       Floating-point types. (line 54)
-* Unused bits <2>:                       Floating-point types. (line 56)
-* Unused bits <3>:                       Floating-point types. (line 58)
-* Unused bits <4>:                       Floating-point types. (line 60)
-* Unused bits <5>:                       Floating-point types. (line 62)
+* Unused bits:                           Floating-point types. (line 53)
+* Unused bits <1>:                       Floating-point types. (line 55)
+* Unused bits <2>:                       Floating-point types. (line 57)
+* Unused bits <3>:                       Floating-point types. (line 59)
+* Unused bits <4>:                       Floating-point types. (line 61)
+* Unused bits <5>:                       Floating-point types. (line 63)
 * Variable section:                      The variable section. (line  6)
 * volatile:                              Pointers typedefs and cvr-quals.
                                                                (line  6)
@@ -1727,25 +1733,25 @@ Node: CTF Preamble9208
 Node: CTF file-wide flags11818
 Node: CTF header13276
 Node: The type section19200
-Node: The info word23865
-Node: Type indexes and type IDs26395
-Node: Type kinds29763
-Node: Integer types33056
-Node: Floating-point types36604
-Node: Slices40629
-Node: Pointers typedefs and cvr-quals44133
-Node: Arrays45304
-Node: Function pointers47035
-Node: Enums47700
-Node: Structs and unions48982
-Node: Forward declarations52839
-Node: The symtypetab sections54418
-Node: The variable section57496
-Node: The label section58634
-Node: The string section59609
-Node: Data models60871
-Node: Limits of CTF61540
-Node: Index62585
+Node: The info word23866
+Node: Type indexes and type IDs26396
+Node: Type kinds29764
+Node: Integer types33072
+Node: Floating-point types36620
+Node: Slices40720
+Node: Pointers typedefs and cvr-quals44224
+Node: Arrays45395
+Node: Function pointers47364
+Node: Enums48029
+Node: Structs and unions49311
+Node: Forward declarations53168
+Node: The symtypetab sections54747
+Node: The variable section57825
+Node: The label section58963
+Node: The string section59938
+Node: Data models61200
+Node: Limits of CTF61869
+Node: Index62914
 
 End Tag Table
 

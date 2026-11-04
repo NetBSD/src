@@ -1,12 +1,11 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       message.h
 /// \brief      Printing messages to stderr
 //
 //  Author:     Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -24,7 +23,10 @@ enum message_verbosity {
 extern const int message_progress_sigs[];
 
 
-/// \brief      Initializes the message functions
+/// \brief      Initializes the progress message functions
+///
+/// message_fatal() and such can be called even before message_init()
+/// has been called.
 ///
 /// If an error occurs, this function doesn't return.
 ///
@@ -44,42 +46,44 @@ extern enum message_verbosity message_verbosity_get(void);
 /// \brief      Print a message if verbosity level is at least "verbosity"
 ///
 /// This doesn't touch the exit status.
-extern void message(enum message_verbosity verbosity, const char *fmt, ...)
-		lzma_attribute((__format__(__printf__, 2, 3)));
+lzma_attribute((__format__(__printf__, 2, 3)))
+extern void message(enum message_verbosity verbosity, const char *fmt, ...);
 
 
 /// \brief      Prints a warning and possibly sets exit status
 ///
 /// The message is printed only if verbosity level is at least V_WARNING.
 /// The exit status is set to WARNING unless it was already at ERROR.
-extern void message_warning(const char *fmt, ...)
-		lzma_attribute((__format__(__printf__, 1, 2)));
+lzma_attribute((__format__(__printf__, 1, 2)))
+extern void message_warning(const char *fmt, ...);
 
 
 /// \brief      Prints an error message and sets exit status
 ///
 /// The message is printed only if verbosity level is at least V_ERROR.
 /// The exit status is set to ERROR.
-extern void message_error(const char *fmt, ...)
-		lzma_attribute((__format__(__printf__, 1, 2)));
+lzma_attribute((__format__(__printf__, 1, 2)))
+extern void message_error(const char *fmt, ...);
 
 
 /// \brief      Prints an error message and exits with EXIT_ERROR
 ///
 /// The message is printed only if verbosity level is at least V_ERROR.
-extern void message_fatal(const char *fmt, ...)
-		lzma_attribute((__format__(__printf__, 1, 2)))
-		lzma_attribute((__noreturn__));
+tuklib_attr_noreturn
+lzma_attribute((__format__(__printf__, 1, 2)))
+extern void message_fatal(const char *fmt, ...);
 
 
 /// Print an error message that an internal error occurred and exit with
 /// EXIT_ERROR.
-extern void message_bug(void) lzma_attribute((__noreturn__));
+tuklib_attr_noreturn
+extern void message_bug(void);
 
 
 /// Print a message that establishing signal handlers failed, and exit with
 /// exit status ERROR.
-extern void message_signal_handler(void) lzma_attribute((__noreturn__));
+tuklib_attr_noreturn
+extern void message_signal_handler(void);
 
 
 /// Convert lzma_ret to a string.
@@ -88,22 +92,6 @@ extern const char *message_strm(lzma_ret code);
 
 /// Display how much memory was needed and how much the limit was.
 extern void message_mem_needed(enum message_verbosity v, uint64_t memusage);
-
-
-/// Buffer size for message_filters_to_str()
-#define FILTERS_STR_SIZE 512
-
-
-/// \brief      Get the filter chain as a string
-///
-/// \param      buf         Pointer to caller allocated buffer to hold
-///                         the filter chain string
-/// \param      filters     Pointer to the filter chain
-/// \param      all_known   If true, all filter options are printed.
-///                         If false, only the options that get stored
-///                         into .xz headers are printed.
-extern void message_filters_to_str(char buf[FILTERS_STR_SIZE],
-		const lzma_filter *filters, bool all_known);
 
 
 /// Print the filter chain.
@@ -116,11 +104,19 @@ extern void message_try_help(void);
 
 
 /// Prints the version number to stdout and exits with exit status SUCCESS.
-extern void message_version(void) lzma_attribute((__noreturn__));
+tuklib_attr_noreturn
+extern void message_version(void);
 
 
 /// Print the help message.
-extern void message_help(bool long_help) lzma_attribute((__noreturn__));
+tuklib_attr_noreturn
+extern void message_help(bool long_help);
+
+
+/// Prints a help message specifically for using the --filters and
+/// --filtersX command line options.
+tuklib_attr_noreturn
+extern void message_filters_help(void);
 
 
 /// \brief      Set the total number of files to be processed
@@ -148,9 +144,14 @@ extern void message_filename(const char *src_name);
 /// given *strm becomes invalid.
 ///
 /// \param      strm      Pointer to lzma_stream used for the coding.
+/// \param      is_passthru
+///                       If true, we are copying input to output without
+///                       encoding or decoding, and thus cannot use
+///                       lzma_get_progress().
 /// \param      in_size   Size of the input file, or zero if unknown.
 ///
-extern void message_progress_start(lzma_stream *strm, uint64_t in_size);
+extern void message_progress_start(lzma_stream *strm,
+		bool is_passthru, uint64_t in_size);
 
 
 /// Update the progress info if in verbose mode and enough time has passed

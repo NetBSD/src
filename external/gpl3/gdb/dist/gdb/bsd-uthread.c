@@ -1,6 +1,6 @@
 /* BSD user-level threads support.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -25,7 +25,6 @@
 #include "observable.h"
 #include "regcache.h"
 #include "solib.h"
-#include "solist.h"
 #include "symfile.h"
 #include "target.h"
 
@@ -157,9 +156,8 @@ static int bsd_uthread_active;
 static CORE_ADDR
 bsd_uthread_lookup_address (const char *name, struct objfile *objfile)
 {
-  struct bound_minimal_symbol sym;
-
-  sym = lookup_minimal_symbol (name, NULL, objfile);
+  bound_minimal_symbol sym
+    = lookup_minimal_symbol (current_program_space, name, objfile);
   if (sym.minsym)
     return sym.value_address ();
 
@@ -281,13 +279,13 @@ bsd_uthread_solib_loaded (solib &so)
 
   for (names = bsd_uthread_solib_names; *names; names++)
     {
-      if (startswith (so.so_original_name, *names))
+      if (startswith (so.original_name, *names))
 	{
 	  solib_read_symbols (so, 0);
 
 	  if (bsd_uthread_activate (so.objfile))
 	    {
-	      bsd_uthread_solib_name = so.so_original_name;
+	      bsd_uthread_solib_name = so.original_name;
 	      return;
 	    }
 	}
@@ -295,12 +293,13 @@ bsd_uthread_solib_loaded (solib &so)
 }
 
 static void
-bsd_uthread_solib_unloaded (program_space *pspace, const solib &so)
+bsd_uthread_solib_unloaded (program_space *pspace, const solib &so,
+			    bool still_in_use, bool /* silent */)
 {
-  if (bsd_uthread_solib_name.empty ())
+  if (bsd_uthread_solib_name.empty () || still_in_use)
     return;
 
-  if (so.so_original_name == bsd_uthread_solib_name)
+  if (so.original_name == bsd_uthread_solib_name)
     bsd_uthread_deactivate ();
 }
 
@@ -536,14 +535,12 @@ bsd_uthread_target::pid_to_str (ptid_t ptid)
   if (ptid.tid () != 0)
     return string_printf ("process %d, thread 0x%s",
 			  ptid.pid (),
-			  phex_nz (ptid.tid (), sizeof (ULONGEST)));
+			  phex_nz (ptid.tid ()));
 
   return normal_pid_to_str (ptid);
 }
 
-void _initialize_bsd_uthread ();
-void
-_initialize_bsd_uthread ()
+INIT_GDB_FILE (bsd_uthread)
 {
   gdb::observers::inferior_created.attach (bsd_uthread_inferior_created,
 					   "bsd-uthread");

@@ -1,0 +1,5 @@
+/* $NetBSD: bcm2711-rpi-400.dts,v 1.1.2.2 2026/11/04 23:20:07 perseant Exp $ */
+
+#include "../../../external/gpl2/dts/dist/arch/arm64/boot/dts/broadcom/bcm2711-rpi-400.dts"
+
+#include "bcm2711-cpus.dtsi"

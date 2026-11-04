@@ -1,6 +1,6 @@
 /* Python event definitions -*- c++ -*-
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,3 +45,4 @@ GDB_PY_DEFINE_EVENT(connection_removed)
 GDB_PY_DEFINE_EVENT(executable_changed)
 GDB_PY_DEFINE_EVENT(new_progspace)
 GDB_PY_DEFINE_EVENT(free_progspace)
+GDB_PY_DEFINE_EVENT(tui_enabled)

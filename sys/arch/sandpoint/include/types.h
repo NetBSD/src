@@ -1,7 +1,6 @@
-/*	$NetBSD: types.h,v 1.10 2021/04/15 00:04:07 rin Exp $	*/
+/*	$NetBSD: types.h,v 1.10.22.1 2026/11/04 23:21:16 perseant Exp $	*/
 
 #define	__HAVE_NEW_STYLE_BUS_H
-#define	__PPC_HAVE_MODULE_INIT_MD
 
 #include <powerpc/types.h>
 

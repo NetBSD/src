@@ -1,6 +1,6 @@
 /* Interface to coff-pe-read.c (portable-executable-specific symbol reader).
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,8 +19,8 @@
 
    Contributed by Raoul M. Gough (RaoulGough@yahoo.co.uk).  */
 
-#if !defined (COFF_PE_READ_H)
-#define COFF_PE_READ_H
+#ifndef GDB_COFF_PE_READ_H
+#define GDB_COFF_PE_READ_H
 
 class minimal_symbol_reader;
 struct objfile;
@@ -35,4 +35,4 @@ extern void read_pe_exported_syms (minimal_symbol_reader &reader,
    Returns default value 0x1000 if information is not found.  */
 extern CORE_ADDR pe_text_section_offset (struct bfd *abfd);
 
-#endif /* !defined (COFF_PE_READ_H) */
+#endif /* GDB_COFF_PE_READ_H */

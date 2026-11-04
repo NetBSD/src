@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_mainbus.c,v 1.7.12.1 2025/08/02 05:55:23 perseant Exp $	*/
+/*	$NetBSD: amd64_mainbus.c,v 1.7.12.2 2026/11/04 23:19:58 perseant Exp $	*/
 /*	NetBSD: mainbus.c,v 1.39 2018/12/02 08:19:44 cherry Exp 	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.7.12.1 2025/08/02 05:55:23 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.7.12.2 2026/11/04 23:19:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,10 +90,8 @@ __KERNEL_RCSID(0, "$NetBSD: amd64_mainbus.c,v 1.7.12.1 2025/08/02 05:55:23 perse
 
 int	amd64_mainbus_match(device_t, cfdata_t, void *);
 void	amd64_mainbus_attach(device_t, device_t, void *);
-int	amd64_mainbus_print(void *, const char *);
 
 union amd64_mainbus_attach_args {
-	const char *mba_busname;		/* first elem of all */
 	struct pcibus_attach_args mba_pba;
 	struct isabus_attach_args mba_iba;
 	struct cpu_attach_args mba_caa;
@@ -239,8 +237,7 @@ amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 		mba.mba_iba = mba_iba;
 		mba.mba_iba.iba_iot = x86_bus_space_io;
 		mba.mba_iba.iba_memt = x86_bus_space_mem;
-		config_found(self, &mba.mba_iba, isabusprint,
-		    CFARGS(.iattr = "isabus"));
+		isabus_attach(self, &mba.mba_iba);
 	}
 #endif
 
@@ -262,14 +259,4 @@ amd64_mainbus_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-}
-
-int
-amd64_mainbus_print(void *aux, const char *pnp)
-{
-	union amd64_mainbus_attach_args *mba = aux;
-
-	if (pnp)
-		aprint_normal("%s at %s", mba->mba_busname, pnp);
-	return UNCONF;
 }

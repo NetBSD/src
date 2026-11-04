@@ -1,4 +1,4 @@
-/*	$NetBSD: dbiterator.c,v 1.6.4.1 2025/08/02 05:53:24 perseant Exp $	*/
+/*	$NetBSD: dbiterator.c,v 1.6.4.2 2026/11/04 23:18:00 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -68,6 +68,14 @@ dns__dbiterator_seek(dns_dbiterator_t *iterator,
 	REQUIRE(DNS_DBITERATOR_VALID(iterator));
 
 	return iterator->methods->seek(iterator, name DNS__DB_FLARG_PASS);
+}
+
+isc_result_t
+dns__dbiterator_seek3(dns_dbiterator_t *iterator,
+		      const dns_name_t *name DNS__DB_FLARG) {
+	REQUIRE(DNS_DBITERATOR_VALID(iterator));
+
+	return iterator->methods->seek3(iterator, name DNS__DB_FLARG_PASS);
 }
 
 isc_result_t

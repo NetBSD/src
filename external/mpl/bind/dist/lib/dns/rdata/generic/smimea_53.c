@@ -1,4 +1,4 @@
-/*	$NetBSD: smimea_53.c,v 1.9.2.1 2025/08/02 05:53:46 perseant Exp $	*/
+/*	$NetBSD: smimea_53.c,v 1.9.2.2 2026/11/04 23:18:12 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,9 +84,7 @@ tostruct_smimea(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
 	REQUIRE(smimea != NULL);
 
-	smimea->common.rdclass = rdata->rdclass;
-	smimea->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&smimea->common, link);
+	DNS_RDATACOMMON_INIT(smimea, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_tlsa(CALL_TOSTRUCT);
 }

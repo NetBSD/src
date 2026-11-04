@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI C6X
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
 		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -1563,8 +1563,7 @@ elf32_tic6x_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      TIC6X_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1656,8 +1655,7 @@ elf32_tic6x_mkobject (bfd *abfd)
 {
   bool ret;
 
-  ret = bfd_elf_allocate_object (abfd, sizeof (struct elf32_tic6x_obj_tdata),
-				 TIC6X_ELF_DATA);
+  ret = bfd_elf_allocate_object (abfd, sizeof (struct elf32_tic6x_obj_tdata));
   if (ret)
     elf32_tic6x_set_use_rela_p (abfd, true);
   return ret;
@@ -2083,18 +2081,12 @@ static bool
 elf32_tic6x_new_section_hook (bfd *abfd, asection *sec)
 {
   bool ret;
+  _tic6x_elf_section_data *sdata;
 
-  /* Allocate target specific section data.  */
-  if (!sec->used_by_bfd)
-    {
-      _tic6x_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
-
-      sdata = (_tic6x_elf_section_data *) bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   ret = _bfd_elf_new_section_hook (abfd, sec);
   sec->use_rela_p = elf32_tic6x_tdata (abfd)->use_rela_p;
@@ -2228,7 +2220,8 @@ elf32_tic6x_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_C6000_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -3183,6 +3176,7 @@ elf32_tic6x_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -3327,6 +3321,7 @@ elf32_tic6x_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
       s->contents = bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->elf.dynamic_sections_created)

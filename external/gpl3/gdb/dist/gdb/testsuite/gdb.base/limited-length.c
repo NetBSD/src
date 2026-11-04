@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright (C) 2023-2024 Free Software Foundation, Inc.
+   Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -40,6 +40,8 @@ int large_2d_array[][10] = {
   {80, 81, 82, 83, 84, 85, 86, 87, 88, 89},
   {90, 91, 92, 93, 94, 95, 96, 97, 98, 99}
 };
+
+char large_empty_string[100000] = "";
 
 int
 main ()

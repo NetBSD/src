@@ -1,4 +1,4 @@
-/*	$NetBSD: log.h,v 1.8.2.1 2025/08/02 05:54:00 perseant Exp $	*/
+/*	$NetBSD: log.h,v 1.8.2.2 2026/11/04 23:18:16 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,6 +21,7 @@
 #include <stdbool.h>
 #include <stdio.h>
 #include <syslog.h> /* XXXDCL NT */
+#include <unistd.h>
 
 #include <isc/formatcheck.h>
 #include <isc/lang.h>

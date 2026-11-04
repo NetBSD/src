@@ -1,4 +1,4 @@
-/* Copyright 2018-2024 Free Software Foundation, Inc.
+/* Copyright 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -14,6 +14,8 @@
 
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+#include <stdlib.h>
 
 int
 frame_2 (void)
@@ -40,6 +42,23 @@ recursive (int arg)
   return v;
 }
 
+/* A function that never returns.  */
+void __attribute__((noreturn))
+func_that_never_returns (void)
+{
+  exit (0);
+}
+
+/* A function that tail calls.  Calling a 'noreturn' function isn't
+   required for a tail call, but at low optimisation levels, gcc will apply
+   the tail call optimisation only for 'noreturn' calls.  */
+
+void
+func_that_tail_calls (void)
+{
+  func_that_never_returns ();
+}
+
 int
 main (void)
 {
@@ -47,6 +66,8 @@ main (void)
 
   i = frame_1 ();
   j = recursive (0);
+
+  func_that_tail_calls ();
 
   return i + j;
 }

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.113.2.1 2025/08/02 05:58:23 perseant Exp $
+#	$NetBSD: Makefile,v 1.113.2.2 2026/11/04 23:28:29 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,24 +8,23 @@ MODULE=		${EXTERNAL_GCC_SUBDIR}
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 10
-MKNATIVE=		${.CURDIR}/mknative-gcc.old
-.endif
+MKNATIVE=		${.CURDIR}/mknative-${EXTERNAL_GCC_SUBDIR}
 
 # Defaults
 CC_FOR_BUILD=		${HOST_CXX:Q}
 MKNATIVE?=		${.CURDIR}/mknative-gcc
 
-# Force C++11 so builds succeed on hosts where this isn't the compiler
-# default, e.g., NetBSD 8.x with GCC 5.5.
-.if ${HAVE_GCC} > 10
+# GCC since 10.x (at least) needs C++11
 HOST_CXXFLAGS+=		-std=c++11
-.endif
 
 .if ${MACHINE_ARCH} == "x86_64" || ${MACHINE_ARCH} == "sparc64"
 MULTILIB_ARGS= --enable-multilib
 .else
 MULTILIB_ARGS= --disable-multilib
+.endif
+
+.if ${HAVE_GCC} >= 14
+GCC_LANGUAGES+= fortran
 .endif
 
 .if ${MKSOFTFLOAT} != "no" && ${MACHINE_CPU} != "m68k" \
@@ -59,16 +58,16 @@ COMMON_CONFIGURE_ARGS+=	--enable-fix-cortex-a53-835769 \
 			--enable-fix-cortex-a53-843419
 .endif
 
-.if ${HAVE_GCC} >= 7
 COMMON_CONFIGURE_ARGS+=	--with-default-libstdcxx-abi=new
-.endif
 
-# We enabled isl support for GCC 12.  Move into normal segment when
-# removing GCC 10.
 .if ${HAVE_GCC} < 12 || defined(NOGCCISL)
 COMMON_CONFIGURE_ARGS+=	--without-isl
 .else
 COMMON_CONFIGURE_ARGS+=	--with-isl=${TOOLDIR}
+.endif
+
+.if ${HAVE_GCC} >= 14 && ${MACHINE} == "ia64"
+COMMON_CONFIGURE_ARGS+=	--enable-obsolete
 .endif
 
 CONFIGURE_ARGS=	${COMMON_CONFIGURE_ARGS}
@@ -120,19 +119,19 @@ MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libbacktrace \
 	configure-target-libobjc
 
-.if ${HAVE_GCC} >= 9
+.if ${HAVE_GCC} >= 14
+MKNATIVE_CONFIG_TARGET_LIBS+= \
+	configure-target-libquadmath \
+	configure-target-libgfortran
+.endif
+
 # XXX needs to build libstdc++ fully, which fails
 .if 0
 MKNATIVE_CONFIG_TARGET_LIBS+= \
 	configure-target-libsanitizer
 .endif
-.endif
 
-.if ${HAVE_GCC} <= 10
-EXTRA_FILES=	gcov-iov.h
-.else
 EXTRA_FILES=	bversion.h gtyp-input.list
-.endif
 
 BINENV=		/usr/bin/env -i
 

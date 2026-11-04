@@ -1,4 +1,4 @@
-/*	$NetBSD: lp_107.c,v 1.8.2.1 2025/08/02 05:53:43 perseant Exp $	*/
+/*	$NetBSD: lp_107.c,v 1.8.2.2 2026/11/04 23:18:10 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -159,9 +159,7 @@ tostruct_lp(ARGS_TOSTRUCT) {
 	REQUIRE(lp != NULL);
 	REQUIRE(rdata->length != 0);
 
-	lp->common.rdclass = rdata->rdclass;
-	lp->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&lp->common, link);
+	DNS_RDATACOMMON_INIT(lp, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

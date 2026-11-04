@@ -1,6 +1,6 @@
 /* CLI options framework, for GDB.
 
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CLI_OPTION_H
-#define CLI_OPTION_H 1
+#ifndef GDB_CLI_CLI_OPTION_H
+#define GDB_CLI_CLI_OPTION_H
 
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "gdbsupport/array-view.h"
 #include "completer.h"
 #include <string>
@@ -49,12 +49,13 @@ protected:
      used to create the option's "set/show" commands.  */
   constexpr option_def (const char *name_,
 			var_types var_type_,
+			const literal_def *extra_literals_,
 			erased_get_var_address_ftype *erased_get_var_address_,
 			show_value_ftype *show_cmd_cb_,
 			const char *set_doc_,
 			const char *show_doc_,
 			const char *help_doc_)
-    : name (name_), type (var_type_),
+    : name (name_), type (var_type_), extra_literals (extra_literals_),
       erased_get_var_address (erased_get_var_address_),
       var_address {},
       show_cmd_cb (show_cmd_cb_),
@@ -67,6 +68,9 @@ public:
 
   /* The option's type.  */
   var_types type;
+
+  /* Extra literals, such as `unlimited', accepted in lieu of a number.  */
+  const literal_def *extra_literals;
 
   /* A function that gets the controlling variable's address, type
      erased.  */
@@ -160,7 +164,7 @@ struct boolean_option_def : option_def
 		      const char *set_doc_,
 		      const char *show_doc_ = nullptr,
 		      const char *help_doc_ = nullptr)
-    : option_def (long_option_, var_boolean,
+    : option_def (long_option_, var_boolean, nullptr,
 		  (erased_get_var_address_ftype *) get_var_address_cb_,
 		  show_cmd_cb_,
 		  set_doc_, show_doc_, help_doc_)
@@ -207,37 +211,59 @@ struct uinteger_option_def : option_def
 {
   uinteger_option_def (const char *long_option_,
 		       unsigned int *(*get_var_address_cb_) (Context *),
+		       const literal_def *extra_literals_,
 		       show_value_ftype *show_cmd_cb_,
 		       const char *set_doc_,
 		       const char *show_doc_ = nullptr,
 		       const char *help_doc_ = nullptr)
-    : option_def (long_option_, var_uinteger,
+    : option_def (long_option_, var_uinteger, extra_literals_,
 		  (erased_get_var_address_ftype *) get_var_address_cb_,
 		  show_cmd_cb_,
 		  set_doc_, show_doc_, help_doc_)
   {
     var_address.uinteger = detail::get_var_address<unsigned int, Context>;
   }
+
+  uinteger_option_def (const char *long_option_,
+		       unsigned int *(*get_var_address_cb_) (Context *),
+		       show_value_ftype *show_cmd_cb_,
+		       const char *set_doc_,
+		       const char *show_doc_ = nullptr,
+		       const char *help_doc_ = nullptr)
+    : uinteger_option_def (long_option_, get_var_address_cb_, nullptr,
+			   show_cmd_cb_, set_doc_, show_doc_, help_doc_)
+  { /* Nothing.  */ }
 };
 
-/* A var_zuinteger_unlimited command line option.  */
+/* A var_pinteger command line option.  */
 
 template<typename Context>
-struct zuinteger_unlimited_option_def : option_def
+struct pinteger_option_def : option_def
 {
-  zuinteger_unlimited_option_def (const char *long_option_,
-				  int *(*get_var_address_cb_) (Context *),
-				  show_value_ftype *show_cmd_cb_,
-				  const char *set_doc_,
-				  const char *show_doc_ = nullptr,
-				  const char *help_doc_ = nullptr)
-    : option_def (long_option_, var_zuinteger_unlimited,
+  pinteger_option_def (const char *long_option_,
+		       int *(*get_var_address_cb_) (Context *),
+		       const literal_def *extra_literals_,
+		       show_value_ftype *show_cmd_cb_,
+		       const char *set_doc_,
+		       const char *show_doc_ = nullptr,
+		       const char *help_doc_ = nullptr)
+    : option_def (long_option_, var_pinteger, extra_literals_,
 		  (erased_get_var_address_ftype *) get_var_address_cb_,
 		  show_cmd_cb_,
 		  set_doc_, show_doc_, help_doc_)
   {
     var_address.integer = detail::get_var_address<int, Context>;
   }
+
+  pinteger_option_def (const char *long_option_,
+		       int *(*get_var_address_cb_) (Context *),
+		       show_value_ftype *show_cmd_cb_,
+		       const char *set_doc_,
+		       const char *show_doc_ = nullptr,
+		       const char *help_doc_ = nullptr)
+    : pinteger_option_def (long_option_, get_var_address_cb_, nullptr,
+			   show_cmd_cb_, set_doc_, show_doc_, help_doc_)
+  { /* Nothing.  */ }
 };
 
 /* An var_enum command line option.  */
@@ -252,7 +278,7 @@ struct enum_option_def : option_def
 		   const char *set_doc_,
 		   const char *show_doc_ = nullptr,
 		   const char *help_doc_ = nullptr)
-    : option_def (long_option_, var_enum,
+    : option_def (long_option_, var_enum, nullptr,
 		  (erased_get_var_address_ftype *) get_var_address_cb_,
 		  show_cmd_cb_,
 		  set_doc_, show_doc_, help_doc_)
@@ -273,12 +299,32 @@ struct string_option_def : option_def
 		     const char *set_doc_,
 		     const char *show_doc_ = nullptr,
 		     const char *help_doc_ = nullptr)
-    : option_def (long_option_, var_string,
+    : option_def (long_option_, var_string, nullptr,
 		  (erased_get_var_address_ftype *) get_var_address_cb_,
 		  show_cmd_cb_,
 		  set_doc_, show_doc_, help_doc_)
   {
-    var_address.enumeration = detail::get_var_address<const char *, Context>;
+    var_address.string = detail::get_var_address<std::string, Context>;
+  }
+};
+
+/* A var_filename command line option.  */
+
+template<typename Context>
+struct filename_option_def : option_def
+{
+  filename_option_def (const char *long_option_,
+		       std::string *(*get_var_address_cb_) (Context *),
+		       show_value_ftype *show_cmd_cb_,
+		       const char *set_doc_,
+		       const char *show_doc_ = nullptr,
+		       const char *help_doc_ = nullptr)
+    : option_def (long_option_, var_filename, nullptr,
+		  (erased_get_var_address_ftype *) get_var_address_cb_,
+		  show_cmd_cb_,
+		  set_doc_, show_doc_, help_doc_)
+  {
+    var_address.string = detail::get_var_address<std::string, Context>;
   }
 };
 
@@ -353,4 +399,4 @@ extern void add_setshow_cmds_for_options (command_class cmd_class, void *data,
 } /* namespace option */
 } /* namespace gdb */
 
-#endif /* CLI_OPTION_H */
+#endif /* GDB_CLI_CLI_OPTION_H */

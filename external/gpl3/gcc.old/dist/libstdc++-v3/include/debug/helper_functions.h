@@ -1,6 +1,6 @@
 // Debugging support implementation -*- C++ -*-
 
-// Copyright (C) 2003-2020 Free Software Foundation, Inc.
+// Copyright (C) 2003-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -111,21 +111,33 @@ namespace __gnu_debug
     _GLIBCXX_CONSTEXPR
     inline typename _Distance_traits<_Iterator>::__type
     __get_distance(_Iterator __lhs, _Iterator __rhs)
-    { return __get_distance(__lhs, __rhs, std::__iterator_category(__lhs)); }
+    {
+      return __gnu_debug::__get_distance(__lhs, __rhs,
+					 std::__iterator_category(__lhs));
+    }
 
   // An arbitrary iterator pointer is not singular.
   inline bool
   __check_singular_aux(const void*) { return false; }
 
+  // Defined in <debug/safe_base.h>
+  bool
+  __check_singular_aux(const class _Safe_iterator_base*);
+
   // We may have an iterator that derives from _Safe_iterator_base but isn't
   // a _Safe_iterator.
   template<typename _Iterator>
+    _GLIBCXX_CONSTEXPR
     inline bool
     __check_singular(_Iterator const& __x)
-    { return __check_singular_aux(std::__addressof(__x)); }
+    {
+      return ! std::__is_constant_evaluated()
+	       && __gnu_debug::__check_singular_aux(std::__addressof(__x));
+    }
 
   /** Non-NULL pointers are nonsingular. */
   template<typename _Tp>
+    _GLIBCXX_CONSTEXPR
     inline bool
     __check_singular(_Tp* const& __ptr)
     { return __ptr == 0; }
@@ -158,7 +170,8 @@ namespace __gnu_debug
 		      std::input_iterator_tag)
     {
       return __first == __last
-	|| (!__check_singular(__first) && !__check_singular(__last));
+	|| (!__gnu_debug::__check_singular(__first)
+	      && !__gnu_debug::__check_singular(__last));
     }
 
   template<typename _InputIterator>
@@ -167,8 +180,8 @@ namespace __gnu_debug
     __valid_range_aux(_InputIterator __first, _InputIterator __last,
 		      std::random_access_iterator_tag)
     {
-      return
-	__valid_range_aux(__first, __last, std::input_iterator_tag())
+      return __gnu_debug::__valid_range_aux(__first, __last,
+					    std::input_iterator_tag())
 	&& __first <= __last;
     }
 
@@ -181,8 +194,8 @@ namespace __gnu_debug
     __valid_range_aux(_InputIterator __first, _InputIterator __last,
 		      std::__false_type)
     {
-      return __valid_range_aux(__first, __last,
-			       std::__iterator_category(__first));
+      return __gnu_debug::__valid_range_aux(__first, __last,
+					    std::__iterator_category(__first));
     }
 
   template<typename _InputIterator>
@@ -192,10 +205,11 @@ namespace __gnu_debug
 		      typename _Distance_traits<_InputIterator>::__type& __dist,
 		      std::__false_type)
     {
-      if (!__valid_range_aux(__first, __last, std::input_iterator_tag()))
+      if (!__gnu_debug::__valid_range_aux(__first, __last,
+					  std::input_iterator_tag()))
 	return false;
 
-      __dist = __get_distance(__first, __last);
+      __dist = __gnu_debug::__get_distance(__first, __last);
       switch (__dist.second)
 	{
 	case __dp_none:
@@ -225,13 +239,9 @@ namespace __gnu_debug
     __valid_range(_InputIterator __first, _InputIterator __last,
 		  typename _Distance_traits<_InputIterator>::__type& __dist)
     {
-#ifdef __cpp_lib_is_constant_evaluated
-      if (std::is_constant_evaluated())
-	// Detected by the compiler directly.
-	return true;
-#endif
       typedef typename std::__is_integer<_InputIterator>::__type _Integral;
-      return __valid_range_aux(__first, __last, __dist, _Integral());
+      return __gnu_debug::__valid_range_aux(__first, __last, __dist,
+					    _Integral());
     }
 
   template<typename _Iterator, typename _Sequence, typename _Category>
@@ -253,13 +263,8 @@ namespace __gnu_debug
     inline bool
     __valid_range(_InputIterator __first, _InputIterator __last)
     {
-#ifdef _GLIBCXX_HAVE_BUILTIN_IS_CONSTANT_EVALUATED
-      if (__builtin_is_constant_evaluated())
-	// Detected by the compiler directly.
-	return true;
-#endif
       typedef typename std::__is_integer<_InputIterator>::__type _Integral;
-      return __valid_range_aux(__first, __last, _Integral());
+      return __gnu_debug::__valid_range_aux(__first, __last, _Integral());
     }
 
   template<typename _Iterator, typename _Sequence, typename _Category>

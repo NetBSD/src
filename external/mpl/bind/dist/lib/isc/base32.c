@@ -1,4 +1,4 @@
-/*	$NetBSD: base32.c,v 1.8.4.1 2025/08/02 05:53:51 perseant Exp $	*/
+/*	$NetBSD: base32.c,v 1.8.4.2 2026/11/04 23:18:14 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -23,13 +23,6 @@
 #include <isc/region.h>
 #include <isc/string.h>
 #include <isc/util.h>
-
-#define RETERR(x)                        \
-	do {                             \
-		isc_result_t _r = (x);   \
-		if (_r != ISC_R_SUCCESS) \
-			return ((_r));   \
-	} while (0)
 
 /*@{*/
 /*!

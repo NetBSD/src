@@ -1,6 +1,6 @@
 /* Support routines for manipulating internal types for GDB.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -44,6 +44,7 @@
 #include "gmp-utils.h"
 #include "rust-lang.h"
 #include "ada-lang.h"
+#include "extract-store-integer.h"
 
 /* The value of an invalid conversion badness.  */
 #define INVALID_CONVERSION 100
@@ -631,7 +632,7 @@ address_space_name_to_type_instance_flags (struct gdbarch *gdbarch,
 }
 
 /* Identify address space identifier by type_instance_flags and return
-   the string version of the adress space name.  */
+   the string version of the address space name.  */
 
 const char *
 address_space_type_instance_flags_to_name (struct gdbarch *gdbarch,
@@ -733,7 +734,7 @@ make_type_with_address_space (struct type *type,
    If TYPEPTR and *TYPEPTR are non-zero, then *TYPEPTR points to
    storage to hold the new qualified type; *TYPEPTR and TYPE must be
    in the same objfile.  Otherwise, allocate fresh memory for the new
-   type whereever TYPE lives.  If TYPEPTR is non-zero, set it to the
+   type wherever TYPE lives.  If TYPEPTR is non-zero, set it to the
    new type we construct.  */
 
 struct type *
@@ -816,7 +817,7 @@ make_atomic_type (struct type *type)
 
 /* Replace the contents of ntype with the type *type.  This changes the
    contents, rather than the pointer for TYPE_MAIN_TYPE (ntype); thus
-   the changes are propogated to all types in the TYPE_CHAIN.
+   the changes are propagated to all types in the TYPE_CHAIN.
 
    In order to build recursive types, it's inevitable that we'll need
    to update types in place --- but this sort of indiscriminate
@@ -901,7 +902,7 @@ operator== (const dynamic_prop &l, const dynamic_prop &r)
       return true;
     case PROP_CONST:
       return l.const_val () == r.const_val ();
-    case PROP_ADDR_OFFSET:
+    case PROP_FIELD:
     case PROP_LOCEXPR:
     case PROP_LOCLIST:
       return l.baton () == r.baton ();
@@ -1079,10 +1080,10 @@ get_discrete_low_bound (struct type *type)
 	       entries.  */
 	    LONGEST low = type->field (0).loc_enumval ();
 
-	    for (int i = 0; i < type->num_fields (); i++)
+	    for (const auto &field : type->fields ())
 	      {
-		if (type->field (i).loc_enumval () < low)
-		  low = type->field (i).loc_enumval ();
+		if (field.loc_enumval () < low)
+		  low = field.loc_enumval ();
 	      }
 
 	    return low;
@@ -1146,10 +1147,10 @@ get_discrete_high_bound (struct type *type)
 	       entries.  */
 	    LONGEST high = type->field (0).loc_enumval ();
 
-	    for (int i = 0; i < type->num_fields (); i++)
+	    for (const auto &field : type->fields ())
 	      {
-		if (type->field (i).loc_enumval () > high)
-		  high = type->field (i).loc_enumval ();
+		if (field.loc_enumval () > high)
+		  high = field.loc_enumval ();
 	      }
 
 	    return high;
@@ -1371,7 +1372,7 @@ create_array_type_with_stride (type_allocator &alloc,
 	 undefined by setting it to zero.  Although we are not expected
 	 to trust TYPE_LENGTH in this case, setting the size to zero
 	 allows us to avoid allocating objects of random sizes in case
-	 we accidently do.  */
+	 we accidentally do.  */
       result_type->set_length (0);
     }
 
@@ -1553,7 +1554,7 @@ set_type_self_type (struct type *type, struct type *self_type)
 }
 
 /* Smash TYPE to be a type of pointers to members of SELF_TYPE with type
-   TO_TYPE.  A member pointer is a wierd thing -- it amounts to a
+   TO_TYPE.  A member pointer is a weird thing -- it amounts to a
    typed offset into a struct, e.g. "an int at offset 8".  A MEMBER
    TYPE doesn't include the offset (that's the value of the MEMBER
    itself), but does include the structure type into which it points
@@ -1601,15 +1602,15 @@ smash_to_methodptr_type (struct type *type, struct type *to_type)
 
 void
 smash_to_method_type (struct type *type, struct type *self_type,
-		      struct type *to_type, struct field *args,
-		      int nargs, int varargs)
+		      struct type *to_type, gdb::array_view<struct field> args,
+		      int varargs)
 {
   smash_type (type);
   type->set_code (TYPE_CODE_METHOD);
   type->set_target_type (to_type);
   set_type_self_type (type, self_type);
-  type->set_fields (args);
-  type->set_num_fields (nargs);
+  type->set_fields (args.data ());
+  type->set_num_fields (args.size ());
 
   if (varargs)
     type->set_has_varargs (true);
@@ -2120,7 +2121,7 @@ is_dynamic_type_internal (struct type *type, bool top_level)
 	      return true;
 	    /* If the field is at a fixed offset, then it is not
 	       dynamic.  */
-	    if (type->field (i).loc_kind () != FIELD_LOC_KIND_DWARF_BLOCK)
+	    if (!type->field (i).loc_is_dwarf_block ())
 	      continue;
 	    /* Do not consider C++ virtual base types to be dynamic
 	       due to the field's offset being dynamic; these are
@@ -2145,7 +2146,7 @@ is_dynamic_type (struct type *type)
 }
 
 static struct type *resolve_dynamic_type_internal
-  (struct type *type, struct property_addr_info *addr_stack,
+  (struct type *type, const property_addr_info *addr_stack,
    const frame_info_ptr &frame, bool top_level);
 
 /* Given a dynamic range type (dyn_range_type) and a stack of
@@ -2166,7 +2167,7 @@ static struct type *resolve_dynamic_type_internal
 
 static struct type *
 resolve_dynamic_range (struct type *dyn_range_type,
-		       struct property_addr_info *addr_stack,
+		       const property_addr_info *addr_stack,
 		       const frame_info_ptr &frame,
 		       int rank, bool resolve_p = true)
 {
@@ -2268,7 +2269,7 @@ resolve_dynamic_range (struct type *dyn_range_type,
 
 static struct type *
 resolve_dynamic_array_or_string_1 (struct type *type,
-				   struct property_addr_info *addr_stack,
+				   const property_addr_info *addr_stack,
 				   const frame_info_ptr &frame,
 				   int rank, bool resolve_p)
 {
@@ -2327,10 +2328,42 @@ resolve_dynamic_array_or_string_1 (struct type *type,
 						    frame, rank - 1,
 						    resolve_p);
     }
+  else if (ary_dim != nullptr && ary_dim->code () == TYPE_CODE_STRING)
+    {
+      /* The following special case for TYPE_CODE_STRING should not be
+	 needed, ideally we would defer resolving the dynamic type of the
+	 array elements until needed later, and indeed, the resolved type
+	 of each array element might be different, so attempting to resolve
+	 the type here makes no sense.
+
+	 However, in Fortran, for arrays of strings, each element must be
+	 the same type, as such, the DWARF for the string length relies on
+	 the object address of the array itself.
+
+	 The problem here is that, when we create values from the dynamic
+	 array type, we resolve the data location, and use that as the
+	 value address, this completely discards the original value
+	 address, and it is this original value address that is the
+	 descriptor for the dynamic array, the very address that the DWARF
+	 needs us to push in order to resolve the dynamic string length.
+
+	 What this means then, is that, given the current state of GDB, if
+	 we don't resolve the string length now, then we will have lost
+	 access to the address of the dynamic object descriptor, and so we
+	 will not be able to resolve the dynamic string later.
+
+	 For now then, we handle special case TYPE_CODE_STRING on behalf of
+	 Fortran, and hope that this doesn't cause problems for anyone
+	 else.  */
+      elt_type = resolve_dynamic_type_internal (type->target_type (),
+						addr_stack, frame, 0);
+    }
   else
     elt_type = type->target_type ();
 
   prop = type->dyn_prop (DYN_PROP_BYTE_STRIDE);
+  if (prop != nullptr && type->code () == TYPE_CODE_STRING)
+    prop = nullptr;
   if (prop != NULL && resolve_p)
     {
       if (dwarf2_evaluate_property (prop, frame, addr_stack, &value))
@@ -2351,8 +2384,11 @@ resolve_dynamic_array_or_string_1 (struct type *type,
     bit_stride = type->field (0).bitsize ();
 
   type_allocator alloc (type, type_allocator::SMASH);
-  return create_array_type_with_stride (alloc, elt_type, range_type, NULL,
-					bit_stride);
+  if (type->code () == TYPE_CODE_STRING)
+    return create_string_type (alloc, elt_type, range_type);
+  else
+    return create_array_type_with_stride (alloc, elt_type, range_type, NULL,
+					  bit_stride);
 }
 
 /* Resolve an array or string type with dynamic properties, return a new
@@ -2361,7 +2397,7 @@ resolve_dynamic_array_or_string_1 (struct type *type,
 
 static struct type *
 resolve_dynamic_array_or_string (struct type *type,
-				 struct property_addr_info *addr_stack,
+				 const property_addr_info *addr_stack,
 				 const frame_info_ptr &frame)
 {
   CORE_ADDR value;
@@ -2454,27 +2490,26 @@ resolve_dynamic_array_or_string (struct type *type,
 
 static struct type *
 resolve_dynamic_union (struct type *type,
-		       struct property_addr_info *addr_stack,
+		       const property_addr_info *addr_stack,
 		       const frame_info_ptr &frame)
 {
   struct type *resolved_type;
-  int i;
   unsigned int max_len = 0;
 
   gdb_assert (type->code () == TYPE_CODE_UNION);
 
   resolved_type = copy_type (type);
   resolved_type->copy_fields (type);
-  for (i = 0; i < resolved_type->num_fields (); ++i)
+  for (auto &field : resolved_type->fields ())
     {
       struct type *t;
 
-      if (type->field (i).is_static ())
+      if (field.is_static ())
 	continue;
 
-      t = resolve_dynamic_type_internal (resolved_type->field (i).type (),
-					 addr_stack, frame, false);
-      resolved_type->field (i).set_type (t);
+      t = resolve_dynamic_type_internal (field.type (), addr_stack,
+					 frame, false);
+      field.set_type (t);
 
       struct type *real_type = check_typedef (t);
       if (real_type->length () > max_len)
@@ -2498,7 +2533,7 @@ variant::matches (ULONGEST value, bool is_unsigned) const
 
 static void
 compute_variant_fields_inner (struct type *type,
-			      struct property_addr_info *addr_stack,
+			      const property_addr_info *addr_stack,
 			      const variant_part &part,
 			      std::vector<bool> &flags);
 
@@ -2513,7 +2548,7 @@ compute_variant_fields_inner (struct type *type,
 
 static void
 compute_variant_fields_recurse (struct type *type,
-				struct property_addr_info *addr_stack,
+				const property_addr_info *addr_stack,
 				const variant &variant,
 				std::vector<bool> &flags,
 				bool enabled)
@@ -2545,7 +2580,7 @@ compute_variant_fields_recurse (struct type *type,
 
 static void
 compute_variant_fields_inner (struct type *type,
-			      struct property_addr_info *addr_stack,
+			      const property_addr_info *addr_stack,
 			      const variant_part &part,
 			      std::vector<bool> &flags)
 {
@@ -2614,7 +2649,7 @@ compute_variant_fields_inner (struct type *type,
 static void
 compute_variant_fields (struct type *type,
 			struct type *resolved_type,
-			struct property_addr_info *addr_stack,
+			const property_addr_info *addr_stack,
 			const gdb::array_view<variant_part> &parts)
 {
   /* Assume all fields are included by default.  */
@@ -2640,17 +2675,121 @@ compute_variant_fields (struct type *type,
     }
 }
 
+/* See gdbtypes.h.  */
+
+void
+apply_bit_offset_to_field (struct field &field, LONGEST bit_offset,
+			   LONGEST explicit_byte_size)
+{
+  struct type *field_type = field.type ();
+  struct gdbarch *gdbarch = field_type->arch ();
+  LONGEST current_bitpos = field.loc_bitpos ();
+
+  if (gdbarch_byte_order (gdbarch) == BFD_ENDIAN_BIG)
+    {
+      /* For big endian bits, the DW_AT_bit_offset gives the
+	 additional bit offset from the MSB of the containing
+	 anonymous object to the MSB of the field.  We don't
+	 have to do anything special since we don't need to
+	 know the size of the anonymous object.  */
+      field.set_loc_bitpos (current_bitpos + bit_offset);
+    }
+  else
+    {
+      /* For little endian bits, compute the bit offset to the
+	 MSB of the anonymous object, subtract off the number of
+	 bits from the MSB of the field to the MSB of the
+	 object, and then subtract off the number of bits of
+	 the field itself.  The result is the bit offset of
+	 the LSB of the field.  */
+      LONGEST object_size = explicit_byte_size;
+      if (object_size == 0)
+	object_size = field_type->length ();
+
+      field.set_loc_bitpos (current_bitpos
+			    + 8 * object_size
+			    - bit_offset
+			    - field.bitsize ());
+    }
+}
+
+/* See gdbtypes.h.  */
+
+void
+resolve_dynamic_field (struct field &field,
+		       const property_addr_info *addr_stack,
+		       const frame_info_ptr &frame)
+{
+  gdb_assert (!field.is_static ());
+
+  if (field.loc_is_dwarf_block ())
+    {
+      dwarf2_locexpr_baton *field_loc
+	= field.loc_dwarf_block ();
+
+      struct dwarf2_property_baton baton;
+      baton.property_type = lookup_pointer_type (field.type ());
+      baton.locexpr = *field_loc;
+
+      struct dynamic_prop prop;
+      prop.set_locexpr (&baton);
+
+      CORE_ADDR vals[1] = {addr_stack->addr};
+      CORE_ADDR addr_or_bitpos;
+      if (dwarf2_evaluate_property (&prop, frame, addr_stack,
+				    &addr_or_bitpos, vals))
+	{
+	  if (field.loc_kind () == FIELD_LOC_KIND_DWARF_BLOCK_ADDR)
+	    field.set_loc_bitpos (TARGET_CHAR_BIT
+				  * (addr_or_bitpos - addr_stack->addr));
+	  else
+	    field.set_loc_bitpos (addr_or_bitpos);
+
+	  if (field_loc->is_field_location)
+	    {
+	      dwarf2_field_location_baton *fl_baton
+		= static_cast<dwarf2_field_location_baton *> (field_loc);
+	      apply_bit_offset_to_field (field, fl_baton->bit_offset,
+					 fl_baton->explicit_byte_size);
+	    }
+	}
+    }
+
+  /* As we know this field is not a static field, the field's
+     field_loc_kind should be FIELD_LOC_KIND_BITPOS.  Verify
+     this is the case, but only trigger a simple error rather
+     than an internal error if that fails.  While failing
+     that verification indicates a bug in our code, the error
+     is not severe enough to suggest to the user he stops
+     his debugging session because of it.  */
+  if (field.loc_kind () != FIELD_LOC_KIND_BITPOS)
+    error (_("Cannot determine struct field location"
+	     " (invalid location kind)"));
+
+  struct property_addr_info pinfo;
+  pinfo.type = check_typedef (field.type ());
+  size_t offset = field.loc_bitpos () / TARGET_CHAR_BIT;
+  pinfo.valaddr = addr_stack->valaddr;
+  if (!pinfo.valaddr.empty ())
+    pinfo.valaddr = pinfo.valaddr.slice (offset);
+  pinfo.addr = addr_stack->addr + offset;
+  pinfo.next = addr_stack;
+
+  field.set_type (resolve_dynamic_type_internal (field.type (),
+						 &pinfo, frame, false));
+  gdb_assert (field.loc_kind () == FIELD_LOC_KIND_BITPOS);
+}
+
 /* Resolve dynamic bounds of members of the struct TYPE to static
    bounds.  ADDR_STACK is a stack of struct property_addr_info to
    be used if needed during the dynamic resolution.  */
 
 static struct type *
 resolve_dynamic_struct (struct type *type,
-			struct property_addr_info *addr_stack,
+			const property_addr_info *addr_stack,
 			const frame_info_ptr &frame)
 {
   struct type *resolved_type;
-  int i;
   unsigned resolved_type_bit_length = 0;
 
   gdb_assert (type->code () == TYPE_CODE_STRUCT);
@@ -2671,63 +2810,21 @@ resolve_dynamic_struct (struct type *type,
       resolved_type->copy_fields (type);
     }
 
-  for (i = 0; i < resolved_type->num_fields (); ++i)
+  for (auto &field : resolved_type->fields ())
     {
       unsigned new_bit_length;
-      struct property_addr_info pinfo;
 
-      if (resolved_type->field (i).is_static ())
+      if (field.is_static ())
 	continue;
 
-      if (resolved_type->field (i).loc_kind () == FIELD_LOC_KIND_DWARF_BLOCK)
-	{
-	  struct dwarf2_property_baton baton;
-	  baton.property_type
-	    = lookup_pointer_type (resolved_type->field (i).type ());
-	  baton.locexpr = *resolved_type->field (i).loc_dwarf_block ();
+      resolve_dynamic_field (field, addr_stack, frame);
 
-	  struct dynamic_prop prop;
-	  prop.set_locexpr (&baton);
-
-	  CORE_ADDR addr;
-	  if (dwarf2_evaluate_property (&prop, frame, addr_stack, &addr,
-					{addr_stack->addr}))
-	    resolved_type->field (i).set_loc_bitpos
-	      (TARGET_CHAR_BIT * (addr - addr_stack->addr));
-	}
-
-      /* As we know this field is not a static field, the field's
-	 field_loc_kind should be FIELD_LOC_KIND_BITPOS.  Verify
-	 this is the case, but only trigger a simple error rather
-	 than an internal error if that fails.  While failing
-	 that verification indicates a bug in our code, the error
-	 is not severe enough to suggest to the user he stops
-	 his debugging session because of it.  */
-      if (resolved_type->field (i).loc_kind () != FIELD_LOC_KIND_BITPOS)
-	error (_("Cannot determine struct field location"
-		 " (invalid location kind)"));
-
-      pinfo.type = check_typedef (resolved_type->field (i).type ());
-      size_t offset = resolved_type->field (i).loc_bitpos () / TARGET_CHAR_BIT;
-      pinfo.valaddr = addr_stack->valaddr;
-      if (!pinfo.valaddr.empty ())
-	pinfo.valaddr = pinfo.valaddr.slice (offset);
-      pinfo.addr = addr_stack->addr + offset;
-      pinfo.next = addr_stack;
-
-      resolved_type->field (i).set_type
-	(resolve_dynamic_type_internal (resolved_type->field (i).type (),
-					&pinfo, frame, false));
-      gdb_assert (resolved_type->field (i).loc_kind ()
-		  == FIELD_LOC_KIND_BITPOS);
-
-      new_bit_length = resolved_type->field (i).loc_bitpos ();
-      if (resolved_type->field (i).bitsize () != 0)
-	new_bit_length += resolved_type->field (i).bitsize ();
+      new_bit_length = field.loc_bitpos ();
+      if (field.bitsize () != 0)
+	new_bit_length += field.bitsize ();
       else
 	{
-	  struct type *real_type
-	    = check_typedef (resolved_type->field (i).type ());
+	  struct type *real_type = check_typedef (field.type ());
 
 	  new_bit_length += (real_type->length () * TARGET_CHAR_BIT);
 	}
@@ -2761,7 +2858,7 @@ resolve_dynamic_struct (struct type *type,
 
 static struct type *
 resolve_dynamic_type_internal (struct type *type,
-			       struct property_addr_info *addr_stack,
+			       const property_addr_info *addr_stack,
 			       const frame_info_ptr &frame,
 			       bool top_level)
 {
@@ -3294,7 +3391,8 @@ check_stub_method (struct type *type, int method_id, int signature_id)
   /* MTYPE may currently be a function (TYPE_CODE_FUNC).
      We want a method (TYPE_CODE_METHOD).  */
   smash_to_method_type (mtype, type, mtype->target_type (),
-			argtypes, argcount, p[-2] == '.');
+			gdb::make_array_view (argtypes, argcount),
+			p[-2] == '.');
   mtype->set_is_stub (false);
   TYPE_FN_FIELD_STUB (f, signature_id) = 0;
 }
@@ -3598,12 +3696,12 @@ type_align (struct type *type)
     case TYPE_CODE_UNION:
       {
 	int number_of_non_static_fields = 0;
-	for (unsigned i = 0; i < type->num_fields (); ++i)
+	for (const auto &field : type->fields ())
 	  {
-	    if (!type->field (i).is_static ())
+	    if (!field.is_static ())
 	      {
 		number_of_non_static_fields++;
-		ULONGEST f_align = type_align (type->field (i).type ());
+		ULONGEST f_align = type_align (field.type ());
 		if (f_align == 0)
 		  {
 		    /* Don't pretend we know something we don't.  */
@@ -4320,7 +4418,8 @@ check_types_equal (struct type *type1, struct type *type2,
 					       field2->loc_physname ()))
 		return false;
 	      break;
-	    case FIELD_LOC_KIND_DWARF_BLOCK:
+	    case FIELD_LOC_KIND_DWARF_BLOCK_ADDR:
+	    case FIELD_LOC_KIND_DWARF_BLOCK_BITPOS:
 	      {
 		struct dwarf2_locexpr_baton *block1, *block2;
 
@@ -4372,7 +4471,7 @@ check_types_worklist (std::vector<type_equality_entry> *worklist,
 
       /* If the type pair has already been visited, we know it is
 	 ok.  */
-      cache->insert (&entry, sizeof (entry), &added);
+      cache->insert (entry, &added);
       if (!added)
 	continue;
 
@@ -4937,19 +5036,14 @@ rank_one_type (struct type *parm, struct type *arg, struct value *value)
    situation.  */
 
 static void
-print_args (struct field *args, int nargs, int spaces)
+print_args (gdb::array_view<struct field> args, int spaces)
 {
-  if (args != NULL)
+  for (int i = 0; i < args.size (); i++)
     {
-      int i;
-
-      for (i = 0; i < nargs; i++)
-	{
-	  gdb_printf
-	    ("%*s[%d] name '%s'\n", spaces, "", i,
-	     args[i].name () != NULL ? args[i].name () : "<NULL>");
-	  recursive_dump_type (args[i].type (), spaces + 2);
-	}
+      gdb_printf
+	("%*s[%d] name '%s'\n", spaces, "", i,
+	 args[i].name () != NULL ? args[i].name () : "<NULL>");
+      recursive_dump_type (args[i].type (), spaces + 2);
     }
 }
 
@@ -4990,9 +5084,8 @@ dump_fn_fieldlists (struct type *type, int spaces)
 
 	  gdb_printf
 	    ("%*sargs %s\n", spaces + 8, "",
-	     host_address_to_string (TYPE_FN_FIELD_ARGS (f, overload_idx)));
+	     host_address_to_string (TYPE_FN_FIELD_ARGS (f, overload_idx).data ()));
 	  print_args (TYPE_FN_FIELD_ARGS (f, overload_idx),
-		      TYPE_FN_FIELD_TYPE (f, overload_idx)->num_fields (),
 		      spaces + 8 + 2);
 	  gdb_printf
 	    ("%*sfcontext %s\n", spaces + 8, "",
@@ -5274,7 +5367,7 @@ recursive_dump_type (struct type *type, int spaces)
 	}
       gdb_printf ("\n");
     }
-  gdb_printf ("%s\n", host_address_to_string (type->fields ()));
+  gdb_printf ("%s\n", host_address_to_string (type->fields ().data ()));
   for (idx = 0; idx < type->num_fields (); idx++)
     {
       field &fld = type->field (idx);
@@ -5372,46 +5465,6 @@ recursive_dump_type (struct type *type, int spaces)
     obstack_free (&dont_print_type_obstack, NULL);
 }
 
-/* Trivial helpers for the libiberty hash table, for mapping one
-   type to another.  */
-
-struct type_pair
-{
-  type_pair (struct type *old_, struct type *newobj_)
-    : old (old_), newobj (newobj_)
-  {}
-
-  struct type * const old, * const newobj;
-};
-
-static hashval_t
-type_pair_hash (const void *item)
-{
-  const struct type_pair *pair = (const struct type_pair *) item;
-
-  return htab_hash_pointer (pair->old);
-}
-
-static int
-type_pair_eq (const void *item_lhs, const void *item_rhs)
-{
-  const struct type_pair *lhs = (const struct type_pair *) item_lhs;
-  const struct type_pair *rhs = (const struct type_pair *) item_rhs;
-
-  return lhs->old == rhs->old;
-}
-
-/* Allocate the hash table used by copy_type_recursive to walk
-   types without duplicates.  */
-
-htab_up
-create_copied_types_hash ()
-{
-  return htab_up (htab_create_alloc (1, type_pair_hash, type_pair_eq,
-				     htab_delete_entry<type_pair>,
-				     xcalloc, xfree));
-}
-
 /* Recursively copy (deep copy) a dynamic attribute list of a type.  */
 
 static struct dynamic_prop_list *
@@ -5443,27 +5496,20 @@ copy_dynamic_prop_list (struct obstack *storage,
    it is not associated with OBJFILE.  */
 
 struct type *
-copy_type_recursive (struct type *type, htab_t copied_types)
+copy_type_recursive (struct type *type, copied_types_hash_t &copied_types)
 {
-  void **slot;
-  struct type *new_type;
-
   if (!type->is_objfile_owned ())
     return type;
 
-  struct type_pair pair (type, nullptr);
+  if (auto iter = copied_types.find (type);
+      iter != copied_types.end ())
+    return iter->second;
 
-  slot = htab_find_slot (copied_types, &pair, INSERT);
-  if (*slot != NULL)
-    return ((struct type_pair *) *slot)->newobj;
-
-  new_type = type_allocator (type->arch ()).new_type ();
+  struct type *new_type = type_allocator (type->arch ()).new_type ();
 
   /* We must add the new type to the hash table immediately, in case
      we encounter this type again during a recursive call below.  */
-  struct type_pair *stored = new type_pair (type, new_type);
-
-  *slot = stored;
+  copied_types.emplace (type, new_type);
 
   /* Copy the common fields of types.  For the main type, we simply
      copy the entire thing and then update specific fields as needed.  */
@@ -5512,8 +5558,12 @@ copy_type_recursive (struct type *type, htab_t copied_types)
 	      new_type->field (i).set_loc_physname
 		(xstrdup (type->field (i).loc_physname ()));
 	      break;
-	    case FIELD_LOC_KIND_DWARF_BLOCK:
-	      new_type->field (i).set_loc_dwarf_block
+	    case FIELD_LOC_KIND_DWARF_BLOCK_ADDR:
+	      new_type->field (i).set_loc_dwarf_block_addr
+		(type->field (i).loc_dwarf_block ());
+	      break;
+	    case FIELD_LOC_KIND_DWARF_BLOCK_BITPOS:
+	      new_type->field (i).set_loc_dwarf_block_bitpos
 		(type->field (i).loc_dwarf_block ());
 	      break;
 	    default:
@@ -5698,7 +5748,7 @@ append_composite_type_field_raw (struct type *t, const char *name,
   struct field *f;
 
   t->set_num_fields (t->num_fields () + 1);
-  t->set_fields (XRESIZEVEC (struct field, t->fields (),
+  t->set_fields (XRESIZEVEC (struct field, t->fields ().data (),
 			     t->num_fields ()));
   f = &t->field (t->num_fields () - 1);
   memset (f, 0, sizeof f[0]);
@@ -5849,7 +5899,7 @@ type::alloc_fields (unsigned int nfields, bool init)
       return;
     }
 
-  size_t size = nfields * sizeof (*this->fields ());
+  size_t size = nfields * sizeof (struct field);
   struct field *fields
     = (struct field *) (init
 			? TYPE_ZALLOC (this, size)
@@ -5868,8 +5918,8 @@ type::copy_fields (struct type *src)
   if (nfields == 0)
     return;
 
-  size_t size = nfields * sizeof (*this->fields ());
-  memcpy (this->fields (), src->fields (), size);
+  size_t size = nfields * sizeof (struct field);
+  memcpy (this->fields ().data (), src->fields ().data (), size);
 }
 
 /* See gdbtypes.h.  */
@@ -5882,8 +5932,8 @@ type::copy_fields (std::vector<struct field> &src)
   if (nfields == 0)
     return;
 
-  size_t size = nfields * sizeof (*this->fields ());
-  memcpy (this->fields (), src.data (), size);
+  size_t size = nfields * sizeof (struct field);
+  memcpy (this->fields ().data (), src.data (), size);
 }
 
 /* See gdbtypes.h.  */
@@ -6126,17 +6176,25 @@ builtin_type (struct objfile *objfile)
   return builtin_type (objfile->arch ());
 }
 
-/* See gdbtypes.h.  */
+/* See dwarf2/call-site.h.  */
 
 CORE_ADDR
 call_site::pc () const
 {
+  /* dwarf2_per_objfile is defined in dwarf/read.c, so if that is disabled
+     at configure time, we won't be able to use this relocate function.
+     This is dwarf-specific, and would ideally be in call-site.h, but
+     including dwarf2/read.h in dwarf2/call-site.h will lead to things being
+     included in the wrong order and many compilation errors will happen.
+     This is the next best thing.  */
+#if defined(DWARF_FORMAT_AVAILABLE)
   return per_objfile->relocate (m_unrelocated_pc);
+#else
+  gdb_assert_not_reached ("unexpected call_site object found");
+#endif
 }
 
-void _initialize_gdbtypes ();
-void
-_initialize_gdbtypes ()
+INIT_GDB_FILE (gdbtypes)
 {
   add_setshow_zuinteger_cmd ("overload", no_class, &overload_debug,
 			     _("Set debugging of C++ overloading."),
@@ -6150,10 +6208,10 @@ _initialize_gdbtypes ()
   /* Add user knob for controlling resolution of opaque types.  */
   add_setshow_boolean_cmd ("opaque-type-resolution", class_support,
 			   &opaque_type_resolution,
-			   _("Set resolution of opaque struct/class/union"
-			     " types (if set before loading symbols)."),
-			   _("Show resolution of opaque struct/class/union"
-			     " types (if set before loading symbols)."),
+			   _("\
+Set resolution of opaque struct/class/union types."),
+			   _("\
+Show resolution of opaque struct/class/union types."),
 			   NULL, NULL,
 			   show_opaque_type_resolution,
 			   &setlist, &showlist);

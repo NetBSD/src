@@ -1,6 +1,6 @@
 /* Support for printing Go types for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2023 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,7 +23,6 @@
      want a Python API for type printing
 */
 
-#include "defs.h"
 #include "gdbtypes.h"
 #include "c-lang.h"
 #include "go-lang.h"

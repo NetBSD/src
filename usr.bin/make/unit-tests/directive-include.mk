@@ -1,4 +1,4 @@
-# $NetBSD: directive-include.mk,v 1.14.2.1 2025/08/02 05:58:34 perseant Exp $
+# $NetBSD: directive-include.mk,v 1.14.2.2 2026/11/04 23:28:38 perseant Exp $
 #
 # Tests for the .include directive, which includes another file.
 
@@ -82,7 +82,7 @@ include
 # Buf_InitSize, which assumes that bmake_malloc never returns NULL, just like
 # all other places in the code.
 _!=		> directive-include-empty
-.include "${.CURDIR}/directive-include-empty"
+.include "${.OBJDIR}/directive-include-empty"
 _!=		rm directive-include-empty
 
 

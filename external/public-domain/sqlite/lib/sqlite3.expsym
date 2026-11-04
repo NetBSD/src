@@ -89,6 +89,7 @@ sqlite3_db_name
 sqlite3_db_readonly
 sqlite3_db_release_memory
 sqlite3_db_status
+sqlite3_db_status64
 sqlite3_declare_vtab
 sqlite3_deserialize
 sqlite3_drop_modules
@@ -191,7 +192,9 @@ sqlite3_serialize
 sqlite3_set_authorizer
 sqlite3_set_auxdata
 sqlite3_set_clientdata
+sqlite3_set_errmsg
 sqlite3_set_last_insert_rowid
+sqlite3_setlk_timeout
 sqlite3_shutdown
 sqlite3_sleep
 sqlite3_snprintf
@@ -213,9 +216,11 @@ sqlite3_str_appendchar
 sqlite3_str_appendf
 sqlite3_str_errcode
 sqlite3_str_finish
+sqlite3_str_free
 sqlite3_str_length
 sqlite3_str_new
 sqlite3_str_reset
+sqlite3_str_truncate
 sqlite3_str_value
 sqlite3_str_vappendf
 sqlite3_strglob

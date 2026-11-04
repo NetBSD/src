@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wg.c,v 1.78.2.1 2025/08/02 05:57:47 perseant Exp $	*/
+/*	$NetBSD: if_wg.c,v 1.78.2.2 2026/11/04 23:27:57 perseant Exp $	*/
 
 /*
  * Copyright (C) Ryota Ozaki <ozaki.ryota@gmail.com>
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.78.2.1 2025/08/02 05:57:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wg.c,v 1.78.2.2 2026/11/04 23:27:57 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_altq_enabled.h"
@@ -665,13 +665,6 @@ struct wg_peer {
 	uint8_t			wgp_latest_cookie[WG_COOKIE_LEN];
 	uint8_t			wgp_last_sent_mac1[WG_MAC_LEN];
 	bool			wgp_last_sent_mac1_valid;
-	uint8_t			wgp_last_sent_cookie[WG_COOKIE_LEN];
-	bool			wgp_last_sent_cookie_valid;
-
-	time_t			wgp_last_msg_received_time[WG_MSG_TYPE_MAX];
-
-	time_t			wgp_last_cookiesecret_time;
-	uint8_t			wgp_cookiesecret[WG_COOKIESECRET_LEN];
 
 	struct wg_ppsratecheck	wgp_ppsratecheck;
 
@@ -696,6 +689,7 @@ struct wg_softc {
 
 	uint8_t		wg_privkey[WG_STATIC_KEY_LEN];
 	uint8_t		wg_pubkey[WG_STATIC_KEY_LEN];
+	uint8_t		wg_cookiesecret[WG_COOKIESECRET_LEN];
 
 	int		wg_npeers;
 	struct pslist_head	wg_peers;
@@ -752,9 +746,15 @@ static unsigned wg_keepalive_timeout = WG_KEEPALIVE_TIMEOUT;
 static struct mbuf *
 		wg_get_mbuf(size_t, size_t);
 
+static void	wg_bake_cookie(struct wg_softc *,
+		    uint8_t[static WG_COOKIE_LEN],
+		    uint8_t[static WG_COOKIE_LEN],
+		    const struct sockaddr *);
+
 static void	wg_send_data_msg(struct wg_peer *, struct wg_session *,
 		    struct mbuf *);
-static void	wg_send_cookie_msg(struct wg_softc *, struct wg_peer *,
+static void	wg_send_cookie_msg(struct wg_softc *,
+		    const uint8_t[static WG_COOKIE_LEN],
 		    const uint32_t, const uint8_t[static WG_MAC_LEN],
 		    const struct sockaddr *);
 static void	wg_send_handshake_msg_resp(struct wg_softc *, struct wg_peer *,
@@ -777,7 +777,7 @@ static void	wg_update_endpoint_if_necessary(struct wg_peer *,
 
 static void	wg_schedule_session_dtor_timer(struct wg_peer *);
 
-static bool	wg_is_underload(struct wg_softc *, struct wg_peer *, int);
+static bool	wg_is_underload(struct wg_softc *, int);
 static void	wg_calculate_keys(struct wg_session *, const bool);
 
 static void	wg_clear_states(struct wg_session *);
@@ -785,6 +785,8 @@ static void	wg_clear_states(struct wg_session *);
 static void	wg_get_peer(struct wg_peer *, struct psref *);
 static void	wg_put_peer(struct wg_peer *, struct psref *);
 
+static int	wg_send_cookie(struct wg_softc *, const struct sockaddr *,
+		    struct mbuf *);
 static int	wg_send_hs(struct wg_peer *, struct mbuf *);
 static int	wg_send_data(struct wg_peer *, struct mbuf *);
 static int	wg_output(struct ifnet *, struct mbuf *,
@@ -807,6 +809,8 @@ static int	wg_clone_create(struct if_clone *, int);
 static int	wg_clone_destroy(struct ifnet *);
 
 struct wg_ops {
+	int (*send_cookie)(struct wg_softc *, const struct sockaddr *,
+	    struct mbuf *);
 	int (*send_hs_msg)(struct wg_peer *, struct mbuf *);
 	int (*send_data_msg)(struct wg_peer *, struct mbuf *);
 	void (*input)(struct ifnet *, struct mbuf *, const int);
@@ -814,6 +818,7 @@ struct wg_ops {
 };
 
 struct wg_ops wg_ops_rumpkernel = {
+	.send_cookie	= wg_send_cookie,
 	.send_hs_msg	= wg_send_hs,
 	.send_data_msg	= wg_send_data,
 	.input		= wg_input,
@@ -824,12 +829,15 @@ struct wg_ops wg_ops_rumpkernel = {
 static bool	wg_user_mode(struct wg_softc *);
 static int	wg_ioctl_linkstr(struct wg_softc *, struct ifdrv *);
 
+static int	wg_send_cookie_user(struct wg_softc *, const struct sockaddr *,
+		    struct mbuf *);
 static int	wg_send_hs_user(struct wg_peer *, struct mbuf *);
 static int	wg_send_data_user(struct wg_peer *, struct mbuf *);
 static void	wg_input_user(struct ifnet *, struct mbuf *, const int);
 static int	wg_bind_port_user(struct wg_softc *, const uint16_t);
 
 struct wg_ops wg_ops_rumpuser = {
+	.send_cookie	= wg_send_cookie_user,
 	.send_hs_msg	= wg_send_hs_user,
 	.send_data_msg	= wg_send_data_user,
 	.input		= wg_input_user,
@@ -1094,8 +1102,71 @@ wg_algo_dh(uint8_t out[static WG_DH_OUTPUT_LEN],
 
 	CTASSERT(WG_STATIC_KEY_LEN == crypto_scalarmult_curve25519_BYTES);
 
-	int ret __diagused = crypto_scalarmult(out, privkey, pubkey);
-	KASSERT(ret == 0);
+	/*
+	 * libsodium crypto_scalarmult may fail early (return -1) if
+	 * pubkey is a point of order <=8 -- and thus if the output
+	 * _would_ be all-zero -- in order to mitigate _potential_
+	 * timing side channel attacks prompted by:
+	 *
+	 *	Daniel Genkin, Luke Valenta, and Yuval Yarom, `May the
+	 *	Fourth Be With You: A Microarchitectural Side Channel
+	 *	Attack on Several Real-World Applications of
+	 *	Curve25519', ACM CCS 2017
+	 *	https://dl.acm.org/doi/10.1145/3133956.3134029
+	 *
+	 * (The paper is actually about exploiting variable-time logic
+	 * in erstwhile versions of libgcrypt; the risk libsodium
+	 * mitigates is only the potential of compiler optimizations
+	 * that convert branchless arithmetic circuits written in C
+	 * into variable-time machine code.  Of course, this early
+	 * abort itself introduces timing variation!  But that timing
+	 * variation only reveals the distinction between a point of
+	 * order <=8 (not possible for legitimate keys) and a point of
+	 * order >8.)
+	 *
+	 * The X25519 function was explicitly designed from the
+	 * beginning to be safe without point validation in DH key
+	 * agreements:
+	 *
+	 * https://web.archive.org/web/20260618014320/https://cr.yp.to/ecdh/curve25519-20060209.pdf
+	 * https://web.archive.org/web/20260613191208/https://cr.yp.to/ecdh.html#validate
+	 *
+	 * Consistent with the `MAY' in the RFC 7748 procedure for
+	 * X25519 DH key agreements, we deliberately ignore the result
+	 * of this check -- except to memset the output to zero --
+	 * because:
+	 *
+	 * - If a malicious peer provides a static public key of low
+	 *   order as its identity, that malicious peer could also just
+	 *   maliciously forward traffic to the NSA anyway.
+	 *
+	 * - If a MITM on the network provides an ephemeral public key
+	 *   in a key agreement, we will reject it as a forgery anyway
+	 *   using the static public key of the peer's identity.
+	 *
+	 * So there is no value in using the result of the check -- and
+	 * if we did use it, it would introduce unnecessary code
+	 * complexity downstream, raising the cost of auditing.
+	 *
+	 * Note that not all of libsodium's implementations of
+	 * crypto_scalarmult_curve25519 even do the check!  At time of
+	 * writing (both in the version of libsodium in NetBSD, 1.0.16,
+	 * and the latest libsodium, 1.0.22), the ref10 implementation
+	 * may return -1, while the sandy2x implementation never does.
+	 * The libsodium documentation doesn't even mention what the
+	 * return value means, even though the function is annotated
+	 * with __attribute__((warn_unused_result)):
+	 *
+	 * https://web.archive.org/web/20260521174050/https://libsodium.gitbook.io/doc/advanced/scalar_multiplication
+	 *
+	 * Further reading on the check, its value, and its
+	 * limitations:
+	 *
+	 * https://web.archive.org/web/20260404134530/https://moderncrypto.org/mail-archive/curves/2017/000896.html
+	 * https://web.archive.org/web/20210506235924/https://crypto.stackexchange.com/questions/55632/libsodium-x25519-and-ed25519-small-order-check/55643#55643
+	 */
+	if (crypto_scalarmult(out, privkey, pubkey))
+		memset(out, 0, WG_DH_OUTPUT_LEN);
 }
 
 static void
@@ -1620,6 +1691,37 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	}
 
 	/*
+	 * [W] 5.4.7: Under Load: Cookie Reply Message
+	 */
+	if (wg_is_underload(wg, WG_MSG_TYPE_INIT)) {
+		uint8_t cookie0[WG_COOKIE_LEN], cookie1[WG_COOKIE_LEN];
+		uint8_t mac2_0[WG_MAC_LEN], mac2_1[WG_MAC_LEN];
+
+		WG_TRACE("under load");
+
+		wg_bake_cookie(wg, cookie0, cookie1, src);
+		wg_algo_mac(mac2_0, sizeof(mac2_0),
+		    cookie0, sizeof(cookie0),
+		    (const uint8_t *)wgmi,
+		    offsetof(struct wg_msg_init, wgmi_mac2),
+		    NULL, 0);
+		wg_algo_mac(mac2_1, sizeof(mac2_1),
+		    cookie1, sizeof(cookie1),
+		    (const uint8_t *)wgmi,
+		    offsetof(struct wg_msg_init, wgmi_mac2),
+		    NULL, 0);
+		if (!(consttime_memequal(mac2_0, wgmi->wgmi_mac2,
+			    sizeof(mac2_0)) |
+			consttime_memequal(mac2_1, wgmi->wgmi_mac2,
+			    sizeof(mac2_1)))) {
+			WG_DLOG("mac2 is invalid, sending a cookie\n");
+			wg_send_cookie_msg(wg, cookie1, wgmi->wgmi_sender,
+			    wgmi->wgmi_mac1, src);
+			return;
+		}
+	}
+
+	/*
 	 * [W] 5.4.2: First Message: Initiator to Responder
 	 * "When the responder receives this message, it does the same
 	 *  operations so that its final state variables are identical,
@@ -1663,57 +1765,25 @@ wg_handle_msg_init(struct wg_softc *wg, const struct wg_msg_init *wgmi,
 	/* Hi := HASH(Hi || msg.static) */
 	wg_algo_hash(hash, wgmi->wgmi_static, sizeof(wgmi->wgmi_static));
 
+	/*
+	 * Look up the peer.  Once we find a peer, wgp->wgp_pubkey is
+	 * stable as long as we hold a passive reference, but for just
+	 * about anything else we must lock the peer.
+	 */
 	wgp = wg_lookup_peer_by_pubkey(wg, peer_pubkey, &psref_peer);
 	if (wgp == NULL) {
 		WG_DLOG("peer not found\n");
 		return;
 	}
 
-	/*
-	 * Lock the peer to serialize access to cookie state.
-	 *
-	 * XXX Can we safely avoid holding the lock across DH?  Take it
-	 * just to verify mac2 and then unlock/DH/lock?
-	 */
-	mutex_enter(wgp->wgp_lock);
-
-	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_INIT))) {
-		WG_TRACE("under load");
-		/*
-		 * [W] 5.3: Denial of Service Mitigation & Cookies
-		 * "the responder, ..., and when under load may reject messages
-		 *  with an invalid msg.mac2.  If the responder receives a
-		 *  message with a valid msg.mac1 yet with an invalid msg.mac2,
-		 *  and is under load, it may respond with a cookie reply
-		 *  message"
-		 */
-		uint8_t zero[WG_MAC_LEN] = {0};
-		if (consttime_memequal(wgmi->wgmi_mac2, zero, sizeof(zero))) {
-			WG_TRACE("sending a cookie message: no cookie included");
-			wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
-			    wgmi->wgmi_mac1, src);
-			goto out;
-		}
-		if (!wgp->wgp_last_sent_cookie_valid) {
-			WG_TRACE("sending a cookie message: no cookie sent ever");
-			wg_send_cookie_msg(wg, wgp, wgmi->wgmi_sender,
-			    wgmi->wgmi_mac1, src);
-			goto out;
-		}
-		uint8_t mac2[WG_MAC_LEN];
-		wg_algo_mac(mac2, sizeof(mac2), wgp->wgp_last_sent_cookie,
-		    WG_COOKIE_LEN, (const uint8_t *)wgmi,
-		    offsetof(struct wg_msg_init, wgmi_mac2), NULL, 0);
-		if (!consttime_memequal(mac2, wgmi->wgmi_mac2, sizeof(mac2))) {
-			WG_DLOG("mac2 is invalid\n");
-			goto out;
-		}
-		WG_TRACE("under load, but continue to sending");
-	}
-
 	/* [N] 2.2: "ss" */
 	/* Ci, k := KDF2(Ci, DH(Si^priv, Sr^pub)) */
 	wg_algo_dh_kdf(ckey, cipher_key, wg->wg_privkey, wgp->wgp_pubkey);
+
+	/*
+	 * Lock the peer to serialize access to handshake state.
+	 */
+	mutex_enter(wgp->wgp_lock);
 
 	/* msg.timestamp := AEAD(k, TIMESTAMP(), Hi) */
 	wg_timestamp_t timestamp;
@@ -1896,6 +1966,25 @@ wg_put_sa(struct wg_peer *wgp, struct wg_sockaddr *wgsa, struct psref *psref)
 {
 
 	psref_release(psref, &wgsa->wgsa_psref, wg_psref_class);
+}
+
+static int
+wg_send_cookie(struct wg_softc *wg, const struct sockaddr *src, struct mbuf *m)
+{
+	struct socket *const so = wg_get_so_by_af(wg, src->sa_family);
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} dst;
+
+#ifdef WG_DEBUG_LOG
+	char addr[128];
+	sockaddr_format(src, addr, sizeof(addr));
+	WG_DLOG("send cookie to %s\n", addr);
+#endif
+	sockaddr_copy(&dst.sa, sizeof(dst), src);
+	return sosend(so, &dst.sa, NULL, m, NULL, 0, curlwp);
 }
 
 static int
@@ -2151,7 +2240,6 @@ wg_swap_sessions(struct wg_softc *wg, struct wg_peer *wgp)
 	getnanotime(&wgp->wgp_last_handshake_time);
 	wgp->wgp_handshake_start_time = 0;
 	wgp->wgp_last_sent_mac1_valid = false;
-	wgp->wgp_last_sent_cookie_valid = false;
 
 	/*
 	 * If we had a data packet queued up, send it.
@@ -2221,6 +2309,37 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 		return;
 	}
 
+	/*
+	 * [W] 5.4.7: Under Load: Cookie Reply Message
+	 */
+	if (wg_is_underload(wg, WG_MSG_TYPE_RESP)) {
+		uint8_t cookie0[WG_COOKIE_LEN], cookie1[WG_COOKIE_LEN];
+		uint8_t mac2_0[WG_MAC_LEN], mac2_1[WG_MAC_LEN];
+
+		WG_TRACE("under load");
+
+		wg_bake_cookie(wg, cookie0, cookie1, src);
+		wg_algo_mac(mac2_0, sizeof(mac2_0),
+		    cookie0, sizeof(cookie0),
+		    (const uint8_t *)wgmr,
+		    offsetof(struct wg_msg_resp, wgmr_mac2),
+		    NULL, 0);
+		wg_algo_mac(mac2_1, sizeof(mac2_1),
+		    cookie1, sizeof(cookie1),
+		    (const uint8_t *)wgmr,
+		    offsetof(struct wg_msg_resp, wgmr_mac2),
+		    NULL, 0);
+		if (!(consttime_memequal(mac2_0, wgmr->wgmr_mac2,
+			    sizeof(mac2_0)) |
+			consttime_memequal(mac2_1, wgmr->wgmr_mac2,
+			    sizeof(mac2_1)))) {
+			WG_DLOG("mac2 is invalid, sending a cookie\n");
+			wg_send_cookie_msg(wg, cookie1, wgmr->wgmr_receiver,
+			    wgmr->wgmr_mac1, src);
+			return;
+		}
+	}
+
 	WG_TRACE("resp msg received");
 	wgs = wg_lookup_session_by_index(wg, wgmr->wgmr_receiver, &psref);
 	if (wgs == NULL) {
@@ -2236,40 +2355,6 @@ wg_handle_msg_resp(struct wg_softc *wg, const struct wg_msg_resp *wgmr,
 	if (wgs->wgs_state != WGS_STATE_INIT_ACTIVE) {
 		WG_TRACE("peer sent spurious handshake response, ignoring");
 		goto out;
-	}
-
-	if (__predict_false(wg_is_underload(wg, wgp, WG_MSG_TYPE_RESP))) {
-		WG_TRACE("under load");
-		/*
-		 * [W] 5.3: Denial of Service Mitigation & Cookies
-		 * "the responder, ..., and when under load may reject messages
-		 *  with an invalid msg.mac2.  If the responder receives a
-		 *  message with a valid msg.mac1 yet with an invalid msg.mac2,
-		 *  and is under load, it may respond with a cookie reply
-		 *  message"
-		 */
-		uint8_t zero[WG_MAC_LEN] = {0};
-		if (consttime_memequal(wgmr->wgmr_mac2, zero, sizeof(zero))) {
-			WG_TRACE("sending a cookie message: no cookie included");
-			wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
-			    wgmr->wgmr_mac1, src);
-			goto out;
-		}
-		if (!wgp->wgp_last_sent_cookie_valid) {
-			WG_TRACE("sending a cookie message: no cookie sent ever");
-			wg_send_cookie_msg(wg, wgp, wgmr->wgmr_sender,
-			    wgmr->wgmr_mac1, src);
-			goto out;
-		}
-		uint8_t mac2[WG_MAC_LEN];
-		wg_algo_mac(mac2, sizeof(mac2), wgp->wgp_last_sent_cookie,
-		    WG_COOKIE_LEN, (const uint8_t *)wgmr,
-		    offsetof(struct wg_msg_resp, wgmr_mac2), NULL, 0);
-		if (!consttime_memequal(mac2, wgmr->wgmr_mac2, sizeof(mac2))) {
-			WG_DLOG("mac2 is invalid\n");
-			goto out;
-		}
-		WG_TRACE("under load, but continue to sending");
 	}
 
 	memcpy(hash, wgs->wgs_handshake_hash, sizeof(hash));
@@ -2432,33 +2517,20 @@ wg_lookup_peer_by_pubkey(struct wg_softc *wg,
 }
 
 static void
-wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
-    struct wg_msg_cookie *wgmc, const uint32_t sender,
-    const uint8_t mac1[static WG_MAC_LEN], const struct sockaddr *src)
+wg_bake_cookie(struct wg_softc *wg,
+    uint8_t cookie0[static WG_COOKIE_LEN],
+    uint8_t cookie1[static WG_COOKIE_LEN],
+    const struct sockaddr *src)
 {
-	uint8_t cookie[WG_COOKIE_LEN];
-	uint8_t key[WG_HASH_LEN];
-	uint8_t addr[sizeof(struct in6_addr)];
+	uint8_t addr[16];
 	size_t addrlen;
-	uint16_t uh_sport; /* be */
+	uint8_t uh_sport[2];
 
-	KASSERT(mutex_owned(wgp->wgp_lock));
-
-	wgmc->wgmc_type = htole32(WG_MSG_TYPE_COOKIE);
-	wgmc->wgmc_receiver = sender;
-	cprng_fast(wgmc->wgmc_salt, sizeof(wgmc->wgmc_salt));
-
-	/*
-	 * [W] 5.4.7: Under Load: Cookie Reply Message
-	 * "The secret variable, Rm, changes every two minutes to a
-	 * random value"
-	 */
-	if ((time_uptime - wgp->wgp_last_cookiesecret_time) >
-	    WG_COOKIESECRET_TIME) {
-		cprng_strong(kern_cprng, wgp->wgp_cookiesecret,
-		    sizeof(wgp->wgp_cookiesecret), 0);
-		wgp->wgp_last_cookiesecret_time = time_uptime;
-	}
+#ifdef WG_DEBUG_LOG
+	char addrstr[128];
+	sockaddr_format(src, addrstr, sizeof(addrstr));
+	WG_DLOG("src=%s\n", addrstr);
+#endif
 
 	switch (src->sa_family) {
 #ifdef INET
@@ -2466,7 +2538,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		const struct sockaddr_in *sin = satocsin(src);
 		addrlen = sizeof(sin->sin_addr);
 		memcpy(addr, &sin->sin_addr, addrlen);
-		uh_sport = sin->sin_port;
+		be16enc(uh_sport, ntohs(sin->sin_port));
 		break;
 	    }
 #endif
@@ -2475,7 +2547,7 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		const struct sockaddr_in6 *sin6 = satocsin6(src);
 		addrlen = sizeof(sin6->sin6_addr);
 		memcpy(addr, &sin6->sin6_addr, addrlen);
-		uh_sport = sin6->sin6_port;
+		be16enc(uh_sport, ntohs(sin6->sin6_port));
 		break;
 	    }
 #endif
@@ -2483,29 +2555,90 @@ wg_fill_msg_cookie(struct wg_softc *wg, struct wg_peer *wgp,
 		panic("invalid af=%d", src->sa_family);
 	}
 
-	wg_algo_mac(cookie, sizeof(cookie),
-	    wgp->wgp_cookiesecret, sizeof(wgp->wgp_cookiesecret),
-	    addr, addrlen, (const uint8_t *)&uh_sport, sizeof(uh_sport));
-	wg_algo_mac_cookie(key, sizeof(key), wg->wg_pubkey,
-	    sizeof(wg->wg_pubkey));
-	wg_algo_xaead_enc(wgmc->wgmc_cookie, sizeof(wgmc->wgmc_cookie), key,
-	    cookie, sizeof(cookie), mac1, WG_MAC_LEN, wgmc->wgmc_salt);
+	/*
+	 * [W] 5.4.7: Under Load: Cookie Reply Message
+	 * "The secret variable, R_m, changes every two minutes to a
+	 * random value..."
+	 *
+	 * Rather than keep state (requires locking, prefer not to take
+	 * any locks at this stage of DoS mitigation), we just compute
+	 * a pseudorandom function of the number of two-minute
+	 * intervals since boot.
+	 *
+	 * Actually, we compute a PRF of the number of one-minute
+	 * intervals since boot, but we allow both the current minute
+	 * and the next minute, and we will send the next minute as the
+	 * cookie on the network -- that way, every cookie is valid for
+	 * a total of two minutes of absolute time, but the cookie we
+	 * send is guaranteed to be valid for _at least_ one minute
+	 * after we send it.  If we simply used a single two-minute
+	 * interval, we might send a cookie out 119sec into its
+	 * validity period, expiring before the other side has had a
+	 * chance to use it.
+	 */
+	uint8_t cookie_R0[WG_COOKIESECRET_LEN], cookie_R1[WG_COOKIESECRET_LEN];
+	const uint32_t now = time_uptime32;
+	uint8_t now0[4], now1[4];
+	le32enc(now0, now/(WG_COOKIESECRET_TIME/2));
+	le32enc(now1, now/(WG_COOKIESECRET_TIME/2) + 1);
+	blake2s(cookie_R0, sizeof(cookie_R0),
+	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
+	    now0, sizeof(now0));
+	blake2s(cookie_R1, sizeof(cookie_R1),
+	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
+	    now1, sizeof(now1));
 
-	/* Need to store to calculate mac2 */
-	memcpy(wgp->wgp_last_sent_cookie, cookie, sizeof(cookie));
-	wgp->wgp_last_sent_cookie_valid = true;
+	/*
+	 * tau := MAC(R_m, A_{m'}),
+	 *
+	 * where "A_{m'} represents a concatenation of the subscript's
+	 * external IP source address and UDP source port"
+	 *
+	 * The document is not clear, but it seems that tau itself is
+	 * the `cookie' (and the `msg.cookie' field is the _encrypted_
+	 * cookie).
+	 */
+	wg_algo_mac(cookie0, WG_COOKIE_LEN,
+	    cookie_R0, sizeof(cookie_R0),
+	    addr, addrlen, uh_sport, sizeof(uh_sport));
+	wg_algo_mac(cookie1, WG_COOKIE_LEN,
+	    cookie_R1, sizeof(cookie_R1),
+	    addr, addrlen, uh_sport, sizeof(uh_sport));
 }
 
 static void
-wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
+wg_fill_msg_cookie(struct wg_softc *wg,
+    struct wg_msg_cookie *wgmc,
+    const uint8_t cookie[static WG_COOKIE_LEN],
+    const uint32_t sender, const uint8_t mac1[static WG_MAC_LEN])
+{
+	uint8_t key[WG_HASH_LEN];
+
+	wgmc->wgmc_type = htole32(WG_MSG_TYPE_COOKIE);
+	wgmc->wgmc_receiver = sender;
+	cprng_fast(wgmc->wgmc_salt, sizeof(wgmc->wgmc_salt));
+
+	/*
+	 * msg.cookie := XAEAD(HASH(LABEL-COOKIE || S_m^pub),
+	 *     msg.nonce, tau, M),
+	 *
+	 * where tau is the cookie and M is the original mac1.
+	 */
+	wg_algo_mac_cookie(key, sizeof(key), wg->wg_pubkey,
+	    sizeof(wg->wg_pubkey));
+	wg_algo_xaead_enc(wgmc->wgmc_cookie, sizeof(wgmc->wgmc_cookie), key,
+	    cookie, WG_COOKIE_LEN, mac1, WG_MAC_LEN, wgmc->wgmc_salt);
+}
+
+static void
+wg_send_cookie_msg(struct wg_softc *wg,
+    const uint8_t cookie[static WG_COOKIE_LEN],
     const uint32_t sender, const uint8_t mac1[static WG_MAC_LEN],
     const struct sockaddr *src)
 {
 	int error;
 	struct mbuf *m;
 	struct wg_msg_cookie *wgmc;
-
-	KASSERT(mutex_owned(wgp->wgp_lock));
 
 	m = m_gethdr(M_WAIT, MT_DATA);
 	if (sizeof(*wgmc) > MHLEN) {
@@ -2514,9 +2647,9 @@ wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
 	}
 	m->m_pkthdr.len = m->m_len = sizeof(*wgmc);
 	wgmc = mtod(m, struct wg_msg_cookie *);
-	wg_fill_msg_cookie(wg, wgp, wgmc, sender, mac1, src);
+	wg_fill_msg_cookie(wg, wgmc, cookie, sender, mac1);
 
-	error = wg->wg_ops->send_hs_msg(wgp, m); /* consumes m */
+	error = wg->wg_ops->send_cookie(wg, src, m); /* consumes m */
 	if (error) {
 		WG_DLOG("send_hs_msg failed, error=%d\n", error);
 		return;
@@ -2526,8 +2659,11 @@ wg_send_cookie_msg(struct wg_softc *wg, struct wg_peer *wgp,
 }
 
 static bool
-wg_is_underload(struct wg_softc *wg, struct wg_peer *wgp, int msgtype)
+wg_is_underload(struct wg_softc *wg, int msgtype)
 {
+	static volatile uint32_t last_received[WG_MSG_TYPE_MAX + 1];
+	uint32_t now, last;
+
 #ifdef WG_DEBUG_PARAMS
 	if (wg_force_underload)
 		return true;
@@ -2539,9 +2675,10 @@ wg_is_underload(struct wg_softc *wg, struct wg_peer *wgp, int msgtype)
 	 * messages as (a kind of) load; if a message of the same type comes
 	 * to a peer within 1 second, we consider we are under load.
 	 */
-	time_t last = wgp->wgp_last_msg_received_time[msgtype];
-	wgp->wgp_last_msg_received_time[msgtype] = time_uptime;
-	return (time_uptime - last) == 0;
+	now = time_uptime32;
+	last = msgtype < __arraycount(last_received) ?
+	    atomic_swap_32(&last_received[msgtype], now) : 0;
+	return (now - last) == 0;
 }
 
 static void
@@ -2670,6 +2807,8 @@ wg_need_to_send_init_message(struct wg_session *wgs)
 static void
 wg_schedule_peer_task(struct wg_peer *wgp, unsigned int task)
 {
+
+	KASSERT(task != 0);
 
 	mutex_enter(wgp->wgp_intr_lock);
 	WG_DLOG("tasks=%d, task=%d\n", wgp->wgp_tasks, task);
@@ -2882,6 +3021,11 @@ wg_update_endpoint_if_necessary(struct wg_peer *wgp,
 		!sockaddr_port_match(src, wgsatosa(wgsa)))) {
 		/* XXX We can't change the endpoint twice in a short period */
 		if (atomic_swap_uint(&wgp->wgp_endpoint_changing, 1) == 0) {
+			/*
+			 * membar_acquire matches atomic_store_release
+			 * in wg_task_endpoint_changed.
+			 */
+			membar_acquire();
 			wg_change_endpoint(wgp, src);
 		}
 	}
@@ -3328,6 +3472,18 @@ wg_receive_packets(struct wg_softc *wg, const int af)
 			return;
 		}
 
+		/*
+		 * wg_overudp_cb should guarantee that only packets
+		 * long enough to possibly be wg messages make it
+		 * through to us, but let's double-check out of
+		 * paranoia.
+		 */
+		KASSERT(m_length(m) >= sizeof(struct wg_msg));
+		if (__predict_false(m_length(m) < sizeof(struct wg_msg))) {
+			m_freem(m);
+			continue;
+		}
+
 		KASSERT(paddr != NULL);
 		KASSERT(paddr->m_len >= sizeof(struct sockaddr));
 		src = mtod(paddr, struct sockaddr *);
@@ -3482,6 +3638,11 @@ wg_task_endpoint_changed(struct wg_softc *wg, struct wg_peer *wgp)
 		psref_target_init(&wgp->wgp_endpoint0->wgsa_psref,
 		    wg_psref_class);
 		mutex_enter(wgp->wgp_lock);
+
+		/*
+		 * atomic_store_release matches membar_acquire
+		 * in wg_update_endpoint_if_necessary.
+		 */
 		atomic_store_release(&wgp->wgp_endpoint_changing, 0);
 	}
 }
@@ -3697,7 +3858,10 @@ wg_overudp_cb(struct mbuf **mp, int offset, struct socket *so,
 
 	WG_TRACE("enter");
 
-	/* Verify the mbuf chain is long enough to have a wg msg header.  */
+	/*
+	 * Verify the mbuf chain is long enough to have a wg msg header.
+	 * wg_receive_packets relies on this.
+	 */
 	KASSERT(offset <= m_length(m));
 	if (__predict_false(m_length(m) - offset < sizeof(struct wg_msg))) {
 		/* drop on the floor */
@@ -3940,6 +4104,7 @@ wg_destroy_peer(struct wg_peer *wgp)
 
 	/* Prevent new packets from this peer on any source address.  */
 	rw_enter(wg->wg_rwlock, RW_WRITER);
+	KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 	for (int i = 0; i < wgp->wgp_n_allowedips; i++) {
 		struct wg_allowedip *wga = &wgp->wgp_allowedips[i];
 		struct radix_node_head *rnh = wg_rnh(wg, wga->wga_family);
@@ -4152,6 +4317,10 @@ wg_clone_create(struct if_clone *ifc, int unit)
 	threadpool_job_init(&wg->wg_job, wg_job, wg->wg_intr_lock,
 	    "%s", if_name(&wg->wg_if));
 	wg->wg_ops = &wg_ops_rumpkernel;
+
+	cprng_strong(kern_cprng,
+	    wg->wg_cookiesecret, sizeof(wg->wg_cookiesecret),
+	    0);
 
 	error = threadpool_get(&wg->wg_threadpool, PRI_NONE);
 	if (error)
@@ -4662,6 +4831,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	const void *psk;
 	size_t psk_len;
 	const char *name = NULL;
+	struct wg_peer *wgp = NULL;
 
 	if (prop_dictionary_get_string(peer, "name", &name)) {
 		if (strlen(name) > WG_PEER_NAME_MAXLEN) {
@@ -4684,7 +4854,7 @@ wg_handle_prop_peer(struct wg_softc *wg, prop_dictionary_t peer,
 	}
 #endif
 
-	struct wg_peer *wgp = wg_alloc_peer(wg);
+	wgp = wg_alloc_peer(wg);
 	memcpy(wgp->wgp_pubkey, pubkey, sizeof(wgp->wgp_pubkey));
 	if (name != NULL)
 		strncpy(wgp->wgp_name, name, sizeof(wgp->wgp_name));
@@ -4741,9 +4911,14 @@ skip_endpoint:
 
 	prop_object_iterator_t _it = prop_array_iterator(allowedips);
 	prop_dictionary_t prop_allowedip;
-	int j = 0;
 	while ((prop_allowedip = prop_object_iterator_next(_it)) != NULL) {
-		struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
+		if (wgp->wgp_n_allowedips >= WG_ALLOWEDIPS) {
+			error = E2BIG;
+			goto out;
+		}
+
+		struct wg_allowedip *const wga =
+		    &wgp->wgp_allowedips[wgp->wgp_n_allowedips++];
 
 		if (!prop_dictionary_get_int(prop_allowedip, "family",
 			&wga->wga_family))
@@ -4763,8 +4938,10 @@ skip_endpoint:
 			struct in_addr mask;
 			struct sockaddr_in sin_mask;
 
-			if (addr_len != sizeof(struct in_addr))
-				return EINVAL;
+			if (addr_len != sizeof(struct in_addr)) {
+				error = EINVAL;
+				goto out;
+			}
 			memcpy(&wga->wga_addr4, addr, addr_len);
 
 			sockaddr_in_init(&sin, (const struct in_addr *)addr,
@@ -4791,8 +4968,10 @@ skip_endpoint:
 			struct in6_addr mask;
 			struct sockaddr_in6 sin6_mask;
 
-			if (addr_len != sizeof(struct in6_addr))
-				return EINVAL;
+			if (addr_len != sizeof(struct in6_addr)) {
+				error = EINVAL;
+				goto out;
+			}
 			memcpy(&wga->wga_addr6, addr, addr_len);
 
 			sockaddr_in6_init(&sin6, (const struct in6_addr *)addr,
@@ -4821,13 +5000,14 @@ skip_endpoint:
 		error = wg_rtable_add_route(wg, wga);
 		if (error != 0)
 			goto out;
-
-		j++;
 	}
-	wgp->wgp_n_allowedips = j;
+	KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 skip:
 	*wgpp = wgp;
+	wgp = NULL;
 out:
+	if (wgp)
+		wg_destroy_peer(wgp);
 	return error;
 }
 
@@ -4859,7 +5039,7 @@ static int
 wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	const void *privkey;
 	size_t privkey_len;
@@ -4889,6 +5069,8 @@ wg_ioctl_set_private_key(struct wg_softc *wg, struct ifdrv *ifd)
 	error = 0;
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4897,7 +5079,7 @@ static int
 wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	uint16_t port;
 
@@ -4914,6 +5096,8 @@ wg_ioctl_set_listen_port(struct wg_softc *wg, struct ifdrv *ifd)
 	error = wg->wg_ops->bind_port(wg, (uint16_t)port);
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4922,7 +5106,7 @@ static int
 wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	struct wg_peer *wgp = NULL, *wgp0 __diagused;
 
@@ -4964,6 +5148,8 @@ wg_ioctl_add_peer(struct wg_softc *wg, struct ifdrv *ifd)
 	if_link_state_change(&wg->wg_if, LINK_STATE_UP);
 
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -4972,7 +5158,7 @@ static int
 wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 {
 	int error;
-	prop_dictionary_t prop_dict;
+	prop_dictionary_t prop_dict = NULL;
 	char *buf = NULL;
 	const char *name;
 
@@ -4991,6 +5177,8 @@ wg_ioctl_delete_peer(struct wg_softc *wg, struct ifdrv *ifd)
 
 	error = wg_destroy_peer_name(wg, name);
 out:
+	if (prop_dict)
+		prop_object_release(prop_dict);
 	kmem_free(buf, ifd->ifd_len + 1);
 	return error;
 }
@@ -5100,6 +5288,7 @@ wg_ioctl_get(struct wg_softc *wg, struct ifdrv *ifd)
 		prop_array_t allowedips = prop_array_create();
 		if (allowedips == NULL)
 			goto next;
+		KASSERT(wgp->wgp_n_allowedips <= WG_ALLOWEDIPS);
 		for (int j = 0; j < wgp->wgp_n_allowedips; j++) {
 			struct wg_allowedip *wga = &wgp->wgp_allowedips[j];
 			prop_dictionary_t prop_allowedip;
@@ -5376,12 +5565,12 @@ SYSCTL_SETUP(sysctl_net_wg_setup, "sysctl net.wg setup")
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_QUAD, "rekey_after_messages",
-	    SYSCTL_DESCR("session liftime by messages"),
+	    SYSCTL_DESCR("session lifetime by messages"),
 	    NULL, 0, &wg_rekey_after_messages, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, "rekey_after_time",
-	    SYSCTL_DESCR("session liftime"),
+	    SYSCTL_DESCR("session lifetime"),
 	    NULL, 0, &wg_rekey_after_time, 0, CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
@@ -5464,7 +5653,8 @@ wg_send_user(struct wg_peer *wgp, struct mbuf *m, bool handshake)
 	struct psref psref;
 	struct wg_sockaddr *wgsa;
 	struct wg_softc *wg = wgp->wgp_sc;
-	struct iovec iov[1];
+	void *pkt;
+	size_t pktlen;
 
 	wgsa = wg_get_endpoint_sa(wgp, &psref);
 
@@ -5476,16 +5666,44 @@ wg_send_user(struct wg_peer *wgp, struct mbuf *m, bool handshake)
 	}
 #endif
 
-	iov[0].iov_base = mtod(m, void *);
-	iov[0].iov_len = m->m_len;
+	pkt = mtod(m, void *);
+	pktlen = m->m_len;
 
 	/* Send messages to a peer via an ordinary socket. */
-	error = rumpuser_wg_send_peer(wg->wg_user, wgsatosa(wgsa), iov, 1);
+	error = rumpuser_wg_send_peer(wg->wg_user, wgsatosa(wgsa),
+	    pkt, pktlen);
 
 	wg_put_sa(wgp, wgsa, &psref);
 
 	m_freem(m);
 
+	return error;
+}
+
+static int
+wg_send_cookie_user(struct wg_softc *wg, const struct sockaddr *src,
+    struct mbuf *m)
+{
+	union {
+		struct sockaddr sa;
+		struct sockaddr_in sin;
+		struct sockaddr_in6 sin6;
+	} dst;
+	void *pkt;
+	size_t pktlen;
+	int error;
+
+#ifdef WG_DEBUG_LOG
+	char addr[128];
+	sockaddr_format(src, addr, sizeof(addr));
+	WG_DLOG("send cookie to %s\n", addr);
+#endif
+
+	sockaddr_copy(&dst.sa, sizeof(dst), src);
+	pkt = mtod(m, void *);
+	pktlen = m->m_len;
+	error = rumpuser_wg_send_peer(wg->wg_user, &dst.sa, pkt, pktlen);
+	m_freem(m);
 	return error;
 }
 
@@ -5507,8 +5725,17 @@ static void
 wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 {
 	struct wg_softc *wg = ifp->if_softc;
-	struct iovec iov[2];
-	struct sockaddr_storage ss;
+	union {
+		struct sockaddr sa;
+#ifdef INET
+		struct sockaddr_in sin;
+#endif
+#ifdef INET6
+		struct sockaddr_in6 sin6;
+#endif
+	} dst;
+	const void *pkt;
+	size_t pktlen;
 
 	KASSERT(af == AF_INET || af == AF_INET6);
 
@@ -5517,23 +5744,21 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 	switch (af) {
 #ifdef INET
 	case AF_INET: {
-		struct sockaddr_in *sin = (struct sockaddr_in *)&ss;
 		struct ip *ip;
 
 		KASSERT(m->m_len >= sizeof(struct ip));
 		ip = mtod(m, struct ip *);
-		sockaddr_in_init(sin, &ip->ip_dst, 0);
+		sockaddr_in_init(&dst.sin, &ip->ip_dst, 0);
 		break;
 	}
 #endif
 #ifdef INET6
 	case AF_INET6: {
-		struct sockaddr_in6 *sin6 = (struct sockaddr_in6 *)&ss;
 		struct ip6_hdr *ip6;
 
 		KASSERT(m->m_len >= sizeof(struct ip6_hdr));
 		ip6 = mtod(m, struct ip6_hdr *);
-		sockaddr_in6_init(sin6, &ip6->ip6_dst, 0, 0, 0);
+		sockaddr_in6_init(&dst.sin6, &ip6->ip6_dst, 0, 0, 0);
 		break;
 	}
 #endif
@@ -5541,15 +5766,13 @@ wg_input_user(struct ifnet *ifp, struct mbuf *m, const int af)
 		goto out;
 	}
 
-	iov[0].iov_base = &ss;
-	iov[0].iov_len = ss.ss_len;
-	iov[1].iov_base = mtod(m, void *);
-	iov[1].iov_len = m->m_len;
+	pkt = mtod(m, void *);
+	pktlen = m->m_len;
 
-	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
+	WG_DUMP_BUF(pkt, pktlen);
 
 	/* Send decrypted packets to users via a tun. */
-	rumpuser_wg_send_user(wg->wg_user, iov, 2);
+	rumpuser_wg_send_user(wg->wg_user, &dst.sa, pkt, pktlen);
 
 out:	m_freem(m);
 }
@@ -5572,28 +5795,30 @@ wg_bind_port_user(struct wg_softc *wg, const uint16_t port)
 }
 
 /*
- * Receive user packets.
+ * Receive outgoing packets from the kernel network stack on the wgN
+ * interface (actually, tunN).
  */
 void
-rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
+rumpkern_wg_recv_user(struct wg_softc *wg, const struct sockaddr *dst,
+    const void *pkt, size_t pktlen)
 {
 	struct ifnet *ifp = &wg->wg_if;
 	struct mbuf *m;
-	const struct sockaddr *dst;
 	int error;
 
 	WG_TRACE("");
 
-	dst = iov[0].iov_base;
+	if (pktlen > INT_MAX)	/* paranoia */
+		return;
 
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
 	m->m_len = m->m_pkthdr.len = 0;
-	m_copyback(m, 0, iov[1].iov_len, iov[1].iov_base);
+	m_copyback(m, 0, (int)pktlen, pkt);
 
-	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
-	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
+	WG_DLOG("iov_len=%zu\n", pktlen);
+	WG_DUMP_BUF(pkt, pktlen);
 
 	error = wg_output(ifp, m, dst, NULL); /* consumes m */
 	if (error)
@@ -5601,27 +5826,41 @@ rumpkern_wg_recv_user(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
 }
 
 /*
- * Receive packets from a peer.
+ * Receive incoming packets packets from a peer on the network.
  */
 void
-rumpkern_wg_recv_peer(struct wg_softc *wg, struct iovec *iov, size_t iovlen)
+rumpkern_wg_recv_peer(struct wg_softc *wg, const struct sockaddr *src,
+    const void *pkt, size_t pktlen)
 {
 	struct mbuf *m;
-	const struct sockaddr *src;
 	int bound;
 
 	WG_TRACE("");
 
-	src = iov[0].iov_base;
+	if (pktlen > INT_MAX)	/* paranoia */
+		return;
 
+	/*
+	 * If the input UDP packet is too short, just drop it on the
+	 * floor like the kernel does.
+	 */
+	if (pktlen < sizeof(struct wg_msg))
+		return;
+
+	/*
+	 * Create an mbuf with the data.  Can't use the caller's buffer
+	 * -- don't know how long it will last.  (XXX Should maybe push
+	 * mbuf allocation into the caller to we don't have to memcpy
+	 * here.)
+	 */
 	m = m_gethdr(M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return;
 	m->m_len = m->m_pkthdr.len = 0;
-	m_copyback(m, 0, iov[1].iov_len, iov[1].iov_base);
+	m_copyback(m, 0, (int)pktlen, pkt);
 
-	WG_DLOG("iov_len=%zu\n", iov[1].iov_len);
-	WG_DUMP_BUF(iov[1].iov_base, iov[1].iov_len);
+	WG_DLOG("iov_len=%zu\n", pktlen);
+	WG_DUMP_BUF(pkt, pktlen);
 
 	bound = curlwp_bind();
 	wg_handle_packet(wg, m, src);

@@ -3,7 +3,7 @@
    Low level functions to implement Operating System specific
    code to manipulate x86 debug registers.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -20,8 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_NAT_H
-#define X86_NAT_H 1
+#ifndef GDB_X86_NAT_H
+#define GDB_X86_NAT_H
 
 #include "breakpoint.h"
 #include "nat/x86-dregs.h"
@@ -114,4 +114,4 @@ struct x86_nat_target : public BaseTarget
   { return x86_stopped_by_hw_breakpoint (); }
 };
 
-#endif /* X86_NAT_H */
+#endif /* GDB_X86_NAT_H */

@@ -77,6 +77,8 @@
 
    */
 
+#ifdef HAVE_SYSV_SHM
+
 typedef struct _hw_shm_device {
   unsigned_word physical_address;
   char *shm_address;
@@ -221,5 +223,13 @@ const device_descriptor hw_shm_device_descriptor[] = {
   { "shm", hw_shm_create, &hw_shm_callbacks },
   { NULL },
 };
+
+#else
+
+const device_descriptor hw_shm_device_descriptor[] = {
+  { NULL },
+};
+
+#endif /* HAVE_SYSV_SHM */
 
 #endif /* _HW_SHM_C_ */

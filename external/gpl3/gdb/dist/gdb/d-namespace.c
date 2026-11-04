@@ -1,6 +1,6 @@
 /* Helper routines for D support in GDB.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -362,7 +362,6 @@ d_lookup_symbol_imports (const char *scope, const char *name,
 			 const struct block *block,
 			 const domain_search_flags domain)
 {
-  struct using_direct *current;
   struct block_symbol sym;
 
   /* First, try to find the symbol in the given module.  */
@@ -375,9 +374,7 @@ d_lookup_symbol_imports (const char *scope, const char *name,
      the module we're searching in, see if we can find a match by
      applying them.  */
 
-  for (current = block->get_using ();
-       current != NULL;
-       current = current->next)
+  for (using_direct *current : block->get_using ())
     {
       const char **excludep;
 

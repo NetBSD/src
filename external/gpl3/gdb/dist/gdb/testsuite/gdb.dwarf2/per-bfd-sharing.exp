@@ -1,4 +1,4 @@
-#   Copyright 2020-2024 Free Software Foundation, Inc.
+#   Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 standard_testfile
 
 if { [build_executable "failed to prepare" $testfile $srcfile \
-	  {debug ldflags=-Wl,--build-id}] == -1 } {
+	  {debug build-id}] == -1 } {
     return
 }
 set host_binfile [gdb_remote_download host $binfile]

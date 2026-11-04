@@ -1,4 +1,4 @@
-#   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+#   Copyright (C) 1997-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -93,14 +93,15 @@ if {[runto csub]} {
     gdb_continue_to_end "first session"
 }
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 # Try exercising the "minimal" language a bit...
 
 if {[runto csub]} {
-    gdb_test "set lang minimal" \
-             "Warning: the current language does not match this frame." \
-             "set lang to minimal"
+    # Also test warn-language-frame-mismatch.
+    gdb_test_no_output "set warn-language-frame-mismatch off"
+    gdb_test_no_output "set lang minimal" "set lang to minimal"
     
     gdb_test "print x" " = 5000" "print parameter value"
 

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13.2.1 2025/08/02 05:50:37 perseant Exp $
+# $NetBSD: Makefile,v 1.13.2.2 2026/11/04 23:15:23 perseant Exp $
 
 LIB=		lua
 LUA_CORE=	lapi.c lcode.c lctype.c ldebug.c ldo.c ldump.c lfunc.c lgc.c \
@@ -17,10 +17,8 @@ INCSDIR=	/usr/include
 CPPFLAGS+=	-DLUA_USE_POSIX -DLUA_USE_DLOPEN
 CWARNFLAGS.clang+=	-Wno-empty-body -Wno-error=string-plus-int
 COPTS.lstring.c+=	${CC_WNO_STRINGOP_OVERFLOW}
-LINTFLAGS+=	-X 141		# integer overflow detected, op '<<'
-LINTFLAGS+=	-X 247		# pointer cast from 'pointer to struct
-				# GCObject' to 'pointer to union GCUnion' may
-				# be troublesome
+LINTFLAGS+=	-X 141		# '4294967295 << 8' overflows 'unsigned int'
+LINTFLAGS+=	-X 247		# pointer cast between unrelated types
 
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 

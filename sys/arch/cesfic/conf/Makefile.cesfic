@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.cesfic,v 1.20 2018/09/22 12:24:01 rin Exp $
+#	$NetBSD: Makefile.cesfic,v 1.20.36.1 2026/11/04 23:20:23 perseant Exp $
 
 # Makefile for NetBSD
 #
@@ -26,7 +26,8 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 CESFIC=		$S/arch/cesfic
-GENASSYM_CONF=	${CESFIC}/cesfic/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${CESFIC}/cesfic/genassym.cf
 
 ##
 ## (2) compile settings
@@ -45,6 +46,8 @@ OPT_MODULAR=	%MODULAR%
 ##
 ## (4) local objects, compile rules, and dependencies
 ##
+.include "$S/arch/m68k/conf/Makefile.kern.m68k.inc"
+
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
 

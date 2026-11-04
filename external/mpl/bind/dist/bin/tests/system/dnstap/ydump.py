@@ -17,8 +17,8 @@ except (ModuleNotFoundError, ImportError):
     print("No python yaml module, skipping")
     sys.exit(1)
 
-import subprocess
 import pprint
+import subprocess
 
 DNSTAP_READ = sys.argv[1]
 DATAFILE = sys.argv[2]

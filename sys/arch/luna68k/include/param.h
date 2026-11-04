@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.15 2023/01/15 05:08:33 tsutsui Exp $ */
+/* $NetBSD: param.h,v 1.15.6.1 2026/11/04 23:20:49 perseant Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,28 +45,9 @@
 #define MACHINE		"luna68k"
 
 #define PGSHIFT		12		/* LOG2(NBPG) */
-#define KERNBASE	0x00000000	/* start of kernel virtual */
-
-#define UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
 
-#define NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
-
 #include <machine/intr.h>
-
-#if defined(_KERNEL) && !defined(_LOCORE)
-#define delay(us)	_delay((us)<<8)
-#define DELAY(n)	delay(n)
-
-void _delay(u_int);
-#endif	/* _KERNEL && !_LOCORE */
 
 #endif	/* !_MACHINE_PARAM_H_ */

@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux, architecture independent.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,14 +17,26 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef LINUX_TDEP_H
-#define LINUX_TDEP_H
+#ifndef GDB_LINUX_TDEP_H
+#define GDB_LINUX_TDEP_H
 
 #include "bfd.h"
 #include "displaced-stepping.h"
+#include "solib.h"
 
 struct inferior;
 struct regcache;
+
+#ifndef SEGV_CPERR
+#define SEGV_CPERR 10 /* Control protection error.  */
+#endif
+
+/* Flag which enables shadow stack in PR_SET_SHADOW_STACK_STATUS prctl.  */
+#ifndef PR_SHADOW_STACK_ENABLE
+#define PR_SHADOW_STACK_ENABLE (1UL << 0)
+#define PR_SHADOW_STACK_WRITE (1UL << 1)
+#define PR_SHADOW_STACK_PUSH (1UL << 2)
+#endif
 
 /* Enum used to define the extra fields of the siginfo type used by an
    architecture.  */
@@ -112,9 +124,11 @@ extern CORE_ADDR linux_get_hwcap2 (const std::optional<gdb::byte_vector> &auxv,
 
 extern CORE_ADDR linux_get_hwcap2 ();
 
-/* Fetch (and possibly build) an appropriate `struct link_map_offsets'
-   for ILP32 and LP64 Linux systems.  */
-extern struct link_map_offsets *linux_ilp32_fetch_link_map_offsets ();
-extern struct link_map_offsets *linux_lp64_fetch_link_map_offsets ();
+/* Returns true if ADDR belongs to a shadow stack memory range.  If this
+   is the case, assign the shadow stack memory range to RANGE
+   [start_address, end_address).  */
 
-#endif /* linux-tdep.h */
+extern bool linux_address_in_shadow_stack_mem_range
+  (CORE_ADDR addr, std::pair<CORE_ADDR, CORE_ADDR> *range);
+
+#endif /* GDB_LINUX_TDEP_H */

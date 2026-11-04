@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/hppa
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "osabi.h"
 #include "regcache.h"
 #include "regset.h"
@@ -44,7 +43,6 @@ hppaobsd_supply_gregset (const struct regset *regset,
 			 struct regcache *regcache,
 			 int regnum, const void *gregs, size_t len)
 {
-  gdb_byte zero[4] = { 0 };
   const gdb_byte *regs = (const gdb_byte *) gregs;
   size_t offset;
   int i;
@@ -52,7 +50,7 @@ hppaobsd_supply_gregset (const struct regset *regset,
   gdb_assert (len >= HPPAOBSD_SIZEOF_GREGS);
 
   if (regnum == -1 || regnum == HPPA_R0_REGNUM)
-    regcache->raw_supply (HPPA_R0_REGNUM, &zero);
+    regcache->raw_supply_zeroed (HPPA_R0_REGNUM);
   for (i = HPPA_R1_REGNUM, offset = 4; i <= HPPA_R31_REGNUM; i++, offset += 4)
     {
       if (regnum == -1 || regnum == i)

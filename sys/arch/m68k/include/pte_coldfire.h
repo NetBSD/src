@@ -1,4 +1,4 @@
-/* $NetBSD: pte_coldfire.h,v 1.2 2014/03/18 18:20:41 riastradh Exp $ */
+/* $NetBSD: pte_coldfire.h,v 1.2.70.1 2026/11/04 23:20:51 perseant Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -109,7 +109,7 @@ pte_wired_p(pt_entry_t pt_entry)
 }
 
 static inline pt_entry_t
-pte_nv_entry(bool kernel)
+pte_nv_entry(bool kernel_p)
 {
 	return 0;
 }
@@ -163,7 +163,7 @@ pte_unwire_entry(pt_entry_t pt_entry)
 }
 
 static inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pt_entry)
+pte_clear_modify(pt_entry_t pt_entry)
 {
 	return pt_entry & ~MMUDR_W;
 }
@@ -171,6 +171,8 @@ pte_prot_nowrite(pt_entry_t pt_entry)
 static inline pt_entry_t
 pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 {
+	KASSERT((newprot & VM_PROT_READ) != 0);
+
 	pt_entry &= ~MMUDR_W;
 	if ((newprot & VM_PROT_EXECUTE) == 0)
 		pt_entry &= ~MMUDR_X;

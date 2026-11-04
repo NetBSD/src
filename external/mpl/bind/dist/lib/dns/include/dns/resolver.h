@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.h,v 1.9.2.1 2025/08/02 05:53:37 perseant Exp $	*/
+/*	$NetBSD: resolver.h,v 1.9.2.2 2026/11/04 23:18:07 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -278,9 +278,10 @@ dns_resolver_createfetch(dns_resolver_t *res, const dns_name_t *name,
 			 const isc_sockaddr_t *client, dns_messageid_t id,
 			 unsigned int options, unsigned int depth,
 			 isc_counter_t *qc, isc_counter_t *gqc,
-			 isc_loop_t *loop, isc_job_cb cb, void *arg,
-			 dns_edectx_t *edectx, dns_rdataset_t *rdataset,
-			 dns_rdataset_t *sigrdataset, dns_fetch_t **fetchp);
+			 fetchctx_t *parent, isc_loop_t *loop, isc_job_cb cb,
+			 void *arg, dns_edectx_t *edectx,
+			 dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset,
+			 dns_fetch_t **fetchp);
 /*%<
  * Recurse to answer a question.
  *

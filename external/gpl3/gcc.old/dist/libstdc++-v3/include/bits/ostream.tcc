@@ -1,6 +1,6 @@
 // ostream classes -*- C++ -*-
 
-// Copyright (C) 1997-2020 Free Software Foundation, Inc.
+// Copyright (C) 1997-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -53,7 +53,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       if (__os.good())
 	_M_ok = true;
-      else
+      else if (__os.bad())
 	__os.setstate(ios_base::failbit);
     }
 
@@ -69,7 +69,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    ios_base::iostate __err = ios_base::goodbit;
 	    __try
 	      {
+#ifndef _GLIBCXX_LONG_DOUBLE_ALT128_COMPAT
 		const __num_put_type& __np = __check_facet(this->_M_num_put);
+#else
+		const __num_put_type& __np
+		  = use_facet<__num_put_type>(this->_M_ios_locale);
+#endif
 		if (__np.put(*this, *this, this->fill(), __v).failed())
 		  __err |= ios_base::badbit;
 	      }
@@ -192,8 +197,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       sentry __cerb(*this);
       if (__cerb)
 	{
+	  ios_base::iostate __err = ios_base::goodbit;
 	  __try
-	    { _M_write(__s, __n); }
+	    {
+	      if (this->rdbuf()->sputn(__s, __n) != __n)
+		__err = ios_base::badbit;
+	    }
 	  __catch(__cxxabiv1::__forced_unwind&)
 	    {
 	      this->_M_setstate(ios_base::badbit);		
@@ -201,6 +210,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    }
 	  __catch(...)
 	    { this->_M_setstate(ios_base::badbit); }
+	  if (__err)
+	    this->setstate(ios_base::badbit);
 	}
       return *this;
     }
@@ -213,21 +224,30 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       // _GLIBCXX_RESOLVE_LIB_DEFECTS
       // DR 60. What is a formatted input function?
       // basic_ostream::flush() is *not* an unformatted output function.
-      ios_base::iostate __err = ios_base::goodbit;
-      __try
+      // 581. flush() not unformatted function
+      // basic_ostream::flush() *is* an unformatted output function.
+      if (__streambuf_type* __buf = this->rdbuf())
 	{
-	  if (this->rdbuf() && this->rdbuf()->pubsync() == -1)
-	    __err |= ios_base::badbit;
+	  sentry __cerb(*this);
+	  if (__cerb)
+	    {
+	      ios_base::iostate __err = ios_base::goodbit;
+	      __try
+		{
+		  if (this->rdbuf()->pubsync() == -1)
+		    __err |= ios_base::badbit;
+		}
+	      __catch(__cxxabiv1::__forced_unwind&)
+		{
+		  this->_M_setstate(ios_base::badbit);
+		  __throw_exception_again;
+		}
+	      __catch(...)
+		{ this->_M_setstate(ios_base::badbit); }
+	      if (__err)
+		this->setstate(__err);
+	    }
 	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);		
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
-      if (__err)
-	this->setstate(__err);
       return *this;
     }
 
@@ -236,19 +256,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_ostream<_CharT, _Traits>::
     tellp()
     {
+      sentry __cerb(*this);
       pos_type __ret = pos_type(-1);
-      __try
-	{
-	  if (!this->fail())
-	    __ret = this->rdbuf()->pubseekoff(0, ios_base::cur, ios_base::out);
-	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);		
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
+      if (!this->fail())
+	__ret = this->rdbuf()->pubseekoff(0, ios_base::cur, ios_base::out);
       return __ret;
     }
 
@@ -257,30 +268,17 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_ostream<_CharT, _Traits>::
     seekp(pos_type __pos)
     {
-      ios_base::iostate __err = ios_base::goodbit;
-      __try
+      sentry __cerb(*this);
+      if (!this->fail())
 	{
-	  if (!this->fail())
-	    {
-	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-	      // 136.  seekp, seekg setting wrong streams?
-	      const pos_type __p = this->rdbuf()->pubseekpos(__pos,
-							     ios_base::out);
+	  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	  // 136.  seekp, seekg setting wrong streams?
+	  const pos_type __p = this->rdbuf()->pubseekpos(__pos, ios_base::out);
 
-	      // 129. Need error indication from seekp() and seekg()
-	      if (__p == pos_type(off_type(-1)))
-		__err |= ios_base::failbit;
-	    }
+	  // 129. Need error indication from seekp() and seekg()
+	  if (__p == pos_type(off_type(-1)))
+	    this->setstate(ios_base::failbit);
 	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);		
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
-      if (__err)
-	this->setstate(__err);
       return *this;
     }
 
@@ -289,30 +287,18 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     basic_ostream<_CharT, _Traits>::
     seekp(off_type __off, ios_base::seekdir __dir)
     {
-      ios_base::iostate __err = ios_base::goodbit;
-      __try
+      sentry __cerb(*this);
+      if (!this->fail())
 	{
-	  if (!this->fail())
-	    {
-	      // _GLIBCXX_RESOLVE_LIB_DEFECTS
-	      // 136.  seekp, seekg setting wrong streams?
-	      const pos_type __p = this->rdbuf()->pubseekoff(__off, __dir,
-							     ios_base::out);
+	  // _GLIBCXX_RESOLVE_LIB_DEFECTS
+	  // 136.  seekp, seekg setting wrong streams?
+	  const pos_type __p = this->rdbuf()->pubseekoff(__off, __dir,
+							 ios_base::out);
 
-	      // 129. Need error indication from seekp() and seekg()
-	      if (__p == pos_type(off_type(-1)))
-		__err |= ios_base::failbit;
-	    }
+	  // 129. Need error indication from seekp() and seekg()
+	  if (__p == pos_type(off_type(-1)))
+	    this->setstate(ios_base::failbit);
 	}
-      __catch(__cxxabiv1::__forced_unwind&)
-	{
-	  this->_M_setstate(ios_base::badbit);		
-	  __throw_exception_again;
-	}
-      __catch(...)
-	{ this->_M_setstate(ios_base::badbit); }
-      if (__err)
-	this->setstate(__err);
       return *this;
     }
 

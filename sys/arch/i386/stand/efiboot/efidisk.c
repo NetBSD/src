@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.11 2024/01/06 21:26:43 mlelstv Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.11.2.1 2026/11/04 23:20:45 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -146,7 +146,7 @@ next:
 
 	if (efi_bootdp_type == BOOT_DEVICE_TYPE_CD) {
 		edi = TAILQ_FIRST(&efi_disklist);
-		if (edi != NULL && edi->bootdev) {
+		if (edi != NULL && edi->bootdev && edi->bio->Media->BlockSize == 2048) {
 			edi->type = BIOSDISK_TYPE_CD;
 			TAILQ_REMOVE(&efi_disklist, edi, list);
 			TAILQ_INSERT_TAIL(&efi_disklist, edi, list);
@@ -393,7 +393,8 @@ efidisk_get_efi_system_partition(int dev, int *partition)
 			continue;
 		if (part[i].fstype == FS_UNUSED)
 			continue;
-		if (guid_is_equal(part[i].guid->guid, &GET_efi))
+		if (part[i].guid != NULL &&
+		    guid_is_equal(part[i].guid->guid, &GET_efi))
 			break;
 	}
 	dealloc_biosdisk_part(part, nparts);

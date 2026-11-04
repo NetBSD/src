@@ -1,0 +1,57 @@
+/* OS ABI variant definitions for GDB and gdbserver.
+
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+
+   This file is part of GDB.
+
+   This program is free software; you can redistribute it and/or modify
+   it under the terms of the GNU General Public License as published by
+   the Free Software Foundation; either version 3 of the License, or
+   (at your option) any later version.
+
+   This program is distributed in the hope that it will be useful,
+   but WITHOUT ANY WARRANTY; without even the implied warranty of
+   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+   GNU General Public License for more details.
+
+   You should have received a copy of the GNU General Public License
+   along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+/* Each definition in this file is an osabi known to GDB.
+
+   The first argument is used to create the enum name and is appended
+   to 'GDB_OSABI_'.
+
+   The second argument is the osabi name.  These strings can't be
+   changed _ever_ as gdbserver will emit these.  Changing these
+   strings would break compatibility with already released versions of
+   GDB and/or gdbserver.
+
+   The third argument is a regexp which matches against a target
+   triplet.  */
+
+GDB_OSABI_DEF_FIRST (UNKNOWN, "unknown", nullptr)
+
+GDB_OSABI_DEF (NONE, "none", nullptr)
+
+GDB_OSABI_DEF (SVR4, "SVR4", nullptr)
+GDB_OSABI_DEF (HURD, "GNU/Hurd", nullptr)
+GDB_OSABI_DEF (SOLARIS, "Solaris", nullptr)
+GDB_OSABI_DEF (LINUX, "GNU/Linux", "linux(-gnu[^-]*)?")
+GDB_OSABI_DEF (FREEBSD, "FreeBSD", nullptr)
+GDB_OSABI_DEF (NETBSD, "NetBSD", nullptr)
+GDB_OSABI_DEF (OPENBSD, "OpenBSD", nullptr)
+GDB_OSABI_DEF (WINCE, "WindowsCE", nullptr)
+GDB_OSABI_DEF (GO32, "DJGPP", nullptr)
+GDB_OSABI_DEF (CYGWIN, "Cygwin", nullptr)
+GDB_OSABI_DEF (WINDOWS, "Windows", nullptr)
+GDB_OSABI_DEF (AIX, "AIX", nullptr)
+GDB_OSABI_DEF (DICOS, "DICOS", nullptr)
+GDB_OSABI_DEF (DARWIN, "Darwin", nullptr)
+GDB_OSABI_DEF (OPENVMS, "OpenVMS", nullptr)
+GDB_OSABI_DEF (LYNXOS178, "LynxOS178", nullptr)
+GDB_OSABI_DEF (NEWLIB, "Newlib", nullptr)
+GDB_OSABI_DEF (SDE, "SDE", nullptr)
+GDB_OSABI_DEF (PIKEOS, "PikeOS", nullptr)
+
+GDB_OSABI_DEF_LAST (INVALID, "<invalid>", nullptr)

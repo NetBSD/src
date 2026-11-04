@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.43 2024/01/19 03:35:31 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.43.2.1 2026/11/04 23:20:53 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2024/01/19 03:35:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43.2.1 2026/11/04 23:20:53 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,14 @@ __KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.43 2024/01/19 03:35:31 thorpej Exp 
 #include <sys/exec.h>
 
 #include <machine/frame.h>
-#include <machine/pte.h>
 #include <machine/pcb.h>
 
 #include <uvm/uvm_extern.h>
+
+struct vm_map *phys_map;
+
+__CTASSERT(USPACE >= PAGE_SIZE);
+__CTASSERT((USPACE & PAGE_MASK) == 0);
 
 void
 cpu_proc_fork(struct proc *p1, struct proc *p2)
@@ -114,8 +118,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/*
 	 * If specified, give the child a different stack.
 	 */
-	if (stack != NULL)
-		tf->tf_regs[15] = (u_int)stack + stacksize;
+	if (stack != NULL) {
+		tf->tf_regs[15] =
+		    ((uintptr_t)stack + stacksize) & ~STACK_ALIGNBYTES;
+	}
 
 	sf = (struct switchframe *)tf - 1;
 	sf->sf_pc = (u_int)lwp_trampoline;
@@ -139,6 +145,12 @@ cpu_lwp_free2(struct lwp *l)
 
 	/* Nothing to do */
 }
+
+/*
+ * Ensure phys_map is large enough for at least 2 concurrent
+ * MAXPHYS transfers.
+ */
+__CTASSERT((MAXPHYS * 2) <= VM_PHYS_SIZE);
 
 /*
  * Map a user I/O request into kernel virtual address space.

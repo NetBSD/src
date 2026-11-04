@@ -1,13 +1,12 @@
-/*	$NetBSD: msg_378.c,v 1.2.2.1 2025/08/02 05:58:19 perseant Exp $	*/
+/*	$NetBSD: msg_378.c,v 1.2.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_378.c"
 
 // Test for message: conversion '%.*s' is unreachable by input value [378]
 
 /*
- * The typical use case of snprintb is to have a format that is specifically
- * tailored to a particular input value.  Often, a format is only used in a
- * single place.  Therefore, bits that are unreachable are redundant and may
- * hint at typos.
+ * The typical use case of snprintb is to have a format defined in a header
+ * and to use that format in a single place in the code.  Therefore, bits or
+ * fields that are unreachable are redundant and may hint at typos.
  */
 
 /* lint1-extra-flags: -X 351 */

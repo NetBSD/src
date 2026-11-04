@@ -1,4 +1,4 @@
-/*	$NetBSD: bmx280.c,v 1.2 2023/04/16 17:16:45 brad Exp $	*/
+/*	$NetBSD: bmx280.c,v 1.2.6.1 2026/11/04 23:21:57 perseant Exp $	*/
 
 /*
  * Copyright (c) 2022 Brad Spencer <brad@anduin.eldar.org>
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2 2023/04/16 17:16:45 brad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2.6.1 2026/11/04 23:21:57 perseant Exp $");
 
 /*
  * Common driver for the Bosch BMP280/BME280 temperature, humidity (sometimes) and
@@ -35,11 +35,24 @@ __KERNEL_RCSID(0, "$NetBSD: bmx280.c,v 1.2 2023/04/16 17:16:45 brad Exp $");
 #include <sys/proc.h>
 
 #include <dev/sysmon/sysmonvar.h>
-#include <dev/spi/spivar.h>
-#include <dev/i2c/i2cvar.h>
+
 #include <dev/ic/bmx280reg.h>
 #include <dev/ic/bmx280var.h>
 
+const struct device_compatible_entry bmx280_compat_data[] = {
+	{ .compat = "bosch,bmp280" },
+	{ .compat = "bosch,bme280" },
+#if 0
+	/*
+	 * XXX Should also add support for:
+	 *	bosch,bmp085
+	 *	bosch,bmp180
+	 *	bosch,bmp380
+	 *	bosch,bmp580
+	 */
+#endif
+	DEVICE_COMPAT_EOL
+};
 
 static void	bmx280_store_raw_blob_tp(struct bmx280_sc *, uint8_t *);
 static void	bmx280_store_raw_blob_h(struct bmx280_sc *, uint8_t *);
@@ -282,8 +295,6 @@ bmx280_sysctl_init(struct bmx280_sc *sc)
 	const struct sysctlnode *cnode;
 	int sysctlroot_num, sysctlwait_num;
 
-	sc->sc_func_attach = &bmx280_attach;
-
 	if ((error = sysctl_createv(&sc->sc_bmx280log, 0, NULL, &cnode,
 	    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("bmx280 controls"), NULL, 0, NULL, 0, CTL_HW,
@@ -401,6 +412,15 @@ bmx280_attach(struct bmx280_sc *sc)
 
 	aprint_normal("\n");
 
+	/*
+	 * XXX Should get and use the following properties from
+	 * the device tree:
+	 *
+	 *	vddd-supply	(a regulator)
+	 *	vdda-supply	(a regulator)
+	 *	reset-gpios	(a gpio, active-low reset)
+	 */
+
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_numsensors = __arraycount(bmx280_sensors);
 
@@ -411,7 +431,7 @@ bmx280_attach(struct bmx280_sc *sc)
 		return;
 	}
 
-	error = (*(sc->sc_func_acquire_bus))(sc);
+	error = sc->sc_funcs->acquire_bus(sc);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "Could not acquire the bus: %d\n",
 		    error);
@@ -420,7 +440,7 @@ bmx280_attach(struct bmx280_sc *sc)
 
 	buf[0] = BMX280_REGISTER_RESET;
 	buf[1] = BMX280_TRIGGER_RESET;
-	error = (*(sc->sc_func_write_register))(sc, buf, 2);
+	error = sc->sc_funcs->write_reg(sc, buf, 2);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "Failed to reset chip: %d\n",
 		    error);
@@ -429,7 +449,7 @@ bmx280_attach(struct bmx280_sc *sc)
 	delay(30000);
 
 	reg = BMX280_REGISTER_ID;
-	error = (*(sc->sc_func_read_register))(sc, reg, &chip_id, 1);
+	error = sc->sc_funcs->read_reg(sc, reg, &chip_id, 1);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "Failed to read ID: %d\n",
 		    error);
@@ -446,7 +466,7 @@ bmx280_attach(struct bmx280_sc *sc)
 
 	uint8_t raw_blob_tp[24];
 	reg = BMX280_REGISTER_DIG_T1;
-	error = (*(sc->sc_func_read_register))(sc, reg, raw_blob_tp, 24);
+	error = sc->sc_funcs->read_reg(sc, reg, raw_blob_tp, 24);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "Failed to read the calibration registers for tp: %d\n",
 		    error);
@@ -465,14 +485,14 @@ bmx280_attach(struct bmx280_sc *sc)
 		uint8_t raw_blob_h[8];
 
 		reg = BMX280_REGISTER_DIG_H1;
-		error = (*(sc->sc_func_read_register))(sc, reg, raw_blob_h, 1);
+		error = sc->sc_funcs->read_reg(sc, reg, raw_blob_h, 1);
 		if (error) {
 			aprint_error_dev(sc->sc_dev, "Failed to read the calibration registers for h1: %d\n",
 			    error);
 		}
 
 		reg = BMX280_REGISTER_DIG_H2;
-		error = (*(sc->sc_func_read_register))(sc, reg, &raw_blob_h[1], 7);
+		error = sc->sc_funcs->read_reg(sc, reg, &raw_blob_h[1], 7);
 		if (error) {
 			aprint_error_dev(sc->sc_dev, "Failed to read the calibration registers for h2 - h6: %d\n",
 			    error);
@@ -488,7 +508,7 @@ bmx280_attach(struct bmx280_sc *sc)
 		bmx280_store_raw_blob_h(sc,raw_blob_h);
 	}
 
-	(*(sc->sc_func_release_bus))(sc);
+	sc->sc_funcs->release_bus(sc);
 
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev, "Unable to setup device\n");
@@ -546,6 +566,28 @@ bmx280_attach(struct bmx280_sc *sc)
 out:
 	sysmon_envsys_destroy(sc->sc_sme);
 	sc->sc_sme = NULL;
+}
+
+int
+bmx280_detach(struct bmx280_sc *sc, int flags __unused)
+{
+	mutex_enter(&sc->sc_mutex);
+
+	/* Remove the sensors */
+	if (sc->sc_sme != NULL) {
+		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
+
+	mutex_exit(&sc->sc_mutex);
+
+	/* Remove the sysctl tree */
+	sysctl_teardown(&sc->sc_bmx280log);
+
+	/* Remove the mutex */
+	mutex_destroy(&sc->sc_mutex);
+
+	return 0;
 }
 
 /* The conversion algorithms are taken from the BMP280 datasheet.  The
@@ -655,7 +697,7 @@ bmx280_set_control_and_trigger(struct bmx280_sc *sc,
 	s++;
 	DPRINTF(sc, 2, ("%s: control register set up: num: %d ; %02x %02x ; %02x %02x ; %02x %02x\n",
 	    device_xname(sc->sc_dev), s, cr[0], cr[1], cr[2], cr[3], cr[4], cr[5]));
-	error = (*(sc->sc_func_write_register))(sc, cr, s);
+	error = sc->sc_funcs->write_reg(sc, cr, s);
 	if (error) {
 		DPRINTF(sc, 2, ("%s: write control registers: %d\n",
 		    device_xname(sc->sc_dev), error));
@@ -695,7 +737,7 @@ bmx280_wait_for_data(struct bmx280_sc *sc)
 	reg = BMX280_REGISTER_STATUS;
 	do {
 		delay(1000);
-		ierror = (*(sc->sc_func_read_register))(sc, reg, &running, 1);
+		ierror = sc->sc_funcs->read_reg(sc, reg, &running, 1);
 		if (ierror) {
 			DPRINTF(sc, 2, ("%s: Refresh failed to read back status: %d\n",
 			    device_xname(sc->sc_dev), ierror));
@@ -750,7 +792,7 @@ bmx280_read_data(struct bmx280_sc *sc,
 	DPRINTF(sc, 2, ("%s: read data: reg: %02x ; len: %d ; tstart: %d ; pstart: %d\n",
 	    device_xname(sc->sc_dev), reg, rlen, rtstart, rpstart));
 
-	ierror = (*(sc->sc_func_read_register))(sc, reg, raw_press_temp_hum, rlen);
+	ierror = sc->sc_funcs->read_reg(sc, reg, raw_press_temp_hum, rlen);
 	if (ierror) {
 		DPRINTF(sc, 2, ("%s: failed to read pressure and temp registers: %d\n",
 		    device_xname(sc->sc_dev), ierror));
@@ -840,7 +882,7 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 	}
 
 	mutex_enter(&sc->sc_mutex);
-	error = (*(sc->sc_func_acquire_bus))(sc);
+	error = sc->sc_funcs->acquire_bus(sc);
 	if (error) {
 		DPRINTF(sc, 2, ("%s: Could not acquire i2c bus: %x\n",
 		    device_xname(sc->sc_dev), error));
@@ -870,7 +912,7 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 						DPRINTF(sc, 1, ("%s: Refresh compensated temp: %d - t_fine: %d\n",
 						    device_xname(sc->sc_dev), comp_temp, t_fine));
 
-						/* comp_temp is in Celcius * 100.  This converts it to microkelvin */
+						/* comp_temp is in Celsius * 100.  This converts it to microkelvin */
 
 						uint32_t q;
 
@@ -976,7 +1018,7 @@ bmx280_refresh(struct sysmon_envsys * sme, envsys_data_t * edata)
 		    device_xname(sc->sc_dev), error));
 	}
 
-	(*(sc->sc_func_release_bus))(sc);
+	sc->sc_funcs->release_bus(sc);
 out:
 	mutex_exit(&sc->sc_mutex);
 }

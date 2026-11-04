@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef WINDOWS_NAT_H
-#define WINDOWS_NAT_H
+#ifndef GDB_WINDOWS_NAT_H
+#define GDB_WINDOWS_NAT_H
 
 /* A pointer to a function that should return non-zero iff REGNUM
    corresponds to one of the segment registers.  */
@@ -36,5 +36,4 @@ int amd64_windows_segment_register_p (int regnum);
 extern const int amd64_mappings[];
 #endif
 
-#endif
-
+#endif /* GDB_WINDOWS_NAT_H */

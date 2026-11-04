@@ -13,6 +13,7 @@ ASM_HIDDEN(__tsan_trace_switch)
 .globl ASM_SYMBOL(__tsan_trace_switch_thunk)
 ASM_SYMBOL(__tsan_trace_switch_thunk):
   CFI_STARTPROC
+  _CET_ENDBR
   # Save scratch registers.
   push %rax
   CFI_ADJUST_CFA_OFFSET(8)
@@ -41,6 +42,25 @@ ASM_SYMBOL(__tsan_trace_switch_thunk):
   push %r11
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%r11, 0)
+  # All XMM registers are caller-saved.
+  sub $0x100, %rsp
+  CFI_ADJUST_CFA_OFFSET(0x100)
+  movdqu %xmm0, 0x0(%rsp)
+  movdqu %xmm1, 0x10(%rsp)
+  movdqu %xmm2, 0x20(%rsp)
+  movdqu %xmm3, 0x30(%rsp)
+  movdqu %xmm4, 0x40(%rsp)
+  movdqu %xmm5, 0x50(%rsp)
+  movdqu %xmm6, 0x60(%rsp)
+  movdqu %xmm7, 0x70(%rsp)
+  movdqu %xmm8, 0x80(%rsp)
+  movdqu %xmm9, 0x90(%rsp)
+  movdqu %xmm10, 0xa0(%rsp)
+  movdqu %xmm11, 0xb0(%rsp)
+  movdqu %xmm12, 0xc0(%rsp)
+  movdqu %xmm13, 0xd0(%rsp)
+  movdqu %xmm14, 0xe0(%rsp)
+  movdqu %xmm15, 0xf0(%rsp)
   # Align stack frame.
   push %rbx  # non-scratch
   CFI_ADJUST_CFA_OFFSET(8)
@@ -50,11 +70,7 @@ ASM_SYMBOL(__tsan_trace_switch_thunk):
   shr $4, %rsp  # clear 4 lsb, align to 16
   shl $4, %rsp
 
-#ifdef __PIC__
-  call ASM_SYMBOL(__tsan_trace_switch@PLT)
-#else
   call ASM_SYMBOL(__tsan_trace_switch)
-#endif
 
   # Unalign stack frame back.
   mov %rbx, %rsp  # restore the original rsp
@@ -62,6 +78,24 @@ ASM_SYMBOL(__tsan_trace_switch_thunk):
   pop %rbx
   CFI_ADJUST_CFA_OFFSET(-8)
   # Restore scratch registers.
+  movdqu 0x0(%rsp), %xmm0
+  movdqu 0x10(%rsp), %xmm1
+  movdqu 0x20(%rsp), %xmm2
+  movdqu 0x30(%rsp), %xmm3
+  movdqu 0x40(%rsp), %xmm4
+  movdqu 0x50(%rsp), %xmm5
+  movdqu 0x60(%rsp), %xmm6
+  movdqu 0x70(%rsp), %xmm7
+  movdqu 0x80(%rsp), %xmm8
+  movdqu 0x90(%rsp), %xmm9
+  movdqu 0xa0(%rsp), %xmm10
+  movdqu 0xb0(%rsp), %xmm11
+  movdqu 0xc0(%rsp), %xmm12
+  movdqu 0xd0(%rsp), %xmm13
+  movdqu 0xe0(%rsp), %xmm14
+  movdqu 0xf0(%rsp), %xmm15
+  add $0x100, %rsp
+  CFI_ADJUST_CFA_OFFSET(-0x100)
   pop %r11
   CFI_ADJUST_CFA_OFFSET(-8)
   pop %r10
@@ -97,6 +131,7 @@ ASM_HIDDEN(__tsan_report_race)
 .globl ASM_SYMBOL(__tsan_report_race_thunk)
 ASM_SYMBOL(__tsan_report_race_thunk):
   CFI_STARTPROC
+  _CET_ENDBR
   # Save scratch registers.
   push %rax
   CFI_ADJUST_CFA_OFFSET(8)
@@ -125,6 +160,25 @@ ASM_SYMBOL(__tsan_report_race_thunk):
   push %r11
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%r11, 0)
+  # All XMM registers are caller-saved.
+  sub $0x100, %rsp
+  CFI_ADJUST_CFA_OFFSET(0x100)
+  movdqu %xmm0, 0x0(%rsp)
+  movdqu %xmm1, 0x10(%rsp)
+  movdqu %xmm2, 0x20(%rsp)
+  movdqu %xmm3, 0x30(%rsp)
+  movdqu %xmm4, 0x40(%rsp)
+  movdqu %xmm5, 0x50(%rsp)
+  movdqu %xmm6, 0x60(%rsp)
+  movdqu %xmm7, 0x70(%rsp)
+  movdqu %xmm8, 0x80(%rsp)
+  movdqu %xmm9, 0x90(%rsp)
+  movdqu %xmm10, 0xa0(%rsp)
+  movdqu %xmm11, 0xb0(%rsp)
+  movdqu %xmm12, 0xc0(%rsp)
+  movdqu %xmm13, 0xd0(%rsp)
+  movdqu %xmm14, 0xe0(%rsp)
+  movdqu %xmm15, 0xf0(%rsp)
   # Align stack frame.
   push %rbx  # non-scratch
   CFI_ADJUST_CFA_OFFSET(8)
@@ -134,11 +188,7 @@ ASM_SYMBOL(__tsan_report_race_thunk):
   shr $4, %rsp  # clear 4 lsb, align to 16
   shl $4, %rsp
 
-#ifdef __PIC__
-  call ASM_SYMBOL(__tsan_report_race@PLT)
-#else
   call ASM_SYMBOL(__tsan_report_race)
-#endif
 
   # Unalign stack frame back.
   mov %rbx, %rsp  # restore the original rsp
@@ -146,6 +196,24 @@ ASM_SYMBOL(__tsan_report_race_thunk):
   pop %rbx
   CFI_ADJUST_CFA_OFFSET(-8)
   # Restore scratch registers.
+  movdqu 0x0(%rsp), %xmm0
+  movdqu 0x10(%rsp), %xmm1
+  movdqu 0x20(%rsp), %xmm2
+  movdqu 0x30(%rsp), %xmm3
+  movdqu 0x40(%rsp), %xmm4
+  movdqu 0x50(%rsp), %xmm5
+  movdqu 0x60(%rsp), %xmm6
+  movdqu 0x70(%rsp), %xmm7
+  movdqu 0x80(%rsp), %xmm8
+  movdqu 0x90(%rsp), %xmm9
+  movdqu 0xa0(%rsp), %xmm10
+  movdqu 0xb0(%rsp), %xmm11
+  movdqu 0xc0(%rsp), %xmm12
+  movdqu 0xd0(%rsp), %xmm13
+  movdqu 0xe0(%rsp), %xmm14
+  movdqu 0xf0(%rsp), %xmm15
+  add $0x100, %rsp
+  CFI_ADJUST_CFA_OFFSET(-0x100)
   pop %r11
   CFI_ADJUST_CFA_OFFSET(-8)
   pop %r10
@@ -193,23 +261,16 @@ ASM_TYPE_FUNCTION(ASM_SYMBOL_INTERCEPTOR(setjmp))
 ASM_SYMBOL_INTERCEPTOR(setjmp):
 #endif
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%rdi, 0)
-  // obtain %rsp
+  // obtain SP, store in %rdi, first argument to `void __tsan_setjmp(uptr sp)`
 #if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 8(%rsp), %rdi
-  mov %rdi, %rsi
-#elif defined(__APPLE__)
+#elif defined(__linux__) || defined(__APPLE__)
   lea 16(%rsp), %rdi
-  mov %rdi, %rsi
-  xorq ___tsan_darwin_setjmp_xor_key(%rip), %rsi
-#elif defined(__linux__)
-  lea 16(%rsp), %rdi
-  mov %rdi, %rsi
-  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
-  rol $0x11, %rsi
 #else
 # error "Unknown platform"
 #endif
@@ -242,23 +303,16 @@ ASM_SIZE(ASM_SYMBOL_INTERCEPTOR(setjmp))
 ASM_TYPE_FUNCTION(ASM_SYMBOL_INTERCEPTOR(_setjmp))
 ASM_SYMBOL_INTERCEPTOR(_setjmp):
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
   CFI_REL_OFFSET(%rdi, 0)
-  // obtain %rsp
+  // obtain SP, store in %rdi, first argument to `void __tsan_setjmp(uptr sp)`
 #if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 8(%rsp), %rdi
-  mov %rdi, %rsi
-#elif defined(__APPLE__)
+#elif defined(__linux__) || defined(__APPLE__)
   lea 16(%rsp), %rdi
-  mov %rdi, %rsi
-  xorq ___tsan_darwin_setjmp_xor_key(%rip), %rsi
-#elif defined(__linux__)
-  lea 16(%rsp), %rdi
-  mov %rdi, %rsi
-  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
-  rol $0x11, %rsi
 #else
 # error "Unknown platform"
 #endif
@@ -291,6 +345,7 @@ ASM_TYPE_FUNCTION(ASM_SYMBOL_INTERCEPTOR(sigsetjmp))
 ASM_SYMBOL_INTERCEPTOR(sigsetjmp):
 #endif
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
@@ -302,19 +357,11 @@ ASM_SYMBOL_INTERCEPTOR(sigsetjmp):
   // align stack frame
   sub $8, %rsp
   CFI_ADJUST_CFA_OFFSET(8)
-  // obtain %rsp
+  // obtain SP, store in %rdi, first argument to `void __tsan_setjmp(uptr sp)`
 #if defined(__FreeBSD__) || defined(__NetBSD__)
   lea 24(%rsp), %rdi
-  mov %rdi, %rsi
-#elif defined(__APPLE__)
+#elif defined(__linux__) || defined(__APPLE__)
   lea 32(%rsp), %rdi
-  mov %rdi, %rsi
-  xorq ___tsan_darwin_setjmp_xor_key(%rip), %rsi
-#elif defined(__linux__)
-  lea 32(%rsp), %rdi
-  mov %rdi, %rsi
-  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
-  rol $0x11, %rsi
 #else
 # error "Unknown platform"
 #endif
@@ -355,6 +402,7 @@ ASM_SIZE(ASM_SYMBOL_INTERCEPTOR(sigsetjmp))
 ASM_TYPE_FUNCTION(ASM_SYMBOL_INTERCEPTOR(__sigsetjmp))
 ASM_SYMBOL_INTERCEPTOR(__sigsetjmp):
   CFI_STARTPROC
+  _CET_ENDBR
   // save env parameter
   push %rdi
   CFI_ADJUST_CFA_OFFSET(8)
@@ -366,15 +414,11 @@ ASM_SYMBOL_INTERCEPTOR(__sigsetjmp):
   // align stack frame
   sub $8, %rsp
   CFI_ADJUST_CFA_OFFSET(8)
-  // obtain %rsp
-#if defined(__FreeBSD__) || defined(__NetBSD__)
+  // obtain SP, store in %rdi, first argument to `void __tsan_setjmp(uptr sp)`
+#if defined(__FreeBSD__)
   lea 24(%rsp), %rdi
-  mov %rdi, %rsi
 #else
   lea 32(%rsp), %rdi
-  mov %rdi, %rsi
-  xor %fs:0x30, %rsi  // magic mangling of rsp (see libc setjmp)
-  rol $0x11, %rsi
 #endif
   // call tsan interceptor
   call ASM_SYMBOL(__tsan_setjmp)
@@ -397,10 +441,6 @@ ASM_SYMBOL_INTERCEPTOR(__sigsetjmp):
 ASM_SIZE(ASM_SYMBOL_INTERCEPTOR(__sigsetjmp))
 #endif  // !defined(__APPLE__) && !defined(__NetBSD__)
 
-#if defined(__FreeBSD__) || defined(__linux__)
-/* We do not need executable stack.  */
-/* This note is not needed on NetBSD. */
-.section        .note.GNU-stack,"",@progbits
-#endif
+NO_EXEC_STACK_DIRECTIVE
 
 #endif

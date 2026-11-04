@@ -1,6 +1,6 @@
 #! /usr/bin/env python3
 
-# Copyright (C) 2011-2024 Free Software Foundation, Inc.
+# Copyright (C) 2011-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -17,27 +17,29 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-"""copyright.py
+# This script updates the list of years in the copyright notices in
+# most files maintained by the GDB project.
+#
+# Usage: ./gdb/copyright.py
+#
+# Always review the output of this script before committing it!
+#
+# A useful command to review the output is:
+#
+#     $ filterdiff -x \*.c -x \*.cc -x \*.h -x \*.exp updates.diff
+#
+# This removes the bulk of the changes which are most likely to be correct.
 
-This script updates the list of years in the copyright notices in
-most files maintained by the GDB project.
-
-Usage: cd src/gdb && ./copyright.py
-
-Always review the output of this script before committing it!
-A useful command to review the output is:
-    % filterdiff -x \*.c -x \*.cc -x \*.h -x \*.exp updates.diff
-This removes the bulk of the changes which are most likely to be correct.
-"""
+# pyright: strict
 
 import argparse
-import datetime
 import locale
 import os
 import os.path
+import pathlib
 import subprocess
 import sys
-from typing import List, Optional
+from typing import Iterable
 
 
 def get_update_list():
@@ -47,42 +49,40 @@ def get_update_list():
     of the GDB source tree (NOT the gdb/ subdirectory!).  The names of
     the files are relative to that root directory.
     """
-    result = []
-    for gdb_dir in (
-        "gdb",
-        "gdbserver",
-        "gdbsupport",
-        "gnulib",
-        "sim",
-        "include/gdb",
-    ):
-        for root, dirs, files in os.walk(gdb_dir, topdown=True):
-            for dirname in dirs:
-                reldirname = "%s/%s" % (root, dirname)
-                if (
-                    dirname in EXCLUDE_ALL_LIST
-                    or reldirname in EXCLUDE_LIST
-                    or reldirname in NOT_FSF_LIST
-                    or reldirname in BY_HAND
-                ):
-                    # Prune this directory from our search list.
-                    dirs.remove(dirname)
-            for filename in files:
-                relpath = "%s/%s" % (root, filename)
-                if (
-                    filename in EXCLUDE_ALL_LIST
-                    or relpath in EXCLUDE_LIST
-                    or relpath in NOT_FSF_LIST
-                    or relpath in BY_HAND
-                ):
-                    # Ignore this file.
-                    pass
-                else:
-                    result.append(relpath)
-    return result
+    result = (
+        subprocess.check_output(
+            [
+                "git",
+                "ls-files",
+                "-z",
+                "--",
+                "gdb",
+                "gdbserver",
+                "gdbsupport",
+                "gnulib",
+                "sim",
+                "include/gdb",
+            ],
+            text=True,
+        )
+        .rstrip("\0")
+        .split("\0")
+    )
+
+    full_exclude_list = EXCLUDE_LIST + BY_HAND
+
+    def include_file(filename: str):
+        path = pathlib.Path(filename)
+        for pattern in full_exclude_list:
+            if path.full_match(pattern):
+                return False
+
+        return True
+
+    return filter(include_file, result)
 
 
-def update_files(update_list):
+def update_files(update_list: Iterable[str]):
     """Update the copyright header of the files in the given list.
 
     We use gnulib's update-copyright script for that.
@@ -127,7 +127,7 @@ def update_files(update_list):
             print("*** " + line)
 
 
-def may_have_copyright_notice(filename):
+def may_have_copyright_notice(filename: str):
     """Check that the given file does not seem to have a copyright notice.
 
     The filename is relative to the root directory.
@@ -165,17 +165,13 @@ def get_parser() -> argparse.ArgumentParser:
     return parser
 
 
-def main(argv: List[str]) -> Optional[int]:
+def main(argv: list[str]) -> int | None:
     """The main subprogram."""
     parser = get_parser()
     _ = parser.parse_args(argv)
-    root_dir = os.path.dirname(os.getcwd())
-    os.chdir(root_dir)
 
-    if not (
-        os.path.isdir("gdb") and os.path.isfile("gnulib/import/extra/update-copyright")
-    ):
-        sys.exit("Error: This script must be called from the gdb directory.")
+    if not os.path.isfile("gnulib/import/extra/update-copyright"):
+        sys.exit("Error: This script must be called from the top-level directory.")
 
     update_list = get_update_list()
     update_files(update_list)
@@ -195,10 +191,19 @@ def main(argv: List[str]) -> Optional[int]:
     if BY_HAND:
         print()
         print(
-            "\033[31mREMINDER: The following files must be updated by hand." "\033[0m"
+            "\033[31mREMINDER: The following files must be updated by hand:" "\033[0m"
         )
         for filename in BY_HAND:
             print("  ", filename)
+
+    print()
+    print(
+        "\033[31mREMINDER: The following files contain code to print a copyright "
+        "notice at runtime, they must be updated by hand:\033[0m"
+    )
+    print("  gdb/top.c")
+    print("  gdbserver/gdbreplay.cc")
+    print("  gdbserver/server.cc")
 
 
 ############################################################################
@@ -213,54 +218,26 @@ def main(argv: List[str]) -> Optional[int]:
 # generated, non-FSF, or otherwise special (e.g. license text,
 # or test cases which must be sensitive to line numbering).
 #
-# Filenames are relative to the root directory.
+# Entries are treated as glob patterns.
 EXCLUDE_LIST = (
+    "**/aclocal.m4",
+    "**/configure",
+    "**/COPYING.LIB",
+    "**/COPYING",
+    "**/fdl.texi",
+    "**/gpl.texi",
+    "gdb/copying.c",
     "gdb/nat/glibc_thread_db.h",
     "gdb/CONTRIBUTE",
     "gdbsupport/Makefile.in",
+    "gdbsupport/unordered_dense.h",
     "gnulib/doc/gendocs_template",
     "gnulib/doc/gendocs_template_min",
-    "gnulib/import",
+    "gnulib/import/**",
     "gnulib/config.in",
     "gnulib/Makefile.in",
-)
-
-# Files which should not be modified, either because they are
-# generated, non-FSF, or otherwise special (e.g. license text,
-# or test cases which must be sensitive to line numbering).
-#
-# Matches any file or directory name anywhere.  Use with caution.
-# This is mostly for files that can be found in multiple directories.
-# Eg: We want all files named COPYING to be left untouched.
-
-EXCLUDE_ALL_LIST = (
-    "COPYING",
-    "COPYING.LIB",
-    "CVS",
-    "configure",
-    "copying.c",
-    "fdl.texi",
-    "gpl.texi",
-    "aclocal.m4",
-)
-
-# The list of files to update by hand.
-BY_HAND = (
-    # Nothing at the moment :-).
-)
-
-# Files containing multiple copyright headers.  This script is only
-# fixing the first one it finds, so we need to finish the update
-# by hand.
-MULTIPLE_COPYRIGHT_HEADERS = (
-    "gdb/doc/gdb.texinfo",
-    "gdb/doc/refcard.tex",
-    "gdb/syscalls/update-netbsd.sh",
-)
-
-# The list of file which have a copyright, but not held by the FSF.
-# Filenames are relative to the root directory.
-NOT_FSF_LIST = (
+    "sim/Makefile.in",
+    # The files below have a copyright, but not held by the FSF.
     "gdb/exc_request.defs",
     "gdb/gdbtk",
     "gdb/testsuite/gdb.gdbtk/",
@@ -297,132 +274,26 @@ NOT_FSF_LIST = (
     "sim/mips/sim-main.c",
     "sim/moxie/moxie-gdb.dts",
     # Not a single file in sim/ppc/ appears to be copyright FSF :-(.
-    "sim/ppc/filter.h",
-    "sim/ppc/gen-support.h",
-    "sim/ppc/ld-insn.h",
-    "sim/ppc/hw_sem.c",
-    "sim/ppc/hw_disk.c",
-    "sim/ppc/idecode_branch.h",
-    "sim/ppc/sim-endian.h",
-    "sim/ppc/table.c",
-    "sim/ppc/hw_core.c",
-    "sim/ppc/gen-support.c",
-    "sim/ppc/gen-semantics.h",
-    "sim/ppc/cpu.h",
-    "sim/ppc/sim_callbacks.h",
-    "sim/ppc/RUN",
-    "sim/ppc/Makefile.in",
-    "sim/ppc/emul_chirp.c",
-    "sim/ppc/hw_nvram.c",
-    "sim/ppc/dc-test.01",
-    "sim/ppc/hw_phb.c",
-    "sim/ppc/hw_eeprom.c",
-    "sim/ppc/bits.h",
-    "sim/ppc/hw_vm.c",
-    "sim/ppc/cap.h",
-    "sim/ppc/os_emul.h",
-    "sim/ppc/options.h",
-    "sim/ppc/gen-idecode.c",
-    "sim/ppc/filter.c",
-    "sim/ppc/corefile-n.h",
-    "sim/ppc/std-config.h",
-    "sim/ppc/ld-decode.h",
-    "sim/ppc/filter_filename.h",
-    "sim/ppc/hw_shm.c",
-    "sim/ppc/pk_disklabel.c",
-    "sim/ppc/dc-simple",
-    "sim/ppc/misc.h",
-    "sim/ppc/device_table.h",
-    "sim/ppc/ld-insn.c",
-    "sim/ppc/inline.c",
-    "sim/ppc/emul_bugapi.h",
-    "sim/ppc/hw_cpu.h",
-    "sim/ppc/debug.h",
-    "sim/ppc/hw_ide.c",
-    "sim/ppc/debug.c",
-    "sim/ppc/gen-itable.h",
-    "sim/ppc/interrupts.c",
-    "sim/ppc/hw_glue.c",
-    "sim/ppc/emul_unix.c",
-    "sim/ppc/sim_calls.c",
-    "sim/ppc/dc-complex",
-    "sim/ppc/ld-cache.c",
-    "sim/ppc/registers.h",
-    "sim/ppc/dc-test.02",
-    "sim/ppc/options.c",
-    "sim/ppc/igen.h",
-    "sim/ppc/registers.c",
-    "sim/ppc/device.h",
-    "sim/ppc/emul_chirp.h",
-    "sim/ppc/hw_register.c",
-    "sim/ppc/hw_init.c",
-    "sim/ppc/sim-endian-n.h",
-    "sim/ppc/filter_filename.c",
-    "sim/ppc/bits.c",
-    "sim/ppc/idecode_fields.h",
-    "sim/ppc/hw_memory.c",
-    "sim/ppc/misc.c",
-    "sim/ppc/double.c",
-    "sim/ppc/psim.h",
-    "sim/ppc/hw_trace.c",
-    "sim/ppc/emul_netbsd.h",
-    "sim/ppc/psim.c",
-    "sim/ppc/powerpc.igen",
-    "sim/ppc/tree.h",
-    "sim/ppc/README",
-    "sim/ppc/gen-icache.h",
-    "sim/ppc/gen-model.h",
-    "sim/ppc/ld-cache.h",
-    "sim/ppc/mon.c",
-    "sim/ppc/corefile.h",
-    "sim/ppc/vm.c",
-    "sim/ppc/INSTALL",
-    "sim/ppc/gen-model.c",
-    "sim/ppc/hw_cpu.c",
-    "sim/ppc/corefile.c",
-    "sim/ppc/hw_opic.c",
-    "sim/ppc/gen-icache.c",
-    "sim/ppc/events.h",
-    "sim/ppc/os_emul.c",
-    "sim/ppc/emul_generic.c",
-    "sim/ppc/main.c",
-    "sim/ppc/hw_com.c",
-    "sim/ppc/gen-semantics.c",
-    "sim/ppc/emul_bugapi.c",
-    "sim/ppc/device.c",
-    "sim/ppc/emul_generic.h",
-    "sim/ppc/tree.c",
-    "sim/ppc/mon.h",
-    "sim/ppc/interrupts.h",
-    "sim/ppc/cap.c",
-    "sim/ppc/cpu.c",
-    "sim/ppc/hw_phb.h",
-    "sim/ppc/device_table.c",
-    "sim/ppc/lf.c",
-    "sim/ppc/lf.c",
-    "sim/ppc/dc-stupid",
-    "sim/ppc/hw_pal.c",
-    "sim/ppc/ppc-spr-table",
-    "sim/ppc/emul_unix.h",
-    "sim/ppc/words.h",
-    "sim/ppc/basics.h",
-    "sim/ppc/hw_htab.c",
-    "sim/ppc/lf.h",
-    "sim/ppc/ld-decode.c",
-    "sim/ppc/sim-endian.c",
-    "sim/ppc/gen-itable.c",
-    "sim/ppc/idecode_expression.h",
-    "sim/ppc/table.h",
-    "sim/ppc/dgen.c",
-    "sim/ppc/events.c",
-    "sim/ppc/gen-idecode.h",
-    "sim/ppc/emul_netbsd.c",
-    "sim/ppc/igen.c",
-    "sim/ppc/vm_n.h",
-    "sim/ppc/vm.h",
-    "sim/ppc/hw_iobus.c",
-    "sim/ppc/inline.h",
+    "sim/ppc/**",
     "sim/testsuite/mips/mips32-dsp2.s",
+)
+
+# The list of files to update by hand.
+#
+# Entries are treated as glob patterns.
+BY_HAND: tuple[str, ...] = (
+    # Nothing at the moment :-).
+)
+
+# Files containing multiple copyright headers.  This script is only
+# fixing the first one it finds, so we need to finish the update
+# by hand.
+#
+# Entries are treated as glob patterns.
+MULTIPLE_COPYRIGHT_HEADERS = (
+    "gdb/doc/gdb.texinfo",
+    "gdb/doc/refcard.tex",
+    "gdb/syscalls/update-netbsd.sh",
 )
 
 if __name__ == "__main__":

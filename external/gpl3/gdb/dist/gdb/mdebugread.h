@@ -1,6 +1,6 @@
 /* Read a symbol table in ECOFF format (Third-Eye).
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MDEBUGREAD_H
-#define MDEBUGREAD_H
+#ifndef GDB_MDEBUGREAD_H
+#define GDB_MDEBUGREAD_H
 
 #include "coff/sym.h"
 #include "coff/symconst.h"
@@ -37,13 +37,38 @@ struct mdebug_extra_func_info
 
 #define MDEBUG_EFI_SYMBOL_NAME "__GDB_EFI_INFO__"
 
-extern void mdebug_build_psymtabs (minimal_symbol_reader &,
-				   struct objfile *,
-				   const struct ecoff_debug_swap *,
-				   struct ecoff_debug_info *);
+#if defined(MDEBUG_FORMAT_AVAILABLE)
 
 extern void elfmdebug_build_psymtabs (struct objfile *,
 				      const struct ecoff_debug_swap *,
 				      asection *);
 
-#endif /* MDEBUGREAD_H */
+/* Read ECOFF debugging information from a BFD section.  This is
+   called from mipsread.c.  It parses the section into a
+   ecoff_debug_info struct, and then lets the rest of the file handle
+   it as normal.  */
+extern void mipsmdebug_build_psymtabs (struct objfile *,
+				       const struct ecoff_debug_swap *,
+				       struct ecoff_debug_info *);
+
+#else /* MDEBUG_FORMAT_AVAILABLE */
+
+static inline void
+elfmdebug_build_psymtabs (struct objfile *,
+			  const struct ecoff_debug_swap *,
+			  asection *)
+{
+  warning (_("No mdebug support available"));
+}
+
+static inline void
+mipsmdebug_build_psymtabs (struct objfile *,
+			   const struct ecoff_debug_swap *,
+			   struct ecoff_debug_info *)
+{
+  warning (_("No mdebug support available"));
+}
+
+#endif /* MDEBUG_FORMAT_AVAILABLE */
+
+#endif /* GDB_MDEBUGREAD_H */

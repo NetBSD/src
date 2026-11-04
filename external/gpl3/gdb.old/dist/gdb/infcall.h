@@ -1,6 +1,6 @@
 /* Perform an inferior function call, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef INFCALL_H
-#define INFCALL_H
+#ifndef GDB_INFCALL_H
+#define GDB_INFCALL_H
 
 #include "dummy-frame.h"
 #include "gdbsupport/array-view.h"
@@ -71,4 +71,4 @@ extern struct value *
 
 extern void error_call_unknown_return_type (const char *func_name);
 
-#endif
+#endif /* GDB_INFCALL_H */

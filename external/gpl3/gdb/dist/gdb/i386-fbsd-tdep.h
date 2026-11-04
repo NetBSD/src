@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD x86.
 
-   Copyright (C) 2015-2024 Free Software Foundation, Inc.
+   Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef I386_FBSD_TDEP_H
-#define I386_FBSD_TDEP_H
+#ifndef GDB_I386_FBSD_TDEP_H
+#define GDB_I386_FBSD_TDEP_H
 
 #include "gdbsupport/x86-xstate.h"
 #include "regset.h"
@@ -32,8 +32,9 @@
 uint64_t i386_fbsd_core_read_xsave_info (bfd *abfd, x86_xsave_layout &layout);
 
 /* Implement the core_read_x86_xsave_layout gdbarch method.  */
-bool i386_fbsd_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
-					   x86_xsave_layout &layout);
+extern bool i386_fbsd_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
+						  bfd &cbfd,
+						  x86_xsave_layout &layout);
 
 /* The format of the XSAVE extended area is determined by hardware.
    Cores store the XSAVE extended area in a NT_X86_XSTATE note that
@@ -42,4 +43,4 @@ bool i386_fbsd_core_read_x86_xsave_layout (struct gdbarch *gdbarch,
 
 extern const struct regset i386_fbsd_gregset;
 
-#endif /* i386-fbsd-tdep.h */
+#endif /* GDB_I386_FBSD_TDEP_H */

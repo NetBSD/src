@@ -639,9 +639,7 @@ show_warranty_command (const char *ignore, int from_tty)
   gdb_printf ("\n");
 }
 
-void _initialize_copying ();
-void
-_initialize_copying ()
+INIT_GDB_FILE (copying)
 {
   add_cmd ("copying", no_set_class, show_copying_command,
 	   _("Conditions for redistributing copies of GDB."),

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.134.6.1 2025/08/02 05:56:10 perseant Exp $ */
+/*	$NetBSD: cpu.h,v 1.134.6.2 2026/11/04 23:21:23 perseant Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -215,6 +215,29 @@ struct cpu_info {
 	paddr_t			ci_cpuset; /* mondo recipient address */ 
 	paddr_t			ci_mondo;  /* mondo message address */
 
+#ifdef DEBUG
+	/*
+	 * Debug code for storing register windows 
+	 */
+	int64_t     ci_winregs;
+	int64_t     ci_rw0_local[8]; /* window registers (locals)  - window 0 */
+	int64_t     ci_rw0_in[8];    /* window registers (ins)     - window 0 */
+	int64_t     ci_rw1_local[8]; /* window registers (locals)  - window 1 */
+	int64_t     ci_rw1_in[8];    /* window registers (ins)     - window 1 */
+	int64_t     ci_rw2_local[8]; /* window registers (locals)  - window 2 */
+	int64_t     ci_rw2_in[8];    /* window registers (ins)     - window 2 */
+	int64_t     ci_rw3_local[8]; /* window registers (locals)  - window 3 */
+	int64_t     ci_rw3_in[8];    /* window registers (ins)     - window 3 */
+	int64_t     ci_rw4_local[8]; /* window registers (locals)  - window 4 */
+	int64_t     ci_rw4_in[8];    /* window registers (ins)     - window 4 */
+	int64_t     ci_rw5_local[8]; /* window registers (locals)  - window 5 */
+	int64_t     ci_rw5_in[8];    /* window registers (ins)     - window 5 */
+	int64_t     ci_rw6_local[8]; /* window registers (locals)  - window 6 */
+	int64_t     ci_rw6_in[8];    /* window registers (ins)     - window 6 */
+	int64_t     ci_rw7_local[8]; /* window registers (locals)  - window 7 */
+	int64_t     ci_rw7_in[8];    /* window registers (ins)     - window 7 */
+#endif		
+
 	/* probe fault in PCI config space reads */
 	bool			ci_pci_probe;
 	bool			ci_pci_fault;
@@ -409,9 +432,6 @@ struct intrhand *intrhand_alloc(void);
 /* cpu.c */
 int	cpu_myid(void);
 
-/* disksubr.c */
-struct dkbad;
-int isbad(struct dkbad *bt, int, int, int);
 /* machdep.c */
 void *	reserve_dumppages(void *);
 /* clock.c */
@@ -464,6 +484,12 @@ void kgdb_panic(void);
 /* emul.c */
 int	fixalign(struct lwp *, struct trapframe64 *);
 int	emulinstr(vaddr_t, struct trapframe64 *);
+
+
+#if DEBUG
+void print_winregs(void);
+void clear_winregs(void);
+#endif
 
 #endif /* _KERNEL */
 #endif /* _CPU_H_ */

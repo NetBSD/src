@@ -1,0 +1,174 @@
+;ANSWER
+example. 86400 IN SOA ns2.example. hostmaster.example. 1397051952 5 5 1814400 3600
+example. 3600 IN DNSKEY 512 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRu niJDBzC7w0aRyzWZriO6i2odGWWQVucZ qKVsENW91IOW4vqudngPZsY3GvQ/xVA8 /7pyFj6b7Esga60zyGW6LFe9r8n6paHr lG5ojqf0BaqHT+8=
+example. 3600 IN NS ns2.example.
+example. 3600 IN NS ns3.example.
+a01.example. 3600 IN A 0.0.0.0
+a02.example. 3600 IN A 255.255.255.255
+a601.example. 3600 IN A6 \# 17 00ffffffffffffffffffffffffffffff ff
+a601.example. 3600 IN A6 \# 14 40ffffffffffffffff03666f6f00
+a601.example. 3600 IN A6 \# 7 7f0103666f6f00
+a601.example. 3600 IN A6 \# 2 8000
+aaaa01.example. 3600 IN AAAA ::1
+aaaa02.example. 3600 IN AAAA fd92:7065:b8e:ffff::5
+afsdb01.example. 3600 IN AFSDB 0 hostname.example.
+afsdb02.example. 3600 IN AFSDB 65535 .
+amtrelay01.example. 3600 IN AMTRELAY 0 0 0 .
+amtrelay02.example. 3600 IN AMTRELAY 0 1 0 .
+amtrelay03.example. 3600 IN AMTRELAY 0 0 1 0.0.0.0
+amtrelay04.example. 3600 IN AMTRELAY 0 0 2 ::
+amtrelay05.example. 3600 IN AMTRELAY 0 0 3 example.net.
+apl01.example. 3600 IN APL !1:10.0.0.1/32 1:10.0.0.0/24
+atma01.example. 3600 IN TYPE34 \# 12 013631323030303030303030
+atma02.example. 3600 IN TYPE34 \# 12 013631323030303030303030
+atma03.example. 3600 IN TYPE34 \# 9 001234567890abcdef
+atma04.example. 3600 IN TYPE34 \# 9 00fedcba0987654321
+avc.example. 3600 IN AVC "foo:bar"
+caa01.example. 3600 IN CAA 0 issue "ca.example.net; policy=ev"
+caa02.example. 3600 IN CAA 128 tbs "Unknown"
+caa03.example. 3600 IN CAA 128 tbs ""
+cdnskey01.example. 3600 IN CDNSKEY 512 255 1 AQMFD5raczCJHViKtLYhWGz8hMY9UGRu niJDBzC7w0aRyzWZriO6i2odGWWQVucZ qKVsENW91IOW4vqudngPZsY3GvQ/xVA8 /7pyFj6b7Esga60zyGW6LFe9r8n6paHr lG5ojqf0BaqHT+8=
+cds01.example. 3600 IN CDS 30795 1 1 310d27f4d82c1fc2400704ea9939fe6e1ceaa3b9
+cert01.example. 3600 IN CERT 65534 65535 PRIVATEOID MxFcby9k/yvedMfQgKzhH5er0Mu/vILz 45IkskceFGgiWCn/GxHhai6VAuHAoNUz 4YoU1tVfSCSqQYn6//11U6Nld80jEeC8 aTrO+KKmCaY=
+cname01.example. 3600 IN CNAME cname-target.
+cname02.example. 3600 IN CNAME cname-target.example.
+cname03.example. 3600 IN CNAME .
+csync01.example. 3600 IN CSYNC 0 0 A NS AAAA
+csync02.example. 3600 IN CSYNC 0 0
+dhcid01.example. 3600 IN DHCID AAIBY2/AuCccgoJbsaxcQc9TUapptP69 lOjxfNuVAA2kjEA=
+dhcid02.example. 3600 IN DHCID AAEBOSD+XR3Os/0LozeXVqcNc7FwCfQd WL3b/NaiUDlW2No=
+dhcid03.example. 3600 IN DHCID AAABxLmlskllE0MVjd57zHcWmEH3pCQ6 VytcKD//7es/deY=
+dlv.example. 3600 IN DLV 30795 1 1 310d27f4d82c1fc2400704ea9939fe6e1ceaa3b9
+dname01.example. 3600 IN DNAME dname-target.
+dname02.example. 3600 IN DNAME dname-target.example.
+dname03.example. 3600 IN DNAME .
+doa01.example. 3600 IN TYPE259 \# 301 499602d2499602d20109696d6167652f 67696647494638396128001900e30200 666666006699ffffff3399ccccffff99 ccff33669966ccff99cccccccccc0099 ffffffffffffffffffffffffffffffff 21f904010a000f002c00000000280019 000004c7f081492b95366b8df7ec5e68 8119299e8089ae5cbb3eb08aca1f1cdc 78008734f7e4c0db6ed3bbfc82481db1 a23a2693c554e94955962ea36ad54572 6a9352d70777380c6e8342e19c2b9b71 586cc72b109ceb78013a6fbf31e51739 750303838567850204697a7e7f52185e 01830575407848572918418675078202 a0412d3b92937d0479777da44b006ca1 b18c7a83484d12a7a8b137837504999b 73b948866b0189c8756b03c08e463549 947c6c95abcf7f36486a8805040541de 08b144da5fe71ebae74f11003b
+doa02.example. 3600 IN TYPE259 \# 30 0000000000000001020068747470733a 2f2f7777772e6973632e6f72672f
+ds01.example. 3600 IN DS 12892 5 2 26584835ca80c81c91999f31cfaf2a0e89d4ff1c8fafd0ddb31a85c719277c13
+ds01.example. 3600 IN NS ns42.example.
+ds02.example. 3600 IN DS 12892 5 1 7aa4a3f416c2f2391fb7ab0d434f762cd62d1390
+ds02.example. 3600 IN NS ns43.example.
+eid01.example. 3600 IN TYPE31 \# 3 1289ab
+eui48.example. 3600 IN EUI48 01-23-45-67-89-ab
+eui64.example. 3600 IN EUI64 01-23-45-67-89-ab-cd-ef
+gid01.example. 3600 IN TYPE102 \# 1 03
+gpos01.example. 3600 IN GPOS -22.6882 116.8652 250.0
+hinfo01.example. 3600 IN HINFO "Generic PC clone" "NetBSD-1.4"
+hinfo02.example. 3600 IN HINFO "PC" "NetBSD"
+hip1.example. 3600 IN HIP 2 200100107b1a74df365639cc39f1d578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D
+hip2.example. 3600 IN HIP 2 200100107b1a74df365639cc39f1d578 AwEAAbdxyhNuSutc5EMzxTs9LBPCIkOFH8cIvM4p9+LrV4e19WzK00+CI6zBCQTdtWsuxKbWIy87UOoJTwkUs7lBu+Upr1gsNrut79ryra+bSRGQb1slImA8YVJyuIDsj7kwzG7jnERNqnWxZ48AWkskmdHaVDP4BcelrTI3rMXdXF5D rvs.example.com.
+https0.example. 3600 IN HTTPS 0 example.net.
+https1.example. 3600 IN HTTPS 1 . port="60"
+ipseckey01.example. 3600 IN IPSECKEY 10 1 2 192.0.2.38 AQNRU3mG7TVTO2BkR47usntb102uFJtu gbo6BSGvgqt4AQ==
+ipseckey02.example. 3600 IN IPSECKEY 10 0 2 . AQNRU3mG7TVTO2BkR47usntb102uFJtu gbo6BSGvgqt4AQ==
+ipseckey03.example. 3600 IN IPSECKEY 10 1 2 192.0.2.3 AQNRU3mG7TVTO2BkR47usntb102uFJtu gbo6BSGvgqt4AQ==
+ipseckey04.example. 3600 IN IPSECKEY 10 3 2 mygateway.example.com. AQNRU3mG7TVTO2BkR47usntb102uFJtu gbo6BSGvgqt4AQ==
+ipseckey05.example. 3600 IN IPSECKEY 10 2 2 2001:db8:0:8002::2000:1 AQNRU3mG7TVTO2BkR47usntb102uFJtu gbo6BSGvgqt4AQ==
+isdn01.example. 3600 IN ISDN "isdn-address"
+isdn02.example. 3600 IN ISDN "isdn-address" "subaddress"
+isdn03.example. 3600 IN ISDN "isdn-address"
+isdn04.example. 3600 IN ISDN "isdn-address" "subaddress"
+keydata.example. 3600 IN TYPE65533 \# 0
+keydata.example. 3600 IN TYPE65533 \# 6 010203040506
+keydata.example. 3600 IN TYPE65533 \# 18 01020304050601020304050601020304 0506
+kx01.example. 3600 IN KX 10 kdc.example.
+kx02.example. 3600 IN KX 10 .
+l32.example. 3600 IN L32 10 1.2.3.4
+l64.example. 3600 IN L64 10 0014:4fff:ff20:ee64
+loc01.example. 3600 IN LOC 60 9 0.000 N 24 39 0.000 E 10.00m 20.00m 2000.00m 20.00m
+loc02.example. 3600 IN LOC 60 9 0.000 N 24 39 0.000 E 10.00m 20.00m 2000.00m 20.00m
+lp.example. 3600 IN LP 10 example.net.
+mb01.example. 3600 IN MG \# 10 076d61646e616d65c00c
+mb02.example. 3600 IN MG \# 1 00
+mg01.example. 3600 IN MG \# 10 076d676d6e616d65c00c
+mg02.example. 3600 IN MG \# 1 00
+minfo01.example. 3600 IN MINFO \# 20 07726d61696c6278c00c07656d61696c 6278c00c
+minfo02.example. 3600 IN MINFO \# 2 0000
+mr01.example. 3600 IN MR \# 9 066d726e616d65c00c
+mr02.example. 3600 IN MR \# 1 00
+mx01.example. 3600 IN MX 10 mail.example.
+mx02.example. 3600 IN MX 10 .
+naptr01.example. 3600 IN NAPTR 0 0 "" "" "" .
+naptr02.example. 3600 IN NAPTR 65535 65535 "blurgh" "blorf" "blllbb" foo.
+nid.example. 3600 IN NID 10 0014:4fff:ff20:ee64
+nimloc01.example. 3600 IN TYPE32 \# 3 1289ab
+ninfo01.example. 3600 IN NINFO "foo"
+ninfo02.example. 3600 IN NINFO "foo" "bar"
+ninfo03.example. 3600 IN NINFO "foo"
+ninfo04.example. 3600 IN NINFO "foo" "bar"
+ninfo05.example. 3600 IN NINFO "foo bar"
+ninfo06.example. 3600 IN NINFO "foo bar"
+ninfo07.example. 3600 IN NINFO "foo bar"
+ninfo08.example. 3600 IN NINFO "foo\010bar"
+ninfo09.example. 3600 IN NINFO "foo\010bar"
+ninfo10.example. 3600 IN NINFO "foo bar"
+ninfo11.example. 3600 IN NINFO "\"foo\""
+ninfo12.example. 3600 IN NINFO "\"foo\""
+ninfo13.example. 3600 IN NINFO "foo;"
+ninfo14.example. 3600 IN NINFO "foo;"
+ninfo15.example. 3600 IN NINFO "bar\\;"
+ns2.example. 3600 IN A 10.53.0.2
+ns3.example. 3600 IN A 10.53.0.3
+nsap-ptr01.example. 3600 IN NSAP-PTR .
+nsap-ptr01.example. 3600 IN NSAP-PTR foo.
+nsap01.example. 3600 IN NSAP 0x47000580005a0000000001e133ffffff00016100
+nsap02.example. 3600 IN NSAP 0x47000580005a0000000001e133ffffff00016100
+nsec01.example. 3600 IN NSEC a.secure.nil. NS SOA MX LOC RRSIG NSEC DNSKEY
+nsec02.example. 3600 IN NSEC . NSAP-PTR NSEC
+nsec03.example. 3600 IN NSEC . A
+nsec04.example. 3600 IN NSEC . TYPE127
+openpgpkey.example. 3600 IN OPENPGPKEY AQMFD5raczCJHViKtLYhWGz8hMY9UGRuniJDBzC7w0aRyzWZriO6i2odGWWQVucZqKVsENW91IOW4vqudngPZsY3GvQ/xVA8/7pyFj6b7Esga60zyGW6LFe9r8n6paHrlG5ojqf0BaqHT+8=
+ptr01.example. 3600 IN PTR example.
+px01.example. 3600 IN PX 65535 foo. bar.
+px02.example. 3600 IN PX 65535 . .
+rkey01.example. 3600 IN TYPE57 \# 111 0000ff010103050f9ada7330891d588a b4b621586cfc84c63d50646e9e224307 30bbc34691cb3599ae23ba8b6a1d1965 9056e719a8a56c10d5bdd48396e2faae 76780f66c6371af43fc5503cffba7216 3e9bec4b206bad33c865ba2c57bdafc9 faa5a1eb946e688ea7f405aa874fef
+rp01.example. 3600 IN RP mbox-dname.example. txt-dname.example.
+rp02.example. 3600 IN RP . .
+rrsig01.example. 3600 IN RRSIG NSEC 1 3 3600 20000102030405 19961211100908 2143 foo.nil. MxFcby9k/yvedMfQgKzhH5er0Mu/vILz 45IkskceFGgiWCn/GxHhai6VAuHAoNUz 4YoU1tVfSCSqQYn6//11U6Nld80jEeC8 aTrO+KKmCaY=
+rt01.example. 3600 IN RT 0 intermediate-host.example.
+rt02.example. 3600 IN RT 65535 .
+sink01.example. 3600 IN TYPE40 \# 3 010000
+sink02.example. 3600 IN TYPE40 \# 6 0800029788a4
+smimea.example. 3600 IN SMIMEA 1 1 2 92003ba34942dc74152e2f2c408d29eca5a520e7f2e06bb944f4dca346baf63c1b177615d466f6c4b71c216a50292bd58c9ebdd2f74e38fe51ffd48c43326cbc
+spf01.example. 3600 IN SPF "v=spf1 -all"
+spf02.example. 3600 IN SPF "v=spf1" " -all"
+srv01.example. 3600 IN SRV 0 0 0 .
+srv02.example. 3600 IN SRV 65535 65535 65535 old-slow-box.example.
+sshfp01.example. 3600 IN SSHFP 4 2 c76d8329954da2835751e371544e963efda099080d6c58dd2bfd9a316e162c83
+sshfp02.example. 3600 IN SSHFP 1 2 bf29468c83ac58ccf8c85ab7b3beb054ecf1e38512b8353ab36471fa88961dcc
+svcb0.example. 3600 IN SVCB 0 example.net.
+svcb1.example. 3600 IN SVCB 1 . port="60"
+ta.example. 3600 IN TA \# 24 784b0101310d27f4d82c1fc2400704ea 9939fe6e1ceaa3b9
+talink0.example. 3600 IN TYPE58 \# 18 000774616c696e6b31076578616d706c 6500
+talink1.example. 3600 IN TYPE58 \# 34 0774616c696e6b30076578616d706c65 000774616c696e6b32076578616d706c 6500
+talink2.example. 3600 IN TYPE58 \# 18 0774616c696e6b32076578616d706c65 0000
+tlsa.example. 3600 IN TLSA 1 1 2 92003ba34942dc74152e2f2c408d29eca5a520e7f2e06bb944f4dca346baf63c1b177615d466f6c4b71c216a50292bd58c9ebdd2f74e38fe51ffd48c43326cbc
+txt01.example. 3600 IN TXT "foo"
+txt02.example. 3600 IN TXT "foo" "bar"
+txt03.example. 3600 IN TXT "foo"
+txt04.example. 3600 IN TXT "foo" "bar"
+txt05.example. 3600 IN TXT "foo bar"
+txt06.example. 3600 IN TXT "foo bar"
+txt07.example. 3600 IN TXT "foo bar"
+txt08.example. 3600 IN TXT "foo\010bar"
+txt09.example. 3600 IN TXT "foo\010bar"
+txt10.example. 3600 IN TXT "foo bar"
+txt11.example. 3600 IN TXT "\"foo\""
+txt12.example. 3600 IN TXT "\"foo\""
+txt13.example. 3600 IN TXT "foo;"
+txt14.example. 3600 IN TXT "foo;"
+txt15.example. 3600 IN TXT "bar\\;"
+uid01.example. 3600 IN TYPE101 \# 1 02
+uinfo01.example. 3600 IN TYPE100 \# 1 01
+unspec01.example. 3600 IN UNSPEC \# 1 04
+uri01.example. 3600 IN URI 10 20 "https://www.isc.org/"
+uri02.example. 3600 IN URI 30 40 "https://www.isc.org/HolyCowThisSureIsAVeryLongURIRecordIDontEvenKnowWhatSomeoneWouldEverWantWithSuchAThingButTheSpecificationRequiresThatWesupportItSoHereWeGoTestingItLaLaLaLaLaLaLaSeriouslyThoughWhyWouldYouEvenConsiderUsingAURIThisLongItSeemsLikeASillyIdeaButEnhWhatAreYouGonnaDo/"
+wks01.example. 3600 IN WKS 10.0.0.1 6 0 1 2 21 23
+wks02.example. 3600 IN WKS 10.0.0.1 17 0 1 2 53
+wks03.example. 3600 IN WKS 10.0.0.2 6 65535
+x2501.example. 3600 IN X25 "123456789"
+zonemd01.example. 3600 IN ZONEMD 2019020700 1 1 c220b8a6ed5728a971902f7e3d4fd93adeea88b0453c2e8e8c863d465ab06cf34eb95b266398c98b59124fa239cb7eeb
+zonemd02.example. 3600 IN ZONEMD 2019020700 1 2 08cfa1115c7b948c4163a901270395ea226a930cd2cbcf2fa9a5e6eb85f37c8a4e114d884e66f176eab121cb02db7d652e0cc4827e7a3204f166b47e5613fd27
+8f1tmio9avcom2k0frp92lgcumak0cad.example. 3600 IN NSEC3 1 0 10 d2cf0294c020ce6c 8fpns2uct7fbs643thp2b77peq77k6iu A NS SOA MX AAAA RRSIG DNSKEY NSEC3PARAM
+kcd3juae64f9c5csl1kif1htaui7un0g.example. 3600 IN NSEC3 1 0 10 d2cf0294c020ce6c kd5mn2m20340dgo0bl7ntsb8jp4bsc7e
+mr5ukvsk1l37btu4q7b1dfevft4hkqdk.example. 3600 IN NSEC3 1 0 10 d2cf0294c020ce6c mt38j6vg7s0sn5g17mcuf6iqikfuaj05 A AAAA RRSIG

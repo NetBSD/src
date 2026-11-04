@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie_sebuf.c,v 1.16.120.1 2025/08/02 05:56:11 perseant Exp $	*/
+/*	$NetBSD: if_ie_sebuf.c,v 1.16.120.2 2026/11/04 23:21:25 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.16.120.1 2025/08/02 05:56:11 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie_sebuf.c,v 1.16.120.2 2026/11/04 23:21:25 perseant Exp $");
 
 #include "opt_inet.h"
 
@@ -98,7 +98,7 @@ ie_sebuf_match(device_t parent, cfdata_t cf, void *args)
 	if (strcmp(aa->name, "ie"))
 		return 0;
 
-	/* Anyting else to check? */
+	/* Anything else to check? */
 
 	return 1;
 }

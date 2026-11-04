@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 # The same tests as in jit.exp, but loading JITer itself from a shared
 # library.
 
-if {[skip_shlib_tests]} {
-    untested "skipping shared library tests"
-    return -1
-}
+require allow_shlib_tests
 
 load_lib jit-elf-helpers.exp
 
@@ -49,7 +46,8 @@ set jit_solib_srcfile ${srcdir}/${subdir}/${jit_solib_basename}.c
 # On failure, return -1.
 proc compile_jit_dlmain {options} {
     global main_loader_srcfile main_loader_binfile main_loader_basename
-    set options [concat $options debug]
+    set options [concat $options debug \
+	additional_flags=-DJIT_DESCRIPTOR_LINKAGE="static"]
 
     if { [gdb_compile ${main_loader_srcfile} ${main_loader_binfile} \
 	    executable $options] != "" } {
@@ -136,7 +134,8 @@ proc one_jit_test {solib_binfiles_target match_str} {
 
 # Compile the main code (which loads the JIT objects) as a shared library.
 if { [compile_jit_elf_main_as_so $main_solib_srcfile $main_solib_binfile \
-	{additional_flags="-DMAIN=jit_dl_main"}] < 0 } {
+	{additional_flags="-DMAIN=jit_dl_main" \
+	    additional_flags="-DJIT_DESCRIPTOR_LINKAGE=static"}] < 0 } {
     return
 }
 

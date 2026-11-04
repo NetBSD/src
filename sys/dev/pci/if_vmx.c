@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.16.2.1 2025/08/02 05:56:46 perseant Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.16.2.2 2026/11/04 23:22:05 perseant Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.16.2.1 2025/08/02 05:56:46 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.16.2.2 2026/11/04 23:22:05 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_vmx.h"
@@ -1019,7 +1019,7 @@ vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 		return (-1);
 	}
 
-	for (i = 0; i < MIN(sc->vmx_nrxqueues, sc->vmx_nrxqueues); i++)
+	for (i = 0; i < MIN(sc->vmx_ntxqueues, sc->vmx_nrxqueues); i++)
 		sc->vmx_queue[i].vxq_intr_idx = 0;
 	sc->vmx_event_intr_idx = 0;
 
@@ -1063,7 +1063,7 @@ vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 		return (-1);
 	}
 
-	for (i = 0; i < MIN(sc->vmx_nrxqueues, sc->vmx_nrxqueues); i++)
+	for (i = 0; i < MIN(sc->vmx_ntxqueues, sc->vmx_nrxqueues); i++)
 		sc->vmx_queue[i].vxq_intr_idx = 0;
 	sc->vmx_event_intr_idx = 0;
 
@@ -1982,7 +1982,7 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 		evcnt_attach_dynamic(&txq->vxtxq_watchdogto, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "Watchdog timeout");
 		evcnt_attach_dynamic(&txq->vxtxq_defragged, EVCNT_TYPE_MISC,
-		    NULL, txq->vxtxq_name, "m_defrag successed");
+		    NULL, txq->vxtxq_name, "m_defrag succeeded");
 		evcnt_attach_dynamic(&txq->vxtxq_defrag_failed, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "m_defrag failed");
 	}

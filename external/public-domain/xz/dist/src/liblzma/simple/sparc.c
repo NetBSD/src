@@ -1,3 +1,5 @@
+// SPDX-License-Identifier: 0BSD
+
 ///////////////////////////////////////////////////////////////////////////////
 //
 /// \file       sparc.c
@@ -5,9 +7,6 @@
 ///
 //  Authors:    Igor Pavlov
 //              Lasse Collin
-//
-//  This file has been put into the public domain.
-//  You can do whatever you want with this file.
 //
 ///////////////////////////////////////////////////////////////////////////////
 
@@ -19,9 +18,10 @@ sparc_code(void *simple lzma_attribute((__unused__)),
 		uint32_t now_pos, bool is_encoder,
 		uint8_t *buffer, size_t size)
 {
-	size_t i;
-	for (i = 0; i + 4 <= size; i += 4) {
+	size &= ~(size_t)3;
 
+	size_t i;
+	for (i = 0; i < size; i += 4) {
 		if ((buffer[i] == 0x40 && (buffer[i + 1] & 0xC0) == 0x00)
 				|| (buffer[i] == 0x7F
 				&& (buffer[i + 1] & 0xC0) == 0xC0)) {
@@ -65,6 +65,7 @@ sparc_coder_init(lzma_next_coder *next, const lzma_allocator *allocator,
 }
 
 
+#ifdef HAVE_ENCODER_SPARC
 extern lzma_ret
 lzma_simple_sparc_encoder_init(lzma_next_coder *next,
 		const lzma_allocator *allocator,
@@ -72,8 +73,10 @@ lzma_simple_sparc_encoder_init(lzma_next_coder *next,
 {
 	return sparc_coder_init(next, allocator, filters, true);
 }
+#endif
 
 
+#ifdef HAVE_DECODER_SPARC
 extern lzma_ret
 lzma_simple_sparc_decoder_init(lzma_next_coder *next,
 		const lzma_allocator *allocator,
@@ -81,3 +84,4 @@ lzma_simple_sparc_decoder_init(lzma_next_coder *next,
 {
 	return sparc_coder_init(next, allocator, filters, false);
 }
+#endif

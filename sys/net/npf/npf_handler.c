@@ -46,7 +46,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.49.26.1 2025/08/02 05:57:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_handler.c,v 1.49.26.2 2026/11/04 23:27:58 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -292,6 +292,10 @@ block:
 	if (rp && !npf_rproc_run(&npc, rp, &mi, &decision)) {
 		if (con) {
 			npf_conn_release(con);
+
+			/* ensure that reference is released only on connection in stateful rules */
+			if (is_rproc_route(rp))
+				return 0;
 		}
 		npf_rproc_release(rp);
 		/* mbuf already freed */

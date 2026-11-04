@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_AARCH64_LINUX_H
-#define NAT_AARCH64_LINUX_H
+#ifndef GDB_NAT_AARCH64_LINUX_H
+#define GDB_NAT_AARCH64_LINUX_H
 
 #include <signal.h>
 
@@ -133,4 +133,4 @@ ps_err_e aarch64_ps_get_thread_area (struct ps_prochandle *ph,
    used for aarch64 state.  */
 int aarch64_tls_register_count (int tid);
 
-#endif /* NAT_AARCH64_LINUX_H */
+#endif /* GDB_NAT_AARCH64_LINUX_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.33.10.1 2025/08/02 05:56:31 perseant Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.33.10.2 2026/11/04 23:21:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2021 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.33.10.1 2025/08/02 05:56:31 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.33.10.2 2026/11/04 23:21:47 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -171,6 +171,189 @@ acpi_device_enumerate_children(device_t dev, devhandle_t call_handle, void *v)
 }
 ACPI_DEVICE_CALL_REGISTER(DEVICE_ENUMERATE_CHILDREN_STR,
 			  acpi_device_enumerate_children)
+
+static int
+acpi_device_register(device_t dev, devhandle_t call_handle, void *v)
+{
+	ACPI_HANDLE handle = devhandle_to_acpi(call_handle);
+	ACPI_BUFFER buf;
+	ACPI_STATUS rv;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
+
+	rv = AcpiGetName(handle, ACPI_FULL_PATHNAME, &buf);
+
+	if (! ACPI_FAILURE(rv)) {
+		device_setprop_string(dev, "device-path", buf.Pointer);
+	}
+
+	ACPI_FREE(buf.Pointer);
+	return 0;
+}
+ACPI_DEVICE_CALL_REGISTER(DEVICE_REGISTER_STR,
+			  acpi_device_register)
+
+static bool
+prop_type_to_acpi(prop_type_t type, ACPI_OBJECT_TYPE *out)
+{
+	switch (type) {
+	case PROP_TYPE_NUMBER:
+	case PROP_TYPE_BOOL:
+		*out = ACPI_TYPE_INTEGER;
+		break;
+
+	case PROP_TYPE_DATA:
+		/*
+		 * If we're requesting DATA, when we map to ANY, since
+		 * we want to be able to fetch STRINGs as DATA, too.
+		 */
+		*out = ACPI_TYPE_ANY;
+		break;
+
+	case PROP_TYPE_STRING:
+		*out = ACPI_TYPE_STRING;
+		break;
+
+	case PROP_TYPE_UNKNOWN:
+		*out = ACPI_TYPE_ANY;
+		break;
+
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+static bool
+acpi_type_to_prop(ACPI_OBJECT_TYPE acpitype, prop_type_t *out)
+{
+	switch (acpitype) {
+	case ACPI_TYPE_INTEGER:
+		*out = PROP_TYPE_NUMBER;
+		break;
+
+	case ACPI_TYPE_BUFFER:
+		*out = PROP_TYPE_DATA;
+		break;
+
+	case ACPI_TYPE_STRING:
+		*out = PROP_TYPE_STRING;
+		break;
+
+	default:
+		return false;
+	}
+
+	return true;
+}
+
+static int
+acpi_device_get_property(device_t dev, devhandle_t call_handle, void *v)
+{
+	struct device_get_property_args *args = v;
+	ACPI_HANDLE hdl = devhandle_to_acpi(call_handle);
+	ACPI_OBJECT *propval;
+	ACPI_OBJECT_TYPE acpitype;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+	int error = 0;
+
+	/*
+	 * No need to clamp size; ACPI sizes are unsigned (UINT32),
+	 * and the upper layer has already clamped to fit in ssize_t.
+	 */
+
+	if (! prop_type_to_acpi(args->reqtype, &acpitype)) {
+		return EFTYPE;
+	}
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	rv = acpi_dsd_property(hdl, args->prop, &buf, acpitype, &propval);
+	if (!ACPI_SUCCESS(rv)) {
+		if (rv == AE_TYPE) {
+			error = EFTYPE;
+			goto out;
+		}
+		error = ENOENT;
+		goto out;
+	}
+
+	args->encoding = _LITTLE_ENDIAN; /* ACPI is always little-endian */
+	if (! acpi_type_to_prop(propval->Type, &args->type)) {
+		error = EFTYPE;
+		goto out;
+	}
+
+	switch (propval->Type) {
+	case ACPI_TYPE_INTEGER:
+		args->propsize = sizeof(propval->Integer.Value);
+		if (args->buf != NULL) {
+			/*
+			 * We don't have a native boolean type, but we
+			 * can test for zero and equate that to false.
+			 */
+			if (args->reqtype == PROP_TYPE_BOOL) {
+				KASSERT(args->buflen == sizeof(bool));
+				*(bool *)args->buf =
+				    propval->Integer.Value != 0;
+				goto out;
+			}
+			/*
+			 * DATA requests the ANY type (so that it can
+			 * get STRINGs, too), so filter out non-NUMBER.
+			 */
+			if (args->reqtype != PROP_TYPE_NUMBER) {
+				error = EFTYPE;
+				goto out;
+			}
+			KASSERT(args->buflen == sizeof(uint64_t));
+			*(uint64_t *)args->buf =
+			    le64toh(propval->Integer.Value);
+		}
+		break;
+
+	case ACPI_TYPE_STRING:
+		/* +1 for trailing NUL */
+		args->propsize = propval->String.Length + 1;
+		if (args->buf != NULL) {
+			if (args->buflen < args->propsize) {
+				error = EFBIG;
+				goto out;
+			}
+			strlcpy(args->buf, propval->String.Pointer,
+			    args->buflen);
+		}
+		break;
+
+	case ACPI_TYPE_BUFFER:
+		args->propsize = propval->Buffer.Length;
+		if (args->buf != NULL) {
+			if (args->buflen < args->propsize) {
+				error = EFBIG;
+				goto out;
+			}
+			memcpy(args->buf, propval->Buffer.Pointer,
+			    args->propsize);
+		}
+		break;
+
+	default:
+		error = EFTYPE;
+		goto out;
+	}
+
+ out:
+	if (buf.Pointer != NULL) {
+		ACPI_FREE(buf.Pointer);
+	}
+	return error;
+}
+ACPI_DEVICE_CALL_REGISTER(DEVICE_GET_PROPERTY_STR,
+			  acpi_device_get_property)
 
 /*
  * Evaluate an integer object.
@@ -1031,7 +1214,7 @@ acpi_dsd_property(ACPI_HANDLE handle, const char *prop, ACPI_BUFFER *pbuf, ACPI_
 		if (strcmp(propkey->String.Pointer, prop) != 0)
 			continue;
 
-		if (propval->Type != type) {
+		if (type != ACPI_TYPE_ANY && propval->Type != type) {
 			return AE_TYPE;
 		} else {
 			*ret = propval;
@@ -1238,4 +1421,43 @@ acpi_claim_childdevs(device_t dev, struct acpi_devnode *devnode,
 	}
 
 	return AE_OK;
+}
+
+/*
+ * Return the Hypervisor Vendor Identity from the FADT as a NUL-terminated
+ * string, or false if there is none to report.
+ *
+ * ACPI 6.0 added the field (5.2.9, FADT Format, offset 268): eight bytes
+ * that name the hypervisor vendor, "usually following the name of the
+ * hypervisor product", with no version information in it.  QEMU writes
+ * "QEMU" and VMware writes "VMware", zero padded.  Firmware places zero
+ * bytes in it when no hypervisor is present, so zero is reported as
+ * absence.  The specification's own note is that a guest "can consult it
+ * and act on the result, based on whether it recognized the vendor",
+ * which is what a caller does with the string.
+ *
+ * The field only exists from FADT revision 6.  ACPICA zeroes its copy of
+ * the FADT before filling it from the firmware's table, so on an older,
+ * shorter table the field reads as zero rather than as garbage.  That is
+ * a property of the copy and not something to lean on, so both the
+ * revision and the length are checked before the field is read, as
+ * open-vm-tools does.  The bytes are copied in table order rather than
+ * through the UINT64, so that this reads the same on big-endian machines.
+ */
+bool
+acpi_fadt_hypervisor_id(char *buf, size_t buflen)
+{
+	const size_t len = sizeof(AcpiGbl_FADT.HypervisorId);
+
+	KASSERT(buflen > len);
+
+	if (AcpiGbl_FADT.Header.Revision < 6 ||
+	    AcpiGbl_FADT.Header.Length < ACPI_FADT_V6_SIZE)
+		return false;
+	if (AcpiGbl_FADT.HypervisorId == 0)
+		return false;
+
+	memcpy(buf, &AcpiGbl_FADT.HypervisorId, len);
+	buf[len] = '\0';
+	return true;
 }

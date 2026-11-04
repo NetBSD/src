@@ -1,4 +1,4 @@
-/*	$NetBSD: biosboot.c,v 1.32.12.1 2025/08/02 05:55:06 perseant Exp $ */
+/*	$NetBSD: biosboot.c,v 1.32.12.2 2026/11/04 23:19:39 perseant Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -37,13 +37,15 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: biosboot.c,v 1.32.12.1 2025/08/02 05:55:06 perseant Exp $");
+__RCSID("$NetBSD: biosboot.c,v 1.32.12.2 2026/11/04 23:19:39 perseant Exp $");
 #endif
 
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/param.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 #include <sys/bootblock.h>
 
 #if defined(DIOCGWEDGEINFO) && !defined(HAVE_NBTOOL_CONFIG_H)

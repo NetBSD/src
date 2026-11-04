@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.95 2023/09/02 17:44:59 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.95.6.1 2026/11/04 23:21:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.95 2023/09/02 17:44:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.95.6.1 2026/11/04 23:21:46 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -337,7 +337,7 @@ cngetsn(char *cp, int size)
 	char *lp;
 	int c, len;
 
-	cnpollc(1);
+	cnpollc(true);
 
 	lp = cp;
 	len = 0;
@@ -348,7 +348,7 @@ cngetsn(char *cp, int size)
 		case '\r':
 			printf("\n");
 			*lp++ = '\0';
-			cnpollc(0);
+			cnpollc(false);
 			return (len);
 		case '\b':
 		case '\177':

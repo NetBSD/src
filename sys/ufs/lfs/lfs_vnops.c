@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.340 2021/10/20 03:08:19 thorpej Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.340.10.1 2026/11/04 23:28:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.340 2021/10/20 03:08:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.340.10.1 2026/11/04 23:28:07 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -177,6 +177,7 @@ static int lfs_deleteextattr(void *v);
 static int lfs_makeinode(struct vattr *vap, struct vnode *,
 		      const struct ulfs_lookup_results *,
 		      struct vnode **, struct componentname *);
+static int lfs_filestats(struct lfs *, ino_t, struct lfs_filestats *);
 
 /* Global vfs data structures for lfs. */
 int (**lfs_vnodeop_p)(void *);
@@ -419,18 +420,11 @@ lfs_fsync(void *v)
 			}
 			cv_broadcast(&lfs_writerd_cv);
 			mutex_exit(&lfs_lock);
-		}
+ 		}
 		goto out;
 	}
 
-	/*
-	 * If a vnode is being cleaned, flush it out before we try to
-	 * reuse it.  This prevents the cleaner from writing files twice
-	 * in the same partial segment, causing an accounting underflow.
-	 */
-	if (ap->a_flags & FSYNC_RECLAIM && ip->i_state & IN_CLEANING) {
-		lfs_vflush(vp);
-	}
+	KASSERT(!(ap->a_flags & FSYNC_RECLAIM && ip->i_state & IN_CLEANING));
 
 	wait = (ap->a_flags & FSYNC_WAIT);
 	do {
@@ -448,7 +442,8 @@ lfs_fsync(void *v)
 	if (error)
 		goto out;
 
-	if ((ap->a_flags & FSYNC_DATAONLY) == 0)
+	if ((ap->a_flags & FSYNC_DATAONLY) == 0
+	    && (ip->i_flags & IN_MODIFIED))
 		error = lfs_update(vp, NULL, NULL, wait ? UPDATE_WAIT : 0);
 
 	if (error == 0 && ap->a_flags & FSYNC_CACHE) {
@@ -474,18 +469,21 @@ lfs_inactive(void *v)
 		struct vnode *a_vp;
 		bool *a_recycle;
 	} */ *ap = v;
+	struct inode *ip;
 
+	ip = VTOI(ap->a_vp);
 	KASSERT(VOP_ISLOCKED(ap->a_vp) == LK_EXCLUSIVE);
-
+	KASSERT(!(ip->i_state & IN_CLEANING));
+	
 	UNMARK_VNODE(ap->a_vp);
 
 	/*
 	 * The Ifile is only ever inactivated on unmount.
 	 * Streamline this process by not giving it more dirty blocks.
 	 */
-	if (VTOI(ap->a_vp)->i_number == LFS_IFILE_INUM) {
+	if (ip->i_number == LFS_IFILE_INUM) {
 		mutex_enter(&lfs_lock);
-		LFS_CLR_UINO(VTOI(ap->a_vp), IN_ALLMOD);
+		LFS_CLR_UINO(ip, IN_ALLMOD);
 		mutex_exit(&lfs_lock);
 		return 0;
 	}
@@ -496,7 +494,6 @@ lfs_inactive(void *v)
 	 * XXX If it happens at any other time, it should be a panic.
 	 */
 	if (ap->a_vp->v_uflag & VU_DIROP) {
-		struct inode *ip = VTOI(ap->a_vp);
 		printf("lfs_inactive: inactivating VU_DIROP? ino = %llu\n",
 		    (unsigned long long) ip->i_number);
 	}
@@ -1057,7 +1054,7 @@ lfs_remove(void *v)
 	}
 	error = ulfs_remove(ap);
 	if (ip->i_nlink == 0)
-		lfs_orphan(ip->i_lfs, ip->i_number);
+		lfs_orphan(ip->i_lfs, vp);
 
 	UNMARK_VNODE(dvp);
 	if (ap->a_vp) {
@@ -1100,7 +1097,7 @@ lfs_rmdir(void *v)
 	}
 	error = ulfs_rmdir(ap);
 	if (ip->i_nlink == 0)
-		lfs_orphan(ip->i_lfs, ip->i_number);
+		lfs_orphan(ip->i_lfs, vp);
 
 	UNMARK_VNODE(ap->a_dvp);
 	if (ap->a_vp) {
@@ -1124,10 +1121,11 @@ lfs_link(void *v)
 		struct componentname *a_cnp;
 	} */ *ap = v;
 	struct lfs *fs;
-	struct vnode *dvp;
+	struct vnode *dvp, *vp;
 	int error;
 
 	dvp = ap->a_dvp;
+	vp = ap->a_vp;
 
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 
@@ -1137,15 +1135,20 @@ lfs_link(void *v)
 		return EROFS;
 	}
 
-	error = lfs_set_dirop(dvp, NULL);
-	if (error) {
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error)
 		return error;
-	}
+	error = lfs_set_dirop(dvp, vp);
+	VOP_UNLOCK(vp);
+	if (error)
+		return error;
 
 	error = ulfs_link(ap);
 
+	UNMARK_VNODE(vp);
 	UNMARK_VNODE(dvp);
 	lfs_unset_dirop(fs, dvp, "link");
+	vrele(vp);
 	vrele(dvp);
 
 	return (error);
@@ -1291,8 +1294,12 @@ lfs_close(void *v)
 		mutex_exit(&lfs_lock);
 	}
 
+	/* When closing an anonymous file, maybe mark it IN_DEAD */
+	if (ip->i_nlink == 0)
+		lfs_orphan(fs, vp);
+
 	if (vp == ip->i_lfs->lfs_ivnode &&
-	    vp->v_mount->mnt_iflag & IMNT_UNMOUNT)
+	    vp->v_mount->mnt_iflag & (IMNT_UNMOUNT | IMNT_WANTRDONLY))
 		return 0;
 
 	if (vrefcnt(vp) > 1 && vp != ip->i_lfs->lfs_ivnode) {
@@ -1374,6 +1381,8 @@ lfs_reclaim(void *v)
 
 	ip = VTOI(vp);
 	fs = ip->i_lfs;
+
+	KASSERT(!(ip->i_state & IN_CLEANING));
 
 	/*
 	 * The inode must be freed and updated before being removed
@@ -1671,15 +1680,15 @@ lfs_flush_dirops(struct lfs *fs)
 		}
 
 		/*
-		 * We might need to update these inodes again,
+		 * We might need to update files' inodes again;
 		 * for example, if they have data blocks to write.
 		 * Make sure that after this flush, they are still
 		 * marked IN_MODIFIED so that we don't forget to
 		 * write them.
 		 */
-		/* XXX only for non-directories? --KS */
 		mutex_enter(&lfs_lock);
-		LFS_SET_UINO(ip, IN_MODIFIED);
+		if (vp->v_type == VREG)
+			LFS_SET_UINO(ip, IN_MODIFIED);
 		mutex_exit(&lfs_lock);
 
 		vrele(vp);
@@ -1851,21 +1860,33 @@ lfs_fcntl(void *v)
 	} */ *ap = v;
 	struct timeval tv;
 	struct timeval *tvp;
+	struct timeval50 *tvp50;
 	BLOCK_INFO *blkiov;
 	BLOCK_INFO_70 *blkiov70;
 	CLEANERINFO *cip;
-	SEGUSE *sup;
+	CLEANERINFO64 ci;
+	SEGUSE *sup, *sua;
 	int blkcnt, i, error;
-	size_t fh_size;
+	size_t fh_size, size;
 	struct lfs_fcntl_markv blkvp;
 	struct lfs_fcntl_markv_70 blkvp70;
+	struct lfs_inode_array inotbl;
+	struct lfs_segnum_array snap;
+	struct lfs_filestat_req lfr;
+	struct lfs_write_stats lws;
+	struct lfs_filestats *fss;
+	struct lfs_seguse_array suap;
+	struct lfs_autoclean_params params;
 	struct lwp *l;
 	fsid_t *fsidp;
 	struct lfs *fs;
 	struct buf *bp;
 	fhandle_t *fhp;
 	daddr_t off;
-	int oclean;
+	int oclean, *sna, direct, offset;
+	ino_t *inoa;
+	bool scramble;
+	ino_t maxino;
 
 	/* Only respect LFS fcntls on fs root or Ifile */
 	if (VTOI(ap->a_vp)->i_number != ULFS_ROOTINO &&
@@ -1882,33 +1903,35 @@ lfs_fcntl(void *v)
 	l = curlwp;
 	if (((ap->a_command & 0xff00) >> 8) == 'L' &&
 	    (error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_LFS,
-	     KAUTH_REQ_SYSTEM_LFS_FCNTL, NULL, NULL, NULL)) != 0)
+					    KAUTH_REQ_SYSTEM_LFS_FCNTL, NULL, NULL, NULL)) != 0)
 		return (error);
 
 	fs = VTOI(ap->a_vp)->i_lfs;
 	fsidp = &ap->a_vp->v_mount->mnt_stat.f_fsidx;
 
+	maxino = ((VTOI(fs->lfs_ivnode)->i_size >> lfs_sb_getbshift(fs))
+		  - lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs))
+		* lfs_sb_getifpb(fs);
+
 	error = 0;
 	switch ((int)ap->a_command) {
-	    case LFCNSEGWAITALL_COMPAT_50:
-	    case LFCNSEGWAITALL_COMPAT:
+	case LFCNSEGWAITALL_COMPAT_50:
+	case LFCNSEGWAITALL_COMPAT:
 		fsidp = NULL;
 		/* FALLTHROUGH */
-	    case LFCNSEGWAIT_COMPAT_50:
-	    case LFCNSEGWAIT_COMPAT:
-		{
-			struct timeval50 *tvp50
-				= (struct timeval50 *)ap->a_data;
-			timeval50_to_timeval(tvp50, &tv);
-			tvp = &tv;
-		}
+	case LFCNSEGWAIT_COMPAT_50:
+	case LFCNSEGWAIT_COMPAT:
+		tvp50 = (struct timeval50 *)ap->a_data;
+		timeval50_to_timeval(tvp50, &tv);
+		tvp = &tv;
 		goto segwait_common;
-	    case LFCNSEGWAITALL:
+
+	case LFCNSEGWAITALL:
 		fsidp = NULL;
 		/* FALLTHROUGH */
-	    case LFCNSEGWAIT:
+	case LFCNSEGWAIT:
 		tvp = (struct timeval *)ap->a_data;
-segwait_common:
+	segwait_common:
 		mutex_enter(&lfs_lock);
 		++fs->lfs_sleepers;
 		mutex_exit(&lfs_lock);
@@ -1921,8 +1944,8 @@ segwait_common:
 		mutex_exit(&lfs_lock);
 		return error;
 
-	    case LFCNBMAPV_COMPAT_70:
-	    case LFCNMARKV_COMPAT_70:
+	case LFCNBMAPV_COMPAT_70:
+	case LFCNMARKV_COMPAT_70:
 		blkvp70 = *(struct lfs_fcntl_markv_70 *)ap->a_data;
 
 		blkcnt = blkvp70.blkcnt;
@@ -1965,8 +1988,8 @@ segwait_common:
 		lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 		return error;
 
-	    case LFCNBMAPV:
-	    case LFCNMARKV:
+	case LFCNBMAPV:
+	case LFCNMARKV:
 		blkvp = *(struct lfs_fcntl_markv *)ap->a_data;
 
 		blkcnt = blkvp.blkcnt;
@@ -1974,7 +1997,7 @@ segwait_common:
 			return (EINVAL);
 		blkiov = lfs_malloc(fs, blkcnt * sizeof(BLOCK_INFO), LFS_NB_BLKIOV);
 		if ((error = copyin(blkvp.blkiov, blkiov,
-		     blkcnt * sizeof(BLOCK_INFO))) != 0) {
+				    blkcnt * sizeof(BLOCK_INFO))) != 0) {
 			lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 			return error;
 		}
@@ -1996,21 +2019,30 @@ segwait_common:
 		lfs_free(fs, blkiov, LFS_NB_BLKIOV);
 		return error;
 
-	    case LFCNRECLAIM:
+	case LFCNRECLAIM:
 		/*
 		 * Flush dirops and write Ifile, allowing empty segments
 		 * to be immediately reclaimed.
 		 */
 		lfs_writer_enter(fs, "pndirop");
 		off = lfs_sb_getoffset(fs);
-		lfs_seglock(fs, SEGM_FORCE_CKP | SEGM_CKP);
+		lfs_prelock(fs, 0);
 		lfs_flush_dirops(fs);
 		LFS_CLEANERINFO(cip, fs, bp);
 		oclean = lfs_ci_getclean(fs, cip);
 		LFS_SYNC_CLEANERINFO(cip, fs, bp, 1);
-		lfs_segwrite(ap->a_vp->v_mount, SEGM_FORCE_CKP);
-		fs->lfs_sp->seg_flags |= SEGM_PROT;
+
+		lfs_seglock(fs, 0);
+		lfs_segwrite(ap->a_vp->v_mount, SEGM_CKP | SEGM_FORCE_CKP);
+
+		/* Copy out write stats while fs->lfs_sp still exists */
+		memset(&lws, 0, sizeof(lws));
+		lws.direct = 0;
+		lws.offset = lfs_btofsb(fs, fs->lfs_sp->bytes_written);
+		*(struct lfs_write_stats *)ap->a_data = lws;
+
 		lfs_segunlock(fs);
+		lfs_preunlock(fs);
 		lfs_writer_leave(fs);
 
 #ifdef DEBUG
@@ -2028,47 +2060,40 @@ segwait_common:
 
 		return 0;
 
-	    case LFCNIFILEFH_COMPAT:
+	case LFCNIFILEFH_COMPAT:
 		/* Return the filehandle of the Ifile */
 		if ((error = kauth_authorize_system(l->l_cred,
-		    KAUTH_SYSTEM_FILEHANDLE, 0, NULL, NULL, NULL)) != 0)
+						    KAUTH_SYSTEM_FILEHANDLE,
+						    0, NULL, NULL, NULL)) != 0)
 			return (error);
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
 		fh_size = 16;	/* former VFS_MAXFIDSIZ */
 		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 
-	    case LFCNIFILEFH_COMPAT2:
-	    case LFCNIFILEFH:
+	case LFCNIFILEFH_COMPAT2:
+	case LFCNIFILEFH:
 		/* Return the filehandle of the Ifile */
 		fhp = (struct fhandle *)ap->a_data;
 		fhp->fh_fsid = *fsidp;
 		fh_size = sizeof(struct lfs_fhandle) -
-		    offsetof(fhandle_t, fh_fid);
+			offsetof(fhandle_t, fh_fid);
 		return lfs_vptofh(fs->lfs_ivnode, &(fhp->fh_fid), &fh_size);
 
-	    case LFCNREWIND:
+	case LFCNREWIND:
 		/* Move lfs_offset to the lowest-numbered segment */
 		return lfs_rewind(fs, *(int *)ap->a_data);
 
-	    case LFCNINVAL:
+	case LFCNINVAL:
 		/* Mark a segment SEGUSE_INVAL */
-		LFS_SEGENTRY(sup, fs, *(int *)ap->a_data, bp);
-		if (sup->su_nbytes > 0) {
-			brelse(bp, 0);
-			lfs_unset_inval_all(fs);
-			return EBUSY;
-		}
-		sup->su_flags |= SEGUSE_INVAL;
-		VOP_BWRITE(bp->b_vp, bp);
-		return 0;
+		return lfs_invalidate(fs, *(int *)ap->a_data);
 
-	    case LFCNRESIZE:
+	case LFCNRESIZE:
 		/* Resize the filesystem */
 		return lfs_resize_fs(fs, *(int *)ap->a_data);
 
-	    case LFCNWRAPSTOP:
-	    case LFCNWRAPSTOP_COMPAT:
+	case LFCNWRAPSTOP:
+	case LFCNWRAPSTOP_COMPAT:
 		/*
 		 * Hold lfs_newseg at segment 0; if requested, sleep until
 		 * the filesystem wraps around.  To support external agents
@@ -2091,7 +2116,7 @@ segwait_common:
 		    || ap->a_command == LFCNWRAPSTOP_COMPAT) {
 			log(LOG_NOTICE, "LFCNSTOPWRAP waiting for log wrap\n");
 			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
-				"segwrap", 0, &lfs_lock);
+					"segwrap", 0, &lfs_lock);
 			log(LOG_NOTICE, "LFCNSTOPWRAP done waiting\n");
 			if (error) {
 				lfs_wrapgo(fs, VTOI(ap->a_vp), 0);
@@ -2100,8 +2125,8 @@ segwait_common:
 		mutex_exit(&lfs_lock);
 		return 0;
 
-	    case LFCNWRAPGO:
-	    case LFCNWRAPGO_COMPAT:
+	case LFCNWRAPGO:
+	case LFCNWRAPGO_COMPAT:
 		/*
 		 * Having done its work, the agent wakes up the writer.
 		 * If the argument is 1, it sleeps until a new segment
@@ -2110,11 +2135,11 @@ segwait_common:
 		mutex_enter(&lfs_lock);
 		error = lfs_wrapgo(fs, VTOI(ap->a_vp),
 				   ap->a_command == LFCNWRAPGO_COMPAT ? 1 :
-				    *((int *)ap->a_data));
+				   *((int *)ap->a_data));
 		mutex_exit(&lfs_lock);
 		return error;
 
-	    case LFCNWRAPPASS:
+	case LFCNWRAPPASS:
 		if ((VTOI(ap->a_vp)->i_lfs_iflags & LFSI_WRAPWAIT))
 			return EALREADY;
 		mutex_enter(&lfs_lock);
@@ -2134,7 +2159,7 @@ segwait_common:
 			VTOI(ap->a_vp)->i_lfs_iflags |= LFSI_WRAPWAIT;
 			log(LOG_NOTICE, "LFCNPASS waiting for log wrap\n");
 			error = mtsleep(&fs->lfs_nowrap, PCATCH | PUSER,
-				"segwrap", 0, &lfs_lock);
+					"segwrap", 0, &lfs_lock);
 			log(LOG_NOTICE, "LFCNPASS done waiting\n");
 			VTOI(ap->a_vp)->i_lfs_iflags &= ~LFSI_WRAPWAIT;
 			vrele(ap->a_vp);
@@ -2142,15 +2167,237 @@ segwait_common:
 		mutex_exit(&lfs_lock);
 		return error;
 
-	    case LFCNWRAPSTATUS:
+	case LFCNWRAPSTATUS:
 		mutex_enter(&lfs_lock);
 		*(int *)ap->a_data = fs->lfs_wrapstatus;
 		mutex_exit(&lfs_lock);
 		return 0;
 
-	    default:
+	case LFCNFILESTATS:
+		/* Retrieve fragmentation statistics from these inodes */
+		lfr = *(struct lfs_filestat_req *)ap->a_data;
+		if (lfr.len < 0 || lfr.len > LFS_FILESTATS_MAXCNT)
+			return EINVAL;
+		if (lfr.ino < LFS_IFILE_INUM || lfr.len < 1
+		    || lfr.ino >= maxino || lfr.ino + lfr.len >= maxino)
+			return EINVAL;
+		fss = lfs_malloc(fs, lfr.len * sizeof(*fss), LFS_NB_BLKIOV);
+		if ((error = copyin(lfr.fss, fss,
+				    lfr.len * sizeof(*fss))) != 0) {
+			lfs_free(fs, fss, LFS_NB_BLKIOV);
+			return error;
+		}
+		
+		for (i = 0; i < lfr.len; ++i) {
+			error = lfs_filestats(fs, lfr.ino + i, &fss[i]);
+			if (error == ENOENT)
+				error = 0;
+			if (error)
+				break;
+		}
+		
+		if (error == 0)
+			error = copyout(fss, lfr.fss, lfr.len * sizeof(*fss));
+		
+		lfs_free(fs, fss, LFS_NB_BLKIOV);
+		return error;
+		
+	case LFCNREWRITESEGS:
+		/* Rewrite (clean) the listed segments */
+		snap = *(struct lfs_segnum_array *)ap->a_data;
+		if (snap.len > LFS_REWRITE_MAXCNT)
+			return EINVAL;
+		sna = lfs_malloc(fs, snap.len * sizeof(int), LFS_NB_BLKIOV);
+		if ((error = copyin(snap.segments, sna,
+				    snap.len * sizeof(int))) != 0) {
+			lfs_free(fs, sna, LFS_NB_BLKIOV);
+			return error;
+		}
+
+		for (i = 0; i < snap.len; i++)
+			if (sna[i] < 0 || sna[i] >= lfs_sb_getnseg(fs))
+				return EINVAL;
+
+		direct = offset = 0;
+		error = lfs_rewrite_segments(fs, sna, snap.len, &direct,
+					     &offset, curlwp);
+		lfs_free(fs, sna, LFS_NB_BLKIOV);
+
+		/* Copy out write stats */
+		snap.stats.direct = direct;
+		snap.stats.offset = offset;
+		*(struct lfs_write_stats *)
+			&(((struct lfs_segnum_array *)ap->a_data)->stats)
+			= snap.stats;
+		return error;
+
+	case LFCNREWRITEFILE:
+	case LFCNSCRAMBLE:
+		/* Rewrite (coalesce) the listed inodes */
+		scramble = ((int)ap->a_command == LFCNSCRAMBLE);
+		inotbl = *(struct lfs_inode_array *)ap->a_data;
+		if (inotbl.len > LFS_REWRITE_MAXCNT)
+			return EINVAL;
+		inoa = lfs_malloc(fs, inotbl.len * sizeof(ino_t),
+				  LFS_NB_BLKIOV);
+		if ((error = copyin(inotbl.inodes, inoa,
+				    inotbl.len * sizeof(ino_t))) != 0) {
+			lfs_free(fs, inoa, LFS_NB_BLKIOV);
+			return error;
+		}
+
+		for (i = 0; i < inotbl.len; i++) {
+			if (inoa[i] <= LFS_IFILE_INUM || inoa[i] >= maxino)
+			return EINVAL;
+		}
+
+		direct = offset = 0;
+		error = lfs_rewrite_file(fs, inoa, inotbl.len, scramble,
+					 &direct, &offset);
+		lfs_free(fs, inoa, LFS_NB_BLKIOV);
+
+		/* Copy out write stats */
+		inotbl.stats.direct = direct;
+		inotbl.stats.offset = offset;
+		*(struct lfs_write_stats *)
+			&(((struct lfs_inode_array *)ap->a_data)->stats)
+			= inotbl.stats;
+		
+		return error;
+
+	case LFCNCLEANERINFO:
+		/*
+		 * Get current CLEANERINFO information.
+		 */
+		memset(&ci, 0, sizeof ci);
+		ci.clean = lfs_sb_getnclean(fs);
+		ci.dirty = lfs_sb_getnseg(fs) - lfs_sb_getnclean(fs);
+		ci.bfree = lfs_sb_getbfree(fs);
+		ci.avail = lfs_sb_getavail(fs) - fs->lfs_ravail
+			- fs->lfs_favail;
+		ci.flags = (fs->lfs_flags & LFS_MUSTCLEAN)
+			? LFS_CLEANER_MUST_CLEAN : 0;
+		*(CLEANERINFO64 *)ap->a_data = ci;
+
+		return 0;
+		       
+	case LFCNSEGUSE:
+		/*
+		 * Retrieve SEGUSE information for one or more segments.
+		 */
+		if (lfs_sb_getversion(fs) == 1)
+			return EINVAL;
+		suap = *(struct lfs_seguse_array *)ap->a_data;
+		if (suap.start < 0
+		    /* || suap.len < 0 */
+		    || suap.len > LFS_SEGUSE_MAXCNT
+		    || suap.start >= lfs_sb_getnseg(fs))
+			return EINVAL;
+		if (suap.start + suap.len >= lfs_sb_getnseg(fs)) {
+			suap.len = lfs_sb_getnseg(fs) - suap.start;
+			*(struct lfs_seguse_array *)ap->a_data = suap;
+		}
+		sua = lfs_malloc(fs, suap.len * sizeof *sua, LFS_NB_BLKIOV);
+		
+		for (i = 0; i < suap.len; i++) {
+			LFS_SEGENTRY(sup, fs, suap.start + i, bp);
+			memcpy(sua + i, sup, sizeof(*sup));
+			LFS_RELEASESEGENTRY(sup, fs, suap.start + i, bp);
+		}
+
+		error = copyout(sua, suap.seguse, suap.len * sizeof *sua);
+		lfs_free(fs, sua, LFS_NB_BLKIOV);
+		return error;
+
+	case LFCNAUTOCLEAN:
+		/*
+		 * Control the in-kernel cleaner.
+		 */
+		size = *(size_t *)ap->a_data;
+		if (size > sizeof(params))
+			return EINVAL;
+		memset(&params, 0, sizeof(params));
+		memcpy(&params, (struct lfs_autoclean_params *)ap->a_data,
+		       size);
+		return lfs_cleanctl(fs, &params);
+
+	default:
 		return genfs_fcntl(v);
 	}
+	return 0;
+}
+
+/*
+ * Report continuity statistics for this file.  Two measures are provided:
+ * the number of discontinuities, and the total length, in fragment units,
+ * of all the gaps between contiguously allocated file extents.  Only
+ * direct blocks are considered.
+ *
+ * A single-block file will show zero for both measures, as will any file
+ * that fits completely within its partial-segment.  In general, the minimum
+ * discontinuity count for any files will be N-1, where N is the number
+ * of segments required to store the file, rounded up; and the minimum
+ * total gap length will also be N, with only the partial-segment headers
+ * breaking up the file data (indirect blocks are written at the end).
+ *
+ * Some files will be too large to be written in their entirety without
+ * a checkpoint in the middle; those will have a higher minimum total gap
+ * measure but about the same discountinuity count.
+ *
+ * The coalescing cleaner will use these statistics to identify files that
+ * need to be rewritten to be contiguous on disk.
+ */
+static int
+lfs_filestats(struct lfs *fs, ino_t ino, struct lfs_filestats *lfp)
+{
+	int error, step, run;
+	daddr_t lbn, odaddr, daddr, diff, hiblk;
+	struct vnode *vp;
+	struct inode *ip;
+
+	memset(lfp, 0, sizeof(*lfp));
+	lfp->ino = ino;
+
+	/* Contiguous blocks will be this far apart */
+	step = lfs_sb_getbsize(fs) >> DEV_BSHIFT;
+
+	error = VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_SHARED, &vp);
+	if (error)
+		return error;
+	ip = VTOI(vp);
+	
+	/* Highest block in this inode */
+	hiblk = lfs_lblkno(fs, ip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
+	lfp->nblk = 0;
+		
+	odaddr = 0x0;
+	for (lbn = 0; lbn <= hiblk; ++lbn) {
+		error = VOP_BMAP(vp, lbn, NULL, &daddr, &run);
+		if (error)
+			break;
+
+		/* Count all blocks */
+		if (daddr > 0)
+			lfp->nblk += (run + 1);
+		
+		/* Holes and yet-unwritten data only count once */
+		if (daddr == odaddr && daddr <= 0)
+			continue;
+
+		/* Count any discontinuities */
+		if (lbn > 0 && daddr != odaddr + step) {
+			++lfp->dc_count;
+			diff = daddr - odaddr;
+			if (diff < 0)
+				diff = -diff;
+			lfp->dc_sum += diff;
+		}
+		lbn += run;
+		odaddr = daddr + run * step;
+	}
+	VOP_UNLOCK(vp);
+	vrele(vp);
+
 	return 0;
 }
 

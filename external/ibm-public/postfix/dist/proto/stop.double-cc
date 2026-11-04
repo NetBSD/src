@@ -343,3 +343,16 @@ additional_info  additional_info
 ignored  ignored 
 USE_TLSRPT  USE_TLSRPT 
 encoded  encoded text can contain only alpha digit 
+ossl_digest_new  ossl_digest_new returns NULL after error ossl_digest_data 
+ Richard Hansen rhansen rhansen org 
+ long long or long integer 
+void  void tls_stats_revert TLS_STATS tstats 
+void  void pol_stats_revert POL_STATS pstats 
+ feature feature etc 
+ feature feature etc where 
+ policies policy policy domain If null this defaults to the
+bounce  bounce defer trace 
+dict_open  dict_open looks up our DICT_OPEN_INFO with dict_fn and mkmap_fn
+mkmap_open  mkmap_open looks up our DICT_OPEN_INFO with dict_fn and mkmap_fn
+ typedef struct MSG_CAPTURE MSG_CAPTURE 
+MSG_CAPTURE  MSG_CAPTURE msg_capt_create ssize_t init_size 

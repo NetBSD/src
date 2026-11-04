@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2017-2024 Free Software Foundation, Inc.
+   Copyright 2017-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 #include <stdint.h>
 #include <assert.h>
+
+static volatile int volatile_dummy;
 
 static int again;
 
@@ -53,6 +55,40 @@ write_size8twice (void)
   data.u.size8twice[offset] = first;
   data.u.size8twice[offset + 1] = second;
 #endif
+
+  /* Setting a breakpoint on an instruction after an instruction triggering a
+     watchpoint makes it ambiguous which one will be reported.
+     Insert a dummy instruction in between to make sure the watchpoint gets
+     reported.  */
+  volatile_dummy = 1;
+
+  return; /* write_size8twice_return */
+}
+
+static void
+read_size8twice (void)
+{
+  static uint64_t volatile first;
+  static uint64_t volatile second;
+
+#ifdef __aarch64__
+  volatile void *p = &data.u.size8twice[offset];
+  asm volatile ("ldp %0, %1, [%2]"
+	       : "=r" (first), "=r" (second) /* output */
+	       : "r" (p)  /* input */
+	       : /* clobber */);
+#else
+  first = data.u.size8twice[offset];
+  second = data.u.size8twice[offset + 1];
+#endif
+
+  /* Setting a breakpoint on an instruction after an instruction triggering a
+     watchpoint makes it ambiguous which one will be reported.
+     Insert a dummy instruction inbetween to make sure the watchpoint gets
+     reported.  */
+  volatile_dummy = 1;
+
+  return; /* read_size8twice_return */
 }
 
 int
@@ -63,6 +99,7 @@ main (void)
   assert (sizeof (data) == 8 + 3 * 8);
 
   write_size8twice ();
+  read_size8twice ();
 
   while (size)
     {

@@ -1,6 +1,6 @@
 /* Linux namespaces(7) support.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 #include "nat/linux-namespaces.h"
 #include "gdbsupport/filestuff.h"
 #include <fcntl.h>
@@ -29,6 +28,7 @@
 #include <signal.h>
 #include <sched.h>
 #include "gdbsupport/scope-exit.h"
+#include "gdbsupport/eintr.h"
 
 /* See nat/linux-namespaces.h.  */
 bool debug_linux_namespaces;
@@ -549,7 +549,7 @@ mnsh_handle_readlink (int sock, const char *filename)
 
 /* The helper process.  Never returns.  Must be async-signal-safe.  */
 
-static void mnsh_main (int sock) ATTRIBUTE_NORETURN;
+[[noreturn]] static void mnsh_main (int sock);
 
 static void
 mnsh_main (int sock)
@@ -723,7 +723,7 @@ mnsh_maybe_mourn_peer (void)
 	  return;
 	}
 
-      pid = waitpid (helper->pid, &status, WNOHANG);
+      pid = gdb::waitpid (helper->pid, &status, WNOHANG);
       if (pid == 0)
 	{
 	  /* The helper is still alive.  */

@@ -1,11 +1,11 @@
-#	$NetBSD: Makefile,v 1.10 2023/06/03 09:09:07 lukem Exp $
+#	$NetBSD: Makefile,v 1.10.2.1 2026/11/04 23:15:24 perseant Exp $
 
 .include <bsd.own.mk>
 
 PROG=	xauth
 SRCS=	xauth.c gethost.c process.c parsedpy.c
 
-CPPFLAGS+=		-DRETSIGTYPE=void -DPACKAGE_VERSION=\"1.0.8\"
+CPPFLAGS+=		-DRETSIGTYPE=void
 CPPFLAGS+= 		-DHAVE_STRLCPY
 CPPFLAGS+= 		-DHAVE_REALLOCARRAY
 CPPFLAGS.gethost.c=	${X11FLAGS.CONNECTION}
@@ -26,6 +26,8 @@ DPADD+=	${LIBXAU} ${LIBXMUU} ${LIBXT} ${LIBSM} ${LIBICE} ${LIBXEXT} ${LIBX11}
 .include <bsd.own.mk>
 
 USE_SSP:=	no
+
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

@@ -1,0 +1,380 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+
+# Test that the GDB-internal TLS link map to module id mapping code
+# works correctly when debugging a program which is linked against
+# shared objects and which also loads and unloads other shared objects
+# in different orders.  For targets which have GDB-internal TLS
+# support, it'll check both GDB-internal TLS support as well as that
+# provided by a helper library such as libthread_db.
+
+source $srcdir/$subdir/tls-common.exp.tcl
+
+require allow_shlib_tests
+
+standard_testfile
+
+set libsrc "${srcdir}/${subdir}/${testfile}-lib.c"
+
+# These will be dlopen'd:
+set lib1obj [standard_output_file "${testfile}1-lib.so"]
+set lib2obj [standard_output_file "${testfile}2-lib.so"]
+set lib3obj [standard_output_file "${testfile}3-lib.so"]
+set lib4obj [standard_output_file "${testfile}4-lib.so"]
+
+# These will be dynamically linked with the main program:
+set lib10obj [standard_output_file "${testfile}10-lib.so"]
+set lib11obj [standard_output_file "${testfile}11-lib.so"]
+
+# Due to problems with some versions of glibc, we expect some tests to
+# fail due to TLS storage not being allocated/initialized.  Test
+# command CMD using regular expression RE, and use XFAIL instead of
+# FAIL when the relevant RE is matched and COND is true when evaluated
+# in the upper level.
+
+proc gdb_test_with_xfail { cmd re cond} {
+    gdb_test_multiple $cmd $cmd {
+	-re -wrap $re {
+	    pass $gdb_test_name
+	}
+	-re -wrap "The inferior has not yet allocated storage for thread-local variables.*" {
+	    if [ uplevel 1 [list expr $cond]] {
+		xfail $gdb_test_name
+	    } else {
+		fail $gdb_test_name
+	    }
+	}
+    }
+}
+
+proc do_tests {force_internal_tls} {
+    clean_restart
+    gdb_load $::binfile
+    if ![runto_main] {
+	return
+    }
+
+    if $force_internal_tls {
+	gdb_test_no_output "maint set force-internal-tls-address-lookup on"
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-1"]
+    gdb_continue_to_breakpoint "main-breakpoint-1"
+
+    with_test_prefix "before assignments" {
+	gdb_test "print tls_main_tbss_1" ".* = 0"
+	gdb_test "print tls_main_tbss_2" ".* = 0"
+	gdb_test "print tls_main_tdata_1" ".* = 96"
+	gdb_test "print tls_main_tdata_2" ".* = 97"
+
+	# For these tests, where we're attempting to access TLS vars
+	# in a dlopen'd library, but before assignment to any of the
+	# vars, so it could happen that storage hasn't been allocated
+	# yet.  But it might also work.  (When testing against MUSL,
+	# things just work; GLIBC ends to produce the TLS error.) So
+	# accept either the right answer or a TLS error message.
+
+	set tlserr "The inferior has not yet allocated storage for thread-local variables.*"
+	foreach n {1 2 3 4} {
+	    gdb_test "print tls_lib${n}_tbss_1" \
+		     "0|${tlserr}"
+	    gdb_test "print tls_lib${n}_tbss_2" \
+		     "0|${tlserr}"
+	    gdb_test "print tls_lib${n}_tdata_1" \
+		     "96|${tlserr}"
+	    gdb_test "print tls_lib${n}_tdata_2" \
+		     "97|${tlserr}"
+	}
+	foreach n {10 11} {
+	    gdb_test "print tls_lib${n}_tbss_1" ".* = 0"
+	    gdb_test "print tls_lib${n}_tbss_2" ".* = 0"
+	    gdb_test "print tls_lib${n}_tdata_1" ".* = ${n}96"
+	    gdb_test "print tls_lib${n}_tdata_2" ".* = ${n}97"
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-2"]
+    gdb_continue_to_breakpoint "main-breakpoint-2"
+
+    with_test_prefix "at main-breakpoint-2" {
+	gdb_test "print tls_main_tbss_1" ".* = 11"
+	gdb_test "print tls_main_tbss_2" ".* = 12"
+	gdb_test "print tls_main_tdata_1" ".* = 13"
+	gdb_test "print tls_main_tdata_2" ".* = 14"
+
+	foreach n {1 2 3 4 10 11} {
+	    gdb_test "print tls_lib${n}_tbss_1" ".* = ${n}11"
+	    gdb_test "print tls_lib${n}_tbss_2" ".* = ${n}12"
+	    gdb_test "print tls_lib${n}_tdata_1" ".* = ${n}13"
+	    gdb_test "print tls_lib${n}_tdata_2" ".* = ${n}14"
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-3"]
+    gdb_continue_to_breakpoint "main-breakpoint-3"
+
+    # At this point lib2 and lib3 have been unloaded.  Also, TLS vars
+    # in remaining libraries have been changed.
+
+    with_test_prefix "at main-breakpoint-3" {
+	gdb_test "print tls_main_tbss_1" ".* = 21"
+	gdb_test "print tls_main_tbss_2" ".* = 22"
+	gdb_test "print tls_main_tdata_1" ".* = 23"
+	gdb_test "print tls_main_tdata_2" ".* = 24"
+
+	foreach n {1 4 10 11} {
+	    gdb_test "print tls_lib${n}_tbss_1" ".* = ${n}21"
+	    gdb_test "print tls_lib${n}_tbss_2" ".* = ${n}22"
+	    gdb_test "print tls_lib${n}_tdata_1" ".* = ${n}23"
+	    gdb_test "print tls_lib${n}_tdata_2" ".* = ${n}24"
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-4"]
+    gdb_continue_to_breakpoint "main-breakpoint-4"
+
+    # lib3 has been loaded again; lib2 is the only one not loaded.
+
+    with_test_prefix "at main-breakpoint-4" {
+	gdb_test "print tls_main_tbss_1" ".* = 31"
+	gdb_test "print tls_main_tbss_2" ".* = 32"
+	gdb_test "print tls_main_tdata_1" ".* = 33"
+	gdb_test "print tls_main_tdata_2" ".* = 34"
+
+	set cond { $n == 3 }
+	foreach n {1 3 4 10 11} {
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_1" ".* = ${n}31" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_2" ".* = ${n}32" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_1" ".* = ${n}33" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_2" ".* = ${n}34" $cond
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-5"]
+    gdb_continue_to_breakpoint "main-breakpoint-5"
+
+    # lib2 and lib3 are loaded; lib1 and lib4 are not.
+
+    with_test_prefix "at main-breakpoint-5" {
+	gdb_test "print tls_main_tbss_1" ".* = 41"
+	gdb_test "print tls_main_tbss_2" ".* = 42"
+	gdb_test "print tls_main_tdata_1" ".* = 43"
+	gdb_test "print tls_main_tdata_2" ".* = 44"
+
+	set cond { $n == 2 || $n == 3 }
+	foreach n {2 3 10 11} {
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_1" ".* = ${n}41" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_2" ".* = ${n}42" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_1" ".* = ${n}43" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_2" ".* = ${n}44" $cond
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-6"]
+    gdb_continue_to_breakpoint "main-breakpoint-6"
+
+    # lib1, lib3 and lib4 are loaded; lib2 is not loaded.
+
+    with_test_prefix "at main-breakpoint-6" {
+	gdb_test "print tls_main_tbss_1" ".* = 51"
+	gdb_test "print tls_main_tbss_2" ".* = 52"
+	gdb_test "print tls_main_tdata_1" ".* = 53"
+	gdb_test "print tls_main_tdata_2" ".* = 54"
+
+	set cond { $n == 1 || $n == 3 || $n == 4}
+	foreach n {1 3 4 10 11} {
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_1" ".* = ${n}51" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_2" ".* = ${n}52" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_1" ".* = ${n}53" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_2" ".* = ${n}54" $cond
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-7"]
+    gdb_continue_to_breakpoint "main-breakpoint-7"
+
+    # lib2 and lib3 are loaded; lib1 and lib4 are not.
+
+    with_test_prefix "at main-breakpoint-7" {
+	gdb_test "print tls_main_tbss_1" ".* = 61"
+	gdb_test "print tls_main_tbss_2" ".* = 62"
+	gdb_test "print tls_main_tdata_1" ".* = 63"
+	gdb_test "print tls_main_tdata_2" ".* = 64"
+
+	set cond { $n == 2 || $n == 3 }
+	foreach n {2 3 10 11} {
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_1" ".* = ${n}61" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_2" ".* = ${n}62" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_1" ".* = ${n}63" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_2" ".* = ${n}64" $cond
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-8"]
+    gdb_continue_to_breakpoint "main-breakpoint-8"
+
+    # lib1, lib2, lib3, and lib4 are all loaded.
+
+    with_test_prefix "at main-breakpoint-8" {
+	gdb_test "print tls_main_tbss_1" ".* = 71"
+	gdb_test "print tls_main_tbss_2" ".* = 72"
+	gdb_test "print tls_main_tdata_1" ".* = 73"
+	gdb_test "print tls_main_tdata_2" ".* = 74"
+
+	foreach n {1 2 3 4 10 11} {
+	    gdb_test "print tls_lib${n}_tbss_1" ".* = ${n}71"
+	    gdb_test "print tls_lib${n}_tbss_2" ".* = ${n}72"
+	    gdb_test "print tls_lib${n}_tdata_1" ".* = ${n}73"
+	    gdb_test "print tls_lib${n}_tdata_2" ".* = ${n}74"
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-9"]
+    gdb_continue_to_breakpoint "main-breakpoint-9"
+
+    # lib2 is loaded; lib1, lib3, and lib4 are not.
+
+    with_test_prefix "at main-breakpoint-9" {
+	gdb_test "print tls_main_tbss_1" ".* = 81"
+	gdb_test "print tls_main_tbss_2" ".* = 82"
+	gdb_test "print tls_main_tdata_1" ".* = 83"
+	gdb_test "print tls_main_tdata_2" ".* = 84"
+
+	foreach n {2 10 11} {
+	    gdb_test "print tls_lib${n}_tbss_1" ".* = ${n}81"
+	    gdb_test "print tls_lib${n}_tbss_2" ".* = ${n}82"
+	    gdb_test "print tls_lib${n}_tdata_1" ".* = ${n}83"
+	    gdb_test "print tls_lib${n}_tdata_2" ".* = ${n}84"
+	}
+    }
+
+    gdb_breakpoint [gdb_get_line_number "main-breakpoint-10"]
+    gdb_continue_to_breakpoint "main-breakpoint-10"
+
+    # lib3 and lib4 are loaded; lib1 and lib2 are not.
+
+    with_test_prefix "at main-breakpoint-10" {
+	gdb_test "print tls_main_tbss_1" ".* = 91"
+	gdb_test "print tls_main_tbss_2" ".* = 92"
+	gdb_test "print tls_main_tdata_1" ".* = 93"
+	gdb_test "print tls_main_tdata_2" ".* = 94"
+
+	set cond { $n == 3 || $n == 4 }
+	foreach n {3 4 10 11} {
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_1" ".* = ${n}91" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_2" ".* = ${n}92" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_1" ".* = ${n}93" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_2" ".* = ${n}94" $cond
+	}
+    }
+
+    # gdb_interact
+
+    set corefile ${::binfile}.core
+    set core_supported 0
+    if { ![is_remote host] } {
+	set core_supported [gdb_gcore_cmd $corefile "save corefile"]
+    }
+
+    # Finish test early if no core file was made.
+    if !$core_supported {
+	return
+    }
+
+    clean_restart
+    gdb_load $::binfile
+
+    set core_loaded [gdb_core_cmd $corefile "load corefile"]
+    if { $core_loaded == -1 } {
+	return
+    }
+
+    with_test_prefix "core file" {
+	if $force_internal_tls {
+	    gdb_test_no_output "maint set force-internal-tls-address-lookup on"
+	}
+
+	gdb_test "print tls_main_tbss_1" ".* = 91"
+	gdb_test "print tls_main_tbss_2" ".* = 92"
+	gdb_test "print tls_main_tdata_1" ".* = 93"
+	gdb_test "print tls_main_tdata_2" ".* = 94"
+
+	set cond { $n == 3 || $n == 4 }
+	foreach n {3 4 10 11} {
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_1" ".* = ${n}91" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tbss_2" ".* = ${n}92" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_1" ".* = ${n}93" $cond
+	    gdb_test_with_xfail "print tls_lib${n}_tdata_2" ".* = ${n}94" $cond
+	}
+    }
+}
+
+# Build shared objects for dlopen:
+if { [gdb_compile_shlib $libsrc $lib1obj [list debug additional_flags=-DN=1]] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+if { [gdb_compile_shlib $libsrc $lib2obj [list debug additional_flags=-DN=2]] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+if { [gdb_compile_shlib $libsrc $lib3obj [list debug additional_flags=-DN=3]] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+if { [gdb_compile_shlib $libsrc $lib4obj [list debug additional_flags=-DN=4]] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+
+# Build shared objects to link against main program:
+if { [gdb_compile_shlib $libsrc $lib10obj [list debug additional_flags=-DN=10]] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+if { [gdb_compile_shlib $libsrc $lib11obj [list debug additional_flags=-DN=11]] != "" } {
+    untested "failed to compile shared object"
+    return -1
+}
+
+# Use gdb_compile_pthreads to build and link the main program for
+# testing.  It's also possible to run the tests using plain old
+# gdb_compile, but this adds complexity with setting up additional
+# KFAILs.  (When run using GLIBC versions earlier than 2.34, a program
+# that's not dynamically linked against libpthread will lack a working
+# libthread_db, and, therefore, won't be able to access thread local
+# storage without GDB-internal TLS support.  Additional complications
+# arise from when testing on x86_64 with -m32, which tends to work
+# okay on GLIBC 2.34 and newer, but not older versions.  It gets messy
+# to properly sort out all of these cases.)
+#
+# This test was originally written to do it both ways, i.e. with both
+# both gdb_compile and gdb_compile_pthreads, but the point of this
+# test is to check that the link map address to TLS module id mapping
+# code works correctly in programs which use lots of dlopen and
+# dlclose calls in various orders - and that can be done using just
+# gdb_compile_pthreads.
+
+if { [gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable \
+			    [list debug shlib_load \
+				  shlib=${lib10obj} \
+				  shlib=${lib11obj} \
+				  additional_flags=-DOBJ1=\"${lib1obj}\" \
+				  additional_flags=-DOBJ2=\"${lib2obj}\" \
+				  additional_flags=-DOBJ3=\"${lib3obj}\" \
+				  additional_flags=-DOBJ4=\"${lib4obj}\" \
+								]] != "" } {
+    untested "failed to compile"
+} else {
+    foreach_with_prefix force_internal_tls $internal_tls_iters {
+	do_tests $force_internal_tls
+    }
+}

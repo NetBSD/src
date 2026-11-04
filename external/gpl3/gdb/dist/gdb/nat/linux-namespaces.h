@@ -1,6 +1,6 @@
 /* Linux namespaces(7) support.
 
-   Copyright (C) 2015-2024 Free Software Foundation, Inc.
+   Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,18 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_NAMESPACES_H
-#define NAT_LINUX_NAMESPACES_H
+#ifndef GDB_NAT_LINUX_NAMESPACES_H
+#define GDB_NAT_LINUX_NAMESPACES_H
 
 /* Set to true to enable debugging of Linux namespaces code.  */
 
 extern bool debug_linux_namespaces;
+
+/* Print a "linux-namespaces" debug statement.  */
+
+#define linux_namespaces_debug_printf(fmt, ...) \
+  debug_prefixed_printf_cond (debug_linux_namespaces, "linux-namespaces", \
+			      fmt, ##__VA_ARGS__)
 
 /* Enumeration of Linux namespace types.  */
 
@@ -58,6 +64,11 @@ enum linux_ns_type
 
 extern int linux_ns_same (pid_t pid, enum linux_ns_type type);
 
+/* Like lstat(2), but in the mount namespace of process PID.  */
+
+extern int linux_mntns_lstat (pid_t pid, const char *filename,
+			      struct stat *sb);
+
 /* Like gdb_open_cloexec, but in the mount namespace of process
    PID.  */
 
@@ -73,4 +84,4 @@ extern int linux_mntns_unlink (pid_t pid, const char *filename);
 extern ssize_t linux_mntns_readlink (pid_t pid, const char *filename,
 				     char *buf, size_t bufsiz);
 
-#endif /* NAT_LINUX_NAMESPACES_H */
+#endif /* GDB_NAT_LINUX_NAMESPACES_H */

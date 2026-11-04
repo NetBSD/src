@@ -1,4 +1,4 @@
-/*	$NetBSD: xhcivar.h,v 1.24.6.1 2025/08/02 05:57:07 perseant Exp $	*/
+/*	$NetBSD: xhcivar.h,v 1.24.6.2 2026/11/04 23:22:39 perseant Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -107,6 +107,7 @@ struct xhci_softc {
 	int sc_maxslots;
 	int sc_maxintrs;
 	int sc_maxspbuf;
+	int sc_isthresh;		/* value in frames */
 
 	/*
 	 * Port routing and root hub - xHCI 4.19.7

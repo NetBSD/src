@@ -1,0 +1,49 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+remote-servers "ns2" {
+	10.53.0.2 port @PORT@;
+};
+
+remote-servers "ns4" {
+	10.53.0.4 port @PORT@;
+};
+
+dnssec-policy "nsec3rsa256" {
+	cdnskey no;
+	keys {
+		ksk lifetime unlimited algorithm RSASHA256 2048;
+		zsk lifetime P90D algorithm RSASHA256 2048;
+	};
+	max-zone-ttl P2D;
+	signatures-refresh P8D;
+
+	nsec3param;
+};
+
+{% if "retransfer.kasp" in zones %}
+zone "retransfer.kasp" {
+	type secondary;
+	primaries { "ns2"; };
+	file "retransfer.kasp.db";
+	allow-transfer { any; };
+	allow-notify { any; };
+	also-notify { "ns4"; };
+	notify explicit;
+
+	dnssec-policy "nsec3rsa256";
+	inline-signing yes;
+	sig-signing-signatures 100;
+	checkds no;
+};
+{% endif %}{# retransfer.kasp #}

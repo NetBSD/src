@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.7.2.1 2025/08/02 05:53:21 perseant Exp $	*/
+/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.7.2.2 2026/11/04 23:17:58 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -51,7 +51,6 @@ LLVMFuzzerInitialize(int *argc ISC_ATTR_UNUSED, char ***argv ISC_ATTR_UNUSED) {
 	isc_lex_create(mctx, 64, &lex);
 
 	memset(specials, 0, sizeof(specials));
-	specials[0] = 1;
 	specials['('] = 1;
 	specials[')'] = 1;
 	specials['"'] = 1;
@@ -212,5 +211,6 @@ LLVMFuzzerTestOneInput(const uint8_t *data, size_t size) {
 	assert(target.used == size);
 	assert(!memcmp(target.base, data, size));
 
+cleanup:
 	return 0;
 }

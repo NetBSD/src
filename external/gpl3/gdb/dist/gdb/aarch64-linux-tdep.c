@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux AArch64.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -19,10 +19,13 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "gdbarch.h"
 #include "glibc-tdep.h"
+#include "solib-svr4-linux.h"
 #include "linux-tdep.h"
+#include "svr4-tls-tdep.h"
 #include "aarch64-tdep.h"
 #include "aarch64-linux-tdep.h"
 #include "osabi.h"
@@ -30,10 +33,12 @@
 #include "symtab.h"
 #include "tramp-frame.h"
 #include "trad-frame.h"
+#include "dwarf2/frame.h"
 #include "target.h"
 #include "target/target.h"
 #include "expop.h"
 #include "auxv.h"
+#include "inferior.h"
 
 #include "regcache.h"
 #include "regset.h"
@@ -47,6 +52,8 @@
 #include "record-full.h"
 #include "linux-record.h"
 
+#include "arch/aarch64-gcs-linux.h"
+#include "arch/aarch64-mte.h"
 #include "arch/aarch64-mte-linux.h"
 #include "arch/aarch64-scalable-linux.h"
 
@@ -160,6 +167,7 @@
 #define AARCH64_ZA_MAGIC			0x54366345
 #define AARCH64_TPIDR2_MAGIC			0x54504902
 #define AARCH64_ZT_MAGIC			0x5a544e01
+#define AARCH64_GCS_MAGIC			0x47435300
 
 /* Defines for the extra_context that follows an AARCH64_EXTRA_MAGIC.  */
 #define AARCH64_EXTRA_DATAP_OFFSET		8
@@ -201,6 +209,11 @@
    the signal context state.  */
 #define AARCH64_SME2_CONTEXT_REGS_OFFSET	16
 
+/* GCSPR register value offset in the GCS signal frame context.  */
+#define AARCH64_GCS_CONTEXT_GCSPR_OFFSET	8
+/* features_enabled value offset in the GCS signal frame context.  */
+#define AARCH64_GCS_CONTEXT_FEATURES_ENABLED_OFFSET	16
+
 /* Holds information about the signal frame.  */
 struct aarch64_linux_sigframe
 {
@@ -241,6 +254,13 @@ struct aarch64_linux_sigframe
   bool za_payload = false;
   /* True if we have a ZT entry in the signal context, false otherwise.  */
   bool zt_available = false;
+
+  /* True if we have a GCS entry in the signal context, false otherwise.  */
+  bool gcs_availabe = false;
+  /* The Guarded Control Stack Pointer Register.  */
+  uint64_t gcspr;
+  /* Flags indicating which GCS features are enabled for the thread.  */
+  uint64_t gcs_features_enabled;
 };
 
 /* Read an aarch64_ctx, returning the magic value, and setting *SIZE to the
@@ -524,6 +544,39 @@ aarch64_linux_read_signal_frame_info (const frame_info_ptr &this_frame,
 	    section += size;
 	    break;
 	  }
+	case AARCH64_GCS_MAGIC:
+	  {
+	    gdb_byte buf[8];
+
+	    /* Extract the GCSPR.  */
+	    if (target_read_memory (section + AARCH64_GCS_CONTEXT_GCSPR_OFFSET,
+				    buf, 8) != 0)
+	      {
+		warning (_("Failed to read the GCS pointer from the GCS signal"
+			   " frame context."));
+		section += size;
+		break;
+	      }
+
+	    signal_frame.gcspr = extract_unsigned_integer (buf, byte_order);
+
+	    /* Extract the features_enabled field.  */
+	    if (target_read_memory (section
+				    + AARCH64_GCS_CONTEXT_FEATURES_ENABLED_OFFSET,
+				    buf, sizeof (buf)) != 0)
+	      {
+		warning (_("Failed to read the enabled features from the GCS"
+			   " signal frame context."));
+		section += size;
+		break;
+	      }
+
+	    signal_frame.gcs_features_enabled
+	      = extract_unsigned_integer (buf, byte_order);
+	    signal_frame.gcs_availabe = true;
+	    section += size;
+	    break;
+	  }
 	case AARCH64_EXTRA_MAGIC:
 	  {
 	    /* Extra is always the last valid section in reserved and points to
@@ -696,6 +749,19 @@ aarch64_linux_sigframe_init (const struct tramp_frame *self,
       trad_frame_set_reg_addr (this_cache, tdep->tls_regnum_base + 1,
 			       signal_frame.tpidr2_section
 			       + AARCH64_TPIDR2_CONTEXT_TPIDR2_OFFSET);
+    }
+
+  /* Restore the GCS registers, if the target supports it and if there is
+     an entry for them.  */
+  if (signal_frame.gcs_availabe && tdep->has_gcs_linux ())
+    {
+      /* Restore GCSPR.  */
+      trad_frame_set_reg_value (this_cache, tdep->gcs_reg_base,
+				signal_frame.gcspr);
+      /* Restore gcs_features_enabled.  */
+      trad_frame_set_reg_value (this_cache, tdep->gcs_linux_reg_base,
+				signal_frame.gcs_features_enabled);
+      /* gcs_features_locked isn't present in the GCS signal context.  */
     }
 
   trad_frame_set_id (this_cache, frame_id_build (signal_frame.sp, func));
@@ -1295,11 +1361,7 @@ aarch64_linux_supply_za_regset (const struct regset *regset,
       regcache->raw_supply (tdep->sme_za_regnum, buf);
     }
   else
-    {
-      gdb_byte za_zeroed[za_bytes];
-      memset (za_zeroed, 0, za_bytes);
-      regcache->raw_supply (tdep->sme_za_regnum, za_zeroed);
-    }
+    regcache->raw_supply_part_zeroed (tdep->sme_za_regnum, 0, za_bytes);
 }
 
 /* Collect register REGNUM from REGCACHE to BUF, using the register
@@ -1604,6 +1666,27 @@ aarch64_linux_iterate_over_regset_sections (struct gdbarch *gdbarch,
       cb (".reg-aarch-tls", sizeof_tls_regset, sizeof_tls_regset,
 	  &aarch64_linux_tls_regset, "TLS register", cb_data);
     }
+
+  /* Handle GCS registers.  */
+  if (tdep->has_gcs_linux ())
+    {
+      /* Create this on the fly in order to handle the variable regnums.  */
+      const regcache_map_entry gcs_regmap[] =
+	{
+	  { 1, tdep->gcs_linux_reg_base, 8 },      /* features_enabled */
+	  { 1, tdep->gcs_linux_reg_base + 1, 8 },  /* features_locked */
+	  { 1, tdep->gcs_reg_base, 8 },            /* GCSPR */
+	  { 0 }
+	};
+
+      const regset aarch64_linux_gcs_regset =
+	{
+	  gcs_regmap, regcache_supply_regset, regcache_collect_regset
+	};
+
+      cb (".reg-aarch-gcs", sizeof (user_gcs), sizeof (user_gcs),
+	  &aarch64_linux_gcs_regset, "GCS registers", cb_data);
+    }
 }
 
 /* Implement the "core_read_description" gdbarch method.  */
@@ -1628,6 +1711,7 @@ aarch64_linux_core_read_description (struct gdbarch *gdbarch,
      length.  */
   features.vq = aarch64_linux_core_read_vq_from_sections (gdbarch, abfd);
   features.pauth = hwcap & AARCH64_HWCAP_PACA;
+  features.gcs = features.gcs_linux = hwcap & HWCAP_GCS;
   features.mte = hwcap2 & HWCAP2_MTE;
 
   /* Handle the TLS section.  */
@@ -2040,11 +2124,17 @@ enum aarch64_syscall {
 static enum gdb_syscall
 aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
 {
-#define SYSCALL_MAP(SYSCALL) case aarch64_sys_##SYSCALL: \
-  return gdb_sys_##SYSCALL
+#define SYSCALL_MAP(SYSCALL)			\
+  case aarch64_sys_ ## SYSCALL:			\
+    return gdb_sys_ ## SYSCALL
 
-#define UNSUPPORTED_SYSCALL_MAP(SYSCALL) case aarch64_sys_##SYSCALL: \
-  return gdb_sys_no_syscall
+#define SYSCALL_MAP_RENAME(SYSCALL, GDB_SYSCALL)	\
+  case aarch64_sys_ ## SYSCALL:				\
+    return GDB_SYSCALL;
+
+#define UNSUPPORTED_SYSCALL_MAP(SYSCALL)	\
+  case aarch64_sys_ ## SYSCALL:			\
+    return gdb_sys_no_syscall
 
   switch (syscall_number)
     {
@@ -2271,8 +2361,7 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       SYSCALL_MAP (clone);
       SYSCALL_MAP (execve);
 
-    case aarch64_sys_mmap:
-      return gdb_sys_mmap2;
+      SYSCALL_MAP_RENAME (mmap, gdb_sys_old_mmap);
 
       SYSCALL_MAP (fadvise64);
       SYSCALL_MAP (swapon);
@@ -2293,7 +2382,7 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       SYSCALL_MAP (move_pages);
       UNSUPPORTED_SYSCALL_MAP (rt_tgsigqueueinfo);
       UNSUPPORTED_SYSCALL_MAP (perf_event_open);
-      UNSUPPORTED_SYSCALL_MAP (accept4);
+      SYSCALL_MAP (accept4);
       UNSUPPORTED_SYSCALL_MAP (recvmmsg);
 
       SYSCALL_MAP (wait4);
@@ -2314,9 +2403,14 @@ aarch64_canonicalize_syscall (enum aarch64_syscall syscall_number)
       UNSUPPORTED_SYSCALL_MAP (sched_setattr);
       UNSUPPORTED_SYSCALL_MAP (sched_getattr);
       SYSCALL_MAP (getrandom);
-  default:
-    return gdb_sys_no_syscall;
-  }
+
+    default:
+      return gdb_sys_no_syscall;
+    }
+
+#undef SYSCALL_MAP
+#undef SYSCALL_MAP_RENAME
+#undef UNSUPPORTED_SYSCALL_MAP
 }
 
 /* Retrieve the syscall number at a ptrace syscall-stop, either on syscall entry
@@ -2426,36 +2520,13 @@ aarch64_linux_gcc_target_options (struct gdbarch *gdbarch)
   return {};
 }
 
-/* Helper to get the allocation tag from a 64-bit ADDRESS.
-
-   Return the allocation tag if successful and nullopt otherwise.  */
-
-static std::optional<CORE_ADDR>
-aarch64_mte_get_atag (CORE_ADDR address)
-{
-  gdb::byte_vector tags;
-
-  /* Attempt to fetch the allocation tag.  */
-  if (!target_fetch_memtags (address, 1, tags,
-			     static_cast<int> (memtag_type::allocation)))
-    return {};
-
-  /* Only one tag should've been returned.  Make sure we got exactly that.  */
-  if (tags.size () != 1)
-    error (_("Target returned an unexpected number of tags."));
-
-  /* Although our tags are 4 bits in size, they are stored in a
-     byte.  */
-  return tags[0];
-}
-
 /* Implement the tagged_address_p gdbarch method.  */
 
 static bool
 aarch64_linux_tagged_address_p (struct gdbarch *gdbarch, CORE_ADDR address)
 {
   /* Remove the top byte for the memory range check.  */
-  address = gdbarch_remove_non_address_bits (gdbarch, address);
+  address = aarch64_remove_non_address_bits (gdbarch, address);
 
   /* Check if the page that contains ADDRESS is mapped with PROT_MTE.  */
   if (!linux_address_in_memtag_page (address))
@@ -2465,131 +2536,79 @@ aarch64_linux_tagged_address_p (struct gdbarch *gdbarch, CORE_ADDR address)
   return true;
 }
 
-/* Implement the memtag_matches_p gdbarch method.  */
+/* Implement the "get_shadow_stack_pointer" gdbarch method.  */
 
-static bool
-aarch64_linux_memtag_matches_p (struct gdbarch *gdbarch,
-				struct value *address)
+static std::optional<CORE_ADDR>
+aarch64_linux_get_shadow_stack_pointer (gdbarch *gdbarch, regcache *regcache,
+					bool &shadow_stack_enabled)
 {
-  gdb_assert (address != nullptr);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+  shadow_stack_enabled = false;
 
-  CORE_ADDR addr = value_as_address (address);
+  if (!tdep->has_gcs_linux ())
+    return {};
 
-  /* Fetch the allocation tag for ADDRESS.  */
-  std::optional<CORE_ADDR> atag
-    = aarch64_mte_get_atag (gdbarch_remove_non_address_bits (gdbarch, addr));
+  uint64_t features_enabled;
+  register_status status = regcache->cooked_read (tdep->gcs_linux_reg_base,
+						  &features_enabled);
+  if (status != REG_VALID)
+    error (_("Can't read $gcs_features_enabled."));
 
-  if (!atag.has_value ())
-    return true;
+  CORE_ADDR gcspr;
+  status = regcache->cooked_read (tdep->gcs_reg_base, &gcspr);
+  if (status != REG_VALID)
+    error (_("Can't read $gcspr."));
 
-  /* Fetch the logical tag for ADDRESS.  */
-  gdb_byte ltag = aarch64_mte_get_ltag (addr);
-
-  /* Are the tags the same?  */
-  return ltag == *atag;
+  shadow_stack_enabled = features_enabled & PR_SHADOW_STACK_ENABLE;
+  return gcspr;
 }
 
-/* Implement the set_memtags gdbarch method.  */
+/* Implement Guarded Control Stack Pointer Register unwinding.  For each
+   previous GCS pointer check if its address is still in the GCS memory
+   range.  If it's outside the range set the returned value to unavailable,
+   otherwise return a value containing the new GCS pointer.  */
 
-static bool
-aarch64_linux_set_memtags (struct gdbarch *gdbarch, struct value *address,
-			   size_t length, const gdb::byte_vector &tags,
-			   memtag_type tag_type)
+static value *
+aarch64_linux_dwarf2_prev_gcspr (const frame_info_ptr &this_frame,
+				 void **this_cache, int regnum)
 {
-  gdb_assert (!tags.empty ());
-  gdb_assert (address != nullptr);
+  value *v = frame_unwind_got_register (this_frame, regnum, regnum);
+  gdb_assert (v != nullptr);
 
-  CORE_ADDR addr = value_as_address (address);
+  gdbarch *gdbarch = get_frame_arch (this_frame);
 
-  /* Set the logical tag or the allocation tag.  */
-  if (tag_type == memtag_type::logical)
+  if (v->entirely_available () && !v->optimized_out ())
     {
-      /* When setting logical tags, we don't care about the length, since
-	 we are only setting a single logical tag.  */
-      addr = aarch64_mte_set_ltag (addr, tags[0]);
+      int size = register_size (gdbarch, regnum);
+      bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+      CORE_ADDR gcspr = extract_unsigned_integer (v->contents_all ().data (),
+						  size, byte_order);
 
-      /* Update the value's content with the tag.  */
-      enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
-      gdb_byte *srcbuf = address->contents_raw ().data ();
-      store_unsigned_integer (srcbuf, sizeof (addr), byte_order, addr);
-    }
-  else
-    {
-      /* Remove the top byte.  */
-      addr = gdbarch_remove_non_address_bits (gdbarch, addr);
+      /* Starting with v6.13, the Linux kernel supports Guarded Control
+	 Stack.  Using /proc/PID/smaps we can only check if the current
+	 GCSPR points to GCS memory.  Only if this is the case a valid
+	 previous GCS pointer can be calculated.  */
+      std::pair<CORE_ADDR, CORE_ADDR> range;
+      if (linux_address_in_shadow_stack_mem_range (gcspr, &range))
+	{
+	  /* The GCS grows downwards.  To compute the previous GCS pointer,
+	     we need to increment the GCSPR.  */
+	  CORE_ADDR new_gcspr = gcspr + 8;
 
-      /* With G being the number of tag granules and N the number of tags
-	 passed in, we can have the following cases:
-
-	 1 - G == N: Store all the N tags to memory.
-
-	 2 - G < N : Warn about having more tags than granules, but write G
-		     tags.
-
-	 3 - G > N : This is a "fill tags" operation.  We should use the tags
-		     as a pattern to fill the granules repeatedly until we have
-		     written G tags to memory.
-      */
-
-      size_t g = aarch64_mte_get_tag_granules (addr, length,
-					       AARCH64_MTE_GRANULE_SIZE);
-      size_t n = tags.size ();
-
-      if (g < n)
-	warning (_("Got more tags than memory granules.  Tags will be "
-		   "truncated."));
-      else if (g > n)
-	warning (_("Using tag pattern to fill memory range."));
-
-      if (!target_store_memtags (addr, length, tags,
-				 static_cast<int> (memtag_type::allocation)))
-	return false;
-    }
-  return true;
-}
-
-/* Implement the get_memtag gdbarch method.  */
-
-static struct value *
-aarch64_linux_get_memtag (struct gdbarch *gdbarch, struct value *address,
-			  memtag_type tag_type)
-{
-  gdb_assert (address != nullptr);
-
-  CORE_ADDR addr = value_as_address (address);
-  CORE_ADDR tag = 0;
-
-  /* Get the logical tag or the allocation tag.  */
-  if (tag_type == memtag_type::logical)
-    tag = aarch64_mte_get_ltag (addr);
-  else
-    {
-      /* Remove the top byte.  */
-      addr = gdbarch_remove_non_address_bits (gdbarch, addr);
-      std::optional<CORE_ADDR> atag = aarch64_mte_get_atag (addr);
-
-      if (!atag.has_value ())
-	return nullptr;
-
-      tag = *atag;
+	  /* If NEW_GCSPR still points within the current GCS memory range
+	     we consider it to be valid.  */
+	  if (new_gcspr < range.second)
+	    return frame_unwind_got_address (this_frame, regnum, new_gcspr);
+	}
     }
 
-  /* Convert the tag to a value.  */
-  return value_from_ulongest (builtin_type (gdbarch)->builtin_unsigned_int,
-			      tag);
-}
-
-/* Implement the memtag_to_string gdbarch method.  */
-
-static std::string
-aarch64_linux_memtag_to_string (struct gdbarch *gdbarch, struct value *tag_value)
-{
-  if (tag_value == nullptr)
-    return "";
-
-  CORE_ADDR tag = value_as_address (tag_value);
-
-  return string_printf ("0x%s", phex_nz (tag, sizeof (tag)));
+  /* Return a value which is marked as unavailable in case we could not
+     calculate a valid previous GCS pointer.  */
+  value *retval
+    = value::allocate_register (get_next_frame_sentinel_okay (this_frame),
+				regnum, register_type (gdbarch, regnum));
+  retval->mark_bytes_unavailable (0, retval->type ()->length ());
+  return retval;
 }
 
 /* AArch64 Linux implementation of the report_signal_info gdbarch
@@ -2602,17 +2621,18 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
 {
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
 
-  if (!tdep->has_mte () || siggnal != GDB_SIGNAL_SEGV)
+  if (!(tdep->has_mte () || tdep->has_gcs ()) || siggnal != GDB_SIGNAL_SEGV)
     return;
 
   CORE_ADDR fault_addr = 0;
-  long si_code = 0;
+  long si_code = 0, si_errno = 0;
 
   try
     {
       /* Sigcode tells us if the segfault is actually a memory tag
 	 violation.  */
       si_code = parse_and_eval_long ("$_siginfo.si_code");
+      si_errno = parse_and_eval_long ("$_siginfo.si_errno");
 
       fault_addr
 	= parse_and_eval_long ("$_siginfo._sifields._sigfault.si_addr");
@@ -2623,13 +2643,18 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
       return;
     }
 
-  /* If this is not a memory tag violation, just return.  */
-  if (si_code != SEGV_MTEAERR && si_code != SEGV_MTESERR)
+  const char *meaning;
+
+  if (si_code == SEGV_MTEAERR || si_code == SEGV_MTESERR)
+    meaning = _("Memory tag violation");
+  else if (si_code == SEGV_CPERR && si_errno == 0)
+    meaning = _("Guarded Control Stack error");
+  else
     return;
 
   uiout->text ("\n");
 
-  uiout->field_string ("sigcode-meaning", _("Memory tag violation"));
+  uiout->field_string ("sigcode-meaning", meaning);
 
   /* For synchronous faults, show additional information.  */
   if (si_code == SEGV_MTESERR)
@@ -2639,8 +2664,9 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
       uiout->text ("\n");
 
       std::optional<CORE_ADDR> atag
-	= aarch64_mte_get_atag (gdbarch_remove_non_address_bits (gdbarch,
-								 fault_addr));
+	= aarch64_mte_get_atag (
+	    aarch64_remove_non_address_bits (gdbarch, fault_addr));
+
       gdb_byte ltag = aarch64_mte_get_ltag (fault_addr);
 
       if (!atag.has_value ())
@@ -2654,7 +2680,7 @@ aarch64_linux_report_signal_info (struct gdbarch *gdbarch,
 	  uiout->field_string ("logical-tag", hex_string (ltag));
 	}
     }
-  else
+  else if (si_code != SEGV_CPERR)
     {
       uiout->text ("\n");
       uiout->text (_("Fault address unavailable"));
@@ -2737,8 +2763,8 @@ aarch64_linux_fill_memtag_section (struct gdbarch *gdbarch, asection *osec)
 				 static_cast<int> (memtag_type::allocation)))
 	{
 	  warning (_("Failed to read MTE tags from memory range [%s,%s)."),
-		     phex_nz (start_address, sizeof (start_address)),
-		     phex_nz (end_address, sizeof (end_address)));
+		     phex_nz (start_address),
+		     phex_nz (end_address));
 	  return false;
 	}
 
@@ -2841,6 +2867,57 @@ aarch64_use_target_description_from_corefile_notes (gdbarch *gdbarch,
   return true;
 }
 
+/* Fetch and return the TLS DTV (dynamic thread vector) address for PTID.
+   Throw a suitable TLS error if something goes wrong.  */
+
+static CORE_ADDR
+aarch64_linux_get_tls_dtv_addr (struct gdbarch *gdbarch, ptid_t ptid,
+				svr4_tls_libc libc)
+{
+  /* On aarch64, the thread pointer is found in the TPIDR register.
+     Note that this is the first register in the TLS feature - see
+     features/aarch64-tls.c - and it will always be present.  */
+  regcache *regcache
+    = get_thread_arch_regcache (current_inferior (), ptid, gdbarch);
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
+  target_fetch_registers (regcache, tdep->tls_regnum_base);
+  ULONGEST thr_ptr;
+  if (regcache->cooked_read (tdep->tls_regnum_base, &thr_ptr) != REG_VALID)
+    throw_error (TLS_GENERIC_ERROR, _("Unable to fetch thread pointer"));
+
+  CORE_ADDR dtv_ptr_addr;
+  switch (libc)
+    {
+    case svr4_tls_libc_musl:
+      /* MUSL: The DTV pointer is found at the very end of the pthread
+	 struct which is located *before* the thread pointer.  I.e.
+	 the thread pointer will be just beyond the end of the struct,
+	 so the address of the DTV pointer is found one pointer-size
+	 before the thread pointer.  */
+      dtv_ptr_addr = thr_ptr - (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+      break;
+    case svr4_tls_libc_glibc:
+      /* GLIBC: The thread pointer (tpidr) points at the TCB (thread control
+	 block).  On aarch64, this struct (tcbhead_t) is defined to
+	 contain two pointers.  The first is a pointer to the DTV and
+	 the second is a pointer to private data.  So the DTV pointer
+	 address is the same as the thread pointer.  */
+      dtv_ptr_addr = thr_ptr;
+      break;
+    default:
+      throw_error (TLS_GENERIC_ERROR, _("Unknown aarch64 C library"));
+      break;
+    }
+  gdb::byte_vector buf (gdbarch_ptr_bit (gdbarch) / TARGET_CHAR_BIT);
+  if (target_read_memory (dtv_ptr_addr, buf.data (), buf.size ()) != 0)
+    throw_error (TLS_GENERIC_ERROR, _("Unable to fetch DTV address"));
+
+  const struct builtin_type *builtin = builtin_type (gdbarch);
+  CORE_ADDR dtv_addr = gdbarch_pointer_to_address
+			 (gdbarch, builtin->builtin_data_ptr, buf.data ());
+  return dtv_addr;
+}
+
 static void
 aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 {
@@ -2852,16 +2929,24 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 								    NULL };
   aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (gdbarch);
 
+  if (tdep->has_gcs () && !tdep->has_gcs_linux ())
+    {
+      warning (_("Incomplete GCS support in the target: missing Linux part."
+		 " GCS feature disabled."));
+      tdep->gcs_reg_base = -1;
+    }
+
   tdep->lowest_pc = 0x8000;
 
   linux_init_abi (info, gdbarch, 1);
-
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 linux_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
 					     svr4_fetch_objfile_link_map);
+  set_gdbarch_get_thread_local_address (gdbarch,
+					svr4_tls_get_thread_local_address);
+  svr4_tls_register_tls_methods (info, gdbarch, aarch64_linux_get_tls_dtv_addr);
 
   /* Shared library handling.  */
   set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
@@ -2899,27 +2984,6 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
       /* Register a hook for checking if an address is tagged or not.  */
       set_gdbarch_tagged_address_p (gdbarch, aarch64_linux_tagged_address_p);
 
-      /* Register a hook for checking if there is a memory tag match.  */
-      set_gdbarch_memtag_matches_p (gdbarch,
-				    aarch64_linux_memtag_matches_p);
-
-      /* Register a hook for setting the logical/allocation tags for
-	 a range of addresses.  */
-      set_gdbarch_set_memtags (gdbarch, aarch64_linux_set_memtags);
-
-      /* Register a hook for extracting the logical/allocation tag from an
-	 address.  */
-      set_gdbarch_get_memtag (gdbarch, aarch64_linux_get_memtag);
-
-      /* Set the allocation tag granule size to 16 bytes.  */
-      set_gdbarch_memtag_granule_size (gdbarch, AARCH64_MTE_GRANULE_SIZE);
-
-      /* Register a hook for converting a memory tag to a string.  */
-      set_gdbarch_memtag_to_string (gdbarch, aarch64_linux_memtag_to_string);
-
-      set_gdbarch_report_signal_info (gdbarch,
-				      aarch64_linux_report_signal_info);
-
       /* Core file helpers.  */
 
       /* Core file helper to create a memory tag section for a particular
@@ -2935,6 +2999,9 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
       set_gdbarch_decode_memtag_section (gdbarch,
 					 aarch64_linux_decode_memtag_section);
     }
+
+  if (tdep->has_mte () || tdep->has_gcs ())
+    set_gdbarch_report_signal_info (gdbarch, aarch64_linux_report_signal_info);
 
   /* Initialize the aarch64_linux_record_tdep.  */
   /* These values are the size of the type that will be used in a system
@@ -3117,6 +3184,13 @@ aarch64_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
      sections.  */
   set_gdbarch_use_target_description_from_corefile_notes (gdbarch,
 			    aarch64_use_target_description_from_corefile_notes);
+
+  if (tdep->has_gcs_linux ())
+    {
+      set_gdbarch_get_shadow_stack_pointer (gdbarch,
+					aarch64_linux_get_shadow_stack_pointer);
+      tdep->fn_prev_gcspr = aarch64_linux_dwarf2_prev_gcspr;
+    }
 }
 
 #if GDB_SELF_TEST
@@ -3140,12 +3214,10 @@ aarch64_linux_ltag_tests (void)
     }
 }
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_aarch64_linux_tdep ();
-void
-_initialize_aarch64_linux_tdep ()
+INIT_GDB_FILE (aarch64_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_LINUX,
 			  aarch64_linux_init_abi);

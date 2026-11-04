@@ -1,6 +1,6 @@
 /* Unlinking class
 
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_UNLINKER_H
-#define COMMON_GDB_UNLINKER_H
+#ifndef GDBSUPPORT_GDB_UNLINKER_H
+#define GDBSUPPORT_GDB_UNLINKER_H
 
 namespace gdb
 {
@@ -57,4 +57,4 @@ class unlinker
 
 }
 
-#endif /* COMMON_GDB_UNLINKER_H */
+#endif /* GDBSUPPORT_GDB_UNLINKER_H */

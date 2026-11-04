@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2020-2024 Free Software Foundation, Inc.
+   Copyright 2020-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 class Base
 {
 public:
-  static const int b = 20;
+  static const int bbb = 20;
 
   void func () {}
 };
@@ -26,7 +26,7 @@ public:
 class A : public Base
 {
 public:
-  static const int a = 10;
+  static const int aaa = 10;
 
   void func () {}
 };
@@ -34,7 +34,7 @@ public:
 class C : public Base
 {
 public:
-  static const int c = 30;
+  static const int ccc = 30;
 
   void func () {}
 };

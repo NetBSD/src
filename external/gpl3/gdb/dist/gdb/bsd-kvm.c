@@ -1,6 +1,6 @@
 /* BSD Kernel Data Access Library (libkvm) interface.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -110,7 +110,6 @@ static void
 bsd_kvm_target_open (const char *arg, int from_tty)
 {
   char errbuf[_POSIX2_LINE_MAX];
-  const char *execfile = NULL;
   kvm_t *temp_kd;
   std::string filename;
   struct inferior *inf;
@@ -121,10 +120,10 @@ bsd_kvm_target_open (const char *arg, int from_tty)
     {
       filename = gdb_tilde_expand (arg);
       if (!IS_ABSOLUTE_PATH (filename))
-	filename = gdb_abspath (filename.c_str ());
+	filename = gdb_abspath (filename);
     }
 
-  execfile = get_exec_file (1);
+  const char *execfile = current_program_space->exec_filename ();
   temp_kd = kvm_openfiles (execfile, filename.c_str (), NULL,
 			   write_files ? O_RDWR : O_RDONLY, errbuf);
   if (temp_kd == NULL)
@@ -423,11 +422,11 @@ Generic command for manipulating the kernel memory interface."),
 
 #ifndef HAVE_STRUCT_THREAD_TD_PCB
   add_cmd ("proc", class_obscure, bsd_kvm_proc_cmd,
-	   _("Set current context from proc address"), &bsd_kvm_cmdlist);
+	   _("Set current context from proc address."), &bsd_kvm_cmdlist);
 #endif
   add_cmd ("pcb", class_obscure, bsd_kvm_pcb_cmd,
 	   /* i18n: PCB == "Process Control Block".  */
-	   _("Set current context from pcb address"), &bsd_kvm_cmdlist);
+	   _("Set current context from pcb address."), &bsd_kvm_cmdlist);
 
   /* Some notes on the ptid usage on this target.
 

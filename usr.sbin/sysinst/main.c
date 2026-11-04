@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.33.2.1 2025/08/02 05:58:55 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.33.2.2 2026/11/04 23:28:58 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -97,7 +97,12 @@ __dead static void miscsighandler(int);
 static void ttysighandler(int);
 static void cleanup(void);
 static void process_f_flag(char *);
+#ifndef NO_HTTPS
 static bool no_openssl_trust_anchors_available(void);
+#endif
+#ifdef BUILD_TIMESTAMP
+static void check_todr_sanity(void);
+#endif
 
 static int exit_cleanly = 0;	/* Did we finish nicely? */
 FILE *logfp;			/* log file */
@@ -110,7 +115,7 @@ const char *err_outofmem;
 extern int log_flip(void);
 #endif
 
-/* Definion for colors */
+/* Definition for colors */
 
 struct {
 	unsigned int bg;
@@ -191,7 +196,12 @@ init(void)
 		else
 			strlcpy(arg->var, arg->dflt, arg->size);
 	}
-	ftp.xfer = pkg.xfer = pkgsrc.xfer = XFER_HTTPS;
+	pkg.xfer = pkgsrc.xfer = XFER_HTTPS;
+#ifdef NO_HTTPS
+	ftp.xfer = XFER_HTTP;
+#else
+	ftp.xfer = XFER_HTTPS;
+#endif
 
 	clr_arg.bg=COLOR_BLUE;
 	clr_arg.fg=COLOR_WHITE;
@@ -208,7 +218,7 @@ init_lang(void)
 int
 main(int argc, char **argv)
 {
-	int ch, no_https = 0;
+	int ch;
 	const char *msg_cat_dir = NULL;
 
 	init();
@@ -265,11 +275,18 @@ main(int argc, char **argv)
 	/* Initialize the partitioning subsystem */
 	partitions_init();
 
-	/* do we need to tell ftp(1) to avoid checking certificate chains? */
-	if (no_openssl_trust_anchors_available()) {
+	/*
+	 * Do we need to tell ftp(1) to avoid checking certificate chains?
+	 * Does the ftp(1) that comes with this installer support https
+	 * at all?
+	 */
+#ifndef NO_HTTPS
+	if (no_openssl_trust_anchors_available())
+#endif
 		setenv("FTPSSLNOVERIFY", "1", 1);
-		no_https = 1;
-	}
+
+	/* Prevent kernel console messages from messing up the display */
+	discard_console_output();
 
 	/* initialize message window */
 	if (menu_init()) {
@@ -310,11 +327,13 @@ main(int argc, char **argv)
 	get_kb_encoding();
 	init_lang();
 
+#ifdef BUILD_TIMESTAMP
+	check_todr_sanity();
+#endif
+
 	/* remove some invalid menu entries */
 	if (!has_colors())
 		remove_color_options();
-	if (no_https)
-		remove_https_options();
 
 	/* Menu processing */
 	if (partman_go)
@@ -647,6 +666,7 @@ process_f_flag(char *f_name)
 	fclose(fp);
 }
 
+#ifndef NO_HTTPS
 /*
  * return true if we do not have any root certificates installed,
  * so can not verify any trust chain.
@@ -689,3 +709,18 @@ no_openssl_trust_anchors_available(void)
 
 	return cnt < 2;
 }
+#endif
+
+#ifdef BUILD_TIMESTAMP
+static void
+check_todr_sanity(void)
+{
+	time_t now = time(NULL);
+
+	if (now >= BUILD_TIMESTAMP - 2*86400)
+		return;
+
+	do_time_and_date_setup(MSG_todr_old);
+}
+#endif
+

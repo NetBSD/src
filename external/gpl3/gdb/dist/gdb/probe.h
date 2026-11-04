@@ -1,6 +1,6 @@
 /* Generic SDT probe support for GDB.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (PROBE_H)
-#define PROBE_H 1
+#ifndef GDB_PROBE_H
+#define GDB_PROBE_H
 
 #include "symtab.h"
 
@@ -309,4 +309,4 @@ extern struct value *probe_safe_evaluate_at_pc (const frame_info_ptr &frame,
 
 bool ignore_probe_p (const char *provider, const char *name,
 		     const char *objfile_name, const char *TYPE);
-#endif /* !defined (PROBE_H) */
+#endif /* GDB_PROBE_H */

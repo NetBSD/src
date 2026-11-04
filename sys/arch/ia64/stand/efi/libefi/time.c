@@ -1,4 +1,4 @@
-/*	$NetBSD: time.c,v 1.4 2016/08/04 18:07:43 scole Exp $	*/
+/*	$NetBSD: time.c,v 1.4.52.1 2026/11/04 23:20:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000
@@ -16,13 +16,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- * 
- *    This product includes software developed by Intel Corporation and
- *    its contributors.
- * 
- * 4. Neither the name of Intel Corporation or its contributors may be
+ * 3. Neither the name of Intel Corporation or its contributors may be
  *    used to endorse or promote products derived from this software
  *    without specific prior written permission.
  * 
@@ -154,12 +148,12 @@ EfiTimeToUnixTime(EFI_TIME *ETime)
     UTime += ETime->Second;
 
     /*
-    //  EFI time is repored in local time.  Adjust for any time zone offset to
+    //  EFI time is reported in local time.  Adjust for any time zone offset to
     //  get true UT
     */
     if ( ETime->TimeZone != EFI_UNSPECIFIED_TIMEZONE ) {
     	/*
-    	//  TimeZone is kept in minues...
+    	//  TimeZone is kept in minutes...
     	*/
     	UTime += (ETime->TimeZone * 60);
     }

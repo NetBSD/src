@@ -1,6 +1,6 @@
 // SGI's rope class -*- C++ -*-
 
-// Copyright (C) 2001-2020 Free Software Foundation, Inc.
+// Copyright (C) 2001-2022 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -171,6 +171,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
   // behave a little like basic_ostringstream<sequence::value_type> and a
   // little like containers.
 
+// Ignore warnings about std::iterator.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+
   template<class _Sequence, std::size_t _Buf_sz = 100>
     class sequence_buffer
     : public std::iterator<std::output_iterator_tag, void, void, void, void>
@@ -203,6 +207,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	std::copy(__x._M_buffer, __x._M_buffer + __x._M_buf_count, _M_buffer);
       }
       
+      // Non-const "copy" modifies the parameter - yuck
       sequence_buffer(sequence_buffer& __x)
       {
 	__x.flush();
@@ -213,6 +218,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       sequence_buffer(_Sequence& __s)
       : _M_prefix(&__s), _M_buf_count(0) { }
       
+      // Non-const "copy" modifies the parameter - yuck
       sequence_buffer&
       operator=(sequence_buffer& __x)
       {
@@ -230,7 +236,12 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	std::copy(__x._M_buffer, __x._M_buffer + __x._M_buf_count, _M_buffer);
 	return *this;
       }
-      
+
+#if __cplusplus >= 201103L
+      sequence_buffer(sequence_buffer&& __x) : sequence_buffer(__x) { }
+      sequence_buffer& operator=(sequence_buffer&& __x) { return *this = __x; }
+#endif
+
       void
       push_back(value_type __x)
       {
@@ -299,6 +310,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       operator++(int)
       { return *this; }
     };
+#pragma GCC diagnostic pop
   
   // The following should be treated as private, at least for now.
   template<class _CharT>
@@ -423,7 +435,10 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
   // Some helpers, so we can use power on ropes.
   // See below for why this isn't local to the implementation.
-  
+
+// Ignore warnings about std::binary_function.
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   // This uses a nonstandard refcount convention.
   // The result has refcount 0.
   template<class _CharT, class _Alloc>
@@ -436,6 +451,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		 const rope<_CharT, _Alloc>& __y)
       { return __x + __y; }
     };
+#pragma GCC diagnostic pop
 
   template <class _CharT, class _Alloc>
     inline rope<_CharT, _Alloc>
@@ -452,7 +468,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     typedef std::size_t _RC_t;
     
     // The data member _M_ref_count
-    volatile _RC_t _M_ref_count;
+    _RC_t _M_ref_count;
 
     // Constructor
 #ifdef __GTHREAD_MUTEX_INIT
@@ -489,7 +505,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     _M_decr()
     {
       __gthread_mutex_lock(&_M_ref_count_lock);
-      volatile _RC_t __tmp = --_M_ref_count;
+      _RC_t __tmp = --_M_ref_count;
       __gthread_mutex_unlock(&_M_ref_count_lock);
       return __tmp;
     }
@@ -675,7 +691,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
       static void _S_ref(_Rope_RopeRep*) { }
       static void _S_free_if_unref(_Rope_RopeRep*) { }
 #   endif
-protected:
+    protected:
       _Rope_RopeRep&
       operator=(const _Rope_RopeRep&);
 
@@ -742,7 +758,7 @@ protected:
 	this->__STL_FREE_STRING(_M_data, this->_M_size, this->_M_get_allocator());
       }
 #endif
-protected:
+    protected:
       _Rope_RopeLeaf&
       operator=(const _Rope_RopeLeaf&);
 
@@ -778,7 +794,7 @@ protected:
 	_M_right->_M_unref_nonnil();
       }
 #endif
-protected:
+    protected:
       _Rope_RopeConcatenation&
       operator=(const _Rope_RopeConcatenation&);
       
@@ -1052,6 +1068,9 @@ protected:
   // Iterators are assumed to be thread private.  Ropes can
   // be shared.
   
+// Ignore warnings about std::iterator
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
   template<class _CharT, class _Alloc>
     class _Rope_iterator_base
     : public std::iterator<std::random_access_iterator_tag, _CharT>
@@ -1129,6 +1148,7 @@ protected:
 	  }
       }
     };
+#pragma GCC diagnostic pop
 
   template<class _CharT, class _Alloc>
     class _Rope_iterator;
@@ -1508,7 +1528,7 @@ protected:
       __ROPE_DEFINE_ALLOCS(_Alloc)
 #undef __ROPE_DEFINE_ALLOC
 
-	protected:
+    protected:
       _Rope_base&
       operator=(const _Rope_base&);
       
@@ -1612,19 +1632,21 @@ protected:
 
       static _RopeRep* _S_concat_char_iter(_RopeRep* __r,
 					   const _CharT* __iter,
-					   size_type __slen);
-      // Concatenate rope and char ptr, copying __s.
+					   size_type __slen,
+					   allocator_type& __a);
+      // Concatenate rope and char ptr, copying __iter.
       // Should really take an arbitrary iterator.
       // Result is counted in refcount.
       static _RopeRep* _S_destr_concat_char_iter(_RopeRep* __r,
 						 const _CharT* __iter,
-						 size_type __slen)
+						 size_type __slen,
+						 allocator_type& __a)
 	// As above, but one reference to __r is about to be
 	// destroyed.  Thus the pieces may be recycled if all
 	// relevant reference counts are 1.
 #ifdef __GC
 	// We can't really do anything since refcounts are unavailable.
-      { return _S_concat_char_iter(__r, __iter, __slen); }
+      { return _S_concat_char_iter(__r, __iter, __slen, __a); }
 #else
       ;
 #endif
@@ -1913,9 +1935,10 @@ protected:
       void
       push_back(_CharT __x)
       {
+	allocator_type __a = _M_get_allocator();
 	_RopeRep* __old = this->_M_tree_ptr;
 	this->_M_tree_ptr
-	  = _S_destr_concat_char_iter(this->_M_tree_ptr, &__x, 1);
+	  = _S_destr_concat_char_iter(this->_M_tree_ptr, &__x, 1, __a);
 	_S_unref(__old);
       }
 
@@ -2115,8 +2138,9 @@ protected:
       rope&
       append(const _CharT* __iter, size_type __n)
       {
+	allocator_type __a = _M_get_allocator();
 	_RopeRep* __result =
-	  _S_destr_concat_char_iter(this->_M_tree_ptr, __iter, __n);
+	  _S_destr_concat_char_iter(this->_M_tree_ptr, __iter, __n, __a);
 	_S_unref(this->_M_tree_ptr);
 	this->_M_tree_ptr = __result;
 	return *this;
@@ -2133,8 +2157,9 @@ protected:
       rope&
       append(const _CharT* __s, const _CharT* __e)
       {
+	allocator_type __a = _M_get_allocator();
 	_RopeRep* __result =
-	  _S_destr_concat_char_iter(this->_M_tree_ptr, __s, __e - __s);
+	  _S_destr_concat_char_iter(this->_M_tree_ptr, __s, __e - __s, __a);
 	_S_unref(this->_M_tree_ptr);
 	this->_M_tree_ptr = __result;
 	return *this;
@@ -2156,8 +2181,9 @@ protected:
       rope&
       append(_CharT __c)
       {
+	allocator_type __a = _M_get_allocator();
 	_RopeRep* __result =
-	  _S_destr_concat_char_iter(this->_M_tree_ptr, &__c, 1);
+	  _S_destr_concat_char_iter(this->_M_tree_ptr, &__c, 1, __a);
 	_S_unref(this->_M_tree_ptr);
 	this->_M_tree_ptr = __result;
 	return *this;
@@ -2239,7 +2265,8 @@ protected:
 	_Self_destruct_ptr __left(_S_substring(this->_M_tree_ptr, 0, __p));
 	_Self_destruct_ptr __right(_S_substring(this->_M_tree_ptr,
 						__p, size()));
-	_Self_destruct_ptr __left_result(_S_concat_char_iter(__left, __i, __n));
+	_Self_destruct_ptr __left_result(_S_concat_char_iter(__left, __i, __n,
+							     _M_get_allocator()));
 	// _S_ destr_concat_char_iter should be safe here.
 	// But as it stands it's probably not a win, since __left
 	// is likely to have additional references.
@@ -2386,11 +2413,6 @@ protected:
 	_S_unref(this->_M_tree_ptr);
 	this->_M_tree_ptr = __result;
       }
-
-      // Erase, single character
-      _GLIBCXX_DEPRECATED void
-      erase(size_type __p)
-      { erase(__p, __p + 1); }
 
       // Insert, iterator variants.
       iterator
@@ -2843,8 +2865,9 @@ protected:
     {
       typedef rope<_CharT, _Alloc> rope_type;
       std::size_t __rlen = rope_type::_S_char_ptr_len(__right);
+      _Alloc __a = __left.get_allocator();
       return rope_type(rope_type::_S_concat_char_iter(__left._M_tree_ptr,
-						      __right, __rlen));
+						      __right, __rlen, __a));
     }
 
   template <class _CharT, class _Alloc>
@@ -2861,8 +2884,9 @@ protected:
     operator+(const rope<_CharT, _Alloc>& __left, _CharT __right)
     {
       typedef rope<_CharT, _Alloc> rope_type;
+      _Alloc __a = __left.get_allocator();
       return rope_type(rope_type::_S_concat_char_iter(__left._M_tree_ptr,
-						      &__right, 1));
+						      &__right, 1, __a));
     }
 
   template <class _CharT, class _Alloc>

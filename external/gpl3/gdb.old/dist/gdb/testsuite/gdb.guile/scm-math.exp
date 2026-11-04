@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 # It tests <gdb:value> math operations.
 
 load_lib gdb-guile.exp
+
+require allow_guile_tests
 
 standard_testfile
 
@@ -334,9 +336,6 @@ proc test_value_compare {} {
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile {debug c}]} {
     return
 }
-
-# Skip all tests if Guile scripting is not enabled.
-if { [skip_guile_tests] } { continue }
 
 if ![gdb_guile_runto_main] {
    return

@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.14.10.1 2025/08/02 05:56:40 perseant Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.14.10.2 2026/11/04 23:21:57 perseant Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.14.10.1 2025/08/02 05:56:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.14.10.2 2026/11/04 23:21:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -188,8 +188,8 @@ genet_setup_txdesc(struct genet_softc *sc, int index, int flags,
 
 	status = flags | __SHIFTIN(len, GENET_TX_DESC_STATUS_BUFLEN);
 
-	WR4(sc, GENET_TX_DESC_ADDRESS_LO(index), (uint32_t)paddr);
-	WR4(sc, GENET_TX_DESC_ADDRESS_HI(index), (uint32_t)(paddr >> 32));
+	WR4(sc, GENET_TX_DESC_ADDRESS_LO(index), BUS_ADDR_LO32(paddr));
+	WR4(sc, GENET_TX_DESC_ADDRESS_HI(index), BUS_ADDR_HI32(paddr));
 	WR4(sc, GENET_TX_DESC_STATUS(index), status);
 }
 
@@ -258,8 +258,8 @@ static void
 genet_setup_rxdesc(struct genet_softc *sc, int index,
     bus_addr_t paddr, bus_size_t len)
 {
-	WR4(sc, GENET_RX_DESC_ADDRESS_LO(index), (uint32_t)paddr);
-	WR4(sc, GENET_RX_DESC_ADDRESS_HI(index), (uint32_t)(paddr >> 32));
+	WR4(sc, GENET_RX_DESC_ADDRESS_LO(index), BUS_ADDR_LO32(paddr));
+	WR4(sc, GENET_RX_DESC_ADDRESS_HI(index), BUS_ADDR_HI32(paddr));
 }
 
 static int
@@ -958,16 +958,9 @@ genet_ifflags_cb(struct ethercom *ec)
 static void
 genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 {
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
 	uint32_t maclo, machi, val;
-	prop_data_t eaprop;
 
-	eaprop = prop_dictionary_get(prop, "mac-address");
-	if (eaprop != NULL) {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(eaddr, prop_data_value(eaprop),
-		    ETHER_ADDR_LEN);
+	if (ether_getaddr(sc->sc_dev, eaddr)) {
 		return;
 	}
 
@@ -984,11 +977,13 @@ genet_get_eaddr(struct genet_softc *sc, uint8_t *eaddr)
 		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
 		machi = cprng_strong32() & 0xffff;
 	}
+	else
+		maclo = htonl(maclo);
 
-	eaddr[0] = (maclo >> 24) & 0xff;
-	eaddr[1] = (maclo >> 16) & 0xff;
-	eaddr[2] = (maclo >>  8) & 0xff;
-	eaddr[3] = (maclo >>  0) & 0xff;
+	eaddr[0] = (maclo >> 0) & 0xff;
+	eaddr[1] = (maclo >> 8) & 0xff;
+	eaddr[2] = (maclo >>  16) & 0xff;
+	eaddr[3] = (maclo >>  24) & 0xff;
 	eaddr[4] = (machi >>  8) & 0xff;
 	eaddr[5] = (machi >>  0) & 0xff;
 }

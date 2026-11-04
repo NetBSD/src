@@ -1,4 +1,4 @@
-/*	$NetBSD: bounce_trace_service.c,v 1.2.24.1 2025/08/02 05:50:01 perseant Exp $	*/
+/*	$NetBSD: bounce_trace_service.c,v 1.2.24.2 2026/11/04 23:14:45 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -183,6 +183,8 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
 					 NULL_TRACE_FLAGS,
 					 sendopts,
 					 new_id)) != 0) {
+	msg_info("%s: sender delivery status notification: %s",
+		 queue_id, STR(new_id));
 	count = -1;
 	if (bounce_header(bounce, bounce_info, recipient,
 			  NO_POSTMASTER_COPY) == 0
@@ -194,14 +196,18 @@ int     bounce_trace_service(int flags, char *service, char *queue_name,
 				     DSN_NOTIFY_OVERRIDE) > 0) {
 	    bounce_original(bounce, bounce_info, DSN_RET_HDRS);
 	    bounce_status = post_mail_fclose(bounce);
-	    if (bounce_status == 0)
-		msg_info("%s: sender delivery status notification: %s",
-			 queue_id, STR(new_id));
+	    if (bounce_status)
+		msg_warn("%s: sender notification failed to %s: %s",
+			 queue_id, recipient,
+			 cleanup_strerror(bounce_status));
 	} else {
 	    (void) vstream_fclose(bounce);
 	    if (count == 0)
 		bounce_status = 0;
 	}
+    } else {
+	msg_warn("%s: sender notification failed to %s",
+		 queue_id, recipient);
     }
 
     /*

@@ -1,6 +1,6 @@
 /* Target-dependent code for Solaris.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOL2_TDEP_H
-#define SOL2_TDEP_H 1
+#ifndef GDB_SOL2_TDEP_H
+#define GDB_SOL2_TDEP_H
 
 struct gdbarch;
 
-int sol2_sigtramp_p (frame_info_ptr this_frame);
+int sol2_sigtramp_p (const frame_info_ptr &this_frame);
 
 void sol2_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch);
 
-#endif /* sol2-tdep.h */
+#endif /* GDB_SOL2_TDEP_H */

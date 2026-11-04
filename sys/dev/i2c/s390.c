@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.7 2021/01/30 17:38:57 thorpej Exp $	*/
+/*	$NetBSD: s390.c,v 1.7.24.1 2026/11/04 23:21:56 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.7 2021/01/30 17:38:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.7.24.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -115,19 +115,16 @@ s390rtc_attach(device_t parent, device_t self, void *arg)
 			return;
 	}
 
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = s390rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = s390rtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 
 static int
 s390rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct s390rtc_softc *sc = ch->cookie;
+	struct s390rtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t bcd[S390_RT1_NBYTES];
 	int error;
 
@@ -151,7 +148,7 @@ s390rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 s390rtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct s390rtc_softc *sc = ch->cookie;
+	struct s390rtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t bcd[S390_RT1_NBYTES];
 
 	/*

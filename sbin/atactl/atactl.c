@@ -1,4 +1,4 @@
-/*	$NetBSD: atactl.c,v 1.85.8.1 2025/08/02 05:55:04 perseant Exp $	*/
+/*	$NetBSD: atactl.c,v 1.85.8.2 2026/11/04 23:19:37 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: atactl.c,v 1.85.8.1 2025/08/02 05:55:04 perseant Exp $");
+__RCSID("$NetBSD: atactl.c,v 1.85.8.2 2026/11/04 23:19:37 perseant Exp $");
 #endif
 
 
@@ -43,6 +43,7 @@ __RCSID("$NetBSD: atactl.c,v 1.85.8.1 2025/08/02 05:55:04 perseant Exp $");
 #include <sys/ioctl.h>
 #include <err.h>
 #include <errno.h>
+#include <endian.h>
 #include <fcntl.h>
 #include <pwd.h>
 #include <stdio.h>

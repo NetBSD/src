@@ -1,4 +1,4 @@
-# Copyright 2009-2023 Free Software Foundation, Inc.
+# Copyright 2009-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -27,13 +27,7 @@
 #   difference appears to be caused by prelink, adjusting expectations
 # In such case both disk libraries will be loaded at VMAs starting at zero.
 
-if [skip_shlib_tests] {
-    return 0
-}
-
-if {![can_spawn_for_attach]} {
-    return 0
-}
+require allow_shlib_tests can_spawn_for_attach
 
 # Library file.
 set libname "solib-overlap-lib"

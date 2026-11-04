@@ -1,6 +1,6 @@
 /* CLI Definitions for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "cli-interp.h"
+#include "exceptions.h"
 #include "interps.h"
 #include "event-top.h"
 #include "ui-out.h"
@@ -227,7 +228,7 @@ cli_interp::exec (const char *command_str)
      interpreter which has a new ui_file for gdb_stdout, use that one
      instead of the default.
 
-     It is important that it gets reset everytime, since the user
+     It is important that it gets reset every time, since the user
      could set gdb to use a different interpreter.  */
   ui_file *old_stream = m_cli_uiout->set_stream (gdb_stdout);
   SCOPE_EXIT { m_cli_uiout->set_stream (old_stream); };
@@ -268,7 +269,7 @@ cli_interp_base::set_logging (ui_file_up logfile, bool logging_redirect,
   if (logfile != nullptr)
     {
       gdb_assert (m_saved_output == nullptr);
-      m_saved_output.reset (new saved_output_files);
+      m_saved_output = std::make_unique<saved_output_files> ();
       m_saved_output->out = gdb_stdout;
       m_saved_output->err = gdb_stderr;
       m_saved_output->log = gdb_stdlog;
@@ -320,9 +321,7 @@ cli_interp_factory (const char *name)
 
 /* Standard gdb initialization hook.  */
 
-void _initialize_cli_interp ();
-void
-_initialize_cli_interp ()
+INIT_GDB_FILE (cli_interp)
 {
   interp_factory_register (INTERP_CONSOLE, cli_interp_factory);
 }

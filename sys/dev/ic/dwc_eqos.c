@@ -1,7 +1,7 @@
-/* $NetBSD: dwc_eqos.c,v 1.36.2.1 2025/08/02 05:56:41 perseant Exp $ */
+/* $NetBSD: dwc_eqos.c,v 1.36.2.2 2026/11/04 23:21:57 perseant Exp $ */
 
 /*-
- * Copyright (c) 2022 Jared McNeill <jmcneill@invisible.ca>
+ * Copyright (c) 2022-2026 Jared McNeill <jmcneill@invisible.ca>
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.36.2.1 2025/08/02 05:56:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.36.2.2 2026/11/04 23:21:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,7 +49,6 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.36.2.1 2025/08/02 05:56:41 perseant E
 #include <sys/cprng.h>
 #include <sys/evcnt.h>
 #include <sys/sysctl.h>
-
 #include <sys/rndsource.h>
 
 #include <net/if.h>
@@ -67,6 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_eqos.c,v 1.36.2.1 2025/08/02 05:56:41 perseant E
 #define	EQOS_TXDMA_SIZE		(EQOS_MAX_MTU + ETHER_HDR_LEN + ETHER_CRC_LEN)
 #define	EQOS_RXDMA_SIZE		2048	/* Fixed value by hardware */
 CTASSERT(MCLBYTES >= EQOS_RXDMA_SIZE);
+#define	EQOS_RXBUF_SIZE		(EQOS_RXDMA_SIZE * EQOS_DMA_RXBUF_COUNT)
+#define	EQOS_TX_PACKET_PER_INTR	16
 
 #ifdef EQOS_DEBUG
 #define	EDEB_NOTE		(1U << 0)
@@ -117,6 +118,17 @@ unsigned int eqos_debug;	/* Default value */
 #define	WR4(sc, reg, val)		\
 	bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
 
+/*
+ * Request interrupt on completion for every "rx_batch" # packets.
+ */
+int eqos_rx_batch = 16;
+
+/*
+ * RX interrupt watchdog is triggered after "rx_wdt_count" * 256 system
+ * clock cycles.
+ */
+int eqos_rx_wdt_count = 160;
+
 static void	eqos_init_sysctls(struct eqos_softc *);
 static int	eqos_sysctl_tx_cur_handler(SYSCTLFN_PROTO);
 static int	eqos_sysctl_tx_end_handler(SYSCTLFN_PROTO);
@@ -139,15 +151,13 @@ eqos_mii_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	    GMAC_MAC_MDIO_ADDRESS_GOC_READ | GMAC_MAC_MDIO_ADDRESS_GB;
 	WR4(sc, GMAC_MAC_MDIO_ADDRESS, addr);
 
-	delay(10000);
-
 	for (retry = MII_BUSY_RETRY; retry > 0; retry--) {
+		delay(10);
 		addr = RD4(sc, GMAC_MAC_MDIO_ADDRESS);
 		if ((addr & GMAC_MAC_MDIO_ADDRESS_GB) == 0) {
 			*val = RD4(sc, GMAC_MAC_MDIO_DATA) & 0xFFFF;
 			break;
 		}
-		delay(10);
 	}
 	if (retry == 0) {
 		device_printf(dev, "phy read timeout, phy=%d reg=%d\n",
@@ -173,14 +183,12 @@ eqos_mii_writereg(device_t dev, int phy, int reg, uint16_t val)
 	    GMAC_MAC_MDIO_ADDRESS_GOC_WRITE | GMAC_MAC_MDIO_ADDRESS_GB;
 	WR4(sc, GMAC_MAC_MDIO_ADDRESS, addr);
 
-	delay(10000);
-
 	for (retry = MII_BUSY_RETRY; retry > 0; retry--) {
+		delay(10);
 		addr = RD4(sc, GMAC_MAC_MDIO_ADDRESS);
 		if ((addr & GMAC_MAC_MDIO_ADDRESS_GB) == 0) {
 			break;
 		}
-		delay(10);
 	}
 	if (retry == 0) {
 		device_printf(dev, "phy write timeout, phy=%d reg=%d\n",
@@ -269,10 +277,11 @@ eqos_dma_sync(struct eqos_softc *sc, bus_dmamap_t map,
 	}
 }
 
-static void
+static uint32_t
 eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
-    bus_addr_t paddr, u_int len, u_int total_len)
+    bus_addr_t paddr, u_int len, u_int total_len, bool ioc)
 {
+	struct eqos_dma_desc desc;
 	uint32_t tdes2, tdes3;
 
 	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
@@ -287,7 +296,8 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 		tdes3 = 0;
 		--sc->sc_tx.queued;
 	} else {
-		tdes2 = (flags & EQOS_TDES3_TX_LD) ? EQOS_TDES2_TX_IOC : 0;
+		tdes2 = (ioc && (flags & EQOS_TDES3_TX_LD) != 0) ?
+			EQOS_TDES2_TX_IOC : 0;
 		tdes3 = flags;
 		++sc->sc_tx.queued;
 	}
@@ -295,19 +305,23 @@ eqos_setup_txdesc(struct eqos_softc *sc, int index, int flags,
 	KASSERT(!EQOS_HW_FEATURE_ADDR64_32BIT(sc) ||
 	    ((uint64_t)paddr >> 32) == 0);
 
-	sc->sc_tx.desc_ring[index].tdes0 = htole32((uint32_t)paddr);
-	sc->sc_tx.desc_ring[index].tdes1
-	    = htole32((uint32_t)((uint64_t)paddr >> 32));
-	sc->sc_tx.desc_ring[index].tdes2 = htole32(tdes2 | len);
-	sc->sc_tx.desc_ring[index].tdes3 = htole32(tdes3 | total_len);
+	desc.tdes0 = htole32((uint32_t)paddr);
+	desc.tdes1 = htole32((uint32_t)((uint64_t)paddr >> 32));
+	desc.tdes2 = htole32(tdes2 | len);
+	desc.tdes3 = htole32(tdes3 | total_len);
+
+	sc->sc_tx.desc_ring[index] = desc;
+
+	return tdes3 | total_len;
 }
 
 static int
-eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
+eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m,
+    uint32_t *ptdes3)
 {
 	bus_dma_segment_t *segs;
 	int error, nsegs, cur, i;
-	uint32_t flags;
+	uint32_t flags, first_tdes3;
 	bool nospace;
 
 	DPRINTF(EDEB_TXRING, "preparing desc %u\n", index);
@@ -347,32 +361,42 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	sc->sc_tx.buf_map[index].mbuf = m;
 
 	flags = EQOS_TDES3_TX_FD;
+	if (ptdes3 == NULL) {
+		flags |= EQOS_TDES3_TX_OWN;
+	}
+	if ((m->m_pkthdr.csum_flags & (M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
+		flags |= EQOS_TDES3_TX_CIC_FULL;
+	} else if ((m->m_pkthdr.csum_flags & M_CSUM_IPv4) != 0) {
+		flags |= EQOS_TDES3_TX_CIC_IPHDR;
+	}
+	first_tdes3 = 0;
 
+	const bool ioc = (sc->sc_tx.count++ % EQOS_TX_PACKET_PER_INTR) == 0;
 	for (cur = index, i = 0; i < nsegs; i++) {
+		uint32_t tdes3;
+
 		if (i == nsegs - 1)
 			flags |= EQOS_TDES3_TX_LD;
 
-		eqos_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
-		    segs[i].ds_len, m->m_pkthdr.len);
-		flags &= ~EQOS_TDES3_TX_FD;
+		tdes3 = eqos_setup_txdesc(sc, cur, flags, segs[i].ds_addr,
+		    segs[i].ds_len, m->m_pkthdr.len, ioc);
 		cur = TX_NEXT(cur);
 
+		if (i == 0) {
+			first_tdes3 = tdes3;
+			flags &= ~EQOS_TDES3_TX_FD;
+		}
 		flags |= EQOS_TDES3_TX_OWN;
 	}
 
-	/*
-	 * Defer setting OWN bit on the first descriptor until all
-	 * descriptors have been updated.  The hardware will not try to
-	 * process any descriptors past the first one still owned by
-	 * software (i.e., with the OWN bit clear).
-	 */
-	bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.desc_map,
-	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
-	    BUS_DMASYNC_PREWRITE);
+	if (ptdes3 != NULL) {
+		*ptdes3 = first_tdes3;
+	}
+
 	DPRINTF(EDEB_TXRING, "passing tx desc %u to hardware, cur: %u, "
-	    "next: %u, queued: %u\n",
-	    index, sc->sc_tx.cur, sc->sc_tx.next, sc->sc_tx.queued);
-	sc->sc_tx.desc_ring[index].tdes3 |= htole32(EQOS_TDES3_TX_OWN);
+	    "next: %u, queued: %u, owned: %u\n",
+	    index, sc->sc_tx.cur, sc->sc_tx.next, sc->sc_tx.queued,
+	    ptdes3 == NULL);
 
 	return nsegs;
 }
@@ -380,18 +404,25 @@ eqos_setup_txbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 static void
 eqos_setup_rxdesc(struct eqos_softc *sc, int index, bus_addr_t paddr)
 {
+	struct eqos_dma_desc desc;
+	uint32_t tdes3 = EQOS_TDES3_RX_OWN | EQOS_TDES3_RX_BUF1V;
+
+	if ((index % eqos_rx_batch) == 0) {
+		tdes3 |= EQOS_TDES3_RX_IOC;
+	}
 
 	DPRINTF(EDEB_RXRING, "preparing desc %u\n", index);
 
-	sc->sc_rx.desc_ring[index].tdes0 = htole32((uint32_t)paddr);
-	sc->sc_rx.desc_ring[index].tdes1 =
-	    htole32((uint32_t)((uint64_t)paddr >> 32));
-	sc->sc_rx.desc_ring[index].tdes2 = htole32(0);
+	desc.tdes0 = htole32((uint32_t)paddr);
+	desc.tdes1 = htole32((uint32_t)((uint64_t)paddr >> 32));
+	desc.tdes2 = htole32(0);
+	desc.tdes3 = 0;
+
+	sc->sc_rx.desc_ring[index] = desc;
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rx.desc_map,
 	    DESC_OFF(index), offsetof(struct eqos_dma_desc, tdes3),
 	    BUS_DMASYNC_PREWRITE);
-	sc->sc_rx.desc_ring[index].tdes3 = htole32(EQOS_TDES3_RX_OWN |
-	    EQOS_TDES3_RX_IOC | EQOS_TDES3_RX_BUF1V);
+	sc->sc_rx.desc_ring[index].tdes3 = htole32(tdes3);
 }
 
 static int
@@ -419,14 +450,54 @@ eqos_setup_rxbuf(struct eqos_softc *sc, int index, struct mbuf *m)
 	return 0;
 }
 
+static struct eqos_rxbuf *
+eqos_alloc_rxbuf(struct eqos_softc *sc)
+{
+	struct eqos_rxbuf *rxbuf;
+
+	mutex_enter(&sc->sc_rxdata.freelist_mtx);
+	rxbuf = SLIST_FIRST(&sc->sc_rxdata.freelist);
+	if (rxbuf != NULL) {
+		SLIST_REMOVE_HEAD(&sc->sc_rxdata.freelist, next);
+	}
+	mutex_exit(&sc->sc_rxdata.freelist_mtx);
+
+	return rxbuf;
+}
+
+static void
+eqos_free_rxbuf(struct mbuf *m, void *buf, size_t size, void *arg)
+{
+	struct eqos_rxbuf *rxbuf = arg;
+	struct eqos_softc *sc = rxbuf->sc;
+
+	mutex_enter(&sc->sc_rxdata.freelist_mtx);
+	SLIST_INSERT_HEAD(&sc->sc_rxdata.freelist, rxbuf, next);
+	mutex_exit(&sc->sc_rxdata.freelist_mtx);
+
+	if (__predict_true(m != NULL)) {
+		pool_cache_put(mb_cache, m);
+	}
+}
+
 static struct mbuf *
 eqos_alloc_mbufcl(struct eqos_softc *sc)
 {
+	struct eqos_rxbuf *rxbuf;
 	struct mbuf *m;
 
-	m = m_getcl(M_NOWAIT, MT_DATA, M_PKTHDR);
-	if (m != NULL)
-		m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
+	m = m_gethdr(M_NOWAIT, MT_DATA);
+	if (m == NULL) {
+		return NULL;
+	}
+	rxbuf = eqos_alloc_rxbuf(sc);
+	if (rxbuf == NULL) {
+		m_freem(m);
+		return NULL;
+	}
+	MEXTADD(m, rxbuf->vaddr, EQOS_RXDMA_SIZE, 0, eqos_free_rxbuf, rxbuf);
+	m->m_flags |= M_EXT_RW;
+	m->m_pkthdr.len = m->m_len = m->m_ext.ext_size;
 
 	return m;
 }
@@ -489,33 +560,58 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	EQOS_ASSERT_LOCKED(sc);
 
 	pfil = RD4(sc, GMAC_MAC_PACKET_FILTER);
+
+	/* turn off promiscous mode */
+	/* turn off the receive-all mode */
+	/* turn off the non-UDP/TCP filter */
+	/* turn off broadcast filter */
+	/* turn off pass all multicast mode */
+	/* turn on  hash or perfect mode */
+	/* turn off source address filter */
+	/* turn off inverse source address filter */
+	/* turn off inverse destination address filter */
+	/* turn off multicast hash table matching */
+	/* turn off unicast hash table matching */
+	/* XXX keep IP Layer3+4 filter */
+	/* XXX keep VLAN tag filter */
+	/* don't pass control packets */
 	pfil &= ~(GMAC_MAC_PACKET_FILTER_PR |
+		  GMAC_MAC_PACKET_FILTER_RA |
+		  GMAC_MAC_PACKET_FILTER_DNTU |
+		  GMAC_MAC_PACKET_FILTER_DBF |
 		  GMAC_MAC_PACKET_FILTER_PM |
+		  GMAC_MAC_PACKET_FILTER_SAF |
+		  GMAC_MAC_PACKET_FILTER_SAIF |
+		  GMAC_MAC_PACKET_FILTER_DAIF |
 		  GMAC_MAC_PACKET_FILTER_HMC |
-		  GMAC_MAC_PACKET_FILTER_PCF_MASK);
-	hash[0] = hash[1] = ~0U;
+		  GMAC_MAC_PACKET_FILTER_HUC |
+	          GMAC_MAC_PACKET_FILTER_PCF_MASK);
+	pfil |= GMAC_MAC_PACKET_FILTER_HPF;
 
 	ETHER_LOCK(ec);
 	if ((sc->sc_if_flags & IFF_PROMISC) != 0)  {
 		ec->ec_flags |= ETHER_F_ALLMULTI;
-		pfil |= GMAC_MAC_PACKET_FILTER_PR |
-			GMAC_MAC_PACKET_FILTER_PCF_ALL;
+		/* enable promiscous mode */
+		pfil |= GMAC_MAC_PACKET_FILTER_PR;
+		/* also receive control packets */
+		pfil |= GMAC_MAC_PACKET_FILTER_PCF_ALL;
+		/* ignored */
+		hash[0] = hash[1] = ~0U;
 	} else {
-		pfil |= GMAC_MAC_PACKET_FILTER_HMC;
-		hash[0] = hash[1] = 0;
+		hash[0] = hash[1] = 0U;
 		ec->ec_flags &= ~ETHER_F_ALLMULTI;
+		/* enable multicast hash table matching */
+		pfil |= GMAC_MAC_PACKET_FILTER_HMC;
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 				ETHER_ADDR_LEN) != 0) {
-				ec->ec_flags |= ETHER_F_ALLMULTI;
+				/* disable multicast hash table matching */
 				pfil &= ~GMAC_MAC_PACKET_FILTER_HMC;
+				/* pass all multicast instead */
 				pfil |= GMAC_MAC_PACKET_FILTER_PM;
-				/*
-				 * Shouldn't matter if we clear HMC but
-				 * let's avoid using different values.
-				 */
-				hash[0] = hash[1] = 0xffffffff;
+				/* ignored */
+				hash[0] = hash[1] = ~0U;
 				break;
 			}
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
@@ -531,13 +627,16 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 
 	/* Write our unicast address */
 	eaddr = CLLADDR(ifp->if_sadl);
-	val = eaddr[4] | (eaddr[5] << 8) | GMAC_MAC_ADDRESS0_HIGH_AE;
+	val = eaddr[4] | (eaddr[5] << 8);
+	val = __SHIFTIN(val, GMAC_MAC_ADDRESS_HIGH_ADDR)
+	    | GMAC_MAC_ADDRESS_HIGH_AE;
 	WR4(sc, GMAC_MAC_ADDRESS0_HIGH, val);
 	val = eaddr[0] | (eaddr[1] << 8) | (eaddr[2] << 16) |
 	    (eaddr[3] << 24);
 	WR4(sc, GMAC_MAC_ADDRESS0_LOW, val);
 
 	/* Multicast hash filters */
+	/* XXX assumes 64 bit hashtable size */
 	WR4(sc, GMAC_MAC_HASH_TABLE_REG0, hash[0]);
 	WR4(sc, GMAC_MAC_HASH_TABLE_REG1, hash[1]);
 
@@ -545,6 +644,26 @@ eqos_setup_rxfilter(struct eqos_softc *sc)
 	    "%08x, hash[1]=%08x, hash[0]=%08x\n", pfil, hash[1], hash[0]);
 	/* Packet filter config */
 	WR4(sc, GMAC_MAC_PACKET_FILTER, pfil);
+}
+
+static void
+eqos_setup_coe(struct eqos_softc *sc)
+{
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	const uint64_t if_capenable = ifp->if_capenable;
+	uint32_t val;
+
+	EQOS_ASSERT_LOCKED(sc);
+
+	val = RD4(sc, GMAC_MAC_CONFIGURATION);
+	if ((if_capenable & (IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+			     IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+			     IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx)) != 0) {
+		val |= GMAC_MAC_CONFIGURATION_IPC;
+	} else {
+		val &= ~GMAC_MAC_CONFIGURATION_IPC;
+	}
+	WR4(sc, GMAC_MAC_CONFIGURATION, val);
 }
 
 static int
@@ -607,8 +726,12 @@ eqos_init_locked(struct eqos_softc *sc)
 	EQOS_ASSERT_LOCKED(sc);
 	EQOS_ASSERT_TXLOCKED(sc);
 
-	if ((ifp->if_flags & IFF_RUNNING) != 0)
+	if ((ifp->if_flags & IFF_RUNNING) != 0) {
+		/* Only Setup RX filter and checksum offload */
+		eqos_setup_rxfilter(sc);
+		eqos_setup_coe(sc);
 		return 0;
+	}
 
 	/* Setup TX/RX rings */
 	eqos_init_rings(sc, 0);
@@ -617,7 +740,14 @@ eqos_init_locked(struct eqos_softc *sc)
 	sc->sc_if_flags = ifp->if_flags;
 	eqos_setup_rxfilter(sc);
 
+	/* Setup checksum offload */
+	eqos_setup_coe(sc);
+
 	WR4(sc, GMAC_MAC_1US_TIC_COUNTER, (sc->sc_csr_clock / 1000000) - 1);
+
+	/* RX interrupt watchdog timer */
+	WR4(sc, GMAC_DMA_CHAN0_RX_WATCHDOG,
+	    GMAC_DMA_CHAN0_RX_WATCHDOG_RWTU_256 | eqos_rx_wdt_count);
 
 	/* Enable transmit and receive DMA */
 	val = RD4(sc, GMAC_DMA_CHAN0_CONTROL);
@@ -782,6 +912,8 @@ eqos_stop_locked(struct eqos_softc *sc, int disable)
 	/* Disable interrupts */
 	eqos_disable_intr(sc);
 
+	workqueue_wait(sc->sc_wq, &sc->sc_rxwork);
+
 	sc->sc_if_flags &= ~IFF_RUNNING;
 	ifp->if_flags &= ~IFF_RUNNING;
 }
@@ -800,6 +932,7 @@ static void
 eqos_rxintr(struct eqos_softc *sc, int qid)
 {
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	const uint64_t if_capenable = ifp->if_capenable;
 	int error, index, pkts = 0;
 	struct mbuf *m, *m0, *new_m, *mprev;
 	uint32_t tdes3;
@@ -809,6 +942,9 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 	discarding = sc->sc_rx_discarding;
 	m0 = sc->sc_rx_receiving_m;
 	mprev = sc->sc_rx_receiving_m_last;
+
+	DPRINTF(EDEB_INTR, "qid: %u, discarding %u, m0 %p\n",
+	    qid, discarding, m0);
 
 	for (index = sc->sc_rx.cur; ; index = RX_NEXT(index)) {
 		eqos_dma_sync(sc, sc->sc_rx.desc_map,
@@ -820,7 +956,7 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			break;
 		}
 
-		/* now discarding untill the last packet */
+		/* now discarding until the last packet */
 		if (discarding)
 			goto rx_next;
 
@@ -905,6 +1041,31 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 			m_set_rcvif(m0, ifp);
 			m0->m_flags |= M_HASFCS;
 			m0->m_nextpkt = NULL;
+
+			if ((tdes3 & EQOS_TDES3_RX_RS1V) != 0 &&
+			    (if_capenable & IFCAP_CSUM_IPv4_Rx) != 0) {
+				uint32_t tdes1 =
+				    le32toh(sc->sc_rx.desc_ring[index].tdes1);
+
+				if ((tdes1 & (EQOS_TDES1_RX_IPCE |
+					      EQOS_TDES1_RX_IPCB)) == 0) {
+					if ((tdes1 & EQOS_TDES1_RX_IPV4) != 0) {
+						m0->m_pkthdr.csum_flags |=
+						    M_CSUM_IPv4;
+					}
+					switch (tdes1 & EQOS_TDES1_RX_PT_MASK) {
+					case EQOS_TDES1_RX_PT_UDP:
+						m0->m_pkthdr.csum_flags |=
+						    M_CSUM_UDPv4;
+						break;
+					case EQOS_TDES1_RX_PT_TCP:
+						m0->m_pkthdr.csum_flags |=
+						    M_CSUM_TCPv4;
+						break;
+					}
+				}
+			}
+
 			if_percpuq_enqueue(ifp->if_percpuq, m0);
 			m0 = mprev = NULL;
 
@@ -922,8 +1083,7 @@ eqos_rxintr(struct eqos_softc *sc, int qid)
 		    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 		WR4(sc, GMAC_DMA_CHAN0_RX_END_ADDR,
-		    (uint32_t)sc->sc_rx.desc_ring_paddr +
-		    DESC_OFF(sc->sc_rx.cur));
+		    (uint32_t)sc->sc_rx.desc_ring_paddr + DESC_OFF(index));
 	}
 	/* save jumboframe context */
 	sc->sc_rx_discarding = discarding;
@@ -950,15 +1110,16 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 
 	DPRINTF(EDEB_INTR, "qid: %u\n", qid);
 
-	EQOS_ASSERT_LOCKED(sc);
 	EQOS_ASSERT_TXLOCKED(sc);
+
+	eqos_dma_sync(sc, sc->sc_tx.desc_map,
+	    sc->sc_tx.next, sc->sc_tx.cur, TX_DESC_COUNT,
+	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 	for (i = sc->sc_tx.next; sc->sc_tx.queued > 0; i = TX_NEXT(i)) {
 		KASSERT(sc->sc_tx.queued > 0);
 		KASSERT(sc->sc_tx.queued <= TX_DESC_COUNT);
-		eqos_dma_sync(sc, sc->sc_tx.desc_map,
-		    i, i + 1, TX_DESC_COUNT,
-		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
+
 		desc = &sc->sc_tx.desc_ring[i];
 		tdes3 = le32toh(desc->tdes3);
 		if ((tdes3 & EQOS_TDES3_TX_OWN) != 0) {
@@ -975,10 +1136,7 @@ eqos_txintr(struct eqos_softc *sc, int qid)
 			++pkts;
 		}
 
-		eqos_setup_txdesc(sc, i, 0, 0, 0, 0);
-		eqos_dma_sync(sc, sc->sc_tx.desc_map,
-		    i, i + 1, TX_DESC_COUNT,
-		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		--sc->sc_tx.queued;
 
 		/* Last descriptor in a packet contains DMA status */
 		if ((tdes3 & EQOS_TDES3_TX_LD) != 0) {
@@ -1012,6 +1170,8 @@ eqos_start_locked(struct eqos_softc *sc)
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
 	struct mbuf *m;
 	int cnt, nsegs, start;
+	uint32_t first_tdes3 = 0;
+	uint32_t *ptdes3 = &first_tdes3;
 
 	EQOS_ASSERT_TXLOCKED(sc);
 
@@ -1029,7 +1189,7 @@ eqos_start_locked(struct eqos_softc *sc)
 		if (m == NULL)
 			break;
 
-		nsegs = eqos_setup_txbuf(sc, sc->sc_tx.cur, m);
+		nsegs = eqos_setup_txbuf(sc, sc->sc_tx.cur, m, ptdes3);
 		if (nsegs <= 0) {
 			DPRINTF(EDEB_TXRING, "eqos_setup_txbuf failed "
 			    "with %d\n", nsegs);
@@ -1045,6 +1205,7 @@ eqos_start_locked(struct eqos_softc *sc)
 		bpf_mtap(ifp, m, BPF_D_OUT);
 
 		sc->sc_tx.cur = TX_SKIP(sc->sc_tx.cur, nsegs);
+		ptdes3 = NULL;
 	}
 
 	DPRINTF(EDEB_TXRING, "tx loop -> cnt = %u, cur: %u, next: %u, "
@@ -1054,6 +1215,19 @@ eqos_start_locked(struct eqos_softc *sc)
 	if (cnt != 0) {
 		eqos_dma_sync(sc, sc->sc_tx.desc_map,
 		    start, sc->sc_tx.cur, TX_DESC_COUNT,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+		/*
+		 * Defer setting OWN bit on the first descriptor until all
+		 * descriptors have been updated.  The hardware will not try to
+		 * process any descriptors past the first one still owned by
+		 * software (i.e., with the OWN bit clear).
+		 */
+		sc->sc_tx.desc_ring[start].tdes3 =
+		    htole32(first_tdes3 | EQOS_TDES3_TX_OWN);
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx.desc_map,
+		    DESC_OFF(start) + offsetof(struct eqos_dma_desc, tdes3),
+		    sizeof(uint32_t),
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		/* Start and run TX DMA */
@@ -1079,6 +1253,43 @@ eqos_start(struct ifnet *ifp)
 	EQOS_TXLOCK(sc);
 	eqos_start_locked(sc);
 	EQOS_TXUNLOCK(sc);
+}
+
+static void
+eqos_receive(struct work *wk, void *arg)
+{
+	struct eqos_softc *sc = arg;
+	uint32_t dma_intr_enable;
+
+	EQOS_LOCK(sc);
+
+	eqos_rxintr(sc, 0);
+
+	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
+	dma_intr_enable |= GMAC_DMA_CHAN0_INTR_ENABLE_RIE;
+	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
+
+	EQOS_UNLOCK(sc);
+}
+
+static void
+eqos_txsoftintr(void *arg)
+{
+	struct eqos_softc *sc = arg;
+	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	uint32_t dma_intr_enable;
+
+	EQOS_TXLOCK(sc);
+	eqos_txintr(sc, 0);
+	EQOS_TXUNLOCK(sc);
+
+	if_schedule_deferred_start(ifp);
+
+	EQOS_LOCK(sc);
+	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
+	dma_intr_enable |= GMAC_DMA_CHAN0_INTR_ENABLE_TIE;
+	WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
+	EQOS_UNLOCK(sc);
 }
 
 static void
@@ -1126,8 +1337,9 @@ int
 eqos_intr(void *arg)
 {
 	struct eqos_softc * const sc = arg;
-	struct ifnet * const ifp = &sc->sc_ec.ec_if;
-	uint32_t mac_status, mtl_status, dma_status, rx_tx_status;
+	uint32_t mac_status, mtl_status, dma_status, dma_intr_enable,
+		 rx_tx_status;
+	bool do_txintr = false;
 
 	EQOS_LOCK(sc);
 
@@ -1145,24 +1357,27 @@ eqos_intr(void *arg)
 	mtl_status = RD4(sc, GMAC_MTL_INTERRUPT_STATUS);
 	eqos_intr_mtl(sc, mtl_status);
 
+	dma_intr_enable = RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
 	dma_status = RD4(sc, GMAC_DMA_CHAN0_STATUS);
-	dma_status &= RD4(sc, GMAC_DMA_CHAN0_INTR_ENABLE);
+	dma_status &= dma_intr_enable;
 	if (dma_status) {
 		WR4(sc, GMAC_DMA_CHAN0_STATUS, dma_status);
 	}
 
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_RI) != 0) {
-		eqos_rxintr(sc, 0);
+		dma_intr_enable &= ~GMAC_DMA_CHAN0_INTR_ENABLE_RIE;
+		WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
+		workqueue_enqueue(sc->sc_wq, &sc->sc_rxwork, NULL);
 		sc->sc_ev_rxintr.ev_count++;
 	}
 
 	if ((dma_status & GMAC_DMA_CHAN0_STATUS_TI) != 0) {
-		EQOS_TXLOCK(sc);
-		eqos_txintr(sc, 0);
-		EQOS_TXUNLOCK(sc);
-		if_schedule_deferred_start(ifp);
+		do_txintr = true;
+		dma_intr_enable &= ~GMAC_DMA_CHAN0_INTR_ENABLE_TIE;
+		WR4(sc, GMAC_DMA_CHAN0_INTR_ENABLE, dma_intr_enable);
 		sc->sc_ev_txintr.ev_count++;
 	}
+
 	rx_tx_status = RD4(sc, GMAC_MAC_RX_TX_STATUS);
 
 	EQOS_UNLOCK(sc);
@@ -1190,6 +1405,10 @@ eqos_intr(void *arg)
 
 		DPRINTF(EDEB_INTR, "GMAC_MAC_RX_TX_STATUS = 0x%08x\n",
 		    rx_tx_status);
+	}
+
+	if (do_txintr) {
+		softint_schedule(sc->sc_tx_si);
 	}
 
 	return 1;
@@ -1273,31 +1492,23 @@ eqos_ifflags_cb(struct ethercom *ec)
 static void
 eqos_get_eaddr(struct eqos_softc *sc, uint8_t *eaddr)
 {
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
 	uint32_t maclo, machi;
-	prop_data_t eaprop;
 
-	eaprop = prop_dictionary_get(prop, "mac-address");
-	if (eaprop != NULL) {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(eaddr, prop_data_value(eaprop),
-		    ETHER_ADDR_LEN);
+	if (ether_getaddr(sc->sc_dev, eaddr)) {
 		return;
 	}
 
 	maclo = RD4(sc, GMAC_MAC_ADDRESS0_LOW);
-	machi = RD4(sc, GMAC_MAC_ADDRESS0_HIGH) & 0xFFFF;
-	if ((maclo & 0x00000001) != 0) {
+	machi = __SHIFTOUT(RD4(sc, GMAC_MAC_ADDRESS0_HIGH),
+	    GMAC_MAC_ADDRESS_HIGH_ADDR);
+	if (maclo == 0xFFFFFFFF && machi == 0xFFFF) {
+		/* Create one */
+		maclo = 0x00f2 | (cprng_strong32() << 16);
+		machi = cprng_strong32() & 0xffff;
+	} else if (maclo & 0x00000001) {
 		aprint_error_dev(sc->sc_dev,
 		    "Wrong MAC address. Clearing the multicast bit.\n");
 		maclo &= ~0x00000001;
-	}
-
-	if (maclo == 0xFFFFFFFF && machi == 0xFFFF) {
-		/* Create one */
-		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
-		machi = cprng_strong32() & 0xffff;
 	}
 
 	eaddr[0] = maclo & 0xff;
@@ -1329,30 +1540,35 @@ eqos_get_dma_pbl(struct eqos_softc *sc)
 static void
 eqos_axi_configure(struct eqos_softc *sc)
 {
-	prop_dictionary_t prop = device_properties(sc->sc_dev);
 	uint32_t val;
 	u_int uival;
-	bool bval;
 
 	val = RD4(sc, GMAC_DMA_SYSBUS_MODE);
-	if (prop_dictionary_get_bool(prop, "snps,mixed-burst", &bval) && bval) {
+
+	/* XXX are MB and FB mutually-exclusive? XXX */
+	if (device_getprop_bool(sc->sc_dev, "snps,mixed-burst")) {
 		val |= GMAC_DMA_SYSBUS_MODE_MB;
 	}
-	if (prop_dictionary_get_bool(prop, "snps,fixed-burst", &bval) && bval) {
+	if (device_getprop_bool(sc->sc_dev, "snps,fixed-burst")) {
 		val |= GMAC_DMA_SYSBUS_MODE_FB;
 	}
-	if (prop_dictionary_get_uint(prop, "snps,wr_osr_lmt", &uival)) {
+	if (device_getprop_uint(sc->sc_dev, "snps,wr_osr_lmt", &uival)) {
 		val &= ~GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_MASK;
-		val |= uival << GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_SHIFT;
+		val |= (uival << GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_SHIFT) &
+		    GMAC_DMA_SYSBUS_MODE_WR_OSR_LMT_MASK;
 	}
-	if (prop_dictionary_get_uint(prop, "snps,rd_osr_lmt", &uival)) {
+	if (device_getprop_uint(sc->sc_dev, "snps,rd_osr_lmt", &uival)) {
 		val &= ~GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_MASK;
-		val |= uival << GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_SHIFT;
+		val |= (uival << GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_SHIFT) &
+		    GMAC_DMA_SYSBUS_MODE_RD_OSR_LMT_MASK;
 	}
 
 	if (!EQOS_HW_FEATURE_ADDR64_32BIT(sc)) {
 		val |= GMAC_DMA_SYSBUS_MODE_EAME;
 	}
+
+	/* XXX snps,kbbe XXX */
+	/* XXX snps,blen XXX */
 
 	/* XXX */
 	val |= GMAC_DMA_SYSBUS_MODE_BLEN16;
@@ -1384,7 +1600,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 		return error;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_tx.desc_dmaseg, nsegs,
-	    TX_DESC_SIZE, (void *)&sc->sc_tx.desc_ring, BUS_DMA_WAITOK);
+	    TX_DESC_SIZE, (void *)&sc->sc_tx.desc_ring,
+	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (error) {
 		return error;
 	}
@@ -1402,7 +1619,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 	sc->sc_tx.queued = TX_DESC_COUNT;
 	for (i = 0; i < TX_DESC_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, EQOS_TXDMA_SIZE,
-		    TX_MAX_SEGS, MCLBYTES, 0, BUS_DMA_WAITOK,
+		    TX_MAX_SEGS, MCLBYTES, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->sc_tx.buf_map[i].map);
 		if (error != 0) {
 			device_printf(sc->sc_dev,
@@ -1410,8 +1628,43 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 			return error;
 		}
 		EQOS_TXLOCK(sc);
-		eqos_setup_txdesc(sc, i, 0, 0, 0, 0);
+		eqos_setup_txdesc(sc, i, 0, 0, 0, 0, false);
 		EQOS_TXUNLOCK(sc);
+	}
+
+	/* Setup RX buffers */
+	error = bus_dmamap_create(sc->sc_dmat, EQOS_RXBUF_SIZE, 1,
+	    EQOS_RXBUF_SIZE, 0, BUS_DMA_WAITOK, &sc->sc_rxdata.map);
+	if (error) {
+		return error;
+	}
+	error = bus_dmamem_alloc(sc->sc_dmat, EQOS_RXBUF_SIZE, PAGE_SIZE, 0,
+	    &sc->sc_rxdata.seg, 1, &nsegs, BUS_DMA_WAITOK);
+	if (error) {
+		return error;
+	}
+	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_rxdata.seg, nsegs,
+	    EQOS_RXBUF_SIZE, &sc->sc_rxdata.vaddr, BUS_DMA_WAITOK);
+	if (error) {
+		return error;
+	}
+	error = bus_dmamap_load(sc->sc_dmat, sc->sc_rxdata.map,
+	    sc->sc_rxdata.vaddr, EQOS_RXBUF_SIZE, NULL, BUS_DMA_WAITOK);
+	if (error) {
+		return error;
+	}
+	sc->sc_rxdata.paddr = sc->sc_rxdata.map->dm_segs[0].ds_addr;
+
+	mutex_init(&sc->sc_rxdata.freelist_mtx, MUTEX_DEFAULT, IPL_NET);
+	SLIST_INIT(&sc->sc_rxdata.freelist);
+	for (i = 0; i < EQOS_DMA_RXBUF_COUNT; i++) {
+		sc->sc_rxdata.rxbuf[i].sc = sc;
+		sc->sc_rxdata.rxbuf[i].vaddr =
+		    (char *)sc->sc_rxdata.vaddr + i * EQOS_RXDMA_SIZE;
+		sc->sc_rxdata.rxbuf[i].paddr =
+		    sc->sc_rxdata.paddr + i * EQOS_RXDMA_SIZE;
+		SLIST_INSERT_HEAD(&sc->sc_rxdata.freelist,
+		    &sc->sc_rxdata.rxbuf[i], next);
 	}
 
 	/* Setup RX ring */
@@ -1426,7 +1679,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 		return error;
 	}
 	error = bus_dmamem_map(sc->sc_dmat, &sc->sc_rx.desc_dmaseg, nsegs,
-	    RX_DESC_SIZE, (void *)&sc->sc_rx.desc_ring, BUS_DMA_WAITOK);
+	    RX_DESC_SIZE, (void *)&sc->sc_rx.desc_ring,
+	    BUS_DMA_WAITOK | BUS_DMA_COHERENT);
 	if (error) {
 		return error;
 	}
@@ -1441,7 +1695,8 @@ eqos_setup_dma(struct eqos_softc *sc, int qid)
 
 	for (i = 0; i < RX_DESC_COUNT; i++) {
 		error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
-		    RX_DESC_COUNT, MCLBYTES, 0, BUS_DMA_WAITOK,
+		    1, MCLBYTES, 0,
+		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW,
 		    &sc->sc_rx.buf_map[i].map);
 		if (error != 0) {
 			device_printf(sc->sc_dev,
@@ -1475,6 +1730,7 @@ eqos_attach(struct eqos_softc *sc)
 {
 	struct mii_data * const mii = &sc->sc_mii;
 	struct ifnet * const ifp = &sc->sc_ec.ec_if;
+	struct ifcapreq ifcr;
 	uint8_t eaddr[ETHER_ADDR_LEN];
 	u_int userver, snpsver;
 	int error;
@@ -1573,6 +1829,19 @@ eqos_attach(struct eqos_softc *sc)
 		return EINVAL;
 	}
 
+	/* Receive workers */
+	error = workqueue_create(&sc->sc_wq, device_xname(sc->sc_dev),
+	    eqos_receive, sc, PRI_SOFTNET, IPL_NET, WQ_MPSAFE | WQ_PERCPU);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to create receive workqueue: %d\n", error);
+		return error;
+	}
+
+	/* Transmit softint */
+	sc->sc_tx_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
+	    eqos_txsoftintr, sc);
+
 	/* Setup ethernet interface */
 	ifp->if_softc = sc;
 	snprintf(ifp->if_xname, IFNAMSIZ, "%s", device_xname(sc->sc_dev));
@@ -1582,12 +1851,14 @@ eqos_attach(struct eqos_softc *sc)
 	ifp->if_ioctl = eqos_ioctl;
 	ifp->if_init = eqos_init;
 	ifp->if_stop = eqos_stop;
-	ifp->if_capabilities = 0;
-	ifp->if_capenable = ifp->if_capabilities;
+	ifp->if_capabilities = IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
+            		       IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
+            		       IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
+	ifp->if_capenable = 0;
 	IFQ_SET_MAXLEN(&ifp->if_snd, IFQ_MAXLEN);
 	IFQ_SET_READY(&ifp->if_snd);
 
-	/* 802.1Q VLAN-sized frames, and jumbo frame are supported */
+	/* 802.1Q VLAN-sized frames and jumbo frames are supported */
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 
@@ -1659,6 +1930,16 @@ eqos_attach(struct eqos_softc *sc)
 
 	rnd_attach_source(&sc->sc_rndsource, ifp->if_xname, RND_TYPE_NET,
 	    RND_FLAG_DEFAULT);
+
+	/* Try to enable COE */
+	memset(&ifcr, 0, sizeof(ifcr));
+	snprintf(ifcr.ifcr_name, sizeof(ifcr.ifcr_name), "%s", if_name(ifp));
+	ifcr.ifcr_capenable = ifp->if_capabilities;
+	error = ifioctl_common(ifp, SIOCSIFCAP, &ifcr);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev, "failed to enable COE: %d\n",
+		    error);
+	}
 
 	return 0;
 }

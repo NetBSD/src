@@ -1,6 +1,6 @@
 /* Low-level I/O routines for BFDs.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -293,7 +293,7 @@ DESCRIPTION
 .  int (*bstat) (struct bfd *abfd, struct stat *sb);
 .  {* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
 .     mmap parameter, except that LEN and OFFSET do not need to be page
-.     aligned.  Returns (void *)-1 on failure, mmapped address on success.
+.     aligned.  Returns MAP_FAILED on failure, mmapped address on success.
 .     Also write in MAP_ADDR the address of the page aligned buffer and in
 .     MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
 .     MAP_LEN to unmap.  *}
@@ -725,6 +725,7 @@ DESCRIPTION
 	Return mmap()ed region of the file, if possible and implemented.
 	LEN and OFFSET do not need to be page aligned.  The page aligned
 	address and length are written to MAP_ADDR and MAP_LEN.
+	Returns MAP_FAILED on failure.
 
 */
 
@@ -898,7 +899,7 @@ memory_bmmap (bfd *abfd ATTRIBUTE_UNUSED, void *addr ATTRIBUTE_UNUSED,
 	      void **map_addr ATTRIBUTE_UNUSED,
 	      size_t *map_len ATTRIBUTE_UNUSED)
 {
-  return (void *)-1;
+  return MAP_FAILED;
 }
 
 const struct bfd_iovec _bfd_memory_iovec =

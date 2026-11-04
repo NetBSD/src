@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.15 2019/01/07 22:00:31 jdolecek Exp $	*/
+/*	$NetBSD: param.h,v 1.15.36.1 2026/11/04 23:20:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,6 @@
 
 #define	KERNBASE	0x80000000	/* start of kernel virtual */
 #define KERNTEXTOFF	0x80001000	/* start of kernel text for kvm_mkdb */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
 
 #ifdef _KERNEL
 #ifndef _LOCORE

@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_FORWARD_SCOPE_EXIT_H
-#define COMMON_FORWARD_SCOPE_EXIT_H
+#ifndef GDBSUPPORT_FORWARD_SCOPE_EXIT_H
+#define GDBSUPPORT_FORWARD_SCOPE_EXIT_H
 
 #include "gdbsupport/scope-exit.h"
 #include <functional>
@@ -52,9 +52,9 @@
       obj.release ();  // Optional cancel if needed.
 
    forward_scope_exit is also handy when you would need to wrap a
-   scope_exit in a gdb::optional:
+   scope_exit in a std::optional:
 
-      gdb::optional<longjmp_breakpoint_cleanup> cleanup;
+      std::optional<longjmp_breakpoint_cleanup> cleanup;
       if (some condition)
 	cleanup.emplace (thread);
       ...
@@ -62,7 +62,7 @@
 	cleanup->release ();
 
    since with scope exit, you would have to know the scope_exit's
-   callable template type when you create the gdb::optional:
+   callable template type when you create the std::optional:
 
      gdb:optional<scope_exit<what goes here?>>
 
@@ -120,4 +120,4 @@ private:
 #define FORWARD_SCOPE_EXIT(FUNC) \
   detail::forward_scope_exit<decltype (FUNC), FUNC, decltype (FUNC)>
 
-#endif /* COMMON_FORWARD_SCOPE_EXIT_H */
+#endif /* GDBSUPPORT_FORWARD_SCOPE_EXIT_H */

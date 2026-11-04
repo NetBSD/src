@@ -18,12 +18,4 @@ cp ns4/tld1.db ns4/tld.db
 cp ns6/to-be-removed.tld.db.in ns6/to-be-removed.tld.db
 cp ns7/server.db.in ns7/server.db
 
-copy_setports ns1/named.conf.in ns1/named.conf
-copy_setports ns4/named.conf.in ns4/named.conf
-copy_setports ns5/named.conf.in ns5/named.conf
-copy_setports ns6/named.conf.in ns6/named.conf
-copy_setports ns7/named1.conf.in ns7/named.conf
-copy_setports ns9/named.conf.in ns9/named.conf
-copy_setports ns11/named.conf.in ns11/named.conf
-
 (cd ns6 && $SHELL keygen.sh)

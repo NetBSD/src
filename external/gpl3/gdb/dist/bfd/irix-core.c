@@ -1,5 +1,5 @@
 /* BFD back-end for Irix core files.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -203,7 +203,8 @@ irix_core_core_file_p (bfd *abfd)
   if (!core_hdr (abfd))
     return NULL;
 
-  strncpy (core_command (abfd), coreout.c_name, CORE_NAMESIZE);
+  strncpy (core_command (abfd), coreout.c_name, CORE_NAMESIZE - 1);
+  core_command (abfd)[CORE_NAMESIZE - 1] = 0;
   core_signal (abfd) = coreout.c_sigcause;
 
   if (bfd_seek (abfd, coreout.c_vmapoffset, SEEK_SET) != 0)

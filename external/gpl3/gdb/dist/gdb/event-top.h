@@ -1,6 +1,6 @@
 /* Definitions used by event-top.c, for GDB, the GNU debugger.
 
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    Written by Elena Zannoni <ezannoni@cygnus.com> of Cygnus Solutions.
 
@@ -19,10 +19,12 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EVENT_TOP_H
-#define EVENT_TOP_H
+#ifndef GDB_EVENT_TOP_H
+#define GDB_EVENT_TOP_H
 
 #include <signal.h>
+
+#include "extension.h"
 
 struct cmd_list_element;
 
@@ -81,6 +83,29 @@ extern void quit_serial_event_set ();
 
 extern void quit_serial_event_clear ();
 
+/* Wrap f (args) and handle exceptions by:
+   - returning val, and
+   - calling set_quit_flag or set_force_quit_flag, if needed.  */
+
+template <typename R, R val, typename F, typename... Args>
+static R
+catch_exceptions (F &&f, Args&&... args)
+{
+   try
+     {
+       return f (std::forward<Args> (args)...);
+     }
+   catch (const gdb_exception &ex)
+     {
+       if (ex.reason == RETURN_QUIT)
+	 set_quit_flag ();
+       else if (ex.reason == RETURN_FORCED_QUIT)
+	 set_force_quit_flag ();
+     }
+
+   return val;
+}
+
 extern void display_gdb_prompt (const char *new_prompt);
 extern void gdb_setup_readline (int);
 extern void gdb_disable_readline (void);
@@ -105,7 +130,6 @@ extern void async_enable_stdin (void);
 
 extern bool set_editing_cmd_var;
 extern bool exec_done_display_p;
-extern struct prompts the_prompts;
 extern void (*after_char_processing_hook) (void);
 extern int call_stdin_event_handler_again_p;
 extern void gdb_readline_no_editing_callback (void *client_data);
@@ -142,4 +166,4 @@ class scoped_segv_handler_restore
   segv_handler_t m_old_handler;
 };
 
-#endif
+#endif /* GDB_EVENT_TOP_H */

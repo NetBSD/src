@@ -177,13 +177,35 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        <b>-n</b> (ignored)
               Backwards compatibility.
 
-       <b>-oA</b><i>alias</i><b>_</b><i>database</i>
-              Non-default alias database. Specify <i>pathname</i>  or  <i>type</i>:<i>pathname</i>.
-              See <a href="postalias.1.html"><b>postalias</b>(1)</a> for details.
+       <b>-O requiretls=yes</b>
+
+       <b>-O requiretls=no</b>
+              When delivering a message to an SMTP or LMTP server, the connec-
+              tion  must  use TLS with a verified server certificate, and that
+              server must support REQUIRETLS. The "requiretls" name and option
+              value are case-insensitive. REQUIRETLS enforcement is controlled
+              with    the    configuration    parameters    <a href="postconf.5.html#requiretls_enable">requiretls_enable</a>,
+              <a href="postconf.5.html#smtp_requiretls_policy">smtp_requiretls_policy</a>, and <a href="postconf.5.html#lmtp_requiretls_policy">lmtp_requiretls_policy</a>.
+
+              This feature is available in Postfix 3.11 and later.
+
+       <b>-O smtputf8=yes</b>
+
+       <b>-O smtputf8=no</b>
+              When  delivering  a  message  to  an SMTP or LMTP server, and an
+              envelope address or message  header  contains  UTF8  text,  that
+              server  must  support  SMTPUTF8.  The "smtputf8" option name and
+              value are case-insensitive.
+
+              This feature is available in Postfix 3.11 and later.
 
        <b>-O</b> <i>option=value</i> (ignored)
-              Set  the named <i>option</i> to <i>value</i>. Use the equivalent configuration
+              Set the named <i>option</i> to <i>value</i>. Use the equivalent  configuration
               parameter in <a href="postconf.5.html"><b>main.cf</b></a> instead.
+
+       <b>-oA</b><i>alias</i><b>_</b><i>database</i>
+              Non-default  alias  database. Specify <i>pathname</i> or <i>type</i>:<i>pathname</i>.
+              See <a href="postalias.1.html"><b>postalias</b>(1)</a> for details.
 
        <b>-o7</b> (ignored)
 
@@ -483,6 +505,12 @@ SENDMAIL(1)                                                        SENDMAIL(1)
               the  default  Postfix  instance,  and that are started, stopped,
               etc., together with the default Postfix instance.
 
+       Postfix 3.11 and later:
+
+       <b><a href="postconf.5.html#requiretls_enable">requiretls_enable</a> (yes)</b>
+              Enable support for the ESMTP  verb  "REQUIRETLS"  in  the  "MAIL
+              FROM" command.
+
 <b><a name="files">FILES</a></b>
        /var/spool/postfix, mail queue
        /etc/postfix, configuration files
@@ -501,7 +529,7 @@ SENDMAIL(1)                                                        SENDMAIL(1)
        syslogd(8), system logging
 
 <b><a name="readme_files">README_FILES</a></b>
-       Use "<b>postconf <a href="postconf.5.html#readme_directory">readme_directory</a></b>" or "<b>postconf <a href="postconf.5.html#html_directory">html_directory</a></b>" to  locate
+       Use  "<b>postconf <a href="postconf.5.html#readme_directory">readme_directory</a></b>" or "<b>postconf <a href="postconf.5.html#html_directory">html_directory</a></b>" to locate
        this information.
        <a href="DEBUG_README.html">DEBUG_README</a>, Postfix debugging howto
        <a href="ETRN_README.html">ETRN_README</a>, Postfix ETRN howto

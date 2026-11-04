@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,11 +18,10 @@
 
 load_lib gdb-python.exp
 
+require allow_python_tests
+
 # Start with a fresh gdb.
 clean_restart
-
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
 
 proc py_param_test_maybe_no_output { command pattern args } {
     if [string length $pattern] {
@@ -77,7 +76,8 @@ proc_with_prefix test_data_directory { } {
     set rel_path_to_output_dir \
 	[file join "." [string replace ${abs_path_to_output_dir} 0 \
 			    [string length ${abs_path_to_cwd}] ""]]
-    gdb_test_no_output "set data-directory ${rel_path_to_output_dir}"
+    gdb_test_no_output "set data-directory ${rel_path_to_output_dir}" \
+	"set data-directory to relative path"
 
     gdb_test "python print (gdb.parameter ('data-directory'))" \
 	${abs_path_to_output_dir} \
@@ -338,10 +338,11 @@ proc_with_prefix test_gdb_parameter { } {
 	"listsize"
 	"print elements"
 	"max-completions"
+	"print characters"
     } {
 	clean_restart
 
-	set param_range_error ".*gdb.error: integer -1 out of range.*"
+	set param_range_error ".*gdb.error.*: integer -1 out of range.*"
 	switch -- $param {
 	    "listsize" {
 		set param_get_zero None
@@ -350,7 +351,8 @@ proc_with_prefix test_gdb_parameter { } {
 		set param_get_unlimited None
 		set param_set_minus_one ""
 	    }
-	    "print elements" {
+	    "print elements" -
+	    "print characters" {
 		set param_get_zero None
 		set param_get_minus_one None
 		set param_get_none None
@@ -399,6 +401,15 @@ proc_with_prefix test_gdb_parameter { } {
 
 	gdb_test "python print(gdb.parameter('$param'))" \
 	    $param_get_unlimited "test value of 'unlimited'"
+
+	if {$param == "print characters"} {
+	    gdb_test_no_output \
+		"python gdb.set_parameter('$param', 'elements')" \
+		"test set to 'elements'"
+
+	    gdb_test "python print(gdb.parameter('$param'))" \
+		elements "test value of 'elements'"
+	}
     }
 
     clean_restart
@@ -427,14 +438,15 @@ proc_with_prefix test_integer_parameter { } {
 	    "test_param_$kind = TestNodocParam ('test-$kind')" "" \
 	    "end"
 
-	set param_range_error "RuntimeError: Range exceeded.*"
-	set param_integer_error "RuntimeError: The value must be integer.*"
+	set param_range_error "RuntimeError.*: Range exceeded.*"
+	set param_integer_error "RuntimeError.*: The value must be integer.*"
 	switch -- $kind {
 	    PARAM_UINTEGER {
 		set param_get_zero None
 		set param_get_minus_one None
 		set param_get_minus_five 1
 		set param_get_none None
+		set param_get_unlimited None
 		set param_set_minus_one $param_range_error
 		set param_set_minus_five $param_range_error
 		set param_set_none ""
@@ -444,6 +456,7 @@ proc_with_prefix test_integer_parameter { } {
 		set param_get_minus_one -1
 		set param_get_minus_five -5
 		set param_get_none None
+		set param_get_unlimited None
 		set param_set_minus_one -1
 		set param_set_minus_five -5
 		set param_set_none ""
@@ -453,6 +466,7 @@ proc_with_prefix test_integer_parameter { } {
 		set param_get_minus_one -1
 		set param_get_minus_five -5
 		set param_get_none 5
+		set param_get_unlimited 0
 		set param_set_minus_one ""
 		set param_set_minus_five ""
 		set param_set_none $param_integer_error
@@ -462,6 +476,7 @@ proc_with_prefix test_integer_parameter { } {
 		set param_get_minus_one 0
 		set param_get_minus_five 1
 		set param_get_none 5
+		set param_get_unlimited 0
 		set param_set_minus_one $param_range_error
 		set param_set_minus_five $param_range_error
 		set param_set_none $param_integer_error
@@ -471,6 +486,7 @@ proc_with_prefix test_integer_parameter { } {
 		set param_get_minus_one -1
 		set param_get_minus_five 1
 		set param_get_none -1
+		set param_get_unlimited -1
 		set param_set_minus_one ""
 		set param_set_minus_five $param_range_error
 		set param_set_none ""
@@ -527,6 +543,16 @@ proc_with_prefix test_integer_parameter { } {
 
 	gdb_test "python print(gdb.parameter('test-$kind'))" \
 	    $param_get_zero "test value of 0 via gdb.parameter"
+
+	py_param_test_maybe_no_output \
+	    "python test_param_$kind.value = 'unlimited'" \
+	    $param_set_none "test set to 'unlimited'"
+
+	gdb_test "python print(test_param_$kind.value)" \
+	    $param_get_unlimited "test value of 'unlimited'"
+
+	gdb_test "python print(gdb.parameter('test-$kind'))" \
+	    $param_get_unlimited "test value of 'unlimited' via gdb.parameter"
     }
 }
 
@@ -562,6 +588,37 @@ proc_with_prefix test_language {} {
     gdb_test_no_output "set lang auto"
 }
 
+proc_with_prefix test_ambiguous_parameter {} {
+    gdb_test_multiline "create parameter" \
+	"python" "" \
+	"class TestAmbiguousParam (gdb.Parameter):" "" \
+	"   def __init__ (self, name, value):" "" \
+	"      super (TestAmbiguousParam, self).__init__ (name, gdb.COMMAND_DATA, gdb.PARAM_INTEGER)" "" \
+	"      self.value = value" "" \
+	"end"
+
+    # Create parameters.
+    gdb_test "python TestAmbiguousParam('test-ambiguous-value-1', 1)" ""
+    gdb_test "python TestAmbiguousParam('test-ambiguous-value-2-extra', 2)" ""
+    gdb_test "python TestAmbiguousParam('test-ambiguous', 3)" ""
+
+    # Test unambiguous matches.
+    gdb_test "python print(gdb.parameter('test-ambiguous-value-1'))" "1"
+    gdb_test "python print(gdb.parameter('test-ambiguous-value-2-extra'))" "2"
+    gdb_test "python print(gdb.parameter('test-ambiguous-value-2'))" "2"
+    gdb_test "python print(gdb.parameter('test-ambiguous'))" "3"
+
+    # Test ambiguous names.
+    gdb_test "python print(gdb.parameter('test-ambiguou'))" \
+	"Parameter .* is ambiguous.*Error occurred in Python.*"
+    gdb_test "python print(gdb.parameter('test-ambiguous-'))" \
+	"Parameter .* is ambiguous.*Error occurred in Python.*"
+    gdb_test "python print(gdb.parameter('test-ambiguous-v'))" \
+	"Parameter .* is ambiguous.*Error occurred in Python.*"
+    gdb_test "python print(gdb.parameter('test-ambiguous-value-1a'))" \
+	"Could not find parameter.*Error occurred in Python.*"
+}
+
 test_directories
 test_data_directory
 test_boolean_parameter
@@ -574,5 +631,6 @@ test_gdb_parameter
 test_integer_parameter
 test_throwing_parameter
 test_language
+test_ambiguous_parameter
 
 rename py_param_test_maybe_no_output ""

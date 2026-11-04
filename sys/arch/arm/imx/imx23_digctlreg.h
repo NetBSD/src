@@ -1,4 +1,4 @@
-/* $Id: imx23_digctlreg.h,v 1.2 2013/10/07 17:36:40 matt Exp $ */
+/* $NetBSD: imx23_digctlreg.h,v 1.2.66.1 2026/11/04 23:20:10 perseant Exp $ */
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.

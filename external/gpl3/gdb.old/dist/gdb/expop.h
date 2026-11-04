@@ -1,6 +1,6 @@
 /* Definitions for expressions in GDB
 
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,13 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef EXPOP_H
-#define EXPOP_H
+#ifndef GDB_EXPOP_H
+#define GDB_EXPOP_H
 
-#include "block.h"
 #include "c-lang.h"
 #include "cp-abi.h"
 #include "expression.h"
+#include "language.h"
 #include "objfiles.h"
 #include "gdbsupport/traits.h"
 #include "gdbsupport/enum-flags.h"
@@ -64,11 +64,6 @@ extern struct value *eval_op_func_static_var (struct type *expect_type,
 extern struct value *eval_op_register (struct type *expect_type,
 				       struct expression *exp,
 				       enum noside noside, const char *name);
-extern struct value *eval_op_ternop (struct type *expect_type,
-				     struct expression *exp,
-				     enum noside noside,
-				     struct value *array, struct value *low,
-				     struct value *upper);
 extern struct value *eval_op_structop_struct (struct type *expect_type,
 					      struct expression *exp,
 					      enum noside noside,
@@ -177,9 +172,6 @@ extern struct value *eval_op_ind (struct type *expect_type,
 				  struct expression *exp,
 				  enum noside noside,
 				  struct value *arg1);
-extern struct value *eval_op_type (struct type *expect_type,
-				   struct expression *exp,
-				   enum noside noside, struct type *type);
 extern struct value *eval_op_alignof (struct type *expect_type,
 				      struct expression *exp,
 				      enum noside noside,
@@ -228,11 +220,8 @@ check_objfile (struct symbol *sym, struct objfile *objfile)
   return check_objfile (sym->objfile (), objfile);
 }
 
-static inline bool
-check_objfile (const struct block *block, struct objfile *objfile)
-{
-  return check_objfile (block_objfile (block), objfile);
-}
+extern bool check_objfile (const struct block *block,
+			   struct objfile *objfile);
 
 static inline bool
 check_objfile (const block_symbol &sym, struct objfile *objfile)
@@ -277,6 +266,12 @@ check_objfile (ULONGEST val, struct objfile *objfile)
   return false;
 }
 
+static inline bool
+check_objfile (const gdb_mpz &val, struct objfile *objfile)
+{
+  return false;
+}
+
 template<typename T>
 static inline bool
 check_objfile (enum_flags<T> val, struct objfile *objfile)
@@ -311,7 +306,10 @@ static inline void
 dump_for_expression (struct ui_file *stream, int depth,
 		     const operation_up &op)
 {
-  op->dump (stream, depth);
+  if (op == nullptr)
+    gdb_printf (stream, _("%*snullptr\n"), depth, "");
+  else
+    op->dump (stream, depth);
 }
 
 extern void dump_for_expression (struct ui_file *stream, int depth,
@@ -322,6 +320,8 @@ extern void dump_for_expression (struct ui_file *stream, int depth,
 				 struct type *type);
 extern void dump_for_expression (struct ui_file *stream, int depth,
 				 CORE_ADDR addr);
+extern void dump_for_expression (struct ui_file *stream, int depth,
+				 const gdb_mpz &addr);
 extern void dump_for_expression (struct ui_file *stream, int depth,
 				 internalvar *ivar);
 extern void dump_for_expression (struct ui_file *stream, int depth,
@@ -467,6 +467,12 @@ check_constant (const std::string &str)
 
 static inline bool
 check_constant (ULONGEST cst)
+{
+  return true;
+}
+
+static inline bool
+check_constant (const gdb_mpz &cst)
 {
   return true;
 }
@@ -668,18 +674,21 @@ protected:
 };
 
 class long_const_operation
-  : public tuple_holding_operation<struct type *, LONGEST>
+  : public tuple_holding_operation<struct type *, gdb_mpz>
 {
 public:
 
   using tuple_holding_operation::tuple_holding_operation;
 
+  long_const_operation (struct type *type, LONGEST val)
+    : long_const_operation (type, gdb_mpz (val))
+  { }
+
   value *evaluate (struct type *expect_type,
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    return value_from_longest (std::get<0> (m_storage),
-			       std::get<1> (m_storage));
+    return value_from_mpz (std::get<0> (m_storage), std::get<1> (m_storage));
   }
 
   enum exp_opcode opcode () const override
@@ -689,6 +698,9 @@ public:
   { return true; }
 
 protected:
+
+  LONGEST as_longest () const
+  { return std::get<1> (m_storage).as_integer_truncate<LONGEST> (); }
 
   void do_generate_ax (struct expression *exp,
 		       struct agent_expr *ax,
@@ -919,16 +931,7 @@ public:
 
   value *evaluate (struct type *expect_type,
 		   struct expression *exp,
-		   enum noside noside) override
-  {
-    struct value *array
-      = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
-    struct value *low
-      = std::get<1> (m_storage)->evaluate (nullptr, exp, noside);
-    struct value *upper
-      = std::get<2> (m_storage)->evaluate (nullptr, exp, noside);
-    return eval_op_ternop (expect_type, exp, noside, array, low, upper);
-  }
+		   enum noside noside) override;
 
   enum exp_opcode opcode () const override
   { return TERNOP_SLICE; }
@@ -1333,7 +1336,7 @@ public:
     value *lhs
       = std::get<0> (this->m_storage)->evaluate (nullptr, exp, noside);
     value *rhs
-      = std::get<1> (this->m_storage)->evaluate (value_type (lhs), exp,
+      = std::get<1> (this->m_storage)->evaluate (lhs->type (), exp,
 						 noside);
     return FUNC (expect_type, exp, noside, OP, lhs, rhs);
   }
@@ -1507,9 +1510,8 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    if (expect_type != nullptr && expect_type->code () == TYPE_CODE_PTR)
-      expect_type = check_typedef (expect_type)->target_type ();
-    value *val = std::get<0> (m_storage)->evaluate (expect_type, exp, noside);
+    value *val
+      = std::get<0> (m_storage)->evaluate (nullptr, exp, noside);
     return eval_op_ind (expect_type, exp, noside, val);
   }
 
@@ -1555,15 +1557,15 @@ public:
 
   value *evaluate (struct type *expect_type,
 		   struct expression *exp,
-		   enum noside noside) override
-  {
-    return eval_op_type (expect_type, exp, noside, std::get<0> (m_storage));
-  }
+		   enum noside noside) override;
 
   enum exp_opcode opcode () const override
   { return OP_TYPE; }
 
   bool constant_p () const override
+  { return true; }
+
+  bool type_p () const override
   { return true; }
 };
 
@@ -1588,6 +1590,9 @@ public:
 
   enum exp_opcode opcode () const override
   { return OP_TYPEOF; }
+
+  bool type_p () const override
+  { return true; }
 };
 
 /* Implement 'decltype'.  */
@@ -1616,12 +1621,12 @@ public:
 	    || sub_op == STRUCTOP_PTR
 	    || sub_op == OP_SCOPE)
 	  {
-	    struct type *type = value_type (result);
+	    struct type *type = result->type ();
 
 	    if (!TYPE_IS_REFERENCE (type))
 	      {
 		type = lookup_lvalue_reference_type (type);
-		result = allocate_value (type);
+		result = value::allocate (type);
 	      }
 	  }
 
@@ -1633,6 +1638,9 @@ public:
 
   enum exp_opcode opcode () const override
   { return OP_DECLTYPE; }
+
+  bool type_p () const override
+  { return true; }
 };
 
 /* Implement 'typeid'.  */
@@ -1647,16 +1655,15 @@ public:
 		   struct expression *exp,
 		   enum noside noside) override
   {
-    enum exp_opcode sub_op = std::get<0> (m_storage)->opcode ();
     enum noside sub_noside
-      = ((sub_op == OP_TYPE || sub_op == OP_DECLTYPE || sub_op == OP_TYPEOF)
+      = (std::get<0> (m_storage)->type_p ()
 	 ? EVAL_AVOID_SIDE_EFFECTS
 	 : noside);
 
     value *result = std::get<0> (m_storage)->evaluate (nullptr, exp,
 						       sub_noside);
     if (noside != EVAL_NORMAL)
-      return allocate_value (cplus_typeid_type (exp->gdbarch));
+      return value::allocate (cplus_typeid_type (exp->gdbarch));
     return cplus_typeid (result);
   }
 
@@ -1807,7 +1814,7 @@ public:
     value *typeval
       = std::get<0> (m_storage)->evaluate (expect_type, exp,
 					   EVAL_AVOID_SIDE_EFFECTS);
-    struct type *type = value_type (typeval);
+    struct type *type = typeval->type ();
     value *val = std::get<1> (m_storage)->evaluate (expect_type, exp, noside);
     return eval_op_memval (expect_type, exp, noside, val, type);
   }
@@ -1892,9 +1899,9 @@ public:
        expected type.  This avoids a weird case where re-assigning a
        string or array to an internal variable could error with "Too
        many array elements".  */
-    struct type *xtype = (VALUE_LVAL (lhs) == lval_internalvar
+    struct type *xtype = (lhs->lval () == lval_internalvar
 			  ? nullptr
-			  : value_type (lhs));
+			  : lhs->type ());
     value *rhs = std::get<1> (m_storage)->evaluate (xtype, exp, noside);
 
     if (noside == EVAL_AVOID_SIDE_EFFECTS)
@@ -2033,7 +2040,7 @@ public:
   {
     value *val = std::get<0> (m_storage)->evaluate (nullptr, exp,
 						    EVAL_AVOID_SIDE_EFFECTS);
-    return std::get<1> (m_storage)->evaluate_for_cast (value_type (val),
+    return std::get<1> (m_storage)->evaluate_for_cast (val->type (),
 						       exp, noside);
   }
 
@@ -2067,7 +2074,7 @@ public:
   {
     value *val = std::get<0> (m_storage)->evaluate (nullptr, exp,
 						    EVAL_AVOID_SIDE_EFFECTS);
-    struct type *type = value_type (val);
+    struct type *type = val->type ();
     value *rhs = std::get<1> (m_storage)->evaluate (type, exp, noside);
     return FUNC (type, rhs);
   }
@@ -2209,4 +2216,4 @@ public:
 
 } /* namespace expr */
 
-#endif /* EXPOP_H */
+#endif /* GDB_EXPOP_H */

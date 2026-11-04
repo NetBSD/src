@@ -1,4 +1,4 @@
-/* $NetBSD: qcompas.c,v 1.1.4.2 2025/08/02 05:56:33 perseant Exp $ */
+/* $NetBSD: qcompas.c,v 1.1.4.3 2026/11/04 23:21:47 perseant Exp $ */
 /*	$OpenBSD: qcpas.c,v 1.8 2024/11/08 21:13:34 landry Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>
@@ -24,6 +24,8 @@
 #include <sys/condvar.h>
 #include <sys/callout.h>
 #include <sys/exec_elf.h>
+
+#include <uvm/uvm_extern.h>
 
 #include <dev/firmload.h>
 #include <dev/sysmon/sysmonvar.h>

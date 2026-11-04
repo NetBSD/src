@@ -1,9 +1,7 @@
-#	$NetBSD: files.x68k,v 1.84.2.1 2025/08/02 05:56:15 perseant Exp $
+#	$NetBSD: files.x68k,v 1.84.2.2 2026/11/04 23:21:30 perseant Exp $
 #
 # new style config file for x68k architecture
 #
-
-defflag				M060SP
 
 defflag				JUPITER
 defflag				PANICBUTTON
@@ -28,30 +26,15 @@ file	arch/x68k/x68k/autoconf.c
 file	arch/x68k/x68k/conf.c
 file	arch/x68k/x68k/disksubr.c	disk
 file	arch/x68k/x68k/machdep.c
-file	arch/x68k/x68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file	arch/x68k/x68k/trap.c
+file	arch/x68k/x68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/x68k/x68k/bus.c
-file	arch/m68k/m68k/cacheops.c
-file	arch/m68k/m68k/db_memrw.c	ddb
-file	arch/m68k/m68k/fpu.c		compile-with "${M68K_KERN_FPU}"
-file	arch/m68k/m68k/m68k_trap.c
-file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
-file	arch/m68k/m68k/procfs_machdep.c	procfs
-file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vm_machdep.c
+file	arch/m68k/m68k/delay.s
+file	arch/m68k/m68k/dumpsys.c
 
 file	dev/bus_dma/bus_dmamem_common.c
 
 file	dev/cons.c
 file	dev/cninit.c
-
-# Emulation modules
-# 6888x emulator (FPU_EMULATE)
-include "arch/m68k/fpe/files.fpe"
-
-# 68060 software support package
-include "arch/m68k/060sp/files.060sp"
 
 # graphic devices
 define	grfb { addr = -1 }
@@ -189,21 +172,6 @@ file	arch/x68k/dev/bmd.c		bmd needs-flag
 
 # memory disk
 file	dev/md_root.c			memory_disk_hooks
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include	"compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c	compat_linux
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 # USB support
 include "dev/usb/files.usb"

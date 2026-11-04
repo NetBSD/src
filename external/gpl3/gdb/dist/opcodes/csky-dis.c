@@ -1,5 +1,5 @@
 /* C-SKY disassembler.
-   Copyright (C) 1988-2024 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of the GNU opcodes library.
@@ -281,6 +281,7 @@ parse_csky_dis_options (const char *opts_in)
 	fprintf (stderr,
 		 "unrecognized disassembler option: %s", opt);
     }
+  free (opts);
 }
 
 /* Get general register name.  */

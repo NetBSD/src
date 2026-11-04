@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.88.8.1 2025/08/02 05:55:43 perseant Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.88.8.2 2026/11/04 23:20:44 perseant Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88.8.1 2025/08/02 05:55:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.88.8.2 2026/11/04 23:20:44 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -155,9 +155,9 @@ db_suspend_others(void)
 #ifdef XENPV
 		xen_broadcast_ipi(XEN_IPI_DDB);
 #else
-#if NLAPIC > 0		
+#if NLAPIC > 0
 		x86_ipi(ddb_vec, LAPIC_DEST_ALLEXCL, LAPIC_DLMODE_FIXED);
-#endif		
+#endif
 #endif /* XENPV */
 	}
 	ddb_mp_online = x86_mp_online;
@@ -377,6 +377,10 @@ ddb_suspend(struct trapframe *frame)
 
 extern void cpu_debug_dump(void); /* XXX */
 
+/*
+ * XXX sync with sys/arch/amd64/amd64/db_interface.c
+ * XXX sync with usr.sbin/crash/arch/x86.c
+ */
 void
 db_mach_cpu(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
 {

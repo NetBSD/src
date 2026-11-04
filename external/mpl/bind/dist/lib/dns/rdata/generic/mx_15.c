@@ -1,4 +1,4 @@
-/*	$NetBSD: mx_15.c,v 1.8.2.1 2025/08/02 05:53:44 perseant Exp $	*/
+/*	$NetBSD: mx_15.c,v 1.8.2.2 2026/11/04 23:18:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -233,9 +233,7 @@ tostruct_mx(ARGS_TOSTRUCT) {
 	REQUIRE(mx != NULL);
 	REQUIRE(rdata->length != 0);
 
-	mx->common.rdclass = rdata->rdclass;
-	mx->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&mx->common, link);
+	DNS_RDATACOMMON_INIT(mx, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

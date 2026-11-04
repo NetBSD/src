@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,9 +23,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0
-}
+require dwarf2_support
 
 # Choose suitable integer registers for the test.
 
@@ -49,11 +47,17 @@ if { [is_aarch64_target] } {
 
 standard_testfile symbol_needs_eval.c ${gdb_test_file_name}-dw.S
 
+if [prepare_for_testing "failed to prepare" $testfile $srcfile {debug}] {
+    return
+}
+
+set int_size [get_sizeof "int" -1]
+
 # Make some DWARF for the test.
 
 set asm_file [standard_output_file $srcfile2]
 Dwarf::assemble $asm_file {
-    global dwarf_regnum regname
+    global dwarf_regnum regname int_size
 
     set exec_mask_var [gdb_target_symbol exec_mask]
 
@@ -68,7 +72,7 @@ Dwarf::assemble $asm_file {
 	    int_type_label: DW_TAG_base_type {
 		{DW_AT_name "int"}
 		{DW_AT_encoding @DW_ATE_signed}
-		{DW_AT_byte_size 4 DW_FORM_sdata}
+		{DW_AT_byte_size $int_size DW_FORM_sdata}
 	    }
 
 	    # define artificial variable a
@@ -77,7 +81,7 @@ Dwarf::assemble $asm_file {
 		{DW_AT_type :$int_type_label}
 		{DW_AT_location {
 		    DW_OP_addr $exec_mask_var
-		    DW_OP_deref
+		    DW_OP_deref_size $int_size
 
 		    # conditional jump to DW_OP_bregx
 		    DW_OP_bra 4

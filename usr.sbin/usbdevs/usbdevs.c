@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.42 2024/03/24 03:23:19 mrg Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.42.2.1 2026/11/04 23:29:03 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.42 2024/03/24 03:23:19 mrg Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.42.2.1 2026/11/04 23:29:03 perseant Exp $");
 #endif
 
 #include <sys/param.h>
@@ -329,8 +329,8 @@ dumpone(char *name, int f, int addr)
 }
 
 /*
- * Find the highest usb device unit.  Searches recursively
- * thought the device list, tracking highest unit seen.
+ * Find the highest USB device unit.  Searches recursively
+ * through the device list, tracking highest unit seen.
  */
 static int
 get_highest_usb_device_unit(int fd, const char *dev, int depth)
@@ -348,12 +348,12 @@ get_highest_usb_device_unit(int fd, const char *dev, int depth)
 
 	/*
 	 * Look for children that match "usb[0-9]*".  The high 
-	 * bus from this value, regardles
-	 * simply return 1 here, but there's always a chance that
-	 * someone has eg, a USB to PCI bridge, with a USB
+	 * bus from this value, regardless,
+	 * simply returns 1 here, but there's always a chance that
+	 * someone has e.g., a USB to PCI bridge, with a USB
 	 * controller behind PCI.
 	 */
-	if (strncmp(dev, "usb", 3) == 0 && isdigit((int)dev[3])) {
+	if (strncmp(dev, "usb", 3) == 0 && isdigit((unsigned char)dev[3])) {
 		int new_high = atoi(dev+3);
 
 		highbus = MAX(new_high, highbus);

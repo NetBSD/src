@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.179.6.1 2025/08/02 05:57:05 perseant Exp $
+#	$NetBSD: files.usb,v 1.179.6.2 2026/11/04 23:22:35 perseant Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -50,7 +50,6 @@ defflag opt_usb.h	UGENSA_DEBUG: USB_DEBUG
 defflag opt_usb.h	UGEN_DEBUG: USB_DEBUG
 defparam opt_usb.h	UGEN_DEBUG_DEFAULT: UGEN_DEBUG
 defflag opt_usb.h	UHIDEV_DEBUG: USB_DEBUG
-defflag opt_usb.h	UHID_DEBUG: USB_DEBUG
 defflag opt_usb.h	UHMODEM_DEBUG: USB_DEBUG
 defflag opt_usb.h	UHSO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UIPAD_DEBUG: USB_DEBUG
@@ -156,9 +155,8 @@ attach	uhidev at usbifif
 file	dev/usb/uhidev.c		uhidev
 
 # Generic HID devices
-device	uhid: hid
-attach	uhid at uhidbus
-file	dev/usb/uhid.c			uhid			needs-flag
+attach	uhid at uhidbus with uhid_usb
+file	dev/usb/uhid.c			uhid_usb		needs-flag
 
 # Keyboards
 defparam	UKBD_LAYOUT
@@ -227,7 +225,7 @@ device	ustir: irbus, irdasir
 attach	ustir at usbdevif
 file	dev/usb/ustir.c			ustir
 
-# Windows Media Center IR tranceivers
+# Windows Media Center IR transceivers
 device	irmce: irbus
 attach	irmce at usbifif
 file	dev/usb/irmce.c			irmce
@@ -538,7 +536,7 @@ file	dev/usb/if_urndis.c		urndis
 # Realtek RTL8188CU/RTL8192CU
 device	urtwn: ether, ifnet, arp, wlan, firmload
 attach	urtwn at usbdevif
-file	dev/usb/if_urtwn.c              urtwn
+file	dev/usb/if_urtwn.c		urtwn
 
 # Realtek RTL8187/RTL8187B 802.11b/g USB wireless adapter
 device	urtw: ether, ifnet, arp, wlan
@@ -573,8 +571,12 @@ file	dev/usb/ualea.c			ualea
 attach	bwfm at usbdevif with bwfm_usb: firmload
 file	dev/usb/if_bwfm_usb.c		bwfm_usb
 
-# Microchip USB 2.0 to I2C/UART Protocol Converter with GPIO
-device	umcpmio: hid, i2cbus, i2cexec, gpiobus
+# Microchip USB 2.0 to I2C/UART/SPI Protocol Converter with GPIO
+device	umcpmio: hid, spibus, i2cbus, i2cexec, gpiobus
 attach  umcpmio at uhidbus
-file    dev/usb/umcpmio.c		umcpmio			needs-flag
+file	dev/usb/umcpmio.c		umcpmio			needs-flag
+file	dev/usb/umcpmio_transport.c	umcpmio
+file	dev/usb/umcpmio_gpio.c		umcpmio
+file	dev/usb/umcpmio_iic.c		umcpmio
+file	dev/usb/umcpmio_spi.c		umcpmio
 file	dev/usb/umcpmio_subr.c		umcpmio

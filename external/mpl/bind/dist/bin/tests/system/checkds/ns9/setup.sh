@@ -61,6 +61,7 @@ for checkds in explicit yes no; do
   for zn in \
     good.${checkds}.dspublish.ns2 \
     reference.${checkds}.dspublish.ns2 \
+    tls-reference.${checkds}.dspublish.ns2 \
     resolver.${checkds}.dspublish.ns2 \
     not-yet.${checkds}.dspublish.ns5 \
     bad.${checkds}.dspublish.ns6 \

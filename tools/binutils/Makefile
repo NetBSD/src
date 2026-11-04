@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38.2.1 2025/08/02 05:58:22 perseant Exp $
+#	$NetBSD: Makefile,v 1.38.2.2 2026/11/04 23:28:28 perseant Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -15,6 +15,7 @@ BASE_CONFIGURE_ARGS= \
 	--target=${MACHINE_GNU_PLATFORM} \
 	--enable-initfini-array=yes \
 	--enable-default-execstack=no \
+	--with-debuginfod=no \
 	${BRANDING}
 
 CONFIGURE_ARGS=	--disable-nls --disable-werror \
@@ -80,6 +81,35 @@ native-binutils: .native/.configure_done
 		(cd .native/ld && ${MAKE} ldemul-list.h)
 	@touch $@
 
+CLEANFILES+=	PREV_BINUTILS
+
+.if !defined(PREV_BINUTILS)
+.  if exists(PREV_BINUTILS)
+PREV_BINUTILS!=	cat PREV_BINUTILS
+.  else
+PREV_BINUTILS=
+.  endif
+.endif
+
+CLEANFILES+=	PREV_BINUTILS
+
+# Include the local NetBSD BINUTILS version so that bumps to it trigger rebuilds.
+NETBSD_BINUTILS_VERSION_NOSPACE=nb1	# just to keep it the same with gcc
+
+realall realdepend: .MAKE
+.if !empty(PREV_BINUTILS) && "${PREV_BINUTILS}" != "${EXTERNAL_BINUTILS_SUBDIR}-${HAVE_BINUTILS}-${NETBSD_BINUTILS_VERSION_NOSPACE}"
+	@echo "*** WARNING: BINUTILS has changed version?"
+	@echo "*** PREV_BINUTILS '${PREV_BINUTILS}'"
+	@echo "*** NETBSD_BINUTILS_VERSION_NOSPACE '${NETBSD_BINUTILS_VERSION_NOSPACE}'"
+	@echo "***     !=  EXTERNAL_BINUTILS_SUBDIR-HAVE_BINUTILS-NETBSD_BINUTILS_VERSION_NOSPACE:"
+	@echo "***     !=  '${EXTERNAL_BINUTILS_SUBDIR}-${HAVE_BINUTILS}-${NETBSD_BINUTILS_VERSION_NOSPACE}'"
+	@echo "*** Cleaning mis-matched tools/binutils"
+	rm -f PREV_BINUTILS
+	(cd ${.CURDIR} && ${MAKE} cleandir)
+.endif
+	echo ${EXTERNAL_BINUTILS_SUBDIR}-${HAVE_BINUTILS}-${NETBSD_BINUTILS_VERSION_NOSPACE} >PREV_BINUTILS
+
 clean: clean.native
 clean.native:
 	-rm -r -f .native
+

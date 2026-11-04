@@ -75,7 +75,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named2.conf.in ns2/named.conf
+cp ns2/named2.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -113,7 +113,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named3.conf.in ns2/named.conf
+cp ns2/named3.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -151,7 +151,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named4.conf.in ns2/named.conf
+cp ns2/named4.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -191,7 +191,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named5.conf.in ns2/named.conf
+cp ns2/named5.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -232,7 +232,7 @@ fi
 
 n=$((n + 1))
 echo_i "reloading server"
-copy_setports ns2/named6.conf.in ns2/named.conf
+cp ns2/named6.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -270,7 +270,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named7.conf.in ns2/named.conf
+cp ns2/named7.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -308,7 +308,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named8.conf.in ns2/named.conf
+cp ns2/named8.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -346,7 +346,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named9.conf.in ns2/named.conf
+cp ns2/named9.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -384,7 +384,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named10.conf.in ns2/named.conf
+cp ns2/named10.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -422,7 +422,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named11.conf.in ns2/named.conf
+cp ns2/named11.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -431,7 +431,7 @@ n=$((n + 1))
 echo_i "checking Domain database using IPv4 ($n)"
 ret=0
 lret=0
-for i in 1 2 3 4 5 6 7; do
+for i in 1 2 3 4 5 6 7 8; do
   $DIG $DIGOPTS txt example -b 10.53.0.$i >dig.out.ns2.test$n.$i || lret=1
   j=$(cat dig.out.ns2.test$n.$i | tr -d '"')
   [ "$i" = "$j" ] || lret=1
@@ -446,7 +446,7 @@ if testsock6 fd92:7065:b8e:ffff::3; then
   echo_i "checking Domain database using IPv6 ($n)"
   ret=0
   lret=0
-  for i in 1 2 3 4 5 6 7; do
+  for i in 1 2 3 4 5 6 7 8; do
     $DIG $DIGOPTS6 txt example -b fd92:7065:b8e:ffff::$i >dig.out.ns2.test$n.$i || lret=1
     j=$(cat dig.out.ns2.test$n.$i | tr -d '"')
     [ "$i" = "$j" ] || lret=1
@@ -460,7 +460,7 @@ else
 fi
 
 echo_i "reloading server"
-copy_setports ns2/named12.conf.in ns2/named.conf
+cp ns2/named12.conf ns2/named.conf
 $CHECKCONF ns2/named.conf | cat_i
 rndc_reload ns2 10.53.0.2
 sleep 3
@@ -469,6 +469,20 @@ n=$((n + 1))
 echo_i "checking geoip blackhole ACL ($n)"
 ret=0
 $DIG $DIGOPTS txt example -b 10.53.0.7 >dig.out.ns2.test$n || ret=1
+$RNDCCMD 10.53.0.2 status 2>&1 >rndc.out.ns2.test$n || ret=1
+[ $ret -eq 0 ] || echo_i "failed"
+status=$((status + ret))
+
+echo_i "reloading server"
+cp ns2/named13.conf ns2/named.conf
+$CHECKCONF ns2/named.conf | grep -v "'sortlist' is deprecated" | cat_i
+rndc_reload ns2 10.53.0.2
+sleep 3
+
+n=$((n + 1))
+echo_i "checking geoip single-element sortlist ($n)"
+ret=0
+$DIG $DIGOPTS -b 10.53.0.2 txt example >dig.out.ns2.test$n || ret=1
 $RNDCCMD 10.53.0.2 status 2>&1 >rndc.out.ns2.test$n || ret=1
 [ $ret -eq 0 ] || echo_i "failed"
 status=$((status + ret))

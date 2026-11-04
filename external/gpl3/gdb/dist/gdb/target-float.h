@@ -1,6 +1,6 @@
 /* Floating point definitions for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TARGET_FLOAT_H
-#define TARGET_FLOAT_H
+#ifndef GDB_TARGET_FLOAT_H
+#define GDB_TARGET_FLOAT_H
 
 #include "expression.h"
 
@@ -58,4 +58,4 @@ extern void target_float_binop (enum exp_opcode opcode,
 extern int target_float_compare (const gdb_byte *x, const struct type *type_x,
 				 const gdb_byte *y, const struct type *type_y);
 
-#endif /* TARGET_FLOAT_H */
+#endif /* GDB_TARGET_FLOAT_H */

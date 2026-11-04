@@ -1,4 +1,11 @@
-#	$NetBSD: list,v 1.55 2022/05/16 14:55:56 christos Exp $
+#	$NetBSD: list,v 1.55.4.1 2026/11/04 23:19:35 perseant Exp $
+
+# Touching this file for:
+#
+# 20251220 new -L argument in CRUNCHGEN_FLAGS for libssh
+#
+# Feel free to remove this comment when anything else in the file
+# changes.
 
 SRCDIRS	bin
 
@@ -45,20 +52,15 @@ SRCDIRS	sbin
 PROG	atactl
 PROG	badsect
 PROG	brconfig
-PROG	ccdconfig
 PROG	chown		chgrp
 PROG	clri
 PROG	disklabel
 PROG	dkctl
 PROG	dmesg
 PROG	dump		rdump
-PROG	dump_lfs	rdump_lfs
 PROG	fdisk
 PROG	fsck
-PROG	fsck_ext2fs
 PROG	fsck_ffs
-PROG	fsck_lfs
-PROG	fsck_msdos
 PROG	fsdb
 PROG	fsirand
 PROG	gpt
@@ -70,30 +72,10 @@ PROG	modload
 PROG	modstat
 PROG	modunload
 PROG	mount
-PROG	mount_ados
-PROG	mount_cd9660
-PROG	mount_efs
-PROG	mount_ext2fs
-PROG	mount_fdesc
 PROG	mount_ffs	mount_ufs
-PROG	mount_filecore
-PROG	mount_kernfs
-PROG	mount_lfs
-PROG	mount_msdos
-PROG	mount_nfs
-PROG	mount_ntfs
-PROG	mount_null
-PROG	mount_overlay
-PROG	mount_procfs
-PROG	mount_tmpfs
-PROG	mount_umap
-PROG	mount_union
 PROG	newfs		mount_mfs
-PROG	newfs_lfs
-PROG	newfs_msdos
 PROG	ping
 PROG	pppoectl
-PROG	raidctl
 PROG	rcorder
 PROG	reboot		halt
 PROG	restore		rrestore
@@ -103,14 +85,12 @@ PROG	routed
 PROG	savecore
 PROG	scan_ffs
 PROG	scsictl
-PROG	setkey
 PROG	shutdown
 PROG	slattach
 PROG	swapctl		swapon
 PROG	sysctl
 PROG	ttyflags
 PROG	tunefs
-PROG	umbctl
 PROG	umount
 PROG	wdogctl
 PROG	veriexecctl
@@ -118,6 +98,7 @@ PROG	wsconsctl
 
 SRCDIRS	usr.bin
 
+PROG	atto		natto
 PROG	bzip2		bunzip2 bzcat
 PROG	ftp
 PROG	grep		egrep fgrep zgrep zegrep zfgrep
@@ -140,7 +121,6 @@ SRCDIRS	usr.sbin
 
 PROG	chroot
 PROG	dumpfs
-PROG	dumplfs
 PROG	installboot
 PROG	vnconfig	vndconfig
 
@@ -150,7 +130,5 @@ PROG	tetris
 
 SRCDIRS	libexec
 
-PROG	lfs_cleanerd
-
 LIBS	liboverride.o
-LIBS	-lbz2 -llzma -lcrypt -ledit -lipsec -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop
+LIBS	-lbz2 -llzma -lcrypt -ledit -lkvm -ll -lm -lrmt -lcurses -lterminfo -lutil -lz -levent -lprop -lmenu

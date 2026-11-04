@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.23.2.1 2025/08/02 05:56:04 perseant Exp $ */
+/* $NetBSD: pmap.h,v 1.23.2.2 2026/11/04 23:21:14 perseant Exp $ */
 
 /*
  * Copyright (c) 2014, 2019, 2021 The NetBSD Foundation, Inc.
@@ -79,6 +79,8 @@
 
 #define	KERNEL_PID	0
 
+#define	PMAP_GROWKERNEL
+#define	PMAP_STEAL_MEMORY
 #define	PMAP_HWPAGEWALKER		1
 #define	PMAP_TLB_MAX			1
 #define	PMAP_TLB_ALWAYS_ASIDS		false
@@ -104,6 +106,11 @@
 #endif
 #endif /* __BSD_PTENTRY_T__ */
 
+#define	__HAVE_PMAP_MD
+struct pmap_md {
+	paddr_t md_ppn;
+};
+
 #define	PMAP_NEED_PROCWR
 static inline void
 pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
@@ -111,20 +118,27 @@ pmap_procwr(struct proc *p, vaddr_t va, vsize_t len)
 	__asm __volatile("fence\trw,rw; fence.i" ::: "memory");
 }
 
-#include <uvm/pmap/tlb.h>
+
+void	pmap_md_pdetab_init(struct pmap *);
+void	pmap_md_pdetab_fini(struct pmap *);
+
+struct vm_page *
+	pmap_md_alloc_poolpage(int);
+vaddr_t	pmap_md_map_poolpage(paddr_t, vsize_t);
+void	pmap_md_unmap_poolpage(vaddr_t, vsize_t);
+
+vaddr_t	pmap_md_direct_map_paddr(paddr_t);
+bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
+paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
+
+
+#include <uvm/pmap/pmap.h>
 #include <uvm/pmap/pmap_devmap.h>
 #include <uvm/pmap/pmap_tlb.h>
 #include <uvm/pmap/pmap_synci.h>
-
-#define	PMAP_GROWKERNEL
-#define	PMAP_STEAL_MEMORY
+#include <uvm/pmap/tlb.h>
 
 #ifdef _KERNEL
-
-#define	__HAVE_PMAP_MD
-struct pmap_md {
-	paddr_t md_ppn;
-};
 
 static inline void
 pmap_md_icache_sync_all(void)
@@ -136,23 +150,13 @@ pmap_md_icache_sync_range_index(vaddr_t va, vsize_t size)
 {
 }
 
-struct vm_page *
-	pmap_md_alloc_poolpage(int);
-vaddr_t	pmap_md_map_poolpage(paddr_t, vsize_t);
-void	pmap_md_unmap_poolpage(vaddr_t, vsize_t);
 
-bool	pmap_md_direct_mapped_vaddr_p(vaddr_t);
-paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(vaddr_t);
-vaddr_t	pmap_md_direct_map_paddr(paddr_t);
 void	pmap_md_init(void);
 bool	pmap_md_io_vaddr_p(vaddr_t);
 bool	pmap_md_ok_to_steal_p(const uvm_physseg_t, size_t);
-void	pmap_md_pdetab_init(struct pmap *);
-void	pmap_md_pdetab_fini(struct pmap *);
 void	pmap_md_tlb_info_attach(struct pmap_tlb_info *, struct cpu_info *);
-void	pmap_md_xtab_activate(struct pmap *, struct lwp *);
-void	pmap_md_xtab_deactivate(struct pmap *);
 
+void	pmap_pte_xmae(void);
 void	pmap_bootstrap(vaddr_t, vaddr_t);
 
 vsize_t	pmap_kenter_range(vaddr_t, paddr_t, vsize_t, vm_prot_t, u_int);
@@ -183,6 +187,20 @@ extern vaddr_t pmap_direct_end;
 #ifdef __PMAP_PRIVATE
 
 static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
+}
+
+static inline bool
 pmap_md_tlb_check_entry(void *ctx, vaddr_t va, tlb_asid_t asid, pt_entry_t pte)
 {
 	// TLB not walked and so not called.
@@ -196,7 +214,7 @@ pmap_md_page_syncicache(struct vm_page_md *mdpg, const kcpuset_t *onproc)
 }
 
 /*
- * Virtual Cache Alias helper routines.  Not a problem for RISCV CPUs.
+ * Virtual Cache Alias helper routines.  Not a problem for RISC-V CPUs.
  */
 static inline bool
 pmap_md_vca_add(struct vm_page_md *mdpg, vaddr_t va, pt_entry_t *nptep)
@@ -235,10 +253,38 @@ pmap_md_nptep(pt_entry_t *ptep)
 	return ptep + 1;
 }
 
+static inline void
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pmap, struct lwp *l)
+{
+//	struct cpu_info * const ci = curcpu();
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
+
+	uint64_t satp =
+#ifdef _LP64
+	    __SHIFTIN(SATP_MODE_SV39, SATP_MODE) |
+#else
+	    __SHIFTIN(SATP_MODE_SV32, SATP_MODE) |
+#endif
+	    __SHIFTIN(asid, SATP_ASID) |
+	    __SHIFTIN(pmap->pm_md.md_ppn, SATP_PPN);
+
+	csr_satp_write(satp);
+
+	if (l && !tlbinfo_hasasids_p(ti)) {
+		tlb_invalidate_all();
+	}
+}
+
+static inline void
+pmap_md_asid_deactivate(struct pmap *pmap)
+{
+
+	/* switch to kernel pmap */
+	pmap_md_asid_activate(KERNEL_PID, pmap_kernel(), NULL);
+}
+
 #endif /* __PMAP_PRIVATE */
 #endif /* _KERNEL */
-
-#include <uvm/pmap/pmap.h>
 
 #endif /* !_MODULE */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.60.2.1 2025/08/02 05:56:00 perseant Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.60.2.2 2026/11/04 23:21:08 perseant Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.60.2.1 2025/08/02 05:56:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.60.2.2 2026/11/04 23:21:08 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -603,7 +603,7 @@ pq3etsec_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/*
-	 * Assume firmware has aready set the mac address and fetch it
+	 * Assume firmware has already set the mac address and fetch it
 	 * before we reinit it.
 	 */
 	sc->sc_macstnaddr2 = etsec_read(sc, MACSTNADDR2);
@@ -1338,7 +1338,7 @@ pq3etsec_mapcache_create(
 		     BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &dmc->dmc_maps[i]);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
-			    "failed to creat dma map cache "
+			    "failed to create dma map cache "
 			    "entry %u of %zu: %d\n",
 			    i, maxmaps, error);
 			while (i-- > 0) {

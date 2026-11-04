@@ -1,4 +1,4 @@
-# Copyright 2022-2023 Free Software Foundation, Inc.
+# Copyright 2022-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,10 +21,7 @@
 # again.  The test was expanded to test various combinations of
 # run-control-related actions done with an inferior running in background.
 
-if {[use_gdb_stub]} {
-    unsupported "test requires running"
-    return
-}
+require !use_gdb_stub
 
 standard_testfile
 
@@ -113,6 +110,9 @@ proc do_test { action1 action2 } {
 
 foreach_with_prefix action1 { kill detach add none } {
     foreach_with_prefix action2 { start run attach } {
+	if { $action2 == "attach" && ![can_spawn_for_attach] } {
+	   continue
+	}
 	do_test $action1 $action2
     }
 }

@@ -1,6 +1,6 @@
 /* varobj support for Ada.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -379,16 +379,14 @@ ada_varobj_get_number_of_children (struct value *parent_value,
    whose index is CHILD_INDEX:
 
      - If CHILD_NAME is not NULL, then a copy of the child's name
-       is saved in *CHILD_NAME.  This copy must be deallocated
-       with xfree after use.
+       is saved in *CHILD_NAME.
 
      - If CHILD_VALUE is not NULL, then save the child's value
        in *CHILD_VALUE. Same thing for the child's type with
        CHILD_TYPE if not NULL.
 
      - If CHILD_PATH_EXPR is not NULL, then compute the child's
-       path expression.  The resulting string must be deallocated
-       after use with xfree.
+       path expression.
 
        Computing the child's path expression requires the PARENT_PATH_EXPR
        to be non-NULL.  Otherwise, PARENT_PATH_EXPR may be null if
@@ -612,7 +610,7 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
     {
       std::string index_img = ada_varobj_scalar_image (index_type, real_index);
 
-      /* Enumeration litterals by themselves are potentially ambiguous.
+      /* Enumeration literals by themselves are potentially ambiguous.
 	 For instance, consider the following package spec:
 
 	    package Pck is
@@ -620,10 +618,10 @@ ada_varobj_describe_simple_array_child (struct value *parent_value,
 	       type Blood_Cells is (White, Red);
 	    end Pck;
 
-	 In this case, the litteral "red" for instance, or even
-	 the fully-qualified litteral "pck.red" cannot be resolved
+	 In this case, the literal "red" for instance, or even
+	 the fully-qualified literal "pck.red" cannot be resolved
 	 by itself.  Type qualification is needed to determine which
-	 enumeration litterals should be used.
+	 enumeration literals should be used.
 
 	 The following variable will be used to contain the name
 	 of the array index type when such type qualification is
@@ -805,9 +803,7 @@ ada_varobj_get_type_of_child (struct value *parent_value,
 }
 
 /* Return a string that contains the image of the given VALUE, using
-   the print options OPTS as the options for formatting the result.
-
-   The resulting string must be deallocated after use with xfree.  */
+   the print options OPTS as the options for formatting the result.  */
 
 static std::string
 ada_varobj_get_value_image (struct value *value,
@@ -825,9 +821,7 @@ ada_varobj_get_value_image (struct value *value,
    in the array inside square brackets, but there are situations where
    it's useful to add more info.
 
-   OPTS are the print options used when formatting the result.
-
-   The result should be deallocated after use using xfree.  */
+   OPTS are the print options used when formatting the result.  */
 
 static std::string
 ada_varobj_get_value_of_array_variable (struct value *value,

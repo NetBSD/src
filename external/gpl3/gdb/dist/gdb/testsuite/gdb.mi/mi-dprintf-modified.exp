@@ -1,0 +1,119 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that GDB doesn't emit a 'breakpoint-modified' notification for
+# dprintf breakpoints when the dprintf commands haven't changed.
+#
+# GDB use to emit a 'breakpoint-modified' dprintf breakpoints each
+# time the dprintf_breakpoint::re_set function was called as this
+# would re-cacluate the dprintf command string, even though in most
+# cases the calculated string was no different from the previous
+# value.
+#
+# Then GDB got smarter and could recognise that the string had not
+# changed, and so would skip the 'breakpoint-modified' notification.
+#
+# This test stops at a dlopen() call in the inferior and creates a
+# dprintf breakpoint.  Then we 'next' over the dlopen() which triggers
+# a call to the ::re_set() functions.  We check that there is no
+# 'breakpoint-modified' event emitted for the dprintf breakpoint.
+
+load_lib mi-support.exp
+set MIFLAGS "-i=mi"
+
+standard_testfile .c -lib.c
+
+# Build the library.
+set libname ${testfile}-lib
+set libfile [standard_output_file $libname]
+if { [build_executable "build shlib" $libfile $srcfile2 {debug shlib}] == -1} {
+    return
+}
+
+# Build the executable.
+set opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${libname}\"]
+if { [build_executable "build exec" $binfile $srcfile $opts] == -1} {
+    return
+}
+
+# The line number of the dlopen() call.
+set bp_line [gdb_get_line_number "Break here" $srcfile]
+
+# Start the inferior.
+mi_clean_restart $::testfile
+mi_runto_main
+
+# Place a breakpoint at the dlopen() line.
+mi_create_breakpoint $srcfile:$bp_line "set breakpoint at dlopen call" \
+    -disp keep -func main -file "\[^\r\n\]+/$srcfile" -line $bp_line
+
+# And run to the breakpoint.
+mi_execute_to "exec-continue" "breakpoint-hit" main "" ".*/$srcfile" \
+    $bp_line { "" "disp=\"keep\"" } "run to breakpoint"
+
+# Cleanup breakpoints.
+mi_delete_breakpoints
+
+# Setup a dprintf breakpoint.
+mi_gdb_test "-dprintf-insert --function main \"in main\"" \
+    "\\^done,bkpt={.*}" "dprintf at main"
+
+set bpnum [mi_get_valueof "/d" "\$bpnum" "INVALID" \
+	       "get number for dprintf breakpoint"]
+
+# Use 'next' to step over loading the shared library.
+mi_gdb_test "220-exec-next" ".*" "next over dlopen"
+
+# Now wait for the 'stopped' notification.  While we wait we should
+# see a 'library-loaded' notification for the loading of the shared
+# library.
+#
+# In older versions of GDB we would also see a 'breakpoint-modified'
+# notification for the dprintf breakpoint, but newer versions of GDB
+# are smart enough to not emit this unnecessary notification.
+set bp_re [mi_make_breakpoint -number $bpnum \
+	       -type dprintf -disp keep -enabled y -func main]
+set saw_bp_modified false
+set saw_lib_load false
+set saw_stopped false
+gdb_test_multiple "" "wait for 'next' to complete" {
+    -re "^=library-loaded,id=\[^\r\n\]+\r\n" {
+	set saw_lib_load true
+	exp_continue
+    }
+
+    -re "^=breakpoint-modified,$bp_re\r\n" {
+	set saw_bp_modified true
+	exp_continue
+    }
+
+    -re "^\\*stopped,reason=\"end-stepping-range\",\[^\r\n\]+\r\n" {
+	set saw_stopped true
+	exp_continue
+    }
+
+    -re "^$mi_gdb_prompt$" {
+	gdb_assert { $saw_lib_load } \
+	    "$gdb_test_name, library was loaded"
+	gdb_assert { $saw_stopped } \
+	    "$gdb_test_name, saw stopped message"
+	gdb_assert { !$saw_bp_modified } \
+	    "$gdb_test_name, no breakpoint-modified"
+    }
+
+    -re "^\[^\r\n\]+\r\n" {
+	exp_continue
+    }
+}

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt_uuid.c,v 1.21.2.1 2025/08/02 05:55:06 perseant Exp $	*/
+/*	$NetBSD: gpt_uuid.c,v 1.21.2.2 2026/11/04 23:19:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt_uuid.c,v 1.21.2.1 2025/08/02 05:55:06 perseant Exp $");
+__RCSID("$NetBSD: gpt_uuid.c,v 1.21.2.2 2026/11/04 23:19:39 perseant Exp $");
 #endif
 
 #include <err.h>
@@ -79,6 +79,7 @@ static const struct {
 	{ GPT_ENT_TYPE_LINUX_RAID, "linux-raid", "Linux RAID" },
 	{ GPT_ENT_TYPE_LINUX_SWAP, "linux-swap", "Linux swap" },
 	{ GPT_ENT_TYPE_LINUX_LVM, "linux-lvm", "Linux LVM" },
+	{ GPT_ENT_TYPE_LINUX_XBOOTLDR, "linux-xbootldr", "Linux XBOOTLDR" },
 	{ GPT_ENT_TYPE_MS_BASIC_DATA, "windows", "Windows basic data" },
 	{ GPT_ENT_TYPE_MS_RESERVED, "windows-reserved", "Windows reserved" },
 	{ GPT_ENT_TYPE_MS_RECOVERY, "windows-recovery", "Windows recovery" },
@@ -92,7 +93,8 @@ static const struct {
 	{ GPT_ENT_TYPE_OPENBSD_DATA, "obsd", "OpenBSD data" },
 	{ GPT_ENT_TYPE_VMWARE_VMKCORE, "vmcore", "VMware VMkernel core dump" },
 	{ GPT_ENT_TYPE_VMWARE_VMFS, "vmfs", "VMware VMFS" },
-	{ GPT_ENT_TYPE_VMWARE_RESERVED, "vmresered", "VMware reserved" },
+	{ GPT_ENT_TYPE_VMWARE_RESERVED, "vmreserved", "VMware reserved" },
+	{ GPT_ENT_TYPE_SIFIVE_BBL, "sifive-bbl", "SiFive BBL" },
 };
 
 static void
@@ -142,8 +144,11 @@ gpt_uuid_symbolic(char *buf, size_t bufsiz, const struct dce_uuid *u)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0)
-			return (int)strlcpy(buf, gpt_nv[i].n, bufsiz);
+		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0) {
+			if (gpt_nv[i].n)
+				return (int)strlcpy(buf, gpt_nv[i].n, bufsiz);
+			break;
+		}
 	return -1;
 }
 
@@ -153,8 +158,11 @@ gpt_uuid_descriptive(char *buf, size_t bufsiz, const struct dce_uuid *u)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0)
-			return (int)strlcpy(buf, gpt_nv[i].d, bufsiz);
+		if (memcmp(&gpt_nv[i].u, u, sizeof(*u)) == 0) {
+			if (gpt_nv[i].d)
+				return (int)strlcpy(buf, gpt_nv[i].d, bufsiz);
+			break;
+		}
 	return -1;
 }
 
@@ -213,7 +221,7 @@ gpt_uuid_parse_symbolic(const char *s, struct dce_uuid *u)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		if (strcmp(gpt_nv[i].n, s) == 0) {
+		if (gpt_nv[i].n && strcmp(gpt_nv[i].n, s) == 0) {
 			*u = gpt_nv[i].u;
 			return 0;
 		}
@@ -260,7 +268,9 @@ gpt_uuid_help(const char *prefix)
 	size_t i;
 
 	for (i = 0; i < __arraycount(gpt_nv); i++)
-		printf("%s%18.18s\t%s\n", prefix, gpt_nv[i].n, gpt_nv[i].d);
+		printf("%s%18.18s\t%s\n", prefix,
+		    gpt_nv[i].n ? gpt_nv[i].n : "-",
+		    gpt_nv[i].d ? gpt_nv[i].d : "?");
 }
 
 void
@@ -291,7 +301,7 @@ gpt_uuid_random(gpt_t gpt, struct dce_uuid *u, size_t n)
 			goto out;
 		}
 		if (nread == 0) {
-			gpt_warn(gpt, "EOF from /dev/urandom");
+			gpt_warnx(gpt, "EOF from /dev/urandom");
 			goto out;
 		}
 		if ((size_t)nread > n) {
@@ -340,7 +350,7 @@ gpt_uuid_tstamp(gpt_t gpt, struct dce_uuid *u, size_t l __unused)
 	/* Set UUID fields for version 1 */
 	u->time_low = x & UINT64_C(0xffffffff);
 	u->time_mid = (x >> 32) & 0xffff;
-	u->time_hi_and_version = 0x1000 | ((x >> 48) & 0xfff);
+	u->time_hi_and_version = (unsigned short)(0x1000 | ((x >> 48) & 0xfff));
 
 	/*
 	 * The clock sequence should make UUIDs unique in case

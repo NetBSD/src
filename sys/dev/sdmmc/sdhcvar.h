@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.35.2.1 2025/08/02 05:57:03 perseant Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.35.2.2 2026/11/04 23:22:34 perseant Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -86,6 +86,8 @@ struct sdhc_softc {
 	int (*sc_vendor_transfer_data_dma)(struct sdhc_softc *, struct sdmmc_command *);
 	void (*sc_vendor_hw_reset)(struct sdhc_softc *, struct sdhc_host *);
 	int (*sc_vendor_signal_voltage)(struct sdhc_softc *, int);
+
+	bus_addr_t		sc_dma_align_mask; /* DMA alignment required */
 };
 
 /* Host controller functions called by the attachment driver. */

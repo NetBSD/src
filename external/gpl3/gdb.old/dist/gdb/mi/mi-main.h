@@ -1,6 +1,6 @@
 /* MI Internal Functions for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MI_MI_MAIN_H
-#define MI_MI_MAIN_H
+#ifndef GDB_MI_MI_MAIN_H
+#define GDB_MI_MI_MAIN_H
 
 struct ui_file;
 
@@ -33,11 +33,6 @@ extern void mi_print_timing_maybe (struct ui_file *file);
 /* Whether MI is in async mode.  */
 
 extern int mi_async_p (void);
-
-extern char *current_token;
-
-extern int running_result_record_printed;
-extern int mi_proceeded;
 
 struct mi_suppress_notification
 {
@@ -69,11 +64,19 @@ extern void mi_execute_cli_command (const char *cmd, bool args_p,
 /* Implementation of -fix-multi-location-breakpoint-output.  */
 
 extern void mi_cmd_fix_multi_location_breakpoint_output (const char *command,
-							 char **argv, int argc);
+							 const char *const *argv,
+							 int argc);
 
 /* Implementation of -fix-breakpoint-script-output.  */
 
 extern void mi_cmd_fix_breakpoint_script_output (const char *command,
-						 char **argv, int argc);
+						 const char *const *argv,
+						 int argc);
 
-#endif /* MI_MI_MAIN_H */
+/* Parse a thread-group-id from ID, and return the integer part of the
+   ID.  A valid thread-group-id is the character 'i' followed by an
+   integer that is greater than zero.  */
+
+extern int mi_parse_thread_group_id (const char *id);
+
+#endif /* GDB_MI_MI_MAIN_H */

@@ -1,6 +1,6 @@
 /* Handle different target file systems for GDB, the GNU Debugger.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "filesystem.h"
 #include "gdbarch.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
+#include "inferior.h"
 
 const char file_system_kind_auto[] = "auto";
 const char file_system_kind_unix[] = "unix";
@@ -39,7 +39,7 @@ effective_target_file_system_kind (void)
 {
   if (target_file_system_kind == file_system_kind_auto)
     {
-      if (gdbarch_has_dos_based_file_system (target_gdbarch ()))
+      if (gdbarch_has_dos_based_file_system (current_inferior ()->arch ()))
 	return file_system_kind_dos_based;
       else
 	return file_system_kind_unix;

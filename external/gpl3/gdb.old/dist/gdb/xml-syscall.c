@@ -1,7 +1,7 @@
 /* Functions that provide the mechanism to parse a syscall XML file
    and get its values.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbtypes.h"
 #include "xml-support.h"
 #include "xml-syscall.h"
@@ -314,7 +313,7 @@ syscall_parse_xml (const char *document, xml_fetch_another fetcher)
 static struct syscalls_info *
 xml_init_syscalls_info (const char *filename)
 {
-  gdb::optional<gdb::char_vector> full_file
+  std::optional<gdb::char_vector> full_file
     = xml_fetch_content_from_file (filename,
 				   const_cast<char *>(gdb_datadir.c_str ()));
   if (!full_file)

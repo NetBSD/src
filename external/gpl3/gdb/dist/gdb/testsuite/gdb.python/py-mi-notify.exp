@@ -1,4 +1,4 @@
-# Copyright (C) 2023-2024 Free Software Foundation, Inc.
+# Copyright (C) 2023-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -42,8 +42,11 @@ mi_gdb_test "python gdb.notify_mi('-test-notification', None)" \
     ".*=-test-notification\r\n\\^done" \
     "python notification, no additional data"
 
+set re_data1 {data1="1"}
+set re_data2 {data2="2"}
+set re_data1_data2 ($re_data1,$re_data2|$re_data2,$re_data1)
 mi_gdb_test "python gdb.notify_mi('-test-notification', \{ 'data1' : 1 , 'data2' : 2 })" \
-    ".*=-test-notification,data1=\"1\",data2=\"2\"\r\n\\^done" \
+    ".*=-test-notification,$re_data1_data2\r\n\\^done" \
     "python notification, with additional data"
 
 mi_gdb_test "python gdb.notify_mi('-test-notification', 1)" \

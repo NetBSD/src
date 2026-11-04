@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1313.2.2 2025/08/02 05:56:29 perseant Exp $
+#	$NetBSD: files,v 1.1313.2.3 2026/11/04 23:21:43 perseant Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -177,11 +177,13 @@ defflag				COMPAT_LINUX: COMPAT_NETBSD, COMPAT_43
 defflag				COMPAT_SUNOS: COMPAT_09, COMPAT_43
 defflag				COMPAT_ULTRIX: COMPAT_50
 
-# mips64 and aarch64 have COMPAT_NETBSD32 but cannot have EXEC_AOUT; all
-# other users of COMPAT_NETBSD32 need EXEC_AOUT
+# mips64, aarch64, and riscv64 have COMPAT_NETBSD32 but cannot have
+# EXEC_AOUT; all other users of COMPAT_NETBSD32 need EXEC_AOUT
 ifdef mips
 defflag				COMPAT_NETBSD32
 elifdef aarch64
+defflag				COMPAT_NETBSD32
+elifdef riscv
 defflag				COMPAT_NETBSD32
 else
 defflag				COMPAT_NETBSD32	: EXEC_AOUT
@@ -241,6 +243,13 @@ defparam opt_kernhist.h			KERNHIST_DELAY
 file	kern/kern_history.c		kernhist
 
 #
+# Options for BIOHIST
+#
+defflag	opt_biohist.h			BIOHIST: KERNHIST
+defflag	opt_biohist.h			BIOHIST_PRINT: KERNHIST_PRINT
+defparam opt_biohist.h			BIOHIST_SIZE
+
+#
 # These are here for the benefit of kern_history.c so that
 # UVMHIST can be built in kernels without usb.
 #
@@ -248,13 +257,6 @@ file	kern/kern_history.c		kernhist
 defflag	opt_usb.h			USB_DEBUG: KERNHIST
 defflag	opt_usb.h			USBHIST_PRINT
 defparam opt_usb.h			USBHIST_SIZE
-
-#
-# Options for BIOHIST
-#
-defflag opt_biohist.h           BIOHIST: KERNHIST
-defflag opt_biohist.h           BIOHIST_PRINT: KERNHIST_PRINT
-defparam opt_biohist.h          BIOHIST_SIZE
 
 #
 # System monitoring framework
@@ -300,12 +302,14 @@ defflag	opt_ppp.h		PPP_DEFLATE PPP_BSDCOMP PPP_FILTER
 						# compression, enable pppd
 						# packet filtering support
 defflag opt_pppoe.h		PPPOE_SERVER PPPOE_DEBUG
-defparam opt_pppoe.h		PPPOE_DEQUEUE_MAXLEN
+defparam opt_pppoe.h	PPPOE_DEQUEUE_MAXLEN
+						PPPOE_RETRY_DELAY
 
 defflag opt_sppp.h		SPPP_IFDOWN_RECONNECT
 defparam opt_sppp.h		SPPP_KEEPALIVE_INTERVAL
 				SPPP_NORECV_TIME
 				SPPP_ALIVE_INTERVAL
+defflag				SPPP_FILTER
 
 # networking options
 #
@@ -392,6 +396,16 @@ define	ipmibus		{ }
 define	scmi
 define	smbios
 
+# 8250/16[45]50-based "com" ports
+#
+defflag	opt_com.h		COM_DEBUG
+# XXX In a perfect world, this would be done with attributes
+defflag	opt_com.h		COM_16650 COM_16750
+				COM_HAYESP COM_PXA2X0
+defparam opt_com.h		COM_TOLERANCE
+device	com { } : tty
+file	dev/ic/com.c			com			needs-flag
+
 # speaker devices, attaches to audio or pcppi drivers
 device	spkr: wsbelldev
 file	dev/spkr.c			spkr
@@ -445,7 +459,16 @@ file	dev/ic/scmd.c	scmd
 
 # Bosch BMP280 / BME280 sensor (attaches via I2C or SPI)
 device  bmx280thp
-file	dev/ic/bmx280.c	bmx280thp
+file	dev/ic/bmx280.c			bmx280thp
+
+# NXP SC16IS7xx UART bridge (attaches via I2C or SPI,
+# and provides an attachment for com* and gpio*)
+define	sc16is7xxbus {  }
+device	sc16is7xx: sc16is7xxbus, gpiobus
+file	dev/ic/sc16is7xx.c		sc16is7xx
+
+attach	com at sc16is7xxbus with sc16is7xx_tty
+file	dev/ic/sc16is7xx_tty.c		sc16is7xx_tty
 
 # Generic HID support (used by USB, bluetooth and i2c)
 include "dev/hid/files.hid"
@@ -512,6 +535,10 @@ include "altq/files.altq"
 #
 device	ld: disk
 file	dev/ld.c			ld			needs-flag
+
+# Disk-related attributes
+define	bad144
+file	dev/bad144.c			bad144
 
 #
 # MII/PHY support for network devices
@@ -938,16 +965,6 @@ file	dev/ic/tms320av110.c		tms320av110
 device	ne: ether, ifnet, arp, dp8390nic, mii
 file	dev/ic/ne2000.c			ne
 
-# 8250/16[45]50-based "com" ports
-#
-defflag	opt_com.h		COM_DEBUG
-# XXX In a perfect world, this would be done with attributes
-defflag	opt_com.h		COM_16650 COM_16750
-				COM_HAYESP COM_PXA2X0
-defparam opt_com.h		COM_TOLERANCE
-device	com { } : tty
-file	dev/ic/com.c			com			needs-flag
-
 # PC-like keyboard controller
 #
 device	pckbc: pckbport
@@ -1095,7 +1112,7 @@ file	dev/ic/aic6915.c		sf
 
 # Mostek time-of-day clock and NVRAM
 #
-define	mk48txx
+define	mk48txx: sysmon_envsys
 file	dev/ic/mk48txx.c		mk48txx
 
 # OKI MSM6242B
@@ -1162,7 +1179,8 @@ file	dev/ic/lm700x.c			lm700x
 
 # Philips PCF8584 i2c controller
 define	pcf8584
-file	dev/ic/pcf8584.c		pcf8584
+device	pcfiic: pcf8584, i2cbus
+file	dev/ic/pcf8584.c		pcfiic
 
 # PCA9564 i2c controller
 define	pca9564
@@ -1170,7 +1188,7 @@ file	dev/ic/pca9564.c		pca9564
 
 # Synopsys DesignWare I2C controller
 define	dwiic
-device dwiic: dwiic, i2cbus
+device	dwiic: dwiic, i2cbus
 file	dev/ic/dwiic.c			dwiic
 
 # Cadence I2C controller
@@ -1243,7 +1261,7 @@ define	pcdisplayops
 file	dev/ic/pcdisplay_subr.c	pcdisplayops
 file	dev/ic/pcdisplay_chars.c	pcdisplayops
 # an attribute used by arch specific config files to include /dev/fb* (or
-# equivalent) support - on most archs this is just a NOP (untill, maybe
+# equivalent) support - on most archs this is just a NOP (until, maybe
 # someday when we might make /dev/fb* support MI)
 define	fb
 # VGA graphics

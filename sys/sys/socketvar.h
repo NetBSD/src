@@ -1,4 +1,4 @@
-/*	$NetBSD: socketvar.h,v 1.169.2.1 2025/08/02 05:57:55 perseant Exp $	*/
+/*	$NetBSD: socketvar.h,v 1.169.2.2 2026/11/04 23:28:05 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -196,7 +196,7 @@ struct socket {
 #define	SS_CANTSENDMORE		0x010	/* can't send more data to peer */
 #define	SS_CANTRCVMORE		0x020	/* can't receive more data from peer */
 #define	SS_RCVATMARK		0x040	/* at mark on input */
-#define	SS_ISABORTING		0x080	/* aborting fd references - close() */
+/* unused			0x080 */
 #define	SS_RESTARTSYS		0x100	/* restart blocked system calls */
 #define	SS_POLLRDBAND		0x200	/* poll should return POLLRDBAND */
 #define	SS_MORETOCOME		0x400	/*
@@ -273,7 +273,7 @@ int	sbappendaddr(struct sockbuf *, const struct sockaddr *, struct mbuf *,
 	    struct mbuf *);
 int	sbappendaddrchain(struct sockbuf *, const struct sockaddr *,
 	     struct mbuf *, int);
-int	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
+void	sbappendcontrol(struct sockbuf *, struct mbuf *, struct mbuf *);
 void	sbappendrecord(struct sockbuf *, struct mbuf *);
 void	sbcheck(struct sockbuf *);
 void	sbcompress(struct sockbuf *, struct mbuf *, struct mbuf *);

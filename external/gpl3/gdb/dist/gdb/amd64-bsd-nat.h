@@ -1,6 +1,6 @@
 /* Native-dependent code for modern AMD64 BSD's.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_BSD_NAT_H
-#define AMD64_BSD_NAT_H
+#ifndef GDB_AMD64_BSD_NAT_H
+#define GDB_AMD64_BSD_NAT_H
 
 #include "x86-bsd-nat.h"
 
@@ -41,4 +41,4 @@ public:
   { amd64bsd_store_inferior_registers (regcache, regnum); }
 };
 
-#endif /* i386-bsd-nat.h */
+#endif /* GDB_AMD64_BSD_NAT_H */

@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -35,7 +35,8 @@ if {[gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable \
     return -1
 }
 
-clean_restart ${binfile}
+clean_restart
+gdb_load $binfile
 
 set solib_name [gdb_load_shlib $solib_name]
 
@@ -72,13 +73,18 @@ proc run_info_sources { extra_args args } {
 	set objfile_name ""
 	set source_files {}
 	set files {}
+	# Note below we sanitize paths so we can compare against the
+	# host_file_normalize'd paths later.  Note we sanitize, but
+	# don't normalize here, as the latter would turn a relative
+	# path into an absolute path, and this testcase wants to make
+	# sure that GDB prints the absolute path.
 	gdb_test_multiple $cmd "" {
 	    -re "${command_regex}\r\n" {
 		exp_continue
 	    }
 
 	    -re "^(\[^\r\n\]+):\r\n" {
-		set objfile_name $expect_out(1,string)
+		set objfile_name [host_file_sanitize $expect_out(1,string)]
 		if { $is_remote_target } {
 		    set objfile_name [file tail $objfile_name]
 		}
@@ -101,7 +107,7 @@ proc run_info_sources { extra_args args } {
 	    }
 
 	    -re "^(\[^,\r\n\]+), " {
-		set f $expect_out(1,string)
+		set f [host_file_sanitize $expect_out(1,string)]
 		lappend files $f
 		exp_continue
 	    }
@@ -111,7 +117,7 @@ proc run_info_sources { extra_args args } {
 		    return
 		}
 
-		set f $expect_out(1,string)
+		set f [host_file_sanitize $expect_out(1,string)]
 		lappend files $f
 		set info_sources($objfile_name) $files
 		set $objfile_name ""
@@ -120,7 +126,7 @@ proc run_info_sources { extra_args args } {
 	    }
 	}
 
-	# Now check ARGS agaisnt the values held in INFO_SOURCES map.
+	# Now check ARGS against the values held in INFO_SOURCES map.
 	foreach {objfile sourcefile} $args {
 	    # First, figure out if we're expecting SOURCEFILE to be present,
 	    # or not.
@@ -133,7 +139,7 @@ proc run_info_sources { extra_args args } {
 	    }
 
 	    # Figure out the path for SOURCEFILE that we're looking for.
-	    set sourcepath [file normalize ${srcdir}/${subdir}/${sourcefile}]
+	    set sourcepath [host_file_normalize ${srcdir}/${subdir}/${sourcefile}]
 
 	    if { $is_remote_target } {
 		set objfile [file tail $objfile]
@@ -156,32 +162,34 @@ proc run_info_sources { extra_args args } {
 
 # The actual tests.
 
+set host_binfile [host_file_normalize $binfile$EXEEXT]
+
 run_info_sources "" \
-    ${binfile} ${srcfile} \
-    ${binfile} ${testfile}-header.h \
+    ${host_binfile} ${srcfile} \
+    ${host_binfile} ${testfile}-header.h \
     ${solib_name} ${srcfile2} \
     ${solib_name} ${testfile}-header.h
 
 run_info_sources "-basename info_sources_2" \
-    ${binfile} ${srcfile} \
-    ${binfile} ${testfile}-header.h \
+    ${host_binfile} ${srcfile} \
+    ${host_binfile} ${testfile}-header.h \
     ${solib_name} ${srcfile2} \
     ${solib_name} ${testfile}-header.h
 
 run_info_sources "-basename \\.c" \
-    ${binfile} ${srcfile} \
-    ${binfile} !${testfile}-header.h \
+    ${host_binfile} ${srcfile} \
+    ${host_binfile} !${testfile}-header.h \
     ${solib_name} ${srcfile2} \
     ${solib_name} !${testfile}-header.h
 
 run_info_sources "-basename -- -test\\.c" \
-    ${binfile} ${srcfile} \
-    ${binfile} !${testfile}-header.h \
+    ${host_binfile} ${srcfile} \
+    ${host_binfile} !${testfile}-header.h \
     ${solib_name} !${srcfile2} \
     ${solib_name} !${testfile}-header.h
 
 run_info_sources "-basename -- -lib\\.c" \
-    ${binfile} !${srcfile} \
-    ${binfile} !${testfile}-header.h \
+    ${host_binfile} !${srcfile} \
+    ${host_binfile} !${testfile}-header.h \
     ${solib_name} ${srcfile2} \
     ${solib_name} !${testfile}-header.h

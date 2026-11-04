@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_FORWARD_SCOPE_EXIT_H
-#define COMMON_FORWARD_SCOPE_EXIT_H
+#ifndef GDBSUPPORT_FORWARD_SCOPE_EXIT_H
+#define GDBSUPPORT_FORWARD_SCOPE_EXIT_H
 
 #include "gdbsupport/scope-exit.h"
 #include <functional>
@@ -120,4 +120,4 @@ private:
 #define FORWARD_SCOPE_EXIT(FUNC) \
   detail::forward_scope_exit<decltype (FUNC), FUNC, decltype (FUNC)>
 
-#endif /* COMMON_FORWARD_SCOPE_EXIT_H */
+#endif /* GDBSUPPORT_FORWARD_SCOPE_EXIT_H */

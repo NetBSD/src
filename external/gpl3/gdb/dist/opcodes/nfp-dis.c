@@ -1,5 +1,5 @@
 /* Print NFP instructions for objdump.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
    Contributed by Francois H. Theron <francois.theron@netronome.com>
 
    This file is part of the GNU opcodes library.
@@ -2556,6 +2556,13 @@ init_nfp3200_priv (nfp_priv_data * priv, struct disassemble_info *dinfo)
   if (sec_idx == sec_cnt)
     {
       dinfo->fprintf_func (dinfo->stream, _("File has no ME-Config section."));
+      return false;
+    }
+
+  if (sec->bfd_section == NULL)
+    {
+      /* See PR 31843 for an example of this.  */
+      dinfo->fprintf_func (dinfo->stream, _("The ME-Config section is corrupt."));
       return false;
     }
 

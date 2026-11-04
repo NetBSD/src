@@ -1,6 +1,6 @@
 /* Reverse execution and reverse debugging.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -277,9 +277,7 @@ info_bookmarks_command (const char *args, int from_tty)
     }
 }
 
-void _initialize_reverse ();
-void
-_initialize_reverse ()
+INIT_GDB_FILE (reverse)
 {
   cmd_list_element *reverse_step_cmd
    = add_com ("reverse-step", class_run, reverse_step, _("\

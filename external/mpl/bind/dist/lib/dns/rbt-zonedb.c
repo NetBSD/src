@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt-zonedb.c,v 1.3.4.2 2025/08/02 05:53:29 perseant Exp $	*/
+/*	$NetBSD: rbt-zonedb.c,v 1.3.4.3 2026/11/04 23:18:02 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -46,6 +46,7 @@
 #include <dns/callbacks.h>
 #include <dns/db.h>
 #include <dns/dbiterator.h>
+#include <dns/diff.h>
 #include <dns/fixedname.h>
 #include <dns/log.h>
 #include <dns/masterdump.h>
@@ -64,14 +65,8 @@
 #include <dns/zonekey.h>
 
 #include "db_p.h"
+#include "isc/attributes.h"
 #include "rbtdb_p.h"
-
-#define CHECK(op)                            \
-	do {                                 \
-		result = (op);               \
-		if (result != ISC_R_SUCCESS) \
-			goto failure;        \
-	} while (0)
 
 #define EXISTS(header)                                 \
 	((atomic_load_acquire(&(header)->attributes) & \
@@ -125,6 +120,19 @@ zone_zonecut_callback(dns_rbtnode_t *node, dns_name_t *name,
 	}
 
 	onode = search->rbtdb->origin_node;
+
+	/*
+	 * The database may contain nodes above its origin (out-of-zone
+	 * data loaded from a secondary zone file or a journal).  They are
+	 * not part of the zone and must not act as zone cuts or wildcard
+	 * parents for the names inside it.  The origin itself is the
+	 * usual callback node, so spare it the name comparison.
+	 */
+	if (node != onode &&
+	    !dns_name_issubdomain(name, &search->rbtdb->common.origin))
+	{
+		return result;
+	}
 
 	NODE_RDLOCK(&(search->rbtdb->node_locks[node->locknum].lock),
 		    &nlocktype);
@@ -436,7 +444,7 @@ wildcard_blocked(rbtdb_search_t *search, const dns_name_t *qname,
 	/* Now reset the chain and look for a successor with data. */
 	chain = search->chain;
 	result = dns_rbtnodechain_next(&chain, NULL, NULL);
-	if (result == ISC_R_SUCCESS) {
+	if (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
 		check_next = step(search, &chain, FORWARD, next);
 	}
 
@@ -610,11 +618,12 @@ find_wildcard(rbtdb_search_t *search, dns_rbtnode_t **nodep,
 			}
 		}
 
-		if (active) {
+		if (active || node == rbtdb->origin_node) {
 			/*
-			 * The level node is active.  Any wildcarding
-			 * present at higher levels has no
-			 * effect and we're done.
+			 * The level node is active, or it is the origin
+			 * of the zone.  Any wildcarding present at higher
+			 * levels has no effect (the nodes above the origin
+			 * are not part of the zone) and we're done.
 			 */
 			result = ISC_R_NOTFOUND;
 			break;
@@ -686,6 +695,22 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 	REQUIRE(type == dns_rdatatype_nsec3 || firstp != NULL);
 
 	if (type == dns_rdatatype_nsec3) {
+		dns_rbtnode_t *current = NULL;
+
+		/*
+		 * The NSEC3 nodes of the zone form the subtree of its
+		 * origin node in the NSEC3 tree, and in DNSSEC order the
+		 * origin node comes first: once it has been examined,
+		 * anything before it in the tree is outside the zone.
+		 */
+		result = dns_rbtnodechain_current(&search->chain, NULL, NULL,
+						  &current);
+		if (result == ISC_R_SUCCESS &&
+		    current == search->rbtdb->nsec3_origin_node)
+		{
+			return ISC_R_NOMORE;
+		}
+
 		result = dns_rbtnodechain_prev(&search->chain, NULL, NULL);
 		if (result != ISC_R_SUCCESS && result != DNS_R_NEWORIGIN) {
 			return result;
@@ -761,6 +786,17 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 			return result;
 		}
 
+		/*
+		 * The NSEC tree may contain nodes outside the zone; a
+		 * predecessor that is not below the origin means that the
+		 * walk has left the zone.
+		 */
+		if (!dns_name_issubdomain(target,
+					  &search->rbtdb->common.origin))
+		{
+			return ISC_R_NOMORE;
+		}
+
 		*nodep = NULL;
 		result = dns_rbt_findnode(search->rbtdb->tree, target, NULL,
 					  nodep, &search->chain,
@@ -782,6 +818,39 @@ previous_closest_nsec(dns_rdatatype_t type, rbtdb_search_t *search,
 			return DNS_R_BADDB;
 		}
 	}
+}
+
+/*
+ * Point the search chain at the last node of the zone in 'tree', skipping
+ * any nodes that sort after it (out-of-zone data loaded from a secondary
+ * zone file or a journal).
+ */
+static isc_result_t
+last_in_zone(rbtdb_search_t *search, dns_rbt_t *tree) {
+	dns_fixedname_t fname, forigin, ffull;
+	dns_name_t *name = dns_fixedname_initname(&fname);
+	dns_name_t *origin = dns_fixedname_initname(&forigin);
+	dns_name_t *full = dns_fixedname_initname(&ffull);
+	isc_result_t result;
+
+	result = dns_rbtnodechain_last(&search->chain, tree, NULL, NULL);
+	while (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
+		result = dns_rbtnodechain_current(&search->chain, name, origin,
+						  NULL);
+		if (result != ISC_R_SUCCESS) {
+			break;
+		}
+		result = dns_name_concatenate(name, origin, full, NULL);
+		if (result != ISC_R_SUCCESS) {
+			break;
+		}
+		if (dns_name_issubdomain(full, &search->rbtdb->common.origin)) {
+			return ISC_R_SUCCESS;
+		}
+		result = dns_rbtnodechain_prev(&search->chain, NULL, NULL);
+	}
+
+	return result;
 }
 
 /*
@@ -964,9 +1033,12 @@ again:
 	}
 
 	if (result == ISC_R_NOMORE && wraps) {
-		result = dns_rbtnodechain_last(&search->chain, tree, NULL,
-					       NULL);
-		if (result == ISC_R_SUCCESS || result == DNS_R_NEWORIGIN) {
+		/*
+		 * Start over from the last node of the zone in the NSEC3
+		 * tree, skipping any nodes that sort after it.
+		 */
+		result = last_in_zone(search, tree);
+		if (result == ISC_R_SUCCESS) {
 			wraps = false;
 			goto again;
 		}
@@ -1032,6 +1104,17 @@ zone_find(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 	dns_rbtnodechain_init(&search.chain);
 
 	TREE_RDLOCK(&search.rbtdb->tree_lock, &tlocktype);
+
+	/*
+	 * The database may contain nodes that are not below its origin
+	 * (out-of-zone data loaded from a secondary zone file or a
+	 * journal).  A name that is not below the origin is not in the
+	 * zone, whatever stray nodes exist for it.
+	 */
+	if (!dns_name_issubdomain(name, &search.rbtdb->common.origin)) {
+		result = ISC_R_NOTFOUND;
+		goto tree_exit;
+	}
 
 	/*
 	 * Search down from the root of the tree.  If, while going down, we
@@ -1686,8 +1769,8 @@ done:
 }
 
 static isc_result_t
-loading_addrdataset(void *arg, const dns_name_t *name,
-		    dns_rdataset_t *rdataset DNS__DB_FLARG) {
+loading_addrdataset(void *arg, const dns_name_t *name, dns_rdataset_t *rdataset,
+		    dns_diffop_t op ISC_ATTR_UNUSED DNS__DB_FLARG) {
 	rbtdb_load_t *loadctx = arg;
 	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *)loadctx->db;
 	dns_rbtnode_t *node = NULL;
@@ -1785,8 +1868,8 @@ loading_addrdataset(void *arg, const dns_name_t *name,
 
 	NODE_WRLOCK(&rbtdb->node_locks[node->locknum].lock, &nlocktype);
 	result = dns__rbtdb_add(rbtdb, node, name, rbtdb->current_version,
-				newheader, DNS_DBADD_MERGE, true, NULL,
-				0 DNS__DB_FLARG_PASS);
+				newheader, DNS_DBADD_MERGE, true, NULL, 0,
+				nlocktype DNS__DB_FLARG_PASS);
 	NODE_UNLOCK(&rbtdb->node_locks[node->locknum].lock, &nlocktype);
 
 	if (result == ISC_R_SUCCESS &&
@@ -1821,7 +1904,7 @@ beginload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 
 	RWUNLOCK(&rbtdb->lock, isc_rwlocktype_write);
 
-	callbacks->add = loading_addrdataset;
+	callbacks->update = loading_addrdataset;
 	callbacks->add_private = loadctx;
 
 	return ISC_R_SUCCESS;
@@ -1858,7 +1941,7 @@ endload(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
 		RWUNLOCK(&rbtdb->lock, isc_rwlocktype_write);
 	}
 
-	callbacks->add = NULL;
+	callbacks->update = NULL;
 	callbacks->add_private = NULL;
 
 	isc_mem_put(rbtdb->common.mctx, loadctx, sizeof(*loadctx));
@@ -2256,10 +2339,52 @@ addglue(dns_db_t *db, dns_dbversion_t *dbversion, dns_rdataset_t *rdataset,
 	return ISC_R_SUCCESS;
 }
 
+static isc_result_t
+rbt_beginupdate(dns_db_t *db, dns_dbversion_t *ver,
+		dns_rdatacallbacks_t *callbacks) {
+	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *)db;
+
+	REQUIRE(VALID_RBTDB(rbtdb));
+	REQUIRE(ver != NULL);
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	dns_updatectx_t *ctx = isc_mem_get(rbtdb->common.mctx, sizeof(*ctx));
+	*ctx = (dns_updatectx_t){
+		.db = db,
+		.ver = ver,
+		.warn = true,
+	};
+
+	callbacks->update = update_callback;
+	callbacks->add_private = ctx;
+
+	return ISC_R_SUCCESS;
+}
+
+static isc_result_t
+rbt_endupdate(dns_db_t *db, dns_rdatacallbacks_t *callbacks) {
+	dns_rbtdb_t *rbtdb = (dns_rbtdb_t *)db;
+	dns_updatectx_t *ctx;
+
+	REQUIRE(VALID_RBTDB(rbtdb));
+	REQUIRE(DNS_CALLBACK_VALID(callbacks));
+
+	ctx = (dns_updatectx_t *)callbacks->add_private;
+	if (ctx != NULL) {
+		isc_mem_put(rbtdb->common.mctx, ctx, sizeof(*ctx));
+		callbacks->add_private = NULL;
+	}
+
+	return ISC_R_SUCCESS;
+}
+
 dns_dbmethods_t dns__rbtdb_zonemethods = {
 	.destroy = dns__rbtdb_destroy,
 	.beginload = beginload,
 	.endload = endload,
+	.beginupdate = rbt_beginupdate,
+	.commitupdate = rbt_endupdate,
+	.abortupdate = rbt_endupdate,
 	.currentversion = dns__rbtdb_currentversion,
 	.newversion = dns__rbtdb_newversion,
 	.attachversion = dns__rbtdb_attachversion,

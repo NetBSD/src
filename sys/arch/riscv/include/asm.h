@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.7.6.1 2025/08/02 05:56:03 perseant Exp $	*/
+/*	$NetBSD: asm.h,v 1.7.6.2 2026/11/04 23:21:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -41,20 +41,16 @@
 
 /*
  * Define -pg profile entry code.
- * Must always be noreorder, must never use a macro instruction
- * Final addiu to t9 must always equal the size of this _KERN_MCOUNT
  */
 #define	_KERN_MCOUNT						\
-	.set	push;						\
-	subi	sp, sp, CALLFRAME_SIZE;				\
-	REG_S	a0, CALLFRAME_S0(sp);				\
+	addi	sp, sp, -CALLFRAME_SIZ;				\
 	REG_S	ra, CALLFRAME_RA(sp);				\
-	move	a0, ra;						\
-	call	_mcount 					\
+	REG_S	a0, CALLFRAME_S1(sp);				\
+	mv	a0, ra;						\
+	call	PLT(_mcount); 					\
 	REG_L	ra, CALLFRAME_RA(sp);				\
-	REG_L	a0, CALLFRAME_S0(sp);				\
-	addi	sp, sp, CALLFRAME_SIZ;				\
-	.set	pop;
+	REG_L	a0, CALLFRAME_S1(sp);				\
+	addi	sp, sp, CALLFRAME_SIZ
 
 #ifdef GPROF
 #define	_PROF_PROLOGUE _KERN_MCOUNT
@@ -94,7 +90,7 @@
 	.type	_C_LABEL(x), @function;	\
 	_C_LABEL(x):
 
-#define	ENTRY_NP(x)	.text; .align 2; _ENTRY(x)
+#define	ENTRY_NP(x)	.text; .align 4; _ENTRY(x)
 #define	ENTRY(x)	ENTRY_NP(x); _PROF_PROLOGUE
 #define	ALTENTRY(x)	_ENTRY(x)
 #define	END(x)		.size _C_LABEL(x), . - _C_LABEL(x)
@@ -167,7 +163,6 @@
 #define	PTR_ADD		add
 #define	PTR_ADDI	addi
 #define	PTR_SUB		sub
-#define	PTR_SUBI	subi
 #define	PTR_LA		la
 #define	PTR_SLLI	slli
 #define	PTR_SLL		sll
@@ -200,20 +195,18 @@
 #define	INT_SCALESHIFT	2
 #ifdef _LP64
 #define	INT_ADD		addw
-#define	INT_ADDI	addwi
+#define	INT_ADDI	addiw
 #define	INT_SUB		subw
-#define	INT_SUBI	subwi
-#define	INT_SLL		sllwi
+#define	INT_SLL		slliw
 #define	INT_SLLV	sllw
-#define	INT_SRL		srlwi
+#define	INT_SRL		srliw
 #define	INT_SRLV	srlw
-#define	INT_SRA		srawi
+#define	INT_SRA		sraiw
 #define	INT_SRAV	sraw
 #else
 #define	INT_ADD		add
 #define	INT_ADDI	addi
 #define	INT_SUB		sub
-#define	INT_SUBI	subi
 #define	INT_SLLI	slli
 #define	INT_SLL		sll
 #define	INT_SRLI	srli
@@ -226,7 +219,6 @@
 #define	LONG_ADD	add
 #define	LONG_ADDI	addi
 #define	LONG_SUB	sub
-#define	LONG_SUBI	subi
 #define	LONG_SLLI	slli
 #define	LONG_SLL	sll
 #define	LONG_SRLI	srli

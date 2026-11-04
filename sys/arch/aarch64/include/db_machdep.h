@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.h,v 1.16 2021/10/31 22:06:32 skrll Exp $ */
+/* $NetBSD: db_machdep.h,v 1.16.10.1 2026/11/04 23:19:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #ifdef __aarch64__
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <uvm/uvm.h>
 

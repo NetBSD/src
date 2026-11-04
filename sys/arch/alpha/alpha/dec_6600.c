@@ -1,4 +1,4 @@
-/* $NetBSD: dec_6600.c,v 1.38.2.1 2025/08/02 05:55:21 perseant Exp $ */
+/* $NetBSD: dec_6600.c,v 1.38.2.2 2026/11/04 23:19:57 perseant Exp $ */
 
 /*
  * Copyright (c) 1995, 1996, 1997 Carnegie-Mellon University.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.38.2.1 2025/08/02 05:55:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dec_6600.c,v 1.38.2.2 2026/11/04 23:19:57 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -169,7 +169,7 @@ dec_6600_device_register(device_t dev, void *aux)
 
 			if (pa->pa_bus == 0 && pa->pa_device == 13 &&
 			    pa->pa_function == 0) {
-				prop_dictionary_set_bool(device_properties(dev),
+				device_setprop_bool(dev,
 				    "pciide-disable-dma", true);
 			}
 		}

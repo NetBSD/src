@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RS6000_AIX_TDEP_H
-#define RS6000_AIX_TDEP_H
+#ifndef GDB_RS6000_AIX_TDEP_H
+#define GDB_RS6000_AIX_TDEP_H
 
 extern ULONGEST rs6000_aix_ld_info_to_xml (struct gdbarch *gdbarch,
 					   const gdb_byte *ldi_buf,
@@ -25,4 +25,4 @@ extern ULONGEST rs6000_aix_ld_info_to_xml (struct gdbarch *gdbarch,
 					   ULONGEST len,
 					   int close_ldinfo_fd);
 
-#endif /* RS6000_AIX_TDEP_H */
+#endif /* GDB_RS6000_AIX_TDEP_H */

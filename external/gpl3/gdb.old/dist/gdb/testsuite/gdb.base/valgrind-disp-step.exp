@@ -1,4 +1,4 @@
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,14 +19,11 @@
 # automatically instead of getting stuck or crashing.
 
 # Valgrind gdbserver requires gdb with xml support.
-require gdb_skip_xml_test 0
+require allow_xml_test
 
 load_lib valgrind.exp
 
-if [is_remote target] {
-    # The test always runs locally.
-    return 0
-}
+require {!is_remote target}
 
 standard_testfile .c
 if {[build_executable "failed to build" $testfile $srcfile {debug}] == -1} {

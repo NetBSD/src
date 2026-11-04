@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2023 Free Software Foundation, Inc.
+# Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -37,7 +37,7 @@ gdb_breakpoint "start" "" "1, set breakpoint at start"
 
 gdb_test "continue" "Catchpoint.*" "1, get to the fork event"
 
-gdb_test "info threads" " Thread .* Thread .* Thread .* Thread .*" "1, multiple threads found"
+gdb_test "info threads" " ${tdlabel_re} .* ${tdlabel_re} .* ${tdlabel_re} .* ${tdlabel_re} .*" "1, multiple threads found"
 
 gdb_test "thread 1" ".*" "1, switched away from event thread"
 
@@ -45,10 +45,10 @@ gdb_test "continue" "Not resuming.*" "1, refused to resume"
 
 set test "1, followed to the child, found one thread"
 gdb_test_multiple "info threads" "metest" {
-    -re " Thread .* Thread .*$gdb_prompt $" {
+    -re " ${tdlabel_re} .* ${tdlabel_re} .*$gdb_prompt $" {
 	fail "$test"
     }
-    -re " Thread .*$gdb_prompt $" {
+    -re " ${tdlabel_re} .*$gdb_prompt $" {
 	pass "$test"
     }
     -re "$gdb_prompt $" {
@@ -63,10 +63,10 @@ gdb_test "continue" "Breakpoint 3, start.*" "1, get to the spawned thread in for
 
 set test "1, followed to the child, found two threads"
 gdb_test_multiple "info threads" "$test" {
-    -re " Thread .* Thread .* Thread .*$gdb_prompt $" {
+    -re " ${tdlabel_re} .* ${tdlabel_re} .* ${tdlabel_re} .*$gdb_prompt $" {
 	fail "$test"
     }
-    -re " Thread .* Thread .*$gdb_prompt $" {
+    -re " ${tdlabel_re} .* ${tdlabel_re} .*$gdb_prompt $" {
 	pass "$test"
     }
     -re "$gdb_prompt $" {
@@ -79,11 +79,7 @@ gdb_test_multiple "info threads" "$test" {
 
 # Start over, but this time, don't switch away from the fork event thread.
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-
-gdb_load ${binfile}
+clean_restart $binfile
 if {![runto_main]} {
    return 0
 }
@@ -94,16 +90,16 @@ gdb_breakpoint "start"
 
 gdb_test "continue" "Catchpoint.*" "2, get to the fork event"
 
-gdb_test "info threads" " Thread .* Thread .* Thread .* Thread .*" "2, multiple threads found"
+gdb_test "info threads" " ${tdlabel_re} .* ${tdlabel_re} .* ${tdlabel_re} .* ${tdlabel_re} .*" "2, multiple threads found"
 
 gdb_test "continue" "Breakpoint 3, start.*" "2, get to the spawned thread in fork child"
 
 set test "2, followed to the child, found two threads"
 gdb_test_multiple "info threads" "$test" {
-    -re " Thread .* Thread .* Thread .*$gdb_prompt $" {
+    -re " ${tdlabel_re} .* ${tdlabel_re} .* ${tdlabel_re} .*$gdb_prompt $" {
 	fail "$test"
     }
-    -re " Thread .* Thread .*$gdb_prompt $" {
+    -re " ${tdlabel_re} .* ${tdlabel_re} .*$gdb_prompt $" {
 	pass "$test"
     }
     -re "$gdb_prompt $" {

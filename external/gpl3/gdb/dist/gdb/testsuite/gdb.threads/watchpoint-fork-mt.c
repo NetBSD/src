@@ -1,6 +1,6 @@
 /* Test case for forgotten hw-watchpoints after fork()-off of a process.
 
-   Copyright 2012-2024 Free Software Foundation, Inc.
+   Copyright 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,7 +27,6 @@
 #include <pthread.h>
 
 #include <asm/unistd.h>
-#include <unistd.h>
 #define gettid() syscall (__NR_gettid)
 
 /* Non-atomic `var++' should not hurt as we synchronize the threads by the STEP

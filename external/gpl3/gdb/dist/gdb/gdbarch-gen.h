@@ -3,7 +3,7 @@
 
 /* Dynamic architecture support for GDB, the GNU debugger.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -430,6 +430,14 @@ typedef struct value * (gdbarch_value_from_register_ftype) (struct gdbarch *gdba
 extern struct value * gdbarch_value_from_register (struct gdbarch *gdbarch, struct type *type, int regnum, const frame_info_ptr &this_frame);
 extern void set_gdbarch_value_from_register (struct gdbarch *gdbarch, gdbarch_value_from_register_ftype *value_from_register);
 
+/* For a DW_OP_piece located in a register, but not occupying the
+   entire register, return the placement of the piece within that
+   register as defined by the ABI. */
+
+typedef ULONGEST (gdbarch_dwarf2_reg_piece_offset_ftype) (struct gdbarch *gdbarch, int regnum, ULONGEST size);
+extern ULONGEST gdbarch_dwarf2_reg_piece_offset (struct gdbarch *gdbarch, int regnum, ULONGEST size);
+extern void set_gdbarch_dwarf2_reg_piece_offset (struct gdbarch *gdbarch, gdbarch_dwarf2_reg_piece_offset_ftype *dwarf2_reg_piece_offset);
+
 typedef CORE_ADDR (gdbarch_pointer_to_address_ftype) (struct gdbarch *gdbarch, struct type *type, const gdb_byte *buf);
 extern CORE_ADDR gdbarch_pointer_to_address (struct gdbarch *gdbarch, struct type *type, const gdb_byte *buf);
 extern void set_gdbarch_pointer_to_address (struct gdbarch *gdbarch, gdbarch_pointer_to_address_ftype *pointer_to_address);
@@ -684,19 +692,46 @@ extern CORE_ADDR gdbarch_addr_bits_remove (struct gdbarch *gdbarch, CORE_ADDR ad
 extern void set_gdbarch_addr_bits_remove (struct gdbarch *gdbarch, gdbarch_addr_bits_remove_ftype *addr_bits_remove);
 
 /* On some architectures, not all bits of a pointer are significant.
-   On AArch64, for example, the top bits of a pointer may carry a "tag", which
-   can be ignored by the kernel and the hardware.  The "tag" can be regarded as
-   additional data associated with the pointer, but it is not part of the address.
+   On AArch64 and amd64, for example, the top bits of a pointer may carry a
+   "tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+   regarded as additional data associated with the pointer, but it is not part
+   of the address.
 
    Given a pointer for the architecture, this hook removes all the
-   non-significant bits and sign-extends things as needed.  It gets used to remove
-   non-address bits from data pointers (for example, removing the AArch64 MTE tag
-   bits from a pointer) and from code pointers (removing the AArch64 PAC signature
-   from a pointer containing the return address). */
+   non-significant bits and sign-extends things as needed.  It gets used to
+   remove non-address bits from pointers used for watchpoints. */
 
-typedef CORE_ADDR (gdbarch_remove_non_address_bits_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
-extern CORE_ADDR gdbarch_remove_non_address_bits (struct gdbarch *gdbarch, CORE_ADDR pointer);
-extern void set_gdbarch_remove_non_address_bits (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_ftype *remove_non_address_bits);
+typedef CORE_ADDR (gdbarch_remove_non_address_bits_watchpoint_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern CORE_ADDR gdbarch_remove_non_address_bits_watchpoint (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern void set_gdbarch_remove_non_address_bits_watchpoint (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_watchpoint_ftype *remove_non_address_bits_watchpoint);
+
+/* On some architectures, not all bits of a pointer are significant.
+   On AArch64 and amd64, for example, the top bits of a pointer may carry a
+   "tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+   regarded as additional data associated with the pointer, but it is not part
+   of the address.
+
+   Given a pointer for the architecture, this hook removes all the
+   non-significant bits and sign-extends things as needed.  It gets used to
+   remove non-address bits from pointers used for breakpoints. */
+
+typedef CORE_ADDR (gdbarch_remove_non_address_bits_breakpoint_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern CORE_ADDR gdbarch_remove_non_address_bits_breakpoint (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern void set_gdbarch_remove_non_address_bits_breakpoint (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_breakpoint_ftype *remove_non_address_bits_breakpoint);
+
+/* On some architectures, not all bits of a pointer are significant.
+   On AArch64 and amd64, for example, the top bits of a pointer may carry a
+   "tag", which can be ignored by the kernel and the hardware.  The "tag" can be
+   regarded as additional data associated with the pointer, but it is not part
+   of the address.
+
+   Given a pointer for the architecture, this hook removes all the
+   non-significant bits and sign-extends things as needed.  It gets used to
+   remove non-address bits from any pointer used to access memory. */
+
+typedef CORE_ADDR (gdbarch_remove_non_address_bits_memory_ftype) (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern CORE_ADDR gdbarch_remove_non_address_bits_memory (struct gdbarch *gdbarch, CORE_ADDR pointer);
+extern void set_gdbarch_remove_non_address_bits_memory (struct gdbarch *gdbarch, gdbarch_remove_non_address_bits_memory_ftype *remove_non_address_bits_memory);
 
 /* Return a string representation of the memory tag TAG. */
 
@@ -757,11 +792,11 @@ extern void set_gdbarch_memtag_granule_size (struct gdbarch *gdbarch, CORE_ADDR 
    the condition is true, so that we ensure forward progress when stepping
    past a conditional branch to self. */
 
-extern bool gdbarch_software_single_step_p (struct gdbarch *gdbarch);
+extern bool gdbarch_get_next_pcs_p (struct gdbarch *gdbarch);
 
-typedef std::vector<CORE_ADDR> (gdbarch_software_single_step_ftype) (struct regcache *regcache);
-extern std::vector<CORE_ADDR> gdbarch_software_single_step (struct gdbarch *gdbarch, struct regcache *regcache);
-extern void set_gdbarch_software_single_step (struct gdbarch *gdbarch, gdbarch_software_single_step_ftype *software_single_step);
+typedef std::vector<CORE_ADDR> (gdbarch_get_next_pcs_ftype) (struct regcache *regcache);
+extern std::vector<CORE_ADDR> gdbarch_get_next_pcs (struct gdbarch *gdbarch, struct regcache *regcache);
+extern void set_gdbarch_get_next_pcs (struct gdbarch *gdbarch, gdbarch_get_next_pcs_ftype *get_next_pcs);
 
 /* Return non-zero if the processor is executing a delay slot and a
    further single-step is needed before the instruction finishes. */
@@ -783,10 +818,11 @@ typedef CORE_ADDR (gdbarch_skip_trampoline_code_ftype) (const frame_info_ptr &fr
 extern CORE_ADDR gdbarch_skip_trampoline_code (struct gdbarch *gdbarch, const frame_info_ptr &frame, CORE_ADDR pc);
 extern void set_gdbarch_skip_trampoline_code (struct gdbarch *gdbarch, gdbarch_skip_trampoline_code_ftype *skip_trampoline_code);
 
-/* Vtable of solib operations functions. */
+/* Return a newly-allocated solib_ops object capable of providing the solibs for this architecture. */
 
-extern const solib_ops * gdbarch_so_ops (struct gdbarch *gdbarch);
-extern void set_gdbarch_so_ops (struct gdbarch *gdbarch, const solib_ops * so_ops);
+typedef solib_ops_up (gdbarch_make_solib_ops_ftype) (program_space *pspace);
+extern solib_ops_up gdbarch_make_solib_ops (struct gdbarch *gdbarch, program_space *pspace);
+extern void set_gdbarch_make_solib_ops (struct gdbarch *gdbarch, gdbarch_make_solib_ops_ftype *make_solib_ops);
 
 /* If in_solib_dynsym_resolve_code() returns true, and SKIP_SOLIB_RESOLVER
    evaluates non-zero, this is the address where the debugger will place
@@ -824,7 +860,7 @@ extern void set_gdbarch_stack_frame_destroyed_p (struct gdbarch *gdbarch, gdbarc
 
 /* Process an ELF symbol in the minimal symbol table in a backend-specific
    way.  Normally this hook is supposed to do nothing, however if required,
-   then this hook can be used to apply tranformations to symbols that are
+   then this hook can be used to apply transformations to symbols that are
    considered special in some way.  For example the MIPS backend uses it
    to interpret `st_other' information to mark compressed code symbols so
    that they can be treated in the appropriate manner in the processing of
@@ -832,8 +868,8 @@ extern void set_gdbarch_stack_frame_destroyed_p (struct gdbarch *gdbarch, gdbarc
 
 extern bool gdbarch_elf_make_msymbol_special_p (struct gdbarch *gdbarch);
 
-typedef void (gdbarch_elf_make_msymbol_special_ftype) (asymbol *sym, struct minimal_symbol *msym);
-extern void gdbarch_elf_make_msymbol_special (struct gdbarch *gdbarch, asymbol *sym, struct minimal_symbol *msym);
+typedef void (gdbarch_elf_make_msymbol_special_ftype) (const asymbol *sym, struct minimal_symbol *msym);
+extern void gdbarch_elf_make_msymbol_special (struct gdbarch *gdbarch, const asymbol *sym, struct minimal_symbol *msym);
 extern void set_gdbarch_elf_make_msymbol_special (struct gdbarch *gdbarch, gdbarch_elf_make_msymbol_special_ftype *elf_make_msymbol_special);
 
 typedef void (gdbarch_coff_make_msymbol_special_ftype) (int val, struct minimal_symbol *msym);
@@ -842,7 +878,7 @@ extern void set_gdbarch_coff_make_msymbol_special (struct gdbarch *gdbarch, gdba
 
 /* Process a symbol in the main symbol table in a backend-specific way.
    Normally this hook is supposed to do nothing, however if required,
-   then this hook can be used to apply tranformations to symbols that
+   then this hook can be used to apply transformations to symbols that
    are considered special in some way.  This is currently used by the
    MIPS backend to make sure compressed code symbols have the ISA bit
    set.  This in turn is needed for symbol values seen in GDB to match
@@ -993,8 +1029,8 @@ extern void set_gdbarch_decode_memtag_section (struct gdbarch *gdbarch, gdbarch_
 
 extern bool gdbarch_core_xfer_shared_libraries_p (struct gdbarch *gdbarch);
 
-typedef ULONGEST (gdbarch_core_xfer_shared_libraries_ftype) (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
-extern ULONGEST gdbarch_core_xfer_shared_libraries (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+typedef ULONGEST (gdbarch_core_xfer_shared_libraries_ftype) (struct gdbarch *gdbarch, struct bfd &cbfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+extern ULONGEST gdbarch_core_xfer_shared_libraries (struct gdbarch *gdbarch, struct bfd &cbfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
 extern void set_gdbarch_core_xfer_shared_libraries (struct gdbarch *gdbarch, gdbarch_core_xfer_shared_libraries_ftype *core_xfer_shared_libraries);
 
 /* Read offset OFFSET of TARGET_OBJECT_LIBRARIES_AIX formatted shared
@@ -1003,8 +1039,8 @@ extern void set_gdbarch_core_xfer_shared_libraries (struct gdbarch *gdbarch, gdb
 
 extern bool gdbarch_core_xfer_shared_libraries_aix_p (struct gdbarch *gdbarch);
 
-typedef ULONGEST (gdbarch_core_xfer_shared_libraries_aix_ftype) (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
-extern ULONGEST gdbarch_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+typedef ULONGEST (gdbarch_core_xfer_shared_libraries_aix_ftype) (struct gdbarch *gdbarch, struct bfd &cbfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+extern ULONGEST gdbarch_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch, struct bfd &cbfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
 extern void set_gdbarch_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch, gdbarch_core_xfer_shared_libraries_aix_ftype *core_xfer_shared_libraries_aix);
 
 /* How the core target converts a PTID from a core file to a string. */
@@ -1015,31 +1051,31 @@ typedef std::string (gdbarch_core_pid_to_str_ftype) (struct gdbarch *gdbarch, pt
 extern std::string gdbarch_core_pid_to_str (struct gdbarch *gdbarch, ptid_t ptid);
 extern void set_gdbarch_core_pid_to_str (struct gdbarch *gdbarch, gdbarch_core_pid_to_str_ftype *core_pid_to_str);
 
-/* How the core target extracts the name of a thread from a core file. */
+/* How the core target extracts the name of a thread from core file CBFD. */
 
 extern bool gdbarch_core_thread_name_p (struct gdbarch *gdbarch);
 
-typedef const char * (gdbarch_core_thread_name_ftype) (struct gdbarch *gdbarch, struct thread_info *thr);
-extern const char * gdbarch_core_thread_name (struct gdbarch *gdbarch, struct thread_info *thr);
+typedef const char * (gdbarch_core_thread_name_ftype) (struct gdbarch *gdbarch, struct bfd &cbfd, struct thread_info *thr);
+extern const char * gdbarch_core_thread_name (struct gdbarch *gdbarch, struct bfd &cbfd, struct thread_info *thr);
 extern void set_gdbarch_core_thread_name (struct gdbarch *gdbarch, gdbarch_core_thread_name_ftype *core_thread_name);
 
 /* Read offset OFFSET of TARGET_OBJECT_SIGNAL_INFO signal information
-   from core file into buffer READBUF with length LEN.  Return the number
+   from core file CBFD into buffer READBUF with length LEN.  Return the number
    of bytes read (zero indicates EOF, a negative value indicates failure). */
 
 extern bool gdbarch_core_xfer_siginfo_p (struct gdbarch *gdbarch);
 
-typedef LONGEST (gdbarch_core_xfer_siginfo_ftype) (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
-extern LONGEST gdbarch_core_xfer_siginfo (struct gdbarch *gdbarch, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+typedef LONGEST (gdbarch_core_xfer_siginfo_ftype) (struct gdbarch *gdbarch, struct bfd &cbfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
+extern LONGEST gdbarch_core_xfer_siginfo (struct gdbarch *gdbarch, struct bfd &cbfd, gdb_byte *readbuf, ULONGEST offset, ULONGEST len);
 extern void set_gdbarch_core_xfer_siginfo (struct gdbarch *gdbarch, gdbarch_core_xfer_siginfo_ftype *core_xfer_siginfo);
 
-/* Read x86 XSAVE layout information from core file into XSAVE_LAYOUT.
+/* Read x86 XSAVE layout information from core file CBFD into XSAVE_LAYOUT.
    Returns true if the layout was read successfully. */
 
 extern bool gdbarch_core_read_x86_xsave_layout_p (struct gdbarch *gdbarch);
 
-typedef bool (gdbarch_core_read_x86_xsave_layout_ftype) (struct gdbarch *gdbarch, x86_xsave_layout &xsave_layout);
-extern bool gdbarch_core_read_x86_xsave_layout (struct gdbarch *gdbarch, x86_xsave_layout &xsave_layout);
+typedef bool (gdbarch_core_read_x86_xsave_layout_ftype) (struct gdbarch *gdbarch, struct bfd &cbfd, x86_xsave_layout &xsave_layout);
+extern bool gdbarch_core_read_x86_xsave_layout (struct gdbarch *gdbarch, struct bfd &cbfd, x86_xsave_layout &xsave_layout);
 extern void set_gdbarch_core_read_x86_xsave_layout (struct gdbarch *gdbarch, gdbarch_core_read_x86_xsave_layout_ftype *core_read_x86_xsave_layout);
 
 /* BFD target to use when generating a core file. */
@@ -1112,7 +1148,7 @@ extern void set_gdbarch_displaced_step_copy_insn (struct gdbarch *gdbarch, gdbar
    the displaced instruction buffer).
 
    The default implementation returns false on all targets that provide a
-   gdbarch_software_single_step routine, and true otherwise. */
+   gdbarch_get_next_pcs routine, and true otherwise. */
 
 typedef bool (gdbarch_displaced_step_hw_singlestep_ftype) (struct gdbarch *gdbarch);
 extern bool gdbarch_displaced_step_hw_singlestep (struct gdbarch *gdbarch);
@@ -1290,8 +1326,8 @@ extern void set_gdbarch_get_siginfo_type (struct gdbarch *gdbarch, gdbarch_get_s
 
 extern bool gdbarch_record_special_symbol_p (struct gdbarch *gdbarch);
 
-typedef void (gdbarch_record_special_symbol_ftype) (struct gdbarch *gdbarch, struct objfile *objfile, asymbol *sym);
-extern void gdbarch_record_special_symbol (struct gdbarch *gdbarch, struct objfile *objfile, asymbol *sym);
+typedef void (gdbarch_record_special_symbol_ftype) (struct gdbarch *gdbarch, struct objfile *objfile, const asymbol *sym);
+extern void gdbarch_record_special_symbol (struct gdbarch *gdbarch, struct objfile *objfile, const asymbol *sym);
 extern void set_gdbarch_record_special_symbol (struct gdbarch *gdbarch, gdbarch_record_special_symbol_ftype *record_special_symbol);
 
 /* Function for the 'catch syscall' feature.
@@ -1354,7 +1390,7 @@ extern void set_gdbarch_stap_register_suffixes (struct gdbarch *gdbarch, const c
 
    (%eax) ;; indirecting eax
 
-   in this case, this prefix would be the charater `('.
+   in this case, this prefix would be the character `('.
 
    Please note that we use the indirection prefix also for register
    displacement, e.g., `4(%eax)' on x86. */
@@ -1368,7 +1404,7 @@ extern void set_gdbarch_stap_register_indirection_prefixes (struct gdbarch *gdba
 
    (%eax) ;; indirecting eax
 
-   in this case, this prefix would be the charater `)'.
+   in this case, this prefix would be the character `)'.
 
    Please note that we use the indirection suffix also for register
    displacement, e.g., `4(%eax)' on x86. */
@@ -1588,28 +1624,15 @@ typedef void (gdbarch_info_proc_ftype) (struct gdbarch *gdbarch, const char *arg
 extern void gdbarch_info_proc (struct gdbarch *gdbarch, const char *args, enum info_proc_what what);
 extern void set_gdbarch_info_proc (struct gdbarch *gdbarch, gdbarch_info_proc_ftype *info_proc);
 
-/* Implement the "info proc" command for core files.  Noe that there
+/* Implement the "info proc" command for core files.  Note that there
    are two "info_proc"-like methods on gdbarch -- one for core files,
-   one for live targets. */
+   one for live targets.  CBFD is the core file being read from. */
 
 extern bool gdbarch_core_info_proc_p (struct gdbarch *gdbarch);
 
-typedef void (gdbarch_core_info_proc_ftype) (struct gdbarch *gdbarch, const char *args, enum info_proc_what what);
-extern void gdbarch_core_info_proc (struct gdbarch *gdbarch, const char *args, enum info_proc_what what);
+typedef void (gdbarch_core_info_proc_ftype) (struct gdbarch *gdbarch, struct bfd *cbfd, const char *args, enum info_proc_what what);
+extern void gdbarch_core_info_proc (struct gdbarch *gdbarch, struct bfd *cbfd, const char *args, enum info_proc_what what);
 extern void set_gdbarch_core_info_proc (struct gdbarch *gdbarch, gdbarch_core_info_proc_ftype *core_info_proc);
-
-/* Iterate over all objfiles in the order that makes the most sense
-   for the architecture to make global symbol searches.
-
-   CB is a callback function passed an objfile to be searched.  The iteration stops
-   if this function returns nonzero.
-
-   If not NULL, CURRENT_OBJFILE corresponds to the objfile being
-   inspected when the symbol search was requested. */
-
-typedef void (gdbarch_iterate_over_objfiles_in_search_order_ftype) (struct gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb, struct objfile *current_objfile);
-extern void gdbarch_iterate_over_objfiles_in_search_order (struct gdbarch *gdbarch, iterate_over_objfiles_in_search_order_cb_ftype cb, struct objfile *current_objfile);
-extern void set_gdbarch_iterate_over_objfiles_in_search_order (struct gdbarch *gdbarch, gdbarch_iterate_over_objfiles_in_search_order_ftype *iterate_over_objfiles_in_search_order);
 
 /* Ravenscar arch-dependent ops. */
 
@@ -1751,3 +1774,46 @@ extern void set_gdbarch_read_core_file_mappings (struct gdbarch *gdbarch, gdbarc
 typedef bool (gdbarch_use_target_description_from_corefile_notes_ftype) (struct gdbarch *gdbarch, struct bfd *corefile_bfd);
 extern bool gdbarch_use_target_description_from_corefile_notes (struct gdbarch *gdbarch, struct bfd *corefile_bfd);
 extern void set_gdbarch_use_target_description_from_corefile_notes (struct gdbarch *gdbarch, gdbarch_use_target_description_from_corefile_notes_ftype *use_target_description_from_corefile_notes);
+
+/* Examine the core file bfd object CBFD and try to extract the name of
+   the current executable and the argument list, which are return in a
+   core_file_exec_context object.
+
+   If for any reason the details can't be extracted from CBFD then an
+   empty context is returned.
+
+   It is required that the current inferior be the one associated with
+   CBFD, strings are read from the current inferior using target methods
+   which all assume current_inferior() is the one to read from. */
+
+typedef core_file_exec_context (gdbarch_core_parse_exec_context_ftype) (struct gdbarch *gdbarch, bfd *cbfd);
+extern core_file_exec_context gdbarch_core_parse_exec_context (struct gdbarch *gdbarch, bfd *cbfd);
+extern void set_gdbarch_core_parse_exec_context (struct gdbarch *gdbarch, gdbarch_core_parse_exec_context_ftype *core_parse_exec_context);
+
+/* Some targets support special hardware-assisted control-flow protection
+   technologies.  For example, the Intel Control-Flow Enforcement Technology
+   (Intel CET) on x86 provides a shadow stack and indirect branch tracking.
+   To enable shadow stack support for inferior calls the shadow_stack_push
+   gdbarch hook has to be provided.  The get_shadow_stack_pointer gdbarch
+   hook has to be provided to enable displaced stepping.
+
+   Push NEW_ADDR to the shadow stack and update the shadow stack pointer. */
+
+extern bool gdbarch_shadow_stack_push_p (struct gdbarch *gdbarch);
+
+typedef void (gdbarch_shadow_stack_push_ftype) (struct gdbarch *gdbarch, CORE_ADDR new_addr, regcache *regcache);
+extern void gdbarch_shadow_stack_push (struct gdbarch *gdbarch, CORE_ADDR new_addr, regcache *regcache);
+extern void set_gdbarch_shadow_stack_push (struct gdbarch *gdbarch, gdbarch_shadow_stack_push_ftype *shadow_stack_push);
+
+/* If possible, return the shadow stack pointer.  If the shadow stack
+   feature is enabled then set SHADOW_STACK_ENABLED to true, otherwise
+   set SHADOW_STACK_ENABLED to false.  This hook has to be provided to enable
+   displaced stepping for shadow stack enabled programs.
+   On some architectures, the shadow stack pointer is available even if the
+   feature is disabled.  So dependent on the target, an implementation of
+   this function may return a valid shadow stack pointer, but set
+   SHADOW_STACK_ENABLED to false. */
+
+typedef std::optional<CORE_ADDR> (gdbarch_get_shadow_stack_pointer_ftype) (struct gdbarch *gdbarch, regcache *regcache, bool &shadow_stack_enabled);
+extern std::optional<CORE_ADDR> gdbarch_get_shadow_stack_pointer (struct gdbarch *gdbarch, regcache *regcache, bool &shadow_stack_enabled);
+extern void set_gdbarch_get_shadow_stack_pointer (struct gdbarch *gdbarch, gdbarch_get_shadow_stack_pointer_ftype *get_shadow_stack_pointer);

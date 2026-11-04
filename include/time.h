@@ -1,4 +1,4 @@
-/*	$NetBSD: time.h,v 1.49.2.1 2025/08/02 05:54:28 perseant Exp $	*/
+/*	$NetBSD: time.h,v 1.49.2.2 2026/11/04 23:19:10 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -85,6 +85,17 @@ struct tm {
 	long	tm_gmtoff;	/* offset from UTC in seconds */
 	__aconst char *tm_zone;	/* timezone abbreviation */
 };
+
+/*
+ * This represents the minimum value for how long a timezone abbreviation
+ * name is allowed to be, it is also (if >= 254) the default for the max length
+ * we currently allow (that can be changed by compiling libc(localtime.c)
+ * with  -DTZNAME_MAXIMUM=N specifying a value at least this long, no less).
+ *
+ * This one should probably be made less, and localtime then use a longer value
+ * (it will use 254 at least), so this would never need to change in the future.
+ */
+#define	_TZNAME_MAXIMUM	254
 
 __BEGIN_DECLS
 char *asctime(const struct tm *);

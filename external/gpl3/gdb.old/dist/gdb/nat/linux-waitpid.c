@@ -1,6 +1,6 @@
 /* Wrapper implementation for waitpid for GNU/Linux (LWP layer).
 
-   Copyright (C) 2001-2023 Free Software Foundation, Inc.
+   Copyright (C) 2001-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "gdbsupport/common-defs.h"
 
 #include "linux-nat.h"
 #include "linux-waitpid.h"
@@ -52,5 +51,5 @@ status_to_str (int status)
 int
 my_waitpid (int pid, int *status, int flags)
 {
-  return gdb::handle_eintr (-1, ::waitpid, pid, status, flags);
+  return gdb::waitpid (pid, status, flags);
 }

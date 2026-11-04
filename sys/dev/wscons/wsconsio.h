@@ -1,4 +1,4 @@
-/* $NetBSD: wsconsio.h,v 1.127.2.1 2025/08/02 05:57:08 perseant Exp $ */
+/* $NetBSD: wsconsio.h,v 1.127.2.2 2026/11/04 23:22:39 perseant Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -91,7 +91,7 @@ struct wscons_event {
 #define	WSKBD_TYPE_PC_AT	4	/* PC-ish, AT scancode, not used by modern kernels */
 #define	WSKBD_TYPE_USB		5	/* USB, XT scancode */
 #define	WSKBD_TYPE_NEXT		6	/* NeXT keyboard */
-#define	WSKBD_TYPE_HPC_KBD	7	/* HPC bultin keyboard */
+#define	WSKBD_TYPE_HPC_KBD	7	/* HPC builtin keyboard */
 #define	WSKBD_TYPE_HPC_BTN	8	/* HPC/PsPC buttons */
 #define	WSKBD_TYPE_ARCHIMEDES	9	/* Archimedes keyboard */
 #define	WSKBD_TYPE_RISCPC	10	/* RiscPC keyboard, resembling AT codes */
@@ -369,6 +369,7 @@ struct wsmouse_parameters {
 #define	WSDISPLAY_TYPE_HOLLYWOOD 67	/* Nintendo Wii "Hollywood" SoC */
 #define	WSDISPLAY_TYPE_VC6	68	/* Broadcom VideoCore 6 */
 #define	WSDISPLAY_TYPE_VIOGPU	69	/* VirtIO GPU */
+#define	WSDISPLAY_TYPE_NWB225	70	/* Sony NEWS NWB-225 */
 
 /* Basic display information.  Not applicable to all display types. */
 struct wsdisplay_fbinfo {
@@ -746,5 +747,11 @@ struct wsdisplay_getfont {
  */
 
 #define WSDISPLAYIO_GFONT	_IOWR('W', 108, struct wsdisplay_getfont)
+
+/*
+ * set colour depth for fb mode, in bits per pixel 
+ * returns EINVAL if depth is unsupported
+ */
+#define WSDISPLAYIO_SET_DEPTH	_IOW('W', 109, int)
 
 #endif /* _DEV_WSCONS_WSCONSIO_H_ */

@@ -1,4 +1,4 @@
-# Copyright 2016-2024 Free Software Foundation, Inc.
+# Copyright 2016-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -32,7 +32,7 @@ proc add_inferior { expected_num message } {
 proc test_remove_inferiors { } {
     global binfile
 
-    clean_restart ${binfile}
+    clean_restart ${::testfile}
 
     # Add another inferior and switch to it.
     add_inferior 2 "add second inferior"

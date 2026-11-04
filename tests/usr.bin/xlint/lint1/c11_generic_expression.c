@@ -1,4 +1,4 @@
-/*	$NetBSD: c11_generic_expression.c,v 1.19 2023/08/06 19:44:50 rillig Exp $	*/
+/*	$NetBSD: c11_generic_expression.c,v 1.19.2.1 2026/11/04 23:28:26 perseant Exp $	*/
 # 3 "c11_generic_expression.c"
 
 /* lint1-extra-flags: -X 351 */
@@ -100,7 +100,7 @@ primary_expression(void)
 }
 
 /*
- * The types don't match, therefore build_generic_selection returns NULL,
+ * The types don't match, therefore the _Generic selection evaluates to NULL,
  * which is then silently ignored by init_expr.  This situation is already
  * covered by the compilers, so there is no need for lint to double-check it.
  */
@@ -108,3 +108,89 @@ const char *x = _Generic(
     1ULL + 1.0f,
     int: 1
 );
+
+// In C11 6.5.2.1, type qualifiers were not required to be removed.
+// C23 6.5.2.1 added that requirement.
+void
+type_conversions(const char *str)
+{
+	int array[4] = { 0, 1, 2, 3 };
+
+	// Type qualifiers are removed in lvalues.
+	x = _Generic(*str,
+		char: str,
+		default: primary_expression
+	);
+	// Type qualifiers are ignored in rvalues.
+	x = _Generic(((const unsigned char)str[2]),
+		unsigned char: str
+	);
+	// Functions are converted to a function pointer.
+	x = _Generic(type_conversions,
+		void(*)(const char *): str,
+		default: primary_expression
+	);
+	// Arrays are converted to the corresponding pointer.
+	x = _Generic(array,
+		int *: str,
+		default: primary_expression
+	);
+}
+
+
+void
+skip_blank(const char *p)
+{
+	static const unsigned short *_ctype_tab_;
+
+	while (_Generic(
+	    p[1 / 0],
+	    unsigned char: (_ctype_tab_ + 1)[*p] & 0x0200,
+	    int: (_ctype_tab_ + 1)[*p] & 0x0200
+	))
+		p++;
+}
+
+const char *
+evaluation_mode(void)
+{
+	return _Generic(
+	    0,
+
+	    // Only parse since 'double' does not match 'int'.
+	    double: 1 / 0,
+
+	    int: "matched",
+
+	    // Only parse since 'const char *' does not match 'int'.
+	    // Plus, 'int' already matched in the previous branch.
+	    const char *: 1 / 0,
+
+	    // Only parse since a previous branch already matched,
+	    // so the fallback branch is not used.
+	    default: 1 / 0
+	);
+}
+
+const char *
+evaluation_mode_early_default(void)
+{
+	return _Generic(
+	    0,
+
+	    // Lint decides at parse time whether it fully evaluates the
+	    // branch or only parses it. Since the default branch comes
+	    // first, it is not yet known whether any of the other branches
+	    // will match, so evaluate it.
+	    /* expect+1: error: division by 0 [139] */
+	    default: 1 / 0,
+
+	    // Only parse since 'double' does not match 'int'.
+	    double: 1 / 0,
+
+	    int: "matched",
+
+	    // Only parse since 'const char *' does not match 'int'.
+	    const char *: 1 / 0
+	);
+}

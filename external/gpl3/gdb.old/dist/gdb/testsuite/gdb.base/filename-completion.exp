@@ -1,0 +1,522 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests for filename completion.  Create a directory tree on the test
+# machine and try completing filenames within the tree.
+
+# Some tests rely on setting the TERM environment variable.  Don't try
+# to run on remote hosts in case the environment change is not visible.
+require {!is_remote host}
+
+load_lib completion-support.exp
+
+# Setup a directory tree in which completion tests can be run.  The
+# structure is:
+#
+# root/			[ DIRECTORY ]
+#   aaa/		[ DIRECTORY ]
+#     aa bb		[ FILE ]
+#     aa cc		[ FILE ]
+#   aaa/		[ DIRECTORY ]
+#   bb1/		[ DIRECTORY ]
+#   bb2/		[ DIRECTORY ]
+#     dir 1/		[ DIRECTORY ]
+#       unique file	[ FILE ]
+#     dir 2/		[ DIRECTORY ]
+#       file 1		[ FILE ]
+#       file 2		[ FILE ]
+#   cc1/		[ DIRECTORY ]
+#   cc2			[ FILE ]
+proc setup_directory_tree {} {
+    set root [standard_output_file "root"]
+
+    remote_exec host "mkdir -p ${root}"
+    remote_exec host "mkdir -p ${root}/aaa"
+    remote_exec host "mkdir -p ${root}/bb1"
+    remote_exec host "mkdir -p ${root}/bb2"
+    remote_exec host "mkdir -p ${root}/cc1"
+    remote_exec host "touch ${root}/cc2"
+    remote_exec host "touch \"${root}/aaa/aa bb\""
+    remote_exec host "touch \"${root}/aaa/aa cc\""
+    remote_exec host "mkdir -p \"${root}/bb2/dir 1\""
+    remote_exec host "mkdir -p \"${root}/bb2/dir 2\""
+    remote_exec host "touch \"${root}/bb2/dir 1/unique file\""
+    remote_exec host "touch \"${root}/bb2/dir 2/file 1\""
+    remote_exec host "touch \"${root}/bb2/dir 2/file 2\""
+
+    remote_exec host "touch \"${root}/bb1/aa\\\"bb\""
+    remote_exec host "touch \"${root}/bb1/aa'bb\""
+
+    return $root
+}
+
+# This proc started as a copy of test_gdb_complete_multiple, however, this
+# version does some extra work.  See the original test_gdb_complete_multiple
+# for a description of all the arguments.
+#
+# When using the 'complete' command with filenames, GDB will add a trailing
+# quote for filenames, and a trailing "/" for directory names.  As the
+# trailing "/" is also added in the tab-completion output the
+# COMPLETION_LIST will include the "/" character, but the trailing quote is
+# only added when using the 'complete' command.
+#
+# Pass the trailing quote will be passed as END_QUOTE_CHAR, this proc will
+# run the tab completion test, and will then add the trailing quote to those
+# entries in COMPLETION_LIST that don't have a trailing "/" before running
+# the 'complete' command test.
+proc test_gdb_complete_filename_multiple {
+  cmd_prefix completion_word add_completed_line completion_list
+  {start_quote_char ""} {end_quote_char ""} {max_completions false}
+  {testname ""}
+} {
+    if { [readline_is_used] } {
+	test_gdb_complete_tab_multiple "$cmd_prefix$completion_word" \
+	    $add_completed_line $completion_list $max_completions $testname
+    }
+
+    if { $start_quote_char eq "" } {
+	set updated_completion_list {}
+
+	foreach entry $completion_list {
+	    # If ENTRY is quoted with double quotes, then any double
+	    # quotes within the entry need to be escaped.
+	    if { $end_quote_char eq "\"" } {
+		regsub -all "\"" $entry "\\\"" entry
+	    }
+
+	    if { $end_quote_char eq "" } {
+		regsub -all " " $entry "\\ " entry
+		regsub -all "\"" $entry "\\\"" entry
+		regsub -all "'" $entry "\\'" entry
+	    }
+
+	    if {[string range $entry end end] ne "/"} {
+		set entry $entry$end_quote_char
+	    }
+	    lappend updated_completion_list $entry
+	}
+
+	set completion_list $updated_completion_list
+	set end_quote_char ""
+    }
+
+    test_gdb_complete_cmd_multiple $cmd_prefix $completion_word \
+	$completion_list $start_quote_char $end_quote_char $max_completions \
+	$testname
+}
+
+# Helper proc.  Returns a string containing the escape sequence to move the
+# cursor COUNT characters to the left.  There's no sanity checking performed
+# on COUNT, so the user of this proc must ensure there are more than COUNT
+# characters on the current line.
+proc c_left { count } {
+    string repeat "\033\[D" $count
+}
+
+# This proc is based off of test_gdb_complete_tab_multiple in
+# completion-support.exp library.  This proc however tests completing a
+# filename in the middle of a command line.
+#
+# INPUT_LINE is the line to complete, BACK_COUNT is the number of characters
+# to move the cursor left before sending tab to complete the line.
+# ADD_COMPLETED_LINE is what we expect to be unconditionally added the first
+# time tab is sent.  On additional tabs COMPLETION_LIST will be displayed.
+# TESTNAME is used as expected.
+proc test_tab_complete_within_line_multiple { input_line back_count \
+						  add_completed_line \
+						  completion_list \
+						  testname } {
+    global gdb_prompt
+
+    # After displaying the completion list the line will be reprinted, but
+    # now with ADD_COMPLETED_LINE inserted.  Build the regexp to match
+    # against this expanded line.  The new content will be inserted
+    # BACK_COUNT character from the end of the line.
+    set expanded_line \
+	[join [list \
+		   [string range $input_line 0 end-$back_count] \
+		   ${add_completed_line} \
+		   [string range $input_line end-[expr $back_count - 1] end]] \
+	     ""]
+    set expanded_line_re [string_to_regexp $expanded_line]
+
+    # Convert input arguments into regexp.
+    set input_line_re [string_to_regexp $input_line]
+    set add_completed_line_re [string_to_regexp $add_completed_line]
+    set completion_list_re [make_tab_completion_list_re $completion_list]
+
+    # Build a regexp to match the line after the first tab.  This
+    # regexp stats with the input line and then moves the cursor
+    # backwards BACK_COUNT characters.  The new content is emitted
+    # followed by the tail of the line being re-emitted.  The cursor
+    # is then moved backwards again to the correct position within the
+    # line.
+    set after_tab_re "^$input_line_re"
+    set after_tab_re "$after_tab_re\\\x08{$back_count}"
+    set after_tab_re "$after_tab_re${completion::bell_re}"
+    set tail [string range $input_line end-[expr $back_count - 1] end]
+    set after_tab_re "$after_tab_re$add_completed_line_re"
+    set after_tab_re "$after_tab_re[string_to_regexp $tail]"
+    set after_tab_re "$after_tab_re\\\x08{$back_count}"
+
+    send_gdb "$input_line[c_left $back_count]\t"
+    gdb_test_multiple "" "$testname (first tab)" {
+	-re "$after_tab_re" {
+	    send_gdb "\t"
+	    # If we auto-completed to an ambiguous prefix, we need an
+	    # extra tab to show the matches list.
+	    if {$add_completed_line != ""} {
+		send_gdb "\t"
+		set maybe_bell ${completion::bell_re}
+	    } else {
+		set maybe_bell ""
+	    }
+	    gdb_test_multiple "" "$testname (second tab)" {
+		-re "^${maybe_bell}\r\n$completion_list_re\r\n$gdb_prompt " {
+		    gdb_test_multiple "" "$testname (second tab)" {
+			-re "^$expanded_line_re\\\x08{$back_count}$" {
+			    pass $gdb_test_name
+			}
+		    }
+		}
+		-re "${maybe_bell}\r\n.+\r\n$gdb_prompt $" {
+		    fail $gdb_test_name
+		}
+	    }
+	}
+    }
+
+    clear_input_line $testname
+}
+
+# Wrapper around test_gdb_complete_tab_unique to test completing a unique
+# item in the middle of a line.  INPUT_LINE is the line to complete.
+# BACK_COUNT is the number of characters to move left within INPUT_LINE
+# before sending tab to perform completion.  INSERT_STR is what we expect to
+# see inserted by the completion engine in GDB.
+proc test_tab_complete_within_line_unique { input_line back_count insert_str } {
+    # Build a regexp for the line after the cursor has moved
+    # BACK_COUNT characters back and tab has been sent.  The '\\\x08'
+    # matches a single backward (left) motion, this is repeated
+    # BACK_COUNT times.  After this readline emits the new characters
+    # and then re-emits the tail of the original line. The new content
+    # will overwrite the original output on the terminal.  Finally,
+    # control characters are emitted to move the cursor back to the
+    # correct place in the middle of the line.
+    set re [string_to_regexp $input_line]
+    set re $re\\\x08{$back_count}
+    set re $re[string_to_regexp $insert_str]
+    set tail [string range $input_line end-[expr $back_count - 1] end]
+    set re $re[string_to_regexp $tail]
+    set re $re\\\x08{$back_count}
+
+    # We can now perform the tab-completion, we check for either of
+    # the possible output regexp patterns.
+    test_gdb_complete_tab_unique \
+	"${input_line}[c_left $back_count]" \
+	"$re" \
+	"" \
+	"complete unique file within command line"
+}
+
+
+# Run filename completion tests for those command that accept quoting and
+# escaping of the filename argument.  CMD is the initial part of the command
+# line, paths to complete will be added after CMD.
+#
+# ROOT is the base directory as returned from setup_directory_tree, though,
+# if ROOT is a sub-directory of the user's home directory ROOT might have
+# been modified to replace the $HOME prefix with a single "~" character.
+proc run_quoting_and_escaping_tests_1 { root cmd } {
+    gdb_start
+
+    # Completing 'thread apply all ...' commands uses a custom word
+    # point.  At one point we had a bug where doing this would break
+    # completion of quoted filenames that contained white space.
+    test_gdb_complete_unique "thread apply all hel" \
+	"thread apply all help" " " false \
+	"complete a 'thread apply all' command"
+
+    foreach_with_prefix qc [list "" "'" "\""] {
+	test_gdb_complete_none "$cmd ${qc}${root}/xx" \
+	    "expand a non-existent filename"
+
+	test_gdb_complete_unique "$cmd ${qc}${root}/a" \
+	    "$cmd ${qc}${root}/aaa/" "" false \
+	    "expand a unique directory name"
+
+	test_gdb_complete_unique "$cmd ${qc}${root}/cc2" \
+	    "$cmd ${qc}${root}/cc2${qc}" " " false \
+	    "expand a unique filename"
+
+	test_gdb_complete_filename_multiple "$cmd ${qc}${root}/" \
+	    "b" "b" {
+		"bb1/"
+		"bb2/"
+	    } "" "${qc}" false \
+	    "expand multiple directory names"
+
+	test_gdb_complete_filename_multiple "$cmd ${qc}${root}/" \
+	    "c" "c" {
+		"cc1/"
+		"cc2"
+	    } "" "${qc}" false \
+	    "expand mixed directory and file names"
+
+	if { $qc ne "" } {
+	    set sp " "
+	} else {
+	    set sp "\\ "
+	}
+
+	if { $qc eq "'" } {
+	    set dq "\""
+	} else {
+	    set dq "\\\""
+	}
+
+	test_gdb_complete_unique "${cmd} ${qc}${root}/bb2/dir${sp}1/" \
+	    "${cmd} ${qc}${root}/bb2/dir${sp}1/unique${sp}file${qc}" " " \
+	    false \
+	    "expand a unique file name in a directory containing a space"
+
+	test_gdb_complete_filename_multiple "$cmd ${qc}${root}/bb2/" \
+	    "d" "ir${sp}" {
+		"dir 1/"
+		"dir 2/"
+	    } "" "${qc}" false \
+	    "expand multiple directory names containing spaces"
+
+	test_gdb_complete_filename_multiple "${cmd} ${qc}${root}/bb2/dir${sp}2/" \
+	    "f" "ile${sp}" {
+		"file 1"
+		"file 2"
+	    } "" "${qc}" false \
+	    "expand contents of a directory containing a space"
+
+	test_gdb_complete_filename_multiple "$cmd ${qc}${root}/aaa/" \
+	    "a" "a${sp}" {
+		"aa bb"
+		"aa cc"
+	    } "" "${qc}" false \
+	    "expand filenames containing spaces"
+
+	test_gdb_complete_filename_multiple "$cmd ${qc}${root}/bb1/" \
+	    "a" "a" {
+		"aa\"bb"
+		"aa'bb"
+	    } "" "${qc}" false \
+	    "expand filenames containing quotes"
+
+	test_gdb_complete_unique "$cmd ${qc}${root}/bb1/aa${dq}" \
+	    "$cmd ${qc}${root}/bb1/aa${dq}bb${qc}" " " false \
+	    "expand unique filename containing double quotes"
+
+	# It is not possible to include a single quote character
+	# within a single quoted string.  However, GDB does not do
+	# anything smart if a user tries to do this.  Avoid testing
+	# this case.  Maybe in the future we'll figure a way to avoid
+	# this situation.
+	if { $qc ne "'" } {
+	    if { $qc eq "" } {
+		set sq "\\'"
+	    } else {
+		set sq "'"
+	    }
+
+	    test_gdb_complete_unique "$cmd ${qc}${root}/bb1/aa${sq}" \
+		"$cmd ${qc}${root}/bb1/aa${sq}bb${qc}" " " false \
+		"expand unique filename containing single quote"
+	}
+    }
+
+    gdb_exit
+}
+
+# Tests for completing a filename in the middle of a command line.  This
+# represents a user typing out a command line then moving the cursor left
+# (e.g. with the left arrow key), editing a filename argument, and then
+# using tab completion to try and complete the filename even though there is
+# other content on the command line after the filename.
+proc run_mid_line_completion_tests { root cmd } {
+    # The mid-line completion tests are sensitive to the control
+    # sequences which are used to insert new text into the middle of a
+    # line.  Force a specific, simple TERM setting so that we can
+    # predict the control sequences that will be emitted.
+    save_vars { ::env(TERM) } {
+	setenv TERM dumb
+
+	gdb_start
+
+	test_tab_complete_within_line_unique \
+	    "$cmd \"$root/bb2/dir 1/unique fi \"xxx\"" 6 "le\""
+
+	test_tab_complete_within_line_multiple \
+	    "$cmd \"$root/aaa/a \"xxx\"" 6 "a " \
+	    [list "aa bb" "aa cc"] \
+	    "complete filename mid-line with multiple possibilities"
+
+	gdb_exit
+    }
+}
+
+# Run filename completion tests for those command that accept quoting and
+# escaping of the filename argument.
+#
+# ROOT is the base directory as returned from setup_directory_tree, though,
+# if ROOT is a sub-directory of the user's home directory ROOT might have
+# been modified to replace the $HOME prefix with a single "~" character.
+proc run_quoting_and_escaping_tests { root } {
+    # Test all the commands which allow quoting of filenames, and
+    # which require whitespace to be escaped in unquoted filenames.
+    foreach_with_prefix cmd { file exec-file symbol-file add-symbol-file \
+				  remove-symbol-file \
+				  "target core" "target exec" "target tfile" \
+				  "maint print c-tdesc" "compile file" \
+				  "save gdb-index" "save gdb-index -dwarf-5" } {
+	# Try each test placing the filename as the first argument
+	# then again with a quoted string immediately after the
+	# command.  This works because the filename completer will
+	# complete any number of filenames, even if the command only
+	# takes a single filename.
+	foreach_with_prefix filler { "" " \"xxx\"" " 'zzz'" " yyy"} {
+	    run_quoting_and_escaping_tests_1 $root "$cmd$filler"
+	}
+
+	run_mid_line_completion_tests $root $cmd
+    }
+
+    foreach sub_cmd { require-delimiter unknown-is-error unknown-is-operand } {
+	set cmd "maintenance test-options $sub_cmd -filename"
+	with_test_prefix "cmd=$cmd" {
+	    run_quoting_and_escaping_tests_1 $root $cmd
+	}
+    }
+}
+
+# Helper for run_unquoted_tests.  ROOT is the root directory as setup
+# by setup_directory_tree.  CMD is the GDB command to test.  PREFIX is
+# a possible prefix filename to prepend to the filename being
+# completed.
+proc run_unquoted_tests_core { root cmd { prefix "" } } {
+    gdb_start
+
+    if { $prefix != "" } {
+	# Platform specific path separator (':' on UNIX, ';' on MS-DOS).
+	set pathsep $::tcl_platform(pathSeparator)
+
+	set prefix ${prefix}${pathsep}
+    }
+
+    test_gdb_complete_none "$cmd ${prefix}${root}${root}/xx" \
+	"expand a non-existent filename"
+
+    test_gdb_complete_unique "$cmd ${prefix}${root}/a" \
+	"$cmd ${prefix}${root}/aaa/" "" false \
+	"expand a unique filename"
+
+    test_gdb_complete_unique "$cmd ${prefix}${root}/bb2/dir 1/uni" \
+	"$cmd ${prefix}${root}/bb2/dir 1/unique file" " " false \
+	"expand a unique filename containing whitespace"
+
+    test_gdb_complete_multiple "$cmd ${prefix}${root}/" \
+	"b" "b" {
+	    "bb1/"
+	    "bb2/"
+	} "" "" false \
+	"expand multiple directory names"
+
+    test_gdb_complete_multiple "$cmd ${prefix}${root}/" \
+	"c" "c" {
+	    "cc1/"
+	    "cc2"
+	} "" "" false \
+	"expand mixed directory and file names"
+
+    test_gdb_complete_multiple "$cmd ${prefix}${root}/aaa/" \
+	"a" "a " {
+	    "aa bb"
+	    "aa cc"
+	} "" "" false \
+	"expand filenames containing spaces"
+
+    test_gdb_complete_multiple "$cmd ${prefix}${root}/bb2/dir 2/" \
+	"fi" "le " {
+	    "file 1"
+	    "file 2"
+	} "" "" false \
+	"expand filenames containing spaces in path"
+
+    gdb_exit
+}
+
+
+# Run filename completion tests for a sample of commands that take an
+# unquoted, unescaped filename as an argument.  Only a sample of commands
+# are (currently) tested as there's a lot of commands that accept this style
+# of filename argument.
+#
+# ROOT is the base directory as returned from setup_directory_tree, though,
+# if ROOT is a sub-directory of the user's home directory ROOT might have
+# been modified to replace the $HOME prefix with a single "~" character.
+proc run_unquoted_tests { root } {
+    # Test all the commands which allow quoting of filenames, and
+    # which require whitespace to be escaped in unquoted filenames.
+    foreach_with_prefix cmd { "set logging file" "add-auto-load-safe-path" } {
+	run_unquoted_tests_core $root $cmd
+    }
+
+    foreach prefix [list \
+			"${root}/bb2/dir 1" \
+			"${root}/bb2/dir 1/unique file" \
+			"${root}/cc1" \
+			"${root}/cc2"] {
+
+	# Don't use the full path in the test name, just use the
+	# part after the ROOT directory.
+	set id [string range $prefix [string length ${root}] end]
+	with_test_prefix "prefix=$id" {
+	    foreach_with_prefix cmd { "add-auto-load-safe-path" "path" } {
+		run_unquoted_tests_core $root $cmd $prefix
+	    }
+	}
+    }
+}
+
+set root [setup_directory_tree]
+
+run_quoting_and_escaping_tests $root
+run_unquoted_tests $root
+
+# This test relies on using the $HOME directory.  We could make this
+# work for remote hosts, but right now, this isn't supported.
+if {![is_remote host]} {
+
+    # The users home directory.
+    set home $::env(HOME)
+
+    # Check if ROOT is within the $HOME directory.  If it is then we can
+    # rerun the tests, but replacing the $HOME part with "~".
+    if { [string compare -length [string length $home] $root $home] == 0 } {
+	# Convert the $HOME prefix in to ~.
+	set tilde_root "~[string range $root [string length $home] end]"
+
+	with_test_prefix "with tilde" {
+	    # And rerun the tests.
+	    run_quoting_and_escaping_tests $tilde_root
+	    run_unquoted_tests $tilde_root
+	}
+    }
+}

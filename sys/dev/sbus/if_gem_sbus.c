@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $	*/
+/*	$NetBSD: if_gem_sbus.c,v 1.14.10.1 2026/11/04 23:22:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.14 2022/09/25 18:03:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_sbus.c,v 1.14.10.1 2026/11/04 23:22:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 	struct gem_sbus_softc *gsc = device_private(self);
 	struct gem_softc *sc = &gsc->gsc_gem;
 	uint8_t enaddr[ETHER_ADDR_LEN];
+	uint32_t sbus_cfg;
 
 	sc->sc_dev = self;
 
@@ -96,6 +97,11 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 	if (sa->sa_nreg < 2) {
 		printf("%s: only %d register sets\n",
 			device_xname(self), sa->sa_nreg);
+		return;
+	}
+
+	if (! ether_getaddr(self, enaddr)) {
+		aprint_error(": unable to get MAC address\n");
 		return;
 	}
 
@@ -122,7 +128,6 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "cannot map registers\n");
 		return;
 	}
-	prom_getether(sa->sa_node, enaddr);
 
 	if (!strcmp("serdes", prom_getpropstring(sa->sa_node, "shared-pins")))
 		sc->sc_flags |= GEM_SERDES;
@@ -134,8 +139,14 @@ gemattach_sbus(device_t parent, device_t self, void *aux)
 	 */
 	(void) bus_space_read_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_RESET);
 	delay(100);
-	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG,
-	    GEM_SBUS_CFG_BSIZE128|GEM_SBUS_CFG_PARITY|GEM_SBUS_CFG_BMODE64);
+
+#if defined(__sparc64__)
+	sbus_cfg = GEM_SBUS_CFG_BSIZE128 | GEM_SBUS_CFG_PARITY |
+	    GEM_SBUS_CFG_BMODE64;
+#else
+	sbus_cfg = GEM_SBUS_CFG_BSIZE64;
+#endif
+	bus_space_write_4(sa->sa_bustag, sc->sc_h2, GEM_SBUS_CONFIG, sbus_cfg);
 	sc->sc_chiprev = bus_space_read_4(sa->sa_bustag, sc->sc_h2,
 	    GEM_SBUS_REVISION);
 

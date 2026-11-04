@@ -1,4 +1,4 @@
-#   Copyright 2016-2024 Free Software Foundation, Inc.
+#   Copyright 2016-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,10 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-standard_testfile
-
 # Test a thread is doing step-over a syscall instruction which is exit,
 # and GDBserver should cleanup its state of step-over properly.
+
+# The testcase relies on follow-fork-mode child.
+require allow_fork_tests
+
+standard_testfile
 
 set syscall_insn ""
 

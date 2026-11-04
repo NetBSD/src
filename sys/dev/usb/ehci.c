@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.325.2.1 2025/08/02 05:57:04 perseant Exp $ */
+/*	$NetBSD: ehci.c,v 1.325.2.2 2026/11/04 23:22:35 perseant Exp $ */
 
 /*
  * Copyright (c) 2004-2012,2016,2020 The NetBSD Foundation, Inc.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.325.2.1 2025/08/02 05:57:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.325.2.2 2026/11/04 23:22:35 perseant Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3315,7 +3315,7 @@ ehci_alloc_sitd(ehci_softc_t *sc)
 		 */
 		int err = usb_allocmem(sc->sc_dmatag,
 		    EHCI_SITD_SIZE * EHCI_SITD_CHUNK,
-		    EHCI_PAGE_SIZE, USBMALLOC_COHERENT, &dma);
+		    EHCI_PAGE_SIZE, 0, &dma);
 
 		if (err) {
 			DPRINTF("alloc returned %jd", err, 0, 0, 0);
@@ -3822,10 +3822,10 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 	usb_syncmem(&setup->dma, setup->offs, sizeof(*setup->qtd),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	 usb_syncmem(&status->dma, status->offs, sizeof(*status->qtd),
-	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
-
 	KASSERT(status->qtd->qtd_status & htole32(EHCI_QTD_TOGGLE_MASK));
+
+	usb_syncmem(&status->dma, status->offs, sizeof(*status->qtd),
+	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
 #ifdef EHCI_DEBUG
 	DPRINTFN(5, "--- dump start ---", 0, 0, 0, 0);
@@ -3836,6 +3836,20 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, setup);
+
+	/*
+	 * Workaround SB600 first address-0 control transfer failure after
+	 * cold boot.  Reload ASYNCLISTADDR after linking the qTD chan so
+	 * the controller resumes walking the asyn list properly.
+	 * See PR/57359 for details.
+	 */
+	if ((sc->sc_flags & EHCIF_SB600_ASYNCLIST_RELOAD) != 0 &&
+	    epipe->pipe.up_dev->ud_addr == 0) {
+		sc->sc_flags &= ~EHCIF_SB600_ASYNCLIST_RELOAD;
+		EOWRITE4(sc, EHCI_ASYNCLISTADDR,
+		    sc->sc_async_head->physaddr | EHCI_LINK_QH);
+	}
+
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	usbd_xfer_schedule_timeout(xfer);

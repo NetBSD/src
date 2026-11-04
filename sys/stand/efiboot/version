@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.31.10.1 2025/08/02 05:57:53 perseant Exp $
+$NetBSD: version,v 1.31.10.2 2026/11/04 23:28:04 perseant Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -36,3 +36,4 @@ is taken as the current.
 2.13:	Add Arm RT support and change Arm64 (aarch64) RT VAs.
 2.14:	Arm64: check cpu support for big endian kernel.
 2.15:	Arm64: Use 1:1 PA to VA mappings for RT services.
+2.16:	Arm: disable RT support.

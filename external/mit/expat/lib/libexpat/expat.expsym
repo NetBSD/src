@@ -27,6 +27,8 @@ XML_ParserCreate_MM
 XML_ParserFree
 XML_ParserReset
 XML_ResumeParser
+XML_SetAllocTrackerActivationThreshold
+XML_SetAllocTrackerMaximumAmplification
 XML_SetAttlistDeclHandler
 XML_SetBase
 XML_SetBillionLaughsAttackProtectionActivationThreshold
@@ -48,6 +50,7 @@ XML_SetEntityDeclHandler
 XML_SetExternalEntityRefHandler
 XML_SetExternalEntityRefHandlerArg
 XML_SetHashSalt
+XML_SetHashSalt16Bytes
 XML_SetNamespaceDeclHandler
 XML_SetNotStandaloneHandler
 XML_SetNotationDeclHandler
@@ -87,3 +90,8 @@ g_reparseDeferralEnabledDefault
 testingAccountingGetCountBytesDirect
 testingAccountingGetCountBytesIndirect
 unsignedCharToPrintable
+writeRandomBytes_arc4random
+writeRandomBytes_arc4random_buf
+writeRandomBytes_dev_urandom
+writeRandomBytes_getentropy
+writeRandomBytes_getrandom_nonblock

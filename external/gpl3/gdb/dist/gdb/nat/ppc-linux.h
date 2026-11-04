@@ -1,4 +1,4 @@
-/* Copyright (C) 1995-2024 Free Software Foundation, Inc.
+/* Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_PPC_LINUX_H
-#define NAT_PPC_LINUX_H
+#ifndef GDB_NAT_PPC_LINUX_H
+#define GDB_NAT_PPC_LINUX_H
 
 #include <asm/ptrace.h>
 #include <asm/cputable.h>
@@ -162,4 +162,4 @@
 /* Return the wordsize of the target, either 4 or 8 bytes.  */
 int ppc_linux_target_wordsize (int tid);
 
-#endif /* NAT_PPC_LINUX_H */
+#endif /* GDB_NAT_PPC_LINUX_H */

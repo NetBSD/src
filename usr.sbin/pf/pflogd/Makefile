@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2011/12/21 22:18:43 christos Exp $
+#	$NetBSD: Makefile,v 1.6.52.1 2026/11/04 23:28:55 perseant Exp $
 #	$OpenBSD: Makefile,v 1.6 2003/11/20 23:23:09 avsm Exp $
 
 .include <bsd.own.mk>		# for MKDYNAMICROOT definition

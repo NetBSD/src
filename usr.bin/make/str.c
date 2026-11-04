@@ -1,4 +1,4 @@
-/*	$NetBSD: str.c,v 1.103.2.1 2025/08/02 05:58:29 perseant Exp $	*/
+/*	$NetBSD: str.c,v 1.103.2.2 2026/11/04 23:28:37 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990, 1993
@@ -71,7 +71,7 @@
 #include "make.h"
 
 /*	"@(#)str.c	5.8 (Berkeley) 6/1/90"	*/
-MAKE_RCSID("$NetBSD: str.c,v 1.103.2.1 2025/08/02 05:58:29 perseant Exp $");
+MAKE_RCSID("$NetBSD: str.c,v 1.103.2.2 2026/11/04 23:28:37 perseant Exp $");
 
 
 static HashTable interned_strings;
@@ -203,7 +203,7 @@ Substring_Words(const char *str, bool expand)
 			words[words_len++] =
 			    Substring_Init(word_start, word_end - 1);
 			word_start = NULL;
-			if (ch == '\n' || ch == '\0') {
+			if (ch == '\0') {
 				if (expand && inquote != '\0') {
 					SubstringWords res;
 

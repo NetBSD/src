@@ -37,7 +37,7 @@ yes | no) ;;
 esac])
 
 AC_ARG_ENABLE([example-sims],
-	      [AC_HELP_STRING([--enable-example-sims],
+	      [AS_HELP_STRING([--enable-example-sims],
 			      [enable example GNU simulators])])
 
 AC_ARG_ENABLE(targets,
@@ -96,7 +96,6 @@ if test "${enable_sim}" != no; then
   do
     m4_map([SIM_TARGET], [
       [[aarch64*-*-*], [aarch64]],
-      [[arm*-*-*], [arm]],
       [[avr*-*-*], [avr]],
       [[bfin-*-*], [bfin]],
       [[bpf-*-*], [bpf]],

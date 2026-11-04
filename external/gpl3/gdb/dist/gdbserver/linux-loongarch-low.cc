@@ -1,6 +1,6 @@
 /* GNU/Linux/LoongArch specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,9 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "linux-low.h"
+#include "nat/loongarch-hw-point.h"
+#include "nat/loongarch-linux.h"
+#include "nat/loongarch-linux-hw-point.h"
 #include "tdesc.h"
 #include "elf/common.h"
 #include "arch/loongarch.h"
@@ -33,6 +36,8 @@ public:
   int breakpoint_kind_from_pc (CORE_ADDR *pcptr) override;
 
   const gdb_byte *sw_breakpoint_from_kind (int kind, int *size) override;
+
+  bool supports_z_point_type (char z_type) override;
 
 protected:
 
@@ -51,6 +56,28 @@ protected:
   void low_set_pc (regcache *regcache, CORE_ADDR newpc) override;
 
   bool low_breakpoint_at (CORE_ADDR pc) override;
+
+  int low_insert_point (raw_bkpt_type type, CORE_ADDR addr,
+			int size, raw_breakpoint *bp) override;
+
+  int low_remove_point (raw_bkpt_type type, CORE_ADDR addr,
+			int size, raw_breakpoint *bp) override;
+
+  bool low_stopped_by_watchpoint () override;
+
+  CORE_ADDR low_stopped_data_address () override;
+
+  arch_process_info *low_new_process () override;
+
+  void low_delete_process (arch_process_info *info) override;
+
+  void low_new_thread (lwp_info *) override;
+
+  void low_delete_thread (arch_lwp_info *) override;
+
+  void low_new_fork (process_info *parent, process_info *child) override;
+
+  void low_prepare_to_resume (lwp_info *lwp) override;
 };
 
 /* The singleton target ops object.  */
@@ -71,6 +98,19 @@ loongarch_target::low_cannot_store_register (int regno)
 			  "is not implemented by the target");
 }
 
+void
+loongarch_target::low_prepare_to_resume (lwp_info *lwp)
+{
+  loongarch_linux_prepare_to_resume (lwp);
+}
+
+/* Per-process arch-specific data we want to keep.  */
+
+struct arch_process_info
+{
+  struct loongarch_debug_reg_state debug_reg_state;
+};
+
 /* Implementation of linux target ops method "low_arch_setup".  */
 
 void
@@ -85,10 +125,11 @@ loongarch_target::low_arch_setup ()
 
   if (tdesc->expedite_regs.empty ())
     {
-      init_target_desc (tdesc.get (), expedite_regs);
+      init_target_desc (tdesc.get (), expedite_regs, GDB_OSABI_LINUX);
       gdb_assert (!tdesc->expedite_regs.empty ());
     }
   current_process ()->tdesc = tdesc.release ();
+  loongarch_linux_get_debug_reg_capacity (current_thread->id.lwp ());
 }
 
 /* Collect GPRs from REGCACHE into BUF.  */
@@ -379,6 +420,229 @@ loongarch_target::low_breakpoint_at (CORE_ADDR pc)
     return true;
 
   return false;
+}
+
+static void
+loongarch_init_debug_reg_state (struct loongarch_debug_reg_state *state)
+{
+  int i;
+
+  for (i = 0; i < LOONGARCH_HBP_MAX_NUM; ++i)
+    {
+      state->dr_addr_bp[i] = 0;
+      state->dr_ctrl_bp[i] = 0;
+      state->dr_ref_count_bp[i] = 0;
+    }
+
+  for (i = 0; i < LOONGARCH_HWP_MAX_NUM; ++i)
+    {
+      state->dr_addr_wp[i] = 0;
+      state->dr_ctrl_wp[i] = 0;
+      state->dr_ref_count_wp[i] = 0;
+    }
+}
+
+/* See nat/loongarch-linux-hw-point.h.  */
+
+struct loongarch_debug_reg_state *
+loongarch_get_debug_reg_state (pid_t pid)
+{
+  struct process_info *proc = find_process_pid (pid);
+
+  return &proc->priv->arch_private->debug_reg_state;
+}
+
+/* Implementation of target ops method "supports_z_point_type".  */
+
+bool
+loongarch_target::supports_z_point_type (char z_type)
+{
+  switch (z_type)
+    {
+    case Z_PACKET_SW_BP:
+    case Z_PACKET_HW_BP:
+    case Z_PACKET_WRITE_WP:
+    case Z_PACKET_READ_WP:
+    case Z_PACKET_ACCESS_WP:
+      return true;
+    default:
+      return false;
+    }
+}
+
+/* Implementation of linux target ops method "low_insert_point".
+
+   It actually only records the info of the to-be-inserted bp/wp;
+   the actual insertion will happen when threads are resumed.  */
+
+int
+loongarch_target::low_insert_point (raw_bkpt_type type, CORE_ADDR addr,
+				    int len, raw_breakpoint *bp)
+{
+  int ret;
+  enum target_hw_bp_type targ_type;
+  struct loongarch_debug_reg_state *state
+    = loongarch_get_debug_reg_state (current_thread->id.pid ());
+
+  if (show_debug_regs)
+    fprintf (stderr, "insert_point on entry (addr=0x%08lx, len=%d)\n",
+	     (unsigned long) addr, len);
+
+  /* Determine the type from the raw breakpoint type.  */
+  targ_type = raw_bkpt_type_to_target_hw_bp_type (type);
+
+  if (targ_type != hw_execute)
+    {
+      if (loongarch_region_ok_for_watchpoint (addr, len))
+	ret = loongarch_handle_watchpoint (targ_type, addr, len,
+					   1 /* is_insert */,
+					   current_lwp_ptid (), state);
+      else
+	ret = -1;
+    }
+  else
+    {
+      ret = loongarch_handle_breakpoint (targ_type, addr, len,
+					 1 /* is_insert */, current_lwp_ptid (),
+					 state);
+    }
+
+  if (show_debug_regs)
+    loongarch_show_debug_reg_state (state, "insert_point", addr, len,
+				    targ_type);
+
+  return ret;
+}
+
+/* Implementation of linux target ops method "low_remove_point".
+
+   It actually only records the info of the to-be-removed bp/wp,
+   the actual removal will be done when threads are resumed.  */
+
+int
+loongarch_target::low_remove_point (raw_bkpt_type type, CORE_ADDR addr,
+				    int len, raw_breakpoint *bp)
+{
+  int ret;
+  enum target_hw_bp_type targ_type;
+  struct loongarch_debug_reg_state *state
+    = loongarch_get_debug_reg_state (current_thread->id.pid ());
+
+  if (show_debug_regs)
+    fprintf (stderr, "remove_point on entry (addr=0x%08lx, len=%d)\n",
+	     (unsigned long) addr, len);
+
+  /* Determine the type from the raw breakpoint type.  */
+  targ_type = raw_bkpt_type_to_target_hw_bp_type (type);
+
+  /* Set up state pointers.  */
+  if (targ_type != hw_execute)
+    ret =
+      loongarch_handle_watchpoint (targ_type, addr, len, 0 /* is_insert */,
+				   current_lwp_ptid (), state);
+  else
+    {
+      ret = loongarch_handle_breakpoint (targ_type, addr, len,
+					 0 /* is_insert */,  current_lwp_ptid (),
+					 state);
+    }
+
+  if (show_debug_regs)
+    loongarch_show_debug_reg_state (state, "remove_point", addr, len,
+				    targ_type);
+
+  return ret;
+}
+
+
+/* Implementation of linux target ops method "low_stopped_data_address".  */
+
+CORE_ADDR
+loongarch_target::low_stopped_data_address ()
+{
+  siginfo_t siginfo;
+  struct loongarch_debug_reg_state *state;
+  int pid = current_thread->id.lwp ();
+
+  /* Get the siginfo.  */
+  if (ptrace (PTRACE_GETSIGINFO, pid, NULL, &siginfo) != 0)
+    return (CORE_ADDR) 0;
+
+  /* Need to be a hardware breakpoint/watchpoint trap.  */
+  if (siginfo.si_signo != SIGTRAP
+      || (siginfo.si_code & 0xffff) != 0x0004 /* TRAP_HWBKPT */)
+    return (CORE_ADDR) 0;
+
+  /* Check if the address matches any watched address.  */
+  state = loongarch_get_debug_reg_state (current_thread->id.pid ());
+  CORE_ADDR result;
+  if (loongarch_stopped_data_address (state, (CORE_ADDR) siginfo.si_addr, &result))
+    return result;
+
+  return (CORE_ADDR) 0;
+}
+
+/* Implementation of linux target ops method "low_stopped_by_watchpoint".  */
+
+bool
+loongarch_target::low_stopped_by_watchpoint ()
+{
+  return (low_stopped_data_address () != 0);
+}
+
+/* Implementation of linux target ops method "low_new_process".  */
+
+arch_process_info *
+loongarch_target::low_new_process ()
+{
+  struct arch_process_info *info = XCNEW (struct arch_process_info);
+
+  loongarch_init_debug_reg_state (&info->debug_reg_state);
+
+  return info;
+}
+
+/* Implementation of linux target ops method "low_delete_process".  */
+
+void
+loongarch_target::low_delete_process (arch_process_info *info)
+{
+  xfree (info);
+}
+
+void
+loongarch_target::low_new_thread (lwp_info *lwp)
+{
+  loongarch_linux_new_thread (lwp);
+}
+
+void
+loongarch_target::low_delete_thread (arch_lwp_info *arch_lwp)
+{
+  loongarch_linux_delete_thread (arch_lwp);
+}
+
+/* Implementation of linux target ops method "low_new_fork".  */
+
+void
+loongarch_target::low_new_fork (process_info *parent,
+			      process_info *child)
+{
+  /* These are allocated by linux_add_process.  */
+  gdb_assert (parent->priv != NULL
+	      && parent->priv->arch_private != NULL);
+  gdb_assert (child->priv != NULL
+	      && child->priv->arch_private != NULL);
+
+  /* GDB core assumes the child inherits the watchpoints/hw
+     breakpoints of the parent, and will remove them all from the
+     forked off process. Copy the debug registers mirrors into the
+     new process so that all breakpoints and watchpoints can be
+     removed together.  The debug registers mirror will become zeroed
+     in the end before detaching the forked off process, thus making
+     this compatible with older Linux kernels too.  */
+
+  *child->priv->arch_private = *parent->priv->arch_private;
 }
 
 /* The linux target ops object.  */

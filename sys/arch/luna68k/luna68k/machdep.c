@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.112.2.1 2026/11/04 23:20:49 perseant Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,11 +31,10 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112.2.1 2026/11/04 23:20:49 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
-#include "opt_compat_sunos.h"
 #include "opt_modular.h"
 #include "opt_panicbutton.h"
 #include "opt_m68k_arch.h"
@@ -55,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $"
 #include <sys/tty.h>
 #include <sys/mount.h>
 #include <sys/exec.h>
-#include <sys/exec_aout.h>		/* for MID_* */
 #include <sys/core.h>
 #include <sys/kauth.h>
 #include <sys/kcore.h>
@@ -83,6 +81,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $"
 #include <machine/pte.h>
 #include <machine/kcore.h>	/* XXX should be pulled in by sys/kcore.h */
 
+#include <m68k/seglist.h>
+
 #include <luna68k/dev/siottyvar.h>
 
 #include <dev/cons.h>
@@ -96,41 +96,19 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.112 2024/03/05 14:15:32 thorpej Exp $"
 
 #include "ksyms.h"
 
-/*
- * Info for CTL_HW
- */
-char	machine[] = MACHINE;
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
-
-struct vm_map *phys_map = NULL;
-
 int	maxmem;			/* max memory per process */
 
 extern	u_int lowram;
 
-void luna68k_init(void);
-void identifycpu(void);
-void dumpsys(void);
+void machine_init(paddr_t);
 
-void straytrap(int, u_short);
 void nmihand(struct frame);
-
-int  cpu_dumpsize(void);
-int  cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
-void cpu_init_kcore_hdr(void);
 
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 vsize_t symtab_size(vaddr_t);
 #endif
 extern char end[];
 extern void *esym;
-
-/*
- * Machine-independent crash dump header info.
- */
-cpu_kcore_hdr_t cpu_kcore_hdr;
 
 int	machtype;	/* model: 1 for LUNA-1, 2 for LUNA-2 */
 int	sysconsole;	/* console: 0 for ttya, 1 for video */
@@ -139,28 +117,36 @@ extern void omfb_cnattach(void);
 extern void ws_cnattach(void);
 
 /*
- * On the 68020/68030, the value of delay_divisor is roughly
- * 2048 / cpuspeed (where cpuspeed is in MHz).
- *
- * On the 68040/68060(?), the value of delay_divisor is roughly
- * 759 / cpuspeed (where cpuspeed is in MHz).
- * XXX -- is the above formula correct?
+ * Default the delay_divisor to 25MHz 68040.
  */
-int	cpuspeed = 25;		/* only used for printing later */
-int	delay_divisor = 30;	/* for delay() loop count */
+int	delay_divisor = delay_divisor_est40(25);
+
+/*
+ * Clamp the kernel virtual address space to keep it out of the
+ * TT ranges we use for devices.
+ */
+struct pmap_bootmap machine_bootmap[] = {
+	{ .pmbm_vaddr = LUNA68K_IO0_TT_BASE,
+	  .pmbm_size  = LUNA68K_IO0_TT_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = LUNA68K_IO1_TT_BASE,
+	  .pmbm_size  = LUNA68K_IO1_TT_SIZE,
+	  .pmbm_flags = PMBM_F_KEEPOUT },
+
+	{ .pmbm_vaddr = -1 },
+};
 
 /*
  * Early initialization, before main() is called.
  */
 void
-luna68k_init(void)
+machine_init(paddr_t nextpa)
 {
 	volatile uint8_t *pio0 = (void *)OBIO_PIO0_BASE;
-	int sw1, i;
+	int sw1;
 	char *cp;
 	extern char bootarg[64];
-
-	extern paddr_t avail_start, avail_end;
 
 	/* initialize cn_tab for early console */
 #if 1
@@ -169,23 +155,10 @@ luna68k_init(void)
 	cn_tab = &romcons;
 #endif
 
-	/*
-	 * Tell the VM system about available physical memory.  The
-	 * luna68k only has one segment.
-	 */
-	uvm_page_physload(atop(avail_start), atop(avail_end),
-	    atop(avail_start), atop(avail_end), VM_FREELIST_DEFAULT);
+	phys_seg_list[0].ps_start = 0;	/* XXX lowram? */
+	phys_seg_list[0].ps_end = m68k_ptob(maxmem);
 
-	/*
-	 * Initialize error message buffer (at end of core).
-	 * avail_end was pre-decremented in pmap_bootstrap to compensate.
-	 */
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
-
+	machine_init_common(nextpa);
 
 	pio0[3] = 0xb6;
 	pio0[2] = 1 << 6;		/* enable parity check */
@@ -310,91 +283,33 @@ symtab_size(vaddr_t hdr)
 }
 #endif /* NKSYMS || defined(DDB) || defined(MODULAR) */
 
-/*
- * cpu_startup: allocate memory for variable-sized tables.
- */
 void
-cpu_startup(void)
+machine_set_model(void)
 {
-	vaddr_t minaddr, maxaddr;
-	char pbuf[9];
-
-	if (fputype != FPU_NONE)
-		m68k_make_fpu_idle_frame();
-
-	/*
-	 * Initialize the kernel crash dump header.
-	 */
-	cpu_init_kcore_hdr();
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	printf("%s%s", copyright, version);
-	identifycpu();
-
-	format_bytes(pbuf, sizeof(pbuf), ctob(physmem));
-	printf("total memory = %s\n", pbuf);
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-	    VM_PHYS_SIZE, 0, false, NULL);
-
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
-	printf("avail memory = %s\n", pbuf);
-}
-
-void
-identifycpu(void)
-{
-	extern int cputype;
-	const char *model, *fpu;
-
 	switch (cputype) {
+#ifdef M68030
 	case CPU_68030:
-		model ="LUNA-I";
-		switch (fputype) {
-		case FPU_68881:
-			fpu = "MC68881";
-			break;
-		case FPU_68882:
-			fpu = "MC68882";
-			break;
-		case FPU_NONE:
-			fpu = "no";
-			break;
-		default:
-			fpu = "unknown";
-			break;
-		}
-		cpu_setmodel("%s (MC68030 CPU+MMU, %s FPU)", model, fpu);
+		cpu_setmodel("LUNA-I");
 		machtype = LUNA_I;
 		/* 20MHz 68030 */
-		cpuspeed = 20;
-		delay_divisor = 102;
+		cpuspeed_khz = 20*1000;
+		delay_divisor = delay_divisor_est(20);
 		hz = 60;
 		break;
-#if defined(M68040)
+#endif
+#ifdef M68040
 	case CPU_68040:
-		model ="LUNA-II";
-		cpu_setmodel(
-		    "%s (MC68040 CPU+MMU+FPU, 4k on-chip physical I/D caches)",
-		    model);
+		cpu_setmodel("LUNA-II");
 		machtype = LUNA_II;
 		/* 25MHz 68040 */
-		cpuspeed = 25;
-		delay_divisor = 30;
+		cpuspeed_khz = 25*1000;
+		delay_divisor = delay_divisor_est40(25);
 		/* hz = 100 on LUNA-II */
 		break;
 #endif
 	default:
 		panic("unknown CPU type");
 	}
-	printf("%s\n", cpu_getmodel());
 }
 
 /*
@@ -416,349 +331,17 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-int	waittime = -1;
-
 void
-cpu_reboot(int howto, char *bootstr)
+machine_powerdown(void)
 {
-	struct pcb *pcb = lwp_getpcb(curlwp);
-	extern void doboot(void);
+	volatile uint8_t *pio = (void *)OBIO_PIO1_BASE;
 
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	/* If system is hold, just halt. */
-	if (cold) {
-		howto |= RB_HALT;
-		goto haltsys;
-	}
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0 && waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-
-	/* Disable interrupts. */
-	splhigh();
-
-	/* If rebooting and a dump is requested, do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-haltsys:
-	/* Run any shutdown hooks. */
-	doshutdownhooks();
-
-	pmf_system_shutdown(boothowto);
-
-	/* Finally, halt/reboot the system. */
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		volatile uint8_t *pio = (void *)OBIO_PIO1_BASE;
-
-		printf("power is going down.\n");
-		DELAY(100000);
-		pio[3] = 0x94;
-		pio[2] = 0 << 4;
-		for (;;)
-			/* NOP */;
-	}
-	if (howto & RB_HALT) {
-		printf("System halted.	Hit any key to reboot.\n\n");
-		cnpollc(1);
-		(void)cngetc();
-		cnpollc(0);
-	}
-
-	printf("rebooting...\n");
+	printf("power is going down.\n");
 	DELAY(100000);
-	doboot();
-	/*NOTREACHED*/
+	pio[3] = 0x94;
+	pio[2] = 0 << 4;
 	for (;;)
-		;
-}
-
-/*
- * Initialize the kernel crash dump header.
- */
-void
-cpu_init_kcore_hdr(void)
-{
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
-
-	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
-
-	/*
-	 * Initialize the `dispatcher' portion of the header.
-	 */
-	strcpy(h->name, machine);
-	h->page_size = PAGE_SIZE;
-	h->kernbase = KERNBASE;
-
-	/*
-	 * Fill in information about our MMU configuration.
-	 */
-	m->mmutype	= mmutype;
-	m->sg_v		= SG_V;
-	m->sg_frame	= SG_FRAME;
-	m->sg_ishift	= SG_ISHIFT;
-	m->sg_pmask	= SG_PMASK;
-	m->sg40_shift1	= SG4_SHIFT1;
-	m->sg40_mask2	= SG4_MASK2;
-	m->sg40_shift2	= SG4_SHIFT2;
-	m->sg40_mask3	= SG4_MASK3;
-	m->sg40_shift3	= SG4_SHIFT3;
-	m->sg40_addr1	= SG4_ADDR1;
-	m->sg40_addr2	= SG4_ADDR2;
-	m->pg_v		= PG_V;
-	m->pg_frame	= PG_FRAME;
-
-	/*
-	 * Initialize pointer to kernel segment table.
-	 */
-	m->sysseg_pa = (uint32_t)(pmap_kernel()->pm_stpa);
-
-	/*
-	 * Initialize relocation value such that:
-	 *
-	 *	pa = (va - KERNBASE) + reloc
-	 *
-	 * Since we're linked and loaded at the same place,
-	 * and the kernel is mapped va == pa, this is 0.
-	 */
-	m->reloc = 0;
-
-	/*
-	 * Define the end of the relocatable range.
-	 */
-	m->relocend = (uint32_t)end;
-
-	/*
-	 * The luna68k has one contiguous memory segment.
-	 */
-	m->ram_segs[0].start = 0 /* lowram */;
-	m->ram_segs[0].size  = ctob(physmem);
-}
-
-/*
- * Compute the size of the machine-dependent crash dump header.
- * Returns size in disk blocks.
- */
-
-#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
-#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
-
-int
-cpu_dumpsize(void)
-{
-
-	return btodb(MDHDRSIZE);
-}
-
-/*
- * Called by dumpsys() to dump the machine-dependent header.
- */
-int
-cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *blknop)
-{
-	int buf[MDHDRSIZE / sizeof(int)];
-	cpu_kcore_hdr_t *chdr;
-	kcore_seg_t *kseg;
-	int error;
-
-	kseg = (kcore_seg_t *)buf;
-	chdr = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(kcore_seg_t)) /
-	    sizeof(int)];
-
-	/* Create the segment header. */
-	CORE_SETMAGIC(*kseg, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg->c_size = MDHDRSIZE - ALIGN(sizeof(kcore_seg_t));
-
-	memcpy(chdr, &cpu_kcore_hdr, sizeof(cpu_kcore_hdr_t));
-	error = (*dump)(dumpdev, *blknop, (void *)buf, sizeof(buf));
-	*blknop += btodb(sizeof(buf));
-	return error;
-}
-
-/*
- * These variables are needed by /sbin/savecore
- */
-uint32_t dumpmag = 0x8fca0101;	/* magic number */
-int	dumpsize = 0;		/* pages */
-long	dumplo = 0;		/* blocks */
-
-/*
- * This is called by main to set dumplo and dumpsize.
- * Dumps always skip the first PAGE_SIZE of disk space
- * in case there might be a disk label stored there.
- * If there is extra space, put dump at the end to
- * reduce the chance that swapping trashes it.
- */
-void
-cpu_dumpconf(void)
-{
-	int chdrsize;	/* size of dump header */
-	int nblks;	/* size of dump area */
-
-	if (dumpdev == NODEV)
-		return;
-	nblks = bdev_size(dumpdev);
-	chdrsize = cpu_dumpsize();
-
-	dumpsize = btoc(cpu_kcore_hdr.un._m68k.ram_segs[0].size);
-
-	/*
-	 * Check do see if we will fit.  Note we always skip the
-	 * first PAGE_SIZE in case there is a disk label there.
-	 */
-	if (nblks < (ctod(dumpsize) + chdrsize + ctod(1))) {
-		dumpsize = 0;
-		dumplo = -1;
-		return;
-	}
-
-	/*
-	 * Put dump at the end of the partition.
-	 */
-	dumplo = (nblks - 1) - ctod(dumpsize) - chdrsize;
-}
-
-/*
- * Dump physical memory onto the dump device.  Called by cpu_reboot().
- */
-void
-dumpsys(void)
-{
-	const struct bdevsw *bdev;
-	daddr_t blkno;		/* current block to write */
-				/* dump routine */
-	int (*dump)(dev_t, daddr_t, void *, size_t);
-	int pg;			/* page being dumped */
-	paddr_t maddr;		/* PA being dumped */
-	int error;		/* error code from (*dump)() */
-
-	/* XXX initialized here because of gcc lossage */
-	maddr = 0 /* lowram */;
-	pg = 0;
-
-	/* Make sure dump device is valid. */
-	if (dumpdev == NODEV)
-		return;
-	bdev = bdevsw_lookup(dumpdev);
-	if (bdev == NULL)
-		return;
-	if (dumpsize == 0) {
-		cpu_dumpconf();
-		if (dumpsize == 0)
-			return;
-	}
-	if (dumplo <= 0) {
-		printf("\ndump to dev %u,%u  not possible\n",
-		    major(dumpdev), minor(dumpdev));
-		return;
-	}
-	dump = bdev->d_dump;
-	blkno = dumplo;
-
-	printf("\ndumping to dev %u,%u offset %ld\n",
-	    major(dumpdev), minor(dumpdev), dumplo);
-
-	printf("dump ");
-
-	/* Write the dump header. */
-	error = cpu_dump(dump, &blkno);
-	if (error)
-		goto bad;
-
-	for (pg = 0; pg < dumpsize; pg++) {
-#define NPGMB	(1024*1024/PAGE_SIZE)
-		/* print out how many MBs we have dumped */
-		if (pg && (pg % NPGMB) == 0)
-			printf("%d ", pg / NPGMB);
-#undef NPGMB
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
-		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
-
-		pmap_update(pmap_kernel());
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
- bad:
-		switch (error) {
-		case 0:
-			maddr += PAGE_SIZE;
-			blkno += btodb(PAGE_SIZE);
-			break;
-
-		case ENXIO:
-			printf("device bad\n");
-			return;
-
-		case EFAULT:
-			printf("device not ready\n");
-			return;
-
-		case EINVAL:
-			printf("area improper\n");
-			return;
-
-		case EIO:
-			printf("i/o error\n");
-			return;
-
-		case EINTR:
-			printf("aborted from console\n");
-			return;
-
-		default:
-			printf("error %d\n", error);
-			return;
-		}
-	}
-	printf("succeeded\n");
-}
-
-void
-straytrap(int pc, u_short evec)
-{
-
-	printf("unexpected trap (vector offset %x) from %x\n",
-	    evec & 0xFFF, pc);
-}
-
-int	*nofault;
-
-int
-badaddr(register void *addr, int nbytes)
-{
-	int i;
-	label_t faultbuf;
-
-	nofault = (int *)&faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = (int *)0;
-		return 1;
-	}
-
-	switch (nbytes) {
-	case 1:
-		i = *(volatile int8_t *)addr;
-		break;
-
-	case 2:
-		i = *(volatile int16_t *)addr;
-		break;
-
-	case 4:
-		i = *(volatile int32_t *)addr;
-		break;
-
-	default:
-		panic("badaddr: bad request");
-	}
-	__USE(i);
-	nofault = (int *)0;
-	return 0;
+		/* NOP */;
 }
 
 void luna68k_abort(const char *);
@@ -805,29 +388,6 @@ luna68k_abort(const char *cp)
 #endif /* PANICBUTTON */
 #endif /* DDB */
 }
-
-/*
- * cpu_exec_aout_makecmds():
- *	CPU-dependent a.out format hook for execve().
- *
- * Determine of the given exec package refers to something which we
- * understand and, if so, set up the vmcmds for it.
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-	return ENOEXEC;
-}
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-#endif
 
 #ifdef notyet
 /*
@@ -906,10 +466,3 @@ romcngetc(dev_t dev)
 	return c;
 }
 #endif
-
-int
-mm_md_physacc(paddr_t pa, vm_prot_t prot)
-{
-
-	return (pa < lowram || pa >= 0xfffffffc) ? EFAULT : 0;
-}

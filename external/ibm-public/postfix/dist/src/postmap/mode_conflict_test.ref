@@ -1,0 +1,33 @@
++ ./postmap -d yy -d xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -d yy -i whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -d yy -q xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -d yy -s whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -i -d xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -i -i whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -i -q xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -i -s whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -q yy -d xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -q yy -i whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -q yy -q xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -q yy -s whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -s -d xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -s -i whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -s -q xx whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ ./postmap -s -s whatever:whatever
+postmap: fatal: specify only one of -d -i -q or -s
++ exit 0

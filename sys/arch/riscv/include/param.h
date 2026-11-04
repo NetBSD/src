@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.8 2023/05/07 12:41:48 skrll Exp $ */
+/* $NetBSD: param.h,v 1.8.6.1 2026/11/04 23:21:14 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #endif
 
 /*
- * Machine dependent constants for all OpenRISC processors
+ * Machine dependent constants for all RISC-V processors
  */
 
 /*
@@ -46,7 +46,7 @@
  *	uname returns the correct thing, etc.
  *
  * For non-KERNEL code:
- *	If ELF, MACHINE and MACHINE_ARCH are forced to "or1k/or1k".
+ *	If ELF, MACHINE and MACHINE_ARCH are forced to "riscv".
  */
 
 #ifdef _LP64
@@ -99,8 +99,10 @@
 #define MAXCPUS			32
 
 #ifdef _KERNEL
+#ifndef __HIDE_DELAY
 void delay(unsigned long);
 #define	DELAY(x)		delay(x)
+#endif
 #endif
 
 #define riscv_btop(x)		((unsigned long)(x) >> PGSHIFT)

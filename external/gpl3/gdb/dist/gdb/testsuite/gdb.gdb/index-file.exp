@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -30,20 +30,44 @@ if { $filename eq "" } {
     return -1
 }
 
+# If FILENAME is a libtool wrapper, then we need to get the path of the real
+# executable.
+set filename [selftest_libtool_get_real_gdb_executable $filename]
+if { $filename eq "" } {
+    return -1
+}
+
 with_timeout_factor $timeout_factor {
     # Start GDB, load FILENAME.
-    clean_restart $filename
+    clean_restart
+    gdb_load $filename
 }
 
 # Record how many worker threads GDB is using.
 set worker_threads [gdb_get_worker_threads]
 
+if { $worker_threads eq "UNKNOWN" } {
+    unresolved "unable to get worker thread count"
+    return -1
+}
+
 # Generate an index file.
 set dir1 [standard_output_file "index_1"]
 remote_exec host "mkdir -p ${dir1}"
 with_timeout_factor $timeout_factor {
-    gdb_test_no_output "save gdb-index $dir1" \
-	"create gdb-index file"
+    set ok 0
+    gdb_test_multiple "save gdb-index $dir1" "create gdb-index file" {
+	-re -wrap "Error while writing index for \[^\r\n\]*: No debugging symbols" {
+	    unsupported $gdb_test_name
+	}
+	-re -wrap "^" {
+	    pass $gdb_test_name
+	    set ok 1
+	}
+    }
+    if { ! $ok } {
+	return -1
+    }
 
     gdb_test_no_output "save gdb-index -dwarf-5 $dir1" \
 	"create dwarf-index files"

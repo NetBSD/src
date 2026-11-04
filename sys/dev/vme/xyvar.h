@@ -1,4 +1,4 @@
-/*	$NetBSD: xyvar.h,v 1.14 2012/10/27 17:18:39 chs Exp $	*/
+/*	$NetBSD: xyvar.h,v 1.14.76.1 2026/11/04 23:22:39 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Charles D. Cranor
@@ -108,7 +108,7 @@ struct xy_softc {
 	u_char hw_spt;		/* as above, but includes spare sectors */
 	struct xy_iorq *xyrq;	/* this disk's ioreq structure */
 	struct bufq_state *xyq;	/* queued I/O requests */
-	struct dkbad dkb;	/* bad144 sectors */
+	struct bad144_context *bad144; /* bad144 sectors */
 };
 
 /*

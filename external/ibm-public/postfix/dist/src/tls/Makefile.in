@@ -45,7 +45,7 @@ Makefile: Makefile.in
 
 test:	$(TESTPROG)
 
-tests: tls_certkey_tests
+tests: tls_certkey_tests tls_dane_tests
 
 tls_certkey_tests: test
 	@echo Testing loading of keys and certs
@@ -75,6 +75,9 @@ tls_certkey_tests: test
 	    exit 1; \
 	    echo "  $$pem: OK"; \
 	done
+
+tls_dane_tests: tls_dane tls_dane.sh
+	$(SHLIB_ENV) $(VALGRIND) bash tls_dane.sh
 
 root_tests:
 

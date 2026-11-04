@@ -1,7 +1,7 @@
 /* GNU/Linux/x86-64 specific low level interface, for the in-process
    agent library for GDB.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,15 +18,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 #include <sys/mman.h>
 #include "tracepoint.h"
-#include "linux-x86-tdesc.h"
 #include "gdbsupport/x86-xstate.h"
-
-/* Defined in auto-generated file amd64-linux.c.  */
-void init_registers_amd64_linux (void);
-extern const struct target_desc *tdesc_amd64_linux;
+#include "arch/amd64-linux-tdesc.h"
+#include "arch/x86-linux-tdesc-features.h"
 
 /* fast tracepoints collect registers.  */
 
@@ -168,47 +164,21 @@ supply_static_tracepoint_registers (struct regcache *regcache,
 
 #endif /* HAVE_UST */
 
-#if !defined __ILP32__
-/* Map the tdesc index to xcr0 mask.  */
-static uint64_t idx2mask[X86_TDESC_LAST] = {
-  X86_XSTATE_X87_MASK,
-  X86_XSTATE_SSE_MASK,
-  X86_XSTATE_AVX_MASK,
-  X86_XSTATE_MPX_MASK,
-  X86_XSTATE_AVX_MPX_MASK,
-  X86_XSTATE_AVX_AVX512_MASK,
-  X86_XSTATE_AVX_MPX_AVX512_PKU_MASK,
-};
-#endif
-
 /* Return target_desc to use for IPA, given the tdesc index passed by
    gdbserver.  */
 
 const struct target_desc *
 get_ipa_tdesc (int idx)
 {
-  if (idx >= X86_TDESC_LAST)
-    {
-      internal_error ("unknown ipa tdesc index: %d", idx);
-    }
+  uint64_t xcr0 = x86_linux_tdesc_idx_to_xcr0 (idx);
 
 #if defined __ILP32__
-  switch (idx)
-    {
-    case X86_TDESC_SSE:
-      return amd64_linux_read_description (X86_XSTATE_SSE_MASK, true);
-    case X86_TDESC_AVX:
-      return amd64_linux_read_description (X86_XSTATE_AVX_MASK, true);
-    case X86_TDESC_AVX_AVX512:
-      return amd64_linux_read_description (X86_XSTATE_AVX_AVX512_MASK, true);
-    default:
-      break;
-    }
+  bool is_x32 = true;
 #else
-  return amd64_linux_read_description (idx2mask[idx], false);
+  bool is_x32 = false;
 #endif
 
-  internal_error ("unknown ipa tdesc index: %d", idx);
+  return amd64_linux_read_description (xcr0, is_x32);
 }
 
 /* Allocate buffer for the jump pads.  The branch instruction has a
@@ -276,11 +246,10 @@ void
 initialize_low_tracepoint (void)
 {
 #if defined __ILP32__
-  amd64_linux_read_description (X86_XSTATE_SSE_MASK, true);
-  amd64_linux_read_description (X86_XSTATE_AVX_MASK, true);
-  amd64_linux_read_description (X86_XSTATE_AVX_AVX512_MASK, true);
+  for (int i = 0; i < x86_linux_x32_tdesc_count (); i++)
+    amd64_linux_read_description (x86_linux_tdesc_idx_to_xcr0 (i), true);
 #else
-  for (auto i = 0; i < X86_TDESC_LAST; i++)
-    amd64_linux_read_description (idx2mask[i], false);
+  for (int i = 0; i < x86_linux_amd64_tdesc_count (); i++)
+    amd64_linux_read_description (x86_linux_tdesc_idx_to_xcr0 (i), false);
 #endif
 }

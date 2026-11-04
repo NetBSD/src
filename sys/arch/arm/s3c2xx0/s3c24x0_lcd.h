@@ -1,4 +1,4 @@
-/* $NetBSD: s3c24x0_lcd.h,v 1.7 2022/05/23 21:46:11 andvar Exp $ */
+/* $NetBSD: s3c24x0_lcd.h,v 1.7.10.1 2026/11/04 23:20:14 perseant Exp $ */
 
 /*
  * Copyright (c) 2004  Genetec Corporation.  All rights reserved.
@@ -36,7 +36,7 @@
 #include <dev/rasops/rasops.h>
 #include <sys/bus.h>
 
-/* LCD Contoroller */
+/* LCD Controller */
 
 struct s3c24x0_lcd_screen {
 	LIST_ENTRY(s3c24x0_lcd_screen) link;

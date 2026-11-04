@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.13 2023/12/20 15:29:06 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.13.2.1 2026/11/04 23:21:16 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13 2023/12/20 15:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.13.2.1 2026/11/04 23:21:16 perseant Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -146,10 +146,10 @@ say_hi(void)
 	Debugger();
 #endif
 #if 0
-        li      %r28,0x00000041 /* PUT A to R28*/         
+        li      %r28,0x00000041 /* PUT A to R28*/
         li      %r29,0x30       /* put serial addr to r29*/
         addis   %r29,%r29,0xc000 /* r29 now holds serial addr*/
-        stb     %r28,0(%r29)  /* slam it to serial port*/        
+        stb     %r28,0(%r29)  /* slam it to serial port*/
 loopforever:
         bla     loopforever
 #endif
@@ -295,7 +295,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	 * 1) POWER has no bat registers.
 	 * 2) NVRAM, IPL ROM, and other fun bits all live at 0xFF000000 on the
 	 *    60x RS6000's, however if you try to map any less than 256MB
-	 *    on a 601 it wedges. 
+	 *    on a 601 it wedges.
 	 */
 #if !defined(POWER)
 	setled(0x40200000);
@@ -368,7 +368,7 @@ initppc(u_long startkernel, u_long endkernel, u_int args, void *btinfo)
 	printf("sysinfo scr_addr %p -> %x\n", sysinfo->scr_addr,
 	    *sysinfo->scr_addr);
 #endif
-	
+
 	/* Initialize bus_space. */
 	rs6000_bus_space_init();
 	setled(0x40600000);
@@ -415,7 +415,7 @@ cpu_startup(void)
 	oea_startup("rs6000");
 
 	/*
-	 * Inititalize the IOCC interrupt stuff
+	 * Initialize the IOCC interrupt stuff
 	 */
 	init_intr();
 
@@ -508,9 +508,9 @@ halt_sys:
                 printf("\n");
                 printf("The operating system has halted.\n");
                 printf("Please press any key to reboot.\n\n");
-                cnpollc(1);	/* for proper keyboard command handling */
+                cnpollc(true);	/* for proper keyboard command handling */
                 cngetc();
-                cnpollc(0);
+                cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");

@@ -1,4 +1,4 @@
-# Copyright 2021-2023 Free Software Foundation, Inc.
+# Copyright 2021-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-require dwarf2_support 1
+require dwarf2_support
 
 standard_testfile .c
 
@@ -88,6 +88,10 @@ proc test_1 { _cv _cdw64 _lv _ldw64 {_string_form ""}} {
 		# to set the current file explicitly.
 		DW_LNS_set_file $diridx
 
+		DW_LNE_set_address $bar_start
+		line [line_for bar]
+		DW_LNS_copy
+
 		DW_LNE_set_address bar_label
 		line [line_for bar_label]
 		DW_LNS_copy
@@ -104,7 +108,7 @@ proc test_1 { _cv _cdw64 _lv _ldw64 {_string_form ""}} {
 		line [line_for bar_label_4]
 		DW_LNS_copy
 
-		DW_LNE_set_address bar_label_5
+		DW_LNE_set_address "$bar_start + $bar_len"
 		DW_LNE_end_sequence
 	    }
 	}
@@ -122,9 +126,9 @@ proc test_1 { _cv _cdw64 _lv _ldw64 {_string_form ""}} {
     gdb_breakpoint "bar_label"
     gdb_continue_to_breakpoint "foo \\(1\\)"
 
-    gdb_test "next" "foo \\(2\\).*" "next to foo (2)"
-    gdb_test "next" "foo \\(3\\).*" "next to foo (3)"
-    gdb_test "next" "foo \\(4\\).*" "next to foo (4)"
+    gdb_test "next" "foo \\(2\\).*" "next to foo(2)"
+    gdb_test "next" "foo \\(3\\).*" "next to foo(3)"
+    gdb_test "next" "foo \\(4\\).*" "next to foo(4)"
 }
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.417.6.1 2025/08/02 05:57:02 perseant Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.417.6.2 2026/11/04 23:22:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.417.6.1 2025/08/02 05:57:02 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.417.6.2 2026/11/04 23:22:32 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -262,15 +262,15 @@ struct rf_recon_req_internal {
 };
 
 /*
- * Allow RAIDOUTSTANDING number of simultaneous IO's to this RAID device.
- * Be aware that large numbers can allow the driver to consume a lot of
- * kernel memory, especially on writes, and in degraded mode reads.
+ * Minimum number of simultaneous I/Os (openings) allowed to a RAID device
+ * when constrained by the 1% physmem budget.  Actual per-set openings and
+ * reserved buffer counts are computed in rf_ComputeOpenings().
  *
  * For example: with a stripe width of 64 blocks (32k) and 5 disks,
  * a single 64K write will typically require 64K for the old data,
  * 64K for the old parity, and 64K for the new parity, for a total
  * of 192K (if the parity buffer is not re-used immediately).
- * Even it if is used immediately, that's still 128K, which when multiplied
+ * Even if it is used immediately, that's still 128K, which when multiplied
  * by say 10 requests, is 1280K, *on top* of the 640K of incoming data.
  *
  * Now in degraded mode, for example, a 64K read on the above setup may
@@ -1211,6 +1211,7 @@ int
 rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 {
 	struct rf_recon_req_internal *rrint;
+	int ret;
 
 	if (raidPtr->Layout.map->faultsTolerated == 0) {
 		/* Can't do this on a RAID 0!! */
@@ -1225,6 +1226,10 @@ rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 	rf_lock_mutex2(raidPtr->mutex);
 	if (raidPtr->status == rf_rs_reconstructing) {
 		raidPtr->abortRecon[rr->col] = 1;
+	}
+	if (raidPtr->recon_in_progress != 0) {
+		rf_unlock_mutex2(raidPtr->mutex);
+		return EBUSY;
 	}
 	if ((raidPtr->Disks[rr->col].status == rf_ds_optimal) &&
 	    (raidPtr->numFailures > 0)) {
@@ -1246,19 +1251,31 @@ rf_fail_disk(RF_Raid_t *raidPtr, struct rf_recon_req *rr)
 		raidPtr->Disks[spareCol].status = rf_ds_failed;
 			
 	}
+	raidPtr->recon_in_progress = 1;
 	rf_unlock_mutex2(raidPtr->mutex);
 
 	/* make a copy of the recon request so that we don't rely on
 	 * the user's buffer */
 	rrint = RF_Malloc(sizeof(*rrint));
-	if (rrint == NULL)
+	if (rrint == NULL) {
+		rf_lock_mutex2(raidPtr->mutex);
+		raidPtr->recon_in_progress = 0;
+		rf_unlock_mutex2(raidPtr->mutex);
 		return(ENOMEM);
+	}
 	rrint->col = rr->col;
 	rrint->flags = rr->flags;
 	rrint->raidPtr = raidPtr;
 
-	return RF_CREATE_THREAD(raidPtr->recon_thread, rf_ReconThread,
+	ret = RF_CREATE_THREAD(raidPtr->recon_thread, rf_ReconThread,
 	    rrint, "raid_recon");
+	if (ret != 0) {
+		RF_Free(rrint, sizeof(*rrint));
+		rf_lock_mutex2(raidPtr->mutex);
+		raidPtr->recon_in_progress = 0;
+		rf_unlock_mutex2(raidPtr->mutex);
+	}
+	return ret;
 out:
 	rf_unlock_mutex2(raidPtr->mutex);
 	return EINVAL;
@@ -1370,10 +1387,6 @@ rf_construct(struct raid_softc *rs, RF_Config_t *k_cfg)
 	retcode = rf_Configure(raidPtr, k_cfg, NULL);
 
 	if (retcode == 0) {
-		/* allow this many simultaneous IO's to
-		   this RAID device */
-		raidPtr->openings = RAIDOUTSTANDING;
-
 		raidinit(rs);
 		raid_wakeup(raidPtr);
 		rf_markalldirty(raidPtr);
@@ -1470,14 +1483,10 @@ rf_init_component_label(RF_Raid_t *raidPtr, RF_ComponentLabel_t *clabel)
 static int
 rf_rebuild_in_place(RF_Raid_t *raidPtr, RF_SingleComponent_t *componentPtr)
 {
+	int ret;
 
 	if (raidPtr->Layout.map->faultsTolerated == 0) {
 		/* Can't do this on a RAID 0!! */
-		return EINVAL;
-	}
-
-	if (raidPtr->recon_in_progress == 1) {
-		/* a reconstruct is already in progress! */
 		return EINVAL;
 	}
 
@@ -1486,53 +1495,97 @@ rf_rebuild_in_place(RF_Raid_t *raidPtr, RF_SingleComponent_t *componentPtr)
 	component.row = 0; /* we don't support any more */
 	int column = component.column;
 
-	if ((column < 0) || (column >= raidPtr->numCol)) {
-		return EINVAL;
-	}
-
 	rf_lock_mutex2(raidPtr->mutex);
-	if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
-	    (raidPtr->numFailures > 0)) {
-		/* XXX 0 above shouldn't be constant!!! */
-		/* some component other than this has failed.
-		   Let's not make things worse than they already
-		   are... */
-		printf("raid%d: Unable to reconstruct to disk at:\n",
-		       raidPtr->raidid);
-		printf("raid%d:     Col: %d   Too many failures.\n",
-		       raidPtr->raidid, column);
+	if ((column < 0) ||
+	    (column >= raidPtr->numCol + raidPtr->numSpare)) {
 		rf_unlock_mutex2(raidPtr->mutex);
 		return EINVAL;
 	}
 
-	if (raidPtr->Disks[column].status == rf_ds_reconstructing) {
-		printf("raid%d: Unable to reconstruct to disk at:\n",
-		       raidPtr->raidid);
-		printf("raid%d:    Col: %d   "
-		    "Reconstruction already occurring!\n",
-		    raidPtr->raidid, column);
-
+	if (raidPtr->recon_in_progress != 0) {
+		/* a reconstruct is already in progress! */
 		rf_unlock_mutex2(raidPtr->mutex);
 		return EINVAL;
 	}
 
-	if (raidPtr->Disks[column].status == rf_ds_spared) {
-		rf_unlock_mutex2(raidPtr->mutex);
-		return EINVAL;
+	if (column < raidPtr->numCol) {
+		if ((raidPtr->Disks[column].status == rf_ds_optimal) &&
+		    (raidPtr->numFailures > 0)) {
+			/* XXX 0 above shouldn't be constant!!! */
+			/* some component other than this has failed.
+			   Let's not make things worse than they already
+			   are... */
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Col: %d   Too many failures.\n",
+			       raidPtr->raidid, column);
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+
+		if (raidPtr->Disks[column].status == rf_ds_reconstructing) {
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:    Col: %d   "
+			    "Reconstruction already occurring!\n",
+			    raidPtr->raidid, column);
+
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+
+		if (raidPtr->Disks[column].status == rf_ds_spared) {
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+	} else {
+		if (raidPtr->Disks[column].status != rf_ds_spared &&
+		    raidPtr->Disks[column].status != rf_ds_spare &&
+		    raidPtr->Disks[column].status != rf_ds_failed) {
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+		if (raidPtr->numFailures == 0) {
+			printf("raid%d: Unable to reconstruct to disk at "
+			    "col %d: no failed component.\n",
+			    raidPtr->raidid, column);
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
+		if (raidPtr->numFailures > 1) {	/* XXX wrong for RAID6 */
+			printf("raid%d: Unable to reconstruct to disk at:\n",
+			       raidPtr->raidid);
+			printf("raid%d:     Col: %d   Too many failures.\n",
+			       raidPtr->raidid, column);
+			rf_unlock_mutex2(raidPtr->mutex);
+			return EINVAL;
+		}
 	}
 
+	raidPtr->recon_in_progress = 1;
 	rf_unlock_mutex2(raidPtr->mutex);
 
 	struct rf_recon_req_internal *rrint;
 	rrint = RF_Malloc(sizeof(*rrint));
-	if (rrint == NULL)
+	if (rrint == NULL) {
+		rf_lock_mutex2(raidPtr->mutex);
+		raidPtr->recon_in_progress = 0;
+		rf_unlock_mutex2(raidPtr->mutex);
 		return ENOMEM;
+	}
 
 	rrint->col = column;
 	rrint->raidPtr = raidPtr;
 
-	return RF_CREATE_THREAD(raidPtr->recon_thread,
+	ret = RF_CREATE_THREAD(raidPtr->recon_thread,
 	    rf_ReconstructInPlaceThread, rrint, "raid_reconip");
+	if (ret != 0) {
+		RF_Free(rrint, sizeof(*rrint));
+		rf_lock_mutex2(raidPtr->mutex);
+		raidPtr->recon_in_progress = 0;
+		rf_unlock_mutex2(raidPtr->mutex);
+	}
+	return ret;
 }
 
 static int
@@ -2649,6 +2702,8 @@ rf_markalldirty(RF_Raid_t *raidPtr)
 				   but whatever you do, don't
 				   try to access it!! */
 			} else {
+				clabel->maxOutstanding =
+				    raidPtr->maxOutstanding;
 				raidmarkdirty(raidPtr, c);
 			}
 		}
@@ -2713,6 +2768,7 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 			clabel = raidget_component_label(raidPtr, c);
 			/* make sure status is noted */
 			clabel->status = rf_ds_optimal;
+			clabel->maxOutstanding = raidPtr->maxOutstanding;
 
 			/* note what unit we are configured as */
 			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
@@ -2757,6 +2813,8 @@ rf_update_component_labels(RF_Raid_t *raidPtr, int final)
 
 			clabel->column = scol;
 			clabel->status = rf_ds_optimal;
+			rf_component_label_set_partitionsize(clabel,
+			    raidPtr->Disks[sparecol].partitionSize);
 			if ((rs->sc_cflags & RAIDF_UNIT_CHANGED) == 0)
 				clabel->last_unit = raidPtr->raidid;
 
@@ -2823,7 +2881,6 @@ rf_ReconThread(struct rf_recon_req_internal *req)
 
 	s = splbio();
 	raidPtr = (RF_Raid_t *) req->raidPtr;
-	raidPtr->recon_in_progress = 1;
 
 	if (req->flags & RF_FDFLAGS_RECON_FORCE) {
 		raidPtr->forceRecon = 1;
@@ -2838,7 +2895,9 @@ rf_ReconThread(struct rf_recon_req_internal *req)
 
 	RF_Free(req, sizeof(*req));
 
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->recon_in_progress = 0;
+	rf_unlock_mutex2(raidPtr->mutex);
 	splx(s);
 
 	/* That's all... */
@@ -2886,7 +2945,6 @@ rf_ReconstructInPlaceThread(struct rf_recon_req_internal *req)
 
 	s = splbio();
 	raidPtr = req->raidPtr;
-	raidPtr->recon_in_progress = 1;
 
 	if (req->flags & RF_FDFLAGS_RECON_FORCE) {
 		raidPtr->forceRecon = 1;
@@ -2899,7 +2957,9 @@ rf_ReconstructInPlaceThread(struct rf_recon_req_internal *req)
 	}
 
 	RF_Free(req, sizeof(*req));
+	rf_lock_mutex2(raidPtr->mutex);
 	raidPtr->recon_in_progress = 0;
+	rf_unlock_mutex2(raidPtr->mutex);
 	splx(s);
 
 	/* That's all... */
@@ -3369,7 +3429,6 @@ rf_does_it_fit(RF_ConfigSet_t *cset, RF_AutoConfig_t *ac)
 	    (clabel1->SUsPerPU == clabel2->SUsPerPU) &&
 	    (clabel1->SUsPerRU == clabel2->SUsPerRU) &&
 	    (clabel1->parityConfig == clabel2->parityConfig) &&
-	    (clabel1->maxOutstanding == clabel2->maxOutstanding) &&
 	    (clabel1->blockSize == clabel2->blockSize) &&
 	    rf_component_label_numblocks(clabel1) ==
 	    rf_component_label_numblocks(clabel2) &&
@@ -3508,7 +3567,13 @@ rf_create_configuration(RF_AutoConfig_t *ac, RF_Config_t *config,
 	config->parityConfig = clabel->parityConfig;
 	/* XXX... */
 	strcpy(config->diskQueueType,"fifo");
-	config->maxOutstandingDiskReqs = clabel->maxOutstanding;
+	if (clabel->maxOutstanding <= 0)
+		config->maxOutstandingDiskReqs = RF_DEFAULT_QUEUE_DEPTH;
+	else if (clabel->maxOutstanding > RF_MAX_QUEUE_DEPTH)
+		config->maxOutstandingDiskReqs = RF_MAX_QUEUE_DEPTH;
+	else
+		config->maxOutstandingDiskReqs =
+		    (uint8_t)clabel->maxOutstanding;
 	config->layoutSpecificSize = 0; /* XXX ?? */
 
 	while(ac!=NULL) {
@@ -3689,7 +3754,6 @@ rf_auto_config_set(RF_ConfigSet_t *cset)
 	/* XXX all this stuff should be done SOMEWHERE ELSE! */
 	raidPtr->softc = sc;
 	raidPtr->raidid = raidID;
-	raidPtr->openings = RAIDOUTSTANDING;
 
 	/* 3. Build the configuration structure */
 	rf_create_configuration(cset->ac, config, raidPtr);
@@ -3732,7 +3796,9 @@ rf_pool_init(RF_Raid_t *raidPtr, char *w_chan, struct pool *p, size_t size, cons
 
 	/* Format: raid%d_foo */
 	snprintf(w_chan, RF_MAX_POOLNAMELEN, "raid%d_%s", raidPtr->raidid, pool_name);
-	
+	aprint_debug("raid%d: pool %s: item %zuB, min %zu, max %zu\n",
+	    raidPtr->raidid, pool_name, size, xmin, xmax);
+
 	pool_init(p, size, 0, 0, 0, w_chan, NULL, IPL_BIO);
 	pool_sethiwat(p, xmax);
 	pool_prime(p, xmin);

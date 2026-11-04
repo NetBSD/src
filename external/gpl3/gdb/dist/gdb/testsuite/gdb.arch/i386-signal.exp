@@ -1,4 +1,4 @@
-# Copyright 2007-2024 Free Software Foundation, Inc.
+# Copyright 2007-2025 Free Software Foundation, Inc.
 
 # This file is part of the GDB testsuite.
 
@@ -30,7 +30,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" \
     return -1
 }
 
-clean_restart $binfile
+clean_restart $::testfile
 
 runto func
 gdb_test "backtrace 10" \

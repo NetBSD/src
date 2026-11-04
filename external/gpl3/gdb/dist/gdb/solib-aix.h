@@ -1,4 +1,4 @@
-/* Copyright (C) 2013-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,12 +15,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SOLIB_AIX_H
-#define SOLIB_AIX_H
+#ifndef GDB_SOLIB_AIX_H
+#define GDB_SOLIB_AIX_H
 
-struct solib_ops;
-extern const solib_ops solib_aix_so_ops;
+#include "solib.h"
 
 extern CORE_ADDR solib_aix_get_toc_value (CORE_ADDR pc);
 
-#endif
+/* Return a new solib_ops for AIX systems.  */
+
+solib_ops_up make_aix_solib_ops (program_space *pspace);
+
+#endif /* GDB_SOLIB_AIX_H */

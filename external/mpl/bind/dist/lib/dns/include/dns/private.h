@@ -1,4 +1,4 @@
-/*	$NetBSD: private.h,v 1.7.2.1 2025/08/02 05:53:36 perseant Exp $	*/
+/*	$NetBSD: private.h,v 1.7.2.2 2026/11/04 23:18:06 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,7 +19,14 @@
 #include <isc/types.h>
 
 #include <dns/db.h>
+#include <dns/nsec.h>
 #include <dns/types.h>
+
+/*
+ * The private record has one extra byte, containing a 0, in front of
+ * an NSEC3PARAM record.
+ */
+#define DNS_PRIVATE_BUFFERSIZE (DNS_NSEC3PARAM_BUFFERSIZE + 1)
 
 #pragma once
 

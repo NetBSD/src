@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.95.2.1 2025/08/02 05:58:55 perseant Exp $ */
+/*	$NetBSD: disks.c,v 1.95.2.2 2026/11/04 23:28:58 perseant Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -37,6 +37,7 @@
 
 #include <assert.h>
 #include <errno.h>
+#include <endian.h>
 #include <inttypes.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -783,6 +784,7 @@ dump_parts(const struct disk_partitions *parts)
 }
 #endif
 
+#ifndef NO_DISKSIZE_CHECKS
 static bool
 delete_scheme(struct pm_devs *p)
 {
@@ -794,8 +796,16 @@ delete_scheme(struct pm_devs *p)
 	p->parts = NULL;
 	return true;
 }
+#endif
 
-
+#if !defined(NO_DISKSIZE_CHECKS) || !defined(NO_PARTMAN)
+/* If we have PARTMAN we offer a menu to convert between different partitioning
+ * schemes, so this code is referenced from code outside the #ifndef NO_DISKSIZE_CHECKS
+ * code below.
+ * Ideally we would also conditionalize this on the effective number of partitioning
+ * schemes available, but that is only known at runtime and this #if stuff is about
+ * reducing size for "challenged" environments.
+ */
 static bool
 convert_copy(struct disk_partitions *old_parts,
     struct disk_partitions *new_parts)
@@ -874,6 +884,7 @@ convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg)
 	p->parts = new_parts;
 	return true;
 }
+#endif
 
 static struct pm_devs *
 dummy_whole_system_pm(void)
@@ -1100,7 +1111,9 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 		pm->parts = partitions_read_disk(pm->diskdev,
 		    pm->dlsize, disk->dd_secsize, disk->dd_no_mbr);
 
+#ifndef NO_DISKSIZE_CHECKS
 again:
+#endif
 
 #ifdef DEBUG_VERBOSE
 		if (pm->parts) {
@@ -1129,6 +1142,7 @@ again:
 				pm->dlsize =
 				    disk->dd_cyl * disk->dd_head * disk->dd_sec;
 
+#ifndef NO_DISKSIZE_CHECKS
 			if (pm->parts && pm->parts->pscheme->size_limit != 0
 			    && pm->dlsize > pm->parts->pscheme->size_limit
 			    && ! partman_go) {
@@ -1180,6 +1194,7 @@ again:
 				}
 				pm->dlsize = pm->parts->pscheme->size_limit;
 			}
+#endif
 		} else {
 			pm->sectorsize = 0;
 			pm->dlcyl = 0;

@@ -10,3 +10,4 @@ options 	PMAP_MI
 #options 	UVMHIST_PRINT,KERNHIST_DELAY=0
 
 #options 	LOCKDEBUG
+options 	PMAP_DEBUG

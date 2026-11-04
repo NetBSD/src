@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -31,7 +31,7 @@ proc test {non-stop schedlock} {
     save_vars ::GDBFLAGS {
 	append ::GDBFLAGS " -ex \"set non-stop ${non-stop}\""
 	set sl [expr $schedlock == "on" ? 1 : 0]
-	clean_restart $::binfile-$sl
+	clean_restart $::testfile-$sl
     }
 
     set linenum1 [gdb_get_line_number "set break 1 here"]

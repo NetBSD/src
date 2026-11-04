@@ -1,4 +1,4 @@
-/*	$NetBSD: test-async.c,v 1.2.6.1 2025/08/02 05:51:58 perseant Exp $	*/
+/*	$NetBSD: test-async.c,v 1.2.6.2 2026/11/04 23:16:30 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -37,14 +37,6 @@
 #include <ns/log.h>
 #include <ns/query.h>
 #include <ns/types.h>
-
-#define CHECK(op)                              \
-	do {                                   \
-		result = (op);                 \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	} while (0)
 
 /*
  * Persistent data for use by this module. This will be associated

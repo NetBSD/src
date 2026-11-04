@@ -9,6 +9,4 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-transfers_complete  # unused function (cipher-suites/tests_cipher_suites.py:31)
-transfers_complete  # unused variable (cipher-suites/tests_cipher_suites.py:86)
-token_init_and_cleanup  # unused function (keyfromlabel/tests_keyfromlabel.py:43)
+transfers_complete  # unused function (cipher-suites/tests_cipher_suites.py:82)

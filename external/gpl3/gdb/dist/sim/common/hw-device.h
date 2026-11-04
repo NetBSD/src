@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2024 Free Software Foundation, Inc.
+   Copyright 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -170,7 +170,7 @@ typedef unsigned (hw_reset_method)
 /* Hardware operations:
 
    Connecting a parent to its children is a common bus. The parent
-   node is described as the bus owner and is responisble for
+   node is described as the bus owner and is responsible for
    co-ordinating bus operations. On the bus, a SPACE:ADDR pair is used
    to specify an address.  A device that is both a bus owner (parent)
    and bus client (child) are referred to as a bridging device.

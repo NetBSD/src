@@ -1,4 +1,4 @@
-/*	$NetBSD: gffbreg.h,v 1.5 2020/04/16 23:29:53 rin Exp $	*/
+/*	$NetBSD: gffbreg.h,v 1.5.26.1 2026/11/04 23:22:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 2013 Michael Lorenz
@@ -32,13 +32,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.5.26.1 2026/11/04 23:22:04 perseant Exp $");
 
 #ifndef GFFBREG_H
 #define GFFBREG_H
 
 #define GFFB_RAMDAC0	0x00680000
 #define GFFB_RAMDAC1	0x00682000
+#define GFFB_CURPOS	0x00000300
 
 #define GFFB_PCIO0	0x00601000
 #define GFFB_PCIO1	0x00603000
@@ -49,6 +50,8 @@ __KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
 
 #define GFFB_CRTC0	0x00600000
 #define GFFB_CRTC1	0x00602000
+
+#define GFFB_PVIO	0x000C0000
 
 #define GFFB_FIFO	0x00800000
 #define GFFB_FIFO_PUT	0x00800040	/* command list stop */
@@ -68,8 +71,17 @@ __KERNEL_RCSID(0, "$NetBSD: gffbreg.h,v 1.5 2020/04/16 23:29:53 rin Exp $");
 #define GFFB_PEXTDEV	0x00101000
 #define GFFB_PTIMER	0x00009000
 
+#define GFFB_BL_MIN	0x100
+#define GFFB_BL_MAX	0x534
+
+#define NV40_PMC_BACKLIGHT				   0x000015f0
+#	define NV40_PMC_BACKLIGHT_MASK			   0x001f0000
+
 /* CRTC registers */
 #define GFFB_DISPLAYSTART	0x800
+#define GFFB_CURSOR_CONFIG	0x810
+#define GFFB_PCRTC_GPIO		0x818
+#define GFFB_PCRTC_GPIO_EXT	0x81c
 
 /* VGA registers */
 #define GFFB_PEL_MASK	0x3c6

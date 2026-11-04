@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.183.10.1 2025/08/02 05:57:47 perseant Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.183.10.2 2026/11/04 23:27:57 perseant Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,10 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.183.10.1 2025/08/02 05:57:47 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.183.10.2 2026/11/04 23:27:57 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
+#include "opt_sppp_filter.h"
 #include "opt_pppoe.h"
 #include "opt_net_mpsafe.h"
 #endif
@@ -78,6 +79,10 @@ __KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.183.10.1 2025/08/02 05:57:47 perseant
 
 #ifndef PPPOE_DEQUEUE_MAXLEN
 #define PPPOE_DEQUEUE_MAXLEN	IFQ_MAXLEN
+#endif
+
+#ifndef PPPOE_RETRY_DELAY
+#define PPPOE_RETRY_DELAY	60
 #endif
 
 struct pppoehdr {
@@ -130,7 +135,8 @@ struct pppoetag {
 		PPPOE_ADD_16(PTR, LEN)
 
 #define	PPPOE_DISC_TIMEOUT	(hz*5)	/* base for quick timeout calculation */
-#define	PPPOE_SLOW_RETRY	(hz*60)	/* persistent retry interval */
+#define	PPPOE_SLOW_RETRY	(hz*PPPOE_RETRY_DELAY)
+					/* persistent retry interval */
 #define	PPPOE_RECON_FAST	(hz*15)	/* first retry after auth failure */
 #define	PPPOE_RECON_IMMEDIATE	(hz/10)	/* "no delay" reconnect */
 #define	PPPOE_RECON_PADTRCVD	(hz*5)	/* reconnect delay after PADT received */
@@ -376,8 +382,9 @@ pppoe_clone_create(struct if_clone *ifc, int unit)
 
 	sc->sc_sppp.pp_tls = pppoe_tls;
 	sc->sc_sppp.pp_tlf = pppoe_tlf;
-	sc->sc_sppp.pp_flags |= PP_KEEPALIVE |	/* use LCP keepalive */
-				PP_NOFRAMING;	/* no serial encapsulation */
+	SET(sc->sc_sppp.pp_dev_flags,
+	     (PP_DEVF_KEEPALIVE |	/* use LCP keepalive */
+	      PP_DEVF_NOFRAMING));	/* no serial encapsulation */
 	sc->sc_sppp.pp_framebytes = PPPOE_HEADERLEN;	/* framing added to ppp packets */
 
 	rv = workqueue_create(&sc->sc_timeout_wq,
@@ -1060,7 +1067,7 @@ breakbreak:;
 		}
 
 		pppoe_clear_softc(sc, "received PADT");
-		if (sc->sc_sppp.pp_if.if_flags & IFF_RUNNING) {
+		if (sppp_is_connecting(&sc->sc_sppp.pp_if)) {
 			pppoe_printf(sc, "wait for reconnect\n");
 			callout_schedule(&sc->sc_timeout,
 			    PPPOE_RECON_PADTRCVD);
@@ -1578,8 +1585,7 @@ pppoe_timeout(struct pppoe_softc *sc)
 		 *  - Slow retry mode: we already had a connection successfully
 		 *    established and will try infinitely (without user
 		 *    intervention)
-		 * We only enter slow retry mode if IFF_LINK1 (aka autodial)
-		 * is not set.
+		 * We only enter slow retry mode if on-demand is disabled.
 		 */
 
 		/* initialize for quick retry mode */
@@ -1588,7 +1594,7 @@ pppoe_timeout(struct pppoe_softc *sc)
 		ACQUIRE_SPLNET();
 		sc->sc_padi_retried++;
 		if (sc->sc_padi_retried >= PPPOE_DISC_MAXPADI) {
-			if ((sc->sc_sppp.pp_if.if_flags & IFF_LINK1) == 0) {
+			if (!sppp_ondemand_enabled(&sc->sc_sppp.pp_if)) {
 				/* slow retry mode */
 				retry_wait = PPPOE_SLOW_RETRY;
 			} else {
@@ -1715,11 +1721,10 @@ pppoe_disconnect(struct pppoe_softc *sc)
 #endif
 	sc->sc_session = 0;
 
-	PPPOE_UNLOCK(sc);
 
 	/* notify upper layer */
+	PPPOE_UNLOCK(sc);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-
 	PPPOE_LOCK(sc, RW_WRITER);
 
 	RELEASE_SPLNET();
@@ -1735,16 +1740,14 @@ pppoe_abort_connect(struct pppoe_softc *sc)
 	pppoe_printf(sc, "could not establish connection\n");
 	sc->sc_state = PPPOE_STATE_CLOSING;
 
-	PPPOE_UNLOCK(sc);
-
-	/* notify upper layer */
-	sc->sc_sppp.pp_down(&sc->sc_sppp);
-
-	PPPOE_LOCK(sc, RW_WRITER);
-
 	/* clear connection state */
 	memcpy(&sc->sc_dest, etherbroadcastaddr, sizeof(sc->sc_dest));
 	sc->sc_state = PPPOE_STATE_INITIAL;
+
+	/* notify upper layer */
+	PPPOE_UNLOCK(sc);
+	sppp_abort_connect(&sc->sc_sppp.pp_if);
+	PPPOE_LOCK(sc, RW_WRITER);
 }
 
 static int
@@ -2103,11 +2106,9 @@ pppoe_clear_softc(struct pppoe_softc *sc, const char *message)
 	/* fix our state */
 	sc->sc_state = PPPOE_STATE_INITIAL;
 
-	PPPOE_UNLOCK(sc);
-
 	/* signal upper layer */
+	PPPOE_UNLOCK(sc);
 	sc->sc_sppp.pp_down(&sc->sc_sppp);
-
 	PPPOE_LOCK(sc, RW_WRITER);
 
 	/* clean up softc */

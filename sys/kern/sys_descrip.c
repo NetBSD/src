@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.51.2.1 2025/08/02 05:57:42 perseant Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.51.2.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,32 +67,35 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.51.2.1 2025/08/02 05:57:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.51.2.2 2026/11/04 23:27:50 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/filedesc.h>
-#include <sys/kernel.h>
-#include <sys/vnode.h>
-#include <sys/proc.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/conf.h>
+#include <sys/event.h>
+#include <sys/fcntl.h>
 #include <sys/file.h>
+#include <sys/filedesc.h>
+#include <sys/ioctl.h>
+#include <sys/kauth.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/pool.h>
+#include <sys/proc.h>
+#include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/socket.h>
 #include <sys/socketvar.h>
 #include <sys/stat.h>
-#include <sys/ioctl.h>
-#include <sys/fcntl.h>
-#include <sys/kmem.h>
-#include <sys/pool.h>
-#include <sys/syslog.h>
-#include <sys/unistd.h>
-#include <sys/resourcevar.h>
-#include <sys/conf.h>
-#include <sys/event.h>
-#include <sys/kauth.h>
-#include <sys/atomic.h>
-#include <sys/mount.h>
 #include <sys/syscallargs.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/unistd.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_readahead.h>
 
@@ -111,7 +114,7 @@ sys_dup(struct lwp *l, const struct sys_dup_args *uap, register_t *retval)
 	oldfd = SCARG(uap, fd);
 
 	if ((fp = fd_getfile(oldfd)) == NULL) {
-		return EBADF;
+		return SET_ERROR(EBADF);
 	}
 	error = fd_dup(fp, 0, &newfd, false, false);
 	fd_putfile(oldfd);
@@ -129,7 +132,7 @@ dodup(struct lwp *l, int from, int to, int flags, register_t *retval)
 	file_t *fp;
 
 	if ((fp = fd_getfile(from)) == NULL)
-		return EBADF;
+		return SET_ERROR(EBADF);
 	mutex_enter(&fp->f_lock);
 	fp->f_count++;
 	mutex_exit(&fp->f_lock);
@@ -137,7 +140,7 @@ dodup(struct lwp *l, int from, int to, int flags, register_t *retval)
 
 	if ((u_int)to >= curproc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 	    (u_int)to >= maxfiles)
-		error = EBADF;
+		error = SET_ERROR(EBADF);
 	else if (from == to)
 		error = 0;
 	else
@@ -157,7 +160,7 @@ sys___dup3100(struct lwp *l, const struct sys___dup3100_args *uap, register_t *r
 		syscallarg(int)	flags;
 	} */
 	if (SCARG(uap, from) == SCARG(uap, to))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	return dodup(l, SCARG(uap, from), SCARG(uap, to), SCARG(uap, flags),
 	    retval);
 }
@@ -185,7 +188,7 @@ fcntl_forfs(int fd, file_t *fp, int cmd, void *arg)
 	char		stkbuf[STK_PARAMS];
 
 	if ((fp->f_flag & (FREAD | FWRITE)) == 0)
-		return (EBADF);
+		return SET_ERROR(EBADF);
 
 	/*
 	 * Interpret high order word to find amount of data to be
@@ -193,7 +196,7 @@ fcntl_forfs(int fd, file_t *fp, int cmd, void *arg)
 	 */
 	size = (size_t)F_PARAM_LEN(cmd);
 	if (size > F_PARAM_MAX)
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	memp = NULL;
 	if (size > sizeof(stkbuf)) {
 		memp = kmem_alloc(size, KM_SLEEP);
@@ -242,11 +245,11 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 	int error, flg;
 
 	if ((fp = fd_getfile(fd)) == NULL) {
-		error = EBADF;
+		error = SET_ERROR(EBADF);
 		goto out;
 	}
 	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL) {
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -263,7 +266,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 		switch (fl->l_type) {
 		case F_RDLCK:
 			if ((fp->f_flag & FREAD) == 0) {
-				error = EBADF;
+				error = SET_ERROR(EBADF);
 				break;
 			}
 			if ((p->p_flag & PK_ADVLOCK) == 0) {
@@ -276,7 +279,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 
 		case F_WRLCK:
 			if ((fp->f_flag & FWRITE) == 0) {
-				error = EBADF;
+				error = SET_ERROR(EBADF);
 				break;
 			}
 			if ((p->p_flag & PK_ADVLOCK) == 0) {
@@ -292,7 +295,7 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 			break;
 
 		default:
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			break;
 		}
 		break;
@@ -301,14 +304,14 @@ do_fcntl_lock(int fd, int cmd, struct flock *fl)
 		if (fl->l_type != F_RDLCK &&
 		    fl->l_type != F_WRLCK &&
 		    fl->l_type != F_UNLCK) {
-			error = EINVAL;
+			error = SET_ERROR(EINVAL);
 			break;
 		}
 		error = (*fo_advlock)(fp, p, F_GETLK, fl, F_POSIX);
 		break;
 
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		break;
 	}
 
@@ -345,7 +348,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	switch (cmd) {
 	case F_CLOSEM:
 		if (fd < 0)
-			return EBADF;
+			return SET_ERROR(EBADF);
 		while ((i = fdp->fd_lastfile) >= fd) {
 			if (fd_getfile(i) == NULL) {
 				/* Another thread has updated. */
@@ -376,7 +379,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	}
 
 	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+		return SET_ERROR(EBADF);
 
 	if ((cmd & F_FSCTL)) {
 		error = fcntl_forfs(fd, fp, cmd, SCARG(uap, arg));
@@ -401,7 +404,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		    l->l_proc->p_rlimit[RLIMIT_NOFILE].rlim_cur ||
 		    (u_int)newmin >= maxfiles) {
 			fd_putfile(fd);
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		error = fd_dup(fp, newmin, &i, cloexec, clofork);
 		*retval = i;
@@ -506,7 +509,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 	}
 
 	fd_putfile(fd);
@@ -526,7 +529,7 @@ sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 	int fd = SCARG(uap, fd);
 
 	if (fd_getfile(fd) == NULL) {
-		return EBADF;
+		return SET_ERROR(EBADF);
 	}
 
 	error = fd_close(fd);
@@ -535,7 +538,7 @@ sys_close(struct lwp *l, const struct sys_close_args *uap, register_t *retval)
 		printf("%s[%d]: close(%d) returned ERESTART\n",
 		    l->l_proc->p_comm, (int)l->l_proc->p_pid, fd);
 #endif
-		error = EINTR;
+		error = SET_ERROR(EINTR);
 	}
 
 	return error;
@@ -552,7 +555,7 @@ do_sys_fstat(int fd, struct stat *sb)
 	int error;
 
 	if ((fp = fd_getfile(fd)) == NULL) {
-		return EBADF;
+		return SET_ERROR(EBADF);
 	}
 	error = (*fp->f_ops->fo_stat)(fp, sb);
 	fd_putfile(fd);
@@ -600,9 +603,9 @@ sys_fpathconf(struct lwp *l, const struct sys_fpathconf_args *uap,
 	error = 0;
 
 	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+		return SET_ERROR(EBADF);
 	if (fp->f_ops->fo_fpathconf == NULL)
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 	else
 		error = (*fp->f_ops->fo_fpathconf)(fp, name, retval);
 	fd_putfile(fd);
@@ -632,12 +635,12 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 	how = SCARG(uap, how);
 
 	if ((fp = fd_getfile(fd)) == NULL) {
-		error = EBADF;
+		error = SET_ERROR(EBADF);
 		goto out;
 	}
 	if ((fo_advlock = fp->f_ops->fo_advlock) == NULL) {
 		KASSERT((atomic_load_relaxed(&fp->f_flag) & FHASLOCK) == 0);
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 		goto out;
 	}
 
@@ -658,7 +661,7 @@ sys_flock(struct lwp *l, const struct sys_flock_args *uap, register_t *retval)
 		lf.l_type = F_RDLCK;
 		break;
 	default:
-		error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -680,9 +683,9 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 	int error;
 
 	if ((fp = fd_getfile(fd)) == NULL)
-		return EBADF;
+		return SET_ERROR(EBADF);
 	if (fp->f_ops->fo_posix_fadvise == NULL) {
-		error = EOPNOTSUPP;
+		error = SET_ERROR(EOPNOTSUPP);
 	} else {
 		error = (*fp->f_ops->fo_posix_fadvise)(fp, offset, len,
 		    advice);

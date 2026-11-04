@@ -1,6 +1,6 @@
 /* Observers
 
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef OBSERVABLE_H
-#define OBSERVABLE_H
+#ifndef GDB_OBSERVABLE_H
+#define GDB_OBSERVABLE_H
 
 #include "gdbsupport/observable.h"
 #include "target/waitstatus.h"
@@ -102,9 +102,14 @@ extern observable<inferior */* parent_inf */, inferior */* child_inf */,
 extern observable<solib &/* solib */> solib_loaded;
 
 /* The shared library SOLIB has been unloaded from program space PSPACE.
+   The SILENT argument indicates that GDB doesn't wish to notify the CLI
+   about any non-error consequences of unloading the solib, e.g. when
+   breakpoints are disabled.
+
    Note  when gdb calls this observer, the library's symbols have not
    been unloaded yet, and thus are still available.  */
-extern observable<program_space *, const solib &/* solib */> solib_unloaded;
+extern observable<program_space *, const solib &/* solib */,
+		  bool /* still_in_use */, bool /* silent */> solib_unloaded;
 
 /* The symbol file specified by OBJFILE has been loaded.  */
 extern observable<struct objfile */* objfile */> new_objfile;
@@ -253,8 +258,10 @@ extern observable <program_space */* pspace */> new_program_space;
 /* The program space PSPACE is about to be deleted.  */
 extern observable <program_space */* pspace */> free_program_space;
 
+extern observable<bool /* enabled */> tui_enabled;
+
 } /* namespace observers */
 
 } /* namespace gdb */
 
-#endif /* OBSERVABLE_H */
+#endif /* GDB_OBSERVABLE_H */

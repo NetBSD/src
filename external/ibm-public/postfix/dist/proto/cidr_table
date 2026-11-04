@@ -9,7 +9,9 @@
 #	\fBpostmap -q - cidr:/etc/postfix/\fIfilename\fB <\fIinputfile\fR
 # DESCRIPTION
 #	The Postfix mail system uses optional lookup tables.
-#	These tables are usually in \fBdbm\fR or \fBdb\fR format.
+#	These tables are usually in \fBlmdb:\fR, \fBcdb:\fR, \fBhash:\fR,
+#	or \fBdbm:\fR format.
+#
 #	Alternatively, lookup tables can be specified in CIDR
 #	(Classless Inter-Domain Routing) form. In this case, each
 #	input is compared against a list of patterns. When a match

@@ -1,4 +1,4 @@
-/*	$NetBSD: mips_fixup.c,v 1.23.10.1 2025/08/02 05:55:54 perseant Exp $	*/
+/*	$NetBSD: mips_fixup.c,v 1.23.10.2 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.23.10.1 2025/08/02 05:55:54 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mips_fixup.c,v 1.23.10.2 2026/11/04 23:20:58 perseant Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips3_wired.h"
@@ -172,7 +172,7 @@ bool
 mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 {
 	struct cpu_info * const ci = curcpu();
-	struct pmap_tlb_info * const ti = ci->ci_tlb_info;
+	struct pmap_tlb_info * const ti = cpu_tlb_info(ci);
 
 	KASSERT(MIPS_KSEG0_P(load_addr));
 	KASSERT(!MIPS_CACHE_VIRTUAL_ALIAS);
@@ -189,7 +189,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 	 * is a NOP.
 	 */
 	new_insns[0] =
-	    (new_insns[1] & (0xfc1f0000|PAGE_MASK)) | (0xffff & ~PAGE_MASK);
+	    (new_insns[1] & (0xfc1f0000 | PAGE_MASK)) | (0xffff & ~PAGE_MASK);
 	new_insns[1] = 0;
 #ifdef DEBUG_VERBOSE
 	printf("%s: %08x: insn#1 %08x: %s r%u, %d(r%u)\n",
@@ -211,7 +211,7 @@ mips_fixup_zero_relative(int32_t load_addr, uint32_t new_insns[2], void *arg)
 	 */
 	TLBINFO_LOCK(ti);
 	if (ci->ci_tlb_slot < 0) {
-		uint32_t tlb_lo = MIPS3_PG_G|MIPS3_PG_V|MIPS3_PG_D
+		uint32_t tlb_lo = MIPS3_PG_G | MIPS3_PG_V | MIPS3_PG_D
 		    | mips3_paddr_to_tlbpfn(MIPS_KSEG0_TO_PHYS(trunc_page(load_addr)));
 		struct tlbmask tlbmask = {
 			.tlb_hi = -PAGE_SIZE | KERNEL_PID,
@@ -297,7 +297,7 @@ mips_fixup_addr(const uint32_t *stubp)
 	 *	 nop
 	 */
 	mips_reg_t regs[32];
-	uint32_t used = 1 |__BIT(_R_A0)|__BIT(_R_A1)|__BIT(_R_A2)|__BIT(_R_A3);
+	uint32_t used = 1 | __BIT(_R_A0) | __BIT(_R_A1) | __BIT(_R_A2) | __BIT(_R_A3);
 	size_t n;
 	const char *errstr = "mips";
 
@@ -317,7 +317,7 @@ mips_fixup_addr(const uint32_t *stubp)
 		const InstFmt insn = { .word = stubp[n] };
 		switch (insn.IType.op) {
 		case OP_LUI:
-			regs[insn.IType.rt] = (int16_t)insn.IType.imm << 16;
+			regs[insn.IType.rt] = (int32_t)((uint32_t)insn.IType.imm << 16);
 			used |= (1 << insn.IType.rt);
 			break;
 #ifdef _LP64
@@ -478,7 +478,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 
 	KASSERT(MIPS_KSEG0_P(start));
 	KASSERT(MIPS_KSEG0_P(end));
-	KASSERT(MIPS_KSEG0_START == (((intptr_t)start >> 28) << 28));
+	KASSERT(MIPS_KSEG0_START == ((intptr_t)start & ~__MASK(28)));
 
 	if (end > __stub_start)
 		end = __stub_start;
@@ -488,7 +488,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		uint32_t offset = insn & 0x03ffffff;
 		uint32_t opcode = insn >> 26;
 		const uint32_t * const stubp =
-		    &((uint32_t *)(((intptr_t)insnp >> 28) << 28))[offset];
+		    &((uint32_t *)MIPS_KSEG0_START)[offset];
 
 		/*
 		 * First we check to see if this is a jump and whether it is
@@ -510,7 +510,7 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 		 * Verify the real destination is in the same 256MB
 		 * as the location of the jump instruction.
 		 */
-		KASSERT((real_addr >> 28) == ((intptr_t)insnp >> 28));
+		KASSERT((real_addr & ~__MASK(28)) == ((intptr_t)insnp & ~__MASK(28)));
 
 		/*
 		 * Now fix it up.  Replace the old displacement to the stub
@@ -546,19 +546,20 @@ mips_fixup_stubs(uint32_t *start, uint32_t *end)
 
 #define	__stub		__section(".stub")
 
-void	mips_cpu_switch_resume(struct lwp *)		__stub;
-tlb_asid_t
-	tlb_get_asid(void)				__stub;
-void	tlb_set_asid(uint32_t, struct pmap *)		__stub;
-void	tlb_invalidate_all(void)			__stub;
-void	tlb_invalidate_globals(void)			__stub;
-void	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
-void	tlb_invalidate_addr(vaddr_t, tlb_asid_t)	__stub;
-u_int	tlb_record_asids(u_long *, uint32_t)		__stub;
-bool	tlb_update_addr(vaddr_t, tlb_asid_t, pt_entry_t, bool)
-							__stub;
-void	tlb_read_entry(size_t, struct tlbmask *)	__stub;
-void	tlb_write_entry(size_t, const struct tlbmask *) __stub;
+void __noubsan
+		 mips_cpu_switch_resume(struct lwp *)		__stub;
+tlb_asid_t __noubsan
+		tlb_get_asid(void)				__stub;
+void __noubsan	tlb_set_asid(uint32_t, struct pmap *)		__stub;
+void __noubsan	tlb_invalidate_all(void)			__stub;
+void __noubsan	tlb_invalidate_globals(void)			__stub;
+void __noubsan	tlb_invalidate_asids(uint32_t, uint32_t)	__stub;
+void __noubsan	tlb_invalidate_addr(vaddr_t, tlb_asid_t)	__stub;
+u_int __noubsan	tlb_record_asids(u_long *, uint32_t)		__stub;
+bool __noubsan	tlb_update_addr(vaddr_t, tlb_asid_t, pt_entry_t, bool)
+								__stub;
+void __noubsan	tlb_read_entry(size_t, struct tlbmask *)	__stub;
+void __noubsan	tlb_write_entry(size_t, const struct tlbmask *) __stub;
 
 /*
  * wbflush isn't a stub since it gets overridden quite late
@@ -641,10 +642,10 @@ wbflush(void)
 }
 
 #ifndef LOCKDEBUG
-void mutex_enter(kmutex_t *mtx)				__stub;
-void mutex_exit(kmutex_t *mtx)				__stub;
-void mutex_spin_enter(kmutex_t *mtx)			__stub;
-void mutex_spin_exit(kmutex_t *mtx)			__stub;
+void __noubsan mutex_enter(kmutex_t *mtx)			__stub;
+void __noubsan mutex_exit(kmutex_t *mtx)			__stub;
+void __noubsan mutex_spin_enter(kmutex_t *mtx)			__stub;
+void __noubsan mutex_spin_exit(kmutex_t *mtx)			__stub;
 
 void
 mutex_enter(kmutex_t *mtx)
@@ -675,8 +676,8 @@ mutex_spin_exit(kmutex_t *mtx)
 }
 #endif	/* !LOCKDEBUG */
 
-u_int _atomic_cas_uint(volatile u_int *, u_int, u_int)		__stub;
-u_long _atomic_cas_ulong(volatile u_long *, u_long, u_long)	__stub;
+u_int __noubsan _atomic_cas_uint(volatile u_int *, u_int, u_int)		__stub;
+u_long __noubsan _atomic_cas_ulong(volatile u_long *, u_long, u_long)	__stub;
 
 u_int
 _atomic_cas_uint(volatile u_int *ptr, u_int old, u_int new)
@@ -709,7 +710,7 @@ __strong_alias(_atomic_cas_64, _atomic_cas_ulong)
 __strong_alias(_atomic_cas_64_ni, _atomic_cas_ulong)
 #endif
 
-int	__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *) __stub;
+int	__noubsan __ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *) __stub;
 int
 __ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *retp)
 {
@@ -719,7 +720,7 @@ __ucas_32(volatile uint32_t *ptr, uint32_t old, uint32_t new, uint32_t *retp)
 __strong_alias(_ucas_32,__ucas_32);
 
 #ifdef _LP64
-int	__ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *) __stub;
+int	__noubsan __ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *) __stub;
 int
 __ucas_64(volatile uint64_t *ptr, uint64_t old, uint64_t new, uint64_t *retp)
 {

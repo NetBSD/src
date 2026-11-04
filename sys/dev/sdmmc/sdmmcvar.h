@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.36.24.1 2025/08/02 05:57:04 perseant Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.36.24.2 2026/11/04 23:22:34 perseant Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -113,8 +113,6 @@ struct sdmmc_command {
 	uint32_t	 c_arg;		/* SD/MMC command argument */
 	sdmmc_response	 c_resp;	/* response buffer */
 	bus_dmamap_t	 c_dmamap;
-	int		 c_dmaseg;	/* DMA segment number */
-	int		 c_dmaoff;	/* offset in DMA segment */
 	void		*c_data;	/* buffer to send or read into */
 	int		 c_datalen;	/* length of data buffer */
 	int		 c_blklen;	/* block length */
@@ -241,6 +239,7 @@ struct sdmmc_softc {
 	bus_dma_tag_t sc_dmat;
 	bus_dmamap_t sc_dmap;
 #define	SDMMC_MAXNSEGS		((MAXPHYS / PAGE_SIZE) + 1)
+	bus_addr_t sc_dma_align_mask;	/* DMA alignment required */
 
 	struct kmutex sc_mtx;		/* lock around host controller */
 	int sc_dying;			/* bus driver is shutting down */
@@ -414,5 +413,23 @@ int	sdmmc_mem_discard(struct sdmmc_function *, uint32_t, uint32_t);
 int	sdmmc_mem_flush_cache(struct sdmmc_function *, bool);
 
 void	sdmmc_pause(u_int, kmutex_t *);
+
+static inline bool
+sdmmc_alignment_ok(struct sdmmc_softc *sc, bus_dmamap_t dm)
+{
+	const bus_addr_t align_mask = sc->sc_dma_align_mask;
+
+	if (align_mask != 0) {
+		int n;
+
+		for (n = 0; n < dm->dm_nsegs; n++) {
+			if ((dm->dm_segs[n].ds_addr & align_mask) != 0 ||
+			    (dm->dm_segs[n].ds_len & align_mask) != 0) {
+				return false;
+			}
+		}
+	}
+	return true;
+}
 
 #endif	/* _SDMMCVAR_H_ */

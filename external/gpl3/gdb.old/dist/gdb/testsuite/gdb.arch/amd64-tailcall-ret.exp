@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2023 Free Software Foundation, Inc.
+# Copyright (C) 2012-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,15 +14,19 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 set opts {}
-standard_testfile .S
+standard_testfile .S .c
 
 if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.arch/amd64-tailcall-ret.exp COMPILE=1"
-    standard_testfile
+    standard_testfile .c .c
     lappend opts debug optimize=-O2
-} elseif { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping ${testfile}."
-    return
+} else {
+    require is_x86_64_m64_target
+}
+
+# Make .c available on the host.
+if [is_remote host] {
+    gdb_remote_download host $srcdir/$subdir/$srcfile2
 }
 
 if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} $opts] } {

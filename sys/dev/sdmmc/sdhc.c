@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.119.2.1 2025/08/02 05:57:03 perseant Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.119.2.2 2026/11/04 23:22:34 perseant Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.119.2.1 2025/08/02 05:57:03 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.119.2.2 2026/11/04 23:22:34 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -407,7 +407,7 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 
 	/*
 	 * Use DMA if the host system and the controller support it.
-	 * Supports integrated or external DMA egine, with or without
+	 * Supports integrated or external DMA engine, with or without
 	 * SDHC_DMA_ENABLE in the command.
 	 */
 	if (ISSET(sc->sc_flags, SDHC_FLAG_FORCE_DMA) ||
@@ -604,6 +604,7 @@ adma_done:
 	saa.saa_sct = &sdhc_functions;
 	saa.saa_sch = hp;
 	saa.saa_dmat = hp->dmat;
+	saa.saa_dma_align_mask = hp->sc->sc_dma_align_mask;
 	saa.saa_clkmax = hp->clkbase;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_HAVE_CGM))
 		saa.saa_clkmin = hp->clkbase / 256 / 2046;
@@ -935,8 +936,7 @@ sdhc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 	/*
 	 * Disable bus power before voltage change.
 	 */
-	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_32BIT_ACCESS)
-	    && !ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_PWR0)) {
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_PWR0)) {
 		hp->vdd = 0;
 		HWRITE1(hp, SDHC_POWER_CTL, 0);
 	}
@@ -1809,7 +1809,10 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 	}
 
 	/* Set DMA start address. */
-	if (ISSET(hp->flags, SHF_USE_ADMA2_MASK) && cmd->c_data != NULL) {
+	if (ISSET(mode, SDHC_DMA_ENABLE) &&
+	    ISSET(hp->flags, SHF_USE_ADMA2_MASK) &&
+	    cmd->c_data != NULL) {
+		KASSERT(cmd->c_dmamap != NULL);
 		for (int seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
 			bus_addr_t paddr =
 			    cmd->c_dmamap->dm_segs[seg].ds_addr;
@@ -2353,8 +2356,10 @@ sdhc_wait_intr(struct sdhc_host *hp, int mask, int timo, bool probing)
 
 	if (nointr ||
 	    (ISSET(status, SDHC_ERROR_INTERRUPT) && error)) {
-		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED))
+		if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_ENHANCED)) {
+			sdmmc_delay(100);
 			(void)sdhc_soft_reset(hp, SDHC_RESET_CMD|SDHC_RESET_DAT);
+		}
 		hp->intr_error_status = 0;
 		status = 0;
 	}

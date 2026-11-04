@@ -2,7 +2,7 @@
 # Wrapper around gcc to tweak the output in various ways when running
 # the testsuite.
 
-# Copyright (C) 2010-2023 Free Software Foundation, Inc.
+# Copyright (C) 2010-2024 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -43,13 +43,14 @@
 # -z compress using dwz
 # -m compress using dwz -m
 # -i make an index (.gdb_index)
+# -c make an index (currently .gdb_index) in a cache dir
 # -n make a dwarf5 index (.debug_names)
 # -p create .dwp files (Fission), you need to also use gcc option -gsplit-dwarf
 # -l creates separate debuginfo files linked to using .gnu_debuglink
 # If nothing is given, no changes are made
 
 myname=cc-with-tweaks.sh
-mydir=`dirname "$0"`
+mydir=$(dirname "$0")
 
 if [ -z "$GDB" ]
 then
@@ -85,6 +86,7 @@ output_file=a.out
 
 want_index=false
 index_options=""
+want_index_cache=false
 want_dwz=false
 want_multi=false
 want_dwp=false
@@ -97,6 +99,7 @@ while [ $# -gt 0 ]; do
 	-z) want_dwz=true ;;
 	-i) want_index=true ;;
 	-n) want_index=true; index_options=-dwarf-5;;
+	-c) want_index_cache=true ;;
 	-m) want_multi=true ;;
 	-p) want_dwp=true ;;
 	-l) want_gnu_debuglink=true ;;
@@ -109,7 +112,7 @@ if [ "$want_index" = true ]
 then
     if [ -z "$GDB_ADD_INDEX" ]
     then
-	if [ -f $mydir/gdb-add-index.sh ]
+	if [ -f "$mydir/gdb-add-index.sh" ]
 	then
 	    GDB_ADD_INDEX="$mydir/gdb-add-index.sh"
 	else
@@ -133,10 +136,10 @@ do
     # doing a link and what the output file is.
     # It's not perfect, but it seems to work well enough for the task at hand.
     case "$arg" in
-    "-c") have_link=no ;;
-    "-E") have_link=no ;;
-    "-S") have_link=no ;;
-    "-o") next_is_output_file=yes ;;
+	"-c") have_link=no ;;
+	"-E") have_link=no ;;
+	"-S") have_link=no ;;
+	"-o") next_is_output_file=yes ;;
     esac
 done
 
@@ -197,7 +200,7 @@ if [ "$want_index" = true ]; then
 	cp "$f" "$tmpdir"
     done
 
-    tmpfile="$tmpdir/$(basename $output_file)"
+    tmpfile=$tmpdir/$(basename "$output_file")
     # Filter out these messages which would stop dejagnu testcase run:
     # echo "$myname: No index was created for $file" 1>&2
     # echo "$myname: [Was there no debuginfo? Was there already an index?]" 1>&2
@@ -206,7 +209,34 @@ if [ "$want_index" = true ]; then
     rc=${PIPESTATUS[0]}
     mv "$tmpfile" "$output_file"
     rm -f "$tmpdir"/*.dwo
+    [ "$rc" != 0 ] && exit "$rc"
+fi
+
+if [ "$want_index_cache" = true ]; then
+    $GDB -q -batch \
+	 -ex "set index-cache directory $INDEX_CACHE_DIR" \
+	 -ex "set index-cache enabled on" \
+	 -ex "file $output_file"
+    rc=$?
     [ $rc != 0 ] && exit $rc
+fi
+
+if [ "$want_dwz" = true ] || [ "$want_multi" = true ]; then
+    # Require dwz version with PR dwz/24468 fixed.
+    dwz_version_major_required=0
+    dwz_version_minor_required=13
+    dwz_version_line=$($DWZ --version 2>&1 | head -n 1)
+    dwz_version=${dwz_version_line//dwz version /}
+    dwz_version_major=${dwz_version//\.*/}
+    dwz_version_minor=${dwz_version//*\./}
+    if [ "$dwz_version_major" -lt "$dwz_version_major_required" ] \
+	   || { [ "$dwz_version_major" -eq "$dwz_version_major_required" ] \
+		    && [ "$dwz_version_minor" -lt "$dwz_version_minor_required" ]; }; then
+	detected="$dwz_version_major.$dwz_version_minor"
+	required="$dwz_version_major_required.$dwz_version_minor_required"
+	echo "$myname: dwz version $detected detected, version $required or higher required"
+	exit 1
+    fi
 fi
 
 if [ "$want_dwz" = true ]; then
@@ -218,18 +248,18 @@ if [ "$want_dwz" = true ]; then
     rm -f "${output_file}.copy"
 
     case $cmp_rc in
-    0)
-	echo "$myname: dwz did not modify ${output_file}."
-        exit 1
-	;;
-    1)
-	# File was modified, great.
-	;;
-    *)
-	# Other cmp error, it presumably has already printed something on
-	# stderr.
-	exit 1
-	;;
+	0)
+	    echo "$myname: dwz did not modify ${output_file}."
+	    exit 1
+	    ;;
+	1)
+	    # File was modified, great.
+	    ;;
+	*)
+	    # Other cmp error, it presumably has already printed something on
+	    # stderr.
+	    exit 1
+	    ;;
     esac
 elif [ "$want_multi" = true ]; then
     get_tmpdir
@@ -238,9 +268,9 @@ elif [ "$want_multi" = true ]; then
     # new file in case dwz fails.
     rm -f "$dwz_file"
 
-    cp $output_file ${output_file}.alt
-    $DWZ -m "$dwz_file" "$output_file" ${output_file}.alt > /dev/null
-    rm -f ${output_file}.alt
+    cp "$output_file" "${output_file}.alt"
+    $DWZ -m "$dwz_file" "$output_file" "${output_file}.alt" > /dev/null
+    rm -f "${output_file}.alt"
 
     # Validate dwz's work by checking if the expected output file exists.
     if [ ! -f "$dwz_file" ]; then
@@ -250,14 +280,19 @@ elif [ "$want_multi" = true ]; then
 fi
 
 if [ "$want_dwp" = true ]; then
-    dwo_files=$($READELF -wi "${output_file}" | grep _dwo_name | \
-	sed -e 's/^.*: //' | sort | uniq)
+    mapfile -t dwo_files \
+	    < \
+	    <($READELF -wi "${output_file}" \
+		  | grep _dwo_name \
+		  | sed -e 's/^.*: //' \
+		  | sort \
+		  | uniq)
     rc=0
-    if [ -n "$dwo_files" ]; then
-	$DWP -o "${output_file}.dwp" ${dwo_files} > /dev/null
+    if  [ ${#dwo_files[@]} -ne 0 ]; then
+	$DWP -o "${output_file}.dwp" "${dwo_files[@]}" > /dev/null
 	rc=$?
 	[ $rc != 0 ] && exit $rc
-	rm -f ${dwo_files}
+	rm -f "${dwo_files[@]}"
     fi
 fi
 
@@ -291,10 +326,10 @@ if [ "$want_gnu_debuglink" = true ]; then
 	# Overwrite output_file with stripped version containing
 	# .gnu_debuglink to debug_file.
 	$OBJCOPY --add-gnu-debuglink="$link" "${stripped_file}" \
-		"${output_file}"
-	rc=$?
-	[ $rc != 0 ] && exit $rc
+		 "${output_file}"
     )
+    rc=$?
+    [ $rc != 0 ] && exit $rc
 fi
 
 exit $rc

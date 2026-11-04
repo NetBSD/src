@@ -1,5 +1,5 @@
 /* GDB-specific functions for operating on agent expressions
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AX_GDB_H
-#define AX_GDB_H
+#ifndef GDB_AX_GDB_H
+#define GDB_AX_GDB_H
 
 #include "ax.h"
 
@@ -123,4 +123,4 @@ extern agent_expr_up gen_printf (CORE_ADDR, struct gdbarch *,
 				 CORE_ADDR, LONGEST, const char *, int,
 				 int, struct expression **);
 
-#endif /* AX_GDB_H */
+#endif /* GDB_AX_GDB_H */

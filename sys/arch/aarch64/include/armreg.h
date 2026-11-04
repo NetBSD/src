@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.66.2.1 2025/08/02 05:55:20 perseant Exp $ */
+/* $NetBSD: armreg.h,v 1.66.2.2 2026/11/04 23:19:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -91,6 +91,10 @@ reg_##regname##_write(const uint64_t __val)			\
 #define AARCH64REG_WRITEIMM_INLINE(regname)			\
 	AARCH64REG_WRITEIMM_INLINE2(regname, regname)
 
+#define AARCH64REG_READWRITE_INLINE(regname)			\
+	AARCH64REG_READ_INLINE2(regname, regname)		\
+	AARCH64REG_WRITE_INLINE2(regname, regname)
+
 #define AARCH64REG_READWRITE_INLINE2(regname, regdesc)		\
 	AARCH64REG_READ_INLINE2(regname, regdesc)		\
 	AARCH64REG_WRITE_INLINE2(regname, regdesc)
@@ -130,8 +134,7 @@ AARCH64REG_READ_INLINE(dczid_el0)	// Data Cache Zero ID Register
 #define	DCZID_DZP		__BIT(4)	// Data Zero Prohibited
 #define	DCZID_BS		__BITS(3,0)	// Block Size (log2 - 2)
 
-AARCH64REG_READ_INLINE(fpcr)		// Floating Point Control Register
-AARCH64REG_WRITE_INLINE(fpcr)
+AARCH64REG_READWRITE_INLINE(fpcr)		// Floating Point Control Register
 
 #define	FPCR_AHP		__BIT(26)	// Alternative Half Precision
 #define	FPCR_DN			__BIT(25)	// Default Nan Control
@@ -152,8 +155,7 @@ AARCH64REG_WRITE_INLINE(fpcr)
 #define	FPCR_IOE		__BIT(8)	// Invalid Operation Exception enable
 #define	FPCR_ESUM		0x1F00
 
-AARCH64REG_READ_INLINE(fpsr)		// Floating Point Status Register
-AARCH64REG_WRITE_INLINE(fpsr)
+AARCH64REG_READWRITE_INLINE(fpsr)	// Floating Point Status Register
 
 #define	FPSR_N32		__BIT(31)	// AARCH32 Negative
 #define	FPSR_Z32		__BIT(30)	// AARCH32 Zero
@@ -168,16 +170,14 @@ AARCH64REG_WRITE_INLINE(fpsr)
 #define	FPSR_IOC		__BIT(0)	// Invalid Operation Cumulative status
 #define	FPSR_CSUM		0x1F
 
-AARCH64REG_READ_INLINE(nzcv)		// condition codes
-AARCH64REG_WRITE_INLINE(nzcv)
+AARCH64REG_READWRITE_INLINE(nzcv)	// condition codes
 
 #define	NZCV_N			__BIT(31)	// Negative
 #define	NZCV_Z			__BIT(30)	// Zero
 #define	NZCV_C			__BIT(29)	// Carry
 #define	NZCV_V			__BIT(28)	// Overflow
 
-AARCH64REG_READ_INLINE(tpidr_el0)	// Thread Pointer ID Register (RW)
-AARCH64REG_WRITE_INLINE(tpidr_el0)
+AARCH64REG_READWRITE_INLINE(tpidr_el0)	// Thread Pointer ID Register (RW)
 
 AARCH64REG_READ_INLINE(tpidrro_el0)	// Thread Pointer ID Register (RO)
 
@@ -229,8 +229,7 @@ AARCH64REG_READ_INLINE(clidr_el1)
 #define	 CLIDR_TYPE_IDCACHE	 3		//  Separate inst and data caches
 #define	 CLIDR_TYPE_UNIFIEDCACHE 4		//  Unified cache
 
-AARCH64REG_READ_INLINE(contextidr_el1)
-AARCH64REG_WRITE_INLINE(contextidr_el1)
+AARCH64REG_READWRITE_INLINE(contextidr_el1)
 
 AARCH64REG_READ_INLINE(currentel)
 
@@ -258,6 +257,7 @@ AARCH64REG_READ_INLINE(id_aa64dfr0_el1)
 #define	 ID_AA64DFR0_EL1_PMUVER_V3P4	 5
 #define	 ID_AA64DFR0_EL1_PMUVER_V3P5	 6
 #define	 ID_AA64DFR0_EL1_PMUVER_V3P7	 7
+#define	 ID_AA64DFR0_EL1_PMUVER_V3P8	 8
 #define	 ID_AA64DFR0_EL1_PMUVER_IMPL	 15
 #define	ID_AA64DFR0_EL1_TRACEVER	__BITS(4,7)
 #define	 ID_AA64DFR0_EL1_TRACEVER_NONE	 0
@@ -512,6 +512,7 @@ AARCH64REG_READ_INLINE(mpidr_el1)
 #define	MIDR_EL1_REVISION	__BITS(3,0)		// Revision
 
 #define	MPIDR_AFF3		__BITS(32,39)
+#define	MPIDR_RES1		__BIT(31)
 #define	MPIDR_U	 		__BIT(30)		// 1 = Uni-Processor System
 #define	MPIDR_MT		__BIT(24)		// 1 = SMT(AFF0 is logical)
 #define	MPIDR_AFF2		__BITS(16,23)
@@ -625,8 +626,7 @@ AARCH64REG_WRITE_INLINE3(APGAKeyHi_EL1, apgakeyhi_el1, ATTR_ARCH("armv8.3-a"))
 AARCH64REG_READ_INLINE3(pan, pan, ATTR_ARCH("armv8.1-a"))
 AARCH64REG_WRITE_INLINE3(pan, pan, ATTR_ARCH("armv8.1-a"))
 
-AARCH64REG_READ_INLINE(cpacr_el1)	// Coprocessor Access Control Register
-AARCH64REG_WRITE_INLINE(cpacr_el1)
+AARCH64REG_READWRITE_INLINE(cpacr_el1)	// Coprocessor Access Control Register
 
 #define	CPACR_TTA		__BIT(28)	 // System Register Access Traps
 #define	CPACR_FPEN		__BITS(21,20)
@@ -635,14 +635,12 @@ AARCH64REG_WRITE_INLINE(cpacr_el1)
 #define	 CPACR_FPEN_NONE_2	 __SHIFTIN(2, CPACR_FPEN)
 #define	 CPACR_FPEN_ALL		 __SHIFTIN(3, CPACR_FPEN)
 
-AARCH64REG_READ_INLINE(csselr_el1)	// Cache Size Selection Register
-AARCH64REG_WRITE_INLINE(csselr_el1)
+AARCH64REG_READWRITE_INLINE(csselr_el1)	// Cache Size Selection Register
 
 #define	CSSELR_LEVEL		__BITS(3,1)	// Cache level of required cache
 #define	CSSELR_IND		__BIT(0)	// Instruction not Data bit
 
-AARCH64REG_READ_INLINE(daif)		// Debug Async Irq Fiq mask register
-AARCH64REG_WRITE_INLINE(daif)
+AARCH64REG_READWRITE_INLINE(daif)	// Debug Async Irq Fiq mask register
 AARCH64REG_WRITEIMM_INLINE(daifclr)
 AARCH64REG_WRITEIMM_INLINE(daifset)
 
@@ -650,13 +648,13 @@ AARCH64REG_WRITEIMM_INLINE(daifset)
 #define	DAIF_A			__BIT(8)	// SError Abort Mask
 #define	DAIF_I			__BIT(7)	// IRQ Mask
 #define	DAIF_F			__BIT(6)	// FIQ Mask
-#define	DAIF_SETCLR_SHIFT	6		// for daifset/daifclr #imm shift
+#define	DAIF_MASK		(DAIF_D | DAIF_A | DAIF_I | DAIF_F)
 
-AARCH64REG_READ_INLINE(elr_el1)		// Exception Link Register
-AARCH64REG_WRITE_INLINE(elr_el1)
+AARCH64REG_READWRITE_INLINE(elr_el1)		// Exception Link Register
+AARCH64REG_READWRITE_INLINE(elr_el2)
 
-AARCH64REG_READ_INLINE(esr_el1)		// Exception Symdrone Register
-AARCH64REG_WRITE_INLINE(esr_el1)
+AARCH64REG_READWRITE_INLINE(esr_el1)		// Exception Symdrone Register
+AARCH64REG_READWRITE_INLINE(esr_el2)
 
 #define	ESR_EC			__BITS(31,26) // Exception Cause
 #define	 ESR_EC_UNKNOWN		 0x00	// AXX: Unknown Reason
@@ -668,7 +666,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_FP_ACCESS	 0x07	// AXX: Access to SIMD/FP Registers
 #define	 ESR_EC_FPID		 0x08	// A32: MCR/MRC access to CP10 !EC=7
 #define	 ESR_EC_PAUTH		 0x09	// A64: Pointer auth trap (FEAT_PAUTH)
-#define	 ESR_EC_LS64		 0x0a	// AXX: LD64B/ST64B instruction (FEAT_LS64)		// XXXNH
+#define	 ESR_EC_LS64		 0x0a	// A64: LD64B/ST64B instruction (FEAT_LS64)
 #define	 ESR_EC_CP14_RRT	 0x0c	// A32: MRRC access to CP14
 #define	 ESR_EC_BTE_A64		 0x0d	// A64: Branch Target Exception (V8.5)
 #define	 ESR_EC_ILL_STATE	 0x0e	// AXX: Illegal Execution State
@@ -684,7 +682,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_TME		 0x1b	// A64: TSTART instruction (FEAT_TME)
 #define	 ESR_EC_FRAC		 0x1c	// A64: Pointer auth trap (FEAT_FPAC)
 #define	 ESR_EC_SME		 0x1d	// AXX: Access to SME (FEAT_SME)
-#define	 ESR_EC_RME		 0x1e	// A64: Granule Protection  Check (FEAT_RME)
+#define	 ESR_EC_RME		 0x1e	// A64: Granule Protection Check (FEAT_RME)
 #define	 ESR_EC_INSN_ABT_EL_LOW	 0x20	// AXX: Instruction Abort from lower level
 #define	 ESR_EC_INSN_ABT_EL_CUR	 0x21	// AXX: Instruction Abort from current level
 #define	 ESR_EC_PC_ALIGNMENT	 0x22	// AXX: Misaligned PC
@@ -789,13 +787,10 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	ESR_ISS_FSC_SECOND_LEVEL_DOMAIN_FAULT		0x3e
 
 
-AARCH64REG_READ_INLINE(far_el1)		// Fault Address Register
-AARCH64REG_WRITE_INLINE(far_el1)
-AARCH64REG_READ_INLINE(far_el2)
-AARCH64REG_WRITE_INLINE(far_el2)
+AARCH64REG_READWRITE_INLINE(far_el1)		// Fault Address Register
+AARCH64REG_READWRITE_INLINE(far_el2)
 
-AARCH64REG_READ_INLINE(hcr_el2)		// Hypervisor Configuration Register
-AARCH64REG_WRITE_INLINE(hcr_el2)
+AARCH64REG_READWRITE_INLINE(hcr_el2)		// Hypervisor Configuration Register
 
 #define	HCR_EL2_TWEDEL		__BITS(63,60)	// TWE Delay (FEAT_TWED)
 #define	HCR_EL2_TWEDEN		__BIT(59)	// TWE Delay Enable (FEAT_TWED)
@@ -823,7 +818,7 @@ AARCH64REG_WRITE_INLINE(hcr_el2)
 #define	HCR_EL2_TEA		__BIT(37)	// Route synchronous External abort exceptions to EL2 (FEAT_RAS)
 #define	HCR_EL2_TERR		__BIT(36)	// Trap accesses of Error Record registers (FEAT_RAS)
 #define	HCR_EL2_TLOR		__BIT(35)	// Trap LOR registers (FEAT_LOR)
-#define	HCR_EL2_VHE		__BIT(34)	// EL2 Host (FEAT_VHE)
+#define	HCR_EL2_E2H		__BIT(34)	// EL2 Host (FEAT_VHE)
 #define	HCR_EL2_ID		__BIT(33)	// stage2 IC disable
 #define	HCR_EL2_CD		__BIT(32)	// stage2 DC disable
 #define	HCR_EL2_RW		__BIT(31)	// register width
@@ -845,7 +840,7 @@ AARCH64REG_WRITE_INLINE(hcr_el2)
 #define	HCR_EL2_TID0		__BIT(15)	// trap ID group0 regs
 #define	HCR_EL2_TWE		__BIT(14)	// trap WFE
 #define	HCR_EL2_TWI		__BIT(13)	// trap WFI
-#define	HCR_EL2_DC		__BIT(12)	// default cacheablility
+#define	HCR_EL2_DC		__BIT(12)	// default cacheability
 #define	HCR_EL2_BSU		__BITS(11,10)	// barrier shareability upgrade
 #define	HCR_EL2_FB		__BIT(9)	// force broadcast TLBI and IC
 #define	HCR_EL2_VSE		__BIT(8)	// inject Virtual SError
@@ -858,17 +853,39 @@ AARCH64REG_WRITE_INLINE(hcr_el2)
 #define	HCR_EL2_SWIO		__BIT(1)	// override DC ISW to DC CISW
 #define	HCR_EL2_VM		__BIT(0)	// enable stage2 translation
 
-AARCH64REG_READ_INLINE(hpfar_el2)		// Hypervisor IPA Fault Address Register
-AARCH64REG_WRITE_INLINE(hpfar_el2)
+AARCH64REG_READWRITE_INLINE(cptr_el2)	// Architectural Feature Trap Register
+
+#define CPTR_EL2_E0TP1E		__BIT(33)
+#define CPTR_EL2_E0TP0E		__BIT(32)
+#define CPTR_EL2_E0POE		__BIT(29)
+#define CPTR_EL2_TCPAC		__BIT(31)
+#define CPTR_EL2_TAM		__BIT(30)
+#define CPTR_EL2_TTA		__BIT(28)
+#define CPTR_EL2_VHE_SMEN	__BITS(25,24)
+#define CPTR_EL2_VHE_FPEN	__BITS(21,20)
+#define CPTR_EL2_VHE_ZEN	__BITS(17,16)
+#define CPTR_EL2_NVHE_TTA	__BIT(20)
+#define CPTR_EL2_NVHE_TSM	__BIT(12)
+#define CPTR_EL2_NVHE_TFP	__BIT(10)
+#define CPTR_EL2_NVHE_TZ	__BIT(8)
+
+#define CPTR_EL2_NVHE_RES1	(__BIT(13) | __BIT(9) | __BITS(7, 0))
+#define CPTR_EL2_NVHE_RES0	(__BITS(63, 32) | __BITS(29, 21) | __BITS(19, 14) | __BIT(11))
+
+
+AARCH64REG_READWRITE_INLINE(hpfar_el2)		// Hypervisor IPA Fault Address Register
 
 #define HPFAR_EL2_NS		__BIT(63)	// Faulting IPA address space (FEAT_SEL2)
-#define HPFAR_EL2_FIPA_D128	__BITS(47,4)	// Faulting Intermediate Physical Address Bits [55:12]
-#define HPFAR_EL2_FIPA		__BITS(43,4)    // Faulting Intermediate Physical Address Bits [51:12]
-#define HPFAR_EL2_FIPA_BITSHIFT	12
+#define HPFAR_EL2_FIPA_D128	__BITS(47,  4)	// Faulting Intermediate Physical Address Bits [55:12]
+#define HPFAR_EL2_FIPA_D128_BITS \
+				__BITS(55, 12)
+#define HPFAR_EL2_FIPA_LPA	__BITS(43,  4)	// Faulting Intermediate Physical Address Bits [51:12]
+#define HPFAR_EL2_FIPA_LPA_BITS __BITS(51, 12)
+#define HPFAR_EL2_FIPA		__BITS(39,  4)	// Faulting Intermediate Physical Address Bits [47:12]
+#define HPFAR_EL2_FIPA_BITS	__BITS(47, 12)
 
 
-AARCH64REG_READ_INLINE(hstr_el2)		// Hypervisor System Trap Register
-AARCH64REG_WRITE_INLINE(hstr_el2)
+AARCH64REG_READWRITE_INLINE(hstr_el2)		// Hypervisor System Trap Register
 
 #define	HSTR_EL2_T15	__BIT(15)
 //			__BIT(14) Res0
@@ -887,8 +904,34 @@ AARCH64REG_WRITE_INLINE(hstr_el2)
 #define	HSTR_EL2_T1	__BIT(1)
 #define	HSTR_EL2_T0	__BIT(0)
 
-AARCH64REG_READ_INLINE2(l2ctlr_el1, s3_1_c11_c0_2)  // Cortex-A53,57,72,73
-AARCH64REG_WRITE_INLINE2(l2ctlr_el1, s3_1_c11_c0_2) // Cortex-A53,57,72,73
+AARCH64REG_READWRITE_INLINE(mdcr_el2)	// Monitor Debug Configuration Register
+
+//			__BITS(63, 37)	Res0
+#define	MDCR_EL2_HPMFZS	__BIT(36)		// Hyp Performance Monitors Freeze-on-SPE event (FEAT_SPEv1p2)
+//			__BITS(35, 30)	Res0
+#define	MDCR_EL2_HPMFZO	__BIT(29)		// Hyp Performance Monitors Freeze-on-overflow (FEAT_PMUv3p7)
+#define	MDCR_EL2_MTPME	__BIT(28)		// Multi-threaded PMU Enable (FEAT_MTPMU and not EL3)
+#define	MDCR_EL2_TDCC	__BIT(27)		// Trap DCC. (FEAT_FGT)
+#define	MDCR_EL2_HLP	__BIT(26)		// Hypervisor Long event counter enable. (FEAT_PMUv3p5)
+#define	MDCR_EL2_E2TB	__BITS(25, 24)		// EL2 Trace Buffer. (FEAT_TRBE)
+#define	MDCR_EL2_HCCD	__BIT(23)		// Hypervisor Cycle Counter Disable. (FEAT_PMUv3p5)
+//			__BITS(22, 20)	Res0
+#define	MDCR_EL2_TTRF	__BIT(19)		// Trap Trace Filter Control. (FEAT_TRF)
+//			__BIT(18)	Res0
+#define	MDCR_EL2_HPMD	__BIT(17)		// Guest Performance Monitor Disable. (FEAT_PMUv3p1 and FEAT_Debugv8p2)
+//			__BITS(16, 15)	Res0
+#define	MDCR_EL2_TPMS	__BIT(14)		// Trap Performance Monitor Sampling. (FEAT_SPE)
+#define	MDCR_EL2_E2PM	__BITS(13, 12)		// EL2 Profiling Buffer. (FEAT_SPE)
+#define	MDCR_EL2_TDRA	__BIT(11)		// Trap Debug ROM Address register access.
+#define	MDCR_EL2_TDOSA	__BIT(10)		// Trap debug OS-related register access. (FEAT_DoubleLock)
+#define	MDCR_EL2_TDA	__BIT(9)		// Trap Debug Access.
+#define	MDCR_EL2_TDE	__BIT(8)		// Trap Debug Exceptions.
+#define	MDCR_EL2_HPME	__BIT(7)		// Enable [MDCR_EL2.HPMN .. (N-1)] event counters.
+#define	MDCR_EL2_TPM	__BIT(6)		// Trap Performance Monitor accesses. (FEAT_PMUv3)
+#define	MDCR_EL2_TPMCR	__BIT(5)		// Trap PMCR{_EL0,} access. (FEAT_PMUv3)
+#define	MDCR_EL2_HPMN	__BIT(4, 0)		// Event counters range split. (FEAT_PMUv3)
+
+AARCH64REG_READWRITE_INLINE2(l2ctlr_el1, s3_1_c11_c0_2)  // Cortex-A53,57,72,73
 
 #define	L2CTLR_NUMOFCORE	__BITS(25,24)	// Number of cores
 #define	L2CTLR_CPUCACHEPROT	__BIT(22)	// CPU Cache Protection
@@ -896,14 +939,10 @@ AARCH64REG_WRITE_INLINE2(l2ctlr_el1, s3_1_c11_c0_2) // Cortex-A53,57,72,73
 #define	L2CTLR_L2_INPUT_LATENCY	__BIT(5)	// L2 Data RAM input latency
 #define	L2CTLR_L2_OUTPUT_LATENCY __BIT(0)	// L2 Data RAM output latency
 
-AARCH64REG_READ_INLINE(mair_el1) // Memory Attribute Indirection Register
-AARCH64REG_WRITE_INLINE(mair_el1)
-AARCH64REG_READ_INLINE(mair_el2)
-AARCH64REG_WRITE_INLINE(mair_el2)
-AARCH64REG_READ_INLINE(amair_el1)	// Auxiliary MAIR
-AARCH64REG_WRITE_INLINE(amair_el1)
-AARCH64REG_READ_INLINE(amair_el2)
-AARCH64REG_WRITE_INLINE(amair_el2)
+AARCH64REG_READWRITE_INLINE(mair_el1) // Memory Attribute Indirection Register
+AARCH64REG_READWRITE_INLINE(mair_el2)
+AARCH64REG_READWRITE_INLINE(amair_el1)	// Auxiliary MAIR
+AARCH64REG_READWRITE_INLINE(amair_el2)
 
 #define	MAIR_ATTR0		 __BITS(7,0)
 #define	MAIR_ATTR1		 __BITS(15,8)
@@ -919,8 +958,7 @@ AARCH64REG_WRITE_INLINE(amair_el2)
 #define	MAIR_NORMAL_WT		 0xbb
 #define	MAIR_NORMAL_WB		 0xff
 
-AARCH64REG_READ_INLINE(par_el1)		// Physical Address Register
-AARCH64REG_WRITE_INLINE(par_el1)
+AARCH64REG_READWRITE_INLINE(par_el1)		// Physical Address Register
 
 #define	PAR_ATTR		__BITS(63,56)	// F=0 memory attributes
 #define	PAR_PA			__BITS(51,12)	// F=0 physical address
@@ -937,11 +975,9 @@ AARCH64REG_WRITE_INLINE(par_el1)
 #define	PAR_FST			__BITS(6,1)	// F=1 fault status code
 #define	PAR_F			__BIT(0)	// translation failed
 
-AARCH64REG_READ_INLINE(rmr_el1)		// Reset Management Register
-AARCH64REG_WRITE_INLINE(rmr_el1)
+AARCH64REG_READWRITE_INLINE(rmr_el1)		// Reset Management Register
 
-AARCH64REG_READ_INLINE(rvbar_el1)	// Reset Vector Base Address Register
-AARCH64REG_WRITE_INLINE(rvbar_el1)
+AARCH64REG_READWRITE_INLINE(rvbar_el1)	// Reset Vector Base Address Register
 
 AARCH64REG_ATWRITE_INLINE(s1e0r)	// Address Translate Stages 1 EL0
 AARCH64REG_ATWRITE_INLINE(s1e0w)
@@ -952,10 +988,8 @@ AARCH64REG_ATWRITE_INLINE(s12e0w)
 AARCH64REG_ATWRITE_INLINE(s12e1r)	// Address Translate Stages 1 and 2 EL1
 AARCH64REG_ATWRITE_INLINE(s12e1w)
 
-AARCH64REG_READ_INLINE(sctlr_el1)	// System Control Register
-AARCH64REG_WRITE_INLINE(sctlr_el1)
-AARCH64REG_READ_INLINE(sctlr_el2)
-AARCH64REG_WRITE_INLINE(sctlr_el2)
+AARCH64REG_READWRITE_INLINE(sctlr_el1)	// System Control Register
+AARCH64REG_READWRITE_INLINE(sctlr_el2)
 
 #define	SCTLR_RES0		0xc8222400	// Reserved ARMv8.0, write 0
 #define	SCTLR_RES1		0x30d00800	// Reserved ARMv8.0, write 1
@@ -1008,18 +1042,15 @@ reg_sp_read(void)
 	return __rv;
 }
 
-AARCH64REG_READ_INLINE(sp_el0)		// EL0 Stack Pointer
-AARCH64REG_WRITE_INLINE(sp_el0)
-AARCH64REG_READ_INLINE(sp_el1)		// EL1 Stack Pointer
-AARCH64REG_WRITE_INLINE(sp_el1)
+AARCH64REG_READWRITE_INLINE(sp_el0)		// EL0 Stack Pointer
+AARCH64REG_READWRITE_INLINE(sp_el1)		// EL1 Stack Pointer
+AARCH64REG_READWRITE_INLINE(sp_el2)		// EL2 Stack Pointer
 
-AARCH64REG_READ_INLINE(spsel)		// Stack Pointer Select
-AARCH64REG_WRITE_INLINE(spsel)
+AARCH64REG_READWRITE_INLINE(spsel)		// Stack Pointer Select
 
 #define	SPSEL_SP		__BIT(0);	// use SP_EL0 at all exception levels
 
-AARCH64REG_READ_INLINE(spsr_el1)	// Saved Program Status Register
-AARCH64REG_WRITE_INLINE(spsr_el1)
+AARCH64REG_READWRITE_INLINE(spsr_el1)	// Saved Program Status Register
 
 #define	SPSR_NZCV 		__BITS(31,28)	// mask of N Z C V
 #define	 SPSR_N	 		__BIT(31)	// Negative
@@ -1067,8 +1098,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_USER_P(spsr)	(((spsr) & (SPSR_M & ~SPSR_A32)) == 0)
 #define	SPSR_PRIVILEGED_P(spsr) (!SPSR_USER_P((spsr)))
 
-AARCH64REG_READ_INLINE(tcr_el1)		// Translation Control Register
-AARCH64REG_WRITE_INLINE(tcr_el1)
+AARCH64REG_READWRITE_INLINE(tcr_el1)		// Translation Control Register
 
 /* TCR_EL1 - Translation Control Register */
 #define TCR_TCMA1		__BIT(58)		/* ARMv8.5-MemTag control when ADDR[59:55] = 0b11111 */
@@ -1144,8 +1174,7 @@ AARCH64REG_WRITE_INLINE(tcr_el1)
 #define TCR_EPD0		__BIT(7)		/* Walk Disable for TTBR0 */
 #define TCR_T0SZ		__BITS(5,0)		/* Size offset for TTBR0_EL1 */
 
-AARCH64REG_READ_INLINE(tcr_el2)		// Translation Control Register EL2
-AARCH64REG_WRITE_INLINE(tcr_el2)
+AARCH64REG_READWRITE_INLINE(tcr_el2)	// Translation Control Register EL2
 
 /* TCR_EL2 - Translation Control Register */
 //				__BITS(63, 34) 	// Res0
@@ -1185,35 +1214,25 @@ AARCH64REG_WRITE_INLINE(tcr_el2)
 #define  TCR_EL2_IRGN0_WB	__SHIFTIN(3,TCR_EL2_IRGN0)	//  WriteBack
 #define TCR_EL2_T0SZ		__BITS(5,0)	// TTBR0_EL2 Size offset
 
-AARCH64REG_READ_INLINE(tpidr_el1)	// Thread ID Register (EL1)
-AARCH64REG_WRITE_INLINE(tpidr_el1)
-AARCH64REG_READ_INLINE(tpidr_el2)	// Thread ID Register (EL2)
-AARCH64REG_WRITE_INLINE(tpidr_el2)
+AARCH64REG_READWRITE_INLINE(tpidr_el1)	// Thread ID Register (EL1)
+AARCH64REG_READWRITE_INLINE(tpidr_el2)	// Thread ID Register (EL2)
 
 AARCH64REG_WRITE_INLINE(tpidrro_el0)	// Thread ID Register (RO for EL0)
 
-AARCH64REG_READ_INLINE(ttbr0_el1)	// Translation Table Base Register 0 EL1
-AARCH64REG_WRITE_INLINE(ttbr0_el1)
-AARCH64REG_READ_INLINE(ttbr0_el2)	// Translation Table Base Register 0 EL2
-AARCH64REG_WRITE_INLINE(ttbr0_el2)
+AARCH64REG_READWRITE_INLINE(ttbr0_el1)	// Translation Table Base Register 0 EL1
+AARCH64REG_READWRITE_INLINE(ttbr0_el2)	// Translation Table Base Register 0 EL2
 
-AARCH64REG_READ_INLINE(ttbr1_el1)	// Translation Table Base Register 1 EL1
-AARCH64REG_WRITE_INLINE(ttbr1_el1)
+AARCH64REG_READWRITE_INLINE(ttbr1_el1)	// Translation Table Base Register 1 EL1
 
 #define TTBR_ASID		__BITS(63,48)
 #define TTBR_BADDR		__BITS(47,0)
 
-AARCH64REG_READ_INLINE(vbar_el1)	// Vector Base Address Register
-AARCH64REG_WRITE_INLINE(vbar_el1)
-AARCH64REG_READ_INLINE(vbar_el2)
-AARCH64REG_WRITE_INLINE(vbar_el2)
+AARCH64REG_READWRITE_INLINE(vbar_el1)	// Vector Base Address Register
+AARCH64REG_READWRITE_INLINE(vbar_el2)
 
-AARCH64REG_READ_INLINE(vpidr_el2)	// Virtualization Processor ID Register
-AARCH64REG_WRITE_INLINE(vpidr_el2)
-AARCH64REG_READ_INLINE(vmpidr_el2)	// Virtualization Multiprocessor ID Register
-AARCH64REG_WRITE_INLINE(vmpidr_el2)
-AARCH64REG_READ_INLINE(vtcr_el2)	// Virtualization Translation Control Register
-AARCH64REG_WRITE_INLINE(vtcr_el2)
+AARCH64REG_READWRITE_INLINE(vpidr_el2)	// Virtualization Processor ID Register
+AARCH64REG_READWRITE_INLINE(vmpidr_el2)	// Virtualization Multiprocessor ID Register
+AARCH64REG_READWRITE_INLINE(vtcr_el2)	// Virtualization Translation Control Register
 
 #define VTCR_EL2_HAFT		__BIT(44)	// Hardware managed Access Flag (FEAT_HAFT)
 //				__BITS(43, 42) 	// Res0
@@ -1246,9 +1265,7 @@ AARCH64REG_WRITE_INLINE(vtcr_el2)
 #define VTCR_EL2_SL0		__BITS(7,6)	// Start Level of S2 translation lookup.
 #define VTCR_EL2_T0SZ		__BITS(5,0)	// VTTBR_EL2 Size offset
 
-
-AARCH64REG_READ_INLINE(vttbr_el2)	// Virtualization Translation Table Base Register
-AARCH64REG_WRITE_INLINE(vttbr_el2)
+AARCH64REG_READWRITE_INLINE(vttbr_el2)	// Virtualization Translation Table Base Register
 
 #define VTTBR_VIMD		__BITS(55,48)
 #define VTTBR_BADDR		__BITS(47,0)
@@ -1256,38 +1273,22 @@ AARCH64REG_WRITE_INLINE(vttbr_el2)
 /*
  * From here on, these are DEBUG registers
  */
-AARCH64REG_READ_INLINE(dbgbcr0_el1) // Debug Breakpoint Control Register 0
-AARCH64REG_WRITE_INLINE(dbgbcr0_el1)
-AARCH64REG_READ_INLINE(dbgbcr1_el1) // Debug Breakpoint Control Register 1
-AARCH64REG_WRITE_INLINE(dbgbcr1_el1)
-AARCH64REG_READ_INLINE(dbgbcr2_el1) // Debug Breakpoint Control Register 2
-AARCH64REG_WRITE_INLINE(dbgbcr2_el1)
-AARCH64REG_READ_INLINE(dbgbcr3_el1) // Debug Breakpoint Control Register 3
-AARCH64REG_WRITE_INLINE(dbgbcr3_el1)
-AARCH64REG_READ_INLINE(dbgbcr4_el1) // Debug Breakpoint Control Register 4
-AARCH64REG_WRITE_INLINE(dbgbcr4_el1)
-AARCH64REG_READ_INLINE(dbgbcr5_el1) // Debug Breakpoint Control Register 5
-AARCH64REG_WRITE_INLINE(dbgbcr5_el1)
-AARCH64REG_READ_INLINE(dbgbcr6_el1) // Debug Breakpoint Control Register 6
-AARCH64REG_WRITE_INLINE(dbgbcr6_el1)
-AARCH64REG_READ_INLINE(dbgbcr7_el1) // Debug Breakpoint Control Register 7
-AARCH64REG_WRITE_INLINE(dbgbcr7_el1)
-AARCH64REG_READ_INLINE(dbgbcr8_el1) // Debug Breakpoint Control Register 8
-AARCH64REG_WRITE_INLINE(dbgbcr8_el1)
-AARCH64REG_READ_INLINE(dbgbcr9_el1) // Debug Breakpoint Control Register 9
-AARCH64REG_WRITE_INLINE(dbgbcr9_el1)
-AARCH64REG_READ_INLINE(dbgbcr10_el1) // Debug Breakpoint Control Register 10
-AARCH64REG_WRITE_INLINE(dbgbcr10_el1)
-AARCH64REG_READ_INLINE(dbgbcr11_el1) // Debug Breakpoint Control Register 11
-AARCH64REG_WRITE_INLINE(dbgbcr11_el1)
-AARCH64REG_READ_INLINE(dbgbcr12_el1) // Debug Breakpoint Control Register 12
-AARCH64REG_WRITE_INLINE(dbgbcr12_el1)
-AARCH64REG_READ_INLINE(dbgbcr13_el1) // Debug Breakpoint Control Register 13
-AARCH64REG_WRITE_INLINE(dbgbcr13_el1)
-AARCH64REG_READ_INLINE(dbgbcr14_el1) // Debug Breakpoint Control Register 14
-AARCH64REG_WRITE_INLINE(dbgbcr14_el1)
-AARCH64REG_READ_INLINE(dbgbcr15_el1) // Debug Breakpoint Control Register 15
-AARCH64REG_WRITE_INLINE(dbgbcr15_el1)
+AARCH64REG_READWRITE_INLINE(dbgbcr0_el1)	// Debug Breakpoint Control Register 0
+AARCH64REG_READWRITE_INLINE(dbgbcr1_el1)	// Debug Breakpoint Control Register 1
+AARCH64REG_READWRITE_INLINE(dbgbcr2_el1)	// Debug Breakpoint Control Register 2
+AARCH64REG_READWRITE_INLINE(dbgbcr3_el1)	// Debug Breakpoint Control Register 3
+AARCH64REG_READWRITE_INLINE(dbgbcr4_el1)	// Debug Breakpoint Control Register 4
+AARCH64REG_READWRITE_INLINE(dbgbcr5_el1)	// Debug Breakpoint Control Register 5
+AARCH64REG_READWRITE_INLINE(dbgbcr6_el1)	// Debug Breakpoint Control Register 6
+AARCH64REG_READWRITE_INLINE(dbgbcr7_el1)	// Debug Breakpoint Control Register 7
+AARCH64REG_READWRITE_INLINE(dbgbcr8_el1)	// Debug Breakpoint Control Register 8
+AARCH64REG_READWRITE_INLINE(dbgbcr9_el1)	// Debug Breakpoint Control Register 9
+AARCH64REG_READWRITE_INLINE(dbgbcr10_el1)	// Debug Breakpoint Control Register 10
+AARCH64REG_READWRITE_INLINE(dbgbcr11_el1)	// Debug Breakpoint Control Register 11
+AARCH64REG_READWRITE_INLINE(dbgbcr12_el1)	// Debug Breakpoint Control Register 12
+AARCH64REG_READWRITE_INLINE(dbgbcr13_el1)	// Debug Breakpoint Control Register 13
+AARCH64REG_READWRITE_INLINE(dbgbcr14_el1)	// Debug Breakpoint Control Register 14
+AARCH64REG_READWRITE_INLINE(dbgbcr15_el1)	// Debug Breakpoint Control Register 15
 
 #define	DBGBCR_BT		 __BITS(23,20)
 #define	DBGBCR_LBN		 __BITS(19,16)
@@ -1297,73 +1298,41 @@ AARCH64REG_WRITE_INLINE(dbgbcr15_el1)
 #define	DBGBCR_PMC		 __BITS(2,1)
 #define	DBGBCR_E		 __BIT(0)
 
-AARCH64REG_READ_INLINE(dbgbvr0_el1) // Debug Breakpoint Value Register 0
-AARCH64REG_WRITE_INLINE(dbgbvr0_el1)
-AARCH64REG_READ_INLINE(dbgbvr1_el1) // Debug Breakpoint Value Register 1
-AARCH64REG_WRITE_INLINE(dbgbvr1_el1)
-AARCH64REG_READ_INLINE(dbgbvr2_el1) // Debug Breakpoint Value Register 2
-AARCH64REG_WRITE_INLINE(dbgbvr2_el1)
-AARCH64REG_READ_INLINE(dbgbvr3_el1) // Debug Breakpoint Value Register 3
-AARCH64REG_WRITE_INLINE(dbgbvr3_el1)
-AARCH64REG_READ_INLINE(dbgbvr4_el1) // Debug Breakpoint Value Register 4
-AARCH64REG_WRITE_INLINE(dbgbvr4_el1)
-AARCH64REG_READ_INLINE(dbgbvr5_el1) // Debug Breakpoint Value Register 5
-AARCH64REG_WRITE_INLINE(dbgbvr5_el1)
-AARCH64REG_READ_INLINE(dbgbvr6_el1) // Debug Breakpoint Value Register 6
-AARCH64REG_WRITE_INLINE(dbgbvr6_el1)
-AARCH64REG_READ_INLINE(dbgbvr7_el1) // Debug Breakpoint Value Register 7
-AARCH64REG_WRITE_INLINE(dbgbvr7_el1)
-AARCH64REG_READ_INLINE(dbgbvr8_el1) // Debug Breakpoint Value Register 8
-AARCH64REG_WRITE_INLINE(dbgbvr8_el1)
-AARCH64REG_READ_INLINE(dbgbvr9_el1) // Debug Breakpoint Value Register 9
-AARCH64REG_WRITE_INLINE(dbgbvr9_el1)
-AARCH64REG_READ_INLINE(dbgbvr10_el1) // Debug Breakpoint Value Register 10
-AARCH64REG_WRITE_INLINE(dbgbvr10_el1)
-AARCH64REG_READ_INLINE(dbgbvr11_el1) // Debug Breakpoint Value Register 11
-AARCH64REG_WRITE_INLINE(dbgbvr11_el1)
-AARCH64REG_READ_INLINE(dbgbvr12_el1) // Debug Breakpoint Value Register 12
-AARCH64REG_WRITE_INLINE(dbgbvr12_el1)
-AARCH64REG_READ_INLINE(dbgbvr13_el1) // Debug Breakpoint Value Register 13
-AARCH64REG_WRITE_INLINE(dbgbvr13_el1)
-AARCH64REG_READ_INLINE(dbgbvr14_el1) // Debug Breakpoint Value Register 14
-AARCH64REG_WRITE_INLINE(dbgbvr14_el1)
-AARCH64REG_READ_INLINE(dbgbvr15_el1) // Debug Breakpoint Value Register 15
-AARCH64REG_WRITE_INLINE(dbgbvr15_el1)
+AARCH64REG_READWRITE_INLINE(dbgbvr0_el1)	// Debug Breakpoint Value Register 0
+AARCH64REG_READWRITE_INLINE(dbgbvr1_el1)	// Debug Breakpoint Value Register 1
+AARCH64REG_READWRITE_INLINE(dbgbvr2_el1)	// Debug Breakpoint Value Register 2
+AARCH64REG_READWRITE_INLINE(dbgbvr3_el1)	// Debug Breakpoint Value Register 3
+AARCH64REG_READWRITE_INLINE(dbgbvr4_el1)	// Debug Breakpoint Value Register 4
+AARCH64REG_READWRITE_INLINE(dbgbvr5_el1)	// Debug Breakpoint Value Register 5
+AARCH64REG_READWRITE_INLINE(dbgbvr6_el1)	// Debug Breakpoint Value Register 6
+AARCH64REG_READWRITE_INLINE(dbgbvr7_el1)	// Debug Breakpoint Value Register 7
+AARCH64REG_READWRITE_INLINE(dbgbvr8_el1)	// Debug Breakpoint Value Register 8
+AARCH64REG_READWRITE_INLINE(dbgbvr9_el1)	// Debug Breakpoint Value Register 9
+AARCH64REG_READWRITE_INLINE(dbgbvr10_el1)	// Debug Breakpoint Value Register 10
+AARCH64REG_READWRITE_INLINE(dbgbvr11_el1)	// Debug Breakpoint Value Register 11
+AARCH64REG_READWRITE_INLINE(dbgbvr12_el1)	// Debug Breakpoint Value Register 12
+AARCH64REG_READWRITE_INLINE(dbgbvr13_el1)	// Debug Breakpoint Value Register 13
+AARCH64REG_READWRITE_INLINE(dbgbvr14_el1)	// Debug Breakpoint Value Register 14
+AARCH64REG_READWRITE_INLINE(dbgbvr15_el1)	// Debug Breakpoint Value Register 15
 
 #define	DBGBVR_MASK		 __BITS(63,2)
 
-AARCH64REG_READ_INLINE(dbgwcr0_el1) // Debug Watchpoint Control Register 0
-AARCH64REG_WRITE_INLINE(dbgwcr0_el1)
-AARCH64REG_READ_INLINE(dbgwcr1_el1) // Debug Watchpoint Control Register 1
-AARCH64REG_WRITE_INLINE(dbgwcr1_el1)
-AARCH64REG_READ_INLINE(dbgwcr2_el1) // Debug Watchpoint Control Register 2
-AARCH64REG_WRITE_INLINE(dbgwcr2_el1)
-AARCH64REG_READ_INLINE(dbgwcr3_el1) // Debug Watchpoint Control Register 3
-AARCH64REG_WRITE_INLINE(dbgwcr3_el1)
-AARCH64REG_READ_INLINE(dbgwcr4_el1) // Debug Watchpoint Control Register 4
-AARCH64REG_WRITE_INLINE(dbgwcr4_el1)
-AARCH64REG_READ_INLINE(dbgwcr5_el1) // Debug Watchpoint Control Register 5
-AARCH64REG_WRITE_INLINE(dbgwcr5_el1)
-AARCH64REG_READ_INLINE(dbgwcr6_el1) // Debug Watchpoint Control Register 6
-AARCH64REG_WRITE_INLINE(dbgwcr6_el1)
-AARCH64REG_READ_INLINE(dbgwcr7_el1) // Debug Watchpoint Control Register 7
-AARCH64REG_WRITE_INLINE(dbgwcr7_el1)
-AARCH64REG_READ_INLINE(dbgwcr8_el1) // Debug Watchpoint Control Register 8
-AARCH64REG_WRITE_INLINE(dbgwcr8_el1)
-AARCH64REG_READ_INLINE(dbgwcr9_el1) // Debug Watchpoint Control Register 9
-AARCH64REG_WRITE_INLINE(dbgwcr9_el1)
-AARCH64REG_READ_INLINE(dbgwcr10_el1) // Debug Watchpoint Control Register 10
-AARCH64REG_WRITE_INLINE(dbgwcr10_el1)
-AARCH64REG_READ_INLINE(dbgwcr11_el1) // Debug Watchpoint Control Register 11
-AARCH64REG_WRITE_INLINE(dbgwcr11_el1)
-AARCH64REG_READ_INLINE(dbgwcr12_el1) // Debug Watchpoint Control Register 12
-AARCH64REG_WRITE_INLINE(dbgwcr12_el1)
-AARCH64REG_READ_INLINE(dbgwcr13_el1) // Debug Watchpoint Control Register 13
-AARCH64REG_WRITE_INLINE(dbgwcr13_el1)
-AARCH64REG_READ_INLINE(dbgwcr14_el1) // Debug Watchpoint Control Register 14
-AARCH64REG_WRITE_INLINE(dbgwcr14_el1)
-AARCH64REG_READ_INLINE(dbgwcr15_el1) // Debug Watchpoint Control Register 15
-AARCH64REG_WRITE_INLINE(dbgwcr15_el1)
+AARCH64REG_READWRITE_INLINE(dbgwcr0_el1)	// Debug Watchpoint Control Register 0
+AARCH64REG_READWRITE_INLINE(dbgwcr1_el1)	// Debug Watchpoint Control Register 1
+AARCH64REG_READWRITE_INLINE(dbgwcr2_el1)	// Debug Watchpoint Control Register 2
+AARCH64REG_READWRITE_INLINE(dbgwcr3_el1)	// Debug Watchpoint Control Register 3
+AARCH64REG_READWRITE_INLINE(dbgwcr4_el1)	// Debug Watchpoint Control Register 4
+AARCH64REG_READWRITE_INLINE(dbgwcr5_el1)	// Debug Watchpoint Control Register 5
+AARCH64REG_READWRITE_INLINE(dbgwcr6_el1)	// Debug Watchpoint Control Register 6
+AARCH64REG_READWRITE_INLINE(dbgwcr7_el1)	// Debug Watchpoint Control Register 7
+AARCH64REG_READWRITE_INLINE(dbgwcr8_el1)	// Debug Watchpoint Control Register 8
+AARCH64REG_READWRITE_INLINE(dbgwcr9_el1)	// Debug Watchpoint Control Register 9
+AARCH64REG_READWRITE_INLINE(dbgwcr10_el1)	// Debug Watchpoint Control Register 10
+AARCH64REG_READWRITE_INLINE(dbgwcr11_el1)	// Debug Watchpoint Control Register 11
+AARCH64REG_READWRITE_INLINE(dbgwcr12_el1)	// Debug Watchpoint Control Register 12
+AARCH64REG_READWRITE_INLINE(dbgwcr13_el1)	// Debug Watchpoint Control Register 13
+AARCH64REG_READWRITE_INLINE(dbgwcr14_el1)	// Debug Watchpoint Control Register 14
+AARCH64REG_READWRITE_INLINE(dbgwcr15_el1)	// Debug Watchpoint Control Register 15
 
 #define	DBGWCR_MASK		 __BITS(28,24)
 #define	DBGWCR_WT		 __BIT(20)
@@ -1375,44 +1344,27 @@ AARCH64REG_WRITE_INLINE(dbgwcr15_el1)
 #define	DBGWCR_PAC		 __BITS(2,1)
 #define	DBGWCR_E		 __BIT(0)
 
-AARCH64REG_READ_INLINE(dbgwvr0_el1) // Debug Watchpoint Value Register 0
-AARCH64REG_WRITE_INLINE(dbgwvr0_el1)
-AARCH64REG_READ_INLINE(dbgwvr1_el1) // Debug Watchpoint Value Register 1
-AARCH64REG_WRITE_INLINE(dbgwvr1_el1)
-AARCH64REG_READ_INLINE(dbgwvr2_el1) // Debug Watchpoint Value Register 2
-AARCH64REG_WRITE_INLINE(dbgwvr2_el1)
-AARCH64REG_READ_INLINE(dbgwvr3_el1) // Debug Watchpoint Value Register 3
-AARCH64REG_WRITE_INLINE(dbgwvr3_el1)
-AARCH64REG_READ_INLINE(dbgwvr4_el1) // Debug Watchpoint Value Register 4
-AARCH64REG_WRITE_INLINE(dbgwvr4_el1)
-AARCH64REG_READ_INLINE(dbgwvr5_el1) // Debug Watchpoint Value Register 5
-AARCH64REG_WRITE_INLINE(dbgwvr5_el1)
-AARCH64REG_READ_INLINE(dbgwvr6_el1) // Debug Watchpoint Value Register 6
-AARCH64REG_WRITE_INLINE(dbgwvr6_el1)
-AARCH64REG_READ_INLINE(dbgwvr7_el1) // Debug Watchpoint Value Register 7
-AARCH64REG_WRITE_INLINE(dbgwvr7_el1)
-AARCH64REG_READ_INLINE(dbgwvr8_el1) // Debug Watchpoint Value Register 8
-AARCH64REG_WRITE_INLINE(dbgwvr8_el1)
-AARCH64REG_READ_INLINE(dbgwvr9_el1) // Debug Watchpoint Value Register 9
-AARCH64REG_WRITE_INLINE(dbgwvr9_el1)
-AARCH64REG_READ_INLINE(dbgwvr10_el1) // Debug Watchpoint Value Register 10
-AARCH64REG_WRITE_INLINE(dbgwvr10_el1)
-AARCH64REG_READ_INLINE(dbgwvr11_el1) // Debug Watchpoint Value Register 11
-AARCH64REG_WRITE_INLINE(dbgwvr11_el1)
-AARCH64REG_READ_INLINE(dbgwvr12_el1) // Debug Watchpoint Value Register 12
-AARCH64REG_WRITE_INLINE(dbgwvr12_el1)
-AARCH64REG_READ_INLINE(dbgwvr13_el1) // Debug Watchpoint Value Register 13
-AARCH64REG_WRITE_INLINE(dbgwvr13_el1)
-AARCH64REG_READ_INLINE(dbgwvr14_el1) // Debug Watchpoint Value Register 14
-AARCH64REG_WRITE_INLINE(dbgwvr14_el1)
-AARCH64REG_READ_INLINE(dbgwvr15_el1) // Debug Watchpoint Value Register 15
-AARCH64REG_WRITE_INLINE(dbgwvr15_el1)
+AARCH64REG_READWRITE_INLINE(dbgwvr0_el1) // Debug Watchpoint Value Register 0
+AARCH64REG_READWRITE_INLINE(dbgwvr1_el1) // Debug Watchpoint Value Register 1
+AARCH64REG_READWRITE_INLINE(dbgwvr2_el1) // Debug Watchpoint Value Register 2
+AARCH64REG_READWRITE_INLINE(dbgwvr3_el1) // Debug Watchpoint Value Register 3
+AARCH64REG_READWRITE_INLINE(dbgwvr4_el1) // Debug Watchpoint Value Register 4
+AARCH64REG_READWRITE_INLINE(dbgwvr5_el1) // Debug Watchpoint Value Register 5
+AARCH64REG_READWRITE_INLINE(dbgwvr6_el1) // Debug Watchpoint Value Register 6
+AARCH64REG_READWRITE_INLINE(dbgwvr7_el1) // Debug Watchpoint Value Register 7
+AARCH64REG_READWRITE_INLINE(dbgwvr8_el1) // Debug Watchpoint Value Register 8
+AARCH64REG_READWRITE_INLINE(dbgwvr9_el1) // Debug Watchpoint Value Register 9
+AARCH64REG_READWRITE_INLINE(dbgwvr10_el1) // Debug Watchpoint Value Register 10
+AARCH64REG_READWRITE_INLINE(dbgwvr11_el1) // Debug Watchpoint Value Register 11
+AARCH64REG_READWRITE_INLINE(dbgwvr12_el1) // Debug Watchpoint Value Register 12
+AARCH64REG_READWRITE_INLINE(dbgwvr13_el1) // Debug Watchpoint Value Register 13
+AARCH64REG_READWRITE_INLINE(dbgwvr14_el1) // Debug Watchpoint Value Register 14
+AARCH64REG_READWRITE_INLINE(dbgwvr15_el1) // Debug Watchpoint Value Register 15
 
 #define	DBGWVR_MASK		 __BITS(63,2)
 
 
-AARCH64REG_READ_INLINE(mdscr_el1) // Monitor Debug System Control Register
-AARCH64REG_WRITE_INLINE(mdscr_el1)
+AARCH64REG_READWRITE_INLINE(mdscr_el1) // Monitor Debug System Control Register
 
 #define	MDSCR_RXFULL		__BIT(30)	// for EDSCR.RXfull
 #define	MDSCR_TXFULL		__BIT(29)	// for EDSCR.TXfull
@@ -1435,8 +1387,7 @@ AARCH64REG_READ_INLINE(oslsr_el1)	// OS Lock Status Register
  * From here on, these are PMC registers
  */
 
-AARCH64REG_READ_INLINE(pmccfiltr_el0)
-AARCH64REG_WRITE_INLINE(pmccfiltr_el0)
+AARCH64REG_READWRITE_INLINE(pmccfiltr_el0)
 
 #define	PMCCFILTR_P		__BIT(31)	// Don't count cycles in EL1
 #define	PMCCFILTR_U		__BIT(30)	// Don't count cycles in EL0
@@ -1456,8 +1407,7 @@ AARCH64REG_WRITE_INLINE(pmcntenset_el0)
 #define	PMCNTEN_C		__BIT(31)	// Enable the cycle counter
 #define	PMCNTEN_P		__BITS(30,0)	// Enable event counter bits
 
-AARCH64REG_READ_INLINE(pmcr_el0)
-AARCH64REG_WRITE_INLINE(pmcr_el0)
+AARCH64REG_READWRITE_INLINE(pmcr_el0)
 
 #define	PMCR_IMP		__BITS(31,24)	// Implementor code
 #define	PMCR_IDCODE		__BITS(23,16)	// Identification code
@@ -1473,11 +1423,9 @@ AARCH64REG_WRITE_INLINE(pmcr_el0)
 #define	PMCR_E			__BIT(0)	// Enable
 
 
-AARCH64REG_READ_INLINE(pmevcntr1_el0)
-AARCH64REG_WRITE_INLINE(pmevcntr1_el0)
+AARCH64REG_READWRITE_INLINE(pmevcntr1_el0)
 
-AARCH64REG_READ_INLINE(pmevtyper1_el0)
-AARCH64REG_WRITE_INLINE(pmevtyper1_el0)
+AARCH64REG_READWRITE_INLINE(pmevtyper1_el0)
 
 #define	PMEVTYPER_P		__BIT(31)	// Don't count events in EL1
 #define	PMEVTYPER_U		__BIT(30)	// Don't count events in EL0
@@ -1496,8 +1444,7 @@ AARCH64REG_WRITE_INLINE(pmintenset_el1)
 #define PMINTEN_P		__BITS(30,0)	// for event counters (0-30)
 
 AARCH64REG_WRITE_INLINE(pmovsclr_el0)
-AARCH64REG_READ_INLINE(pmovsset_el0)
-AARCH64REG_WRITE_INLINE(pmovsset_el0)
+AARCH64REG_READWRITE_INLINE(pmovsset_el0)
 
 #define PMOVS_C			__BIT(31)	// for the cycle counter
 #define PMOVS_P			__BITS(30,0)	// for event counters (0-30)
@@ -1506,14 +1453,11 @@ AARCH64REG_WRITE_INLINE(pmselr_el0)
 
 AARCH64REG_WRITE_INLINE(pmswinc_el0)
 
-AARCH64REG_READ_INLINE(pmuserenr_el0)
-AARCH64REG_WRITE_INLINE(pmuserenr_el0)
+AARCH64REG_READWRITE_INLINE(pmuserenr_el0)
 
-AARCH64REG_READ_INLINE(pmxevcntr_el0)
-AARCH64REG_WRITE_INLINE(pmxevcntr_el0)
+AARCH64REG_READWRITE_INLINE(pmxevcntr_el0)
 
-AARCH64REG_READ_INLINE(pmxevtyper_el0)
-AARCH64REG_WRITE_INLINE(pmxevtyper_el0)
+AARCH64REG_READWRITE_INLINE(pmxevtyper_el0)
 
 /*
  * Generic timer registers
@@ -1521,16 +1465,35 @@ AARCH64REG_WRITE_INLINE(pmxevtyper_el0)
 
 AARCH64REG_READ_INLINE(cntfrq_el0)
 
-AARCH64REG_READ_INLINE(cnthctl_el2)
-AARCH64REG_WRITE_INLINE(cnthctl_el2)
+AARCH64REG_READWRITE_INLINE(cnthctl_el2)
+AARCH64REG_READWRITE_INLINE(cnthv_ctl_el2)
+AARCH64REG_READWRITE_INLINE(cnthp_ctl_el2)
+AARCH64REG_READWRITE_INLINE(cntvoff_el2)
 
-#define	CNTHCTL_EVNTDIR		__BIT(3)
-#define	CNTHCTL_EVNTEN		__BIT(2)
-#define	CNTHCTL_EL1PCEN		__BIT(1)
-#define	CNTHCTL_EL1PCTEN	__BIT(0)
+/*
+ * Common fields independent of FEAT_VHE configuration
+ */
+#define CNTHCTL_EL2_CNTPMASK       __BIT(19)
+#define CNTHCTL_EL2_CNTVMASK       __BIT(18)
+#define CNTHCTL_EL2_EVNTIS         __BIT(17)
+#define CNTHCTL_EL2_EL1NVVCT       __BIT(16)
+#define CNTHCTL_EL2_EL1NVPCT       __BIT(15)
+#define CNTHCTL_EL2_EL1TVCT        __BIT(14)
+#define CNTHCTL_EL2_EL1TVT         __BIT(13)
+#define CNTHCTL_EL2_ECV            __BIT(12)
+#define CNTHCTL_EL2_EVNTI          __BITS(7,4)
+#define CNTHCTL_EL2_EVNTDIR        __BIT(3)
+#define CNTHCTL_EL2_EVNTEN         __BIT(2)
+/* FEAT_VHE Layout (HCR_EL2.E2H == 1) */
+#define CNTHCTL_EL2_VHE_EL0PTEN    __BIT(9)
+#define CNTHCTL_EL2_VHE_EL0VTEN    __BIT(8)
+#define CNTHCTL_EL2_VHE_EL0VCTEN   __BIT(1)
+#define CNTHCTL_EL2_VHE_EL0PCTEN   __BIT(0)
+/* Non-FEAT_VHE Layout (HCR_EL2.E2H == 0) */
+#define CNTHCTL_EL2_NVHE_EL1PCEN   __BIT(1)
+#define CNTHCTL_EL2_NVHE_EL1PCTEN  __BIT(0)
 
-AARCH64REG_READ_INLINE(cntkctl_el1)
-AARCH64REG_WRITE_INLINE(cntkctl_el1)
+AARCH64REG_READWRITE_INLINE(cntkctl_el1)
 
 #define	CNTKCTL_EL0PTEN		__BIT(9)	// EL0 access for CNTP CVAL/TVAL/CTL
 #define	CNTKCTL_PL0PTEN		CNTKCTL_EL0PTEN
@@ -1544,30 +1507,19 @@ AARCH64REG_WRITE_INLINE(cntkctl_el1)
 #define	CNTKCTL_EL0PCTEN	__BIT(0)	// EL0 access for CNTPCT and CNTFRQ
 #define	CNTKCTL_PL0PCTEN	CNTKCTL_EL0PCTEN
 
-AARCH64REG_READ_INLINE(cntp_ctl_el0)
-AARCH64REG_WRITE_INLINE(cntp_ctl_el0)
-AARCH64REG_READ_INLINE(cntp_cval_el0)
-AARCH64REG_WRITE_INLINE(cntp_cval_el0)
-AARCH64REG_READ_INLINE(cntp_tval_el0)
-AARCH64REG_WRITE_INLINE(cntp_tval_el0)
-AARCH64REG_READ_INLINE(cntpct_el0)
-AARCH64REG_WRITE_INLINE(cntpct_el0)
+AARCH64REG_READWRITE_INLINE(cntp_ctl_el0)
+AARCH64REG_READWRITE_INLINE(cntp_cval_el0)
+AARCH64REG_READWRITE_INLINE(cntp_tval_el0)
+AARCH64REG_READWRITE_INLINE(cntpct_el0)
 
-AARCH64REG_READ_INLINE(cntps_ctl_el1)
-AARCH64REG_WRITE_INLINE(cntps_ctl_el1)
-AARCH64REG_READ_INLINE(cntps_cval_el1)
-AARCH64REG_WRITE_INLINE(cntps_cval_el1)
-AARCH64REG_READ_INLINE(cntps_tval_el1)
-AARCH64REG_WRITE_INLINE(cntps_tval_el1)
+AARCH64REG_READWRITE_INLINE(cntps_ctl_el1)
+AARCH64REG_READWRITE_INLINE(cntps_cval_el1)
+AARCH64REG_READWRITE_INLINE(cntps_tval_el1)
 
-AARCH64REG_READ_INLINE(cntv_ctl_el0)
-AARCH64REG_WRITE_INLINE(cntv_ctl_el0)
-AARCH64REG_READ_INLINE(cntv_cval_el0)
-AARCH64REG_WRITE_INLINE(cntv_cval_el0)
-AARCH64REG_READ_INLINE(cntv_tval_el0)
-AARCH64REG_WRITE_INLINE(cntv_tval_el0)
-AARCH64REG_READ_INLINE(cntvct_el0)
-AARCH64REG_WRITE_INLINE(cntvct_el0)
+AARCH64REG_READWRITE_INLINE(cntv_ctl_el0)
+AARCH64REG_READWRITE_INLINE(cntv_cval_el0)
+AARCH64REG_READWRITE_INLINE(cntv_tval_el0)
+AARCH64REG_READWRITE_INLINE(cntvct_el0)
 
 #define	CNTCTL_ISTATUS		__BIT(2)	// Interrupt Asserted
 #define	CNTCTL_IMASK		__BIT(1)	// Timer Interrupt is Masked
@@ -1591,7 +1543,7 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	ID_AA64PFR0_EL1_MPAM		__BITS(43,40) // MPAM Extension
 #define	 ID_AA64PFR0_EL1_MPAM_NONE	0
 #define	 ID_AA64PFR0_EL1_MPAM_IMPL	1
-#define	ID_AA64PFR0_EL1_SEL2		__BITS(43,40) // Secure EL2
+#define	ID_AA64PFR0_EL1_SEL2		__BITS(39,36) // Secure EL2
 #define	 ID_AA64PFR0_EL1_SEL2_NONE	0
 #define	 ID_AA64PFR0_EL1_SEL2_IMPL	1
 #define	ID_AA64PFR0_EL1_SVE		__BITS(35,32) // Scalable Vector
@@ -1601,7 +1553,7 @@ AARCH64REG_WRITE_INLINE(cntvct_el0)
 #define	 ID_AA64PFR0_EL1_RAS_NONE	 0
 #define	 ID_AA64PFR0_EL1_RAS_IMPL	 1
 #define	 ID_AA64PFR0_EL1_RAS_ERX	 2
-#define	ID_AA64PFR0_EL1_GIC		__BITS(24,27) // GIC CPU IF
+#define	ID_AA64PFR0_EL1_GIC		__BITS(27,24) // GIC CPU IF
 #define	ID_AA64PFR0_EL1_GIC_SHIFT	24
 #define	 ID_AA64PFR0_EL1_GIC_CPUIF_EN	 1
 #define	 ID_AA64PFR0_EL1_GIC_CPUIF_NONE	 0
@@ -1698,6 +1650,61 @@ AARCH64REG_READ_INLINE2(icc_iar1_el1, s3_0_c12_c12_0)
 #define	icc_sgi1r_write		reg_icc_sgi1r_el1_write
 #define	icc_iar1_read		reg_icc_iar1_el1_read
 #define	icc_eoi1r_write		reg_icc_eoir1_el1_write
+
+AARCH64REG_READWRITE_INLINE(ich_hcr_el2)
+
+#define ICH_HCR_EL2_EN		__BIT(0)	// Virtualization enable
+#define ICH_HCR_EL2_UIE		__BIT(1)	// Underflow Interrupt Enable
+#define ICH_HCR_EL2_LRENPIE	__BIT(2)	// List Register Entry Not Present Interrupt Enable
+#define ICH_HCR_EL2_NPIE	__BIT(3)	// No Pending Interrupt Enable
+#define ICH_HCR_EL2_VGrp0EIE	__BIT(4)	// Virtual Group 0 Enable for EL1 Interrupts
+#define ICH_HCR_EL2_VGrp1EIE	__BIT(5)	// Virtual Group 1 Enable for EL1 Interrupts
+#define ICH_HCR_EL2_TC		__BIT(10)	// Trap Control
+#define ICH_HCR_EL2_TALL0	__BIT(11)	// Trap All Group 0 interrupts
+#define ICH_HCR_EL2_TALL1	__BIT(12)	// Trap All Group 1 interrupts
+
+AARCH64REG_READWRITE_INLINE(afsr0_el12)
+AARCH64REG_READWRITE_INLINE(afsr1_el12)
+AARCH64REG_READWRITE_INLINE(amair_el12)
+AARCH64REG_READWRITE_INLINE(amair2_el12)
+AARCH64REG_READWRITE_INLINE(brbcr_el12)
+AARCH64REG_READWRITE_INLINE(cntkctl_el12)
+AARCH64REG_READWRITE_INLINE(cntp_ctl_el02)
+AARCH64REG_READWRITE_INLINE(cntp_cval_el02)
+AARCH64REG_READWRITE_INLINE(cntp_tval_el02)
+AARCH64REG_READWRITE_INLINE(cntv_ctl_el02)
+AARCH64REG_READWRITE_INLINE(cntv_cval_el02)
+AARCH64REG_READWRITE_INLINE(cntv_tval_el02)
+AARCH64REG_READWRITE_INLINE(contextidr_el12)
+AARCH64REG_READWRITE_INLINE(cpacr_el12)
+AARCH64REG_READWRITE_INLINE(elr_el12)
+AARCH64REG_READWRITE_INLINE(esr_el12)
+AARCH64REG_READWRITE_INLINE(far_el12)
+AARCH64REG_READWRITE_INLINE(gcscr_el12)
+AARCH64REG_READWRITE_INLINE(gcspr_el12)
+AARCH64REG_READWRITE_INLINE(mair_el12)
+AARCH64REG_READWRITE_INLINE(mair2_el12)
+AARCH64REG_READWRITE_INLINE(mpam1_el12)
+AARCH64REG_READWRITE_INLINE(pfar_el12)
+AARCH64REG_READWRITE_INLINE(pir_el12)
+AARCH64REG_READWRITE_INLINE(pire0_el12)
+AARCH64REG_READWRITE_INLINE(pmscr_el12)
+AARCH64REG_READWRITE_INLINE(por_el12)
+AARCH64REG_READWRITE_INLINE(sctlr_el12)
+AARCH64REG_READWRITE_INLINE(sctlr2_el12)
+AARCH64REG_READWRITE_INLINE(scxtnum_el12)
+AARCH64REG_READWRITE_INLINE(smcr_el12)
+AARCH64REG_READWRITE_INLINE(spmaccessr_el12)
+AARCH64REG_READWRITE_INLINE(spsr_el12)
+AARCH64REG_READWRITE_INLINE(tcr_el12)
+AARCH64REG_READWRITE_INLINE(tcr2_el12)
+AARCH64REG_READWRITE_INLINE(tfsr_el12)
+AARCH64REG_READWRITE_INLINE(trcitecr_el12)
+AARCH64REG_READWRITE_INLINE(trfcr_el12)
+AARCH64REG_READWRITE_INLINE(ttbr0_el12)
+AARCH64REG_READWRITE_INLINE(ttbr1_el12)
+AARCH64REG_READWRITE_INLINE(vbar_el12)
+AARCH64REG_READWRITE_INLINE(zcr_el12)
 
 #if defined(_KERNEL)
 

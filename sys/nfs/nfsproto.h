@@ -1,4 +1,4 @@
-/*	$NetBSD: nfsproto.h,v 1.17.170.1 2025/08/02 05:57:52 perseant Exp $	*/
+/*	$NetBSD: nfsproto.h,v 1.17.170.2 2026/11/04 23:28:01 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -297,11 +297,11 @@ struct nfsv3_spec {
 typedef	struct nfsv3_spec	nfsv3spec;
 
 /*
- * File attributes and setable attributes. These structures cover both
+ * File attributes and settable attributes. These structures cover both
  * NFS version 2 and the version 3 protocol. Note that the union is only
  * used so that one pointer can refer to both variants. These structures
  * go out on the wire and must be densely packed, so no quad data types
- * are used. (all fields are longs or u_longs or structures of same)
+ * are used. (All fields are longs or u_longs or structures of same.)
  * NB: You can't do sizeof(struct nfs_fattr), you must use the
  *     NFSX_FATTR(v3) macro.
  */

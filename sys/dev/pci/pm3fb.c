@@ -1,4 +1,4 @@
-/* $NetBSD: pm3fb.c,v 1.9.10.1 2025/08/02 05:57:00 perseant Exp $ */
+/* $NetBSD: pm3fb.c,v 1.9.10.2 2026/11/04 23:22:29 perseant Exp $ */
 
 /*
  * Copyright (c) 2015 Naruaki Etomi
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.9.10.1 2025/08/02 05:57:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm3fb.c,v 1.9.10.2 2026/11/04 23:22:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -949,6 +949,9 @@ pm3fb_putchar(void *cookie, int row, int col, u_int c, long attr)
 			}
 			}
 		}
+		if (attr & WSATTR_UNDERLINE)
+			pm3fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
+
 	}
 }
 
@@ -982,7 +985,7 @@ pm3fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	/* if we draw a whitespace we're done here */
 	if (c == 0x20) {
 		pm3fb_rectfill(sc, x, y, wi, he, bg);
-		if (attr & 1)
+		if (attr & WSATTR_UNDERLINE)
 			pm3fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 		return;
 	}
@@ -1067,7 +1070,7 @@ pm3fb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 		glyphcache_add(&sc->sc_gc, c, x, y);
 	}
 
-	if (attr & 1)
+	if (attr & WSATTR_UNDERLINE)
 		pm3fb_rectfill(sc, x, y + he - 2, wi, 1, fg);
 }
 

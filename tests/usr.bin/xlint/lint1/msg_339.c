@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_339.c,v 1.4 2023/03/28 14:44:35 rillig Exp $	*/
+/*	$NetBSD: msg_339.c,v 1.4.2.1 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_339.c"
 
 // Test for message: option '%c' should be listed in the options string [339]
@@ -43,6 +43,20 @@ main(int argc, char **argv)
 			break;
 		case '?':
 		default:
+			break;
+		}
+	}
+
+	// There may be several switch statements in the same while loop.
+	// Handling an option in the first switch statement still allows it
+	// to be handled in the second switch statement as well.
+	while ((o = getopt(argc, argv, "a")) != -1) {
+		switch (o) {
+		case 'a':
+			break;
+		}
+		switch (o) {
+		case 'a':
 			break;
 		}
 	}

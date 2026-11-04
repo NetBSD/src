@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,10 +19,7 @@
 # This file is part of the gdb testsuite.
 
 
-if {(![istarget "x86_64-*-*"] && ![istarget "i?86-*-*"])} {
-    verbose "Skipping i386 byte register tests."
-    return
-}
+require {is_any_target "x86_64-*-*" "i?86-*-*"}
 
 standard_testfile i386-pseudo.c
 

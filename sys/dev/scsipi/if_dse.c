@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dse.c,v 1.5.2.1 2025/08/02 05:57:03 perseant Exp $ */
+/*	$NetBSD: if_dse.c,v 1.5.2.2 2026/11/04 23:22:33 perseant Exp $ */
 
 /*
  * Driver for DaynaPORT SCSI/Link SCSI-Ethernet
@@ -696,7 +696,7 @@ dse_recv(struct dse_softc *sc)
 	error = dse_scsipi_cmd(sc->sc_periph,
 	    (void *)&cmd_recv, sizeof(cmd_recv),
 	    sc->sc_rbuf, RBUF_LEN, DSE_RETRIES, DSE_TIMEOUT, NULL,
-	    XS_CTL_NOSLEEP | XS_CTL_POLL | XS_CTL_DATA_IN);
+	    XS_CTL_NOSLEEP | XS_CTL_DATA_IN);
 	if (error)
 		callout_schedule(&sc->sc_recv_ch, dse_poll);
 }

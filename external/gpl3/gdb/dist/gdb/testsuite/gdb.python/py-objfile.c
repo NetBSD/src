@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2011-2024 Free Software Foundation, Inc.
+   Copyright 2011-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@ int global_var = 42;
 static int __attribute__ ((used)) static_var = 50;
 
 int
-main ()
+main (void)
 {
   int some_var = 0;
   return 0;

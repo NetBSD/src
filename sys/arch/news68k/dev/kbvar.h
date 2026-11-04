@@ -1,4 +1,4 @@
-/*	$NetBSD: kbvar.h,v 1.3 2008/05/14 13:29:28 tsutsui Exp $	*/
+/*	$NetBSD: kbvar.h,v 1.3.122.1 2026/11/04 23:21:04 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001 Izumi Tsutsui.  All rights reserved.
@@ -26,12 +26,12 @@
 
 struct console_softc {
 	u_long	cs_nintr;
-	u_long	cs_nkeyevents;
 	int	cs_isconsole;
 	int	cs_polling;
-	int	cs_key;
-	u_int	cs_type;
-	int	cs_val;
+	volatile uint8_t *cs_data;
+	volatile uint8_t *cs_stat;
+	volatile uint8_t *cs_inte;
+	uint8_t	cs_saved_inte;
 };
 
 struct kb_softc {

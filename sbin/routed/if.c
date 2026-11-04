@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.31 2017/10/02 11:02:19 maya Exp $	*/
+/*	$NetBSD: if.c,v 1.31.16.1 2026/11/04 23:19:43 perseant Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -37,7 +37,7 @@
 #include "pathnames.h"
 
 #ifdef __NetBSD__
-__RCSID("$NetBSD: if.c,v 1.31 2017/10/02 11:02:19 maya Exp $");
+__RCSID("$NetBSD: if.c,v 1.31.16.1 2026/11/04 23:19:43 perseant Exp $");
 #elif defined(__FreeBSD__)
 __RCSID("$FreeBSD$");
 #else
@@ -868,7 +868,7 @@ ifinit(void)
 			ifs.int_std_mask = std_mask(ifs.int_dstaddr);
 			ifs.int_net = ntohl(ifs.int_dstaddr);
 
-		}  else {
+		} else {
 			if (INFO_MASK(&info) == 0) {
 				if (iff_up(ifs.int_if_flags)) {
 					if (!(prev_complaints & COMP_NOMASK))

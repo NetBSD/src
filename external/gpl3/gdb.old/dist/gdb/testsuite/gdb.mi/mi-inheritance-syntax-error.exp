@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,15 +13,10 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_cplus_tests] } { return }
+require allow_cplus_tests
 
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
-
-gdb_exit
-if [mi_gdb_start] {
-    return
-}
 
 standard_testfile .cc
 
@@ -30,10 +25,13 @@ if {[gdb_compile $srcdir/$subdir/$srcfile $binfile executable {debug c++}] != ""
   return -1
 }
 
+if {[mi_clean_restart $binfile]} {
+    return
+}
+
 # Test that children of derived classes are given the proper
 # path by -var-info-path-expression
 
-mi_gdb_load ${binfile}
 mi_runto C::testLocation
 
 mi_create_varobj "var1" "this" "create var for THIS"
@@ -63,4 +61,3 @@ mi_gdb_test "-data-evaluate-expression \"$path\"" \
     "-data-evaluate-expression $path"
 
 mi_gdb_exit
-return 0

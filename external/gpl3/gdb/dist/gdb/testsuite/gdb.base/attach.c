@@ -5,7 +5,7 @@
    exit unless/until gdb sets the variable to non-zero.)
    */
 #include <stdio.h>
-#include <unistd.h>
+#include "gdb_watchdog.h"
 
 int  bidule = 0;
 volatile int  should_exit = 0;
@@ -14,7 +14,7 @@ int main ()
 {
   int  local_i = 0;
 
-  alarm (60);
+  gdb_watchdog (60);
 
   while (! should_exit)
     {

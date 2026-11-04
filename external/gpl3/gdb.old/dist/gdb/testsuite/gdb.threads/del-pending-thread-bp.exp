@@ -1,0 +1,98 @@
+# Copyright 2023 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This test checks that pending thread-specific breakpoints are
+# correctly deleted when the thread the breakpoint is for goes out of
+# scope.
+#
+# We also check that we can't create a pending thread-specific
+# breakpoint for a non-existent thread.
+
+require allow_shlib_tests
+
+standard_testfile
+
+set libname $testfile-lib
+set srcfile_lib $srcdir/$subdir/$libname.c
+set binfile_lib [standard_output_file $libname.so]
+
+if { [gdb_compile_shlib $srcfile_lib $binfile_lib {}] != "" } {
+    untested "failed to compile shared library 1"
+    return -1
+}
+
+set binfile_lib_target [gdb_download_shlib $binfile_lib]
+
+if { [prepare_for_testing "failed to prepare" $testfile $srcfile \
+	  [list debug \
+	       additional_flags=-DSHLIB_NAME=\"$binfile_lib_target\" \
+	       shlib_load pthreads]] } {
+    return -1
+}
+
+gdb_locate_shlib $binfile_lib
+
+if ![runto_main] {
+    return 0
+}
+
+# Run until we have two threads.
+gdb_breakpoint "breakpt"
+gdb_continue_to_breakpoint "first breakpt call"
+
+# Confirm that we have a thread '2'.
+gdb_test "info threads" "\r\n\\s+2\\s+\[^\r\n\]+"
+
+# Create a pending, thread-specific, breakpoint on 'foo'.
+gdb_breakpoint "foo thread 2" allow-pending
+set bpnum [get_integer_valueof "\$bpnum" "*INVALID*" \
+	       "get breakpoint number"]
+
+# Check we can't create a pending thread-specific breakpoint for a
+# non-existent thread.
+gdb_test "with breakpoint pending on -- break foo thread 99" \
+    "Unknown thread 99\\."
+
+# Continue to 'breakpt' again.  Don't use gdb_continue_to_breakpoint
+# as we are looking for the thread exited and breakpoint deleted
+# messages.
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "\\\[Thread \[^\r\n\]+ exited\\\]" \
+	 "Thread-specific breakpoint $bpnum deleted - thread 2 no longer in the thread list\\." \
+	 "" \
+	 "Thread 1 \[^\r\n\]+, breakpt \\(\\) at \[^\r\n\]+" \
+	 "$decimal\\s+\[^\r\n\]+"] \
+    "second breakpt call"
+
+# Confirm breakpoint has been deleted.
+gdb_test "info breakpoints $bpnum" \
+    "No breakpoint, watchpoint, tracepoint, or catchpoint matching '$bpnum'\\."
+
+# Continue again.  This will pass through 'foo'.  We should not stop
+# in 'foo', the breakpoint has been deleted.  We should next stop in
+# breakpt again.
+gdb_test "continue" \
+    [multi_line \
+	 "Continuing\\." \
+	 "" \
+	 "Thread 1 \[^\r\n\]+ hit Breakpoint $decimal, breakpt \\(\\) at \[^\r\n\]+" \
+	 "$decimal\\s+\[^\r\n\]+"] \
+    "third breakpt call"
+gdb_test "bt 1" \
+    [multi_line \
+	 "#0\\s+breakpt \\(\\) at \[^\r\n\]+" \
+	 "\\(More stack frames follow\\.\\.\\.\\)"]

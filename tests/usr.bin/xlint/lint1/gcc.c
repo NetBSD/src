@@ -1,4 +1,4 @@
-/*	$NetBSD: gcc.c,v 1.3.2.1 2025/08/02 05:58:14 perseant Exp $	*/
+/*	$NetBSD: gcc.c,v 1.3.2.2 2026/11/04 23:28:26 perseant Exp $	*/
 # 3 "gcc.c"
 
 /*
@@ -47,9 +47,28 @@ range_in_case_label(int i)
 	switch (i) {
 	case 1 ... 40:		// This is a GCC extension.
 		return 1;
+	case 1000 ... 2000:
+		return 1000;
+	case 3000 ... 4001:
+		return 3000;
 	default:
 		return 2;
 	}
+}
+
+int
+range_in_case_label_enum(int i)
+{
+	enum {
+		LSB = 0,
+		MSB = 63,
+	} bit = i;
+
+	switch (bit) {
+	case LSB ... MSB:
+		return 1;
+	}
+	return 0;
 }
 
 union {
@@ -126,3 +145,5 @@ atomic_functions(void)
 	/* expect+1: warning: conversion from 'unsigned long long' to 'char' may lose accuracy [132] */
 	c = __atomic_exchange_n(pv, 0, 0);
 }
+
+__float128 f128 = 0.0;

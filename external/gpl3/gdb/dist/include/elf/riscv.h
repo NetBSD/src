@@ -1,5 +1,5 @@
 /* RISC-V ELF support for BFD.
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS ELF support for BFD, by Ian Lance Taylor.
@@ -141,7 +141,7 @@ END_RELOC_NUMBERS (R_RISCV_max)
 #define EF_RISCV_TSO 0x0010
 
 /* Additional section types.  */
-#define SHT_RISCV_ATTRIBUTES 0x70000003 /* Section holds attributes.  */
+#define SHT_RISCV_ATTRIBUTES (SHT_LOPROC + 3) /* Section holds attributes.  */
 
 /* Processor specific program header types.  */
 

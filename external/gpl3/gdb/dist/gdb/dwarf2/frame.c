@@ -1,6 +1,6 @@
 /* Frame unwinder for frames with DWARF Call Frame Information.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    Contributed by Mark Kettenis.
 
@@ -25,19 +25,19 @@
 #include "frame.h"
 #include "frame-base.h"
 #include "frame-unwind.h"
-#include "gdbcore.h"
 #include "gdbtypes.h"
 #include "symtab.h"
 #include "objfiles.h"
 #include "regcache.h"
 #include "value.h"
 #include "record.h"
+#include "extract-store-integer.h"
+#include "producer.h"
 
 #include "complaints.h"
 #include "dwarf2/frame.h"
 #include "dwarf2/read.h"
 #include "dwarf2/public.h"
-#include "ax.h"
 #include "dwarf2/loc.h"
 #include "dwarf2/frame-tailcall.h"
 #include "gdbsupport/gdb_binary_search.h"
@@ -45,7 +45,6 @@
 #include "gdbsupport/selftest.h"
 #include "selftest-arch.h"
 #endif
-#include <unordered_map>
 
 #include <algorithm>
 
@@ -105,7 +104,7 @@ struct dwarf2_cie
 
 /* The CIE table is used to find CIEs during parsing, but then
    discarded.  It maps from the CIE's offset to the CIE.  */
-typedef std::unordered_map<ULONGEST, dwarf2_cie *> dwarf2_cie_table;
+using dwarf2_cie_table = gdb::unordered_map<ULONGEST, dwarf2_cie *>;
 
 /* Frame Description Entry (FDE).  */
 
@@ -184,9 +183,6 @@ static ULONGEST read_encoded_value (struct comp_unit *unit, gdb_byte encoding,
 				    unsigned int *bytes_read_ptr,
 				    unrelocated_addr func_base);
 
-
-/* See dwarf2/frame.h.  */
-bool dwarf2_frame_unwinders_enabled_p = true;
 
 /* Store the length the expression for the CFA in the `cfa_reg' field,
    which is unused in that case.  */
@@ -578,7 +574,7 @@ execute_cfa_program_test (struct gdbarch *gdbarch)
   SELF_CHECK (fs.regs.prev == NULL);
 }
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
 
@@ -776,9 +772,8 @@ dwarf2_frame_find_quirks (struct dwarf2_frame_state *fs,
 
 int
 dwarf2_fetch_cfa_info (struct gdbarch *gdbarch, CORE_ADDR pc,
-		       struct dwarf2_per_cu_data *data,
-		       int *regnum_out, LONGEST *offset_out,
-		       CORE_ADDR *text_offset_out,
+		       dwarf2_per_cu *data, int *regnum_out,
+		       LONGEST *offset_out, CORE_ADDR *text_offset_out,
 		       const gdb_byte **cfa_start_out,
 		       const gdb_byte **cfa_end_out)
 {
@@ -913,7 +908,7 @@ dwarf2_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
      its return address.  As a result the return address will
      point at some random instruction, and the CFI for that
      instruction is probably worthless to us.  GCC's unwinder solves
-     this problem by substracting 1 from the return address to get an
+     this problem by subtracting 1 from the return address to get an
      address in the middle of a presumed call instruction (or the
      instruction in the associated delay slot).  This should only be
      done for "normal" frames and not for resume-type frames (signal
@@ -1075,7 +1070,7 @@ incomplete CFI data; unspecified registers (e.g., %s) at %s"),
 	    ULONGEST retaddr_column = fs.retaddr_column;
 
 	    /* It seems rather bizarre to specify an "empty" column as
-	       the return adress column.  However, this is exactly
+	       the return address column.  However, this is exactly
 	       what GCC does on some targets.  It turns out that GCC
 	       assumes that the return address can be found in the
 	       register corresponding to the return address column.
@@ -1308,9 +1303,6 @@ static int
 dwarf2_frame_sniffer (const struct frame_unwind *self,
 		      const frame_info_ptr &this_frame, void **this_cache)
 {
-  if (!dwarf2_frame_unwinders_enabled_p)
-    return 0;
-
   /* Grab an address that is guaranteed to reside somewhere within the
      function.  get_frame_pc(), with a no-return next function, can
      end up returning something past the end of this function's body.
@@ -1331,30 +1323,30 @@ dwarf2_frame_sniffer (const struct frame_unwind *self,
   if (fde->cie->signal_frame
       || dwarf2_frame_signal_frame_p (get_frame_arch (this_frame),
 				      this_frame))
-    return self->type == SIGTRAMP_FRAME;
+    return self->type () == SIGTRAMP_FRAME;
 
-  if (self->type != NORMAL_FRAME)
+  if (self->type () != NORMAL_FRAME)
     return 0;
 
   return 1;
 }
 
-static const struct frame_unwind dwarf2_frame_unwind =
-{
+static const struct frame_unwind_legacy dwarf2_frame_unwind (
   "dwarf2",
   NORMAL_FRAME,
+  FRAME_UNWIND_DEBUGINFO,
   dwarf2_frame_unwind_stop_reason,
   dwarf2_frame_this_id,
   dwarf2_frame_prev_register,
   NULL,
   dwarf2_frame_sniffer,
   dwarf2_frame_dealloc_cache
-};
+);
 
-static const struct frame_unwind dwarf2_signal_frame_unwind =
-{
+static const struct frame_unwind_legacy dwarf2_signal_frame_unwind (
   "dwarf2 signal",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_DEBUGINFO,
   dwarf2_frame_unwind_stop_reason,
   dwarf2_frame_this_id,
   dwarf2_frame_prev_register,
@@ -1363,7 +1355,7 @@ static const struct frame_unwind dwarf2_signal_frame_unwind =
 
   /* TAILCALL_CACHE can never be in such frame to need dealloc_cache.  */
   NULL
-};
+);
 
 /* Append the DWARF-2 frame unwinders to GDBARCH's list.  */
 
@@ -2045,7 +2037,7 @@ decode_frame_entry (struct gdbarch *gdbarch,
 	 produces a hole in the frame info that gets filled by the 
 	 linker with zeros.
 
-	 The GCC behaviour is arguably a bug, but it's effectively now
+	 The GCC behavior is arguably a bug, but it's effectively now
 	 part of the ABI, so we're now stuck with it, at least at the
 	 object file level.  A smart linker may decide, in the process
 	 of compressing duplicate CIE information, that it can rewrite
@@ -2255,34 +2247,8 @@ dwarf2_build_frame_info (struct objfile *objfile)
   set_comp_unit (objfile, unit.release ());
 }
 
-/* Handle 'maintenance show dwarf unwinders'.  */
-
-static void
-show_dwarf_unwinders_enabled_p (struct ui_file *file, int from_tty,
-				struct cmd_list_element *c,
-				const char *value)
+INIT_GDB_FILE (dwarf2_frame)
 {
-  gdb_printf (file,
-	      _("The DWARF stack unwinders are currently %s.\n"),
-	      value);
-}
-
-void _initialize_dwarf2_frame ();
-void
-_initialize_dwarf2_frame ()
-{
-  add_setshow_boolean_cmd ("unwinders", class_obscure,
-			   &dwarf2_frame_unwinders_enabled_p , _("\
-Set whether the DWARF stack frame unwinders are used."), _("\
-Show whether the DWARF stack frame unwinders are used."), _("\
-When enabled the DWARF stack frame unwinders can be used for architectures\n\
-that support the DWARF unwinders.  Enabling the DWARF unwinders for an\n\
-architecture that doesn't support them will have no effect."),
-			   NULL,
-			   show_dwarf_unwinders_enabled_p,
-			   &set_dwarf_cmdlist,
-			   &show_dwarf_cmdlist);
-
 #if GDB_SELF_TEST
   selftests::register_test_foreach_arch ("execute_cfa_program",
 					 selftests::execute_cfa_program_test);

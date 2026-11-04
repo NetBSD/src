@@ -1,6 +1,6 @@
 /* Serial interface for raw TCP connections on Un*x like systems.
 
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -465,9 +465,7 @@ static const struct serial_ops tcp_ops =
 
 #endif /* USE_WIN32API */
 
-void _initialize_ser_tcp ();
-void
-_initialize_ser_tcp ()
+INIT_GDB_FILE (ser_tcp)
 {
 #ifdef USE_WIN32API
   /* Do nothing; the TCP serial operations will be initialized in

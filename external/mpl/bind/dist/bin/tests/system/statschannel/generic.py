@@ -9,28 +9,27 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
-from datetime import datetime, timedelta
 from collections import defaultdict
+from datetime import datetime, timedelta, timezone
 from time import sleep
+
 import os
 
 import dns.message
-import dns.query
-import dns.rcode
 
 import isctest
 
-
-# ISO datetime format without msec
-fmt = "%Y-%m-%dT%H:%M:%SZ"
+# ISO datetime format without msec (the %z directive parses the trailing "Z"
+# as UTC, yielding timezone-aware datetimes)
+FMT = "%Y-%m-%dT%H:%M:%S%z"
 
 # The constants were taken from BIND 9 source code (lib/dns/zone.c)
 max_refresh = timedelta(seconds=2419200)  # 4 weeks
 max_expires = timedelta(seconds=14515200)  # 24 weeks
-dayzero = datetime.utcfromtimestamp(0).replace(microsecond=0)
+dayzero = datetime.fromtimestamp(0, timezone.utc).replace(microsecond=0)
 
 # Wait for the secondary zone files to appear to extract their mtime
-max_secondary_zone_waittime_sec = 5
+MAX_SECONDARY_ZONE_WAITTIME_SEC = 5
 
 
 # Generic helper functions
@@ -46,12 +45,12 @@ def check_refresh(refresh, min_time, max_time):
 
 def check_loaded(loaded, expected, now):
     # Sanity check the zone timers values
-    assert (loaded - expected).total_seconds() < max_secondary_zone_waittime_sec
+    assert (loaded - expected).total_seconds() < MAX_SECONDARY_ZONE_WAITTIME_SEC
     assert loaded <= now
 
 
 def check_zone_timers(loaded, expires, refresh, loaded_exp):
-    now = datetime.utcnow().replace(microsecond=0)
+    now = datetime.now(timezone.utc).replace(microsecond=0)
     # Sanity checks the zone timers values
     if expires is not None:
         check_expires(expires, now, now + max_expires)
@@ -70,11 +69,11 @@ def check_manykeys(name, zone=None):
 
 def zone_mtime(zonedir, name):
     try:
-        si = os.stat(os.path.join(zonedir, "{}.db".format(name)))
+        si = os.stat(os.path.join(zonedir, f"{name}.db"))
     except FileNotFoundError:
         return dayzero
 
-    mtime = datetime.utcfromtimestamp(si.st_mtime).replace(microsecond=0)
+    mtime = datetime.fromtimestamp(si.st_mtime, timezone.utc).replace(microsecond=0)
 
     return mtime
 
@@ -87,7 +86,7 @@ def test_zone_timers_primary(fetch_zones, load_timers, **kwargs):
     zones = fetch_zones(statsip, statsport)
 
     for zone in zones:
-        (name, loaded, expires, refresh) = load_timers(zone, True)
+        name, loaded, expires, refresh = load_timers(zone, True)
         mtime = zone_mtime(zonedir, name)
         check_zone_timers(loaded, expires, refresh, mtime)
 
@@ -98,12 +97,12 @@ def test_zone_timers_secondary(fetch_zones, load_timers, **kwargs):
     zonedir = kwargs["zonedir"]
 
     # If any one of the zone files isn't ready, then retry until timeout.
-    tries = max_secondary_zone_waittime_sec
+    tries = MAX_SECONDARY_ZONE_WAITTIME_SEC
     while tries >= 0:
         zones = fetch_zones(statsip, statsport)
         again = False
         for zone in zones:
-            (name, loaded, expires, refresh) = load_timers(zone, False)
+            name, loaded, expires, refresh = load_timers(zone, False)
             mtime = zone_mtime(zonedir, name)
             if (mtime != dayzero) or (tries == 0):
                 # mtime was either retrieved successfully or no tries were
@@ -161,7 +160,7 @@ def create_expected(data):
 def update_expected(expected, key, msg):
     msg_len = len(msg.to_wire())
     bucket_num = (msg_len // 16) * 16
-    bucket = "{}-{}".format(bucket_num, bucket_num + 15)
+    bucket = f"{bucket_num}-{bucket_num + 15}"
 
     expected[key][bucket] += 1
 
@@ -185,6 +184,16 @@ def check_traffic(data, expected):
     assert ordered_data == ordered_expected
 
 
+def wait_for_traffic(fetch_traffic, statsip, statsport, expected):
+    # named updates the counters asynchronously, so a snapshot taken right
+    # after the query may lag; re-fetch until it matches (or time out).
+    def fetch_and_check():
+        check_traffic(fetch_traffic(statsip, statsport), expected)
+        return True
+
+    isctest.run.retry_with_timeout(fetch_and_check, timeout=10)
+
+
 def test_traffic(fetch_traffic, **kwargs):
     statsip = kwargs["statsip"]
     statsport = kwargs["statsport"]
@@ -197,33 +206,25 @@ def test_traffic(fetch_traffic, **kwargs):
     ans = isctest.query.udp(msg, statsip, attempts=1)
     isctest.check.noerror(ans)
     update_expected(exp, "dns-udp-responses-sizes-sent-ipv4", ans)
-    data = fetch_traffic(statsip, statsport)
-
-    check_traffic(data, exp)
+    wait_for_traffic(fetch_traffic, statsip, statsport, exp)
 
     msg = create_msg("long.example.", "TXT")
     update_expected(exp, "dns-udp-requests-sizes-received-ipv4", msg)
     ans = isctest.query.udp(msg, statsip, attempts=1)
     isctest.check.noerror(ans)
     update_expected(exp, "dns-udp-responses-sizes-sent-ipv4", ans)
-    data = fetch_traffic(statsip, statsport)
-
-    check_traffic(data, exp)
+    wait_for_traffic(fetch_traffic, statsip, statsport, exp)
 
     msg = create_msg("short.example.", "TXT")
     update_expected(exp, "dns-tcp-requests-sizes-received-ipv4", msg)
     ans = isctest.query.tcp(msg, statsip, attempts=1)
     isctest.check.noerror(ans)
     update_expected(exp, "dns-tcp-responses-sizes-sent-ipv4", ans)
-    data = fetch_traffic(statsip, statsport)
-
-    check_traffic(data, exp)
+    wait_for_traffic(fetch_traffic, statsip, statsport, exp)
 
     msg = create_msg("long.example.", "TXT")
     update_expected(exp, "dns-tcp-requests-sizes-received-ipv4", msg)
     ans = isctest.query.tcp(msg, statsip, attempts=1)
     isctest.check.noerror(ans)
     update_expected(exp, "dns-tcp-responses-sizes-sent-ipv4", ans)
-    data = fetch_traffic(statsip, statsport)
-
-    check_traffic(data, exp)
+    wait_for_traffic(fetch_traffic, statsip, statsport, exp)

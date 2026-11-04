@@ -1,4 +1,4 @@
-/*	$NetBSD: work_test.c,v 1.2.4.2 2025/08/02 05:54:18 perseant Exp $	*/
+/*	$NetBSD: work_test.c,v 1.2.4.3 2026/11/04 23:18:24 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,31 +40,28 @@
 
 static atomic_uint scheduled = 0;
 
-static void
+static isc_result_t
 work_cb(void *arg) {
 	UNUSED(arg);
 
 	atomic_fetch_add(&scheduled, 1);
 
 	assert_int_equal(isc_tid(), UINT32_MAX);
+
+	return ISC_R_ALREADYRUNNING; /* mock result code */
 }
 
 static void
-after_work_cb(void *arg) {
-	UNUSED(arg);
-
+after_work_cb(void *arg ISC_ATTR_UNUSED, isc_result_t result) {
+	assert_int_equal(result, ISC_R_ALREADYRUNNING);
 	assert_int_equal(atomic_load(&scheduled), 1);
 	isc_loopmgr_shutdown(loopmgr);
 }
 
 static void
-work_enqueue_cb(void *arg) {
-	UNUSED(arg);
-	uint32_t tid = isc_loopmgr_nloops(loopmgr) - 1;
-
-	isc_loop_t *loop = isc_loop_get(loopmgr, tid);
-
-	isc_work_enqueue(loop, work_cb, after_work_cb, loopmgr);
+work_enqueue_cb(void *arg ISC_ATTR_UNUSED) {
+	isc_work_enqueue(isc_loop(), ISC_WORKLANE_FAST, work_cb, after_work_cb,
+			 NULL);
 }
 
 ISC_RUN_TEST_IMPL(isc_work_enqueue) {

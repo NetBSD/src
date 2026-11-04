@@ -16,7 +16,7 @@ verify_offsetof_matching (ctf_dict_t *fp, ctf_id_t type, const char *name, size_
     goto err;
 
   if (mi.ctm_offset != offset * 8)
-    fprintf (stderr, "field %s inconsistency: offsetof() says %zi bits, CTF says %zi\n",
+    fprintf (stderr, "field %s inconsistency: offsetof() says %zi bits, CTF says %li\n",
 	     name, offset * 8, mi.ctm_offset);
 
   return;

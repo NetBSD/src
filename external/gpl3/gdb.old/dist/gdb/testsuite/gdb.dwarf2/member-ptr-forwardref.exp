@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,9 @@
 load_lib dwarf.exp
 
 # This test can only be run on targets which support DWARF-2 and use gas.
-if {![dwarf2_support]} {
-    return 0  
-}
+require dwarf2_support
 
-if { [skip_cplus_tests] } { continue }
+require allow_cplus_tests
 
 standard_testfile .S
 
@@ -28,9 +26,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" ${binfile} object {debug}] !=
     return -1
 }
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 # Be sure to set cp-abi before ${binfile} gets loaded
 gdb_test "set cp-abi gnu-v3"
@@ -38,5 +34,19 @@ gdb_test "show cp-abi" {The currently selected C\+\+ ABI is "gnu-v3".*}
 
 gdb_load ${binfile}
 
+set re_address_class "@\[^\r\n\]+"
+
+set re_C_ptr \
+    [string cat \
+	 [string_to_regexp "C *"] "( const)?( $re_address_class)?"]
+
 gdb_test_no_output "set language c++"
-gdb_test "ptype c" "type = struct C {\[\r\n \t\]*private:\[\r\n \t\]*int \\(C::\\*fp\\)\\(C \\*( const)?\\);\[\r\n \t\]*}"
+gdb_test "ptype c" \
+    [multi_line \
+	 "type = struct C {" \
+	 "  private:" \
+	 [string cat \
+	      [string_to_regexp "    int (C::*fp)("] \
+	      $re_C_ptr \
+	      [string_to_regexp ");"]] \
+	 "}"]

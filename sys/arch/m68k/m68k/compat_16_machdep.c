@@ -1,4 +1,4 @@
-/*    $NetBSD: compat_16_machdep.c,v 1.18 2021/10/27 04:14:59 thorpej Exp $   */
+/*    $NetBSD: compat_16_machdep.c,v 1.18.10.1 2026/11/04 23:20:52 perseant Exp $   */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.18 2021/10/27 04:14:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.18.10.1 2026/11/04 23:20:52 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -67,8 +67,6 @@ __KERNEL_RCSID(0, "$NetBSD: compat_16_machdep.c,v 1.18 2021/10/27 04:14:59 thorp
 #include <machine/reg.h>
 #include <machine/frame.h>
 
-extern  short exframesize[];
-
 #ifdef DEBUG
 extern int sigdebug;
 extern int sigpid;
@@ -91,11 +89,11 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 	int onstack, error;
 	int sig = ksi->ksi_signo;
 	u_long code = KSI_TRAPCODE(ksi);
-	struct sigframe_sigcontext *fp = getframe(l, sig, &onstack), kf;
+	struct sigframe_sigcontext *fp, kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 	short ft = frame->f_format;
 
-	fp--;
+	fp = getframe(l, sig, &onstack, sizeof(*fp));
 
 #ifdef DEBUG
 	if ((sigdebug & SDB_KSTACK) && p->p_pid == sigpid)
@@ -162,7 +160,7 @@ sendsig_sigcontext(const ksiginfo_t *ksi, const sigset_t *mask)
 
 	if (fputype) {
 		kf.sf_state.ss_flags |= SS_FPSTATE;
-		m68881_save(&kf.sf_state.ss_fpstate);
+		fpu_save(&kf.sf_state.ss_fpstate);
 	}
 #ifdef DEBUG
 	if ((sigdebug & SDB_FPSTATE) && *(char *)&kf.sf_state.ss_fpstate)
@@ -345,7 +343,7 @@ compat_16_sys___sigreturn14(struct lwp *l, const struct compat_16_sys___sigretur
 	 * Restore the original FP context
 	 */
 	if (fputype && (flags & SS_FPSTATE))
-		m68881_restore(&tstate.ss_fpstate);
+		fpu_restore(&tstate.ss_fpstate);
 
  restore:
 	/*

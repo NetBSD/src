@@ -1,4 +1,4 @@
-#   Copyright 2005-2023 Free Software Foundation, Inc.
+#   Copyright 2005-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # Until "set follow-fork-mode" and "catch fork" are implemented on
 # other targets...
 #
-if {![istarget "*-*-linux*"]} {
-    return
-}
+require {istarget "*-*-linux*"}
 
 # Checkpoint support is currently implemented in the Linux native
 # target, so only works with "target native".
@@ -86,9 +84,11 @@ gdb_test "checkpoint" "" "checkpoint nine"
 gdb_test "continue 10" "breakpoint 1.*" "break1 ten"
 gdb_test "checkpoint" "" "checkpoint ten"
 
-gdb_test "info checkpoints" \
-    " 1 .* 2 .* 3 .* 4 .* 5 .* 6 .* 7 .* 8 .* 9 .* 10 .*" \
-    "info checkpoints one"
+set info_checkpoints_re ""
+for { set i 0 } { $i <= 10 } { incr i } {
+    append info_checkpoints_re " $i .* file .*"
+}
+gdb_test "info checkpoints" $info_checkpoints_re "info checkpoints one"
 
 delete_breakpoints
 gdb_breakpoint $break2_loc
@@ -290,38 +290,53 @@ gdb_test "restart 10" "Not found.*" "no more checkpoint 10"
 # Now let's try setting a large number of checkpoints (>600)
 #
 
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 runto_main
 gdb_breakpoint $break1_loc
 
-gdb_test "commands\nsilent\nif (lines % 2)\ncheckpoint\nend\n  continue\nend" \
+set cmd \
+    [join \
+	 [list \
+	      "commands" \
+	      "if (lines % 2)" \
+	      "  checkpoint" \
+	      "else" \
+	      "  continue" \
+	      "end" \
+	      "end"] \
+	 "\n"]
+gdb_test $cmd \
     "" \
     "set checkpoint breakpoint"
 
-set prev_timeout $timeout
-set timeout [expr $timeout + 120]
-verbose "Timeout now $timeout sec."
-
-gdb_breakpoint $break2_loc
-gdb_test "continue" "breakpoint 2.*" "break2 with many checkpoints"
+set nr_ok 0
+for {set iter 0} {$iter < 600} {incr iter} {
+    set ok 0
+    gdb_test_multiple "continue" "" {
+	-re -wrap "breakpoint 1.*" {
+	    set ok 1
+	}
+	-re -wrap "" {
+	}
+    }
+    if { $ok } {
+	incr nr_ok
+    } else {
+	break
+    }
+}
+gdb_assert { $nr_ok == 600 } "break1 with many checkpoints"
 
 set count 0
 set msg "info checkpoints with at least 600 checkpoints"
 gdb_test_multiple "info checkpoints" $msg {
-    -re "  $decimal process \[^\r\]*\r\n" {
+    -re "\r\n  $decimal process \[^\r\]*" {
 	incr count
 	exp_continue
     }
-    -re "$gdb_prompt $" {
-	if { $count >= 600 } {
-	    pass $msg
-	} else {
-	    fail $msg
-	}
+    -re -wrap "" {
+	gdb_assert { $count == 600 } $gdb_test_name
     }
 }
 
@@ -332,10 +347,20 @@ gdb_test_multiple "info checkpoints" $msg {
 gdb_test "kill" "" "kill all one with many checkpoints" \
     "Kill the program being debugged.*y or n. $" "y"
 
-# Restore old timeout
-set timeout $prev_timeout
-verbose "Timeout now $timeout sec."
-
 #
 # Finished: cleanup
 #
+
+#
+# Now let's try to delete checkpoint 0.
+#
+
+with_test_prefix "delete checkpoint 0" {
+    clean_restart $binfile
+    runto_main
+
+    gdb_test "checkpoint" "checkpoint 1: fork returned pid $decimal\\."
+    gdb_test "restart 1" "Switching to .*"
+    gdb_test "delete checkpoint 0" "Killed process $decimal"
+    gdb_test "info checkpoints" [string_to_regexp "No checkpoints."]
+}

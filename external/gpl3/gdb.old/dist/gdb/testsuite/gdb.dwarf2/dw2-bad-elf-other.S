@@ -1,4 +1,4 @@
-/* Copyright 2019-2023 Free Software Foundation, Inc.
+/* Copyright 2019-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -15,7 +15,11 @@
 
 	.section ".other", "x"
 	.global some_func, some_func_end
+#ifdef __arm__
+	.type   some_func, %function
+#else
 	.type   some_func, @function
+#endif
 	nop
 	nop
 	nop
@@ -27,4 +31,8 @@ some_func:
 	.size some_func,.-some_func
 some_func_end:
 	nop
+#ifdef __arm__
+	.section	.note.GNU-stack,"",%progbits
+#else
 	.section	.note.GNU-stack,"",@progbits
+#endif

@@ -1,4 +1,4 @@
-/* $NetBSD: gtxf2.c,v 1.2 2004/09/27 10:16:24 he Exp $ */
+/* $NetBSD: gtxf2.c,v 1.2.104.1 2026/11/04 23:19:22 perseant Exp $ */
 
 /*
  * Written by Ben Harris, 2000.  This file is in the Public Domain.
@@ -10,7 +10,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: gtxf2.c,v 1.2 2004/09/27 10:16:24 he Exp $");
+__RCSID("$NetBSD: gtxf2.c,v 1.2.104.1 2026/11/04 23:19:22 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #ifdef FLOATX80
@@ -22,6 +22,10 @@ __gtxf2(floatx80 a, floatx80 b)
 {
 
 	/* libgcc1.c says a > b */
+#ifdef X80M68K
+	return floatx80_lt(b, a) == -1 ? 1 : -1;
+#else
 	return floatx80_lt(b, a);
+#endif
 }
 #endif /* FLOATX80 */

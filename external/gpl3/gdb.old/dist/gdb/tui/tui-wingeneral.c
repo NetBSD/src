@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,53 +19,35 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-io.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-win.h"
-#include "tui/tui-stack.h"
 #include "cli/cli-style.h"
 
 #include "gdb_curses.h"
 
-/* This is true if we're currently suppressing output, via
-   wnoutrefresh.  This is needed in case we create a new window while
-   in this mode.  */
+/* This is true when there is a live instance of tui_batch_rendering.
+   The outermost tui_batch_rendering will cause a flush to the
+   screen.  */
 
 static bool suppress_output;
 
 /* See tui-data.h.  */
 
-tui_suppress_output::tui_suppress_output ()
+tui_batch_rendering::tui_batch_rendering ()
   : m_saved_suppress (suppress_output)
 {
   suppress_output = true;
-
-  for (const auto &win : all_tui_windows ())
-    win->no_refresh ();
 }
 
 /* See tui-data.h.  */
 
-tui_suppress_output::~tui_suppress_output ()
+tui_batch_rendering::~tui_batch_rendering ()
 {
   suppress_output = m_saved_suppress;
   if (!suppress_output)
     doupdate ();
-
-  for (const auto &win : all_tui_windows ())
-    win->refresh_window ();
-}
-
-/* See tui-data.h.  */
-
-void
-tui_wrefresh (WINDOW *win)
-{
-  if (!suppress_output)
-    wrefresh (win);
 }
 
 /* See tui-data.h.  */
@@ -74,10 +56,15 @@ void
 tui_win_info::refresh_window ()
 {
   if (handle != NULL)
-    tui_wrefresh (handle.get ());
+    {
+      if (suppress_output)
+	wnoutrefresh (handle.get ());
+      else
+	wrefresh (handle.get ());
+    }
 }
 
-/* Draw a border arround the window.  */
+/* Draw a border around the window.  */
 static void
 box_win (struct tui_win_info *win_info, 
 	 bool highlight_flag)
@@ -98,27 +85,23 @@ box_win (struct tui_win_info *win_info,
 			   ? tui_active_border_style.style ()
 			   : tui_border_style.style ()));
   wattron (win, attrs);
-#ifdef HAVE_WBORDER
   wborder (win, tui_border_vline, tui_border_vline,
 	   tui_border_hline, tui_border_hline,
 	   tui_border_ulcorner, tui_border_urcorner,
 	   tui_border_llcorner, tui_border_lrcorner);
-#else
-  box (win, tui_border_vline, tui_border_hline);
-#endif
-  if (!win_info->title.empty ())
+  if (!win_info->title ().empty ())
     {
       /* Emit "+-TITLE-+" -- so 2 characters on the right and 2 on
 	 the left.  */
-      int max_len = win_info->width - 2 - 2;
+      int max_len = win_info->width - win_info->box_size () - 2;
 
-      if (win_info->title.size () <= max_len)
-	mvwaddstr (win, 0, 2, win_info->title.c_str ());
+      if (win_info->title ().size () <= max_len)
+	mvwaddstr (win, 0, 2, win_info->title ().c_str ());
       else
 	{
 	  std::string truncated
-	    = "..." + win_info->title.substr (win_info->title.size ()
-					      - max_len + 3);
+	    = "..." + win_info->title ().substr (win_info->title ().size ()
+						 - max_len + 3);
 	  mvwaddstr (win, 0, 2, truncated.c_str ());
 	}
     }
@@ -172,8 +155,6 @@ tui_win_info::make_window ()
   handle.reset (newwin (height, width, y, x));
   if (handle != NULL)
     {
-      if (suppress_output)
-	wnoutrefresh (handle.get ());
       scrollok (handle.get (), TRUE);
       if (can_box ())
 	box_win (this, false);
@@ -181,7 +162,7 @@ tui_win_info::make_window ()
 }
 
 /* We can't really make windows visible, or invisible.  So we have to
-   delete the entire window when making it visible, and create it
+   delete the entire window when making it invisible, and create it
    again when making it visible.  */
 void
 tui_win_info::make_visible (bool visible)
@@ -193,16 +174,4 @@ tui_win_info::make_visible (bool visible)
     make_window ();
   else
     handle.reset (nullptr);
-}
-
-/* Function to refresh all the windows currently displayed.  */
-
-void
-tui_refresh_all ()
-{
-  for (tui_win_info *win_info : all_tui_windows ())
-    {
-      if (win_info->is_visible ())
-	win_info->refresh_window ();
-    }
 }

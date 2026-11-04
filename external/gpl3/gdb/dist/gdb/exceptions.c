@@ -1,6 +1,6 @@
 /* Exception (throw catch) mechanism, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,15 +18,14 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 #include "exceptions.h"
-#include "breakpoint.h"
 #include "target.h"
 #include "inferior.h"
 #include "annotate.h"
 #include "ui-out.h"
 #include "serial.h"
-#include "gdbthread.h"
 #include "ui.h"
 #include <optional>
+#include "cli/cli-style.h"
 
 static void
 print_flush (void)
@@ -82,7 +81,7 @@ print_exception (struct ui_file *file, const struct gdb_exception &e)
 	  end++;
 	  file->write (start, end - start);
 	}
-    }					    
+    }
   gdb_printf (file, "\n");
 
   /* Now append the annotation.  */
@@ -107,6 +106,7 @@ exception_print (struct ui_file *file, const struct gdb_exception &e)
   if (e.reason < 0 && e.message != NULL)
     {
       print_flush ();
+      print_error_prefix (file);
       print_exception (file, e);
     }
 }
@@ -120,6 +120,7 @@ exception_fprintf (struct ui_file *file, const struct gdb_exception &e,
       va_list args;
 
       print_flush ();
+      print_error_prefix (file);
 
       /* Print the prefix.  */
       va_start (args, prefix);

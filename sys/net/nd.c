@@ -1,4 +1,4 @@
-/*	$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $	*/
+/*	$NetBSD: nd.c,v 1.7.2.1 2026/11/04 23:27:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.7.2.1 2026/11/04 23:27:58 perseant Exp $");
 
 #include <sys/callout.h>
 #include <sys/mbuf.h>
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd.c,v 1.7 2024/05/30 23:00:39 riastradh Exp $");
 #include <netinet/ip6.h>
 
 static struct nd_domain *nd_domains[AF_MAX];
-
-static int nd_gctimer = (60 * 60 * 24); /* 1 day: garbage collection timer */
 
 static void nd_set_timertick(struct llentry *, time_t);
 static struct nd_domain *nd_find_domain(int);
@@ -85,9 +83,11 @@ nd_timer(void *arg)
 		break;
 
 	case ND_LLINFO_INCOMPLETE:
-		send_ns = true;
-		if (ln->ln_asked++ < nd->nd_mmaxtries)
+		if (ln->ln_asked < nd->nd_mmaxtries) {
+			ln->ln_asked++;
+			send_ns = true;
 			break;
+		}
 
 		if (ln->ln_hold) {
 			struct mbuf *m0, *mnxt;
@@ -113,13 +113,12 @@ nd_timer(void *arg)
 
 		missed = ND_LLINFO_INCOMPLETE;
 		ln->ln_state = ND_LLINFO_WAITDELETE;
+		ln->la_flags |= LLE_UNRESOLVED;
 		break;
 
 	case ND_LLINFO_REACHABLE:
-		if (!ND_IS_LLINFO_PERMANENT(ln)) {
+		if (!ND_IS_LLINFO_PERMANENT(ln))
 			ln->ln_state = ND_LLINFO_STALE;
-			nd_set_timer(ln, ND_TIMER_GC);
-		}
 		break;
 
 	case ND_LLINFO_PURGE: /* FALLTHROUGH */
@@ -137,10 +136,8 @@ nd_timer(void *arg)
 			ln->ln_state = ND_LLINFO_PROBE;
 			send_ns = true;
 			daddrp = &taddr;
-		} else {
+		} else
 			ln->ln_state = ND_LLINFO_STALE;
-			nd_set_timer(ln, ND_TIMER_GC);
-		}
 		break;
 
 	case ND_LLINFO_PROBE:
@@ -180,14 +177,18 @@ nd_timer(void *arg)
 		break;
 	}
 
+	if (ln != NULL) {
+		int type = ND_TIMER_RETRANS;
+		if (ln->ln_state == ND_LLINFO_WAITDELETE)
+			type = ND_TIMER_RETRANS_BACKOFF;
+		else if (ln->ln_state == ND_LLINFO_STALE)
+			type = ND_TIMER_GC;
+		nd_set_timer(ln, type);
+	}
 	if (send_ns) {
 		uint8_t lladdr[255], *lladdrp;
 		union l3addr src, *psrc;
 
-		if (ln->ln_state == ND_LLINFO_WAITDELETE)
-			nd_set_timer(ln, ND_TIMER_RETRANS_BACKOFF);
-		else
-			nd_set_timer(ln, ND_TIMER_RETRANS);
 		if (ln->ln_state > ND_LLINFO_INCOMPLETE &&
 		    ln->la_flags & LLE_VALID)
 		{
@@ -291,13 +292,13 @@ nd_set_timer(struct llentry *ln, int type)
 		if (ln->ln_expire > time_uptime)
 			xtick = (ln->ln_expire - time_uptime) * hz;
 		else
-			xtick = nd_gctimer * hz;
+			xtick = nd->nd_gctimer * hz;
 		break;
 	case ND_TIMER_DELAY:
 		xtick = nd->nd_delay * hz;
 		break;
 	case ND_TIMER_GC:
-		xtick = nd_gctimer * hz;
+		xtick = nd->nd_gctimer * hz;
 		break;
 	default:
 		panic("%s: invalid timer type\n", __func__);
@@ -360,8 +361,10 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 	 * the oldest packet in the queue will be removed.
 	 */
 	if (ln->ln_state == ND_LLINFO_NOSTATE ||
-	    ln->ln_state == ND_LLINFO_WAITDELETE)
+	    ln->ln_state == ND_LLINFO_WAITDELETE) {
+		ln->ln_asked = 0;
 		ln->ln_state = ND_LLINFO_INCOMPLETE;
+	}
 
 #ifdef MBUFTRACE
 	m_claimm(m, ln->lle_tbl->llt_mowner);
@@ -398,7 +401,7 @@ nd_resolve(struct llentry *ln, const struct rtentry *rt, struct mbuf *m,
 	    ln->la_numheld, nd->nd_maxqueuelen);
 	ln->la_numheld++;
 
-	if (ln->ln_asked >= nd->nd_mmaxtries)
+	if ((ln->la_flags & LLE_UNRESOLVED) != 0)
 		error = (rt != NULL && rt->rt_flags & RTF_GATEWAY) ?
 		    EHOSTUNREACH : EHOSTDOWN;
 	else

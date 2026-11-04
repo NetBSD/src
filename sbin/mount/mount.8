@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount.8,v 1.92.2.1 2025/08/02 05:55:07 perseant Exp $
+.\"	$NetBSD: mount.8,v 1.92.2.2 2026/11/04 23:19:40 perseant Exp $
 .\"
 .\" Copyright (c) 1980, 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)mount.8	8.8 (Berkeley) 6/16/94
 .\"
-.Dd July 1, 2025
+.Dd August 26, 2026
 .Dt MOUNT 8
 .Os
 .Sh NAME
@@ -37,7 +37,7 @@
 .Nd mount file systems
 .Sh SYNOPSIS
 .Nm
-.Op Fl Aadfruvw
+.Op Fl AadfruvWw
 .Op Fl t Ar type
 .Nm
 .Op Fl dfruvw
@@ -245,6 +245,15 @@ and avoiding excess writes on flash-based file systems.
 This file system should be skipped when mount is run with the
 .Fl a
 flag.
+.It Cm nfsv4acls
+Enable NFSv4 ACLs, which can be customized via the
+.Xr setfacl 1
+and
+.Xr getfacl 1
+commands.
+This flag is mutually exclusive with
+.Cm posix1eacls
+flag.
 .It Cm nocoredump
 Do not allow programs to create crash dumps (core files) on the file system.
 This option can be used to help protect sensitive
@@ -270,10 +279,25 @@ binaries for architectures other than its own.
 Do not allow set-user-identifier or set-group-identifier bits to take effect.
 .It Cm port
 (NFS only) Use the specified NFS port.
+.It Cm posix1eacls
+Enable POSIX.1e Access Control Lists, or ACLs, which can be customized via the
+.Xr setfacl 1
+and
+.Xr getfacl 1
+commands.
+This flag is mutually exclusive with
+.Cm nfsv4acls
+flag.
 .It Cm rdonly
 The same as
 .Fl r ;
 mount the file system read-only (even the super-user may not write it).
+.It Cm rw
+The inverse of
+.Cm rdonly ,
+and the same as
+.Fl w ;
+mount the file system read-write.
 .It Cm reload
 Reload all incore data for a file system.
 This is used mainly after running
@@ -469,6 +493,25 @@ show what was mounted, after it has completed.
 In this case, if this flag is specified more than once, then the
 file system-specific mount program used, and its arguments are
 printed, and also the file system ID and statistics.
+.It Fl W
+When printing the list of mounted filesystems,
+rather than mounting any,
+if the
+.Ar special
+file the
+.Ar node
+is mounted from is a wedge,
+and that wedge has a label,
+print the wedge's label in the form
+.Dq NAME=label
+instead of the
+.Ar special .
+In this case, if the
+.Fl W
+is repeated, the
+.Ar special
+name is also printed
+.Pq in parentheses .
 .It Fl w
 The file system object is to be read and write.
 .El
@@ -543,7 +586,11 @@ mount -t cd9660 -o nodev,nosuid /dev/cd0a /mnt
 .Ed
 .Sh SEE ALSO
 .Xr df 1 ,
+.Xr getfacl 1 ,
+.Xr setfacl 1 ,
 .Xr mount 2 ,
+.Xr acl 3 ,
+.Xr getmntinfo 3 ,
 .Xr options 4 ,
 .Xr wapbl 4 ,
 .Xr fstab 5 ,

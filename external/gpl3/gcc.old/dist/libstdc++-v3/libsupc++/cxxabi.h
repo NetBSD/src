@@ -1,6 +1,6 @@
 // ABI Support -*- C++ -*-
 
-// Copyright (C) 2000-2020 Free Software Foundation, Inc.
+// Copyright (C) 2000-2022 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -125,14 +125,22 @@ namespace __cxxabiv1
 
   // DSO destruction.
   int
+#ifdef _GLIBCXX_CDTOR_CALLABI
+  __cxa_atexit(void (_GLIBCXX_CDTOR_CALLABI *)(void*), void*, void*) _GLIBCXX_NOTHROW;
+#else
   __cxa_atexit(void (*)(void*), void*, void*) _GLIBCXX_NOTHROW;
+#endif
 
-  int
+  void
   __cxa_finalize(void*);
 
   // TLS destruction.
   int
+#ifdef _GLIBCXX_CDTOR_CALLABI
+  __cxa_thread_atexit(void (_GLIBCXX_CDTOR_CALLABI *)(void*), void*, void *) _GLIBCXX_NOTHROW;
+#else
   __cxa_thread_atexit(void (*)(void*), void*, void *) _GLIBCXX_NOTHROW;
+#endif
 
   // Pure virtual functions.
   void

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.167 2024/03/07 23:03:55 gutteridge Exp $
+.\"	$NetBSD: sysctl.7,v 1.167.2.1 2026/11/04 23:19:51 perseant Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd March 7, 2024
+.Dd September 7, 2026
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -274,6 +274,11 @@ The bytes of non-kernel memory as a 32-bit integer.
 .It Li hw.usermem64 ( Dv HW_USERMEM64 )
 The bytes of non-kernel memory as a 64-bit integer.
 .El
+.Pp
+There are also various device-specific nodes exposed in this part of the
+subtree.
+For example, see those documented for
+.Xr acpi 4 .
 .Ss The kern.* subtree
 This subtree includes data generally related to the kernel.
 The string and integer information available for the
@@ -304,6 +309,7 @@ privilege may change the value.
 .It kern.domainname	string	yes
 .It kern.drivers	struct kinfo_drivers	no
 .It kern.dump_on_panic	integer	yes
+.It kern.entropy.*	integer	yes
 .It kern.expose_address	integer	yes
 .It kern.file	struct file	no
 .It kern.forkfsleep	integer	yes
@@ -545,6 +551,12 @@ field is always a NUL terminated string.
 The
 .Va d_bmajor
 field will be set to \-1 if the driver doesn't have a block device.
+.It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
+Perform a crash dump on system
+.Xr panic 9 .
+.It Li kern.entropy.*
+These are documented in detail in
+.Xr rnd 4 .
 .It Li kern.expose_address
 Expose kernel addresses in
 .Xr sysctl 3
@@ -574,9 +586,6 @@ otherwise.
 Allowing general access renders KASLR ineffective; allowing only kmem
 accessing programs weakens KASLR if those programs can be subverted
 to leak the addresses.
-.It Li kern.dump_on_panic ( Dv KERN_DUMP_ON_PANIC )
-Perform a crash dump on system
-.Xr panic 9 .
 .It Li kern.file ( Dv KERN_FILE )
 Return the entire file table.
 The returned data consists of a single
@@ -616,7 +625,7 @@ See
 .It Li kern.hist
 This variable contains kernel history data if the kernel was
 configured for any of the options
-.Dv UVHMIST ,
+.Dv UVMHIST ,
 .Dv USB_DEBUG ,
 .Dv BIOHIST ,
 or
@@ -1143,7 +1152,7 @@ Maximum socket buffer size in bytes.
 See
 .Xr secmodel_securelevel 9 .
 .It Li kern.sched ( dynamic )
-Influence the scheduling of LWPs, their priorisation and how they are
+Influence the scheduling of LWPs, their prioritisation and how they are
 distributed on and moved between CPUs.
 .Bl -column "kern.sched.balance_period" "integer" "Changeable" -offset indent
 .It Sy Third level name	   Sy Type	 Sy Changeable
@@ -1429,6 +1438,7 @@ protocol number, though this is not always the case.
 .It net.route	routing messages	no
 .It net.inet	IPv4 values	yes
 .It net.inet6	IPv6 values	yes
+.It net.interfaces	interface-specific settings  yes
 .It net.key	IPsec key management values	yes
 .El
 .Bl -tag -width "123456"
@@ -1495,6 +1505,9 @@ The currently defined protocols and names are:
 .It ip	grettl	integer	yes
 .It ip	hashsize	integer	yes
 .It ip	hostzerobroadcast	integer	yes
+.It ip	ifq.drops	quad	no
+.It ip	ifq.len	integer	no
+.It ip	ifq.maxlen	integer	yes
 .It ip	lowportmin	integer	yes
 .It ip	lowportmax	integer	yes
 .It ip	maxflows	integer	yes
@@ -1507,7 +1520,13 @@ The currently defined protocols and names are:
 .It ip	ttl	integer	yes
 .It tcp	rfc1323	integer	yes
 .It tcp	sendspace	integer	yes
+.It tcp	sendbuf_auto	integer	yes
+.It tcp	sendbuf_inc	integer	yes
+.It tcp	sendbuf_max	integer	yes
 .It tcp	recvspace	integer	yes
+.It tcp	recvbuf_auto	integer	yes
+.It tcp	recvbuf_inc	integer	yes
+.It tcp	recvbuf_max	integer	yes
 .It tcp	mssdflt	integer	yes
 .It tcp	syn_cache_limit	integer	yes
 .It tcp	syn_bucket_limit	integer	yes
@@ -1562,7 +1581,7 @@ probing reachability.
 .It Li arp.nd_retrans
 The number of milliseconds between ARP probes.
 .It Li arp.nd_nud
-If set to non-zero, perform Neighor Unreachability Detection.
+If set to non-zero, perform Neighbor Unreachability Detection.
 .It Li arp.nd_maxnudhint
 Neighbor discovery permits upper layer protocols to supply reachability
 hints, to avoid unnecessary neighbor discovery exchanges.
@@ -1657,6 +1676,13 @@ Also see
 .Li ip.maxflows .
 .It Li ip.hostzerobroadcast
 All zeroes address is broadcast address.
+.It Li ip.ifq.drops
+Packets dropped due to full output queue.
+.It Li ip.ifq.len
+Current output queue length.
+.It Li ip.ifq.maxlen
+Maximum allowed output queue length.
+The default value is 256.
 .It Li ip.lowportmax
 The highest port number to use for TCP and UDP reserved port allocation.
 This cannot be set to less than 0 or greater than 1024, and must
@@ -1790,6 +1816,14 @@ is disabled.
 Do not change this value unless you really know what you are doing.
 .It Li tcp.recvspace
 The default TCP receive buffer size.
+.It Li tcp.recvbuf_auto
+If set to 1, enables automatic receive buffer sizing.
+.It Li tcp.recvbuf_inc
+Incrementor step size of the automatic receive buffer.
+Defaults to 16 KiB.
+.It Li tcp.recvbuf_max
+The maximum size of the automatic receive buffer.
+Defaults to 256 KiB.
 .It Li tcp.rfc1323
 If set to 1, enables RFC 1323 extensions to TCP.
 .It Li tcp.rstppslimit
@@ -1817,6 +1851,14 @@ If set to 1, enables RFC 3168 Explicit Congestion Notification.
 Number of times to retry sending the ECN-setup packet.
 .It Li tcp.sendspace
 The default TCP send buffer size.
+.It Li tcp.sendbuf_auto
+If set to 1, enables automatic send buffer sizing.
+.It Li tcp.sendbuf_inc
+Incrementor step size of the automatic send buffer.
+Defaults to 8 KiB.
+.It Li tcp.sendbuf_max
+The maximum size of the automatic send buffer.
+Defaults to 256 KiB.
 .It Li tcp.slowhz
 The units for tcp.keepidle and tcp.keepintvl; those variables are in ticks
 of a clock that ticks tcp.slowhz times per second.
@@ -1874,6 +1916,7 @@ The currently defined protocols and names are:
 .It icmp6	nd6_delay	integer	yes
 .It icmp6	nd6_maxnudhint	integer	yes
 .It icmp6	nd6_mmaxtries	integer	yes
+.It icmp6	nd6_gctimer	integer	yes
 .It icmp6	nd6_prune	integer	yes
 .It icmp6	nd6_umaxtries	integer	yes
 .It icmp6	nd6_useloopback	integer	yes
@@ -1897,6 +1940,9 @@ The currently defined protocols and names are:
 .It ip6	hashsize	integer	yes
 .It ip6	hlim	integer	yes
 .It ip6	hdrnestlimit	integer	yes
+.It ip6	ifq.drops	quad	no
+.It ip6	ifq.len	integer	no
+.It ip6	ifq.maxlen	integer	yes
 .It ip6	kame_version	string	no
 .It ip6	keepfaith	integer	yes
 .It ip6	log_interval	integer	yes
@@ -1988,6 +2034,13 @@ The default hop limit value for an IPv6 unicast packet sourced by the node.
 This value applies to all the transport protocols on top of IPv6.
 There are APIs to override the value, as documented in
 .Xr ip6 4 .
+.It Li ip6.ifq.drops
+Packets dropped due to full output queue.
+.It Li ip6.ifq.len
+Current output queue length.
+.It Li ip6.ifq.maxlen
+Maximum allowed output queue length.
+The default value is 256.
 .It Li ip6.kame_version
 The string identifies the version of KAME IPv6 stack implemented in the kernel.
 .It Li ip6.keepfaith
@@ -2113,6 +2166,9 @@ The variable specifies
 .Dv MAX_MULTICAST_SOLICIT
 constant in IPv6 neighbor discovery specification
 .Pq RFC 2461 .
+.It Li icmp6.nd6_gctimer
+The duration stale neighbors will be kept for, before being garbage collected,
+in seconds.
 .It Li icmp6.nd6_prune
 The variable specifies interval between IPv6 neighbor cache babysitting,
 in seconds.
@@ -2169,6 +2225,8 @@ Please refer to
 section above.
 For variables net.*.ipsec6, please refer to
 .Xr ipsec 4 .
+.It Li net.interfaces.*
+Interface-specific settings akin to the net.inet.ip.ifq.* nodes.
 .It Li net.key ( Dv PF_KEY )
 Get or set various global information about the IPsec key management.
 The third level name is the variable name.
@@ -2463,12 +2521,16 @@ privilege may change the value.
 .It user.bc_dim_max	integer	no
 .It user.bc_scale_max	integer	no
 .It user.bc_string_max	integer	no
+.It user.built	string	no
 .It user.coll_weights_max	integer	no
 .It user.cs_path	string	no
 .It user.expr_nest_max	integer	no
 .It user.line_max	integer	no
 .It user.posix2_c_bind	integer	no
 .It user.posix2_c_dev	integer	no
+.It user.osrelease	string	no
+.It user.osrevision	integer	no
+.It user.ostype	string	no
 .It user.posix2_char_term	integer	no
 .It user.posix2_fort_dev	integer	no
 .It user.posix2_fort_run	integer	no
@@ -2501,6 +2563,16 @@ utility.
 The maximum string length in the
 .Xr bc 1
 utility.
+.It Li user.built Pq Dv USER_BUILDTIME
+A string in the format
+.Dq Li "YYYY-MM-DD\ hh:mm:ss\ UTC[\ !]"
+representing the date and time (in Universal Co-ordinated Time)
+at which the user parts of the system, and libc in particular,
+were built.
+If the optional trailing exclamation mark
+.Pq Sq \&!
+appears, the string represents the date and time used as the
+basis for a reproducible build.
 .It Li user.coll_weights_max ( Dv USER_COLL_WEIGHTS_MAX )
 The maximum number of weights that can be assigned to any entry of
 the LC_COLLATE order keyword in the locale definition file.
@@ -2516,6 +2588,22 @@ utility.
 .It Li user.line_max ( Dv USER_LINE_MAX )
 The maximum length in bytes of a text-processing utility's input
 line.
+.It Li user.osrelease Pq Dv USER_OSRELEASE
+This is a string, analagous to
+.Li kern.osrelease
+which contains the release sting for the utilities and libraries,
+and libc in particular.
+.It Li user.osrevision Pq Dv USER_OSREVISION
+An integer, analagous to
+.Li kern.osrevision
+giving the library and utility release version.
+.It Li user.ostype Pq Dv USER_OSTYPE
+A string giving the name of the Operating System.
+On
+.Nx
+it will always be
+.\" nb: the following is *not* .Nx - the value is NetBSD whatever Nx becomes.
+.Dq Li NetBSD .
 .It Li user.posix2_char_term ( Dv USER_POSIX2_CHAR_TERM )
 Return 1 if the system supports at least one terminal type capable of
 all operations described in
@@ -2552,8 +2640,8 @@ permitted when using interval notation.
 The minimum maximum number of streams that a process may have open
 at any one time.
 .It Li user.tzname_max ( Dv USER_TZNAME_MAX )
-The minimum maximum number of types supported for the name of a
-timezone.
+The minimum maximum number of bytes supported for the name of a
+timezone (that is, a timezone abbreviation).
 .El
 .Ss The vm.* subtree ( Dv CTL_VM )
 The string and integer information available for the
@@ -2651,9 +2739,9 @@ The returned data consists of a
 Return system wide virtual memory statistics.
 The returned data consists of a
 .Vt struct uvmexp_sysctl .
-.It Li vm.guard_size
+.It Li vm.guard_size ( Dv VM_GUARD_SIZE )
 Return system wide guard size for the main thread of a program.
-.It Li vm.thread_guard_size
+.It Li vm.thread_guard_size ( Dv VM_THREAD_GUARD_SIZE )
 Return system wide default size for the guard area of all other threads
 of a program.
 .It Li vm.swap_encrypt

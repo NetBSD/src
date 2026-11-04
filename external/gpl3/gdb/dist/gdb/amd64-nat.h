@@ -1,6 +1,6 @@
 /* Native-dependent code for AMD64.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AMD64_NAT_H
-#define AMD64_NAT_H 1
+#ifndef GDB_AMD64_NAT_H
+#define GDB_AMD64_NAT_H
 
 struct regcache;
 
@@ -49,4 +49,4 @@ extern void amd64_supply_native_gregset (struct regcache *regcache,
 extern void amd64_collect_native_gregset (const struct regcache *regcache,
 					  void *gregs, int regnum);
 
-#endif /* amd64-nat.h */
+#endif /* GDB_AMD64_NAT_H */

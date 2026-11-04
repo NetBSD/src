@@ -1,4 +1,4 @@
-/*	$NetBSD: apple_iic.c,v 1.1 2022/05/10 08:05:32 skrll Exp $	*/
+/*	$NetBSD: apple_iic.c,v 1.1.10.1 2026/11/04 23:20:04 perseant Exp $	*/
 /*	$OpenBSD: apliic.c,v 1.3 2022/02/14 14:55:53 kettenis Exp $	*/
 
 /*-
@@ -243,9 +243,7 @@ apple_iic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_release_bus = apple_iic_release_bus;
 	sc->sc_i2c.ic_exec = apple_iic_exec;
 
-	fdtbus_register_i2c_controller(&sc->sc_i2c, phandle);
-
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_i2c, iicbus_print);
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 

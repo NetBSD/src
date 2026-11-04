@@ -1,4 +1,4 @@
-/*	$NetBSD: netmgr-int.h,v 1.11.2.1 2025/08/02 05:54:04 perseant Exp $	*/
+/*	$NetBSD: netmgr-int.h,v 1.11.2.2 2026/11/04 23:18:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -105,7 +105,7 @@ STATIC_ASSERT(ISC_NETMGR_TCP_RECVBUF_SIZE <= ISC_NETMGR_RECVBUF_SIZE,
  * most in TCPDNS or TLSDNS connections, so there's no risk of overrun
  * when using a buffer this size.
  */
-#define NM_BIG_BUF ISC_NETMGR_TCP_RECVBUF_SIZE * 2
+#define NM_BIG_BUF (ISC_NETMGR_TCP_RECVBUF_SIZE * 2)
 
 /*%
  * Maximum segment size (MSS) of TCP socket on which the server responds to
@@ -368,6 +368,11 @@ struct isc_nm {
 	atomic_int_fast32_t send_udp_buffer_size;
 	atomic_int_fast32_t recv_tcp_buffer_size;
 	atomic_int_fast32_t send_tcp_buffer_size;
+
+	_Atomic(in_port_t) port_low4;
+	_Atomic(in_port_t) port_high4;
+	_Atomic(in_port_t) port_low6;
+	_Atomic(in_port_t) port_high6;
 };
 
 /*%
@@ -1115,6 +1120,9 @@ isc__nm_httpsession_detach(isc_nm_http_session_t **sessionp);
 isc_nmhandle_t *
 isc__nm_httpsession_handle(isc_nm_http_session_t *session);
 
+bool
+isc__nm_httpsession_active(isc_nm_http_session_t *session);
+
 void
 isc__nm_http_set_tlsctx(isc_nmsocket_t *sock, isc_tlsctx_t *tlsctx);
 
@@ -1373,6 +1381,15 @@ isc_result_t
 isc__nm_socket_min_mtu(uv_os_sock_t fd, sa_family_t sa_family);
 /*%<
  * Use minimum MTU on IPv6 sockets
+ */
+
+isc_result_t
+isc__nm_socket_max_port_range(uv_os_sock_t fd ISC_ATTR_UNUSED,
+			      sa_family_t sa_family ISC_ATTR_UNUSED,
+			      in_port_t port_low, in_port_t port_high);
+/*%<
+ * Set IP_BIND_ADDRESS_NO_PORT and IP_LOCAL_PORT_RANGE on the socket
+ * (Linux only).
  */
 
 void

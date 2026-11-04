@@ -1,5 +1,5 @@
 /* Memory breakpoint interfaces for the remote server for GDB.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -161,16 +161,16 @@ void set_single_step_breakpoint (CORE_ADDR stop_at, ptid_t ptid);
 
 /* Delete all single-step breakpoints of THREAD.  */
 
-void delete_single_step_breakpoints (struct thread_info *thread);
+void delete_single_step_breakpoints (thread_info *thread);
 
 /* Reinsert all single-step breakpoints of THREAD.  */
 
-void reinsert_single_step_breakpoints (struct thread_info *thread);
+void reinsert_single_step_breakpoints (thread_info *thread);
 
 /* Uninsert all single-step breakpoints of THREAD.  This still leaves
    the single-step breakpoints in the table.  */
 
-void uninsert_single_step_breakpoints (struct thread_info *thread);
+void uninsert_single_step_breakpoints (thread_info *thread);
 
 /* Reinsert breakpoints at WHERE (and change their status to
    inserted).  */
@@ -179,7 +179,7 @@ void reinsert_breakpoints_at (CORE_ADDR where);
 
 /* The THREAD has single-step breakpoints or not.  */
 
-int has_single_step_breakpoints (struct thread_info *thread);
+int has_single_step_breakpoints (thread_info *thread);
 
 /* Uninsert breakpoints at WHERE (and change their status to
    uninserted).  This still leaves the breakpoints in the table.  */
@@ -274,7 +274,7 @@ int remove_memory_breakpoint (struct raw_breakpoint *bp);
 /* Create a new breakpoint list in CHILD_THREAD's process that is a
    copy of breakpoint list in PARENT_THREAD's process.  */
 
-void clone_all_breakpoints (struct thread_info *child_thread,
-			    const struct thread_info *parent_thread);
+void clone_all_breakpoints (thread_info *child_thread,
+			    const thread_info *parent_thread);
 
 #endif /* GDBSERVER_MEM_BREAK_H */

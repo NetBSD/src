@@ -1,5 +1,5 @@
 /* BFD back-end for ARM WINCE PE IMAGE COFF files.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -27,5 +27,7 @@
 #define TARGET_BIG_NAME      "pei-arm-wince-big"
 
 #define LOCAL_LABEL_PREFIX "."
+
+#define WINCE
 
 #include "pei-arm.c"

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.150 2023/09/21 09:31:50 msaitoh Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.150.6.1 2026/11/04 23:27:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2021 The NetBSD Foundation, Inc.
@@ -63,26 +63,29 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.150 2023/09/21 09:31:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.150.6.1 2026/11/04 23:27:47 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/wait.h>
-#include <sys/proc.h>
-#include <sys/file.h>
-#include <sys/select.h>
-#include <sys/queue.h>
+#include <sys/types.h>
+
+#include <sys/atomic.h>
+#include <sys/conf.h>
 #include <sys/event.h>
 #include <sys/eventvar.h>
-#include <sys/poll.h>
-#include <sys/kmem.h>
-#include <sys/stat.h>
+#include <sys/file.h>
 #include <sys/filedesc.h>
-#include <sys/syscallargs.h>
 #include <sys/kauth.h>
-#include <sys/conf.h>
-#include <sys/atomic.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/queue.h>
+#include <sys/sdt.h>
+#include <sys/select.h>
+#include <sys/stat.h>
+#include <sys/syscallargs.h>
+#include <sys/systm.h>
+#include <sys/wait.h>
 
 static int	kqueue_scan(file_t *, size_t, struct kevent *,
 			    const struct timespec *, register_t *,
@@ -144,6 +147,8 @@ knote_alloc(bool sleepok)
 	struct knote_impl *ki;
 
 	ki = kmem_zalloc(sizeof(*ki), sleepok ? KM_SLEEP : KM_NOSLEEP);
+	if (!sleepok && __predict_false(ki == NULL))
+		return NULL;
 	mutex_init(&ki->ki_foplock, MUTEX_DEFAULT, IPL_NONE);
 
 	return KIMPL_TO_KNOTE(ki);
@@ -750,16 +755,16 @@ kfilter_register(const char *name, const struct filterops *filtops,
 	int i;
 
 	if (name == NULL || name[0] == '\0' || filtops == NULL)
-		return (EINVAL);	/* invalid args */
+		return SET_ERROR(EINVAL);	/* invalid args */
 
 	rw_enter(&kqueue_filter_lock, RW_WRITER);
 	if (kfilter_byname(name) != NULL) {
 		rw_exit(&kqueue_filter_lock);
-		return (EEXIST);	/* already exists */
+		return SET_ERROR(EEXIST);	/* already exists */
 	}
 	if (user_kfilterc > 0xffffffff - EVFILT_SYSCOUNT) {
 		rw_exit(&kqueue_filter_lock);
-		return (EINVAL);	/* too many */
+		return SET_ERROR(EINVAL);	/* too many */
 	}
 
 	for (i = 0; i < user_kfilterc; i++) {
@@ -813,22 +818,22 @@ kfilter_unregister(const char *name)
 	struct kfilter *kfilter;
 
 	if (name == NULL || name[0] == '\0')
-		return (EINVAL);	/* invalid name */
+		return SET_ERROR(EINVAL);	/* invalid name */
 
 	rw_enter(&kqueue_filter_lock, RW_WRITER);
 	if (kfilter_byname_sys(name) != NULL) {
 		rw_exit(&kqueue_filter_lock);
-		return (EINVAL);	/* can't detach system filters */
+		return SET_ERROR(EINVAL); /* can't detach system filters */
 	}
 
 	kfilter = kfilter_byname_user(name);
 	if (kfilter == NULL) {
 		rw_exit(&kqueue_filter_lock);
-		return (ENOENT);
+		return SET_ERROR(ENOENT);
 	}
 	if (kfilter->refcnt != 0) {
 		rw_exit(&kqueue_filter_lock);
-		return (EBUSY);
+		return SET_ERROR(EBUSY);
 	}
 
 	/* Cast away const (but we know it's safe. */
@@ -910,7 +915,7 @@ filt_procattach(struct knote *kn)
 	p = proc_find(kn->kn_id);
 	if (p == NULL) {
 		mutex_exit(&proc_lock);
-		return ESRCH;
+		return SET_ERROR(ESRCH);
 	}
 
 	/*
@@ -922,7 +927,7 @@ filt_procattach(struct knote *kn)
 	if (kauth_authorize_process(curlwp->l_cred,
 	    KAUTH_PROCESS_KEVENT_FILTER, p, NULL, NULL, NULL) != 0) {
 	    	mutex_exit(p->p_lock);
-		return EACCES;
+		return SET_ERROR(EACCES);
 	}
 
 	kn->kn_obj = p;
@@ -1099,7 +1104,7 @@ knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
 	knchild = knote_alloc(false);
 	kntrack = knote_alloc(false);
 	if (__predict_false(knchild == NULL || kntrack == NULL)) {
-		error = ENOMEM;
+		error = SET_ERROR(ENOMEM);
 		goto out;
 	}
 
@@ -1160,7 +1165,7 @@ knote_proc_fork_track(struct proc *p1, struct proc *p2, struct knote *okn)
 	if (__predict_false(error != 0)) {
 		mutex_exit(p2->p_lock);
 		mutex_exit(&fdp->fd_lock);
-		error = EACCES;
+		error = SET_ERROR(EACCES);
 		goto out;
 	}
 	klist_insert(&p2->p_klist, kntrack);
@@ -1308,7 +1313,7 @@ filt_timercompute(struct kevent *kev, uintptr_t *tticksp)
 	uintptr_t tticks;
 
 	if (kev->fflags & ~(NOTE_TIMER_UNITMASK | NOTE_ABSTIME)) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	/*
@@ -1337,7 +1342,7 @@ filt_timercompute(struct kevent *kev, uintptr_t *tticksp)
 		break;
 
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (kev->fflags & NOTE_ABSTIME) {
@@ -1372,10 +1377,10 @@ filt_timercompute(struct kevent *kev, uintptr_t *tticksp)
 	/* if the supplied value is under our resolution, use 1 tick */
 	if (tticks == 0) {
 		if (kev->data == 0)
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		tticks = 1;
 	} else if (tticks > INT_MAX) {
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if ((kev->flags & EV_ONESHOT) != 0) {
@@ -1448,7 +1453,7 @@ filt_timerattach(struct knote *kn)
 	if (atomic_inc_uint_nv(&kq_ncallouts) >= kq_calloutmax ||
 	    (calloutp = kmem_alloc(sizeof(*calloutp), KM_NOSLEEP)) == NULL) {
 		atomic_dec_uint(&kq_ncallouts);
-		return ENOMEM;
+		return SET_ERROR(ENOMEM);
 	}
 	callout_init(calloutp, CALLOUT_MPSAFE);
 
@@ -1704,7 +1709,7 @@ seltrue_kqfilter(dev_t dev, struct knote *kn)
 		kn->kn_fop = &seltrue_filtops;
 		break;
 	default:
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	/* Nothing more to do */
@@ -1820,11 +1825,11 @@ kevent1(register_t *retval, int fd,
 	/* check that we're dealing with a kq */
 	fp = fd_getfile(fd);
 	if (fp == NULL)
-		return (EBADF);
+		return SET_ERROR(EBADF);
 
 	if (fp->f_type != DTYPE_KQUEUE) {
 		fd_putfile(fd);
-		return (EBADF);
+		return SET_ERROR(EBADF);
 	}
 
 	if (timeout != NULL) {
@@ -1909,7 +1914,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		/* filter not found nor implemented */
 		rw_exit(&kqueue_filter_lock);
 		knote_free(newkn);
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
 	/* search if knote already exists */
@@ -1920,12 +1925,12 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 		    || (fp = fd_getfile(fd = kev->ident)) == NULL) {
 			rw_exit(&kqueue_filter_lock);
 			knote_free(newkn);
-			return EBADF;
+			return SET_ERROR(EBADF);
 		}
 		mutex_enter(&fdp->fd_lock);
 		ff = fdp->fd_dt->dt_ff[fd];
 		if (ff->ff_refcnt & FR_CLOSING) {
-			error = EBADF;
+			error = SET_ERROR(EBADF);
 			goto doneunlock;
 		}
 		if (fd <= fdp->fd_lastkqfile) {
@@ -1984,7 +1989,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			if (kn->kn_fop->f_touch != NULL &&
 			    kn->kn_fop != &timer_filtops &&
 			    kn->kn_fop != &user_filtops) {
-				error = ENOTSUP;
+				error = SET_ERROR(ENOTSUP);
 				goto fail_ev_add;
 			}
 
@@ -2054,7 +2059,7 @@ kqueue_register(struct kqueue *kq, struct kevent *kev)
 			goto done_ev_add;
 		} else {
 			/* No matching knote and the EV_ADD flag is not set. */
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 			goto doneunlock;
 		}
 	}
@@ -2255,7 +2260,7 @@ static int
 kqueue_fpathconf(struct file *fp, int name, register_t *retval)
 {
 
-	return EINVAL;
+	return SET_ERROR(EINVAL);
 }
 
 /*
@@ -2292,7 +2297,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 		ats = *tsp;
 		if (inittimeleft(&ats, &sleepts) == -1) {
 			*retval = maxevents;
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		timeout = tstohz(&ats);
 		if (timeout <= 0)
@@ -2317,7 +2322,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 				if (KQ_COUNT(kq) == 0 &&
 				    (kq->kq_count & KQ_RESTART)) {
 					/* return to clear file reference */
-					error = ERESTART;
+					error = SET_ERROR(ERESTART);
 				} else if (tsp == NULL || (timeout =
 				    gettimeleft(&ats, &sleepts)) > 0) {
 					goto retry;
@@ -2325,7 +2330,7 @@ kqueue_scan(file_t *fp, size_t maxevents, struct kevent *ulistp,
 			} else {
 				/* don't restart after signals... */
 				if (error == ERESTART)
-					error = EINTR;
+					error = SET_ERROR(EINTR);
 				if (error == EWOULDBLOCK)
 					error = 0;
 			}
@@ -2559,7 +2564,7 @@ kqueue_ioctl(file_t *fp, u_long com, void *data)
 			error = copyoutstr(name, km->name, km->len, NULL);
 		} else {
 			rw_exit(&kqueue_filter_lock);
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 		}
 		break;
 
@@ -2573,12 +2578,12 @@ kqueue_ioctl(file_t *fp, u_long com, void *data)
 		if (kfilter != NULL)
 			km->filter = kfilter->filter;
 		else
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 		rw_exit(&kqueue_filter_lock);
 		break;
 
 	default:
-		error = ENOTTY;
+		error = SET_ERROR(ENOTTY);
 		break;
 
 	}
@@ -2593,7 +2598,7 @@ static int
 kqueue_fcntl(file_t *fp, u_int com, void *data)
 {
 
-	return (ENOTTY);
+	return SET_ERROR(ENOTTY);
 }
 
 /*
@@ -2750,7 +2755,7 @@ kqueue_kqfilter(file_t *fp, struct knote *kn)
 	KASSERT(fp == kn->kn_obj);
 
 	if (kn->kn_filter != EVFILT_READ)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	kn->kn_fop = &kqread_filtops;
 	mutex_enter(&kq->kq_lock);

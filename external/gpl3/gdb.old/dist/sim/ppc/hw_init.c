@@ -182,7 +182,7 @@ static device_callbacks const hw_file_callbacks = {
    eeprom requires a complex sequence of accesses).  The
    <<real-address>> is specified as <<0x0c00>> which is the offset
    into the eeprom.  For brevity, most of the eeprom properties have
-   been omited.
+   been omitted.
 
    | /iobus/eeprom@0xfff00000/reg 0xfff00000 0x80000
    | /openprom/init/data@0xfff00c00/real-address 0x0c00

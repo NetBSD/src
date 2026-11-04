@@ -1,4 +1,4 @@
-# Copyright 2021-2024 Free Software Foundation, Inc.
+# Copyright 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@
 # if the breakpoint is set past the syscall due to faulty prologue skipping,
 # the breakpoint will not trigger.
 #
-# In particular, we're trying to excercise the instruction analysis
+# In particular, we're trying to exercise the instruction analysis
 # functionality of prologue skipping.  If non-minimal symbols are
 # read, then that functionality might not be used because f.i.
 # line-info is used instead.  So, we use nodebug.

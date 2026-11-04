@@ -1,5 +1,5 @@
 /* Target-specific definition for a Renesas Super-H.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SH_TDEP_H
-#define SH_TDEP_H
+#ifndef GDB_SH_TDEP_H
+#define GDB_SH_TDEP_H
 
 #include "gdbarch.h"
 
@@ -115,4 +115,4 @@ void sh_corefile_supply_regset (const struct regset *regset,
 void sh_corefile_collect_regset (const struct regset *regset,
 				 const struct regcache *regcache,
 				 int regnum, void *regs, size_t len);
-#endif /* SH_TDEP_H */
+#endif /* GDB_SH_TDEP_H */

@@ -1,0 +1,134 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2024-2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Setup a .build-id/ based debug directory containing multiple entries
+# for the same build-id, with each entry given a different sequence
+# number.
+#
+# Ensure that GDB will scan over broken symlinks for the same build-id
+# (but different sequence number) to find later working symlinks.
+#
+# This test only places debug information on the host, so it is always
+# local to GDB.
+
+require {!is_remote host}
+
+standard_testfile
+
+if {[build_executable "failed to prepare" $testfile $srcfile \
+	 {debug build-id}] == -1} {
+    return -1
+}
+
+# Split out BINFILE.debug.  Remove debug from BINFILE.
+if {[gdb_gnu_strip_debug $binfile] != 0} {
+    return -1
+}
+
+# Get the '.build-id/xx/xxx...xxx' part of the filename.
+set build_id_filename [build_id_debug_filename_get $binfile]
+
+# Hide (rename) BINFILE.debug, this should ensure GDB can't find it
+# directly but needs to look for the build-id based file in the debug
+# directory.
+set hidden_debuginfo [standard_output_file "hidden_$testfile.debug"]
+remote_exec build "mv ${binfile}.debug $hidden_debuginfo"
+
+# A filename that doesn't exist.  Some symlinks will point at this
+# file.
+set missing_debuginfo [host_standard_output_file "missing_debuginfo"]
+
+# Create the debug directory, and the .build-id directory structure
+# within it.
+set debugdir [host_standard_output_file "debug"]
+remote_exec host "mkdir -p $debugdir/[file dirname $build_id_filename]"
+
+set host_hidden_debuginfo [gdb_remote_download host $hidden_debuginfo]
+remote_exec host "ln -fs $host_hidden_debuginfo $debugdir/$build_id_filename"
+
+# Start GDB and load global BINFILE.  If FIND_DEBUGINFO is true then
+# we expect GDB to find the debug information matching BINFILE,
+# otherwise, we expect GDB not to find the debug information.
+proc load_binfile_check_debug_is_found { find_debuginfo testname } {
+    with_test_prefix "$testname" {
+	clean_restart
+
+	gdb_test_no_output "set debug-file-directory $::debugdir" \
+	    "set debug-file-directory"
+
+	gdb_file_cmd $::binfile
+
+	if { $find_debuginfo } {
+	    gdb_assert { [regexp [string_to_regexp \
+				      "Reading symbols from $::hidden_debuginfo..."] \
+			      $::gdb_file_cmd_msg] } \
+		"debuginfo was read via build-id"
+	} else {
+	    gdb_assert { [regexp "\\(No debugging symbols found in \[^\r\n\]+/$::testfile\\)" \
+			      $::gdb_file_cmd_msg] } \
+	    }
+    }
+}
+
+# Return a copy of FILENAME, which should end '.debug', with NUMBER
+# added, e.g. add_seqno 1 "foo.debug" --> "foo.1.debug".
+proc add_seqno { number filename } {
+    return [regsub "\.debug\$" $filename ".${number}.debug"]
+}
+
+load_binfile_check_debug_is_found true \
+    "find debuginfo with a single build-id file"
+
+remote_exec host "ln -fs $host_hidden_debuginfo \
+			$debugdir/[add_seqno 1 $build_id_filename]"
+remote_exec host "ln -fs $host_hidden_debuginfo \
+			$debugdir/[add_seqno 2 $build_id_filename]"
+remote_exec host "ln -fs $host_hidden_debuginfo \
+			$debugdir/[add_seqno 3 $build_id_filename]"
+
+load_binfile_check_debug_is_found true \
+    "find debuginfo with 4 build-id files"
+
+remote_exec host "ln -fs $missing_debuginfo $debugdir/$build_id_filename"
+
+load_binfile_check_debug_is_found true \
+    "find debuginfo, first build-id file is bad"
+
+remote_exec host "ln -fs $missing_debuginfo \
+			$debugdir/[add_seqno 1 $build_id_filename]"
+remote_exec host "ln -fs $missing_debuginfo \
+			$debugdir/[add_seqno 3 $build_id_filename]"
+
+load_binfile_check_debug_is_found true  \
+    "find debuginfo, first 2 build-id files are bad"
+
+remote_exec host "ln -fs $missing_debuginfo \
+			$debugdir/[add_seqno 2 $build_id_filename]"
+
+load_binfile_check_debug_is_found false  \
+    "cannot find debuginfo, all build-id files are bad"
+
+remote_exec host "ln -fs $host_hidden_debuginfo \
+			$debugdir/[add_seqno 3 $build_id_filename]"
+
+load_binfile_check_debug_is_found true  \
+    "find debuginfo, last build-id file is good"
+
+remote_exec host "rm -f $debugdir/[add_seqno 1 $build_id_filename]"
+
+load_binfile_check_debug_is_found false  \
+    "cannot find debuginfo, file with seqno 1 is missing"

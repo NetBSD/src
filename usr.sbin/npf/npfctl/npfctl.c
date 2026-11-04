@@ -1,3 +1,5 @@
+/*	$NetBSD: npfctl.c,v 1.65.4.2 2026/11/04 23:28:54 perseant Exp $	*/
+
 /*-
  * Copyright (c) 2009-2025 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -28,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.65.4.1 2025/08/02 05:58:52 perseant Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.65.4.2 2026/11/04 23:28:54 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -93,7 +95,10 @@ usage(void)
 	const char *progname = getprogname();
 
 	fprintf(stderr,
-	    "Usage:\t%s start | stop | flush | show | stats\n",
+	    "Usage:\t%s start | stop | flush | show\n",
+	    progname);
+	fprintf(stderr,
+	    "\t%s stats [reset]\n",
 	    progname);
 	fprintf(stderr,
 	    "\t%s validate | reload [<rule-file>]\n",
@@ -128,6 +133,15 @@ usage(void)
 	    "[ -o <outfile> ]\n",
 	    progname);
 	exit(EXIT_FAILURE);
+}
+
+static int
+npfctl_stats_reset(int fd)
+{
+	if (ioctl(fd, IOC_NPF_STATS_RESET, NULL) != 0) {
+		err(EXIT_FAILURE, "ioctl(IOC_NPF_STATS_RESET)");
+	}
+	return 0;
 }
 
 static int
@@ -171,8 +185,13 @@ npfctl_print_stats(int fd)
 
 		{ -1, "Fragmentation"					},
 		{ NPF_STAT_FRAGMENTS,		"fragments"		},
+		{ NPF_STAT_NOFRAGMENT,		"failed fragmentation"	},
 		{ NPF_STAT_REASSEMBLY,		"reassembled"		},
 		{ NPF_STAT_REASSFAIL,		"failed reassembly"	},
+
+		{ -1, "Routing"					},
+		{ NPF_STAT_REROUTE,			"re-routing"		},
+		{ NPF_STAT_NOREROUTE,		"failed re-routing"	},
 
 		{ -1, "Other"						},
 		{ NPF_STAT_ERROR,		"unexpected errors"	},
@@ -522,6 +541,16 @@ npfctl(int action, int argc, char **argv)
 		fun = "npfctl_config_save";
 		break;
 	case NPFCTL_STATS:
+		if (argc > 2) {
+			argv += 2;
+			if (strcmp(argv[0], "reset") == 0) {
+				ret = npfctl_stats_reset(fd);
+			} else
+				usage();
+			fun = "npfctl_stats_reset";
+			break;
+		}
+
 		ret = npfctl_print_stats(fd);
 		fun = "npfctl_print_stats";
 		break;

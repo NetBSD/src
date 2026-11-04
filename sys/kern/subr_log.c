@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.63.8.1 2025/08/02 05:57:42 perseant Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.63.8.2 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,23 +65,26 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.63.8.1 2025/08/02 05:57:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.63.8.2 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/vnode.h>
-#include <sys/ioctl.h>
-#include <sys/msgbuf.h>
-#include <sys/file.h>
-#include <sys/syslog.h>
+#include <sys/types.h>
+
 #include <sys/conf.h>
-#include <sys/select.h>
-#include <sys/poll.h> 
+#include <sys/file.h>
 #include <sys/intr.h>
-#include <sys/sysctl.h>
+#include <sys/ioctl.h>
+#include <sys/kernel.h>
 #include <sys/ktrace.h>
+#include <sys/msgbuf.h>
+#include <sys/poll.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/select.h>
+#include <sys/sysctl.h>
+#include <sys/syslog.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
 
 static int sysctl_msgbuf(SYSCTLFN_PROTO);
 
@@ -163,7 +166,7 @@ logopen(dev_t dev, int flags, int mode, struct lwp *l)
 
 	mutex_spin_enter(&log_lock);
 	if (log_open) {
-		error = EBUSY;
+		error = SET_ERROR(EBUSY);
 	} else {
 		log_open = 1;
 		log_pgid = l->l_proc->p_pid;	/* signal process only */
@@ -176,7 +179,7 @@ logopen(dev_t dev, int flags, int mode, struct lwp *l)
 		 */
 		if (mbp->msg_magic != MSG_MAGIC) {
 			msgbufenabled = 0;
-			error = ENXIO;
+			error = SET_ERROR(ENXIO);
 		}
 	}
 	mutex_spin_exit(&log_lock);
@@ -210,7 +213,7 @@ logread(dev_t dev, struct uio *uio, int flag)
 	while (mbp->msg_bufr == mbp->msg_bufx) {
 		if (flag & IO_NDELAY) {
 			mutex_spin_exit(&log_lock);
-			return EWOULDBLOCK;
+			return SET_ERROR(EWOULDBLOCK);
 		}
 		error = cv_wait_sig(&log_cv, &log_lock);
 		if (error) {
@@ -314,10 +317,10 @@ logkqfilter(dev_t dev, struct knote *kn)
 		break;
 
 	default:
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	}
 
-	return (0);
+	return 0;
 }
 
 void

@@ -1,5 +1,5 @@
 /* Darwin support for GDB, the GNU debugger.
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    Contributed by AdaCore.
 
@@ -18,14 +18,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "extract-store-integer.h"
 #include "top.h"
 #include "inferior.h"
 #include "target.h"
 #include "symfile.h"
 #include "symtab.h"
 #include "objfiles.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
+#include "cli/cli-style.h"
 #include "gdbcore.h"
 #include "gdbthread.h"
 #include "regcache.h"
@@ -68,7 +69,9 @@
 #include "gdbsupport/gdb_unlinker.h"
 #include "gdbsupport/pathstuff.h"
 #include "gdbsupport/scoped_fd.h"
+#include "gdbsupport/scoped_restore.h"
 #include "nat/fork-inferior.h"
+#include "gdbsupport/eintr.h"
 
 /* Quick overview.
    Darwin kernel is Mach + BSD derived kernel.  Note that they share the
@@ -351,7 +354,8 @@ darwin_nat_target::check_new_threads (inferior *inf)
 	  pti->msg_state = DARWIN_RUNNING;
 
 	  /* Add the new thread.  */
-	  add_thread_with_info (this, ptid_t (inf->pid, 0, new_id), pti);
+	  add_thread_with_info (this, ptid_t (inf->pid, 0, new_id),
+				private_thread_info_up (pti));
 	  new_thread_vec.push_back (pti);
 	  new_ix++;
 	  continue;
@@ -360,7 +364,7 @@ darwin_nat_target::check_new_threads (inferior *inf)
 	{
 	  /* A thread was removed.  */
 	  struct thread_info *thr
-	    = find_thread_ptid (this, ptid_t (inf->pid, 0, old_id));
+	    = this->find_thread (ptid_t (inf->pid, 0, old_id));
 	  delete_thread (thr);
 	  kret = mach_port_deallocate (gdb_task, old_id);
 	  MACH_CHECK_ERROR (kret);
@@ -1105,7 +1109,7 @@ darwin_nat_target::decode_message (mach_msg_header_t *hdr,
 	      if (WIFEXITED (wstatus))
 		{
 		  status->set_exited (WEXITSTATUS (wstatus));
-	          inferior_debug (4, _("darwin_wait: pid=%d exit, status=0x%x\n"),
+		  inferior_debug (4, _("darwin_wait: pid=%d exit, status=0x%x\n"),
 				  res_pid, wstatus);
 		}
 	      else if (WIFSTOPPED (wstatus))
@@ -1128,7 +1132,7 @@ darwin_nat_target::decode_message (mach_msg_header_t *hdr,
 		{
 		  status->set_ignore ();
 		  warning (_("Unexpected wait status after MACH_NOTIFY_DEAD_NAME "
-		             "notification: 0x%x"), wstatus);
+			     "notification: 0x%x"), wstatus);
 		  return minus_one_ptid;
 		}
 
@@ -1150,7 +1154,7 @@ darwin_nat_target::decode_message (mach_msg_header_t *hdr,
 }
 
 int
-darwin_nat_target::cancel_breakpoint (ptid_t ptid)
+darwin_nat_target::cancel_breakpoint (inferior *inf, ptid_t ptid)
 {
   /* Arrange for a breakpoint to be hit again later.  We will handle
      the current event, eventually we will resume this thread, and this
@@ -1165,7 +1169,7 @@ darwin_nat_target::cancel_breakpoint (ptid_t ptid)
   CORE_ADDR pc;
 
   pc = regcache_read_pc (regcache) - gdbarch_decr_pc_after_break (gdbarch);
-  if (breakpoint_inserted_here_p (regcache->aspace (), pc))
+  if (breakpoint_inserted_here_p (inf->aspace.get (), pc))
     {
       inferior_debug (4, "cancel_breakpoint for thread 0x%lx\n",
 		      (unsigned long) ptid.tid ());
@@ -1285,7 +1289,8 @@ darwin_nat_target::wait_1 (ptid_t ptid, struct target_waitstatus *status)
 	  && thread->event.ex_type == EXC_BREAKPOINT)
 	{
 	  if (thread->single_step
-	      || cancel_breakpoint (ptid_t (inf->pid, 0, thread->gdb_port)))
+	      || cancel_breakpoint (inf,
+				    ptid_t (inf->pid, 0, thread->gdb_port)))
 	    {
 	      gdb_assert (thread->msg_state == DARWIN_MESSAGE);
 	      darwin_send_reply (inf, thread);
@@ -1601,7 +1606,7 @@ darwin_attach_pid (struct inferior *inf)
 	  if (!inf->attach_flag)
 	    {
 	      kill (inf->pid, 9);
-	      waitpid (inf->pid, &status, 0);
+	      gdb::waitpid (inf->pid, &status, 0);
 	    }
 
 	  error
@@ -1939,16 +1944,20 @@ Because `startup-with-shell' is enabled, gdb tried to work around SIP by\n\
 caching a copy of your shell.  However, this failed:\n\
 %s\n\
 If you correct the problem, gdb will automatically try again the next time\n\
-you \"run\".  To prevent these attempts, you can use:\n\
-    set startup-with-shell off"),
-		   ex.what ());
+you \"%ps\".  To prevent these attempts, you can use:\n\
+    %ps"),
+		   ex.what (),
+		   styled_string (command_style.style (), "run"),
+		   styled_string (command_style.style (),
+				  "set startup-with-shell off"));
 	  return false;
 	}
 
       gdb_printf (_("Note: this version of macOS has System Integrity Protection.\n\
 Because `startup-with-shell' is enabled, gdb has worked around this by\n\
-caching a copy of your shell.  The shell used by \"run\" is now:\n\
+caching a copy of your shell.  The shell used by \"%ps\" is now:\n\
     %s\n"),
+		  styled_string (command_style.style (), "run"),
 		  new_name.c_str ());
     }
 
@@ -1966,7 +1975,10 @@ darwin_nat_target::create_inferior (const char *exec_file,
 				    const std::string &allargs,
 				    char **env, int from_tty)
 {
-  gdb::optional<scoped_restore_tmpl<bool>> restore_startup_with_shell;
+  if (exec_file == nullptr)
+    no_executable_specified_error ();
+
+  std::optional<scoped_restore_tmpl<bool>> restore_startup_with_shell;
   darwin_nat_target *the_target = this;
 
   if (startup_with_shell && may_have_sip ())
@@ -2026,7 +2038,7 @@ darwin_nat_target::attach (const char *args, int from_tty)
 
   pid = parse_pid_to_attach (args);
 
-  if (pid == getpid ())		/* Trying to masturbate?  */
+  if (pid == getpid ())
     error (_("I refuse to debug myself!"));
 
   target_announce_attach (from_tty, pid);

@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on ARM systems.
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_ARM_H
-#define ARCH_ARM_H
+#ifndef GDB_ARCH_ARM_H
+#define GDB_ARCH_ARM_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -188,7 +188,7 @@ enum system_register_address : CORE_ADDR
   ((CORE_ADDR) (((unsigned long) (addr)) + 8 + (sbits (instr, 0, 23) << 2)))
 
 /* Forward declaration.  */
-struct regcache;
+struct reg_buffer_common;
 
 /* Return the size in bytes of the complete Thumb instruction whose
    first halfword is INST1.  */
@@ -213,7 +213,7 @@ int thumb_advance_itstate (unsigned int itstate);
 
 /* Decode shifted register value.  */
 
-unsigned long shifted_reg_val (struct regcache *regcache,
+unsigned long shifted_reg_val (reg_buffer_common *regcache,
 			       unsigned long inst,
 			       int carry,
 			       unsigned long pc_val,
@@ -227,4 +227,4 @@ target_desc *arm_create_target_description (arm_fp_type fp_type, bool tls);
 
 target_desc *arm_create_mprofile_target_description (arm_m_profile_type m_type);
 
-#endif /* ARCH_ARM_H */
+#endif /* GDB_ARCH_ARM_H */

@@ -1,0 +1,10 @@
+{% include '_common/zones/soa.partial.db.j2' %}
+{% include '_common/zones/ns.partial.db.j2' %}
+
+; This NSEC3PARAM record should be ignored.  It does not
+; indicate that there is a valid NSEC3 chain.  As there
+; isn't another NSEC3PARAM record with zero flags nor a
+; NSEC record this zone should be rejected.
+{% raw %}
+@		NSEC3PARAM 1 1 0 -
+{% endraw %}

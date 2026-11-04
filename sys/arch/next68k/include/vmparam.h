@@ -1,11 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.30.6.1 2025/08/02 05:55:58 perseant Exp $	*/
-
-/*
- * This file was taken from mvme68k/include/vmparam.h and
- * should probably be re-synced when needed.
- * Darrin B Jewell <jewell@mit.edu>  Fri Aug 28 03:22:07 1998
- * original cvs id: NetBSD: vmparam.h,v 1.9 1998/08/22 10:55:34 scw Exp
- */
+/*	$NetBSD: vmparam.h,v 1.30.6.2 2026/11/04 23:21:06 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,79 +41,16 @@
 #ifndef _NEXT68K_VMPARAM_H_
 #define _NEXT68K_VMPARAM_H_
 
-/*
- * Machine dependent constants for NEXT68K
- */
-
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
-
-/*
- * Virtual memory related constants, all in bytes
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(64*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * Mach derived constants
- */
-
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)2)
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
  */
-#define	VM_PHYSSEG_MAX		5			/* @@@ should really come from N_SIMM */
+#define	VM_PHYSSEG_MAX		5	/* @@@ should really come from N_SIMM */
 #define	VM_PHYSSEG_STRAT	VM_PSTRAT_RANDOM
-#define	VM_NFREELIST		1
-#define	VM_FREELIST_DEFAULT	0
 
-#define	__HAVE_PMAP_PHYSSEG
+#endif /* _KERNEL && !_MODULE */
 
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-struct pmap_physseg {
-	struct pv_header *pvheader;	/* pv table for this seg */
-};
+#include <m68k/vmparam.h>
 
 #endif /* _NEXT68K_VMPARAM_H_ */

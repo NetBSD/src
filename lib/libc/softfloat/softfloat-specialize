@@ -1,4 +1,4 @@
-/*	$NetBSD: softfloat-specialize,v 1.9.36.1 2025/08/02 05:54:40 perseant Exp $	*/
+/*	$NetBSD: softfloat-specialize,v 1.9.36.2 2026/11/04 23:19:22 perseant Exp $	*/
 
 /* This is a derivative work. */
 
@@ -420,7 +420,7 @@ NaN; otherwise returns 0.
 flag floatx80_is_nan( floatx80 a )
 {
 
-    return ( ( a.high & 0x7FFF ) == 0x7FFF ) && (bits64) ( a.low<<1 );
+    return (((a.high >> X80SHIFT) & 0x7FFF) == 0x7FFF) && (bits64)(a.low<<1);
 
 }
 
@@ -436,12 +436,13 @@ flag floatx80_is_signaling_nan( floatx80 a )
 
     aLow = a.low & ~ LIT64( 0x4000000000000000 );
     return
-           ( ( a.high & 0x7FFF ) == 0x7FFF )
+           ( ( (a.high >> X80SHIFT) & 0x7FFF ) == 0x7FFF )
         && (bits64) ( aLow<<1 )
         && ( a.low == aLow );
 
 }
 
+#ifndef SOFTFLOAT_BITS32
 /*
 -------------------------------------------------------------------------------
 Returns the result of converting the extended double-precision floating-
@@ -454,9 +455,9 @@ static commonNaNT floatx80ToCommonNaN( floatx80 a )
     commonNaNT z;
 
     if ( floatx80_is_signaling_nan( a ) ) float_raise( float_flag_invalid );
-    z.sign = a.high>>15;
-    z.low = 0;
-    z.high = a.low<<1;
+    z.sign = a.high>>(15 + X80SHIFT);
+    z.low = a.low<<1;
+    z.high = (a.high>>X80SHIFT) & 0x7FFF;
     return z;
 
 }
@@ -471,8 +472,8 @@ static floatx80 commonNaNToFloatx80( commonNaNT a )
 {
     floatx80 z;
 
-    z.low = LIT64( 0xC000000000000000 ) | ( a.high>>1 );
-    z.high = ( ( (bits16) a.sign )<<15 ) | 0x7FFF;
+    z.low = LIT64( 0xC000000000000000 ) | ( a.low );
+    z.high = (( ( (bits16) a.sign )<<15 ) | 0x7FFF) << X80SHIFT;
     return z;
 
 }
@@ -504,6 +505,7 @@ static floatx80 propagateFloatx80NaN( floatx80 a, floatx80 b )
 
 }
 
+#endif
 #endif
 
 #ifdef FLOAT128

@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD x86.
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef X86_FBSD_NAT_H
-#define X86_FBSD_NAT_H
+#ifndef GDB_X86_FBSD_NAT_H
+#define GDB_X86_FBSD_NAT_H
 
 #include <sys/ptrace.h>
 
@@ -53,4 +53,4 @@ private:
 #endif
 };
 
-#endif /* x86-bsd-nat.h */
+#endif /* GDB_X86_FBSD_NAT_H */

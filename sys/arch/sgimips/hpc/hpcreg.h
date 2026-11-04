@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcreg.h,v 1.20.92.1 2025/08/02 05:56:06 perseant Exp $	*/
+/*	$NetBSD: hpcreg.h,v 1.20.92.2 2026/11/04 23:21:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -451,8 +451,21 @@ struct hpc_dma_desc {
 #define HPC1_LPT_DEVREGS	0x00000132	/* Ext. Parallel Registers */
 #define	HPC1_LPT_DEVREGS_SIZE	0x00000001	/* Size of External Registers */
 
+/* DSP regs on the primary HPC */
+#define HPC1_DSP_DEVREGS	0x00000180	/* Hollywood Audio DSP Regs */
+#define HPC1_DSP_DEVREGS_SIZE	0x00000038
+#define HPC1_DSP_SRAM		0x00060000	/* Hollywood Audio DSP Memory */
+#define HPC1_DSP_SRAM_SIZE	0x00020000	/* 24-bit words mapped as 32b */
+
 /* AUX regs on the primary HPC */
 #define HPC1_AUX_REGS		0x000001bf	/* EEPROM/LED Control (byte) */
 #define HPC1_AUX_CONSLED	0x01		/* Console LED */
+
+/* EEPROM bits are the same on HPC1 and HPC3 */
+#define HPC_AUX_EEPROM_PRE	0x01		/* CS56 PRE pin (same as LED) */
+#define HPC_AUX_EEPROM_CS	0x02		/* CS56 CS pin */
+#define HPC_AUX_EEPROM_SK	0x04		/* CS56 SK pin */
+#define HPC_AUX_EEPROM_DI	0x08		/* CS56 DI pin */
+#define HPC_AUX_EEPROM_DO	0x10		/* CS56 DO pin */
 
 #endif	/* _ARCH_SGIMIPS_HPC_HPCREG_H_ */

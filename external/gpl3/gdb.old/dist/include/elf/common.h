@@ -1,5 +1,5 @@
 /* ELF support for BFD.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    Written by Fred Fish @ Cygnus Support, from information published
    in "UNIX System V Release 4, Programmers Guide: ANSI C and
@@ -76,19 +76,19 @@
 #define ELFOSABI_CLOUDABI    17 /* Nuxi CloudABI */
 #define ELFOSABI_OPENVOS     18 /* Stratus Technologies OpenVOS */
 
-#define ELFOSABI_C6000_ELFABI 64 /* Bare-metal TMS320C6000 */
-#define ELFOSABI_AMDGPU_HSA  64 /* AMD HSA Runtime */
-#define ELFOSABI_C6000_LINUX 65 /* Linux TMS320C6000 */
-#define ELFOSABI_AMDGPU_PAL  65 /* AMD PAL Runtime */
-#define ELFOSABI_ARM_FDPIC   65 /* ARM FDPIC */
+#define ELFOSABI_CUDA          51 /* NVIDIA CUDA architecture.  */
+#define ELFOSABI_C6000_ELFABI  64 /* Bare-metal TMS320C6000 */
+#define ELFOSABI_AMDGPU_HSA    64 /* AMD HSA Runtime */
+#define ELFOSABI_C6000_LINUX   65 /* Linux TMS320C6000 */
+#define ELFOSABI_AMDGPU_PAL    65 /* AMD PAL Runtime */
+#define ELFOSABI_ARM_FDPIC     65 /* ARM FDPIC */
 #define ELFOSABI_AMDGPU_MESA3D 66 /* AMD Mesa3D Runtime */
-#define ELFOSABI_ARM	     97	/* ARM */
-#define ELFOSABI_STANDALONE 255	/* Standalone (embedded) application */
+#define ELFOSABI_ARM	       97 /* ARM */
+#define ELFOSABI_STANDALONE   255 /* Standalone (embedded) application */
 
 #define EI_ABIVERSION	8	/* ABI version */
 
 #define EI_PAD		9	/* Start of padding bytes */
-
 
 /* Values for e_type, which identifies the object file type.  */
 
@@ -479,27 +479,40 @@
 #define PT_SHLIB	5		/* Reserved, unspecified semantics */
 #define PT_PHDR		6		/* Entry for header table itself */
 #define PT_TLS		7		/* Thread local storage segment */
+#define	PT_NUM		8		/* Number of defined types.  */
+
 #define PT_LOOS		0x60000000	/* OS-specific */
 #define PT_HIOS		0x6fffffff	/* OS-specific */
-#define PT_LOPROC	0x70000000	/* Processor-specific */
-#define PT_HIPROC	0x7FFFFFFF	/* Processor-specific */
 
+#define PT_SUNW_UNWIND  (PT_LOOS + 0x464e550)
 #define PT_GNU_EH_FRAME	(PT_LOOS + 0x474e550) /* Frame unwind information */
 #define PT_SUNW_EH_FRAME PT_GNU_EH_FRAME      /* Solaris uses the same value */
 #define PT_GNU_STACK	(PT_LOOS + 0x474e551) /* Stack flags */
 #define PT_GNU_RELRO	(PT_LOOS + 0x474e552) /* Read-only after relocation */
 #define PT_GNU_PROPERTY	(PT_LOOS + 0x474e553) /* GNU property */
-#define PT_GNU_SFRAME	(PT_LOOS + 0x474e554) /* SFrame unwind information */
+#define PT_GNU_SFRAME	(PT_LOOS + 0x474e554) /* SFrame stack trace information */
 
 /* OpenBSD segment types.  */
+#define PT_OPENBSD_MUTABLE   (PT_LOOS + 0x5a3dbe5)  /* Like bss, but not immutable.  */
 #define PT_OPENBSD_RANDOMIZE (PT_LOOS + 0x5a3dbe6)  /* Fill with random data.  */
 #define PT_OPENBSD_WXNEEDED  (PT_LOOS + 0x5a3dbe7)  /* Program does W^X violations.  */
+#define PT_OPENBSD_NOBTCFI   (PT_LOOS + 0x5a3dbe8)  /* No branch target CFI.  */
+#define PT_OPENBSD_SYSCALLS  (PT_LOOS + 0x5a3dbe9)  /* System call sites.  */
 #define PT_OPENBSD_BOOTDATA  (PT_LOOS + 0x5a41be6)  /* Section for boot arguments.  */
+
+/* Solaris segment types.  */
+#define PT_SUNWBSS	(PT_LOOS + 0xffffffa)	/* Sun Specific segment.  */
+#define PT_SUNWSTACK	(PT_LOOS + 0xffffffb)	/* Stack segment.  */
+#define PT_SUNWDTRACE   (PT_LOOS + 0xffffffc)
+#define PT_SUNWCAP      (PT_LOOS + 0xffffffd)
 
 /* Mbind segments */
 #define PT_GNU_MBIND_NUM 4096
 #define PT_GNU_MBIND_LO (PT_LOOS + 0x474e555)
 #define PT_GNU_MBIND_HI (PT_GNU_MBIND_LO + PT_GNU_MBIND_NUM - 1)
+
+#define PT_LOPROC	0x70000000	/* Processor-specific */
+#define PT_HIPROC	0x7FFFFFFF	/* Processor-specific */
 
 /* Program segment permissions, in program header p_flags field.  */
 
@@ -535,17 +548,40 @@
 #define SHT_LOOS	0x60000000	/* First of OS specific semantics */
 #define SHT_HIOS	0x6fffffff	/* Last of OS specific semantics */
 
-#define SHT_GNU_INCREMENTAL_INPUTS 0x6fff4700   /* incremental build data */
-#define SHT_GNU_ATTRIBUTES 0x6ffffff5	/* Object attributes */
-#define SHT_GNU_HASH	0x6ffffff6	/* GNU style symbol hash table */
-#define SHT_GNU_LIBLIST	0x6ffffff7	/* List of prelink dependencies */
+#define SHT_ANDROID_REL              0x60000001
+#define SHT_ANDROID_RELA             0x60000002
 
+#define SHT_GNU_INCREMENTAL_INPUTS   0x6fff4700 /* Incremental build data */
+
+#define SHT_LLVM_ODRTAB              0x6fff4c00 /* LLVM ODR table.  */
+#define SHT_LLVM_LINKER_OPTIONS      0x6fff4c01 /* LLVM Linker Options.  */
+#define SHT_LLVM_ADDRSIG             0x6fff4c03 /* List of address-significant symbols for safe ICF.  */
+#define SHT_LLVM_DEPENDENT_LIBRARIES 0x6fff4c04 /* LLVM Dependent Library Specifiers.  */
+#define SHT_LLVM_SYMPART             0x6fff4c05 /* Symbol partition specification.  */
+#define SHT_LLVM_PART_EHDR           0x6fff4c06 /* ELF header for loadable partition.  */
+#define SHT_LLVM_PART_PHDR           0x6fff4c07 /* Phdrs for loadable partition.  */
+#define SHT_LLVM_BB_ADDR_MAP_V0      0x6fff4c08 /* LLVM Basic Block Address Map.  */
+#define SHT_LLVM_CALL_GRAPH_PROFILE  0x6fff4c09 /* LLVM Call Graph Profile.  */
+#define SHT_LLVM_BB_ADDR_MAP         0x6fff4c0a /* LLVM Basic Block Address Map.  */
+#define SHT_LLVM_OFFLOADING          0x6fff4c0b /* LLVM device offloading data.  */
+#define SHT_LLVM_LTO                 0x6fff4c0c /* .llvm.lto for fat LTO.  */
+
+#define SHT_ANDROID_RELR             0x6fffff00
+
+#define SHT_GNU_ATTRIBUTES           0x6ffffff5	/* Object attributes */
+#define SHT_GNU_HASH	             0x6ffffff6	/* GNU style symbol hash table */
+#define SHT_GNU_LIBLIST	             0x6ffffff7	/* List of prelink dependencies */
+#define SHT_CHECKSUM	             0x6ffffff8	/* Checksum for DSO content.  */
+
+#define SHT_SUNW_move	             0x6ffffffa
+#define SHT_SUNW_COMDAT              0x6ffffffb
+#define SHT_SUNW_syminfo             0x6ffffffc
 /* The next three section types are defined by Solaris, and are named
    SHT_SUNW*.  We use them in GNU code, so we also define SHT_GNU*
    versions.  */
-#define SHT_SUNW_verdef	0x6ffffffd	/* Versions defined by file */
-#define SHT_SUNW_verneed 0x6ffffffe	/* Versions needed by file */
-#define SHT_SUNW_versym	0x6fffffff	/* Symbol versions */
+#define SHT_SUNW_verdef	             0x6ffffffd	/* Versions defined by file */
+#define SHT_SUNW_verneed             0x6ffffffe	/* Versions needed by file */
+#define SHT_SUNW_versym	             0x6fffffff	/* Symbol versions */
 
 #define SHT_GNU_verdef	SHT_SUNW_verdef
 #define SHT_GNU_verneed	SHT_SUNW_verneed
@@ -553,6 +589,7 @@
 
 #define SHT_LOPROC	0x70000000	/* Processor-specific semantics, lo */
 #define SHT_HIPROC	0x7FFFFFFF	/* Processor-specific semantics, hi */
+
 #define SHT_LOUSER	0x80000000	/* Application-specific semantics */
 /* #define SHT_HIUSER	0x8FFFFFFF    *//* Application-specific semantics */
 #define SHT_HIUSER	0xFFFFFFFF	/* New value, defined in Oct 4, 1999 Draft */
@@ -573,19 +610,16 @@
 
 /* #define SHF_MASKOS	0x0F000000    *//* OS-specific semantics */
 #define SHF_MASKOS	0x0FF00000	/* New value, Oct 4, 1999 Draft */
-#define SHF_GNU_RETAIN	      (1 << 21)	/* Section should not be garbage collected by the linker.  */
+#define SHF_GNU_RETAIN	(1 << 21)	/* Section should not be garbage collected by the linker.  */
+#define SHF_GNU_MBIND	(1 << 24)	/* Mbind section.  */
+
 #define SHF_MASKPROC	0xF0000000	/* Processor-specific semantics */
-
 /* This used to be implemented as a processor specific section flag.
-   We just make it generic.  */
-#define SHF_EXCLUDE	0x80000000	/* Link editor is to exclude
-					   this section from executable
-					   and shared library that it
-					   builds when those objects
-					   are not to be further
-					   relocated.  */
+   We just make it generic.  The definition is:	the link editor is
+   to exclude this section from executable and shared libraries that
+   it builds when those objects are not to be further relocated.  */
+#define SHF_EXCLUDE	(1U << 31)
 
-#define SHF_GNU_MBIND	0x01000000	/* Mbind section.  */
 
 /* Compression types.  */
 #define ELFCOMPRESS_ZLIB   1		/* Compressed with zlib.  */
@@ -643,6 +677,9 @@
 					/*   note name must be "LINUX".  */
 #define NT_X86_CET	0x203		/* x86 CET state.  */
 					/*   note name must be "LINUX".  */
+#define NT_X86_SHSTK	0x204		/* x86 SHSTK state.  */
+					/* This replaces NT_X86_CET (0x203).  */
+					/*   note name must be "LINUX".  */
 #define NT_S390_HIGH_GPRS 0x300		/* S/390 upper halves of GPRs  */
 					/*   note name must be "LINUX".  */
 #define NT_S390_TIMER	0x301		/* S390 timer */
@@ -696,6 +733,12 @@
 #define NT_ARM_PAC_ENABLED_KEYS	0x40a	/* AArch64 pointer authentication
 					   enabled keys (prctl()) */
 					/*   note name must be "LINUX".  */
+#define NT_ARM_SSVE     0x40b        	/* AArch64 SME streaming SVE registers.  */
+					/*   Note: name must be "LINUX".  */
+#define NT_ARM_ZA       0x40c           /* AArch64 SME ZA register.  */
+					/*   Note: name must be "LINUX".  */
+#define NT_ARM_ZT       0x40d           /* AArch64 SME2 ZT registers.  */
+					/*   Note: name must be "LINUX".  */
 #define NT_ARC_V2	0x600		/* ARC HS accumulator/extra registers.  */
 					/*   note name must be "LINUX".  */
 #define NT_LARCH_CPUCFG 0xa00		/* LoongArch CPU config registers */
@@ -708,6 +751,10 @@
 					/*   note name must be "LINUX".  */
 #define NT_LARCH_LBT    0xa04		/* LoongArch Binary Translation registers */
 					/*   note name must be "CORE".  */
+#define NT_LOONGARCH_HW_BREAK   0xa05	/* LoongArch hardware breakpoint registers */
+					/*   note name must be "LINUX".  */
+#define NT_LOONGARCH_HW_WATCH   0xa06	/* LoongArch hardware watchpoint registers */
+					/*   note name must be "LINUX".  */
 #define NT_RISCV_CSR    0x900		/* RISC-V Control and Status Registers */
 					/*   note name must be "LINUX".  */
 #define NT_SIGINFO	0x53494749	/* Fields of siginfo_t.  */
@@ -764,6 +811,19 @@
 #define NT_OPENBSD_XFPREGS	22
 #define NT_OPENBSD_WCOOKIE	23
 
+/* Note segments for core files on QNX systems.  Note name
+   must start with "QNX".  */
+#define QNT_DEBUG_FULLPATH 1
+#define QNT_DEBUG_RELOC    2
+#define QNT_STACK          3
+#define QNT_GENERATOR      4
+#define QNT_DEFAULT_LIB    5
+#define QNT_CORE_SYSINFO   6
+#define QNT_CORE_INFO      7
+#define QNT_CORE_STATUS    8
+#define QNT_CORE_GREG      9
+#define QNT_CORE_FPREG     10
+#define QNT_LINK_MAP       11
 
 /* Note segments for core files on Solaris systems.  Note name
    must start with "CORE".  */
@@ -977,6 +1037,7 @@
 
 #define GNU_PROPERTY_AARCH64_FEATURE_1_BTI	(1U << 0)
 #define GNU_PROPERTY_AARCH64_FEATURE_1_PAC	(1U << 1)
+#define GNU_PROPERTY_AARCH64_FEATURE_1_GCS	(1U << 2)
 
 /* Values used in GNU .note.ABI-tag notes (NT_GNU_ABI_TAG).  */
 #define GNU_ABI_TAG_LINUX	0
@@ -1011,6 +1072,9 @@
 
 /* Values for FDO .note.package notes as defined on https://systemd.io/COREDUMP_PACKAGE_METADATA/  */
 #define FDO_PACKAGING_METADATA	0xcafe1a7e
+
+/* Values for FDO .note.dlopen notes as defined on https://systemd.io/ELF_DLOPEN_METADATA/  */
+#define FDO_DLOPEN_METADATA 0x407c0c0a
 
 /* These three macros disassemble and assemble a symbol table st_info field,
    which contains the symbol binding and symbol type.  The STB_ and STT_
@@ -1117,13 +1181,16 @@
 #define DT_FINI_ARRAYSZ 28
 #define DT_RUNPATH	29
 #define DT_FLAGS	30
+
+/* Values in the range [DT_ENCODING, DT_LOOS) use d_un.d_ptr if the
+   value is even, d_un.d_val if odd.  */
+#define DT_ENCODING	32
 #define DT_PREINIT_ARRAY   32
 #define DT_PREINIT_ARRAYSZ 33
 #define DT_SYMTAB_SHNDX    34
 #define DT_RELRSZ	35
 #define DT_RELR		36
 #define DT_RELRENT	37
-#define DT_ENCODING	38
 
 /* Note, the Oct 4, 1999 draft of the ELF ABI changed the values
    for DT_LOOS and DT_HIOS.  Some implementations however, use
@@ -1353,6 +1420,8 @@
 					   may differ from AT_PLATFORM.  */
 #define AT_RANDOM	25		/* Address of 16 random bytes.  */
 #define AT_HWCAP2	26		/* Extension of AT_HWCAP.  */
+#define AT_RSEQ_FEATURE_SIZE	27	/* rseq supported feature size */
+#define AT_RSEQ_ALIGN	28		/* rseq allocation alignment */
 #define AT_EXECFN	31		/* Filename of executable.  */
 /* Pointer to the global system page used for system calls and other
    nice things.  */

@@ -1,4 +1,4 @@
-# Copyright 2010-2024 Free Software Foundation, Inc.
+# Copyright 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ proc gdb_py_test_silent_cmd { cmd name report_pass } {
     global gdb_prompt
 
     gdb_test_multiple $cmd $name {
+	-re "Error occurred in Python:.*$gdb_prompt $" { fail $name }
 	-re "Traceback.*$gdb_prompt $" { fail $name }
 	-re "$gdb_prompt $"            { if $report_pass { pass $name } }
     }
@@ -75,4 +76,25 @@ proc gdb_py_module_available { name } {
     }
 
     return ${available}
+}
+
+# Run a memory leak test within the Python script FILENAME.  This proc
+# checks that the required Python modules are available, sets up the
+# syspath so that the helper module can be found (in the same
+# directory as FILENAME), then loads FILENAME to run the test.
+proc gdb_py_run_memory_leak_test { filename testname } {
+    if { ![gdb_py_module_available "tracemalloc"] } {
+	unsupported "$testname (tracemalloc module not available)"
+    }
+
+    gdb_test_no_output -nopass "python import sys"
+    gdb_test_no_output -nopass \
+	"python sys.path.insert(0, \"[file dirname $filename]\")" \
+	"setup sys.path"
+
+    set pyfile [gdb_remote_download host ${filename}]
+
+    # Source the Python script, this runs the test, and either prints
+    # PASS, or throws an exception.
+    gdb_test "source ${pyfile}" "^PASS" $testname
 }

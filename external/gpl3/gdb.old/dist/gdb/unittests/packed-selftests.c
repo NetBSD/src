@@ -1,6 +1,6 @@
 /* Self tests for packed for GDB, the GNU debugger.
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/packed.h"
 
@@ -32,29 +31,25 @@ enum test_enum
   TE_D = 4,
 };
 
-gdb_static_assert (sizeof (packed<test_enum, 1>) == 1);
-gdb_static_assert (sizeof (packed<test_enum, 2>) == 2);
-gdb_static_assert (sizeof (packed<test_enum, 3>) == 3);
-gdb_static_assert (sizeof (packed<test_enum, 4>) == 4);
+static_assert (sizeof (packed<test_enum, 1>) == 1);
+static_assert (sizeof (packed<test_enum, 2>) == 2);
+static_assert (sizeof (packed<test_enum, 3>) == 3);
+static_assert (sizeof (packed<test_enum, 4>) == 4);
 
-gdb_static_assert (alignof (packed<test_enum, 1>) == 1);
-gdb_static_assert (alignof (packed<test_enum, 2>) == 1);
-gdb_static_assert (alignof (packed<test_enum, 3>) == 1);
-gdb_static_assert (alignof (packed<test_enum, 4>) == 1);
+static_assert (alignof (packed<test_enum, 1>) == 1);
+static_assert (alignof (packed<test_enum, 2>) == 1);
+static_assert (alignof (packed<test_enum, 3>) == 1);
+static_assert (alignof (packed<test_enum, 4>) == 1);
 
 /* Triviality checks.  */
 #define CHECK_TRAIT(TRAIT)			\
   static_assert (std::TRAIT<packed<test_enum, 1>>::value, "")
-
-#if HAVE_IS_TRIVIALLY_COPYABLE
 
 CHECK_TRAIT (is_trivially_copyable);
 CHECK_TRAIT (is_trivially_copy_constructible);
 CHECK_TRAIT (is_trivially_move_constructible);
 CHECK_TRAIT (is_trivially_copy_assignable);
 CHECK_TRAIT (is_trivially_move_assignable);
-
-#endif
 
 #undef CHECK_TRAIT
 

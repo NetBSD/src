@@ -1,6 +1,6 @@
 /* Target-dependent code for NetBSD/alpha.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Wasabi Systems, Inc.
 
@@ -261,11 +261,10 @@ alphanbsd_init_abi (struct gdbarch_info info,
 
   /* NetBSD/alpha does not provide single step support via ptrace(2); we
      must use software single-stepping.  */
-  set_gdbarch_software_single_step (gdbarch, alpha_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, alpha_software_single_step);
 
   /* NetBSD/alpha has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 
   tdep->dynamic_sigtramp_offset = alphanbsd_sigtramp_offset;
   tdep->pc_in_sigtramp = alphanbsd_pc_in_sigtramp;
@@ -279,9 +278,7 @@ alphanbsd_init_abi (struct gdbarch_info info,
 }
 
 
-void _initialize_alphanbsd_tdep ();
-void
-_initialize_alphanbsd_tdep ()
+INIT_GDB_FILE (alphanbsd_tdep)
 {
   /* Even though NetBSD/alpha used ELF since day one, it used the
      traditional a.out-style core dump format before NetBSD 1.6, but

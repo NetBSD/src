@@ -1,4 +1,4 @@
-/*	$NetBSD: telnetd.c,v 1.59.2.1 2025/08/02 05:55:03 perseant Exp $	*/
+/*	$NetBSD: telnetd.c,v 1.59.2.2 2026/11/04 23:19:34 perseant Exp $	*/
 
 /*
  * Copyright (C) 1997 and 1998 WIDE Project.
@@ -65,7 +65,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1993\
 #if 0
 static char sccsid[] = "@(#)telnetd.c	8.4 (Berkeley) 5/30/95";
 #else
-__RCSID("$NetBSD: telnetd.c,v 1.59.2.1 2025/08/02 05:55:03 perseant Exp $");
+__RCSID("$NetBSD: telnetd.c,v 1.59.2.2 2026/11/04 23:19:34 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -872,7 +872,7 @@ telnet(int f, int p)
 	(void) signal(SIGTSTP, SIG_IGN);
 	/*
 	 * Ignoring SIGTTOU keeps the kernel from blocking us
-	 * in ttioct() in /sys/tty.c.
+	 * in ttioctl() in /sys/tty.c.
 	 */
 	(void) signal(SIGTTOU, SIG_IGN);
 

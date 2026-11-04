@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.82.8.1 2025/08/02 05:58:55 perseant Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.82.8.2 2026/11/04 23:28:57 perseant Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -1191,7 +1191,7 @@ done:
 	free_ndopts(&ndopts);
 }
 
-/* return a non-zero value if the received prefix is inconsitent with ours */
+/* return a non-zero value if the received prefix is inconsistent with ours */
 static int
 prefix_check(struct nd_opt_prefix_info *pinfo,
 	     struct rainfo *rai, struct sockaddr_in6 *from)

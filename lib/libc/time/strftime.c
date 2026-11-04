@@ -1,4 +1,4 @@
-/*	$NetBSD: strftime.c,v 1.56.2.1 2025/08/02 05:54:43 perseant Exp $	*/
+/*	$NetBSD: strftime.c,v 1.56.2.2 2026/11/04 23:19:25 perseant Exp $	*/
 
 /* Convert a broken-down timestamp to a string.  */
 
@@ -35,14 +35,13 @@
 static char	elsieid[] = "@(#)strftime.c	7.64";
 static char	elsieid[] = "@(#)strftime.c	8.3";
 #else
-__RCSID("$NetBSD: strftime.c,v 1.56.2.1 2025/08/02 05:54:43 perseant Exp $");
+__RCSID("$NetBSD: strftime.c,v 1.56.2.2 2026/11/04 23:19:25 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
 #include <stddef.h>
-#include <assert.h>
 #include <locale.h>
 #include "setlocale_local.h"
 
@@ -79,8 +78,9 @@ __RCSID("$NetBSD: strftime.c,v 1.56.2.1 2025/08/02 05:54:43 perseant Exp $");
    and account for the tm_year origin (1900) and time_t origin (1970).  */
 #define MKTIME_FITS_IN(min, max) \
   ((min) < 0 \
-   && ((min) + 0x7fffffff) / 366 / 24 / 60 / 60 / 2 + 1970 - 1900 < INT_MIN \
-   && INT_MAX < ((max) - 0x7fffffff) / 366 / 24 / 60 / 60 / 2 + 1970 - 1900)
+   && (((min) + TWO_31_MINUS_1) / 366 / 24 / 60 / 60 / 2 + 1970 - 1900 \
+       < INT_MIN)						\
+   && INT_MAX < ((max) - TWO_31_MINUS_1) / 366 / 24 / 60 / 60 / 2 + 1970 - 1900)
 
 /* MKTIME_MIGHT_OVERFLOW is true if mktime can fail due to time_t overflow
    or if it is not known whether mktime can fail,
@@ -524,9 +524,7 @@ label:
 						int	bot;
 						int	top;
 
-						len = isleap_sum(year, base) ?
-							DAYSPERLYEAR :
-							DAYSPERNYEAR;
+						len = year_sum_days(year, base);
 						/*
 						** What yday (-3 ... 3) does
 						** the ISO year begin on?
@@ -553,9 +551,8 @@ label:
 							break;
 						}
 						--base;
-						yday += isleap_sum(year, base) ?
-							DAYSPERLYEAR :
-							DAYSPERNYEAR;
+						yday += year_sum_days(year,
+								      base);
 					}
 #ifdef XPG4_1994_04_09
 					if ((w == 52 &&
@@ -742,7 +739,6 @@ label:
 				diff /= SECSPERMIN;
 				diff = (diff / MINSPERHOUR) * 100 +
 					(diff % MINSPERHOUR);
-				_DIAGASSERT(__type_fit(int, diff));
 				pt = _conv((int)diff,
 				    fmt_padding[PAD_FMT_YEAR][PadIndex],
 				    pt, ptlim, loc);
@@ -790,11 +786,17 @@ strftime(char *restrict s, size_t maxsize, char const *restrict format,
 	 struct tm const *restrict t)
 {
 	size_t r;
-	
-	rwlock_wrlock(&__lcl_lock);
-	tzset_unlocked();
-	r = strftime_z(__lclptr, s, maxsize, format, t);
-	rwlock_unlock(&__lcl_lock);
+	time_t now = __lcl_get_monotonic_time();
+	int err = __lcl_lock();
+	if (0 < err) {
+		errno = err;
+		return 0;
+	}
+	tzset_unlocked(!err, false, now);
+
+	r = strftime_z(__lcl_ptr, s, maxsize, format, t);
+
+	__lcl_unlock(!err);
 
 	return r;
 }
@@ -804,11 +806,17 @@ strftime_l(char * __restrict s, size_t maxsize, const char * __restrict format,
     const struct tm * __restrict t, locale_t loc)
 {
 	size_t r;
+	time_t now = __lcl_get_monotonic_time();
+	int err = __lcl_lock();
+	if (0 < err) {
+		errno = err;
+		return 0;
+	}
+	tzset_unlocked(!err, false, now);
 
-	rwlock_wrlock(&__lcl_lock);
-	tzset_unlocked();
-	r = strftime_lz(__lclptr, s, maxsize, format, t, loc);
-	rwlock_unlock(&__lcl_lock);
+	r = strftime_lz(__lcl_ptr, s, maxsize, format, t, loc);
+
+	__lcl_unlock(!err);
 
 	return r;
 }

@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -212,7 +212,7 @@ proc out_line { name cu_dir cu_name line_dir line_name } {
 }
 
 # IFSOME can be optionally _same or _different if >= 2 absolute directories are
-# provided.  Then in the _different case the overriden directories have invalid
+# provided.  Then in the _different case the overridden directories have invalid
 # XDIR value.
 
 proc out_unit { func compdir ldir file ifsame } {

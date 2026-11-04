@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.191.2.1 2025/08/02 05:56:30 perseant Exp $	*/
+/*	$NetBSD: ccd.c,v 1.191.2.2 2026/11/04 23:21:46 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.191.2.1 2025/08/02 05:56:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.191.2.2 2026/11/04 23:21:46 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1172,6 +1172,7 @@ ccdioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	if (error != EPASSTHROUGH)
 		return error;
 
+	error = 0;
 	switch (cmd) {
 	case DIOCGSTRATEGY:
 	    {
@@ -1750,7 +1751,7 @@ ccd_units_sysctl(SYSCTLFN_ARGS)
 		LIST_FOREACH(sc, &ccds, sc_link) {
 			if (i >= nccd)
 				break;
-			units[i] = sc->sc_unit;
+			units[i++] = sc->sc_unit;
 		}
 		mutex_exit(&ccd_lock);
 	} else {

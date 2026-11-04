@@ -1,5 +1,5 @@
 /* Target-dependent code for the GNU Hurd.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,7 @@
 #include "osabi.h"
 #include "solib-svr4.h"
 
+#include "glibc-tdep.h"
 #include "i386-tdep.h"
 
 /* Recognizing signal handler frames.  */
@@ -72,8 +73,7 @@ i386_gnu_sigtramp_start (const frame_info_ptr &this_frame)
   return pc;
 }
 
-/* Return whether THIS_FRAME corresponds to a GNU/Linux sigtramp
-   routine.  */
+/* Return whether THIS_FRAME corresponds to a Hurd sigtramp routine.  */
 
 static int
 i386_gnu_sigtramp_p (const frame_info_ptr &this_frame)
@@ -178,8 +178,16 @@ i386gnu_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* GNU uses ELF.  */
   i386_elf_init_abi (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_ilp32_fetch_link_map_offsets);
+  /* Hurd uses SVR4-style shared libraries.  */
+  set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
+  set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
+
+  /* Hurd uses the dynamic linker included in the GNU C Library.  */
+  set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
+
+  /* Enable TLS support.  */
+  set_gdbarch_fetch_tls_load_module_address (gdbarch,
+					     svr4_fetch_objfile_link_map);
 
   tdep->gregset_reg_offset = i386gnu_gregset_reg_offset;
   tdep->gregset_num_regs = ARRAY_SIZE (i386gnu_gregset_reg_offset);
@@ -193,9 +201,7 @@ i386gnu_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   tdep->sc_num_regs = ARRAY_SIZE (i386_gnu_sc_reg_offset);
 }
 
-void _initialize_i386gnu_tdep ();
-void
-_initialize_i386gnu_tdep ()
+INIT_GDB_FILE (i386gnu_tdep)
 {
   gdbarch_register_osabi (bfd_arch_i386, 0, GDB_OSABI_HURD, i386gnu_init_abi);
 }

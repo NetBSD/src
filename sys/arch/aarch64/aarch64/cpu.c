@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.76.2.2 2025/08/02 05:55:19 perseant Exp $ */
+/* $NetBSD: cpu.c,v 1.76.2.3 2026/11/04 23:19:54 perseant Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.76.2.2 2025/08/02 05:55:19 perseant Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.76.2.3 2026/11/04 23:19:54 perseant Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -371,10 +371,22 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 	/* ID_AA64DFR0_EL1 */
 	switch (__SHIFTOUT(id->ac_aa64dfr0, ID_AA64DFR0_EL1_PMUVER)) {
 	case ID_AA64DFR0_EL1_PMUVER_V3:
-		aprint_verbose(", PMCv3");
+		aprint_verbose(", PMUv3");
 		break;
-	case ID_AA64DFR0_EL1_PMUVER_NOV3:
-		aprint_verbose(", PMC");
+	case ID_AA64DFR0_EL1_PMUVER_V3P1:
+		aprint_verbose(", PMUv3p1");
+		break;
+	case ID_AA64DFR0_EL1_PMUVER_V3P4:
+		aprint_verbose(", PMUv3p4");
+		break;
+	case ID_AA64DFR0_EL1_PMUVER_V3P5:
+		aprint_verbose(", PMUv3p5");
+		break;
+	case ID_AA64DFR0_EL1_PMUVER_V3P7:
+		aprint_verbose(", PMUv3p7");
+		break;
+	case ID_AA64DFR0_EL1_PMUVER_V3P8:
+		aprint_verbose(", PMUv3p8");
 		break;
 	}
 

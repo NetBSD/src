@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# $NetBSD: acpica2netbsd,v 1.1.58.1 2025/08/02 05:57:09 perseant Exp $
+# $NetBSD: acpica2netbsd,v 1.1.58.2 2026/11/04 23:22:42 perseant Exp $
 #
 #  Copyright (c) 2014 The NetBSD Foundation.
 #  All rights reserved.
@@ -38,6 +38,7 @@ then
 	exit 1
 fi
 cd $1
+cleantags .
 echo -n "Shuffling things around"
 
 rmdir libraries

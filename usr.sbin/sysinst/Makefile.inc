@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.49.2.1 2025/08/02 05:58:55 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.49.2.2 2026/11/04 23:28:58 perseant Exp $
 #
 # Makefile for sysinst
 
@@ -32,8 +32,17 @@ LANGUAGES?=	de en es fr pl
 MENUS_MI=	menus.mi
 MENUS_MI+=	${NOPARTMAN:D:Umenus.pm}
 
+# Provide a timestamp when this binary was build for TODR sanity checking
+.if ${MKREPRO_TIMESTAMP:Uno} != "no"
+CPPFLAGS+=	-DBUILD_TIMESTAMP=${MKREPRO_TIMESTAMP}
+.else
+BUILD_TS!=	${TOOL_DATE} -u '+%s'
+CPPFLAGS+=	-DBUILD_TIMESTAMP=${BUILD_TS}
+.endif
+
 .if ${NO_GPT:Uno} != "yes"
 CPPFLAGS+=	-DHAVE_GPT
+MD_OPTIONS+=	HAVE_GPT
 GPT_DIR=${.CURDIR}/../../../../sbin/gpt
 SRCS+=	gpt.c gpt_uuid.c
 CPPFLAGS.gpt_uuid.c+=	-I${GPT_DIR}
@@ -42,9 +51,21 @@ CPPFLAGS.gpt.c+=	-I${GPT_DIR}
 .if ${NO_MBR:Uyes} != "yes"
 CPPFLAGS+=	-DHAVE_MBR
 SRCS+=	mbr.c
+COPTS.mbr.c+=	${CC_WNO_MAYBE_UNINITIALIZED}
 .endif
 .if ${NO_CLONES:Uno} == "yes"
 CPPFLAGS+=	-DNO_CLONES
+.else
+MD_OPTIONS+=	HAVE_CLONES
+.endif
+.if ${HAVE_DVD_IMAGE:Uno} == "yes"
+CPPFLAGS+=	-DHAVE_DVD_IMAGE
+MD_OPTIONS+=	HAVE_DVD_IMAGE
+.endif
+.if ${NO_DISKSIZE_CHECKS:Uno} == "yes"
+CPPFLAGS+=	-DNO_DISKSIZE_CHECKS
+.else
+MD_OPTIONS+=	HAVE_DISKSIZE_CHECKS
 .endif
 
 .if ${CHECK_ENTROPY:Uyes} != "no"
@@ -154,10 +175,11 @@ O0TRACKING=	-fvar-tracking-assignments -fvar-tracking
 .endif
 CPPFLAGS+=-DDEBUG
 DBG +=-g -O0 ${O0TRACKING}
-COPTS.net.c	+= -Wno-error=maybe-uninitialized
+COPTS.net.c	+= ${CC_WNO_MAYBE_UNINITIALIZED}
 .else
 .if defined(SMALLPROG)
 COPTS += -Os
+CPPFLAGS+=	-DNO_HTTPS
 .endif
 .endif
 

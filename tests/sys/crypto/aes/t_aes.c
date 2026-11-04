@@ -1,4 +1,4 @@
-/*	$NetBSD: t_aes.c,v 1.4 2020/08/17 16:26:02 riastradh Exp $	*/
+/*	$NetBSD: t_aes.c,v 1.4.8.1 2026/11/04 23:28:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
 
 #include <crypto/aes/aes.h>
 #include <crypto/aes/aes_bear.h>
+#include <crypto/aes/aes_bear64.h>
 #include <crypto/aes/aes_impl.h>
 
 #if defined(__i386__) || defined(__x86_64__)
 #include <crypto/aes/arch/x86/aes_ni.h>
-#include <crypto/aes/arch/x86/aes_sse2.h>
+#include <crypto/aes/arch/x86/aes_sse2_4x32.h>
 #include <crypto/aes/arch/x86/aes_ssse3.h>
 #include <crypto/aes/arch/x86/aes_via.h>
 #endif
@@ -71,6 +72,28 @@ ATF_TC_BODY(aes_ct_selftest, tc)
 		atf_tc_fail("BearSSL aes_ct self-test failed");
 }
 
+ATF_TC(aes_ct64_selftest);
+ATF_TC_HEAD(aes_ct64_selftest, tc)
+{
+
+	atf_tc_set_md_var(tc, "descr", "BearSSL aes_ct64 tests");
+}
+
+ATF_TC_BODY(aes_ct64_selftest, tc)
+{
+
+	if (aes_bear64_impl.ai_probe()) {
+		/*
+		 * aes_ct64 is the portable software fallback for LP64
+		 * platforms, so probe should never fail.
+		 */
+		atf_tc_fail("BearSSL aes_ct probe64 failed");
+	}
+
+	if (aes_selftest(&aes_bear64_impl))
+		atf_tc_fail("BearSSL aes_ct64 self-test failed");
+}
+
 #define	AES_SELFTEST(name, impl, descr)					      \
 ATF_TC(name);								      \
 ATF_TC_HEAD(name, tc)							      \
@@ -102,8 +125,8 @@ AES_SELFTEST(aes_ni_selftest, &aes_ni_impl, "Intel AES-NI self-test")
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
-AES_SELFTEST(aes_sse2_selftest, &aes_sse2_impl,
-    "Intel SSE2 bitsliced self-test")
+AES_SELFTEST(aes_sse2_4x32_selftest, &aes_sse2_4x32_impl,
+    "Intel SSE2 4x32 bitsliced self-test")
 AES_SELFTEST(aes_ssse3_selftest, &aes_ssse3_impl,
     "Intel SSSE3 vpaes self-test")
 AES_SELFTEST(aes_via_selftest, &aes_via_impl, "VIA ACE AES self-test")
@@ -113,6 +136,7 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	ATF_TP_ADD_TC(tp, aes_ct_selftest);
+	ATF_TP_ADD_TC(tp, aes_ct64_selftest);
 
 #ifdef __aarch64__
 	ATF_TP_ADD_TC(tp, aes_armv8_selftest);
@@ -127,7 +151,7 @@ ATF_TP_ADD_TCS(tp)
 #endif
 
 #if defined(__i386__) || defined(__x86_64__)
-	ATF_TP_ADD_TC(tp, aes_sse2_selftest);
+	ATF_TP_ADD_TC(tp, aes_sse2_4x32_selftest);
 	ATF_TP_ADD_TC(tp, aes_ssse3_selftest);
 	ATF_TP_ADD_TC(tp, aes_via_selftest);
 #endif

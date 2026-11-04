@@ -1,6 +1,6 @@
 /* Target-dependent code for the HP PA-RISC architecture.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    Contributed by the Center for Software Science at the
    University of Utah (pa-gdb-bugs@cs.utah.edu).
@@ -194,9 +194,8 @@ hppa_extract_17 (unsigned word)
 CORE_ADDR 
 hppa_symbol_address(const char *sym)
 {
-  struct bound_minimal_symbol minsym;
-
-  minsym = lookup_minimal_symbol (sym, NULL, NULL);
+  bound_minimal_symbol minsym
+    = lookup_minimal_symbol (current_program_space, sym);
   if (minsym.minsym)
     return minsym.value_address ();
   else
@@ -921,12 +920,12 @@ hppa64_convert_code_addr_to_fptr (struct gdbarch *gdbarch, CORE_ADDR code)
   if (!(sec->the_bfd_section->flags & SEC_CODE))
     return code;
 
-  for (obj_section *opd : sec->objfile->sections ())
+  for (obj_section &opd : sec->objfile->sections ())
     {
-      if (strcmp (opd->the_bfd_section->name, ".opd") == 0)
+      if (strcmp (opd.the_bfd_section->name, ".opd") == 0)
 	{
-	  for (CORE_ADDR addr = opd->addr ();
-	       addr < opd->endaddr ();
+	  for (CORE_ADDR addr = opd.addr ();
+	       addr < opd.endaddr ();
 	       addr += 2 * 8)
 	    {
 	      ULONGEST opdaddr;
@@ -2283,16 +2282,16 @@ hppa_frame_unwind_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind hppa_frame_unwind =
-{
+static const struct frame_unwind_legacy hppa_frame_unwind (
   "hppa unwind table",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   hppa_frame_this_id,
   hppa_frame_prev_register,
   NULL,
   hppa_frame_unwind_sniffer
-};
+);
 
 /* This is a generic fallback frame unwinder that kicks in if we fail all
    the other ones.  Normally we would expect the stub and regular unwinder
@@ -2396,16 +2395,16 @@ hppa_fallback_frame_prev_register (const frame_info_ptr &this_frame,
 					  info->saved_regs, regnum);
 }
 
-static const struct frame_unwind hppa_fallback_frame_unwind =
-{
+static const struct frame_unwind_legacy hppa_fallback_frame_unwind (
   "hppa prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   hppa_fallback_frame_this_id,
   hppa_fallback_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Stub frames, used for all kinds of call stubs.  */
 struct hppa_stub_unwind_cache
@@ -2478,15 +2477,16 @@ hppa_stub_unwind_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind hppa_stub_frame_unwind = {
+static const struct frame_unwind_legacy hppa_stub_frame_unwind (
   "hppa stub",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   hppa_stub_frame_this_id,
   hppa_stub_frame_prev_register,
   NULL,
   hppa_stub_unwind_sniffer
-};
+);
 
 CORE_ADDR
 hppa_unwind_pc (struct gdbarch *gdbarch, const frame_info_ptr &next_frame)
@@ -3119,9 +3119,7 @@ hppa_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
   gdb_printf (file, "elf = %s\n", tdep->is_elf ? "yes" : "no");
 }
 
-void _initialize_hppa_tdep ();
-void
-_initialize_hppa_tdep ()
+INIT_GDB_FILE (hppa_tdep)
 {
   gdbarch_register (bfd_arch_hppa, hppa_gdbarch_init, hppa_dump_tdep);
 

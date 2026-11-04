@@ -1,6 +1,6 @@
 /* Definitions for values of C expressions, for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,19 +17,19 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (VALUE_H)
-#define VALUE_H 1
+#ifndef GDB_VALUE_H
+#define GDB_VALUE_H
 
 #include "frame.h"
 #include "extension.h"
 #include "gdbsupport/gdb_ref_ptr.h"
 #include "gmp-utils.h"
+#include "gdbtypes.h"
 
 struct block;
 struct expression;
 struct regcache;
 struct symbol;
-struct type;
 struct ui_file;
 struct language_defn;
 struct value_print_options;
@@ -593,7 +593,7 @@ public:
 
   /* Update this value before discarding OBJFILE.  COPIED_TYPES is
      used to prevent cycles / duplicates.  */
-  void preserve (struct objfile *objfile, htab_t copied_types);
+  void preserve (struct objfile *objfile, copied_types_hash_t &copied_types);
 
   /* Unpack a bitfield of BITSIZE bits found at BITPOS in the object
      at VALADDR + EMBEDDEDOFFSET that has the type of DEST_VAL and
@@ -961,7 +961,7 @@ struct lval_funcs
      This may simply return the same closure, if VALUE's is
      reference-counted or statically allocated.
 
-     This may be NULL, in which case VALUE's closure is re-used in the
+     This may be NULL, in which case VALUE's closure is reused in the
      new value.  */
   void *(*copy_closure) (const struct value *v);
 
@@ -1058,9 +1058,18 @@ extern gdb_mpz value_as_mpz (struct value *val);
 extern LONGEST unpack_long (struct type *type, const gdb_byte *valaddr);
 extern CORE_ADDR unpack_pointer (struct type *type, const gdb_byte *valaddr);
 
+/* Unpack a field FIELDNO of the specified TYPE, from the anonymous
+   object at VALADDR.  See unpack_bits_as_long for more details.  */
+
 extern LONGEST unpack_field_as_long (struct type *type,
 				     const gdb_byte *valaddr,
 				     int fieldno);
+
+/* Unpack a field, FIELD, from the anonymous object at VALADDR.  See
+   unpack_bits_as_long for more details.  */
+
+extern LONGEST unpack_field_as_long (const gdb_byte *valaddr,
+				     struct field *field);
 
 /* Unpack a bitfield of the specified FIELD_TYPE, from the object at
    VALADDR, and store the result in *RESULT.
@@ -1127,6 +1136,8 @@ extern struct value *value_from_contents (struct type *, const gdb_byte *);
 extern value *default_value_from_register (gdbarch *gdbarch, type *type,
 					   int regnum,
 					   const frame_info_ptr &this_frame);
+
+extern ULONGEST default_dwarf2_reg_piece_offset (gdbarch *gdbarch, int regnum, ULONGEST size);
 
 extern struct value *value_from_register (struct type *type, int regnum,
 					  const frame_info_ptr &frame);
@@ -1295,10 +1306,9 @@ extern struct value *value_struct_elt (struct value **argp,
 				       const char *name, int *static_memfuncp,
 				       const char *err);
 
-extern struct value *value_struct_elt_bitpos (struct value **argp,
+extern struct value *value_struct_elt_bitpos (struct value *val,
 					      int bitpos,
-					      struct type *field_type,
-					      const char *err);
+					      struct type *field_type);
 
 extern struct value *value_aggregate_elt (struct type *curtype,
 					  const char *name,
@@ -1598,13 +1608,24 @@ extern struct value *find_function_in_inferior (const char *,
 
 extern struct value *value_allocate_space_in_inferior (int);
 
-/* User function handler.  */
+/* User function handler.  The internal_function_fn variant assumes return
+   type int.  The internal_function_fn_noside returns some value with the
+   return type when passed noside == EVAL_AVOID_SIDE_EFFECTS.  */
 
-typedef struct value *(*internal_function_fn) (struct gdbarch *gdbarch,
-					       const struct language_defn *language,
-					       void *cookie,
-					       int argc,
-					       struct value **argv);
+using internal_function_fn
+  = std::function<struct value *(struct gdbarch *gdbarch,
+				 const struct language_defn *language,
+				 void *cookie,
+				 int argc,
+				 struct value **argv)>;
+
+using internal_function_fn_noside
+  = std::function<struct value *(struct gdbarch *gdbarch,
+				 const struct language_defn *language,
+				 void *cookie,
+				 int argc,
+				 struct value **argv,
+				 enum noside noside)>;
 
 /* Add a new internal function.  NAME is the name of the function; DOC
    is a documentation string describing the function.  HANDLER is
@@ -1615,6 +1636,9 @@ typedef struct value *(*internal_function_fn) (struct gdbarch *gdbarch,
 extern void add_internal_function (const char *name, const char *doc,
 				   internal_function_fn handler,
 				   void *cookie);
+extern void add_internal_function (const char *name, const char *doc,
+				   internal_function_fn_noside handler,
+				   void *cookie);
 
 /* This overload takes an allocated documentation string.  */
 
@@ -1622,11 +1646,16 @@ extern void add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
 				   gdb::unique_xmalloc_ptr<char> &&doc,
 				   internal_function_fn handler,
 				   void *cookie);
+extern void add_internal_function (gdb::unique_xmalloc_ptr<char> &&name,
+				   gdb::unique_xmalloc_ptr<char> &&doc,
+				   internal_function_fn_noside handler,
+				   void *cookie);
 
 struct value *call_internal_function (struct gdbarch *gdbarch,
 				      const struct language_defn *language,
 				      struct value *function,
-				      int argc, struct value **argv);
+				      int argc, struct value **argv,
+				      enum noside noside);
 
 const char *value_internal_function_name (struct value *);
 
@@ -1704,4 +1733,4 @@ void pseudo_to_concat_raw (const frame_info_ptr &next_frame,
 			   int raw_reg_1_num, int raw_reg_2_num,
 			   int raw_reg_3_num);
 
-#endif /* !defined (VALUE_H) */
+#endif /* GDB_VALUE_H */

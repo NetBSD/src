@@ -1,5 +1,5 @@
 /* Async events for the GDB event loop.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ASYNC_EVENT_H
-#define ASYNC_EVENT_H
+#ifndef GDB_ASYNC_EVENT_H
+#define GDB_ASYNC_EVENT_H
 
 #include "gdbsupport/event-loop.h"
 
@@ -87,4 +87,4 @@ extern void clear_async_event_handler (struct async_event_handler *handler);
 
 extern void initialize_async_signal_handlers (void);
 
-#endif /* ASYNC_EVENT_H */
+#endif /* GDB_ASYNC_EVENT_H */

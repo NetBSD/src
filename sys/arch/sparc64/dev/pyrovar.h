@@ -62,6 +62,8 @@ struct pyro_softc {
 	bus_space_tag_t sc_bustag;
 	bus_addr_t sc_csr, sc_xbc;
 	bus_space_handle_t sc_csrh, sc_xbch;
+	void	*(*intr_establish_sc)(struct pyro_softc *, int, int,
+		int (*)(void *), void *, void (*)(void));
 
 	int sc_oberon;
 };

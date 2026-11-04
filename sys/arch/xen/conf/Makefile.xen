@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xen,v 1.50 2020/05/02 16:44:36 bouyer Exp $
+#	$NetBSD: Makefile.xen,v 1.50.26.1 2026/11/04 23:21:34 perseant Exp $
 #	NetBSD: Makefile.i386,v 1.132 2003/07/05 16:56:10 simonb Exp 
 
 # Makefile for NetBSD
@@ -25,7 +25,7 @@ NORELRO=
 NOSANITIZER=
 .include <bsd.init.mk>
 
-USE_SSP?=	yes
+USE_SSP_DEFAULT=yes
 
 ##
 ## (1) port identification

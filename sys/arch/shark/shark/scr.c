@@ -1,4 +1,4 @@
-/*	$NetBSD: scr.c,v 1.38 2024/03/06 20:02:24 andvar Exp $	*/
+/*	$NetBSD: scr.c,v 1.38.2.1 2026/11/04 23:21:20 perseant Exp $	*/
 
 /*
  * Copyright 1997
@@ -102,7 +102,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.38 2024/03/06 20:02:24 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scr.c,v 1.38.2.1 2026/11/04 23:21:20 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -1025,7 +1025,7 @@ scrioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
     struct scr_softc*   sc = device_lookup_private(&scr_cd, SCRUNIT(dev));
     
     int                 error = 0;          /* error value returned */
-    int                 masterDoneRetries= 0;         /* nuber of times we looked at masterDone */
+    int                 masterDoneRetries= 0;         /* number of times we looked at masterDone */
     int                 done;               /* local copy of masterDone */
     
     ScrStatus *         pIoctlStatus;       /* pointer to status ioctl */
@@ -3964,7 +3964,7 @@ char * getText(int x)
         case    atrcTWorkWaiting: return "atrcTWorkWaiting";
 
 
-            /* states in in Anser To Reset (ATR) state machine */
+            /* states in Answer To Reset (ATR) state machine */
         case    atrsIdle:        return "atrsIdle";
         case    atrsTS:          return "atrsTS";
         case    atrsT0:          return "atrsT0";
@@ -3984,7 +3984,7 @@ char * getText(int x)
         case    t0rbcTErrorStart:   return "t0rbcTErrorStart";
         case    t0rbcTErrorStop:    return "t0rbcTErrorStop";
 
-            /* states in in TO Recv Byte state machine */
+            /* states in TO Recv Byte state machine */
         case    t0rbsIdle:          return "t0rbsIdle";
         case    t0rbsFindStartEdge: return "t0rbcFindStartEdge";
         case    t0rbsFindStartMid:  return "t0rbcFindStartMid";
@@ -4000,7 +4000,7 @@ char * getText(int x)
         case    t0sbcTError:        return "t0sbcTError";
         case    t0sbcTResend:       return "t0sbcTResend";
 
-            /* states in in T0 Send Byte state machine */
+            /* states in T0 Send Byte state machine */
         case    t0sbsIdle:          return "t0sbsIdle";
         case    t0sbsClockData:     return "t0sbsClockData";
         case    t0sbsWaitError:     return "t0sbsWaitError";

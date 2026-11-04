@@ -1,5 +1,5 @@
 /* Common definitions for remote server for GDB.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -68,6 +68,7 @@ void initialize_low ();
 extern bool server_waiting;
 
 extern bool disable_packet_vCont;
+extern bool disable_packet_vCont_step;
 extern bool disable_packet_Tthread;
 extern bool disable_packet_qC;
 extern bool disable_packet_qfThreadInfo;
@@ -95,7 +96,6 @@ extern int in_queued_stop_replies (ptid_t ptid);
 
 #include "utils.h"
 #include "debug.h"
-#include "gdbsupport/gdb_vecs.h"
 
 /* Maximum number of bytes to read/write at once.  The value here
    is chosen to fill up a packet (the headers account for the 32).  */
@@ -192,6 +192,11 @@ struct client_state
   /* If true, memory tagging features are supported.  */
   bool memory_tagging_feature = false;
 
+  /* If true then E.errtext style errors are supported everywhere,
+     including for the qRcmd and m packet.  When false E.errtext errors
+     are not supported with qRcmd and m packets, but are still supported
+     everywhere else.  This is for backward compatibility reasons.  */
+  bool error_message_supported = false;
 };
 
 client_state &get_client_state ();

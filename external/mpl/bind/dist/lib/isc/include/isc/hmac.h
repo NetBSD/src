@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac.h,v 1.6.2.1 2025/08/02 05:53:59 perseant Exp $	*/
+/*	$NetBSD: hmac.h,v 1.6.2.2 2026/11/04 23:18:16 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -15,7 +15,7 @@
 
 /*!
  * \file isc/hmac.h
- * \brief This is the header for for message authentication code.
+ * \brief This is the header for message authentication code.
  */
 
 #pragma once

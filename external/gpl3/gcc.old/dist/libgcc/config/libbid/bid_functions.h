@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2022 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -81,7 +81,7 @@ ALIGN (16)
 #define SQRT80 sqrtw
 #endif
 
-     typedef ALIGN (16)
+     typedef ALIGN (8)
      struct {
        UINT64 w[3];
      } UINT192;

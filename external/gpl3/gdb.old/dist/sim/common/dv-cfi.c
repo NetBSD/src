@@ -2,7 +2,7 @@
    http://www.spansion.com/Support/AppNotes/CFI_Spec_AN_03.pdf
    http://www.spansion.com/Support/AppNotes/cfi_100_20011201.pdf
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -210,7 +210,7 @@ cfi_unshift_addr (struct cfi *cfi, unsigned addr)
 {
   switch (cfi->width)
     {
-    case 4: addr >>= 1; /* fallthrough.  */
+    case 4: addr >>= 1; ATTRIBUTE_FALLTHROUGH;
     case 2: addr >>= 1;
     }
   return addr;
@@ -414,7 +414,7 @@ cfi_io_write_buffer (struct hw *me, const void *source, int space,
 	  goto done;
 	}
 
-      /* Fall through.  */
+      ATTRIBUTE_FALLTHROUGH;
 
     default:
       if (!cfi->cmdset->write (me, cfi, source, offset, value, nr_bytes))
@@ -489,6 +489,8 @@ cfi_io_read_buffer (struct hw *me, void *dest, int space,
 
 	  break;
 	}
+
+      ATTRIBUTE_FALLTHROUGH;
 
     default:
       if (!cfi->cmdset->read (me, cfi, dest, offset, shifted_offset, nr_bytes))

@@ -1,6 +1,6 @@
 /* This file is part of SIS (SPARC instruction simulator)
 
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Contributed by Jiri Gaisler, European Space Agency
 
    This program is free software; you can redistribute it and/or modify
@@ -20,7 +20,7 @@
    FPU.  IEEE trap handling is done as follows:
      1. In the host, all IEEE traps are masked
      2. After each simulated FPU instruction, check if any exception
-        occured by reading the exception bits from the host FPU status
+        occurred by reading the exception bits from the host FPU status
         register (get_accex()).
      3. Propagate any exceptions to the simulated FSR.
      4. Clear host exception bits.

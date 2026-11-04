@@ -1,5 +1,5 @@
 /* Standard wait macros.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_WAIT_H
-#define COMMON_GDB_WAIT_H
+#ifndef GDBSUPPORT_GDB_WAIT_H
+#define GDBSUPPORT_GDB_WAIT_H
 
 #ifdef HAVE_SYS_WAIT_H
 #include <sys/wait.h>
@@ -128,4 +128,4 @@ extern int windows_status_to_termsig (unsigned long);
 #define __WCLONE	0x80000000 /* Wait for cloned process.  */
 #endif
 
-#endif /* COMMON_GDB_WAIT_H */
+#endif /* GDBSUPPORT_GDB_WAIT_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2023/11/22 17:48:35 rjs Exp $
+#	$NetBSD: Makefile,v 1.9.2.1 2026/11/04 23:15:26 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -92,7 +92,8 @@ CPPFLAGS+=	${X11FLAGS.THREADLIB} \
 		-DHAVE_TIMESPEC_GET \
 		-DHAVE_PTHREAD \
 		-DHAVE_LIBDRM \
-		-DHAVE_MINCORE
+		-DHAVE_MINCORE \
+		-DHAVE_NOATEXIT
 
 .include "../libloader.mk"
 

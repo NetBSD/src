@@ -1,0 +1,60 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	session-keyfile "session.key";
+	recursion no;
+	dnssec-validation no;
+};
+
+key rndc_key {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+key secondkey {
+	secret "abcd1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+/* deliberately not _common/controls.conf.j2: multi-key control channel is the test subject */
+controls {
+	inet @ns.ip@ port @CONTROLPORT@ allow { any; } keys { rndc_key; secondkey; };
+};
+
+
+{% include "_common/root.hint.conf" %}
+
+zone "nil" {
+	type primary;
+	update-policy local;
+	file "nil.db";
+	ixfr-from-differences yes;
+};
+
+zone "other" {
+	type primary;
+	update-policy local;
+	file "other.db";
+};
+
+zone "static" {
+	type primary;
+	file "static.db";
+};
+
+zone "incl" {
+	type primary;
+	file "incl.db";
+};

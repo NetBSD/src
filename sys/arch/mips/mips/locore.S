@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.231 2023/06/24 05:31:04 msaitoh Exp $	*/
+/*	$NetBSD: locore.S,v 1.231.6.1 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.231 2023/06/24 05:31:04 msaitoh Exp $")
+RCSID("$NetBSD: locore.S,v 1.231.6.1 2026/11/04 23:20:58 perseant Exp $")
 
 #include "assym.h"
 
@@ -127,12 +127,12 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 1:	wait
 	b	1b
 	 nop
-#endif /* MIPS64_OCTEON */
+#endif /* MULTIPROCESSOR */
 2:
-#endif
-/*
- * Initialize stack and call machine startup.
- */
+#endif /* MIPS64_OCTEON */
+	/*
+	 * Initialize stack and call machine startup.
+	 */
 	PTR_LA	v1, start
 	slt	v0, v1, sp
 	bne	v0, zero, 1f
@@ -167,7 +167,7 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	/* Disable again, we don't want it on in the kernel */
 	and	k0, ~MIPS_SR_COP_1_BIT
 	mtc0	k0, MIPS_COP_0_STATUS
-#endif
+#endif /* NOFPU */
 
 	INT_S	t0, _C_LABEL(mips_options)+MO_CPU_ID # save PRID register
 	INT_S	t1, _C_LABEL(mips_options)+MO_FPU_ID # save FPU ID register
@@ -187,14 +187,10 @@ EXPORT_OBJECT(kernel_text)			# libkvm refers this
 	/*
 	 * Now enable interrupts (but they are all masked).
 	 */
-#if __mips_isa_rev >= 2
-	ei
-#else
 	mfc0	v0, MIPS_COP_0_STATUS
 	MFC0_HAZARD
 	or	v0, MIPS_SR_INT_IE
 	mtc0	v0, MIPS_COP_0_STATUS
-#endif
 	COP0_SYNC
 
 	jal	_C_LABEL(main)			# main(void)
@@ -273,19 +269,41 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	 nop
 #endif /* PARANOID_SPL */
 
+	move	s7, t0				# s7 = COP0
 	move	s6, a0				# s6 = old lwp
+
+	/*
+	 * Disable ALL interrupts while switching context.
+	 *
+	 * Interrupts are masked until MIPS_CURLWP, SP, and this CPU's
+	 * ci_curlwp all refer to the new LWP.  Its l_cpu already identifies
+	 * this CPU.
+	 */
+	move	t1, s7
+	or	t1, MIPS_SR_INT_IE		#
+	xor	t1, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	t1, MIPS_COP_0_STATUS		# disable interrupts
+	COP0_SYNC
+
 	move	MIPS_CURLWP, a1			# t8 = new lwp
 	PTR_SUBU sp, CALLFRAME_SIZ
 	REG_S	ra, CALLFRAME_RA(sp)
 	.mask	0x80000000, -4
-/*
- * Switch to new context.
- */
+
+	/*
+	 * Switch to new context.
+	 *
+	 * The architecture specific cpu_switch_resume assembly functions
+	 * are written to preserve s6 (old lwp), and s7 (COP0_STATUS) by
+	 * avoiding using them.
+	 */
 	jal	_C_LABEL(mips_cpu_switch_resume)
 	 move	a0, MIPS_CURLWP
 
+	/* restore SP */
+	PTR_L	s5, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
 	PTR_L	t2, L_CPU(MIPS_CURLWP)
-	nop					# patchable load delay slot
+	REG_L	sp, PCB_CONTEXT+SF_REG_SP(s5)
 
 	/*
 	 * Issue barriers to coordinate mutex_exit on this CPU with
@@ -309,9 +327,14 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(t2)
 	SYNC_DEKKER		/* XXX fixup to nop for uniprocessor boot */
 
+	/* restore interrupts */
+	DYNAMIC_STATUS_MASK(s7, ra)
+	mtc0	s7, MIPS_COP_0_STATUS
+	COP0_SYNC
+
 	/* Check for restartable atomic sequences (RAS) */
 	PTR_L	a0, L_PROC(MIPS_CURLWP)		# argument to ras_lookup
-	PTR_L	s5, L_PCB(MIPS_CURLWP)		# XXXuvm_lwp_getuarea
+	NOP_L
 	PTR_L	v1, P_RASLIST(a0)		# get raslist
 	NOP_L					# load delay
 	beqz	v1, 1f				#   skip call if empty
@@ -350,7 +373,6 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #if defined(__mips_n32) || defined(__mips_n64)
 	REG_L	gp, PCB_CONTEXT+SF_REG_GP(a0)
 #endif
-	REG_L	sp, PCB_CONTEXT+SF_REG_SP(a0)
 	REG_L	s8, PCB_CONTEXT+SF_REG_S8(a0)
 	REG_EPILOGUE
 	mtc0	t0, MIPS_COP_0_STATUS
@@ -418,6 +440,19 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 #endif
 	REG_EPILOGUE
 
+	move	s3, t1				# remember COP0_STATUS
+	/*
+	 * Disable ALL interrupts while switching context.
+	 *
+	 * Interrupts are masked until MIPS_CURLWP, SP, and this CPU's
+	 * ci_curlwp all refer to the new LWP.  Its l_cpu already identifies
+	 * this CPU.
+	 */
+	or	t1, MIPS_SR_INT_IE		#
+	xor	t1, MIPS_SR_INT_IE		# clear interrupt enable bit
+	mtc0	t1, MIPS_COP_0_STATUS		# disable interrupts
+	COP0_SYNC
+
 	/*
 	 * Switch to a fast softint thread.  We don't care about its existing
 	 * state and we use a private KSEG0/XKPHYS mapped stack so don't have
@@ -425,8 +460,9 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	 */
 	move	s0, MIPS_CURLWP				# remember current lwp
 	move	MIPS_CURLWP, a0				# switch to softint lwp
+	move	s2, sp					# remember sp
 	PTR_L	s1, L_CPU(MIPS_CURLWP)			# get curcpu()
-	nop					# patchable load delay slot
+	move	s4, t0					# remember curpcb
 	SYNC_PRODUCER /* XXX fixup */	/* for mutex_enter; see cpu_switchto */
 	PTR_S	MIPS_CURLWP, CPU_INFO_CURLWP(s1)	#    ...
 	/*
@@ -436,13 +472,16 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	 * need not participate in the protocol with mutex_vector_enter
 	 * barriers here.
 	 */
-	move	s2, sp					# remember sp
-	move	s3, t0					# remember curpcb
-
 	PTR_L	t2, L_PCB(MIPS_CURLWP)
 	move	a0, s0					# wants the pinned lwp
+	PTR_ADDU sp, t2, USPACE - TF_SIZ - CALLFRAME_SIZ
+
+	/* restore interrupts */
+	mtc0	s3, MIPS_COP_0_STATUS
+	COP0_SYNC
+
 	jal	_C_LABEL(softint_dispatch)
-	 PTR_ADDU sp, t2, USPACE - TF_SIZ - CALLFRAME_SIZ
+	 nop
 
 	move	sp, s2					# restore stack
 	move	MIPS_CURLWP, s0				# restore curlwp
@@ -453,10 +492,11 @@ NESTED(softint_fast_dispatch, CALLFRAME_SIZ, ra)
 	REG_L	ra, CALLFRAME_RA(sp)		# load early since we use it
 
 	REG_PROLOGUE
-	REG_L	s0, PCB_CONTEXT+SF_REG_S0(s3)		# restore the saved
-	REG_L	s1, PCB_CONTEXT+SF_REG_S1(s3)		#    registers that we
-	REG_L	s2, PCB_CONTEXT+SF_REG_S2(s3)		#    used
-	REG_L	s3, PCB_CONTEXT+SF_REG_S3(s3)
+	REG_L	s0, PCB_CONTEXT+SF_REG_S0(s4)		# restore the saved
+	REG_L	s1, PCB_CONTEXT+SF_REG_S1(s4)		# registers that we
+	REG_L	s2, PCB_CONTEXT+SF_REG_S2(s4)		# used, i.e. s0-s4
+	REG_L	s3, PCB_CONTEXT+SF_REG_S3(s4)
+	REG_L	s4, PCB_CONTEXT+SF_REG_S4(s4)
 	REG_EPILOGUE
 
 	/*
@@ -609,7 +649,7 @@ LEAF(longjmp)
 	jr	ra
 	 li	v0, 1
 END(longjmp)
-#endif
+#endif /* DDB || KGDB */
 
 /*
  * uint32_t mips_cp0_cause_read(void)
@@ -703,30 +743,31 @@ XNESTED(mips_fpu_trap)
 	bgez		t2, 3f			# no, normal trap
 	 nop
 
-/*
- * We received an unimplemented operation trap so
- * fetch the instruction and emulate the instruction.
- *
- * We check whether it's an unimplemented FP instruction here rather
- * than invoking mips_emul_inst(), since it is faster.
- */
+	/*
+	 * We received an unimplemented operation trap so
+	 * fetch the instruction and emulate the instruction.
+	 *
+	 * We check whether it's an unimplemented FP instruction here rather
+	 * than invoking mips_emul_inst(), since it is faster.
+	 */
 	srl		v1, a2, 31		# move branch delay bit to LSB
 	sll		v1, 2			# shift it left by 2 (mult by 4)
 	PTR_ADDU	a0, v1			# add to a0
 	INT_L		a0, 0(a0)		# a0 = coproc instruction
 	NOP_L					# load delay
 
-/*
- * Check to see if the instruction to be emulated is a floating-point
- * instruction.
- */
+	/*
+	 * Check to see if the instruction to be emulated is a floating-point
+	 * instruction.
+	 */
 	srl		t2, a0, MIPS_OPCODE_SHIFT
 	beq		t2, MIPS_OPCODE_C1, 4f
 	 nop
 
-/*
- * Send an ILL signal to the current LWP if the instruction can't be emulated.
- */
+	/*
+	 * Send an ILL signal to the current LWP if the instruction can't be
+	 * emulated.
+	 */
 	srl		a2, 8
 	sll		a2, 8
 	ori		a2, T_RES_INST << MIPS_CR_EXC_CODE_SHIFT
@@ -744,10 +785,10 @@ XNESTED(mips_fpu_trap)
 	b		FPReturn
 	 nop
 
-/*
- * Send a FPE signal to the current LWP if it tripped the any of
- * the VZOUI bits.
- */
+	/*
+	 * Send a FPE signal to the current LWP if it tripped the any of
+	 * the VZOUI bits.
+	 */
 3:
 	REG_PROLOGUE
 	REG_S		a2, TF_REG_CAUSE(a1)
@@ -763,17 +804,17 @@ XNESTED(mips_fpu_trap)
 	b		FPReturn
 	 nop
 
-/*
- * Finally, we can call
- * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
- */
+	/*
+	 * Finally, we can call
+	 * mips_emul_fp(uint32_t insn, struct trapframe *tf, uint32_t cause).
+	 */
 4:
 	jal		_C_LABEL(mips_emul_fp)
 	 nop
 
-/*
- * Turn off the floating point coprocessor and return.
- */
+	/*
+	 * Turn off the floating point coprocessor and return.
+	 */
 FPReturn:
 	mfc0		t0, MIPS_COP_0_STATUS
 	REG_L		ra, CALLFRAME_RA(sp)
@@ -819,7 +860,7 @@ LEAF(mips_pagecopy)
 END(mips_pagecopy)
 
 LEAF(mips_pagezero)
-/* We can always safely store a 64-bit zero on MIPS3,4,64 */
+	/* We can always safely store a 64-bit zero on MIPS3,4,64 */
 	.set	push
 #if (MIPS1 + MIPS32 + MIPS32R2) == 0
 	.set	mips3

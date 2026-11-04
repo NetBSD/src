@@ -12,15 +12,7 @@
  */
 
 options {
-	query-source address 10.53.0.2;
-	notify-source 10.53.0.2;
-	transfer-source 10.53.0.2;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.2; };
-	listen-on-v6 { none; };
-	recursion yes;
-	notify yes;
+	{% include_indented "_common/options.conf.j2" %}
 	statistics-file "named.stats";
 	dnstap-identity "ns2";
 	dnstap-version "xxx";
@@ -28,25 +20,14 @@ options {
 	dnstap { all; };
 	send-cookie no;
 	require-server-cookie no;
-	dnssec-validation yes;
+	dnssec-validation no;
 	qname-minimization disabled;
 };
 
-trust-anchors { };
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
+{% include "_common/controls.conf.j2" %}
 
-controls {
-	inet 10.53.0.2 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
-
-zone "." {
-	type hint;
-	file "../../_common/root.hint";
-};
+{% include "_common/root.hint.conf" %}
 
 zone "example" {
 	type primary;

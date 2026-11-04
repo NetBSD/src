@@ -1,5 +1,5 @@
 /* GNU/Linux on ARM native support.
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -89,8 +89,6 @@ public:
   bool stopped_by_watchpoint () override;
 
   bool stopped_data_address (CORE_ADDR *) override;
-
-  bool watchpoint_addr_within_range (CORE_ADDR, CORE_ADDR, int) override;
 
   const struct target_desc *read_description () override;
 
@@ -714,7 +712,7 @@ struct arm_linux_hw_breakpoint
 
    The Linux ptrace interface to hardware break-/watch-points presents the 
    values in a vector centred around 0 (which is used fo generic information).
-   Positive indicies refer to breakpoint addresses/control registers, negative
+   Positive indices refer to breakpoint addresses/control registers, negative
    indices to watchpoint addresses/control registers.
 
    The Linux vector is indexed as follows:
@@ -874,6 +872,14 @@ static int
 arm_hwbp_control_is_enabled (arm_hwbp_control_t control)
 {
   return control & 0x1;
+}
+
+/* Is the breakpoint control value CONTROL initialized?  */
+
+static int
+arm_hwbp_control_is_initialized (arm_hwbp_control_t control)
+{
+  return control != 0;
 }
 
 /* Change a breakpoint control word so that it is in the disabled state.  */
@@ -1198,14 +1204,6 @@ arm_linux_nat_target::stopped_by_watchpoint ()
   return stopped_data_address (&addr);
 }
 
-bool
-arm_linux_nat_target::watchpoint_addr_within_range (CORE_ADDR addr,
-						    CORE_ADDR start,
-						    int length)
-{
-  return start <= addr && start + length - 1 >= addr;
-}
-
 /* Handle thread creation.  We need to copy the breakpoints and watchpoints
    in the parent thread to the child thread.  */
 void
@@ -1234,6 +1232,34 @@ arm_linux_nat_target::low_delete_thread (struct arch_lwp_info *arch_lwp)
   xfree (arch_lwp);
 }
 
+/* For PID, set the address register of hardware breakpoint pair I to
+   ADDRESS.  */
+
+static void
+sethbpregs_hwbp_address (int pid, int i, unsigned int address)
+{
+  PTRACE_TYPE_ARG3 address_reg = (PTRACE_TYPE_ARG3) ((i << 1) + 1);
+
+  errno = 0;
+
+  if (ptrace (PTRACE_SETHBPREGS, pid, address_reg, &address) < 0)
+    perror_with_name (_("Unexpected error updating breakpoint address"));
+}
+
+/* For PID, set the control register of hardware breakpoint pair I to
+   CONTROL.  */
+
+static void
+sethbpregs_hwbp_control (int pid, int i, arm_hwbp_control_t control)
+{
+  PTRACE_TYPE_ARG3 control_reg = (PTRACE_TYPE_ARG3) ((i << 1) + 2);
+
+  errno = 0;
+
+  if (ptrace (PTRACE_SETHBPREGS, pid, control_reg, &control) < 0)
+    perror_with_name (_("Unexpected error setting breakpoint control"));
+}
+
 /* Called when resuming a thread.
    The hardware debug registers are updated when there is any change.  */
 
@@ -1257,16 +1283,58 @@ arm_linux_nat_target::low_prepare_to_resume (struct lwp_info *lwp)
   for (i = 0; i < arm_linux_get_hw_breakpoint_count (); i++)
     if (arm_lwp_info->bpts_changed[i])
       {
-	errno = 0;
-	if (arm_hwbp_control_is_enabled (bpts[i].control))
-	  if (ptrace (PTRACE_SETHBPREGS, pid,
-	      (PTRACE_TYPE_ARG3) ((i << 1) + 1), &bpts[i].address) < 0)
-	    perror_with_name (_("Unexpected error setting breakpoint"));
+	unsigned int address = bpts[i].address;
+	arm_hwbp_control_t control = bpts[i].control;
 
-	if (bpts[i].control != 0)
-	  if (ptrace (PTRACE_SETHBPREGS, pid,
-	      (PTRACE_TYPE_ARG3) ((i << 1) + 2), &bpts[i].control) < 0)
-	    perror_with_name (_("Unexpected error setting breakpoint"));
+	if (!arm_hwbp_control_is_initialized (control))
+	  {
+	    /* Nothing to do.  */
+	  }
+	else if (!arm_hwbp_control_is_enabled (control))
+	  {
+	    /* Disable hardware breakpoint, just write the control
+	       register.  */
+	    sethbpregs_hwbp_control (pid, i, control);
+	  }
+	else
+	  {
+	    /* We used to do here simply:
+	       1. address_reg = address
+	       2. control_reg = control
+	       but the write to address_reg can fail for thumb2 instructions if
+	       the address is not 4-byte aligned.
+
+	       It's not clear whether this is a kernel bug or not, partly
+	       because PTRACE_SETHBPREGS is undocumented.
+
+	       The context is that we're using two ptrace calls to set the two
+	       halves of a register pair.  For each ptrace call, the kernel must
+	       check the arguments, and return -1 and set errno appropriately if
+	       something is wrong.  One of the aspects that needs validation is
+	       whether, in terms of hw_breakpoint_arch_parse, the breakpoint
+	       address matches the breakpoint length.  This aspect can only be
+	       checked by looking in both registers, which only makes sense
+	       once a pair is written in full.
+
+	       The problem is that the kernel checks this aspect after each
+	       ptrace call, and consequently for the first call it may be
+	       checking this aspect using a default or previous value for the
+	       part of the pair not written by the call.  A possible fix for
+	       this would be to only check this aspect when writing the
+	       control reg.
+
+	       Work around this by first using an inoffensive address, which is
+	       guaranteed to hit the offset == 0 case in
+	       hw_breakpoint_arch_parse.  */
+	    unsigned int aligned_address = address & ~0x7U;
+	    if (aligned_address != address)
+	      {
+		sethbpregs_hwbp_address (pid, i, aligned_address);
+		sethbpregs_hwbp_control (pid, i, control);
+	      }
+	    sethbpregs_hwbp_address (pid, i, address);
+	    sethbpregs_hwbp_control (pid, i, control);
+	  }
 
 	arm_lwp_info->bpts_changed[i] = 0;
       }
@@ -1315,9 +1383,7 @@ arm_linux_nat_target::low_new_fork (struct lwp_info *parent, pid_t child_pid)
   *child_state = *parent_state;
 }
 
-void _initialize_arm_linux_nat ();
-void
-_initialize_arm_linux_nat ()
+INIT_GDB_FILE (arm_linux_nat)
 {
   /* Register the target.  */
   linux_target = &the_arm_linux_nat_target;

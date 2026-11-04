@@ -1,5 +1,5 @@
 /* Externally visible ECOFF routines.
-   Copyright (C) 2019-2024 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -17,6 +17,8 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston,
    MA 02110-1301, USA.  */
+
+extern asection _bfd_ecoff_scom_section;
 
 extern bool bfd_ecoff_set_gp_value
   (bfd *abfd, bfd_vma gp_value);

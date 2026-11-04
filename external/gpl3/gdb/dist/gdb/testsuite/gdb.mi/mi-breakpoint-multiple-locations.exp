@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -56,7 +56,7 @@ proc do_test { mi_version use_fix_flag expect_fixed_output } {
 	    global MIFLAGS decimal binfile
 	    set MIFLAGS "-i=mi${mi_version}"
 
-	    mi_clean_restart $binfile
+	    mi_clean_restart $::testfile
 
 	    mi_runto_main
 

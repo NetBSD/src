@@ -1,6 +1,6 @@
 /* Skipping uninteresting files and functions while stepping.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -531,7 +531,7 @@ skiplist_entry::do_skip_gfile_p (const symtab_and_line &function_sal) const
   /* Check first sole SYMTAB->FILENAME.  It may not be a substring of
      symtab_to_fullname as it may contain "./" etc.  */
   if (gdb_filename_fnmatch (m_file.c_str (), function_sal.symtab->filename,
-			    FNM_FILE_NAME | FNM_NOESCAPE) == 0)
+			    FNM_NOESCAPE) == 0)
     result = true;
 
   /* Before we invoke symtab_to_fullname, which is expensive, do a quick
@@ -542,14 +542,14 @@ skiplist_entry::do_skip_gfile_p (const symtab_and_line &function_sal) const
   else if (!basenames_may_differ
       && gdb_filename_fnmatch (lbasename (m_file.c_str ()),
 			       lbasename (function_sal.symtab->filename),
-			       FNM_FILE_NAME | FNM_NOESCAPE) != 0)
+			       FNM_NOESCAPE) != 0)
     result = false;
   else
     {
       /* Note: symtab_to_fullname caches its result, thus we don't have to.  */
       const char *fullname = symtab_to_fullname (function_sal.symtab);
 
-      result = compare_glob_filenames_for_search (fullname, m_file.c_str ());
+      result = gdb_filename_fnmatch (m_file.c_str (), fullname, FNM_NOESCAPE);
     }
 
   if (debug_skip)
@@ -657,9 +657,7 @@ complete_skip_number (cmd_list_element *cmd,
     }
 }
 
-void _initialize_step_skip ();
-void
-_initialize_step_skip ()
+INIT_GDB_FILE (step_skip)
 {
   static struct cmd_list_element *skiplist = NULL;
   struct cmd_list_element *c;
@@ -684,7 +682,7 @@ Ignore a file while stepping.\n\
 Usage: skip file [FILE-NAME]\n\
 If no filename is given, ignore the current file."),
 	       &skiplist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
 
   c = add_cmd ("function", class_breakpoint, skip_function_command, _("\
 Ignore a function while stepping.\n\

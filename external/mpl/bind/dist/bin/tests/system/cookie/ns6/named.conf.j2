@@ -11,31 +11,15 @@
  * information regarding copyright ownership.
  */
 
-key rndc_key {
-	secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.6 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.6;
-	notify-source 10.53.0.6;
-	transfer-source 10.53.0.6;
-	port @PORT@;
-	pid-file "named.pid";
-	listen-on { 10.53.0.6; };
-	listen-on-v6 { none; };
-	recursion yes;
-	dnssec-validation yes;
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation no;
 	cookie-algorithm siphash24;
 	cookie-secret "6b300e27a0db46d4b046e4189790fa7d";
 	require-server-cookie yes;
 };
-
-trust-anchors { };
 
 zone "." {
 	type hint;

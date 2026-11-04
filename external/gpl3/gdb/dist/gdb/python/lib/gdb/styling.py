@@ -1,5 +1,5 @@
 # Styling related hooks.
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,6 +22,7 @@ try:
     from pygments import formatters, highlight, lexers
     from pygments.filters import TokenMergeFilter
     from pygments.token import Comment, Error, Text
+    from pygments.util import ClassNotFound
 
     _formatter = None
 
@@ -31,10 +32,13 @@ try:
             _formatter = formatters.TerminalFormatter()
         return _formatter
 
-    def colorize(filename, contents):
+    def colorize(filename, contents, lang):
         # Don't want any errors.
         try:
-            lexer = lexers.get_lexer_for_filename(filename, stripnl=False)
+            try:
+                lexer = lexers.get_lexer_by_name(lang, stripnl=False)
+            except ClassNotFound:
+                lexer = lexers.get_lexer_for_filename(filename, stripnl=False)
             formatter = get_formatter()
             return highlight(contents, lexer, formatter).encode(
                 gdb.host_charset(), "backslashreplace"
@@ -76,7 +80,6 @@ try:
             # ignore.
             pass
 
-        global _asm_lexers
         if lexer_type not in _asm_lexers:
             _asm_lexers[lexer_type] = lexers.get_lexer_by_name(lexer_type)
             _asm_lexers[lexer_type].add_filter(HandleNasmComments())
@@ -94,7 +97,7 @@ try:
 
 except ImportError:
 
-    def colorize(filename, contents):
+    def colorize(filename, contents, lang):
         return None
 
     def colorize_disasm(content, gdbarch):

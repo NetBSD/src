@@ -1,4 +1,4 @@
-/*	$NetBSD: em3027.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $ */
+/*	$NetBSD: em3027.c,v 1.8.24.1 2026/11/04 23:21:55 perseant Exp $ */
 /*
  * Copyright (c) 2018 Valery Ushakov
  * All rights reserved.
@@ -28,7 +28,7 @@
  * EM Microelectronic EM3027 RTC
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.8 2021/01/27 02:29:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: em3027.c,v 1.8.24.1 2026/11/04 23:21:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -234,10 +234,9 @@ em3027rtc_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * Attach RTC
 	 */
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = em3027rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = em3027rtc_settime;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 
@@ -383,7 +382,7 @@ em3027rtc_write_byte(struct em3027rtc_softc *sc, uint8_t reg, uint8_t val)
 static int
 em3027rtc_gettime(struct todr_chip_handle *todr, struct clock_ymdhms *dt)
 {
-	struct em3027rtc_softc *sc = todr->cookie;
+	struct em3027rtc_softc *sc = device_private(todr->todr_dev);
 	struct em3027rtc_watch w;
 	int error;
 
@@ -426,7 +425,7 @@ em3027rtc_gettime(struct todr_chip_handle *todr, struct clock_ymdhms *dt)
 static int
 em3027rtc_settime(struct todr_chip_handle *todr, struct clock_ymdhms *dt)
 {
-	struct em3027rtc_softc *sc = todr->cookie;
+	struct em3027rtc_softc *sc = device_private(todr->todr_dev);
 	struct em3027rtc_watch w;
 	int error;
 

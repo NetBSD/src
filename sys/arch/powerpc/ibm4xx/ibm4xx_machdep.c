@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.39 2024/03/05 14:15:34 thorpej Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.39.2.1 2026/11/04 23:21:09 perseant Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.39 2024/03/05 14:15:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.39.2.1 2026/11/04 23:21:09 perseant Exp $");
 
 #include "ksyms.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.39 2024/03/05 14:15:34 thorpej 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_modular.h"
+#include "opt_ppcarch.h"
 #endif
 
 #include <sys/param.h>
@@ -134,6 +135,9 @@ extern const uint32_t defaulttrap[], defaultsize;
 extern const uint32_t sctrap[], scsize;
 extern const uint32_t accesstrap[], accesssize;
 extern const uint32_t criticaltrap[], criticalsize;
+#ifdef PPC_IBM440
+extern const uint32_t mchktrap[], mchksize;
+#endif
 extern const uint32_t tlbimiss4xx[], tlbim4size;
 extern const uint32_t tlbdmiss4xx[], tlbdm4size;
 extern const uint32_t pitfitwdog[], pitfitwdogsize;
@@ -145,19 +149,28 @@ static const struct exc_info trap_table[] = {
 	{ EXC_SC,	sctrap,		(uintptr_t)&scsize },
 	{ EXC_ALI,	accesstrap,	(uintptr_t)&accesssize },
 	{ EXC_DSI,	accesstrap,	(uintptr_t)&accesssize },
+#ifdef PPC_IBM440
+	{ EXC_MCHK,	mchktrap,	(uintptr_t)&mchksize },
+	{ EXC_ISI,	accesstrap,	(uintptr_t)&accesssize },
+#else
 	{ EXC_MCHK,	criticaltrap,	(uintptr_t)&criticalsize },
+#endif
 	{ EXC_ITMISS,	tlbimiss4xx,	(uintptr_t)&tlbim4size },
 	{ EXC_DTMISS,	tlbdmiss4xx,	(uintptr_t)&tlbdm4size },
 	{ EXC_PIT,	pitfitwdog,	(uintptr_t)&pitfitwdogsize },
 	{ EXC_DEBUG,	criticaltrap,	(uintptr_t)&criticalsize },
+#ifndef PPC_IBM440
 	{ (EXC_DTMISS|EXC_ALI),
 			errata51handler, (uintptr_t)&errata51size },
+#endif
 #if defined(DDB)
 	{ EXC_PGM,	ddblow,		(uintptr_t)&ddbsize },
 #else
 	{ EXC_PGM,	accesstrap,	(uintptr_t)&accesssize },
 #endif
 };
+
+void (*md_powerdown)(void);
 
 void
 cpu_reboot(int howto, char *what)
@@ -181,17 +194,18 @@ cpu_reboot(int howto, char *what)
 
 	pmf_system_shutdown(boothowto);
 
-	if ((howto & RB_POWERDOWN) == RB_POWERDOWN) {
-		/* Power off here if we know how... */
+	if ((howto & RB_POWERDOWN) == RB_POWERDOWN && md_powerdown != NULL) {
+		printf("Powering off...\n\n");
+		(*md_powerdown)();
 	}
 
 	if (howto & RB_HALT) {
 		printf("The operating system has halted.\n"
 		    "Press any key to reboot.\n\n");
 
-		cnpollc(1);
+		cnpollc(true);
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("rebooting...\n\n");
@@ -279,7 +293,32 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 
 	__syncicache((void *)EXC_RST, EXC_LAST - EXC_RST + 0x100);
 
+#ifdef PPC_IBM440
+	/*
+	 * Book E: exception vectors are IVPR + IVORn. 
+	 * Point the IVORs at the same memory offs the 40x uses, so the
+	 * trap_copy()ed handlers above are shared...
+	 */
+	mtspr(SPR_IVPR, 0);		/* Exception vector base */
+	mtspr(SPR_IVOR0, EXC_CII);	/* critical input */
+	mtspr(SPR_IVOR1, EXC_MCHK);	/* machine check */
+	mtspr(SPR_IVOR2, EXC_DSI);	/* data storage */
+	mtspr(SPR_IVOR3, EXC_ISI);	/* instruction storage */
+	mtspr(SPR_IVOR4, EXC_EXI);	/* external input */
+	mtspr(SPR_IVOR5, EXC_ALI);	/* alignment */
+	mtspr(SPR_IVOR6, EXC_PGM);	/* program */
+	mtspr(SPR_IVOR7, EXC_FPU);	/* FP unavailable */
+	mtspr(SPR_IVOR8, EXC_SC);	/* system call */
+	mtspr(SPR_IVOR9, EXC_FPA);	/* AP unavailable (default trap) */
+	mtspr(SPR_IVOR10, EXC_PIT);	/* decrementer -> PIT stub */
+	mtspr(SPR_IVOR11, EXC_FIT);	/* fixed interval timer */
+	mtspr(SPR_IVOR12, EXC_WDOG);	/* watchdog */
+	mtspr(SPR_IVOR13, EXC_DTMISS);	/* data TLB error */
+	mtspr(SPR_IVOR14, EXC_ITMISS);	/* instruction TLB error */
+	mtspr(SPR_IVOR15, EXC_DEBUG);	/* debug */
+#else
 	mtspr(SPR_EVPR, 0);		/* Set Exception vector base */
+#endif
 
 	/* Handle trap instruction as PGM exception */
 	mtspr(SPR_DBCR0, mfspr(SPR_DBCR0) & ~DBCR0_TDE);
@@ -293,9 +332,18 @@ ibm4xx_init(vaddr_t startkernel, vaddr_t endkernel, void (*handler)(void))
 	/*
 	 * Now enable translation (and machine checks/recoverable interrupts).
 	 */
+#ifdef PPC_IBM440
+	/*
+	 * The 440 returns from machine checks via MCSRR0/1 + rfmci, so
+	 * enabling ME is necessary - no stuck observed on 440
+	 */
+	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
+		      : : "r" (0), "K" (PSL_IR|PSL_DR|PSL_ME));
+#else
 	__asm volatile ("mfmsr %0; ori %0,%0,%1; mtmsr %0; isync"
 		      : : "r" (0), "K" (PSL_IR|PSL_DR));
 	/* XXXX PSL_ME - With ME set kernel gets stuck... */
+#endif
 
 	/*
 	 * turn on console after enable translation
@@ -397,6 +445,10 @@ ibm4xx_cpu_startup(const char *model)
 
 	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem(false)));
 	printf("avail memory = %s\n", pbuf);
+
+#if defined(PPC_IBM440) && defined(BLKCPY_SELFTEST)
+	ibm4xx_blkcpy_selftest();
+#endif
 }
 
 /*

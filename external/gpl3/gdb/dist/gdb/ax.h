@@ -1,5 +1,5 @@
 /* Definitions for expressions designed to be executed on the agent
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AX_H
-#define AX_H
+#ifndef GDB_AX_H
+#define GDB_AX_H
 
 /* It's sometimes useful to be able to debug programs that you can't
    really stop for more than a fraction of a second.  To this end, the
@@ -224,4 +224,4 @@ extern void ax_print (struct ui_file *f, struct agent_expr * EXPR);
 
 extern void ax_reqs (struct agent_expr *ax);
 
-#endif /* AX_H */
+#endif /* GDB_AX_H */

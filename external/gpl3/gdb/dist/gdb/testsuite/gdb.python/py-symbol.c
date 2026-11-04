@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2010-2024 Free Software Foundation, Inc.
+   Copyright 2010-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -44,6 +44,7 @@ extern void function_in_other_file (void);
 
 int qq = 72;			/* line of qq */
 static int __attribute__ ((used)) rr = 42;	/* line of rr */
+static int __attribute__ ((used)) qqrr = 42;
 
 int func (int arg)
 {

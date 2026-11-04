@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.21.6.1 2025/08/02 05:55:28 perseant Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.21.6.2 2026/11/04 23:20:08 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_modular.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.21.6.1 2025/08/02 05:55:28 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.21.6.2 2026/11/04 23:20:08 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,6 +44,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.21.6.1 2025/08/02 05:55:28 perseant Ex
 #include <uvm/uvm_extern.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <dev/ofw/openfirm.h>
 
@@ -90,6 +91,7 @@ static TAILQ_HEAD(, arm_fdt_cpu_hatch_cb) arm_fdt_cpu_hatch_cbs =
 static void (*_arm_fdt_irq_handler)(void *) = arm_fdt_irq_default_handler;
 static void (*_arm_fdt_fiq_handler)(void *) = arm_fdt_fiq_default_handler;
 static void (*_arm_fdt_timer_init)(void) = NULL;
+static void (*_arm_fdt_timer_setstatclockrate)(int) = NULL;
 
 int
 arm_fdt_match(device_t parent, cfdata_t cf, void *aux)
@@ -200,6 +202,29 @@ cpu_initclocks(void)
 #endif
 
 void
+arm_fdt_timer_register_setstatclockrate(void (*ratefn)(int))
+{
+	if (_arm_fdt_timer_setstatclockrate != NULL) {
+#ifdef DIAGNOSTIC
+		aprint_verbose("%s: setstatclockrate already registered\n",
+		    __func__);
+#endif
+		return;
+	}
+	_arm_fdt_timer_setstatclockrate = ratefn;
+}
+
+#ifdef __HAVE_GENERIC_SETSTATCLOCKRATE
+void
+setstatclockrate(int newhz)
+{
+	if (_arm_fdt_timer_setstatclockrate != NULL) {
+		_arm_fdt_timer_setstatclockrate(newhz);
+	}
+}
+#endif
+
+void
 arm_fdt_module_init(void)
 {
 #ifdef MODULAR
@@ -297,7 +322,6 @@ arm_fdt_efi_init(device_t dev)
 
 	if (arm_efirt_gettime(&tm, NULL) == 0) {
 		aprint_normal_dev(dev, "using EFI runtime services for RTC\n");
-		efi_todr.cookie = NULL;
 		efi_todr.todr_gettime_ymdhms = arm_fdt_efi_rtc_gettime;
 		efi_todr.todr_settime_ymdhms = arm_fdt_efi_rtc_settime;
 		todr_attach(&efi_todr);

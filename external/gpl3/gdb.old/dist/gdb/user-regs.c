@@ -1,6 +1,6 @@
 /* User visible, per-frame registers, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -19,7 +19,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "user-regs.h"
 #include "gdbtypes.h"
 #include "frame.h"
@@ -44,7 +43,7 @@ struct user_reg
   /* Avoid the "read" symbol name as it conflicts with a preprocessor symbol
      in the NetBSD header for Stack Smashing Protection, that wraps the read(2)
      syscall.  */
-  struct value *(*xread) (frame_info_ptr frame, const void *baton);
+  struct value *(*xread) (const frame_info_ptr &frame, const void *baton);
   const void *baton;
   struct user_reg *next;
 };
@@ -203,7 +202,7 @@ user_reg_map_regnum_to_name (struct gdbarch *gdbarch, int regnum)
 }
 
 struct value *
-value_of_user_reg (int regnum, frame_info_ptr frame)
+value_of_user_reg (int regnum, const frame_info_ptr &frame)
 {
   struct gdbarch *gdbarch = get_frame_arch (frame);
   int maxregs = gdbarch_num_cooked_regs (gdbarch);
@@ -223,9 +222,19 @@ maintenance_print_user_registers (const char *args, int from_tty)
   struct gdb_user_regs *regs = get_user_regs (gdbarch);
   regnum = gdbarch_num_cooked_regs (gdbarch);
 
-  gdb_printf (" %-11s %3s\n", "Name", "Nr");
+  ui_out_emit_table emitter (current_uiout, 2, -1, "UserRegs");
+
+  current_uiout->table_header (11, ui_left, "name", "Name");
+  current_uiout->table_header (3, ui_left, "regnum", "Nr");
+  current_uiout->table_body ();
+
   for (reg = regs->first; reg != NULL; reg = reg->next, ++regnum)
-    gdb_printf (" %-11s %3d\n", reg->name, regnum);
+    {
+      ui_out_emit_tuple tuple_emitter (current_uiout, nullptr);
+      current_uiout->field_string ("name", reg->name);
+      current_uiout->field_signed ("regnum", regnum);
+      current_uiout->text ("\n");
+    }
 }
 
 void _initialize_user_regs ();

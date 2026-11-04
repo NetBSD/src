@@ -58,24 +58,24 @@ void if_enum(enum e e)			{ if (e) return; }
 
 /* C99 6.2.5p20 */
 void if_array(struct arr arr)		{ if (arr.arr) return; }
-/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+2: error: controlling expressions must have scalar type, not 'struct s' [204] */
 /* expect+1: warning: parameter 's' unused in function 'if_struct' [231] */
 void if_struct(struct s s)		{ if (s) return; }
-/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+2: error: controlling expressions must have scalar type, not 'union u' [204] */
 /* expect+1: warning: parameter 'u' unused in function 'if_union' [231] */
 void if_union(union u u)		{ if (u) return; }
 void if_function(void)			{ if (if_function) return; }
 void if_pointer(void *p)		{ if (p) return; }
 
 /* C99 6.8.5 */
-/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+2: error: controlling expressions must have scalar type, not 'struct s' [204] */
 /* expect+1: warning: parameter 's' unused in function 'while_struct' [231] */
 void while_struct(struct s s)		{ while (s) return; }
-/* expect+3: error: controlling expressions must have scalar type [204] */
+/* expect+3: error: controlling expressions must have scalar type, not 'struct s' [204] */
 /* expect+2: warning: end-of-loop code not reached [223] */
 /* expect+1: warning: parameter 's' unused in function 'for_struct' [231] */
 void for_struct(struct s s)		{ for (;s;) return; }
-/* expect+2: error: controlling expressions must have scalar type [204] */
+/* expect+2: error: controlling expressions must have scalar type, not 'struct s' [204] */
 /* expect+1: warning: parameter 's' unused in function 'do_while_struct' [231] */
 void do_while_struct(struct s s)	{ do { return; } while (s); }
 

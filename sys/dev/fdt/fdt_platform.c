@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_platform.c,v 1.1 2023/04/07 08:55:31 skrll Exp $ */
+/* $NetBSD: fdt_platform.c,v 1.1.6.1 2026/11/04 23:21:51 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_platform.c,v 1.1 2023/04/07 08:55:31 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_platform.c,v 1.1.6.1 2026/11/04 23:21:51 perseant Exp $");
 
 #include <sys/param.h>
 
 #include <dev/ofw/openfirm.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 const struct fdt_platform *
 fdt_platform_find(void)
@@ -78,6 +79,3 @@ fdt_platform_find(void)
 
 	return booted_platform == NULL ? NULL : booted_platform->fpi_ops;
 }
-
-// XXXNH remove this and rely on a default
-FDT_PLATFORM(dummy, NULL, NULL);

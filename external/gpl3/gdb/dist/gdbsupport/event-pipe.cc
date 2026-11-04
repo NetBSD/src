@@ -1,6 +1,6 @@
 /* Event pipe for GDB, the GNU debugger.
 
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "gdbsupport/event-pipe.h"
 #include "gdbsupport/filestuff.h"
+#include "gdbsupport/eintr.h"
 
 #include <errno.h>
 #include <fcntl.h>
@@ -41,8 +42,8 @@ event_pipe::open_pipe ()
   if (gdb_pipe_cloexec (m_fds) == -1)
     return false;
 
-  if (fcntl (m_fds[0], F_SETFL, O_NONBLOCK) == -1
-      || fcntl (m_fds[1], F_SETFL, O_NONBLOCK) == -1)
+  if (gdb::fcntl (m_fds[0], F_SETFL, O_NONBLOCK) == -1
+      || gdb::fcntl (m_fds[1], F_SETFL, O_NONBLOCK) == -1)
     {
       close_pipe ();
       return false;
@@ -56,8 +57,8 @@ event_pipe::open_pipe ()
 void
 event_pipe::close_pipe ()
 {
-  ::close (m_fds[0]);
-  ::close (m_fds[1]);
+  gdb::close (m_fds[0]);
+  gdb::close (m_fds[1]);
   m_fds[0] = -1;
   m_fds[1] = -1;
 }
@@ -72,9 +73,9 @@ event_pipe::flush ()
 
   do
     {
-      ret = read (m_fds[0], &buf, 1);
+      ret = gdb::read (m_fds[0], &buf, 1);
     }
-  while (ret >= 0 || (ret == -1 && errno == EINTR));
+  while (ret >= 0);
 }
 
 /* See event-pipe.h.  */
@@ -82,18 +83,12 @@ event_pipe::flush ()
 void
 event_pipe::mark ()
 {
-  int ret;
-
   /* It doesn't really matter what the pipe contains, as long we end
      up with something in it.  Might as well flush the previous
      left-overs.  */
   flush ();
 
-  do
-    {
-      ret = write (m_fds[1], "+", 1);
-    }
-  while (ret == -1 && errno == EINTR);
+  gdb::write (m_fds[1], "+", 1);
 
   /* Ignore EAGAIN.  If the pipe is full, the event loop will already
      be awakened anyway.  */

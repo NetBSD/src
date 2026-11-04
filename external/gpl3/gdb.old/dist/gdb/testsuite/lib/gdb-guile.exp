@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,24 +18,11 @@
 # Guile doesn't print the 0x prefix on hex numbers.
 set ghex {[0-9a-f]+}
 
-# Return a 1 for configurations that do not support Guile scripting.
+# Return a 1 for configurations that support Guile scripting.
 
-proc skip_guile_tests {} {
-    global gdb_prompt
-
-    gdb_test_multiple "guile (display \"test\\n\")" "verify guile support" {
-	-re "Undefined command.*$gdb_prompt $" {
-	    unsupported "Guile not supported."
-	    return 1
-	}
-	-re "not supported.*$gdb_prompt $" {
-	    unsupported "Guile support is disabled."
-	    return 1
-	}
-	-re "$gdb_prompt $" {}
-    }
-
-    return 0
+gdb_caching_proc allow_guile_tests {} {
+    set output [remote_exec host $::GDB "$::INTERNAL_GDBFLAGS --configuration"]
+    return [expr {[string first "--with-guile" $output] != -1}]
 }
 
 # Run a command in GDB, and report a failure if a Scheme exception is thrown.

@@ -182,6 +182,7 @@ bounce.o: ../../include/deliver_request.h
 bounce.o: ../../include/dsb_scan.h
 bounce.o: ../../include/dsn.h
 bounce.o: ../../include/dsn_buf.h
+bounce.o: ../../include/dsn_mask.h
 bounce.o: ../../include/hfrom_format.h
 bounce.o: ../../include/htable.h
 bounce.o: ../../include/iostuff.h
@@ -197,8 +198,10 @@ bounce.o: ../../include/msg.h
 bounce.o: ../../include/msg_stats.h
 bounce.o: ../../include/mymalloc.h
 bounce.o: ../../include/nvtable.h
+bounce.o: ../../include/pol_stats.h
 bounce.o: ../../include/rcpt_buf.h
 bounce.o: ../../include/recipient_list.h
+bounce.o: ../../include/sendopts.h
 bounce.o: ../../include/stringops.h
 bounce.o: ../../include/sys_defs.h
 bounce.o: ../../include/vbuf.h
@@ -275,6 +278,7 @@ bounce_notify_service.o: ../../include/msg_stats.h
 bounce_notify_service.o: ../../include/mymalloc.h
 bounce_notify_service.o: ../../include/name_mask.h
 bounce_notify_service.o: ../../include/nvtable.h
+bounce_notify_service.o: ../../include/pol_stats.h
 bounce_notify_service.o: ../../include/post_mail.h
 bounce_notify_service.o: ../../include/rcpt_buf.h
 bounce_notify_service.o: ../../include/rec_type.h
@@ -380,6 +384,7 @@ bounce_notify_verp.o: ../../include/msg_stats.h
 bounce_notify_verp.o: ../../include/mymalloc.h
 bounce_notify_verp.o: ../../include/name_mask.h
 bounce_notify_verp.o: ../../include/nvtable.h
+bounce_notify_verp.o: ../../include/pol_stats.h
 bounce_notify_verp.o: ../../include/post_mail.h
 bounce_notify_verp.o: ../../include/rcpt_buf.h
 bounce_notify_verp.o: ../../include/rec_type.h
@@ -416,6 +421,7 @@ bounce_one_service.o: ../../include/msg_stats.h
 bounce_one_service.o: ../../include/mymalloc.h
 bounce_one_service.o: ../../include/name_mask.h
 bounce_one_service.o: ../../include/nvtable.h
+bounce_one_service.o: ../../include/pol_stats.h
 bounce_one_service.o: ../../include/post_mail.h
 bounce_one_service.o: ../../include/rcpt_buf.h
 bounce_one_service.o: ../../include/rec_type.h

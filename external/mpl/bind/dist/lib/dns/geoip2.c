@@ -1,4 +1,4 @@
-/*	$NetBSD: geoip2.c,v 1.7.2.1 2025/08/02 05:53:25 perseant Exp $	*/
+/*	$NetBSD: geoip2.c,v 1.7.2.2 2026/11/04 23:18:00 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -65,26 +65,31 @@ typedef struct geoip_state {
 	isc_netaddr_t addr;
 	MMDB_lookup_result_s mmresult;
 	MMDB_entry_s entry;
+	uint_fast64_t serial;
 } geoip_state_t;
 
 static thread_local geoip_state_t geoip_state = { 0 };
+static atomic_int_fast64_t geoip_state_serial = 0;
 
 static void
-set_state(const MMDB_s *db, const isc_netaddr_t *addr,
+set_state(uint_fast64_t serial, const MMDB_s *db, const isc_netaddr_t *addr,
 	  MMDB_lookup_result_s mmresult, MMDB_entry_s entry) {
 	geoip_state.db = db;
 	geoip_state.addr = *addr;
 	geoip_state.mmresult = mmresult;
 	geoip_state.entry = entry;
+	geoip_state.serial = serial;
 }
 
 static geoip_state_t *
 get_entry_for(MMDB_s *const db, const isc_netaddr_t *addr) {
 	isc_sockaddr_t sa;
+	uint_fast64_t serial = atomic_load(&geoip_state_serial);
 	MMDB_lookup_result_s match;
 	int err;
 
-	if (db == geoip_state.db && isc_netaddr_equal(addr, &geoip_state.addr))
+	if (serial == geoip_state.serial && db == geoip_state.db &&
+	    isc_netaddr_equal(addr, &geoip_state.addr))
 	{
 		return &geoip_state;
 	}
@@ -95,7 +100,7 @@ get_entry_for(MMDB_s *const db, const isc_netaddr_t *addr) {
 		return NULL;
 	}
 
-	set_state(db, addr, match, match.entry);
+	set_state(serial, db, addr, match, match.entry);
 
 	return &geoip_state;
 }
@@ -196,7 +201,7 @@ match_string(MMDB_entry_data_s *value, const char *str) {
 
 	if (value == NULL || !value->has_data ||
 	    value->type != MMDB_DATA_TYPE_UTF8_STRING ||
-	    value->utf8_string == NULL)
+	    value->utf8_string == NULL || value->data_size != strlen(str))
 	{
 		return false;
 	}
@@ -214,6 +219,11 @@ match_int(MMDB_entry_data_s *value, const uint32_t ui32) {
 	}
 
 	return value->uint32 == ui32;
+}
+
+void
+dns_geoip_invalidate(void) {
+	atomic_fetch_add(&geoip_state_serial, 1);
 }
 
 bool

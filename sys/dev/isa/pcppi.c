@@ -1,4 +1,4 @@
-/* $NetBSD: pcppi.c,v 1.48 2024/02/09 18:20:00 andvar Exp $ */
+/* $NetBSD: pcppi.c,v 1.48.2.1 2026/11/04 23:22:00 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Carnegie-Mellon University.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.48 2024/02/09 18:20:00 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcppi.c,v 1.48.2.1 2026/11/04 23:22:00 perseant Exp $");
 
 #include "attimer.h"
 
@@ -65,7 +65,7 @@ int	pcppi_rescan(device_t, const char *, const int *);
 
 CFATTACH_DECL3_NEW(pcppi, sizeof(struct pcppi_softc),
     pcppi_match, pcppi_isa_attach, pcppi_detach, NULL, pcppi_rescan,
-    pcppi_childdet, DVF_DETACH_SHUTDOWN);
+    pcppi_childdet, 0);
 
 static int pcppisearch(device_t, cfdata_t, const int *, void *);
 static void pcppi_bell_stop(struct pcppi_softc *);

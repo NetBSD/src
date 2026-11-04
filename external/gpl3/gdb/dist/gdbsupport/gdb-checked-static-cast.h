@@ -1,4 +1,4 @@
-/* Copyright (C) 2022-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_GDB_CHECKED_STATIC_CAST_H
-#define COMMON_GDB_CHECKED_STATIC_CAST_H
+#ifndef GDBSUPPORT_GDB_CHECKED_STATIC_CAST_H
+#define GDBSUPPORT_GDB_CHECKED_STATIC_CAST_H
 
 #include "gdbsupport/traits.h"
 
@@ -80,4 +80,4 @@ checked_static_cast (V &v)
 
 }
 
-#endif /* COMMON_GDB_CHECKED_STATIC_CAST_H */
+#endif /* GDBSUPPORT_GDB_CHECKED_STATIC_CAST_H */

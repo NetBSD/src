@@ -1,4 +1,4 @@
-/*	$NetBSD: controlconf.c,v 1.12.2.1 2025/08/02 05:50:52 perseant Exp $	*/
+/*	$NetBSD: controlconf.c,v 1.12.2.2 2026/11/04 23:15:34 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -150,14 +150,6 @@ ISC_REFCOUNT_DECL(controlconnection);
 #endif
 
 #define CLOCKSKEW 300
-
-#define CHECK(x)                               \
-	{                                      \
-		result = (x);                  \
-		if (result != ISC_R_SUCCESS) { \
-			goto cleanup;          \
-		}                              \
-	}
 
 static void
 free_controlkey(controlkey_t *key, isc_mem_t *mctx) {
@@ -378,11 +370,8 @@ control_respond(controlconnection_t *conn) {
 	/* Skip the length field (4 bytes) */
 	isc_buffer_add(conn->buffer, 4);
 
-	result = isccc_cc_towire(conn->response, &conn->buffer, conn->alg,
-				 &conn->secret);
-	if (result != ISC_R_SUCCESS) {
-		return;
-	}
+	CHECK(isccc_cc_towire(conn->response, &conn->buffer, conn->alg,
+			      &conn->secret));
 
 	isc_buffer_init(&b, conn->buffer->base, 4);
 	isc_buffer_putuint32(&b, conn->buffer->used - 4);

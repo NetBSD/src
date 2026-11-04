@@ -1,5 +1,5 @@
 /* 32-bit ELF support for C-SKY.
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1502,8 +1502,7 @@ csky_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      csky_elf_link_hash_newfunc,
-				      sizeof (struct csky_elf_link_hash_entry),
-				      CSKY_ELF_DATA))
+				      sizeof (struct csky_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1522,8 +1521,7 @@ csky_elf_link_hash_table_create (bfd *abfd)
 static bool
 csky_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct csky_elf_obj_tdata),
-				  CSKY_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct csky_elf_obj_tdata));
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -1918,6 +1916,7 @@ csky_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -2086,6 +2085,7 @@ csky_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->elf.dynamic_sections_created)
@@ -3446,13 +3446,12 @@ elf32_csky_size_stubs (bfd *output_bfd,
   while (1)
     {
       bfd *input_bfd;
-      unsigned int bfd_indx;
       asection *stub_sec;
       bool stub_changed = false;
 
-      for (input_bfd = info->input_bfds, bfd_indx = 0;
+      for (input_bfd = info->input_bfds;
 	   input_bfd != NULL;
-	   input_bfd = input_bfd->link.next, bfd_indx++)
+	   input_bfd = input_bfd->link.next)
 	{
 	  Elf_Internal_Shdr *symtab_hdr;
 	  asection *section;
@@ -3726,7 +3725,7 @@ csky_build_one_stub (struct bfd_hash_entry *gen_entry,
      section.  The user should fix his linker script.  */
   if (stub_entry->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output section. "
+    info->callbacks->fatal (_("%P: Could not assign `%pA' to an output section. "
 			      "Retry without --enable-non-contiguous-regions.\n"),
 			    stub_entry->target_section);
 
@@ -3856,6 +3855,7 @@ elf32_csky_build_stubs (struct bfd_link_info *info)
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
 	return false;
+      stub_sec->alloced = 1;
       stub_sec->size = 0;
     }
 
@@ -4380,8 +4380,8 @@ csky_elf_relocate_section (bfd *                  output_bfd,
 	  else
 #endif
 	    RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					     rel, 1, relend, howto, 0,
-					     contents);
+					     rel, 1, relend, R_CKCORE_NONE,
+					     howto, 0, contents);
 	}
 
       if (bfd_link_relocatable (info))
@@ -5299,6 +5299,7 @@ elf32_csky_obj_attrs_handle_unknown (bfd *abfd ATTRIBUTE_UNUSED,
 #define TARGET_LITTLE_SYM                     csky_elf32_le_vec
 #define TARGET_LITTLE_NAME                    "elf32-csky-little"
 #define ELF_ARCH                              bfd_arch_csky
+#define ELF_TARGET_ID			      CSKY_ELF_DATA
 #define ELF_MACHINE_CODE                      EM_CSKY
 #define ELF_MACHINE_ALT1		      EM_CSKY_OLD
 #define ELF_MAXPAGESIZE                       0x1000

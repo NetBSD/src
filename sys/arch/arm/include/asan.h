@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.8 2022/04/02 11:16:07 skrll Exp $	*/
+/*	$NetBSD: asan.h,v 1.8.10.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -111,11 +111,13 @@ __md_palloc(void)
 		return pa;
 	}
 
+	uint64_t ticket;
 	struct vm_page *pg;
 retry:
+	ticket = uvm_wait_prepare();
 	pg = uvm_pagealloc(NULL, 0, NULL, 0);
 	if (pg == NULL) {
-		uvm_wait(__func__);
+		uvm_wait(__func__, ticket);
 		goto retry;
 	}
 	pa = VM_PAGE_TO_PHYS(pg);

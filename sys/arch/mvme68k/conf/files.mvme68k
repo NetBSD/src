@@ -1,8 +1,7 @@
-#	$NetBSD: files.mvme68k,v 1.69 2024/01/18 05:12:29 thorpej Exp $
+#	$NetBSD: files.mvme68k,v 1.69.2.1 2026/11/04 23:21:00 perseant Exp $
 
 # config file for mvme68k
 
-defflag	opt_m060sp.h		M060SP
 defflag				PANICBUTTON	# panic on ABORT if not DDB
 
 # maxpartitions must be first item in files.${ARCH}.newconf
@@ -93,45 +92,18 @@ file arch/mvme68k/dev/memc_68k.c		memc
 file arch/mvme68k/dev/vme_two_68k.c		vmetwo | pcctwo
 
 file arch/mvme68k/mvme68k/autoconf.c
-file arch/mvme68k/mvme68k/bus_dma.c
-file arch/mvme68k/mvme68k/bus_space.c
 file arch/mvme68k/mvme68k/clock.c
 file arch/mvme68k/mvme68k/conf.c
 file arch/mvme68k/mvme68k/disksubr.c
 file arch/mvme68k/mvme68k/machdep.c
-file arch/mvme68k/mvme68k/pmap_bootstrap.c	compile-with "${NOPROF_C}"
-file arch/mvme68k/mvme68k/trap.c
-file arch/m68k/m68k/cacheops.c
-file arch/m68k/m68k/db_memrw.c			ddb | kgdb
-file arch/m68k/m68k/kgdb_machdep.c		kgdb
+file arch/mvme68k/mvme68k/pmap_bootstrap.c	!__have_new_pmap_68k
+file arch/m68k/m68k/bus_dma.c
+file arch/m68k/m68k/bus_space_simple.c
+file arch/m68k/m68k/delay.s
+file arch/m68k/m68k/dumpsys.c
 file arch/m68k/m68k/m68k_intr.c
 file arch/m68k/m68k/m68k_intr_stubs.s
-file arch/m68k/m68k/m68k_trap.c
-file arch/m68k/m68k/mmu_subr.s
-file arch/m68k/m68k/pmap_motorola.c
-file arch/m68k/m68k/procfs_machdep.c		procfs
-file arch/m68k/m68k/sys_machdep.c
-file arch/m68k/m68k/vectors.c
-file arch/m68k/m68k/vm_machdep.c
 file dev/cons.c
 file dev/cninit.c
-
-# Motorola 68060 support package
-include "arch/m68k/060sp/files.060sp"
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include "compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include "compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c		compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include "compat/linux/files.linux"
-include "compat/linux/arch/m68k/files.linux_m68k"
-file arch/m68k/m68k/linux_trap.c		compat_linux
-
-# OSS audio driver compatibility
-include "compat/ossaudio/files.ossaudio"
 
 include	"arch/mvme68k/conf/majors.mvme68k"

@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.62.18.1 2025/08/02 05:56:10 perseant Exp $ */
+/*	$NetBSD: param.h,v 1.62.18.2 2026/11/04 23:21:23 perseant Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -108,14 +108,10 @@ extern int nbpg, pgofset, pgshift;
 #ifdef SUN4V
 #define	MAXCPUS		256
 #endif
+#endif
 
 /* We get stack overflows w/8K stacks in 64-bit mode */
-#define	SSIZE		2		/* initial stack size in pages */
-#else
-#define	SSIZE		2
-#endif
-#define	USPACE		(SSIZE*8192)
-
+#define	USPACE		(2*8192)
 
 /*
  * Here are all the magic kernel virtual addresses and how they're allocated.

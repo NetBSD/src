@@ -1,6 +1,6 @@
 /* GNU/Linux S/390 specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -589,7 +589,7 @@ s390_target::low_arch_setup ()
   struct regset_info *regset;
 
   /* Determine word size and HWCAP.  */
-  int pid = pid_of (current_thread);
+  int pid = current_thread->id.pid ();
   int wordsize = s390_get_wordsize (pid);
   unsigned long hwcap = linux_get_hwcap (pid, wordsize);
 
@@ -796,9 +796,7 @@ s390_target::low_get_thread_area (int lwpid, CORE_ADDR *addrp)
 {
   CORE_ADDR res = ptrace (PTRACE_PEEKUSER, lwpid, (long) PT_ACR0, (long) 0);
 #ifdef __s390x__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-
-  if (register_size (regcache->tdesc, 0) == 4)
+  if (register_size (current_process ()->tdesc, 0) == 4)
     res &= 0xffffffffull;
 #endif
   *addrp = res;
@@ -1286,8 +1284,7 @@ s390_target::install_fast_tracepoint_jump_pad
   unsigned char jbuf[6] = { 0xc0, 0xf4, 0, 0, 0, 0 };	/* jg ... */
   CORE_ADDR buildaddr = *jump_entry;
 #ifdef __s390x__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-  int is_64 = register_size (regcache->tdesc, 0) == 8;
+  int is_64 = register_size (current_process ()->tdesc, 0) == 8;
   int is_zarch = is_64 || have_hwcap_s390_high_gprs;
   int has_vx = have_hwcap_s390_vx;
 #else
@@ -1451,8 +1448,7 @@ s390_target::get_min_fast_tracepoint_insn_len ()
 int
 s390_target::get_ipa_tdesc_idx ()
 {
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-  const struct target_desc *tdesc = regcache->tdesc;
+  const target_desc *tdesc = current_process ()->tdesc;
 
 #ifdef __s390x__
   if (tdesc == tdesc_s390x_linux64)
@@ -2839,9 +2835,7 @@ emit_ops *
 s390_target::emit_ops ()
 {
 #ifdef __s390x__
-  struct regcache *regcache = get_thread_regcache (current_thread, 0);
-
-  if (register_size (regcache->tdesc, 0) == 8)
+  if (register_size (current_process ()->tdesc, 0) == 8)
     return &s390x_emit_ops;
   else
 #endif

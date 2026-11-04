@@ -1,4 +1,4 @@
-/*      $NetBSD: clpsrtc.c,v 1.1 2013/04/28 11:57:13 kiyohara Exp $      */
+/*      $NetBSD: clpsrtc.c,v 1.1.76.1 2026/11/04 23:20:06 perseant Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpsrtc.c,v 1.1 2013/04/28 11:57:13 kiyohara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpsrtc.c,v 1.1.76.1 2026/11/04 23:20:06 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,17 +83,16 @@ clpsrtc_attach(device_t parent, device_t self, void *aux)
 	/* XXXX: reset to compare registers */
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PS711X_RTCMR, 0);
 
-	sc->sc_todr.cookie = sc;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime = clpsrtc_todr_gettime;
 	sc->sc_todr.todr_settime = clpsrtc_todr_settime;
-	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 
 static int
 clpsrtc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct clpsrtc_softc *sc = ch->cookie;
+	struct clpsrtc_softc *sc = device_private(ch->todr_dev);
 
 	tv->tv_sec = bus_space_read_4(sc->sc_iot, sc->sc_ioh, PS711X_RTCDR);
 	tv->tv_usec = 0;
@@ -103,7 +102,7 @@ clpsrtc_todr_gettime(todr_chip_handle_t ch, struct timeval *tv)
 static int
 clpsrtc_todr_settime(todr_chip_handle_t ch, struct timeval *tv)
 {
-	struct clpsrtc_softc *sc = ch->cookie;
+	struct clpsrtc_softc *sc = device_private(ch->todr_dev);
 
 	bus_space_write_4(sc->sc_iot, sc->sc_ioh, PS711X_RTCDR, tv->tv_sec);
 	return 0;

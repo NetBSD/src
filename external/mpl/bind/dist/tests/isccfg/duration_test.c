@@ -1,4 +1,4 @@
-/*	$NetBSD: duration_test.c,v 1.2.6.1 2025/08/02 05:54:18 perseant Exp $	*/
+/*	$NetBSD: duration_test.c,v 1.2.6.2 2026/11/04 23:18:24 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -210,6 +210,7 @@ ISC_RUN_TEST_IMPL(duration) {
 
 			kopts = cfg_tuple_get(kconf, "options");
 			result = cfg_map_get(kopts, "keys", &keys);
+			assert_int_equal(result, ISC_R_SUCCESS);
 
 			key_element = cfg_list_first(keys);
 			assert_non_null(key_element);

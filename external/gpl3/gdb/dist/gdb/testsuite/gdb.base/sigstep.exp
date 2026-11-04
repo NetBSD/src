@@ -1,4 +1,4 @@
-# Copyright 2004-2024 Free Software Foundation, Inc.
+# Copyright 2004-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,8 @@ set other_handler_location [gdb_get_line_number "other handler location"]
 proc restart {} {
     global binfile
 
-    clean_restart $binfile
+    clean_restart
+    gdb_load $binfile
 
     gdb_test "display/i \$pc"
 
@@ -117,7 +118,6 @@ proc advance { enter_cmd in_handler_prefix in_handler exit_cmd } {
 		fail "$test (could not insert single-step breakpoint)"
 	    }
 	    -re "Cannot insert breakpoint.*Cannot access memory.*$gdb_prompt $" {
-		setup_kfail gdb/8841 "nios2*-*-linux*"
 		fail "$test (could not insert single-step breakpoint)"
 	    }
 	    -re "done = 1;.*${gdb_prompt} $" {
@@ -214,7 +214,6 @@ proc advancei { cmd } {
 		# don't gracefully fall back to single-stepping.
 		setup_kfail gdb/8841 "i?86-*-linux*"
 		setup_kfail gdb/8841 "*-*-openbsd*"
-		setup_kfail gdb/8841 "nios2-*-linux*"
 		fail "$test (could not set breakpoint)"
 		return
 	    }
@@ -261,7 +260,7 @@ proc advancei { cmd } {
 	    -re "return .*${gdb_prompt} $" {
 		fail "$test (stepped)"
 	    }
-	    -re "Make .*frame return now.*y or n. $" {
+	    -re "Make signal trampoline return now.*y or n. $" {
 		send_gdb "y\n"
 		exp_continue -continue_timer
 	    }

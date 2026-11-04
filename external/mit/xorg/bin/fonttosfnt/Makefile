@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2018/12/30 08:51:21 mrg Exp $
+#	$NetBSD: Makefile,v 1.4.12.1 2026/11/04 23:15:23 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,8 @@ DPADD+=	 ${LIBFREETYPE} ${LIBFONTENC} ${LIBZ} ${LIBM}
 .PATH:	${X11SRCDIR.${PROG}} ${X11SRCDIR.${PROG}}/man
 
 CWARNFLAGS.clang+=	-Wno-format
+
+.include "../../xorg-pkg-ver.mk"
 
 .include <bsd.x11.mk>
 .include <bsd.prog.mk>

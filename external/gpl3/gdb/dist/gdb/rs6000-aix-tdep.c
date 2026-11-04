@@ -1,6 +1,6 @@
 /* Native support code for PPC AIX, for GDB the GNU debugger.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    Free Software Foundation, Inc.
 
@@ -328,15 +328,16 @@ aix_sighandle_frame_sniffer (const struct frame_unwind *self,
 
 /* AIX signal handler frame unwinder */
 
-static const struct frame_unwind aix_sighandle_frame_unwind = {
+static const struct frame_unwind_legacy aix_sighandle_frame_unwind (
   "rs6000 aix sighandle",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   aix_sighandle_frame_this_id,
   aix_sighandle_frame_prev_register,
   NULL,
   aix_sighandle_frame_sniffer
-};
+);
 
 /* Core file support.  */
 
@@ -524,7 +525,7 @@ rs6000_push_dummy_call (struct gdbarch *gdbarch, struct value *function,
      on PPC variants that lack them.  */
   gdb_assert (ppc_floating_point_unit_p (gdbarch));
 
-  /* The first eight words of ther arguments are passed in registers.
+  /* The first eight words of the arguments are passed in registers.
      Copy them appropriately.  */
   ii = 0;
 
@@ -1329,6 +1330,7 @@ rs6000_aix_ld_info_to_xml (struct gdbarch *gdbarch, const gdb_byte *ldi_buf,
 
 static ULONGEST
 rs6000_aix_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch,
+					   struct bfd &cbfd,
 					   gdb_byte *readbuf,
 					   ULONGEST offset,
 					   ULONGEST len)
@@ -1336,8 +1338,7 @@ rs6000_aix_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch,
   struct bfd_section *ldinfo_sec;
   int ldinfo_size;
 
-  ldinfo_sec = bfd_get_section_by_name (current_program_space->core_bfd (),
-					".ldinfo");
+  ldinfo_sec = bfd_get_section_by_name (&cbfd, ".ldinfo");
   if (ldinfo_sec == NULL)
     error (_("cannot find .ldinfo section from core file: %s"),
 	   bfd_errmsg (bfd_get_error ()));
@@ -1345,8 +1346,7 @@ rs6000_aix_core_xfer_shared_libraries_aix (struct gdbarch *gdbarch,
 
   gdb::byte_vector ldinfo_buf (ldinfo_size);
 
-  if (! bfd_get_section_contents (current_program_space->core_bfd (),
-				  ldinfo_sec, ldinfo_buf.data (), 0,
+  if (! bfd_get_section_contents (&cbfd, ldinfo_sec, ldinfo_buf.data (), 0,
 				  ldinfo_size))
     error (_("unable to read .ldinfo section from core file: %s"),
 	  bfd_errmsg (bfd_get_error ()));
@@ -1361,7 +1361,7 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   ppc_gdbarch_tdep *tdep = gdbarch_tdep<ppc_gdbarch_tdep> (gdbarch);
 
   /* RS6000/AIX does not support PT_STEP.  Has to be simulated.  */
-  set_gdbarch_software_single_step (gdbarch, rs6000_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, rs6000_software_single_step);
 
   /* Displaced stepping is currently not supported in combination with
      software single-stepping.  These override the values set by
@@ -1410,13 +1410,11 @@ rs6000_aix_init_osabi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_wchar_signed (gdbarch, 0);
   set_gdbarch_auto_wide_charset (gdbarch, rs6000_aix_auto_wide_charset);
 
-  set_gdbarch_so_ops (gdbarch, &solib_aix_so_ops);
+  set_gdbarch_make_solib_ops (gdbarch, make_aix_solib_ops);
   frame_unwind_append_unwinder (gdbarch, &aix_sighandle_frame_unwind);
 }
 
-void _initialize_rs6000_aix_tdep ();
-void
-_initialize_rs6000_aix_tdep ()
+INIT_GDB_FILE (rs6000_aix_tdep)
 {
   gdbarch_register_osabi_sniffer (bfd_arch_rs6000,
 				  bfd_target_xcoff_flavour,

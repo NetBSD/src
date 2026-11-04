@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.255.2.1 2026/11/04 23:20:00 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,6 @@
  */
 
 #include "opt_ddb.h"
-#include "opt_compat_netbsd.h"
 #include "opt_fpu_emulate.h"
 #include "opt_lev6_defer.h"
 #include "opt_m060sp.h"
@@ -50,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255.2.1 2026/11/04 23:20:00 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +78,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $"
 #include <sys/exec_elf.h>
 #endif
 
-#include <sys/exec_aout.h>
-
 #undef PS	/* XXX netccitt/pk.h conflict with machine/reg.h? */
 
 #define	MAXMEM	64*1024	/* XXX - from cmap.h */
@@ -97,6 +94,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $"
 #include <machine/psl.h>
 #include <machine/pte.h>
 #include <machine/kcore.h>
+#include <machine/vectors.h>
 #include <dev/cons.h>
 #include <dev/mm.h>
 #include <amiga/amiga/isr.h>
@@ -113,16 +111,17 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.255 2024/03/05 14:15:28 thorpej Exp $"
 #include <amiga/pci/empmvar.h>
 #endif /* NEMPM > 0 */
 
+#ifdef M68060
+#include <m68k/pcr.h>
+#endif
+
 #include "fd.h"
 #include "ser.h"
 #include "ksyms.h"
 
 /* prototypes */
-void identifycpu(void);
 vm_offset_t reserve_dumppages(vm_offset_t);
 void dumpsys(void);
-void initcpu(void);
-void straytrap(int, u_short);
 void intrhand(int);
 #if NSER > 0
 void ser_outintr(void);
@@ -133,24 +132,11 @@ void fdintr(int);
 
 volatile unsigned int intr_depth = 0;
 
-struct vm_map *phys_map = NULL;
-
-void *	msgbufaddr;
-paddr_t msgbufpa;
-
 int	machineid;
 int	maxmem;			/* max memory per process */
 
 extern  int   freebufspace;
 extern	u_int lowram;
-
-/* used in init_main.c */
-const char *cpu_type = "m68k";
-/* the following is used externally (sysctl_hw) */
-char	machine[] = MACHINE;	/* from <machine/param.h> */
-
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store;
 
 /*
  * current open serial device speed;  used by some SCSI drivers to reduce
@@ -165,6 +151,11 @@ volatile u_int8_t *draco_intena, *draco_intpen, *draco_intfrc;
 volatile u_int8_t *draco_misc;
 volatile struct drioct *draco_ioct;
 #endif
+
+struct pmap_bootmap machine_bootmap[] = {
+	/* XXX */
+	{ .pmbm_vaddr = -1 },
+};
 
  /*
  * Console initialization: called early on from main,
@@ -200,8 +191,8 @@ consinit(void)
 	}
 #endif
 #ifdef DDB
-        if (boothowto & RB_KDB)
-                Debugger();
+	if (boothowto & RB_KDB)
+		Debugger();
 #endif
 }
 
@@ -212,93 +203,24 @@ consinit(void)
 void
 cpu_startup(void)
 {
-	u_int i;
-#ifdef DEBUG
-	extern int pmapdebug;
-	int opmapdebug = pmapdebug;
-#endif
-	vaddr_t minaddr, maxaddr;
-
-	/*
-	 * Initialize error message buffer (at end of core).
-	 */
-#ifdef DEBUG
-	pmapdebug = 0;
-#endif
-	/*
-	 * pmap_bootstrap has positioned this at the end of kernel
-	 * memory segment - map and initialize it now.
-	 */
-
-	for (i = 0; i < btoc(MSGBUFSIZE); i++)
-		pmap_enter(pmap_kernel(), (vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    msgbufpa + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE,
-		    VM_PROT_READ|VM_PROT_WRITE|PMAP_WIRED);
-	pmap_update(pmap_kernel());
-	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
-
-	minaddr = 0;
-
-	/*
-	 * Allocate a submap for physio
-	 */
-	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
-				   VM_PHYS_SIZE, 0, false, NULL);
-
-	/*
-	 * Good {morning,afternoon,evening,night}.
-	 */
-	banner();
-
-	/*
-	 * Get MMU/FPU type from bootstrap
-	 */
-	identifycpu();
-
-#ifdef DEBUG
-	pmapdebug = opmapdebug;
-#endif
+	cpu_startup_common();
 
 	/*
 	 * display memory configuration passed from loadbsd
 	 */
-	if (memlist->m_nseg > 0 && memlist->m_nseg < 16)
-		for (i = 0; i < memlist->m_nseg; i++)
+	if (memlist->m_nseg > 0 && memlist->m_nseg < 16) {
+		for (u_int i = 0; i < memlist->m_nseg; i++) {
 			printf("memory segment %d at %08x size %08x\n", i,
 			    memlist->m_seg[i].ms_start,
 			    memlist->m_seg[i].ms_size);
-
-#ifdef DEBUG_KERNEL_START
-	printf("calling initcpu...\n");
-#endif
-	/*
-	 * Set up CPU-specific registers, cache, etc.
-	 */
-	initcpu();
-
-#ifdef DEBUG_KERNEL_START
-	printf("survived initcpu...\n");
-#endif
+		}
+	}
 }
 
-/*
- * Info for CTL_HW
- */
-#if defined(M68060)
-int m68060_pcr_init = 0x21;	/* make this patchable */
-#endif
-
-
 void
-identifycpu(void)
+machine_set_model(void)
 {
-        /* there's alot of XXX in here... */
-	const char *mach, *mmu, *fpu;
-
-#ifdef M68060
-	char cpubuf[16];
-	u_int32_t pcr;
-#endif
+	const char *mach;
 
 #ifdef DRACO
 	char machbuf[16];
@@ -319,52 +241,7 @@ identifycpu(void)
 	else
 		mach = "Amiga 500/2000";
 
-	fpu = NULL;
-#ifdef M68060
-	if (machineid & AMIGA_68060) {
-		__asm(".word 0x4e7a,0x0808; movl %%d0,%0" : "=d"(pcr) : : "d0");
-		snprintf(cpubuf, sizeof(cpubuf), "68%s060 rev.%d",
-		    pcr & 0x10000 ? "LC/EC" : "", (pcr>>8)&0xff);
-		cpu_type = cpubuf;
-		mmu = "/MMU";
-		if (pcr & 2) {
-			fpu = "/FPU disabled";
-			fputype = FPU_NONE;
-		} else if (m68060_pcr_init & 2){
-			fpu = "/FPU will be disabled";
-			fputype = FPU_NONE;
-		} else  if (machineid & AMIGA_FPU40) {
-			fpu = "/FPU";
-			fputype = FPU_68040; /* XXX */
-		}
-	} else
-#endif
-	if (machineid & AMIGA_68040) {
-		cpu_type = "m68040";
-		mmu = "/MMU";
-		fpu = "/FPU";
-		fputype = FPU_68040; /* XXX */
-	} else if (machineid & AMIGA_68030) {
-		cpu_type = "m68030";	/* XXX */
-		mmu = "/MMU";
-	} else {
-		cpu_type = "m68020";
-		mmu = " m68851 MMU";
-	}
-	if (fpu == NULL) {
-		if (machineid & AMIGA_68882) {
-			fpu = " m68882 FPU";
-			fputype = FPU_68882;
-		} else if (machineid & AMIGA_68881) {
-			fpu = " m68881 FPU";
-			fputype = FPU_68881;
-		} else {
-			fpu = " no FPU";
-			fputype = FPU_NONE;
-		}
-	}
-	cpu_setmodel("%s (%s CPU%s%s)", mach, cpu_type, mmu, fpu);
-	printf("%s\n", cpu_getmodel());
+	cpu_setmodel("%s", mach);
 }
 
 /*
@@ -386,65 +263,16 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 		       CTL_MACHDEP, CPU_CONSDEV, CTL_EOL);
 }
 
-static int waittime = -1;
-
 void
-bootsync(void)
+machine_powerdown(void)
 {
-	if (waittime < 0) {
-		waittime = 0;
-		vfs_shutdown();
-	}
-}
-
-
-void
-cpu_reboot(register int howto, char *bootstr)
-{
-	struct pcb *pcb = lwp_getpcb(curlwp);
 #if NEMPM > 0
-	device_t empmdev;
-#endif /* NEMPM > 0 */
-
-	/* take a snap shot before clobbering any registers */
-	if (pcb != NULL)
-		savectx(pcb);
-
-	boothowto = howto;
-	if ((howto & RB_NOSYNC) == 0)
-		bootsync();
-
-	/* Disable interrupts. */
-	spl7();
-
-	/* If rebooting and a dump is requested do it. */
-	if (howto & RB_DUMP)
-		dumpsys();
-
-#if NEMPM > 0
-	if (howto & RB_POWERDOWN) {
-		empmdev = device_find_by_xname("empm0");
-		if (empmdev != NULL) {
-			empm_power_off(device_private(empmdev));
-		}	
+	device_t empmdev = device_find_by_xname("empm0");
+	if (empmdev != NULL) {
+		empm_power_off(device_private(empmdev));
 	}
 #endif /* NEMPM > 0 */
-
-	if (howto & RB_HALT) {
-		printf("\n");
-		printf("The operating system has halted.\n");
-		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);
-		cngetc();
-		cnpollc(0);
-	}
-
-	printf("rebooting...\n");
-	DELAY(1000000);
-	doboot();
-	/*NOTREACHED*/
 }
-
 
 u_int32_t dumpmag = 0x8fca0101;	/* magic number for savecore */
 int	dumpsize = 0;		/* also for savecore */
@@ -544,14 +372,13 @@ cpu_dumpconf(void)
  * getting on the dump stack, either when called above, or by
  * the auto-restart code.
  */
-#define BYTES_PER_DUMP MAXPHYS	/* Must be a multiple of pagesize XXX small */
 static vm_offset_t dumpspace;
 
 vm_offset_t
 reserve_dumppages(vm_offset_t p)
 {
 	dumpspace = p;
-	return (p + BYTES_PER_DUMP);
+	return (p + PAGE_SIZE);
 }
 
 void
@@ -622,8 +449,8 @@ dumpsys(void)
 			printf_nolog("%d ", n / (1024 * 1024));
 
 		/* Limit size for next transfer. */
-		if (n > BYTES_PER_DUMP)
-			n = BYTES_PER_DUMP;
+		if (n > PAGE_SIZE)
+			n = PAGE_SIZE;
 
 		if (maddr == 0) {	/* XXX kvtop chokes on this */
 			maddr += PAGE_SIZE;
@@ -631,7 +458,9 @@ dumpsys(void)
 			i += PAGE_SIZE;
 			++blkno;	/* XXX skip physical page 0 */
 		}
-		(void) pmap_map(dumpspace, maddr, maddr + n, VM_PROT_READ);
+		pmap_enter(pmap_kernel(), dumpspace, maddr,
+		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
+		pmap_update(pmap_kernel());
 		error = (*dump) (dumpdev, blkno, (void *) dumpspace, n);
 		if (error)
 			break;
@@ -670,189 +499,6 @@ dumpsys(void)
 	}
 	printf("\n\n");
 	delay(5000000);		/* 5 seconds */
-}
-
-void
-initcpu(void)
-{
-	/* XXX should init '40 vecs here, too */
-#if defined(M68060) || defined(M68040) || defined(DRACO) || defined(FPU_EMULATE)
-	typedef void trapfun(void);
-	extern trapfun *vectab[256];
-#endif
-
-#if defined(M68060) || defined(M68040)
-	extern trapfun addrerr4060;
-#endif
-
-#ifdef M68060
-	extern trapfun buserr60;
-#if defined(M060SP)
-	/*extern u_int8_t I_CALL_TOP[];*/
-	extern trapfun intemu60, fpiemu60, fpdemu60, fpeaemu60;
-	extern u_int8_t FP_CALL_TOP[];
-#else
-	extern trapfun illinst;
-#endif
-	extern trapfun fpfault;
-#endif
-
-#ifdef M68040
-	extern trapfun buserr40;
-#endif
-
-#ifdef DRACO
-	extern trapfun DraCoIntr, DraCoLev1intr, DraCoLev2intr;
-	u_char dracorev;
-#endif
-
-#ifdef FPU_EMULATE
-	extern trapfun fpemuli;
-#endif
-
-#ifdef M68060
-	if (machineid & AMIGA_68060) {
-		if (machineid & AMIGA_FPU40 && m68060_pcr_init & 2) {
-			/*
-			 * in this case, we're about to switch the FPU off;
-			 * do a FNOP to avoid stray FP traps later
-			 *
-			 * But we can't use fnop directly anymore as of
-			 * gcc-6 because it passes -mno-float to the assembler
-			 * because of -msoft-float and the assembler refuses
-			 * to assemble the instruction; adding -Wa,-mfloat
-			 * does not work either because the assembler then
-			 * complains about feature being turned off and on
-			 * so we just put in the opcode directly.
-			 */
-#if 0
-			__asm("fnop");
-#else
-			__asm(".word 0xf280,0x0000");
-#endif
-			/* ... and mark FPU as absent for identifyfpu() */
-			machineid &= ~(AMIGA_FPU40|AMIGA_68882|AMIGA_68881);
-		}
-		__asm volatile ("movl %0,%%d0; .word 0x4e7b,0x0808" : :
-			"d"(m68060_pcr_init):"d0" );
-
-		/* bus/addrerr vectors */
-		vectab[2] = buserr60;
-		vectab[3] = addrerr4060;
-#if defined(M060SP)
-
-		/* integer support */
-		vectab[61] = intemu60/*(trapfun *)&I_CALL_TOP[128 + 0x00]*/;
-
-		/* floating point support */
-		/*
-		 * XXX maybe we really should run-time check for the
-		 * stack frame format here:
-		 */
-		vectab[11] = fpiemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x30]*/;
-
-		vectab[55] = fpdemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x38]*/;
-		vectab[60] = fpeaemu60/*(trapfun *)&FP_CALL_TOP[128 + 0x40]*/;
-
-		vectab[54] = (trapfun *)&FP_CALL_TOP[128 + 0x00];
-		vectab[52] = (trapfun *)&FP_CALL_TOP[128 + 0x08];
-		vectab[53] = (trapfun *)&FP_CALL_TOP[128 + 0x10];
-		vectab[51] = (trapfun *)&FP_CALL_TOP[128 + 0x18];
-		vectab[50] = (trapfun *)&FP_CALL_TOP[128 + 0x20];
-		vectab[49] = (trapfun *)&FP_CALL_TOP[128 + 0x28];
-
-#else
-		vectab[61] = illinst;
-#endif
-		vectab[48] = fpfault;
-	}
-#endif
-
-/*
- * Vector initialization for special motherboards
- */
-#ifdef M68040
-#ifdef M68060
-	else
-#endif
-	if (machineid & AMIGA_68040) {
-		/* addrerr vector */
-		vectab[2] = buserr40;
-		vectab[3] = addrerr4060;
-	}
-#endif
-
-#ifdef FPU_EMULATE
-	if (!(machineid & (AMIGA_68881|AMIGA_68882|AMIGA_FPU40))) {
-		vectab[11] = fpemuli;
-		printf("FPU software emulation initialized.\n");
-	}
-#endif
-
-/*
- * Vector initialization for special motherboards
- */
-
-#ifdef DRACO
-	dracorev = is_draco();
-	if (dracorev) {
-		if (dracorev >= 4) {
-			vectab[24+1] = DraCoLev1intr;
-			vectab[24+2] = DraCoIntr;
-		} else {
-			vectab[24+1] = DraCoIntr;
-			vectab[24+2] = DraCoLev2intr;
-		}
-		vectab[24+3] = DraCoIntr;
-		vectab[24+4] = DraCoIntr;
-		vectab[24+5] = DraCoIntr;
-		vectab[24+6] = DraCoIntr;
-	}
-#endif
-}
-
-void
-straytrap(int pc, u_short evec)
-{
-	printf("unexpected trap format %x (vector offset %x) from %x\n",
-	       evec>>12, evec & 0xFFF, pc);
-/*XXX*/	panic("straytrap");
-}
-
-int	*nofault;
-
-int
-badaddr(register void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = NULL;
-		return 1;
-	}
-	i = *(volatile short *)addr;
-	__USE(i);
-	nofault = NULL;
-	return 0;
-}
-
-int
-badbaddr(register void *addr)
-{
-	int i;
-	label_t	faultbuf;
-
-	nofault = (int *) &faultbuf;
-	if (setjmp((label_t *)nofault)) {
-		nofault = NULL;
-		return 1;
-	}
-	i = *(volatile char *)addr;
-	__USE(i);
-	nofault = NULL;
-	return 0;
 }
 
 struct isr *isr_ports;
@@ -1175,34 +821,7 @@ nmihand(struct frame frame)
 }
 #endif
 
-/*
- * should only get here, if no standard executable. This can currently
- * only mean, we're reading an old ZMAGIC file without MID, but since Amiga
- * ZMAGIC always worked the `right' way (;-)) just ignore the missing
- * MID and proceed to new zmagic code ;-)
- */
-int
-cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
-{
-#ifdef COMPAT_NOMID
-	struct exec *execp = epp->ep_hdr;
-
-	if (!((execp->a_midmag >> 16) & 0x0fff)
-	    && execp->a_midmag == ZMAGIC)
-		return(exec_aout_prep_zmagic(l, epp));
-#endif
-	return ENOEXEC;
-}
-
 #ifdef MODULAR
-/*
- * Push any modules loaded by the bootloader etc.
- */
-void
-module_init_md(void)
-{
-}
-
 int _spllkm6(void);
 int _spllkm7(void);
 

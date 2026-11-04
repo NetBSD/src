@@ -1,6 +1,6 @@
 /* Displaced stepping related things.
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DISPLACED_STEPPING_H
-#define DISPLACED_STEPPING_H
+#ifndef GDB_DISPLACED_STEPPING_H
+#define GDB_DISPLACED_STEPPING_H
 
 #include "gdbsupport/array-view.h"
 #include "gdbsupport/byte-vector.h"
 
 struct gdbarch;
+struct inferior;
+struct target_ops;
 struct thread_info;
 
 /* True if we are debugging displaced stepping.  */
@@ -48,6 +50,26 @@ enum displaced_step_prepare_status
   DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE,
 };
 
+/* Return a string representation of STATUS.  */
+
+static inline const char *
+displaced_step_prepare_status_str (displaced_step_prepare_status status)
+{
+  switch (status)
+  {
+  case DISPLACED_STEP_PREPARE_STATUS_OK:
+    return "OK";
+
+  case DISPLACED_STEP_PREPARE_STATUS_CANT:
+    return "CANT";
+
+  case DISPLACED_STEP_PREPARE_STATUS_UNAVAILABLE:
+    return "UNAVAILABLE";
+  }
+
+  gdb_assert_not_reached ("invalid displaced_step_prepare_status value");
+}
+
 enum displaced_step_finish_status
 {
   /* Either the instruction was stepped and fixed up, or the specified thread
@@ -58,6 +80,23 @@ enum displaced_step_finish_status
   /* The thread started a displaced step, but didn't complete it.  */
   DISPLACED_STEP_FINISH_STATUS_NOT_EXECUTED,
 };
+
+/* Return a string representation of STATUS.  */
+
+static inline const char *
+displaced_step_finish_status_str (displaced_step_finish_status status)
+{
+  switch (status)
+  {
+  case DISPLACED_STEP_FINISH_STATUS_OK:
+    return "OK";
+
+  case DISPLACED_STEP_FINISH_STATUS_NOT_EXECUTED:
+    return "NOT_EXECUTED";
+  }
+
+  gdb_assert_not_reached ("invalid displaced_step_finish_status value");
+}
 
 /* Data returned by a gdbarch displaced_step_copy_insn method, to be passed to
    the matching displaced_step_fixup method.  */
@@ -207,4 +246,32 @@ private:
   std::vector<displaced_step_buffer> m_buffers;
 };
 
-#endif /* DISPLACED_STEPPING_H */
+/* Default implementation of target_ops::supports_displaced_step.
+
+   Forwards the call to the architecture of THREAD.  */
+
+bool default_supports_displaced_step (target_ops *target, thread_info *thread);
+
+/* Default implementation of target_ops::displaced_step_prepare.
+
+   Forwards the call to the architecture of THREAD.  */
+
+displaced_step_prepare_status default_displaced_step_prepare
+  (target_ops *target, thread_info *thread, CORE_ADDR &displaced_pc);
+
+/* Default implementation of target_ops::displaced_step_finish.
+
+   Forwards the call to the architecture of THREAD.  */
+
+displaced_step_finish_status default_displaced_step_finish
+  (target_ops *target, thread_info *thread, const target_waitstatus &status);
+
+/* Default implementation of target_ops::displaced_step_restore_all_in_ptid.
+
+   Forwards the call to the architecture of PARENT_INF.  */
+
+void default_displaced_step_restore_all_in_ptid (target_ops *target,
+						 inferior *parent_inf,
+						 ptid_t child_ptid);
+
+#endif /* GDB_DISPLACED_STEPPING_H */

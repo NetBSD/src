@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.10 2020/01/02 19:00:34 thorpej Exp $ */
+/* $NetBSD: r2025.c,v 1.10.32.1 2026/11/04 23:21:56 perseant Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.10 2020/01/02 19:00:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.10.32.1 2026/11/04 23:21:56 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,12 +95,9 @@ r2025rtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
 	sc->sc_open = 0;
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = r2025rtc_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = r2025rtc_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
@@ -108,7 +105,7 @@ r2025rtc_attach(device_t parent, device_t self, void *arg)
 static int
 r2025rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct r2025rtc_softc *sc = ch->cookie;
+	struct r2025rtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t rctrl;
 	uint8_t bcd[R2025_CLK_SIZE];
 	int hour;
@@ -157,7 +154,7 @@ r2025rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 static int
 r2025rtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
-	struct r2025rtc_softc *sc = ch->cookie;
+	struct r2025rtc_softc *sc = device_private(ch->todr_dev);
 	uint8_t rctrl;
 	uint8_t bcd[R2025_CLK_SIZE];
 	int error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.158.6.1 2025/08/02 05:57:57 perseant Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.158.6.2 2026/11/04 23:28:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,35 +37,38 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.158.6.1 2025/08/02 05:57:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.158.6.2 2026/11/04 23:28:08 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/namei.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/file.h>
-#include <sys/stat.h>
-#include <sys/mount.h>
-#include <sys/vnode.h>
-#include <sys/kernel.h>
 #include <sys/kauth.h>
-#include <sys/wapbl.h>
-#include <sys/proc.h>
+#include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/mount.h>
+#include <sys/namei.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/stat.h>
+#include <sys/systm.h>
+#include <sys/vnode.h>
+#include <sys/wapbl.h>
 
-#include <ufs/ufs/inode.h>
 #include <ufs/ufs/dir.h>
 #ifdef UFS_DIRHASH
 #include <ufs/ufs/dirhash.h>
 #endif
-#include <ufs/ufs/ufsmount.h>
-#include <ufs/ufs/ufs_extern.h>
+#include <ufs/ufs/inode.h>
 #include <ufs/ufs/ufs_bswap.h>
+#include <ufs/ufs/ufs_extern.h>
 #include <ufs/ufs/ufs_wapbl.h>
+#include <ufs/ufs/ufsmount.h>
 
 #include <miscfs/genfs/genfs.h>
 
@@ -200,7 +203,7 @@ slot_estimate(const struct slotinfo *slot, int dirblksiz, int nameiop,
 #if 0 /* commented out by dbj. none of the on disk fields changed */
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
 #endif
-	return EJUSTRETURN;
+	return SET_ERROR(EJUSTRETURN);
 }
 
 /*
@@ -230,12 +233,12 @@ ufs_can_delete(struct vnode *tdp, struct vnode *vdp, struct inode *ip,
 	/* Moved to ufs_remove, ufs_rmdir because they hold the lock */
 	error = VOP_ACCESSX(tdp, VDELETE, cred);
 	if (error == 0)
-		return (0);
+		return 0;
 #endif
 
 	error = VOP_ACCESSX(vdp, VDELETE_CHILD, cred);
 	if (error == 0)
-		return (0);
+		return 0;
 
 	error = VOP_ACCESSX(vdp, VEXPLICIT_DENY | VDELETE_CHILD, cred);
 	if (error)
@@ -262,7 +265,7 @@ ufs_can_delete(struct vnode *tdp, struct vnode *vdp, struct inode *ip,
 	error = kauth_authorize_vnode(cred, KAUTH_VNODE_DELETE, tdp, vdp,
 	    genfs_can_sticky(vdp, cred, ip->i_uid, VTOI(tdp)->i_uid));
 	if (error) {
-		error = EPERM;	// Why override?
+		error = SET_ERROR(EPERM);	// Why override?
 		goto out;
 	}
 	return 0;
@@ -277,7 +280,7 @@ ufs_getino(struct vnode *vdp, struct inode *ip, ino_t foundino,
 {
 	if (ip->i_number == foundino) {
 		if (same)
-			return EISDIR;
+			return SET_ERROR(EISDIR);
 		vref(vdp);
 		*tdp = vdp;
 		return 0;
@@ -365,11 +368,11 @@ ufs_lookup(void *v)
 	 * Check accessibility of directory.
 	 */
 	if ((error = VOP_ACCESS(vdp, VEXEC, cred)) != 0)
-		return (error);
+		return error;
 
 	if ((flags & ISLASTCN) && (vdp->v_mount->mnt_flag & MNT_RDONLY) &&
 	    (nameiop == DELETE || nameiop == RENAME))
-		return (EROFS);
+		return SET_ERROR(EROFS);
 
 	/*
 	 * We now have a segment name to search for, and a directory to search.
@@ -383,12 +386,12 @@ ufs_lookup(void *v)
 		if (iswhiteout) {
 			cnp->cn_flags |= ISWHITEOUT;
 		}
-		return *vpp == NULLVP ? ENOENT : 0;
+		return *vpp == NULLVP ? SET_ERROR(ENOENT) : 0;
 	}
 
 	/* May need to restart the lookup with an exclusive lock. */
 	if (VOP_ISLOCKED(vdp) != LK_EXCLUSIVE) {
-		return ENOLCK;
+		return SET_ERROR(ENOLCK);
 	}
 
 	/*
@@ -650,7 +653,7 @@ notfound:
 		cache_enter(vdp, *vpp, cnp->cn_nameptr, cnp->cn_namelen,
 			    cnp->cn_flags);
 	}
-	error = ENOENT;
+	error = SET_ERROR(ENOENT);
 	goto out;
 
 found:
@@ -1165,7 +1168,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 		error = ufs_blkatoff(dvp, (off_t)ulr->ulr_offset, &ep,
 				     &bp, true);
 		if (error)
-			return (error);
+			return error;
 		ep->d_ino = ufs_rw32(UFS_WINO, needswap);
 		ep->d_type = DT_WHT;
 		goto out;
@@ -1173,7 +1176,7 @@ ufs_dirremove(struct vnode *dvp, const struct ufs_lookup_results *ulr,
 
 	if ((error = ufs_blkatoff(dvp,
 	    (off_t)(ulr->ulr_offset - ulr->ulr_count), &ep, &bp, true)) != 0)
-		return (error);
+		return error;
 
 	reclen = ufs_rw16(ep->d_reclen, needswap);
 #ifdef UFS_DIRHASH
@@ -1232,7 +1235,7 @@ out:
 	    ip->i_nlink == 0)
 		UFS_SNAPGONE(ITOV(ip));
 	UFS_WAPBL_UPDATE(dvp, NULL, NULL, 0);
-	return (error);
+	return error;
 }
 
 /*
@@ -1263,7 +1266,7 @@ ufs_dirrewrite(struct inode *dp, off_t offset,
 
 	error = ufs_blkatoff(vdp, offset, &ep, &bp, true);
 	if (error)
-		return (error);
+		return error;
 	ep->d_ino = ufs_rw32(newinum, UFS_MPNEEDSWAP(dp->i_ump));
 	if (!FSFMT(vdp))
 		ep->d_type = newtype;
@@ -1281,7 +1284,7 @@ ufs_dirrewrite(struct inode *dp, off_t offset,
 	if ((oip->i_flags & SF_SNAPSHOT) != 0 && oip->i_nlink == 0)
 		UFS_SNAPGONE(ITOV(oip));
 	UFS_WAPBL_UPDATE(vdp, NULL, NULL, UPDATE_DIROP);
-	return (error);
+	return error;
 }
 
 /*
@@ -1314,10 +1317,10 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		 * be 0 unless we're at end of file.
 		 */
 		if (error || count != 0)
-			return (0);
+			return 0;
 		/* avoid infinite loops */
 		if (dp->d_reclen == 0)
-			return (0);
+			return 0;
 		/* skip empty entries */
 		ino_t ino = ufs_rw32(dp->d_ino, needswap);
 		if (ino == 0 || ino == UFS_WINO)
@@ -1325,9 +1328,9 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 		/* accept only "." and ".." */
 		const uint8_t namlen = NAMLEN(fsfmt, needswap, dp);
 		if (namlen > 2)
-			return (0);
+			return 0;
 		if (dp->d_name[0] != '.')
-			return (0);
+			return 0;
 		/*
 		 * At this point namlen must be 1 or 2.
 		 * 1 implies ".", 2 implies ".." if second
@@ -1337,9 +1340,9 @@ ufs_dirempty(struct inode *ip, ino_t parentino, kauth_cred_t cred)
 			continue;
 		if (dp->d_name[1] == '.' && ino == parentino)
 			continue;
-		return (0);
+		return 0;
 	}
-	return (1);
+	return 1;
 }
 
 #define	UFS_DIRRABLKS 0

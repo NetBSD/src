@@ -1,6 +1,6 @@
 /* Caching of GDB/DWARF index files.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef DWARF_INDEX_CACHE_H
-#define DWARF_INDEX_CACHE_H
+#ifndef GDB_DWARF2_INDEX_CACHE_H
+#define GDB_DWARF2_INDEX_CACHE_H
 
-#include "dwarf2/index-common.h"
 #include "gdbsupport/array-view.h"
-#include "symfile.h"
 
 class dwarf2_per_bfd;
 class index_cache;
@@ -34,6 +32,8 @@ struct index_cache_resource
 {
   virtual ~index_cache_resource () = 0;
 };
+
+using index_cache_resource_up = std::unique_ptr<index_cache_resource>;
 
 /* Information to be captured in the main thread, and to be used by worker
    threads during store ().  */
@@ -91,7 +91,7 @@ public:
      If no matching index file is found, return an empty array view.  */
   gdb::array_view<const gdb_byte>
   lookup_gdb_index (const bfd_build_id *build_id,
-		    std::unique_ptr<index_cache_resource> *resource);
+		    index_cache_resource_up *resource);
 
   /* Return the number of cache hits.  */
   unsigned int n_hits () const
@@ -137,4 +137,4 @@ private:
 /* The global instance of the index cache.  */
 extern index_cache global_index_cache;
 
-#endif /* DWARF_INDEX_CACHE_H */
+#endif /* GDB_DWARF2_INDEX_CACHE_H */

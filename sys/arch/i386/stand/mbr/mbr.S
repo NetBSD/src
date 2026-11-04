@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.S,v 1.24 2023/08/01 21:26:27 andvar Exp $	*/
+/*	$NetBSD: mbr.S,v 1.24.6.1 2026/11/04 23:20:46 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999-2004 The NetBSD Foundation, Inc. 
@@ -346,7 +346,7 @@ check_key:
  * Use keycode to index the table we generated when we scanned the mbr
  * while generating the menu.
  *
- * We very carfully saved the values in the correct part of the table.
+ * We very carefully saved the values in the correct part of the table.
  */
 
 boot_ptn:

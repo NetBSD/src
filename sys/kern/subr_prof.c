@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $	*/
+/*	$NetBSD: subr_prof.c,v 1.50.10.1 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.50.10.1 2026/11/04 23:27:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
@@ -40,18 +40,20 @@ __KERNEL_RCSID(0, "$NetBSD: subr_prof.c,v 1.50 2021/08/14 17:51:20 ryo Exp $");
 #endif
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/proc.h>
-#include <sys/mount.h>
-#include <sys/syscallargs.h>
-#include <sys/sysctl.h>
+#include <sys/types.h>
 
 #include <sys/cpu.h>
+#include <sys/kernel.h>
+#include <sys/mount.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
+#include <sys/syscallargs.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #ifdef GPROF
-#include <sys/malloc.h>
 #include <sys/gmon.h>
+#include <sys/malloc.h>
 #include <sys/xcall.h>
 
 MALLOC_DEFINE(M_GPROF, "gprof", "kernel profiling buffer");
@@ -254,7 +256,7 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 		gp = malloc(sizeof(struct gmonparam) + size, M_GPROF,
 		    M_NOWAIT | M_ZERO);
 		if (gp == NULL)
-			return ENOMEM;
+			return SET_ERROR(ENOMEM);
 		memcpy(gp, &_gmonparam, sizeof(_gmonparam));
 		cp = (char *)(gp + 1);
 		gp->tos = (struct tostruct *)cp;
@@ -311,7 +313,7 @@ sysctl_kern_profiling(SYSCTLFN_ARGS)
 		node.sysctl_size = sizeof(*gp);
 		break;
 	default:
-		return (EOPNOTSUPP);
+		return SET_ERROR(EOPNOTSUPP);
 	}
 
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -491,12 +493,12 @@ sys_profil(struct lwp *l, const struct sys_profil_args *uap, register_t *retval)
 	struct uprof *upp;
 
 	if (SCARG(uap, scale) > (1 << 16))
-		return (EINVAL);
+		return SET_ERROR(EINVAL);
 	if (SCARG(uap, scale) == 0) {
 		mutex_spin_enter(&p->p_stmutex);
 		stopprofclock(p);
 		mutex_spin_exit(&p->p_stmutex);
-		return (0);
+		return 0;
 	}
 	upp = &p->p_stats->p_prof;
 
@@ -509,7 +511,7 @@ sys_profil(struct lwp *l, const struct sys_profil_args *uap, register_t *retval)
 	startprofclock(p);
 	mutex_spin_exit(&p->p_stmutex);
 
-	return (0);
+	return 0;
 }
 
 /*

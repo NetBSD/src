@@ -1,4 +1,4 @@
-/* Copyright (C) 2011-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_PTRACE_H
-#define NAT_LINUX_PTRACE_H
+#ifndef GDB_NAT_LINUX_PTRACE_H
+#define GDB_NAT_LINUX_PTRACE_H
 
 #include "nat/gdb_ptrace.h"
 #include "gdbsupport/gdb_wait.h"
@@ -186,4 +186,4 @@ extern int linux_ptrace_get_extended_event (int wstat);
 extern int linux_is_extended_waitstatus (int wstat);
 extern int linux_wstatus_maybe_breakpoint (int wstat);
 
-#endif /* NAT_LINUX_PTRACE_H */
+#endif /* GDB_NAT_LINUX_PTRACE_H */

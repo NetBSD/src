@@ -700,7 +700,7 @@
     of a few dozen kilobytes on startup. This pool is used to ensure it's
     possible to throw exceptions (such as <code class="classname">bad_alloc</code>)
     even when <code class="code">malloc</code> is unable to allocate any more memory.
-    With some versions of <a class="link" href="http://valgrind.org/" target="_top"><span class="command"><strong>valgrind</strong></span></a>
+    With some versions of <a class="link" href="https://valgrind.org" target="_top"><span class="command"><strong>valgrind</strong></span></a>
     this pool will be shown as "still reachable" when the process exits, e.g.
     <code class="code">still reachable: 72,704 bytes in 1 blocks</code>.
     This memory is not a leak, because it's still in use by libstdc++,
@@ -710,7 +710,7 @@
     </p><p>
     In the past, a few people reported that the standard containers appear
     to leak memory when tested with memory checkers such as
-    <a class="link" href="http://valgrind.org/" target="_top"><span class="command"><strong>valgrind</strong></span></a>.
+    <span class="command"><strong>valgrind</strong></span>.
     Under some (non-default) configurations the library's allocators keep
     free memory in a
     pool for later reuse, rather than deallocating it with <code class="code">delete</code>
@@ -797,7 +797,7 @@
     Libstdc++-v3 incorporates a lot of code from
     <a class="link" href="https://web.archive.org/web/20171225062613/http://www.sgi.com/tech/stl/" target="_top">the SGI STL</a>
     (the final merge was from
-    <a class="link" href="https://web.archive.org/web/20171225062613/http://www.sgi.com/tech/stl/whats_new.html" target="_top">release 3.3</a>).
+    <a class="link" href="https://web.archive.org/web/20171206110416/http://www.sgi.com/tech/stl/whats_new.html" target="_top">release 3.3</a>).
     The code in libstdc++ contains many fixes and changes compared to the
     original SGI code.
     </p><p>

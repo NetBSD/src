@@ -1,0 +1,80 @@
+# Copyright 2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Some basic testing of 'set debug breakpoint on'.  At one point a bug
+# meant that some breakpoints would immediately trigger a segfault if
+# GDB tried to run with breakpoint debugging turned on.
+#
+# Test is compiled as C++ only so 'catch catch/throw/rethrow' have a
+# something to do.  The original bug would trigger for any 'catch'
+# style breakpoint, so C++ isn't really a hard requirement.
+
+standard_testfile .cc
+
+require allow_cplus_tests
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile} \
+	  {debug c++}] } {
+    return
+}
+
+if {![runto_main]} {
+    return
+}
+
+gdb_test "catch catch" "^Catchpoint $decimal \\(catch\\)"
+gdb_test "catch throw" "^Catchpoint $decimal \\(throw\\)"
+gdb_test "catch rethrow" "^Catchpoint $decimal \\(rethrow\\)"
+
+gdb_test "catch exec" "^Catchpoint $decimal \\(exec\\)"
+gdb_test "catch fork" "^Catchpoint $decimal \\(fork\\)"
+gdb_test "catch vfork" "^Catchpoint $decimal \\(vfork\\)"
+
+gdb_test "catch load" "^Catchpoint $decimal \\(load\\)"
+gdb_test "catch unload" "^Catchpoint $decimal \\(unload\\)"
+
+gdb_test "catch signal" "^Catchpoint $decimal \\(standard signals\\)"
+
+set re_warning_xml_disabled \
+    [string_to_regexp \
+	 [join \
+	      [list \
+		   "warning: Can not parse XML syscalls information;" \
+		   "XML support was disabled at compile time."]]]
+gdb_test "catch syscall" \
+    [multi_line \
+	 "^($re_warning_xml_disabled" \
+	 ")?Catchpoint $decimal [string_to_regexp {(any syscall)}]"]
+
+gdb_test "watch -l global_var" "\[Ww]atchpoint $decimal: -location global_var"
+
+gdb_test_no_output "set debug breakpoint on"
+
+set saw_bp_debug_line false
+gdb_test_multiple "step" "" {
+    -re "^step\r\n" {
+	exp_continue
+    }
+    -re "^\\\[breakpoint\\\] \[^\r\n\]+\r\n" {
+	set saw_bp_debug_line true
+	exp_continue
+    }
+    -re "^$gdb_prompt $" {
+	gdb_assert { $saw_bp_debug_line } $gdb_test_name
+    }
+    -re "^\[^\r\n\]*\r\n" {
+	exp_continue
+    }
+}

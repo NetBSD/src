@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.41 2024/01/12 23:46:53 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.41.2.1 2026/11/04 23:21:26 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -99,8 +99,6 @@ struct trapframe;
 struct uio;
 struct mmu_rootptr;
 
-extern label_t *nofault;
-
 extern vaddr_t vmmap;	/* XXX - See mem.c */
 
 void	clock_init (void);
@@ -126,11 +124,6 @@ void	netintr(void);
 
 void	obio_init(void);
 
-void	sunmon_abort(void);
-void	sunmon_halt(void);
-void	sunmon_init(void);
-void	sunmon_reboot(const char *);
-
 void	swapconf(void);
 
 void	zs_init(void);
@@ -154,7 +147,7 @@ void	cache_flush_segment(vaddr_t);
 void	cache_flush_context(void);
 
 /* pmap.c */
-void	pmap_bootstrap(vaddr_t);
+paddr_t	pmap_bootstrap(vaddr_t);
 void	pmap_kcore_hdr(struct sun3_kcore_hdr *);
 void	pmap_get_pagemap(int *, int);
 
@@ -175,9 +168,8 @@ extern vaddr_t virtual_avail;
 
 void	loadcrp(struct mmu_rootptr *);
 
-void	pmap_bootstrap(vaddr_t);
+paddr_t	pmap_bootstrap(vaddr_t);
 void	pmap_kcore_hdr(struct sun3x_kcore_hdr *);
-int	pmap_pa_exists(paddr_t);
 
 #endif	/* SUN3X */
 

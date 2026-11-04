@@ -445,7 +445,7 @@ om_write_word(om_map *map,
 }
 
 
-/* Bring things into existance */
+/* Bring things into existence */
 
 INLINE_VM\
 (vm *)

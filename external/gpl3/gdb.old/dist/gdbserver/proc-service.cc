@@ -1,5 +1,5 @@
 /* libthread_db helper functions for the remote server for GDB.
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by MontaVista Software.
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 
 /* This file is currently tied to GNU/Linux.  It should scale well to
    another libthread_db implementation, with the appropriate gdbserver
@@ -112,8 +111,8 @@ ps_lgetregs (gdb_ps_prochandle_t ph, lwpid_t lwpid, prgregset_t gregset)
     return PS_ERR;
 
   scoped_restore_current_thread restore_thread;
-  switch_to_thread (get_lwp_thread (lwp));
-  regcache = get_thread_regcache (current_thread, 1);
+  switch_to_thread (lwp->thread);
+  regcache = get_thread_regcache (current_thread);
   gregset_info ()->fill_function (regcache, gregset);
 
   return PS_OK;

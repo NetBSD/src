@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_coldfire.h,v 1.6 2023/09/28 06:34:22 skrll Exp $	*/
+/*	$NetBSD: pmap_coldfire.h,v 1.6.6.1 2026/11/04 23:20:51 perseant Exp $	*/
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #ifndef _M68K_PMAP_COLDFIRE_H_
-#define M68K_PMAP_COLDFIRE_H_
+#define _M68K_PMAP_COLDFIRE_H_
 
 #ifdef _LOCORE
 #error use assym.h instead
@@ -57,11 +57,11 @@
 
 #include <m68k/pte_coldfire.h>
 
-#define	NBSEG		(NBPG*NPTEPG)
-#define	SEGSHIFT	(PGSHIFT + PGSHIFT - 2)
+#define	NBSEG		(PAGE_SIZE*NPTEPG)
+#define	SEGSHIFT	(PAGE_SHIFT + PAGE_SHIFT - 2)
 #define	SEGOFSET	((1 << SEGSHIFT) - 1)
 #define	PMAP_SEGTABSIZE	(1 << (32 - SEGSHIFT))
-#define	NPTEPG		(NBPG >> 2)
+#define	NPTEPG		(PAGE_SIZE >> 2)
 
 #define	KERNEL_PID	0
 
@@ -137,17 +137,17 @@ pmap_md_tlb_asid_max(void)
 }
 
 static inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pm, struct lwp *l)
 {
 
-	/* nothing */
+	tlb_set_asid(asid, pm);
 }
 
 static inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
+pmap_md_asid_deactivate(struct pmap *pm)
 {
 
-	/* nothing */
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 }
 #endif
 

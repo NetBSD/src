@@ -1,4 +1,4 @@
-/*	$NetBSD: dpclock.c,v 1.7 2020/01/02 23:51:48 thorpej Exp $	*/
+/*	$NetBSD: dpclock.c,v 1.7.32.1 2026/11/04 23:21:18 perseant Exp $	*/
 
 /*
  * Copyright (c) 2001 Erik Reid
@@ -50,6 +50,7 @@
 #include <sgimips/sgimips/clockvar.h>
 
 struct dpclock_softc {
+	device_t		sc_dev;
 	struct todr_chip_handle sc_todrch;
 
 	/* RTC registers */
@@ -112,6 +113,7 @@ dpclock_attach(device_t parent, device_t self, void *aux)
 
 	printf("\n");
 
+	sc->sc_dev = self;
 	sc->sc_rtct = normal_memt;
 	/*
 	 * All machines have one byte register per word. IP6/IP10 use
@@ -128,12 +130,9 @@ dpclock_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_todrch.cookie = sc;
-	sc->sc_todrch.todr_gettime = NULL;
-	sc->sc_todrch.todr_settime = NULL;
+	sc->sc_todrch.todr_dev = self;
 	sc->sc_todrch.todr_gettime_ymdhms = dpclock_gettime_ymdhms;
 	sc->sc_todrch.todr_settime_ymdhms = dpclock_settime_ymdhms;
-	sc->sc_todrch.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todrch);
 }
@@ -144,7 +143,7 @@ dpclock_attach(device_t parent, device_t self, void *aux)
 static int 
 dpclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 {
-	struct dpclock_softc *sc = (struct dpclock_softc *)todrch->cookie;
+	struct dpclock_softc *sc = device_private(todrch->todr_dev);
 	int s;
 	u_int8_t i, j;
 	u_int8_t regs[32];
@@ -194,7 +193,7 @@ dpclock_gettime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 static int
 dpclock_settime_ymdhms(struct todr_chip_handle *todrch, struct clock_ymdhms *dt)
 {
-	struct dpclock_softc *sc = (struct dpclock_softc *)todrch->cookie;
+	struct dpclock_softc *sc = device_private(todrch->todr_dev);
 	int s;
 	u_int8_t i, j;
 	u_int8_t regs[32];

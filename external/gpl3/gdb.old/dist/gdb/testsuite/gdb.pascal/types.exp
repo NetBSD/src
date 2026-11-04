@@ -1,4 +1,4 @@
-# Copyright 1994-2023 Free Software Foundation, Inc.
+# Copyright 1994-2024 Free Software Foundation, Inc.
 # Copyright 2007 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
@@ -59,7 +59,7 @@ proc test_float_literal_types_accepted {} {
     # Test various floating point formats
 
     # this used to guess whether to look for "real*4" or
-    # "real*8" based on a target config variable, but noone
+    # "real*8" based on a target config variable, but no one
     # maintained it properly.
 
     gdb_test "pt .44" "type = double"
@@ -68,11 +68,7 @@ proc test_float_literal_types_accepted {} {
     gdb_test "pt 10E20" "type = double"
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 if {[set_lang_pascal]} {
     test_integer_literal_types_accepted

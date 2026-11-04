@@ -1,0 +1,34 @@
+authorized_verp_clients = x
+config_directory = .
+fallback_relay = x
+lmtp_cname_overrides_servername = x
+lmtp_per_record_deadline = x
+postscreen_blacklist_action = x
+postscreen_dnsbl_ttl = x
+postscreen_dnsbl_whitelist_threshold = x
+postscreen_whitelist_interfaces = x
+smtp_cname_overrides_servername = x
+smtp_per_record_deadline = x
+smtpd_client_connection_limit_exceptions = x
+smtpd_per_record_deadline = x
+tlsproxy_client_level = x
+tlsproxy_client_policy = x
+virtual_maps = x
+./postconf: warning: ./main.cf: support for parameter "authorized_verp_clients" will be removed; instead, specify "smtpd_authorized_verp_clients"
+./postconf: warning: ./main.cf: support for parameter "fallback_relay" will be removed; instead, specify "smtp_fallback_relay"
+./postconf: warning: ./main.cf: support for parameter "lmtp_cname_overrides_servername" will be removed; instead, do not specify
+./postconf: warning: ./main.cf: support for parameter "lmtp_per_record_deadline" will be removed; instead, specify "lmtp_per_request_deadline"
+./postconf: warning: ./main.cf: support for parameter "postscreen_blacklist_action" will be removed; instead, specify "postscreen_denylist_action"
+./postconf: warning: ./main.cf: support for parameter "postscreen_dnsbl_ttl" will be removed; instead, specify "postscreen_dnsbl_max_ttl"
+./postconf: warning: ./main.cf: support for parameter "postscreen_dnsbl_whitelist_threshold" will be removed; instead, specify "postscreen_dnsbl_allowlist_threshold"
+./postconf: warning: ./main.cf: support for parameter "postscreen_whitelist_interfaces" will be removed; instead, specify "postscreen_allowlist_interfaces"
+./postconf: warning: ./main.cf: support for parameter "smtp_cname_overrides_servername" will be removed; instead, do not specify
+./postconf: warning: ./main.cf: support for parameter "smtp_per_record_deadline" will be removed; instead, specify "smtp_per_request_deadline"
+./postconf: warning: ./main.cf: support for parameter "smtpd_client_connection_limit_exceptions" will be removed; instead, specify "smtpd_client_event_limit_exceptions"
+./postconf: warning: ./main.cf: support for parameter "smtpd_per_record_deadline" will be removed; instead, specify "smtpd_per_request_deadline"
+./postconf: warning: ./main.cf: support for parameter "tlsproxy_client_level" will be removed; instead, specify "tlsproxy_client_security_level"
+./postconf: warning: ./main.cf: support for parameter "tlsproxy_client_policy" will be removed; instead, specify "tlsproxy_client_policy_maps"
+./postconf: warning: ./main.cf: support for parameter "virtual_maps" will be removed; instead, specify "virtual_alias_maps"
+./postconf: warning: ./master.cf: support for parameter "lmtp_tls_enforce_peername" will be removed; instead, specify "lmtp_tls_security_level"
+./postconf: warning: ./master.cf: support for parameter "smtp_tls_enforce_peername" will be removed; instead, specify "smtp_tls_security_level"
+./postconf: warning: See https://www.postfix.org/DEPRECATION_README.html for details

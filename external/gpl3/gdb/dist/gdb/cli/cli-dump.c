@@ -1,6 +1,6 @@
 /* Dump-to-file commands, for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat.
 
@@ -348,7 +348,7 @@ add_dump_command (const char *name,
   struct dump_context *d;
 
   c = add_cmd (name, all_commands, descr, &dump_cmdlist);
-  c->completer =  filename_completer;
+  set_cmd_completer (c, deprecated_filename_completer);
   d = XNEW (struct dump_context);
   d->func = func;
   d->mode = FOPEN_WB;
@@ -356,7 +356,7 @@ add_dump_command (const char *name,
   c->func = call_dump_func;
 
   c = add_cmd (name, all_commands, descr, &append_cmdlist);
-  c->completer =  filename_completer;
+  set_cmd_completer (c, deprecated_filename_completer);
   d = XNEW (struct dump_context);
   d->func = func;
   d->mode = FOPEN_AB;
@@ -397,7 +397,7 @@ restore_one_section (bfd *ibfd, asection *isec,
   if (sec_end <= load_start
       || (load_end > 0 && sec_start >= load_end))
     {
-      /* No, no useable data in this section.  */
+      /* No, no usable data in this section.  */
       gdb_printf (_("skipping section %s...\n"), 
 		  bfd_section_name (isec));
       return;
@@ -564,9 +564,7 @@ restore_command (const char *args, int from_tty)
     }
 }
 
-void _initialize_cli_dump ();
-void
-_initialize_cli_dump ()
+INIT_GDB_FILE (cli_dump)
 {
   struct cmd_list_element *c;
 
@@ -705,6 +703,6 @@ Arguments are FILE OFFSET START END where all except FILE are optional.\n\
 OFFSET will be added to the base address of the file (default zero).\n\
 If START and END are given, only the file contents within that range\n\
 (file relative) will be restored to target memory."));
-  c->completer = filename_completer;
+  set_cmd_completer (c, deprecated_filename_completer);
   /* FIXME: completers for other commands.  */
 }

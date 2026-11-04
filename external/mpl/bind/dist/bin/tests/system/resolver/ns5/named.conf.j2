@@ -1,0 +1,47 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS5
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation yes;
+	querylog yes;
+	prefetch 4 10;
+	responselog yes;
+};
+
+include "trusted.conf";
+
+server 10.53.0.7 {
+	edns-version 0;
+};
+
+zone "." {
+	type hint;
+	file "root.hint";
+};
+
+zone "moves" {
+	type primary;
+	file "moves.db";
+};
+
+zone "child.server" {
+	type primary;
+	file "child.server.db";
+};
+
+include "trusted.conf";
+
+{% include "_common/controls.conf.j2" %}

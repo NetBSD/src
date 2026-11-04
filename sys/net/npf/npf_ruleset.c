@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.52.6.1 2025/08/02 05:57:48 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.52.6.2 2026/11/04 23:27:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -925,7 +925,14 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
 		const unsigned skip_to = rl->r_skip_to & SKIPTO_MASK;
 		const uint32_t attr = rl->r_attr;
 
-		if ((attr & layer) == 0) {
+		/*
+		 * PR kern/59615
+		 * we are skipping rule inspection on two cases
+		 * if layer attributes are set but we are on a different layer
+		 * or if no layer attributes set (10 userland), don't inspect at layer 2
+		 */
+		if (!(((layer == NPF_RULE_LAYER_3 && ((attr & (NPF_RULE_LAYER_2 | NPF_RULE_LAYER_3)) == 0)) ||
+		    (attr & layer)))) {
 			n = skip_to;
 			continue;
 		}
@@ -977,7 +984,7 @@ npf_ruleset_inspect(npf_cache_t *npc, const npf_ruleset_t *rlset,
  * for passing, we set the STATEFULNESS for TCP connection establishment
  * if ret == 0, it is for a pass to be changed to block
  * non-zero ret indicates a block to pass
- * when we change to block, we assume the default RST rerturn for TCP
+ * when we change to block, we assume the default RST return for TCP
  * when we change to pass, we ensure no bit field for RST for tcp and ICMP for udp
  * finally change the ret condition too
  */

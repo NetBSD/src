@@ -1,6 +1,6 @@
 /* Target-dependent code for the Z80.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef Z80_TDEP_H
-#define Z80_TDEP_H
+#ifndef GDB_Z80_TDEP_H
+#define GDB_Z80_TDEP_H
 
 /* Register pair constants
    Order optimized for gdb-stub implementation
@@ -49,4 +49,4 @@ enum z80_regnum
 #define EZ80_NUM_REGS	(Z80_NUM_REGS + 1)
 #define EZ80_REG_BYTES	(EZ80_NUM_REGS*3)
 
-#endif /* z80-tdep.h */
+#endif /* GDB_Z80_TDEP_H */

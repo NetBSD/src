@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.25 2022/07/19 23:19:44 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.25.10.1 2026/11/04 23:22:58 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -85,6 +85,7 @@ BUS_MEM_TO_PHYS(bus_dma_tag_t dmat, bus_addr_t ba)
 #  define	PHYS_TO_BUS_MEM(dmat, paddr)	((bus_addr_t)(paddr))
 #  define	BUS_MEM_TO_PHYS(dmat, baddr)	((paddr_t)(baddr))
 #elif defined(__powerpc__)
+#include "opt_ppcarch.h"
 #elif defined(__alpha__)
 #  define	PHYS_TO_BUS_MEM(dmat, paddr)				      \
 	((bus_addr_t)(paddr) | (dmat)->_wbase)
@@ -99,6 +100,8 @@ bus_dmamem_pgfl(bus_dma_tag_t tag)
 {
 #if defined(__i386__) || defined(__x86_64__)
 	return x86_select_freelist(tag->_bounce_alloc_hi - 1);
+#elif defined(__powerpc__) && (defined(PPC_OEA) || defined(PPC_OEA64_BRIDGE))
+	return VM_FREELIST_DIRECT_MAPPED;	/* first 3GB */
 #else
 	return VM_FREELIST_DEFAULT;
 #endif
@@ -119,7 +122,13 @@ bus_dmatag_bounces_paddr(bus_dma_tag_t dmat, paddr_t pa)
 	}
 	return true;
 #elif defined(__powerpc__)
-	return dmat->_bounce_thresh && pa >= dmat->_bounce_thresh;
+	if (dmat->_bounce_thresh_min != 0 && pa < dmat->_bounce_thresh_min) {
+		return true;
+	}
+	if (dmat->_bounce_thresh_max != 0 && pa >= dmat->_bounce_thresh_max) {
+		return true;
+	}
+	return false;
 #elif defined(__sparc__) || defined(__sparc64__)
 	return false;		/* no bounce buffers ever */
 #elif defined(__alpha__)

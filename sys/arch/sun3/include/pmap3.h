@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.51 2020/03/14 14:05:44 ad Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.51.28.1 2026/11/04 23:21:26 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -29,7 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef _KERNEL
+#ifndef _SUN3_PMAP3_H_
+#define _SUN3_PMAP3_H_ 
+
+#if defined(_KERNEL)
+
+#if !defined(_MODULE)
+
 /*
  * Physical map structures exported to the VM code.
  */
@@ -47,7 +53,7 @@ struct pmap {
  * This function does that, and calls vm_fault if it
  * could not resolve the fault by reloading the MMU.
  */
-int _pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
+int pmap_fault(struct vm_map *, vaddr_t, vm_prot_t);
 
 /* This lets us have some say in choosing VA locations. */
 extern void pmap_prefer(vaddr_t, vaddr_t *, int);
@@ -60,9 +66,6 @@ extern segsz_t pmap_resident_pages(pmap_t);
 /* This needs to be a macro for vm_mmap.c */
 extern segsz_t pmap_wired_pages(pmap_t);
 #define	pmap_wired_count(pmap)	(pmap_wired_pages(pmap))
-
-/* We use the PA plus some low bits for device mmap. */
-#define pmap_phys_address(addr) 	(addr)
 
 /* Map a given physical region to a virtual region */
 extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);
@@ -90,8 +93,19 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x10	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x1C	/* mask to get all above. */
 
+/* Kernel debugger support functions. */
+struct pmap_db_write_text_context {
+	vaddr_t		pgva;
+	int		opte;
+};
+bool	pmap_db_write_text_enter(vaddr_t, struct pmap_db_write_text_context *);
+void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
+
+#endif /* _MODULE */
+
 #endif	/* _KERNEL */
 
+#if (defined(_KERNEL) && !defined(_MODULE)) || defined(_STANDALONE)
 /* MMU specific segment size */
 #define	SEGSHIFT	17	        /* LOG2(NBSG) */
 #define	NBSG		(1 << SEGSHIFT)	/* bytes/segment */
@@ -100,3 +114,6 @@ pmap_remove_all(struct pmap *pmap)
 #define	sun3_round_seg(x)	((((vaddr_t)(x)) + SEGOFSET) & ~SEGOFSET)
 #define	sun3_trunc_seg(x)	((vaddr_t)(x) & ~SEGOFSET)
 #define	sun3_seg_offset(x)	((vaddr_t)(x) & SEGOFSET)
+#endif /* (_KERNEL && !_MODULE) || _STANDALONE */
+
+#endif /* _SUN3_PMAP3_H_ */

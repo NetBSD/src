@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.61 2023/06/03 21:30:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.61.2.1 2026/11/04 23:28:43 perseant Exp $
 #
 # Copyright (c) 1990 The Regents of the University of California.
 # All rights reserved.
@@ -48,9 +48,12 @@ SRCS=	authenc.c commands.c main.c network.c ring.c sys_bsd.c telnet.c \
 	terminal.c utilities.c
 
 CPPFLAGS+=-I${NETBSDSRCDIR}/lib
+
+.if (${MKIPSEC} != "no")
 CPPFLAGS+=-DIPSEC
 LDADD+=	-lipsec
 DPADD+=	${LIBIPSEC}
+.endif
 
 .if (${USE_INET6} != "no")
 CPPFLAGS+=-DINET6

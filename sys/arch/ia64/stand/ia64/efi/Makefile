@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2020/07/02 09:07:24 lukem Exp $	
+#	$NetBSD: Makefile,v 1.7.26.1 2026/11/04 23:20:47 perseant Exp $	
 
 S=	${.CURDIR}/../../../../..
 
@@ -44,7 +44,7 @@ loader.efi: loader.sym
 	fi
 	${OBJCOPY} -j .data -j .dynamic -j .dynstr -j .dynsym -j .hash \
 	    -j .rela.dyn -j .reloc -j .sdata -j .text \
-	    --target=efi-app-${MACHINE_ARCH} loader.sym ${.TARGET}
+	    --output-target=efi-app-${MACHINE_ARCH} loader.sym ${.TARGET}
 	@echo link finished.
 
 all: loader.efi

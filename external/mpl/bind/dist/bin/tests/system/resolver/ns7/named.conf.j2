@@ -1,0 +1,62 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS7
+
+options {
+	{% include_indented "_common/options-dual.conf.j2" %}
+	dnssec-validation no;
+	empty-zones-enable yes;
+	disable-empty-zone 20.172.in-addr.arpa;
+	/*
+	 * check prefetch disabled
+	 * check zero ttl not returned
+	 */
+	prefetch 0;
+	querylog yes;
+	edns-udp-size 4096;
+};
+
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type hint;
+	file "root.hint";
+};
+
+zone "server" {
+	type primary;
+	file "server.db";
+	allow-update { any; };
+};
+
+zone "edns-version.tld" {
+	type primary;
+	file "edns-version.tld.db";
+};
+
+zone "all-cnames" {
+	type primary;
+	file "all-cnames.db";
+};
+
+zone "tld2" {
+	type primary;
+	file "tld2.db";
+};
+
+zone "sub.tld1" {
+	type primary;
+	file "sub.tld1.db";
+};

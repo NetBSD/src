@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.228 2023/09/09 16:01:09 christos Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.228.6.1 2026/11/04 23:27:47 perseant Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.228 2023/09/09 16:01:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.228.6.1 2026/11/04 23:27:47 perseant Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -402,7 +402,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       CTLTYPE_INT, "monotonic_clock",
 		       SYSCTL_DESCR("Implementation version of the POSIX "
 				    "1003.1b Monotonic Clock Option"),
-		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_MONOTONIC_CLOCK, NULL, 0,
 		       CTL_KERN, KERN_MONOTONIC_CLOCK, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -443,7 +442,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Threads option to which the system "
 				    "attempts to conform"),
-		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_THREADS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_THREADS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -452,7 +450,7 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Semaphores option to which the system "
 				    "attempts to conform"), NULL,
-		       200112, NULL, 0,
+		       _POSIX_SEMAPHORES, NULL, 0,
 		       CTL_KERN, KERN_POSIX_SEMAPHORES, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_IMMEDIATE,
@@ -460,7 +458,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Barriers option to which the system "
 				    "attempts to conform"),
-		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_BARRIERS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_BARRIERS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -469,7 +466,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Timers option to which the system "
 				    "attempts to conform"),
-		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_TIMERS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_TIMERS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -478,7 +474,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its Spin "
 				    "Locks option to which the system attempts "
 				    "to conform"),
-		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_SPIN_LOCKS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_SPIN_LOCKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -487,7 +482,6 @@ SYSCTL_SETUP(sysctl_kern_setup, "sysctl kern subtree setup")
 		       SYSCTL_DESCR("Version of IEEE Std 1003.1 and its "
 				    "Read-Write Locks option to which the "
 				    "system attempts to conform"),
-		       /* XXX _POSIX_VERSION */
 		       NULL, _POSIX_READER_WRITER_LOCKS, NULL, 0,
 		       CTL_KERN, KERN_POSIX_READER_WRITER_LOCKS, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,

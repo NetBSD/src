@@ -27,6 +27,7 @@ dnssec-policy "test" {
 		zsk lifetime P30D algorithm 13;
 		csk key-store "hsm" lifetime P30D algorithm 8 2048;
 	};
+	manual-mode no;
 	max-zone-ttl 86400;
 	nsec3param ;
 	parent-ds-ttl 7200;

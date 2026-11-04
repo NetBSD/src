@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_rproc.c,v 1.23 2023/02/24 11:03:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_rproc.c,v 1.23.6.1 2026/11/04 23:27:58 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -387,4 +387,10 @@ npf_rproc_run(npf_cache_t *npc, npf_rproc_t *rp, const npf_match_info_t *mi,
 	}
 
 	return true;
+}
+
+int
+is_rproc_route(npf_rproc_t *rp)
+{
+	return !strcmp(rp->rp_name, "route");
 }

@@ -334,6 +334,7 @@ typedef struct npf_ioctl_table {
 #define	IOC_NPF_RULE		_IOWR('N', 107, nvlist_ref_t)
 #define	IOC_NPF_CONN_LOOKUP	_IOWR('N', 108, nvlist_ref_t)
 #define	IOC_NPF_TABLE_REPLACE	_IOWR('N', 109, nvlist_ref_t)
+#define	IOC_NPF_STATS_RESET	_IO('N', 110)
 
 /*
  * NPF error report.
@@ -355,11 +356,9 @@ typedef enum {
 	NPF_STAT_PASS_DEFAULT,
 	NPF_STAT_PASS_RULESET,
 	NPF_STAT_PASS_CONN,
-	NPF_ETHER_STAT_PASS,
 	/* Packets blocked. */
 	NPF_STAT_BLOCK_DEFAULT,
 	NPF_STAT_BLOCK_RULESET,
-	NPF_ETHER_STAT_BLOCK,
 	/* Connection and NAT entries. */
 	NPF_STAT_CONN_CREATE,
 	NPF_STAT_CONN_DESTROY,
@@ -375,13 +374,20 @@ typedef enum {
 	NPF_STAT_RACE_NAT,
 	/* Fragments. */
 	NPF_STAT_FRAGMENTS,
+	NPF_STAT_NOFRAGMENT,
 	NPF_STAT_REASSEMBLY,
 	NPF_STAT_REASSFAIL,
+	/* routing */
+	NPF_STAT_REROUTE,
+	NPF_STAT_NOREROUTE,
 	/* Other errors. */
 	NPF_STAT_ERROR,
 	/* nbuf non-contiguous cases. */
 	NPF_STAT_NBUF_NONCONTIG,
 	NPF_STAT_NBUF_CONTIG_FAIL,
+	/* layer 2 statistics */
+	NPF_ETHER_STAT_PASS,
+	NPF_ETHER_STAT_BLOCK,
 	/* Count (last). */
 	NPF_STATS_COUNT
 } npf_stats_t;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_extended_state.h,v 1.18.6.1 2025/08/02 05:56:16 perseant Exp $	*/
+/*	$NetBSD: cpu_extended_state.h,v 1.18.6.2 2026/11/04 23:21:32 perseant Exp $	*/
 
 #ifndef _X86_CPU_EXTENDED_STATE_H_
 #define _X86_CPU_EXTENDED_STATE_H_
@@ -141,6 +141,8 @@ struct xsave_header {
 	uint8_t xsh_reserved[40];	/* best if zero */
 };
 __CTASSERT(sizeof(struct xsave_header) == 512 + 64);
+
+#define	XSAVE_ALIGN	64
 
 /*
  * The ymm save area actually follows the xsave_header.

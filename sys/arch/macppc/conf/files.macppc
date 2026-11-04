@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.123.10.1 2025/08/02 05:55:51 perseant Exp $
+#	$NetBSD: files.macppc,v 1.123.10.2 2026/11/04 23:20:54 perseant Exp $
 #
 # macppc-specific configuration info
 
@@ -11,6 +11,7 @@ include "arch/powerpc/conf/files.ofw"
 include "arch/powerpc/pic/files.pic"
 include "arch/powerpc/pic/files.ipi"
 
+file arch/macppc/macppc/autoconf.c
 file arch/powerpc/oea/ofw_autoconf.c
 file arch/powerpc/powerpc/clock.c
 file arch/macppc/macppc/disksubr.c		disk
@@ -21,6 +22,9 @@ file arch/macppc/macppc/machdep.c
 file arch/macppc/macppc/static_edid.c
 file arch/powerpc/oea/ofw_rascons.c
 file arch/macppc/dev/dbdma.c
+
+define ofw_i2c_machdep
+file arch/macppc/dev/ofw_i2c_machdep.c		ofw_i2c_machdep
 
 # interrupt controllers
 define pic_ohare
@@ -141,7 +145,7 @@ attach wdc at pci with kauai: ata_dma, ata_udma
 file arch/macppc/dev/kauai.c			kauai
 
 define obio {}
-device obio: obio
+device obio: obio, leds, fancontrol
 attach obio at pci
 file arch/macppc/dev/obio.c			obio
 defflag opt_obio.h OBIO_DEBUG OBIO_SPEED_CONTROL
@@ -185,7 +189,7 @@ attach smu at mainbus
 file arch/macppc/dev/smu.c			smu needs-flag
 defflag	opt_smu.h	SMU_DEBUG
 
-device smuiic: i2cbus
+device smuiic: i2cbus, ofw_i2c_machdep
 attach smuiic at smu
 file arch/macppc/dev/smuiic.c			smuiic
 
@@ -204,7 +208,7 @@ file arch/macppc/dev/cuda.c			cuda needs-flag
 define pmu_bus {}
 defflag	opt_pmu.h	PMU_DEBUG
 defflag opt_pmu.h	PMU_VERBOSE
-device pmu : adb_bus, i2cbus, pmu_bus
+device pmu : adb_bus, i2cbus, ofw_i2c_machdep, pmu_bus
 attach pmu at obio
 file arch/macppc/dev/pmu.c			pmu needs-flag
 
@@ -288,7 +292,7 @@ defflag opt_macppc.h	PB3400_CARDBUS_HACK UMAX_E100_HACK
 file arch/macppc/macppc/rbus_machdep.c		cardbus
 
 # Keywest I2C
-device ki2c: i2cbus
+device ki2c: i2cbus, ofw_i2c_machdep
 attach ki2c at obio, uni_n
 file arch/macppc/dev/ki2c.c			ki2c
 defflag opt_ki2c.h	KI2C_DEBUG
@@ -343,3 +347,12 @@ attach 	obiofan at obio
 file 	arch/macppc/dev/obiofan.c			obiofan
 defflag opt_obiofan.h OBIOFAN_DEBUG
 
+# Philips PCA9554 GPIO controlling Xserve's drivebays
+device	drivebay: leds
+attach	drivebay at iic
+file	arch/macppc/dev/drivebay.c			drivebay
+
+# LED bar found on Xserve
+device 	lightbar
+attach 	lightbar at obio
+file 	arch/macppc/dev/lightbar.c			lightbar

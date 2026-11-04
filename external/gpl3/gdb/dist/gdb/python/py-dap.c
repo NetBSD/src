@@ -1,6 +1,6 @@
 /* Python DAP interpreter
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -110,9 +110,7 @@ dap_interp::pre_command_loop ()
   call_dap_fn ("pre_command_loop");
 }
 
-void _initialize_py_interp ();
-void
-_initialize_py_interp ()
+INIT_GDB_FILE (py_interp)
 {
   /* The dap code uses module typing, available starting python 3.5.  */
 #if PY_VERSION_HEX >= 0x03050000

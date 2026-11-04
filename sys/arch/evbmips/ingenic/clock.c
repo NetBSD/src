@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.11 2020/05/29 12:30:40 rin Exp $ */
+/*	$NetBSD: clock.c,v 1.11.26.1 2026/11/04 23:20:32 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11 2020/05/29 12:30:40 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.11.26.1 2026/11/04 23:20:32 perseant Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -116,24 +116,24 @@ cpu_initclocks(void)
 	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
 	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
 	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
-	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
-	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
+	printf("CR: %08x\n", mips_cp0_cause_read());
+	printf("SR: %08x\n", mips_cp0_status_read());
 	delay(100000);
 	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
 	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
 	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
-	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
-	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
+	printf("CR: %08x\n", mips_cp0_cause_read());
+	printf("SR: %08x\n", mips_cp0_status_read());
 	printf("TFR: %08x\n", readreg(JZ_TC_TFR));
 	printf("TMR: %08x\n", readreg(JZ_TC_TMR));
 	printf("cnt5: %08x\n", readreg(JZ_TC_TCNT(5)));
-	printf("CR: %08x\n", MFC0(MIPS_COP_0_CAUSE, 0));
-	printf("SR: %08x\n", MFC0(MIPS_COP_0_STATUS, 0));
+	printf("CR: %08x\n", mips_cp0_cause_read());
+	printf("SR: %08x\n", mips_cp0_status_read());
 
 	printf("INTC %08x %08x\n", readreg(JZ_ICSR0), readreg(JZ_ICSR1));
 	delay(3000000);
-	printf("%s %d\n", __func__, MFC0(12, 3));
-	printf("%s %08x\n", __func__, MFC0(12, 4));
+	printf("%s %d\n", __func__, mips_cp0_corestatus_read());
+	printf("%s %08x\n", __func__, mips_cp0_corereim_read());
 #endif
 }
 
@@ -236,7 +236,7 @@ ingenic_clockintr(struct clockframe *cf)
 	 * XXX
 	 * needs to take the IPI lock and ping all online CPUs, not just core 1
 	 */
-	mips_cp0_corembox_write(1, 1 << IPI_CLOCK);
+	mips_cp0_corembox_write(1, 1 << INGENIC_IPI_CLOCK);
 #endif
 	hardclock(cf);
 	splx(s);

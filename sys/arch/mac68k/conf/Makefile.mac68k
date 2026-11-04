@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.mac68k,v 1.93 2018/09/22 12:24:02 rin Exp $
+#	$NetBSD: Makefile.mac68k,v 1.93.36.1 2026/11/04 23:20:53 perseant Exp $
 
 # Makefile for NetBSD
 #
@@ -26,13 +26,17 @@ NEED_OWN_INSTALL_TARGET?=no
 ## (1) port identification
 ##
 MAC68K=		$S/arch/mac68k
-GENASSYM_CONF=	${MAC68K}/mac68k/genassym.cf
+GENASSYM_CONF=	$S/arch/m68k/m68k/genassym.cf
+GENASSYM_EXTRAS+= ${MAC68K}/mac68k/genassym.cf
 
 ##
 ## (2) compile settings
 ##
+## Machine flags
+## Compile with support for 060; assemble for 030
+CMACHFLAGS=	-m68020-60 -Wa,-m68030 -Wa,-mcpu=68030 -Wa,-m68851
 CPPFLAGS+=	-Dmac68k
-CFLAGS+=	-msoft-float
+CFLAGS+=	${CMACHFLAGS} -msoft-float
 AFLAGS+=	-x assembler-with-cpp
 
 ##
@@ -45,6 +49,9 @@ OPT_MODULAR=	%MODULAR%
 ##
 # for the Motorola 68040 Floating Point Software Product
 .include "$S/arch/m68k/fpsp/Makefile.inc"
+
+# for the Motorola 68060 Software Support Package
+.include "$S/arch/m68k/060sp/Makefile.inc"
 
 MD_OBJS=	locore.o
 MD_LIBS=	${FPSP}

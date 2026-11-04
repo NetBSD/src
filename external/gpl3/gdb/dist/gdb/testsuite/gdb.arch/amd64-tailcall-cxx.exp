@@ -1,4 +1,4 @@
-# Copyright (C) 2012-2024 Free Software Foundation, Inc.
+# Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,9 @@ standard_testfile amd64-tailcall-cxx1.S amd64-tailcall-cxx2.S
 if [info exists COMPILE] {
     # make check RUNTESTFLAGS="gdb.arch/amd64-tailcall-cxx.exp COMPILE=1"
     standard_testfile amd64-tailcall-cxx1.cc amd64-tailcall-cxx2.cc
-    lappend opts debug optimize=-O2
+    lappend opts debug
+    lappend opts optimize=-O2
+    lappend opts c++
 } else {
     require is_x86_64_m64_target
 }

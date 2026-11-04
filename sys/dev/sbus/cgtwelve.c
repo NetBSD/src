@@ -1,4 +1,4 @@
-/*	$NetBSD: cgtwelve.c,v 1.8 2021/08/07 16:19:15 thorpej Exp $ */
+/*	$NetBSD: cgtwelve.c,v 1.8.12.1 2026/11/04 23:22:33 perseant Exp $ */
 
 /*-
  * Copyright (c) 2010 Michael Lorenz
@@ -29,7 +29,7 @@
 /* a console driver for the Sun CG12 / Matrox SG3 graphics board */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.8 2021/08/07 16:19:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.8.12.1 2026/11/04 23:22:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgtwelve.c,v 1.8 2021/08/07 16:19:15 thorpej Exp $")
 #include <dev/wscons/wsdisplay_vconsvar.h>
 
 #include <dev/sbus/cgtwelvereg.h>
-#include <dev/ic/bt462reg.h>
+//#include <dev/ic/bt462reg.h>
 
 #include "opt_wsemul.h"
 #include "opt_cgtwelve.h"
@@ -74,6 +74,16 @@ struct cgtwelve_softc {
 	int		sc_stride;
 	int		sc_fbsize;
 	int		sc_mode;
+	int		sc_video;
+	int		sc_depth;
+	/* colour map */
+	uint8_t		sc_r[256], sc_g[256], sc_b[256];
+	uint32_t	sc_cursor_mask[32];
+	uint32_t	sc_cursor_image[32];
+	int		sc_cursor_wi, sc_cursor_he;	/* real size of sprite */
+	int		sc_cursor_x, sc_cursor_y;
+	int		sc_hot_x, sc_hot_y;
+	int		sc_cursor_on;
 	struct vcons_data vd;
 };
 
@@ -93,6 +103,12 @@ static void	cgtwelve_select_ovl(struct cgtwelve_softc *, int);
 #define CG12_SEL_WID	4
 static void	cgtwelve_write_dac(struct cgtwelve_softc *, int, int, int, int);
 static void	cgtwelve_setup(struct cgtwelve_softc *, int);
+static void	cgtwelve_set_video(struct cgtwelve_softc *, int);
+static int	cgtwelve_putcmap(struct cgtwelve_softc *, struct wsdisplay_cmap *);
+static int	cgtwelve_getcmap(struct cgtwelve_softc *, struct wsdisplay_cmap *);
+static void	cgtwelve_move_cursor(struct cgtwelve_softc *, int, int);
+static int	cgtwelve_do_cursor(struct cgtwelve_softc *,
+                           struct wsdisplay_cursor *);
 
 CFATTACH_DECL_NEW(cgtwelve, sizeof(struct cgtwelve_softc),
     cgtwelve_match, cgtwelve_attach, NULL, NULL);
@@ -183,7 +199,7 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 		}
 		sc->sc_fbaddr = bus_space_vaddr(sa->sa_bustag, bh);
 	}
-		
+
 	aprint_normal_dev(self, "%d x %d\n", sc->sc_width, sc->sc_height);
 
 	if (sbus_bus_map(sa->sa_bustag,
@@ -216,7 +232,8 @@ cgtwelve_attach(device_t parent, device_t self, void *args)
 		return;
 	}
 	sc->sc_int = bus_space_vaddr(sa->sa_bustag, bh);
-
+	sc->sc_video = WSDISPLAYIO_VIDEO_ON;
+	sc->sc_depth = 32;
 #ifdef CG12_COLOR
 	cgtwelve_setup(sc, 8);
 #else
@@ -353,13 +370,67 @@ cgtwelve_write_dac(struct cgtwelve_softc *sc, int idx, int r, int g, int b)
 {
 	uint32_t lo = (idx & 0xff);
 	uint32_t hi = (idx >> 8) & 0xff;
+	int use_alt = idx & 0x10000;
 
 	lo |= lo << 8 | lo << 16;
 	hi |= hi << 8 | hi << 16;
 	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12DAC_ADDR0, lo);
 	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12DAC_ADDR1, hi);
-	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12DAC_DATA,
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, 
+	    use_alt ? CG12DAC_CTRL : CG12DAC_DATA,
 	    b << 16 | g << 8 | r);
+}
+
+static int
+cgtwelve_putcmap(struct cgtwelve_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int i, error;
+
+	if (cm->index >= 256 || cm->count > 256 ||
+	    (cm->index + cm->count) > 256)
+		return EINVAL;
+	error = copyin(cm->red, &sc->sc_r[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->green, &sc->sc_g[index], count);
+	if (error)
+		return error;
+	error = copyin(cm->blue, &sc->sc_b[index], count);
+	if (error)
+		return error;
+
+	if (sc->sc_depth == 8) {
+		for (i = index; i < index + count; i++) {
+			cgtwelve_write_dac(sc, i, sc->sc_r[i], sc->sc_g[i], sc->sc_b[i]);
+		}
+	}
+	return 0;
+}
+
+static int
+cgtwelve_getcmap(struct cgtwelve_softc *sc, struct wsdisplay_cmap *cm)
+{
+	u_int index = cm->index;
+	u_int count = cm->count;
+	int error;
+
+	if (index >= 255 || count > 256 || index + count > 256)
+		return EINVAL;
+
+
+	error = copyout(&sc->sc_r[index],   cm->red,   count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_g[index], cm->green, count);
+	if (error)
+		return error;
+	error = copyout(&sc->sc_b[index],  cm->blue,  count);
+	if (error)
+		return error;
+
+	return 0;
 }
 
 static void
@@ -370,7 +441,7 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 	/* first let's put some stuff into the WID table */
 	cgtwelve_write_wid(sc, 0, CG12_WID_8_BIT);
 	cgtwelve_write_wid(sc, 1, CG12_WID_24_BIT);
-	
+
 	/* a linear ramp for the gamma table */
 	for (i = 0; i < 256; i++)
 		cgtwelve_write_dac(sc, i + 0x100, i, i, i);
@@ -378,6 +449,9 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 	j = 0;
 	/* rasops' ANSI colour map */
 	for (i = 0; i < 256; i++) {
+		sc->sc_r[i] = rasops_cmap[j];
+		sc->sc_g[i] = rasops_cmap[j + 1];
+		sc->sc_g[i] = rasops_cmap[j + 2];
 		cgtwelve_write_dac(sc, i,
 		    rasops_cmap[j],
 		    rasops_cmap[j + 1],
@@ -454,6 +528,19 @@ cgtwelve_setup(struct cgtwelve_softc *sc, int depth)
 }
 
 static void
+cgtwelve_set_video(struct cgtwelve_softc *sc, int on)
+{
+	uint32_t reg;
+	if (on == sc->sc_video) return;
+	on = on == 0 ? WSDISPLAYIO_VIDEO_OFF : WSDISPLAYIO_VIDEO_ON;
+	reg = bus_space_read_4(sc->sc_tag, sc->sc_regh, CG12APU_VSG_CTL);
+	reg &= ~CG12APU_VIDEO_ENABLE;
+	if (on) reg |= CG12APU_VIDEO_ENABLE;
+	bus_space_write_4(sc->sc_tag, sc->sc_regh, CG12APU_VSG_CTL, reg);
+	sc->sc_video = on;
+}
+
+static void
 cgtwelve_init_screen(void *cookie, struct vcons_screen *scr,
     int existing, long *defattr)
 {
@@ -514,25 +601,35 @@ cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			wdf = (void *)data;
 			wdf->height = sc->sc_height;
 			wdf->width = sc->sc_width;
-			wdf->depth = 32;
+			wdf->depth = sc->sc_depth;
 			wdf->cmsize = 256;
 			return 0;
 
 		case FBIOGVIDEO:
 		case WSDISPLAYIO_GVIDEO:
-			*(int *)data = 1;
+			*(int *)data = sc->sc_video;
 			return 0;
 
 		case WSDISPLAYIO_SVIDEO:
 		case FBIOSVIDEO:
-			/* when we figure out how to do this... */
-			/*cgtwelve_set_video(sc, *(int *)data);*/
+			cgtwelve_set_video(sc, *(int *)data);
 			return 0;
+
+		case WSDISPLAYIO_GETCMAP:
+			return cgtwelve_getcmap(sc,
+			    (struct wsdisplay_cmap *)data);
+
+		case WSDISPLAYIO_PUTCMAP:
+			return cgtwelve_putcmap(sc,
+			    (struct wsdisplay_cmap *)data);
 
 		case WSDISPLAYIO_LINEBYTES:
 			{
 				int *ret = (int *)data;
-				*ret = sc->sc_width << 2;
+				if (sc->sc_depth == 32) {
+					*ret = sc->sc_width << 2;
+				} else
+					*ret = sc->sc_width;
 			}
 			return 0;
 
@@ -551,10 +648,83 @@ cgtwelve_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 #endif
 						vcons_redraw_screen(ms);
 					} else {
-						cgtwelve_setup(sc, 32);
+						cgtwelve_setup(sc, sc->sc_depth);
 					}
 				}
 			}
+			return 0;
+
+		case WSDISPLAYIO_GCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = sc->sc_cursor_x;
+				cp->y = sc->sc_cursor_y;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURPOS:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cgtwelve_move_cursor(sc, cp->x, cp->y);
+			}
+			return 0;
+
+		case WSDISPLAYIO_GCURMAX:
+			{
+				struct wsdisplay_curpos *cp = (void *)data;
+
+				cp->x = 32;
+				cp->y = 32;
+			}
+			return 0;
+
+		case WSDISPLAYIO_SCURSOR:
+			{
+				struct wsdisplay_cursor *cursor = (void *)data;
+
+				return cgtwelve_do_cursor(sc, cursor);
+			}
+
+		case WSDISPLAYIO_SET_DEPTH:
+			{
+				int new_depth = *(int*)data;
+
+				if ((new_depth == 8) || (new_depth == 32)) {
+					sc->sc_depth = new_depth;
+					return 0;
+				}
+				return EINVAL;
+			}
+
+		case WSDISPLAYIO_GET_FBINFO:
+		{
+			struct wsdisplayio_fbinfo *fbi = data;
+
+			if (sc->sc_depth == 8) {
+				fbi->fbi_stride = sc->sc_width;
+				fbi->fbi_fbsize = 1024 * 1024;
+				fbi->fbi_bitsperpixel = 8;
+				fbi->fbi_pixeltype = WSFB_CI;
+			} else {
+				fbi->fbi_stride = sc->sc_width * 4;
+				fbi->fbi_fbsize = 4 * 1024 * 1024;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_pixeltype = WSFB_RGB;
+			}
+			fbi->fbi_width = sc->sc_width;
+			fbi->fbi_height = sc->sc_height;
+			fbi->fbi_subtype.fbi_rgbmasks.red_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 16;
+			fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_offset = 0;
+			fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			return 0;
+		}
 	}
 
 	return EPASSTHROUGH;
@@ -574,3 +744,203 @@ cgtwelve_mmap(void *v, void *vs, off_t offset, int prot)
 
 	return -1;
 }
+
+static void
+cgtwelve_move_cursor(struct cgtwelve_softc *sc, int x, int y)
+{
+	int start, end, wi, he;
+	uint8_t *saddr;
+	uint32_t *addr;
+	int monostride = sc->sc_width >> 5;
+	int shift, i;
+
+	/* first we clear the old image */
+	start = sc->sc_cursor_x & ~0x1f;
+	end = (sc->sc_cursor_x + sc->sc_cursor_wi - 1) & ~0x1f;
+	/* if start == end the whole thing fits in one 32bit word */
+	cgtwelve_select_ovl(sc, CG12_SEL_ENABLE);
+	wi = sc->sc_width - sc->sc_cursor_x - 1;
+	if (wi > sc->sc_cursor_wi) wi = sc->sc_cursor_wi;
+	if (wi < 1) goto skip;
+	he = sc->sc_height - sc->sc_cursor_y - 1;
+	if (he > sc->sc_cursor_he) he = sc->sc_cursor_he;
+	if (he < 1) goto skip;
+	saddr = (uint8_t *)sc->sc_fbaddr + (start >> 3);
+	if (start == end) {
+		addr = (uint32_t *)saddr + monostride * sc->sc_cursor_y;
+		for (i = 0; i < he; i++) {
+			*addr = 0;
+			addr += monostride;
+		}
+	} else {
+		addr = (uint32_t *)saddr + monostride * sc->sc_cursor_y;
+		for (i = 0; i < he; i++) {
+			addr[0] = 0;
+			addr[1] = 0;
+			addr += monostride;
+		}
+	}
+	/* clear it in the image plane as well */
+	cgtwelve_select_ovl(sc, CG12_SEL_OVL);
+	if (start == end) {
+		addr = (uint32_t *)saddr + monostride * sc->sc_cursor_y;
+		for (i = 0; i < he; i++) {
+			*addr = 0;
+			addr += monostride;
+		}
+	} else {
+		addr = (uint32_t *)saddr + monostride * sc->sc_cursor_y;
+		for (i = 0; i < he; i++) {
+			addr[0] = 0;
+			addr[1] = 0;
+			addr += monostride;
+		}
+	}
+skip:
+	/* now draw the cursor at the new position, mask first */
+	cgtwelve_select_ovl(sc, CG12_SEL_ENABLE);
+	wi = sc->sc_width - x - 1;
+	if (wi > sc->sc_cursor_wi) wi = sc->sc_cursor_wi;
+	if (wi < 1) goto out;
+	he = sc->sc_height - y - 1;
+	if (he > sc->sc_cursor_he) he = sc->sc_cursor_he;
+	if (he < 1) goto out;
+
+	start = x & ~0x1f;
+	end =   (x + wi - 1) & ~0x1f;
+	saddr = (uint8_t *)sc->sc_fbaddr + (start >> 3);
+	shift = x & 0x1f;
+	if ((shift + wi) < 32) {
+		/* fits in a single 32bit word */
+		addr = (uint32_t *)saddr + monostride * y;
+		for (i = 0; i < he; i++) {
+			*addr = sc->sc_cursor_mask[i] >> shift;
+			addr += monostride;
+		}
+	} else {
+		/* split into two 32bit words */
+		addr = (uint32_t *)saddr + monostride * y;
+		for (i = 0; i < he; i++) {
+			addr[0] = sc->sc_cursor_mask[i] >> shift;
+			addr[1] = sc->sc_cursor_mask[i] << (32 - shift);
+			addr += monostride;
+		}
+	}
+	/* ... and now the image */
+	cgtwelve_select_ovl(sc, CG12_SEL_OVL);
+	if ((shift + wi) < 32) {
+		/* fits in a single 32bit word */
+		addr = (uint32_t *)saddr + monostride * y;
+		for (i = 0; i < he; i++) {
+			*addr = sc->sc_cursor_image[i] >> shift;
+			addr += monostride;
+		}
+	} else {
+		/* split into two 32bit words */
+		addr = (uint32_t *)saddr + monostride * y;
+		for (i = 0; i < he; i++) {
+			addr[0] = sc->sc_cursor_image[i] >> shift;
+			addr[1] = sc->sc_cursor_image[i] << (32 - shift);
+			addr += monostride;
+		}
+	}
+out:
+	sc->sc_cursor_x = x;
+	sc->sc_cursor_y = y;
+	cgtwelve_select_ovl(sc, sc->sc_depth == 8 ? CG12_SEL_8BIT : CG12_SEL_24BIT);
+}
+
+static int
+cgtwelve_do_cursor(struct cgtwelve_softc *sc,
+                           struct wsdisplay_cursor *cur)
+{
+	if (cur->which & WSDISPLAY_CURSOR_DOCUR) {
+
+		if (cur->enable != sc->sc_cursor_on) {
+			/* clear or draw as needed */
+			sc->sc_cursor_on = cur->enable;
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOHOT) {
+
+		sc->sc_hot_x = cur->hot.x;
+		sc->sc_hot_y = cur->hot.y;
+		cur->which |= WSDISPLAY_CURSOR_DOPOS;
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOPOS) {
+
+		cgtwelve_move_cursor(sc, cur->pos.x, cur->pos.y);
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOCMAP) {
+		int i;
+
+		if ((cur->cmap.index > 1) || (cur->cmap.count > 2) ||
+		    (cur->cmap.index + cur->cmap.count > 2))
+			return EINVAL;
+
+		for (i = 0; i < uimin(cur->cmap.count, 2); i++) {
+			/* overlay colours live in alt space at 0x100 */
+			cgtwelve_write_dac(sc, ((i << 1) + cur->cmap.index + 1) | 0x10100, cur->cmap.red[i],
+			    cur->cmap.green[i], cur->cmap.blue[i]);
+		}
+	}
+	if (cur->which & WSDISPLAY_CURSOR_DOSHAPE) {
+		uint32_t buffer[32], latch, tmp;
+		int i, s;
+
+		sc->sc_cursor_wi = 0;
+		sc->sc_cursor_he = 0;
+		copyin(cur->mask, buffer, 128);
+		for (i = 0; i < 32; i++) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			sc->sc_cursor_mask[i] = latch;
+			/* measure sprite size to optimize drawing */
+			if (latch != 0) {
+				sc->sc_cursor_he = i + 1;
+				s = ffs(latch);
+				s = 33 - s;
+				if (s > sc->sc_cursor_wi) sc->sc_cursor_wi = s;
+			}
+		}
+
+		copyin(cur->image, buffer, 128);
+		for (i = 0; i < 32; i++) {
+			latch = 0;
+			tmp = buffer[i] & 0x80808080;
+			latch |= tmp >> 7;
+			tmp = buffer[i] & 0x40404040;
+			latch |= tmp >> 5;
+			tmp = buffer[i] & 0x20202020;
+			latch |= tmp >> 3;
+			tmp = buffer[i] & 0x10101010;
+			latch |= tmp >> 1;
+			tmp = buffer[i] & 0x08080808;
+			latch |= tmp << 1;
+			tmp = buffer[i] & 0x04040404;
+			latch |= tmp << 3;
+			tmp = buffer[i] & 0x02020202;
+			latch |= tmp << 5;
+			tmp = buffer[i] & 0x01010101;
+			latch |= tmp << 7;
+			sc->sc_cursor_image[i] = latch;
+		}
+	}
+	return 0;
+}
+

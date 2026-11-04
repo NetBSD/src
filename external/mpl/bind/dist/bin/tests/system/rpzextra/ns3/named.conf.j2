@@ -11,26 +11,13 @@
  * information regarding copyright ownership.
  */
 
-key rndc_key {
-    secret "1234abcd8765";
-	algorithm @DEFAULT_HMAC@;
-};
-
-controls {
-	inet 10.53.0.3 port @CONTROLPORT@ allow { any; } keys { rndc_key; };
-};
+{% include "_common/controls.conf.j2" %}
 
 options {
-	query-source address 10.53.0.3;
-	notify-source 10.53.0.3;
-	transfer-source 10.53.0.3;
-	port @PORT@;
-	listen-on { 10.53.0.3; };
-	pid-file "named.pid";
+	{% include_indented "_common/options.conf.j2" %}
 	notify no;
 	dnssec-validation no;
 	allow-query { any; };
-	recursion yes;
 	allow-recursion { any; };
 	empty-zones-enable false;
 	response-policy {
@@ -94,7 +81,7 @@ view "second" {
 };
 
 view "third" {
-	match-clients { 10.53.0.3; };
+	match-clients { @ns.ip@; };
 	zone "." {
 		type hint;
 		file "root.db";

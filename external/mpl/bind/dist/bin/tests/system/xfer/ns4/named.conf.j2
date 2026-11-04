@@ -1,0 +1,46 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+{% set ns4_as_secondary_for_nil = ns4_as_secondary_for_nil | default(False) %}
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation no;
+	blackhole { none; };
+};
+
+key unused_key. {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+key tsig_key. {
+	secret "LSAnCU+Z";
+	algorithm @DEFAULT_HMAC@;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+{% if ns4_as_secondary_for_nil %}
+zone "nil" {
+	type secondary;
+	file "nil.db";
+	primaries { 10.53.0.5 key tsig_key; };
+};
+{% endif %}

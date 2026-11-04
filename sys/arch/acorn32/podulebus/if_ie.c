@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.55.2.1 2025/08/02 05:55:21 perseant Exp $ */
+/* $NetBSD: if_ie.c,v 1.55.2.2 2026/11/04 23:19:56 perseant Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55.2.1 2025/08/02 05:55:21 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.55.2.2 2026/11/04 23:19:56 perseant Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -731,7 +731,7 @@ run_tdr(struct ie_softc *sc)
     }
     else if ( result & IE_TDR_XCVR )
     {
-	printf ( "ie: tranceiver problem. Is it plugged in?\n" );
+	printf ( "ie: transceiver problem. Is it plugged in?\n" );
     }
     else if ( result & IE_TDR_OPEN )
     {

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.121.2.1 2025/08/02 05:56:01 perseant Exp $	*/
+/*	$NetBSD: pmap.c,v 1.121.2.2 2026/11/04 23:21:12 perseant Exp $	*/
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.1 2025/08/02 05:56:01 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.121.2.2 2026/11/04 23:21:12 perseant Exp $");
 
 #define	PMAP_NOOPNAMES
 
@@ -2148,7 +2148,7 @@ pmap_extract(pmap_t pm, vaddr_t va, paddr_t *pap)
 	 */
 	if (pm == pmap_kernel() &&
 	    (va < VM_MIN_KERNEL_ADDRESS ||
-	     (KERNEL2_SR < 15 && VM_MAX_KERNEL_ADDRESS <= va))) {
+	     (KERNEL2_SR < NSEGREG - 1 && VM_MAX_KERNEL_ADDRESS <= va))) {
 		KASSERT((va >> ADDR_SR_SHFT) != USER_SR);
 #if defined(PMAP_OEA)
 #ifdef PPC_OEA601
@@ -2885,6 +2885,7 @@ pmap_free_unmanaged(struct pup *pup)
 void *
 pmap_pool_alloc(struct pool *pp, int flags)
 {
+	uint64_t ticket;
 	struct vm_page *pg;
 	paddr_t pa;
 
@@ -2892,6 +2893,7 @@ pmap_pool_alloc(struct pool *pp, int flags)
 		return (void *)uvm_pageboot_alloc(PAGE_SIZE);
 
  retry:
+	ticket = uvm_wait_prepare();
 	pg = uvm_pagealloc_strat(NULL /*obj*/, 0 /*off*/, NULL /*anon*/,
 	    UVM_PGA_USERESERVE /*flags*/, UVM_PGA_STRAT_ONLY /*strat*/,
 	    VM_FREELIST_DIRECT_MAPPED /*free_list*/);
@@ -2902,7 +2904,7 @@ pmap_pool_alloc(struct pool *pp, int flags)
 
 		if ((flags & PR_WAITOK) == 0)
 			return NULL;
-		uvm_wait("plpg");
+		uvm_wait("plpg", ticket);
 		goto retry;
 	}
 	KDASSERT(VM_PAGE_TO_PHYS(pg) == (uintptr_t)VM_PAGE_TO_PHYS(pg));
@@ -2967,7 +2969,7 @@ pmap_steal_memory(vsize_t vsize, vaddr_t *vstartp, vaddr_t *vendp)
 	}
 
 	if (pa == 0)
-		panic("pmap_steal_memory: no approriate memory to steal!");
+		panic("pmap_steal_memory: no appropriate memory to steal!");
 
 	uvm_physseg_unplug(start, npgs);
 

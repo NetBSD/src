@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.35 2012/02/10 17:35:49 para Exp $	*/
+/*	$NetBSD: param.h,v 1.35.84.1 2026/11/04 23:20:19 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -48,28 +48,13 @@
 #define	MACHINE		"atari"
 
 #define	PGSHIFT		13		/* LOG2(NBPG) */
-#define	KERNBASE	0x00000000	/* start of kernel virtual */
-
-#define	UPAGES		2		/* pages of u-area */
 
 #include <m68k/param.h>
-
-#define	NPTEPG		(NBPG/(sizeof (pt_entry_t)))
-
-/*
- * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
- * logical pages.
- */
-#define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
-#define	NKMEMPAGES_MAX_DEFAULT	((128 * 1024 * 1024) >> PAGE_SHIFT)
 
 #ifdef	_KERNEL
 
 #include <machine/intr.h>
 
-void delay(unsigned int);
-
-#define	DELAY(n)	delay(n)
 #endif	/* _KERNEL */
 
 #endif	/* !_MACHINE_PARAM_H_ */

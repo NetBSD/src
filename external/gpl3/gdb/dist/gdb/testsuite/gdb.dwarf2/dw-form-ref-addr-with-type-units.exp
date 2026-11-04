@@ -1,0 +1,109 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This is a reproducer for PR 29518:
+#
+#   https://sourceware.org/bugzilla/show_bug.cgi?id=29518
+#
+# The root cause for the problem was that function
+# dwarf2_find_containing_comp_unit was searching the whole "all_units" vector,
+# containing both compile units and type units, causing it to sometimes
+# erroneously return a type unit.  It should have been restricted to searching
+# compile units.
+#
+# To get dwarf2_find_containing_comp_unit to be called and reproduce the
+# original bug, we need a value with form DW_FORM_ref_addr pointing to a
+# different compile unit.  This is produced by `%$int_type` below.
+
+load_lib dwarf.exp
+require dwarf2_support
+standard_testfile main.c .S
+
+set asm_file [standard_output_file $srcfile2]
+
+Dwarf::assemble $asm_file {
+    global srcfile
+    declare_labels int_type
+
+    # The source CU.
+    cu {version 4} {
+	compile_unit {
+	} {
+	    subprogram {
+		{MACRO_AT_func {main}}
+		{type %$int_type}
+	    }
+	}
+    }
+
+    # Create a bunch of empty / dummy CUs, to make the offset of int_type a bit
+    # higher.
+    for {set i 1} {$i < 10} {incr i} {
+	cu {version 4} {
+	    compile_unit {} {}
+	}
+    }
+
+    # The target CU.
+    cu {version 4} {
+	compile_unit {
+	} {
+	    int_type: DW_TAG_base_type {
+		{DW_AT_byte_size 4 DW_FORM_sdata}
+		{DW_AT_encoding  @DW_ATE_signed}
+		{DW_AT_name      int}
+	    }
+	}
+    }
+
+    # Create many TUs.
+    #
+    # We need enough type units in the "all_units" vector in order to steer the
+    # binary search in dwarf2_find_containing_comp_unit towards the type units
+    # region of the array.
+    for {set i 1} {$i < 20} {incr i} {
+	tu {version 4} $i the_type_i {
+		type_unit {} {
+		declare_labels dummy_int_type
+
+		the_type_i: structure_type {
+			{name s}
+			{byte_size 4 sdata}
+		} {
+			member {
+			{name i}
+			{type :$dummy_int_type}
+			}
+		}
+
+		dummy_int_type: base_type {
+			{name int}
+			{encoding @DW_ATE_signed}
+			{byte_size 4 sdata}
+		}
+	    }
+	}
+    }
+}
+
+if { [prepare_for_testing "failed to prepare" ${testfile} \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+# Without the corresponding fix, we get an internal error:
+#
+#   gdb/dwarf2/read.c:3940: internal-error: load_full_comp_unit: Assertion `! this_cu->is_debug_types' failed.
+gdb_test "p main" " = {int \\(void\\)} $hex <main>"

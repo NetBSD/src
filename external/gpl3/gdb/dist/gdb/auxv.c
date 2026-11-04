@@ -1,6 +1,6 @@
 /* Auxiliary vector support for GDB, the GNU debugger.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -81,7 +81,6 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
 		 ULONGEST offset,
 		 ULONGEST len, ULONGEST *xfered_len)
 {
-  struct bound_minimal_symbol msym;
   CORE_ADDR data_address, pointer_address;
   gdbarch *arch = current_inferior ()->arch ();
   type *ptr_type = builtin_type (arch)->builtin_data_ptr;
@@ -91,7 +90,8 @@ ld_so_xfer_auxv (gdb_byte *readbuf,
   LONGEST retval;
   size_t block;
 
-  msym = lookup_minimal_symbol ("_dl_auxv", NULL, NULL);
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, "_dl_auxv");
   if (msym.minsym == NULL)
     return TARGET_XFER_E_IO;
 
@@ -328,7 +328,7 @@ parse_auxv (target_ops *ops, gdbarch *gdbarch, const gdb_byte **readptr,
 
 /*  Auxiliary Vector information structure.  This is used by GDB
     for caching purposes for each inferior.  This helps reduce the
-    overhead of transfering data from a remote target to the local host.  */
+    overhead of transferring data from a remote target to the local host.  */
 struct auxv_info
 {
   std::optional<gdb::byte_vector> data;
@@ -609,9 +609,7 @@ info_auxv_command (const char *cmd, int from_tty)
     }
 }
 
-void _initialize_auxv ();
-void
-_initialize_auxv ()
+INIT_GDB_FILE (auxv)
 {
   add_info ("auxv", info_auxv_command,
 	    _("Display the inferior's auxiliary vector.\n\

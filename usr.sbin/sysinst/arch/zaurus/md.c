@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.12 2022/01/29 16:01:21 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.12.4.1 2026/11/04 23:29:02 perseant Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -41,6 +41,7 @@
 #include <util.h>
 
 #include "defs.h"
+#include "endian.h"
 #include "md.h"
 #include "msg_defs.h"
 #include "menu_defs.h"

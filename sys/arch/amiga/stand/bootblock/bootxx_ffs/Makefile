@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2022/04/29 07:45:20 rin Exp $
+#	$NetBSD: Makefile,v 1.28.10.1 2026/11/04 23:20:02 perseant Exp $
 
 .include <bsd.init.mk>
 .include <bsd.sys.mk>
@@ -111,13 +111,15 @@ bootxx_fd: f.out
 
 x.out: xxstart.o libboot.a
 	${_MKTARGET_LINK}
-	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
+	${LD} ${LDFLAGS} -r -dc -e start -T ${.CURDIR}/../ldscript.booters \
+		-o $@ $>
 	${SIZE} $@
 	${NM} -u $@
 
 f.out: fdstart.o libboot.a
 	${_MKTARGET_LINK}
-	${LD} ${LDFLAGS} -r -dc -e start -o $@ $>
+	${LD} ${LDFLAGS} -r -dc -e start -T ${.CURDIR}/../ldscript.booters \
+		-o $@ $>
 	${SIZE} $@
 	${NM} -u $@
 

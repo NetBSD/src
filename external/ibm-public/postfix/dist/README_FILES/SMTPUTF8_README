@@ -278,8 +278,8 @@ current versions of the Firefox and Chrome web browsers. Specify
 "enable_idna2003_compatibility = yes" to get the historical behavior.
 
 This affects the conversion of domain names that contain for example the German
-sz (ß) and the Greek zeta (ς). See https://unicode.org/cldr/utility/idna.jsp
-for more examples.
+sz (ß) and the Greek (final) sigma (ς). See https://unicode.org/cldr/utility/
+idna.jsp for more examples.
 
 CCrreeddiittss
 

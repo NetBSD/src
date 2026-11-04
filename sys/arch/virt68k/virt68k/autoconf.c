@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.5.2.1 2025/08/02 05:56:15 perseant Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.5.2.2 2026/11/04 23:21:30 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.1 2025/08/02 05:56:15 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.2 2026/11/04 23:21:30 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.5.2.1 2025/08/02 05:56:15 perseant Ex
 #include <sys/reboot.h>
 #include <sys/device.h>
 
-#include <machine/bootinfo.h>
+#include <m68k/linux_bootinfo.h>
 #include <machine/intr.h>
 
 #include <virt68k/dev/mainbusvar.h>
@@ -111,8 +111,7 @@ device_register(device_t dev, void *aux)
 		struct mainbus_attach_args *ma = aux;
 
 		if (ma->ma_addr == consdev_addr) {
-			prop_dictionary_set_bool(device_properties(dev),
-						 "is-console", true);
+			device_setprop_bool(dev, "is-console", true);
 		}
 	}
 }

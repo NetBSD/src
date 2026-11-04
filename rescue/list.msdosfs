@@ -1,0 +1,5 @@
+#	$NetBSD: list.msdosfs,v 1.1.2.2 2026/11/04 23:19:36 perseant Exp $
+
+PROG	fsck_msdos
+PROG	mount_msdos
+PROG	newfs_msdos

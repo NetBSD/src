@@ -1,4 +1,4 @@
-# Copyright (C) 2018-2024 Free Software Foundation, Inc.
+# Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,8 @@ require !gdb_debug_enabled
 proc test_set_osabi_none { } {
     clean_restart
     gdb_test_no_output "set debug arch 1"
-    gdb_test "set osabi none" ".*gdbarch_find_by_info: info.osabi 1 \\(none\\).*"
+    gdb_test "pipe set osabi none | grep gdbarch_find_by_info" \
+	".*gdbarch_find_by_info: info.osabi 1 \\(none\\).*"
 }
 
 test_set_osabi_none

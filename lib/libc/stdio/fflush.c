@@ -1,4 +1,4 @@
-/*	$NetBSD: fflush.c,v 1.24 2021/07/22 17:09:01 christos Exp $	*/
+/*	$NetBSD: fflush.c,v 1.24.4.1 2026/11/04 23:19:22 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)fflush.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: fflush.c,v 1.24 2021/07/22 17:09:01 christos Exp $");
+__RCSID("$NetBSD: fflush.c,v 1.24.4.1 2026/11/04 23:19:22 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -67,8 +67,12 @@ fflush(FILE *fp)
 
 	FLOCKFILE(fp);
 	if ((fp->_flags & (__SWR | __SRW)) == 0) {
-		errno = EBADF;
-		r = EOF;
+		if (fp->_file == -1) {
+			errno = EBADF;
+			r = EOF;
+		} else {
+			r = 0;
+		}
 	} else {
 		r = __sflush(fp);
 	}

@@ -3,7 +3,7 @@ static int x = 1;
 static void
 foo(void)
 {
-	x = 0;
+	x--;
 }
 
 static void (*fp) (void) __attribute__((__section__(".init_array"), __used__)) =

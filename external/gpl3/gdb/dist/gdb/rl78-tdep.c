@@ -1,6 +1,6 @@
 /* Target-dependent code for the Renesas RL78 for GDB, the GNU debugger.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -1183,16 +1183,16 @@ rl78_prev_register (const frame_info_ptr &this_frame,
     return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind rl78_unwind =
-{
+static const struct frame_unwind_legacy rl78_unwind (
   "rl78 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   rl78_this_id,
   rl78_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Implement the "dwarf_reg_to_regnum" gdbarch method.  */
 
@@ -1488,9 +1488,7 @@ rl78_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 /* Register the above initialization routine.  */
 
-void _initialize_rl78_tdep ();
-void
-_initialize_rl78_tdep ()
+INIT_GDB_FILE (rl78_tdep)
 {
   gdbarch_register (bfd_arch_rl78, rl78_gdbarch_init);
 }

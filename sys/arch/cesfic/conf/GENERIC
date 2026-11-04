@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.78 2023/02/12 14:50:38 abs Exp $
+# $NetBSD: GENERIC,v 1.78.6.1 2026/11/04 23:20:23 perseant Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,16 +22,12 @@ include 	"arch/cesfic/conf/std.cesfic"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-O2 -fno-reorder-blocks -fno-omit-frame-pointer"
-	# See share/mk/sys.mk. -fno-omit-frame-pointer is necessary for
-	# backtraces in DDB.
+makeoptions	COPTS="-O2 -fno-reorder-blocks"
 
 # Need to set locally
 maxusers	32
 
 #options 	LEDEBUG
-
-options 	FPSP
 
 # Standard system options
 options 	USERCONF	# userconf(4) support

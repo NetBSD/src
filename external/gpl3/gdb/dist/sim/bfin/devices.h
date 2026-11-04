@@ -1,6 +1,6 @@
 /* Common Blackfin device stuff.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
    Contributed by Analog Devices, Inc.
 
    This file is part of simulators.
@@ -28,7 +28,7 @@
 
 #include "bfin-sim.h"
 
-/* We keep the same inital structure layout with DMA enabled devices.  */
+/* We keep the same initial structure layout with DMA enabled devices.  */
 struct dv_bfin {
   bu32 base;
   struct hw *dma_master;

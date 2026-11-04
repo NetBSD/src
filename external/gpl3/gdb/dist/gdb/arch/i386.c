@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,6 +18,7 @@
 #include "i386.h"
 #include "gdbsupport/tdesc.h"
 #include "gdbsupport/x86-xstate.h"
+#include "gdbsupport/osabi.h"
 #include <stdlib.h>
 
 #include "../features/i386/32bit-core.c"
@@ -25,29 +26,30 @@
 #include "../features/i386/32bit-sse.c"
 #include "../features/i386/32bit-avx.c"
 #include "../features/i386/32bit-avx512.c"
-#include "../features/i386/32bit-mpx.c"
 #include "../features/i386/32bit-segments.c"
 #include "../features/i386/pkeys.c"
+#include "../features/i386/32bit-ssp.c"
 
-/* Create i386 target descriptions according to XCR0.  */
+/* See arch/i386.h.  */
 
 target_desc *
-i386_create_target_description (uint64_t xcr0, bool is_linux, bool segments)
+i386_create_target_description (uint64_t xstate_bv, bool is_linux,
+				bool segments)
 {
   target_desc_up tdesc = allocate_target_description ();
 
 #ifndef IN_PROCESS_AGENT
   set_tdesc_architecture (tdesc.get (), "i386");
   if (is_linux)
-    set_tdesc_osabi (tdesc.get (), "GNU/Linux");
+    set_tdesc_osabi (tdesc.get (), GDB_OSABI_LINUX);
 #endif
 
   long regnum = 0;
 
-  if (xcr0 & X86_XSTATE_X87)
+  if (xstate_bv & X86_XSTATE_X87)
     regnum = create_feature_i386_32bit_core (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_SSE)
+  if (xstate_bv & X86_XSTATE_SSE)
     regnum = create_feature_i386_32bit_sse (tdesc.get (), regnum);
 
   if (is_linux)
@@ -56,17 +58,17 @@ i386_create_target_description (uint64_t xcr0, bool is_linux, bool segments)
   if (segments)
     regnum = create_feature_i386_32bit_segments (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_AVX)
+  if (xstate_bv & X86_XSTATE_AVX)
     regnum = create_feature_i386_32bit_avx (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_MPX)
-    regnum = create_feature_i386_32bit_mpx (tdesc.get (), regnum);
-
-  if (xcr0 & X86_XSTATE_AVX512)
+  if (xstate_bv & X86_XSTATE_AVX512)
     regnum = create_feature_i386_32bit_avx512 (tdesc.get (), regnum);
 
-  if (xcr0 & X86_XSTATE_PKRU)
+  if (xstate_bv & X86_XSTATE_PKRU)
     regnum = create_feature_i386_pkeys (tdesc.get (), regnum);
+
+  if (xstate_bv & X86_XSTATE_CET_U)
+    regnum = create_feature_i386_32bit_ssp (tdesc.get (), regnum);
 
   return tdesc.release ();
 }

@@ -1,6 +1,6 @@
 /* GDB routines for supporting auto-loaded Guile scripts.
 
-   Copyright (C) 2010-2023 Free Software Foundation, Inc.
+   Copyright (C) 2010-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,9 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "top.h"
-#include "gdbcmd.h"
 #include "objfiles.h"
 #include "cli/cli-cmds.h"
 #include "auto-load.h"
@@ -54,7 +52,8 @@ gdbscm_auto_load_enabled (const struct extension_language_defn *extlang)
 static void
 info_auto_load_guile_scripts (const char *pattern, int from_tty)
 {
-  auto_load_info_scripts (pattern, from_tty, &extension_language_guile);
+  auto_load_info_scripts (current_program_space, pattern, from_tty,
+			  &extension_language_guile);
 }
 
 void
@@ -62,8 +61,8 @@ gdbscm_initialize_auto_load (void)
 {
   add_setshow_boolean_cmd ("guile-scripts", class_support,
 			   &auto_load_guile_scripts, _("\
-Set the debugger's behaviour regarding auto-loaded Guile scripts."), _("\
-Show the debugger's behaviour regarding auto-loaded Guile scripts."), _("\
+Set the debugger's behavior regarding auto-loaded Guile scripts."), _("\
+Show the debugger's behavior regarding auto-loaded Guile scripts."), _("\
 If enabled, auto-loaded Guile scripts are loaded when the debugger reads\n\
 an executable or shared library.\n\
 This options has security implications for untrusted inferiors."),

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2022-2023 Free Software Foundation, Inc.
+   Copyright 2022-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,5 +19,12 @@ int
 foo (void)
 {
   asm ("foo_label: .globl foo_label");
+  return 0;
+}
+
+int
+foo2 (void)
+{
+  asm ("foo2_label: .globl foo2_label");
   return 0;
 }

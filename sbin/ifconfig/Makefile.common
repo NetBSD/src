@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile.common,v 1.7 2021/05/17 04:07:42 yamaguchi Exp $
+#	$NetBSD: Makefile.common,v 1.7.6.1 2026/11/04 23:19:40 perseant Exp $
 
 # shared stuff with src/distrib/utils/x_ifconfig for install media.
 # stuff not required by install media should be into Makefile.
 
 .ifdef SMALLPROG
 CPPFLAGS+=	-DSMALL
+.endif
+
+.if (${MKWLAN} == "no")
+NOIEEE80211=	1
 .endif
 
 DPADD+=		${LIBUTIL} ${LIBPROP}
@@ -19,3 +23,5 @@ SRCS+=		ieee80211.c
 .ifndef SMALLPROG
 SRCS+=		agr.c l2tp.c lagg.c
 .endif
+
+COPTS.parse.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}

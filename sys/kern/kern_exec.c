@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.521.6.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.521.6.2 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.521.6.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.521.6.2 2026/11/04 23:27:48 perseant Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -533,6 +533,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 		 * loader.
 		 */
 		KASSERT(epp->ep_emul_arg == NULL);
+		KASSERT(epp->ep_emul_arg_free == NULL);
 		if (epp->ep_emul_root != NULL) {
 			vrele(epp->ep_emul_root);
 			epp->ep_emul_root = NULL;
@@ -560,6 +561,14 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 	 */
 	kill_vmcmds(&epp->ep_vmcmds);
 
+	/*
+	 * Some struct execsw::es_makecmds may have succeeded and
+	 * allocated epp->ep_emul_arg, but we may have rejected the
+	 * option anyway because some parameters exceedd some limits
+	 * like RLIMIT_DATA.  In that case, we must free it.
+	 */
+	exec_free_emul_arg(epp);
+
 #if NVERIEXEC > 0 || defined(PAX_SEGVGUARD)
 bad2:
 #endif
@@ -582,7 +591,7 @@ bad1:
 }
 
 #ifdef __MACHINE_STACK_GROWS_UP
-#define STACK_PTHREADSPACE NBPG
+#define STACK_PTHREADSPACE PAGE_SIZE
 #else
 #define STACK_PTHREADSPACE 0
 #endif
@@ -898,6 +907,8 @@ execve_loadvm(struct lwp *l, bool has_path, const char *path, int fd,
  bad:
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&epp->ep_vmcmds);
+	/* free any emul arg from struct execsw::es_makecmds */
+	exec_free_emul_arg(epp);
 	/* kill any opened file descriptor, if necessary */
 	if (epp->ep_flags & EXEC_HASFD) {
 		epp->ep_flags &= ~EXEC_HASFD;
@@ -910,6 +921,8 @@ execve_loadvm(struct lwp *l, bool has_path, const char *path, int fd,
 	pool_put(&exec_pool, data->ed_argp);
 
  freehdr:
+	KASSERT(epp->ep_emul_arg == NULL);
+	KASSERT(epp->ep_emul_arg_free == NULL);
 	kmem_free(epp->ep_hdr, epp->ep_hdrlen);
 	if (epp->ep_emul_root != NULL)
 		vrele(epp->ep_emul_root);
@@ -957,22 +970,35 @@ execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
 
 	base_vcp = NULL;
 
-	for (i = 0; i < epp->ep_vmcmds.evs_used && !error; i++) {
+	for (i = 0; i < epp->ep_vmcmds.evs_used; i++) {
 		struct exec_vmcmd *vcp;
 
 		vcp = &epp->ep_vmcmds.evs_cmds[i];
+		if (vcp->ev_flags & VMCMD_BASE)
+			base_vcp = vcp;
+
 		if (vcp->ev_flags & VMCMD_RELATIVE) {
-			KASSERTMSG(base_vcp != NULL,
-			    "%s: relative vmcmd with no base", __func__);
-			KASSERTMSG((vcp->ev_flags & VMCMD_BASE) == 0,
-			    "%s: illegal base & relative vmcmd", __func__);
+			if (base_vcp == NULL) {
+				DPRINTF(("%s: relative vmcmd %zu with no base",
+				    __func__, i));
+				error = EINVAL;
+				break;
+			}
+			if ((vcp->ev_flags & VMCMD_BASE) != 0) {
+				DPRINTF(("%s: illegal base|relative vmcmd %zu",
+				    __func__, i));
+				error = EINVAL;
+				break;
+			}
 			vcp->ev_addr += base_vcp->ev_addr;
 		}
 		error = (*vcp->ev_proc)(l, vcp);
-		if (error)
+		if (error) {
 			DUMPVMCMDS(epp, i, error);
-		if (vcp->ev_flags & VMCMD_BASE)
-			base_vcp = vcp;
+			DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i,
+			    error));
+			break;
+		}
 	}
 
 	/* free the vmspace-creation commands, and release their references */
@@ -982,10 +1008,6 @@ execve_dovmcmds(struct lwp *l, struct execve_data * restrict data)
 	VOP_CLOSE(epp->ep_vp, FREAD, l->l_cred);
 	vput(epp->ep_vp);
 
-	/* if an error happened, deallocate and punt */
-	if (error != 0) {
-		DPRINTF(("%s: vmcmd %zu failed: %d\n", __func__, i - 1, error));
-	}
 	return error;
 }
 
@@ -993,6 +1015,9 @@ static void
 execve_free_data(struct execve_data *data)
 {
 	struct exec_package	* const epp = &data->ed_pack;
+
+	KASSERT(epp->ep_emul_arg == NULL);
+	KASSERT(epp->ep_emul_arg_free == NULL);
 
 	/* free the vmspace-creation commands, and release their references */
 	kill_vmcmds(&epp->ep_vmcmds);
@@ -1272,6 +1297,7 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	l->l_ctxlink = NULL;	/* reset ucontext link */
 	p->p_acflag &= ~AFORK;
 	p->p_flag |= PK_EXEC;
+	p->p_stackbase = epp->ep_minsaddr;
 	mutex_exit(p->p_lock);
 
 	error = credexec(l, data);
@@ -1384,6 +1410,14 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 	SDT_PROBE(proc, kernel, , exec__success, epp->ep_kname, 0, 0, 0, 0);
 
 	emulexec(l, epp);
+
+	/*
+	 * By this point, one of the execsw or emul callbacks must have
+	 * consumed epp->ep_emul_arg, if it was ever set; otherwise, if
+	 * it wasn't useful to consume, why would it have been set?
+	 */
+	KASSERT(epp->ep_emul_arg == NULL);
+	KASSERT(epp->ep_emul_arg_free == NULL);
 
 	/* Allow new references from the debugger/procfs. */
 	rw_exit(&p->p_reflock);
@@ -2407,6 +2441,7 @@ spawn_return(void *arg)
 		 * so release/free both here.
 		 */
 		rw_exit(&p->p_reflock);
+		exec_free_emul_arg(&spawn_data->sed_exec.ed_pack);
 		execve_free_data(&spawn_data->sed_exec);
 	}
 

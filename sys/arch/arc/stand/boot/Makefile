@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.19 2024/06/29 08:02:06 rin Exp $
+# $NetBSD: Makefile,v 1.19.2.1 2026/11/04 23:20:03 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -51,7 +51,7 @@ LIBKERN= ${KERNLIB}
 .include "${S}/lib/libz/Makefile.inc"
 LIBZ=    ${ZLIB}
 
-LIBS=  ${LIBSA} ${LIBKERN} ${LIBZ}
+LIBS=	${LIBSA} ${LIBZ} ${LIBKERN}
 
 cleandir distclean: .WAIT cleanlibdir
 cleanlibdir:

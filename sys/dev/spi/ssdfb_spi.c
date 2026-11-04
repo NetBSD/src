@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.14 2022/01/19 13:33:49 thorpej Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.14.10.1 2026/11/04 23:22:34 perseant Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.14 2022/01/19 13:33:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.14.10.1 2026/11/04 23:22:34 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -52,7 +52,7 @@ struct bs_state {
 
 struct ssdfb_spi_softc {
 	struct ssdfb_softc	sc;
-	struct spi_handle	*sc_sh;
+	spi_handle_t		sc_sh;
 #ifdef FDT
 	struct fdtbus_gpio_pin	*sc_gpio_dc;
 	struct fdtbus_gpio_pin	*sc_gpio_res;
@@ -102,8 +102,13 @@ static int
 ssdfb_spi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int match_result;
 
-	return spi_compatible_match(sa, match, compat_data);
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
+	}
+
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
@@ -118,6 +123,7 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	sc->sc.sc_dev = self;
 	sc->sc_sh = sa->sa_handle;
 	sc->sc.sc_cookie = (void *)sc;
+
 	if ((flags & SSDFB_ATTACH_FLAG_PRODUCT_MASK) == SSDFB_PRODUCT_UNKNOWN) {
 		const struct device_compatible_entry *dce =
 			spi_compatible_lookup(sa, compat_data);
@@ -130,7 +136,8 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	/*
 	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
 	 */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 10000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0,
+	    SPI_FREQ_MHz(10));
 	if (error) {
 		return;
 	}
@@ -144,25 +151,33 @@ ssdfb_spi_attach(device_t parent, device_t self, void *aux)
 	 * 4 wire mode sends 8 bit sequences and requires an auxiliary GPIO
 	 * pin for the command/data bit.
 	 */
+	devhandle_t devhandle = device_handle(self);
+	switch (devhandle_type(devhandle)) {
 #ifdef FDT
-	const int phandle = sa->sa_cookie;
-	sc->sc_gpio_dc =
-	    fdtbus_gpio_acquire(phandle, "dc-gpio", GPIO_PIN_OUTPUT);
-	if (!sc->sc_gpio_dc)
+	case DEVHANDLE_TYPE_OF: {
+		const int phandle = devhandle_to_of(devhandle);
 		sc->sc_gpio_dc =
-		    fdtbus_gpio_acquire(phandle, "cd-gpio", GPIO_PIN_OUTPUT);
-	sc->sc_3wiremode = (sc->sc_gpio_dc == NULL);
-	sc->sc_gpio_res =
-	    fdtbus_gpio_acquire(phandle, "res-gpio", GPIO_PIN_OUTPUT);
-	if (sc->sc_gpio_res) {
-		fdtbus_gpio_write_raw(sc->sc_gpio_res, 0);
-		DELAY(100);
-		fdtbus_gpio_write_raw(sc->sc_gpio_res, 1);
-		DELAY(100);
+		    fdtbus_gpio_acquire(phandle, "dc-gpio", GPIO_PIN_OUTPUT);
+		if (!sc->sc_gpio_dc) {
+			sc->sc_gpio_dc = fdtbus_gpio_acquire(phandle,
+			    "cd-gpio", GPIO_PIN_OUTPUT);
+		}
+		sc->sc_3wiremode = (sc->sc_gpio_dc == NULL);
+		sc->sc_gpio_res =
+		    fdtbus_gpio_acquire(phandle, "res-gpio", GPIO_PIN_OUTPUT);
+		if (sc->sc_gpio_res) {
+			fdtbus_gpio_write_raw(sc->sc_gpio_res, 0);
+			DELAY(100);
+			fdtbus_gpio_write_raw(sc->sc_gpio_res, 1);
+			DELAY(100);
+		}
+		break;
+	    }
+#endif /* FDT */
+	default:
+		sc->sc_3wiremode = true;
+		break;
 	}
-#else
-	sc->sc_3wiremode = true;
-#endif
 
 	sc->sc.sc_cmd = sc->sc_3wiremode
 	    ? ssdfb_spi_cmd_3wire

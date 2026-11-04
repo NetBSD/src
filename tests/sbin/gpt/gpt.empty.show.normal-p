@@ -1,0 +1,6 @@
+0 1 0 PMBR
+1 1 0 Pri GPT header
+2 32 0 Pri GPT table
+34 10174 0 Unused
+10208 32 0 Sec GPT table
+10240 1 0 Sec GPT header

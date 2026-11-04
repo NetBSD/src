@@ -132,6 +132,17 @@ for ns in 2 4 5 6; do
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
 
+  echo_i "prime negative NXDOMAIN response no-apex-covering (synth-from-dnssec ${description};) ($n)"
+  ret=0
+  dig_with_opts a.no-apex-covering. @10.53.0.${ns} a >dig.out.ns${ns}.test$n || ret=1
+  check_ad_flag $ad dig.out.ns${ns}.test$n || ret=1
+  check_status NXDOMAIN dig.out.ns${ns}.test$n || ret=1
+  check_nosynth_soa no-apex-covering. dig.out.ns${ns}.test$n || ret=1
+  [ $ns -eq 2 ] && cp dig.out.ns${ns}.test$n no-apex-covering.out
+  n=$((n + 1))
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
   echo_i "prime negative NODATA response (synth-from-dnssec ${description};) ($n)"
   ret=0
   dig_with_opts nodata.example. @10.53.0.${ns} a >dig.out.ns${ns}.test$n || ret=1
@@ -366,6 +377,24 @@ for ns in 2 4 5 6; do
     nextpart ns1/named.run | grep b.example/A >/dev/null || ret=1
   fi
   digcomp nxdomain.out dig.out.ns${ns}.test$n || ret=1
+  n=$((n + 1))
+  if [ $ret != 0 ]; then echo_i "failed"; fi
+  status=$((status + ret))
+
+  echo_i "check synthesized NXDOMAIN response no-apex-covering (synth-from-dnssec ${description};) ($n)"
+  ret=0
+  nextpart ns1/named.run >/dev/null
+  dig_with_opts b.no-apex-covering. @10.53.0.${ns} a >dig.out.ns${ns}.test$n || ret=1
+  check_ad_flag $ad dig.out.ns${ns}.test$n || ret=1
+  check_status NXDOMAIN dig.out.ns${ns}.test$n || ret=1
+  if [ ${synth} = yes ]; then
+    check_synth_soa no-apex-covering. dig.out.ns${ns}.test$n || ret=1
+    nextpart ns1/named.run | grep b.no-apex-covering/A >/dev/null && ret=1
+  else
+    check_nosynth_soa no-apex-covering. dig.out.ns${ns}.test$n || ret=1
+    nextpart ns1/named.run | grep b.no-apex-covering/A >/dev/null || ret=1
+  fi
+  digcomp no-apex-covering.out dig.out.ns${ns}.test$n || ret=1
   n=$((n + 1))
   if [ $ret != 0 ]; then echo_i "failed"; fi
   status=$((status + ret))
@@ -670,7 +699,7 @@ for ns in 2 4 5 6; do
 
   for synthesized in NXDOMAIN no-data wildcard; do
     case $synthesized in
-      NXDOMAIN) count=1 ;;
+      NXDOMAIN) count=2 ;;
       no-data) count=4 ;;
       wildcard) count=2 ;;
     esac
@@ -686,7 +715,7 @@ for ns in 2 4 5 6; do
     status=$((status + ret))
   done
 
-  if ${FEATURETEST} --have-libxml2 && [ -x "${CURL}" ]; then
+  if ${FEATURETEST} --have-libxml2 && [ -x "${CURL}" ] && [ -x "${XMLLINT}" ]; then
     echo_i "getting XML statisistcs for (synth-from-dnssec ${description};) ($n)"
     ret=0
     xml=xml.out$n
@@ -697,10 +726,9 @@ for ns in 2 4 5 6; do
 
     echo_i "check XML for 'CoveringNSEC' with (synth-from-dnssec ${description};) ($n)"
     ret=0
-    counter=$(sed -n 's;.*<view name="_default">.*\(<counter name="CoveringNSEC">[0-9]*</counter>\).*</view><view.*;\1;gp' $xml)
-    count=$(echo "$counter" | grep CoveringNSEC | wc -l)
+    count=$("${XMLLINT}" --xpath 'count(/statistics/views/view[@name="_default"]/counters[@type="cachestats"]/counter[@name="CoveringNSEC"])' $xml)
     test $count = 1 || ret=1
-    zero=$(echo "$counter" | grep ">0<" | wc -l)
+    zero=$("${XMLLINT}" --xpath 'count(/statistics/views/view[@name="_default"]/counters[@type="cachestats"]/counter[@name="CoveringNSEC" and text()="0"])' $xml)
     if [ ${synth} = yes ]; then
       test $zero = 0 || ret=1
     else
@@ -712,10 +740,9 @@ for ns in 2 4 5 6; do
 
     echo_i "check XML for 'CacheNSECNodes' with (synth-from-dnssec ${description};) ($n)"
     ret=0
-    counter=$(sed -n 's;.*<view name="_default">.*\(<counter name="CacheNSECNodes">[0-9]*</counter>\).*</view><view.*;\1;gp' $xml)
-    count=$(echo "$counter" | grep CacheNSECNodes | wc -l)
+    count=$("${XMLLINT}" --xpath 'count(/statistics/views/view[@name="_default"]/counters[@type="cachestats"]/counter[@name="CacheNSECNodes"])' $xml)
     test $count = 1 || ret=1
-    zero=$(echo "$counter" | grep ">0<" | wc -l)
+    zero=$("${XMLLINT}" --xpath 'count(/statistics/views/view[@name="_default"]/counters[@type="cachestats"]/counter[@name="CacheNSECNodes" and text()="0"])' $xml)
     if [ ${ad} = yes ]; then
       test $zero = 0 || ret=1
     else
@@ -727,18 +754,17 @@ for ns in 2 4 5 6; do
 
     for synthesized in SynthNXDOMAIN SynthNODATA SynthWILDCARD; do
       case $synthesized in
-        SynthNXDOMAIN) count=1 ;;
+        SynthNXDOMAIN) count=2 ;;
         SynthNODATA) count=4 ;;
         SynthWILDCARD) count=2 ;;
       esac
 
       echo_i "check XML for '$synthesized}' with (synth-from-dnssec ${description};) ($n)"
       ret=0
-      if [ ${synth} = yes ]; then
-        grep '<counter name="'$synthesized'">'$count'</counter>' $xml >/dev/null || ret=1
-      else
-        grep '<counter name="'$synthesized'">'0'</counter>' $xml >/dev/null || ret=1
+      if [ ${synth} != yes ]; then
+        count=0
       fi
+      test $("${XMLLINT}" --xpath '/statistics/server/counters[@type="nsstat"]/counter[@name="'"${synthesized}"'"]/text()' $xml) -eq $count || ret=1
       n=$((n + 1))
       if [ $ret != 0 ]; then echo_i "failed"; fi
       status=$((status + ret))
@@ -747,7 +773,7 @@ for ns in 2 4 5 6; do
     echo_i "Skipping XML statistics checks"
   fi
 
-  if $FEATURETEST --have-json-c && [ -x "${CURL}" ]; then
+  if $FEATURETEST --have-json-c && [ -x "${CURL}" ] && [ -x "${JQ}" ]; then
     echo_i "getting JSON statisistcs for (synth-from-dnssec ${description};) ($n)"
     ret=0
     json=json.out$n
@@ -758,9 +784,9 @@ for ns in 2 4 5 6; do
 
     echo_i "check JSON for 'CoveringNSEC' with (synth-from-dnssec ${description};) ($n)"
     ret=0
-    count=$(grep '"CoveringNSEC":' $json | wc -l)
+    count=$("${JQ}" '.views | map(select(.resolver.cachestats | has("CoveringNSEC"))) | length' <$json)
     test $count = 2 || ret=1
-    zero=$(grep '"CoveringNSEC":0' $json | wc -l)
+    zero=$("${JQ}" '.views | map(select(.resolver.cachestats.CoveringNSEC == 0)) | length' <$json)
     if [ ${synth} = yes ]; then
       test $zero = 1 || ret=1
     else
@@ -772,9 +798,9 @@ for ns in 2 4 5 6; do
 
     echo_i "check JSON for 'CacheNSECNodes' with (synth-from-dnssec ${description};) ($n)"
     ret=0
-    count=$(grep '"CacheNSECNodes":' $json | wc -l)
+    count=$("${JQ}" '.views | map(select(.resolver.cachestats | has("CacheNSECNodes"))) | length' <$json)
     test $count = 2 || ret=1
-    zero=$(grep '"CacheNSECNodes":0' $json | wc -l)
+    zero=$("${JQ}" '.views | map(select(.resolver.cachestats.CacheNSECNodes == 0)) | length' <$json)
     if [ ${ad} = yes ]; then
       test $zero = 1 || ret=1
     else
@@ -786,7 +812,7 @@ for ns in 2 4 5 6; do
 
     for synthesized in SynthNXDOMAIN SynthNODATA SynthWILDCARD; do
       case $synthesized in
-        SynthNXDOMAIN) count=1 ;;
+        SynthNXDOMAIN) count=2 ;;
         SynthNODATA) count=4 ;;
         SynthWILDCARD) count=2 ;;
       esac
@@ -794,9 +820,9 @@ for ns in 2 4 5 6; do
       echo_i "check JSON for '$synthesized}' with (synth-from-dnssec ${description};) ($n)"
       ret=0
       if [ ${synth} = yes ]; then
-        grep '"'$synthesized'":'$count'' $json >/dev/null || ret=1
+        test $("${JQ}" ".nsstats.${synthesized}" <$json) -eq $count || ret=1
       else
-        grep '"'$synthesized'":' $json >/dev/null && ret=1
+        "${JQ}" -e '.nsstats | has("'"${synthesized}"'")' <$json >/dev/null && ret=1
       fi
       n=$((n + 1))
       if [ $ret != 0 ]; then echo_i "failed"; fi

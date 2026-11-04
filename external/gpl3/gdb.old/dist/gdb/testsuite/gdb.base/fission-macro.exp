@@ -1,0 +1,75 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# Gcc 14 is the first release containing the fix for PR debug/111409.
+require {expr [gcc_major_version] >= 14}
+
+standard_testfile .c -2.c
+
+proc do_tests { dwarf_version dwarf_bits strict_dwarf } {
+    set opts {}
+    lappend opts debug
+    lappend opts quiet
+    lappend opts additional_flags=-gsplit-dwarf
+    lappend opts macros
+
+    if { $dwarf_bits == 64 } {
+	lappend opts additional_flags=-gdwarf64
+    }
+
+    if { $strict_dwarf } {
+	lappend opts additional_flags=-gstrict-dwarf
+    }
+
+    lappend opts additional_flags=-gdwarf-$dwarf_version
+
+    set id v$dwarf_version-b$dwarf_bits-s$strict_dwarf
+
+    set srcfiles [list $::srcfile $::srcfile2]
+    if { [build_executable "failed to prepare" $::testfile-$id $srcfiles $opts] } {
+	return -1
+    }
+
+    clean_restart
+
+    gdb_load_no_complaints $::binfile-$id
+
+    if {![runto_main]} {
+	return 0
+    }
+
+    gdb_test "p FIRST" " = 1"
+    gdb_test "p SECOND" " = 2"
+
+    gdb_test "info macro FIRST" "#define FIRST 1"
+    gdb_test "info macro SECOND" "#define SECOND 2"
+
+    gdb_breakpoint foo
+    gdb_continue_to_breakpoint "foo"
+
+    gdb_test "p THIRD" " = 3"
+    gdb_test "p FOURTH" " = 4"
+
+    gdb_test "info macro THIRD" "#define THIRD 3"
+    gdb_test "info macro FOURTH" "#define FOURTH 4"
+}
+
+foreach_with_prefix dwarf_version {5} {
+    foreach_with_prefix dwarf_bits {32} {
+	foreach_with_prefix strict_dwarf {0 1} {
+	    do_tests $dwarf_version $dwarf_bits $strict_dwarf
+	}
+    }
+}

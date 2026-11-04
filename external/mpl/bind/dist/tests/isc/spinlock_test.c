@@ -1,4 +1,4 @@
-/*	$NetBSD: spinlock_test.c,v 1.2.4.2 2025/08/02 05:54:17 perseant Exp $	*/
+/*	$NetBSD: spinlock_test.c,v 1.2.4.3 2026/11/04 23:18:24 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,6 +84,7 @@ ISC_RUN_TEST_IMPL(isc_spinlock) {
 #define CNT_MIN 800
 #define CNT_MAX 1600
 
+#if !defined(__SANITIZE_THREAD__)
 static size_t shared_counter = 0;
 static size_t expected_counter = SIZE_MAX;
 
@@ -215,6 +216,7 @@ ISC_RUN_TEST_IMPL(isc_spinlock_benchmark) {
 
 	isc_mem_cput(mctx, threads, workers, sizeof(*threads));
 }
+#endif
 
 ISC_TEST_LIST_START
 

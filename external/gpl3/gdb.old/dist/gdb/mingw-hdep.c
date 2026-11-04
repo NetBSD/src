@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2023 Free Software Foundation, Inc.
+   Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "main.h"
 #include "serial.h"
 #include "gdbsupport/event-loop.h"
@@ -385,7 +384,7 @@ sharing_input_terminal (int pid)
       len = GetConsoleProcessList (results.data (), results.size ());
       /* Note that LEN == 0 is a failure, but we can treat it the same
 	 as a "no".  */
-      if (len < results.size ())
+      if (len <= results.size ())
 	break;
 
       results.resize (len);

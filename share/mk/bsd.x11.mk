@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.x11.mk,v 1.155.2.1 2025/08/02 05:55:19 perseant Exp $
+#	$NetBSD: bsd.x11.mk,v 1.155.2.2 2026/11/04 23:19:54 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -134,7 +134,7 @@ XORG_VERSION_CURRENT="(((${XORG_SERVER_MAJOR}) * 10000000) + ((${XORG_SERVER_MIN
 .else
 XORG_SERVER_MAJOR=	21
 XORG_SERVER_MINOR=	1
-XORG_SERVER_TEENY=	18
+XORG_SERVER_TEENY=	25
 XORG_VERSION_CURRENT="((10000000) + ((${XORG_SERVER_MAJOR}) * 100000) + ((${XORG_SERVER_MINOR}) * 1000) + ${XORG_SERVER_TEENY})"
 .endif
 
@@ -263,7 +263,7 @@ FILESMODE_${_pkg}.pc=	${NONBINMODE}
 ${_PKGDEST.${_pkg}}: ${_pkg}.pc __fileinstall
 pkgconfig-install: ${_PKGDEST.${_pkg}}
 
-# Add a dependancy on the configure file if it exists; this way we
+# Add a dependency on the configure file if it exists; this way we
 # will rebuild the .pc file if the version in configure changes.
 .if exists(${PKGDIST.${_pkg}}/configure)
 ${_pkg}.pc: ${PKGDIST.${_pkg}}/configure Makefile

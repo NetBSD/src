@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.26 2022/03/23 13:06:06 andvar Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.26.10.1 2026/11/04 23:28:07 perseant Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -47,6 +47,7 @@
  * This header file provides a reasonably sanitized version of the
  * structures and definitions needed for that purpose.
  */
+#include <sys/rbtree.h>
 
 #include <miscfs/genfs/genfs_node.h>
 #include <ufs/lfs/lfs.h>
@@ -115,7 +116,7 @@ struct inode {
 #define	IN_MODIFY	0x2000		/* Modification time update request. */
 #define	IN_MODIFIED	0x0008		/* Inode has been modified. */
 #define	IN_ACCESSED	0x0010		/* Inode has been accessed. */
-/* 	   unused	0x0020 */	/* was IN_RENAME */
+#define IN_DEAD		0x0020		/* Removed, waiting for reclaim. */
 #define	IN_SHLOCK	0x0040		/* File has shared lock. */
 #define	IN_EXLOCK	0x0080		/* File has exclusive lock. */
 #define	IN_CLEANING	0x0100		/* LFS: file is being cleaned */
@@ -125,7 +126,7 @@ struct inode {
 #define IN_CDIROP       0x4000          /* LFS: dirop completed pending i/o */
 #define	IN_MARKER	0x00010000	/* LFS: marker inode for iteration */
 
-/* XXX this is missing some of the flags */
+/* All of the flags that indicate a need to write the inode */
 #define IN_ALLMOD (IN_MODIFIED|IN_ACCESS|IN_CHANGE|IN_UPDATE|IN_MODIFY|IN_ACCESSED|IN_CLEANING)
 
 	dev_t	  i_dev;	/* Device associated with the inode. */
@@ -183,6 +184,7 @@ struct lfs_inode_ext {
 	size_t	  lfs_fragsize[ULFS_NDADDR]; /* size of on-disk direct blocks */
 	TAILQ_ENTRY(inode) lfs_dchain;  /* Dirop chain. */
 	TAILQ_ENTRY(inode) lfs_pchain;  /* Paging chain. */
+	TAILQ_ENTRY(inode) lfs_clean;   /* Mount point cleaning inodes list */
 #define LFSI_NO_GOP_WRITE 0x01
 #define LFSI_DELETED      0x02
 #define LFSI_WRAPBLOCK    0x04
@@ -193,13 +195,14 @@ struct lfs_inode_ext {
 #ifdef _KERNEL
 	SPLAY_HEAD(lfs_splay, lbnentry) lfs_lbtree; /* Tree of balloc'd lbns */
 	int	  lfs_nbtree;		/* Size of tree */
-	LIST_HEAD(, segdelta) lfs_segdhd;
+	rb_tree_t lfs_segdhd;		/* rbtree for truncation */
 #endif
 	int16_t	  lfs_odnlink;		/* on-disk nlink count for cleaner */
 };
 #define i_lfs_osize		inode_ext.lfs->lfs_osize
 #define i_lfs_effnblks		inode_ext.lfs->lfs_effnblocks
 #define i_lfs_fragsize		inode_ext.lfs->lfs_fragsize
+#define i_lfs_clean		inode_ext.lfs->lfs_clean
 #define i_lfs_dchain		inode_ext.lfs->lfs_dchain
 #define i_lfs_pchain		inode_ext.lfs->lfs_pchain
 #define i_lfs_iflags		inode_ext.lfs->lfs_iflags

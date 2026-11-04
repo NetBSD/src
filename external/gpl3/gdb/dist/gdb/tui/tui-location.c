@@ -1,4 +1,4 @@
-/* Copyright (C) 2021-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,9 +15,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "tui/tui.h"
 #include "tui/tui-status.h"
-#include "tui/tui-data.h"
 #include "tui/tui-location.h"
 #include "symtab.h"
 #include "source.h"

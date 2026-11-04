@@ -1,6 +1,6 @@
 /* Target-dependent code for GDB, the GNU debugger.
 
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PPC_TDEP_H
-#define PPC_TDEP_H
+#ifndef GDB_PPC_TDEP_H
+#define GDB_PPC_TDEP_H
 
 #include "gdbarch.h"
 
@@ -458,4 +458,4 @@ extern const struct target_desc *tdesc_powerpc_vsx32;
 extern const struct target_desc *tdesc_powerpc_altivec64;
 extern const struct target_desc *tdesc_powerpc_altivec32;
 
-#endif /* ppc-tdep.h */
+#endif /* GDB_PPC_TDEP_H */

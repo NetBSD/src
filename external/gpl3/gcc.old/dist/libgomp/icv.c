@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2020 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
    Contributed by Richard Henderson <rth@redhat.com>.
 
    This file is part of the GNU Offloading and Multi Processing Library
@@ -30,6 +30,8 @@
 #include "gomp-constants.h"
 #include <limits.h>
 
+ialias_redirect (omp_get_active_level)
+
 void
 omp_set_num_threads (int n)
 {
@@ -51,19 +53,26 @@ omp_get_dynamic (void)
   return icv->dyn_var;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
 void
 omp_set_nested (int val)
 {
   struct gomp_task_icv *icv = gomp_icv (true);
-  icv->nest_var = val;
+  if (val)
+    icv->max_active_levels_var = gomp_supported_active_levels;
+  else if (icv->max_active_levels_var > 1)
+    icv->max_active_levels_var = 1;
 }
 
 int
 omp_get_nested (void)
 {
   struct gomp_task_icv *icv = gomp_icv (false);
-  return icv->nest_var;
+  return (icv->max_active_levels_var > 1
+	  && icv->max_active_levels_var > omp_get_active_level ());
 }
+#pragma GCC diagnostic pop
 
 void
 omp_set_schedule (omp_sched_t kind, int chunk_size)
@@ -116,13 +125,53 @@ void
 omp_set_max_active_levels (int max_levels)
 {
   if (max_levels >= 0)
-    gomp_max_active_levels_var = max_levels;
+    {
+      struct gomp_task_icv *icv = gomp_icv (true);
+
+      if (max_levels <= gomp_supported_active_levels)
+	icv->max_active_levels_var = max_levels;
+      else
+	icv->max_active_levels_var = gomp_supported_active_levels;
+    }
 }
 
 int
 omp_get_max_active_levels (void)
 {
-  return gomp_max_active_levels_var;
+  struct gomp_task_icv *icv = gomp_icv (false);
+  return icv->max_active_levels_var;
+}
+
+int
+omp_get_supported_active_levels (void)
+{
+  return gomp_supported_active_levels;
+}
+
+void
+omp_set_num_teams (int num_teams)
+{
+  if (num_teams >= 0)
+    gomp_nteams_var = num_teams;
+}
+
+int
+omp_get_max_teams (void)
+{
+  return gomp_nteams_var;
+}
+
+void
+omp_set_teams_thread_limit (int thread_limit)
+{
+  if (thread_limit >= 0)
+    gomp_teams_thread_limit_var = thread_limit;
+}
+
+int
+omp_get_teams_thread_limit (void)
+{
+  return gomp_teams_thread_limit_var;
 }
 
 int
@@ -142,12 +191,6 @@ omp_get_proc_bind (void)
 {
   struct gomp_task_icv *icv = gomp_icv (false);
   return icv->bind_var;
-}
-
-int
-omp_get_initial_device (void)
-{
-  return GOMP_DEVICE_HOST_FALLBACK;
 }
 
 int
@@ -197,22 +240,50 @@ omp_get_partition_place_nums (int *place_nums)
     *place_nums++ = thr->ts.place_partition_off + i;
 }
 
+void
+omp_set_default_allocator (omp_allocator_handle_t allocator)
+{
+  struct gomp_thread *thr = gomp_thread ();
+  if (allocator == omp_null_allocator)
+    allocator = omp_default_mem_alloc;
+  thr->ts.def_allocator = (uintptr_t) allocator;
+}
+
+omp_allocator_handle_t
+omp_get_default_allocator (void)
+{
+  struct gomp_thread *thr = gomp_thread ();
+  if (thr->ts.def_allocator == omp_null_allocator)
+    return (omp_allocator_handle_t) gomp_def_allocator;
+  else
+    return (omp_allocator_handle_t) thr->ts.def_allocator;
+}
+
 ialias (omp_set_dynamic)
-ialias (omp_set_nested)
-ialias (omp_set_num_threads)
 ialias (omp_get_dynamic)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+ialias (omp_set_nested)
 ialias (omp_get_nested)
+#pragma GCC diagnostic pop
+ialias (omp_set_num_threads)
 ialias (omp_set_schedule)
 ialias (omp_get_schedule)
 ialias (omp_get_max_threads)
 ialias (omp_get_thread_limit)
 ialias (omp_set_max_active_levels)
 ialias (omp_get_max_active_levels)
+ialias (omp_get_supported_active_levels)
+ialias (omp_set_num_teams)
+ialias (omp_get_max_teams)
+ialias (omp_set_teams_thread_limit)
+ialias (omp_get_teams_thread_limit)
 ialias (omp_get_cancellation)
 ialias (omp_get_proc_bind)
-ialias (omp_get_initial_device)
 ialias (omp_get_max_task_priority)
 ialias (omp_get_num_places)
 ialias (omp_get_place_num)
 ialias (omp_get_partition_num_places)
 ialias (omp_get_partition_place_nums)
+ialias (omp_set_default_allocator)
+ialias (omp_get_default_allocator)

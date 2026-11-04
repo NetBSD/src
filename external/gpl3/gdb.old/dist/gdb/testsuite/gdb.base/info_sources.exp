@@ -1,4 +1,4 @@
-# Copyright 2019-2023 Free Software Foundation, Inc.
+# Copyright 2019-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -23,17 +23,29 @@ if {[prepare_for_testing $testfile.exp $testfile \
     return -1
 }
 
-# Executes "info sources " $args.
-# EXPECT_SEEN_INFO_SOURCES 1 indicates that the source file info_sources.c must be seen
-# in the output.  Similarly, EXPECT_SEEN_INFO_SOURCES_BASE indicates that the source file
-# info_sources_base.c must be seen in the output.
-proc test_info_sources {args expect_seen_info_sources expect_seen_info_sources_base} {
+# Executes "info sources ARGS".
+#
+# EXPECT_SEEN_INFO_SOURCES 1 indicates that the source file info_sources.c
+# must be seen in the output.  Similarly, EXPECT_SEEN_INFO_SOURCES_BASE
+# indicates that the source file info_sources_base.c must be seen in the
+# output.
+#
+# If TESTNAME is not the empty string then this is the test name, otherwise
+# uses "info sources ARGS" as the test name.
+proc test_info_sources {args expect_seen_info_sources \
+			    expect_seen_info_sources_base \
+			    {testname ""}} {
     global gdb_prompt srcfile srcfile2
 
     set seen_info_sources 0
     set seen_info_sources_base 0
     set cmd [concat "info sources " $args]
-    gdb_test_multiple $cmd $cmd {
+
+    if { $testname eq "" } {
+	set $testname $cmd
+    }
+
+    gdb_test_multiple $cmd $testname {
 	-re "^\[^,\]*${srcfile}(, |\[\r\n\]+)" {
 	    incr seen_info_sources
 	    exp_continue
@@ -48,9 +60,9 @@ proc test_info_sources {args expect_seen_info_sources expect_seen_info_sources_b
 	-re "$gdb_prompt $" {
 	    if {$seen_info_sources == $expect_seen_info_sources \
 		    && $seen_info_sources_base == $expect_seen_info_sources_base} {
-		pass $cmd
+		pass $gdb_test_name
 	    } else {
-		fail $cmd
+		fail $gdb_test_name
 	    }
 	}
     }
@@ -99,6 +111,34 @@ if { ! [is_remote host] } {
     test_info_sources "-dirname base" 1 1
 }
 
-# Test non matching regexp, with option terminator:
+# Test non matching regexp against the basename, with option
+# terminator:
 test_info_sources "-b -- -d" 0 0
-test_info_sources "-d -- -d" 0 0
+
+# The following tests relies on using a regexp which will not match
+# either the directory name of the source files.  Unlike the basename
+# test above we need to be more careful picking the regexp as the
+# source filename might contain any simple character patterns, and so
+# could unexpectedly match the regexp.
+#
+# Loop through all the characters a-z trying regexp '-C' (where 'C' is
+# each character), looking for a regexp which doesn't match the
+# directory name.
+set re ""
+for {set i [scan a %c]} {$i <= [scan z %c]} {incr i} {
+    set tmp_re -[format %c $i]
+
+    if {$re eq "" && ![regexp $tmp_re $srcdir/$subdir/]} {
+	set re $tmp_re
+    }
+}
+
+# If we found a suitable regexp then test non matching regexp against
+# the directory name, with option terminator:
+if { $re ne "" } {
+    test_info_sources "-d -- $re" 0 0 \
+	"info sources -d -- <non matching regexp>"
+} else {
+    unresolved \
+	"info sources -d -- <non matching regexp> (failed to find regexp)"
+}

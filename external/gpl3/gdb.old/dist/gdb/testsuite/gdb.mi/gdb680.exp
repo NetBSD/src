@@ -1,4 +1,4 @@
-# Copyright 2002-2023 Free Software Foundation, Inc.
+# Copyright 2002-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,8 +20,7 @@
 load_lib mi-support.exp
 set MIFLAGS "-i=mi"
 
-gdb_exit
-if [mi_gdb_start] {
+if {[mi_clean_restart]} {
     return
 }
 
@@ -49,4 +48,3 @@ for {set i 0} {$i < 4} {incr i} {
 do_test $i
 
 mi_gdb_exit
-return 0

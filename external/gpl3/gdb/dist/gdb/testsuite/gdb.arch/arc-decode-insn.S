@@ -1,6 +1,6 @@
 ; This testcase is part of GDB, the GNU debugger.
 
-; Copyright 2017-2024 Free Software Foundation, Inc.
+; Copyright 2017-2025 Free Software Foundation, Inc.
 
 ; This program is free software; you can redistribute it and/or modify
 ; it under the terms of the GNU General Public License as published by
@@ -394,7 +394,7 @@ start_branch_tests:
 
 #ifdef TEST_B
 .Lb_target:
-    ; Artifical nop, so that first b will not branch to itself.
+    ; Artificial nop, so that first b will not branch to itself.
     nop_s
     ; b s25
     .set b_s25_target, @.Lb_target

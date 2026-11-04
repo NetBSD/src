@@ -1,5 +1,5 @@
 /* Remote serial support interface definitions for GDB, the GNU Debugger.
-   Copyright (C) 1992-2024 Free Software Foundation, Inc.
+   Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SERIAL_H
-#define SERIAL_H
+#ifndef GDB_SERIAL_H
+#define GDB_SERIAL_H
 
 #ifdef USE_WIN32API
 #include <winsock2.h>
@@ -152,7 +152,8 @@ extern void serial_send_break (struct serial *scb);
 extern void serial_raw (struct serial *scb);
 
 /* Return a pointer to a newly malloc'd ttystate containing the state
-   of the tty.  */
+   of the tty.  Can return NULL if the current tty state could not be
+   read, for example, if GDB's stdin is not a terminal.  */
 
 extern serial_ttystate serial_get_tty_state (struct serial *scb);
 
@@ -326,4 +327,4 @@ extern void serial_done_wait_handle (struct serial *);
 
 #endif /* USE_WIN32API */
 
-#endif /* SERIAL_H */
+#endif /* GDB_SERIAL_H */

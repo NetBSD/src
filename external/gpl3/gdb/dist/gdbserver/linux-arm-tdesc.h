@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -28,4 +28,4 @@ const target_desc * arm_linux_read_description (arm_fp_type fp_type);
 
 arm_fp_type arm_linux_get_tdesc_fp_type (const target_desc *tdesc);
 
-#endif /* linux-arm-tdesc.h.  */
+#endif /* GDBSERVER_LINUX_ARM_TDESC_H */

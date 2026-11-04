@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.60.6.1 2025/08/02 05:57:40 perseant Exp $
+#	$NetBSD: files.kern,v 1.60.6.2 2026/11/04 23:27:47 perseant Exp $
 
 #
 # kernel sources
@@ -127,9 +127,9 @@ file	kern/subr_extent.c		kern
 file	kern/subr_fault.c		fault
 file	kern/subr_hash.c		kern
 file	kern/subr_humanize.c		kern
-file	kern/subr_interrupt.c		kern
+file	kern/subr_interrupt.c		kern & multiprocessor
 file	kern/subr_iostat.c		kern
-file	kern/subr_ipi.c			kern
+file	kern/subr_ipi.c			kern & multiprocessor
 file	kern/subr_kcpuset.c		kern
 file	kern/subr_kcov.c		kcov
 defflag	opt_kmem.h			KMEM_SIZE

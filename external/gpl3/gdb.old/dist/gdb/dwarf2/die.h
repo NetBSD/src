@@ -1,6 +1,6 @@
 /* DWARF DIEs
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,10 +21,23 @@
 #define GDB_DWARF2_DIE_H
 
 #include "complaints.h"
+#include "dwarf2/attribute.h"
 
 /* This data structure holds a complete die structure.  */
 struct die_info
 {
+  /* Allocate a new die_info on OBSTACK.  NUM_ATTRS is the number of
+     attributes that are needed.  */
+  static die_info *allocate (struct obstack *obstack, int num_attrs);
+
+  /* Dump this DIE and any children to MAX_LEVEL.  They are written to
+     gdb_stdlog.  Note this is called from the pdie user command in
+     gdb-gdb.gdb.  */
+  void dump (int max_level);
+
+  /* Shallowly dump this DIE to gdb_stderr.  */
+  void error_dump ();
+
   /* Return the named attribute or NULL if not there, but do not
      follow DW_AT_specification, etc.  */
   struct attribute *attr (dwarf_attribute name)
@@ -38,7 +51,7 @@ struct die_info
   /* Return the address base of the compile unit, which, if exists, is
      stored either at the attribute DW_AT_GNU_addr_base, or
      DW_AT_addr_base.  */
-  gdb::optional<ULONGEST> addr_base ()
+  std::optional<ULONGEST> addr_base ()
   {
     for (unsigned i = 0; i < num_attrs; ++i)
       if (attrs[i].name == DW_AT_addr_base
@@ -52,7 +65,7 @@ struct die_info
 	  complaint (_("address base attribute (offset %s) as wrong form"),
 		     sect_offset_str (sect_off));
 	}
-    return gdb::optional<ULONGEST> ();
+    return std::optional<ULONGEST> ();
   }
 
   /* Return the base address of the compile unit into the .debug_ranges section,
@@ -124,6 +137,34 @@ struct die_info
      zero, but it's not common and zero-sized arrays are not
      sufficiently portable C.  */
   struct attribute attrs[1];
+};
+
+/* Key hash type to store die_info objects in gdb::unordered_set, identified by
+   their section offsets.  */
+
+struct die_info_hash_sect_off final
+{
+  using is_transparent = void;
+
+  std::size_t operator() (const die_info *die) const noexcept
+  { return (*this) (die->sect_off); }
+
+  std::size_t operator() (sect_offset offset) const noexcept
+  { return std::hash<sect_offset> () (offset); }
+};
+
+/* Key equal type to store die_info objects in gdb::unordered_set, identified by
+   their section offsets.  */
+
+struct die_info_eq_sect_off final
+{
+  using is_transparent = void;
+
+  bool operator() (const die_info *a, const die_info *b) const noexcept
+  { return (*this) (a->sect_off, b); }
+
+  bool operator() (sect_offset offset, const die_info *die) const noexcept
+  { return offset == die->sect_off; }
 };
 
 #endif /* GDB_DWARF2_DIE_H */

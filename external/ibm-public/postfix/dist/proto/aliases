@@ -22,14 +22,24 @@
 #	domain).
 #
 #	Normally, the \fBaliases\fR(5) table is specified as a text file
-#	that serves as input to the \fBpostalias\fR(1) command. The
-#	result, an indexed file in \fBdbm\fR or \fBdb\fR format, is
-#	used for fast lookup by the mail system. Execute the command
-#	\fBnewaliases\fR in order to rebuild the indexed file after
-#	changing the Postfix alias database.
+#	that serves as input to the \fBpostalias\fR(1) command to create
+#	an indexed file for fast lookup. The location of this file is
+#	system-dependent. This text will use \fB/path/to/aliases\fR.
+#
+#	Execute the command "\fBnewaliases\fR to rebuild the indexed
+#	file after changing the text file. Execute "\fBpostalias -q
+#	\fIname\fB /path/to/aliases\fR" to query a default-type indexed
+#	file, or execute "\fBpostalias -q \fIname\fB
+#	\fItype\fB:/path/to/aliases\fR" to specify an explicit type.
+#
+#	The default indexed file type is configured with the
+#	default_database_type parameter. Depending on the platform this
+#	may be one of lmdb:, cdb:, hash:, or dbm: (without the trailing
+#       ':').
 #
 #	When the table is provided via other means such as NIS, LDAP
 #	or SQL, the same lookups are done as for ordinary indexed files.
+#	Managing such databases is outside the scope of Postfix.
 #
 #	Alternatively, the table can be provided as a regular-expression
 #	map where patterns are given as regular expressions. In

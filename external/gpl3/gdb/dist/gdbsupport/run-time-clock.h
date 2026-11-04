@@ -1,5 +1,5 @@
 /* User/system CPU time clocks that follow the std::chrono interface.
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_RUN_TIME_CLOCK_H
-#define COMMON_RUN_TIME_CLOCK_H
+#ifndef GDBSUPPORT_RUN_TIME_CLOCK_H
+#define GDBSUPPORT_RUN_TIME_CLOCK_H
 
 #include <chrono>
 
@@ -51,6 +51,33 @@ struct system_cpu_time_clock
   static time_point now () noexcept = delete;
 };
 
+/* Whether to measure time run time for the whole process or just one
+   thread.  */
+
+enum class run_time_scope
+{
+  process,
+  thread,
+};
+
+/* Return the user/system time as separate time points, if
+   supported.  If not supported, then the combined user+kernel time
+   is returned in USER and SYSTEM is set to zero.
+
+   SCOPE indicates whether to return the run time for the whole
+   process or just for the calling thread.  If the latter isn't
+   supported, then returns the run time for the whole process even if
+   run_time_scope::thread is requested.  */
+
+void get_run_time (user_cpu_time_clock::time_point &user,
+		   system_cpu_time_clock::time_point &system,
+		   run_time_scope scope) noexcept;
+
+/* Returns true if is it possible for get_run_time above to return the
+   run time for just the calling thread.  */
+
+bool get_run_time_thread_scope_available ();
+
 /* Count the total amount of time spent executing in userspace+kernel
    mode.  */
 
@@ -64,12 +91,6 @@ struct run_time_clock
   static constexpr bool is_steady = true;
 
   static time_point now () noexcept;
-
-  /* Return the user/system time as separate time points, if
-     supported.  If not supported, then the combined user+kernel time
-     is returned in USER and SYSTEM is set to zero.  */
-  static void now (user_cpu_time_clock::time_point &user,
-		   system_cpu_time_clock::time_point &system) noexcept;
 };
 
-#endif /* COMMON_RUN_TIME_CLOCK_H */
+#endif /* GDBSUPPORT_RUN_TIME_CLOCK_H */

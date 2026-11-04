@@ -46,7 +46,7 @@ for i in 1 2 3 4 5 6 7 8 9 10; do
   grep "status: NOERROR" dig.out.ns3.test$n >/dev/null || ret=1
   grep "flags:.* aa[ ;]" dig.out.ns3.test$n >/dev/null || ret=1
   nr=$(grep -c 'x[0-9].*sending notify to' ns2/named.run)
-  [ "$nr" -ge 23 ] || ret=1
+  [ "$nr" -ge 22 ] || ret=1
   [ $ret = 0 ] && break
   sleep 1
 done
@@ -94,7 +94,7 @@ END {
 	print "count:", count;
 	print "average:", average;
 	if (average < 0.180) exit(1);
-	if (count < 23) exit(1);
+	if (count < 22) exit(1);
 }' ns2/named.run >awk.out.ns2.test$n || ret=1
 test_end
 
@@ -238,6 +238,19 @@ test_end
 test_start "checking notify retries expire within 30 seconds"
 nextpartreset ns3/named.run
 wait_for_log 30 'retries exceeded' ns3/named.run || ret=1
+test_end
+
+test_start "checking notify with bad notify source address and tsig"
+$NSUPDATE <<EOF
+server 10.53.0.2 ${PORT}
+zone change-ns
+update add change-ns 0 NS ns53.change-ns
+update add ns53.change-ns 0 A 10.53.0.53
+send
+EOF
+wait_for_log 10 "zone change-ns/IN: sending notify to 10.53.0.53#${PORT} : TSIG (10.53.0.53)" ns2/named.run
+dig_plus_opts ns change-ns @10.53.0.2 >dig.out.test$n || ret=1
+grep "ns2.change-ns." dig.out.test$n >/dev/null || ret=1
 test_end
 
 echo_i "exit status: $status"

@@ -1,5 +1,5 @@
 /* Common multi-process/thread control defs for GDB and gdbserver.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_GDBTHREAD_H
-#define COMMON_COMMON_GDBTHREAD_H
+#ifndef GDBSUPPORT_COMMON_GDBTHREAD_H
+#define GDBSUPPORT_COMMON_GDBTHREAD_H
 
 struct process_stratum_target;
 
@@ -25,4 +25,4 @@ struct process_stratum_target;
 extern void switch_to_thread (process_stratum_target *proc_target,
 			      ptid_t ptid);
 
-#endif /* COMMON_COMMON_GDBTHREAD_H */
+#endif /* GDBSUPPORT_COMMON_GDBTHREAD_H */

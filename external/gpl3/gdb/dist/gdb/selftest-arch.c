@@ -1,5 +1,5 @@
 /* GDB self-test for each gdbarch.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -108,5 +108,24 @@ reset ()
   registers_changed ();
   reinit_frame_cache ();
 }
-} // namespace selftests
+
+/* See selftest-arch.h.  */
+
+bool
+selftest_skip_warning_arch (struct gdbarch *gdbarch)
+{
+  const char *name = gdbarch_bfd_arch_info (gdbarch)->printable_name;
+
+  /* Avoid warning:
+       Running selftest <test>::m68hc11.
+       warning: No frame soft register found in the symbol table.
+       Stack backtrace will not work.
+     We could instead capture the output and then filter out the warning, but
+     that seems more trouble than it's worth.  */
+  return (strcmp (name, "m68hc11") == 0
+	  || strcmp (name, "m68hc12") == 0
+	  || strcmp (name, "m68hc12:HCS12") == 0);
+}
+
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */

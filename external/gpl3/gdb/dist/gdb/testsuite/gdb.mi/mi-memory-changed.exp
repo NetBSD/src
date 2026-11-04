@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,7 +22,7 @@ if { [gdb_compile "$srcdir/$subdir/$srcfile" $binfile \
 
 load_lib mi-support.exp
 
-if {[mi_clean_restart $binfile]} {
+if {[mi_clean_restart $::testfile]} {
     return
 }
 
@@ -44,11 +44,11 @@ mi_gdb_test "-var-create var_c * C" \
 
 mi_gdb_test "-var-assign var_c 5" \
     "-var-assign var_c 5\r\n\\^done,value=\"5\"" \
-    "change C thru. varobj"
+    "change C through. varobj"
 
 mi_gdb_test  "-data-write-memory-bytes &C \"00\"" \
     {\^done} \
-    "change C thru. -data-write-memory-bytes"
+    "change C through. -data-write-memory-bytes"
 
 # Modify code section also triggers MI notification.
 

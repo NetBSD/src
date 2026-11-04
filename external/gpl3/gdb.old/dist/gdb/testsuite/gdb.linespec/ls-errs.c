@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2012-2023 Free Software Foundation, Inc.
+   Copyright 2012-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -21,6 +21,16 @@ myfunction (int aa)
   int i;
 
   i = aa + 42;
+
+  /* These lines are intentionally left blank such that the tests trying
+     to place breakpoints at line -10 relative to the "set.breakpoint.here"
+     line below land on a valid breakpoint location, inside the function.  */
+
+
+
+
+
+
   return i;    /* set breakpoint here */
 }
 

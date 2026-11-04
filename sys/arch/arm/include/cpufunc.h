@@ -1,4 +1,4 @@
-/*	cpufunc.h,v 1.40.22.4 2007/11/08 10:59:33 matt Exp	*/
+/*	$NetBSD: cpufunc.h,v 1.90.10.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Mark Brinicombe.
@@ -39,8 +39,8 @@
  * Prototypes for cpu, mmu and tlb related functions.
  */
 
-#ifndef _ARM_CPUFUNC_H_
-#define _ARM_CPUFUNC_H_
+#ifndef	_ARM_CPUFUNC_H_
+#define	_ARM_CPUFUNC_H_
 
 #ifdef _ARM_ARCH_7
 /*
@@ -65,14 +65,28 @@
 
 #else
 
-#define dsb(opt)	\
+#define	dsb(opt)	\
 	__asm __volatile("mcr p15, 0, %0, c7, c10, 4" :: "r" (0) : "memory")
-#define dmb(opt)	\
+#define	dmb(opt)	\
 	__asm __volatile("mcr p15, 0, %0, c7, c10, 5" :: "r" (0) : "memory")
-#define isb()		\
+#define	isb()		\
 	__asm __volatile("mcr p15, 0, %0, c7, c5, 4" :: "r" (0) : "memory")
-#define sev()		__nothing
+#define	sev()		__nothing
 
+#endif
+
+#if defined(_ARM_ARCH_8)
+#define	dma_r_r()	dmb(oshld)	// actually r_rw
+#define	dma_w_w()	dmb(oshst)
+#define	dma_rw_w()	dmb(osh)	// actually rw_rw
+#elif defined(_ARM_ARCH_6)
+#define	dma_r_r()	dmb(osh)	// actually rw_rw
+#define	dma_w_w()	dmb(oshst)
+#define	dma_rw_w()	dmb(osh)	// actually rw_rw
+#else
+#define	dma_r_r()	__nothing
+#define	dma_w_w()	cpu_drain_writebuf()
+#define	dma_rw_w()	cpu_drain_writebuf()
 #endif
 
 #ifdef __arm__
@@ -204,13 +218,13 @@ struct cpu_functions {
 extern struct cpu_functions cpufuncs;
 extern u_int cputype;
 
-#define cpu_idnum()		cpufuncs.cf_id()
+#define	cpu_idnum()		cpufuncs.cf_id()
 
-#define cpu_control(c, e)	cpufuncs.cf_control(c, e)
-#define cpu_domains(d)		cpufuncs.cf_domains(d)
-#define cpu_setttb(t, f)	cpufuncs.cf_setttb(t, f)
-#define cpu_faultstatus()	cpufuncs.cf_faultstatus()
-#define cpu_faultaddress()	cpufuncs.cf_faultaddress()
+#define	cpu_control(c, e)	cpufuncs.cf_control(c, e)
+#define	cpu_domains(d)		cpufuncs.cf_domains(d)
+#define	cpu_setttb(t, f)	cpufuncs.cf_setttb(t, f)
+#define	cpu_faultstatus()	cpufuncs.cf_faultstatus()
+#define	cpu_faultaddress()	cpufuncs.cf_faultaddress()
 
 #define	cpu_tlb_flushID()	cpufuncs.cf_tlb_flushID()
 #define	cpu_tlb_flushID_SE(e)	cpufuncs.cf_tlb_flushID_SE(e)
@@ -239,21 +253,21 @@ extern u_int cputype;
 #define	cpu_flush_brnchtgt_C()	cpufuncs.cf_flush_brnchtgt_C()
 #define	cpu_flush_brnchtgt_E(e)	cpufuncs.cf_flush_brnchtgt_E(e)
 
-#define cpu_sleep(m)		cpufuncs.cf_sleep(m)
+#define	cpu_sleep(m)		cpufuncs.cf_sleep(m)
 
-#define cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
-#define cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
-#define ABORT_FIXUP_OK		0	/* fixup succeeded */
-#define ABORT_FIXUP_FAILED	1	/* fixup failed */
-#define ABORT_FIXUP_RETURN	2	/* abort handler should return */
+#define	cpu_dataabt_fixup(a)		cpufuncs.cf_dataabt_fixup(a)
+#define	cpu_prefetchabt_fixup(a)	cpufuncs.cf_prefetchabt_fixup(a)
+#define	ABORT_FIXUP_OK		0	/* fixup succeeded */
+#define	ABORT_FIXUP_FAILED	1	/* fixup failed */
+#define	ABORT_FIXUP_RETURN	2	/* abort handler should return */
 
-#define cpu_context_switch(a)		cpufuncs.cf_context_switch(a)
-#define cpu_setup(a)			cpufuncs.cf_setup(a)
+#define	cpu_context_switch(a)		cpufuncs.cf_context_switch(a)
+#define	cpu_setup(a)			cpufuncs.cf_setup(a)
 
 int	set_cpufuncs		(void);
 int	set_cpufuncs_id		(u_int);
-#define ARCHITECTURE_NOT_PRESENT	1	/* known but not configured */
-#define ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
+#define	ARCHITECTURE_NOT_PRESENT	1	/* known but not configured */
+#define	ARCHITECTURE_NOT_SUPPORTED	2	/* not known */
 
 void	cpufunc_nullop		(void);
 int	cpufunc_null_fixup	(void *);
@@ -338,7 +352,7 @@ enable_interrupts(uint32_t mask)
 		}
 		return ret;
 	}
-#endif /* _ARM_ARCH_6 */
+#endif	/* _ARM_ARCH_6 */
 
 	/* Set the control field of CPSR */
 	__asm volatile("msr\tcpsr_c, %0" :: "r"(ret & ~mask));
@@ -346,7 +360,7 @@ enable_interrupts(uint32_t mask)
 	return ret;
 }
 
-#define restore_interrupts(old_cpsr)					\
+#define	restore_interrupts(old_cpsr)					\
 	(__set_cpsr_c((I32_bit | F32_bit), (old_cpsr) & (I32_bit | F32_bit)))
 
 #define	ENABLE_INTERRUPT()		cpsie(I32_bit)
@@ -424,7 +438,7 @@ extern uint32_t cpu_ttb;
  * Miscellany
  */
 
-int get_pc_str_offset	(void);
+int get_pc_str_offset(void);
 
 bool cpu_gtmr_exists_p(void);
 u_int cpu_clusterid(void);
@@ -438,13 +452,13 @@ bool cpu_earlydevice_va_p(void);
 void set_stackptr	(u_int, u_int);
 u_int get_stackptr	(u_int);
 
-#endif /* _KERNEL || _KMEMUSER */
+#endif	/* _KERNEL || _KMEMUSER */
 
 #elif defined(__aarch64__)
 
 #include <aarch64/cpufunc.h>
 
-#endif /* __arm__/__aarch64__ */
+#endif	/* __arm__/__aarch64__ */
 
 #endif	/* _ARM_CPUFUNC_H_ */
 

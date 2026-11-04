@@ -1,4 +1,4 @@
-/*  $NetBSD: ops.c,v 1.92 2023/06/24 05:18:13 msaitoh Exp $ */
+/*  $NetBSD: ops.c,v 1.92.2.1 2026/11/04 23:19:29 perseant Exp $ */
 
 /*-
  *  Copyright (c) 2010-2011 Emmanuel Dreyfus. All rights reserved.
@@ -3341,7 +3341,7 @@ out:
 	}
 
 	/*
-	 * VOP_PUTPAGE causes FAF write where kernel does not 
+	 * VOP_PUTPAGES causes FAF write where kernel does not
 	 * check operation result. At least warn if it failed.
 	 */
 #ifdef PUFFS_WRITE_FAF

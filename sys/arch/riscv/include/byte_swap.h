@@ -1,4 +1,4 @@
-/* $NetBSD: byte_swap.h,v 1.5 2020/04/04 21:13:20 christos Exp $ */
+/* $NetBSD: byte_swap.h,v 1.5.28.1 2026/11/04 23:21:14 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -55,7 +55,7 @@
 
 #else
 
-#include <sys/types.h>
+#include <sys/stdint.h>
 __BEGIN_DECLS
 
 #define	__BYTE_SWAP_U64_VARIABLE __byte_swap_u64_variable
@@ -88,7 +88,7 @@ __byte_swap_u32_variable(uint32_t v)
 static __inline uint16_t
 __byte_swap_u16_variable(uint16_t v)
 {
-	/*LINTED*/
+
 	return (uint16_t)((v >> 8) | (v << 8));
 }
 

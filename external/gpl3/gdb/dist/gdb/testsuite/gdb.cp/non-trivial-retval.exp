@@ -1,4 +1,4 @@
-# Copyright 2014-2024 Free Software Foundation, Inc.
+# Copyright 2014-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,8 +21,18 @@ require allow_cplus_tests
 
 standard_testfile .cc
 
+set i1 i1
+set i2 i2
+
 if {[have_fvar_tracking]} {
     set additional_flags "additional_flags= -fvar-tracking"
+
+    if { [gcc_major_version] < 14 } {
+	# For armv7, target board unix/-mthumb, -fvar-tracking and gcc 13 we
+	# get incorrect location info.  Work around this by using constants instead.
+	set i1 23
+	set i2 100
+    }
 }
 
 if {[prepare_for_testing "failed to prepare" $testfile $srcfile [list debug c++ $additional_flags]]} {
@@ -37,17 +47,25 @@ if {![runto_main]} {
 gdb_breakpoint [gdb_get_line_number "Break here"]
 gdb_continue_to_breakpoint "Break here"
 
-gdb_test "p f1 (i1, i2)" ".* = {a = 123}"
-gdb_test "p f2 (i1, i2)" ".* = {b = 123}"
-gdb_test "p f22 (i1, i2)" ".* = {b1 = 123}"
-gdb_test "p f3 (i1, i2)" ".* = {.* c = 123}"
-gdb_test "p f4 (i1, i2)" ".* = {.* e = 123}"
+gdb_test "p f1 ($i1, $i2)" ".* = {a = 123}" \
+    "p f1 (i1, i2)"
+gdb_test "p f2 ($i1, $i2)" ".* = {b = 123}" \
+    "p f2 (i1, i2)"
+gdb_test "p f22 ($i1, $i2)" ".* = {b1 = 123}" \
+    "p f22 (i1, i2)"
+gdb_test "p f3 ($i1, $i2)" ".* = {.* c = 123}" \
+    "p f3 (i1, i2)"
+gdb_test "p f4 ($i1, $i2)" ".* = {.* e = 123}" \
+    "p f4 (i1, i2)"
+gdb_test "p f5 ($i1, $i2)" ".* = {f = 123}" \
+    "p f5 (i1, i2)"
 
 gdb_breakpoint "f1"
 gdb_breakpoint "f2"
 gdb_breakpoint "f22"
 gdb_breakpoint "f3"
 gdb_breakpoint "f4"
+gdb_breakpoint "f5"
 
 gdb_continue_to_breakpoint "Break in f1"
 gdb_test "finish" " = {a = 123}" \
@@ -68,3 +86,7 @@ gdb_test "finish" " = {.* c = 123}" \
 gdb_continue_to_breakpoint "Break in f4"
 gdb_test "finish" " = {.* e = 123}" \
     "finish from f4"
+
+gdb_continue_to_breakpoint "Break in f5"
+gdb_test "finish" " = {f = 123}" \
+    "finish from f5"

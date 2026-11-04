@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.77 2022/10/26 07:35:19 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.77.8.1 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -143,17 +143,17 @@ pmap_md_cache_prefer_mask(void)
 }
 
 static inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pm, struct lwp *l)
 {
 
-	/* nothing */
+	tlb_set_asid(asid, pm);
 }
 
 static inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
+pmap_md_asid_deactivate(struct pmap *pm)
 {
 
-	/* nothing */
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 }
 
 #endif /* __PMAP_PRIVATE */
@@ -162,6 +162,20 @@ pmap_md_xtab_deactivate(struct pmap *pm)
 bool	pmap_md_direct_mapped_vaddr_p(register_t);
 paddr_t	pmap_md_direct_mapped_vaddr_to_paddr(register_t);
 bool	pmap_md_io_vaddr_p(vaddr_t);
+
+static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
+}
 
 /*
  * Alternate mapping hooks for pool pages.  Avoids thrashing the TLB.
@@ -276,7 +290,7 @@ int sbmips_cca_for_pa(paddr_t);
 
 #ifdef __HAVE_PMAP_PV_TRACK
 struct pmap_page {
-        struct vm_page_md       pp_md;
+	struct vm_page_md	pp_md;
 };
 
 #define PMAP_PAGE_TO_MD(ppage)  (&((ppage)->pp_md))

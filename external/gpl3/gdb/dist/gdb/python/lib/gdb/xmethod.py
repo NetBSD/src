@@ -1,5 +1,5 @@
 # Python side of the support for xmethods.
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -266,9 +266,14 @@ def register_xmethod_matcher(locus, matcher, replace=False):
             del locus.xmethods[index]
         else:
             raise RuntimeError(
-                "Xmethod matcher already registered with "
-                "%s: %s" % (locus_name, matcher.name)
+                "Xmethod matcher already registered with {}: {}".format(
+                    locus_name, matcher.name
+                )
             )
     if gdb.parameter("verbose"):
-        gdb.write("Registering xmethod matcher '%s' with %s' ...\n")
+        gdb.write(
+            "Registering xmethod matcher '{}' with '{}' ...\n".format(
+                locus_name, matcher.name
+            )
+        )
     locus.xmethods.insert(0, matcher)

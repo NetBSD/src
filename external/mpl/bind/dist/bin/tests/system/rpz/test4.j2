@@ -1,0 +1,37 @@
+; Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+;
+; SPDX-License-Identifier: MPL-2.0
+;
+; This Source Code Form is subject to the terms of the Mozilla Public
+; License, v. 2.0.  If a copy of the MPL was not distributed with this
+; file, you can obtain one at https://mozilla.org/MPL/2.0/.
+;
+; See the COPYRIGHT file distributed with this work for additional
+; information regarding copyright ownership.
+
+
+
+; Use comment lines instead of blank lines to combine update requests into
+;	single requests
+; Separate update requests for distinct TLDs with blank lines or 'send'
+; End the file with a blank line or 'send'
+
+; NSIP tests
+
+server 10.53.0.3 @PORT@
+
+; NXDOMAIN for all of tld2 based on its server IP address
+update add  32.2.0.53.10.rpz-nsip.bl.	300 CNAME .
+;
+; exempt a3-2.tld2 and anything in 192.168.0.0/24
+;   also checks that IP policies are preferred over NSIP policies
+update add  a3-2.tld2.bl		300 CNAME a3-2.tld2.
+update add  24.0.0.168.192.rpz-ip.bl	300 CNAME 24.0.0.168.192.
+;
+; prefer NSIP policy to NSDNAME policy
+update add  ns.tld2.rpz-nsdname.bl.	300 CNAME 10.0.0.1
+
+; ip-as-ns rewrites all of tld5
+update add  32.5.0.53.10.rpz-ip.bl.	300 A 12.12.12.12
+send
+

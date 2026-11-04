@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_regexp.c,v 1.5 2023/12/23 20:30:46 christos Exp $	*/
+/*	$NetBSD: dict_regexp.c,v 1.5.2.1 2026/11/04 23:14:57 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -870,7 +870,7 @@ DICT   *dict_regexp_open(const char *mapname, int open_flags, int dict_flags)
 	    (regmatch_t *) mymalloc(sizeof(regmatch_t) * (max_sub + 1));
 
     dict_file_purge_buffers(&dict_regexp->dict);
-    DICT_REGEXP_OPEN_RETURN(DICT_DEBUG (&dict_regexp->dict));
+    DICT_REGEXP_OPEN_RETURN(&dict_regexp->dict);
 }
 
 #endif

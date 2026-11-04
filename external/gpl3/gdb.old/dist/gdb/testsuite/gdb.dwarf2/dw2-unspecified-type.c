@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2022-2023 Free Software Foundation, Inc.
+   Copyright 2022-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -16,10 +16,18 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 extern int foo (void);
+extern int foo2 (void);
+
+int
+bar (void)
+{
+  asm ("bar_label: .globl bar_label");
+  return 0;
+}
 
 int
 main (void)
 {
-  int res = foo ();
+  int res = foo () + bar () + foo2 ();
   return res;
 }

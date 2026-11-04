@@ -1,4 +1,4 @@
-/*	$NetBSD: isavar.h,v 1.53 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: isavar.h,v 1.53.102.1 2026/11/04 23:22:00 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2001 The NetBSD Foundation, Inc.
@@ -72,6 +72,9 @@
  * Definitions for ISA autoconfiguration.
  */
 
+#include <sys/param.h>
+#include <sys/device.h>
+#include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/bus.h>
 
@@ -86,12 +89,22 @@ struct isabus_attach_args;
  * ISA bus attach arguments
  */
 struct isabus_attach_args {
-	const char *_iba_busname;		/* XXX placeholder */
+	const char *_iba_busname;	/* XXX placeholder */
 	bus_space_tag_t iba_iot;	/* isa i/o space tag */
 	bus_space_tag_t iba_memt;	/* isa mem space tag */
 	bus_dma_tag_t iba_dmat;		/* isa DMA tag */
 	isa_chipset_tag_t iba_ic;
 };
+
+int	isabusprint(void *, const char *);
+
+static inline device_t
+isabus_attach(device_t dev, struct isabus_attach_args *iba)
+{
+	return config_found(dev, iba, isabusprint,
+	    CFARGS(.iattr = "isabus",
+		   .devhandle = device_handle(dev)));
+}
 
 /*
  * ISA bus resources.
@@ -118,49 +131,6 @@ struct isa_drq {
 struct isa_pnpname {
 	struct isa_pnpname *ipn_next;
 	char *ipn_name;
-};
-
-/*
- * Machine-dependent code provides a list of these to describe
- * devices on the ISA bus which should be attached via direct
- * configuration.
- *
- * All of this information is dynamically allocated, so that
- * the ISA bus driver may free all of this information if the
- * bus does not support dynamic attach/detach of devices (e.g.
- * on a docking station).
- *
- * Some info on the "ik_key" field: This is a unique number for
- * each knowndev node.  If, when we need to re-enumerate the
- * knowndevs, we discover that a node with key N is in the old
- * list but not in the new, the device has disappeared.  Similarly,
- * if a node with key M is in the new list but not in the old,
- * the device is new.  Note that the knowndevs list must be
- * sorted in ascending "key" order.
- */
-struct isa_knowndev {
-	TAILQ_ENTRY(isa_knowndev) ik_list;
-	uintptr_t ik_key;
-	device_t ik_claimed;
-
-	/*
-	 * The rest of these fields correspond to isa_attach_args
-	 * fields.
-	 */
-	char *ik_pnpname;
-	struct isa_pnpname *ik_pnpcompatnames;
-
-	struct isa_io *ik_io;
-	int ik_nio;
-
-	struct isa_iomem *ik_iomem;
-	int ik_niomem;
-
-	struct isa_irq *ik_irq;
-	int ik_nirq;
-
-	struct isa_drq *ik_drq;
-	int ik_ndrq;
 };
 
 /*
@@ -215,9 +185,6 @@ struct isa_softc {
 	bus_dma_tag_t sc_dmat;		/* isa DMA tag */
 
 	isa_chipset_tag_t sc_ic;
-
-	TAILQ_HEAD(, isa_knowndev) sc_knowndevs;
-	int sc_dynamicdevs;
 };
 
 /*
@@ -231,8 +198,6 @@ struct isa_softc {
 #define ISA_UNKNOWN_IRQ		(-1)
 #define ISA_UNKNOWN_DRQ		(-1)
 #define ISA_UNKNOWN_DRQ2	(-1)
-
-int	isabusprint(void *, const char *);
 
 /*
  * ISA interrupt handler manipulation.

@@ -1,4 +1,4 @@
-# $NetBSD: directive-sinclude.mk,v 1.5.2.1 2025/08/02 05:58:34 perseant Exp $
+# $NetBSD: directive-sinclude.mk,v 1.5.2.2 2026/11/04 23:28:38 perseant Exp $
 #
 # Tests for the .sinclude directive, which includes another file,
 # silently skipping it if it cannot be opened.
@@ -17,7 +17,7 @@
 # Errors that are not related to opening the file are still reported.
 # expect: make: directive-include-error.inc:1: Invalid line "syntax error"
 _!=	echo 'syntax error' > directive-include-error.inc
-.sinclude "${.CURDIR}/directive-include-error.inc"
+.sinclude "${.OBJDIR}/directive-include-error.inc"
 _!=	rm directive-include-error.inc
 
 all: .PHONY

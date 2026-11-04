@@ -1,6 +1,6 @@
 /* Target dependent code for GDB on TI C6x systems.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
    Contributed by Andrew Jenner <andrew@codesourcery.com>
    Contributed by Yao Qi <yao@codesourcery.com>
 
@@ -452,16 +452,16 @@ tic6x_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
   return info->base;
 }
 
-static const struct frame_unwind tic6x_frame_unwind =
-{
+static const struct frame_unwind_legacy tic6x_frame_unwind (
   "tic6x prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   tic6x_frame_this_id,
   tic6x_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static const struct frame_base tic6x_frame_base =
 {
@@ -515,16 +515,16 @@ tic6x_stub_unwind_sniffer (const struct frame_unwind *self,
   return 0;
 }
 
-static const struct frame_unwind tic6x_stub_unwind =
-{
+static const struct frame_unwind_legacy tic6x_stub_unwind (
   "tic6x stub",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   tic6x_stub_this_id,
   tic6x_frame_prev_register,
   NULL,
   tic6x_stub_unwind_sniffer
-};
+);
 
 /* Return the instruction on address PC.  */
 
@@ -1267,7 +1267,7 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   dwarf2_frame_set_init_reg (gdbarch, tic6x_dwarf2_frame_init_reg);
 
   /* Single stepping.  */
-  set_gdbarch_software_single_step (gdbarch, tic6x_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, tic6x_software_single_step);
 
   /* Call dummy code.  */
   set_gdbarch_frame_align (gdbarch, tic6x_frame_align);
@@ -1293,9 +1293,7 @@ tic6x_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_tic6x_tdep ();
-void
-_initialize_tic6x_tdep ()
+INIT_GDB_FILE (tic6x_tdep)
 {
   gdbarch_register (bfd_arch_tic6x, tic6x_gdbarch_init);
 }

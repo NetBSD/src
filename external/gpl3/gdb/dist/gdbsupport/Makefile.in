@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -159,12 +159,12 @@ am_libgdbsupport_a_OBJECTS = agent.$(OBJEXT) btrace-common.$(OBJEXT) \
 	common-regcache.$(OBJEXT) common-utils.$(OBJEXT) \
 	environ.$(OBJEXT) errors.$(OBJEXT) event-loop.$(OBJEXT) \
 	fileio.$(OBJEXT) filestuff.$(OBJEXT) format.$(OBJEXT) \
-	gdb-dlfcn.$(OBJEXT) gdb-hashtab.$(OBJEXT) \
-	gdb_obstack.$(OBJEXT) gdb_regex.$(OBJEXT) \
+	gdb-dlfcn.$(OBJEXT) gdb_obstack.$(OBJEXT) gdb_regex.$(OBJEXT) \
 	gdb_tilde_expand.$(OBJEXT) gdb_wait.$(OBJEXT) \
 	gdb_vecs.$(OBJEXT) job-control.$(OBJEXT) netstuff.$(OBJEXT) \
-	new-op.$(OBJEXT) pathstuff.$(OBJEXT) print-utils.$(OBJEXT) \
-	ptid.$(OBJEXT) rsp-low.$(OBJEXT) run-time-clock.$(OBJEXT) \
+	new-op.$(OBJEXT) osabi.$(OBJEXT) pathstuff.$(OBJEXT) \
+	print-utils.$(OBJEXT) ptid.$(OBJEXT) remote-args.$(OBJEXT) \
+	rsp-low.$(OBJEXT) run-time-clock.$(OBJEXT) \
 	safe-strerror.$(OBJEXT) scoped_mmap.$(OBJEXT) search.$(OBJEXT) \
 	signals.$(OBJEXT) signals-state-save-restore.$(OBJEXT) \
 	task-group.$(OBJEXT) tdesc.$(OBJEXT) thread-pool.$(OBJEXT) \
@@ -426,7 +426,6 @@ libgdbsupport_a_SOURCES = \
     filestuff.cc \
     format.cc \
     gdb-dlfcn.cc \
-    gdb-hashtab.cc \
     gdb_obstack.cc \
     gdb_regex.cc \
     gdb_tilde_expand.cc \
@@ -435,9 +434,11 @@ libgdbsupport_a_SOURCES = \
     job-control.cc \
     netstuff.cc \
     new-op.cc \
+    osabi.cc \
     pathstuff.cc \
     print-utils.cc \
     ptid.cc \
+    remote-args.cc \
     rsp-low.cc \
     run-time-clock.cc \
     safe-strerror.cc \
@@ -536,7 +537,6 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/filestuff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb-dlfcn.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb-hashtab.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_obstack.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_regex.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gdb_tilde_expand.Po@am__quote@
@@ -545,9 +545,11 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/job-control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/netstuff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/new-op.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/osabi.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/pathstuff.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/print-utils.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ptid.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/remote-args.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/rsp-low.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/run-time-clock.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/safe-strerror.Po@am__quote@

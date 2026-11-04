@@ -1,6 +1,6 @@
 /* Definitions for a frame base, for GDB, the GNU debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (FRAME_BASE_H)
-#define FRAME_BASE_H 1
+#ifndef GDB_FRAME_BASE_H
+#define GDB_FRAME_BASE_H
 
 class frame_info_ptr;
 struct frame_id;
@@ -42,17 +42,17 @@ struct regcache;
 
 /* A generic base address.  */
 
-typedef CORE_ADDR (frame_this_base_ftype) (frame_info_ptr this_frame,
+typedef CORE_ADDR (frame_this_base_ftype) (const frame_info_ptr &this_frame,
 					   void **this_base_cache);
 
 /* The base address of the frame's local variables.  */
 
-typedef CORE_ADDR (frame_this_locals_ftype) (frame_info_ptr this_frame,
+typedef CORE_ADDR (frame_this_locals_ftype) (const frame_info_ptr &this_frame,
 					     void **this_base_cache);
 
 /* The base address of the frame's arguments / parameters.  */
 
-typedef CORE_ADDR (frame_this_args_ftype) (frame_info_ptr this_frame,
+typedef CORE_ADDR (frame_this_args_ftype) (const frame_info_ptr &this_frame,
 					   void **this_base_cache);
 
 struct frame_base
@@ -68,7 +68,7 @@ struct frame_base
 /* Given THIS frame, return the frame base methods for THIS frame,
    or NULL if it can't handle THIS frame.  */
 
-typedef const struct frame_base *(frame_base_sniffer_ftype) (frame_info_ptr this_frame);
+typedef const struct frame_base *(frame_base_sniffer_ftype) (const frame_info_ptr &this_frame);
 
 /* Append a frame base sniffer to the list.  The sniffers are polled
    in the order that they are appended.  */
@@ -86,6 +86,6 @@ extern void frame_base_set_default (struct gdbarch *gdbarch,
 /* Iterate through the list of frame base handlers until one returns
    an implementation.  */
 
-extern const struct frame_base *frame_base_find_by_frame (frame_info_ptr this_frame);
+extern const struct frame_base *frame_base_find_by_frame (const frame_info_ptr &this_frame);
 
-#endif
+#endif /* GDB_FRAME_BASE_H */

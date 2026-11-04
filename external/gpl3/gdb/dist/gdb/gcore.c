@@ -1,6 +1,6 @@
 /* Generate a core file for the inferior process.
 
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -269,13 +269,14 @@ call_target_sbrk (int sbrk_arg)
   struct value *sbrk_fn, *ret;
   bfd_vma tmp;
 
-  if (lookup_minimal_symbol ("sbrk", NULL, NULL).minsym != NULL)
+  if (lookup_minimal_symbol (current_program_space, "sbrk").minsym != nullptr)
     {
       sbrk_fn = find_function_in_inferior ("sbrk", &sbrk_objf);
       if (sbrk_fn == NULL)
 	return (bfd_vma) 0;
     }
-  else if (lookup_minimal_symbol ("_sbrk", NULL, NULL).minsym != NULL)
+  else if (lookup_minimal_symbol (current_program_space, "_sbrk").minsym
+	   != nullptr)
     {
       sbrk_fn = find_function_in_inferior ("_sbrk", &sbrk_objf);
       if (sbrk_fn == NULL)
@@ -424,13 +425,13 @@ gcore_create_callback (CORE_ADDR vaddr, unsigned long size, int read,
 	 If so, we can avoid copying its contents by clearing SEC_LOAD.  */
 
       for (objfile *objfile : current_program_space->objfiles ())
-	for (obj_section *objsec : objfile->sections ())
+	for (obj_section &objsec : objfile->sections ())
 	  {
 	    bfd *abfd = objfile->obfd.get ();
-	    asection *asec = objsec->the_bfd_section;
+	    asection *asec = objsec.the_bfd_section;
 	    bfd_vma align = (bfd_vma) 1 << bfd_section_alignment (asec);
-	    bfd_vma start = objsec->addr () & -align;
-	    bfd_vma end = (objsec->endaddr () + align - 1) & -align;
+	    bfd_vma start = objsec.addr () & -align;
+	    bfd_vma end = (objsec.endaddr () + align - 1) & -align;
 
 	    /* Match if either the entire memory region lies inside the
 	       section (i.e. a mapping covering some pages of a large
@@ -532,9 +533,9 @@ objfile_find_memory_regions (struct target_ops *self,
 
   /* Call callback function for each objfile section.  */
   for (objfile *objfile : current_program_space->objfiles ())
-    for (obj_section *objsec : objfile->sections ())
+    for (obj_section &objsec : objfile->sections ())
       {
-	asection *isec = objsec->the_bfd_section;
+	asection *isec = objsec.the_bfd_section;
 	flagword flags = bfd_section_flags (isec);
 
 	/* Separate debug info files are irrelevant for gcore.  */
@@ -546,7 +547,7 @@ objfile_find_memory_regions (struct target_ops *self,
 	    int size = bfd_section_size (isec);
 	    int ret;
 
-	    ret = (*func) (objsec->addr (), size,
+	    ret = (*func) (objsec.addr (), size,
 			   1, /* All sections will be readable.  */
 			   (flags & SEC_READONLY) == 0, /* Writable.  */
 			   (flags & SEC_CODE) != 0, /* Executable.  */
@@ -860,9 +861,7 @@ gcore_find_signalled_thread ()
   return nullptr;
 }
 
-void _initialize_gcore ();
-void
-_initialize_gcore ()
+INIT_GDB_FILE (gcore)
 {
   cmd_list_element *generate_core_file_cmd
     = add_com ("generate-core-file", class_files, gcore_command, _("\

@@ -1,4 +1,4 @@
-/* $NetBSD: t_pipe.c,v 1.2 2017/01/13 21:30:41 christos Exp $ */
+/* $NetBSD: t_pipe.c,v 1.2.26.1 2026/11/04 23:28:14 perseant Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_pipe.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
+__RCSID("$NetBSD: t_pipe.c,v 1.2.26.1 2026/11/04 23:28:14 perseant Exp $");
 
 #include <sys/event.h>
 #include <sys/wait.h>
@@ -40,6 +40,7 @@ __RCSID("$NetBSD: t_pipe.c,v 1.2 2017/01/13 21:30:41 christos Exp $");
 #include <fcntl.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <time.h>
 #include <unistd.h>
 
 #include <atf-c.h>
@@ -65,8 +66,22 @@ ATF_TC_BODY(pipe1, tc)
 
 	EV_SET(&event[0], fds[1], EVFILT_WRITE, EV_ADD|EV_ENABLE, 0, 0, 0);
 	ATF_REQUIRE_EQ_MSG((n = kevent(kq, event, 1, NULL, 0, NULL)),
-	    -1, "got: %d", n);
-	ATF_REQUIRE_EQ_MSG(errno, EBADF, "got: %s", strerror(errno));
+	    0, "got: %d", n);
+	REQUIRE_LIBC(alarm(1), (unsigned)-1);
+	ATF_REQUIRE_EQ_MSG((n = kevent(kq, NULL, 0, event, 1, NULL)),
+	    1, "got: %d", n);
+	REQUIRE_LIBC(alarm(0), (unsigned)-1);
+	printf("event[0].ident = %#"PRIxPTR"\n", event[0].ident);
+	printf("event[0].filter = %"PRId32"\n", event[0].filter);
+	printf("event[0].flags = 0x%"PRIx32"\n", event[0].flags);
+	printf("event[0].fflags = 0x%"PRIx32"\n", event[0].fflags);
+	printf("event[0].data = %#"PRIx64"\n", event[0].data);
+	printf("event[0].udata = %p\n", (void *)event[0].udata);
+	ATF_REQUIRE(event[0].ident == (uintptr_t)fds[1]);
+	ATF_REQUIRE(event[0].filter == EVFILT_WRITE);
+	ATF_REQUIRE(event[0].flags & EV_EOF);
+	ATF_REQUIRE(event[0].data == 0); /* zero space remains in buffer */
+	ATF_REQUIRE(event[0].udata == 0); /* we set no udata */
 }
 
 ATF_TC(pipe2);
@@ -136,12 +151,41 @@ ATF_TC_BODY(pipe3, tc)
 	RL(close(fds[1]));
 }
 
+ATF_TC(pipe_wrong_end);
+ATF_TC_HEAD(pipe_wrong_end, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Checks EVFILT_WRITE on the read side of a pipe never triggers");
+}
+ATF_TC_BODY(pipe_wrong_end, tc)
+{
+	struct kevent event[1];
+	int fds[2];
+	int kq, n;
+	struct timespec zerots = { .tv_sec = 0, .tv_nsec = 0 };
+
+	RL(pipe(fds));
+	RL(kq = kqueue());
+
+	EV_SET(&event[0], fds[0], EVFILT_WRITE, EV_ADD|EV_ENABLE, 0, 0, 0);
+	RL(kevent(kq, event, 1, NULL, 0, NULL));
+
+	/* make sure there is something in the pipe */
+	RL(write(fds[1], "foo", 3));
+	(void)printf("pipe: wrote 'foo' to pipe\n");
+
+	/* event should not trigger but also kevent(2) should not fail */
+	RL(n = kevent(kq, NULL, 0, event, 1, &zerots));
+	ATF_REQUIRE(n == 0);
+}
 
 ATF_TP_ADD_TCS(tp)
 {
+
 	ATF_TP_ADD_TC(tp, pipe1);
 	ATF_TP_ADD_TC(tp, pipe2);
 	ATF_TP_ADD_TC(tp, pipe3);
+	ATF_TP_ADD_TC(tp, pipe_wrong_end);
 
 	return atf_no_error();
 }

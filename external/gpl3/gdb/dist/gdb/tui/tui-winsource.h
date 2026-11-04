@@ -1,6 +1,6 @@
 /* TUI display source/assembly window.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,9 +19,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_WINSOURCE_H
-#define TUI_TUI_WINSOURCE_H
+#ifndef GDB_TUI_TUI_WINSOURCE_H
+#define GDB_TUI_TUI_WINSOURCE_H
 
+#include "gdbsupport/observable.h"
 #include "tui/tui-data.h"
 #include "symtab.h"
 
@@ -159,7 +160,7 @@ public:
 
   /* Update the window to display the given location.  Does nothing if
      the location is already displayed.  */
-  virtual void maybe_update (const frame_info_ptr &fi, symtab_and_line sal) = 0;
+  virtual void maybe_update (struct gdbarch *gdbarch, symtab_and_line sal) = 0;
 
   void update_source_window_as_is  (struct gdbarch *gdbarch,
 				    const struct symtab_and_line &sal);
@@ -187,6 +188,11 @@ public:
      reflects the input address.  Single window variant of
      update_source_windows_with_addr.  */
   void update_source_window_with_addr (struct gdbarch *, CORE_ADDR);
+
+protected:
+
+  /* Called when a user style setting is changed.  */
+  void style_changed ();
 
 private:
 
@@ -234,9 +240,6 @@ private:
 
      the initial escape that sets the color will still be applied.  */
   void puts_to_pad_with_skip (const char *string, int skip);
-
-  /* Called when the user "set style enabled" setting is changed.  */
-  void style_changed ();
 
   /* A token used to register and unregister an observer.  */
   gdb::observers::token m_observable;
@@ -365,4 +368,4 @@ extern std::string tui_copy_source_line (const char **ptr,
 /* Constant definitions. */
 #define SCROLL_THRESHOLD 2	/* Threshold for lazy scroll.  */
 
-#endif /* TUI_TUI_WINSOURCE_H */
+#endif /* GDB_TUI_TUI_WINSOURCE_H */

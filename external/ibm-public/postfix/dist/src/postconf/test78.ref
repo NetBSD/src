@@ -1,0 +1,8 @@
+config_directory = .
+lmtp_tls_enforce_peername = yes
+smtp_tls_enforce_peername = yes
+./postconf: warning: ./main.cf: support for parameter "lmtp_tls_enforce_peername" will be removed; instead, specify "lmtp_tls_security_level"
+./postconf: warning: ./main.cf: support for parameter "smtp_tls_enforce_peername" will be removed; instead, specify "smtp_tls_security_level"
+./postconf: warning: ./master.cf: support for parameter "lmtp_tls_enforce_peername" will be removed; instead, specify "lmtp_tls_security_level"
+./postconf: warning: ./master.cf: support for parameter "smtp_tls_enforce_peername" will be removed; instead, specify "smtp_tls_security_level"
+./postconf: warning: See https://www.postfix.org/DEPRECATION_README.html for details

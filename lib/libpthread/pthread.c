@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.185.2.1 2025/08/02 05:54:55 perseant Exp $	*/
+/*	$NetBSD: pthread.c,v 1.185.2.2 2026/11/04 23:19:30 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.185.2.1 2025/08/02 05:54:55 perseant Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.185.2.2 2026/11/04 23:19:30 perseant Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -107,7 +107,7 @@ int pthread__started;
 int __uselibcstub = 1;
 pthread_mutex_t pthread__deadqueue_lock = PTHREAD_MUTEX_INITIALIZER;
 pthread_queue_t pthread__deadqueue;
-pthread_queue_t pthread__allqueue;
+pthread_queue_t pthread__allqueue; /* only for ancient libpthread_dbg */
 
 static pthread_attr_t pthread_default_attr;
 static lwpctl_t pthread__dummy_lwpctl = { .lc_curcpu = LWPCTL_CPU_NONE };
@@ -125,13 +125,6 @@ int pthread__nspins;
 size_t pthread__unpark_max = PTHREAD__UNPARK_MAX;
 int pthread__dbg;	/* set by libpthread_dbg if active */
 
-/*
- * We have to initialize the pthread_stack* variables here because
- * mutexes are used before pthread_init() and thus pthread__initmain()
- * are called.  Since mutexes only save the stack pointer and not a
- * pointer to the thread data, it is safe to change the mapping from
- * stack pointer to thread data afterwards.
- */
 size_t	pthread__stacksize;
 size_t	pthread__guardsize;
 size_t	pthread__pagesize;
@@ -142,6 +135,8 @@ int _sys___sigprocmask14(int, const sigset_t *, sigset_t *);
 
 __strong_alias(__libc_thr_self,pthread_self)
 __strong_alias(__libc_thr_create,pthread_create)
+__strong_alias(__libc_thr_detach,pthread_detach)
+__strong_alias(__libc_thr_join,pthread_join)
 __strong_alias(__libc_thr_exit,pthread_exit)
 __strong_alias(__libc_thr_errno,pthread__errno)
 __strong_alias(__libc_thr_setcancelstate,pthread_setcancelstate)
@@ -370,8 +365,6 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 		newthread->pt_stack_allocated = false;
 	}
 
-	newthread->pt_stack_allocated = false;
-
 	if (stackbase == NULL) {
 		stacksize = ((stacksize - 1) | (pthread__pagesize - 1)) + 1;
 		guardsize = ((guardsize - 1) | (pthread__pagesize - 1)) + 1;
@@ -480,12 +473,15 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 		if (newthread)
 			PTQ_REMOVE(&pthread__deadqueue, newthread, pt_deadq);
 		pthread_mutex_unlock(&pthread__deadqueue_lock);
+		if (newthread) {
+			newthread->pt_is_main = false;
 #if defined(__HAVE_TLS_VARIANT_I) || defined(__HAVE_TLS_VARIANT_II)
-		if (newthread && newthread->pt_tls) {
-			_rtld_tls_free(newthread->pt_tls);
-			newthread->pt_tls = NULL;
-		}
+			if (newthread->pt_tls) {
+				_rtld_tls_free(newthread->pt_tls);
+				newthread->pt_tls = NULL;
+			}
 #endif
+		}
 	}
 
 	/*
@@ -814,6 +810,9 @@ pthread_getname_np(pthread_t thread, char *name, size_t len)
 
 	pthread__error(EINVAL, "Invalid thread",
 	    thread->pt_magic == PT_MAGIC);
+
+	if (len == 0)
+		return EINVAL;
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -1373,6 +1372,7 @@ pthread__initmain(pthread_t *newt)
 		errx(1, "Stacksize limit is too low, minimum %zd kbyte.",
 		    4 * pthread__pagesize / 1024);
 
+	pthread__main->pt_is_main = true;
 	*newt = pthread__main;
 #if defined(_PTHREAD_GETTCB_EXT)
 	pthread__main->pt_tls = _PTHREAD_GETTCB_EXT();
@@ -1440,4 +1440,12 @@ pthread__checkpri(int pri)
 		havepri = 1;
 	}
 	return (pri < min || pri > max) ? EINVAL : 0;
+}
+
+int
+pthread_main_np(void)
+{
+	if (__predict_false(__uselibcstub))
+		return -1;
+	return pthread_self()->pt_is_main;
 }

@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/powerpc.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PPC_OBSD_TDEP_H
-#define PPC_OBSD_TDEP_H
+#ifndef GDB_PPC_OBSD_TDEP_H
+#define GDB_PPC_OBSD_TDEP_H
 
 struct regset;
 struct regcache;
@@ -49,4 +49,4 @@ extern void ppcobsd_collect_gregset (const struct regset *regset,
 				     const struct regcache *regcache,
 				     int regnum, void *gregs, size_t len);
 
-#endif /* ppc-obsd-tdep.h */
+#endif /* GDB_PPC_OBSD_TDEP_H */

@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2018-2023 Free Software Foundation, Inc.
+# Copyright 2018-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,16 +22,12 @@ load_lib gdbserver-support.exp
 
 standard_testfile normal.c
 
-if { [skip_gdbserver_tests] } {
-    return 0
-}
+require allow_gdbserver_tests
 
 # Because we're relying on being able to change our CWD before
 # executing gdbserver, we just run if we're not testing with a remote
 # target.
-if { [is_remote target] } {
-    return 0
-}
+require {!is_remote target}
 
 save_vars { GDBFLAGS } {
     # If GDB and GDBserver are both running locally, set the sysroot to avoid

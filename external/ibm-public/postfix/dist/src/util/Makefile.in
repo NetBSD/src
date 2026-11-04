@@ -47,7 +47,8 @@ SRCS	= alldig.c allprint.c argv.c argv_split.c attr_clnt.c attr_print0.c \
 	mkmap_fail.c mkmap_lmdb.c mkmap_open.c mkmap_sdbm.c inet_prefix_top.c \
 	inet_addr_sizes.c quote_for_json.c mystrerror.c \
 	sane_sockaddr_to_hostaddr.c normalize_ws.c valid_uri_scheme.c \
-	clean_ascii_cntrl_space.c
+	clean_ascii_cntrl_space.c normalize_v4mapped_addr.c ossl_digest.c \
+	mac_midna.c wrap_stat.c
 OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	attr_print64.o attr_print_plain.o attr_scan0.o attr_scan64.o \
 	attr_scan_plain.o auto_clnt.o base64_code.o basename.o binhash.o \
@@ -95,7 +96,8 @@ OBJS	= alldig.o allprint.o argv.o argv_split.o attr_clnt.o attr_print0.o \
 	sane_strtol.o hash_fnv.o ldseed.o mkmap_db.o mkmap_dbm.o \
 	mkmap_fail.o mkmap_open.o inet_prefix_top.o inet_addr_sizes.o \
 	quote_for_json.o mystrerror.o sane_sockaddr_to_hostaddr.o \
-	normalize_ws.o valid_uri_scheme.o clean_ascii_cntrl_space.o
+	normalize_ws.o valid_uri_scheme.o clean_ascii_cntrl_space.o \
+	normalize_v4mapped_addr.o ossl_digest.o mac_midna.o wrap_stat.o
 # MAP_OBJ is for maps that may be dynamically loaded with dynamicmaps.cf.
 # When hard-linking these, makedefs sets NON_PLUGIN_MAP_OBJ=$(MAP_OBJ),
 # otherwise it sets the PLUGIN_* macros.
@@ -103,7 +105,8 @@ MAP_OBJ	= dict_pcre.o dict_cdb.o dict_lmdb.o dict_sdbm.o slmdb.o \
 	mkmap_cdb.o mkmap_lmdb.o mkmap_sdbm.o 
 HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	chroot_uid.h cidr_match.h clean_env.h connect.h ctable.h dict.h \
-	dict_cdb.h dict_cidr.h dict_db.h dict_dbm.h dict_env.h dict_ht.h \
+	dict_cdb.h dict_cidr.h dict_db.h dict_dbm.h dict_debug.h dict_env.h \
+	dict_ht.h \
 	dict_lmdb.h dict_ni.h dict_nis.h dict_nisplus.h dict_pcre.h dict_regexp.h \
 	dict_sdbm.h dict_static.h dict_tcp.h dict_unix.h dir_forest.h \
 	events.h exec_command.h find_inet.h fsspace.h fullname.h \
@@ -123,12 +126,13 @@ HDRS	= argv.h attr.h attr_clnt.h auto_clnt.h base64_code.h binhash.h \
 	vstring_vstream.h watchdog.h format_tv.h load_file.h killme_after.h \
 	edit_file.h dict_cache.h dict_thash.h ip_match.h nbbio.h base32_code.h \
 	dict_fail.h warn_stat.h dict_sockmap.h line_number.h timecmp.h \
-	slmdb.h compat_va_copy.h dict_pipe.h dict_random.h \
+	slmdb.h compat_va_copy.h dict_pipe.h dict_random.h parse_utf8_char.h \
 	valid_utf8_hostname.h midna_domain.h dict_union.h dict_inline.h \
 	check_arg.h argv_attr.h msg_logger.h logwriter.h byte_mask.h \
 	known_tcp_ports.h sane_strtol.h hash_fnv.h ldseed.h mkmap.h \
 	inet_prefix_top.h inet_addr_sizes.h valid_uri_scheme.h \
-	clean_ascii_cntrl_space.h
+	clean_ascii_cntrl_space.h normalize_v4mapped_addr.h ossl_digest.h \
+	mac_midna.h wrap_stat.h
 TESTSRC	= fifo_open.c fifo_rdwr_bug.c fifo_rdonly_bug.c select_bug.c \
 	stream_test.c dup2_pass_on_exec.c
 DEFS	= -I. -D$(SYSTYPE)
@@ -149,14 +153,17 @@ TESTPROG= dict_open dup2_pass_on_exec events exec_command fifo_open \
 	valid_utf8_string ip_match base32_code msg_rate_delay netstring \
 	vstream timecmp dict_cache midna_domain casefold strcasecmp_utf8 \
 	vbuf_print split_qnameval vstream msg_logger byte_mask \
-	known_tcp_ports dict_stream find_inet binhash hash_fnv argv \
+	known_tcp_ports dict_stream find_inet binhash hash_fnv_test argv \
 	clean_env inet_prefix_top printable readlline quote_for_json \
-	normalize_ws valid_uri_scheme clean_ascii_cntrl_space
+	normalize_ws valid_uri_scheme clean_ascii_cntrl_space \
+	normalize_v4mapped_addr_test ossl_digest_test dict_pipe_test \
+	dict_union_test
 PLUGIN_MAP_SO = $(LIB_PREFIX)pcre$(LIB_SUFFIX) $(LIB_PREFIX)lmdb$(LIB_SUFFIX) \
 	$(LIB_PREFIX)cdb$(LIB_SUFFIX) $(LIB_PREFIX)sdbm$(LIB_SUFFIX)
 HTABLE_FIX = NORANDOMIZE=1
 LIB_DIR	= ../../lib
 INC_DIR	= ../../include
+TESTLIB	= $(LIB_DIR)/libtesting.a
 
 .c.o:;	$(CC) $(SHLIB_CFLAGS) $(CFLAGS) -c $*.c
 
@@ -222,7 +229,7 @@ plugin_map_obj_update: $(LIB_MAP_OBJ)
 	done
 
 clean:
-	rm -f *.o $(LIB) *core $(TESTPROG) junk $(MAKES) *.tmp
+	rm -f *.o $(LIB) *core $(TESTPROG) junk $(MAKES) *.tmp testdb.db
 
 tidy:	clean
 
@@ -451,10 +458,8 @@ binhash: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
-hash_fnv: $(LIB)
-	mv $@.o junk
-	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
-	mv junk $@.o
+hash_fnv_test: $(LIB) update
+	$(CC) $(CFLAGS) -o $@ $@.c $(LIB) $(SYSLIBS)
 
 unix_recv_fd:  $(LIB)
 	mv $@.o junk
@@ -630,6 +635,18 @@ clean_ascii_cntrl_space: $(LIB)
 	$(CC) $(CFLAGS) -DTEST -o $@ $@.c $(LIB) $(SYSLIBS)
 	mv junk $@.o
 
+normalize_v4mapped_addr_test: normalize_v4mapped_addr_test.c $(LIB)
+	$(CC) $(CFLAGS) -o $@ normalize_v4mapped_addr_test.c $(LIB) $(SYSLIBS)
+
+ossl_digest_test: ossl_digest_test.c $(LIB)
+	$(CC) $(CFLAGS) -o $@ $@.c $(LIB) $(SYSLIBS)
+
+dict_pipe_test: dict_pipe_test.c $(TESTLIB) $(LIB)
+	$(CC) $(CFLAGS) -o $@ $@.c $(TESTLIB) $(LIB) $(SYSLIBS)
+
+dict_union_test: dict_union_test.c $(TESTLIB) $(LIB)
+	$(CC) $(CFLAGS) -o $@ $@.c $(TESTLIB) $(LIB) $(SYSLIBS)
+
 tests: all valid_hostname_test mac_expand_test dict_test unescape_test \
 	hex_quote_test ctable_test inet_addr_list_test base64_code_test \
 	attr_scan64_test attr_scan0_test host_port_test dict_tests \
@@ -641,15 +658,17 @@ tests: all valid_hostname_test mac_expand_test dict_test unescape_test \
 	vstream_test byte_mask_tests mystrtok_test known_tcp_ports_test \
 	binhash_test argv_test inet_prefix_top_test printable_test \
 	valid_utf8_string_test readlline_test quote_for_json_test \
-	normalize_ws_test valid_uri_scheme_test clean_ascii_cntrl_space_test
+	normalize_ws_test valid_uri_scheme_test clean_ascii_cntrl_space_test \
+	test_normalize_v4mapped_addr test_ossl_digest test_dict_pipe \
+	test_dict_union test_hash_fnv
  
 dict_tests: all dict_test \
 	dict_pcre_tests dict_cidr_test dict_thash_test dict_static_test \
-	dict_inline_test dict_utf8_test dict_regexp_test dict_union_test \
-	dict_pipe_test dict_regexp_file_test dict_cidr_file_test \
+	dict_inline_test dict_utf8_test dict_regexp_test \
+	dict_regexp_file_test dict_cidr_file_test dict_seq_test \
 	dict_static_file_test dict_random_test dict_random_file_test \
 	dict_inline_file_test dict_stream_test dict_inline_regexp_test \
-	dict_inline_cidr_test
+	dict_inline_cidr_test dict_debug_test
 
 dict_pcre_tests: dict_pcre_test miss_endif_pcre_test dict_pcre_file_test \
 	dict_inline_pcre_test
@@ -667,7 +686,7 @@ mac_expand_test: mac_expand mac_expand.in mac_expand.ref
 	rm -f mac_expand.tmp
 
 unescape_test: unescape unescape.in unescape.ref
-	$(SHLIB_ENV) ${VALGRIND} ./unescape <unescape.in | od -cb >unescape.tmp
+	$(SHLIB_ENV) ${VALGRIND} ./unescape <unescape.in | LANG=C od -cb >unescape.tmp
 	diff -b unescape.ref unescape.tmp
 #	$(SHLIB_ENV) ${VALGRIND} ./unescape <unescape.in | $(SHLIB_ENV) ${VALGRIND} ./unescape -e >unescape.tmp
 #	diff unescape.in unescape.tmp
@@ -792,7 +811,7 @@ split_qnameval_test: split_qnameval update
 
 dict_seq_test: dict_open testdb dict_seq.in dict_seq.ref
 	rm -f testdb.db testdb.dir testdb.pag
-	$(SHLIB_ENV) ${VALGRIND} ./dict_open hash:testdb create sync < dict_seq.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' > dict_seq.tmp
+	${HTABLE_FIX} $(SHLIB_ENV) ${VALGRIND} ./dict_open internal:testdb create sync_update < dict_seq.in 2>&1 | sed 's/uid=[0-9][0-9][0-9]*/uid=USER/' > dict_seq.tmp
 	diff dict_seq.ref dict_seq.tmp
 	rm -f testdb.db testdb.dir testdb.pag dict_seq.tmp
 
@@ -812,8 +831,8 @@ htable_test: htable /usr/share/dict/words
 binhash_test: binhash /usr/share/dict/words
 	$(SHLIB_ENV) ${VALGRIND} ./binhash < /usr/share/dict/words
 
-hash_fnv_test: hash_fnv
-	$(SHLIB_ENV) ${VALGRIND} ./hash_fnv
+test_hash_fnv: hash_fnv_test
+	$(SHLIB_ENV) ${VALGRIND} ./hash_fnv_test
 
 hex_code_test: hex_code
 	$(SHLIB_ENV) ${VALGRIND} ./hex_code
@@ -1047,16 +1066,6 @@ vbuf_print_test: vbuf_print vbuf_print_test.in vbuf_print_test.ref
 	diff vbuf_print_test.ref vbuf_print_test.tmp
 	rm -f vbuf_print_test.tmp
 
-dict_union_test: dict_open dict_union_test.in dict_union_test.ref
-	$(SHLIB_ENV) ${VALGRIND} sh -x dict_union_test.in >dict_union_test.tmp 2>&1
-	diff dict_union_test.ref dict_union_test.tmp
-	rm -f dict_union_test.tmp
-
-dict_pipe_test: dict_open dict_pipe_test.in dict_pipe_test.ref
-	$(SHLIB_ENV) ${VALGRIND} sh -x dict_pipe_test.in >dict_pipe_test.tmp 2>&1
-	diff dict_pipe_test.ref dict_pipe_test.tmp
-	rm -f dict_pipe_test.tmp
-
 vstring_test: dict_open vstring vstring_test.ref
 	$(SHLIB_ENV) ${VALGRIND} ./vstring one two three >vstring_test.tmp 2>&1
 	diff vstring_test.ref vstring_test.tmp
@@ -1104,6 +1113,11 @@ dict_inline_cidr_test: dict_open dict_inline_cidr.ref
 	diff dict_inline_cidr.ref dict_inline_cidr.tmp
 	rm -f dict_inline_cidr.tmp
 
+dict_debug_test: dict_open dict_debug_test.sh dict_debug_test.ref
+	$(SHLIB_ENV) ./dict_debug_test.sh >dict_debug_test.tmp 2>&1
+	diff dict_debug_test.ref dict_debug_test.tmp
+	rm -f dict_debug_test.tmp
+
 find_inet_test: find_inet find_inet.ref
 	$(SHLIB_ENV) ${VALGRIND} ./find_inet >find_inet.tmp 2>&1
 	diff find_inet.ref find_inet.tmp
@@ -1126,6 +1140,18 @@ valid_uri_scheme_test: valid_uri_scheme
 
 clean_ascii_cntrl_space_test: clean_ascii_cntrl_space
 	$(SHLIB_ENV) ${VALGRIND} ./clean_ascii_cntrl_space
+
+test_normalize_v4mapped_addr: update normalize_v4mapped_addr_test
+	$(SHLIB_ENV) ${VALGRIND} ./normalize_v4mapped_addr_test
+
+test_ossl_digest: update ossl_digest_test
+	$(SHLIB_ENV) ${VALGRIND} ./ossl_digest_test
+
+test_dict_pipe: update dict_pipe_test
+	$(SHLIB_ENV) ${VALGRIND} ./dict_pipe_test
+
+test_dict_union: update dict_union_test
+	$(SHLIB_ENV) ${VALGRIND} ./dict_union_test
 
 depend: $(MAKES)
 	(sed '1,/^# do not edit/!d' Makefile.in; \
@@ -1530,6 +1556,7 @@ dict_debug.o: argv.h
 dict_debug.o: check_arg.h
 dict_debug.o: dict.h
 dict_debug.o: dict_debug.c
+dict_debug.o: dict_debug.h
 dict_debug.o: msg.h
 dict_debug.o: myflock.h
 dict_debug.o: mymalloc.h
@@ -1657,6 +1684,7 @@ dict_open.o: dict_cdb.h
 dict_open.o: dict_cidr.h
 dict_open.o: dict_db.h
 dict_open.o: dict_dbm.h
+dict_open.o: dict_debug.h
 dict_open.o: dict_env.h
 dict_open.o: dict_fail.h
 dict_open.o: dict_ht.h
@@ -1720,6 +1748,20 @@ dict_pipe.o: sys_defs.h
 dict_pipe.o: vbuf.h
 dict_pipe.o: vstream.h
 dict_pipe.o: vstring.h
+dict_pipe_test.o: ../../include/dict_test_helper.h
+dict_pipe_test.o: argv.h
+dict_pipe_test.o: check_arg.h
+dict_pipe_test.o: dict.h
+dict_pipe_test.o: dict_pipe.h
+dict_pipe_test.o: dict_pipe_test.c
+dict_pipe_test.o: msg.h
+dict_pipe_test.o: msg_vstream.h
+dict_pipe_test.o: myflock.h
+dict_pipe_test.o: stringops.h
+dict_pipe_test.o: sys_defs.h
+dict_pipe_test.o: vbuf.h
+dict_pipe_test.o: vstream.h
+dict_pipe_test.o: vstring.h
 dict_random.o: argv.h
 dict_random.o: check_arg.h
 dict_random.o: dict.h
@@ -1887,6 +1929,20 @@ dict_union.o: sys_defs.h
 dict_union.o: vbuf.h
 dict_union.o: vstream.h
 dict_union.o: vstring.h
+dict_union_test.o: ../../include/dict_test_helper.h
+dict_union_test.o: argv.h
+dict_union_test.o: check_arg.h
+dict_union_test.o: dict.h
+dict_union_test.o: dict_union.h
+dict_union_test.o: dict_union_test.c
+dict_union_test.o: msg.h
+dict_union_test.o: msg_vstream.h
+dict_union_test.o: myflock.h
+dict_union_test.o: stringops.h
+dict_union_test.o: sys_defs.h
+dict_union_test.o: vbuf.h
+dict_union_test.o: vstream.h
+dict_union_test.o: vstring.h
 dict_unix.o: argv.h
 dict_unix.o: check_arg.h
 dict_unix.o: dict.h
@@ -2038,6 +2094,16 @@ hash_fnv.o: hash_fnv.h
 hash_fnv.o: ldseed.h
 hash_fnv.o: msg.h
 hash_fnv.o: sys_defs.h
+hash_fnv_test.o: check_arg.h
+hash_fnv_test.o: hash_fnv.h
+hash_fnv_test.o: hash_fnv_test.c
+hash_fnv_test.o: msg.h
+hash_fnv_test.o: msg_vstream.h
+hash_fnv_test.o: stringops.h
+hash_fnv_test.o: sys_defs.h
+hash_fnv_test.o: vbuf.h
+hash_fnv_test.o: vstream.h
+hash_fnv_test.o: vstring.h
 hex_code.o: check_arg.h
 hex_code.o: hex_code.c
 hex_code.o: hex_code.h
@@ -2243,6 +2309,17 @@ mac_expand.o: stringops.h
 mac_expand.o: sys_defs.h
 mac_expand.o: vbuf.h
 mac_expand.o: vstring.h
+mac_midna.o: check_arg.h
+mac_midna.o: mac_expand.h
+mac_midna.o: mac_midna.c
+mac_midna.o: mac_midna.h
+mac_midna.o: mac_parse.h
+mac_midna.o: midna_domain.h
+mac_midna.o: msg.h
+mac_midna.o: stringops.h
+mac_midna.o: sys_defs.h
+mac_midna.o: vbuf.h
+mac_midna.o: vstring.h
 mac_parse.o: check_arg.h
 mac_parse.o: mac_parse.c
 mac_parse.o: mac_parse.h
@@ -2471,10 +2548,14 @@ myaddrinfo.o: sys_defs.h
 myaddrinfo.o: valid_hostname.h
 myaddrinfo.o: vbuf.h
 myaddrinfo.o: vstring.h
+myflock.o: check_arg.h
 myflock.o: msg.h
 myflock.o: myflock.c
 myflock.o: myflock.h
+myflock.o: name_mask.h
 myflock.o: sys_defs.h
+myflock.o: vbuf.h
+myflock.o: vstring.h
 mymalloc.o: msg.h
 mymalloc.o: mymalloc.c
 mymalloc.o: mymalloc.h
@@ -2532,6 +2613,24 @@ non_blocking.o: iostuff.h
 non_blocking.o: msg.h
 non_blocking.o: non_blocking.c
 non_blocking.o: sys_defs.h
+normalize_v4mapped_addr.o: inet_proto.h
+normalize_v4mapped_addr.o: myaddrinfo.h
+normalize_v4mapped_addr.o: normalize_v4mapped_addr.c
+normalize_v4mapped_addr.o: normalize_v4mapped_addr.h
+normalize_v4mapped_addr.o: sock_addr.h
+normalize_v4mapped_addr.o: sys_defs.h
+normalize_v4mapped_addr_test.o: check_arg.h
+normalize_v4mapped_addr_test.o: inet_proto.h
+normalize_v4mapped_addr_test.o: msg.h
+normalize_v4mapped_addr_test.o: msg_vstream.h
+normalize_v4mapped_addr_test.o: myaddrinfo.h
+normalize_v4mapped_addr_test.o: normalize_v4mapped_addr.h
+normalize_v4mapped_addr_test.o: normalize_v4mapped_addr_test.c
+normalize_v4mapped_addr_test.o: stringops.h
+normalize_v4mapped_addr_test.o: sys_defs.h
+normalize_v4mapped_addr_test.o: vbuf.h
+normalize_v4mapped_addr_test.o: vstream.h
+normalize_v4mapped_addr_test.o: vstring.h
 normalize_ws.o: check_arg.h
 normalize_ws.o: msg.h
 normalize_ws.o: msg_vstream.h
@@ -2547,11 +2646,14 @@ nvtable.o: mymalloc.h
 nvtable.o: nvtable.c
 nvtable.o: nvtable.h
 nvtable.o: sys_defs.h
+open_as.o: check_arg.h
 open_as.o: msg.h
 open_as.o: open_as.c
 open_as.o: open_as.h
 open_as.o: set_eugid.h
 open_as.o: sys_defs.h
+open_as.o: vbuf.h
+open_as.o: vstream.h
 open_limit.o: iostuff.h
 open_limit.o: open_limit.c
 open_limit.o: sys_defs.h
@@ -2565,6 +2667,26 @@ open_lock.o: sys_defs.h
 open_lock.o: vbuf.h
 open_lock.o: vstream.h
 open_lock.o: vstring.h
+ossl_digest.o: argv.h
+ossl_digest.o: check_arg.h
+ossl_digest.o: msg.h
+ossl_digest.o: mymalloc.h
+ossl_digest.o: ossl_digest.c
+ossl_digest.o: ossl_digest.h
+ossl_digest.o: sys_defs.h
+ossl_digest.o: vbuf.h
+ossl_digest.o: vstring.h
+ossl_digest_test.o: argv.h
+ossl_digest_test.o: check_arg.h
+ossl_digest_test.o: hex_code.h
+ossl_digest_test.o: msg.h
+ossl_digest_test.o: mymalloc.h
+ossl_digest_test.o: ossl_digest.h
+ossl_digest_test.o: ossl_digest_test.c
+ossl_digest_test.o: stringops.h
+ossl_digest_test.o: sys_defs.h
+ossl_digest_test.o: vbuf.h
+ossl_digest_test.o: vstring.h
 pass_accept.o: attr.h
 pass_accept.o: check_arg.h
 pass_accept.o: htable.h
@@ -2673,8 +2795,8 @@ sane_rename.o: sane_fsops.h
 sane_rename.o: sane_rename.c
 sane_rename.o: sys_defs.h
 sane_rename.o: warn_stat.h
-sane_sockaddr_to_hostaddr.o: inet_proto.h
 sane_sockaddr_to_hostaddr.o: myaddrinfo.h
+sane_sockaddr_to_hostaddr.o: normalize_v4mapped_addr.h
 sane_sockaddr_to_hostaddr.o: sane_sockaddr_to_hostaddr.c
 sane_sockaddr_to_hostaddr.o: sys_defs.h
 sane_socketpair.o: msg.h
@@ -3016,6 +3138,9 @@ watchdog.o: posix_signals.h
 watchdog.o: sys_defs.h
 watchdog.o: watchdog.c
 watchdog.o: watchdog.h
+wrap_stat.o: sys_defs.h
+wrap_stat.o: wrap_stat.c
+wrap_stat.o: wrap_stat.h
 write_buf.o: iostuff.h
 write_buf.o: msg.h
 write_buf.o: sys_defs.h

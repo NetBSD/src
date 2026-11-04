@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.16 2024/01/13 00:44:42 thorpej Exp $	*/
+/*	$NetBSD: machdep.h,v 1.16.2.1 2026/11/04 23:21:24 perseant Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -99,10 +99,6 @@ struct reg;
 struct trapframe;
 struct uio;
 
-extern int fputype;
-
-extern label_t *nofault;
-
 extern vaddr_t vmmap;	/* XXX - See mem.c */
 
 void	clock_init (void);
@@ -131,7 +127,7 @@ extern vaddr_t virtual_avail, virtual_end;
 extern paddr_t avail_start, avail_end;
 
 /* pmap.c */
-void	pmap_bootstrap(vaddr_t nextva);
+paddr_t	pmap_bootstrap(vaddr_t nextva);
 void	pmap_kcore_hdr(struct sun2_kcore_hdr *);
 void	pmap_get_pagemap(int *pt, int off);
 

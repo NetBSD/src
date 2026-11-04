@@ -1,6 +1,6 @@
 /* Type stack for GDB parser.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TYPE_STACK_H
-#define TYPE_STACK_H
+#ifndef GDB_TYPE_STACK_H
+#define GDB_TYPE_STACK_H
 
 #include "gdbtypes.h"
 #include <vector>
@@ -203,4 +203,4 @@ private:
   std::vector<union type_stack_elt> m_elements;
 };
 
-#endif /* TYPE_STACK_H */
+#endif /* GDB_TYPE_STACK_H */

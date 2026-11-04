@@ -11,17 +11,15 @@
 # See the COPYRIGHT file distributed with this work for additional
 # information regarding copyright ownership.
 
+from functools import reduce
+from resource import RLIMIT_NOFILE, getrlimit, setrlimit
+
 import os
-import sys
+import random
 import socket
 import subprocess
-import random
+import sys
 import time
-
-from functools import reduce
-from resource import getrlimit
-from resource import setrlimit
-from resource import RLIMIT_NOFILE
 
 MULTIDIG_INSTANCES = 10
 CONNECT_TRIES = 5
@@ -137,9 +135,8 @@ class SubDIG:
         return command
 
     def run(self):
-        # pylint: disable=consider-using-with
         with open(os.devnull, "w", encoding="utf-8") as devnull:
-            self.sub_process = subprocess.Popen(
+            self.sub_process = subprocess.Popen(  # pylint: disable=consider-using-with
                 self.get_command(), shell=True, stdout=devnull
             )
 
@@ -228,8 +225,8 @@ def run_test(http_secure=True):
     assert subdig.alive(), "The single DIG instance is expected to be alive"
     assert multidig.alive(), (
         "The DIG instances from the set are all expected to "
-        "be alive, but {} of them have completed"
-    ).format(multidig.completed())
+        f"be alive, but {multidig.completed()} of them have completed"
+    )
     # Let's close opened connections (in random order) to let all dig
     # processes to complete
     connector.disconnect_all()

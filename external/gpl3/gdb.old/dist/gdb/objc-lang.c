@@ -1,6 +1,6 @@
 /* Objective-C language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Apple Computer, Inc.
    Written by Michael Snyder.
@@ -20,7 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
+#include "exceptions.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -35,7 +36,7 @@
 #include "objfiles.h"
 #include "target.h"
 #include "gdbcore.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 #include "frame.h"
 #include "gdbsupport/gdb_regex.h"
 #include "regcache.h"
@@ -87,7 +88,7 @@ lookup_struct_typedef (const char *name, const struct block *block, int noerr)
 {
   struct symbol *sym;
 
-  sym = lookup_symbol (name, block, STRUCT_DOMAIN, 0).symbol;
+  sym = lookup_symbol (name, block, SEARCH_STRUCT_DOMAIN, 0).symbol;
 
   if (sym == NULL)
     {
@@ -119,9 +120,11 @@ lookup_objc_class (struct gdbarch *gdbarch, const char *classname)
       return 0;
     }
 
-  if (lookup_minimal_symbol("objc_lookUpClass", 0, 0).minsym)
+  if (lookup_minimal_symbol (current_program_space,
+			     "objc_lookUpClass").minsym != nullptr)
     function = find_function_in_inferior("objc_lookUpClass", NULL);
-  else if (lookup_minimal_symbol ("objc_lookup_class", 0, 0).minsym)
+  else if (lookup_minimal_symbol (current_program_space,
+				  "objc_lookup_class").minsym != nullptr)
     function = find_function_in_inferior("objc_lookup_class", NULL);
   else
     {
@@ -148,9 +151,11 @@ lookup_child_selector (struct gdbarch *gdbarch, const char *selname)
       return 0;
     }
 
-  if (lookup_minimal_symbol("sel_getUid", 0, 0).minsym)
+  if (lookup_minimal_symbol (current_program_space, "sel_getUid").minsym
+      != nullptr)
     function = find_function_in_inferior("sel_getUid", NULL);
-  else if (lookup_minimal_symbol ("sel_get_any_uid", 0, 0).minsym)
+  else if (lookup_minimal_symbol (current_program_space,
+				  "sel_get_any_uid").minsym != nullptr)
     function = find_function_in_inferior("sel_get_any_uid", NULL);
   else
     {
@@ -179,17 +184,21 @@ value_nsstring (struct gdbarch *gdbarch, const char *ptr, int len)
   stringValue[2] = value_string(ptr, len, char_type);
   stringValue[2] = value_coerce_array(stringValue[2]);
   /* _NSNewStringFromCString replaces "istr" after Lantern2A.  */
-  if (lookup_minimal_symbol("_NSNewStringFromCString", 0, 0).minsym)
+  if (lookup_minimal_symbol (current_program_space,
+			     "_NSNewStringFromCString").minsym != nullptr)
     {
       function = find_function_in_inferior("_NSNewStringFromCString", NULL);
       nsstringValue = call_function_by_hand(function, NULL, stringValue[2]);
     }
-  else if (lookup_minimal_symbol("istr", 0, 0).minsym)
+  else if (lookup_minimal_symbol (current_program_space,
+				  "istr").minsym != nullptr)
     {
       function = find_function_in_inferior("istr", NULL);
       nsstringValue = call_function_by_hand(function, NULL, stringValue[2]);
     }
-  else if (lookup_minimal_symbol("+[NSString stringWithCString:]", 0, 0).minsym)
+  else if (lookup_minimal_symbol (current_program_space,
+				  "+[NSString stringWithCString:]").minsym
+	   != nullptr)
     {
       function
 	= find_function_in_inferior("+[NSString stringWithCString:]", NULL);
@@ -212,7 +221,7 @@ value_nsstring (struct gdbarch *gdbarch, const char *ptr, int len)
   else
     type = lookup_pointer_type(sym->type ());
 
-  deprecated_set_value_type (nsstringValue, type);
+  nsstringValue->deprecated_set_type (type);
   return nsstringValue;
 }
 
@@ -282,7 +291,7 @@ public:
 
   /* See language.h.  */
 
-  CORE_ADDR skip_trampoline (frame_info_ptr frame,
+  CORE_ADDR skip_trampoline (const frame_info_ptr &frame,
 			     CORE_ADDR stop_pc) const override
   {
     struct gdbarch *gdbarch = get_frame_arch (frame);
@@ -543,7 +552,7 @@ compare_selectors (const void *a, const void *b)
  *
  * Implements the "Info selectors" command.  Takes an optional regexp
  * arg.  Lists all objective c selectors that match the regexp.  Works
- * by grepping thru all symbols for objective c methods.  Output list
+ * by grepping through all symbols for objective c methods.  Output list
  * is sorted and uniqued. 
  */
 
@@ -592,7 +601,7 @@ info_selectors_command (const char *regexp, int from_tty)
 	error (_("Invalid regexp (%s): %s"), val, regexp);
     }
 
-  /* First time thru is JUST to get max length and count.  */
+  /* First time through is JUST to get max length and count.  */
   for (objfile *objfile : current_program_space->objfiles ())
     {
       for (minimal_symbol *msymbol : objfile->msymbols ())
@@ -707,7 +716,7 @@ compare_classes (const void *a, const void *b)
  *
  * Implements the "info classes" command for objective c classes.
  * Lists all objective c classes that match the optional regexp.
- * Works by grepping thru the list of objective c methods.  List will
+ * Works by grepping through the list of objective c methods.  List will
  * be sorted and uniqued (since one class may have many methods).
  * BUGS: will not list a class that has no methods. 
  */
@@ -746,7 +755,7 @@ info_classes_command (const char *regexp, int from_tty)
 	error (_("Invalid regexp (%s): %s"), val, regexp);
     }
 
-  /* First time thru is JUST to get max length and count.  */
+  /* First time through is JUST to get max length and count.  */
   for (objfile *objfile : current_program_space->objfiles ())
     {
       for (minimal_symbol *msymbol : objfile->msymbols ())
@@ -841,9 +850,9 @@ parse_selector (char *method, char **selector)
 
   for (;;)
     {
-      if (isalnum (*s2) || (*s2 == '_') || (*s2 == ':'))
+      if (isalnum ((unsigned char)*s2) || (*s2 == '_') || (*s2 == ':'))
 	*s1++ = *s2;
-      else if (isspace (*s2))
+      else if (isspace ((unsigned char)*s2))
 	;
       else if ((*s2 == '\0') || (*s2 == '\''))
 	break;
@@ -905,7 +914,7 @@ parse_method (char *method, char *type, char **theclass,
   s1++;
 
   nclass = s1;
-  while (isalnum (*s1) || (*s1 == '_'))
+  while (isalnum ((unsigned char)*s1) || (*s1 == '_'))
     s1++;
   
   s2 = s1;
@@ -916,7 +925,7 @@ parse_method (char *method, char *type, char **theclass,
       s2++;
       s2 = skip_spaces (s2);
       ncategory = s2;
-      while (isalnum (*s2) || (*s2 == '_'))
+      while (isalnum ((unsigned char)*s2) || (*s2 == '_'))
 	s2++;
       *s2++ = '\0';
     }
@@ -929,9 +938,9 @@ parse_method (char *method, char *type, char **theclass,
 
   for (;;)
     {
-      if (isalnum (*s2) || (*s2 == '_') || (*s2 == ':'))
+      if (isalnum ((unsigned char)*s2) || (*s2 == '_') || (*s2 == ':'))
 	*s1++ = *s2;
-      else if (isspace (*s2))
+      else if (isspace ((unsigned char)*s2))
 	;
       else if (*s2 == ']')
 	break;
@@ -1129,15 +1138,15 @@ find_imps (const char *method, std::vector<const char *> *symbol_names)
      add the selector itself as a symbol, if it exists.  */
   if (selector_case && !symbol_names->empty ())
     {
-      struct symbol *sym = lookup_symbol (selector, NULL, VAR_DOMAIN,
+      struct symbol *sym = lookup_symbol (selector, NULL, SEARCH_VFT,
 					  0).symbol;
 
       if (sym != NULL) 
 	symbol_names->push_back (sym->natural_name ());
       else
 	{
-	  struct bound_minimal_symbol msym
-	    = lookup_minimal_symbol (selector, 0, 0);
+	  bound_minimal_symbol msym
+	    = lookup_minimal_symbol (current_program_space, selector);
 
 	  if (msym.minsym != NULL) 
 	    symbol_names->push_back (msym.minsym->natural_name ());
@@ -1164,9 +1173,7 @@ print_object_command (const char *args, int from_tty)
   {
     expression_up expr = parse_expression (args);
 
-    object
-      = evaluate_expression (expr.get (),
-			     builtin_type (expr->gdbarch)->builtin_data_ptr);
+    object = expr->evaluate (builtin_type (expr->gdbarch)->builtin_data_ptr);
   }
 
   /* Validate the address for sanity.  */
@@ -1196,7 +1203,7 @@ print_object_command (const char *args, int from_tty)
   gdb_printf ("\n");
 }
 
-/* The data structure 'methcalls' is used to detect method calls (thru
+/* The data structure 'methcalls' is used to detect method calls (through
  * ObjC runtime lib functions objc_msgSend, objc_msgSendSuper, etc.),
  * and ultimately find the method being called.
  */
@@ -1241,13 +1248,13 @@ find_objc_msgsend (void)
 
   for (i = 0; i < nmethcalls; i++)
     {
-      struct bound_minimal_symbol func;
-
       /* Try both with and without underscore.  */
-      func = lookup_bound_minimal_symbol (methcalls[i].name);
+      bound_minimal_symbol func
+	= lookup_minimal_symbol (current_program_space, methcalls[i].name);
       if ((func.minsym == NULL) && (methcalls[i].name[0] == '_'))
 	{
-	  func = lookup_bound_minimal_symbol (methcalls[i].name + 1);
+	  func = lookup_minimal_symbol (current_program_space,
+					methcalls[i].name + 1);
 	}
       if (func.minsym == NULL)
 	{ 
@@ -1286,7 +1293,7 @@ find_objc_msgcall_submethod (int (*f) (CORE_ADDR, CORE_ADDR *),
       if (f (pc, new_pc) == 0)
 	return 1;
     }
-  catch (const gdb_exception &ex)
+  catch (const gdb_exception_error &ex)
     {
       exception_fprintf (gdb_stderr, ex,
 			 "Unable to determine target of "

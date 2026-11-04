@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/mips64.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -150,13 +150,10 @@ mips64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   obsd_init_abi(info, gdbarch);
 
   /* OpenBSD/mips64 has SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 }
 
-void _initialize_mips64obsd_tdep ();
-void
-_initialize_mips64obsd_tdep ()
+INIT_GDB_FILE (mips64obsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_mips, 0, GDB_OSABI_OPENBSD,
 			  mips64obsd_init_abi);

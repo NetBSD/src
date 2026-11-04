@@ -1,4 +1,4 @@
-/*	$NetBSD: rkey_57.c,v 1.8.2.1 2025/08/02 05:53:46 perseant Exp $	*/
+/*	$NetBSD: rkey_57.c,v 1.8.2.2 2026/11/04 23:18:11 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,9 +87,7 @@ tostruct_rkey(ARGS_TOSTRUCT) {
 	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_rkey);
 
-	rkey->common.rdclass = rdata->rdclass;
-	rkey->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&rkey->common, link);
+	DNS_RDATACOMMON_INIT(rkey, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_key(CALL_TOSTRUCT);
 }

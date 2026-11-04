@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_rtc.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $ */
+/* $NetBSD: tegra_rtc.c,v 1.8.24.1 2026/11/04 23:20:13 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_rtc.c,v 1.8 2021/01/27 03:10:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_rtc.c,v 1.8.24.1 2026/11/04 23:20:13 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -109,14 +109,14 @@ tegra_rtc_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_todr.todr_gettime = tegra_rtc_gettime;
 	sc->sc_todr.todr_settime = tegra_rtc_settime;
-	sc->sc_todr.cookie = sc;
-	fdtbus_todr_attach(self, faa->faa_phandle, &sc->sc_todr);
+	sc->sc_todr.todr_dev = self;
+	todr_attach(&sc->sc_todr);
 }
 
 static int
 tegra_rtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 {
-	struct tegra_rtc_softc * const sc = tch->cookie;
+	struct tegra_rtc_softc * const sc = device_private(tch->todr_dev);
 
 	tv->tv_sec = RTC_READ(sc, RTC_SECONDS_REG);
 	tv->tv_usec = 0;
@@ -127,7 +127,7 @@ tegra_rtc_gettime(todr_chip_handle_t tch, struct timeval *tv)
 static int
 tegra_rtc_settime(todr_chip_handle_t tch, struct timeval *tv)
 {
-	struct tegra_rtc_softc * const sc = tch->cookie;
+	struct tegra_rtc_softc * const sc = device_private(tch->todr_dev);
 	int retry = 500;
 
 	while (--retry > 0) {

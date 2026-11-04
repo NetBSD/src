@@ -1,4 +1,4 @@
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,14 +18,18 @@
 load_lib completion-support.exp
 load_lib data-structures.exp
 
-standard_testfile cpls.cc cpls2.cc cpls-hyphen.cc
+standard_testfile cpcompletion.cc cpls.cc cpls2.cc cpls-hyphen.cc
 
 set opts {}
 lappend opts debug
+lappend opts c++
 lappend opts additional_flags=-std=c++11
 
+set flags {}
+lappend flags debug
+
 if {[prepare_for_testing "failed to prepare" $testfile \
-	 [list $srcfile $srcfile2 $srcfile3] $opts]} {
+	 [list $srcfile $srcfile2 $srcfile3 $srcfile4] $opts]} {
     return -1
 }
 
@@ -666,6 +670,7 @@ proc_with_prefix template-function-foo {} {
 	    $completion_list
 	check_setting_bp_fails "$cmd_prefix foo<A"
 
+	clean_restart $::testfile
 	# "foo<A>" should give any function with one parameter of any type
 	# of A.  While the parameter list in the template should be ignored,
 	# the function's argument list should not be ignored.
@@ -831,7 +836,7 @@ proc_with_prefix template-class-with-method {} {
 	}
 }
 
-# Test completion of a const-overloaded funtion (const-overload).
+# Test completion of a const-overloaded function (const-overload).
 # Note that "const" appears after the function/method parameters.
 
 proc_with_prefix const-overload {} {

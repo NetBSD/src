@@ -36,9 +36,7 @@
 #include "sim/sim.h"
 
 #include <stdlib.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #include <string.h>
 #include <errno.h>
 
@@ -291,7 +289,7 @@ main(int argc, char * const *argv)
   psim_stack(simulation, argv, environ);
 
   {
-    RETSIGTYPE (*prev) ();
+    RETSIGTYPE (*prev) (int);
     prev = signal(SIGINT, cntrl_c);
     psim_run(simulation);
     signal(SIGINT, prev);

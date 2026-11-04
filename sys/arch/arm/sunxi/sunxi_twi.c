@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_twi.c,v 1.17 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: sunxi_twi.c,v 1.17.24.1 2026/11/04 23:20:15 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.17 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_twi.c,v 1.17.24.1 2026/11/04 23:20:15 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,8 +162,7 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 		}
 
 	conf = of_compatible_lookup(phandle, compat_data)->data;
-	prop_dictionary_set_bool(device_properties(self), "iflg-rwc",
-	    conf->iflg_rwc);
+	sc->sc_iflg_rwc = conf->iflg_rwc;
 
 	/* Attach gttwsi core */
 	gttwsi_attach_subr(self, bst, bsh, sunxi_twi_regmap);
@@ -183,7 +182,5 @@ sunxi_twi_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
-	fdtbus_register_i2c_controller(&sc->sc_i2c, phandle);
-
-	fdtbus_attach_i2cbus(self, phandle, &sc->sc_i2c, iicbus_print);
+	iicbus_attach(self, &sc->sc_i2c);
 }

@@ -1,6 +1,6 @@
 /* Interface between GDB and target environments, including files and processes
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support.  Written by John Gilmore.
 
@@ -41,8 +41,8 @@
    dummy target at the bottom stratum, so we can call the target
    methods without checking them.  */
 
-#if !defined (TARGET_H)
-#define TARGET_H
+#ifndef GDB_TARGET_H
+#define GDB_TARGET_H
 
 struct objfile;
 struct ui_file;
@@ -134,7 +134,7 @@ enum inferior_event_type
     INF_EXEC_COMPLETE,
   };
 
-/* Target objects which can be transfered using target_read,
+/* Target objects which can be transferred using target_read,
    target_write, et cetera.  */
 
 enum target_object
@@ -156,7 +156,7 @@ enum target_object
   TARGET_OBJECT_CODE_MEMORY,
   /* Kernel Unwind Table.  See "ia64-tdep.c".  */
   TARGET_OBJECT_UNWIND_TABLE,
-  /* Transfer auxilliary vector.  */
+  /* Transfer auxiliary vector.  */
   TARGET_OBJECT_AUXV,
   /* StackGhost cookie.  See "sparc-tdep.c".  */
   TARGET_OBJECT_WCOOKIE,
@@ -177,7 +177,7 @@ enum target_object
   /* Currently loaded libraries specific to AIX systems, in XML format.  */
   TARGET_OBJECT_LIBRARIES_AIX,
   /* Get OS specific data.  The ANNEX specifies the type (running
-     processes, etc.).  The data being transfered is expected to follow
+     processes, etc.).  The data being transferred is expected to follow
      the DTD specified in features/osdata.dtd.  */
   TARGET_OBJECT_OSDATA,
   /* Extra signal info.  Usually the contents of `siginfo_t' on unix
@@ -755,7 +755,7 @@ struct target_ops
        potential optimization is missed.  */
     virtual bool has_pending_events ()
       TARGET_DEFAULT_RETURN (false);
-    virtual void thread_events (int)
+    virtual void thread_events (bool)
       TARGET_DEFAULT_IGNORE ();
     /* Returns true if the target supports setting thread options
        OPTIONS, false otherwise.  */
@@ -821,7 +821,7 @@ struct target_ops
        transferring if desired.  This is handled in target.c.
 
        The interface does not support a "retry" mechanism.  Instead it
-       assumes that at least one addressable unit will be transfered on each
+       assumes that at least one addressable unit will be transferred on each
        successful call.
 
        NOTE: cagney/2003-10-17: The current interface can lead to
@@ -1011,6 +1011,14 @@ struct target_ops
        *TARGET_ERRNO).  */
     virtual int fileio_fstat (int fd, struct stat *sb, fileio_error *target_errno);
 
+    /* Get information about the file FILENAME and put it in SB.  Look for
+       FILENAME in the filesystem as seen by INF.  If INF is NULL, use the
+       filesystem seen by the debugger (GDB or, for remote targets, the
+       remote stub).  Return 0 on success, or -1 if an error occurs (and
+       set *TARGET_ERRNO).  */
+    virtual int fileio_lstat (struct inferior *inf, const char *filename,
+			      struct stat *sb, fileio_error *target_errno);
+
     /* Close FD on the target.  Return 0, or -1 if an error occurs
        (and set *TARGET_ERRNO).  */
     virtual int fileio_close (int fd, fileio_error *target_errno);
@@ -1154,8 +1162,12 @@ struct target_ops
 			       CORE_ADDR memaddr, ULONGEST size)
       TARGET_DEFAULT_FUNC (default_verify_memory);
 
-    /* Return the address of the start of the Thread Information Block
-       a Windows OS specific feature.  */
+    /* Set *ADDR to the address of the start of the Thread Information
+       Block (TIB) for thread PTID.  Return true on success and false
+       otherwise.
+
+       ADDR may be nullptr, in which case the checks will be done but
+       the result will be discarded.  */
     virtual bool get_tib_address (ptid_t ptid, CORE_ADDR *addr)
       TARGET_DEFAULT_NORETURN (tcomplain ());
 
@@ -1368,6 +1380,25 @@ struct target_ops
     /* Return the x86 XSAVE extended state area layout.  */
     virtual x86_xsave_layout fetch_x86_xsave_layout ()
       TARGET_DEFAULT_RETURN (x86_xsave_layout ());
+
+    /* Return true if the target supports displaced stepping for THREAD.  */
+    virtual bool supports_displaced_step (thread_info *thread)
+      TARGET_DEFAULT_FUNC (default_supports_displaced_step);
+
+    /* See documentation of gdbarch_displaced_step_prepare.  */
+    virtual displaced_step_prepare_status displaced_step_prepare (thread_info *thread,
+								  CORE_ADDR &displaced_pc)
+      TARGET_DEFAULT_FUNC (default_displaced_step_prepare);
+
+    /* See documentation of gdbarch_displaced_step_finish.  */
+    virtual displaced_step_finish_status displaced_step_finish
+      (thread_info *thread, const target_waitstatus &status)
+      TARGET_DEFAULT_FUNC (default_displaced_step_finish);
+
+    /* See documentation of gdbarch_displaced_step_restore_all_in_ptid.  */
+    virtual void displaced_step_restore_all_in_ptid (inferior *parent_inf,
+						     ptid_t child_ptid)
+      TARGET_DEFAULT_FUNC (default_displaced_step_restore_all_in_ptid);
   };
 
 /* Deleter for std::unique_ptr.  See comments in
@@ -1643,7 +1674,7 @@ struct memory_write_request
     : begin (begin_), end (end_), data (data_), baton (baton_)
   {}
 
-  /* Begining address that must be written.  */
+  /* Beginning address that must be written.  */
   ULONGEST begin;
   /* Past-the-end address.  */
   ULONGEST end;
@@ -1653,7 +1684,7 @@ struct memory_write_request
   void *baton;
 };
 
-/* Enumeration specifying different flash preservation behaviour.  */
+/* Enumeration specifying different flash preservation behavior.  */
 enum flash_preserve_mode
   {
     flash_preserve,
@@ -1920,7 +1951,7 @@ extern bool target_is_async_p ();
 extern void target_async (bool enable);
 
 /* Enables/disables thread create and exit events.  */
-extern void target_thread_events (int enable);
+extern void target_thread_events (bool enable);
 
 /* Returns true if the target supports setting thread options
    OPTIONS.  */
@@ -2220,6 +2251,14 @@ extern int target_fileio_pread (int fd, gdb_byte *read_buf, int len,
 extern int target_fileio_fstat (int fd, struct stat *sb,
 				fileio_error *target_errno);
 
+/* Get information about the file at FILENAME on the target and put it in
+   SB.  Look in the filesystem as seen by INF.  If INF is NULL, use the
+   filesystem seen by the debugger (GDB or, for remote targets, the remote
+   stub).  Return 0 on success, or -1 if an error occurs (and set
+   *TARGET_ERRNO).  */
+extern int target_fileio_lstat (struct inferior *inf, const char *filename,
+				struct stat *sb, fileio_error *target_errno);
+
 /* Close FD on the target.  Return 0, or -1 if an error occurs
    (and set *TARGET_ERRNO).  */
 extern int target_fileio_close (int fd, fileio_error *target_errno);
@@ -2322,6 +2361,8 @@ extern void target_set_trace_buffer_size (LONGEST val);
 extern bool target_set_trace_notes (const char *user, const char *notes,
 				    const char *stopnotes);
 
+/* A wrapper that calls get_tib_address on the top target of the
+   current inferior.  */
 extern bool target_get_tib_address (ptid_t ptid, CORE_ADDR *addr);
 
 extern void target_set_permissions ();
@@ -2427,12 +2468,18 @@ struct target_unpusher
 
 typedef std::unique_ptr<struct target_ops, target_unpusher> target_unpush_up;
 
-extern void target_pre_inferior (int);
+extern void target_pre_inferior ();
 
 extern void target_preopen (int);
 
+/* Using the objfile specified in OBJFILE, find the address for the
+   current thread's thread-local storage with offset OFFSET.  If it's
+   provided, NAME might be used to indicate the relevant variable
+   in an error message.  */
+
 extern CORE_ADDR target_translate_tls_address (struct objfile *objfile,
-					       CORE_ADDR offset);
+					       CORE_ADDR offset,
+					       const char *name = nullptr);
 
 /* Return the "section" containing the specified address.  */
 const struct target_section *target_section_by_addr (struct target_ops *target,
@@ -2490,7 +2537,7 @@ extern int default_memory_insert_breakpoint (struct gdbarch *,
 
 extern void initialize_targets (void);
 
-extern void noprocess (void) ATTRIBUTE_NORETURN;
+[[noreturn]] extern void noprocess (void);
 
 extern void target_require_runnable (void);
 
@@ -2613,4 +2660,4 @@ extern void target_prepare_to_generate_core (void);
 /* See to_done_generating_core.  */
 extern void target_done_generating_core (void);
 
-#endif /* !defined (TARGET_H) */
+#endif /* GDB_TARGET_H */

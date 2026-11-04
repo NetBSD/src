@@ -1,4 +1,4 @@
-# Copyright 2017-2023 Free Software Foundation, Inc.
+# Copyright 2017-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,15 +15,15 @@
 
 load_lib gdbserver-support.exp
 
-if {[skip_gdbserver_tests]} {
-    return
-}
+require allow_gdbserver_tests
 
 standard_testfile normal.c
 
 if {[build_executable "failed to prepare" $testfile $srcfile debug]} {
     return -1
 }
+
+set target_binfile [gdb_remote_download target $binfile]
 
 # Test running GDB without providing a local binary for it.  In order
 # to do that, we unset GDBFLAGS before running GDB.  We also start
@@ -41,7 +41,7 @@ save_vars { GDBFLAGS } {
     gdb_exit
     gdb_start
 
-    gdb_test_no_output "set remote exec-file $binfile" \
+    gdb_test_no_output "set remote exec-file $target_binfile" \
 	"set remote exec-file"
 
     # Make sure we're disconnected, in case we're testing with an

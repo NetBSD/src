@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.70.6.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.70.6.2 2026/11/04 23:27:48 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.70.6.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.70.6.2 2026/11/04 23:27:48 perseant Exp $");
 
 #include "opt_dtrace.h"
 
@@ -252,7 +252,7 @@ sched_enqueue(struct lwp *l)
 }
 
 /*
- * Remove and LWP from the run queue it's on.  The LWP must be in state
+ * Remove an LWP from the run queue it's on.  The LWP must be in state
  * LSRUN.
  */
 void
@@ -664,7 +664,7 @@ sched_catchlwp(struct cpu_info *ci)
 	 * Be more aggressive if this CPU is first class, and the other
 	 * is not.
 	 */
-	gentle = cpu_is_better(curci, ci);
+	gentle = !cpu_is_better(curci, ci);
 
 	if (atomic_load_relaxed(&spc->spc_mcount) < (gentle ? min_catch : 1) ||
 	    curspc->spc_psid != spc->spc_psid) {

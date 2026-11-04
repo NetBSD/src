@@ -1,7 +1,7 @@
 /*  Lattice Mico32 UART model.
     Contributed by Jon Beniston <jon@beniston.com>
     
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -97,7 +97,7 @@ do_uart_tx_event (struct hw *me, void *data)
       hw_port_event (me, INT_PORT, 1);
     }
 
-  /* Indicate which interrupt has occured.  */
+  /* Indicate which interrupt has occurred.  */
   uart->iir = MICOUART_IIR_TXRDY;
 
   /* Indicate THR is empty.  */
@@ -292,7 +292,6 @@ static void
 lm32uart_finish (struct hw *me)
 {
   struct lm32uart *uart;
-  int i;
 
   uart = HW_ZALLOC (me, struct lm32uart);
   set_hw_data (me, uart);

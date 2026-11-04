@@ -1,6 +1,6 @@
 /* Branch trace support for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2023 Free Software Foundation, Inc.
+   Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
    Contributed by Intel Corp. <markus.t.metzger@intel.com>.
 
@@ -19,15 +19,15 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BTRACE_H
-#define BTRACE_H
+#ifndef GDB_BTRACE_H
+#define GDB_BTRACE_H
 
 /* Branch tracing (btrace) is a per-thread control-flow execution trace of the
    inferior.  For presentation purposes, the branch trace is represented as a
    list of sequential control-flow blocks, one such list per thread.  */
 
 #include "gdbsupport/btrace-common.h"
-#include "target/waitstatus.h" /* For enum target_stop_reason.  */
+#include "target/waitstatus.h"
 #include "gdbsupport/enum-flags.h"
 
 #if defined (HAVE_LIBIPT)
@@ -35,6 +35,7 @@
 #endif
 
 #include <vector>
+#include <string>
 
 struct thread_info;
 struct btrace_function;
@@ -52,7 +53,10 @@ enum btrace_insn_class
   BTRACE_INSN_RETURN,
 
   /* The instruction is an unconditional jump.  */
-  BTRACE_INSN_JUMP
+  BTRACE_INSN_JUMP,
+
+  /* The instruction is a pseudo instruction containing auxiliary data.  */
+  BTRACE_INSN_AUX
 };
 
 /* Instruction flags.  */
@@ -68,8 +72,19 @@ DEF_ENUM_FLAGS_TYPE (enum btrace_insn_flag, btrace_insn_flags);
    This represents a single instruction in a branch trace.  */
 struct btrace_insn
 {
-  /* The address of this instruction.  */
-  CORE_ADDR pc;
+  union
+  {
+    /* The address of this instruction.  Applies to btrace_insn with
+       iclass == BTRACE_INSN_OTHER or
+       iclass == BTRACE_INSN_CALL or
+       iclass == BTRACE_INSN_RETURN or
+       iclass == BTRACE_INSN_JUMP.  */
+    CORE_ADDR pc;
+
+    /* Index into btrace_info::aux_data.  Applies to btrace_insn with
+       iclass == BTRACE_INSN_AUX.  */
+    uint64_t aux_data_index;
+  };
 
   /* The size of this instruction in bytes.  */
   gdb_byte size;
@@ -91,7 +106,15 @@ enum btrace_function_flag
 
   /* The 'up' link points to a tail call.  This obviously only makes sense
      if bfun_up_links_to_ret is clear.  */
-  BFUN_UP_LINKS_TO_TAILCALL = (1 << 1)
+  BFUN_UP_LINKS_TO_TAILCALL = (1 << 1),
+
+  /* Indicates that at least one auxiliary instruction is in the current
+     function segment.  */
+  BFUN_CONTAINS_AUX = (1 << 2),
+
+  /* Indicates that at least one instruction not of type BTRACE_INSN_AUX
+     is in the current function segment.  */
+  BFUN_CONTAINS_NON_AUX = (1 << 3)
 };
 DEF_ENUM_FLAGS_TYPE (enum btrace_function_flag, btrace_function_flags);
 
@@ -112,7 +135,7 @@ enum btrace_pt_error
   BDE_PT_USER_QUIT = 1,
 
   /* Tracing was temporarily disabled.  */
-  BDE_PT_DISABLED,
+  BDE_PT_NON_CONTIGUOUS,
 
   /* Trace recording overflowed.  */
   BDE_PT_OVERFLOW
@@ -165,7 +188,7 @@ struct btrace_function
 
   /* The instruction number offset for the first instruction in this
      function segment.
-     If INSN is empty this is the insn_offset of the succeding function
+     If INSN is empty this is the insn_offset of the succeeding function
      segment in control-flow order.  */
   unsigned int insn_offset;
 
@@ -330,6 +353,20 @@ struct btrace_thread_info
      function segment i will be at index (i - 1).  */
   std::vector<btrace_function> functions;
 
+  /* Optional auxiliary information that is printed in all commands
+     displaying or stepping through the execution history.  */
+  std::vector<std::string> aux_data;
+
+  /* Function pointer to the ptwrite callback.  Returns the string returned
+     by the ptwrite filter function.  */
+  std::optional<std::string> (*ptw_callback_fun) (const uint64_t payload,
+						  std::optional<uint64_t> ip,
+						  const void *ptw_context)
+						    = nullptr;
+
+  /* Context for the ptw_callback_fun.  */
+  void *ptw_context = nullptr;
+
   /* The function level offset.  When added to each function's LEVEL,
      this normalizes the function levels such that the smallest level
      becomes zero.  */
@@ -392,12 +429,6 @@ extern void btrace_clear (struct thread_info *);
 
 /* Clear the branch trace for all threads when an object file goes away.  */
 extern void btrace_free_objfile (struct objfile *);
-
-/* Parse a branch trace xml document XML into DATA.  */
-extern void parse_xml_btrace (struct btrace_data *data, const char *xml);
-
-/* Parse a branch trace configuration xml document XML into CONF.  */
-extern void parse_xml_btrace_conf (struct btrace_config *conf, const char *xml);
 
 /* Dereference a branch trace instruction iterator.  Return a pointer to the
    instruction the iterator points to.
@@ -504,4 +535,4 @@ extern int btrace_is_replaying (struct thread_info *tp);
 /* Return non-zero if the branch trace for TP is empty; zero otherwise.  */
 extern int btrace_is_empty (struct thread_info *tp);
 
-#endif /* BTRACE_H */
+#endif /* GDB_BTRACE_H */

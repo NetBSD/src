@@ -1,4 +1,4 @@
-# Copyright (C) 2016-2023 Free Software Foundation, Inc.
+# Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -53,6 +53,9 @@ proc do_value_printing { max_value_size test_prefix } {
 	    gdb_test "p/d one_hundred" " = \\{0 <repeats 100 times>\\}"
 	}
 	gdb_test "p/d one_hundred \[99\]" " = 0"
+	# Verify that accessing value history is undisturbed.
+	gdb_test "p/d \$2" " = \\{0 <repeats 100 times>\\}"
+	gdb_test "p/d \$2 \[99\]" " = 0"
     }
 }
 
@@ -92,4 +95,4 @@ gdb_test "set max-value-size 1" \
 gdb_test "set max-value-size 0" \
     "max-value-size set too low, increasing to \[0-9\]+ bytes"
 gdb_test "set max-value-size -5" \
-    "only -1 is allowed to set as unlimited"
+    "integer -5 out of range"

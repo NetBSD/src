@@ -1,4 +1,4 @@
-/* $NetBSD: t_getitimer.c,v 1.4.4.1 2025/08/02 05:58:06 perseant Exp $ */
+/* $NetBSD: t_getitimer.c,v 1.4.4.2 2026/11/04 23:28:18 perseant Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_getitimer.c,v 1.4.4.1 2025/08/02 05:58:06 perseant Exp $");
+__RCSID("$NetBSD: t_getitimer.c,v 1.4.4.2 2026/11/04 23:28:18 perseant Exp $");
 
 #include <sys/time.h>
 
@@ -41,6 +41,8 @@ __RCSID("$NetBSD: t_getitimer.c,v 1.4.4.1 2025/08/02 05:58:06 perseant Exp $");
 #include <unistd.h>
 
 #include "h_macros.h"
+
+#define	TIME_MAX	__type_max(time_t)
 
 static sig_atomic_t	fired;
 static void		sighandler(int);
@@ -217,6 +219,8 @@ ATF_TC_BODY(setitimer_invalidtime, tc)
 		[3] = { .it_value = {1, 0}, .it_interval = {-1, 0} },
 		[4] = { .it_value = {1, 0}, .it_interval = {0, -1} },
 		[5] = { .it_value = {1, 0}, .it_interval = {0, 1000001} },
+		[6] = { .it_value = {TIME_MAX - 1, 0}, .it_interval = {0, 0} },
+		[7] = { .it_value = {TIME_MAX, 0}, .it_interval = {0, 0} },
 	};
 	sigset_t sigs, mask;
 	unsigned i;

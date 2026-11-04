@@ -1,4 +1,30 @@
-/* $NetBSD: fdt_i2c.c,v 1.12 2022/02/23 07:55:55 skrll Exp $ */
+/* $NetBSD: fdt_i2c.c,v 1.12.10.1 2026/11/04 23:21:51 perseant Exp $ */
+
+/*
+ * Copyright (c) 2021, 2025 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,15 +53,20 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.12 2022/02/23 07:55:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_i2c.c,v 1.12.10.1 2026/11/04 23:21:51 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
+#include <sys/systm.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
+
+#include <dev/i2c/i2cvar.h>
+#include <dev/i2c/i2c_calls.h>
+#include <dev/i2c/i2c_enum.h>
 
 struct fdtbus_i2c_controller {
 	i2c_tag_t i2c_tag;
@@ -47,9 +78,10 @@ struct fdtbus_i2c_controller {
 static LIST_HEAD(, fdtbus_i2c_controller) fdtbus_i2c_controllers =
     LIST_HEAD_INITIALIZER(fdtbus_i2c_controllers);
 
-int
-fdtbus_register_i2c_controller(i2c_tag_t tag, int phandle)
+void
+fdtbus_register_i2c_controller(device_t dev, i2c_tag_t tag)
 {
+	int phandle = devhandle_to_of(device_handle(dev));
 	struct fdtbus_i2c_controller *i2c;
 
 	i2c = kmem_alloc(sizeof(*i2c), KM_SLEEP);
@@ -57,8 +89,6 @@ fdtbus_register_i2c_controller(i2c_tag_t tag, int phandle)
 	i2c->i2c_phandle = phandle;
 
 	LIST_INSERT_HEAD(&fdtbus_i2c_controllers, i2c, i2c_next);
-
-	return 0;
 }
 
 static struct fdtbus_i2c_controller *
@@ -98,34 +128,66 @@ fdtbus_i2c_acquire(int phandle, const char *prop)
 	return fdtbus_i2c_get_tag(i2c_phandle);
 }
 
-device_t
-fdtbus_attach_i2cbus(device_t dev, int phandle, i2c_tag_t tag, cfprint_t print)
+static int
+fdtbus_i2c_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 {
-	struct i2cbus_attach_args iba;
-	prop_dictionary_t devs, props;
-	device_t ret;
-	u_int address_cells;
+	struct i2c_enumerate_devices_args *args = v;
+	int i2c_node, node;
+	char name[32], compat_buf[32];
+	bus_addr_t addr;
+	char *clist;
+	int clist_size;
+	bool cbrv;
 
-	devs = prop_dictionary_create();
-	if (of_getprop_uint32(phandle, "#address-cells", &address_cells))
-		address_cells = 1;
+	i2c_node = devhandle_to_of(call_handle);
 
-	of_enter_i2c_devs(devs, phandle, address_cells * 4, 0);
+	/*
+	 * The Device Tree bindings state that if a controller has a
+	 * child node named "i2c-bus", then that is the node beneath
+	 * which the child devices are populated.
+	 */
+	for (node = OF_child(i2c_node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
+			continue;
+		}
+		if (strcmp(name, "i2c-bus") == 0) {
+			i2c_node = node;
+			break;
+		}
+	}
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = tag;
-	iba.iba_child_devices = prop_dictionary_get(devs, "i2c-child-devices");
-	if (iba.iba_child_devices)
-		prop_object_retain(iba.iba_child_devices);
-	prop_object_release(devs);
+	for (node = OF_child(i2c_node); node != 0; node = OF_peer(node)) {
+		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
+			continue;
+		}
+		if (fdtbus_get_reg(node, 0, &addr, NULL) != 0) {
+			continue;
+		}
 
-	props = device_properties(dev);
-	prop_dictionary_set_bool(props, "i2c-no-indirect-config", true);
+		clist_size = OF_getproplen(node, "compatible");
+		if (clist_size <= 0) {
+			continue;
+		}
+		clist = kmem_tmpbuf_alloc(clist_size,
+		    compat_buf, sizeof(compat_buf), KM_SLEEP);
+		if (OF_getprop(node, "compatible", clist, clist_size)
+			       < clist_size) {
+			kmem_tmpbuf_free(clist, clist_size, compat_buf);
+			continue;
+		}
 
-	ret = config_found(dev, &iba, print,
-	    CFARGS(.iattr = "i2cbus"));
-	if (iba.iba_child_devices)
-		prop_object_release(iba.iba_child_devices);
+		cbrv = i2c_enumerate_device(dev, args, name, clist,
+		    clist_size, (i2c_addr_t)addr,
+		    devhandle_from_of(call_handle, node));
 
-	return ret;
+		kmem_tmpbuf_free(clist, clist_size, compat_buf);
+
+		if (!cbrv) {
+			break;
+		}
+	}
+
+	return 0;
 }
+OF_DEVICE_CALL_REGISTER(I2C_ENUMERATE_DEVICES_STR,
+			fdtbus_i2c_enumerate_devices);

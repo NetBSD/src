@@ -1,6 +1,6 @@
 /* The common simulator framework for GDB, the GNU Debugger.
 
-   Copyright 2002-2023 Free Software Foundation, Inc.
+   Copyright 2002-2024 Free Software Foundation, Inc.
 
    Contributed by Andrew Cagney and Red Hat.
 
@@ -29,9 +29,7 @@
 #include <stdarg.h>
 #include <stdint.h>
 #include <stdlib.h>
-#if HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 
 #undef open
 
@@ -335,7 +333,7 @@ sim_io_poll_quit (SIM_DESC sd)
    FIXME: Some completly new mechanism for handling the general
    problem of asynchronous IO is needed.
 
-   FIXME: This function does not supress the echoing (ECHO) of input.
+   FIXME: This function does not suppress the echoing (ECHO) of input.
    Consequently polled input is always displayed.
 
    FIXME: This function does not perform uncooked reads.

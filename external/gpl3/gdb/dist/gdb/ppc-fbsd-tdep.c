@@ -1,6 +1,6 @@
 /* Target-dependent code for PowerPC systems running FreeBSD.
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -262,15 +262,16 @@ ppcfbsd_sigtramp_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_register (cache, this_frame, regnum);
 }
 
-static const struct frame_unwind ppcfbsd_sigtramp_frame_unwind = {
+static const struct frame_unwind_legacy ppcfbsd_sigtramp_frame_unwind (
   "ppc freebsd sigtramp",
   SIGTRAMP_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   ppcfbsd_sigtramp_frame_this_id,
   ppcfbsd_sigtramp_frame_prev_register,
   NULL,
   ppcfbsd_sigtramp_frame_sniffer
-};
+);
 
 static enum return_value_convention
 ppcfbsd_return_value (struct gdbarch *gdbarch, struct value *function,
@@ -331,8 +332,7 @@ ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
       set_gdbarch_return_value (gdbarch, ppcfbsd_return_value);
 
       set_gdbarch_skip_trampoline_code (gdbarch, find_solib_trampoline_target);
-      set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					     svr4_ilp32_fetch_link_map_offsets);
+      set_solib_svr4_ops (gdbarch, make_svr4_ilp32_solib_ops);
 
       frame_unwind_append_unwinder (gdbarch, &ppcfbsd_sigtramp_frame_unwind);
       set_gdbarch_gcore_bfd_target (gdbarch, "elf32-powerpc");
@@ -346,8 +346,7 @@ ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					    ppc64_elf_make_msymbol_special);
 
       set_gdbarch_skip_trampoline_code (gdbarch, ppc64_skip_trampoline_code);
-      set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					     svr4_lp64_fetch_link_map_offsets);
+      set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
       set_gdbarch_gcore_bfd_target (gdbarch, "elf64-powerpc");
     }
 
@@ -360,9 +359,7 @@ ppcfbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 					ppcfbsd_get_thread_local_address);
 }
 
-void _initialize_ppcfbsd_tdep ();
-void
-_initialize_ppcfbsd_tdep ()
+INIT_GDB_FILE (ppcfbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_powerpc, bfd_mach_ppc, GDB_OSABI_FREEBSD,
 			  ppcfbsd_init_abi);

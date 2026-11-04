@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwnvar.h,v 1.16 2020/03/15 23:04:51 thorpej Exp $	*/
+/*	$NetBSD: if_urtwnvar.h,v 1.16.28.1 2026/11/04 23:22:36 perseant Exp $	*/
 /*	$OpenBSD: if_urtwnreg.h,v 1.3 2010/11/16 18:02:59 damien Exp $	*/
 
 /*-

@@ -1,4 +1,4 @@
-# Copyright 2017-2024 Free Software Foundation, Inc.
+# Copyright 2017-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,7 +40,7 @@ set initial_thread_re "($thread_re1|$thread_re2)"
 with_test_prefix "user-initiated check" {
 
     # User-initiated check with libthread_db not loaded.
-    clean_restart ${binfile}
+    clean_restart ${::testfile}
 
     gdb_test "maint show check-libthread-db" \
 	"Whether to check libthread_db at load time is off."
@@ -85,7 +85,7 @@ with_test_prefix "automated load-time check" {
 
     # Automated load-time check with NPTL possibly uninitialized.
     with_test_prefix "libpthread.so possibly not initialized" {
-	clean_restart ${binfile}
+	clean_restart ${::testfile}
 
 	gdb_test_no_output "maint set check-libthread-db 1"
 	gdb_test_no_output "set debug libthread-db 1"
@@ -104,7 +104,7 @@ with_test_prefix "automated load-time check" {
     # Automated load-time check with NPTL fully operational.
     if { [can_spawn_for_attach] } {
 	with_test_prefix "libpthread.so fully initialized" {
-	    clean_restart ${binfile}
+	    clean_restart ${::testfile}
 
 	    gdb_test_no_output "maint set check-libthread-db 1"
 	    gdb_test_no_output "set debug libthread-db 1"

@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,9 +17,7 @@
 
 load_lib gdb-python.exp
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests allow_python_tests
 
 standard_testfile
 
@@ -43,9 +41,6 @@ if { [gdb_compile ${srcdir}/${subdir}/${srcfile} ${binfile} executable $exec_opt
 clean_restart $testfile
 gdb_load_shlib ${library}
 
-# Skip all tests if Python scripting is not enabled.
-if { [skip_python_tests] } { continue }
-
 # The following tests require execution.
 
 if {![runto_main]} {
@@ -56,16 +51,31 @@ runto [gdb_get_line_number "Break to end."]
 
 # Test gdb.solib_name
 gdb_test "p &func1" "" "func1 address"
-gdb_py_test_silent_cmd "python func1 = gdb.history(0)" "Aquire func1 address" 1
+gdb_py_test_silent_cmd "python func1 = gdb.history(0)" "Acquire func1 address" 1
 gdb_test "python print (gdb.solib_name(int(func1)))" "py-shared-sl.sl" \
     "test func1 solib location"
 gdb_test "python print (gdb.solib_name(func1))" "py-shared-sl.sl" \
     "test func1 solib location using Value"
 
 gdb_test "p &main" "" "main address"
-gdb_py_test_silent_cmd "python main = gdb.history(0)" "Aquire main address" 1
+gdb_py_test_silent_cmd "python main = gdb.history(0)" "Acquire main address" 1
 gdb_test "python print (gdb.solib_name(int(main)))" "None" "test main solib location"
 
 if {[is_lp64_target]} {
     gdb_test "python print (len(\[gdb.solib_name(0xffffffffffffffff)\]))" "1"
 }
+
+gdb_test "python print(gdb.solib_name(-1))" \
+    [multi_line \
+	 "Python Exception <class 'OverflowError'>: can't convert negative int to unsigned" \
+	 "Error occurred in Python: can't convert negative int to unsigned"]
+
+gdb_test "python print(gdb.current_progspace().solib_name(-1))" \
+    [multi_line \
+	 "Python Exception <class 'OverflowError'>: can't convert negative int to unsigned" \
+	 "Error occurred in Python: can't convert negative int to unsigned"]
+
+gdb_test "python print(gdb.current_progspace().solib_name(\"string\"))" \
+    [multi_line \
+	 "Python Exception <class 'ValueError'>: invalid literal for int\\(\\) with base 10: 'string'" \
+	 "Error occurred in Python: invalid literal for int\\(\\) with base 10: 'string'"]

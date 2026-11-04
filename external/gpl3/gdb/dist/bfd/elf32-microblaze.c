@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -742,16 +742,12 @@ struct _microblaze_elf_section_data
 static bool
 microblaze_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct _microblaze_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  struct _microblaze_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -861,8 +857,7 @@ microblaze_elf_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
-				      sizeof (struct elf32_mb_link_hash_entry),
-				      MICROBLAZE_ELF_DATA))
+				      sizeof (struct elf32_mb_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1770,7 +1765,6 @@ microblaze_elf_relax_section (bfd *abfd,
   Elf_Internal_Rela *irel, *irelend;
   bfd_byte *contents = NULL;
   bfd_byte *free_contents = NULL;
-  int rel_count;
   unsigned int shndx;
   size_t i, sym_index;
   asection *o;
@@ -1823,8 +1817,7 @@ microblaze_elf_relax_section (bfd *abfd,
     goto error_return;
 
   irelend = internal_relocs + sec->reloc_count;
-  rel_count = 0;
-  for (irel = internal_relocs; irel < irelend; irel++, rel_count++)
+  for (irel = internal_relocs; irel < irelend; irel++)
     {
       bfd_vma symval;
       if ((ELF32_R_TYPE (irel->r_info) != (int) R_MICROBLAZE_64_PCREL)
@@ -1940,10 +1933,9 @@ microblaze_elf_relax_section (bfd *abfd,
   if (sdata->relax_count > 0)
     {
       shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
-      rel_count = 0;
       sdata->relax[sdata->relax_count].addr = sec->size;
 
-      for (irel = internal_relocs; irel < irelend; irel++, rel_count++)
+      for (irel = internal_relocs; irel < irelend; irel++)
 	{
 	  bfd_vma nraddr;
 
@@ -2748,11 +2740,8 @@ microblaze_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* Apply the required alignment.  */
   s->size = BFD_ALIGN (s->size, (bfd_size_type) (1 << power_of_two));
-  if (power_of_two > s->alignment_power)
-    {
-      if (!bfd_set_section_alignment (s, power_of_two))
-	return false;
-    }
+  if (!bfd_link_align_section (s, power_of_two))
+    return false;
 
   /* Define the symbol as being at this point in the section.  */
   h->root.u.def.section = s;
@@ -3149,6 +3138,7 @@ microblaze_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL && s->size != 0)
 	return false;
+      s->alloced = 1;
     }
 
   /* ??? Force DF_BIND_NOW?  */

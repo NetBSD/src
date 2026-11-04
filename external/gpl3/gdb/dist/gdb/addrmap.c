@@ -1,6 +1,6 @@
 /* addrmap.c --- implementation of address map data structure.
 
-   Copyright (C) 2007-2024 Free Software Foundation, Inc.
+   Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -178,12 +178,40 @@ addrmap_mutable::force_transition (CORE_ADDR addr)
 }
 
 
-void
+/* Compare keys as CORE_ADDR * values.  */
+static int
+splay_compare_CORE_ADDR_ptr (splay_tree_key ak, splay_tree_key bk)
+{
+  CORE_ADDR a = * (CORE_ADDR *) ak;
+  CORE_ADDR b = * (CORE_ADDR *) bk;
+
+  /* We can't just return a-b here, because of over/underflow.  */
+  if (a < b)
+    return -1;
+  else if (a == b)
+    return 0;
+  else
+    return 1;
+}
+
+
+static void
+xfree_wrapper (splay_tree_key key)
+{
+  xfree ((void *) key);
+}
+
+bool
 addrmap_mutable::set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
 			    void *obj)
 {
+  bool full_range = true;
   splay_tree_node n, next;
   void *prior_value;
+
+  if (tree == nullptr)
+    tree = splay_tree_new (splay_compare_CORE_ADDR_ptr, xfree_wrapper,
+			   nullptr /* no delete value */);
 
   /* If we're being asked to set all empty portions of the given
      address range to empty, then probably the caller is confused.
@@ -207,7 +235,12 @@ addrmap_mutable::set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
        n && addrmap_node_key (n) <= end_inclusive;
        n = splay_tree_successor (addrmap_node_key (n)))
     {
-      if (! addrmap_node_value (n))
+      if (addrmap_node_value (n))
+	{
+	  /* Already mapped.  */
+	  full_range = false;
+	}
+      else
 	addrmap_node_set_value (n, obj);
     }
 
@@ -227,12 +260,17 @@ addrmap_mutable::set_empty (CORE_ADDR start, CORE_ADDR end_inclusive,
       else
 	prior_value = addrmap_node_value (n);
     }
+
+  return full_range;
 }
 
 
 void *
 addrmap_mutable::do_find (CORE_ADDR addr) const
 {
+  if (tree == nullptr)
+    return nullptr;
+
   splay_tree_node n = splay_tree_lookup (addr);
   if (n != nullptr)
     {
@@ -287,16 +325,6 @@ addrmap_fixed::addrmap_fixed (struct obstack *obstack,
   gdb_assert (num_transitions == transition_count);
 }
 
-
-void
-addrmap_mutable::relocate (CORE_ADDR offset)
-{
-  /* Not needed yet.  */
-  internal_error (_("addrmap_relocate is not implemented yet "
-		    "for mutable addrmaps"));
-}
-
-
 /* This is a splay_tree_foreach_fn.  */
 
 static int
@@ -311,50 +339,30 @@ addrmap_mutable_foreach_worker (splay_tree_node node, void *data)
 int
 addrmap_mutable::do_foreach (addrmap_foreach_fn fn) const
 {
+  if (tree == nullptr)
+    return 0;
   return splay_tree_foreach (tree, addrmap_mutable_foreach_worker, &fn);
 }
 
 
-/* Compare keys as CORE_ADDR * values.  */
-static int
-splay_compare_CORE_ADDR_ptr (splay_tree_key ak, splay_tree_key bk)
-{
-  CORE_ADDR a = * (CORE_ADDR *) ak;
-  CORE_ADDR b = * (CORE_ADDR *) bk;
-
-  /* We can't just return a-b here, because of over/underflow.  */
-  if (a < b)
-    return -1;
-  else if (a == b)
-    return 0;
-  else
-    return 1;
-}
-
-
-static void
-xfree_wrapper (splay_tree_key key)
-{
-  xfree ((void *) key);
-}
-
-addrmap_mutable::addrmap_mutable ()
-  : tree (splay_tree_new (splay_compare_CORE_ADDR_ptr, xfree_wrapper,
-			  nullptr /* no delete value */))
-{
-}
-
-addrmap_mutable::~addrmap_mutable ()
+void
+addrmap_mutable::clear ()
 {
   if (tree != nullptr)
-    splay_tree_delete (tree);
+    {
+      splay_tree_delete (tree);
+      tree = nullptr;
+    }
 }
 
 
 /* See addrmap.h.  */
 
 void
-addrmap_dump (struct addrmap *map, struct ui_file *outfile, void *payload)
+addrmap_dump (struct addrmap *map, struct ui_file *outfile, void *payload,
+	      gdb::function_view<void (struct ui_file *outfile,
+				       CORE_ADDR start_addr,
+				       const void *value)> annotate_value)
 {
   /* True if the previously printed addrmap entry was for PAYLOAD.
      If so, we want to print the next one as well (since the next
@@ -373,10 +381,16 @@ addrmap_dump (struct addrmap *map, struct ui_file *outfile, void *payload)
       addr_str = "<ends here>";
 
     if (matches || previous_matched)
-      gdb_printf (outfile, "  %s%s %s\n",
-		  payload != nullptr ? "  " : "",
-		  core_addr_to_string (start_addr),
-		  addr_str);
+      {
+	gdb_printf (outfile, "  %s%s %s",
+		    payload != nullptr ? "  " : "",
+		    core_addr_to_string (start_addr),
+		    addr_str);
+	if (annotate_value != nullptr)
+	  annotate_value (outfile, start_addr, obj);
+
+	gdb_printf (outfile, "\n");
+      }
 
     previous_matched = matches;
 
@@ -392,20 +406,20 @@ namespace selftests {
 /* Convert P to CORE_ADDR.  */
 
 static CORE_ADDR
-core_addr (void *p)
+core_addr (const void *p)
 {
-  return (CORE_ADDR)(uintptr_t)p;
+  return (CORE_ADDR) (uintptr_t) p;
 }
 
 /* Check that &ARRAY[LOW]..&ARRAY[HIGH] has VAL in MAP.  */
 
-#define CHECK_ADDRMAP_FIND(MAP, ARRAY, LOW, HIGH, VAL)			\
-  do									\
-    {									\
-      for (unsigned i = LOW; i <= HIGH; ++i)				\
-	SELF_CHECK (MAP->find (core_addr (&ARRAY[i])) == VAL);		\
-    }									\
-  while (0)
+static void
+check_addrmap_find (const addrmap &map, const char *array, unsigned int low,
+		    unsigned int high, const void *val)
+{
+  for (unsigned int i = low; i <= high; ++i)
+    SELF_CHECK (map.find (core_addr (&array[i])) == val);
+}
 
 /* Entry point for addrmap unit tests.  */
 
@@ -421,25 +435,26 @@ test_addrmap ()
 
   /* Create mutable addrmap.  */
   auto_obstack temp_obstack;
-  auto map = std::make_unique<struct addrmap_mutable> ();
-  SELF_CHECK (map != nullptr);
+  addrmap_mutable map;
 
   /* Check initial state.  */
-  CHECK_ADDRMAP_FIND (map, array, 0, 19, nullptr);
+  check_addrmap_find (map, array, 0, 19, nullptr);
 
   /* Insert address range into mutable addrmap.  */
-  map->set_empty (core_addr (&array[10]), core_addr (&array[12]), val1);
-  CHECK_ADDRMAP_FIND (map, array, 0, 9, nullptr);
-  CHECK_ADDRMAP_FIND (map, array, 10, 12, val1);
-  CHECK_ADDRMAP_FIND (map, array, 13, 19, nullptr);
+  bool full_range_p
+    = map.set_empty (core_addr (&array[10]), core_addr (&array[12]), val1);
+  SELF_CHECK (full_range_p);
+  check_addrmap_find (map, array, 0, 9, nullptr);
+  check_addrmap_find (map, array, 10, 12, val1);
+  check_addrmap_find (map, array, 13, 19, nullptr);
 
   /* Create corresponding fixed addrmap.  */
-  struct addrmap *map2
-    = new (&temp_obstack) addrmap_fixed (&temp_obstack, map.get ());
+  addrmap_fixed *map2
+    = new (&temp_obstack) addrmap_fixed (&temp_obstack, &map);
   SELF_CHECK (map2 != nullptr);
-  CHECK_ADDRMAP_FIND (map2, array, 0, 9, nullptr);
-  CHECK_ADDRMAP_FIND (map2, array, 10, 12, val1);
-  CHECK_ADDRMAP_FIND (map2, array, 13, 19, nullptr);
+  check_addrmap_find (*map2, array, 0, 9, nullptr);
+  check_addrmap_find (*map2, array, 10, 12, val1);
+  check_addrmap_find (*map2, array, 13, 19, nullptr);
 
   /* Iterate over both addrmaps.  */
   auto callback = [&] (CORE_ADDR start_addr, void *obj)
@@ -454,29 +469,29 @@ test_addrmap ()
 	SELF_CHECK (false);
       return 0;
     };
-  SELF_CHECK (map->foreach (callback) == 0);
+  SELF_CHECK (map.foreach (callback) == 0);
   SELF_CHECK (map2->foreach (callback) == 0);
 
   /* Relocate fixed addrmap.  */
   map2->relocate (1);
-  CHECK_ADDRMAP_FIND (map2, array, 0, 10, nullptr);
-  CHECK_ADDRMAP_FIND (map2, array, 11, 13, val1);
-  CHECK_ADDRMAP_FIND (map2, array, 14, 19, nullptr);
+  check_addrmap_find (*map2, array, 0, 10, nullptr);
+  check_addrmap_find (*map2, array, 11, 13, val1);
+  check_addrmap_find (*map2, array, 14, 19, nullptr);
 
   /* Insert partially overlapping address range into mutable addrmap.  */
-  map->set_empty (core_addr (&array[11]), core_addr (&array[13]), val2);
-  CHECK_ADDRMAP_FIND (map, array, 0, 9, nullptr);
-  CHECK_ADDRMAP_FIND (map, array, 10, 12, val1);
-  CHECK_ADDRMAP_FIND (map, array, 13, 13, val2);
-  CHECK_ADDRMAP_FIND (map, array, 14, 19, nullptr);
+  full_range_p
+    = map.set_empty (core_addr (&array[11]), core_addr (&array[13]), val2);
+  SELF_CHECK (!full_range_p);
+  check_addrmap_find (map, array, 0, 9, nullptr);
+  check_addrmap_find (map, array, 10, 12, val1);
+  check_addrmap_find (map, array, 13, 13, val2);
+  check_addrmap_find (map, array, 14, 19, nullptr);
 }
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_addrmap ();
-void
-_initialize_addrmap ()
+INIT_GDB_FILE (addrmap)
 {
 #if GDB_SELF_TEST
   selftests::register_test ("addrmap", selftests::test_addrmap);

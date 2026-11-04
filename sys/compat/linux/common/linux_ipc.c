@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.57.32.1 2025/08/02 05:56:25 perseant Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.57.32.2 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.57.32.1 2025/08/02 05:56:25 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.57.32.2 2026/11/04 23:21:39 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.57.32.1 2025/08/02 05:56:25 perseant
 #include <sys/syscallargs.h>
 
 #include <compat/linux/common/linux_types.h>
+#include <compat/linux/common/linux_sched.h>
 #include <compat/linux/common/linux_signal.h>
 #include <compat/linux/common/linux_util.h>
 #include <compat/linux/common/linux_ipc.h>
@@ -75,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.57.32.1 2025/08/02 05:56:25 perseant
  * Function in multiarch:
  *	linux_sys_ipc		: linux_ipccall.c
  *	linux_semop		: linux_ipccall.c
+ *	linux_semtimedop	: linux_ipccall.c
  *	linux_semget		: linux_ipccall.c
  *	linux_msgsnd		: linux_ipccall.c
  *	linux_msgrcv		: linux_ipccall.c
@@ -305,6 +307,36 @@ linux_sys_semctl(struct lwp *l, const struct linux_sys_semctl_args *uap, registe
 
 	return (error);
 }
+
+
+#ifdef LINUX_SYS_semtimedop
+/* Adapted from do_semop() to accept pointer to linux_timespec */
+static int
+linux_timespec_copyin(const void *uptr, void *kptr, size_t len __unused)
+{
+	struct linux_timespec lts;
+	int error = copyin(uptr, &lts, sizeof(lts));
+	if (error)
+		return error;
+	linux_to_native_timespec(kptr, &lts);
+	return 0;
+}
+
+int
+linux_sys_semtimedop(struct lwp *l, const struct linux_sys_semtimedop_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int) semid;
+		syscallarg(struct sembuf *) sops;
+		syscallarg(size_t) nsops;
+		syscallarg(struct linux_timespec) timeout;
+	} */
+	return do_semop(l, SCARG(uap, semid), SCARG(uap, sops),
+	    SCARG(uap, nsops), SCARG(uap, timeout), retval,
+	    linux_timespec_copyin);
+}
+#endif
 #endif /* SYSVSEM */
 
 #ifdef SYSVMSG
@@ -453,6 +485,7 @@ linux_sys_shmget(struct lwp *l, const struct linux_sys_shmget_args *uap, registe
 	} */
 	struct sys_shmget_args bsd_ua;
 
+	memset(&bsd_ua, 0, sizeof(bsd_ua));
 	SCARG(&bsd_ua, key) = SCARG(uap, key);
 	SCARG(&bsd_ua, size) = SCARG(uap, size);
 	SCARG(&bsd_ua, shmflg) = SCARG(uap, shmflg) | _SHM_RMLINGER;

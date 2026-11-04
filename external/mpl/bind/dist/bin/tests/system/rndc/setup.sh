@@ -33,14 +33,6 @@ fi
 awk 'END { for (i = 1; i <= '${size}'; i++)
      printf "host%d IN A 10.53.0.6\n", i; }' </dev/null >>ns6/huge.zone.db
 
-copy_setports ns2/named.conf.in ns2/named.conf
-copy_setports ns2/secondkey.conf.in ns2/secondkey.conf
-copy_setports ns3/named.conf.in ns3/named.conf
-copy_setports ns4/named.conf.in ns4/named.conf
-copy_setports ns5/named.conf.in ns5/named.conf
-copy_setports ns6/named.conf.in ns6/named.conf
-copy_setports ns7/named.conf.in ns7/named.conf
-
 keyset=
 make_key() {
   $RNDCCONFGEN -k key$1 -A $3 -s 10.53.0.4 -p $2 \

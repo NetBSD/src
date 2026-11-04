@@ -1,4 +1,4 @@
-# $NetBSD: varmod-range.mk,v 1.11.2.1 2025/08/02 05:58:39 perseant Exp $
+# $NetBSD: varmod-range.mk,v 1.11.2.2 2026/11/04 23:28:39 perseant Exp $
 #
 # Tests for the :range variable modifier, which generates sequences
 # of integers from the given range.
@@ -46,13 +46,15 @@
 .  error
 .endif
 
-# Negative ranges don't make sense.
-# As of 2020-11-01, they are accepted though, using up all available memory.
-#.if "${:range=-1}"
-#.  error
-#.else
-#.  error
-#.endif
+# Negative ranges don't make sense.  Since var.c 1.635 from 2020-11-01, they
+# are rejected.  Before that, they were accepted and used up all available
+# memory.
+# expect+1: Invalid number "-1}"" for modifier ":range"
+.if "${:range=-1}"
+.  error
+.else
+.  error
+.endif
 
 # The :range modifier requires a number as parameter.
 #

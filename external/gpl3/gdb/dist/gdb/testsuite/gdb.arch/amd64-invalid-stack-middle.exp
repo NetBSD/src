@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2024 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
 # frame where the stack in unreadable.
 #
 # One interesting bug that has been observed is that gdb will sometime
-# exhibit different behaviour the first time a stack command is run
+# exhibit different behavior the first time a stack command is run
 # compared to the second (and later) times a command is run.  This is
 # because the first time a command is run gdb actually tries to figure out
 # the answer, while the second (and later) times gdb relies on the answer
@@ -45,7 +45,7 @@ gdb_test "bt" "^#0 +breakpt *\\(\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in func5\[^\
 gdb_test "bt" "^#0 +breakpt *\\(\\) \[^\r\n\]*\r\n#1 +0x\[0-9a-f\]+ in func5\[^\r\n\]*\r\n#2 +0x\[0-9a-f\]+ in func4\[^\r\n\]*\r\n#3 +0x\[0-9a-f\]+ in func3\[^\r\n\]*\r\nBacktrace stopped: Cannot access memory at address 0x\[0-9a-f\]+" \
 	 "second backtrace, with error message"
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 if ![runto breakpt] {
     return -1
@@ -59,7 +59,7 @@ gdb_test "interpreter-exec mi \"-stack-info-depth\"" \
     "\\^done,depth=\"4\"" \
     "check mi -stack-info-depth command, second time"
 
-clean_restart ${binfile}
+clean_restart ${::testfile}
 
 if ![runto breakpt] {
     return -1

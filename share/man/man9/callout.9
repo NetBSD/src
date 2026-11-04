@@ -1,4 +1,4 @@
-.\"	$NetBSD: callout.9,v 1.29 2020/01/12 20:49:21 sevan Exp $
+.\"	$NetBSD: callout.9,v 1.29.10.1 2026/11/04 23:19:52 perseant Exp $
 .\"
 .\" Copyright (c) 2000, 2003, 2009 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,9 +34,9 @@
 .Nm callout_init ,
 .Nm callout_destroy ,
 .Nm callout_halt ,
-.Nm callout_reset ,
-.Nm callout_schedule ,
 .Nm callout_setfunc ,
+.Nm callout_schedule ,
+.Nm callout_reset ,
 .Nm callout_stop ,
 .Nm callout_pending ,
 .Nm callout_expired ,
@@ -50,12 +50,12 @@
 .Ft void
 .Fn "callout_destroy" "callout_t *c"
 .Ft void
-.Fn "callout_reset" "callout_t *c" "int ticks" \
-    "void (*func)(void *)" "void *arg"
+.Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
 .Ft void
 .Fn "callout_schedule" "callout_t *c" "int ticks"
 .Ft void
-.Fn "callout_setfunc" "callout_t *c" "void (*func)(void *)" "void *arg"
+.Fn "callout_reset" "callout_t *c" "int ticks" \
+    "void (*func)(void *)" "void *arg"
 .Ft bool
 .Fn "callout_stop" "callout_t *c"
 .Ft bool
@@ -74,10 +74,14 @@
 The
 .Nm callout
 facility provides a mechanism to execute a function at a given time.
-The timer is based on the hardclock timer which ticks
-.Dv hz
+The timer is based on the
+.Xr hardclock 8
+timer which ticks
+.Va hz
 times per second.
-The function is called at softclock interrupt level.
+The function is called at
+.Dv IPL_SOFTCLOCK
+interrupt level.
 .Pp
 Clients of the
 .Nm callout
@@ -93,9 +97,10 @@ functions
 and
 .Fn untimeout .
 .Sh FUNCTIONS
-The
-.Fn callout_init
-function initializes the callout handle
+.Bl -tag -width Fn
+.
+.It Fn callout_init c flags
+Initializes the callout handle
 .Fa c
 for use.
 No operations can be performed on the callout before it is initialized.
@@ -106,14 +111,14 @@ argument is
 the handler will be called without getting the global kernel lock.
 In this case it should only use functions that are multiprocessor
 safe.
-.Pp
-.Fn callout_destroy
-destroys the callout, preventing further use.
+.
+.It Fn callout_destroy c
+Destroys the callout, preventing further use.
 It is provided as a diagnostic facility intended to catch bugs.
 To ensure future compatibility,
 .Fn callout_destroy
-should always be called when the callout is no longer required (for instance,
-when a device is being detached).
+should always be called when the callout is no longer required
+.Pq for instance, when a device is being detached .
 The callout should be stopped before
 .Fn callout_destroy
 is called by calling
@@ -121,17 +126,28 @@ is called by calling
 Note that
 .Fn callout_stop
 shouldn't be used for this purpose.
-.Pp
-The
-.Fn callout_reset
-function resets and starts the timer associated with the callout handle
+.
+.It Fn callout_setfunc c func arg
+Sets the function and argument of the callout handle
+.Fa c
+to
+.Fa func
+and
+.Fa arg
+respectively, so that when the timer expires, it will call
+.Sm off
+.Li "(*" Ar func Li ")(" Ar arg Li ")" .
+.Sm on
+The callout handle must already be initialized.
+.
+.It Fn callout_schedule c ticks
+Starts the timer associated with the callout handle
 .Fa c .
 When the timer expires after
-.Fa ticks Ns No /hz
-seconds, the function specified by
-.Fa func
-will be called with the argument
-.Fa arg .
+.Fa ticks Ns No \|/\| Ns Va hz
+seconds, the function previously specified by
+.Fn callout_setfunc
+will be called.
 If the timer associated with the callout handle is already running,
 the callout will simply be rescheduled to execute at the newly specified
 time.
@@ -145,28 +161,25 @@ and
 and the
 .Em PENDING
 status is cleared.
-.Pp
-The
-.Fn callout_setfunc
-function sets the function and argument of the callout handle
-.Fa c
-to
-.Fa func
+.
+.It Fn callout_reset ch ticks func arg
+Atomically does
+.Fn callout_setfunc ch func arg
 and
-.Fa arg
-respectively.
+.Fn callout_schedule ch ticks
+together.
 The callout handle must already be initialized.
-If a callout will always be used with the same function and argument,
-then
-.Fn callout_setfunc
-used in conjunction with
-.Fn callout_schedule
-is slightly more efficient than using
-.Fn callout_reset .
 .Pp
-The
-.Fn callout_stop
-function requests that the timer associated with the callout handle
+If a callout will always be used with the same function and argument,
+you should use
+.Fn callout_setfunc
+in conjunction with
+.Fn callout_schedule ;
+it is clearer, and slightly more efficient, than using
+.Fn callout_reset .
+.
+.It Fn callout_stop c
+Requests that the timer associated with the callout handle
 .Fa c
 be stopped.
 The
@@ -180,7 +193,8 @@ on a callout handle that is not pending, so long as it is initialized.
 .Fn callout_stop
 will return a non-zero value if the callout was
 .Em EXPIRED .
-Note that
+.Pp
+.Sy WARNING :
 .Fn callout_stop
 can return while the callout is running on a different CPU or at a
 different interrupt priority level on the current CPU.
@@ -188,20 +202,31 @@ It can only be said to prevent the callout from firing in the future,
 unless explicitly re-scheduled.
 To stop a callout and wait for completion, use
 .Fn callout_halt .
-.Pp
-.Fn callout_halt
-acts much like
+.
+.It Fn callout_halt c interlock
+Acts much like
 .Fn callout_stop ,
 but waits for the callout to complete if it is currently in-flight.
 .Fn callout_halt
 may not be called from a hard interrupt handler as it will sleep if the
 callout is currently executing.
-If the callout can take locks (such as mutexes or RW locks), the caller of
+.Pp
+If the callout can take locks
+.Po
+such as
+.Xr mutex 9
+or
+.Xr rwlock 9
+.Pc ,
+the caller of
 .Fn callout_halt
-must not hold any of those locks, otherwise the two could deadlock.
+.Em must not
+hold any of those locks; otherwise, the two could deadlock.
 To facilitate this,
 .Fn callout_halt
-can optionally release a single mutex specified by the
+can optionally release a single
+.Xr mutex 9
+specified by the
 .Fa interlock
 parameter.
 If
@@ -217,10 +242,9 @@ will not be released.
 However, to avoid race conditions the caller should always assume that
 .Fa interlock
 has been released and reacquired, and act accordingly.
-.Pp
-The
-.Fn callout_pending
-function tests the
+.
+.It Fn callout_pending c
+Tests the
 .Em PENDING
 status of the callout handle
 .Fa c .
@@ -234,41 +258,54 @@ to let softclock interrupts through.
 Note that it is only safe to test
 .Em PENDING
 status when at softclock interrupt level or higher.
-.Pp
-The
-.Fn callout_expired
-function tests to see if the callout's timer has expired and its
-function called.
-.Pp
-The
-.Fn callout_active
-function returns true if a timer has been started but not explicitly stopped,
+.
+.It Fn callout_expired c
+Tests to see if the callout's timer has expired.
+If this returns true, then either the callout's function has already
+been called or is guaranteed to be called, even if
+.Fn callout_stop
+or
+.Fn callout_halt
+are later used.
+.
+.It Fn callout_active c
+Returns true if a timer has been started but not explicitly stopped,
 even if it has already fired.
-.Fn callout_active foo
+.Fn callout_active c
 is logically the same as
-.Fn callout_pending foo
-||
-.Fn callout_expired foo ;
+.Dl callout_pending(c) || callout_expired(c)
 it is implemented as a separate function for compatibility with
 .Fx
 and for the special case of
 .Fn TCP_TIMER_ISARMED .
 Its use is not recommended.
-.Pp
-The
-.Fn callout_invoking
-function tests the
+.
+.It Fn callout_invoking c
+Tests the
 .Em INVOKING
 status of the callout handle
 .Fa c .
 This flag is set just before a callout's function is being called.
-Since the priority level is lowered prior to invocation of the
-callout function, other pending higher-priority code may run before
-the callout function is allowed to run.
-This may create a race condition if this higher-priority code
-deallocates storage containing one or more callout structures whose
-callout functions are about to be run.
-In such cases, one technique to prevent references to deallocated
+.Pp
+This is useful in scenarios when concurrent or higher-priority code
+which can't sleep stops a callout with
+.Fn callout_stop
+potentially just before it has expired, and seeks to deallocate storage
+which the callout might use.
+Since the code can't sleep, it can't use
+.Fn callout_halt
+to wait for the callout to finish.
+Instead, it needs to distinguish three cases:
+.Bl -enum -offset indent -compact
+.It
+the callout has not yet expired,
+.It
+the callout has expired but has not yet begun to use the storage,
+.It
+the callout has expired and is already using the storage.
+.El
+.Pp
+In such scenarios, one technique to prevent references to deallocated
 storage would be to test whether any callout functions are in the
 .Em INVOKING
 state using
@@ -278,23 +315,50 @@ deallocation until the callout function is allowed to run.
 For this handshake protocol to work, the callout function will
 have to use the
 .Fn callout_ack
-function to clear this flag.
-.Pp
-The
-.Fn callout_ack
-function clears the
+function to clear this flag, typically after taking a lock:
+.Bd -literal
+mutex_enter(&sc->sc_lock);
+if (!callout_stop(ch)) {
+	/* 1. callout has not yet expired */
+} else if (callout_invoking(ch)) {
+	/* 2. callout has expired but not acked */
+} else {
+	/* 3. callout expired and acked */
+}
+mutex_exit(&sc->sc_lock);
+
+/* callout function */
+static void
+driver_intr(void *arg)
+{
+	struct driver_softc *sc = arg;
+
+	/* 2. callout has expired but not acked */
+
+	mutex_enter(&sc->sc_lock);
+	callout_ack(&sc->sc_timeout);
+	/* 3. callout expired and acked */
+	...
+	mutex_exit(&sc->sc_lock);
+}
+.Ed
+.
+.It Fn callout_ack c
+Clears the
 .Em INVOKING
 state in the callout handle
 .Fa c .
 This is used in situations where it is necessary to protect against
 the race condition described under
 .Fn callout_invoking .
+.El
 .Sh CONCURRENCY
 The callout facility performs locking internally in order to guarantee the
 atomicity of individual operations performed on callouts.
 It does not provide life cycle management of user-provided callout data
-structures, nor does it ensure that groups of operations (multiple function
-calls) are performed atomically.
+structures, nor does it ensure that groups of operations
+.Pq multiple function calls
+are performed atomically.
 These aspects of callout management are the responsibility of the user of
 the callout facility.
 .Pp
@@ -306,17 +370,30 @@ callout will never have multiple concurrent invocations.
 .Sh SEE ALSO
 .Xr condvar 9 ,
 .Xr hz 9 ,
+.Xr mutex 9 ,
 .Xr softint 9 ,
 .Xr workqueue 9
 .Sh HISTORY
 The
 .Nm callout
-facility was implemented by Artur Grabowski and Thomas Nordin, based
-on the work of G. Varghese and A. Lauck, described in the paper
-Hashed and Hierarchical Timing Wheels: Data Structures for the
-Efficient Implementation of a Timer Facility
-in the Proceedings of the 11th ACM Annual Symposium on Operating System
-Principles, Austin, Texas, November 1987.
+facility was implemented for
+.Fx
+by Artur Grabowski and Thomas Nordin, based on the paper by
+.Rs
+.%A G.\~Varghese
+.%A A.\~Lauck
+.\" Some citations give "T. Lauck".  The paper itself says "Tony Lauck".
+.\" The reworked version https://doi.org/10.1109/90.650142 from 1997
+.\" uses "A. Lauck" and refers to the 1987 original using "A. Lauck" too.
+.%T Hashed and Hierarchical Timing Wheels: \
+Data Structures for the Efficient Implementation of a Timer Facility
+.%B Proceedings of the 11th ACM Annual Symposium on Operating System Principles
+.%I ACM
+.%P pp.\~25\(en38
+.%C Austin, Texas
+.%D November 1987
+.%U https://doi.org/10.1145/37499.37504
+.Re
 It was adapted to the
 .Nx
 kernel by Jason R. Thorpe.

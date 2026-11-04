@@ -1,4 +1,4 @@
-/*	$NetBSD: sbc.c,v 1.59.6.1 2025/08/02 05:55:50 perseant Exp $	*/
+/*	$NetBSD: sbc.c,v 1.59.6.2 2026/11/04 23:20:53 perseant Exp $	*/
 
 /*
  * Copyright (C) 1996 Scott Reynolds.  All rights reserved.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.59.6.1 2025/08/02 05:55:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbc.c,v 1.59.6.2 2026/11/04 23:20:53 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -92,7 +92,6 @@ int	sbc_debug = 0 /* | SBC_DB_INTR | SBC_DB_DMA */;
 int	sbc_link_flags = 0 /* | SDEV_DB2 */;
 int	sbc_options = 0 /* | SBC_PDMA */;
 
-extern label_t	*nofault;
 extern void *	m68k_fault_addr;
 
 static	int	sbc_wait_busy(struct ncr5380_softc *);
@@ -278,8 +277,17 @@ sbc_pdma_in(struct ncr5380_softc *ncr_sc, int phase, int datalen, u_char *data)
 		goto interrupt;
 	}
 
-#define R4	*(u_int32_t *)data = *long_data, data += 4;
-	for (; resid >= 128; resid -= 128) {
+	int tmpres = 64;
+	while (tmpres) {
+		if (sbc_ready(ncr_sc))
+			goto interrupt;
+		*(u_int8_t *)data = *byte_data, data += 1;
+		resid--;
+		tmpres--;
+	}
+
+#define R4	*(u_int32_t *)data = *long_data, data += 4, resid -= 4
+	while (resid >= 128) {
 		if (sbc_ready(ncr_sc))
 			goto interrupt;
 		R4; R4; R4; R4; R4; R4; R4; R4;
@@ -446,6 +454,9 @@ sbc_drq_intr(void *p)
 	u_int8_t *data;
 	int count, dcount, s;
 
+	if (ncr_sc->sc_state & NCR_ABORTING)
+		return;
+
 	/*
 	 * If we're not ready to xfer data, or have no more, just return.
 	 */
@@ -469,7 +480,7 @@ sbc_drq_intr(void *p)
 
 	m68k_fault_addr = 0;
 	if (setjmp(nofault)) {
-		nofault = (label_t *)0;
+		nofault = NULL;
 		if ((dh->dh_flags & SBC_DH_DONE) == 0) {
 			count = ((  (u_long)m68k_fault_addr
 				  - (u_long)sc->sc_drq_addr));
@@ -508,7 +519,7 @@ sbc_drq_intr(void *p)
 		 */
 		dcount =
 		    count = uimin(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
-		if (count && count < 4) {
+		if (count) {
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			data = (u_int8_t *)dh->dh_addr;
 
@@ -573,7 +584,7 @@ sbc_drq_intr(void *p)
 		 */
 		dcount =
 		    count = uimin(dh->dh_len, 4 - (((int)dh->dh_addr) & 0x3));
-		if (count && count < 4) {
+		if (count) {
 			data = (u_int8_t *)dh->dh_addr;
 			drq = (volatile u_int8_t *)sc->sc_drq_addr;
 			while (count) {
@@ -617,7 +628,7 @@ sbc_drq_intr(void *p)
 	 * OK.  No bus error occurred above.  Clear the nofault flag
 	 * so we no longer short-circuit bus errors.
 	 */
-	nofault = (label_t *)0;
+	nofault = NULL;
 
 	splx(s);
 

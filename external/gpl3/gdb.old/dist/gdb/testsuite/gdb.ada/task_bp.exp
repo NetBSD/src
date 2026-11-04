@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 load_lib "ada.exp"
 
-if { [skip_ada_tests] } { return -1 }
+require allow_ada_tests
 
 standard_ada_testfile foo
 
@@ -37,7 +37,7 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug]] != "" } 
 
 proc test_bp { loc msg } {
    gdb_test "break $loc" \
-     "Breakpoint \[0-9\]+ at 0x\[0-9a-fA-F\]+: file .*pck.adb, line \[0-9\]+\." \
+     "Breakpoint \[0-9\]+ at 0x\[0-9a-fA-F\]+: file .*pck.adb, line \[0-9\]+\\." \
      "break $loc - $msg"
 
    gdb_run_cmd

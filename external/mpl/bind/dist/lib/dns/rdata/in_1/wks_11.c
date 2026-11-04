@@ -1,4 +1,4 @@
-/*	$NetBSD: wks_11.c,v 1.10.2.1 2025/08/02 05:53:50 perseant Exp $	*/
+/*	$NetBSD: wks_11.c,v 1.10.2.2 2026/11/04 23:18:14 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -195,8 +195,9 @@ totext_in_wks(ARGS_TOTEXT) {
 			for (j = 0; j < 8; j++) {
 				if ((sr.base[i] & (0x80 >> j)) != 0) {
 					{
-						snprintf(buf, sizeof(buf), "%u",
-							 i * 8 + j);
+						snprintf(buf, sizeof(buf),
+						  "%hu",
+						  (unsigned short)(i * 8 + j));
 						RETERR(str_totext(" ", target));
 						RETERR(str_totext(buf, target));
 					}
@@ -307,9 +308,7 @@ tostruct_in_wks(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
 	REQUIRE(rdata->length != 0);
 
-	wks->common.rdclass = rdata->rdclass;
-	wks->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&wks->common, link);
+	DNS_RDATACOMMON_INIT(wks, rdata->type, rdata->rdclass);
 
 	dns_rdata_toregion(rdata, &region);
 	n = uint32_fromregion(&region);

@@ -1,4 +1,4 @@
-# Copyright (C) 2009-2024 Free Software Foundation, Inc.
+# Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -70,6 +70,65 @@ gdb_test_multiline "input subcommand" \
     "end" ""
 
 gdb_test "prefix-cmd subcmd ugh" "subcmd output, arg = ugh" "call subcmd"
+
+# Create a sub-command using a partial, but still unique, prefix.
+
+gdb_test_multiline "sub-command using partial prefix" \
+    "guile" "" \
+    "(register-command! (make-command \"prefix subcmd2\"" "" \
+    "  #:command-class COMMAND_OBSCURE" "" \
+    "  #:invoke (lambda (self arg from-tty)" "" \
+    "    (display (format #f \"subcmd2 output, arg = ~a\\n\" arg)))))" "" \
+    "end" ""
+
+gdb_test "prefix-cmd subcmd2 ugh" "subcmd2 output, arg = ugh" "call subcmd2"
+
+# Now create a second prefix, similar to the first.
+
+gdb_test_multiline "create prefix-xxx prefix command" \
+    "guile" "" \
+    "(register-command! (make-command \"prefix-xxx\"" "" \
+    "  #:command-class COMMAND_OBSCURE" "" \
+    "  #:completer-class COMPLETE_NONE" "" \
+    "  #:prefix? #t))" "" \
+    "end" ""
+
+# Now create a sub-command using an ambiguous prefix.
+
+gdb_test_multiline "sub-command using ambiguous partial prefix" \
+    "guile" "" \
+    "(register-command! (make-command \"prefix subcmd3\"" "" \
+    "  #:command-class COMMAND_OBSCURE" "" \
+    "  #:invoke (lambda (self arg from-tty)" "" \
+    "    (display (format #f \"subcmd3 output, arg = ~a\\n\" arg)))))" "" \
+    "end" \
+    [multi_line \
+	 "Out of range: could not find command prefix 'prefix' in position 1: \"prefix subcmd3\"" \
+	 "Error while executing Scheme code\\."]
+
+# Check for errors when creating a command with an unknown prefix.
+
+gdb_test_multiline "try to create 'unknown-prefix subcmd'" \
+    "guile" "" \
+    "(register-command! (make-command \"unknown-prefix subcmd\"" "" \
+    "  #:command-class COMMAND_OBSCURE" "" \
+    "  #:invoke (lambda (self arg from-tty)" "" \
+    "    (display \"called unknown-prefix subcmd\"))))" "" \
+    "end" \
+    [multi_line \
+	 "Out of range: could not find command prefix 'unknown-prefix' in position 1: \"unknown-prefix subcmd\"" \
+	 "Error while executing Scheme code\\."]
+
+gdb_test_multiline "try to create 'prefix-cmd unknown-prefix subcmd'" \
+    "guile" "" \
+    "(register-command! (make-command \"prefix-cmd unknown-prefix subcmd\"" "" \
+    "  #:command-class COMMAND_OBSCURE" "" \
+    "  #:invoke (lambda (self arg from-tty)" "" \
+    "    (display \"called prefix-cmd unknown-prefix subcmd\"))))" "" \
+    "end" \
+    [multi_line \
+	 "Out of range: could not find command prefix 'prefix-cmd unknown-prefix' in position 1: \"prefix-cmd unknown-prefix subcmd\"" \
+	 "Error while executing Scheme code\\."]
 
 # Test a subcommand in an existing GDB prefix.
 

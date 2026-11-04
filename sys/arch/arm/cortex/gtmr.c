@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmr.c,v 1.49.10.1 2025/08/02 05:55:27 perseant Exp $	*/
+/*	$NetBSD: gtmr.c,v 1.49.10.2 2026/11/04 23:20:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.49.10.1 2025/08/02 05:55:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmr.c,v 1.49.10.2 2026/11/04 23:20:07 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -107,7 +107,6 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	struct mpcore_attach_args * const mpcaa = aux;
 	struct gtmr_softc *sc = &gtmr_sc;
 	prop_dictionary_t dict = device_properties(self);
-	prop_dictionary_t pdict = device_properties(device_parent(self));
 	char freqbuf[sizeof("X.XXX SHz")];
 	bool flag;
 
@@ -117,8 +116,13 @@ gtmr_attach(device_t parent, device_t self, void *aux)
 	if (!prop_dictionary_get_uint32(dict, "frequency", &sc->sc_freq))
 		sc->sc_freq = gtmr_cntfrq_read();
 
-	if (!prop_dictionary_get_bool(dict, "physical", &sc->sc_physical))
-	    prop_dictionary_get_bool(pdict, "physical", &sc->sc_physical);
+	if (!prop_dictionary_get_bool(dict, "physical", &sc->sc_physical)) {
+		/* Now check the parent device */
+		KASSERT(parent == device_parent(self));
+		const prop_dictionary_t pdict = device_properties(parent);
+
+		prop_dictionary_get_bool(pdict, "physical", &sc->sc_physical);
+	}
 
 	KASSERT(sc->sc_freq != 0);
 
@@ -351,7 +355,7 @@ gtmr_intr(void *arg)
 	struct gtmr_softc * const sc = &gtmr_sc;
 
 	const uint32_t ctl = gtmr_read_ctl(sc);
-	if ((ctl & (CNTCTL_ENABLE|CNTCTL_ISTATUS)) != (CNTCTL_ENABLE|CNTCTL_ISTATUS)) {
+	if ((ctl & (CNTCTL_ENABLE | CNTCTL_ISTATUS)) != (CNTCTL_ENABLE | CNTCTL_ISTATUS)) {
 		aprint_debug_dev(ci->ci_dev, "spurious timer interrupt (ctl=%#x)\n", ctl);
 		return 0;
 	}
@@ -411,10 +415,13 @@ gtmr_intr(void *arg)
 	return 1;
 }
 
+#ifndef __HAVE_GENERIC_SETSTATCLOCKRATE
 void
 setstatclockrate(int newhz)
 {
+	/* use hardclock */
 }
+#endif
 
 static u_int
 gtmr_get_timecount(struct timecounter *tc)

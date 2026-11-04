@@ -1,4 +1,4 @@
-# Copyright 2009-2024 Free Software Foundation, Inc.
+# Copyright 2009-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -33,5 +33,5 @@ if {![runto f]} {
 
 gdb_test_no_output "set print frame-arguments all"
 gdb_test "frame" ".*s='foo'.*"
-gdb_test "ptype s" "type = character \\(3\\)"
+gdb_test "ptype s" "type = character\\*3"
 gdb_test "p s" "\\$\[0-9\]* = 'foo'"

@@ -1,4 +1,4 @@
-/*	$NetBSD: mem.c,v 1.15.2.1 2025/08/02 05:53:53 perseant Exp $	*/
+/*	$NetBSD: mem.c,v 1.15.2.2 2026/11/04 23:18:15 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -21,7 +21,9 @@
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
+#include <unistd.h>
 
+#include <isc/backtrace.h>
 #include <isc/hash.h>
 #include <isc/magic.h>
 #include <isc/mem.h>
@@ -29,6 +31,7 @@
 #include <isc/once.h>
 #include <isc/os.h>
 #include <isc/overflow.h>
+#include <isc/random.h>
 #include <isc/refcount.h>
 #include <isc/strerr.h>
 #include <isc/string.h>
@@ -131,7 +134,6 @@ struct isc_mem {
 	char name[16];
 	atomic_size_t inuse;
 	atomic_bool hi_called;
-	atomic_bool is_overmem;
 	atomic_size_t hi_water;
 	atomic_size_t lo_water;
 	ISC_LIST(isc_mempool_t) pools;
@@ -168,6 +170,86 @@ struct isc_mempool {
 /*
  * Private Inline-able.
  */
+
+static size_t
+total_inuse(void) {
+	size_t inuse = 0;
+	LOCK(&contextslock);
+	for (isc_mem_t *ctx = ISC_LIST_HEAD(contexts); ctx != NULL;
+	     ctx = ISC_LIST_NEXT(ctx, link))
+	{
+		inuse += isc_mem_inuse(ctx);
+	}
+	UNLOCK(&contextslock);
+
+	return inuse;
+}
+
+static void
+write_string(int fd, const char *str) {
+	int r = write(fd, str, strlen(str));
+	if (r == -1) {
+		abort();
+	}
+}
+
+#define STRINGIFY(x) #x
+#define TOSTRING(x)  STRINGIFY(x)
+static void
+write_size(int fd, size_t size) {
+	char buf[sizeof(TOSTRING(SIZE_MAX)) + 1] = { 0 };
+
+	char *str = buf + (sizeof(buf) - 1);
+
+	if (size == 0) {
+		*--str = '0';
+	} else {
+		while (size) {
+			*--str = '0' + (size % 10);
+			size /= 10;
+		}
+	}
+
+	write_string(fd, str);
+}
+#undef TOSTRING
+#undef STRINGIFY
+
+static void
+write_errno(int fd, int errnum) {
+	char buf[BUFSIZ] = { 0 };
+	int ret = isc_string_strerror_r(errnum, buf, sizeof(buf));
+	if (ret == 0) {
+		write_string(fd, buf);
+	}
+}
+
+static void
+write_backtrace(int fd) {
+	void *tracebuf[ISC_BACKTRACE_MAXFRAME];
+	int nframes = isc_backtrace(tracebuf, ISC_BACKTRACE_MAXFRAME);
+
+	if (nframes > 0) {
+		isc_backtrace_symbols_fd(tracebuf, nframes, fd);
+	}
+}
+
+#define CHECK_OOM(ptr, size) (void)((ptr != NULL) || (oom(size), false))
+
+static void
+oom(size_t size) {
+	int fd = fileno(stderr);
+	write_string(fd, "Out of memory (trying to allocate ");
+	write_size(fd, size);
+	write_string(fd, ", total ");
+	write_size(fd, total_inuse());
+	write_string(fd, "): ");
+	write_errno(fd, errno);
+	write_string(fd, "\n");
+	write_backtrace(fd);
+
+	abort();
+}
 
 #if !ISC_MEM_TRACKLINES
 #define ADD_TRACE(mctx, ptr, size, file, line)
@@ -235,7 +317,7 @@ add_trace_entry(isc_mem_t *mctx, const void *ptr, size_t size FLARG) {
 	idx = hash % DEBUG_TABLE_COUNT;
 
 	dl = mallocx(dlsize, mctx->jemalloc_flags);
-	INSIST(dl != NULL);
+	CHECK_OOM(dl, dlsize);
 
 	ISC_LINK_INIT(dl, link);
 	dl->ptr = ptr;
@@ -309,20 +391,18 @@ unlock:
  */
 static void *
 mem_get(isc_mem_t *ctx, size_t size, int flags) {
-	char *ret = NULL;
-
 	ADJUST_ZERO_ALLOCATION_SIZE(size);
 
-	ret = mallocx(size, flags | ctx->jemalloc_flags);
-	INSIST(ret != NULL);
+	void *ptr = mallocx(size, flags | ctx->jemalloc_flags);
+	CHECK_OOM(ptr, size);
 
 	if ((flags & ISC__MEM_ZERO) == 0 &&
 	    (ctx->flags & ISC_MEMFLAG_FILL) != 0)
 	{
-		memset(ret, 0xbe, size); /* Mnemonic for "beef". */
+		memset(ptr, 0xbe, size); /* Mnemonic for "beef". */
 	}
 
-	return ret;
+	return ptr;
 }
 
 /*!
@@ -347,7 +427,7 @@ mem_realloc(isc_mem_t *ctx, void *old_ptr, size_t old_size, size_t new_size,
 	ADJUST_ZERO_ALLOCATION_SIZE(new_size);
 
 	new_ptr = rallocx(old_ptr, new_size, flags | ctx->jemalloc_flags);
-	INSIST(new_ptr != NULL);
+	CHECK_OOM(new_ptr, new_size);
 
 	if ((flags & ISC__MEM_ZERO) == 0 &&
 	    (ctx->flags & ISC_MEMFLAG_FILL) != 0)
@@ -448,6 +528,8 @@ static void
 mem_shutdown(void) {
 	bool empty;
 
+	rcu_barrier();
+
 	isc__mem_checkdestroyed();
 
 	LOCK(&contextslock);
@@ -472,7 +554,7 @@ mem_create(isc_mem_t **ctxp, unsigned int debugging, unsigned int flags,
 	REQUIRE(ctxp != NULL && *ctxp == NULL);
 
 	ctx = mallocx(sizeof(*ctx), jemalloc_flags);
-	INSIST(ctx != NULL);
+	CHECK_OOM(ctx, sizeof(*ctx));
 
 	*ctx = (isc_mem_t){
 		.magic = MEM_MAGIC,
@@ -490,18 +572,17 @@ mem_create(isc_mem_t **ctxp, unsigned int debugging, unsigned int flags,
 	atomic_init(&ctx->hi_water, 0);
 	atomic_init(&ctx->lo_water, 0);
 	atomic_init(&ctx->hi_called, false);
-	atomic_init(&ctx->is_overmem, false);
 
 	ISC_LIST_INIT(ctx->pools);
 
 #if ISC_MEM_TRACKLINES
 	if ((ctx->debugging & ISC_MEM_DEBUGRECORD) != 0) {
 		unsigned int i;
+		size_t debuglist_size = ISC_CHECKED_MUL(DEBUG_TABLE_COUNT,
+							sizeof(debuglist_t));
 
-		ctx->debuglist = mallocx(
-			ISC_CHECKED_MUL(DEBUG_TABLE_COUNT, sizeof(debuglist_t)),
-			jemalloc_flags);
-		INSIST(ctx->debuglist != NULL);
+		ctx->debuglist = mallocx(debuglist_size, jemalloc_flags);
+		CHECK_OOM(ctx->debuglist, debuglist_size);
 
 		for (i = 0; i < DEBUG_TABLE_COUNT; i++) {
 			ISC_LIST_INIT(ctx->debuglist[i]);
@@ -878,27 +959,6 @@ isc__mem_strdup(isc_mem_t *mctx, const char *s FLARG) {
 	return ns;
 }
 
-char *
-isc__mem_strndup(isc_mem_t *mctx, const char *s, size_t size FLARG) {
-	size_t len;
-	char *ns = NULL;
-
-	REQUIRE(VALID_CONTEXT(mctx));
-	REQUIRE(s != NULL);
-	REQUIRE(size != 0);
-
-	len = strlen(s) + 1;
-	if (len > size) {
-		len = size;
-	}
-
-	ns = isc__mem_allocate(mctx, len, 0 FLARG_PASS);
-
-	strlcpy(ns, s, len);
-
-	return ns;
-}
-
 void
 isc_mem_setdestroycheck(isc_mem_t *ctx, bool flag) {
 	REQUIRE(VALID_CONTEXT(ctx));
@@ -937,48 +997,30 @@ bool
 isc_mem_isovermem(isc_mem_t *ctx) {
 	REQUIRE(VALID_CONTEXT(ctx));
 
-	bool is_overmem = atomic_load_relaxed(&ctx->is_overmem);
-
-	if (!is_overmem) {
-		/* We are not overmem, check whether we should be? */
-		size_t hiwater = atomic_load_relaxed(&ctx->hi_water);
-		if (hiwater == 0) {
-			return false;
-		}
-
-		size_t inuse = atomic_load_relaxed(&ctx->inuse);
-		if (inuse <= hiwater) {
-			return false;
-		}
-
-		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
-			fprintf(stderr,
-				"overmem mctx %p inuse %zu hi_water %zu\n", ctx,
-				inuse, hiwater);
-		}
-
-		atomic_store_relaxed(&ctx->is_overmem, true);
-		return true;
-	} else {
-		/* We are overmem, check whether we should not be? */
-		size_t lowater = atomic_load_relaxed(&ctx->lo_water);
-		if (lowater == 0) {
-			return false;
-		}
-
-		size_t inuse = atomic_load_relaxed(&ctx->inuse);
-		if (inuse >= lowater) {
-			return true;
-		}
-
-		if ((isc_mem_debugging & ISC_MEM_DEBUGUSAGE) != 0) {
-			fprintf(stderr,
-				"overmem mctx %p inuse %zu lo_water %zu\n", ctx,
-				inuse, lowater);
-		}
-		atomic_store_relaxed(&ctx->is_overmem, false);
+	size_t hiwater = atomic_load_relaxed(&ctx->hi_water);
+	if (hiwater == 0) {
 		return false;
 	}
+
+	size_t inuse = atomic_load_relaxed(&ctx->inuse);
+	if (inuse >= hiwater) {
+		return true;
+	}
+
+	size_t lowater = atomic_load_relaxed(&ctx->lo_water);
+	if (inuse <= lowater) {
+		return false;
+	}
+
+	/*
+	 * Between lo_water and hi_water, return true with a probability
+	 * that ramps linearly from 0 at lo_water to 1 at hi_water.  This
+	 * spreads cache cleaning across many inserts instead of triggering
+	 * a thundering herd once the hi_water mark is crossed.
+	 */
+	uint32_t prob = (uint32_t)(((uint64_t)(inuse - lowater) * 256) /
+				   (hiwater - lowater));
+	return isc_random8() < prob;
 }
 
 void

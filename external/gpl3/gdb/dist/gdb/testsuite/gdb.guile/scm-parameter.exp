@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -39,7 +39,8 @@ if { [is_remote host] } {
     gdb_test "guile (print (parameter-value \"directories\"))" \
 	"\\\$cdir.\\\$cwd"
 } else {
-    set escaped_directory [string_to_regexp "$srcdir/$subdir"]
+    set directory [host_file_normalize "$::srcdir/$::subdir"]
+    set escaped_directory [string_to_regexp $directory]
     gdb_test "guile (print (parameter-value \"directories\"))" \
 	"$escaped_directory.\\\$cdir.\\\$cwd"
 }
@@ -62,14 +63,24 @@ gdb_test_multiline "Simple gdb boolean parameter" \
     "end"
 
 with_test_prefix "test-param" {
-    gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value (true)"
+    gdb_test "guile (print (parameter-value test-param))" "= #t" "parameter value, true"
     gdb_test "show print test-param" "The state of the Test Parameter is on." "show parameter on"
     gdb_test_no_output "set print test-param off"
     gdb_test "show print test-param" "The state of the Test Parameter is off." "show parameter off"
-    gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value (false)"
-    gdb_test "help show print test-param" "Show the state of the boolean test-param.*" "show help"
-    gdb_test "help set print test-param" "Set the state of the boolean test-param.*" "set help"
-    gdb_test "help set print" "set print test-param -- Set the state of the boolean test-param.*" "general help"
+    gdb_test "guile (print (parameter-value test-param))" "= #f" "parameter value, false"
+    gdb_test "help show print test-param" \
+	[multi_line \
+	     "^Show the state of the boolean test-param\\." \
+	     "When enabled, test param does something useful\\. When disabled, does nothing\\."] \
+	"show help"
+    gdb_test "help set print test-param" \
+	[multi_line \
+	     "^Set the state of the boolean test-param\\." \
+	     "When enabled, test param does something useful\\. When disabled, does nothing\\."] \
+	 "set help"
+    gdb_test "help set print" \
+	"set print test-param -- Set the state of the boolean test-param.*" \
+	"general help"
 
     gdb_test "guile (print (parameter? test-param))" "= #t"
     gdb_test "guile (print (parameter? 42))" "= #f"
@@ -94,11 +105,11 @@ gdb_test_multiline "enum gdb parameter" \
     "end"
 
 with_test_prefix "test-enum-param" {
-    gdb_test "guile (print (parameter-value test-enum-param))" "one" "enum parameter value (one)"
+    gdb_test "guile (print (parameter-value test-enum-param))" "one" "enum parameter value, one"
     gdb_test "show print test-enum-param" "The state of the enum is one." "show initial value"
     gdb_test_no_output "set print test-enum-param two"
     gdb_test "show print test-enum-param" "The state of the enum is two." "show new value"
-    gdb_test "guile (print (parameter-value test-enum-param))" "two" "enum parameter value (two)"
+    gdb_test "guile (print (parameter-value test-enum-param))" "two" "enum parameter value, two"
     gdb_test "set print test-enum-param three" "Undefined item: \"three\".*" "set invalid enum parameter" 
 }
 
@@ -241,14 +252,14 @@ foreach_with_prefix kind {
 
     with_test_prefix "test-$kind-param" {
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    3 "$kind parameter value (3)"
+	    3 "$kind parameter value, 3"
 	gdb_test "show print test-$kind-param" \
 	    "The state of $kind is 3." "show initial value"
 	gdb_test_no_output "set print test-$kind-param 2"
 	gdb_test "show print test-$kind-param" \
 	    "The state of $kind is 2." "show new value"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    2 "$kind parameter value (2)"
+	    2 "$kind parameter value, 2"
 	scm_param_test_maybe_no_output \
 	    "guile (set-parameter-value! test-$kind-param #:unlimited)" \
 	    $param_set_unlimited
@@ -257,18 +268,18 @@ foreach_with_prefix kind {
 	    "show unlimited value"
 	gdb_test_no_output "guile (set-parameter-value! test-$kind-param 1)"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    1 "$kind parameter value (1)"
+	    1 "$kind parameter value, 1"
 	gdb_test_no_output "guile (set-parameter-value! test-$kind-param 0)"
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_zero "$kind parameter value (0)"
+	    $param_get_zero "$kind parameter value, 0"
 	scm_param_test_maybe_no_output "set print test-$kind-param -1" \
 	    $param_set_minus_one
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_minus_one "$kind parameter value (-1)"
+	    $param_get_minus_one "$kind parameter value, -1"
 	scm_param_test_maybe_no_output "set print test-$kind-param -2" \
 	    $param_set_minus_two
 	gdb_test "guile (print (parameter-value test-$kind-param))" \
-	    $param_get_minus_two "$kind parameter value (-2)"
+	    $param_get_minus_two "$kind parameter value, -2"
     }
 }
 
@@ -314,9 +325,17 @@ with_test_prefix "test-undocumented-param" {
     gdb_test "show print test-undoc-param" "The state of the Test Parameter is on." "show parameter on"
     gdb_test_no_output "set print test-undoc-param off"
     gdb_test "show print test-undoc-param" "The state of the Test Parameter is off." "show parameter off"
-    gdb_test "help show print test-undoc-param" "This command is not documented." "show help"
-    gdb_test "help set print test-undoc-param" "This command is not documented." "set help"
-    gdb_test "help set print" "set print test-undoc-param -- This command is not documented.*" "general help"
+    gdb_test "help show print test-undoc-param" \
+	[multi_line \
+	     "^Show the current value of 'print test-undoc-param'\\." \
+	     "This command is not documented\\."] \
+	"show help"
+    gdb_test "help set print test-undoc-param" \
+	[multi_line \
+	     "Set the current value of 'print test-undoc-param'\\." \
+	     "This command is not documented\\."] \
+	 "set help"
+    gdb_test "help set print" "set print test-undoc-param -- Set the current value of 'print test-undoc-param'\\..*" "general help"
 }
 
 # Test a parameter with a restricted range, where we need to notify the user
@@ -378,14 +397,219 @@ gdb_test_multiline "previously ambiguously named boolean parameter" \
 gdb_test_no_output "guile (register-parameter! prev-ambig)"
 
 with_test_prefix "previously-ambiguous" {
-    gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value (false)"
-    gdb_test "show print s" "Command is not documented is off." "show parameter off"
+    gdb_test "guile (print (parameter-value prev-ambig))" "= #f" "parameter value, false"
+    gdb_test "show print s" \
+	"The current value of 'print s' is off\\." "show parameter off"
     gdb_test_no_output "set print s on"
-    gdb_test "show print s" "Command is not documented is on." "show parameter on"
-    gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value (true)"
-    gdb_test "help show print s" "This command is not documented." "show help"
-    gdb_test "help set print s" "This command is not documented." "set help"
-    gdb_test "help set print" "set print s -- This command is not documented.*" "general help"
+    gdb_test "show print s" \
+	"The current value of 'print s' is on\\." "show parameter on"
+    gdb_test "guile (print (parameter-value prev-ambig))" "= #t" "parameter value, true"
+    gdb_test "help show print s" \
+	[multi_line \
+	     "^Show the current value of 'print s'\\." \
+	     "This command is not documented\\."] \
+	"show help"
+    gdb_test "help set print s" \
+	[multi_line \
+	     "Set the current value of 'print s'\\." \
+	     "This command is not documented\\."] \
+	"set help"
+    gdb_test "help set print" \
+	"set print s -- Set the current value of 'print s'\\..*" \
+	"general help"
+}
+
+gdb_test_multiline "create set/show foo1 prefix commands" \
+    "guile" "" \
+    "(register-command! (make-command \"set foo1\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:prefix? #t))" "" \
+    "(register-command! (make-command \"show foo1\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:prefix? #t))" "" \
+    "end"
+
+gdb_test_multiline "create set/show foo1 baz1 prefix commands" \
+    "guile" "" \
+    "(register-command! (make-command \"set foo1 baz1\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:prefix? #t))" "" \
+    "(register-command! (make-command \"show foo1 baz1\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:prefix? #t))" "" \
+    "end"
+
+gdb_test_multiline "create 'foo bar' parameter" \
+    "guile" "" \
+    "(register-parameter! (make-parameter \"foo bar\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:parameter-type PARAM_BOOLEAN" "" \
+    "   #:show-func (lambda (self value)" "" \
+    "      (format #f \"The state of 'foo bar' is ~a.\" value))" "" \
+    "   #:initial-value #t))" "" \
+    "end"
+
+gdb_test "show foo1 bar" "^The state of 'foo bar' is on\\." "show parameter 'foo bar'"
+
+gdb_test_multiline "create set/show foo2 prefix commands" \
+    "guile" "" \
+    "(register-command! (make-command \"set foo2\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:prefix? #t))" "" \
+    "(register-command! (make-command \"show foo2\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:prefix? #t))" "" \
+    "end" ""
+
+gdb_test_multiline "create ambiguous 'foo baz' parameter" \
+    "guile" "" \
+    "(register-parameter! (make-parameter \"foo baz\"" "" \
+    "   #:command-class COMMAND_OBSCURE" "" \
+    "   #:parameter-type PARAM_BOOLEAN" "" \
+    "   #:show-func (lambda (self value)" "" \
+    "      (format #f \"The state of 'foo baz' is ~a.\" value))" "" \
+    "   #:initial-value #t))" "" \
+    "end" \
+    [multi_line \
+	 "Out of range: could not find command prefix 'foo' in position 1: \"foo baz\"" \
+	 "Error while executing Scheme code."]
+
+with_test_prefix "empty doc string" {
+    gdb_test_multiline "empty doc string parameter" \
+	"guile" "" \
+	"(register-parameter! (make-parameter \"empty-doc-string\"" "" \
+	"   #:command-class COMMAND_NONE" "" \
+	"   #:parameter-type PARAM_ZINTEGER" "" \
+	"   #:doc \"\"" "" \
+	"   #:set-doc \"Set doc string.\"" "" \
+	"   #:show-doc \"Show doc string.\"))" "" \
+	"end"
+
+    gdb_test "help set empty-doc-string" "^Set doc string\\."
+    gdb_test "help show empty-doc-string" "^Show doc string\\."
+}
+
+with_test_prefix "set/show parameter" {
+    # This first set/show prefix command doesn't have an invoke
+    # method.  As such, GDB installs the default invoke behaviour; set
+    # prints the full list of sub-commands, and show prints all the
+    # sub-command values.
+    gdb_test_multiline "Setup set/show parameter prefix with no invoke" \
+	"guile" "" \
+	"(register-command! (make-command \"set test-prefix\"" "" \
+	"  #:prefix? #t" "" \
+	"  #:command-class COMMAND_NONE))" ""\
+	"(register-command! (make-command \"show test-prefix\"" "" \
+	"  #:prefix? #t" "" \
+	"  #:command-class COMMAND_NONE))" ""\
+	"(register-parameter! (make-parameter \"test-prefix param-1\"" "" \
+	"  #:command-class COMMAND_NONE" "" \
+	"  #:parameter-type PARAM_BOOLEAN))" "" \
+	"(register-parameter! (make-parameter \"test-prefix param-2\"" "" \
+	"  #:command-class COMMAND_NONE" "" \
+	"  #:parameter-type PARAM_UINTEGER))" "" \
+	"(register-parameter! (make-parameter \"test-prefix param-3\"" "" \
+	"  #:command-class COMMAND_NONE" "" \
+	"  #:parameter-type PARAM_STRING))" "" \
+	"end" ""
+
+    gdb_test "set test-prefix" \
+	[multi_line \
+	     "List of \"set test-prefix\" subcommands:" \
+	     "" \
+	     "set test-prefix param-1 -- Set the current value of 'test-prefix param-1'." \
+	     "set test-prefix param-2 -- Set the current value of 'test-prefix param-2'." \
+	     "set test-prefix param-3 -- Set the current value of 'test-prefix param-3'." \
+	     "" \
+	     "Type \"help set test-prefix\" followed by subcommand name for full documentation\\." \
+	     "Type \"apropos word\" to search for commands related to \"word\"\\." \
+	     "Type \"apropos -v word\" for full documentation of commands related to \"word\"\\." \
+	     "Command name abbreviations are allowed if unambiguous\\."]
+
+    gdb_test "show test-prefix" \
+	[multi_line \
+	     "test-prefix param-1:  The current value of 'test-prefix param-1' is off\\." \
+	     "test-prefix param-2:  The current value of 'test-prefix param-2' is 0\\." \
+	     "test-prefix param-3:  The current value of 'test-prefix param-3' is \"\"\\."]
+
+    # This next set/show prefix has an invoke method, which will be
+    # called instead of the default behaviour tested above.
+    gdb_test_multiline "Setup set/show parameter prefix with invoke" \
+	"guile" "" \
+	"(register-command! (make-command \"set test-prefix-2\"" "" \
+	"  #:prefix? #t" "" \
+	"  #:command-class COMMAND_NONE" ""\
+	"  #:invoke (lambda (self arg from-tty)" "" \
+	"    (display \"invoke -- set\\n\"))))" "" \
+	"(register-command! (make-command \"show test-prefix-2\"" "" \
+	"  #:prefix? #t" "" \
+	"  #:command-class COMMAND_NONE" ""\
+	"  #:invoke (lambda (self arg from-tty)" "" \
+	"    (display \"invoke -- show\\n\"))))" "" \
+	"(register-parameter! (make-parameter \"test-prefix-2 param-1\"" "" \
+	"  #:command-class COMMAND_NONE" "" \
+	"  #:parameter-type PARAM_BOOLEAN))" "" \
+	"(register-parameter! (make-parameter \"test-prefix-2 param-2\"" "" \
+	"  #:command-class COMMAND_NONE" "" \
+	"  #:parameter-type PARAM_UINTEGER))" "" \
+	"(register-parameter! (make-parameter \"test-prefix-2 param-3\"" "" \
+	"  #:command-class COMMAND_NONE" "" \
+	"  #:parameter-type PARAM_STRING))" "" \
+	"end" ""
+
+    gdb_test "set test-prefix-2" "^invoke -- set"
+
+    gdb_test "show test-prefix-2" "^invoke -- show"
 }
 
 rename scm_param_test_maybe_no_output ""
+
+# Test a color parameter.
+
+if { ![is_remote host] } {
+    with_ansi_styling_terminal {
+
+	# This enables 256 colors support and disables colors approximation.
+	setenv TERM xterm-256color
+	setenv COLORTERM truecolor
+
+	# Start with a fresh gdb.
+	gdb_exit
+	gdb_start
+	gdb_reinitialize_dir $srcdir/$subdir
+
+	gdb_install_guile_utils
+	gdb_install_guile_module
+
+	# We use "." here instead of ":" so that this works on win32 too.
+	set escaped_directory [string_to_regexp "$srcdir/$subdir"]
+
+	gdb_test_multiline "color gdb parameter" \
+	    "guile" "" \
+	    "(define test-color-param" "" \
+	    "  (make-parameter \"print test-color-param\"" "" \
+	    "   #:command-class COMMAND_DATA" "" \
+	    "   #:parameter-type PARAM_COLOR" "" \
+	    "   #:doc \"When set, test param does something useful. When disabled, does nothing.\"" "" \
+	    "   #:show-doc \"Show the state of the test-color-param.\"" "" \
+	    "   #:set-doc \"Set the state of the test-color-param.\"" "" \
+	    "   #:show-func (lambda (self value)" "" \
+	    "      (format #f \"The state of the test-color-param is ~a.\" value))" "" \
+	    "   #:initial-value (make-color \"green\")))" "" \
+	    "(register-parameter! test-color-param)" "" \
+	    "end"
+
+	with_test_prefix "test-color-param" {
+	    with_test_prefix "initial-value" {
+		gdb_test "guile (print (parameter-value test-color-param))" "= #<gdb:color green COLORSPACE_ANSI_8COLOR>" "color parameter value (green)"
+		gdb_test "show print test-color-param" "The state of the test-color-param is green." "show initial value"
+		gdb_test_no_output "set print test-color-param 255"
+	    }
+	    with_test_prefix "new-value" {
+		gdb_test "show print test-color-param" "The state of the test-color-param is 255." "show new value"
+		gdb_test "guile (print (parameter-value test-color-param))" "= #<gdb:color 255 COLORSPACE_XTERM_256COLOR>" "color parameter value (255)"
+		gdb_test "set print test-color-param 256" "integer 256 out of range.*" "set invalid color parameter"
+	    }
+	}
+    }
+}

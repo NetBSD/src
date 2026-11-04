@@ -6,18 +6,21 @@ struct foo_t
   size_t bar;
   const char *baz;
   struct foo_t *self;
-  union
+  const volatile union
   {
     double should_not_appear;
     char *nor_should_this;
   } named;
-  struct
+  volatile const struct
   {
     long unnamed_sub_member;
     union
     {
       double one_more_level;
       long yes_really_one_more;
+    };
+    struct {
+      int and_finally;
     };
   };
   struct {};		/* Empty ones */

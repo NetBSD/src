@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.56 2023/12/15 09:43:59 rin Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.56.2.1 2026/11/04 23:21:12 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define _POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56 2023/12/15 09:43:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.56.2.1 2026/11/04 23:21:12 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ppcarch.h"
@@ -125,7 +125,8 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments, bus_size_t m
 	map->_dm_segcnt = nsegments;
 	map->_dm_maxmaxsegsz = maxsegsz;
 	map->_dm_boundary = boundary;
-	map->_dm_bounce_thresh = t->_bounce_thresh;
+	map->_dm_bounce_thresh_min = t->_bounce_thresh_min;
+	map->_dm_bounce_thresh_max = t->_bounce_thresh_max;
 	map->_dm_flags = flags & ~(BUS_DMA_WAITOK|BUS_DMA_NOWAIT);
 	map->dm_maxsegsz = maxsegsz;
 	map->dm_mapsize = 0;		/* no valid mappings */
@@ -182,8 +183,11 @@ _bus_dmamap_load_buffer(bus_dma_tag_t t, bus_dmamap_t map, void *buf, bus_size_t
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (map->_dm_bounce_thresh != 0 &&
-		    curaddr >= map->_dm_bounce_thresh)
+		if (map->_dm_bounce_thresh_min != 0 &&
+		    curaddr < map->_dm_bounce_thresh_min)
+			return (EINVAL);
+		if (map->_dm_bounce_thresh_max != 0 &&
+		    curaddr >= map->_dm_bounce_thresh_max)
 			return (EINVAL);
 
 		/*
@@ -323,6 +327,20 @@ _bus_dmamap_load_mbuf(bus_dma_tag_t t, bus_dmamap_t map, struct mbuf *m0, int fl
 			lastaddr = m->m_ext.ext_paddr +
 			    (m->m_data - m->m_ext.ext_buf);
  have_addr:
+			/*
+			 * If we're beyond the bounce threshold, notify
+			 * the caller.
+			 */
+			if (map->_dm_bounce_thresh_min != 0 &&
+			    lastaddr < map->_dm_bounce_thresh_min) {
+				error = EINVAL;
+				continue;
+			}
+			if (map->_dm_bounce_thresh_max != 0 &&
+			    lastaddr >= map->_dm_bounce_thresh_max) {
+				error = EINVAL;
+				continue;
+			}
 			if (first == 0 && ++seg >= map->_dm_segcnt) {
 				error = EFBIG;
 				continue;
@@ -411,6 +429,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	bus_size_t sgsize, isgsize;
 	bus_size_t busaddr, curaddr, lastaddr, baddr, bmask;
 	int seg, iseg, first;
+	bus_size_t size0 = size;
 
 	if (size == 0)
 		return 0;
@@ -418,7 +437,7 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 	lastaddr = 0;
 	bmask = ~(map->_dm_boundary - 1);
 
-	first = 0;
+	first = 1;
 	iseg = 0;
 	busaddr = segs[iseg].ds_addr;
 	isgsize = segs[iseg].ds_len;
@@ -432,8 +451,11 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		 * If we're beyond the bounce threshold, notify
 		 * the caller.
 		 */
-		if (map->_dm_bounce_thresh != 0 &&
-		    curaddr >= map->_dm_bounce_thresh)
+		if (map->_dm_bounce_thresh_min != 0 &&
+		    curaddr < map->_dm_bounce_thresh_min)
+			return EINVAL;
+		if (map->_dm_bounce_thresh_max != 0 &&
+		    curaddr >= map->_dm_bounce_thresh_max)
 			return EINVAL;
 
 		/*
@@ -480,17 +502,27 @@ _bus_dmamap_load_raw(bus_dma_tag_t t, bus_dmamap_t map,
 		}
 
 		lastaddr = curaddr + sgsize;
+		busaddr += sgsize;
 		size -= sgsize;
 		if ((isgsize -= sgsize) == 0) {
-			iseg++;
+			if (++iseg == nsegs) {
+				++seg;
+				break;
+			}
 			KASSERT(iseg < nsegs);
 			busaddr = segs[iseg].ds_addr;
 			isgsize = segs[iseg].ds_len;
 		}
 	}
 
-	if (size > 0)
+	if (size > 0) {
+		map->dm_nsegs = 0;
+		map->dm_mapsize = 0;
 		return EFBIG;
+	}
+
+	map->dm_nsegs = seg;
+	map->dm_mapsize = size0;
 
 	return 0;
 }
@@ -685,6 +717,22 @@ _bus_dmamem_free(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs)
 }
 
 /*
+ * Apparently, this code was written with the assumption that OEA PowerPC
+ * have bus snooping, and that the DMA_MAP_COHERENT can be a no-op.
+ *
+ * The 4xx, (at least some) BookE and few OEA (Wii) cores have no DMA bus
+ * snooping, so a coherent mapping has to be made cache-inhibited...
+ *
+ * Truth is, this needs a proper refactor (perhaps using tags like arm).
+ */
+#if defined(PPC_IBM4XX) /* || defined(PPC_BOOKE) */
+#define	PPC_DMAMEM_UNCACHED(flags)	\
+	(((flags) & (BUS_DMA_DONTCACHE | BUS_DMA_COHERENT)) != 0)
+#else
+#define	PPC_DMAMEM_UNCACHED(flags)	(((flags) & BUS_DMA_DONTCACHE) != 0)
+#endif
+
+/*
  * Common function for mapping DMA-safe memory.  May be called by
  * bus-specific DMA memory map functions.
  */
@@ -704,7 +752,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 	 * If we are mapping a cacheable physically contiguous segment, treat
 	 * it as if we are mapping a poolpage and avoid consuming any KVAs.
 	 */
-	if (nsegs == 1 && (flags & BUS_DMA_DONTCACHE) == 0) {
+	if (nsegs == 1 && !PPC_DMAMEM_UNCACHED(flags)) {
 		KASSERT(size == segs->ds_len);
 		addr = BUS_MEM_TO_PHYS(t, segs->ds_addr);
 		if (__predict_true(addr + size < PMAP_DIRECT_MAPPED_LEN)) {
@@ -729,16 +777,16 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, size_t size
 			if (size == 0)
 				panic("_bus_dmamem_map: size botch");
 			/*
-			 * If we are mapping nocache, flush the page from
+			 * If we are mapping uncached, flush the page from
 			 * cache before we map it.
 			 */
-			if (flags & BUS_DMA_DONTCACHE)
+			if (PPC_DMAMEM_UNCACHED(flags))
 				dcbf(addr, PAGE_SIZE,
 				    curcpu()->ci_ci.dcache_line_size);
 			pmap_kenter_pa(va, addr,
 			    VM_PROT_READ | VM_PROT_WRITE,
 			    PMAP_WIRED |
-			    ((flags & BUS_DMA_DONTCACHE) ? PMAP_NOCACHE : 0));
+			    (PPC_DMAMEM_UNCACHED(flags) ? PMAP_NOCACHE : 0));
 		}
 	}
 
@@ -790,7 +838,17 @@ _bus_dmamem_mmap(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs, off_t off,
 			continue;
 		}
 
-		return (BUS_MEM_TO_PHYS(t, segs[i].ds_addr) + off);
+		paddr_t mmapcookie =
+		    BUS_MEM_TO_PHYS(t, segs[i].ds_addr) + off;
+#if defined(PPC_IBM4XX)
+		/*
+		 * This probably could be the default on OEA too,
+		 * requires more testing.
+		 */
+		if (!PPC_DMAMEM_UNCACHED(flags))
+			mmapcookie |= POWERPC_MMAP_FLAG_CACHEABLE;
+#endif
+		return (mmapcookie);
 	}
 
 	/* Page not found. */

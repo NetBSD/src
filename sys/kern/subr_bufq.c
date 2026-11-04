@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_bufq.c,v 1.27 2019/02/17 23:17:41 bad Exp $	*/
+/*	$NetBSD: subr_bufq.c,v 1.27.36.1 2026/11/04 23:27:49 perseant Exp $	*/
 /*	NetBSD: subr_disk.c,v 1.70 2005/08/20 12:00:01 yamt Exp $	*/
 
 /*-
@@ -68,16 +68,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.27 2019/02/17 23:17:41 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_bufq.c,v 1.27.36.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/systm.h>
+#include <sys/types.h>
+
 #include <sys/buf.h>
 #include <sys/bufq.h>
 #include <sys/bufq_impl.h>
 #include <sys/kmem.h>
-#include <sys/sysctl.h>
 #include <sys/module.h>
+#include <sys/sdt.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #define	STRAT_MATCH(id, bs)	(strcmp((id), (bs)->bs_name) == 0)
 
@@ -116,7 +119,7 @@ bufq_unregister(struct bufq_strat *bs)
 	mutex_enter(&bufq_mutex);
 	if (bs->bs_refcnt != 0) {
 		mutex_exit(&bufq_mutex);
-		return EBUSY;
+		return SET_ERROR(EBUSY);
 	}
 	SLIST_REMOVE(&bufq_strat_list, bs, bufq_strat, bs_next);
 	mutex_exit(&bufq_mutex);
@@ -193,7 +196,7 @@ bufq_alloc(struct bufq_state **bufqp, const char *strategy, int flags)
 	}
 	if (strategy != BUFQ_STRAT_ANY && !found_exact) {
 		if ((flags & BUFQ_EXACT)) {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 			mutex_exit(&bufq_mutex);
 			goto out;
 		}
@@ -255,7 +258,7 @@ bufq_drain(struct bufq_state *bufq)
 	struct buf *bp;
 
 	while ((bp = bufq_get(bufq)) != NULL) {
-		bp->b_error = EIO;
+		bp->b_error = SET_ERROR(EIO);
 		bp->b_resid = bp->b_bcount;
 		biodone(bp);
 	}

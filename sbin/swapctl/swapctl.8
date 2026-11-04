@@ -1,4 +1,4 @@
-.\"	$NetBSD: swapctl.8,v 1.45.2.1 2025/08/02 05:55:08 perseant Exp $
+.\"	$NetBSD: swapctl.8,v 1.45.2.2 2026/11/04 23:19:44 perseant Exp $
 .\"
 .\" Copyright (c) 1997 Matthew R. Green
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd June 1, 2011
+.Dd February 16, 2026
 .Dt SWAPCTL 8
 .Os
 .Sh NAME
@@ -34,16 +34,16 @@
 .Sh SYNOPSIS
 .Nm
 .Fl A
-.Op Fl f | Fl o
+.Op Fl f Ns \||\| Ns Fl o
 .Op Fl n
 .Op Fl p Ar priority
-.Op Fl t Ar blk|noblk|auto
+.Op Fl t Cm blk Ns \||\| Ns Cm noblk Ns \||\| Ns Cm auto
 .Nm
-.Fl D Ar dumpdev|none
+.Fl D Ar dumpdev Ns \||\| Ns Cm none
 .Nm
 .Fl U
 .Op Fl n
-.Op Fl t Ar blk|noblk|auto
+.Op Fl t Cm blk Ns \||\| Ns Cm noblk Ns \||\| Ns Cm auto
 .Nm
 .Fl a
 .Op Fl p Ar priority
@@ -56,184 +56,173 @@
 .Fl d
 .Ar path
 .Nm
-.Fl l | Fl s
-.Op Fl k | Fl m | Fl g | Fl h
+.Fl l Ns \||\| Ns Fl s
+.Op Fl k Ns \||\| Ns Fl m Ns \||\| Ns Fl g Ns \||\| Ns Fl h
+.Op Fl p Ar priority
 .Nm
 .Fl q
 .Nm
 .Fl z
+.Pp
 .Nm swapon
 .Fl a
-.Op Fl t Ar blk|noblk
+.Op Fl t Cm blk Ns \||\| Ns Cm noblk
 .Nm swapon
 .Ar path
+.
 .Sh DESCRIPTION
 The
 .Nm
 program adds, removes,
 lists, and prioritizes swap devices and files for the system.
-The
-.Nm swapon
-program acts the same as the
-.Nm
-program as if called with the
-.Fl a
-option, except if
-.Nm swapon
-itself is called with
-.Fl a
-in which case
-.Nm swapon
-acts as
-.Nm
-with the
-.Fl A
-option.
 .Pp
-The following options are available:
-.Bl -tag -width 123456
-.It Fl A
-This option causes
+The historic
+.Nm swapon
+program, with
+.Fl a
+acts the same as
 .Nm
-to read the
+.Fl A
+.Pq Dq all ,
+otherwise,
+.Nm swapon
+.Ar path
+acts the same as
+.Nm
+.Fl a
+.Ar path
+.Pq Dq add .
+.Pp
+The following options are available for
+.Nm :
+.Bl -tag -width Fl
+.
+.It Fl A
+Read the
 .Pa /etc/fstab
 file for devices and files with a
-.Dq sw
+.Ql sw
 or
-.Dq dp
-type, and adds all
-.Dq sw
-type entries as swap devices and sets the last
-.Dq dp
+.Ql dp
+type, and add all
+.Ql sw
+type entries as swap devices and set the last
+.Ql dp
 type entry as the dump device.
 If no swap devices are configured,
 .Nm
 will exit with an error code.
 If used together with
-.Fl t Ar auto
+.Fl t Cm auto
 this option will not read
 .Pa /etc/fstab
 but query the kernel for all swap partitions on local hard disks.
+.
 .It Fl a
-The
-.Fl a
-option requires that a
+Add
 .Ar path
-also be in the argument list.
-The
-.Ar path
-is added to the kernel's list of swap devices using the
-.Xr swapctl 2
-system call.
-When using the
-.Nm swapon
-form of this command, the
-.Fl a
-option is treated the same as the
-.Fl A
-option, for backwards compatibility.
+to the kernel's list of swap devices.
+.
 .It Fl c
-The
-.Fl c
-option changes the priority of the listed swap device or file.
+Change the priority of the 
+.Ar path
+swap device or file.
+.
 .It Fl D
-The
-.Fl D
-option requires that a
-.Ar dumpdev
-also be in the argument list.
 The kernel dump device is set to
-.Ar dumpdev .
+.Ar dumpdev ,
+which must be a local block device, not a file.
 The word
-.Dq none
-can be used instead of a
-.Ar dumpdev
-to disable the currently set dump device.
-This change is made via the
-.Xr swapctl 2
-system call.
+.Cm none
+can be used instead to disable the currently set dump device.
 The dump device is used when the system crashes
 to write a current snapshot of real memory, to be saved later with
 .Xr savecore 8
 at system reboot, and analyzed to determine the problem.
+.
 .It Fl d
-The
-.Fl d
-option removes the listed
+Remove
 .Ar path
 from the kernel's list of swap devices or files.
+.
 .It Fl f
-Used in combination with the
-.Fl A
-command and
-.Fl t Ar auto
-flag this option makes
+Used in combination with
+.Fl A Fl t Cm auto ,
+.Fl f
+causes
 .Nm
-use the first discovered swap device to also become the dump device.
+to use the first discovered swap device as the dump device.
 The
 .Fl f
-option is mutually exclusive with the
-.Fl o
-option.
+option is mutually exclusive with
+.Fl o .
+.
 .It Fl g
-The
-.Fl g
-option uses (1024 * 1024 * 1024) byte blocks instead of the default 512 byte.
+Report sizes in GB (1024 * 1024 * 1024) blocks instead of the default
+512 byte.
+.
 .It Fl h
-The
-.Fl h
-option uses
+Use
 .Xr humanize_number 3
 to display the sizes.
+.
 .It Fl k
-The
-.Fl k
-option uses 1024 byte blocks instead of the default 512 byte.
+Report sizes in KB (1024) blocks instead of the default 512 byte.
+.
 .It Fl l
-The
-.Fl l
-option lists the current swap devices and files, and their usage statistics.
+List the current swap devices and files, and their usage statistics.
+.
 .It Fl m
-The
-.Fl m
-option uses (1024 * 1024) byte blocks instead of the default 512 byte.
+Report sizes in MB (1024 * 1024) blocks instead of the default 512 byte.
+.
 .It Fl n
-Used with the
+Dry run.
+With the
 .Fl A
 or
 .Fl U
-command, the
-.Fl n
-option makes
+options, print the action
 .Nm
-print the action it would take, but not actually change any swap or
-dump devices.
+would take, but don't actually change any swap or dump devices.
+.
 .It Fl o
 Similar to the
 .Fl f
-flag, this
-.Dq Dump Only
+option, this
+.Dq dump only
 option makes
 .Nm
-find the first swap device and configure it as dump device.
+find the first swap device and configure it as the dump device.
 No swap device is changed.
 This option needs to be used in combination with
-.Fl A Fl t Ar auto
+.Fl A Fl t Cm auto
 and is mutually exclusive with
 .Fl f .
+.
 .It Fl p
-The
-.Fl p
-option sets the priority of swap devices or files to the
+Specify the
 .Ar priority
-argument.
-This works with the
-.\" .Fl d ,
-.Fl a ,
-.Fl c ,
+of swap devices or files.
+With
+.Fl a
 and
+.Fl c
+set the priority of the specified
+.Ar path .
+With
+.Fl A
+the
+.Ar priority
+becomes the default for
+.Pa /etc/fstab
+entries that do not specify a priority.
+With the
 .Fl l
-options.
+and
+.Fl s
+the output is limited to only devices (or files) with the given
+.Ar priority .
+.
 .It Fl q
 Query
 .Pa /etc/fstab ,
@@ -242,57 +231,48 @@ If any are found,
 .Nm
 returns with an exit status of 0, if none are found the exit status will
 be 1.
+.
 .It Fl s
-The
-.Fl s
-option displays a single line summary of current swap statistics.
+Display a single line summary of current swap statistics.
+.
 .It Fl t
-This flag modifies the function of the
-.Fl A
-and
-.Fl U
-options.
-The
-.Fl t
-option allows the type of device to add to be specified.
+Specify the type of device to add or remove.
 An argument of
-.Ar blk
+.Cm blk
 causes all block devices in
 .Pa /etc/fstab
-to be added.
+to be added (or removed).
 An argument of
-.Ar noblk
-causes all non-block devices in
-.Pa /etc/fstab
-to be added.
+.Cm noblk
+operates on all non-block devices in
+.Pa /etc/fstab .
 An argument of
-.Ar auto
+.Cm auto
 causes all swap partitions on local hard disks to be used.
-This option is useful in early system startup, where swapping
+The latter is useful in early system startup, where swapping
 may be needed before all file systems are available, such as during
 disk checks of large file systems.
+.
 .It Fl U
-This option causes
-.Nm
-to read the
+Read the
 .Pa /etc/fstab
-file for devices and files with a
-.Dq sw
+file for devices and files with an
+.Ql sw
 type, and remove all these entries as swap devices.
 If no swap devices are unconfigured,
 .Nm
 will exit with an error code.
 If used together with
-.Fl t Ar auto
+.Fl t Cm auto
 this option will not read
 .Pa /etc/fstab
 but unconfigure all local swap partitions.
+.
 .It Fl z
-The
-.Fl z
-option displays the current dump device.
+Display the current dump device.
 .El
-.Sh SWAP PRIORITY
+.
+.Ss Swap Priority
 The
 .Nx
 swap system allows different swap devices and files to be assigned different
@@ -303,17 +283,17 @@ level will be used.
 The default priority is 0, the highest.
 This value can be any valid integer,
 with higher values receiving less priority.
-.Sh SWAP OPTIONS
+.Ss Swap Options
 When parsing the
 .Pa /etc/fstab
 file for swap devices, the following options are recognized:
 .Pp
-.Bl -tag -width nfsmntpt=/path -compact
-.It priority=N
-This option sets the priority of the specified swap device to N.
-.It nfsmntpt=/path
-This option is useful for swapping to NFS files.
-It specifies the local mount point to mount an NFS filesystem.
+.Bl -tag -width nfsmntpt=/path
+.It Li priority= Ns Ar N
+Set the priority of the specified swap device to
+.Ar N .
+.It Li nfsmntpt= Ns Ar /path
+Specify the local mount point when swapping to an NFS file.
 The mount point must exist as a directory.
 Typically, once this mount has succeeded, the file to be used for swapping
 on will be available under this mount point.
@@ -365,8 +345,8 @@ program was written by
 .An Matthew R. Green Aq Mt mrg@eterna23.net .
 .Sh CAVEATS
 Using the automatic swap partition detection done by the
-.Fl A Fl t Ar auto
-option may be dangereous.
+.Fl A Fl t Cm auto
+option may be dangerous.
 Depending on the on-disk partitioning scheme used, the type of a partition
 may not be accurately recognizable as a swap partition.
 The autodetection might recognize and use partitions on
@@ -381,18 +361,26 @@ If no swap information is specified in
 .Pa /etc/fstab ,
 the system startup scripts (see
 .Xr rc 8 )
-will configure no swap space and your machine will behave very badly
+will configure no swap space and the system will behave very badly
 if (more likely when) it runs out of real memory.
 .Pp
 Local and remote swap files cannot be configured until after the file
-systems they reside on are mounted read/write.
+systems they reside upon are mounted read/write.
 The system startup scripts need to
 .Xr fsck 8
 all local file systems before this can happen.
 This process requires substantial amounts of memory on some systems.
-If you configure no local block swap devices on a machine that has local
-file systems to check and rely only on swap files, the machine will have
+If no local block swap devices are configured on a machine that has local
+file systems to check, and relies only on swap files, the machine will have
 no swap space at all during system
 .Xr fsck 8
 and may run out of real memory, causing fsck to abnormally exit and
-startup scripts to fail.
+the startup scripts to fail.
+.Pp
+Which device is
+.Dq first
+for the purposes of
+.Fl Aft Ns Cm auto
+or
+.Fl Aot Ns Cm auto
+is not specified, and depends upon system configuration behavior.

@@ -1,5 +1,5 @@
 # Makefile for regression testing the GNU debugger.
-# Copyright 1992-2024 Free Software Foundation, Inc.
+# Copyright 1992-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -209,7 +209,7 @@ endif
 # in the same situation, we avoid invoking DejaGnu, and instead just call
 # the check/no-matching-tests-found rule (which prints a helpful message).
 #
-# To get the same behaviour for check-single we decide here, based on how
+# To get the same behavior for check-single we decide here, based on how
 # TESTS expanded, whether check-single should redirect to do-check-single or
 # to check/no-matching-tests-found.
 ifeq ($(expanded_tests_or_none),no-matching-tests-found)
@@ -386,7 +386,17 @@ check-all-boards: all $(abs_builddir)/site.exp
 	${abs_srcdir}/make-check-all.sh --keep-results \
 		--host-user "$(GDB_HOST_USERNAME)" \
 		--target-user "$(GDB_TARGET_USERNAME)" \
-		"$(TESTS)"
+		"$(TESTS)" \
+	result=$$?; \
+	if test -d check-all; then \
+	  $(SHELL) $(srcdir)/../../contrib/dg-extract-results.sh \
+	    `find check-all -name gdb.sum -print` > check-all/gdb.sum; \
+	  $(SHELL) $(srcdir)/../../contrib/dg-extract-results.sh -L \
+	    `find check-all -name gdb.log -print` > check-all/gdb.log; \
+	  sed -n '/=== gdb Summary ===/,$$ p' check-all/gdb.sum; \
+	fi; \
+	exit $$result
+
 
 force:;
 
@@ -440,14 +450,15 @@ expect-read1 expect-readmore:
 # function, making it read one byte at a time.  Running the testsuite
 # with this catches racy tests.
 read1.so: lib/read1.c
-	$(ECHO_CC) $(CC) -o $@ ${srcdir}/lib/read1.c -Wall -g -shared -fPIC $(CFLAGS)
+	$(ECHO_CC) $(CC) -o $@ ${srcdir}/lib/read1.c -Wall -g -shared -fPIC \
+	  $(filter-out -fsanitize=%,$(CFLAGS))
 
 # Build the readmore.so preload library.  This overrides the `read'
 # function, making it try harder to read more at a time.  Running the
 # testsuite with this catches racy tests.
 readmore.so: lib/read1.c
 	$(ECHO_CC) $(CC) -o $@ ${srcdir}/lib/read1.c -Wall -g -shared -fPIC \
-	  $(CFLAGS) -DREADMORE
+	  $(filter-out -fsanitize=%,$(CFLAGS)) -DREADMORE
 
 # Build the read1 machinery.
 .PHONY: read1 readmore

@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.c,v 1.8.2.1 2025/08/02 05:53:41 perseant Exp $	*/
+/*	$NetBSD: dname_39.c,v 1.8.2.2 2026/11/04 23:18:09 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -149,9 +149,7 @@ tostruct_dname(ARGS_TOSTRUCT) {
 	REQUIRE(dname != NULL);
 	REQUIRE(rdata->length != 0);
 
-	dname->common.rdclass = rdata->rdclass;
-	dname->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dname->common, link);
+	DNS_RDATACOMMON_INIT(dname, rdata->type, rdata->rdclass);
 
 	dns_name_init(&name, NULL);
 	dns_rdata_toregion(rdata, &region);

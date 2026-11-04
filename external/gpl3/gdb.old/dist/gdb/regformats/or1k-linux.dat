@@ -3,6 +3,7 @@
 name:or1k_linux
 xmltarget:or1k-linux.xml
 expedite:r1,npc
+osabi:GNU/Linux
 32:r0
 32:r1
 32:r2

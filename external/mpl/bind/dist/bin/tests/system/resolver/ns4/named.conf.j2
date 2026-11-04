@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+// NS4
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	recursion no;
+	dnssec-validation no;
+};
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "moves" {
+	type primary;
+	file "moves.db";
+};
+
+zone "child.server" {
+	type primary;
+	file "child.server.db";
+};
+
+zone "tld" {
+	type primary;
+	file "tld.db";
+};
+
+zone "broken" {
+	type primary;
+	file "broken.db";
+};
+
+zone "sourcens" {
+	type primary;
+	file "sourcens.db";
+};
+
+zone "v4only.net" {
+	type primary;
+	file "v4only.net.db";
+};
+
+{% include "_common/controls.conf.j2" %}

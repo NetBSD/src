@@ -1,0 +1,34 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+{% set wrongoption = wrongoption | default(False) %}
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation no;
+	attach-cache "globalcache";
+	max-zone-ttl unlimited;
+	resolver-query-timeout 5000; # 5 seconds
+	max-recursion-queries 100;
+};
+
+view "default" {
+	zone "." {
+		type hint;
+		file "root.hint";
+	};
+	{% if wrongoption %}
+	forwarders port 9999999 { 127.0.0.1; };
+	{% endif %}
+};
+
+{% include "_common/controls.conf.j2" %}

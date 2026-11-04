@@ -1,0 +1,303 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Tests for GDB's handling of a shared library being unloaded via a
+# call to dlclose.  See the individual test_* procs for a description
+# of each test.
+
+standard_testfile .c -lib.c
+
+# One of the tests uses this Python file.  The test_* proc checks that
+# GDB supports Python tests.  Some of the other procs don't use this
+# Python file.
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+
+# Build the library and copy it to the target.
+set libname ${testfile}-lib
+set libfile [standard_output_file $libname]
+if { [build_executable "build shlib" $libfile $srcfile2 {debug shlib}] == -1} {
+    return
+}
+set libfile_on_target [gdb_download_shlib $libfile]
+
+# Build the executable.
+set opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${libname}\"]
+if { [build_executable "build exec" $binfile $srcfile $opts] == -1} {
+    return
+}
+
+# The line number of the dlclose call.
+set bp_line [gdb_get_line_number "Break here" $srcfile]
+
+# If the target is remote, then the library name in the bp_disabled_re
+# below will have a 'target:' prefix.
+if {[is_remote target]} {
+    set target_prefix_re "target:"
+} else {
+    set target_prefix_re ""
+}
+
+# The line emitted when GDB disables breakpoints after unloading a
+# shared library.
+set bp_disabled_re "warning: Temporarily disabling breakpoints for unloaded shared library \"$target_prefix_re[string_to_regexp $::libfile_on_target]\""
+
+# The complete regexp for when GDB stops on the line after BP_LINE,
+# assuming that GDB has disabled some breakpoints.
+set stop_after_bp_re [multi_line \
+			  "^$::bp_disabled_re" \
+			  "[expr $::bp_line + 1]\\s+assert \\(res == 0\\);"]
+
+# Checking that a breakpoint with multiple locations in a shared
+# library only triggers a single breakpoint modified event from
+# disable_breakpoints_in_unloaded_shlib when the shared library is
+# unloaded.
+proc_with_prefix test_bp_modified_events {} {
+    if { ![allow_python_tests] } {
+	unsupported "python support needed"
+	return
+    }
+
+    clean_restart
+    gdb_load $::binfile
+
+    if {![runto_main]} {
+	return
+    }
+
+    # If the debug information doesn't allow GDB to identify inline
+    # functions then this test isn't going to work.
+    get_debug_format
+    if { [skip_inline_frame_tests] } {
+	unsupported "skipping inline frame tests"
+	return
+    }
+
+    gdb_breakpoint $::srcfile:$::bp_line
+    gdb_continue_to_breakpoint "stop before dlclose"
+
+    gdb_breakpoint inline_func
+    set bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		    "get b/p number"]
+
+    gdb_test_no_output "source $::pyfile" "import python scripts"
+
+    gdb_test "next" $::stop_after_bp_re
+
+    # The breakpoint should have been modified once when some of its
+    # locations are made pending after the shared library is unloaded.
+    gdb_test_multiple "python print(bp_modified_counts\[$bp_num\])" "" {
+	-re -wrap "^1" {
+	    pass $gdb_test_name
+	}
+	-re -wrap "^2" {
+	    # A second event occurs when the pending breakpoint is
+	    # incorrectly deleted.
+	    kfail gdb/32404 $gdb_test_name
+	}
+	-re -wrap "^$::decimal" {
+	    fail $gdb_test_name
+	}
+    }
+}
+
+# Check that GDB disables dprintf breakpoints within a shared library
+# when the shared library is unloaded.
+proc_with_prefix test_dprintf_after_unload {} {
+    clean_restart
+    gdb_load $::binfile
+
+    if {![runto_main]} {
+	return
+    }
+
+    gdb_breakpoint $::srcfile:$::bp_line
+    gdb_continue_to_breakpoint "stop before dlclose"
+
+    # Setup a dprintf within the shared library.
+    gdb_test "dprintf foo,\"In foo\""
+    set bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		    "get b/p number"]
+
+    # Unload the shared library, GDB should disable our b/p.
+    gdb_test "next" $::stop_after_bp_re
+
+    # Check that our b/p is now showing as disabled.
+    gdb_test "info breakpoints $bp_num" \
+	[multi_line \
+	     "^Num\\s+Type\\s+Disp\\s+Enb\\s+Address\\s+What" \
+	     "$bp_num\\s+dprintf\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	     "\\s+printf \"In foo\""]
+}
+
+# Create a dprintf breakpoint in a shared library.  Restart the
+# inferior.  We should not get an error about re-setting the dprintf
+# breakpoint.
+proc_with_prefix test_dprintf_with_rerun {} {
+    clean_restart
+    gdb_load $::binfile
+
+    if {![runto_main]} {
+	return
+    }
+
+    gdb_breakpoint $::srcfile:$::bp_line
+    gdb_continue_to_breakpoint "stop before dlclose"
+
+    # Setup a dprintf within the shared library.
+    gdb_test "dprintf foo,\"In foo\""
+    set bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+		    "get b/p number"]
+
+    # Check that the dprintf b/p is initially not pending.
+    gdb_test "info breakpoints $bp_num" \
+	[multi_line \
+	     "^Num\\s+Type\\s+Disp\\s+Enb\\s+Address\\s+What" \
+	     "$bp_num\\s+dprintf\\s+keep\\s+y\\s+$::hex\\s+in foo at \[^\r\n\]+" \
+	     "\\s+printf \"In foo\""] \
+	"dprintf is non-pending before restart"
+
+    # Restart the inferior.
+    gdb_run_cmd
+
+    # The inferior will stop at the initial 'main' breakpoint.  This
+    # is at a location before any of the shlibs have been loaded.
+    set saw_bp_reset_error false
+    set saw_bp_disable_warning false
+    gdb_test_multiple "" "stop before shlib are reloaded" {
+	-re "warning: Temporarily disabling breakpoints for unloaded shared library \"\[^\r\n\]+/$::libname\"\r\n" {
+	    set saw_bp_disable_warning true
+	    exp_continue
+	}
+
+	-re "Error in re-setting breakpoint $bp_num: \[^\r\n\]+" {
+	    set saw_bp_reset_error true
+	    exp_continue
+	}
+
+	-re "Breakpoint $::decimal, main \\(\\) at \[^\r\n\]+\r\n$::decimal\\s+\[^\r\n\]+\r\n$::gdb_prompt $" {
+	    gdb_assert { !$saw_bp_reset_error && !$saw_bp_disable_warning } $gdb_test_name
+	}
+    }
+
+    # Check that the dprintf b/p is still enabled, but marked pending
+    # before the shlib are loaded.
+    gdb_test "info breakpoints $bp_num" \
+	[multi_line \
+	     "^Num\\s+Type\\s+Disp\\s+Enb\\s+Address\\s+What" \
+	     "$bp_num\\s+dprintf\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+	     "\\s+printf \"In foo\""] \
+	"dprintf is pending before shlib reload"
+
+    set saw_in_foo_output false
+    gdb_test_multiple "continue" "stop after libraries are reloaded" {
+	-re "^continue\r\n" {
+	    exp_continue
+	}
+	-re "^Continuing\\.\r\n" {
+	    exp_continue
+	}
+	-re "^In foo\r\n" {
+	    set saw_in_foo_output true
+	    exp_continue
+	}
+	-re "^Breakpoint $::decimal, main \\(\\) at .* Break here\\.  \\*/\r\n$::gdb_prompt $" {
+	    gdb_assert { $saw_in_foo_output } $gdb_test_name
+	}
+    }
+
+    # Check that the dprintf b/p is still enabled, but is now, no
+    # longer pending.
+    gdb_test "info breakpoints $bp_num" \
+	[multi_line \
+	     "^Num\\s+Type\\s+Disp\\s+Enb\\s+Address\\s+What" \
+	     "$bp_num\\s+dprintf\\s+keep\\s+y\\s+$::hex\\s+in foo at \[^\r\n\]+" \
+	     "\\s+breakpoint already hit 1 time" \
+	     "\\s+printf \"In foo\""] \
+	"dprintf is non-pending after restart"
+}
+
+# Check that we see breakpoint modified events (where appropriate)
+# when the 'nosharedlibrary' command is used to unload all shared
+# libraries.
+#
+# Also check that the 'nosharedlibrary' doesn't trigger a warning
+# about shared library breakpoints being disabled.
+proc_with_prefix test_silent_nosharedlib {} {
+    if { ![allow_python_tests] } {
+	unsupported "python support needed"
+	return
+    }
+
+    foreach_with_prefix type { breakpoint dprintf } {
+	clean_restart
+	gdb_load $::binfile
+
+	if {![runto_main]} {
+	    return
+	}
+
+	gdb_breakpoint $::srcfile:$::bp_line
+	gdb_continue_to_breakpoint "stop before dlclose"
+
+	# Setup a dprintf or breakpoint in the shared library.
+	if { $type eq "breakpoint" } {
+	    gdb_test "break foo"
+	} else {
+	    gdb_test "dprintf foo,\"In foo\""
+	}
+
+	# Record the number of the b/p (or dprintf) we just inserted.
+	set bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			"get b/p number"]
+
+	# Load Python library to track b/p modifications.
+	gdb_test_no_output "source $::pyfile" "import python scripts"
+
+	# Initialise the b/p modified hash.  Currently dprintf style
+	# breakpoints are not visible from Python, so the modification
+	# count will remain unchanged in that case.
+	gdb_test_no_output "python bp_modified_counts\[$bp_num\] = 0"
+
+	# Discard symbols from all loaded shared libraries.
+	gdb_test_no_output "nosharedlibrary"
+
+	# Check that our b/p is now showing as disabled.
+	if { $type eq "breakpoint" } {
+	    set re \
+		[list "$bp_num\\s+breakpoint\\s+keep\\s+y\\s+<PENDING>\\s+foo"]
+	    set count 1
+	} else {
+	    set re \
+		[list \
+		     "$bp_num\\s+dprintf\\s+keep\\s+y\\s+<PENDING>\\s+foo" \
+		     "\\s+printf \"In foo\""]
+	    set count 0
+	}
+
+	gdb_test "info breakpoints $bp_num" \
+	    [multi_line "^Num\\s+Type\\s+Disp\\s+Enb\\s+Address\\s+What" \
+		 {*}$re]
+
+	# Check we've seen the expected number of breakpoint modified
+	# events.  Currently dprintf breakpoints are not visible from
+	# Python, so we will not see an event in that case.
+	gdb_test "python print(bp_modified_counts\[$bp_num\])" "^$count"
+    }
+}
+
+test_bp_modified_events
+test_dprintf_after_unload
+test_dprintf_with_rerun
+test_silent_nosharedlib

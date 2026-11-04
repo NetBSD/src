@@ -1,0 +1,4 @@
+#	$NetBSD: list.raid,v 1.1.2.2 2026/11/04 23:19:36 perseant Exp $
+
+PROG	ccdconfig
+PROG	raidctl

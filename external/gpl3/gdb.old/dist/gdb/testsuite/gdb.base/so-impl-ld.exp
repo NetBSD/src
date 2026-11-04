@@ -1,4 +1,4 @@
-# Copyright 1997-2023 Free Software Foundation, Inc.
+# Copyright 1997-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -14,9 +14,7 @@
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 standard_testfile .c
 set libfile "solib1"
@@ -64,10 +62,3 @@ gdb_test "next" "${decimal}\[ \t\]*return ans;.* STEP .*" "step in solib call"
 gdb_step_until ".*main .. at.*return 0;.*" "step out of solib call"
 
 gdb_exit
-return 0
-
-
-
-
-
-

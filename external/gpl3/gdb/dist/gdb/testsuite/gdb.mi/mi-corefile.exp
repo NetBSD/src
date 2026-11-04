@@ -1,4 +1,4 @@
-# Copyright 2022-2024 Free Software Foundation, Inc.
+# Copyright 2022-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,6 +29,7 @@ if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
 
 set corefile [core_find $binfile {}]
 if {$corefile == ""} {
+    untested "unable to create or find corefile"
     return 0
 }
 

@@ -1,6 +1,6 @@
 /* Modula 2 language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,7 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
+#include "event-top.h"
 #include "symtab.h"
 #include "gdbtypes.h"
 #include "expression.h"
@@ -42,7 +42,7 @@ eval_op_m2_high (struct type *expect_type, struct expression *exp,
   else
     {
       arg1 = coerce_ref (arg1);
-      struct type *type = check_typedef (value_type (arg1));
+      struct type *type = check_typedef (arg1->type ());
 
       if (m2_is_unbounded_array (type))
 	{
@@ -54,7 +54,7 @@ eval_op_m2_high (struct type *expect_type, struct expression *exp,
 				   _("unbounded structure "
 				     "missing _m2_high field"));
 
-	  if (value_type (arg1) != type)
+	  if (arg1->type () != type)
 	    arg1 = value_cast (type, arg1);
 	}
     }
@@ -73,7 +73,7 @@ eval_op_m2_subscript (struct type *expect_type, struct expression *exp,
      then report this as an error.  */
 
   arg1 = coerce_ref (arg1);
-  struct type *type = check_typedef (value_type (arg1));
+  struct type *type = check_typedef (arg1->type ());
 
   if (m2_is_unbounded_array (type))
     {
@@ -87,10 +87,10 @@ eval_op_m2_subscript (struct type *expect_type, struct expression *exp,
 			       _("unbounded structure "
 				 "missing _m2_contents field"));
 	  
-      if (value_type (arg1) != type)
+      if (arg1->type () != type)
 	arg1 = value_cast (type, arg1);
 
-      check_typedef (value_type (arg1));
+      check_typedef (arg1->type ());
       return value_ind (value_ptradd (arg1, value_as_long (arg2)));
     }
   else
@@ -104,7 +104,7 @@ eval_op_m2_subscript (struct type *expect_type, struct expression *exp,
       }
 
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
-    return value_zero (type->target_type (), VALUE_LVAL (arg1));
+    return value::zero (type->target_type (), arg1->lval ());
   else
     return value_subscript (arg1, value_as_long (arg2));
 }
@@ -139,7 +139,7 @@ m2_language::language_arch_info (struct gdbarch *gdbarch,
   lai->set_bool_type (builtin->builtin_bool, "BOOLEAN");
 }
 
-/* See languge.h.  */
+/* See language.h.  */
 
 void
 m2_language::printchar (int c, struct type *type,
@@ -169,7 +169,8 @@ m2_language::printstr (struct ui_file *stream, struct type *elttype,
       return;
     }
 
-  for (i = 0; i < length && things_printed < options->print_max; ++i)
+  unsigned int print_max_chars = get_print_max_chars (options);
+  for (i = 0; i < length && things_printed < print_max_chars; ++i)
     {
       /* Position of the character we are examining
 	 to see whether it is repeated.  */
@@ -280,18 +281,20 @@ build_m2_types (struct gdbarch *gdbarch)
 {
   struct builtin_m2_type *builtin_m2_type = new struct builtin_m2_type;
 
+  type_allocator alloc (gdbarch);
+
   /* Modula-2 "pervasive" types.  NOTE:  these can be redefined!!! */
   builtin_m2_type->builtin_int
-    = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 0, "INTEGER");
+    = init_integer_type (alloc, gdbarch_int_bit (gdbarch), 0, "INTEGER");
   builtin_m2_type->builtin_card
-    = arch_integer_type (gdbarch, gdbarch_int_bit (gdbarch), 1, "CARDINAL");
+    = init_integer_type (alloc, gdbarch_int_bit (gdbarch), 1, "CARDINAL");
   builtin_m2_type->builtin_real
-    = arch_float_type (gdbarch, gdbarch_float_bit (gdbarch), "REAL",
+    = init_float_type (alloc, gdbarch_float_bit (gdbarch), "REAL",
 		       gdbarch_float_format (gdbarch));
   builtin_m2_type->builtin_char
-    = arch_character_type (gdbarch, TARGET_CHAR_BIT, 1, "CHAR");
+    = init_character_type (alloc, TARGET_CHAR_BIT, 1, "CHAR");
   builtin_m2_type->builtin_bool
-    = arch_boolean_type (gdbarch, gdbarch_int_bit (gdbarch), 1, "BOOLEAN");
+    = init_boolean_type (alloc, gdbarch_int_bit (gdbarch), 1, "BOOLEAN");
 
   return builtin_m2_type;
 }

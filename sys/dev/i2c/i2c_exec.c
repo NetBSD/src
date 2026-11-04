@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.18 2022/10/24 10:17:27 riastradh Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.18.8.1 2026/11/04 23:21:55 perseant Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.18 2022/10/24 10:17:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.18.8.1 2026/11/04 23:21:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -73,6 +73,7 @@ iic_tag_init(i2c_tag_t tag)
 
 	memset(tag, 0, sizeof(*tag));
 	mutex_init(&tag->ic_bus_lock, MUTEX_DEFAULT, IPL_NONE);
+	tag->ic_channel = I2C_CHANNEL_DEFAULT;
 }
 
 /*
@@ -88,25 +89,20 @@ iic_tag_fini(i2c_tag_t tag)
 }
 
 /*
- * iic_acquire_bus:
+ * iic_acquire_bus_lock --
  *
- *	Acquire the I2C bus for use by a client.
+ *	Acquire an i2c bus lock.  Used by iic_acquire_bus() and other
+ *	places that need to acquire an i2c-related lock with the same
+ *	logic.
  */
 int
-iic_acquire_bus(i2c_tag_t tag, int flags)
+iic_acquire_bus_lock(kmutex_t *lock, int flags)
 {
-
-#if 0	/* XXX Not quite ready for this yet. */
-	KASSERT(!cpu_intr_p());
-#endif
-
-	flags = iic_op_flags(flags);
-
 	if (flags & I2C_F_POLL) {
 		/*
 		 * Polling should only be used in rare and/or
-		 * extreme circumstances; most i2c clients
-		 * should be allowed to sleep.
+		 * extreme circumstances; most i2c clients should
+		 * be allowed to sleep.
 		 *
 		 * Really, the ONLY user of I2C_F_POLL should be
 		 * "when cold", i.e. during early autoconfiguration
@@ -115,7 +111,7 @@ iic_acquire_bus(i2c_tag_t tag, int flags)
 		 * users interfering with our access of the i2c bus
 		 * in that case.
 		 */
-		if (mutex_tryenter(&tag->ic_bus_lock) == 0) {
+		if (mutex_tryenter(lock) == 0) {
 			return EBUSY;
 		}
 	} else {
@@ -126,21 +122,53 @@ iic_acquire_bus(i2c_tag_t tag, int flags)
 		 * i2c bus while we're asleep waiting for the controller
 		 * to perform the I/O.
 		 *
-		 * XXXJRT Disable preemption here?  We'd like to keep
-		 * the CPU while holding this resource, unless we release
-		 * it voluntarily (which should only happen while waiting
-		 * for a controller to complete I/O).
+		 * XXXJRT Disable preemption here?  We'd like to keep the
+		 * CPU while holding this resource, unless we release it
+		 * voluntarily (which should only happen while waiting for
+		 * a controller to complete I/O).
 		 */
-		mutex_enter(&tag->ic_bus_lock);
+		mutex_enter(lock);
 	}
 
-	int error = 0;
+	return 0;
+}
+
+/*
+ * iic_release_bus_lock --
+ *
+ *	Release a previously-acquired i2c-related bus lock.
+ */
+void
+iic_release_bus_lock(kmutex_t *lock)
+{
+	mutex_exit(lock);
+}
+
+/*
+ * iic_acquire_bus:
+ *
+ *	Acquire the I2C bus for use by a client.
+ */
+int
+iic_acquire_bus(i2c_tag_t tag, int flags)
+{
+#if 0	/* XXX Not quite ready for this yet. */
+	KASSERT(!cpu_intr_p());
+#endif
+
+	flags = iic_op_flags(flags);
+
+	int error = iic_acquire_bus_lock(&tag->ic_bus_lock, flags);
+	if (error) {
+		return error;
+	}
+
 	if (tag->ic_acquire_bus) {
 		error = (*tag->ic_acquire_bus)(tag->ic_cookie, flags);
 	}
 
 	if (__predict_false(error)) {
-		mutex_exit(&tag->ic_bus_lock);
+		iic_release_bus_lock(&tag->ic_bus_lock);
 	}
 
 	return error;
@@ -154,7 +182,6 @@ iic_acquire_bus(i2c_tag_t tag, int flags)
 void
 iic_release_bus(i2c_tag_t tag, int flags)
 {
-
 #if 0	/* XXX Not quite ready for this yet. */
 	KASSERT(!cpu_intr_p());
 #endif
@@ -165,7 +192,7 @@ iic_release_bus(i2c_tag_t tag, int flags)
 		(*tag->ic_release_bus)(tag->ic_cookie, flags);
 	}
 
-	mutex_exit(&tag->ic_bus_lock);
+	iic_release_bus_lock(&tag->ic_bus_lock);
 }
 
 /*

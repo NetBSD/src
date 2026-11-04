@@ -1,4 +1,4 @@
-/*	$NetBSD: ukfs_disklabel.c,v 1.3 2011/02/22 15:42:15 pooka Exp $	*/
+/*	$NetBSD: ukfs_disklabel.c,v 1.3.56.1 2026/11/04 23:19:31 perseant Exp $	*/
 
 /*
  * Local copies of libutil disklabel routines.  This uncouples libukfs
@@ -41,6 +41,7 @@
  */
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #include <string.h>
 #include <unistd.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: hd64461pcmcia.c,v 1.56 2024/06/02 13:28:45 andvar Exp $	*/
+/*	$NetBSD: hd64461pcmcia.c,v 1.56.2.1 2026/11/04 23:20:41 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.56 2024/06/02 13:28:45 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hd64461pcmcia.c,v 1.56.2.1 2026/11/04 23:20:41 perseant Exp $");
 
 #include "opt_hd64461pcmcia.h"
 
@@ -397,7 +397,7 @@ hd64461pcmcia_attach_channel(struct hd64461pcmcia_softc *sc,
 	/*
 	 * Continuous 16-MB Area Mode
 	 */
-	/* Attibute/Common memory extent */
+	/* Attribute/Common memory extent */
 	membase = (channel == CHANNEL_0)
 	    ? HD64461_PCC0_MEMBASE : HD64461_PCC1_MEMBASE;
 
@@ -1192,7 +1192,7 @@ hd64461pcmcia_info(struct hd64461pcmcia_softc *sc)
 #undef _
 	printf("\n");
 
-	printf("PCC1 General Contorol Register\n");
+	printf("PCC1 General Control Register\n");
 	r8 = hd64461_reg_read_1(HD64461_PCC1GCR_REG8);
 #define	_(m)	dbg_bitmask_print(r8, HD64461_PCC1GCR_##m, #m)
 	_(P1DRVE);_(P1PCCR);_(P1VCC0);_(P1MMOD);_(P1PA25);_(P1PA24);_(P1REG);

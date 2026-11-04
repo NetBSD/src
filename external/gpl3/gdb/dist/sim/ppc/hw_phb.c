@@ -90,7 +90,7 @@
 
    Since device tree entries that are specified on the command line
    are added before most of the device tree has been built it is often
-   necessary to explictly add certain device properties and thus
+   necessary to explicitly add certain device properties and thus
    ensure they are already present in the device tree.  For the
    <<phb>> one such property is parent busses <<#address-cells>>.
 
@@ -154,7 +154,7 @@
    
    The Open Firmware PCI bus bindings document (rev 1.6) suggests that
    the register field of non-relocatable PCI address should be zero.
-   Unfortunatly, PCI addresses specified in the <<assigned-addresses>>
+   Unfortunately, PCI addresses specified in the <<assigned-addresses>>
    property must be both non-relocatable and have non-zero register
    fields.
 
@@ -316,7 +316,7 @@ hw_phb_attach_address(device *me,
   if (phb_type != hw_phb_normal_decode && phb_type != hw_phb_subtractive_decode)
     device_error(me, "attach type (%d) specified by %s invalid",
 		 type, device_path(client));
-  /* attach it to the relevent bus */
+  /* attach it to the relevant bus */
   DTRACE(phb, ("attach %s - %s %s:0x%lx (0x%lx bytes)\n",
 	       device_path(client),
 	       hw_phb_decode_name(phb_type),

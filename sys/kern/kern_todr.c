@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.47 2021/04/03 12:06:53 simonb Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.47.22.1 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,16 +70,19 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.47 2021/04/03 12:06:53 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.47.22.1 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
-#include <sys/kernel.h>
-#include <sys/systm.h>
+
 #include <sys/device.h>
-#include <sys/timetc.h>
+#include <sys/device_calls.h>
 #include <sys/intr.h>
-#include <sys/rndsource.h>
+#include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/rndsource.h>
+#include <sys/sdt.h>
+#include <sys/systm.h>
+#include <sys/timetc.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
@@ -140,6 +143,36 @@ todr_lock_owned(void)
 }
 
 /*
+ * todr_should_skip:
+ *	Evaluate if we should skip attaching the clock device
+ *	specified by the todr handle.
+ */
+static bool
+todr_should_skip(todr_chip_handle_t todr)
+{
+	device_t dev = todr->todr_dev;
+	struct device_is_system_todr_args args = { };
+
+	/* No basis for evaluation if no device backs the TODR. */
+	if (dev == NULL) {
+		return false;
+	}
+
+	if (device_call(dev, DEVICE_IS_SYSTEM_TODR(&args)) != 0) {
+		/* Call is not supported; proceed as if we should attach. */
+		return false;
+	}
+
+	if (args.result) {
+		/* This is the system TODR; proceed. */
+		return false;
+	}
+
+	aprint_normal_dev(dev, "disabled (not system TODR)\n");
+	return true;
+}
+
+/*
  * todr_attach:
  *	Attach the clock device to todr_handle.
  */
@@ -153,6 +186,10 @@ todr_attach(todr_chip_handle_t todr)
 	 * main().
 	 */
 	KASSERT(todr_initialized);
+
+	if (todr_should_skip(todr)) {
+		return;
+	}
 
 	todr_lock();
 	if (todr_handle) {
@@ -210,7 +247,7 @@ todr_set_systime(time_t base)
 	 * Some ports need to be supplied base in order to fabricate a time_t.
 	 */
 	if (todr_handle)
-		todr_handle->base_time = base;
+		todr_handle->todr_base_time = base;
 
 	memset(&tv, 0, sizeof(tv));
 
@@ -445,14 +482,14 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		if (dt.dt_mon < 1 || dt.dt_mon > 12 ||
 		    dt.dt_day < 1 || dt.dt_day > 31 ||
 		    dt.dt_hour > 23 || dt.dt_min > 59 || dt.dt_sec > 60) {
-			return EINVAL;
+			return SET_ERROR(EINVAL);
 		}
 		tvp->tv_sec = clock_ymdhms_to_secs(&dt) + rtc_offset * 60;
 		tvp->tv_usec = 0;
-		return tvp->tv_sec < 0 ? EINVAL : 0;
+		return tvp->tv_sec < 0 ? SET_ERROR(EINVAL) : 0;
 	}
 
-	return ENXIO;
+	return SET_ERROR(ENXIO);
 }
 
 static int
@@ -481,5 +518,5 @@ todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 		return rv;
 	}
 
-	return ENXIO;
+	return SET_ERROR(ENXIO);
 }

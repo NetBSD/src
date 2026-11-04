@@ -1,4 +1,4 @@
-/*	$NetBSD: apei_hest.c,v 1.3.2.1 2025/08/02 05:56:32 perseant Exp $	*/
+/*	$NetBSD: apei_hest.c,v 1.3.2.2 2026/11/04 23:21:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2024 The NetBSD Foundation, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.3.2.1 2025/08/02 05:56:32 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: apei_hest.c,v 1.3.2.2 2026/11/04 23:21:47 perseant Exp $");
 
 #include <sys/types.h>
 
@@ -919,8 +919,10 @@ apei_hest_attach(struct apei_softc *sc)
 		aprint_error_dev(sc->sc_dev, "HEST: too many error sources\n");
 		return;
 	}
-	hsc->hsc_source = kmem_zalloc(n * sizeof(hsc->hsc_source[0]),
-	    KM_SLEEP);
+	if (n > 0) {
+		hsc->hsc_source = kmem_zalloc(n * sizeof(hsc->hsc_source[0]),
+			KM_SLEEP);
+	}
 
 	header = (ACPI_HEST_HEADER *)(hest + 1);
 	resid = hest->Header.Length - sizeof(*hest);

@@ -1,0 +1,5 @@
+#	$NetBSD: std.mvme162_172,v 1.1.2.2 2026/11/04 23:21:01 perseant Exp $
+
+# Standard devices found on all MVME162 and MVME172 systems.
+zsc*		at pcctwo? ipl 4
+zstty*		at zsc? channel ?

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7.12.1 2025/08/02 05:58:03 perseant Exp $
+# $NetBSD: Makefile,v 1.7.12.2 2026/11/04 23:28:15 perseant Exp $
 
 NOMAN=			# defined
 
@@ -14,7 +14,7 @@ SUBDIR+=		dso
 CPPFLAGS+=		${CPPFLAGS_CHECK_STACK}
 
 BINDIR=			${TESTSDIR}
-PROG_CXX=		h_initfini1 h_initfini2 h_initfini3
+PROGS_CXX=		h_initfini1 h_initfini2 h_initfini3
 SRCS.h_initfini1=	h_initfini1.cxx h_initfini_common.cxx \
 			${SRCS_CHECK_STACK}
 SRCS.h_initfini2=	h_initfini1.cxx h_initfini_common.cxx \
@@ -24,9 +24,10 @@ SRCS.h_initfini3=	h_initfini3.cxx h_initfini_common.cxx \
 			${SRCS_CHECK_STACK}
 LDADD.h_initfini3+=	-Wl,-rpath,${TESTSDIR}
 
-PROGS+=			h_ifunc_static h_initfini_array
+PROGS+=			h_ifunc_static h_initfini_array h_preinit_array
 SRCS.h_ifunc_static=	h_ifunc_static.c
 SRCS.h_initfini_array=	h_initfini_array.c
+SRCS.h_preinit_array=	h_preinit_array.c
 LDSTATIC.h_ifunc_static=-static
 
 TESTS_SH+=		t_hello
@@ -38,6 +39,7 @@ PROGS+=		h_hello_sta
 PROGS+=		${"${MKPIE}" != no:?h_hello_stapie:}
 
 h_hello_relr: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
+h_hello_relr.link: CTFMERGE=:	# PR toolchain/59364: ctf tools needs update
 
 SRCS.h_hello_dyn+=		h_hello.c
 SRCS.h_hello_dynpie+=		h_hello.c

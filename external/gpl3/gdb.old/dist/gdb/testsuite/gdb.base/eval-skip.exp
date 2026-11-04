@@ -1,4 +1,4 @@
-# Copyright 1998-2023 Free Software Foundation, Inc.
+# Copyright 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -54,94 +54,63 @@ gdb_test_no_output "set variable y=2" "set variable y=2"
 gdb_test_no_output "set variable z=2" "set variable z=2"
 gdb_test_no_output "set variable w=3" "set variable w=3"
 
-gdb_test "print (0 && (x+y))" ".$decimal = $false" \
-    "print value of (0 && (x+y))"
+proc test { val re } {
+    gdb_test "print $val" $re "print value of $val value"
+}
 
-gdb_test "print (0 && (x-y))" ".$decimal = $false" \
-    "print value of (0 && (x-y))"
+test "(0 && (x+y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x*y))" ".$decimal = $false" \
-    "print value of (0 && (x*y))"
+test "(0 && (x-y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x/y))" ".$decimal = $false" \
-    "print value of (0 && (x/y))"
+test "(0 && (x*y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x%y))" ".$decimal = $false" \
-    "print value of (0 && (x%y))"
+test "(0 && (x/y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x&&y))" ".$decimal = $false" \
-    "print value of (0 && (x&&y))"
+test "(0 && (x%y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x||y))" ".$decimal = $false" \
-    "print value of (0 && (x||y))"
+test "(0 && (x&&y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x&y))" ".$decimal = $false" \
-    "print value of (0 && (x&y))"
+test "(0 && (x||y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x|y))" ".$decimal = $false" \
-    "print value of (0 && (x|y))"
+test "(0 && (x&y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x^y))" ".$decimal = $false" \
-    "print value of (0 && (x^y))"
+test "(0 && (x|y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x < y))" ".$decimal = $false" \
-    "print value of (0 && (x < y))"
+test "(0 && (x^y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x <= y))" ".$decimal = $false" \
-    "print value of (0 && (x <= y))"
+test "(0 && (x < y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x>y))" ".$decimal = $false" \
-    "print value of (0 && (x>y))"
+test "(0 && (x <= y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x>=y))" ".$decimal = $false" \
-    "print value of (0 && (x>=y))"
+test "(0 && (x>y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x==y))" ".$decimal = $false" \
-    "print value of (0 && (x==y))"
+test "(0 && (x>=y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x!=y))" ".$decimal = $false" \
-    "print value of (0 && (x!=y))"
+test "(0 && (x==y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x<<31))" ".$decimal = $false" \
-    "print value of (0 && (x<<31))"
+test "(0 && (x!=y))" ".$decimal = $false"
 
-gdb_test "print (0 && (x>>31))" ".$decimal = $false" \
-    "print value of (0 && (x>>31))"
+test "(0 && (x<<31))" ".$decimal = $false"
 
-gdb_test "print (0 && (!x))" ".$decimal = $false" \
-    "print value of (0 && (!x))"
+test "(0 && (x>>31))" ".$decimal = $false"
 
-gdb_test "print (0 && (~x))" ".$decimal = $false" \
-    "print value of (0 && (~x))"
+test "(0 && (!x))" ".$decimal = $false"
 
-gdb_test "print (0 && (-x))" ".$decimal = $false" \
-    "print value of (0 && (-x))"
+test "(0 && (~x))" ".$decimal = $false"
 
-gdb_test "print (0 && (x++))" ".$decimal = $false" \
-    "print value of (0 && (x++))"
+test "(0 && (-x))" ".$decimal = $false"
 
-gdb_test "print (0 && (++x))" ".$decimal = $false" \
-    "print value of (0 && (++x))"
+test "(0 && (x++))" ".$decimal = $false"
 
-gdb_test "print (0 && (x--))" ".$decimal = $false" \
-    "print value of (0 && (x--))"
+test "(0 && (++x))" ".$decimal = $false"
 
-gdb_test "print (0 && (--x))" ".$decimal = $false" \
-    "print value of (0 && (--x))"
+test "(0 && (x--))" ".$decimal = $false"
 
-gdb_test "print (0 && (x+=7))" ".$decimal = $false" \
-    "print value of (0 && (x+=7))"
+test "(0 && (--x))" ".$decimal = $false"
 
-gdb_test "print (0 && (x=y))" ".$decimal = $false" \
-    "print value of (0 && (x=y))"
+test "(0 && (x+=7))" ".$decimal = $false"
+
+test "(0 && (x=y))" ".$decimal = $false"
 
 
 gdb_exit
-return 0
-
-
-
-
-
-
-

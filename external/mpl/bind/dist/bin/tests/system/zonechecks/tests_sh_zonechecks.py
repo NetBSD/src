@@ -20,6 +20,7 @@ pytestmark = pytest.mark.extra_artifacts(
         "ns1/dsset-primary.example.",
         "ns1/duplicate.db",
         "ns1/primary.db",
+        "ns1/primary.db.jnl",
         "ns1/primary.db.signed",
         "ns1/reload.db",
         "ns1/signer.err",

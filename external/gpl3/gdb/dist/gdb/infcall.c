@@ -1,6 +1,6 @@
 /* Perform an inferior function call, for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -488,7 +488,7 @@ get_function_name (CORE_ADDR funaddr, char *buf, int buf_size)
 
   {
     /* Try the minimal symbols.  */
-    struct bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (funaddr);
+    bound_minimal_symbol msymbol = lookup_minimal_symbol_by_pc (funaddr);
 
     if (msymbol.minsym)
       return msymbol.minsym->print_name ();
@@ -887,15 +887,21 @@ run_inferior_call (std::unique_ptr<call_thread_fsm> sm,
      call async_enable_stdin.  This changes the prompt state to
      PROMPT_NEEDED.
 
-     If the previous prompt state was PROMPT_NEEDED, then as
-     async_enable_stdin has already been called, nothing additional
-     needs to be done here.  */
+     If the previous prompt state was PROMPT_NEEDED, then async_enable_stdin
+     may or may not have been called, so do the same changes as in
+     async_enable_stdin.  */
   if (current_ui->prompt_state == PROMPT_BLOCKED)
     {
       if (call_thread->thread_fsm ()->finished_p ())
 	async_disable_stdin ();
       else
 	async_enable_stdin ();
+    }
+  else if (current_ui->prompt_state == PROMPT_NEEDED)
+    {
+      /* Copied from async_enable_stdin.  */
+      target_terminal::ours ();
+      current_ui->register_file_handler ();
     }
 
   /* If the infcall does NOT succeed, normal_stop will have already
@@ -1271,12 +1277,12 @@ call_function_by_hand_dummy (struct value *function,
 	CORE_ADDR dummy_addr;
 
 	real_pc = funaddr;
-	dummy_addr = entry_point_address ();
+	dummy_addr = entry_point_address (current_program_space);
 
 	/* A call dummy always consists of just a single breakpoint, so
 	   its address is the same as the address of the dummy.
 
-	   The actual breakpoint is inserted separatly so there is no need to
+	   The actual breakpoint is inserted separately so there is no need to
 	   write that out.  */
 	bp_addr = dummy_addr;
 	break;
@@ -1448,10 +1454,16 @@ call_function_by_hand_dummy (struct value *function,
   /* Create the dummy stack frame.  Pass in the call dummy address as,
      presumably, the ABI code knows where, in the call dummy, the
      return address should be pointed.  */
-  sp = gdbarch_push_dummy_call (gdbarch, function,
-				get_thread_regcache (inferior_thread ()),
-				bp_addr, args.size (), args.data (),
-				sp, return_method, struct_addr);
+  regcache *regcache = get_thread_regcache (inferior_thread ());
+  sp = gdbarch_push_dummy_call (gdbarch, function, regcache, bp_addr,
+				args.size (), args.data (), sp,
+				return_method, struct_addr);
+
+  /* Push the return address of the inferior (bp_addr) to the shadow stack
+     and update the shadow stack pointer.  As we don't execute a call
+     instruction to call the function we need to handle this manually.  */
+  if (gdbarch_shadow_stack_push_p (gdbarch))
+    gdbarch_shadow_stack_push (gdbarch, bp_addr, regcache);
 
   /* Set up a frame ID for the dummy frame so we can pass it to
      set_momentary_breakpoint.  We need to give the breakpoint a frame
@@ -1834,7 +1846,7 @@ The program being debugged entered a std::terminate call, most likely\n\
 caused by an unhandled C++ exception.  GDB blocked this call in order\n\
 to prevent the program from being terminated, and has restored the\n\
 context to its original state before the call.\n\
-To change this behaviour use \"set unwind-on-terminating-exception off\".\n\
+To change this behavior use \"set unwind-on-terminating-exception off\".\n\
 Evaluation of the expression containing the function (%s)\n\
 will be abandoned."),
 		 name.c_str ());
@@ -1870,9 +1882,7 @@ When the function is done executing, GDB will silently stop."),
   gdb_assert_not_reached ("... should not be here");
 }
 
-void _initialize_infcall ();
-void
-_initialize_infcall ()
+INIT_GDB_FILE (infcall)
 {
   add_setshow_boolean_cmd ("may-call-functions", no_class,
 			   &may_call_functions_p, _("\

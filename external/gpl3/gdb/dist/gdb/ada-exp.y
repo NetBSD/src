@@ -1,5 +1,5 @@
 /* YACC parser for Ada expressions, for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -36,7 +36,7 @@
 %{
 
 #include <ctype.h>
-#include <unordered_map>
+#include "gdbsupport/unordered_map.h"
 #include "expression.h"
 #include "value.h"
 #include "parser-defs.h"
@@ -98,7 +98,7 @@ struct ada_parse_state
   std::vector<ada_assign_up> assignments;
 
   /* Track currently active iterated assignment names.  */
-  std::unordered_map<std::string, std::vector<ada_index_var_operation *>>
+  gdb::unordered_map<std::string, std::vector<ada_index_var_operation *>>
        iterated_associations;
 
   auto_obstack temp_space;
@@ -185,12 +185,12 @@ ada_pop (bool deprocedure_p = true, struct type *context_type = nullptr)
 }
 
 /* Like parser_state::wrap, but use ada_pop to pop the value.  */
-template<typename T>
+template<typename T, typename... Args>
 void
-ada_wrap ()
+ada_wrap (Args... args)
 {
   operation_up arg = ada_pop ();
-  pstate->push_new<T> (std::move (arg));
+  pstate->push_new<T> (std::move (arg), std::forward<Args> (args)...);
 }
 
 /* Create and push an address-of operation, as appropriate for Ada.
@@ -519,7 +519,7 @@ make_tick_completer (struct stoken tok)
 
 %right TICK_ACCESS TICK_ADDRESS TICK_FIRST TICK_LAST TICK_LENGTH
 %right TICK_MAX TICK_MIN TICK_MODULUS
-%right TICK_POS TICK_RANGE TICK_SIZE TICK_TAG TICK_VAL
+%right TICK_POS TICK_RANGE TICK_SIZE TICK_OBJECT_SIZE TICK_TAG TICK_VAL
 %right TICK_COMPLETE TICK_ENUM_REP TICK_ENUM_VAL
  /* The following are right-associative only so that reductions at this
     precedence have lower precedence than '.' and '('.  The syntax still
@@ -914,7 +914,9 @@ primary :	primary TICK_ACCESS
 			    (std::move (arg), OP_ATR_LENGTH, $3);
 			}
 	|       primary TICK_SIZE
-			{ ada_wrap<ada_atr_size_operation> (); }
+			{ ada_wrap<ada_atr_size_operation> (true); }
+	|       primary TICK_OBJECT_SIZE
+			{ ada_wrap<ada_atr_size_operation> (false); }
 	|	primary TICK_TAG
 			{ ada_wrap<ada_atr_tag_operation> (); }
 	|       opt_type_prefix TICK_MIN '(' exp ',' exp ')'
@@ -1232,7 +1234,7 @@ primary	:	'*' primary		%prec '.'
 /* yylex defined in ada-lex.c: Reads one token, getting characters */
 /* through lexptr.  */
 
-/* Remap normal flex interface names (yylex) as well as gratuitiously */
+/* Remap normal flex interface names (yylex) as well as gratuitously */
 /* global symbol names, so we can have multiple flex-generated parsers */
 /* in gdb.  */
 
@@ -1323,7 +1325,6 @@ write_object_renaming (struct parser_state *par_state,
 {
   char *name;
   enum { SIMPLE_INDEX, LOWER_BOUND, UPPER_BOUND } slice_state;
-  struct block_symbol sym_info;
 
   if (max_depth <= 0)
     error (_("Could not find renamed symbol"));
@@ -1333,10 +1334,11 @@ write_object_renaming (struct parser_state *par_state,
 
   name = obstack_strndup (&ada_parser->temp_space, renamed_entity,
 			  renamed_entity_len);
-  ada_lookup_encoded_symbol (name, orig_left_context, SEARCH_VFT, &sym_info);
+  block_symbol sym_info = ada_lookup_encoded_symbol (name, orig_left_context,
+						     SEARCH_VFT);
   if (sym_info.symbol == NULL)
     error (_("Could not find renamed variable: %s"), ada_decode (name).c_str ());
-  else if (sym_info.symbol->aclass () == LOC_TYPEDEF)
+  else if (sym_info.symbol->loc_class () == LOC_TYPEDEF)
     /* We have a renaming of an old-style renaming symbol.  Don't
        trust the block information.  */
     sym_info.block = orig_left_context;
@@ -1391,7 +1393,6 @@ write_object_renaming (struct parser_state *par_state,
 	  {
 	    const char *end;
 	    char *index_name;
-	    struct block_symbol index_sym_info;
 
 	    end = strchr (renaming_expr, 'X');
 	    if (end == NULL)
@@ -1402,11 +1403,12 @@ write_object_renaming (struct parser_state *par_state,
 					  end - renaming_expr);
 	    renaming_expr = end;
 
-	    ada_lookup_encoded_symbol (index_name, orig_left_context,
-				       SEARCH_VFT, &index_sym_info);
+	    block_symbol index_sym_info
+	      = ada_lookup_encoded_symbol (index_name, orig_left_context,
+					   SEARCH_VFT);
 	    if (index_sym_info.symbol == NULL)
 	      error (_("Could not find %s"), index_name);
-	    else if (index_sym_info.symbol->aclass () == LOC_TYPEDEF)
+	    else if (index_sym_info.symbol->loc_class () == LOC_TYPEDEF)
 	      /* Index is an old-style renaming symbol.  */
 	      index_sym_info.block = orig_left_context;
 	    write_var_from_sym (par_state, index_sym_info);
@@ -1476,14 +1478,14 @@ block_lookup (const struct block *context, const char *raw_name)
     = ada_lookup_symbol_list (name, context, SEARCH_FUNCTION_DOMAIN);
 
   if (context == NULL
-      && (syms.empty () || syms[0].symbol->aclass () != LOC_BLOCK))
-    symtab = lookup_symtab (name);
+      && (syms.empty () || syms[0].symbol->loc_class () != LOC_BLOCK))
+    symtab = lookup_symtab (current_program_space, name);
   else
     symtab = NULL;
 
   if (symtab != NULL)
     result = symtab->compunit ()->blockvector ()->static_block ();
-  else if (syms.empty () || syms[0].symbol->aclass () != LOC_BLOCK)
+  else if (syms.empty () || syms[0].symbol->loc_class () != LOC_BLOCK)
     {
       if (context == NULL)
 	error (_("No file or function \"%s\"."), raw_name);
@@ -1509,7 +1511,7 @@ select_possible_type_sym (const std::vector<struct block_symbol> &syms)
 	  
   preferred_index = -1; preferred_type = NULL;
   for (i = 0; i < syms.size (); i += 1)
-    switch (syms[i].symbol->aclass ())
+    switch (syms[i].symbol->loc_class ())
       {
       case LOC_TYPEDEF:
 	if (ada_prefer_type (syms[i].symbol->type (), preferred_type))
@@ -1553,7 +1555,7 @@ find_primitive_type (struct parser_state *par_state, const char *name)
       strcpy (expanded_name, "standard__");
       strcat (expanded_name, name);
       sym = ada_lookup_symbol (expanded_name, NULL, SEARCH_TYPE_DOMAIN).symbol;
-      if (sym != NULL && sym->aclass () == LOC_TYPEDEF)
+      if (sym != NULL && sym->loc_class () == LOC_TYPEDEF)
 	type = sym->type ();
     }
 
@@ -1831,7 +1833,7 @@ write_var_or_type (struct parser_state *par_state,
 	      if (block != nullptr)
 		objfile = block->objfile ();
 
-	      struct bound_minimal_symbol msym
+	      bound_minimal_symbol msym
 		= ada_lookup_simple_minsym (decoded_name.c_str (), objfile);
 	      if (msym.minsym != NULL)
 		{
@@ -1857,7 +1859,9 @@ write_var_or_type (struct parser_state *par_state,
 	    }
 	}
 
-      if (!have_full_symbols () && !have_partial_symbols () && block == NULL)
+      if (!have_full_symbols (current_program_space)
+	  && !have_partial_symbols (current_program_space)
+	  && block == NULL)
 	error (_("No symbol table is loaded.  Use the \"file\" command."));
       if (block == par_state->expression_context_block)
 	error (_("No definition of \"%s\" in current context."), name0.ptr);
@@ -1962,7 +1966,7 @@ write_name_assoc (struct parser_state *par_state, struct stoken name)
 				  par_state->expression_context_block,
 				  SEARCH_VFT);
 
-      if (syms.size () != 1 || syms[0].symbol->aclass () == LOC_TYPEDEF)
+      if (syms.size () != 1 || syms[0].symbol->loc_class () == LOC_TYPEDEF)
 	pstate->push_new<ada_string_operation> (copy_name (name));
       else
 	write_var_from_sym (par_state, syms[0]);

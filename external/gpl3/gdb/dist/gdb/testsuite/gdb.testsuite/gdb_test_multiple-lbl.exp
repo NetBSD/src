@@ -1,0 +1,84 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test gdb_test_multiple -lbl, particularly with patterns that share a
+# common prefix.
+
+standard_testfile
+
+clean_restart
+
+gdb_test_no_output "source ${srcdir}/${subdir}/$testfile.gdb" \
+    "source gdb test script"
+
+set saw_prompt 0
+set saw_prefix 0
+set saw_command 0
+set saw_prefix_foo 0
+set saw_prefix_bar 0
+
+# #1 - We need anchors so that the "prefix foo" pattern below does not
+# match when the expect output buffer contains:
+#
+#  "\r\nprefix xxx\r\n\prefix foo\r\n"
+#
+# #2 - We need an anchor on the prompt match as otherwise the prompt
+# regexp would match:
+#
+#  "\r\nmeant-to-be-matched-by-lbl-2\r\nprefix xxx\r\n(gdb) "
+#
+# This test would fail if -lbl did not force the built-in prompt match
+# regexp to have an anchor as well, as without it, the built-in prompt
+# regexp would have the exact same issue as #2 above.
+
+gdb_test_multiple "command" "" -lbl {
+    -re "^command(?=\r\n)" {
+	verbose -log <COMMAND>
+	incr saw_command
+	exp_continue
+    }
+    -re "^\r\nprefix foo(?=\r\n)" {
+	verbose -log <PREFIX-FOO>
+	incr saw_prefix_foo
+	exp_continue
+    }
+    -re "^\r\nprefix bar(?=\r\n)" {
+	verbose -log <PREFIX-BAR>
+	incr saw_prefix_bar
+	exp_continue
+    }
+    -re "^\r\nprefix \[^\r\n\]*(?=\r\n)" {
+	verbose -log <PREFIX>
+	incr saw_prefix
+	exp_continue
+    }
+    -re "^\r\n$gdb_prompt $" {
+	verbose -log <PROMPT>
+	incr saw_prompt
+	pass $gdb_test_name
+    }
+}
+
+verbose -log "saw_command: $saw_command"
+verbose -log "saw_prefix_foo: $saw_prefix_foo"
+verbose -log "saw_prefix_bar: $saw_prefix_bar"
+verbose -log "saw_prefix: $saw_prefix"
+verbose -log "saw_prompt: $saw_prompt"
+
+gdb_assert {$saw_command == 1}
+gdb_assert {$saw_prefix_foo == 1}
+gdb_assert {$saw_prefix_bar == 1}
+gdb_assert {$saw_prefix == 3}
+gdb_assert {$saw_prompt == 1}

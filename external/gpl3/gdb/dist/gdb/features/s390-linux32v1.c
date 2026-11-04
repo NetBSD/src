@@ -11,6 +11,8 @@ initialize_tdesc_s390_linux32v1 (void)
   target_desc_up result = allocate_target_description ();
   set_tdesc_architecture (result.get (), bfd_scan_arch ("s390:31-bit"));
 
+  set_tdesc_osabi (result.get (), GDB_OSABI_LINUX);
+
   struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result.get (), "org.gnu.gdb.s390.core");

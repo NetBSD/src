@@ -1,0 +1,68 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	tls-port @TLSPORT@;
+	listen-on tls ephemeral { @ns.ip@; };
+	allow-transfer { any; };
+	recursion no;
+	dnssec-validation no;
+	include "dnstap.conf";
+};
+
+{% include "_common/controls.conf.j2" %}
+
+tls tls-example-primary {
+	remote-hostname "srv01.crt01.example.com"; // enable Strict TLS
+	ca-file "../CA/CA.pem";
+};
+
+zone "example" {
+	type secondary;
+	file "example.bk";
+	allow-update-forwarding { 10.53.0.1; };
+	primaries { 10.53.0.1 tls ephemeral; };
+};
+
+zone "example2" {
+	type secondary;
+	file "example2.bk";
+	allow-update-forwarding { 10.53.0.1; };
+	primaries { 10.53.0.1; };
+};
+
+zone "example2-toomanykeys" {
+	type secondary;
+	file "example2-toomanykeys.bk";
+	allow-update-forwarding { 10.53.0.1; };
+	primaries { 10.53.0.1; };
+};
+
+zone "example3" {
+	type secondary;
+	file "example3.bk";
+	allow-update-forwarding { 10.53.0.1; };
+	primaries {
+		10.53.0.1 tls tls-example-primary; // bad
+		10.53.0.1; // good
+	};
+};
+
+zone "noprimary" {
+	type secondary;
+	file "noprimary1.db";
+	allow-update-forwarding { any; };
+	masterfile-format text;
+	primaries { 10.53.0.4; };
+};

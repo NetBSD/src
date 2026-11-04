@@ -1,6 +1,6 @@
 /* Tag attributes
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -30,7 +30,6 @@ tag_is_type (dwarf_tag tag)
 {
   switch (tag)
     {
-    case DW_TAG_padding:
     case DW_TAG_array_type:
     case DW_TAG_class_type:
     case DW_TAG_enumeration_type:
@@ -136,7 +135,10 @@ tag_matches_domain (dwarf_tag tag, domain_search_flags search, language lang)
       break;
 
     case DW_TAG_module:
-      flags = SEARCH_MODULE_DOMAIN;
+      if (lang == language_ada)
+	flags = SEARCH_TYPE_DOMAIN;
+      else
+	flags = SEARCH_MODULE_DOMAIN;
       break;
     }
 

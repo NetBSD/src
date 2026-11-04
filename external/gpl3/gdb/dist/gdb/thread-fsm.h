@@ -1,5 +1,5 @@
 /* Thread command's finish-state machine, for GDB, the GNU debugger.
-   Copyright (C) 2015-2024 Free Software Foundation, Inc.
+   Copyright (C) 2015-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef THREAD_FSM_H
-#define THREAD_FSM_H
+#ifndef GDB_THREAD_FSM_H
+#define GDB_THREAD_FSM_H
 
 #include "mi/mi-common.h"
 
@@ -129,4 +129,4 @@ protected:
   }
 };
 
-#endif /* THREAD_FSM_H */
+#endif /* GDB_THREAD_FSM_H */

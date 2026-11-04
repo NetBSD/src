@@ -1,4 +1,4 @@
-/*	$NetBSD: expandm.c,v 1.12.14.1 2025/08/02 05:54:59 perseant Exp $	*/
+/*	$NetBSD: expandm.c,v 1.12.14.2 2026/11/04 23:19:32 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: expandm.c,v 1.12.14.1 2025/08/02 05:54:59 perseant Exp $");
+__RCSID("$NetBSD: expandm.c,v 1.12.14.2 2026/11/04 23:19:32 perseant Exp $");
 
 #include <limits.h>
 #include <stdio.h>
@@ -77,7 +77,7 @@ expandm(const char *fmt, const char *sf, char **rbuf)
 			 */
 			if (blen >= PTRDIFF_MAX ||
 			    nlen >= PTRDIFF_MAX - blen ||
-			    nlen >= SIZE_T_MAX - blen)
+			    nlen >= SIZE_MAX - blen)
 				goto out;
 
 			tlen = nlen + blen;

@@ -1,6 +1,6 @@
 /* Application Data Integrity (ADI) test in sparc64.
 
-   Copyright 2017-2023 Free Software Foundation, Inc.
+   Copyright 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -31,7 +31,6 @@
 #include <string.h>
 #include <signal.h>
 #include <sys/shm.h>
-#include <errno.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <fcntl.h>

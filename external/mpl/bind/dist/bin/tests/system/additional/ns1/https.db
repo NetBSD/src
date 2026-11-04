@@ -1,0 +1,46 @@
+$TTL 86400
+@ IN SOA ns1 hostmaster ( 3 8H 2H 4W 1D );
+    NS ns1
+ns1 A 10.53.0.1
+
+; AliasMode HTTPS records pointing at ServiceMode HTTPS RRsets.  The
+; target14 RRset has more records than DNS_RDATASET_MAXADDITIONAL (13),
+; so additional-section processing of the alias target must give up on
+; it; the target13 RRset is at the limit and is processed normally.
+;
+; The ServiceMode records point at "." (the owner name), so processing
+; a target RRset for its own additional data adds the target's A record.
+; That is how the test tells whether a target RRset was processed.
+alias14 HTTPS 0 target14
+alias13 HTTPS 0 target13
+
+target14 A 10.53.0.14
+target14 HTTPS 1 .
+target14 HTTPS 2 .
+target14 HTTPS 3 .
+target14 HTTPS 4 .
+target14 HTTPS 5 .
+target14 HTTPS 6 .
+target14 HTTPS 7 .
+target14 HTTPS 8 .
+target14 HTTPS 9 .
+target14 HTTPS 10 .
+target14 HTTPS 11 .
+target14 HTTPS 12 .
+target14 HTTPS 13 .
+target14 HTTPS 14 .
+
+target13 A 10.53.0.13
+target13 HTTPS 1 .
+target13 HTTPS 2 .
+target13 HTTPS 3 .
+target13 HTTPS 4 .
+target13 HTTPS 5 .
+target13 HTTPS 6 .
+target13 HTTPS 7 .
+target13 HTTPS 8 .
+target13 HTTPS 9 .
+target13 HTTPS 10 .
+target13 HTTPS 11 .
+target13 HTTPS 12 .
+target13 HTTPS 13 .

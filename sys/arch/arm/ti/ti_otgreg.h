@@ -1,4 +1,4 @@
-/* $NetBSD: ti_otgreg.h,v 1.1 2019/10/27 16:31:26 jmcneill Exp $ */
+/* $NetBSD: ti_otgreg.h,v 1.1.36.1 2026/11/04 23:20:17 perseant Exp $ */
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
  *
@@ -23,7 +23,6 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define TI_OTG_NPORTS 2
 /* USBSS registers */
 #define TIOTG_USBSS_OFFSET 0
 #define TIOTG_USBSS_READ4(sc, reg) \
@@ -72,3 +71,10 @@
 
 #define USB_CORE_OFFSET		0x400
 #define USB_CORE_SIZE		0x400
+
+/* USB control module register */
+#define CM_USBCTRL(n)			(2 * sizeof(uint32_t))
+#define CM_USBCTRL_CM_PWRDN		__BIT(0)
+#define CM_USBCTRL_OTG_PWRDN		__BIT(1)
+#define CM_USBCTRL_OTGVDET_EN		__BIT(19)
+#define CM_USBCTRL_OTGSESSENDEN		__BIT(20)

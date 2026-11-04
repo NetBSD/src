@@ -1,4 +1,4 @@
-/* Copyright (C) 2019-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2019-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_SCOPE_EXIT_H
-#define COMMON_SCOPE_EXIT_H
+#ifndef GDBSUPPORT_SCOPE_EXIT_H
+#define GDBSUPPORT_SCOPE_EXIT_H
 
 #include <functional>
 #include <type_traits>
@@ -69,16 +69,7 @@ public:
       }
   }
 
-  /* This is needed for make_scope_exit because copy elision isn't
-     guaranteed until C++17.  An optimizing compiler will usually skip
-     calling this, but it must exist.  */
-  scope_exit_base (const scope_exit_base &other)
-    : m_released (other.m_released)
-  {
-    other.m_released = true;
-  }
-
-  void operator= (const scope_exit_base &) = delete;
+  DISABLE_COPY_AND_ASSIGN (scope_exit_base);
 
   /* If this is called, then the wrapped function will not be called
      on destruction.  */
@@ -118,6 +109,9 @@ public:
       /* "If the initialization of exit_function throws an exception,
 	 calls f()."  */
       f ();
+      /* "throws: Nothing, unless the initialization of exit_function
+	 throws."  */
+      throw;
     }
 
   template<typename EFP,
@@ -132,16 +126,7 @@ public:
     rhs.release ();
   }
 
-  /* This is needed for make_scope_exit because copy elision isn't
-     guaranteed until C++17.  An optimizing compiler will usually skip
-     calling this, but it must exist.  */
-  scope_exit (const scope_exit &other)
-    : scope_exit_base<scope_exit<EF>> (other),
-      m_exit_function (other.m_exit_function)
-  {
-  }
-
-  void operator= (const scope_exit &) = delete;
+  DISABLE_COPY_AND_ASSIGN (scope_exit);
   void operator= (scope_exit &&) = delete;
 
 private:
@@ -183,4 +168,4 @@ operator+ (scope_exit_lhs, EF &&rhs)
 #define SCOPE_EXIT \
   auto CONCAT(scope_exit_, __LINE__) = ::detail::scope_exit_lhs () + [&] ()
 
-#endif /* COMMON_SCOPE_EXIT_H */
+#endif /* GDBSUPPORT_SCOPE_EXIT_H */

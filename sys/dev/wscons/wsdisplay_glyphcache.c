@@ -1,4 +1,4 @@
-/*	$NetBSD: wsdisplay_glyphcache.c,v 1.13.2.1 2025/08/02 05:57:08 perseant Exp $	*/
+/*	$NetBSD: wsdisplay_glyphcache.c,v 1.13.2.2 2026/11/04 23:22:39 perseant Exp $	*/
 
 /*
  * Copyright (c) 2012 Michael Lorenz
@@ -150,8 +150,10 @@ glyphcache_reconfig(glyphcache *gc, int cellwidth, int cellheight, long attr)
 	 * if we don't have enough video memory to cache at least a few glyphs
 	 * we stop right here
 	 */
-	if (buckets < 1)
+	if (buckets < 1) {
+		gc->gc_numbuckets = 0;
 		return ENOMEM;
+	}
 
 	buckets = uimin(buckets, gc->gc_nbuckets);
 	gc->gc_numbuckets = buckets;
@@ -217,7 +219,8 @@ glyphcache_wipe(glyphcache *gc)
 		b = &gc->gc_buckets[i];
 		b->gb_usedcells = 0;
 		b->gb_index = -1;
-		for (j = 0; j < b->gb_numcells; j++)
+		/* careful: map per character */
+		for (j = 0; j < __arraycount(b->gb_map); j++)
 			b->gb_map[j] = -1;
 	}
 
@@ -253,7 +256,7 @@ glyphcache_add(glyphcache *gc, int c, int x, int y)
 	b->gb_map[c - 33] = (cx << 16) | cy;
 	gc->gc_bitblt(gc->gc_blitcookie, x, y, cx, cy,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
-	if (gc->gc_underline & 1) {
+	if (gc->gc_underline & WSATTR_UNDERLINE) {
 		glyphcache_underline(gc, x, y, gc->gc_underline);
 	}
 	return 0;
@@ -282,8 +285,8 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 	gc_bucket *b;
 
 	idx = attr2idx(attr);
-	/* see if we're in range */
-	if ((c < 33) || (c > 255) || (idx < 0))
+	/* see if we're in range, and have a cache */
+	if ((c < 33) || (c > 255) || (idx < 0) || (gc->gc_numbuckets < 1))
 		return GC_NOPE;
 	/* see if there's already a bucket for this attribute */
 	bi = gc->gc_attrmap[idx];
@@ -310,6 +313,8 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 			time_t moo = time_uptime;
 			int i, oldest = 1;
 
+			if (gc->gc_numbuckets < 2)
+				return GC_NOPE;
 			for (i = 1; i < gc->gc_numbuckets; i++) {
 				if (gc->gc_buckets[i].gb_lastread < moo) {
 					oldest = i;
@@ -324,7 +329,7 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 			b->gb_usedcells = 0;
 			gc->gc_attrmap[idx] = oldest;
 			/* now scrub it */
-			for (i = 0; i < b->gb_numcells; i++)
+			for (i = 0; i < __arraycount(b->gb_map); i++)
 				b->gb_map[i] = -1;
 			/* and set the time stamp */
 			b->gb_lastread = time_uptime;
@@ -351,7 +356,7 @@ glyphcache_try(glyphcache *gc, int c, int x, int y, long attr)
 	gc->gc_bitblt(gc->gc_blitcookie, cx, cy, x, y,
 	    gc->gc_cellwidth, gc->gc_cellheight, gc->gc_rop);
 	/* and underline it if needed */
-	if (attr & 1)
+	if (attr & WSATTR_UNDERLINE)
 		glyphcache_underline(gc, x, y, attr);
 	/* update bucket's time stamp */
 	b->gb_lastread = time_uptime;

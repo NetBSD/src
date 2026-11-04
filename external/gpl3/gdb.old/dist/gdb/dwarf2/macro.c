@@ -1,6 +1,6 @@
 /* Read DWARF macro information
 
-   Copyright (C) 1994-2023 Free Software Foundation, Inc.
+   Copyright (C) 1994-2024 Free Software Foundation, Inc.
 
    Adapted by Gary Funck (gary@intrepid.com), Intrepid Technology,
    Inc.  with support from Florida State University (under contract
@@ -24,7 +24,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "dwarf2/read.h"
 #include "dwarf2/leb.h"
 #include "dwarf2/expr.h"
@@ -36,6 +35,7 @@
 #include "macrotab.h"
 #include "complaints.h"
 #include "objfiles.h"
+#include "gdbsupport/unordered_set.h"
 
 static void
 dwarf2_macro_malformed_definition_complaint (const char *arg1)
@@ -155,87 +155,65 @@ parse_macro_definition (struct macro_source_file *file, int line,
 	}
 
       macro_define_object (file, line, name.c_str (), replacement);
+      return;
     }
-  else if (*p == '(')
-    {
-      /* It's a function-like macro.  */
-      std::string name (body, p - body);
-      int argc = 0;
-      int argv_size = 1;
-      char **argv = XNEWVEC (char *, argv_size);
 
-      p++;
+  /* It's a function-like macro.  */
+  gdb_assert (*p == '(');
+  std::string name (body, p - body);
+  std::vector<std::string> argv;
+
+  p++;
+
+  p = consume_improper_spaces (p, body);
+
+  /* Parse the formal argument list.  */
+  while (*p && *p != ')')
+    {
+      /* Find the extent of the current argument name.  */
+      const char *arg_start = p;
+
+      while (*p && *p != ',' && *p != ')' && *p != ' ')
+	p++;
+
+      if (! *p || p == arg_start)
+	{
+	  dwarf2_macro_malformed_definition_complaint (body);
+	  return;
+	}
+      else
+	argv.emplace_back (arg_start, p);
 
       p = consume_improper_spaces (p, body);
 
-      /* Parse the formal argument list.  */
-      while (*p && *p != ')')
-	{
-	  /* Find the extent of the current argument name.  */
-	  const char *arg_start = p;
-
-	  while (*p && *p != ',' && *p != ')' && *p != ' ')
-	    p++;
-
-	  if (! *p || p == arg_start)
-	    dwarf2_macro_malformed_definition_complaint (body);
-	  else
-	    {
-	      /* Make sure argv has room for the new argument.  */
-	      if (argc >= argv_size)
-		{
-		  argv_size *= 2;
-		  argv = XRESIZEVEC (char *, argv, argv_size);
-		}
-
-	      argv[argc++] = savestring (arg_start, p - arg_start);
-	    }
-
-	  p = consume_improper_spaces (p, body);
-
-	  /* Consume the comma, if present.  */
-	  if (*p == ',')
-	    {
-	      p++;
-
-	      p = consume_improper_spaces (p, body);
-	    }
-	}
-
-      if (*p == ')')
+      /* Consume the comma, if present.  */
+      if (*p == ',')
 	{
 	  p++;
 
-	  if (*p == ' ')
-	    /* Perfectly formed definition, no complaints.  */
-	    macro_define_function (file, line, name.c_str (),
-				   argc, (const char **) argv,
-				   p + 1);
-	  else if (*p == '\0')
-	    {
-	      /* Complain, but do define it.  */
-	      dwarf2_macro_malformed_definition_complaint (body);
-	      macro_define_function (file, line, name.c_str (),
-				     argc, (const char **) argv,
-				     p);
-	    }
-	  else
-	    /* Just complain.  */
-	    dwarf2_macro_malformed_definition_complaint (body);
+	  p = consume_improper_spaces (p, body);
+	}
+    }
+
+  if (*p == ')')
+    {
+      p++;
+
+      if (*p == ' ')
+	/* Perfectly formed definition, no complaints.  */
+	macro_define_function (file, line, name.c_str (), argv, p + 1);
+      else if (*p == '\0')
+	{
+	  /* Complain, but do define it.  */
+	  dwarf2_macro_malformed_definition_complaint (body);
+	  macro_define_function (file, line, name.c_str (), argv, p);
 	}
       else
 	/* Just complain.  */
 	dwarf2_macro_malformed_definition_complaint (body);
-
-      {
-	int i;
-
-	for (i = 0; i < argc; i++)
-	  xfree (argv[i]);
-      }
-      xfree (argv);
     }
   else
+    /* Just complain.  */
     dwarf2_macro_malformed_definition_complaint (body);
 }
 
@@ -444,8 +422,9 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 			  unsigned int offset_size,
 			  struct dwarf2_section_info *str_section,
 			  struct dwarf2_section_info *str_offsets_section,
-			  gdb::optional<ULONGEST> str_offsets_base,
-			  htab_t include_hash, struct dwarf2_cu *cu)
+			  std::optional<ULONGEST> str_offsets_base,
+			  gdb::unordered_set<const gdb_byte *> &include_hash,
+			  struct dwarf2_cu *cu)
 {
   struct objfile *objfile = per_objfile->objfile;
   enum dwarf_macro_record_type macinfo_type;
@@ -720,7 +699,6 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 	case DW_MACRO_import_sup:
 	  {
 	    LONGEST offset;
-	    void **slot;
 	    bfd *include_bfd = abfd;
 	    const struct dwarf2_section_info *include_section = section;
 	    const gdb_byte *include_mac_end = mac_end;
@@ -735,8 +713,6 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 		dwz_file *dwz = dwarf2_get_dwz_file (per_objfile->per_bfd,
 						     true);
 
-		dwz->macro.read (objfile);
-
 		include_section = &dwz->macro;
 		include_bfd = include_section->get_bfd_owner ();
 		include_mac_end = dwz->macro.buffer + dwz->macro.size;
@@ -744,9 +720,8 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 	      }
 
 	    new_mac_ptr = include_section->buffer + offset;
-	    slot = htab_find_slot (include_hash, new_mac_ptr, INSERT);
 
-	    if (*slot != NULL)
+	    if (!include_hash.insert (new_mac_ptr).second)
 	      {
 		/* This has actually happened; see
 		   http://sourceware.org/bugzilla/show_bug.cgi?id=13568.  */
@@ -755,8 +730,6 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 	      }
 	    else
 	      {
-		*slot = (void *) new_mac_ptr;
-
 		dwarf_decode_macro_bytes (per_objfile, builder, include_bfd,
 					  new_mac_ptr, include_mac_end,
 					  current_file, lh, section,
@@ -764,7 +737,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 					  str_section, str_offsets_section,
 					  str_offsets_base, include_hash, cu);
 
-		htab_remove_elt (include_hash, (void *) new_mac_ptr);
+		include_hash.erase (new_mac_ptr);
 	      }
 	  }
 	  break;
@@ -784,7 +757,7 @@ dwarf_decode_macro_bytes (dwarf2_per_objfile *per_objfile,
 	      /* We don't recognize any vendor extensions.  */
 	      break;
 	    }
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 
 	default:
 	  mac_ptr = skip_unknown_opcode (macinfo_type, opcode_definitions,
@@ -805,7 +778,7 @@ dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
 		     const struct line_header *lh, unsigned int offset_size,
 		     unsigned int offset, struct dwarf2_section_info *str_section,
 		     struct dwarf2_section_info *str_offsets_section,
-		     gdb::optional<ULONGEST> str_offsets_base,
+		     std::optional<ULONGEST> str_offsets_base,
 		     int section_is_gnu, struct dwarf2_cu *cu)
 {
   bfd *abfd;
@@ -813,7 +786,6 @@ dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
   struct macro_source_file *current_file = 0;
   enum dwarf_macro_record_type macinfo_type;
   const gdb_byte *opcode_definitions[256];
-  void **slot;
 
   abfd = section->get_bfd_owner ();
 
@@ -939,7 +911,7 @@ dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
 	      read_direct_string (abfd, mac_ptr, &bytes_read);
 	      mac_ptr += bytes_read;
 	    }
-	  /* FALLTHROUGH */
+	  [[fallthrough]];
 
 	default:
 	  mac_ptr = skip_unknown_opcode (macinfo_type, opcode_definitions,
@@ -958,14 +930,11 @@ dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
      command-line macro definitions/undefinitions.  This flag is unset when we
      reach the first DW_MACINFO_start_file entry.  */
 
-  htab_up include_hash (htab_create_alloc (1, htab_hash_pointer,
-					   htab_eq_pointer,
-					   NULL, xcalloc, xfree));
+  gdb::unordered_set<const gdb_byte *> include_hash;
   mac_ptr = section->buffer + offset;
-  slot = htab_find_slot (include_hash.get (), mac_ptr, INSERT);
-  *slot = (void *) mac_ptr;
+  include_hash.insert (mac_ptr);
   dwarf_decode_macro_bytes (per_objfile, builder, abfd, mac_ptr, mac_end,
 			    current_file, lh, section, section_is_gnu, 0,
 			    offset_size, str_section, str_offsets_section,
-			    str_offsets_base, include_hash.get (), cu);
+			    str_offsets_base, include_hash, cu);
 }

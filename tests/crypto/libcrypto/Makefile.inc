@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.11.2.1 2025/08/02 05:57:58 perseant Exp $
+# $NetBSD: Makefile.inc,v 1.11.2.2 2026/11/04 23:28:10 perseant Exp $
 
 .include <bsd.own.mk>
 .include "../Makefile.inc"
@@ -32,8 +32,8 @@ PROGDPLIBS+=	cryptotest ${OPENSSLSRC}/../lib/libcryptotest
 .if ${HELPER_NAME} != "threadstest"
 PROGDPLIBS+=	crypto ${OPENSSLSRC}/../lib/libcrypto
 .endif
-DPADD_AFTER+=		${LIBCRYPT} ${LIBPTHREAD}
-LDADD_AFTER+=		-lcrypt -lpthread
+DPADD+=		${LIBCRYPT}
+LDADD+=		-lcrypt
 
 
 .include <bsd.test.mk>

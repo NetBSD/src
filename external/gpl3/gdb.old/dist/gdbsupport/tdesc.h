@@ -1,4 +1,4 @@
-/* Copyright (C) 2006-2023 Free Software Foundation, Inc.
+/* Copyright (C) 2006-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_TDESC_H
-#define COMMON_TDESC_H
+#ifndef GDBSUPPORT_TDESC_H
+#define GDBSUPPORT_TDESC_H
+
+#include "gdbsupport/osabi.h"
 
 struct tdesc_feature;
 struct tdesc_type;
@@ -338,8 +340,8 @@ void set_tdesc_architecture (target_desc *target_desc,
    or NULL if no architecture was specified.  */
 const char *tdesc_architecture_name (const struct target_desc *target_desc);
 
-/* Set TARGET_DESC's osabi by NAME.  */
-void set_tdesc_osabi (target_desc *target_desc, const char *name);
+/* Set TARGET_DESC's osabi to OSABI.  */
+void set_tdesc_osabi (target_desc *target_desc, enum gdb_osabi osabi);
 
 /* Return the osabi associated with this target description as a string,
    or NULL if no osabi was specified.  */
@@ -462,4 +464,4 @@ private:
   int m_depth;
 };
 
-#endif /* COMMON_TDESC_H */
+#endif /* GDBSUPPORT_TDESC_H */

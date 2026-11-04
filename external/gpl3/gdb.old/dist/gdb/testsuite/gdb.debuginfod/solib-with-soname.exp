@@ -1,0 +1,290 @@
+# Copyright 2024 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
+
+# This test exercises GDB's ability to validate build-ids when loading
+# shared libraries for a core file.
+#
+# The test creates two "versions" of a shared library, sets up a
+# symlink to point to one version of the library, and creates a core file.
+#
+# We then try re-loading the core file and executable and check that
+# GDB is able to correctly load the shared library.  To confuse things
+# we retarget the library symlink at the other version of the library.
+#
+# After that we repeat the test, but this time deleting the symlink
+# completely.
+#
+# Then we remove the version of the library completely, at this point
+# we do expect GDB to give a warning about being unable to load the library.
+#
+# And finally, we setup debuginfod and have it serve the missing
+# library file, GDB should correctly download the library file.
+#
+# Despite this test living in the gdb.debuginfod/ directory, only the last
+# part of this test actually uses debuginfod, everything up to that point is
+# pretty generic.
+
+load_lib debuginfod-support.exp
+
+require allow_shlib_tests
+require {istarget "*-linux*"}
+require {!is_remote host}
+require {!using_fission}
+
+standard_testfile -1.c -2.c
+
+# Build two similar, but slightly different versions of the shared
+# library.  Both libraries have DT_SONAME set to the generic
+# libfoo.so, we'll create a symlink with that name later.
+set library_1_filename [standard_output_file "libfoo_1.so"]
+set library_2_filename [standard_output_file "libfoo_2.so"]
+
+# The generic name for the library.
+set library_filename [standard_output_file "libfoo.so"]
+
+# When compiling a shared library the -Wl,-soname,NAME option is
+# automatically added based on the final name of the library.  We want
+# to compile libfoo_1.so, but set the soname to libfoo.so.  To achieve
+# this we first compile into libfoo.so, and then rename the library to
+# libfoo_1.so.
+if {[build_executable "build libfoo_1.so" $library_filename \
+	 $srcfile \
+	      { debug shlib build-id \
+		    additional_flags=-DLIB_VERSION=1 }] == -1} {
+    return
+}
+remote_exec build "mv ${library_filename} ${library_1_filename}"
+
+# See the comment above, but this time we rename to libfoo_2.so.
+if {[build_executable "build libfoo_2.so" $library_filename \
+	 $srcfile \
+	      { debug shlib build-id \
+		    additional_flags=-DLIB_VERSION=2 }] == -1} {
+    return
+}
+remote_exec build "mv ${library_filename} ${library_2_filename}"
+
+# Create libfoo.so symlink to the libfoo_1.so library.  If this
+# symlink creation fails then we assume we can't create symlinks on
+# this host.  If this succeeds then later symlink creation is required
+# to succeed, and will trigger an FAIL if it doesn't.
+set status \
+    [remote_exec build \
+	 "ln -sf ${library_1_filename} ${library_filename}"]
+if {[lindex $status 0] != 0} {
+    unsupported "host does not support symbolic links"
+    return
+}
+
+# Build the executable.  This links against libfoo.so, which is
+# poining at libfoo_1.so.  Just to confuse things even more, this
+# executable uses dlopen to load libfoo_2.so.  Weird!
+if { [build_executable "build executable" ${binfile} ${srcfile2} \
+	  [list debug shlib=${library_filename} shlib_load]] == -1 } {
+    return
+}
+
+# If the board file is automatically splitting the debug information
+# into a separate file (e.g. the cc-with-gnu-debuglink.exp board) then
+# this test isn't going to work.
+clean_restart
+gdb_file_cmd $binfile
+if {$gdb_file_cmd_debug_info ne "debug"} {
+    unsupported "failed to find debug information"
+    return
+}
+if {[regexp "${testfile}.debug" $gdb_file_cmd_msg]} {
+    unsupported "debug information has been split to a separate file"
+    return
+}
+
+# Run BINFILE which will generate a corefile.
+set corefile [core_find $binfile]
+if {$corefile eq ""} {
+    untested "could not generate core file"
+    return
+}
+
+# Helper proc to load global BINFILE and then load global COREFILE.
+#
+# If EXPECT_WARNING is true then we require a warning about being
+# unable to load the shared library symbols, otherwise, EXPECT_WARNING
+# is false and we require no warning.
+#
+# If EXPECT_DOWNLOAD is true then we require a line indicating that
+# the shared library is being downloaded from debuginfod, otherwise
+# the shared library should not be downloaded.
+#
+# If DEBUGDIR is not the empty string then 'debug-file-directory' is
+# set to the value of DEBUGDIR.
+proc load_exec_and_core_file { expect_warning expect_download testname \
+				   {debugdir ""} } {
+    with_test_prefix $testname {
+	clean_restart $::binfile
+
+	if { $debugdir ne "" } {
+	    gdb_test_no_output "set debug-file-directory $debugdir" \
+		"set debug directory"
+	}
+
+	set saw_warning false
+	set saw_download false
+	set saw_generated false
+	set saw_terminated false
+
+	gdb_test_multiple "core-file $::corefile" "load core file" {
+	    -re "^Core was generated by \[^\r\n\]+\r\n" {
+		set saw_generated true
+		exp_continue
+	    }
+	    -re "^Program terminated with signal \[^\r\n\]+\r\n" {
+		set saw_terminated true
+		exp_continue
+	    }
+	    -re "^warning: Can't open file \[^\r\n\]+ during file-backed mapping note processing\r\n" {
+		# Ignore warnings from the file backed mapping phase.
+		exp_continue
+	    }
+	    -re "^warning: Could not load shared library symbols for \[^\r\n\]+/libfoo\\.so\\.\r\n" {
+		set saw_warning true
+		exp_continue
+	    }
+	    -re "^Downloading\[^\r\n\]*file \[^\r\n\]+/libfoo_1\\.so\\.\\.\\.\r\n" {
+		set saw_download true
+		exp_continue
+	    }
+	    -re "^$::gdb_prompt $" {
+		gdb_assert { $saw_generated && $saw_terminated \
+				 && $saw_warning == $expect_warning \
+				 && $saw_download == $expect_download } \
+		    $gdb_test_name
+	    }
+	    -re "^\[^\r\n\]*\r\n" {
+		exp_continue
+	    }
+	}
+
+	# If we don't expect a warning then debug symbols from the
+	# shared library should be available.  Confirm we can read a
+	# variable from the shared library.  If we do expect a warning
+	# then the shared library debug symbols have not loaded, and
+	# the library variable should not be available.
+	if { !$expect_warning } {
+	    gdb_test "print/x library_1_var" " = 0x12345678" \
+		"check library_1_var can be read"
+	} else {
+	    gdb_test "print/x library_1_var" \
+		"^No symbol \"library_1_var\" in current context\\." \
+		"check library_1_var cannot be read"
+	}
+    }
+}
+
+# Initial test, just load the executable and core file.  At this point
+# everything should load fine as everything is where we expect to find
+# it.
+load_exec_and_core_file false false \
+    "load core file, all libraries as expected"
+
+# Update libfoo.so symlink to point at the second library then reload
+# the core file.  GDB should spot that the symlink points to the wrong
+# file, but should be able to figure out the correct file to load as
+# the right file will be in the mapped file list.
+set status [remote_exec build \
+		"ln -sf ${library_2_filename} ${library_filename}"]
+gdb_assert { [lindex $status 0] == 0 } \
+    "update library symlink to point to the wrong file"
+
+load_exec_and_core_file false false \
+    "load core file, symlink points to wrong file"
+
+# Remove libfoo.so symlink and reload the core file.  As in the
+# previous test GDB should be able to figure out the correct file to
+# load as the correct file will still appear in the mapped file list.
+set status [remote_exec build "rm -f ${library_filename}"]
+gdb_assert { [lindex $status 0] == 0 } "remove library symlink"
+
+load_exec_and_core_file false false \
+    "load core file, symlink removed"
+
+# Remove LIBRARY_1_FILENAME.  We'll now see a warning that the mapped
+# file can't be loaded (we ignore that warning), and we'll see a
+# warning that the shared library can't be loaded.
+set library_1_backup_filename ${library_1_filename}.backup
+set status \
+    [remote_exec build \
+	 "mv ${library_1_filename} ${library_1_backup_filename}"]
+gdb_assert { [lindex $status 0] == 0 } \
+    "remove libfoo_1.so"
+
+load_exec_and_core_file true false \
+    "load core file, libfoo_1.so removed"
+
+# Symlink the .build-id/xx/xxx...xxx filename within the debug
+# directory to LIBRARY_1_BACKUP_FILENAME, now when we restart GDB it
+# should find the missing library within the debug directory.
+set debugdir [standard_output_file "debugdir"]
+set build_id_filename \
+    $debugdir/[build_id_debug_filename_get $library_1_backup_filename ""]
+set status \
+    [remote_exec build \
+	 "mkdir -p [file dirname $build_id_filename]"]
+gdb_assert { [lindex $status 0] == 0 } \
+    "create sub-directory within the debug directory"
+set status \
+    [remote_exec build \
+	 "ln -sf $library_1_backup_filename $build_id_filename"]
+gdb_assert { [lindex $status 0] == 0 } \
+    "create symlink within the debug directory "
+
+load_exec_and_core_file false false \
+    "load core file, find libfoo_1.so through debug-file-directory" \
+    $debugdir
+
+# Setup a debuginfod server which can serve the original shared
+# library file.
+if {![allow_debuginfod_tests]} {
+    untested "skippig debuginfod parts of this test"
+    return
+}
+
+set server_dir [standard_output_file "debuginfod.server"]
+file mkdir $server_dir
+file rename -force $library_1_backup_filename $server_dir
+
+prepare_for_debuginfod cache db
+
+set url [start_debuginfod $db $server_dir]
+if { $url eq "" } {
+    unresolved "failed to start debuginfod server"
+    return
+}
+
+with_debuginfod_env $cache {
+    setenv DEBUGINFOD_URLS $url
+
+    save_vars { GDBFLAGS } {
+	append GDBFLAGS " -ex \"set debuginfod enabled on\""
+
+	# Reload the executable and core file.  GDB should download
+	# the file libfoo_1.so using debuginfod during the mapped file
+	# phase, but should then reuse that download during the shared
+	# library phase.
+	load_exec_and_core_file false true \
+	    "load core file, use debuginfod"
+    }
+}
+
+stop_debuginfod

@@ -1,4 +1,4 @@
-#	$NetBSD: t_opencrypto.sh,v 1.9.10.1 2025/08/02 05:57:59 perseant Exp $
+#	$NetBSD: t_opencrypto.sh,v 1.9.10.2 2026/11/04 23:28:11 perseant Exp $
 #
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -67,6 +67,16 @@ common_cleanup() {
 	unset RUMPHIJACK
 	unset LD_PRELOAD
 	rump.halt
+	for core in *.core; do
+		test -s "$core" || continue
+		case $core in
+		h_*)	prog="$(atf_get_srcdir)/${core%.core}" || continue
+			;;
+		*)	prog="${core%.core}" || continue
+			;;
+		esac
+		gdb -batch -ex bt -ex 'info registers' "$prog" "$core"
+	done
 }
 
 atf_test_case arc4 cleanup
@@ -295,6 +305,32 @@ xcbcmac_cleanup() {
 	common_cleanup
 }
 
+atf_test_case thread cleanup
+thread_head() {
+	common_head "Test threaded crypto"
+}
+
+thread_body() {
+	common_body h_thread
+}
+
+thread_cleanup() {
+	if ! [ -f rump_server.core ]; then
+		LD_PRELOAD="/usr/lib/librumphijack.so" \
+		RUMPHIJACK=sysctl=yes \
+		dmesg >&2
+	fi
+	if [ -f h_thread.core ]; then
+		gdb -batch -ex bt -ex 'info registers' \
+		    "$(atf_get_srcdir)/h_thread" h_thread.core
+	fi
+	if [ -f rump_server.core ]; then
+		gdb -batch -ex bt -ex 'info registers' \
+		    /usr/bin/rump_server rump_server.core
+	fi
+	common_cleanup
+}
+
 atf_test_case ioctl cleanup
 ioctl_head() {
 	common_head "Test ioctl for /dev/crypto"
@@ -333,5 +369,6 @@ atf_init_test_cases() {
 	atf_add_test_case sha1_hmac
 	atf_add_test_case sha2_hmac
 	atf_add_test_case xcbcmac
+	atf_add_test_case thread
 	atf_add_test_case ioctl
 }

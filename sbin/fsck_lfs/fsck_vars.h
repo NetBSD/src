@@ -1,4 +1,4 @@
-/* $NetBSD: fsck_vars.h,v 1.16 2020/04/03 19:36:33 joerg Exp $	 */
+/* $NetBSD: fsck_vars.h,v 1.16.8.1 2026/11/04 23:19:38 perseant Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -45,6 +45,7 @@ extern long dev_bsize;		/* computed value of DEV_BSIZE */
 extern long secsize;		/* actual disk sector size */
 extern char nflag;		/* assume a no response */
 extern char yflag;		/* assume a yes response */
+extern int aflag;		/* ignore discrepancies in avail */
 extern int bflag;		/* location of alternate super block */
 extern int debug;		/* output debugging info */
 extern int exitonfail;

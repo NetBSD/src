@@ -1,6 +1,6 @@
 /* Target-dependent header for the MIPS architecture, for GDB, the GNU Debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MIPS_TDEP_H
-#define MIPS_TDEP_H
+#ifndef GDB_MIPS_TDEP_H
+#define GDB_MIPS_TDEP_H
 
 #include "objfiles.h"
 #include "gdbarch.h"
@@ -125,7 +125,7 @@ struct mips_gdbarch_tdep : gdbarch_tdep_base
 
   /* Return the expected next PC if FRAME is stopped at a syscall
      instruction.  */
-  CORE_ADDR (*syscall_next_pc) (frame_info_ptr frame) = nullptr;
+  CORE_ADDR (*syscall_next_pc) (const frame_info_ptr &frame) = nullptr;
 };
 
 /* Register numbers of various important registers.  */
@@ -210,4 +210,4 @@ in_mips_stubs_section (CORE_ADDR pc)
   return pc_in_section (pc, ".MIPS.stubs");
 }
 
-#endif /* MIPS_TDEP_H */
+#endif /* GDB_MIPS_TDEP_H */

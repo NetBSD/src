@@ -1,4 +1,4 @@
-/*	$NetBSD: bpfjit.c,v 1.48 2020/02/01 02:54:02 riastradh Exp $	*/
+/*	$NetBSD: bpfjit.c,v 1.48.30.1 2026/11/04 23:27:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011-2015 Alexander Nasonov.
@@ -31,9 +31,9 @@
 
 #include <sys/cdefs.h>
 #ifdef _KERNEL
-__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.48 2020/02/01 02:54:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpfjit.c,v 1.48.30.1 2026/11/04 23:27:57 perseant Exp $");
 #else
-__RCSID("$NetBSD: bpfjit.c,v 1.48 2020/02/01 02:54:02 riastradh Exp $");
+__RCSID("$NetBSD: bpfjit.c,v 1.48.30.1 2026/11/04 23:27:57 perseant Exp $");
 #endif
 
 #include <sys/types.h>
@@ -145,7 +145,7 @@ struct bpfjit_stack
 #ifdef _KERNEL
 	int err; /* 3rd argument for m_xword/m_xhalf/m_xbyte function call */
 #endif
-	uint32_t mem[BPF_MEMWORDS]; /* internal memory store */
+	uint32_t mem[MAX_MEMWORDS]; /* internal memory store */
 };
 
 /*
@@ -1419,11 +1419,19 @@ optimize_pass1(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 				*initmask |= invalid & BJ_INIT_XBIT;
 			}
 
-			if (BPF_OP(insns[i].code) == BPF_JA) {
+			switch (BPF_OP(insns[i].code)) {
+			case BPF_JA:
 				jt = jf = insns[i].k;
-			} else {
+				break;
+			case BPF_JEQ:
+			case BPF_JGT:
+			case BPF_JGE:
+			case BPF_JSET:
 				jt = insns[i].jt;
 				jf = insns[i].jf;
+				break;
+			default:
+				return false;
 			}
 
 			if (jt >= insn_count - (i + 1) ||
@@ -1597,7 +1605,11 @@ optimize(const bpf_ctx_t *bc, const struct bpf_insn *insns,
 static bool
 alu_to_op(const struct bpf_insn *pc, int *res)
 {
-	const uint32_t k = pc->k;
+	/*
+	 * bpf_validate() accepts all shifts, bpfjit doesn't
+	 * accept shifts by a constant K greater than 31.
+	 */
+	const bool valid_shift = BPF_SRC(pc->code) != BPF_K || pc->k < 32;
 
 	/*
 	 * Note: all supported 64bit arches have 32bit multiply
@@ -1623,11 +1635,11 @@ alu_to_op(const struct bpf_insn *pc, int *res)
 		*res = SLJIT_AND;
 		return true;
 	case BPF_LSH:
-		*res = SLJIT_SHL;
-		return k < 32;
+		*res = SLJIT_SHL|SLJIT_I32_OP;
+		return valid_shift;
 	case BPF_RSH:
 		*res = SLJIT_LSHR|SLJIT_I32_OP;
-		return k < 32;
+		return valid_shift;
 	default:
 		return false;
 	}
@@ -1709,7 +1721,7 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 	struct sljit_jump *to_mchain_jump;
 
 	size_t i;
-	unsigned int rval, mode, src, op;
+	unsigned int mode, src, op;
 	int branching, negate;
 	int status, cond, op2;
 	uint32_t jt, jf;
@@ -1979,12 +1991,8 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 				    &ret0_size, &ret0_maxsize))
 					goto fail;
 			} else if (pc->k == 0) {
-				jump = sljit_emit_jump(compiler, SLJIT_JUMP);
-				if (jump == NULL)
-					goto fail;
-				if (!append_jump(jump, &ret0,
-				    &ret0_size, &ret0_maxsize))
-					goto fail;
+				/* bpf_validate() fails */
+				goto fail;
 			}
 
 			if (src == BPF_X) {
@@ -2057,25 +2065,28 @@ generate_insn_code(struct sljit_compiler *compiler, bpfjit_hint_t hints,
 			continue;
 
 		case BPF_RET:
-			rval = BPF_RVAL(pc->code);
-			if (rval == BPF_X)
-				goto fail;
-
-			/* BPF_RET+BPF_K    accept k bytes */
-			if (rval == BPF_K) {
+			if (pc->code == (BPF_RET|BPF_K)) {
+				/* accept k bytes */
 				status = sljit_emit_return(compiler,
 				    SLJIT_MOV_U32,
 				    SLJIT_IMM, (uint32_t)pc->k);
 				if (status != SLJIT_SUCCESS)
 					goto fail;
 			}
-
-			/* BPF_RET+BPF_A    accept A bytes */
-			if (rval == BPF_A) {
+			else if (pc->code == (BPF_RET|BPF_A)) {
+				/* accept A bytes */
 				status = sljit_emit_return(compiler,
 				    SLJIT_MOV_U32,
 				    BJ_AREG, 0);
 				if (status != SLJIT_SUCCESS)
+					goto fail;
+			} else {
+				/* return 0; */
+				jump = sljit_emit_jump(compiler, SLJIT_JUMP);
+				if (jump == NULL)
+					goto fail;
+				if (!append_jump(jump, &ret0,
+				    &ret0_size, &ret0_maxsize))
 					goto fail;
 			}
 
@@ -2182,6 +2193,17 @@ bpfjit_generate_code(const bpf_ctx_t *bc,
 
 	if (insn_count == 0 || insn_count > SIZE_MAX / sizeof(insn_dat[0]))
 		goto fail;
+
+	/*
+	 * Follow bpf_validate() and fail if a program doesn't end
+	 * with a canonical RET. Other RETs arent' checked rigorously
+	 * by bpf_validate() and non-canonical RETs may sneak in but
+	 * they will be rejected by bpf_filter().
+	 */
+	if (insns[insn_count - 1].code != (BPF_RET|BPF_K) &&
+	    insns[insn_count - 1].code != (BPF_RET|BPF_A)) {
+		goto fail;
+	}
 
 	insn_dat = BJ_ALLOC(insn_count * sizeof(insn_dat[0]));
 	if (insn_dat == NULL)

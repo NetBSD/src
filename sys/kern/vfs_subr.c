@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.500.6.1 2025/08/02 05:57:44 perseant Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.500.6.2 2026/11/04 23:27:51 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.500.6.1 2025/08/02 05:57:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.500.6.2 2026/11/04 23:27:51 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_43.h"
@@ -338,6 +338,9 @@ vflushbuf(struct vnode *vp, int flags)
 	struct buf *bp, *nbp;
 	int error, pflags;
 	bool dirty, sync;
+#ifdef DEBUG
+	bool warned = false;
+#endif
 
 	sync = (flags & FSYNC_WAIT) != 0;
 	pflags = PGO_CLEANIT | PGO_ALLPAGES |
@@ -382,7 +385,18 @@ loop:
 	mutex_exit(vp->v_interlock);
 
 	if (dirty) {
-		vprint("vflushbuf: dirty", vp);
+#ifdef DEBUG
+		if (!warned) {
+			static struct timeval vflushbuf_warntime;
+			const struct timeval interval = {60,0};
+
+			mutex_enter(&bufcache_lock);
+			if (ratecheck(&vflushbuf_warntime, &interval))
+				vprint("vflushbuf: dirty", vp);
+			mutex_exit(&bufcache_lock);
+			warned = true;
+		}
+#endif
 		goto loop;
 	}
 
@@ -1488,11 +1502,11 @@ VFS_MOUNT(struct mount *mp, const char *a, void *b, size_t *c)
 	 * XXX Maybe the MPSAFE bit should be set in struct vfsops and
 	 * not in struct mount.
 	 */
-	if (mpsafe) {
+	if (!mpsafe) {
 		KERNEL_LOCK(1, NULL);
 	}
 	error = (*(mp->mnt_op->vfs_mount))(mp, a, b, c);
-	if (mpsafe) {
+	if (!mpsafe) {
 		KERNEL_UNLOCK_ONE(NULL);
 	}
 

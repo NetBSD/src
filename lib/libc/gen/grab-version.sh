@@ -1,0 +1,84 @@
+#! /bin/sh
+
+# $NetBSD: grab-version.sh,v 1.3.2.2 2026/11/04 23:19:17 perseant Exp $
+
+# Free unlicensed public-domain code.
+# Found under a bush behind an outdoor dunny in Wagga Wagga (mid 1800's).
+# Your risk entirely if you use it.
+
+case "$#" in
+1)	;;
+*)	printf >&2 'Usage: %s NETBSDSRCDIR\n' "${0##*/}"; exit 1;;
+esac
+
+# GEN='$NetBSD: grab-version.sh,v 1.3.2.2 2026/11/04 23:19:17 perseant Exp $'
+# GEN=${GEN#'$NetBSD: '}
+# GEN=${GEN%' Exp $'}
+
+VERSION_FILE="${1}/sys/sys/param.h"
+
+: ${SED:=sed}
+: ${DATE:=date}
+
+if ( O=$(eval "printf %s $'X\tY'") && [ "$O" = 'X	Y' ] ) >/dev/null 2>&1
+then
+	# Use this when possible, it is more obvious what is happening.
+	VERS_MATCH=$'^#define[ \t][ \t]*__NetBSD_Version__[ \t][ \t]*[1-9]'
+	IFS=$' \t'
+else
+	# The same as above, avoiding use of $'...' (for old shells)
+	VERS_MATCH='^#define[ 	][ 	]*__NetBSD_Version__[ 	][ 	]*[1-9]'
+	IFS=' 	'
+fi
+
+VL=$( "${SED}" -n							\
+	-e "/${VERS_MATCH}/ {"						\
+	-e	p							\
+	-e	q							\
+	-e }			"${VERSION_FILE}"
+     )	||
+{
+	printf >&2 '%s: No __NetBSD_Version__ in %s\n'			\
+			"${0##*/}" "${VERSION_FILE}"
+	exit 1
+}
+
+# See IFS setting above (this is the sole occasion it is used)
+read -r def nbv version comment <<!EOF!
+${VL}
+!EOF!
+
+format()
+{
+	printf >&2 '%s: Badly formatted version line from %s:\n\t%s\n'	\
+		"${0##*/}" "${VERSION_FILE}" "${VL}"
+	exit 1
+}
+
+if [ "${def}" != '#define' ] || [ "${nbv}" != __NetBSD_Version__ ]
+then
+	format
+fi
+
+comment=${comment#* }
+comment=${comment% *}
+case "${comment}" in
+*[/*]*)	format		;;
+'NetBSD '[1-9]*)	comment="${comment#NetBSD }";;
+*)	format		;;
+esac
+
+case "${version}" in
+*[!0-9]*)	format	;;
+[1-9]*[0-9])		;;
+*)		format	;;
+esac
+
+printf "'%s'\n" '-DUSER_OSTYPE_VALUE="NetBSD"'
+printf "'%s'\n" "-DUSER_OSREVISION_VALUE=${version}"
+printf "'-DUSER_OSRELEASE_VALUE=\"%s\"'\n" "${comment}"
+printf "'-DUSER_BUILDTIME_VALUE=\"%s%s\"'\n"			\
+    "$( TZ=UTC "${DATE}" -u					\
+	${MKREPRO_TIMESTAMP:+-r "${MKREPRO_TIMESTAMP}"}		\
+	'+%Y-%m-%d %T UTC' )"					\
+    "${MKREPRO_TIMESTAMP:+ !}"

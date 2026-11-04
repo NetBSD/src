@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.5.6.1 2025/08/02 05:56:04 perseant Exp $	*/
+/*	$NetBSD: proc.h,v 1.5.6.2 2026/11/04 23:21:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,12 +33,11 @@
 #define _RISCV_PROC_H_
 
 #include <sys/param.h>
-#include <riscv/vmparam.h>
 
 struct lwp;
 
 /*
- * Machine-dependent part of the lwp structure for RISCV
+ * Machine-dependent part of the lwp structure for RISC-V
  */
 struct trapframe;
 
@@ -50,13 +49,6 @@ struct mdlwp {
 	unsigned long md_ss_addr;	/* single step address for ptrace */
 	int	md_ss_instr;		/* single step instruction for ptrace */
 	volatile int md_astpending;	/* AST pending on return to userland */
-#if 0
-#if USPACE > PAGE_SIZE
-	int	md_upte[USPACE/4096];	/* ptes for mapping u page */
-#else
-	int	md_dpte[USPACE/4096];	/* dummy ptes to keep the same */
-#endif
-#endif
 };
 
 struct mdproc {

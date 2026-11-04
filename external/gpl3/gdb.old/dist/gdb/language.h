@@ -1,6 +1,6 @@
 /* Source-language-related definitions for GDB.
 
-   Copyright (C) 1991-2023 Free Software Foundation, Inc.
+   Copyright (C) 1991-2024 Free Software Foundation, Inc.
 
    Contributed by the Department of Computer Science at the State University
    of New York at Buffalo.
@@ -20,8 +20,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (LANGUAGE_H)
-#define LANGUAGE_H 1
+#ifndef GDB_LANGUAGE_H
+#define GDB_LANGUAGE_H
 
 #include "symtab.h"
 #include "gdbsupport/function-view.h"
@@ -321,7 +321,7 @@ struct language_defn
 
   virtual struct value *read_var_value (struct symbol *var,
 					const struct block *var_block,
-					frame_info_ptr frame) const;
+					const frame_info_ptr &frame) const;
 
   /* Return information about whether TYPE should be passed
      (and returned) by reference at the language level.  The default
@@ -349,9 +349,10 @@ struct language_defn
 
   /* Find the definition of the type with the given name.  */
 
-  virtual struct type *lookup_transparent_type (const char *name) const
+  virtual struct type *lookup_transparent_type (const char *name,
+						domain_search_flags flags) const
   {
-    return basic_lookup_transparent_type (name);
+    return basic_lookup_transparent_type (name, flags);
   }
 
   /* Find all symbols in the current program space matching NAME in
@@ -369,7 +370,7 @@ struct language_defn
      used as the definition.  */
   virtual bool iterate_over_symbols
 	(const struct block *block, const lookup_name_info &name,
-	 domain_enum domain,
+	 domain_search_flags domain,
 	 gdb::function_view<symbol_found_callback_ftype> callback) const
   {
     return ::iterate_over_symbols (block, name, domain, callback);
@@ -471,7 +472,7 @@ struct language_defn
      If that PC falls in a trampoline belonging to this language, return
      the address of the first pc in the real function, or 0 if it isn't a
      language tramp for this language.  */
-  virtual CORE_ADDR skip_trampoline (frame_info_ptr fi, CORE_ADDR pc) const
+  virtual CORE_ADDR skip_trampoline (const frame_info_ptr &fi, CORE_ADDR pc) const
   {
     return (CORE_ADDR) 0;
   }
@@ -506,6 +507,23 @@ struct language_defn
       (tracker, mode, name_match_type, text, word, "", code);
   }
 
+  /* This is called by lookup_local_symbol after checking a block.  It
+     can be used by a language to augment the local lookup, for
+     instance for searching imported namespaces.  SCOPE is the current
+     scope (from block::scope), NAME is the name being searched for,
+     BLOCK is the block being searched, and DOMAIN is the search
+     domain.  Returns a block symbol, or an empty block symbol if not
+     found.  */
+
+  virtual struct block_symbol lookup_symbol_local
+       (const char *scope,
+	const char *name,
+	const struct block *block,
+	const domain_search_flags domain) const
+  {
+    return {};
+  }
+
   /* This is a function that lookup_symbol will call when it gets to
      the part of symbol lookup where C looks up static and global
      variables.  This default implements the basic C lookup rules.  */
@@ -513,7 +531,7 @@ struct language_defn
   virtual struct block_symbol lookup_symbol_nonlocal
 	(const char *name,
 	 const struct block *block,
-	 const domain_enum domain) const;
+	 const domain_search_flags domain) const;
 
   /* Return an expression that can be used for a location
      watchpoint.  TYPE is a pointer type that points to the memory
@@ -548,7 +566,7 @@ struct language_defn
 			  struct ui_file * stream) const;
 
 /* Print the character string STRING, printing at most LENGTH characters.
-   Printing stops early if the number hits print_max; repeat counts
+   Printing stops early if the number hits print_max_chars; repeat counts
    are printed as appropriate.  Print ellipses at the end if we
    had to stop before printing LENGTH characters, or if FORCE_ELLIPSES.  */
 
@@ -567,6 +585,17 @@ struct language_defn
 
   /* Return true if TYPE is a string type.  */
   virtual bool is_string_type_p (struct type *type) const;
+
+  /* Return true if TYPE is array-like.  */
+  virtual bool is_array_like (struct type *type) const
+  { return false; }
+
+  /* Underlying implementation of value_to_array.  Return a value of
+     array type that corresponds to VAL.  The caller must ensure that
+     is_array_like is true for VAL's type.  Return nullptr if the type
+     cannot be handled.  */
+  virtual struct value *to_array (struct value *val) const
+  { return nullptr; }
 
   /* Return a string that is used by the 'set print max-depth' setting.
      When GDB replaces a struct or union (during value printing) that is
@@ -602,6 +631,12 @@ struct language_defn
   virtual char string_lower_bound () const
   { return c_style_arrays_p () ? 0 : 1; }
 
+  /* Return the LEN characters long string at PTR as a value suitable for
+     this language.  GDBARCH is used to infer the character type.  The
+     default implementation returns a null-terminated C string.  */
+  virtual struct value *value_string (struct gdbarch *gdbarch,
+				      const char *ptr, ssize_t len) const;
+
   /* Returns true if the symbols names should be stored in GDB's data
      structures for minimal/partial/full symbols using their linkage (aka
      mangled) form; false if the symbol names should be demangled first.
@@ -631,7 +666,7 @@ struct language_defn
   { return false; }
 
   /* Is this language case sensitive?  The return value from this function
-     provides the automativ setting for 'set case-sensitive', as a
+     provides the automatic setting for 'set case-sensitive', as a
      consequence, a user is free to override this setting if they want.  */
 
   virtual enum case_sensitivity case_sensitivity () const
@@ -663,6 +698,11 @@ protected:
 	  (const lookup_name_info &lookup_name) const;
 };
 
+/* Return the current language.  Normally code just uses the
+   'current_language' macro.  */
+
+extern const struct language_defn *get_current_language ();
+
 /* Pointer to the language_defn for our current language.  This pointer
    always points to *some* valid struct; it can be used without checking
    it for validity.
@@ -679,7 +719,7 @@ protected:
    the language of symbol files (e.g. detecting when ".c" files are
    C++), it should be a separate setting from the current_language.  */
 
-extern const struct language_defn *current_language;
+#define current_language (get_current_language ())
 
 /* Pointer to the language_defn expected by the user, e.g. the language
    of main(), or the language we last mentioned in a message, or C.  */
@@ -690,6 +730,10 @@ extern const struct language_defn *expected_language;
    frame do not match.  */
 
 extern const char lang_frame_mismatch_warn[];
+
+/* Controls whether to warn on a frame language mismatch.  */
+
+extern bool warn_frame_lang_mismatch;
 
 /* language_mode == 
    language_mode_auto:   current_language automatically set upon selection
@@ -744,7 +788,7 @@ struct symbol *
 					    const char *name);
 
 
-/* These macros define the behaviour of the expression 
+/* These macros define the behavior of the expression 
    evaluator.  */
 
 /* Should we range check values against the domain of their type?  */
@@ -761,7 +805,12 @@ struct symbol *
 
 extern void language_info ();
 
-extern enum language set_language (enum language);
+/* Set the current language to LANG.  */
+
+extern void set_language (enum language lang);
+
+typedef void lazily_set_language_ftype ();
+extern void lazily_set_language (lazily_set_language_ftype *fun);
 
 
 /* Test a character to decide whether it can be printed in literal form
@@ -789,12 +838,7 @@ extern const char *language_str (enum language);
 
 /* Check for a language-specific trampoline.  */
 
-extern CORE_ADDR skip_language_trampoline (frame_info_ptr, CORE_ADDR pc);
-
-/* Return demangled language symbol, or NULL.  */
-extern gdb::unique_xmalloc_ptr<char> language_demangle
-     (const struct language_defn *current_language,
-      const char *mangled, int options);
+extern CORE_ADDR skip_language_trampoline (const frame_info_ptr &, CORE_ADDR pc);
 
 /* Return information about whether TYPE should be passed
    (and returned) by reference at the language level.  */
@@ -819,14 +863,18 @@ class scoped_restore_current_language
 {
 public:
 
-  explicit scoped_restore_current_language ()
-    : m_lang (current_language->la_language)
-  {
-  }
+  scoped_restore_current_language ();
 
-  ~scoped_restore_current_language ()
+  /* Set the current language as well.  */
+  explicit scoped_restore_current_language (enum language lang);
+
+  ~scoped_restore_current_language ();
+
+  scoped_restore_current_language (scoped_restore_current_language &&other)
   {
-    set_language (m_lang);
+    m_lang = other.m_lang;
+    m_fun = other.m_fun;
+    other.dont_restore ();
   }
 
   scoped_restore_current_language (const scoped_restore_current_language &)
@@ -834,9 +882,18 @@ public:
   scoped_restore_current_language &operator=
       (const scoped_restore_current_language &) = delete;
 
+  /* Cancel restoring on scope exit.  */
+  void dont_restore ()
+  {
+    /* This is implemented using a sentinel value.  */
+    m_lang = nullptr;
+    m_fun = nullptr;
+  }
+
 private:
 
-  enum language m_lang;
+  const language_defn *m_lang;
+  lazily_set_language_ftype *m_fun;
 };
 
 /* If language_mode is language_mode_auto,
@@ -879,4 +936,4 @@ private:
   enum language m_lang;
 };
 
-#endif /* defined (LANGUAGE_H) */
+#endif /* GDB_LANGUAGE_H */

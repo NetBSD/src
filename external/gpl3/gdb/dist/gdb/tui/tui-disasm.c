@@ -1,6 +1,6 @@
 /* Disassembly display.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -29,21 +29,15 @@
 #include "tui/tui.h"
 #include "tui/tui-command.h"
 #include "tui/tui-data.h"
-#include "tui/tui-win.h"
-#include "tui/tui-layout.h"
 #include "tui/tui-winsource.h"
 #include "tui/tui-status.h"
-#include "tui/tui-file.h"
 #include "tui/tui-disasm.h"
-#include "tui/tui-source.h"
 #include "progspace.h"
 #include "objfiles.h"
 #include "cli/cli-style.h"
 #include "tui/tui-location.h"
 #include "gdbsupport/selftest.h"
 #include "inferior.h"
-
-#include "gdb_curses.h"
 
 struct tui_asm_line
 {
@@ -104,8 +98,11 @@ tui_disassemble (struct gdbarch *gdbarch,
 		 CORE_ADDR pc, int count,
 		 size_t *addr_size = nullptr)
 {
-  bool term_out = source_styling && gdb_stdout->can_emit_style_escape ();
+  bool term_out = disassembler_styling && gdb_stdout->can_emit_style_escape ();
   string_file gdb_dis_out (term_out);
+  struct ui_file *stream = (addr_size == nullptr
+			    ? (decltype (stream))&null_stream
+			    : (decltype (stream))&gdb_dis_out);
 
   /* Must start with an empty list.  */
   asm_lines.clear ();
@@ -114,11 +111,13 @@ tui_disassemble (struct gdbarch *gdbarch,
   for (int i = 0; i < count; ++i)
     {
       tui_asm_line tal;
-      CORE_ADDR orig_pc = pc;
+
+      /* Save the instruction address.  */
+      tal.addr = pc;
 
       try
 	{
-	  pc = pc + gdb_print_insn (gdbarch, pc, &gdb_dis_out, NULL);
+	  pc += gdb_print_insn (gdbarch, pc, stream, NULL);
 	}
       catch (const gdb_exception_error &except)
 	{
@@ -130,25 +129,24 @@ tui_disassemble (struct gdbarch *gdbarch,
 	  return pc;
 	}
 
+      /* If that's all we need, continue.  */
+      if (addr_size == nullptr)
+	{
+	  asm_lines.push_back (std::move (tal));
+	  continue;
+	}
+
       /* Capture the disassembled instruction.  */
       tal.insn = gdb_dis_out.release ();
 
       /* And capture the address the instruction is at.  */
-      tal.addr = orig_pc;
-      print_address (gdbarch, orig_pc, &gdb_dis_out);
+      print_address (gdbarch, tal.addr, &gdb_dis_out);
       tal.addr_string = gdb_dis_out.release ();
+      tal.addr_size = (term_out
+		       ? len_without_escapes (tal.addr_string)
+		       : tal.addr_string.size ());
 
-      if (addr_size != nullptr)
-	{
-	  size_t new_size;
-
-	  if (term_out)
-	    new_size = len_without_escapes (tal.addr_string);
-	  else
-	    new_size = tal.addr_string.size ();
-	  *addr_size = std::max (*addr_size, new_size);
-	  tal.addr_size = new_size;
-	}
+      *addr_size = std::max (*addr_size, tal.addr_size);
 
       asm_lines.push_back (std::move (tal));
     }
@@ -163,11 +161,11 @@ tui_disassemble (struct gdbarch *gdbarch,
 static CORE_ADDR
 tui_find_backward_disassembly_start_address (CORE_ADDR addr)
 {
-  struct bound_minimal_symbol msym, msym_prev;
-
-  msym = lookup_minimal_symbol_by_pc_section (addr - 1, nullptr,
-					      lookup_msym_prefer::TEXT,
-					      &msym_prev);
+  bound_minimal_symbol msym_prev;
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol_by_pc_section (addr - 1, nullptr,
+					   lookup_msym_prefer::TEXT,
+					   &msym_prev);
   if (msym.minsym != nullptr)
     return msym.value_address ();
   else if (msym_prev.minsym != nullptr)
@@ -395,10 +393,12 @@ tui_get_begin_asm_address (struct gdbarch **gdbarch_p, CORE_ADDR *addr_p)
 
   if (tui_location.addr () == 0)
     {
-      if (have_full_symbols () || have_partial_symbols ())
+      if (have_full_symbols (current_program_space)
+	  || have_partial_symbols (current_program_space))
 	{
 	  set_default_source_symtab_and_line ();
-	  struct symtab_and_line sal = get_current_source_symtab_and_line ();
+	  symtab_and_line sal
+	    = get_current_source_symtab_and_line (current_program_space);
 
 	  if (sal.symtab != nullptr)
 	    find_line_pc (sal.symtab, sal.line, &addr);
@@ -406,8 +406,8 @@ tui_get_begin_asm_address (struct gdbarch **gdbarch_p, CORE_ADDR *addr_p)
 
       if (addr == 0)
 	{
-	  struct bound_minimal_symbol main_symbol
-	    = lookup_minimal_symbol (main_name (), nullptr, nullptr);
+	  bound_minimal_symbol main_symbol
+	    = lookup_minimal_symbol (current_program_space, main_name ());
 	  if (main_symbol.minsym != nullptr)
 	    addr = main_symbol.value_address ();
 	}
@@ -433,12 +433,12 @@ tui_get_low_disassembly_address (struct gdbarch *gdbarch,
 
   /* Determine where to start the disassembly so that the pc is about
      in the middle of the viewport.  */
-  if (TUI_DISASM_WIN != NULL)
-    pos = TUI_DISASM_WIN->height;
-  else if (TUI_CMD_WIN == NULL)
+  if (tui_disasm_win () != nullptr)
+    pos = tui_disasm_win ()->height;
+  else if (tui_cmd_win () == nullptr)
     pos = tui_term_height () / 2 - 2;
   else
-    pos = tui_term_height () - TUI_CMD_WIN->height - 2;
+    pos = tui_term_height () - tui_cmd_win ()->height - 2;
   pos = (pos - 2) / 2;
 
   pc = tui_find_disassembly_address (gdbarch, pc, -pos);
@@ -489,11 +489,9 @@ tui_disasm_window::addr_is_displayed (CORE_ADDR addr) const
 }
 
 void
-tui_disasm_window::maybe_update (const frame_info_ptr &fi, symtab_and_line sal)
+tui_disasm_window::maybe_update (struct gdbarch *gdbarch, symtab_and_line sal)
 {
   CORE_ADDR low;
-
-  struct gdbarch *frame_arch = get_frame_arch (fi);
 
   if (find_pc_partial_function (sal.pc, NULL, &low, NULL) == 0)
     {
@@ -502,7 +500,7 @@ tui_disasm_window::maybe_update (const frame_info_ptr &fi, symtab_and_line sal)
       low = sal.pc;
     }
   else
-    low = tui_get_low_disassembly_address (frame_arch, low, sal.pc);
+    low = tui_get_low_disassembly_address (gdbarch, low, sal.pc);
 
   struct tui_line_or_address a;
 
@@ -511,7 +509,7 @@ tui_disasm_window::maybe_update (const frame_info_ptr &fi, symtab_and_line sal)
   if (!addr_is_displayed (sal.pc))
     {
       sal.pc = low;
-      update_source_window (frame_arch, sal);
+      update_source_window (gdbarch, sal);
     }
   else
     {
@@ -552,9 +550,7 @@ run_tests ()
 } /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
-void _initialize_tui_disasm ();
-void
-_initialize_tui_disasm ()
+INIT_GDB_FILE (tui_disasm)
 {
 #if GDB_SELF_TEST
   selftests::register_test ("tui-disasm", selftests::tui::disasm::run_tests);

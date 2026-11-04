@@ -1,4 +1,4 @@
-# Copyright 2010-2023 Free Software Foundation, Inc.
+# Copyright 2010-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 global inferior_spawn_id
 global gdb_spawn_id
 
-if ![istarget *-linux*] {
-    return
-}
+require {istarget *-linux*}
 
 # In remote mode we cannot use the 'set args' command, and this
 # test requires it.

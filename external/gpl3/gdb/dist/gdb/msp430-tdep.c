@@ -1,7 +1,7 @@
 /* Target-dependent code for the Texas Instruments MSP430 for GDB, the
    GNU debugger.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    Contributed by Red Hat, Inc.
 
@@ -542,15 +542,16 @@ msp430_prev_register (const frame_info_ptr &this_frame,
     return frame_unwind_got_register (this_frame, regnum, regnum);
 }
 
-static const struct frame_unwind msp430_unwind = {
+static const struct frame_unwind_legacy msp430_unwind (
   "msp430 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   msp430_this_id,
   msp430_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Implement the "dwarf2_reg_to_regnum" gdbarch method.  */
 
@@ -807,11 +808,10 @@ msp430_in_return_stub (struct gdbarch *gdbarch, CORE_ADDR pc,
 static CORE_ADDR
 msp430_skip_trampoline_code (const frame_info_ptr &frame, CORE_ADDR pc)
 {
-  struct bound_minimal_symbol bms;
   const char *stub_name;
   struct gdbarch *gdbarch = get_frame_arch (frame);
 
-  bms = lookup_minimal_symbol_by_pc (pc);
+  bound_minimal_symbol bms = lookup_minimal_symbol_by_pc (pc);
   if (!bms.minsym)
     return pc;
 
@@ -996,9 +996,7 @@ msp430_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
 /* Register the initialization routine.  */
 
-void _initialize_msp430_tdep ();
-void
-_initialize_msp430_tdep ()
+INIT_GDB_FILE (msp430_tdep)
 {
   gdbarch_register (bfd_arch_msp430, msp430_gdbarch_init);
 }

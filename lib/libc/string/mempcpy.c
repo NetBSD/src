@@ -1,4 +1,4 @@
-/*	$NetBSD: mempcpy.c,v 1.1 2023/08/01 17:51:25 christos Exp $	*/
+/*	$NetBSD: mempcpy.c,v 1.1.2.1 2026/11/04 23:19:23 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2023 The NetBSD Foundation, Inc.
@@ -25,13 +25,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if HAVE_NBTOOL_CONFIG_H
+#include "nbtool_config.h"
+#endif
+
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mempcpy.c,v 1.1 2023/08/01 17:51:25 christos Exp $");
+#if defined(LIBC_SCCS) && !defined(lint)
+__RCSID("$NetBSD: mempcpy.c,v 1.1.2.1 2026/11/04 23:19:23 perseant Exp $");
+#endif /* LIBC_SCCS and not lint */
 
 #include <string.h>
 
+#if !HAVE_MEMPCPY
 void *
 mempcpy(void *__restrict dst, const void *__restrict src, size_t len)
 {
 	return (char *)memcpy(dst, src, len) + len;
 }
+#endif

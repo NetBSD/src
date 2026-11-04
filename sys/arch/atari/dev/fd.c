@@ -1,4 +1,4 @@
-/*	$NetBSD: fd.c,v 1.98.2.1 2025/08/02 05:55:30 perseant Exp $	*/
+/*	$NetBSD: fd.c,v 1.98.2.2 2026/11/04 23:20:19 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98.2.1 2025/08/02 05:55:30 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98.2.2 2026/11/04 23:20:19 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: fd.c,v 1.98.2.1 2025/08/02 05:55:30 perseant Exp $")
 #include <sys/conf.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 #include <atari/atari/device.h>
 #include <atari/atari/stalloc.h>
 #include <machine/disklabel.h>
@@ -439,8 +438,6 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 		return error;
 
 	switch (cmd) {
-	case DIOCSBAD:
-		return EINVAL;
 #ifdef notyet /* XXX LWP */
 	case DIOCSRETRIES:
 	case DIOCSSTEP:
@@ -459,7 +456,7 @@ fdioctl(dev_t dev, u_long cmd, void * addr, int flag, struct lwp *l)
 /*
  * Open the device. If this is the first open on both the floppy devices,
  * initialize the controller.
- * Note that partition info on the floppy device is used to distinguise
+ * Note that partition info on the floppy device is used to distinguish
  * between 780Kb and 360Kb floppy's.
  *	partition 0: 360Kb
  *	partition 1: 780Kb
@@ -766,7 +763,7 @@ fddone(register struct fd_softc *sc)
 	}
 	fd_state = FLP_IDLE;
 #ifdef FLP_DEBUG
-	printf("fddone: Staring job on unit %d\n", sc1->unit);
+	printf("fddone: Starting job on unit %d\n", sc1->unit);
 #endif
 	st_dmagrab((dma_farg)fdcint, (dma_farg)fdstart, sc1, &lock_stat, 0,
 	    NULL);

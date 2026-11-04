@@ -1,6 +1,6 @@
 /* Common target-dependent functionality for CSKY
 
-   Copyright (C) 2022-2024 Free Software Foundation, Inc.
+   Copyright (C) 2022-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_CSKY_H
-#define ARCH_CSKY_H
+#ifndef GDB_ARCH_CSKY_H
+#define GDB_ARCH_CSKY_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -26,4 +26,4 @@
 
 target_desc_up csky_create_target_description (void);
 
-#endif /* ARCH_CSKY_H */
+#endif /* GDB_ARCH_CSKY_H */

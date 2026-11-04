@@ -1,9 +1,8 @@
-#	$NetBSD: files.amiga,v 1.186 2024/01/09 04:16:23 thorpej Exp $
+#	$NetBSD: files.amiga,v 1.186.2.1 2026/11/04 23:20:00 perseant Exp $
 
 # maxpartitions must be first item in files.${ARCH}.newconf
 maxpartitions 16			# NOTE THAT AMIGA IS SPECIAL!
 
-defflag	opt_m060sp.h		M060SP
 defflag				PANICBUTTON	# panic on kbd NMI if not DDB
 
 maxusers 2 8 64
@@ -468,12 +467,6 @@ device	drbbc
 attach	drbbc at mainbus
 file	arch/amiga/dev/drbbc.c		drbbc
 
-# kernel floating point emulator
-include	"arch/m68k/fpe/files.fpe"
-
-# Motorola 68060 support package
-include	"arch/m68k/060sp/files.060sp"
-
 # list of standard files...
 
 file	dev/cons.c
@@ -483,19 +476,11 @@ file	arch/amiga/amiga/autoconf.c
 file	arch/amiga/amiga/cia.c
 file	arch/amiga/amiga/conf.c
 file	arch/amiga/amiga/disksubr.c
-file	arch/amiga/amiga/dkbad.c
 file	arch/amiga/amiga/machdep.c
 file	arch/amiga/amiga/pmap_bootstrap.c
-file	arch/amiga/amiga/trap.c
 file	arch/amiga/amiga/cc.c
 file	dev/md_root.c			memory_disk_hooks
-file	arch/m68k/m68k/cacheops.c
-file	arch/m68k/m68k/db_memrw.c	ddb
-file	arch/m68k/m68k/mmu_subr.s
-file	arch/m68k/m68k/pmap_motorola.c
-file	arch/m68k/m68k/procfs_machdep.c	procfs
-file	arch/m68k/m68k/sys_machdep.c
-file	arch/m68k/m68k/vm_machdep.c
+file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/bus_dma.c
 
 define	gayle
@@ -523,21 +508,6 @@ attach	efa at mainbus
 file	arch/amiga/dev/efa.c		efa
 
 # Compatibility modules
-
-# NetBSD m68k a.out Binary Compatibility (COMPAT_AOUT_M68K)
-include	"compat/aoutm68k/files.aoutm68k"
-
-# SunOS Binary Compatibility (COMPAT_SUNOS)
-include	"compat/sunos/files.sunos"
-file	arch/m68k/m68k/sunos_machdep.c	compat_sunos
-
-# Linux binary compatibility (COMPAT_LINUX)
-include	"compat/linux/files.linux"
-include	"compat/linux/arch/m68k/files.linux_m68k"
-file	arch/m68k/m68k/linux_trap.c		compat_linux
-
-# OSS audio driver compatibility
-include	"compat/ossaudio/files.ossaudio"
 
 # Bluetooth stack
 include	"dev/bluetooth/files.bluetooth"

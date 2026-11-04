@@ -1,6 +1,6 @@
 /* Low-level siginfo manipulation for amd64.
 
-   Copyright (C) 2016-2023 Free Software Foundation, Inc.
+   Copyright (C) 2016-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_AMD64_LINUX_SIGINFO_H
-#define NAT_AMD64_LINUX_SIGINFO_H
+#ifndef GDB_NAT_AMD64_LINUX_SIGINFO_H
+#define GDB_NAT_AMD64_LINUX_SIGINFO_H
 
-#include <signal.h>  /* For siginfo_t.  */
+#include <signal.h>
 
 /* When GDB is built as a 64-bit application on Linux, the
    PTRACE_GETSIGINFO data is always presented in 64-bit layout.  Since
@@ -55,4 +55,4 @@ int amd64_linux_siginfo_fixup_common (siginfo_t *native, gdb_byte *inf,
 				      int direction,
 				      enum amd64_siginfo_fixup_mode mode);
 
-#endif /* NAT_AMD64_LINUX_SIGINFO_H */
+#endif /* GDB_NAT_AMD64_LINUX_SIGINFO_H */

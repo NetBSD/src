@@ -1,6 +1,6 @@
 /* NetBSD/ARM support.
 
-   Copyright (C) 2020-2024 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,11 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARM_NBSD_TDEP_H
-#define ARM_NBSD_TDEP_H
+#ifndef GDB_ARM_NETBSD_TDEP_H
+#define GDB_ARM_NETBSD_TDEP_H
 
 void arm_nbsd_supply_gregset
   (const struct regset *regset, struct regcache *regcache,
    int regnum, const void *gregs, size_t len);
 
-#endif
+#endif /* GDB_ARM_NETBSD_TDEP_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.227.2.1 2025/08/02 05:58:46 perseant Exp $ */
+/* $NetBSD: lint1.h,v 1.227.2.2 2026/11/04 23:28:45 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -52,6 +52,21 @@ typedef struct memory_pool {
 	size_t	len;
 	size_t	cap;
 } memory_pool;
+
+/*
+ * By default, all expressions are fully evaluated. In some cases such as the
+ * sizeof operator, only the type of an expression is needed, but not its
+ * value. In yet other cases such as a _Generic expression, not even the type
+ * is needed, so just parsing the expression suffices.
+ */
+typedef enum {
+	/* Only parse expressions, don't determine their type. */
+	EM_PARSE,
+	/* Determine the type of the expressions, but don't evaluate them. */
+	EM_TYPE,
+	/* Fully evaluate expressions. */
+	EM_EVAL,
+} evaluation_mode;
 
 /* See saved_lwarn in cgram.y. */
 #define LWARN_ALL	(-2)
@@ -136,6 +151,7 @@ struct lint1_type {
 	bool	t_const:1;
 	bool	t_volatile:1;
 	bool	t_proto:1;	/* function prototype (u.params valid) */
+	bool	t_identifier_params:1;	/* if FUNC and not t_proto */
 	bool	t_vararg:1;	/* prototype with '...' */
 	bool	t_noreturn:1;	/* function never returns normally */
 	bool	t_typedef:1;	/* type defined with typedef */
@@ -314,10 +330,11 @@ struct tnode {
 	} u;
 };
 
-struct generic_association {
-	type_t *ga_arg;		/* NULL means default or error */
-	tnode_t *ga_result;	/* NULL means error */
-	struct generic_association *ga_prev;
+struct generic_selection {
+	const type_t *expr_type;
+	tnode_t *fallback;
+	tnode_t *matched;
+	bool assoc_matched;
 };
 
 typedef struct {
@@ -386,6 +403,8 @@ typedef struct decl_level {
 	sym_t	*d_func_proto_syms;	/* symbols defined in prototype, such
 					 * as tagged types or parameter names,
 					 * may overlap d_func_params */
+	bool	d_finished;	/* the declaration-specifiers are complete,
+				 * the declarator is being parsed */
 	struct decl_level *d_enclosing; /* the enclosing declaration level */
 } decl_level;
 

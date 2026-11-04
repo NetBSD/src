@@ -1,4 +1,4 @@
-/*	$NetBSD: xxboot.h,v 1.5 2003/05/23 21:56:37 leo Exp $	*/
+/*	$NetBSD: xxboot.h,v 1.5.230.1 2026/11/04 23:20:21 perseant Exp $	*/
 
 /*
  * Copyright (c) 1995 Waldi Ravens
@@ -12,10 +12,7 @@
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by Waldi Ravens.
- * 4. The name of the author may not be used to endorse or promote products
+ * 3. The name of the author may not be used to endorse or promote products
  *    derived from this software without specific prior written permission
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
@@ -88,7 +85,7 @@
 #define	LBLST		(BXXST-LBLSZ)
 
 /*
- * Miminum/maximum value for the top/bottom  of the memory area
+ * Minimum/maximum value for the top/bottom  of the memory area
  * provided by the BIOS. The 1MB minimum memory limit is enough
  * to load a NetBSD kernel, not to run it. ;-) However, memory
  * reserved by the BIOS is not available to the boot loaders,

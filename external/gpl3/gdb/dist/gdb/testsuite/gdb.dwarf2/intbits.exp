@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ Dwarf::assemble ${asm_file} {
 	    {DW_AT_language @DW_LANG_C_plus_plus}
 	} {
 	    declare_labels i7_type u1_type u17_type u31_type \
-		u31_1_type u32_0_type u0_0_type be30_1_type
+		u31_1_type u32_0_type u0_0_type be30_1_type just_bit_type
 
 	    i7_type: DW_TAG_base_type {
 		{DW_AT_encoding @DW_ATE_signed}
@@ -167,6 +167,20 @@ Dwarf::assemble ${asm_file} {
 		{DW_AT_location {DW_OP_addr [gdb_target_symbol "u32_0"]}
 		    SPECIAL_expr}
 	    }
+
+	    just_bit_type: DW_TAG_base_type {
+		{DW_AT_encoding @DW_ATE_unsigned}
+		{DW_AT_name "just_bit_type"}
+		{DW_AT_bit_size 3 DW_FORM_udata}
+	    }
+
+	    DW_TAG_variable {
+		{DW_AT_name "v_just_bit"}
+		{DW_AT_type :${just_bit_type}}
+		{DW_AT_external 1 DW_FORM_flag}
+		{DW_AT_location {DW_OP_addr [gdb_target_symbol "just_bit_0"]}
+		    SPECIAL_expr}
+	    }
 	}
     }
 }
@@ -197,3 +211,6 @@ gdb_test "x/4xb &v_u32_1_off" ":\t0x0e\t0x00\t0x00\t0x00"
 gdb_test "print v_be30_1_off" "= 1"
 gdb_test "print v_be30_1_off = 7" " = 7"
 gdb_test "x/4xb &v_be30_1_off" ":\t0x00\t0x00\t0x00\t0x0e"
+
+gdb_test "print/x v_just_bit" " = 0x5"
+gdb_test "print/x (just_bit_type) 5" " = 0x5"

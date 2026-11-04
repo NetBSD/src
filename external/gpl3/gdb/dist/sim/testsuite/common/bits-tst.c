@@ -1,4 +1,5 @@
 # 2 "bits-tst.c"
+#include <string.h>
 
 /* Drive the bit test routines */
 
@@ -320,9 +321,7 @@ check_bits (int call,
 
 
 int
-main (argc, argv)
-     int argc;
-     char **argv;
+main (int argc, char **argv)
 {
   int errors = 0;
 

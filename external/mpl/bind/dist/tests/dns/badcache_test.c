@@ -1,4 +1,4 @@
-/*	$NetBSD: badcache_test.c,v 1.2.4.2 2025/08/02 05:54:11 perseant Exp $	*/
+/*	$NetBSD: badcache_test.c,v 1.2.4.3 2026/11/04 23:18:22 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -57,7 +57,7 @@ ISC_LOOP_TEST_IMPL(basic) {
 
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 
-	bc = dns_badcache_new(mctx, loopmgr);
+	bc = dns_badcache_new(mctx);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, now + 60);
 
 	flags = 0;
@@ -85,7 +85,7 @@ ISC_LOOP_TEST_IMPL(expire) {
 
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 
-	bc = dns_badcache_new(mctx, loopmgr);
+	bc = dns_badcache_new(mctx);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, now + 60);
 	dns_badcache_add(bc, name, dns_rdatatype_a, flags, now + 60);
 
@@ -137,15 +137,17 @@ ISC_LOOP_TEST_IMPL(print) {
 
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 
-	bc = dns_badcache_new(mctx, loopmgr);
+	bc = dns_badcache_new(mctx);
 	dns_badcache_add(bc, name, dns_rdatatype_a, flags, expire);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, expire);
 
 	file = fopen("./badcache.out", "w");
+	assert_non_null(file);
 	dns_badcache_print(bc, "badcache", file);
 	fclose(file);
 
 	file = fopen("./badcache.out", "r");
+	assert_non_null(file);
 	len = fread(buf, sizeof(buf[0]), ARRAY_SIZE(buf), file);
 	assert_int_equal(len, 68);
 	fclose(file);
@@ -210,7 +212,7 @@ ISC_LOOP_TEST_IMPL(flush) {
 
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 
-	bc = dns_badcache_new(mctx, loopmgr);
+	bc = dns_badcache_new(mctx);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, now + 60);
 
 	result = dns_badcache_find(bc, name, dns_rdatatype_aaaa, &flags, now);
@@ -234,8 +236,7 @@ ISC_LOOP_TEST_IMPL(flushname) {
 	isc_result_t result;
 	uint32_t flags = BADCACHE_TEST_FLAG;
 
-	bc = dns_badcache_new(mctx, loopmgr);
-
+	bc = dns_badcache_new(mctx);
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, now + 60);
 	result = dns_badcache_find(bc, name, dns_rdatatype_aaaa, &flags, now);
@@ -280,7 +281,7 @@ ISC_LOOP_TEST_IMPL(flushtree) {
 	isc_result_t result;
 	uint32_t flags = BADCACHE_TEST_FLAG;
 
-	bc = dns_badcache_new(mctx, loopmgr);
+	bc = dns_badcache_new(mctx);
 
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, now + 60);
@@ -329,7 +330,7 @@ ISC_LOOP_TEST_IMPL(purge) {
 	isc_result_t result;
 	uint32_t flags = BADCACHE_TEST_FLAG;
 
-	bc = dns_badcache_new(mctx, loopmgr);
+	bc = dns_badcache_new(mctx);
 
 	dns_name_fromstring(name, "example.com.", NULL, 0, NULL);
 	dns_badcache_add(bc, name, dns_rdatatype_aaaa, flags, now);

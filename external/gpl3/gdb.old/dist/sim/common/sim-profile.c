@@ -1,5 +1,5 @@
 /* Default profiling support.
-   Copyright (C) 1996-2023 Free Software Foundation, Inc.
+   Copyright (C) 1996-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -611,7 +611,7 @@ profile_pc_init (SIM_DESC sd)
 }
 
 static void
-profile_print_pc (sim_cpu *cpu, int verbose)
+profile_print_pc (sim_cpu *cpu, bool verbose)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   PROFILE_DATA *profile = CPU_PROFILE_DATA (cpu);
@@ -758,7 +758,7 @@ profile_insn_init (SIM_DESC sd)
 }
 
 static void
-profile_print_insn (sim_cpu *cpu, int verbose)
+profile_print_insn (sim_cpu *cpu, bool verbose)
 {
   unsigned int i, n, total, max_val, max_name_len;
   SIM_DESC sd = CPU_STATE (cpu);
@@ -831,7 +831,7 @@ profile_print_insn (sim_cpu *cpu, int verbose)
 #if WITH_PROFILE_MEMORY_P
 
 static void
-profile_print_memory (sim_cpu *cpu, int verbose)
+profile_print_memory (sim_cpu *cpu, bool verbose)
 {
   unsigned int i, n;
   unsigned int total_read, total_write;
@@ -905,7 +905,7 @@ profile_print_memory (sim_cpu *cpu, int verbose)
 #if WITH_PROFILE_CORE_P
 
 static void
-profile_print_core (sim_cpu *cpu, int verbose)
+profile_print_core (sim_cpu *cpu, bool verbose)
 {
   unsigned int total;
   unsigned int max_val;
@@ -962,7 +962,7 @@ profile_print_core (sim_cpu *cpu, int verbose)
 #if WITH_PROFILE_MODEL_P
 
 static void
-profile_print_model (sim_cpu *cpu, int verbose)
+profile_print_model (sim_cpu *cpu, bool verbose)
 {
   SIM_DESC sd = CPU_STATE (cpu);
   PROFILE_DATA *data = CPU_PROFILE_DATA (cpu);
@@ -1110,7 +1110,7 @@ profile_print_addr_ranges (sim_cpu *cpu)
    section titles.  */
 
 static void
-profile_info (SIM_DESC sd, int verbose)
+profile_info (SIM_DESC sd, bool verbose)
 {
   int i,c;
   int print_title_p = 0;

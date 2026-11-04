@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.384.6.1 2025/08/02 05:56:41 perseant Exp $ */
+/* $NetBSD: com.c,v 1.384.6.2 2026/11/04 23:21:57 perseant Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -64,14 +64,18 @@
  * COM driver, uses National Semiconductor NS16450/NS16550AF UART
  * Supports automatic hardware flow control on StarTech ST16C650A UART
  *
- * Lock order:
+ * Lock order (when sc_softirq is false):
  *	ttylock (IPL_VM)
  *	-> sc->sc_lock (IPL_HIGH)
  *	-> timecounter_lock (IPL_HIGH)
+ *
+ * When sc_softirq is true, the ttylock is dropped or avoided and
+ * sc->sc_lock is run at IPL_SOFTSERIAL
+ *
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384.6.1 2025/08/02 05:56:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384.6.2 2026/11/04 23:21:57 perseant Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -116,6 +120,7 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384.6.1 2025/08/02 05:56:41 perseant Exp $
 #include <sys/vnode.h>
 #include <sys/kauth.h>
 #include <sys/intr.h>
+#include <sys/workqueue.h>
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
@@ -149,6 +154,10 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.384.6.1 2025/08/02 05:56:41 perseant Exp $
 #define	CSR_READ_2(r, o)	\
 	bus_space_read_2((r)->cr_iot, (r)->cr_ioh, (r)->cr_map[o])
 
+/* Out of band error */
+#define CSR_HAS_ERROR(r)	\
+	(r)->cr_has_errored
+
 static void com_enable_debugport(struct com_softc *);
 
 void	com_config(struct com_softc *);
@@ -157,7 +166,9 @@ int	comspeed(long, long, int);
 static	u_char	cflag2lcr(tcflag_t);
 int	comparam(struct tty *, struct termios *);
 void	comstart(struct tty *);
+void	comstartsoft(struct tty *);
 int	comhwiflow(struct tty *, int);
+int	comhwiflowsoft(struct tty *, int);
 
 void	com_loadchannelregs(struct com_softc *);
 void	com_hwiflow(struct com_softc *);
@@ -179,6 +190,7 @@ void	comcnputc(dev_t, int);
 void	comcnpollc(dev_t, int);
 
 void	comsoft(void *);
+static void comsoftwq(struct work *, void *);
 static inline void com_rxsoft(struct com_softc *, struct tty *);
 static inline void com_txsoft(struct com_softc *, struct tty *);
 static inline void com_stsoft(struct com_softc *, struct tty *);
@@ -282,6 +294,26 @@ static const bus_size_t com_std_map[COM_REGMAP_NENTRIES] = {
 #define COM_BARRIER(r, f) \
 	bus_space_barrier((r)->cr_iot, (r)->cr_ioh, 0, (r)->cr_nports, (f))
 
+/* Wrap the mutex calls to pick which varient we need to be using */
+
+static void
+com_mutex_enter(struct com_softc *sc)
+{
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		mutex_enter(&sc->sc_lock);
+	else
+		mutex_spin_enter(&sc->sc_lock);
+}
+
+static void
+com_mutex_exit(struct com_softc *sc)
+{
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		mutex_exit(&sc->sc_lock);
+	else
+		mutex_spin_exit(&sc->sc_lock);
+}
+
 /*
  * com_read_1 --
  *	Default register read callback using single byte accesses.
@@ -358,6 +390,7 @@ com_init_regs(struct com_regs *regs, bus_space_tag_t st, bus_space_handle_t sh,
 {
 
 	memset(regs, 0, sizeof(*regs));
+	regs->cr_has_errored = false;
 	regs->cr_iot = st;
 	regs->cr_ioh = sh;
 	regs->cr_iobase = addr;
@@ -440,6 +473,8 @@ comspeed(long speed, long frequency, int type)
 	if (err < 0)
 		err = -err;
 	if (err > COM_TOLERANCE)
+		return (-1);
+	if (x > 65535) /* There are only 16 bits for the divider. */
 		return (-1);
 	return (x);
 
@@ -541,7 +576,7 @@ com_attach_subr(struct com_softc *sc)
 	bool is_console = true;
 	bool force_console = false;
 	bool skip_attach_delay = false;
-
+	int error;
 	aprint_naive("\n");
 
 	dict = device_properties(sc->sc_dev);
@@ -549,9 +584,17 @@ com_attach_subr(struct com_softc *sc)
 	prop_dictionary_get_bool(dict, "force_console", &force_console);
 	prop_dictionary_get_bool(dict, "skip_attach_delay", &skip_attach_delay);
 	callout_init(&sc->sc_diag_callout, 0);
-	callout_init(&sc->sc_poll_callout, 0);
-	callout_setfunc(&sc->sc_poll_callout, com_intr_poll, sc);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+
+	/* The softirq case must run everything here at IPL_SOFTfoo and
+	 * not have any spin locks involved
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ)) {
+		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTSERIAL);
+	} else {
+		callout_init(&sc->sc_poll_callout, 0);
+		mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
+		callout_setfunc(&sc->sc_poll_callout, com_intr_poll, sc);
+	}
 
 #if defined(COM_16650)
 	sc->sc_type = COM_TYPE_16650;
@@ -665,6 +708,16 @@ com_attach_subr(struct com_softc *sc)
 			CSR_WRITE_1(regsp, COM_REG_FIFO,
 			    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_1);
 		}
+		goto fifodelay;
+
+	case COM_TYPE_SC16IS7XX:
+		sc->sc_fifolen = 64;
+		fifo_msg = "NXP UART";
+		SET(sc->sc_hwflags, COM_HW_FLOW);
+		SET(sc->sc_hwflags, COM_HW_FIFO);
+		SET(sc->sc_hwflags, COM_HW_MCRPRESCALE);
+		CSR_WRITE_1(regsp, COM_REG_FIFO,
+		    FIFO_ENABLE | FIFO_RCV_RST | FIFO_XMT_RST | FIFO_TRIGGER_14);
 		goto fifodelay;
 	}
 
@@ -791,9 +844,14 @@ fifodelay:
 fifodone:
 
 	tp = tty_alloc();
-	tp->t_oproc = comstart;
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ)) {
+		tp->t_oproc = comstartsoft;
+		tp->t_hwiflow = comhwiflowsoft;
+	} else {
+		tp->t_oproc = comstart;
+		tp->t_hwiflow = comhwiflow;
+	}
 	tp->t_param = comparam;
-	tp->t_hwiflow = comhwiflow;
 	tp->t_softc = sc;
 
 	sc->sc_tty = tp;
@@ -837,7 +895,22 @@ fifodone:
 	}
 #endif
 
-	sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
+	/* Use a workqueue in the softirq case and not a softint, which
+	 * tripped panics
+	 */
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ)) {
+		error = workqueue_create(&sc->sc_wq, device_xname(sc->sc_dev),
+		    comsoftwq, sc, PRI_SOFTSERIAL, IPL_SOFTSERIAL, WQ_MPSAFE);
+		if (error) {
+			aprint_error_dev(sc->sc_dev,
+			    "Could not create workqueue: %d\n",
+			    error);
+		}
+		sc->sc_si = NULL;
+	} else {
+		sc->sc_si = softint_establish(SOFTINT_SERIAL, comsoft, sc);
+		sc->sc_wq = NULL;
+	}
 
 #ifdef RND_COM
 	rnd_attach_source(&sc->rnd_source, device_xname(sc->sc_dev),
@@ -853,8 +926,16 @@ fifodone:
 
 	SET(sc->sc_hwflags, COM_HW_DEV_OK);
 
-	if (sc->sc_poll_ticks != 0)
-		callout_schedule(&sc->sc_poll_callout, sc->sc_poll_ticks);
+	/* A choice was made here...  in the softirq case, have the code that
+	 * this is glued to start the interrupt poller.  The SC16IS7XX needs this
+	 * because there are two ports on one chip with a single interrupt and you
+	 * wouldn't want two kernel threads running to do that artifical interrupt.
+	 */
+	if (sc->sc_poll_ticks != 0) {
+		if (!ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ)) {
+			callout_schedule(&sc->sc_poll_callout, sc->sc_poll_ticks);
+		}
+	}
 }
 
 void
@@ -955,14 +1036,23 @@ com_detach(device_t self, int flags)
 	tty_free(sc->sc_tty);
 
 	/* Unhook the soft interrupt handler. */
-	softint_disestablish(sc->sc_si);
+	if (sc->sc_si != NULL)
+		softint_disestablish(sc->sc_si);
+
+	if (sc->sc_wq != NULL)
+		workqueue_destroy(sc->sc_wq);
 
 #ifdef RND_COM
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 #endif
 	callout_destroy(&sc->sc_diag_callout);
+	if (!ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		callout_destroy(&sc->sc_poll_callout);
 
+	com_mutex_enter(sc);
+	com_mutex_exit(sc);
+	
 	/* Destroy the lock. */
 	mutex_destroy(&sc->sc_lock);
 
@@ -974,7 +1064,7 @@ com_shutdown(struct com_softc *sc)
 {
 	struct tty *tp = sc->sc_tty;
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 
 	/* If we were asserting flow control, then deassert it. */
 	SET(sc->sc_rx_flags, RX_IBUF_BLOCKED);
@@ -1009,7 +1099,7 @@ com_shutdown(struct com_softc *sc)
 
 	CSR_WRITE_1(&sc->sc_regs, COM_REG_IER, sc->sc_ier);
 
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 
 	if (sc->disable) {
 #ifdef DIAGNOSTIC
@@ -1030,6 +1120,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 	int error;
 
 	sc = device_lookup_private(&com_cd, COMUNIT(dev));
+
 	if (sc == NULL || !ISSET(sc->sc_hwflags, COM_HW_DEV_OK) ||
 		sc->sc_rbuf == NULL)
 		return (ENXIO);
@@ -1057,7 +1148,11 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 	if (kauth_authorize_device_tty(l->l_cred, KAUTH_DEVICE_TTY_OPEN, tp))
 		return (EBUSY);
 
-	s = spltty();
+	/* Run at the IPL_SOFTfoo level */
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		s = splsoftserial();
+	else
+		s = spltty();
 
 	/*
 	 * Do the following iff this is a first open.
@@ -1075,11 +1170,11 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 				    "device enable failed\n");
 				return (EIO);
 			}
-			mutex_spin_enter(&sc->sc_lock);
+			com_mutex_enter(sc);
 			sc->enabled = 1;
 			com_config(sc);
 		} else {
-			mutex_spin_enter(&sc->sc_lock);
+			com_mutex_enter(sc);
 		}
 
 		if (timerisset(&sc->sc_hup_pending)) {
@@ -1117,7 +1212,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		pps_init(&sc->sc_pps_state);
 		mutex_spin_exit(&timecounter_lock);
 
-		mutex_spin_exit(&sc->sc_lock);
+		com_mutex_exit(sc);
 
 		/*
 		 * Initialize the termios status to the defaults.  Add in the
@@ -1146,7 +1241,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 		ttychars(tp);
 		ttsetwater(tp);
 
-		mutex_spin_enter(&sc->sc_lock);
+		com_mutex_enter(sc);
 
 		/*
 		 * Turn on DTR.  We must always do this, even if carrier is not
@@ -1169,7 +1264,7 @@ comopen(dev_t dev, int flag, int mode, struct lwp *l)
 			comstatus(sc, "comopen  ");
 #endif
 
-		mutex_spin_exit(&sc->sc_lock);
+		com_mutex_exit(sc);
 	}
 
 	splx(s);
@@ -1317,7 +1412,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		return error;
 	}
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 
 	switch (cmd) {
 	case TIOCSBRK:
@@ -1385,7 +1480,7 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		break;
 	}
 
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 
 #ifdef COM_DEBUG
 	if (com_debug)
@@ -1398,11 +1493,13 @@ comioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 static inline void
 com_schedrx(struct com_softc *sc)
 {
-
 	sc->sc_rx_ready = 1;
 
 	/* Wake up the poller. */
-	softint_schedule(sc->sc_si);
+	if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		workqueue_enqueue(sc->sc_wq,(struct work *)&sc->sc_wk,NULL);
+	else
+		softint_schedule(sc->sc_si);
 }
 
 void
@@ -1571,8 +1668,22 @@ comparam(struct tty *tp, struct termios *t)
 		if (prescaler == 4)
 			return (EINVAL);
 		sc->sc_prescaler = prescaler;
-	} else
-		ospeed = comspeed(t->c_ospeed, sc->sc_frequency, sc->sc_type);
+	} else {
+		if (ISSET(sc->sc_hwflags, COM_HW_MCRPRESCALE)) {
+			/* Try it without the prescaler, if that fails, enable
+			 * the prescaler and try again.
+			 */
+			ospeed = comspeed(t->c_ospeed, sc->sc_frequency, sc->sc_type);
+			CLR(sc->sc_mcr, MCR_PRESCALE);
+			if (ospeed < 0) {
+				ospeed = comspeed(t->c_ospeed, sc->sc_frequency / 4, sc->sc_type);
+				if (ospeed >= 0)
+					SET(sc->sc_mcr, MCR_PRESCALE);
+			}
+		} else {
+			ospeed = comspeed(t->c_ospeed, sc->sc_frequency, sc->sc_type);
+		}
+	}
 
 	/* Check requested parameters. */
 	if (ospeed < 0)
@@ -1601,7 +1712,7 @@ comparam(struct tty *tp, struct termios *t)
 
 	lcr = ISSET(sc->sc_lcr, LCR_SBREAK) | cflag2lcr(t->c_cflag);
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 
 	sc->sc_lcr = lcr;
 
@@ -1726,7 +1837,7 @@ comparam(struct tty *tp, struct termios *t)
 		sc->sc_r_lowat = com_rbuf_lowat;
 	}
 
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 
 	/*
 	 * Update the tty layer's idea of the carrier bit, in case we changed
@@ -1824,6 +1935,11 @@ com_loadchannelregs(struct com_softc *sc)
 		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
 		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
 	}
+	if (ISSET(sc->sc_hwflags, COM_HW_MCRPRESCALE)) {
+		/* Unlock the prescale bit */
+		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr | EFR_EFCR);
+	}
 	if (sc->sc_type == COM_TYPE_AU1x00) {
 		/* alchemy has single separate 16-bit clock divisor register */
 		CSR_WRITE_2(regsp, COM_REG_DLBL, sc->sc_dlbl +
@@ -1836,6 +1952,12 @@ com_loadchannelregs(struct com_softc *sc)
 	CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
 	CSR_WRITE_1(regsp, COM_REG_MCR, sc->sc_mcr_active = sc->sc_mcr);
 	CSR_WRITE_1(regsp, COM_REG_FIFO, sc->sc_fifo);
+	if (ISSET(sc->sc_hwflags, COM_HW_MCRPRESCALE)) {
+		/* Lock the prescale bit back up again */
+		CSR_WRITE_1(regsp, COM_REG_LCR, LCR_EERS);
+		CSR_WRITE_1(regsp, COM_REG_EFR, sc->sc_efr);
+		CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
+	}
 	if (sc->sc_type == COM_TYPE_HAYESP) {
 		bus_space_write_1(regsp->cr_iot, sc->sc_hayespioh, HAYESP_CMD1,
 		    HAYESP_SETPRESCALER);
@@ -1886,7 +2008,7 @@ comhwiflow(struct tty *tp, int block)
 	if (sc->sc_mcr_rts == 0)
 		return (0);
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 
 	if (block) {
 		if (!ISSET(sc->sc_rx_flags, RX_TTY_BLOCKED)) {
@@ -1904,8 +2026,20 @@ comhwiflow(struct tty *tp, int block)
 		}
 	}
 
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 	return (1);
+}
+
+int
+comhwiflowsoft(struct tty *tp, int block)
+{
+	int r;
+
+	mutex_spin_exit(&tty_lock);
+	r = comhwiflow(tp, block);
+	mutex_spin_enter(&tty_lock);
+
+	return r;
 }
 
 /*
@@ -1955,7 +2089,7 @@ comstart(struct tty *tp)
 		tba = tp->t_outq.c_cf;
 		tbc = ndqb(&tp->t_outq, 0);
 
-		mutex_spin_enter(&sc->sc_lock);
+		com_mutex_enter(sc);
 
 		sc->sc_tba = tba;
 		sc->sc_tbc = tbc;
@@ -1982,11 +2116,27 @@ comstart(struct tty *tp)
 		sc->sc_tba += n;
 	}
 
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
+}
+
+/* Do an ugly thing in the softirq case.  We can't have a spin lock held right now,
+ * so drop it.
+ */
+
+void
+comstartsoft(struct tty *tp)
+{
+	mutex_spin_exit(&tty_lock);
+	comstart(tp);
+	mutex_spin_enter(&tty_lock);
 }
 
 /*
  * Stop output on a line.
+ *
+ * For reasons that are not obvious dropping the tty_lock spin lock was not
+ * enough for the stop call and if you try to acquire a adaptive lock while
+ * holding a spin lock you will panic, so just don't acquire it.
  */
 void
 comstop(struct tty *tp, int flag)
@@ -1994,7 +2144,8 @@ comstop(struct tty *tp, int flag)
 	struct com_softc *sc =
 	    device_lookup_private(&com_cd, COMUNIT(tp->t_dev));
 
-	mutex_spin_enter(&sc->sc_lock);
+	if (!ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		com_mutex_enter(sc);
 	if (ISSET(tp->t_state, TS_BUSY)) {
 		/* Stop transmitting at the next chunk. */
 		sc->sc_tbc = 0;
@@ -2002,8 +2153,10 @@ comstop(struct tty *tp, int flag)
 		if (!ISSET(tp->t_state, TS_TTSTOP))
 			SET(tp->t_state, TS_FLUSH);
 	}
-	mutex_spin_exit(&sc->sc_lock);
+	if (!ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+		com_mutex_exit(sc);
 }
+
 
 void
 comdiag(void *arg)
@@ -2011,13 +2164,13 @@ comdiag(void *arg)
 	struct com_softc *sc = arg;
 	int overflows, floods;
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 	overflows = sc->sc_overflows;
 	sc->sc_overflows = 0;
 	floods = sc->sc_floods;
 	sc->sc_floods = 0;
 	sc->sc_errors = 0;
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 
 	log(LOG_WARNING, "%s: %d silo overflow%s, %d ibuf flood%s\n",
 	    device_xname(sc->sc_dev),
@@ -2103,7 +2256,7 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 
 	if (cc != scc) {
 		sc->sc_rbget = get;
-		mutex_spin_enter(&sc->sc_lock);
+		com_mutex_enter(sc);
 
 		cc = sc->sc_rbavail += scc - cc;
 		/* Buffers should be ok again, release possible block. */
@@ -2125,7 +2278,7 @@ com_rxsoft(struct com_softc *sc, struct tty *tp)
 				com_hwiflow(sc);
 			}
 		}
-		mutex_spin_exit(&sc->sc_lock);
+		com_mutex_exit(sc);
 	}
 }
 
@@ -2138,7 +2291,15 @@ com_txsoft(struct com_softc *sc, struct tty *tp)
 		CLR(tp->t_state, TS_FLUSH);
 	else
 		ndflush(&tp->t_outq, (int)(sc->sc_tba - tp->t_outq.c_cf));
-	(*tp->t_linesw->l_start)(tp);
+
+/* This used to be (*tp->t_linesw->l_start)(tp) which is probably more
+ * correct, however... in the softirq case, it won't work as comstartsoft
+ * will try and drop the spin lock and there isn't one of those when called
+ * from here.  In any case, l_start is just comstartsoft or comstart anyway
+ * and there are other places in this code that just calls comstart, so
+ * do likewise.
+ */
+	comstart(tp);
 }
 
 static inline void
@@ -2146,11 +2307,11 @@ com_stsoft(struct com_softc *sc, struct tty *tp)
 {
 	u_char msr, delta;
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 	msr = sc->sc_msr;
 	delta = sc->sc_msr_delta;
 	sc->sc_msr_delta = 0;
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 
 	if (ISSET(delta, sc->sc_msr_dcd)) {
 		/*
@@ -2163,7 +2324,8 @@ com_stsoft(struct com_softc *sc, struct tty *tp)
 		/* Block or unblock output according to flow control. */
 		if (ISSET(msr, sc->sc_msr_cts)) {
 			sc->sc_tx_stopped = 0;
-			(*tp->t_linesw->l_start)(tp);
+			/* See note above about  (*tp->t_linesw->l_start)(tp); */
+			comstart(tp);
 		} else {
 			sc->sc_tx_stopped = 1;
 		}
@@ -2202,6 +2364,19 @@ comsoft(void *arg)
 	}
 }
 
+static void
+comsoftwq(struct work *wk, void *arg)
+{
+	struct com_softc *sc = arg;
+	struct com_regs *regsp = &sc->sc_regs;
+
+	if (CSR_HAS_ERROR(regsp)) {
+		return;
+	}
+
+	comsoft(sc);
+}
+
 int
 comintr(void *arg)
 {
@@ -2217,21 +2392,31 @@ comintr(void *arg)
 
 	KASSERT(regsp != NULL);
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 	iir = CSR_READ_1(regsp, COM_REG_IIR);
+
+	if (CSR_HAS_ERROR(regsp)) {
+		com_mutex_exit(sc);
+		return (0);
+	}
 
 	/* Handle ns16750-specific busy interrupt. */
 	if (sc->sc_type == COM_TYPE_16750 &&
 	    (iir & IIR_BUSY) == IIR_BUSY) {
 		for (int timeout = 10000;
-		    (CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0; timeout--)
+		     (CSR_READ_1(regsp, COM_REG_USR) & 0x1) != 0; timeout--) {
+			if (CSR_HAS_ERROR(regsp)) {
+				com_mutex_exit(sc);
+				return (0);
+			}
 			if (timeout <= 0) {
 				aprint_error_dev(sc->sc_dev,
 				    "timeout while waiting for BUSY interrupt "
 				    "acknowledge\n");
-				mutex_spin_exit(&sc->sc_lock);
+				com_mutex_exit(sc);
 				return (0);
 			}
+		}
 
 		CSR_WRITE_1(regsp, COM_REG_LCR, sc->sc_lcr);
 		iir = CSR_READ_1(regsp, COM_REG_IIR);
@@ -2253,6 +2438,10 @@ comintr(void *arg)
 			for (int timeout = 10000000;
 			    (CSR_READ_1(regsp, COM_REG_HALT) & HALT_CHCFG_UD) != 0;
 			    timeout--) {
+				if (CSR_HAS_ERROR(regsp)) {
+					com_mutex_exit(sc);
+					return (0);
+				}
 				if (timeout <= 0) {
 					aprint_error_dev(sc->sc_dev,
 					    "timeout while waiting for HALT "
@@ -2279,12 +2468,17 @@ comintr(void *arg)
 	if (ISSET(iir, IIR_NOPEND)) {
 		if (ISSET(sc->sc_hwflags, COM_HW_BROKEN_ETXRDY))
 			goto do_tx;
-		mutex_spin_exit(&sc->sc_lock);
+		com_mutex_exit(sc);
 		return (0);
 	}
 
 again:	do {
 		u_char	msr, delta;
+
+		if (CSR_HAS_ERROR(regsp)) {
+			com_mutex_exit(sc);
+			return (0);
+		}
 
 		lsr = CSR_READ_1(regsp, COM_REG_LSR);
 		if (ISSET(lsr, LSR_BI)) {
@@ -2323,6 +2517,11 @@ again:	do {
 				lsr = CSR_READ_1(regsp, COM_REG_LSR);
 				if (!ISSET(lsr, LSR_RCV_MASK))
 					break;
+
+				if (CSR_HAS_ERROR(regsp)) {
+					com_mutex_exit(sc);
+					return (0);
+				}
 			}
 
 			/*
@@ -2375,6 +2574,10 @@ again:	do {
 		}
 
 		msr = CSR_READ_1(regsp, COM_REG_MSR);
+		if (CSR_HAS_ERROR(regsp)) {
+			com_mutex_exit(sc);
+			return (0);
+		}
 		delta = msr ^ sc->sc_msr;
 		sc->sc_msr = msr;
 		if ((sc->sc_pps_state.ppsparam.mode & PPS_CAPTUREBOTH) &&
@@ -2425,6 +2628,11 @@ do_tx:
 	 */
 	lsr = CSR_READ_1(regsp, COM_REG_LSR);
 
+	if (CSR_HAS_ERROR(regsp)) {
+		com_mutex_exit(sc);
+		return (0);
+	}
+
 	/*
 	 * See if data can be transmitted as well.
 	 * Schedule tx done event if no data left
@@ -2468,11 +2676,19 @@ do_tx:
 	if (!ISSET((iir = CSR_READ_1(regsp, COM_REG_IIR)), IIR_NOPEND))
 		goto again;
 
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
+
+	if (CSR_HAS_ERROR(regsp)) {
+		return (0);
+	}
 
 	/* Wake up the poller. */
-	if ((sc->sc_rx_ready | sc->sc_st_check | sc->sc_tx_done) != 0)
-		softint_schedule(sc->sc_si);
+	if ((sc->sc_rx_ready | sc->sc_st_check | sc->sc_tx_done) != 0) {
+		if (ISSET(sc->sc_hwflags, COM_HW_SOFTIRQ))
+			workqueue_enqueue(sc->sc_wq,(struct work *)&sc->sc_wk,NULL);
+		else
+			softint_schedule(sc->sc_si);
+	}
 
 #ifdef RND_COM
 	rnd_add_uint32(&sc->rnd_source, iir | lsr);
@@ -2755,7 +2971,11 @@ com_kgdb_attach(bus_space_tag_t iot, bus_addr_t iobase, int rate,
 {
 	struct com_regs regs;
 
-	com_init_regs(&regs, iot, (bus_space_handle_t)0/*XXX*/, iobase);
+	/*XXX*/
+	bus_space_handle_t dummy_bsh;
+	memset(&dummy_bsh, 0, sizeof(dummy_bsh));
+	
+	com_init_regs(&regs, iot, dummy_bsh/*XXX*/, iobase);
 
 	return com_kgdb_attach1(&regs, rate, frequency, type, cflag);
 }
@@ -2836,9 +3056,9 @@ com_resume(device_t self, const pmf_qual_t *qual)
 {
 	struct com_softc *sc = device_private(self);
 
-	mutex_spin_enter(&sc->sc_lock);
+	com_mutex_enter(sc);
 	com_loadchannelregs(sc);
-	mutex_spin_exit(&sc->sc_lock);
+	com_mutex_exit(sc);
 
 	return true;
 }

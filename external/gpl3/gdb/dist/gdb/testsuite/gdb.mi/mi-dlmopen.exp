@@ -1,0 +1,232 @@
+# This testcase is part of GDB, the GNU debugger.
+#
+# Copyright 2024-2025 Free Software Foundation, Inc.
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# MI tests related to loading shared libraries into different namespaces
+# with dlmopen().  The source files for this test are copied (almost)
+# verbatim from the gdb.base/dlmopen.exp test.
+
+load_lib "mi-support.exp"
+
+require allow_dlmopen_tests
+
+standard_testfile .c -lib.c -lib-dep.c
+
+set basename_lib dlmopen-lib
+set srcfile_lib $srcfile2
+set binfile_lib1 [standard_output_file $basename_lib.1.so]
+set binfile_lib2 [standard_output_file $basename_lib.2.so]
+set srcfile_lib_dep $srcfile3
+set binfile_lib_dep [standard_output_file $basename_lib-dep.so]
+
+if { [build_executable "build shlib dep" $binfile_lib_dep $srcfile_lib_dep \
+	  {debug shlib}] == -1 } {
+    return
+}
+
+if { [build_executable "build shlib" $binfile_lib1 $srcfile_lib \
+	  [list debug shlib_load shlib libs=$binfile_lib_dep]] == -1 } {
+    return
+}
+
+if { [build_executable "build shlib" $binfile_lib2 $srcfile_lib \
+	  [list debug shlib_load shlib libs=$binfile_lib_dep]] == -1 } {
+    return
+}
+
+if { [build_executable "failed to build" $testfile $srcfile \
+	  [list additional_flags=-DDSO1_NAME=\"$binfile_lib1\" \
+	       additional_flags=-DDSO2_NAME=\"$binfile_lib2\" \
+	       shlib_load debug]] } {
+    return
+}
+
+# Figure out the file name for the dynamic linker.
+set dyln_name [section_get $binfile .interp]
+if { $dyln_name eq "" } {
+    unsupported "couldn't find dynamic linker name"
+    return
+}
+
+# Some source locations needed by the tests.
+set bp_main [gdb_get_line_number "bp.main" $srcfile]
+set bp_loaded [gdb_get_line_number "bp.loaded" $srcfile]
+
+# If the dynamic linker path contains a symlink, some instances show the real
+# path instead of the original path.  Accept both.
+lassign [remote_exec target realpath "$dyln_name"] realpath_ret dyln_realpath_name
+
+if { $realpath_ret == 0 } {
+    set dyln_realpath_name [string trim $dyln_realpath_name]
+} else {
+    set dyln_realpath_name "not-a-valid-path"
+}
+
+# Return true if FILENAME is the dynamic linker.  Otherwise return false.
+proc is_dyln { filename } {
+    return [expr {$filename eq $::dyln_name || $filename eq $::dyln_realpath_name}]
+}
+
+# Run 'info sharedlibrary' and count the number of mappings that look
+# like they might be the dynamic linker.  This will only work for
+# Linux right now.
+proc get_dyld_info {} {
+    if { ![istarget *-linux*] } {
+	return [list 0 ""]
+    }
+
+    set dyld_count 0
+    set dyld_start_addr ""
+    gdb_test_multiple "info sharedlibrary" "" {
+	-re "~\"From\\s+To(\\s+Linker NS)?\\s+Syms\\s+Read\\s+Shared Object Library\\\\n\"\r\n" {
+	    exp_continue
+	}
+	-re "^~\"($::hex)\\s+${::hex}(\\s+$::decimal)?\\s+\[^/\]+(/\[^\r\n\]+)\\\\n\"\r\n" {
+	    set addr $expect_out(1,string)
+	    set lib $expect_out(3,string)
+
+	    if { [is_dyln $lib] } {
+		# This looks like it might be the dynamic linker.
+		incr dyld_count
+		if { $dyld_start_addr eq "" } {
+		    set dyld_start_addr $addr
+		} elseif { $dyld_start_addr ne $addr } {
+		    set dyld_start_addr "MULTIPLE"
+		}
+	    }
+
+	    exp_continue
+	}
+	-re "~\"\\(\\*\\): Shared library is missing debugging information\\.\\\\n\"\r\n" {
+	    exp_continue
+	}
+	-re "^\\^done\r\n" {
+	    exp_continue
+	}
+	-re "^$::mi_gdb_prompt$" {
+	}
+    }
+
+    if { $dyld_start_addr eq "MULTIPLE" } {
+	set dyld_start_addr ""
+    }
+
+    return [list $dyld_count $dyld_start_addr]
+}
+
+# Run the inferior over all the 'dlclose' calls and capture the
+# resulting library-unloaded events.  Check that we see the expected
+# number of unload events for the libraries created for this test, and
+# additionally, check for dynamic linker unload events.
+proc check_solib_unload_events {} {
+    mi_clean_restart $::testfile
+
+    if {[mi_runto_main] == -1} {
+	return
+    }
+
+    # After starting we expect the dynamic linker to be loaded exactly
+    # once.  If it is not then we'll not be able to check the dynamic
+    # linker unloaded events later in this script.
+    set dyld_info [get_dyld_info]
+    set dyld_count [lindex $dyld_info 0]
+    if { $dyld_count != 1 } {
+	unsupported "dynamic linker doesn't appear to be loaded"
+	return
+    }
+
+    # Create breakpoints.
+    mi_create_breakpoint "$::srcfile:$::bp_loaded" \
+	"create b/p once libraries are loaded" \
+	-disp keep -func main -file ".*$::srcfile" -line $::bp_loaded
+    mi_create_breakpoint "$::srcfile:$::bp_main" "create b/p at dlclose" \
+	-disp keep -func main -file ".*$::srcfile" -line $::bp_main
+
+    # Run past all the dlopen and dlmopen calls.
+    mi_execute_to "exec-continue" "breakpoint-hit" main "" ".*" $::bp_loaded \
+	{"" "disp=\"keep\""} "continue until all libraries are loaded"
+
+    # Check that the dynamic linker has now been loaded multiple times.
+    set dyld_info [get_dyld_info]
+    set dyld_count [lindex $dyld_info 0]
+    if { $dyld_count < 2 } {
+	unsupported "not enough instances of the dynamic linker are mapped in"
+	return
+    }
+
+    # Continue.  This will run until the end of 'main', and will pass
+    # over all the dlclose calls.
+    if {[mi_send_resuming_command "exec-continue" "exec-next"] == -1} {
+	return
+    }
+
+    # As a result of all the dlclose calls we should see some library
+    # unload events.  Process them now.
+    set dyld_unload_count 0
+    array set unload_counts {}
+    set still_in_use_fields_correct true
+    gdb_test_multiple "" "" -prompt $::mi_gdb_prompt {
+	-re "=library-unloaded,id=\"(\[^\"\]+)\",\[^\r\n\]+,ranges=\\\[\\{from=\"$::hex\",to=\"$::hex\"\\}\\\],still-in-use=\"(true|false)\"\r\n" {
+	    set lib $expect_out(1,string)
+	    set in_use $expect_out(2,string)
+	    if {[is_dyln $lib]} {
+		# This is the dynamic linker being unloaded.
+		incr dyld_unload_count
+		set expected_in_use "true"
+	    } else {
+		set expected_in_use "false"
+	    }
+
+	    if { $in_use ne $expected_in_use } {
+		set still_in_use_fields_correct false
+	    }
+
+	    set filename [file tail $lib]
+	    incr unload_counts($filename)
+	    exp_continue
+	}
+	-re "\\*stopped,reason=\"breakpoint-hit\",\[^\r\n\]+\r\n$::mi_gdb_prompt" {
+	}
+    }
+
+    # Check we saw the dynamic linker being unloaded the expected number of
+    # times.
+    gdb_assert { $dyld_unload_count == $dyld_count - 1 } \
+	"expected number of dynamic linker unloads"
+
+    gdb_assert { $still_in_use_fields_correct } \
+	"still-in-use fields were all correct"
+
+    # Check that we saw the expected number of library-unloaded events for
+    # each library.  Each DESC is a list of two elements, a filename for a
+    # library, and the number of times it should have been unloaded.
+    foreach desc [list [list $::binfile_lib1 3] \
+		       [list $::binfile_lib_dep 3] \
+		       [list $::binfile_lib2 1]] {
+	set filename [file tail [lindex $desc 0]]
+	set count [lindex $desc 1]
+	gdb_assert { $unload_counts($filename) == $count } \
+	    "check unload count for $filename"
+    }
+
+    # Check that the dynamic linker still shows as loaded exactly once.
+    set dyld_info [get_dyld_info]
+    set dyld_count [lindex $dyld_info 0]
+    gdb_assert { $dyld_count == 1 } \
+	"dynamic linker is mapped once at final b/p"
+}
+
+check_solib_unload_events

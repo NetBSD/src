@@ -1,5 +1,5 @@
 /* GDB self-test for each gdbarch.
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,7 +16,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include <functional>
 
 #if GDB_SELF_TEST
@@ -99,9 +98,7 @@ register_test_foreach_arch (const std::string &name,
 			    self_test_foreach_arch_function *function)
 {
   add_lazy_generator ([=] ()
-		      {
-		        return foreach_arch_test_generator (name, function);
-		      });
+		      { return foreach_arch_test_generator (name, function); });
 }
 
 void

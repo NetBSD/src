@@ -66,6 +66,7 @@ discard.o: ../../include/msg.h
 discard.o: ../../include/msg_stats.h
 discard.o: ../../include/mymalloc.h
 discard.o: ../../include/nvtable.h
+discard.o: ../../include/pol_stats.h
 discard.o: ../../include/recipient_list.h
 discard.o: ../../include/sent.h
 discard.o: ../../include/sys_defs.h

@@ -1,5 +1,5 @@
 /* Generic simulator halt/resume.
-   Copyright (C) 1997-2024 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
 
 This file is part of GDB, the GNU debugger.
@@ -134,7 +134,7 @@ extern void sim_engine_vabort
 
 
 /* Called by the generic sim_resume to run the simulation within the
-   above safty net.
+   above safety net.
 
    An example implementation of sim_engine_run can be found in the
    file sim-run.c */

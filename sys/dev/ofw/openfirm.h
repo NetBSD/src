@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.h,v 1.48 2022/01/22 11:49:18 thorpej Exp $	*/
+/*	$NetBSD: openfirm.h,v 1.48.10.1 2026/11/04 23:22:03 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -129,8 +129,7 @@ device_t of_device_from_phandle(int);
 int	*of_network_decode_media(int, int *, int *);
 char	*of_get_mode_string(char *, int);
 
-void	of_enter_i2c_devs(prop_dictionary_t, int, size_t, int);
-void	of_enter_spi_devs(prop_dictionary_t, int, size_t);
+prop_array_t of_copy_i2c_devs(int, size_t, int);
 #endif /* _KERNEL */
 
 bool	of_hasprop(int, const char *);

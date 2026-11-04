@@ -1,0 +1,8 @@
+dnssec-policy "tagged-keys" {
+	dnskey-ttl 3600;
+
+	keys {
+		ksk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@ tag-range 0 32767;
+		zsk key-directory lifetime unlimited algorithm @DEFAULT_ALGORITHM@ tag-range 32768 65535;
+	};
+};

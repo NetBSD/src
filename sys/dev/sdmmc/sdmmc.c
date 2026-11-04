@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.43.12.1 2025/08/02 05:57:03 perseant Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.43.12.2 2026/11/04 23:22:34 perseant Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.43.12.1 2025/08/02 05:57:03 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.43.12.2 2026/11/04 23:22:34 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -125,6 +125,7 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_spi_sct = saa->saa_spi_sct;
 	sc->sc_sch = saa->saa_sch;
 	sc->sc_dmat = saa->saa_dmat;
+	sc->sc_dma_align_mask = saa->saa_dma_align_mask;
 	sc->sc_clkmin = saa->saa_clkmin;
 	sc->sc_clkmax = saa->saa_clkmax;
 	sc->sc_busclk = sc->sc_clkmax;
@@ -695,8 +696,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->blklen = sdmmc_chip_host_maxblklen(sc->sc_sct, sc->sc_sch);
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
-	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+	    ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 		bus_dma_segment_t ds;
 		int rseg, error;
 
@@ -712,18 +712,11 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 		    &sf->bbuf, BUS_DMA_WAITOK);
 		if (error)
 			goto fail3;
-		error = bus_dmamap_load(sc->sc_dmat, sf->bbuf_dmap,
-		    sf->bbuf, MAXPHYS, NULL,
-		    BUS_DMA_WAITOK|BUS_DMA_READ|BUS_DMA_WRITE);
-		if (error)
-			goto fail4;
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, 1,
 		    MAXPHYS, 0, BUS_DMA_WAITOK, &sf->sseg_dmap);
 		if (!error)
 			goto out;
 
-		bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
-fail4:
 		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, MAXPHYS);
 fail3:
 		bus_dmamem_free(sc->sc_dmat, &ds, 1);
@@ -744,10 +737,8 @@ sdmmc_function_free(struct sdmmc_function *sf)
 	struct sdmmc_softc *sc = sf->sc;
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
-	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
-	    !ISSET(sc->sc_caps, SMC_CAPS_MULTI_SEG_DMA)) {
+	    ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 		bus_dmamap_destroy(sc->sc_dmat, sf->sseg_dmap);
-		bus_dmamap_unload(sc->sc_dmat, sf->bbuf_dmap);
 		bus_dmamem_unmap(sc->sc_dmat, sf->bbuf, MAXPHYS);
 		bus_dmamem_free(sc->sc_dmat,
 		    sf->bbuf_dmap->dm_segs, sf->bbuf_dmap->dm_nsegs);

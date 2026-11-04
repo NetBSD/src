@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_indata.c,v 1.15.2.1 2025/08/02 05:57:50 perseant Exp $ */
+/*	$NetBSD: sctp_indata.c,v 1.15.2.2 2026/11/04 23:27:59 perseant Exp $ */
 /*	$KAME: sctp_indata.c,v 1.36 2005/03/06 16:04:17 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.15.2.1 2025/08/02 05:57:50 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_indata.c,v 1.15.2.2 2026/11/04 23:27:59 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -2165,7 +2165,7 @@ sctp_process_a_data_chunk(struct sctp_tcb *stcb, struct sctp_association *asoc,
 				 * queue it.
 				 */
 				TAILQ_INSERT_TAIL(&asoc->pending_reply_queue , chk, sctp_next);
-			}  else {
+			} else {
 				sctp_queue_data_to_stream(stcb, asoc, chk, abort_flag);
 			}
 		}

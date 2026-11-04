@@ -1,6 +1,6 @@
 /* Python memory buffer interface for reading inferior memory.
 
-   Copyright (C) 2009-2023 Free Software Foundation, Inc.
+   Copyright (C) 2009-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "python-internal.h"
 
 struct membuf_object {
@@ -99,16 +98,16 @@ get_buffer (PyObject *self, Py_buffer *buf, int flags)
 
 /* General Python initialization callback.  */
 
-int
+static int CPYCHECKER_NEGATIVE_RESULT_SETS_EXCEPTION
 gdbpy_initialize_membuf (void)
 {
   membuf_object_type.tp_new = PyType_GenericNew;
-  if (PyType_Ready (&membuf_object_type) < 0)
-    return -1;
-
-  return gdb_pymodule_addobject (gdb_module, "Membuf",
-				 (PyObject *) &membuf_object_type);
+  return gdbpy_type_ready (&membuf_object_type);
 }
+
+GDBPY_INITIALIZE_FILE (gdbpy_initialize_membuf);
+
+
 
 static PyBufferProcs buffer_procs =
 {

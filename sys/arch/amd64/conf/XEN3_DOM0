@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.203.2.1 2025/08/02 05:55:24 perseant Exp $
+# $NetBSD: XEN3_DOM0,v 1.203.2.2 2026/11/04 23:19:59 perseant Exp $
 
 # XEN3_DOM0 machine description file
 #
@@ -14,7 +14,7 @@ include 	"arch/amd64/conf/std.xen"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"XEN3_DOM0-$Revision: 1.203.2.1 $"
+#ident		"XEN3_DOM0-$Revision: 1.203.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -537,6 +537,8 @@ amdtemp* at amdnb_misc?  		# AMD CPU Temperature sensors
 amdsmn* at pci?				# AMD SMN Configuration
 amdzentemp* at amdsmnbus?		# AMD Ryzen Family 17h CPU temp sensors
 
+pchtemp* at pci?			# Intel PCH Thermal Subsystem
+
 # Winbond LPC Super I/O
 #wbsio*	at isa? port 0x2e
 #wbsio*	at isa? port 0x4e
@@ -866,7 +868,7 @@ ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 ral*	at pci? dev ? function ?	# Ralink Technology RT25x0 802.11a/b/g
 re*	at pci? dev ? function ?	# Realtek 8139C+/8169/8169S/8110S
-rge*	at pci? dev ? function ?	# Realtek 8125
+rge*	at pci? dev ? function ?	# Realtek 8125/8126/8127
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
 rtw*	at pci? dev ? function ?	# Realtek 8180L (802.11)
 rtwn*	at pci? dev ? function ?	# Realtek 8188CE/8192CE 802.11b/g/n

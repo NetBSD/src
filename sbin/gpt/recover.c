@@ -33,10 +33,13 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/recover.c,v 1.8 2005/08/31 01:47:19 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: recover.c,v 1.19.8.1 2025/08/02 05:55:06 perseant Exp $");
+__RCSID("$NetBSD: recover.c,v 1.19.8.2 2026/11/04 23:19:39 perseant Exp $");
 #endif
 
 #include <sys/types.h>
+#if defined(HAVE_SYS_ENDIAN_H) || ! defined(HAVE_NBTOOL_CONFIG_H)
+#include <sys/endian.h>
+#endif
 
 #include <err.h>
 #include <stddef.h>

@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -107,7 +107,7 @@ proc_with_prefix no_url { } {
     setenv DEBUGINFOD_URLS ""
 
     # Test that GDB cannot find source without debuginfod.
-    clean_restart $binfile
+    clean_restart $::testfile
     gdb_test_no_output "set substitute-path $outputdir /dev/null" \
 	"set substitute-path"
     gdb_test "list" ".*No such file or directory.*"
@@ -126,7 +126,7 @@ proc_with_prefix no_url { } {
     file rename -force $debuginfo $debugdir
 
     # Test that GDB cannot find symbols without debuginfod.
-    clean_restart $binfile
+    clean_restart $::testfile
     gdb_test "file" ".*No symbol file.*"
 
     set buildid "01234567890abcdef0123456"
@@ -152,12 +152,12 @@ proc_with_prefix no_url { } {
     # Test that GDB cannot find dwz without debuginfod.
     clean_restart
     gdb_test "file ${binfile}_alt.o" \
-	".*could not find '.gnu_debugaltlink'.*" \
+	".*could not find supplementary DWARF file .*" \
 	"file [file tail ${binfile}_alt.o]"
 
     # Generate a core file and test that GDB cannot find the
     # executable.
-    clean_restart ${binfile}2
+    clean_restart ${::testfile}2
     if ![runto_main] {
 	return -1
     }
@@ -195,12 +195,6 @@ proc test_urls {urls pattern_re test} {
 	$test
 }
 
-# Used as a replacement for delete_breakpoints while calling
-# runto_main in one case where we don't want to delete all the
-# breakpoints.
-proc disable_delete_breakpoints {} {
-}
-
 # Uses the global variables DEBUGDIR and DB which are setup elsewhere
 # in this script.
 #
@@ -234,13 +228,14 @@ proc_with_prefix local_url { } {
     # the contents of DW_AT_comp_dir and DW_AT_name.
     gdb_test "set cwd $debugdir" "" "file [file tail $binfile] cwd"
     gdb_breakpoint $lineno
-    with_override delete_breakpoints disable_delete_breakpoints {
-	if {![runto_main]} {
-	    return
-	}
-	gdb_continue_to_breakpoint "runto breakpoint in main" \
-	    ".* Breakpoint here\\. .*"
+
+    # Run to main, but don't delete all breakpoints.
+    if {![runto_main no-delete-breakpoints]} {
+	return
     }
+
+    gdb_continue_to_breakpoint "runto breakpoint in main" \
+	".* Breakpoint here\\. .*"
 
     # GDB should now find the executable file.
     set enable_debuginfod_question \

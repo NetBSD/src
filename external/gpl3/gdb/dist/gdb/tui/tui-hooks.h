@@ -1,6 +1,6 @@
 /* External/Public TUI hools header file, for GDB the GNU debugger.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TUI_TUI_HOOKS_H
-#define TUI_TUI_HOOKS_H
+#ifndef GDB_TUI_TUI_HOOKS_H
+#define GDB_TUI_TUI_HOOKS_H
 
 extern void tui_install_hooks (void);
 extern void tui_remove_hooks (void);
 
-#endif /* TUI_TUI_HOOKS_H */
+#endif /* GDB_TUI_TUI_HOOKS_H */

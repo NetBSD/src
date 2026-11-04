@@ -1,4 +1,5 @@
-/*	$NetBSD: stdd.h,v 1.4 2003/08/07 11:14:34 agc Exp $	*/
+/*	$NetBSD: stdd.h,v 1.4.110.1 2026/11/04 23:28:35 perseant Exp $	*/
+/*	$OpenBSD: stdd.h,v 1.6 2010/09/07 19:58:09 marco Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993

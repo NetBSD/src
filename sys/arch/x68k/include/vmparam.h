@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.40.30.1 2025/08/02 05:56:15 perseant Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.40.30.2 2026/11/04 23:21:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,63 +41,7 @@
 #ifndef _X68K_VMPARAM_H_
 #define	_X68K_VMPARAM_H_
 
-/*
- * Machine dependent constants for X68K
- */
-
-/*
- * Use common m68k definitions to define PAGE_SIZE and related constants.
- */
-#include <m68k/vmparam.h>
-
-/*
- * USRSTACK is the top (end) of the user stack.
- */
-#define	USRSTACK	VM_MAXUSER_ADDRESS	/* Start of user stack */
-
-/*
- * Virtual memory related constants, all in bytes
- */
-#ifndef MAXTSIZ
-#define	MAXTSIZ		(32*1024*1024)		/* max text size */
-#endif
-#ifndef DFLDSIZ
-#define	DFLDSIZ		(16*1024*1024)		/* initial data size limit */
-#endif
-#ifndef MAXDSIZ
-#define	MAXDSIZ		(64*1024*1024)		/* max data size */
-#endif
-#ifndef	DFLSSIZ
-#define	DFLSSIZ		(2*1024*1024)		/* initial stack size limit */
-#endif
-#ifndef	MAXSSIZ
-#define	MAXSSIZ		MAXDSIZ			/* max stack size */
-#endif
-
-/*
- * PTEs for mapping user space into the kernel for phyio operations.
- * One page is enough to handle 4Mb of simultaneous raw IO operations.
- */
-#ifndef USRIOSIZE
-#define USRIOSIZE	(1 * NPTEPG)	/* 4mb */
-#endif
-
-/*
- * Mach derived constants
- */
-
-/* user/kernel map constants */
-#define VM_MIN_ADDRESS		((vaddr_t)0)
-#define VM_MAXUSER_ADDRESS	((vaddr_t)0xFFF00000)
-#define VM_MAX_ADDRESS		((vaddr_t)0xFFF00000)
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0)
-#define VM_MAX_KERNEL_ADDRESS	((vaddr_t)(0-PAGE_SIZE*NPTEPG))
-
-/* virtual sizes (bytes) for various kernel submaps */
-#define VM_PHYS_SIZE		(USRIOSIZE*PAGE_SIZE)
-
-/* # of kernel PT pages (initial only, can grow dynamically) */
-#define VM_KERNEL_PT_PAGES	((vsize_t)4)
+#if defined(_KERNEL) && !defined(_MODULE)
 
 /*
  * Constants which control the way the VM system deals with memory segments.
@@ -111,13 +55,11 @@
 #define	VM_FREELIST_HIGHMEM	VM_FREELIST_DEFAULT
 #define	VM_FREELIST_MAINMEM	1
 
-#define	__HAVE_PMAP_PHYSSEG
+#define	VM_PHYS_SEG_TO_FREELIST(s) \
+	((s) == 0 ? VM_FREELIST_MAINMEM : VM_FREELIST_DEFAULT)
 
-/*
- * pmap-specific data stored in the vm_physmem[] array.
- */
-struct pmap_physseg {
-	struct pv_header *pvheader;	/* pv table for this seg */
-};
+#endif /* _KERNEL && !_MODULE */
+
+#include <m68k/vmparam.h>
 
 #endif /* _X68K_VMPARAM_H_ */

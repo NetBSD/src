@@ -1,4 +1,4 @@
-# Copyright 2011-2023 Free Software Foundation, Inc.
+# Copyright 2011-2024 Free Software Foundation, Inc.
 #
 # Contributed by Red Hat, originally written by Keith Seitz.
 #
@@ -17,7 +17,7 @@
 
 # This file is part of the gdb testsuite.
 
-if {[skip_cplus_tests]} { return }
+require allow_cplus_tests
 
 standard_testfile .cc anon-ns2.cc
 
@@ -55,12 +55,10 @@ foreach test $methods {
 
     gdb_test "list $test" $result
     gdb_test "list '$test'" $result
-    if {[gdb_breakpoint $test]} {
-	pass "break $test"
-    }
-    if {[gdb_breakpoint '$test']} {
-	pass "break '$test'"
-    }
+    gdb_assert { [gdb_breakpoint $test no-message] } \
+	"break $test, unquoted"
+    gdb_assert { [gdb_breakpoint '$test' no-message] } \
+	"break $test, single-quoted"
 }
 
 # PR c++/17976
@@ -68,4 +66,3 @@ gdb_test "ptype '(anonymous namespace)'" \
     "type = namespace \\\(anonymous namespace\\\)"
 
 gdb_exit
-return 0

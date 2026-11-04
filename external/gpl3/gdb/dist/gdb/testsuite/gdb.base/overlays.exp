@@ -1,4 +1,4 @@
-# Copyright 1997-2024 Free Software Foundation, Inc.
+# Copyright 1997-2025 Free Software Foundation, Inc.
 # 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -150,7 +150,7 @@ if {$data_overlays} {
 }
 
 # Verify that early-mapped overlays have been bumped out 
-# by later-mapped overlays layed over in the same VMA range.
+# by later-mapped overlays laid over in the same VMA range.
 
 send_gdb "overlay list\n"
 gdb_expect {

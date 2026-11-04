@@ -1,6 +1,6 @@
 /* Scheme interface to lazy strings.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -38,7 +38,7 @@ struct lazy_string_smob
 
   /*  Holds the encoding that will be applied to the string when the string
       is printed by GDB.  If the encoding is set to NULL then GDB will select
-      the most appropriate encoding when the sting is printed.
+      the most appropriate encoding when the string is printed.
       Space for this is malloc'd and will be freed when the object is
       freed.  */
   char *encoding;
@@ -206,7 +206,7 @@ lsscm_elt_type (lazy_string_smob *ls_smob)
     case TYPE_CODE_ARRAY:
       return realtype->target_type ();
     default:
-      /* This is done to preserve existing behaviour.  PR 20769.
+      /* This is done to preserve existing behavior.  PR 20769.
 	 E.g., gdb.parse_and_eval("my_int_variable").lazy_string().type.  */
       return realtype;
     }

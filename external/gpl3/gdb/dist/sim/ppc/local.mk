@@ -80,7 +80,7 @@ noinst_PROGRAMS += %D%/run
 
 %D%/defines.h: %D%/stamp-defines ; @true
 %D%/stamp-defines: config.h Makefile
-	$(AM_V_GEN)$(SED) -n -e '/^#define HAVE_.*1$$/{ s/ 1$$/",/; s/.* HAVE_/"HAVE_/; p }' < config.h > %D%/defines.hin
+	$(AM_V_GEN)$(SED) -n -e '/^#define HAVE_.*1$$/{ s/ 1$$/",/; s/.* HAVE_/"HAVE_/; p; }' < config.h > %D%/defines.hin
 	$(AM_V_at)$(SHELL) $(srcroot)/move-if-change %D%/defines.hin %D%/defines.h
 	$(AM_V_at)touch $@
 

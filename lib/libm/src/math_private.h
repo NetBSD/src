@@ -11,7 +11,7 @@
 
 /*
  * from: @(#)fdlibm.h 5.1 93/09/24
- * $NetBSD: math_private.h,v 1.32.2.1 2025/08/02 05:54:52 perseant Exp $
+ * $NetBSD: math_private.h,v 1.32.2.2 2026/11/04 23:19:28 perseant Exp $
  */
 
 #ifndef _MATH_PRIVATE_H_
@@ -19,6 +19,7 @@
 
 #include <assert.h>
 #include <sys/types.h>
+#include <sys/endian.h>
 
 /*
  * The original fdlibm code used statements like:
@@ -428,7 +429,7 @@ do {								\
  * any extra precision into the type of 'a' -- 'a' should have type float_t,
  * double_t or long double.  b's type should be no larger than 'a's type.
  * Callers should use these types with scopes as large as possible, to
- * reduce their own extra-precision and efficiciency problems.  In
+ * reduce their own extra-precision and efficiency problems.  In
  * particular, they shouldn't convert back and forth just to call here.
  */
 #ifdef DEBUG

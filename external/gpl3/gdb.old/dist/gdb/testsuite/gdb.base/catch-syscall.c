@@ -38,7 +38,11 @@ int unknown_syscall = 0x0f07ff;
 #else
 int unknown_syscall = 123456789;
 #endif
+#ifdef SYS_exit_group
 int exit_group_syscall = SYS_exit_group;
+#else
+int exit_syscall = SYS_exit;
+#endif
 
 /* Set by the test when it wants execve.  */
 int do_execve = 0;

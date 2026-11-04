@@ -1,6 +1,6 @@
 /* Basic C++ demangling support for GDB.
 
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    Written by Fred Fish at Cygnus Support.
 
@@ -208,9 +208,7 @@ demangle_command (const char *args, int from_tty)
     error (_("Can't demangle \"%s\""), name);
 }
 
-void _initialize_gdb_demangle ();
-void
-_initialize_gdb_demangle ()
+INIT_GDB_FILE (gdb_demangle)
 {
   int i, ndems;
 

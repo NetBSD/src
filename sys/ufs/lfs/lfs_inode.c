@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.160 2020/04/23 21:47:09 ad Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.160.26.1 2026/11/04 23:28:07 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.160 2020/04/23 21:47:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.160.26.1 2026/11/04 23:28:07 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -187,7 +187,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 		fs->lfs_writer++;
 		if (vp->v_uflag & VU_DIROP) {
 			KASSERT(fs->lfs_dirops == 0);
-			lfs_flush_fs(fs, SEGM_SYNC);
+			lfs_flush_fs(fs, 0);
 		}
 		mutex_exit(&lfs_lock);
 		error = lfs_vflush(vp);
@@ -349,7 +349,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 	bc = 0;
 
 	if (ovp != fs->lfs_ivnode)
-		lfs_seglock(fs, SEGM_PROT);
+		lfs_prelock(fs, 0);
 	if (offset == 0) {
 		oip->i_size = length;
 		lfs_dino_setsize(fs, oip->i_din, oip->i_size);
@@ -619,7 +619,7 @@ done:
   errout:
 	oip->i_lfs_hiblk = lfs_lblkno(fs, oip->i_size + lfs_sb_getbsize(fs) - 1) - 1;
 	if (ovp != fs->lfs_ivnode)
-		lfs_segunlock(fs);
+		lfs_preunlock(fs);
 	return (allerror ? allerror : error);
 }
 
@@ -655,16 +655,17 @@ lfs_update_seguse(struct lfs *fs, struct inode *ip, long lastseg, size_t num)
 	if (lastseg < 0 || num == 0)
 		return 0;
 
-	LIST_FOREACH(sd, &ip->i_lfs_segdhd, list)
-		if (sd->segnum == lastseg)
-			break;
+	sd = rb_tree_find_node(&ip->i_lfs_segdhd, &lastseg);
 	if (sd == NULL) {
 		sd = malloc(sizeof(*sd), M_SEGMENT, M_WAITOK);
 		sd->segnum = lastseg;
 		sd->num = 0;
-		LIST_INSERT_HEAD(&ip->i_lfs_segdhd, sd, list);
+		rb_tree_insert_node(&ip->i_lfs_segdhd, sd);
 	}
 	sd->num += num;
+	DLOG((DLOG_SU, "seg %jd -= %jd for ino %jd (postponed)\n",
+	      (intmax_t)lastseg, (intmax_t)num,
+	      (intmax_t)ip->i_number));
 
 	return 0;
 }
@@ -674,21 +675,23 @@ lfs_finalize_seguse(struct lfs *fs, void *v)
 {
 	SEGUSE *sup;
 	struct buf *bp;
-	struct segdelta *sd;
-	LIST_HEAD(, segdelta) *hd = v;
+	struct segdelta *sd, *tmp;
+	rb_tree_t *rbt = v;
 
 	ASSERT_SEGLOCK(fs);
-	while((sd = LIST_FIRST(hd)) != NULL) {
-		LIST_REMOVE(sd, list);
+	RB_TREE_FOREACH_SAFE(sd, rbt, tmp) {
 		LFS_SEGENTRY(sup, fs, sd->segnum, bp);
+		DLOG((DLOG_SU, "seg %jd -= %jd when finalized\n",
+			(intmax_t)sd->segnum, (intmax_t)sd->num));
 		if (sd->num > sup->su_nbytes) {
-			printf("lfs_finalize_seguse: segment %ld short by %ld\n",
+			printf("lfs_finalize_seguse: seg %ld short by %ld\n",
 				sd->segnum, (long)(sd->num - sup->su_nbytes));
 			panic("lfs_finalize_seguse: negative bytes");
 			sup->su_nbytes = sd->num;
 		}
 		sup->su_nbytes -= sd->num;
 		LFS_WRITESEGENTRY(sup, fs, sd->segnum, bp);
+		rb_tree_remove_node(rbt, sd);
 		free(sd, M_SEGMENT);
 	}
 }

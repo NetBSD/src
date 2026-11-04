@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsNN.h,v 1.14 2023/05/06 21:53:26 andvar Exp $	*/
+/*	$NetBSD: mipsNN.h,v 1.14.6.1 2026/11/04 23:20:58 perseant Exp $	*/
 
 /*
  * Copyright 2000, 2001
@@ -164,7 +164,7 @@
 /* "WR" (R): Watch registers implemented if set. */
 #define	MIPSNN_CFG1_WR		0x00000008
 
-/* "CA" (R): Code compressiong (MIPS16) implemented if set. */
+/* "CA" (R): Code compression (MIPS16) implemented if set. */
 #define	MIPSNN_CFG1_CA		0x00000004
 
 /* "EP" (R): EJTAG implemented if set. */

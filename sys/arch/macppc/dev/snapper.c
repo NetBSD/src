@@ -1,4 +1,4 @@
-/*	$NetBSD: snapper.c,v 1.67 2023/12/20 15:29:04 thorpej Exp $	*/
+/*	$NetBSD: snapper.c,v 1.67.2.1 2026/11/04 23:20:55 perseant Exp $	*/
 /*	Id: snapper.c,v 1.11 2002/10/31 17:42:13 tsubai Exp	*/
 /*	Id: i2s.c,v 1.12 2005/01/15 14:32:35 tsubai Exp		*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.67 2023/12/20 15:29:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.67.2.1 2026/11/04 23:20:55 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/audioio.h>
@@ -55,6 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: snapper.c,v 1.67 2023/12/20 15:29:04 thorpej Exp $")
 
 #include <macppc/dev/deqvar.h>
 #include <macppc/dev/obiovar.h>
+#include <macppc/dev/i2sreg.h>
 
 #include "opt_snapper.h"
 
@@ -530,35 +531,6 @@ static bus_size_t owaddr = -1;
 static uint8_t headphone_detect_active = 0;
 static uint8_t lineout_detect_active = 0;
 
-
-/* I2S registers */
-#define I2S_INT		0x00
-#define I2S_FORMAT	0x10
-#define I2S_FRAMECOUNT	0x40
-#define I2S_FRAMEMATCH	0x50
-#define I2S_WORDSIZE	0x60
-
-/* I2S_INT register definitions */
-#define I2S_INT_CLKSTOPPEND 0x01000000  /* clock-stop interrupt pending */
-
-/* I2S_WORDSIZE register definitions */
-#define INPUT_STEREO            (2 << 24)
-#define INPUT_MONO              (1 << 24)
-#define INPUT_16BIT             (0 << 16)
-#define INPUT_24BIT             (3 << 16)
-#define OUTPUT_STEREO           (2 << 8)
-#define OUTPUT_MONO             (1 << 8)
-#define OUTPUT_16BIT            (0 << 0)
-#define OUTPUT_24BIT            (3 << 0)
-
-/* FCR(0x3c) bits */
-#define KEYLARGO_FCR1   0x3c
-#define  I2S0CLKEN      0x1000
-#define  I2S0EN         0x2000
-#define  I2S1CLKEN      0x080000
-#define  I2S1EN         0x100000
-#define FCR3C_BITMASK "\020\25I2S1EN\24I2S1CLKEN\16I2S0EN\15I2S0CLKEN"
-
 /* TAS3004/TAS3001 registers */
 #define DEQ_MCR1	0x01	/* Main control register 1 (1byte) */
 #define DEQ_DRC		0x02	/* Dynamic range compression (6bytes?)
@@ -649,24 +621,6 @@ struct tas3004_reg {
 	u_char ACR[1];
 	u_char MCR2[1];
 };
-
-#define GPIO_OUTSEL	0xf0	/* Output select */
-		/*	0x00	GPIO bit0 is output
-			0x10	media-bay power
-			0x20	reserved
-			0x30	MPIC */
-
-#define GPIO_ALTOE	0x08	/* Alternate output enable */
-		/*	0x00	Use DDR
-			0x08	Use output select */
-
-#define GPIO_DDR	0x04	/* Data direction */
-#define GPIO_DDR_OUTPUT	0x04	/* Output */
-#define GPIO_DDR_INPUT	0x00	/* Input */
-
-#define GPIO_LEVEL	0x02	/* Pin level (RO) */
-
-#define	GPIO_DATA	0x01	/* Data */
 
 static int
 snapper_match(device_t parent, struct cfdata *match, void *aux)
@@ -1673,25 +1627,6 @@ if (sc->sc_mode > 1) return;
 
 	tas3004_write(sc, DEQ_MIXER_R, regs);
 }
-
-#define CLKSRC_49MHz	0x80000000	/* Use 49152000Hz Osc. */
-#define CLKSRC_45MHz	0x40000000	/* Use 45158400Hz Osc. */
-#define CLKSRC_18MHz	0x00000000	/* Use 18432000Hz Osc. */
-#define MCLK_DIV	0x1f000000	/* MCLK = SRC / DIV */
-#define  MCLK_DIV1	0x14000000	/*  MCLK = SRC */
-#define  MCLK_DIV3	0x13000000	/*  MCLK = SRC / 3 */
-#define  MCLK_DIV5	0x12000000	/*  MCLK = SRC / 5 */
-#define SCLK_DIV	0x00f00000	/* SCLK = MCLK / DIV */
-#define  SCLK_DIV1	0x00800000
-#define  SCLK_DIV3	0x00900000
-#define SCLK_MASTER	0x00080000	/* Master mode */
-#define SCLK_SLAVE	0x00000000	/* Slave mode */
-#define SERIAL_FORMAT	0x00070000
-#define  SERIAL_SONY	0x00000000
-#define  SERIAL_64x	0x00010000
-#define  SERIAL_32x	0x00020000
-#define  SERIAL_DAV	0x00040000
-#define  SERIAL_SILICON	0x00050000
 
 /*
  * rate = fs = LRCLK

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93.c,v 1.33 2024/02/09 22:08:34 andvar Exp $	*/
+/*	$NetBSD: wd33c93.c,v 1.33.2.1 2026/11/04 23:21:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.33 2024/02/09 22:08:34 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd33c93.c,v 1.33.2.1 2026/11/04 23:21:59 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -129,7 +129,8 @@ int	wd33c93_nextstate (struct wd33c93_softc *, struct wd33c93_acb *,
 int	wd33c93_abort (struct wd33c93_softc *, struct wd33c93_acb *,
      const char *);
 void	wd33c93_xferdone (struct wd33c93_softc *);
-void	wd33c93_error (struct wd33c93_softc *, struct wd33c93_acb *);
+void	wd33c93_error (struct wd33c93_softc *, struct wd33c93_acb *,
+			const char *);
 void	wd33c93_scsidone (struct wd33c93_softc *, struct wd33c93_acb *, int);
 void	wd33c93_sched (struct wd33c93_softc *);
 void	wd33c93_dequeue (struct wd33c93_softc *, struct wd33c93_acb *);
@@ -140,7 +141,8 @@ void	wd33c93_msgin (struct wd33c93_softc *, u_char *, int);
 void	wd33c93_reselect (struct wd33c93_softc *, int, int, int, int);
 void	wd33c93_sched_msgout (struct wd33c93_softc *, u_short);
 void	wd33c93_msgout (struct wd33c93_softc *);
-void	wd33c93_timeout (void *arg);
+void	wd33c93_timeout_callout (void *arg);
+int	wd33c93_timeout (struct wd33c93_acb *);
 void	wd33c93_watchdog (void *arg);
 u_char	wd33c93_stp2syn (struct wd33c93_softc *, struct wd33c93_tinfo *);
 void	wd33c93_setsync (struct wd33c93_softc *, struct wd33c93_tinfo *);
@@ -394,7 +396,8 @@ wd33c93_reset(struct wd33c93_softc *sc)
 }
 
 void
-wd33c93_error(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
+wd33c93_error(struct wd33c93_softc *sc, struct wd33c93_acb *acb,
+    const char *str)
 {
 	struct scsipi_xfer *xs = acb->xs;
 
@@ -404,7 +407,7 @@ wd33c93_error(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 		return;
 
 	scsipi_printaddr(xs->xs_periph);
-	printf("SCSI Error\n");
+	printf("SCSI Error (%s)\n", str);
 }
 
 /*
@@ -555,7 +558,7 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 	struct wd33c93_acb *acb;
 	int flags, s;
 
-	SBIC_DEBUG(MISC, ("wd33c93_scsi_request: req 0x%x\n", (int)req));
+	SBIC_DEBUG(SCSIREQ, ("%s: req 0x%x\n", __func__, (int)req));
 
 	switch (req) {
 	case ADAPTER_REQ_RUN_XFER:
@@ -580,6 +583,9 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 			scsipi_done(xs);
 			return;
 		}
+
+		SBIC_DEBUG(SCSIREQ,
+		    ("wd33c93_scsi_request: RUN_XFER: acb %p\n", acb));
 
 		acb->flags = ACB_ACTIVE;
 		acb->xs    = xs;
@@ -618,7 +624,10 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 		return;
 
 	case ADAPTER_REQ_GROW_RESOURCES:
+		SBIC_DEBUG(SCSIREQ, ("%s: GROW_RESOURCES, UNSUPPORTED\n",
+		    __func__));
 		/* XXX Not supported. */
+		/* XXX TODO: should fail the request */
 		return;
 
 	case ADAPTER_REQ_SET_XFER_MODE:
@@ -628,6 +637,8 @@ wd33c93_scsi_request(struct scsipi_channel *chan, scsipi_adapter_req_t req, void
 
 		ti = &sc->sc_tinfo[xm->xm_target];
 		ti->flags &= ~T_WANTSYNC;
+
+		SBIC_DEBUG(SCSIREQ, ("%s: REQ_SET_XFER_MODE\n", __func__));
 
 		if ((CFFLAGS_NOTAGS(sc->sc_cfflags, xm->xm_target) == 0) &&
 		    (xm->xm_mode & PERIPH_CAP_TQING) && !wd33c93_notags)
@@ -916,7 +927,7 @@ wd33c93_abort(struct wd33c93_softc *sc, struct wd33c93_acb *acb,
 	if (sc->sc_nexus == acb) {
 		/* Reschedule timeout. */
 		callout_reset(&acb->xs->xs_callout, mstohz(acb->timeout),
-		    wd33c93_timeout, acb);
+		    wd33c93_timeout_callout, acb);
 
 		while (asr & SBIC_ASR_DBR) {
 			/*
@@ -998,7 +1009,7 @@ wd33c93_selectbus(struct wd33c93_softc *sc, struct wd33c93_acb *acb)
 
 	if ((xs->xs_control & XS_CTL_POLL) == 0)
 		callout_reset(&xs->xs_callout, mstohz(acb->timeout),
-		    wd33c93_timeout, acb);
+		    wd33c93_timeout_callout, acb);
 
 	/*
 	 * issue select
@@ -1298,7 +1309,7 @@ wd33c93_xferdone(struct wd33c93_softc *sc)
 	if (phase == 0x60)
 		GET_SBIC_tlun(sc, sc->sc_status);
 	else
-		wd33c93_error(sc, sc->sc_nexus);
+		wd33c93_error(sc, sc->sc_nexus, "unexpected phase");
 
 	QPRINTF(("=STS:%02x=\n", sc->sc_status));
 	splx(s);
@@ -1406,7 +1417,8 @@ wd33c93_intr(struct wd33c93_softc *sc)
 	} while (sc->sc_state == SBIC_CONNECTED &&
 	    	 asr & (SBIC_ASR_INT|SBIC_ASR_LCI));
 
-	SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n", i, asr));
+       SBIC_DEBUG(INTS, ("intr done. state=%d, asr=0x%02x\n",
+           sc->sc_state, asr));
 
 	return(1);
 }
@@ -2149,7 +2161,7 @@ wd33c93_nextstate(struct wd33c93_softc *sc, struct wd33c93_acb	*acb, u_char csr,
 
 		SET_SBIC_control(sc, SBIC_CTL_EDI | SBIC_CTL_IDI);
 		if (acb->xs)
-			wd33c93_error(sc, acb);
+			wd33c93_error(sc, acb, "unexpected/abort");
 		wd33c93_abort(sc, acb, "next");
 
 		if (sc->sc_flags & SBICF_INDMA) {
@@ -2274,14 +2286,33 @@ wd33c93_update_xfer_mode(struct wd33c93_softc *sc, int target)
 }
 
 void
-wd33c93_timeout(void *arg)
+wd33c93_timeout_callout(void *arg)
 {
 	struct wd33c93_acb *acb = arg;
+	int x;
+
+	x = splbio();
+	wd33c93_timeout(acb);
+	splx(x);
+}
+
+/**
+ * @brief Handle timeout events.
+ *
+ * Note: this can be run from outside splbio(), it will acquire it as needed.
+ *
+ * Returns 1 if the transfer was aborted and the caller should
+ * reschedule or complete the acb, 0 otherwise.
+ */
+int
+wd33c93_timeout(struct wd33c93_acb *acb)
+{
 	struct scsipi_xfer *xs = acb->xs;
 	struct scsipi_periph *periph = xs->xs_periph;
 	struct wd33c93_softc *sc =
 	    device_private(periph->periph_channel->chan_adapter->adapt_dev);
 	int s, asr;
+	int ret;
 
 	s = splbio();
 
@@ -2297,10 +2328,14 @@ wd33c93_timeout(void *arg)
 	if (asr & SBIC_ASR_INT) {
 		/* We need to service a missed IRQ */
 		wd33c93_intr(sc);
+		ret = 0;
 	} else {
-		(void) wd33c93_abort(sc, sc->sc_nexus, "timeout");
+		(void) wd33c93_abort(sc, acb, "timeout");
+		ret = 1;
 	}
 	splx(s);
+
+	return (ret);
 }
 
 

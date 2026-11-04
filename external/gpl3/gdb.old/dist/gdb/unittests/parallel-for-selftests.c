@@ -1,6 +1,6 @@
 /* Self tests for parallel_for_each
 
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -24,7 +24,6 @@
    FOR_EACH.  The FOR_EACH-defined part reads like a regular function.  */
 #ifndef FOR_EACH
 
-#include "defs.h"
 #include "gdbsupport/selftest.h"
 #include "gdbsupport/parallel-for.h"
 
@@ -120,34 +119,6 @@ TEST (int n_threads)
 	    });
   SELF_CHECK (counter == 0);
 
-  auto task_size_max_ = [] (int iter)
-    {
-      return (size_t)SIZE_MAX;
-    };
-  auto task_size_max = gdb::make_function_view (task_size_max_);
-
-  counter = 0;
-  FOR_EACH (1, 0, NUMBER,
-	    [&] (int start, int end)
-	    {
-	      counter += end - start;
-	    }, task_size_max);
-  SELF_CHECK (counter == NUMBER);
-
-  auto task_size_one_ = [] (int iter)
-    {
-      return (size_t)1;
-    };
-  auto task_size_one = gdb::make_function_view (task_size_one_);
-
-  counter = 0;
-  FOR_EACH (1, 0, NUMBER,
-	    [&] (int start, int end)
-	    {
-	      counter += end - start;
-	    }, task_size_one);
-  SELF_CHECK (counter == NUMBER);
-
 #undef NUMBER
 
   /* Check that if there are fewer tasks than threads, then we won't
@@ -160,27 +131,8 @@ TEST (int n_threads)
 	      {
 		if (start == end)
 		  any_empty_tasks = true;
-		return std::unique_ptr<int> (new int (end - start));
+		return std::make_unique<int> (end - start);
 	      });
-  SELF_CHECK (!any_empty_tasks);
-  SELF_CHECK (std::all_of (intresults.begin (),
-			   intresults.end (),
-			   [] (const std::unique_ptr<int> &entry)
-			     {
-			       return entry != nullptr;
-			     }));
-
-  /* The same but using the task size parameter.  */
-  intresults.clear ();
-  any_empty_tasks = false;
-  FOR_EACH (1, 0, 1,
-	    [&] (int start, int end)
-	      {
-		if (start == end)
-		  any_empty_tasks = true;
-		return std::unique_ptr<int> (new int (end - start));
-	      },
-	    task_size_one);
   SELF_CHECK (!any_empty_tasks);
   SELF_CHECK (std::all_of (intresults.begin (),
 			   intresults.end (),

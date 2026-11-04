@@ -11,7 +11,9 @@
 
 import pytest
 
-pytestmark = pytest.mark.extra_artifacts(
+import isctest.mark
+
+EXTRA_ARTIFACTS = pytest.mark.extra_artifacts(
     [
         "dig.out.*",
         "wait_for_message.*",
@@ -22,9 +24,12 @@ pytestmark = pytest.mark.extra_artifacts(
     ]
 )
 
-import isctest.mark
+pytestmark = [
+    isctest.mark.requires_net_dns,
+    EXTRA_ARTIFACTS,
+]
 
 
-@isctest.mark.flaky(max_runs=2)
+@pytest.mark.flaky(max_runs=3)
 def test_fetchlimit(run_tests_sh):
     run_tests_sh()

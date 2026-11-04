@@ -1,4 +1,4 @@
-/*	$NetBSD: zdump.c,v 1.63.2.1 2025/08/02 05:54:44 perseant Exp $	*/
+/*	$NetBSD: zdump.c,v 1.63.2.2 2026/11/04 23:19:25 perseant Exp $	*/
 /* Dump time zone data in a textual format.  */
 
 /*
@@ -8,7 +8,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: zdump.c,v 1.63.2.1 2025/08/02 05:54:44 perseant Exp $");
+__RCSID("$NetBSD: zdump.c,v 1.63.2.2 2026/11/04 23:19:25 perseant Exp $");
 #endif /* !defined lint */
 
 #ifndef NETBSD_INSPIRED
@@ -64,13 +64,6 @@ enum { SECSPER400YEARS_FITS = SECSPERLYEAR <= INTMAX_MAX / 400 };
 #if ! HAVE_LOCALTIME_RZ
 # undef  timezone_t
 # define timezone_t char **
-#endif
-
-#if !HAVE_POSIX_DECLS
-extern int	getopt(int argc, char * const argv[],
-			const char * options);
-extern char *	optarg;
-extern int	optind;
 #endif
 
 /* The minimum and maximum finite time values.  */
@@ -135,7 +128,7 @@ size_overflow(void)
 
 /* Return A + B, exiting if the result would overflow either ptrdiff_t
    or size_t.  A and B are both nonnegative.  */
-ATTRIBUTE_PURE_114833 static ptrdiff_t
+ATTRIBUTE_PURE_114833_HACK static ptrdiff_t
 sumsize(size_t a, size_t b)
 {
 #ifdef ckd_add
@@ -222,16 +215,6 @@ localtime_rz(ATTRIBUTE_MAYBE_UNUSED timezone_t rz, time_t *tp, struct tm *tmp)
 {
 	return localtime_r(tp, tmp);
 }
-
-# ifdef TYPECHECK
-#  undef mktime_z
-#  define mktime_z zdump_mktime_z
-static time_t
-mktime_z(timezone_t tz, struct tm *tmp)
-{
-	return mktime(tmp);
-}
-# endif
 
 # undef tzalloc
 # undef tzfree
@@ -336,41 +319,6 @@ my_gmtime_r(time_t *tp, struct tm *tmp)
 	return USE_LOCALTIME_RZ ?
 	    localtime_rz(gmtz, tp, tmp) : gmtime_r(tp, tmp);
 }
-
-#ifndef TYPECHECK
-#define my_localtime_rz	localtime_rz
-#else /* !defined TYPECHECK */
-static struct tm *
-my_localtime_rz(timezone_t tz, const time_t *tp, struct tm *tmp)
-{
-	tmp = localtime_rz(tz, tp, tmp);
-	if (tmp) {
-		struct tm	tm;
-		time_t	t;
-
-		tm = *tmp;
-		t = mktime_z(tz, &tm);
-		if (t != *tp) {
-			(void) fflush(stdout);
-			(void) fprintf(stderr, "\n%s: ", progname);
-			(void) fprintf(stderr, tformat(), *tp);
-			(void) fprintf(stderr, " ->");
-			(void) fprintf(stderr, " year=%d", tmp->tm_year);
-			(void) fprintf(stderr, " mon=%d", tmp->tm_mon);
-			(void) fprintf(stderr, " mday=%d", tmp->tm_mday);
-			(void) fprintf(stderr, " hour=%d", tmp->tm_hour);
-			(void) fprintf(stderr, " min=%d", tmp->tm_min);
-			(void) fprintf(stderr, " sec=%d", tmp->tm_sec);
-			(void) fprintf(stderr, " isdst=%d", tmp->tm_isdst);
-			(void) fprintf(stderr, " -> ");
-			(void) fprintf(stderr, tformat(), t);
-			(void) fprintf(stderr, "\n");
-			errout = true;
-		}
-	}
-	return tmp;
-}
-#endif /* !defined TYPECHECK */
 
 static void
 abbrok(const char *const abbrp, const char *const zone)
@@ -602,16 +550,16 @@ main(int argc, char *argv[])
 		t = absolute_min_time;
 		if (! (iflag | Vflag)) {
 			show(tz, argv[i], t, true);
-			if (my_localtime_rz(tz, &t, &tm) == NULL
+			if (localtime_rz(tz, &t, &tm) == NULL
 			    && t < cutlotime) {
 				time_t newt = cutlotime;
-				if (my_localtime_rz(tz, &newt, &newtm) != NULL)
+				if (localtime_rz(tz, &newt, &newtm) != NULL)
 				  showextrema(tz, argv[i], t, NULL, newt);
 			}
 		}
 		if (t + 1 < cutlotime)
 		  t = cutlotime - 1;
-		tm_ok = my_localtime_rz(tz, &t, &tm) != NULL;
+		tm_ok = localtime_rz(tz, &t, &tm) != NULL;
 		if (tm_ok) {
 			ab = saveabbr(&abbrev, &abbrevsize, &tm);
 			if (iflag) {
@@ -654,9 +602,9 @@ main(int argc, char *argv[])
 			time_t newt = absolute_max_time;
 			t = cuthitime;
 			if (t < newt) {
-			  struct tm *tmp = my_localtime_rz(tz, &t, &tm);
+			  struct tm *tmp = localtime_rz(tz, &t, &tm);
 			  if (tmp != NULL
-			      && my_localtime_rz(tz, &newt, &newtm) == NULL)
+			      && localtime_rz(tz, &newt, &newtm) == NULL)
 			    showextrema(tz, argv[i], t, tmp, newt);
 			}
 			show(tz, argv[i], absolute_max_time, true);
@@ -731,7 +679,7 @@ hunt(timezone_t tz, time_t lot, time_t hit, bool only_ok)
 	   caller already did that.  On platforms without TM_ZONE,
 	   tzname may have been altered since our caller broke down
 	   LOT, and tzname needs to be changed back.  */
-	bool lotm_ok = my_localtime_rz(tz, &lot, &lotm) != NULL;
+	bool lotm_ok = localtime_rz(tz, &lot, &lotm) != NULL;
 	bool tm_ok;
 	char const *ab = lotm_ok ? saveabbr(&loab, &loabsize, &lotm) : NULL;
 
@@ -742,7 +690,7 @@ hunt(timezone_t tz, time_t lot, time_t hit, bool only_ok)
 		time_t t = (rem_sum == 2) - (rem_sum < 0) + lot / 2 + hit / 2;
 		if (t == lot)
 			break;
-		tm_ok = my_localtime_rz(tz, &t, &tm) != NULL;
+		tm_ok = localtime_rz(tz, &t, &tm) != NULL;
 		if (lotm_ok == tm_ok
 		    && (only_ok
 			|| (ab && tm.tm_isdst == lotm.tm_isdst
@@ -768,7 +716,7 @@ delta_nonneg(struct tm *newp, struct tm *oldp)
 	intmax_t sec = SECSPERREPEAT, result = cycles * sec;
 	int tmy = oldp->tm_year + cycles * YEARSPERREPEAT;
 	for ( ; tmy < newp->tm_year; ++tmy)
-		result += DAYSPERNYEAR + isleap_sum(tmy, TM_YEAR_BASE);
+	  result += year_sum_days(tmy, TM_YEAR_BASE);
 	result += newp->tm_yday - oldp->tm_yday;
 	result *= HOURSPERDAY;
 	result += newp->tm_hour - oldp->tm_hour;
@@ -795,7 +743,7 @@ adjusted_yday(struct tm const *a, struct tm const *b)
 {
 	int yday = a->tm_yday;
 	if (b->tm_year < a->tm_year)
-		yday += 365 + isleap_sum(b->tm_year, TM_YEAR_BASE);
+		yday += year_sum_days(b->tm_year, TM_YEAR_BASE);
 	return yday;
 }
 #endif
@@ -850,7 +798,7 @@ show(timezone_t tz, char *zone, time_t t, bool v)
 		}
 		(void) printf(" = ");
 	}
-	tmp = my_localtime_rz(tz, &t, &tm);
+	tmp = localtime_rz(tz, &t, &tm);
 	if (tmp == NULL) {
 		printf(tformat(), t);
 		printf(_(" (localtime failed)"));
@@ -887,7 +835,7 @@ showextrema(timezone_t tz, char *zone, time_t lo, struct tm *lotmp, time_t hi)
 	: hi + (hi < TIME_T_MAX));
   if (SECSPERDAY < boundary - lo) {
     lo = boundary - SECSPERDAY;
-    lotmp = my_localtime_rz(tz, &lo, &localtm[old]);
+    lotmp = localtime_rz(tz, &lo, &localtm[old]);
   }
   if (lotmp)
     localtm[old] = *lotmp;
@@ -902,7 +850,7 @@ showextrema(timezone_t tz, char *zone, time_t lo, struct tm *lotmp, time_t hi)
      worth the trouble.  */
   for (t = lo + 1; t < hi; t++) {
     bool new = !old;
-    if (! my_localtime_rz(tz, &t, &localtm[new]))
+    if (! localtime_rz(tz, &t, &localtm[new]))
       localtm[new].tm_sec = -1;
     if (! my_gmtime_r(&t, &gmtm[new]))
       gmtm[new].tm_sec = -1;
@@ -924,6 +872,7 @@ my_snprintf(char *s, size_t size, char const *format, ...)
   int n;
   va_list args;
   char const *arg;
+  char *cp;
   size_t arglen, slen;
   char buf[1024];
   va_start(args, format);
@@ -940,8 +889,9 @@ my_snprintf(char *s, size_t size, char const *format, ...)
     arglen = n;
   }
   slen = arglen < size ? arglen : size - 1;
-  memcpy(s, arg, slen);
-  s[slen] = '\0';
+  cp = s;
+  cp = mempcpy(cp, arg, slen);
+  *cp = '\0';
   n = arglen <= INT_MAX ? arglen : -1;
   va_end(args);
   return n;
@@ -1070,8 +1020,9 @@ istrftime(char *buf, ptrdiff_t size, char const *time_fmt,
       char fbuf[100];
       bool oversized = (ptrdiff_t)sizeof fbuf <= f_prefix_copy_size;
       char *f_prefix_copy = oversized ? xmalloc(f_prefix_copy_size) : fbuf;
-      memcpy(f_prefix_copy, f, f_prefix_len);
-      strcpy(f_prefix_copy + f_prefix_len, "X");
+      char *cp = f_prefix_copy;
+      cp = mempcpy(cp, f, f_prefix_len);
+      strcpy(cp, "X");
       formatted_len = strftime(b, s, f_prefix_copy, tm);
       if (oversized)
 	free(f_prefix_copy);

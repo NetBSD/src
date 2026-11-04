@@ -1,6 +1,6 @@
 /* Call site information.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    Contributed by Cygnus Support, using pieces from other GDB modules.
 
@@ -19,15 +19,16 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef CALL_SITE_H
-#define CALL_SITE_H
+#ifndef GDB_DWARF2_CALL_SITE_H
+#define GDB_DWARF2_CALL_SITE_H
 
 #include "dwarf2/types.h"
 #include "../frame.h"
 #include "gdbsupport/function-view.h"
+#include "gdbsupport/unordered_set.h"
 
 struct dwarf2_locexpr_baton;
-struct dwarf2_per_cu_data;
+struct dwarf2_per_cu;
 struct dwarf2_per_objfile;
 
 /* struct call_site_parameter can be referenced in callees by several ways.  */
@@ -163,38 +164,21 @@ struct call_site_parameter
 
 struct call_site
 {
-  call_site (unrelocated_addr pc, dwarf2_per_cu_data *per_cu,
+  call_site (unrelocated_addr pc, dwarf2_per_cu *per_cu,
 	     dwarf2_per_objfile *per_objfile)
     : per_cu (per_cu), per_objfile (per_objfile), m_unrelocated_pc (pc)
   {}
 
-  static int
-  eq (const call_site *a, const call_site *b)
-  {
-    return a->m_unrelocated_pc == b->m_unrelocated_pc;
-  }
-
-  static hashval_t
-  hash (const call_site *a)
-  {
-    return (hashval_t) a->m_unrelocated_pc;
-  }
-
-  static int
-  eq (const void *a, const void *b)
-  {
-    return eq ((const call_site *)a, (const call_site *)b);
-  }
-
-  static hashval_t
-  hash (const void *a)
-  {
-    return hash ((const call_site *)a);
-  }
-
-  /* Return the address of the first instruction after this call.  */
+  /* Return the relocated (using the objfile from PER_OBJFILE) address of the
+     first instruction after this call.  */
 
   CORE_ADDR pc () const;
+
+  /* Return the unrelocated address of the first instruction after this
+     call.  */
+
+  unrelocated_addr unrelocated_pc () const noexcept
+  { return m_unrelocated_pc; }
 
   /* Call CALLBACK for each target address.  CALLER_FRAME (for
      registers) can be NULL if it is not known.  This function may
@@ -214,7 +198,7 @@ struct call_site
   struct call_site *tail_call_next = nullptr;
 
   /* * Describe DW_AT_call_target.  Missing attribute uses
-     FIELD_LOC_KIND_DWARF_BLOCK with FIELD_DWARF_BLOCK == NULL.  */
+     m_loc_kind == DWARF_BLOCK with m_loc.dwarf_block == nullptr.  */
 
   struct call_site_target target {};
 
@@ -225,7 +209,7 @@ struct call_site
   /* * CU of the function where the call is located.  It gets used
      for DWARF blocks execution in the parameter array below.  */
 
-  dwarf2_per_cu_data *const per_cu = nullptr;
+  dwarf2_per_cu *const per_cu = nullptr;
 
   /* objfile of the function where the call is located.  */
 
@@ -241,4 +225,37 @@ public:
   struct call_site_parameter parameter[];
 };
 
-#endif /* CALL_SITE_H */
+/* Key hash type to store call_site objects in gdb::unordered_set, identified by
+   their unrelocated PC.  */
+
+struct call_site_hash_pc
+{
+  using is_transparent = void;
+
+  std::size_t operator() (const call_site *site) const noexcept
+  { return (*this) (site->unrelocated_pc ()); }
+
+  std::size_t operator() (unrelocated_addr pc) const noexcept
+  { return std::hash<unrelocated_addr> () (pc); }
+};
+
+/* Key equal type to store call_site objects in gdb::unordered_set, identified
+   by their unrelocated PC.  */
+
+struct call_site_eq_pc
+{
+  using is_transparent = void;
+
+  bool operator() (const call_site *a, const call_site *b) const noexcept
+  { return (*this) (a->unrelocated_pc (), b); }
+
+  bool operator() (unrelocated_addr pc, const call_site *site) const noexcept
+  { return pc == site->unrelocated_pc (); }
+};
+
+/* Set of call_site objects identified by their unrelocated PC.  */
+
+using call_site_htab_t
+  = gdb::unordered_set<call_site *, call_site_hash_pc, call_site_eq_pc>;
+
+#endif /* GDB_DWARF2_CALL_SITE_H */

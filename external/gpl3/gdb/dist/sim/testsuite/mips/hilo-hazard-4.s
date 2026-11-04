@@ -1,11 +1,11 @@
-# Test for mf{hi,lo} -> mult/div/mt{hi,lo} with 2 nops inbetween.
+# Test for mf{hi,lo} -> mult/div/mt{hi,lo} with 2 nops in between.
 #
 # mach:		all
 # as:		-mabi=eabi -mmicromips
 # ld:		-N -Ttext=0x80010000
 # output:	pass\\n
 
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 # Contributed by Andrew Bennett (andrew.bennett@imgtec.com)
 #
 # This file is part of the MIPS sim.

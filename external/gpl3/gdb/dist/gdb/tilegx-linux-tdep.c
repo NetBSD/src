@@ -1,6 +1,6 @@
 /* Target-dependent code for GNU/Linux on Tilera TILE-Gx processors.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -19,6 +19,7 @@
 
 #include "osabi.h"
 #include "linux-tdep.h"
+#include "solib-svr4-linux.h"
 #include "glibc-tdep.h"
 #include "solib-svr4.h"
 #include "symtab.h"
@@ -119,11 +120,9 @@ tilegx_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   /* GNU/Linux uses SVR4-style shared libraries.  */
   if (arch_size == 32)
-    set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					   linux_ilp32_fetch_link_map_offsets);
+    set_solib_svr4_ops (gdbarch, make_linux_ilp32_svr4_solib_ops);
   else
-    set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					   linux_lp64_fetch_link_map_offsets);
+    set_solib_svr4_ops (gdbarch, make_linux_lp64_svr4_solib_ops);
 
   /* Enable TLS support.  */
   set_gdbarch_fetch_tls_load_module_address (gdbarch,
@@ -134,9 +133,7 @@ tilegx_linux_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   set_gdbarch_skip_solib_resolver (gdbarch, glibc_skip_solib_resolver);
 }
 
-void _initialize_tilegx_linux_tdep ();
-void
-_initialize_tilegx_linux_tdep ()
+INIT_GDB_FILE (tilegx_linux_tdep)
 {
   gdbarch_register_osabi (bfd_arch_tilegx, bfd_mach_tilegx, GDB_OSABI_LINUX,
 			  tilegx_linux_init_abi);

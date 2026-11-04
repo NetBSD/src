@@ -1,5 +1,5 @@
 /* NDS32-specific support for 32-bit ELF.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2024 Free Software Foundation, Inc.
    Contributed by Andes Technology Corporation.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -256,8 +256,7 @@ struct elf_nds32_obj_tdata
 static bool
 nds32_elf_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_nds32_obj_tdata),
-				  NDS32_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_nds32_obj_tdata));
 }
 
 /* Relocations used for relocation.  */
@@ -3738,8 +3737,7 @@ nds32_elf_link_hash_table_create (bfd *abfd)
   /* Patch tag.  */
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      nds32_elf_link_hash_newfunc,
-				      sizeof (struct elf_nds32_link_hash_entry),
-				      NDS32_ELF_DATA))
+				      sizeof (struct elf_nds32_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -4302,8 +4300,8 @@ elf32_nds32_add_dynreloc (bfd *output_bfd,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				 struct bfd_link_info *info)
+nds32_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
 {
   struct elf_nds32_link_hash_table *htab;
   bfd *dynobj;
@@ -4316,7 +4314,8 @@ nds32_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
@@ -6385,18 +6384,18 @@ nds32_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 
 	    case DT_PLTGOT:
 	      /* name = ".got";  */
-	      s = ehtab->sgot->output_section;
+	      s = ehtab->sgot;
 	      goto get_vma;
 	    case DT_JMPREL:
-	      s = ehtab->srelplt->output_section;
+	      s = ehtab->srelplt;
 	    get_vma:
 	      BFD_ASSERT (s != NULL);
-	      dyn.d_un.d_ptr = s->vma;
+	      dyn.d_un.d_ptr = s->output_section->vma + s->output_offset;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
 	      break;
 
 	    case DT_PLTRELSZ:
-	      s = ehtab->srelplt->output_section;
+	      s = ehtab->srelplt;
 	      BFD_ASSERT (s != NULL);
 	      dyn.d_un.d_val = s->size;
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
@@ -6414,7 +6413,7 @@ nds32_elf_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
 		 about changing the DT_RELA entry.  */
 	      if (ehtab->srelplt != NULL)
 		{
-		  s = ehtab->srelplt->output_section;
+		  s = ehtab->srelplt;
 		  dyn.d_un.d_val -= s->size;
 		}
 	      bfd_elf32_swap_dyn_out (output_bfd, &dyn, dyncon);
@@ -13137,7 +13136,7 @@ nds32_elf_get_relocated_section_contents (bfd *abfd,
 							  input_section);
 	      _bfd_clear_contents ((*parent)->howto, input_bfd,
 				   input_section, data, off);
-	      (*parent)->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	      (*parent)->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	      (*parent)->addend = 0;
 	      (*parent)->howto = &none_howto;
 	      r = bfd_reloc_ok;
@@ -13984,7 +13983,7 @@ nds32_elf_unify_tls_model (bfd *inbfd, asection *insec, bfd_byte *incontents,
 #define elf_backend_create_dynamic_sections	nds32_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	nds32_elf_finish_dynamic_sections
 #define elf_backend_finish_dynamic_symbol	nds32_elf_finish_dynamic_symbol
-#define elf_backend_size_dynamic_sections	nds32_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		nds32_elf_late_size_sections
 #define elf_backend_relocate_section		nds32_elf_relocate_section
 #define elf_backend_gc_mark_hook		nds32_elf_gc_mark_hook
 #define elf_backend_grok_prstatus		nds32_elf_grok_prstatus

@@ -1,10 +1,10 @@
-@c Copyright (C) 2017-2020 Free Software Foundation, Inc.
+@c Copyright (C) 2017-2022 Free Software Foundation, Inc.
 @c This is part of the GCC manual.
 @c For copying conditions, see the file gcc.texi.
 
 @ignore
 @c man begin COPYRIGHT
-Copyright @copyright{} 2017-2020 Free Software Foundation, Inc.
+Copyright @copyright{} 2017-2022 Free Software Foundation, Inc.
 
 Permission is granted to copy, distribute and/or modify this document
 under the terms of the GNU Free Documentation License, Version 1.3 or
@@ -61,6 +61,7 @@ gcov-dump [@option{-v}|@option{--version}]
      [@option{-h}|@option{--help}]
      [@option{-l}|@option{--long}]
      [@option{-p}|@option{--positions}]
+     [@option{-r}|@option{--raw}]
      @var{gcovfiles}
 @c man end
 @end ignore
@@ -79,6 +80,10 @@ Dump content of records.
 @item -p
 @itemx --positions
 Dump positions of records.
+
+@item -r
+@itemx --raw
+Print content records in raw format.
 
 @item -v
 @itemx --version

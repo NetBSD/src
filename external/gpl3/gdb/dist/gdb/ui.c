@@ -1,4 +1,4 @@
-/* Copyright (C) 2023-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2023-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -106,7 +106,7 @@ ui::input_interactive_p () const
 
 
 /* When there is an event ready on the stdin file descriptor, instead
-   of calling readline directly throught the callback function, or
+   of calling readline directly through the callback function, or
    instead of calling gdb_readline_no_editing_callback, give gdb a
    chance to detect errors and do something.  */
 
@@ -237,9 +237,7 @@ new_ui_command (const char *args, int from_tty)
   gdb_printf ("New UI allocated\n");
 }
 
-void _initialize_ui ();
-void
-_initialize_ui ()
+INIT_GDB_FILE (ui)
 {
   cmd_list_element *c = add_cmd ("new-ui", class_support, new_ui_command, _("\
 Create a new UI.\n\

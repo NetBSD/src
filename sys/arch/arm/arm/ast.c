@@ -1,4 +1,4 @@
-/*	$NetBSD: ast.c,v 1.32 2021/02/01 19:31:34 skrll Exp $	*/
+/*	$NetBSD: ast.c,v 1.32.24.1 2026/11/04 23:20:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.32 2021/02/01 19:31:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ast.c,v 1.32.24.1 2026/11/04 23:20:04 perseant Exp $");
 
 #include "opt_ddb.h"
 
@@ -69,23 +69,14 @@ void
 userret(struct lwp *l)
 {
 #if defined(ARM_MMU_EXTENDED)
-	/*
-	 * If our ASID got released, access via TTBR0 will have been disabled.
-	 * So if it is disabled, activate the lwp again to get a new ASID.
-	 */
-#ifdef __HAVE_PREEMPTION
-	kpreempt_disable();
-#endif
 	KASSERTMSG(curcpu()->ci_pmap_cur == l->l_proc->p_vmspace->vm_map.pmap,
 	    "%p vs %p", curcpu()->ci_pmap_cur,
 	    l->l_proc->p_vmspace->vm_map.pmap);
-	if (__predict_false(armreg_ttbcr_read() & TTBCR_S_PD0)) {
-		pmap_activate(l);
-	}
-	KASSERT(!(armreg_ttbcr_read() & TTBCR_S_PD0));
-#ifdef __HAVE_PREEMPTION
-	kpreempt_enable();
-#endif
+
+	KASSERT(
+	    (armreg_pfr1_read() & ARM_PFR1_SEC_MASK) == 0 ||
+	    (armreg_ttbcr_read() & TTBCR_S_PD0) == 0
+	);
 #endif
 
 	/* Invoke MI userret code */

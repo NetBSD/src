@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.50 2021/07/19 10:28:58 christos Exp $ */
+/* $NetBSD: param.h,v 1.50.16.1 2026/11/04 23:19:57 perseant Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,10 +68,6 @@
 #define	PGSHIFT		ALPHA_PGSHIFT			/* LOG2(NBPG) */
 
 #define	KERNBASE	0xfffffc0000a00000	/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	SSIZE		1		/* initial stack size/NBPG */
-#define	SINCR		1		/* increment of stack/NBPG */
 
 #define	UPAGES		2			/* pages of u-area */
 #define	USPACE		(UPAGES * NBPG)		/* total size of u-area */
@@ -122,8 +118,10 @@
 
 #include <machine/intr.h>
 
+#ifndef __HIDE_DELAY
 void	delay(unsigned long);
 #define	DELAY(n)	delay(n)
+#endif
 
 #endif
 #endif /* !_KERNEL */

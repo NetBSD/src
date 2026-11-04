@@ -3,6 +3,7 @@
 name:s390x_te_linux64
 xmltarget:s390x-te-linux64.xml
 expedite:r14,r15,pswa
+osabi:GNU/Linux
 64:pswm
 64:pswa
 64:r0

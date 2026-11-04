@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,7 +24,8 @@ proc test_setup { count } {
     global srcfile
     global binfile
 
-    clean_restart ${binfile}
+    clean_restart
+    gdb_load $binfile
 
     if {![runto_main]} {
 	return 0

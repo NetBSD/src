@@ -1,4 +1,4 @@
-/*	$NetBSD: queue.h,v 1.6.2.1 2025/08/02 05:54:01 perseant Exp $	*/
+/*	$NetBSD: queue.h,v 1.6.2.2 2026/11/04 23:18:17 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -12,6 +12,7 @@
  * See the COPYRIGHT file distributed with this work for additional
  * information regarding copyright ownership.
  */
+#pragma once
 
 #include <isc/os.h>
 #include <isc/urcu.h>
@@ -23,10 +24,10 @@ STATIC_ASSERT(sizeof(struct __cds_wfcq_head) <= ISC_OS_CACHELINE_SIZE,
 typedef struct isc_queue {
 	struct __cds_wfcq_head head;
 	uint8_t		       __padding_head[ISC_OS_CACHELINE_SIZE -
-				      sizeof(struct __cds_wfcq_head)];
+					      sizeof(struct __cds_wfcq_head)];
 	struct cds_wfcq_tail   tail;
 	uint8_t		       __padding_tail[ISC_OS_CACHELINE_SIZE -
-				      sizeof(struct __cds_wfcq_head)];
+					      sizeof(struct cds_wfcq_tail)];
 } isc_queue_t;
 
 typedef struct cds_wfcq_node isc_queue_node_t;

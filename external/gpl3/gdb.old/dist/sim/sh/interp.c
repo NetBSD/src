@@ -25,9 +25,7 @@
 #include <stdio.h>
 #include <errno.h>
 #include <signal.h>
-#ifdef HAVE_UNISTD_H
 #include <unistd.h>
-#endif
 #ifdef HAVE_MMAP
 #include <sys/mman.h>
 # ifndef MAP_FAILED
@@ -40,9 +38,7 @@
 
 #include <string.h>
 #include <stdlib.h>
-#ifdef HAVE_SYS_STAT_H
 #include <sys/stat.h>
-#endif
 #include <time.h>
 #include <sys/time.h>
 #ifdef HAVE_UTIME_H
@@ -55,13 +51,15 @@
 #include "bfd.h"
 #include "sim/callback.h"
 #include "sim/sim.h"
-#include "gdb/sim-sh.h"
+#include "sim/sim-sh.h"
 
 #include "sim-main.h"
 #include "sim-base.h"
 #include "sim-options.h"
 
 #include "target-newlib-syscall.h"
+
+#include "sh-sim.h"
 
 #include <math.h>
 
@@ -148,7 +146,7 @@ static int maskl = 0;
 
 /* Alternate bank of registers r0-r7 */
 
-/* Note: code controling SR handles flips between BANK0 and BANK1 */
+/* Note: code controlling SR handles flips between BANK0 and BANK1 */
 #define Rn_BANK(n) (saved_state.asregs.bank[(n)])
 #define SET_Rn_BANK(n, EXP) do { saved_state.asregs.bank[(n)] = (EXP); } while (0)
 
@@ -728,7 +726,7 @@ static int nsamples;
 #define SSR1 (0x05FFFECC)	/* Channel 1  serial status register */
 #define RDR1 (0x05FFFECD)	/* Channel 1  receive data register */
 
-#define SCI_RDRF  	 0x40	/* Recieve data register full */
+#define SCI_RDRF  	 0x40	/* Receive data register full */
 #define SCI_TDRE	0x80	/* Transmit data register empty */
 
 static int
@@ -824,7 +822,7 @@ static int
 strswaplen (int str)
 {
   unsigned char *memory = saved_state.asregs.memory;
-  int start, end;
+  int end;
   int endian = endianb;
 
   if (! endian)
@@ -1048,8 +1046,8 @@ trap (SIM_DESC sd, int i, int *regs, unsigned char *insn_ptr,
 	    if (regs[5] < countargv (prog_argv))
 	      {
 		/* Include the termination byte.  */
-		int i = strlen (prog_argv[regs[5]]) + 1;
-		regs[0] = sim_write (0, regs[6], prog_argv[regs[5]], i);
+		int len = strlen (prog_argv[regs[5]]) + 1;
+		regs[0] = sim_write (0, regs[6], prog_argv[regs[5]], len);
 	      }
 	    else
 	      regs[0] = -1;
@@ -1240,7 +1238,7 @@ macl (int *regs, unsigned char *memory, int n, int m)
           mach |= 0xffff8000; /* Sign extend higher 16 bits */
         }
       else
-        mach = mach & 0x00007fff; /* Postive Result */
+        mach = mach & 0x00007fff; /* Positive Result */
     }
 
   MACL = macl;
@@ -1501,8 +1499,6 @@ get_loop_bounds (int rs, int re, unsigned char *memory, unsigned char *mem_end,
 static void *
 mcalloc (size_t nmemb, size_t size)
 {
-  void *page;
-
   if (nmemb != 1)
     size *= nmemb;
   return mmap (0, size, PROT_READ | PROT_WRITE, MAP_PRIVATE | MAP_ANONYMOUS,
@@ -1669,10 +1665,8 @@ dump_profile (void)
 {
   unsigned int minpc;
   unsigned int maxpc;
-  unsigned short *p;
   int i;
 
-  p = saved_state.asregs.profile_hist;
   minpc = 0;
   maxpc = (1 << sim_profile_size);
 
@@ -1873,8 +1867,8 @@ sim_resume (SIM_DESC sd, int step, int siggnal)
   signal (SIGFPE, prev_fpe);
 }
 
-int
-sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
+uint64_t
+sim_write (SIM_DESC sd, uint64_t addr, const void *buffer, uint64_t size)
 {
   int i;
   const unsigned char *data = buffer;
@@ -1888,8 +1882,8 @@ sim_write (SIM_DESC sd, SIM_ADDR addr, const void *buffer, int size)
   return size;
 }
 
-int
-sim_read (SIM_DESC sd, SIM_ADDR addr, void *buffer, int size)
+uint64_t
+sim_read (SIM_DESC sd, uint64_t addr, void *buffer, uint64_t size)
 {
   int i;
   unsigned char *data = buffer;
@@ -2274,7 +2268,7 @@ sim_stop_reason (SIM_DESC sd, enum sim_stop *reason, int *sigrc)
 }
 
 void
-sim_info (SIM_DESC sd, int verbose)
+sim_info (SIM_DESC sd, bool verbose)
 {
   double timetaken = 
     (double) saved_state.asregs.ticks / (double) now_persec ();
@@ -2348,7 +2342,7 @@ sim_open (SIM_OPEN_KIND kind, host_callback *cb,
   cb->syscall_map = cb_sh_syscall_map;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 0) != SIM_RC_OK)
     {
       free_state (sd);
       return 0;

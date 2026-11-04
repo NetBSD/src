@@ -1,0 +1,442 @@
+# Copyright 2009-2023 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# This file is part of the gdb testsuite.
+
+#
+# This test tests i386 AVX instructions for reverse execution.  This
+# is supposed to test all supported instructions eventually.
+#
+
+require supports_reverse
+require have_avx
+
+# TODO: this is the case because I used xmm15 all over the test.
+# Some parts of the test require xmm15 to validate some code paths, but
+# that could be done only on 64bit targets and the rest could use xmm7
+# instead.
+if {![istarget "x86_64-*-*"]} {
+    verbose "avx-reverse requires 64 bit targets"
+    return
+}
+
+standard_testfile
+
+# some targets have leading underscores on assembly symbols.
+set additional_flags [gdb_target_symbol_prefix_flags]
+lappend_include_file alloc_lib $srcdir/lib/precise-aligned-alloc.c
+
+if {[prepare_for_testing "failed to prepare" $testfile $srcfile \
+	 [list debug $additional_flags $alloc_lib]]} {
+    return -1
+}
+
+# Shorthand to test reversing through one instruction and
+# testing if a register has the expected value.
+# Prefix, if included, should end with a colon and space.
+
+proc test_one_register {insn register value {prefix ""}} {
+    gdb_test "reverse-step" "$insn.*" \
+	"${prefix}reverse-step from $insn to test register $register"
+
+    if {[regexp {^ymm} $register]} {
+	set value "\\\{$value\\\}"
+    }
+
+    gdb_test "info register $register" \
+	"$register.*int128 = $value.*" \
+	"${prefix}verify $register before $insn"
+}
+
+# Shorthand to test reversing through one instruction and
+# testing if a general purpose register has the expected value.
+# Prefix, if included, should end with a colon and space.
+
+proc test_one_general_register {insn register value {prefix ""}} {
+    gdb_test "reverse-step" "$insn.*" \
+	"${prefix}reverse-step from $insn to test register $register"
+
+    gdb_test "info register $register" \
+	"$register\\s+$value.*" \
+	"${prefix}verify $register before $insn"
+}
+
+# Shorthand to test reversing through one instruction and
+# testing if a variable has the expected value.
+# Prefix, if used, should end with a colon and space.
+
+proc test_one_memory {insn mem value {dynamic false} {prefix ""}} {
+    gdb_test "reverse-step" "$insn.*" \
+	"${prefix}reverse-step from $insn to test memory $mem"
+
+    # For the dynamic buffer, we have to cast and dereference the pointer
+    set cast ""
+    if {$dynamic == true} {
+	set cast {(char [32]) *}
+    }
+
+    gdb_test "p/x $cast$mem" \
+	".*$value.*" \
+	"${prefix}verify $mem before $insn"
+
+}
+
+# Record the execution for the whole function, and stop at its end
+# to check if we can correctly reconstruct the state.
+# In the source code, the function must be FUNCTION_test, and
+# at the end, it must have a comment in the form:
+# /* end FUNCTION_test */
+# Returns true if the full function could be recorded, false otherwise.
+proc record_full_function {function} {
+    set end [gdb_get_line_number "end ${function}_test "]
+    set start [gdb_get_line_number "start ${function}_test"]
+    gdb_breakpoint $start temporary
+    gdb_breakpoint $end temporary
+    gdb_continue_to_breakpoint "start ${function}_test"
+
+    if [supports_process_record] {
+	# Activate process record/replay.
+	gdb_test_no_output "record" "${function}: turn on process record"
+    }
+
+    # We return early in gdb_test_multiple because the rest of the
+    # function is aborting recording and cleaning up to put us back in
+    # a known location.
+    gdb_test_multiple "continue" "continue to end of ${function}_test" {
+	-re " end ${function}_test .*\r\n$::gdb_prompt $" {
+	    pass $gdb_test_name
+	    return true
+	}
+	-re " Illegal instruction.*\r\n$::gdb_prompt $" {
+	    fail $gdb_test_name
+	}
+	-re "Process record does not support VEX instruction.*" {
+	    fail $gdb_test_name
+	}
+    }
+
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete failed record history"
+    # If we didn't exit early, the temporary breakpoint at the end of
+    # the function hasn't been hit yet, so we can just continue.
+    gdb_continue_to_breakpoint "end ${function}_test" ".*end ${function}_test.*"
+
+    return false
+}
+
+runto_main
+
+global hex
+global decimal
+
+# Record all the execution for vmov tests first.
+
+if {[record_full_function "vmov"] == true} {
+    # Now execute backwards, checking all instructions.
+    test_one_register "vmovdqa" "ymm0" \
+	"0x2f2e2d2c2b2a29282726252423222120, 0x2f2e2d2c2b2a29282726252423222120" \
+	"from register: "
+    test_one_register "vmovdqu" "ymm15" \
+	"0x2f2e2d2c2b2a29282726252423222120, 0x2f2e2d2c2b2a29282726252423222120" \
+	"from register: "
+    test_one_register "vmovdqu" "ymm0" \
+	"0x2f2e2d2c2b2a29282726252423222120, 0x2f2e2d2c2b2a29282726252423222120" \
+	"from register: "
+
+    test_one_memory "vmovdqu" "dyn_buf1" \
+	    "0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x28, 0x29" \
+	true "dynamic buffer: "
+    test_one_register "vmovdqu" "ymm0" \
+	"0x1f1e1d1c1b1a19181716151413121110, 0x1f1e1d1c1b1a19181716151413121110" \
+	"dynamic buffer: "
+    test_one_memory "vmovdqa" "dyn_buf1" "0x0 .repeats 32 times" true
+    test_one_register "vmovdqa" "ymm15" "0x0, 0x0"
+
+    # Don't check the full buffer because that'd be too long
+    test_one_memory "vmovdqu" "global_buf1" \
+	"0x0 .repeats 32 times" \
+	false "global buffer: "
+    test_one_register "vmovdqu" "ymm0" \
+	"0x3f3e3d3c3b3a39383736353433323130, 0x3f3e3d3c3b3a39383736353433323130" \
+	"global buffer: "
+
+    test_one_memory "vmovdqu" "buf1" "0x0 .repeats 32 times"
+    test_one_register "vmovdqu" "ymm0" "0x2726252423222120, 0x0" "local buffer: "
+
+    test_one_register "vmovq" "xmm15" "0x3736353433323130" "reg_reset: "
+    test_one_register "vmovq" "xmm15" "0x0"
+    test_one_register "vmovd" "xmm15" "0x33323130" "reg_reset: "
+    test_one_register "vmovd" "xmm15" "0x0"
+
+    with_test_prefix buffer_reset {
+	test_one_memory "vmovq" "dyn_buf1" \
+	    "0x20, 0x21, 0x22, 0x23, 0x24, 0x25, 0x26, 0x27, 0x0" true
+	test_one_memory "vmovq" "global_buf1" \
+	    "0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x0"
+	test_one_memory "vmovq" "buf1" \
+	    "0x30, 0x31, 0x32, 0x33, 0x34, 0x35, 0x36, 0x37, 0x0"
+    }
+
+    with_test_prefix dynamic_buffers {
+	test_one_memory "vmovq" "dyn_buf1" "0x20, 0x21, 0x22, 0x23, 0x0" true
+	test_one_register "vmovq" "xmm0" "0x23222120"
+	test_one_memory "vmovd" "dyn_buf1" "0x0 .repeats 32 times" true
+	test_one_register "vmovd" "xmm0" "0x1716151413121110"
+    }
+
+    with_test_prefix global_buffers {
+	test_one_memory "vmovq" "global_buf1" "0x10, 0x11, 0x12, 0x13, 0x0"
+	test_one_register "vmovq" "xmm0" "0x13121110"
+	test_one_memory "vmovd" "global_buf1" "0x0 .repeats 32 times"
+	test_one_register "vmovd" "xmm0" "0x3736353433323130"
+    }
+
+    with_test_prefix local_buffers {
+	test_one_memory "vmovq" "buf1" "0x30, 0x31, 0x32, 0x33, 0x0"
+	test_one_register "vmovq" "xmm0" "0x33323130"
+	test_one_memory "vmovd" "buf1" "0x0 .repeats 32 times"
+	test_one_register "vmovd" "xmm0" "0xbeef"
+    }
+
+    # regular registers don't have uint128 members, so do it manually.
+    with_test_prefix registers {
+	test_one_register "vmovq" "xmm15" "0xbeef" "reset xmm15: "
+
+	test_one_register "vmovq" "xmm15" "0x0" "xmm0 to xmm15: "
+
+	gdb_test "reverse-step" "vmovd %xmm0, %rcx.*" \
+	    "reverse step to check rcx recording"
+	gdb_test "print/x \$rcx" "= 0x0" "rcx was recorded"
+
+	test_one_register "vmovd" "xmm0" "0x0"
+    }
+
+    # Stop recording to get a clean history.
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete history for vmov_test"
+} else {
+    untested "could not record vmov_test"
+}
+
+# Move to the end of vmov_test to set up next.
+gdb_test "finish" "Run till exit from.*vmov_test.*" "leaving vmov_test"
+
+# Starting vpunpck tests.
+gdb_test_no_output \
+    "set \$ymm0.v4_int64 = {0x1716151413121110, 0x1f1e1d1c1b1a1918, 0x2726252423222120, 0x2f2e2d2c2b2a2928}"
+gdb_test_no_output \
+    "set \$ymm1.v4_int64 = {0x3736353433323130, 0x3f3e3d3c3b3a3938, 0x4746454443424140, 0x4f4e4d4c4b4a4948}"
+gdb_test_no_output "set \$ymm2.v2_int128 = {0x0, 0x0}"
+gdb_test_no_output "set \$ymm15.v2_int128 = {0xdead, 0xbeef}"
+if {[record_full_function "vpunpck"] == true} {
+    test_one_register "vpunpckhqdq" "ymm15" \
+	"0x1f1e1d1c3f3e3d3c1b1a19183b3a3938, 0x2f2e2d2c4f4e4d4c2b2a29284b4a4948" \
+	"ymm: "
+    test_one_register "vpunpckhdq" "ymm15" \
+	"0x17163736151435341312333211103130, 0x27264746252445442322434221204140" \
+	"ymm: "
+    test_one_register "vpunpcklwd" "ymm15" \
+	"0x17371636153514341333123211311030, 0x27472646254524442343224221412040" \
+	"ymm: "
+    test_one_register "vpunpcklbw" "ymm15" \
+	"0x1f1e3f3e1d1c3d3c1b1a3b3a19183938, 0x0" "ymm: "
+
+    test_one_register "vpunpckhqdq" "ymm2" \
+	"0x1f1e1d1c3f3e3d3c1b1a19183b3a3938, 0x0"
+    test_one_register "vpunpckhdq" "ymm2" \
+	"0x17161514131211103736353433323130, 0x0"
+    test_one_register "vpunpckhwd" "ymm15" \
+	"0x1f3f1e3e1d3d1c3c1b3b1a3a19391838, 0x0"
+    test_one_register "vpunpckhbw" "ymm15" \
+	"0x17163736151435341312333211103130, 0x0"
+
+    test_one_register "vpunpcklqdq" "ymm2" \
+	"0x17161514373635341312111033323130, 0x0"
+    test_one_register "vpunpckldq" "ymm2" "0x0, 0x0"
+    test_one_register "vpunpcklwd" "ymm15" \
+	"0x17371636153514341333123211311030, 0x0"
+    test_one_register "vpunpcklbw" "ymm15" "0xdead, 0xbeef"
+} else {
+    untested "couldn't test vpunpck tests"
+}
+
+# Move to the end of vmov_test to set up next.
+# Stop recording in case of recording errors.
+gdb_test "record stop" "Process record is stopped.*" \
+    "delete history for vpunpck_test"
+gdb_test "finish" "Run till exit from.*vpunpck_test.*" "leaving vpunpck_test"
+
+# Start vpbroadcast tests
+gdb_test_no_output "set \$ymm0.v2_int128 = {0x0, 0x0}" "set xmm0 for vpbroadcast"
+gdb_test_no_output "set \$xmm1.v2_int64 = {0x1716151413121110, 0x1f1e1d1c1b1a1918}" \
+    "set xmm1 for vpbroadcast"
+gdb_test_no_output "set \$ymm15.v2_int128 = {0x0, 0x0}" "set xmm15 for vpbroadcast"
+if {[record_full_function "vpbroadcast"] == true} {
+    test_one_register "vpbroadcastq" "ymm15" "0x13121110131211101312111013121110, 0x0"
+    test_one_register "vpbroadcastq" "ymm0"  "0x13121110131211101312111013121110, 0x0"
+
+    test_one_register "vpbroadcastd" "ymm15" \
+	"0x11101110111011101110111011101110, 0x11101110111011101110111011101110"
+    test_one_register "vpbroadcastd" "ymm0"  \
+	"0x11101110111011101110111011101110, 0x11101110111011101110111011101110"
+
+    test_one_register "vpbroadcastw" "ymm15" "0x10101010101010101010101010101010, 0x0"
+    test_one_register "vpbroadcastw" "ymm0"  "0x10101010101010101010101010101010, 0x0"
+
+    test_one_register "vpbroadcastb" "ymm15" "0x0, 0x0"
+    test_one_register "vpbroadcastb" "ymm0"  "0x0, 0x0"
+
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete history for vpbroadcast_test"
+} else {
+    untested "couldn't run vpbroadcast tests"
+}
+
+gdb_test "finish" "Run till exit from.*vpbroadcast_test.*" \
+    "leaving vpbroadcast"
+
+# Preparation and testing of vzeroupper
+gdb_test_no_output "set \$ymm0.v2_int128 = {0x0, 0x12345}" "set ymm0 for vzeroupper"
+gdb_test_no_output "set \$ymm1.v2_int128 = {0x1f1e1d1c1b1a1918, 0x0}" \
+    "set ymm1 for vzeroupper"
+gdb_test_no_output "set \$ymm2.v2_int128 = {0x0, 0xbeef}" "set ymm2 for vzeroupper"
+gdb_test_no_output "set \$ymm15.v2_int128 = {0x0, 0xcafeface}" "set ymm15 for vpbroadcast"
+if {[record_full_function "vzeroupper"] == true} {
+    # Since vzeroupper needs to save 8 or 16 registers, let's check what was
+    # actually recorded, instead of just undoing an instruction.  Only
+    # really check the values of egisters 0, 1, 2 and 15 because those are
+    # the only ones we're setting.
+    gdb_test "maint print record-instruction" \
+	[multi_line "Register ymm0h changed: 74565" \
+	    "Register ymm1h changed: 0" \
+	    "Register ymm2h changed: 48879" \
+	    "Register ymm3h changed: ${decimal}" \
+	    "Register ymm4h changed: ${decimal}" \
+	    "Register ymm5h changed: ${decimal}" \
+	    "Register ymm6h changed: ${decimal}" \
+	    "Register ymm7h changed: ${decimal}" \
+	    "Register ymm8h changed: ${decimal}" \
+	    "Register ymm9h changed: ${decimal}" \
+	    "Register ymm10h changed: ${decimal}" \
+	    "Register ymm11h changed: ${decimal}" \
+	    "Register ymm12h changed: ${decimal}" \
+	    "Register ymm13h changed: ${decimal}" \
+	    "Register ymm14h changed: ${decimal}" \
+	    "Register ymm15h changed: 3405707982" \
+	    "Register rip changed: \[^\r\n\]+" ] \
+	"verify vzeroupper recording"
+
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete history for vzeroupper_test"
+} else {
+    untested "couldn't run vzeroupper tests"
+}
+
+gdb_test "finish" "Run till exit from.*vzeroupper_test.*" \
+    "leaving vzeroupper"
+
+# Preparation and testing vpxor instructions.
+gdb_test_no_output "set \$ymm0.v2_int128 = {0x0, 0x12345}" "set ymm0 for vpor_xor"
+gdb_test_no_output "set \$ymm1.v2_int128 = {0x1f1e1d1c1b1a1918, 0x0}" \
+    "set ymm1 for vpor_xor"
+gdb_test_no_output "set \$ymm2.v2_int128 = {0x0, 0xbeef}" "set ymm2 for vpor_xor"
+gdb_test_no_output "set \$ymm15.v2_int128 = {0x0, 0xcafeface}" "set ymm15 for vpor_xor"
+
+if {[record_full_function "vpor_xor"] == true} {
+    test_one_register "vpor" "ymm15" "0x0, 0xcafe4421"
+    test_one_register "vpor" "ymm2" "0x0, 0x0"
+    test_one_register "vpor" "ymm1" "0x0, 0xcafe4421"
+    test_one_register "vpor" "ymm0" "0x1f1e1d1c1b1a1918, 0x0" "first: "
+    test_one_register "vpor" "ymm0" "0x1f1e1d1c1b1a1918, 0x0" "second: "
+
+    test_one_register "vpxor" "ymm15" "0x0, 0xcafeface"
+    test_one_register "vpxor" "ymm2" "0x0, 0xbeef"
+    test_one_register "vpxor" "ymm1" "0x1f1e1d1c1b1a1918, 0x0"
+    test_one_register "vpxor" "ymm0" "0x0, 0x0" "first: "
+    test_one_register "vpxor" "ymm0" "0x0, 0x12345" "second: "
+
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete history for vpor_xor_test"
+} else {
+    untested "couldn't run vpor_xor tests"
+}
+gdb_test "finish" "Run till exit from.*vpor_xor_test.*" \
+    "leaving vpor_xor"
+
+# Preparation and testing vpcmpeq instructions.
+gdb_test_no_output "set \$ymm0.v2_int128 = {0x12345, 0x12345}" \
+    "set ymm0 for vpcmpeq"
+gdb_test_no_output \
+    "set \$ymm1.v8_int32 = {0xcafe, 0xbeef, 0xff, 0x1234, 0x0, 0xff00, 0xff0000ff, 0xface0f0f}" \
+    "set ymm1 for vpcmpeq"
+gdb_test_no_output \
+    "set \$ymm2.v8_int32 = {0xcafe0, 0xbeef, 0xff00, 0x12345678, 0x90abcdef, 0xffff00, 0xff, 0xf}" \
+    "set ymm2 for vpcmpeq"
+gdb_test_no_output "set \$ymm15.v2_int128 = {0xcafeface, 0xcafeface}" \
+    "set ymm15 for vpcmpeq"
+
+if {[record_full_function "vpcmpeq"] == true} {
+    test_one_register "vpcmpeqd" "ymm15" \
+	"0xffff0000ffffffff00000000, 0xffff0000ffff00000000" "ymm: "
+    test_one_register "vpcmpeqw" "ymm15" \
+	"0xffff0000ffffffffff000000, 0xff00ffffffff00ffff00000000" "ymm: "
+    test_one_register "vpcmpeqb" "ymm15" \
+	"0xffffffff00000000, 0x0" "ymm: "
+    test_one_register "vpcmpeqd" "ymm15" \
+	"0xffff0000ffffffff00000000, 0x0" "xmm: "
+    test_one_register "vpcmpeqw" "ymm15" \
+	"0xffff0000ffffffffff000000, 0x0" "xmm: "
+    test_one_register "vpcmpeqb" "ymm15" "0xcafeface, 0xcafeface" "xmm: "
+
+    test_one_register "vpcmpeqd" "ymm0" \
+	"0xffff0000ffffffff00000000, 0xffff0000ffff00000000" "ymm: "
+    test_one_register "vpcmpeqw" "ymm0" \
+	"0xffff0000ffffffffff000000, 0xff00ffffffff00ffff00000000" "ymm: "
+    test_one_register "vpcmpeqb" "ymm0" \
+	"0xffffffff00000000, 0x0" "ymm: "
+    test_one_register "vpcmpeqd" "ymm0" \
+	"0xffff0000ffffffff00000000, 0x0" "xmm: "
+    test_one_register "vpcmpeqw" "ymm0" \
+	"0xffff0000ffffffffff000000, 0x0" "xmm: "
+    test_one_register "vpcmpeqb" "ymm0" "0x12345, 0x12345" "xmm: "
+
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete history for vpcmpeq_test"
+} else {
+    untested "couldn't run vpcmpeq tests"
+}
+gdb_test "finish" "Run till exit from.*vpcmpeq_test.*" \
+    "leaving vpcmpeq"
+
+# Preparation and testing vpcmpeq instructions.
+gdb_test_no_output "set \$rbx = 2" "set rbx for vpmovmskb"
+gdb_test_no_output "set \$r8 = 3" "set r8 for vpmovmskb"
+gdb_test_no_output "set \$r9 = 4" "set ymm15 for vpmovmskb"
+
+if {[record_full_function "vpmovmskb"] == true} {
+    test_one_general_register "vpmovmskb" "r9" "0x4"
+    test_one_general_register "vpmovmskb" "r8" "0x3"
+    test_one_general_register "vpmovmskb" "rbx" "0x2"
+    # Because of the infrastructure of the test, we can't set rax.
+    # However, it seems to always be set to 0, so this should be fine.
+    test_one_general_register "vpmovmskb" "rax" "0x0"
+
+    gdb_test "record stop" "Process record is stopped.*" \
+	"delete history for vpmovmskb_test"
+} else {
+    untested "couldn't run vpmovmskb tests"
+}
+gdb_test "finish" "Run till exit from.*vpmovmskb_test.*" \
+    "leaving vpmovmskb"

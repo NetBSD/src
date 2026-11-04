@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,10 +16,7 @@
 
 # Tests for Powerpc floating point register setting and fetching
 
-if {![istarget "powerpc*"]} {
-    verbose "Skipping powerpc floating point register tests."
-    return
-}
+require {istarget "powerpc*"}
 
 standard_testfile
 
@@ -34,12 +31,7 @@ if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {quie
     return -1
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
-gdb_load ${binfile}
+clean_restart $binfile
 
 gdb_breakpoint [gdb_get_line_number "Invalid operation."]
 gdb_breakpoint [gdb_get_line_number "Division by zero."]

@@ -1,6 +1,6 @@
 /* Architecture independent code for ABI 'none' (bare-metal).
 
-   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NONE_TDEP_H
-#define NONE_TDEP_H
+#ifndef GDB_ELF_NONE_TDEP_H
+#define GDB_ELF_NONE_TDEP_H
 
 struct gdbarch;
 
@@ -27,4 +27,4 @@ struct gdbarch;
 
 void elf_none_init_abi (struct gdbarch *gdbarch);
 
-#endif /* NONE_TDEP_H */
+#endif /* GDB_ELF_NONE_TDEP_H */

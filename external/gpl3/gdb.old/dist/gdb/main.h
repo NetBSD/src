@@ -1,6 +1,6 @@
 /* Main interface for GDB, the GNU debugger.
 
-   Copyright (C) 2002-2023 Free Software Foundation, Inc.
+   Copyright (C) 2002-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MAIN_H
-#define MAIN_H
+#ifndef GDB_MAIN_H
+#define GDB_MAIN_H
 
 struct captured_main_args
 {
@@ -44,12 +44,6 @@ extern std::string interpreter_p;
    return value is in malloc'ed storage.  */
 extern char *windows_get_absolute_argv0 (const char *argv0);
 
-/* Return read only pointer to the name of gdb as it was invoked.  This
-   might have been expanded to an absolute path if required by the
-   platform.  Could return NULL if called before gdb has had a chance to
-   parse the argv array.  */
-extern const char *get_gdb_program_name (void);
-
 extern void set_gdb_data_directory (const char *new_data_dir);
 
-#endif
+#endif /* GDB_MAIN_H */

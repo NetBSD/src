@@ -1,6 +1,6 @@
 /* The ptid_t type and common functions operating on it.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_PTID_H
-#define COMMON_PTID_H
+#ifndef GDBSUPPORT_PTID_H
+#define GDBSUPPORT_PTID_H
 
 /* The ptid struct is a collection of the various "ids" necessary for
    identifying the inferior process/thread being debugged.  This
@@ -182,4 +182,4 @@ extern const ptid_t null_ptid;
 
 extern const ptid_t minus_one_ptid;
 
-#endif /* COMMON_PTID_H */
+#endif /* GDBSUPPORT_PTID_H */

@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_DEF_VECTOR_H
-#define COMMON_DEF_VECTOR_H
+#ifndef GDBSUPPORT_DEF_VECTOR_H
+#define GDBSUPPORT_DEF_VECTOR_H
 
 #include <vector>
 #include "gdbsupport/default-init-alloc.h"
@@ -33,4 +33,4 @@ template<typename T> using def_vector
 
 } /* namespace gdb */
 
-#endif /* COMMON_DEF_VECTOR_H */
+#endif /* GDBSUPPORT_DEF_VECTOR_H */

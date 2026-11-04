@@ -1,6 +1,6 @@
 /* General window behavior.
 
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,52 +19,35 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "tui/tui.h"
 #include "tui/tui-data.h"
 #include "tui/tui-io.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-win.h"
-#include "tui/tui-status.h"
 #include "cli/cli-style.h"
 
 #include "gdb_curses.h"
 
-/* This is true if we're currently suppressing output, via
-   wnoutrefresh.  This is needed in case we create a new window while
-   in this mode.  */
+/* This is true when there is a live instance of tui_batch_rendering.
+   The outermost tui_batch_rendering will cause a flush to the
+   screen.  */
 
 static bool suppress_output;
 
 /* See tui-data.h.  */
 
-tui_suppress_output::tui_suppress_output ()
+tui_batch_rendering::tui_batch_rendering ()
   : m_saved_suppress (suppress_output)
 {
   suppress_output = true;
-
-  for (const auto &win : all_tui_windows ())
-    win->no_refresh ();
 }
 
 /* See tui-data.h.  */
 
-tui_suppress_output::~tui_suppress_output ()
+tui_batch_rendering::~tui_batch_rendering ()
 {
   suppress_output = m_saved_suppress;
   if (!suppress_output)
     doupdate ();
-
-  for (const auto &win : all_tui_windows ())
-    win->refresh_window ();
-}
-
-/* See tui-data.h.  */
-
-void
-tui_wrefresh (WINDOW *win)
-{
-  if (!suppress_output)
-    wrefresh (win);
 }
 
 /* See tui-data.h.  */
@@ -73,7 +56,12 @@ void
 tui_win_info::refresh_window ()
 {
   if (handle != NULL)
-    tui_wrefresh (handle.get ());
+    {
+      if (suppress_output)
+	wnoutrefresh (handle.get ());
+      else
+	wrefresh (handle.get ());
+    }
 }
 
 /* Draw a border around the window.  */
@@ -92,7 +80,7 @@ box_win (struct tui_win_info *win_info,
 
   /* tui_apply_style resets the style entirely, so be sure to call it
      before applying ATTRS.  */
-  if (cli_styling)
+  if (term_cli_styling ())
     tui_apply_style (win, (highlight_flag
 			   ? tui_active_border_style.style ()
 			   : tui_border_style.style ()));
@@ -167,8 +155,6 @@ tui_win_info::make_window ()
   handle.reset (newwin (height, width, y, x));
   if (handle != NULL)
     {
-      if (suppress_output)
-	wnoutrefresh (handle.get ());
       scrollok (handle.get (), TRUE);
       if (can_box ())
 	box_win (this, false);

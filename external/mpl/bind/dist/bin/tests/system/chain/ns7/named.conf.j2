@@ -1,0 +1,43 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options-dual.conf.j2" %}
+	allow-recursion { any; };
+	dnssec-validation no;
+	deny-answer-aliases {
+		"example";
+	} except-from {
+		"example";
+	};
+	qname-minimization disabled;  // Regression test for GL #4652
+};
+
+
+key restart16 {
+	secret "1234abcd8765";
+	algorithm @DEFAULT_HMAC@;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+view restart16 {
+	match-clients { key restart16; none; };
+	max-query-restarts 16;
+
+	{% include_indented "_common/root.hint.conf" %}
+};
+
+view default {
+	{% include_indented "_common/root.hint.conf" %}
+};

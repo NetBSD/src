@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.63.10.1 2025/08/02 05:56:27 perseant Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.63.10.2 2026/11/04 23:21:41 perseant Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.63.10.1 2025/08/02 05:56:27 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.63.10.2 2026/11/04 23:21:41 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -108,6 +108,7 @@ compat_43_netbsd32_ocreat(struct lwp *l, const struct compat_43_netbsd32_ocreat_
 	} */
 	struct sys_open_args  ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(mode);
 	SCARG(&ua, flags) = O_WRONLY | O_CREAT | O_TRUNC;
@@ -125,6 +126,7 @@ compat_43_netbsd32_olseek(struct lwp *l, const struct compat_43_netbsd32_olseek_
 	} */
 	struct sys_lseek_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	SCARG(&ua, fd) = SCARG(uap, fd);
 	NETBSD32TOX_UAP(offset, long);
 	NETBSD32TO64_UAP(whence);
@@ -198,6 +200,7 @@ compat_43_netbsd32_otruncate(struct lwp *l, const struct compat_43_netbsd32_otru
 	} */
 	struct sys_truncate_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(path, const char);
 	NETBSD32TO64_UAP(length);
 	return sys_truncate(l, &ua, retval);
@@ -212,6 +215,7 @@ compat_43_netbsd32_oftruncate(struct lwp *l, const struct compat_43_netbsd32_oft
 	} */
 	struct sys_ftruncate_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TO64_UAP(length);
 	return sys_ftruncate(l, &ua, retval);
@@ -228,6 +232,7 @@ compat_43_netbsd32_ogetdirentries(struct lwp *l, const struct compat_43_netbsd32
 	} */
 	struct compat_43_sys_getdirentries_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fd);
 	NETBSD32TOP_UAP(buf, char);
 	NETBSD32TO64_UAP(count);
@@ -247,6 +252,7 @@ compat_43_netbsd32_ogetkerninfo(struct lwp *l, const struct compat_43_netbsd32_o
 	} */
 	struct compat_43_sys_getkerninfo_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(op);
 	NETBSD32TOP_UAP(where, char);
 	NETBSD32TOP_UAP(size, int);
@@ -294,6 +300,7 @@ compat_43_netbsd32_sethostid(struct lwp *l, const struct compat_43_netbsd32_seth
 	} */
 	struct compat_43_sys_sethostid_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(hostid);
 	return compat_43_sys_sethostid(l, &ua, retval);
 }
@@ -307,6 +314,7 @@ compat_43_netbsd32_ogetrlimit(struct lwp *l, const struct compat_43_netbsd32_oge
 	} */
 	struct compat_43_sys_getrlimit_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(which);
 	NETBSD32TOP_UAP(rlp, struct orlimit);
 	return compat_43_sys_getrlimit(l, &ua, retval);
@@ -321,6 +329,7 @@ compat_43_netbsd32_osetrlimit(struct lwp *l, const struct compat_43_netbsd32_ose
 	} */
 	struct compat_43_sys_setrlimit_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(which);
 	NETBSD32TOP_UAP(rlp, struct orlimit);
 	return compat_43_sys_setrlimit(l, &ua, retval);
@@ -335,6 +344,7 @@ compat_43_netbsd32_killpg(struct lwp *l, const struct compat_43_netbsd32_killpg_
 	} */
 	struct compat_43_sys_killpg_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(pgid);
 	NETBSD32TO64_UAP(signum);
 	return compat_43_sys_killpg(l, &ua, retval);
@@ -354,6 +364,7 @@ compat_43_netbsd32_ommap(struct lwp *l, const struct compat_43_netbsd32_ommap_ar
 	} */
 	struct compat_43_sys_mmap_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOP_UAP(addr, void *);
 	NETBSD32TOX_UAP(len, size_t);
 	NETBSD32TO64_UAP(prot);
@@ -374,6 +385,7 @@ compat_43_netbsd32_oaccept(struct lwp *l, const struct compat_43_netbsd32_oaccep
 	} */
 	struct compat_43_sys_accept_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TOX_UAP(s, int);
 	NETBSD32TOP_UAP(name, void *);
 	NETBSD32TOP_UAP(anamelen, int);
@@ -391,6 +403,7 @@ compat_43_netbsd32_osend(struct lwp *l, const struct compat_43_netbsd32_osend_ar
 	} */
 	struct compat_43_sys_send_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(buf, void *);
 	NETBSD32TO64_UAP(len);
@@ -409,6 +422,7 @@ compat_43_netbsd32_orecv(struct lwp *l, const struct compat_43_netbsd32_orecv_ar
 	} */
 	struct compat_43_sys_recv_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(buf, void *);
 	NETBSD32TO64_UAP(len);
@@ -494,7 +508,9 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 		m_free(from);
 
 	if (error != 0)
-		 error = copyout(&omsg, SCARG_P32(uap, msg), sizeof(omsg));
+		goto out;
+
+	error = copyout(&omsg, SCARG_P32(uap, msg), sizeof(omsg));
 out:
 	if (iov != aiov) {
 		kmem_free(iov, omsg.msg_iovlen * sizeof(*iov));
@@ -572,6 +588,7 @@ compat_43_netbsd32_orecvfrom(struct lwp *l, const struct compat_43_netbsd32_orec
 	} */
 	struct compat_43_sys_recvfrom_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(s);
 	NETBSD32TOP_UAP(buf, void *);
 	NETBSD32TOX_UAP(len, size_t);
@@ -591,6 +608,7 @@ compat_43_netbsd32_ogetsockname(struct lwp *l, const struct compat_43_netbsd32_o
 	} */
 	struct compat_43_sys_getsockname_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fdec);
 	NETBSD32TOP_UAP(asa, void *);
 	NETBSD32TOP_UAP(alen, int *);
@@ -607,6 +625,7 @@ compat_43_netbsd32_ogetpeername(struct lwp *l, const struct compat_43_netbsd32_o
 	} */
 	struct compat_43_sys_getpeername_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(fdes);
 	NETBSD32TOP_UAP(asa, void *);
 	NETBSD32TOP_UAP(alen, int *);
@@ -664,6 +683,7 @@ compat_43_netbsd32_sigblock(struct lwp *l, const struct compat_43_netbsd32_sigbl
 	} */
 	struct compat_43_sys_sigblock_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(mask);
 	return compat_43_sys_sigblock(l, &ua, retval);
 }
@@ -676,6 +696,7 @@ compat_43_netbsd32_sigsetmask(struct lwp *l, const struct compat_43_netbsd32_sig
 	} */
 	struct compat_43_sys_sigsetmask_args ua;
 
+	memset(&ua, 0, sizeof(ua));
 	NETBSD32TO64_UAP(mask);
 	return compat_43_sys_sigsetmask(l, &ua, retval);
 }

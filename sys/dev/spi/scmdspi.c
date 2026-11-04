@@ -1,5 +1,5 @@
 
-/*	$NetBSD: scmdspi.c,v 1.3.10.1 2025/08/02 05:57:04 perseant Exp $	*/
+/*	$NetBSD: scmdspi.c,v 1.3.10.2 2026/11/04 23:22:34 perseant Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.3.10.1 2025/08/02 05:57:04 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.3.10.2 2026/11/04 23:22:34 perseant Exp $");
 
 /*
  * SPI driver for the Sparkfun Serial motor controller.
@@ -41,6 +41,12 @@ __KERNEL_RCSID(0, "$NetBSD: scmdspi.c,v 1.3.10.1 2025/08/02 05:57:04 perseant Ex
 #include <dev/spi/spivar.h>
 #include <dev/ic/scmdreg.h>
 #include <dev/ic/scmdvar.h>
+
+static const struct device_compatible_entry compat_data[] = {
+	{ .compat = "sparkfun,scmd-motor-driver" },
+
+	DEVICE_COMPAT_EOL
+};
 
 extern void	scmd_attach(struct scmd_sc *);
 
@@ -77,8 +83,7 @@ CFATTACH_DECL_NEW(scmdspi, sizeof(struct scmd_sc),
  * Ardunio code does 50us, so do likewise.
  */
 static int
-scmdspi_read_reg_direct(struct spi_handle *sh, uint8_t reg,
-    uint8_t *buf)
+scmdspi_read_reg_direct(spi_handle_t sh, uint8_t reg, uint8_t *buf)
 {
 	int err;
 	uint8_t b;
@@ -120,8 +125,7 @@ scmdspi_read_reg(struct scmd_sc *sc, uint8_t reg, uint8_t *buf)
  * This does more or less what the Ardunio code does.
  */
 static int
-scmdspi_write_reg_direct(struct spi_handle *sh, uint8_t reg,
-    uint8_t buf)
+scmdspi_write_reg_direct(spi_handle_t sh, uint8_t reg, uint8_t buf)
 {
 	uint8_t rreg = reg & 0x7F;
 	int err;
@@ -168,13 +172,13 @@ static int
 scmdspi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
-	const bool matchdebug = true;
+	int match_result;
 
-	if (matchdebug) {
-		printf("Trying to match\n");
+	if (spi_use_direct_match(sa, compat_data, &match_result)) {
+		return match_result;
 	}
 
-	return 1;
+	return SPI_MATCH_DEFAULT;
 }
 
 static void
@@ -205,7 +209,7 @@ scmdspi_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_cond_dying, "scmdspidc");
 
 	/* configure for 1MHz and SPI mode 0 according to the data sheet */
-	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, 1000000);
+	error = spi_configure(self, sa->sa_handle, SPI_MODE_0, SPI_FREQ_MHz(1));
 	if (error) {
 		return;
 	}

@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2015-2024 Free Software Foundation, Inc.
+   Copyright 2015-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -24,6 +24,7 @@ main ()
   const char array[] = "array";
   pointer typedef_ptr = "typedef pointer";
   const char *null = 0;
+  int not_a_string = 23;
 
   return 0; /* break here */
 }

@@ -26,7 +26,7 @@ THIS SOFTWARE.
 #include "nbtool_config.h"
 #endif
 
-const char	*version = "version 20240728";
+const char	*version = "version 20260426";
 
 #define DEBUG
 #include <stdio.h>

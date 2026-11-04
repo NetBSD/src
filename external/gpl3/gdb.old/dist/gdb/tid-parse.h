@@ -1,6 +1,6 @@
 /* TID parsing for GDB, the GNU debugger.
 
-   Copyright (C) 2015-2023 Free Software Foundation, Inc.
+   Copyright (C) 2015-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef TID_PARSE_H
-#define TID_PARSE_H
+#ifndef GDB_TID_PARSE_H
+#define GDB_TID_PARSE_H
 
 #include "cli/cli-utils.h"
 
@@ -26,7 +26,7 @@ struct thread_info;
 
 /* Issue an invalid thread ID error, pointing at STRING, the invalid
    ID.  */
-extern void ATTRIBUTE_NORETURN invalid_thread_id_error (const char *string);
+[[noreturn]] extern void invalid_thread_id_error (const char *string);
 
 /* Parse TIDSTR as a per-inferior thread ID, in either INF_NUM.THR_NUM
    or THR_NUM form.  In the latter case, the missing INF_NUM is filled
@@ -35,6 +35,14 @@ extern void ATTRIBUTE_NORETURN invalid_thread_id_error (const char *string);
    thread ID.  Either a valid thread is returned, or an error is
    thrown.  */
 struct thread_info *parse_thread_id (const char *tidstr, const char **end);
+
+/* Return true if TIDSTR is pointing to a string that looks like a
+   thread-id.  This doesn't mean that TIDSTR identifies a valid thread, but
+   the string does at least look like a valid thread-id.  If END is not
+   NULL, parse_thread_id stores the address of the first character after
+   the thread-id into *END.  */
+
+bool is_thread_id (const char *tidstr, const char **end);
 
 /* Parse a thread ID or a thread range list.
 
@@ -186,4 +194,4 @@ private:
 extern int tid_is_in_list (const char *list, int default_inferior,
 			   int inf_num, int thr_num);
 
-#endif /* TID_PARSE_H */
+#endif /* GDB_TID_PARSE_H */

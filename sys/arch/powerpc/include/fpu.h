@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.25 2020/07/15 09:19:49 rin Exp $	*/
+/*	$NetBSD: fpu.h,v 1.25.26.1 2026/11/04 23:21:10 perseant Exp $	*/
 
 /*-
  * Copyright (C) 1996 Wolfgang Solfrank.
@@ -87,8 +87,12 @@ int	fpu_get_fault_code(void);
 
 extern const pcu_ops_t fpu_ops;
 
-/* List of PowerPC architectures that support FPUs. */
-#if defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE)
+/*
+ * List of PowerPC architectures that support FPUs.
+ * PPC_IBM440 covers only the 440 with the FPU.
+ */
+#if defined(PPC_OEA) || defined (PPC_OEA64) || defined (PPC_OEA64_BRIDGE) || \
+    defined(PPC_IBM440)
 #define PPC_HAVE_FPU
 
 struct fpreg;

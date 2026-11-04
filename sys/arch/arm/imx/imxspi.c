@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.10 2021/08/17 22:00:27 andvar Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.10.10.1 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,10 +32,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.10 2021/08/17 22:00:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.10.10.1 2026/11/04 23:20:11 perseant Exp $");
 
 #include "opt_imxspi.h"
-#include "opt_fdt.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +50,6 @@ __KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.10 2021/08/17 22:00:27 andvar Exp $");
 
 #include <arm/imx/imxspivar.h>
 #include <arm/imx/imxspireg.h>
-
-#ifdef FDT
-#include <dev/fdt/fdtvar.h>
-#endif
 
 /* SPI service routines */
 static int imxspi_configure_enhanced(void *, int, int, int);
@@ -84,20 +79,6 @@ int imxspi_debug = IMXSPI_DEBUG;
 #define	DPRINTFN(n,x)   if (imxspi_debug>(n)) printf x;
 #else
 #define	DPRINTFN(n,x)
-#endif
-
-#ifdef FDT
-static struct spi_controller *
-imxspi_get_controller(device_t dev)
-{
-	struct imxspi_softc * const sc = device_private(dev);
-
-	return &sc->sc_spi;
-}
-
-static const struct fdtbus_spi_controller_func imxspi_funcs = {
-	.get_controller = imxspi_get_controller
-};
 #endif
 
 int
@@ -137,19 +118,7 @@ imxspi_attach_common(device_t self)
 
 	WRITE_REG(sc, PERIODREG, 0x0);
 
-#ifdef FDT
-	KASSERT(sc->sc_phandle != 0);
-
-	fdtbus_register_spi_controller(self, sc->sc_phandle, &imxspi_funcs);
-	(void) fdtbus_attach_spibus(self, sc->sc_phandle, spibus_print);
-#else
-	struct spibus_attach_args sba;
-	memset(&sba, 0, sizeof(sba));
-	sba.sba_controller = &sc->sc_spi;
-
-	/* attach slave devices */
-	config_found(sc->sc_dev, &sba, spibus_print, CFARGS_NONE);
-#endif
+	spibus_attach(self, &sc->sc_spi);
 
 	return 0;
 }

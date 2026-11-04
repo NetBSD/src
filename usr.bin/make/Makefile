@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.127.2.1 2025/08/02 05:58:29 perseant Exp $
+#	$NetBSD: Makefile,v 1.127.2.2 2026/11/04 23:28:36 perseant Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -76,6 +76,9 @@ FILEMON_H?=	/usr/include/dev/filemon/filemon.h
 COPTS.filemon_dev.c+= \
 		-DHAVE_FILEMON_H -I${FILEMON_H:H}
 .      endif
+.    elif ${USE_FILEMON} == "ktrace"
+COPTS.filemon_ktrace.c+= \
+		-Wno-unused-parameter
 .    endif
 .  endif
 .endif
@@ -85,7 +88,7 @@ SUBDIR.roff+=	PSD.doc
 SUBDIR+=	unit-tests
 .endif
 
-LINTFLAGS+=	-T	# strict bool mode, available since 2021-01-11
+LINTFLAGS+=	${ACTIVE_CC:Mgcc:%=-T}	# strict bool mode
 LINTFLAGS+=	-w	# treat warnings as errors
 CLEANFILES+=	*.o	# for filemon objects
 

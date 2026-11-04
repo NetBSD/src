@@ -1,4 +1,4 @@
-/*	$NetBSD: viaide.c,v 1.89.34.1 2025/08/02 05:57:00 perseant Exp $	*/
+/*	$NetBSD: viaide.c,v 1.89.34.2 2026/11/04 23:22:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.89.34.1 2025/08/02 05:57:00 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: viaide.c,v 1.89.34.2 2026/11/04 23:22:29 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -329,6 +329,11 @@ static const struct pciide_product_desc pciide_via_products[] =  {
 	  "VIA Technologies VT6415/VT6330 IDE controller",
 	  via_chip_map,
 	},
+	{ PCI_PRODUCT_VIATECH_VT6420_IDE,
+	  0,
+	  "VIA Technologies VT6420 IDE controller",
+	  via_chip_map,
+	},
 	{ PCI_PRODUCT_VIATECH_VT6421_RAID,
 	  0,
 	  "VIA Technologies VT6421 Serial ATA RAID Controller",
@@ -517,6 +522,8 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			 */
 			no_ideconf = 1;
 			/* FALLTHROUGH */
+		case PCI_PRODUCT_VIATECH_VT6420_IDE:
+			/* FALLTHROUGH */
 		case PCI_PRODUCT_VIATECH_CX700_IDE:
 			sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
 			break;
@@ -589,6 +596,10 @@ via_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 			case PCI_PRODUCT_VIATECH_VT8233A:
 				aprint_normal("VT8233A ATA133 controller\n");
 				sc->sc_wdcdev.sc_atac.atac_udma_cap = 6;
+				break;
+			case PCI_PRODUCT_VIATECH_VT8233C:
+				aprint_normal("VT8233C ATA100 controller\n");
+				sc->sc_wdcdev.sc_atac.atac_udma_cap = 5;
 				break;
 			case PCI_PRODUCT_VIATECH_VT8235:
 				aprint_normal("VT8235 ATA133 controller\n");
@@ -762,18 +773,14 @@ via_mapchan(const struct pci_attach_args *pa,	struct pciide_channel *cp,
 {
 	struct ata_channel *wdc_cp;
 	struct pciide_softc *sc;
-	prop_bool_t compat_nat_enable;
 
 	wdc_cp = &cp->ata_channel;
 	sc = CHAN_TO_PCIIDE(&cp->ata_channel);
-	compat_nat_enable = prop_dictionary_get(
-	    device_properties(sc->sc_wdcdev.sc_atac.atac_dev),
-	      "use-compat-native-irq");
 
 	if (interface & PCIIDE_INTERFACE_PCI(wdc_cp->ch_channel)) {
 		/* native mode with irq 14/15 requested? */
-		if (compat_nat_enable != NULL &&
-		    prop_bool_true(compat_nat_enable))
+		if (device_getprop_bool(sc->sc_wdcdev.sc_atac.atac_dev,
+					"use-compat-native-irq"))
 			via_mapregs_compat_native(pa, cp);
 		else
 			pciide_mapregs_native(pa, cp, pci_intr);
@@ -1294,7 +1301,7 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 		    PCI_MAPREG_TYPE_IO, 0, &wdr->cmd_iot, &wdr->cmd_baseioh,
 		    NULL, &wdr->cmd_ios) != 0) {
 			aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
-			    "couldn't map %s channel regs\n", cp->name);
+			    "couldn't map channel %d regs\n", channel);
 		}
 		wdr->ctl_iot = wdr->cmd_iot;
 		for (i = 0; i < WDC_NREG; i++) {
@@ -1303,8 +1310,8 @@ via_sata_chip_map_new(struct pciide_softc *sc,
 			    &wdr->cmd_iohs[i]) != 0) {
 				aprint_error_dev(
 				    sc->sc_wdcdev.sc_atac.atac_dev,
-				    "couldn't subregion %s "
-				    "channel cmd regs\n", cp->name);
+				    "couldn't subregion channel %d "
+				    "cmd regs\n", channel);
 				return;
 			}
 		}

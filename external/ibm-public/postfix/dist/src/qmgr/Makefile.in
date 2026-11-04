@@ -104,6 +104,7 @@ qmgr_active.o: ../../include/msg.h
 qmgr_active.o: ../../include/msg_stats.h
 qmgr_active.o: ../../include/mymalloc.h
 qmgr_active.o: ../../include/nvtable.h
+qmgr_active.o: ../../include/pol_stats.h
 qmgr_active.o: ../../include/qmgr_user.h
 qmgr_active.o: ../../include/rec_type.h
 qmgr_active.o: ../../include/recipient_list.h
@@ -127,6 +128,7 @@ qmgr_bounce.o: ../../include/htable.h
 qmgr_bounce.o: ../../include/msg_stats.h
 qmgr_bounce.o: ../../include/mymalloc.h
 qmgr_bounce.o: ../../include/nvtable.h
+qmgr_bounce.o: ../../include/pol_stats.h
 qmgr_bounce.o: ../../include/recipient_list.h
 qmgr_bounce.o: ../../include/scan_dir.h
 qmgr_bounce.o: ../../include/sys_defs.h
@@ -149,6 +151,7 @@ qmgr_defer.o: ../../include/msg.h
 qmgr_defer.o: ../../include/msg_stats.h
 qmgr_defer.o: ../../include/mymalloc.h
 qmgr_defer.o: ../../include/nvtable.h
+qmgr_defer.o: ../../include/pol_stats.h
 qmgr_defer.o: ../../include/recipient_list.h
 qmgr_defer.o: ../../include/scan_dir.h
 qmgr_defer.o: ../../include/sys_defs.h
@@ -280,6 +283,7 @@ qmgr_message.o: ../../include/myflock.h
 qmgr_message.o: ../../include/mymalloc.h
 qmgr_message.o: ../../include/nvtable.h
 qmgr_message.o: ../../include/opened.h
+qmgr_message.o: ../../include/pol_stats.h
 qmgr_message.o: ../../include/qmgr_user.h
 qmgr_message.o: ../../include/rec_attr_map.h
 qmgr_message.o: ../../include/rec_type.h

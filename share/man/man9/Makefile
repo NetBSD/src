@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.470.2.1 2025/08/02 05:55:17 perseant Exp $
+#       $NetBSD: Makefile,v 1.470.2.2 2026/11/04 23:19:52 perseant Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -15,6 +15,7 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	cpu_number.9 cpu_reboot.9 cpu_rootconf.9 \
 	cpu_startup.9 cpu_switchto.9 cpufreq.9 \
 	crashme.9 csf.9 ctod.9 \
+	curlwp_bind.9 \
 	curproc.9 \
 	ddb.9 ddc.9 \
 	delay.9 devsw_attach.9 disk.9 disklabel.9 dksubr.9 dofileread.9 \
@@ -41,7 +42,12 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 acl.9 \
 	microseq.9 microtime.9 microuptime.9 mi_switch.9 module.9 \
 	mstohz.9 mutex.9 m_tag.9 namecache.9 \
 	namei.9 nullop.9 opencrypto.9 optstr.9 \
-	panic.9 pathbuf.9 pci.9 pci_configure_bus.9 pci_intr.9 \
+	panic.9 \
+	paravirt_membar_sync.9 \
+	pathbuf.9 \
+	pci.9 \
+	pci_configure_bus.9 \
+	pci_intr.9 \
 	pci_msi.9 pckbport.9 pcmcia.9 pcq.9 pcu.9 \
 	percpu.9 pfil.9 physio.9 pktqueue.9 pmap.9 pmatch.9 pmf.9 pool.9 \
 	pool_cache.9 portfeatures.9 powerhook_establish.9 ppsratecheck.9 \
@@ -320,6 +326,7 @@ MLINKS+=ctod.9 dtoc.9 \
 	ctod.9 btoc.9 \
 	ctod.9 dbtob.9 \
 	ctod.9 btodb.9
+MLINKS+=curlwp_bind.9 curlwp_bindx.9
 MLINKS+=curproc.9 curcpu.9 curproc.9 curlwp.9
 MLINKS+=delay.9 DELAY.9
 MLINKS+=devsw_attach.9 devsw.9 \

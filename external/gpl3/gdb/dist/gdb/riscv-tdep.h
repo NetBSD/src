@@ -1,7 +1,7 @@
 /* Target-dependent header for the RISC-V architecture, for GDB, the
    GNU Debugger.
 
-   Copyright (C) 2018-2024 Free Software Foundation, Inc.
+   Copyright (C) 2018-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef RISCV_TDEP_H
-#define RISCV_TDEP_H
+#ifndef GDB_RISCV_TDEP_H
+#define GDB_RISCV_TDEP_H
 
 #include "arch/riscv.h"
 #include "gdbarch.h"
@@ -35,7 +35,11 @@ enum
   RISCV_FP_REGNUM = 8,		/* Frame Pointer.  */
   RISCV_A0_REGNUM = 10,		/* First argument.  */
   RISCV_A1_REGNUM = 11,		/* Second argument.  */
-  RISCV_A7_REGNUM = 17,		/* Seventh argument.  */
+  RISCV_A2_REGNUM = 12,		/* Third argument.  */
+  RISCV_A3_REGNUM = 13,		/* Forth argument.  */
+  RISCV_A4_REGNUM = 14,		/* Fifth argument.  */
+  RISCV_A5_REGNUM = 15,		/* Sixth argument.  */
+  RISCV_A7_REGNUM = 17,		/* Register to pass syscall number.  */
   RISCV_PC_REGNUM = 32,		/* Program Counter.  */
 
   RISCV_NUM_INTEGER_REGS = 32,
@@ -113,6 +117,10 @@ struct riscv_gdbarch_tdep : gdbarch_tdep_base
   /* Return the expected next PC assuming FRAME is stopped at a syscall
      instruction.  */
   CORE_ADDR (*syscall_next_pc) (const frame_info_ptr &frame) = nullptr;
+
+  /* Syscall record.  */
+  int (*riscv_syscall_record) (struct regcache *regcache,
+			       unsigned long svc_number) = nullptr;
 };
 
 
@@ -177,7 +185,13 @@ extern void riscv_supply_regset (const struct regset *regset,
 				  struct regcache *regcache, int regnum,
 				  const void *regs, size_t len);
 
+/* Parse the current instruction, and record the values of the
+   registers and memory that will be changed by the current
+   instruction.  Returns -1 if something goes wrong, 0 otherwise.  */
+extern int riscv_process_record (struct gdbarch *gdbarch,
+				 struct regcache *regcache, CORE_ADDR addr);
+
 /* The names of the RISC-V target description features.  */
 extern const char *riscv_feature_name_csr;
 
-#endif /* RISCV_TDEP_H */
+#endif /* GDB_RISCV_TDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.14.2.1 2025/08/02 05:55:05 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.14.2.2 2026/11/04 23:19:39 perseant Exp $	*/
 
 /*
  * Copyright (c) 2022 Reinoud Zandijk
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: main.c,v 1.14.2.1 2025/08/02 05:55:05 perseant Exp $");
+__RCSID("$NetBSD: main.c,v 1.14.2.2 2026/11/04 23:19:39 perseant Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -434,7 +434,7 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 	directory = node->directory;
 	inf_len   = node->found.inf_len;
 
-	rebuild_dir = calloc(1, inf_len);
+	rebuild_dir = calloc(inf_len, 1);
 	assert(rebuild_dir);
 
 	sfpos  = 0;
@@ -495,8 +495,6 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 
 			dfpos += udf_fidsize(dfid);
 			drest -= udf_fidsize(dfid);
-
-			assert(udf_fidsize(sfid) == udf_fidsize(dfid));
 			continue;
 		}
 
@@ -520,14 +518,16 @@ udf_rebuild_fid_stream(struct udf_fsck_node *node, int64_t *rest_lenp)
 	}
 
 	if (sfpos != dfpos)
-		printf("%s: could save %" PRIi64 " bytes in directory\n", udf_node_path(node), sfpos - dfpos);
+		pwarn("%s: could save %" PRIi64 " bytes in directory\n", udf_node_path(node), sfpos - dfpos);
 
-	memset(directory, 0, inf_len);
-	memcpy(directory, rebuild_dir, dfpos);
-
+	*rest_lenp = sfpos;
+	if (error_in_stream) {
+		memset(directory, 0, sfpos);
+		memcpy(directory, rebuild_dir, dfpos);
+		*rest_lenp = dfpos;
+	}
 	free(rebuild_dir);
 
-	*rest_lenp = dfpos;
 	return error_in_stream;
 }
 
@@ -805,7 +805,7 @@ udf_process_ad(union dscrptr *dscrptr, int action, uint8_t **resultp,
 			stats->inf_len     = piece_len;
 			stats->obj_size    = piece_len;
 			stats->logblks_rec = 0;
-		}  else if (flags == UDF_EXT_ALLOCATED) {
+		} else if (flags == UDF_EXT_ALLOCATED) {
 			stats->inf_len     += piece_len;
 			stats->obj_size    += piece_len;
 			stats->logblks_rec += piece_sectors;
@@ -2801,8 +2801,7 @@ udf_check_VDS_areas(void) {
 		context.vds_size = vds1_size;
 		free(vds2_buf);
 		vds2_buf = NULL;
-	}
-	if (!error2) {
+	} else {
 		/* retrieve data from VDS 2 */
 		udf_read_vds_extent(vds2_buf, vds2_size);
 		context.vds_buf  = vds2_buf;

@@ -1,4 +1,4 @@
-/*	$NetBSD: rpz.h,v 1.10.2.1 2025/08/02 05:53:37 perseant Exp $	*/
+/*	$NetBSD: rpz.h,v 1.10.2.2 2026/11/04 23:18:07 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -20,6 +20,7 @@
 #include <inttypes.h>
 #include <stdbool.h>
 
+#include <isc/atomic.h>
 #include <isc/ht.h>
 #include <isc/lang.h>
 #include <isc/refcount.h>
@@ -136,6 +137,9 @@ struct dns_rpz_zone {
 	unsigned int magic;
 	isc_loop_t  *loop;
 
+	/* Protect this zone's database, timer, and update state. */
+	isc_mutex_t update_lock;
+
 	dns_rpz_num_t	 num;	    /* ordinal in list of policy zones */
 	dns_name_t	 origin;    /* Policy zone name */
 	dns_name_t	 client_ip; /* DNS_RPZ_CLIENT_IP_ZONE.origin. */
@@ -156,16 +160,14 @@ struct dns_rpz_zone {
 	dns_rpz_zones_t *rpzs;		/* owner */
 	isc_time_t	 lastupdated;	/* last time the zone was processed
 					 * */
+	bool		 processed;	/* the zone is processed. */
+	bool		 dbregistered;	/* db callback notify is registered. */
 	bool		 updatepending; /* there is an update pending */
 	bool		 updaterunning; /* there is an update running */
-	isc_result_t	 updateresult;	/* result from the offloaded work */
 	dns_db_t	*db;		/* zones database */
 	dns_dbversion_t *dbversion;	/* version we will be updating to */
-	dns_db_t	*updb;		/* zones database we're working on */
-	dns_dbversion_t *updbversion;	/* version we're currently working
-					 * on */
-	bool	     addsoa;		/* add soa to the additional section */
-	isc_timer_t *updatetimer;
+	bool		 addsoa;	/* add soa to the additional section */
+	isc_timer_t	*updatetimer;
 };
 
 /*
@@ -207,6 +209,8 @@ struct dns_rpz_popt {
 	bool		qname_wait_recurse;
 	bool		nsip_wait_recurse;
 	bool		nsdname_wait_recurse;
+	bool		servfail_until_ready;
+	bool		slow_mode; /* Used for system tests with '-T rpzslow' */
 	unsigned int	min_ns_labels;
 	dns_rpz_num_t	num_zones;
 };
@@ -223,6 +227,9 @@ struct dns_rpz_zones {
 	dns_rpz_popt_t	   p;
 	dns_rpz_zone_t	  *zones[DNS_RPZ_MAX_ZONES];
 	dns_rpz_triggers_t triggers[DNS_RPZ_MAX_ZONES];
+
+	_Atomic(dns_rpz_num_t) zones_registered;
+	_Atomic(dns_rpz_num_t) zones_processed;
 
 	/*
 	 * RPZ policy version number.
@@ -257,16 +264,15 @@ struct dns_rpz_zones {
 	 */
 	dns_rpz_triggers_t total_triggers;
 
-	/*
-	 * One lock for short term read-only search that guarantees the
-	 * consistency of the pointers.
-	 * A second lock for maintenance that guarantees no other thread
-	 * is adding or deleting nodes.
-	 */
+	/* Protect query readers against changes to the CIDR tree. */
 	isc_rwlock_t search_lock;
-	isc_mutex_t  maint_lock;
 
-	bool shuttingdown;
+	/* Serialize summary QP and CIDR updates and their derived state. */
+	isc_mutex_t data_lock;
+
+	bool first_time;
+	/* Publish shutdown without waiting for an update or data lock. */
+	atomic_bool shuttingdown;
 
 	dns_rpz_cidr_node_t *cidr;
 	dns_qpmulti_t	    *table;
@@ -395,7 +401,8 @@ dns_rpz_decode_cname(dns_rpz_zone_t *rpz, dns_rdataset_t *rdataset,
 
 isc_result_t
 dns_rpz_new_zones(dns_view_t *view, isc_loopmgr_t *loopmgr, char *rps_cstr,
-		  size_t rps_cstr_size, dns_rpz_zones_t **rpzsp);
+		  size_t rps_cstr_size, dns_rpz_zones_t **rpzsp,
+		  bool first_time);
 
 isc_result_t
 dns_rpz_new_zone(dns_rpz_zones_t *rpzs, dns_rpz_zone_t **rpzp);

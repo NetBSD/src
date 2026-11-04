@@ -1,4 +1,4 @@
-/*	$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $ */
+/*	$NetBSD: ofw_patch.c,v 1.7.24.1 2026/11/04 23:21:24 perseant Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7.24.1 2026/11/04 23:21:24 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -41,8 +41,16 @@ __KERNEL_RCSID(0, "$NetBSD: ofw_patch.c,v 1.7 2020/12/23 07:01:14 jdc Exp $");
 #include <sparc64/sparc64/ofw_patch.h>
 #include <sparc64/sparc64/static_edid.h>
 
+/*
+ * GPIO pin configurations
+ *   num: the bit representing the pin
+ *   act: on/off are reversed
+ *   def: default state for LED or ALERT (will be set or checked by the driver)
+ *   to: timeout (secs) before which we need to read the state
+ */
 static void
-add_gpio_pin(prop_array_t pins, const char *name, int num, int act, int def)
+add_gpio_pin(prop_array_t pins, const char *name, int num, int act,
+    int def, int to)
 {
 	prop_dictionary_t pin = prop_dictionary_create();
 	prop_dictionary_set_string(pin, "name", name);
@@ -50,6 +58,8 @@ add_gpio_pin(prop_array_t pins, const char *name, int num, int act, int def)
 	prop_dictionary_set_bool(pin, "active_high", act);
 	if (def != -1)
 		prop_dictionary_set_int32(pin, "default_state", def);
+	if (to != -1)
+		prop_dictionary_set_int32(pin, "timeout", to);
 	prop_array_add(pins, pin);
 	prop_object_release(pin);
 }
@@ -72,9 +82,10 @@ create_i2c_dict(device_t busdev)
 
 static void
 add_i2c_device(prop_array_t cfg, const char *name, const char *compat,
-uint32_t addr, uint64_t node)
+    uint32_t addr, uint64_t node)
 {
 	prop_dictionary_t dev;
+	devhandle_t child_devhandle;
 
 	DPRINTF(ACDB_PROBE, ("\nAdding i2c device: %s (%s) @ 0x%x (%lx)\n",
 	    name, compat == NULL ? "NULL" : compat, addr, node & 0xffffffff));
@@ -84,12 +95,20 @@ uint32_t addr, uint64_t node)
 		prop_dictionary_set_data(dev, "compatible", compat,
 		    strlen(compat) + 1);
 	prop_dictionary_set_uint32(dev, "addr", addr);
-	prop_dictionary_set_uint64(dev, "cookie", node);
+	if (node != 0) {
+		child_devhandle =
+		    devhandle_from_of(devhandle_invalid(), node);
+	} else {
+		child_devhandle = devhandle_invalid();
+	}
+	prop_dictionary_set_data(dev, "devhandle",
+	    &child_devhandle, sizeof(child_devhandle));
+
 	prop_array_add(cfg, dev);
 	prop_object_release(dev);
 }
 
-void
+static void
 add_gpio_props_v210(device_t dev, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
@@ -99,34 +118,111 @@ add_gpio_props_v210(device_t dev, void *aux)
 	switch (ia->ia_addr) {
 		case 0x38:	/* front panel LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED indicator", 7, 0, -1);
-			add_gpio_pin(pins, "LED fault", 5, 0, 0);
-			add_gpio_pin(pins, "LED power", 4, 0, 1);
+			add_gpio_pin(pins, "LED indicator", 7, 0, -1, -1);
+			add_gpio_pin(pins, "LED fault", 5, 0, 0, -1);
+			add_gpio_pin(pins, "LED power", 4, 0, 1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x23:	/* drive bay O/1 LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED bay0_fault", 10, 0, 0);
-			add_gpio_pin(pins, "LED bay1_fault", 11, 0, 0);
-			add_gpio_pin(pins, "LED bay0_remove", 12, 0, 0);
-			add_gpio_pin(pins, "LED bay1_remove", 13, 0, 0);
+			add_gpio_pin(pins, "LED bay0_fault", 10, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay1_fault", 11, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay0_remove", 12, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay1_remove", 13, 0, 0, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x25:	/* drive bay 2/3 LEDs (v240 only)*/
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED bay2_fault", 10, 0, 0);
-			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0);
-			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0);
-			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0);
+			add_gpio_pin(pins, "LED bay2_fault", 10, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay3_fault", 11, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay2_remove", 12, 0, 0, -1);
+			add_gpio_pin(pins, "LED bay3_remove", 13, 0, 0, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 	}
 }
 
-void
+static void
+add_gpio_props_v245(device_t dev, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_array_t pins;
+
+	switch (ia->ia_addr) {
+		case 0x12:	/* V215 disk status / LED's */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "ALERT HDD 0 present",
+			    6, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 1 present",
+			    7, 1, -1, -1);
+			add_gpio_pin(pins, "LED hdd0_fault", 0, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd0_remove", 4, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_fault", 1, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_remove", 5, 0, 0, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x22:	/* V245 disk status / LED's */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "ALERT HDD 0 present",
+			    8, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 1 present",
+			    9, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 2 present",
+			    10, 1, -1, -1);
+			add_gpio_pin(pins, "ALERT HDD 3 present",
+			    11, 1, -1, -1);
+			add_gpio_pin(pins, "LED hdd0_fault", 0, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd0_remove", 4, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_fault", 1, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd1_remove", 5, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd2_fault", 2, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd2_remove", 6, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd3_fault", 3, 0, 0, -1);
+			add_gpio_pin(pins, "LED hdd3_remove", 7, 0, 0, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x3e:	/* PSU 0 */
+			pins = prop_array_create();
+			prop_dictionary_set(dict, "pins", pins);
+			add_gpio_pin(pins, "ALERT PSU 0 input power",
+			    6, 0, 0, -1);
+			prop_object_release(pins);
+			break;
+		case 0x3f:	/* PSU 1 */
+			pins = prop_array_create();
+			prop_dictionary_set(dict, "pins", pins);
+			add_gpio_pin(pins, "ALERT PSU 1 input power",
+			    6, 0, 0, -1);
+			prop_object_release(pins);
+			break;
+	}
+}
+
+static void
+add_gpio_props_u45(device_t dev, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_array_t pins;
+
+	switch (ia->ia_addr) {
+		case 0x18:	/* front panel LEDs */
+			pins = prop_array_create();
+			add_gpio_pin(pins, "LED power", 0, 1, -1, -1);
+			add_gpio_pin(pins, "LED fault", 1, 0, -1, -1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+	}
+}
+
+static void
 add_gpio_props_e250(device_t dev, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
@@ -136,62 +232,64 @@ add_gpio_props_e250(device_t dev, void *aux)
 	switch (ia->ia_addr) {
 		case 0x38:	/* interrupt status */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "ALERT high_temp", 1, 0, 30);
-			add_gpio_pin(pins, "ALERT disk_event", 2, 0, 30);
-			add_gpio_pin(pins, "ALERT fan_fail", 4, 0, 30);
-			add_gpio_pin(pins, "ALERT key_event", 5, 0, 30);
-			add_gpio_pin(pins, "ALERT psu_event", 6, 0, 30);
+			add_gpio_pin(pins, "ALERT high_temp", 1, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT disk_event", 2, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT fan_fail", 4, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT key_event", 5, 0, -1, 30);
+			add_gpio_pin(pins, "ALERT psu_event", 6, 0, -1, 30);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x39:	/* PSU status */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "INDICATOR psu0_present", 0, 0, -1);
-			add_gpio_pin(pins, "INDICATOR psu1_present", 1, 0, -1);
-			add_gpio_pin(pins, "INDICATOR psu0_fault", 4, 0, -1);
-			add_gpio_pin(pins, "INDICATOR psu1_fault", 5, 0, -1);
+			add_gpio_pin(pins, "INDICATOR psu0_present",
+			    0, 0, -1, -1);
+			add_gpio_pin(pins, "INDICATOR psu1_present",
+			    1, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT psu0_fault", 4, 0, 1, -1);
+			add_gpio_pin(pins, "ALERT psu1_fault", 5, 0, 1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x3d:	/* disk status */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "INDICATOR disk0_present",
-			    0, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk1_present",
-			    1, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk2_present",
-			    2, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk3_present",
-			    3, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk4_present",
-			    4, 0, -1);
-			add_gpio_pin(pins, "INDICATOR disk5_present",
-			    5, 0, -1);
+			add_gpio_pin(pins, "ALERT disk0_present",
+			    0, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk1_present",
+			    1, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk2_present",
+			    2, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk3_present",
+			    3, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk4_present",
+			    4, 0, -1, -1);
+			add_gpio_pin(pins, "ALERT disk5_present",
+			    5, 0, -1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x3e:	/* front panel LEDs (E250/E450) */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED disk_fault", 0, 0, -1);
-			add_gpio_pin(pins, "LED psu_fault", 1, 0, -1);
-			add_gpio_pin(pins, "LED overtemp", 2, 0, -1);
-			add_gpio_pin(pins, "LED fault", 3, 0, -1);
-			add_gpio_pin(pins, "LED activity", 4, 0, -1);
+			add_gpio_pin(pins, "LED disk_fault", 0, 0, -1, -1);
+			add_gpio_pin(pins, "LED psu_fault", 1, 0, -1, -1);
+			add_gpio_pin(pins, "LED overtemp", 2, 0, -1, -1);
+			add_gpio_pin(pins, "LED fault", 3, 0, -1, -1);
+			add_gpio_pin(pins, "LED activity", 4, 0, -1, -1);
 			/* Pin 5 is power LED, but not controllable */
-			add_gpio_pin(pins, "INDICATOR key_normal", 6, 0, -1);
-			add_gpio_pin(pins, "INDICATOR key_diag", 7, 0, -1);
+			add_gpio_pin(pins, "INDICATOR key_normal", 6, 0, -1, -1);
+			add_gpio_pin(pins, "INDICATOR key_diag", 7, 0, -1, -1);
 			/* If not "normal" or "diag", key is "lock" */
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
 		case 0x3f:	/* disk fault LEDs */
 			pins = prop_array_create();
-			add_gpio_pin(pins, "LED disk0_fault", 0, 0, -1);
-			add_gpio_pin(pins, "LED disk1_fault", 1, 0, -1);
-			add_gpio_pin(pins, "LED disk2_fault", 2, 0, -1);
-			add_gpio_pin(pins, "LED disk3_fault", 3, 0, -1);
-			add_gpio_pin(pins, "LED disk4_fault", 4, 0, -1);
-			add_gpio_pin(pins, "LED disk5_fault", 5, 0, -1);
+			add_gpio_pin(pins, "LED disk0_fault", 0, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk1_fault", 1, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk2_fault", 2, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk3_fault", 3, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk4_fault", 4, 0, -1, -1);
+			add_gpio_pin(pins, "LED disk5_fault", 5, 0, -1, -1);
 			prop_dictionary_set(dict, "pins", pins);
 			prop_object_release(pins);
 			break;
@@ -249,7 +347,7 @@ add_drivebay_props(device_t dev, int ofnode, void *aux)
 /*
  * Add SPARCle spdmem devices (0x50 and 0x51) that are not in the OFW tree
  */
-void
+static void
 add_spdmem_props_sparcle(device_t busdev)
 {
 	prop_array_t cfg;
@@ -266,7 +364,7 @@ add_spdmem_props_sparcle(device_t busdev)
 /*
  * Add V210/V240 environmental sensors that are not in the OFW tree.
  */
-void
+static void
 add_env_sensors_v210(device_t busdev)
 {
 	prop_array_t cfg;
@@ -276,12 +374,57 @@ add_env_sensors_v210(device_t busdev)
 
 	/* ADM1026 at 0x2e */
 	add_i2c_device(cfg, "hardware-monitor", "i2c-adm1026", 0x2e, 0);
+
 	/* LM75 at 0x4e */
 	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75", 0x4e, 0);
 }
 
+/*
+ * Add U45 environmental sensors that are not in the OFW tree.
+ */
+static void
+add_env_sensors_u45(device_t busdev)
+{
+	prop_array_t cfg;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
+	cfg = create_i2c_dict(busdev);
+
+	/* LM95221 at 0x2b */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm95221", 0x2b, 0);
+
+	/* NXP LM75A at 0x4f */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm75a", 0x4f, 0);
+}
+
+/*
+ * Add V245 environmental sensors that are not in the OFW tree.
+ */
+static void
+add_env_sensors_v245(device_t busdev, int model)
+{
+	prop_array_t cfg;
+
+	DPRINTF(ACDB_PROBE, ("\nAdding sensors for %s ", machine_model));
+	cfg = create_i2c_dict(busdev);
+
+	/* PCA9556 at 0x12 (V215) */
+	if (model == 215)
+		add_i2c_device(cfg, "gpio", "i2c-pca9556", 0x12, 0);
+
+	/* PCA9555 at 0x22 (V245) */
+	if (model == 245)
+		add_i2c_device(cfg, "gpio", "i2c-pca9555", 0x22, 0);
+
+	/* LM95221 at 0x2b */
+	add_i2c_device(cfg, "temperature-sensor", "i2c-lm95221", 0x2b, 0);
+
+	/* ADT7475 at 0x2e */
+	add_i2c_device(cfg, "hardware-monitor", "i2c-adt7475", 0x2e, 0);
+}
+
 /* Sensors and GPIO's for E450 and E250 */
-void
+static void
 add_i2c_props_e450(device_t busdev, uint64_t node)
 {
 	prop_array_t cfg;
@@ -307,7 +450,7 @@ add_i2c_props_e450(device_t busdev, uint64_t node)
 	prop_object_release(cfg);
 }
 
-void
+static void
 add_i2c_props_e250(device_t busdev, uint64_t node)
 {
 	prop_array_t cfg;
@@ -331,37 +474,242 @@ add_i2c_props_e250(device_t busdev, uint64_t node)
 	/* NVRAM */
 	add_i2c_device(cfg, "nvram", "i2c-at24c02", 0x52, node);
 
-	/* RSC clock */
-	add_i2c_device(cfg, "rscrtc", "i2c-ds1307", 0x68, node);
-
 	prop_object_release(cfg);
 }
 
-/* Hardware specific device properties */
-void
-set_hw_props(device_t dev)
+/*
+ * Fix-up U45 incorrect properties in the OFW tree.
+ */
+static void
+fix_properties_u45(device_t busdev)
 {
-	device_t busdev = device_parent(dev);
+	prop_dictionary_t props = device_properties(busdev);
+	prop_array_t cfg;
+	prop_object_t dev;
+	uint32_t addr;
+	const char *name;
+	int i, n;
+
+	cfg = prop_dictionary_get(props, "i2c-child-devices");
+	if (!cfg)
+		return;
+
+	n = prop_array_count(cfg);
+	for (i = 0; i < n; i++) {
+		dev = prop_array_get(cfg, i);
+		if (prop_object_type(dev) == PROP_TYPE_DICTIONARY &&
+		    prop_dictionary_get_uint32(dev, "addr", &addr) &&
+		    prop_dictionary_get_string(dev, "name", &name)) {
+			/* Change psu-fru-prom to a standard eeprom */
+			if (addr == 0x57)
+				prop_dictionary_set_data(dev, "compatible",
+				    "i2c-at24c02", strlen("i2c-at24c02") + 1);
+			/* Remove fake lm76 at addresses 2b, 48 and 4f */
+			if ((addr == 0x2b || addr == 0x48 || addr == 0x4f) &&
+			    !strcmp(name, "temperature")) {
+				prop_array_remove(cfg, i);
+				i -= 1;
+				n -= 1;
+			}
+		}
+	}
+}
+
+/*
+ * Fix-up V245 incorrect properties in the OFW tree.
+ */
+static void
+fix_properties_v245(device_t busdev)
+{
+	prop_dictionary_t props = device_properties(busdev);
+	prop_array_t cfg;
+	prop_object_t dev;
+	uint32_t addr;
+	const char *name;
+	int i, n;
+
+	cfg = prop_dictionary_get(props, "i2c-child-devices");
+	if (!cfg)
+		return;
+
+	n = prop_array_count(cfg);
+	for (i = 0; i < n; i++) {
+		dev = prop_array_get(cfg, i);
+		if (prop_object_type(dev) == PROP_TYPE_DICTIONARY &&
+		    prop_dictionary_get_uint32(dev, "addr", &addr) &&
+		    prop_dictionary_get_string(dev, "name", &name)) {
+			/* Change psu-fru-prom's to standard eeprom's */
+			if (addr == 0x36 || addr == 0x37)
+				prop_dictionary_set_data(dev, "compatible",
+				    "i2c-at24c02", strlen("i2c-at24c02") + 1);
+		}
+	}
+}
+
+/*
+ * Fix-up V445 incorrect properties in the OFW tree.
+ */
+static void
+fix_properties_v445(device_t busdev)
+{
+	prop_dictionary_t props = device_properties(busdev);
+	prop_array_t cfg;
+	prop_object_t dev;
+	uint32_t addr;
+	const char *name;
+	int i, n;
+
+	cfg = prop_dictionary_get(props, "i2c-child-devices");
+	if (!cfg)
+		return;
+
+	n = prop_array_count(cfg);
+	for (i = 0; i < n; i++) {
+		dev = prop_array_get(cfg, i);
+		if (prop_object_type(dev) == PROP_TYPE_DICTIONARY &&
+		    prop_dictionary_get_uint32(dev, "addr", &addr) &&
+		    prop_dictionary_get_string(dev, "name", &name)) {
+			/* Change power-supply-fru-prom to a standard eeprom */
+			if (addr == 0x12 || addr == 0x19 ||
+			    addr == 0x29 || addr == 0x39)
+				prop_dictionary_set_data(dev, "compatible",
+				    "i2c-at24c02", strlen("i2c-at24c02") + 1);
+			/* Remove "I2c-lm75" from hardware-monitor */
+			if (addr == 0x4d)
+//				prop_dictionary_remove(dev, "compatible");
+				prop_dictionary_set_data(dev, "compatible",
+				    "i2c-unknown", strlen("i2c-unknown") + 1);
+		}
+	}
+}
+
+/* Hardware specific i2c bus properties */
+void
+set_i2c_bus_props(device_t busdev, uint64_t busnode)
+{
+
+	if (!strcmp(machine_model, "TAD,SPARCLE"))
+		add_spdmem_props_sparcle(busdev);
+
+	if (device_is_a(busdev, "pcfiic")) {
+		if (!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
+		    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))
+			add_env_sensors_v210(busdev);
+
+		if (!strcmp(machine_model, "SUNW,A70") ||
+		    !strcmp(machine_model, "SUNW,Ultra-25")) {
+			add_env_sensors_u45(busdev);
+			fix_properties_u45(busdev);
+		}
+
+		/* E450 SUNW,envctrl */
+		if (!strcmp(machine_model, "SUNW,Ultra-4"))
+			add_i2c_props_e450(busdev, busnode);
+
+		/* E250 SUNW,envctrltwo */
+		if (!strcmp(machine_model, "SUNW,Ultra-250"))
+			add_i2c_props_e250(busdev, busnode);
+	}
+
+	if (device_is_a(busdev, "firei2c")) {
+		if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
+		    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
+			add_env_sensors_v245(busdev,
+			    strcmp(machine_model, "SUNW,Sun-Fire-V245")
+			    ? 215 : 245);
+			fix_properties_v245(busdev);
+		}
+
+		if (!strcmp(machine_model, "SUNW,Sun-Fire-V445"))
+			fix_properties_v445(busdev);
+	}
+}
+
+
+/* Hardware specific i2c device properties */
+void
+set_i2c_dev_props(device_t dev, device_t busdev, void *aux)
+{
 
 	if ((!strcmp(machine_model, "SUNW,Sun-Fire-V240") ||
 	    !strcmp(machine_model, "SUNW,Sun-Fire-V210"))) {
-		device_t busparent = device_parent(busdev);
-		prop_dictionary_t props = device_properties(dev);
+		if (device_is_a(dev, "pcagpio"))
+			add_gpio_props_v210(dev, aux);
 
-		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
-		    device_is_a(dev, "adm1026hm") && props != NULL) {
+		if (device_is_a(dev, "adm1026hm")) {
+			prop_dictionary_t props = device_properties(dev);
 			prop_dictionary_set_uint8(props, "fan_div2", 0x55);
-			prop_dictionary_set_bool(props, "multi_read", true);
+			/* There are only 3 fans in the 1st group on V240 */
+			if (!strcmp(machine_model, "SUNW,Sun-Fire-V240"))
+				prop_dictionary_set_uint8(props,
+				    "fan_mask", 0x08);
 		}
 	}
 
-	if (!strcmp(machine_model, "SUNW,Sun-Fire-V440")) {
-		device_t busparent = device_parent(busdev);
-		prop_dictionary_t props = device_properties(dev);
-		if (busparent != NULL && device_is_a(busparent, "pcfiic") &&
-		    device_is_a(dev, "adm1026hm") && props != NULL) {
-			prop_dictionary_set_bool(props, "multi_read", true);
+	if (!strcmp(machine_model, "SUNW,Sun-Fire-V245") ||
+	    !strcmp(machine_model, "SUNW,Sun-Fire-V215")) {
+		/* CPU temperatures are offset by 29C */
+		if (device_is_a(dev, "adt7462sm")){
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint32(props,
+			    "temp_off", 0x001d1d00);
 		}
+		/* Disk status / LED's */
+		if (device_is_a(dev, "pcagpio") ||
+		     device_is_a(dev, "pcf8574io"))
+			add_gpio_props_v245(dev, aux);
+
+		/* Tach pulse is set incorrectly */
+		if (device_is_a(dev, "dbcool")) {
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint16(props,
+			    "fan_div", 0x0022);
+		}
+	}
+
+	if (!strcmp(machine_model, "SUNW,Sun-Blade-2500-S") ||
+	    !strcmp(machine_model, "SUNW,Sun-Blade-1500-S")) {
+		/* Tach pulse is set incorrectly on both chips */
+		if (device_is_a(dev, "dbcool")) {
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint16(props,
+			    "fan_div", 0x0044);
+		}
+	}
+
+	/* U45 has 5 measured fans */
+	if (!strcmp(machine_model, "SUNW,A70")) {
+		if (device_is_a(dev, "adt7462sm")){
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint8(props, "fan_conf", 0x1f);
+		}
+	}
+
+	/* U45 pcagpio @ firei2c controls the front panel LED */
+	if (!strcmp(machine_model, "SUNW,A70") ||
+	    !strcmp(machine_model, "SUNW,Ultra-25"))
+		if (device_is_a(dev, "pcagpio") &&
+		    device_is_a(busdev, "firei2c"))
+			add_gpio_props_u45(dev, aux);
+
+	/* E250 GPIO's */
+	if (!strcmp(machine_model, "SUNW,Ultra-250"))
+		if (device_is_a(dev, "pcf8574io"))
+			add_gpio_props_e250(dev, aux);
+
+	if (!strcmp(machine_model, "SUNW,Sun-Fire-V445")) {
+		/* CPU temperatures are offset by 29C */
+		if (device_is_a(dev, "admtemp")) {
+			prop_dictionary_t props = device_properties(dev);
+			prop_dictionary_set_uint16(props,
+			    "temp_off", 0x1d00);
+		}
+	}
+
+	/* Sun use offsets from 2000 but range 1970 to 2069 */
+	if (device_is_a(dev, "dsrtc")) {
+		prop_dictionary_t props = device_properties(dev);
+		prop_dictionary_set_uint(props, "start-year", 2000);
 	}
 }
 

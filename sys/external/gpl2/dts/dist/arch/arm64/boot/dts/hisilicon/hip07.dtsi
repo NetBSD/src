@@ -842,66 +842,98 @@
 
 		cluster0_l2: l2-cache0 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster1_l2: l2-cache1 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster2_l2: l2-cache2 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster3_l2: l2-cache3 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster4_l2: l2-cache4 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster5_l2: l2-cache5 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster6_l2: l2-cache6 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster7_l2: l2-cache7 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster8_l2: l2-cache8 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster9_l2: l2-cache9 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster10_l2: l2-cache10 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster11_l2: l2-cache11 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster12_l2: l2-cache12 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster13_l2: l2-cache13 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster14_l2: l2-cache14 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 
 		cluster15_l2: l2-cache15 {
 			compatible = "cache";
+			cache-level = <2>;
+			cache-unified;
 		};
 	};
 
@@ -979,6 +1011,42 @@
 			#msi-cells = <1>;
 			reg = <0x408 0xc6000000 0x0 0x40000>;
 		};
+	};
+
+	eth0: ethernet-0 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <4>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	eth1: ethernet-1 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <5>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	eth2: ethernet-2 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <0>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
+	};
+
+	eth3: ethernet-3 {
+		compatible = "hisilicon,hns-nic-v2";
+		ae-handle = <&dsaf0>;
+		port-idx-in-ae = <1>;
+		local-mac-address = [00 00 00 00 00 00];
+		status = "disabled";
+		dma-coherent;
 	};
 
 	timer {
@@ -1238,7 +1306,7 @@
 			};
 		};
 
-		uart0: uart@602b0000 {
+		uart0: serial@602b0000 {
 			compatible = "arm,sbsa-uart";
 			reg = <0x0 0x602b0000 0x0 0x1000>;
 			interrupt-parent = <&mbigen_uart>;
@@ -1311,7 +1379,7 @@
 			};
 		};
 
-		dsaf0: dsa@c7000000 {
+		dsaf0: dsa@c5000000 {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "hisilicon,hns-dsaf-v2";
@@ -1422,7 +1490,7 @@
 
 			port@1 {
 				reg = <1>;
-				serdes-syscon= <&serdes_ctrl>;
+				serdes-syscon = <&serdes_ctrl>;
 				cpld-syscon = <&dsa_cpld 0x4>;
 				port-rst-offset = <1>;
 				port-mode-offset = <1>;
@@ -1433,7 +1501,7 @@
 			port@4 {
 				reg = <4>;
 				phy-handle = <&phy0>;
-				serdes-syscon= <&serdes_ctrl>;
+				serdes-syscon = <&serdes_ctrl>;
 				port-rst-offset = <4>;
 				port-mode-offset = <2>;
 				mc-mac-mask = [ff f0 00 00 00 00];
@@ -1443,48 +1511,12 @@
 			port@5 {
 				reg = <5>;
 				phy-handle = <&phy1>;
-				serdes-syscon= <&serdes_ctrl>;
+				serdes-syscon = <&serdes_ctrl>;
 				port-rst-offset = <5>;
 				port-mode-offset = <3>;
 				mc-mac-mask = [ff f0 00 00 00 00];
 				media-type = "copper";
 			};
-		};
-
-		eth0: ethernet@4{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <4>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
-		};
-
-		eth1: ethernet@5{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <5>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
-		};
-
-		eth2: ethernet@0{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <0>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
-		};
-
-		eth3: ethernet@1{
-			compatible = "hisilicon,hns-nic-v2";
-			ae-handle = <&dsaf0>;
-			port-idx-in-ae = <1>;
-			local-mac-address = [00 00 00 00 00 00];
-			status = "disabled";
-			dma-coherent;
 		};
 
 		infiniband@c4000000 {
@@ -1692,7 +1724,7 @@
 			status = "disabled";
 		};
 
-		p0_pcie2_a: pcie@a00a0000 {
+		p0_pcie2_a: pcie@af800000 {
 			compatible = "hisilicon,hip07-pcie-ecam";
 			reg = <0 0xaf800000 0 0x800000>,
 			      <0 0xa00a0000 0 0x10000>;
@@ -1713,7 +1745,7 @@
 					 0x0 0 0 4 &mbigen_pcie2_a 671 4>;
 			status = "disabled";
 		};
-		p0_sec_a: crypto@d2000000 {
+		p0_sec_a: crypto@d0000000 {
 			compatible = "hisilicon,hip07-sec";
 			reg = <0x0 0xd0000000 0x0 0x10000>,
 			      <0x0 0xd2000000 0x0 0x10000>,
@@ -1754,7 +1786,7 @@
 				     <605 1>, <606 4>,
 				     <607 1>, <608 4>;
 		};
-		p0_sec_b: crypto@8,d2000000 {
+		p0_sec_b: crypto@8d0000000 {
 			compatible = "hisilicon,hip07-sec";
 			reg = <0x8 0xd0000000 0x0 0x10000>,
 			      <0x8 0xd2000000 0x0 0x10000>,
@@ -1795,7 +1827,7 @@
 				     <605 1>, <606 4>,
 				     <607 1>, <608 4>;
 		};
-		p1_sec_a: crypto@400,d2000000 {
+		p1_sec_a: crypto@400d0000000 {
 			compatible = "hisilicon,hip07-sec";
 			reg = <0x400 0xd0000000 0x0 0x10000>,
 			      <0x400 0xd2000000 0x0 0x10000>,
@@ -1836,7 +1868,7 @@
 				     <605 1>, <606 4>,
 				     <607 1>, <608 4>;
 		};
-		p1_sec_b: crypto@408,d2000000 {
+		p1_sec_b: crypto@408d0000000 {
 			compatible = "hisilicon,hip07-sec";
 			reg = <0x408 0xd0000000 0x0 0x10000>,
 			      <0x408 0xd2000000 0x0 0x10000>,

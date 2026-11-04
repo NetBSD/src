@@ -1,3 +1,5 @@
+/*	$NetBSD: irqc-rzg2l.h,v 1.1.4.3 2026/11/04 23:27:25 perseant Exp $	*/
+
 /* SPDX-License-Identifier: (GPL-2.0-only OR BSD-2-Clause) */
 /*
  * This header provides constants for Renesas RZ/G2L family IRQC bindings.

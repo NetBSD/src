@@ -1,6 +1,6 @@
 ## See sim/Makefile.am
 ##
-## Copyright (C) 2008-2024 Free Software Foundation, Inc.
+## Copyright (C) 2008-2025 Free Software Foundation, Inc.
 ## Written by Anthony Green
 ##
 ## This program is free software; you can redistribute it and/or modify

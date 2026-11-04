@@ -61,6 +61,11 @@ fi
 AC_SUBST(MAINT)dnl
 AC_SUBST(NOTMAINT)dnl
 
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+AC_SUBST([ETAGS])
+
 # Do we have a single-tree copy of texinfo?  Even if we do, we can't
 # rely on it - libiberty is built before texinfo.
 AC_CHECK_PROG(MAKEINFO, makeinfo, makeinfo, )
@@ -240,6 +245,7 @@ AC_SUBST(PICFLAG)
 NOASANFLAG=
 case " ${CFLAGS} " in
   *\ -fsanitize=address\ *) NOASANFLAG=-fno-sanitize=address ;;
+  *\ -fsanitize=hwaddress\ *) NOASANFLAG=-fno-sanitize=hwaddress ;;
 esac
 AC_SUBST(NOASANFLAG)
 
@@ -617,6 +623,12 @@ if test -z "${setobjs}"; then
     ac_cv_func_getpagesize=yes
     ;;
 
+  hppa*-*-hpux*)
+    # Replace system snprintf and vsnprintf with libiberty implementations.
+    AC_LIBOBJ([snprintf])
+    AC_LIBOBJ([vsnprintf])
+    ;;
+
   *-*-mingw32*)
     # Under mingw32, sys_nerr and sys_errlist exist, but they are
     # macros, so the test below won't find them.
@@ -671,7 +683,7 @@ if test -z "${setobjs}"; then
   for v in $vars; do
     AC_MSG_CHECKING([for $v])
     AC_CACHE_VAL(libiberty_cv_var_$v,
-      [AC_LINK_IFELSE([AC_LANG_PROGRAM([[int *p;]],[[extern int $v []; p = $v;]])],
+      [AC_LINK_IFELSE([AC_LANG_PROGRAM([[extern int $v [];]],[[if ($v [0]) return 1;]])],
 		      [eval "libiberty_cv_var_$v=yes"],
 		      [eval "libiberty_cv_var_$v=no"])])
     if eval "test \"`echo '$libiberty_cv_var_'$v`\" = yes"; then

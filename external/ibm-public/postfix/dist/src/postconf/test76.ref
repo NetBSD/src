@@ -2,8 +2,9 @@ config_directory = .
 disable_dns_lookups = no
 lmtp_use_tls = no
 smtpd_tls_dh1024_param_file = auto
+./postconf: warning: ./main.cf: support for parameter deleted-test-only has been removed; instead, do not specify
 ./postconf: warning: ./main.cf: support for parameter "disable_dns_lookups" will be removed; instead, specify "smtp_dns_support_level"
 ./postconf: warning: ./main.cf: support for parameter "lmtp_use_tls" will be removed; instead, specify "lmtp_tls_security_level"
 ./postconf: warning: ./main.cf: support for parameter "smtpd_tls_dh1024_param_file" will be removed; instead, do not specify (leave at default)
-./postconf: warning: ./main.cf: support for parameter deleted-test-only has been removed; instead, do not specify
 ./postconf: warning: ./master.cf: support for parameter "smtp_enforce_tls" will be removed; instead, specify "smtp_tls_security_level"
+./postconf: warning: See https://www.postfix.org/DEPRECATION_README.html for details

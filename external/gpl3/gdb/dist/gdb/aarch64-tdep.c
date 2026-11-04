@@ -1,6 +1,6 @@
 /* Common target dependent code for GDB on AArch64 systems.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -45,6 +45,7 @@
 
 #include "aarch64-tdep.h"
 #include "aarch64-ravenscar-thread.h"
+#include "arch/aarch64-mte.h"
 
 #include "record.h"
 #include "record-full.h"
@@ -156,6 +157,18 @@ static const char *const aarch64_mte_register_names[] =
 {
   /* Tag Control Register.  */
   "tag_ctl"
+};
+
+static const char *const aarch64_gcs_register_names[] = {
+  /* Guarded Control Stack Pointer Register.  */
+  "gcspr"
+};
+
+static const char *const aarch64_gcs_linux_register_names[] = {
+  /* Field in struct user_gcs.  */
+  "gcs_features_enabled",
+  /* Field in struct user_gcs.  */
+  "gcs_features_locked",
 };
 
 static int aarch64_stack_frame_destroyed_p (struct gdbarch *, CORE_ADDR);
@@ -948,7 +961,7 @@ aarch64_analyze_prologue_test (void)
 	}
     }
 }
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
 /* Implement the "skip_prologue" gdbarch method.  */
@@ -1204,16 +1217,16 @@ aarch64_prologue_prev_register (const frame_info_ptr &this_frame,
 }
 
 /* AArch64 prologue unwinder.  */
-static frame_unwind aarch64_prologue_unwind =
-{
+static const frame_unwind_legacy aarch64_prologue_unwind (
   "aarch64 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   aarch64_prologue_frame_unwind_stop_reason,
   aarch64_prologue_this_id,
   aarch64_prologue_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 /* Allocate and fill in *THIS_CACHE with information about the prologue of
    *THIS_FRAME.  Do not do this is if *THIS_CACHE was already allocated.
@@ -1299,16 +1312,16 @@ aarch64_stub_unwind_sniffer (const struct frame_unwind *self,
 }
 
 /* AArch64 stub unwinder.  */
-static frame_unwind aarch64_stub_unwind =
-{
+static const frame_unwind_legacy aarch64_stub_unwind (
   "aarch64 stub",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   aarch64_stub_frame_unwind_stop_reason,
   aarch64_stub_this_id,
   aarch64_prologue_prev_register,
   NULL,
   aarch64_stub_unwind_sniffer
-};
+);
 
 /* Return the frame base address of *THIS_FRAME.  */
 
@@ -1394,6 +1407,12 @@ aarch64_dwarf2_frame_init_reg (struct gdbarch *gdbarch, int regnum,
 	  reg->how = DWARF2_FRAME_REG_SAME_VALUE;
 	  return;
 	}
+    }
+  if (tdep->has_gcs () && tdep->fn_prev_gcspr != nullptr
+      && regnum == tdep->gcs_reg_base)
+    {
+      reg->how = DWARF2_FRAME_REG_FN;
+      reg->loc.fn = tdep->fn_prev_gcspr;
     }
 }
 
@@ -1727,16 +1746,15 @@ pass_in_v (struct gdbarch *gdbarch,
     {
       int regnum = AARCH64_V0_REGNUM + info->nsrn;
       /* Enough space for a full vector register.  */
-      gdb_byte reg[register_size (gdbarch, regnum)];
-      gdb_assert (len <= sizeof (reg));
+      gdb::byte_vector reg (register_size (gdbarch, regnum), 0);
+      gdb_assert (len <= reg.size ());
 
       info->argnum++;
       info->nsrn++;
 
-      memset (reg, 0, sizeof (reg));
       /* PCS C.1, the argument is allocated to the least significant
 	 bits of V register.  */
-      memcpy (reg, buf, len);
+      memcpy (reg.data (), buf, len);
       regcache->cooked_write (regnum, reg);
 
       aarch64_debug_printf ("arg %d in %s", info->argnum,
@@ -1873,6 +1891,55 @@ pass_in_v_vfp_candidate (struct gdbarch *gdbarch, struct regcache *regcache,
     default:
       return false;
     }
+}
+
+/* Push LR_VALUE to the Guarded Control Stack.  */
+
+static void
+aarch64_push_gcs_entry (regcache *regs, CORE_ADDR lr_value)
+{
+  gdbarch *arch = regs->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (arch);
+  CORE_ADDR gcs_addr;
+
+  register_status status = regs->cooked_read (tdep->gcs_reg_base, &gcs_addr);
+  if (status != REG_VALID)
+    error (_("Can't read $gcspr."));
+
+  gcs_addr -= 8;
+  gdb_byte buf[8];
+  store_integer (buf, gdbarch_byte_order (arch), lr_value);
+  if (target_write_memory (gcs_addr, buf, sizeof (buf)) != 0)
+    error (_("Can't write to Guarded Control Stack."));
+
+  /* Update GCSPR.  */
+  regcache_cooked_write_unsigned (regs, tdep->gcs_reg_base, gcs_addr);
+}
+
+/* Remove the newest entry from the Guarded Control Stack.  */
+
+static void
+aarch64_pop_gcs_entry (regcache *regs)
+{
+  gdbarch *arch = regs->arch ();
+  aarch64_gdbarch_tdep *tdep = gdbarch_tdep<aarch64_gdbarch_tdep> (arch);
+  CORE_ADDR gcs_addr;
+
+  register_status status = regs->cooked_read (tdep->gcs_reg_base, &gcs_addr);
+  if (status != REG_VALID)
+    error (_("Can't read $gcspr."));
+
+  /* Update GCSPR.  */
+  regcache_cooked_write_unsigned (regs, tdep->gcs_reg_base, gcs_addr + 8);
+}
+
+/* Implement the "shadow_stack_push" gdbarch method.  */
+
+static void
+aarch64_shadow_stack_push (gdbarch *gdbarch, CORE_ADDR new_addr,
+			   regcache *regcache)
+{
+  aarch64_push_gcs_entry (regcache, new_addr);
 }
 
 /* Implement the "push_dummy_call" gdbarch method.  */
@@ -2543,8 +2610,8 @@ aarch64_extract_return_value (struct type *type, struct regcache *regs,
 	{
 	  int regno = AARCH64_V0_REGNUM + i;
 	  /* Enough space for a full vector register.  */
-	  gdb_byte buf[register_size (gdbarch, regno)];
-	  gdb_assert (len <= sizeof (buf));
+	  gdb::byte_vector buf (register_size (gdbarch, regno));
+	  gdb_assert (len <= buf.size ());
 
 	  aarch64_debug_printf
 	    ("read HFA or HVA return value element %d from %s",
@@ -2552,7 +2619,7 @@ aarch64_extract_return_value (struct type *type, struct regcache *regs,
 
 	  regs->cooked_read (regno, buf);
 
-	  memcpy (valbuf, buf, len);
+	  memcpy (valbuf, buf.data (), len);
 	  valbuf += len;
 	}
     }
@@ -2584,7 +2651,7 @@ aarch64_extract_return_value (struct type *type, struct regcache *regs,
     }
   else
     {
-      /* For a structure or union the behaviour is as if the value had
+      /* For a structure or union the behavior is as if the value had
 	 been stored to word-aligned memory and then loaded into
 	 registers with 64-bit load instruction(s).  */
       int len = type->length ();
@@ -2657,8 +2724,8 @@ aarch64_store_return_value (struct type *type, struct regcache *regs,
 	{
 	  int regno = AARCH64_V0_REGNUM + i;
 	  /* Enough space for a full vector register.  */
-	  gdb_byte tmpbuf[register_size (gdbarch, regno)];
-	  gdb_assert (len <= sizeof (tmpbuf));
+	  gdb::byte_vector tmpbuf (register_size (gdbarch, regno));
+	  gdb_assert (len <= tmpbuf.size ());
 
 	  aarch64_debug_printf
 	    ("write HFA or HVA return value element %d to %s",
@@ -2669,7 +2736,7 @@ aarch64_store_return_value (struct type *type, struct regcache *regs,
 	     original contents of the register before overriding it with a new
 	     value that has a potential size <= 16 bytes.  */
 	  regs->cooked_read (regno, tmpbuf);
-	  memcpy (tmpbuf, valbuf,
+	  memcpy (tmpbuf.data (), valbuf,
 		  len > V_REGISTER_SIZE ? V_REGISTER_SIZE : len);
 	  regs->cooked_write (regno, tmpbuf);
 	  valbuf += len;
@@ -2696,7 +2763,7 @@ aarch64_store_return_value (struct type *type, struct regcache *regs,
 	{
 	  /* Integral values greater than one word are stored in
 	     consecutive registers starting with r0.  This will always
-	     be a multiple of the regiser size.  */
+	     be a multiple of the register size.  */
 	  int len = type->length ();
 	  int regno = AARCH64_X0_REGNUM;
 
@@ -2710,7 +2777,7 @@ aarch64_store_return_value (struct type *type, struct regcache *regs,
     }
   else
     {
-      /* For a structure or union the behaviour is as if the value had
+      /* For a structure or union the behavior is as if the value had
 	 been stored to word-aligned memory and then loaded into
 	 registers with 64-bit load instruction(s).  */
       int len = type->length ();
@@ -3290,6 +3357,9 @@ aarch64_pseudo_read_value (gdbarch *gdbarch, const frame_info_ptr &next_frame,
     return aarch64_pseudo_read_value_1 (next_frame, pseudo_reg_num,
 					pseudo_offset - AARCH64_SVE_V0_REGNUM);
 
+  if (tdep->has_pauth () && pseudo_reg_num == tdep->ra_sign_state_regnum)
+    return value::zero (builtin_type (gdbarch)->builtin_uint64, lval_register);
+
   gdb_assert_not_reached ("regnum out of bound");
 }
 
@@ -3302,18 +3372,16 @@ aarch64_pseudo_write_1 (gdbarch *gdbarch, const frame_info_ptr &next_frame,
 {
   unsigned raw_regnum = AARCH64_V0_REGNUM + regnum_offset;
 
-  /* Enough space for a full vector register.  */
-  int raw_reg_size = register_size (gdbarch, raw_regnum);
-  gdb_byte raw_buf[raw_reg_size];
-  static_assert (AARCH64_V0_REGNUM == AARCH64_SVE_Z0_REGNUM);
+  /* Enough space for a full vector register.
 
-  /* Ensure the register buffer is zero, we want gdb writes of the
+     Ensure the register buffer is zero, we want gdb writes of the
      various 'scalar' pseudo registers to behavior like architectural
      writes, register width bytes are written the remainder are set to
      zero.  */
-  memset (raw_buf, 0, register_size (gdbarch, AARCH64_V0_REGNUM));
+  gdb::byte_vector raw_buf (register_size (gdbarch, raw_regnum), 0);
+  static_assert (AARCH64_V0_REGNUM == AARCH64_SVE_Z0_REGNUM);
 
-  gdb::array_view<gdb_byte> raw_view (raw_buf, raw_reg_size);
+  gdb::array_view<gdb_byte> raw_view (raw_buf);
   copy (buf, raw_view.slice (0, buf.size ()));
   put_frame_register (next_frame, raw_regnum, raw_view);
 }
@@ -3556,6 +3624,9 @@ struct aarch64_displaced_step_copy_insn_closure
   /* PC adjustment offset after displaced stepping.  If 0, then we don't
      write the PC back, assuming the PC is already the right address.  */
   int32_t pc_adjust = 0;
+
+  /* True if it's a branch instruction that saves the link register.  */
+  bool linked_branch = false;
 };
 
 /* Data when visiting instructions for displaced stepping.  */
@@ -3607,6 +3678,12 @@ aarch64_displaced_step_b (const int is_bl, const int32_t offset,
       /* Update LR.  */
       regcache_cooked_write_unsigned (dsd->regs, AARCH64_LR_REGNUM,
 				      data->insn_addr + 4);
+      dsd->dsc->linked_branch = true;
+      bool gcs_is_enabled;
+      gdbarch_get_shadow_stack_pointer (dsd->regs->arch (), dsd->regs,
+					gcs_is_enabled);
+      if (gcs_is_enabled)
+	aarch64_push_gcs_entry (dsd->regs, data->insn_addr + 4);
     }
 }
 
@@ -3765,6 +3842,12 @@ aarch64_displaced_step_others (const uint32_t insn,
       aarch64_emit_insn (dsd->insn_buf, insn & 0xffdfffff);
       regcache_cooked_write_unsigned (dsd->regs, AARCH64_LR_REGNUM,
 				      data->insn_addr + 4);
+      dsd->dsc->linked_branch = true;
+      bool gcs_is_enabled;
+      gdbarch_get_shadow_stack_pointer (dsd->regs->arch (), dsd->regs,
+					gcs_is_enabled);
+      if (gcs_is_enabled)
+	aarch64_push_gcs_entry (dsd->regs, data->insn_addr + 4);
     }
   else
     aarch64_emit_insn (dsd->insn_buf, insn);
@@ -3861,19 +3944,23 @@ aarch64_displaced_step_fixup (struct gdbarch *gdbarch,
 			      CORE_ADDR from, CORE_ADDR to,
 			      struct regcache *regs, bool completed_p)
 {
+  aarch64_displaced_step_copy_insn_closure *dsc
+    = (aarch64_displaced_step_copy_insn_closure *) dsc_;
   CORE_ADDR pc = regcache_read_pc (regs);
 
-  /* If the displaced instruction didn't complete successfully then all we
-     need to do is restore the program counter.  */
+  /* If the displaced instruction didn't complete successfully then we need
+     to restore the program counter, and perhaps the Guarded Control Stack.  */
   if (!completed_p)
     {
+      bool gcs_is_enabled;
+      gdbarch_get_shadow_stack_pointer (gdbarch, regs, gcs_is_enabled);
+      if (dsc->linked_branch && gcs_is_enabled)
+	aarch64_pop_gcs_entry (regs);
+
       pc = from + (pc - to);
       regcache_write_pc (regs, pc);
       return;
     }
-
-  aarch64_displaced_step_copy_insn_closure *dsc
-    = (aarch64_displaced_step_copy_insn_closure *) dsc_;
 
   displaced_debug_printf ("PC after stepping: %s (was %s).",
 			  paddress (gdbarch, pc), paddress (gdbarch, to));
@@ -4045,6 +4132,14 @@ aarch64_features_from_target_desc (const struct target_desc *tdesc)
   features.sme2 = (tdesc_find_feature (tdesc, "org.gnu.gdb.aarch64.sme2")
 		   != nullptr);
 
+  /* Check for the GCS feature.  */
+  features.gcs = (tdesc_find_feature (tdesc, "org.gnu.gdb.aarch64.gcs")
+		  != nullptr);
+
+  /* Check for the GCS Linux feature.  */
+  features.gcs_linux = (tdesc_find_feature (tdesc, "org.gnu.gdb.aarch64.gcs.linux")
+			!= nullptr);
+
   return features;
 }
 
@@ -4088,10 +4183,159 @@ aarch64_stack_frame_destroyed_p (struct gdbarch *gdbarch, CORE_ADDR pc)
   return streq (inst.opcode->name, "ret");
 }
 
-/* AArch64 implementation of the remove_non_address_bits gdbarch hook.  Remove
-   non address bits from a pointer value.  */
+/* Helper to get the allocation tag from a 64-bit ADDRESS.
 
-static CORE_ADDR
+   Return the allocation tag if successful and nullopt otherwise.  */
+
+std::optional<CORE_ADDR>
+aarch64_mte_get_atag (CORE_ADDR address)
+{
+  gdb::byte_vector tags;
+
+  /* Attempt to fetch the allocation tag.  */
+  if (!target_fetch_memtags (address, 1, tags,
+			     static_cast<int> (memtag_type::allocation)))
+    return {};
+
+  /* Only one tag should've been returned.  Make sure we got exactly that.  */
+  if (tags.size () != 1)
+    error (_("Target returned an unexpected number of tags."));
+
+  /* Although our tags are 4 bits in size, they are stored in a
+     byte.  */
+  return tags[0];
+}
+
+/* Implement the memtag_matches_p gdbarch method.  */
+
+static bool
+aarch64_memtag_matches_p (struct gdbarch *gdbarch,
+			  struct value *address)
+{
+  gdb_assert (address != nullptr);
+
+  CORE_ADDR addr = value_as_address (address);
+
+  /* Fetch the allocation tag for ADDRESS.  */
+  std::optional<CORE_ADDR> atag
+    = aarch64_mte_get_atag (aarch64_remove_non_address_bits (gdbarch, addr));
+
+  if (!atag.has_value ())
+    return true;
+
+  /* Fetch the logical tag for ADDRESS.  */
+  gdb_byte ltag = aarch64_mte_get_ltag (addr);
+
+  /* Are the tags the same?  */
+  return ltag == *atag;
+}
+
+/* Implement the set_memtags gdbarch method.  */
+
+static bool
+aarch64_set_memtags (struct gdbarch *gdbarch, struct value *address,
+		     size_t length, const gdb::byte_vector &tags,
+		     memtag_type tag_type)
+{
+  gdb_assert (!tags.empty ());
+  gdb_assert (address != nullptr);
+
+  CORE_ADDR addr = value_as_address (address);
+
+  /* Set the logical tag or the allocation tag.  */
+  if (tag_type == memtag_type::logical)
+    {
+      /* When setting logical tags, we don't care about the length, since
+	 we are only setting a single logical tag.  */
+      addr = aarch64_mte_set_ltag (addr, tags[0]);
+
+      /* Update the value's content with the tag.  */
+      enum bfd_endian byte_order = gdbarch_byte_order (gdbarch);
+      gdb_byte *srcbuf = address->contents_raw ().data ();
+      store_unsigned_integer (srcbuf, sizeof (addr), byte_order, addr);
+    }
+  else
+    {
+      /* Remove the top byte.  */
+      addr = aarch64_remove_non_address_bits (gdbarch, addr);
+
+      /* With G being the number of tag granules and N the number of tags
+	 passed in, we can have the following cases:
+
+	 1 - G == N: Store all the N tags to memory.
+
+	 2 - G < N : Warn about having more tags than granules, but write G
+		     tags.
+
+	 3 - G > N : This is a "fill tags" operation.  We should use the tags
+		     as a pattern to fill the granules repeatedly until we have
+		     written G tags to memory.
+      */
+
+      size_t g = aarch64_mte_get_tag_granules (addr, length,
+					       AARCH64_MTE_GRANULE_SIZE);
+      size_t n = tags.size ();
+
+      if (g < n)
+	warning (_("Got more tags than memory granules.  Tags will be "
+		   "truncated."));
+      else if (g > n)
+	warning (_("Using tag pattern to fill memory range."));
+
+      if (!target_store_memtags (addr, length, tags,
+				 static_cast<int> (memtag_type::allocation)))
+	return false;
+    }
+  return true;
+}
+
+/* Implement the get_memtag gdbarch method.  */
+
+static struct value *
+aarch64_get_memtag (struct gdbarch *gdbarch, struct value *address,
+		    memtag_type tag_type)
+{
+  gdb_assert (address != nullptr);
+
+  CORE_ADDR addr = value_as_address (address);
+  CORE_ADDR tag = 0;
+
+  /* Get the logical tag or the allocation tag.  */
+  if (tag_type == memtag_type::logical)
+    tag = aarch64_mte_get_ltag (addr);
+  else
+    {
+      /* Remove the top byte.  */
+      addr = aarch64_remove_non_address_bits (gdbarch, addr);
+      std::optional<CORE_ADDR> atag = aarch64_mte_get_atag (addr);
+
+      if (!atag.has_value ())
+	return nullptr;
+
+      tag = *atag;
+    }
+
+  /* Convert the tag to a value.  */
+  return value_from_ulongest (builtin_type (gdbarch)->builtin_unsigned_int,
+			      tag);
+}
+
+/* Implement the memtag_to_string gdbarch method.  */
+
+static std::string
+aarch64_memtag_to_string (struct gdbarch *gdbarch, struct value *tag_value)
+{
+  if (tag_value == nullptr)
+    return "";
+
+  CORE_ADDR tag = value_as_address (tag_value);
+
+  return string_printf ("0x%s", phex_nz (tag));
+}
+
+/* See aarch64-tdep.h.  */
+
+CORE_ADDR
 aarch64_remove_non_address_bits (struct gdbarch *gdbarch, CORE_ADDR pointer)
 {
   /* By default, we assume TBI and discard the top 8 bits plus the VA range
@@ -4194,7 +4438,7 @@ aarch64_initialize_sme_pseudo_names (struct gdbarch *gdbarch,
 }
 
 /* Initialize the current architecture based on INFO.  If possible,
-   re-use an architecture from ARCHES, which is a list of
+   reuse an architecture from ARCHES, which is a list of
    architectures already created during this debugging session.
 
    Called e.g. at program startup, when reading a core file, and when
@@ -4440,6 +4684,48 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     int first_w_regnum = num_pseudo_regs;
     num_pseudo_regs += 31;
 
+  const tdesc_feature *feature_gcs
+    = tdesc_find_feature (tdesc, "org.gnu.gdb.aarch64.gcs");
+  int first_gcs_regnum = -1;
+  /* Add the GCS registers.  */
+  if (feature_gcs != nullptr)
+    {
+      first_gcs_regnum = num_regs;
+      /* Validate the descriptor provides the mandatory GCS registers and
+	 allocate their numbers.  */
+      for (i = 0; i < ARRAY_SIZE (aarch64_gcs_register_names); i++)
+	valid_p &= tdesc_numbered_register (feature_gcs, tdesc_data.get (),
+					    first_gcs_regnum + i,
+					    aarch64_gcs_register_names[i]);
+
+      num_regs += i;
+    }
+
+  if (!valid_p)
+    return nullptr;
+
+  const tdesc_feature *feature_gcs_linux
+    = tdesc_find_feature (tdesc, "org.gnu.gdb.aarch64.gcs.linux");
+  int first_gcs_linux_regnum = -1;
+  /* Add the GCS Linux registers.  */
+  if (feature_gcs_linux != nullptr && feature_gcs == nullptr)
+    {
+      /* This feature depends on the GCS feature.  */
+      return nullptr;
+    }
+  else if (feature_gcs_linux != nullptr)
+    {
+      first_gcs_linux_regnum = num_regs;
+      /* Validate the descriptor provides the mandatory GCS Linux registers
+	 and allocate their numbers.  */
+      for (i = 0; i < ARRAY_SIZE (aarch64_gcs_linux_register_names); i++)
+	valid_p &= tdesc_numbered_register (feature_gcs_linux, tdesc_data.get (),
+					    first_gcs_linux_regnum + i,
+					    aarch64_gcs_linux_register_names[i]);
+
+      num_regs += i;
+    }
+
   if (!valid_p)
     return nullptr;
 
@@ -4461,6 +4747,8 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   tdep->mte_reg_base = first_mte_regnum;
   tdep->tls_regnum_base = first_tls_regnum;
   tdep->tls_register_count = tls_register_count;
+  tdep->gcs_reg_base = first_gcs_regnum;
+  tdep->gcs_linux_reg_base = first_gcs_linux_regnum;
 
   /* Set the SME register set details.  The pseudo-registers will be adjusted
      later.  */
@@ -4488,7 +4776,7 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_sw_breakpoint_from_kind (gdbarch,
 				       aarch64_breakpoint::bp_from_kind);
   set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
-  set_gdbarch_software_single_step (gdbarch, aarch64_software_single_step);
+  set_gdbarch_get_next_pcs (gdbarch, aarch64_software_single_step);
 
   /* Information about registers, etc.  */
   set_gdbarch_sp_regnum (gdbarch, AARCH64_SP_REGNUM);
@@ -4503,6 +4791,23 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_tdesc_pseudo_register_reggroup_p (gdbarch,
 					aarch64_pseudo_register_reggroup_p);
   set_gdbarch_cannot_store_register (gdbarch, aarch64_cannot_store_register);
+
+  /* Set the allocation tag granule size to 16 bytes.  */
+  set_gdbarch_memtag_granule_size (gdbarch, AARCH64_MTE_GRANULE_SIZE);
+
+  /* Register a hook for checking if there is a memory tag match.  */
+  set_gdbarch_memtag_matches_p (gdbarch, aarch64_memtag_matches_p);
+
+  /* Register a hook for setting the logical/allocation tags for
+     a range of addresses.  */
+  set_gdbarch_set_memtags (gdbarch, aarch64_set_memtags);
+
+  /* Register a hook for extracting the logical/allocation tag from an
+     address.  */
+  set_gdbarch_get_memtag (gdbarch, aarch64_get_memtag);
+
+  /* Register a hook for converting a memory tag to a string.  */
+  set_gdbarch_memtag_to_string (gdbarch, aarch64_memtag_to_string);
 
   /* ABI */
   set_gdbarch_short_bit (gdbarch, 16);
@@ -4566,6 +4871,9 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   set_gdbarch_get_pc_address_flags (gdbarch, aarch64_get_pc_address_flags);
 
+  if (tdep->has_gcs ())
+    set_gdbarch_shadow_stack_push (gdbarch, aarch64_shadow_stack_push);
+
   tdesc_use_registers (gdbarch, tdesc, std::move (tdesc_data));
 
   /* Fetch the updated number of registers after we're done adding all
@@ -4585,9 +4893,15 @@ aarch64_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     tdep->ra_sign_state_regnum = ra_sign_state_offset + num_regs;
 
   /* Architecture hook to remove bits of a pointer that are not part of the
-     address, like memory tags (MTE) and pointer authentication signatures.  */
-  set_gdbarch_remove_non_address_bits (gdbarch,
-				       aarch64_remove_non_address_bits);
+     address, like memory tags (MTE) and pointer authentication signatures.
+     Configure address adjustment for watchpoints, breakpoints and memory
+     transfer.  */
+  set_gdbarch_remove_non_address_bits_watchpoint
+    (gdbarch, aarch64_remove_non_address_bits);
+  set_gdbarch_remove_non_address_bits_breakpoint
+    (gdbarch, aarch64_remove_non_address_bits);
+  set_gdbarch_remove_non_address_bits_memory
+    (gdbarch, aarch64_remove_non_address_bits);
 
   /* SME pseudo-registers.  */
   if (tdep->has_sme ())
@@ -4732,6 +5046,11 @@ aarch64_dump_tdep (struct gdbarch *gdbarch, struct ui_file *file)
 	      pulongest (tdep->sme_tile_pseudo_base));
   gdb_printf (file, _("aarch64_dump_tdep: sme_svq = %s\n"),
 	      pulongest (tdep->sme_svq));
+
+  gdb_printf (file, _("aarch64_dump_tdep: gcs_reg_base = %d\n"),
+	      tdep->gcs_reg_base);
+  gdb_printf (file, _("aarch64_dump_tdep: gcs_linux_reg_base = %d\n"),
+	      tdep->gcs_linux_reg_base);
 }
 
 #if GDB_SELF_TEST
@@ -4741,9 +5060,7 @@ static void aarch64_process_record_test (void);
 }
 #endif
 
-void _initialize_aarch64_tdep ();
-void
-_initialize_aarch64_tdep ()
+INIT_GDB_FILE (aarch64_tdep)
 {
   gdbarch_register (bfd_arch_aarch64, aarch64_gdbarch_init,
 		    aarch64_dump_tdep);
@@ -5030,9 +5347,9 @@ aarch64_record_asimd_load_store (aarch64_insn_decode_record *aarch64_insn_r)
   CORE_ADDR address;
   uint64_t addr_offset = 0;
   uint32_t record_buf[24];
-  uint64_t record_buf_mem[24];
+  std::vector<uint64_t> record_buf_mem;
   uint32_t reg_rn, reg_rt;
-  uint32_t reg_index = 0, mem_index = 0;
+  uint32_t reg_index = 0;
   uint8_t opcode_bits, size_bits;
 
   reg_rt = bits (aarch64_insn_r->aarch64_insn, 0, 4);
@@ -5095,8 +5412,8 @@ aarch64_record_asimd_load_store (aarch64_insn_decode_record *aarch64_insn_r)
 		record_buf[reg_index++] = reg_rt + AARCH64_V0_REGNUM;
 	      else
 		{
-		  record_buf_mem[mem_index++] = esize / 8;
-		  record_buf_mem[mem_index++] = address + addr_offset;
+		  record_buf_mem.push_back (esize / 8);
+		  record_buf_mem.push_back (address + addr_offset);
 		}
 	      addr_offset = addr_offset + (esize / 8);
 	      reg_rt = (reg_rt + 1) % 32;
@@ -5167,8 +5484,8 @@ aarch64_record_asimd_load_store (aarch64_insn_decode_record *aarch64_insn_r)
 		  record_buf[reg_index++] = reg_tt + AARCH64_V0_REGNUM;
 		else
 		  {
-		    record_buf_mem[mem_index++] = esize / 8;
-		    record_buf_mem[mem_index++] = address + addr_offset;
+		    record_buf_mem.push_back (esize / 8);
+		    record_buf_mem.push_back (address + addr_offset);
 		  }
 		addr_offset = addr_offset + (esize / 8);
 		reg_tt = (reg_tt + 1) % 32;
@@ -5180,9 +5497,9 @@ aarch64_record_asimd_load_store (aarch64_insn_decode_record *aarch64_insn_r)
     record_buf[reg_index++] = reg_rn;
 
   aarch64_insn_r->reg_rec_count = reg_index;
-  aarch64_insn_r->mem_rec_count = mem_index / 2;
+  aarch64_insn_r->mem_rec_count = record_buf_mem.size () / 2;
   MEM_ALLOC (aarch64_insn_r->aarch64_mems, aarch64_insn_r->mem_rec_count,
-	     record_buf_mem);
+	     record_buf_mem.data ());
   REG_ALLOC (aarch64_insn_r->aarch64_regs, aarch64_insn_r->reg_rec_count,
 	     record_buf);
   return AARCH64_RECORD_SUCCESS;
@@ -5773,7 +6090,7 @@ aarch64_process_record_test (void)
   deallocate_reg_mem (&aarch64_record);
 }
 
-} // namespace selftests
+} /* namespace selftests */
 #endif /* GDB_SELF_TEST */
 
 /* Parse the current instruction and record the values of the registers and

@@ -1,4 +1,4 @@
-/*	$NetBSD: history.c,v 1.63.10.1 2025/08/02 05:54:48 perseant Exp $	*/
+/*	$NetBSD: history.c,v 1.63.10.2 2026/11/04 23:19:27 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)history.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: history.c,v 1.63.10.1 2025/08/02 05:54:48 perseant Exp $");
+__RCSID("$NetBSD: history.c,v 1.63.10.2 2026/11/04 23:19:27 perseant Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: history.c,v 1.63.10.1 2025/08/02 05:54:48 perseant Exp $");
 static const char hist_cookie[] = "_HiStOrY_V2_\n";
 
 #include "histedit.h"
+#include "history.h"
 
 
 #ifdef NARROWCHAR
@@ -88,6 +89,8 @@ static const char hist_cookie[] = "_HiStOrY_V2_\n";
 #define	Strncmp(d, s, n)	wcsncmp(d, s, n)
 #define	Strncpy(d, s, n)	wcsncpy(d, s, n)
 #define	Strncat(d, s, n)	wcsncat(d, s, n)
+
+libedit_private size_t hist_cookie_len = sizeof(hist_cookie) - 1;
 
 #endif
 
@@ -800,7 +803,7 @@ history_load(TYPE(History) *h, const char *fname)
 	for (i = 0; (sz = getline(&line, &llen, fp)) != -1; i++) {
 		if (sz > 0 && line[sz - 1] == '\n')
 			line[--sz] = '\0';
-		if (max_size < (size_t)sz) {
+		if (max_size <= (size_t)sz) {
 			char *nptr;
 			max_size = ((size_t)sz + 1024) & (size_t)~1023;
 			nptr = h_realloc(ptr, max_size * sizeof(*ptr));

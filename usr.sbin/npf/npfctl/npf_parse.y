@@ -517,6 +517,8 @@ proc_param_val
 	: some_name	{ $$ = $1; }
 	| number	{ (void)asprintf(&$$, "%ld", $1); }
 	| FPNUM		{ (void)asprintf(&$$, "%lf", $1); }
+	| IPV4ADDR	{ $$ = $1; }
+	| IPV6ADDR	{ $$ = $1; }
 	|		{ $$ = NULL; }
 	;
 
@@ -571,7 +573,7 @@ group_opts
 
 layer
 	: L2 { $$ = NPF_RULE_LAYER_2; }
-	| 	{ $$ =  NPF_RULE_LAYER_3; } /* ret layer3 by defualt */
+	| 	{ $$ =  NPF_RULE_LAYER_3; } /* ret layer3 by default */
 	;
 
 ruleset_block

@@ -1,4 +1,4 @@
-/*	$NetBSD: scmdreg.h,v 1.3 2023/04/05 21:53:56 andvar Exp $	*/
+/*	$NetBSD: scmdreg.h,v 1.3.6.1 2026/11/04 23:21:59 perseant Exp $	*/
 
 /*
  * Copyright (c) 2021 Brad Spencer <brad@anduin.eldar.org>
@@ -157,7 +157,7 @@
 #define SCMD_REG_BRIDGE_SLV_L		0x54 /* Bridge slave module outputs.  Bit 0 is slave 1
 					      * module.  Bit 8 is slave 8 module.
 					      */
-#define SCMD_REG_BRIDGE_SLV_H		0x55 /* Brige slave module outputs.  Slave module 9 to
+#define SCMD_REG_BRIDGE_SLV_H		0x55 /* Bridge slave module outputs.  Slave module 9 to
 					      * 16
 					      */
 /* Another hole in the register space */

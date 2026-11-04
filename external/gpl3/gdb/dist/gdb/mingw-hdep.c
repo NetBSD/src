@@ -1,6 +1,6 @@
 /* Host support routines for MinGW, for GDB, the GNU debugger.
 
-   Copyright (C) 2006-2024 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -22,6 +22,10 @@
 #include "gdbsupport/event-loop.h"
 #include "gdbsupport/gdb_select.h"
 #include "inferior.h"
+#include "cli/cli-style.h"
+#include "command.h"
+#include "cli/cli-cmds.h"
+#include "terminal.h"
 
 #include <windows.h>
 #include <signal.h>
@@ -212,7 +216,30 @@ static int mingw_console_initialized;
 static HANDLE hstdout = INVALID_HANDLE_VALUE;
 
 /* Text attribute to use for normal text (the "none" pseudo-color).  */
-static SHORT  norm_attr;
+static SHORT norm_attr;
+
+/* Initialize settings related to the console.  */
+
+void
+windows_initialize_console ()
+{
+  hstdout = (HANDLE)_get_osfhandle (fileno (stdout));
+  DWORD cmode;
+  CONSOLE_SCREEN_BUFFER_INFO csbi;
+
+  if (hstdout != INVALID_HANDLE_VALUE
+      && GetConsoleMode (hstdout, &cmode) != 0
+      && GetConsoleScreenBufferInfo (hstdout, &csbi))
+    {
+      norm_attr = csbi.wAttributes;
+      mingw_console_initialized = 1;
+    }
+  else if (hstdout != INVALID_HANDLE_VALUE)
+    mingw_console_initialized = -1; /* valid, but not a console device */
+
+  if (mingw_console_initialized > 0)
+    no_emojis ();
+}
 
 /* The most recently applied style.  */
 static ui_file_style last_style;
@@ -223,22 +250,6 @@ static ui_file_style last_style;
 int
 gdb_console_fputs (const char *linebuf, FILE *fstream)
 {
-  if (!mingw_console_initialized)
-    {
-      hstdout = (HANDLE)_get_osfhandle (fileno (fstream));
-      DWORD cmode;
-      CONSOLE_SCREEN_BUFFER_INFO csbi;
-
-      if (hstdout != INVALID_HANDLE_VALUE
-	  && GetConsoleMode (hstdout, &cmode) != 0
-	  && GetConsoleScreenBufferInfo (hstdout, &csbi))
-	{
-	  norm_attr = csbi.wAttributes;
-	  mingw_console_initialized = 1;
-	}
-      else if (hstdout != INVALID_HANDLE_VALUE)
-	mingw_console_initialized = -1; /* valid, but not a console device */
-    }
   /* If our stdout is not a console device, let the default 'fputs'
      handle the task. */
   if (mingw_console_initialized <= 0)
@@ -436,4 +447,13 @@ install_sigint_handler (c_c_handler_ftype *fn)
   c_c_handler_ftype *result = current_handler;
   current_handler = fn;
   return result;
+}
+
+/* See terminal.h.  */
+
+void
+set_output_translation_mode_binary ()
+{
+  setmode (fileno (stdout), O_BINARY);
+  setmode (fileno (stderr), O_BINARY);
 }

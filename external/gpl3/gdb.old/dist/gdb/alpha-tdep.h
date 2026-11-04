@@ -1,5 +1,5 @@
 /* Common target dependent code for GDB on Alpha systems.
-   Copyright (C) 1993-2023 Free Software Foundation, Inc.
+   Copyright (C) 1993-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ALPHA_TDEP_H
-#define ALPHA_TDEP_H
+#ifndef GDB_ALPHA_TDEP_H
+#define GDB_ALPHA_TDEP_H
 
 #include "gdbarch.h"
 
@@ -81,7 +81,7 @@ struct alpha_gdbarch_tdep : gdbarch_tdep_base
 
   /* Translate a signal handler stack base address into the address of
      the sigcontext structure for that signal handler.  */
-  CORE_ADDR (*sigcontext_addr) (frame_info_ptr) = nullptr;
+  CORE_ADDR (*sigcontext_addr) (const frame_info_ptr &) = nullptr;
 
   /* Does the PC fall in a signal trampoline.  */
   /* NOTE: cagney/2004-04-30: Do not copy/clone this code.  Instead
@@ -99,7 +99,7 @@ struct alpha_gdbarch_tdep : gdbarch_tdep_base
   int sc_fpregs_offset = 0;
 
   int jb_pc = 0;			/* Offset to PC value in jump buffer.
-				   If htis is negative, longjmp support
+				   If this is negative, longjmp support
 				   will be disabled.  */
   size_t jb_elt_size = 0;		/* And the size of each entry in the buf.  */
 };
@@ -121,4 +121,4 @@ extern void alpha_supply_fp_regs (struct regcache *, int,
 extern void alpha_fill_fp_regs (const struct regcache *,
 				int, void *, void *);
 
-#endif /* ALPHA_TDEP_H */
+#endif /* GDB_ALPHA_TDEP_H */

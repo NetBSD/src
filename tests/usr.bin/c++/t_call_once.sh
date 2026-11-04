@@ -1,4 +1,4 @@
-#	$NetBSD: t_call_once.sh,v 1.6.4.1 2025/08/02 05:58:12 perseant Exp $
+#	$NetBSD: t_call_once.sh,v 1.6.4.2 2026/11/04 23:28:23 perseant Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -101,12 +101,6 @@ EOF
 }
 
 call_once_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <cstdio>
 #include <thread>
@@ -118,6 +112,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -static -pg -o call_once test.cpp -pthread
+	case $(uname -p) in
+	riscv*)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
 
@@ -133,12 +132,6 @@ call_once_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
-
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
 
 	cat > test.cpp << EOF
 #include <cstdio>
@@ -214,17 +207,17 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -m32 -o call_once test.cpp -L. -ltest -pthread
 
+	case $(uname -p) in
+	mips*)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
+
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
 
 call_once_pic_profile_body() {
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
-
 	cat > test.cpp << EOF
 #include <stdlib.h>
 int callpic(void);
@@ -246,6 +239,12 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -pg -o call_once test.cpp -L. -ltest -pthread
 
+	case $(uname -p) in
+	*arm*|i?86|mips*|powerpc*|sparc|vax)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
+
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
@@ -262,12 +261,6 @@ call_once_pic_profile_32_body() {
 			atf_fail "c++ -m32 does not generate netbsd32 binaries"
 		fi
 	fi
-
-	case `uname -m` in
-	riscv)	atf_expect_fail "PR port-riscv/59301:" \
-		    " riscv: missing MKPROFILE=yes support"
-		;;
-	esac
 
 	cat > test.cpp << EOF
 #include <stdlib.h>
@@ -290,6 +283,12 @@ EOF
 	atf_check -s exit:0 -o ignore -e ignore \
 	    c++ -m32 -pg -o call_once test.cpp -L. -ltest -pthread
 
+	case $(uname -p) in
+	x86_64)
+		atf_expect_fail "PR toolchain/59710: various pic profile tests are failing and/or broken"
+		;;
+	esac
+
 	export LD_LIBRARY_PATH=.
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
@@ -310,6 +309,11 @@ int main(void) {
 }
 EOF
 	atf_check -s exit:0 -o ignore -e ignore c++ -fpie -pie -o call_once test.cpp -pthread
+	case $(uname -p) in
+	alpha)
+		atf_expect_fail "PR port-alpha/60356: pie tests are failing on alpha"
+		;;
+	esac
 	atf_check -s exit:0 -o inline:"hello, world!\n" ./call_once
 }
 

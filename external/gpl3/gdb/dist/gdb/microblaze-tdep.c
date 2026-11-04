@@ -1,6 +1,6 @@
 /* Target-dependent code for Xilinx MicroBlaze.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -160,7 +160,7 @@ microblaze_alloc_frame_cache (void)
 /* The base of the current frame is in a frame pointer register.
    This register is noted in frame_extra_info->fp_regnum.
 
-   Note that the existance of an FP might also indicate that the
+   Note that the existence of an FP might also indicate that the
    function has called alloca.  */
 #define MICROBLAZE_MY_FRAME_IN_FP 0x2
 
@@ -478,16 +478,16 @@ microblaze_frame_prev_register (const frame_info_ptr &this_frame,
 
 }
 
-static const struct frame_unwind microblaze_frame_unwind =
-{
+static const struct frame_unwind_legacy microblaze_frame_unwind (
   "microblaze prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   microblaze_frame_this_id,
   microblaze_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 microblaze_frame_base_address (const frame_info_ptr &next_frame,
@@ -736,9 +736,7 @@ microblaze_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_microblaze_tdep ();
-void
-_initialize_microblaze_tdep ()
+INIT_GDB_FILE (microblaze_tdep)
 {
   gdbarch_register (bfd_arch_microblaze, microblaze_gdbarch_init);
 

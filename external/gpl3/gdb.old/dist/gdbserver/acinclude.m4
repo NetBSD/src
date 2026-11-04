@@ -18,8 +18,15 @@ dnl anything else in gdbserver.
 m4_include(../config/codeset.m4)
 m4_include(../gdbsupport/common.m4)
 
+dnl For AM_ICONV.  We need to explicitly include these other files before
+dnl iconv.m4 to avoid warnings.
+m4_include([../config/lib-ld.m4])
+m4_include([../config/lib-prefix.m4])
+m4_include([../config/lib-link.m4])
+m4_include([../config/iconv.m4])
+
 dnl For libiberty_INIT.
-m4_include(../gdb/libiberty.m4)
+m4_include(../gdbsupport/libiberty.m4)
 
 dnl For GDB_AC_PTRACE.
 m4_include(../gdbsupport/ptrace.m4)

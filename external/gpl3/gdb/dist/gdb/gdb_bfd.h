@@ -1,6 +1,6 @@
 /* Definitions for BFD wrappers used by GDB.
 
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GDB_BFD_H
-#define GDB_BFD_H
+#ifndef GDB_GDB_BFD_H
+#define GDB_GDB_BFD_H
 
 #include "registry.h"
 #include "gdbsupport/byte-vector.h"
@@ -251,6 +251,17 @@ gdb_bfd_sections (const gdb_bfd_ref_ptr &abfd)
   return gdb_bfd_section_range (abfd->sections);
 };
 
+/* A wrapper for bfd_stat that acquires the per-BFD lock on ABFD.  */
+
+extern int gdb_bfd_stat (bfd *abfd, struct stat *sbuf)
+  ATTRIBUTE_WARN_UNUSED_RESULT;
+
+/* A wrapper for bfd_get_mtime that acquires the per-BFD lock on
+   ABFD.  */
+
+extern long gdb_bfd_get_mtime (bfd *abfd)
+  ATTRIBUTE_WARN_UNUSED_RESULT;
+
 /* A wrapper for bfd_errmsg to produce a more helpful error message
    in the case of bfd_error_file_ambiguously recognized.
    MATCHING, if non-NULL, is the corresponding argument to
@@ -263,4 +274,16 @@ extern std::string gdb_bfd_errmsg (bfd_error_type error_tag, char **matching);
 
 extern void gdb_bfd_init ();
 
-#endif /* GDB_BFD_H */
+/* A wrapper for bfd_canonicalize_symtab that caches the result.  This
+   is important to avoid excess memory use on repeated calls.  See
+   PR gdb/32758. bfd_canonicalize_symtab should not be called directly
+   by other code in gdb.
+
+   When SHOULD_THROW is true (the default), this will throw an
+   exception if symbols could not be read.  When SHOULD_THROW is
+   false, an empty view is returned instead.  */
+
+extern gdb::array_view<asymbol *> gdb_bfd_canonicalize_symtab
+     (bfd *abfd, bool should_throw = true);
+
+#endif /* GDB_GDB_BFD_H */

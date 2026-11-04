@@ -1,0 +1,64 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	allow-transfer { any; };
+	dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+key tsigzone. {
+	algorithm @DEFAULT_HMAC@;
+	secret "1234abcd8765";
+};
+
+{% include "_common/root.hint.conf" %}
+
+zone "example" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	file "example.bk";
+};
+
+zone "primary" {
+	type secondary;
+	transfer-source @ns.ip@ port @EXTRAPORT1@;
+	primaries { 10.53.0.6; };
+	file "primary.bk";
+};
+
+server 10.53.0.2 {
+	keys { tsigzone.; };
+};
+
+zone "tsigzone" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	file "tsigzone.bk";
+	allow-transfer { key tsigzone.; };
+};
+
+zone "mapped" {
+	type secondary;
+	primaries { 10.53.0.2; };
+	masterfile-format raw;
+	file "mapped.bk";
+};
+
+zone "xfer-stats" {
+	type secondary;
+	primaries { 10.53.0.1; };
+	file "xfer-stats.bk";
+};

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.151 2024/02/16 21:32:17 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.151.2.1 2026/11/04 23:19:54 perseant Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151 2024/02/16 21:32:17 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.151.2.1 2026/11/04 23:19:54 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cpuoptions.h"
@@ -552,6 +552,7 @@ static paddr_t
 pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 {
 	paddr_t pa;
+	uint64_t ticket;
 	struct vm_page *pg;
 
 	UVMHIST_FUNC(__func__);
@@ -562,10 +563,11 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 		int aflags = ((flags & PMAP_CANFAIL) ? 0 : UVM_PGA_USERESERVE) |
 		    UVM_PGA_ZERO;
  retry:
+		ticket = uvm_wait_prepare();
 		pg = uvm_pagealloc(NULL, 0, NULL, aflags);
 		if (pg == NULL) {
 			if (waitok) {
-				uvm_wait("pmap_alloc_pdp");
+				uvm_wait("pmap_alloc_pdp", ticket);
 				goto retry;
 			}
 			return POOL_PADDR_INVALID;
@@ -587,8 +589,7 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 	if (pgp != NULL)
 		*pgp = pg;
 
-	UVMHIST_LOG(pmaphist, "pa=%llx, pg=%llx",
-	    pa, pg, 0, 0);
+	UVMHIST_LOG(pmaphist, "pa=%llx, pg=%llx", pa, pg, 0, 0);
 
 	return pa;
 }
@@ -1153,8 +1154,8 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 	struct pv_entry *pv;
 
 	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLARGS(pmaphist, "pp=%p, pm=%p, va=%llx, pa=%llx", pp, pm, va,
-	    pa);
+	UVMHIST_CALLARGS(pmaphist, "pp=%p, pm=%p, va=%llx, pa=%llx", pp, pm,
+	    va, pa);
 	UVMHIST_LOG(pmaphist, "ptep=%p, flags=%08x", ptep, flags, 0, 0);
 
 	KASSERT(mutex_owned(&pp->pp_pvlock));
@@ -1399,16 +1400,12 @@ pmap_activate_efirt(void)
 	UVMHIST_CALLARGS(pmaphist, " (pm=%#jx)", (uintptr_t)pm, 0, 0, 0);
 
 	KASSERT(kpreempt_disabled());
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	ci->ci_pmap_asid_cur = pai->pai_asid;
-	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid,
-	    0, 0, 0);
-	tlb_set_asid(pai->pai_asid, pm);
+	UVMHIST_LOG(pmaphist, "setting asid to %#jx", pai->pai_asid, 0, 0, 0);
 
-	/* Re-enable translation table walks using TTBR0 */
-	uint64_t tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr & ~TCR_EPD0);
-	isb();
+	pmap_md_asid_activate(pai->pai_asid, pm, NULL);
 	pm->pm_activated = true;
 
 	PMAP_COUNT(activate);
@@ -1419,7 +1416,6 @@ void
 pmap_activate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
-	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, kernel=%u)", l,
@@ -1435,17 +1431,8 @@ pmap_activate(struct lwp *l)
 
 	KASSERT(pm->pm_l0table != NULL);
 
-	/* this calls tlb_set_asid which calls cpu_set_ttbr0 */
+	/* this calls pmap_md_asid_activate */
 	pmap_tlb_asid_acquire(pm, l);
-
-	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l,
-	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
-
-	/* Re-enable translation table walks using TTBR0 */
-	tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr & ~TCR_EPD0);
-	isb();
-
 	pm->pm_activated = true;
 
 	PMAP_COUNT(activate);
@@ -1462,18 +1449,11 @@ pmap_deactivate_efirt(void)
 
 	KASSERT(kpreempt_disabled());
 
-	/* Disable translation table walks using TTBR0 */
-	uint64_t tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr | TCR_EPD0);
-	isb();
-
-	UVMHIST_LOG(pmaphist, "setting asid to %#jx", KERNEL_PID,
-	    0, 0, 0);
-
 	ci->ci_pmap_asid_cur = KERNEL_PID;
-        tlb_set_asid(KERNEL_PID, pmap_kernel());
-
+	pmap_md_asid_deactivate(pm);
 	pm->pm_activated = false;
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	PMAP_COUNT(deactivate);
 }
@@ -1483,7 +1463,6 @@ void
 pmap_deactivate(struct lwp *l)
 {
 	struct pmap *pm = l->l_proc->p_vmspace->vm_map.pmap;
-	uint64_t tcr;
 
 	UVMHIST_FUNC(__func__);
 	UVMHIST_CALLARGS(pmaphist, "lwp=%p (pid=%d, (kernel=%u))", l,
@@ -1491,17 +1470,16 @@ pmap_deactivate(struct lwp *l)
 
 	KASSERT(kpreempt_disabled());
 
-	/* Disable translation table walks using TTBR0 */
-	tcr = reg_tcr_el1_read();
-	reg_tcr_el1_write(tcr | TCR_EPD0);
-	isb();
+	struct cpu_info * const ci = curcpu();
 
 	UVMHIST_LOG(pmaphist, "lwp=%p, asid=%d", l,
 	    PMAP_PAI(pm, cpu_tlb_info(ci))->pai_asid, 0, 0);
 
+	ci->ci_pmap_asid_cur = KERNEL_PID;
 	pmap_tlb_asid_deactivate(pm);
-
 	pm->pm_activated = false;
+
+	KASSERT((reg_tcr_el1_read() & TCR_EPD0) != 0);
 
 	PMAP_COUNT(deactivate);
 }
@@ -2404,9 +2382,9 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 #if 0
 	KASSERT_PM_ADDR(pm, va);
 #else
-	if (((pm == pmap_kernel()) &&
+	if ((pm == pmap_kernel() &&
 	    !(IN_RANGE(va, VM_MIN_KERNEL_ADDRESS, VM_MAX_KERNEL_ADDRESS))) ||
-	    ((pm != pmap_kernel()) &&
+	    (pm != pmap_kernel() &&
 	    !(IN_RANGE(va, VM_MIN_ADDRESS, VM_MAX_ADDRESS)))) {
 
 		UVMHIST_LOG(pmaphist,
@@ -2435,7 +2413,8 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 	pa = l3pte_pa(*ptep);
 	pp = phys_to_pp(pa);
 	if (pp == NULL) {
-		UVMHIST_LOG(pmaphist, "pmap_page not found: va=%016lx", va, 0, 0, 0);
+		UVMHIST_LOG(pmaphist, "pmap_page not found: va=%016lx",
+		    va, 0, 0, 0);
 		goto done;
 	}
 
@@ -2777,3 +2756,181 @@ pmap_db_pmap_print(struct pmap *pm,
 	pr(" pm_activated  = %d\n\n", pm->pm_activated);
 }
 #endif /* DDB */
+
+/***************************** PMAP DEBUGGING ********************************/
+
+#ifdef PMAP_DEBUG
+
+void	pmap_test_mod_ref(void);
+
+void
+pmap_test_mod_ref(void)
+{
+	int val;
+	bool mod, ref;
+	bool exp_mod, exp_ref;
+
+	vaddr_t va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
+
+	if (va == 0) {
+		printf("%s: couldn't allocate a VA to use\n",
+		    __func__);
+		return;
+	}
+
+	struct vm_page *pg = uvm_pagealloc(NULL, 0, NULL, 0);
+	if (pg == NULL) {
+		printf("%s: couldn't allocate page\n", __func__);
+		return;
+	}
+	pg->flags &= ~(PG_BUSY|PG_FAKE);	/* never busy */
+
+	struct lwp *l = curlwp;
+	pmap_deactivate(l);
+
+	const paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	volatile int * const loc = (volatile int *)va;
+
+	/* Initialize page and mod/ref state to pristine. */
+	pmap_zero_page(pa);
+	pmap_clear_modify(pg);
+	pmap_clear_reference(pg);
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: validating pristine page: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* Enter non-seeded R/W mapping. */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	pmap_update(pmap_kernel());
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: enter(ALL, 0): mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* reference page */
+	val = *loc;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = true;
+	printf("%s: ref 1: val=%d: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    val,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* validate clear behavior. */
+	exp_mod = mod;
+	exp_ref = ref;
+	mod = pmap_clear_modify(pg);
+	ref = pmap_clear_reference(pg);
+	printf("%s: checking clear 1: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: checking clear 2: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* reference page again */
+	val = *loc;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = true;
+	printf("%s: ref 2: val=%d: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    val,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* modify page */
+	*loc = 0xff;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 1: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* write-protect page */
+	pmap_page_protect(pg, UVM_PROT_READ);
+
+	mod = pmap_clear_modify(pg);
+	ref = pmap_clear_reference(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 2: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = false;
+	exp_ref = false;
+	printf("%s: checking clear 3: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* modify page again */
+	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	*loc = 0xaa;
+
+	mod = pmap_is_modified(pg);
+	ref = pmap_is_referenced(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 3: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* remove all mappings of page */
+	pmap_page_protect(pg, UVM_PROT_NONE);
+
+	mod = pmap_clear_modify(pg);
+	ref = pmap_clear_reference(pg);
+	exp_mod = true;
+	exp_ref = true;
+	printf("%s: mod 4: mod=%d(%d) ref=%d(%d) (%s)\n",
+	    __func__,
+	    mod, exp_mod, ref, exp_ref,
+	    mod == exp_mod && ref == exp_ref ? "OK" : "FAIL");
+
+	/* all done. */
+	pmap_remove(pmap_kernel(), va, va + PAGE_SIZE);
+	pmap_update(pmap_kernel());
+
+	printf("%s: done\n", __func__);
+
+	pmap_activate(l);
+
+	uvm_km_free(kernel_map, va, PAGE_SIZE, UVM_KMF_VAONLY);
+}
+
+#endif /* PMAP_DEBUG */

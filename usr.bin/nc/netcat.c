@@ -1,3 +1,4 @@
+/* $NetBSD: netcat.c,v 1.7.2.1 2026/11/04 23:28:41 perseant Exp $ */
 /* $OpenBSD: netcat.c,v 1.172 2017/02/05 01:39:14 jca Exp $ */
 /*
  * Copyright (c) 2001 Eric Jackson <ericj@monkey.org>
@@ -27,7 +28,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: netcat.c,v 1.7 2023/06/20 08:51:24 rin Exp $");
+__RCSID("$NetBSD: netcat.c,v 1.7.2.1 2026/11/04 23:28:41 perseant Exp $");
 
 /*
  * Re-written nc(1) for OpenBSD. Original implementation by
@@ -44,6 +45,7 @@ __RCSID("$NetBSD: netcat.c,v 1.7 2023/06/20 08:51:24 rin Exp $");
 #include <netinet/ip.h>
 #include <arpa/telnet.h>
 
+#include <ctype.h>
 #include <err.h>
 #include <errno.h>
 #include <limits.h>
@@ -110,6 +112,9 @@ int	Tflag = -1;				/* IP Type of Service */
 int	rtableid = -1;
 #endif
 
+intmax_t maxsend, maxrecv;
+
+#ifdef CRYPTO
 int	usetls;					/* use TLS */
 char    *Cflag;					/* Public cert file */
 char    *Kflag;					/* Private key file */
@@ -119,6 +124,7 @@ int	tls_cachanged;				/* Using non-default CA file */
 int     TLSopt;					/* TLS options */
 char	*tls_expectname;			/* required name in peer cert */
 char	*tls_expecthash;			/* required hash of peer cert */
+#endif
 
 int timeout = -1;
 int family = AF_UNSPEC;
@@ -150,8 +156,11 @@ void	report_tls(struct tls *tls_ctx, char * host, char *tlsexpectname);
 void	usage(int);
 ssize_t drainbuf(int, unsigned char *, size_t *, struct tls *);
 ssize_t fillbuf(int, unsigned char *, size_t *, struct tls *);
+
+#ifdef CRYPTO
 void	tls_setup_client(struct tls *, int, char *);
 struct tls *tls_setup_server(struct tls *, int, char *);
+#endif
 
 int
 main(int argc, char *argv[])
@@ -181,9 +190,12 @@ main(int argc, char *argv[])
 
 	while ((ch = getopt(argc, argv,
 #ifdef CRYPTO
-	    "46C:cDde:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuV:vw:X:x:z"
+	    "46C:cDdE:e:FH:hI:i:K:klM:m:NnO:o:P:p:R:rSs:T:tUuvw:X:x:z"
 #else
-	    "46Dde:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
+	    "46DdE:FhI:i:klM:m:NnO:P:p:rSs:tUuvw:X:x:z"
+#endif
+#ifdef __OpenBSD__
+	    "V:"
 #endif
 	)) != -1) {
 		switch (ch) {
@@ -217,9 +229,36 @@ main(int argc, char *argv[])
 		case 'd':
 			dflag = 1;
 			break;
+
+		case 'E': {
+			char *ep;
+
+			maxsend = strtoi(optarg, &ep, 0, 0, UINT_MAX, &errnum);
+			if (errnum == ECANCELED)
+				maxsend = 0;
+			if ((errnum == ENOTSUP || errnum == ECANCELED) &&
+			    *ep == '/' && (ep[1] == '\0' ||
+			    isdigit(*(unsigned char *)(ep + 1)))) {
+				maxrecv = strtoi(ep + 1, &ep, 0, 0, UINT_MAX,
+				    &errnum);
+				if (errnum == ECANCELED) {
+					maxrecv = 0;
+					if (*ep == '\0')
+						errnum = 0;
+				}
+			} else
+				maxrecv = maxsend;
+
+			if (errnum)
+				errc(1, errnum, "bad end specifier '%s'",
+				    optarg);
+			break;
+		}
+#ifdef CRYPTO
 		case 'e':
 			tls_expectname = optarg;
 			break;
+#endif
 		case 'F':
 			Fflag = 1;
 			break;
@@ -400,15 +439,15 @@ main(int argc, char *argv[])
 		errx(1, "cannot use -z and -l");
 	if (!lflag && kflag)
 		errx(1, "must use -l with -k");
-	if (uflag && usetls)
-		errx(1, "cannot use -c and -u");
-	if ((family == AF_UNIX) && usetls)
-		errx(1, "cannot use -c and -U");
 	if ((family == AF_UNIX) && Fflag)
 		errx(1, "cannot use -F and -U");
+#ifdef CRYPTO
 	if (Fflag && usetls)
 		errx(1, "cannot use -c and -F");
-#ifdef CRYPTO
+	if ((family == AF_UNIX) && usetls)
+		errx(1, "cannot use -c and -U");
+	if (uflag && usetls)
+		errx(1, "cannot use -c and -u");
 	if (TLSopt && !usetls)
 		errx(1, "you must specify -c to use TLS options");
 	if (Cflag && !usetls)
@@ -1066,7 +1105,7 @@ readwrite(int net_fd, struct tls *tls_ctx)
 	size_t netinbufpos = 0;
 	unsigned char stdinbuf[BUFSIZE];
 	size_t stdinbufpos = 0;
-	int n, num_fds;
+	int n, num_fds, done = 0;
 	ssize_t ret;
 
 	/* don't read from stdin if requested */
@@ -1089,7 +1128,7 @@ readwrite(int net_fd, struct tls *tls_ctx)
 	pfd[POLL_STDOUT].fd = stdout_fd;
 	pfd[POLL_STDOUT].events = 0;
 
-	while (1) {
+	while (!done || pfd[POLL_STDOUT].events == POLLOUT) {
 		/* both inputs are gone, buffers are empty, we are done */
 		if (pfd[POLL_STDIN].fd == -1 && pfd[POLL_NETIN].fd == -1 &&
 		    stdinbufpos == 0 && netinbufpos == 0) {
@@ -1163,7 +1202,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 		}
 
 		/* try to read from stdin */
-		if (pfd[POLL_STDIN].revents & POLLIN && stdinbufpos < BUFSIZE) {
+		if (!done && pfd[POLL_STDIN].revents & POLLIN &&
+		    stdinbufpos < BUFSIZE) {
 			ret = fillbuf(pfd[POLL_STDIN].fd, stdinbuf,
 			    &stdinbufpos, NULL);
 			if (ret == TLS_WANT_POLLIN)
@@ -1180,7 +1220,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 				pfd[POLL_STDIN].events = 0;
 		}
 		/* try to write to network */
-		if (pfd[POLL_NETOUT].revents & POLLOUT && stdinbufpos > 0) {
+		if (!done && pfd[POLL_NETOUT].revents & POLLOUT &&
+		    stdinbufpos > 0) {
 			ret = drainbuf(pfd[POLL_NETOUT].fd, stdinbuf,
 			    &stdinbufpos, tls_ctx);
 			if (ret == TLS_WANT_POLLIN)
@@ -1195,9 +1236,13 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			/* buffer no longer full - poll stdin again */
 			if (stdinbufpos < BUFSIZE)
 				pfd[POLL_STDIN].events = POLLIN;
+
+			if (maxsend != 0 && --maxsend == 0)
+				done = 1;
 		}
 		/* try to read from network */
-		if (pfd[POLL_NETIN].revents & POLLIN && netinbufpos < BUFSIZE) {
+		if (!done && pfd[POLL_NETIN].revents & POLLIN &&
+		    netinbufpos < BUFSIZE) {
 			ret = fillbuf(pfd[POLL_NETIN].fd, netinbuf,
 			    &netinbufpos, tls_ctx);
 			if (ret == TLS_WANT_POLLIN)
@@ -1221,6 +1266,8 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			if (tflag)
 				atelnet(pfd[POLL_NETIN].fd, netinbuf,
 				    netinbufpos);
+			if (maxrecv != 0 && --maxrecv == 0)
+				done = 1;
 		}
 		/* try to write to stdout */
 		if (pfd[POLL_STDOUT].revents & POLLOUT && netinbufpos > 0) {
@@ -1251,6 +1298,10 @@ readwrite(int net_fd, struct tls *tls_ctx)
 			pfd[POLL_STDOUT].fd = -1;
 		}
 	}
+
+	if (pfd[POLL_NETOUT].fd != -1 && Nflag)
+		shutdown(pfd[POLL_NETOUT].fd, SHUT_WR);
+	close(net_fd);
 }
 
 ssize_t
@@ -1467,6 +1518,8 @@ build_ports(char *p)
 	}
 }
 
+#define UDP_SCAN_TIMEOUT	3	/* seconds */
+
 /*
  * udptest()
  * Do a few writes to see if the UDP port is there.
@@ -1475,15 +1528,23 @@ build_ports(char *p)
 int
 udptest(int s)
 {
-	int i, ret;
+	int i, t = timeout == -1 ? UDP_SCAN_TIMEOUT : (timeout / 1000);
 
-	for (i = 0; i <= 3; i++) {
-		if (write(s, "X", 1) == 1)
-			ret = 1;
-		else
-			ret = -1;
-	}
-	return (ret);
+ 	/* Only write to the socket in scan mode or interactive mode. */
+ 	if (!zflag && !isatty(STDIN_FILENO))
+ 		return 0;
+
+	if (write(s, "X", 1) != 1 ||
+	    (write(s, "X", 1) != 1 && errno == ECONNREFUSED))
+		return -1;
+
+	/* Give the remote host some time to reply. */
+	for (i = 0; i < t; i++) {
+		sleep(1);
+		if (write(s, "X", 1) != 1 && errno == ECONNREFUSED)
+			return -1;
+ 	}
+	return 1;
 }
 
 void
@@ -1720,6 +1781,8 @@ help(void)
 #endif
 	"\t-D		Enable the debug socket option\n"
 	"\t-d		Detach from stdin\n"
+	"\t-E [s]/[r]	Exit after sending s or receiving r (pkts)\n"
+	"\t-E n		     (same as -E n/n)\n"
 #ifdef CRYPTO
 	"\t-e name\t	Required name in peer certificate\n"
 #endif
@@ -1773,10 +1836,11 @@ void
 usage(int ret)
 {
 	fprintf(stderr,
-	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-e name] [-I length]\n"
+	    "Usage: %s [-46%sDdFhklNnrStUuvz] [-E [s]/[r] | -E n] "
+	    "[-I length]\n"
 #ifdef CRYPTO
-	    "\t  [-C certfile] [-H hash] [-K keyfile] [-R CAfile] "
-	    "[-T keyword] [-o staplefile]\n"
+	    "\t  [-C certfile] [-e name] [-H hash] "
+	    "[-K keyfile] [-R CAfile] [-T keyword] [-o staplefile]\n"
 #endif
 	    "\t  [-i interval] [-M ttl] [-m minttl] [-O length]\n"
 	    "\t  [-P proxy_username] [-p source_port]\n"

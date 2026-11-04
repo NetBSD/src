@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.27.2.1 2025/08/02 05:57:57 perseant Exp $	*/
+/*	$NetBSD: pmap.h,v 1.27.2.2 2026/11/04 23:28:09 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,9 +109,9 @@ static __inline int
 pmap_direct_process(paddr_t pa, voff_t pgoff, size_t len,
     int (*process)(void *, size_t, void *), void *arg)
 {
-        vaddr_t va = pmap_md_direct_map_paddr(pa);
+	vaddr_t va = pmap_md_direct_map_paddr(pa);
 
-        return process((void *)(va + pgoff), len, arg);
+	return process((void *)(va + pgoff), len, arg);
 }
 #endif
 #endif

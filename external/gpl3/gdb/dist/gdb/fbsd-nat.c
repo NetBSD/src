@@ -1,6 +1,6 @@
 /* Native-dependent code for FreeBSD.
 
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -45,6 +45,7 @@
 #include "elf-bfd.h"
 #include "fbsd-nat.h"
 #include "fbsd-tdep.h"
+#include "gdbsupport/eintr.h"
 
 #ifndef PT_GETREGSET
 #define	PT_GETREGSET	42	/* Get a target register set */
@@ -1150,7 +1151,7 @@ fbsd_wait_for_fork_child (pid_t pid)
     return ptid;
 
   int status;
-  pid_t wpid = waitpid (pid, &status, 0);
+  pid_t wpid = gdb::waitpid (pid, &status, 0);
   if (wpid == -1)
     perror_with_name (("waitpid"));
 
@@ -2156,7 +2157,7 @@ fbsd_nat_target::kill ()
 	perror_with_name (("ptrace (PT_KILL)"));
 
   int status;
-  waitpid (pid, &status, 0);
+  gdb::waitpid (pid, &status, 0);
 
   target_mourn_inferior (inferior_ptid);
 }
@@ -2464,14 +2465,12 @@ fbsd_nat_get_siginfo (ptid_t ptid, siginfo_t *siginfo)
   if (ptrace (PT_LWPINFO, pid, (caddr_t) &pl, sizeof pl) == -1)
     return false;
   if (!(pl.pl_flags & PL_FLAG_SI))
-    return false;;
+    return false;
   *siginfo = pl.pl_siginfo;
   return (true);
 }
 
-void _initialize_fbsd_nat ();
-void
-_initialize_fbsd_nat ()
+INIT_GDB_FILE (fbsd_nat)
 {
   add_setshow_boolean_cmd ("fbsd-lwp", class_maintenance,
 			   &debug_fbsd_lwp, _("\

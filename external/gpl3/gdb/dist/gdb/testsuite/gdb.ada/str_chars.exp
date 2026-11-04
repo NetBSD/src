@@ -1,4 +1,4 @@
-# Copyright 2023-2024 Free Software Foundation, Inc.
+# Copyright 2023-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -28,8 +28,8 @@ if {[gdb_compile_ada "${srcfile}" "${binfile}" executable [list debug ]] != "" }
 clean_restart ${testfile}
 
 set bp_location [gdb_get_line_number "STOP" ${testdir}/foo.adb]
-if ![runto "foo.adb:$bp_location" ] then {
-  return -1
+if {![runto "foo.adb:$bp_location"]} {
+    return
 }
 
 gdb_test "print Arg" \
@@ -57,7 +57,7 @@ gdb_test "print Arg" \
 
 # The 'set print elements' command used to control printing of characters
 # in a string, before we created 'set print characters'.  This test makes
-# sure that 'set print elements' doens't effect string printing any more.
+# sure that 'set print elements' doesn't effect string printing any more.
 gdb_test_no_output "set print elements 12"
 gdb_test "print Arg" \
     " = \"abcdefghijklmnopqrstuvwxyz\"" \

@@ -1,5 +1,5 @@
 /* frv trap support
-   Copyright (C) 1999-2024 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Contributed by Red Hat.
 
 This file is part of the GNU simulators.
@@ -780,7 +780,7 @@ frvbf_check_swap_address (SIM_CPU *current_cpu, SI address)
   if (STATE_ARCHITECTURE (sd)->mach != bfd_mach_fr550)
     return;
 
-  /* Adress must be aligned on a word boundary.  */
+  /* Address must be aligned on a word boundary.  */
   if (address & 0x3)
     frv_queue_data_access_exception_interrupt (current_cpu);
 }

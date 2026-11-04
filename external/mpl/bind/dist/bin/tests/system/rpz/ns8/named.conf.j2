@@ -1,0 +1,53 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+/*
+ * Main rpz test DNS server.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	statistics-file	"named.stats";
+	session-keyfile "session.key";
+	allow-transfer { any; };
+	minimal-responses no;
+	dnssec-validation no;
+
+	response-policy {
+		zone "manual-update-rpz";
+	}
+	// add-soa yes // do not set testing default mode
+	min-ns-dots 0
+	qname-wait-recurse yes
+	min-update-interval 0
+	nsdname-enable yes
+	nsip-enable yes
+	;
+
+	include "../dnsrps.conf";
+	also-notify { @ns.ip@ port @EXTRAPORT1@; };
+	notify-delay 0;
+};
+
+
+logging { category rpz { default_debug; }; };
+{% include "_common/controls.conf.j2" %}
+
+
+zone "." { type hint; file "hints"; };
+
+zone "manual-update-rpz." {
+	type primary;
+	file "manual-update-rpz.db";
+	notify no;
+};

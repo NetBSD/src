@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.145.2.1 2025/08/02 05:58:28 perseant Exp $	*/
+/*	$NetBSD: kdump.c,v 1.145.2.2 2026/11/04 23:28:35 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.145.2.1 2025/08/02 05:58:28 perseant Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.145.2.2 2026/11/04 23:28:35 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: kdump.c,v 1.145.2.1 2025/08/02 05:58:28 perseant Exp $");
 #include <err.h>
 #include <inttypes.h>
 #include <signal.h>
+#include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -132,6 +133,7 @@ static void	ktrcsw(struct ktr_csw *);
 static void	ktruser(struct ktr_user *, int);
 static void	ktrmib(int *, int);
 static void	ktrexecfd(struct ktr_execfd *);
+static void	ktrsigmask(struct ktr_sigmask *);
 static void	usage(void) __dead;
 static void	eprint(int);
 static void	rprint(register_t);
@@ -346,6 +348,9 @@ main(int argc, char **argv)
 		case KTR_MIB:
 			ktrmib(m, ktrlen);
 			break;
+		case KTR_SIGMASK:
+			ktrsigmask(m);
+			break;
 		default:
 			putchar('\n');
 			hexdump_buf(m, ktrlen, word_size ? word_size : 1);
@@ -476,6 +481,9 @@ dumpheader(struct ktr_header *kth)
 		break;
 	case KTR_MIB:
 		type = "MIB";
+		break;
+	case KTR_SIGMASK:
+		type = "MASK";
 		break;
 	default:
 		(void)snprintf(unknown, sizeof(unknown), "UNKNOWN(%d)",
@@ -1080,6 +1088,63 @@ ktrexecfd(struct ktr_execfd *ktr)
 		printf("UNKNOWN(%u) %d\n", ktr->ktr_dtype, ktr->ktr_fd);
 }
 
+static int
+psigset(char *buf, size_t size, const sigset_t *set)
+{
+	size_t pos = 0;
+	bool first = true;
+	bool in_range = false;
+	int range_start = 0;
+	int ret;
+
+	for (int sig = 1; sig < NSIG; sig++) {
+		if (!sigismember(set, sig)) {
+			in_range = false;
+			continue;
+		}
+
+		if (!in_range) {
+			ret = snprintf(buf + pos, size - pos, "%s%d",
+			    first ? "" : ",", sig);
+			if ((size_t)ret >= size - pos)
+				return -1;
+			pos += ret;
+			range_start = sig;
+			in_range = true;
+			first = false;
+		}
+
+		bool isnextset = sig < NSIG - 1 && sigismember(set, sig + 1);
+		if (!isnextset && sig > range_start) {
+			ret = snprintf(buf + pos, size - pos, "-%d", sig);
+			if ((size_t)ret >= size - pos)
+				return -1;
+			pos += ret;
+			in_range = false;
+		}
+	}
+
+	if (first && size > 0)
+		buf[0] = '\0';
+
+	return pos < size ? (int)pos : -1;
+}
+
+static void
+ktrsigmask(struct ktr_sigmask *ktr)
+{
+	static const char * const how[] = {
+		"*SIG_ZERO*", "SIG_BLOCK", "SIG_UNBLOCK", "SIG_SETMASK"
+	};
+	char new[512], old[512], res[512];
+
+	psigset(new, sizeof(new), &ktr->ktr_nset);
+	psigset(old, sizeof(old), &ktr->ktr_oset);
+	psigset(res, sizeof(res), &ktr->ktr_rset);
+	printf("%s([%s]) [%s] -> [%s]\n",
+	    how[ktr->ktr_how & 3], new, old, res);
+}
+
 static void
 rprint(register_t ret)
 {
@@ -1326,7 +1391,6 @@ ktrgenio(struct ktr_genio *ktr, int len)
 static void
 ktrpsig(void *v, int len)
 {
-	int signo, first;
 	struct {
 		struct ktr_psig ps;
 		siginfo_t si;
@@ -1338,18 +1402,10 @@ ktrpsig(void *v, int len)
 	if (psig->ps.action == SIG_DFL)
 		(void)printf("SIG_DFL");
 	else {
-		(void)printf("caught handler=%p mask=(", psig->ps.action);
-		first = 1;
-		for (signo = 1; signo < NSIG; signo++) {
-			if (sigismember(&psig->ps.mask, signo)) {
-				if (first)
-					first = 0;
-				else
-					(void)printf(",");
-				(void)printf("%d", signo);
-			}
-		}
-		(void)printf(")");
+		char set[512];
+		psigset(set, sizeof(set), &psig->ps.mask);
+		(void)printf("caught handler=%p mask=[%s]", psig->ps.action,
+		    set);
 	}
 	switch (len) {
 	case sizeof(struct ktr_psig):
@@ -1462,7 +1518,7 @@ static void
 ktruser_soname(const char *name, const void *buf, size_t len)
 {
 	char fmt[512];
-	sockaddr_snprintf(fmt, sizeof(fmt), "%a", buf);
+	sockaddr_snprintf(fmt, sizeof(fmt), "%n", buf);
 	printf("%.*s: [%s]\n", KTR_USER_MAXIDLEN, name, fmt);
 }
 

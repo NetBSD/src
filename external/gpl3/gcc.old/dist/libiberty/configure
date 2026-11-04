@@ -659,6 +659,7 @@ HAVE_PERL
 PERL
 BUILD_INFO
 MAKEINFO
+ETAGS
 NOTMAINT
 MAINT
 libiberty_topdir
@@ -2458,9 +2459,6 @@ ac_compiler_gnu=$ac_cv_c_compiler_gnu
 
 
 
-
-
-
 # This works around the fact that libtool configuration may change LD
 # for this particular configuration, but some shells, instead of
 # keeping the changes in LD private, export them just because LD is
@@ -2560,6 +2558,11 @@ else
   MAINT='#'
   NOTMAINT=''
 fi
+
+if test -z "$ETAGS"; then
+  ETAGS=etags
+fi
+
 
 # Do we have a single-tree copy of texinfo?  Even if we do, we can't
 # rely on it - libiberty is built before texinfo.
@@ -5264,6 +5267,7 @@ fi
 NOASANFLAG=
 case " ${CFLAGS} " in
   *\ -fsanitize=address\ *) NOASANFLAG=-fno-sanitize=address ;;
+  *\ -fsanitize=hwaddress\ *) NOASANFLAG=-fno-sanitize=hwaddress ;;
 esac
 
 
@@ -5286,12 +5290,12 @@ $as_echo_n "checking for CET support... " >&6; }
 case "$host" in
   i[34567]86-*-linux* | x86_64-*-linux*)
     may_have_cet=yes
-    save_CFLAGS="$CFLAGS"
+    cet_save_CFLAGS="$CFLAGS"
     CFLAGS="$CFLAGS -fcf-protection"
     case "$enable_cet" in
       auto)
 	# Check if target supports multi-byte NOPs
-	# and if assembler supports CET insn.
+	# and if compiler and assembler support CET.
 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -5317,7 +5321,7 @@ fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
 	;;
       yes)
-	# Check if assembler supports CET.
+	# Check if compiler and assembler support CET.
 	cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
 
@@ -5330,14 +5334,27 @@ asm ("setssbsy");
 }
 _ACEOF
 if ac_fn_c_try_compile "$LINENO"; then :
-
+  support_cet=yes
 else
-  as_fn_error $? "assembler with CET support is required for --enable-cet" "$LINENO" 5
+  support_cet=no
 fi
 rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
+	if test $support_cet = "no"; then
+	  if test x$enable_bootstrap != xno \
+	     && test -z "${with_build_subdir}" \
+	     && (test ! -f ../stage_current \
+	         || test `cat ../stage_current` != "stage1"); then
+	    # Require CET support only for the final GCC build.
+	    as_fn_error $? "compiler and assembler with CET support are required for --enable-cet" "$LINENO" 5
+	  else
+	    # Don't enable CET without CET support for non-bootstrap
+	    # build, in stage1 nor for build support.
+	    enable_cet=no
+	  fi
+	fi
 	;;
     esac
-    CFLAGS="$save_CFLAGS"
+    CFLAGS="$cet_save_CFLAGS"
     ;;
   *)
     may_have_cet=no
@@ -5345,9 +5362,9 @@ rm -f core conftest.err conftest.$ac_objext conftest.$ac_ext
     ;;
 esac
 
-save_CFLAGS="$CFLAGS"
+cet_save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -fcf-protection=none"
-save_LDFLAGS="$LDFLAGS"
+cet_save_LDFLAGS="$LDFLAGS"
 LDFLAGS="$LDFLAGS -Wl,-z,ibt,-z,shstk"
 if test x$may_have_cet = xyes; then
   # Check whether -fcf-protection=none -Wl,-z,ibt,-z,shstk work.
@@ -5377,6 +5394,34 @@ fi
 if test x$may_have_cet = xyes; then
   if test x$cross_compiling = xno; then
     if test "$cross_compiling" = yes; then :
+  { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
+$as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
+as_fn_error $? "cannot run test program while cross compiling
+See \`config.log' for more details" "$LINENO" 5; }
+else
+  cat confdefs.h - <<_ACEOF >conftest.$ac_ext
+/* end confdefs.h.  */
+
+int
+main ()
+{
+  asm ("endbr32");
+  return 0;
+}
+
+_ACEOF
+if ac_fn_c_try_run "$LINENO"; then :
+  have_multi_byte_nop=yes
+else
+  have_multi_byte_nop=no
+fi
+rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
+  conftest.$ac_objext conftest.beam conftest.$ac_ext
+fi
+
+    have_cet=no
+    if test x$have_multi_byte_nop = xyes; then
+      if test "$cross_compiling" = yes; then :
   { { $as_echo "$as_me:${as_lineno-$LINENO}: error: in \`$ac_pwd':" >&5
 $as_echo "$as_me: error: in \`$ac_pwd':" >&2;}
 as_fn_error $? "cannot run test program while cross compiling
@@ -5421,6 +5466,7 @@ rm -f core *.core core.conftest.* gmon.out bb.out conftest$ac_exeext \
   conftest.$ac_objext conftest.beam conftest.$ac_ext
 fi
 
+    fi
     if test x$enable_cet = xno -a x$have_cet = xyes; then
       as_fn_error $? "Intel CET must be enabled on Intel CET enabled host" "$LINENO" 5
     fi
@@ -5438,8 +5484,8 @@ else
   { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
 $as_echo "no" >&6; }
 fi
-CFLAGS="$save_CFLAGS"
-LDFLAGS="$save_LDFLAGS"
+CFLAGS="$cet_save_CFLAGS"
+LDFLAGS="$cet_save_LDFLAGS"
 
 
 
@@ -6555,6 +6601,22 @@ if test -z "${setobjs}"; then
     ac_cv_func_getpagesize=yes
     ;;
 
+  hppa*-*-hpux*)
+    # Replace system snprintf and vsnprintf with libiberty implementations.
+    case " $LIBOBJS " in
+  *" snprintf.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS snprintf.$ac_objext"
+ ;;
+esac
+
+    case " $LIBOBJS " in
+  *" vsnprintf.$ac_objext "* ) ;;
+  *) LIBOBJS="$LIBOBJS vsnprintf.$ac_objext"
+ ;;
+esac
+
+    ;;
+
   *-*-mingw32*)
     # Under mingw32, sys_nerr and sys_errlist exist, but they are
     # macros, so the test below won't find them.
@@ -6718,7 +6780,10 @@ else
 else
   cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-find_stack_direction ()
+#include <stdlib.h>
+
+int
+find_stack_direction (void)
 {
   static char *addr = 0;
   auto char dummy;
@@ -6730,7 +6795,9 @@ find_stack_direction ()
   else
     return (&dummy > addr) ? 1 : -1;
 }
-main ()
+
+int
+main (void)
 {
   exit (find_stack_direction() < 0);
 }
@@ -7016,11 +7083,11 @@ else
 fi
 cat confdefs.h - <<_ACEOF >conftest.$ac_ext
 /* end confdefs.h.  */
-int *p;
+extern int $v [];
 int
 main ()
 {
-extern int $v []; p = $v;
+if ($v [0]) return 1;
   ;
   return 0;
 }
@@ -7555,6 +7622,8 @@ else
 
 /* Test by Jim Wilson and Kaveh Ghazi.
    Check whether strncmp reads past the end of its string parameters. */
+#include <stdlib.h>
+#include <string.h>
 #include <sys/types.h>
 
 #ifdef HAVE_FCNTL_H
@@ -7582,7 +7651,8 @@ else
 
 #define MAP_LEN 0x10000
 
-main ()
+int
+main (void)
 {
 #if defined(HAVE_MMAP) || defined(HAVE_MMAP_ANYWHERE)
   char *p;

@@ -1149,7 +1149,7 @@ rrrrr,111111,RRRRR + wwww,0011110,mmmm,0:XI:::mac
   hi   = (((op0 >> 16) & 0xFFFF) * ((op1 >> 16) & 0xFFFF));
   
   /* We now need to add all of these results together, taking care
-     to propogate the carries from the additions: */
+     to propagate the carries from the additions: */
   RdLo = Add32 (lo, (mid1 << 16), & carry);
   RdHi = carry;
   RdLo = Add32 (RdLo, (mid2 << 16), & carry);
@@ -1214,7 +1214,7 @@ rrrrr,111111,RRRRR + wwww,0011111,mmmm,0:XI:::macu
   hi   = (((op0 >> 16) & 0xFFFF) * ((op1 >> 16) & 0xFFFF));
   
   /* We now need to add all of these results together, taking care
-     to propogate the carries from the additions: */
+     to propagate the carries from the additions: */
   RdLo = Add32 (lo, (mid1 << 16), & carry);
   RdHi = carry;
   RdLo = Add32 (RdLo, (mid2 << 16), & carry);

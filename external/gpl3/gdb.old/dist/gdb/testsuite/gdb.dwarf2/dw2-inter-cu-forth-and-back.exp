@@ -1,0 +1,60 @@
+# Copyright 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Check that the cooked index reader can handle inter-CU references:
+# - DIE1@CU1 -> DIE2@CU2
+# - DIE2@CU2 -> DIE3@CU1.
+
+load_lib dwarf.exp
+
+# This test can only be run on targets which support DWARF-2 and use gas.
+require dwarf2_support
+
+standard_testfile main.c .S
+
+# Create the DWARF.
+set asm_file [standard_output_file $srcfile2]
+Dwarf::assemble $asm_file {
+    declare_labels label1 label2
+
+    cu {} {
+	compile_unit {{language @DW_LANG_C}} {
+	    subprogram {
+		{MACRO_AT_range { main }}
+		{DW_AT_specification %$label1}
+	    }
+
+	    label2: subprogram {
+		{DW_AT_name main}
+	    }
+	}
+    }
+
+    cu {} {
+	compile_unit {{language @DW_LANG_C}} {
+	    label1: subprogram {
+		{DW_AT_specification %$label2}
+	    }
+	}
+    }
+}
+
+if [prepare_for_testing "failed to prepare" $testfile \
+	[list $asm_file $srcfile] {nodebug}] {
+    return -1
+}
+
+# Regression test for PR32081.
+gdb_assert { ![regexp -nocase "error:" $gdb_file_cmd_msg] } "No Error message"

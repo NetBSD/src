@@ -1,8 +1,8 @@
-#	$NetBSD: Makefile.inc,v 1.16 2021/08/29 16:44:16 rillig Exp $
+#	$NetBSD: Makefile.inc,v 1.16.4.1 2026/11/04 23:19:18 perseant Exp $
 #	@(#)Makefile.inc	8.1 (Berkeley) 6/4/93
 
 # gmon sources
-.PATH: ${.CURDIR}/gmon ${ARCHDIR}/gmon
+.PATH: ${.PARSEDIR} ${ARCHDIR}/gmon
 
 .-include "${ARCHDIR}/gmon/Makefile.inc"
 

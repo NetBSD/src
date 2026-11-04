@@ -1,6 +1,6 @@
 /* GNU/Linux/RISC-V specific low level interface, for the remote server
    for GDB.
-   Copyright (C) 2020-2023 Free Software Foundation, Inc.
+   Copyright (C) 2020-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "server.h"
 
 #include "linux-low.h"
 #include "tdesc.h"
@@ -87,11 +86,15 @@ riscv_target::low_arch_setup ()
   static const char *expedite_regs[] = { "sp", "pc", NULL };
 
   const riscv_gdbarch_features features
-    = riscv_linux_read_features (lwpid_of (current_thread));
+    = riscv_linux_read_features (current_thread->id.lwp ());
   target_desc_up tdesc = riscv_create_target_description (features);
 
-  if (!tdesc->expedite_regs)
-    init_target_desc (tdesc.get (), expedite_regs);
+  if (tdesc->expedite_regs.empty ())
+    {
+      init_target_desc (tdesc.get (), expedite_regs, GDB_OSABI_LINUX);
+      gdb_assert (!tdesc->expedite_regs.empty ());
+    }
+
   current_process ()->tdesc = tdesc.release ();
 }
 

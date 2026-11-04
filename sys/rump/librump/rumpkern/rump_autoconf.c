@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_autoconf.c,v 1.3 2021/08/07 16:19:18 thorpej Exp $	*/
+/*	$NetBSD: rump_autoconf.c,v 1.3.12.1 2026/11/04 23:28:03 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_autoconf.c,v 1.3 2021/08/07 16:19:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_autoconf.c,v 1.3.12.1 2026/11/04 23:28:03 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -45,7 +45,7 @@ struct mainbus_softc {
  * is patched in by rump_mainbus_init().
  */
 const struct cfattachinit cfattachinit[] = {
-	{ NULL, NULL },
+	{ NULL, NULL, NULL },
 };
 struct cfdata cfdata[] = {
 	{ NULL, NULL, 0, FSTATE_NOTFOUND, NULL, 0, NULL}, /* replaced by init */

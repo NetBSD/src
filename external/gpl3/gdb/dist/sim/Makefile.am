@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 ##
-#   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+#   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -105,9 +105,6 @@ include testsuite/local.mk
 ## Arch includes must come after common/local.mk.
 if SIM_ENABLE_ARCH_aarch64
 include aarch64/local.mk
-endif
-if SIM_ENABLE_ARCH_arm
-include arm/local.mk
 endif
 if SIM_ENABLE_ARCH_avr
 include avr/local.mk

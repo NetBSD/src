@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.h,v 1.11.92.1 2025/08/02 05:55:49 perseant Exp $	*/
+/*	$NetBSD: trap.h,v 1.11.92.2 2026/11/04 23:20:51 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,7 +51,7 @@
 #define	T_PRIVINST	6
 #define	T_TRACE		7
 #define	T_MMUFLT	8
-#define	T_SSIR		9
+/*	T_SSIR		9	no longer used */
 #define	T_FMTERR	10
 #define	T_FPERR		11
 #define	T_COPERR	12

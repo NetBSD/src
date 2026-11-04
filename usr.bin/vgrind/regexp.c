@@ -1,4 +1,4 @@
-/*	$NetBSD: regexp.c,v 1.15.4.1 2025/08/02 05:58:44 perseant Exp $	*/
+/*	$NetBSD: regexp.c,v 1.15.4.2 2026/11/04 23:28:44 perseant Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -44,7 +44,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static char sccsid[] = "@(#)regexp.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: regexp.c,v 1.15.4.1 2025/08/02 05:58:44 perseant Exp $");
+__RCSID("$NetBSD: regexp.c,v 1.15.4.2 2026/11/04 23:28:44 perseant Exp $");
 #endif /* not lint */
 
 #include <assert.h>
@@ -184,7 +184,7 @@ expconv(void)
 {
     char *cs;		/* pointer to current symbol in converted exp */
     char c;		/* character being processed */
-    char *acs;		/* pinter to last alternate */
+    char *acs;		/* pointer to last alternate */
     int temp;
 
     /* let the conversion begin */

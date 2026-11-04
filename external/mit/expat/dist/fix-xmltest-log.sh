@@ -6,7 +6,7 @@
 #                      \___/_/\_\ .__/ \__,_|\__|
 #                               |_| XML parser
 #
-# Copyright (c) 2019-2022 Sebastian Pipping <sebastian@pipping.org>
+# Copyright (c) 2019-2026 Sebastian Pipping <sebastian@pipping.org>
 # Copyright (c) 2024      Dag-Erling Smørgrav <des@des.dev>
 # Licensed under the MIT license:
 #
@@ -31,11 +31,15 @@
 
 set -e
 
+sed="$(type -P gsed sed false | head -n 1)"  # e.g. for Solaris
 filename="${1:-tests/xmltest.log}"
 
-sed -i.bak \
+exec "${sed}" -i.bak \
         -e '# convert DOS line endings to Unix without resorting to dos2unix' \
         -e $'s/\r//' \
+        \
+        -e '# Filter out "unhandled instruction" lines from AddressSanitizer' \
+        -e '/^==[0-9]\+==interception_win: unhandled instruction at /d' \
         \
         -e 's/^wine: Call .* msvcrt\.dll\._wperror, aborting$/ibm49i02.dtd: No such file or directory/' \
         \

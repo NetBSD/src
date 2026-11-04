@@ -1,5 +1,5 @@
 /* Annotation routines for GDB.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ANNOTATE_H
-#define ANNOTATE_H
+#ifndef GDB_ANNOTATE_H
+#define GDB_ANNOTATE_H
 
 #include "symtab.h"
 #include "gdbtypes.h"
@@ -112,7 +112,7 @@ struct annotate_arg_emitter
    are on, we only sometimes print the annotation, and only sometimes
    update the current symtab and line.  However, this particular annotation
    has behaved this way for some time, and front ends that still use
-   annotations now depend on this behaviour.  */
+   annotations now depend on this behavior.  */
 extern bool annotate_source_line (struct symtab *s, int line,
 				  int mid_statement, CORE_ADDR pc);
 
@@ -140,4 +140,4 @@ extern void annotate_array_section_end (void);
 extern void (*deprecated_annotate_signalled_hook) (void);
 extern void (*deprecated_annotate_signal_hook) (void);
 
-#endif /* ANNOTATE_H */
+#endif /* GDB_ANNOTATE_H */

@@ -616,7 +616,7 @@ static void resize_gototab(fa *f, int state)
 	if (p == NULL)
 		overflo(__func__);
 
-	// need to initialized the new memory to zero
+	// need to initialize the new memory to zero
 	size_t orig_size = f->gototab[state].allocated;		// 2nd half of new mem is this size
 	memset(p + orig_size, 0, orig_size * sizeof(gtte));	// clean it out
 
@@ -1212,6 +1212,9 @@ replace_repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 static int repeat(const uschar *reptok, int reptoklen, const uschar *atom,
 		  int atomlen, int firstnum, int secondnum)
 {
+	if (atom == NULL)
+		return 0;
+
 	/*
 	   In general, the repetition specifier or "bound" is replaced here
 	   by an equivalent ERE string, repeating the immediately previous atom
@@ -1459,6 +1462,9 @@ rescan:
 					lastre);
 			} else if (isdigit(c)) {
 				num = 10 * num + c - '0';
+				if (num > 255)
+					FATAL("repetition count %.20s too large",
+						lastre);
 				digitfound = true;
 			} else if (c == ',') {
 				if (commafound)

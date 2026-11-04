@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -214,8 +214,6 @@ TARGET32_LIBOPCODES_CFILES = \
 	mt-opc.c \
 	nds32-asm.c \
 	nds32-dis.c \
-	nios2-dis.c \
-	nios2-opc.c \
 	ns32k-dis.c \
 	or1k-asm.c \
 	or1k-desc.c \
@@ -494,7 +492,7 @@ MOSTLYCLEANFILES = aarch64-gen$(EXEEXT_FOR_BUILD) i386-gen$(EXEEXT_FOR_BUILD) \
 	z8kgen$(EXEEXT_FOR_BUILD) opc2c$(EXEEXT_FOR_BUILD)
 
 MAINTAINERCLEANFILES = $(srcdir)/aarch64-asm-2.c $(srcdir)/aarch64-dis-2.c \
-	$(srcdir)/aarch64-opc-2.c \
+	$(srcdir)/aarch64-opc-2.c $(srcdir)/aarch64-tbl-2.h \
 	$(srcdir)/i386-tbl.h $(srcdir)/i386-init.h $(srcdir)/i386-mnem.h \
 	$(srcdir)/ia64-asmtab.c $(srcdir)/z8k-opc.h \
 	$(srcdir)/msp430-decode.c \
@@ -514,6 +512,14 @@ $(srcdir)/aarch64-dis-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
 	$(AM_V_GEN)./aarch64-gen$(exeext_for_build) --gen-dis > $@
 $(srcdir)/aarch64-opc-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
 	$(AM_V_GEN)./aarch64-gen$(exeext_for_build) --gen-opc > $@
+$(srcdir)/aarch64-tbl-2.h: @MAINT@ aarch64-gen$(exeext_for_build)
+	$(AM_V_GEN)./aarch64-gen$(exeext_for_build) --gen-idx > $@
+
+aarch64-asm-2.lo: $(srcdir)/aarch64-tbl-2.h $(srcdir)/aarch64-asm-2.c
+
+aarch64-dis-2.lo: $(srcdir)/aarch64-tbl-2.h $(srcdir)/aarch64-dis-2.c
+
+aarch64-opc-2.lo: $(srcdir)/aarch64-tbl-2.h $(srcdir)/aarch64-opc-2.c
 
 i386-gen$(EXEEXT_FOR_BUILD): i386-gen.o $(BUILD_LIB_DEPS)
 	$(AM_V_CCLD)$(LINK_FOR_BUILD) i386-gen.o $(BUILD_LIBS)

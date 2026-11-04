@@ -11,6 +11,8 @@ initialize_tdesc_mips64_dsp_linux (void)
   target_desc_up result = allocate_target_description ();
   set_tdesc_architecture (result.get (), bfd_scan_arch ("mips"));
 
+  set_tdesc_osabi (result.get (), GDB_OSABI_LINUX);
+
   struct tdesc_feature *feature;
 
   feature = tdesc_create_feature (result.get (), "org.gnu.gdb.mips.cpu");

@@ -1,6 +1,6 @@
 /* Evaluate expressions for GDB.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -492,7 +492,7 @@ fake_method::fake_method (type_instance_flags flags,
 
 fake_method::~fake_method ()
 {
-  xfree (m_type.fields ());
+  xfree (m_type.fields ().data ());
 }
 
 namespace expr
@@ -588,21 +588,41 @@ evaluate_subexp_do_call (expression *exp, enum noside noside,
 {
   if (callee == NULL)
     error (_("Cannot evaluate function -- may be inlined"));
+
+  type *ftype = callee->type ();
+
+  /* If the callee is a struct, there might be a user-defined function call
+     operator that should be used instead.  */
+  std::vector<value *> vals;
+  if (overload_resolution
+      && exp->language_defn->la_language == language_cplus
+      && check_typedef (ftype)->code () == TYPE_CODE_STRUCT)
+    {
+      /* Include space for the `this' pointer at the start.  */
+      vals.resize (argvec.size () + 1);
+
+      vals[0] = value_addr (callee);
+      for (int i = 0; i < argvec.size (); ++i)
+	vals[i + 1] = argvec[i];
+
+      int static_memfuncp;
+      find_overload_match (vals, "operator()", METHOD, &vals[0], nullptr,
+			   &callee, nullptr, &static_memfuncp, 0, noside);
+      if (!static_memfuncp)
+	argvec = vals;
+
+      ftype = callee->type ();
+    }
+
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       /* If the return type doesn't look like a function type,
 	 call an error.  This can happen if somebody tries to turn
 	 a variable into a function call.  */
 
-      type *ftype = callee->type ();
-
       if (ftype->code () == TYPE_CODE_INTERNAL_FUNCTION)
 	{
-	  /* We don't know anything about what the internal
-	     function might return, but we have to return
-	     something.  */
-	  return value::zero (builtin_type (exp->gdbarch)->builtin_int,
-			     not_lval);
+	  /* The call to call_internal_function below handles noside.  */
 	}
       else if (ftype->code () == TYPE_CODE_XMETHOD)
 	{
@@ -642,7 +662,8 @@ evaluate_subexp_do_call (expression *exp, enum noside noside,
     {
     case TYPE_CODE_INTERNAL_FUNCTION:
       return call_internal_function (exp->gdbarch, exp->language_defn,
-				     callee, argvec.size (), argvec.data ());
+				     callee, argvec.size (), argvec.data (),
+				     noside);
     case TYPE_CODE_XMETHOD:
       return callee->call_xmethod (argvec);
     default:
@@ -666,9 +687,13 @@ operation::evaluate_funcall (struct type *expect_type,
   struct type *type = callee->type ();
   if (type->code () == TYPE_CODE_PTR)
     type = type->target_type ();
+  /* If type is a struct, num_fields would refer to the number of
+     members in the type, not the number of arguments.  */
+  bool type_has_arguments
+    = type->code () == TYPE_CODE_FUNC || type->code () == TYPE_CODE_METHOD;
   for (int i = 0; i < args.size (); ++i)
     {
-      if (i < type->num_fields ())
+      if (type_has_arguments && i < type->num_fields ())
 	vals[i] = args[i]->evaluate (type->field (i).type (), exp, noside);
       else
 	vals[i] = args[i]->evaluate_with_coercion (exp, noside);
@@ -969,9 +994,10 @@ add_struct_fields (struct type *type, completion_list &output,
 		output.emplace_back (concat (prefix, type->field (i).name (),
 					     nullptr));
 	    }
-	  else if (type->field (i).type ()->code () == TYPE_CODE_UNION)
+	  else if (type->field (i).type ()->code () == TYPE_CODE_UNION
+		   || type->field (i).type ()->code () == TYPE_CODE_STRUCT)
 	    {
-	      /* Recurse into anonymous unions.  */
+	      /* Recurse into anonymous unions and structures.  */
 	      add_struct_fields (type->field (i).type (),
 				 output, fieldname, namelen, prefix);
 	    }
@@ -1044,20 +1070,6 @@ is_integral_or_integral_reference (struct type *type)
   return (type != nullptr
 	  && TYPE_IS_REFERENCE (type)
 	  && is_integral_type (type->target_type ()));
-}
-
-/* Helper function that implements the body of OP_SCOPE.  */
-
-struct value *
-eval_op_scope (struct type *expect_type, struct expression *exp,
-	       enum noside noside,
-	       struct type *type, const char *string)
-{
-  struct value *arg1 = value_aggregate_elt (type, string, expect_type,
-					    0, noside);
-  if (arg1 == NULL)
-    error (_("There is no field named %s"), string);
-  return arg1;
 }
 
 /* Helper function that implements the body of OP_VAR_ENTRY_VALUE.  */
@@ -1847,16 +1859,19 @@ eval_op_postdec (struct type *expect_type, struct expression *exp,
     }
 }
 
-/* A helper function for OP_TYPE.  */
+namespace expr
+{
 
 struct value *
-eval_op_type (struct type *expect_type, struct expression *exp,
-	      enum noside noside, struct type *type)
+type_operation::evaluate (struct type *expect_type, struct expression *exp,
+			  enum noside noside)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
-    return value::allocate (type);
+    return value::allocate (std::get<0> (m_storage));
   else
     error (_("Attempt to use a type name as an expression"));
+}
+
 }
 
 /* A helper function for BINOP_ASSIGN_MODIFY.  */
@@ -1929,7 +1944,8 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
   if (value_as_long (target) == 0)
     return value_from_longest (long_type, 0);
 
-  if (lookup_minimal_symbol ("objc_msg_lookup", 0, 0).minsym)
+  if (lookup_minimal_symbol (current_program_space, "objc_msg_lookup").minsym
+      != nullptr)
     gnu_runtime = 1;
 
   /* Find the method dispatch (Apple runtime) or method lookup
@@ -2076,7 +2092,7 @@ eval_op_objc_msgcall (struct type *expect_type, struct expression *exp,
 
   /* Found a function symbol.  Now we will substitute its
      value in place of the message dispatcher (obj_msgSend),
-     so that we call the method directly instead of thru
+     so that we call the method directly instead of through
      the dispatcher.  The main reason for doing this is that
      we can now evaluate the return value and parameter values
      according to their known data types, in case we need to
@@ -2542,27 +2558,26 @@ unop_extract_operation::evaluate (struct type *expect_type,
 
 }
 
-
 /* Helper for evaluate_subexp_for_address.  */
 
 static value *
-evaluate_subexp_for_address_base (struct expression *exp, enum noside noside,
-				  value *x)
+evaluate_subexp_for_address_base (enum noside noside, value *x)
 {
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       struct type *type = check_typedef (x->type ());
+      enum type_code typecode = type->code ();
 
       if (TYPE_IS_REFERENCE (type))
 	return value::zero (lookup_pointer_type (type->target_type ()),
-			   not_lval);
-      else if (x->lval () == lval_memory || value_must_coerce_to_target (x))
-	return value::zero (lookup_pointer_type (x->type ()),
-			   not_lval);
+			    not_lval);
+      else if (x->lval () == lval_memory || value_must_coerce_to_target (x)
+	       || typecode == TYPE_CODE_STRUCT || typecode == TYPE_CODE_UNION)
+	return value::zero (lookup_pointer_type (x->type ()), not_lval);
       else
-	error (_("Attempt to take address of "
-		 "value not located in memory."));
+	error (_("Attempt to take address of value not located in memory."));
     }
+
   return value_addr (x);
 }
 
@@ -2582,18 +2597,20 @@ value *
 operation::evaluate_for_address (struct expression *exp, enum noside noside)
 {
   value *val = evaluate (nullptr, exp, noside);
-  return evaluate_subexp_for_address_base (exp, noside, val);
+  return evaluate_subexp_for_address_base (noside, val);
 }
 
 value *
-scope_operation::evaluate_for_address (struct expression *exp,
-				       enum noside noside)
+scope_operation::evaluate_internal (struct type *expect_type,
+				    struct expression *exp,
+				    enum noside noside,
+				    bool want_address)
 {
-  value *x = value_aggregate_elt (std::get<0> (m_storage),
-				  std::get<1> (m_storage).c_str (),
-				  NULL, 1, noside);
-  if (x == NULL)
-    error (_("There is no field named %s"), std::get<1> (m_storage).c_str ());
+  const char *string = std::get<1> (m_storage).c_str ();
+  value *x = value_aggregate_elt (std::get<0> (m_storage), string,
+				  expect_type, want_address, noside);
+  if (x == nullptr)
+    error (_("There is no field named %s"), string);
   return x;
 }
 
@@ -2607,7 +2624,7 @@ unop_ind_base_operation::evaluate_for_address (struct expression *exp,
   if (unop_user_defined_p (UNOP_IND, x))
     {
       x = value_x_unop (x, UNOP_IND, noside);
-      return evaluate_subexp_for_address_base (exp, noside, x);
+      return evaluate_subexp_for_address_base (noside, x);
     }
 
   return coerce_array (x);
@@ -2661,11 +2678,11 @@ var_value_operation::evaluate_for_address (struct expression *exp,
   if (noside == EVAL_AVOID_SIDE_EFFECTS)
     {
       struct type *type = lookup_pointer_type (var->type ());
-      enum address_class sym_class = var->aclass ();
+      location_class loc_class = var->loc_class ();
 
-      if (sym_class == LOC_CONST
-	  || sym_class == LOC_CONST_BYTES
-	  || sym_class == LOC_REGISTER)
+      if (loc_class == LOC_CONST
+	  || loc_class == LOC_CONST_BYTES
+	  || loc_class == LOC_REGISTER)
 	error (_("Attempt to take address of register or constant."));
 
       return value::zero (type, not_lval);

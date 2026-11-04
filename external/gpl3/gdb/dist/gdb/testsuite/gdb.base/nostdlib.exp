@@ -1,4 +1,4 @@
-# Copyright 2010-2024 Free Software Foundation, Inc.
+# Copyright 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -24,33 +24,75 @@ require !use_gdb_stub
 # dependent on whether the system libraries are already prelinked.
 # prelink: Could not set /lib64/libm-2.11.1.so owner or mode: Operation not permitted
 set compile {
-    gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable {debug additional_flags=-nostdlib}
-}
-set board [target_info name]
-if [board_info $board exists mathlib] {
-    set mathlib [board_info $dest mathlib]
-    set_board_info mathlib ""
-    set err [eval $compile]
-    set_board_info mathlib $mathlib
-} else {
-    set_board_info mathlib ""
-    set err [eval $compile]
-    unset_board_info mathlib
-}
-if {$err != ""} {
-    untested "failed to compile"
-    return -1
+    gdb_compile "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable $opts
 }
 
-clean_restart $binfile
+foreach_with_prefix pie { "nopie" "pie" } {
+    # OPTS and BINFILE are used by the COMPILE string (defined above)
+    # when it is evaluated below.
+    set opts [list debug additional_flags=-nostdlib $pie]
+    set binfile [standard_output_file $testfile-$pie]
 
-gdb_breakpoint "*marker"
-gdb_breakpoint "*_start"
+    set board [target_info name]
+    if [board_info $board exists mathlib] {
+	set mathlib [board_info $dest mathlib]
+	set_board_info mathlib ""
+	set err [eval $compile]
+	set_board_info mathlib $mathlib
+    } else {
+	set_board_info mathlib ""
+	set err [eval $compile]
+	unset_board_info mathlib
+    }
+    if {$err != ""} {
+	untested "failed to compile"
+	return -1
+    }
 
-gdb_run_cmd
+    clean_restart
+    gdb_load $binfile
 
-# Breakpoint 2, Stopped due to shared library event
-# _start () at ./gdb.base/nostdlib.c:20
-gdb_test "" {Breakpoint [0-9]+, .*_start .*} "stop at run"
+    gdb_breakpoint "*marker"
 
-gdb_test "continue" {Breakpoint [0-9]+, marker .*} "continue to marker"
+    # Say we set a permanent breakpoint on *_start.  When setting the
+    # breakpoint, it will resolve to _start in the exec.
+    # After starting to run, that may stay the same, and consequently
+    # execution will stop there.
+    # OTOH, after starting to run, that may change to *_start in the dynamic
+    # linker, and consequently execution will stop there.
+    # There's currently no way to enforce one or the other (PR32748).
+    #
+    # Say we run into a stop in *_start in the dynamic linker.  Continuing
+    # from this situation, the dynamic linker is reported as unloaded, which
+    # makes the breakpoint resolve again to *_start in the exec, and
+    # consequently execution will stop there as well.
+    #
+    # However, we cannot rely on this behavior either.  Reporting the dynamic
+    # linker as unloaded is a GLIBC bug, which may get fixed eventually.
+    #
+    # Instead of trying to cater for all these possibilities in a controlled
+    # fashion, make the breakpoint temporary, ensuring that there will just be
+    # one stop.
+    gdb_breakpoint "*_start" temporary
+
+    gdb_run_cmd
+
+    # Breakpoint 2, Stopped due to shared library event
+    # _start () at ./gdb.base/nostdlib.c:20
+    gdb_test "" {Temporary breakpoint [0-9]+, .*_start .*} "stop at run"
+
+    gdb_test "continue" {Breakpoint [0-9]+, marker .*} "continue to marker"
+
+    # When compiling as PIE the executable will be a dynamic
+    # executable, the dynamic linker performs the PIE relocation.
+    # Some versions of glibc would (possibly due to a bug) report the
+    # dynamic linker as unmapped during startup, which places the
+    # 'shlib event' breakpoint(s) into the PENDING state.
+    #
+    # At one point trying to print these internal breakpoints in a
+    # PENDING state would crash GDB, so lets make sure that doesn't
+    # happen now.  We don't really care about the exact output,
+    # gdb_test will spot if running this command crashes GDB, which is
+    # all we're really checking for.
+    gdb_test "maint info breakpoints" ".*"
+}

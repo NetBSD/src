@@ -1,6 +1,6 @@
 /* Low-level child interface to ptrace.
 
-   Copyright (C) 1988-2023 Free Software Foundation, Inc.
+   Copyright (C) 1988-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "command.h"
 #include "inferior.h"
 #include "terminal.h"
@@ -33,6 +32,7 @@
 #include "nat/fork-inferior.h"
 #include "utils.h"
 #include "gdbarch.h"
+#include "gdbsupport/eintr.h"
 
 
 
@@ -82,6 +82,9 @@ inf_ptrace_target::create_inferior (const char *exec_file,
 				    const std::string &allargs,
 				    char **env, int from_tty)
 {
+  if (exec_file == nullptr)
+    no_executable_specified_error ();
+
   inferior *inf = current_inferior ();
 
   /* Do not change either targets above or the same target if already present.
@@ -126,7 +129,7 @@ inf_ptrace_target::mourn_inferior ()
      Do not check whether this succeeds though, since we may be
      dealing with a process that we attached to.  Such a process will
      only report its exit status to its original parent.  */
-  waitpid (inferior_ptid.pid (), &status, 0);
+  gdb::waitpid (inferior_ptid.pid (), &status, 0);
 
   inf_child_target::mourn_inferior ();
 }
@@ -145,7 +148,7 @@ inf_ptrace_target::attach (const char *args, int from_tty)
 
   pid_t pid = parse_pid_to_attach (args);
 
-  if (pid == getpid ())		/* Trying to masturbate?  */
+  if (pid == getpid ())
     error (_("I refuse to debug myself!"));
 
   target_unpush_up unpusher;
@@ -231,7 +234,7 @@ inf_ptrace_target::kill ()
     return;
 
   ptrace (PT_KILL, pid, (PTRACE_TYPE_ARG3)0, 0);
-  waitpid (pid, &status, 0);
+  gdb::waitpid (pid, &status, 0);
 
   target_mourn_inferior (inferior_ptid);
 }
@@ -268,7 +271,7 @@ inf_ptrace_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
        single-threaded processes, so simply resume the inferior.  */
     ptid = ptid_t (inferior_ptid.pid ());
 
-  if (catch_syscall_enabled () > 0)
+  if (catch_syscall_enabled ())
     request = PT_SYSCALL;
   else
     request = PT_CONTINUE;
@@ -311,12 +314,8 @@ inf_ptrace_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
     {
       set_sigint_trap ();
 
-      do
-	{
-	  pid = waitpid (ptid.pid (), &status, options);
-	  save_errno = errno;
-	}
-      while (pid == -1 && errno == EINTR);
+      pid = gdb::waitpid (ptid.pid (), &status, options);
+      save_errno = errno;
 
       clear_sigint_trap ();
 
@@ -479,7 +478,7 @@ inf_ptrace_target::xfer_partial (enum target_object object,
     case TARGET_OBJECT_AUXV:
 #if defined (PT_IO) && defined (PIOD_READ_AUXV)
       /* OpenBSD 4.5 has a new PIOD_READ_AUXV operation for the PT_IO
-	 request that allows us to read the auxilliary vector.  Other
+	 request that allows us to read the auxiliary vector.  Other
 	 BSD's may follow if they feel the need to support PIE.  */
       {
 	struct ptrace_io_desc piod;
@@ -528,7 +527,7 @@ inf_ptrace_target::files_info ()
 
   gdb_printf (_("\tUsing the running image of %s %s.\n"),
 	      inf->attach_flag ? "attached" : "child",
-	      target_pid_to_str (inferior_ptid).c_str ());
+	      target_pid_to_str (ptid_t (inf->pid)).c_str ());
 }
 
 std::string

@@ -1,5 +1,5 @@
 // -*- C++ -*- Manage the thread-local exception globals.
-// Copyright (C) 2001-2020 Free Software Foundation, Inc.
+// Copyright (C) 2001-2022 Free Software Foundation, Inc.
 //
 // This file is part of GCC.
 //
@@ -64,8 +64,15 @@ __cxxabiv1::__cxa_get_globals() _GLIBCXX_NOTHROW
 
 #else
 
-// Single-threaded fallback buffer.
-static __cxa_eh_globals eh_globals;
+#if __has_cpp_attribute(clang::require_constant_initialization)
+#  define __constinit [[clang::require_constant_initialization]]
+#endif
+
+namespace
+{
+  // Single-threaded fallback buffer.
+  __constinit __cxa_eh_globals eh_globals;
+}
 
 #if __GTHREADS
 
@@ -90,21 +97,31 @@ eh_globals_dtor(void* ptr)
 struct __eh_globals_init
 {
   __gthread_key_t  	_M_key;
-  bool 			_M_init;
+  static bool 		_S_init;
 
-  __eh_globals_init() : _M_init(false)
-  { 
+  __eh_globals_init()
+  {
     if (__gthread_active_p())
-      _M_init = __gthread_key_create(&_M_key, eh_globals_dtor) == 0; 
+      _S_init = __gthread_key_create(&_M_key, eh_globals_dtor) == 0;
   }
 
   ~__eh_globals_init()
   {
-    if (_M_init)
-      __gthread_key_delete(_M_key);
-    _M_init = false;
+    if (_S_init)
+      {
+	/* Set it before the call, so that, should
+	   __gthread_key_delete throw an exception, it won't rely on
+	   the key being deleted.  */
+	_S_init = false;
+	__gthread_key_delete(_M_key);
+      }
   }
+
+  __eh_globals_init(const __eh_globals_init&) = delete;
+  __eh_globals_init& operator=(const __eh_globals_init&) = delete;
 };
+
+bool __eh_globals_init::_S_init = false;
 
 static __eh_globals_init init;
 
@@ -112,7 +129,7 @@ extern "C" __cxa_eh_globals*
 __cxxabiv1::__cxa_get_globals_fast() _GLIBCXX_NOTHROW
 {
   __cxa_eh_globals* g;
-  if (init._M_init)
+  if (init._S_init)
     g = static_cast<__cxa_eh_globals*>(__gthread_getspecific(init._M_key));
   else
     g = &eh_globals;
@@ -123,7 +140,7 @@ extern "C" __cxa_eh_globals*
 __cxxabiv1::__cxa_get_globals() _GLIBCXX_NOTHROW
 {
   __cxa_eh_globals* g;
-  if (init._M_init)
+  if (init._S_init)
     {
       g = static_cast<__cxa_eh_globals*>(__gthread_getspecific(init._M_key));
       if (!g)

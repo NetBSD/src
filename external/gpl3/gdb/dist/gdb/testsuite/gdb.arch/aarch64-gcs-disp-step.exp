@@ -1,0 +1,86 @@
+# Copyright 2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Test displaced stepping in a program that uses a Guarded Control Stack.
+
+require allow_aarch64_gcs_tests
+
+standard_testfile
+
+if { [prepare_for_testing "failed to prepare" ${testfile} ${srcfile}] } {
+    return
+}
+
+if ![runto_main] {
+    return
+}
+
+gdb_test_no_output "set breakpoint auto-hw off"
+gdb_test_no_output "set displaced-stepping on"
+
+# Get address of the branch and link instructions of interest.
+set addr_bl 0
+set test "get address of bl instruction"
+gdb_test_multiple "disassemble function_bl" $test -lbl {
+    -re "\r\n\\s+($hex) <\\+${decimal}>:\\s+bl\\s+${hex} <function2>(?=\r\n)" {
+	set addr_bl $expect_out(1,string)
+	exp_continue
+    }
+    -re -wrap "" {
+	gdb_assert { $addr_bl != 0 } $test
+    }
+}
+
+set addr_blr 0
+set test "get address of blr instruction"
+gdb_test_multiple "disassemble function_blr" $test -lbl {
+    -re "\r\n\\s+($hex) <\\+${decimal}>:\\s+blr\\s+x${decimal}(?=\r\n)" {
+	set addr_blr $expect_out(1,string)
+	exp_continue
+    }
+    -re -wrap "" {
+	gdb_assert { $addr_blr != 0 } $test
+    }
+}
+
+if { $addr_bl == 0 || $addr_blr == 0 } {
+    return
+}
+
+gdb_test "break *$addr_bl" \
+    "Breakpoint $decimal at $hex: file .*aarch64-gcs-disp-step.c, line ${decimal}." \
+    "set breakpoint at bl instruction"
+
+gdb_test "break *$addr_blr" \
+    "Breakpoint $decimal at $hex: file .*aarch64-gcs-disp-step.c, line ${decimal}." \
+    "set breakpoint at blr instruction"
+
+gdb_test "continue" \
+    [multi_line \
+	 {Continuing\.} \
+	 "" \
+	 "Breakpoint $decimal, function_bl \\(\\) at .*aarch64-gcs-disp-step.c:${decimal}(?: \\\[GCS error\\\])?" \
+	 {[^\r\n]+"bl function2\\n"}] \
+    "continue to breakpoint at bl"
+
+gdb_test "continue" \
+    [multi_line \
+	 {Continuing\.} \
+	 "" \
+	 "Breakpoint $decimal, $hex in function_blr \\(\\) at .*aarch64-gcs-disp-step.c:${decimal}(?: \\\[GCS error\\\])?" \
+	 {[^\r\n]+"blr %1\\n"}] \
+    "continue to breakpoint at blr"
+
+gdb_continue_to_end

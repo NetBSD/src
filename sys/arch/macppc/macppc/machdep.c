@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.177.2.1 2025/08/02 05:55:52 perseant Exp $	*/
+/*	$NetBSD: machdep.c,v 1.177.2.2 2026/11/04 23:20:56 perseant Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.2.1 2025/08/02 05:55:52 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.177.2.2 2026/11/04 23:20:56 perseant Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -226,7 +226,7 @@ cpu_startup(void)
 void
 dumpsys(void)
 {
-	printf("dumpsys: TBD\n");
+	oea_dumpsys();
 }
 
 /*

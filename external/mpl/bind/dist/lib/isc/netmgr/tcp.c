@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp.c,v 1.10.4.1 2025/08/02 05:54:04 perseant Exp $	*/
+/*	$NetBSD: tcp.c,v 1.10.4.2 2026/11/04 23:18:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -14,6 +14,7 @@
  */
 
 #include <libgen.h>
+#include <string.h>
 #include <unistd.h>
 
 #include <isc/async.h>
@@ -227,6 +228,7 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 	sa_family_t sa_family;
 	isc__networker_t *worker = NULL;
 	uv_os_sock_t fd = -1;
+	in_port_t port_low, port_high;
 
 	REQUIRE(VALID_NM(mgr));
 	REQUIRE(local != NULL);
@@ -263,6 +265,18 @@ isc_nm_tcpconnect(isc_nm_t *mgr, isc_sockaddr_t *local, isc_sockaddr_t *peer,
 
 	(void)isc__nm_socket_min_mtu(sock->fd, sa_family);
 	(void)isc__nm_socket_tcp_maxseg(sock->fd, NM_MAXSEG);
+	port_low = (sa_family == AF_INET) ? mgr->port_low4 : mgr->port_low6;
+	port_high = (sa_family == AF_INET) ? mgr->port_high4 : mgr->port_high6;
+	result = isc__nm_socket_max_port_range(sock->fd, sa_family, port_low,
+					       port_high);
+	if (result != ISC_R_SUCCESS) {
+		isc__nmsocket_log(sock, ISC_LOG_DEBUG(99),
+				  "setting up IP_BIND_ADDRESS_NO_PORT or "
+				  "IP_LOCAL_PORT_RANGE failed: %s\n",
+				  result == ISC_R_RANGE
+					  ? isc_result_totext(result)
+					  : strerror(errno));
+	}
 
 	sock->active = true;
 
@@ -750,7 +764,10 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 		goto free;
 	}
 
-	if (nread < 0) {
+	if (nread == 0) {
+		/* EAGAIN/EWOULDBLOCK: no data yet, not an error on libuv. */
+		goto free;
+	} else if (nread < 0) {
 		if (nread != UV_EOF) {
 			isc__nm_incstats(sock, STATID_RECVFAIL);
 		}
@@ -809,7 +826,7 @@ isc__nm_tcp_read_cb(uv_stream_t *stream, ssize_t nread, const uv_buf_t *buf) {
 	}
 
 free:
-	if (nread < 0) {
+	if (nread <= 0) {
 		/*
 		 * The buffer may be a null buffer on error.
 		 */
@@ -891,7 +908,7 @@ accept_connection(isc_nmsocket_t *csock) {
 
 	/*
 	 * We need to initialize the tcp and timer before failing because
-	 * isc__nm_tcp_close() can't handle uninitalized TCP nmsocket.
+	 * isc__nm_tcp_close() can't handle uninitialized TCP nmsocket.
 	 */
 	if (isc__nmsocket_closing(csock)) {
 		result = ISC_R_CANCELED;

@@ -1,4 +1,4 @@
-/*	$NetBSD: url.h,v 1.4.4.1 2025/08/02 05:54:03 perseant Exp $	*/
+/*	$NetBSD: url.h,v 1.4.4.2 2026/11/04 23:18:18 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -50,6 +50,8 @@
 #ifndef HTTP_PARSER_STRICT
 #define HTTP_PARSER_STRICT 1
 #endif
+
+#define URL_MAX_LENGTH 8192
 
 typedef enum {
 	ISC_UF_SCHEMA = 0,

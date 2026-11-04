@@ -1,6 +1,6 @@
 /* Support for reading/writing gcore files.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (GCORE_H)
-#define GCORE_H 1
+#ifndef GDB_GCORE_H
+#define GDB_GCORE_H
 
 #include "gdb_bfd.h"
 
@@ -37,4 +37,4 @@ extern int objfile_find_memory_regions (struct target_ops *self,
 
 extern thread_info *gcore_find_signalled_thread ();
 
-#endif /* GCORE_H */
+#endif /* GDB_GCORE_H */

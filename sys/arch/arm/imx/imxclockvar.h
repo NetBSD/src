@@ -1,3 +1,5 @@
+/* $NetBSD: imxclockvar.h,v 1.2.76.1 2026/11/04 23:20:11 perseant Exp $ */
+
 #ifndef _ARM_IMX_IMXCLOCKVAR_H
 #define	_ARM_IMX_IMXCLOCKVAR_H
 

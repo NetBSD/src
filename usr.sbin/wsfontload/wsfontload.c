@@ -1,4 +1,4 @@
-/* $NetBSD: wsfontload.c,v 1.24 2022/05/12 22:08:55 uwe Exp $ */
+/* $NetBSD: wsfontload.c,v 1.24.4.1 2026/11/04 23:29:03 perseant Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -35,6 +35,7 @@
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <err.h>
+#include <endian.h>
 
 #include <dev/wscons/wsconsio.h>
 
@@ -141,6 +142,7 @@ main(int argc, char **argv)
 	size_t len;
 	int c, res, wsfd, ffd, verbose = 0, listfonts = 0;
 	int use_embedded_name = 1;
+	int dry_run = 0;
 	void *buf;
 	char nbuf[65];
 
@@ -155,7 +157,7 @@ main(int argc, char **argv)
 	f.bitorder = DEFBITORDER;
 	f.byteorder = DEFBYTEORDER;
 
-	while ((c = getopt(argc, argv, "f:w:h:e:N:bBvl")) != -1) {
+	while ((c = getopt(argc, argv, "f:w:h:e:N:bBnvl")) != -1) {
 		switch (c) {
 		case 'f':
 			wsdev = optarg;
@@ -173,6 +175,9 @@ main(int argc, char **argv)
 			break;
 		case 'e':
 			f.encoding = getencoding(optarg);
+			break;
+		case 'n':
+			dry_run = 1;
 			break;
 		case 'N':
 			f.name = optarg;
@@ -298,9 +303,11 @@ main(int argc, char **argv)
 			rgetfontorder(f.byteorder), f.byteorder);
 	}
 
-	res = ioctl(wsfd, WSDISPLAYIO_LDFONT, &f);
-	if (res < 0)
-		err(3, "WSDISPLAYIO_LDFONT");
+	if (!dry_run) {
+		res = ioctl(wsfd, WSDISPLAYIO_LDFONT, &f);
+		if (res < 0)
+			err(3, "WSDISPLAYIO_LDFONT");
+	}
 
 	return (0);
 }

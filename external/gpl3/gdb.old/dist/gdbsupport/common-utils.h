@@ -1,6 +1,6 @@
 /* Shared general utility routines for GDB, the GNU debugger.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,15 +17,22 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_UTILS_H
-#define COMMON_COMMON_UTILS_H
+#ifndef GDBSUPPORT_COMMON_UTILS_H
+#define GDBSUPPORT_COMMON_UTILS_H
 
 #include <string>
 #include <vector>
 #include "gdbsupport/byte-vector.h"
 #include "gdbsupport/gdb_unique_ptr.h"
+#include "gdbsupport/array-view.h"
 #include "poison.h"
-#include "gdb_string_view.h"
+#include <string_view>
+
+#if defined HAVE_LIBXXHASH
+#  include <xxhash.h>
+#else
+#  include "hashtab.h"
+#endif
 
 /* xmalloc(), xrealloc() and xcalloc() have already been declared in
    "libiberty.h". */
@@ -77,6 +84,11 @@ char *savestring (const char *ptr, size_t len);
 
 std::string extract_string_maybe_quoted (const char **arg);
 
+/* Return a copy of STR, but with any white space, single quote, or
+   double quote characters escaped with a backslash.  */
+
+std::string make_quoted_string (const char *str);
+
 /* The strerror() function can return NULL for errno values that are
    out of range.  Provide a "safe" version that always returns a
    printable string.  This version is also thread-safe.  */
@@ -87,10 +99,20 @@ extern const char *safe_strerror (int);
    true if the start of STRING matches PATTERN, false otherwise.  */
 
 static inline bool
-startswith (gdb::string_view string, gdb::string_view pattern)
+startswith (std::string_view string, std::string_view pattern)
 {
   return (string.length () >= pattern.length ()
 	  && strncmp (string.data (), pattern.data (), pattern.length ()) == 0);
+}
+
+/* Version of startswith that takes a string_view for only one of its
+   arguments.  Return true if STR starts with PREFIX, otherwise return
+   false.  */
+
+static inline bool
+startswith (const char *str, const std::string_view &prefix)
+{
+  return strncmp (str, prefix.data (), prefix.length ()) == 0;
 }
 
 /* Return true if the strings are equal.  */
@@ -188,4 +210,51 @@ extern int hex2bin (const char *hex, gdb_byte *bin, int count);
 /* Like the above, but return a gdb::byte_vector.  */
 gdb::byte_vector hex2bin (const char *hex);
 
-#endif /* COMMON_COMMON_UTILS_H */
+/* Build a string containing the contents of BYTES.  Each byte is
+   represented as a 2 character hex string, with spaces separating each
+   individual byte.  */
+
+extern std::string bytes_to_string (gdb::array_view<const gdb_byte> bytes);
+
+/* See bytes_to_string above.  This takes a BUFFER pointer and LENGTH
+   rather than an array view.  */
+
+static inline std::string bytes_to_string (const gdb_byte *buffer,
+					   size_t length)
+{
+  return bytes_to_string ({buffer, length});
+}
+
+/* A fast hashing function.  This can be used to hash data in a fast way
+   when the length is known.  If no fast hashing library is available, falls
+   back to iterative_hash from libiberty.  START_VALUE can be set to
+   continue hashing from a previous value.  */
+
+static inline unsigned int
+fast_hash (const void *ptr, size_t len, unsigned int start_value = 0)
+{
+#if defined HAVE_LIBXXHASH
+  return XXH64 (ptr, len, start_value);
+#else
+  return iterative_hash (ptr, len, start_value);
+#endif
+}
+
+namespace gdb
+{
+
+/* Hash type for std::string_view.
+
+   Even after we switch to C++17 and dump our string_view implementation, we
+   might want to keep this hash implementation if it's faster than std::hash
+   for std::string_view.  */
+
+struct string_view_hash
+{
+  std::size_t operator() (std::string_view view) const
+  {  return fast_hash (view.data (), view.length ()); }
+};
+
+} /* namespace gdb */
+
+#endif /* GDBSUPPORT_COMMON_UTILS_H */

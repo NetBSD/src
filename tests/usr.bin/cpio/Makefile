@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.5 2024/06/10 07:31:51 kre Exp $
+# $NetBSD: Makefile,v 1.5.2.1 2026/11/04 23:28:24 perseant Exp $
 
 NOMAN=
 
@@ -22,12 +22,14 @@ CPPFLAGS+=-DPLATFORM_CONFIG_H='"config_netbsd.h"'
 DPADD+=	${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
 	${LIBCRYPTO} ${LIBPTHREAD}
 LDADD+=	-larchive -lexpat -lbz2 -llzma -lz -lcrypto -lpthread  
+.include "${NETBSDSRCDIR}/external/bsd/zstd/Makefile.zstd"
+PROGDPLIBS+=	${ZSTDDPLIBS}	# XXX needed by libarchive
 
 SRCS.h_cpio= \
 test_main.c \
 test_utils.c \
 cmdline.c \
-err.c \
+lafe_err.c \
 test_0.c \
 test_basic.c \
 test_cmdline.c \

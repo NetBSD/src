@@ -1,6 +1,6 @@
 /* Stack manipulation commands, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,10 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef STACK_H
-#define STACK_H
+#ifndef GDB_STACK_H
+#define GDB_STACK_H
 
-gdb::unique_xmalloc_ptr<char> find_frame_funname (frame_info_ptr frame,
+gdb::unique_xmalloc_ptr<char> find_frame_funname (const frame_info_ptr &frame,
 						  enum language *funlang,
 						  struct symbol **funcp);
 
@@ -38,12 +38,12 @@ void iterate_over_block_local_vars (const struct block *block,
    information to print, otherwise the printing function should print
    the relevant information.  */
 
-void get_user_print_what_frame_info (gdb::optional<enum print_what> *what);
+void get_user_print_what_frame_info (std::optional<enum print_what> *what);
 
 /* Return true if we should display the address in addition to the location,
    because we are in the middle of a statement.  */
 
-bool frame_show_address (frame_info_ptr frame, struct symtab_and_line sal);
+bool frame_show_address (const frame_info_ptr &frame, struct symtab_and_line sal);
 
 /* Forget the last sal we displayed.  */
 
@@ -84,4 +84,4 @@ void frame_apply_all_cmd_completer (struct cmd_list_element *ignore,
 				    completion_tracker &tracker,
 				    const char *text, const char */*word*/);
 
-#endif /* #ifndef STACK_H */
+#endif /* GDB_STACK_H */

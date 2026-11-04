@@ -10,12 +10,12 @@
 # information regarding copyright ownership.
 
 
+import dns.edns
+import dns.flags
 import dns.message
 import pytest
 
 import isctest
-
-pytest.importorskip("dns", minversion="2.0.0")
 
 pytestmark = pytest.mark.extra_artifacts(
     [
@@ -29,7 +29,7 @@ pytestmark = pytest.mark.extra_artifacts(
 
 def test_glue_full_glue_set():
     """test that a ccTLD referral gets a full glue set from the root zone"""
-    msg = dns.message.make_query("foo.bar.fi", "A")
+    msg = isctest.query.create("foo.bar.fi", "A")
     msg.flags &= ~dns.flags.RD
     res = isctest.query.udp(msg, "10.53.0.1")
 
@@ -60,7 +60,7 @@ NS.UU.NET. 172800 IN A 137.39.1.3
 
 def test_glue_no_glue_set():
     """test that out-of-zone glue is not found"""
-    msg = dns.message.make_query("example.net.", "A")
+    msg = isctest.query.create("example.net.", "A")
     msg.flags &= ~dns.flags.RD
     res = isctest.query.udp(msg, "10.53.0.1")
 

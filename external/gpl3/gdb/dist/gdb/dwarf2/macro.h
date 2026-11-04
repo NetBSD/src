@@ -1,6 +1,6 @@
 /* DWARF macro support for GDB.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -21,6 +21,8 @@
 #define GDB_DWARF2_MACRO_H
 
 struct buildsym_compunit;
+struct dwarf2_per_objfile;
+struct dwarf2_section_info;
 
 extern void dwarf_decode_macros (dwarf2_per_objfile *per_objfile,
 				 buildsym_compunit *builder,

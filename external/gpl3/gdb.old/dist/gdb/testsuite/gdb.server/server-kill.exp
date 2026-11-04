@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -22,28 +22,11 @@ load_lib gdbserver-support.exp
 
 standard_testfile
 
-if {[skip_gdbserver_tests]} {
-    return 0
-}
+require allow_gdbserver_tests
 
 if { [build_executable "failed to prepare" ${testfile}] } {
     return -1
 }
-
-# Global control variable used by the proc prepare.  Should be set to
-# either 'inferior' or 'server'.
-#
-# In the proc prepare we start gdbserver and extract a pid, which will
-# later be killed by calling the proc kill_server.
-#
-# When KILL_PID_OF is set to 'inferior' then the pid we kill is that
-# of the inferior running under gdbserver, when this process dies
-# gdbserver itself will exit.
-#
-# When KILL_PID_OF is set to 'server' then the pid we kill is that of
-# the gdbserver itself, this is a much more aggressive strategy and
-# exposes different bugs within GDB.
-set kill_pid_of "inferior"
 
 # Spawn GDBserver, run to main, extract GDBserver's PID and save it in
 # the SERVER_PID global.
@@ -69,24 +52,16 @@ proc prepare {} {
 
     gdbserver_run ""
 
-    # Continue past server_pid assignment.  We do this for both scenarios,
-    # to avoid doing a backtrace from _start, which may not trigger remote
-    # communication.
     gdb_breakpoint ${srcfile}:[gdb_get_line_number "i = 0;"]
     gdb_continue_to_breakpoint "after server_pid assignment"
 
-    if { $::kill_pid_of == "inferior" } {
-	# Get the pid of GDBServer.
-	set test "p server_pid"
-	set server_pid 0
-	gdb_test_multiple $test $test {
-	    -re " = ($decimal)\r\n$gdb_prompt $" {
-		set server_pid $expect_out(1,string)
-		pass $test
-	    }
+    # Get the pid of GDBServer.
+    set server_pid 0
+    gdb_test_multiple "p server_pid" "" {
+	-re -wrap " = ($decimal)" {
+	    set server_pid $expect_out(1,string)
+	    pass $gdb_test_name
 	}
-    } else {
-	set server_pid [exp_pid -i $::server_spawn_id]
     }
 
     if {$server_pid == 0} {
@@ -116,11 +91,13 @@ proc_with_prefix test_tstatus {} {
     # Enable trace status packet which is disabled after the
     # connection if the remote target doesn't support tracepoint at
     # all.  Otherwise, no RSP packet is sent out.
-    gdb_test_no_output "set remote trace-status-packet on"
+    gdb_test \
+	"set remote trace-status-packet on" \
+	"Support for the 'qTStatus' packet on the current remote target is set to \"on\"."
 
     # Force GDB to talk with GDBserver, so that we can get the
     # "connection closed" error.
-    gdb_test "tstatus" {Remote connection closed|Remote communication error\.  Target disconnected\.: Connection reset by peer\.}
+    gdb_test "tstatus" {Remote connection closed|Remote communication error\.  Target disconnected: Connection reset by peer\.}
 }
 
 # Test unwinding with no debug/unwind info, right after the connection
@@ -160,17 +137,19 @@ proc_with_prefix test_stepi {} {
 	return
     }
 
+    # Ensure GDB has computed the frame-id for the current frame
+    # before we kill the gdbserver.  With the frame-id cached when we
+    # stepi below the first packets we try to send to gdbserver will
+    # be from within the breakpoint insertion process.
+    gdb_test "info frame" "Stack level 0, .*"
+
     kill_server
 
     gdb_test "stepi" "(Target disconnected|Remote connection closed|Remote communication error).*"
 }
 
-# Run each test twice, see the description of KILL_PID_OF earlier in
-# this file for more details.
+test_tstatus
+test_unwind_nosyms
+test_unwind_syms
+test_stepi
 
-foreach_with_prefix kill_pid_of { "inferior" "server" } {
-    test_tstatus
-    test_unwind_nosyms
-    test_unwind_syms
-    test_stepi
-}

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_MIPS_LINUX_WATCH_H
-#define NAT_MIPS_LINUX_WATCH_H
+#ifndef GDB_NAT_MIPS_LINUX_WATCH_H
+#define GDB_NAT_MIPS_LINUX_WATCH_H
 
 #include <asm/ptrace.h>
 #include "gdbsupport/break-common.h"
@@ -116,4 +116,4 @@ int mips_linux_read_watch_registers (long lwpid,
 				     struct pt_watch_regs *watch_readback,
 				     int *watch_readback_valid, int force);
 
-#endif /* NAT_MIPS_LINUX_WATCH_H */
+#endif /* GDB_NAT_MIPS_LINUX_WATCH_H */

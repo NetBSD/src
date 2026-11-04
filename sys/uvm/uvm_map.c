@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.411.2.1 2025/08/02 05:57:57 perseant Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.411.2.2 2026/11/04 23:28:08 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.411.2.1 2025/08/02 05:57:57 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.411.2.2 2026/11/04 23:28:08 perseant Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3343,7 +3343,7 @@ uvm_map_inherit(struct vm_map *map, vaddr_t start, vaddr_t end,
 	if (uvm_map_lookup_entry(map, start, &temp_entry)) {
 		entry = temp_entry;
 		UVM_MAP_CLIP_START(map, entry, start);
-	}  else {
+	} else {
 		entry = temp_entry->next;
 	}
 	while ((entry != &map->header) && (entry->start < end)) {
@@ -5132,7 +5132,7 @@ uvm_voaddr_acquire(struct vm_map * const map, vaddr_t const va,
 
 /*
  * uvm_voaddr_release: release the references held by the
- * vitual object address.
+ * virtual object address.
  */
 void
 uvm_voaddr_release(struct uvm_voaddr * const voaddr)
@@ -5391,15 +5391,28 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 	} else
 		vmesize = 0;
 
-	if ((error = proc_find_locked(l, &p, pid)) != 0)
+	/*
+	 * Look up the pid and take a read lock on p->p_reflock so the
+	 * process cannot exit while we're still working with it.
+	 */
+	if ((error = proc_find_reflocked(l, &p, pid, RW_READER)) != 0)
 		return error;
+	KASSERT(pid == -1 || rw_read_held(&p->p_reflock));
 
 	vme = NULL;
 	count = 0;
 
+	/*
+	 * Get the process's vmspace so we can iterate over the VM map.
+	 */
 	if ((error = proc_vmspace_getref(p, &vm)) != 0)
 		goto out;
 
+	/*
+	 * Take a read lock on the VM map to iterate over it.
+	 *
+	 * XXX Should we kmem_alloc before locking the VM map?
+	 */
 	map = &vm->vm_map;
 	vm_map_lock_read(map);
 
@@ -5416,12 +5429,13 @@ fill_vmentries(struct lwp *l, pid_t pid, u_int elem_size, void *oldp,
 		}
 		count++;
 	}
+
 	vm_map_unlock_read(map);
 	uvmspace_free(vm);
 
 out:
 	if (pid != -1)
-		mutex_exit(p->p_lock);
+		rw_exit(&p->p_reflock);
 	if (error == 0) {
 		const u_int esize = uimin(sizeof(*vme), elem_size);
 		dp = oldp;

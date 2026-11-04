@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef ARCH_ARC_H
-#define ARCH_ARC_H
+#ifndef GDB_ARCH_ARC_H
+#define GDB_ARCH_ARC_H
 
 #include "gdbsupport/tdesc.h"
 
@@ -84,4 +84,4 @@ const target_desc *arc_lookup_target_description
 #endif /* GDBSERVER */
 
 
-#endif /* ARCH_ARC_H */
+#endif /* GDB_ARCH_ARC_H */

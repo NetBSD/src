@@ -1,0 +1,207 @@
+# Copyright 2024-2025 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+# Breakpoint locations can be marked as "disabled due to their
+# condition".  This test sets up a breakpoint which depends on reading
+# a variable in a shared library.  We then check that the b/p is
+# correctly disabled before the shared library is loaded, becomes
+# enabled once the shared library is loaded.  And becomes disabled
+# again when the shared libraries are unloaded.
+
+standard_testfile .c -lib.c
+
+set pyfile [gdb_remote_download host ${srcdir}/${subdir}/${testfile}.py]
+
+# Build the library and copy it to the target.
+set libname ${testfile}-lib
+set libfile [standard_output_file $libname]
+if { [build_executable "build shlib" $libfile $srcfile2 {debug shlib}] == -1} {
+    return
+}
+set libfile_on_target [gdb_download_shlib $libfile]
+
+# Build the executable.
+set opts [list debug shlib_load additional_flags=-DSHLIB_NAME=\"${libname}\"]
+if { [build_executable "build exec" $binfile $srcfile $opts] == -1} {
+    return
+}
+
+set other_bp_line [gdb_get_line_number "Other BP location" $srcfile]
+set cond_bp_line [gdb_get_line_number "Conditional BP location" $srcfile]
+set exit_bp_line [gdb_get_line_number "BP before exit" $srcfile]
+
+# Setup a conditional b/p, the condition of which depends on reading a
+# variable from a shared library.  The b/p will initially be created
+# disabled (due to the condition).
+#
+# Continue the inferior, when the shared library is loaded GDB should
+# make the b/p enabled.
+#
+# Restart the inferior, which should unload the shared library, GDB
+# should mark the b/p as disabled due to its condition again.
+proc run_test { hit_cond } {
+    clean_restart
+    gdb_load $::binfile
+
+    if {![runto_main]} {
+	return
+    }
+
+    # Setup breakpoints.
+    gdb_breakpoint $::srcfile:$::other_bp_line
+    set other_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			  "get number of other b/p"]
+
+    gdb_breakpoint $::srcfile:$::exit_bp_line
+    set exit_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			 "get number of exit b/p"]
+
+    gdb_breakpoint $::srcfile:$::cond_bp_line
+    set cond_bp_num [get_integer_valueof "\$bpnum" "*UNKNOWN*" \
+			"get number of conditional b/p"]
+
+    if { $hit_cond } {
+	set lib_global_val 0
+    } else {
+	set lib_global_val 1
+    }
+
+    # Set the condition.  Use 'force' as we're referencing a variable in
+    # the shared library, which hasn't been loaded yet.  The breakpoint
+    # will immediately be marked as disabled_by_cond.
+    gdb_test "condition -force $cond_bp_num lib_global == $lib_global_val" \
+	[multi_line \
+	     "warning: failed to validate condition at location $cond_bp_num\\.1, disabling:" \
+	     "  No symbol \"lib_global\" in current context\\."] \
+	"set b/p condition, it will be disabled"
+
+    # Source Python script if supported.
+    if { [allow_python_tests] } {
+	gdb_test_no_output "source $::pyfile" "import python scripts"
+	gdb_test "python print(bp_modified_list)" "\\\[\\\]" \
+	    "check b/p modified observer has not yet triggered"
+    }
+
+    # Check the b/p is indeed marked as disabled (based on its condition).
+    gdb_test "info breakpoint $cond_bp_num" \
+	[multi_line \
+	     "\r\n$cond_bp_num\\.1\\s+N\\*\\s+$::hex in main at \[^\r\n\]+" \
+	     "\\(\\*\\): Breakpoint condition is invalid at this location\\."] \
+	"conditional breakpoint is disabled based on condition"
+
+    if { $hit_cond } {
+	# Continue the inferior.  The shared library is loaded and the
+	# breakpoint condition should become valid.  We should then stop at
+	# the conditional breakpoint.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Breakpoint $cond_bp_num, main \\(\\) at \[^\r\n\]+:$::cond_bp_line" \
+		 "$::cond_bp_line\\s+breakpt \\(\\);\\s+/\\* Conditional BP location\\.  \\*/"] \
+	    "continue until conditional b/p is hit"
+    } else {
+	# Continue the inferior.  The shared library is loaded and the
+	# breakpoint condition should become valid.  As the condition
+	# is going to be false GDB will stop at the other line.
+	gdb_test "continue" \
+	    [multi_line \
+		 "Breakpoint $other_bp_num, main \\(\\) at \[^\r\n\]+:$::other_bp_line" \
+		 "$::other_bp_line\\s+breakpt \\(\\);\\s+/\\* Other BP location\\.  \\*/"] \
+	    "continue until conditional b/p is hit"
+    }
+
+    if { [allow_python_tests] } {
+	# We're going to look at the list of b/p that have been
+	# modified since we loaded the Python script.  The first b/p
+	# modified will be the conditional b/p, this occurs when the
+	# b/p condition became valid.
+	#
+	# The second b/p will be whichever b/p we hit (the hit count
+	# increased).  So figure out which b/p we are going to hit.
+	if { $hit_cond } {
+	    set second_bp_num $cond_bp_num
+	} else {
+	    set second_bp_num $other_bp_num
+	}
+
+	# Now check the list of modified b/p.
+	gdb_test "python print(bp_modified_list)" \
+	    "\\\[$cond_bp_num, $second_bp_num\\\]" \
+	    "check b/p modified observer was triggered"
+    }
+
+    if {[gdb_protocol_is_remote]} {
+	set evals_re "(?: \\(\[^) \]+ evals\\))?"
+    } else {
+	set evals_re ""
+    }
+
+    # Check the b/p is no longer marked as disabled.  The output is
+    # basically the same here whether the b/p was hit or not.  It's
+    # just the hit counter line that we need to append or not.
+    set re_list \
+	[list \
+	     "$cond_bp_num\\s+breakpoint\\s+keep\\s+y\\s+$::hex in main at \[^\r\n\]+:$::cond_bp_line" \
+	     "\\s+stop only if lib_global == $lib_global_val$evals_re"]
+    if { $hit_cond } {
+	lappend re_list "\\s+breakpoint already hit 1 time"
+    }
+    set re [multi_line {*}$re_list]
+    gdb_test "info breakpoint $cond_bp_num" $re \
+	"conditional breakpoint is now enabled"
+
+    if { $hit_cond } {
+	gdb_test "continue" \
+	    [multi_line \
+		 "Breakpoint $other_bp_num, main \\(\\) at \[^\r\n\]+:$::other_bp_line" \
+		 "$::other_bp_line\\s+breakpt \\(\\);\\s+/\\* Other BP location\\.  \\*/"] \
+	    "continue to other b/p"
+    }
+
+    if {[allow_python_tests]} {
+	# Clear out the list of modified b/p.  This makes the results
+	# (see below) clearer.
+	gdb_test_no_output "python bp_modified_list=\[\]" \
+	    "clear bp_modified_list"
+    }
+
+    gdb_test "continue" \
+	[multi_line \
+	     "Breakpoint $exit_bp_num, main \\(\\) at \[^\r\n\]+:$::exit_bp_line" \
+	     "$::exit_bp_line\\s+breakpt \\(\\);\\s+/\\* BP before exit\\.  \\*/"] \
+	"continue b/p before exit"
+
+    # Check the b/p is once again marked as disabled based on its
+    # condition.
+    gdb_test "info breakpoint $cond_bp_num" \
+	[multi_line \
+	     "\r\n$cond_bp_num\\.1\\s+N\\*\\s+$::hex in main at \[^\r\n\]+" \
+	     "\\(\\*\\): Breakpoint condition is invalid at this location\\."] \
+	"conditional breakpoint is again disabled based on condition"
+
+    if { [allow_python_tests] } {
+	# The condition breakpoint will have been modified (moved to
+	# the disabled state) when GDB unloaded the shared libraries.
+	# And the b/p in main will have been modified in that it's hit
+	# count will have gone up.
+	gdb_test "python print(bp_modified_list)" \
+	    "\\\[$cond_bp_num, $exit_bp_num\\\]" \
+	    "check b/p modified observer was triggered during restart"
+    }
+}
+
+# The tests.
+foreach_with_prefix hit_cond { true false } {
+    run_test $hit_cond
+}

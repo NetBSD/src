@@ -1,4 +1,4 @@
-/*	$NetBSD: dlv_32769.c,v 1.9.2.1 2025/08/02 05:53:41 perseant Exp $	*/
+/*	$NetBSD: dlv_32769.c,v 1.9.2.2 2026/11/04 23:18:09 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -87,9 +87,7 @@ tostruct_dlv(ARGS_TOSTRUCT) {
 	REQUIRE(rdata->type == dns_rdatatype_dlv);
 	REQUIRE(dlv != NULL);
 
-	dlv->common.rdclass = rdata->rdclass;
-	dlv->common.rdtype = rdata->type;
-	ISC_LINK_INIT(&dlv->common, link);
+	DNS_RDATACOMMON_INIT(dlv, rdata->type, rdata->rdclass);
 
 	return generic_tostruct_ds(CALL_TOSTRUCT);
 }

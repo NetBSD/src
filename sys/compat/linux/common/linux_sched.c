@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.79.10.1 2025/08/02 05:56:26 perseant Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.79.10.2 2026/11/04 23:21:39 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.79.10.1 2025/08/02 05:56:26 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.79.10.2 2026/11/04 23:21:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -61,6 +61,8 @@ __KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.79.10.1 2025/08/02 05:56:26 persea
 #include <compat/linux/linux_syscallargs.h>
 
 #include <compat/linux/common/linux_sched.h>
+
+#include <compat/linux/common/linux_prctl.h>
 
 static int linux_clone_nptl(struct lwp *, const struct linux_sys_clone_args *,
     register_t *);
@@ -229,8 +231,14 @@ linux_sys_clone3(struct lwp *l, const struct linux_sys_clone3_args *uap, registe
 	// XXX: what to do with tid_set and tid_set_size
 	// XXX: clone3 has stacksize, instead implement clone as a clone3
 	// wrapper.
+	memset(&clone_args, 0, sizeof(clone_args));
 	SCARG(&clone_args, flags) = flags;
+#ifdef __MACHINE_STACK_GROWS_UP
 	SCARG(&clone_args, stack) = (void *)(uintptr_t)cl_args.stack;
+#else
+	SCARG(&clone_args, stack) =
+	    (void *)(uintptr_t)((uintptr_t)cl_args.stack + cl_args.stack_size);
+#endif
 	SCARG(&clone_args, parent_tidptr) =
 	    (void *)(intptr_t)cl_args.parent_tid;
 	SCARG(&clone_args, tls) =
@@ -770,10 +778,48 @@ linux_sys_sched_setaffinity(struct lwp *l, const struct linux_sys_sched_setaffin
 		lid = curlwp->l_lid;
 	}
 
+	memset(&ssa, 0, sizeof(ssa));
 	SCARG(&ssa, pid) = pid;
 	SCARG(&ssa, lid) = lid;
 	SCARG(&ssa, size) = size;
 	SCARG(&ssa, cpuset) = (cpuset_t *)SCARG(uap, mask);
 
 	return sys__sched_setaffinity(l, &ssa, retval);
+}
+
+int
+linux_sys___prctl(struct lwp *l, const struct linux_sys___prctl_args *uap,
+    register_t *retval)
+{
+	/* {
+		syscallarg(int)    code;
+		syscallarg(void *) args[LINUX_SYS_MAXSYSARGS];
+	} */
+
+	unsigned int c = SCARG(uap, code);
+
+        /* TODO: add other commonly used prctl codes */
+	switch(c) {
+	case LINUX_PR_SET_NAME: {
+		struct sys__lwp_setname_args sls;
+
+		memset(&sls, 0, sizeof(sls));
+		SCARG(&sls, target) = 0;
+		SCARG(&sls, name) = (char *) SCARG(uap, args[0]);
+		return sys__lwp_setname(l, &sls, retval);
+	}
+	case LINUX_PR_GET_NAME: {
+		struct sys__lwp_getname_args slg;
+
+		memset(&slg, 0, sizeof(slg));
+		SCARG(&slg, target) = 0;
+		SCARG(&slg, name) = (char *) SCARG(uap, args[0]);
+		SCARG(&slg, len) = MAXCOMLEN;
+		return sys__lwp_getname(l, &slg, retval);
+	}
+	default:
+		printf("Unimplemented linux prctl code: (%d)", c);
+		return ENOSYS;
+	}
+
 }

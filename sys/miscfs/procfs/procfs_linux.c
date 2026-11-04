@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.88.2.1 2025/08/02 05:57:45 perseant Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.88.2.2 2026/11/04 23:27:53 perseant Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.88.2.1 2025/08/02 05:57:45 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.88.2.2 2026/11/04 23:27:53 perseant Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -200,7 +200,7 @@ procfs_domeminfo(struct lwp *curl, struct proc *p,
 		PGTOKB(uvmexp.npages),
 		PGTOKB(freepg),
 		0L,
-		PGTOKB(freepg),
+		PGTOKB(filepg),
 		PGTOKB(anonpg + filepg + execpg),
 		PGTOKB(uvmexp.swpages),
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));

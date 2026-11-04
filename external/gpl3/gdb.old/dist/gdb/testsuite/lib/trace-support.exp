@@ -1,4 +1,4 @@
-# Copyright (C) 1998-2023 Free Software Foundation, Inc.
+# Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -364,6 +364,20 @@ proc gdb_find_recursion_test_baseline { filename } {
 	default { }
     }
     return $baseline
+}
+
+# Return 1 if the IPA library is available and 0 otherwise.
+
+proc allow_in_proc_agent {} {
+    global objdir
+
+    if [target_info exists in_proc_agent] {
+	return 1
+    } elseif [file exists "$objdir/../../gdbserver/libinproctrace.so"] {
+	return 1
+    } else {
+	return 0
+    }
 }
 
 # Return the location of the IPA library.

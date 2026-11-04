@@ -1,6 +1,6 @@
 /* Python interface to record targets.
 
-   Copyright 2017-2023 Free Software Foundation, Inc.
+   Copyright 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PYTHON_PY_RECORD_H
-#define PYTHON_PY_RECORD_H
+#ifndef GDB_PYTHON_PY_RECORD_H
+#define GDB_PYTHON_PY_RECORD_H
 
 #include "inferior.h"
 #include "python-internal.h"
@@ -59,6 +59,9 @@ extern PyTypeObject recpy_insn_type;
 /* Python RecordFunctionSegment type.  */
 extern PyTypeObject recpy_func_type;
 
+/* Python RecordAuxiliary type.  */
+extern PyTypeObject recpy_aux_type;
+
 /* Create a new gdb.RecordInstruction object.  */
 extern PyObject *recpy_insn_new (thread_info *thread, enum record_method method,
 				 Py_ssize_t number);
@@ -71,4 +74,8 @@ extern PyObject *recpy_func_new (thread_info *thread, enum record_method method,
 extern PyObject *recpy_gap_new (int reason_code, const char *reason_string,
 				Py_ssize_t number);
 
-#endif /* PYTHON_PY_RECORD_H */
+/* Create a new gdb.RecordGap object.  */
+extern PyObject *recpy_aux_new (thread_info *thread, enum record_method method,
+				Py_ssize_t number);
+
+#endif /* GDB_PYTHON_PY_RECORD_H */

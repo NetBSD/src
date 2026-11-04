@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.17 2020/05/03 06:31:02 jdc Exp $ */
+/*	$NetBSD: disksubr.c,v 1.17.26.1 2026/11/04 23:22:35 perseant Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2020/05/03 06:31:02 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17.26.1 2026/11/04 23:22:35 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -64,7 +64,6 @@ __KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.17 2020/05/03 06:31:02 jdc Exp $");
 #include <sys/device.h>
 #include <sys/disklabel.h>
 #include <sys/disk.h>
-#include <sys/dkbad.h>
 
 #include <dev/sun/disklabel.h>
 
@@ -95,7 +94,7 @@ readdisklabel(dev_t dev, void (*strat)(struct buf *), struct disklabel *lp, stru
 	struct sun_disklabel *slp;
 	int error;
 
-	/* minimal requirements for archtypal disk label */
+	/* minimal requirements for archetypal disk label */
 	if (lp->d_secperunit == 0)
 		lp->d_secperunit = 0x1fffffff;
 	if (lp->d_npartitions == 0) {
@@ -386,27 +385,4 @@ disklabel_bsd_to_sun(struct disklabel *lp, char *cp)
 	sl->sl_cksum = cksum;
 
 	return (0);
-}
-
-/*
- * Search the bad sector table looking for the specified sector.
- * Return index if found.
- * Return -1 if not found.
- */
-int
-isbad(struct dkbad *bt, int cyl, int trk, int sec)
-{
-	int i;
-	long blk, bblk;
-
-	blk = ((long)cyl << 16) + (trk << 8) + sec;
-	for (i = 0; i < 126; i++) {
-		bblk = ((long)bt->bt_bad[i].bt_cyl << 16) +
-			bt->bt_bad[i].bt_trksec;
-		if (blk == bblk)
-			return (i);
-		if (blk < bblk || bblk < 0)
-			break;
-	}
-	return (-1);
 }

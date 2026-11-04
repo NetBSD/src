@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2022/06/11 16:41:55 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.6.4.1 2026/11/04 23:28:59 perseant Exp $
 #
 # Makefile for atari
 #
@@ -12,6 +12,7 @@ CPPFLAGS+=	-DSUPPORT_8_3_SOURCE_FILESYSTEM
 CHECK_ENTROPY=	no	# do not check entropy/offer adding
 NOPARTMAN=	yes
 NO_GPT=		yes
+NO_DISKSIZE_CHECKS=	yes	# we only have disklabel, can't do large disks
 NO_MBR=		yes
 NO_CLONES=	yes
 .endif

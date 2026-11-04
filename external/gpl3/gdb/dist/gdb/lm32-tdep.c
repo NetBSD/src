@@ -1,7 +1,7 @@
 /* Target-dependent code for Lattice Mico32 processor, for GDB.
    Contributed by Jon Beniston <jon@beniston.com>
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -447,15 +447,16 @@ lm32_frame_prev_register (const frame_info_ptr &this_frame,
   return trad_frame_get_prev_register (this_frame, info->saved_regs, regnum);
 }
 
-static const struct frame_unwind lm32_frame_unwind = {
+static const struct frame_unwind_legacy lm32_frame_unwind (
   "lm32 prologue",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   lm32_frame_this_id,
   lm32_frame_prev_register,
   NULL,
   default_frame_sniffer
-};
+);
 
 static CORE_ADDR
 lm32_frame_base_address (const frame_info_ptr &this_frame, void **this_cache)
@@ -535,9 +536,7 @@ lm32_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   return gdbarch;
 }
 
-void _initialize_lm32_tdep ();
-void
-_initialize_lm32_tdep ()
+INIT_GDB_FILE (lm32_tdep)
 {
   gdbarch_register (bfd_arch_lm32, lm32_gdbarch_init);
 }

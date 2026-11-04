@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -40,6 +40,7 @@ if {[build_executable $testfile.exp $testfile $srcfile debug] == -1} {
 
 set corefile [core_find $binfile {}]
 if {$corefile == ""} {
+    untested "unable to create or find corefile"
     return 0
 }
 
@@ -170,7 +171,8 @@ with_test_prefix "renamed binfile" {
 
 # Restart and run to the abort call.
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 if {![runto_main]} {
     return
@@ -194,7 +196,8 @@ if {!$core_supported} {
 gdb_test_no_output "maint print core-file-backed-mappings" \
     "maint print core-file-backed-mapping with no core file"
 
-clean_restart $binfile
+clean_restart
+gdb_load $binfile
 
 set core_loaded [gdb_core_cmd "$corefile" "re-load generated corefile"]
 if { $core_loaded == -1 } {

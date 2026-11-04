@@ -1,0 +1,57 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+server 10.53.0.4 {
+	provide-ixfr no;
+};
+
+server 10.53.0.2 {
+	request-ixfr no;
+};
+
+zone "zone000000.example" {
+	type secondary;
+	file "zone000000.example.bk";
+	primaries { 10.53.0.2; };
+};
+
+zone "zone000001.example" {
+	type secondary;
+	file "zone000001.example.bk";
+	primaries { 10.53.0.2; };
+};
+
+zone "zone000002.example" {
+	type secondary;
+	file "zone000002.example.bk";
+	primaries { 10.53.0.2; };
+};
+
+zone "zone000003.example" {
+	type secondary;
+	file "zone000003.example.bk";
+	primaries { 10.53.0.2; };
+};
+
+zone "zone000004.example" {
+	type secondary;
+	file "zone000004.example.bk";
+	primaries { 10.53.0.2; };
+};

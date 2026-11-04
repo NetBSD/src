@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc_asm_arm67.S,v 1.8 2022/10/20 06:58:38 skrll Exp $	*/
+/*	$NetBSD: cpufunc_asm_arm67.S,v 1.8.8.1 2026/11/04 23:20:04 perseant Exp $	*/
 
 /*
  * Copyright (c) 1997,1998 Mark Brinicombe.
@@ -88,7 +88,7 @@ ENTRY(arm67_cache_flush)
 /*
  * Context switch.
  *
- * These are the CPU-specific parts of the context switcher cpu_switch()
+ * These are the CPU-specific parts of pmap_activate()
  * These functions actually perform the TTB reload.
  */
 ENTRY(arm67_context_switch)

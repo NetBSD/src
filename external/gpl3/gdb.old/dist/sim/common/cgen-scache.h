@@ -1,5 +1,5 @@
 /* Simulator header for cgen scache support.
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
    Contributed by Cygnus Solutions.
 
 This file is part of GDB, the GNU debugger.
@@ -117,7 +117,7 @@ extern void scache_flush_cpu (SIM_CPU *);
 /* Scache profiling support.  */
 
 /* Print summary scache usage information.  */
-extern void scache_print_profile (SIM_CPU *cpu, int verbose);
+extern void scache_print_profile (SIM_CPU *cpu, bool verbose);
 
 #if WITH_PROFILE_SCACHE_P
 

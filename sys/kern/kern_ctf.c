@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ctf.c,v 1.8.22.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_ctf.c,v 1.8.22.2 2026/11/04 23:27:47 perseant Exp $	*/
 /*-
  * Copyright (c) 2008 John Birrell <jb@freebsd.org>
  * All rights reserved.
@@ -27,19 +27,25 @@
  * $FreeBSD: src/sys/kern/kern_ctf.c,v 1.1.4.1 2009/08/03 08:13:06 kensmith Exp $
  */
 
+#define _KSYMS_PRIVATE
 #define ELFSIZE ARCH_ELFSIZE
-#include <sys/proc.h>
-#include <sys/module.h>
+
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: kern_ctf.c,v 1.8.22.2 2026/11/04 23:27:47 perseant Exp $");
+
+#include <sys/types.h>
+
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
-#include <sys/kmem.h>
-#include <sys/malloc.h>
-#include <sys/kobj_impl.h>
-#include <sys/kobj.h>
 #include <sys/kern_ctf.h>
-
-#define _KSYMS_PRIVATE
+#include <sys/kmem.h>
+#include <sys/kobj.h>
+#include <sys/kobj_impl.h>
 #include <sys/ksyms.h>
+#include <sys/malloc.h>
+#include <sys/module.h>
+#include <sys/proc.h>
+#include <sys/sdt.h>
 
 #include <net/zlib.h>
 
@@ -108,9 +114,9 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 	}
 
 	if (mod->mod_kobj == NULL) {
-	    	/* no kobj entry, try building from ksyms list */
+		/* no kobj entry, try building from ksyms list */
 		if (st == NULL) {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 			goto out;
 		}
 
@@ -123,7 +129,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 		mc->nsym   = st->sd_symsize / sizeof(Elf_Sym);
 	} else {
 		if (kobj_find_section(mod->mod_kobj, ".SUNW_ctf", (void **)&ctfaddr, &ctfsize)) {
-			error = ENOENT;
+			error = SET_ERROR(ENOENT);
 			goto out;
 		}
 
@@ -134,20 +140,20 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 	}
 
 	if (ctfaddr == NULL) {
-	    	error = ENOENT;
+		error = SET_ERROR(ENOENT);
 		goto out;
 	}
 
 	/* Check the CTF magic number. */
 	memcpy(&ctfmagic, ctfaddr, sizeof ctfmagic);
 	if (ctfmagic != CTF_MAGIC) {
-	    	error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
 	/* Check if version 2 or 3. */
 	if (ctfaddr[2] != 2 && ctfaddr[2] != 3) {
-	    	error = EINVAL;
+		error = SET_ERROR(EINVAL);
 		goto out;
 	}
 
@@ -180,7 +186,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 	 */
 	if (compressed) {
 		if ((ctfbuf = malloc(sz, M_TEMP, M_WAITOK)) == NULL) {
-			error = ENOMEM;
+			error = SET_ERROR(ENOMEM);
 			goto out;
 		}
 		ctftab = ctfbuf;
@@ -206,7 +212,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 		zs.zfree = z_free;
 
 		if (inflateInit2(&zs, MAX_WBITS) != Z_OK) {
-			error = EIO;
+			error = SET_ERROR(EIO);
 			goto out;
 		}
 
@@ -217,7 +223,7 @@ mod_ctf_get(struct module *mod, mod_ctf_t **mcp)
 		inflateReset(&zs);
 		if ((ret = inflate(&zs, Z_FINISH)) != Z_STREAM_END) {
 			printf("%s(%d): zlib inflate returned %d\n", __func__, __LINE__, ret);
-			error = EIO;
+			error = SET_ERROR(EIO);
 			goto out;
 		}
 	}

@@ -1,4 +1,4 @@
-# Copyright 2020-2024 Free Software Foundation, Inc.
+# Copyright 2020-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -29,9 +29,6 @@ if {![runto [gdb_get_line_number "First Breakpoint"]]} {
     perror "couldn't run to breakpoint First Breakpoint"
     return -1
 }
-
-# Avoid shared lib symbols.
-gdb_test_no_output "set auto-solib-add off"
 
 # Avoid libc symbols, in particular the 'array' type.
 gdb_test_no_output "nosharedlibrary"

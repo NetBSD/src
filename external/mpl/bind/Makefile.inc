@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.15.2.1 2025/08/02 05:50:45 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.15.2.2 2026/11/04 23:15:29 perseant Exp $
 
 .if !defined(BIND9_MAKEFILE_INC)
 BIND9_MAKEFILE_INC=yes
@@ -17,13 +17,17 @@ CWARNFLAGS.clang+=	-Wno-unused-value -Wno-parentheses \
 LIBUVDIR=	${NETBSDSRCDIR}/external/mit/libuv
 LIBUVOBJDIR!=   cd ${LIBUVDIR}/lib && ${PRINTOBJDIR}
 LIBURCUDIR=	${NETBSDSRCDIR}/external/lgpl2/userspace-rcu
-LIBURCUMEMBOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-memb && ${PRINTOBJDIR}
+LIBURCUMBOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-mb && ${PRINTOBJDIR}
 LIBURCUCDSOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-cds && ${PRINTOBJDIR}
 LIBURCUCOMMONOBJDIR!=   cd ${LIBURCUDIR}/lib/liburcu-common && ${PRINTOBJDIR}
 CPPFLAGS+=	-I${LIBUVDIR}/dist/include
 CPPFLAGS+=	-I${LIBURCUDIR}/dist/include -I${LIBURCUDIR}/include
 CFLAGS+=	-std=gnu18
 LINTFLAGS+=	-Ac11
+
+LINTFLAGS+=	-X 220	# fallthrough on case statement
+LINTFLAGS+=	-X 226	# static variable 'X' unused (used for constexpr)
+LINTFLAGS+=	-X 247	# pointer cast from 'X' to unrelated 'Y' (isc__magic_t)
 
 BIND_SRCDIR:=	${.PARSEDIR}
 IDIST=		${BIND_SRCDIR}/dist
@@ -57,7 +61,7 @@ DBG=-g3 -gstabs
 .if defined(NAMED_DEBUG)
 LDADD+=		-lisccfg_g -ldns_g -lns_g
 LDADD+=		-lisccc_g -lisc_g
-LDADD+=		-L${LIBURCUMEMBOBJDIR} -lurcu-memb_g
+LDADD+=		-L${LIBURCUMBOBJDIR} -lurcu-mb_g
 LDADD+=		-L${LIBURCUCDSOBJDIR} -lurcu-cds_g
 LDADD+=		-L${LIBURCUCOMMONOBJDIR} -lurcu-common_g
 LDADD+=		-L${LIBUVOBJDIR} -luv_g
@@ -66,7 +70,7 @@ LDADD+=		-lexecinfo_g -lelf_g -lkvm_g -lz_g -lm_g
 LDADD+=		-lisccfg -ldns -lns
 DPADD+=		${LIBISCCFG} ${LIBDNS} ${LIBNS}
 LDADD+=		-lisccc -lisc 
-LDADD+=		-L${LIBURCUMEMBOBJDIR} -lurcu-memb
+LDADD+=		-L${LIBURCUMBOBJDIR} -lurcu-mb
 LDADD+=		-L${LIBURCUCDSOBJDIR} -lurcu-cds
 LDADD+=		-L${LIBURCUCOMMONOBJDIR} -lurcu-common
 LDADD+=		-L${LIBUVOBJDIR} -luv

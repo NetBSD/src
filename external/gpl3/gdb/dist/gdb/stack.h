@@ -1,6 +1,6 @@
 /* Stack manipulation commands, for GDB the GNU Debugger.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef STACK_H
-#define STACK_H
+#ifndef GDB_STACK_H
+#define GDB_STACK_H
 
 gdb::unique_xmalloc_ptr<char> find_frame_funname (const frame_info_ptr &frame,
 						  enum language *funlang,
@@ -84,4 +84,4 @@ void frame_apply_all_cmd_completer (struct cmd_list_element *ignore,
 				    completion_tracker &tracker,
 				    const char *text, const char */*word*/);
 
-#endif /* #ifndef STACK_H */
+#endif /* GDB_STACK_H */

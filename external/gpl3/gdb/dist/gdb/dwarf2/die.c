@@ -1,6 +1,6 @@
 /* DWARF DIEs
 
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -33,27 +33,6 @@ die_info::allocate (struct obstack *obstack, int num_attrs)
   struct die_info *die = (struct die_info *) obstack_alloc (obstack, size);
   memset (die, 0, size);
   return die;
-}
-
-/* See die.h.  */
-
-hashval_t
-die_info::hash (const void *item)
-{
-  const struct die_info *die = (const struct die_info *) item;
-
-  return to_underlying (die->sect_off);
-}
-
-/* See die.h.  */
-
-int
-die_info::eq (const void *item_lhs, const void *item_rhs)
-{
-  const struct die_info *die_lhs = (const struct die_info *) item_lhs;
-  const struct die_info *die_rhs = (const struct die_info *) item_rhs;
-
-  return die_lhs->sect_off == die_rhs->sect_off;
 }
 
 static void
@@ -111,6 +90,8 @@ dump_die_shallow (struct ui_file *f, int indent, struct die_info *die)
 	  gdb_puts (hex_string (die->attrs[i].as_unsigned ()), f);
 	  break;
 	case DW_FORM_GNU_ref_alt:
+	case DW_FORM_ref_sup4:
+	case DW_FORM_ref_sup8:
 	  gdb_printf (f, "alt ref address: ");
 	  gdb_puts (hex_string (die->attrs[i].as_unsigned ()), f);
 	  break;
@@ -144,6 +125,7 @@ dump_die_shallow (struct ui_file *f, int indent, struct die_info *die)
 	case DW_FORM_strx:
 	case DW_FORM_GNU_str_index:
 	case DW_FORM_GNU_strp_alt:
+	case DW_FORM_strp_sup:
 	  gdb_printf (f, "string: \"%s\" (%s canonicalized)",
 		      die->attrs[i].as_string ()
 		      ? die->attrs[i].as_string () : "",
@@ -205,9 +187,9 @@ dump_die_1 (struct ui_file *f, int level, int max_level, struct die_info *die)
 	}
     }
 
-  if (die->sibling != NULL && level > 0)
+  if (die->next != NULL && level > 0)
     {
-      dump_die_1 (f, level, max_level, die->sibling);
+      dump_die_1 (f, level, max_level, die->next);
     }
 }
 

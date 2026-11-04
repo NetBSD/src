@@ -1,4 +1,4 @@
-/* $NetBSD: simplefb.c,v 1.15 2021/08/30 22:47:24 jmcneill Exp $ */
+/* $NetBSD: simplefb.c,v 1.15.10.1 2026/11/04 23:21:52 perseant Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_wsdisplay_compat.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.15 2021/08/30 22:47:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.15.10.1 2026/11/04 23:21:52 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: simplefb.c,v 1.15 2021/08/30 22:47:24 jmcneill Exp $
 #include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_console.h>
 
 #include <dev/wsfb/genfbvar.h>
 
@@ -156,7 +157,8 @@ simplefb_attach_genfb(struct simplefb_softc *sc)
 	}
 
 	if (strcmp(format, "a8b8g8r8") == 0 ||
-	    strcmp(format, "x8r8g8b8") == 0) {
+	    strcmp(format, "x8r8g8b8") == 0 ||
+	    strcmp(format, "a8r8g8b8") == 0) {
 		depth = 32;
 	} else if (strcmp(format, "r8g8b8a8") == 0 ||
 		   strcmp(format, "b8g8r8x8") == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.203.10.1 2025/08/02 05:57:43 perseant Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.203.10.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.203.10.1 2025/08/02 05:57:43 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.203.10.2 2026/11/04 23:27:50 perseant Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -179,7 +179,16 @@ const struct sockaddr_un sun_noname = {
 	.sun_len = offsetof(struct sockaddr_un, sun_path),
 	.sun_family = AF_LOCAL,
 };
-ino_t	unp_ino;			/* prototype for fake inode numbers */
+
+/* prototype for fake inode numbers */
+#ifdef __HAVE_ATOMIC64_OPS
+volatile uint64_t	unp_ino __cacheline_aligned;
+#else
+struct {
+	uint64_t	num;
+	kmutex_t	lock;
+} unp_ino __cacheline_aligned;
+#endif
 
 static struct mbuf * unp_addsockcred(struct lwp *, struct mbuf *);
 static void   unp_discard_later(file_t *);
@@ -233,6 +242,10 @@ uipc_init(void)
 	    NULL, &unp_thread_lwp, "unpgc");
 	if (error != 0)
 		panic("uipc_init %d", error);
+
+#ifndef __HAVE_ATOMIC64_OPS
+	mutex_init(&unp_ino.lock, MUTEX_DEFAULT, IPL_NONE);
+#endif
 }
 
 static void
@@ -555,8 +568,8 @@ unp_send(struct socket *so, struct mbuf *m, struct sockaddr *nam,
 		 * Wake up readers.
 		 */
 		if (control) {
-			if (sbappendcontrol(rcv, m, control) != 0)
-				control = NULL;
+			sbappendcontrol(rcv, m, control);
+			control = NULL;
 		} else {
 			switch(so->so_type) {
 			case SOCK_SEQPACKET:
@@ -906,8 +919,15 @@ unp_stat(struct socket *so, struct stat *ub)
 		break;
 	}
 	ub->st_dev = NODEV;
-	if (unp->unp_ino == 0)
-		unp->unp_ino = unp_ino++;
+	if (unp->unp_ino == 0) {
+#ifdef __HAVE_ATOMIC64_OPS
+		unp->unp_ino = atomic_inc_64_nv(&unp_ino);
+#else
+		mutex_enter(&unp_ino.lock);
+		unp->unp_ino = ++unp_ino.num;
+		mutex_exit(&unp_ino.lock);
+#endif
+	}
 	ub->st_atimespec = ub->st_mtimespec = ub->st_ctimespec = unp->unp_ctime;
 	ub->st_ino = unp->unp_ino;
 	ub->st_uid = so->so_uidinfo->ui_uid;

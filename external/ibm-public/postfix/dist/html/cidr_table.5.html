@@ -17,10 +17,12 @@ CIDR_TABLE(5)                                                    CIDR_TABLE(5)
 
 <b><a name="description">DESCRIPTION</a></b>
        The  Postfix mail system uses optional lookup tables.  These tables are
-       usually in <b>dbm</b> or <b>db</b> format.  Alternatively, lookup tables can be spec-
-       ified in CIDR (Classless Inter-Domain Routing) form. In this case, each
-       input is compared against a list of patterns. When a  match  is  found,
-       the corresponding result is returned and the search is terminated.
+       usually in <b><a href="lmdb_table.5.html">lmdb</a>:</b>, <b><a href="CDB_README.html">cdb</a>:</b>, <b><a href="DATABASE_README.html#types">hash</a>:</b>, or <b><a href="DATABASE_README.html#types">dbm</a>:</b> format.
+
+       Alternatively, lookup  tables  can  be  specified  in  CIDR  (Classless
+       Inter-Domain  Routing)  form.  In  this  case,  each  input is compared
+       against a list of patterns. When a match is  found,  the  corresponding
+       result is returned and the search is terminated.
 
        To  find  out  what types of lookup tables your Postfix system supports
        use the "<b>postconf -m</b>" command.

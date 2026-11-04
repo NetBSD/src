@@ -1,4 +1,4 @@
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -38,13 +38,17 @@ proc_with_prefix test_directories { } {
 	# doesn't set search directories on remote host.
 	set directories ".*\\\$cdir.\\\$cwd"
     } else {
-	set escaped_directory [string_to_regexp "$::srcdir/$::subdir"]
+	set directory [host_file_normalize "$::srcdir/$::subdir"]
+	set escaped_directory [string_to_regexp $directory]
 	set directories "$escaped_directory.\\\$cdir.\\\$cwd"
     }
     gdb_test "python print (gdb.parameter ('directories'))" $directories
 }
 
 proc_with_prefix test_data_directory { } {
+    # Proc assumes local host.
+    require {!is_remote host}
+
     clean_restart
 
     # Check we can correctly read the data-directory parameter.  First,
@@ -185,6 +189,60 @@ proc_with_prefix test_enum_parameter { } {
 	"Undefined item: \"three\".*" "set invalid enum parameter"
 }
 
+# Test an color parameter.
+proc_with_prefix test_color_parameter { } {
+    require {!is_remote host}
+
+    global env
+    with_ansi_styling_terminal {
+	# This enables 256 colors support and disables colors approximation.
+	setenv TERM xterm-256color
+	setenv COLORTERM truecolor
+
+	clean_restart
+
+	gdb_test_multiline "color gdb parameter" \
+	    "python" "" \
+	    "class TestColorParam (gdb.Parameter):" "" \
+	    "   \"\"\"When set, test param does something useful. When disabled, does nothing.\"\"\"" "" \
+	    "   show_doc = \"Show the state of the color\"" ""\
+	    "   set_doc = \"Set the state of the color\"" "" \
+	    "   def get_show_string (self, pvalue):" ""\
+	    "      return \"The state of the color is \" + str(pvalue)" ""\
+	    "   def get_set_string (self):" ""\
+	    "      return \"The state of the color has been set to \" + str(self.value)" ""\
+	    "   def __init__ (self, name):" "" \
+	    "      super (TestColorParam, self).__init__ (name, gdb.COMMAND_DATA, gdb.PARAM_COLOR)" "" \
+	    "      self.value = gdb.Color(\"green\")" "" \
+	    "test_color_param = TestColorParam ('print test-color-param')" ""\
+	    "end"
+
+	gdb_test "python print (test_color_param.value)" "green" \
+	    "test color parameter value is green"
+	gdb_test "show print test-color-param" \
+	    "The state of the color is green.*" \
+	    "show parameter is initial value"
+	gdb_test "set print test-color-param 255" \
+	    "The state of the color has been set to 255" "set color to 255"
+	gdb_test "show print test-color-param" \
+	    "The state of the color is 255.*" "show parameter is new value"
+	gdb_test "python print (test_color_param.value)" "255" \
+	    "test color parameter value is 255"
+	gdb_test_no_output "python test_color_param.value = gdb.Color(254)" \
+	    "assign test_color_param.value to 254"
+	gdb_test "python print (test_color_param.value)" "254" \
+	    "test color parameter value is integer"
+	gdb_test_no_output "python test_color_param.value =  gdb.Color('#FED210')" \
+	    "assign test_color_param.value to #FED210"
+	gdb_test "python print (test_color_param.value.components)" "\\(254, 210, 16\\)" \
+	    "test color parameter components from RGB hex tripple value"
+	gdb_test "set print test-color-param 256" \
+	    "integer 256 out of range.*" "set invalid color parameter"
+	gdb_test "python test_color_param.value = gdb.Color(256)" \
+	    ".*Error occurred in Python: Palette color index 256 is out of range.*" "set invalid color value"
+    }
+}
+
 # Test a file parameter.
 proc_with_prefix test_file_parameter { } {
     clean_restart
@@ -292,6 +350,91 @@ proc_with_prefix test_really_undocumented_parameter { } {
     gdb_test "help set print" \
 	"set print test-nodoc-param -- Set the current value of 'print test-nodoc-param'\\..*" \
 	"test general help"
+}
+
+# Test a parameter in which the __doc__ string is empty or None.
+proc_with_prefix test_empty_doc_parameter {} {
+    gdb_test_multiline "empty __doc__ parameter" \
+	"python" "" \
+	"class EmptyDocParam(gdb.Parameter):" "" \
+	"   __doc__ = \"\"" "" \
+	"   def __init__(self, name):" "" \
+	"      super ().__init__(name, gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"      self.value = True" "" \
+	"test_empty_doc_param = EmptyDocParam('print test-empty-doc-param')" ""\
+	"end"
+
+    # Setting the __doc__ string to empty means GDB will completely
+    # elide it from the output.
+    gdb_test "help set print test-empty-doc-param" \
+	"^Set the current value of 'print test-empty-doc-param'\\."
+
+    gdb_test_multiline "None __doc__ parameter" \
+	"python" "" \
+	"class NoneDocParam(gdb.Parameter):" "" \
+	"   __doc__ = None" "" \
+	"   def __init__(self, name):" "" \
+	"      super ().__init__(name, gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"      self.value = True" "" \
+	"test_none_doc_param = NoneDocParam('print test-none-doc-param')" ""\
+	"end"
+
+    # Setting the __doc__ string to None, or anything else that isn't
+    # a string, causes GDB to use a default string instead.
+    gdb_test "help set print test-none-doc-param" \
+	[multi_line \
+	     "^Set the current value of 'print test-none-doc-param'\\." \
+	     "This command is not documented\\."]
+}
+
+# Test a parameter in which the set_doc/show_doc strings are either
+# empty, or None.
+proc_with_prefix test_empty_set_show_doc_parameter {} {
+    gdb_test_multiline "empty set/show doc parameter" \
+	"python" "" \
+	"class EmptySetShowParam(gdb.Parameter):" "" \
+	"   set_doc = \"\"" "" \
+	"   show_doc = \"\"" "" \
+	"   def __init__(self, name):" "" \
+	"      super ().__init__(name, gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"      self.value = True" "" \
+	"test_empty_set_show_param = EmptySetShowParam('print test-empty-set-show-param')" ""\
+	"end"
+
+    # Setting the set_doc/show_doc string to empty means GDB will use
+    # a suitable default string.
+    gdb_test "help set print test-empty-set-show-param" \
+	[multi_line \
+	     "^Set the current value of 'print test-empty-set-show-param'\\." \
+	     "This command is not documented\\."]
+
+    gdb_test "help show print test-empty-set-show-param" \
+	[multi_line \
+	     "^Show the current value of 'print test-empty-set-show-param'\\." \
+	     "This command is not documented\\."]
+
+    gdb_test_multiline "None set/show doc parameter" \
+	"python" "" \
+	"class NoneSetShowParam(gdb.Parameter):" "" \
+	"   set_doc = None" "" \
+	"   show_doc = None" "" \
+	"   def __init__(self, name):" "" \
+	"      super ().__init__(name, gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"      self.value = True" "" \
+	"test_none_set_show_param = NoneSetShowParam('print test-none-set-show-param')" ""\
+	"end"
+
+    # Setting the set_doc/show_doc string to None (or any non-string
+    # value) means GDB will use a suitable default string.
+    gdb_test "help set print test-none-set-show-param" \
+	[multi_line \
+	     "^Set the current value of 'print test-none-set-show-param'\\." \
+	     "This command is not documented\\."]
+
+    gdb_test "help show print test-none-set-show-param" \
+	[multi_line \
+	     "^Show the current value of 'print test-none-set-show-param'\\." \
+	     "This command is not documented\\."]
 }
 
 # Test deprecated API. Do not use in your own implementations.
@@ -617,20 +760,123 @@ proc_with_prefix test_ambiguous_parameter {} {
 	"Parameter .* is ambiguous.*Error occurred in Python.*"
     gdb_test "python print(gdb.parameter('test-ambiguous-value-1a'))" \
 	"Could not find parameter.*Error occurred in Python.*"
+
+    # Create command prefixs 'set foo1' and 'show foo1'.
+    gdb_test_no_output "python gdb.Command('set foo1', gdb.COMMAND_NONE, prefix=True)"
+    gdb_test_no_output "python gdb.Command('show foo1', gdb.COMMAND_NONE, prefix=True)"
+
+    # Create a parameter under 'foo1', but use a truncated prefix.  At
+    # this point though, the prefix is not ambiguous.
+    gdb_test_no_output "python gdb.Parameter('foo bar', gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)"
+    gdb_test "python print(gdb.parameter('foo1 bar'))" "False"
+
+    # Create another prefix command, similar in name to the first.
+    gdb_test_no_output "python gdb.Command('set foo2', gdb.COMMAND_NONE, prefix=True)"
+    gdb_test_no_output "python gdb.Command('show foo2', gdb.COMMAND_NONE, prefix=True)"
+
+    # An attempt to create a parameter using an ambiguous prefix will give an error.
+    gdb_test "python gdb.Parameter('foo baz', gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" \
+	[multi_line \
+	     "Python Exception <class 'RuntimeError'>: Could not find command prefix foo\\." \
+	     "Error occurred in Python: Could not find command prefix foo\\."]
+}
+
+# Check that creating a gdb.Parameter with an unknown command prefix results in an error.
+proc_with_prefix test_unknown_prefix {} {
+    gdb_test_multiline "create parameter" \
+	"python" "" \
+	"class UnknownPrefixParam(gdb.Parameter):" "" \
+	"   def __init__ (self, name):" "" \
+	"      super().__init__ (name, gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"      self.value = True" "" \
+	"end"
+
+    foreach prefix { "unknown-prefix" "style unknown-prefix" "style disassembler unknown-prefix"} {
+	gdb_test "python UnknownPrefixParam('$prefix new-param')" \
+	    [multi_line \
+		 "Python Exception <class 'RuntimeError'>: Could not find command prefix $prefix\\." \
+		 "Error occurred in Python: Could not find command prefix $prefix\\."]
+    }
+}
+
+# Test the default behaviour of a set/show parameter prefix command.
+proc_with_prefix test_set_show_parameters {} {
+    # This first set/show prefix command doesn't have an invoke
+    # method.  As such, GDB installs the default invoke behaviour; set
+    # prints the full list of sub-commands, and show prints all the
+    # sub-command values.
+    gdb_test_multiline "Setup set/show parameter prefix with no invoke" \
+	"python" "" \
+	"class TestParamPrefix(gdb.Command):" "" \
+	"   \"\"\"TestParamPrefix documentation string.\"\"\"" "" \
+	"   def __init__(self, name):" "" \
+	"      super().__init__(name, gdb.COMMAND_NONE, prefix = True)" "" \
+	"TestParamPrefix('set test-prefix')" "" \
+	"TestParamPrefix('show test-prefix')" "" \
+	"gdb.Parameter('test-prefix param-1', gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"gdb.Parameter('test-prefix param-2', gdb.COMMAND_NONE, gdb.PARAM_INTEGER)" "" \
+	"gdb.Parameter('test-prefix param-3', gdb.COMMAND_NONE, gdb.PARAM_STRING)" "" \
+	"end"
+
+    gdb_test "set test-prefix" \
+	[multi_line \
+	     "List of \"set test-prefix\" subcommands:" \
+	     "" \
+	     "set test-prefix param-1 -- Set the current value of 'test-prefix param-1'." \
+	     "set test-prefix param-2 -- Set the current value of 'test-prefix param-2'." \
+	     "set test-prefix param-3 -- Set the current value of 'test-prefix param-3'." \
+	     "" \
+	     "Type \"help set test-prefix\" followed by subcommand name for full documentation\\." \
+	     "Type \"apropos word\" to search for commands related to \"word\"\\." \
+	     "Type \"apropos -v word\" for full documentation of commands related to \"word\"\\." \
+	     "Command name abbreviations are allowed if unambiguous\\."]
+
+    gdb_test "show test-prefix" \
+	[multi_line \
+	     "test-prefix param-1:  The current value of 'test-prefix param-1' is \"off\"\\." \
+	     "test-prefix param-2:  The current value of 'test-prefix param-2' is \"0\"\\." \
+	     "test-prefix param-3:  The current value of 'test-prefix param-3' is \"\"\\."]
+
+    # This next set/show prefix has an invoke method, which will be
+    # called instead of the default behaviour tested above.
+    gdb_test_multiline "Setup set/show parameter prefix with invoke" \
+	"python" "" \
+	"class TestParamPrefix(gdb.Command):" "" \
+	"   \"\"\"TestParamPrefix documentation string.\"\"\"" "" \
+	"   def __init__(self, name, mode):" "" \
+	"      self._mode = mode" "" \
+	"      super().__init__(self._mode + ' ' + name, gdb.COMMAND_NONE, prefix = True)" "" \
+	"   def invoke(self, args, from_tty):" "" \
+	"      print('invoke -- ' + self._mode)" "" \
+	"TestParamPrefix('test-prefix-2', 'set')" "" \
+	"TestParamPrefix('test-prefix-2', 'show')" "" \
+	"gdb.Parameter('test-prefix-2 param-1', gdb.COMMAND_NONE, gdb.PARAM_BOOLEAN)" "" \
+	"gdb.Parameter('test-prefix-2 param-2', gdb.COMMAND_NONE, gdb.PARAM_INTEGER)" "" \
+	"gdb.Parameter('test-prefix-2 param-3', gdb.COMMAND_NONE, gdb.PARAM_STRING)" "" \
+	"end"
+
+    gdb_test "set test-prefix-2" "^invoke -- set"
+
+    gdb_test "show test-prefix-2" "^invoke -- show"
 }
 
 test_directories
 test_data_directory
 test_boolean_parameter
 test_enum_parameter
+test_color_parameter
 test_file_parameter
 test_undocumented_parameter
 test_really_undocumented_parameter
+test_empty_doc_parameter
+test_empty_set_show_doc_parameter
 test_deprecated_api_parameter
 test_gdb_parameter
 test_integer_parameter
 test_throwing_parameter
 test_language
 test_ambiguous_parameter
+test_unknown_prefix
+test_set_show_parameters
 
 rename py_param_test_maybe_no_output ""

@@ -1,6 +1,6 @@
 /* Functions specific to running GDB native on HPPA running GNU/Linux.
 
-   Copyright (C) 2004-2024 Free Software Foundation, Inc.
+   Copyright (C) 2004-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -383,9 +383,7 @@ fill_fpregset (const struct regcache *regcache,
    }
 }
 
-void _initialize_hppa_linux_nat ();
-void
-_initialize_hppa_linux_nat ()
+INIT_GDB_FILE (hppa_linux_nat)
 {
   /* Register the target.  */
   linux_target = &the_hppa_linux_nat_target;

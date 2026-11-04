@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.105.2.1 2025/08/02 05:57:44 perseant Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.105.2.2 2026/11/04 23:27:50 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.105.2.1 2025/08/02 05:57:44 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.105.2.2 2026/11/04 23:27:50 perseant Exp $");
 
 #include "veriexec.h"
 
@@ -542,7 +542,7 @@ vfs_insmntque(vnode_t *vp, struct mount *mp)
 	struct mount *omp;
 	kmutex_t *lock;
 
-	KASSERT(mp == NULL || (mp->mnt_iflag & IMNT_UNMOUNT) == 0 ||
+	KASSERT(mp == NULL || (mp->mnt_iflag & IMNT_GONE) == 0 ||
 	    vp->v_tag == VT_VFS);
 
 	/*

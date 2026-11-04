@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.30.10.1 2025/08/02 05:55:42 perseant Exp $	*/
+/*	$NetBSD: param.h,v 1.30.10.2 2026/11/04 23:20:43 perseant Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -51,10 +51,6 @@
 #define	SEGOFSET	(NBSEG - 1)	/* byte offset into segment */
 
 #define	KERNBASE	0x00000000	/* start of kernel virtual */
-#define	BTOPKERNBASE	((u_long)KERNBASE >> PGSHIFT)
-
-#define	SSIZE		(1)		/* initial stack size/NBPG */
-#define	SINCR		(1)		/* increment of stack/NBPG */
 
 #ifdef DIAGNOSTIC
 #define	UPAGES		5		/* pages of u-area + redzone */

@@ -1,4 +1,4 @@
-# Copyright 2018-2024 Free Software Foundation, Inc.
+# Copyright 2018-2025 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -83,7 +83,7 @@ proc gdb_spawn_with_ld_preload {lib} {
 	# ASan runtime does not come first in initial library list; you should
 	# either link runtime to your application or manually preload it with
 	# LD_PRELOAD.
-	set_sanitizer_default ASAN_OPTIONS verify_asan_link_order 0
+	append_environment_default ASAN_OPTIONS verify_asan_link_order 0
 
 	gdb_start
     }

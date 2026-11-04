@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.25 2023/09/28 06:24:37 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.25.6.1 2026/11/04 23:21:10 perseant Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -142,6 +142,20 @@ pmap_md_vca_clean(struct vm_page_md *mdpg, vaddr_t va, int op)
 {
 }
 
+static inline bool
+pmap_md_kernel_vaddr_p(vaddr_t va)
+{
+	return false;
+}
+
+static inline paddr_t
+pmap_md_kernel_vaddr_to_paddr(vaddr_t vax)
+{
+	/* Not used due to false from pmap_md_kernel_vaddr_p */
+
+	return 0;
+}
+
 static __inline size_t
 pmap_md_tlb_asid_max(void)
 {
@@ -156,17 +170,17 @@ pmap_md_ok_to_steal_p(const uvm_physseg_t bank, size_t npgs)
 }
 
 static __inline void
-pmap_md_xtab_activate(struct pmap *pm, struct lwp *l)
+pmap_md_asid_activate(tlb_asid_t asid, struct pmap *pm, struct lwp *l)
 {
 
-	/* nothing */
+	tlb_set_asid(asid, pm);
 }
 
 static __inline void
-pmap_md_xtab_deactivate(struct pmap *pm)
+pmap_md_asid_deactivate(struct pmap *pm)
 {
 
-	/* nothing */
+	tlb_set_asid(KERNEL_PID, pmap_kernel());
 }
 
 #endif

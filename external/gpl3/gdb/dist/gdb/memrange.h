@@ -1,6 +1,6 @@
 /* The memory range data structure, and associated utilities.
 
-   Copyright (C) 2010-2024 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef MEMRANGE_H
-#define MEMRANGE_H
+#ifndef GDB_MEMRANGE_H
+#define GDB_MEMRANGE_H
 
 /* Defines a [START, START + LENGTH) memory range.  */
 
@@ -62,4 +62,4 @@ extern int mem_ranges_overlap (CORE_ADDR start1, int len1,
 
 extern void normalize_mem_ranges (std::vector<mem_range> *memory);
 
-#endif
+#endif /* GDB_MEMRANGE_H */

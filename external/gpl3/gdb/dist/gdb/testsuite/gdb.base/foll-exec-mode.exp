@@ -1,4 +1,4 @@
-#    Copyright 1997-2024 Free Software Foundation, Inc.
+#    Copyright 1997-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -127,7 +127,7 @@ proc do_follow_exec_mode_tests { mode cmd infswitch } {
 	# past it.
 	#
 	if {$cmd == "continue"} {
-	    gdb_breakpoint "$execd_line"
+	    gdb_breakpoint "$execd_line" "allow-pending"
 	}
 
 	# Execute past the exec call.

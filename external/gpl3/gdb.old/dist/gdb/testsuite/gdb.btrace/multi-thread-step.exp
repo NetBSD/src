@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 #
-# Copyright 2013-2023 Free Software Foundation, Inc.
+# Copyright 2013-2024 Free Software Foundation, Inc.
 #
 # Contributed by Intel Corp. <markus.t.metzger@intel.com>
 #
@@ -17,10 +17,7 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-if { [skip_btrace_tests] } {
-    unsupported "target does not support record-btrace"
-    return -1
-}
+require allow_btrace_tests
 
 standard_testfile
 if {[gdb_compile_pthreads "$srcdir/$subdir/$srcfile" "$binfile" executable {debug}] != "" } {
@@ -114,14 +111,14 @@ proc test_cont {} {
     with_test_prefix "cont" {
         gdb_test "thread 1" ".*"
         with_test_prefix "thread 1" {
-            gdb_test "continue" "No more reverse-execution history.*"
+            gdb_test "continue" "Reached end of recorded history.*"
 
             check_not_replaying 1
             check_replay_insn 2 2
         }
         gdb_test "thread 2" ".*"
         with_test_prefix "thread 2" {
-            gdb_test "continue" "No more reverse-execution history.*"
+            gdb_test "continue" "Reached end of recorded history.*"
 
             check_not_replaying 1
             check_not_replaying 2
@@ -131,7 +128,7 @@ proc test_cont {} {
 
 proc test_cont_all {} {
     with_test_prefix "cont-all" {
-        gdb_test "continue" "No more reverse-execution history.*"
+        gdb_test "continue" "Reached end of recorded history.*"
 
         # this works because we're lock-stepping threads that executed exactly
         # the same code starting from the same instruction.

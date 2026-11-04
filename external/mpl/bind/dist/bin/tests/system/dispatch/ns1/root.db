@@ -14,3 +14,5 @@
 ns.nil.		300	A	10.53.0.1
 example.	300	NS	ns.example.
 ns.example.	300	A	10.53.0.2
+tcp-only.	300	NS	ns.tcp-only.
+ns.tcp-only.	300	A	10.53.0.4

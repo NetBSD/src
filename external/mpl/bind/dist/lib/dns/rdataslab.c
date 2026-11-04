@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataslab.c,v 1.8.2.1 2025/08/02 05:53:30 perseant Exp $	*/
+/*	$NetBSD: rdataslab.c,v 1.8.2.2 2026/11/04 23:18:03 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,6 +17,7 @@
 
 #include <ctype.h>
 #include <stdbool.h>
+#include <stddef.h>
 #include <stdlib.h>
 
 #include <isc/ascii.h>
@@ -41,6 +42,16 @@
 #define NONEXISTENT(header)                            \
 	((atomic_load_acquire(&(header)->attributes) & \
 	  DNS_SLABHEADERATTR_NONEXISTENT) != 0)
+
+STATIC_ASSERT(offsetof(dns_rdataset_t, slab.raw) ==
+		      offsetof(dns_rdataset_t, proof.raw),
+	      "slab and proof raw pointers must have the same offset");
+STATIC_ASSERT(offsetof(dns_rdataset_t, slab.iter_pos) ==
+		      offsetof(dns_rdataset_t, proof.iter_pos),
+	      "slab and proof iterators must have the same offset");
+STATIC_ASSERT(offsetof(dns_rdataset_t, slab.iter_count) ==
+		      offsetof(dns_rdataset_t, proof.iter_count),
+	      "slab and proof iterator counts must have the same offset");
 
 /*
  * The rdataslab structure allows iteration to occur in both load order
@@ -101,6 +112,8 @@ struct xrdata {
 
 static void
 rdataset_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG);
+static void
+rdataproof_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG);
 static isc_result_t
 rdataset_first(dns_rdataset_t *rdataset);
 static isc_result_t
@@ -109,13 +122,12 @@ static void
 rdataset_current(dns_rdataset_t *rdataset, dns_rdata_t *rdata);
 static void
 rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG);
+static void
+rdataproof_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG);
 static unsigned int
 rdataset_count(dns_rdataset_t *rdataset);
 static isc_result_t
 rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
-		    dns_rdataset_t *neg, dns_rdataset_t *negsig DNS__DB_FLARG);
-static isc_result_t
-rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
 		    dns_rdataset_t *neg, dns_rdataset_t *negsig DNS__DB_FLARG);
 static void
 rdataset_settrust(dns_rdataset_t *rdataset, dns_trust_t trust);
@@ -127,9 +139,6 @@ static void
 rdataset_setownercase(dns_rdataset_t *rdataset, const dns_name_t *name);
 static void
 rdataset_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name);
-static bool
-rdataset_equals(const dns_rdataset_t *rdataset1,
-		const dns_rdataset_t *rdataset2);
 
 /*% Note: the "const void *" are just to make qsort happy.  */
 static int
@@ -181,7 +190,7 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	static unsigned char removed;
 	struct xrdata *x = NULL;
 	unsigned char *rawbuf = NULL;
-	unsigned int buflen;
+	uint32_t buflen;
 	isc_result_t result;
 	unsigned int nitems;
 	unsigned int nalloc;
@@ -296,6 +305,10 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 			if (rdataset->type == dns_rdatatype_rrsig) {
 				buflen++;
 			}
+			if (buflen - reservelen - 2 > DNS_RDATA_MAXLENGTH) {
+				result = ISC_R_NOSPACE;
+				goto free_rdatas;
+			}
 		}
 	}
 
@@ -312,6 +325,10 @@ dns_rdataslab_fromrdataset(dns_rdataset_t *rdataset, isc_mem_t *mctx,
 	 */
 	if (rdataset->type == dns_rdatatype_rrsig) {
 		buflen++;
+	}
+	if (buflen - reservelen - 2 > DNS_RDATA_MAXLENGTH) {
+		result = ISC_R_NOSPACE;
+		goto free_rdatas;
 	}
 
 	/*
@@ -528,7 +545,8 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 		    unsigned char **tslabp) {
 	unsigned char *ocurrent = NULL, *ostart = NULL, *ncurrent = NULL;
 	unsigned char *tstart = NULL, *tcurrent = NULL, *data = NULL;
-	unsigned int ocount, ncount, count, olength, tlength, tcount, length;
+	unsigned int ocount, ncount, count, olength, tcount, length;
+	uint32_t tlength;
 	dns_rdata_t ordata = DNS_RDATA_INIT;
 	dns_rdata_t nrdata = DNS_RDATA_INIT;
 	bool added_something = false;
@@ -615,6 +633,9 @@ dns_rdataslab_merge(unsigned char *oslab, unsigned char *nslab,
 #endif /* if DNS_RDATASET_FIXED */
 			if (type == dns_rdatatype_rrsig) {
 				tlength++;
+			}
+			if (tlength - reservelen - 2 > DNS_RDATA_MAXLENGTH) {
+				return ISC_R_NOSPACE;
 			}
 			tcount++;
 			nncount++;
@@ -792,7 +813,8 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 		       unsigned int flags, unsigned char **tslabp) {
 	unsigned char *mcurrent = NULL, *sstart = NULL, *scurrent = NULL;
 	unsigned char *tstart = NULL, *tcurrent = NULL;
-	unsigned int mcount, scount, rcount, count, tlength, tcount, i;
+	unsigned int mcount, scount, rcount, count, tcount, i;
+	uint32_t tlength;
 	dns_rdata_t srdata = DNS_RDATA_INIT;
 	dns_rdata_t mrdata = DNS_RDATA_INIT;
 #if DNS_RDATASET_FIXED
@@ -847,7 +869,10 @@ dns_rdataslab_subtract(unsigned char *mslab, unsigned char *sslab,
 			 * This rdata isn't in the sslab, and thus isn't
 			 * being subtracted.
 			 */
-			tlength += (unsigned int)(mcurrent - mrdatabegin);
+			tlength += (uint32_t)(mcurrent - mrdatabegin);
+			if (tlength - reservelen - 2 > DNS_RDATA_MAXLENGTH) {
+				return ISC_R_NOSPACE;
+			}
 			tcount++;
 		} else {
 			rcount++;
@@ -1090,6 +1115,7 @@ dns_slabheader_reset(dns_slabheader_t *h, dns_db_t *db, dns_dbnode_t *node) {
 
 	atomic_init(&h->attributes, 0);
 	atomic_init(&h->last_refresh_fail_ts, 0);
+	isc_refcount_init(&h->references, 1);
 
 	STATIC_ASSERT(sizeof(h->attributes) == 2,
 		      "The .attributes field of dns_slabheader_t needs to be "
@@ -1154,13 +1180,26 @@ dns_rdatasetmethods_t dns_rdataslab_rdatasetmethods = {
 	.clone = rdataset_clone,
 	.count = rdataset_count,
 	.getnoqname = rdataset_getnoqname,
-	.getclosest = rdataset_getclosest,
 	.settrust = rdataset_settrust,
 	.expire = rdataset_expire,
 	.clearprefetch = rdataset_clearprefetch,
 	.setownercase = rdataset_setownercase,
 	.getownercase = rdataset_getownercase,
-	.equals = rdataset_equals,
+};
+
+dns_rdatasetmethods_t dns_rdataproof_rdatasetmethods = {
+	.disassociate = rdataproof_disassociate,
+	.first = rdataset_first,
+	.next = rdataset_next,
+	.current = rdataset_current,
+	.clone = rdataproof_clone,
+	.count = rdataset_count,
+	.getnoqname = rdataset_getnoqname,
+	.settrust = rdataset_settrust,
+	.expire = rdataset_expire,
+	.clearprefetch = rdataset_clearprefetch,
+	.setownercase = rdataset_setownercase,
+	.getownercase = rdataset_getownercase,
 };
 
 /* Fixed RRSet helper macros */
@@ -1180,6 +1219,20 @@ rdataset_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG) {
 	dns_db_t *db = rdataset->slab.db;
 	dns_dbnode_t *node = rdataset->slab.node;
 
+	if (rdataset->methods == &dns_rdataslab_rdatasetmethods) {
+		dns_slabheader_t *header =
+			dns_slabheader_fromrdataset(rdataset);
+		isc_refcount_decrement(&header->references);
+	}
+	dns__db_detachnode(db, &node DNS__DB_FLARG_PASS);
+}
+
+static void
+rdataproof_disassociate(dns_rdataset_t *rdataset DNS__DB_FLARG) {
+	dns_db_t *db = rdataset->proof.db;
+	dns_dbnode_t *node = rdataset->proof.node;
+
+	isc_refcount_decrement(&rdataset->proof.header->references);
 	dns__db_detachnode(db, &node DNS__DB_FLARG_PASS);
 }
 
@@ -1285,6 +1338,11 @@ rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG) {
 	dns_dbnode_t *node = source->slab.node;
 	dns_dbnode_t *cloned_node = NULL;
 
+	if (source->methods == &dns_rdataslab_rdatasetmethods) {
+		dns_slabheader_t *header = dns_slabheader_fromrdataset(source);
+		isc_refcount_increment(&header->references);
+	}
+
 	dns__db_attachnode(db, node, &cloned_node DNS__DB_FLARG_PASS);
 	INSIST(!ISC_LINK_LINKED(target, link));
 	*target = *source;
@@ -1292,6 +1350,23 @@ rdataset_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG) {
 
 	target->slab.iter_pos = NULL;
 	target->slab.iter_count = 0;
+}
+
+static void
+rdataproof_clone(dns_rdataset_t *source, dns_rdataset_t *target DNS__DB_FLARG) {
+	dns_db_t *db = source->proof.db;
+	dns_dbnode_t *node = source->proof.node;
+	dns_dbnode_t *cloned_node = NULL;
+
+	isc_refcount_increment(&source->proof.header->references);
+
+	dns__db_attachnode(db, node, &cloned_node DNS__DB_FLARG_PASS);
+	INSIST(!ISC_LINK_LINKED(target, link));
+	*target = *source;
+	ISC_LINK_INIT(target, link);
+
+	target->proof.iter_pos = NULL;
+	target->proof.iter_count = 0;
 }
 
 static unsigned int
@@ -1311,6 +1386,7 @@ rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 		    dns_rdataset_t *nsecsig DNS__DB_FLARG) {
 	dns_db_t *db = rdataset->slab.db;
 	dns_dbnode_t *node = rdataset->slab.node;
+	dns_slabheader_t *header = dns_slabheader_fromrdataset(rdataset);
 	const dns_slabheader_proof_t *noqname = rdataset->slab.noqname;
 
 	/*
@@ -1323,15 +1399,17 @@ rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 	 */
 	dns__db_attachnode(db, node,
 			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
+	isc_refcount_increment(&header->references);
 	*nsec = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
+		.methods = &dns_rdataproof_rdatasetmethods,
 		.rdclass = db->rdclass,
 		.type = noqname->type,
 		.ttl = rdataset->ttl,
 		.trust = rdataset->trust,
-		.slab.db = db,
-		.slab.node = node,
-		.slab.raw = noqname->neg,
+		.proof.db = db,
+		.proof.node = node,
+		.proof.raw = noqname->neg,
+		.proof.header = header,
 		.link = nsec->link,
 		.count = nsec->count,
 		.attributes = nsec->attributes | DNS_RDATASETATTR_KEEPCASE,
@@ -1340,16 +1418,18 @@ rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 
 	dns__db_attachnode(db, node,
 			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
+	isc_refcount_increment(&header->references);
 	*nsecsig = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
+		.methods = &dns_rdataproof_rdatasetmethods,
 		.rdclass = db->rdclass,
 		.type = dns_rdatatype_rrsig,
 		.covers = noqname->type,
 		.ttl = rdataset->ttl,
 		.trust = rdataset->trust,
-		.slab.db = db,
-		.slab.node = node,
-		.slab.raw = noqname->negsig,
+		.proof.db = db,
+		.proof.node = node,
+		.proof.raw = noqname->negsig,
+		.proof.header = header,
 		.link = nsecsig->link,
 		.count = nsecsig->count,
 		.attributes = nsecsig->attributes | DNS_RDATASETATTR_KEEPCASE,
@@ -1357,59 +1437,6 @@ rdataset_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 	};
 
 	dns_name_clone(&noqname->name, name);
-
-	return ISC_R_SUCCESS;
-}
-
-static isc_result_t
-rdataset_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
-		    dns_rdataset_t *nsec,
-		    dns_rdataset_t *nsecsig DNS__DB_FLARG) {
-	dns_db_t *db = rdataset->slab.db;
-	dns_dbnode_t *node = rdataset->slab.node;
-	const dns_slabheader_proof_t *closest = rdataset->slab.closest;
-
-	/*
-	 * As mentioned above, rdataset->slab.raw usually refers the data
-	 * following an dns_slabheader, but in this case it points to a bare
-	 * rdataslab belonging to the dns_slabheader's `closest` field.
-	 */
-	dns__db_attachnode(db, node,
-			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
-	*nsec = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
-		.rdclass = db->rdclass,
-		.type = closest->type,
-		.ttl = rdataset->ttl,
-		.trust = rdataset->trust,
-		.slab.db = db,
-		.slab.node = node,
-		.slab.raw = closest->neg,
-		.link = nsec->link,
-		.count = nsec->count,
-		.attributes = nsec->attributes | DNS_RDATASETATTR_KEEPCASE,
-		.magic = nsec->magic,
-	};
-
-	dns__db_attachnode(db, node,
-			   &(dns_dbnode_t *){ NULL } DNS__DB_FLARG_PASS);
-	*nsecsig = (dns_rdataset_t){
-		.methods = &dns_rdataslab_rdatasetmethods,
-		.rdclass = db->rdclass,
-		.type = dns_rdatatype_rrsig,
-		.covers = closest->type,
-		.ttl = rdataset->ttl,
-		.trust = rdataset->trust,
-		.slab.db = db,
-		.slab.node = node,
-		.slab.raw = closest->negsig,
-		.link = nsecsig->link,
-		.count = nsecsig->count,
-		.attributes = nsecsig->attributes | DNS_RDATASETATTR_KEEPCASE,
-		.magic = nsecsig->magic,
-	};
-
-	dns_name_clone(&closest->name, name);
 
 	return ISC_R_SUCCESS;
 }
@@ -1478,19 +1505,4 @@ rdataset_getownercase(const dns_rdataset_t *rdataset, dns_name_t *name) {
 
 unlock:
 	dns_db_unlocknode(header->db, header->node, isc_rwlocktype_read);
-}
-
-static bool
-rdataset_equals(const dns_rdataset_t *rdataset1,
-		const dns_rdataset_t *rdataset2) {
-	if (rdataset1->rdclass != rdataset2->rdclass ||
-	    rdataset1->type != rdataset2->type)
-	{
-		return false;
-	}
-
-	unsigned char *header1 = rdataset1->slab.raw - sizeof(dns_slabheader_t);
-	unsigned char *header2 = rdataset2->slab.raw - sizeof(dns_slabheader_t);
-	return dns_rdataslab_equalx(header1, header2, sizeof(dns_slabheader_t),
-				    rdataset1->rdclass, rdataset2->type);
 }

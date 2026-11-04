@@ -2,7 +2,7 @@
 
 # Add a .gdb_index section to a file.
 
-# Copyright (C) 2010-2024 Free Software Foundation, Inc.
+# Copyright (C) 2010-2025 Free Software Foundation, Inc.
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
 # the Free Software Foundation; either version 3 of the License, or
@@ -22,16 +22,73 @@ GDB=${GDB:=gdb}
 OBJCOPY=${OBJCOPY:=objcopy}
 READELF=${READELF:=readelf}
 
+PKGVERSION="@PKGVERSION@"
+VERSION="@VERSION@"
+
 myname="${0##*/}"
 
+print_usage() {
+    prefix="Usage: $myname"
+    echo "$prefix [-h|--help] [-v|--version] [--dwarf-5] FILENAME"
+}
+
+print_try_help() {
+    echo "Try '$myname --help' for more information."
+}
+
+print_help() {
+    print_usage
+    echo
+    echo "Add a .gdb_index section to FILENAME to facilitate faster debug"
+    echo "information loading by GDB."
+    echo
+    echo "  -h, --help         Print this message then exit."
+    echo "  -v, --version      Print version information then exit."
+    echo "  --dwarf-5          Add the DWARF-5 style .debug_names section"
+    echo "                       instead of .gdb_index."
+}
+
+print_version() {
+    echo "GNU gdb-add-index (${PKGVERSION}) ${VERSION}"
+}
+
 dwarf5=""
-if [ "$1" = "-dwarf-5" ]; then
-    dwarf5="$1"
+
+# Parse options.
+until
+opt=$1
+case ${opt} in
+    --dwarf-5 | -dwarf-5)
+	dwarf5="-dwarf-5"
+	;;
+
+    --help | -help | -h)
+	print_help
+	exit 0
+	;;
+
+    --version | -version | -v)
+	print_version
+	exit 0
+	;;
+
+    -?*)
+	print_try_help 1>&2
+	exit 2
+	;;
+
+    *)
+	# No arguments remaining.
+	;;
+esac
+# Break from loop if the first character of OPT is not '-'.
+[ "x$(printf %.1s "$opt")" != "x-" ]
+do
     shift
-fi
+done
 
 if test $# != 1; then
-    echo "usage: $myname [-dwarf-5] FILE" 1>&2
+    print_try_help
     exit 1
 fi
 
@@ -113,7 +170,7 @@ trap "rm -f $tmp_files" 0
 
 $GDB --batch -nx -iex 'set auto-load no' \
     -iex 'set debuginfod enabled off' \
-    -ex "file $file" -ex "save gdb-index $dwarf5 $dir" || {
+    -ex "file '$file'" -ex "save gdb-index $dwarf5 '$dir'" || {
     # Just in case.
     status=$?
     echo "$myname: gdb error generating index for $file" 1>&2
@@ -122,7 +179,7 @@ $GDB --batch -nx -iex 'set auto-load no' \
 
 # In some situations gdb can exit without creating an index.  This is
 # not an error.
-# E.g., if $file is stripped.  This behaviour is akin to stripping an
+# E.g., if $file is stripped.  This behavior is akin to stripping an
 # already stripped binary, it's a no-op.
 status=0
 
@@ -143,34 +200,31 @@ handle_file ()
 	    index="$index5"
 	    section=".debug_names"
 	fi
-	debugstradd=false
-	debugstrupdate=false
 	if test -s "$debugstr"; then
 	    if ! $OBJCOPY --dump-section .debug_str="$debugstrmerge" "$fpath" \
-		 /dev/null 2>$debugstrerr; then
-		cat >&2 $debugstrerr
+		 /dev/null 2> "$debugstrerr"; then
+		cat >&2 "$debugstrerr"
 		exit 1
 	    fi
-	    if grep -q "can't dump section '.debug_str' - it does not exist" \
-		    $debugstrerr; then
-		debugstradd=true
-	    else
-		debugstrupdate=true
-		cat >&2 $debugstrerr
-	    fi
 	    cat "$debugstr" >>"$debugstrmerge"
+	    if grep -q "can't dump section '.debug_str' - it does not exist" \
+		    "$debugstrerr"; then
+		$OBJCOPY --add-section $section="$index" \
+			 --set-section-flags $section=readonly \
+			 --add-section .debug_str="$debugstrmerge" \
+		         --set-section-flags .debug_str=readonly \
+			 "$fpath" "$fpath"
+	    else
+		$OBJCOPY --add-section $section="$index" \
+			 --set-section-flags $section=readonly \
+			 --update-section .debug_str="$debugstrmerge" \
+			 "$fpath" "$fpath"
+	    fi
+	else
+	    $OBJCOPY --add-section $section="$index" \
+		     --set-section-flags $section=readonly \
+		     "$fpath" "$fpath"
 	fi
-
-	$OBJCOPY --add-section $section="$index" \
-		 --set-section-flags $section=readonly \
-		 $(if $debugstradd; then \
-		       echo --add-section .debug_str="$debugstrmerge"; \
-		       echo --set-section-flags .debug_str=readonly; \
-		   fi; \
-		   if $debugstrupdate; then \
-		       echo --update-section .debug_str="$debugstrmerge"; \
-		   fi) \
-		 "$fpath" "$fpath"
 
 	status=$?
     else

@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_machdep.c,v 1.51 2021/04/24 16:14:08 tsutsui Exp $	*/
+/*	$NetBSD: sig_machdep.c,v 1.51.22.1 2026/11/04 23:20:52 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,9 +38,10 @@
  */
 
 #include "opt_m68k_arch.h"
+#include "opt_fpu_emulate.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.51 2021/04/24 16:14:08 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.51.22.1 2026/11/04 23:20:52 perseant Exp $");
 
 #define __M68K_SIGNAL_PRIVATE
 
@@ -64,9 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: sig_machdep.c,v 1.51 2021/04/24 16:14:08 tsutsui Exp
 #include <m68k/m68k.h>
 #include <m68k/fpreg.h>
 
-extern short exframesize[];
-struct fpframe m68k_cached_fpu_idle_frame;
-
 #ifdef DEBUG
 int sigdebug = 0;
 int sigpid = 0;
@@ -75,30 +73,35 @@ int sigpid = 0;
 #define SDB_FPSTATE	0x04
 #endif
 
+#ifdef M68K_FPCOPROC
+struct fpframe fpu_idle_frame;
+
 /*
  * Test for a null floating point frame given a pointer to the start
  * of an fsave'd frame.
  */
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-#define	FPFRAME_IS_NULL(fp)						    \
-	    ((fputype == FPU_68060 &&					    \
-	      ((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL) || \
-	     (fputype != FPU_68060  &&					    \
-	      ((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0))
+#define	FPFRAME_IS_NULL_68881(fp)					\
+	(((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0)
+
+#define	FPFRAME_IS_NULL_68060(fp)					\
+	(((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
+
+#ifdef M68060
+#define	FPU_IS_68060	(fputype == FPU_68060)
 #else
-#define FPFRAME_IS_NULL(fp) \
-	    (((union FPF_u1 *)(fp))->FPF_nonnull.FPF_version == 0)
+#define	FPU_IS_68060	0
 #endif
-#else
-#define FPFRAME_IS_NULL(fp) \
-	    (((struct fpframe060 *)(fp))->fpf6_frmfmt == FPF6_FMT_NULL)
-#endif
+
+#define	FPFRAME_IS_NULL(fp)						\
+	(FPU_IS_68060 ? FPFRAME_IS_NULL_68060(fp)			\
+		      : FPFRAME_IS_NULL_68881(fp))
+#endif /* M68K_FPCOPROC */
 
 /* convert 68881 %fpsr code into siginfo ksi_code */
 u_int
 fpsr2siginfocode(u_int fpsr)
 {
+#ifdef M68K_FPCOPROC
 	if (fpsr & FPSR_DZ)
 		return FPE_FLTDIV;
 	if (fpsr & FPSR_UNFL)
@@ -109,22 +112,28 @@ fpsr2siginfocode(u_int fpsr)
 		return FPE_FLTINV;
 	if (fpsr & (FPSR_INEX1|FPSR_INEX2))
 		return FPE_FLTRES;
+#endif /* M68K_FPCOPROC */
 	return 0;
 }
 
 void *
-getframe(struct lwp *l, int sig, int *onstack)
+getframe(struct lwp *l, int sig, int *onstack, size_t size)
 {
 	struct frame *tf = (struct frame *)l->l_md.md_regs;
+	uintptr_t frame;
 
 	/* Do we need to jump onto the signal stack? */
-	*onstack =(l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0
-		&& (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
+	*onstack =
+	    (l->l_sigstk.ss_flags & (SS_DISABLE | SS_ONSTACK)) == 0 &&
+	    (SIGACTION(l->l_proc, sig).sa_flags & SA_ONSTACK) != 0;
 
 	if (*onstack)
-		return (char *)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
+		frame = (uintptr_t)l->l_sigstk.ss_sp + l->l_sigstk.ss_size;
 	else
-		return (void *)tf->f_regs[SP];
+		frame = tf->f_regs[SP];
+	frame -= size;
+	frame &= ~STACK_ALIGNBYTES;
+	return (void *)frame;
 }
 
 /*
@@ -154,10 +163,10 @@ sendsig_siginfo(const ksiginfo_t *ksi, const sigset_t *mask)
 	struct sigacts *ps = p->p_sigacts;
 	int onstack, error;
 	int sig = ksi->ksi_signo;
-	struct sigframe_siginfo *fp = getframe(l, sig, &onstack), kf;
+	struct sigframe_siginfo *fp, kf;
 	sig_t catcher = SIGACTION(p, sig).sa_handler;
 
-	fp--;
+	fp = getframe(l, sig, &onstack, sizeof(*fp));
 
 	memset(&kf, 0, sizeof(kf));
 	kf.sf_ra = (int)ps->sa_sigdesc[sig].sd_tramp;
@@ -250,32 +259,38 @@ cpu_getmcontext(struct lwp *l, mcontext_t *mcp, u_int *flags)
 		frame->f_format = frame->f_vector = 0;
 	}
 
-	if (fputype != FPU_NONE) {
-		/* Save FPU context. */
-		struct pcb *pcb = lwp_getpcb(l);
-		struct fpframe *fpf = &pcb->pcb_fpregs;
+#ifdef M68K_FPCOPROC
+	struct pcb *pcb = lwp_getpcb(l);
+	struct fpframe *fpf = &pcb->pcb_fpregs;
 
-		/*
-		 * If we're dealing with the current lwp, we need to
-		 * save its FP state. Otherwise, its state is already
-		 * store in its PCB.
-		 */
-		if (l == curlwp)
-			m68881_save(fpf);
-
-		mcp->__mc_pad.__mc_frame.__mcf_fpf_u1 = fpf->FPF_u1;
-
-		/* If it's a null frame there's no need to save/convert. */
-		if (!FPFRAME_IS_NULL(fpf)) {
-			mcp->__mc_pad.__mc_frame.__mcf_fpf_u2 = fpf->FPF_u2;
-			(void)memcpy(mcp->__fpregs.__fp_fpregs,
-			    fpf->fpf_regs, sizeof(fpf->fpf_regs));
-			mcp->__fpregs.__fp_pcr = fpf->fpf_fpcr;
-			mcp->__fpregs.__fp_psr = fpf->fpf_fpsr;
-			mcp->__fpregs.__fp_piaddr = fpf->fpf_fpiar;
-			*flags |= _UC_FPU;
-		}
+	/*
+	 * Save FPU context.
+	 *
+	 * If we're dealing with the current lwp, we need to
+	 * save its FP state. Otherwise, its state is already
+	 * store in its PCB.
+	 */
+	if (fputype != FPU_NONE && l == curlwp) {
+		fpu_save(fpf);
 	}
+
+	mcp->__mc_pad.__mc_frame.__mcf_fpf_u1 = fpf->FPF_u1;
+
+	/*
+	 * If it's a null frame there's no need to save/convert.
+	 * Note that this also handles saving emulated FPU registers
+	 * in the FPU_EMULATE case.
+	 */
+	if (!FPFRAME_IS_NULL(fpf)) {
+		mcp->__mc_pad.__mc_frame.__mcf_fpf_u2 = fpf->FPF_u2;
+		(void)memcpy(mcp->__fpregs.__fp_fpregs,
+		    fpf->fpf_regs, sizeof(fpf->fpf_regs));
+		mcp->__fpregs.__fp_pcr = fpf->fpf_fpcr;
+		mcp->__fpregs.__fp_psr = fpf->fpf_fpsr;
+		mcp->__fpregs.__fp_piaddr = fpf->fpf_fpiar;
+		*flags |= _UC_FPU;
+	}
+#endif /* M68K_FPCOPROC */
 }
 
 int
@@ -361,64 +376,69 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, u_int flags)
 		frame->f_pc = gr[_REG_PC];
 	}
 
-	if (fputype != FPU_NONE) {
-		const __fpregset_t *fpr = &mcp->__fpregs;
-		struct pcb *pcb = lwp_getpcb(l);
-		struct fpframe *fpf = &pcb->pcb_fpregs;
+#ifdef M68K_FPCOPROC
+	const __fpregset_t *fpr = &mcp->__fpregs;
+	struct pcb *pcb = lwp_getpcb(l);
+	struct fpframe *fpf = &pcb->pcb_fpregs;
 
-		switch (flags & (_UC_FPU | _UC_M68K_UC_USER)) {
-		case _UC_FPU:
-			/*
-			 * We're restoring FPU context saved by the above
-			 * cpu_getmcontext(). We can do a full frestore if
-			 * something other than an null frame was saved.
-			 */
-			fpf->FPF_u1 = mcp->__mc_pad.__mc_frame.__mcf_fpf_u1;
-			if (!FPFRAME_IS_NULL(fpf)) {
-				fpf->FPF_u2 =
-				    mcp->__mc_pad.__mc_frame.__mcf_fpf_u2;
-				(void)memcpy(fpf->fpf_regs,
-				    fpr->__fp_fpregs, sizeof(fpf->fpf_regs));
-				fpf->fpf_fpcr = fpr->__fp_pcr;
-				fpf->fpf_fpsr = fpr->__fp_psr;
-				fpf->fpf_fpiar = fpr->__fp_piaddr;
-			}
-			break;
-
-		case _UC_FPU | _UC_M68K_UC_USER:
-			/*
-			 * We're restoring FPU context saved by the
-			 * userland _getcontext_() function. Since there
-			 * is no FPU frame to restore. We assume the FPU was
-			 * "idle" when the frame was created, so use the
-			 * cached idle frame.
-			 */
-			fpf->FPF_u1 = m68k_cached_fpu_idle_frame.FPF_u1;
-			fpf->FPF_u2 = m68k_cached_fpu_idle_frame.FPF_u2;
-			(void)memcpy(fpf->fpf_regs, fpr->__fp_fpregs,
-			    sizeof(fpf->fpf_regs));
+	/*
+	 * Note that this also handles restoring emulated FPU registers
+	 * in the FPU_EMULATE case.
+	 */
+	switch (flags & (_UC_FPU | _UC_M68K_UC_USER)) {
+	case _UC_FPU:
+		/*
+		 * We're restoring FPU context saved by the above
+		 * cpu_getmcontext(). We can do a full frestore if
+		 * something other than an null frame was saved.
+		 */
+		fpf->FPF_u1 = mcp->__mc_pad.__mc_frame.__mcf_fpf_u1;
+		if (!FPFRAME_IS_NULL(fpf)) {
+			fpf->FPF_u2 =
+			    mcp->__mc_pad.__mc_frame.__mcf_fpf_u2;
+			(void)memcpy(fpf->fpf_regs,
+			    fpr->__fp_fpregs, sizeof(fpf->fpf_regs));
 			fpf->fpf_fpcr = fpr->__fp_pcr;
 			fpf->fpf_fpsr = fpr->__fp_psr;
 			fpf->fpf_fpiar = fpr->__fp_piaddr;
-			break;
-
-		default:
-			/*
-			 * The saved context contains no FPU state.
-			 * Restore a NULL frame.
-			 */
-			fpf->FPF_u1.FPF_null = 0;
-			break;
 		}
+		break;
 
+	case _UC_FPU | _UC_M68K_UC_USER:
 		/*
-		 * We only need to restore FP state right now if we're
-		 * dealing with curlwp. Otherwise, it'll be restored
-		 * (from the PCB) when this lwp is given the CPU.
+		 * We're restoring FPU context saved by the
+		 * userland _getcontext_() function. Since there
+		 * is no FPU frame to restore. We assume the FPU was
+		 * "idle" when the frame was created, so use the
+		 * cached idle frame.
 		 */
-		if (l == curlwp)
-			m68881_restore(fpf);
+		fpf->FPF_u1 = fpu_idle_frame.FPF_u1;
+		fpf->FPF_u2 = fpu_idle_frame.FPF_u2;
+		(void)memcpy(fpf->fpf_regs, fpr->__fp_fpregs,
+		    sizeof(fpf->fpf_regs));
+		fpf->fpf_fpcr = fpr->__fp_pcr;
+		fpf->fpf_fpsr = fpr->__fp_psr;
+		fpf->fpf_fpiar = fpr->__fp_piaddr;
+		break;
+
+	default:
+		/*
+		 * The saved context contains no FPU state.
+		 * Restore a NULL frame.
+		 */
+		fpf->FPF_u1.FPF_null = 0;
+		break;
 	}
+
+	/*
+	 * We only need to restore FP state right now if we're
+	 * dealing with curlwp. Otherwise, it'll be restored
+	 * (from the PCB) when this lwp is given the CPU.
+	 */
+	if (fputype != FPU_NONE && l == curlwp) {
+		fpu_restore(fpf);
+	}
+#endif /* M68K_FPCOPROC */
 
 	if ((flags & _UC_TLSBASE) != 0)
 		lwp_setprivate(l, (void *)(uintptr_t)mcp->_mc_tlsbase);

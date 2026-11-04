@@ -1,5 +1,5 @@
 <?xml version="1.0"?>
-<!-- Copyright (C) 2009-2024 Free Software Foundation, Inc.
+<!-- Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
      Copying and distribution of this file, with or without modification,
      are permitted in any medium without royalty provided the copyright
@@ -11,29 +11,8 @@
 
      <sys/syscall.h>
 
-     The file mentioned above belongs to the Linux Kernel.
+     The file mentioned above belongs to the Linux Kernel.  -->
 
-     Note that the system header file /usr/include/asm-generic/unistd.h
-     may be different with the latest upstream Linux kernel uapi header
-     file include/uapi/asm-generic/unistd.h, it is better to copy the
-     upstream header file into the system header file when generating
-     loongarch-linux.xml.in.
-
-     There exist some __NR3264_ prefixed syscall numbers, replace them
-     with digital numbers according to /usr/include/asm-generic/unistd.h
-     and sort them by syscall number manually, maybe we can modify the
-     script to do it automatically in the future.
-
-     <syscall name="fcntl" number="__NR3264_fcntl"/>
-     <syscall name="statfs" number="__NR3264_statfs"/>
-     <syscall name="fstatfs" number="__NR3264_fstatfs"/>
-     <syscall name="truncate" number="__NR3264_truncate"/>
-     <syscall name="ftruncate" number="__NR3264_ftruncate"/>
-     <syscall name="lseek" number="__NR3264_lseek"/>
-     <syscall name="sendfile" number="__NR3264_sendfile"/>
-     <syscall name="mmap" number="__NR3264_mmap"/>
-     <syscall name="fadvise64" number="__NR3264_fadvise64"/>
--->
 
 <syscalls_info>
   <syscall name="io_setup" number="0"/>
@@ -114,6 +93,8 @@
   <syscall name="splice" number="76"/>
   <syscall name="tee" number="77"/>
   <syscall name="readlinkat" number="78"/>
+  <syscall name="fstatat" number="79"/>
+  <syscall name="fstat" number="80"/>
   <syscall name="sync" number="81"/>
   <syscall name="fsync" number="82"/>
   <syscall name="fdatasync" number="83"/>
@@ -348,5 +329,10 @@
   <syscall name="lsm_get_self_attr" number="459"/>
   <syscall name="lsm_set_self_attr" number="460"/>
   <syscall name="lsm_list_modules" number="461"/>
-  <syscall name="syscalls" number="462"/>
+  <syscall name="mseal" number="462"/>
+  <syscall name="setxattrat" number="463"/>
+  <syscall name="getxattrat" number="464"/>
+  <syscall name="listxattrat" number="465"/>
+  <syscall name="removexattrat" number="466"/>
+  <syscall name="syscalls" number="467"/>
 </syscalls_info>

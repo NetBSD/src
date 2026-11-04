@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_aout.h,v 1.41 2016/06/03 15:14:57 dholland Exp $	*/
+/*	$NetBSD: exec_aout.h,v 1.41.54.1 2026/11/04 23:28:05 perseant Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Christopher G. Demetriou
@@ -32,6 +32,8 @@
 
 #ifndef _SYS_EXEC_AOUT_H_
 #define _SYS_EXEC_AOUT_H_
+
+#include <sys/endian.h>
 
 #ifndef N_PAGSIZ
 #define	N_PAGSIZ(ex)	(AOUT_LDPGSZ)

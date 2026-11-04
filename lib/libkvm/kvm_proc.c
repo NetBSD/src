@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.99.2.1 2025/08/02 05:54:49 perseant Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.99.2.2 2026/11/04 23:19:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.99.2.1 2025/08/02 05:54:49 perseant Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.99.2.2 2026/11/04 23:19:28 perseant Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -130,6 +130,7 @@ struct miniproc {
 	do { \
 		(p)->p_stat = (kp)->kp_proc.p_stat; \
 		(p)->p_pid = (kp)->kp_proc.p_pid; \
+		(p)->p_psstrp = (kp)->kp_proc.p_psstrp; \
 		(p)->p_paddr = (kp)->kp_eproc.e_paddr; \
 		(p)->p_vmspace = (kp)->kp_proc.p_vmspace; \
 	} while (0)
@@ -204,8 +205,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 		if (KREAD(kd, addr, &vme))
 			return (NULL);
 
-		if (va >= vme.start && va < vme.end &&
-		    vme.aref.ar_amap != NULL)
+		if (va >= vme.start && va < vme.end)
 			break;
 
 		addr = (u_long)vme.next;
@@ -229,7 +229,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	if (slot > amap.am_nslot)
 		return (NULL);
 
-	addr = (u_long)amap.am_anon + (offset / kd->nbpg) * sizeof(anonp);
+	addr = (u_long)amap.am_anon + slot * sizeof(anonp);
 	if (KREAD(kd, addr, &anonp))
 		return (NULL);
 
@@ -248,7 +248,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 	} else {
 		if (kd->swfd < 0 ||
 		    _kvm_pread(kd, kd->swfd, kd->swapspc, (size_t)kd->nbpg,
-		    (off_t)(anon.an_swslot * kd->nbpg)) != kd->nbpg)
+		    ((off_t)anon.an_swslot * kd->nbpg)) != kd->nbpg)
 			return (NULL);
 	}
 

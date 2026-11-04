@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.73.6.1 2025/08/02 05:56:38 perseant Exp $ */
+/* $NetBSD: gpio.c,v 1.73.6.2 2026/11/04 23:21:53 perseant Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.73.6.1 2025/08/02 05:56:38 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.73.6.2 2026/11/04 23:21:53 perseant Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -327,7 +327,7 @@ gpio_print(void *aux, const char *pnp)
 
 	aprint_normal(" pins");
 	for (i = 0; i < 32; i++)
-		if (ga->ga_mask & (1 << i))
+		if (ga->ga_mask & (1U << i))
 			aprint_normal(" %d", ga->ga_offset + i);
 
 	return UNCONF;
@@ -362,7 +362,7 @@ gpio_pin_can_map(void *gpio, int offset, uint32_t mask)
 		return 0;
 
 	for (npins = 0, i = 0; i < 32; i++)
-		if (mask & (1 << i)) {
+		if (mask & (1U << i)) {
 			pin = offset + i;
 			if (pin < 0 || pin >= sc->sc_npins)
 				return 0;
@@ -384,7 +384,7 @@ gpio_pin_map(void *gpio, int offset, uint32_t mask, struct gpio_pinmap *map)
 		return 1;
 
 	for (npins = 0, i = 0; i < 32; i++)
-		if (mask & (1 << i)) {
+		if (mask & (1U << i)) {
 			pin = offset + i;
 			if (pin < 0 || pin >= sc->sc_npins)
 				return 1;
@@ -642,7 +642,7 @@ gpio_npins(uint32_t mask)
 	int npins, i;
 
 	for (npins = 0, i = 0; i < 32; i++)
-		if (mask & (1 << i))
+		if (mask & (1U << i))
 			npins++;
 
 	return npins;

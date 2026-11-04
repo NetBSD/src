@@ -1,6 +1,6 @@
 /* Go language support routines for GDB, the GNU debugger.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -54,9 +54,8 @@ static const char GO_MAIN_MAIN[] = "main.main";
 const char *
 go_main_name (void)
 {
-  struct bound_minimal_symbol msym;
-
-  msym = lookup_minimal_symbol (GO_MAIN_MAIN, NULL, NULL);
+  bound_minimal_symbol msym
+    = lookup_minimal_symbol (current_program_space, GO_MAIN_MAIN);
   if (msym.minsym != NULL)
     return GO_MAIN_MAIN;
 

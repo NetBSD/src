@@ -1,0 +1,72 @@
+# Copyright (C) 2024 Free Software Foundation, Inc.
+
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+# Test accessing an empty linetable in Python.
+
+load_lib dwarf.exp
+load_lib gdb-python.exp
+
+require dwarf2_support allow_python_tests
+
+standard_testfile .c -dw.S
+
+set asm_file [standard_output_file ${srcfile2}]
+Dwarf::assemble $asm_file {
+
+    cu {} {
+	compile_unit {
+	    {language @DW_LANG_C}
+	    {name py-linetable-empty.c}
+	} {
+	    subprogram {
+			{MACRO_AT_func {main}}
+	    }
+	}
+    }
+}
+
+if { [prepare_for_testing "failed to prepare" ${testfile} \
+	  [list $srcfile $asm_file] {nodebug}] } {
+    return -1
+}
+
+if ![runto_main] {
+	return -1
+}
+
+gdb_test "python print(gdb.selected_frame().function().symtab.fullname())" \
+	"py-linetable-empty.c" "Test main has symtab"
+
+# Get the linetable for main's symbol table. This is empty as we didn't include
+# a linetable in the debug info.
+gdb_py_test_silent_cmd "python lt = gdb.selected_frame().function().symtab.linetable()" \
+    "get linetable" 0
+
+gdb_test "python print(lt.is_valid())" "True" \
+	"Test linetable is valid"
+
+gdb_test "python print(lt.line(1))" "None" \
+	"Test line() returns None"
+
+gdb_test "python print(lt.has_line(1))" \
+	"RuntimeError.*: Linetable information not found in symbol table.*" \
+	"Test has_line() throws exception"
+
+gdb_test "python print(lt.source_lines())" \
+	"RuntimeError.*: Linetable information not found in symbol table.*" \
+	"Test source_lines() throws exception"
+
+gdb_test "python print(list(lt))" "\\\[\\\]" \
+	"Test iterating over linetable"

@@ -305,9 +305,9 @@
 // suggest they don't.
 //
 // In reality, some MIPS IV parts, such as the VR5000 and VR5400, do have
-// these restrictions, while others, like the VR5500, don't.  To accomodate
+// these restrictions, while others, like the VR5500, don't.  To accommodate
 // such differences, the MIPS IV and MIPS V version of these helper functions
-// use auxillary routines to determine whether the restriction applies.
+// use auxiliary routines to determine whether the restriction applies.
 
 // check_mf_cycles:
 //
@@ -474,7 +474,7 @@
 *micromips32:
 *micromips64:
 {
-  /* FIXME: could record the fact that a stall occured if we want */
+  /* FIXME: could record the fact that a stall occurred if we want */
   int64_t time = sim_events_time (SD);
   hi->op.timestamp = time;
   lo->op.timestamp = time;
@@ -1133,18 +1133,17 @@
 
 :function:::void:do_pref:int hint, int insn_offset, int insn_base
 {
+  /*
   address_word base = GPR[insn_base];
   address_word offset = EXTEND16 (insn_offset);
-  {
-    address_word vaddr = loadstore_ea (SD_, base, offset);
-    address_word paddr = vaddr;
-    /* Prefetch (paddr, vaddr, isDATA, hint); */
-  }
+  address_word vaddr = loadstore_ea (SD_, base, offset);
+  address_word paddr = vaddr;
+  Prefetch (paddr, vaddr, isDATA, hint);
+  */
 }
 
 :function:::void:do_sc:int rt, int offsetarg, int basereg, address_word instruction_0, int store_ll_bit
 {
-  uint32_t instruction = instruction_0;
   address_word base = GPR[basereg];
   address_word offset = EXTEND16 (offsetarg);
   {
@@ -1684,13 +1683,13 @@
 
 :function:::void:do_prefx:int hint, int rindex, int rbase
 {
+  /*
   address_word base = GPR[rbase];
   address_word index = GPR[rindex];
-  {
-    address_word vaddr = loadstore_ea (SD_, base, index);
-    address_word paddr = vaddr;
-    /* Prefetch (paddr, vaddr, isDATA, hint); */
-  }
+  address_word vaddr = loadstore_ea (SD_, base, index);
+  address_word paddr = vaddr;
+  Prefetch (paddr, vaddr, isDATA, hint);
+  */
 }
 
 :function:::void:do_sdc1:int ft, int offset, int base

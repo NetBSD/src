@@ -1,6 +1,6 @@
 /* General GDB/Scheme code.
 
-   Copyright (C) 2014-2024 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef GUILE_GUILE_H
-#define GUILE_GUILE_H
+#ifndef GDB_GUILE_GUILE_H
+#define GDB_GUILE_GUILE_H
 
 #include "extension.h"
 
@@ -28,4 +28,4 @@ extern const struct extension_language_defn extension_language_guile;
 /* Command element for the 'guile' command.  */
 extern cmd_list_element *guile_cmd_element;
 
-#endif /* GUILE_GUILE_H */
+#endif /* GDB_GUILE_GUILE_H */

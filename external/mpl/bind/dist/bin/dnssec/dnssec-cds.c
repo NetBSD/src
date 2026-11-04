@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-cds.c,v 1.10.2.1 2025/08/02 05:50:51 perseant Exp $	*/
+/*	$NetBSD: dnssec-cds.c,v 1.10.2.2 2026/11/04 23:15:33 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -36,6 +36,7 @@
 #include <isc/serial.h>
 #include <isc/string.h>
 #include <isc/time.h>
+#include <isc/urcu.h>
 #include <isc/util.h>
 
 #include <dns/callbacks.h>
@@ -654,7 +655,7 @@ matching_sigs(keyinfo_t *keytbl, dns_rdataset_t *rdataset,
 
 			result = dns_dnssec_verify(name, rdataset, ki->dst,
 						   false, 0, mctx, &sigrdata,
-						   NULL);
+						   NULL, NULL);
 
 			if (result != ISC_R_SUCCESS &&
 			    result != DNS_R_FROMWILDCARD)
@@ -1085,6 +1086,7 @@ cleanup(void) {
 		}
 		isc_mem_destroy(&mctx);
 	}
+	rcu_barrier();
 }
 
 int

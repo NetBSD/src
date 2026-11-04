@@ -1,6 +1,6 @@
 /* Path manipulation routines for GDB and gdbserver.
 
-   Copyright (C) 1986-2023 Free Software Foundation, Inc.
+   Copyright (C) 1986-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "common-defs.h"
 #include "pathstuff.h"
 #include "host-defs.h"
 #include "filenames.h"
@@ -41,7 +40,7 @@ gdb_realpath (const char *filename)
 
    But the situation is slightly more complex on Windows, due to some
    versions of GCC which were reported to generate paths where
-   backlashes (the directory separator) were doubled.  For instance:
+   backslashes (the directory separator) were doubled.  For instance:
       c:\\some\\double\\slashes\\dir
    ... instead of ...
       c:\some\double\slashes\dir
@@ -125,17 +124,17 @@ gdb_realpath_keepfile (const char *filename)
 /* See gdbsupport/pathstuff.h.  */
 
 std::string
-gdb_abspath (const char *path)
+gdb_abspath (const char *path, const char *cwd)
 {
   gdb_assert (path != NULL && path[0] != '\0');
 
   if (path[0] == '~')
     return gdb_tilde_expand (path);
 
-  if (IS_ABSOLUTE_PATH (path) || current_directory == NULL)
+  if (IS_ABSOLUTE_PATH (path) || cwd == NULL)
     return path;
 
-  return path_join (current_directory, path);
+  return path_join (cwd, path);
 }
 
 /* See gdbsupport/pathstuff.h.  */
@@ -199,11 +198,17 @@ path_join (gdb::array_view<const char *> paths)
     {
       const char *path = paths[i];
 
-      if (i > 0)
-	gdb_assert (strlen (path) == 0 || !IS_ABSOLUTE_PATH (path));
+      if (!ret.empty ())
+	{
+	  /* If RET doesn't already end with a separator then add one.  */
+	  if (!IS_DIR_SEPARATOR (ret.back ()))
+	    ret += '/';
 
-      if (!ret.empty () && !IS_DIR_SEPARATOR (ret.back ()))
-	  ret += '/';
+	  /* Now that RET ends with a separator, ignore any at the start of
+	     PATH.  */
+	  while (IS_DIR_SEPARATOR (path[0]))
+	    ++path;
+	}
 
       ret.append (path);
     }

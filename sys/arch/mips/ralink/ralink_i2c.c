@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.8 2022/09/29 07:00:47 skrll Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.8.10.1 2026/11/04 23:20:59 perseant Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.8 2022/09/29 07:00:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.8.10.1 2026/11/04 23:20:59 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -118,7 +118,6 @@ ra_i2c_attach(device_t parent, device_t self, void *aux)
 {
 	ra_i2c_softc_t * const sc = device_private(self);
 	const struct mainbus_attach_args *ma = aux;
-	struct i2cbus_attach_args iba;
 	uint32_t r;
 	int error;
 
@@ -156,9 +155,7 @@ ra_i2c_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_exec = ra_i2c_exec;
 
-	memset(&iba, 0, sizeof(iba));
-	iba.iba_tag = &sc->sc_i2c;
-	config_found(self, &iba, iicbus_print, CFARGS_NONE);
+	iicbus_attach(self, &sc->sc_i2c);
 }
 
 
@@ -194,7 +191,7 @@ ra_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	 *   - Read
 	 *   - Read with stop
 	 * Because the I2C block on the Ralink part generates stop markers
-	 * at approprite places, based upon the byte count, the read and write
+	 * at appropriate places, based upon the byte count, the read and write
 	 * with stop operations will rarely be needed.  They are included here
 	 * as placeholders, but haven't been implemented or tested.
 	 */

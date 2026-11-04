@@ -1,20 +1,19 @@
 /* This must come before any other includes.  */
 #include "defs.h"
 
-#include <signal.h>
-
 #include "sim-main.h"
 #include "sim-options.h"
 #include "sim-hw.h"
 
 #include "bfd.h"
 #include "sim-assert.h"
+#include "sim-fpu.h"
 #include "sim-signal.h"
+
+#include "mn10300-sim.h"
 
 #include <stdlib.h>
 #include <string.h>
-
-#include "bfd.h"
 
 
 struct _state State;
@@ -36,7 +35,6 @@ mn10300_option_handler (SIM_DESC sd,
 			char *arg,
 			int is_command)
 {
-  int cpu_nr;
   switch (opt)
     {
     case OPTION_BOARD:
@@ -99,7 +97,7 @@ sim_open (SIM_OPEN_KIND kind,
   current_target_byte_order = BFD_ENDIAN_LITTLE;
 
   /* The cpu data is kept in a separately allocated chunk of memory.  */
-  if (sim_cpu_alloc_all (sd, 1) != SIM_RC_OK)
+  if (sim_cpu_alloc_all (sd, 0) != SIM_RC_OK)
     return 0;
 
   /* for compatibility */
@@ -174,7 +172,7 @@ sim_open (SIM_OPEN_KIND kind,
       sim_hw_parse (sd, "/mn103cpu@0x20000000");
       sim_hw_parse (sd, "/mn103cpu@0x20000000/reg 0x20000000 0x42");
       
-      /* DEBUG: ACK output wired upto a glue device */
+      /* DEBUG: ACK output wired up to a glue device */
       sim_hw_parse (sd, "/glue@0x20002000");
       sim_hw_parse (sd, "/glue@0x20002000/reg 0x20002000 4");
       sim_hw_parse (sd, "/mn103cpu > ack int0 /glue@0x20002000");
@@ -393,8 +391,6 @@ program_interrupt (SIM_DESC sd,
 		   sim_cia cia,
 		   SIM_SIGNAL sig)
 {
-  int status;
-  struct hw *device;
   static int in_interrupt = 0;
 
 #ifdef SIM_CPU_EXCEPTION_TRIGGER
@@ -482,7 +478,7 @@ mn10300_cpu_exception_resume(SIM_DESC sd, sim_cpu* cpu, int exception)
     }
   else if(exception != 0 && State.exc_suspended == 0)
     {
-      sim_io_eprintf(sd, "Warning, ignoring spontanous exception signal (%d)\n", exception); 
+      sim_io_eprintf(sd, "Warning, ignoring spontaneous exception signal (%d)\n", exception); 
     }
   State.exc_suspended = 0; 
 }

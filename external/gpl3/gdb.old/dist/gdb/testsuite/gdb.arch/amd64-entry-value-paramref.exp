@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2023 Free Software Foundation, Inc.
+# Copyright (C) 2014-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,9 +15,11 @@
 
 standard_testfile .S .cc
 
-if { ![istarget x86_64-*-* ] || ![is_lp64_target] } {
-    verbose "Skipping amd64-entry-value-paramref."
-    return
+require is_x86_64_m64_target
+
+# Make .cc available on the host.
+if [is_remote host] {
+    gdb_remote_download host $srcdir/$subdir/$srcfile2
 }
 
 if { [prepare_for_testing_full "failed to prepare" \
@@ -29,8 +31,7 @@ if ![runto_main] {
     return -1
 }
 
-set srcfile $srcfile2
-gdb_breakpoint [gdb_get_line_number "break-here"]
+gdb_breakpoint [gdb_get_line_number "break-here" $srcfile2]
 
 gdb_continue_to_breakpoint "break-here" ".* break-here .*"
 gdb_test "frame" {bar \(ref=@0x[0-9a-f]+: 10, ref@entry=@0x[0-9a-f]+: <optimized out>\) at .*}

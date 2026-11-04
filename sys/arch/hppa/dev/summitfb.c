@@ -1,4 +1,4 @@
-/*	$NetBSD: summitfb.c,v 1.34.4.2 2025/08/02 05:55:42 perseant Exp $	*/
+/*	$NetBSD: summitfb.c,v 1.34.4.3 2026/11/04 23:20:42 perseant Exp $	*/
 
 /*	$OpenBSD: sti_pci.c,v 1.7 2009/02/06 22:51:04 miod Exp $	*/
 
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.34.4.2 2025/08/02 05:55:42 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.34.4.3 2026/11/04 23:20:42 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: summitfb.c,v 1.34.4.2 2025/08/02 05:55:42 perseant E
 #include <dev/ic/stireg.h>
 #include <dev/ic/summitreg.h>
 #include <dev/ic/stivar.h>
+#include <hppa/dev/sti_pci_var.h>
 
 #include "opt_summitfb.h"
 
@@ -72,15 +73,16 @@ struct	summitfb_softc {
 	struct sti_softc	sc_base;
 	struct sti_screen 	sc_scr;
 	bus_space_handle_t	sc_romh;
+	uint32_t		sc_gid;
 
 	int sc_width, sc_height;
-	int sc_locked;
+	int sc_locked, sc_is_lego;
 	struct vcons_screen sc_console_screen;
 	struct wsscreen_descr sc_defaultscreen_descr;
 	const struct wsscreen_descr *sc_screens[1];
 	struct wsscreen_list sc_screenlist;
 	struct vcons_data vd;
-	int sc_mode;
+	int sc_mode, sc_fbdepth;
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
@@ -88,10 +90,6 @@ struct	summitfb_softc {
 	/* cursor stuff */
 	int sc_cursor_x, sc_cursor_y;
 	int sc_hot_x, sc_hot_y, sc_enabled;
-	/* font-in-vram */
-	struct wsdisplay_font *sc_font;
-	int sc_font_start;	/* x of font area */
-	int sc_cols;		/* chars per line in font area */
 	uint32_t sc_palette[16];
 	int sc_video_on;
 	glyphcache sc_gc;
@@ -100,25 +98,16 @@ struct	summitfb_softc {
 CFATTACH_DECL_NEW(summitfb, sizeof(struct summitfb_softc),
     summitfb_match, summitfb_attach, NULL, NULL);
 
-int	summitfb_readbar(struct sti_softc *, struct pci_attach_args *, u_int,
-	    int);
-int	summitfb_check_rom(struct summitfb_softc *, struct pci_attach_args *);
 void	summitfb_enable_rom(struct sti_softc *);
 void	summitfb_disable_rom(struct sti_softc *);
-void	summitfb_enable_rom_internal(struct summitfb_softc *);
-void	summitfb_disable_rom_internal(struct summitfb_softc *);
 
 void 	summitfb_setup(struct summitfb_softc *);
 
 /* XXX these really need to go into their own header */
-int	sti_pci_is_console(struct pci_attach_args *, bus_addr_t *);
 int	sti_rom_setup(struct sti_rom *, bus_space_tag_t, bus_space_tag_t,
 	    bus_space_handle_t, bus_addr_t *, u_int);
 int	sti_screen_setup(struct sti_screen *, int);
 void	sti_describe_screen(struct sti_softc *, struct sti_screen *);
-
-#define PCI_ROM_SIZE(mr)						      \
-	(PCI_MAPREG_ROM_ADDR(mr) & -PCI_MAPREG_ROM_ADDR(mr))
 
 /* wsdisplay stuff */
 static int	summitfb_ioctl(void *, void *, u_long, void *, int,
@@ -139,12 +128,14 @@ static inline void summitfb_setup_fb(struct summitfb_softc *);
 static void 	summitfb_clearfb(struct summitfb_softc *);
 static void	summitfb_rectfill(struct summitfb_softc *, int, int, int, int,
 		    uint32_t);
+static void	summitfb_rectfill_a(void *, int, int, int, int, long);
 static void	summitfb_bitblt(void *, int, int, int, int, int,
 		    int, int);
 
 static void	summitfb_cursor(void *, int, int, int);
 static void	summitfb_putchar(void *, int, int, u_int, long);
 static void	summitfb_putchar_aa(void *, int, int, u_int, long);
+static int	summitfb_allocattr(void *, int, int, int, long *);
 static void	summitfb_copycols(void *, int, int, int, int);
 static void	summitfb_erasecols(void *, int, int, int, long);
 static void	summitfb_copyrows(void *, int, int, int);
@@ -238,6 +229,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	struct rasops_info *ri;
 	struct wsemuldisplaydev_attach_args aa;
 	struct sti_dd *dd;
+	bus_size_t romsize;
 	unsigned long defattr = 0;
 	int ret, is_console = 0;
 
@@ -251,7 +243,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	if (summitfb_check_rom(sc, paa) != 0)
+	if (sti_pci_check_rom(&sc->sc_base, paa, &sc->sc_romh, &romsize) != 0)
 		return;
 
 	ret = sti_pci_is_console(paa, sc->sc_base. bases);
@@ -277,6 +269,13 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	sti_fetchfonts(&sc->sc_scr, NULL, dd->dd_fntaddr, 0);
 	wsfont_init();
 	summitfb_copyfont(sc);
+	sc->sc_gid = sc->sc_scr.scr_rom->rom_dd.dd_grid[0];
+	/* see if this is a FX2/4/6 or FX5/10 */
+	sc->sc_is_lego = sc->sc_gid == STI_DD_LEGO;
+	printf("%s: gid %08x lego %d\n", __func__,
+	    sc->sc_gid, sc->sc_is_lego); 
+
+	//bus_space_unmap(paa->pa_memt, sc->sc_romh, romsize);
 
 	sc->sc_width = sc->sc_scr.scr_cfg.scr_width;
 	sc->sc_height = sc->sc_scr.scr_cfg.scr_height;
@@ -300,6 +299,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_screens[0] = &sc->sc_defaultscreen_descr;
 	sc->sc_screenlist = (struct wsscreen_list){1, sc->sc_screens};
 	sc->sc_mode = WSDISPLAYIO_MODE_EMUL;
+	sc->sc_fbdepth = 32;
 	sc->sc_locked = 0;
 
 	vcons_init(&sc->vd, sc, &sc->sc_defaultscreen_descr,
@@ -310,6 +310,7 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 	ri = &sc->sc_console_screen.scr_ri;
 
 	sc->sc_gc.gc_bitblt = summitfb_bitblt;
+	sc->sc_gc.gc_rectfill = summitfb_rectfill_a;
 	sc->sc_gc.gc_blitcookie = sc;
 	sc->sc_gc.gc_rop = RopSrc;
 
@@ -367,266 +368,19 @@ summitfb_attach(device_t parent, device_t self, void *aux)
 }
 
 /*
- * Grovel the STI ROM image.
- */
-int
-summitfb_check_rom(struct summitfb_softc *spc, struct pci_attach_args *pa)
-{
-	struct sti_softc *sc = &spc->sc_base;
-	pcireg_t address, mask;
-	bus_space_handle_t romh;
-	bus_size_t romsize, subsize, stiromsize;
-	bus_addr_t selected, offs, suboffs;
-	uint32_t tmp;
-	int i;
-	int rc;
-
-	/* sort of inline sti_pci_enable_rom(sc) */
-	address = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM,
-	    ~PCI_MAPREG_ROM_ENABLE);
-	mask = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_MAPREG_ROM, address);
-	sc->sc_flags |= STI_ROM_ENABLED;
-
-	/*
-	 * Map the complete ROM for now.
-	 */
-	romsize = PCI_ROM_SIZE(mask);
-	DPRINTF(("%s: mapping rom @ %lx for %lx\n", __func__,
-	    (long)PCI_MAPREG_ROM_ADDR(address), (long)romsize));
-
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address), romsize,
-	    0, &romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map PCI ROM (%d)\n", rc);
-		goto fail2;
-	}
-
-	summitfb_disable_rom_internal(spc);
-
-	/*
-	 * Iterate over the ROM images, pick the best candidate.
-	 */
-	selected = (bus_addr_t)-1;
-	for (offs = 0; offs < romsize; offs += subsize) {
-		summitfb_enable_rom_internal(spc);
-		/*
-		 * Check for a valid ROM header.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x55aa0000) {
-			summitfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM header signature"
-				    " (%08x)\n", tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		/*
-		 * Check ROM type.
-		 */
-		tmp = bus_space_read_4(pa->pa_memt, romh, offs + 4);
-		tmp = le32toh(tmp);
-		if (tmp != 0x00000001) {	/* 1 == STI ROM */
-			summitfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev,
-				    "invalid PCI ROM type (%08x)\n", tmp);
-				rc = EINVAL;
-			}
-			break;
-		}
-
-		subsize = (bus_addr_t)bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x0c);
-		subsize <<= 9;
-
-#ifdef SUMMITFB_DEBUG
-		summitfb_disable_rom_internal(spc);
-		DPRINTF(("ROM offset %08x size %08x type %08x",
-		    (u_int)offs, (u_int)subsize, tmp));
-		summitfb_enable_rom_internal(spc);
-#endif
-
-		/*
-		 * Check for a valid ROM data structure.
-		 * We do not need it except to know what architecture the ROM
-		 * code is for.
-		 */
-
-		suboffs = offs + bus_space_read_2(pa->pa_memt, romh,
-		    offs + 0x18);
-		tmp = bus_space_read_4(pa->pa_memt, romh, suboffs + 0);
-		tmp = le32toh(tmp);
-		if (tmp != 0x50434952) {	/* PCIR */
-			summitfb_disable_rom_internal(spc);
-			if (offs == 0) {
-				aprint_error_dev(sc->sc_dev, "invalid PCI data"
-				    " signature (%08x)\n", tmp);
-				rc = EINVAL;
-			} else {
-				DPRINTF((" invalid PCI data signature %08x\n",
-				    tmp));
-				continue;
-			}
-		}
-
-		tmp = bus_space_read_1(pa->pa_memt, romh, suboffs + 0x14);
-		summitfb_disable_rom_internal(spc);
-		DPRINTF((" code %02x", tmp));
-
-		switch (tmp) {
-#ifdef __hppa__
-		case 0x10:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-#ifdef __i386__
-		case 0x00:
-			if (selected == (bus_addr_t)-1)
-				selected = offs;
-			break;
-#endif
-		default:
-			DPRINTF((" (wrong architecture)"));
-			break;
-		}
-		DPRINTF(("%s\n", selected == offs ? " -> SELECTED" : ""));
-	}
-
-	if (selected == (bus_addr_t)-1) {
-		if (rc == 0) {
-			aprint_error_dev(sc->sc_dev, "found no ROM with "
-			    "correct microcode architecture\n");
-			rc = ENOEXEC;
-		}
-		goto fail;
-	}
-
-	/*
-	 * Read the STI region BAR assignments.
-	 */
-
-	summitfb_enable_rom_internal(spc);
-	offs = selected + bus_space_read_2(pa->pa_memt, romh, selected + 0x0e);
-	for (i = 0; i < STI_REGION_MAX; i++) {
-		rc = summitfb_readbar(sc, pa, i,
-		    bus_space_read_1(pa->pa_memt, romh, offs + i));
-		if (rc != 0)
-			goto fail;
-	}
-
-	/*
-	 * Find out where the STI ROM itself lies, and its size.
-	 */
-
-	offs = selected +
-	    bus_space_read_4(pa->pa_memt, romh, selected + 0x08);
-	stiromsize = bus_space_read_4(pa->pa_memt, romh, offs + 0x18);
-	stiromsize = le32toh(stiromsize);
-	summitfb_disable_rom_internal(spc);
-
-	/*
-	 * Replace our mapping with a smaller mapping of only the area
-	 * we are interested in.
-	 */
-
-	DPRINTF(("remapping rom @ %lx for %lx\n",
-	    (long)(PCI_MAPREG_ROM_ADDR(address) + offs), (long)stiromsize));
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-	rc = bus_space_map(pa->pa_memt, PCI_MAPREG_ROM_ADDR(address) + offs,
-	    stiromsize, 0, &spc->sc_romh);
-	if (rc != 0) {
-		aprint_error_dev(sc->sc_dev, "can't map STI ROM (%d)\n",
-		    rc);
-		goto fail2;
-	}
- 	summitfb_disable_rom_internal(spc);
-	sc->sc_flags &= ~STI_ROM_ENABLED;
-
-	return 0;
-
-fail:
-	bus_space_unmap(pa->pa_memt, romh, romsize);
-fail2:
-	summitfb_disable_rom_internal(spc);
-
-	return rc;
-}
-
-/*
- * Decode a BAR register.
- */
-int
-summitfb_readbar(struct sti_softc *sc, struct pci_attach_args *pa,
-    u_int region, int bar)
-{
-	bus_addr_t addr;
-	bus_size_t size;
-	uint32_t cf;
-	int rc;
-
-	if (bar == 0) {
-		sc->bases[region] = 0;
-		return 0;
-	}
-
-#ifdef DIAGNOSTIC
-	if (bar < PCI_MAPREG_START || bar > PCI_MAPREG_PPB_END) {
-		summitfb_disable_rom(sc);
-		printf("%s: unexpected bar %02x for region %d\n",
-		    device_xname(sc->sc_dev), bar, region);
-		summitfb_enable_rom(sc);
-	}
-#endif
-
-	cf = pci_conf_read(pa->pa_pc, pa->pa_tag, bar);
-
-	rc = pci_mapreg_info(pa->pa_pc, pa->pa_tag, bar, PCI_MAPREG_TYPE(cf),
-	    &addr, &size, NULL);
-
-	if (rc != 0) {
-		summitfb_disable_rom(sc);
-		aprint_error_dev(sc->sc_dev, "invalid bar %02x"
-		    " for region %d\n",
-		    bar, region);
-		summitfb_enable_rom(sc);
-		return rc;
-	}
-
-	sc->bases[region] = addr;
-	return 0;
-}
-
-/*
  * Enable PCI ROM.
  */
-void
-summitfb_enable_rom_internal(struct summitfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address |= PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 summitfb_enable_rom(struct sti_softc *sc)
 {
 	struct summitfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (!ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		summitfb_enable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address |= PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	SET(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -634,25 +388,17 @@ summitfb_enable_rom(struct sti_softc *sc)
 /*
  * Disable PCI ROM.
  */
-void
-summitfb_disable_rom_internal(struct summitfb_softc *spc)
-{
-	pcireg_t address;
-
-	KASSERT(spc != NULL);
-
-	address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
-	address &= ~PCI_MAPREG_ROM_ENABLE;
-	pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
-}
 
 void
 summitfb_disable_rom(struct sti_softc *sc)
 {
 	struct summitfb_softc *spc = device_private(sc->sc_dev);
+	uint32_t address;
 
 	if (ISSET(sc->sc_flags, STI_ROM_ENABLED)) {
-		summitfb_disable_rom_internal(spc);
+		address = pci_conf_read(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM);
+		address &= ~PCI_MAPREG_ROM_ENABLE;
+		pci_conf_write(spc->sc_pc, spc->sc_tag, PCI_MAPREG_ROM, address);
 	}
 	CLR(sc->sc_flags, STI_ROM_ENABLED);
 }
@@ -671,17 +417,47 @@ summitfb_setup_fb(struct summitfb_softc *sc)
 
 	summitfb_wait(sc);
 	if (sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+		if (sc->sc_is_lego) {
+			// turn off swapping
+			summitfb_write4(sc, B2_DMA_BSCFB, SWAP_0123);
+			summitfb_write4(sc, B2_PDU_BSCFB, SWAP_0123);
+		}
 		summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_read_mode(sc, VISFX_WRITE_MODE_PLAIN);
 		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
 		/* make overlay opaque */
 		summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
 	} else {
-		summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
-		summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
-		summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
-		/* make overlay transparent */
-		summitfb_write4(sc, VISFX_OTR, OTR_A);
+		if (sc->sc_is_lego) {
+			/* on FX5/10 we use the image planes in 8bit for now */ 
+			summitfb_write_mode(sc, OTC04 | BIN8I | BUFFL);
+			summitfb_read_mode(sc, OTC04 | BIN8I | BUFFL);
+			summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
+			/* turn off overlay */
+			summitfb_write4(sc, VISFX_OTR, OTR_A);
+			/* turn on swapping */
+			summitfb_write4(sc, B2_DMA_BSCFB, SWAP_3210);
+			summitfb_write4(sc, B2_PDU_BSCFB, SWAP_3210);
+		} else {
+			/*
+			 * on FX2/4/6 turn off the overlay and expose the
+			 * 24bit framebuffer
+			 */
+			if (sc->sc_fbdepth == 32) {
+				summitfb_write_mode(sc, OTC01 | BIN8F | BUFFL);
+				summitfb_read_mode(sc, OTC01 | BIN8F | BUFFL);
+				summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_32);
+				/* make overlay transparent */
+				summitfb_write4(sc, VISFX_OTR, OTR_A);
+			} else {
+				summitfb_write_mode(sc, VISFX_WRITE_MODE_PLAIN);
+				summitfb_read_mode(sc, VISFX_WRITE_MODE_PLAIN);
+				summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
+				/* make overlay opaque */
+				summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
+
+			}
+		}
 	}
 	summitfb_write4(sc, VISFX_IBO, RopSrc);
 }
@@ -699,10 +475,27 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_wait(sc);
 #if 1
 	/* these control byte swapping */
-	summitfb_write4(sc, 0xb08044, 0x1b);	/* MFU_BSCTD */
-	summitfb_write4(sc, 0xb08048, 0x1b);	/* MFU_BSCCTL */
+	if(sc->sc_is_lego) {
+		/* disable blanket swapper */
+		summitfb_write4(sc, B2_DMA_BSCSAV, 0);
+		summitfb_write4(sc, B2_DMA_BSCBLK, 0);
+		/* no swapping for buffered access */
+		summitfb_write4(sc, B2_DMA_BSCFB, SWAP_0123);
+		summitfb_write4(sc, B2_PDU_BSCFB, SWAP_0123);
+		/* no swapping for unbuffered */
+		summitfb_write4(sc, UB_DMA_UBSCFB, SWAP_0123);
+		summitfb_write4(sc, UB_PDU_UBSCFB, SWAP_0123);
+		/* don't swap register accesses */
+		summitfb_write4(sc, B2_MFU_BSCTD, SWAP_0123);
+		summitfb_write4(sc, B2_MFU_BSCCTL, SWAP_0123);
+		/*  */
+		summitfb_write4(sc, VISFX_RBS, SWAP_3210);
+	} else {
+		summitfb_write4(sc, B2_MFU_BSCTD, 0x1b);
+		summitfb_write4(sc, B2_MFU_BSCCTL, 0x1b);
+		summitfb_write4(sc, 0x920860, 0xe4);	/* FBC_RBS */
+	}
 
-	summitfb_write4(sc, 0x920860, 0xe4);	/* FBC_RBS */
 	summitfb_write4(sc, 0x921114, 0);	/* CPE, clip plane enable */
 	summitfb_write4(sc, 0x9211d8, 0);	/* FCDA */
 
@@ -711,7 +504,7 @@ summitfb_setup(struct summitfb_softc *sc)
 	summitfb_write4(sc, 0xa00850, 0);	/* MISC_CTL */
 	summitfb_write4(sc, 0xa0086c, 0);	/* WCE window clipping enable */
 #endif
-	/* initialize drawiing engine */
+	/* initialize drawing engine */
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_CONTROL, 0);	// clear WFC
 	summitfb_write4(sc, VISFX_APERTURE_ACCESS, VISFX_DEPTH_8);
@@ -732,32 +525,42 @@ summitfb_setup(struct summitfb_softc *sc)
 	/* make sure the overlay is opaque */
 	summitfb_write4(sc, VISFX_OTR, OTR_T | OTR_L1 | OTR_L0);
 
-	/*
-	 * initialize XLUT, I mean attribute table
-	 * set all to 24bit, CFS1
-	 */
-	for (i = 0; i < 16; i++)
-		summitfb_write4(sc, VISFX_IAA(i), IAA_8F | IAA_CFS1);
-	/* RGB8, no LUT */
-	summitfb_write4(sc, VISFX_CFS(1), CFS_8F | CFS_BYPASS);
-	/* overlay is 8bit, uses LUT 0 */
-	summitfb_write4(sc, VISFX_CFS(16), CFS_8I | CFS_LUT0);
-	summitfb_write4(sc, VISFX_CFS(17), CFS_8I | CFS_LUT0);
-
 	/* zero the attribute plane */
-	summitfb_write_mode(sc, OTC04 | BINapln);
+	summitfb_write_mode(sc, OTC32 | BINapln);
 	summitfb_wait_fifo(sc, 12);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xff);
-	summitfb_write4(sc, VISFX_IBO, 0);	/* GXclear */
+	summitfb_write4(sc, VISFX_IBO, RopSrc);
 	summitfb_write4(sc, VISFX_FG_COLOUR, 0);
 	summitfb_write4(sc, VISFX_START, 0);
 	summitfb_write4(sc, VISFX_SIZE, (sc->sc_width << 16) | sc->sc_height);
 	summitfb_wait(sc);
 	summitfb_write4(sc, VISFX_PLANE_MASK, 0xffffffff);
 
-	/* turn off force attr so the above takes effect */
-	summitfb_write4(sc, VISFX_FATTR, 0);
+	/*
+	 * initialize XLUT, I mean attribute table
+	 * set all to 24bit, CFS1
+	 */
+	if (!sc->sc_is_lego) {
+		/*
+		 * we don't know (yet) how any of this works on FX5/10, so only
+		 * do it on FX2/4/6
+		 */
+		for (i = 0; i < 16; i++) {
+			summitfb_write4(sc, VISFX_IAA(i), IAA_8F | IAA_CFS1);
+			/* RGB8, no LUT */
+			summitfb_write4(sc, VISFX_CFS(i), CFS_8F | CFS_BYPASS);
+		}
+		/* overlay is 8bit, uses RGB332 */
+		summitfb_write4(sc, VISFX_CFS(16), CFS_332 | CFS_BYPASS);
+		summitfb_write4(sc, VISFX_CFS(17), CFS_332 | CFS_BYPASS);
 
+
+		/* turn off force attr so the above takes effect */
+		summitfb_write4(sc, VISFX_FATTR, 0);
+	} else {
+		summitfb_write4(sc, VISFX_CFS(1), CFS_8I | CFS_LUT1);
+		summitfb_write4(sc, VISFX_FATTR, 0x91919191);
+	}
 	summitfb_setup_fb(sc);
 }
 
@@ -776,7 +579,7 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		return 0;
 
 	case GCID:
-		*(u_int *)data = sc->sc_scr.scr_rom->rom_dd.dd_grid[0];
+		*(u_int *)data = sc->sc_gid;
 		return 0;
 
 	/* PCI config read/write passthrough. */
@@ -825,8 +628,12 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				    (ms->scr_defattr >> 16) & 0xff]);
 				vcons_redraw_screen(ms);
 				summitfb_set_video(sc, 1);
-			} else
+			} else {
+				int i;
+				for (i =0; i < 256; i++)
+					summitfb_putpalreg(sc, i, i, i, i);
 				summitfb_clearfb(sc);
+			}
 			summitfb_setup_fb(sc);
 		}
 		return 0;
@@ -837,19 +644,44 @@ summitfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 		int ret;
 
 		ret = wsdisplayio_get_fbinfo(&ms->scr_ri, fbi);
-		//fbi->fbi_fbsize = sc->sc_height * 2048;
-		fbi->fbi_stride = 8192;
-		fbi->fbi_bitsperpixel = 32;
-		fbi->fbi_pixeltype = WSFB_RGB;
-		fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
-		fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
-		fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
-		fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
-		fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
+		if (sc->sc_is_lego) {
+			/* on FX5/10 we can't use 24bit yet */
+			fbi->fbi_stride = 2048;
+			/* not sure yet how much VRAM is accessible */
+			fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+		} else {
+			/* on FX2/4/6 we switch to 24bit */
+			if (sc->sc_fbdepth == 32) {
+				fbi->fbi_stride = 8192;
+				fbi->fbi_bitsperpixel = 32;
+				fbi->fbi_fbsize = sc->sc_scr.fbheight * 8192;
+				fbi->fbi_pixeltype = WSFB_RGB;
+				fbi->fbi_subtype.fbi_rgbmasks.red_offset = 16;
+				fbi->fbi_subtype.fbi_rgbmasks.red_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.green_offset = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.green_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.blue_offset = 0;
+				fbi->fbi_subtype.fbi_rgbmasks.blue_size = 8;
+				fbi->fbi_subtype.fbi_rgbmasks.alpha_size = 0;
+			} else {
+				fbi->fbi_stride = 2048;
+				fbi->fbi_bitsperpixel = 8;
+				fbi->fbi_fbsize = sc->sc_scr.fbheight * 2048;
+				fbi->fbi_pixeltype = WSFB_CI;
+				fbi->fbi_subtype.fbi_cmapinfo.cmap_entries = 256;
+			}
+		}
 		return ret;
+	}
+
+	case WSDISPLAYIO_SET_DEPTH:
+	{
+		int new_depth = *(int*)data;
+		if ((new_depth == 8) || (new_depth == 32)) {
+			sc->sc_fbdepth = new_depth;
+			return 0;
+		}
+		return EINVAL;
 	}
 
 	case WSDISPLAYIO_GCURPOS: {
@@ -927,9 +759,17 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_width = sc->sc_width;
 	ri->ri_height = sc->sc_height;
 	ri->ri_stride = 2048;
-	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB
-	    | RI_ENABLE_ALPHA | RI_PREFER_ALPHA
-	    ;
+	ri->ri_flg = RI_CENTER | RI_8BIT_IS_RGB | RI_FULLCLEAR;
+	if (sc->sc_is_lego) {
+		/* until we can use ROPs, use putchar() based cursor() */
+		scr->scr_flags = VCONS_NO_CURSOR;
+	} else {
+		/*
+		 * only enable alpha fonts on FX4, until we figure out how this
+		 * works on FX5/10
+		 */
+		ri->ri_flg |= RI_ENABLE_ALPHA | RI_PREFER_ALPHA;
+	}
 
 	ri->ri_bits = (void *)sc->sc_scr.fbaddr;
 	rasops_init(ri, 0, 0);
@@ -947,7 +787,7 @@ summitfb_init_screen(void *cookie, struct vcons_screen *scr,
 	ri->ri_ops.eraserows = summitfb_eraserows;
 	ri->ri_ops.erasecols = summitfb_erasecols;
 	ri->ri_ops.cursor = summitfb_cursor;
-	sc->sc_font = NULL;
+	ri->ri_ops.allocattr = summitfb_allocattr;
 	if (FONT_IS_ALPHA(ri->ri_font)) {
 		ri->ri_ops.putchar = summitfb_putchar_aa;
 	} else
@@ -1084,6 +924,16 @@ summitfb_rectfill(struct summitfb_softc *sc, int x, int y, int wi, int he,
 }
 
 static void
+summitfb_rectfill_a(void *cookie, int dstx, int dsty,
+    int width, int height, long attr)
+{
+	struct summitfb_softc *sc = cookie;
+
+	summitfb_rectfill(sc, dstx, dsty, width, height,
+	    sc->vd.active->scr_ri.ri_devcmap[(attr >> 24 & 0xf)]);
+}
+
+static void
 summitfb_bitblt(void *cookie, int xs, int ys, int xd, int yd, int wi,
     int he, int rop)
 {
@@ -1166,7 +1016,7 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct summitfb_softc *sc = scr->scr_cookie;
 	void *data;
-	int i, x, y, wi, he;
+	int i, x, y, wi, he, ul;
 	uint32_t bg, fg, mask;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1185,15 +1035,18 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 	x = ri->ri_xorigin + col * wi;
 	y = ri->ri_yorigin + row * he;
 
+	ul = he - ((he < 16) ? 1 : 2);
+
 	bg = ri->ri_devcmap[(attr >> 16) & 0xf];
+	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	/* if we're drawing a space we're done here */
 	if (c == 0x20) {
 		summitfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			summitfb_rectfill(sc, x, y + ul, wi, 1, fg);
 		return;
 	}
-
-	fg = ri->ri_devcmap[(attr >> 24) & 0x0f];
 
 	summitfb_write_mode(sc, VISFX_WRITE_MODE_EXPAND);
 	summitfb_wait_fifo(sc, 12);
@@ -1207,22 +1060,51 @@ summitfb_putchar(void *cookie, int row, int col, u_int c, long attr)
 
 	data = WSFONT_GLYPH(c, font);
 
-	if (ri->ri_font->stride == 1) {
-		uint8_t *data8 = data;
-		for (i = 0; i < he; i++) {
-			mask = *data8;
-			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
-			    mask << 24);
-			data8++;
+	if (attr & WSATTR_HILIT) {
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				mask |= mask >> 1;
+				summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+				    mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				mask |= mask >> 1;
+				summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+				    mask << 16);
+				data16++;
+			}
 		}
 	} else {
-		uint16_t *data16 = data;
-		for (i = 0; i < he; i++) {
-			mask = *data16;
-			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
-			    mask << 16);
-			data16++;
+		if (ri->ri_font->stride == 1) {
+			uint8_t *data8 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data8;
+				summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+				    mask << 24);
+				data8++;
+			}
+		} else {
+			uint16_t *data16 = data;
+			for (i = 0; i < he; i++) {
+				mask = *data16;
+				summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+				    mask << 16);
+				data16++;
+			}
 		}
+	}
+	if (attr & WSATTR_UNDERLINE) {
+		summitfb_wait_fifo(sc, 2);
+		summitfb_write4(sc, VISFX_VRAM_WRITE_DEST,
+		    ((y + ul) << 16) | x);
+		summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRY,
+		    0xffffffff << (32 - wi));
 	}
 }
 
@@ -1234,7 +1116,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	struct vcons_screen *scr = ri->ri_hw;
 	struct summitfb_softc *sc = scr->scr_cookie;
 	int x, y, wi, he, rv = GC_NOPE, i, j;
-	uint32_t bg, fg, tmp;
+	uint32_t bg, fg24, tmp;
 	uint8_t *data;
 
 	if (sc->sc_mode != WSDISPLAYIO_MODE_EMUL)
@@ -1257,6 +1139,8 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	if (c == 0x20) {
 		summitfb_rectfill(sc, x, y, wi, he, bg);
+		if (attr & WSATTR_UNDERLINE)
+			glyphcache_underline(&sc->sc_gc, x, y, attr);
 		return;
 	}
 
@@ -1272,7 +1156,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 
 	summitfb_write_mode(sc, OTC01 | BIN332F | BUFovl);
 	/* we need the foreground colour as full RGB8 */
-	fg = sc->sc_palette[(attr >> 24) & 0xf];
+	fg24 = sc->sc_palette[(attr >> 24) & 0xf];
 
 	/*
 	 * set the blending equation to
@@ -1280,6 +1164,7 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 	 */
 	summitfb_write4(sc, VISFX_IBO,
 	    IBO_ADD | SRC(IBO_SRC) | DST(IBO_ONE_MINUS_SRC));
+	summitfb_write4(sc, VISFX_FOE, FOE_BLEND_ROP | FOE_DITHER);
 
 	/* get the glyph */
 	data = WSFONT_GLYPH(c, font);
@@ -1297,13 +1182,39 @@ summitfb_putchar_aa(void *cookie, int row, int col, u_int c, long attr)
 			tmp = *data;
 			/* alpha & RGB -> ARGB */
 			summitfb_write4(sc, VISFX_VRAM_WRITE_DATA_INCRX,
-			    (tmp << 24) | fg);
+			    (tmp << 24) | fg24);
 			data++;
 		}
 	}
 
-	if (rv == GC_ADD)
+	if (rv == GC_ADD) {
 		glyphcache_add(&sc->sc_gc, c, x, y);
+	}
+	if (attr & WSATTR_UNDERLINE)
+		glyphcache_underline(&sc->sc_gc, x, y, attr);
+
+}
+
+static int
+summitfb_allocattr(void *cookie, int fg0, int bg0, int flg, long *attr)
+{
+	struct rasops_info *ri = cookie;
+	int fg = fg0, bg = bg0;
+
+	if ((flg & WSATTR_BLINK) != 0)
+		return EINVAL;
+
+	if ((flg & WSATTR_REVERSE) != 0) {
+		fg = bg0;
+		bg = fg0;
+	}
+
+	if (FONT_IS_ALPHA(ri->ri_font) && ((flg & WSATTR_HILIT) != 0)) {
+		fg = fg0 < 8 ? fg0 + 8 : fg0;
+	}
+
+	*attr = (bg << 16) | (fg << 24) | flg;
+	return 0;
 }
 
 static void
@@ -1396,10 +1307,17 @@ summitfb_eraserows(void *cookie, int row, int nrows, long fillattr)
 	int32_t x, y, width, height, fg, bg, ul;
 
 	if (sc->sc_locked == 0 && sc->sc_mode == WSDISPLAYIO_MODE_EMUL) {
-		x = ri->ri_xorigin;
-		y = ri->ri_yorigin + ri->ri_font->fontheight * row;
-		width = ri->ri_emuwidth;
-		height = ri->ri_font->fontheight * nrows;
+		if (row == 0 && nrows == ri->ri_rows) {
+			x = 0;
+			y = 0;
+			width = sc->sc_width;
+			height = sc->sc_height;
+		} else {
+			x = ri->ri_xorigin;
+			y = ri->ri_yorigin + ri->ri_font->fontheight * row;
+			width = ri->ri_emuwidth;
+			height = ri->ri_font->fontheight * nrows;
+		}
 		rasops_unpack_attr(fillattr, &fg, &bg, &ul);
 
 		summitfb_rectfill(sc, x, y, width, height, ri->ri_devcmap[bg]);

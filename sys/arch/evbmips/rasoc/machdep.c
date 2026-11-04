@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2024/03/05 14:15:31 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.15.2.1 2026/11/04 23:20:33 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2024/03/05 14:15:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15.2.1 2026/11/04 23:20:33 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/boot_flag.h>
@@ -79,7 +79,7 @@ cal_timer(void)
 	uint32_t cntfreq;
 
 	cntfreq = curcpu()->ci_cpu_freq = RA_CLOCK_RATE;
-	
+
 	/* MIPS 4Kc CP0 counts every other clock */
 	if (mips_options.mips_cpu_flags & CPU_MIPS_DOUBLE_COUNT)
 		cntfreq /= 2;
@@ -267,9 +267,9 @@ cpu_reboot(int howto, char *bootstr)
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
-		cnpollc(1);	/* For proper keyboard command handling */
+		cnpollc(true);	/* For proper keyboard command handling */
 		cngetc();
-		cnpollc(0);
+		cnpollc(false);
 	}
 
 	printf("resetting board...\n\n");

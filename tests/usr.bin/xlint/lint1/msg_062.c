@@ -1,11 +1,12 @@
-/*	$NetBSD: msg_062.c,v 1.7.2.1 2025/08/02 05:58:15 perseant Exp $	*/
+/*	$NetBSD: msg_062.c,v 1.7.2.2 2026/11/04 23:28:27 perseant Exp $	*/
 # 3 "msg_062.c"
 
 // Test for message: function prototype parameters must have types [62]
 
 /* lint1-extra-flags: -X 351 */
 
-/* expect+1: error: old-style declaration; add 'int' [1] */
+/* expect+2: error: old-style declaration; add 'int' [1] */
+/* expect+1: warning: function definition for 'outer' is not a prototype [286] */
 outer() {
 	/* expect+3: warning: function definition for 'inner' with identifier list is obsolete in C23 [384] */
 	/* expect+2: warning: function prototype parameters must have types [62] */

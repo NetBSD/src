@@ -1,4 +1,4 @@
-# Copyright (C) 2021-2024 Free Software Foundation, Inc.
+# Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -81,7 +81,7 @@ def register_disassembler(disassembler, architecture=None):
 
     # Call the private _set_enabled function within the
     # _gdb.disassembler module.  This function sets a global flag
-    # within GDB's C++ code that enables or dissables the Python
+    # within GDB's C++ code that enables or disables the Python
     # disassembler functionality, this improves performance of the
     # disassembler by avoiding unneeded calls into Python when we know
     # that no disassemblers are registered.
@@ -147,7 +147,7 @@ class maint_info_py_disassemblers_cmd(gdb.Command):
         # Figure out the name of the current architecture.  There
         # should always be a current inferior, but if, somehow, there
         # isn't, then leave curr_arch as the empty string, which will
-        # not then match agaisnt any architecture in the dictionary.
+        # not then match against any architecture in the dictionary.
         curr_arch = ""
         if gdb.selected_inferior() is not None:
             curr_arch = gdb.selected_inferior().architecture().name()

@@ -1,6 +1,6 @@
 /* Routines for handling XML generic OS data provided by target.
 
-   Copyright (C) 2008-2023 Free Software Foundation, Inc.
+   Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,12 +17,11 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "target.h"
 #include "xml-support.h"
 #include "osdata.h"
 #include "ui-out.h"
-#include "gdbcmd.h"
+#include "cli/cli-cmds.h"
 
 #if !defined(HAVE_LIBEXPAT)
 
@@ -64,7 +63,7 @@ osdata_start_osdata (struct gdb_xml_parser *parser,
     gdb_xml_error (parser, _("Seen more than on osdata element"));
 
   char *type = (char *) xml_find_attribute (attributes, "type")->value.get ();
-  data->osdata.reset (new struct osdata (std::string (type)));
+  data->osdata = std::make_unique<osdata> (std::string (type));
 }
 
 /* Handle the start of a <item> element.  */
@@ -162,7 +161,7 @@ std::unique_ptr<osdata>
 get_osdata (const char *type)
 {
   std::unique_ptr<osdata> osdata;
-  gdb::optional<gdb::char_vector> xml = target_get_osdata (type);
+  std::optional<gdb::char_vector> xml = target_get_osdata (type);
 
   if (xml)
     {

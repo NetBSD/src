@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.38 2020/05/31 11:43:37 rin Exp $
+#	$NetBSD: Makefile.inc,v 1.38.8.1 2026/11/04 23:19:12 perseant Exp $
 
 SRCS+=	alloca.S fabs.S
 
@@ -14,7 +14,7 @@ SRCS+=	nanf.c
 
 # 68000-based machines use a double-extended `long double' type
 # for which the generic ieee754 versions can be used
-.if	${MACHINE_ARCH} != "m68k"
+.if	${MACHINE_ARCH:S/m68ksf/m68k/} != "m68k"
 SRCS+=	infinityl_dbl_ieee754.c
 .else
 SRCS+=	infinityl.c
@@ -23,8 +23,10 @@ SRCS+=	signbitl_ieee754.c
 .endif
 
 SRCS+=	ashlsi3.S ashrsi3.S \
-	lshlsi3.S lshrsi3.S \
-	negdf2.S negsf2.S
+	lshlsi3.S lshrsi3.S
+.if ${MKSOFTFLOAT} == "no" || ${MKLIBCSOFTFLOAT} != "no"
+SRCS+=	negdf2.S negsf2.S
+.endif
 SRCS+=	bswap16.S bswap32.S bswap64.S
 SRCS+=	_lwp.c
 CPPFLAGS._lwp.c	+= -D_LIBC_SOURCE
@@ -32,7 +34,8 @@ CPPFLAGS._lwp.c	+= -D_LIBC_SOURCE
 # 68000-based machines build with a libgcc that includes
 # much of the (soft)float and integer support that would 
 # otherwise be compiled here.
-.if	(${MACHINE_ARCH} == "m68000" || ${MKSOFTFLOAT} != "no")
+.if	(${MACHINE_ARCH} == "m68000" || \
+		(${MKSOFTFLOAT} != "no" && ${MKLIBCSOFTFLOAT} == "no"))
 SRCS+=	compat_modf_ieee754.c			# generic ieee754 version
 SRCS+=	flt_rounds_softfloat.S
 .if ${MKSOFTFLOAT} == "no"
@@ -40,7 +43,7 @@ SRCS+=	fpfake.c
 .endif
 .endif
 
-.if ${MACHINE_ARCH} == "m68k"
+.if ${MACHINE_ARCH:S/m68ksf/m68k/} == "m68k"
 SRCS+=	mulsi3.S umulsi3.S
 SRCS+=	muldi3.S
 .else

@@ -11,14 +11,11 @@
 
 import itertools
 
-import isctest
+import dns.flags
+import dns.rrset
 import pytest
 
-import dns.message
-
-# Everything from getting a big answer to creating an RR set with thousands
-# of records takes minutes of CPU and real time with dnspython < 2.0.0.
-pytest.importorskip("dns", minversion="2.0.0")
+import isctest
 
 
 @pytest.mark.parametrize(
@@ -32,7 +29,7 @@ pytest.importorskip("dns", minversion="2.0.0")
     ],
 )
 def test_limits(name, limit):
-    msg_query = dns.message.make_query(f"{name}.example.", "A")
+    msg_query = isctest.query.create(f"{name}.example.", "A")
     res = isctest.query.tcp(msg_query, "10.53.0.1", log_response=False)
 
     iplist = [
@@ -46,7 +43,7 @@ def test_limits(name, limit):
 
 
 def test_limit_exceeded():
-    msg_query = dns.message.make_query("5000.example.", "A")
+    msg_query = isctest.query.create("5000.example.", "A")
     res = isctest.query.tcp(msg_query, "10.53.0.1", log_response=False)
 
     assert res.flags & dns.flags.TC, "TC flag was not set"

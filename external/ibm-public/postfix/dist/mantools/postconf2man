@@ -39,6 +39,7 @@ while(<>) {
     #$block =~ s/\n\./\n\\\&./g;
     $block =~ s/\n\./\n\134\&./g;
     $block =~ s/\n'/\n\134\&'/g;
+    $block =~ s/(<(p|dd|br)+>\s*)([.'])/$1\134\&$3/g;
     if ($block =~ /<H2>/) {
 	$block =~ s/<H2><a[^>]+>([^<]+)<\/a><\/H2>/\n.SH \1\n/g;
 	$block =~ tr/a-z/A-Z/;
@@ -55,6 +56,10 @@ while(<>) {
     $block =~ s/<i>/\\fI/g;
     $block =~ s/<\/b>/\\fR/g;
     $block =~ s/<\/i>/\\fR/g;
+    $block =~ s/\s*<\/p>\s*<pre>\s*\n/\n.sp\n.nf\n.na\n/g;
+    $block =~ s/\s*<\/pre>\s*<p>\s*/\n.sp\n.fi\n.ad\n/g;
+    $block =~ s/\s*<\/pre>\s*<pre>\s*\n/\n.sp\n/g;
+    $block =~ s/\s*<\/p>\s*<p>\s*/\n.sp\n/g;
     $block =~ s/^(<p(re)?>)/.PP\n\1/ if ($wantpp);
     $block =~ s/<p> */\n/g;
     $block =~ s/ *<\/p>/\n/g;

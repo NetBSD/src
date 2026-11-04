@@ -1,4 +1,4 @@
-/* $NetBSD: s3c2440_rtc.c,v 1.3 2020/01/02 22:24:11 thorpej Exp $ */
+/* $NetBSD: s3c2440_rtc.c,v 1.3.32.1 2026/11/04 23:20:14 perseant Exp $ */
 
 /*--
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -91,12 +91,9 @@ ssrtc_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal(": RTC \n");
 
-	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = NULL;
-	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_dev = self;
 	sc->sc_todr.todr_gettime_ymdhms = ssrtc_todr_gettime_ymdhms;
 	sc->sc_todr.todr_settime_ymdhms = ssrtc_todr_settime_ymdhms;
-	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
@@ -104,7 +101,7 @@ ssrtc_attach(device_t parent, device_t self, void *aux)
 static int
 ssrtc_todr_gettime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *dt)
 {
-	struct ssrtc_softc *sc = h->cookie;
+	struct ssrtc_softc *sc = device_private(h->todr_dev);
 	uint8_t reg;
 
 	reg = bus_space_read_1(sc->sc_iot, sc->sc_ioh, RTC_BCDSEC);
@@ -149,7 +146,7 @@ ssrtc_todr_gettime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *dt)
 static int
 ssrtc_todr_settime_ymdhms(struct todr_chip_handle *h, struct clock_ymdhms *dt)
 {
-	struct ssrtc_softc *sc = h->cookie;
+	struct ssrtc_softc *sc = device_private(h->todr_dev);
 	uint8_t reg;
 
 	DPRINTF(("ssrtc_todr_settime"));

@@ -1,6 +1,6 @@
 /* Public partial symbol table definitions.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef PSYMTAB_H
-#define PSYMTAB_H
+#ifndef GDB_PSYMTAB_H
+#define GDB_PSYMTAB_H
 
 #include "objfiles.h"
 #include <string_view>
@@ -184,10 +184,10 @@ struct partial_symbol
   ENUM_BITFIELD(domain_enum) domain : SYMBOL_DOMAIN_BITS;
 
   /* Address class (for info_symbols).  Note that we don't allow
-     synthetic "aclass" values here at present, simply because there's
+     synthetic "loc_class" values here at present, simply because there's
      no need.  */
 
-  ENUM_BITFIELD(address_class) aclass : SYMBOL_ACLASS_BITS;
+  ENUM_BITFIELD(location_class) loc_class : SYMBOL_LOC_CLASS_BITS;
 };
 
 /* A convenience enum to give names to some constants used when
@@ -333,7 +333,7 @@ struct partial_symtab
      If COPY_NAME is true, make a copy of NAME, otherwise use the passed
      reference.
 
-     THECLASS is the type of symbol.
+     LOC_CLASS is the type of symbol.
 
      SECTION is the index of the section of OBJFILE in which the symbol is found.
 
@@ -348,8 +348,8 @@ struct partial_symtab
 
   void add_psymbol (std::string_view name,
 		    bool copy_name, domain_enum domain,
-		    enum address_class theclass,
-		    short section,
+		    location_class loc_class,
+		    int section,
 		    psymbol_placement where,
 		    unrelocated_addr coreaddr,
 		    enum language language,
@@ -444,7 +444,7 @@ struct partial_symtab
      improve access.  Binary search will be the usual method of
      finding a symbol within it.  */
 
-  std::vector<partial_symbol *> global_psymbols;
+  std::vector<const partial_symbol *> global_psymbols;
 
   /* Static symbol list.  This list will *not* be sorted after readin;
      to find a symbol in it, exhaustive search must be used.  This is
@@ -453,7 +453,7 @@ struct partial_symtab
      to take a *lot* of time; check) or an error (and we don't care
      how long errors take).  */
 
-  std::vector<partial_symbol *> static_psymbols;
+  std::vector<const partial_symbol *> static_psymbols;
 
   /* True if the name of this partial symtab is not a source file name.  */
 
@@ -628,16 +628,17 @@ struct psymbol_functions : public quick_symbol_functions
 
   bool expand_symtabs_matching
     (struct objfile *objfile,
-     gdb::function_view<expand_symtabs_file_matcher_ftype> file_matcher,
+     expand_symtabs_file_matcher file_matcher,
      const lookup_name_info *lookup_name,
-     gdb::function_view<expand_symtabs_symbol_matcher_ftype> symbol_matcher,
-     gdb::function_view<expand_symtabs_exp_notify_ftype> expansion_notify,
+     expand_symtabs_symbol_matcher symbol_matcher,
+     expand_symtabs_expansion_listener expansion_notify,
      block_search_flags search_flags,
-     domain_search_flags kind) override;
+     domain_search_flags kind,
+     expand_symtabs_lang_matcher lang_matcher) override;
 
   struct compunit_symtab *find_pc_sect_compunit_symtab
-    (struct objfile *objfile, struct bound_minimal_symbol msymbol,
-     CORE_ADDR pc, struct obj_section *section, int warn_if_readin) override;
+    (struct objfile *objfile, bound_minimal_symbol msymbol, CORE_ADDR pc,
+     struct obj_section *section, int warn_if_readin) override;
 
   struct compunit_symtab *find_compunit_symtab_by_address
     (struct objfile *objfile, CORE_ADDR address) override
@@ -645,8 +646,7 @@ struct psymbol_functions : public quick_symbol_functions
     return nullptr;
   }
 
-  void map_symbol_filenames (struct objfile *objfile,
-			     gdb::function_view<symbol_filename_ftype> fun,
+  void map_symbol_filenames (objfile *objfile, symbol_filename_listener fun,
 			     bool need_fullname) override;
 
   /* Return a range adapter for the psymtabs.  */
@@ -672,11 +672,10 @@ struct psymbol_functions : public quick_symbol_functions
      exactly matches PC, or, if we cannot find an exact match, the
      psymtab that contains a symbol whose address is closest to PC.  */
 
-  struct partial_symtab *find_pc_sect_psymtab
-       (struct objfile *objfile,
-	CORE_ADDR pc,
-	struct obj_section *section,
-	struct bound_minimal_symbol msymbol);
+  struct partial_symtab *find_pc_sect_psymtab (struct objfile *objfile,
+					       CORE_ADDR pc,
+					       struct obj_section *section,
+					       bound_minimal_symbol msymbol);
 
 private:
 
@@ -687,4 +686,4 @@ private:
   std::shared_ptr<psymtab_storage> m_partial_symtabs;
 };
 
-#endif /* PSYMTAB_H */
+#endif /* GDB_PSYMTAB_H */

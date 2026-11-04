@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.331.16.1 2025/08/02 05:56:30 perseant Exp $
+#	$NetBSD: DEVNAMES,v 1.331.16.2 2026/11/04 23:21:46 perseant Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -1155,6 +1155,7 @@ rfc			MI
 rk			vax
 rl			vax
 rlc			vax
+rsu			MI
 rt			MI
 rtc			acorn32
 rtc			evbmips

@@ -24,65 +24,72 @@ CANONICAL(5)                                                      CANONICAL(5)
        sive.
 
        Normally, the <a href="canonical.5.html"><b>canonical</b>(5)</a> table is  specified  as  a  text  file  that
-       serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command.  The result, an indexed file
-       in <b>dbm</b> or <b>db</b> format, is used for fast searching  by  the  mail  system.
-       Execute  the  command  "<b>postmap  /etc/postfix/canonical</b>"  to rebuild an
-       indexed file after changing the corresponding text file.
+       serves as input to the <a href="postmap.1.html"><b>postmap</b>(1)</a> command to create an indexed file for
+       fast lookup.
+
+       Execute the  command  "<b>postmap  /etc/postfix/canonical</b>"  to  rebuild  a
+       default-type  indexed  file  after  changing  the text file, or execute
+       "<b>postmap</b> <i>type</i><b>:/etc/postfix/canonical</b>" to specify an explicit type.
+
+       The default indexed file type  is  configured  with  the  <a href="postconf.5.html#default_database_type">default_data</a>-
+       <a href="postconf.5.html#default_database_type">base_type</a>  parameter.  Depending  on  the  platform  this may be one of
+       <a href="lmdb_table.5.html">lmdb</a>:, <a href="CDB_README.html">cdb</a>:, <a href="DATABASE_README.html#types">hash</a>:, or <a href="DATABASE_README.html#types">dbm</a>: (without the trailing ':').
 
        When the table is provided via other means such as NIS,  LDAP  or  SQL,
-       the same lookups are done as for ordinary indexed files.
+       the same lookups are done as for ordinary indexed files.  Managing such
+       databases is outside the scope of Postfix.
 
-       Alternatively,  the  table  can be provided as a regular-expression map
-       where patterns are given as regular  expressions,  or  lookups  can  be
+       Alternatively, the table can be provided as  a  regular-expression  map
+       where  patterns  are  given  as  regular expressions, or lookups can be
        directed to a TCP-based server. In those cases, the lookups are done in
-       a slightly different way as described below under  "REGULAR  EXPRESSION
+       a  slightly  different way as described below under "REGULAR EXPRESSION
        TABLES" or "TCP-BASED TABLES".
 
        By  default  the  <a href="canonical.5.html"><b>canonical</b>(5)</a>  mapping  affects  both  message  header
-       addresses (i.e. addresses that  appear  inside  messages)  and  message
-       envelope  addresses  (for  example, the addresses that are used in SMTP
-       protocol commands).  This  is  controlled  with  the  <b><a href="postconf.5.html#canonical_classes">canonical_classes</a></b>
+       addresses  (i.e.  addresses  that  appear  inside messages) and message
+       envelope addresses (for example, the addresses that are  used  in  SMTP
+       protocol  commands).  This  is  controlled  with  the <b><a href="postconf.5.html#canonical_classes">canonical_classes</a></b>
        parameter.
 
-       NOTE:  Postfix  versions  2.2  and  later  rewrite message headers from
-       remote SMTP clients only if the  client  matches  the  <a href="postconf.5.html#local_header_rewrite_clients">local_header_re</a>-
+       NOTE: Postfix versions 2.2  and  later  rewrite  message  headers  from
+       remote  SMTP  clients  only  if the client matches the <a href="postconf.5.html#local_header_rewrite_clients">local_header_re</a>-
        <a href="postconf.5.html#local_header_rewrite_clients">write_clients</a> parameter, or if the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> config-
-       uration parameter specifies a non-empty  value.  To  get  the  behavior
-       before    Postfix    2.2,   specify   "<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a>   =
+       uration  parameter  specifies  a  non-empty  value. To get the behavior
+       before   Postfix   2.2,   specify    "<a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a>    =
        <a href="DATABASE_README.html#types">static</a>:all".
 
-       Typically, one would use the <a href="canonical.5.html"><b>canonical</b>(5)</a> table to replace login  names
+       Typically,  one would use the <a href="canonical.5.html"><b>canonical</b>(5)</a> table to replace login names
        by <i>Firstname.Lastname</i>, or to clean up addresses produced by legacy mail
        systems.
 
-       The <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused with <i>virtual alias</i>  sup-
-       port  or  with  <a href="ADDRESS_REWRITING_README.html#aliases">local  aliasing</a>.  To change the destination but not the
+       The  <a href="canonical.5.html"><b>canonical</b>(5)</a> mapping is not to be confused with <i>virtual alias</i> sup-
+       port or with <a href="ADDRESS_REWRITING_README.html#aliases">local aliasing</a>. To change  the  destination  but  not  the
        headers, use the <a href="virtual.5.html"><b>virtual</b>(5)</a> or <a href="aliases.5.html"><b>aliases</b>(5)</a> map instead.
 
 <b><a name="case_folding">CASE FOLDING</a></b>
-       The search string is folded to lowercase before database lookup. As  of
-       Postfix  2.3,  the search string is not case folded with database types
-       such as <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both  upper  and
+       The  search string is folded to lowercase before database lookup. As of
+       Postfix 2.3, the search string is not case folded with  database  types
+       such  as  <a href="regexp_table.5.html">regexp</a>: or <a href="pcre_table.5.html">pcre</a>: whose lookup fields can match both upper and
        lower case.
 
 <b><a name="table_format">TABLE FORMAT</a></b>
        The input format for the <a href="postmap.1.html"><b>postmap</b>(1)</a> command is as follows:
 
        <i>pattern address</i>
-              When  <i>pattern</i>  matches  a mail address, replace it by the corre-
+              When <i>pattern</i> matches a mail address, replace it  by  the  corre-
               sponding <i>address</i>.
 
        blank lines and comments
-              Empty lines and whitespace-only lines are ignored, as are  lines
+              Empty  lines and whitespace-only lines are ignored, as are lines
               whose first non-whitespace character is a `#'.
 
        multi-line text
-              A  logical  line  starts  with  non-whitespace text. A line that
+              A logical line starts with  non-whitespace  text.  A  line  that
               starts with whitespace continues a logical line.
 
 <b><a name="table_search_order">TABLE SEARCH ORDER</a></b>
-       With lookups from indexed files such as DB or DBM,  or  from  networked
-       tables  such  as  NIS,  LDAP  or SQL, each <i>user</i>@<i>domain</i> query produces a
+       With  lookups  from  indexed files such as DB or DBM, or from networked
+       tables such as NIS, LDAP or SQL,  each  <i>user</i>@<i>domain</i>  query  produces  a
        sequence of query patterns as described below.
 
        Each query pattern is sent to each specified lookup table before trying
@@ -92,13 +99,13 @@ CANONICAL(5)                                                      CANONICAL(5)
               Replace <i>user</i>@<i>domain</i> by <i>address</i>. This form has the highest prece-
               dence.
 
-              This is useful to clean up addresses  produced  by  legacy  mail
-              systems.   It  can  also  be  used to produce <i>Firstname.Lastname</i>
+              This  is  useful  to  clean up addresses produced by legacy mail
+              systems.  It can also  be  used  to  produce  <i>Firstname.Lastname</i>
               style addresses, but see below for a simpler solution.
 
        <i>user address</i>
-              Replace <i>user</i>@<i>site</i> by <i>address</i> when <i>site</i> is  equal  to  $<b><a href="postconf.5.html#myorigin">myorigin</a></b>,
-              when  <i>site</i>  is listed in $<b><a href="postconf.5.html#mydestination">mydestination</a></b>, or when it is listed in
+              Replace  <i>user</i>@<i>site</i>  by  <i>address</i> when <i>site</i> is equal to $<b><a href="postconf.5.html#myorigin">myorigin</a></b>,
+              when <i>site</i> is listed in $<b><a href="postconf.5.html#mydestination">mydestination</a></b>, or when it is  listed  in
               $<b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a></b> or $<b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a></b>.
 
               This form is useful for replacing login names by <i>Firstname.Last-</i>
@@ -108,16 +115,16 @@ CANONICAL(5)                                                      CANONICAL(5)
               Replace other addresses in <i>domain</i> by <i>address</i>.  This form has the
               lowest precedence.
 
-              Note: @<i>domain</i> is a wild-card.  When  this  form  is  applied  to
-              recipient  addresses,  the  Postfix SMTP server accepts mail for
-              any recipient in <i>domain</i>, regardless of  whether  that  recipient
-              exists.   This  may  turn  your  mail  system into a backscatter
-              source: Postfix first accepts mail for  non-existent  recipients
-              and  then  tries  to  return that mail as "undeliverable" to the
+              Note:  @<i>domain</i>  is  a  wild-card.  When  this form is applied to
+              recipient addresses, the Postfix SMTP server  accepts  mail  for
+              any  recipient  in  <i>domain</i>, regardless of whether that recipient
+              exists.  This may turn  your  mail  system  into  a  backscatter
+              source:  Postfix  first accepts mail for non-existent recipients
+              and then tries to return that mail  as  "undeliverable"  to  the
               often forged sender address.
 
-              To avoid backscatter with mail for a wild-card  domain,  replace
-              the  wild-card  mapping  with  explicit  1:1  mappings, or add a
+              To  avoid  backscatter with mail for a wild-card domain, replace
+              the wild-card mapping with  explicit  1:1  mappings,  or  add  a
               <a href="postconf.5.html#reject_unverified_recipient">reject_unverified_recipient</a> restriction for that domain:
 
                   <a href="postconf.5.html#smtpd_recipient_restrictions">smtpd_recipient_restrictions</a> =
@@ -133,10 +140,10 @@ CANONICAL(5)                                                      CANONICAL(5)
 <b><a name="result_address_rewriting">RESULT ADDRESS REWRITING</a></b>
        The lookup result is subject to address rewriting:
 
-       <b>o</b>      When  the  result  has the form @<i>otherdomain</i>, the result becomes
+       <b>o</b>      When the result has the form @<i>otherdomain</i>,  the  result  becomes
               the same <i>user</i> in <i>otherdomain</i>.
 
-       <b>o</b>      When "<b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a>=yes</b>", append "<b>@$<a href="postconf.5.html#myorigin">myorigin</a></b>" to  addresses
+       <b>o</b>      When  "<b><a href="postconf.5.html#append_at_myorigin">append_at_myorigin</a>=yes</b>", append "<b>@$<a href="postconf.5.html#myorigin">myorigin</a></b>" to addresses
               without "@domain".
 
        <b>o</b>      When "<b><a href="postconf.5.html#append_dot_mydomain">append_dot_mydomain</a>=yes</b>", append "<b>.$<a href="postconf.5.html#mydomain">mydomain</a></b>" to addresses
@@ -144,38 +151,38 @@ CANONICAL(5)                                                      CANONICAL(5)
 
 <b><a name="address_extension">ADDRESS EXTENSION</a></b>
        When a mail address localpart contains the optional recipient delimiter
-       (e.g.,  <i>user+foo</i>@<i>domain</i>),  the  lookup  order becomes: <i>user+foo</i>@<i>domain</i>,
+       (e.g., <i>user+foo</i>@<i>domain</i>), the  lookup  order  becomes:  <i>user+foo</i>@<i>domain</i>,
        <i>user</i>@<i>domain</i>, <i>user+foo</i>, <i>user</i>, and @<i>domain</i>.
 
-       The  <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>  parameter  controls   whether   an
+       The   <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a></b>   parameter  controls  whether  an
        unmatched address extension (<i>+foo</i>) is propagated to the result of table
        lookup.
 
 <b><a name="regular_expression_tables">REGULAR EXPRESSION TABLES</a></b>
-       This section describes how the table lookups change when the  table  is
-       given  in the form of regular expressions. For a description of regular
+       This  section  describes how the table lookups change when the table is
+       given in the form of regular expressions. For a description of  regular
        expression lookup table syntax, see <a href="regexp_table.5.html"><b>regexp_table</b>(5)</a> or <a href="pcre_table.5.html"><b>pcre_table</b>(5)</a>.
 
-       Each pattern is a regular expression that  is  applied  to  the  entire
-       address  being looked up. Thus, <i>user@domain</i> mail addresses are not bro-
-       ken up into their <i>user</i> and <i>@domain</i> constituent parts, nor  is  <i>user+foo</i>
+       Each  pattern  is  a  regular  expression that is applied to the entire
+       address being looked up. Thus, <i>user@domain</i> mail addresses are not  bro-
+       ken  up  into their <i>user</i> and <i>@domain</i> constituent parts, nor is <i>user+foo</i>
        broken up into <i>user</i> and <i>foo</i>.
 
-       Patterns  are  applied  in the order as specified in the table, until a
+       Patterns are applied in the order as specified in the  table,  until  a
        pattern is found that matches the search string.
 
-       Results are the same as with indexed file lookups, with the  additional
-       feature  that parenthesized substrings from the pattern can be interpo-
+       Results  are the same as with indexed file lookups, with the additional
+       feature that parenthesized substrings from the pattern can be  interpo-
        lated as <b>$1</b>, <b>$2</b> and so on.
 
 <b><a name="tcp-based_tables">TCP-BASED TABLES</a></b>
-       This section describes how the table lookups change  when  lookups  are
-       directed   to  a  TCP-based  server.  For  a  description  of  the  TCP
-       client/server lookup protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature  is  not
+       This  section  describes  how the table lookups change when lookups are
+       directed  to  a  TCP-based  server.  For  a  description  of  the   TCP
+       client/server  lookup  protocol, see <a href="tcp_table.5.html"><b>tcp_table</b>(5)</a>.  This feature is not
        available up to and including Postfix version 2.4.
 
-       Each  lookup operation uses the entire address once.  Thus, <i>user@domain</i>
-       mail addresses are not broken up  into  their  <i>user</i>  and  <i>@domain</i>  con-
+       Each lookup operation uses the entire address once.  Thus,  <i>user@domain</i>
+       mail  addresses  are  not  broken  up  into their <i>user</i> and <i>@domain</i> con-
        stituent parts, nor is <i>user+foo</i> broken up into <i>user</i> and <i>foo</i>.
 
        Results are the same as with indexed file lookups.
@@ -184,76 +191,76 @@ CANONICAL(5)                                                      CANONICAL(5)
        The table format does not understand quoting conventions.
 
 <b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
-       The  following  <a href="postconf.5.html"><b>main.cf</b></a>  parameters  are especially relevant.  The text
-       below provides only a  parameter  summary.  See  <a href="postconf.5.html"><b>postconf</b>(5)</a>  for  more
+       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are  especially  relevant.   The  text
+       below  provides  only  a  parameter  summary.  See <a href="postconf.5.html"><b>postconf</b>(5)</a> for more
        details including examples.
 
-       <b><a href="postconf.5.html#canonical_classes">canonical_classes</a>  (envelope_sender, envelope_recipient, header_sender,</b>
+       <b><a href="postconf.5.html#canonical_classes">canonical_classes</a> (envelope_sender, envelope_recipient,  header_sender,</b>
        <b>header_recipient)</b>
               What addresses are subject to <a href="postconf.5.html#canonical_maps">canonical_maps</a> address mapping.
 
        <b><a href="postconf.5.html#canonical_maps">canonical_maps</a> (empty)</b>
-              Optional  address  mapping lookup tables for message headers and
+              Optional address mapping lookup tables for message  headers  and
               envelopes.
 
        <b><a href="postconf.5.html#recipient_canonical_maps">recipient_canonical_maps</a> (empty)</b>
-              Optional address mapping lookup tables for envelope  and  header
+              Optional  address  mapping lookup tables for envelope and header
               recipient addresses.
 
        <b><a href="postconf.5.html#sender_canonical_maps">sender_canonical_maps</a> (empty)</b>
-              Optional  address  mapping lookup tables for envelope and header
+              Optional address mapping lookup tables for envelope  and  header
               sender addresses.
 
        <b><a href="postconf.5.html#propagate_unmatched_extensions">propagate_unmatched_extensions</a> (canonical, virtual)</b>
-              What address lookup tables copy an address  extension  from  the
+              What  address  lookup  tables copy an address extension from the
               lookup key to the lookup result.
 
        Other parameters of interest:
 
        <b><a href="postconf.5.html#inet_interfaces">inet_interfaces</a> (all)</b>
-              The  local  network  interface  addresses  that this mail system
+              The local network interface  addresses  that  this  mail  system
               receives mail on.
 
        <b><a href="postconf.5.html#local_header_rewrite_clients">local_header_rewrite_clients</a> (<a href="postconf.5.html#permit_inet_interfaces">permit_inet_interfaces</a>)</b>
-              Rewrite or add message  headers  in  mail  from  these  clients,
-              updating  incomplete addresses with the domain name in $<a href="postconf.5.html#myorigin">myorigin</a>
+              Rewrite  or  add  message  headers  in  mail from these clients,
+              updating incomplete addresses with the domain name in  $<a href="postconf.5.html#myorigin">myorigin</a>
               or $<a href="postconf.5.html#mydomain">mydomain</a>, and adding missing headers.
 
        <b><a href="postconf.5.html#proxy_interfaces">proxy_interfaces</a> (empty)</b>
-              The remote network interface addresses  that  this  mail  system
-              receives  mail  on by way of a proxy or network address transla-
+              The  remote  network  interface  addresses that this mail system
+              receives mail on by way of a proxy or network  address  transla-
               tion unit.
 
        <b><a href="postconf.5.html#masquerade_classes">masquerade_classes</a> (envelope_sender, header_sender, header_recipient)</b>
               What addresses are subject to address masquerading.
 
        <b><a href="postconf.5.html#masquerade_domains">masquerade_domains</a> (empty)</b>
-              Optional list of  domains  whose  subdomain  structure  will  be
+              Optional  list  of  domains  whose  subdomain  structure will be
               stripped off in email addresses.
 
        <b><a href="postconf.5.html#masquerade_exceptions">masquerade_exceptions</a> (empty)</b>
-              Optional  list  of  user names that are not subjected to address
-              masquerading,  even  when  their   addresses   match   $<a href="postconf.5.html#masquerade_domains">masquer</a>-
+              Optional list of user names that are not  subjected  to  address
+              masquerading,   even   when   their  addresses  match  $<a href="postconf.5.html#masquerade_domains">masquer</a>-
               <a href="postconf.5.html#masquerade_domains">ade_domains</a>.
 
        <b><a href="postconf.5.html#mydestination">mydestination</a> ($<a href="postconf.5.html#myhostname">myhostname</a>, localhost.$<a href="postconf.5.html#mydomain">mydomain</a>, localhost)</b>
-              The  list of domains that are delivered via the $<a href="postconf.5.html#local_transport">local_transport</a>
+              The list of domains that are delivered via the  $<a href="postconf.5.html#local_transport">local_transport</a>
               mail delivery transport.
 
        <b><a href="postconf.5.html#myorigin">myorigin</a> ($<a href="postconf.5.html#myhostname">myhostname</a>)</b>
-              The domain name that locally-posted mail appears to  come  from,
+              The  domain  name that locally-posted mail appears to come from,
               and that locally posted mail is delivered to.
 
        <b><a href="postconf.5.html#owner_request_special">owner_request_special</a> (yes)</b>
-              Enable  special  treatment  for  owner-<i>listname</i>  entries  in the
+              Enable special  treatment  for  owner-<i>listname</i>  entries  in  the
               <a href="aliases.5.html"><b>aliases</b>(5)</a>  file,  and  don't  split  owner-<i>listname</i>  and  <i>list-</i>
-              <i>name</i>-request  address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a> is
+              <i>name</i>-request address localparts when the <a href="postconf.5.html#recipient_delimiter">recipient_delimiter</a>  is
               set to "-".
 
        <b><a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> (empty)</b>
-              Rewrite or add message headers in mail from  remote  clients  if
-              the  <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a>  parameter value is non-empty,
-              updating incomplete addresses with the domain specified  in  the
+              Rewrite  or  add  message headers in mail from remote clients if
+              the <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> parameter value  is  non-empty,
+              updating  incomplete  addresses with the domain specified in the
               <a href="postconf.5.html#remote_header_rewrite_domain">remote_header_rewrite_domain</a> parameter, and adding missing head-
               ers.
 

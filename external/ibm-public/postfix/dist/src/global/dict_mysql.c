@@ -1,4 +1,4 @@
-/*	$NetBSD: dict_mysql.c,v 1.4.2.1 2025/08/02 05:50:06 perseant Exp $	*/
+/*	$NetBSD: dict_mysql.c,v 1.4.2.2 2026/11/04 23:14:47 perseant Exp $	*/
 
 /*++
 /* NAME
@@ -761,7 +761,7 @@ static void mysql_parse_config(DICT_MYSQL *dict_mysql, const char *mysqlcf)
     }
     /* Don't blacklist the load balancer! */
     if (dict_mysql->hosts->argc == 1)
-        argv_add(dict_mysql->hosts, dict_mysql->hosts->argv[0], (char *) 0);
+	argv_add(dict_mysql->hosts, dict_mysql->hosts->argv[0], (char *) 0);
     myfree(hosts);
 }
 
@@ -799,7 +799,7 @@ DICT   *dict_mysql_open(const char *name, int open_flags, int dict_flags)
     if (dict_mysql->pldb == NULL)
 	msg_fatal("couldn't initialize pldb!\n");
     dict_mysql->dict.owner = cfg_get_owner(dict_mysql->parser);
-    return (DICT_DEBUG (&dict_mysql->dict));
+    return (&dict_mysql->dict);
 }
 
 /*

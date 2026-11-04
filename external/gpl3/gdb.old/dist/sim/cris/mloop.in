@@ -1,5 +1,5 @@
 # Simulator main loop for CRIS. -*- C -*-
-# Copyright (C) 2004-2023 Free Software Foundation, Inc.
+# Copyright (C) 2004-2024 Free Software Foundation, Inc.
 # Contributed by Axis Communications.
 #
 # This file is part of the GNU simulators.
@@ -42,6 +42,7 @@ case "x$1" in
 xsupport)
 
 cat <<EOF
+#line $LINENO "$0"
 #include <stdlib.h>
 
 /* It seems we don't have a templated header file corresponding to
@@ -142,6 +143,7 @@ EOF
 xinit)
 
 cat <<EOF
+#line $LINENO "$0"
   /* This seemed the only sane location to emit a call to a
      model-specific init function.  It may not work for all simulator
      types.  FIXME: Introduce a model-init hook.  */
@@ -160,6 +162,7 @@ xextract-simple | xextract-scache)
 # Outputs: sc filled in
 
 cat <<EOF
+#line $LINENO "$0"
 {
   CGEN_INSN_INT insn = GETIMEMUHI (current_cpu, vpc);
   extract (current_cpu, vpc, insn, SEM_ARGBUF (sc), FAST_P);
@@ -179,6 +182,7 @@ xextract-pbb)
 # SET_INSN_COUNT(n) must be called to record number of real insns.
 
 cat <<EOF
+#line $LINENO "$0"
 {
   const IDESC *idesc;
   int icount = 0;
@@ -230,7 +234,6 @@ cat <<EOF
 	     for invalid programs.  */
 	  if (insn != 0 && CGEN_ATTR_VALUE (NULL, idesc->attrs, CGEN_INSN_DELAY_SLOT))
 	    {
-	      UHI insn;
 	      trace_p = PC_IN_TRACE_RANGE_P (current_cpu, pc);
 	      profile_p = PC_IN_PROFILE_RANGE_P (current_cpu, pc);
 	      befaft_p = profile_p || trace_p;
@@ -276,6 +279,7 @@ xfull-exec-* | xfast-exec-*)
 # vpc contains the address of the next insn to execute
 
 cat <<EOF
+#line $LINENO "$0"
 {
 #if (! FAST_P && WITH_SEM_SWITCH_FULL) || (FAST_P && WITH_SEM_SWITCH_FAST)
 #define DEFINE_SWITCH

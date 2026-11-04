@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.11 2020/08/22 15:34:51 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.11.26.1 2026/11/04 23:21:10 perseant Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -96,6 +96,12 @@ pte_modified_p(pt_entry_t pt_entry)
 }
 
 static __inline bool
+pte_referenced_p(pt_entry_t pt_entry)
+{
+	return false;
+}
+
+static __inline bool
 pte_valid_p(pt_entry_t pt_entry)
 {
 	return pt_entry != 0;
@@ -127,7 +133,7 @@ pte_wired_p(pt_entry_t pt_entry)
 }
 
 static __inline pt_entry_t
-pte_nv_entry(bool kernel)
+pte_nv_entry(bool kernel_p)
 {
 	return 0;
 }
@@ -181,15 +187,23 @@ pte_unwire_entry(pt_entry_t pt_entry)
 }
 
 static __inline pt_entry_t
-pte_prot_nowrite(pt_entry_t pt_entry)
+pte_clear_modify(pt_entry_t pt_entry)
 {
 	return pt_entry & ~(PTE_xW|PTE_UNMODIFIED);
 }
 
 static __inline pt_entry_t
+pte_clear_reference(pt_entry_t pt_entry)
+{
+	return pt_entry;
+}
+
+static __inline pt_entry_t
 pte_prot_downgrade(pt_entry_t pt_entry, vm_prot_t newprot)
 {
-	pt_entry &= ~(PTE_xW|PTE_UNMODIFIED);
+	KASSERT((newprot & VM_PROT_READ) != 0);
+
+	pt_entry &= ~(PTE_xW | PTE_UNMODIFIED);
 	if ((newprot & VM_PROT_EXECUTE) == 0)
 		pt_entry &= ~(PTE_xX|PTE_UNSYNCED);
 	return pt_entry;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.305.4.1 2025/08/02 05:57:46 perseant Exp $	*/
+/*	$NetBSD: if.h,v 1.305.4.2 2026/11/04 23:27:57 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -420,7 +420,12 @@ typedef struct ifnet {
 			*if_percpuq;	/* :: we should remove it in the future */
 	struct work	if_link_work;	/* q: linkage on link state work queue */
 	uint16_t	if_link_queue;	/* q: masked link state change queue */
-					/* q: is link state work scheduled? */
+#define	LINK_QUEUE_LOCKED	(1 << 0)
+#define	LINK_QUEUE_SCHEDULED	(1 << 1)
+#define	LINK_QUEUE_DOWN		(1 << 2)
+#define	LINK_QUEUE_UNKNOWN	(1 << 3)
+#define	LINK_QUEUE_UP		(1 << 4)
+					/* if_link_scheduled is unused */
 	bool		if_link_scheduled;
 	struct pslist_entry
 			if_pslist_entry;/* i: */
@@ -1237,8 +1242,8 @@ struct	ifaddr *ifaof_ifpforaddr_psref(const struct sockaddr *, struct ifnet *,
 void	link_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 void	p2p_rtrequest(int, struct rtentry *, const struct rt_addrinfo *);
 
-struct ifaddr *if_first_addr(const struct ifnet *ifp, const int af);
-struct ifaddr *if_first_addr_psref(const struct ifnet *ifp, const int af, struct psref *psref);
+struct ifaddr *if_first_addr(const struct ifnet *, const int);
+struct ifaddr *if_first_addr_psref(const struct ifnet *, const int, struct psref *);
 
 void	if_clone_attach(struct if_clone *);
 void	if_clone_detach(struct if_clone *);

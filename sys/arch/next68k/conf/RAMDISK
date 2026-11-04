@@ -1,4 +1,4 @@
-#	$NetBSD: RAMDISK,v 1.6 2024/01/29 18:27:14 christos Exp $
+#	$NetBSD: RAMDISK,v 1.6.2.1 2026/11/04 23:21:05 perseant Exp $
 
 #
 # RAMDISK: Root/swap on ramdisk
@@ -8,7 +8,7 @@ include 	"arch/next68k/conf/std.next68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-makeoptions	COPTS="-Os -fno-unwind-tables"
+makeoptions	COPTS="-Os"
 
 # Enable the hooks used for initializing the ram-disk.
 options 	MEMORY_DISK_HOOKS
@@ -127,7 +127,6 @@ options 	INET		# IP + ICMP + TCP + UDP
 # NeXT specific options
 options 	M68040
 options 	M68030
-options 	FPSP
 #options 	FPU_EMULATE
 
 options 	ZS_CONSOLE_ABORT	# drop to debugger on break

@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_AARCH64_LINUX_HW_POINT_H
-#define NAT_AARCH64_LINUX_HW_POINT_H
+#ifndef GDB_NAT_AARCH64_LINUX_HW_POINT_H
+#define GDB_NAT_AARCH64_LINUX_HW_POINT_H
 
 #include "gdbsupport/break-common.h"
 
@@ -109,4 +109,4 @@ void aarch64_linux_get_debug_reg_capacity (int tid);
 
 struct aarch64_debug_reg_state *aarch64_get_debug_reg_state (pid_t pid);
 
-#endif /* NAT_AARCH64_LINUX_HW_POINT_H */
+#endif /* GDB_NAT_AARCH64_LINUX_HW_POINT_H */

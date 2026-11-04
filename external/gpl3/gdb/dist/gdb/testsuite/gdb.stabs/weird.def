@@ -294,7 +294,7 @@ attr69:
 # Using double quotes requires an escaping, as the stabs string
 # is a double quote delimited string.
 .stabs "constString2:c=s\"Double quote String2\"", N_LSYM,0,0, 0
-# Escaping sinlge quote with is easy
+# Escaping single quote with is easy
 .stabs "constString3:c=s'String3 with embedded quote \' in the middle'", N_LSYM,0,0, 0
 # Esaping double quotes is less clear...
 .stabs "constString4:c=s\"String4 with embedded quote \\" in the middle\"", N_LSYM,0,0, 0

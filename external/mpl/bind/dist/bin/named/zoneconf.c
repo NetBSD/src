@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.15.2.1 2025/08/02 05:50:53 perseant Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.15.2.2 2026/11/04 23:15:35 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -62,13 +62,6 @@ typedef enum {
 	allow_update,
 	allow_update_forwarding
 } acl_type_t;
-
-#define CHECK(x)                             \
-	do {                                 \
-		result = (x);                \
-		if (result != ISC_R_SUCCESS) \
-			goto cleanup;        \
-	} while (0)
 
 /*%
  * Convenience function for configuring a single zone ACL.

@@ -69,38 +69,42 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               Each  queue entry shows the queue file ID, message size, arrival
               time, sender, and the recipients that still need  to  be  deliv-
               ered.  If mail could not be delivered upon the last attempt, the
-              reason for failure is shown. The queue ID string is followed  by
-              an optional status character:
+              reason for failure is shown. With Postfix &gt;=  3.11,  the  output
+              may  also  show bounced recipients that are pending the creation
+              of a non-delivery  status  notification  message  that  will  be
+              returned to the sender.
 
-              <b>*</b>      The  message  is in the <b>active</b> queue, i.e. the message is
+              The queue ID string is followed by an optional status character:
+
+              <b>*</b>      The message is in the <b>active</b> queue, i.e. the  message  is
                      selected for delivery.
 
-              <b>!</b>      The message is in the <b>hold</b> queue, i.e. no further  deliv-
-                     ery  attempt  will  be  made  until the mail is taken off
+              <b>!</b>      The  message is in the <b>hold</b> queue, i.e. no further deliv-
+                     ery attempt will be made until  the  mail  is  taken  off
                      hold.
 
-              <b>#</b>      The message is forced to  expire.  See  the  <a href="postsuper.1.html"><b>postsuper</b>(1)</a>
+              <b>#</b>      The  message  is  forced  to expire. See the <a href="postsuper.1.html"><b>postsuper</b>(1)</a>
                      options <b>-e</b> or <b>-f</b>.
 
                      This feature is available in Postfix 3.5 and later.
 
        <b>-s</b> <i>site</i>
-              Schedule  immediate  delivery of all mail that is queued for the
-              named <i>site</i>. A numerical site must be specified as  a  valid  <a href="https://tools.ietf.org/html/rfc5321">RFC</a>
+              Schedule immediate delivery of all mail that is queued  for  the
+              named  <i>site</i>.  A  numerical site must be specified as a valid <a href="https://tools.ietf.org/html/rfc5321">RFC</a>
               <a href="https://tools.ietf.org/html/rfc5321">5321</a>  address  literal  enclosed  in  [],  just  like  in  email
-              addresses.  The site must be eligible for the "fast flush"  ser-
-              vice.   See <a href="flush.8.html"><b>flush</b>(8)</a> for more information about the "fast flush"
+              addresses.   The site must be eligible for the "fast flush" ser-
+              vice.  See <a href="flush.8.html"><b>flush</b>(8)</a> for more information about the "fast  flush"
               service.
 
-              This option implements the traditional "<b>sendmail  -qR</b><i>site</i>"  com-
+              This  option  implements the traditional "<b>sendmail -qR</b><i>site</i>" com-
               mand, by contacting the Postfix <a href="flush.8.html"><b>flush</b>(8)</a> daemon.
 
-       <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
-              options make the software increasingly verbose.  As  of  Postfix
+       <b>-v</b>     Enable verbose  logging  for  debugging  purposes.  Multiple  <b>-v</b>
+              options  make  the  software increasingly verbose. As of Postfix
               2.3, this option is available for the super-user only.
 
 <b><a name="json_object_format">JSON OBJECT FORMAT</a></b>
-       Each  JSON  object represents one queue file; it is emitted as a single
+       Each JSON object represents one queue file; it is emitted as  a  single
        text line followed by a newline character.
 
        Object members have string values unless indicated otherwise.  Programs
@@ -108,33 +112,31 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
        bers is expected to grow over time.
 
        <b>queue_name</b>
-              The name of the queue where the message was  found.   Note  that
-              the  contents  of  the  mail  queue may change while it is being
-              listed; some messages may appear more than once, and  some  mes-
+              The  name  of  the queue where the message was found.  Note that
+              the contents of the mail queue may  change  while  it  is  being
+              listed;  some  messages may appear more than once, and some mes-
               sages may be missed.
 
        <b>queue_id</b>
               The queue file name. The queue_id may be reused within a Postfix
               instance unless "<a href="postconf.5.html#enable_long_queue_ids">enable_long_queue_ids</a> = true" and time is mono-
-              tonic.   Even  then,  the  queue_id is not expected to be unique
-              between different  Postfix  instances.   Management  tools  that
-              require  a  unique  name  should  combine  the queue_id with the
+              tonic.  Even then, the queue_id is not  expected  to  be  unique
+              between  different  Postfix  instances.   Management  tools that
+              require a unique name  should  combine  the  queue_id  with  the
               <a href="postconf.5.html#myhostname">myhostname</a> setting of the Postfix instance.
 
        <b>arrival_time</b>
               The number of seconds since the start of the UNIX epoch.
 
        <b>message_size</b>
-              The number of bytes in the message header and body. This  number
-              does  not  include  message envelope information. It is approxi-
-              mately equal to the number of bytes that  would  be  transmitted
+              The  number of bytes in the message header and body. This number
+              does not include message envelope information.  It  is  approxi-
+              mately  equal  to  the number of bytes that would be transmitted
               via SMTP including the &lt;CR&gt;&lt;LF&gt; line endings.
 
-       <b>forced_expire</b>
-              The  message is forced to expire (<b>true</b> or <b>false</b>).  See the <a href="postsuper.1.html"><b>post-</b></a>
+       <b>forced_expire</b> (Postfix &gt;= 3.5)
+              The message is forced to expire (<b>true</b> or <b>false</b>).  See the  <a href="postsuper.1.html"><b>post-</b></a>
               <a href="postsuper.1.html"><b>super</b>(1)</a> options <b>-e</b> or <b>-f</b>.
-
-              This feature is available in Postfix 3.5 and later.
 
        <b>sender</b> The envelope sender address.
 
@@ -144,11 +146,20 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               <b>address</b>
                      One recipient address.
 
+              <b>orig_address</b> (Postfix &gt;= 3.11)
+                     One original recipient address.
+
               <b>delay_reason</b>
-                     If present, the reason  for  delayed  delivery.   Delayed
-                     recipients  may  have no delay reason, for example, while
-                     delivery is in progress, or after the system was  stopped
+                     If  present,  the  reason  for delayed delivery.  Delayed
+                     recipients may have no delay reason, for  example,  while
+                     delivery  is in progress, or after the system was stopped
                      before it could record the reason.
+
+              <b>bounce_reason</b> (Postfix &gt;= 3.11)
+                     If present, the reason why this  recipient  was  bounced.
+                     The   recipient  is  still  pending  the  creation  of  a
+                     non-delivery status notification  message  that  will  be
+                     returned to the sender.
 
 <b><a name="security">SECURITY</a></b>
        This  program  is designed to run with set-group ID privileges, so that
@@ -164,27 +175,28 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
 <b><a name="environment">ENVIRONMENT</a></b>
        MAIL_CONFIG
               Directory  with the <a href="postconf.5.html"><b>main.cf</b></a> file. In order to avoid exploitation
-              of set-group ID privileges, a non-standard directory is  allowed
+              of set-group ID privileges, a non-default directory  is  allowed
               only if:
 
-              <b>o</b>      The  name is listed in the standard <a href="postconf.5.html"><b>main.cf</b></a> file with the
-                     <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b> configuration parameter.
+              <b>o</b>      The  name  is listed in the default <a href="postconf.5.html"><b>main.cf</b></a> file with the
+                     <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a></b>  or  <b><a href="postconf.5.html#multi_instance_directories">multi_instance_directo</a>-</b>
+                     <b><a href="postconf.5.html#multi_instance_directories">ries</a></b> configuration parameter.
 
               <b>o</b>      The command is invoked by the super-user.
 
 <b><a name="configuration_parameters">CONFIGURATION PARAMETERS</a></b>
-       The following <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to  this  pro-
-       gram.   The  text  below  provides  only a parameter summary. See <a href="postconf.5.html"><b>post-</b></a>
+       The  following  <a href="postconf.5.html"><b>main.cf</b></a> parameters are especially relevant to this pro-
+       gram.  The text below provides only  a  parameter  summary.  See  <a href="postconf.5.html"><b>post-</b></a>
        <a href="postconf.5.html"><b>conf</b>(5)</a> for more details including examples.
 
        <b><a href="postconf.5.html#alternate_config_directories">alternate_config_directories</a> (empty)</b>
               A list of non-default Postfix configuration directories that may
-              be  specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line (in
-              the case of <a href="sendmail.1.html"><b>sendmail</b>(1)</a>, with  the  "-C"  option),  or  via  the
+              be specified with "-c <a href="postconf.5.html#config_directory">config_directory</a>" on the command line  (in
+              the  case  of  <a href="sendmail.1.html"><b>sendmail</b>(1)</a>,  with  the  "-C" option), or via the
               MAIL_CONFIG environment parameter.
 
        <b><a href="postconf.5.html#config_directory">config_directory</a> (see 'postconf -d' output)</b>
-              The  default  location of the Postfix <a href="postconf.5.html">main.cf</a> and <a href="master.5.html">master.cf</a> con-
+              The default location of the Postfix <a href="postconf.5.html">main.cf</a> and  <a href="master.5.html">master.cf</a>  con-
               figuration files.
 
        <b><a href="postconf.5.html#command_directory">command_directory</a> (see 'postconf -d' output)</b>
@@ -195,8 +207,8 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               tion logfiles with mail that is queued to those destinations.
 
        <b><a href="postconf.5.html#import_environment">import_environment</a> (see 'postconf -d' output)</b>
-              The  list  of  environment  variables  that a privileged Postfix
-              process will  import  from  a  non-Postfix  parent  process,  or
+              The list of environment  variables  that  a  privileged  Postfix
+              process  will  import  from  a  non-Postfix  parent  process, or
               name=value environment overrides.
 
        <b><a href="postconf.5.html#queue_directory">queue_directory</a> (see 'postconf -d' output)</b>
@@ -206,11 +218,11 @@ POSTQUEUE(1)                                                      POSTQUEUE(1)
               The syslog facility of Postfix logging.
 
        <b><a href="postconf.5.html#syslog_name">syslog_name</a> (see 'postconf -d' output)</b>
-              A  prefix  that  is  prepended  to  the  process  name in syslog
+              A prefix that  is  prepended  to  the  process  name  in  syslog
               records, so that, for example, "smtpd" becomes "prefix/smtpd".
 
        <b><a href="postconf.5.html#trigger_timeout">trigger_timeout</a> (10s)</b>
-              The time limit for sending a trigger to a  Postfix  daemon  (for
+              The  time  limit  for sending a trigger to a Postfix daemon (for
               example, the <a href="pickup.8.html"><b>pickup</b>(8)</a> or <a href="qmgr.8.html"><b>qmgr</b>(8)</a> daemon).
 
        Available in Postfix version 2.2 and later:

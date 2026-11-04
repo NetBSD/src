@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2014-2023 Free Software Foundation, Inc.
+   Copyright 2014-2024 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -23,11 +23,27 @@ foo (void)
   return 0; /* set break here */
 }
 
+static volatile int do_wait;
+
+static void
+wait (void)
+{
+  while (do_wait)
+    usleep (10 * 1000);
+}
+
 int
 main (void)
 {
+  alarm (60);
+
   foo ();
-  sleep (5);
+
+  do_wait = 1;
+  wait ();
+  /* do_wait set to 0 externally.  */
+
   foo ();
+
   return 0;
 }

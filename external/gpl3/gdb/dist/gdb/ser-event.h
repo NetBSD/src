@@ -1,5 +1,5 @@
 /* Serial interface for a selectable event.
-   Copyright (C) 2016-2024 Free Software Foundation, Inc.
+   Copyright (C) 2016-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef SER_EVENT_H
-#define SER_EVENT_H
+#ifndef GDB_SER_EVENT_H
+#define GDB_SER_EVENT_H
 
 /* This is used to be able to signal the event loop (or any other
    select/poll) of events, in a race-free manner.
@@ -48,4 +48,4 @@ extern void serial_event_set (struct serial_event *event);
    call is made.  */
 extern void serial_event_clear (struct serial_event *event);
 
-#endif
+#endif /* GDB_SER_EVENT_H */

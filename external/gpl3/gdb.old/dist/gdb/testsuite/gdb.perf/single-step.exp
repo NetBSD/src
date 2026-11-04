@@ -1,4 +1,4 @@
-# Copyright (C) 2013-2023 Free Software Foundation, Inc.
+# Copyright (C) 2013-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,15 +13,13 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# This test case is to test the speed of GDB when it is doing singe step.
+# This test case is to test the speed of GDB when it is doing single step.
 # There is one parameter in this test:
 #  - SINGLE_STEP_COUNT is the number of single step GDB performs.
 
 load_lib perftest.exp
 
-if [skip_perf_tests] {
-    return 0
-}
+require allow_perf_tests
 
 standard_testfile .c
 set executable $testfile

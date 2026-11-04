@@ -1,6 +1,6 @@
 ./myaddrinfo4: === hostname belly.porcupine.org ===
-./myaddrinfo4: belly.porcupine.org -> family=2 sock=1 proto=6 168.100.3.6
-./myaddrinfo4: 168.100.3.6 -> belly.porcupine.org
+./myaddrinfo4: belly.porcupine.org:(null) -> family=2 sock=1 proto=0 168.100.3.6:0
+./myaddrinfo4: warning: sockaddr_to_hostname: hostname nor servname provided, or not known
 ./myaddrinfo4: === host address 168.100.3.2 ===
-./myaddrinfo4: 168.100.3.2 -> family=2 sock=1 proto=6 168.100.3.2
-./myaddrinfo4: 168.100.3.2 -> spike.porcupine.org
+./myaddrinfo4: 168.100.3.2:(null) -> family=2 sock=1 proto=0 168.100.3.2:0
+./myaddrinfo4: warning: sockaddr_to_hostname: hostname nor servname provided, or not known

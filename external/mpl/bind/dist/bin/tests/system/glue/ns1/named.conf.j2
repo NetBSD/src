@@ -1,0 +1,45 @@
+/*
+ * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ *
+ * SPDX-License-Identifier: MPL-2.0
+ *
+ * This Source Code Form is subject to the terms of the Mozilla Public
+ * License, v. 2.0.  If a copy of the MPL was not distributed with this
+ * file, you can obtain one at https://mozilla.org/MPL/2.0/.
+ *
+ * See the COPYRIGHT file distributed with this work for additional
+ * information regarding copyright ownership.
+ */
+
+options {
+	{% include_indented "_common/options.conf.j2" %}
+	notify no;
+	dnssec-validation no;
+};
+
+{% include "_common/controls.conf.j2" %}
+
+zone "." {
+	type primary;
+	file "root.db";
+};
+
+zone "root-servers.nil" {
+	type primary;
+	file "root-servers.nil.db";
+};
+
+zone "net" {
+	type primary;
+	file "net.db";
+};
+
+zone "tc-test-unsigned" {
+	type master;
+	file "tc-test-unsigned.db";
+};
+
+zone "tc-test-signed" {
+	type master;
+	file "tc-test-signed.db.signed";
+};

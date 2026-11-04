@@ -1,6 +1,6 @@
 # This testcase is part of GDB, the GNU debugger.
 
-# Copyright 2012-2023 Free Software Foundation, Inc.
+# Copyright 2012-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -20,7 +20,7 @@
 
 load_lib "go.exp"
 
-if { [skip_go_tests] } { continue }
+require allow_go_tests
 
 proc test_float_accepted {} {
     global gdb_prompt
@@ -56,11 +56,7 @@ proc test_float_rejected {} {
     test_print_reject "p 1.1ll"
 }
 
-# Start with a fresh gdb.
-
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 
 if [set_lang_go] {
     test_float_accepted

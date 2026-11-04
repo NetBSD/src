@@ -1,6 +1,6 @@
 /* Target-dependent code for OpenBSD/amd64.
 
-   Copyright (C) 2003-2024 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -402,19 +402,19 @@ amd64obsd_trapframe_sniffer (const struct frame_unwind *self,
 		   || (startswith (name, "Xintr"))));
 }
 
-static const struct frame_unwind amd64obsd_trapframe_unwind =
-{
+static const struct frame_unwind_legacy amd64obsd_trapframe_unwind (
   /* FIXME: kettenis/20051219: This really is more like an interrupt
      frame, but SIGTRAMP_FRAME would print <signal handler called>,
      which really is not what we want here.  */
   "amd64 openbsd trap",
   NORMAL_FRAME,
+  FRAME_UNWIND_ARCH,
   default_frame_unwind_stop_reason,
   amd64obsd_trapframe_this_id,
   amd64obsd_trapframe_prev_register,
   NULL,
   amd64obsd_trapframe_sniffer
-};
+);
 
 
 static void
@@ -443,16 +443,13 @@ amd64obsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   bsd_uthread_set_collect_uthread (gdbarch, amd64obsd_collect_uthread);
 
   /* OpenBSD uses SVR4-style shared libraries.  */
-  set_solib_svr4_fetch_link_map_offsets
-    (gdbarch, svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 
   /* Unwind kernel trap frames correctly.  */
   frame_unwind_prepend_unwinder (gdbarch, &amd64obsd_trapframe_unwind);
 }
 
-void _initialize_amd64obsd_tdep ();
-void
-_initialize_amd64obsd_tdep ()
+INIT_GDB_FILE (amd64obsd_tdep)
 {
   /* The OpenBSD/amd64 native dependent code makes this assumption.  */
   gdb_assert (ARRAY_SIZE (amd64obsd_r_reg_offset) == AMD64_NUM_GREGS);

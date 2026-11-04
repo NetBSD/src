@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.221.6.1 2025/08/02 05:57:41 perseant Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.221.6.2 2026/11/04 23:27:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009, 2020
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221.6.1 2025/08/02 05:57:41 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221.6.2 2026/11/04 23:27:49 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -80,6 +80,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.221.6.1 2025/08/02 05:57:41 perseant
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/resourcevar.h>
+#include <sys/sdt.h>
 #include <sys/signal.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
@@ -103,10 +104,23 @@ static TAILQ_HEAD(, ptimer) ptimer_queue;
 #define	CLOCK_VIRTUAL_P(clockid)	\
 	((clockid) == CLOCK_VIRTUAL || (clockid) == CLOCK_PROF)
 
+#define IS_ITIMER(id) (0 <= (id) && (id) < TIMER_MIN)
+#define IS_POSIX_TIMER(id)  (TIMER_MIN <= (id) && (id) < TIMER_MAX)
+
 CTASSERT(ITIMER_REAL == CLOCK_REALTIME);
 CTASSERT(ITIMER_VIRTUAL == CLOCK_VIRTUAL);
 CTASSERT(ITIMER_PROF == CLOCK_PROF);
 CTASSERT(ITIMER_MONOTONIC == CLOCK_MONOTONIC);
+
+CTASSERT(IS_ITIMER(ITIMER_REAL));
+CTASSERT(IS_ITIMER(ITIMER_VIRTUAL));
+CTASSERT(IS_ITIMER(ITIMER_PROF));
+CTASSERT(IS_ITIMER(ITIMER_MONOTONIC));
+
+CTASSERT(!IS_POSIX_TIMER(ITIMER_REAL));
+CTASSERT(!IS_POSIX_TIMER(ITIMER_VIRTUAL));
+CTASSERT(!IS_POSIX_TIMER(ITIMER_PROF));
+CTASSERT(!IS_POSIX_TIMER(ITIMER_MONOTONIC));
 
 /*
  * Initialize timekeeping.
@@ -204,7 +218,7 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 	 * unreasonable system behaviour.
 	 */
 	if (ts->tv_sec < 0 || ts->tv_sec > (1LL << 36))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	nanotime(&now);
 	timespecsub(ts, &now, &delta);
@@ -212,12 +226,12 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 	if (check_kauth && kauth_authorize_system(kauth_cred_get(),
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, __UNCONST(ts),
 	    &delta, KAUTH_ARG(check_kauth ? false : true)) != 0) {
-		return EPERM;
+		return SET_ERROR(EPERM);
 	}
 
 #ifdef notyet
 	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
-		return EPERM;
+		return SET_ERROR(EPERM);
 	}
 #endif
 
@@ -296,7 +310,7 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
 	int error;
 
 	if (tp->tv_nsec < 0 || tp->tv_nsec >= 1000000000L)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	switch (clock_id) {
 	case CLOCK_REALTIME:
@@ -304,9 +318,9 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
 			return error;
 		break;
 	case CLOCK_MONOTONIC:
-		return EINVAL;	/* read-only clock */
+		return SET_ERROR(EINVAL);	/* read-only clock */
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -348,7 +362,7 @@ clock_getres1(clockid_t clock_id, struct timespec *ts)
 			ts->tv_nsec = 1000000000 / tc_getfrequency();
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	return 0;
@@ -468,7 +482,7 @@ again:
 	}
 
 	if (error == ERESTART)
-		error = EINTR;
+		error = SET_ERROR(EINTR);
 
 	return error;
 }
@@ -498,7 +512,7 @@ sys_clock_getcpuclockid2(struct lwp *l,
 		clock_id = CLOCK_THREAD_CPUTIME_ID | lid;
 		break;
 	default:
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	return copyout(&clock_id, SCARG(uap, clock_id), sizeof(clock_id));
 }
@@ -576,7 +590,7 @@ settimeofday1(const struct timeval *utv, bool userspace,
 	}
 
 	if (utv->tv_usec < 0 || utv->tv_usec >= 1000000)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	TIMEVAL_TO_TIMESPEC(utv, &ts);
 	return settime1(l->l_proc, &ts, check_kauth);
@@ -873,7 +887,7 @@ itimer_callout(void *arg)
 	 */
 	itimer_transition(&it->it_time, &now, &next, &overruns);
 	it->it_time.it_value = next;
-	it->it_overruns += overruns;
+	it->it_overruns += MIN(INT_MAX - overruns, overruns);
 
 	/*
 	 * Reset the callout, if it's not going away.
@@ -920,7 +934,7 @@ itimer_settime(struct itimer *it)
 		 * over from the top.
 		 */
 		if (callout_halt(&it->it_ch, &itimer_mutex))
-			return ERESTART;
+			return SET_ERROR(ERESTART);
 		KASSERT(!it->it_dying);
 
 		/* Now we can touch it and start it up again. */
@@ -1228,7 +1242,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	p = l->l_proc;
 
 	if ((u_int)id > CLOCK_MONOTONIC)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	if ((pts = p->p_timers) == NULL)
 		pts = ptimers_alloc(p);
@@ -1243,7 +1257,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 			 (pt->pt_ev.sigev_signo <= 0 ||
 			  pt->pt_ev.sigev_signo >= NSIG))) {
 			kmem_free(pt, sizeof(*pt));
-			return (error ? error : EINVAL);
+			return (error ? error : SET_ERROR(EINVAL));
 		}
 	}
 
@@ -1255,7 +1269,7 @@ timer_create1(timer_t *tid, clockid_t id, struct sigevent *evp,
 	if (timerid == TIMER_MAX) {
 		itimer_unlock();
 		kmem_free(pt, sizeof(*pt));
-		return EAGAIN;
+		return SET_ERROR(EAGAIN);
 	}
 	if (evp == NULL) {
 		pt->pt_ev.sigev_notify = SIGEV_SIGNAL;
@@ -1317,13 +1331,13 @@ sys_timer_delete(struct lwp *l, const struct sys_timer_delete_args *uap,
 	timerid = SCARG(uap, timerid);
 	pts = p->p_timers;
 
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return EINVAL;
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
+		return SET_ERROR(EINVAL);
 
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
 		itimer_unlock();
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 
 	if (CLOCK_VIRTUAL_P(it->it_clockid)) {
@@ -1392,18 +1406,18 @@ dotimer_settime(int timerid, struct itimerspec *value,
 
 	pts = p->p_timers;
 
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return EINVAL;
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
+		return SET_ERROR(EINVAL);
 	val = *value;
 	if (itimespecfix(&val.it_value) != 0 ||
 	    itimespecfix(&val.it_interval) != 0)
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	itimer_lock();
  restart:
 	if ((it = pts->pts_timers[timerid]) == NULL) {
-		itimer_unlock();
-		return EINVAL;
+		error = SET_ERROR(EINVAL);
+		goto out;
 	}
 
 	if (ovalue)
@@ -1425,12 +1439,22 @@ dotimer_settime(int timerid, struct itimerspec *value,
 				} else { /* CLOCK_MONOTONIC */
 					getnanouptime(&now);
 				}
+				if (!timespecaddok(&it->it_time.it_value,
+					&now)) {
+					error = SET_ERROR(EINVAL);
+					goto out;
+				}
 				timespecadd(&it->it_time.it_value, &now,
 				    &it->it_time.it_value);
 			}
 		} else {
 			if ((flags & TIMER_ABSTIME) != 0) {
 				getnanotime(&now);
+				if (!timespecsubok(&it->it_time.it_value,
+					&now)) {
+					error = SET_ERROR(EINVAL);
+					goto out;
+				}
 				timespecsub(&it->it_time.it_value, &now,
 				    &it->it_time.it_value);
 				if (!timespecisset(&it->it_time.it_value) ||
@@ -1448,9 +1472,10 @@ dotimer_settime(int timerid, struct itimerspec *value,
 		goto restart;
 	}
 	KASSERT(error == 0);
+ out:
 	itimer_unlock();
 
-	return 0;
+	return error;
 }
 
 /*
@@ -1483,12 +1508,12 @@ dotimer_gettime(int timerid, struct proc *p, struct itimerspec *its)
 	struct ptimers *pts;
 
 	pts = p->p_timers;
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return EINVAL;
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
+		return SET_ERROR(EINVAL);
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
 		itimer_unlock();
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	itimer_gettime(it, its);
 	itimer_unlock();
@@ -1519,12 +1544,12 @@ sys_timer_getoverrun(struct lwp *l, const struct sys_timer_getoverrun_args *uap,
 	timerid = SCARG(uap, timerid);
 
 	pts = p->p_timers;
-	if (pts == NULL || timerid < 2 || timerid >= TIMER_MAX)
-		return EINVAL;
+	if (pts == NULL || !IS_POSIX_TIMER(timerid))
+		return SET_ERROR(EINVAL);
 	itimer_lock();
 	if ((it = pts->pts_timers[timerid]) == NULL) {
 		itimer_unlock();
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 	}
 	pt = container_of(it, struct ptimer, pt_itimer);
 	*retval = pt->pt_poverruns;
@@ -1566,8 +1591,8 @@ dogetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct itimer *it;
 	struct itimerspec its;
 
-	if ((u_int)which > ITIMER_MONOTONIC)
-		return EINVAL;
+	if (!IS_ITIMER(which))
+		return SET_ERROR(EINVAL);
 
 	itimer_lock();
 	pts = p->p_timers;
@@ -1610,6 +1635,7 @@ sys___setitimer50(struct lwp *l, const struct sys___setitimer50_args *uap,
 	    (error = copyin(itvp, &aitv, sizeof(struct itimerval))) != 0)
 		return error;
 	if (SCARG(uap, oitv) != NULL) {
+		memset(&getargs, 0, sizeof(getargs));
 		SCARG(&getargs, which) = which;
 		SCARG(&getargs, itv) = SCARG(uap, oitv);
 		if ((error = sys___getitimer50(l, &getargs, retval)) != 0)
@@ -1631,10 +1657,10 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 	struct itlist *itl;
 	int error;
 
-	if ((u_int)which > ITIMER_MONOTONIC)
-		return EINVAL;
+	if (!IS_ITIMER(which))
+		return SET_ERROR(EINVAL);
 	if (itimerfix(&itvp->it_value) || itimerfix(&itvp->it_interval))
-		return EINVAL;
+		return SET_ERROR(EINVAL);
 
 	/*
 	 * Don't bother allocating data structures if the process just
@@ -1701,7 +1727,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		case ITIMER_REAL:
 			getnanotime(&now);
 			if (!timespecaddok(&it->it_time.it_value, &now)) {
-				error = EINVAL;
+				error = SET_ERROR(EINVAL);
 				goto out;
 			}
 			timespecadd(&it->it_time.it_value, &now,
@@ -1710,7 +1736,7 @@ dosetitimer(struct proc *p, int which, struct itimerval *itvp)
 		case ITIMER_MONOTONIC:
 			getnanouptime(&now);
 			if (!timespecaddok(&it->it_time.it_value, &now)) {
-				error = EINVAL;
+				error = SET_ERROR(EINVAL);
 				goto out;
 			}
 			timespecadd(&it->it_time.it_value, &now,
@@ -1798,7 +1824,8 @@ ptimer_intr(void *cookie)
 			continue;
 		}
 		if (sigismember(&p->p_sigpend.sp_set, pt->pt_ev.sigev_signo)) {
-			it->it_overruns++;
+			if (it->it_overruns < INT_MAX)
+				it->it_overruns++;
 			continue;
 		}
 

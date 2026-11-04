@@ -1,4 +1,4 @@
-/*	$NetBSD: keygen.c,v 1.7.2.1 2025/08/02 05:50:49 perseant Exp $	*/
+/*	$NetBSD: keygen.c,v 1.7.2.2 2026/11/04 23:15:32 perseant Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -22,10 +22,12 @@
 #include <isc/base64.h>
 #include <isc/buffer.h>
 #include <isc/file.h>
+#include <isc/md.h>
 #include <isc/mem.h>
 #include <isc/result.h>
 #include <isc/string.h>
 
+#include <dns/fixedname.h>
 #include <dns/keyvalues.h>
 #include <dns/name.h>
 
@@ -90,6 +92,33 @@ alg_bits(dns_secalg_t alg) {
 }
 
 /*%
+ * Reject invalid key names and make them safe for embedding into
+ * rndc.conf and named.conf.
+ */
+void
+makesafe_keyname(const char *keyname, char *namebuf, size_t length) {
+	dns_fixedname_t fixed;
+	dns_name_t *name = dns_fixedname_initname(&fixed);
+	isc_result_t result;
+	isc_buffer_t b;
+
+	if (keyname == NULL || keyname[0] == '\0') {
+		fatal("key name must not be empty");
+	}
+	result = dns_name_fromstring(name, keyname, dns_rootname, 0, NULL);
+	if (result != ISC_R_SUCCESS) {
+		fatal("invalid key name: %s", isc_result_totext(result));
+	}
+
+	isc_buffer_init(&b, namebuf, length);
+	result = dns_name_totext(name, DNS_NAME_QUOTED | DNS_NAME_OMITFINALDOT,
+				 &b);
+	if (result != ISC_R_SUCCESS) {
+		fatal("invalid key name: %s", isc_result_totext(result));
+	}
+}
+
+/*%
  * Generate a key of size 'keysize' and place it in 'key_txtbuffer'
  */
 void
@@ -98,7 +127,7 @@ generate_key(isc_mem_t *mctx, dns_secalg_t alg, int keysize,
 	isc_result_t result = ISC_R_SUCCESS;
 	isc_buffer_t key_rawbuffer;
 	isc_region_t key_rawregion;
-	char key_rawsecret[64];
+	char key_rawsecret[ISC_MAX_BLOCK_SIZE];
 	dst_key_t *key = NULL;
 
 	switch (alg) {

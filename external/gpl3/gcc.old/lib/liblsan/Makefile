@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7.2.1 2025/08/02 05:26:15 perseant Exp $
+# $NetBSD: Makefile,v 1.7.2.2 2026/11/04 23:00:33 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -8,13 +8,17 @@
 .PATH: ${SANITIZER}/lsan ${SANITIZER}/asan
 
 LSAN_SRCS+= \
-	lsan.cc \
-	lsan_allocator.cc \
-	lsan_common.cc \
-	lsan_common_linux.cc \
-	lsan_interceptors.cc \
-	lsan_linux.cc \
-	lsan_thread.cc
+	lsan_common.cpp \
+	lsan_common_linux.cpp \
+	lsan_common_mac.cpp \
+	lsan.cpp \
+	lsan_linux.cpp \
+	lsan_mac.cpp \
+	lsan_malloc_mac.cpp \
+	lsan_allocator.cpp \
+	lsan_interceptors.cpp \
+	lsan_thread.cpp \
+	lsan_posix.cpp
 
 LIB=	lsan
 SRCS+=	${LSAN_SRCS}

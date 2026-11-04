@@ -1,4 +1,4 @@
-/* Copyright 2019-2024 Free Software Foundation, Inc.
+/* Copyright 2019-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -14,7 +14,7 @@
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
 /* This test relies on foo being inlined into main and bar not being
-   inlined.  The test is checking GDB's behaviour as we single step from
+   inlined.  The test is checking GDB's behavior as we single step from
    main through foo and into bar.  */
 
 volatile int global_var;

@@ -1,4 +1,4 @@
-/*	$NetBSD: ixm1200_machdep.c,v 1.68 2023/08/03 08:16:31 mrg Exp $ */
+/*	$NetBSD: ixm1200_machdep.c,v 1.68.6.1 2026/11/04 23:20:29 perseant Exp $ */
 
 /*
  * Copyright (c) 2002, 2003
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.68 2023/08/03 08:16:31 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixm1200_machdep.c,v 1.68.6.1 2026/11/04 23:20:29 perseant Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -216,7 +216,7 @@ cpu_reboot(int howto, char *bootstr)
 	}
 
 	/* Disable console buffering */
-	cnpollc(1);
+	cnpollc(true);
 
 	/*
 	 * If RB_NOSYNC was not specified sync the discs.

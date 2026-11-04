@@ -1,4 +1,4 @@
-# Copyright 2019-2024 Free Software Foundation, Inc.
+# Copyright 2019-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -90,7 +90,7 @@ proc do_bp_tests {with_src_prefix_p with_nest_prefix_p} {
 		     # Currently referencing symbols using 'info',
 		     # 'whatis' and 'ptype' before the program is
 		     # started doesn't work.  This is the same
-		     # behaviour we see in C++ so I don't think this
+		     # behavior we see in C++ so I don't think this
 		     # is a failure, just a limitation in current GDB.
 		     if { ${with_nest_prefix_p} } {
 			 gdb_test "info symbol ${nest_prefix}${function}" \

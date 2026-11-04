@@ -1,4 +1,4 @@
-# Copyright 2012-2024 Free Software Foundation, Inc.
+# Copyright 2012-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,7 +15,7 @@
 
 # Test the "print symbol-loading" option.
 
-require allow_shlib_tests
+require allow_shlib_tests gcore_cmd_available
 
 standard_testfile print-symbol-loading-main.c
 set libfile print-symbol-loading-lib
@@ -35,7 +35,8 @@ if { [gdb_compile ${objfile} ${binfile} executable $opts] != "" } {
     return -1
 }
 
-clean_restart ${binfile}
+clean_restart
+gdb_load $binfile
 gdb_load_shlib ${binfile_lib}
 
 if ![runto lib] {
@@ -94,11 +95,14 @@ proc test_load_shlib { print_symbol_loading } {
     global binfile
     global gdb_prompt
     with_test_prefix "shlib ${print_symbol_loading}" {
-	clean_restart ${binfile}
-	gdb_test_no_output "set auto-solib-add off"
+	clean_restart
+	gdb_load $binfile
 	if ![runto_main] {
 	    return -1
 	}
+
+	gdb_test_no_output "nosharedlibrary"
+
 	gdb_test_no_output "set print symbol-loading $print_symbol_loading"
 	set test_name "load shared-lib"
 	set libc_re \

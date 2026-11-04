@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.39.24.1 2026/11/04 23:21:52 perseant Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.39.24.1 2026/11/04 23:21:52 perseant Exp $");
 
 #include "opt_fdt.h"
 
@@ -43,9 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.39 2021/01/24 15:43:22 thorpej Exp $"
 #endif
 
 static const void *fdt_data;
-
-static struct fdt_conslist fdt_console_list =
-    TAILQ_HEAD_INITIALIZER(fdt_console_list);
 
 bool
 fdtbus_init(const void *data)
@@ -96,26 +93,34 @@ fdtbus_set_decoderegprop(bool decode)
 	fdtbus_decoderegprop = decode;
 }
 
+static int
+fdtbus_get_u32prop_with_default(int phandle, const char *prop, int dflt)
+{
+	uint32_t val;
+
+	if (of_getprop_uint32(phandle, prop, &val)) {
+		val = dflt;
+	}
+
+	return val;
+}
+
 int
 fdtbus_get_addr_cells(int phandle)
 {
-	uint32_t addr_cells;
-
-	if (of_getprop_uint32(phandle, "#address-cells", &addr_cells))
-		addr_cells = 2;
-
-	return addr_cells;
+	return fdtbus_get_u32prop_with_default(phandle, "#address-cells", 2);
 }
 
 int
 fdtbus_get_size_cells(int phandle)
 {
-	uint32_t size_cells;
+	return fdtbus_get_u32prop_with_default(phandle, "#size-cells", 0);
+}
 
-	if (of_getprop_uint32(phandle, "#size-cells", &size_cells))
-		size_cells = 0;
-
-	return size_cells;
+int
+fdtbus_get_reg_shift(int phandle, int dflt)
+{
+	return fdtbus_get_u32prop_with_default(phandle, "reg-shift", dflt);
 }
 
 int
@@ -334,138 +339,6 @@ fdtbus_get_reg64(int phandle, u_int index, uint64_t *paddr, uint64_t *psize)
 		*psize = size;
 
 	return 0;
-}
-
-#if defined(FDT)
-const struct fdt_console *
-fdtbus_get_console(void)
-{
-	static const struct fdt_console_info *booted_console = NULL;
-
-	if (booted_console == NULL) {
-		__link_set_decl(fdt_consoles, struct fdt_console_info);
-		struct fdt_console_info * const *info;
-		const struct fdt_console_info *best_info = NULL;
-		const int phandle = fdtbus_get_stdout_phandle();
-		int best_match = 0;
-
-		if (phandle == -1) {
-			printf("WARNING: no console device\n");
-			return NULL;
-		}
-
-		__link_set_foreach(info, fdt_consoles) {
-			const int match = (*info)->ops->match(phandle);
-			if (match > best_match) {
-				best_match = match;
-				best_info = *info;
-			}
-		}
-
-		booted_console = best_info;
-	}
-
-	return booted_console == NULL ? NULL : booted_console->ops;
-}
-#endif
-
-const char *
-fdtbus_get_stdout_path(void)
-{
-	const char *prop;
-
-	const int off = fdt_path_offset(fdtbus_get_data(), "/chosen");
-	if (off >= 0) {
-		prop = fdt_getprop(fdtbus_get_data(), off, "stdout-path", NULL);
-		if (prop != NULL)
-			return prop;
-	}
-
-	/* If the stdout-path property is not found, return the default */
-	return FDT_DEFAULT_STDOUT_PATH;
-}
-
-int
-fdtbus_get_stdout_phandle(void)
-{
-	const char *prop, *p;
-	int off, len;
-
-	prop = fdtbus_get_stdout_path();
-	if (prop == NULL)
-		return -1;
-
-	p = strchr(prop, ':');
-	len = p == NULL ? strlen(prop) : (p - prop);
-	if (*prop != '/') {
-		/* Alias */
-		prop = fdt_get_alias_namelen(fdtbus_get_data(), prop, len);
-		if (prop == NULL)
-			return -1;
-		len = strlen(prop);
-	}
-	off = fdt_path_offset_namelen(fdtbus_get_data(), prop, len);
-	if (off < 0)
-		return -1;
-
-	return fdtbus_offset2phandle(off);
-}
-
-int
-fdtbus_get_stdout_speed(void)
-{
-	const char *prop, *p;
-
-	prop = fdtbus_get_stdout_path();
-	if (prop == NULL)
-		return -1;
-
-	p = strchr(prop, ':');
-	if (p == NULL)
-		return -1;
-
-	return (int)strtoul(p + 1, NULL, 10);
-}
-
-tcflag_t
-fdtbus_get_stdout_flags(void)
-{
-	const char *prop, *p;
-	tcflag_t flags = TTYDEF_CFLAG;
-	char *ep;
-
-	prop = fdtbus_get_stdout_path();
-	if (prop == NULL)
-		return flags;
-
-	p = strchr(prop, ':');
-	if (p == NULL)
-		return flags;
-
-	ep = NULL;
-	(void)strtoul(p + 1, &ep, 10);
-	if (ep == NULL)
-		return flags;
-
-	/* <baud>{<parity>{<bits>{<flow>}}} */
-	while (*ep) {
-		switch (*ep) {
-		/* parity */
-		case 'n':	flags &= ~(PARENB|PARODD); break;
-		case 'e':	flags &= ~PARODD; flags |= PARENB; break;
-		case 'o':	flags |= (PARENB|PARODD); break;
-		/* bits */
-		case '5':	flags &= ~CSIZE; flags |= CS5; break;
-		case '6':	flags &= ~CSIZE; flags |= CS6; break;
-		case '7':	flags &= ~CSIZE; flags |= CS7; break;
-		case '8':	flags &= ~CSIZE; flags |= CS8; break;
-		/* flow */
-		case 'r':	flags |= CRTSCTS; break;
-		}
-		ep++;
-	}
-
-	return flags;
 }
 
 bool

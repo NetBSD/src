@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.9 2022/07/22 23:43:23 thorpej Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.9.10.1 2026/11/04 23:21:56 perseant Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -51,8 +51,6 @@ struct motoi2c_softc {
 	struct i2c_controller	sc_i2c;
 	motoi2c_iord_t		sc_iord;
 	motoi2c_iowr_t		sc_iowr;
-	int			sc_phandle;
-	prop_array_t		sc_child_devices;
 	struct motoi2c_settings	sc_settings;
 	int			sc_flags;
 #define	MOTOI2C_F_ENABLE_INV	__BIT(0)

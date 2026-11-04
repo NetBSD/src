@@ -1,4 +1,4 @@
-/*	$NetBSD: obs600_locore.S,v 1.7 2021/03/02 07:23:22 rin Exp $	*/
+/*	$NetBSD: obs600_locore.S,v 1.7.24.1 2026/11/04 23:20:36 perseant Exp $	*/
 
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
@@ -49,7 +49,7 @@ _C_LABEL(kernel_text):
 
 /*
  * Kernel start routine for OpenBlockS600
- * this code is excuted at the very first after the kernel is loaded
+ * this code is executed at the very first after the kernel is loaded
  * by U-Boot.
  */
 	.text

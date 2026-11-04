@@ -1,6 +1,6 @@
 /* Process record and replay target for GDB, the GNU debugger.
 
-   Copyright (C) 2013-2024 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
+#include "exceptions.h"
 #include "extract-store-integer.h"
 #include "cli/cli-cmds.h"
+#include "gdbsupport/gdb_vecs.h"
 #include "regcache.h"
 #include "gdbthread.h"
 #include "inferior.h"
@@ -38,6 +40,7 @@
 #include "infrun.h"
 #include "gdbsupport/gdb_unlinker.h"
 #include "gdbsupport/byte-vector.h"
+#include "gdbsupport/scoped_signal_handler.h"
 #include "async-event.h"
 #include "top.h"
 #include "valprint.h"
@@ -369,6 +372,15 @@ record_full_is_used (void)
 	  || t == &record_full_core_ops);
 }
 
+/* see record-full.h.  */
+bool
+record_full_is_replaying ()
+{
+  auto target = dynamic_cast<record_full_target *>
+		  (current_inferior ()->target_at (record_stratum));
+  return target != nullptr && RECORD_FULL_IS_REPLAY;
+}
+
 
 /* Command lists for "set/show record full".  */
 static struct cmd_list_element *set_record_full_cmdlist;
@@ -622,7 +634,7 @@ record_full_arch_list_add_reg (struct regcache *regcache, int regnum)
 
   rec = record_full_reg_alloc (regcache, regnum);
 
-  regcache->raw_read (regnum, record_full_get_loc (rec));
+  regcache->cooked_read (regnum, record_full_get_loc (rec));
 
   record_full_arch_list_add (rec);
 
@@ -896,7 +908,7 @@ record_full_exec_insn (struct regcache *regcache,
     }
 }
 
-static void record_full_restore (void);
+static void record_full_restore (struct bfd &cbfd);
 
 /* Asynchronous signal handle registered as event loop source for when
    we have pending events ready to be passed to the core.  */
@@ -909,10 +921,11 @@ record_full_async_inferior_event_handler (gdb_client_data data)
   inferior_event_handler (INF_REG_EVENT);
 }
 
-/* Open the process record target for 'core' files.  */
+/* Open the process record target for 'core' files.  CBFD is the core file
+   containing the record information.  */
 
 static void
-record_full_core_open_1 ()
+record_full_core_open_1 (struct bfd &cbfd)
 {
   regcache *regcache = get_thread_regcache (inferior_thread ());
   int regnum = gdbarch_num_regs (regcache->arch ());
@@ -925,11 +938,10 @@ record_full_core_open_1 ()
   for (i = 0; i < regnum; i ++)
     record_full_core_regbuf->raw_supply (i, *regcache);
 
-  record_full_core_sections
-    = build_section_table (current_program_space->core_bfd ());
+  record_full_core_sections = build_section_table (&cbfd);
 
   current_inferior ()->push_target (&record_full_core_ops);
-  record_full_restore ();
+  record_full_restore (cbfd);
 }
 
 /* Open the process record target for 'live' processes.  */
@@ -975,8 +987,8 @@ record_full_open (const char *args, int from_tty)
   record_full_list = &record_full_first;
   record_full_list->next = NULL;
 
-  if (current_program_space->core_bfd ())
-    record_full_core_open_1 ();
+  if (current_program_space->core_bfd () != nullptr)
+    record_full_core_open_1 (*current_program_space->core_bfd ());
   else
     record_full_open_1 ();
 
@@ -1079,7 +1091,7 @@ record_full_target::resume (ptid_t ptid, int step, enum gdb_signal signal)
       if (!step)
 	{
 	  /* This is not hard single step.  */
-	  if (!gdbarch_software_single_step_p (gdbarch))
+	  if (!gdbarch_get_next_pcs_p (gdbarch))
 	    {
 	      /* This is a normal continue.  */
 	      step = 1;
@@ -1149,6 +1161,7 @@ record_full_wait_1 (struct target_ops *ops,
 {
   scoped_restore restore_operation_disable
     = record_full_gdb_operation_disable_set ();
+  scoped_signal_handler<SIGINT> interrupt_handler (record_full_sig_handler);
 
   if (record_debug)
     gdb_printf (gdb_stdlog,
@@ -1169,7 +1182,6 @@ record_full_wait_1 (struct target_ops *ops,
     }
 
   record_full_get_sig = 0;
-  signal (SIGINT, record_full_sig_handler);
 
   record_full_stop_reason = TARGET_STOPPED_BY_NO_REASON;
 
@@ -1254,7 +1266,7 @@ record_full_wait_1 (struct target_ops *ops,
 		      process_stratum_target *proc_target
 			= current_inferior ()->process_target ();
 
-		      if (gdbarch_software_single_step_p (gdbarch))
+		      if (gdbarch_get_next_pcs_p (gdbarch))
 			{
 			  /* Try to insert the software single step breakpoint.
 			     If insert success, set step to 0.  */
@@ -1458,8 +1470,6 @@ record_full_wait_1 (struct target_ops *ops,
 	}
     }
 
-  signal (SIGINT, handle_sigint);
-
   return inferior_ptid;
 }
 
@@ -1637,7 +1647,7 @@ record_full_target::store_registers (struct regcache *regcache, int regno)
 
 /* "xfer_partial" method.  Behavior is conditional on
    RECORD_FULL_IS_REPLAY.
-   In replay mode, we cannot write memory unles we are willing to
+   In replay mode, we cannot write memory unless we are willing to
    invalidate the record/replay log from this point forward.  */
 
 enum target_xfer_status
@@ -2072,6 +2082,7 @@ record_full_core_target::resume (ptid_t ptid, int step,
 				 enum gdb_signal signal)
 {
   record_full_resume_step = step;
+  record_full_resume_ptid = ptid;
   record_full_resumed = 1;
   record_full_execution_dir = ::execution_direction;
 }
@@ -2321,20 +2332,16 @@ netorder32 (uint32_t input)
   return ret;
 }
 
-/* Restore the execution log from a core_bfd file.  */
+/* Restore the execution log from core file CBFD.  */
+
 static void
-record_full_restore (void)
+record_full_restore (struct bfd &cbfd)
 {
   uint32_t magic;
   struct record_full_entry *rec;
   asection *osec;
   uint32_t osec_size;
   int bfd_offset = 0;
-
-  /* We restore the execution log from the open core bfd,
-     if there is one.  */
-  if (current_program_space->core_bfd () == nullptr)
-    return;
 
   /* "record_full_restore" can only be called when record list is empty.  */
   gdb_assert (record_full_first.next == NULL);
@@ -2343,7 +2350,7 @@ record_full_restore (void)
     gdb_printf (gdb_stdlog, "Restoring recording from core file.\n");
 
   /* Now need to find our special note section.  */
-  osec = bfd_get_section_by_name (current_program_space->core_bfd (), "null0");
+  osec = bfd_get_section_by_name (&cbfd, "null0");
   if (record_debug)
     gdb_printf (gdb_stdlog, "Find precord section %s.\n",
 		osec ? "succeeded" : "failed");
@@ -2354,11 +2361,10 @@ record_full_restore (void)
     gdb_printf (gdb_stdlog, "%s", bfd_section_name (osec));
 
   /* Check the magic code.  */
-  bfdcore_read (current_program_space->core_bfd (), osec, &magic,
-		sizeof (magic), &bfd_offset);
+  bfdcore_read (&cbfd, osec, &magic, sizeof (magic), &bfd_offset);
   if (magic != RECORD_FULL_FILE_MAGIC)
-    error (_("Version mis-match or file format error in core file %s."),
-	   bfd_get_filename (current_program_space->core_bfd ()));
+    error (_("Version mismatch or file format error in core file %s."),
+	   bfd_get_filename (&cbfd));
   if (record_debug)
     gdb_printf (gdb_stdlog,
 		"  Reading 4-byte magic cookie "
@@ -2384,23 +2390,21 @@ record_full_restore (void)
 	  /* We are finished when offset reaches osec_size.  */
 	  if (bfd_offset >= osec_size)
 	    break;
-	  bfdcore_read (current_program_space->core_bfd (), osec, &rectype,
-			sizeof (rectype), &bfd_offset);
+	  bfdcore_read (&cbfd, osec, &rectype, sizeof (rectype), &bfd_offset);
 
 	  switch (rectype)
 	    {
 	    case record_full_reg: /* reg */
 	      /* Get register number to regnum.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec, &regnum,
-			    sizeof (regnum), &bfd_offset);
+	      bfdcore_read (&cbfd, osec, &regnum, sizeof (regnum),
+			    &bfd_offset);
 	      regnum = netorder32 (regnum);
 
 	      rec = record_full_reg_alloc (regcache, regnum);
 
 	      /* Get val.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec,
-			    record_full_get_loc (rec), rec->u.reg.len,
-			    &bfd_offset);
+	      bfdcore_read (&cbfd, osec, record_full_get_loc (rec),
+			    rec->u.reg.len, &bfd_offset);
 
 	      if (record_debug)
 		gdb_printf (gdb_stdlog,
@@ -2413,21 +2417,18 @@ record_full_restore (void)
 
 	    case record_full_mem: /* mem */
 	      /* Get len.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec, &len,
-			    sizeof (len), &bfd_offset);
+	      bfdcore_read (&cbfd, osec, &len, sizeof (len), &bfd_offset);
 	      len = netorder32 (len);
 
 	      /* Get addr.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec, &addr,
-			    sizeof (addr), &bfd_offset);
+	      bfdcore_read (&cbfd, osec, &addr, sizeof (addr), &bfd_offset);
 	      addr = netorder64 (addr);
 
 	      rec = record_full_mem_alloc (addr, len);
 
 	      /* Get val.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec,
-			    record_full_get_loc (rec), rec->u.mem.len,
-			    &bfd_offset);
+	      bfdcore_read (&cbfd, osec, record_full_get_loc (rec),
+			    rec->u.mem.len, &bfd_offset);
 
 	      if (record_debug)
 		gdb_printf (gdb_stdlog,
@@ -2445,14 +2446,13 @@ record_full_restore (void)
 	      record_full_insn_num ++;
 
 	      /* Get signal value.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec, &signal,
-			    sizeof (signal), &bfd_offset);
+	      bfdcore_read (&cbfd, osec, &signal, sizeof (signal),
+			    &bfd_offset);
 	      signal = netorder32 (signal);
 	      rec->u.end.sigval = (enum gdb_signal) signal;
 
 	      /* Get insn count.  */
-	      bfdcore_read (current_program_space->core_bfd (), osec, &count,
-			    sizeof (count), &bfd_offset);
+	      bfdcore_read (&cbfd, osec, &count, sizeof (count), &bfd_offset);
 	      count = netorder32 (count);
 	      rec->u.end.insn_num = count;
 	      record_full_insn_count = count + 1;
@@ -2468,7 +2468,7 @@ record_full_restore (void)
 
 	    default:
 	      error (_("Bad entry type in core file %s."),
-		     bfd_get_filename (current_program_space->core_bfd ()));
+		     bfd_get_filename (&cbfd));
 	      break;
 	    }
 
@@ -2498,7 +2498,7 @@ record_full_restore (void)
 
   /* Succeeded.  */
   gdb_printf (_("Restored records from core file %s.\n"),
-	      bfd_get_filename (current_program_space->core_bfd ()));
+	      bfd_get_filename (&cbfd));
 
   print_stack_frame (get_selected_frame (NULL), 1, SRC_AND_LOC, 1);
 }
@@ -2866,9 +2866,7 @@ maintenance_print_record_instruction (const char *args, int from_tty)
     }
 }
 
-void _initialize_record_full ();
-void
-_initialize_record_full ()
+INIT_GDB_FILE (record_full)
 {
   struct cmd_list_element *c;
 
@@ -2890,12 +2888,12 @@ _initialize_record_full ()
 	       _("Restore the execution log from a file.\n\
 Argument is filename.  File must be created with 'record save'."),
 	       &record_full_cmdlist);
-  set_cmd_completer (record_full_restore_cmd, filename_completer);
+  set_cmd_completer (record_full_restore_cmd, deprecated_filename_completer);
 
   /* Deprecate the old version without "full" prefix.  */
   c = add_alias_cmd ("restore", record_full_restore_cmd, class_obscure, 1,
 		     &record_cmdlist);
-  set_cmd_completer (c, filename_completer);
+  set_cmd_completer (c, deprecated_filename_completer);
   deprecate_cmd (c, "record full restore");
 
   add_setshow_prefix_cmd ("full", class_support,
@@ -2976,8 +2974,8 @@ When ON, query if PREC cannot record memory change of next instruction."),
 	   _("\
 Print a recorded instruction.\n\
 If no argument is provided, print the last instruction recorded.\n\
-If a negative argument is given, prints how the nth previous \
+If a negative argument is given, prints how the nth previous\n\
 instruction will be undone.\n\
-If a positive argument is given, prints \
+If a positive argument is given, prints\n\
 how the nth following instruction will be redone."), &maintenanceprintlist);
 }

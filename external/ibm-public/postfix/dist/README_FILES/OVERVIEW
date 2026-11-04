@@ -24,7 +24,7 @@ the incoming queue. The figure below shows the main processes that are involved
 with new mail. Names followed by a number are Postfix commands or server
 programs, while unnumbered names inside shaded areas represent Postfix queues.
 
-                               trivial-
+                           /   trivial-
                               rewrite(8)
 
     Network ->   smtpd(8)

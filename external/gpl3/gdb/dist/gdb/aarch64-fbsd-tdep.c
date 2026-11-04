@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD/aarch64.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -239,8 +239,7 @@ aarch64_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
   /* Generic FreeBSD support.  */
   fbsd_init_abi (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 
   tramp_frame_prepend_unwinder (gdbarch, &aarch64_fbsd_sigframe);
 
@@ -261,9 +260,7 @@ aarch64_fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     }
 }
 
-void _initialize_aarch64_fbsd_tdep ();
-void
-_initialize_aarch64_fbsd_tdep ()
+INIT_GDB_FILE (aarch64_fbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_FREEBSD,
 			  aarch64_fbsd_init_abi);

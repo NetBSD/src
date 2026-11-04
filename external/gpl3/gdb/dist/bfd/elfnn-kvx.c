@@ -1,5 +1,5 @@
 /* KVX-specific support for NN-bit ELF.
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Contributed by Kalray SA.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -421,8 +421,7 @@ struct elf_kvx_obj_tdata
 static bool
 elfNN_kvx_mkobject (bfd *abfd)
 {
-  return bfd_elf_allocate_object (abfd, sizeof (struct elf_kvx_obj_tdata),
-				  KVX_ELF_DATA);
+  return bfd_elf_allocate_object (abfd, sizeof (struct elf_kvx_obj_tdata));
 }
 
 #define elf_kvx_hash_entry(ent) \
@@ -641,7 +640,7 @@ elfNN_kvx_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init
       (&ret->root, abfd, elfNN_kvx_link_hash_newfunc,
-       sizeof (struct elf_kvx_link_hash_entry), KVX_ELF_DATA))
+       sizeof (struct elf_kvx_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -927,7 +926,7 @@ kvx_build_one_stub (struct bfd_hash_entry *gen_entry,
      section.  The user should fix his linker script.  */
   if (stub_entry->target_section->output_section == NULL
       && info->non_contiguous_regions)
-    info->callbacks->einfo (_("%F%P: Could not assign '%pA' to an output section. "
+    info->callbacks->fatal (_("%P: Could not assign '%pA' to an output section. "
 			      "Retry without "
 			      "--enable-non-contiguous-regions.\n"),
 			    stub_entry->target_section);
@@ -1611,6 +1610,7 @@ elfNN_kvx_build_stubs (struct bfd_link_info *info)
       stub_sec->contents = bfd_zalloc (htab->stub_bfd, size);
       if (stub_sec->contents == NULL && size != 0)
 	return false;
+      stub_sec->alloced = 1;
       stub_sec->size = 0;
     }
 
@@ -2541,7 +2541,8 @@ elfNN_kvx_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_KVX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -3688,16 +3689,12 @@ elfNN_kvx_output_arch_local_syms (bfd *output_bfd,
 static bool
 elfNN_kvx_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      _kvx_elf_section_data *sdata;
-      bfd_size_type amt = sizeof (*sdata);
+  _kvx_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -4054,6 +4051,7 @@ elfNN_kvx_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    abort ();
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -4215,6 +4213,7 @@ elfNN_kvx_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   if (htab->root.dynamic_sections_created)
@@ -4680,6 +4679,7 @@ elfNN_kvx_plt_sym_val (bfd_vma i, const asection *plt,
 }
 
 #define ELF_ARCH			bfd_arch_kvx
+#define ELF_TARGET_ID			KVX_ELF_DATA
 #define ELF_MACHINE_CODE		EM_KVX
 #define ELF_MAXPAGESIZE			0x10000
 #define ELF_MINPAGESIZE			0x1000

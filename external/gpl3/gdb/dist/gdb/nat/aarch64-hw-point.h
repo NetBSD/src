@@ -1,4 +1,4 @@
-/* Copyright (C) 2009-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,8 +15,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_AARCH64_HW_POINT_H
-#define NAT_AARCH64_HW_POINT_H
+#ifndef GDB_NAT_AARCH64_HW_POINT_H
+#define GDB_NAT_AARCH64_HW_POINT_H
 
 /* Macro definitions, data structures, and code for the hardware
    breakpoint and hardware watchpoint support follow.  We use the
@@ -136,4 +136,4 @@ void aarch64_show_debug_reg_state (struct aarch64_debug_reg_state *state,
 
 int aarch64_region_ok_for_watchpoint (CORE_ADDR addr, int len);
 
-#endif /* NAT_AARCH64_HW_POINT_H */
+#endif /* GDB_NAT_AARCH64_HW_POINT_H */

@@ -100,21 +100,21 @@ INLINE_CPU\
 INLINE_CPU\
 (void) cpu_restart
 (cpu *processor,
- unsigned_word nia);
+ unsigned_word nia) ATTRIBUTE_NORETURN;
 
 INLINE_CPU\
 (void) cpu_halt
 (cpu *processor,
  unsigned_word nia,
  stop_reason reason,
- int signal);
+ int signal) ATTRIBUTE_NORETURN;
 
 EXTERN_CPU\
 (void) cpu_error
 (cpu *processor,
  unsigned_word cia,
  const char *fmt,
- ...) ATTRIBUTE_PRINTF_3;
+ ...) ATTRIBUTE_NORETURN ATTRIBUTE_PRINTF_3;
 
 
 /* The processors local concept of time */
@@ -139,7 +139,7 @@ INLINE_CPU\
 
 
 #if WITH_IDECODE_CACHE_SIZE
-/* Return the cache entry that matches the given CIA.  No guarentee
+/* Return the cache entry that matches the given CIA.  No guarantee
    that the cache entry actually contains the instruction for that
    address */
 
@@ -160,7 +160,7 @@ INLINE_CPU\
    inner vm maps, to have the cpu its self provide memory manipulation
    functions. (eg cpu_instruction_fetch() cpu_data_read_4())
 
-   Unfortunatly in addition to these functions is the need (for the
+   Unfortunately in addition to these functions is the need (for the
    debugger) to be able to read/write to memory in ways that violate
    the vm protection (eg store breakpoint instruction in the
    instruction map). */

@@ -226,7 +226,7 @@ address] as well. All the mail to these two accounts is forwarded to an inside
 address.
 
     1 /etc/postfix/main.cf:
-    2     virtual_alias_maps = hash:/etc/postfix/virtual
+    2     virtual_alias_maps = lmdb:/etc/postfix/virtual
     3
     4 /etc/postfix/virtual:
     5     postmaster      postmaster@example.com
@@ -261,8 +261,8 @@ purpose of the firewall email function.
      9b        permit_mynetworks reject_unauth_destination
     10b        ...spam blocking rules....
 
-    11     relay_recipient_maps = hash:/etc/postfix/relay_recipients
-    12     transport_maps = hash:/etc/postfix/transport
+    11     relay_recipient_maps = lmdb:/etc/postfix/relay_recipients
+    12     transport_maps = lmdb:/etc/postfix/transport
     13
     14 /etc/postfix/relay_recipients:
     15     user1@example.com   x
@@ -293,14 +293,22 @@ Translation:
     "relay" delivery transport, instead of competing with other SMTP deliveries
     for SMTP clients from the default "smtp" delivery transport.
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+
+Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//vviirrttuuaall" whenever you change the
+virtual file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp ttyyppee:://
+eettcc//ppoossttffiixx//vviirrttuuaall" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//rreellaayy__rreecciippiieennttss" whenever you change
-the relay_recipients table.
+the relay_recipients file, to (re)build a default-type indexed file. Execute
+"ppoossttmmaapp ttyyppee:://eettcc//ppoossttffiixx//rreellaayy__rreecciippiieennttss" to specify an explicit type.
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ttrraannssppoorrtt" whenever you change the
-transport table.
+transport file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp
+ttyyppee:://eettcc//ppoossttffiixx//ttrraannssppoorrtt" to specify an explicit type.
 
 In some installations, there may be separate instances of Postfix processing
 inbound and outbound mail on a multi-homed firewall. The inbound Postfix
@@ -325,7 +333,7 @@ is also sent to the central mailhost. In order to deliver such accounts
 locally, you can set up virtual aliases as follows:
 
     1 /etc/postfix/main.cf:
-    2     virtual_alias_maps = hash:/etc/postfix/virtual
+    2     virtual_alias_maps = lmdb:/etc/postfix/virtual
     3
     4 /etc/postfix/virtual:
     5     root     root@localhost
@@ -338,7 +346,14 @@ Translation:
     listed in $mydestination, or when it matches $inet_interfaces or
     $proxy_interfaces.
 
-Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//vviirrttuuaall" after editing the file.
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+
+Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//vviirrttuuaall" after editing the virtual
+file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp ttyyppee:://eettcc//
+ppoossttffiixx//vviirrttuuaall" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 RRuunnnniinngg PPoossttffiixx bbeehhiinndd aa ffiirreewwaallll
 
@@ -356,7 +371,7 @@ this with basic configuration information as discussed in the first half of
 this document.
 
      1 /etc/postfix/main.cf:
-     2     transport_maps = hash:/etc/postfix/transport
+     2     transport_maps = lmdb:/etc/postfix/transport
      3     relayhost =
      4     # Optional for a machine that isn't "always on"
      5     #fallback_relay = [gateway.example.com]
@@ -381,11 +396,14 @@ Translation:
     is turned off. Postfix tries to deliver mail directly, and gives
     undeliverable mail to a gateway.
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ttrraannssppoorrtt" whenever you edit the
-transport table.
+transport file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp
+ttyyppee:://eettcc//ppoossttffiixx//ttrraannssppoorrtt" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 CCoonnffiigguurriinngg PPoossttffiixx aass pprriimmaarryy oorr bbaacckkuupp MMXX hhoosstt ffoorr aa rreemmoottee ssiittee
 
@@ -416,7 +434,7 @@ When your system is SECONDARY MX host for a remote site this is all you need:
     11     # You must specify your NAT/proxy external address.
     12     #proxy_interfaces = 1.2.3.4
     13
-    14     relay_recipient_maps = hash:/etc/postfix/relay_recipients
+    14     relay_recipient_maps = lmdb:/etc/postfix/relay_recipients
     15
     16 /etc/postfix/relay_recipients:
     17     user1@the.backed-up.domain.tld   x
@@ -426,7 +444,7 @@ When your system is SECONDARY MX host for a remote site this is all you need:
 When your system is PRIMARY MX host for a remote site you need the above, plus:
 
     20 /etc/postfix/main.cf:
-    21     transport_maps = hash:/etc/postfix/transport
+    21     transport_maps = lmdb:/etc/postfix/transport
     22
     23 /etc/postfix/transport:
     24     the.backed-up.domain.tld       relay:[their.mail.host.tld]
@@ -454,11 +472,18 @@ Important notes:
 
   * Line 24: The [] forces Postfix to do no MX lookup.
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
+
+Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//rreellaayy__rreecciippiieennttss" whenever you change
+the relay_recipients file, to (re)build a default-type indexed file. Execute
+"ppoossttmmaapp ttyyppee:://eettcc//ppoossttffiixx//rreellaayy__rreecciippiieennttss" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ttrraannssppoorrtt" whenever you change the
-transport table.
+transport file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp
+ttyyppee:://eettcc//ppoossttffiixx//ttrraannssppoorrtt" to specify an explicit type.
 
 NOTE for Postfix < 2.2: Do not use the fallback_relay feature when relaying
 mail for a backup or primary MX domain. Mail would loop between the Postfix MX
@@ -563,7 +588,7 @@ this with basic configuration information as discussed in the first half of
 this document.
 
     1 /etc/postfix/main.cf:
-    2     smtp_generic_maps = hash:/etc/postfix/generic
+    2     smtp_generic_maps = lmdb:/etc/postfix/generic
     3
     4 /etc/postfix/generic:
     5     his@localdomain.local             hisaccount@hisisp.example
@@ -580,11 +605,14 @@ When mail is sent to a remote host via SMTP:
     extension of +local (this example assumes that the ISP supports "+" style
     address extensions).
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ggeenneerriicc" whenever you change the
-generic table.
+generic file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp ttyyppee:://
+eettcc//ppoossttffiixx//ggeenneerriicc" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 SSoolluuttiioonn 22:: PPoossttffiixx vveerrssiioonn 22..11 aanndd eeaarrlliieerr
 
@@ -602,9 +630,9 @@ this document.
      2     myhostname = hostname.localdomain
      3     mydomain = localdomain
      4
-     5     canonical_maps = hash:/etc/postfix/canonical
+     5     canonical_maps = lmdb:/etc/postfix/canonical
      6
-     7     virtual_alias_maps = hash:/etc/postfix/virtual
+     7     virtual_alias_maps = lmdb:/etc/postfix/virtual
      8
      9 /etc/postfix/canonical:
     10     your-login-name    your-account@your-isp.com
@@ -626,12 +654,16 @@ Translation:
     instead of sending it to the ISP. This part is not required but is
     convenient.
 
-Specify ddbbmm instead of hhaasshh if your system uses ddbbmm files instead of ddbb files.
-To find out what lookup tables Postfix supports, use the command "ppoossttccoonnff --mm".
+Instead of lmdb:, some systems use cdb:, hash:, or dbm:.
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//ccaannoonniiccaall" whenever you change the
-canonical table.
+canonical file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp
+ttyyppee:://eettcc//ppoossttffiixx//ccaannoonniiccaall" to specify an explicit type.
+
+The default indexed file type is configured with the default_database_type
+parameter. To list available explicit types, execute the command "ppoossttccoonnff --mm".
 
 Execute the command "ppoossttmmaapp //eettcc//ppoossttffiixx//vviirrttuuaall" whenever you change the
-virtual table.
+virtual file, to (re)build a default-type indexed file. Execute "ppoossttmmaapp ttyyppee:://
+eettcc//ppoossttffiixx//vviirrttuuaall" to specify an explicit type.
 

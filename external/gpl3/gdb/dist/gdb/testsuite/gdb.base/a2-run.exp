@@ -1,4 +1,4 @@
-#   Copyright 1988-2024 Free Software Foundation, Inc.
+#   Copyright 1988-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,6 +17,8 @@
 
 # Can't do this test without stdio support.
 require {!gdb_skip_stdio_test "a2run.exp"}
+
+set have_startup_shell [have_startup_shell]
 
 #
 # test running programs
@@ -166,9 +168,8 @@ gdb_run_cmd
 setup_xfail "arm-*-coff"
 gdb_test_stdio "" "720" "" "run \"$testfile\" again after setting args"
 
-# GOAL: Test that shell is being used with "run".  For remote debugging
-# targets, there is no guarantee that a "shell" (whatever that is) is used.
-if {![is_remote target]} {
+# GOAL: Test that shell is being used with "run".
+if { $have_startup_shell == 1 } {
     gdb_test_stdio "run `echo 8`" \
 	"40320" "" "run \"$testfile\" with shell"
 }

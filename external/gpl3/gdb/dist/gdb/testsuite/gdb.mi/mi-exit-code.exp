@@ -1,4 +1,4 @@
-# Copyright 1999-2024 Free Software Foundation, Inc.
+# Copyright 1999-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -36,7 +36,7 @@ proc test_list_thread_groups { } {
 	"122\\^done,groups=\\\[\{id=\"i1\",type=\"process\"\}\]" \
 	"-list-thread-groups before run shows no exit-code"
 
-    mi_clean_restart $binfile
+    mi_clean_restart $::testfile
 
     with_test_prefix "first run" {
 	mi_runto_main

@@ -1,4 +1,4 @@
-# Copyright (C) 2008-2023 Free Software Foundation, Inc.
+# Copyright (C) 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -13,22 +13,19 @@
 # You should have received a copy of the GNU General Public License
 # along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-# Test use of unwindonsignal when a hand function call that gets interrupted
+# Test use of unwind-on-signal when a hand function call that gets interrupted
 # by a signal in another thread.
 
 set NR_THREADS 4
 
 standard_testfile interrupted-hand-call.c
 
-if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "additional_flags=-DNR_THREADS=$NR_THREADS"]] != "" } {
-    return -1
-}
-
 # Some targets can't do function calls, so don't even bother with this
 # test.
-if [target_info exists gdb,cannot_call_functions] {
-    unsupported "this target can not call functions"
-    return
+require {!target_info exists gdb,cannot_call_functions}
+
+if {[gdb_compile_pthreads "${srcdir}/${subdir}/${srcfile}" "${binfile}" executable [list debug "additional_flags=-DNR_THREADS=$NR_THREADS"]] != "" } {
+    return -1
 }
 
 clean_restart ${binfile}
@@ -52,12 +49,12 @@ gdb_test "continue" \
 # We want the main thread (hand_call_with_signal) and
 # thread 1 (sigabrt_handler) to both run.
 
-# Do turn on unwindonsignal.
+# Do turn on unwind-on-signal.
 # We want to test gdb handling of the current thread changing when
 # unwindonsignal is in effect.
-gdb_test_no_output "set unwindonsignal on" \
+gdb_test_no_output "set unwind-on-signal on" \
 	"setting unwindonsignal"
-gdb_test "show unwindonsignal" \
+gdb_test "show unwind-on-signal" \
 	"Unwinding of stack .* is on." \
 	"showing unwindonsignal"
 
@@ -100,5 +97,3 @@ gdb_test_multiple "maint print dummy-frames" "dummy frame popped" {
 # Continue one last time, the program should exit normally.
 
 gdb_continue_to_end "" continue 1
-
-return 0

@@ -35,15 +35,15 @@
 	ddrc_opp_table: opp-table {
 		compatible = "operating-points-v2";
 
-		opp-25M {
+		opp-25000000 {
 			opp-hz = /bits/ 64 <25000000>;
 		};
 
-		opp-100M {
+		opp-100000000 {
 			opp-hz = /bits/ 64 <100000000>;
 		};
 
-		opp-600M {
+		opp-600000000 {
 			opp-hz = /bits/ 64 <600000000>;
 		};
 	};
@@ -58,6 +58,10 @@
 		interrupt-parent = <&gpio1>;
 		interrupts = <3 IRQ_TYPE_LEVEL_LOW>;
 		rohm,reset-snvs-powered;
+
+		#clock-cells = <0>;
+		clocks = <&osc_32k>;
+		clock-output-names = "clk-32k-out";
 
 		regulators {
 			buck1_reg: BUCK1 {
@@ -152,5 +156,21 @@
 				regulator-always-on;
 			};
 		};
+	};
+};
+
+&i2c2 {
+	hdmi@3d {
+		avdd-supply = <&buck5_reg>;
+		dvdd-supply = <&buck5_reg>;
+		pvdd-supply = <&buck5_reg>;
+		a2vdd-supply = <&buck5_reg>;
+		v1p2-supply = <&buck5_reg>;
+	};
+};
+
+&i2c3 {
+	camera@3c {
+		DOVDD-supply = <&buck5_reg>;
 	};
 };

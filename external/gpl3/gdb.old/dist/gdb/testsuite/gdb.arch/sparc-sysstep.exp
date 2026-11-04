@@ -1,4 +1,4 @@
-# Copyright 2014-2023 Free Software Foundation, Inc.
+# Copyright 2014-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -21,9 +21,7 @@
 # PC must be extracted from the sigreturn register save area in the
 # stack.
 
-if {![istarget "sparc*-*-linux*"]} {
-    return 0
-}
+require {istarget "sparc*-*-linux*"}
 
 set testfile sparc-sysstep
 set srcfile ${testfile}.c

@@ -17,7 +17,7 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 
    <b>Iterator mode:</b>
 
-       <b>postmulti -l</b> [<b>-aRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>]
+       <b>postmulti -l</b> [<b>-ajRv</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>]
 
        <b>postmulti -p</b> [<b>-av</b>] [<b>-g</b> <i>group</i>] [<b>-i</b> <i>name</i>] <i>postfix-command...</i>
 
@@ -97,6 +97,10 @@ POSTMULTI(1)                                                      POSTMULTI(1)
               This option cannot be used with <b>-p</b>.
 
 <b>List mode</b>
+       <b>-j</b>     Produce JSON output. See JSON OBJECT FORMAT below.
+
+              This feature is available in Postfix version 3.11 and later.
+
        <b>-l</b>     List Postfix instances with their instance name, instance  group
               name, enable/disable status and configuration directory.
 
@@ -300,6 +304,31 @@ POSTMULTI(1)                                                      POSTMULTI(1)
 <b>Other options</b>
        <b>-v</b>     Enable  verbose  logging  for  debugging  purposes.  Multiple <b>-v</b>
               options make the software increasingly verbose.
+
+<b><a name="json_object_format">JSON OBJECT FORMAT</a></b>
+       The output consists of a sequence of lines. Each line contains one JSON
+       object  that  represents settings in a corresponding instance's <a href="postconf.5.html">main.cf</a>
+       file.
+
+       Object members have string values unless indicated otherwise.  Programs
+       should ignore members that are not listed here, as members may be added
+       over time.
+
+       <b>name</b>   The value of the corresponding <b><a href="postconf.5.html#multi_instance_name">multi_instance_name</a></b> parameter, or
+              "<b>-</b>" if no name is specified.
+
+       <b>group</b>  The  value  of the corresponding <b><a href="postconf.5.html#multi_instance_group">multi_instance_group</a></b> parameter,
+              or "<b>-</b>" if no group is specified.
+
+       <b>enabled</b>
+              Either "<b>y</b>"  or  "<b>n</b>",  depending  on  whether  the  corresponding
+              <b><a href="postconf.5.html#multi_instance_enable">multi_instance_enable</a></b> parameter value is "<b>yes</b>" or "<b>no</b>".
+
+              Note:   this   reports   "<b>y</b>"   for   a  primary  instance,  when
+              multi-instance support is not enabled.
+
+       <b><a href="postconf.5.html#config_directory">config_directory</a></b>
+              The value of the corresponding <b><a href="postconf.5.html#config_directory">config_directory</a></b> parameter.
 
 <b><a name="environment">ENVIRONMENT</a></b>
        The <a href="postmulti.1.html"><b>postmulti</b>(1)</a> command exports the  following  environment  variables

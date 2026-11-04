@@ -185,8 +185,7 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
 
   nbsd_init_abi (info, gdbarch);
 
-  set_solib_svr4_fetch_link_map_offsets (gdbarch,
-					 svr4_lp64_fetch_link_map_offsets);
+  set_solib_svr4_ops (gdbarch, make_svr4_lp64_solib_ops);
 
   tramp_frame_prepend_unwinder (gdbarch, &aarch64_nbsd_sigframe);
 
@@ -197,9 +196,8 @@ aarch64_nbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch)
     (gdbarch, aarch64_nbsd_iterate_over_regset_sections);
 }
 
-void
-_initialize_aarch64_nbsd_tdep ()
+INIT_GDB_FILE (aarch64_nbsd_tdep)
 {
   gdbarch_register_osabi (bfd_arch_aarch64, 0, GDB_OSABI_NETBSD,
-			  aarch64_nbsd_init_abi);
+                          aarch64_nbsd_init_abi);
 }

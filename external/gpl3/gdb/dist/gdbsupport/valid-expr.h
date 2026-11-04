@@ -1,6 +1,6 @@
 /* Compile-time valid expression checker for GDB, the GNU debugger.
 
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -23,8 +23,8 @@
    right type.  This is mainly used to verify that some utility's API
    is really as safe as intended.  */
 
-#ifndef COMMON_VALID_EXPR_H
-#define COMMON_VALID_EXPR_H
+#ifndef GDBSUPPORT_VALID_EXPR_H
+#define GDBSUPPORT_VALID_EXPR_H
 
 #include "gdbsupport/preprocessor.h"
 #include "gdbsupport/traits.h"
@@ -108,4 +108,4 @@
 			ESC_PARENS (T1, T2, T3, T4, T5, T6),		\
 			VALID, EXPR_TYPE, EXPR)
 
-#endif /* COMMON_VALID_EXPR_H */
+#endif /* GDBSUPPORT_VALID_EXPR_H */

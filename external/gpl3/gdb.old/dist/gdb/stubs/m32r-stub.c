@@ -46,7 +46,7 @@
  *
  *  Because gdb will sometimes write to the stack area to execute function
  *  calls, this program cannot rely on using the supervisor stack so it
- *  uses it's own stack area reserved in the int array remcomStack.
+ *  uses its own stack area reserved in the int array remcomStack.
  *
  *************
  *
@@ -168,7 +168,7 @@ static volatile int mem_err = 0;
 int gdb_m32r_vector = -1;
 
 #if 0
-#include "syscall.h"		/* for SYS_exit, SYS_write etc. */
+#include "syscall.h"
 #endif
 
 /* Global entry points:
@@ -409,7 +409,7 @@ handle_exception (int exceptionVector)
 		  hex2mem (ptr, (unsigned char *) &registers[regno], 4, 0);
 		  /*
 		   * Since we just changed a single CPU register, let's
-		   * make sure to keep the several stack pointers consistant.
+		   * make sure to keep the several stack pointers consistent.
 		   */
 		  stackmode = registers[PSW] & 0x80;
 		  if (regno == R15)	/* stack pointer changed */
@@ -975,7 +975,7 @@ isShortBranch (unsigned char *instr)
 
   if (instr0 == 0x1E || instr0 == 0x1F)	/* JL or JMP */
     if ((instr[1] & 0xF0) == 0xC0)
-      return 2;			/* jump thru a register */
+      return 2;			/* jump through a register.  */
 
   if (instr0 == 0x7C || instr0 == 0x7D ||	/* BC, BNC, BL, BRA */
       instr0 == 0x7E || instr0 == 0x7F)
@@ -1088,7 +1088,7 @@ branchDestination (unsigned char *instr, int branchCode)
     case 1:			/* RTE */
       return registers[BPC] & ~3;	/* pop BPC into PC */
     case 2:			/* JL or JMP */
-      return registers[instr[1] & 0x0F] & ~3;	/* jump thru a register */
+      return registers[instr[1] & 0x0F] & ~3;	/* jump through a register.  */
     case 3:			/* BC, BNC, BL, BRA (short, 8-bit relative offset) */
       return (((int) instr) & ~3) + ((char) instr[1] << 2);
     case 4:			/* BC, BNC, BL, BRA (long, 24-bit relative offset) */
@@ -1261,7 +1261,7 @@ struct PSWreg
 /* Upon entry the value for LR to save has been pushed.
    We unpush that so that the value for the stack pointer saved is correct.
    Upon entry, all other registers are assumed to have not been modified
-   since the interrupt/trap occured.  */
+   since the interrupt/trap occurred.  */
 
 asm ("\n\
 stash_registers:\n\

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.13.2.1 2025/08/02 05:54:22 perseant Exp $
+# $NetBSD: Makefile.inc,v 1.13.2.2 2026/11/04 23:18:26 perseant Exp $
 
 WARNS?=	1	# XXX -Wshadow -Wcast-qual -Wsign-compare
 
@@ -50,15 +50,24 @@ PROGDPLIBS+= execinfo ${NETBSDSRCDIR}/lib/libexecinfo
 PROGDPLIBS+= kvm ${NETBSDSRCDIR}/lib/libkvm
 PROGDPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 PROGDPLIBS+= z ${NETBSDSRCDIR}/lib/libz
+
 .if (${MKKERBEROS} != "no")
 LDADD_AFTER+= -lgssapi -lheimntlm ${LIBKRB5_LDADD} ${LIBKRB5_STATIC_LDADD}
 DPADD_AFTER+= ${LIBKRB5_DPADD} ${LIBHEIMNTLM} ${LIBGSSAPI} ${LIBKRB5_STATIC_DPADD}
 .endif
+
 .if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
 LDADD_AFTER+=-Wl,-Bdynamic
 .endif
+
+.if (${MKIPSEC} != "no")
 LDADD_AFTER+= -lssl -lcrypto -lipsec -lcrypt
 DPADD_AFTER+= ${LIBSSL} ${LIBCRYPTO} ${LIBIPSEC} ${LIBCRYPT}
+.else
+LDADD_AFTER+= -lssl -lcrypto -lcrypt
+DPADD_AFTER+= ${LIBSSL} ${LIBCRYPTO} ${LIBCRYPT}
+.endif
+
 .if defined(PROG) && ${PROG} == "dhclient" && ${MKSANITIZER:Uno} != "yes"
 LDADD_AFTER+=-Wl,-Bdynamic
 .endif

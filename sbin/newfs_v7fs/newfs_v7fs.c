@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs_v7fs.c,v 1.5 2017/01/10 20:53:09 christos Exp $ */
+/*	$NetBSD: newfs_v7fs.c,v 1.5.26.1 2026/11/04 23:19:42 perseant Exp $ */
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: newfs_v7fs.c,v 1.5 2017/01/10 20:53:09 christos Exp $");
+__RCSID("$NetBSD: newfs_v7fs.c,v 1.5.26.1 2026/11/04 23:19:42 perseant Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: newfs_v7fs.c,v 1.5 2017/01/10 20:53:09 christos Exp $");
 #include <sys/stat.h>
 
 #include <err.h>
+#include <endian.h>
 #include <stdio.h>
 #include <string.h>
 #include <stdlib.h>
@@ -74,7 +75,7 @@ main(int argc, char **argv)
 		usage();
 
 	Fflag = Zflag = partsize = 0;
-	while ((ch = getopt(argc, argv, "Fs:Zs:n:B:V:")) != -1) {
+	while ((ch = getopt(argc, argv, "FZs:n:B:V:")) != -1) {
 		switch (ch) {
 		case 'V':
 			v7fs_newfs_verbose = atoi(optarg);

@@ -1,4 +1,4 @@
-/* $NetBS$ */
+/* $NetBSD: qcomipcc.h,v 1.1.4.3 2026/11/04 23:21:47 perseant Exp $ */
 /*	$OpenBSD: qcipcc.c,v 1.2 2023/05/19 20:54:55 patrick Exp $	*/
 /*
  * Copyright (c) 2023 Patrick Wildt <patrick@blueri.se>

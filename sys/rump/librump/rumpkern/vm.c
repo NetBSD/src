@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.197 2023/09/24 09:33:26 martin Exp $	*/
+/*	$NetBSD: vm.c,v 1.197.6.1 2026/11/04 23:28:03 perseant Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.197 2023/09/24 09:33:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.197.6.1 2026/11/04 23:28:03 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -671,7 +671,7 @@ struct vm_page *
 uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 {
 	struct vm_page *pg;
-	bool ispagedaemon = curlwp == uvm.pagedaemon_lwp;
+	bool ispagedaemon = uvm_lwp_is_pagedaemon(curlwp);
 
 	pg = radix_tree_lookup_node(&uobj->uo_pages, off >> PAGE_SHIFT);
 	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject) && !ispagedaemon) {
@@ -958,6 +958,12 @@ uvm_vsunlock(struct vmspace *vs, void *addr, size_t len)
 
 }
 
+long
+uvm_resident_count(struct vmspace *vm)
+{
+	return pmap_resident_count(vm->vm_map.pmap);
+}
+
 /*
  * For the local case the buffer mappers don't need to do anything.
  * For the remote case we need to reserve space and copy data in or
@@ -1095,24 +1101,105 @@ uvm_uarea_free(vaddr_t uarea)
  * Routines related to the Page Baroness.
  */
 
+#if __HAVE_ATOMIC64_LOADSTORE
+
+static volatile uint64_t uvmpd_gen;
+
+static uint64_t
+uvmpd_read_gen(void)
+{
+
+	return atomic_load_acquire(&uvmpd_gen);
+}
+
+static void
+uvmpd_advance_gen(void)
+{
+
+	KASSERT(mutex_owned(&pdaemonmtx));
+	atomic_store_release(&uvmpd_gen, atomic_load_relaxed(&uvmpd_gen) + 1);
+}
+
+#else  /* !__HAVE_ATOMIC64_LOADSTORE */
+
+static volatile struct {
+#if _BYTE_ORDER == _BIG_ENDIAN
+	uint32_t	hi, lo;
+#else
+	uint32_t	lo, hi;
+#endif
+} uvmpd_gen;
+
+static uint64_t
+uvmpd_read_gen(void)
+{
+	uint32_t hi, lo;
+
+top:	while (__predict_false((hi = atomic_load_relaxed(&uvmpd_gen.hi)) ==
+		0xffffffff))
+		SPINLOCK_BACKOFF_HOOK;
+	membar_consumer();	/* membar_producer in uvmpd_advance_gen */
+	/* load-acquire matches store-release in uvmpd_advance_gen */
+	lo = atomic_load_acquire(&uvmpd_gen.lo);
+	if (__predict_false(hi != atomic_load_relaxed(&uvmpd_gen.hi)))
+		goto top;
+
+	return (uint64_t)hi << 32 | lo;
+}
+
+static void
+uvmpd_advance_gen(void)
+{
+	uint32_t hi, lo;
+
+	KASSERT(mutex_owned(&pdaemonmtx));
+
+	lo = atomic_load_relaxed(&uvmpd_gen.lo);
+	if (__predict_false(++lo == 0)) {
+		hi = atomic_load_relaxed(&uvmpd_gen.hi) + 1; /* carry */
+		atomic_store_relaxed(&uvmpd_gen.hi, 0xffffffff);
+		/* store-release matches load-acquire in uvmpd_read_gen */
+		atomic_store_release(&uvmpd_gen.lo, lo);
+		membar_producer(); /* membar_consumer in uvmpd_read_gen */
+		atomic_store_relaxed(&uvmpd_gen.hi, hi);
+	} else {
+		/* store-release matches load-acquire in uvmpd_read_gen */
+		atomic_store_release(&uvmpd_gen.lo, lo);
+	}
+}
+
+#endif
+
+uint64_t
+uvm_wait_prepare(void)
+{
+	uint64_t ticket;
+
+	ticket = uvmpd_read_gen();
+
+	return ticket;
+}
+
 void
-uvm_wait(const char *msg)
+uvm_wait(const char *msg, uint64_t ticket)
 {
 
 	if (__predict_false(rump_threads == 0))
 		panic("pagedaemon missing (RUMP_THREADS = 0)");
 
-	if (curlwp == uvm.pagedaemon_lwp) {
+	if (uvm_lwp_is_pagedaemon(curlwp)) {
 		/* is it possible for us to later get memory? */
 		if (!uvmexp.paging)
 			panic("pagedaemon out of memory");
 	}
 
 	mutex_enter(&pdaemonmtx);
+	if (ticket != uvmpd_read_gen())
+		goto out;
 	pdaemon_waiters++;
 	cv_signal(&pdaemoncv);
 	cv_wait(&oomwait, &pdaemonmtx);
-	mutex_exit(&pdaemonmtx);
+out:	mutex_exit(&pdaemonmtx);
 }
 
 void
@@ -1135,6 +1222,7 @@ uvm_pageout_done(int npages)
 	KASSERT(uvmexp.paging >= npages);
 	uvmexp.paging -= npages;
 
+	uvmpd_advance_gen();
 	if (pdaemon_waiters) {
 		pdaemon_waiters = 0;
 		cv_broadcast(&oomwait);
@@ -1179,6 +1267,7 @@ uvm_pageout(void *arg)
 
 	mutex_enter(&pdaemonmtx);
 	for (;;) {
+		uvmpd_advance_gen();
 		if (pdaemon_waiters) {
 			pdaemon_waiters = 0;
 			cv_broadcast(&oomwait);
@@ -1292,11 +1381,18 @@ uvm_kick_pdaemon()
 	}
 }
 
+bool
+_uvm_lwp_is_pagedaemon(struct lwp *l)
+{
+	return _uvm_lwp_is_pagedaemon_test(l);
+}
+
 void *
 rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 {
 	const unsigned long thelimit =
-	    curlwp == uvm.pagedaemon_lwp ? pdlimit : rump_physmemlimit;
+	    uvm_lwp_is_pagedaemon(curlwp) ? pdlimit : rump_physmemlimit;
+	uint64_t ticket;
 	unsigned long newmem;
 	void *rv;
 	int error;
@@ -1306,22 +1402,24 @@ rump_hypermalloc(size_t howmuch, int alignment, bool waitok, const char *wmsg)
 	/* first we must be within the limit */
  limitagain:
 	if (thelimit != RUMPMEM_UNLIMITED) {
+		ticket = uvm_wait_prepare();
 		newmem = atomic_add_long_nv(&curphysmem, howmuch);
 		if (newmem > thelimit) {
 			newmem = atomic_add_long_nv(&curphysmem, -howmuch);
 			if (!waitok) {
 				return NULL;
 			}
-			uvm_wait(wmsg);
+			uvm_wait(wmsg, ticket);
 			goto limitagain;
 		}
 	}
 
 	/* second, we must get something from the backend */
  again:
+	ticket = uvm_wait_prepare();
 	error = rumpuser_malloc(howmuch, alignment, &rv);
 	if (__predict_false(error && waitok)) {
-		uvm_wait(wmsg);
+		uvm_wait(wmsg, ticket);
 		goto again;
 	}
 

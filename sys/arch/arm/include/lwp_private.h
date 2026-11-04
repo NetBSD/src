@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp_private.h,v 1.1.4.2 2025/08/02 05:55:28 perseant Exp $	*/
+/*	$NetBSD: lwp_private.h,v 1.1.4.3 2026/11/04 23:20:11 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __lwp_getprivate_fast(void)
 		return rv;
 	/*
 	 * Some ARM cores are broken and don't raise an undefined fault when an
-	 * unrecogized mrc instruction is encountered, but just return zero.
+	 * unrecognized mrc instruction is encountered, but just return zero.
 	 * To do deal with that, if we get a zero we (re-)fetch the value using
 	 * syscall.
 	 */

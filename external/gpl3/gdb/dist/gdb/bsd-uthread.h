@@ -1,6 +1,6 @@
 /* BSD user-level threads support.
 
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef BSD_UTHREAD_H
-#define BSD_UTHREAD_H 1
+#ifndef GDB_BSD_UTHREAD_H
+#define GDB_BSD_UTHREAD_H
 
 /* Set the function that supplies registers for an inactive thread for
    architecture GDBARCH to SUPPLY_UTHREAD.  */
@@ -35,4 +35,4 @@ extern void bsd_uthread_set_collect_uthread (struct gdbarch *gdbarch,
 			     void (*collect_uthread) (const struct regcache *,
 						      int, CORE_ADDR));
 
-#endif /* bsd-uthread.h */
+#endif /* GDB_BSD_UTHREAD_H */

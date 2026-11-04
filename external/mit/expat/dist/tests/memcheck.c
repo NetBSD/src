@@ -9,6 +9,8 @@
    Copyright (c) 2017      Rhodri James <rhodri@wildebeest.org.uk>
    Copyright (c) 2017-2023 Sebastian Pipping <sebastian@pipping.org>
    Copyright (c) 2022      Sean McBride <sean@rogue-research.com>
+   Copyright (c) 2026      Matthew Fernandez <matthew.fernandez@gmail.com>
+   Copyright (c) 2026      Leo Camus <leo.camus23@gmail.com>
    Licensed under the MIT license:
 
    Permission is  hereby granted,  free of charge,  to any  person obtaining
@@ -29,6 +31,8 @@
    DAMAGES OR  OTHER LIABILITY, WHETHER  IN AN  ACTION OF CONTRACT,  TORT OR
    OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE
    USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+   SPDX-License-Identifier: MIT
 */
 
 #include <stdio.h>
@@ -55,8 +59,7 @@ static AllocationEntry *find_allocation(const void *ptr);
 /* Allocate some memory and keep track of it. */
 void *
 tracking_malloc(size_t size) {
-  AllocationEntry *const entry
-      = (AllocationEntry *)malloc(sizeof(AllocationEntry));
+  AllocationEntry *const entry = malloc(sizeof(AllocationEntry));
 
   if (entry == NULL) {
     printf("Allocator failure\n");
@@ -115,7 +118,7 @@ tracking_free(void *ptr) {
     if (entry->next != NULL)
       entry->next->prev = entry->prev;
     else
-      alloc_tail = entry->next;
+      alloc_tail = entry->prev;
     free(entry);
   } else {
     printf("Attempting to free unallocated memory at %p\n", ptr);
@@ -142,7 +145,7 @@ tracking_realloc(void *ptr, size_t size) {
   entry = find_allocation(ptr);
   if (entry == NULL) {
     printf("Attempting to realloc unallocated memory at %p\n", ptr);
-    entry = (AllocationEntry *)malloc(sizeof(AllocationEntry));
+    entry = malloc(sizeof(AllocationEntry));
     if (entry == NULL) {
       printf("Reallocator failure\n");
       return NULL;

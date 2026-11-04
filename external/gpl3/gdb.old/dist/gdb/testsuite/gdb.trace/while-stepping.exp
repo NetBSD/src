@@ -1,4 +1,4 @@
-#   Copyright 1998-2023 Free Software Foundation, Inc.
+#   Copyright 1998-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -17,25 +17,15 @@
 
 load_lib "trace-support.exp"
 
-
-gdb_exit
-gdb_start
-
 standard_testfile actions.c
-if ![gdb_trace_common_supports_arch] {
-    unsupported "no trace-common.h support for arch"
-    return -1
-}
+require gdb_trace_common_supports_arch
 if { [gdb_compile "${srcdir}/${subdir}/${srcfile}" $binfile \
 	  executable {debug nowarnings}] != "" } {
     untested "failed to compile"
     return -1
 }
-gdb_reinitialize_dir $srcdir/$subdir
 
-# If testing on a remote host, download the source file.
-# remote_download host $srcdir/$subdir/$srcfile
-
+clean_restart
 gdb_file_cmd $binfile
 
 #
@@ -54,7 +44,7 @@ if {$trcpt1 <= 0} {
 gdb_test "info tracepoints" \
     "Num     Type\[ \]+Disp Enb Address\[ \]+What.*
 \[0-9\]+\[\t \]+tracepoint     keep y.* in gdb_c_test at .*$srcfile:\[0-9\]+.
-\[\t \]+not installed on target." \
+\[\t \]+not installed on target" \
 	"5.12: set a tracepoint, stepcount is zero"
 
 set stepcount 12
@@ -147,16 +137,14 @@ check_tracepoint "live"
 gdb_test_no_output "tstop"
 set tracefile [standard_output_file ${testfile}]
 gdb_test "tsave ${tracefile}.tf" \
-    "Trace data saved to file '${tracefile}.tf'\.\\r" \
+    "Trace data saved to file '${tracefile}.tf'\\." \
     "save tfile trace file"
 gdb_test "tsave -ctf ${tracefile}.ctf" \
-    "Trace data saved to directory '${tracefile}.ctf'\.\\r" \
+    "Trace data saved to directory '${tracefile}.ctf'\\." \
     "save ctf trace file"
 
 # Restart GDB and read the trace data in tfile target.
-gdb_exit
-gdb_start
-gdb_reinitialize_dir $srcdir/$subdir
+clean_restart
 gdb_file_cmd $binfile
 gdb_test "target tfile ${tracefile}.tf" ".*" \
     "change to tfile target"
@@ -174,9 +162,7 @@ gdb_test_multiple "target ctf" "" {
 }
 
 if { $gdb_can_read_ctf_data } {
-    gdb_exit
-    gdb_start
-    gdb_reinitialize_dir $srcdir/$subdir
+    clean_restart
     gdb_file_cmd $binfile
     gdb_test "target ctf ${tracefile}.ctf" ".*" \
 	"change to ctf target"

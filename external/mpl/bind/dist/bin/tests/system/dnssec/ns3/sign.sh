@@ -77,6 +77,75 @@ done
 
 echo_i "ns3/sign.sh: example zones"
 
+# A zone that will be treated as insecure as the DEFAULT_ALGORITHM is
+# disabled for it.
+zone=badalg.secure.example.
+infile=badalg.secure.example.db.in
+zonefile=badalg.secure.example.db
+
+keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
+
+cat "$infile" "$keyname.key" >"$zonefile"
+
+"$SIGNER" -z -o "$zone" "$zonefile" >/dev/null
+
+# A zone that will be treated as insecure as the DEFAULT_ALGORITHM is
+# disabled for ent.secure.example.
+zone=zonecut.ent.secure.example.
+infile=zonecut.ent.secure.example.db.in
+zonefile=zonecut.ent.secure.example.db
+
+keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
+
+cat "$infile" "$keyname.key" >"$zonefile"
+
+"$SIGNER" -z -o "$zone" "$zonefile" >/dev/null
+
+# A normally-signed child zone whose parent DS RRset (built in ns2) is
+# flooded with many mismatched DS records with unique key tags (GL #5349).
+# A single key keeps the DNSKEY RRset small so the flood lives entirely on
+# the DS side; none of the parent DS records match this key.
+zone=keytrap.example.
+infile=template.db.in
+zonefile=keytrap.example.db
+
+keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK "$zone")
+
+cat "$infile" "$keyname.key" >"$zonefile"
+
+"$SIGNER" -z -o "$zone" "$zonefile" >/dev/null
+
+# A companion to keytrap.example that exercises the up-front DS-by-DNSKEY
+# combination cap instead of the per-DS quota (GL #5349).  The child
+# publishes several DNSKEYs, so even a DS RRset smaller than the per-DS
+# quota (built in ns2) pushes the product of the two counts over the
+# limit.  None of the parent DS records match these keys.
+zone=keytrap2.example.
+infile=template.db.in
+zonefile=keytrap2.example.db
+
+keyname1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK "$zone")
+keyname2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
+keyname3=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
+
+cat "$infile" "$keyname1.key" "$keyname2.key" "$keyname3.key" >"$zonefile"
+
+"$SIGNER" -z -o "$zone" "$zonefile" >/dev/null
+
+# A valid child whose generated DS is accompanied by enough unsupported
+# algorithm and digest records in the parent to exceed the raw DS-by-DNSKEY
+# combination cap.  Unsupported records must not count as matching work.
+zone=keytrap3.example.
+infile=template.db.in
+zonefile=keytrap3.example.db
+
+keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK "$zone")
+
+cat "$infile" "$keyname.key" >"$zonefile"
+
+"$SIGNER" -z -o "$zone" "$zonefile" >/dev/null
+
+#
 zone=secure.example.
 infile=secure.example.db.in
 zonefile=secure.example.db
@@ -85,7 +154,7 @@ cnameandkey=$("$KEYGEN" -T KEY -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n 
 dnameandkey=$("$KEYGEN" -T KEY -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n host "dnameandkey.$zone")
 keyname=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 
-cat "$infile" "$cnameandkey.key" "$dnameandkey.key" "$keyname.key" >"$zonefile"
+cat "$infile" dsset-badalg.secure.example. "$cnameandkey.key" "$dnameandkey.key" "$keyname.key" >"$zonefile"
 
 "$SIGNER" -z -D -o "$zone" "$zonefile" >/dev/null
 cat "$zonefile" "$zonefile".signed >"$zonefile".tmp
@@ -701,3 +770,34 @@ zone=rsasha1-1024.example
 zonefile=rsasha1-1024.example.db
 awk '$4 == "DNSKEY" && $5 == 257 { print }' "$zonefile" \
   | $DSFROMKEY -f - "$zone" >"dsset-${zone}."
+
+#
+#
+#
+zone=extrabadkey.example.
+infile=template.db.in
+zonefile=extrabadkey.example.db
+
+# Add KSK and ZSK that we will mangle to RSAMD5
+ksk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK "$zone")
+zsk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
+cat "$infile" "$ksk.key" "$zsk.key" >"$zonefile"
+"$SIGNER" -g -O full -o "$zone" "$zonefile" >/dev/null 2>&1
+
+# Mangle the signatures to RSAMD5 and save them for future use
+sed -ne "s/\(IN[[:space:]]*RRSIG[[:space:]]*[A-Z]*\) $DEFAULT_ALGORITHM_NUMBER /\1 1 /p" <"$zonefile.signed" >"$zonefile.signed.rsamd5"
+
+# Now add normal KSK and ZSK to the zone file
+ksk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -f KSK "$zone")
+zsk=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" "$zone")
+cat "$infile" "$ksk.key" "$zsk.key" >"$zonefile"
+
+# Mangle the DNSKEY algorithm numbers and add them to the signed zone file
+cat "$ksk.key" "$zsk.key" | sed -e "s/\(IN[[:space:]]*DNSKEY[[:space:]]*[0-9]* 3\) $DEFAULT_ALGORITHM_NUMBER /\1 1 /" >>"$zonefile"
+
+# Sign normally
+"$SIGNER" -g -o "$zone" "$zonefile" >/dev/null 2>&1
+
+# Add the mangled signatures to signed zone file
+cat "$zonefile.signed.rsamd5" >>"$zonefile.signed"
+rm "$zonefile.signed.rsamd5"

@@ -1,4 +1,4 @@
-#   Copyright 2008-2023 Free Software Foundation, Inc.
+#   Copyright 2008-2024 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -16,9 +16,7 @@
 # This file is part of the GDB testsuite.  It tests reverse debugging
 # with breakpoints.
 
-if ![supports_reverse] {
-    return
-}
+require supports_reverse
 
 standard_testfile
 
@@ -66,7 +64,7 @@ gdb_test_multiple "continue" "main backward" {
     -re ".*Breakpoint $decimal,.*$srcfile:$main_location.*$gdb_prompt $" {
 	pass "main backward"
     }
-    -re "No more reverse-execution history.* break in main .*$gdb_prompt $" {
+    -re -wrap "Reached end of recorded history.*Backward execution.*" {
 	pass "main backward"
     }
 }
@@ -82,7 +80,7 @@ gdb_test_multiple "continue" "end of record log" {
     -re ".*Breakpoint $decimal,.*$srcfile:$end_location.*$gdb_prompt $" {
 	pass "end of record log"
     }
-    -re "No more reverse-execution history.* end of main .*$gdb_prompt $" {
+    -re -wrap "Reached end of recorded history.*Following forward.*" {
 	pass "end of record log"
     }
 }

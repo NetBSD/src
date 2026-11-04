@@ -1,6 +1,6 @@
 /* This testcase is part of GDB, the GNU debugger.
 
-   Copyright 2018-2024 Free Software Foundation, Inc.
+   Copyright 2018-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
    using the LD_PRELOAD technique.
 
    The library intercepts calls to WAITPID and SIGSUSPEND in order to
-   simulate the behaviour of a heavily loaded kernel.
+   simulate the behavior of a heavily loaded kernel.
 
    When GDB wants to stop all threads in an inferior each thread is sent a
    SIGSTOP, GDB will then wait for the signal to be received by the thread
@@ -39,7 +39,7 @@
    The idea in this library is to rate limit calls to waitpid (where pid is
    -1 and the WNOHANG option is set) so that only 1 per second can return
    an answer.  Any additional calls will report that no threads are
-   currently ready.  This should match the behaviour we see on a slow
+   currently ready.  This should match the behavior we see on a slow
    kernel.
 
    However, given that usually when using this library, the kernel does

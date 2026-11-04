@@ -1,4 +1,4 @@
-/*	$NetBSD: dumplfs.c,v 1.66 2024/02/09 22:08:38 andvar Exp $	*/
+/*	$NetBSD: dumplfs.c,v 1.66.2.1 2026/11/04 23:28:49 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,7 +40,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dumplfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: dumplfs.c,v 1.66 2024/02/09 22:08:38 andvar Exp $");
+__RCSID("$NetBSD: dumplfs.c,v 1.66.2.1 2026/11/04 23:28:49 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -73,16 +73,13 @@ static int	dump_ipage_segusage(struct lfs *, int, char *, int);
 static void	dump_segment(int, int, daddr_t, struct lfs *, int);
 static int	dump_sum(int, struct lfs *, SEGSUM *, int, daddr_t);
 static void	dump_super(struct lfs *);
+static void	dump_inoblk(int, struct lfs *, daddr_t, ino_t);
 static void	usage(void);
 
 extern uint32_t	cksum(void *, size_t);
 
-typedef struct seglist SEGLIST;
-struct seglist {
-        SEGLIST *next;
-	int num;
-};
-SEGLIST	*seglist;
+int seglist_count = 0;
+int *seglist = NULL;
 
 char *special;
 
@@ -94,7 +91,7 @@ static inline void
 print_suentry(int i, SEGUSE *sp, struct lfs *fs)
 {
 	time_t t;
-	char flags[4] = "   ";
+	char flags[8] = "-------";
 
 	if (sp->su_flags & SEGUSE_ACTIVE)
 		flags[0] = 'A';
@@ -104,6 +101,12 @@ print_suentry(int i, SEGUSE *sp, struct lfs *fs)
 		flags[1] = 'C';
 	if (sp->su_flags & SEGUSE_SUPERBLOCK)
 		flags[2] = 'S';
+	if (sp->su_flags & SEGUSE_EMPTY)
+		flags[3] = 'M';
+	if (sp->su_flags & SEGUSE_READY)
+		flags[4] = 'R';
+	if (sp->su_flags & SEGUSE_ERROR)
+		flags[5] = 'E';
 
 	t = (lfs_sb_getversion(fs) == 1 ? sp->su_olastmod : sp->su_lastmod);
 
@@ -174,6 +177,12 @@ identify(struct lfs *fs)
 	}
 }
 
+static int
+compare_int(const void *a, const void *b)
+{
+	return *(const int *)a - *(const int *)b;
+}
+
 #define fsbtobyte(fs, b)	lfs_fsbtob((fs), (off_t)((b)))
 
 int datasum_check = 0;
@@ -182,16 +191,21 @@ int
 main(int argc, char **argv)
 {
 	struct lfs lfs_sb1, lfs_sb2, *lfs_master;
-	daddr_t seg_addr, idaddr, sbdaddr;
-	int ch, do_allsb, do_ientries, do_segentries, fd, segnum;
+	daddr_t seg_addr, idaddr, sbdaddr, inoaddr;
+	int i, ch, do_allsb, do_ientries, do_segentries, fd, segnum;
 	void *sbuf;
+	char *narg, *s;
+	ino_t dumpino;
 
 	do_allsb = 0;
 	do_ientries = 0;
 	do_segentries = 0;
+	dumpino = 0;
 	idaddr = 0x0;
 	sbdaddr = 0x0;
-	while ((ch = getopt(argc, argv, "ab:diI:Ss:")) != -1)
+	inoaddr = 0x0;
+	narg = NULL;
+	while ((ch = getopt(argc, argv, "ab:diI:n:Ss:")) != -1)
 		switch(ch) {
 		case 'a':		/* Dump all superblocks */
 			do_allsb = 1;
@@ -207,6 +221,9 @@ main(int argc, char **argv)
 			break;
 		case 'I':		/* Use this ifile inode */
 			idaddr = strtol(optarg, NULL, 0);
+			break;
+		case 'n':
+			narg = optarg;
 			break;
 		case 'S':
 			do_segentries = !do_segentries;
@@ -277,6 +294,26 @@ main(int argc, char **argv)
 
 	free(sbuf);
 
+	/*
+	 * If asked to dump an inode block, do that and exit.
+	 */
+	if (narg != NULL) {
+		s = strchr(narg, '@');
+		if (s != NULL) {
+			*s = 0;
+			dumpino = strtol(narg, NULL, 0);
+			if (dumpino <= 0)
+				usage();
+			narg = s + 1;
+		}
+		inoaddr = strtol(narg, NULL, 0);
+		if (inoaddr <= 0)
+			usage();
+
+		dump_inoblk(fd, lfs_master, inoaddr, dumpino);
+		exit(0);
+	}
+
 	/* Compatibility */
 	if (lfs_sb_getversion(lfs_master) == 1) {
 		lfs_sb_setsumsize(lfs_master, LFS_V1_SUMMARY_SIZE);
@@ -290,20 +327,26 @@ main(int argc, char **argv)
 	    lfs_master->lfs_is64 ? 64 : 32, (long long)sbdaddr);
 	dump_super(lfs_master);
 
+	/* Sort segment list before using */
+	if (seglist != NULL) {
+		qsort(seglist, seglist_count, sizeof(*seglist), compare_int);
+	}
+
 	dump_ifile(fd, lfs_master, do_ientries, do_segentries, idaddr);
 
-	if (seglist != NULL)
-		for (; seglist != NULL; seglist = seglist->next) {
-			seg_addr = lfs_sntod(lfs_master, seglist->num);
-			dump_segment(fd, seglist->num, seg_addr, lfs_master,
-				     do_allsb);
+	if (seglist != NULL) {
+		for (i = 0; i < seglist_count; i++) {
+			seg_addr = lfs_sntod(lfs_master, seglist[i]);
+			dump_segment(fd, seglist[i], seg_addr, lfs_master,
+			     	do_allsb);
 		}
-	else
+	} else {
 		for (segnum = 0, seg_addr = lfs_sntod(lfs_master, 0);
 		     segnum < lfs_sb_getnseg(lfs_master);
 		     segnum++, seg_addr = lfs_sntod(lfs_master, segnum))
 			dump_segment(fd, segnum, seg_addr, lfs_master,
 				     do_allsb);
+	}
 
 	(void)close(fd);
 	exit(0);
@@ -474,9 +517,9 @@ dump_ipage_ifile(struct lfs *lfsp, int i, char *pp, int tot)
 
 	if (lfsp->lfs_is64)
 		entsize = sizeof(IFILE64);
-	if (lfs_sb_getversion(lfsp) > 1) 
+	else if (lfs_sb_getversion(lfsp) > 1)
 		entsize = sizeof(IFILE32);
-	else 
+	else
 		entsize = sizeof(IFILE_V1);
 	max = i + tot;
 
@@ -489,8 +532,7 @@ static int
 dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 {
 	SEGUSE *sp;
-	int cnt, max;
-	struct seglist *slp;
+	int j, cnt, max;
 
 	max = i + tot;
 	for (sp = (SEGUSE *)pp, cnt = i;
@@ -498,8 +540,8 @@ dump_ipage_segusage(struct lfs *lfsp, int i, char *pp, int tot)
 		if (seglist == NULL)
 			print_suentry(cnt, sp, lfsp);
 		else {
-			for (slp = seglist; slp != NULL; slp = slp->next)
-				if (cnt == slp->num) {
+			for (j = 0; j < seglist_count; j++)
+				if (cnt == seglist[j]) {
 					print_suentry(cnt, sp, lfsp);
 					break;
 				}
@@ -534,8 +576,9 @@ dump_dinode(struct lfs *fs, union lfs_dinode *dip)
 	(void)printf("    %s%s", "atime ", ctime(&at));
 	(void)printf("    %s%s", "mtime ", ctime(&mt));
 	(void)printf("    %s%s", "ctime ", ctime(&ct));
-	(void)printf("    inum  %ju\n",
-		(uintmax_t)lfs_dino_getinumber(fs, dip));
+	(void)printf("    inum  %ju\tnblocks  %ju\n",
+		     (uintmax_t)lfs_dino_getinumber(fs, dip),
+		     (uintmax_t)lfs_dino_getblocks(fs, dip));
 	(void)printf("    Direct Addresses\n");
 	for (i = 0; i < ULFS_NDADDR; i++) {
 		(void)printf("\t0x%jx", (intmax_t)lfs_dino_getdb(fs, dip, i));
@@ -612,7 +655,7 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 	/* Dump out inode disk addresses */
 	iip = SEGSUM_IINFOSTART(lfsp, sp);
 	diblock = emalloc(lfs_sb_getbsize(lfsp));
-	printf("    Inode addresses:");
+	printf("    Inode addresses:\n");
 	numbytes = 0;
 	numblocks = 0;
 	for (i = 0; i < lfs_ss_getninos(lfsp, sp); iip = NEXTLOWER_IINFO(lfsp, iip)) {
@@ -627,13 +670,9 @@ dump_sum(int fd, struct lfs *lfsp, SEGSUM *sp, int segnum, daddr_t addr)
 			(void)printf("%juv%d", lfs_dino_getinumber(lfsp, dip),
 				     lfs_dino_getgen(lfsp, dip));
 		}
-		(void)printf("}");
-		if (((i/LFS_INOPB(lfsp)) % 4) == 3)
-			(void)printf("\n");
+		(void)printf("}\n");
 	}
 	free(diblock);
-
-	printf("\n");
 
 	fp = SEGSUM_FINFOBASE(lfsp, sp);
 	for (i = 0; i < lfs_ss_getnfinfo(lfsp, sp); i++) {
@@ -747,16 +786,33 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 	sb = 0;
 	did_one = 0;
 	do {
+		const char *whyfailed = NULL;
+		
 		get(fd, sum_offset, sumblock, lfs_sb_getsumsize(lfsp));
 		sump = (SEGSUM *)sumblock;
 		sumstart = lfs_ss_getsumstart(lfsp);
-		if ((lfs_sb_getversion(lfsp) > 1 &&
-		     lfs_ss_getident(lfsp, sump) != lfs_sb_getident(lfsp)) ||
-		    lfs_ss_getsumsum(lfsp, sump) !=
-		      cksum((char *)sump + sumstart,
-			    lfs_sb_getsumsize(lfsp) - sumstart)) {
+		if (whyfailed == NULL && lfs_ss_getmagic(lfsp, sump) !=
+		    SS_MAGIC) {
+		    whyfailed = "bad magic number";
+		    printf("Found magic number 0x%lx expecting 0x%lx\n",
+			   (unsigned long)lfs_ss_getmagic(lfsp, sump),
+			   (unsigned long)SS_MAGIC);
+		}
+		if (whyfailed == NULL && lfs_ss_getsumsum(lfsp, sump) !=
+		    cksum((char *)sump + sumstart,
+			  lfs_sb_getsumsize(lfsp) - sumstart))
+			whyfailed = "bad sumsum";
+		if (whyfailed == NULL && lfs_sb_getversion(lfsp) > 1 &&
+		    lfs_ss_getident(lfsp, sump) != lfs_sb_getident(lfsp))
+		    whyfailed = "bad ident";
+		if (whyfailed != NULL) {
+			uint32_t sbmagic;
+			
 			sbp = (struct lfs *)sump;
-			if ((sb = (sbp->lfs_dlfs_u.u_32.dlfs_magic == LFS_MAGIC))) {
+			sbmagic = sbp->lfs_dlfs_u.u_32.dlfs_magic;
+			
+			if ((sb = (!lfsp->lfs_is64 && sbmagic == LFS_MAGIC)
+			     || (lfsp->lfs_is64 && sbmagic == LFS64_MAGIC))) {
 				printf("Superblock at 0x%x\n",
 				       (unsigned)lfs_btofsb(lfsp, sum_offset));
 				if (dump_sb)  {
@@ -773,8 +829,8 @@ dump_segment(int fd, int segnum, daddr_t addr, struct lfs *lfsp, int dump_sb)
 			} else if (did_one)
 				break;
 			else {
-				printf("Segment at 0x%llx empty or corrupt\n",
-                                       (long long)addr);
+				printf("Segment at 0x%llx empty or corrupt (%s)\n",
+                                       (long long)addr, whyfailed);
 				break;
 			}
 		} else {
@@ -813,7 +869,7 @@ dump_super(struct lfs *lfsp)
  	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
  		     "fsize    ", lfs_sb_getfsize(lfsp),
  		     "frag     ", lfs_sb_getfrag(lfsp),
- 		     "minfree  ", lfs_sb_getminfree(lfsp));
+	             "ibsize   ", lfs_sb_getibsize(lfsp));
  	(void)printf("    %s%-10d  %s%-10d  %s%-10d\n",
  		     "inopb    ", lfs_sb_getinopb(lfsp),
  		     "ifpb     ", lfs_sb_getifpb(lfsp),
@@ -834,7 +890,7 @@ dump_super(struct lfs *lfsp)
  		     "ffshift  ", lfs_sb_getffshift(lfsp),
  		     "fbmask   ", (uintmax_t)lfs_sb_getfbmask(lfsp),
  		     "fbshift  ", lfs_sb_getfbshift(lfsp));
- 	
+
  	(void)printf("    %s%-10d  %s%-10d  %s0x%-8x\n",
  		     "sushift  ", lfs_sb_getsushift(lfsp),
  		     "fsbtodb  ", lfs_sb_getfsbtodb(lfsp),
@@ -847,7 +903,8 @@ dump_super(struct lfs *lfsp)
  		     "roll_id  ", lfs_sb_getident(lfsp),
  		     "interleave ", lfs_sb_getinterleave(lfsp),
  		     "sumsize  ", lfs_sb_getsumsize(lfsp));
- 	(void)printf("    %s%-10jd  %s0x%-8jx\n",
+ 	(void)printf("    %s%-10d  %s%-10jd  %s0x%-8jx\n",
+		     "minfree  ", lfs_sb_getminfree(lfsp),
 		     "seg0addr ", (intmax_t)lfs_sb_gets0addr(lfsp),
  		     "maxfilesize  ", (uintmax_t)lfs_sb_getmaxfilesize(lfsp));
  	
@@ -889,12 +946,10 @@ dump_super(struct lfs *lfsp)
 static void
 addseg(char *arg)
 {
-	SEGLIST *p;
+	int seg = atoi(arg);
 
-	p = emalloc(sizeof(*p));
-	p->next = seglist;
-	p->num = atoi(arg);
-	seglist = p;
+	seglist = realloc(seglist, (seglist_count + 1) * sizeof(*seglist));
+	seglist[seglist_count++] = seg;
 }
 
 static void
@@ -917,8 +972,32 @@ dump_cleaner_info(struct lfs *lfsp, void *ipage)
 }
 
 static void
+dump_inoblk(int fd, struct lfs *lfsp, daddr_t daddr, ino_t ino)
+{
+	char *buf;
+	union lfs_dinode *dip;
+	ino_t dino;
+	int i;
+
+	buf = emalloc(lfs_sb_getfsize(lfsp));
+	get(fd, lfs_fsbtob(lfsp, daddr), buf, lfs_sb_getfsize(lfsp));
+	for (i = 0; i < LFS_INOPB(lfsp); ++i) {
+		dip = DINO_IN_BLOCK(lfsp, buf, i);
+		dino = lfs_dino_getinumber(lfsp, dip);
+		if (dino == 0)
+			continue;
+		else if (ino == 0 || ino == dino) {
+			(void)printf("Addr 0x%jx entry %d inode %jd:\n",
+				     (intmax_t)daddr, i, (intmax_t)dino);
+			dump_dinode(lfsp, dip);
+		}
+	}
+}
+
+
+static void
 usage(void)
 {
-	(void)fprintf(stderr, "usage: dumplfs [-adiS] [-b blkno] [-I blkno] [-s segno] filesys|device\n");
+	(void)fprintf(stderr, "usage: dumplfs [-adiS] [-b blkno] [-I blkno] [-n blkno] [-s segno]\n\tfilesys|device\n");
 	exit(1);
 }

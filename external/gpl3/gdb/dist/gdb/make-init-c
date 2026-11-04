@@ -1,6 +1,6 @@
 #!/bin/sh
 
-# Copyright (C) 2013-2024 Free Software Foundation, Inc.
+# Copyright (C) 2013-2025 Free Software Foundation, Inc.
 #
 # This file is part of GDB.
 #
@@ -25,12 +25,13 @@
 #
 # Where SOURCE-FILES is the list of source files to extract init functions from.
 #
-# Formatting conventions:  The name of the initialization routines must begin
-# with `_initialize_`, must start in column zero, and be followed with exactly
-# ` ()`.  For example:
+
+# An initialization function is introduced using the "INIT_GDB_FILE"
+# macro.  In ordinary code this expands to a function declaration (to
+# avoid a warning) and then the start of a definition.  In the
+# generated init.c, though, it is expanded differently.  For example:
 #
-# void
-# _initialize_foo ()
+# INIT_GDB_FILE (foo)
 # {
 #   ...
 # }
@@ -43,19 +44,21 @@ echo "/* Do not modify this file.  */"
 echo "/* It is created automatically by the Makefile.  */"
 echo "#include <algorithm>"
 echo ""
-sed -n -e 's/^\(_initialize_[a-zA-Z0-9_]*\) ()$/\1/p' "$@" | while read -r name; do
-  echo "extern initialize_file_ftype $name;"
-done
+echo "#undef INIT_GDB_FILE"
+echo "#define INIT_GDB_FILE(NAME) extern void _initialize_ ## NAME ();"
+grep -h '^[ 	]*INIT_GDB_FILE\b' "$@"
 echo ""
 echo "void initialize_all_files ();"
 echo "void"
 echo "initialize_all_files ()"
 echo "{"
+echo "  typedef void initialize_file_ftype (void);"
+echo ""
 echo "  std::vector<initialize_file_ftype *> functions ="
 echo "    {"
-sed -n -e 's/^\(_initialize_[a-zA-Z0-9_]*\) ()$/\1/p' "$@" | while read -r name; do
-  echo "      $name,"
-done
+echo "#undef INIT_GDB_FILE"
+echo "#define INIT_GDB_FILE(NAME) _initialize_ ## NAME,"
+grep -h '^[ 	]*INIT_GDB_FILE\b' "$@"
 echo "    };"
 echo ""
 echo "  /* If GDB_REVERSE_INIT_FUNCTIONS is set (any value), reverse the"

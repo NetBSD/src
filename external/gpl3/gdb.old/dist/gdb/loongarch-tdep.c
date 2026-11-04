@@ -1,6 +1,6 @@
 /* Target-dependent code for the LoongArch architecture, for GDB.
 
-   Copyright (C) 2022-2023 Free Software Foundation, Inc.
+   Copyright (C) 2022-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,13 +17,18 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "arch-utils.h"
+#include "arch/loongarch-insn.h"
 #include "dwarf2/frame.h"
 #include "elf-bfd.h"
+#include "extract-store-integer.h"
 #include "frame-unwind.h"
 #include "gdbcore.h"
+#include "linux-record.h"
 #include "loongarch-tdep.h"
+#include "record.h"
+#include "record-full.h"
+#include "reggroups.h"
 #include "target.h"
 #include "target-descriptions.h"
 #include "trad-frame.h"
@@ -35,14 +40,14 @@ static insn_t
 loongarch_fetch_instruction (CORE_ADDR pc)
 {
   size_t insn_len = loongarch_insn_length (0);
-  gdb_byte buf[insn_len];
+  gdb::byte_vector buf (insn_len);
   int err;
 
-  err = target_read_memory (pc, buf, insn_len);
+  err = target_read_memory (pc, buf.data (), insn_len);
   if (err)
     memory_error (TARGET_XFER_E_IO, pc);
 
-  return extract_unsigned_integer (buf, insn_len, BFD_ENDIAN_LITTLE);
+  return extract_unsigned_integer (buf.data (), insn_len, BFD_ENDIAN_LITTLE);
 }
 
 /* Return TRUE if INSN is a unconditional branch instruction, otherwise return FALSE.  */
@@ -112,7 +117,7 @@ loongarch_insn_is_sc (insn_t insn)
 
 static CORE_ADDR
 loongarch_scan_prologue (struct gdbarch *gdbarch, CORE_ADDR start_pc,
-			 CORE_ADDR limit_pc, frame_info_ptr this_frame,
+			 CORE_ADDR limit_pc, const frame_info_ptr &this_frame,
 			 struct trad_frame_cache *this_cache)
 {
   CORE_ADDR cur_pc = start_pc, prologue_end = 0;
@@ -386,6 +391,15 @@ loongarch_software_single_step (struct regcache *regcache)
   return {next_pc};
 }
 
+/* Callback function for user_reg_add.  */
+
+static struct value *
+value_of_loongarch_user_reg (const frame_info_ptr &frame, const void *baton)
+{
+  return value_of_register ((long long) baton,
+			    get_next_frame_sentinel_okay (frame));
+}
+
 /* Implement the frame_align gdbarch method.  */
 
 static CORE_ADDR
@@ -397,7 +411,7 @@ loongarch_frame_align (struct gdbarch *gdbarch, CORE_ADDR addr)
 /* Generate, or return the cached frame cache for frame unwinder.  */
 
 static struct trad_frame_cache *
-loongarch_frame_cache (frame_info_ptr this_frame, void **this_cache)
+loongarch_frame_cache (const frame_info_ptr &this_frame, void **this_cache)
 {
   struct trad_frame_cache *cache;
   CORE_ADDR pc;
@@ -419,7 +433,7 @@ loongarch_frame_cache (frame_info_ptr this_frame, void **this_cache)
 /* Implement the this_id callback for frame unwinder.  */
 
 static void
-loongarch_frame_this_id (frame_info_ptr this_frame, void **prologue_cache,
+loongarch_frame_this_id (const frame_info_ptr &this_frame, void **prologue_cache,
 			 struct frame_id *this_id)
 {
   struct trad_frame_cache *info;
@@ -431,7 +445,7 @@ loongarch_frame_this_id (frame_info_ptr this_frame, void **prologue_cache,
 /* Implement the prev_register callback for frame unwinder.  */
 
 static struct value *
-loongarch_frame_prev_register (frame_info_ptr this_frame,
+loongarch_frame_prev_register (const frame_info_ptr &this_frame,
 			       void **prologue_cache, int regnum)
 {
   struct trad_frame_cache *info;
@@ -507,11 +521,22 @@ static void
 compute_struct_member (struct type *type,
 		       unsigned int *fixed_point_members,
 		       unsigned int *floating_point_members,
-		       bool *first_member_is_fixed_point)
+		       bool *first_member_is_fixed_point,
+		       bool *has_long_double)
 {
   for (int i = 0; i < type->num_fields (); i++)
     {
+      /* Ignore any static fields.  */
+      if (type->field (i).is_static ())
+	continue;
+
       struct type *field_type = check_typedef (type->field (i).type ());
+
+      if ((field_type->code () == TYPE_CODE_FLT
+	   && field_type->length () == 16)
+	  || (field_type->code () == TYPE_CODE_COMPLEX
+	      && field_type->length () == 32))
+	*has_long_double = true;
 
       if (field_type->code () == TYPE_CODE_INT
 	  || field_type->code () == TYPE_CODE_BOOL
@@ -531,9 +556,76 @@ compute_struct_member (struct type *type,
 	compute_struct_member (field_type,
 			       fixed_point_members,
 			       floating_point_members,
-			       first_member_is_fixed_point);
+			       first_member_is_fixed_point,
+			       has_long_double);
       else if (field_type->code () == TYPE_CODE_COMPLEX)
 	(*floating_point_members) += 2;
+    }
+}
+
+/* Compute the lengths and offsets of struct member.  */
+
+static void
+struct_member_info (struct type *type,
+		    unsigned int *member_offsets,
+		    unsigned int *member_lens,
+		    unsigned int offset,
+		    unsigned int *fields)
+{
+  unsigned int count = type->num_fields ();
+  unsigned int i;
+
+  for (i = 0; i < count; ++i)
+    {
+      if (type->field (i).loc_kind () != FIELD_LOC_KIND_BITPOS)
+	continue;
+
+      struct type *field_type = check_typedef (type->field (i).type ());
+      int field_offset
+	= offset + type->field (i).loc_bitpos () / TARGET_CHAR_BIT;
+
+      switch (field_type->code ())
+	{
+	case TYPE_CODE_STRUCT:
+	  struct_member_info (field_type, member_offsets, member_lens,
+			      field_offset, fields);
+	  break;
+
+	case TYPE_CODE_COMPLEX:
+	  if (*fields == 0)
+	    {
+	      /* _Complex float */
+	      if (field_type->length () == 8)
+		{
+		  member_offsets[0] = field_offset;
+		  member_offsets[1] = field_offset + 4;
+		  member_lens[0] = member_lens[1] = 4;
+		  *fields = 2;
+		}
+	      /* _Complex double */
+	      else if (field_type->length () == 16)
+		{
+		  member_offsets[0] = field_offset;
+		  member_offsets[1] = field_offset + 8;
+		  member_lens[0] = member_lens[1] = 8;
+		  *fields = 2;
+		}
+	    }
+	  break;
+
+	default:
+	  if (*fields < 2)
+	    {
+	      member_offsets[*fields] = field_offset;
+	      member_lens[*fields] = field_type->length ();
+	    }
+	  (*fields)++;
+	  break;
+	}
+
+      /* only has special handling for structures with 1 or 2 fields. */
+      if (*fields > 2)
+	return;
     }
 }
 
@@ -556,6 +648,10 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
   unsigned int fixed_point_members;
   unsigned int floating_point_members;
   bool first_member_is_fixed_point;
+  bool has_long_double;
+  unsigned int member_offsets[2];
+  unsigned int member_lens[2];
+  unsigned int fields;
   gdb_byte buf[1024] = { 0 };
   gdb_byte *addr = buf;
 
@@ -565,12 +661,12 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
   for (int i = 0; i < nargs; i++)
     {
       struct value *arg = args[i];
-      const gdb_byte *val = value_contents (arg).data ();
-      struct type *type = check_typedef (value_type (arg));
+      const gdb_byte *val = arg->contents ().data ();
+      struct type *type = check_typedef (arg->type ());
       size_t len = type->length ();
       int align = type_align (type);
       enum type_code code = type->code ();
-      struct type *func_type = check_typedef (value_type (function));
+      struct type *func_type = check_typedef (function->type ());
       bool varargs = (func_type->has_varargs () && i >= func_type->num_fields ());
 
       switch (code)
@@ -589,12 +685,12 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
 	       and the signed integer scalars are sign-extended.  */
 	  if (type->is_unsigned ())
 	    {
-              ULONGEST data = extract_unsigned_integer (val, len, BFD_ENDIAN_LITTLE);
+	      ULONGEST data = extract_unsigned_integer (val, len, BFD_ENDIAN_LITTLE);
 	      if (gar > 0)
 		pass_in_gar (regcache, gar--, (gdb_byte *) &data);
 	      else
 		pass_on_stack (regcache, (gdb_byte *) &data, len, align, &addr);
-            }
+	    }
 	  else
 	    {
 	      LONGEST data = extract_signed_integer (val, len, BFD_ENDIAN_LITTLE);
@@ -602,7 +698,7 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
 		pass_in_gar (regcache, gar--, (gdb_byte *) &data);
 	      else
 		pass_on_stack (regcache, (gdb_byte *) &data, len, align, &addr);
-            }
+	    }
 	  }
 	  break;
 	case TYPE_CODE_FLT:
@@ -640,7 +736,7 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
 		     all future arguments will also be passed on the stack,
 		     i.e., the last argument register may be left unused
 		     due to the aligned register pair rule.
-		     long double data tpye is passed in an aligned GAR pair,
+		     long double data type is passed in an aligned GAR pair,
 		     the first register in the pair is even-numbered.  */
 		  if (gar >= 2)
 		    {
@@ -685,12 +781,55 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
 	    fixed_point_members = 0;
 	    floating_point_members = 0;
 	    first_member_is_fixed_point = false;
+	    has_long_double = false;
+	    member_offsets[0] = member_offsets[1] = 0;
+	    member_lens[0] = member_offsets[1] = 0;
+	    fields = 0;
 	    compute_struct_member (type,
 				   &fixed_point_members,
 				   &floating_point_members,
-				   &first_member_is_fixed_point);
-
-	    if (len > 0 && len <= regsize)
+				   &first_member_is_fixed_point,
+				   &has_long_double);
+	    struct_member_info (type, member_offsets, member_lens, 0, &fields);
+	    /* If the structure consists of one floating-point member within
+	       FRLEN bits wide, it is passed in an FAR if available. If the
+	       structure consists of two floating-point members both within
+	       FRLEN bits wide, it is passed in two FARs if available. If the
+	       structure consists of one integer member within GRLEN bits wide
+	       and one floating-point member within FRLEN bits wide, it is
+	       passed in a GAR and an FAR if available. */
+	    if (has_long_double == false
+		&& ((fixed_point_members == 0 && floating_point_members == 1
+		     && far >= 1)
+		    || (fixed_point_members == 0 && floating_point_members == 2
+			&& far >= 2)
+		    || (fixed_point_members == 1 && floating_point_members == 1
+			&& far >= 1 && gar >= 1)))
+	      {
+		if (fixed_point_members == 0 && floating_point_members == 1)
+		  {
+		    pass_in_far (regcache, far--, val + member_offsets[0]);
+		  }
+		else if (fixed_point_members == 0 && floating_point_members == 2)
+		  {
+		    pass_in_far (regcache, far--, val + member_offsets[0]);
+		    pass_in_far (regcache, far--, val + member_offsets[1]);
+		  }
+		else if (fixed_point_members == 1 && floating_point_members == 1)
+		  {
+		    if (first_member_is_fixed_point == false)
+		      {
+			pass_in_far (regcache, far--, val + member_offsets[0]);
+			pass_in_gar (regcache, gar--, val + member_offsets[1]);
+		      }
+		    else
+		      {
+			pass_in_gar (regcache, gar--, val + member_offsets[0]);
+			pass_in_far (regcache, far--, val + member_offsets[1]);
+		      }
+		  }
+	      }
+	    else if (len > 0 && len <= regsize)
 	      {
 		/* The structure has only fixed-point members.  */
 		if (fixed_point_members > 0 && floating_point_members == 0)
@@ -962,7 +1101,7 @@ loongarch_push_dummy_call (struct gdbarch *gdbarch,
 	      }
 	    else if (len > 2 * regsize)
 	      {
-	        /* It's passed by reference and are replaced in the argument list with the address.
+		/* It's passed by reference and are replaced in the argument list with the address.
 		   If there is an available GAR, the reference is passed in the GAR,
 		   and passed on the stack if no GAR is available.  */
 		sp = align_down (sp - len, 16);
@@ -1147,13 +1286,14 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
   unsigned int fixed_point_members;
   unsigned int floating_point_members;
   bool first_member_is_fixed_point;
+  bool has_long_double;
+  unsigned int member_offsets[2];
+  unsigned int member_lens[2];
+  unsigned int fields;
   int a0 = LOONGARCH_A0_REGNUM;
   int a1 = LOONGARCH_A0_REGNUM + 1;
   int f0 = LOONGARCH_FIRST_FP_REGNUM;
   int f1 = LOONGARCH_FIRST_FP_REGNUM + 1;
-
-  if (len > 2 * regsize)
-    return RETURN_VALUE_STRUCT_CONVENTION;
 
   switch (code)
     {
@@ -1170,18 +1310,24 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
 	   and the signed integer scalars are sign-extended.  */
 	if (writebuf)
 	  {
-	    gdb_byte buf[regsize];
+	    gdb::byte_vector buf (regsize);
 	    if (type->is_unsigned ())
 	      {
-		ULONGEST data = extract_unsigned_integer (writebuf, len, BFD_ENDIAN_LITTLE);
-		store_unsigned_integer (buf, regsize, BFD_ENDIAN_LITTLE, data);
+		ULONGEST data = extract_unsigned_integer (writebuf, len,
+							  BFD_ENDIAN_LITTLE);
+		store_unsigned_integer (buf.data (), regsize,
+					BFD_ENDIAN_LITTLE, data);
 	      }
 	    else
 	      {
-		LONGEST data = extract_signed_integer (writebuf, len, BFD_ENDIAN_LITTLE);
-		store_signed_integer (buf, regsize, BFD_ENDIAN_LITTLE, data);
+		LONGEST data
+		  = extract_signed_integer (writebuf, len, BFD_ENDIAN_LITTLE);
+		store_signed_integer (buf.data (), regsize, BFD_ENDIAN_LITTLE,
+				      data);
 	      }
-	    loongarch_xfer_reg (regcache, a0, regsize, nullptr, buf, 0);
+
+	    loongarch_xfer_reg (regcache, a0, regsize, nullptr, buf.data (),
+				0);
 	  }
 	else
 	  loongarch_xfer_reg (regcache, a0, len, readbuf, nullptr, 0);
@@ -1207,12 +1353,56 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
 	fixed_point_members = 0;
 	floating_point_members = 0;
 	first_member_is_fixed_point = false;
+	has_long_double = false;
+	member_offsets[0] = member_offsets[1] = 0;
+	member_lens[0] = member_offsets[1] = 0;
+	fields = 0;
 	compute_struct_member (type,
 			       &fixed_point_members,
 			       &floating_point_members,
-			       &first_member_is_fixed_point);
-
-	if (len > 0 && len <= regsize)
+			       &first_member_is_fixed_point,
+			       &has_long_double);
+	struct_member_info (type, member_offsets, member_lens, 0, &fields);
+	/* struct consists of one floating-point member;
+	   struct consists of two floating-point members;
+	   struct consists of one floating-point member
+	   and one integer member. */
+	if (has_long_double == false
+	    && ((fixed_point_members == 0 && floating_point_members == 1)
+		|| (fixed_point_members == 0 && floating_point_members == 2)
+		|| (fixed_point_members == 1 && floating_point_members == 1)))
+	  {
+	    if (fixed_point_members == 0 && floating_point_members == 1)
+	      {
+		loongarch_xfer_reg (regcache, f0, member_lens[0], readbuf,
+				    writebuf, member_offsets[0]);
+	      }
+	    else if (fixed_point_members == 0 && floating_point_members == 2)
+	      {
+		loongarch_xfer_reg (regcache, f0, member_lens[0], readbuf,
+				    writebuf, member_offsets[0]);
+		loongarch_xfer_reg (regcache, f1, member_lens[1], readbuf,
+				    writebuf, member_offsets[1]);
+	      }
+	    else if (fixed_point_members == 1 && floating_point_members == 1)
+	      {
+		if (first_member_is_fixed_point == false)
+		  {
+		    loongarch_xfer_reg (regcache, f0, member_lens[0], readbuf,
+					writebuf, member_offsets[0]);
+		    loongarch_xfer_reg (regcache, a0, member_lens[1], readbuf,
+					writebuf, member_offsets[1]);
+		  }
+		else
+		  {
+		    loongarch_xfer_reg (regcache, a0, member_lens[0], readbuf,
+					writebuf, member_offsets[0]);
+		    loongarch_xfer_reg (regcache, f0, member_lens[1], readbuf,
+					writebuf, member_offsets[1]);
+		  }
+	      }
+	  }
+	else if (len > 0 && len <= regsize)
 	  {
 	    /* The structure has only fixed-point members.  */
 	    if (fixed_point_members > 0 && floating_point_members == 0)
@@ -1325,6 +1515,8 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
 		  }
 	      }
 	  }
+	else if (len > 2 * regsize)
+	  return RETURN_VALUE_STRUCT_CONVENTION;
       }
       break;
     case TYPE_CODE_UNION:
@@ -1339,13 +1531,18 @@ loongarch_return_value (struct gdbarch *gdbarch, struct value *function,
 	  loongarch_xfer_reg (regcache, a0, regsize, readbuf, writebuf, 0);
 	  loongarch_xfer_reg (regcache, a1, len - regsize, readbuf, writebuf, regsize);
 	}
+      else if (len > 2 * regsize)
+	return RETURN_VALUE_STRUCT_CONVENTION;
       break;
     case TYPE_CODE_COMPLEX:
-      {
-	/* The return value is passed in f0 and f1.  */
-	loongarch_xfer_reg (regcache, f0, len / 2, readbuf, writebuf, 0);
-	loongarch_xfer_reg (regcache, f1, len / 2, readbuf, writebuf, len / 2);
-      }
+      if (len > 0 && len <= 2 * regsize)
+	{
+	  /* The return value is passed in f0 and f1.  */
+	  loongarch_xfer_reg (regcache, f0, len / 2, readbuf, writebuf, 0);
+	  loongarch_xfer_reg (regcache, f1, len / 2, readbuf, writebuf, len / 2);
+	}
+      else if (len > 2 * regsize)
+	return RETURN_VALUE_STRUCT_CONVENTION;
       break;
     default:
       break;
@@ -1433,6 +1630,51 @@ loongarch_find_default_target_description (const struct gdbarch_info info)
   return loongarch_lookup_target_description (features);
 }
 
+static int
+loongarch_register_reggroup_p (struct gdbarch *gdbarch, int regnum,
+			       const struct reggroup *group)
+{
+  if (gdbarch_register_name (gdbarch, regnum) == NULL
+      || *gdbarch_register_name (gdbarch, regnum) == '\0')
+    return 0;
+
+  int raw_p = regnum < gdbarch_num_regs (gdbarch);
+
+  if (group == save_reggroup || group == restore_reggroup)
+    return raw_p;
+
+  if (group == all_reggroup)
+    return 1;
+
+  if (0 <= regnum && regnum <= LOONGARCH_BADV_REGNUM)
+    return group == general_reggroup;
+
+  /* Only ORIG_A0, PC, BADV in general_reggroup */
+  if (group == general_reggroup)
+    return 0;
+
+  if (LOONGARCH_FIRST_FP_REGNUM <= regnum && regnum <= LOONGARCH_FCSR_REGNUM)
+    return group == float_reggroup;
+
+  /* Only $fx / $fccx / $fcsr in float_reggroup */
+  if (group == float_reggroup)
+    return 0;
+
+  if (LOONGARCH_FIRST_LSX_REGNUM <= regnum
+     && regnum < LOONGARCH_FIRST_LASX_REGNUM + LOONGARCH_LINUX_NUM_LASXREGSET)
+    return group == vector_reggroup;
+
+  /* Only $vrx / $xrx in vector_reggroup */
+  if (group == vector_reggroup)
+    return 0;
+
+  int ret = tdesc_register_in_reggroup_p (gdbarch, regnum, group);
+  if (ret != -1)
+    return ret;
+
+  return default_register_reggroup_p (gdbarch, regnum, group);
+}
+
 /* Initialize the current architecture based on INFO  */
 
 static struct gdbarch *
@@ -1441,7 +1683,6 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   size_t regnum = 0;
   struct loongarch_gdbarch_features features;
   tdesc_arch_data_up tdesc_data = tdesc_data_alloc ();
-  loongarch_gdbarch_tdep *tdep = new loongarch_gdbarch_tdep;
   const struct target_desc *tdesc = info.target_desc;
 
   /* Ensure we always have a target description.  */
@@ -1481,6 +1722,52 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     valid_p &= tdesc_numbered_register (feature_fpu, tdesc_data.get (), regnum++,
 					loongarch_c_normal_name[i] + 1);
   valid_p &= tdesc_numbered_register (feature_fpu, tdesc_data.get (), regnum++, "fcsr");
+  if (!valid_p)
+    return nullptr;
+
+  const struct tdesc_feature *feature_lsx
+    = tdesc_find_feature (tdesc, "org.gnu.gdb.loongarch.lsx");
+  if (feature_lsx == nullptr)
+    return nullptr;
+
+  /* Validate the description provides the lsx registers and
+     allocate their numbers.  */
+  regnum = LOONGARCH_FIRST_LSX_REGNUM;
+  for (int i = 0; i < LOONGARCH_LINUX_NUM_LSXREGSET; i++)
+    valid_p &= tdesc_numbered_register (feature_lsx, tdesc_data.get (), regnum++,
+					loongarch_v_normal_name[i] + 1);
+  if (!valid_p)
+    return nullptr;
+
+  const struct tdesc_feature *feature_lasx
+    = tdesc_find_feature (tdesc, "org.gnu.gdb.loongarch.lasx");
+  if (feature_lasx == nullptr)
+    return nullptr;
+
+  /* Validate the description provides the lasx registers and
+     allocate their numbers.  */
+  regnum = LOONGARCH_FIRST_LASX_REGNUM;
+  for (int i = 0; i < LOONGARCH_LINUX_NUM_LASXREGSET; i++)
+    valid_p &= tdesc_numbered_register (feature_lasx, tdesc_data.get (), regnum++,
+					loongarch_x_normal_name[i] + 1);
+  if (!valid_p)
+    return nullptr;
+
+  const struct tdesc_feature *feature_lbt
+    = tdesc_find_feature (tdesc, "org.gnu.gdb.loongarch.lbt");
+  if (feature_lbt == nullptr)
+    return nullptr;
+
+  /* Validate the description provides the lbt registers and
+     allocate their numbers.  */
+  regnum = LOONGARCH_FIRST_SCR_REGNUM;
+  for (int i = 0; i < LOONGARCH_LINUX_NUM_SCR; i++)
+    valid_p &= tdesc_numbered_register (feature_lbt, tdesc_data.get (), regnum++,
+					loongarch_cr_normal_name[i] + 1);
+  valid_p &= tdesc_numbered_register (feature_lbt, tdesc_data.get (), regnum++,
+				      "eflags");
+  valid_p &= tdesc_numbered_register (feature_lbt, tdesc_data.get (), regnum++,
+				      "ftop");
   if (!valid_p)
     return nullptr;
 
@@ -1531,7 +1818,10 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
     return arches->gdbarch;
 
   /* None found, so create a new architecture from the information provided.  */
-  struct gdbarch *gdbarch = gdbarch_alloc (&info, tdep);
+  gdbarch *gdbarch
+    = gdbarch_alloc (&info, gdbarch_tdep_up (new loongarch_gdbarch_tdep));
+  loongarch_gdbarch_tdep *tdep = gdbarch_tdep<loongarch_gdbarch_tdep> (gdbarch);
+
   tdep->abi_features = abi_features;
 
   /* Target data types.  */
@@ -1548,6 +1838,19 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   info.target_desc = tdesc;
   info.tdesc_data = tdesc_data.get ();
+
+  for (int i = 0; i < ARRAY_SIZE (loongarch_r_alias); ++i)
+    if (loongarch_r_alias[i][0] != '\0')
+      user_reg_add (gdbarch, loongarch_r_alias[i] + 1,
+	value_of_loongarch_user_reg, (void *) (size_t) i);
+
+  for (int i = 0; i < ARRAY_SIZE (loongarch_f_alias); ++i)
+    {
+      if (loongarch_f_alias[i][0] != '\0')
+	user_reg_add (gdbarch, loongarch_f_alias[i] + 1,
+		      value_of_loongarch_user_reg,
+		      (void *) (size_t) (LOONGARCH_FIRST_FP_REGNUM + i));
+    }
 
   /* Information about registers.  */
   set_gdbarch_num_regs (gdbarch, regnum);
@@ -1576,6 +1879,7 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
   set_gdbarch_software_single_step (gdbarch, loongarch_software_single_step);
   set_gdbarch_breakpoint_kind_from_pc (gdbarch, loongarch_breakpoint::kind_from_pc);
   set_gdbarch_sw_breakpoint_from_kind (gdbarch, loongarch_breakpoint::bp_from_kind);
+  set_gdbarch_have_nonsteppable_watchpoint (gdbarch, 1);
 
   /* Frame unwinders. Use DWARF debug info if available, otherwise use our own unwinder.  */
   set_gdbarch_dwarf2_reg_to_regnum (gdbarch, loongarch_dwarf2_reg_to_regnum);
@@ -1584,8 +1888,518 @@ loongarch_gdbarch_init (struct gdbarch_info info, struct gdbarch_list *arches)
 
   /* Hook in OS ABI-specific overrides, if they have been registered.  */
   gdbarch_init_osabi (info, gdbarch);
+  set_gdbarch_register_reggroup_p (gdbarch, loongarch_register_reggroup_p);
 
   return gdbarch;
+}
+
+/* LoongArch record/replay enumerations and structures.  */
+
+enum loongarch_record_result
+{
+  LOONGARCH_RECORD_SUCCESS,
+  LOONGARCH_RECORD_UNSUPPORTED,
+  LOONGARCH_RECORD_UNKNOWN
+};
+
+struct loongarch_record_s
+{
+  struct gdbarch *gdbarch;
+  struct regcache *regcache;
+  CORE_ADDR this_addr;                 /* Addr of insn to be recorded.   */
+  uint32_t insn;                       /* Insn to be recorded.           */
+};
+
+/* Record handler for data processing instructions.  */
+
+static int
+loongarch_record_data_proc_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for read time instructions.  */
+
+static int
+loongarch_record_read_time_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num, rj_num;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rj_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for branch instructions.  */
+
+static int
+loongarch_record_branch_insn (loongarch_record_s *loongarch_record)
+{
+  if (is_jirl_insn (loongarch_record->insn))
+    {
+      int rd_num;
+      rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+	return -1;
+    }
+  else if (is_bl_insn (loongarch_record->insn))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache,
+					 LOONGARCH_RA_REGNUM))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for float data processing instructions.  */
+
+static int
+loongarch_record_float_data_proc_insn (loongarch_record_s *loongarch_record)
+{
+  int fd_num;
+  fd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0)
+	   + LOONGARCH_FIRST_FP_REGNUM;
+
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, fd_num))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for move gr to fcsr instructions.  */
+
+static int
+loongarch_record_movgr2fcsr_insn (loongarch_record_s *loongarch_record)
+{
+  if (record_full_arch_list_add_reg (loongarch_record->regcache,
+				     LOONGARCH_FCSR_REGNUM))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for move gr/fr to fcc instructions.  */
+
+static int
+loongarch_record_mov2cf_insn (loongarch_record_s *loongarch_record)
+{
+  int cd;
+  cd = loongarch_decode_imm ("0:3", loongarch_record->insn, 0);
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, cd))
+    return -1;
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for float instructions.  */
+
+static unsigned int
+loongarch_record_float_insn (loongarch_record_s *loongarch_record)
+{
+  if (is_movgr2fcsr_insn (loongarch_record->insn))
+    return loongarch_record_movgr2fcsr_insn (loongarch_record);
+  else if (is_mov2cf_insn (loongarch_record->insn))
+    return loongarch_record_mov2cf_insn (loongarch_record);
+  else
+    return loongarch_record_float_data_proc_insn (loongarch_record);
+}
+
+/* Record handler for store instructions.  */
+
+static int
+loongarch_record_store_insn (loongarch_record_s *loongarch_record)
+{
+  enum store_types
+    {
+      STB, STH, STW, STD, STXB, STXH, STXW, STXD, STPTRW, STPTRD,
+      SCW, SCD, FSTS, FSTD, FSTXS, FSTXD, VST, XVST, NOT_STORE
+    };
+  int store_type, data_size, rj_num;
+  uint64_t address, rj_val;
+
+  store_type = is_st_b_insn (loongarch_record->insn)	   ? STB     :
+	       is_st_h_insn (loongarch_record->insn)       ? STH     :
+	       is_st_w_insn (loongarch_record->insn)       ? STW     :
+	       is_st_d_insn (loongarch_record->insn)       ? STD     :
+	       is_stx_b_insn (loongarch_record->insn)      ? STXB    :
+	       is_stx_h_insn (loongarch_record->insn)      ? STXH    :
+	       is_stx_w_insn (loongarch_record->insn)      ? STXW    :
+	       is_stx_d_insn (loongarch_record->insn)      ? STXD    :
+	       is_stptr_w_insn (loongarch_record->insn)    ? STPTRW  :
+	       is_stptr_d_insn (loongarch_record->insn)    ? STPTRD  :
+	       is_sc_w_insn (loongarch_record->insn)       ? SCW     :
+	       is_sc_d_insn (loongarch_record->insn)       ? SCD     :
+	       is_fst_s_insn (loongarch_record->insn)      ? FSTS    :
+	       is_fst_d_insn (loongarch_record->insn)      ? FSTD    :
+	       is_fstx_s_insn (loongarch_record->insn)     ? FSTXS   :
+	       is_fstx_d_insn (loongarch_record->insn)     ? FSTXD   :
+	       is_vst_insn (loongarch_record->insn)        ? VST     :
+	       is_xvst_insn (loongarch_record->insn)       ? XVST    :
+	       NOT_STORE;
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+
+  if (store_type == STB || store_type == STH || store_type == STW
+      || store_type == STD || store_type == FSTS || store_type == FSTD
+      || store_type == VST || store_type == XVST)
+    {
+      int imm;
+      imm = loongarch_decode_imm ("10:12", loongarch_record->insn, 1);
+      address = rj_val + imm;
+      switch (store_type)
+	{
+	case STB:
+	  data_size = 1;
+	  break;
+	case STH:
+	  data_size = 2;
+	  break;
+	case STW:
+	case FSTS:
+	  data_size = 4;
+	  break;
+	case STD:
+	case FSTD:
+	  data_size = 8;
+	  break;
+	case VST:
+	  data_size = 16;
+	  break;
+	case XVST:
+	  data_size = 32;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  else if (store_type == STXB || store_type == STXH || store_type == STXW
+	   || store_type == STXD || store_type == FSTXS || store_type == FSTXD)
+    {
+      int rk_num;
+      uint64_t rk_val;
+      rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+      regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+      address = rj_val + rk_val;
+      switch (store_type)
+	{
+	case STXB:
+	  data_size = 1;
+	  break;
+	case STXH:
+	  data_size = 2;
+	  break;
+	case STXW:
+	case FSTXS:
+	  data_size = 4;
+	  break;
+	case STXD:
+	case FSTXD:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  else if (store_type == STPTRW || store_type == STPTRD || store_type == SCW
+	   || store_type == SCD)
+    {
+      int imm;
+      imm = loongarch_decode_imm ("10:14<<2", loongarch_record->insn, 1);
+      address = rj_val + imm;
+      switch (store_type)
+	{
+	case STPTRW:
+	case SCW:
+	  data_size = 4;
+	  break;
+	case STPTRD:
+	case SCD:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for atomic memory access instructions.  */
+
+static int
+loongarch_record_atomic_access_insn (loongarch_record_s *loongarch_record)
+{
+  int rj_num, rd_num, rk_num, length;
+  int data_size;
+  uint64_t address;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &address);
+  if (is_basic_am_w_d_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:1", loongarch_record->insn, 0);
+      data_size = length == 1 ? 8 : 4;
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  if (is_am_b_h_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:1", loongarch_record->insn, 0);
+      data_size = length == 1 ? 2 : 1;
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+  if (is_amcas_insn (loongarch_record->insn))
+    {
+      length = loongarch_decode_imm ("15:2", loongarch_record->insn, 0);
+      switch (length)
+	{
+	case 0x0:
+	  data_size = 1;
+	  break;
+	case 0x1:
+	  data_size = 2;
+	  break;
+	case 0x2:
+	  data_size = 4;
+	  break;
+	case 0x3:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+      if (record_full_arch_list_add_mem (address, data_size))
+	return -1;
+    }
+
+  if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+    return -1;
+
+  if (is_amswap_insn (loongarch_record->insn))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rk_num))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for bound check load instructions.  */
+
+static int
+loongarch_record_bound_check_load_insn (loongarch_record_s *loongarch_record)
+{
+  int rd_num, rj_num, rk_num, fd_num;
+  uint64_t rj_val, rk_val;
+  rd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  fd_num = loongarch_decode_imm ("0:5", loongarch_record->insn, 0);
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+
+  if ((is_ldgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+      || (is_ldle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, rd_num))
+	return -1;
+    }
+  else if ((is_fldgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+	   || (is_fldle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      if (record_full_arch_list_add_reg (loongarch_record->regcache, fd_num))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for bound check store instructions.  */
+
+static int
+loongarch_record_bound_check_store_insn (loongarch_record_s *loongarch_record)
+{
+  int rj_num, rk_num;
+  int data_size;
+  uint64_t rj_val, rk_val;
+  uint32_t length_opcode;
+  rj_num = loongarch_decode_imm ("5:5", loongarch_record->insn, 0);
+  rk_num = loongarch_decode_imm ("10:5", loongarch_record->insn, 0);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rj_num, &rj_val);
+  regcache_raw_read_unsigned (loongarch_record->regcache, rk_num, &rk_val);
+
+  if ((is_stgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+      || (is_stle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      length_opcode = loongarch_record->insn & 0x00018000;
+      switch (length_opcode)
+	{
+	case 0x00000000:
+	  data_size = 1;
+	  break;
+	case 0x00008000:
+	  data_size = 2;
+	  break;
+	case 0x00010000:
+	  data_size = 4;
+	  break;
+	case 0x00018000:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (rj_val, data_size))
+	return -1;
+    }
+  else if ((is_fstgt_insn (loongarch_record->insn) && (rj_val > rk_val))
+	    || (is_fstle_insn (loongarch_record->insn) && (rj_val <= rk_val)))
+    {
+      length_opcode = loongarch_record->insn & 0x00008000;
+      switch (length_opcode)
+	{
+	case 0x00000000:
+	  data_size = 4;
+	  break;
+	case 0x00008000:
+	  data_size = 8;
+	  break;
+	default:
+	  data_size = 0;
+	  break;
+	}
+
+      if (record_full_arch_list_add_mem (rj_val, data_size))
+	return -1;
+    }
+
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for special instructions like privilege instructions,
+   barrier instructions and cache related instructions etc.  */
+
+static int
+loongarch_record_special_insn (loongarch_record_s *loongarch_record)
+{
+  return LOONGARCH_RECORD_SUCCESS;
+}
+
+/* Record handler for syscall instructions.  */
+
+static int
+loongarch_record_syscall_insn (loongarch_record_s *loongarch_record)
+{
+  uint64_t syscall_number;
+  struct loongarch_gdbarch_tdep *tdep
+	    = gdbarch_tdep<loongarch_gdbarch_tdep> (loongarch_record->gdbarch);
+
+  regcache_raw_read_unsigned (loongarch_record->regcache, LOONGARCH_A7_REGNUM,
+			      &syscall_number);
+
+  return tdep->loongarch_syscall_record (loongarch_record->regcache,
+					 syscall_number);
+}
+
+/* Decode insns type and invoke its record handler.  */
+
+static int
+loongarch_record_decode_insn_handler (loongarch_record_s *loongarch_record)
+{
+  if (is_data_process_insn (loongarch_record->insn))
+    return loongarch_record_data_proc_insn (loongarch_record);
+  else if (is_branch_insn (loongarch_record->insn))
+    return loongarch_record_branch_insn (loongarch_record);
+  else if (is_store_insn (loongarch_record->insn))
+    return loongarch_record_store_insn (loongarch_record);
+  else if (is_read_time_insn (loongarch_record->insn))
+    return loongarch_record_read_time_insn (loongarch_record);
+  else if (is_float_insn (loongarch_record->insn))
+    return loongarch_record_float_insn (loongarch_record);
+  else if (is_special_insn (loongarch_record->insn))
+    return loongarch_record_special_insn (loongarch_record);
+  else if (is_atomic_access_insn (loongarch_record->insn))
+    return loongarch_record_atomic_access_insn (loongarch_record);
+  else if (is_bound_check_load_insn (loongarch_record->insn))
+    return loongarch_record_bound_check_load_insn (loongarch_record);
+  else if (is_bound_check_store_insn (loongarch_record->insn))
+    return loongarch_record_bound_check_store_insn (loongarch_record);
+  else if (is_syscall_insn (loongarch_record->insn))
+    return loongarch_record_syscall_insn (loongarch_record);
+
+  return LOONGARCH_RECORD_UNSUPPORTED;
+}
+
+/* Parse the current instruction and record the values of the registers and
+   memory that will be changed in current instruction to record_arch_list
+   return -1 if something is wrong.  */
+
+int
+loongarch_process_record (struct gdbarch *gdbarch, struct regcache *regcache,
+			  CORE_ADDR insn_addr)
+{
+  int ret = 0;
+  loongarch_record_s loongarch_record;
+
+  /* reset the content of loongarch_record */
+  memset (&loongarch_record, 0, sizeof (loongarch_record_s));
+
+  /* write the loongarch_record */
+  loongarch_record.gdbarch = gdbarch;
+  loongarch_record.regcache = regcache;
+  loongarch_record.this_addr = insn_addr;
+
+  /* Get the current instruction */
+  loongarch_record.insn = (uint32_t) loongarch_fetch_instruction (insn_addr);
+  ret = loongarch_record_decode_insn_handler (&loongarch_record);
+  if (ret == LOONGARCH_RECORD_UNSUPPORTED)
+    {
+      gdb_printf (gdb_stderr,
+		  _("Process record does not support instruction "
+		    "0x%0x at address %s.\n"),
+		  loongarch_record.insn,
+		  paddress (gdbarch, insn_addr));
+      return -1;
+    }
+  if (ret == LOONGARCH_RECORD_SUCCESS)
+    {
+      /* Record PC registers.  */
+      if (record_full_arch_list_add_reg (loongarch_record.regcache,
+					 LOONGARCH_PC_REGNUM))
+	return -1;
+
+      if (record_full_arch_list_add_end ())
+	return -1;
+    }
+
+  return ret;
 }
 
 void _initialize_loongarch_tdep ();

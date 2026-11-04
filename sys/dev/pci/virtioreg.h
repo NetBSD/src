@@ -1,4 +1,4 @@
-/*	$NetBSD: virtioreg.h,v 1.13.2.1 2025/08/02 05:57:00 perseant Exp $	*/
+/*	$NetBSD: virtioreg.h,v 1.13.2.2 2026/11/04 23:22:29 perseant Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -67,45 +67,80 @@
 
 #include <sys/types.h>
 
-/* Virtio product id (all subsystems) */
-#define VIRTIO_DEVICE_ID_NETWORK	 1
-#define VIRTIO_DEVICE_ID_BLOCK		 2
-#define VIRTIO_DEVICE_ID_CONSOLE	 3
-#define VIRTIO_DEVICE_ID_ENTROPY	 4
-#define VIRTIO_DEVICE_ID_BALLOON	 5
-#define VIRTIO_DEVICE_ID_IOMEM		 6
-#define VIRTIO_DEVICE_ID_RPMSG		 7
-#define VIRTIO_DEVICE_ID_SCSI		 8
-#define VIRTIO_DEVICE_ID_9P		 9
-#define VIRTIO_DEVICE_ID_GPU            16
+/*
+ * Virtio product id (all subsystems)
+ *
+ * Each device ID is marked with the version of the VirtIO specification
+ * in which the device was first described.  Devices that were documented
+ * in pre-1.0 drafts also have the "0.9" version identifier.  If a device
+ * has both "0.9" and "1.0", then it is a so-called "transitional device"
+ * whose behavior when using the legacy interface is described in the
+ * VirtIO 1.0 specification.  If a device has only a "0.9" identifier, then
+ * it was described in the pre-1.0 drafts and subsequently dropped.
+ *
+ * Device IDs without a first-version marking have mentions in at least
+ * one version of the VirtIO specification, but no formal description in
+ * the specification.
+ */
+#define VIRTIO_DEVICE_ID_NETWORK	1	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_BLOCK		2	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_CONSOLE	3	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_ENTROPY	4	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_BALLOON	5	/* 0.9, 1.0  (traditional) */
+#define VIRTIO_DEVICE_ID_IOMEM		6
+#define VIRTIO_DEVICE_ID_RPMSG		7	/* 0.9 */
+#define VIRTIO_DEVICE_ID_SCSI		8	/* 0.9, 1.0 */
+#define VIRTIO_DEVICE_ID_9P		9
+#define VIRTIO_DEVICE_ID_MAC80211_WLAN	10
+#define VIRTIO_DEVICE_ID_RPROC_SERIAL	11
+#define VIRTIO_DEVICE_ID_CAIF		12
+#define VIRTIO_DEVICE_ID_MEMORY_BALLOON	12	/* (new?) */
+#define VIRTIO_DEVICE_ID_GPU		16	/* 1.1 */
+#define VIRTIO_DEVICE_ID_TIMER_CLOCK	17
+#define VIRTIO_DEVICE_ID_INPUT_DEVICE	18	/* 1.1 */
+#define VIRTIO_DEVICE_ID_SOCKET		19	/* 1.1 */
+#define VIRTIO_DEVICE_ID_CRYPTO		20	/* 1.1 */
+#define VIRTIO_DEVICE_ID_IOMMU		23	/* 1.2 */
+#define VIRTIO_DEVICE_ID_MEMORY		24	/* 1.2 */
+#define VIRTIO_DEVICE_ID_FILE_SYSTEM	26	/* 1.2 */
+#define VIRTIO_DEVICE_ID_SOUND		25	/* 1.2 */
+#define VIRTIO_DEVICE_ID_PMEM		27	/* 1.2 */
+#define VIRTIO_DEVICE_ID_RPMB		28	/* 1.2 */
+#define VIRTIO_DEVICE_ID_SCMI		32	/* 1.2 */
+#define VIRTIO_DEVICE_ID_I2C_ADAPTER	34	/* 1.2 */
+#define VIRTIO_DEVICE_ID_GPIO		41	/* 1.2 */
 
 /* common device/guest features */
-#define  VIRTIO_F_NOTIFY_ON_EMPTY		__BIT(24)
-#define  VIRTIO_F_RING_INDIRECT_DESC		__BIT(28)
-#define  VIRTIO_F_RING_EVENT_IDX		__BIT(29)
-#define  VIRTIO_F_BAD_FEATURE			__BIT(30)
-#define  VIRTIO_F_VERSION_1			__BIT(32)
-#define  VIRTIO_F_ACCESS_PLATFORM		__BIT(33)
-#define  VIRTIO_F_RING_PACKED			__BIT(34)
-#define  VIRTIO_F_ORDER_PLATFORM		__BIT(36)
-#define  VIRTIO_F_SR_IOV			__BIT(37)
+#define VIRTIO_F_NOTIFY_ON_EMPTY	__BIT(24) /* not in 1.0 */
+#define VIRTIO_F_RING_INDIRECT_DESC	__BIT(28)
+#define VIRTIO_F_RING_EVENT_IDX		__BIT(29)
+#define VIRTIO_F_BAD_FEATURE		__BIT(30)
+#define VIRTIO_F_VERSION_1		__BIT(32)
+#define VIRTIO_F_ACCESS_PLATFORM	__BIT(33)
+#define VIRTIO_F_RING_PACKED		__BIT(34)
+#define VIRTIO_F_ORDER			__BIT(35)
+#define VIRTIO_F_ORDER_PLATFORM		__BIT(36)
+#define VIRTIO_F_SR_IOV			__BIT(37)
+#define VIRTIO_F_NOTIFICATION_DATA	__BIT(38)
+#define VIRTIO_F_NOTIF_CONFIG_DATA	__BIT(39)
+#define VIRTIO_F_RING_RESET		__BIT(40)
 
 /* common device status flags */
-#define  VIRTIO_CONFIG_DEVICE_STATUS_RESET		  0
-#define  VIRTIO_CONFIG_DEVICE_STATUS_ACK		  1
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER		  2
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK		  4
-#define  VIRTIO_CONFIG_DEVICE_STATUS_FEATURES_OK	  8
-#define  VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET	 64
-#define  VIRTIO_CONFIG_DEVICE_STATUS_FAILED		128
+#define VIRTIO_CONFIG_DEVICE_STATUS_RESET		  0
+#define VIRTIO_CONFIG_DEVICE_STATUS_ACK			  1
+#define VIRTIO_CONFIG_DEVICE_STATUS_DRIVER		  2
+#define VIRTIO_CONFIG_DEVICE_STATUS_DRIVER_OK		  4
+#define VIRTIO_CONFIG_DEVICE_STATUS_FEATURES_OK		  8
+#define VIRTIO_CONFIG_DEVICE_STATUS_DEVICE_NEEDS_RESET	 64
+#define VIRTIO_CONFIG_DEVICE_STATUS_FAILED		128
 
 /* common ISR status flags */
-#define  VIRTIO_CONFIG_ISR_QUEUE_INTERRUPT	1
-#define  VIRTIO_CONFIG_ISR_CONFIG_CHANGE	2
+#define VIRTIO_CONFIG_ISR_QUEUE_INTERRUPT	1
+#define VIRTIO_CONFIG_ISR_CONFIG_CHANGE		2
 
 /* common device/guest features */
 #define VIRTIO_COMMON_FLAG_BITS			\
-        "\177\020"				\
+	"\177\020"				\
 	"b\x24" "SR_IOV\0"			\
 	"b\x23" "ORDER_PLATFORM\0"		\
 	"b\x22" "RING_PACKED\0"			\
@@ -122,10 +157,10 @@
  */
 
 /* marks a buffer as continuing via the next field. */
-#define VRING_DESC_F_NEXT       1
+#define VRING_DESC_F_NEXT	1
 
 /* marks a buffer as write-only (otherwise read-only). */
-#define VRING_DESC_F_WRITE      2
+#define VRING_DESC_F_WRITE	2
 
 /* the buffer contains a list of buffer descriptors. */
 #define VRING_DESC_F_INDIRECT	4
@@ -136,48 +171,48 @@
  * you add a buffer.  It's unreliable, so it's simply an optimization.  Guest
  * will still kick if it's out of buffers.
  */
-#define VRING_USED_F_NO_NOTIFY  1
+#define VRING_USED_F_NO_NOTIFY	1
 
 /*
  * The Guest uses this in avail->flags to advise the Host: don't interrupt me
  * when you consume a buffer.  It's unreliable, so it's simply an
  * optimization.
  */
-#define VRING_AVAIL_F_NO_INTERRUPT      1
+#define VRING_AVAIL_F_NO_INTERRUPT	1
 
 
 /* Virtio ring descriptors: 16 bytes.
  * These can chain together via "next". */
 struct vring_desc {
-        /* Address (guest-physical). */
-        uint64_t addr;
-        /* Length. */
-        uint32_t len;
-        /* The flags as indicated above. */
-        uint16_t flags;
-        /* We chain unused descriptors via this, too */
-        uint16_t next;
+	/* Address (guest-physical). */
+	uint64_t addr;
+	/* Length. */
+	uint32_t len;
+	/* The flags as indicated above. */
+	uint16_t flags;
+	/* We chain unused descriptors via this, too */
+	uint16_t next;
 } __packed;
 
 struct vring_avail {
-        uint16_t flags;
-        uint16_t idx;
-        uint16_t ring[];
+	uint16_t flags;
+	uint16_t idx;
+	uint16_t ring[];
 	/* trailed by uint16_t used_event when VIRTIO_F_RING_EVENT_IDX */
 } __packed;
 
 /* u32 is used here for ids for padding reasons. */
 struct vring_used_elem {
-        /* Index of start of used descriptor chain. */
-        uint32_t id;
-        /* Total length of the descriptor chain which was written to. */
-        uint32_t len;
+	/* Index of start of used descriptor chain. */
+	uint32_t id;
+	/* Total length of the descriptor chain which was written to. */
+	uint32_t len;
 } __packed;
 
 struct vring_used {
-        uint16_t flags;
-        uint16_t idx;
-        struct vring_used_elem ring[];
+	uint16_t flags;
+	uint16_t idx;
+	struct vring_used_elem ring[];
 	/* trailed by uint16_t avail_event when VIRTIO_F_RING_EVENT_IDX */
 } __packed;
 

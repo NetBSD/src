@@ -1,6 +1,6 @@
 /* General functions for the WDB TUI.
 
-   Copyright (C) 1998-2023 Free Software Foundation, Inc.
+   Copyright (C) 1998-2024 Free Software Foundation, Inc.
 
    Contributed by Hewlett-Packard Company.
 
@@ -19,33 +19,30 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
-#include "gdbcmd.h"
+#include "event-top.h"
+#include "cli/cli-cmds.h"
+#include "exceptions.h"
 #include "tui/tui.h"
 #include "tui/tui-hooks.h"
 #include "tui/tui-command.h"
 #include "tui/tui-data.h"
 #include "tui/tui-layout.h"
 #include "tui/tui-io.h"
-#include "tui/tui-regs.h"
-#include "tui/tui-stack.h"
+#include "tui/tui-status.h"
 #include "tui/tui-win.h"
 #include "tui/tui-wingeneral.h"
 #include "tui/tui-winsource.h"
 #include "tui/tui-source.h"
 #include "target.h"
 #include "frame.h"
-#include "breakpoint.h"
 #include "inferior.h"
 #include "symtab.h"
-#include "source.h"
 #include "terminal.h"
 #include "top.h"
+#include "ui.h"
+#include "observable.h"
 
-#include <ctype.h>
-#include <signal.h>
 #include <fcntl.h>
-#include <setjmp.h>
 
 #include "gdb_curses.h"
 #include "interps.h"
@@ -84,13 +81,19 @@ struct tui_char_command
    mode.  */
 static const struct tui_char_command tui_commands[] = {
   { 'c', "continue" },
+  { 'C', "reverse-continue" },
   { 'd', "down" },
   { 'f', "finish" },
+  { 'F', "reverse-finish" },
   { 'n', "next" },
+  { 'N', "reverse-next" },
   { 'o', "nexti" },
+  { 'O', "reverse-nexti" },
   { 'r', "run" },
   { 's', "step" },
+  { 'S', "reverse-step" },
   { 'i', "stepi" },
+  { 'I', "reverse-stepi" },
   { 'u', "up" },
   { 'v', "info locals" },
   { 'w', "where" },
@@ -121,6 +124,13 @@ tui_rl_switch_mode (int notused1, int notused2)
 	  rl_deprep_terminal ();
 	  tui_enable ();
 	}
+    }
+  catch (const gdb_exception_forced_quit &ex)
+    {
+      /* Ideally, we'd do a 'throw' here, but as noted above, we can't
+	 do that, so, instead, we'll set the necessary flags so that
+	 a later QUIT check will restart the forced quit.  */
+      set_force_quit_flag ();
     }
   catch (const gdb_exception &ex)
     {
@@ -217,7 +227,7 @@ tui_rl_command_key (int count, int key)
 	  rl_newline (1, '\n');
 
 	  /* Switch to gdb command mode while executing the command.
-	     This way the gdb's continue prompty will be displayed.  */
+	     This way the gdb's continue prompt will be displayed.  */
 	  tui_set_key_mode (TUI_ONE_COMMAND_MODE);
 	  return 0;
 	}
@@ -244,6 +254,13 @@ tui_rl_next_keymap (int notused1, int notused2)
   if (!tui_active)
     tui_rl_switch_mode (0 /* notused */, 0 /* notused */);
 
+  if (rl_end)
+    {
+      rl_end = 0;
+      rl_point = 0;
+      rl_mark = 0;
+    }
+
   tui_set_key_mode (tui_current_key_mode == TUI_COMMAND_MODE
 		    ? TUI_SINGLE_KEY_MODE : TUI_COMMAND_MODE);
   return 0;
@@ -256,11 +273,9 @@ tui_rl_next_keymap (int notused1, int notused2)
 static int
 tui_rl_startup_hook (void)
 {
-  rl_already_prompted = 1;
   if (tui_current_key_mode != TUI_COMMAND_MODE
       && !gdb_in_secondary_prompt_p (current_ui))
     tui_set_key_mode (TUI_SINGLE_KEY_MODE);
-  tui_redisplay_readline ();
   return 0;
 }
 
@@ -272,7 +287,7 @@ tui_set_key_mode (enum tui_key_mode mode)
   tui_current_key_mode = mode;
   rl_set_keymap (mode == TUI_SINGLE_KEY_MODE
 		 ? tui_keymap : tui_readline_standard_keymap);
-  tui_show_locator_content ();
+  tui_show_status_content ();
 }
 
 /* Initialize readline and configure the keymap for the switching
@@ -448,11 +463,11 @@ tui_enable (void)
       tui_set_term_width_to (COLS);
       def_prog_mode ();
 
-      tui_show_frame_info (0);
+      tui_show_frame_info (deprecated_safe_get_selected_frame ());
       tui_set_initial_layout ();
-      tui_set_win_focus_to (TUI_SRC_WIN);
-      keypad (TUI_CMD_WIN->handle.get (), TRUE);
-      wrefresh (TUI_CMD_WIN->handle.get ());
+      tui_set_win_focus_to (tui_src_win ());
+      keypad (tui_cmd_win ()->handle.get (), TRUE);
+      wrefresh (tui_cmd_win ()->handle.get ());
       tui_finish_init = false;
     }
   else
@@ -480,11 +495,6 @@ tui_enable (void)
       tui_resize_all ();
     }
 
-  if (deprecated_safe_get_selected_frame ())
-    tui_show_frame_info (deprecated_safe_get_selected_frame ());
-  else
-    tui_display_main ();
-
   /* Install the TUI specific hooks.  This must be done after the call to
      tui_display_main so that we don't detect the symtab changed event it
      can cause.  */
@@ -500,6 +510,8 @@ tui_enable (void)
   /* Update gdb's knowledge of its terminal.  */
   gdb_save_tty_state ();
   tui_update_gdb_sizes ();
+
+  gdb::observers::tui_enabled.notify (true);
 }
 
 /* Leave the tui mode.
@@ -538,6 +550,8 @@ tui_disable (void)
 
   tui_active = false;
   tui_update_gdb_sizes ();
+
+  gdb::observers::tui_enabled.notify (false);
 }
 
 /* Command wrapper for enabling tui mode.  */
@@ -559,7 +573,7 @@ tui_disable_command (const char *args, int from_tty)
 void
 tui_show_assembly (struct gdbarch *gdbarch, CORE_ADDR addr)
 {
-  tui_suppress_output suppress;
+  tui_batch_rendering suppress;
   tui_add_win_to_layout (DISASSEM_WIN);
   tui_update_source_windows_with_addr (gdbarch, addr);
 }
@@ -580,11 +594,11 @@ bool
 tui_get_command_dimension (unsigned int *width, 
 			   unsigned int *height)
 {
-  if (!tui_active || (TUI_CMD_WIN == NULL))
+  if (!tui_active || (tui_cmd_win () == NULL))
     return false;
   
-  *width = TUI_CMD_WIN->width;
-  *height = TUI_CMD_WIN->height;
+  *width = tui_cmd_win ()->width;
+  *height = tui_cmd_win ()->height;
   return true;
 }
 

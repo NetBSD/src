@@ -1,5 +1,5 @@
 /* MI Command Set - varobj commands.
-   Copyright (C) 2000-2023 Free Software Foundation, Inc.
+   Copyright (C) 2000-2024 Free Software Foundation, Inc.
 
    Contributed by Cygnus Solutions (a Red Hat company).
 
@@ -18,7 +18,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "mi-cmds.h"
 #include "mi-main.h"
 #include "ui-out.h"
@@ -30,7 +29,7 @@
 #include "mi-getopt.h"
 #include "gdbthread.h"
 #include "mi-parse.h"
-#include "gdbsupport/gdb_optional.h"
+#include <optional>
 #include "inferior.h"
 
 static void varobj_update_one (struct varobj *var,
@@ -89,13 +88,13 @@ print_varobj (struct varobj *var, enum print_values print_values,
 /* VAROBJ operations */
 
 void
-mi_cmd_var_create (const char *command, char **argv, int argc)
+mi_cmd_var_create (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   CORE_ADDR frameaddr = 0;
   struct varobj *var;
-  char *frame;
-  char *expr;
+  const char *frame;
+  const char *expr;
   enum varobj_type var_type;
 
   if (argc != 3)
@@ -140,9 +139,9 @@ mi_cmd_var_create (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_delete (const char *command, char **argv, int argc)
+mi_cmd_var_delete (const char *command, const char *const *argv, int argc)
 {
-  char *name;
+  const char *name;
   struct varobj *var;
   int numdel;
   int children_only_p = 0;
@@ -214,7 +213,7 @@ mi_parse_format (const char *arg)
 }
 
 void
-mi_cmd_var_set_format (const char *command, char **argv, int argc)
+mi_cmd_var_set_format (const char *command, const char *const *argv, int argc)
 {
   enum varobj_display_formats format;
   struct varobj *var;
@@ -240,12 +239,13 @@ mi_cmd_var_set_format (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_set_visualizer (const char *command, char **argv, int argc)
+mi_cmd_var_set_visualizer (const char *command, const char *const *argv,
+			   int argc)
 {
   struct varobj *var;
 
   if (argc != 2)
-    error (_("Usage: NAME VISUALIZER_FUNCTION."));
+    error (_("-var-set-visualizer: Usage: NAME VISUALIZER_FUNCTION."));
 
   var = varobj_get_handle (argv[0]);
 
@@ -256,13 +256,13 @@ mi_cmd_var_set_visualizer (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_set_frozen (const char *command, char **argv, int argc)
+mi_cmd_var_set_frozen (const char *command, const char *const *argv, int argc)
 {
   struct varobj *var;
   bool frozen;
 
   if (argc != 2)
-    error (_("-var-set-format: Usage: NAME FROZEN_FLAG."));
+    error (_("-var-set-frozen: Usage: NAME FROZEN_FLAG."));
 
   var = varobj_get_handle (argv[0]);
 
@@ -281,7 +281,7 @@ mi_cmd_var_set_frozen (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_show_format (const char *command, char **argv, int argc)
+mi_cmd_var_show_format (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   enum varobj_display_formats format;
@@ -300,7 +300,8 @@ mi_cmd_var_show_format (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_info_num_children (const char *command, char **argv, int argc)
+mi_cmd_var_info_num_children (const char *command, const char *const *argv,
+			      int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct varobj *var;
@@ -335,19 +336,33 @@ mi_print_value_p (struct varobj *var, enum print_values print_values)
   if (type == NULL)
     return 1;
   else
-    {
-      type = check_typedef (type);
+    return mi_simple_type_p (type);
+}
 
-      /* For PRINT_SIMPLE_VALUES, only print the value if it has a type
-	 and that type is not a compound type.  */
-      return (type->code () != TYPE_CODE_ARRAY
-	      && type->code () != TYPE_CODE_STRUCT
-	      && type->code () != TYPE_CODE_UNION);
+/* See mi-cmds.h.  */
+
+bool
+mi_simple_type_p (struct type *type)
+{
+  type = check_typedef (type);
+
+  if (TYPE_IS_REFERENCE (type))
+    type = check_typedef (type->target_type ());
+
+  switch (type->code ())
+    {
+    case TYPE_CODE_ARRAY:
+    case TYPE_CODE_STRUCT:
+    case TYPE_CODE_UNION:
+      return false;
+    default:
+      return true;
     }
 }
 
 void
-mi_cmd_var_list_children (const char *command, char **argv, int argc)
+mi_cmd_var_list_children (const char *command, const char *const *argv,
+			  int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct varobj *var;  
@@ -390,15 +405,7 @@ mi_cmd_var_list_children (const char *command, char **argv, int argc)
 
   if (from < to)
     {
-      /* For historical reasons this might emit a list or a tuple, so
-	 we construct one or the other.  */
-      gdb::optional<ui_out_emit_tuple> tuple_emitter;
-      gdb::optional<ui_out_emit_list> list_emitter;
-
-      if (mi_version (uiout) == 1)
-	tuple_emitter.emplace (uiout, "children");
-      else
-	list_emitter.emplace (uiout, "children");
+      ui_out_emit_list list_emitter (uiout, "children");
       for (int ix = from; ix < to && ix < children.size (); ix++)
 	{
 	  ui_out_emit_tuple child_emitter (uiout, "child");
@@ -411,7 +418,7 @@ mi_cmd_var_list_children (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_info_type (const char *command, char **argv, int argc)
+mi_cmd_var_info_type (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct varobj *var;
@@ -427,13 +434,14 @@ mi_cmd_var_info_type (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_info_path_expression (const char *command, char **argv, int argc)
+mi_cmd_var_info_path_expression (const char *command, const char *const *argv,
+				 int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct varobj *var;
 
   if (argc != 1)
-    error (_("Usage: NAME."));
+    error (_("-var-info-path-expression: Usage: NAME."));
 
   /* Get varobj handle, if a valid var obj name was specified.  */
   var = varobj_get_handle (argv[0]);
@@ -444,7 +452,8 @@ mi_cmd_var_info_path_expression (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_info_expression (const char *command, char **argv, int argc)
+mi_cmd_var_info_expression (const char *command, const char *const *argv,
+			    int argc)
 {
   struct ui_out *uiout = current_uiout;
   const struct language_defn *lang;
@@ -465,7 +474,8 @@ mi_cmd_var_info_expression (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_show_attributes (const char *command, char **argv, int argc)
+mi_cmd_var_show_attributes (const char *command, const char *const *argv,
+			    int argc)
 {
   struct ui_out *uiout = current_uiout;
   int attr;
@@ -489,7 +499,8 @@ mi_cmd_var_show_attributes (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_evaluate_expression (const char *command, char **argv, int argc)
+mi_cmd_var_evaluate_expression (const char *command, const char *const *argv,
+				int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct varobj *var;
@@ -497,7 +508,7 @@ mi_cmd_var_evaluate_expression (const char *command, char **argv, int argc)
   enum varobj_display_formats format;
   int formatFound;
   int oind;
-  char *oarg;
+  const char *oarg;
     
   enum opt
   {
@@ -556,7 +567,7 @@ mi_cmd_var_evaluate_expression (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_assign (const char *command, char **argv, int argc)
+mi_cmd_var_assign (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
   struct varobj *var;
@@ -614,10 +625,10 @@ mi_cmd_var_update_iter (struct varobj *var, bool only_floating,
 }
 
 void
-mi_cmd_var_update (const char *command, char **argv, int argc)
+mi_cmd_var_update (const char *command, const char *const *argv, int argc)
 {
   struct ui_out *uiout = current_uiout;
-  char *name;
+  const char *name;
   enum print_values print_values;
 
   if (argc != 1 && argc != 2)
@@ -633,15 +644,7 @@ mi_cmd_var_update (const char *command, char **argv, int argc)
   else
     print_values = PRINT_NO_VALUES;
 
-  /* For historical reasons this might emit a list or a tuple, so we
-     construct one or the other.  */
-  gdb::optional<ui_out_emit_tuple> tuple_emitter;
-  gdb::optional<ui_out_emit_list> list_emitter;
-
-  if (mi_version (uiout) <= 1)
-    tuple_emitter.emplace (uiout, "changelist");
-  else
-    list_emitter.emplace (uiout, "changelist");
+  ui_out_emit_list list_emitter (uiout, "changelist");
 
   /* Check if the parameter is a "*", which means that we want to
      update all variables.  */
@@ -653,9 +656,7 @@ mi_cmd_var_update (const char *command, char **argv, int argc)
 	 only the root VAROBJs.  */
 
       all_root_varobjs ([=] (varobj *var)
-        {
-	  mi_cmd_var_update_iter (var, *name == '0', print_values);
-	});
+	{ mi_cmd_var_update_iter (var, *name == '0', print_values); });
     }
   else
     {
@@ -680,9 +681,7 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
     {
       int from, to;
 
-      gdb::optional<ui_out_emit_tuple> tuple_emitter;
-      if (mi_version (uiout) > 1)
-	tuple_emitter.emplace (uiout, nullptr);
+      ui_out_emit_tuple tuple_emitter (uiout, nullptr);
       uiout->field_string ("name", varobj_get_objname (r.varobj));
 
       switch (r.status)
@@ -748,7 +747,8 @@ varobj_update_one (struct varobj *var, enum print_values print_values,
 }
 
 void
-mi_cmd_enable_pretty_printing (const char *command, char **argv, int argc)
+mi_cmd_enable_pretty_printing (const char *command, const char *const *argv,
+			       int argc)
 {
   if (argc != 0)
     error (_("-enable-pretty-printing: no arguments allowed"));
@@ -757,7 +757,8 @@ mi_cmd_enable_pretty_printing (const char *command, char **argv, int argc)
 }
 
 void
-mi_cmd_var_set_update_range (const char *command, char **argv, int argc)
+mi_cmd_var_set_update_range (const char *command, const char *const *argv,
+			     int argc)
 {
   struct varobj *var;
   int from, to;

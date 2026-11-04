@@ -1,0 +1,5 @@
+#	$NetBSD: std.mvme167_177,v 1.1.2.2 2026/11/04 23:21:01 perseant Exp $
+
+# Standard devices found on all MVME167 and MVME177 systems.
+clmpcc0		at pcctwo? ipl 4
+lpt0		at pcctwo? ipl 1

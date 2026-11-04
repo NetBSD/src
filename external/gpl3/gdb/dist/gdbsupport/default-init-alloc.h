@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2024 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -15,10 +15,10 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_DEFAULT_INIT_ALLOC_H
-#define COMMON_DEFAULT_INIT_ALLOC_H
+#ifndef GDBSUPPORT_DEFAULT_INIT_ALLOC_H
+#define GDBSUPPORT_DEFAULT_INIT_ALLOC_H
 
-#if __cplusplus >= 202002L
+#if __has_include(<memory_resource>)
 #include <memory_resource>
 #endif
 
@@ -35,7 +35,7 @@ namespace gdb {
 
 template<typename T,
 	 typename A
-#if __cplusplus >= 202002L
+#ifdef __cpp_lib_polymorphic_allocator
 	 = std::pmr::polymorphic_allocator<T>
 #else
 	 = std::allocator<T>
@@ -75,4 +75,4 @@ public:
 
 } /* namespace gdb */
 
-#endif /* COMMON_DEFAULT_INIT_ALLOC_H */
+#endif /* GDBSUPPORT_DEFAULT_INIT_ALLOC_H */

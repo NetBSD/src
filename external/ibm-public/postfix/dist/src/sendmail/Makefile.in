@@ -86,6 +86,7 @@ sendmail.o: ../../include/recipient_list.h
 sendmail.o: ../../include/record.h
 sendmail.o: ../../include/resolve_clnt.h
 sendmail.o: ../../include/safe.h
+sendmail.o: ../../include/sendopts.h
 sendmail.o: ../../include/set_ugid.h
 sendmail.o: ../../include/split_at.h
 sendmail.o: ../../include/stringops.h

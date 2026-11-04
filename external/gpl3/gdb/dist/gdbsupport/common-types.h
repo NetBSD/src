@@ -1,6 +1,6 @@
 /* Declarations for common types.
 
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef COMMON_COMMON_TYPES_H
-#define COMMON_COMMON_TYPES_H
+#ifndef GDBSUPPORT_COMMON_TYPES_H
+#define GDBSUPPORT_COMMON_TYPES_H
 
 #include <inttypes.h>
 
@@ -53,4 +53,4 @@ typedef uint64_t ULONGEST;
 
 enum tribool { TRIBOOL_UNKNOWN = -1, TRIBOOL_FALSE = 0, TRIBOOL_TRUE = 1 };
 
-#endif /* COMMON_COMMON_TYPES_H */
+#endif /* GDBSUPPORT_COMMON_TYPES_H */

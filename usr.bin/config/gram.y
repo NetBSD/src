@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: gram.y,v 1.57 2024/01/18 04:41:37 thorpej Exp $	*/
+/*	$NetBSD: gram.y,v 1.57.2.1 2026/11/04 23:28:31 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: gram.y,v 1.57 2024/01/18 04:41:37 thorpej Exp $");
+__RCSID("$NetBSD: gram.y,v 1.57.2.1 2026/11/04 23:28:31 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -943,6 +943,7 @@ major_minor:
 /* filesystem type for root fs specification */
 fs_spec:
 	  TYPE '?'		   { setfstype(&conf.cf_fstype, intern("?")); }
+	| TYPE QSTRING			{ setfstype(&conf.cf_fstype, $2); }
 	| TYPE WORD			{ setfstype(&conf.cf_fstype, $2); }
 ;
 

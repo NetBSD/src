@@ -1,5 +1,5 @@
 /* Hash table wrappers for gdb.
-   Copyright (C) 2021-2023 Free Software Foundation, Inc.
+   Copyright (C) 2021-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -41,10 +41,5 @@ htab_delete_entry (void *ptr)
 {
   delete (T *) ptr;
 }
-
-/* Allocation and deallocation functions for the libiberty hash table
-   which use obstacks.  */
-void *hashtab_obstack_allocate (void *data, size_t size, size_t count);
-void dummy_obstack_deallocate (void *object, void *data);
 
 #endif /* GDBSUPPORT_GDB_HASHTAB_H */

@@ -1,4 +1,4 @@
-/* $NetBSD: nlist_ecoff.c,v 1.23 2012/03/20 00:31:24 matt Exp $ */
+/* $NetBSD: nlist_ecoff.c,v 1.23.44.1 2026/11/04 23:19:17 perseant Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou
@@ -36,11 +36,12 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nlist_ecoff.c,v 1.23 2012/03/20 00:31:24 matt Exp $");
+__RCSID("$NetBSD: nlist_ecoff.c,v 1.23.44.1 2026/11/04 23:19:17 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <sys/file.h>
@@ -90,7 +91,7 @@ __fdnlist_ecoff(int fd, struct nlist *list)
 	/*
 	 * Map the file in its entirety.
 	 */
-	if ((uintmax_t)st.st_size > (uintmax_t)SIZE_T_MAX) {
+	if ((uintmax_t)st.st_size > (uintmax_t)SIZE_MAX) {
 		errno = EFBIG;
 		goto out;
 	}

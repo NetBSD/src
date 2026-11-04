@@ -1,5 +1,5 @@
 /* Support routines for building symbol tables in GDB's internal format.
-   Copyright (C) 1986-2024 Free Software Foundation, Inc.
+   Copyright (C) 1986-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -951,11 +951,7 @@ buildsym_compunit::end_compunit_symtab_with_blockvector
   cu->set_producer (m_producer);
 
   cu->set_blockvector (blockvector);
-  {
-    struct block *b = blockvector->global_block ();
-
-    b->set_compunit_symtab (cu);
-  }
+  blockvector->global_block ()->set_compunit (cu);
 
   cu->set_macro_table (release_macros ());
 

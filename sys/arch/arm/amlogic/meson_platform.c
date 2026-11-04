@@ -1,4 +1,4 @@
-/* $NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Exp $ */
+/* $NetBSD: meson_platform.c,v 1.21.6.1 2026/11/04 23:20:04 perseant Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "arml2cc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.21.6.1 2026/11/04 23:20:04 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -42,6 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_platform.c,v 1.21 2023/04/07 08:55:29 skrll Ex
 #include <sys/termios.h>
 
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_platform.h>
 
 #include <arm/fdt/arm_fdtvar.h>
 
@@ -187,8 +188,8 @@ meson_platform_device_register(device_t self, void *aux)
 		uint8_t enaddr[ETHER_ADDR_LEN];
 		if (get_bootconf_option(boot_args, "awge0.mac-address",
 		    BOOTOPT_TYPE_MACADDR, enaddr)) {
-			prop_dictionary_set_data(dict, "mac-address", enaddr,
-			    sizeof(enaddr));
+			device_setprop_data(self, "mac-address",
+			    enaddr, sizeof(enaddr));
 		}
 	}
 
@@ -297,7 +298,7 @@ meson8b_platform_bootstrap(void)
 
 #if NARML2CC > 0
 	const bus_space_handle_t pl310_bh = MESON8B_ARM_VBASE + MESON8B_ARM_PL310_BASE;
-	arml2cc_init(&arm_generic_bs_tag, pl310_bh, 0);
+	arml2cc_get_cacheinfo(&arm_generic_bs_tag, pl310_bh, 0);
 #endif
 
 	meson_platform_bootstrap();

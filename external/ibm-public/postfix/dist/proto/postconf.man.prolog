@@ -29,7 +29,7 @@ whose first non-whitespace character is a `#'.
 A logical line starts with non-whitespace text. A line that starts
 with whitespace continues a logical line.
 .IP \(bu
-A parameter value may refer to other parameters.
+A parameter value may refer to functions or other parameters.
 .RS
 .IP \(bu 
 The expressions "$name" and "${name}" are recursively replaced with
@@ -59,6 +59,11 @@ Postfix supports "!=" (inequality), "<", "<=", ">=", and ">". The
 comparison is numerical when both operands are all digits, otherwise
 the comparison is lexicographical. These forms are supported with
 Postfix versions >= 3.0.
+.IP \(bu
+The expression "${name{value}}" is replaced with the result from
+calling the function \fIname\fR with the argument \fIvalue\fR
+after stripping whitespace between the "{", the value, and the "}".
+An example is the domain_to_ascii{} function.
 .IP \(bu
 Each "value" is subject to recursive named parameter and relational
 expression evaluation, except where noted.

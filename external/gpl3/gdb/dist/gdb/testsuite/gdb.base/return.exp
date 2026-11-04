@@ -1,4 +1,4 @@
-# Copyright (C) 1992-2024 Free Software Foundation, Inc.
+# Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -15,11 +15,11 @@
 
 # This file was written by Jeff Law. (law@cs.utah.edu)
 
+set allow_float_test [allow_float_test]
+
 if { [prepare_for_testing "failed to prepare" "return"] } {
     return -1
 }
-
-set allow_float_test [allow_float_test]
 
 proc return_tests { } {
     global gdb_prompt allow_float_test

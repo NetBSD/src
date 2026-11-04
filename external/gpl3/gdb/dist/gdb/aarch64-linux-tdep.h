@@ -1,6 +1,6 @@
 /* GNU/Linux on AArch64 target support, prototypes.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GDB.
@@ -18,8 +18,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef AARCH64_LINUX_TDEP_H
-#define AARCH64_LINUX_TDEP_H
+#ifndef GDB_AARCH64_LINUX_TDEP_H
+#define GDB_AARCH64_LINUX_TDEP_H
 
 #include "regset.h"
 
@@ -45,4 +45,4 @@ extern const struct regset aarch64_linux_fpregset;
 /* Matches HWCAP_PACA in kernel header arch/arm64/include/uapi/asm/hwcap.h.  */
 #define AARCH64_HWCAP_PACA (1 << 30)
 
-#endif /* AARCH64_LINUX_TDEP_H */
+#endif /* GDB_AARCH64_LINUX_TDEP_H */

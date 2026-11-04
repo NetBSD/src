@@ -54,7 +54,8 @@
 #define SIGNBIT		0x80000000L
 #define HIDDEN		(1L << 23L)
 #define SIGN(fp)	((fp) & SIGNBIT)
-#define EXP(fp)		(((fp) >> 23L) & 0xFF)
+#define EXPMASK		0xFF
+#define EXP(fp)		(((fp) >> 23L) & EXPMASK)
 #define MANT(fp)	(((fp) & 0x7FFFFFL) | HIDDEN)
 #define PACK(s,e,m)	((s) | ((e) << 23L) | (m))
 
@@ -63,7 +64,7 @@
 #define HIDDEND		(1L << 20L)
 #define EXPDBITS	11
 #define EXPDMASK	0x7FFL
-#define EXPD(fp)	(((fp.l.upper) >> 20L) & 0x7FFL)
+#define EXPD(fp)	(((fp.l.upper) >> 20L) & EXPDMASK)
 #define SIGND(fp)	((fp.l.upper) & SIGNBIT)
 #define MANTD(fp)	(((((fp.l.upper) & 0xFFFFF) | HIDDEND) << 10) | \
 				(fp.l.lower >> 22))
@@ -77,6 +78,9 @@
 #define EXPX(fp)	(((fp.l.upper) >> 16) & EXPXMASK)
 #define SIGNX(fp)	((fp.l.upper) & SIGNBIT)
 #define MANTXMASK	0x7FFFFFFFL /* mask of upper part */
+
+#define QUIET_NaN	0xFFFFFFFF
+#define POSS_INF_or_NaN	0x7FFFFFFF
 
 union double_long 
 {
@@ -135,6 +139,7 @@ __unorddf2(double a, double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert unsigned int to double */
 double
 __floatunsidf (unsigned long a1)
@@ -242,6 +247,23 @@ __extendsfdf2 (float a1)
   fl1.f = a1;
 
   dl.l.upper = SIGN (fl1.l);
+
+  /* special case for inf. */
+  if ((fl1.l & POSS_INF_or_NaN) == (EXPMASK << 23))
+    {
+      dl.l.upper |= EXPDMASK << 20;
+      dl.l.lower = 0;
+      return dl.d;
+    }
+
+  /* expand the right value for nan */
+  if ((fl1.l & POSS_INF_or_NaN) > (EXPMASK << 23))
+    {
+      dl.l.upper = QUIET_NaN;
+      dl.l.lower = QUIET_NaN;
+      return dl.d;
+    }
+
   if ((fl1.l & ~SIGNBIT) == 0)
     {
       dl.l.lower = 0;
@@ -281,6 +303,20 @@ __truncdfsf2 (double a1)
   int shift;
 
   dl1.d = a1;
+
+  /* special case for inf. */
+  if (EXPD(dl1) == EXPDMASK && dl1.l.lower == 0)
+    {
+      fl.l = (EXPMASK << 23) | SIGND(dl1);
+      return fl.f;
+    }
+
+  /* special case for nan. */
+  if (EXPD(dl1) == EXPDMASK && (dl1.l.lower | (dl1.l.upper & MANTDMASK)))
+    {
+      fl.l = QUIET_NaN;
+      return fl.f;
+    }
 
   if ((dl1.l.upper & ~SIGNBIT) == 0 && !dl1.l.lower)
     {
@@ -377,6 +413,7 @@ __fixsfsi (float a1)
   return __fixdfsi (foo);
 }
 
+#endif
 #else /* EXTFLOAT */
 
 /* We do not need these routines for coldfire, as it has no extended
@@ -387,6 +424,7 @@ __fixsfsi (float a1)
 
    We assume all numbers are normalized, don't do any rounding, etc.  */
 
+#ifndef LIBCSOFTFLOAT
 /* Prototypes for the above in case we use them.  */
 double __floatunsidf (unsigned long);
 double __floatsidf (long);
@@ -396,6 +434,7 @@ float __truncdfsf2 (double);
 long __fixdfsi (double);
 long __fixsfsi (float);
 long __cmpdf2 (double, double);
+#endif
 
 int
 __unordxf2(long double a, long double b)
@@ -413,6 +452,7 @@ __unordxf2(long double a, long double b)
   return 0;
 }
 
+#ifndef LIBCSOFTFLOAT
 /* convert double to long double */
 long double
 __extenddfxf2 (double d)
@@ -425,6 +465,25 @@ __extenddfxf2 (double d)
   /*printf ("dfxf in: %g\n", d);*/
 
   ldl.l.upper = SIGND (dl);
+
+  /* special case for inf. */
+  if ((dl.l.upper & POSS_INF_or_NaN) == (EXPDMASK << 20) && dl.l.lower == 0)
+    {
+      ldl.l.upper |= EXPXMASK << 16;
+      ldl.l.middle = 0;
+      ldl.l.lower = 0;
+      return ldl.ld;
+    }
+
+  /* special case for nan */
+  if (EXPD(dl) == EXPDMASK && (dl.l.lower | (dl.l.upper & MANTDMASK)))
+    {
+      ldl.l.upper = EXPXMASK << 16;
+      ldl.l.middle = QUIET_NaN;
+      ldl.l.lower = QUIET_NaN;
+      return ldl.ld;
+    }
+
   if ((dl.l.upper & ~SIGNBIT) == 0 && !dl.l.lower)
     {
       ldl.l.middle = 0;
@@ -458,6 +517,23 @@ __truncxfdf2 (long double ld)
   /*printf ("xfdf in: %s\n", dumpxf (ld));*/
 
   dl.l.upper = SIGNX (ldl);
+
+  /* special case for inf. */
+  if ((EXPX(ldl) == EXPXMASK) && (ldl.l.middle | ldl.l.lower) == 0)
+    {
+      dl.l.upper |= EXPDMASK << 20;
+      dl.l.lower = 0;
+      return dl.d;
+    }
+
+  /* special case for nan */
+  if (EXPX(ldl) == EXPXMASK && (ldl.l.middle | ldl.l.lower))
+    {
+      dl.l.upper = QUIET_NaN;
+      dl.l.lower = QUIET_NaN;
+      return dl.d;
+    }
+
   if ((ldl.l.upper & ~SIGNBIT) == 0 && !ldl.l.middle && !ldl.l.lower)
     {
       dl.l.lower = 0;
@@ -592,5 +668,6 @@ __gexf2 (long double x1, long double x2)
   return __cmpdf2 ((double) x1, (double) x2);
 }
 
+#endif
 #endif /* !__mcoldfire__ */
 #endif /* EXTFLOAT */

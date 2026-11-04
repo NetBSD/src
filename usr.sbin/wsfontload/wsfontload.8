@@ -1,4 +1,4 @@
-.\"	$NetBSD: wsfontload.8,v 1.32 2022/06/08 22:38:29 uwe Exp $
+.\"	$NetBSD: wsfontload.8,v 1.32.4.1 2026/11/04 23:29:03 perseant Exp $
 .\"
 .\" Copyright (c) 1999, 2001
 .\" 	Matthias Drochner.  All rights reserved.
@@ -32,7 +32,7 @@
 .Nd "load a font bitmap into the wsfont pool or a wscons display device"
 .Sh SYNOPSIS
 .Nm
-.Op Fl Bbv
+.Op Fl Bbnv
 .Op Fl e Ar encoding
 .Op Fl f Ar wsdev
 .Op Fl h Ar height
@@ -88,19 +88,25 @@ Per default,
 .Ql iso
 is assumed.
 .It Fl f Ar wsdev
-Specify the device to operate on.
+Specifies the device to operate on.
 Default is
 .Pa /dev/wsfont .
 .It Fl h Ar height
 Sets the height of a font character in pixels.
 Default is 16.
 .It Fl l
-Print a list of fonts that have been loaded or are built-in to the kernel.
+Prints a list of fonts that have been loaded or are built-in to the kernel.
 .It Fl N Ar name
 Specifies a name which can be used later to refer to the font.
 If none is given, the
 .Ar fontfile
 name is used to create one.
+.It Fl n
+Does a dry run.
+The
+.Ar fontfile
+is not actually loaded.
+Useful for validating or obtaining information about the font.
 .It Fl v
 Prints the font's properties before loading it.
 .It Fl w Ar width
@@ -132,7 +138,7 @@ See
 .El
 .Sh EXAMPLES
 Load ISO-encoded 20-pixel high Terminus font
-and use it on the current console
+and use it on the current console:
 .Pp
 .Bd -literal -offset indent
 # wsfontload /usr/share/wscons/fonts/ter-120n.wsf
@@ -146,7 +152,7 @@ and switch the first console screen to use it:
 .Pp
 .Bd -literal -offset indent
 # wsfontload -w 16 -h 32 -e iso -N spleen32 \e
-	/usr/share/wscons/fonts/spleen-16x32.fnt
+    /usr/share/wscons/fonts/spleen-16x32.fnt
 # wsconsctl -dw font=spleen32
 .Ed
 .Pp
@@ -163,6 +169,13 @@ This or another 8\[tmu]8-font is necessary to use the
 50-line screen type on
 .Xr vga 4
 displays.
+.Pp
+Obtain information about a font file without loading it:
+.Pp
+.Bd -literal -offset indent
+# wsfontload -n -v \e
+    /usr/share/wscons/fonts/ter-120n.wsf
+.Ed
 .Sh SEE ALSO
 .Xr wscons 4 ,
 .Xr wsfont 4 ,

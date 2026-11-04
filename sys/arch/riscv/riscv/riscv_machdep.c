@@ -1,4 +1,4 @@
-/*	$NetBSD: riscv_machdep.c,v 1.37.2.1 2025/08/02 05:56:04 perseant Exp $	*/
+/*	$NetBSD: riscv_machdep.c,v 1.37.2.2 2026/11/04 23:21:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2019, 2022 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_riscv_debug.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: riscv_machdep.c,v 1.37.2.1 2025/08/02 05:56:04 perseant Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.37.2.2 2026/11/04 23:21:15 perseant Exp $");
 
 #include <sys/param.h>
 
@@ -63,6 +63,7 @@ __RCSID("$NetBSD: riscv_machdep.c,v 1.37.2.1 2025/08/02 05:56:04 perseant Exp $"
 
 #include <uvm/uvm_extern.h>
 
+#include <riscv/cpufunc.h>
 #include <riscv/frame.h>
 #include <riscv/locore.h>
 #include <riscv/machdep.h>
@@ -73,8 +74,10 @@ __RCSID("$NetBSD: riscv_machdep.c,v 1.37.2.1 2025/08/02 05:56:04 perseant Exp $"
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_boot.h>
+#include <dev/fdt/fdt_console.h>
 #include <dev/fdt/fdt_memory.h>
 #include <dev/fdt/fdt_private.h>
+#include <dev/fdt/fdt_platform.h>
 
 int cpu_printfataltraps = 1;
 char machine[] = MACHINE;
@@ -140,16 +143,6 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	    NULL, 0, NULL, 0,
 	    CTL_MACHDEP, CTL_EOL);
 }
-
-#ifdef MODULAR
-/*
- * Push any modules loaded by the boot loader.
- */
-void
-module_init_md(void)
-{
-}
-#endif /* MODULAR */
 
 /*
  * Set registers on exec.
@@ -451,6 +444,11 @@ cpu_reboot(int howto, char *bootstr)
 	DISABLE_INTERRUPTS();
 
 	if (howto & RB_HALT) {
+		if (howto & RB_POWERDOWN) {
+			printf("power off...\n");
+			sbi_system_reset(SBI_RESET_TYPE_SHUTDOWN,
+					 SBI_RESET_REASON_NONE);
+		} /* FALLTHRU */
 		printf("\n");
 		printf("The operating system has halted.\n");
 		printf("Please press any key to reboot.\n\n");
@@ -609,8 +607,10 @@ cpu_kernel_vm_init(paddr_t memory_start, paddr_t memory_end)
 	const size_t eidx = (eva >> vshift) & pdetab_mask;
 
 	/* Allocate gigapages covering all physical memory in the direct map. */
+	pt_entry_t pbmt_flag = pte_enter_flags_to_pbmt(0);
 	for (size_t i = sidx; i < eidx && pa < memory_end; i++, pa += inc) {
-		l2_pte[i] = PA_TO_PTE(pa) | PTE_KERN | PTE_HARDWIRED | PTE_RW;
+		l2_pte[i] = PA_TO_PTE(pa) | PTE_KERN | PTE_HARDWIRED | PTE_RW |
+		    pbmt_flag;
 		VPRINTF("dm:   %p :  %#" PRIxPADDR "\n", &l2_pte[i], l2_pte[i]);
 	}
 #endif
@@ -717,6 +717,11 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	boot_args = fdt_get_bootargs();
 
+	/* Heads up ... Setup the CPU / MMU / TLB functions. */
+	VPRINTF("cpufunc\n");
+	if (set_cpufuncs())
+		panic("cpu not recognized!");
+
 	VPRINTF("devmap %p\n", plat->fp_devmap());
 	pmap_devmap_bootstrap(0, plat->fp_devmap());
 
@@ -763,7 +768,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	const uint64_t memory_limit = ptoa(maxppn);
 
 	if (memory_end > memory_limit) {
-		fdt_memory_remove_range(memory_limit, memory_end);
+		fdt_memory_remove_range(memory_limit, memory_end - memory_limit);
 		memory_end = memory_limit;
 	}
 
@@ -840,7 +845,7 @@ init_riscv(register_t hartid, paddr_t dtb)
 	/* XXX check all ranges for last one with a big enough hole */
 	msgbufaddr = memory_end - MSGBUFSIZE;
 	KASSERT(msgbufaddr != 0);	/* no space for msgbuf */
-	fdt_memory_remove_range(msgbufaddr, msgbufaddr + MSGBUFSIZE);
+	fdt_memory_remove_range(msgbufaddr, MSGBUFSIZE);
 	msgbufaddr = RISCV_PA_TO_KVA(msgbufaddr);
 	VPRINTF("msgbufaddr = %#lx\n", msgbufaddr);
 	initmsgbuf((void *)msgbufaddr, MSGBUFSIZE);
@@ -895,7 +900,6 @@ init_riscv(register_t hartid, paddr_t dtb)
 
 	/* Finish setting up lwp0 on our end before we call main() */
 	riscv_init_lwp0_uarea();
-
 
 	error = 0;
 	if ((boothowto & RB_MD1) == 0) {

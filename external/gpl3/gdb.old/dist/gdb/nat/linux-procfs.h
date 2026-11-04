@@ -1,5 +1,5 @@
 /* Linux-specific PROCFS manipulation routines.
-   Copyright (C) 2011-2023 Free Software Foundation, Inc.
+   Copyright (C) 2011-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef NAT_LINUX_PROCFS_H
-#define NAT_LINUX_PROCFS_H
+#ifndef GDB_NAT_LINUX_PROCFS_H
+#define GDB_NAT_LINUX_PROCFS_H
 
 #include <unistd.h>
 
@@ -54,6 +54,17 @@ extern int linux_proc_pid_is_zombie_nowarn (pid_t pid);
 
 extern int linux_proc_pid_is_gone (pid_t pid);
 
+/* Index of fields of interest in /proc/PID/stat, from procfs(5) man page.  */
+#define LINUX_PROC_STAT_STATE 3
+#define LINUX_PROC_STAT_STARTTIME 22
+#define LINUX_PROC_STAT_PROCESSOR 39
+
+/* Returns FIELD (as numbered in procfs(5) man page) of
+   /proc/PID/task/LWP/stat file.  */
+
+extern std::optional<std::string> linux_proc_get_stat_field (ptid_t ptid,
+							     int field);
+
 /* Return a string giving the thread's name or NULL if the
    information is unavailable.  The returned value points to a statically
    allocated buffer.  The value therefore becomes invalid at the next
@@ -85,4 +96,4 @@ extern const char *linux_proc_pid_to_exec_file (int pid);
 
 extern void linux_proc_init_warnings ();
 
-#endif /* NAT_LINUX_PROCFS_H */
+#endif /* GDB_NAT_LINUX_PROCFS_H */

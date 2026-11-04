@@ -1,4 +1,4 @@
-# Copyright (C) 1989-2024 Free Software Foundation, Inc.
+# Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
 # This file is part of GDB.
 
@@ -104,10 +104,6 @@ LIBIBERTY = $(LIBIBERTY_NORMAL)
 GDBSUPPORT_BUILDDIR = ../gdbsupport
 GDBSUPPORT = $(GDBSUPPORT_BUILDDIR)/libgdbsupport.a
 
-# Where is ust?  These will be empty if ust was not available.
-ustlibs = @ustlibs@
-ustinc = @ustinc@
-
 # gnulib
 GNULIB_PARENT_DIR = ..
 include $(GNULIB_PARENT_DIR)/gnulib/Makefile.gnulib.inc
@@ -198,8 +194,8 @@ SFILES = \
 	$(srcdir)/linux-loongarch-low.cc \
 	$(srcdir)/linux-low.cc \
 	$(srcdir)/linux-m68k-low.cc \
+        $(srcdir)/linux-microblaze-low.cc \
 	$(srcdir)/linux-mips-low.cc \
-	$(srcdir)/linux-nios2-low.cc \
 	$(srcdir)/linux-or1k-low.cc \
 	$(srcdir)/linux-ppc-low.cc \
 	$(srcdir)/linux-riscv-low.cc \
@@ -488,10 +484,7 @@ stamp-xml: $(XML_DIR)/feature_to_c.sh Makefile $(XML_FILES)
 MAKEOVERRIDES =
 
 regdat_sh = $(srcdir)/../gdb/regformats/regdat.sh
-
-UST_CFLAGS = \
-	$(ustinc) \
-	-DCONFIG_UST_GDB_INTEGRATION
+osabi_def = $(srcdir)/../gdbsupport/osabi.def
 
 # Undo gnulib replacements for the IPA shared library build.
 # The gnulib headers are still needed, but gnulib is not linked
@@ -506,7 +499,6 @@ UNDO_GNULIB_CFLAGS = \
 # the first place.
 IPAGENT_CFLAGS = \
 	$(INTERNAL_CFLAGS) \
-	$(UST_CFLAGS) \
 	$(UNDO_GNULIB_CFLAGS) \
 	-fPIC -DIN_PROCESS_AGENT \
 	-fvisibility=hidden
@@ -588,11 +580,11 @@ target/%.o: ../gdb/target/%.c
 # Rules for register format descriptions.  Suffix destination files with
 # -generated to identify and clean them easily.
 
-%-generated.cc: ../gdb/regformats/%.dat $(regdat_sh)
-	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
+%-generated.cc: ../gdb/regformats/%.dat $(osabi_def) $(regdat_sh)
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $(osabi_def) $@
 
-%-generated.cc: ../gdb/regformats/rs6000/%.dat $(regdat_sh)
-	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $@
+%-generated.cc: ../gdb/regformats/rs6000/%.dat $(osabi_def) $(regdat_sh)
+	$(ECHO_REGDAT) $(SHELL) $(regdat_sh) $< $(osabi_def) $@
 
 # Rule for gdbreplay.o.  This is the same as COMPILE, but includes common-defs.h
 # instead of server.h.

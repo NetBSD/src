@@ -1,6 +1,6 @@
 /* Native-dependent code for OpenBSD.
 
-   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -27,6 +27,7 @@
 
 #include "inf-ptrace.h"
 #include "obsd-nat.h"
+#include "gdbsupport/eintr.h"
 
 /* OpenBSD 5.2 and later include rthreads which uses a thread model
    that maps userland threads directly onto kernel threads in a 1:1
@@ -105,7 +106,7 @@ obsd_nat_target::wait (ptid_t ptid, struct target_waitstatus *ourstatus,
 	  ourstatus->set_forked (ptid_t (pe.pe_other_pid));
 
 	  /* Make sure the other end of the fork is stopped too.  */
-	  pid_t fpid = waitpid (pe.pe_other_pid, nullptr, 0);
+	  pid_t fpid = gdb::waitpid (pe.pe_other_pid, nullptr, 0);
 	  if (fpid == -1)
 	    perror_with_name (("waitpid"));
 

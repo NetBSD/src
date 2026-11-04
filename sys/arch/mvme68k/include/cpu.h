@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.57 2024/01/20 00:15:32 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.57.2.1 2026/11/04 23:21:01 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -68,14 +68,12 @@
 
 #ifdef _KERNEL
 extern	int machineid;
-extern	int cpuspeed;
-extern	char *intiobase, *intiolimit;
-extern	u_int intiobase_phys, intiotop_phys;
+extern	char *intiobase;
+extern	u_int intiobase_phys;
+extern	u_int intiosize;
 extern	u_long ether_data_buff_size;
 extern	u_char mvme_ea[6];
 
-void	doboot(int) 
-	__attribute__((__noreturn__));
 int	nmihand(void *);
 void	mvme68k_abort(const char *);
 void	*iomap(u_long, size_t);
@@ -84,10 +82,12 @@ void	iounmap(void *, size_t);
 /* physical memory addresses where mvme147's onboard devices live */
 #define	INTIOBASE147	(0xfffe0000u)
 #define	INTIOTOP147	(0xfffe5000u)
+#define	INTIOSIZE147	(INTIOTOP147 - INTIOBASE147)
 
 /* ditto for mvme1[67][27] */
 #define	INTIOBASE1xx	(0xfff40000u)
 #define	INTIOTOP1xx	(0xfffd0000u)
+#define	INTIOSIZE1xx	(INTIOTOP1xx - INTIOBASE1xx)
 
 #endif /* _KERNEL */
 

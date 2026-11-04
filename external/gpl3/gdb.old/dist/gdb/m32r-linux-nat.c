@@ -1,6 +1,6 @@
 /* Native-dependent code for GNU/Linux m32r.
 
-   Copyright (C) 2004-2023 Free Software Foundation, Inc.
+   Copyright (C) 2004-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "gdbcore.h"
 #include "regcache.h"
@@ -67,7 +66,7 @@ static int regmap[] = {
 
 
 
-/* Transfering the general-purpose registers between GDB, inferiors
+/* Transferring the general-purpose registers between GDB, inferiors
    and core files.  */
 
 /* Fill GDB's register array with the general-purpose register values
@@ -177,7 +176,7 @@ store_regs (const struct regcache *regcache, int tid, int regno)
 
 
 
-/* Transfering floating-point registers between GDB, inferiors and cores.  
+/* Transferring floating-point registers between GDB, inferiors and cores.
    Since M32R has no floating-point registers, these functions do nothing.  */
 
 void

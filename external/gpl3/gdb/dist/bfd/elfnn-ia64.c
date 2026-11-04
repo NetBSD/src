@@ -1,5 +1,5 @@
 /* IA-64 support for 64-bit ELF
-   Copyright (C) 1998-2024 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -361,8 +361,8 @@ elfNN_ia64_relax_section (bfd *abfd, asection *sec,
   *again = false;
 
   if (bfd_link_relocatable (link_info))
-    (*link_info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    link_info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   /* Don't even try to relax for non-ELF outputs.  */
   if (!is_elf_hash_table (link_info->hash))
@@ -1460,8 +1460,7 @@ elfNN_ia64_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elfNN_ia64_new_elf_hash_entry,
-				      sizeof (struct elfNN_ia64_link_hash_entry),
-				      IA64_ELF_DATA))
+				      sizeof (struct elfNN_ia64_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -3011,6 +3010,7 @@ elfNN_ia64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       sec = bfd_get_linker_section (dynobj, ".interp");
       BFD_ASSERT (sec != NULL);
       sec->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
+      sec->alloced = 1;
       sec->size = strlen (ELF_DYNAMIC_INTERPRETER) + 1;
     }
 
@@ -3185,6 +3185,7 @@ elfNN_ia64_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	  sec->contents = (bfd_byte *) bfd_zalloc (dynobj, sec->size);
 	  if (sec->contents == NULL && sec->size != 0)
 	    return false;
+	  sec->alloced = 1;
 	}
     }
 
@@ -3910,7 +3911,8 @@ elfNN_ia64_relocate_section (bfd *output_bfd,
 
       if (sym_sec != NULL && discarded_section (sym_sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_IA64_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;

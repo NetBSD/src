@@ -1,5 +1,5 @@
 /* BFD back-end for HP PA-RISC ELF files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2025 Free Software Foundation, Inc.
 
    Original code by
 	Center for Software Science
@@ -418,8 +418,7 @@ elf32_hppa_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&htab->etab, abfd, hppa_link_hash_newfunc,
-				      sizeof (struct elf32_hppa_link_hash_entry),
-				      HPPA32_ELF_DATA))
+				      sizeof (struct elf32_hppa_link_hash_entry)))
     {
       free (htab);
       return NULL;
@@ -729,7 +728,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
+	info->callbacks->fatal (_("%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -758,7 +757,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
+	info->callbacks->fatal (_("%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -839,7 +838,7 @@ hppa_build_one_stub (struct bfd_hash_entry *bh, void *in_arg)
 	 section.  The user should fix his linker script.  */
       if (hsh->target_section->output_section == NULL
 	  && info->non_contiguous_regions)
-	info->callbacks->einfo (_("%F%P: Could not assign `%pA' to an output "
+	info->callbacks->fatal (_("%P: Could not assign `%pA' to an output "
 				  "section. Retry without "
 				  "--enable-non-contiguous-regions.\n"),
 				hsh->target_section);
@@ -2069,6 +2068,7 @@ elf32_hppa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 	    abort ();
 	  sec->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  sec->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  sec->alloced = 1;
 	}
 
       /* Force millicode symbols local.  */
@@ -2216,12 +2216,10 @@ elf32_hppa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 		 section.  We want this stub right at the end, up
 		 against the .got section.  */
 	      int gotalign = bfd_section_alignment (htab->etab.sgot);
-	      int pltalign = bfd_section_alignment (sec);
 	      int align = gotalign > 3 ? gotalign : 3;
 	      bfd_size_type mask;
 
-	      if (align > pltalign)
-		bfd_set_section_alignment (sec, align);
+	      (void) bfd_link_align_section (sec, align);
 	      mask = ((bfd_size_type) 1 << gotalign) - 1;
 	      sec->size = (sec->size + sizeof (plt_stub) + mask) & ~mask;
 	    }
@@ -2273,6 +2271,7 @@ elf32_hppa_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       sec->contents = bfd_zalloc (dynobj, sec->size);
       if (sec->contents == NULL)
 	return false;
+      sec->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -2996,6 +2995,7 @@ elf32_hppa_build_stubs (struct bfd_link_info *info)
 	stub_sec->contents = bfd_zalloc (htab->stub_bfd, stub_sec->size);
 	if (stub_sec->contents == NULL)
 	  return false;
+	stub_sec->alloced = 1;
 	stub_sec->size = 0;
       }
 
@@ -3432,48 +3432,62 @@ final_link_relocate (asection *input_section,
       break;
     }
 
-  r_format = bfd_hppa_insn2fmt (input_bfd, insn);
-  switch (r_format)
+  switch (r_type)
     {
-    case 10:
-    case -10:
-      if (val & 7)
-	{
-	  _bfd_error_handler
-	    /* xgettext:c-format */
-	    (_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
-	       "is not a multiple of 8 (gp %#x)"),
-	     input_bfd,
-	     input_section,
-	     (uint64_t) offset,
-	     val,
-	     insn,
-	     (unsigned int) elf_gp (input_section->output_section->owner));
-	  bfd_set_error (bfd_error_bad_value);
-	  return bfd_reloc_notsupported;
-	}
-      break;
-
-    case -11:
-    case -16:
-      if (val & 3)
-	{
-	  _bfd_error_handler
-	    /* xgettext:c-format */
-	    (_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
-	       "is not a multiple of 4 (gp %#x)"),
-	     input_bfd,
-	     input_section,
-	     (uint64_t) offset,
-	     val,
-	     insn,
-	     (unsigned int) elf_gp (input_section->output_section->owner));
-	  bfd_set_error (bfd_error_bad_value);
-	  return bfd_reloc_notsupported;
-	}
+    case R_PARISC_DIR32:
+    case R_PARISC_SECREL32:
+    case R_PARISC_SEGBASE:
+    case R_PARISC_SEGREL32:
+    case R_PARISC_PLABEL32:
+      /* These relocations apply to data.  */
+      r_format = howto->bitsize;
       break;
 
     default:
+      r_format = bfd_hppa_insn2fmt (input_bfd, insn);
+      switch (r_format)
+	{
+	case 10:
+	case -10:
+	  if (val & 7)
+	    {
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
+		   "is not a multiple of 8 (gp %#x)"),
+		 input_bfd,
+		 input_section,
+		 (uint64_t) offset,
+		 val,
+		 insn,
+		 (unsigned int) elf_gp (input_section->output_section->owner));
+	      bfd_set_error (bfd_error_bad_value);
+	      return bfd_reloc_notsupported;
+	    }
+	  break;
+
+	case -11:
+	case -16:
+	  if (val & 3)
+	    {
+	      _bfd_error_handler
+		/* xgettext:c-format */
+		(_("%pB(%pA+%#" PRIx64 "): displacement %#x for insn %#x "
+		   "is not a multiple of 4 (gp %#x)"),
+		 input_bfd,
+		 input_section,
+		 (uint64_t) offset,
+		 val,
+		 insn,
+		 (unsigned int) elf_gp (input_section->output_section->owner));
+	      bfd_set_error (bfd_error_bad_value);
+	      return bfd_reloc_notsupported;
+	    }
+	  break;
+
+	default:
+	  break;
+        }
       break;
     }
   insn = hppa_rebuild_insn (insn, val, r_format);
@@ -3580,7 +3594,7 @@ elf32_hppa_relocate_section (bfd *output_bfd,
 
       if (sym_sec != NULL && discarded_section (sym_sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rela, 1, relend,
+					 rela, 1, relend, R_PARISC_NONE,
 					 elf_hppa_howto_table + r_type, 0,
 					 contents);
 

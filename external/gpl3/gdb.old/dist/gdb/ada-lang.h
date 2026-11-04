@@ -1,6 +1,6 @@
 /* Ada language support definitions for GDB, the GNU debugger.
 
-   Copyright (C) 1992-2023 Free Software Foundation, Inc.
+   Copyright (C) 1992-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#if !defined (ADA_LANG_H)
-#define ADA_LANG_H 1
+#ifndef GDB_ADA_LANG_H
+#define GDB_ADA_LANG_H
 
 class frame_info_ptr;
 struct inferior;
@@ -202,8 +202,6 @@ extern int ada_is_simple_array_type (struct type *);
 
 extern int ada_is_array_descriptor_type (struct type *);
 
-extern int ada_is_bogus_array_descriptor (struct type *);
-
 extern LONGEST ada_discrete_type_low_bound (struct type *);
 
 extern LONGEST ada_discrete_type_high_bound (struct type *);
@@ -218,24 +216,30 @@ extern const char *ada_decode_symbol (const struct general_symbol_info *);
    the name does not appear to be GNAT-encoded, then the result
    depends on WRAP.  If WRAP is true (the default), then the result is
    simply wrapped in <...>.  If WRAP is false, then the empty string
-   will be returned.  Also, when OPERATORS is false, operator names
-   will not be decoded.  */
+   will be returned.
+
+   When OPERATORS is false, operator names will not be decoded.  By
+   default, they are decoded, e.g., 'Oadd' will be transformed to
+   '"+"'.
+
+   When WIDE is false, wide characters will be left as-is.  By
+   default, they converted from their hex encoding to the host
+   charset.  */
 extern std::string ada_decode (const char *name, bool wrap = true,
-			       bool operators = true);
+			       bool operators = true,
+			       bool wide = true);
 
 extern std::vector<struct block_symbol> ada_lookup_symbol_list
-     (const char *, const struct block *, domain_enum);
+     (const char *, const struct block *, domain_search_flags);
 
 extern struct block_symbol ada_lookup_symbol (const char *,
 					      const struct block *,
-					      domain_enum);
+					      domain_search_flags);
 
-extern void ada_lookup_encoded_symbol
-  (const char *name, const struct block *block, domain_enum domain,
-   struct block_symbol *symbol_info);
+extern block_symbol ada_lookup_encoded_symbol
+  (const char *name, const struct block *block, domain_search_flags domain);
 
-extern struct bound_minimal_symbol ada_lookup_simple_minsym (const char *,
-							     objfile *);
+extern bound_minimal_symbol ada_lookup_simple_minsym (const char *, objfile *);
 
 extern int ada_scan_number (const char *, int, LONGEST *, int *);
 
@@ -335,16 +339,14 @@ extern enum ada_renaming_category ada_parse_renaming (struct symbol *,
 						      const char **,
 						      int *, const char **);
 
-extern void ada_find_printable_frame (frame_info_ptr fi);
+extern void ada_find_printable_frame (const frame_info_ptr &fi);
 
-extern char *ada_breakpoint_rewrite (char *, int *);
-
-extern char *ada_main_name (void);
+extern const char *ada_main_name ();
 
 extern void create_ada_exception_catchpoint
   (struct gdbarch *gdbarch, enum ada_exception_catchpoint_kind ex_kind,
-   const std::string &excep_string, const std::string &cond_string, int tempflag,
-   int disabled, int from_tty);
+   std::string &&excep_string, const std::string &cond_string, int tempflag,
+   int enabled, int from_tty);
 
 /* Return true if BP is an Ada catchpoint.  */
 
@@ -431,4 +433,8 @@ extern block_symbol ada_resolve_variable (struct symbol *sym,
 extern struct type *ada_index_type (struct type *type, int n,
 				    const char *name);
 
-#endif
+/* Clear the Ada symbol cache.  */
+
+extern void ada_clear_symbol_cache (program_space *pspace);
+
+#endif /* GDB_ADA_LANG_H */

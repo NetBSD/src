@@ -1,6 +1,6 @@
 /* Target-dependent code for FreeBSD, architecture independent.
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,8 +17,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef FBSD_TDEP_H
-#define FBSD_TDEP_H
+#ifndef GDB_FBSD_TDEP_H
+#define GDB_FBSD_TDEP_H
 
 extern void fbsd_init_abi (struct gdbarch_info info, struct gdbarch *gdbarch);
 
@@ -76,4 +76,4 @@ extern CORE_ADDR fbsd_get_thread_local_address (struct gdbarch *gdbarch,
 extern CORE_ADDR fbsd_skip_solib_resolver (struct gdbarch *gdbarch,
 					   CORE_ADDR pc);
 
-#endif /* fbsd-tdep.h */
+#endif /* GDB_FBSD_TDEP_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.549.2.1 2025/08/02 05:57:40 perseant Exp $	*/
+/*	$NetBSD: init_main.c,v 1.549.2.2 2026/11/04 23:27:47 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2023 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.549.2.1 2025/08/02 05:57:40 perseant Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.549.2.2 2026/11/04 23:27:47 perseant Exp $");
 
 #include "opt_cnmagic.h"
 #include "opt_ddb.h"
@@ -116,6 +116,7 @@ __KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.549.2.1 2025/08/02 05:57:40 perseant
 #include "opt_splash.h"
 #include "opt_kernhist.h"
 #include "opt_gprof.h"
+#include "opt_multiprocessor.h"
 
 #if defined(SPLASHSCREEN) && defined(makeoptions_SPLASHSCREEN_IMAGE)
 extern void *_binary_splash_image_start;
@@ -362,8 +363,10 @@ main(void)
 	 */
 	bpf_setops();
 
+#if defined(MULTIPROCESSOR)
 	/* Initialize what we can in ipi(9) before CPUs are detected. */
 	ipi_sysinit();
+#endif
 
 	/* Start module system. */
 	module_init();
@@ -573,8 +576,10 @@ main(void)
 
 	configure2();
 
+#if defined(MULTIPROCESSOR)
 	/* Initialize the rest of ipi(9) after CPUs have been detected. */
 	ipi_percpu_init();
+#endif
 
 	futex_sys_init();
 
@@ -1110,6 +1115,7 @@ start_init(void *arg)
 		 */
 		ucp = (void *)STACK_ALIGN(ucp, STACK_ALIGNBYTES);
 		uap = (char **)STACK_ALLOC(ucp, sizeof(argv));
+		memset(&args, 0, sizeof(args));
 		SCARG(&args, path) = arg0;
 		SCARG(&args, argp) = uap;
 		SCARG(&args, envp) = NULL;

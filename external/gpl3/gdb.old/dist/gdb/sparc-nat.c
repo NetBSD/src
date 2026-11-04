@@ -1,6 +1,6 @@
 /* Native-dependent code for SPARC.
 
-   Copyright (C) 2003-2023 Free Software Foundation, Inc.
+   Copyright (C) 2003-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -17,7 +17,6 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#include "defs.h"
 #include "inferior.h"
 #include "regcache.h"
 #include "target.h"
@@ -155,9 +154,7 @@ sparc_fetch_inferior_registers (process_stratum_target *proc_target,
 
   if (regnum == SPARC_G0_REGNUM)
     {
-      gdb_byte zero[8] = { 0 };
-
-      regcache->raw_supply (SPARC_G0_REGNUM, &zero);
+      regcache->raw_supply_zeroed (SPARC_G0_REGNUM);
       return;
     }
 

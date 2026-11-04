@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.50.2.1 2025/08/02 05:55:20 perseant Exp $ */
+/* $NetBSD: cpu.h,v 1.50.2.2 2026/11/04 23:19:55 perseant Exp $ */
 
 /*-
  * Copyright (c) 2014, 2020 The NetBSD Foundation, Inc.
@@ -39,7 +39,6 @@
 #ifdef _KERNEL_OPT
 #include "opt_gprof.h"
 #include "opt_multiprocessor.h"
-#include "opt_pmap.h"
 #endif
 
 #include <sys/param.h>
@@ -152,12 +151,6 @@ struct cpu_info {
 	volatile uint32_t ci_pending_ipls;
 
 	int ci_kfpu_spl;
-
-#if defined(PMAP_MI)
-        struct pmap_tlb_info *ci_tlb_info;
-        struct pmap *ci_pmap_lastuser;
-        struct pmap *ci_pmap_cur;
-#endif
 
 	/* ASID of current pmap */
 	tlb_asid_t ci_pmap_asid_cur;

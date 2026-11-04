@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.23 2023/03/06 05:54:54 kre Exp $
+# $NetBSD: t_expand.sh,v 1.23.2.1 2026/11/04 23:28:10 perseant Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -348,7 +348,7 @@ EOF
 	atf_check -s exit:0 -o inline:'>a a++b + ca a< >< >b < > c<\n'	\
 		-e empty ${TEST_SH} -c					\
 		'. ./h-f3; set -- "a a" "" "b " " c"; IFS=+; delim_argv "$*$@"'
-	atf_check -s exit:0 -o inline:'>a< >a< >< >b < > ca+a< >< >b < > c<\n' \
+	atf_check -s exit:0 -o inline:'>a< >a< >b < > ca+a< >< >b < > c<\n' \
 		-e empty ${TEST_SH} -c					       \
 		'. ./h-f3; set -- "a+a" "" "b " " c"; IFS=+; delim_argv $*"$@"'
 }
@@ -521,8 +521,13 @@ arithmetic_body() {
 		'printf %s $((1 + 2))'
 	atf_check -o inline:'2147483647' -e empty ${TEST_SH} -c \
 		'printf %s $((0x7fffffff))'
+
+	# The following used to use $(( (1 << 63) - 1 ))
+	# but 1 << 63 in a 64 bit int overflows into the sign bit
+	# which some shells treat as as error.   So use the following
+	# less obvious formula instead:
 	atf_check -o inline:'9223372036854775807' -e empty ${TEST_SH} -c \
-		'printf %s $(((1 << 63) - 1))'
+		'printf %s $(( (( 1 << 62 ) - 1) * 2 + 1))'
 }
 
 atf_test_case iteration_on_null_parameter
@@ -803,7 +808,7 @@ dollar_hash_body() {
 #
 #	Note that some of these are just how we treat expansions that
 #	are unspecified by posix (as noted below.)
-#	
+#
 #		1.   ${#} is just $# (number of params)
 #		1.a	${\#} is nothing at all (error: invalid expansion)
 #		1.b	${\#...} (anything after) is the same (invalid)
@@ -813,7 +818,7 @@ dollar_hash_body() {
 #		3.a	Including ${VAR#} which just removes leading nothing
 #			This is relevant in case of ${VAR#${X}} with X=''
 #				nb: not required by posix, see XCU 2.6.2
-#		3.b	${##} is not a case of 3.a but rather 2.a 
+#		3.b	${##} is not a case of 3.a but rather 2.a
 #		3.c	Yet ${##pat} is a case of 3.a
 #			Including ${##${X}} where X='' or X='#'
 #				nb: not required by posix, see XCU 2.6.2
@@ -1289,6 +1294,102 @@ dollar_at_in_field_split_context_body() {
 	results
 }
 
+atf_test_case dollar_star_unquoted
+dollar_star_unquoted_head() {
+	atf_set descr 'Test unquoted $* in various contexts'
+}
+dollar_star_unquoted_body() {
+	reset dollar_star_unquoted
+
+	check 'set -- ; set -- $* ; printf %d "$#"'		0	0   # 1
+	check 'set -- a ; set -- $* ; printf %d "$#"'		1	0   # 2
+	check 'set -- a b ; set -- $* ; printf %d "$#"'		2	0   # 3
+	check 'set -- "" ; printf %d+ "$#"; set -- x$* ; printf %d "$#"' \
+								1+1	0   # 4
+	check 'set -- "" "" ; printf %d+ "$#"; set -- x$*y ; printf %d "$#"' \
+								2+2	0   # 5
+
+	# expect the following sub-test (+more) to fail currently, PR bin/60099
+	check 'set -- a b+ c +d e; IFS=+; set -- $* ; printf %d "$#"' \
+								6	0   # 6
+
+	check 'set -- ; set -- x$*y; printf "%s," "$@"'		xy,	0   # 7
+	check 'IFS=+ ; set -- ; set -- x$*y; printf "%s," "$@"' xy,	0   # 8
+	check 'set -- ""; set -- x$*y; printf "%s," "$@"'	xy,	0   # 9
+	check 'IFS=+ ; set -- ""; set -- x$*y; printf "%s," "$@"' \
+								xy,	0   #10
+	check 'set -- "" ""; set -- x$*y; printf "%s," "$@"'	x,y,	0   #11
+	check 'IFS=+ ; set -- "" ""; set -- x$*y; printf "%s," "$@"' \
+								x,y,	0   #12
+
+		# The following tests test unspecified POSIX behaviour
+		# (empty fields MAY be omitted from $* unquoted in this context)
+		# They are included to detect unexpected changes in how
+		# the NetBSD shell works, failures using other shells
+		# should be investigated, but are not necessarily wrong.
+	check 'set -- a "" b ; set -- $* ; printf %d "$#"'	2	0   #13
+	check 'set -- a b "" ; set -- $* ; printf %d "$#"'	2	0   #14
+	check 'set -- "" a b ; set -- $* ; printf %d "$#"'	2	0   #15
+	check 'set -- "" a "" b "" ; set -- $* ; printf %d "$#"' 2	0   #16
+	check 'set -- "" "" a b ; set -- $* ; printf %d "$#"'	2	0   #17
+	check 'set -- a b "" "" ; set -- $* ; printf %d "$#"'	2	0   #18
+
+	check 'set -- "" ; printf %d+ "$#"; set -- $* ; printf %d "$#"' \
+								1+0	0   #19
+	check 'set -- "" "" ; printf %d+ "$#"; set -- $* ; printf %d "$#"' \
+								2+0	0   #20
+	check 'set -- "" "" ; printf %d+ "$#"; set -- x$* ; printf %d "$#"' \
+								2+1	0   #21
+	check  \
+	   'set -- "" "" "" ; printf %d+ "$#"; set -- x$*y ; printf %d "$#"' \
+								3+2	0   #22
+	check  \
+	   'set -- "" "" "" "";printf %d+ "$#";set -- x$*y ;printf %d "$#"' \
+								4+2	0   #23
+	check 'set "" "";  for i in $* ; do printf %s\\n "z${i}z"; done' \
+								''	0   #24
+
+	# The following check that using a non-whitespace IFS[0] alters nothing.
+
+	# While in the following, the actual answers might not be specified
+	# by POSIX, that the same answer is generated in each of the tests
+	# in each pair below is.
+
+	# That is, empty fields are deleted or not, before field splitting
+	# happens (according to the standard) so the value of IFS cannot be
+	# relevant to whether that happens or not.
+
+	check 'set -- "" "" ""; set -- x$*y; printf "%s," "$@"'	x,y,	0   #25
+	check 'IFS=+ ; set -- "" "" ""; set -- x$*y; printf "%s," "$@"' \
+								x,y,	0   #26
+
+	check 'set -- a "" b ; set -- $* $* ; printf %d "$#"'	4	0   #27
+	check 'IFS=+ ; set -- a "" b ; set -- $* $* ; printf %d "$#"' \
+								4	0   #28
+
+	check 'set -- "" a "" b "" ; set -- $* $* ; printf %d "$#"' 4	0   #29
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $* $* ; printf %d "$#"' \
+								4	0   #30
+
+	check 'set -- a "" b ; set -- $*$* ; printf %d "$#"'	3	0   #31
+	check 'IFS=+ ; set -- a "" b ; set -- $*$* ; printf %d "$#"' \
+								3	0   #32
+
+	check 'set -- "" a "" b "" ; set -- $*$* ; printf %d "$#"' 4	0   #33
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*$* ; printf %d "$#"' \
+								4	0   #34
+
+	check 'set -- "" a "" b "" ; set -- $*x$* ; printf %d "$#"' 5	0   #35
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*x$* ; printf %d "$#"' \
+								5	0   #36
+
+	check 'set -- "" a "" b "" ; set -- $*+$* ; printf %d "$#"' 5	0   #35
+	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*+$* ; printf %d "$#"' \
+								5	0   #36
+
+	results
+}
+
 atf_test_case embedded_nl
 embedded_nl_head() {
 	atf_set descr 'Test literal \n in xxx string in ${var-xxx}'
@@ -1390,31 +1491,81 @@ alternative_body() {
 	check3	'set -- ${X:+bar}; echo "$#:$1"'	1:bar 0: 0:	# 73
 	check3	'set -- ${X:+}; echo "$#:$1"'		0: 0: 0:	# 76
 	check3	'set -- ${X:+""}; echo "$#:$1"'		1: 0: 0:	# 79
-	check3	'set -- "${X:+}"; echo "$#:$1"'		1: 1: 1:	# 80
-	check3	'set -- "${X:+bar}"; echo "$#:$1"'	1:bar 1: 1:	# 83
+	check3	'set -- "${X:+}"; echo "$#:$1"'		1: 1: 1:	# 82
+	check3	'set -- "${X:+bar}"; echo "$#:$1"'	1:bar 1: 1:	# 85
 
-	check3	'set -- ${X:+a b c}; echo "$#:$1"'	3:a 0: 0:	# 86
-	check3	'set -- ${X:+"a b c"}; echo "$#:$1"'	'1:a b c' 0: 0:	# 89
-	check3	'set -- "${X:+a b c}"; echo "$#:$1"'	'1:a b c' 1: 1:	# 92
-	check3	'set -- ${X:+a b\ c}; echo "$#:$1"'	2:a 0: 0:	# 95
-	check3	'set -- ${X:+"a b" c}; echo "$#:$1"'	'2:a b' 0: 0:	# 98
+	check3	'set -- ${X:+a b c}; echo "$#:$1"'	3:a 0: 0:	# 88
+	check3	'set -- ${X:+"a b c"}; echo "$#:$1"'	'1:a b c' 0: 0:	# 91
+	check3	'set -- "${X:+a b c}"; echo "$#:$1"'	'1:a b c' 1: 1:	# 94
+	check3	'set -- ${X:+a b\ c}; echo "$#:$1"'	2:a 0: 0:	# 97
+	check3	'set -- ${X:+"a b" c}; echo "$#:$1"'	'2:a b' 0: 0:	#100
 
-	check3	'printf %s "" ${X:+}'			''  ''  ''	#101
-	check3	'printf %s ""${X:+bar}'			bar ''  ''	#104
+	check3	'printf %s "" ${X:+}'			''  ''  ''	#103
+	check3	'printf %s ""${X:+bar}'			bar ''  ''	#106
 
-	check3	'Y=bar; printf %s ${X:+x}${Y:+y}'	xy  y   y	#107
-	check3	'Y=bar; printf %s ""${X:+${Y:+z}}'	z   ''  ''	#110
-	check3	'Y=; printf %s ""${X:+${Y+z}}'		z   ''  ''	#113
-	check3	'Y=; printf %s ""${X:+${Y:+z}}'		''  ''  ''	#116
-	check3	'unset Y; printf %s ""${X:+${Y:+z}}'	''  ''  ''	#119
-	check3	'Y=1; printf %s a ${X:+"${Y:+z}"}'	az  a	a	#122
+	check3	'Y=bar; printf %s ${X:+x}${Y:+y}'	xy  y   y	#109
+	check3	'Y=bar; printf %s ""${X:+${Y:+z}}'	z   ''  ''	#112
+	check3	'Y=; printf %s ""${X:+${Y+z}}'		z   ''  ''	#115
+	check3	'Y=; printf %s ""${X:+${Y:+z}}'		''  ''  ''	#118
+	check3	'unset Y; printf %s ""${X:+${Y:+z}}'	''  ''  ''	#121
+	check3	'Y=1; printf %s a ${X:+"${Y:+z}"}'	az  a	a	#124
 
-	check3	'printf %s ${X:+}x}'			x}  x}  x}	#125
-	check3	'printf %s ${X:+}}'			 }   }   }	#128
-	check3	'printf %s "" ${X:+"}"x}'		}x  ''  ''	#131
-	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#134
-	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#137
-	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#140
+	check3	'printf %s ${X:+}x}'			x}  x}  x}	#127
+	check3	'printf %s ${X:+}}'			 }   }   }	#130
+	check3	'printf %s "" ${X:+"}"x}'		}x  ''  ''	#133
+	check3	'printf %s "" ${X:+\}x}'		}x  ''  ''	#136
+	check3	'printf %s "${X:+\}x}"'			}x  ''  ''	#139
+	check3	'printf %s "${X:+\}}"'			 }  ''  ''	#142
+
+	# Tests for odd cases of field splitting (a long standing NetBSD sh bug)
+	# Nb: fixed (a day) before these tests were added, no PR ever generated
+
+	# The A B... just guarantee an arg for printf (and make test id easier)
+
+	check3	'IFS=:; printf %s, A ${X:-a:b}'	   A,foo, A,a,b, A,a,b, #145
+	check3	'IFS=:; printf %s, B "${X:-a:b}"'  B,foo, B,a:b, B,a:b, #148
+	check3	'IFS=:; printf %s, C ${X:-"a:b"}'  C,foo, C,a:b, C,a:b, #151
+
+	check3	'IFS=:; printf %s, D ${X:+a:b}'	   D,a,b, D,     D,     #154
+	check3	'IFS=:; printf %s, E "${X:+a:b}"'  E,a:b, E,,    E,,    #157
+	check3	'IFS=:; printf %s, F ${X:+"a:b"}'  F,a:b, F,     F,     #160
+
+	check3	'IFS=:; printf %s, G ${X:=a:b}'	   G,foo, G,a,b, G,a,b, #163
+	check3	'IFS=:; printf %s, H "${X:=a:b}"'  H,foo, H,a:b, H,a:b, #166
+	check3	'IFS=:; printf %s, I ${X:="a:b"}'  I,foo, I,a,b, I,a,b, #169
+
+	check3	'IFS=:; printf %s, J ${X-a:b}'     J,foo, J,     J,a,b, #172
+	check3	'IFS=:; printf %s, K "${X-a:b}"'   K,foo, K,,    K,a:b, #175
+	check3	'IFS=:; printf %s, L ${X-"a:b"}'   L,foo, L,     L,a:b, #178
+
+	check3	'IFS=:; printf %s, M ${X+a:b}'     M,a,b, M,a,b, M,     #181
+	check3	'IFS=:; printf %s, N "${X+a:b}"'   N,a:b, N,a:b, N,,    #184
+	check3	'IFS=:; printf %s, O ${X+"a:b"}'   O,a:b, O,a:b, O,     #187
+
+	check3	'IFS=:; printf %s, P ${X=a:b}'     P,foo, P,     P,a,b, #190
+	check3	'IFS=:; printf %s, Q "${X=a:b}"'   Q,foo, Q,,    Q,a:b, #193
+	check3	'IFS=:; printf %s, R ${X="a:b"}'   R,foo, R,     R,a,b, #196
+
+	# It should make no difference what the IFS char is (but these passed).
+	# (These are copies of the old NetBSD sh failing sub-tests from above)
+	# The 6 tests that failed above are numbers 144 145 152 172 179 180
+
+	# 144 & 145 are here as 198&199, 152=200, 172=205, 179=206, 180=207
+	check3	'IFS=+; printf %s, S ${X:-a+b}'	   S,foo, S,a,b, S,a,b, #199
+	check3	'IFS=+; printf %s, T ${X:+a+b}'	   T,a,b, T,     T,     #202
+	check3	'IFS=+; printf %s, U ${X-a+b}'     U,foo, U,     U,a,b, #205
+	check3	'IFS=+; printf %s, V ${X+a+b}'     V,a,b, V,a,b, V,     #208
+
+	# But it did, ':' and '=' were treated differently than all others
+
+	# These are more repeats of the failing tests from above, and add
+	# 6 more failures (in old NetBSD shells) (the same failures as above)
+
+	# 144 & 145 are here as 210&211, 152=212, 172=217, 179=218, 180=219
+	check3	'IFS==; printf %s, W ${X:-a=b}'	   W,foo, W,a,b, W,a,b, #211
+	check3	'IFS==; printf %s, X ${X:+a=b}'	   X,a,b, X,     X,     #214
+	check3	'IFS==; printf %s, Y ${X-a=b}'     Y,foo, Y,     Y,a,b, #217
+	check3	'IFS==; printf %s, Z ${X+a=b}'     Z,a,b, Z,a,b, Z,     #220
 
 	results
 }
@@ -1535,7 +1686,7 @@ assign_body() {
 	check3	'printf %s ${X=}}; printf :%s "${X-U}"'  foo}:foo }:  }:   #93
 	check3	'printf %s ${X={}}; printf :%s "${X-U}"' foo}:foo }: {}:{  #96
 
-	check3	'set -- ${X:=bar}; echo "$#:$1"'	1:foo 1:bar 1:bar # 99	
+	check3	'set -- ${X:=bar}; echo "$#:$1"'	1:foo 1:bar 1:bar  #99
 	check3	'set -- ${X:=}; echo "$#:$1"'		1:foo 0: 0:	#102
 	check3	'set -- ${X:=""}; echo "$#:$1"'		1:foo 0: 0:	#105
 	check3	'set -- "${X:=}"; echo "$#:$1"'		1:foo 1: 1:	#108
@@ -1611,6 +1762,126 @@ error_body() {
 	results
 }
 
+atf_test_case land_mine
+land_mine_head() {
+	atf_set descr 'Attempt to test for land mines left by expansions'
+}
+land_mine_body() {
+	reset land_mine
+
+	# Land mines (in this sense) are bugs left in the shell state
+	# after an expansion, which very often are benign, and unnoticed
+	# by the vast majority of ordinary code, but in odd cases can
+	# cause weird failures.   Generally this happens when the word
+	# containing the expansion is very long (after the expansion)
+
+	# So this test case borrows a random sampling of other tests, adds
+	# a whole bunch of text after the expansion in question, then
+	# validates that the expansion happened exactly as it should.
+
+	# A few of these were not all that randomly selected!
+
+	# First, we need a long string to use.  We will use it both
+	# expanded before the test (by ATF_SH), and expanded during
+	# the test (by TEST_SH).
+
+	# In what follows, use ${L} when ATF_SH is to expand L, and
+	# just $L when TEST_SH is intended to expand it (except if the
+	# braces are essential, naturally).  Just for clarity.
+
+	L=AAAAAAAA			# ${#L} == 8
+	L=${L}${L}${L}${L}		# ${#L} == 32
+	L=${L}${L}${L}${L}		# ${#L} == 128
+	L=${L}${L}${L}${L}		# ${#L} == 512
+	L=${L}${L}			# ${#L} == 1024
+	B=' '				# to insert a splitting place
+
+	test ${#L} -eq 1024 || atf_skip "ATF_SH cannot make long strings"
+
+	check	'set -- XX;
+		 set -- word$@'"${L}"'; printf %d, "${#1}"'       1030,   0 # 1
+	check "L='${L}'; "'set -- XX;
+		 set -- word$@$L;       printf %d, "${#1}"'	  1030,   0 # 2
+	check "L='${L}'; "'set -- XX;
+		 set -- word$@"$L";     printf %d, "${#1}"'	  1030,   0 # 3
+	check "L='${L}' B='${B}'; "'set -- XX;
+		 set -- word$@$L$B$L;   printf %d, "$#" "${#1}" "${#2}"'    \
+							   2,1030,1024,   0 # 4
+	check "L='${L}' B='${B}'; "'set -- XX;
+		 set -- word$@"$L"$B"$L"; printf %d, "$#" "${#1}" "${#2}"'  \
+							   2,1030,1024,   0 # 5
+	check "L='${L}' B='${B}'; "'set -- XX;
+		 set -- word$@"$L$B$L"; printf %d, "$#" "${#1}" "${#2}"'    \
+							       1,2055,0,  0 # 6
+
+
+	check	'X=set; set --;
+		 set -- "${X+$@}"'"${L}"'; printf %d, "${#1}"'    1024,   0 # 7
+	check "L='${L}'; "'X=set; set --;
+		 set -- "${X+$@}"$L;       printf %d, "${#1}"'    1024,   0 # 8
+	check "L='${L}'; "'X=set; set --;
+		 set -- "${X+$@}""$L";     printf %d, "${#1}"'    1024,   0 # 9
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}"$L$B$L;   printf %d, "$#" "${#1}" "${#2}"' \
+							   2,1024,1024,   0 #10
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}""$L"$B"$L"; printf %d, "$#" "${#1}" "${#2}"' \
+							   2,1024,1024,   0 #11
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}""$L$B$L"; printf %d, "$#" "${#1}" "${#2}"' \
+							      1,2049,0,   0 #12
+	check "L='${L}' B='${B}'; "'X=set; set --;
+		 set -- "${X+$@}$L$B$L";   printf %d, "$#" "${#1}" "${#2}"' \
+							      1,2049,0,   0 #13
+
+
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L%AAA};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #14
+	check "L='${L}' B='${B}'; "'
+		 set -- "${L%AAA}";	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #15
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L#AAA};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #16
+	check "L='${L}' B='${B}'; "'
+		 set -- "${L#AAA}";	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1021,0,   0 #17
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L%AAA}$B${L#AAAA}; printf %d, "$#" "${#1}" "${#2}"' \
+							    2,1021,1020,  0 #18
+	check "L='${L}' B='${B}'; "'
+		 set -- ${L#AAA}$B${L%AAAA}; printf %d, "$#" "${#1}" "${#2}"' \
+							    2,1021,1020,  0 #19
+	check "L='foo${L}${B}bar' B='${B}'; "'
+		 set -- ${L#f?o};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      2,1024,3,   0 #20
+	check "L='foo${L}${B}bar' B='${B}'; "'
+		 set -- ${L%?ar};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1027,0,   0 #21
+	check "L='foo${B}${L}bar' B='${B}'; "'
+		 set -- ${L#fo?};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      1,1027,0,   0 #22
+	check "L='foo${B}${L}bar' B='${B}'; "'
+		 set -- ${L%b??};	    printf %d, "$#" "${#1}" "${#2}"' \
+							      2,3,1024,   0 #23
+
+	check "set -- '${L}'"' a b c; shift;
+		echo "$#: ${1-A} ${2-B} ${3-C} ${4-D} ${5-E}"'		    \
+							 '3: a b c D E'   0 #24
+	check 'set -- a "" c "" e '"'${L}'"';
+	       echo "$#: ${1:-A} ${2:-B} ${3:-C} ${4:-D} ${5:-E} ${#6}"'    \
+						    '6: a B c D e 1024'   0 #25
+	check 'set -- a "" c "" e "" '"'${L}'"';
+	       echo "$#: ${1:+A} ${2:+B} ${3:+C} ${4:+D} ${5:+E} ${6:+F}"'  \
+							   '7: A  C  E '  0 #26
+
+	check 'set -- "$(echo a)" $(echo b) "$(echo c d)" $(echo e f) '"'${L}'"'
+		echo "$#: $1.$2.$3.$4.$5.${#6}"'  '6: a.b.c d.e.f.1024'   0 #27
+
+	results
+}
+
 atf_init_test_cases() {
 	# Listed here in the order ATF runs them, not the order from above
 
@@ -1628,6 +1899,7 @@ atf_init_test_cases() {
 	atf_add_test_case dollar_star_in_quoted_word
 	atf_add_test_case dollar_star_in_word
 	atf_add_test_case dollar_star_in_word_empty_ifs
+	atf_add_test_case dollar_star_unquoted
 	atf_add_test_case dollar_star_with_empty_ifs
 	atf_add_test_case embedded_nl
 	atf_add_test_case error
@@ -1635,6 +1907,7 @@ atf_init_test_cases() {
 	atf_add_test_case iteration_on_quoted_null_parameter
 	atf_add_test_case iteration_on_null_or_null_parameter
 	atf_add_test_case iteration_on_null_or_missing_parameter
+	atf_add_test_case land_mine
 	atf_add_test_case shell_params
 	atf_add_test_case strip
 	atf_add_test_case tilde

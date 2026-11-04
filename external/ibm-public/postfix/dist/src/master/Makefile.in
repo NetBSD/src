@@ -101,6 +101,7 @@ dgram_server.o: ../../include/msg_vstream.h
 dgram_server.o: ../../include/myflock.h
 dgram_server.o: ../../include/mymalloc.h
 dgram_server.o: ../../include/nvtable.h
+dgram_server.o: ../../include/pol_stats.h
 dgram_server.o: ../../include/recipient_list.h
 dgram_server.o: ../../include/resolve_local.h
 dgram_server.o: ../../include/safe_open.h
@@ -142,6 +143,7 @@ event_server.o: ../../include/msg_vstream.h
 event_server.o: ../../include/myflock.h
 event_server.o: ../../include/mymalloc.h
 event_server.o: ../../include/nvtable.h
+event_server.o: ../../include/pol_stats.h
 event_server.o: ../../include/recipient_list.h
 event_server.o: ../../include/resolve_local.h
 event_server.o: ../../include/safe_open.h
@@ -364,6 +366,7 @@ multi_server.o: ../../include/msg_vstream.h
 multi_server.o: ../../include/myflock.h
 multi_server.o: ../../include/mymalloc.h
 multi_server.o: ../../include/nvtable.h
+multi_server.o: ../../include/pol_stats.h
 multi_server.o: ../../include/recipient_list.h
 multi_server.o: ../../include/resolve_local.h
 multi_server.o: ../../include/safe_open.h
@@ -406,6 +409,7 @@ single_server.o: ../../include/msg_vstream.h
 single_server.o: ../../include/myflock.h
 single_server.o: ../../include/mymalloc.h
 single_server.o: ../../include/nvtable.h
+single_server.o: ../../include/pol_stats.h
 single_server.o: ../../include/recipient_list.h
 single_server.o: ../../include/resolve_local.h
 single_server.o: ../../include/safe_open.h
@@ -448,6 +452,7 @@ trigger_server.o: ../../include/msg_vstream.h
 trigger_server.o: ../../include/myflock.h
 trigger_server.o: ../../include/mymalloc.h
 trigger_server.o: ../../include/nvtable.h
+trigger_server.o: ../../include/pol_stats.h
 trigger_server.o: ../../include/recipient_list.h
 trigger_server.o: ../../include/resolve_local.h
 trigger_server.o: ../../include/safe_open.h

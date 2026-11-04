@@ -1,4 +1,4 @@
-# Copyright (C) 2003-2023 Free Software Foundation, Inc.
+# Copyright (C) 2003-2024 Free Software Foundation, Inc.
 #
 # This program is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -19,9 +19,7 @@
 # them gets relocated at load-time. Check that gdb gets the right
 # values for the debugging and minimal symbols.
 
-if {[skip_shlib_tests]} {
-    return 0
-}
+require allow_shlib_tests
 
 #
 # This file uses shreloc.c, shreloc1.c and shreloc2.c

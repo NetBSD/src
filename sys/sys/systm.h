@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.306 2024/05/12 10:34:56 rillig Exp $	*/
+/*	$NetBSD: systm.h,v 1.306.2.1 2026/11/04 23:28:06 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -63,12 +63,13 @@
 struct clockframe;
 struct lwp;
 struct proc;
+struct rootspechook;
 struct sysent;
 struct timeval;
 struct tty;
 struct uio;
-struct vnode;
 struct vmspace;
+struct vnode;
 
 extern const char *panicstr;	/* panic message */
 extern int doing_shutdown;	/* shutting down */
@@ -156,7 +157,9 @@ extern const uint32_t sysent_nomodbits[];
 #define SYCALL_ARG7_64  0x1000000
 #define SYCALL_NOSYS    0x2000000 /* permanent nosys in sysent[] */
 #define	SYCALL_ARG_PTR	0x4000000 /* at least one argument is a pointer */
+#define SYCALL_RET_WIDE	0x8000000 /* retval wider than 32 bits on LP64 */
 #define SYCALL_RET_64_P(sy)	((sy)->sy_flags & SYCALL_RET_64)
+#define SYCALL_RET_WIDE_P(sy)	((sy)->sy_flags & SYCALL_RET_WIDE)
 #define SYCALL_ARG_64_P(sy, n)	((sy)->sy_flags & (SYCALL_ARG0_64 << (n)))
 #define	SYCALL_ARG_64_MASK(sy)	(((sy)->sy_flags >> 17) & 0xff)
 #define	SYCALL_ARG_PTR_P(sy)	((sy)->sy_flags & SYCALL_ARG_PTR)
@@ -177,6 +180,7 @@ extern void (*v_putc)(int); /* Virtual console putc routine */
 void	voidop(void);
 int	nullop(void *);
 void*	nullret(void);
+int	trueop(void);
 int	enodev(void);
 int	enosys(void);
 int	enoioctl(void);
@@ -586,6 +590,13 @@ void	*mountroothook_establish(void (*)(device_t), device_t);
 void	mountroothook_disestablish(void *);
 void	mountroothook_destroy(void);
 void	domountroothook(device_t);
+
+/* Register rootspec/bootdevice prefixes for per-driver handling. */
+struct rootspechook *rootspechook_establish(const char *,
+	    device_t (*)(const char *), void (*)(void));
+void	rootspechook_disestablish(struct rootspechook *);
+device_t dorootspechooks(const char *);
+void	dorootspecprint(void);
 
 /*
  * Exec hooks. Subsystems may want to do cleanup when a process

@@ -1,5 +1,5 @@
 /* Helper routines for C support in GDB.
-   Copyright (C) 2017-2023 Free Software Foundation, Inc.
+   Copyright (C) 2017-2024 Free Software Foundation, Inc.
 
    This file is part of GDB.
 
@@ -16,8 +16,8 @@
    You should have received a copy of the GNU General Public License
    along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 
-#ifndef C_SUPPORT_H
-#define C_SUPPORT_H
+#ifndef GDB_C_SUPPORT_H
+#define GDB_C_SUPPORT_H
 
 #include "safe-ctype.h"
 
@@ -43,4 +43,4 @@ c_ident_is_alnum (unsigned char ch)
   return ISALNUM (ch) || ch >= 0x80;
 }
 
-#endif /* C_SUPPORT_H */
+#endif /* GDB_C_SUPPORT_H */

@@ -1,4 +1,4 @@
-/*	$NetBSD: frame.h,v 1.35 2024/01/13 17:07:26 thorpej Exp $	*/
+/*	$NetBSD: frame.h,v 1.35.2.1 2026/11/04 23:20:50 perseant Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -196,6 +196,10 @@ struct sigframe_siginfo {
 	ucontext_t	sf_uc;		/* actual saved ucontext */
 };
 
+const char *trap_desc(int);
+
+extern const short exframesize[];
+
 /*
  * Utility function to relocate the initial frame, make room to restore an
  * exception frame and reenter the syscall.
@@ -205,10 +209,12 @@ void	reenter_syscall(struct frame *, int) __attribute__((__noreturn__));
 /*
  * Create an FPU "idle" frame for use by cpu_setmcontext()
  */
-extern void m68k_make_fpu_idle_frame(void);
-extern struct fpframe m68k_cached_fpu_idle_frame;
+extern void fpu_make_idle_frame(void);
+extern struct fpframe fpu_idle_frame;
 
-void	*getframe(struct lwp *, int, int *);
+void	userret(struct lwp *, struct frame *, u_quad_t);
+
+void	*getframe(struct lwp *, int, int *, size_t);
 void	buildcontext(struct lwp *, void *, void *);
 #ifdef COMPAT_16
 void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
@@ -218,9 +224,11 @@ void	sendsig_sigcontext(const ksiginfo_t *, const sigset_t *);
 int	m68040_writeback(struct frame *, int);
 #endif
 
-#if defined(__mc68010__)
+void	trap_kdebug(int, struct trapframe *);
+
+#if defined(__mc68010__) || defined(__HAVE_M68K_BROKEN_RMC)
 /*
- * Restartable atomic sequence-cased compare-and-swap for atomic_cas ops
+ * Restartable atomic sequence-based compare-and-swap for atomic_cas ops
  * and locking primitives.  We defined this here because it manipulates a
  * "clockframe" as prepared by interrupt handlers.
  */
@@ -237,7 +245,7 @@ do {									\
 } while (/*CONSTCOND*/0)
 #else
 #define	ATOMIC_CAS_CHECK(cfp)	/* nothing */
-#endif /* __mc68010__ */
+#endif /* __mc68010__ || __HAVE_M68K_BROKEN_RMC */
 
 static inline void **
 getvbr(void)

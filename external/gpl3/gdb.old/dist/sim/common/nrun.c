@@ -1,5 +1,5 @@
 /* New version of run front end support for simulators.
-   Copyright (C) 1997-2023 Free Software Foundation, Inc.
+   Copyright (C) 1997-2024 Free Software Foundation, Inc.
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by
@@ -21,10 +21,8 @@ along with this program.  If not, see <http://www.gnu.org/licenses/>.  */
 #include <stdlib.h>
 /* For strsignal.  */
 #include <string.h>
-#ifdef HAVE_UNISTD_H
 /* For chdir.  */
 #include <unistd.h>
-#endif
 
 #include "bfd.h"
 #include "environ.h"
@@ -66,7 +64,7 @@ main (int argc, char **argv)
   enum sim_stop reason;
   int sigrc = 0;
   int single_step = 0;
-  RETSIGTYPE (*prev_sigint) ();
+  RETSIGTYPE (*prev_sigint) (int);
 
   myname = lbasename (argv[0]);
 

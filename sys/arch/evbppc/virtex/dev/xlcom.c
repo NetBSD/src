@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.12 2021/08/20 20:25:27 andvar Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.12.10.1 2026/11/04 23:20:36 perseant Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.12 2021/08/20 20:25:27 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.12.10.1 2026/11/04 23:20:36 perseant Exp $");
 
 #include "opt_kgdb.h"
 
@@ -80,7 +80,7 @@ struct xlcom_softc {
 	bus_space_tag_t 	sc_iot;
 	bus_space_handle_t 	sc_ioh;
 
-	/* Deffered execution context. */
+	/* Deferred execution context. */
 	void 			*sc_rx_soft;
 	void 			*sc_tx_soft;
 
