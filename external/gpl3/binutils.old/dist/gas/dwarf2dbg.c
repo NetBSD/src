@@ -1,5 +1,5 @@
 /* dwarf2dbg.c - DWARF2 debug support
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -25,7 +25,7 @@
 	.file FILENO "file.c"
 	.loc  FILENO LINENO [COLUMN] [basic_block] [prologue_end] \
 	      [epilogue_begin] [is_stmt VALUE] [isa VALUE] \
-	      [discriminator VALUE]
+	      [discriminator VALUE] [view VALUE]
 */
 
 #include "as.h"
@@ -86,9 +86,9 @@
 #define DWARF2_ARANGES_VERSION 2
 #endif
 
-/* This implementation outputs version 3 .debug_line information.  */
+/* The .debug_line version is the same as the .debug_info version.  */
 #ifndef DWARF2_LINE_VERSION
-#define DWARF2_LINE_VERSION (dwarf_level > 3 ? dwarf_level : 3)
+#define DWARF2_LINE_VERSION DWARF2_VERSION
 #endif
 
 /* The .debug_rnglists has only been in DWARF version 5. */
@@ -119,7 +119,7 @@
    Note: If you want to change this, you'll have to update the
    "standard_opcode_lengths" table that is emitted below in
    out_debug_line().  */
-#define DWARF2_LINE_OPCODE_BASE		13
+#define DWARF2_LINE_OPCODE_BASE		(DWARF2_LINE_VERSION == 2 ? 10 : 13)
 
 #ifndef DWARF2_LINE_BASE
   /* Minimum line offset in a special line info. opcode.  This value
@@ -160,6 +160,10 @@
 #define TC_PARSE_CONS_RETURN_NONE BFD_RELOC_NONE
 #endif
 
+#define GAS_ABBREV_COMP_UNIT 1
+#define GAS_ABBREV_SUBPROG   2
+#define GAS_ABBREV_NO_TYPE   3
+
 struct line_entry
 {
   struct line_entry *next;
@@ -167,10 +171,18 @@ struct line_entry
   struct dwarf2_line_info loc;
 };
 
-/* Don't change the offset of next in line_entry.  set_or_check_view
-   calls in dwarf2_gen_line_info_1 depend on it.  */
-static char unused[offsetof(struct line_entry, next) ? -1 : 1]
-ATTRIBUTE_UNUSED;
+/* Given line_entry list HEAD and PTAIL pointers, return a pointer to
+   the last line_entry on the list.  */
+static inline struct line_entry *
+line_entry_at_tail (void *head, struct line_entry **ptail)
+{
+  /* If the list is empty ptail points at head.  */
+  if (head == NULL)
+    return NULL;
+  /* Otherwise ptail points to line_entry.next of the last entry.  */
+  void *p = (char *) ptail - offsetof (struct line_entry, next);
+  return p;
+}
 
 struct line_subseg
 {
@@ -524,13 +536,18 @@ dwarf2_gen_line_info_1 (symbolS *label, struct dwarf2_line_info *loc)
   /* Subseg heads are chained to previous subsegs in
      dwarf2_finish.  */
   if (loc->filenum != -1u && loc->u.view && lss->head)
-    set_or_check_view (e, (struct line_entry *) lss->ptail, lss->head);
+    set_or_check_view (e, line_entry_at_tail (lss->head, lss->ptail),
+		       lss->head);
 
   *lss->ptail = e;
   lss->ptail = &e->next;
 }
 
 /* Record an entry for LOC occurring at OFS within the current fragment.  */
+
+static unsigned int dw2_line;
+static const char *dw2_filename;
+static int label_num;
 
 void
 dwarf2_gen_line_info (addressT ofs, struct dwarf2_line_info *loc)
@@ -554,27 +571,23 @@ dwarf2_gen_line_info (addressT ofs, struct dwarf2_line_info *loc)
      uses them to determine the end of the prologue.  */
   if (debug_type == DEBUG_DWARF2)
     {
-      static unsigned int line = -1;
-      static const char *filename = NULL;
-
-      if (line == loc->line)
+      if (dw2_line == loc->line)
 	{
-	  if (filename == loc->u.filename)
+	  if (dw2_filename == loc->u.filename)
 	    return;
-	  if (filename_cmp (filename, loc->u.filename) == 0)
+	  if (filename_cmp (dw2_filename, loc->u.filename) == 0)
 	    {
-	      filename = loc->u.filename;
+	      dw2_filename = loc->u.filename;
 	      return;
 	    }
 	}
 
-      line = loc->line;
-      filename = loc->u.filename;
+      dw2_line = loc->line;
+      dw2_filename = loc->u.filename;
     }
 
   if (linkrelax)
     {
-      static int label_num = 0;
       char name[32];
 
       /* Use a non-fake name for the line number location,
@@ -646,9 +659,8 @@ get_directory_table_entry (const char *dirname,
 		 is set to the current build directory).  Since we are
 		 about to create a directory entry that is not the
 		 same, allocate the current directory first.  */
-	      (void) get_directory_table_entry (pwd, file0_dirname,
-						strlen (pwd), true);
-	      d = 1;
+	      (void) get_directory_table_entry (pwd, pwd, strlen (pwd), true);
+	      d = dirs_in_use;
 	    }
 	  else
 	    d = 0;
@@ -674,18 +686,17 @@ get_directory_table_entry (const char *dirname,
 }
 
 static bool
-assign_file_to_slot (unsigned int i, const char *file, unsigned int dir)
+assign_file_to_slot (valueT i, const char *file, unsigned int dir)
 {
   if (i >= files_allocated)
     {
       unsigned int want = i + 32;
 
-      /* Catch wraparound.  */
-      if (want < files_allocated
-	  || want < i
-	  || want > UINT_MAX / sizeof (struct file_entry))
+      /* If this array is taking 1G or more, someone is using silly
+	 file numbers.  */
+      if (want < i || want > UINT_MAX / 4 / sizeof (struct file_entry))
 	{
-	  as_bad (_("file number %u is too big"), i);
+	  as_bad (_("file number %" PRIu64 " is too big"), (uint64_t) i);
 	  return false;
 	}
 
@@ -711,10 +722,12 @@ assign_file_to_slot (unsigned int i, const char *file, unsigned int dir)
    Returns the slot number allocated to that filename or -1
    if there was a problem.  */
 
+static int last_used;
+static int last_used_dir_len;
+
 static signed int
 allocate_filenum (const char * pathname)
 {
-  static signed int last_used = -1, last_used_dir_len = 0;
   const char *file;
   size_t dir_len;
   unsigned int i, dir;
@@ -837,7 +850,7 @@ purge_generated_debug (bool thelot)
 static bool
 allocate_filename_to_slot (const char *dirname,
 			   const char *filename,
-			   unsigned int num,
+			   valueT num,
 			   bool with_md5)
 {
   const char *file;
@@ -877,6 +890,8 @@ allocate_filename_to_slot (const char *dirname,
 		}
 	      
 	      dirs[files[num].dir] = xmemdup0 (dirname, strlen (dirname));
+	      if (dirs_in_use <= files[num].dir)
+		dirs_in_use = files[num].dir + 1;
 	    }
 	    
 	  return true;
@@ -905,14 +920,17 @@ allocate_filename_to_slot (const char *dirname,
 		    }
 
 		  dirs[files[num].dir] = xmemdup0 (filename, file - filename);
+		  if (dirs_in_use <= files[num].dir)
+		    dirs_in_use = files[num].dir + 1;
 		}
 	      return true;
 	    }
 	}
 
     fail:
-      as_bad (_("file table slot %u is already occupied by a different file (%s%s%s vs %s%s%s)"),
-	      num,
+      as_bad (_("file table slot %u is already occupied by a different file"
+		" (%s%s%s vs %s%s%s)"),
+	      (unsigned int) num,
 	      dir == NULL ? "" : dir,
 	      dir == NULL ? "" : "/",
 	      files[num].filename,
@@ -958,7 +976,7 @@ allocate_filename_to_slot (const char *dirname,
   d = get_directory_table_entry (dirname, file0_dirname, dirlen, num == 0);
   i = num;
 
-  if (! assign_file_to_slot (i, file, d))
+  if (!assign_file_to_slot (num, file, d))
     return false;
 
   if (with_md5)
@@ -1191,6 +1209,8 @@ dwarf2_directive_filename (void)
 	{
 	  dirname = filename;
 	  filename = demand_copy_C_string (&filename_len);
+	  if (filename == NULL)
+	    return NULL;
 	  SKIP_WHITESPACE ();
 	}
 
@@ -1216,15 +1236,7 @@ dwarf2_directive_filename (void)
     purge_generated_debug (false);
   debug_type = DEBUG_NONE;
 
-  if (num != (unsigned int) num
-      || num >= (size_t) -1 / sizeof (struct file_entry) - 32)
-    {
-      as_bad (_("file number %lu is too big"), (unsigned long) num);
-      return NULL;
-    }
-
-  if (! allocate_filename_to_slot (dirname, filename, (unsigned int) num,
-				   with_md5))
+  if (!allocate_filename_to_slot (dirname, filename, num, with_md5))
     return NULL;
 
   return filename;
@@ -1318,17 +1330,21 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
       if (strcmp (p, "basic_block") == 0)
 	{
 	  current.flags |= DWARF2_FLAG_BASIC_BLOCK;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else if (strcmp (p, "prologue_end") == 0)
 	{
+	  if (dwarf_level < 3)
+	    dwarf_level = 3;
 	  current.flags |= DWARF2_FLAG_PROLOGUE_END;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else if (strcmp (p, "epilogue_begin") == 0)
 	{
+	  if (dwarf_level < 3)
+	    dwarf_level = 3;
 	  current.flags |= DWARF2_FLAG_EPILOGUE_BEGIN;
-	  *input_line_pointer = c;
+	  restore_line_pointer (c);
 	}
       else if (strcmp (p, "is_stmt") == 0)
 	{
@@ -1346,6 +1362,8 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
 	}
       else if (strcmp (p, "isa") == 0)
 	{
+	  if (dwarf_level < 3)
+	    dwarf_level = 3;
 	  (void) restore_line_pointer (c);
 	  value = get_absolute_expression ();
 	  if (value >= 0)
@@ -1428,7 +1446,7 @@ dwarf2_directive_loc (int dummy ATTRIBUTE_UNUSED)
 	  return;
 	}
 
-      SKIP_WHITESPACE_AFTER_NAME ();
+      SKIP_WHITESPACE ();
     }
 
   demand_empty_rest_of_line ();
@@ -1568,15 +1586,15 @@ out_set_addr (symbolS *sym)
   emit_expr (&exp, sizeof_address);
 }
 
-static void scale_addr_delta (addressT *);
-
 static void
-scale_addr_delta (addressT *addr_delta)
+scale_addr_delta (int line_delta, addressT *addr_delta)
 {
   static int printed_this = 0;
   if (DWARF2_LINE_MIN_INSN_LENGTH > 1)
     {
-      if (*addr_delta % DWARF2_LINE_MIN_INSN_LENGTH != 0  && !printed_this)
+      /* Don't error on non-instruction bytes at end of section.  */
+      if (line_delta != INT_MAX
+	  && *addr_delta % DWARF2_LINE_MIN_INSN_LENGTH != 0  && !printed_this)
 	{
 	  as_bad("unaligned opcodes detected in executable segment");
 	  printed_this = 1;
@@ -1599,7 +1617,7 @@ size_inc_line_addr (int line_delta, addressT addr_delta)
   int len = 0;
 
   /* Scale the address delta by the minimum instruction length.  */
-  scale_addr_delta (&addr_delta);
+  scale_addr_delta (line_delta, &addr_delta);
 
   /* INT_MAX is a signal that this is actually a DW_LNE_end_sequence.
      We cannot use special opcodes here, since we want the end_sequence
@@ -1614,7 +1632,7 @@ size_inc_line_addr (int line_delta, addressT addr_delta)
     }
 
   /* Bias the line delta by the base.  */
-  tmp = line_delta - DWARF2_LINE_BASE;
+  tmp = (unsigned) line_delta - DWARF2_LINE_BASE;
 
   /* If the line increment is out of range of a special opcode, we
      must encode it with DW_LNS_advance_line.  */
@@ -1629,7 +1647,7 @@ size_inc_line_addr (int line_delta, addressT addr_delta)
   tmp += DWARF2_LINE_OPCODE_BASE;
 
   /* Avoid overflow when addr_delta is large.  */
-  if (addr_delta < 256 + MAX_SPECIAL_ADDR_DELTA)
+  if (addr_delta < 256U + MAX_SPECIAL_ADDR_DELTA)
     {
       /* Try using a special opcode.  */
       opcode = tmp + addr_delta * DWARF2_LINE_RANGE;
@@ -1663,7 +1681,7 @@ emit_inc_line_addr (int line_delta, addressT addr_delta, char *p, int len)
   gas_assert ((offsetT) addr_delta >= 0);
 
   /* Scale the address delta by the minimum instruction length.  */
-  scale_addr_delta (&addr_delta);
+  scale_addr_delta (line_delta, &addr_delta);
 
   /* INT_MAX is a signal that this is actually a DW_LNE_end_sequence.
      We cannot use special opcodes here, since we want the end_sequence
@@ -1685,7 +1703,7 @@ emit_inc_line_addr (int line_delta, addressT addr_delta, char *p, int len)
     }
 
   /* Bias the line delta by the base.  */
-  tmp = line_delta - DWARF2_LINE_BASE;
+  tmp = (unsigned) line_delta - DWARF2_LINE_BASE;
 
   /* If the line increment is out of range of a special opcode, we
      must encode it with DW_LNS_advance_line.  */
@@ -1711,7 +1729,7 @@ emit_inc_line_addr (int line_delta, addressT addr_delta, char *p, int len)
   tmp += DWARF2_LINE_OPCODE_BASE;
 
   /* Avoid overflow when addr_delta is large.  */
-  if (addr_delta < 256 + MAX_SPECIAL_ADDR_DELTA)
+  if (addr_delta < 256U + MAX_SPECIAL_ADDR_DELTA)
     {
       /* Try using a special opcode.  */
       opcode = tmp + addr_delta * DWARF2_LINE_RANGE;
@@ -2473,12 +2491,17 @@ out_debug_line (segT line_seg)
   out_byte (0);			/* DW_LNS_set_basic_block */
   out_byte (0);			/* DW_LNS_const_add_pc */
   out_byte (1);			/* DW_LNS_fixed_advance_pc */
-  out_byte (0);			/* DW_LNS_set_prologue_end */
-  out_byte (0);			/* DW_LNS_set_epilogue_begin */
-  out_byte (1);			/* DW_LNS_set_isa */
-  /* We have emitted 12 opcode lengths, so make that this
-     matches up to the opcode base value we have been using.  */
-  gas_assert (DWARF2_LINE_OPCODE_BASE == 13);
+  if (DWARF2_LINE_VERSION >= 3)
+    {
+      out_byte (0);			/* DW_LNS_set_prologue_end */
+      out_byte (0);			/* DW_LNS_set_epilogue_begin */
+      out_byte (1);			/* DW_LNS_set_isa */
+      /* We have emitted 12 opcode lengths, so make that this
+	 matches up to the opcode base value we have been using.  */
+      gas_assert (DWARF2_LINE_OPCODE_BASE == 13);
+    }
+  else
+    gas_assert (DWARF2_LINE_OPCODE_BASE == 10);
 
   out_dir_and_file_list (line_seg, sizeof_offset);
 
@@ -2730,7 +2753,7 @@ out_debug_abbrev (segT abbrev_seg,
 
   subseg_set (abbrev_seg, 0);
 
-  out_uleb128 (1);
+  out_uleb128 (GAS_ABBREV_COMP_UNIT);
   out_uleb128 (DW_TAG_compile_unit);
   out_byte (have_efunc || have_lfunc ? DW_CHILDREN_yes : DW_CHILDREN_no);
   if (DWARF2_VERSION < 4)
@@ -2761,7 +2784,7 @@ out_debug_abbrev (segT abbrev_seg,
 
   if (have_efunc || have_lfunc)
     {
-      out_uleb128 (2);
+      out_uleb128 (GAS_ABBREV_SUBPROG);
       out_uleb128 (DW_TAG_subprogram);
       out_byte (DW_CHILDREN_no);
       out_abbrev (DW_AT_name, DW_FORM_strp);
@@ -2776,10 +2799,26 @@ out_debug_abbrev (segT abbrev_seg,
       else
 	/* Any non-zero value other than DW_FORM_flag will do.  */
 	*func_formP = DW_FORM_block;
+
+      /* PR 29517: Provide a return type for the function.  */
+      if (DWARF2_VERSION > 2)
+	out_abbrev (DW_AT_type, DW_FORM_ref_udata);
+
       out_abbrev (DW_AT_low_pc, DW_FORM_addr);
       out_abbrev (DW_AT_high_pc,
 		  DWARF2_VERSION < 4 ? DW_FORM_addr : DW_FORM_udata);
       out_abbrev (0, 0);
+
+      if (DWARF2_VERSION > 2)
+	{
+	  /* PR 29517: We do not actually know the return type of these
+	     functions, so provide an abbrev that uses DWARF's unspecified
+	     type.  */
+	  out_uleb128 (GAS_ABBREV_NO_TYPE);
+	  out_uleb128 (DW_TAG_unspecified_type);
+	  out_byte (DW_CHILDREN_no);
+	  out_abbrev (0, 0);
+	}
     }
 
   /* Terminate the abbreviations for this compilation unit.  */
@@ -2826,7 +2865,7 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT str_seg,
     }
 
   /* DW_TAG_compile_unit DIE abbrev */
-  out_uleb128 (1);
+  out_uleb128 (GAS_ABBREV_COMP_UNIT);
 
   /* DW_AT_stmt_list */
   TC_DWARF2_EMIT_OFFSET (section_symbol (line_seg),
@@ -2877,11 +2916,18 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT str_seg,
   if (func_form)
     {
       symbolS *symp;
+      symbolS *no_type_tag;
+
+      if (DWARF2_VERSION > 2)
+	no_type_tag = symbol_make (".Ldebug_no_type_tag");
+      else
+	no_type_tag = NULL;
 
       for (symp = symbol_rootP; symp; symp = symbol_next (symp))
 	{
 	  const char *name;
 	  size_t len;
+	  expressionS size = { .X_op = O_constant };
 
 	  /* Skip warning constructs (see above).  */
 	  if (symbol_get_bfdsym (symp)->flags & BSF_WARNING)
@@ -2895,6 +2941,18 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT str_seg,
 	  if (!S_IS_DEFINED (symp) || !S_IS_FUNCTION (symp))
 	    continue;
 
+#if defined (OBJ_ELF) /* || defined (OBJ_MAYBE_ELF) */
+	  size.X_add_number = S_GET_SIZE (symp);
+	  if (size.X_add_number == 0 && IS_ELF
+	      && symbol_get_obj (symp)->size != NULL)
+	    {
+	      size.X_op = O_add;
+	      size.X_op_symbol = make_expr_symbol (symbol_get_obj (symp)->size);
+	    }
+#endif
+	  if (size.X_op == O_constant && size.X_add_number == 0)
+	    continue;
+
 	  subseg_set (str_seg, 0);
 	  name_sym = symbol_temp_new_now_octets ();
 	  name = S_GET_NAME (symp);
@@ -2904,7 +2962,7 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT str_seg,
 	  subseg_set (info_seg, 0);
 
 	  /* DW_TAG_subprogram DIE abbrev */
-	  out_uleb128 (2);
+	  out_uleb128 (GAS_ABBREV_SUBPROG);
 
 	  /* DW_AT_name */
 	  TC_DWARF2_EMIT_OFFSET (name_sym, sizeof_offset);
@@ -2913,6 +2971,16 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT str_seg,
 	  if (func_form == DW_FORM_flag)
 	    out_byte (S_IS_EXTERNAL (symp));
 
+	  /* PR 29517: Let consumers know that we do not have
+	     return type information for this function.  */
+	  if (DWARF2_VERSION > 2)
+	    {
+	      exp.X_op = O_symbol;
+	      exp.X_add_symbol = no_type_tag;
+	      exp.X_add_number = 0;
+	      emit_leb128_expr (&exp, 0);
+	    }
+
 	  /* DW_AT_low_pc */
 	  exp.X_op = O_symbol;
 	  exp.X_add_symbol = symp;
@@ -2920,29 +2988,26 @@ out_debug_info (segT info_seg, segT abbrev_seg, segT line_seg, segT str_seg,
 	  emit_expr (&exp, sizeof_address);
 
 	  /* DW_AT_high_pc */
-	  exp.X_op = O_constant;
-#if defined (OBJ_ELF) /* || defined (OBJ_MAYBE_ELF) */
-	  exp.X_add_number = S_GET_SIZE (symp);
-	  if (exp.X_add_number == 0 && IS_ELF
-	      && symbol_get_obj (symp)->size != NULL)
-	    {
-	      exp.X_op = O_add;
-	      exp.X_op_symbol = make_expr_symbol (symbol_get_obj (symp)->size);
-	    }
-#else
-	  exp.X_add_number = 0;
-#endif
 	  if (DWARF2_VERSION < 4)
 	    {
-	      if (exp.X_op == O_constant)
-		exp.X_op = O_symbol;
-	      exp.X_add_symbol = symp;
-	      emit_expr (&exp, sizeof_address);
+	      if (size.X_op == O_constant)
+		size.X_op = O_symbol;
+	      size.X_add_symbol = symp;
+	      emit_expr (&size, sizeof_address);
 	    }
-	  else if (exp.X_op == O_constant)
-	    out_uleb128 (exp.X_add_number);
+	  else if (size.X_op == O_constant)
+	    out_uleb128 (size.X_add_number);
 	  else
-	    emit_leb128_expr (symbol_get_value_expression (exp.X_op_symbol), 0);
+	    emit_leb128_expr (symbol_get_value_expression (size.X_op_symbol), 0);
+	}
+
+      if (DWARF2_VERSION > 2)
+	{
+	  /* PR 29517: Generate a DIE for the unspecified type abbrev.
+	     We do it here because it cannot be part of the top level DIE.   */
+	  subseg_set (info_seg, 0);
+	  symbol_set_value_now (no_type_tag);
+	  out_uleb128 (GAS_ABBREV_NO_TYPE);
 	}
 
       /* End of children.  */
@@ -2963,6 +3028,11 @@ out_debug_str (segT str_seg, symbolS **name_sym, symbolS **comp_dir_sym,
   int len;
   int first_file = DWARF2_LINE_VERSION > 4 ? 0 : 1;
 
+  if (files_in_use == 0)
+    abort ();
+  if (first_file == 0 && files[first_file].filename == NULL)
+    first_file = 1;
+
   subseg_set (str_seg, 0);
 
   /* DW_AT_name.  We don't have the actual file name that was present
@@ -2970,8 +3040,7 @@ out_debug_str (segT str_seg, symbolS **name_sym, symbolS **comp_dir_sym,
      We're not supposed to get called unless at least one line number
      entry was emitted, so this should always be defined.  */
   *name_sym = symbol_temp_new_now_octets ();
-  if (files_in_use == 0)
-    abort ();
+
   if (files[first_file].dir)
     {
       char *dirname = remap_debug_filename (dirs[files[first_file].dir]);
@@ -3030,6 +3099,10 @@ dwarf2_init (void)
   current.u.view = NULL;
   force_reset_view = NULL;
   view_assert_failed = NULL;
+  dw2_line = -1;
+  dw2_filename = NULL;
+  label_num = 0;
+  last_used = -1;
 
   /* Select the default CIE version to produce here.  The global
      starts with a value of -1 and will be modified to a valid value
@@ -3048,6 +3121,8 @@ dwarf2_cleanup (void)
 {
   purge_generated_debug (true);
   free (files);
+  for (unsigned int i = 0; i < dirs_in_use; i++)
+    free (dirs[i]);
   free (dirs);
 }
 
@@ -3128,8 +3203,7 @@ dwarf2_finish (void)
 	  /* Link the first view of subsequent subsections to the
 	     previous view.  */
 	  if (lss->head && lss->head->loc.u.view)
-	    set_or_check_view (lss->head,
-			       !s->head ? NULL : (struct line_entry *)ptail,
+	    set_or_check_view (lss->head, line_entry_at_tail (s->head, ptail),
 			       s->head ? s->head->head : NULL);
 	  *ptail = lss->head;
 	  lss->head = NULL;

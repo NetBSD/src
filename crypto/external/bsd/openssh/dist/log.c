@@ -1,5 +1,5 @@
-/*	$NetBSD: log.c,v 1.28.2.1 2025/08/02 05:18:46 perseant Exp $	*/
-/* $OpenBSD: log.c,v 1.64 2024/12/07 10:05:36 djm Exp $ */
+/*	$NetBSD: log.c,v 1.28.2.2 2026/11/04 22:36:39 perseant Exp $	*/
+/* $OpenBSD: log.c,v 1.67 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: log.c,v 1.28.2.1 2025/08/02 05:18:46 perseant Exp $");
+__RCSID("$NetBSD: log.c,v 1.28.2.2 2026/11/04 22:36:39 perseant Exp $");
 #include <sys/types.h>
 #include <sys/uio.h>
 
@@ -49,7 +49,6 @@ __RCSID("$NetBSD: log.c,v 1.28.2.1 2025/08/02 05:18:46 perseant Exp $");
 #include <stdlib.h>
 #include <string.h>
 #include <syslog.h>
-#include <time.h>
 #include <unistd.h>
 #include <vis.h>
 
@@ -380,7 +379,8 @@ do_log(LogLevel level, int force, const char *suffix, const char *fmt,
 		/* Avoid recursion */
 		tmp_handler = log_handler;
 		log_handler = NULL;
-		tmp_handler(level, force, visbuf, log_handler_ctx);
+		/* Note: this sends the raw (i.e. no strnvis) log message */
+		tmp_handler(level, force, msgbuf, log_handler_ctx);
 		log_handler = tmp_handler;
 	} else if (log_on_stderr) {
 		snprintf(msgbuf, sizeof msgbuf, "%s%s%.*s\r\n",
@@ -473,7 +473,7 @@ sshlogdirect(LogLevel level, int forced, const char *fmt, ...)
  * To prevent flipping in and out of rate-limiting, there is a hysteresis
  * timer that delays leaving the rate-limited state.
  *
- * While in the rate-limited state, events can be periodically allowed though
+ * While in the rate-limited state, events can be periodically allowed through
  * and the number of dropped events since the last log obtained.
  *
  * XXX a moving average rate of events might be a better approach here rather

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.44.2.1 2025/08/02 05:20:38 perseant Exp $
+# $NetBSD: mi,v 1.44.2.2 2026/11/04 22:37:07 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -32,8 +32,8 @@
 ./etc/fonts/conf.avail/10-hinting-medium.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-hinting-none.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-hinting-slight.conf		xetc-fontconfig-etc	xorg
-./etc/fonts/conf.avail/10-no-sub-pixel.conf		xetc-obsolete	obsolete
 ./etc/fonts/conf.avail/10-no-antialias.conf		xetc-fontconfig-etc	xorg
+./etc/fonts/conf.avail/10-no-sub-pixel.conf		xetc-obsolete	obsolete
 ./etc/fonts/conf.avail/10-scale-bitmap-fonts.conf	xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-bgr.conf		xetc-fontconfig-etc	xorg
 ./etc/fonts/conf.avail/10-sub-pixel-none.conf		xetc-fontconfig-etc	xorg

@@ -55,6 +55,10 @@
    */
 #undef HAVE_DECL_MEMCHR
 
+/* Define to 1 if you have the declaration of `strcasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRCASECMP
+
 /* Define to 1 if you have the declaration of `strcoll', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRCOLL
@@ -62,6 +66,10 @@
 /* Define to 1 if you have the declaration of `strerror', and to 0 if you
    don't. */
 #undef HAVE_DECL_STRERROR
+
+/* Define to 1 if you have the declaration of `strncasecmp', and to 0 if you
+   don't. */
+#undef HAVE_DECL_STRNCASECMP
 
 /* Define to 1 if you have the declaration of `_snprintf', and to 0 if you
    don't. */

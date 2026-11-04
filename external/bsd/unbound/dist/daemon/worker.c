@@ -160,9 +160,11 @@ worker_mem_report(struct worker* ATTR_UNUSED(worker),
 		+ sizeof(worker->rndstate)
 		+ regional_get_mem(worker->scratchpad)
 		+ sizeof(*worker->env.scratch_buffer)
-		+ sldns_buffer_capacity(worker->env.scratch_buffer)
-		+ forwards_get_mem(worker->env.fwds)
-		+ hints_get_mem(worker->env.hints);
+		+ sldns_buffer_capacity(worker->env.scratch_buffer);
+	if(worker->daemon->env->fwds)
+		log_info("forwards=%u", (unsigned)forwards_get_mem(worker->env.fwds));
+	if(worker->daemon->env->hints)
+		log_info("hints=%u", (unsigned)hints_get_mem(worker->env.hints));
 	if(worker->thread_num == 0)
 		me += acl_list_get_mem(worker->daemon->acl);
 	if(cur_serv) {
@@ -253,7 +255,8 @@ worker_handle_service_reply(struct comm_point* c, void* arg, int error,
 		return 0;
 	}
 	/* sanity check. */
-	if(!LDNS_QR_WIRE(sldns_buffer_begin(c->buffer))
+	if(sldns_buffer_limit(c->buffer) < LDNS_HEADER_SIZE
+		|| !LDNS_QR_WIRE(sldns_buffer_begin(c->buffer))
 		|| LDNS_OPCODE_WIRE(sldns_buffer_begin(c->buffer)) !=
 			LDNS_PACKET_QUERY
 		|| LDNS_QDCOUNT(sldns_buffer_begin(c->buffer)) > 1) {
@@ -288,6 +291,44 @@ worker_err_ratelimit(struct worker* worker, int err)
 		worker->err_limit_count = 1;
 	}
 	return err;
+}
+
+/**
+ * Reply with an error.
+ * This reply includes the qname if it has been parsed.
+ * For error ratelimiting, the err ratelimit routine should be checked
+ * beforehand. The reply is without EDNS, and copies RD and sets QR flag.
+ * @param pkt: the packet buffer from the comm point.
+ * @param err: the error code that would be wanted.
+ * @param qname_len: 0 if not parsed, and the qname length in packet.
+ */
+static void
+query_error(sldns_buffer* pkt, int err, size_t qname_len)
+{
+	/* Preserve the RD flag.
+	 * The CD flag must be cleared in authoritative answers,
+	 * also the AD flag need not be copied into answers.
+	 * The other flags need not be copied into the answer. */
+	sldns_buffer_write_u16_at(pkt, 2,
+		sldns_buffer_read_u16_at(pkt, 2)&0x0100U);
+	LDNS_QR_SET(sldns_buffer_begin(pkt)); /* Set QR flag. */
+	LDNS_RCODE_SET(sldns_buffer_begin(pkt), err); /* Set rcode */
+
+	if(qname_len && LDNS_QDCOUNT(sldns_buffer_begin(pkt))>=1 &&
+		qname_len <= LDNS_MAX_DOMAINLEN) {
+		/* Copy query into the answer. */
+		LDNS_QDCOUNT_SET(sldns_buffer_begin(pkt), 1);
+		sldns_buffer_set_position(pkt, LDNS_HEADER_SIZE +
+			qname_len + 2 /* type */ + 2 /* class */ );
+	} else {
+		/* No query section in answer. */
+		LDNS_QDCOUNT_SET(sldns_buffer_begin(pkt), 0);
+		sldns_buffer_set_position(pkt, LDNS_HEADER_SIZE);
+	}
+	LDNS_ANCOUNT_SET(sldns_buffer_begin(pkt), 0);
+	LDNS_NSCOUNT_SET(sldns_buffer_begin(pkt), 0);
+	LDNS_ARCOUNT_SET(sldns_buffer_begin(pkt), 0);
+	sldns_buffer_flip(pkt);
 }
 
 /**
@@ -327,7 +368,6 @@ worker_check_request(sldns_buffer* pkt, struct worker* worker,
 		return;
 	}
 	if(LDNS_TC_WIRE(sldns_buffer_begin(pkt))) {
-		LDNS_TC_CLR(sldns_buffer_begin(pkt));
 		verbose(VERB_QUERY, "request bad, has TC bit on");
 		out->value = worker_err_ratelimit(worker, LDNS_RCODE_FORMERR);
 		return;
@@ -369,6 +409,84 @@ worker_check_request(sldns_buffer* pkt, struct worker* worker,
 	return;
 }
 
+/**
+ * Send fast-reload acknowledgement to the mainthread in one byte.
+ * This signals that this worker has received the previous command.
+ * The worker is waiting if that is after a reload_stop command.
+ * Or the worker has briefly processed the event itself, and in doing so
+ * released data pointers to old config, after a reload_poll command.
+ */
+static void
+worker_send_reload_ack(struct worker* worker)
+{
+	/* If this is clipped to 8 bits because thread_num>255, then that
+	 * is not a problem, the receiver counts the number of bytes received.
+	 * The number is informative only. */
+	uint8_t c = (uint8_t)worker->thread_num;
+	ssize_t ret;
+	while(1) {
+		ret = send(worker->daemon->fast_reload_thread->commreload[1],
+			(void*)&c, 1, 0);
+		if(ret == -1) {
+			if(
+#ifndef USE_WINSOCK
+				errno == EINTR || errno == EAGAIN
+#  ifdef EWOULDBLOCK
+				|| errno == EWOULDBLOCK
+#  endif
+#else
+				WSAGetLastError() == WSAEINTR ||
+				WSAGetLastError() == WSAEINPROGRESS ||
+				WSAGetLastError() == WSAEWOULDBLOCK
+#endif
+				)
+				continue; /* Try again. */
+			log_err("worker reload ack reply: send failed: %s",
+				sock_strerror(errno));
+			break;
+		}
+		break;
+	}
+}
+
+/** stop and wait to resume the worker */
+static void
+worker_stop_and_wait(struct worker* worker)
+{
+	uint8_t* buf = NULL;
+	uint32_t len = 0, cmd;
+	worker_send_reload_ack(worker);
+	/* wait for reload */
+	if(!tube_read_msg(worker->cmd, &buf, &len, 0)) {
+		log_err("worker reload read reply failed");
+		return;
+	}
+	if(len != sizeof(uint32_t)) {
+		log_err("worker reload reply, bad control msg length %d",
+			(int)len);
+		free(buf);
+		return;
+	}
+	cmd = sldns_read_uint32(buf);
+	free(buf);
+	if(cmd == worker_cmd_quit) {
+		/* quit anyway */
+		verbose(VERB_ALGO, "reload reply, control cmd quit");
+		comm_base_exit(worker->base);
+		return;
+	}
+	if(cmd != worker_cmd_reload_start) {
+		log_err("worker reload reply, wrong reply command");
+	}
+	if(worker->daemon->fast_reload_drop_mesh) {
+		verbose(VERB_ALGO, "worker: drop mesh queries after reload");
+		mesh_delete_all(worker->env.mesh);
+	}
+	fast_reload_worker_pickup_changes(worker);
+	worker_send_reload_ack(worker);
+	verbose(VERB_ALGO, "worker resume after reload");
+}
+
 void
 worker_handle_control_cmd(struct tube* ATTR_UNUSED(tube), uint8_t* msg,
 	size_t len, int error, void* arg)
@@ -383,7 +501,9 @@ worker_handle_control_cmd(struct tube* ATTR_UNUSED(tube), uint8_t* msg,
 		return;
 	}
 	if(len != sizeof(uint32_t)) {
-		fatal_exit("bad control msg length %d", (int)len);
+		verbose(VERB_ALGO, "bad control msg length %d", (int)len);
+		free(msg);
+		return;
 	}
 	cmd = sldns_read_uint32(msg);
 	free(msg);
@@ -403,6 +523,15 @@ worker_handle_control_cmd(struct tube* ATTR_UNUSED(tube), uint8_t* msg,
 	case worker_cmd_remote:
 		verbose(VERB_ALGO, "got control cmd remote");
 		daemon_remote_exec(worker);
+		break;
+	case worker_cmd_reload_stop:
+		verbose(VERB_ALGO, "got control cmd reload_stop");
+		worker_stop_and_wait(worker);
+		break;
+	case worker_cmd_reload_poll:
+		verbose(VERB_ALGO, "got control cmd reload_poll");
+		fast_reload_worker_pickup_changes(worker);
+		worker_send_reload_ack(worker);
 		break;
 	default:
 		log_err("bad command %d", (int)cmd);
@@ -587,7 +716,8 @@ apply_respip_action(struct worker* worker, const struct query_info* qinfo,
 	struct respip_client_info* cinfo, struct reply_info* rep,
 	struct sockaddr_storage* addr, socklen_t addrlen,
 	struct ub_packed_rrset_key** alias_rrset,
-	struct reply_info** encode_repp, struct auth_zones* az)
+	struct reply_info** encode_repp, struct auth_zones* az,
+	int* rpz_passthru)
 {
 	struct respip_action_info actinfo = {0, 0, 0, 0, NULL, 0, NULL};
 	actinfo.action = respip_none;
@@ -598,7 +728,8 @@ apply_respip_action(struct worker* worker, const struct query_info* qinfo,
 		return 1;
 
 	if(!respip_rewrite_reply(qinfo, cinfo, rep, encode_repp, &actinfo,
-		alias_rrset, 0, worker->scratchpad, az, NULL))
+		alias_rrset, 0, worker->scratchpad, az, rpz_passthru,
+		worker->env.views, worker->env.respip_set))
 		return 0;
 
 	/* xxx_deny actions mean dropping the reply, unless the original reply
@@ -644,7 +775,7 @@ answer_from_cache(struct worker* worker, struct query_info* qinfo,
 	int* is_secure_answer, struct ub_packed_rrset_key** alias_rrset,
 	struct reply_info** partial_repp,
 	struct reply_info* rep, uint16_t id, uint16_t flags,
-	struct comm_reply* repinfo, struct edns_data* edns)
+	struct comm_reply* repinfo, struct edns_data* edns, int* rpz_passthru)
 {
 	time_t timenow = *worker->env.now;
 	uint16_t udpsize = edns->udp_size;
@@ -656,20 +787,21 @@ answer_from_cache(struct worker* worker, struct query_info* qinfo,
 	*partial_repp = NULL;  /* avoid accidental further pass */
 
 	/* Check TTL */
-	if(rep->ttl < timenow) {
+	if(TTL_IS_EXPIRED(rep->ttl, timenow)) {
 		/* Check if we need to serve expired now */
 		if(worker->env.cfg->serve_expired &&
-			!worker->env.cfg->serve_expired_client_timeout) {
-				if(worker->env.cfg->serve_expired_ttl &&
-					rep->serve_expired_ttl < timenow)
-					return 0;
-				/* Ignore expired failure answers */
-				if(FLAGS_GET_RCODE(rep->flags) !=
-					LDNS_RCODE_NOERROR &&
-					FLAGS_GET_RCODE(rep->flags) !=
-					LDNS_RCODE_NXDOMAIN &&
-					FLAGS_GET_RCODE(rep->flags) !=
-					LDNS_RCODE_YXDOMAIN)
+			/* if serve-expired-client-timeout is set, serve
+			 * an expired record without attempting recursion
+			 * if the serve_expired_norec_ttl is set for the record
+			 * as we know that recursion is currently failing. */
+			(!worker->env.cfg->serve_expired_client_timeout ||
+			 timenow < rep->serve_expired_norec_ttl)
+#ifdef USE_CACHEDB
+			&& !(worker->env.cachedb_enabled &&
+			  worker->env.cfg->cachedb_check_when_serve_expired)
+#endif
+			) {
+				if(!reply_info_can_answer_expired(rep, timenow))
 					return 0;
 				if(!rrset_array_lock(rep->ref, rep->rrset_count, 0))
 					return 0;
@@ -731,7 +863,7 @@ answer_from_cache(struct worker* worker, struct query_info* qinfo,
 			"validation");
 		goto bail_out; /* need to validate cache entry first */
 	} else if(rep->security == sec_status_secure) {
-		if(reply_all_rrsets_secure(rep)) {
+		if(reply_an_ns_rrsets_secure(rep)) {
 			*is_secure_answer = 1;
 		} else {
 			if(must_validate) {
@@ -753,12 +885,13 @@ answer_from_cache(struct worker* worker, struct query_info* qinfo,
 	if((worker->daemon->use_response_ip || worker->daemon->use_rpz) &&
 		!partial_rep && !apply_respip_action(worker, qinfo, cinfo, rep,
 		&repinfo->client_addr, repinfo->client_addrlen, alias_rrset,
-		&encode_rep, worker->env.auth_zones)) {
+		&encode_rep, worker->env.auth_zones, rpz_passthru)) {
 		goto bail_out;
 	} else if(partial_rep &&
 		!respip_merge_cname(partial_rep, qinfo, rep, cinfo,
 		must_validate, &encode_rep, worker->scratchpad,
-		worker->env.auth_zones)) {
+		worker->env.auth_zones, worker->env.views,
+		worker->env.respip_set)) {
 		goto bail_out;
 	}
 	if(encode_rep != rep) {
@@ -879,6 +1012,7 @@ chaos_replystr(sldns_buffer* pkt, char** str, int num, struct edns_data* edns,
 	size_t udpsize = edns->udp_size;
 	edns->edns_version = EDNS_ADVERTISED_VERSION;
 	edns->udp_size = EDNS_ADVERTISED_SIZE;
+	edns->ext_rcode = 0;
 	edns->bits &= EDNS_DO;
 	if(!inplace_cb_reply_local_call(&worker->env, NULL, NULL, NULL,
 		LDNS_RCODE_NOERROR, edns, repinfo, worker->scratchpad,
@@ -1079,7 +1213,7 @@ answer_notify(struct worker* w, struct query_info* qinfo,
 
 	if(verbosity >= VERB_DETAIL) {
 		char buf[380];
-		char zname[255+1];
+		char zname[LDNS_MAX_DOMAINLEN];
 		char sr[25];
 		dname_str(qinfo->qname, zname);
 		sr[0]=0;
@@ -1137,9 +1271,7 @@ deny_refuse(struct comm_point* c, enum acl_access acl,
 		worker_check_request(c->buffer, worker, check_result);
 		if(check_result->value != 0) {
 			if(check_result->value != -1) {
-				LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-				LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-					check_result->value);
+				query_error(c->buffer, check_result->value, 0);
 				return 1;
 			}
 			comm_point_drop_reply(repinfo);
@@ -1151,45 +1283,22 @@ deny_refuse(struct comm_point* c, enum acl_access acl,
 		log_assert(sldns_buffer_limit(c->buffer) >= LDNS_HEADER_SIZE
 			&& LDNS_QDCOUNT(sldns_buffer_begin(c->buffer)) == 1);
 
-		sldns_buffer_skip(c->buffer, LDNS_HEADER_SIZE); /* skip header */
+		sldns_buffer_set_position(c->buffer, LDNS_HEADER_SIZE); /* skip header */
 
 		/* check additional section is present and that we respond with EDEs */
 		if(LDNS_ARCOUNT(sldns_buffer_begin(c->buffer)) != 1
 			|| !ede) {
-			LDNS_QDCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ANCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_NSCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ARCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-			LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-				LDNS_RCODE_REFUSED);
-			sldns_buffer_flip(c->buffer);
+			query_error(c->buffer, LDNS_RCODE_REFUSED, 0);
 			return 1;
 		}
 
 		if (!query_dname_len(c->buffer)) {
-			LDNS_QDCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ANCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_NSCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ARCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-			LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-				LDNS_RCODE_FORMERR);
-			sldns_buffer_set_position(c->buffer, LDNS_HEADER_SIZE);
-			sldns_buffer_flip(c->buffer);
+			query_error(c->buffer, LDNS_RCODE_FORMERR, 0);
 			return 1;
 		}
 		/* space available for query type and class? */
 		if (sldns_buffer_remaining(c->buffer) < 2 * sizeof(uint16_t)) {
-                        LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-                        LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-				 LDNS_RCODE_FORMERR);
-			LDNS_QDCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ANCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_NSCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ARCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			sldns_buffer_set_position(c->buffer, LDNS_HEADER_SIZE);
-                        sldns_buffer_flip(c->buffer);
+			query_error(c->buffer, LDNS_RCODE_FORMERR, 0);
 			return 1;
 		}
 		LDNS_QR_SET(sldns_buffer_begin(c->buffer));
@@ -1211,35 +1320,27 @@ deny_refuse(struct comm_point* c, enum acl_access acl,
 			if(!skip_pkt_rrs(c->buffer,
 				((int)LDNS_ANCOUNT(sldns_buffer_begin(c->buffer)))+
 				((int)LDNS_NSCOUNT(sldns_buffer_begin(c->buffer))))) {
-				LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-					LDNS_RCODE_FORMERR);
-				LDNS_ANCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-				LDNS_NSCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-				LDNS_ARCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-				sldns_buffer_set_position(c->buffer, opt_rr_mark);
-				sldns_buffer_flip(c->buffer);
+				query_error(c->buffer, LDNS_RCODE_FORMERR,
+					opt_rr_mark - LDNS_HEADER_SIZE
+					- 2 /* qtype */ - 2 /* qclass */);
 				return 1;
 			}
 		}
 		/* Do we have a valid OPT RR here? If not return REFUSED (could be a valid TSIG or something so no FORMERR) */
 		/* domain name must be the root of length 1. */
 		if(sldns_buffer_remaining(c->buffer) < 1 || *sldns_buffer_current(c->buffer) != 0) {
-			LDNS_ANCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_NSCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ARCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			sldns_buffer_set_position(c->buffer, opt_rr_mark);
-			sldns_buffer_flip(c->buffer);
+			query_error(c->buffer, LDNS_RCODE_REFUSED,
+				opt_rr_mark - LDNS_HEADER_SIZE
+				- 2 /* qtype */ - 2 /* qclass */);
 			return 1;
 		} else {
 			sldns_buffer_skip(c->buffer, 1); /* skip root label */
 		}
 		if(sldns_buffer_remaining(c->buffer) < 2 ||
 			sldns_buffer_read_u16(c->buffer) != LDNS_RR_TYPE_OPT) {
-			LDNS_ANCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_NSCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			LDNS_ARCOUNT_SET(sldns_buffer_begin(c->buffer), 0);
-			sldns_buffer_set_position(c->buffer, opt_rr_mark);
-			sldns_buffer_flip(c->buffer);
+			query_error(c->buffer, LDNS_RCODE_REFUSED,
+				opt_rr_mark - LDNS_HEADER_SIZE
+				- 2 /* qtype */ - 2 /* qclass */);
 			return 1;
 		}
 		/* Write OPT RR directly after the query,
@@ -1326,15 +1427,6 @@ deny_refuse_non_local(struct comm_point* c, enum acl_access acl,
 		worker, repinfo, acladdr, ede, check_result);
 }
 
-/* Returns 1 if the ip rate limit check can happen before EDNS parsing,
- * else 0 */
-static int
-pre_edns_ip_ratelimit_check(enum acl_access acl)
-{
-	if(acl == acl_allow_cookie) return 0;
-	return 1;
-}
-
 /* Check if the query is blocked by source IP rate limiting.
  * Returns 1 if it passes the check, 0 otherwise. */
 static int
@@ -1360,6 +1452,24 @@ check_ip_ratelimit(struct worker* worker, struct sockaddr_storage* addr,
 	return 1;
 }
 
+/*
+ * This is the callback function when a request arrives. It is passed
+ * the packet and user argument. Return true to send a reply.
+ * This is of type comm_point_callback_type. The struct comm_point contains
+ * more comments on the comm_point.callback member about the function.
+ * @param c: the comm_point where the request arrives on.
+ * @param arg: the user argument for the callback, the worker.
+ * @param error: This can be NETEVENT_NOERROR, NETEVENT_TIMEOUT,
+ *	NETEVENT_CLOSED or other comm point callback error values.
+ * @param repinfo: The reply info, use it to send a reply. If the reply
+ *	is immediate, return 1. If the reply is later on return 0 and save
+ *	the repinfo, to call comm_point_send_reply on.
+ * @return 1 to sent a reply straight away, for like cache response so that
+ *	no allocation needs to be done. And only internal preallocated buffers
+ *	are used. Return 0 and save the repinfo to reply later, for responses
+ *	that need to be looked up. Return 0 and call comm_point_drop_reply on
+ *	the repinfo to drop the response.
+ */
 int
 worker_handle_request(struct comm_point* c, void* arg, int error,
 	struct comm_reply* repinfo)
@@ -1387,6 +1497,8 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 	struct reply_info* partial_rep = NULL;
 	struct query_info* lookup_qinfo = &qinfo;
 	struct query_info qinfo_tmp; /* placeholder for lookup_qinfo */
+	uint8_t* alias_orig_qname = NULL; /* original qname for logs, if
+		a local_alias is used to change the qname. */
 	struct respip_client_info* cinfo = NULL, cinfo_tmp;
 	struct timeval wait_time;
 	struct check_request_result check_result = {0,0};
@@ -1404,7 +1516,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		if (worker->stats.max_query_time_us < wait_queue_time)
 			worker->stats.max_query_time_us = wait_queue_time;
 		if(wait_queue_time >
-			(long long)(worker->env.cfg->sock_queue_timeout * 1000000)) {
+			(long long)worker->env.cfg->sock_queue_timeout * 1000000) {
 			/* count and drop queries that were sitting in the socket queue too long */
 			worker->stats.num_queries_timed_out++;
 			return 0;
@@ -1418,7 +1530,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		return 0;
 	}
 	if(c->dnscrypt && !repinfo->is_dnscrypted) {
-		char buf[LDNS_MAX_DOMAINLEN+1];
+		char buf[LDNS_MAX_DOMAINLEN];
 		/* Check if this is unencrypted and asking for certs */
 		worker_check_request(c->buffer, worker, &check_result);
 		if(check_result.value != 0) {
@@ -1426,6 +1538,10 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 				"dnscrypt: worker check request: bad query.");
 			log_addr(VERB_CLIENT,"from",&repinfo->client_addr,
 				repinfo->client_addrlen);
+			if(check_result.value != -1) {
+				query_error(c->buffer, check_result.value, 0);
+				return 1;
+			}
 			comm_point_drop_reply(repinfo);
 			return 0;
 		}
@@ -1434,8 +1550,13 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 				"dnscrypt: worker parse request: formerror.");
 			log_addr(VERB_CLIENT, "from", &repinfo->client_addr,
 				repinfo->client_addrlen);
-			comm_point_drop_reply(repinfo);
-			return 0;
+			if(worker_err_ratelimit(worker, LDNS_RCODE_FORMERR) == -1) {
+				comm_point_drop_reply(repinfo);
+				return 0;
+			}
+			query_error(c->buffer, LDNS_RCODE_FORMERR, 0);
+			sldns_buffer_copy(c->dnscrypt_buffer, c->buffer);
+			return 1;
 		}
 		dname_str(qinfo.qname, buf);
 		if(!(qinfo.qtype == LDNS_RR_TYPE_TXT &&
@@ -1446,9 +1567,15 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 				worker->daemon->dnscenv->provider_name,
 				sldns_rr_descript(qinfo.qtype)->_name,
 				buf);
-			comm_point_drop_reply(repinfo);
+			if(worker_err_ratelimit(worker, LDNS_RCODE_SERVFAIL) == -1) {
+				comm_point_drop_reply(repinfo);
+				return 0;
+			}
+			query_error(c->buffer, LDNS_RCODE_SERVFAIL,
+				qinfo.qname_len);
 			worker->stats.num_query_dnscrypt_cleartext++;
-			return 0;
+			sldns_buffer_copy(c->dnscrypt_buffer, c->buffer);
+			return 1;
 		}
 		worker->stats.num_query_dnscrypt_cert++;
 		sldns_buffer_rewind(c->buffer);
@@ -1462,8 +1589,8 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 	 */
 	if(worker->dtenv.log_client_query_messages) {
 		log_addr(VERB_ALGO, "request from client", &repinfo->client_addr, repinfo->client_addrlen);
-		log_addr(VERB_ALGO, "to local addr", (void*)repinfo->c->socket->addr->ai_addr, repinfo->c->socket->addr->ai_addrlen);
-		dt_msg_send_client_query(&worker->dtenv, &repinfo->client_addr, (void*)repinfo->c->socket->addr->ai_addr, c->type, c->buffer,
+		log_addr(VERB_ALGO, "to local addr", (void*)repinfo->c->socket->addr, repinfo->c->socket->addrlen);
+		dt_msg_send_client_query(&worker->dtenv, &repinfo->client_addr, (void*)repinfo->c->socket->addr, c->type, c->ssl, c->buffer,
 		((worker->env.cfg->sock_queue_timeout && timeval_isset(&c->recv_tv))?&c->recv_tv:NULL));
 	}
 #endif
@@ -1488,9 +1615,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		verbose(VERB_ALGO, "worker check request: bad query.");
 		log_addr(VERB_CLIENT,"from",&repinfo->client_addr, repinfo->client_addrlen);
 		if(check_result.value != -1) {
-			LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-			LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-				check_result.value);
+			query_error(c->buffer, check_result.value, 0);
 			return 1;
 		}
 		comm_point_drop_reply(repinfo);
@@ -1498,7 +1623,9 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 	}
 
 	worker->stats.num_queries++;
-	pre_edns_ip_ratelimit = pre_edns_ip_ratelimit_check(acl);
+	pre_edns_ip_ratelimit = !worker->env.cfg->do_answer_cookie
+		|| sldns_buffer_limit(c->buffer) < LDNS_HEADER_SIZE
+		|| LDNS_ARCOUNT(sldns_buffer_begin(c->buffer)) == 0;
 
 	/* If the IP rate limiting check needs extra EDNS information (e.g.,
 	 * DNS Cookies) postpone the check until after EDNS is parsed. */
@@ -1522,10 +1649,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			comm_point_drop_reply(repinfo);
 			return 0;
 		}
-		sldns_buffer_rewind(c->buffer);
-		LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-		LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-			LDNS_RCODE_FORMERR);
+		query_error(c->buffer, LDNS_RCODE_FORMERR, 0);
 		goto send_reply;
 	}
 	if(worker->env.cfg->log_queries) {
@@ -1538,10 +1662,11 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		verbose(VERB_ALGO, "worker request: refused zone transfer.");
 		log_addr(VERB_CLIENT, "from", &repinfo->client_addr,
 			repinfo->client_addrlen);
-		sldns_buffer_rewind(c->buffer);
-		LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-		LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-			LDNS_RCODE_REFUSED);
+		if(worker_err_ratelimit(worker, LDNS_RCODE_REFUSED) == -1) {
+			comm_point_drop_reply(repinfo);
+			return 0;
+		}
+		query_error(c->buffer, LDNS_RCODE_REFUSED, qinfo.qname_len);
 		if(worker->stats.extended) {
 			worker->stats.qtype[qinfo.qtype]++;
 		}
@@ -1560,10 +1685,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			comm_point_drop_reply(repinfo);
 			return 0;
 		}
-		sldns_buffer_rewind(c->buffer);
-		LDNS_QR_SET(sldns_buffer_begin(c->buffer));
-		LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-			LDNS_RCODE_FORMERR);
+		query_error(c->buffer, LDNS_RCODE_FORMERR, qinfo.qname_len);
 		if(worker->stats.extended) {
 			worker->stats.qtype[qinfo.qtype]++;
 		}
@@ -1571,12 +1693,17 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 	}
 	if((ret=parse_edns_from_query_pkt(
 			c->buffer, &edns, worker->env.cfg, c, repinfo,
-			(worker->env.now ? *worker->env.now : time(NULL)),
-			worker->scratchpad)) != 0) {
+			*worker->env.now, worker->scratchpad,
+			worker->daemon->cookie_secrets)) != 0) {
 		struct edns_data reply_edns;
 		verbose(VERB_ALGO, "worker parse edns: formerror.");
 		log_addr(VERB_CLIENT, "from", &repinfo->client_addr,
 			repinfo->client_addrlen);
+		if(worker_err_ratelimit(worker, ret) == -1) {
+			comm_point_drop_reply(repinfo);
+			regional_free_all(worker->scratchpad);
+			return 0;
+		}
 		memset(&reply_edns, 0, sizeof(reply_edns));
 		reply_edns.edns_present = 1;
 		error_encode(c->buffer, ret, &qinfo,
@@ -1593,6 +1720,11 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			verbose(VERB_ALGO, "query with bad edns version.");
 			log_addr(VERB_CLIENT, "from", &repinfo->client_addr,
 				repinfo->client_addrlen);
+			if(worker_err_ratelimit(worker, EDNS_RCODE_BADVERS) == -1) {
+				comm_point_drop_reply(repinfo);
+				regional_free_all(worker->scratchpad);
+				return 0;
+			}
 			extended_error_encode(c->buffer, EDNS_RCODE_BADVERS, &qinfo,
 				*(uint16_t*)(void *)sldns_buffer_begin(c->buffer),
 				sldns_buffer_read_u16_at(c->buffer, 2), 0, &edns);
@@ -1620,6 +1752,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			repinfo->client_addrlen, edns.cookie_valid,
 			c->buffer)) {
 			worker->stats.num_queries_ip_ratelimited++;
+			regional_free_all(worker->scratchpad);
 			comm_point_drop_reply(repinfo);
 			return 0;
 		}
@@ -1637,6 +1770,11 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 
 	else if(edns.cookie_present) {
 		/* Cookie present, but not valid: Cookie was bad! */
+		if(worker_err_ratelimit(worker, LDNS_EXT_RCODE_BADCOOKIE) == -1) {
+			comm_point_drop_reply(repinfo);
+			regional_free_all(worker->scratchpad);
+			return 0;
+		}
 		extended_error_encode(c->buffer,
 			LDNS_EXT_RCODE_BADCOOKIE, &qinfo,
 			*(uint16_t*)(void *)
@@ -1651,6 +1789,11 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			"need cookie or stateful transport");
 		log_addr(VERB_ALGO, "from",&repinfo->remote_addr
 		                          , repinfo->remote_addrlen);
+		if(worker_err_ratelimit(worker, LDNS_RCODE_REFUSED) == -1) {
+			comm_point_drop_reply(repinfo);
+			regional_free_all(worker->scratchpad);
+			return 0;
+		}
 		EDNS_OPT_LIST_APPEND_EDE(&edns.opt_list_out,
 			worker->scratchpad, LDNS_EDE_OTHER,
 			"DNS Cookie needed for UDP replies");
@@ -1677,14 +1820,14 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		verbose(VERB_ALGO, "worker request: edns is too small.");
 		log_addr(VERB_CLIENT, "from", &repinfo->client_addr,
 			repinfo->client_addrlen);
-		LDNS_QR_SET(sldns_buffer_begin(c->buffer));
+		if(worker_err_ratelimit(worker, LDNS_RCODE_SERVFAIL) == -1) {
+			comm_point_drop_reply(repinfo);
+			regional_free_all(worker->scratchpad);
+			return 0;
+		}
+		/* A small error without qname, and TC flag on. */
+		query_error(c->buffer, LDNS_RCODE_SERVFAIL, 0);
 		LDNS_TC_SET(sldns_buffer_begin(c->buffer));
-		LDNS_RCODE_SET(sldns_buffer_begin(c->buffer),
-			LDNS_RCODE_SERVFAIL);
-		sldns_buffer_set_position(c->buffer, LDNS_HEADER_SIZE);
-		sldns_buffer_write_at(c->buffer, 4,
-			(uint8_t*)"\0\0\0\0\0\0\0\0", 8);
-		sldns_buffer_flip(c->buffer);
 		regional_free_all(worker->scratchpad);
 		goto send_reply;
 	}
@@ -1692,7 +1835,13 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		server_stats_insquery(&worker->stats, c, qinfo.qtype,
 			qinfo.qclass, &edns, repinfo);
 	if(c->type != comm_udp)
+#ifdef USE_DNSCRYPT
+		edns.udp_size = (c->dnscrypt && repinfo->is_dnscrypted)
+			? sldns_buffer_capacity(c->buffer) - DNSCRYPT_REPLY_HEADER_SIZE
+			: 65535;
+#else
 		edns.udp_size = 65535; /* max size for TCP replies */
+#endif
 	if(qinfo.qclass == LDNS_RR_CLASS_CH && answer_chaos(worker, &qinfo,
 		&edns, repinfo, c->buffer)) {
 		regional_free_all(worker->scratchpad);
@@ -1731,8 +1880,9 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		goto send_reply;
 	}
 	if(worker->env.auth_zones &&
-		auth_zones_answer(worker->env.auth_zones, &worker->env,
-		&qinfo, &edns, repinfo, c->buffer, worker->scratchpad)) {
+		auth_zones_downstream_answer(worker->env.auth_zones,
+		&worker->env, &qinfo, &edns, repinfo, c->buffer,
+		worker->scratchpad)) {
 		regional_free_all(worker->scratchpad);
 		if(sldns_buffer_limit(c->buffer) == 0) {
 			comm_point_drop_reply(repinfo);
@@ -1768,6 +1918,15 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 	 * ACLs allow the snooping. */
 	if(!(LDNS_RD_WIRE(sldns_buffer_begin(c->buffer))) &&
 		acl != acl_allow_snoop ) {
+		log_addr(VERB_ALGO, "refused nonrec (cache snoop) query from",
+			&repinfo->client_addr, repinfo->client_addrlen);
+		/* This ratelimited error query is accounted in the stats,
+		 * as an incoming query. */
+		if(worker_err_ratelimit(worker, LDNS_RCODE_REFUSED) == -1) {
+			comm_point_drop_reply(repinfo);
+			regional_free_all(worker->scratchpad);
+			return 0;
+		}
 		if(worker->env.cfg->ede) {
 			EDNS_OPT_LIST_APPEND_EDE(&edns.opt_list_out,
 				worker->scratchpad, LDNS_EDE_NOT_AUTHORITATIVE, "");
@@ -1776,29 +1935,22 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 			*(uint16_t*)(void *)sldns_buffer_begin(c->buffer),
 			sldns_buffer_read_u16_at(c->buffer, 2), &edns);
 		regional_free_all(worker->scratchpad);
-		log_addr(VERB_ALGO, "refused nonrec (cache snoop) query from",
-			&repinfo->client_addr, repinfo->client_addrlen);
-
 		goto send_reply;
 	}
 
 	/* If we've found a local alias, replace the qname with the alias
 	 * target before resolving it. */
 	if(qinfo.local_alias) {
-		struct ub_packed_rrset_key* rrset = qinfo.local_alias->rrset;
-		struct packed_rrset_data* d = rrset->entry.data;
-
-		/* Sanity check: our current implementation only supports
-		 * a single CNAME RRset as a local alias. */
-		if(qinfo.local_alias->next ||
-			rrset->rk.type != htons(LDNS_RR_TYPE_CNAME) ||
-			d->count != 1) {
-			log_err("assumption failure: unexpected local alias");
+		if(qinfo.local_alias->rrset &&
+			qinfo.local_alias->rrset->rk.dname)
+			/* Store the original qname, used for logs, since
+			 * local_alias can be removed by region_free_all. */
+			alias_orig_qname = qinfo.local_alias->rrset->rk.dname;
+		if(!local_alias_shallow_copy_qname(qinfo.local_alias, &qinfo.qname,
+			&qinfo.qname_len)) {
 			regional_free_all(worker->scratchpad);
 			return 0; /* drop it */
 		}
-		qinfo.qname = d->rr_data[0] + 2;
-		qinfo.qname_len = d->rr_len[0] - 2;
 	}
 
 	/* If we may apply IP-based actions to the answer, build the client
@@ -1815,7 +1967,7 @@ worker_handle_request(struct comm_point* c, void* arg, int error,
 		cinfo_tmp.tag_datas = acladdr->tag_datas;
 		cinfo_tmp.tag_datas_size = acladdr->tag_datas_size;
 		cinfo_tmp.view = acladdr->view;
-		cinfo_tmp.respip_set = worker->daemon->respip_set;
+		cinfo_tmp.view_name = NULL;
 		cinfo = &cinfo_tmp;
 	}
 
@@ -1841,19 +1993,19 @@ lookup_cache:
 				&alias_rrset, &partial_rep, rep,
 				*(uint16_t*)(void *)sldns_buffer_begin(c->buffer),
 				sldns_buffer_read_u16_at(c->buffer, 2), repinfo,
-				&edns)) {
+				&edns, &rpz_passthru)) {
 				/* prefetch it if the prefetch TTL expired.
 				 * Note that if there is more than one pass
 				 * its qname must be that used for cache
 				 * lookup. */
 				if((worker->env.cfg->prefetch &&
-					*worker->env.now >= rep->prefetch_ttl) ||
+					rep->prefetch_ttl <= *worker->env.now) ||
 					(worker->env.cfg->serve_expired &&
-					*worker->env.now > rep->ttl)) {
-
-					time_t leeway = rep->ttl - *worker->env.now;
-					if(rep->ttl < *worker->env.now)
-						leeway = 0;
+					TTL_IS_EXPIRED(rep->ttl, *worker->env.now) &&
+					!(*worker->env.now < rep->serve_expired_norec_ttl))) {
+					time_t leeway =
+						TTL_IS_EXPIRED(rep->ttl, *worker->env.now)
+						? 0 : rep->ttl - *worker->env.now;
 					lock_rw_unlock(&e->lock);
 
 					reply_and_prefetch(worker, lookup_qinfo,
@@ -1949,32 +2101,35 @@ send_reply_rc:
 	/*
 	 * sending src (client)/dst (local service) addresses over DNSTAP from send_reply code label (when we serviced local zone for ex.)
 	 */
-	if(worker->dtenv.log_client_response_messages) {
-		log_addr(VERB_ALGO, "from local addr", (void*)repinfo->c->socket->addr->ai_addr, repinfo->c->socket->addr->ai_addrlen);
+	if(worker->dtenv.log_client_response_messages && rc !=0) {
+		log_addr(VERB_ALGO, "from local addr", (void*)repinfo->c->socket->addr, repinfo->c->socket->addrlen);
 		log_addr(VERB_ALGO, "response to client", &repinfo->client_addr, repinfo->client_addrlen);
-		dt_msg_send_client_response(&worker->dtenv, &repinfo->client_addr, (void*)repinfo->c->socket->addr->ai_addr, c->type, c->buffer);
+		dt_msg_send_client_response(&worker->dtenv, &repinfo->client_addr, (void*)repinfo->c->socket->addr, c->type, c->ssl, c->buffer);
 	}
 #endif
 	if(worker->env.cfg->log_replies)
 	{
 		struct timeval tv;
 		memset(&tv, 0, sizeof(tv));
-		if(qinfo.local_alias && qinfo.local_alias->rrset &&
-			qinfo.local_alias->rrset->rk.dname) {
+		if(alias_orig_qname) {
 			/* log original qname, before the local alias was
 			 * used to resolve that CNAME to something else */
-			qinfo.qname = qinfo.local_alias->rrset->rk.dname;
+			qinfo.qname = alias_orig_qname;
 			log_reply_info(NO_VERBOSE, &qinfo,
 				&repinfo->client_addr, repinfo->client_addrlen,
-				tv, 1, c->buffer);
+				tv, 1, c->buffer,
+				(worker->env.cfg->log_destaddr?(void*)repinfo->c->socket->addr:NULL),
+				c->type, c->ssl);
 		} else {
 			log_reply_info(NO_VERBOSE, &qinfo,
 				&repinfo->client_addr, repinfo->client_addrlen,
-				tv, 1, c->buffer);
+				tv, 1, c->buffer,
+				(worker->env.cfg->log_destaddr?(void*)repinfo->c->socket->addr:NULL),
+				c->type, c->ssl);
 		}
 	}
 #ifdef USE_DNSCRYPT
-	if(!dnsc_handle_uncurved_request(repinfo)) {
+	if(!dnsc_handle_uncurved_request(repinfo, c->buffer)) {
 		return 0;
 	}
 #endif
@@ -2022,10 +2177,37 @@ worker_restart_timer(struct worker* worker)
 {
 	if(worker->env.cfg->stat_interval > 0) {
 		struct timeval tv;
+		if(worker->daemon->stat_time_specific) {
+			struct timeval dest, now;
+			int interval = worker->env.cfg->stat_interval;
+			int offset = worker->daemon->stat_time_offset;
+			int nows, spec;
+			if(gettimeofday(&now, NULL) < 0)
+				log_err("gettimeofday: %s", strerror(errno));
 #ifndef S_SPLINT_S
-		tv.tv_sec = worker->env.cfg->stat_interval;
-		tv.tv_usec = 0;
+			nows = (int)now.tv_sec;
+			/* The next time is on the timer interval, at the
+			 * specific offset, time value % interval = offset. */
+			/* It relies on the integer division below to drop the
+			 * remainder in order to calculate the expected
+			 * result. */
+			spec = ((nows-offset)/interval+1)*interval+offset;
+			/* This is instead of an assertion, and should not
+			 * be needed. So assert(spec > nows), tv is going to
+			 * be positive. */
+			if(spec<=nows) spec += interval;
+			dest.tv_sec = spec;
+			dest.tv_usec = 0;
 #endif
+			/* Subtract in timeval, so the fractions of a second
+			 * are rounded to the whole specific time. */
+			timeval_subtract(&tv, &dest, &now);
+		} else {
+#ifndef S_SPLINT_S
+			tv.tv_sec = worker->env.cfg->stat_interval;
+			tv.tv_usec = 0;
+#endif
+		}
 		comm_timer_set(worker->stat_timer, &tv);
 	}
 }
@@ -2060,23 +2242,16 @@ void worker_probe_timer_cb(void* arg)
 }
 
 struct worker*
-worker_create(struct daemon* daemon, int id, int* ports, int n)
+worker_create(struct daemon* daemon, int id)
 {
 	unsigned int seed;
 	struct worker* worker = (struct worker*)calloc(1,
 		sizeof(struct worker));
 	if(!worker)
 		return NULL;
-	worker->numports = n;
-	worker->ports = (int*)memdup(ports, sizeof(int)*n);
-	if(!worker->ports) {
-		free(worker);
-		return NULL;
-	}
 	worker->daemon = daemon;
 	worker->thread_num = id;
 	if(!(worker->cmd = tube_create())) {
-		free(worker->ports);
 		free(worker);
 		return NULL;
 	}
@@ -2084,7 +2259,6 @@ worker_create(struct daemon* daemon, int id, int* ports, int n)
 	if(!(worker->rndstate = ub_initstate(daemon->rand))) {
 		log_err("could not init random numbers.");
 		tube_delete(worker->cmd);
-		free(worker->ports);
 		free(worker);
 		return NULL;
 	}
@@ -2100,9 +2274,6 @@ worker_init(struct worker* worker, struct config_file *cfg,
 	struct dt_env* dtenv = &worker->dtenv;
 #else
 	void* dtenv = NULL;
-#endif
-#ifdef HAVE_GETTID
-	worker->thread_tid = gettid();
 #endif
 	worker->need_to_exit = 0;
 	worker->base = comm_base_create(do_sigs);
@@ -2171,8 +2342,11 @@ worker_init(struct worker* worker, struct config_file *cfg,
 			: cfg->tcp_idle_timeout,
 		cfg->harden_large_queries, cfg->http_max_streams,
 		cfg->http_endpoint, cfg->http_notls_downstream,
-		worker->daemon->tcl, worker->daemon->listen_sslctx,
-		dtenv, worker_handle_request, worker);
+		worker->daemon->tcl, worker->daemon->listen_dot_sslctx,
+		worker->daemon->listen_doh_sslctx,
+		worker->daemon->listen_quic_sslctx,
+		dtenv, worker->daemon->doq_table, worker->env.rnd,
+		cfg, worker_handle_request, worker);
 	if(!worker->front) {
 		log_err("could not create listening sockets");
 		worker_delete(worker);
@@ -2183,14 +2357,14 @@ worker_init(struct worker* worker, struct config_file *cfg,
 		cfg->out_ifs, cfg->num_out_ifs, cfg->do_ip4, cfg->do_ip6,
 		cfg->do_tcp?cfg->outgoing_num_tcp:0, cfg->ip_dscp,
 		worker->daemon->env->infra_cache, worker->rndstate,
-		cfg->use_caps_bits_for_id, worker->ports, worker->numports,
+		cfg->use_caps_bits_for_id,
 		cfg->unwanted_threshold, cfg->outgoing_tcp_mss,
 		&worker_alloc_cleanup, worker,
 		cfg->do_udp || cfg->udp_upstream_without_downstream,
-		worker->daemon->connect_sslctx, cfg->delay_close,
+		worker->daemon->connect_dot_sslctx, cfg->delay_close,
 		cfg->tls_use_sni, dtenv, cfg->udp_connect,
 		cfg->max_reuse_tcp_queries, cfg->tcp_reuse_timeout,
-		cfg->tcp_auth_query_timeout);
+		cfg->tcp_auth_query_timeout, worker->daemon->shared_ports);
 	if(!worker->back) {
 		log_err("could not create outgoing sockets");
 		worker_delete(worker);
@@ -2209,6 +2383,8 @@ worker_init(struct worker* worker, struct config_file *cfg,
 		worker_stat_timer_cb, worker);
 	if(!worker->stat_timer) {
 		log_err("could not create statistics timer");
+		worker_delete(worker);
+		return 0;
 	}
 
 	/* we use the msg_buffer_size as a good estimate for what the
@@ -2260,18 +2436,6 @@ worker_init(struct worker* worker, struct config_file *cfg,
 	worker->env.scratch_buffer = sldns_buffer_new(cfg->msg_buffer_size);
 	if(!worker->env.scratch_buffer) {
 		log_err("malloc failure");
-		worker_delete(worker);
-		return 0;
-	}
-	if(!(worker->env.fwds = forwards_create()) ||
-		!forwards_apply_cfg(worker->env.fwds, cfg)) {
-		log_err("Could not set forward zones");
-		worker_delete(worker);
-		return 0;
-	}
-	if(!(worker->env.hints = hints_create()) ||
-		!hints_apply_cfg(worker->env.hints, cfg)) {
-		log_err("Could not set root or stub hints");
 		worker_delete(worker);
 		return 0;
 	}
@@ -2347,15 +2511,12 @@ worker_delete(struct worker* worker)
 	outside_network_quit_prepare(worker->back);
 	mesh_delete(worker->env.mesh);
 	sldns_buffer_free(worker->env.scratch_buffer);
-	forwards_delete(worker->env.fwds);
-	hints_delete(worker->env.hints);
 	listen_delete(worker->front);
 	outside_network_delete(worker->back);
 	comm_signal_delete(worker->comsig);
 	tube_delete(worker->cmd);
 	comm_timer_delete(worker->stat_timer);
 	comm_timer_delete(worker->env.probe_timer);
-	free(worker->ports);
 	if(worker->thread_num == 0) {
 #ifdef UB_ON_WINDOWS
 		wsvc_desetup_worker(worker);
@@ -2376,6 +2537,8 @@ worker_delete(struct worker* worker)
 	/* don't touch worker->alloc, as it's maintained in daemon */
 	regional_destroy(worker->env.scratch);
 	regional_destroy(worker->scratchpad);
+	/* The thread id can reference this worker's id value, so clear it. */
+	log_thread_set(NULL);
 	free(worker);
 }
 
@@ -2384,7 +2547,8 @@ worker_send_query(struct query_info* qinfo, uint16_t flags, int dnssec,
 	int want_dnssec, int nocaps, int check_ratelimit,
 	struct sockaddr_storage* addr, socklen_t addrlen, uint8_t* zone,
 	size_t zonelen, int tcp_upstream, int ssl_upstream, char* tls_auth_name,
-	struct module_qstate* q, int* was_ratelimited)
+	struct module_qstate* q, int* was_ratelimited,
+	int* ratelimit_incremented)
 {
 	struct worker* worker = q->env->worker;
 	struct outbound_entry* e = (struct outbound_entry*)regional_alloc(
@@ -2396,7 +2560,7 @@ worker_send_query(struct query_info* qinfo, uint16_t flags, int dnssec,
 		want_dnssec, nocaps, check_ratelimit, tcp_upstream,
 		ssl_upstream, tls_auth_name, addr, addrlen, zone, zonelen, q,
 		worker_handle_service_reply, e, worker->back->udp_buff, q->env,
-		was_ratelimited);
+		was_ratelimited, ratelimit_incremented);
 	if(!e->qsent) {
 		return NULL;
 	}
@@ -2445,7 +2609,8 @@ struct outbound_entry* libworker_send_query(
 	struct sockaddr_storage* ATTR_UNUSED(addr), socklen_t ATTR_UNUSED(addrlen),
 	uint8_t* ATTR_UNUSED(zone), size_t ATTR_UNUSED(zonelen), int ATTR_UNUSED(tcp_upstream),
 	int ATTR_UNUSED(ssl_upstream), char* ATTR_UNUSED(tls_auth_name),
-	struct module_qstate* ATTR_UNUSED(q), int* ATTR_UNUSED(was_ratelimited))
+	struct module_qstate* ATTR_UNUSED(q), int* ATTR_UNUSED(was_ratelimited),
+	int* ATTR_UNUSED(ratelimit_incremented))
 {
 	log_assert(0);
 	return 0;
@@ -2487,6 +2652,11 @@ void libworker_event_done_cb(void* ATTR_UNUSED(arg), int ATTR_UNUSED(rcode),
 	log_assert(0);
 }
 
+void libworker_alloc_cleanup(void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+
 int context_query_cmp(const void* ATTR_UNUSED(a), const void* ATTR_UNUSED(b))
 {
 	log_assert(0);
@@ -2515,6 +2685,22 @@ void dtio_tap_callback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
 
 #ifdef USE_DNSTAP
 void dtio_mainfdcallback(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
+
+#ifdef HAVE_NGTCP2
+void doq_client_event_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
+	void* ATTR_UNUSED(arg))
+{
+	log_assert(0);
+}
+#endif
+
+#ifdef HAVE_NGTCP2
+void doq_client_timer_cb(int ATTR_UNUSED(fd), short ATTR_UNUSED(ev),
 	void* ATTR_UNUSED(arg))
 {
 	log_assert(0);

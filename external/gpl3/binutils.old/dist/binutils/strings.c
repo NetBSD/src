@@ -1,5 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -171,13 +171,37 @@ static void usage (FILE *, int) ATTRIBUTE_NORETURN;
 
 int main (int, char **);
 
+static void
+set_string_min (const char * arg)
+{
+  char *s;
+  unsigned long l = strtoul (arg, &s, 0);
+
+  if (s != NULL && *s != 0)
+    fatal (_("invalid integer argument %s"), arg);
+
+  string_min = (unsigned int) l;
+
+  if (l != (unsigned long) string_min)
+    fatal (_("minimum string length is too big: %s"), arg);
+    
+  if (string_min < 1)
+    fatal (_("minimum string length is too small: %s"), arg);
+
+  /* PR 30595: Look for minimum string lengths that overflow an 'int'.  */
+  if (string_min + 1 == 0)
+    fatal (_("minimum string length %s is too big"), arg);
+
+  /* FIXME: Should we warn for unreasonably large minimum
+     string lengths, even if technically they will work ?  */
+}
+
 int
 main (int argc, char **argv)
 {
   int optc;
   int exit_status = 0;
   bool files_given = false;
-  char *s;
   int numeric_opt = 0;
 
   setlocale (LC_ALL, "");
@@ -224,9 +248,7 @@ main (int argc, char **argv)
 	  usage (stdout, 0);
 
 	case 'n':
-	  string_min = (int) strtoul (optarg, &s, 0);
-	  if (s != NULL && *s != 0)
-	    fatal (_("invalid integer argument %s"), optarg);
+	  set_string_min (optarg);
 	  break;
 
 	case 'w':
@@ -310,13 +332,7 @@ main (int argc, char **argv)
     encoding = 'S';
 
   if (numeric_opt != 0)
-    {
-      string_min = (int) strtoul (argv[numeric_opt - 1] + 1, &s, 0);
-      if (s != NULL && *s != 0)
-	fatal (_("invalid integer argument %s"), argv[numeric_opt - 1] + 1);
-    }
-  if (string_min < 1)
-    fatal (_("invalid minimum string length %d"), string_min);
+    set_string_min (argv[numeric_opt - 1] + 1);
 
   switch (encoding)
     {
@@ -1214,7 +1230,9 @@ print_unicode_stream (const char * filename,
     }
 
   /* Allocate space for string_min 4-byte utf-8 characters.  */
-  unsigned char * print_buf = xmalloc ((4 * string_min) + 1);
+  size_t amt = string_min;
+  amt = (4 * amt) + 1;
+  unsigned char * print_buf = xmalloc (amt);
   /* We should never have to put back more than 4 bytes.  */
   unsigned char putback_buf[5];
   unsigned int num_putback = 0;
@@ -1332,8 +1350,8 @@ usage (FILE *stream, int status)
   -T --target=<BFDNAME>     Specify the binary file format\n\
   -e --encoding={s,S,b,l,B,L} Select character size and endianness:\n\
                             s = 7-bit, S = 8-bit, {b,l} = 16-bit, {B,L} = 32-bit\n\
-  --unicode={default|show|invalid|hex|escape|highlight}\n\
-  -U {d|s|i|x|e|h}          Specify how to treat UTF-8 encoded unicode characters\n\
+  --unicode={default|locale|invalid|hex|escape|highlight}\n\
+  -U {d|l|i|x|e|h}          Specify how to treat UTF-8 encoded unicode characters\n\
   -s --output-separator=<string> String used to separate strings in output.\n\
   @<file>                   Read options from <file>\n\
   -h --help                 Display this information\n\

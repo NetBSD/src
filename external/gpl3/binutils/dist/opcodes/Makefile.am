@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -215,8 +215,6 @@ TARGET32_LIBOPCODES_CFILES = \
 	mt-opc.c \
 	nds32-asm.c \
 	nds32-dis.c \
-	nios2-dis.c \
-	nios2-opc.c \
 	ns32k-dis.c \
 	or1k-asm.c \
 	or1k-desc.c \
@@ -495,7 +493,7 @@ MOSTLYCLEANFILES = aarch64-gen$(EXEEXT_FOR_BUILD) i386-gen$(EXEEXT_FOR_BUILD) \
 	z8kgen$(EXEEXT_FOR_BUILD) opc2c$(EXEEXT_FOR_BUILD)
 
 MAINTAINERCLEANFILES = $(srcdir)/aarch64-asm-2.c $(srcdir)/aarch64-dis-2.c \
-	$(srcdir)/aarch64-opc-2.c \
+	$(srcdir)/aarch64-opc-2.c $(srcdir)/aarch64-tbl-2.h \
 	$(srcdir)/i386-tbl.h $(srcdir)/i386-init.h $(srcdir)/i386-mnem.h \
 	$(srcdir)/ia64-asmtab.c $(srcdir)/z8k-opc.h \
 	$(srcdir)/msp430-decode.c \
@@ -503,7 +501,7 @@ MAINTAINERCLEANFILES = $(srcdir)/aarch64-asm-2.c $(srcdir)/aarch64-dis-2.c \
 	$(srcdir)/rx-decode.c
 
 aarch64-gen$(EXEEXT_FOR_BUILD): aarch64-gen.o $(BUILD_LIB_DEPS)
-	$(LINK_FOR_BUILD) aarch64-gen.o $(BUILD_LIBS)
+	$(AM_V_CCLD)$(LINK_FOR_BUILD) aarch64-gen.o $(BUILD_LIBS)
 
 aarch64-gen.o: aarch64-gen.c $(BFD_H) $(INCDIR)/getopt.h $(INCDIR)/libiberty.h\
 	$(INCDIR)/opcode/aarch64.h config.h aarch64-opc.h aarch64-tbl.h
@@ -515,6 +513,14 @@ $(srcdir)/aarch64-dis-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
 	$(AM_V_GEN)./aarch64-gen$(exeext_for_build) --gen-dis > $@
 $(srcdir)/aarch64-opc-2.c: @MAINT@ aarch64-gen$(exeext_for_build)
 	$(AM_V_GEN)./aarch64-gen$(exeext_for_build) --gen-opc > $@
+$(srcdir)/aarch64-tbl-2.h: @MAINT@ aarch64-gen$(exeext_for_build)
+	$(AM_V_GEN)./aarch64-gen$(exeext_for_build) --gen-idx > $@
+
+aarch64-asm-2.lo: $(srcdir)/aarch64-tbl-2.h $(srcdir)/aarch64-asm-2.c
+
+aarch64-dis-2.lo: $(srcdir)/aarch64-tbl-2.h $(srcdir)/aarch64-dis-2.c
+
+aarch64-opc-2.lo: $(srcdir)/aarch64-tbl-2.h $(srcdir)/aarch64-opc-2.c
 
 i386-gen$(EXEEXT_FOR_BUILD): i386-gen.o $(BUILD_LIB_DEPS)
 	$(AM_V_CCLD)$(LINK_FOR_BUILD) i386-gen.o $(BUILD_LIBS)
@@ -523,7 +529,7 @@ i386-gen.o: i386-gen.c i386-opc.h $(srcdir)/../include/opcode/i386.h \
 	$(INCDIR)/ansidecl.h $(INCDIR)/getopt.h $(INCDIR)/hashtab.h \
 	$(INCDIR)/libiberty.h $(INCDIR)/opcode/i386.h $(INCDIR)/safe-ctype.h \
 	config.h sysdep.h
-	$(COMPILE_FOR_BUILD) -c $(srcdir)/i386-gen.c
+	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/i386-gen.c
 
 # i386-gen will generate all headers in one go.  Use a pattern rule to properly
 # express this, with the inner dash ('-') arbitrarily chosen to be the stem.
@@ -545,7 +551,7 @@ ia64-gen.o: ia64-gen.c $(BFD_H) $(INCDIR)/ansidecl.h $(INCDIR)/getopt.h \
 	$(INCDIR)/symcat.h config.h ia64-opc-a.c ia64-opc-b.c \
 	ia64-opc-d.c ia64-opc-f.c ia64-opc-i.c ia64-opc-m.c \
 	ia64-opc-x.c ia64-opc.h sysdep.h
-	$(COMPILE_FOR_BUILD) -c $(srcdir)/ia64-gen.c
+	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/ia64-gen.c
 
 # Use a helper variable for the dependencies to avoid 'make' issues
 # with continuations in comments, as @MAINT@ can be expanded to '#'.
@@ -575,10 +581,11 @@ s390-mkopc$(EXEEXT_FOR_BUILD): s390-mkopc.o
 	$(AM_V_CCLD)$(LINK_FOR_BUILD) s390-mkopc.o
 
 s390-mkopc.o: s390-mkopc.c $(INCDIR)/opcode/s390.h
-	$(COMPILE_FOR_BUILD) -c $(srcdir)/s390-mkopc.c
+	$(AM_V_CC)$(COMPILE_FOR_BUILD) -c $(srcdir)/s390-mkopc.c
 
 s390-opc.tab: s390-mkopc$(EXEEXT_FOR_BUILD) s390-opc.txt
-	$(AM_V_GEN)./s390-mkopc$(EXEEXT_FOR_BUILD) < $(srcdir)/s390-opc.txt > s390-opc.tab
+	$(AM_V_GEN)./s390-mkopc$(EXEEXT_FOR_BUILD) < $(srcdir)/s390-opc.txt > s390-opc.tab.tmp
+	$(AM_V_at)$(am__mv) s390-opc.tab.tmp s390-opc.tab
 
 s390-opc.lo: s390-opc.tab
 

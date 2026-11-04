@@ -1,7 +1,7 @@
-/*	$NetBSD: pcap-snf.c,v 1.7.2.1 2025/08/02 05:21:58 perseant Exp $	*/
+/*	$NetBSD: pcap-snf.c,v 1.7.2.2 2026/11/04 22:38:35 perseant Exp $	*/
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-snf.c,v 1.7.2.1 2025/08/02 05:21:58 perseant Exp $");
+__RCSID("$NetBSD: pcap-snf.c,v 1.7.2.2 2026/11/04 22:38:35 perseant Exp $");
 
 #include <config.h>
 
@@ -604,8 +604,7 @@ pcapint_platform_finddevs(pcap_if_list_t *devlistp, char *errbuf)
 pcap_t *
 pcapint_create_interface(const char *device, char *errbuf)
 {
-	snprintf(errbuf, PCAP_ERRBUF_SIZE,
-	    "This version of libpcap only supports SNF cards");
+	snprintf(errbuf, PCAP_ERRBUF_SIZE, PCAP_ENODEV_MESSAGE, "SNF");
 	return NULL;
 }
 
@@ -615,6 +614,6 @@ pcapint_create_interface(const char *device, char *errbuf)
 const char *
 pcap_lib_version(void)
 {
-	return (PCAP_VERSION_STRING " (SNF-only)");
+	return (PCAP_VERSION_STRING_WITH_ADDITIONAL_INFO("SNF-only"));
 }
 #endif

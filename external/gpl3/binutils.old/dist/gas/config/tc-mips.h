@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -59,9 +59,9 @@ extern char mips_nop_opcode (void);
 #define NOP_OPCODE (mips_nop_opcode ())
 
 extern void mips_handle_align (struct frag *);
-#define HANDLE_ALIGN(fragp)  mips_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp)  mips_handle_align (fragp)
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4)
 
 struct insn_label_list;
 struct mips_segment_info {
@@ -163,8 +163,8 @@ extern void mips_elf_final_processing (void);
 
 #endif
 
-extern void md_mips_end (void);
-#define md_end()	md_mips_end()
+extern void mips_md_finish (void);
+#define md_finish()	mips_md_finish()
 
 extern void mips_pop_insert (void);
 #define md_pop_insert()		mips_pop_insert()

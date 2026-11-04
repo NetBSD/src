@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -42,10 +42,6 @@ ia64elf_after_parse (void)
 }
 
 EOF
-
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_ITANIUM			300
-'
 
 PARSE_AND_LIST_LONGOPTS='
     { "itanium", no_argument, NULL, OPTION_ITANIUM},

@@ -1,4 +1,4 @@
-# $NetBSD: module.md.amd64,v 1.16.2.1 2025/08/02 05:20:32 perseant Exp $
+# $NetBSD: module.md.amd64,v 1.16.2.2 2026/11/04 22:37:03 perseant Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@/acpiacad				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/acpiacad/acpiacad.kmod.debug		modules-base-kernel	kmod,debug
@@ -60,6 +60,8 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_09		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_09/compat_netbsd32_09.kmod.debug modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_12		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_12/compat_netbsd32_12.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_13		modules-base-kernel	kmod,debug
@@ -82,8 +84,6 @@
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_80/compat_netbsd32_80.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_90/compat_netbsd32_90.kmod.debug modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100		modules-base-kernel	kmod,debug
-./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_100/compat_netbsd32_100.kmod.debug modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_coredump/compat_netbsd32_coredump.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/compat_netbsd32_mqueue		modules-base-kernel	kmod,debug
@@ -194,6 +194,8 @@
 ./usr/libdata/debug/@MODULEDIR@/nxt2k/nxt2k.kmod.debug			modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/odcm/odcm.kmod.debug			modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/pchtemp				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/pchtemp/pchtemp.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/powernow				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/powernow/powernow.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/pwdog				modules-base-kernel	kmod,debug

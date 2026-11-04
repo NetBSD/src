@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -233,7 +233,7 @@ case $RC in
 0)
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 *)
 	echo "ldapwhoami failed ($RC)!"
@@ -256,7 +256,7 @@ case $RC in
 0)
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 *)
 	echo "ldapwhoami failed ($RC)!"
@@ -394,7 +394,7 @@ case $RC in
 0)
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 *)
 	echo "ldapwhoami failed ($RC)!"
@@ -417,7 +417,7 @@ case $RC in
 0)
 	echo "ldapwhoami should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 *)
 	echo "ldapwhoami failed ($RC)!"

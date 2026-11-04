@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2011/02/26 20:38:50 phx Exp $
+#	$NetBSD: Makefile,v 1.7.58.1 2026/11/04 22:36:58 perseant Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,7 +14,7 @@ ALTBOOTERS=	${BOOTOBJ}/altboot ${BOOTOBJ}/altboot.bin ${BOOTOBJ}/altboot.img
 release: check_RELEASEDIR .WAIT ${ALTBOOTERS}
 	${RELEASE_INSTALL} ${ALTBOOTERS} ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation
 
-iso_image:
+iso_image: .MAKE
 	${MAKEDIRTARGET} cdroms iso_image
 
 .include <bsd.subdir.mk>

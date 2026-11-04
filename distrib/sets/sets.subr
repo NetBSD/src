@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.206.2.1 2025/08/02 05:20:23 perseant Exp $
+#	$NetBSD: sets.subr,v 1.206.2.2 2026/11/04 22:36:58 perseant Exp $
 #
 
 #
@@ -258,7 +258,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.206.2.1 2025/08/02 05:20:23 perseant Exp $
+# 	# $NetBSD: sets.subr,v 1.206.2.2 2026/11/04 22:36:58 perseant Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
@@ -295,6 +295,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 #	mesa_ver=<n>		<n> = value of ${HAVE_MESA_VER}
 #	nvmm			${HAVE_NVMM} != no
 #	openssl=<n>		<n> = value of ${HAVE_OPENSSL}
+#	quadmath		${HAVE_QUADMATH} != no
 #	uefi			${HAVE_UEFI} != no
 #	efi_rt			${HAVE_EFI_RT} != no
 #	xorg_server_ver=<n>	<n> = value of ${HAVE_XORG_SERVER_VER}
@@ -350,6 +351,9 @@ list_set_files()
 			if (pat == "" || substr(line, 1, patlen) != pat) {
 				return 0
 			}
+			if (! ("debugkernel" in wanted)) {
+				return 0
+			}
 			split("'"${CONFIGS}"'", configs)
 			for (d in configs) {
 				xfname = fname
@@ -384,7 +388,7 @@ list_set_files()
 				sub(/^mk/, "", kw)
 				sub(/^have_/, "", kw)
 				sub(/^target_endianness/, "endian", kw)
-				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && ENVIRON[nv] != "no" && nv != "COMPATARCHDIRS" && nv != "KMODARCHDIRS") {
+				if (nv != "HAVE_GCC" && nv != "HAVE_GDB" && nv != "HAVE_BINUTILS" && ENVIRON[nv] != "no" && nv != "COMPATARCHDIRS" && nv != "KMODARCHDIRS") {
 					wanted[kw] = 1
 				}
 			}
@@ -416,7 +420,7 @@ list_set_files()
 				kmoddbpat = kmoddbprefix ENVIRON["MACHINE"]
 				l_kmoddbpat = length(kmoddbpat)
 			}
-			if ("debug" in wanted) {
+			if (("debug" in wanted) || ("debugkernel" in wanted)) {
 				debugkernelname = "./usr/libdata/debug/netbsd-@CONFIG@.debug"
 				l_debugkernelname = length(debugkernelname);
 			}
@@ -449,6 +453,9 @@ list_set_files()
 			}
 			if ("efi_rt" in wanted) {
 				wanted["efi_rt=" "'"${HAVE_EFI_RT}"'"] = 1
+			}
+			if ("quadmath" in wanted) {
+				wanted["quadmath=" "'"${HAVE_QUADMATH}"'"] = 1
 			}
 			if (("man" in wanted) && ("catpages" in wanted))
 				wanted[".cat"] = 1

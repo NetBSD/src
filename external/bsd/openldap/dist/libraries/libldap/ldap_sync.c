@@ -1,9 +1,9 @@
-/*	$NetBSD: ldap_sync.c,v 1.3 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: ldap_sync.c,v 1.3.4.1 2026/11/04 22:39:12 perseant Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2006-2021 The OpenLDAP Foundation.
+ * Copyright 2006-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ldap_sync.c,v 1.3 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: ldap_sync.c,v 1.3.4.1 2026/11/04 22:39:12 perseant Exp $");
 
 #include "portable.h"
 

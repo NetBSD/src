@@ -3,7 +3,7 @@
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
 ## Copyright 2016-2021 Ondřej Kuzník, Symas Corp.
-## Copyright 2021 The OpenLDAP Foundation.
+## Copyright 2021-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -21,6 +21,12 @@ if test $OTP = otpno; then
     echo "OTP overlay not available, test skipped"
     exit 0
 fi
+
+export URI1 MANAGERDN PASSWD BABSDN BJORNSDN
+
+OTP_DATA=$DATADIR/otp/totp.ldif
+
+mkdir -p $TESTDIR $DBDIR1
 
 for python in python3 python2 python2.7 python27 python ""; do
     if test x"$python" = x; then
@@ -41,12 +47,6 @@ for python in python3 python2 python2.7 python27 python ""; do
         ;;
     esac
 done
-
-export URI1 MANAGERDN PASSWD BABSDN BJORNSDN
-
-OTP_DATA=$DATADIR/otp/totp.ldif
-
-mkdir -p $TESTDIR $DBDIR1
 
 echo "Running slapadd to build slapd database..."
 . $CONFFILTER $BACKEND < $CONF > $ADDCONF

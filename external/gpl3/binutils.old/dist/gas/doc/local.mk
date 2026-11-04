@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -41,7 +41,7 @@ TEXI2DVI = texi2dvi -I "$(srcdir)/%D%" -I %D% -I "$(srcdir)/../libiberty" \
 
 %D%/asconfig.texi: %D%/$(CONFIG).texi %D%/$(am__dirstamp)
 	$(AM_V_at)rm -f %D%/asconfig.texi
-	$(AM_V_GEN)cp $(srcdir)/%D%/$(CONFIG).texi %D%/asconfig.texi
+	$(AM_V_GEN)cp $(srcdir)/%D%/$(CONFIG).texi %D%/asconfig.texi && touch -m -r $(srcdir)/%D%/$(CONFIG).texi %D%/asconfig.texi
 	$(AM_V_at)chmod u+w %D%/asconfig.texi
 
 CPU_DOCS = \
@@ -61,6 +61,7 @@ CPU_DOCS = \
 	%D%/c-hppa.texi \
 	%D%/c-i386.texi \
 	%D%/c-ip2k.texi \
+	%D%/c-kvx.texi \
 	%D%/c-lm32.texi \
 	%D%/c-m32c.texi \
 	%D%/c-m32r.texi \
@@ -73,7 +74,6 @@ CPU_DOCS = \
 	%D%/c-mmix.texi \
 	%D%/c-mt.texi \
 	%D%/c-msp430.texi \
-	%D%/c-nios2.texi \
 	%D%/c-nds32.texi \
 	%D%/c-ns32k.texi \
 	%D%/c-or1k.texi \

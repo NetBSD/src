@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -67,7 +67,7 @@ public:
   char *get_location (bool find_needed = true);
   char *getResolvedPath ();
   char *get_location_info ();
-  struct stat64 *get_stat ();
+  dbe_stat_t *get_stat ();
   bool compare (DbeFile *df);
   void set_need_refind (bool val);
   void set_location (const char *filename);
@@ -79,7 +79,7 @@ public:
 
   bool inArchive;
   int filetype;
-  struct stat64 sbuf;
+  dbe_stat_t sbuf;
   DbeFile *container;
   char *orig_location;
   Experiment *experiment;

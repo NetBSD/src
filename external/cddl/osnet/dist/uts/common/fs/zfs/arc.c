@@ -295,7 +295,6 @@ int arc_procfd;
 #define	swapfs_reserve	0
 #undef curproc
 #define	curproc		curlwp
-#define	proc_pageout	uvm.pagedaemon_lwp
 
 static void	*zio_arena;
 
@@ -5769,7 +5768,7 @@ arc_memory_throttle(uint64_t reserve, uint64_t txg)
 	 * the arc is already going to be evicting, so we just want to
 	 * continue to let page writes occur as quickly as possible.
 	 */
-	if (curlwp == uvm.pagedaemon_lwp) {
+	if (uvm_lwp_is_pagedaemon(curlwp)) {
 		if (page_load > MAX(ptob(minfree), available_memory) / 4)
 			return (SET_ERROR(ERESTART));
 		/* Note: reserve is inflated, so we deflate */
@@ -5945,7 +5944,7 @@ arc_lowmem(void *arg __unused, int howto __unused)
 	 * here from ARC itself and may hold ARC locks and thus risk a deadlock
 	 * with ARC reclaim thread.
 	 */
-	if (curlwp == uvm.pagedaemon_lwp)
+	if (uvm_lwp_is_pagedaemon(curlwp))
 		(void) cv_wait(&arc_reclaim_waiters_cv, &arc_reclaim_lock);
 	mutex_exit(&arc_reclaim_lock);
 }

@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1736,10 +1736,10 @@ static const struct v850_elf_reloc_map v850_elf_reloc_map[] =
   { BFD_RELOC_V850_32_GOT,		   R_V850_32_GOT		 },
   { BFD_RELOC_V850_22_PLT_PCREL,	   R_V850_22_PLT		 },
   { BFD_RELOC_V850_32_PLT_PCREL,	   R_V850_32_PLT		 },
-  { BFD_RELOC_V850_COPY,		   R_V850_COPY			 },
-  { BFD_RELOC_V850_GLOB_DAT,		   R_V850_GLOB_DAT		 },
-  { BFD_RELOC_V850_JMP_SLOT,		   R_V850_JMP_SLOT		 },
-  { BFD_RELOC_V850_RELATIVE,		   R_V850_RELATIVE		 },
+  { BFD_RELOC_COPY,			   R_V850_COPY			 },
+  { BFD_RELOC_GLOB_DAT,			   R_V850_GLOB_DAT		 },
+  { BFD_RELOC_JMP_SLOT,			   R_V850_JMP_SLOT		 },
+  { BFD_RELOC_RELATIVE,			   R_V850_RELATIVE		 },
   { BFD_RELOC_V850_16_GOTOFF,		   R_V850_16_GOTOFF		 },
   { BFD_RELOC_V850_32_GOTOFF,		   R_V850_32_GOTOFF		 },
   { BFD_RELOC_V850_CODE,		   R_V850_CODE			 },
@@ -1933,8 +1933,11 @@ v850_elf_info_to_howto_rela (bfd *abfd,
 static bool
 v850_elf_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 {
-  return (   (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
-	  || (name[0] == '_' &&  name[1] == '.' && name[2] == 'L' && name[3] == '_'));
+  if (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
+    return true;
+  if (name[0] == '_' && name[1] == '.' && name[2] == 'L' && name[3] == '_')
+    return true;
+  return false;
 }
 
 static bool
@@ -2250,7 +2253,8 @@ v850_elf_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_V850_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -2332,19 +2336,19 @@ v850_elf_relocate_section (bfd *output_bfd,
 static asection *
 v850_elf_gc_mark_hook (asection *sec,
 		       struct bfd_link_info *info,
-		       Elf_Internal_Rela *rel,
+		       struct elf_reloc_cookie *cookie,
 		       struct elf_link_hash_entry *h,
-		       Elf_Internal_Sym *sym)
+		       unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_V850_GNU_VTINHERIT:
       case R_V850_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 static void
@@ -2389,6 +2393,7 @@ v850_elf_make_note_section (bfd * abfd)
     return NULL;
 
   s->contents = data;
+  s->alloced = 1;
 
   /* Provide default (= uninitilaised) values for all of the notes.  */
   for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
@@ -2453,7 +2458,8 @@ v850_elf_copy_notes (bfd *ibfd, bfd *obfd)
       bfd_byte * icont;
       bfd_byte * ocont;
 
-      if ((icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
+      if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
+	  || (icont = elf_section_data (inotes)->this_hdr.contents) == NULL)
 	BFD_ASSERT (bfd_malloc_and_get_section (ibfd, inotes, & icont));
 
       if ((ocont = elf_section_data (onotes)->this_hdr.contents) == NULL)
@@ -2781,8 +2787,7 @@ v850_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   flagword in_flags;
   bool result = true;
 
-  if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   result &= v850_elf_merge_notes (ibfd, obfd);

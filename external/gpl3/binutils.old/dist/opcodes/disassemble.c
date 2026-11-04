@@ -1,5 +1,5 @@
 /* Select disassembly routine for specified architecture.
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -57,6 +57,7 @@
 #define ARCH_i386
 #define ARCH_ip2k
 #define ARCH_iq2000
+#define ARCH_kvx
 #define ARCH_lm32
 #define ARCH_m32c
 #define ARCH_m32r
@@ -73,7 +74,6 @@
 #define ARCH_mt
 #define ARCH_msp430
 #define ARCH_nds32
-#define ARCH_nios2
 #define ARCH_ns32k
 #define ARCH_or1k
 #define ARCH_pdp11
@@ -107,23 +107,6 @@
 #ifdef ARCH_m32c
 #include "m32c-desc.h"
 #endif
-
-#ifdef ARCH_bpf
-/* XXX this should be including bpf-desc.h instead of this hackery,
-   but at the moment it is not possible to include several CGEN
-   generated *-desc.h files simultaneously.  To be fixed in
-   CGEN...  */
-
-# ifdef ARCH_m32c
-enum epbf_isa_attr
-{
-  ISA_EBPFLE, ISA_EBPFBE, ISA_XBPFLE, ISA_XBPFBE, ISA_EBPFMAX
-};
-# else
-#  include "bpf-desc.h"
-#  define ISA_EBPFMAX ISA_MAX
-# endif
-#endif /* ARCH_bpf */
 
 disassembler_ftype
 disassembler (enum bfd_architecture a,
@@ -256,6 +239,11 @@ disassembler (enum bfd_architecture a,
       disassemble = print_insn_fr30;
       break;
 #endif
+#ifdef ARCH_kvx
+    case bfd_arch_kvx:
+      disassemble = print_insn_kvx;
+      break;
+#endif
 #ifdef ARCH_lm32
     case bfd_arch_lm32:
       disassemble = print_insn_lm32;
@@ -359,14 +347,6 @@ disassembler (enum bfd_architecture a,
       disassemble = print_insn_mn10300;
       break;
 #endif
-#ifdef ARCH_nios2
-    case bfd_arch_nios2:
-      if (big)
-	disassemble = print_insn_big_nios2;
-      else
-	disassemble = print_insn_little_nios2;
-      break;
-#endif
 #ifdef ARCH_or1k
     case bfd_arch_or1k:
       disassemble = print_insn_or1k;
@@ -402,7 +382,7 @@ disassembler (enum bfd_architecture a,
 #endif
 #ifdef ARCH_riscv
     case bfd_arch_riscv:
-      disassemble = riscv_get_disassembler (abfd);
+      disassemble = print_insn_riscv;
       break;
 #endif
 #ifdef ARCH_rl78
@@ -585,6 +565,9 @@ disassembler_usage (FILE *stream ATTRIBUTE_UNUSED)
 #ifdef ARCH_i386
   print_i386_disassembler_options (stream);
 #endif
+#ifdef ARCH_kvx
+  print_kvx_disassembler_options (stream);
+#endif
 #ifdef ARCH_s390
   print_s390_disassembler_options (stream);
 #endif
@@ -594,7 +577,9 @@ disassembler_usage (FILE *stream ATTRIBUTE_UNUSED)
 #ifdef ARCH_loongarch
   print_loongarch_disassembler_options (stream);
 #endif
-
+#ifdef ARCH_bpf
+  print_bpf_disassembler_options (stream);
+#endif
   return;
 }
 
@@ -610,12 +595,19 @@ disassemble_init_for_target (struct disassemble_info * info)
     case bfd_arch_aarch64:
       info->symbol_is_valid = aarch64_symbol_is_valid;
       info->disassembler_needs_relocs = true;
+      info->created_styled_output = true;
+      break;
+#endif
+#ifdef ARCH_arc
+    case bfd_arch_arc:
+      info->created_styled_output = true;
       break;
 #endif
 #ifdef ARCH_arm
     case bfd_arch_arm:
       info->symbol_is_valid = arm_symbol_is_valid;
       info->disassembler_needs_relocs = true;
+      info->created_styled_output = true;
       break;
 #endif
 #ifdef ARCH_avr
@@ -640,9 +632,19 @@ disassemble_init_for_target (struct disassemble_info * info)
       info->skip_zeroes = 16;
       break;
 #endif
+#ifdef ARCH_loongarch
+    case bfd_arch_loongarch:
+      info->created_styled_output = true;
+      break;
+#endif
 #ifdef ARCH_tic4x
     case bfd_arch_tic4x:
       info->skip_zeroes = 32;
+      break;
+#endif
+#ifdef ARCH_m68k
+    case bfd_arch_m68k:
+      info->created_styled_output = true;
       break;
 #endif
 #ifdef ARCH_mep
@@ -654,6 +656,11 @@ disassemble_init_for_target (struct disassemble_info * info)
 #ifdef ARCH_metag
     case bfd_arch_metag:
       info->disassembler_needs_relocs = true;
+      break;
+#endif
+#ifdef ARCH_mips
+    case bfd_arch_mips:
+      info->created_styled_output = true;
       break;
 #endif
 #ifdef ARCH_m32c
@@ -673,23 +680,7 @@ disassemble_init_for_target (struct disassemble_info * info)
 #endif
 #ifdef ARCH_bpf
     case bfd_arch_bpf:
-      info->endian_code = BFD_ENDIAN_LITTLE;
-      if (!info->private_data)
-	{
-	  info->private_data = cgen_bitset_create (ISA_MAX);
-	  if (info->endian == BFD_ENDIAN_BIG)
-	    {
-	      cgen_bitset_set (info->private_data, ISA_EBPFBE);
-	      if (info->mach == bfd_mach_xbpf)
-		cgen_bitset_set (info->private_data, ISA_XBPFBE);
-	    }
-	  else
-	    {
-	      cgen_bitset_set (info->private_data, ISA_EBPFLE);
-	      if (info->mach == bfd_mach_xbpf)
-		cgen_bitset_set (info->private_data, ISA_XBPFLE);
-	    }
-	}
+      info->created_styled_output = true;
       break;
 #endif
 #ifdef ARCH_pru
@@ -705,6 +696,7 @@ disassemble_init_for_target (struct disassemble_info * info)
 #endif
 #if defined (ARCH_powerpc) || defined (ARCH_rs6000)
       disassemble_init_powerpc (info);
+      info->created_styled_output = true;
       break;
 #endif
 #ifdef ARCH_riscv
@@ -745,13 +737,10 @@ disassemble_free_target (struct disassemble_info *info)
     default:
       return;
 
-#ifdef ARCH_bpf
-    case bfd_arch_bpf:
-#endif
 #ifdef ARCH_m32c
     case bfd_arch_m32c:
 #endif
-#if defined ARCH_bpf || defined ARCH_m32c
+#if defined ARCH_m32c
       if (info->private_data)
 	{
 	  CGEN_BITSET *mask = info->private_data;
@@ -778,10 +767,12 @@ disassemble_free_target (struct disassemble_info *info)
 #endif
 #ifdef ARCH_powerpc
     case bfd_arch_powerpc:
+      disassemble_free_powerpc (info);
       break;
 #endif
 #ifdef ARCH_riscv
     case bfd_arch_riscv:
+      disassemble_free_riscv (info);
       break;
 #endif
 #ifdef ARCH_rs6000

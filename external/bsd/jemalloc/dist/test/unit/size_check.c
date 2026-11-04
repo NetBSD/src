@@ -3,7 +3,8 @@
 #include "jemalloc/internal/safety_check.h"
 
 bool fake_abort_called;
-void fake_abort(const char *message) {
+void
+fake_abort(const char *message) {
 	(void)message;
 	fake_abort_called = true;
 }
@@ -14,9 +15,9 @@ void fake_abort(const char *message) {
 #define LARGE_SIZE1 SC_LARGE_MINCLASS
 #define LARGE_SIZE2 (LARGE_SIZE1 * 2)
 
-void *
+static void *
 test_invalid_size_pre(size_t sz) {
-	safety_check_set_abort(&fake_abort);
+	test_hooks_safety_check_abort = &fake_abort;
 
 	fake_abort_called = false;
 	void *ptr = malloc(sz);
@@ -25,10 +26,10 @@ test_invalid_size_pre(size_t sz) {
 	return ptr;
 }
 
-void
+static void
 test_invalid_size_post(void) {
 	expect_true(fake_abort_called, "Safety check didn't fire");
-	safety_check_set_abort(NULL);
+	test_hooks_safety_check_abort = NULL;
 }
 
 TEST_BEGIN(test_invalid_size_sdallocx) {
@@ -72,8 +73,7 @@ TEST_END
 
 int
 main(void) {
-	return test(
-	    test_invalid_size_sdallocx,
+	return test(test_invalid_size_sdallocx,
 	    test_invalid_size_sdallocx_nonzero_flag,
 	    test_invalid_size_sdallocx_noflags);
 }

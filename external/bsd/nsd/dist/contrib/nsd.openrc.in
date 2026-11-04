@@ -1,0 +1,73 @@
+#!/sbin/openrc-run
+supervisor=supervise-daemon
+
+description="The NLnet Labs Name Server Daemon (NSD)"
+extra_commands="configtest"
+extra_started_commands="reload"
+
+# For the config file, we use a combination of --with-configdir and
+# the service name instead of (say) the value passed to
+# --with-nsd_conf_file, because OpenRC supports running multiple
+# instances of the same daemon from one service script using symlinks.
+config_file="@configdir@/${RC_SVCNAME}.conf"
+
+checkconf="@sbindir@/nsd-checkconf"
+command="@sbindir@/nsd"
+
+# Run the daemon in the foreground and allow OpenRC to background it
+# and manage its PID file. This is the simplest way to ensure that a
+# PID file owned and writable only by the superuser is created outside
+# of e.g. the socket directory that must be writable by the nsd
+# user. It also happens to agree with what the nsd.service systemd
+# unit does. The PID file is named after the service name (and ignores
+# --with-pidfile) to support multiple instances running simultaneously.
+command_args="-c ${config_file} -d -P '' ${NSD_EXTRA_OPTS}"
+command_background=true
+pidfile="@runstatedir@/${RC_SVCNAME}.pid"
+required_files="${config_file}"
+
+depend() {
+	use logger
+	need net
+}
+
+checkconfig() {
+	if ! "${checkconf}" "${config_file}" ; then
+		eerror "You have errors in your config file (${config_file})"
+		return $?
+	fi
+	return 0
+}
+
+configtest() {
+	ebegin "Checking ${RC_SVCNAME} configuration"
+	checkconfig
+	eend $?
+}
+
+start_pre() {
+	# If this isn't a restart, make sure that the configuration is
+	# usable before we try to start the daemon. Without this, the
+	# service will start successfully but then immediately crash.
+	# If this *is* a restart, then the stop_pre action will have
+	# already checked the config.
+	if [ "${RC_CMD}" != "restart" ] ; then
+		checkconfig || return $?
+	fi
+}
+
+stop_pre() {
+	# If this is a restart, check to make sure the user's config
+	# isn't busted before we stop the running daemon. If it's a
+	# regular "stop," however, then we shouldn't interfere.
+	if [ "${RC_CMD}" = "restart" ] ; then
+		checkconfig || return $?
+	fi
+}
+
+reload() {
+	checkconfig || return $?
+	ebegin "Reloading config and zone files"
+	supervise-daemon "${RC_SVCNAME}" -s SIGHUP
+	eend $?
+}

@@ -1,6 +1,6 @@
-/*	$NetBSD: authfile.c,v 1.28.2.1 2025/08/02 05:18:45 perseant Exp $	*/
-/* $OpenBSD: authfile.c,v 1.145 2024/09/22 12:56:21 jsg Exp $ */
-
+/*	$NetBSD: authfile.c,v 1.28.2.2 2026/11/04 22:36:37 perseant Exp $	*/
+/* $OpenBSD: authfile.c,v 1.151 2026/06/29 09:14:25 djm Exp $ */
+/* $OpenBSD: authfile.c,v 1.152 2026/07/07 04:04:16 djm Exp $ */
 /*
  * Copyright (c) 2000, 2013 Markus Friedl.  All rights reserved.
  *
@@ -26,25 +26,20 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: authfile.c,v 1.28.2.1 2025/08/02 05:18:45 perseant Exp $");
+__RCSID("$NetBSD: authfile.c,v 1.28.2.2 2026/11/04 22:36:37 perseant Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
-#include <sys/uio.h>
 
 #include <errno.h>
 #include <fcntl.h>
 #include <stdio.h>
+#include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 
-#include "cipher.h"
-#include "ssh.h"
 #include "log.h"
 #include "authfile.h"
-#include "misc.h"
-#include "atomicio.h"
 #include "sshkey.h"
 #include "sshbuf.h"
 #include "ssherr.h"
@@ -129,8 +124,6 @@ sshkey_load_private_type(int type, const char *filename, const char *passphrase,
 		goto out;
 
 	r = sshkey_load_private_type_fd(fd, type, passphrase, keyp, commentp);
-	if (r == 0 && keyp && *keyp)
-		r = sshkey_set_filename(*keyp, filename);
  out:
 	close(fd);
 	return r;
@@ -182,8 +175,6 @@ sshkey_load_pubkey_from_private(const char *filename, struct sshkey **pubkeyp)
 	    (r = sshkey_parse_pubkey_from_private_fileblob_type(buffer,
 	    KEY_UNSPEC, &pubkey)) != 0)
 		goto out;
-	if ((r = sshkey_set_filename(pubkey, filename)) != 0)
-		goto out;
 	/* success */
 	if (pubkeyp != NULL) {
 		*pubkeyp = pubkey;
@@ -205,6 +196,7 @@ sshkey_try_load_public(struct sshkey **kp, const char *filename,
 	char *line = NULL, *cp;
 	size_t linesize = 0;
 	int r;
+	struct stat st;
 	struct sshkey *k = NULL;
 
 	if (kp == NULL)
@@ -214,6 +206,11 @@ sshkey_try_load_public(struct sshkey **kp, const char *filename,
 		*commentp = NULL;
 	if ((f = fopen(filename, "r")) == NULL)
 		return SSH_ERR_SYSTEM_ERROR;
+	if (fstat(fileno(f), &st) == 0 && S_ISREG(st.st_mode) &&
+	    st.st_size > SSHBUF_SIZE_MAX) {
+		fclose(f);
+		return SSH_ERR_INVALID_FORMAT;
+	}
 	if ((k = sshkey_new(KEY_UNSPEC)) == NULL) {
 		fclose(f);
 		return SSH_ERR_ALLOC_FAIL;
@@ -326,11 +323,10 @@ sshkey_load_private_cert(int type, const char *filename, const char *passphrase,
 	switch (type) {
 #ifdef WITH_OPENSSL
 	case KEY_RSA:
-	case KEY_DSA:
 	case KEY_ECDSA:
 #endif /* WITH_OPENSSL */
 	case KEY_ED25519:
-	case KEY_XMSS:
+	case KEY_MLDSA44_ED25519:
 	case KEY_UNSPEC:
 		break;
 	default:

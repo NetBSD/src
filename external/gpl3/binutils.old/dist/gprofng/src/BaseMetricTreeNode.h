@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -85,7 +85,6 @@ private:
 
   BaseMetricTreeNode *root;     // root of tree
   BaseMetricTreeNode *parent;   // my parent
-  bool aggregation;             // value is based on children's values
   char *name;           // bm->get_cmd() for metrics, unique string otherwise
   char *uname;                  // user-visible text
   char *unit;                   // see UNIT_* defines

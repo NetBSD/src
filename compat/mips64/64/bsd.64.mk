@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.64.mk,v 1.13.8.1 2025/08/02 05:18:35 perseant Exp $
+#	$NetBSD: bsd.64.mk,v 1.13.8.2 2026/11/04 22:36:31 perseant Exp $
 
 .if !empty(MACHINE_ARCH:M*eb)
 LD+=		-m elf64btsmip
@@ -22,6 +22,7 @@ CPUFLAGS+=	-mabi=64
 LDADD+=		-mabi=64
 LDFLAGS+=	-mabi=64
 MKDEPFLAGS+=	-mabi=64
+FFLAGS+=	-mabi=64
 .endif
 
 .include "${.PARSEDIR}/../../Makefile.compat"

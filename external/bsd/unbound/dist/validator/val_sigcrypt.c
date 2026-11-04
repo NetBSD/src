@@ -57,6 +57,7 @@
 #include "sldns/sbuffer.h"
 #include "sldns/parseutil.h"
 #include "sldns/wire2str.h"
+#include "services/mesh.h"
 
 #include <ctype.h>
 #if !defined(HAVE_SSL) && !defined(HAVE_NSS) && !defined(HAVE_NETTLE)
@@ -81,6 +82,8 @@
 
 /** Maximum number of RRSIG validations for an RRset. */
 #define MAX_VALIDATE_RRSIGS 8
+/** Maximum number of NSEC validations for a message. */
+#define MAX_VALIDATE_NSECS 8
 
 /** return number of rrs in an rrset */
 static size_t
@@ -304,6 +307,8 @@ ds_create_dnskey_digest(struct module_env* env,
 	 * digest = digest_algorithm( DNSKEY owner name | DNSKEY RDATA);
 	 *	DNSKEY RDATA = Flags | Protocol | Algorithm | Public Key. */
 	sldns_buffer_clear(b);
+	if(!sldns_buffer_available(b, dnskey_rrset->rk.dname_len + dnskey_len-2))
+		return 0; /* buffer too small */
 	sldns_buffer_write(b, dnskey_rrset->rk.dname, 
 		dnskey_rrset->rk.dname_len);
 	query_dname_tolower(sldns_buffer_begin(b));
@@ -545,8 +550,10 @@ int algo_needs_missing(struct algo_needs* n)
  * @param reason_bogus: EDE (RFC8914) code paired with the reason of failure.
  * @param section: section of packet where this rrset comes from.
  * @param qstate: qstate with region.
+ * @param vq: validator qstate with attempt counts.
  * @param numverified: incremented when the number of RRSIG validations
  * 	increases.
+ * @param num_tagmatches: incremented for tag matches.
  * @return secure if any key signs *this* signature. bogus if no key signs it,
  *	unchecked on error, or indeterminate if all keys are not supported by
  *	the crypto library (openssl3+ only).
@@ -558,7 +565,7 @@ dnskeyset_verify_rrset_sig(struct module_env* env, struct val_env* ve,
 	struct rbtree_type** sortree,
 	char** reason, sldns_ede_code *reason_bogus,
 	sldns_pkt_section section, struct module_qstate* qstate,
-	int* numverified)
+	struct val_qstate* vq, int* numverified, size_t* num_tagmatches)
 {
 	/* find matching keys and check them */
 	enum sec_status sec = sec_status_bogus;
@@ -577,12 +584,40 @@ dnskeyset_verify_rrset_sig(struct module_env* env, struct val_env* ve,
 	}
 
 	for(i=0; i<num; i++) {
+		if((*num_tagmatches)++ > MAX_TAG_MATCHES) {
+			*reason = "too many tag matches";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			verbose(VERB_ALGO, "verify sig: too many tag matches, "
+				"MAX_TAG_MATCHES (%d); bogus", MAX_TAG_MATCHES);
+			return sec_status_bogus;
+		}
 		/* see if key matches keytag and algo */
 		if(algo != dnskey_get_algo(dnskey, i) ||
 			tag != dnskey_calc_keytag(dnskey, i))
 			continue;
 		numchecked ++;
 		(*numverified)++;
+
+		if(vq && vq->num_validation_attempts++ > env->cfg->val_validation_attempts) {
+			*reason = "too many validation attempts";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			verbose(VERB_ALGO, "verify sig: too many validation attempts, "
+				"val-validation-attempts (%d); bogus", env->cfg->val_validation_attempts);
+			return sec_status_bogus;
+		}
+		if(vq && (ntohs(rrset->rk.type) == LDNS_RR_TYPE_NSEC ||
+			ntohs(rrset->rk.type) == LDNS_RR_TYPE_NSEC3) &&
+			vq->num_nsec_attempts++ > MAX_VALIDATE_NSECS) {
+			*reason = "too many NSEC or NSEC3 validation attempts";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			verbose(VERB_ALGO, "verify sig: too many NSEC or NSEC3 validation attempts, "
+				"(%d); bogus", MAX_VALIDATE_NSECS);
+			vq->num_nsec_attempts_exceeded = 1;
+			return sec_status_bogus;
+		}
 
 		/* see if key verifies */
 		sec = dnskey_verify_rrset_sig(env->scratch,
@@ -623,10 +658,12 @@ enum sec_status
 dnskeyset_verify_rrset(struct module_env* env, struct val_env* ve,
 	struct ub_packed_rrset_key* rrset, struct ub_packed_rrset_key* dnskey,
 	uint8_t* sigalg, char** reason, sldns_ede_code *reason_bogus,
-	sldns_pkt_section section, struct module_qstate* qstate, int* verified)
+	sldns_pkt_section section, struct module_qstate* qstate,
+	struct val_qstate* vq, int* verified, char* reasonbuf,
+	size_t reasonlen)
 {
 	enum sec_status sec;
-	size_t i, num;
+	size_t i, num, num_tagmatches = 0;
 	rbtree_type* sortree = NULL;
 	/* make sure that for all DNSKEY algorithms there are valid sigs */
 	struct algo_needs needs;
@@ -654,9 +691,19 @@ dnskeyset_verify_rrset(struct module_env* env, struct val_env* ve,
 		}
 	}
 	for(i=0; i<num; i++) {
+		if(num_tagmatches > MAX_TAG_MATCHES) {
+			*reason = "too many tag matches";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			verbose(VERB_ALGO, "rrset failed to verify: too many tag matches, "
+				"MAX_TAG_MATCHES (%d)", MAX_TAG_MATCHES);
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			return sec_status_bogus;
+		}
 		sec = dnskeyset_verify_rrset_sig(env, ve, *env->now, rrset, 
 			dnskey, i, &sortree, reason, reason_bogus,
-			section, qstate, verified);
+			section, qstate, vq, verified, &num_tagmatches);
 		/* see which algorithm has been fixed up */
 		if(sec == sec_status_secure) {
 			if(!sigalg)
@@ -680,7 +727,8 @@ dnskeyset_verify_rrset(struct module_env* env, struct val_env* ve,
 		verbose(VERB_ALGO, "rrset failed to verify: "
 			"no valid signatures for %d algorithms",
 			(int)algo_needs_num_missing(&needs));
-		algo_needs_reason(env, alg, reason, "no signatures");
+		algo_needs_reason(alg, reason, "no signatures", reasonbuf,
+			reasonlen);
 	} else {
 		verbose(VERB_ALGO, "rrset failed to verify: "
 			"no valid signatures");
@@ -688,24 +736,24 @@ dnskeyset_verify_rrset(struct module_env* env, struct val_env* ve,
 	return sec_status_bogus;
 }
 
-void algo_needs_reason(struct module_env* env, int alg, char** reason, char* s)
+void algo_needs_reason(int alg, char** reason, char* s, char* reasonbuf,
+	size_t reasonlen)
 {
-	char buf[256];
 	sldns_lookup_table *t = sldns_lookup_by_id(sldns_algorithms, alg);
 	if(t&&t->name)
-		snprintf(buf, sizeof(buf), "%s with algorithm %s", s, t->name);
-	else	snprintf(buf, sizeof(buf), "%s with algorithm ALG%u", s,
+		snprintf(reasonbuf, reasonlen, "%s with algorithm %s", s,
+			t->name);
+	else	snprintf(reasonbuf, reasonlen, "%s with algorithm ALG%u", s,
 			(unsigned)alg);
-	*reason = regional_strdup(env->scratch, buf);
-	if(!*reason)
-		*reason = s;
+	*reason = reasonbuf;
 }
 
 enum sec_status
 dnskey_verify_rrset(struct module_env* env, struct val_env* ve,
         struct ub_packed_rrset_key* rrset, struct ub_packed_rrset_key* dnskey,
 	size_t dnskey_idx, char** reason, sldns_ede_code *reason_bogus,
-	sldns_pkt_section section, struct module_qstate* qstate)
+	sldns_pkt_section section, struct module_qstate* qstate,
+	struct val_qstate* vq, size_t* num_tagmatches)
 {
 	enum sec_status sec;
 	size_t i, num, numchecked = 0, numindeterminate = 0;
@@ -726,9 +774,26 @@ dnskey_verify_rrset(struct module_env* env, struct val_env* ve,
 	}
 	for(i=0; i<num; i++) {
 		/* see if sig matches keytag and algo */
+		if((*num_tagmatches)++ > MAX_TAG_MATCHES) {
+			*reason = "too many tag matches";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			verbose(VERB_ALGO, "rrset failed to verify: too many tag matches, "
+				"MAX_TAG_MATCHES (%d); bogus", MAX_TAG_MATCHES);
+			return sec_status_bogus;
+		}
 		if(algo != rrset_get_sig_algo(rrset, i) ||
 			tag != rrset_get_sig_keytag(rrset, i))
 			continue;
+		if(vq && vq->num_validation_attempts++ > env->cfg->val_validation_attempts) {
+			*reason = "too many validation attempts";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			verbose(VERB_ALGO, "rrset failed to verify: too many validation attempts, "
+				"val-validation-attempts (%d); bogus", env->cfg->val_validation_attempts);
+			return sec_status_bogus;
+		}
+
 		buf_canon = 0;
 		sec = dnskey_verify_rrset_sig(env->scratch,
 			env->scratch_buffer, ve, *env->now, rrset, 
@@ -748,7 +813,6 @@ dnskey_verify_rrset(struct module_env* env, struct val_env* ve,
 			return sec_status_bogus;
 		}
 	}
-	verbose(VERB_ALGO, "rrset failed to verify: all signatures are bogus");
 	if(!numchecked) {
 		*reason = "signature for expected key and algorithm missing";
 		if(reason_bogus)
@@ -761,6 +825,7 @@ dnskey_verify_rrset(struct module_env* env, struct val_env* ve,
 		*reason = "algorithm refused by cryptolib";
 		return sec_status_indeterminate;
 	}
+	verbose(VERB_ALGO, "rrset failed to verify: all signatures are bogus");
 	return sec_status_bogus;
 }
 
@@ -1081,6 +1146,18 @@ insert_can_owner(sldns_buffer* buf, struct ub_packed_rrset_key* k,
 	}
 }
 
+/** lowercase a wire dname but never step past end */
+static void
+canon_dname_tolower(uint8_t* d, uint8_t* end)
+{
+	uint8_t lab;
+	while(d < end && (lab = *d) != 0) {
+		if((size_t)lab+1 > (size_t)(end-d)) return; /* malformed */
+		for(d++; lab; lab--, d++)
+			*d = (uint8_t)tolower((unsigned char)*d);
+	}
+}
+
 /**
  * Canonicalize Rdata in buffer.
  * @param buf: buffer at position just after the rdata.
@@ -1092,6 +1169,8 @@ canonicalize_rdata(sldns_buffer* buf, struct ub_packed_rrset_key* rrset,
 	size_t len)
 {
 	uint8_t* datstart = sldns_buffer_current(buf)-len+2;
+	uint8_t* datend = sldns_buffer_current(buf);
+	size_t firstlen;
 	switch(ntohs(rrset->rk.type)) {
 		case LDNS_RR_TYPE_NXT: 
 		case LDNS_RR_TYPE_NS:
@@ -1104,15 +1183,16 @@ canonicalize_rdata(sldns_buffer* buf, struct ub_packed_rrset_key* rrset,
 		case LDNS_RR_TYPE_PTR:
 		case LDNS_RR_TYPE_DNAME:
 			/* type only has a single argument, the name */
-			query_dname_tolower(datstart);
+			canon_dname_tolower(datstart, datend);
 			return;
 		case LDNS_RR_TYPE_MINFO:
 		case LDNS_RR_TYPE_RP:
 		case LDNS_RR_TYPE_SOA:
 			/* two names after another */
-			query_dname_tolower(datstart);
-			query_dname_tolower(datstart + 
-				dname_valid(datstart, len-2));
+			canon_dname_tolower(datstart, datend);
+			firstlen = dname_valid(datstart, len-2);
+			if(firstlen && firstlen < len-2)
+				canon_dname_tolower(datstart + firstlen, datend);
 			return;
 		case LDNS_RR_TYPE_RT:
 		case LDNS_RR_TYPE_AFSDB:
@@ -1122,7 +1202,7 @@ canonicalize_rdata(sldns_buffer* buf, struct ub_packed_rrset_key* rrset,
 			if(len < 2+2+1) /* rdlen, skiplen, 1byteroot */
 				return;
 			datstart += 2;
-			query_dname_tolower(datstart);
+			canon_dname_tolower(datstart, datend);
 			return;
 		case LDNS_RR_TYPE_SIG:
 		/* downcase the RRSIG, compat with BIND (kept it from SIG) */
@@ -1131,16 +1211,17 @@ canonicalize_rdata(sldns_buffer* buf, struct ub_packed_rrset_key* rrset,
 			if(len < 2+18+1)
 				return;
 			datstart += 18;
-			query_dname_tolower(datstart);
+			canon_dname_tolower(datstart, datend);
 			return;
 		case LDNS_RR_TYPE_PX:
 			/* skip, then two names after another */
 			if(len < 2+2+1) 
 				return;
 			datstart += 2;
-			query_dname_tolower(datstart);
-			query_dname_tolower(datstart + 
-				dname_valid(datstart, len-2-2));
+			canon_dname_tolower(datstart, datend);
+			firstlen = dname_valid(datstart, len-2-2);
+			if(firstlen && firstlen < len-2-2)
+				canon_dname_tolower(datstart + firstlen, datend);
 			return;
 		case LDNS_RR_TYPE_NAPTR:
 			if(len < 2+4)
@@ -1161,14 +1242,14 @@ canonicalize_rdata(sldns_buffer* buf, struct ub_packed_rrset_key* rrset,
 			datstart += (size_t)datstart[0]+1;
 			if(len < 1)	/* check name is at least 1 byte*/
 				return;
-			query_dname_tolower(datstart);
+			canon_dname_tolower(datstart, datend);
 			return;
 		case LDNS_RR_TYPE_SRV:
 			/* skip fixed part */
 			if(len < 2+6+1)
 				return;
 			datstart += 6;
-			query_dname_tolower(datstart);
+			canon_dname_tolower(datstart, datend);
 			return;
 
 		/* do not canonicalize NSEC rdata name, compat with 
@@ -1290,14 +1371,32 @@ rrset_canonical(struct regional* region, sldns_buffer* buf,
 	}
 
 	sldns_buffer_clear(buf);
+	if(sldns_buffer_remaining(buf) < siglen || siglen < 18+1) {
+		verbose(VERB_ALGO, "verify: failed to canonicalize, "
+			"rrset too big");
+		return 0;
+	}
 	sldns_buffer_write(buf, sig, siglen);
 	/* canonicalize signer name */
-	query_dname_tolower(sldns_buffer_begin(buf)+18); 
+	canon_dname_tolower(sldns_buffer_begin(buf)+18,
+		sldns_buffer_current(buf));
+
+	if(sldns_buffer_remaining(buf) < k->rk.dname_len+2) {
+		/* Check if the first can_owner name can fit in the buffer.
+		 * The length is k->rk.dname_len or k->rk.dname_len+2
+		 * if it has '*.' in prefixed. Checks the upper bound,
+		 * also realistically the rest of the rrtype, rrclass, origttl,
+		 * rdata and so on has to be inserted, so that extra space has
+		 * to be there. */
+		verbose(VERB_ALGO, "verify: failed to canonicalize, "
+			"rrset too big");
+		return 0;
+	}
 	RBTREE_FOR(walk, struct canon_rr*, (*sortree)) {
 		/* see if there is enough space left in the buffer */
 		if(sldns_buffer_remaining(buf) < can_owner_len + 2 + 2 + 4
 			+ d->rr_len[walk->rr_idx]) {
-			log_err("verify: failed to canonicalize, "
+			verbose(VERB_ALGO, "verify: failed to canonicalize, "
 				"rrset too big");
 			return 0;
 		}
@@ -1306,6 +1405,13 @@ rrset_canonical(struct regional* region, sldns_buffer* buf,
 			sldns_buffer_write(buf, can_owner, can_owner_len);
 		else	insert_can_owner(buf, k, sig, &can_owner, 
 				&can_owner_len);
+		/* Check again, if the rdata can fit in the buffer */
+		if(sldns_buffer_remaining(buf) < 2 + 2 + 4
+                        + d->rr_len[walk->rr_idx]) {
+			verbose(VERB_ALGO, "verify: failed to canonicalize, "
+				"rrset too big");
+                        return 0;
+                }
 		sldns_buffer_write(buf, &k->rk.type, 2);
 		sldns_buffer_write(buf, &k->rk.rrset_class, 2);
 		sldns_buffer_write(buf, sig+4, 4);
@@ -1320,10 +1426,11 @@ rrset_canonical(struct regional* region, sldns_buffer* buf,
 	 * the non-existence proves. */
 	if(ntohs(k->rk.type) == LDNS_RR_TYPE_NSEC &&
 		section == LDNS_SECTION_AUTHORITY && qstate) {
-		k->rk.dname = regional_alloc_init(qstate->region, can_owner,
+		uint8_t* new_dname = regional_alloc_init(qstate->region, can_owner,
 			can_owner_len);
-		if(!k->rk.dname)
+		if(!new_dname)
 			return 0;
+		k->rk.dname = new_dname;
 		k->rk.dname_len = can_owner_len;
 	}
 	
@@ -1356,11 +1463,17 @@ rrset_canonicalize_to_buffer(struct regional* region, sldns_buffer* buf,
 	canonical_sort(k, d, sortree, rrs);
 
 	sldns_buffer_clear(buf);
+	if(sldns_buffer_remaining(buf) < k->rk.dname_len) {
+		/* Check if the first can_owner name can fit in the buffer. */
+		verbose(VERB_ALGO, "verify: failed to canonicalize, "
+			"rrset too big");
+		return 0;
+	}
 	RBTREE_FOR(walk, struct canon_rr*, sortree) {
 		/* see if there is enough space left in the buffer */
 		if(sldns_buffer_remaining(buf) < can_owner_len + 2 + 2 + 4
 			+ d->rr_len[walk->rr_idx]) {
-			log_err("verify: failed to canonicalize, "
+			verbose(VERB_ALGO, "verify: failed to canonicalize, "
 				"rrset too big");
 			return 0;
 		}
@@ -1373,6 +1486,13 @@ rrset_canonicalize_to_buffer(struct regional* region, sldns_buffer* buf,
 			query_dname_tolower(can_owner);
 			can_owner_len = k->rk.dname_len;
 		}
+		/* Check again, if the rdata can fit in the buffer */
+		if(sldns_buffer_remaining(buf) < 2 + 2 + 4
+                        + d->rr_len[walk->rr_idx]) {
+			verbose(VERB_ALGO, "verify: failed to canonicalize, "
+				"rrset too big");
+                        return 0;
+                }
 		sldns_buffer_write(buf, &k->rk.type, 2);
 		sldns_buffer_write(buf, &k->rk.rrset_class, 2);
 		sldns_buffer_write_u32(buf, d->rr_ttl[walk->rr_idx]);
@@ -1568,6 +1688,18 @@ dnskey_verify_rrset_sig(struct regional* region, sldns_buffer* buf,
 			*reason_bogus = LDNS_EDE_NO_ZONE_KEY_BIT_SET;
 		return sec_status_bogus; 
 	}
+	if((dnskey_get_flags(dnskey, dnskey_idx) & LDNS_KEY_REVOKE_KEY) &&
+		/* The REVOKE key is allowed to check sigs on itself. */
+		!(ntohs(rrset->rk.type) == LDNS_RR_TYPE_DNSKEY &&
+		  query_dname_compare(rrset->rk.dname, dnskey->rk.dname)==0)
+		) {
+		verbose(VERB_QUERY, "verify: dnskey has REVOKE bit set, "
+			"not usable for data validation per RFC 5011 s2.1");
+		*reason = "dnskey revoked";
+		if(reason_bogus)
+			*reason_bogus = LDNS_EDE_DNSKEY_MISSING;
+		return sec_status_bogus;
+	}
 
 	if(dnskey_get_protocol(dnskey, dnskey_idx) != LDNS_DNSSEC_KEYPROTO) { 
 		/* RFC 4034 says DNSKEY PROTOCOL MUST be 3 */
@@ -1595,6 +1727,30 @@ dnskey_verify_rrset_sig(struct regional* region, sldns_buffer* buf,
 			*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
 		return sec_status_bogus; /* signer name offtree */
 	}
+	/* NSEC3, the owner name must be the <base32hash>.signername */
+	if(ntohs(rrset->rk.type) == LDNS_RR_TYPE_NSEC3 &&
+		rrset->rk.dname_len > 0) {
+		uint8_t* dnameless = rrset->rk.dname;
+		size_t dnamelesslen = rrset->rk.dname_len;
+		dname_remove_label(&dnameless, &dnamelesslen);
+		if(query_dname_compare(dnameless, signer) != 0) {
+			verbose(VERB_QUERY, "verify: NSEC3 owner name is not b32.signer name");
+			*reason = "NSEC3 owner name is not b32.signer name";
+			if(reason_bogus)
+				*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+			return sec_status_bogus; /* NSEC3 owner not b32.signer */
+		}
+	}
+	/* NSEC, a next owner that is not under the signer is not allowed.*/
+	if(ntohs(rrset->rk.type) == LDNS_RR_TYPE_NSEC &&
+		!nsec_nextowner_subdomain(rrset, signer)) {
+		verbose(VERB_QUERY, "verify: NSEC next owner overreaches signer name");
+		*reason = "NSEC next owner overreaches signer name";
+		if(reason_bogus)
+			*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+		return sec_status_bogus; /* nextowner overreaching */
+	}
+
 	sigblock = (unsigned char*)signer+signer_len;
 	if(siglen < 2+18+signer_len+1) {
 		verbose(VERB_QUERY, "verify: too short, no signature data");
@@ -1652,6 +1808,13 @@ dnskey_verify_rrset_sig(struct regional* region, sldns_buffer* buf,
 			*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
 		return sec_status_bogus;
 	}
+	if((int)sig[2+3] < dname_signame_label_count(signer)) {
+		verbose(VERB_QUERY, "verify: RRSIG label count too low for signer");
+		*reason = "signature labelcount lower than signature signer";
+		if(reason_bogus)
+			*reason_bogus = LDNS_EDE_DNSSEC_BOGUS;
+		return sec_status_bogus;
+	}
 
 	/* original ttl, always ok */
 
@@ -1676,6 +1839,10 @@ dnskey_verify_rrset_sig(struct regional* region, sldns_buffer* buf,
 	/* verify */
 	sec = verify_canonrrset(buf, (int)sig[2+2],
 		sigblock, sigblock_len, key, keylen, reason);
+
+	/* count validation operation */
+	if(qstate && qstate->env && qstate->env->mesh)
+		qstate->env->mesh->val_ops++;
 	
 	if(sec == sec_status_secure) {
 		/* check if TTL is too high - reduce if so */

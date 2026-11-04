@@ -1,0 +1,139 @@
+.lf 1 stdin
+.TH SLAPO_OTP 5 "2018/6/29" "SLAPO-OTP"
+.\" Copyright 2015-2024 The OpenLDAP Foundation.
+.\" Portions Copyright 2015 by Howard Chu, Symas Corp. All rights reserved.
+.\" Portions Copyright 2018 by Ondřej Kuzník, Symas Corp. All rights reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.SH NAME
+slapo-otp \- OATH One-Time Password module
+.SH SYNOPSIS
+.B moduleload
+.I otp.la
+.SH DESCRIPTION
+The
+.B otp
+module allows time-based one-time password, AKA "authenticator-style", and
+HMAC-based one-time password authentication to be used in conjunction with
+a standard LDAP password for two-factor authentication.
+
+With this module, users would use their password, followed with the one-time
+password in the password prompt to authenticate.
+
+The password needed for a user to authenticate is calculated based on a counter
+(current time in case of TOTP) and a key that is referenced in the user's LDAP
+entry. Since the password is based on the time or number of uses, it changes
+periodically. Once used, it cannot be used again so keyloggers and
+shoulder-surfers are thwarted. A mobile phone application, such as the Google
+Authenticator or YubiKey (a
+.BR prover ),
+can be used to calculate the user's current one-time password, which is
+expressed as a (usually six-digit) number.
+
+Alternatively, the value can be calculated by some other application with
+access to the user's key and delivered to the user through SMS or some other
+channel. When prompted to authenticate, the user merely appends the code
+provided by the prover at the end of their password when authenticating.
+
+This implementation complies with
+.B RFC 4226 HOTP HMAC-Based One Time Passwords
+and
+.B RFC 6238 TOTP Time-based One Time Passwords
+and includes support for the SHA-1, SHA-256, and SHA-512 HMAC
+algorithms.
+
+The HMAC key used in the OTP computation is stored in the oathOTPToken entry referenced in
+the user's LDAP entry and the parameters are stored in the oathOTPParams LDAP
+entry referenced in the token.
+
+.SH CONFIGURATION
+Once the module is configured on the database, it will intercept LDAP simple
+binds for users whose LDAP entry has any of the
+.B oathOTPUser
+derived objectlasses attached to it. The attributes linking the user and the
+shared secret are:
+
+.RS
+.TP
+.B oathTOTPToken: <dn>
+Mandatory for
+.BR oathTOTPUser ,
+indicates that the named entry is designated to hold the time-based one-time
+password shared secret and the last password used.
+.TP
+.B oathHOTPToken: <dn>
+Mandatory for
+.BR oathHOTPUser ,
+indicates that the named entry is designated to hold the one-time password
+shared secret and the last password used.
+.TP
+.B oathTOTPParams: <dn>
+Mandatory for
+.BR oathTOTPToken ,
+indicates that the named entry is designated to hold the parameters to generate
+time-based one-time password shared secret: its length and algorithm to use as
+well as the length of each time step and the grace period.
+.TP
+.B oathHOTPParams: <dn>
+Mandatory for
+.BR oathHOTPToken ,
+indicates that the named entry is designated to hold the parameters to generate
+one-time password shared secret: its length and algorithm to use as well as the
+permitted number of passwords to skip.
+.RE
+
+The following parts of the OATH-LDAP schema are implemented.
+
+General attributes:
+
+.RS
+.TP
+.B oathSecret: <data>
+The shared secret is stored here as raw bytes.
+.TP
+.B oathOTPLength: <length>
+The password length, usually 6.
+.TP
+.B oathHMACAlgorithm: <OID>
+The OID of the hash algorithm to use as defined in RFC 8018.
+Supported algorithms include SHA1, SHA224, SHA256, SHA384 and SHA512.
+.RE
+
+The HOTP attributes:
+
+.RS
+.TP
+.B oathHOTPLookAhead: <number>
+The number of successive HOTP tokens that can be skipped.
+.TP
+.B oathHOTPCounter: <number>
+The order of the last HOTP token successfully redeemed by the user.
+.RE
+
+The TOTP attributes:
+
+.RS
+.TP
+.B oathTOTPTimeStepPeriod: <seconds>
+The length of the time-step period for TOTP calculation.
+.TP
+.B oathTOTPLastTimeStep: <number>
+The order of the last TOTP token successfully redeemed by the user.
+.TP
+.B oathTOTPTimeStepWindow: <number>
+The number of time periods around the current time to try when checking the
+password provided by the user.
+.TP
+.B oathTOTPTimeStepDrift: <number>
+If the client didn't provide the correct token but it still fit with
+oathTOTPTimeStepWindow above, this attribute records the current offset to
+provide for slow clock drift of the client device.
+.RE
+
+.SH "SEE ALSO"
+.BR slapd\-config (5).
+
+.SH ACKNOWLEDGEMENT
+This work was developed by Ondřej Kuzník and Howard Chu of Symas Corporation
+for inclusion in OpenLDAP Software.
+
+This work reuses the OATH-LDAP schema developed by Michael Ströder.

@@ -1,5 +1,5 @@
 .TH SLAPD-WT 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2011-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2011-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -33,6 +33,25 @@ A separate directory must be specified for each database.
 The default is
 .BR LOCALSTATEDIR/openldap\-data .
 .TP
+.BI idlcache \ <boolean>
+Use the in-memory idlcache. The default is true.
+.TP
+\fBindex \fR{\fI<attrlist>\fR|\fBdefault\fR} [\fBpres\fR,\fBeq\fR,\fBapprox\fR,\fBsub\fR,\fI<special>\fR]
+Specify the indexes to maintain for the given attribute (or
+list of attributes).
+Some attributes only support a subset of indexes.
+If only an \fI<attr>\fP is given, the indices specified for \fBdefault\fR
+are maintained.
+Note that setting a default does not imply that all attributes will be
+indexed. Also, for best performance, an
+.B eq
+index should always be configured for the
+.B objectClass
+attribute.
+.TP
+.BI mode \ <integer>
+back-wt does not support mode option. use umask instead.
+.TP
 \fBwtconfig \fR{\fBcreate\fR,\fBcache_size=512M\fR,\fBasync=(enabled)\fR}
 Specify configuration for wiredtiger, This parameter is pass to
 .BR wiredtiger_open (3).
@@ -52,19 +71,6 @@ maximum heap memory to allocate for the cache.
 asynchronous operations configuration options. disabled by default.
 .RE
 .RS
-.TP
-\fBindex \fR{\fI<attrlist>\fR|\fBdefault\fR} [\fBpres\fR,\fBeq\fR,\fBapprox\fR,\fBsub\fR,\fI<special>\fR]
-Specify the indexes to maintain for the given attribute (or
-list of attributes).
-Some attributes only support a subset of indexes.
-If only an \fI<attr>\fP is given, the indices specified for \fBdefault\fR
-are maintained.
-Note that setting a default does not imply that all attributes will be
-indexed. Also, for best performance, an
-.B eq
-index should always be configured for the
-.B objectClass
-attribute.
 
 .SH ACCESS CONTROL
 The

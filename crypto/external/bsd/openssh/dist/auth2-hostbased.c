@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-hostbased.c,v 1.23.2.1 2025/08/02 05:18:45 perseant Exp $	*/
-/* $OpenBSD: auth2-hostbased.c,v 1.53 2024/05/17 00:30:23 djm Exp $ */
+/*	$NetBSD: auth2-hostbased.c,v 1.23.2.2 2026/11/04 22:36:37 perseant Exp $	*/
+/* $OpenBSD: auth2-hostbased.c,v 1.59 2026/09/16 00:31:27 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-hostbased.c,v 1.23.2.1 2025/08/02 05:18:45 perseant Exp $");
+__RCSID("$NetBSD: auth2-hostbased.c,v 1.23.2.2 2026/11/04 22:36:37 perseant Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
@@ -62,16 +62,15 @@ static int
 userauth_hostbased(struct ssh *ssh, const char *method)
 {
 	Authctxt *authctxt = ssh->authctxt;
-	struct sshbuf *b;
+	struct sshbuf *keyblob = NULL, *b = NULL;
 	struct sshkey *key = NULL;
 	char *pkalg, *cuser, *chost;
-	u_char *pkblob, *sig;
-	size_t alen, blen, slen;
+	u_char *sig;
+	size_t alen, slen;
 	int r, pktype, authenticated = 0;
 
-	/* XXX use sshkey_froms() */
 	if ((r = sshpkt_get_cstring(ssh, &pkalg, &alen)) != 0 ||
-	    (r = sshpkt_get_string(ssh, &pkblob, &blen)) != 0 ||
+	    (r = sshpkt_getb_froms(ssh, &keyblob)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &chost, NULL)) != 0 ||
 	    (r = sshpkt_get_cstring(ssh, &cuser, NULL)) != 0 ||
 	    (r = sshpkt_get_string(ssh, &sig, &slen)) != 0)
@@ -90,29 +89,39 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 		    pkalg);
 		goto done;
 	}
-	if ((r = sshkey_from_blob(pkblob, blen, &key)) != 0) {
-		error_fr(r, "key_from_blob");
-		goto done;
-	}
-	if (key == NULL) {
-		error_f("cannot decode key: %s", pkalg);
-		goto done;
-	}
-	if (key->type != pktype) {
-		error_f("type mismatch for decoded key "
-		    "(received %d, expected %d)", key->type, pktype);
-		goto done;
-	}
-	if (match_pattern_list(pkalg, options.hostbased_accepted_algos, 0) != 1) {
+	if (match_pattern_list(pkalg,
+	    options.hostbased_accepted_algos, 0) != 1) {
 		logit_f("signature algorithm %s not in "
 		    "HostbasedAcceptedAlgorithms", pkalg);
 		goto done;
 	}
-	if ((r = sshkey_check_cert_sigtype(key,
-	    options.ca_sign_algorithms)) != 0) {
-		logit_fr(r, "certificate signature algorithm %s",
-		    (key->cert == NULL || key->cert->signature_type == NULL) ?
-		    "(null)" : key->cert->signature_type);
+	if ((b = sshbuf_fromb(keyblob)) == NULL)
+		fatal_f("sshbuf_fromb failed");
+	switch ((r = sshkey_fromb_allowlist(b, &key,
+	    options.hostbased_accepted_algos, options.ca_sign_algorithms))) {
+	case 0:
+		/* ok */
+		break;
+	case SSH_ERR_KEY_ALG_UNSUPPORTED:
+		/* This shouldn't happen unless the client is being weird */
+		logit_f("key algorithm differs from signature algorithm %s and "
+		    "is not in HostbasedAcceptedAlgorithms", pkalg);
+		goto done;
+	case SSH_ERR_SIGN_ALG_UNSUPPORTED:
+		logit_fr(r, "certificate signature algorithm not in "
+		    "CASignatureAlgorithms");
+		goto done;
+	default:
+		error_fr(r, "parse key");
+		goto done;
+	}
+	sshbuf_free(b);
+	b = NULL;
+
+	if (key->type != pktype || (sshkey_type_plain(pktype) == KEY_ECDSA &&
+	    sshkey_ecdsa_nid_from_name(pkalg) != key->ecdsa_nid)) {
+		error_f("key type mismatch for decoded key "
+		    "(received %s, expected %s)", sshkey_ssh_name(key), pkalg);
 		goto done;
 	}
 	if ((r = sshkey_check_rsa_length(key,
@@ -135,7 +144,7 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 	    (r = sshbuf_put_cstring(b, authctxt->service)) != 0 ||
 	    (r = sshbuf_put_cstring(b, method)) != 0 ||
 	    (r = sshbuf_put_string(b, pkalg, alen)) != 0 ||
-	    (r = sshbuf_put_string(b, pkblob, blen)) != 0 ||
+	    (r = sshbuf_put_stringb(b, keyblob)) != 0 ||
 	    (r = sshbuf_put_cstring(b, chost)) != 0 ||
 	    (r = sshbuf_put_cstring(b, cuser)) != 0)
 		fatal_fr(r, "reconstruct packet");
@@ -155,12 +164,12 @@ userauth_hostbased(struct ssh *ssh, const char *method)
 		authenticated = 1;
 
 	auth2_record_key(authctxt, authenticated, key);
-	sshbuf_free(b);
 done:
 	debug2_f("authenticated %d", authenticated);
 	sshkey_free(key);
+	sshbuf_free(b);
+	sshbuf_free(keyblob);
 	free(pkalg);
-	free(pkblob);
 	free(cuser);
 	free(chost);
 	free(sig);
@@ -213,10 +222,19 @@ hostbased_key_allowed(struct ssh *ssh, struct passwd *pw,
 	}
 	debug2_f("access allowed by auth_rhosts2");
 
-	if (sshkey_is_cert(key) &&
-	    sshkey_cert_check_authority_now(key, 1, 0, 0, lookup, &reason)) {
-		error("%s", reason);
-		auth_debug_add("%s", reason);
+	if (sshkey_is_cert(key) && sshkey_cert_check_host(key, lookup,
+	     options.ca_sign_algorithms, &reason) != 0) {
+		if ((fp = sshkey_fingerprint(key->cert->signature_key,
+		    options.fingerprint_hash, SSH_FP_DEFAULT)) == NULL)
+			fatal_f("sshkey_fingerprint fail");
+		error("Refusing certificate ID \"%s\" serial=%llu signed by "
+		    "%s CA %s: %s", key->cert->key_id,
+		    (unsigned long long)key->cert->serial,
+		    sshkey_type(key->cert->signature_key), fp, reason);
+		auth_debug_add("Refused Certificate ID \"%s\" serial=%llu: %s",
+		    key->cert->key_id, (unsigned long long)key->cert->serial,
+		    reason);
+		free(fp);
 		return 0;
 	}
 

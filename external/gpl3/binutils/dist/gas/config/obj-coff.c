@@ -1,5 +1,5 @@
 /* coff object file format
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
 
    This file is part of GAS.
 
@@ -43,7 +43,7 @@
    attributes when a directive has no valid flags or the "w" flag is
    used.  This default should be appropriate for most.  */
 #ifndef TC_COFF_SECTION_DEFAULT_ATTRIBUTES
-#define TC_COFF_SECTION_DEFAULT_ATTRIBUTES (SEC_LOAD | SEC_DATA)
+#define TC_COFF_SECTION_DEFAULT_ATTRIBUTES (SEC_ALLOC | SEC_LOAD | SEC_DATA)
 #endif
 
 /* This is used to hold the symbol built by a sequence of pseudo-ops
@@ -90,7 +90,7 @@ stack_init (unsigned long chunk_size,
 }
 
 static char *
-stack_push (stack *st, char *element)
+stack_push (stack *st, void *element)
 {
   if (st->pointer + st->element_size >= st->size)
     {
@@ -133,7 +133,7 @@ tag_insert (const char *name, symbolS *symbolP)
 static symbolS *
 tag_find (char *name)
 {
-  return (symbolS *) str_hash_find (tag_hash, name);
+  return str_hash_find (tag_hash, name);
 }
 
 static symbolS *
@@ -368,11 +368,11 @@ static symbolS *line_fsym;
 void
 coff_obj_symbol_new_hook (symbolS *symbolP)
 {
-  long   sz = (OBJ_COFF_MAX_AUXENTRIES + 1) * sizeof (combined_entry_type);
-  char * s  = XNEWVEC (char, sz);
+  size_t sz = (OBJ_COFF_MAX_AUXENTRIES + 1) * sizeof (combined_entry_type);
+  combined_entry_type *s  = notes_alloc (sz);
 
   memset (s, 0, sz);
-  coffsymbol (symbol_get_bfdsym (symbolP))->native = (combined_entry_type *) s;
+  coffsymbol (symbol_get_bfdsym (symbolP))->native = s;
   coffsymbol (symbol_get_bfdsym (symbolP))->native->is_sym = true;
 
   S_SET_DATA_TYPE (symbolP, T_NULL);
@@ -389,11 +389,10 @@ coff_obj_symbol_new_hook (symbolS *symbolP)
 void
 coff_obj_symbol_clone_hook (symbolS *newsymP, symbolS *orgsymP)
 {
-  long elts = OBJ_COFF_MAX_AUXENTRIES + 1;
-  combined_entry_type * s = XNEWVEC (combined_entry_type, elts);
+  size_t sz = (OBJ_COFF_MAX_AUXENTRIES + 1) * sizeof (combined_entry_type);
+  combined_entry_type *s = notes_alloc (sz);
 
-  memcpy (s, coffsymbol (symbol_get_bfdsym (orgsymP))->native,
-	  elts * sizeof (combined_entry_type));
+  memcpy (s, coffsymbol (symbol_get_bfdsym (orgsymP))->native, sz);
   coffsymbol (symbol_get_bfdsym (newsymP))->native = s;
 
   SF_SET (newsymP, SF_GET (orgsymP));
@@ -463,7 +462,7 @@ obj_coff_ln (int ignore ATTRIBUTE_UNUSED)
   /* If there is no lineno symbol, treat a .ln directive
      as if it were a (no longer existing) .appline one.  */
   if (current_lineno_sym == NULL)
-    new_logical_line ((char *) NULL, l - 1);
+    new_logical_line (NULL, l - 1);
   else
     add_lineno (frag_now, frag_now_fix (), l);
 
@@ -567,18 +566,12 @@ obj_coff_ident (int ignore ATTRIBUTE_UNUSED)
    a C_EFCN. And a second reason is that the code is more clear this
    way. (at least I think it is :-).  */
 
-#define SKIP_SEMI_COLON()	while (*input_line_pointer++ != ';')
-#define SKIP_WHITESPACES()	while (*input_line_pointer == ' ' || \
-				       *input_line_pointer == '\t')  \
+#define SKIP_WHITESPACES()	while (is_whitespace (*input_line_pointer)) \
                                   input_line_pointer++;
 
-static void
+void
 obj_coff_def (int what ATTRIBUTE_UNUSED)
 {
-  char name_end;		/* Char after the end of name.  */
-  char *symbol_name;		/* Name of the debug symbol.  */
-  char *symbol_name_copy;	/* Temporary copy of the name.  */
-
   if (def_symbol_in_progress != NULL)
     {
       as_warn (_(".def pseudo-op used inside of .def/.endef: ignored."));
@@ -588,14 +581,18 @@ obj_coff_def (int what ATTRIBUTE_UNUSED)
 
   SKIP_WHITESPACES ();
 
-  name_end = get_symbol_name (&symbol_name);
-  symbol_name_copy = xstrdup (symbol_name);
+  char *symbol_name;
+  char name_end = get_symbol_name (&symbol_name);
+  char *symbol_name_copy = NULL;
+  char *canon_name = symbol_name;
 #ifdef tc_canonicalize_symbol_name
-  symbol_name_copy = tc_canonicalize_symbol_name (symbol_name_copy);
+  symbol_name_copy = xstrdup (symbol_name);
+  canon_name = tc_canonicalize_symbol_name (symbol_name_copy);
 #endif
 
   /* Initialize the new symbol.  */
-  def_symbol_in_progress = symbol_make (symbol_name_copy);
+  def_symbol_in_progress = symbol_make (canon_name);
+  free (symbol_name_copy);
   symbol_set_frag (def_symbol_in_progress, &zero_address_frag);
   S_SET_VALUE (def_symbol_in_progress, 0);
 
@@ -906,7 +903,7 @@ obj_coff_line (int ignore ATTRIBUTE_UNUSED)
       extern int listing;
 
       if (listing)
-	listing_source_line ((unsigned int) this_base);
+	listing_source_line (this_base);
     }
 #endif
 }
@@ -985,8 +982,8 @@ obj_coff_type (int ignore ATTRIBUTE_UNUSED)
 
   S_SET_DATA_TYPE (def_symbol_in_progress, get_absolute_expression ());
 
-  if (ISFCN (S_GET_DATA_TYPE (def_symbol_in_progress)) &&
-      S_GET_STORAGE_CLASS (def_symbol_in_progress) != C_TPDEF)
+  if (ISFCN (S_GET_DATA_TYPE (def_symbol_in_progress))
+      && S_GET_STORAGE_CLASS (def_symbol_in_progress) != C_TPDEF)
     SF_SET_FUNCTION (def_symbol_in_progress);
 
   demand_empty_rest_of_line ();
@@ -1014,16 +1011,14 @@ obj_coff_val (int ignore ATTRIBUTE_UNUSED)
 	{
 	  /* If the .val is != from the .def (e.g. statics).  */
 	  symbol_set_frag (def_symbol_in_progress, frag_now);
-	  S_SET_VALUE (def_symbol_in_progress, (valueT) frag_now_fix ());
+	  S_SET_VALUE (def_symbol_in_progress, frag_now_fix ());
 	}
       else if (! streq (S_GET_NAME (def_symbol_in_progress), symbol_name))
 	{
-	  expressionS exp;
-
-	  exp.X_op = O_symbol;
-	  exp.X_add_symbol = symbol_find_or_make (symbol_name);
-	  exp.X_op_symbol = NULL;
-	  exp.X_add_number = 0;
+	  expressionS exp = {
+	    .X_op = O_symbol,
+	    .X_add_symbol = symbol_find_or_make (symbol_name)
+	  };
 	  symbol_set_value_expression (def_symbol_in_progress, &exp);
 
 	  /* If the segment is undefined when the forward reference is
@@ -1062,7 +1057,7 @@ weak_is_altname (const char * name)
 /* Return the name of the alternate symbol
    name corresponding to a weak symbol's name.  */
 
-static const char *
+static char *
 weak_name2altname (const char * name)
 {
   return concat (weak_altprefix, name, (char *) NULL);
@@ -1071,7 +1066,7 @@ weak_name2altname (const char * name)
 /* Return the name of the weak symbol corresponding to an
    alternate symbol.  */
 
-static const char *
+static char *
 weak_altname2name (const char * name)
 {
   gas_assert (weak_is_altname (name));
@@ -1092,7 +1087,7 @@ weak_uniquify (const char * name)
 #endif
   gas_assert (weak_is_altname (name));
 
-  return concat (name, ".", unique, (char *) NULL);
+  return notes_concat (name, ".", unique, (char *) NULL);
 }
 
 void
@@ -1109,7 +1104,9 @@ pecoff_obj_set_weak_hook (symbolS *symbolP)
   S_SET_NUMBER_AUXILIARY (symbolP, 1);
   SA_SET_SYM_FSIZE (symbolP, IMAGE_WEAK_EXTERN_SEARCH_NOLIBRARY);
 
-  alternateP = symbol_find_or_make (weak_name2altname (S_GET_NAME (symbolP)));
+  char *altname = weak_name2altname (S_GET_NAME (symbolP));
+  alternateP = symbol_find_or_make (altname);
+  free (altname);
   S_SET_EXTERNAL (alternateP);
   S_SET_STORAGE_CLASS (alternateP, C_NT_WEAK);
 
@@ -1124,7 +1121,9 @@ pecoff_obj_clear_weak_hook (symbolS *symbolP)
   S_SET_STORAGE_CLASS (symbolP, 0);
   SA_SET_SYM_FSIZE (symbolP, 0);
 
-  alternateP = symbol_find (weak_name2altname (S_GET_NAME (symbolP)));
+  char *altname = weak_name2altname (S_GET_NAME (symbolP));
+  alternateP = symbol_find (altname);
+  free (altname);
   S_CLEAR_EXTERNAL (alternateP);
 }
 
@@ -1150,8 +1149,8 @@ obj_coff_weak (int ignore ATTRIBUTE_UNUSED)
 	}
       c = 0;
       symbolP = symbol_find_or_make (name);
-      *input_line_pointer = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       S_SET_WEAK (symbolP);
 
       if (c == ',')
@@ -1177,7 +1176,15 @@ coff_obj_read_begin_hook (void)
   tag_init ();
 }
 
-symbolS *coff_last_function;
+void
+coff_assign_symbol (symbolS *symp ATTRIBUTE_UNUSED)
+{
+#ifndef TE_PE
+  /* "set" symbols are local unless otherwise specified.  */
+  SF_SET_LOCAL (symp);
+#endif
+}
+
 #ifndef OBJ_XCOFF
 static symbolS *coff_last_bf;
 #endif
@@ -1185,6 +1192,7 @@ static symbolS *coff_last_bf;
 void
 coff_frob_symbol (symbolS *symp, int *punt)
 {
+  static symbolS *last_functionP;
   static symbolS *last_tagP;
   static stack *block_stack;
   static symbolS *set_end;
@@ -1209,9 +1217,9 @@ coff_frob_symbol (symbolS *symp, int *punt)
     {
       /* This is a weak alternate symbol.  All processing of
 	 PECOFFweak symbols is done here, through the alternate.  */
-      symbolS *weakp = symbol_find_noref (weak_altname2name
-					  (S_GET_NAME (symp)), 1);
-
+      char *weakname = weak_altname2name (S_GET_NAME (symp));
+      symbolS *weakp = symbol_find_noref (weakname, 1);
+      free (weakname);
       gas_assert (weakp);
       gas_assert (S_GET_NUMBER_AUXILIARY (weakp) == 1);
 
@@ -1315,7 +1323,7 @@ coff_frob_symbol (symbolS *symp, int *punt)
 	  if (S_GET_STORAGE_CLASS (symp) == C_BLOCK)
 	    {
 	      if (streq (S_GET_NAME (symp), ".bb"))
-		stack_push (block_stack, (char *) &symp);
+		stack_push (block_stack, &symp);
 	      else
 		{
 		  symbolS *begin;
@@ -1328,30 +1336,26 @@ coff_frob_symbol (symbolS *symp, int *punt)
 		}
 	    }
 
-	  if (coff_last_function == 0 && SF_GET_FUNCTION (symp)
-	      && S_IS_DEFINED (symp))
+	  if (SF_GET_FUNCTION (symp) && S_IS_DEFINED (symp))
 	    {
 	      union internal_auxent *auxp;
 
-	      coff_last_function = symp;
 	      if (S_GET_NUMBER_AUXILIARY (symp) < 1)
 		S_SET_NUMBER_AUXILIARY (symp, 1);
 	      auxp = SYM_AUXENT (symp);
-	      memset (auxp->x_sym.x_fcnary.x_ary.x_dimen, 0,
-		      sizeof (auxp->x_sym.x_fcnary.x_ary.x_dimen));
+	      memset (&auxp->x_sym.x_fcnary.x_fcn, 0,
+		      sizeof (auxp->x_sym.x_fcnary.x_fcn));
 	    }
 
 	  if (S_GET_STORAGE_CLASS (symp) == C_EFCN
 	      && S_IS_DEFINED (symp))
 	    {
-	      if (coff_last_function == 0)
+	      if (!last_functionP)
 		as_fatal (_("C_EFCN symbol for %s out of scope"),
 			  S_GET_NAME (symp));
-	      SA_SET_SYM_FSIZE (coff_last_function,
-				(long) (S_GET_VALUE (symp)
-					- S_GET_VALUE (coff_last_function)));
-	      next_set_end = coff_last_function;
-	      coff_last_function = 0;
+	      SA_SET_SYM_FSIZE (last_functionP,
+				(S_GET_VALUE (symp)
+				 - S_GET_VALUE (last_functionP)));
 	    }
 	}
 
@@ -1386,7 +1390,7 @@ coff_frob_symbol (symbolS *symp, int *punt)
     *punt = 1;
 #endif
 
-  if (set_end != (symbolS *) NULL
+  if (set_end != NULL
       && ! *punt
       && ((symbol_get_bfdsym (symp)->flags & BSF_NOT_AT_END) != 0
 	  || (S_IS_DEFINED (symp)
@@ -1403,6 +1407,13 @@ coff_frob_symbol (symbolS *symp, int *punt)
 	as_warn (_("Warning: internal error: forgetting to set endndx of %s"),
 		 S_GET_NAME (set_end));
       set_end = next_set_end;
+    }
+
+  if (SF_GET_FUNCTION (symp) && S_IS_DEFINED (symp) && !*punt)
+    {
+      if (last_functionP)
+	SA_SET_SYM_ENDNDX (last_functionP, symp);
+      last_functionP = symp;
     }
 
 #ifndef OBJ_XCOFF
@@ -1482,7 +1493,7 @@ coff_adjust_section_syms (bfd *abfd ATTRIBUTE_UNUSED,
 
   secsym = section_symbol (sec);
   /* This is an estimate; we'll plug in the real value using
-     SET_SECTION_RELOCS later */
+     FINALIZE_SECTION_RELOCS later */
 #ifdef OBJ_XCOFF
   if (S_GET_STORAGE_CLASS (secsym) == C_DWARF)
     SA_SET_SECT_NRELOC (secsym, nrelocs);
@@ -1501,6 +1512,27 @@ void
 coff_frob_file_after_relocs (void)
 {
   bfd_map_over_sections (stdoutput, coff_adjust_section_syms, NULL);
+}
+
+/* Set relocations for the section and then store the number of relocations
+   in its aux entry.  */
+
+bool
+obj_coff_finalize_section_relocs (asection *sec, arelent **relocs,
+				  unsigned int n)
+{
+  symbolS *sect_sym;
+
+  if (!bfd_finalize_section_relocs (stdoutput, sec, n ? relocs : NULL, n))
+    return false;
+  sect_sym = section_symbol (sec);
+#ifdef OBJ_XCOFF
+  if (S_GET_STORAGE_CLASS (sect_sym) == C_DWARF)
+    SA_SET_SECT_NRELOC (sect_sym, n);
+  else
+#endif
+    SA_SET_SCN_NRELOC (sect_sym, n);
+  return true;
 }
 
 /* Implement the .section pseudo op:
@@ -1547,9 +1579,9 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
     }
 
   c = get_symbol_name (&section_name);
-  name = xmemdup0 (section_name, input_line_pointer - section_name);
-  *input_line_pointer = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  name = notes_memdup0 (section_name, input_line_pointer - section_name);
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
 
   exp = 0;
   flags = SEC_NO_FLAGS;
@@ -1562,13 +1594,13 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 	exp = get_absolute_expression ();
       else
 	{
-	  unsigned char attr;
+	  char attr;
 	  int readonly_removed = 0;
 	  int load_removed = 0;
 
 	  while (attr = *++input_line_pointer,
 		 attr != '"'
-		 && ! is_end_of_line[attr])
+		 && ! is_end_of_stmt (attr))
 	    {
 	      if (ISDIGIT (attr))
 		{
@@ -1592,6 +1624,8 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		case 'n':
 		  /* Section not loaded.  */
 		  flags &=~ SEC_LOAD;
+		  if (!is_bss)
+		    flags &= ~SEC_ALLOC;
 		  flags |= SEC_NEVER_LOAD;
 		  load_removed = 1;
 		  break;
@@ -1604,7 +1638,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		  /* Data section.  */
 		  flags |= SEC_DATA;
 		  if (! load_removed)
-		    flags |= SEC_LOAD;
+		    flags |= SEC_LOAD | SEC_ALLOC;
 		  flags &=~ SEC_READONLY;
 		  break;
 
@@ -1628,7 +1662,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 		     otherwise set the SEC_DATA flag.  */
 		  flags |= (attr == 'x' || (flags & SEC_CODE) ? SEC_CODE : SEC_DATA);
 		  if (! load_removed)
-		    flags |= SEC_LOAD;
+		    flags |= SEC_LOAD | SEC_ALLOC;
 		  /* Note - the READONLY flag is set here, even for the 'x'
 		     attribute in order to be compatible with the MSVC
 		     linker.  */
@@ -1656,7 +1690,7 @@ obj_coff_section (int ignore ATTRIBUTE_UNUSED)
 	}
     }
 
-  sec = subseg_new (name, (subsegT) exp);
+  sec = subseg_new (name, exp);
 
   if (is_bss)
     seg_info (sec)->bss = 1;
@@ -1799,8 +1833,8 @@ coff_frob_section (segT sec)
 
   /* Store the values.  */
   p = fragp->fr_literal;
-  bfd_h_put_16 (stdoutput, n_entries, (bfd_byte *) p + 6);
-  bfd_h_put_32 (stdoutput, size, (bfd_byte *) p + 8);
+  bfd_h_put_16 (stdoutput, n_entries, p + 6);
+  bfd_h_put_32 (stdoutput, size, p + 8);
 }
 
 void
@@ -1814,7 +1848,7 @@ obj_coff_init_stab_section (segT stab ATTRIBUTE_UNUSED, segT stabstr)
   p = frag_more (12);
   /* Zero it out.  */
   memset (p, 0, 12);
-  file = as_where ((unsigned int *) NULL);
+  file = as_where (NULL);
   stroff = get_stab_string_offset (file, stabstr);
   know (stroff == 1);
   md_number_to_chars (p, stroff, 4);
@@ -1826,7 +1860,7 @@ const char * s_get_name (symbolS *);
 const char *
 s_get_name (symbolS *s)
 {
-  return ((s == NULL) ? "(NULL)" : S_GET_NAME (s));
+  return s == NULL ? "(NULL)" : S_GET_NAME (s);
 }
 
 void symbol_dump (void);
@@ -1847,7 +1881,7 @@ symbol_dump (void)
 
 #endif /* DEBUG */
 
-const pseudo_typeS coff_pseudo_table[] =
+static const pseudo_typeS coff_pseudo_table[] =
 {
   {"ABORT", s_abort, 0},
   /* We accept the .bss directive for backward compatibility with
@@ -1877,8 +1911,8 @@ const pseudo_typeS coff_pseudo_table[] =
   {"loc", obj_coff_loc, 0},
   {"optim", s_ignore, 0},	/* For sun386i cc (?) */
   {"weak", obj_coff_weak, 0},
-#if defined TC_TIC4X
-  /* The tic4x uses sdef instead of def.  */
+#if defined (TC_TIC4X) || defined (TC_TIC54X)
+  /* The tic4x and tic54x use sdef instead of def.  */
   {"sdef", obj_coff_def, 0},
 #endif
 #if defined(SEH_CMDS)
@@ -1888,13 +1922,13 @@ const pseudo_typeS coff_pseudo_table[] =
 };
 
 
-/* Support for a COFF emulation.  */
-
-static void
+void
 coff_pop_insert (void)
 {
   pop_insert (coff_pseudo_table);
 }
+
+#ifdef USE_EMULATIONS /* Support for a COFF emulation.  */
 
 static int
 coff_separate_stab_sections (void)
@@ -1910,6 +1944,7 @@ const struct format_ops coff_format_ops =
   0,    /* begin */
   0,	/* end.  */
   c_dot_file_symbol,
+  coff_assign_symbol,
   coff_frob_symbol,
   0,	/* frob_file */
   0,	/* frob_file_before_adjust */
@@ -1926,7 +1961,6 @@ const struct format_ops coff_format_ops =
   0,	/* s_get_type */
   0,	/* s_set_type */
   0,	/* copy_symbol_attributes */
-  0,	/* generate_asm_lineno */
   0,	/* process_stab */
   coff_separate_stab_sections,
   obj_coff_init_stab_section,
@@ -1938,3 +1972,5 @@ const struct format_ops coff_format_ops =
   coff_obj_symbol_clone_hook,
   coff_adjust_symtab
 };
+
+#endif /* USE_EMULATIONS */

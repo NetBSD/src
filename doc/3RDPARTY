@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2019.2.2 2025/08/02 05:20:41 perseant Exp $
+#	$NetBSD: 3RDPARTY,v 1.2019.2.3 2026/11/04 22:37:13 perseant Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -37,22 +37,26 @@
 # Location:	comma-separated list of subdirectories in the NetBSD src tree
 # Vendor tag:	name of branch where vendor imports go (usually uppercase)
 # Release tag:	tag of the latest vendor import (lowercase with version number)
+# Current tag:	actual latest tag (not symbolic like release tag)
 # Notes:
 # Multiple lines of free-form text,
 # Must be last.
 #
 
 Package:	acpica
-Version:	20241212
-Current Vers:	20241212
+Version:	20260408
+Current Vers:	20260408
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
 Home Page:	http://www.acpica.org/
-Date:		2025-02-24
+Date:		2026-05-03
 Mailing List:	devel@acpica.org
 License:	BSD-like
 Responsible:	jruoho,christos
 Location:	sys/external/bsd/acpica/dist
+Vendor tag:	intel
+Release tag:	acpica-YYYYMMDD
+Current tag:	acpica-20250807
 Notes:
 You want the unix2 (dual-licensed) tar file.
 Please read src/sys/dev/acpi/acpica/README before any modification.
@@ -123,23 +127,25 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.20.11/MPL
-Current Vers:	9.20.11/MPL
+Version:	9.20.29/MPL
+Current Vers:	9.20.29/9.21.26/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
-Home Page:	http://www.isc.org/software/bind/
-Date:		2025-07-17
+Home Page:	https://www.isc.org/software/bind/
+Date:		2026-09-17
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
 License:	BSD-like (2-clause) / MPL
 Location:	external/mpl/bind/dist
 Notes:
-First bind2netbsd script to import into src/external/bsd/bind/dist.
+First bind2netbsd script to import into src/external/mpl/bind/dist.
 The Makefiles in src/external/mpl/bind are not handled by the script.
 Build bind to generate the include files.
-Then binclude4netbsd script to import into src/external/bsd/bind/include.
+Then binclude4netbsd script to import into src/external/mpl/bind/include.
 The libc and include parts of the resolver are now part of libbind.
+Check and update src/etc/namedb/bind.keys from
+src/external/mpl/bind/dist/bind.keys if necessary.  Also do pullups
 
 Package:	blocklist
 Version:	current-2020-06-14
@@ -154,12 +160,12 @@ Location:	external/bsd/blocklist
 Notes:
 
 Package:	libuv
-Version:	1.44.2
-Current Vers:	1.45.0
+Version:	1.51.0
+Current Vers:	1.51.0
 Maintainer:	libuv
 Archive Site:	https://dist.libuv.org/dist/
 Home Page:	https://libuv.org
-Date:		2023-06-21
+Date:		2026-01-28
 Mailing List:	https://groups.google.com/forum/#!forum/libuv
 Responsible:	christos
 License:	mit
@@ -167,34 +173,47 @@ Location:	external/mit/libuv/dist
 Notes:
 
 Package:	unbound
-Version:	1.19.1
-Current Vers:	1.23.1
+Version:	1.26.2
+Current Vers:	1.26.2
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2025-07-29
+Date:		2026-10-22
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
 Location:	external/bsd/unbound/dist
+Vendor tag:	NLNETLABS
+Release tag:	unbound-M-m-t
+Current tag:	unbound-1-26-2
 Notes:
 Use cleantags to import
-run configure and update config files in include
+run configure --with-libevent and update config files in include
+diff the new and previous config file and manually adjust
 
 Package:	nsd
-Version:	4.8.0
-Current Vers:	4.8.0
+Version:	4.14.0
+Current Vers:	4.14.0
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2024-02-17
+Date:		2026-01-15
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
 Location:	external/bsd/nsd/dist
+Release tag	nsd-M-m-t
+Current tag	nsd-1-14-0
 Notes:
-Use cleantags to import
-run configure and update config files in include
+- Use cleantags to import
+- run configure and update config files in include
+- autoconf does not work propelry:
+  configure does not work detecting sizeof off_t, comment it out.
+  autoreconf -f -i
+  other stuff hand-changed in config.h
+- needs the protobuf-c package to create export.h, build it and then
+  copy into dist
+- disable dnstap, needs too much stuff from pkgsrc
 
 Package:	libbind [libc resolver and includes]
 Version:	libbind-6.0-rc1
@@ -239,12 +258,12 @@ is a FreeBSD committer who has been helpful with incorporating changes
 in the past.
 
 Package:	byacc
-Version:	20240109
-Current Vers:	20240109
+Version:	20260126
+Current Vers:	20260126
 Maintainer:	Thomas Dickey <dickey@invisible-island.net>
 Archive Site:	http://www.invisible-island.net/byacc/byacc.html
 Home Page:	http://www.invisible-island.net/byacc/byacc.html
-Date:		2024-09-14
+Date:		2026-05-03
 Mailing List:
 Responsible:	christos
 License:	Public Domain
@@ -355,8 +374,8 @@ Notes:
 Use the dhcp2netbsd script.
 
 Package:	dhcpcd
-Version:	10.2.3
-Current Vers:	10.2.3
+Version:	10.5.2
+Current Vers:	10.5.2
 Maintainer:	roy
 Archive Site:	https://github.com/NetworkConfiguration/dhcpcd/releases
 Home Page:	https://roy.marples.name/projects/dhcpcd/
@@ -416,12 +435,12 @@ Location:	external/bsd/ekermit
 Notes:
 
 Package:	expat
-Version:	2.7.1
-Current Vers:	2.7.1
+Version:	2.8.5
+Current Vers:	2.10.0
 Maintainer:	Expat Project
 Archive Site:	https://github.com/libexpat/libexpat/releases
 Home Page:	http://www.libexpat.org/
-Date:		2025-03-28
+Date:		2026-11-02
 Mailing List:	expat-discuss@libexpat.org
 Responsible:	mrg
 License:	MIT
@@ -431,12 +450,12 @@ Release tag:	expat-X-Y-Z for expat-X.Y.Z
 Notes:
 
 Package:	file
-Version:	5.45
-Current Vers:	5.45
+Version:	5.48
+Current Vers:	5.48
 Maintainer:	Christos Zoulas <christos@zoulas.com>
 Archive Site:	ftp://ftp.astron.com/pub/file/
 Home Page:	http://www.darwinsys.com/file/
-Date:		2023-08-18
+Date:		2026-06-10
 Mailing List:	file@astron.com
 Responsible:	christos, pooka
 License:	BSD (2-clause)
@@ -450,7 +469,7 @@ Current Vers:	2.6.4
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	https://github.com/westes/flex/releases
 Home Page:	https://github.com/westes/flex
-Date:		2021-03-01
+Date:		2026-01-30
 Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
 License:	BSD-like
@@ -459,12 +478,12 @@ Notes:
 There is a flex2netbsd script to help newer imports.
 
 Package:	gcc
-Version:	10.5.0/12.5.0
-Current Vers:	10.5.0/12.5.0/13.3.0/14.2.0/15.1.0
+Version:	12.5.0/14.4.0
+Current Vers:	12.5.0/14.4.0/15.3.0/16.2.0
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gcc/
 Home Page:	https://www.gnu.org/software/gcc/
-Date:		2025-07-21
+Date:		2026-08-17
 Mailing List:	gcc-bugs@gnu.org
 Responsible:	mrg, christos, skrll
 License:	GPLv3, LGPLv3.1
@@ -488,14 +507,15 @@ Before importing a new version of external/gpl3/gcc:
 	- update tools/gcc/gcc-version.mk
 	- force generate and copy tools/gcc build version of these files
 	  into gcc/dist/gcc/doc: cpp.1 cpp.info gcc.1 gcc.info gcov.1
+	  XXX GCC 14.4.0 made generating cpp.1 more annoying.
 
 Package:	gdb
-Version:	15.1
-Current Vers:	16.3
+Version:	17.1
+Current Vers:	18.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
-Date:		2024-09-09
+Date:		2026-09-27
 Mailing List:	bug-gdb@gnu.org
 Responsible:	christos
 License:	GPLv3, LGPLv3.1
@@ -507,12 +527,12 @@ When updating GDB, it is imperative to test that:
 	  ("options KGDB") works correctly.
 
 Package:	binutils
-Version:	2.42
-Current Vers:	2.45
+Version:	2.46
+Current Vers:	2.47
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	https://www.gnu.org/software/binutils/
-Date:		2024-09-09
+Date:		2026-09-27
 Mailing List:	bug-gnu-utils@gnu.org
 Responsible:	thorpej, mrg
 License:	GPLv3, LGPLv3, GPLv2, LGPLv2, BSD
@@ -521,11 +541,11 @@ Notes:
 
 Package:	autoconf
 Version:	2.69
-Current Vers:	2.72
+Current Vers:	2.73
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/autoconf/
 Home Page:	http://www.gnu.org/software/autoconf/
-Date:		2024-03-06
+Date:		2026-09-27
 Mailing List:	bug-autoconf@gnu.org
 Responsible:	christos
 License:	GPLv3+
@@ -582,20 +602,26 @@ Current Vers:	5.1.2
 Maintainer:	Darren Reed
 Archive Site:	rsync -a a.cvs.sourceforge.net::cvsroot/ipfilter/
 Home Page:	https://www.phildev.net/ipf/
-Date:		2024-10-17
+Date:		2025-09-06
 Mailing List:	ipfilter@postbox.anu.edu.au
 Responsible:	darrenr, christos
 License:	BSD-based; see src/external/bsd/ipf/dist/IPFILTER.LICENCE
 Location:	external/bsd/ipf,sys/external/bsd/ipf
 Notes:
 ipf2netbsd should be used on a virgin ipfilter source tree.
+all the original download places are gone.
+Latest release was July 22, 2012
+https://fossies.org/linux/misc/old/ip_fil5.1.2.tar.gz
+The changes between 5.1.1 and 5.1.2 from what I can tell by looking at
+the diffs in the DARRENR branch and the tar file (since there is no
+more 5.1.1 avalaible anymore) are in test data and a perl script
 
 Package:	ipsec-tools
 Version:	(ipsec-tools head is NetBSD-current head)
 Maintainer:	IPsec-Tools project <ipsec-tools-core@lists.sourceforge.net>
 Archive Site:	http://ipsec-tools.sourceforge.net
 Home Page:	http://ipsec-tools.sourceforge.net
-Date:		2019-01-09
+Date:		2025-09-06
 Mailing List:	ipsec-tools-devel@lists.sourceforge.net
 Responsible:	manu, vanhu, mgrooms
 License:	BSD (3-clause)
@@ -621,17 +647,20 @@ are manually pulled up to NetBSD stable branches (e.g.: netbsd-4 is regularly
 sync with ipsec-tools-0_7-branch)
 
 Package:	jemalloc
-Version:	5.3.0
-Current Vers:	5.3.0
+Version:	5.4.0
+Current Vers:	5.4.0
 Maintainer:	Jason Evans
 Archive Site:	https://github.com/jemalloc/jemalloc
 Home Page:	https://jemalloc.net
-Date:		2024-09-23
+Date:		2026-09-18
 Mailing List:
 Responsible:	christos
 License:	BSD
 Location:	external/bsd/jemalloc
 Notes:
+Jason Evans post-mortem for jemalloc:
+    https://jasone.github.io/2025/06/12/jemalloc-postmortem/
+But there is further development
 There are two versions of this in-tree, the principal one tracking the
 modern upstream, and a much older one found directly at src/lib/libc/stdlib
 which is still in use and receiving local updates as well.
@@ -642,12 +671,13 @@ Current Vers:	KAME/NetBSD SNAP kit (shipped every week)
 Maintainer:	KAME Project <kame@kame.net>
 Archive Site:	http://www.kame.net/
 Home Page:	http://www.kame.net/
-Date:		2019-01-09
+Date:		2025-09-06
 Mailing List:	snap-users@kame.net
 Responsible:
 License:	BSD (3-clause)
 Location:	sys/netinet6
 Notes:
+KAME project was completed at 2006-03
 IPv6 part is based on KAME/NetBSD142 SNAP as of early June 2000, with
 more conservative implementation policy.
 IPsec part is based on KAME/NetBSD14 SNAP as of 12 June 2000.
@@ -705,11 +735,11 @@ directory.
 
 Package:	less
 Version:	less-643
-Current Vers:	less-679
+Current Vers:	less-710
 Maintainer:	Mark Nudelman <markn@greenwoodsoftware.com>
 Archive Site:	http://www.greenwoodsoftware.com/less/download.html
 Home Page:	http://www.greenwoodsoftware.com/less/
-Date:		2023-11-21
+Date:		2026-09-27
 Mailing List:	less-announce-request@greenwoodsoftware.com
 Responsible:	mrg, simonb
 License:	Less License (BSD 2-clause) or GPLv3 (v2 prior to less-418)
@@ -721,25 +751,26 @@ for importation.  Run ./configure beforehand to generate "defines.h".
 Talk to mrg before importing any new version.
 
 Package:	libarchive
-Version:	3.7.7
-Current Vers:	3.8.1
+Version:	3.8.7
+Current Vers:	3.8.9
 Maintainer:	kientzle@freebsd.org, joerg@NetBSD.org
 Archive Site:	https://github.com/libarchive/libarchive/releases
 Home Page: 	http://www.libarchive.org
-Date:		2025-07-01
+Date:		2026-09-27
 Responsible:	joerg
 License:	BSD (2-clause)
 Location:	external/bsd/libarchive/dist
 Notes:
 Distribution is stripped down to the relevant part.
+run configure against the full distribution and adjust include/config_netbsd.h
 
 Package:	libdevmapper
 Version:	1.02.40
-Current Vers:	2.2.03.09
+Current Vers:	2.03.42
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
-Date:		2020-06-13
+Date:		2026-09-27
 Responsible:	haad
 License:	LGPLv2.1
 Location:	external/gpl2/lvm2/dist/libdm
@@ -748,27 +779,24 @@ The lvm2tools and the libdevmapper are now distributed as one source
 repository. See the lvm2tools Notes for more information.
 
 Package:	libevent
-Version:	2.1.12-stable
-Current Vers:	2.1.12-stable
+Version:	2.1.13-stable
+Current Vers:	2.1.13-stable
 Maintainer:	Niels Provos <provos@citi.umich.edu>
 Archive Site:	http://www.monkey.org/~provos/libevent/
 Home Page:	http://www.monkey.org/~provos/libevent/
-Date:		2021-04-06
+Date:		2026-07-08
 Responsible:
 License:	BSD (3/4-clause)
 Location:	external/bsd/libevent/dist
 Notes:
 - Run the libevent2netbsd script
-- Build the doxygen man pages. Edit the Doxyfile to GENERATE_MAN=yes.
-  man pages are in doxygen/man/man3. Remove the extra man pages that are
-  .so'ing only. Copy the rest to man.
 
 Package:	llvm
 Version:	10.0.0git (01f3a59fb3e2542fce74c768718f594d0debd0da)
-Current Vers.:	18.1
+Current Vers.:	23.1.2
 Maintainer:	llvm-dev@lists.llvm.org
 Home Page:	https://llvm.org
-Date:		2024-03-06
+Date:		2026-09-27
 Responsible:	joerg
 License:	Apache2 with runtime exceptions
 Location:	external/apache2/llvm/dist
@@ -778,11 +806,11 @@ All changes should come via import from upstream SVN.
 
 Package:	lvm2tools
 Version:	2.02.56
-Current Vers:	2.03.02
+Current Vers:	2.03.42
 Maintainer:	lvm-devel@redhat.com
 Archive Site:	ftp://sources.redhat.com/pub/lvm2/
 Home Page:	http://sources.redhat.com/lvm2/
-Date:		2019-01-09
+Date:		2026-09-27
 Responsible:	haad
 License:	GPLv2
 Location:	external/gpl2/lvm2/dist
@@ -794,12 +822,12 @@ libdevmapper ioctl protocol code, therefore we should test it before
 import. Talk to haad before importing new version.
 
 Package:	libpcap
-Version:	1.10.5
-Current Vers:	1.10.5
+Version:	1.10.6
+Current Vers:	1.11.0
 Maintainer:	tcpdump-workers@tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2023-09-01
+Date:		2026-09-27
 Mailing List:	tcpdump-workers@tcpdump.org
 Responsible:	dyoung
 License:	BSD (3/4-clause)
@@ -810,12 +838,12 @@ tree. sys/net/dlt.h is a copy of the dlt constants from dlt.h. We use our
 own copy of bpf_filter.c
 
 Package:	tcpdump
-Version:	4.99.5
-Current Vers:	4.99.5
+Version:	4.99.6
+Current Vers:	4.99.7
 Maintainer:	tcpdump-workers@lists.tcpdump.org
 Archive Site:	http://www.tcpdump.org/release/
 Home Page:	http://www.tcpdump.org/
-Date:		2023-09-01
+Date:		2026-09-27
 Mailing List:	tcpdump-workers@lists.tcpdump.org
 Responsible:
 License:	BSD (3-clause)
@@ -830,7 +858,7 @@ Current Vers:	tcp_wrappers 7.6-ipv6.4
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:	ftp://ftp.porcupine.org/pub/security/
 Home Page:	ftp://ftp.porcupine.org/pub/security/
-Date:		2020-06-13
+Date:		2025-09-06
 Mailing List:
 Responsible:	cjs
 License:	BSD-like
@@ -842,10 +870,10 @@ into inetd. The provided libwrap2netbsd script handles just libwrap.
 
 Package:	Lua
 Version:	Lua 5.4.6
-Current Vers:	Lua 5.4.6
+Current Vers:	Lua 5.4.8/5.5.1
 Maintainer:	PUC Rio
 Home Page:	https://www.lua.org/
-Date:		2023-04-16
+Date:		2026-09-27
 Mailing List:
 Responsible:	mbalmer, lneto, salazar, alnsn
 License:	MIT
@@ -858,11 +886,11 @@ have been applied.
 
 Package:	Lutok
 Version:	0.3
-Current Vers:	0.6
+Current Vers:	0.6.2
 Maintainer:	The FreeBSD Foundation
 Archive site:	https://github.com/freebsd/lutok/releases
 Home page:	https://github.com/freebsd/lutok
-Date:		2025-03-29
+Date:		2026-09-27
 Responsible:	-
 License:	BSD 3-clause
 Location:	external/bsd/lutok/dist
@@ -871,26 +899,26 @@ The source files are in external/bsd/lutok/dist.
 Use external/bsd/lutok/prepare-import.sh to regenerate the dist/ directory.
 
 Package:	m4
-Version:	20091026
-Current Vers:	20190628
+Version:	20260610
+Current Vers:	20260610
 Maintainer:	The OpenBSD Project
 Archive Site:	http://www.openbsd.org/cgi-bin/cvsweb/src/usr.bin/m4
 Home Page:	http://www.openbsd.org/
-Date:		2020-06-13
+Date:		2026-06-10
 Mailing List:
 License:	BSD 3-clause like (dns-sd)
 Responsible:	christos
 Location:	usr.bin/m4
 Notes:
-Uses libc's ohash
+Uses libutil's ohash
 
 Package:	mDNSResponder
 Version:	2559.1.1
-Current Vers:	2559.1.1
+Current Vers:	2881.120.11
 Maintainer:	Apple
 Archive Site:	https://www.opensource.apple.com/tarballs/mDNSResponder/
 Home Page:	https://developer.apple.com/bonjour/
-Date:		2024-10-26
+Date:		2026-09-27
 Mailing List:	bonjour-dev@lists.apple.com
 License:	Apache2 (mdnsd), BSD 3-clause (libdns_sd),
 		BSD 3-clause like (dns-sd)
@@ -974,18 +1002,19 @@ Notes:
 Delete the otherOS directory before importing.
 
 Package:	nawk
-Version:	2024-08-17
-Current Vers:	2024-08-17
+Version:	2026-04-26
+Current Vers:	2026-04-26
 Maintainer:	Brian Kernighan <bwk@princeton.edu>
 Archive Site:	https://github.com/onetrueawk/awk
 Home Page:	http://www.cs.princeton.edu/~bwk/btl.mirror/
-Date:		2024-08-17
+Date:		2026-05-03
 Mailing List:
 Responsible:	jdolecek
 License:	BSD-like
 Location:	external/historical/nawk/dist
 Notes:
 Build maketab from nawk sources and generate proctab.c.
+We use the bsd-features branch to import, not master.
 
 Package:	ndbootd
 Version:	0.5
@@ -1008,7 +1037,7 @@ Current Vers:	4.2.8p18
 Maintainer:	David L. Mills <mills@udel.edu>
 Archive Site:	http://www.ntp.org/
 Home Page:	http://www.ntp.org/, http://support.ntp.org/
-Date:		2024-08-18
+Date:		2025-09-02
 Mailing List:
 Responsible:	simonb, jonathan, kardel
 License:	BSD-like
@@ -1031,38 +1060,44 @@ Notes:
 We have lots of local fixes.
 
 Package:	OpenLDAP
-Version:	2.5.6
-Current Vers:	2.5.18
+Version:	2.6.10
+Current Vers:	2.7.1
 Maintainer:	OpenLDAP Foundation
 Archive Site:	http://www.openldap.org/
 Home Page:	http://www.openldap.org/
-Date:		2024-09-24
+Date:		2026-09-27
 Mailing List:
 Responsible:
 License:	BSD (3-clause)
 Location:	external/bsd/openldap/dist
+Vendor tag:	OPENLDAP
+Release tag:	OPENLDAPM_m_t
+Current tag:	OPENLDAP2_6_10
 Notes:
 
 Package:	OpenPAM
-Version:	20230627 (Ximenia)
-Current Vers:	20230627 (Ximenia)
+Version:	2025-05-31 (Zingiber)
+Current Vers:	2025-05-31 (Zingiber)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
-Date:		2023-06-30
+Date:		2026-09-27
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
 Location:	external/bsd/openpam/dist
+Vendor tag:	OPENPAM
+Release tag:	name-YYYY-MM-DD
+Current tag:	zingiber-2025-05-31
 Notes:
 
 Package:	openresolv
-Version:	3.16.2 (patched to 3.16.3)
-Current Vers:	3.16.3
+Version:	3.17.3
+Current Vers:	3.17.4
 Maintainer:	roy
 Archive Site:	https://github.com/NetworkConfiguration/openresolv/releases
 Home Page:	http://roy.marples.name/projects/openresolv/
-Date:		2025-05-07
+Date:		2025-12-11
 License:	BSD (2-clause)
 Location:	external/bsd/openresolv/dist
 Notes:
@@ -1083,12 +1118,12 @@ Notes:
 Patch applied after OpenSSH import.
 
 Package:	OpenSSH
-Version:	10.0
-Current Vers:	10.0 / portable 10.0p2
+Version:	10.6
+Current Vers:	10.6 / portable 10.6p1
 Maintainer:	OpenSSH
 Archive Site:	http://www.openssh.com/ftp.html
 Home Page:	http://www.openssh.com/portable.html
-Date:		2025-04-09
+Date:		2026-10-07
 Mailing List:	openssh-unix-announce@mindrot.org
 Responsible:	thorpej, christos, elric
 License:	BSD. See src/crypto/external/bsd/openssh/dist/LICENSE
@@ -1111,6 +1146,7 @@ markus is very cooperative about it):
   (see if there is any difference between the current version of opensshX.Yp1
    and the new opensshZ.Wp1) and apply them.
 - added LDAP from portable openssh.
+- added rlimit sandbox from portable openssh.
 - conditionalize login_cap
 - conditionalize bsd_auth
 - restore krb5, krb4, afs, skey
@@ -1131,19 +1167,19 @@ markus is very cooperative about it):
 - LIBWRAP support is maintained (now in sshd-session.c)
 
 Package:	OpenSSL
-Version:	1.0.2o/1.1.1t/3.0.16/3.5.1
-Current Vers:	1.0.2u/1.1.1w/3.0.16/3.2.4/3.3.3/3.4.1/3.5.1
+Version:	1.0.2o/1.1.1t/3.0.17/3.5.7
+Current Vers:	1.0.2zm (zs)/1.1.1zd (zj)/3.0.22/3.5.9/3.6.5/4.0.3
 Maintainer:	The OpenSSL Project
 Archive Site:	https://github.com/openssl/openssl/releases
 Home Page:	http://www.openssl.org/
-Date:		2025-07-16
+Date:		2026-09-30
 Mailing List:	openssl-announce@openssl.org
 Responsible:	christos, mjf, tls, riastradh, spz
 License:	Apache2
 Location:	crypto/external/apache2/openssl/dist
 Vendor tag:	OPENSSL
 Release tag:	openssl-x-y-z (openssl-x-y-zw in past with lettered releases)
-Current tag:	openssl-3-5-1
+Current tag:	openssl-3-5-7
 Notes:
 - Run openssl2netbsd to get rid of the RCSID identifiers
 - import
@@ -1166,11 +1202,11 @@ Notes:
 
 Package:	pcc
 Version:	1.1.0.DEVEL 20160208
-Current Vers:	1.1.0 20141210
+Current Vers:	1.1.0.DEVEL 20231021
 Maintainer:	Anders Magnusson <ragge@NetBSD.org>
-Archive Site:	ftp://pcc.ludd.ltu.se/pub/pcc/
-Home Page:	http://pcc.ludd.ltu.se/
-Date:		2019-01-09
+Archive Site:	https://github.com/PortableCC/pcc
+Home Page:	https://web.archive.org/web/20231212090621/http://pcc.ludd.ltu.se/
+Date:		2026-04-26
 Mailing List:	pcc-list@ludd.ltu.se
 Responsible:	plunky
 License:	BSD
@@ -1257,12 +1293,12 @@ and more. Vern's ping is gone. We are too different from everyone else
 now to do a new import.
 
 Package:	Postfix
-Version:	3.10.1
-Current Vers:	3.10.3
+Version:	3.11.2
+Current Vers:	3.11.7
 Maintainer:	Wietse Venema <wietse@porcupine.org>
 Archive Site:
-Home Page:	http://www.postfix.org/
-Date: 		2025-07-26
+Home Page:	https://www.postfix.org/
+Date: 		2026-09-27
 Mailing List:	postfix-users@postfix.org
 Responsible:	christos
 License:	IBM Public License. See also src/external/ibm-public/postfix/dist.
@@ -1271,11 +1307,11 @@ Notes:
 
 Package:	ppp
 Version:	2.5.2
-Current Vers:	2.5.2
+Current Vers:	2.5.4
 Maintainer:	Paul Mackerras <paulus@samba.org>
 Archive Site:
 Home Page:
-Date: 		2025-01-08
+Date: 		2026-09-27
 GIT root:	https://github.com/ppp-project/ppp
 Mailing List:
 Responsible:	christos, cube
@@ -1293,12 +1329,12 @@ TDB code as found in 2.4.x, x>1 is under the GPL.  Therefore, we're
 using the version found in 2.4.1.
 
 Package:	root.cache
-Version:	2023112702 (November 27, 2023)
-Current Vers:	2023112702 (November 27, 2023)
+Version:	2026092401 (September 24, 2026)
+Current Vers:	2026092401 (September 24, 2026)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
-Date:		2023-11-23
+Date:		2026-09-27
 Mailing List:
 Responsible:	thorpej
 License:	Public domain
@@ -1355,11 +1391,11 @@ arithmetic code is unchanged, though, and should behave exactly like the
 original.
 
 Package:	sqlite
-Version:	3.45.1
-Current Vers:	3.50.3
+Version:	3.53.0
+Current Vers:	3.53.0
 Maintainer:	Richard Hipp <drh@sqlite.org>
 Home Page:	http://www.sqlite.org
-Date: 		2025-07-29
+Date: 		2026-04-28
 Responsible:	joerg
 License:	Public domain
 Location:	external/public-domain/sqlite/dist
@@ -1405,12 +1441,12 @@ perhaps this implementation should be kept anyway for historical
 purposes.
 
 Package:	tmux
-Version:	3.5a
-Current Vers:	3.5a
+Version:	3.6b
+Current Vers:	3.8
 Maintainer:	Nicholas Marriott <nicholas.marriott@gmail.com>
 Archive site:	https://github.com/tmux/tmux
 Home page:	http://tmux.github.io
-Date: 		2024-11-09
+Date: 		2026-10-15
 Mailing List:	tmux-users@googlegroups.com
 Responsible:	christos
 License:	BSD
@@ -1425,13 +1461,15 @@ Package:	top
 Version:	3.8beta1
 Current Vers:	3.8beta1
 Maintainer:	William LeFebvre <wnl@groupsys.com>
-Archive Site:	http://www.unixtop.org/dist/top-3.8beta1.tar.gz
-Home Page:	http://www.unixtop.org/
-Mailing List:	top-spinners@ocee.groupsys.com
+Archive Site:	[dead] http://www.unixtop.org/dist/top-3.8beta1.tar.gz
+Home Page:	[dead] http://www.unixtop.org/
+Date: 		2026-01-18
+Mailing List:	[dead] top-spinners@ocee.groupsys.com
 Responsible:	simonb, christos
 License:	BSD (2-clause)
 Location:	external/bsd/top/dist
 Notes:
+We are the upstream now.
 
 Package:	traceroute
 Version:	1.4a12
@@ -1459,14 +1497,14 @@ Location:	external/bsd/tradcpp
 Notes:
 
 Package:	tz
-Version:	tzcode2025b / tzdata2025bgtz
-Current Vers:	tzcode2025b / tzdata2025b
+Version:	tzcode2026e / tzdata2026fgtz
+Current Vers:	tzcode2026f / tzdata2026f
 Maintainer:	Paul Eggert <eggert@cs.ucla.edu>
 Archive Site:	ftp://ftp.iana.org/tz/releases/
 Archive Site:	ftp://munnari.oz.au/pub/oldtz/
 Old Archive Site:	ftp://elsie.nci.nih.gov/pub/
 Home Page:	http://www.iana.org/time-zones
-Date:		2025-04-02
+Date:		2026-10-29
 Mailing List:	tz@iana.org
 Responsible:	kleink, christos, kre
 License:	Public domain
@@ -1478,16 +1516,16 @@ Don't use src/lib/libc/time/tzcode2netbsd to prepare the source tree for import.
 Diffs are now applied by hand, since we have too many diffs (re-entrant tzcode,
 register removal) to apply. The diffs have been submitted upstream but there
 is too much inertia to apply them. Check for .gitignore files.
-For the data files, do use external/public-domain/tz/tzdata2netbsd (usually,
-for now, late 2021, do it manually).
+For the data files, do use external/public-domain/tz/tzdata2netbsd
+Usage is: "cd .../src/external/public-domain/tz && sh tzdata2netbsd ="
 
 Package:	wpa_supplicant/hostapd
 Version:	2.11
-Current Vers:	2.11
+Current Vers:	2.12
 Maintainer:	Jouni Malinen <jkmaline@cc.hut.fi>
 Archive Site:	http://w1.fi/releases/
 Home Page:	http://w1.fi/wpa_supplicant/
-Date:		2024-09-18
+Date:		2026-09-27
 Mailing List:
 Responsible:	scw, dyoung, christos
 License:	BSD or GPLv2
@@ -1496,12 +1534,12 @@ Notes:
 See src/external/bsd/wpa/NetBSD-upgrade for update instructions.
 
 Package:	zlib
-Version:	1.3.1
-Current Vers:	1.3.1
+Version:	1.3.2
+Current Vers:	1.3.2
 Maintainer:	Jean-loup Gailly and Mark Adler <zlib@gzip.org>
 Archive Site:	http://www.zlib.net/
 Home Page:	http://www.zlib.net/
-Date: 		2024-09-22
+Date: 		2026-09-27
 Mailing List:
 Responsible:	gwr, christos
 License:	BSD (3-clause)
@@ -1511,26 +1549,27 @@ Imported to src/common/dist/zlib and shared by the kernel and userland.
 Remember to run cleantags
 
 Package:	zstd
-Version:	1.5.6
+Version:	1.5.7
 Current Vers:	1.5.7
 Maintainer:	Meta
 Archive Site:	https://github.com/facebook/zstd
 Home Page:	https://github.com/facebook/zstd
-Date: 		2025-02-20
+Date: 		2026-09-27
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)/GPLv2
 Location:	external/bsd/zstd
 Notes:
+Use zstd2netbsd
 
 Package:	services, protocols
-Version:	2021-04-07 (services), 2021-02-26 (protocols)
-Current Vers:	2021-04-07 (services), 2021-02-26 (protocols)
+Version:	2026-05-28 (services), 2026-03-09 (protocols)
+Current Vers:	2026-05-28 (services), 2026-03-09 (protocols)
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
 Home Page:	http://www.iana.org/
-Date: 		2021-04-08
+Date: 		2026-05-29
 Mailing List:
 Responsible:	christos
 License:	None
@@ -1550,13 +1589,16 @@ Notes:
      implementation.
    - add alias carp to vrrp
    - put back 240 (pfsync), splitting the unassigned entries
+   - put back NetBSD RCSID
+6. Fix non ascii chars in services (4 bullets currently)
 
 Package:	pigz
 Version:	2.3.1
-Current Vers:	2.4
+Current Vers:	2.8
 Maintainer:	Mark Adler <madler@alumni.caltech.edu>
 Archive Site:	http://zlib.net/pigz/
 Home Page:	http://zlib.net/pigz/
+Date: 		2026-09-27
 Mailing List:	http://mail.zlib.net/mailman/listinfo/pigz-announce_zlib.net
 Responsible:	mrg, tls
 License:	zlib
@@ -1564,12 +1606,12 @@ Location:	external/zlib/pigz/dist
 Notes:
 
 Package:	xz
-Version:	5.2.4
-Current Vers:	5.8.1
+Version:	5.8.3
+Current Vers:	5.8.4
 Maintainer:	Lasse Collin <lasse.collin@tukanni.org>
 Archive Site:	http://tukaani.org/xz/
 Home Page:	http://tukaani.org/xz/
-Date: 		2025-07-29
+Date: 		2026-09-27
 Responsible:	joerg
 License:	public-domain
 Location:	external/public-domain/xz/dist
@@ -1642,10 +1684,11 @@ Notes:
 
 Package:	tre
 Version:	0.8.0, git source as of 20171117
-Current Vers:	0.8.0
+Current Vers:	0.9.0
 Maintainer:	http://laurikari.net/tre
 Archive Site:	https://github.com/laurikari/tre
 Home Page:	http://laurikari.net/tre
+Date:		2026-09-27
 Mailing List:
 Responsible:	agc, christos
 License:	BSD (2-clause)
@@ -1680,16 +1723,16 @@ Notes:
 		Need to feed back local changes
 
 Package:	elftoolchain (libelf/libdwarf)
-Version:	r4037
+Version:	r4324
 Current Vers:	0.7.1
-Maintainer:	Joseph Koshi <jkoshi@freebsd.org>
+Maintainer:	Joseph Koshy <jkoshy@NetBSD.org>
 Archive Site:	none
 Home Page:	http://elftoolchain.sourceforge.net
-Date:		2024-03-03
+Date:		2025-09-06
 Mailing List:	none
-Responsible:	christos
+Responsible:	christos, jkoshy
 License:	BSD-like (2-clause)
-Location:	sys/external/bsd/elftoolchain/dist
+Location:	external/bsd/elftoolchain/dist
 Vendor tag:	FreeBSD
 Release tag:	elftoolchain-rNNNNN
 Notes:
@@ -2380,12 +2423,12 @@ Location:	share/wscons/fonts
 Notes:
 
 Package:	mozilla-certdata
-Version:	2024-08-23 (872bd5fefe12bc48a9c65e9ea7f189df243d835a)
-Current Vers:	2025-01-23 (d348a62fd98df78bceaf6ce066bafad6e9f272b2)
+Version:	2026-10-20 (26d38a0c3fb81e7fb2acedbaf4c42dd21dce0517)
+Current Vers:	2026-10-20 (26d38a0c3fb81e7fb2acedbaf4c42dd21dce0517)
 Maintainer:	Mozilla
 Archive Site:	https://hg.mozilla.org/projects/nss/log/tip/lib/ckfw/builtins/certdata.txt
 Home Page:	https://wiki.mozilla.org/CA
-Date:		2025-01-31
+Date:		2026-10-20
 Mailing List:
 License:	MPL
 Responsible:	riastradh, security-team
@@ -2448,3 +2491,23 @@ Vendor tag:	FreeBSD
 Release tag:	CDDL-FreeBSD-rNNNN
 Notes:
 Our upstream is currently FreeBSD, part of dtrace/zfs...
+
+Package:	brotli
+Version:	1.2.1
+Current Vers:	1.2.1
+Maintainer:	Google, Inc.
+Archive Site:	https://github.com/google/brotli
+Home Page:	https://github.com/google/brotli
+Date:		2026-10-28
+Mailing List:
+License:	MIT-like
+Responsible:	mrg
+Location:	xsrc/external/mit/brotli
+Vendor tag:	GOOGLE
+Release tag:	brotli-
+Notes:
+Generic-purpose lossless compression algorithm, used by freetype.
+This is embedded directly into freetype, using identifier renames
+to make sure it can't conflict with other installations.
+When importing, delete the c/enc/, go/, and python/ subdirectories,
+they are not used.

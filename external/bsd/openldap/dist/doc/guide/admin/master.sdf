@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 #
 # master file for the OpenLDAP Administrator's Guide
@@ -82,6 +82,9 @@ PB:
 PB:
 
 !include "monitoringslapd.sdf"; chapter
+PB:
+
+!include "loadbalancer.sdf"; chapter
 PB:
 
 !include "tuning.sdf"; chapter

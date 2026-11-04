@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -112,15 +112,15 @@ AttributesP::append (char *qName, char *value)
  */
 SAXException::SAXException ()
 {
-  message = strdup ("null");
+  message = xstrdup ("null");
 }
 
 SAXException::SAXException (const char *_message)
 {
   if (_message == NULL)
-    message = strdup ("null");
+    message = xstrdup ("null");
   else
-    message = strdup (_message);
+    message = xstrdup (_message);
 }
 
 SAXException::~SAXException ()
@@ -197,7 +197,7 @@ SAXParserP::SAXParserP ()
 {
   dh = NULL;
   bufsz = 0x2000;
-  buffer = (char*) malloc (bufsz);
+  buffer = (char*) xmalloc (bufsz);
   cntsz = 0;
   idx = 0;
   line = 1;
@@ -214,7 +214,7 @@ SAXParserP::reset ()
 {
   dh = NULL;
   bufsz = 8192;
-  buffer = (char*) realloc (buffer, bufsz);
+  buffer = (char*) xrealloc (buffer, bufsz);
   cntsz = 0;
   idx = 0;
   line = 1;
@@ -244,7 +244,7 @@ SAXParserP::parse (File *f, DefaultHandler *_dh)
 	{
 	  int oldbufsz = bufsz;
 	  bufsz = bufsz >= 0x100000 ? bufsz + 0x100000 : bufsz * 2;
-	  buffer = (char*) realloc (buffer, bufsz);
+	  buffer = (char*) xrealloc (buffer, bufsz);
 	  rem = bufsz - oldbufsz;
 	}
     }

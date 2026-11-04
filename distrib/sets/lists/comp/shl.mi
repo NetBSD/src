@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.354.2.1 2025/08/02 05:20:30 perseant Exp $
+# $NetBSD: shl.mi,v 1.354.2.2 2026/11/04 22:37:02 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -16,7 +16,7 @@
 ./usr/lib/libbind9_pic.a			comp-obsolete		obsolete
 ./usr/lib/libblacklist_pic.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libbluetooth_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libbluetooth_pic.a			comp-c-piclib		compatfile,picinstall,bluetooth
 ./usr/lib/libbozohttpd_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libbsdmalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libbz2_pic.a				comp-c-piclib		compatfile,picinstall
@@ -46,7 +46,7 @@
 ./usr/lib/libexecinfo_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libexpat_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libfetch_pic.a			comp-c-piclib		compatfile,picinstall
-./usr/lib/libfido2_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libfido2_pic.a			comp-c-piclib		fido2,compatfile,picinstall
 ./usr/lib/libform_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libg++_pic.a				comp-obsolete		obsolete
 ./usr/lib/libg2c_pic.a				comp-obsolete		obsolete
@@ -54,6 +54,7 @@
 ./usr/lib/libgcc_eh_p.a				comp-obsolete		obsolete
 ./usr/lib/libgcc_eh_pic.a			comp-obsolete		obsolete
 ./usr/lib/libgcc_pic.a				comp-obsolete		obsolete
+./usr/lib/libgfortran_pic.a			comp-c-piclib		compatfile,picinstall,gcc=14
 ./usr/lib/libgmp.so				comp-obsolete		obsolete
 ./usr/lib/libgmp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libgnuctf.so.0			base-sys-shlib		compatfile,binutils=234
@@ -62,6 +63,10 @@
 ./usr/lib/libgnuctf.so.1.0			base-sys-shlib		compatfile,binutils=239
 ./usr/lib/libgnuctf.so.2			base-sys-shlib		compatfile,binutils=242
 ./usr/lib/libgnuctf.so.2.0			base-sys-shlib		compatfile,binutils=242
+./usr/lib/libgnuctf.so.3			base-sys-shlib		compatfile,binutils=245
+./usr/lib/libgnuctf.so.3			base-sys-shlib		compatfile,binutils=246
+./usr/lib/libgnuctf.so.3.0			base-sys-shlib		compatfile,binutils=245
+./usr/lib/libgnuctf.so.3.0			base-sys-shlib		compatfile,binutils=246
 ./usr/lib/libgnumalloc_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libgomp_pic.a				comp-c-piclib		compatfile,picinstall,gcc
 ./usr/lib/libgssapi_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
@@ -70,7 +75,7 @@
 ./usr/lib/libheimntlm_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libhx509_pic.a			comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libintl_pic.a				comp-c-piclib		compatfile,picinstall
-./usr/lib/libipsec_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libipsec_pic.a			comp-c-piclib		ipsec,compatfile,picinstall
 ./usr/lib/libirs_pic.a				comp-obsolete		obsolete
 ./usr/lib/libisc_pic.a				comp-bind-piclib	compatfile,picinstall
 ./usr/lib/libisccc_pic.a			comp-bind-piclib	compatfile,picinstall
@@ -125,7 +130,11 @@
 ./usr/lib/libopcodes.so.11			comp-c-shlib		compatfile,binutils=239
 ./usr/lib/libopcodes.so.11.0			comp-c-shlib		compatfile,binutils=239
 ./usr/lib/libopcodes.so.12			comp-c-shlib		compatfile,binutils=242
+./usr/lib/libopcodes.so.12			comp-c-shlib		compatfile,binutils=245
 ./usr/lib/libopcodes.so.12.0			comp-c-shlib		compatfile,binutils=242
+./usr/lib/libopcodes.so.12.0			comp-c-shlib		compatfile,binutils=245
+./usr/lib/libopcodes.so.13			comp-c-shlib		compatfile,binutils=246
+./usr/lib/libopcodes.so.13.0			comp-c-shlib		compatfile,binutils=246
 ./usr/lib/libopcodes.so.9			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopcodes.so.9.0			comp-c-shlib		compatfile,binutils=231
 ./usr/lib/libopenpgpsdk_pic.a			comp-obsolete		obsolete
@@ -146,6 +155,7 @@
 ./usr/lib/libpthread_dbg_pic.a			comp-obsolete		obsolete
 ./usr/lib/libpthread_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libpuffs_pic.a			comp-puffs-piclib	compatfile,picinstall
+./usr/lib/libquadmath_pic.a			comp-c-piclib		quadmath,compatfile,picinstall,gcc=14
 ./usr/lib/libquota_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libradius_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/librefuse_pic.a			comp-refuse-piclib	compatfile,picinstall
@@ -217,10 +227,10 @@
 ./usr/lib/librumpfs_v7fs_pic.a			comp-c-piclib		picinstall,rump
 ./usr/lib/librumpfs_zfs_pic.a			comp-c-piclib		picinstall,rump,zfs
 ./usr/lib/librumphijack_pic.a			comp-c-piclib		compatfile,picinstall,rump
-./usr/lib/librumpkern_simplehook_tester_pic.a	comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_crypto_pic.a		comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_ksem_pic.a		comp-obsolete		obsolete
 ./usr/lib/librumpkern_nv_pic.a			comp-c-piclib		picinstall,rump
+./usr/lib/librumpkern_simplehook_tester_pic.a	comp-c-piclib		picinstall,rump
 ./usr/lib/librumpkern_sljit_pic.a		comp-c-piclib		picinstall,rump,sljit
 ./usr/lib/librumpkern_solaris_pic.a		comp-c-piclib		picinstall,rump,zfs
 ./usr/lib/librumpkern_sysproxy_pic.a		comp-c-piclib		picinstall,rump
@@ -269,7 +279,7 @@
 ./usr/lib/libsl_pic.a				comp-c-piclib		compatfile,picinstall,kerberos
 ./usr/lib/libsqlite3_pic.a			comp-c-piclib		compatfile,picinstall
 ./usr/lib/libss_pic.a				comp-obsolete		obsolete
-./usr/lib/libssh_pic.a				comp-c-piclib		compatfile,picinstall
+./usr/lib/libssh_pic.a				comp-obsolete		obsolete
 ./usr/lib/libssl_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libssp_pic.a				comp-obsolete		obsolete
 ./usr/lib/libstdc++_pic.a			comp-cxx-piclib		compatfile,picinstall,cxx,gcccmds,libstdcxx
@@ -286,7 +296,7 @@
 ./usr/lib/libumem_pic.a				comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libunbound_pic.a			comp-c-piclib		compatfile,picinstall,unbound
 ./usr/lib/libusb_pic.a				comp-obsolete		obsolete
-./usr/lib/libusbhid_pic.a			comp-c-piclib		compatfile,picinstall
+./usr/lib/libusbhid_pic.a			comp-c-piclib		usb,compatfile,picinstall
 ./usr/lib/libutil_pic.a				comp-c-piclib		compatfile,picinstall
 ./usr/lib/libuutil_pic.a			comp-zfs-piclib		compatfile,picinstall,zfs
 ./usr/lib/libuv_pic.a				comp-obsolete		obsolete

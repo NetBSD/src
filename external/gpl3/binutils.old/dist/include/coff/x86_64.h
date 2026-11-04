@@ -1,5 +1,5 @@
 /* COFF information for AMD 64.
-   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -20,23 +20,12 @@
    
    Written by Kai Tietz, OneVision Software GmbH&CoKg.  */
 
-#define L_LNNO_SIZE 2
-#define INCLUDE_COMDAT_FIELDS_IN_AUXENT
+#ifndef COFF_X86_64_H
+#define COFF_X86_64_H
 
-#include "coff/external.h"
-
-#define COFF_PAGE_SIZE	0x1000
+#include "coff/x86.h"
 
 #define AMD64MAGIC	0x8664
-
-/* .NET DLLs XOR the Machine number (above) with an override to
-    indicate that the DLL contains OS-specific machine code rather
-    than just IL or bytecode. See
-    https://github.com/dotnet/coreclr/blob/6f7aa7967c607b8c667518314ab937c0d7547025/src/inc/pedecoder.h#L94-L107. */
-#define IMAGE_FILE_MACHINE_NATIVE_APPLE_OVERRIDE   0x4644
-#define IMAGE_FILE_MACHINE_NATIVE_FREEBSD_OVERRIDE 0xadc4
-#define IMAGE_FILE_MACHINE_NATIVE_LINUX_OVERRIDE   0x7b79
-#define IMAGE_FILE_MACHINE_NATIVE_NETBSD_OVERRIDE  0x1993
 
 /* Used in some .NET DLLs that target a specific OS.  */
 #define AMD64_APPLE_MAGIC   (AMD64MAGIC ^ IMAGE_FILE_MACHINE_NATIVE_APPLE_OVERRIDE)
@@ -56,25 +45,6 @@
 #define ZMAGIC          IMAGE_NT_OPTIONAL_HDR64_MAGIC    /* Demand load format, eg normal ld output 0x10b.  */
 #define STMAGIC		0401	/* Target shlib.  */
 #define SHMAGIC		0443	/* Host   shlib.  */
-
-/* Define some NT default values.  */
-/*  #define NT_IMAGE_BASE        0x400000 moved to internal.h.  */
-#define NT_SECTION_ALIGNMENT 0x1000
-#define NT_FILE_ALIGNMENT    0x200
-#define NT_DEF_RESERVE       0x100000
-#define NT_DEF_COMMIT        0x1000
-
-/* Relocation directives.  */
-
-struct external_reloc
-{
-  char r_vaddr[4];
-  char r_symndx[4];
-  char r_type[2];
-};
-
-#define RELOC struct external_reloc
-#define RELSZ 10
 
 /* X86-64 relocations.  */
 #define R_AMD64_ABS 		 0 /* Reference is absolute, no relocation is necessary.  */
@@ -105,3 +75,5 @@ struct external_reloc
 #define R_PCRBYTE	18
 #define R_PCRWORD	19
 #define R_PCRLONG	20
+
+#endif /* COFF_X86_64_H */

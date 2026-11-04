@@ -1,5 +1,5 @@
 /* as.h - global header file
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -247,9 +247,7 @@ enum _relax_state
      1 constant byte: no-op fill control byte.  */
   rs_space_nop,
 
-  /* Similar to rs_fill.  It is used to implement .nops directive.
-     When listings are enabled, fr_opcode gets the buffer assigned, once
-     that's available.  */
+  /* Similar to rs_fill.  It is used to implement .nops directive.  */
   rs_fill_nop,
 
   /* A DWARF leb128 value; only ELF uses this.  The subtype is 0 for
@@ -263,7 +261,10 @@ enum _relax_state
   rs_dwarf2dbg,
 
   /* SFrame FRE type selection optimization.  */
-  rs_sframe
+  rs_sframe,
+
+  /* CodeView compressed integer.  */
+  rs_cv_comp,
 };
 
 typedef enum _relax_state relax_stateT;
@@ -315,10 +316,13 @@ COMMON bool flag_macro_alternate;
 COMMON unsigned char flag_readonly_data_in_text; /* -R */
 
 /* True if warnings should be inhibited.  */
-COMMON int flag_no_warnings; /* -W */
+COMMON int flag_no_warnings; /* -W, --no-warn */
 
 /* True if warnings count as errors.  */
 COMMON int flag_fatal_warnings; /* --fatal-warnings */
+
+/* True if infos should be inhibited.  */
+COMMON bool flag_no_information; /* --no-info */
 
 /* True if we should attempt to generate output even if non-fatal errors
    are detected.  */
@@ -335,7 +339,8 @@ COMMON enum synth_cfi_type flag_synth_cfi;
 /* This is true if the assembler should output time and space usage.  */
 COMMON unsigned char flag_print_statistics;
 
-/* True if local absolute symbols are to be stripped.  */
+/* True (positive) if local absolute symbols are to be stripped.  Negative if
+   even pre-defined symbols should be emitted.  */
 COMMON int flag_strip_local_absolute;
 
 /* True if we should generate a traditional format object file.  */
@@ -350,8 +355,37 @@ COMMON int flag_execstack;
 /* TRUE if .note.GNU-stack section with SEC_CODE should be created */
 COMMON int flag_noexecstack;
 
-/* TRUE if .sframe section should be created.  */
-COMMON int flag_gen_sframe;
+/* PR gas/33175.
+   Add enumerators to disambiguate between configure-time
+   enablement (or not) vs user-specficied enablement/disablement (the latter
+   via command line).  The expected usage of these states is:
+     - user-specified command line takes precedence over configure-time
+       setting and .cfi_sections directive usage.
+     - .cfi_sections usage takes precedence over configure-time setting.  */
+enum gen_sframe_option
+{
+  /* Default. SFrame generation not enabled at configure time.  GNU as will
+     not generate SFrame sections by default, unless enabled by user via
+     command line.  */
+  GEN_SFRAME_DEFAULT_NONE,
+  /* SFrame generation enabled at configure time.  GNU as will generate SFrame
+     sections for all objects, unless disabled by user via command line.  */
+  GEN_SFRAME_CONFIG_ENABLED,
+  /* User specified disablement via --gsframe=no.  */
+  GEN_SFRAME_DISABLED,
+  /* User specified enablement via --gsframe or --gsframe=yes.  */
+  GEN_SFRAME_ENABLED,
+};
+
+/* State of the setting for SFrame section creation.  */
+COMMON enum gen_sframe_option flag_gen_sframe;
+
+enum gen_sframe_version
+{
+  GEN_SFRAME_VERSION_3 = 3,
+};
+
+COMMON enum gen_sframe_version flag_gen_sframe_version;
 
 /* name of emitted object file */
 COMMON const char *out_file_name;
@@ -444,10 +478,13 @@ typedef struct _pseudo_type pseudo_typeS;
 #define PRINTF_LIKE(FCN) \
   void FCN (const char *format, ...) \
     __attribute__ ((__format__ (__printf__, 1, 2)))
+#define PRINTF_INDENT_LIKE(FCN) \
+  void FCN (unsigned int indent, const char *format, ...) \
+    __attribute__ ((__format__ (__printf__, 2, 3)))
 #define PRINTF_WHERE_LIKE(FCN) \
   void FCN (const char *file, unsigned int line, const char *format, ...) \
     __attribute__ ((__format__ (__printf__, 3, 4)))
-#define PRINTF_INDENT_LIKE(FCN) \
+#define PRINTF_WHERE_INDENT_LIKE(FCN) \
   void FCN (const char *file, unsigned int line, unsigned int indent, \
 	    const char *format, ...) \
     __attribute__ ((__format__ (__printf__, 4, 5)))
@@ -455,13 +492,15 @@ typedef struct _pseudo_type pseudo_typeS;
 #else /* __GNUC__ < 2 || defined(VMS) */
 
 #define PRINTF_LIKE(FCN)	void FCN (const char *format, ...)
+#define PRINTF_INDENT_LIKE(FCN)	void FCN (unsigned int indent, \
+					  const char *format, ...)
 #define PRINTF_WHERE_LIKE(FCN)	void FCN (const char *file, \
 					  unsigned int line, \
 					  const char *format, ...)
-#define PRINTF_INDENT_LIKE(FCN)	void FCN (const char *file, \
-					  unsigned int line, \
-					  unsigned int indent, \
-					  const char *format, ...)
+#define PRINTF_WHERE_INDENT_LIKE(FCN) void FCN (const char *file, \
+						unsigned int line, \
+						unsigned int indent, \
+						const char *format, ...)
 
 #endif /* __GNUC__ < 2 || defined(VMS) */
 
@@ -469,10 +508,12 @@ PRINTF_LIKE (as_bad);
 PRINTF_LIKE (as_fatal) ATTRIBUTE_NORETURN;
 PRINTF_LIKE (as_tsktsk);
 PRINTF_LIKE (as_warn);
+PRINTF_INDENT_LIKE (as_info);
 PRINTF_WHERE_LIKE (as_bad_where);
 PRINTF_WHERE_LIKE (as_warn_where);
-PRINTF_INDENT_LIKE (as_info_where);
+PRINTF_WHERE_INDENT_LIKE (as_info_where);
 
+void   set_identify_name (const char *);
 void   as_abort (const char *, int, const char *) ATTRIBUTE_NORETURN;
 void   signal_init (void);
 int    had_errors (void);
@@ -496,7 +537,7 @@ void   input_scrub_insert_line (const char *);
 void   input_scrub_insert_file (char *);
 char * input_scrub_new_file (const char *);
 char * input_scrub_next_buffer (char **bufp);
-size_t do_scrub_chars (size_t (*get) (char *, size_t), char *, size_t);
+size_t do_scrub_chars (size_t (*get) (char *, size_t), char *, size_t, bool);
 size_t do_scrub_pending (void);
 bool   scan_for_multibyte_characters (const unsigned char *, const unsigned char *, bool);
 int    gen_to_words (LITTLENUM_TYPE *, int, long);
@@ -510,6 +551,7 @@ void   as_report_context (void);
 const char * as_where (unsigned int *);
 const char * as_where_top (unsigned int *);
 const char * as_where_physical (unsigned int *);
+void   predefine_symbol (const char *, valueT);
 void   bump_line_counters (void);
 void   do_scrub_begin (int);
 void   input_scrub_begin (void);

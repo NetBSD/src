@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: libevent2netbsd,v 1.3 2021/04/07 03:36:48 christos Exp $
+# $NetBSD: libevent2netbsd,v 1.3.8.1 2026/11/04 22:38:29 perseant Exp $
 
 # Extract the new tarball and rename the libevent-X.Y.Z directory
 # to dist.  Run this script and check for additional files and
@@ -13,7 +13,9 @@
 #
 # don't forget to bump the shlib version in Makefile.inc and
 # commit the include/ files
-# XXX: Automate the man page generation
+# XXX:
+# There is a ton of man pages generated, we copy all of them for now
+# but only install the ones that we have historically installed
 
 if [ -z "$1" ]
 then
@@ -31,50 +33,52 @@ esac
 if [ -f $d/configure ]; then
 	mkdir -p tmp
 	cd tmp
-	$d/configure
+	$d/configure --enable-doxygen-doc --enable-doxygen-man
 	make include/event2/event-config.h
+	make doxygen
 	sed -e '
-/_EVENT_SIZEOF_SIZE_T/ {
+/EVENT__SIZEOF_SIZE_T/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_SIZE_T 8\
+#define EVENT__SIZEOF_SIZE_T 8\
 #else\
-#define _EVENT_SIZEOF_SIZE_T 4\
+#define EVENT__SIZEOF_SIZE_T 4\
 #endif
 	d
 }
-/_EVENT_SIZEOF_LONG_LONG/ {
+/EVENT__SIZEOF_LONG_LONG/ {
 	a\
-#define _EVENT_SIZEOF_LONG_LONG 8
+#define EVENT__SIZEOF_LONG_LONG 8
 	d
 }
-/_EVENT_SIZEOF_LONG/ {
+/EVENT__SIZEOF_LONG/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_LONG 8\
+#define EVENT__SIZEOF_LONG 8\
 #else\
-#define _EVENT_SIZEOF_LONG 4\
+#define EVENT__SIZEOF_LONG 4\
 #endif
 	d
 }
-/_EVENT_SIZEOF_PTHREAD_T/ {
+/EVENT__SIZEOF_PTHREAD_T/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_PTHREAD_T 8\
+#define EVENT__SIZEOF_PTHREAD_T 8\
 #else\
-#define _EVENT_SIZEOF_PTHREAD_T 4\
+#define EVENT__SIZEOF_PTHREAD_T 4\
 #endif
 	d
 }
-/_EVENT_SIZEOF_VOID_P/ {
+/EVENT__SIZEOF_VOID_P/ {
 	a\
 #ifdef _LP64\
-#define _EVENT_SIZEOF_VOID_P 8\
+#define EVENT__SIZEOF_VOID_P 8\
 #else\
-#define _EVENT_SIZEOF_VOID_P 4\
+#define EVENT__SIZEOF_VOID_P 4\
 #endif
 	d
 }' < include/event2/event-config.h > ../include/event2/event-config.h
+	cp doxygen/man/man3/*.3 ../man
 	cd ..
 	rm -Rf tmp
 fi

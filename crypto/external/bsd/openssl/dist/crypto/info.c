@@ -18,6 +18,9 @@
 #if defined(__arm__) || defined(__arm) || defined(__aarch64__)
 # include "arm_arch.h"
 # define CPU_INFO_STR_LEN 128
+#elif defined(__sparcv9) || defined(__sparcv9__)
+# include "sparc_arch.h"
+# define CPU_INFO_STR_LEN 128
 #elif defined(__s390__) || defined(__s390x__)
 # include "s390x_arch.h"
 # define CPU_INFO_STR_LEN 2048
@@ -59,6 +62,16 @@ DEFINE_RUN_ONCE_STATIC(init_info_strings)
     BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
                  CPUINFO_PREFIX "OPENSSL_armcap=0x%x", OPENSSL_armcap_P);
     if ((env = getenv("OPENSSL_armcap")) != NULL)
+        BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
+                     sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
+                     " env:%s", env);
+# elif defined(__sparcv9) || defined(__sparcv9__)
+    const char *env;
+
+    BIO_snprintf(ossl_cpu_info_str, sizeof(ossl_cpu_info_str),
+                 CPUINFO_PREFIX "OPENSSL_sparcv9cap=0x%x:0x%x",
+                 OPENSSL_sparcv9cap_P[0], OPENSSL_sparcv9cap_P[1]);
+    if ((env = getenv("OPENSSL_sparcv9cap")) != NULL)
         BIO_snprintf(ossl_cpu_info_str + strlen(ossl_cpu_info_str),
                      sizeof(ossl_cpu_info_str) - strlen(ossl_cpu_info_str),
                      " env:%s", env);

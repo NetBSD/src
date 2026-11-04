@@ -1,6 +1,6 @@
 /* Low-level I/O routines for BFDs.
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -26,6 +26,7 @@
 #include "bfd.h"
 #include "libbfd.h"
 #include "aout/ar.h"
+#include "libiberty.h"
 #if defined (_WIN32)
 #include <windows.h>
 #include <locale.h>
@@ -118,61 +119,140 @@ _bfd_real_fopen (const char *filename, const char *modes)
 
 #elif defined (_WIN32)
   /* PR 25713: Handle extra long path names possibly containing '..' and '.'.  */
-   wchar_t **     lpFilePart = {NULL};
-   const wchar_t  prefix[] = L"\\\\?\\";
-   const size_t   partPathLen = strlen (filename) + 1;
+  wchar_t **      lpFilePart = {NULL};
+  const wchar_t   prefixDOS[] = L"\\\\?\\";
+  const wchar_t   prefixUNC[] = L"\\\\?\\UNC\\";
+  const wchar_t   prefixNone[] = L"";
+  const wchar_t * prefix;
+  size_t          sizeof_prefix;
+  bool            strip_network_prefix = false;
+
+  /* PR 31527: In order to not hit limits in the maximum file path, all paths
+     need converting to Universal Naming Convention (UNC) syntax. The following
+     forms may be provided to this function and are converted accordingly.
+
+     1. UNC paths (start with \\?\), these are unconverted;
+     2. Network paths (start with \\ or // but not \\?\), these are given the
+	\\?UNC\ prefix, and have the incoming \\ or // removed;
+     3. DOS drive paths (a letter followed by a colon), these are given the
+	\\?\ prefix;
+     4. Paths relative to CWD, the current working directory is tested for the
+	above conditions, and otherwise are assumed to be DOS paths.
+
+     For more information see:
+     https://learn.microsoft.com/en-us/windows/win32/fileio/maximum-file-path-limitation?tabs=registry
+  */
+
+  if (startswith (filename, "\\\\?\\"))
+    {
+      prefix = prefixNone;
+      sizeof_prefix = sizeof (prefixNone);
+    }
+  else if (startswith (filename, "\\\\") || startswith (filename, "//"))
+    {
+      prefix = prefixUNC;
+      sizeof_prefix = sizeof (prefixUNC);
+      strip_network_prefix = true;
+    }
+  else if (strlen (filename) > 2 && filename[1] == ':')
+    {
+      prefix = prefixDOS;
+      sizeof_prefix = sizeof (prefixDOS);
+    }
+  else
+    {
+      /* The partial path is relative to the current working directory, use this
+	 to determine the prefix.
+	 1) Get the length: Calling with lpBuffer set to null returns the length.
+	 2) Resolve the path.  */
+      size_t    pwdWSize = GetCurrentDirectoryW (0, NULL);
+      wchar_t * pwdPath = calloc (pwdWSize, sizeof(wchar_t));
+      GetCurrentDirectoryW (pwdWSize, pwdPath);
+      if (wcsncmp (pwdPath, L"\\\\?\\", 6) == 0)
+	{
+	  prefix = prefixNone;
+	  sizeof_prefix = sizeof (prefixNone);
+	}
+      else if (wcsncmp (pwdPath, L"\\\\", 2) == 0
+	       || wcsncmp (pwdPath, L"//", 2) == 0)
+	{
+	  prefix = prefixUNC;
+	  sizeof_prefix = sizeof (prefixUNC);
+	  strip_network_prefix = true;
+	}
+      else
+	{
+	  prefix = prefixDOS;
+	  sizeof_prefix = sizeof (prefixDOS);
+	}
+      free (pwdPath);
+    }
+
 #ifdef __MINGW32__
 #if !HAVE_DECL____LC_CODEPAGE_FUNC
-/* This prototype was added to locale.h in version 9.0 of MinGW-w64.  */
-   _CRTIMP unsigned int __cdecl ___lc_codepage_func (void);
+  /* This prototype was added to locale.h in version 9.0 of MinGW-w64.  */
+  _CRTIMP unsigned int __cdecl ___lc_codepage_func (void);
 #endif
-   const unsigned int cp = ___lc_codepage_func ();
+  const unsigned int cp = ___lc_codepage_func ();
 #else
-   const unsigned int cp = CP_UTF8;
+  const unsigned int cp = CP_UTF8;
 #endif
 
-   /* Converting the partial path from ascii to unicode.
-      1) Get the length: Calling with lpWideCharStr set to null returns the length.
-      2) Convert the string: Calling with cbMultiByte set to -1 includes the terminating null.  */
-   size_t         partPathWSize = MultiByteToWideChar (cp, 0, filename, -1, NULL, 0);
-   wchar_t *      partPath = calloc (partPathWSize, sizeof(wchar_t));
-   size_t         ix;
+  /* Converting the partial path from ascii to unicode.
+     1) Get the length: Calling with lpWideCharStr set to null returns the length.
+     2) Convert the string: Calling with cbMultiByte set to -1 includes the terminating null.  */
+  size_t     partPathWSize = MultiByteToWideChar (cp, 0, filename, -1, NULL, 0);
+  wchar_t *  partPath = calloc (partPathWSize, sizeof(wchar_t));
+  size_t     ix;
 
-   MultiByteToWideChar (cp, 0, filename, -1, partPath, partPathWSize);
+  MultiByteToWideChar (cp, 0, filename, -1, partPath, partPathWSize);
 
-   /* Convert any UNIX style path separators into the DOS i.e. backslash separator.  */
-   for (ix = 0; ix < partPathLen; ix++)
-     if (IS_UNIX_DIR_SEPARATOR(filename[ix]))
-       partPath[ix] = '\\';
+  /* Convert any UNIX style path separators into the DOS i.e. backslash
+     separator.  Short of a TOASCII()- or ISASCII()-like helper (taking
+     wchar_t as input) in libiberty, open-code that here for now.  */
+  for (ix = 0; partPath[ix] != L'\0'; ix++)
+    if (partPath[ix] <= L'\x7f' && IS_UNIX_DIR_SEPARATOR ((char)partPath[ix]))
+      partPath[ix] = L'\\';
 
-   /* Getting the full path from the provided partial path.
-      1) Get the length.
-      2) Resolve the path.  */
-   long       fullPathWSize = GetFullPathNameW (partPath, 0, NULL, lpFilePart);
-   wchar_t *  fullPath = calloc (fullPathWSize + sizeof(prefix) + 1, sizeof(wchar_t));
+  /* Getting the full path from the provided partial path.
+     1) Get the length.
+     2) Resolve the path.  */
+  long       fullPathWSize = GetFullPathNameW (partPath, 0, NULL, lpFilePart);
+  wchar_t *  fullPath = calloc (fullPathWSize + sizeof_prefix + 1, sizeof(wchar_t));
 
-   wcscpy (fullPath, prefix);
+  wcscpy (fullPath, prefix);
 
-   int        prefixLen = sizeof(prefix) / sizeof(wchar_t);
+  int  prefixLen = sizeof_prefix / sizeof(wchar_t);
 
-   /* Do not add a prefix to the null device.  */
-   if (stricmp (filename, "nul") == 0)
+  /* Do not add a prefix to the null device.  */
+  if (stricmp (filename, "nul") == 0)
     prefixLen = 1;
 
-   wchar_t *  fullPathOffset = fullPath + prefixLen - 1;
+  wchar_t *  fullPathOffset = fullPath + prefixLen - 1;
 
-   GetFullPathNameW (partPath, fullPathWSize, fullPathOffset, lpFilePart);
-   free (partPath);
+  GetFullPathNameW (partPath, fullPathWSize, fullPathOffset, lpFilePart);
 
-   /* It is non-standard for modes to exceed 16 characters.  */
-   wchar_t    modesW[16];
+  if (strip_network_prefix)
+    {
+      /* Remove begining of the beginning two backslash characters (\\).  */
+      wchar_t *_fullPath = calloc (fullPathWSize + sizeof_prefix + 1, sizeof(wchar_t));
 
-   MultiByteToWideChar (cp, 0, modes, -1, modesW, sizeof(modesW));
+      GetFullPathNameW (fullPath, fullPathWSize + sizeof_prefix + 1, _fullPath, lpFilePart);
+      free (fullPath);
+      fullPath = _fullPath;
+    }
 
-   FILE *     file = _wfopen (fullPath, modesW);
-   free (fullPath);
+  free (partPath);
 
-   return close_on_exec (file);
+  /* It is non-standard for modes to exceed 16 characters.  */
+  wchar_t  modesW[16];
+
+  MultiByteToWideChar (cp, 0, modes, -1, modesW, ARRAY_SIZE (modesW));
+
+  FILE *  file = _wfopen (fullPath, modesW);
+  free (fullPath);
+
+  return close_on_exec (file);
 
 #elif defined (HAVE_FOPEN64)
   return close_on_exec (fopen64 (filename, modes));
@@ -215,13 +295,13 @@ DESCRIPTION
 .  int (*bstat) (struct bfd *abfd, struct stat *sb);
 .  {* Mmap a part of the files. ADDR, LEN, PROT, FLAGS and OFFSET are the usual
 .     mmap parameter, except that LEN and OFFSET do not need to be page
-.     aligned.  Returns (void *)-1 on failure, mmapped address on success.
+.     aligned.  Returns MAP_FAILED on failure, mmapped address on success.
 .     Also write in MAP_ADDR the address of the page aligned buffer and in
 .     MAP_LEN the size mapped (a page multiple).  Use unmap with MAP_ADDR and
 .     MAP_LEN to unmap.  *}
-.  void *(*bmmap) (struct bfd *abfd, void *addr, bfd_size_type len,
+.  void *(*bmmap) (struct bfd *abfd, void *addr, size_t len,
 .		   int prot, int flags, file_ptr offset,
-.		   void **map_addr, bfd_size_type *map_len);
+.		   void **map_addr, size_t *map_len);
 .};
 
 .extern const struct bfd_iovec _bfd_memory_iovec;
@@ -250,6 +330,7 @@ bfd_read (void *ptr, bfd_size_type size, bfd *abfd)
   ufile_ptr offset = 0;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -261,6 +342,7 @@ bfd_read (void *ptr, bfd_size_type size, bfd *abfd)
      this element.  */
   if (element_bfd->arelt_data != NULL
       && element_bfd->my_archive != NULL
+      && element_bfd->my_archive->iovec == element_bfd->iovec
       && !bfd_is_thin_archive (element_bfd->my_archive))
     {
       bfd_size_type maxbytes = arelt_size (element_bfd);
@@ -314,6 +396,7 @@ bfd_write (const void *ptr, bfd_size_type size, bfd *abfd)
   file_ptr nwrote;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
@@ -362,6 +445,7 @@ bfd_tell (bfd *abfd)
   file_ptr ptr;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -392,6 +476,7 @@ int
 bfd_flush (bfd *abfd)
 {
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
@@ -419,6 +504,7 @@ bfd_stat (bfd *abfd, struct stat *statbuf)
   int result;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     abfd = abfd->my_archive;
 
@@ -453,6 +539,7 @@ bfd_seek (bfd *abfd, file_ptr position, int direction)
   ufile_ptr offset = 0;
 
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -623,8 +710,8 @@ bfd_get_file_size (bfd *abfd)
 	      && memcmp (((struct ar_hdr *) adata->arch_header)->ar_fmag,
 			 "Z\012", 2) == 0)
 	    compression_p2 = 3;
-	  abfd = abfd->my_archive;
 	}
+      abfd = abfd->my_archive;
     }
 
   file_size = bfd_get_size (abfd) << compression_p2;
@@ -638,24 +725,26 @@ FUNCTION
 	bfd_mmap
 
 SYNOPSIS
-	void *bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
+	void *bfd_mmap (bfd *abfd, void *addr, size_t len,
 			int prot, int flags, file_ptr offset,
-			void **map_addr, bfd_size_type *map_len)
+			void **map_addr, size_t *map_len)
 			ATTRIBUTE_WARN_UNUSED_RESULT;
 
 DESCRIPTION
 	Return mmap()ed region of the file, if possible and implemented.
 	LEN and OFFSET do not need to be page aligned.  The page aligned
 	address and length are written to MAP_ADDR and MAP_LEN.
+	Returns MAP_FAILED on failure.
 
 */
 
 void *
-bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
+bfd_mmap (bfd *abfd, void *addr, size_t len,
 	  int prot, int flags, file_ptr offset,
-	  void **map_addr, bfd_size_type *map_len)
+	  void **map_addr, size_t *map_len)
 {
   while (abfd->my_archive != NULL
+	 && abfd->my_archive->iovec == abfd->iovec
 	 && !bfd_is_thin_archive (abfd->my_archive))
     {
       offset += abfd->origin;
@@ -666,7 +755,7 @@ bfd_mmap (bfd *abfd, void *addr, bfd_size_type len,
   if (abfd->iovec == NULL)
     {
       bfd_set_error (bfd_error_invalid_operation);
-      return (void *) -1;
+      return MAP_FAILED;
     }
 
   return abfd->iovec->bmmap (abfd, addr, len, prot, flags, offset,
@@ -815,12 +904,12 @@ memory_bstat (bfd *abfd, struct stat *statbuf)
 
 static void *
 memory_bmmap (bfd *abfd ATTRIBUTE_UNUSED, void *addr ATTRIBUTE_UNUSED,
-	      bfd_size_type len ATTRIBUTE_UNUSED, int prot ATTRIBUTE_UNUSED,
+	      size_t len ATTRIBUTE_UNUSED, int prot ATTRIBUTE_UNUSED,
 	      int flags ATTRIBUTE_UNUSED, file_ptr offset ATTRIBUTE_UNUSED,
 	      void **map_addr ATTRIBUTE_UNUSED,
-	      bfd_size_type *map_len ATTRIBUTE_UNUSED)
+	      size_t *map_len ATTRIBUTE_UNUSED)
 {
-  return (void *)-1;
+  return MAP_FAILED;
 }
 
 const struct bfd_iovec _bfd_memory_iovec =

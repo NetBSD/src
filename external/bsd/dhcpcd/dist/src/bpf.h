@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd: BPF arp and bootp filtering
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -29,9 +29,9 @@
 #ifndef BPF_HEADER
 #define BPF_HEADER
 
-#define	BPF_EOF			0x01U
-#define	BPF_PARTIALCSUM		0x02U
-#define	BPF_BCAST		0x04U
+#define BPF_EOF		0x01U
+#define BPF_PARTIALCSUM 0x02U
+#define BPF_BCAST	0x04U
 
 /*
  * Even though we program the BPF filter should we trust it?
@@ -50,12 +50,13 @@
  * If you want to be notified of any packet failing the BPF filter,
  * define BPF_DEBUG below.
  */
-//#define	BPF_DEBUG
+// #define	BPF_DEBUG
 
 #include "dhcpcd.h"
 
 struct bpf {
 	const struct interface *bpf_ifp;
+	void *bpf_handle;
 	int bpf_fd;
 	unsigned int bpf_flags;
 	void *bpf_buffer;
@@ -63,19 +64,24 @@ struct bpf {
 	size_t bpf_len;
 	size_t bpf_pos;
 };
+struct iovec;
 
 extern const char *bpf_name;
 size_t bpf_frame_header_len(const struct interface *);
 void *bpf_frame_header_src(const struct interface *, void *, size_t *);
 void *bpf_frame_header_dst(const struct interface *, void *, size_t *);
 int bpf_frame_bcast(const struct interface *, const void *);
-struct bpf * bpf_open(const struct interface *,
+struct bpf *bpf_open(const struct interface *,
     int (*)(const struct bpf *, const struct in_addr *),
     const struct in_addr *);
 void bpf_close(struct bpf *);
-int bpf_attach(int, void *, unsigned int);
+int bpf_setfilter(const struct bpf *, void *, unsigned int);
+int bpf_setwfilter(const struct bpf *, void *, unsigned int);
+int bpf_lockfilter(const struct bpf *);
 ssize_t bpf_send(const struct bpf *, uint16_t, const void *, size_t);
+ssize_t bpf_writev(const struct bpf *, struct iovec *, int);
 ssize_t bpf_read(struct bpf *, void *, size_t);
-int bpf_arp(const struct bpf *, const struct in_addr *);
-int bpf_bootp(const struct bpf *, const struct in_addr *);
+
+int bpf_filter_arp(const struct bpf *, const struct in_addr *);
+int bpf_filter_bootp(const struct bpf *, const struct in_addr *);
 #endif

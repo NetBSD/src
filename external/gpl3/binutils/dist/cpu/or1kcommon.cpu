@@ -243,6 +243,8 @@
    (.unsplice
     (.map (.pmacro (n) (.splice SYS (.sym "ESR" n) (.add n #x40) (.str "Exception supervision register " n)))
           (.iota #x10)))
+   (SYS COREID   #x080 "Core identifier register")
+   (SYS NUMCORES #x081 "Number of cores register")
    (.unsplice
     (.map (.pmacro (n) (.splice SYS (.sym "GPR" n) (.add n #x400) (.str "General purpose register " n)))
           (.iota #x200)))

@@ -19,12 +19,16 @@
 /* Defined if cold attribute is supported. */
 #undef JEMALLOC_HAVE_ATTR_COLD
 
+/* Defined if deprecated attribute is supported. */
+#undef JEMALLOC_HAVE_ATTR_DEPRECATED
+
 /*
  * Define overrides for non-standard allocator-related functions if they are
  * present on the system.
  */
 #undef JEMALLOC_OVERRIDE_MEMALIGN
 #undef JEMALLOC_OVERRIDE_VALLOC
+#undef JEMALLOC_OVERRIDE_PVALLOC
 
 /*
  * At least Linux omits the "const" in:
@@ -41,6 +45,21 @@
  * glibc defines.
  */
 #undef JEMALLOC_USE_CXX_THROW
+
+/*
+ * If undefined, disables reading configuration from environment variable or file
+ */
+#undef JEMALLOC_CONFIG_ENV
+#undef JEMALLOC_CONFIG_FILE
+
+/*
+ * Whether throwing operator new aborts on OOM instead of throwing
+ * std::bad_alloc.  This is always defined to either 0 or 1.
+ */
+#undef JEMALLOC_INFALLIBLE_NEW
+#ifndef JEMALLOC_INFALLIBLE_NEW
+#  define JEMALLOC_INFALLIBLE_NEW 0
+#endif
 
 #ifdef _MSC_VER
 #  ifdef _WIN64

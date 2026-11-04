@@ -871,7 +871,8 @@ zfs_loadvnode(struct mount *mp, struct vnode *vp,
 		return (SET_ERROR(ENOENT));
 	}
 	ASSERT(zp == VTOZ(vp));
-	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
+	if (zfsvfs->z_use_namecache)
+		cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
 
@@ -886,13 +887,15 @@ zfs_newvnode(struct mount *mp, vnode_t *dvp, vnode_t *vp, vattr_t *vap,
 {
 	struct zfs_newvnode_args *args = extra;
 	znode_t *zp, *dzp = VTOZ(dvp);
+	zfsvfs_t *zfsvfs = dzp->z_zfsvfs;
 	dmu_tx_t *tx = args->tx;
 	uint_t flag = args->flag;
 	zfs_acl_ids_t *acl_ids = args->acl_ids;
 
 	zfs_mknode1(dzp, vap, tx, cr, flag, &zp, acl_ids, vp);
 	ASSERT(zp == VTOZ(vp));
-	cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
+	if (zfsvfs->z_use_namecache)
+		cache_enter_id(vp, zp->z_mode, zp->z_uid, zp->z_gid, true);
 
 	*key_len = sizeof(zp->z_id);
 	*new_key = &zp->z_id;
@@ -1289,43 +1292,6 @@ zfs_zget(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
 		*zpp = VTOZ(vp);
 
 	return error;
-}
-
-/*
- * Get a known cached znode, to be used from zil_commit()->zfs_get_data()
- * to resolve log entries.  Doesn't take a reference, will never fail and
- * depends on zfs_vnops.c::zfs_netbsd_reclaim() running a zil_commit()
- * before the znode gets freed.
- */
-int
-zfs_zget_cleaner(zfsvfs_t *zfsvfs, uint64_t obj_num, znode_t **zpp)
-{
-	dmu_buf_t *db;
-	sa_handle_t *hdl;
-	dmu_object_info_t doi;
-	znode_t *zp;
-
-	ZFS_OBJ_HOLD_ENTER(zfsvfs, obj_num);
-
-	VERIFY(0 == sa_buf_hold(zfsvfs->z_os, obj_num, NULL, &db));
-
-	dmu_object_info_from_db(db, &doi);
-	ASSERT(doi.doi_bonus_type == DMU_OT_SA ||
-	    (doi.doi_bonus_type == DMU_OT_ZNODE &&
-	    doi.doi_bonus_size >= sizeof (znode_phys_t)));
-
-	hdl = dmu_buf_get_user(db);
-	ASSERT3P(hdl, !=, NULL);
-
-	zp = sa_get_userdata(hdl);
-	ASSERT3U(zp->z_id, ==, obj_num);
-
-	sa_buf_rele(db, NULL);
-
-	ZFS_OBJ_HOLD_EXIT(zfsvfs, obj_num);
-
-	*zpp = zp;
-	return (0);
 }
 
 #else /* __NetBSD__ */

@@ -1,4 +1,4 @@
-dnl 	$NetBSD: dwarf_pro_nametbl.m4,v 1.4 2024/03/03 17:37:32 christos Exp $
+dnl 	$NetBSD: dwarf_pro_nametbl.m4,v 1.4.2.1 2026/11/04 22:37:34 perseant Exp $
 /*-
  * Copyright (c) 2010 Kai Wang
  * All rights reserved.

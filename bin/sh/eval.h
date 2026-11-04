@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.h,v 1.23.12.1 2025/08/02 05:18:25 perseant Exp $	*/
+/*	$NetBSD: eval.h,v 1.23.12.2 2026/11/04 22:36:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -38,6 +38,23 @@ extern const char *commandname;	/* currently executing command */
 extern int exitstatus;		/* exit status of last command */
 extern int back_exitstatus;	/* exit status of backquoted command */
 extern struct strlist *cmdenviron;  /* environment for builtin command */
+
+	/*
+	 * Note: this will be set in both parent and child, during the
+	 * vfork() process, in the parent it MUST be cleared at any time
+	 * a signal might arrive (ie: signals must be blocked before setting
+	 * it, and it must cleared again before releasing the block).   In
+	 * the child it will be set when the fork occurs, and then needs to
+	 * be cleared sometime before the child would want to receive and
+	 * process a signal that has been set for it to catch (ie: no big
+	 * hurry, but fairly soon - it happens once the trap[] array is
+	 * reset to allow child traps to be set).
+	 *
+	 * Aside from inside evalcommand() which uses it to properly process
+	 * vfork(), its value should only ever be tested in signal handlers
+	 * - that is its sole (externally visible) purpose.
+	 */
+extern volatile int vforking;	/* Set if a vfork() is in progress */
 
 
 struct backcmd {		/* result of evalbackcmd */

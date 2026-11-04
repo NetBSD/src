@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -26,11 +26,13 @@
 %language "C++"
 
 %code top {
+#include "config.h"
 #include <stdio.h>
 #include <string.h>
 #include <string>
 }
 %code requires {
+#include "libiberty.h"
 #include "QLParser.h"
 #include "DbeSession.h"
 #include "Expression.h"
@@ -274,7 +276,7 @@ namespace QL
       case '"':
 	{
 	  int  maxsz = 16;
-	  char *str = (char *) malloc (maxsz);
+	  char *str = (char *) xmalloc (maxsz);
 	  char *ptr = str;
 
 	  for (;;)
@@ -301,7 +303,7 @@ namespace QL
 		    {
 		      size_t len = ptr - str;
 		      maxsz = maxsz > 8192 ? maxsz + 8192 : maxsz * 2;
-		      char *new_s = (char *) realloc (str, maxsz);
+		      char *new_s = (char *) xrealloc (str, maxsz);
 		      str = new_s;
 		      ptr = str + len;
 		    }

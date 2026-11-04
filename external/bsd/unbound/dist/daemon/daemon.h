@@ -58,6 +58,11 @@ struct ub_randstate;
 struct daemon_remote;
 struct respip_set;
 struct shm_main_info;
+struct doq_table;
+struct cookie_secrets;
+struct fast_reload_thread;
+struct fast_reload_printq;
+struct shared_ports;
 
 #include "dnstap/dnstap_config.h"
 #ifdef USE_DNSTAP
@@ -93,10 +98,30 @@ struct daemon {
 	int rc_port;
 	/** listening ports for remote control */
 	struct listen_port* rc_ports;
+	/** the shared ports structure, with random ports numbers. */
+	struct shared_ports* shared_ports;
 	/** remote control connections management (for first worker) */
 	struct daemon_remote* rc;
-	/** ssl context for listening to dnstcp over ssl, and connecting ssl */
-	void* listen_sslctx, *connect_sslctx;
+	/** ssl context for listening to dnstcp over ssl */
+	void* listen_dot_sslctx;
+	/** ssl context for connecting to dnstcp over ssl */
+	void* connect_dot_sslctx;
+	/** ssl context for listening to DoH */
+	void* listen_doh_sslctx;
+	/** ssl context for listening to quic */
+	void* listen_quic_sslctx;
+	/** the file name that the ssl context is made with, private key. */
+	char* ssl_service_key;
+	/** the file name that the ssl context is made with, certificate. */
+	char* ssl_service_pem;
+	/** modification time for ssl_service_key, in sec and ns. Like
+	 * in a struct timespec, but without that for portability. */
+	time_t mtime_ssl_service_key;
+	long mtime_ns_ssl_service_key;
+	/** modification time for ssl_service_pem, in sec and ns. Like
+	 * in a struct timespec, but without that for portability. */
+	time_t mtime_ssl_service_pem;
+	long mtime_ns_ssl_service_pem;
 	/** num threads allocated */
 	int num;
 	/** num threads allocated in the previous config or 0 at first */
@@ -115,6 +140,8 @@ struct daemon {
 	struct module_env* env;
 	/** stack of module callbacks */
 	struct module_stack mods;
+	/** The module stack has been inited */
+	int mods_inited;
 	/** access control, which client IPs are allowed to connect */
 	struct acl_list* acl;
 	/** access control, which interfaces are allowed to connect */
@@ -127,15 +154,18 @@ struct daemon {
 	struct timeval time_last_stat;
 	/** time when daemon started */
 	struct timeval time_boot;
-	/** views structure containing view tree */
-	struct views* views;
 #ifdef USE_DNSTAP
 	/** the dnstap environment master value, copied and changed by threads*/
 	struct dt_env* dtenv;
 #endif
+	/** The SHM info for shared memory stats. */
 	struct shm_main_info* shm_info;
-	/** response-ip set with associated actions and tags. */
-	struct respip_set* respip_set;
+	/** if the timeout for statistics is attempted at specific offset.
+	 * If it is true, the stat timeout is the interval+offset, and that
+	 * picks (roughly) the same time offset every time period. */
+	int stat_time_specific;
+	/** if the timeout is specific, what offset in the period. */
+	int stat_time_offset;
 	/** some response-ip tags or actions are configured if true */
 	int use_response_ip;
 	/** some RPZ policies are configured */
@@ -144,8 +174,23 @@ struct daemon {
 	/** the dnscrypt environment */
 	struct dnsc_env* dnscenv;
 #endif
+	/** the doq connection table */
+	struct doq_table* doq_table;
 	/** reuse existing cache on reload if other conditions allow it. */
 	int reuse_cache;
+	/** the EDNS cookie secrets from the cookie-secret-file */
+	struct cookie_secrets* cookie_secrets;
+	/** the fast reload thread, or NULL */
+	struct fast_reload_thread* fast_reload_thread;
+	/** the fast reload printq list */
+	struct fast_reload_printq* fast_reload_printq_list;
+	/** the fast reload option to drop mesh queries, true if so. */
+	int fast_reload_drop_mesh;
+	/** for fast reload, if the tcl, tcp connection limits, has
+	 * changes for workers */
+	int fast_reload_tcl_has_changes;
+	/** config file name */
+	char* cfgfile;
 };
 
 /**
@@ -161,6 +206,15 @@ struct daemon* daemon_init(void);
  * @return: false on error.
  */
 int daemon_open_shared_ports(struct daemon* daemon);
+
+/**
+ * Do daemon setup that needs privileges
+ * like opening privileged ports or opening device files.
+ * The cfg member pointer must have been set for the daemon.
+ * @param daemon: the daemon.
+ * @return: false on error.
+ */
+int daemon_privileged(struct daemon* daemon);
 
 /**
  * Fork workers and start service.
@@ -188,5 +242,35 @@ void daemon_delete(struct daemon* daemon);
  * @param cfg: new config settings.
  */
 void daemon_apply_cfg(struct daemon* daemon, struct config_file* cfg);
+
+/**
+ * Setup acl list to have entries for the port list.
+ * @param list: the acl interface
+ * @param port_list: list of open ports, or none.
+ * @return false on failure
+ */
+int setup_acl_for_ports(struct acl_list* list, struct listen_port* port_list);
+
+/* setups the needed ssl contexts, fatal_exit() on any failure */
+void daemon_setup_sslctxs(struct daemon* daemon, struct config_file* cfg);
+
+/** See if the SSL cert files have changed */
+int ssl_cert_changed(struct daemon* daemon, struct config_file* cfg);
+
+/** Setup the listening DoT SSL_CTX, returns the ssl ctx. */
+void* daemon_setup_listen_dot_sslctx(struct daemon* daemon,
+	struct config_file* cfg);
+
+/** Setup the listening DoH SSL_CTX, returns the ssl ctx. */
+void* daemon_setup_listen_doh_sslctx(struct daemon* daemon,
+	struct config_file* cfg);
+
+/** Setup the listening Quic SSL_CTX, returns the ssl ctx */
+void* daemon_setup_listen_quic_sslctx(struct daemon* daemon,
+	struct config_file* cfg);
+
+/** Setup the connect DoT SSL_CTX, returns the ssl ctx */
+void* daemon_setup_connect_dot_sslctx(struct daemon* daemon,
+	struct config_file* cfg);
 
 #endif /* DAEMON_H */

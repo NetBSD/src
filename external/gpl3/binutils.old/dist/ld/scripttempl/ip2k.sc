@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -8,7 +8,7 @@
 # sections.  This hack likely leaves ld -Ur broken.
 test -n "${RELOCATING}" || exit 0
 cat << EOF
-/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -135,18 +135,10 @@ SECTIONS
 	/* Stack.  */
 	PROVIDE (__stack = 0x01000FFF);
 
-	/* Stabs debugging sections.  */
-	.stab           0 : { *(.stab) }
-	.stabstr        0 : { *(.stabstr) }
-	.stab.excl      0 : { *(.stab.excl) }
-	.stab.exclstr   0 : { *(.stab.exclstr) }
-	.stab.index     0 : { *(.stab.index) }
-	.stab.indexstr  0 : { *(.stab.indexstr) }
-	.comment        0 : { *(.comment) }
-
 EOF
 
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/misc-sections.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
 }

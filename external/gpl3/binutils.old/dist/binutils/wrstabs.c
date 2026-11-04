@@ -1,5 +1,5 @@
 /* wrstabs.c -- Output stabs debugging information
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -171,23 +171,6 @@ struct stab_write_handle
   const char *lineno_filename;
 };
 
-static struct bfd_hash_entry *string_hash_newfunc
-  (struct bfd_hash_entry *, struct bfd_hash_table *, const char *);
-static bool stab_write_symbol
-  (struct stab_write_handle *, int, int, bfd_vma, const char *);
-static bool stab_push_string
-  (struct stab_write_handle *, const char *, long, bool, unsigned int);
-static bool stab_push_defined_type
-  (struct stab_write_handle *, long, unsigned int);
-static char *stab_pop_type (struct stab_write_handle *);
-static bool stab_modify_type
-  (struct stab_write_handle *, int, unsigned int, long **, size_t *);
-static long stab_get_struct_index
-  (struct stab_write_handle *, const char *, unsigned int,
-   enum debug_type_kind, unsigned int *);
-static bool stab_class_method_var
-  (struct stab_write_handle *, const char *, enum debug_visibility,
-   bool, bool, bool, bfd_vma, bool);
 static bool stab_start_compilation_unit (void *, const char *);
 static bool stab_start_source (void *, const char *);
 static bool stab_empty_type (void *);
@@ -379,8 +362,7 @@ stab_write_symbol (struct stab_write_handle *info, int type, int desc,
   if (info->symbols_size + STAB_SYMBOL_SIZE > info->symbols_alloc)
     {
       info->symbols_alloc *= 2;
-      info->symbols = (bfd_byte *) xrealloc (info->symbols,
-					     info->symbols_alloc);
+      info->symbols = xrealloc (info->symbols, info->symbols_alloc);
     }
 
   memcpy (info->symbols + info->symbols_size, sym, STAB_SYMBOL_SIZE);
@@ -390,16 +372,25 @@ stab_write_symbol (struct stab_write_handle *info, int type, int desc,
   return true;
 }
 
+static bool
+stab_write_symbol_and_free (struct stab_write_handle *info, int type, int desc,
+			    bfd_vma value, char *string)
+{
+  bool ret = stab_write_symbol (info, type, desc, value, string);
+  free (string);
+  return ret;
+}
+
 /* Push a string on to the type stack.  */
 
 static bool
-stab_push_string (struct stab_write_handle *info, const char *string,
+stab_push_string (struct stab_write_handle *info, char *string,
 		  long tindex, bool definition, unsigned int size)
 {
   struct stab_type_stack *s;
 
-  s = (struct stab_type_stack *) xmalloc (sizeof *s);
-  s->string = xstrdup (string);
+  s = xmalloc (sizeof *s);
+  s->string = string;
   s->index = tindex;
   s->definition = definition;
   s->size = size;
@@ -415,6 +406,13 @@ stab_push_string (struct stab_write_handle *info, const char *string,
   return true;
 }
 
+static bool
+stab_push_string_dup (struct stab_write_handle *info, const char *string,
+		      long tindex, bool definition, unsigned int size)
+{
+  return stab_push_string (info, xstrdup (string), tindex, definition, size);
+}
+
 /* Push a type index which has already been defined.  */
 
 static bool
@@ -424,7 +422,7 @@ stab_push_defined_type (struct stab_write_handle *info, long tindex,
   char buf[20];
 
   sprintf (buf, "%ld", tindex);
-  return stab_push_string (info, buf, tindex, false, size);
+  return stab_push_string_dup (info, buf, tindex, false, size);
 }
 
 /* Pop a type off the type stack.  The caller is responsible for
@@ -468,17 +466,20 @@ write_stabs_in_sections_debugging_info (bfd *abfd, void *dhandle,
   struct stab_write_handle info;
   struct string_hash_entry *h;
   bfd_byte *p;
+  bool ret;
 
+  memset (&info, 0, sizeof info);
   info.abfd = abfd;
 
-  info.symbols_size = 0;
   info.symbols_alloc = 500;
-  info.symbols = (bfd_byte *) xmalloc (info.symbols_alloc);
+  info.symbols = xmalloc (info.symbols_alloc);
 
-  info.strings = NULL;
-  info.last_string = NULL;
   /* Reserve 1 byte for a null byte.  */
   info.strings_size = 1;
+  info.type_index = 1;
+  info.so_offset = -1;
+  info.fun_offset = -1;
+  info.pending_lbrac = (bfd_vma) -1;
 
   if (!bfd_hash_table_init (&info.strhash.table, string_hash_newfunc,
 			    sizeof (struct string_hash_entry))
@@ -487,38 +488,28 @@ write_stabs_in_sections_debugging_info (bfd *abfd, void *dhandle,
     {
       non_fatal ("bfd_hash_table_init_failed: %s",
 		 bfd_errmsg (bfd_get_error ()));
-      return false;
+      goto fail;
     }
-
-  info.type_stack = NULL;
-  info.type_index = 1;
-  memset (&info.type_cache, 0, sizeof info.type_cache);
-  info.so_offset = -1;
-  info.fun_offset = -1;
-  info.last_text_address = 0;
-  info.nesting = 0;
-  info.fnaddr = 0;
-  info.pending_lbrac = (bfd_vma) -1;
 
   /* The initial symbol holds the string size.  */
   if (! stab_write_symbol (&info, 0, 0, 0, (const char *) NULL))
-    return false;
+    goto fail;
 
   /* Output an initial N_SO symbol.  */
   info.so_offset = info.symbols_size;
   if (! stab_write_symbol (&info, N_SO, 0, 0, bfd_get_filename (abfd)))
-    return false;
+    goto fail;
 
   if (! debug_write (dhandle, &stab_fns, (void *) &info))
-    return false;
+    goto fail;
 
   if (info.pending_lbrac != (bfd_vma) -1)
-    return false;
+    goto fail;
 
   /* Output a trailing N_SO.  */
   if (! stab_write_symbol (&info, N_SO, 0, info.last_text_address,
 			   (const char *) NULL))
-    return false;
+    goto fail;
 
   /* Put the string size in the initial symbol.  */
   bfd_put_32 (abfd, info.strings_size, info.symbols + 8);
@@ -527,7 +518,7 @@ write_stabs_in_sections_debugging_info (bfd *abfd, void *dhandle,
   *psymsize = info.symbols_size;
 
   *pstringsize = info.strings_size;
-  *pstrings = (bfd_byte *) xmalloc (info.strings_size);
+  *pstrings = xmalloc (info.strings_size);
 
   p = *pstrings;
   *p++ = '\0';
@@ -537,7 +528,38 @@ write_stabs_in_sections_debugging_info (bfd *abfd, void *dhandle,
       p += strlen ((char *) p) + 1;
     }
 
-  return true;
+  ret = true;
+  goto out;
+
+ fail:
+  free (info.symbols);
+  ret = false;
+ out:
+  while (info.type_stack != NULL)
+    {
+      struct stab_type_stack *s = info.type_stack;
+      info.type_stack = s->next;
+      free (s->string);
+      free (s->fields);
+      if (s->baseclasses != NULL)
+	{
+	  for (int i = 0; s->baseclasses[i] != NULL; i++)
+	    free (s->baseclasses[i]);
+	  free (s->baseclasses);
+	}
+      free (s->methods);
+      free (s->vtable);
+      free (s);
+    }
+  free (info.type_cache.pointer_types);
+  free (info.type_cache.function_types);
+  free (info.type_cache.reference_types);
+  free (info.type_cache.struct_types);
+  if (info.typedef_hash.table.memory)
+    bfd_hash_table_free (&info.typedef_hash.table);
+  if (info.strhash.table.memory)
+    bfd_hash_table_free (&info.strhash.table);
+  return ret;
 }
 
 /* Start writing out information for a compilation unit.  */
@@ -596,7 +618,7 @@ stab_empty_type (void *p)
 
       sprintf (buf, "%ld=%ld", tindex, tindex);
 
-      return stab_push_string (info, buf, tindex, false, 0);
+      return stab_push_string_dup (info, buf, tindex, false, 0);
     }
 }
 
@@ -621,7 +643,7 @@ stab_void_type (void *p)
 
       sprintf (buf, "%ld=%ld", tindex, tindex);
 
-      return stab_push_string (info, buf, tindex, true, 0);
+      return stab_push_string_dup (info, buf, tindex, true, 0);
     }
 }
 
@@ -656,32 +678,34 @@ stab_int_type (void *p, unsigned int size, bool unsignedp)
 
       cache[size - 1] = tindex;
 
-      sprintf (buf, "%ld=r%ld;", tindex, tindex);
+      int len = sprintf (buf, "%ld=r%ld;", tindex, tindex);
       if (unsignedp)
 	{
-	  strcat (buf, "0;");
+	  strcpy (buf + len, "0;");
+	  len += 2;
 	  if (size < sizeof (long))
-	    sprintf (buf + strlen (buf), "%ld;", ((long) 1 << (size * 8)) - 1);
+	    sprintf (buf + len, "%ld;", ((long) 1 << (size * 8)) - 1);
 	  else if (size == sizeof (long))
-	    strcat (buf, "-1;");
+	    strcpy (buf + len, "-1;");
 	  else if (size == 8)
-	    strcat (buf, "01777777777777777777777;");
+	    strcpy (buf + len, "01777777777777777777777;");
 	  else
 	    abort ();
 	}
       else
 	{
 	  if (size <= sizeof (long))
-	    sprintf (buf + strlen (buf), "%ld;%ld;",
+	    sprintf (buf + len, "%ld;%ld;",
 		     (long) - ((unsigned long) 1 << (size * 8 - 1)),
 		     (long) (((unsigned long) 1 << (size * 8 - 1)) - 1));
 	  else if (size == 8)
-	    strcat (buf, "01000000000000000000000;0777777777777777777777;");
+	    strcpy (buf + len,
+		    "01000000000000000000000;0777777777777777777777;");
 	  else
 	    abort ();
 	}
 
-      return stab_push_string (info, buf, tindex, true, size);
+      return stab_push_string_dup (info, buf, tindex, true, size);
     }
 }
 
@@ -722,7 +746,7 @@ stab_float_type (void *p, unsigned int size)
 
       free (int_type);
 
-      return stab_push_string (info, buf, tindex, true, size);
+      return stab_push_string_dup (info, buf, tindex, true, size);
     }
 }
 
@@ -740,7 +764,7 @@ stab_complex_type (void *p, unsigned int size)
 
   sprintf (buf, "%ld=r%ld;%u;0;", tindex, tindex, size);
 
-  return stab_push_string (info, buf, tindex, true, size * 2);
+  return stab_push_string_dup (info, buf, tindex, true, size * 2);
 }
 
 /* Push a bool type.  We use an XCOFF predefined type, since gdb
@@ -793,53 +817,44 @@ stab_enum_type (void *p, const char *tag, const char **names,
       if (tag == NULL)
 	return false;
 
-      buf = (char *) xmalloc (10 + strlen (tag));
+      buf = xmalloc (4 + strlen (tag));
       sprintf (buf, "xe%s:", tag);
       /* FIXME: The size is just a guess.  */
-      if (! stab_push_string (info, buf, 0, false, 4))
-	return false;
-      free (buf);
-      return true;
+      return stab_push_string (info, buf, 0, false, 4);
     }
 
-  len = 10;
+  len = 25;
   if (tag != NULL)
     len += strlen (tag);
   for (pn = names; *pn != NULL; pn++)
-    len += strlen (*pn) + 20;
+    len += strlen (*pn) + 22;
 
-  buf = (char *) xmalloc (len);
-
+  buf = xmalloc (len);
+  char *out = buf;
   if (tag == NULL)
-    strcpy (buf, "e");
+    out = stpcpy (out, "e");
   else
     {
       tindex = info->type_index;
       ++info->type_index;
-      sprintf (buf, "%s:T%ld=e", tag, tindex);
+      out += sprintf (out, "%s:T%ld=e", tag, tindex);
     }
 
   for (pn = names, pv = vals; *pn != NULL; pn++, pv++)
-    sprintf (buf + strlen (buf), "%s:%ld,", *pn, (long) *pv);
-  strcat (buf, ";");
+    out += sprintf (out, "%s:%ld,", *pn, (long) *pv);
+  strcpy (out, ";");
 
   if (tag == NULL)
     {
       /* FIXME: The size is just a guess.  */
-      if (! stab_push_string (info, buf, 0, false, 4))
-	return false;
+      return stab_push_string (info, buf, 0, false, 4);
     }
   else
     {
       /* FIXME: The size is just a guess.  */
-      if (! stab_write_symbol (info, N_LSYM, 0, 0, buf)
-	  || ! stab_push_defined_type (info, tindex, 4))
-	return false;
+      return (stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf)
+	      && stab_push_defined_type (info, tindex, 4));
     }
-
-  free (buf);
-
-  return true;
 }
 
 /* Push a modification of the top type on the stack.  Cache the
@@ -867,12 +882,10 @@ stab_modify_type (struct stab_write_handle *info, int mod,
          new type, so we don't bother to define one.  */
       definition = info->type_stack->definition;
       s = stab_pop_type (info);
-      buf = (char *) xmalloc (strlen (s) + 2);
+      buf = xmalloc (strlen (s) + 2);
       sprintf (buf, "%c%s", mod, s);
       free (s);
-      if (! stab_push_string (info, buf, 0, definition, size))
-	return false;
-      free (buf);
+      return stab_push_string (info, buf, 0, definition, size);
     }
   else
     {
@@ -885,9 +898,9 @@ stab_modify_type (struct stab_write_handle *info, int mod,
 	    alloc = 10;
 	  while ((size_t) targindex >= alloc)
 	    alloc *= 2;
-	  *cache = (long *) xrealloc (*cache, alloc * sizeof (long));
+	  *cache = xrealloc (*cache, alloc * sizeof (**cache));
 	  memset (*cache + *cache_alloc, 0,
-		  (alloc - *cache_alloc) * sizeof (long));
+		  (alloc - *cache_alloc) * sizeof (**cache));
 	  *cache_alloc = alloc;
 	}
 
@@ -901,8 +914,7 @@ stab_modify_type (struct stab_write_handle *info, int mod,
              is a struct which we did not define at the time it was
              referenced).  */
 	  free (stab_pop_type (info));
-	  if (! stab_push_defined_type (info, tindex, size))
-	    return false;
+	  return stab_push_defined_type (info, tindex, size);
 	}
       else
 	{
@@ -910,20 +922,15 @@ stab_modify_type (struct stab_write_handle *info, int mod,
 	  ++info->type_index;
 
 	  s = stab_pop_type (info);
-	  buf = (char *) xmalloc (strlen (s) + 20);
+	  buf = xmalloc (strlen (s) + 23);
 	  sprintf (buf, "%ld=%c%s", tindex, mod, s);
 	  free (s);
 
 	  (*cache)[targindex] = tindex;
 
-	  if (! stab_push_string (info, buf, tindex, true, size))
-	    return false;
-
-	  free (buf);
+	  return stab_push_string (info, buf, tindex, true, size);
 	}
     }
-
-  return true;
 }
 
 /* Push a pointer type.  */
@@ -960,14 +967,11 @@ stab_function_type (void *p, int argcount,
 
 	  s = stab_pop_type (info);
 
-	  buf = (char *) xmalloc (strlen (s) + 3);
+	  buf = xmalloc (strlen (s) + 3);
 	  sprintf (buf, ":t%s", s);
 	  free (s);
 
-	  if (! stab_write_symbol (info, N_LSYM, 0, 0, buf))
-	    return false;
-
-	  free (buf);
+	  return stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf);
 	}
     }
 
@@ -1001,16 +1005,11 @@ stab_range_type (void *p, bfd_signed_vma low, bfd_signed_vma high)
   size = info->type_stack->size;
 
   s = stab_pop_type (info);
-  buf = (char *) xmalloc (strlen (s) + 100);
+  buf = xmalloc (strlen (s) + 45);
   sprintf (buf, "r%s;%ld;%ld;", s, (long) low, (long) high);
   free (s);
 
-  if (! stab_push_string (info, buf, 0, definition, size))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_push_string (info, buf, 0, definition, size);
 }
 
 /* Push an array type.  */
@@ -1033,13 +1032,10 @@ stab_array_type (void *p, bfd_signed_vma low, bfd_signed_vma high,
   element_size = info->type_stack->size;
   element = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (range) + strlen (element) + 100);
-
+  buf = xmalloc (strlen (range) + strlen (element) + 70);
+  char *out = buf;
   if (! stringp)
-    {
-      tindex = 0;
-      *buf = '\0';
-    }
+    tindex = 0;
   else
     {
       /* We need to define a type in order to include the string
@@ -1047,10 +1043,10 @@ stab_array_type (void *p, bfd_signed_vma low, bfd_signed_vma high,
       tindex = info->type_index;
       ++info->type_index;
       definition = true;
-      sprintf (buf, "%ld=@S;", tindex);
+      out += sprintf (out, "%ld=@S;", tindex);
     }
 
-  sprintf (buf + strlen (buf), "ar%s;%ld;%ld;%s",
+  sprintf (out, "ar%s;%ld;%ld;%s",
 	   range, (long) low, (long) high, element);
   free (range);
   free (element);
@@ -1059,12 +1055,7 @@ stab_array_type (void *p, bfd_signed_vma low, bfd_signed_vma high,
     size = 0;
   else
     size = element_size * ((high - low) + 1);
-  if (! stab_push_string (info, buf, tindex, definition, size))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_push_string (info, buf, tindex, definition, size);
 }
 
 /* Push a set type.  */
@@ -1080,13 +1071,10 @@ stab_set_type (void *p, bool bitstringp)
   definition = info->type_stack->definition;
 
   s = stab_pop_type (info);
-  buf = (char *) xmalloc (strlen (s) + 30);
-
+  buf = xmalloc (strlen (s) + 26);
+  char *out = buf;
   if (! bitstringp)
-    {
-      *buf = '\0';
-      tindex = 0;
-    }
+    tindex = 0;
   else
     {
       /* We need to define a type in order to include the string
@@ -1094,18 +1082,13 @@ stab_set_type (void *p, bool bitstringp)
       tindex = info->type_index;
       ++info->type_index;
       definition = true;
-      sprintf (buf, "%ld=@S;", tindex);
+      out += sprintf (out, "%ld=@S;", tindex);
     }
 
-  sprintf (buf + strlen (buf), "S%s", s);
+  sprintf (out, "S%s", s);
   free (s);
 
-  if (! stab_push_string (info, buf, tindex, definition, 0))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_push_string (info, buf, tindex, definition, 0);
 }
 
 /* Push an offset type.  */
@@ -1123,17 +1106,12 @@ stab_offset_type (void *p)
   definition = definition || info->type_stack->definition;
   base = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (target) + strlen (base) + 3);
+  buf = xmalloc (strlen (target) + strlen (base) + 3);
   sprintf (buf, "@%s,%s", base, target);
   free (base);
   free (target);
 
-  if (! stab_push_string (info, buf, 0, definition, 0))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_push_string (info, buf, 0, definition, 0);
 }
 
 /* Push a method type.  */
@@ -1178,9 +1156,12 @@ stab_method_type (void *p, bool domainp, int argcount,
 	args = NULL;
       else
 	{
-	  args = (char **) xmalloc (1 * sizeof (*args));
+	  args = xmalloc (1 * sizeof (*args));
 	  if (! stab_empty_type (p))
-	    return false;
+	    {
+	      free (args);
+	      return false;
+	    }
 	  definition = definition || info->type_stack->definition;
 	  args[0] = stab_pop_type (info);
 	  argcount = 1;
@@ -1188,7 +1169,7 @@ stab_method_type (void *p, bool domainp, int argcount,
     }
   else
     {
-      args = (char **) xmalloc ((argcount + 1) * sizeof (*args));
+      args = xmalloc ((argcount + 1) * sizeof (*args));
       for (i = argcount - 1; i >= 0; i--)
 	{
 	  definition = definition || info->type_stack->definition;
@@ -1197,7 +1178,12 @@ stab_method_type (void *p, bool domainp, int argcount,
       if (! varargs)
 	{
 	  if (! stab_empty_type (p))
-	    return false;
+	    {
+	      for (i = 0; i < argcount; i++)
+		free (args[i]);
+	      free (args);
+	      return false;
+	    }
 	  definition = definition || info->type_stack->definition;
 	  args[argcount] = stab_pop_type (info);
 	  ++argcount;
@@ -1207,31 +1193,30 @@ stab_method_type (void *p, bool domainp, int argcount,
   definition = definition || info->type_stack->definition;
   return_type = stab_pop_type (info);
 
-  len = strlen (domain) + strlen (return_type) + 10;
+  len = strlen (domain) + strlen (return_type) + 4 + argcount;
   for (i = 0; i < argcount; i++)
     len += strlen (args[i]);
 
-  buf = (char *) xmalloc (len);
-
-  sprintf (buf, "#%s,%s", domain, return_type);
+  buf = xmalloc (len);
+  char *out = buf;
+  *out++ = '#';
+  out = stpcpy (out, domain);
+  *out++ = ',';
+  out = stpcpy (out, return_type);
   free (domain);
   free (return_type);
   for (i = 0; i < argcount; i++)
     {
-      strcat (buf, ",");
-      strcat (buf, args[i]);
+      *out++ = ',';
+      out = stpcpy (out, args[i]);
       free (args[i]);
     }
-  strcat (buf, ";");
+  *out++ = ';';
+  *out = 0;
 
   free (args);
 
-  if (! stab_push_string (info, buf, 0, definition, 0))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_push_string (info, buf, 0, definition, 0);
 }
 
 /* Push a const version of a type.  */
@@ -1274,13 +1259,13 @@ stab_get_struct_index (struct stab_write_handle *info, const char *tag,
       while (id >= alloc)
 	alloc *= 2;
       info->type_cache.struct_types =
-	(struct stab_tag *) xrealloc (info->type_cache.struct_types,
-				      alloc * sizeof (struct stab_tag));
+	xrealloc (info->type_cache.struct_types,
+		  alloc * sizeof (*info->type_cache.struct_types));
       memset ((info->type_cache.struct_types
 	       + info->type_cache.struct_types_alloc),
 	      0,
 	      ((alloc - info->type_cache.struct_types_alloc)
-	       * sizeof (struct stab_tag)));
+	       * sizeof (*info->type_cache.struct_types)));
       info->type_cache.struct_types_alloc = alloc;
     }
 
@@ -1315,11 +1300,11 @@ stab_start_struct_type (void *p, const char *tag, unsigned int id,
   long tindex;
   bool definition;
   char buf[40];
+  char *out = buf;
 
   if (id == 0)
     {
       tindex = 0;
-      *buf = '\0';
       definition = false;
     }
   else
@@ -1328,18 +1313,18 @@ stab_start_struct_type (void *p, const char *tag, unsigned int id,
 				     &size);
       if (tindex < 0)
 	return false;
-      sprintf (buf, "%ld=", tindex);
+      out += sprintf (out, "%ld=", tindex);
       definition = true;
     }
 
-  sprintf (buf + strlen (buf), "%c%u",
+  sprintf (out, "%c%u",
 	   structp ? 's' : 'u',
 	   size);
 
-  if (! stab_push_string (info, buf, tindex, definition, size))
+  if (!stab_push_string_dup (info, buf, tindex, definition, size))
     return false;
 
-  info->type_stack->fields = (char *) xmalloc (1);
+  info->type_stack->fields = xmalloc (1);
   info->type_stack->fields[0] = '\0';
 
   return true;
@@ -1364,12 +1349,13 @@ stab_struct_field (void *p, const char *name, bfd_vma bitpos,
   /* Add this field to the end of the current struct fields, which is
      currently on the top of the stack.  */
   if (info->type_stack->fields == NULL)
-    return false;
+    {
+      free (s);
+      return false;
+    }
 
-  n = (char *) xmalloc (strlen (info->type_stack->fields)
-			+ strlen (name)
-			+ strlen (s)
-			+ 50);
+  n = xmalloc (strlen (info->type_stack->fields)
+	       + strlen (name) + strlen (s) + 50);
 
   switch (visibility)
     {
@@ -1401,6 +1387,7 @@ stab_struct_field (void *p, const char *name, bfd_vma bitpos,
 	   (long) bitpos, (long) bitsize);
 
   free (info->type_stack->fields);
+  free (s);
   info->type_stack->fields = n;
 
   if (definition)
@@ -1429,17 +1416,12 @@ stab_end_struct_type (void *p)
   fields = info->type_stack->fields;
   first = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (first) + strlen (fields) + 2);
+  buf = xmalloc (strlen (first) + strlen (fields) + 2);
   sprintf (buf, "%s%s;", first, fields);
   free (first);
   free (fields);
 
-  if (! stab_push_string (info, buf, tindex, definition, size))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_push_string (info, buf, tindex, definition, size);
 }
 
 /* Start outputting a class.  */
@@ -1460,7 +1442,10 @@ stab_start_class_type (void *p, const char *tag, unsigned int id,
     }
 
   if (! stab_start_struct_type (p, tag, id, structp, size))
-    return false;
+    {
+      free (vstring);
+      return false;
+    }
 
   if (vptr)
     {
@@ -1470,14 +1455,14 @@ stab_start_class_type (void *p, const char *tag, unsigned int id,
 	{
 	  if (info->type_stack->index < 1)
 	    return false;
-	  vtable = (char *) xmalloc (20);
+	  vtable = xmalloc (23);
 	  sprintf (vtable, "~%%%ld", info->type_stack->index);
 	}
       else
 	{
 	  if (vstring == NULL)
 	    return false;
-	  vtable = (char *) xmalloc (strlen (vstring) + 3);
+	  vtable = xmalloc (strlen (vstring) + 3);
 	  sprintf (vtable, "~%%%s", vstring);
 	  free (vstring);
 	  if (definition)
@@ -1508,11 +1493,8 @@ stab_class_static_member (void *p, const char *name, const char *physname,
 
   if (info->type_stack->fields == NULL)
     return false;
-  n = (char *) xmalloc (strlen (info->type_stack->fields)
-			+ strlen (name)
-			+ strlen (s)
-			+ strlen (physname)
-			+ 10);
+  n = xmalloc (strlen (info->type_stack->fields) + strlen (name)
+	       + strlen (s) + strlen (physname) + 10);
 
   switch (visibility)
     {
@@ -1535,6 +1517,7 @@ stab_class_static_member (void *p, const char *name, const char *physname,
   sprintf (n, "%s%s:%s%s:%s;", info->type_stack->fields, name, vis, s,
 	   physname);
 
+  free (s);
   free (info->type_stack->fields);
   info->type_stack->fields = n;
 
@@ -1562,7 +1545,7 @@ stab_class_baseclass (void *p, bfd_vma bitpos, bool is_virtual,
 
   /* Build the base class specifier.  */
 
-  buf = (char *) xmalloc (strlen (s) + 25);
+  buf = xmalloc (strlen (s) + 25);
   buf[0] = is_virtual ? '1' : '0';
   switch (visibility)
     {
@@ -1588,7 +1571,10 @@ stab_class_baseclass (void *p, bfd_vma bitpos, bool is_virtual,
   /* Add the new baseclass to the existing ones.  */
 
   if (info->type_stack == NULL || info->type_stack->fields == NULL)
-    return false;
+    {
+      free (buf);
+      return false;
+    }
 
   if (info->type_stack->baseclasses == NULL)
     c = 0;
@@ -1599,8 +1585,8 @@ stab_class_baseclass (void *p, bfd_vma bitpos, bool is_virtual,
 	++c;
     }
 
-  baseclasses = (char **) xrealloc (info->type_stack->baseclasses,
-				    (c + 2) * sizeof (*baseclasses));
+  baseclasses = xrealloc (info->type_stack->baseclasses,
+			  (c + 2) * sizeof (*baseclasses));
   baseclasses[c] = buf;
   baseclasses[c + 1] = NULL;
 
@@ -1625,16 +1611,12 @@ stab_class_start_method (void *p, const char *name)
 
   if (info->type_stack->methods == NULL)
     {
-      m = (char *) xmalloc (strlen (name) + 3);
+      m = xmalloc (strlen (name) + 3);
       *m = '\0';
     }
   else
-    {
-      m = (char *) xrealloc (info->type_stack->methods,
-			     (strlen (info->type_stack->methods)
-			      + strlen (name)
-			      + 4));
-    }
+    m = xrealloc (info->type_stack->methods,
+		  strlen (info->type_stack->methods) + strlen (name) + 3);
 
   sprintf (m + strlen (m), "%s::", name);
 
@@ -1667,7 +1649,11 @@ stab_class_method_var (struct stab_write_handle *info, const char *physname,
     }
 
   if (info->type_stack == NULL || info->type_stack->methods == NULL)
-    return false;
+    {
+      free (type);
+      free (context);
+      return false;
+    }
 
   switch (visibility)
     {
@@ -1709,22 +1695,21 @@ stab_class_method_var (struct stab_write_handle *info, const char *physname,
   else
     typec = '*';
 
+  size_t cur_len = strlen (info->type_stack->methods);
   info->type_stack->methods =
-    (char *) xrealloc (info->type_stack->methods,
-		       (strlen (info->type_stack->methods)
-			+ strlen (type)
-			+ strlen (physname)
-			+ (contextp ? strlen (context) : 0)
-			+ 40));
+    xrealloc (info->type_stack->methods, (cur_len
+					  + strlen (type)
+					  + strlen (physname)
+					  + (contextp ? strlen (context) : 0)
+					  + 40));
 
-  sprintf (info->type_stack->methods + strlen (info->type_stack->methods),
-	   "%s:%s;%c%c%c", type, physname, visc, qualc, typec);
+  char *out = info->type_stack->methods + cur_len;
+  out += sprintf (out, "%s:%s;%c%c%c", type, physname, visc, qualc, typec);
   free (type);
 
   if (contextp)
     {
-      sprintf (info->type_stack->methods + strlen (info->type_stack->methods),
-	       "%ld;%s;", (long) voffset, context);
+      sprintf (out, "%ld;%s;", (long) voffset, context);
       free (context);
     }
 
@@ -1811,38 +1796,38 @@ stab_end_class_type (void *p)
 
   /* Build the class definition.  */
 
-  buf = (char *) xmalloc (len);
+  buf = xmalloc (len);
 
-  strcpy (buf, info->type_stack->string);
+  char *out = stpcpy (buf, info->type_stack->string);
 
   if (info->type_stack->baseclasses != NULL)
     {
-      sprintf (buf + strlen (buf), "!%u,", i);
+      out += sprintf (out, "!%u,", i);
       for (i = 0; info->type_stack->baseclasses[i] != NULL; i++)
 	{
-	  strcat (buf, info->type_stack->baseclasses[i]);
+	  out = stpcpy (out, info->type_stack->baseclasses[i]);
 	  free (info->type_stack->baseclasses[i]);
 	}
       free (info->type_stack->baseclasses);
       info->type_stack->baseclasses = NULL;
     }
 
-  strcat (buf, info->type_stack->fields);
+  out = stpcpy (out, info->type_stack->fields);
   free (info->type_stack->fields);
   info->type_stack->fields = NULL;
 
   if (info->type_stack->methods != NULL)
     {
-      strcat (buf, info->type_stack->methods);
+      out = stpcpy (out, info->type_stack->methods);
       free (info->type_stack->methods);
       info->type_stack->methods = NULL;
     }
 
-  strcat (buf, ";");
+  out = stpcpy (out, ";");
 
   if (info->type_stack->vtable != NULL)
     {
-      strcat (buf, info->type_stack->vtable);
+      out = stpcpy (out, info->type_stack->vtable);
       free (info->type_stack->vtable);
       info->type_stack->vtable = NULL;
     }
@@ -1902,7 +1887,7 @@ stab_typdef (void *p, const char *name)
   size = info->type_stack->size;
   s = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (name) + strlen (s) + 20);
+  buf = xmalloc (strlen (name) + strlen (s) + 20);
 
   if (tindex > 0)
     sprintf (buf, "%s:t%s", name, s);
@@ -1915,10 +1900,8 @@ stab_typdef (void *p, const char *name)
 
   free (s);
 
-  if (! stab_write_symbol (info, N_LSYM, 0, 0, buf))
+  if (!stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf))
     return false;
-
-  free (buf);
 
   h = string_hash_lookup (&info->typedef_hash, name, true, false);
   if (h == NULL)
@@ -1946,17 +1929,12 @@ stab_tag (void *p, const char *tag)
 
   s = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (tag) + strlen (s) + 3);
+  buf = xmalloc (strlen (tag) + strlen (s) + 3);
 
   sprintf (buf, "%s:T%s", tag, s);
   free (s);
 
-  if (! stab_write_symbol (info, N_LSYM, 0, 0, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf);
 }
 
 /* Define an integer constant.  */
@@ -1967,15 +1945,10 @@ stab_int_constant (void *p, const char *name, bfd_vma val)
   struct stab_write_handle *info = (struct stab_write_handle *) p;
   char *buf;
 
-  buf = (char *) xmalloc (strlen (name) + 20);
+  buf = xmalloc (strlen (name) + 20);
   sprintf (buf, "%s:c=i%ld", name, (long) val);
 
-  if (! stab_write_symbol (info, N_LSYM, 0, 0, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf);
 }
 
 /* Define a floating point constant.  */
@@ -1986,15 +1959,10 @@ stab_float_constant (void *p, const char *name, double val)
   struct stab_write_handle *info = (struct stab_write_handle *) p;
   char *buf;
 
-  buf = (char *) xmalloc (strlen (name) + 20);
+  buf = xmalloc (strlen (name) + 20);
   sprintf (buf, "%s:c=f%g", name, val);
 
-  if (! stab_write_symbol (info, N_LSYM, 0, 0, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf);
 }
 
 /* Define a typed constant.  */
@@ -2007,16 +1975,11 @@ stab_typed_constant (void *p, const char *name, bfd_vma val)
 
   s = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (name) + strlen (s) + 20);
+  buf = xmalloc (strlen (name) + strlen (s) + 20);
   sprintf (buf, "%s:c=e%s,%ld", name, s, (long) val);
   free (s);
 
-  if (! stab_write_symbol (info, N_LSYM, 0, 0, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, N_LSYM, 0, 0, buf);
 }
 
 /* Record a variable.  */
@@ -2064,7 +2027,7 @@ stab_variable (void *p, const char *name, enum debug_var_kind kind,
 
 	  tindex = info->type_index;
 	  ++info->type_index;
-	  n = (char *) xmalloc (strlen (s) + 20);
+	  n = xmalloc (strlen (s) + 20);
 	  sprintf (n, "%ld=%s", tindex, s);
 	  free (s);
 	  s = n;
@@ -2077,16 +2040,11 @@ stab_variable (void *p, const char *name, enum debug_var_kind kind,
       break;
     }
 
-  buf = (char *) xmalloc (strlen (name) + strlen (s) + 3);
+  buf = xmalloc (strlen (name) + strlen (s) + 3);
   sprintf (buf, "%s:%s%s", name, kindstr, s);
   free (s);
 
-  if (! stab_write_symbol (info, stab_type, 0, val, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, stab_type, 0, val, buf);
 }
 
 /* Start outputting a function.  */
@@ -2102,20 +2060,16 @@ stab_start_function (void *p, const char *name, bool globalp)
 
   rettype = stab_pop_type (info);
 
-  buf = (char *) xmalloc (strlen (name) + strlen (rettype) + 3);
+  buf = xmalloc (strlen (name) + strlen (rettype) + 3);
   sprintf (buf, "%s:%c%s", name,
 	   globalp ? 'F' : 'f',
 	   rettype);
+  free (rettype);
 
   /* We don't know the value now, so we set it in start_block.  */
   info->fun_offset = info->symbols_size;
 
-  if (! stab_write_symbol (info, N_FUN, 0, 0, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, N_FUN, 0, 0, buf);
 }
 
 /* Output a function parameter.  */
@@ -2156,16 +2110,11 @@ stab_function_parameter (void *p, const char *name, enum debug_parm_kind kind, b
       break;
     }
 
-  buf = (char *) xmalloc (strlen (name) + strlen (s) + 3);
+  buf = xmalloc (strlen (name) + strlen (s) + 3);
   sprintf (buf, "%s:%c%s", name, kindc, s);
   free (s);
 
-  if (! stab_write_symbol (info, stab_type, 0, val, buf))
-    return false;
-
-  free (buf);
-
-  return true;
+  return stab_write_symbol_and_free (info, stab_type, 0, val, buf);
 }
 
 /* Start a block.  */

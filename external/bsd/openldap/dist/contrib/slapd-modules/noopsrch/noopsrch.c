@@ -1,10 +1,10 @@
-/*	$NetBSD: noopsrch.c,v 1.3 2021/08/14 16:14:52 christos Exp $	*/
+/*	$NetBSD: noopsrch.c,v 1.3.4.1 2026/11/04 22:38:58 perseant Exp $	*/
 
 /* noopsrch.c - LDAP Control that counts entries a search would return */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2021 The OpenLDAP Foundation.
+ * Copyright 2010-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: noopsrch.c,v 1.3 2021/08/14 16:14:52 christos Exp $");
+__RCSID("$NetBSD: noopsrch.c,v 1.3.4.1 2026/11/04 22:38:58 perseant Exp $");
 
 #include "portable.h"
 

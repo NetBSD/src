@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -20,6 +20,13 @@ if test $AUTOCA = autocano; then
 	echo "Automatic CA overlay not available, test skipped"
 	exit 0
 fi 
+
+if test $BACKEND = ldif ; then
+	# autoca tries to modify an entry in a search response,
+	# which deadlocks because the tree is readlocked by the search.
+	echo "Test does not support $BACKEND backend, test skipped"
+	exit 0
+fi
 
 CFDIR=$TESTDIR/slapd.d
 
@@ -40,6 +47,12 @@ $SLAPPASSWD -g -n >$CONFIGPWF
 echo "Starting slapd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND < $DYNAMICCONF > $CONFLDIF
 $SLAPADD -F $CFDIR -n 0 -l $CONFLDIF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
+
 $SLAPD -F $CFDIR -h $URIP1 -d $LVL > $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then

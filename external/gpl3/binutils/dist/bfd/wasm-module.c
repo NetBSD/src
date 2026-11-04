@@ -1,5 +1,5 @@
 /* BFD back-end for WebAssembly modules.
-   Copyright (C) 2017-2024 Free Software Foundation, Inc.
+   Copyright (C) 2017-2026 Free Software Foundation, Inc.
 
    Based on srec.c, mmo.c, and binary.c
 
@@ -468,6 +468,7 @@ wasm_scan (bfd *abfd)
 						  bfdsec->size);
 	  if (!bfdsec->contents)
 	    goto error_return;
+	  bfdsec->alloced = 1;
 	}
 
       vma += bfdsec->size;
@@ -804,6 +805,7 @@ const bfd_target wasm_vec =
   255,				/* AR_max_namelen.  */
   0,				/* Match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  false,			/* merge sections */
   /* Routines to byte-swap various sized integers from the data sections.  */
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
@@ -823,13 +825,13 @@ const bfd_target wasm_vec =
   {
     _bfd_bool_bfd_false_error,
     wasm_mkobject,
-    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     wasm_write_object_contents,
-    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
 

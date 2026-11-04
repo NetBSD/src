@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -149,7 +149,7 @@ Data_window::bind (Span *span, int64_t minSize)
 	    { // Need to realloc 'base'
 	      free (base);
 	      basesize = wsize;
-	      base = (void *) malloc (basesize);
+	      base = (void *) xmalloc (basesize);
 	      Dprintf (DEBUG_DATA_WINDOW,
 		       NTXT ("Data_window:bind:%d realloc basesize=%llx woffset=%lld \n"),
 		       (int) __LINE__, (long long) basesize, (long long) woffset);
@@ -188,7 +188,7 @@ Data_window::get_data (int64_t offset, int64_t size, void *datap)
     return NULL;
   if (datap == NULL && !mmap_on_file)
     // Can be remmaped or reallocated. Need to make a copy
-    datap = (void *) malloc (size);
+    datap = (void *) xmalloc (size);
   if (datap)
     {
       memcpy (datap, buf, (size_t) size);

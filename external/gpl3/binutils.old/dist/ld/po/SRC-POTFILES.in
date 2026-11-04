@@ -31,6 +31,8 @@ ldwrite.h
 lexsup.c
 mri.c
 mri.h
+pdb.c
+pdb.h
 pe-dll.c
 pe-dll.h
 pep-dll.c

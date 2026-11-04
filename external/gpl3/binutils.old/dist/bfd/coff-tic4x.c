@@ -1,5 +1,5 @@
 /* BFD back-end for TMS320C4X coff binaries.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    Contributed by Michael Hayes (m.hayes@elec.canterbury.ac.nz)
 
@@ -219,7 +219,7 @@ tic4x_reloc_processing (arelent *relent,
 
   relent->address = reloc->r_vaddr;
 
-  if (reloc->r_symndx != -1)
+  if (reloc->r_symndx != -1 && symbols != NULL)
     {
       if (reloc->r_symndx < 0 || reloc->r_symndx >= obj_conv_table_size (abfd))
 	{
@@ -227,7 +227,7 @@ tic4x_reloc_processing (arelent *relent,
 	    /* xgettext: c-format */
 	    (_("%pB: warning: illegal symbol index %ld in relocs"),
 	     abfd, reloc->r_symndx);
-	  relent->sym_ptr_ptr = bfd_abs_section_ptr->symbol_ptr_ptr;
+	  relent->sym_ptr_ptr = &bfd_abs_section_ptr->symbol;
 	  ptr = NULL;
 	}
       else
@@ -239,7 +239,7 @@ tic4x_reloc_processing (arelent *relent,
     }
   else
     {
-      relent->sym_ptr_ptr = section->symbol_ptr_ptr;
+      relent->sym_ptr_ptr = &section->symbol;
       ptr = *(relent->sym_ptr_ptr);
     }
 

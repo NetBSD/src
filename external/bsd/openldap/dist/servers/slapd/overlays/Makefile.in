@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2003-2021 The OpenLDAP Foundation.
+## Copyright 2003-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -24,6 +24,7 @@ SRCS = overlays.c \
 	dynlist.c \
 	homedir.c \
 	memberof.c \
+	nestgroup.c \
 	otp.c \
 	pcache.c \
 	collect.c \
@@ -95,6 +96,9 @@ homedir.la : homedir.lo
 
 memberof.la : memberof.lo
 	$(LTLINK_MOD) -module -o $@ memberof.lo version.lo $(LINK_LIBS)
+
+nestgroup.la : nestgroup.lo
+	$(LTLINK_MOD) -module -o $@ nestgroup.lo version.lo $(LINK_LIBS)
 
 otp.la : otp.lo
 	$(LTLINK_MOD) -module -o $@ otp.lo version.lo $(LINK_LIBS)

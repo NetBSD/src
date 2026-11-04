@@ -30,7 +30,7 @@ AM_CFLAGS += -Wundef -Wbad-function-cast -Winline -Wcast-align
 AM_CFLAGS += -Wdeclaration-after-statement -Wno-pointer-sign -Wno-attributes
 AM_CFLAGS += -Wno-unused-result -Wno-format-y2k
 if IS_DARWIN
-AM_CFLAGS += -Wno-deprecated-declarations -Wno-cast-align
+AM_CFLAGS += -Wno-deprecated-declarations -Wno-cast-align -Wno-macro-redefined
 endif
 AM_CPPFLAGS += -DDEBUG
 endif
@@ -64,6 +64,11 @@ endif
 # Set flags for Haiku.
 if IS_HAIKU
 AM_CPPFLAGS += -D_BSD_SOURCE
+endif
+
+# Set flags for Cygwin.
+if IS_CYGWIN
+AM_CPPFLAGS += -DTMUX_SOCK_PERM=0
 endif
 
 # List of sources.

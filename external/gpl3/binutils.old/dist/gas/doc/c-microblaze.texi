@@ -1,4 +1,4 @@
-@c Copyright (C) 2009-2022 Free Software Foundation, Inc.
+@c Copyright (C) 2009-2025 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 @ifset GENERIC
@@ -22,6 +22,7 @@ Reference Guide (UG081)} available at www.xilinx.com.
 @menu
 * MicroBlaze Directives::           Directives for MicroBlaze Processors.
 * MicroBlaze Syntax::               Syntax for the MicroBlaze
+* MicroBlaze Options::              Options for MicroBlaze Processors.
 @end menu
 
 @node MicroBlaze Directives
@@ -97,3 +98,18 @@ preprocessor control command (@pxref{Preprocessing}).
 @cindex MicroBlaze line separator
 The @samp{;} character can be used to separate statements on the same
 line.
+
+@node MicroBlaze Options
+@section Options
+
+MicroBlaze processors support the following options:
+
+@cindex MicroBlaze Options
+
+@table @code
+@item -mbig-endian
+Build for MicroBlaze in Big Endian configuration.
+
+@item -mlittle-endian
+Build for MicroBlaze in Little Endian configuration.
+@end table

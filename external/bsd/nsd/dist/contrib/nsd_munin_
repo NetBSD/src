@@ -318,8 +318,8 @@ if test "$1" = "config" ; then
 		echo "graph_vlabel zone count"
 		echo "graph_category DNS"
 		p_config "zone.total" "total zones" "GAUGE"
-		p_config "zone.master" "master zones" "GAUGE"
-		p_config "zone.slave" "slave zones" "GAUGE"
+		p_config "zone.primary" "primary zones" "GAUGE"
+		p_config "zone.secondary" "secondary zones" "GAUGE"
 		echo "graph_info number of zones served by NSD."
 		;;
 	esac
@@ -418,11 +418,11 @@ by_rcode)
 	done
 	;;
 zones)
-	get_value "zone.master"
+	get_value "zone.primary"
 	nummas="$value"
-	get_value "zone.slave"
+	get_value "zone.secondary"
 	numsla="$value"
 	echo "zone_total.value" `expr $nummas + $numsla`
-	echo "zone_master.value" "$nummas"
-	echo "zone_slave.value" "$numsla"
+	echo "zone_primary.value" "$nummas"
+	echo "zone_secondary.value" "$numsla"
 esac

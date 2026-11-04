@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.36.2.1 2025/08/02 05:23:58 perseant Exp $
+# $NetBSD: Makefile,v 1.36.2.2 2026/11/04 22:40:15 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -205,7 +205,6 @@ CPPFLAGS+=	\
 -DHAVE_GETPROGNAME=1 \
 -DHAVE_INTTYPES_H=1 \
 -DHAVE_LIBM=1 \
--DHAVE_LIBPROC_H=1 \
 -DHAVE_MEMMEM=1 \
 -DHAVE_MEMORY_H=1 \
 -DHAVE_PATHS_H=1 \
@@ -240,16 +239,16 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 3.5a\" \
+-DPACKAGE_STRING=\"tmux\ 3.6b\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"3.5a\" \
+-DPACKAGE_VERSION=\"3.6b\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
 -DTMUX_LOCK_CMD='"lock -np"' \
 -DTMUX_TERM='"tmux-256color"' \
--DTMUX_VERSION='"3.5a"' \
--DVERSION=\"3.5a\" \
+-DTMUX_VERSION='"3.6b"' \
+-DVERSION=\"3.6b\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_NETBSD_SOURCE \
@@ -261,11 +260,13 @@ CPPFLAGS+=	\
 LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
-COPTS.format.c += -Wno-format-nonliteral
-COPTS.input.c += -Wno-sign-compare -Wno-pointer-sign
-COPTS.tty.c += -Wno-pointer-sign
+COPTS.format.c+=	-Wno-format-nonliteral
+COPTS.input.c+=		-Wno-sign-compare -Wno-pointer-sign
+COPTS.mode-tree.c+=	-Wno-error=stack-protector
+COPTS.tty.c+=		-Wno-pointer-sign
 COPTS.utempter.c+=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.window-copy.c+=	${CC_WNO_MAYBE_UNINITIALIZED} -Wno-pointer-sign
+COPTS.cmd-run-shell.c += ${CC_WNO_MAYBE_UNINITIALIZED}
 
 # The man page needs substitutions, but the dist file usurps the
 # output file suffix.

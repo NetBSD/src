@@ -1,4 +1,4 @@
-.TH "event2/tag.h" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.TH "event2/tag.h" 3 "libevent-2.1.13-stable" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -7,11 +7,11 @@ event2/tag.h \- Helper functions for reading and writing tagged data onto buffer
 .SH SYNOPSIS
 .br
 .PP
-\fC#include <event2/visibility\&.h>\fP
+\fR#include <event2/visibility\&.h>\fP
 .br
-\fC#include <event2/event\-config\&.h>\fP
+\fR#include <event2/event\-config\&.h>\fP
 .br
-\fC#include <event2/util\&.h>\fP
+\fR#include <event2/util\&.h>\fP
 .br
 
 .SS "Functions"
@@ -23,7 +23,7 @@ event2/tag.h \- Helper functions for reading and writing tagged data onto buffer
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL void \fBevtag_encode_int\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t number)"
 .br
-.RI "\fIEncode an integer and store it in an evbuffer\&. \fP"
+.RI "Encode an integer and store it in an evbuffer\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL void \fBevtag_encode_int64\fP (struct \fBevbuffer\fP *evbuf, ev_uint64_t number)"
 .br
@@ -66,7 +66,7 @@ event2/tag.h \- Helper functions for reading and writing tagged data onto buffer
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevtag_unmarshal_header\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t *ptag)"
 .br
-.RI "\fIUnmarshals the header and returns the length of the payload\&. \fP"
+.RI "Unmarshals the header and returns the length of the payload\&. "
 .ti -1c
 .RI "EVENT2_EXPORT_SYMBOL int \fBevtag_unmarshal_int\fP (struct \fBevbuffer\fP *evbuf, ev_uint32_t need_tag, ev_uint32_t *pinteger)"
 .br
@@ -91,8 +91,9 @@ Helper functions for reading and writing tagged data onto buffers\&.
 
 .PP
 Encode an integer and store it in an evbuffer\&. We encode integers by nybbles; the first nibble contains the number of significant nibbles - 1; this allows us to encode up to 64-bit integers\&. This function is byte-order independent\&.
+
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIevbuf\fP evbuffer to store the encoded number 
 .br
@@ -103,16 +104,17 @@ Encode an integer and store it in an evbuffer\&. We encode integers by nybbles; 
 .SS "EVENT2_EXPORT_SYMBOL int evtag_unmarshal_header (struct \fBevbuffer\fP * evbuf, ev_uint32_t * ptag)"
 
 .PP
-Unmarshals the header and returns the length of the payload\&. 
+Unmarshals the header and returns the length of the payload\&. Returns an error if the payload length is above INT_MAX\&.
+
 .PP
-\fBParameters:\fP
+\fBParameters\fP
 .RS 4
 \fIevbuf\fP the buffer from which to unmarshal data 
 .br
 \fIptag\fP a pointer in which the tag id is being stored 
 .RE
 .PP
-\fBReturns:\fP
+\fBReturns\fP
 .RS 4
 -1 on failure or the number of bytes in the remaining payload\&. 
 .RE
@@ -120,4 +122,4 @@ Unmarshals the header and returns the length of the payload\&.
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for libevent from the source code\&.
+Generated automatically by Doxygen for libevent-2\&.1\&.13-stable from the source code\&.

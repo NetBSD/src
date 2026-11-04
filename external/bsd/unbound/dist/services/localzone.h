@@ -57,6 +57,9 @@ struct sldns_buffer;
 struct comm_reply;
 struct config_strlist;
 
+extern const char** local_zones_default_special;
+extern const char** local_zones_default_reverse;
+
 /**
  * Local zone type
  * This type determines processing for queries that did not match
@@ -90,6 +93,12 @@ enum localzone_type {
 	local_zone_always_transparent,
 	/** resolve normally, even when there is local data but return NODATA for A queries */
 	local_zone_block_a,
+	/** resolve normally, even when there is local data, but return NODATA for AAAA queries */
+	local_zone_block_aaaa,
+	/** resolve normally, use local data, else return NODATA for A queries */
+	local_zone_block_a_wdata,
+	/** resolve normally, use local data, else return NODATA for AAAA queries */
+	local_zone_block_aaaa_wdata,
 	/** answer with error, even when there is local data */	
 	local_zone_always_refuse,
 	/** answer with nxdomain, even when there is local data */
@@ -262,11 +271,13 @@ void local_zone_delete(struct local_zone* z);
  * @param taglen: length of taglist.
  * @param ignoretags: lookup zone by name and class, regardless the
  * local-zone's tags.
+ * @param foradd: if the lookup is for addition or removal of the type.
+ *	Used for type DS. The lookup for answers turns this off.
  * @return closest local_zone or NULL if no covering zone is found.
  */
 struct local_zone* local_zones_tags_lookup(struct local_zones* zones, 
 	uint8_t* name, size_t len, int labs, uint16_t dclass, uint16_t dtype,
-	uint8_t* taglist, size_t taglen, int ignoretags);
+	uint8_t* taglist, size_t taglen, int ignoretags, int foradd);
 
 /**
  * Lookup zone that contains the given name, class.
@@ -278,10 +289,13 @@ struct local_zone* local_zones_tags_lookup(struct local_zones* zones,
  * @param dclass: class to lookup.
  * @param dtype: type of the record, if type DS then a zone higher up is found
  *   pass 0 to just plain find a zone for a name.
+ * @param foradd: if the lookup is for addition or removal of the type.
+ *	Used for type DS. The lookup for answers turns this off.
  * @return closest local_zone or NULL if no covering zone is found.
  */
 struct local_zone* local_zones_lookup(struct local_zones* zones, 
-	uint8_t* name, size_t len, int labs, uint16_t dclass, uint16_t dtype);
+	uint8_t* name, size_t len, int labs, uint16_t dclass, uint16_t dtype,
+	int foradd);
 
 /**
  * Debug helper. Print all zones 
@@ -565,7 +579,7 @@ enum respip_action {
 	respip_always_nxdomain = local_zone_always_nxdomain,
         /** answer with nodata response */
 	respip_always_nodata = local_zone_always_nodata,
-        /** answer with nodata response */
+        /** drop query */
 	respip_always_deny = local_zone_always_deny,
 	/** RPZ: truncate answer in order to force switch to tcp */
 	respip_truncate = local_zone_truncate,
@@ -641,4 +655,37 @@ local_zone_enter_rr(struct local_zone* z, uint8_t* nm, size_t nmlen,
  */
 struct local_data* 
 local_zone_find_data(struct local_zone* z, uint8_t* nm, size_t nmlen, int nmlabs);
+
+/** Get memory usage for local_zones tree. The routine locks and unlocks
+ * the tree for reading. */
+size_t local_zones_get_mem(struct local_zones* zones);
+
+/**
+ * Swap internal tree with preallocated entries. Caller should manage
+ * the locks.
+ * @param zones: the local zones structure.
+ * @param data: the data structure used to take elements from. This contains
+ * 	the old elements on return.
+ */
+void local_zones_swap_tree(struct local_zones* zones,
+	struct local_zones* data);
+
+/** Enter a new zone; returns with WRlock
+ *  Made public for unit testing
+ *  @param zones: the local zones tree
+ *  @param name: name of the zone
+ *  @param type: type of the zone
+ *  @param dclass: class of the zone
+ *  @return local_zone (or duplicate), NULL on parse and malloc failures
+ */
+struct local_zone*
+lz_enter_zone(struct local_zones* zones, const char* name, const char* type,
+	uint16_t dclass);
+
+/** Setup parent pointers, so that a lookup can be done for closest match
+ *  Made public for unit testing
+ *  @param zones: the local zones tree
+ */
+void
+lz_init_parents(struct local_zones* zones);
 #endif /* SERVICES_LOCALZONE_H */

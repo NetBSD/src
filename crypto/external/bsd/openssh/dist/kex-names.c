@@ -1,6 +1,6 @@
-/*	$NetBSD: kex-names.c,v 1.3.4.2 2025/08/02 05:18:46 perseant Exp $	*/
-/* $OpenBSD: kex-names.c,v 1.4 2024/09/09 02:39:57 djm Exp $ */
-
+/*	$NetBSD: kex-names.c,v 1.3.4.3 2026/11/04 22:36:38 perseant Exp $	*/
+/* $OpenBSD: kex-names.c,v 1.7 2026/02/14 00:18:34 jsg Exp $ */
+/* $OpenBSD: kex-names.c,v 1.10 2026/08/08 07:27:54 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -26,12 +26,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex-names.c,v 1.3.4.2 2025/08/02 05:18:46 perseant Exp $");
+__RCSID("$NetBSD: kex-names.c,v 1.3.4.3 2026/11/04 22:36:38 perseant Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <unistd.h>
 #include <signal.h>
 
 #ifdef WITH_OPENSSL
@@ -46,60 +45,55 @@ __RCSID("$NetBSD: kex-names.c,v 1.3.4.2 2025/08/02 05:18:46 perseant Exp $");
 #include "misc.h"
 
 #include "ssherr.h"
-#include "xmalloc.h"
 
 struct kexalg {
 	const char *name;
 	u_int type;
 	int ec_nid;
 	int hash_alg;
+	int pq_alg;
 };
 static const struct kexalg kexalgs[] = {
 #ifdef WITH_OPENSSL
-	{ KEX_DH1, KEX_DH_GRP1_SHA1, 0, SSH_DIGEST_SHA1 },
-	{ KEX_DH14_SHA1, KEX_DH_GRP14_SHA1, 0, SSH_DIGEST_SHA1 },
-	{ KEX_DH14_SHA256, KEX_DH_GRP14_SHA256, 0, SSH_DIGEST_SHA256 },
-	{ KEX_DH16_SHA512, KEX_DH_GRP16_SHA512, 0, SSH_DIGEST_SHA512 },
-	{ KEX_DH18_SHA512, KEX_DH_GRP18_SHA512, 0, SSH_DIGEST_SHA512 },
-	{ KEX_DHGEX_SHA1, KEX_DH_GEX_SHA1, 0, SSH_DIGEST_SHA1 },
-	{ KEX_DHGEX_SHA256, KEX_DH_GEX_SHA256, 0, SSH_DIGEST_SHA256 },
+	{ KEX_DH1, KEX_DH_GRP1_SHA1, 0, SSH_DIGEST_SHA1, KEX_NOT_PQ },
+	{ KEX_DH14_SHA1, KEX_DH_GRP14_SHA1, 0, SSH_DIGEST_SHA1, KEX_NOT_PQ },
+	{ KEX_DH14_SHA256, KEX_DH_GRP14_SHA256, 0, SSH_DIGEST_SHA256, KEX_NOT_PQ },
+	{ KEX_DH16_SHA512, KEX_DH_GRP16_SHA512, 0, SSH_DIGEST_SHA512, KEX_NOT_PQ },
+	{ KEX_DH18_SHA512, KEX_DH_GRP18_SHA512, 0, SSH_DIGEST_SHA512, KEX_NOT_PQ },
+	{ KEX_DHGEX_SHA1, KEX_DH_GEX_SHA1, 0, SSH_DIGEST_SHA1, KEX_NOT_PQ },
+	{ KEX_DHGEX_SHA256, KEX_DH_GEX_SHA256, 0, SSH_DIGEST_SHA256, KEX_NOT_PQ },
 	{ KEX_ECDH_SHA2_NISTP256, KEX_ECDH_SHA2,
-	    NID_X9_62_prime256v1, SSH_DIGEST_SHA256 },
+	    NID_X9_62_prime256v1, SSH_DIGEST_SHA256, KEX_NOT_PQ },
 	{ KEX_ECDH_SHA2_NISTP384, KEX_ECDH_SHA2, NID_secp384r1,
-	    SSH_DIGEST_SHA384 },
+	    SSH_DIGEST_SHA384, KEX_NOT_PQ },
 	{ KEX_ECDH_SHA2_NISTP521, KEX_ECDH_SHA2, NID_secp521r1,
-	    SSH_DIGEST_SHA512 },
+	    SSH_DIGEST_SHA512, KEX_NOT_PQ },
+	{ KEX_MLKEM768NISTP256_SHA256, KEX_KEM_MLKEM768ECDH_SHA256,
+	    NID_X9_62_prime256v1, SSH_DIGEST_SHA256, KEX_IS_PQ },
 #endif
-	{ KEX_CURVE25519_SHA256, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256 },
-	{ KEX_CURVE25519_SHA256_OLD, KEX_C25519_SHA256, 0, SSH_DIGEST_SHA256 },
+	{ KEX_CURVE25519_SHA256, KEX_C25519_SHA256, 0,
+	    SSH_DIGEST_SHA256, KEX_NOT_PQ },
+	{ KEX_CURVE25519_SHA256_OLD, KEX_C25519_SHA256, 0,
+	    SSH_DIGEST_SHA256, KEX_NOT_PQ },
 	{ KEX_SNTRUP761X25519_SHA512, KEX_KEM_SNTRUP761X25519_SHA512, 0,
-	    SSH_DIGEST_SHA512 },
+	    SSH_DIGEST_SHA512, KEX_IS_PQ },
 	{ KEX_SNTRUP761X25519_SHA512_OLD, KEX_KEM_SNTRUP761X25519_SHA512, 0,
-	    SSH_DIGEST_SHA512 },
+	    SSH_DIGEST_SHA512, KEX_IS_PQ },
 	{ KEX_MLKEM768X25519_SHA256, KEX_KEM_MLKEM768X25519_SHA256, 0,
-	    SSH_DIGEST_SHA256 },
-	{ NULL, 0, -1, -1},
+	    SSH_DIGEST_SHA256, KEX_IS_PQ },
+	{ NULL, 0, -1, -1, 0},
 };
 
 char *
 kex_alg_list(char sep)
 {
-	char *ret = NULL, *tmp;
-	size_t nlen, rlen = 0;
+	char *ret = NULL;
 	const struct kexalg *k;
+	char sep_str[2] = {sep, '\0'};
 
-	for (k = kexalgs; k->name != NULL; k++) {
-		if (ret != NULL)
-			ret[rlen++] = sep;
-		nlen = strlen(k->name);
-		if ((tmp = realloc(ret, rlen + nlen + 2)) == NULL) {
-			free(ret);
-			return NULL;
-		}
-		ret = tmp;
-		memcpy(ret + rlen, k->name, nlen + 1);
-		rlen += nlen;
-	}
+	for (k = kexalgs; k->name != NULL; k++)
+		xextendf(&ret, sep_str, "%s", k->name);
+
 	return ret;
 }
 
@@ -119,6 +113,16 @@ int
 kex_name_valid(const char *name)
 {
 	return kex_alg_by_name(name) != NULL;
+}
+
+int
+kex_is_pq_from_name(const char *name)
+{
+	const struct kexalg *k;
+
+	if ((k = kex_alg_by_name(name)) == NULL)
+		return 0;
+	return k->pq_alg == KEX_IS_PQ;
 }
 
 u_int

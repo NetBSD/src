@@ -79,6 +79,15 @@ struct query {
 
 	buffer_type *packet;
 
+#ifdef HAVE_SSL
+	/*
+	 * TLS objects.
+	*/
+	SSL* tls;
+	SSL* tls_auth;
+	char* cert_cn;
+#endif
+
 	/* Normalized query domain name.  */
 	const dname_type *qname;
 
@@ -205,6 +214,20 @@ query_type *query_create(region_type *region,
 			 uint16_t *compressed_dname_offsets,
 			 size_t compressed_dname_size,
 			 domain_type **compressed_dnames);
+
+/*
+ * Create a new query structure with buffer pointing to existing memory.
+ */
+query_type *query_create_with_buffer(region_type *region,
+                                     uint16_t *compressed_dname_offsets,
+                                     size_t compressed_dname_size,
+                                     domain_type **compressed_dnames,
+                                     struct buffer *buffer);
+
+/*
+ * Replace the query's buffer data.
+ */
+void query_set_buffer_data(query_type *q, void *data, size_t data_capacity);
 
 /*
  * Reset a query structure so it is ready for receiving and processing

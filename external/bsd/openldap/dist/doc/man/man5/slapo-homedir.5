@@ -1,5 +1,5 @@
 .TH SLAPO-HOMEDIR 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
 .SH NAME
@@ -77,7 +77,7 @@ IGNORE.
 .TP
 .B homedir\-archive\-path <pathname>
 .TP
-.B olcArchivePath: pathname
+.B olcHomedirArchivePath: pathname
 These options specify the destination path for TAR files created by
 the ARCHIVE delete style.
 .SH REPLICATION
@@ -90,6 +90,32 @@ for more information on configure syncrepl.
 
 Partial replication (e.g. with filters) is especially useful for
 providing different provisioning options to different sets of users.
+.SH EXAMPLE
+The following LDIF could be used to add this overlay to
+.B cn=config
+(adjust to suit)
+.LP
+.RS
+.nf
+dn: cn=module{0},cn=config
+changetype: modify
+add: olcModuleLoad
+olcModuleLoad: homedir
+
+dn: olcOverlay=homedir,olcDatabase={1}mdb,cn=config
+changetype: add
+objectClass: olcOverlayConfig
+objectClass: olcHomedirConfig
+olcOverlay: homedir
+olcSkeletonPath: /etc/skel
+olcMinimumUidNumber: 1000
+olcHomedirRegexp: ^(/home/[-_/a-z0-9]+)$ /export/$1
+olcHomedirDeleteStyle: ARCHIVE
+olcHomedirArchivePath: /archive
+.fi
+.RE
+.LP
+
 .SH BUGS
 DELETE, MOD, and MODRDN operations that remove the unix attributes
 when delete style is set to DELETE will recursively delete the (regex
@@ -113,6 +139,7 @@ resolve uid/gid into symbolic names.
 
 No attempt is made to try to mkdir() the parent directories needed for
 a given home directory or archive path.
+
 .SH FILES
 .TP
 ETCDIR/slapd.conf

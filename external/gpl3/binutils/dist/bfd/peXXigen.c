@@ -1,5 +1,5 @@
 /* Support for the generic parts of PE/PEI; the common executable parts.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Written by Cygnus Solutions.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -289,7 +289,7 @@ _bfd_XXi_swap_aux_in (bfd *	abfd,
 
   /* PR 17521: Make sure that all fields in the aux structure
      are initialised.  */
-  memset (in, 0, sizeof * in);
+  memset (in, 0, sizeof (*in));
   switch (in_class)
     {
     case C_FILE:
@@ -299,6 +299,9 @@ _bfd_XXi_swap_aux_in (bfd *	abfd,
 	  in->x_file.x_n.x_n.x_offset = H_GET_32 (abfd, ext->x_file.x_n.x_offset);
 	}
       else
+#if FILNMLEN != E_FILNMLEN
+#error we need to cope with truncating or extending x_fname
+#endif
 	memcpy (in->x_file.x_n.x_fname, ext->x_file.x_fname, FILNMLEN);
       return;
 
@@ -373,7 +376,10 @@ _bfd_XXi_swap_aux_out (bfd *  abfd,
 	  H_PUT_32 (abfd, in->x_file.x_n.x_n.x_offset, ext->x_file.x_n.x_offset);
 	}
       else
-	memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, sizeof (ext->x_file.x_fname));
+#if FILNMLEN != E_FILNMLEN
+#error we need to cope with truncating or extending x_fname
+#endif
+	memcpy (ext->x_file.x_fname, in->x_file.x_n.x_fname, E_FILNMLEN);
 
       return AUXESZ;
 
@@ -492,7 +498,7 @@ _bfd_XXi_swap_aouthdr_in (bfd * abfd,
   a->MinorImageVersion = H_GET_16 (abfd, src->MinorImageVersion);
   a->MajorSubsystemVersion = H_GET_16 (abfd, src->MajorSubsystemVersion);
   a->MinorSubsystemVersion = H_GET_16 (abfd, src->MinorSubsystemVersion);
-  a->Reserved1 = H_GET_32 (abfd, src->Reserved1);
+  a->Win32Version = H_GET_32 (abfd, src->Win32Version);
   a->SizeOfImage = H_GET_32 (abfd, src->SizeOfImage);
   a->SizeOfHeaders = H_GET_32 (abfd, src->SizeOfHeaders);
   a->CheckSum = H_GET_32 (abfd, src->CheckSum);
@@ -593,7 +599,7 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
   struct internal_extra_pe_aouthdr *extra = &pe->pe_opthdr;
   PEAOUTHDR *aouthdr_out = (PEAOUTHDR *) out;
   bfd_vma sa, fa, ib;
-  IMAGE_DATA_DIRECTORY idata2, idata5, tls;
+  IMAGE_DATA_DIRECTORY idata2, idata5, didat2, tls, loadcfg;
 
   sa = extra->SectionAlignment;
   fa = extra->FileAlignment;
@@ -601,7 +607,9 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 
   idata2 = pe->pe_opthdr.DataDirectory[PE_IMPORT_TABLE];
   idata5 = pe->pe_opthdr.DataDirectory[PE_IMPORT_ADDRESS_TABLE];
+  didat2 = pe->pe_opthdr.DataDirectory[PE_DELAY_IMPORT_DESCRIPTOR];
   tls = pe->pe_opthdr.DataDirectory[PE_TLS_TABLE];
+  loadcfg = pe->pe_opthdr.DataDirectory[PE_LOAD_CONFIG_TABLE];
 
   if (aouthdr_in->tsize)
     {
@@ -650,7 +658,9 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
      a final link is going to be performed, it can overwrite them.  */
   extra->DataDirectory[PE_IMPORT_TABLE]  = idata2;
   extra->DataDirectory[PE_IMPORT_ADDRESS_TABLE] = idata5;
+  extra->DataDirectory[PE_DELAY_IMPORT_DESCRIPTOR] = didat2;
   extra->DataDirectory[PE_TLS_TABLE] = tls;
+  extra->DataDirectory[PE_LOAD_CONFIG_TABLE] = loadcfg;
 
   if (extra->DataDirectory[PE_IMPORT_TABLE].VirtualAddress == 0)
     /* Until other .idata fixes are made (pending patch), the entry for
@@ -699,8 +709,8 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 	   for the image size.  */
 	if (coff_section_data (abfd, sec) != NULL
 	    && pei_section_data (abfd, sec) != NULL)
-	  isize = (sec->vma - extra->ImageBase
-		   + SA (FA (pei_section_data (abfd, sec)->virt_size)));
+	  isize = SA (sec->vma - extra->ImageBase
+		      + FA (pei_section_data (abfd, sec)->virt_size));
       }
 
     aouthdr_in->dsize = dsize;
@@ -755,7 +765,7 @@ _bfd_XXi_swap_aouthdr_out (bfd * abfd, void * in, void * out)
 	    aouthdr_out->MajorSubsystemVersion);
   H_PUT_16 (abfd, extra->MinorSubsystemVersion,
 	    aouthdr_out->MinorSubsystemVersion);
-  H_PUT_32 (abfd, extra->Reserved1, aouthdr_out->Reserved1);
+  H_PUT_32 (abfd, extra->Win32Version, aouthdr_out->Win32Version);
   H_PUT_32 (abfd, extra->SizeOfImage, aouthdr_out->SizeOfImage);
   H_PUT_32 (abfd, extra->SizeOfHeaders, aouthdr_out->SizeOfHeaders);
   H_PUT_32 (abfd, extra->CheckSum, aouthdr_out->CheckSum);
@@ -909,7 +919,8 @@ _bfd_XX_only_swap_filehdr_out (bfd * abfd, void * in, void * out)
 }
 
 unsigned int
-_bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
+_bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out,
+			  const asection *section)
 {
   struct internal_scnhdr *scnhdr_int = (struct internal_scnhdr *) in;
   SCNHDR *scnhdr_ext = (SCNHDR *) out;
@@ -978,9 +989,8 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
        sections (.idata, .data, .bss, .CRT) must have IMAGE_SCN_MEM_WRITE set
        (this is especially important when dealing with the .idata section since
        the addresses for routines from .dlls must be overwritten).  If .reloc
-       section data is ever generated, we must add IMAGE_SCN_MEM_DISCARDABLE
-       (0x02000000).  Also, the resource data should also be read and
-       writable.  */
+       section data is ever generated, we generally need to add
+       IMAGE_SCN_MEM_DISCARDABLE (0x02000000).  */
 
     /* FIXME: Alignment is also encoded in this field, at least on
        ARM-WINCE.  Although - how do we get the original alignment field
@@ -993,13 +1003,15 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
     }
     pe_required_section_flags;
 
-    pe_required_section_flags known_sections [] =
+    static const pe_required_section_flags known_sections [] =
       {
+	{ ".CRT",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".arch",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE | IMAGE_SCN_ALIGN_8BYTES },
 	{ ".bss",   IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_UNINITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
 	{ ".data",  IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".didat", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
 	{ ".edata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
-	{ ".idata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_WRITE },
+	{ ".idata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".pdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".rdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
 	{ ".reloc", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA | IMAGE_SCN_MEM_DISCARDABLE },
@@ -1009,7 +1021,7 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
 	{ ".xdata", IMAGE_SCN_MEM_READ | IMAGE_SCN_CNT_INITIALIZED_DATA },
       };
 
-    pe_required_section_flags * p;
+    const pe_required_section_flags * p;
 
     /* We have defaulted to adding the IMAGE_SCN_MEM_WRITE flag, but now
        we know exactly what this specific section wants so we remove it
@@ -1024,10 +1036,16 @@ _bfd_XXi_swap_scnhdr_out (bfd * abfd, void * in, void * out)
 	 p++)
       if (memcmp (scnhdr_int->s_name, p->section_name, SCNNMLEN) == 0)
 	{
+	  unsigned long must_have = p->must_have;
+
 	  if (memcmp (scnhdr_int->s_name, ".text", sizeof ".text")
 	      || (bfd_get_file_flags (abfd) & WP_TEXT))
 	    scnhdr_int->s_flags &= ~IMAGE_SCN_MEM_WRITE;
-	  scnhdr_int->s_flags |= p->must_have;
+	  /* Avoid forcing in the discardable flag if the section itself is
+	     allocated.  */
+	  if (section->flags & SEC_ALLOC)
+	    must_have &= ~IMAGE_SCN_MEM_DISCARDABLE;
+	  scnhdr_int->s_flags |= must_have;
 	  break;
 	}
 
@@ -1390,7 +1408,7 @@ pe_print_idata (bfd * abfd, void * vfile)
 	  int ft_idx;
 	  int ft_allocated;
 
-	  fprintf (file, _("\tvma:  Hint/Ord Member-Name Bound-To\n"));
+	  fprintf (file, _("\tvma:     Ordinal  Hint  Member-Name  Bound-To\n"));
 
 	  idx = hint_addr - adj;
 
@@ -1457,20 +1475,25 @@ pe_print_idata (bfd * abfd, void * vfile)
 	      amt = member - adj;
 
 	      if (HighBitSet (member_high))
-		fprintf (file, "\t%lx%08lx\t %4lx%08lx  <none>",
-			 member_high, member,
-			 WithoutHighBit (member_high), member);
+	        {
+		  /* in low 16 bits is ordinal number, other bits are reserved */
+		  unsigned int ordinal = member & 0xffff;
+		  fprintf (file, "\t%08lx  %5u  <none> <none>",
+			   (unsigned long)(first_thunk + j), ordinal);
+	        }
 	      /* PR binutils/17512: Handle corrupt PE data.  */
 	      else if (amt >= datasize || amt + 2 >= datasize)
-		fprintf (file, _("\t<corrupt: 0x%04lx>"), member);
+		fprintf (file, _("\t<corrupt: 0x%08lx>"), member);
 	      else
 		{
-		  int ordinal;
+		  unsigned int hint;
 		  char *member_name;
 
-		  ordinal = bfd_get_16 (abfd, data + amt);
+		  /* First 16 bits is hint name index, rest is the name */
+		  hint = bfd_get_16 (abfd, data + amt);
 		  member_name = (char *) data + amt + 2;
-		  fprintf (file, "\t%04lx\t %4d  %.*s",member, ordinal,
+		  fprintf (file, "\t%08lx  <none>  %04x  %.*s",
+			   (unsigned long)(first_thunk + j), hint,
 			   (int) (datasize - (amt + 2)), member_name);
 		}
 
@@ -1480,8 +1503,9 @@ pe_print_idata (bfd * abfd, void * vfile)
 		  && first_thunk != 0
 		  && first_thunk != hint_addr
 		  && j + 4 <= ft_datasize)
-		fprintf (file, "\t%04lx",
+		fprintf (file, "\t%08lx",
 			 (unsigned long) bfd_get_32 (abfd, ft_data + j));
+
 	      fprintf (file, "\n");
 	    }
 #else
@@ -1497,20 +1521,24 @@ pe_print_idata (bfd * abfd, void * vfile)
 	      amt = member - adj;
 
 	      if (HighBitSet (member))
-		fprintf (file, "\t%04lx\t %4lu  <none>",
-			 member, WithoutHighBit (member));
+	        {
+		  /* in low 16 bits is ordinal number, other bits are reserved */
+		  unsigned int ordinal = member & 0xffff;
+		  fprintf (file, "\t%08lx  %5u  <none> <none>", (unsigned long)(first_thunk + j), ordinal);
+	        }
 	      /* PR binutils/17512: Handle corrupt PE data.  */
 	      else if (amt >= datasize || amt + 2 >= datasize)
-		fprintf (file, _("\t<corrupt: 0x%04lx>"), member);
+		fprintf (file, _("\t<corrupt: 0x%08lx>"), member);
 	      else
 		{
-		  int ordinal;
+		  unsigned int hint;
 		  char *member_name;
 
-		  ordinal = bfd_get_16 (abfd, data + amt);
+		  /* First 16 bits is hint name index, rest is the name */
+		  hint = bfd_get_16 (abfd, data + amt);
 		  member_name = (char *) data + amt + 2;
-		  fprintf (file, "\t%04lx\t %4d  %.*s",
-			   member, ordinal,
+		  fprintf (file, "\t%08lx  <none>  %04x  %.*s",
+			   (unsigned long)(first_thunk + j), hint,
 			   (int) (datasize - (amt + 2)), member_name);
 		}
 
@@ -1520,7 +1548,7 @@ pe_print_idata (bfd * abfd, void * vfile)
 		  && first_thunk != 0
 		  && first_thunk != hint_addr
 		  && j + 4 <= ft_datasize)
-		fprintf (file, "\t%04lx",
+		fprintf (file, "\t%08lx",
 			 (unsigned long) bfd_get_32 (abfd, ft_data + j));
 
 	      fprintf (file, "\n");
@@ -1719,6 +1747,7 @@ pe_print_edata (bfd * abfd, void * vfile)
   fprintf (file,
 	  _("\nExport Address Table -- Ordinal Base %ld\n"),
 	  edt.base);
+  fprintf (file, "\t          Ordinal  Address  Type\n");
 
   /* PR 17512: Handle corrupt PE binaries.  */
   /* PR 17512 file: 140-165018-0.004.  */
@@ -1741,7 +1770,7 @@ pe_print_edata (bfd * abfd, void * vfile)
 	  /* This rva is to a name (forwarding function) in our section.  */
 	  /* Should locate a function descriptor.  */
 	  fprintf (file,
-		   "\t[%4ld] +base[%4ld] %04lx %s -- %.*s\n",
+		   "\t[%4ld] +base[%4ld] %08lx %s -- %.*s\n",
 		   (long) i,
 		   (long) (i + edt.base),
 		   (unsigned long) eat_member,
@@ -1753,7 +1782,7 @@ pe_print_edata (bfd * abfd, void * vfile)
 	{
 	  /* Should locate a function descriptor in the reldata section.  */
 	  fprintf (file,
-		   "\t[%4ld] +base[%4ld] %04lx %s\n",
+		   "\t[%4ld] +base[%4ld] %08lx %s\n",
 		   (long) i,
 		   (long) (i + edt.base),
 		   (unsigned long) eat_member,
@@ -1764,7 +1793,9 @@ pe_print_edata (bfd * abfd, void * vfile)
   /* The Export Name Pointer Table is paired with the Export Ordinal Table.  */
   /* Dump them in parallel for clarity.  */
   fprintf (file,
-	   _("\n[Ordinal/Name Pointer] Table\n"));
+	   _("\n[Ordinal/Name Pointer] Table -- Ordinal Base %ld\n"),
+	  edt.base);
+  fprintf (file, "\t          Ordinal   Hint Name\n");
 
   /* PR 17512: Handle corrupt PE binaries.  */
   if (edt.npt_addr + (edt.num_names * 4) - adj >= datasize
@@ -1793,14 +1824,16 @@ pe_print_edata (bfd * abfd, void * vfile)
       if ((name_ptr - adj) >= datasize)
 	{
 	  /* xgettext:c-format */
-	  fprintf (file, _("\t[%4ld] <corrupt offset: %lx>\n"),
-		   (long) ord, (long) name_ptr);
+	  fprintf (file, _("\t[%4ld] +base[%4ld]  %04lx <corrupt offset: %lx>\n"),
+		   (long) ord, (long) (ord + edt.base), (long) i, (long) name_ptr);
 	}
       else
 	{
 	  char * name = (char *) data + name_ptr - adj;
 
-	  fprintf (file, "\t[%4ld] %.*s\n", (long) ord,
+	  fprintf (file,
+		   "\t[%4ld] +base[%4ld]  %04lx %.*s\n",
+		   (long) ord, (long) (ord + edt.base), (long) i,
 		   (int)((char *)(data + datasize) - name), name);
 	}
     }
@@ -2834,7 +2867,7 @@ _bfd_XX_print_private_bfd_data_common (bfd * abfd, void * vfile)
   fprintf (file, "MinorImageVersion\t%d\n", i->MinorImageVersion);
   fprintf (file, "MajorSubsystemVersion\t%d\n", i->MajorSubsystemVersion);
   fprintf (file, "MinorSubsystemVersion\t%d\n", i->MinorSubsystemVersion);
-  fprintf (file, "Win32Version\t\t%08x\n", i->Reserved1);
+  fprintf (file, "Win32Version\t\t%08x\n", i->Win32Version);
   fprintf (file, "SizeOfImage\t\t%08x\n", i->SizeOfImage);
   fprintf (file, "SizeOfHeaders\t\t%08x\n", i->SizeOfHeaders);
   fprintf (file, "CheckSum\t\t%08x\n", i->CheckSum);
@@ -2971,8 +3004,7 @@ _bfd_XX_bfd_copy_private_bfd_data_common (bfd * ibfd, bfd * obfd)
   bfd_size_type size;
 
   /* One day we may try to grok other private data.  */
-  if (ibfd->xvec->flavour != bfd_target_coff_flavour
-      || obfd->xvec->flavour != bfd_target_coff_flavour)
+  if (ibfd->xvec->flavour != bfd_target_coff_flavour)
     return true;
 
   ipe = pe_data (ibfd);
@@ -3094,10 +3126,11 @@ bool
 _bfd_XX_bfd_copy_private_section_data (bfd *ibfd,
 				       asection *isec,
 				       bfd *obfd,
-				       asection *osec)
+				       asection *osec,
+				       struct bfd_link_info *link_info)
 {
-  if (bfd_get_flavour (ibfd) != bfd_target_coff_flavour
-      || bfd_get_flavour (obfd) != bfd_target_coff_flavour)
+  if (link_info != NULL
+      || bfd_get_flavour (ibfd) != bfd_target_coff_flavour)
     return true;
 
   if (coff_section_data (ibfd, isec) != NULL
@@ -4387,6 +4420,7 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
   struct coff_link_hash_entry *h1;
   struct bfd_link_info *info = pfinfo->info;
   bool result = true;
+  char name[20];
 
   /* There are a few fields that need to be filled in now while we
      have symbol table access.
@@ -4414,8 +4448,8 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
       else
 	{
 	  _bfd_error_handler
-	    (_("%pB: unable to fill in DataDictionary[1] because .idata$2 is missing"),
-	     abfd);
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s is missing"),
+	     abfd, PE_IMPORT_TABLE, ".idata$2");
 	  result = false;
 	}
 
@@ -4434,8 +4468,8 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
       else
 	{
 	  _bfd_error_handler
-	    (_("%pB: unable to fill in DataDictionary[1] because .idata$4 is missing"),
-	     abfd);
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s is missing"),
+	     abfd, PE_IMPORT_TABLE, ".idata$4");
 	  result = false;
 	}
 
@@ -4455,8 +4489,8 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
       else
 	{
 	  _bfd_error_handler
-	    (_("%pB: unable to fill in DataDictionary[12] because .idata$5 is missing"),
-	     abfd);
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s is missing"),
+	     abfd, PE_IMPORT_ADDRESS_TABLE, ".idata$5");
 	  result = false;
 	}
 
@@ -4475,8 +4509,8 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
       else
 	{
 	  _bfd_error_handler
-	    (_("%pB: unable to fill in DataDictionary[PE_IMPORT_ADDRESS_TABLE (12)] because .idata$6 is missing"),
-	     abfd);
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s is missing"),
+	     abfd, PE_IMPORT_ADDRESS_TABLE, ".idata$6");
 	  result = false;
 	}
     }
@@ -4517,17 +4551,62 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
 	  else
 	    {
 	      _bfd_error_handler
-		(_("%pB: unable to fill in DataDictionary[PE_IMPORT_ADDRESS_TABLE(12)]"
-		   " because .idata$6 is missing"), abfd);
+		(_("%pB: unable to fill in DataDirectory[%d]: %s not defined correctly"),
+		 abfd, PE_IMPORT_ADDRESS_TABLE, "__IAT_end__");
 	      result = false;
 	    }
 	}
     }
 
+  /* The delay import directory.  This is .didat$2 */
   h1 = coff_link_hash_lookup (coff_hash_table (info),
-			      (bfd_get_symbol_leading_char (abfd) != 0
-			       ? "__tls_used" : "_tls_used"),
-			      false, false, true);
+			      "__DELAY_IMPORT_DIRECTORY_start__", false, false,
+			      true);
+  if (h1 != NULL
+      && (h1->root.type == bfd_link_hash_defined
+       || h1->root.type == bfd_link_hash_defweak)
+      && h1->root.u.def.section != NULL
+      && h1->root.u.def.section->output_section != NULL)
+    {
+      bfd_vma delay_va;
+
+      delay_va =
+	(h1->root.u.def.value
+	 + h1->root.u.def.section->output_section->vma
+	 + h1->root.u.def.section->output_offset);
+
+      h1 = coff_link_hash_lookup (coff_hash_table (info),
+				  "__DELAY_IMPORT_DIRECTORY_end__", false,
+				  false, true);
+      if (h1 != NULL
+	  && (h1->root.type == bfd_link_hash_defined
+	   || h1->root.type == bfd_link_hash_defweak)
+	  && h1->root.u.def.section != NULL
+	  && h1->root.u.def.section->output_section != NULL)
+	{
+	  pe_data (abfd)->pe_opthdr.DataDirectory[PE_DELAY_IMPORT_DESCRIPTOR].Size =
+	    ((h1->root.u.def.value
+	      + h1->root.u.def.section->output_section->vma
+	      + h1->root.u.def.section->output_offset)
+	     - delay_va);
+	  if (pe_data (abfd)->pe_opthdr.DataDirectory[PE_DELAY_IMPORT_DESCRIPTOR].Size
+	      != 0)
+	    pe_data (abfd)->pe_opthdr.DataDirectory[PE_DELAY_IMPORT_DESCRIPTOR].VirtualAddress =
+	      delay_va - pe_data (abfd)->pe_opthdr.ImageBase;
+	}
+      else
+	{
+	  _bfd_error_handler
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s not defined correctly"),
+	     abfd, PE_DELAY_IMPORT_DESCRIPTOR,
+	     "__DELAY_IMPORT_DIRECTORY_end__");
+	  result = false;
+	}
+    }
+
+  name[0] = bfd_get_symbol_leading_char (abfd);
+  strcpy (name + !!name[0], "_tls_used");
+  h1 = coff_link_hash_lookup (coff_hash_table (info), name, false, false, true);
   if (h1 != NULL)
     {
       if ((h1->root.type == bfd_link_hash_defined
@@ -4542,8 +4621,8 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
       else
 	{
 	  _bfd_error_handler
-	    (_("%pB: unable to fill in DataDictionary[9] because __tls_used is missing"),
-	     abfd);
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s not defined correctly"),
+	     abfd, PE_TLS_TABLE, name);
 	  result = false;
 	}
      /* According to PECOFF sepcifications by Microsoft version 8.2
@@ -4555,6 +4634,81 @@ _bfd_XXi_final_link_postscript (bfd * abfd, struct coff_final_link_info *pfinfo)
 #else
       pe_data (abfd)->pe_opthdr.DataDirectory[PE_TLS_TABLE].Size = 0x28;
 #endif
+    }
+
+  name[0] = bfd_get_symbol_leading_char (abfd);
+  strcpy (name + !!name[0], "_load_config_used");
+  h1 = coff_link_hash_lookup (coff_hash_table (info), name, false, false, true);
+  if (h1 != NULL)
+    {
+      char data[4];
+      if ((h1->root.type == bfd_link_hash_defined
+	   || h1->root.type == bfd_link_hash_defweak)
+	  && h1->root.u.def.section != NULL
+	  && h1->root.u.def.section->output_section != NULL)
+	{
+	  pe_data (abfd)->pe_opthdr.DataDirectory[PE_LOAD_CONFIG_TABLE].VirtualAddress =
+	    (h1->root.u.def.value
+	     + h1->root.u.def.section->output_section->vma
+	     + h1->root.u.def.section->output_offset
+	     - pe_data (abfd)->pe_opthdr.ImageBase);
+
+	  if (pe_data (abfd)->pe_opthdr.DataDirectory[PE_LOAD_CONFIG_TABLE].VirtualAddress
+	      & (bfd_arch_bits_per_address (abfd) / bfd_arch_bits_per_byte (abfd)
+		- 1))
+	    {
+	      _bfd_error_handler
+		(_("%pB: unable to fill in DataDirectory[%d]: %s not properly aligned"),
+		 abfd, PE_LOAD_CONFIG_TABLE, name);
+	      result = false;
+	    }
+
+	  /* The size is stored as the first 4 bytes at _load_config_used.  */
+	  if (bfd_get_section_contents (abfd,
+		h1->root.u.def.section->output_section, data,
+		h1->root.u.def.section->output_offset + h1->root.u.def.value,
+		4))
+	    {
+	      uint32_t size = bfd_get_32 (abfd, data);
+	      /* The Microsoft PE format documentation says for compatibility
+		 with Windows XP and earlier, the size must be 64 for x86
+		 images.  */
+	      pe_data (abfd)->pe_opthdr.DataDirectory[PE_LOAD_CONFIG_TABLE].Size
+		= (bfd_get_arch (abfd) == bfd_arch_i386
+		   && ((bfd_get_mach (abfd) & ~bfd_mach_i386_intel_syntax)
+		       == bfd_mach_i386_i386)
+		   && ((pe_data (abfd)->pe_opthdr.Subsystem
+			== IMAGE_SUBSYSTEM_WINDOWS_GUI)
+		       || (pe_data (abfd)->pe_opthdr.Subsystem
+			   == IMAGE_SUBSYSTEM_WINDOWS_CUI))
+		   && (pe_data (abfd)->pe_opthdr.MajorSubsystemVersion * 256
+		       + pe_data (abfd)->pe_opthdr.MinorSubsystemVersion
+		       <= 0x0501))
+		? 64 : size;
+
+	      if (size > h1->root.u.def.section->size - h1->root.u.def.value)
+		{
+		  _bfd_error_handler
+		    (_("%pB: unable to fill in DataDirectory[%d]: size too large for the containing section"),
+		     abfd, PE_LOAD_CONFIG_TABLE);
+		  result = false;
+		}
+	    }
+	  else
+	    {
+	      _bfd_error_handler
+		(_("%pB: unable to fill in DataDirectory[%d]: size can't be read from %s"),
+		 abfd, PE_LOAD_CONFIG_TABLE, name);
+	      result = false;
+	    }
+	}
+      else
+	{
+	  _bfd_error_handler
+	    (_("%pB: unable to fill in DataDirectory[%d]: %s not defined correctly"),
+	     abfd, PE_LOAD_CONFIG_TABLE, name);
+	  result = false;
+	}
     }
 
 /* If there is a .pdata section and we have linked pdata finally, we

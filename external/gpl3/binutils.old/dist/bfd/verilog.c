@@ -1,5 +1,5 @@
 /* BFD back-end for verilog hex memory dump files.
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
    Written by Anthony Green <green@moxielogic.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -62,6 +62,10 @@
    Data width in bytes.  */
 unsigned int VerilogDataWidth = 1;
 
+/* Modified by obcopy.c
+   Data endianness.  */
+enum bfd_endian VerilogDataEndianness = BFD_ENDIAN_UNKNOWN;
+
 /* Macros for converting between hex and binary.  */
 
 static const char digs[] = "0123456789ABCDEF";
@@ -105,7 +109,7 @@ verilog_set_arch_mach (bfd *abfd, enum bfd_architecture arch, unsigned long mach
   return true;
 }
 
-/* We have to save up all the outpu for a splurge before output.  */
+/* We have to save up all the output for a splurge before output.  */
 
 static bool
 verilog_set_section_contents (bfd *abfd,
@@ -196,7 +200,7 @@ verilog_write_address (bfd *abfd, bfd_vma address)
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 /* Write a record of type, of the supplied number of bytes. The
@@ -238,7 +242,8 @@ verilog_write_record (bfd *abfd,
 	    *dst++ = ' ';
 	}
     }
-  else if (bfd_little_endian (abfd))
+  else if ((VerilogDataEndianness == BFD_ENDIAN_UNKNOWN && bfd_little_endian (abfd)) /* FIXME: Can this happen ?  */
+	   || (VerilogDataEndianness == BFD_ENDIAN_LITTLE))
     {
       /* If the input byte stream contains:
 	   05 04 03 02 01 00
@@ -263,8 +268,10 @@ verilog_write_record (bfd *abfd,
 	  TOHEX (dst, *end);
 	  dst += 2;
 	}
+
+      /* FIXME: Should padding bytes be inserted here ?  */
     }
-  else
+  else /* Big endian output.  */
     {
       for (src = data; src < end;)
 	{
@@ -274,13 +281,14 @@ verilog_write_record (bfd *abfd,
 	  if ((src - data) % VerilogDataWidth == 0)
 	    *dst++ = ' ';
 	}
+      /* FIXME: Should padding bytes be inserted here ?  */
     }
 
   *dst++ = '\r';
   *dst++ = '\n';
   wrlen = dst - buffer;
 
-  return bfd_bwrite ((void *) buffer, wrlen, abfd) == wrlen;
+  return bfd_write (buffer, wrlen, abfd) == wrlen;
 }
 
 static bool
@@ -291,7 +299,14 @@ verilog_write_section (bfd *abfd,
   unsigned int octets_written = 0;
   bfd_byte *location = list->data;
 
-  verilog_write_address (abfd, list->where);
+  /* Insist that the starting address is a multiple of the data width.  */
+  if (list->where % VerilogDataWidth)
+    {
+      bfd_set_error (bfd_error_invalid_operation);
+      return false;
+    }
+
+  verilog_write_address (abfd, list->where / VerilogDataWidth);
   while (octets_written < list->size)
     {
       unsigned int octets_this_chunk = list->size - octets_written;
@@ -363,44 +378,15 @@ verilog_mkobject (bfd *abfd)
   return true;
 }
 
-#define verilog_close_and_cleanup		     _bfd_generic_close_and_cleanup
-#define verilog_bfd_free_cached_info		     _bfd_generic_bfd_free_cached_info
-#define verilog_new_section_hook		     _bfd_generic_new_section_hook
-#define verilog_bfd_is_target_special_symbol	     _bfd_bool_bfd_asymbol_false
-#define verilog_bfd_is_local_label_name		     bfd_generic_is_local_label_name
-#define verilog_get_lineno			     _bfd_nosymbols_get_lineno
-#define verilog_find_nearest_line		     _bfd_nosymbols_find_nearest_line
-#define verilog_find_inliner_info		     _bfd_nosymbols_find_inliner_info
-#define verilog_make_empty_symbol		     _bfd_generic_make_empty_symbol
-#define verilog_bfd_make_debug_symbol		     _bfd_nosymbols_bfd_make_debug_symbol
-#define verilog_read_minisymbols		     _bfd_generic_read_minisymbols
-#define verilog_minisymbol_to_symbol		     _bfd_generic_minisymbol_to_symbol
-#define verilog_get_section_contents_in_window	     _bfd_generic_get_section_contents_in_window
-#define verilog_bfd_get_relocated_section_contents   bfd_generic_get_relocated_section_contents
-#define verilog_bfd_relax_section		     bfd_generic_relax_section
-#define verilog_bfd_gc_sections			     bfd_generic_gc_sections
-#define verilog_bfd_merge_sections		     bfd_generic_merge_sections
-#define verilog_bfd_is_group_section		     bfd_generic_is_group_section
-#define verilog_bfd_group_name			     bfd_generic_group_name
-#define verilog_bfd_discard_group		     bfd_generic_discard_group
-#define verilog_section_already_linked		     _bfd_generic_section_already_linked
-#define verilog_bfd_link_hash_table_create	     _bfd_generic_link_hash_table_create
-#define verilog_bfd_link_add_symbols		     _bfd_generic_link_add_symbols
-#define verilog_bfd_link_just_syms		     _bfd_generic_link_just_syms
-#define verilog_bfd_final_link			     _bfd_generic_final_link
-#define verilog_bfd_link_split_section		     _bfd_generic_link_split_section
-
 const bfd_target verilog_vec =
 {
   "verilog",			/* Name.  */
   bfd_target_verilog_flavour,
   BFD_ENDIAN_UNKNOWN,		/* Target byte order.  */
   BFD_ENDIAN_UNKNOWN,		/* Target headers byte order.  */
-  (HAS_RELOC | EXEC_P |		/* Object flags.  */
-   HAS_LINENO | HAS_DEBUG |
-   HAS_SYMS | HAS_LOCALS | WP_TEXT | D_PAGED),
+  EXEC_P,			/* Object flags.  */
   (SEC_CODE | SEC_DATA | SEC_ROM | SEC_HAS_CONTENTS
-   | SEC_ALLOC | SEC_LOAD | SEC_RELOC),	/* Section flags.  */
+   | SEC_ALLOC | SEC_LOAD),	/* Section flags.  */
   0,				/* Leading underscore.  */
   ' ',				/* AR_pad_char.  */
   16,				/* AR_max_namelen.  */

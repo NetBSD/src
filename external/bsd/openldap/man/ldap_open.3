@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAP_OPEN 3 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAP_OPEN 3 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_init, ldap_initialize, ldap_open \- Initialize the LDAP library and open a connection to an LDAP server
@@ -29,6 +29,11 @@ int ldap_initialize(ldp, uri)
 .ft
 LDAP **ldp;
 char *uri;
+.LP
+.ft B
+int ldap_connect(ldp)
+.ft
+LDAP *ldp;
 .LP
 .ft B
 int ldap_set_urllist_proc(ld, proc, params)
@@ -142,6 +147,12 @@ are deprecated in favor of
 essentially because the latter allows to specify a schema in the URI
 and it explicitly returns an error code.
 .LP
+.B ldap_connect()
+causes a handle created by
+.B ldap_initialize()
+to connect to the server. This is useful in situations where a file
+descriptor is required before a request is performed.
+.LP
 .B ldap_init_fd()
 allows an LDAP structure to be initialized using an already-opened
 connection. The
@@ -229,4 +240,4 @@ returns LDAP_OPT_ERROR on error, and LDAP_OPT_SUCCESS on success.
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 226 stdin
+.lf 237 stdin

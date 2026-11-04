@@ -59,7 +59,7 @@ AC_C_CONST
 AC_STRUCT_TM
 
 # Checks for function declarations.
-AC_CHECK_DECLS([memchr, strcoll, strerror])
+AC_CHECK_DECLS([memchr, strcoll, strerror, strcasecmp, strncasecmp])
 
 # Checks for library functions.
 AC_FUNC_ALLOCA

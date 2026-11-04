@@ -6,7 +6,9 @@ source_sh ${srcdir}/emulparams/call_nop.sh
 source_sh ${srcdir}/emulparams/cet.sh
 source_sh ${srcdir}/emulparams/x86-report-relative.sh
 source_sh ${srcdir}/emulparams/x86-64-level.sh
+source_sh ${srcdir}/emulparams/x86-64-level-report.sh
 source_sh ${srcdir}/emulparams/x86-64-lam.sh
+source_sh ${srcdir}/emulparams/x86-64-plt.sh
 source_sh ${srcdir}/emulparams/static.sh
 source_sh ${srcdir}/emulparams/dt-relr.sh
 SCRIPT_NAME=elf
@@ -47,16 +49,6 @@ case "$target" in
     case "$EMULATION_NAME" in
       *64*)
 	LIBPATH_SUFFIX=64
-	PARSE_AND_LIST_OPTIONS_BNDPLT='
-  fprintf (file, _("\
-  -z bndplt                   Always generate BND prefix in PLT entries\n"));
-'
-	PARSE_AND_LIST_ARGS_CASE_Z_BNDPLT='
-      else if (strcmp (optarg, "bndplt") == 0)
-	params.bndplt = true;
-'
-	PARSE_AND_LIST_OPTIONS="$PARSE_AND_LIST_OPTIONS $PARSE_AND_LIST_OPTIONS_BNDPLT"
-	PARSE_AND_LIST_ARGS_CASE_Z="$PARSE_AND_LIST_ARGS_CASE_Z $PARSE_AND_LIST_ARGS_CASE_Z_BNDPLT"
 	;;
     esac
     ;;

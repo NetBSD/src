@@ -1,0 +1,11 @@
+#!/bin/sh
+set -e
+cd "$1"
+rm -fr .appveyor.yml \
+.autom4te.cfg \
+.clang-format \
+.git-blame-ignore-revs \
+.gitattributes \
+.gitignore \
+.travis.yml \
+.github

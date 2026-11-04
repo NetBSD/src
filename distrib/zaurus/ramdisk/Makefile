@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile,v 1.23 2018/01/28 01:09:57 rin Exp $
+#	$NetBSD: Makefile,v 1.23.16.1 2026/11/04 22:37:12 perseant Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		ramdisk.fs
-IMAGESIZE=	2048k
 MAKEFS_FLAGS+=	-f 14
 
 WARNS=		1
@@ -36,6 +35,8 @@ ${CRUNCHBIN}:	libhack.o
 .include "${DISTRIBDIR}/common/Makefile.dhcpcd"
 .include "${DISTRIBDIR}/common/Makefile.makedev"
 .include "${DISTRIBDIR}/common/Makefile.image"
+
+IMAGESIZE !=	${GETRAMDISKSIZE}
 
 release:
 

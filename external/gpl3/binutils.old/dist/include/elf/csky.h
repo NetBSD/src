@@ -1,5 +1,5 @@
 /* C-SKY ELF support for BFD.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by C-SKY Microsystems and Mentor Graphics.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -95,7 +95,7 @@ START_RELOC_NUMBERS (elf_csky_reloc_type)
 END_RELOC_NUMBERS (R_CKCORE_MAX)
 
 /* Additional section types.  */
-#define SHT_CSKY_ATTRIBUTES       0x70000001 /* Section holds attributes.  */
+#define SHT_CSKY_ATTRIBUTES       (SHT_LOPROC + 1) /* Section holds attributes.  */
 
 /* Object attribute tags.  */
 enum

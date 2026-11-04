@@ -1,5 +1,5 @@
 /* Simple subrs.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
 
    This file is part of libctf.
 
@@ -152,6 +152,43 @@ ctf_version (int version)
   return _libctf_version;
 }
 
+/* Get and set CTF dict-wide flags.  We are fairly strict about returning
+   errors here, to make it easier to determine programmatically which flags are
+   valid.  */
+
+int
+ctf_dict_set_flag (ctf_dict_t *fp, uint64_t flag, int set)
+{
+  if (set < 0 || set > 1)
+    return (ctf_set_errno (fp, ECTF_BADFLAG));
+
+  switch (flag)
+    {
+    case CTF_STRICT_NO_DUP_ENUMERATORS:
+      if (set)
+	fp->ctf_flags |= LCTF_STRICT_NO_DUP_ENUMERATORS;
+      else
+	fp->ctf_flags &= ~LCTF_STRICT_NO_DUP_ENUMERATORS;
+      break;
+    default:
+      return (ctf_set_errno (fp, ECTF_BADFLAG));
+    }
+  return 0;
+}
+
+int
+ctf_dict_get_flag (ctf_dict_t *fp, uint64_t flag)
+{
+  switch (flag)
+    {
+    case CTF_STRICT_NO_DUP_ENUMERATORS:
+      return (fp->ctf_flags & LCTF_STRICT_NO_DUP_ENUMERATORS) != 0;
+    default:
+      return (ctf_set_errno (fp, ECTF_BADFLAG));
+    }
+  return 0;
+}
+
 void
 libctf_init_debug (void)
 {
@@ -225,17 +262,17 @@ ctf_err_warn (ctf_dict_t *fp, int is_warning, int err,
     }
   va_end (alist);
 
-  /* Include the error code only if there is one; if this is not a warning,
+  /* Include the error code only if there is one; if this is a warning,
      only use the error code if it was explicitly passed and is nonzero.
      (Warnings may not have a meaningful error code, since the warning may not
      lead to unwinding up to the user.)  */
   if ((!is_warning && (err != 0 || (fp && ctf_errno (fp) != 0)))
       || (is_warning && err != 0))
-    ctf_dprintf ("%s: %s (%s)\n", is_warning ? _("error") : _("warning"),
+    ctf_dprintf ("%s: %s (%s)\n", is_warning ? _("warning") : _("error"),
 		 cew->cew_text, err != 0 ? ctf_errmsg (err)
 		 : ctf_errmsg (ctf_errno (fp)));
   else
-    ctf_dprintf ("%s: %s\n", is_warning ? _("error") : _("warning"),
+    ctf_dprintf ("%s: %s\n", is_warning ? _("warning") : _("error"),
 		 cew->cew_text);
 
   if (fp != NULL)
@@ -340,7 +377,7 @@ void
 ctf_assert_fail_internal (ctf_dict_t *fp, const char *file, size_t line,
 			  const char *exprstr)
 {
-  ctf_err_warn (fp, 0, ECTF_INTERNAL, _("%s: %lu: libctf assertion failed: %s"),
-		file, (long unsigned int) line, exprstr);
   ctf_set_errno (fp, ECTF_INTERNAL);
+  ctf_err_warn (fp, 0, 0, _("%s: %lu: libctf assertion failed: %s"),
+		file, (long unsigned int) line, exprstr);
 }

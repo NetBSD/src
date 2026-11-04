@@ -1,5 +1,5 @@
-.\"	$NetBSD: ssh-add.1,v 1.19.2.1 2025/08/02 05:18:47 perseant Exp $
-.\"	$OpenBSD: ssh-add.1,v 1.87 2024/06/17 08:30:29 djm Exp $
+.\"	$NetBSD: ssh-add.1,v 1.19.2.2 2026/11/04 22:36:41 perseant Exp $
+.\"	$OpenBSD: ssh-add.1,v 1.91 2026/09/16 05:10:12 djm Exp $
 .\"
 .\" Author: Tatu Ylonen <ylo@cs.hut.fi>
 .\" Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd June 17 2024
+.Dd September 16 2026
 .Dt SSH-ADD 1
 .Os
 .Sh NAME
@@ -44,7 +44,7 @@
 .Nd adds private key identities to the OpenSSH authentication agent
 .Sh SYNOPSIS
 .Nm ssh-add
-.Op Fl CcDdKkLlqvXx
+.Op Fl CcDdKkLlNPqvXx
 .Op Fl E Ar fingerprint_hash
 .Op Fl H Ar hostkey_file
 .Op Fl h Ar destination_constraint
@@ -60,6 +60,8 @@
 .Nm ssh-add
 .Fl T
 .Ar pubkey ...
+.Nm ssh-add
+.Fl Q
 .Sh DESCRIPTION
 .Nm
 adds private key identities to the authentication agent,
@@ -68,9 +70,10 @@ When run without arguments, it adds the files
 .Pa ~/.ssh/id_rsa ,
 .Pa ~/.ssh/id_ecdsa ,
 .Pa ~/.ssh/id_ecdsa_sk ,
-.Pa ~/.ssh/id_ed25519
+.Pa ~/.ssh/id_ed25519 ,
+.Pa ~/.ssh/id_ed25519_sk
 and
-.Pa ~/.ssh/id_ed25519_sk .
+.Pa ~/.ssh/id_mldsa44_ed25519 .
 After loading a private key,
 .Nm
 will try to load corresponding certificate information from the
@@ -222,8 +225,23 @@ keys only and skip certificates.
 .It Fl L
 Lists public key parameters of all identities currently represented
 by the agent.
+.It Fl P
+When loading PKCS#11 or FIDO keys from a token, do not request a PIN.
+This will cause the operation to fail if the token requires additional
+authentication and has no other way to obtain it, such as a keypad or
+biometric reader.
 .It Fl l
 Lists fingerprints of all identities currently represented by the agent.
+.It Fl N
+When adding certificates, by default
+.Nm
+will request that the agent automatically delete the certificate shortly
+after the certificate's expiry date.
+This flag suppresses this behaviour and does not specify a lifetime for
+certificates added to an agent.
+.It Fl Q
+Query the agent for the list of protocol extensions it supports.
+Note: not all agents support this query.
 .It Fl q
 Be quiet after a successful operation.
 .It Fl S Ar provider
@@ -318,9 +336,11 @@ the built-in USB HID support.
 .It Pa ~/.ssh/id_ecdsa_sk
 .It Pa ~/.ssh/id_ed25519
 .It Pa ~/.ssh/id_ed25519_sk
+.It Pa ~/.ssh/id_mldsa44_ed25519
 .It Pa ~/.ssh/id_rsa
 Contains the ECDSA, authenticator-hosted ECDSA, Ed25519,
-authenticator-hosted Ed25519 or RSA authentication identity of the user.
+authenticator-hosted Ed25519, MLDSA44-ED25519
+or RSA authentication identity of the user.
 .El
 .Pp
 Identity files should not be readable by anyone but the user.

@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -31,13 +31,15 @@
 
 #include "dhcpcd.h"
 
-#define IN6ADDR_LINKLOCAL_ALLDHCP_INIT \
-	{{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
-	    0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02 }}}
+#define IN6ADDR_LINKLOCAL_ALLDHCP_INIT                             \
+	{                                                          \
+		{{ 0xff, 0x02, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, \
+	    0x00, 0x00, 0x00, 0x00, 0x00, 0x01, 0x00, 0x02 }}      \
+	}
 
 /* UDP port numbers for DHCP */
-#define DHCP6_CLIENT_PORT	546
-#define DHCP6_SERVER_PORT	547
+#define DHCP6_CLIENT_PORT 546
+#define DHCP6_SERVER_PORT 547
 
 /* DHCP message type */
 #define DHCP6_SOLICIT		1
@@ -54,108 +56,108 @@
 #define DHCP6_RELAY_FLOW	12
 #define DHCP6_RELAY_REPL	13
 #define DHCP6_RECONFIGURE_REQ	18
-#define DHCP6_RECONFIGURE_REPLY	19
+#define DHCP6_RECONFIGURE_REPLY 19
 
 #ifdef DHCP6
 
-#define D6_OPTION_CLIENTID		1
-#define D6_OPTION_SERVERID		2
-#define D6_OPTION_IA_NA			3
-#define D6_OPTION_IA_TA			4
-#define D6_OPTION_ORO			6
-#define D6_OPTION_IA_ADDR		5
-#define D6_OPTION_PREFERENCE		7
-#define D6_OPTION_ELAPSED		8
-#define D6_OPTION_AUTH			11
-#define D6_OPTION_UNICAST		12
-#define D6_OPTION_STATUS_CODE		13
-#define D6_OPTION_RAPID_COMMIT		14
-#define D6_OPTION_USER_CLASS		15
-#define D6_OPTION_VENDOR_CLASS		16
-#define D6_OPTION_VENDOR_OPTS		17
-#define D6_OPTION_INTERFACE_ID		18
-#define D6_OPTION_RECONF_MSG		19
-#define D6_OPTION_RECONF_ACCEPT		20
-#define D6_OPTION_SIP_SERVERS_NAME	21
-#define D6_OPTION_SIP_SERVERS_ADDRESS	22
-#define D6_OPTION_DNS_SERVERS		23
-#define D6_OPTION_DOMAIN_LIST		24
-#define D6_OPTION_IA_PD			25
-#define D6_OPTION_IAPREFIX		26
-#define D6_OPTION_NIS_SERVERS		27
-#define D6_OPTION_NISP_SERVERS		28
-#define D6_OPTION_NIS_DOMAIN_NAME	29
-#define D6_OPTION_NISP_DOMAIN_NAME	30
-#define D6_OPTION_SNTP_SERVERS		31
-#define D6_OPTION_INFO_REFRESH_TIME	32
-#define D6_OPTION_BCMS_SERVER_D		33
-#define D6_OPTION_BCMS_SERVER_A		34
-#define D6_OPTION_FQDN			39
-#define D6_OPTION_POSIX_TIMEZONE	41
-#define D6_OPTION_TZDB_TIMEZONE		42
-#define D6_OPTION_NTP_SERVER		56
-#define D6_OPTION_PD_EXCLUDE		67
-#define D6_OPTION_SOL_MAX_RT		82
-#define D6_OPTION_INF_MAX_RT		83
-#define	D6_OPTION_MUDURL		112
+#define D6_OPTION_CLIENTID	      1
+#define D6_OPTION_SERVERID	      2
+#define D6_OPTION_IA_NA		      3
+#define D6_OPTION_IA_TA		      4
+#define D6_OPTION_ORO		      6
+#define D6_OPTION_IA_ADDR	      5
+#define D6_OPTION_PREFERENCE	      7
+#define D6_OPTION_ELAPSED	      8
+#define D6_OPTION_AUTH		      11
+#define D6_OPTION_UNICAST	      12
+#define D6_OPTION_STATUS_CODE	      13
+#define D6_OPTION_RAPID_COMMIT	      14
+#define D6_OPTION_USER_CLASS	      15
+#define D6_OPTION_VENDOR_CLASS	      16
+#define D6_OPTION_VENDOR_OPTS	      17
+#define D6_OPTION_INTERFACE_ID	      18
+#define D6_OPTION_RECONF_MSG	      19
+#define D6_OPTION_RECONF_ACCEPT	      20
+#define D6_OPTION_SIP_SERVERS_NAME    21
+#define D6_OPTION_SIP_SERVERS_ADDRESS 22
+#define D6_OPTION_DNS_SERVERS	      23
+#define D6_OPTION_DOMAIN_LIST	      24
+#define D6_OPTION_IA_PD		      25
+#define D6_OPTION_IAPREFIX	      26
+#define D6_OPTION_NIS_SERVERS	      27
+#define D6_OPTION_NISP_SERVERS	      28
+#define D6_OPTION_NIS_DOMAIN_NAME     29
+#define D6_OPTION_NISP_DOMAIN_NAME    30
+#define D6_OPTION_SNTP_SERVERS	      31
+#define D6_OPTION_INFO_REFRESH_TIME   32
+#define D6_OPTION_BCMS_SERVER_D	      33
+#define D6_OPTION_BCMS_SERVER_A	      34
+#define D6_OPTION_FQDN		      39
+#define D6_OPTION_POSIX_TIMEZONE      41
+#define D6_OPTION_TZDB_TIMEZONE	      42
+#define D6_OPTION_NTP_SERVER	      56
+#define D6_OPTION_PD_EXCLUDE	      67
+#define D6_OPTION_SOL_MAX_RT	      82
+#define D6_OPTION_INF_MAX_RT	      83
+#define D6_OPTION_MUDURL	      112
 
-#define D6_FQDN_PTR	0x00
-#define D6_FQDN_BOTH	0x01
-#define D6_FQDN_NONE	0x04
+#define D6_FQDN_PTR		      0x00
+#define D6_FQDN_BOTH		      0x01
+#define D6_FQDN_NONE		      0x04
 
 #include "dhcp.h"
 #include "ipv6.h"
 
-#define D6_STATUS_OK		0
-#define D6_STATUS_FAIL		1
-#define D6_STATUS_NOADDR	2
-#define D6_STATUS_NOBINDING	3
-#define D6_STATUS_NOTONLINK	4
-#define D6_STATUS_USEMULTICAST	5
+#define D6_STATUS_OK	       0
+#define D6_STATUS_FAIL	       1
+#define D6_STATUS_NOADDR       2
+#define D6_STATUS_NOBINDING    3
+#define D6_STATUS_NOTONLINK    4
+#define D6_STATUS_USEMULTICAST 5
 
-#define	SOL_MAX_DELAY		1
-#define	SOL_TIMEOUT		1
-#define	SOL_MAX_RT		3600	/* RFC 8415 */
-#define	SOL_MAX_RC		0
-#define	REQ_MAX_DELAY		0
-#define	REQ_TIMEOUT		1
-#define	REQ_MAX_RT		30
-#define	REQ_MAX_RC		10
-#define	CNF_MAX_DELAY		1
-#define	CNF_TIMEOUT		1
-#define	CNF_MAX_RT		4
-#define	CNF_MAX_RC		0
-#define	CNF_MAX_RD		10
-#define	REN_MAX_DELAY		0
-#define	REN_TIMEOUT		10
-#define	REN_MAX_RT		600
-#define	REB_MAX_DELAY		0
-#define	REB_TIMEOUT		10
-#define	REB_MAX_RT		600
-#define	INF_MAX_DELAY		1
-#define	INF_TIMEOUT		1
-#define	INF_MAX_RD		CNF_MAX_RD /* NOT RFC defined */
-#define	INF_MAX_RT		3600	/* RFC 8415*/
-#define	REL_MAX_DELAY		0
-#define	REL_TIMEOUT		1
-#define	REL_MAX_RT		0
-#define	REL_MAX_RC		4	/* RFC 8415 */
-#define	DEC_MAX_DELAY		0
-#define	DEC_TIMEOUT		1
-#define	DEC_MAX_RC		4	/* RFC 8415 */
-#define	REC_MAX_DELAY		0
-#define	REC_TIMEOUT		2
-#define	REC_MAX_RC		8
-#define	HOP_COUNT_LIMIT		32
+#define SOL_MAX_DELAY	       1
+#define SOL_TIMEOUT	       1
+#define SOL_MAX_RT	       3600 /* RFC 8415 */
+#define SOL_MAX_RC	       0
+#define REQ_MAX_DELAY	       0
+#define REQ_TIMEOUT	       1
+#define REQ_MAX_RT	       30
+#define REQ_MAX_RC	       10
+#define CNF_MAX_DELAY	       1
+#define CNF_TIMEOUT	       1
+#define CNF_MAX_RT	       4
+#define CNF_MAX_RC	       0
+#define CNF_MAX_RD	       10
+#define REN_MAX_DELAY	       0
+#define REN_TIMEOUT	       10
+#define REN_MAX_RT	       600
+#define REB_MAX_DELAY	       0
+#define REB_TIMEOUT	       10
+#define REB_MAX_RT	       600
+#define INF_MAX_DELAY	       1
+#define INF_TIMEOUT	       1
+#define INF_MAX_RD	       CNF_MAX_RD /* NOT RFC defined */
+#define INF_MAX_RT	       3600	  /* RFC 8415*/
+#define REL_MAX_DELAY	       0
+#define REL_TIMEOUT	       1
+#define REL_MAX_RT	       0
+#define REL_MAX_RC	       4 /* RFC 8415 */
+#define DEC_MAX_DELAY	       0
+#define DEC_TIMEOUT	       1
+#define DEC_MAX_RC	       4 /* RFC 8415 */
+#define REC_MAX_DELAY	       0
+#define REC_TIMEOUT	       2
+#define REC_MAX_RC	       8
+#define HOP_COUNT_LIMIT	       32
 
 /* RFC4242 3.1 */
-#define IRT_DEFAULT		86400
-#define IRT_MINIMUM		600
+#define IRT_DEFAULT 86400
+#define IRT_MINIMUM 600
 
 /* These should give -.1 to .1 randomness */
-#define	DHCP6_RAND_MIN		-100
-#define	DHCP6_RAND_MAX		100
-#define	DHCP6_RAND_DIV		1000.0f
+#define DHCP6_RAND_MIN -100
+#define DHCP6_RAND_MAX 100
+#define DHCP6_RAND_DIV 1000.0f
 
 enum DH6S {
 	DH6S_INIT,
@@ -189,9 +191,9 @@ struct dhcp6_state {
 	void (*MRCcallback)(void *);
 	unsigned int sol_max_rt;
 	unsigned int inf_max_rt;
-	unsigned int RT;	/* retransmission timer in milliseconds
-				 * maximal RT is 1 day + RAND,
-				 * so should be enough */
+	unsigned int RT; /* retransmission timer in milliseconds
+			  * maximal RT is 1 day + RAND,
+			  * so should be enough */
 
 	struct dhcp6_message *send;
 	size_t send_len;
@@ -210,30 +212,29 @@ struct dhcp6_state {
 	struct ipv6_addrhead addrs;
 	uint32_t lowpl;
 	/* The +3 is for the possible .pd extension for prefix delegation */
-	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDLEN * 4) +3];
+	char leasefile[sizeof(LEASEFILE6) + IF_NAMESIZE + (IF_SSIDLEN * 4) + 3];
 	const char *reason;
 	uint16_t lerror; /* Last error received from DHCPv6 reply. */
 	bool has_no_binding;
-	bool failed; /* Entered the failed state - used to rate limit log. */
+	bool failed;	/* Entered the failed state - used to rate limit log. */
 	bool new_start; /* New external start, to determine log type. */
 #ifdef AUTH
 	struct authstate auth;
 #endif
 };
 
-#define D6_STATE(ifp)							       \
-	((struct dhcp6_state *)(ifp)->if_data[IF_DATA_DHCP6])
-#define D6_CSTATE(ifp)							       \
+#define D6_STATE(ifp) ((struct dhcp6_state *)(ifp)->if_data[IF_DATA_DHCP6])
+#define D6_CSTATE(ifp) \
 	((const struct dhcp6_state *)(ifp)->if_data[IF_DATA_DHCP6])
-#define D6_STATE_RUNNING(ifp)						       \
-	(D6_CSTATE((ifp)) &&						       \
-	D6_CSTATE((ifp))->reason && dhcp6_dadcompleted((ifp)))
+#define D6_STATE_RUNNING(ifp)                            \
+	(D6_CSTATE((ifp)) && D6_CSTATE((ifp))->reason && \
+	    dhcp6_dadcompleted((ifp)))
 
 int dhcp6_openraw(void);
 int dhcp6_openudp(unsigned int, struct in6_addr *);
 void dhcp6_recvmsg(struct dhcpcd_ctx *, struct msghdr *, struct ipv6_addr *);
-void dhcp6_printoptions(const struct dhcpcd_ctx *,
-    const struct dhcp_opt *, size_t);
+void dhcp6_printoptions(const struct dhcpcd_ctx *, const struct dhcp_opt *,
+    size_t);
 const struct ipv6_addr *dhcp6_iffindaddr(const struct interface *ifp,
     const struct in6_addr *addr, unsigned int flags);
 struct ipv6_addr *dhcp6_findaddr(struct dhcpcd_ctx *, const struct in6_addr *,

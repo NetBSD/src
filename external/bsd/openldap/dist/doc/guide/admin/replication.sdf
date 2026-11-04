@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Replication
@@ -89,12 +89,16 @@ privileges for the DIT fragment to be replicated. The consumer
 server can stop the replication also without the need for provider-side
 changes and restart.
 
-Syncrepl supports partial, sparse, and fractional replications.  The shadow
-DIT fragment is defined by a general search criteria consisting of
+Syncrepl supports both types of partial replication: sparse and fractional
+The shadow DIT fragment is defined by a general search criteria consisting of
 base, scope, filter, and attribute list.  The consumer content is
 also subject to the access privileges of the bind identity of the
 syncrepl replication connection.
 
+Fractional replication uses explicit attribute lists to replicate only a
+subset of the provider's attributes and sparse replication uses
+base/scope/filter to replicate only a subset of the provider's entries.
+Both cases are just refinements of the general search criteria.
 
 H4: The LDAP Content Synchronization Protocol
 
@@ -343,6 +347,10 @@ is too far out of sync (or completely empty), conventional syncrepl is used to
 bring it up to date and replication then switches back to the delta-syncrepl
 mode.
 
+Note: partial replication is incompatible with deltasync. For deltasync to
+work, the replication user needs unrestricted read access to both the main
+database and accesslog database.
+
 Note: since the database state is stored in both the changelog DB and the
 main DB on the provider, it is important to backup/restore both the changelog
 DB and the main DB using slapcat/slapadd when restoring a DB or copying
@@ -477,9 +485,18 @@ The provider is implemented as an overlay, so the overlay itself
 must first be configured in {{slapd.conf}}(5) before it can be
 used. The provider has two primary configuration directives and
 two secondary directives for when delta-syncrepl is being used.
+
 Because the LDAP Sync search is subject to access control, proper
 access control privileges should be set up for the replicated
-content.
+content. In many environments the replicas are meant to carry the
+same data as provider so the replication user needs unrestricted
+read access to the database and as such this tends to be the first
+access rule for that database:
+
+> access to * by "$REPLICATOR" read by * break
+
+However if partial replication is desired, the access rules can be
+tightened appropriately.
 
 The two primary options to configure are the checkpoint and
 sessionlog behaviors.
@@ -493,7 +510,13 @@ operations. If {{<ops>}} operations or more than {{<minutes>}}
 time has passed since the last checkpoint, a new checkpoint is
 performed. Checkpointing is disabled by default.
 
-The session log is configured by the
+If an accesslog is maintained for this database and contains all the
+successful writes, it is the preferred way to provide the resync
+information:
+
+> syncprov-sessionlog-source <accesslog db suffix>
+
+Otherwise an in memory session session log is configured by the
 
 >	syncprov-sessionlog <ops>
 
@@ -511,10 +534,6 @@ The reloadhint option is configured by the
 
 directive. It must be set TRUE when using the accesslog overlay for
 delta-based syncrepl replication support. The default is FALSE.
-
-The nonpresent option should only be configured if the overlay is
-being placed on top of a log database, such as when used with
-delta-syncrepl.
 
 The nonpresent option is configured by the
 
@@ -535,7 +554,7 @@ A more complete example of the {{slapd.conf}}(5) content is thus:
 >
 >	overlay syncprov
 >	syncprov-checkpoint 100 10
->	syncprov-sessionlog 100
+>	syncprov-sessionlog-source cn=accesslog
 
 
 H4: Set up the consumer slapd

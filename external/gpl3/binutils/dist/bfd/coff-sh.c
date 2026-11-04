@@ -1,5 +1,5 @@
 /* BFD back-end for Renesas Super-H COFF binaries.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by Cygnus Support.
    Written by Steve Chamberlain, <sac@cygnus.com>.
    Relaxing code written by Ian Lance Taylor, <ian@cygnus.com>.
@@ -731,10 +731,9 @@ sh_relax_section (bfd *abfd,
 	return false;
     }
 
-  internal_relocs = (_bfd_coff_read_internal_relocs
+  internal_relocs = (bfd_coff_read_internal_relocs
 		     (abfd, sec, link_info->keep_memory,
-		      (bfd_byte *) NULL, false,
-		      (struct internal_reloc *) NULL));
+		      NULL, false, NULL));
   if (internal_relocs == NULL)
     goto error_return;
 
@@ -1374,9 +1373,8 @@ sh_relax_delete_bytes (bfd *abfd,
       /* We always cache the relocs.  Perhaps, if info->keep_memory is
 	 FALSE, we should free them, if we are permitted to, when we
 	 leave sh_coff_relax_section.  */
-      internal_relocs = (_bfd_coff_read_internal_relocs
-			 (abfd, o, true, (bfd_byte *) NULL, false,
-			  (struct internal_reloc *) NULL));
+      internal_relocs = (bfd_coff_read_internal_relocs
+			 (abfd, o, true, NULL, false, NULL));
       if (internal_relocs == NULL)
 	return false;
 
@@ -2940,9 +2938,8 @@ sh_coff_get_relocated_section_contents (bfd *output_bfd,
       if (! _bfd_coff_get_external_symbols (input_bfd))
 	goto error_return;
 
-      internal_relocs = (_bfd_coff_read_internal_relocs
-			 (input_bfd, input_section, false, (bfd_byte *) NULL,
-			  false, (struct internal_reloc *) NULL));
+      internal_relocs = (bfd_coff_read_internal_relocs
+			 (input_bfd, input_section, false, NULL, false, NULL));
       if (internal_relocs == NULL)
 	goto error_return;
 
@@ -3023,7 +3020,7 @@ CREATE_BIG_COFF_TARGET_VEC (sh_coff_vec, "coff-sh", BFD_IS_RELAXABLE, 0, '_', NU
 
 #ifdef COFF_WITH_PE
 CREATE_LITTLE_COFF_TARGET_VEC (TARGET_SYM, TARGET_SHL_NAME, BFD_IS_RELAXABLE,
-			       SEC_CODE | SEC_DATA, '_', NULL, COFF_SWAP_TABLE);
+			       0, '_', NULL, COFF_SWAP_TABLE);
 #else
 CREATE_LITTLE_COFF_TARGET_VEC (TARGET_SYM, TARGET_SHL_NAME, BFD_IS_RELAXABLE,
 			       0, '_', NULL, COFF_SWAP_TABLE)
@@ -3108,7 +3105,7 @@ static const bfd_coff_backend_data bfd_coff_small_swap_table =
   coff_print_aux, coff_reloc16_extra_cases, coff_reloc16_estimate,
   coff_classify_symbol, coff_compute_section_file_positions,
   coff_start_final_link, coff_relocate_section, coff_rtype_to_howto,
-  coff_adjust_symndx, coff_link_add_one_symbol,
+  coff_adjust_symndx,
   coff_link_output_has_begun, coff_final_link_postscript,
   bfd_pe_print_pdata
 };
@@ -3119,8 +3116,6 @@ static const bfd_coff_backend_data bfd_coff_small_swap_table =
   coff_bfd_free_cached_info
 #define coff_small_get_section_contents \
   coff_get_section_contents
-#define coff_small_get_section_contents_in_window \
-  coff_get_section_contents_in_window
 
 extern const bfd_target sh_coff_small_le_vec;
 
@@ -3141,6 +3136,7 @@ const bfd_target sh_coff_small_vec =
   15,				/* ar_max_namelen */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */
@@ -3199,6 +3195,7 @@ const bfd_target sh_coff_small_le_vec =
   15,				/* ar_max_namelen */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getl64, bfd_getl_signed_64, bfd_putl64,
   bfd_getl32, bfd_getl_signed_32, bfd_putl32,
   bfd_getl16, bfd_getl_signed_16, bfd_putl16, /* data */

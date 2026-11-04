@@ -1,5 +1,5 @@
 .TH SLAPO-ACCESSLOG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2005-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2005-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -66,7 +66,9 @@ logged along with the current request.
 .TP
 .B logoldattr <attr> ...
 Specify a list of attributes whose old contents are always logged in
-Modify and ModRDN requests. Usually only the contents of attributes that were
+Modify and ModRDN requests that match any of the filters configured in
+.BR logold .
+Usually only the contents of attributes that were
 actually modified will be logged; by default no old attributes are logged
 for ModRDN requests.
 .TP
@@ -367,7 +369,7 @@ filter.
     NAME 'auditModify'
     DESC 'Modify operation'
     SUP auditWriteObject STRUCTURAL
-    MAY reqOld MUST reqMod )
+    MAY ( reqOld $ reqMod ) )
 .RE
 .P
 The

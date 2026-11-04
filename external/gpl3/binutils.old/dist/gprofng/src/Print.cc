@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -60,7 +60,7 @@ er_print_common_display::open (Print_params *params)
   if (params->dest == DEST_PRINTER)
     {
       tmp_file = dbeSession->get_tmp_file_name (NTXT ("print"), false);
-      dbeSession->tmp_files->append (strdup (tmp_file));
+      dbeSession->tmp_files->append (xstrdup (tmp_file));
       out_file = fopen (tmp_file, NTXT ("w"));
     }
   else if (params->dest == DEST_OPEN_FILE)
@@ -128,7 +128,7 @@ er_print_common_display::get_output (int maxsize)
   if (f == NULL)
     return dbe_sprintf (GTXT ("Error: cannot open temporary file: %s\n"),
 			tmp_file);
-  char *report = (char *) malloc (max);
+  char *report = (char *) xmalloc (max);
   if (report)
     {
       if (1 != fread (report, max - 1, 1, f))
@@ -2209,14 +2209,14 @@ print_anno_file (char *name, const char *sel, const char *srcFile,
 	    {
 	      fitem = func->getDefSrc ();
 	      found = (func->line_first > 0)
-		      && strcmp (basename (srcFile),
-				 basename (fitem->get_name ())) == 0;
+		      && strcmp (get_basename (srcFile),
+				 get_basename (fitem->get_name ())) == 0;
 	    }
 	  else
 	    {
 	      Vec_loop (SourceFile*, sources, index, fitem)
 	      {
-		if (strcmp (basename (srcFile), basename (fitem->get_name ())) == 0)
+		if (strcmp (get_basename (srcFile), get_basename (fitem->get_name ())) == 0)
 		  {
 		    found = true;
 		    break;
@@ -2382,7 +2382,7 @@ print_html_label (FILE *out_file, MetricList *metrics_list)
 	ncols++;
       if (ncols == 0)
 	continue;
-      char *name = strdup (mitem->get_name ());
+      char *name = xstrdup (mitem->get_name ());
       char *name2 = split_metric_name (name);
       const char *style = index == metrics_list->get_sort_ref_index () ? "G" : "";
 
@@ -2608,7 +2608,7 @@ print_delim_label (FILE *out_file, MetricList *metrics_list, char delim)
       if (!(mitem->is_visible () || mitem->is_tvisible ()
 	    || mitem->is_pvisible ()))
 	continue;
-      char *name = strdup (mitem->get_name ());
+      char *name = xstrdup (mitem->get_name ());
       char *name2 = split_metric_name (name);
 
       if (mitem->is_tvisible ())

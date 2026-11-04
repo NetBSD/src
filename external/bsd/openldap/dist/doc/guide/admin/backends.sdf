@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Backends
@@ -54,7 +54,7 @@ the whole of the {{slapd-ldap(5)}} options.
 For example, the {{SECT: Translucent Proxy}}, which retrieves entries from a 
 remote LDAP server that can be partially overridden by the defined database, has
 only four specific {{translucent-}} directives, but can be configured using any 
-of the normal {{slapd-ldap(5)}} options. See {[slapo-translucent(5)}} for details.
+of the normal {{slapd-ldap(5)}} options. See {{slapo-translucent(5)}} for details.
 
 Other {{SECT: Overlays}} allow you to tag directives in front of a normal 
 {{slapd-ldap(5)}} directive. For example, the {{slapo-chain(5)}} overlay does 

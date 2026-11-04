@@ -20,6 +20,7 @@
 #include <sys/wait.h>
 #include <sys/uio.h>
 
+#include <signal.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -287,6 +288,8 @@ server_link_window(struct session *src, struct winlink *srcwl,
 	if (dstwl == NULL)
 		return (-1);
 
+	if (marked_pane.wl == srcwl)
+		marked_pane.wl = dstwl;
 	if (selectflag)
 		session_select(dst, dstwl->idx);
 	server_redraw_session_group(dst);
@@ -318,6 +321,7 @@ server_destroy_pane(struct window_pane *wp, int notify)
 	if (wp->fd != -1) {
 #ifdef HAVE_UTEMPTER
 		utempter_remove_record(wp->fd);
+		kill(getpid(), SIGCHLD);
 #endif
 		bufferevent_free(wp->event);
 		wp->event = NULL;
@@ -402,7 +406,7 @@ server_find_session(struct session *s,
 	struct session *s_loop, *s_out = NULL;
 
 	RB_FOREACH(s_loop, sessions, &sessions) {
-		if (s_loop != s && (s_out == NULL || f(s_loop, s_out)))
+		if (s_loop != s && f(s_loop, s_out))
 			s_out = s_loop;
 	}
 	return (s_out);
@@ -411,6 +415,8 @@ server_find_session(struct session *s,
 static int
 server_newer_session(struct session *s_loop, struct session *s_out)
 {
+	if (s_out == NULL)
+		return (1);
 	return (timercmp(&s_loop->activity_time, &s_out->activity_time, >));
 }
 
@@ -426,7 +432,7 @@ void
 server_destroy_session(struct session *s)
 {
 	struct client	*c;
-	struct session	*s_new = NULL;
+	struct session	*s_new = NULL, *cs_new = NULL, *use_s;
 	int		 detach_on_destroy;
 
 	detach_on_destroy = options_get_number(s->options, "detach-on-destroy");
@@ -438,15 +444,26 @@ server_destroy_session(struct session *s)
 		s_new = session_previous_session(s);
 	else if (detach_on_destroy == 4)
 		s_new = session_next_session(s);
-	if (s_new == s)
-		s_new = NULL;
+
+	/*
+	 * If no suitable new session was found above, then look for any
+	 * session as an alternative in case a client needs it.
+	 */
+	if (s_new == NULL &&
+	    (detach_on_destroy == 1 || detach_on_destroy == 2))
+		cs_new = server_find_session(s, server_newer_session);
+
 	TAILQ_FOREACH(c, &clients, entry) {
 		if (c->session != s)
 			continue;
+		use_s = s_new;
+		if (use_s == NULL && (c->flags & CLIENT_NO_DETACH_ON_DESTROY))
+			use_s = cs_new;
+
 		c->session = NULL;
 		c->last_session = NULL;
-		server_client_set_session(c, s_new);
-		if (s_new == NULL)
+		server_client_set_session(c, use_s);
+		if (use_s == NULL)
 			c->flags |= CLIENT_EXIT;
 	}
 	recalculate_sizes();

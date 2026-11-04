@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -20,7 +20,7 @@ echo "### This test requires the LDAP backend and the rwm overlay."
 echo "### If available, and explicitly requested, it can use SASL bind;"
 echo "### note that SASL must be properly set up, and the requested"
 echo "### mechanism must be available.  Define SLAPD_USE_SASL={yes|<mech>},"
-echo "### with \"yes\" defaulting to DIGEST-MD5 to enable SASL authc[/authz]."
+echo "### with \"yes\" defaulting to SCRAM-SHA-256 to enable SASL authc[/authz]."
 
 if test $BACKLDAP = "ldapno" ; then 
 	echo "LDAP backend not available, test skipped"
@@ -35,7 +35,7 @@ fi
 if test $WITH_SASL = "yes" ; then
 	if test $USE_SASL != "no" ; then
 		if test $USE_SASL = "yes" ; then
-			MECH="DIGEST-MD5"
+			MECH="SCRAM-SHA-256"
 		else
 			MECH="$USE_SASL"
 		fi

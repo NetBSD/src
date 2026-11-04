@@ -365,7 +365,8 @@ static int
 sldns_rdf_type_maybe_quoted(sldns_rdf_type rdf_type)
 {
 	return  rdf_type == LDNS_RDF_TYPE_STR ||
-		rdf_type == LDNS_RDF_TYPE_LONG_STR;
+		rdf_type == LDNS_RDF_TYPE_LONG_STR ||
+		rdf_type == LDNS_RDF_TYPE_UNQUOTED;
 }
 
 /** see if rdata is quoted */
@@ -841,7 +842,8 @@ rrinternal_parse_rdata(sldns_buffer* strbuf, char* token, size_t token_len,
 	sldns_write_uint16(rr+dname_len+8, (uint16_t)(rr_cur_len-dname_len-10));
 	*rr_len = rr_cur_len;
 	/* SVCB/HTTPS handling  */
-	if (rr_type == LDNS_RR_TYPE_SVCB || rr_type == LDNS_RR_TYPE_HTTPS) {
+	if ((rr_type == LDNS_RR_TYPE_SVCB || rr_type == LDNS_RR_TYPE_HTTPS)
+		&& !was_unknown_rr_format) {
 		size_t rdata_len = rr_cur_len - dname_len - 10;
 		uint8_t *rdata = rr+dname_len + 10;
 
@@ -856,7 +858,7 @@ rrinternal_parse_rdata(sldns_buffer* strbuf, char* token, size_t token_len,
 		while (rdata_len && *rdata != 0) {
 			uint8_t label_len;
 
-			if (*rdata & 0xC0)
+			if ((*rdata & 0xC0))
 				return LDNS_WIREPARSE_ERR_OK;
 
 			label_len = *rdata + 1;
@@ -1200,7 +1202,7 @@ sldns_str2wire_svcbparam_ipv4hint(const char* val, uint8_t* rd, size_t* rd_len)
 {
 	size_t count;
 	char ip_str[INET_ADDRSTRLEN+1];
-	char *next_ip_str;
+	const char *next_ip_str;
 	size_t i;
 
 	for (i = 0, count = 1; val[i]; i++) {
@@ -1255,7 +1257,7 @@ sldns_str2wire_svcbparam_ipv6hint(const char* val, uint8_t* rd, size_t* rd_len)
 {
 	size_t count;
 	char ip_str[INET6_ADDRSTRLEN+1];
-	char *next_ip_str;
+	const char *next_ip_str;
 	size_t i;
 
 	for (i = 0, count = 1; val[i]; i++) {
@@ -1316,7 +1318,7 @@ static int
 sldns_str2wire_svcbparam_mandatory(const char* val, uint8_t* rd, size_t* rd_len)
 {
 	size_t i, count, val_len;
-	char* next_key;
+	const char* next_key;
 
 	val_len = strlen(val);
 
@@ -1409,6 +1411,7 @@ sldns_str2wire_svcbparam_ech_value(const char* val, uint8_t* rd, size_t* rd_len)
 			return LDNS_WIREPARSE_ERR_BUFFER_TOO_SMALL;
 		sldns_write_uint16(rd, SVCB_KEY_ECH);
 		sldns_write_uint16(rd + 2, 0);
+		*rd_len = 4;
 
 		return LDNS_WIREPARSE_ERR_OK;
 	}
@@ -1719,6 +1722,8 @@ int sldns_str2wire_rdf_buf(const char* str, uint8_t* rd, size_t* len,
 		return sldns_str2wire_eui48_buf(str, rd, len);
 	case LDNS_RDF_TYPE_EUI64:
 		return sldns_str2wire_eui64_buf(str, rd, len);
+	case LDNS_RDF_TYPE_UNQUOTED:
+		return sldns_str2wire_unquoted_buf(str, rd, len);
 	case LDNS_RDF_TYPE_TAG:
 		return sldns_str2wire_tag_buf(str, rd, len);
 	case LDNS_RDF_TYPE_LONG_STR:
@@ -2554,12 +2559,42 @@ int sldns_str2wire_atma_buf(const char* str, uint8_t* rd, size_t* len)
 {
 	const char* s = str;
 	size_t slen = strlen(str);
-	size_t dlen = 0; /* number of hexdigits parsed */
+	size_t dlen = 0; /* number of hexdigits parsed for hex,
+		digits for E.164 */
 
-	/* just a hex string with optional dots? */
-	/* notimpl e.164 format */
 	if(slen > LDNS_MAX_RDFLEN*2)
 		return LDNS_WIREPARSE_ERR_LABEL_OVERFLOW;
+	if(*len < 1)
+		return LDNS_WIREPARSE_ERR_BUFFER_TOO_SMALL;
+	if(*s == 0) {
+		/* empty string */
+		rd[0] = 0;
+		*len = 1;
+		return LDNS_WIREPARSE_ERR_OK;
+	}
+	if(s[0] == '+') {
+		rd[0] = 1; /* E.164 format */
+		/* digits '0'..'9', with skipped dots. */
+		s++;
+		while(*s) {
+			if(isspace((unsigned char)*s) || *s == '.') {
+				s++;
+				continue;
+			}
+			if(*s < '0' || *s > '9')
+				return RET_ERR(LDNS_WIREPARSE_ERR_SYNTAX, s-str);
+			if(*len < dlen + 2)
+				return RET_ERR(LDNS_WIREPARSE_ERR_BUFFER_TOO_SMALL,
+					s-str);
+			rd[dlen+1] = *s++;
+			dlen++;
+		}
+		*len = dlen+1;
+		return LDNS_WIREPARSE_ERR_OK;
+	}
+
+	rd[0] = 0; /* AESA format */
+	/* hex, with skipped dots. */
 	while(*s) {
 		if(isspace((unsigned char)*s) || *s == '.') {
 			s++;
@@ -2567,17 +2602,17 @@ int sldns_str2wire_atma_buf(const char* str, uint8_t* rd, size_t* len)
 		}
 		if(!isxdigit((unsigned char)*s))
 			return RET_ERR(LDNS_WIREPARSE_ERR_SYNTAX_HEX, s-str);
-		if(*len < dlen/2 + 1)
+		if(*len < dlen/2 + 2)
 			return RET_ERR(LDNS_WIREPARSE_ERR_BUFFER_TOO_SMALL,
 				s-str);
 		if((dlen&1)==0)
-			rd[dlen/2] = (uint8_t)sldns_hexdigit_to_int(*s++) * 16;
-		else	rd[dlen/2] += sldns_hexdigit_to_int(*s++);
+			rd[dlen/2 + 1] = (uint8_t)sldns_hexdigit_to_int(*s++) * 16;
+		else	rd[dlen/2 + 1] += sldns_hexdigit_to_int(*s++);
 		dlen++;
 	}
 	if((dlen&1)!=0)
 		return RET_ERR(LDNS_WIREPARSE_ERR_SYNTAX_HEX, s-str);
-	*len = dlen/2;
+	*len = dlen/2 + 1;
 	return LDNS_WIREPARSE_ERR_OK;
 }
 
@@ -2744,6 +2779,11 @@ int sldns_str2wire_eui64_buf(const char* str, uint8_t* rd, size_t* len)
 	rd[7] = h;
 	*len = 8;
 	return LDNS_WIREPARSE_ERR_OK;
+}
+
+int sldns_str2wire_unquoted_buf(const char* str, uint8_t* rd, size_t* len)
+{
+	return sldns_str2wire_str_buf(str, rd, len);
 }
 
 int sldns_str2wire_tag_buf(const char* str, uint8_t* rd, size_t* len)

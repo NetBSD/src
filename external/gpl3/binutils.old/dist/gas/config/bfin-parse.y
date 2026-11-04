@@ -1,5 +1,5 @@
 /* bfin-parse.y  ADI Blackfin parser
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -529,7 +529,7 @@ dsp32shiftimm in slot1 and P-reg Store in slot2 Not Supported");
 %token _MINUS_ASSIGN _PLUS_ASSIGN
 
 /* Assignments, comparisons.  */
-%token _ASSIGN_BANG _LESS_THAN_ASSIGN _ASSIGN_ASSIGN
+%token _LESS_THAN_ASSIGN _ASSIGN_ASSIGN
 %token GE LT LE GT
 %token LESS_THAN
 
@@ -1804,7 +1804,7 @@ asm_1:
 	    return yyerror ("Only 'Dreg = CC' supported");
 	}
 
-	| CCREG _ASSIGN_BANG CCREG
+	| CCREG ASSIGN BANG CCREG
 	{
 	  notethat ("CC2dreg: CC =! CC\n");
 	  $$ = bfin_gen_cc2dreg (3, 0);
@@ -2471,12 +2471,12 @@ asm_1:
 	    return yyerror ("Register mismatch");
 	}
 
-	| CCREG _ASSIGN_BANG BITTST LPAREN REG COMMA expr RPAREN
+	| CCREG ASSIGN BANG BITTST LPAREN REG COMMA expr RPAREN
 	{
-	  if (IS_DREG ($5) && IS_UIMM ($7, 5))
+	  if (IS_DREG ($6) && IS_UIMM ($8, 5))
 	    {
 	      notethat ("LOGI2op: CC =! BITTST (dregs , uimm5 )\n");
-	      $$ = LOGI2OP ($5, uimm5 ($7), 0);
+	      $$ = LOGI2OP ($6, uimm5 ($8), 0);
 	    }
 	  else
 	    return yyerror ("Register mismatch or value error");

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -29,8 +29,6 @@
 #define hwcfuncs_parse_attrs        __collector_hwcfuncs_parse_attrs
 #define hwcfuncs_bind_descriptor    __collector_hwcfuncs_bind_descriptor
 #define hwcfuncs_bind_hwcentry      __collector_hwcfuncs_bind_hwcentry
-#define hwcfuncs_assign_regnos      __collector_hwcfuncs_assign_regnos
-#define regno_is_valid              __collector_regno_is_valid
 #define hwcfuncs_get_ctrs           __collector_hwcfuncs_get_ctrs
 #define hwcfuncs_errmsg_get         __collector_hwcfuncs_errmsg_get
 #endif  /* --- LIBCOLLECTOR_SRC --- */
@@ -98,7 +96,6 @@ typedef struct {                                /* supplementary data fields */
 
 #define HW_INTERVAL_MAX         UINT64_MAX
 #define HW_INTERVAL_PRESET(x)   (HW_INTERVAL_MAX - ((uint64_t)(x) - 1))
-#define HW_INTERVAL_TYPE(x)     ((uint64_t) (x)
 
 /* parsing */
 #define HWCFUNCS_MAX_ATTRS              20
@@ -117,7 +114,6 @@ typedef struct {                                /* supplementary data fields */
 #define HWCFUNCS_ERROR_HWCARGS          (-5)
 #define HWCFUNCS_ERROR_MEMORY           (-6)
 #define HWCFUNCS_ERROR_UNAVAIL          (-7)
-#define HWCFUNCS_ERROR_ERRNO_ZERO       (-8)
 #define HWCFUNCS_ERROR_UNEXPECTED       (-99)
 
 /*---------------------------------------------------------------------------*/
@@ -137,6 +133,7 @@ extern void hwcfuncs_int_logerr(const char *format,...);
 #define HWCFUNCS_SUPPORT_OVERFLOW_PROFILING 0x01llu
 #define HWCFUNCS_SUPPORT_PEBS_SAMPLING      0x02llu
 #define HWCFUNCS_SUPPORT_OVERFLOW_CTR_ID    0x04llu // OS identifies which counter overflowed
+#define SUPPORT_MEMORYSPACE_PROFILING       0x08
   /* get info about session
      Input:
        <cpuver>: if not NULL, returns value of CPC cpu version
@@ -216,27 +213,6 @@ extern void hwcfuncs_int_logerr(const char *format,...);
      Return: 0 if successful
 	HWCFUNCS_ERROR_HWCINIT if resources unavailable
 	HWCFUNCS_ERROR_HWCARGS if counters were not specified correctly
-   */
-
-  extern int hwcfuncs_assign_regnos (Hwcentry *entries[], unsigned numctrs);
-  /* Assign entries[]->reg_num values as needed by platform
-       Note: modifies <entries> by supplying a regno to each counter
-     Input:
-       <entries>: array of counters
-       <numctrs>: number of items in <entries>
-     Output:
-       <entries>: array of counters is modified
-     Return: 0 if successful
-	HWCFUNCS_ERROR_HWCINIT if resources unavailable
-	HWCFUNCS_ERROR_HWCARGS if counters were not specified correctly
-   */
-
-  extern int regno_is_valid (const Hwcentry *pctr, regno_t regno);
-  /* return 1 if <regno> is in Hwcentry's list
-     Input:
-       <pctr>: counter definition, reg_list[] should be initialized
-       <regno>: register to check
-     Return: 1 if <regno> is in Hwcentry's list, 0 otherwise
    */
 
   extern Hwcentry **hwcfuncs_get_ctrs (unsigned *defcnt);

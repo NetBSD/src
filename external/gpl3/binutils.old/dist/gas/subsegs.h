@@ -1,5 +1,5 @@
 /* subsegs.h -> subsegs.c
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -40,6 +40,7 @@
 #include "obstack.h"
 
 struct frch_cfi_data;
+struct frch_ginsn_data;
 
 struct frchain			/* control building of a frag chain */
 {				/* FRCH = FRagment CHain control */
@@ -52,6 +53,7 @@ struct frchain			/* control building of a frag chain */
   struct obstack frch_obstack;	/* for objects in this frag chain */
   fragS *frch_frag_now;		/* frag_now for this subsegment */
   struct frch_cfi_data *frch_cfi_data;
+  struct frch_ginsn_data *frch_ginsn_data;
 };
 
 typedef struct frchain frchainS;
@@ -71,23 +73,13 @@ typedef struct segment_info_struct {
      there are frags.  */
   unsigned int bss : 1;
 
-  int user_stuff;
-
   /* Fixups for this segment.  This is only valid after the frchains
      are run together.  */
   fixS *fix_root;
   fixS *fix_tail;
 
-  symbolS *dot;
-
-  struct lineno_list *lineno_list_head;
-  struct lineno_list *lineno_list_tail;
-
-  /* Which BFD section does this gas segment correspond to?  */
-  asection *bfd_section;
-
   /* NULL, or pointer to the gas symbol that is the section symbol for
-     this section.  sym->bsym and bfd_section->symbol should be the same.  */
+     this section.  */
   symbolS *sym;
 
   /* Used by dwarf2dbg.c for this section's line table entries.  */

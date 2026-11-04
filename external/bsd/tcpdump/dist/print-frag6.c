@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-frag6.c,v 1.8.2.1 2025/08/02 05:23:23 perseant Exp $");
+__RCSID("$NetBSD: print-frag6.c,v 1.8.2.2 2026/11/04 22:39:55 perseant Exp $");
 #endif
 
 /* \summary: IPv6 fragmentation header printer */
@@ -30,6 +30,7 @@ __RCSID("$NetBSD: print-frag6.c,v 1.8.2.1 2025/08/02 05:23:23 perseant Exp $");
 
 #include "netdissect-stdinc.h"
 
+#define ND_LONGJMP_FROM_TCHECK
 #include "netdissect.h"
 #include "extract.h"
 
@@ -48,6 +49,8 @@ frag6_print(netdissect_options *ndo, const u_char *bp, const u_char *bp2)
 	ND_PRINT("frag (");
 	if (ndo->ndo_vflag)
 		ND_PRINT("0x%08x:", GET_BE_U_4(dp->ip6f_ident));
+	else
+		ND_TCHECK_4(dp->ip6f_ident);
 	ND_PRINT("%u|", GET_BE_U_2(dp->ip6f_offlg) & IP6F_OFF_MASK);
 	if ((bp - bp2) + sizeof(struct ip6_frag) >
 	    sizeof(struct ip6_hdr) + GET_BE_U_2(ip6->ip6_plen))

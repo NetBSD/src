@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23.74.1 2025/08/02 05:20:18 perseant Exp $
+#	$NetBSD: Makefile,v 1.23.74.2 2026/11/04 22:36:50 perseant Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,10 +14,10 @@ release: check_RELEASEDIR .WAIT README.files
 	    ${RELEASEDIR}/${RELEASEMACHINEDIR}/installation/$i
 .endfor
 
-iso_image:
+iso_image: .MAKE
 	${MAKEDIRTARGET} cdroms iso_image
 
-live_image:
+live_image: .MAKE
 	${MAKEDIRTARGET} liveimage live_image
 
 .include <bsd.subdir.mk>

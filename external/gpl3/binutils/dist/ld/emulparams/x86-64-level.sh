@@ -10,7 +10,7 @@ PARSE_AND_LIST_ARGS_CASE_Z_X86_64_LEVEL='
 	  char *end;
 	  unsigned int level = strtoul (optarg + 8 , &end, 10);
 	  if (*end != '\0' || level < 2 || level > 4)
-	    einfo (_("%F%P: invalid x86-64 ISA level: %s\n"), optarg);
+	    fatal (_("%P: invalid x86-64 ISA level: %s\n"), optarg);
 	  params.isa_level = level;
 	}
 '

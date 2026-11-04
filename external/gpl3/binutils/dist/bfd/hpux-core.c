@@ -1,5 +1,5 @@
 /* BFD back-end for HP/UX core files.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus SUpport
 
@@ -128,7 +128,7 @@ make_bfd_asection (bfd *abfd, const char *name, flagword flags,
 /* Return true if the given core file section corresponds to a thread,
    based on its name.  */
 
-static int
+static bool
 thread_section_p (bfd *abfd ATTRIBUTE_UNUSED,
 		  asection *sect,
 		  void *obj ATTRIBUTE_UNUSED)
@@ -177,7 +177,8 @@ hpux_core_core_file_p (bfd *abfd)
 	    struct proc_exec proc_exec;
 	    if (bfd_read (&proc_exec, core_header.len, abfd) != core_header.len)
 	      break;
-	    strncpy (core_command (abfd), proc_exec.cmd, MAXCOMLEN + 1);
+	    strncpy (core_command (abfd), proc_exec.cmd, MAXCOMLEN);
+	    core_command (abfd)[MAXCOMLEN] = 0;
 	    good_sections++;
 	  }
 	  break;
@@ -378,6 +379,7 @@ const bfd_target core_hpux_vec =
     16,				/* ar_max_namelen */
     0,				/* match priority.  */
     TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+    false,			/* merge sections */
     NO_GET64, NO_GETS64, NO_PUT64,	/* 64 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 32 bit data */
     NO_GET, NO_GETS, NO_PUT,		/* 16 bit data */

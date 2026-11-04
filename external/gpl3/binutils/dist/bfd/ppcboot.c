@@ -1,5 +1,5 @@
 /* BFD back-end for PPCbug boot records.
-   Copyright (C) 1996-2024 Free Software Foundation, Inc.
+   Copyright (C) 1996-2026 Free Software Foundation, Inc.
    Written by Michael Meissner, Cygnus Support, <meissner@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -454,7 +454,6 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
 #define ppcboot_bfd_relax_section bfd_generic_relax_section
 #define ppcboot_bfd_gc_sections bfd_generic_gc_sections
 #define ppcboot_bfd_lookup_section_flags bfd_generic_lookup_section_flags
-#define ppcboot_bfd_merge_sections bfd_generic_merge_sections
 #define ppcboot_bfd_is_group_section bfd_generic_is_group_section
 #define ppcboot_bfd_group_name bfd_generic_group_name
 #define ppcboot_bfd_discard_group bfd_generic_discard_group
@@ -470,8 +469,6 @@ ppcboot_bfd_print_private_bfd_data (bfd *abfd, void * farg)
   _bfd_generic_copy_link_hash_symbol_type
 #define ppcboot_bfd_final_link _bfd_generic_final_link
 #define ppcboot_bfd_link_split_section _bfd_generic_link_split_section
-#define ppcboot_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 #define ppcboot_bfd_link_check_relocs _bfd_generic_link_check_relocs
 
 #define ppcboot_bfd_copy_private_bfd_data _bfd_generic_bfd_copy_private_bfd_data
@@ -496,6 +493,7 @@ const bfd_target powerpc_boot_vec =
   16,				/* ar_max_namelen */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* data */

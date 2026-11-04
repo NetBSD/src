@@ -1,5 +1,5 @@
 /* tc-vax.h -- Header file for tc-vax.c.
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,10 +29,6 @@
 #ifndef TARGET_FORMAT
 #define TARGET_FORMAT "a.out-vax-bsd"
 #endif
-#endif
-
-#ifdef OBJ_VMS
-#define TARGET_FORMAT "vms-vax"
 #endif
 
 #ifdef OBJ_ELF

@@ -1,5 +1,5 @@
 /* This file is tc-alpha.h
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Written by Ken Raeburn <raeburn@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -108,10 +108,10 @@ extern void alpha_define_label (symbolS *);
 #define md_cons_align(nbytes) alpha_cons_align (nbytes)
 extern void alpha_cons_align (int);
 
-#define HANDLE_ALIGN(fragp) alpha_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp) alpha_handle_align (fragp)
 extern void alpha_handle_align (struct frag *);
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4 + 8)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4 + 8)
 
 #ifdef OBJ_ECOFF
 #define tc_frob_file_before_adjust() alpha_frob_file_before_adjust ()
@@ -149,8 +149,8 @@ extern void alpha_before_fix (void);
 #endif
 
 #ifdef OBJ_ELF
-#define md_end  alpha_elf_md_end
-extern void alpha_elf_md_end (void);
+#define md_finish  alpha_elf_md_finish
+extern void alpha_elf_md_finish (void);
 #endif
 
 /* New fields for supporting explicit relocations (such as !literal to mark

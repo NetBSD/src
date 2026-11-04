@@ -1,5 +1,5 @@
 /* A program to test BFD.
-   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -47,7 +47,7 @@ static file_ptr iovec_read (struct bfd *nbfd ATTRIBUTE_UNUSED,
 }
 
 static int
-iovec_stat (struct bfd *abfd ATTRIBUTE_UNUSED, 
+iovec_stat (struct bfd *abfd ATTRIBUTE_UNUSED,
 	    void *stream, struct stat *sb)
 {
   return fstat (fileno ((FILE*) stream), sb);

@@ -1,5 +1,5 @@
-#	$NetBSD: sshd_config,v 1.28.4.1 2025/08/02 05:18:49 perseant Exp $
-#	$OpenBSD: sshd_config,v 1.105 2024/12/03 14:12:47 dtucker Exp $
+#	$NetBSD: sshd_config,v 1.28.4.2 2026/11/04 22:36:43 perseant Exp $
+#	$OpenBSD: sshd_config,v 1.106 2026/07/10 17:21:19 naddy Exp $
 
 # This is the sshd server system-wide configuration file.  See
 # sshd_config(5) for more information.
@@ -17,6 +17,7 @@
 #HostKey /etc/ssh/ssh_host_rsa_key
 #HostKey /etc/ssh/ssh_host_ecdsa_key
 #HostKey /etc/ssh/ssh_host_ed25519_key
+#HostKey /etc/ssh/ssh_host_mldsa44_ed25519_key
 
 # Ciphers and keying
 #RekeyLimit default none
@@ -53,7 +54,13 @@ AuthorizedKeysFile	.ssh/authorized_keys
 # Don't read the user's ~/.rhosts and ~/.shosts files
 #IgnoreRhosts yes
 
-# To disable tunneled clear text passwords, change to "no" here!
+# To disable password authentication, you must BOTH
+# (a) set PasswordAuthentication to "no", AND
+# (b) set KbdInteractiveAuthentication to "no", or set UsePAM to "no",
+#     or disable all password-based auth modules in /etc/pam.d/sshd.
+# Alternatively, you can configure AuthenticationMethods with a
+# specific list of methods excluding "password" and
+# "keyboard-interactive".
 #PasswordAuthentication yes
 #PermitEmptyPasswords no
 

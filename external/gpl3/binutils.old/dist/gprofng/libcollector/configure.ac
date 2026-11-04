@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2021 Free Software Foundation, Inc.
+dnl   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -17,7 +17,7 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 
 m4_include([../../bfd/version.m4])
-AC_INIT([gprofng], BFD_VERSION)
+AC_INIT([gprofng], [BFD_VERSION])
 AC_CONFIG_MACRO_DIRS([../../config ../..])
 AC_CONFIG_AUX_DIR(../..)
 AC_CANONICAL_TARGET
@@ -40,23 +40,6 @@ AC_DISABLE_STATIC
 if test "$enable_shared" != "yes"; then
   AC_MSG_WARN([Cannot set --enable-shared for gprofng/libcollector. Profiling will be unavailable.])
 fi
-
-GPROFNG_VARIANT=unknown
-x=`echo | $CC $CFLAGS -dM -E - | grep -w __x86_64`
-if test -n "$x"; then
-  GPROFNG_VARIANT=amd64-Linux
-else
-  x=`echo | $CC $CFLAGS -dM -E - | grep -w __i386__`
-  if test -n "$x"; then
-    GPROFNG_VARIANT=intel-Linux
-  else
-    x=`echo | $CC $CFLAGS -dM -E - | grep -w __aarch64__`
-    if test -n "$x"; then
-      GPROFNG_VARIANT=aarch64-Linux
-    fi
-  fi
-fi
-AC_SUBST(GPROFNG_VARIANT)
 
 ACX_PROG_CC_WARNING_OPTS([-Wno-nonnull-compare], [GPROFNG_NO_NONNULL_COMPARE_CFLAGS])
 AC_SUBST(GPROFNG_NO_NONNULL_COMPARE_CFLAGS)

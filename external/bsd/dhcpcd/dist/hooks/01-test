@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2017-2020 Roy Marples <roy@marples.name>
+
 # Echo the interface flags, reason and message options
 
 if [ "$reason" = "TEST" ]; then
@@ -5,32 +8,32 @@ if [ "$reason" = "TEST" ]; then
 	set | while read line; do
 		case "$line" in
 		interface=*|pid=*|reason=*|protocol=*|profile=*|skip_hooks=*)
-			echo "$line";;
+			printf '%s\n' "$line";;
 		esac
 	done
 	# Interface flags
 	set | while read line; do
 		case "$line" in
 		ifcarrier=*|ifflags=*|ifmetric=*|ifmtu=*|ifwireless=*|ifssid=*)
-			echo "$line";;
+			printf '%s\n' "$line";;
 		esac
 	done
 	# Old lease
 	set | while read line; do
 		case "$line" in
-		old_*) echo "$line";;
+		old_*) printf '%s\n' "$line";;
 		esac
 	done
 	# New lease
 	set | while read line; do
 		case "$line" in
-		new_*) echo "$line";;
+		new_*) printf '%s\n' "$line";;
 		esac
 	done
 	# Router Advertisements
 	set | while read line; do
 		case "$line" in
-		nd[0-9]*_*) echo "$line";;
+		nd[0-9]*_*) printf '%s\n' "$line";;
 		esac
 	done
 	exit 0

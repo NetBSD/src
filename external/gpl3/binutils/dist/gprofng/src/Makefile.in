@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2021-2024 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2026 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -108,15 +108,20 @@ POST_UNINSTALL = :
 build_triplet = @build@
 host_triplet = @host@
 target_triplet = @target@
-bin_PROGRAMS = gp-archive$(EXEEXT) gp-collect-app$(EXEEXT) \
-	gprofng$(EXEEXT) gp-display-text$(EXEEXT) \
-	gp-display-src$(EXEEXT)
+bin_PROGRAMS = gprofng-archive$(EXEEXT) gprofng-collect-app$(EXEEXT) \
+	gprofng$(EXEEXT) gprofng-display-text$(EXEEXT) \
+	gprofng-display-src$(EXEEXT) gprofng-gmon$(EXEEXT)
 subdir = src
 ACLOCAL_M4 = $(top_srcdir)/aclocal.m4
-am__aclocal_m4_deps = $(top_srcdir)/../libtool.m4 \
-	$(top_srcdir)/../ltoptions.m4 $(top_srcdir)/../ltsugar.m4 \
-	$(top_srcdir)/../ltversion.m4 $(top_srcdir)/../lt~obsolete.m4 \
-	$(top_srcdir)/acinclude.m4 $(top_srcdir)/../config/warnings.m4 \
+am__aclocal_m4_deps = $(top_srcdir)/../config/clang-plugin.m4 \
+	$(top_srcdir)/../config/depstand.m4 \
+	$(top_srcdir)/../config/gcc-plugin.m4 \
+	$(top_srcdir)/../config/lead-dot.m4 \
+	$(top_srcdir)/../config/override.m4 \
+	$(top_srcdir)/../libtool.m4 $(top_srcdir)/../ltoptions.m4 \
+	$(top_srcdir)/../ltsugar.m4 $(top_srcdir)/../ltversion.m4 \
+	$(top_srcdir)/../lt~obsolete.m4 $(top_srcdir)/acinclude.m4 \
+	$(top_srcdir)/../config/warnings.m4 \
 	$(top_srcdir)/../config/enable.m4 \
 	$(top_srcdir)/../config/ax_pthread.m4 \
 	$(top_srcdir)/config/bison.m4 $(top_srcdir)/../bfd/version.m4 \
@@ -174,11 +179,14 @@ am__objects_1 = Application.lo BaseMetric.lo BaseMetricTreeNode.lo \
 	MemorySpace.lo Metric.lo MetricList.lo Module.lo Ovw_data.lo \
 	PRBTree.lo PathTree.lo PreviewExp.lo Print.lo \
 	SAXParserFactory.lo Sample.lo Settings.lo SourceFile.lo \
-	Stabs.lo Stats_data.lo StringBuilder.lo Table.lo \
+	Stabs.lo Stats_data.lo StringBuilder.lo Symbol.lo Table.lo \
 	QLParser.tab.lo dbe_collctrl.lo i18n.lo parse.lo UserLabel.lo \
-	util.lo Dbe.lo
-am__objects_2 = dbe_hwcdrv.lo dbe_hwcfuncs.lo dbe_hwctable.lo \
-	dbe_memmgr.lo gethrtime.lo
+	util.lo Dbe.lo gmon_io.lo gmon_basic_blocks.lo \
+	gmon_call_graph.lo gmon_hist.lo gmon_symtab.lo gmon_cg_arcs.lo \
+	gmon_corefile.lo
+am__objects_2 = libgprofng_la-dbe_hwcdrv.lo \
+	libgprofng_la-dbe_hwcfuncs.lo libgprofng_la-dbe_hwctable.lo \
+	libgprofng_la-gethrtime.lo
 am_libgprofng_la_OBJECTS = $(am__objects_1) $(am__objects_2)
 libgprofng_la_OBJECTS = $(am_libgprofng_la_OBJECTS)
 AM_V_lt = $(am__v_lt_@AM_V@)
@@ -190,27 +198,31 @@ libgprofng_la_LINK = $(LIBTOOL) $(AM_V_lt) --tag=CXX \
 	$(AM_CXXFLAGS) $(CXXFLAGS) $(libgprofng_la_LDFLAGS) $(LDFLAGS) \
 	-o $@
 PROGRAMS = $(bin_PROGRAMS)
-am_gp_archive_OBJECTS = gp-archive.$(OBJEXT) ArchiveExp.$(OBJEXT)
-gp_archive_OBJECTS = $(am_gp_archive_OBJECTS)
-gp_archive_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-am_gp_collect_app_OBJECTS = gp-collect-app.$(OBJEXT) checks.$(OBJEXT) \
-	envsets.$(OBJEXT) count.$(OBJEXT)
-gp_collect_app_OBJECTS = $(am_gp_collect_app_OBJECTS)
-gp_collect_app_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-am_gp_display_src_OBJECTS = gp-display-src.$(OBJEXT)
-gp_display_src_OBJECTS = $(am_gp_display_src_OBJECTS)
-gp_display_src_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
-am_gp_display_text_OBJECTS = gp-display-text.$(OBJEXT) ipc.$(OBJEXT) \
-	ipcio.$(OBJEXT)
-gp_display_text_OBJECTS = $(am_gp_display_text_OBJECTS)
-gp_display_text_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
-	$(am__DEPENDENCIES_1)
 am_gprofng_OBJECTS = gprofng.$(OBJEXT)
 gprofng_OBJECTS = $(am_gprofng_OBJECTS)
 gprofng_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_gprofng_archive_OBJECTS = gp-archive.$(OBJEXT) ArchiveExp.$(OBJEXT)
+gprofng_archive_OBJECTS = $(am_gprofng_archive_OBJECTS)
+gprofng_archive_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_gprofng_collect_app_OBJECTS = gp-collect-app.$(OBJEXT) \
+	checks.$(OBJEXT) envsets.$(OBJEXT) count.$(OBJEXT)
+gprofng_collect_app_OBJECTS = $(am_gprofng_collect_app_OBJECTS)
+gprofng_collect_app_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_gprofng_display_src_OBJECTS = gp-display-src.$(OBJEXT)
+gprofng_display_src_OBJECTS = $(am_gprofng_display_src_OBJECTS)
+gprofng_display_src_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
+	$(am__DEPENDENCIES_1)
+am_gprofng_display_text_OBJECTS = gp-display-text.$(OBJEXT) \
+	ipc.$(OBJEXT) ipcio.$(OBJEXT)
+gprofng_display_text_OBJECTS = $(am_gprofng_display_text_OBJECTS)
+gprofng_display_text_DEPENDENCIES = $(LIBGPROFNG) \
+	$(am__DEPENDENCIES_1) $(am__DEPENDENCIES_1)
+am_gprofng_gmon_OBJECTS = gp-gmon.$(OBJEXT)
+gprofng_gmon_OBJECTS = $(am_gprofng_gmon_OBJECTS)
+gprofng_gmon_DEPENDENCIES = $(LIBGPROFNG) $(am__DEPENDENCIES_1) \
 	$(am__DEPENDENCIES_1)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -264,12 +276,14 @@ AM_V_CXXLD = $(am__v_CXXLD_@AM_V@)
 am__v_CXXLD_ = $(am__v_CXXLD_@AM_DEFAULT_V@)
 am__v_CXXLD_0 = @echo "  CXXLD   " $@;
 am__v_CXXLD_1 = 
-SOURCES = $(libgprofng_la_SOURCES) $(gp_archive_SOURCES) \
-	$(gp_collect_app_SOURCES) $(gp_display_src_SOURCES) \
-	$(gp_display_text_SOURCES) $(gprofng_SOURCES)
-DIST_SOURCES = $(libgprofng_la_SOURCES) $(gp_archive_SOURCES) \
-	$(gp_collect_app_SOURCES) $(gp_display_src_SOURCES) \
-	$(gp_display_text_SOURCES) $(gprofng_SOURCES)
+SOURCES = $(libgprofng_la_SOURCES) $(gprofng_SOURCES) \
+	$(gprofng_archive_SOURCES) $(gprofng_collect_app_SOURCES) \
+	$(gprofng_display_src_SOURCES) $(gprofng_display_text_SOURCES) \
+	$(gprofng_gmon_SOURCES)
+DIST_SOURCES = $(libgprofng_la_SOURCES) $(gprofng_SOURCES) \
+	$(gprofng_archive_SOURCES) $(gprofng_collect_app_SOURCES) \
+	$(gprofng_display_src_SOURCES) $(gprofng_display_text_SOURCES) \
+	$(gprofng_gmon_SOURCES)
 am__can_run_installinfo = \
   case $$AM_UPDATE_INFO_DIR in \
     n|no|NO) false;; \
@@ -306,6 +320,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BASH = @BASH@
 BISON = @BISON@
 BUILD_SUBDIRS = @BUILD_SUBDIRS@
 CC = @CC@
@@ -351,6 +366,7 @@ LIBOBJS = @LIBOBJS@
 LIBS = @LIBS@
 LIBTOOL = @LIBTOOL@
 LIPO = @LIPO@
+LLVM_CONFIG = @LLVM_CONFIG@
 LN_S = @LN_S@
 LTLIBOBJS = @LTLIBOBJS@
 MAINT = @MAINT@
@@ -358,6 +374,7 @@ MAKEINFO = @MAKEINFO@
 MKDIR_P = @MKDIR_P@
 NM = @NM@
 NMEDIT = @NMEDIT@
+NOLTO_CFLAGS = @NOLTO_CFLAGS@
 OBJDUMP = @OBJDUMP@
 OBJEXT = @OBJEXT@
 OTOOL = @OTOOL@
@@ -423,6 +440,7 @@ localedir = @localedir@
 localstatedir = @localstatedir@
 mandir = @mandir@
 mkdir_p = @mkdir_p@
+nolto_cflags = @nolto_cflags@
 oldincludedir = @oldincludedir@
 pdfdir = @pdfdir@
 prefix = @prefix@
@@ -504,6 +522,7 @@ CCSOURCES = \
 	Stabs.cc \
 	Stats_data.cc \
 	StringBuilder.cc \
+	Symbol.cc \
 	Table.cc \
 	QLParser.tab.cc \
 	dbe_collctrl.cc \
@@ -512,13 +531,19 @@ CCSOURCES = \
 	UserLabel.cc \
 	util.cc \
 	Dbe.cc \
+	gmon_io.cc \
+	gmon_basic_blocks.cc \
+	gmon_call_graph.cc \
+	gmon_hist.cc \
+	gmon_symtab.cc \
+	gmon_cg_arcs.cc \
+	gmon_corefile.cc \
 	$(NULL)
 
 CSOURCES = \
 	dbe_hwcdrv.c \
 	dbe_hwcfuncs.c \
 	dbe_hwctable.c \
-	dbe_memmgr.c \
 	gethrtime.c \
 	$(NULL)
 
@@ -539,13 +564,14 @@ AM_CPPFLAGS = $(GPROFNG_CPPFLAGS) -DLOCALEDIR=\"$(LOCALEDIR)\" \
 	-I../../bfd -I$(srcdir)/../../bfd $(ZLIBINC)
 
 AM_CFLAGS = $(GPROFNG_CFLAGS) $(PTHREAD_CFLAGS) \
-	$(GPROFNG_NO_SWITCH_CFLAGS)
+	$(GPROFNG_NO_SWITCH_CFLAGS) $(NOLTO_CFLAGS)
 
 AM_CXXFLAGS = $(AM_CFLAGS)
 BUILT_SOURCES = QLParser.tab.cc QLParser.tab.hh
 EXTRA_DIST = QLParser.tab.cc QLParser.tab.hh QLParser.yy
 lib_LTLIBRARIES = $(LIBGPROFNG)
 libgprofng_la_SOURCES = $(CCSOURCES) $(CSOURCES)
+libgprofng_la_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 libgprofng_la_LDFLAGS = -version-info 0:0:0
 
 # Pass -lpthread instead of $(PTHREAD_LIBS) due to $(PTHREAD_LIBS) being empty
@@ -558,16 +584,23 @@ libgprofng_la_LIBADD = $(top_builddir)/../opcodes/libopcodes.la \
 
 dbedir = $(SYSCONFDIR)
 dbe_DATA = $(srcdir)/gprofng.rc
-gp_archive_SOURCES = gp-archive.cc ArchiveExp.cc
-gp_archive_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
-gp_collect_app_SOURCES = gp-collect-app.cc checks.cc envsets.cc count.cc
-gp_collect_app_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
+gprofng_archive_SOURCES = gp-archive.cc ArchiveExp.cc
+gprofng_archive_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
+gprofng_archive_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
+gprofng_collect_app_SOURCES = gp-collect-app.cc checks.cc envsets.cc count.cc
+gprofng_collect_app_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
+gprofng_collect_app_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 gprofng_SOURCES = gprofng.cc
+gprofng_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
 gprofng_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
-gp_display_src_SOURCES = gp-display-src.cc
-gp_display_src_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
-gp_display_text_SOURCES = gp-display-text.cc ipc.cc ipcio.cc
-gp_display_text_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
+gprofng_display_src_SOURCES = gp-display-src.cc
+gprofng_display_src_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
+gprofng_display_src_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
+gprofng_display_text_SOURCES = gp-display-text.cc ipc.cc ipcio.cc
+gprofng_display_text_CFLAGS = $(AM_CFLAGS) $(NOLTO_CFLAGS)
+gprofng_display_text_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
+gprofng_gmon_SOURCES = gp-gmon.cc
+gprofng_gmon_LDADD = $(LIBGPROFNG) $(CLOCK_GETTIME_LINK) $(ZLIB)
 all: $(BUILT_SOURCES)
 	$(MAKE) $(AM_MAKEFLAGS) all-am
 
@@ -690,25 +723,29 @@ clean-binPROGRAMS:
 	echo " rm -f" $$list; \
 	rm -f $$list
 
-gp-archive$(EXEEXT): $(gp_archive_OBJECTS) $(gp_archive_DEPENDENCIES) $(EXTRA_gp_archive_DEPENDENCIES) 
-	@rm -f gp-archive$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(gp_archive_OBJECTS) $(gp_archive_LDADD) $(LIBS)
-
-gp-collect-app$(EXEEXT): $(gp_collect_app_OBJECTS) $(gp_collect_app_DEPENDENCIES) $(EXTRA_gp_collect_app_DEPENDENCIES) 
-	@rm -f gp-collect-app$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(gp_collect_app_OBJECTS) $(gp_collect_app_LDADD) $(LIBS)
-
-gp-display-src$(EXEEXT): $(gp_display_src_OBJECTS) $(gp_display_src_DEPENDENCIES) $(EXTRA_gp_display_src_DEPENDENCIES) 
-	@rm -f gp-display-src$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(gp_display_src_OBJECTS) $(gp_display_src_LDADD) $(LIBS)
-
-gp-display-text$(EXEEXT): $(gp_display_text_OBJECTS) $(gp_display_text_DEPENDENCIES) $(EXTRA_gp_display_text_DEPENDENCIES) 
-	@rm -f gp-display-text$(EXEEXT)
-	$(AM_V_CXXLD)$(CXXLINK) $(gp_display_text_OBJECTS) $(gp_display_text_LDADD) $(LIBS)
-
 gprofng$(EXEEXT): $(gprofng_OBJECTS) $(gprofng_DEPENDENCIES) $(EXTRA_gprofng_DEPENDENCIES) 
 	@rm -f gprofng$(EXEEXT)
 	$(AM_V_CXXLD)$(CXXLINK) $(gprofng_OBJECTS) $(gprofng_LDADD) $(LIBS)
+
+gprofng-archive$(EXEEXT): $(gprofng_archive_OBJECTS) $(gprofng_archive_DEPENDENCIES) $(EXTRA_gprofng_archive_DEPENDENCIES) 
+	@rm -f gprofng-archive$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(gprofng_archive_OBJECTS) $(gprofng_archive_LDADD) $(LIBS)
+
+gprofng-collect-app$(EXEEXT): $(gprofng_collect_app_OBJECTS) $(gprofng_collect_app_DEPENDENCIES) $(EXTRA_gprofng_collect_app_DEPENDENCIES) 
+	@rm -f gprofng-collect-app$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(gprofng_collect_app_OBJECTS) $(gprofng_collect_app_LDADD) $(LIBS)
+
+gprofng-display-src$(EXEEXT): $(gprofng_display_src_OBJECTS) $(gprofng_display_src_DEPENDENCIES) $(EXTRA_gprofng_display_src_DEPENDENCIES) 
+	@rm -f gprofng-display-src$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(gprofng_display_src_OBJECTS) $(gprofng_display_src_LDADD) $(LIBS)
+
+gprofng-display-text$(EXEEXT): $(gprofng_display_text_OBJECTS) $(gprofng_display_text_DEPENDENCIES) $(EXTRA_gprofng_display_text_DEPENDENCIES) 
+	@rm -f gprofng-display-text$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(gprofng_display_text_OBJECTS) $(gprofng_display_text_LDADD) $(LIBS)
+
+gprofng-gmon$(EXEEXT): $(gprofng_gmon_OBJECTS) $(gprofng_gmon_DEPENDENCIES) $(EXTRA_gprofng_gmon_DEPENDENCIES) 
+	@rm -f gprofng-gmon$(EXEEXT)
+	$(AM_V_CXXLD)$(CXXLINK) $(gprofng_gmon_OBJECTS) $(gprofng_gmon_LDADD) $(LIBS)
 
 mostlyclean-compile:
 	-rm -f *.$(OBJEXT)
@@ -777,25 +814,33 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Stabs.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Stats_data.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/StringBuilder.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Symbol.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/Table.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/UserLabel.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/checks.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/count.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbe_collctrl.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbe_hwcdrv.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbe_hwcfuncs.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbe_hwctable.Plo@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/dbe_memmgr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/envsets.Po@am__quote@
-@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gethrtime.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_basic_blocks.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_call_graph.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_cg_arcs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_corefile.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_hist.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_io.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gmon_symtab.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gp-archive.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gp-collect-app.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gp-display-src.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gp-display-text.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gp-gmon.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/gprofng.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/i18n.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipc.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/ipcio.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgprofng_la-dbe_hwcdrv.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgprofng_la-dbe_hwcfuncs.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgprofng_la-dbe_hwctable.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/libgprofng_la-gethrtime.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/parse.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/util.Plo@am__quote@
 
@@ -822,6 +867,34 @@ distclean-compile:
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='$<' object='$@' libtool=yes @AMDEPBACKSLASH@
 @AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
 @am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LTCOMPILE) -c -o $@ $<
+
+libgprofng_la-dbe_hwcdrv.lo: dbe_hwcdrv.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -MT libgprofng_la-dbe_hwcdrv.lo -MD -MP -MF $(DEPDIR)/libgprofng_la-dbe_hwcdrv.Tpo -c -o libgprofng_la-dbe_hwcdrv.lo `test -f 'dbe_hwcdrv.c' || echo '$(srcdir)/'`dbe_hwcdrv.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgprofng_la-dbe_hwcdrv.Tpo $(DEPDIR)/libgprofng_la-dbe_hwcdrv.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dbe_hwcdrv.c' object='libgprofng_la-dbe_hwcdrv.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -c -o libgprofng_la-dbe_hwcdrv.lo `test -f 'dbe_hwcdrv.c' || echo '$(srcdir)/'`dbe_hwcdrv.c
+
+libgprofng_la-dbe_hwcfuncs.lo: dbe_hwcfuncs.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -MT libgprofng_la-dbe_hwcfuncs.lo -MD -MP -MF $(DEPDIR)/libgprofng_la-dbe_hwcfuncs.Tpo -c -o libgprofng_la-dbe_hwcfuncs.lo `test -f 'dbe_hwcfuncs.c' || echo '$(srcdir)/'`dbe_hwcfuncs.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgprofng_la-dbe_hwcfuncs.Tpo $(DEPDIR)/libgprofng_la-dbe_hwcfuncs.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dbe_hwcfuncs.c' object='libgprofng_la-dbe_hwcfuncs.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -c -o libgprofng_la-dbe_hwcfuncs.lo `test -f 'dbe_hwcfuncs.c' || echo '$(srcdir)/'`dbe_hwcfuncs.c
+
+libgprofng_la-dbe_hwctable.lo: dbe_hwctable.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -MT libgprofng_la-dbe_hwctable.lo -MD -MP -MF $(DEPDIR)/libgprofng_la-dbe_hwctable.Tpo -c -o libgprofng_la-dbe_hwctable.lo `test -f 'dbe_hwctable.c' || echo '$(srcdir)/'`dbe_hwctable.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgprofng_la-dbe_hwctable.Tpo $(DEPDIR)/libgprofng_la-dbe_hwctable.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='dbe_hwctable.c' object='libgprofng_la-dbe_hwctable.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -c -o libgprofng_la-dbe_hwctable.lo `test -f 'dbe_hwctable.c' || echo '$(srcdir)/'`dbe_hwctable.c
+
+libgprofng_la-gethrtime.lo: gethrtime.c
+@am__fastdepCC_TRUE@	$(AM_V_CC)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -MT libgprofng_la-gethrtime.lo -MD -MP -MF $(DEPDIR)/libgprofng_la-gethrtime.Tpo -c -o libgprofng_la-gethrtime.lo `test -f 'gethrtime.c' || echo '$(srcdir)/'`gethrtime.c
+@am__fastdepCC_TRUE@	$(AM_V_at)$(am__mv) $(DEPDIR)/libgprofng_la-gethrtime.Tpo $(DEPDIR)/libgprofng_la-gethrtime.Plo
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	$(AM_V_CC)source='gethrtime.c' object='libgprofng_la-gethrtime.lo' libtool=yes @AMDEPBACKSLASH@
+@AMDEP_TRUE@@am__fastdepCC_FALSE@	DEPDIR=$(DEPDIR) $(CCDEPMODE) $(depcomp) @AMDEPBACKSLASH@
+@am__fastdepCC_FALSE@	$(AM_V_CC@am__nodep@)$(LIBTOOL) $(AM_V_lt) --tag=CC $(AM_LIBTOOLFLAGS) $(LIBTOOLFLAGS) --mode=compile $(CC) $(DEFS) $(DEFAULT_INCLUDES) $(INCLUDES) $(AM_CPPFLAGS) $(CPPFLAGS) $(libgprofng_la_CFLAGS) $(CFLAGS) -c -o libgprofng_la-gethrtime.lo `test -f 'gethrtime.c' || echo '$(srcdir)/'`gethrtime.c
 
 .cc.o:
 @am__fastdepCXX_TRUE@	$(AM_V_CXX)depbase=`echo $@ | sed 's|[^/]*$$|$(DEPDIR)/&|;s|\.o$$||'`;\
@@ -1028,7 +1101,8 @@ install-dvi: install-dvi-am
 
 install-dvi-am:
 
-install-exec-am: install-binPROGRAMS install-libLTLIBRARIES
+install-exec-am: install-binPROGRAMS install-exec-local \
+	install-libLTLIBRARIES
 
 install-html: install-html-am
 
@@ -1080,15 +1154,15 @@ uninstall-am: uninstall-binPROGRAMS uninstall-dbeDATA \
 	distclean-tags distdir dvi dvi-am html html-am info info-am \
 	install install-am install-binPROGRAMS install-data \
 	install-data-am install-dbeDATA install-dvi install-dvi-am \
-	install-exec install-exec-am install-html install-html-am \
-	install-info install-info-am install-libLTLIBRARIES \
-	install-man install-pdf install-pdf-am install-ps \
-	install-ps-am install-strip installcheck installcheck-am \
-	installdirs maintainer-clean maintainer-clean-generic \
-	mostlyclean mostlyclean-compile mostlyclean-generic \
-	mostlyclean-libtool pdf pdf-am ps ps-am tags tags-am uninstall \
-	uninstall-am uninstall-binPROGRAMS uninstall-dbeDATA \
-	uninstall-libLTLIBRARIES
+	install-exec install-exec-am install-exec-local install-html \
+	install-html-am install-info install-info-am \
+	install-libLTLIBRARIES install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
+	maintainer-clean-generic mostlyclean mostlyclean-compile \
+	mostlyclean-generic mostlyclean-libtool pdf pdf-am ps ps-am \
+	tags tags-am uninstall uninstall-am uninstall-binPROGRAMS \
+	uninstall-dbeDATA uninstall-libLTLIBRARIES
 
 .PRECIOUS: Makefile
 
@@ -1115,6 +1189,15 @@ diststuff: info
 dist-hook: $(LIBGPROFNG)
 
 $(srcdir)/DbeSession.cc: QLParser.tab.hh
+
+.PHONY: install-exec-local
+install-exec-local:
+	$(mkinstalldirs) $(DESTDIR)$(bindir)
+	for i in gp-{archive,collect-app,display-html,display-src,display-text}; do \
+		oldname=`echo $$i | sed '$(transform)'`; \
+		rm -f $(DESTDIR)$(bindir)/$$oldname ; \
+		ln -s `echo $$oldname | sed 's&gp-&gprofng-&'` $(DESTDIR)$(bindir)/$$oldname; \
+	done
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

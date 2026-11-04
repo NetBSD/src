@@ -1,5 +1,5 @@
 /* BFD back-end for Irix core files.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    Written by Stu Grossman, Cygnus Support.
    Converted to back-end form by Ian Lance Taylor, Cygnus Support
 
@@ -61,7 +61,7 @@ do_sections64 (bfd *abfd, struct coreout *coreout)
 
   for (i = 0; i < coreout->c_nvmap; i++)
     {
-      val = bfd_bread (&vmap, (bfd_size_type) sizeof vmap, abfd);
+      val = bfd_read (&vmap, sizeof vmap, abfd);
       if (val != sizeof vmap)
 	break;
 
@@ -109,7 +109,7 @@ do_sections (bfd *abfd, struct coreout *coreout)
 
   for (i = 0; i < coreout->c_nvmap; i++)
     {
-      val = bfd_bread (&vmap, (bfd_size_type) sizeof vmap, abfd);
+      val = bfd_read (&vmap, sizeof vmap, abfd);
       if (val != sizeof vmap)
 	break;
 
@@ -174,7 +174,7 @@ irix_core_core_file_p (bfd *abfd)
   struct idesc *idg, *idf, *ids;
   size_t amt;
 
-  val = bfd_bread (&coreout, (bfd_size_type) sizeof coreout, abfd);
+  val = bfd_read (&coreout, sizeof coreout, abfd);
   if (val != sizeof coreout)
     {
       if (bfd_get_error () != bfd_error_system_call)
@@ -203,7 +203,8 @@ irix_core_core_file_p (bfd *abfd)
   if (!core_hdr (abfd))
     return NULL;
 
-  strncpy (core_command (abfd), coreout.c_name, CORE_NAMESIZE);
+  strncpy (core_command (abfd), coreout.c_name, CORE_NAMESIZE - 1);
+  core_command (abfd)[CORE_NAMESIZE - 1] = 0;
   core_signal (abfd) = coreout.c_sigcause;
 
   if (bfd_seek (abfd, coreout.c_vmapoffset, SEEK_SET) != 0)

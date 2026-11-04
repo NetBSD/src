@@ -1,4 +1,4 @@
-@c Copyright (C) 1992-2022 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2025 Free Software Foundation, Inc.
 @c This file is part of the documentation for the GAS manual
 
 @c Configuration settings for all-inclusive version of manual
@@ -43,6 +43,7 @@
 @set I80386
 @set IA64
 @set IP2K
+@set KVX
 @set LM32
 @set M32C
 @set M32R
@@ -56,7 +57,6 @@
 @set MMIX
 @set MS1
 @set MSP430
-@set NIOSII
 @set NDS32
 @set NS32K
 @set OPENRISC

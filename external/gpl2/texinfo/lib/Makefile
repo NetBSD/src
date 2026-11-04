@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/14 00:34:53 christos Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2026/11/04 22:41:04 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -27,8 +27,7 @@ CLEANFILES+=	${GEN_SRCS}
 CMD_SRCS = session.c echo-area.c infodoc.c m-x.c indices.c nodemenu.c \
     footnotes.c variables.c
 
-MAKEDOCDIR!=cd ${.CURDIR}/../makedoc && ${PRINTOBJDIR}
-MAKEDOC=${MAKEDOCDIR}/makedoc
+MAKEDOC=${TOOL_MAKEDOC}
 
 ${GEN_SRCS}: ${MAKEDOC} ${CMD_SRCS}
 	${_MKMSG_CREATE} ${GEN_SRCS}

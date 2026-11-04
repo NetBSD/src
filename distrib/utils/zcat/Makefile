@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2023/06/03 09:09:02 lukem Exp $
+# $NetBSD: Makefile,v 1.21.2.1 2026/11/04 22:37:11 perseant Exp $
 # Small zcat (i.e. for install media)
 #
 
@@ -17,7 +17,7 @@ PROG=		zcat
 # Just what we need from libz
 SRCS=		zcat.c gzread.c gzclose.c gzlib.c inflate.c 
 SRCS+=		adler32.c crc32.c zutil.c inffast.c inftrees.c
-CPPFLAGS+=	-I${SRCDIR} -DNO_GZCOMPRESS
+CPPFLAGS+=	-I${SRCDIR} -DNO_GZCOMPRESS -DZLIB_CONST
 
 # This avoids including stdio, threads, locale, etc.
 SRCS+=		misc.c

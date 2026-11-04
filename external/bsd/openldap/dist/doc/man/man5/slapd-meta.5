@@ -1,5 +1,5 @@
 .TH SLAPD-META 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -417,7 +417,9 @@ where
 .B none
 is the default, i.e. no \fIidentity assertion\fP is performed.
 
-The authz parameter is used to instruct the SASL bind to exploit 
+The
+.B authz
+parameter is used to instruct the SASL bind to exploit
 .B native 
 SASL authorization, if available; since connections are cached,
 this should only be used when authorizing with a fixed identity
@@ -754,10 +756,11 @@ connection unless the URI directive protocol scheme is \fBldaps://\fP.
 In that case this keyword may only be set to "ldaps" and the StartTLS
 operation will not be used.
 
-\fBpropagate\fP issues the StartTLS operation only if the original
-connection did.
+With \fBpropagate\fP, the proxy issues the StartTLS operation only if
+the original connection has a TLS layer set up.
 The \fBtry\-\fP prefix instructs the proxy to continue operations
-if the StartTLS operation failed; its use is highly deprecated.
+if the StartTLS operation failed; its use is \fBnot\fP recommended.
+
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert

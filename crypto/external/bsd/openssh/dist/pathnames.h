@@ -1,5 +1,5 @@
-/*	$NetBSD: pathnames.h,v 1.15.10.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: pathnames.h,v 1.33 2024/10/14 01:57:50 djm Exp $ */
+/*	$NetBSD: pathnames.h,v 1.15.10.2 2026/11/04 22:36:40 perseant Exp $	*/
+/* $OpenBSD: pathnames.h,v 1.38 2026/09/16 00:25:50 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -31,11 +31,10 @@
  */
 #define _PATH_SERVER_CONFIG_FILE	SSHDIR "/sshd_config"
 #define _PATH_HOST_CONFIG_FILE		SSHDIR "/ssh_config"
-#define _PATH_HOST_DSA_KEY_FILE		SSHDIR "/ssh_host_dsa_key"
 #define _PATH_HOST_ECDSA_KEY_FILE	SSHDIR "/ssh_host_ecdsa_key"
 #define _PATH_HOST_RSA_KEY_FILE		SSHDIR "/ssh_host_rsa_key"
 #define _PATH_HOST_ED25519_KEY_FILE	SSHDIR "/ssh_host_ed25519_key"
-#define _PATH_HOST_XMSS_KEY_FILE	SSHDIR "/ssh_host_xmss_key"
+#define _PATH_HOST_MLDSA44_ED25519_KEY_FILE SSHDIR "/ssh_host_mldsa44_ed25519_key"
 #define _PATH_DH_MODULI			ETCDIR "/moduli"
 
 #define _PATH_SSH_PROGRAM		"/usr/bin/ssh"
@@ -56,6 +55,16 @@
  */
 #define _PATH_SSH_USER_DIR		".ssh"
 
+
+/*
+ * Directory spec for ssh-agent sockets and agent sockets forwarded by
+ * sshd reside. This directory should not be world-readable.
+ */
+#define _PATH_SSH_AGENT_SOCKET_DIR	"user:" _PATH_SSH_USER_DIR "/agent"
+
+/* Directory spec for ssh-agent sockets in /tmp */
+#define _PATH_SSH_AGENT_SOCKET_TMPDIR	"shared:/tmp"
+
 /*
  * Per-user file containing host keys of known hosts.  This file need not be
  * readable by anyone except the user him/herself, though this does not
@@ -69,13 +78,12 @@
  * Name of the default file containing client-side authentication key. This
  * file should only be readable by the user him/herself.
  */
-#define _PATH_SSH_CLIENT_ID_DSA		_PATH_SSH_USER_DIR "/id_dsa"
 #define _PATH_SSH_CLIENT_ID_ECDSA	_PATH_SSH_USER_DIR "/id_ecdsa"
 #define _PATH_SSH_CLIENT_ID_RSA		_PATH_SSH_USER_DIR "/id_rsa"
 #define _PATH_SSH_CLIENT_ID_ED25519	_PATH_SSH_USER_DIR "/id_ed25519"
-#define _PATH_SSH_CLIENT_ID_XMSS	_PATH_SSH_USER_DIR "/id_xmss"
 #define _PATH_SSH_CLIENT_ID_ECDSA_SK	_PATH_SSH_USER_DIR "/id_ecdsa_sk"
 #define _PATH_SSH_CLIENT_ID_ED25519_SK	_PATH_SSH_USER_DIR "/id_ed25519_sk"
+#define _PATH_SSH_CLIENT_ID_MLDSA44_ED25519 _PATH_SSH_USER_DIR "/id_mldsa44_ed25519"
 
 /*
  * Configuration file in user's home directory.  This file need not be

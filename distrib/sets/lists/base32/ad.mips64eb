@@ -1,6 +1,7 @@
-# $NetBSD: ad.mips64eb,v 1.6.2.2 2025/08/02 05:20:27 perseant Exp $
+# $NetBSD: ad.mips64eb,v 1.6.2.3 2026/11/04 22:36:59 perseant Exp $
 #
 ./libexec/ld.elf_so-o32			base-compat-shlib	compat,pic
 ./usr/lib/o32/libgomp.so.2.1			base-compat-shlib	compat,pic,arch64,gcc=10
 ./usr/lib/o32/libgomp.so.2.2			base-compat-shlib	compat,pic,arch64,gcc=12
+./usr/lib/o32/libgomp.so.2.3			base-compat-shlib	compat,pic,arch64,gcc=14
 ./usr/libexec/ld.elf_so-o32			base-sys-shlib		compat,pic

@@ -1,5 +1,5 @@
 /* MIPS ELF support for BFD.
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
 
    By Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>, from
    information in the System V Application Binary Interface, MIPS
@@ -223,52 +223,70 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 #define EF_MIPS_ARCH		0xf0000000
 
 /* -mips1 code.  */
-#define E_MIPS_ARCH_1		0x00000000
+#define EF_MIPS_ARCH_1		0x00000000
 
 /* -mips2 code.  */
-#define E_MIPS_ARCH_2		0x10000000
+#define EF_MIPS_ARCH_2		0x10000000
 
 /* -mips3 code.  */
-#define E_MIPS_ARCH_3		0x20000000
+#define EF_MIPS_ARCH_3		0x20000000
 
 /* -mips4 code.  */
-#define E_MIPS_ARCH_4		0x30000000
+#define EF_MIPS_ARCH_4		0x30000000
 
 /* -mips5 code.  */
-#define E_MIPS_ARCH_5           0x40000000
+#define EF_MIPS_ARCH_5           0x40000000
 
 /* -mips32 code.  */
-#define E_MIPS_ARCH_32          0x50000000
+#define EF_MIPS_ARCH_32          0x50000000
 
 /* -mips64 code.  */
-#define E_MIPS_ARCH_64          0x60000000
+#define EF_MIPS_ARCH_64          0x60000000
 
 /* -mips32r2 code.  */
-#define E_MIPS_ARCH_32R2        0x70000000
+#define EF_MIPS_ARCH_32R2        0x70000000
 
 /* -mips64r2 code.  */
-#define E_MIPS_ARCH_64R2        0x80000000
+#define EF_MIPS_ARCH_64R2        0x80000000
 
 /* -mips32r6 code.  */
-#define E_MIPS_ARCH_32R6        0x90000000
+#define EF_MIPS_ARCH_32R6        0x90000000
 
 /* -mips64r6 code.  */
-#define E_MIPS_ARCH_64R6        0xa0000000
+#define EF_MIPS_ARCH_64R6        0xa0000000
 
 /* The ABI of the file.  Also see EF_MIPS_ABI2 above. */
 #define EF_MIPS_ABI		0x0000F000
 
 /* The original o32 abi. */
-#define E_MIPS_ABI_O32          0x00001000
+#define EF_MIPS_ABI_O32          0x00001000
 
 /* O32 extended to work on 64 bit architectures */
-#define E_MIPS_ABI_O64          0x00002000
+#define EF_MIPS_ABI_O64          0x00002000
 
 /* EABI in 32 bit mode */
-#define E_MIPS_ABI_EABI32       0x00003000
+#define EF_MIPS_ABI_EABI32       0x00003000
 
 /* EABI in 64 bit mode */
-#define E_MIPS_ABI_EABI64       0x00004000
+#define EF_MIPS_ABI_EABI64       0x00004000
+
+/* In order to support backwards compatibility we also
+   define the old versions of some of these constants.  */
+#define E_MIPS_ARCH_1     EF_MIPS_ARCH_1
+#define E_MIPS_ARCH_2     EF_MIPS_ARCH_2
+#define E_MIPS_ARCH_3     EF_MIPS_ARCH_3
+#define E_MIPS_ARCH_4     EF_MIPS_ARCH_4
+#define E_MIPS_ARCH_5     EF_MIPS_ARCH_5
+#define E_MIPS_ARCH_32    EF_MIPS_ARCH_32
+#define E_MIPS_ARCH_64    EF_MIPS_ARCH_64
+#define E_MIPS_ARCH_32R2  EF_MIPS_ARCH_32R2
+#define E_MIPS_ARCH_64R2  EF_MIPS_ARCH_64R2
+#define E_MIPS_ARCH_32R6  EF_MIPS_ARCH_32R6
+#define E_MIPS_ARCH_64R6  EF_MIPS_ARCH_64R6
+#define E_MIPS_ABI_O32    EF_MIPS_ABI_O32
+#define E_MIPS_ABI_O64    EF_MIPS_ABI_O64
+#define E_MIPS_ABI_EABI32 EF_MIPS_ABI_EABI32
+#define E_MIPS_ABI_EABI64 EF_MIPS_ABI_EABI64
 
 
 /* Machine variant if we know it.  This field was invented at Cygnus,
@@ -281,28 +299,54 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
    00 - 7F should be left for a future standard;
    the rest are open. */
 
-#define E_MIPS_MACH_3900	0x00810000
-#define E_MIPS_MACH_4010	0x00820000
-#define E_MIPS_MACH_4100	0x00830000
-#define E_MIPS_MACH_4650	0x00850000
-#define E_MIPS_MACH_4120	0x00870000
-#define E_MIPS_MACH_4111	0x00880000
-#define E_MIPS_MACH_SB1         0x008a0000
-#define E_MIPS_MACH_OCTEON	0x008b0000
-#define E_MIPS_MACH_XLR     	0x008c0000
-#define E_MIPS_MACH_OCTEON2	0x008d0000
-#define E_MIPS_MACH_OCTEON3	0x008e0000
-#define E_MIPS_MACH_5400	0x00910000
-#define E_MIPS_MACH_5900	0x00920000
-#define E_MIPS_MACH_IAMR2	0x00930000
-#define E_MIPS_MACH_5500	0x00980000
-#define E_MIPS_MACH_9000	0x00990000
-#define E_MIPS_MACH_LS2E        0x00A00000
-#define E_MIPS_MACH_LS2F        0x00A10000
-#define E_MIPS_MACH_GS464       0x00A20000
-#define E_MIPS_MACH_GS464E	0x00A30000
-#define E_MIPS_MACH_GS264E	0x00A40000
-
+#define EF_MIPS_MACH_3900	0x00810000
+#define EF_MIPS_MACH_4010	0x00820000
+#define EF_MIPS_MACH_4100	0x00830000
+#define EF_MIPS_MACH_ALLEGREX	0x00840000
+#define EF_MIPS_MACH_4650	0x00850000
+#define EF_MIPS_MACH_4120	0x00870000
+#define EF_MIPS_MACH_4111	0x00880000
+#define EF_MIPS_MACH_SB1         0x008a0000
+#define EF_MIPS_MACH_OCTEON	0x008b0000
+#define EF_MIPS_MACH_XLR     	0x008c0000
+#define EF_MIPS_MACH_OCTEON2	0x008d0000
+#define EF_MIPS_MACH_OCTEON3	0x008e0000
+#define EF_MIPS_MACH_5400	0x00910000
+#define EF_MIPS_MACH_5900	0x00920000
+#define EF_MIPS_MACH_IAMR2	0x00930000
+#define EF_MIPS_MACH_5500	0x00980000
+#define EF_MIPS_MACH_9000	0x00990000
+#define EF_MIPS_MACH_LS2E        0x00A00000
+#define EF_MIPS_MACH_LS2F        0x00A10000
+#define EF_MIPS_MACH_GS464       0x00A20000
+#define EF_MIPS_MACH_GS464E	0x00A30000
+#define EF_MIPS_MACH_GS264E	0x00A40000
+
+/* In order to support backwards compatibility we also
+   define the old versions of some of these constants.  */
+#define E_MIPS_MACH_3900      EF_MIPS_MACH_3900 
+#define E_MIPS_MACH_4010      EF_MIPS_MACH_4010 
+#define E_MIPS_MACH_4100      EF_MIPS_MACH_4100 
+#define E_MIPS_MACH_ALLEGREX  EF_MIPS_MACH_ALLEGREX 
+#define E_MIPS_MACH_4650      EF_MIPS_MACH_4650 
+#define E_MIPS_MACH_4120      EF_MIPS_MACH_4120 
+#define E_MIPS_MACH_4111      EF_MIPS_MACH_4111 
+#define E_MIPS_MACH_SB1       EF_MIPS_MACH_SB1 
+#define E_MIPS_MACH_OCTEON    EF_MIPS_MACH_OCTEON 
+#define E_MIPS_MACH_XLR       EF_MIPS_MACH_XLR 
+#define E_MIPS_MACH_OCTEON2   EF_MIPS_MACH_OCTEON2 
+#define E_MIPS_MACH_OCTEON3   EF_MIPS_MACH_OCTEON3 
+#define E_MIPS_MACH_5400      EF_MIPS_MACH_5400 
+#define E_MIPS_MACH_5900      EF_MIPS_MACH_5900 
+#define E_MIPS_MACH_IAMR2     EF_MIPS_MACH_IAMR2 
+#define E_MIPS_MACH_5500      EF_MIPS_MACH_5500 
+#define E_MIPS_MACH_9000      EF_MIPS_MACH_9000 
+#define E_MIPS_MACH_LS2E      EF_MIPS_MACH_LS2E 
+#define E_MIPS_MACH_LS2F      EF_MIPS_MACH_LS2F 
+#define E_MIPS_MACH_GS464     EF_MIPS_MACH_GS464 
+#define E_MIPS_MACH_GS464E    EF_MIPS_MACH_GS464E 
+#define E_MIPS_MACH_GS264E    EF_MIPS_MACH_GS264E 
+
 /* Processor specific section indices.  These sections do not actually
    exist.  Symbols with a st_shndx field corresponding to one of these
    values have a special meaning.  */
@@ -329,131 +373,136 @@ END_RELOC_NUMBERS (R_MIPS_maxext)
 
 /* Section contains the set of dynamic shared objects used when
    statically linking.  */
-#define SHT_MIPS_LIBLIST	0x70000000
+#define SHT_MIPS_LIBLIST	(SHT_LOPROC + 0)
 
 /* I'm not sure what this is, but it's used on Irix 5.  */
-#define SHT_MIPS_MSYM		0x70000001
+#define SHT_MIPS_MSYM		(SHT_LOPROC + 1)
 
 /* Section contains list of symbols whose definitions conflict with
    symbols defined in shared objects.  */
-#define SHT_MIPS_CONFLICT	0x70000002
+#define SHT_MIPS_CONFLICT	(SHT_LOPROC + 2)
 
 /* Section contains the global pointer table.  */
-#define SHT_MIPS_GPTAB		0x70000003
+#define SHT_MIPS_GPTAB		(SHT_LOPROC + 3)
 
 /* Section contains microcode information.  The exact format is
    unspecified.  */
-#define SHT_MIPS_UCODE		0x70000004
+#define SHT_MIPS_UCODE		(SHT_LOPROC + 4)
 
 /* Section contains some sort of debugging information.  The exact
    format is unspecified.  It's probably ECOFF symbols.  */
-#define SHT_MIPS_DEBUG		0x70000005
+#define SHT_MIPS_DEBUG		(SHT_LOPROC + 5)
 
 /* Section contains register usage information.  */
-#define SHT_MIPS_REGINFO	0x70000006
+#define SHT_MIPS_REGINFO	(SHT_LOPROC + 6)
 
 /* ??? */
-#define SHT_MIPS_PACKAGE	0x70000007
+#define SHT_MIPS_PACKAGE	(SHT_LOPROC + 7)
 
 /* ??? */
-#define SHT_MIPS_PACKSYM	0x70000008
+#define SHT_MIPS_PACKSYM	(SHT_LOPROC + 8)
 
 /* ??? */
-#define SHT_MIPS_RELD		0x70000009
+#define SHT_MIPS_RELD		(SHT_LOPROC + 9)
 
+/* Note: SHT_LOPROC + 0xa is missing...  */
+  
 /* Section contains interface information.  */
-#define SHT_MIPS_IFACE		0x7000000b
+#define SHT_MIPS_IFACE		(SHT_LOPROC + 0xb)
 
 /* Section contains description of contents of another section.  */
-#define SHT_MIPS_CONTENT	0x7000000c
+#define SHT_MIPS_CONTENT	(SHT_LOPROC + 0xc)
 
 /* Section contains miscellaneous options.  */
-#define SHT_MIPS_OPTIONS	0x7000000d
+#define SHT_MIPS_OPTIONS	(SHT_LOPROC + 0xd)
+
+/* Note: SHT_LOPROC + 0xe is missing...  */
+/* Note: SHT_LOPROC + 0xf is missing...  */
 
 /* ??? */
-#define SHT_MIPS_SHDR		0x70000010
+#define SHT_MIPS_SHDR		(SHT_LOPROC + 0x10)
 
 /* ??? */
-#define SHT_MIPS_FDESC		0x70000011
+#define SHT_MIPS_FDESC		(SHT_LOPROC + 0x11)
 
 /* ??? */
-#define SHT_MIPS_EXTSYM		0x70000012
+#define SHT_MIPS_EXTSYM		(SHT_LOPROC + 0x12)
 
 /* ??? */
-#define SHT_MIPS_DENSE		0x70000013
+#define SHT_MIPS_DENSE		(SHT_LOPROC + 0x13)
 
 /* ??? */
-#define SHT_MIPS_PDESC		0x70000014
+#define SHT_MIPS_PDESC		(SHT_LOPROC + 0x14)
 
 /* ??? */
-#define SHT_MIPS_LOCSYM		0x70000015
+#define SHT_MIPS_LOCSYM		(SHT_LOPROC + 0x15)
 
 /* ??? */
-#define SHT_MIPS_AUXSYM		0x70000016
+#define SHT_MIPS_AUXSYM		(SHT_LOPROC + 0x16)
 
 /* ??? */
-#define SHT_MIPS_OPTSYM		0x70000017
+#define SHT_MIPS_OPTSYM		(SHT_LOPROC + 0x17)
 
 /* ??? */
-#define SHT_MIPS_LOCSTR		0x70000018
+#define SHT_MIPS_LOCSTR		(SHT_LOPROC + 0x18)
 
 /* ??? */
-#define SHT_MIPS_LINE		0x70000019
+#define SHT_MIPS_LINE		(SHT_LOPROC + 0x19)
 
 /* ??? */
-#define SHT_MIPS_RFDESC		0x7000001a
+#define SHT_MIPS_RFDESC		(SHT_LOPROC + 0x1a)
 
 /* Delta C++: symbol table */
-#define SHT_MIPS_DELTASYM	0x7000001b
+#define SHT_MIPS_DELTASYM	(SHT_LOPROC + 0x1b)
 
 /* Delta C++: instance table */
-#define SHT_MIPS_DELTAINST	0x7000001c
+#define SHT_MIPS_DELTAINST	(SHT_LOPROC + 0x1c)
 
 /* Delta C++: class table */
-#define SHT_MIPS_DELTACLASS	0x7000001d
+#define SHT_MIPS_DELTACLASS	(SHT_LOPROC + 0x1d)
 
 /* DWARF debugging section.  */
-#define SHT_MIPS_DWARF		0x7000001e
+#define SHT_MIPS_DWARF		(SHT_LOPROC + 0x1e)
 
 /* Delta C++: declarations */
-#define SHT_MIPS_DELTADECL	0x7000001f
+#define SHT_MIPS_DELTADECL	(SHT_LOPROC + 0x1f)
 
 /* List of libraries the binary depends on.  Includes a time stamp, version
    number.  */
-#define SHT_MIPS_SYMBOL_LIB	0x70000020
+#define SHT_MIPS_SYMBOL_LIB	(SHT_LOPROC + 0x20)
 
 /* Events section.  */
-#define SHT_MIPS_EVENTS		0x70000021
+#define SHT_MIPS_EVENTS		(SHT_LOPROC + 0x21)
 
 /* ??? */
-#define SHT_MIPS_TRANSLATE	0x70000022
+#define SHT_MIPS_TRANSLATE	(SHT_LOPROC + 0x22)
 
 /* Special pixie sections */
-#define SHT_MIPS_PIXIE		0x70000023
+#define SHT_MIPS_PIXIE		(SHT_LOPROC + 0x23)
 
 /* Address translation table (for debug info) */
-#define SHT_MIPS_XLATE		0x70000024
+#define SHT_MIPS_XLATE		(SHT_LOPROC + 0x24)
 
 /* SGI internal address translation table (for debug info) */
-#define SHT_MIPS_XLATE_DEBUG	0x70000025
+#define SHT_MIPS_XLATE_DEBUG	(SHT_LOPROC + 0x25)
 
 /* Intermediate code */
-#define SHT_MIPS_WHIRL		0x70000026
+#define SHT_MIPS_WHIRL		(SHT_LOPROC + 0x26)
 
 /* C++ exception handling region info */
-#define SHT_MIPS_EH_REGION	0x70000027
+#define SHT_MIPS_EH_REGION	(SHT_LOPROC + 0x27)
 
 /* Obsolete address translation table (for debug info) */
-#define SHT_MIPS_XLATE_OLD	0x70000028
+#define SHT_MIPS_XLATE_OLD	(SHT_LOPROC + 0x28)
 
 /* Runtime procedure descriptor table exception information (ucode) ??? */
-#define SHT_MIPS_PDR_EXCEPTION	0x70000029
+#define SHT_MIPS_PDR_EXCEPTION	(SHT_LOPROC + 0x29)
 
 /* ABI related flags section.  */
-#define SHT_MIPS_ABIFLAGS	0x7000002a
+#define SHT_MIPS_ABIFLAGS	(SHT_LOPROC + 0x2a)
 
 /* GNU style symbol hash table with xlat.  */
-#define SHT_MIPS_XHASH		0x7000002b
+#define SHT_MIPS_XHASH		(SHT_LOPROC + 0x2b)
 
 /* A section of type SHT_MIPS_LIBLIST contains an array of the
    following structure.  The sh_link field is the section index of the

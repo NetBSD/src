@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.118.2.1 2025/08/02 05:20:45 perseant Exp $
+# $NetBSD: Makefile,v 1.118.2.2 2026/11/04 22:37:18 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -35,8 +35,8 @@ CONFIGFILES=\
 		perusertmp pf pf_boot pflogd powerd ppp pwcheck \
 		quota \
 		racoon rpcbind raidframe raidframeparity random_seed rarpd \
-		rbootd resize_root rndctl root route6d routed rtadvd \
-		rtclocaltime rwho \
+		rbootd rcorder_cache resize_root rndctl root route6d routed \
+		rtadvd rtclocaltime rwho \
 		savecore screenblank securelevel smtoff sshd \
 		staticroute swap1 swap2 sysctl sysdb syslogd \
 		timed tpctl ttys \

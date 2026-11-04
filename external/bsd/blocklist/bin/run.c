@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.1.1.1.8.1 2025/08/02 05:20:51 perseant Exp $	*/
+/*	$NetBSD: run.c,v 1.1.1.1.8.2 2026/11/04 22:37:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: run.c,v 1.1.1.1.8.1 2025/08/02 05:20:51 perseant Exp $");
+__RCSID("$NetBSD: run.c,v 1.1.1.1.8.2 2026/11/04 22:37:21 perseant Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -64,10 +64,10 @@ static char *
 run(const char *cmd, const char *name, ...)
 {
 	const char *argv[20];
-	size_t i;
+	size_t i, len;
 	va_list ap;
 	FILE *fp;
-	char buf[10240], *res;
+	char *line, *res;
 
 	argv[0] = "control";
 	argv[1] = cmd;
@@ -79,6 +79,7 @@ run(const char *cmd, const char *name, ...)
 	va_end(ap);
 
 	if (debug) {
+		char buf[2048];
 		size_t z;
 		int r;
 
@@ -99,10 +100,10 @@ run(const char *cmd, const char *name, ...)
 		(*lfun)(LOG_ERR, "popen %s failed (%m)", controlprog);
 		return NULL;
 	}
-	if (fgets(buf, sizeof(buf), fp) != NULL)
-		res = strdup(buf);
-	else
-		res = NULL;
+	line = res = NULL;
+	len = 0;
+	if (getline(&line, &len, fp) >= 0)
+		res = line;
 	pclose(fp);
 	if (debug)
 		(*lfun)(LOG_DEBUG, "%s returns %s", cmd, res);

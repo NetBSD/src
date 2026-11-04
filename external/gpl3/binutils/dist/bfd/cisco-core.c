@@ -1,5 +1,5 @@
 /* BFD back-end for CISCO crash dumps.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -154,7 +154,7 @@ cisco_core_file_validate (bfd *abfd, int crash_info_loc)
   /* OK, we believe you.  You're a core file.  */
 
   amt = sizeof (struct cisco_core_struct);
-  abfd->tdata.cisco_core_data = (struct cisco_core_struct *) bfd_zmalloc (amt);
+  abfd->tdata.cisco_core_data = bfd_zalloc (abfd, amt);
   if (abfd->tdata.cisco_core_data == NULL)
     return NULL;
 
@@ -330,6 +330,7 @@ const bfd_target core_cisco_be_vec =
   16,				/* ar_max_namelen */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  false,			/* merge sections */
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16, /* data */

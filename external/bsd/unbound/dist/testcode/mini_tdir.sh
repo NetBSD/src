@@ -127,6 +127,7 @@ dir=$name.$$
 result=result.$name
 done=.done-$name
 skip=.skip-$name
+asan_text="SUMMARY: AddressSanitizer"
 success="no"
 if test -x "`which bash`"; then
 	shell="bash"
@@ -138,6 +139,13 @@ fi
 if test -f $done; then
 	echo "minitdir $done exists. skip test."
 	exit 0
+fi
+
+# always clear the skip mark file in case something changed in the environment
+# in between runs
+if test -f $skip; then
+	echo "minitdir $skip exists; removing."
+	rm $skip
 fi
 
 # Copy
@@ -199,6 +207,16 @@ if test -f $name.post -a ! -f ../$skip; then
 	if test $? -ne 0; then
 		echo "Warning: $name.post did not exit successfully"
 	fi
+fi
+# Check if there were any AddressSanitizer errors
+# if compiled with -fsanitize=address
+if grep "$asan_text" $result >/dev/null 2>&1; then
+	if test -f ../$done; then
+		rm ../$done
+	fi
+	echo "$name: FAILED (AddressSanitizer)" >> $result
+	echo "$name: FAILED (AddressSanitizer)"
+	success="no"
 fi
 echo "DateRunEnd: "`date "+%s" 2>/dev/null` >> $result
 

@@ -37,5 +37,7 @@ void d_stores(unsigned char **, char *, int);
 
 unsigned long d_tomtime(unsigned long);
 unsigned long d_toutime(unsigned long);
+void d_setnow(time_t);
+time_t d_getnow(void);
 
 int d_relstring(char *, char *);

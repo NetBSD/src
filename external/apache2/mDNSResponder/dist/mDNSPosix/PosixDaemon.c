@@ -197,8 +197,8 @@ int main(int argc, char **argv)
 
     ParseCmdLineArgs(argc, argv);
 
-    // Enable mDNSResponder logging by default.
-    mDNS_LoggingEnabled = mDNStrue;
+    // Disable mDNSResponder logging by default.
+    mDNS_LoggingEnabled = mDNSfalse;
 
     LogInfo("%s starting", mDNSResponderVersionString);
 

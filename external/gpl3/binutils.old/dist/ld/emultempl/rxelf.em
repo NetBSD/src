@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -45,13 +45,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_NO_FLAG_MISMATCH_WARNINGS	301
-#define OPTION_IGNORE_LMA			302
-#define OPTION_NO_IGNORE_LMA			303
-#define OPTION_FLAG_MISMATCH_WARNINGS		304
-'
-
 PARSE_AND_LIST_LONGOPTS='
   { "no-flag-mismatch-warnings", no_argument, NULL, OPTION_NO_FLAG_MISMATCH_WARNINGS},
   { "flag-mismatch-warnings", no_argument, NULL, OPTION_FLAG_MISMATCH_WARNINGS},

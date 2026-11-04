@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -163,11 +163,11 @@ SECTIONS
   .stab.index    0 : { *(.stab.index) }
   .stab.indexstr 0 : { *(.stab.indexstr) }
 
-  .comment       0 : { *(.comment) }
+  .comment       0 : { *(.comment); LINKER_VERSION; }
 
 EOF
 
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
 }

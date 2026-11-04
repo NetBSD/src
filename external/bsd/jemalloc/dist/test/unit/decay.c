@@ -22,12 +22,11 @@ TEST_BEGIN(test_decay_init) {
 TEST_END
 
 TEST_BEGIN(test_decay_ms_valid) {
-	expect_false(decay_ms_valid(-7),
-	    "Misclassified negative decay as valid");
+	expect_false(
+	    decay_ms_valid(-7), "Misclassified negative decay as valid");
 	expect_true(decay_ms_valid(-1),
 	    "Misclassified -1 (never decay) as invalid decay");
-	expect_true(decay_ms_valid(8943),
-	    "Misclassified valid decay");
+	expect_true(decay_ms_valid(8943), "Misclassified valid decay");
 	if (SSIZE_MAX > NSTIME_SEC_MAX) {
 		expect_false(
 		    decay_ms_valid((ssize_t)(NSTIME_SEC_MAX * KQU(1000) + 39)),
@@ -111,12 +110,12 @@ TEST_BEGIN(test_decay_empty) {
 	assert_false(err, "");
 
 	uint64_t time_between_calls = decay_epoch_duration_ns(&decay) / 5;
-	int nepochs = 0;
+	int      nepochs = 0;
 	for (uint64_t i = 0; i < decay_ns / time_between_calls * 10; i++) {
 		size_t dirty_pages = 0;
 		nstime_init(&curtime, i * time_between_calls);
-		bool epoch_advanced = decay_maybe_advance_epoch(&decay,
-		    &curtime, dirty_pages);
+		bool epoch_advanced = decay_maybe_advance_epoch(
+		    &decay, &curtime, dirty_pages);
 		if (epoch_advanced) {
 			nepochs++;
 			expect_zu_eq(decay_npages_limit_get(&decay), 0,
@@ -158,30 +157,32 @@ TEST_BEGIN(test_decay) {
 	nstime_init(&epochtime, decay_epoch_duration_ns(&decay));
 
 	const size_t dirty_pages_per_epoch = 1000;
-	size_t dirty_pages = 0;
-	uint64_t epoch_ns = decay_epoch_duration_ns(&decay);
-	bool epoch_advanced = false;
+	size_t       dirty_pages = 0;
+	uint64_t     epoch_ns = decay_epoch_duration_ns(&decay);
+	bool         epoch_advanced = false;
 
 	/* Populate backlog with some dirty pages */
 	for (uint64_t i = 0; i < nepoch_init; i++) {
 		nstime_add(&curtime, &epochtime);
 		dirty_pages += dirty_pages_per_epoch;
-		epoch_advanced |= decay_maybe_advance_epoch(&decay, &curtime,
-		    dirty_pages);
+		epoch_advanced |= decay_maybe_advance_epoch(
+		    &decay, &curtime, dirty_pages);
 	}
 	expect_true(epoch_advanced, "Epoch never advanced");
 
 	size_t npages_limit = decay_npages_limit_get(&decay);
-	expect_zu_gt(npages_limit, 0, "npages_limit is incorrectly equal "
+	expect_zu_gt(npages_limit, 0,
+	    "npages_limit is incorrectly equal "
 	    "to zero after dirty pages have been added");
 
 	/* Keep dirty pages unchanged and verify that npages_limit decreases */
 	for (uint64_t i = nepoch_init; i * epoch_ns < decay_ns; ++i) {
 		nstime_add(&curtime, &epochtime);
-		epoch_advanced = decay_maybe_advance_epoch(&decay, &curtime,
-				    dirty_pages);
+		epoch_advanced = decay_maybe_advance_epoch(
+		    &decay, &curtime, dirty_pages);
 		if (epoch_advanced) {
-			size_t npages_limit_new = decay_npages_limit_get(&decay);
+			size_t npages_limit_new = decay_npages_limit_get(
+			    &decay);
 			expect_zu_lt(npages_limit_new, npages_limit,
 			    "napges_limit failed to decay");
 
@@ -189,20 +190,22 @@ TEST_BEGIN(test_decay) {
 		}
 	}
 
-	expect_zu_gt(npages_limit, 0, "npages_limit decayed to zero earlier "
+	expect_zu_gt(npages_limit, 0,
+	    "npages_limit decayed to zero earlier "
 	    "than decay_ms since last dirty page was added");
 
 	/* Completely push all dirty pages out of the backlog */
 	epoch_advanced = false;
 	for (uint64_t i = 0; i < nepoch_init; i++) {
 		nstime_add(&curtime, &epochtime);
-		epoch_advanced |= decay_maybe_advance_epoch(&decay, &curtime,
-		    dirty_pages);
+		epoch_advanced |= decay_maybe_advance_epoch(
+		    &decay, &curtime, dirty_pages);
 	}
 	expect_true(epoch_advanced, "Epoch never advanced");
 
 	npages_limit = decay_npages_limit_get(&decay);
-	expect_zu_eq(npages_limit, 0, "npages_limit didn't decay to 0 after "
+	expect_zu_eq(npages_limit, 0,
+	    "npages_limit didn't decay to 0 after "
 	    "decay_ms since last bump in dirty pages");
 }
 TEST_END
@@ -230,29 +233,29 @@ TEST_BEGIN(test_decay_ns_until_purge) {
 	    "Failed to return unbounded wait time for zero threshold");
 
 	const size_t dirty_pages_per_epoch = 1000;
-	size_t dirty_pages = 0;
-	bool epoch_advanced = false;
+	size_t       dirty_pages = 0;
+	bool         epoch_advanced = false;
 	for (uint64_t i = 0; i < nepoch_init; i++) {
 		nstime_add(&curtime, &epochtime);
 		dirty_pages += dirty_pages_per_epoch;
-		epoch_advanced |= decay_maybe_advance_epoch(&decay, &curtime,
-		    dirty_pages);
+		epoch_advanced |= decay_maybe_advance_epoch(
+		    &decay, &curtime, dirty_pages);
 	}
 	expect_true(epoch_advanced, "Epoch never advanced");
 
-	uint64_t ns_until_purge_all = decay_ns_until_purge(&decay,
-	    dirty_pages, dirty_pages);
+	uint64_t ns_until_purge_all = decay_ns_until_purge(
+	    &decay, dirty_pages, dirty_pages);
 	expect_u64_ge(ns_until_purge_all, decay_ns,
 	    "Incorrectly calculated time to purge all pages");
 
-	uint64_t ns_until_purge_none = decay_ns_until_purge(&decay,
-	    dirty_pages, 0);
+	uint64_t ns_until_purge_none = decay_ns_until_purge(
+	    &decay, dirty_pages, 0);
 	expect_u64_eq(ns_until_purge_none, decay_epoch_duration_ns(&decay) * 2,
 	    "Incorrectly calculated time to purge 0 pages");
 
 	uint64_t npages_threshold = dirty_pages / 2;
-	uint64_t ns_until_purge_half = decay_ns_until_purge(&decay,
-	    dirty_pages, npages_threshold);
+	uint64_t ns_until_purge_half = decay_ns_until_purge(
+	    &decay, dirty_pages, npages_threshold);
 
 	nstime_t waittime;
 	nstime_init(&waittime, ns_until_purge_half);
@@ -263,21 +266,74 @@ TEST_BEGIN(test_decay_ns_until_purge) {
 	expect_zu_lt(npages_limit, dirty_pages,
 	    "npages_limit failed to decrease after waiting");
 	size_t expected = dirty_pages - npages_limit;
-	int deviation = abs((int)expected - (int)(npages_threshold));
+	int    deviation = abs((int)expected - (int)(npages_threshold));
 	expect_d_lt(deviation, (int)(npages_threshold / 2),
 	    "After waiting, number of pages is out of the expected interval "
 	    "[0.5 * npages_threshold .. 1.5 * npages_threshold]");
 }
 TEST_END
 
+/*
+ * Branch coverage for the decay-level math the early-wake path
+ * (pac_decay_should_wake_early) relies on, exercised here at the public decay
+ * seam with explicit nstime rather than via real-thread timing.
+ */
+TEST_BEGIN(test_decay_early_wake_branches) {
+	decay_t decay;
+	memset(&decay, 0, sizeof(decay));
+
+	nstime_t curtime;
+	nstime_init(&curtime, 0);
+
+	uint64_t decay_ms = 1000;
+	nstime_t decay_nstime;
+	nstime_init(&decay_nstime, decay_ms * 1000 * 1000);
+	expect_false(decay_init(&decay, &curtime, (ssize_t)decay_ms),
+	    "Failed to initialize decay");
+
+	size_t new_pages = 100;
+
+	/*
+	 * Parity trap: with zero new pages the accumulation contributes
+	 * nothing, so decay_npages_purge_in must return 0 regardless of the
+	 * remaining-sleep window.  (The early-wake THRESHOLD compare on the
+	 * EXISTING backlog still runs in pac_decay_should_wake_early; that is
+	 * deliberately kept and documented in src/pac.c.)
+	 */
+	nstime_t window;
+	nstime_copy(&window, &decay_nstime);
+	expect_u64_eq(decay_npages_purge_in(&decay, &window, 0), 0,
+	    "Zero new pages must contribute zero to the purge estimate");
+
+	/*
+	 * A remaining-sleep window at/after the full decay period caps the
+	 * estimate at the new-page count (all of them will have decayed).
+	 */
+	expect_u64_eq(decay_npages_purge_in(&decay, &window, new_pages),
+	    new_pages, "All new pages should be due within the decay window");
+
+	nstime_t beyond;
+	nstime_copy(&beyond, &decay_nstime);
+	nstime_add(&beyond, &decay_nstime);
+	expect_u64_eq(decay_npages_purge_in(&decay, &beyond, new_pages),
+	    new_pages,
+	    "Estimate must cap at the new-page count beyond the decay window");
+
+	/*
+	 * No-backlog branch: with a zero threshold, decay_ns_until_purge is
+	 * unbounded (nothing schedulable).  This mirrors the indefinite-sleep
+	 * case.
+	 */
+	expect_u64_eq(decay_ns_until_purge(&decay, 0, 0),
+	    DECAY_UNBOUNDED_TIME_TO_PURGE,
+	    "Zero threshold must yield an unbounded time-to-purge");
+}
+TEST_END
+
 int
 main(void) {
-	return test(
-	    test_decay_init,
-	    test_decay_ms_valid,
-	    test_decay_npages_purge_in,
-	    test_decay_maybe_advance_epoch,
-	    test_decay_empty,
-	    test_decay,
-	    test_decay_ns_until_purge);
+	return test(test_decay_init, test_decay_ms_valid,
+	    test_decay_npages_purge_in, test_decay_maybe_advance_epoch,
+	    test_decay_empty, test_decay, test_decay_ns_until_purge,
+	    test_decay_early_wake_branches);
 }

@@ -1,5 +1,5 @@
-/*	$NetBSD: progressmeter.c,v 1.15.2.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: progressmeter.c,v 1.54 2024/09/22 12:56:21 jsg Exp $ */
+/*	$NetBSD: progressmeter.c,v 1.15.2.2 2026/11/04 22:36:40 perseant Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.57 2026/03/29 01:08:13 djm Exp $ */
 
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.15.2.1 2025/08/02 05:18:47 perseant Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.15.2.2 2026/11/04 22:36:40 perseant Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -71,7 +71,7 @@ static off_t last_pos;
 static off_t max_delta_pos = 0;
 static volatile off_t *counter;	/* progress counter */
 static long stalled;		/* how long we have been stalled */
-static int bytes_per_second;	/* current speed in bytes per second */
+static long long bytes_per_second; /* current speed in bytes per second */
 static int win_size;		/* terminal window size */
 static volatile sig_atomic_t win_resized; /* for window resizing */
 static volatile sig_atomic_t alarm_fired;
@@ -97,15 +97,15 @@ format_rate(off_t bytes)
 	bytes *= 100;
 	for (i = 0; bytes >= 100*1000 && unit[i] != 'T'; i++)
 		bytes = (bytes + 512) / 1024;
+	/* Display at least KB, even when rate is low or zero. */
 	if (i == 0) {
 		i++;
 		bytes = (bytes + 512) / 1024;
 	}
-	snprintf(buf, sizeof(buf), "%3lld.%1lld%c%s",
+	snprintf(buf, sizeof(buf), "%3lld.%1lld%cB",
 	    (long long) (bytes + 5) / 100,
 	    (long long) (bytes + 5) / 10 % 10,
-	    unit[i],
-	    i ? "B" : " ");
+	    unit[i]);
 	return buf;
 }
 
@@ -132,12 +132,13 @@ refresh_progress_meter(int force_update)
 	double elapsed, now;
 	int percent;
 	off_t bytes_left;
-	int cur_speed;
+	long long cur_speed;
 	int hours, minutes, seconds;
 	int file_len, cols;
 	off_t delta_pos;
 
-	if ((!force_update && !alarm_fired && !win_resized) || !can_output())
+	if (file == NULL || (!force_update && !alarm_fired && !win_resized) ||
+	    !can_output())
 		return;
 	alarm_fired = 0;
 
@@ -285,6 +286,7 @@ stop_progress_meter(void)
 		refresh_progress_meter(1);
 
 	atomicio(vwrite, STDOUT_FILENO, __UNCONST("\n"), 1);
+	file = NULL;
 }
 
 static void

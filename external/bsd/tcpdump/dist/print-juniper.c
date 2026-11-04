@@ -19,7 +19,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-juniper.c,v 1.11.2.1 2025/08/02 05:23:24 perseant Exp $");
+__RCSID("$NetBSD: print-juniper.c,v 1.11.2.2 2026/11/04 22:39:56 perseant Exp $");
 #endif
 
 #include <config.h>
@@ -1009,7 +1009,7 @@ juniper_mlfr_if_print(netdissect_options *ndo,
  *     ATM1 PIC cookie format
  *
  *     +-----+-------------------------+-------------------------------+
- *     |fmtid|     vc index            |  channel  ID                  |
+ *     |fmtid|     vc index            |  channel ID                   |
  *     +-----+-------------------------+-------------------------------+
  */
 
@@ -1070,7 +1070,7 @@ juniper_atm1_if_print(netdissect_options *ndo,
  *     ATM2 PIC cookie format
  *
  *     +-------------------------------+---------+---+-----+-----------+
- *     |     channel ID                |  reserv |AAL| CCRQ| gap cnt   |
+ *     |     channel ID                |reserved |AAL| CCRQ| gap count |
  *     +-------------------------------+---------+---+-----+-----------+
  */
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -71,7 +71,8 @@ enum VType_type
 
 enum ProfData_type
 { // a.k.a "data_id" (not the same as Pckt_type "kind")
-  DATA_SAMPLE,      // Traditional collect "Samples"
+  DATA_NONE = -1,
+  DATA_SAMPLE = 0,  // Traditional collect "Samples"
   DATA_GCEVENT,     // Java Garbage Collection events
   DATA_HEAPSZ,      // heap size tracking based on heap tracing data
   DATA_CLOCK,       // clock profiling data

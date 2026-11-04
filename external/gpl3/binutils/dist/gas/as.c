@@ -1,5 +1,5 @@
 /* as.c - GAS main program.
-   Copyright (C) 1987-2024 Free Software Foundation, Inc.
+   Copyright (C) 1987-2026 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -113,6 +113,15 @@ int flag_use_elf_stt_common = DEFAULT_GENERATE_ELF_STT_COMMON;
 bool flag_generate_build_notes = DEFAULT_GENERATE_BUILD_NOTES;
 #endif
 
+/* If DEFAULT_SFRAME is 0 instead, flag_gen_sframe gets the default
+   enum value GEN_SFRAME_DEFAULT_NONE.  */
+#if DEFAULT_SFRAME
+enum gen_sframe_option flag_gen_sframe = GEN_SFRAME_CONFIG_ENABLED;
+#endif
+/* Version of SFrame stack trace info to generate.  Default version is
+   SFRAME_VERSION_3.  */
+enum gen_sframe_version flag_gen_sframe_version = GEN_SFRAME_VERSION_3;
+
 segT reg_section;
 segT expr_section;
 segT text_section;
@@ -129,10 +138,6 @@ static long start_time;
 
 #ifdef USE_EMULATIONS
 #define EMULATION_ENVIRON "AS_EMULATION"
-
-extern struct emulation mipsbelf, mipslelf, mipself;
-extern struct emulation i386coff, i386elf, i386aout;
-extern struct emulation crisaout, criself;
 
 static struct emulation *const emulations[] = { EMULATIONS };
 static const int n_emulations = sizeof (emulations) / sizeof (emulations[0]);
@@ -180,13 +185,6 @@ select_emulation_mode (int argc, char **argv)
     this_emulation = emulations[0];
 
   this_emulation->init ();
-}
-
-const char *
-default_emul_bfd_name (void)
-{
-  abort ();
-  return NULL;
 }
 
 void
@@ -322,7 +320,12 @@ Options:\n\
   fprintf (stream, _("\
                           generate GNU Build notes if none are present in the input\n"));
   fprintf (stream, _("\
-  --gsframe               generate SFrame stack trace information\n"));
+  --gsframe[={no|yes}]    whether to generate SFrame stack trace information\n\
+                          (default: %s)\n\
+			  Default version emitted is V3\n"),
+	   DEFAULT_SFRAME ? "yes" : "no");
+  fprintf (stream, _("\
+  --gsframe-<N>           generate SFrame version <N> information. 3 == <N>\n"));
 # if defined (TARGET_USE_SCFI) && defined (TARGET_USE_GINSN)
   fprintf (stream, _("\
   --scfi=experimental     Synthesize DWARF CFI for hand-written asm\n\
@@ -333,7 +336,7 @@ Options:\n\
   fprintf (stream, _("\
   -f                      skip whitespace and comment preprocessing\n"));
   fprintf (stream, _("\
-  -g --gen-debug          generate debugging information\n"));
+  -g, --gen-debug         generate debugging information\n"));
   fprintf (stream, _("\
   --gstabs                generate STABS debugging information\n"));
   fprintf (stream, _("\
@@ -361,9 +364,9 @@ Options:\n\
   fprintf (stream, _("\
   -K                      warn when differences altered for long displacements\n"));
   fprintf (stream, _("\
-  -L,--keep-locals        keep local symbols (e.g. starting with `L')\n"));
+  -L, --keep-locals       keep local symbols (e.g. starting with `L')\n"));
   fprintf (stream, _("\
-  -M,--mri                assemble in MRI compatibility mode\n"));
+  -M, --mri               assemble in MRI compatibility mode\n"));
   fprintf (stream, _("\
   --MD FILE               write dependency information in FILE (default none)\n"));
   fprintf (stream, _("\
@@ -388,11 +391,15 @@ Options:\n\
   fprintf (stream, _("\
   --version               print assembler version number and exit\n"));
   fprintf (stream, _("\
-  -W  --no-warn           suppress warnings\n"));
+  -W, --no-warn           suppress warnings\n"));
   fprintf (stream, _("\
   --warn                  don't suppress warnings\n"));
   fprintf (stream, _("\
   --fatal-warnings        treat warnings as errors\n"));
+  fprintf (stream, _("\
+  --no-info               suppress information messages\n"));
+  fprintf (stream, _("\
+  --info                  don't suppress information messages\n"));
 #ifdef HAVE_ITBL_CPU
   fprintf (stream, _("\
   --itbl INSTTBL          extend instruction set to include instructions\n\
@@ -449,7 +456,6 @@ parse_args (int * pargc, char *** pargv)
      the ordering of the two.  We describe each non-option ARGV-element
      as if it were the argument of an option with character code 1.  */
   char *shortopts;
-  extern const char *md_shortopts;
   static const char std_shortopts[] =
   {
     '-', 'J',
@@ -457,13 +463,8 @@ parse_args (int * pargc, char *** pargv)
     /* -K is not meaningful if .word is not being hacked.  */
     'K',
 #endif
-    'L', 'M', 'R', 'W', 'Z', 'a', ':', ':', 'D', 'f', 'g', ':',':', 'I', ':', 'o', ':',
-#ifndef VMS
-    /* -v takes an argument on VMS, so we don't make it a generic
-       option.  */
-    'v',
-#endif
-    'w', 'X',
+    'L', 'M', 'R', 'W', 'Z', 'a', ':', ':', 'D', 'f', 'g', ':',':', 'I', ':',
+    'o', ':', 'v', 'w', 'X',
 #ifdef HAVE_ITBL_CPU
     /* New option for extending instruction set (see also --itbl below).  */
     't', ':',
@@ -471,8 +472,6 @@ parse_args (int * pargc, char *** pargv)
     '\0'
   };
   struct option *longopts;
-  extern struct option md_longopts[];
-  extern size_t md_longopts_size;
   /* Codes used for the long options with no short synonyms.  */
   enum option_values
     {
@@ -481,14 +480,15 @@ parse_args (int * pargc, char *** pargv)
       OPTION_STATISTICS,
       OPTION_VERSION,
       OPTION_DUMPCONFIG,
-      OPTION_VERBOSE,
       OPTION_EMULATION,
       OPTION_DEBUG_PREFIX_MAP,
       OPTION_DEFSYM,
+#ifndef NO_LISTING
       OPTION_LISTING_LHS_WIDTH,
       OPTION_LISTING_LHS_WIDTH2, /* = STD_BASE + 10 */
       OPTION_LISTING_RHS_WIDTH,
       OPTION_LISTING_CONT_LINES,
+#endif
       OPTION_DEPFILE,
       OPTION_GSTABS,
       OPTION_GSTABS_PLUS,
@@ -500,6 +500,7 @@ parse_args (int * pargc, char *** pargv)
       OPTION_GDWARF_CIE_VERSION,
       OPTION_GCODEVIEW,
       OPTION_STRIP_LOCAL_ABSOLUTE,
+      OPTION_EMIT_LOCAL_ABSOLUTE,
       OPTION_TRADITIONAL_FORMAT,
       OPTION_WARN,
       OPTION_TARGET_HELP,
@@ -519,7 +520,10 @@ parse_args (int * pargc, char *** pargv)
       OPTION_NO_PAD_SECTIONS,
       OPTION_MULTIBYTE_HANDLING,  /* = STD_BASE + 40 */
       OPTION_SFRAME,
-      OPTION_SCFI
+      OPTION_SFRAME_3,
+      OPTION_SCFI,
+      OPTION_INFO,
+      OPTION_NOINFO
     /* When you add options here, check that they do
        not collide with OPTION_MD_BASE.  See as.h.  */
     };
@@ -550,7 +554,8 @@ parse_args (int * pargc, char *** pargv)
     ,{"elf-stt-common", required_argument, NULL, OPTION_ELF_STT_COMMON}
     ,{"sectname-subst", no_argument, NULL, OPTION_SECTNAME_SUBST}
     ,{"generate-missing-build-notes", required_argument, NULL, OPTION_ELF_BUILD_NOTES}
-    ,{"gsframe", no_argument, NULL, OPTION_SFRAME}
+    ,{"gsframe", optional_argument, NULL, OPTION_SFRAME}
+    ,{"gsframe-3", no_argument, NULL, OPTION_SFRAME_3}
 # if defined (TARGET_USE_SCFI) && defined (TARGET_USE_GINSN)
     ,{"scfi", required_argument, NULL, OPTION_SCFI}
 # endif
@@ -587,22 +592,27 @@ parse_args (int * pargc, char *** pargv)
        ports use -k to enable PIC assembly.  */
     ,{"keep-locals", no_argument, NULL, 'L'}
     ,{"keep-locals", no_argument, NULL, 'L'}
+#ifndef NO_LISTING
     ,{"listing-lhs-width", required_argument, NULL, OPTION_LISTING_LHS_WIDTH}
     ,{"listing-lhs-width2", required_argument, NULL, OPTION_LISTING_LHS_WIDTH2}
     ,{"listing-rhs-width", required_argument, NULL, OPTION_LISTING_RHS_WIDTH}
     ,{"listing-cont-lines", required_argument, NULL, OPTION_LISTING_CONT_LINES}
+#endif
     ,{"MD", required_argument, NULL, OPTION_DEPFILE}
     ,{"mri", no_argument, NULL, 'M'}
     ,{"nocpp", no_argument, NULL, OPTION_NOCPP}
     ,{"no-pad-sections", no_argument, NULL, OPTION_NO_PAD_SECTIONS}
+    ,{"no-info", no_argument, NULL, OPTION_NOINFO}
     ,{"no-warn", no_argument, NULL, 'W'}
     ,{"reduce-memory-overheads", no_argument, NULL, OPTION_REDUCE_MEMORY_OVERHEADS}
     ,{"statistics", no_argument, NULL, OPTION_STATISTICS}
     ,{"strip-local-absolute", no_argument, NULL, OPTION_STRIP_LOCAL_ABSOLUTE}
+    ,{"emit-local-absolute", no_argument, NULL, OPTION_EMIT_LOCAL_ABSOLUTE}
     ,{"version", no_argument, NULL, OPTION_VERSION}
-    ,{"verbose", no_argument, NULL, OPTION_VERBOSE}
+    ,{"verbose", no_argument, NULL, 'v'}
     ,{"target-help", no_argument, NULL, OPTION_TARGET_HELP}
     ,{"traditional-format", no_argument, NULL, OPTION_TRADITIONAL_FORMAT}
+    ,{"info", no_argument, NULL, OPTION_INFO}
     ,{"warn", no_argument, NULL, OPTION_WARN}
     ,{"multibyte-handling", required_argument, NULL, OPTION_MULTIBYTE_HANDLING}
   };
@@ -650,24 +660,17 @@ parse_args (int * pargc, char *** pargv)
 	     it explicitly here before deciding we've gotten a bad argument.  */
 	  if (optc == 'v')
 	    {
-#ifdef VMS
-	      /* Telling getopt to treat -v's value as optional can result
-		 in it picking up a following filename argument here.  The
-		 VMS code in md_parse_option can return 0 in that case,
-		 but it has no way of pushing the filename argument back.  */
-	      if (optarg && *optarg)
-		new_argv[new_argc++] = optarg, new_argv[new_argc] = NULL;
-	      else
-#else
-	      case 'v':
-#endif
-	      case OPTION_VERBOSE:
-		print_version_id ();
-		verbose = 1;
+	case 'v':
+	      print_version_id ();
+	      verbose = 1;
 	      break;
 	    }
+	  else if (is_a_char (optc))
+	    as_bad (_("unrecognized option `-%c%s'"), optc, optarg ? optarg : "");
+	  else if (optarg)
+	    as_bad (_("unrecognized option `--%s=%s'"), longopts[longind].name, optarg);
 	  else
-	    as_bad (_("unrecognized option -%c%s"), optc, optarg ? optarg : "");
+	    as_bad (_("unrecognized option `--%s'"), longopts[longind].name);
 	  /* Fall through.  */
 
 	case '?':
@@ -703,6 +706,10 @@ parse_args (int * pargc, char *** pargv)
 	  flag_strip_local_absolute = 1;
 	  break;
 
+	case OPTION_EMIT_LOCAL_ABSOLUTE:
+	  flag_strip_local_absolute = -1;
+	  break;
+
 	case OPTION_TRADITIONAL_FORMAT:
 	  flag_traditional_format = 1;
 	  break;
@@ -723,7 +730,7 @@ parse_args (int * pargc, char *** pargv)
 	case OPTION_VERSION:
 	  /* This output is intended to follow the GNU standards document.  */
 	  printf (_("GNU assembler %s\n"), BFD_VERSION_STRING);
-	  printf (_("Copyright (C) 2024 Free Software Foundation, Inc.\n"));
+	  printf (_("Copyright (C) 2026 Free Software Foundation, Inc.\n"));
 	  printf (_("\
 This program is free software; you may redistribute it under the terms of\n\
 the GNU General Public License version 3 or later.\n\
@@ -800,7 +807,7 @@ This program has absolutely no warranty.\n"));
 	    if (*s == '\0')
 	      as_fatal (_("bad defsym; format is --defsym name=value"));
 	    *s++ = '\0';
-	    i = bfd_scan_vma (s, (const char **) NULL, 0);
+	    i = bfd_scan_vma (s, NULL, 0);
 	    n = XNEW (struct defsym_list);
 	    n->next = defsyms;
 	    n->name = optarg;
@@ -937,6 +944,7 @@ This program has absolutely no warranty.\n"));
 	  flag_keep_locals = 1;
 	  break;
 
+#ifndef NO_LISTING
 	case OPTION_LISTING_LHS_WIDTH:
 	  listing_lhs_width = atoi (optarg);
 	  if (listing_lhs_width_second < listing_lhs_width)
@@ -944,7 +952,7 @@ This program has absolutely no warranty.\n"));
 	  break;
 	case OPTION_LISTING_LHS_WIDTH2:
 	  {
-	    int tmp = atoi (optarg);
+	    unsigned int tmp = atoi (optarg);
 
 	    if (tmp > listing_lhs_width)
 	      listing_lhs_width_second = tmp;
@@ -956,6 +964,7 @@ This program has absolutely no warranty.\n"));
 	case OPTION_LISTING_CONT_LINES:
 	  listing_lhs_cont_lines = atoi (optarg);
 	  break;
+#endif /* NO_LISTING */
 
 	case 'M':
 	  flag_mri = 1;
@@ -980,6 +989,14 @@ This program has absolutely no warranty.\n"));
 	case OPTION_WARN_FATAL:
 	  flag_no_warnings = 0;
 	  flag_fatal_warnings = 1;
+	  break;
+
+	case OPTION_NOINFO:
+	  flag_no_information = true;
+	  break;
+
+	case OPTION_INFO:
+	  flag_no_information = false;
 	  break;
 
 #if defined OBJ_ELF || defined OBJ_MAYBE_ELF
@@ -1037,7 +1054,22 @@ This program has absolutely no warranty.\n"));
 	  break;
 
 	case OPTION_SFRAME:
-	  flag_gen_sframe = 1;
+	  if (optarg)
+	    {
+	      if (strcasecmp (optarg, "no") == 0)
+		flag_gen_sframe = GEN_SFRAME_DISABLED;
+	      else if (strcasecmp (optarg, "yes") == 0)
+		flag_gen_sframe = GEN_SFRAME_ENABLED;
+	      else
+		as_fatal (_("Invalid --gsframe option: `%s'"), optarg);
+	    }
+	  else
+	    flag_gen_sframe = GEN_SFRAME_ENABLED;
+	  break;
+
+	case OPTION_SFRAME_3:
+	  flag_gen_sframe = GEN_SFRAME_ENABLED;
+	  flag_gen_sframe_version = GEN_SFRAME_VERSION_3;
 	  break;
 
 #endif /* OBJ_ELF */
@@ -1168,6 +1200,26 @@ This program has absolutely no warranty.\n"));
 #endif
 }
 
+/* Pre-define a symbol with its name derived from TMPL (wrapping in
+   GAS(...)), to value VAL.  */
+
+void
+predefine_symbol (const char *tmpl, valueT val)
+{
+  char *name = xasprintf ("GAS(%s)", tmpl);
+  symbolS *s;
+
+  /* Also put the symbol in the symbol table, if requested.  */
+  if (flag_strip_local_absolute < 0)
+    s = symbol_new (name, absolute_section, &zero_address_frag, val);
+  else
+    s = symbol_create (name, absolute_section, &zero_address_frag, val);
+  S_CLEAR_EXTERNAL (s);
+  symbol_table_insert (s);
+
+  xfree (name);
+}
+
 static void
 dump_statistics (void)
 {
@@ -1203,48 +1255,26 @@ static void
 perform_an_assembly_pass (int argc, char ** argv)
 {
   int saw_a_file = 0;
-#ifndef OBJ_MACH_O
-  flagword applicable;
-#endif
 
   need_pass_2 = 0;
-
-#ifndef OBJ_MACH_O
-  /* Create the standard sections, and those the assembler uses
-     internally.  */
-  text_section = subseg_new (TEXT_SECTION_NAME, 0);
-  data_section = subseg_new (DATA_SECTION_NAME, 0);
-  bss_section = subseg_new (BSS_SECTION_NAME, 0);
-  /* @@ FIXME -- we're setting the RELOC flag so that sections are assumed
-     to have relocs, otherwise we don't find out in time.  */
-  applicable = bfd_applicable_section_flags (stdoutput);
-  bfd_set_section_flags (text_section,
-			 applicable & (SEC_ALLOC | SEC_LOAD | SEC_RELOC
-				       | SEC_CODE | SEC_READONLY));
-  bfd_set_section_flags (data_section,
-			 applicable & (SEC_ALLOC | SEC_LOAD | SEC_RELOC
-				       | SEC_DATA));
-  bfd_set_section_flags (bss_section, applicable & SEC_ALLOC);
-  seg_info (bss_section)->bss = 1;
-#endif
-  subseg_new (BFD_ABS_SECTION_NAME, 0);
-  subseg_new (BFD_UND_SECTION_NAME, 0);
-  reg_section = subseg_new ("*GAS `reg' section*", 0);
-  expr_section = subseg_new ("*GAS `expr' section*", 0);
 
 #ifndef OBJ_MACH_O
   subseg_set (text_section, 0);
 #endif
 
+  predefine_symbol ("version", BFD_VERSION);
+  if (strstr (BFD_VERSION_STRING, "." XSTRING (BFD_VERSION_DATE)) != NULL)
+    predefine_symbol ("date", BFD_VERSION_DATE);
+
+#ifdef obj_begin
+  obj_begin ();
+#endif
+
   /* This may add symbol table entries, which requires having an open BFD,
      and sections already created.  */
   md_begin ();
-
 #ifdef USING_CGEN
   gas_cgen_begin ();
-#endif
-#ifdef obj_begin
-  obj_begin ();
 #endif
 
   /* Skip argv[0].  */
@@ -1319,6 +1349,17 @@ gas_early_init (int *argcp, char ***argvp)
 #endif
 }
 
+/* Tack on format specific section data and create a proper section
+   symbol for one of the standard bfd sections.  */
+
+static void
+bfd_std_section_init (const char *name)
+{
+  asection *sec = bfd_make_section_old_way (stdoutput, name);
+  gas_assert (BFD_SEND (stdoutput, _new_section_hook, (stdoutput, sec)));
+  subseg_new (name, 0);
+}
+
 /* The bulk of gas initialisation.  This is after args are parsed.  */
 
 static void
@@ -1380,12 +1421,37 @@ gas_init (void)
       free (defsyms);
       defsyms = next;
     }
+
+#ifndef OBJ_MACH_O
+  /* Create the standard sections, and those the assembler uses
+     internally.  */
+  text_section = subseg_new (TEXT_SECTION_NAME, 0);
+  data_section = subseg_new (DATA_SECTION_NAME, 0);
+  bss_section = subseg_new (BSS_SECTION_NAME, 0);
+  /* @@ FIXME -- we're setting the RELOC flag so that sections are assumed
+     to have relocs, otherwise we don't find out in time.  */
+  flagword applicable = bfd_applicable_section_flags (stdoutput);
+  bfd_set_section_flags (text_section,
+			 applicable & (SEC_ALLOC | SEC_LOAD | SEC_RELOC
+				       | SEC_CODE | SEC_READONLY));
+  bfd_set_section_flags (data_section,
+			 applicable & (SEC_ALLOC | SEC_LOAD | SEC_RELOC
+				       | SEC_DATA));
+  bfd_set_section_flags (bss_section, applicable & SEC_ALLOC);
+  seg_info (bss_section)->bss = 1;
+#endif
+  bfd_std_section_init (BFD_ABS_SECTION_NAME);
+  bfd_std_section_init (BFD_UND_SECTION_NAME);
+  reg_section = subseg_new ("*GAS `reg' section*", 0);
+  expr_section = subseg_new ("*GAS `expr' section*", 0);
 }
 
 int
 main (int argc, char ** argv)
 {
+#ifndef NO_LISTING
   char ** argv_orig = argv;
+#endif
   struct stat sob;
 
   gas_early_init (&argc, &argv);

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,12 +16,14 @@
 USAGE="$0 [-b <backend>] [-c] [-k] [-l #] [-p] [-s {ro|rp}] [-u] [-w] <script>"
 
 # configure generated
-SRCDIR="@srcdir@"
-TOPSRCDIR="@top_srcdir@"
+SRCDIR="${SRCDIR:-@srcdir@}"
+TOPSRCDIR="${TOPSRCDIR:-@top_srcdir@}"
+TOPDIR="`(cd ..; echo $PWD)`"
+OBJDIR="${OBJDIR:-$TOPDIR}"
 LN_S="@LN_S@"
 EGREP_CMD="@EGREP@"
 
-export SRCDIR TOPSRCDIR LN_S EGREP_CMD
+export SRCDIR TOPSRCDIR OBJDIR LN_S EGREP_CMD
 
 # Load balancer
 AC_lloadd=lloadd@BUILD_BALANCER@
@@ -38,10 +40,12 @@ AC_asyncmeta=asyncmeta@BUILD_ASYNCMETA@
 AC_perl=perl@BUILD_PERL@
 AC_relay=relay@BUILD_RELAY@
 AC_sql=sql@BUILD_SQL@
+AC_wt=@BUILD_WT@
 
 # overlays
 AC_accesslog=accesslog@BUILD_ACCESSLOG@
 AC_argon2=argon2@BUILD_PW_ARGON2@
+AC_auditlog=auditlog@BUILD_AUDITLOG@
 AC_autoca=autoca@BUILD_AUTOCA@
 AC_constraint=constraint@BUILD_CONSTRAINT@
 AC_dds=dds@BUILD_DDS@
@@ -49,6 +53,7 @@ AC_deref=deref@BUILD_DEREF@
 AC_dynlist=dynlist@BUILD_DYNLIST@
 AC_homedir=homedir@BUILD_HOMEDIR@
 AC_memberof=memberof@BUILD_MEMBEROF@
+AC_nestgroup=nestgroup@BUILD_NESTGROUP@
 AC_otp=otp@BUILD_OTP@
 AC_pcache=pcache@BUILD_PROXYCACHE@
 AC_ppolicy=ppolicy@BUILD_PPOLICY@
@@ -80,8 +85,8 @@ if test "${AC_asyncmeta}" = "asyncmetamod" && test "${AC_LIBS_DYNAMIC}" = "stati
 	AC_meta="asyncmetano"
 fi
 export AC_ldap AC_mdb AC_meta AC_asyncmeta AC_monitor AC_null AC_perl AC_relay AC_sql \
-	AC_accesslog AC_argon2 AC_autoca AC_constraint AC_dds AC_deref AC_dynlist \
-	AC_homedir AC_memberof AC_otp AC_pcache AC_ppolicy AC_refint AC_remoteauth \
+	AC_accesslog AC_argon2 AC_auditlog AC_autoca AC_constraint AC_dds AC_deref AC_dynlist \
+	AC_homedir AC_memberof AC_nestgroup AC_otp AC_pcache AC_ppolicy AC_refint AC_remoteauth \
 	AC_retcode AC_rwm AC_unique AC_syncprov AC_translucent \
 	AC_valsort \
 	AC_lloadd \
@@ -187,7 +192,7 @@ fi
 INDEXDB=noindexdb MAINDB=nomaindb
 case $BACKEND in
 	mdb) INDEXDB=indexdb MAINDB=maindb ;;
-	ndb) INDEXDB=indexdb ;;
+	wt) INDEXDB=indexdb ;;
 esac
 
 export	BACKEND BACKENDTYPE INDEXDB MAINDB \
@@ -197,10 +202,11 @@ if test $# = 0 ; then
 	echo "$USAGE"; exit 1
 fi
 
+SCRIPTDIR="${SCRIPTDIR:-${SRCDIR}/scripts}"
+DEFSDIR="${DEFSDIR:-$SCRIPTDIR}"
 # need defines.sh for the definitions of the directories
-. $SRCDIR/scripts/defines.sh
+. "$DEFSDIR/defines.sh"
 
-SCRIPTDIR="${SRCDIR}/scripts"
 ITSDIR="${SRCDIR}/data/regressions"
 SCRIPTNAME="$1"
 shift
@@ -233,16 +239,6 @@ if test -d ${TESTDIR} ; then
 		echo "Cleaning up only database directories leftover from previous run."
 		/bin/rm -rf ${TESTDIR}/db.*
 	fi
-fi
-if test $BACKEND = ndb ; then
-	mysql --user root <<EOF
-	drop database if exists db_1;
-	drop database if exists db_2;
-	drop database if exists db_3;
-	drop database if exists db_4;
-	drop database if exists db_5;
-	drop database if exists db_6;
-EOF
 fi
 mkdir -p ${TESTDIR}
 

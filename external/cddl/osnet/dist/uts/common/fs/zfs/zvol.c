@@ -1604,7 +1604,7 @@ SYSCTL_LONG(_vfs_zfs_vol, OID_AUTO, immediate_write_sz, CTLFLAG_RWTUN,
 
 static void
 zvol_log_write(zvol_state_t *zv, dmu_tx_t *tx, offset_t off, ssize_t resid,
-    boolean_t sync)
+    boolean_t commit)
 {
 	uint32_t blocksize = zv->zv_volblocksize;
 	zilog_t *zilog = zv->zv_zilog;
@@ -1613,15 +1613,16 @@ zvol_log_write(zvol_state_t *zv, dmu_tx_t *tx, offset_t off, ssize_t resid,
 	if (zil_replaying(zilog, tx))
 		return;
 
-	if (zilog->zl_logbias == ZFS_LOGBIAS_THROUGHPUT)
+	if (zilog->zl_logbias == ZFS_LOGBIAS_THROUGHPUT) {
 		write_state = WR_INDIRECT;
-	else if (!spa_has_slogs(zilog->zl_spa) &&
-	    resid >= blocksize && blocksize > zvol_immediate_write_sz)
+	} else if (!spa_has_slogs(zilog->zl_spa) &&
+	    resid >= blocksize && blocksize > zvol_immediate_write_sz) {
 		write_state = WR_INDIRECT;
-	else if (sync)
+	} else if (commit) {
 		write_state = WR_COPIED;
-	else
+	} else {
 		write_state = WR_NEED_COPY;
+	}
 
 	while (resid) {
 		itx_t *itx;
@@ -1653,9 +1654,6 @@ zvol_log_write(zvol_state_t *zv, dmu_tx_t *tx, offset_t off, ssize_t resid,
 		BP_ZERO(&lr->lr_blkptr);
 
 		itx->itx_private = zv;
-
-		if (!sync && (zv->zv_sync_cnt == 0))
-			itx->itx_sync = B_FALSE;
 
 		zil_itx_assign(zilog, itx, tx);
 
@@ -1792,7 +1790,7 @@ zvol_strategy(buf_t *bp)
 	boolean_t doread = 0;
 #endif
 	boolean_t is_dumpified;
-	boolean_t sync;
+	boolean_t commit;
 
 #ifdef illumos
 	zfs_soft_state_t *zs = NULL;
@@ -1929,9 +1927,9 @@ zvol_strategy(buf_t *bp)
 	}
 
 	is_dumpified = B_FALSE;
-	sync = ((!(bp->b_flags & B_ASYNC) &&
+	commit = ((!(bp->b_flags & B_ASYNC) &&
 	    !(zv->zv_flags & ZVOL_WCE)) ||
-	    (zv->zv_objset->os_sync == ZFS_SYNC_ALWAYS)) &&
+	    zv->zv_objset->os_sync == ZFS_SYNC_ALWAYS) &&
 	    !doread && !is_dumpified;
 
 	mutex_enter(&zv->zv_dklock);
@@ -1979,7 +1977,7 @@ zvol_strategy(buf_t *bp)
 				dmu_tx_abort(tx);
 			} else {
 				dmu_write(os, ZVOL_OBJ, off, size, addr, tx);
-				zvol_log_write(zv, tx, off, size, sync);
+				zvol_log_write(zv, tx, off, size, commit);
 				dmu_tx_commit(tx);
 			}
 		}
@@ -2027,7 +2025,7 @@ out:
 	if ((bp->b_resid = resid) == bp->b_bcount)
 		bioerror(bp, off > volsize ? EINVAL : error);
 
-	if (sync)
+	if (commit)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 	mutex_enter(&zv->zv_dklock);
 	disk_unbusy(&zv->zv_dk, bp->b_bcount - bp->b_resid, doread);
@@ -2174,7 +2172,7 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 	uint64_t volsize;
 	rl_t *rl;
 	int error = 0;
-	boolean_t sync;
+	boolean_t commit;
 
 #if defined(illumos) || defined(__NetBSD__)
 	minor_t minor = getminor(dev);
@@ -2205,7 +2203,7 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 	sync = (ioflag & IO_SYNC) ||
 #endif
 #ifdef __NetBSD__
-	sync = 1 ||
+	commit = 1 ||
 #endif
 	    (zv->zv_objset->os_sync == ZFS_SYNC_ALWAYS);
 
@@ -2233,14 +2231,14 @@ zvol_write(struct cdev *dev, struct uio *uio, int ioflag)
 		}
 		error = dmu_write_uio_dbuf(zv->zv_dbuf, uio, bytes, tx);
 		if (error == 0)
-			zvol_log_write(zv, tx, off, bytes, sync);
+			zvol_log_write(zv, tx, off, bytes, commit);
 		dmu_tx_commit(tx);
 
 		if (error)
 			break;
 	}
 	zfs_range_unlock(rl);
-	if (sync)
+	if (commit)
 		zil_commit(zv->zv_zilog, ZVOL_OBJ);
 #ifdef __NetBSD__
 	mutex_enter(&zv->zv_dklock);
@@ -2381,6 +2379,7 @@ zvol_log_write_minor(void *minor_hdl, dmu_tx_t *tx, offset_t off, ssize_t resid,
  */
 #endif	/* illumos */
 
+#if !defined(__NetBSD__)
 /*
  * Log a DKIOCFREE/free-long-range to the ZIL with TX_TRUNCATE.
  */
@@ -2404,6 +2403,7 @@ zvol_log_truncate(zvol_state_t *zv, dmu_tx_t *tx, uint64_t off, uint64_t len,
 	itx->itx_sync = (sync || zv->zv_sync_cnt != 0);
 	zil_itx_assign(zilog, itx, tx);
 }
+#endif /* !defined(__NetBSD__) */
 
 #ifdef illumos
 /*

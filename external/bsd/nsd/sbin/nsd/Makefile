@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2023/05/11 16:18:31 christos Exp $
+# $NetBSD: Makefile,v 1.2.2.1 2026/11/04 22:38:44 perseant Exp $
 
 PROG=nsd
 
@@ -11,9 +11,9 @@ mini_event.c \
 netio.c \
 nsd.c \
 server.c \
-zlexer.c \
+configlexer.c \
 zonec.c \
-zparser.c
+configparser.c
 
 MAN+=${PROG}.conf.5
 ${PROG}.conf.5: ${PROG}.conf.5.in __subst

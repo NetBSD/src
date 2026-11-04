@@ -1,5 +1,5 @@
 .TH LLOADD.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -176,9 +176,29 @@ effect until the server has been restarted.
 Specify a file for recording lloadd debug messages. By default these messages
 only go to stderr, are not recorded anywhere else, and are unrelated to
 messages exposed by the
+.TP
+.B logfile-format debug | syslog-utc | syslog-localtime
+Specify the prefix format for messages written to the logfile. The debug
+format is the normal format used for slapd debug messages, with a timestamp
+in hexadecimal, followed by a thread ID.  The other options are to
+use syslog(3) style prefixes, with timestamps either in UTC or in the
+local timezone. The default is debug format.
 .B loglevel
 configuration parameter. Specifying a logfile copies messages to both stderr
 and the logfile.
+.TP
+.B logfile-only on | off
+Specify that debug messages should only go to the configured logfile, and
+not to stderr.
+.TP
+.B logfile-rotate <max> <Mbytes> <hours>
+Specify automatic rotation for the configured logfile as the maximum
+number of old logfiles to retain, a maximum size in megabytes to allow a
+logfile to grow before rotation, and a maximum age in hours for a logfile
+to be used before rotation. The maximum number must be in the range 1-99.
+Setting Mbytes or hours to zero disables the size or age check, respectively.
+At least one of Mbytes or hours must be non-zero. By default no automatic
+rotation will be performed.
 .TP
 .B loglevel <integer> [...]
 Specify the level at which debugging statements and operation
@@ -341,6 +361,71 @@ Specify the number of milliseconds to wait before forcibly closing
 a connection with an outstanding write. This allows faster recovery from
 various network hang conditions.  An iotimeout of 0 disables this feature.
 The default is 10000.
+.TP
+.B write_coherence <integer>
+Specify the number of seconds after a write operation is finished that
+.B lloadd
+will direct operations exclusively to the last selected backend. A write
+operation is anything not handled internally (certain exops, abandon),
+except search, compare and bind operations. Bind operations also reset this
+restriction. The default is 0, write operations do not restrict selection. When
+negative, the restriction is not time limited and will persist until the next
+bind.
+.TP
+.B restrict_exop <OID> <action>
+Tell
+.B lloadd
+that extended operation with a given OID should be handled in a specific way.
+OID
+.B 1.1
+is special, setting a default (only for operations not handled internally).
+The meaning of the
+.B <action>
+argument is the same as in
+.B restrict_control
+below.
+.TP
+.B restrict_control <OID> <action>
+Tell
+.B lloadd
+that a control with a given OID attached to any operation should be handled in
+a specific way according to the
+.B <action>
+argument. At the moment, only operations passed intact are inspected in
+this way, in particular, controls on bind and extended operations are
+.B not
+checked.
+
+In order of descending priority (the control with highest priority action
+wins), this is the action made:
+.RS
+.RS
+.PD 0
+.TP
+.B reject
+operations that carry this control will be rejected.
+.TP
+.B connection
+once an upstream is selected, every future operation from this client will be
+directed to the same connection. Useful when state is shared between client and
+upstream that the load balancer doesn't track.
+.TP
+.B backend
+like
+.B write
+except this does not time out.
+.TP
+.B write
+this is treated like a write operation (see
+.BR write_coherence )
+above.
+.TP
+.B ignore
+does not influence restrictions, useful when changing the global exop default.
+This is the default handling for exops/controls not handled by the load balancer
+internally.
+.PD
+.RE
 
 .SH TLS OPTIONS
 If
@@ -579,7 +664,13 @@ only valid when using GnuTLS and Mozilla NSS.
 .SH BACKEND CONFIGURATION
 Options in this section describe how the
 .B lloadd
-connects and authenticates to the backend servers.
+connects and authenticates to the backend servers. Backends are organised in groups
+.RB ( tiers ).
+Backends in the first tier are tried first, if none of them are reachable, the
+following tier is tried in the same way. If there is a backend in the tier that
+has suitable connections, but they are busy, no further tier is consulted. This
+is useful in high availability scenarios where a group of servers (e.g. the
+local environment) should be contacted if possible.
 
 It is assumed all backend servers serve the same data. On startup, the
 configured connections are set up and those not dedicated to handle bind
@@ -598,7 +689,16 @@ option. The authentication configuration is shared between them.
 .B [secprops=<properties>]
 .B [timeout=<seconds>]
 .B [network\-timeout=<seconds>]
+.B [keepalive=<idle>:<probes>:<interval>]
 .B [tcp\-user\-timeout=<milliseconds>]
+.B [tls_cert=<file>]
+.B [tls_key=<file>]
+.B [tls_cacert=<file>]
+.B [tls_cacertdir=<path>]
+.B [tls_reqcert=never|allow|try|demand]
+.B [tls_cipher_suite=<ciphers>]
+.B [tls_crlcheck=none|peer|all]
+.B [tls_protocol_min=<major>[.<minor>]]
 
 Specifies the bind credentials
 .B lloadd
@@ -658,6 +758,23 @@ Timeout set to 0 means no timeout is in effect and by default, no timeouts are
 in effect.
 
 The
+.B keepalive
+parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
+used to check whether a socket is alive;
+.I idle
+is the number of seconds a connection needs to remain idle before TCP
+starts sending keepalive probes;
+.I probes
+is the maximum number of keepalive probes TCP should send before dropping
+the connection;
+.I interval
+is interval in seconds between individual keepalive probes.
+Only some systems support the customization of these values;
+the
+.B keepalive
+parameter is ignored otherwise, and system-wide settings are used.
+
+The
 .B tcp\-user\-timeout
 parameter, if non-zero, corresponds to the
 .B TCP_USER_TIMEOUT
@@ -665,22 +782,57 @@ set on the upstream connections, overriding the operating system setting.
 Only some systems support the customization of this parameter, it is
 ignored otherwise and system-wide settings are used.
 
+.SH TIER OPTIONS
+
+.TP
+.B tier
+.B <tier type>
+
+Groups servers which should be considered in the same try. If a viable
+connection is found even if busy, the load balancer does not proceed to the
+next tier. The process of selection a connection within a tier depends on the
+tier's type.
+
+.RE
+Available types are:
+.TP
+.B roundrobin
+Servers are tried in order and if one is selected successfully, the following
+search will try from the one next on the list.
+.TP
+.B weighted
+Backend servers accept a new option
+.B weight=<int>
+which indicates how often it should be selected. If unspecified, weight
+defaults to 0 and such backends have a slight chance of being selected even
+when a non-zero weight backend is configured in the tier. The selection process
+is along the lines of
+.BR RFC2782 .
+.TP
+.B bestof
+Like with
+.BI weighted ,
+backends accept the
+.B weight=<int>
+option. Average latency multiplied by
+.B weight
+is measured over time. The selection process chooses 2 backends at random,
+compares their weighted latencies and the backend with a better (lower) score
+is tried. If the backend is not available (or is busy), the other backend is
+tried, then backends are chosen in a round-robin order.
+
+Note that unlike
+.BI weighted ,
+the higher the weight, the higher the "effective" latency and lower the chance
+a backend is selected.
+
 .SH BACKEND OPTIONS
 
 .TP
 .B backend-server
 .B uri=ldap[s]://<hostname>[:port]
 .B [retry=<retry interval in ms>]
-.B [keepalive=<idle>:<probes>:<interval>]
 .B [starttls=yes|critical]
-.B [tls_cert=<file>]
-.B [tls_key=<file>]
-.B [tls_cacert=<file>]
-.B [tls_cacertdir=<path>]
-.B [tls_reqcert=never|allow|try|demand]
-.B [tls_cipher_suite=<ciphers>]
-.B [tls_crlcheck=none|peer|all]
-.B [tls_protocol_min=<major>[.<minor>]]
 .B [numconns=<conns>]
 .B [bindconns=<conns>]
 .B [max-pending-ops=<ops>]
@@ -723,23 +875,6 @@ will limit the total number or unfinished operations across all backend's
 connections,
 .BR 0 ,
 the default, means no limit will be imposed for this backend.
-
-The
-.B keepalive
-parameter sets the values of \fIidle\fP, \fIprobes\fP, and \fIinterval\fP
-used to check whether a socket is alive;
-.I idle
-is the number of seconds a connection needs to remain idle before TCP
-starts sending keepalive probes;
-.I probes
-is the maximum number of keepalive probes TCP should send before dropping
-the connection;
-.I interval
-is interval in seconds between individual keepalive probes.
-Only some systems support the customization of these values;
-the
-.B keepalive
-parameter is ignored otherwise, and system-wide settings are used.
 
 The
 .B starttls
@@ -794,11 +929,27 @@ Here is a short example of a configuration file:
 argsfile  LOCALSTATEDIR/run/lloadd.args
 pidfile   LOCALSTATEDIR/run/lloadd.pid
 
+# cancel not supported yet
+restrict_exop 1.3.6.1.1.8 reject
+
+# turn not supported
+restrict_exop 1.3.6.1.1.19 reject
+
+# TXN Exop if desired, otherwise reject
+restrict_exop 1.3.6.1.1.21.1 connection
+
+# Paged results control
+restrict_control 1.2.840.113556.1.4.319 connection
+
+# VLV control
+restrict_control 2.16.840.1.113730.3.4.9 connection
+
 bindconf
     bindmethod=simple
     binddn=cn=test
     credentials=pass
 
+tier weighted
 backend-server
     uri=ldap://ldap1.example.com
     numconns=3
@@ -806,6 +957,7 @@ backend-server
     retry=5000
     max-pending-ops=5
     conn-max-pending=3
+    weight=5
 
 backend-server
     uri=ldap://ldap2.example.com
@@ -814,6 +966,7 @@ backend-server
     retry=5000
     max-pending-ops=5
     conn-max-pending=3
+    weight=10
 .fi
 .RE
 .LP
@@ -824,7 +977,7 @@ The original ETCDIR/lloadd.conf is another example.
 .SH LIMITATIONS
 Support for proxying SASL Binds is limited to the
 .B EXTERNAL
-mechanism (and only to extract the DN of a client TLS cerificate if used during
+mechanism (and only to extract the DN of a client TLS certificate if used during
 the last renegotiation) and mechanisms that rely neither on connection metadata
 (as Kerberos does) nor establish a SASL integrity/confidentialiy layer (again,
 some Kerberos mechanisms,

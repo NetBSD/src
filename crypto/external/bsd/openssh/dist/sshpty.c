@@ -1,5 +1,6 @@
-/*	$NetBSD: sshpty.c,v 1.8 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: sshpty.c,v 1.34 2019/07/04 16:20:10 deraadt Exp $ */
+/*	$NetBSD: sshpty.c,v 1.8.10.1 2026/11/04 22:36:44 perseant Exp $	*/
+/* $OpenBSD: sshpty.c,v 1.36 2026/09/15 06:30:58 djm Exp $ */
+
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -14,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshpty.c,v 1.8 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sshpty.c,v 1.8.10.1 2026/11/04 22:36:44 perseant Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
@@ -24,7 +25,9 @@ __RCSID("$NetBSD: sshpty.c,v 1.8 2019/10/12 18:32:22 christos Exp $");
 #include <grp.h>
 #include <paths.h>
 #include <pwd.h>
+#include <signal.h>
 #include <stdarg.h>
+#include <stdio.h>
 #include <string.h>
 #include <termios.h>
 #include <unistd.h>
@@ -182,17 +185,5 @@ pty_setowner(struct passwd *pw, const char *tty)
 				fatal("chmod(%.100s, 0%o) failed: %.100s",
 				    tty, (u_int)mode, strerror(errno));
 		}
-	}
-}
-
-/* Disconnect from the controlling tty. */
-void
-disconnect_controlling_tty(void)
-{
-	int fd;
-
-	if ((fd = open(_PATH_TTY, O_RDWR | O_NOCTTY)) >= 0) {
-		(void) ioctl(fd, TIOCNOTTY, NULL);
-		close(fd);
 	}
 }

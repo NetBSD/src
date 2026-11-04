@@ -1,5 +1,5 @@
 /* VAX series support for 32-bit ELF
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by Matt Thomas <matt@3am-software.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -36,7 +36,6 @@ static bool elf_vax_check_relocs (bfd *, struct bfd_link_info *,
 				  asection *, const Elf_Internal_Rela *);
 static bool elf_vax_adjust_dynamic_symbol (struct bfd_link_info *,
 					   struct elf_link_hash_entry *);
-static bool elf_vax_size_dynamic_sections (bfd *, struct bfd_link_info *);
 static int elf_vax_relocate_section (bfd *, struct bfd_link_info *,
 				     bfd *, asection *, bfd_byte *,
 				     Elf_Internal_Rela *,
@@ -44,7 +43,8 @@ static int elf_vax_relocate_section (bfd *, struct bfd_link_info *,
 static bool elf_vax_finish_dynamic_symbol (bfd *, struct bfd_link_info *,
 					   struct elf_link_hash_entry *,
 					   Elf_Internal_Sym *);
-static bool elf_vax_finish_dynamic_sections (bfd *, struct bfd_link_info *);
+static bool elf_vax_finish_dynamic_sections (bfd *, struct bfd_link_info *,
+					     bfd_byte *);
 static bfd_vma elf_vax_plt_sym_val (bfd_vma, const asection *,
 				    const arelent *);
 
@@ -312,9 +312,9 @@ static const struct
   { BFD_RELOC_32_GOT_PCREL, R_VAX_GOT32 },
   { BFD_RELOC_32_PLT_PCREL, R_VAX_PLT32 },
   { BFD_RELOC_NONE, R_VAX_COPY },
-  { BFD_RELOC_VAX_GLOB_DAT, R_VAX_GLOB_DAT },
-  { BFD_RELOC_VAX_JMP_SLOT, R_VAX_JMP_SLOT },
-  { BFD_RELOC_VAX_RELATIVE, R_VAX_RELATIVE },
+  { BFD_RELOC_GLOB_DAT, R_VAX_GLOB_DAT },
+  { BFD_RELOC_JMP_SLOT, R_VAX_JMP_SLOT },
+  { BFD_RELOC_RELATIVE, R_VAX_RELATIVE },
   { BFD_RELOC_CTOR, R_VAX_32 },
   { BFD_RELOC_VTABLE_INHERIT, R_VAX_GNU_VTINHERIT },
   { BFD_RELOC_VTABLE_ENTRY, R_VAX_GNU_VTENTRY },
@@ -477,8 +477,7 @@ elf_vax_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (ret, abfd,
 				      elf_vax_link_hash_newfunc,
-				      sizeof (struct elf_vax_link_hash_entry),
-				      GENERIC_ELF_DATA))
+				      sizeof (struct elf_vax_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -522,8 +521,7 @@ elf32_vax_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   bfd *obfd = info->output_bfd;
   flagword in_flags;
 
-  if (   bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   in_flags  = elf_elfheader (ibfd)->e_flags;
@@ -829,19 +827,19 @@ elf_vax_check_relocs (bfd *abfd, struct bfd_link_info *info, asection *sec,
 static asection *
 elf_vax_gc_mark_hook (asection *sec,
 		      struct bfd_link_info *info,
-		      Elf_Internal_Rela *rel,
+		      struct elf_reloc_cookie *cookie,
 		      struct elf_link_hash_entry *h,
-		      Elf_Internal_Sym *sym)
+		      unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_VAX_GNU_VTINHERIT:
       case R_VAX_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -1010,8 +1008,8 @@ elf_vax_discard_got_entries (struct elf_link_hash_entry *h,
 /* Discard unused dynamic data if this is a static link.  */
 
 static bool
-elf_vax_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-			      struct bfd_link_info *info)
+elf_vax_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
@@ -1049,24 +1047,26 @@ elf_vax_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf_vax_late_size_sections (bfd *output_bfd, struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   bool relocs;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -1147,6 +1147,7 @@ elf_vax_size_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -1332,7 +1333,8 @@ elf_vax_relocate_section (bfd *output_bfd,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_VAX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -1764,7 +1766,8 @@ elf_vax_finish_dynamic_symbol (bfd *output_bfd, struct bfd_link_info *info,
 /* Finish up the dynamic sections.  */
 
 static bool
-elf_vax_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info)
+elf_vax_finish_dynamic_sections (bfd *output_bfd, struct bfd_link_info *info,
+				 bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sgot;
@@ -1881,6 +1884,7 @@ elf_vax_plt_sym_val (bfd_vma i, const asection *plt,
 
 #define TARGET_LITTLE_SYM		vax_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-vax"
+#define ELF_TARGET_ID			VAX_ELF_DATA
 #define ELF_MACHINE_CODE		EM_VAX
 #define ELF_MAXPAGESIZE			0x10000
 
@@ -1891,15 +1895,13 @@ elf_vax_plt_sym_val (bfd_vma i, const asection *plt,
 #define bfd_elf32_bfd_copy_private_bfd_data \
 					elf32_vax_copy_private_bfd_data
 
-#define bfd_elf32_bfd_final_link	bfd_elf_gc_common_final_link
+#define bfd_elf32_bfd_final_link	_bfd_elf_gc_common_final_link
 
 #define elf_backend_check_relocs	elf_vax_check_relocs
 #define elf_backend_adjust_dynamic_symbol \
 					elf_vax_adjust_dynamic_symbol
-#define elf_backend_always_size_sections \
-					elf_vax_always_size_sections
-#define elf_backend_size_dynamic_sections \
-					elf_vax_size_dynamic_sections
+#define elf_backend_early_size_sections	elf_vax_early_size_sections
+#define elf_backend_late_size_sections	elf_vax_late_size_sections
 #define elf_backend_init_index_section	_bfd_elf_init_1_index_section
 #define elf_backend_relocate_section	elf_vax_relocate_section
 #define elf_backend_finish_dynamic_symbol \

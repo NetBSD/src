@@ -1,5 +1,5 @@
 /* tc-arc.c -- Assembler for the ARC
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
 
    Contributor: Claudiu Zissulescu <claziss@synopsys.com>
 
@@ -109,6 +109,7 @@ enum arc_rlx_types
 				  || (op)->insn_class == BBIT0		\
 				  || (op)->insn_class == BBIT1		\
 				  || (op)->insn_class == BI		\
+				  || (op)->insn_class == DBNZ		\
 				  || (op)->insn_class == EI		\
 				  || (op)->insn_class == ENTER		\
 				  || (op)->insn_class == JLI		\
@@ -182,7 +183,7 @@ const pseudo_typeS md_pseudo_table[] =
   { NULL, NULL, 0 }
 };
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
 enum options
 {
@@ -228,7 +229,7 @@ enum options
   OPTION_RTSC
 };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "EB",		no_argument,	   NULL, OPTION_EB },
   { "EL",		no_argument,	   NULL, OPTION_EL },
@@ -291,7 +292,7 @@ struct option md_longopts[] =
   { NULL,		no_argument, NULL, 0 }
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Local data and data types.  */
 
@@ -521,7 +522,7 @@ static unsigned cl_features = 0;
 #define ARC_RELOC_TABLE(op)				\
   (&arc_reloc_op[ ((!USER_RELOC_P (op))			\
 		   ? (abort (), 0)			\
-		   : (int) (op) - (int) O_gotoff) ])
+		   : (op) - O_gotoff) ])
 
 #define DEF(NAME, RELOC, REQ)				\
   { #NAME, sizeof (#NAME)-1, O_##NAME, RELOC, REQ}
@@ -543,9 +544,9 @@ static const struct arc_reloc_op_tag
 {
   DEF (gotoff,  BFD_RELOC_ARC_GOTOFF,		1),
   DEF (gotpc,   BFD_RELOC_ARC_GOTPC32,		0),
-  DEF (plt,	BFD_RELOC_ARC_PLT32,		0),
+  DEF (plt,	BFD_RELOC_32_PLT_PCREL,		0),
   DEF (sda,	DUMMY_RELOC_ARC_ENTRY,		1),
-  DEF (pcl,	BFD_RELOC_ARC_PC32,		1),
+  DEF (pcl,	BFD_RELOC_32_PCREL,		1),
   DEF (tlsgd,   BFD_RELOC_ARC_TLS_GD_GOT,	0),
   DEF (tlsie,   BFD_RELOC_ARC_TLS_IE_GOT,	0),
   DEF (tpoff9,  BFD_RELOC_ARC_TLS_LE_S9,	0),
@@ -685,7 +686,7 @@ const unsigned arc_num_relaxable_ins = ARRAY_SIZE (arc_relaxable_insns);
 /* Pre-defined "_GLOBAL_OFFSET_TABLE_".  */
 symbolS * GOT_symbol = 0;
 
-/* Set to TRUE when we assemble instructions.  */
+/* Set to TRUE for a special parsing action when assembling instructions.  */
 static bool assembling_insn = false;
 
 /* List with attributes set explicitly.  */
@@ -777,7 +778,7 @@ arc_insert_opcode (const struct arc_opcode *opcode)
 static void
 arc_opcode_free (void *elt)
 {
-  string_tuple_t *tuple = (string_tuple_t *) elt;
+  string_tuple_t *tuple = elt;
   struct arc_opcode_hash_entry *entry = (void *) tuple->value;
   free (entry->opcode);
   free (entry);
@@ -1151,8 +1152,8 @@ parse_reloc_symbol (expressionS *resultP)
       return;
     }
 
-  *input_line_pointer = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   /* Extra check for TLS: base.  */
   if (*input_line_pointer == '@')
     {
@@ -1274,9 +1275,8 @@ tokenize_arguments (char *str,
 
 	  /* Parse @label.  */
 	  input_line_pointer++;
-	  tok->X_op = O_symbol;
-	  tok->X_md = O_absent;
 	  expression (tok);
+	  tok->X_md = O_absent;
 
 	  if (*input_line_pointer == '@')
 	    parse_reloc_symbol (tok);
@@ -1303,9 +1303,11 @@ tokenize_arguments (char *str,
 	  if ((saw_arg && !saw_comma) || num_args == ntok)
 	    goto err;
 
-	  tok->X_op = O_absent;
-	  tok->X_md = O_absent;
+	  /* Tell arc_parse_name to do its job.  */
+	  assembling_insn = true;
 	  expression (tok);
+	  assembling_insn = false;
+	  tok->X_md = O_absent;
 
 	  /* Legacy: There are cases when we have
 	     identifier@relocation_type, if it is the case parse the
@@ -1373,10 +1375,6 @@ tokenize_flags (const char *str,
     {
       switch (*input_line_pointer)
 	{
-	case ' ':
-	case '\0':
-	  goto fini;
-
 	case '.':
 	  input_line_pointer++;
 	  if (saw_dot)
@@ -1386,6 +1384,10 @@ tokenize_flags (const char *str,
 	  break;
 
 	default:
+	  if (is_end_of_stmt (*input_line_pointer)
+	      || is_whitespace (*input_line_pointer))
+	    goto fini;
+
 	  if (saw_flg && !saw_dot)
 	    goto err;
 
@@ -1443,7 +1445,7 @@ apply_fixups (struct arc_insn *insn, fragS *fragP, int fix)
 	offset = insn->len;
 
       /* Some fixups are only used internally, thus no howto.  */
-      if ((int) fixup->reloc == 0)
+      if (fixup->reloc == 0)
 	as_fatal (_("Unhandled reloc type"));
 
       if ((int) fixup->reloc < 0)
@@ -1456,8 +1458,7 @@ apply_fixups (struct arc_insn *insn, fragS *fragP, int fix)
       else
 	{
 	  reloc_howto_type *reloc_howto =
-	    bfd_reloc_type_lookup (stdoutput,
-				   (bfd_reloc_code_real_type) fixup->reloc);
+	    bfd_reloc_type_lookup (stdoutput, fixup->reloc);
 	  gas_assert (reloc_howto);
 
 	  /* FIXME! the reloc size is wrong in the BFD file.
@@ -1592,7 +1593,7 @@ get_register (symbolS *sym)
 }
 
 /* Return true if a RELOC is generic.  A generic reloc is PC-rel of a
-   simple ME relocation (e.g. RELOC_ARC_32_ME, BFD_RELOC_ARC_PC32.  */
+   simple ME relocation (e.g. RELOC_ARC_32_ME, BFD_RELOC_32_PCREL.  */
 
 static bool
 generic_reloc_p (extended_bfd_reloc_code_real_type reloc)
@@ -2522,9 +2523,6 @@ md_assemble (char *str)
   opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_0123456789");
   opname = xmemdup0 (str, opnamelen);
 
-  /* Signalize we are assembling the instructions.  */
-  assembling_insn = true;
-
   /* Tokenize the flags.  */
   if ((nflg = tokenize_flags (str + opnamelen, flags, MAX_INSN_FLGS)) == -1)
     {
@@ -2535,8 +2533,8 @@ md_assemble (char *str)
   /* Scan up to the end of the mnemonic which must end in space or end
      of string.  */
   str += opnamelen;
-  for (; *str != '\0'; str++)
-    if (*str == ' ')
+  for (; !is_end_of_stmt (*str); str++)
+    if (is_whitespace (*str))
       break;
 
   /* Tokenize the rest of the line.  */
@@ -2548,7 +2546,6 @@ md_assemble (char *str)
 
   /* Finish it off.  */
   assemble_tokens (opname, tok, ntok, flags, nflg);
-  assembling_insn = false;
 }
 
 /* Callback to insert a register into the hash table.  */
@@ -2767,7 +2764,7 @@ md_pcrel_from_section (fixS *fixP,
 
   pr_debug ("pcrel_from_section, fx_offset = %d\n", (int) fixP->fx_offset);
 
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (!S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
@@ -2788,7 +2785,7 @@ md_pcrel_from_section (fixS *fixP,
     {
       switch (fixP->fx_r_type)
 	{
-	case BFD_RELOC_ARC_PC32:
+	case BFD_RELOC_32_PCREL:
 	  /* The hardware calculates relative to the start of the
 	     insn, but this relocation is relative to location of the
 	     LIMM, compensate.  The base always needs to be
@@ -2796,7 +2793,7 @@ md_pcrel_from_section (fixS *fixP,
 	     relocation for short instructions.  */
 	  base -= 4;
 	  /* Fall through.  */
-	case BFD_RELOC_ARC_PLT32:
+	case BFD_RELOC_32_PLT_PCREL:
 	case BFD_RELOC_ARC_S25H_PCREL_PLT:
 	case BFD_RELOC_ARC_S21H_PCREL_PLT:
 	case BFD_RELOC_ARC_S25W_PCREL_PLT:
@@ -3004,9 +3001,9 @@ md_apply_fix (fixS *fixP,
 	  fixP->fx_offset += fixP->fx_frag->fr_address;
 	  /* Fall through.  */
 	case BFD_RELOC_32:
-	  fixP->fx_r_type = BFD_RELOC_ARC_PC32;
+	  fixP->fx_r_type = BFD_RELOC_32_PCREL;
 	  /* Fall through.  */
-	case BFD_RELOC_ARC_PC32:
+	case BFD_RELOC_32_PCREL:
 	  /* fixP->fx_offset += fixP->fx_where - fixP->fx_dot_value; */
 	  break;
 	default:
@@ -3104,11 +3101,11 @@ md_apply_fix (fixS *fixP,
 
     case BFD_RELOC_ARC_GOTOFF:
     case BFD_RELOC_ARC_32_ME:
-    case BFD_RELOC_ARC_PC32:
+    case BFD_RELOC_32_PCREL:
       md_number_to_chars_midend (fixpos, value, fixP->fx_size);
       return;
 
-    case BFD_RELOC_ARC_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
       md_number_to_chars_midend (fixpos, value, fixP->fx_size);
       return;
 
@@ -3250,8 +3247,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
   arelent *reloc;
   bfd_reloc_code_real_type code;
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -3386,9 +3383,8 @@ md_operand (expressionS *expressionP)
   if (*p == '@')
     {
       input_line_pointer++;
-      expressionP->X_op = O_symbol;
-      expressionP->X_md = O_absent;
       expression (expressionP);
+      expressionP->X_md = O_absent;
     }
 }
 
@@ -3404,10 +3400,6 @@ arc_parse_name (const char *name,
   struct symbol *sym;
 
   if (!assembling_insn)
-    return false;
-
-  if (e->X_op == O_symbol
-      && e->X_md == O_absent)
     return false;
 
   sym = str_hash_find (arc_reg_hash, name);
@@ -3659,7 +3651,7 @@ find_reloc (const char *name,
 	  if (!nflg)
 	    continue;
 	  found_flag = false;
-	  unsigned * psflg = (unsigned *)r->flags;
+	  const unsigned *psflg = r->flags;
 	  do
 	    {
 	      tmp = false;
@@ -3917,7 +3909,7 @@ assemble_insn (const struct arc_opcode *opcode,
   for (argidx = opcode->operands; *argidx; ++argidx)
     {
       const struct arc_operand *operand = &arc_operands[*argidx];
-      const expressionS *t = (const expressionS *) 0;
+      const expressionS *t = NULL;
 
       if (ARC_OPERAND_IS_FAKE (operand))
 	continue;
@@ -4057,8 +4049,7 @@ assemble_insn (const struct arc_opcode *opcode,
 	    {
 	      /* sanity checks.  */
 	      reloc_howto_type *reloc_howto
-		= bfd_reloc_type_lookup (stdoutput,
-					 (bfd_reloc_code_real_type) reloc);
+		= bfd_reloc_type_lookup (stdoutput, reloc);
 	      unsigned reloc_bitsize = reloc_howto->bitsize;
 	      if (reloc_howto->rightshift)
 		reloc_bitsize -= reloc_howto->rightshift;
@@ -4082,8 +4073,7 @@ assemble_insn (const struct arc_opcode *opcode,
 	  else
 	    {
 	      reloc_howto_type *reloc_howto =
-		bfd_reloc_type_lookup (stdoutput,
-				       (bfd_reloc_code_real_type) fixup->reloc);
+		bfd_reloc_type_lookup (stdoutput, fixup->reloc);
 	      pcrel = reloc_howto->pc_relative;
 	    }
 	  fixup->pcrel = pcrel;
@@ -4226,7 +4216,7 @@ tc_arc_fix_adjustable (fixS *fixP)
   switch (fixP->fx_r_type)
     {
     case BFD_RELOC_ARC_GOTPC32:
-    case BFD_RELOC_ARC_PLT32:
+    case BFD_RELOC_32_PLT_PCREL:
     case BFD_RELOC_ARC_S25H_PCREL_PLT:
     case BFD_RELOC_ARC_S21H_PCREL_PLT:
     case BFD_RELOC_ARC_S25W_PCREL_PLT:
@@ -4675,7 +4665,7 @@ arc_extinsn (int ignore ATTRIBUTE_UNUSED)
     as_warn ("%s", errmsg);
 
   /* Insert the extension instruction.  */
-  arc_insert_opcode ((const struct arc_opcode *) arc_ext_opcodes);
+  arc_insert_opcode (arc_ext_opcodes);
 
   create_extinst_section (&einsn);
 }
@@ -4927,7 +4917,7 @@ arc_extcorereg (int opertype)
 static void
 arc_attribute (int ignored ATTRIBUTE_UNUSED)
 {
-  int tag = obj_elf_vendor_attribute (OBJ_ATTR_PROC);
+  obj_attr_tag_t tag = obj_attr_process_attribute (OBJ_ATTR_PROC);
 
   if (tag < NUM_KNOWN_OBJ_ATTRIBUTES)
     attributes_set_explicitly[tag] = true;
@@ -4936,7 +4926,7 @@ arc_attribute (int ignored ATTRIBUTE_UNUSED)
 /* Set an attribute if it has not already been set by the user.  */
 
 static void
-arc_set_attribute_int (int tag, int value)
+arc_set_attribute_int (obj_attr_tag_t tag, int value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
@@ -4947,7 +4937,7 @@ arc_set_attribute_int (int tag, int value)
 }
 
 static void
-arc_set_attribute_string (int tag, const char *value)
+arc_set_attribute_string (obj_attr_tag_t tag, const char *value)
 {
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
@@ -4973,7 +4963,7 @@ arc_stralloc (char * s1, const char * s2)
   gas_assert (s2);
   len += strlen (s2) + 1;
 
-  p = (char *) xmalloc (len);
+  p = xmalloc (len);
 
   if (s1)
     {

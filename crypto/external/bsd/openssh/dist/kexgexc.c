@@ -1,5 +1,6 @@
-/*	$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $	*/
-/* $OpenBSD: kexgexc.c,v 1.38 2021/12/19 22:08:06 djm Exp $ */
+/*	$NetBSD: kexgexc.c,v 1.17.4.1 2026/11/04 22:36:39 perseant Exp $	*/
+/* $OpenBSD: kexgexc.c,v 1.43 2026/09/16 00:31:27 djm Exp $ */
+
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  * Copyright (c) 2001 Markus Friedl.  All rights reserved.
@@ -26,19 +27,20 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $");
+__RCSID("$NetBSD: kexgexc.c,v 1.17.4.1 2026/11/04 22:36:39 perseant Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 
+#include <openssl/bn.h>
 #include <openssl/dh.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
 
 #include "sshkey.h"
-#include "cipher.h"
 #include "digest.h"
 #include "kex.h"
 #include "log.h"
@@ -51,8 +53,8 @@ __RCSID("$NetBSD: kexgexc.c,v 1.17 2022/02/23 19:07:20 christos Exp $");
 #include "sshbuf.h"
 #include "misc.h"
 
-static int input_kex_dh_gex_group(int, u_int32_t, struct ssh *);
-static int input_kex_dh_gex_reply(int, u_int32_t, struct ssh *);
+static int input_kex_dh_gex_group(int, uint32_t, struct ssh *);
+static int input_kex_dh_gex_reply(int, uint32_t, struct ssh *);
 
 int
 kexgex_client(struct ssh *ssh)
@@ -90,7 +92,7 @@ kexgex_client(struct ssh *ssh)
 }
 
 static int
-input_kex_dh_gex_group(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_dh_gex_group(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	BIGNUM *p = NULL, *g = NULL;
@@ -140,7 +142,7 @@ out:
 }
 
 static int
-input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_dh_gex_reply(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	BIGNUM *dh_server_pub = NULL;
@@ -164,7 +166,8 @@ input_kex_dh_gex_reply(int type, u_int32_t seq, struct ssh *ssh)
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_fromb(tmp, &server_host_key)) != 0 ||
+	if ((r = sshkey_fromb_allowlist(tmp, &server_host_key,
+	    kex->hostkey_alg, NULL)) != 0 ||
 	    (r = kex_verify_host_key(ssh, server_host_key)) != 0)
 		goto out;
 	/* DH parameter f, server public DH key, signed H */

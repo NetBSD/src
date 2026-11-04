@@ -171,20 +171,14 @@ static int64_t
 client_skip_proxy(struct archive_read_filter *self, int64_t request)
 {
 	if (request < 0)
-		__archive_errx(1, "Negative skip requested.");
+		__archive_errx(1, "Negative skip requested");
 	if (request == 0)
 		return 0;
 
 	if (self->archive->client.skipper != NULL) {
-		/* Seek requests over 1GiB are broken down into
-		 * multiple seeks.  This avoids overflows when the
-		 * requests get passed through 32-bit arguments. */
-		int64_t skip_limit = (int64_t)1 << 30;
 		int64_t total = 0;
 		for (;;) {
 			int64_t get, ask = request;
-			if (ask > skip_limit)
-				ask = skip_limit;
 			get = (self->archive->client.skipper)
 				(&self->archive->archive, self->data, ask);
 			total += get;
@@ -385,7 +379,7 @@ archive_read_set_callback_data2(struct archive *_a, void *client_data,
 		if (a->client.dataset == NULL)
 		{
 			archive_set_error(&a->archive, ENOMEM,
-				"No memory.");
+				"No memory");
 			return ARCHIVE_FATAL;
 		}
 		a->client.nodes = 1;
@@ -394,7 +388,7 @@ archive_read_set_callback_data2(struct archive *_a, void *client_data,
 	if (iindex > a->client.nodes - 1)
 	{
 		archive_set_error(&a->archive, EINVAL,
-			"Invalid index specified.");
+			"Invalid index specified");
 		return ARCHIVE_FATAL;
 	}
 	a->client.dataset[iindex].data = client_data;
@@ -415,14 +409,14 @@ archive_read_add_callback_data(struct archive *_a, void *client_data,
 	    "archive_read_add_callback_data");
 	if (iindex > a->client.nodes) {
 		archive_set_error(&a->archive, EINVAL,
-			"Invalid index specified.");
+			"Invalid index specified");
 		return ARCHIVE_FATAL;
 	}
 	p = realloc(a->client.dataset, sizeof(*a->client.dataset)
 		* (++(a->client.nodes)));
 	if (p == NULL) {
 		archive_set_error(&a->archive, ENOMEM,
-			"No memory.");
+			"No memory");
 		return ARCHIVE_FATAL;
 	}
 	a->client.dataset = (struct archive_read_data_node *)p;
@@ -581,8 +575,7 @@ choose_filters(struct archive_read *a)
 			return (ARCHIVE_OK);
 		}
 
-		filter
-		    = calloc(1, sizeof(*filter));
+		filter = calloc(1, sizeof(*filter));
 		if (filter == NULL)
 			return (ARCHIVE_FATAL);
 		filter->bidder = best_bidder;
@@ -632,7 +625,7 @@ _archive_read_next_header2(struct archive *_a, struct archive_entry *entry)
 		r1 = archive_read_data_skip(&a->archive);
 		if (r1 == ARCHIVE_EOF)
 			archive_set_error(&a->archive, EIO,
-			    "Premature end-of-file.");
+			    "Premature end-of-file");
 		if (r1 == ARCHIVE_EOF || r1 == ARCHIVE_FATAL) {
 			a->archive.state = ARCHIVE_STATE_FATAL;
 			return (ARCHIVE_FATAL);
@@ -840,7 +833,9 @@ archive_read_data(struct archive *_a, void *buff, size_t s)
 			r = archive_read_data_block(a, &read_buf,
 			    &a->read_data_remaining, &a->read_data_offset);
 			a->read_data_block = read_buf;
-			if (r == ARCHIVE_EOF)
+			if (r == ARCHIVE_EOF &&
+			    a->read_data_offset == a->read_data_output_offset &&
+			    a->read_data_remaining == 0)
 				return (bytes_read);
 			/*
 			 * Error codes are all negative, so the status

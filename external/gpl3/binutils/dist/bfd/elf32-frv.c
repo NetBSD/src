@@ -1,5 +1,5 @@
 /* FRV-specific support for 32-bit ELF.
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -951,8 +951,7 @@ frvfdpic_elf_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd,
 				      _bfd_elf_link_hash_newfunc,
-				      sizeof (struct elf_link_hash_entry),
-				      FRV_ELF_DATA))
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -2754,7 +2753,8 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_FRV_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -4082,19 +4082,19 @@ elf32_frv_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 static asection *
 elf32_frv_gc_mark_hook (asection *sec,
 			struct bfd_link_info *info,
-			Elf_Internal_Rela *rel,
+			struct elf_reloc_cookie *cookie,
 			struct elf_link_hash_entry *h,
-			Elf_Internal_Sym *sym)
+			unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_FRV_GNU_VTINHERIT:
       case R_FRV_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Hook called by the linker routine which adds symbols from an object
@@ -4171,7 +4171,7 @@ _frv_create_got_section (bfd *abfd, struct bfd_link_info *info)
   asection *s;
   struct elf_link_hash_entry *h;
   struct bfd_link_hash_entry *bh;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   int ptralign;
   int offset;
 
@@ -4324,7 +4324,7 @@ elf32_frvfdpic_create_dynamic_sections (bfd *abfd, struct bfd_link_info *info)
      elflink.c:_bfd_elf_create_dynamic_sections().  */
   flagword flags;
   asection *s;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
 
   flags = (SEC_ALLOC | SEC_LOAD | SEC_HAS_CONTENTS | SEC_IN_MEMORY
 	   | SEC_LINKER_CREATED);
@@ -5314,6 +5314,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				 frvfdpic_got_section (info)->size);
       if (frvfdpic_got_section (info)->contents == NULL)
 	return false;
+      frvfdpic_got_section (info)->alloced = 1;
     }
 
   if (frvfdpic_gotrel_section (info))
@@ -5333,6 +5334,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				 frvfdpic_gotrel_section (info)->size);
       if (frvfdpic_gotrel_section (info)->contents == NULL)
 	return false;
+      frvfdpic_gotrel_section (info)->alloced = 1;
     }
 
   frvfdpic_gotfixup_section (info)->size = (gpinfop->g.fixups + 1) * 4;
@@ -5345,6 +5347,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				 frvfdpic_gotfixup_section (info)->size);
       if (frvfdpic_gotfixup_section (info)->contents == NULL)
 	return false;
+      frvfdpic_gotfixup_section (info)->alloced = 1;
     }
 
   if (frvfdpic_pltrel_section (info))
@@ -5361,6 +5364,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				     frvfdpic_pltrel_section (info)->size);
 	  if (frvfdpic_pltrel_section (info)->contents == NULL)
 	    return false;
+	  frvfdpic_pltrel_section (info)->alloced = 1;
 	}
     }
 
@@ -5414,6 +5418,7 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 				     frvfdpic_plt_section (info)->size);
 	  if (frvfdpic_plt_section (info)->contents == NULL)
 	    return false;
+	  frvfdpic_plt_section (info)->alloced = 1;
 	}
     }
 
@@ -5423,25 +5428,27 @@ _frvfdpic_size_got_plt (bfd *output_bfd,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
-				      struct bfd_link_info *info)
+elf32_frvfdpic_late_size_sections (bfd *output_bfd,
+				   struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *s;
   struct _frvfdpic_dynamic_got_plt_info gpinfo;
 
   dynobj = elf_hash_table (info)->dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = elf_hash_table (info)->interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (bfd_byte *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
 
@@ -5472,8 +5479,8 @@ elf32_frvfdpic_size_dynamic_sections (bfd *output_bfd,
 }
 
 static bool
-elf32_frvfdpic_always_size_sections (bfd *output_bfd,
-				     struct bfd_link_info *info)
+elf32_frvfdpic_early_size_sections (bfd *output_bfd,
+				    struct bfd_link_info *info)
 {
   if (!bfd_link_relocatable (info)
       && !bfd_elf_stack_segment_size (output_bfd, info,
@@ -5617,8 +5624,8 @@ elf32_frvfdpic_relax_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
   struct _frvfdpic_dynamic_got_plt_info gpinfo;
 
   if (bfd_link_relocatable (info))
-    (*info->callbacks->einfo)
-      (_("%P%F: --relax and -r may not be used together\n"));
+    info->callbacks->fatal
+      (_("%P: --relax and -r may not be used together\n"));
 
   /* If we return early, we didn't change anything.  */
   *again = false;
@@ -5678,7 +5685,8 @@ elf32_frvfdpic_relax_section (bfd *abfd ATTRIBUTE_UNUSED, asection *sec,
 
 static bool
 elf32_frv_finish_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				   struct bfd_link_info *info ATTRIBUTE_UNUSED)
+				   struct bfd_link_info *info ATTRIBUTE_UNUSED,
+				   bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   /* Nothing to be done for non-FDPIC.  */
   return true;
@@ -5686,7 +5694,8 @@ elf32_frv_finish_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
 
 static bool
 elf32_frvfdpic_finish_dynamic_sections (bfd *output_bfd,
-					struct bfd_link_info *info)
+					struct bfd_link_info *info,
+					bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn;
@@ -6332,6 +6341,9 @@ frv_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if ((ibfd->flags & DYNAMIC) != 0)
     return true;
 
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
+
   new_opt[0] = old_opt[0] = '\0';
   new_flags = elf_elfheader (ibfd)->e_flags;
   old_flags = elf_elfheader (obfd)->e_flags;
@@ -6817,9 +6829,9 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #undef bfd_elf32_bfd_link_hash_table_create
 #define bfd_elf32_bfd_link_hash_table_create \
 		frvfdpic_elf_link_hash_table_create
-#undef elf_backend_always_size_sections
-#define elf_backend_always_size_sections \
-		elf32_frvfdpic_always_size_sections
+#undef elf_backend_early_size_sections
+#define elf_backend_early_size_sections \
+		elf32_frvfdpic_early_size_sections
 
 #undef elf_backend_create_dynamic_sections
 #define elf_backend_create_dynamic_sections \
@@ -6827,9 +6839,9 @@ elf32_frv_grok_psinfo (bfd *abfd, Elf_Internal_Note *note)
 #undef elf_backend_adjust_dynamic_symbol
 #define elf_backend_adjust_dynamic_symbol \
 		elf32_frvfdpic_adjust_dynamic_symbol
-#undef elf_backend_size_dynamic_sections
-#define elf_backend_size_dynamic_sections \
-		elf32_frvfdpic_size_dynamic_sections
+#undef elf_backend_late_size_sections
+#define elf_backend_late_size_sections \
+		elf32_frvfdpic_late_size_sections
 #undef bfd_elf32_bfd_relax_section
 #define bfd_elf32_bfd_relax_section \
   elf32_frvfdpic_relax_section

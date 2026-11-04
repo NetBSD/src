@@ -24,7 +24,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: netdissect.c,v 1.3.2.1 2025/08/02 05:23:21 perseant Exp $");
+__RCSID("$NetBSD: netdissect.c,v 1.3.2.2 2026/11/04 22:39:55 perseant Exp $");
 #endif
 
 #include <config.h>
@@ -84,7 +84,7 @@ nd_init(char *errbuf, size_t errbuf_size)
 }
 
 /*
- * Clean up anything that ndo_init() did.
+ * Clean up anything that nd_init() did.
  */
 void
 nd_cleanup(void)

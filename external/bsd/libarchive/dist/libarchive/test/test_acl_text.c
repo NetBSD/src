@@ -132,7 +132,7 @@ static struct archive_test_acl_t acls1[] = {
 	  ARCHIVE_ENTRY_ACL_EVERYONE, 0, "" },
 };
 
-const char* acltext[] = {
+static const char* acltext[] = {
 	"user::rwx\n"
 	"group::r-x\n"
 	"other::r-x\n"
@@ -404,6 +404,29 @@ DEFINE_TEST(test_acl_from_text)
 	archive_entry_acl_clear(ae);
 
 	free(ws);
+
+	/*
+	 * 6. Malformed "default" prefix with no tag field should return
+	 *    ARCHIVE_WARN, not crash (GitHub issue #2744).
+	 *    When the ACL text is just "d" or "default" with type DEFAULT,
+	 *    the parser recognises the default prefix but field[1] is NULL,
+	 *    which previously caused a NULL-pointer dereference.
+	 */
+	archive_entry_acl_clear(ae);
+	assertEqualInt(ARCHIVE_WARN,
+	    archive_entry_acl_from_text(ae, "d",
+	    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT));
+	assertEqualInt(ARCHIVE_WARN,
+	    archive_entry_acl_from_text_w(ae, L"d",
+	    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT));
+	archive_entry_acl_clear(ae);
+	assertEqualInt(ARCHIVE_WARN,
+	    archive_entry_acl_from_text(ae, "default",
+	    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT));
+	assertEqualInt(ARCHIVE_WARN,
+	    archive_entry_acl_from_text_w(ae, L"default",
+	    ARCHIVE_ENTRY_ACL_TYPE_DEFAULT));
+
 	archive_entry_free(ae);
 }
 

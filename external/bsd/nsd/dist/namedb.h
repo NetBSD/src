@@ -23,7 +23,6 @@ struct udb_ptr;
 struct nsd;
 struct zone_ixfr;
 
-typedef union rdata_atom rdata_atom_type;
 typedef struct rrset rrset_type;
 typedef struct rr rr_type;
 
@@ -139,7 +138,12 @@ struct zone
 #endif
 	struct zone_options* opts;
 	struct zone_ixfr* ixfr;
-	char*        filename; /* set if read from file, which file */
+	char *filename; /* set if read from file, which files */
+	/* list of include files to monitor for changes */
+	struct {
+		size_t count;
+		char **paths;
+	} includes;
 	char*        logstr; /* set for zone xfer, the log string */
 	struct timespec mtime; /* time of last modification */
 	unsigned     zonestatid; /* array index for zone stats */
@@ -152,14 +156,25 @@ struct zone
 	unsigned     is_bad : 1; /* zone failed verification */
 } ATTR_PACKED;
 
-/* a RR in DNS */
+/* a RR in DNS.
+ * The RDATA is directly allocated with the RR structure and pointers to
+ * domains are directly stored (likely unaligned) in the RDATA. We do this
+ * primarily to save memory, but as the RDATA is directly stored with the RR,
+ * it is likely that data is cached with the RR which should have a positive
+ * impact on performance. When paired with direct conversion routines we are
+ * very likely to improve performance when importing zones and writing RRs out
+ * to the wire. That is in the rr.rdata array, it contains the rdata without
+ * the rdlength bytes. The rdlength contains the length of the rr.rdata array,
+ * that includes the pointer size for names that are pointer references to
+ * struct domain.
+ */
 struct rr {
 	domain_type*     owner;
-	rdata_atom_type* rdatas;
 	uint32_t         ttl;
 	uint16_t         type;
 	uint16_t         klass;
-	uint16_t         rdata_count;
+	uint16_t         rdlength;
+	uint8_t          rdata[]; /* c99 flexible array */
 } ATTR_PACKED;
 
 /*
@@ -170,23 +185,28 @@ struct rrset
 {
 	rrset_type* next;
 	zone_type*  zone;
-	rr_type*    rrs;
+#ifndef PACKED_STRUCTS
+	/* If the storage is not packed, there is a pointer to a separate
+	 * array of rr_type pointers. This is then accessed in an aligned
+	 * manner.
+	 * If the storage is packed, the pointer to the array is not there.
+	 * The rr_type pointers for the rrs are stored after the struct rrset,
+	 * contiguously allocated. This is then unaligned pointers, as they
+	 * are after the packed structure. The region also stores items when
+	 * packed structs is enabled without alignment, and thus there are
+	 * unaligned accesses. It then has unaligned access for like struct
+	 * domain. So unaligned access is used then, here too. This saves
+	 * the space used by the rr_type** rrs array pointer.
+	 * The rr pointers can then be accessed through the rrs[] member and,
+	 * that is an unaligned access, and does not need an accessor function.
+	 */
+	rr_type**   rrs;
+#endif
 	uint16_t    rr_count;
+#ifdef PACKED_STRUCTS
+	rr_type*    rrs[]; /* c99 flexible array */
+#endif
 } ATTR_PACKED;
-
-/*
- * The field used is based on the wireformat the atom is stored in.
- * The allowed wireformats are defined by the rdata_wireformat_type
- * enumeration.
- */
-union rdata_atom
-{
-	/* RDATA_WF_COMPRESSED_DNAME, RDATA_WF_UNCOMPRESSED_DNAME */
-	domain_type* domain;
-
-	/* Default. */
-	uint16_t*    data;
-};
 
 /*
  * Create a new domain_table containing only the root domain.
@@ -251,6 +271,8 @@ void domain_add_rrset(domain_type* domain, rrset_type* rrset);
 
 rrset_type* domain_find_rrset(domain_type* domain, zone_type* zone, uint16_t type);
 rrset_type* domain_find_any_rrset(domain_type* domain, zone_type* zone);
+rrset_type* domain_find_rrset_and_prev(domain_type* domain, zone_type* zone,
+	uint16_t type, rrset_type** prev);
 
 zone_type* domain_find_zone(namedb_type* db, domain_type* domain);
 zone_type* domain_find_parent_zone(namedb_type* db, zone_type* zone);
@@ -318,6 +340,10 @@ static inline int domain_is_subdomain(domain_type* d1, domain_type* d2)
 /* easy printout, to static buffer of dname_to_string, fqdn. */
 static inline const char* domain_to_string(domain_type* domain)
 { return dname_to_string(domain_dname(domain), NULL); }
+/* easy printout, to given buffer of dname_to_string, fqdn. */
+static inline const char* domain_to_string_buf(domain_type* domain, char *buf)
+{ return dname_to_string_buf(domain_dname(domain), NULL, buf); }
+
 
 /*
  * The type covered by the signature in the specified RRSIG RR.
@@ -336,28 +362,6 @@ struct namedb
 	off_t		  diff_pos;
 };
 
-static inline int rdata_atom_is_domain(uint16_t type, size_t index);
-static inline int rdata_atom_is_literal_domain(uint16_t type, size_t index);
-
-static inline domain_type *
-rdata_atom_domain(rdata_atom_type atom)
-{
-	return atom.domain;
-}
-
-static inline uint16_t
-rdata_atom_size(rdata_atom_type atom)
-{
-	return *atom.data;
-}
-
-static inline uint8_t *
-rdata_atom_data(rdata_atom_type atom)
-{
-	return (uint8_t *) (atom.data + 1);
-}
-
-
 /* Find the zone for the specified dname in DB. */
 zone_type *namedb_find_zone(namedb_type *db, const dname_type *dname);
 /*
@@ -370,8 +374,7 @@ void domain_table_deldomain(namedb_type* db, domain_type* domain);
 
 /** dbcreate.c */
 int print_rrs(FILE* out, struct zone* zone);
-/** marshal rdata into buffer, must be MAX_RDLENGTH in size */
-size_t rr_marshal_rdata(rr_type* rr, uint8_t* rdata, size_t sz);
+
 /* dbaccess.c */
 int namedb_lookup (struct namedb* db,
 		   const dname_type* dname,
@@ -391,6 +394,12 @@ void namedb_read_zonefile(struct nsd* nsd, struct zone* zone,
 	struct udb_base* taskudb, struct udb_ptr* last_task);
 zone_type* namedb_zone_create(namedb_type* db, const dname_type* dname,
         struct zone_options* zopt);
+static inline zone_type*
+namedb_find_or_create_zone(namedb_type *db, const dname_type *dname,
+	       	struct zone_options* zopt)
+{ zone_type* zone = namedb_find_zone(db, dname);
+  return zone ? zone : namedb_zone_create(db, dname, zopt); }
+void namedb_zone_free_filenames(namedb_type* db, zone_type* zone);
 void namedb_zone_delete(namedb_type* db, zone_type* zone);
 void namedb_write_zonefile(struct nsd* nsd, struct zone_options* zopt);
 void namedb_write_zonefiles(struct nsd* nsd, struct nsd_options* options);
@@ -398,40 +407,12 @@ int create_dirs(const char* path);
 int file_get_mtime(const char* file, struct timespec* mtime, int* nonexist);
 void allocate_domain_nsec3(domain_table_type *table, domain_type *result);
 
-static inline int
-rdata_atom_is_domain(uint16_t type, size_t index)
-{
-	const rrtype_descriptor_type *descriptor
-		= rrtype_descriptor_by_type(type);
-	return (index < descriptor->maximum
-		&& (descriptor->wireformat[index] == RDATA_WF_COMPRESSED_DNAME
-		    || descriptor->wireformat[index] == RDATA_WF_UNCOMPRESSED_DNAME));
-}
-
-static inline int
-rdata_atom_is_literal_domain(uint16_t type, size_t index)
-{
-	const rrtype_descriptor_type *descriptor
-		= rrtype_descriptor_by_type(type);
-	return (index < descriptor->maximum
-		&& (descriptor->wireformat[index] == RDATA_WF_LITERAL_DNAME));
-}
-
-static inline rdata_wireformat_type
-rdata_atom_wireformat_type(uint16_t type, size_t index)
-{
-	const rrtype_descriptor_type *descriptor
-		= rrtype_descriptor_by_type(type);
-	assert(index < descriptor->maximum);
-	return (rdata_wireformat_type) descriptor->wireformat[index];
-}
-
 static inline uint16_t
 rrset_rrtype(rrset_type* rrset)
 {
 	assert(rrset);
 	assert(rrset->rr_count > 0);
-	return rrset->rrs[0].type;
+	return rrset->rrs[0]->type;
 }
 
 static inline uint16_t
@@ -439,7 +420,7 @@ rrset_rrclass(rrset_type* rrset)
 {
 	assert(rrset);
 	assert(rrset->rr_count > 0);
-	return rrset->rrs[0].klass;
+	return rrset->rrs[0]->klass;
 }
 
 /*
@@ -458,5 +439,10 @@ struct zone_rr_iter {
 void zone_rr_iter_init(zone_rr_iter_type *iter, zone_type *zone);
 
 rr_type *zone_rr_iter_next(zone_rr_iter_type *iter);
+
+/** make the domain last in the numlist, changes numbers of domains */
+void numlist_make_last(domain_table_type* table, domain_type* domain);
+/** pop the biggest domain off the numlist */
+domain_type* numlist_pop_last(domain_table_type* table);
 
 #endif /* NAMEDB_H */

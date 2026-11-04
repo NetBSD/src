@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -19,7 +19,7 @@
    MA 02110-1301, USA.  */
 
 #ifndef _GP_PRINT_H
-#define _ER_PRINT_H
+#define _GP_PRINT_H
 
 #include "Command.h"
 #include "DbeApplication.h"

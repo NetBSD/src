@@ -1,10 +1,10 @@
-/*	$NetBSD: component.c,v 1.3 2021/08/14 16:14:58 christos Exp $	*/
+/*	$NetBSD: component.c,v 1.3.4.1 2026/11/04 22:39:18 perseant Exp $	*/
 
 /* component.c -- Component Filter Match Routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2003-2021 The OpenLDAP Foundation.
+ * Copyright 2003-2024 The OpenLDAP Foundation.
  * Portions Copyright 2004 by IBM Corporation.
  * All rights reserved.
  *
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: component.c,v 1.3 2021/08/14 16:14:58 christos Exp $");
+__RCSID("$NetBSD: component.c,v 1.3.4.1 2026/11/04 22:39:18 perseant Exp $");
 
 #include "portable.h"
 

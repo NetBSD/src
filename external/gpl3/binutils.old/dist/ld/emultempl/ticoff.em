@@ -3,7 +3,7 @@
 (echo;echo;echo;echo)>e${EMULATION_NAME}.c # there, now line numbers match ;-)
 fragment <<EOF
 /* This file is part of GLD, the Gnu Linker.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -28,6 +28,7 @@ fragment <<EOF
 #define TARGET_IS_${EMULATION_NAME}
 
 #include "sysdep.h"
+#include "libiberty.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "ctf-api.h"
@@ -39,12 +40,12 @@ fragment <<EOF
 #include "ldexp.h"
 #include "ldlang.h"
 #include "ldfile.h"
+#include "ldlex.h"
 #include "ldemul.h"
 
 static int coff_version;
 
 /* TI COFF extra command line options */
-#define OPTION_COFF_FORMAT		(300 + 1)
 
 static void
 gld${EMULATION_NAME}_add_options
@@ -87,9 +88,7 @@ gld${EMULATION_NAME}_handle_option (int optc)
 	  lang_add_output_format (buf, NULL, NULL, 0);
 	}
       else
-	{
-	  einfo (_("%F%P: invalid COFF format version %s\n"), optarg);
-	}
+	fatal (_("%P: invalid COFF format version %s\n"), optarg);
       break;
     }
   return false;

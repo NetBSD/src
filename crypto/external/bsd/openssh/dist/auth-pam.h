@@ -1,4 +1,4 @@
-/*	$NetBSD: auth-pam.h,v 1.10.2.1 2025/08/02 05:18:45 perseant Exp $	*/
+/*	$NetBSD: auth-pam.h,v 1.10.2.2 2026/11/04 22:36:37 perseant Exp $	*/
 /*
  * Copyright (c) 2000 Damien Miller.  All rights reserved.
  *

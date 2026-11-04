@@ -1,0 +1,81 @@
+.lf 1 stdin
+.TH SLAPO-DEREF 5 "2025/05/22" "OpenLDAP 2.6.10"
+.\" Copyright 2008-2024 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.\" $OpenLDAP$
+.SH NAME
+slapo\-deref \- Dereference Control overlay to slapd
+.SH SYNOPSIS
+/etc/openldap/slapd.conf
+.TP
+/etc/openldap/slapd.d
+.SH DESCRIPTION
+This overlay implements the draft Dereference control. The overlay can be
+used with any backend or globally for all backends.
+
+.SH EXAMPLES
+.nf
+  database mdb
+  ...
+  overlay deref
+.fi
+
+Given these entries:
+.nf
+  dn: cn=Howard Chu,ou=people,dc=example,dc=org
+  objectClass: inetOrgPerson
+  cn: Howard Chu
+  sn: Chu
+  uid: hyc
+
+  dn: cn=Pierangelo Masarati,ou=people,dc=example,dc=org
+  objectClass: inetOrgPerson
+  cn: Pierangelo Masarati
+  sn: Masarati
+  uid: ando
+
+  dn: cn=Test Group,ou=groups,dc=example,dc=org
+  objectClass: groupOfNames
+  cn: Test Group
+  member: cn=Howard Chu,ou=people,dc=example,dc=org
+  member: cn=Pierangelo Masarati,ou=people,dc=example,dc=org
+.fi
+
+A search could be performed with a Dereference request control value
+specified as
+
+.nf
+  { member, uid }
+.fi
+
+I.e.,
+.nf
+  ldapsearch -x -b dc=example,dc=org -E 'deref=member:uid'
+.fi
+
+and the "cn=Test Group" entry would be returned with the response
+control value
+.nf
+  { { member, cn=Howard Chu,ou=people,dc=example,dc=org,
+      { { uid, [hyc] } } },
+    { member, cn=Pierangelo Masarati,ou=people,dc=example,dc=org,
+      { { uid, [ando] } } } }
+.fi
+
+.SH FILES
+.TP
+/etc/openldap/slapd.conf
+default slapd configuration file
+.TP
+/etc/openldap/slapd.d
+default slapd configuration directory
+.SH SEE ALSO
+.BR slapd.conf (5),
+.BR slapd\-config (5).
+.LP
+"OpenLDAP Administrator's Guide" (http://www.OpenLDAP.org/doc/admin/)
+.LP
+IETF LDAP Dereference Control proposal by P. Masarati, H. Chu,
+in IETF document "draft-masarati-ldap-deref-00.txt".
+.SH AUTHOR
+Pierangelo Masarati

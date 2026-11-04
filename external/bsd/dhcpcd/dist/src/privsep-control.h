@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -30,12 +30,12 @@
 #define PRIVSEP_CTL_H
 
 #define IN_PRIVSEP_CONTROLLER(ctx) \
-    (IN_PRIVSEP((ctx)) && (ctx)->ps_control_pid == getpid())
+	(IN_PRIVSEP((ctx)) && (ctx)->ps_control_pid == getpid())
 
 pid_t ps_ctl_start(struct dhcpcd_ctx *);
 int ps_ctl_stop(struct dhcpcd_ctx *);
-ssize_t ps_ctl_handleargs(struct fd_list *, char *, size_t);
-ssize_t ps_ctl_sendargs(struct fd_list *, void *, size_t);
-ssize_t ps_ctl_sendeof(struct fd_list *fd);
+ssize_t ps_ctl_handleargs(struct fd_list *, const char *, size_t);
+ssize_t ps_ctl_sendmsg(struct fd_list *, const struct msghdr *);
+ssize_t ps_ctl_sendeof(struct dhcpcd_ctx *);
 
 #endif

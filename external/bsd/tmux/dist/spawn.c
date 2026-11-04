@@ -229,8 +229,9 @@ spawn_pane(struct spawn_context *sc, char **cause)
 	if (sc->cwd != NULL) {
 		cwd = format_single(item, sc->cwd, c, target->s, NULL, NULL);
 		if (*cwd != '/') {
-			xasprintf(&new_cwd, "%s/%s", server_client_get_cwd(c,
-			    target->s), cwd);
+			xasprintf(&new_cwd, "%s%s%s",
+			    server_client_get_cwd(c, target->s),
+			    *cwd != '\0' ? "/" : "", cwd);
 			free(cwd);
 			cwd = new_cwd;
 		}
@@ -382,20 +383,19 @@ spawn_pane(struct spawn_context *sc, char **cause)
 
 	/* In the parent process, everything is done now. */
 	if (new_wp->pid != 0) {
-#if defined(HAVE_SYSTEMD) && defined(ENABLE_CGROUPS)
-		/*
-		 * Move the child process into a new cgroup for systemd-oomd
-		 * isolation.
-		 */
-		if (systemd_move_pid_to_new_cgroup(new_wp->pid, cause) < 0) {
-			log_debug("%s: moving pane to new cgroup failed: %s",
-			    __func__, *cause);
-			free (*cause);
-		}
-#endif
 		goto complete;
 	}
 
+#if defined(HAVE_SYSTEMD) && defined(ENABLE_CGROUPS)
+	/*
+	 * Move the child process into a new cgroup for systemd-oomd isolation.
+	 */
+	if (systemd_move_to_new_cgroup(cause) < 0) {
+		log_debug("%s: moving pane to new cgroup failed: %s",
+		    __func__, *cause);
+		free (*cause);
+	}
+#endif
 	/*
 	 * Child process. Change to the working directory or home if that
 	 * fails.

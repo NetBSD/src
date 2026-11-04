@@ -1,5 +1,5 @@
 /* symbols.c -symbol table-
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -25,6 +25,7 @@
 #include "obstack.h"		/* For "symbols.h" */
 #include "subsegs.h"
 #include "write.h"
+#include "scfi.h"
 
 #include <limits.h>
 #ifndef CHAR_BIT
@@ -193,8 +194,8 @@ hash_symbol_entry (const void *e)
 static int
 eq_symbol_entry (const void *a, const void *b)
 {
-  const symbol_entry_t *ea = (const symbol_entry_t *) a;
-  const symbol_entry_t *eb = (const symbol_entry_t *) b;
+  const symbol_entry_t *ea = a;
+  const symbol_entry_t *eb = b;
 
   return (ea->sy.hash == eb->sy.hash
 	  && strcmp (ea->sy.name, eb->sy.name) == 0);
@@ -242,6 +243,75 @@ struct xsymbol dot_symbol_x;
 #endif
 
 struct obstack notes;
+
+/* Utility functions to allocate and duplicate memory on the notes
+   obstack, each like the corresponding function without "notes_"
+   prefix.  All of these exit on an allocation failure.  */
+
+void *
+notes_alloc (size_t size)
+{
+  return obstack_alloc (&notes, size);
+}
+
+void *
+notes_calloc (size_t n, size_t size)
+{
+  size_t amt;
+  void *ret;
+  if (gas_mul_overflow (n, size, &amt))
+    {
+      obstack_alloc_failed_handler ();
+      abort ();
+    }
+  ret = notes_alloc (amt);
+  memset (ret, 0, amt);
+  return ret;
+}
+
+void *
+notes_memdup (const void *src, size_t copy_size, size_t alloc_size)
+{
+  void *ret = obstack_alloc (&notes, alloc_size);
+  memcpy (ret, src, copy_size);
+  if (alloc_size > copy_size)
+    memset ((char *) ret + copy_size, 0, alloc_size - copy_size);
+  return ret;
+}
+
+char *
+notes_strdup (const char *str)
+{
+  size_t len = strlen (str) + 1;
+  return notes_memdup (str, len, len);
+}
+
+char *
+notes_concat (const char *first, ...)
+{
+  va_list args;
+  const char *str;
+
+  va_start (args, first);
+  for (str = first; str; str = va_arg (args, const char *))
+    {
+      size_t size = strlen (str);
+      obstack_grow (&notes, str, size);
+    }
+  va_end (args);
+  obstack_1grow (&notes, 0);
+  return obstack_finish (&notes);
+}
+
+/* Use with caution!  Frees PTR and all more recently allocated memory
+   on the notes obstack.  */
+
+void
+notes_free (void *ptr)
+{
+  obstack_free (&notes, ptr);
+}
+
 #ifdef TE_PE
 /* The name of an external symbol which is
    used to make weak PE symbol names unique.  */
@@ -274,13 +344,10 @@ symbol_new (const char *name, segT segment, fragS *frag, valueT valu)
 static const char *
 save_symbol_name (const char *name)
 {
-  size_t name_length;
   char *ret;
 
   gas_assert (name != NULL);
-  name_length = strlen (name) + 1;	/* +1 for \0.  */
-  obstack_grow (&notes, name, name_length);
-  ret = (char *) obstack_finish (&notes);
+  ret = notes_strdup (name);
 
 #ifdef tc_canonicalize_symbol_name
   ret = tc_canonicalize_symbol_name (ret);
@@ -321,6 +388,8 @@ symbol_init (symbolS *symbolP, const char *name, asection *sec,
     }
 
   S_SET_VALUE (symbolP, valu);
+  if (sec == reg_section)
+    symbolP->x->value.X_op = O_register;
 
   symbol_clear_list_pointers (symbolP);
 
@@ -343,7 +412,7 @@ symbol_create (const char *name, segT segment, fragS *frag, valueT valu)
   preserved_copy_of_name = save_symbol_name (name);
 
   size = sizeof (symbolS) + sizeof (struct xsymbol);
-  symbolP = (symbolS *) obstack_alloc (&notes, size);
+  symbolP = notes_alloc (size);
 
   /* symbol must be born in some fixed state.  This seems as good as any.  */
   memset (symbolP, 0, size);
@@ -377,7 +446,7 @@ local_symbol_make (const char *name, segT section, fragS *frag, valueT val)
 
   name_copy = save_symbol_name (name);
 
-  ret = (struct local_symbol *) obstack_alloc (&notes, sizeof *ret);
+  ret = notes_alloc (sizeof *ret);
   ret->flags = flags;
   ret->hash = 0;
   ret->name = name_copy;
@@ -395,7 +464,7 @@ local_symbol_make (const char *name, segT section, fragS *frag, valueT val)
 static symbolS *
 local_symbol_convert (void *sym)
 {
-  symbol_entry_t *ent = (symbol_entry_t *) sym;
+  symbol_entry_t *ent = sym;
   struct xsymbol *xtra;
   valueT val;
 
@@ -403,7 +472,7 @@ local_symbol_convert (void *sym)
 
   ++local_symbol_conversion_count;
 
-  xtra = (struct xsymbol *) obstack_alloc (&notes, sizeof (*xtra));
+  xtra = notes_alloc (sizeof (*xtra));
   memset (xtra, 0, sizeof (*xtra));
   val = ent->lsy.value;
   ent->sy.x = xtra;
@@ -422,7 +491,7 @@ static void
 define_sym_at_dot (symbolS *symbolP)
 {
   symbolP->frag = frag_now;
-  S_SET_VALUE (symbolP, (valueT) frag_now_fix ());
+  S_SET_VALUE (symbolP, frag_now_fix ());
   S_SET_SEGMENT (symbolP, now_seg);
 }
 
@@ -462,13 +531,8 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
 			+ new_broken_words * md_long_jump_size);
 
       frag_tmp = frag_now;
-      frag_opcode = frag_var (rs_broken_word,
-			      possible_bytes,
-			      possible_bytes,
-			      (relax_substateT) 0,
-			      (symbolS *) broken_words,
-			      (offsetT) 0,
-			      NULL);
+      frag_opcode = frag_var (rs_broken_word, possible_bytes, possible_bytes,
+			      0, (symbolS *) broken_words, 0, NULL);
 
       /* We want to store the pointer to where to insert the jump
 	 table in the fr_opcode of the rs_broken_word frag.  This
@@ -562,11 +626,8 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
 			 If the new size is larger we just change its
 			 value.  If the new size is smaller, we ignore
 			 this symbol.  */
-		      if (S_GET_VALUE (symbolP)
-			  < ((unsigned) frag_now_fix ()))
-			{
-			  S_SET_VALUE (symbolP, (valueT) frag_now_fix ());
-			}
+		      if (S_GET_VALUE (symbolP) < frag_now_fix ())
+			S_SET_VALUE (symbolP, frag_now_fix ());
 		    }
 		  else
 		    {
@@ -641,6 +702,8 @@ colon (/* Just seen "x:" - rattle symbols & frags.  */
 #ifdef obj_frob_label
   obj_frob_label (symbolP);
 #endif
+  if (flag_synth_cfi)
+    ginsn_frob_label (symbolP);
 
   return symbolP;
 }
@@ -683,7 +746,7 @@ symbol_find_or_make (const char *name)
       symbol_table_insert (symbolP);
     }				/* if symbol wasn't found */
 
-  return (symbolP);
+  return symbolP;
 }
 
 symbolS *
@@ -697,7 +760,7 @@ symbol_make (const char *name)
   if (!symbolP)
     symbolP = symbol_new (name, undefined_section, &zero_address_frag, 0);
 
-  return (symbolP);
+  return symbolP;
 }
 
 symbolS *
@@ -717,8 +780,7 @@ symbol_clone (symbolS *orgsymP, int replace)
     orgsymP = local_symbol_convert (orgsymP);
   bsymorg = orgsymP->bsym;
 
-  newsymP = (symbolS *) obstack_alloc (&notes, (sizeof (symbolS)
-						+ sizeof (struct xsymbol)));
+  newsymP = notes_alloc (sizeof (symbolS) + sizeof (struct xsymbol));
   *newsymP = *orgsymP;
   newsymP->x = (struct xsymbol *) (newsymP + 1);
   *newsymP->x = *orgsymP->x;
@@ -742,17 +804,14 @@ symbol_clone (symbolS *orgsymP, int replace)
 
   if (replace)
     {
-      if (symbol_rootP == orgsymP)
+      if (orgsymP->x->previous != NULL)
+	orgsymP->x->previous->x->next = newsymP;
+      else
 	symbol_rootP = newsymP;
-      else if (orgsymP->x->previous)
-	{
-	  orgsymP->x->previous->x->next = newsymP;
-	  orgsymP->x->previous = NULL;
-	}
-      if (symbol_lastP == orgsymP)
-	symbol_lastP = newsymP;
-      else if (orgsymP->x->next)
+      if (orgsymP->x->next != NULL)
 	orgsymP->x->next->x->previous = newsymP;
+      else
+	symbol_lastP = newsymP;
 
       /* Symbols that won't be output can't be external.  */
       S_CLEAR_EXTERNAL (orgsymP);
@@ -963,17 +1022,12 @@ symbol_append (symbolS *addme, symbolS *target,
       *rootPP = addme;
       *lastPP = addme;
       return;
-    }				/* if the list is empty  */
+    }
 
   if (target->x->next != NULL)
-    {
-      target->x->next->x->previous = addme;
-    }
+    target->x->next->x->previous = addme;
   else
-    {
-      know (*lastPP == target);
-      *lastPP = addme;
-    }				/* if we have a next  */
+    *lastPP = addme;
 
   addme->x->next = target->x->next;
   target->x->next = addme;
@@ -1001,25 +1055,15 @@ symbol_remove (symbolS *symbolP, symbolS **rootPP, symbolS **lastPP)
   if (symbolP->flags.local_symbol)
     abort ();
 
-  if (symbolP == *rootPP)
-    {
-      *rootPP = symbolP->x->next;
-    }				/* if it was the root  */
-
-  if (symbolP == *lastPP)
-    {
-      *lastPP = symbolP->x->previous;
-    }				/* if it was the tail  */
+  if (symbolP->x->previous != NULL)
+    symbolP->x->previous->x->next = symbolP->x->next;
+  else
+    *rootPP = symbolP->x->next;
 
   if (symbolP->x->next != NULL)
-    {
-      symbolP->x->next->x->previous = symbolP->x->previous;
-    }				/* if not last  */
-
-  if (symbolP->x->previous != NULL)
-    {
-      symbolP->x->previous->x->next = symbolP->x->next;
-    }				/* if not first  */
+    symbolP->x->next->x->previous = symbolP->x->previous;
+  else
+    *lastPP = symbolP->x->previous;
 
   debug_verify_symchain (*rootPP, *lastPP);
 }
@@ -1039,14 +1083,9 @@ symbol_insert (symbolS *addme, symbolS *target,
     abort ();
 
   if (target->x->previous != NULL)
-    {
-      target->x->previous->x->next = addme;
-    }
+    target->x->previous->x->next = addme;
   else
-    {
-      know (*rootPP == target);
-      *rootPP = addme;
-    }				/* if not first  */
+    *rootPP = addme;
 
   addme->x->previous = target->x->previous;
   target->x->previous = addme;
@@ -1343,6 +1382,45 @@ resolve_symbol_value (symbolS *symp)
 	  BAD_CASE (op);
 	  break;
 
+	case O_md1:
+	case O_md2:
+	case O_md3:
+	case O_md4:
+	case O_md5:
+	case O_md6:
+	case O_md7:
+	case O_md8:
+	case O_md9:
+	case O_md10:
+	case O_md11:
+	case O_md12:
+	case O_md13:
+	case O_md14:
+	case O_md15:
+	case O_md16:
+	case O_md17:
+	case O_md18:
+	case O_md19:
+	case O_md20:
+	case O_md21:
+	case O_md22:
+	case O_md23:
+	case O_md24:
+	case O_md25:
+	case O_md26:
+	case O_md27:
+	case O_md28:
+	case O_md29:
+	case O_md30:
+	case O_md31:
+	case O_md32:
+#ifdef md_resolve_symbol
+	  resolved = md_resolve_symbol (symp, &final_val, &final_seg);
+	  if (resolved)
+	    break;
+#endif
+	  goto exit_dont_set_value;
+
 	case O_absent:
 	  final_val = 0;
 	  /* Fall through.  */
@@ -1487,7 +1565,7 @@ resolve_symbol_value (symbolS *symp)
 	    final_seg = absolute_section;
 
 	  if (op == O_uminus)
-	    left = -left;
+	    left = -(valueT) left;
 	  else if (op == O_logical_not)
 	    left = !left;
 	  else
@@ -1612,9 +1690,29 @@ resolve_symbol_value (symbolS *symp)
 
 	  switch (symp->x->value.X_op)
 	    {
-	    case O_multiply:		left *= right; break;
-	    case O_divide:		left /= right; break;
-	    case O_modulus:		left %= right; break;
+	    /* See expr() for reasons of the use of valueT casts here.  */
+	    case O_multiply:		left *= (valueT) right; break;
+
+	    /* See expr() for reasons of the special casing.  */
+	    case O_divide:
+	      if (right == 1)
+		break;
+	      if (right == -1)
+		{
+		  left = -(valueT) left;
+		  break;
+		}
+	      left /= right;
+	      break;
+
+	    /* Again, see expr() for reasons of the special casing.  */
+	    case O_modulus:
+	      if (right == 1 || right == -1)
+		left = 0;
+	      else
+		left %= right;
+	      break;
+
 	    case O_left_shift:
 	      left = (valueT) left << (valueT) right; break;
 	    case O_right_shift:
@@ -1623,8 +1721,8 @@ resolve_symbol_value (symbolS *symp)
 	    case O_bit_or_not:		left |= ~right; break;
 	    case O_bit_exclusive_or:	left ^= right; break;
 	    case O_bit_and:		left &= right; break;
-	    case O_add:			left += right; break;
-	    case O_subtract:		left -= right; break;
+	    case O_add:			left += (valueT) right; break;
+	    case O_subtract:		left -= (valueT) right; break;
 	    case O_eq:
 	    case O_ne:
 	      left = (left == right && seg_left == seg_right
@@ -1721,7 +1819,7 @@ resolve_local_symbol (void **slot, void *arg ATTRIBUTE_UNUSED)
 void
 resolve_local_symbol_values (void)
 {
-  htab_traverse (sy_hash, resolve_local_symbol, NULL);
+  htab_traverse_noresize (sy_hash, resolve_local_symbol, NULL);
 }
 
 /* Obtain the current value of a symbol without changing any
@@ -1958,7 +2056,7 @@ static size_t fb_label_max;
 static void
 fb_label_init (void)
 {
-  memset ((void *) fb_low_counter, '\0', sizeof (fb_low_counter));
+  memset (fb_low_counter, 0, sizeof (fb_low_counter));
 }
 
 /* Add one to the instance number of this fb label.  */
@@ -2071,16 +2169,16 @@ fb_label_name (unsigned int n, unsigned int augend)
    If the name wasn't generated by foo_label_name(), then return it
    unaltered.  This is used for error messages.  */
 
-char *
-decode_local_label_name (char *s)
+const char *
+decode_local_label_name (const char *s)
 {
-  char *p;
+  const char *p;
   char *symbol_decode;
-  int label_number;
-  int instance_number;
+  unsigned int label_number;
+  unsigned int instance_number;
   const char *type;
   const char *message_format;
-  int lindex = 0;
+  unsigned int lindex = 0;
 
 #ifdef LOCAL_LABEL_PREFIX
   if (s[lindex] == LOCAL_LABEL_PREFIX)
@@ -2103,8 +2201,8 @@ decode_local_label_name (char *s)
   for (instance_number = 0, p++; ISDIGIT (*p); ++p)
     instance_number = (10 * instance_number) + *p - '0';
 
-  message_format = _("\"%d\" (instance number %d of a %s label)");
-  symbol_decode = (char *) obstack_alloc (&notes, strlen (message_format) + 30);
+  message_format = _("\"%u\" (instance number %u of a %s label)");
+  symbol_decode = notes_alloc (strlen (message_format) + 30);
   sprintf (symbol_decode, message_format, label_number, instance_number, type);
 
   return symbol_decode;
@@ -2113,7 +2211,7 @@ decode_local_label_name (char *s)
 /* Get the value of a symbol.  */
 
 valueT
-S_GET_VALUE (symbolS *s)
+S_GET_VALUE_WHERE (symbolS *s, const char * file, unsigned int line)
 {
   if (s->flags.local_symbol)
     return resolve_symbol_value (s);
@@ -2132,10 +2230,24 @@ S_GET_VALUE (symbolS *s)
       if (! s->flags.resolved
 	  || s->x->value.X_op != O_symbol
 	  || (S_IS_DEFINED (s) && ! S_IS_COMMON (s)))
-	as_bad (_("attempt to get value of unresolved symbol `%s'"),
-		S_GET_NAME (s));
+	{
+	  if (strcmp (S_GET_NAME (s), FAKE_LABEL_NAME) == 0)
+	    as_bad_where (file, line, _("expression is too complex to be resolved or converted into relocations"));
+	  else if (file != NULL)
+	    as_bad_where (file, line, _("attempt to get value of unresolved symbol `%s'"),
+			  S_GET_NAME (s));
+	  else
+	    as_bad (_("attempt to get value of unresolved symbol `%s'"),
+		    S_GET_NAME (s));
+	}
     }
-  return (valueT) s->x->value.X_add_number;
+  return s->x->value.X_add_number;
+}
+
+valueT
+S_GET_VALUE (symbolS *s)
+{
+  return S_GET_VALUE_WHERE (s, NULL, 0);
 }
 
 /* Set the value of a symbol.  */
@@ -2179,7 +2291,7 @@ copy_symbol_attributes (symbolS *dest, symbolS *src)
 }
 
 int
-S_IS_FUNCTION (symbolS *s)
+S_IS_FUNCTION (const symbolS *s)
 {
   flagword flags;
 
@@ -2192,7 +2304,7 @@ S_IS_FUNCTION (symbolS *s)
 }
 
 int
-S_IS_EXTERNAL (symbolS *s)
+S_IS_EXTERNAL (const symbolS *s)
 {
   flagword flags;
 
@@ -2209,7 +2321,7 @@ S_IS_EXTERNAL (symbolS *s)
 }
 
 int
-S_IS_WEAK (symbolS *s)
+S_IS_WEAK (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2223,7 +2335,7 @@ S_IS_WEAK (symbolS *s)
 }
 
 int
-S_IS_WEAKREFR (symbolS *s)
+S_IS_WEAKREFR (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2231,7 +2343,7 @@ S_IS_WEAKREFR (symbolS *s)
 }
 
 int
-S_IS_WEAKREFD (symbolS *s)
+S_IS_WEAKREFD (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2239,7 +2351,7 @@ S_IS_WEAKREFD (symbolS *s)
 }
 
 int
-S_IS_COMMON (symbolS *s)
+S_IS_COMMON (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2247,10 +2359,10 @@ S_IS_COMMON (symbolS *s)
 }
 
 int
-S_IS_DEFINED (symbolS *s)
+S_IS_DEFINED (const symbolS *s)
 {
   if (s->flags.local_symbol)
-    return ((struct local_symbol *) s)->section != undefined_section;
+    return ((const struct local_symbol *) s)->section != undefined_section;
   return s->bsym->section != undefined_section;
 }
 
@@ -2263,11 +2375,11 @@ S_IS_DEFINED (symbolS *s)
    symbols or eliminated from expressions, because they may be
    overridden by the linker.  */
 int
-S_FORCE_RELOC (symbolS *s, int strict)
+S_FORCE_RELOC (const symbolS *s, int strict)
 {
   segT sec;
   if (s->flags.local_symbol)
-    sec = ((struct local_symbol *) s)->section;
+    sec = ((const struct local_symbol *) s)->section;
   else
     {
       if ((strict
@@ -2282,7 +2394,7 @@ S_FORCE_RELOC (symbolS *s, int strict)
 }
 
 int
-S_IS_DEBUG (symbolS *s)
+S_IS_DEBUG (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2292,7 +2404,7 @@ S_IS_DEBUG (symbolS *s)
 }
 
 int
-S_IS_LOCAL (symbolS *s)
+S_IS_LOCAL (const symbolS *s)
 {
   flagword flags;
   const char *name;
@@ -2300,16 +2412,15 @@ S_IS_LOCAL (symbolS *s)
   if (s->flags.local_symbol)
     return 1;
 
-  flags = s->bsym->flags;
-
-  /* Sanity check.  */
-  if ((flags & BSF_LOCAL) && (flags & BSF_GLOBAL))
-    abort ();
+  if (S_IS_EXTERNAL (s))
+    return 0;
 
   if (bfd_asymbol_section (s->bsym) == reg_section)
     return 1;
 
-  if (flag_strip_local_absolute
+  flags = s->bsym->flags;
+
+  if (flag_strip_local_absolute > 0
       /* Keep BSF_FILE symbols in order to allow debuggers to identify
 	 the source file even when the object file is stripped.  */
       && (flags & (BSF_GLOBAL | BSF_FILE)) == 0
@@ -2333,7 +2444,7 @@ S_IS_LOCAL (symbolS *s)
 }
 
 int
-S_IS_STABD (symbolS *s)
+S_IS_STABD (const symbolS *s)
 {
   return S_GET_NAME (s) == 0;
 }
@@ -2342,10 +2453,10 @@ int
 S_CAN_BE_REDEFINED (const symbolS *s)
 {
   if (s->flags.local_symbol)
-    return (((struct local_symbol *) s)->frag
+    return (((const struct local_symbol *) s)->frag
 	    == &predefined_address_frag);
   /* Permit register names to be redefined.  */
-  return s->bsym->section == reg_section;
+  return s->x->value.X_op == O_register;
 }
 
 int
@@ -2365,16 +2476,16 @@ S_IS_FORWARD_REF (const symbolS *s)
 }
 
 const char *
-S_GET_NAME (symbolS *s)
+S_GET_NAME (const symbolS *s)
 {
   return s->name;
 }
 
 segT
-S_GET_SEGMENT (symbolS *s)
+S_GET_SEGMENT (const symbolS *s)
 {
   if (s->flags.local_symbol)
-    return ((struct local_symbol *) s)->section;
+    return ((const struct local_symbol *) s)->section;
   return s->bsym->section;
 }
 
@@ -2581,7 +2692,7 @@ S_SET_FORWARD_REF (symbolS *s)
 /* Return the previous symbol in a chain.  */
 
 symbolS *
-symbol_previous (symbolS *s)
+symbol_previous (const symbolS *s)
 {
   if (s->flags.local_symbol)
     abort ();
@@ -2591,7 +2702,7 @@ symbol_previous (symbolS *s)
 /* Return the next symbol in a chain.  */
 
 symbolS *
-symbol_next (symbolS *s)
+symbol_next (const symbolS *s)
 {
   if (s->flags.local_symbol)
     abort ();
@@ -2622,7 +2733,7 @@ symbol_set_value_expression (symbolS *s, const expressionS *exp)
 /* Return whether 2 symbols are the same.  */
 
 int
-symbol_same_p (symbolS *s1, symbolS *s2)
+symbol_same_p (const symbolS *s1, const symbolS *s2)
 {
   return s1 == s2;
 }
@@ -2630,7 +2741,7 @@ symbol_same_p (symbolS *s1, symbolS *s2)
 /* Return a pointer to the X_add_number component of a symbol.  */
 
 offsetT *
-symbol_X_add_number (symbolS *s)
+symbol_X_add_number (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return (offsetT *) &((struct local_symbol *) s)->value;
@@ -2665,10 +2776,27 @@ symbol_set_frag (symbolS *s, fragS *f)
 /* Return the frag of a symbol.  */
 
 fragS *
-symbol_get_frag (symbolS *s)
+symbol_get_frag (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return ((struct local_symbol *) s)->frag;
+  return s->frag;
+}
+
+/* Return the frag of a symbol and the symbol's offset into that frag.  */
+
+fragS *symbol_get_frag_and_value (const symbolS *s, addressT *value)
+{
+  if (s->flags.local_symbol)
+    {
+      const struct local_symbol *locsym = (const struct local_symbol *) s;
+
+      *value = locsym->value;
+      return locsym->frag;
+    }
+
+  gas_assert (s->x->value.X_op == O_constant);
+  *value = s->x->value.X_add_number;
   return s->frag;
 }
 
@@ -2697,7 +2825,7 @@ symbol_clear_used (symbolS *s)
 /* Return whether a symbol has been used.  */
 
 int
-symbol_used_p (symbolS *s)
+symbol_used_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 1;
@@ -2727,7 +2855,7 @@ symbol_clear_used_in_reloc (symbolS *s)
 /* Return whether a symbol has been used in a reloc.  */
 
 int
-symbol_used_in_reloc_p (symbolS *s)
+symbol_used_in_reloc_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2757,7 +2885,7 @@ symbol_clear_mri_common (symbolS *s)
 /* Return whether a symbol is an MRI common symbol.  */
 
 int
-symbol_mri_common_p (symbolS *s)
+symbol_mri_common_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2787,7 +2915,7 @@ symbol_clear_written (symbolS *s)
 /* Return whether a symbol has been written.  */
 
 int
-symbol_written_p (symbolS *s)
+symbol_written_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2807,14 +2935,14 @@ symbol_mark_removed (symbolS *s)
 /* Return whether a symbol has been marked to be removed.  */
 
 int
-symbol_removed_p (symbolS *s)
+symbol_removed_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
   return s->flags.removed;
 }
 
-/* Mark a symbol has having been resolved.  */
+/* Mark a symbol as having been resolved.  */
 
 void
 symbol_mark_resolved (symbolS *s)
@@ -2825,15 +2953,37 @@ symbol_mark_resolved (symbolS *s)
 /* Return whether a symbol has been resolved.  */
 
 int
-symbol_resolved_p (symbolS *s)
+symbol_resolved_p (const symbolS *s)
 {
   return s->flags.resolved;
+}
+
+/* Mark a symbol as being resolved.  */
+
+void
+symbol_mark_resolving (symbolS *s)
+{
+  s->flags.resolving = 1;
+}
+
+void
+symbol_clear_resolving (symbolS *s)
+{
+  s->flags.resolving = 0;
+}
+
+/* Return whether a symbol is being resolved.  */
+
+int
+symbol_resolving_p (const symbolS *s)
+{
+  return s->flags.resolving;
 }
 
 /* Return whether a symbol is a section symbol.  */
 
 int
-symbol_section_p (symbolS *s)
+symbol_section_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2843,7 +2993,7 @@ symbol_section_p (symbolS *s)
 /* Return whether a symbol is equated to another symbol.  */
 
 int
-symbol_equated_p (symbolS *s)
+symbol_equated_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2854,7 +3004,7 @@ symbol_equated_p (symbolS *s)
    treated specially when writing out relocs.  */
 
 int
-symbol_equated_reloc_p (symbolS *s)
+symbol_equated_reloc_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2873,7 +3023,7 @@ symbol_equated_reloc_p (symbolS *s)
 /* Return whether a symbol has a constant value.  */
 
 int
-symbol_constant_p (symbolS *s)
+symbol_constant_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 1;
@@ -2884,7 +3034,7 @@ symbol_constant_p (symbolS *s)
    symbol list.  */
 
 int
-symbol_shadow_p (symbolS *s)
+symbol_shadow_p (const symbolS *s)
 {
   if (s->flags.local_symbol)
     return 0;
@@ -2983,7 +3133,7 @@ symbol_begin (void)
 {
   symbol_lastP = NULL;
   symbol_rootP = NULL;		/* In case we have 0 symbols (!!)  */
-  sy_hash = htab_create_alloc (16, hash_symbol_entry, eq_symbol_entry,
+  sy_hash = htab_create_alloc (1024, hash_symbol_entry, eq_symbol_entry,
 			       NULL, xcalloc, free);
 
 #if defined (EMIT_SECTION_SYMBOLS) || !defined (RELOC_REQUIRES_SYMBOL)
@@ -2995,6 +3145,12 @@ symbol_begin (void)
 
   if (LOCAL_LABELS_FB)
     fb_label_init ();
+}
+
+void
+symbol_end (void)
+{
+  htab_delete (sy_hash);
 }
 
 void
@@ -3022,9 +3178,7 @@ print_symbol_value_1 (FILE *file, symbolS *sym)
   const char *name = S_GET_NAME (sym);
   if (!name || !name[0])
     name = "(unnamed)";
-  fprintf (file, "sym ");
-  fprintf_vma (file, (bfd_vma) (uintptr_t) sym);
-  fprintf (file, " %s", name);
+  fprintf (file, "sym %p %s", sym, name);
 
   if (sym->flags.local_symbol)
     {
@@ -3032,10 +3186,7 @@ print_symbol_value_1 (FILE *file, symbolS *sym)
 
       if (locsym->frag != &zero_address_frag
 	  && locsym->frag != NULL)
-	{
-	  fprintf (file, " frag ");
-	  fprintf_vma (file, (bfd_vma) (uintptr_t) locsym->frag);
-	}
+	fprintf (file, " frag %p", locsym->frag);
       if (locsym->flags.resolved)
 	fprintf (file, " resolved");
       fprintf (file, " local");
@@ -3043,10 +3194,7 @@ print_symbol_value_1 (FILE *file, symbolS *sym)
   else
     {
       if (sym->frag != &zero_address_frag)
-	{
-	  fprintf (file, " frag ");
-	  fprintf_vma (file, (bfd_vma) (uintptr_t) sym->frag);
-	}
+	fprintf (file, " frag %p", sym->frag);
       if (sym->flags.written)
 	fprintf (file, " written");
       if (sym->flags.resolved)
@@ -3120,9 +3268,7 @@ print_binary (FILE *file, const char *name, expressionS *exp)
 void
 print_expr_1 (FILE *file, expressionS *exp)
 {
-  fprintf (file, "expr ");
-  fprintf_vma (file, (bfd_vma) (uintptr_t) exp);
-  fprintf (file, " ");
+  fprintf (file, "expr %p ", exp);
   switch (exp->X_op)
     {
     case O_illegal:
@@ -3132,7 +3278,7 @@ print_expr_1 (FILE *file, expressionS *exp)
       fprintf (file, "absent");
       break;
     case O_constant:
-      fprintf (file, "constant %lx", (unsigned long) exp->X_add_number);
+      fprintf (file, "constant %" PRIx64, (uint64_t) exp->X_add_number);
       break;
     case O_symbol:
       indent_level++;
@@ -3141,8 +3287,8 @@ print_expr_1 (FILE *file, expressionS *exp)
       fprintf (file, ">");
     maybe_print_addnum:
       if (exp->X_add_number)
-	fprintf (file, "\n%*s%lx", indent_level * 4, "",
-		 (unsigned long) exp->X_add_number);
+	fprintf (file, "\n%*s%" PRIx64, indent_level * 4, "",
+		 (uint64_t) exp->X_add_number);
       indent_level--;
       break;
     case O_register:

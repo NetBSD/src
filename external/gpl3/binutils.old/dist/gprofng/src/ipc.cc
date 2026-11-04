@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -28,6 +28,7 @@
 #include <sys/wait.h>   // wait
 #include <locale.h>
 
+#include "libiberty.h"
 #include "DbeApplication.h"
 #include "Histable.h"
 #include "ipcio.h"
@@ -69,16 +70,16 @@ bool2str (bool v)
   return v ? "true" : "false";
 }
 
-inline char*
-str2str (String v)
+inline const char*
+str2str (const char* v)
 {
-  return (char*) (v ? v : "NULL");
+  return v ? v : "NULL";
 }
 
-inline char*
-str2s (String v)
+inline const char*
+str2s (const char* v)
 {
-  return (char*) (v ? v : "");
+  return v ? v : "";
 }
 
 inline DbeView *
@@ -189,11 +190,10 @@ sigterm_handler (int, siginfo_t *, void *)
 static const char *ipc_log_name = NULL;
 static const char *ipc_request_log_name = NULL;
 static const char *ipc_response_log_name = NULL;
-FILE *requestLogFileP = stderr;
-FILE *responseLogFileP = stderr;
-hrtime_t begin_time;
-long long delta_time = 0;
-int ipc_delay_microsec = 0;
+static FILE *requestLogFileP = stderr;
+static FILE *responseLogFileP = stderr;
+static hrtime_t begin_time;
+static long long delta_time = 0;
 
 void
 ipc_default_log (const char *fmt, ...)
@@ -362,7 +362,7 @@ ipc_doWork (void *arg)
       ipc_log ("NULL ipc command received, exiting\n");
       return 0;
     }
-  ipc_log ("ipc: %s Req %x Ch %x\n", inp, currentRequestID, currentChannelID);
+  ipc_log ("ipc: %s Req %x Ch %x\n", inp, req->getRequestID (), req->getChannelID ());
   checkCancellableOp (inp, req);
   if (!strcmp (inp, "initApplication"))
     {
@@ -788,7 +788,7 @@ ipc_doWork (void *arg)
       int dbevindex = readInt (req);
       int cmp_mode = readInt (req);
       getView (dbevindex)->set_compare_mode (cmp_mode);
-      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, currentRequestID, currentChannelID);
+      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, req->getRequestID (), req->getChannelID ());
     }
   else if (!strcmp (inp, "getCompareModeV2"))
     {
@@ -811,7 +811,7 @@ ipc_doWork (void *arg)
       int cmp_mode = readInt (req);
       MetricList *mlist = readMetricListV2 (dbevindex, req);
       getView (dbevindex)->reset_metric_list (mlist, cmp_mode);
-      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, currentRequestID, currentChannelID);
+      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, req->getRequestID (), req->getChannelID ());
     }
   else if (!strcmp (inp, "getCurMetricsV2"))
     {
@@ -2429,7 +2429,7 @@ ipc_doWork (void *arg)
       dbe_archive (ids, locations);
       delete ids;
       destroy (locations);
-      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, currentRequestID, currentChannelID);
+      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, req->getRequestID (), req->getChannelID ());
     }
   else if (strcmp (inp, "dbeSetLocations") == 0)
     {
@@ -2438,7 +2438,7 @@ ipc_doWork (void *arg)
       dbeSetLocations (fnames, locations);
       destroy (fnames);
       destroy (locations);
-      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, currentRequestID, currentChannelID);
+      writeResponseGeneric (RESPONSE_STATUS_SUCCESS, req->getRequestID (), req->getChannelID ());
     }
   else if (strcmp (inp, "dbeResolvedWith_setpath") == 0)
     {
@@ -2534,8 +2534,10 @@ ipc_doWork (void *arg)
     }
   else
     {
-      ipc_log ("Unrecognized input cmd \"%s\"; Aborting.\n", inp);
-      return 1;
+      char *s = dbe_sprintf ("Unrecognized request: \"%s\"", inp);
+      ipc_log ("%s\n", s);
+      writeError (s, req);
+      free (s);
     }
   ipc_log ("  processing IPC command %s complete\n", inp);
   free (inp);
@@ -2687,7 +2689,7 @@ ipc_mainLoop (int argc, char *argv[])
   if (er_print_catch_crash)
     {
       /* reserve memory for fatal error processing */
-      fatalErrorDynamicMemory = (char *) malloc (4 * 1024 * 1024); // reserve 4 MB
+      fatalErrorDynamicMemory = (char *) xmalloc (4 * 1024 * 1024); // reserve 4 MB
       /* install a handler for SIGABRT */
       ipc_request_trace (TRACE_LVL_1, "Installing SIGABRT handler to send message to analyzer\n");
       sigemptyset (&act.sa_mask);

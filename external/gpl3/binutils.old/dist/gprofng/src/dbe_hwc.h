@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -24,7 +24,13 @@
 #include <stdio.h>
 #include <stdarg.h>
 
+#include "libiberty.h"
 #include "i18n.h"
+
+#define malloc(s) xmalloc (s)
+#define realloc(p, s) xrealloc (p, s)
+#define calloc(n, s) xcalloc (n, s)
+#define strdup(s) xstrdup (s)
 
 #define HWC_TRACELEVEL -1
 #if HWC_TRACELEVEL < 0

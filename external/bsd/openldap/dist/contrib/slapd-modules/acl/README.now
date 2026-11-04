@@ -1,0 +1,65 @@
+# create a simple slapd.conf (e.g. by running test003)
+
+
+
+# define the attributes (replace MyOID with a valid OID)
+
+attributetype ( MyOID:1 NAME 'validityStarts'
+        EQUALITY generalizedTimeMatch
+        ORDERING generalizedTimeOrderingMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 )
+attributetype ( MyOID:2 NAME 'validityEnds'
+        EQUALITY generalizedTimeMatch
+        ORDERING generalizedTimeOrderingMatch
+        SYNTAX 1.3.6.1.4.1.1466.115.121.1.24 )
+
+
+
+# load the module
+
+moduleload "now_dynacl.so"
+
+
+
+# and apply the following access rules
+
+access to dn.exact="dc=example,dc=com"
+        by * read
+
+access to dn.children="dc=example,dc=com"
+        by dynacl/now=">=validityStarts" read break
+
+access to dn.children="dc=example,dc=com"
+        by dynacl/now="<=validityEnds" read
+
+
+
+# Then load the LDIF
+
+dn: cn=Too Late,dc=example,dc=com
+objectClass: device
+objectClass: extensibleObject
+cn: Too Late
+validityStarts: 20000101000000Z
+validityEnds: 20100101000000Z
+
+dn: cn=Just in Time,dc=example,dc=com
+objectClass: device
+objectClass: extensibleObject
+cn: Just in Time
+validityStarts: 20100101000000Z
+validityEnds: 20200101000000Z
+
+dn: cn=Too Early,dc=example,dc=com
+objectClass: device
+objectClass: extensibleObject
+cn: Too Early
+validityStarts: 20200101000000Z
+validityEnds: 20300101000000Z
+
+
+# an anonymous ldapsearch should only find the entry
+
+$ ldapsearch -x -H ldap://:9011 -b dc=example,dc=com -LLL 1.1
+dn: cn=Just in Time,dc=example,dc=com
+

@@ -1,6 +1,11 @@
-#       $NetBSD: Makefile,v 1.2 2024/04/24 15:39:58 nia Exp $
+#       $NetBSD: Makefile,v 1.2.2.1 2026/11/04 22:37:09 perseant Exp $
 
-SUBDIR=		installcd installdvd
+SUBDIR=		installdvd
+
+.if !defined(CDSOURCE)
+SUBDIR+=	installcd
+.endif
+
 TARGETS+=	release iso_image
 
 .include <bsd.subdir.mk>

@@ -1,8 +1,13 @@
 #ifndef JEMALLOC_INTERNAL_SEC_H
 #define JEMALLOC_INTERNAL_SEC_H
 
+#include "jemalloc/internal/jemalloc_preamble.h"
+#include "jemalloc/internal/base.h"
 #include "jemalloc/internal/atomic.h"
-#include "jemalloc/internal/pai.h"
+#include "jemalloc/internal/edata.h"
+#include "jemalloc/internal/mutex.h"
+#include "jemalloc/internal/sec_opts.h"
+#include "jemalloc/internal/tsd_types.h"
 
 /*
  * Small extent cache.
@@ -13,91 +18,140 @@
  * knowledge of the underlying PAI implementation).
  */
 
-/*
- * For now, this is just one field; eventually, we'll probably want to get more
- * fine-grained data out (like per-size class statistics).
- */
+typedef struct sec_bin_stats_s sec_bin_stats_t;
+struct sec_bin_stats_s {
+	/* Number of alloc requests that did not find extent in this bin */
+	size_t nmisses;
+	/* Number of successful alloc requests. */
+	size_t nhits;
+	/* Number of dallocs causing the flush */
+	size_t ndalloc_flush;
+	/* Number of dallocs not causing the flush */
+	size_t ndalloc_noflush;
+	/* Number of fills that hit max_bytes */
+	size_t noverfills;
+};
 typedef struct sec_stats_s sec_stats_t;
 struct sec_stats_s {
 	/* Sum of bytes_cur across all shards. */
 	size_t bytes;
+	/* Subset of bytes that are pinned. */
+	size_t bytes_pinned;
+
+	/* Totals of bin_stats. */
+	sec_bin_stats_t total;
 };
+
+typedef struct sec_pszind_stats_s sec_pszind_stats_t;
+struct sec_pszind_stats_s {
+	size_t nextents;
+	size_t bytes;
+	size_t nextents_pinned;
+	size_t bytes_pinned;
+};
+
+static inline void
+sec_bin_stats_accum(sec_bin_stats_t *dst, sec_bin_stats_t *src) {
+	dst->nmisses += src->nmisses;
+	dst->nhits += src->nhits;
+	dst->ndalloc_flush += src->ndalloc_flush;
+	dst->ndalloc_noflush += src->ndalloc_noflush;
+	dst->noverfills += src->noverfills;
+}
 
 static inline void
 sec_stats_accum(sec_stats_t *dst, sec_stats_t *src) {
 	dst->bytes += src->bytes;
+	dst->bytes_pinned += src->bytes_pinned;
+	sec_bin_stats_accum(&dst->total, &src->total);
 }
 
 /* A collections of free extents, all of the same size. */
 typedef struct sec_bin_s sec_bin_t;
 struct sec_bin_s {
 	/*
-	 * When we fail to fulfill an allocation, we do a batch-alloc on the
-	 * underlying allocator to fill extra items, as well.  We drop the SEC
-	 * lock while doing so, to allow operations on other bins to succeed.
-	 * That introduces the possibility of other threads also trying to
-	 * allocate out of this bin, failing, and also going to the backing
-	 * allocator.  To avoid a thundering herd problem in which lots of
-	 * threads do batch allocs and overfill this bin as a result, we only
-	 * allow one batch allocation at a time for a bin.  This bool tracks
-	 * whether or not some thread is already batch allocating.
-	 *
-	 * Eventually, the right answer may be a smarter sharding policy for the
-	 * bins (e.g. a mutex per bin, which would also be more scalable
-	 * generally; the batch-allocating thread could hold it while
-	 * batch-allocating).
-	 */
-	bool being_batch_filled;
-
-	/*
-	 * Number of bytes in this particular bin (as opposed to the
-	 * sec_shard_t's bytes_cur.  This isn't user visible or reported in
-	 * stats; rather, it allows us to quickly determine the change in the
-	 * centralized counter when flushing.
-	 */
-	size_t bytes_cur;
-	edata_list_active_t freelist;
-};
-
-typedef struct sec_shard_s sec_shard_t;
-struct sec_shard_s {
-	/*
-	 * We don't keep per-bin mutexes, even though that would allow more
-	 * sharding; this allows global cache-eviction, which in turn allows for
-	 * better balancing across free lists.
+	 * Protects the freelist and synchronizes counter updates.
 	 */
 	malloc_mutex_t mtx;
+
 	/*
-	 * A SEC may need to be shut down (i.e. flushed of its contents and
-	 * prevented from further caching).  To avoid tricky synchronization
-	 * issues, we just track enabled-status in each shard, guarded by a
-	 * mutex.  In practice, this is only ever checked during brief races,
-	 * since the arena-level atomic boolean tracking HPA enabled-ness means
-	 * that we won't go down these pathways very often after custom extent
-	 * hooks are installed.
+	 * Number of bytes in this particular bin.
 	 */
-	bool enabled;
-	sec_bin_t *bins;
-	/* Number of bytes in all bins in the shard. */
-	size_t bytes_cur;
-	/* The next pszind to flush in the flush-some pathways. */
-	pszind_t to_flush_next;
+	atomic_zu_t         bytes_cur;
+	atomic_zu_t         bytes_pinned_cur;
+	edata_list_active_t freelist;
+	atomic_zu_t         nmisses;
+	atomic_zu_t         nhits;
+	atomic_zu_t         ndalloc_flush;
+	atomic_zu_t         ndalloc_noflush;
+	atomic_zu_t         noverfills;
 };
 
 typedef struct sec_s sec_t;
 struct sec_s {
-	pai_t pai;
-	pai_t *fallback;
-
 	sec_opts_t opts;
-	sec_shard_t *shards;
-	pszind_t npsizes;
+	sec_bin_t *bins;
+	pszind_t   npsizes;
 };
 
-bool sec_init(tsdn_t *tsdn, sec_t *sec, base_t *base, pai_t *fallback,
-    const sec_opts_t *opts);
-void sec_flush(tsdn_t *tsdn, sec_t *sec);
-void sec_disable(tsdn_t *tsdn, sec_t *sec);
+static inline bool
+sec_is_used(const sec_t *sec) {
+	return sec->opts.nshards != 0;
+}
+
+static inline bool
+sec_size_supported(const sec_t *sec, size_t size) {
+	return size <= sec->opts.max_alloc;
+}
+
+/* Min number of extents we will allocate when expanding the SEC. */
+#define SEC_MIN_NALLOCS 2
+
+/* Max number of extents we will allocate out of a single huge page. */
+#define SEC_MAX_NALLOCS 8
+
+/* Attempt to fill the SEC up to max_bytes / SEC_MAX_BYTES_DIV */
+#define SEC_MAX_BYTES_DIV 4
+
+/*
+ * Calculate the min and max number of extents we will try to allocate
+ * when expanding the SEC. We will attempt to allocate at least min
+ * extents and up to max extents depending on whether we can allocate
+ * them out of a huge page we have already allocated out of. Both
+ * min and max should the in the range [1, SEC_MAX_NALLOCS].
+ */
+void sec_calc_nallocs_for_size(
+    sec_t *sec, size_t size, size_t *min_nallocs, size_t *max_nallocs);
+
+/*
+ * Lazily picks (and caches in *idxp) a shard for the calling thread.  Different
+ * SEC instances pass independent per-thread uint8_t slots, initialized to
+ * (uint8_t)-1.
+ */
+uint8_t sec_shard_pick(tsd_t *tsd, sec_t *sec, uint8_t *idxp);
+
+/* Callers must ensure sec_size_supported(sec, size). */
+edata_t *sec_alloc(tsdn_t *tsdn, sec_t *sec, size_t size, uint8_t shard);
+void     sec_fill(tsdn_t *tsdn, sec_t *sec, size_t size,
+        edata_list_active_t *result, size_t nallocs, uint8_t shard);
+
+/*
+ * Callers must ensure sec_size_supported(sec, edata_size).
+ *
+ * Upon return dalloc_list may be empty if edata is consumed by sec or non-empty
+ * if there are extents that need to be flushed from cache.  Please note, that
+ * if we need to flush, extent(s) returned in the list to be deallocated
+ * will almost certainly not contain the one being dalloc-ed (that one will be
+ * considered "hot" and preserved in the cache, while "colder" ones are
+ * returned).
+ */
+void sec_dalloc(tsdn_t *tsdn, sec_t *sec, edata_list_active_t *dalloc_list,
+    uint8_t shard);
+
+bool sec_init(tsdn_t *tsdn, sec_t *sec, base_t *base, const sec_opts_t *opts);
+
+/* Fills to_flush with extents that need to be deallocated */
+void sec_flush(tsdn_t *tsdn, sec_t *sec, edata_list_active_t *to_flush);
 
 /*
  * Morally, these two stats methods probably ought to be a single one (and the
@@ -105,9 +159,12 @@ void sec_disable(tsdn_t *tsdn, sec_t *sec);
  * lets them fit easily into the pa_shard stats framework (which also has this
  * split), which simplifies the stats management.
  */
-void sec_stats_merge(tsdn_t *tsdn, sec_t *sec, sec_stats_t *stats);
-void sec_mutex_stats_read(tsdn_t *tsdn, sec_t *sec,
-    mutex_prof_data_t *mutex_prof_data);
+void sec_stats_merge(tsdn_t *tsdn, const sec_t *sec, sec_stats_t *stats);
+void sec_stats_merge_pszind(
+    tsdn_t *tsdn, const sec_t *sec, pszind_t pszind,
+    sec_pszind_stats_t *stats);
+void sec_mutex_stats_read(
+    tsdn_t *tsdn, sec_t *sec, mutex_prof_data_t *mutex_prof_data);
 
 /*
  * We use the arena lock ordering; these are acquired in phase 2 of forking, but

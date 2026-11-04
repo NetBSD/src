@@ -1,5 +1,5 @@
 /* Linker file opening and searching.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -34,6 +34,7 @@
 #include "ldemul.h"
 #include "libiberty.h"
 #include "filenames.h"
+#include <fnmatch.h>
 #if BFD_SUPPORTS_PLUGINS
 #include "plugin-api.h"
 #include "plugin.h"
@@ -62,8 +63,218 @@ typedef struct search_arch
 } search_arch_type;
 
 static search_dirs_type **search_tail_ptr = &search_head;
+static search_dirs_type *script_search;
 static search_arch_type *search_arch_head;
 static search_arch_type **search_arch_tail_ptr = &search_arch_head;
+
+typedef struct input_remap
+{
+  const char *          pattern;  /* Pattern to match input files.  */
+  const char *          renamed;  /* Filename to use if the pattern matches.  */
+  struct input_remap *  next;     /* Link in a chain of these structures.  */
+} input_remap;
+
+static struct input_remap * input_remaps = NULL;
+
+void
+ldfile_add_remap (const char * pattern, const char * renamed)
+{
+  struct input_remap * new_entry;
+
+  new_entry = xmalloc (sizeof * new_entry);
+  new_entry->pattern = xstrdup (pattern);
+  new_entry->next = NULL;
+
+  /* Look for special filenames that mean that the input file should be ignored.  */
+  if (strcmp (renamed, "/dev/null") == 0
+      || strcmp (renamed, "NUL") == 0)
+    new_entry->renamed = NULL;
+  else
+    /* FIXME: Should we add sanity checking of the 'renamed' string ?  */
+    new_entry->renamed = xstrdup (renamed);
+
+  /* It would be easier to add this new node at the start of the chain,
+     but users expect that remapping will occur in the order in which
+     they occur on the command line, and in the remapping files.  */
+  if (input_remaps == NULL)
+    {
+      input_remaps = new_entry;
+    }
+  else
+    {
+      struct input_remap * i;
+
+      for (i = input_remaps; i->next != NULL; i = i->next)
+	;
+      i->next = new_entry;
+    }
+}
+
+static void
+ldfile_remap_input_free (void)
+{
+  while (input_remaps != NULL)
+    {
+      struct input_remap * i = input_remaps;
+
+      input_remaps = i->next;
+      free ((void *) i->pattern);
+      free ((void *) i->renamed);
+      free (i);
+    }
+}
+
+bool
+ldfile_add_remap_file (const char * file)
+{
+  FILE * f;
+
+  f = fopen (file, FOPEN_RT);
+  if (f == NULL)
+    return false;
+
+  size_t linelen = 256;
+  char * line = xmalloc (linelen);
+
+  do
+    {
+      char * p = line;
+      char * q;
+
+      /* Normally this would use getline(3), but we need to be portable.  */
+      while ((q = fgets (p, linelen - (p - line), f)) != NULL
+	     && strlen (q) == linelen - (p - line) - 1
+	     && line[linelen - 2] != '\n')
+	{
+	  line = xrealloc (line, 2 * linelen);
+	  p = line + linelen - 1;
+	  linelen += linelen;
+	}
+
+      if (q == NULL && p == line)
+	break;
+
+      p = strchr (line, '\n');
+      if (p)
+	*p = '\0';
+
+      /* Because the file format does not know any form of quoting we
+	 can search forward for the next '#' character and if found
+	 make it terminating the line.  */
+      p = strchr (line, '#');
+      if (p)
+	*p = '\0';
+
+      /* Remove leading whitespace.  NUL is no whitespace character.  */
+      p = line;
+      while (*p == ' ' || *p == '\f' || *p == '\r' || *p == '\t' || *p == '\v')
+	++p;
+
+      /* If the line is blank it is ignored.  */
+      if (*p == '\0')
+	continue;
+
+      char * pattern = p;
+
+      /* Advance past the pattern.  We accept whitespace or '=' as an
+	 end-of-pattern marker.  */
+      while (*p && *p != '=' && *p != ' ' && *p != '\t' && *p != '\f'
+	     && *p != '\r' && *p != '\v')
+	++p;
+
+      if (*p == '\0')
+	{
+	  fatal ("%P: malformed remap file entry: %s\n", line);
+	  continue;
+	}
+
+      * p++ = '\0';
+
+      /* Skip whitespace again.  */
+      while (*p == ' ' || *p == '\f' || *p == '\r' || *p == '\t' || *p == '\v')
+	++p;
+
+      if (*p == '\0')
+	{
+	  fatal ("%P: malformed remap file entry: %s\n", line);
+	  continue;
+	}
+
+      char * renamed = p;
+
+      /* Advance past the rename entry.  */
+      while (*p && *p != '=' && *p != ' ' && *p != '\t' && *p != '\f'
+	     && *p != '\r' && *p != '\v')
+	++p;
+      /* And terminate it.  */
+      *p = '\0';
+
+      ldfile_add_remap (pattern, renamed);
+    }
+  while (! feof (f));
+
+  free (line);
+  fclose (f);
+
+  return true;
+}
+
+const char *
+ldfile_possibly_remap_input (const char * filename)
+{
+  struct input_remap * i;
+
+  if (filename == NULL)
+    return NULL;
+
+  for (i = input_remaps; i != NULL; i = i->next)
+    {
+      if (fnmatch (i->pattern, filename, 0) == 0)
+	{
+	  if (verbose)
+	    {
+	      if (strpbrk ((i->pattern), "?*[") != NULL)
+		{
+		  if (i->renamed)
+		    info_msg (_("remap input file '%s' to '%s' based upon pattern '%s'\n"),
+			      filename, i->renamed, i->pattern);
+		  else
+		    info_msg (_("remove input file '%s' based upon pattern '%s'\n"),
+			      filename, i->pattern);
+		}
+	      else
+		{
+		  if (i->renamed)
+		    info_msg (_("remap input file '%s' to '%s'\n"),
+			      filename, i->renamed);
+		  else
+		    info_msg (_("remove input file '%s'\n"),
+			      filename);
+		}
+	    }
+
+	  return i->renamed;
+	}
+    }
+	 
+  return filename;
+}
+
+void
+ldfile_print_input_remaps (void)
+{
+  if (input_remaps == NULL)
+    return;
+
+  minfo (_("\nInput File Remapping\n\n"));
+
+  struct input_remap * i;
+
+  for (i = input_remaps; i != NULL; i = i->next)
+    minfo (_("  Pattern: %s\tMaps To: %s\n"), i->pattern,
+	   i->renamed ? i->renamed : _("<discard>"));
+}
+
 
 /* Test whether a pathname, after canonicalization, is the same or a
    sub-directory of the sysroot directory.  */
@@ -119,6 +330,18 @@ ldfile_add_library_path (const char *name, bool cmdline)
     new_dirs->name = xstrdup (name);
 }
 
+static void
+ldfile_library_path_free (search_dirs_type **root)
+{
+  search_dirs_type *ent;
+  while ((ent = *root) != NULL)
+    {
+      *root = ent->next;
+      free ((void *) ent->name);
+      free (ent);
+    }
+}
+
 /* Try to open a BFD for a lang_input_statement.  */
 
 bool
@@ -138,11 +361,15 @@ ldfile_try_open_bfd (const char *attempt,
   if (entry->the_bfd == NULL)
     {
       if (bfd_get_error () == bfd_error_invalid_target)
-	einfo (_("%F%P: invalid BFD target `%s'\n"), entry->target);
+	fatal (_("%P: invalid BFD target `%s'\n"), entry->target);
       return false;
     }
 
-  track_dependency_files (attempt);
+  /* PR 30568: Do not track lto generated temporary object files.  */
+#if BFD_SUPPORTS_PLUGINS
+  if (!entry->flags.lto_output)
+#endif
+    track_dependency_files (attempt);
 
   /* Linker needs to decompress sections.  */
   entry->the_bfd->flags |= BFD_DECOMPRESS;
@@ -211,18 +438,11 @@ ldfile_try_open_bfd (const char *attempt,
 			  if (token == ',')
 			    {
 			      if ((token = yylex ()) != NAME)
-				{
-				  free (arg1);
-				  continue;
-				}
+				continue;
 			      arg2 = yylval.name;
 			      if ((token = yylex ()) != ','
 				  || (token = yylex ()) != NAME)
-				{
-				  free (arg1);
-				  free (arg2);
-				  continue;
-				}
+				continue;
 			      arg3 = yylval.name;
 			      token = yylex ();
 			    }
@@ -241,18 +461,12 @@ ldfile_try_open_bfd (const char *attempt,
 			      if (strcmp (arg, lang_get_output_target ()) != 0)
 				skip = 1;
 			    }
-			  free (arg1);
-			  free (arg2);
-			  free (arg3);
 			  break;
 			case NAME:
 			case LNAME:
 			case VERS_IDENTIFIER:
 			case VERS_TAG:
-			  free (yylval.name);
-			  break;
 			case INT:
-			  free (yylval.bigint.str);
 			  break;
 			}
 		      token = yylex ();
@@ -277,7 +491,7 @@ ldfile_try_open_bfd (const char *attempt,
 
 	  if (!entry->flags.dynamic && (entry->the_bfd->flags & DYNAMIC) != 0)
 	    {
-	      einfo (_("%F%P: attempted static link of dynamic object `%s'\n"),
+	      fatal (_("%P: attempted static link of dynamic object `%s'\n"),
 		     attempt);
 	      bfd_close (entry->the_bfd);
 	      entry->the_bfd = NULL;
@@ -318,6 +532,8 @@ ldfile_try_open_bfd (const char *attempt,
       && !no_more_claiming
       && bfd_check_format (entry->the_bfd, bfd_object))
     plugin_maybe_claim (entry);
+  else
+    cmdline_check_object_only_section (entry->the_bfd, false);
 #endif /* BFD_SUPPORTS_PLUGINS */
 
   /* It opened OK, the format checked out, and the plugins have had
@@ -497,6 +713,12 @@ ldfile_open_file (lang_input_statement_type *entry)
 	  else
 	    einfo (_("%P: cannot find %s: %E\n"), entry->local_sym_name);
 
+	  /* Be kind to users who are creating static executables, but
+	     have forgotten to install the necessary static libraries.  */
+	  if (entry->flags.dynamic == false && startswith (entry->local_sym_name, "-l"))
+	    einfo (_("%P: have you installed the static version of the %s library ?\n"),
+		     entry->local_sym_name + 2);
+
 	  /* PR 25747: Be kind to users who forgot to add the
 	     "lib" prefix to their library when it was created.  */
 	  for (arch = search_arch_head; arch != NULL; arch = arch->next)
@@ -529,7 +751,10 @@ try_open (const char *name, bool *sysrooted)
   result = fopen (name, "r");
 
   if (result != NULL)
-    *sysrooted = is_sysrooted_pathname (name);
+    {
+      *sysrooted = is_sysrooted_pathname (name);
+      track_dependency_files (name);
+    }
 
   if (verbose)
     {
@@ -610,7 +835,6 @@ ldfile_find_command_file (const char *name,
   search_dirs_type *search;
   FILE *result = NULL;
   char *path;
-  static search_dirs_type *script_search;
 
   if (!default_only)
     {
@@ -629,6 +853,7 @@ ldfile_find_command_file (const char *name,
 	  search_tail_ptr = &script_search;
 	  ldfile_add_library_path (script_dir, true);
 	  search_tail_ptr = save_tail_ptr;
+	  free (script_dir);
 	}
     }
 
@@ -654,19 +879,7 @@ ldfile_find_command_file (const char *name,
   return result;
 }
 
-enum script_open_style {
-  script_nonT,
-  script_T,
-  script_defaultT
-};
-
-struct script_name_list
-{
-  struct script_name_list *next;
-  enum script_open_style open_how;
-  char name[1];
-};
-
+struct script_name_list *processed_scripts = NULL;
 /* Open command file NAME.  */
 
 static void
@@ -674,7 +887,6 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
 {
   FILE *ldlex_input_stack;
   bool sysrooted;
-  static struct script_name_list *processed_scripts = NULL;
   struct script_name_list *script;
   size_t len;
 
@@ -685,15 +897,12 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
       if ((open_how != script_nonT || script->open_how != script_nonT)
 	  && strcmp (name, script->name) == 0)
 	{
-	  einfo (_("%F%P: error: linker script file '%s'"
+	  fatal (_("%P: error: linker script file '%s'"
 		   " appears multiple times\n"), name);
 	  return;
 	}
     }
 
-  /* FIXME: This memory is never freed, but that should not really matter.
-     It will be released when the linker exits, and it is unlikely to ever
-     be more than a few tens of bytes.  */
   len = strlen (name);
   script = xmalloc (sizeof (*script) + len);
   script->next = processed_scripts;
@@ -707,17 +916,26 @@ ldfile_open_command_file_1 (const char *name, enum script_open_style open_how)
   if (ldlex_input_stack == NULL)
     {
       bfd_set_error (bfd_error_system_call);
-      einfo (_("%F%P: cannot open linker script file %s: %E\n"), name);
+      fatal (_("%P: cannot open linker script file %s: %E\n"), name);
       return;
     }
-
-  track_dependency_files (name);
 
   lex_push_file (ldlex_input_stack, name, sysrooted);
 
   lineno = 1;
 
   saved_script_handle = ldlex_input_stack;
+}
+
+static void
+ldfile_script_free (struct script_name_list **root)
+{
+  struct script_name_list *ent;
+  while ((ent = *root) != NULL)
+    {
+      *root = ent->next;
+      free (ent);
+    }
 }
 
 /* Open command file NAME in the current directory, -L directories,
@@ -764,6 +982,18 @@ ldfile_add_arch (const char *in_name)
 
 }
 
+static void
+ldfile_arch_free (search_arch_type **root)
+{
+  search_arch_type *ent;
+  while ((ent = *root) != NULL)
+    {
+      *root = ent->next;
+      free (ent->name);
+      free (ent);
+    }
+}
+
 /* Set the output architecture.  */
 
 void
@@ -780,5 +1010,19 @@ ldfile_set_output_arch (const char *string, enum bfd_architecture defarch)
   else if (defarch != bfd_arch_unknown)
     ldfile_output_architecture = defarch;
   else
-    einfo (_("%F%P: cannot represent machine `%s'\n"), string);
+    fatal (_("%P: cannot represent machine `%s'\n"), string);
+}
+
+/* Tidy up memory.  */
+
+void
+ldfile_free (void)
+{
+  ldfile_remap_input_free ();
+  ldfile_library_path_free (&script_search);
+  search_tail_ptr = &search_head;
+  ldfile_library_path_free (&search_head);
+  search_arch_tail_ptr = &search_arch_head;
+  ldfile_arch_free (&search_arch_head);
+  ldfile_script_free (&processed_scripts);
 }

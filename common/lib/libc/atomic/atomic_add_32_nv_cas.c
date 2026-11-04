@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.7 2016/02/27 19:20:01 joerg Exp $	*/
+/*	$NetBSD: atomic_add_32_nv_cas.c,v 1.7.36.1 2026/11/04 22:36:28 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/atomic.h>
 
-uint32_t
+uint32_t __noinline
 atomic_add_32_nv(volatile uint32_t *addr, int32_t val)
 {
 	uint32_t old, new;
@@ -43,24 +43,29 @@ atomic_add_32_nv(volatile uint32_t *addr, int32_t val)
 		new = old + val;
 	} while (atomic_cas_32(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_add_32_nv
 atomic_op_alias(atomic_add_32_nv,_atomic_add_32_nv)
 crt_alias(__sync_add_and_fetch_4,_atomic_add_32_nv)
 crt_alias(__atomic_add_fetch_4,_atomic_add_32_nv)
 
-#undef atomic_add_int_nv
 atomic_op_alias(atomic_add_int_nv,_atomic_add_32_nv)
 __strong_alias(_atomic_add_int_nv,_atomic_add_32_nv)
 
 #if !defined(_LP64)
-#undef atomic_add_long_nv
 atomic_op_alias(atomic_add_long_nv,_atomic_add_32_nv)
 __strong_alias(_atomic_add_long_nv,_atomic_add_32_nv)
 
-#undef atomic_add_ptr_nv
-atomic_op_alias(atomic_add_ptr_nv,_atomic_add_32_nv)
-__strong_alias(_atomic_add_ptr_nv,_atomic_add_32_nv)
+/*
+ * N.B. not an alias!  Pointer values may have a different return
+ * convention.
+ */
+void *
+atomic_add_ptr_nv(volatile void *ptr, ssize_t delta)
+{
+	return (void *)atomic_add_32_nv((volatile uint32_t *)ptr, (int32_t)delta);
+}
+
+atomic_op_alias(atomic_add_ptr_nv,_atomic_add_ptr_nv)
 #endif /* _LP64 */

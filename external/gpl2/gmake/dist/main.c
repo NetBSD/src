@@ -518,7 +518,8 @@ int fatal_signal_mask;
 # if !defined HAVE_SIGACTION
 #  define bsd_signal signal
 # else
-typedef RETSIGTYPE (*bsd_signal_ret_t) ();
+#  define bsd_signal gmake_bsd_signal	/* <signal.h> conflicts. */
+typedef RETSIGTYPE (*bsd_signal_ret_t) (int);
 
 /*static*/ bsd_signal_ret_t
 bsd_signal (int sig, bsd_signal_ret_t func)

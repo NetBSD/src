@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -19,8 +19,8 @@
 
 #define TE_PE_DYN /* PE with dynamic linking (UNIX shared lib) support */
 #define TE_PE
-#define LEX_AT 1 /* can have @'s inside labels */
-#define LEX_QM 3 /* can have ?'s in or begin labels */
+#define LEX_AT LEX_NAME /* can have @'s inside labels */
+#define LEX_QM (LEX_BEGIN_NAME | LEX_NAME) /* can have ?'s in or begin labels */
 
 /* The PE format supports long section names.  */
 #define COFF_LONG_SECTION_NAMES

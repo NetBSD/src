@@ -1,4 +1,4 @@
-/* Copyright (C) 2017-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2017-2025 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -53,8 +53,8 @@
 # define DIAGNOSTIC_IGNORE_SELF_MOVE DIAGNOSTIC_IGNORE ("-Wself-move")
 # define DIAGNOSTIC_IGNORE_DEPRECATED_DECLARATIONS \
   DIAGNOSTIC_IGNORE ("-Wdeprecated-declarations")
-# define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER \
-  DIAGNOSTIC_IGNORE ("-Wdeprecated-register")
+# define DIAGNOSTIC_IGNORE_REGISTER DIAGNOSTIC_IGNORE ("-Wregister")
+
 # if __has_warning ("-Wenum-compare-switch")
 #  define DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES \
    DIAGNOSTIC_IGNORE ("-Wenum-compare-switch")
@@ -63,14 +63,26 @@
 # define DIAGNOSTIC_IGNORE_FORMAT_NONLITERAL \
   DIAGNOSTIC_IGNORE ("-Wformat-nonliteral")
 
+# if __has_warning ("-Wuser-defined-warnings")
+#  define DIAGNOSTIC_IGNORE_USER_DEFINED_WARNINGS \
+   DIAGNOSTIC_IGNORE ("-Wuser-defined-warnings")
+# endif
+
+# if __has_warning ("-Wunused-but-set-variable")
+#  define DIAGNOSTIC_IGNORE_UNUSED_BUT_SET_VARIABLE \
+   DIAGNOSTIC_IGNORE ("-Wunused-but-set-variable")
+# endif
+
 # define DIAGNOSTIC_ERROR_SWITCH \
   DIAGNOSTIC_ERROR ("-Wswitch")
 
 #elif defined (__GNUC__) /* GCC */
 
+# define DIAGNOSTIC_IGNORE_DEPRECATED_DECLARATIONS \
+  DIAGNOSTIC_IGNORE ("-Wdeprecated-declarations")
+
 # if __GNUC__ >= 7
-#  define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER \
-   DIAGNOSTIC_IGNORE ("-Wregister")
+#  define DIAGNOSTIC_IGNORE_REGISTER DIAGNOSTIC_IGNORE ("-Wregister")
 # endif
 
 # define DIAGNOSTIC_IGNORE_STRINGOP_TRUNCATION \
@@ -83,6 +95,15 @@
 
 # define DIAGNOSTIC_IGNORE_FORMAT_NONLITERAL \
   DIAGNOSTIC_IGNORE ("-Wformat-nonliteral")
+
+# if __GNUC__ >= 5
+#  define DIAGNOSTIC_IGNORE_UNUSED_BUT_SET_VARIABLE \
+   DIAGNOSTIC_IGNORE ("-Wunused-but-set-variable")
+# endif
+
+# if __GNUC__ >= 13
+#  define DIAGNOSTIC_IGNORE_SELF_MOVE DIAGNOSTIC_IGNORE ("-Wself-move")
+# endif
 
 /* GCC 4.8's "diagnostic push/pop" seems broken when using this, -Wswitch
    remains enabled at the error level even after a pop.  Therefore, don't
@@ -101,8 +122,8 @@
 # define DIAGNOSTIC_IGNORE_DEPRECATED_DECLARATIONS
 #endif
 
-#ifndef DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
-# define DIAGNOSTIC_IGNORE_DEPRECATED_REGISTER
+#ifndef DIAGNOSTIC_IGNORE_REGISTER
+# define DIAGNOSTIC_IGNORE_REGISTER
 #endif
 
 #ifndef DIAGNOSTIC_IGNORE_SWITCH_DIFFERENT_ENUM_TYPES
@@ -119,6 +140,14 @@
 
 #ifndef DIAGNOSTIC_IGNORE_FORMAT_NONLITERAL
 # define DIAGNOSTIC_IGNORE_FORMAT_NONLITERAL
+#endif
+
+#ifndef DIAGNOSTIC_IGNORE_USER_DEFINED_WARNINGS
+# define DIAGNOSTIC_IGNORE_USER_DEFINED_WARNINGS
+#endif
+
+#ifndef DIAGNOSTIC_IGNORE_UNUSED_BUT_SET_VARIABLE
+# define DIAGNOSTIC_IGNORE_UNUSED_BUT_SET_VARIABLE
 #endif
 
 #ifndef DIAGNOSTIC_ERROR_SWITCH

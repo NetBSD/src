@@ -1,5 +1,5 @@
 /* CRIS-specific support for 32-bit ELF.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
    Contributed by Axis Communications AB.
    Written by Hans-Peter Nilsson, based on elf32-fr30.c
    PIC and shlib bits based primarily on elf32-m68k.c and elf32-i386.c.
@@ -398,10 +398,10 @@ static const struct cris_reloc_map cris_reloc_map [] =
   { BFD_RELOC_32_PCREL,		R_CRIS_32_PCREL },
   { BFD_RELOC_VTABLE_INHERIT,	R_CRIS_GNU_VTINHERIT },
   { BFD_RELOC_VTABLE_ENTRY,	R_CRIS_GNU_VTENTRY },
-  { BFD_RELOC_CRIS_COPY,	R_CRIS_COPY },
-  { BFD_RELOC_CRIS_GLOB_DAT,	R_CRIS_GLOB_DAT },
-  { BFD_RELOC_CRIS_JUMP_SLOT,	R_CRIS_JUMP_SLOT },
-  { BFD_RELOC_CRIS_RELATIVE,	R_CRIS_RELATIVE },
+  { BFD_RELOC_COPY,		R_CRIS_COPY },
+  { BFD_RELOC_GLOB_DAT,		R_CRIS_GLOB_DAT },
+  { BFD_RELOC_JMP_SLOT,		R_CRIS_JUMP_SLOT },
+  { BFD_RELOC_RELATIVE,		R_CRIS_RELATIVE },
   { BFD_RELOC_CRIS_16_GOT,	R_CRIS_16_GOT },
   { BFD_RELOC_CRIS_32_GOT,	R_CRIS_32_GOT },
   { BFD_RELOC_CRIS_16_GOTPLT,	R_CRIS_16_GOTPLT },
@@ -898,8 +898,7 @@ elf_cris_link_hash_table_create (bfd *abfd)
 
   if (!_bfd_elf_link_hash_table_init (&ret->root, abfd,
 				      elf_cris_link_hash_newfunc,
-				      sizeof (struct elf_cris_link_hash_entry),
-				      CRIS_ELF_DATA))
+				      sizeof (struct elf_cris_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1130,7 +1129,8 @@ cris_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_CRIS_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -2082,8 +2082,6 @@ elf_cris_finish_dynamic_symbol (bfd *output_bfd,
   const bfd_byte *plt_pic_entry = elf_cris_pic_plt_entry;
 
   htab = elf_cris_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   /* Adjust the various PLT entry offsets.  */
   if (bfd_get_mach (output_bfd) == bfd_mach_cris_v32)
@@ -2312,7 +2310,8 @@ elf_cris_finish_dynamic_symbol (bfd *output_bfd,
 
 static bool
 elf_cris_finish_dynamic_sections (bfd *output_bfd,
-				  struct bfd_link_info *info)
+				  struct bfd_link_info *info,
+				  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sgot;
@@ -2441,11 +2440,11 @@ elf_cris_finish_dynamic_sections (bfd *output_bfd,
 static asection *
 cris_elf_gc_mark_hook (asection *sec,
 		       struct bfd_link_info *info,
-		       Elf_Internal_Rela *rel,
+		       struct elf_reloc_cookie *cookie,
 		       struct elf_link_hash_entry *h,
-		       Elf_Internal_Sym *sym)
+		       unsigned int symndx)
 {
-  enum elf_cris_reloc_type r_type = ELF32_R_TYPE (rel->r_info);
+  enum elf_cris_reloc_type r_type = ELF32_R_TYPE (cookie->rel->r_info);
   if (h != NULL)
     switch (r_type)
       {
@@ -2457,7 +2456,7 @@ cris_elf_gc_mark_hook (asection *sec,
 	break;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* The elf_backend_plt_sym_val hook function.  */
@@ -2527,7 +2526,7 @@ cris_elf_plt_sym_val (bfd_vma i ATTRIBUTE_UNUSED, const asection *plt,
    entry but we found we will not create any.  Called when we find we will
    not have any PLT for this symbol, by for example
    elf_cris_adjust_dynamic_symbol when we're doing a proper dynamic link,
-   or elf_cris_size_dynamic_sections if no dynamic sections will be
+   or elf_cris_late_size_sections if no dynamic sections will be
    created (we're only linking static objects).  */
 
 static bool
@@ -3508,8 +3507,8 @@ cris_elf_check_relocs (bfd *abfd,
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				struct bfd_link_info *info)
+elf_cris_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			     struct bfd_link_info *info)
 {
   struct elf_cris_link_hash_table * htab;
   bfd *dynobj;
@@ -3521,17 +3520,19 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = htab->root.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (htab->root.dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->root.interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = sizeof ELF_DYNAMIC_INTERPRETER;
 	  s->contents = (unsigned char *) ELF_DYNAMIC_INTERPRETER;
+	  s->alloced = 1;
 	}
     }
   else
@@ -3646,6 +3647,7 @@ elf_cris_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, relocs);
@@ -3885,8 +3887,7 @@ cris_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   if (! _bfd_generic_verify_endian_match (ibfd, info))
     return false;
 
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   imach = bfd_get_mach (ibfd);
@@ -3957,8 +3958,7 @@ cris_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
 static bool
 cris_elf_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
-  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
-      || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
     return true;
 
   /* Call the base function.  */
@@ -4090,8 +4090,8 @@ elf_cris_got_elt_size (bfd *abfd ATTRIBUTE_UNUSED,
 	elf_cris_adjust_dynamic_symbol
 #define elf_backend_copy_indirect_symbol \
 	elf_cris_copy_indirect_symbol
-#define elf_backend_size_dynamic_sections \
-	elf_cris_size_dynamic_sections
+#define elf_backend_late_size_sections \
+	elf_cris_late_size_sections
 #define elf_backend_init_index_section		_bfd_elf_init_1_index_section
 #define elf_backend_finish_dynamic_symbol \
 	elf_cris_finish_dynamic_symbol
@@ -4099,8 +4099,7 @@ elf_cris_got_elt_size (bfd *abfd ATTRIBUTE_UNUSED,
 	elf_cris_finish_dynamic_sections
 #define elf_backend_create_dynamic_sections \
 	_bfd_elf_create_dynamic_sections
-#define bfd_elf32_bfd_final_link \
-	bfd_elf_gc_common_final_link
+#define bfd_elf32_bfd_final_link		_bfd_elf_gc_common_final_link
 #define elf_backend_hide_symbol			elf_cris_hide_symbol
 #define elf_backend_reloc_type_class		elf_cris_reloc_type_class
 

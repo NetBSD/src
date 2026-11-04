@@ -84,13 +84,15 @@ grid_need_extended_cell(const struct grid_cell_entry *gce,
 		return (1);
 	if (gc->attr > 0xff)
 		return (1);
-	if (gc->data.size != 1 || gc->data.width != 1)
+	if (gc->data.size > 1 || gc->data.width > 1)
 		return (1);
 	if ((gc->fg & COLOUR_FLAG_RGB) || (gc->bg & COLOUR_FLAG_RGB))
 		return (1);
 	if (gc->us != 8) /* only supports 256 or RGB */
 		return (1);
 	if (gc->link != 0)
+		return (1);
+	if (gc->flags & GRID_FLAG_TAB)
 		return (1);
 	return (0);
 }
@@ -124,7 +126,10 @@ grid_extended_cell(struct grid_line *gl, struct grid_cell_entry *gce,
 		fatalx("offset too big");
 	gl->flags |= GRID_LINE_EXTENDED;
 
-	utf8_from_data(&gc->data, &uc);
+	if (gc->flags & GRID_FLAG_TAB)
+		uc = gc->data.width;
+	else
+		utf8_from_data(&gc->data, &uc);
 
 	gee = &gl->extddata[gce->offset];
 	gee->data = uc;
@@ -230,9 +235,13 @@ grid_check_y(struct grid *gd, const char *from, u_int py)
 int
 grid_cells_look_equal(const struct grid_cell *gc1, const struct grid_cell *gc2)
 {
+	int flags1 = gc1->flags, flags2 = gc2->flags;;
+
 	if (gc1->fg != gc2->fg || gc1->bg != gc2->bg)
 		return (0);
-	if (gc1->attr != gc2->attr || gc1->flags != gc2->flags)
+	if (gc1->attr != gc2->attr)
+		return (0);
+	if ((flags1 & ~GRID_FLAG_CLEARED) != (flags2 & ~GRID_FLAG_CLEARED))
 		return (0);
 	if (gc1->link != gc2->link)
 		return (0);
@@ -250,6 +259,17 @@ grid_cells_equal(const struct grid_cell *gc1, const struct grid_cell *gc2)
 	if (gc1->data.size != gc2->data.size)
 		return (0);
 	return (memcmp(gc1->data.data, gc2->data.data, gc1->data.size) == 0);
+}
+
+/* Set grid cell to a tab. */
+void
+grid_set_tab(struct grid_cell *gc, u_int width)
+{
+	memset(gc->data.data, 0, sizeof gc->data.data);
+	gc->flags |= GRID_FLAG_TAB;
+	gc->flags &= ~GRID_FLAG_PADDING;
+	gc->data.width = gc->data.size = gc->data.have = width;
+	memset(gc->data.data, ' ', gc->data.size);
 }
 
 /* Free one line. */
@@ -515,7 +535,11 @@ grid_get_cell1(struct grid_line *gl, u_int px, struct grid_cell *gc)
 			gc->bg = gee->bg;
 			gc->us = gee->us;
 			gc->link = gee->link;
-			utf8_to_data(gee->data, &gc->data);
+
+			if (gc->flags & GRID_FLAG_TAB)
+				grid_set_tab(gc, gee->data);
+			else
+				utf8_to_data(gee->data, &gc->data);
 		}
 		return;
 	}
@@ -1077,13 +1101,18 @@ grid_string_cells(struct grid *gd, u_int px, u_int py, u_int nx,
 		} else
 			codelen = 0;
 
-		data = (void *)gc.data.data;
-		size = gc.data.size;
-		if ((flags & GRID_STRING_ESCAPE_SEQUENCES) &&
-		    size == 1 &&
-		    *data == '\\') {
-			data = "\\\\";
-			size = 2;
+		if (gc.flags & GRID_FLAG_TAB) {
+			data = "\t";
+			size = 1;
+		} else {
+			data = (void *)gc.data.data;
+			size = gc.data.size;
+			if ((flags & GRID_STRING_ESCAPE_SEQUENCES) &&
+			    size == 1 &&
+			    *data == '\\') {
+				data = "\\\\";
+				size = 2;
+			}
 		}
 
 		while (len < off + size + codelen + 1) {
@@ -1275,7 +1304,7 @@ grid_reflow_join(struct grid *target, struct grid *gd, u_int sx, u_int yy,
 		if (!wrapped || want != from->cellused || width == sx)
 			break;
 	}
-	if (lines == 0)
+	if (lines == 0 || from == NULL)
 		return;
 
 	/*
@@ -1532,4 +1561,28 @@ grid_line_length(struct grid *gd, u_int py)
 		px--;
 	}
 	return (px);
+}
+
+/* Check if character is in set. */
+int
+grid_in_set(struct grid *gd, u_int px, u_int py, const char *set)
+{
+	struct grid_cell	gc, tmp_gc;
+	u_int			pxx;
+
+	grid_get_cell(gd, px, py, &gc);
+	if (strchr(set, '\t')) {
+		if (gc.flags & GRID_FLAG_PADDING) {
+			pxx = px;
+			do
+				grid_get_cell(gd, --pxx, py, &tmp_gc);
+			while (pxx > 0 && tmp_gc.flags & GRID_FLAG_PADDING);
+			if (tmp_gc.flags & GRID_FLAG_TAB)
+				return (tmp_gc.data.width - (px - pxx));
+		} else if (gc.flags & GRID_FLAG_TAB)
+			return (gc.data.width);
+	}
+	if (gc.flags & GRID_FLAG_PADDING)
+		return (0);
+	return (utf8_cstrhas(set, &gc.data));
 }

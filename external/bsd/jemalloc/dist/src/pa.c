@@ -1,8 +1,10 @@
 #include "jemalloc/internal/jemalloc_preamble.h"
-#include "jemalloc/internal/jemalloc_internal_includes.h"
 
-#include "jemalloc/internal/san.h"
+#include "jemalloc/internal/background_thread.h"
+#include "jemalloc/internal/background_thread_inlines.h"
+#include "jemalloc/internal/deferral.h"
 #include "jemalloc/internal/hpa.h"
+#include "jemalloc/internal/pa.h"
 
 static void
 pa_nactive_add(pa_shard_t *shard, size_t add_pages) {
@@ -11,13 +13,13 @@ pa_nactive_add(pa_shard_t *shard, size_t add_pages) {
 
 static void
 pa_nactive_sub(pa_shard_t *shard, size_t sub_pages) {
-	assert(atomic_load_zu(&shard->nactive, ATOMIC_RELAXED) >= sub_pages);
+	assert(pa_shard_nactive(shard) >= sub_pages);
 	atomic_fetch_sub_zu(&shard->nactive, sub_pages, ATOMIC_RELAXED);
 }
 
 bool
 pa_central_init(pa_central_t *central, base_t *base, bool hpa,
-    hpa_hooks_t *hpa_hooks) {
+    const hpa_hooks_t *hpa_hooks) {
 	bool err;
 	if (hpa) {
 		err = hpa_central_init(&central->hpa, base, hpa_hooks);
@@ -41,8 +43,8 @@ pa_shard_init(tsdn_t *tsdn, pa_shard_t *shard, pa_central_t *central,
 	}
 
 	if (pac_init(tsdn, &shard->pac, base, emap, &shard->edata_cache,
-	    cur_time, pac_oversize_threshold, dirty_decay_ms, muzzy_decay_ms,
-	    &stats->pac_stats, stats_mtx)) {
+	        cur_time, pac_oversize_threshold, dirty_decay_ms,
+	        muzzy_decay_ms, &stats->pac_stats, stats_mtx)) {
 		return true;
 	}
 
@@ -67,12 +69,9 @@ pa_shard_init(tsdn_t *tsdn, pa_shard_t *shard, pa_central_t *central,
 bool
 pa_shard_enable_hpa(tsdn_t *tsdn, pa_shard_t *shard,
     const hpa_shard_opts_t *hpa_opts, const sec_opts_t *hpa_sec_opts) {
-	if (hpa_shard_init(&shard->hpa_shard, &shard->central->hpa, shard->emap,
-	    shard->base, &shard->edata_cache, shard->ind, hpa_opts)) {
-		return true;
-	}
-	if (sec_init(tsdn, &shard->hpa_sec, shard->base, &shard->hpa_shard.pai,
-	    hpa_sec_opts)) {
+	if (hpa_shard_init(tsdn, &shard->hpa, &shard->central->hpa,
+	        shard->emap, shard->base, &shard->edata_cache, shard->ind,
+	        hpa_opts, hpa_sec_opts)) {
 		return true;
 	}
 	shard->ever_used_hpa = true;
@@ -85,16 +84,27 @@ void
 pa_shard_disable_hpa(tsdn_t *tsdn, pa_shard_t *shard) {
 	atomic_store_b(&shard->use_hpa, false, ATOMIC_RELAXED);
 	if (shard->ever_used_hpa) {
-		sec_disable(tsdn, &shard->hpa_sec);
-		hpa_shard_disable(tsdn, &shard->hpa_shard);
+		hpa_shard_disable(tsdn, &shard->hpa);
 	}
 }
 
 void
 pa_shard_reset(tsdn_t *tsdn, pa_shard_t *shard) {
 	atomic_store_zu(&shard->nactive, 0, ATOMIC_RELAXED);
+	pa_shard_flush(tsdn, shard, /* all */ false);
+}
+
+void
+pa_shard_flush(tsdn_t *tsdn, pa_shard_t *shard, bool all) {
+	pac_sec_flush(tsdn, &shard->pac);
 	if (shard->ever_used_hpa) {
-		sec_flush(tsdn, &shard->hpa_sec);
+		hpa_shard_flush(tsdn, &shard->hpa);
+	}
+	if (all) {
+		pac_decay_all_now(tsdn, &shard->pac, extent_state_dirty);
+		if (pac_should_decay_muzzy(&shard->pac)) {
+			pac_decay_all_now(tsdn, &shard->pac, extent_state_muzzy);
+		}
 	}
 }
 
@@ -107,28 +117,21 @@ void
 pa_shard_destroy(tsdn_t *tsdn, pa_shard_t *shard) {
 	pac_destroy(tsdn, &shard->pac);
 	if (shard->ever_used_hpa) {
-		sec_flush(tsdn, &shard->hpa_sec);
-		hpa_shard_disable(tsdn, &shard->hpa_shard);
+		hpa_shard_destroy(tsdn, &shard->hpa);
 	}
-}
-
-static pai_t *
-pa_get_pai(pa_shard_t *shard, edata_t *edata) {
-	return (edata_pai_get(edata) == EXTENT_PAI_PAC
-	    ? &shard->pac.pai : &shard->hpa_sec.pai);
 }
 
 edata_t *
 pa_alloc(tsdn_t *tsdn, pa_shard_t *shard, size_t size, size_t alignment,
     bool slab, szind_t szind, bool zero, bool guarded,
     bool *deferred_work_generated) {
-	witness_assert_depth_to_rank(tsdn_witness_tsdp_get(tsdn),
-	    WITNESS_RANK_CORE, 0);
+	witness_assert_depth_to_rank(
+	    tsdn_witness_tsdp_get(tsdn), WITNESS_RANK_CORE, 0);
 	assert(!guarded || alignment <= PAGE);
 
 	edata_t *edata = NULL;
 	if (!guarded && pa_shard_uses_hpa(shard)) {
-		edata = pai_alloc(tsdn, &shard->hpa_sec.pai, size, alignment,
+		edata = hpa_alloc(tsdn, &shard->hpa, size, alignment,
 		    zero, /* guarded */ false, slab, deferred_work_generated);
 	}
 	/*
@@ -136,7 +139,7 @@ pa_alloc(tsdn_t *tsdn, pa_shard_t *shard, size_t size, size_t alignment,
 	 * allocation request.
 	 */
 	if (edata == NULL) {
-		edata = pai_alloc(tsdn, &shard->pac.pai, size, alignment, zero,
+		edata = pac_alloc(tsdn, &shard->pac, size, alignment, zero,
 		    guarded, slab, deferred_work_generated);
 	}
 	if (edata != NULL) {
@@ -164,10 +167,15 @@ pa_expand(tsdn_t *tsdn, pa_shard_t *shard, edata_t *edata, size_t old_size,
 	}
 	size_t expand_amount = new_size - old_size;
 
-	pai_t *pai = pa_get_pai(shard, edata);
-
-	bool error = pai_expand(tsdn, pai, edata, old_size, new_size, zero,
-	    deferred_work_generated);
+	/*
+	 * HPA expand always fails (it's a stub); skip the call entirely for
+	 * HPA-owned extents.
+	 */
+	if (edata_pai_get(edata) == EXTENT_PAI_HPA) {
+		return true;
+	}
+	bool error = pac_expand(tsdn, &shard->pac, edata, old_size, new_size,
+	    zero, deferred_work_generated);
 	if (error) {
 		return true;
 	}
@@ -189,8 +197,14 @@ pa_shrink(tsdn_t *tsdn, pa_shard_t *shard, edata_t *edata, size_t old_size,
 	}
 	size_t shrink_amount = old_size - new_size;
 
-	pai_t *pai = pa_get_pai(shard, edata);
-	bool error = pai_shrink(tsdn, pai, edata, old_size, new_size,
+	/*
+	 * HPA shrink always fails (it's a stub); skip the call entirely for
+	 * HPA-owned extents.
+	 */
+	if (edata_pai_get(edata) == EXTENT_PAI_HPA) {
+		return true;
+	}
+	bool error = pac_shrink(tsdn, &shard->pac, edata, old_size, new_size,
 	    deferred_work_generated);
 	if (error) {
 		return true;
@@ -216,23 +230,17 @@ pa_dalloc(tsdn_t *tsdn, pa_shard_t *shard, edata_t *edata,
 	edata_addr_set(edata, edata_base_get(edata));
 	edata_szind_set(edata, SC_NSIZES);
 	pa_nactive_sub(shard, edata_size_get(edata) >> LG_PAGE);
-	pai_t *pai = pa_get_pai(shard, edata);
-	pai_dalloc(tsdn, pai, edata, deferred_work_generated);
+	if (edata_pai_get(edata) == EXTENT_PAI_HPA) {
+		hpa_dalloc(tsdn, &shard->hpa, edata, deferred_work_generated);
+	} else {
+		pac_dalloc(tsdn, &shard->pac, edata, deferred_work_generated);
+	}
 }
-
-#if 0
-bool
-pa_shard_retain_grow_limit_get_set(tsdn_t *tsdn, pa_shard_t *shard,
-    size_t *old_limit, size_t *new_limit) {
-	return pac_retain_grow_limit_get_set(tsdn, &shard->pac, old_limit,
-	    new_limit);
-}
-#endif
 
 bool
 pa_decay_ms_set(tsdn_t *tsdn, pa_shard_t *shard, extent_state_t state,
-    ssize_t decay_ms, pac_purge_eagerness_t eagerness) {
-	return pac_decay_ms_set(tsdn, &shard->pac, state, decay_ms, eagerness);
+    ssize_t decay_ms) {
+	return pac_decay_ms_set(tsdn, &shard->pac, state, decay_ms);
 }
 
 ssize_t
@@ -241,18 +249,38 @@ pa_decay_ms_get(pa_shard_t *shard, extent_state_t state) {
 }
 
 void
-pa_shard_set_deferral_allowed(tsdn_t *tsdn, pa_shard_t *shard,
-    bool deferral_allowed) {
+pa_shard_set_deferral_allowed(
+    tsdn_t *tsdn, pa_shard_t *shard, bool deferral_allowed) {
 	if (pa_shard_uses_hpa(shard)) {
-		hpa_shard_set_deferral_allowed(tsdn, &shard->hpa_shard,
-		    deferral_allowed);
+		hpa_shard_set_deferral_allowed(
+		    tsdn, &shard->hpa, deferral_allowed);
 	}
 }
 
 void
-pa_shard_do_deferred_work(tsdn_t *tsdn, pa_shard_t *shard) {
-	if (pa_shard_uses_hpa(shard)) {
-		hpa_shard_do_deferred_work(tsdn, &shard->hpa_shard);
+pa_shard_handle_deferred_work(tsdn_t *tsdn, pa_shard_t *shard) {
+	witness_assert_depth_to_rank(
+	    tsdn_witness_tsdp_get(tsdn), WITNESS_RANK_CORE, 0);
+
+	if (pac_decay_immediately(&shard->pac)) {
+		pac_decay_all_now(tsdn, &shard->pac, extent_state_dirty);
+	}
+	if (background_thread_enabled()) {
+		pac_wake_bg_on_deferred(tsdn, &shard->pac);
+	}
+}
+
+void
+pa_shard_do_deferred_work(
+    tsdn_t *tsdn, pa_shard_t *shard, bool is_background_thread) {
+	pac_do_deferred_work(tsdn, &shard->pac, is_background_thread);
+	/*
+	 * Application threads self-throttle HPA deferred work inline from their
+	 * own alloc/dalloc path (hpa_shard_maybe_do_deferred_work, capped), so
+	 * only drive it (forced, uncapped) from here on the background thread.
+	 */
+	if (is_background_thread && pa_shard_uses_hpa(shard)) {
+		hpa_shard_do_deferred_work(tsdn, &shard->hpa);
 	}
 }
 
@@ -263,14 +291,14 @@ pa_shard_do_deferred_work(tsdn_t *tsdn, pa_shard_t *shard) {
  */
 uint64_t
 pa_shard_time_until_deferred_work(tsdn_t *tsdn, pa_shard_t *shard) {
-	uint64_t time = pai_time_until_deferred_work(tsdn, &shard->pac.pai);
-	if (time == BACKGROUND_THREAD_DEFERRED_MIN) {
+	uint64_t time = pac_time_until_deferred_work(tsdn, &shard->pac);
+	if (time == DEFERRED_WORK_MIN) {
 		return time;
 	}
 
 	if (pa_shard_uses_hpa(shard)) {
-		uint64_t hpa =
-		    pai_time_until_deferred_work(tsdn, &shard->hpa_shard.pai);
+		uint64_t hpa = hpa_time_until_deferred_work(
+		    tsdn, &shard->hpa);
 		if (hpa < time) {
 			time = hpa;
 		}

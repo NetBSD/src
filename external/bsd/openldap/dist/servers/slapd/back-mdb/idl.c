@@ -1,10 +1,10 @@
-/*	$NetBSD: idl.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: idl.c,v 1.3.4.1 2026/11/04 22:39:25 perseant Exp $	*/
 
 /* idl.c - ldap id list handling routines */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: idl.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: idl.c,v 1.3.4.1 2026/11/04 22:39:25 perseant Exp $");
 
 #include "portable.h"
 
@@ -732,7 +732,9 @@ mdb_idl_intersection(
 	if ( idmin > idmax ) {
 		a[0] = 0;
 		return 0;
-	} else if ( idmin == idmax ) {
+	} else if ( idmin == idmax &&
+			(( MDB_IDL_FIRST(a) == MDB_IDL_LAST(b)) ||
+			( MDB_IDL_FIRST(b) == MDB_IDL_LAST(a)))) {
 		a[0] = 1;
 		a[1] = idmin;
 		return 0;

@@ -79,6 +79,16 @@ struct delegpt {
 	 * Also true if the delegationpoint was created from a delegation
 	 * message and thus contains the parent-side-info already. */
 	uint8_t has_parent_side_NS;
+	/** if true, the delegation point has reached last resort processing
+	 *  and the parent side information has been possibly added to the
+	 *  delegation point.
+	 *  For now this signals that further target lookups will ignore
+	 *  the configured target-fetch-policy and only resolve on
+	 *  demand to try and avoid triggering limits at this stage (.i.e, it
+	 *  is very likely that the A/AAAA queries for the newly added name
+	 *  servers will not yield new IP addresses and trigger NXNS
+	 *  countermeasures. */
+	uint8_t fallback_to_parent_side_NS;
 	/** for assertions on type of delegpt */
 	uint8_t dp_type_mlc;
 	/** use SSL for upstream query */
@@ -211,10 +221,11 @@ int delegpt_add_ns(struct delegpt* dp, struct regional* regional,
  * @param regional: where to allocate the info.
  * @param ns_rrset: NS rrset.
  * @param lame: rrset is lame, disprefer it.
+ * @param port: port or -1 if not set.
  * @return 0 on alloc error.
  */
 int delegpt_rrset_add_ns(struct delegpt* dp, struct regional* regional,
-	struct ub_packed_rrset_key* ns_rrset, uint8_t lame);
+	struct ub_packed_rrset_key* ns_rrset, uint8_t lame, int port);
 
 /**
  * Add target address to the delegation point.
@@ -355,11 +366,12 @@ size_t delegpt_count_targets(struct delegpt* dp);
  *
  * @param msg: the dns message, referral.
  * @param regional: where to allocate delegation point.
+ * @param port: if not -1 specifies a port number.
  * @return new delegation point or NULL on alloc error, or if the
  *         message was not appropriate.
  */
 struct delegpt* delegpt_from_message(struct dns_msg* msg, 
-	struct regional* regional);
+	struct regional* regional, int port);
 
 /**
  * Mark negative return in delegation point for specific nameserver.

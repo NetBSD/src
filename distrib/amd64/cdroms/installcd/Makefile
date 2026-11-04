@@ -1,10 +1,14 @@
-#	$NetBSD: Makefile,v 1.7 2024/04/23 12:25:57 nia Exp $
+#	$NetBSD: Makefile,v 1.7.2.1 2026/11/04 22:36:51 perseant Exp $
 #
 
 # Install CD, to be made after 'build.sh release'
 # Requires populated $RELEASEDIR/${MACHINE}
 
+CDMAKEFSEXTRAOPTS=	-m 700m
+
 .include <bsd.own.mk>
+
+.include "${.CURDIR}/../../../common/Makefile.minibase"
 .include "${.CURDIR}/../Makefile.cdrom"
 
 CDBASE=		amd64cd			# gives ${CDBASE}.iso

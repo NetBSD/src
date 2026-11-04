@@ -1,6 +1,6 @@
 \input texinfo
 @setfilename ldint.info
-@c Copyright (C) 1992-2022 Free Software Foundation, Inc.
+@c Copyright (C) 1992-2025 Free Software Foundation, Inc.
 
 @ifnottex
 @dircategory Software development
@@ -12,7 +12,7 @@
 @copying
 This file documents the internals of the GNU linker ld.
 
-Copyright @copyright{} 1992-2022 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2025 Free Software Foundation, Inc.
 Contributed by Cygnus Support.
 
 Permission is granted to copy, distribute and/or modify this document
@@ -55,7 +55,7 @@ included in the section entitled ``GNU Free Documentation License''.
 @end tex
 
 @vskip 0pt plus 1filll
-Copyright @copyright{} 1992-2022 Free Software Foundation, Inc.
+Copyright @copyright{} 1992-2025 Free Software Foundation, Inc.
 
       Permission is granted to copy, distribute and/or modify this document
       under the terms of the GNU Free Documentation License, Version 1.3
@@ -252,18 +252,23 @@ Here is the list of values assigned to @code{LD_FLAG}.
 @item (empty)
 The script generated is used by default (when none of the following
 cases apply).  The output has an extension of @file{.x}.
+
 @item n
 The script generated is used when the linker is invoked with the
 @code{-n} option.  The output has an extension of @file{.xn}.
+
 @item N
 The script generated is used when the linker is invoked with the
 @code{-N} option.  The output has an extension of @file{.xbn}.
+
 @item r
 The script generated is used when the linker is invoked with the
 @code{-r} option.  The output has an extension of @file{.xr}.
+
 @item u
 The script generated is used when the linker is invoked with the
 @code{-Ur} option.  The output has an extension of @file{.xu}.
+
 @item shared
 The @file{scripttempl} script is only invoked with @code{LD_FLAG} set to
 this value if @code{GENERATE_SHLIB_SCRIPT} is defined in the
@@ -271,14 +276,15 @@ this value if @code{GENERATE_SHLIB_SCRIPT} is defined in the
 this script at the appropriate time, normally when the linker is invoked
 with the @code{-shared} option.  The output has an extension of
 @file{.xs}.
+
 @item c
 The @file{scripttempl} script is only invoked with @code{LD_FLAG} set to
 this value if @code{GENERATE_COMBRELOC_SCRIPT} is defined in the
 @file{emulparams} file or if @code{SCRIPT_NAME} is @code{elf}. The
 @file{emultempl} script must arrange to use this script at the appropriate
 time, normally when the linker is invoked with the @code{-z combreloc}
-option.  The output has an extension of
-@file{.xc}.
+option.  The output has an extension of @file{.xc}.
+
 @item cshared
 The @file{scripttempl} script is only invoked with @code{LD_FLAG} set to
 this value if @code{GENERATE_COMBRELOC_SCRIPT} is defined in the
@@ -287,6 +293,61 @@ this value if @code{GENERATE_COMBRELOC_SCRIPT} is defined in the
 The @file{emultempl} script must arrange to use this script at the
 appropriate time, normally when the linker is invoked with the @code{-shared
 -z combreloc} option.  The output has an extension of @file{.xsc}.
+
+@item wshared
+Like @emph{cshared} but in addition to needing the @option{-shared}
+and @option{-z combreloc} options, it also needs the @option{-z relro}
+option.  If the @option{-z now} option is also used then the output has
+an extension of @file{.xsw}, otherwise it is @file{.xsco}.
+
+@item pie
+The @file{scripttempl} script is only invoked with @code{LD_FLAG} set to
+this value if @code{GENERATE_PIE_SCRIPT} is defined in the
+@file{emulparams} file.  The @file{emultempl} script must arrange to use
+this script at the appropriate time, normally when the linker is invoked
+with the @code{-pie} option.  The output has an extension of
+@file{.xd}.
+
+In addition if the @file{scripttempl} script is also invoked with
+@code{GENERATE_RELRO_SCRIPT} defined then a second script is created
+with an extension of @file{.xdo} to match the @option{-pie} and
+@option{-z relro} options.
+
+@item cpie
+Like @code{pie} but this version is used when the @file{scripttempl}
+script is invoked with both @code{GENERATE_PIE_SCRIPT} and
+@code{GENERATE_COMBRELOC_SCRIPT} defined.  The @file{emultempl} script
+must arrange to use this script at the appropriate time, normally when
+the linker is invoked with the @code{-pie} and @option{-z combreloc}
+options.  The output has an extension of @file{.xdc}.
+
+@item wpie
+Like @code{cpie}, but in addition the @option{-z relro} and
+@option{-z now} options need to be defined.  The output has an
+extension of @file{.xdw}.
+
+@item textonly
+@item pietextonly
+@item cpietextonly
+@item wpietextonly
+
+@item ctextonly
+@item wtextonly
+@item sharedtextonly
+@item csharedtextonly
+@item wsharedtextonly
+
+@item rotextonly
+@item roctextonly
+@item rowtextonly
+@item rosharedtextonly
+@item rocsharedtextonly
+@item rowsharedtextonly
+@item ropietextonly
+@item rocpietextonly
+@item rowpietextonly
+
+
 @item auto_import
 The @file{scripttempl} script is only invoked with @code{LD_FLAG} set to
 this value if @code{GENERATE_AUTO_IMPORT_SCRIPT} is defined in the
@@ -294,7 +355,9 @@ this value if @code{GENERATE_AUTO_IMPORT_SCRIPT} is defined in the
 use this script at the appropriate time, normally when the linker is
 invoked with the @code{--enable-auto-import} option.  The output has
 an extension of @file{.xa}.
+
 @end table
+
 
 Besides the shell variables set by the @file{emulparams} script, and the
 @code{LD_FLAG} variable, the @file{genscripts.sh} script will set

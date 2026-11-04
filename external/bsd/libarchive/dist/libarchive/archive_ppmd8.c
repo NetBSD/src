@@ -61,7 +61,7 @@ typedef struct CPpmd8_Node_
 
 #define EMPTY_NODE 0xFFFFFFFF
 
-void Ppmd8_Construct(CPpmd8 *p)
+static void Ppmd8_Construct(CPpmd8 *p)
 {
   unsigned i, k, m;
 
@@ -89,14 +89,14 @@ void Ppmd8_Construct(CPpmd8 *p)
   }
 }
 
-void Ppmd8_Free(CPpmd8 *p)
+static void Ppmd8_Free(CPpmd8 *p)
 {
   free(p->Base);
   p->Size = 0;
   p->Base = 0;
 }
 
-Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size)
+static Bool Ppmd8_Alloc(CPpmd8 *p, UInt32 size)
 {
   if (p->Base == 0 || p->Size != size)
   {
@@ -242,9 +242,14 @@ static void *AllocUnits(CPpmd8 *p, unsigned indx)
   return AllocUnitsRare(p, indx);
 }
 
-#define MyMem12Cpy(dest, src, num) \
-  { UInt32 *d = (UInt32 *)dest; const UInt32 *z = (const UInt32 *)src; UInt32 n = num; \
-    do { d[0] = z[0]; d[1] = z[1]; d[2] = z[2]; z += 3; d += 3; } while (--n); }
+#define MyMem12Cpy(dest, src, num) do {					\
+	UInt32 *d = (UInt32 *)dest;					\
+	const UInt32 *z = (const UInt32 *)src;				\
+	UInt32 n = num;							\
+	do {								\
+		d[0] = z[0]; d[1] = z[1]; d[2] = z[2]; z += 3; d += 3;	\
+	} while (--n);							\
+} while (0)
 
 static void *ShrinkUnits(CPpmd8 *p, void *oldPtr, unsigned oldNU, unsigned newNU)
 {
@@ -341,7 +346,9 @@ static void SetSuccessor(CPpmd_State *p, CPpmd_Void_Ref v)
   (p)->SuccessorHigh = (UInt16)(((UInt32)(v) >> 16) & 0xFFFF);
 }
 
-#define RESET_TEXT(offs) { p->Text = p->Base + p->AlignOffset + (offs); }
+#define RESET_TEXT(offs) do {						\
+	p->Text = p->Base + p->AlignOffset + (offs);			\
+} while (0)
 
 static void RestartModel(CPpmd8 *p)
 {
@@ -400,7 +407,7 @@ static void RestartModel(CPpmd8 *p)
   }
 }
 
-void Ppmd8_Init(CPpmd8 *p, unsigned maxOrder, unsigned restoreMethod)
+static void Ppmd8_Init(CPpmd8 *p, unsigned maxOrder, unsigned restoreMethod)
 {
   p->MaxOrder = maxOrder;
   p->RestoreMethod = restoreMethod;
@@ -1035,7 +1042,7 @@ static void Rescale(CPpmd8 *p)
   p->FoundState = STATS(p->MinContext);
 }
 
-CPpmd_See *Ppmd8_MakeEscFreq(CPpmd8 *p, unsigned numMasked1, UInt32 *escFreq)
+static CPpmd_See *Ppmd8_MakeEscFreq(CPpmd8 *p, unsigned numMasked1, UInt32 *escFreq)
 {
   CPpmd_See *see;
   if (p->MinContext->NumStats != 0xFF)
@@ -1071,7 +1078,7 @@ static void NextContext(CPpmd8 *p)
   }
 }
 
-void Ppmd8_Update1(CPpmd8 *p)
+static void Ppmd8_Update1(CPpmd8 *p)
 {
   CPpmd_State *s = p->FoundState;
   s->Freq += 4;
@@ -1086,7 +1093,7 @@ void Ppmd8_Update1(CPpmd8 *p)
   NextContext(p);
 }
 
-void Ppmd8_Update1_0(CPpmd8 *p)
+static void Ppmd8_Update1_0(CPpmd8 *p)
 {
   p->PrevSuccess = (2 * p->FoundState->Freq >= p->MinContext->SummFreq);
   p->RunLength += p->PrevSuccess;
@@ -1096,7 +1103,7 @@ void Ppmd8_Update1_0(CPpmd8 *p)
   NextContext(p);
 }
 
-void Ppmd8_UpdateBin(CPpmd8 *p)
+static void Ppmd8_UpdateBin(CPpmd8 *p)
 {
   p->FoundState->Freq = (Byte)(p->FoundState->Freq + (p->FoundState->Freq < 196));
   p->PrevSuccess = 1;
@@ -1104,7 +1111,7 @@ void Ppmd8_UpdateBin(CPpmd8 *p)
   NextContext(p);
 }
 
-void Ppmd8_Update2(CPpmd8 *p)
+static void Ppmd8_Update2(CPpmd8 *p)
 {
   p->MinContext->SummFreq += 4;
   if ((p->FoundState->Freq += 4) > MAX_FREQ)
@@ -1120,7 +1127,7 @@ This code is based on:
   PPMd var.I (2002): Dmitry Shkarin : Public domain
   Carryless rangecoder (1999): Dmitry Subbotin : Public domain */
 
-Bool Ppmd8_RangeDec_Init(CPpmd8 *p)
+static Bool Ppmd8_RangeDec_Init(CPpmd8 *p)
 {
   unsigned i;
   p->Low = 0;
@@ -1154,7 +1161,7 @@ static void RangeDec_Decode(CPpmd8 *p, UInt32 start, UInt32 size)
 
 #define MASK(sym) ((signed char *)charMask)[sym]
 
-int Ppmd8_DecodeSymbol(CPpmd8 *p)
+static int Ppmd8_DecodeSymbol(CPpmd8 *p)
 {
   size_t charMask[256 / sizeof(size_t)];
   if (p->MinContext->NumStats != 0)

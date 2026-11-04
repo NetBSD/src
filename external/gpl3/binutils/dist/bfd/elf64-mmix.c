@@ -1,5 +1,5 @@
 /* MMIX-specific support for 64-bit ELF.
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Contributed by Hans-Peter Nilsson <hp@bitrange.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -828,16 +828,12 @@ bfd_elf64_bfd_reloc_name_lookup (bfd *abfd ATTRIBUTE_UNUSED,
 static bool
 mmix_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct _mmix_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  struct _mmix_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -1430,7 +1426,8 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_MMIX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -1500,7 +1497,7 @@ mmix_elf_relocate_section (bfd *output_bfd ATTRIBUTE_UNUSED,
 		  /* Shift this reloc to the end of the relocs to maintain
 		     the r_offset sorted reloc order.  */
 		  relcpy = *rel;
-		  memmove (rel, rel + 1, (char *) relend - (char *) rel);
+		  memmove (rel, rel + 1, (char *) relend - (char *) (rel + 1));
 		  relend[-1] = relcpy;
 
 		  /* Back up one reloc, or else we'd skip the next reloc
@@ -1765,19 +1762,19 @@ mmix_final_link_relocate (reloc_howto_type *howto, asection *input_section,
 static asection *
 mmix_elf_gc_mark_hook (asection *sec,
 		       struct bfd_link_info *info,
-		       Elf_Internal_Rela *rel,
+		       struct elf_reloc_cookie *cookie,
 		       struct elf_link_hash_entry *h,
-		       Elf_Internal_Sym *sym)
+		       unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF64_R_TYPE (rel->r_info))
+    switch (ELF64_R_TYPE (cookie->rel->r_info))
       {
       case R_MMIX_GNU_VTINHERIT:
       case R_MMIX_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Sort register relocs to come before expanding relocs.  */
@@ -2219,7 +2216,7 @@ mmix_elf_final_link (bfd *abfd, struct bfd_link_info *info)
 	}
     }
 
-  if (! bfd_elf_final_link (abfd, info))
+  if (! _bfd_elf_final_link (abfd, info))
     return false;
 
   /* Since this section is marked SEC_LINKER_CREATED, it isn't output by
@@ -2389,6 +2386,7 @@ _bfd_mmix_after_linker_allocation (bfd *abfd ATTRIBUTE_UNUSED,
     = contents = bfd_alloc (bpo_greg_owner, bpo_gregs_section->size);
   if (contents == NULL)
     return false;
+  bpo_gregs_section->alloced = 1;
 
   /* Sanity check: If these numbers mismatch, some relocation has not been
      accounted for and the rest of gregdata is probably inconsistent.
@@ -2865,6 +2863,7 @@ mmix_elf_relax_section (bfd *abfd,
 
 #define ELF_ARCH		bfd_arch_mmix
 #define ELF_MACHINE_CODE	EM_MMIX
+#define ELF_TARGET_ID		MMIX_ELF_DATA
 
 /* According to mmix-doc page 36 (paragraph 45), this should be (1LL << 48LL).
    However, that's too much for something somewhere in the linker part of

@@ -1,5 +1,5 @@
 /* TILE-Gx-specific support for ELF.
-   Copyright (C) 2011-2024 Free Software Foundation, Inc.
+   Copyright (C) 2011-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -26,9 +26,6 @@
 #include "opcode/tilegx.h"
 #include "libiberty.h"
 #include "elfxx-tilegx.h"
-
-#define ABI_64_P(abfd) \
-  (get_elf_backend_data (abfd)->s->elfclass == ELFCLASS64)
 
 #define TILEGX_ELF_WORD_BYTES(htab) \
   ((htab)->bytes_per_word)
@@ -653,6 +650,10 @@ static const reloc_map tilegx_reloc_map [] =
   TH_REMAP (BFD_RELOC_32_PCREL,		       R_TILEGX_32_PCREL)
   TH_REMAP (BFD_RELOC_16_PCREL,		       R_TILEGX_16_PCREL)
   TH_REMAP (BFD_RELOC_8_PCREL,		       R_TILEGX_8_PCREL)
+  TH_REMAP (BFD_RELOC_COPY,		       R_TILEGX_COPY)
+  TH_REMAP (BFD_RELOC_GLOB_DAT,		       R_TILEGX_GLOB_DAT)
+  TH_REMAP (BFD_RELOC_JMP_SLOT,		       R_TILEGX_JMP_SLOT)
+  TH_REMAP (BFD_RELOC_RELATIVE,		       R_TILEGX_RELATIVE)
 
 #define SIMPLE_REMAP(t) TH_REMAP (BFD_RELOC_##t, R_##t)
 
@@ -664,10 +665,6 @@ static const reloc_map tilegx_reloc_map [] =
   SIMPLE_REMAP (TILEGX_HW0_LAST)
   SIMPLE_REMAP (TILEGX_HW1_LAST)
   SIMPLE_REMAP (TILEGX_HW2_LAST)
-  SIMPLE_REMAP (TILEGX_COPY)
-  SIMPLE_REMAP (TILEGX_GLOB_DAT)
-  SIMPLE_REMAP (TILEGX_JMP_SLOT)
-  SIMPLE_REMAP (TILEGX_RELATIVE)
   SIMPLE_REMAP (TILEGX_BROFF_X1)
   SIMPLE_REMAP (TILEGX_JUMPOFF_X1)
   SIMPLE_REMAP (TILEGX_JUMPOFF_X1_PLT)
@@ -1068,7 +1065,7 @@ static const tilegx_create_func reloc_to_create_func[] =
 static void
 tilegx_elf_append_rela (bfd *abfd, asection *s, Elf_Internal_Rela *rel)
 {
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   bfd_byte *loc;
 
   bed = get_elf_backend_data (abfd);
@@ -1399,8 +1396,7 @@ tilegx_elf_link_hash_table_create (bfd *abfd)
     }
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
-				      sizeof (struct tilegx_elf_link_hash_entry),
-				      TILEGX_ELF_DATA))
+				      sizeof (struct tilegx_elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1417,7 +1413,7 @@ tilegx_elf_create_got_section (bfd *abfd, struct bfd_link_info *info)
   flagword flags;
   asection *s, *s_got;
   struct elf_link_hash_entry *h;
-  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+  elf_backend_data *bed = get_elf_backend_data (abfd);
   struct elf_link_hash_table *htab = elf_hash_table (info);
 
   /* This function may be called more than once.  */
@@ -2034,13 +2030,13 @@ tilegx_elf_check_relocs (bfd *abfd, struct bfd_link_info *info,
 asection *
 tilegx_elf_gc_mark_hook (asection *sec,
 			 struct bfd_link_info *info,
-			 Elf_Internal_Rela *rel,
+			 struct elf_reloc_cookie *cookie,
 			 struct elf_link_hash_entry *h,
-			 Elf_Internal_Sym *sym)
+			 unsigned int symndx)
 {
   if (h != NULL)
     {
-      switch (TILEGX_ELF_R_TYPE (rel->r_info))
+      switch (TILEGX_ELF_R_TYPE (cookie->rel->r_info))
 	{
 	case R_TILEGX_GNU_VTINHERIT:
 	case R_TILEGX_GNU_VTENTRY:
@@ -2054,7 +2050,7 @@ tilegx_elf_gc_mark_hook (asection *sec,
     {
       struct bfd_link_hash_entry *bh;
 
-      switch (TILEGX_ELF_R_TYPE (rel->r_info))
+      switch (TILEGX_ELF_R_TYPE (cookie->rel->r_info))
 	{
 	case R_TILEGX_TLS_GD_CALL:
 	  /* This reloc implicitly references __tls_get_addr.  We know
@@ -2074,11 +2070,11 @@ tilegx_elf_gc_mark_hook (asection *sec,
 	  h->mark = 1;
 	  if (h->is_weakalias)
 	    weakdef (h)->mark = 1;
-	  sym = NULL;
+	  symndx = 0;
 	}
     }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* Adjust a symbol defined by a dynamic object and referenced by a
@@ -2430,8 +2426,8 @@ tilegx_elf_omit_section_dynsym (bfd *output_bfd,
 }
 
 bool
-tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+tilegx_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			       struct bfd_link_info *info)
 {
   struct tilegx_elf_link_hash_table *htab;
   bfd *dynobj;
@@ -2441,17 +2437,19 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   htab = tilegx_elf_hash_table (info);
   BFD_ASSERT (htab != NULL);
   dynobj = htab->elf.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   if (elf_hash_table (info)->dynamic_sections_created)
     {
       /* Set the contents of the .interp section to the interpreter.  */
       if (bfd_link_executable (info) && !info->nointerp)
 	{
-	  s = bfd_get_linker_section (dynobj, ".interp");
+	  s = htab->elf.interp;
 	  BFD_ASSERT (s != NULL);
 	  s->size = strlen (htab->dynamic_interpreter) + 1;
 	  s->contents = (unsigned char *) htab->dynamic_interpreter;
+	  s->alloced = 1;
 	}
     }
 
@@ -2617,6 +2615,7 @@ tilegx_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL)
 	return false;
+      s->alloced = 1;
     }
 
   return _bfd_elf_add_dynamic_tags (output_bfd, info, true);
@@ -2892,7 +2891,8 @@ tilegx_elf_relocate_section (bfd *output_bfd, struct bfd_link_info *info,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_TILEGX_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -3786,7 +3786,7 @@ tilegx_elf_finish_dynamic_symbol (bfd *output_bfd,
       Elf_Internal_Rela rela;
       bfd_byte *loc;
       bfd_vma r_offset;
-      const struct elf_backend_data *bed = get_elf_backend_data (output_bfd);
+      elf_backend_data *bed = get_elf_backend_data (output_bfd);
 
 
       int rela_index;
@@ -3918,7 +3918,7 @@ tilegx_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 		   asection *splt ATTRIBUTE_UNUSED)
 {
   struct tilegx_elf_link_hash_table *htab;
-  const struct elf_backend_data *bed;
+  elf_backend_data *bed;
   bfd_byte *dyncon, *dynconend;
   size_t dynsize;
 
@@ -3960,7 +3960,8 @@ tilegx_finish_dyn (bfd *output_bfd, struct bfd_link_info *info,
 
 bool
 tilegx_elf_finish_dynamic_sections (bfd *output_bfd,
-				    struct bfd_link_info *info)
+				    struct bfd_link_info *info,
+				    bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn;

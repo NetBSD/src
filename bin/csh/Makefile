@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2018/06/10 17:55:11 christos Exp $
+#	$NetBSD: Makefile,v 1.42.14.1 2026/11/04 22:36:13 perseant Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 #
 # C Shell with process control; VM/UNIX VAX Makefile
@@ -57,6 +57,7 @@ SUBDIR.roff+=USD.doc
 COPTS.err.c = -Wno-format-nonliteral
 COPTS.printf.c = -Wno-format-nonliteral
 COPTS.proc.c = -Wno-format-nonliteral
+COPTS.glob.c = ${CC_WNO_DANGLING_POINTER}
 
 .if !empty(DFLAGS:M*EDIT)
 LDADD+=-ledit -lterminfo -lutil

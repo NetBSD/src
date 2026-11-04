@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -79,6 +79,11 @@ objectClass: olcDatabaseConfig
 olcDatabase: {0}config
 olcRootPW:< file://$CONFIGPWF
 EOF
+RC=$?
+if test $RC != 0 ; then
+	echo "slapadd failed ($RC)!"
+	exit $RC
+fi
 
 n=`expr $n + 1`
 done
@@ -165,7 +170,7 @@ PORT=`expr $BASEPORT + $n`
 URI="ldap://${LOCALHOST}:$PORT/"
 echo "olcSyncRepl: rid=00$n provider=$URI binddn=\"cn=config\" bindmethod=simple" >> $TMP
 echo "  credentials=$CONFIGPW searchbase=\"cn=config\" type=refreshAndPersist" >> $TMP
-echo "  retry=\"3 10 300 5\" timeout=3" >> $TMP
+echo "  retry=\"1 12 300 5\" timeout=3" >> $TMP
 n=`expr $n + 1`
 done
 echo "-" >> $TMP
@@ -227,7 +232,7 @@ P2=`expr $BASEPORT + $j`
 U2="ldap://${LOCALHOST}:$P2/"
 echo "olcSyncRepl: rid=00$j provider=$U2 binddn=\"cn=config\" bindmethod=simple" >> $TMP
 echo "  credentials=$CONFIGPW searchbase=\"cn=config\" type=refreshAndPersist" >> $TMP
-echo "  retry=\"3 10 300 5\" timeout=3" >> $TMP
+echo "  retry=\"1 12 300 5\" timeout=3" >> $TMP
 j=`expr $j + 1`
 done
 cat <<EOF >> $TMP
@@ -291,7 +296,7 @@ URI="ldap://${LOCALHOST}:$PORT/"
 
 echo "olcSyncRepl: rid=01$n provider=$URI binddn=\"$MANAGERDN\" bindmethod=simple" >> $TMP
 echo "  credentials=$PASSWD searchbase=\"$BASEDN\" $SYNCTYPE" >> $TMP
-echo "  retry=\"3 10 300 5\" timeout=3" >> $TMP
+echo "  retry=\"1 12 300 5\" timeout=3" >> $TMP
 n=`expr $n + 1`
 done
 

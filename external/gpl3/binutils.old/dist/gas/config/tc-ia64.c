@@ -1,5 +1,5 @@
 /* tc-ia64.c -- Assembler for the HP/Intel IA-64 architecture.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Contributed by David Mosberger-Tang <davidm@hpl.hp.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -68,8 +68,7 @@
 enum special_section
   {
     /* IA-64 ABI section pseudo-ops.  */
-    SPECIAL_SECTION_BSS = 0,
-    SPECIAL_SECTION_SBSS,
+    SPECIAL_SECTION_SBSS = 0,
     SPECIAL_SECTION_SDATA,
     SPECIAL_SECTION_RODATA,
     SPECIAL_SECTION_COMMENT,
@@ -211,9 +210,9 @@ const char FLT_CHARS[] = "rRsSfFdDxXpP";
 
 /* ia64-specific option processing:  */
 
-const char *md_shortopts = "m:N:x::";
+const char md_shortopts[] = "m:N:x::";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
   {
 #define OPTION_MCONSTANT_GP (OPTION_MD_BASE + 1)
     {"mconstant-gp", no_argument, NULL, OPTION_MCONSTANT_GP},
@@ -221,7 +220,7 @@ struct option md_longopts[] =
     {"mauto-pic", no_argument, NULL, OPTION_MAUTO_PIC}
   };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 static struct
   {
@@ -645,7 +644,7 @@ static const bfd_vma nop[IA64_NUM_UNITS] =
    habit of setting temporary sentinels.  */
 static char special_section_name[][20] =
   {
-    {".bss"}, {".sbss"}, {".sdata"}, {".rodata"}, {".comment"},
+    {".sbss"}, {".sdata"}, {".rodata"}, {".comment"},
     {".IA_64.unwind"}, {".IA_64.unwind_info"},
     {".init_array"}, {".fini_array"}
   };
@@ -742,7 +741,7 @@ typedef struct unw_rec_list {
   struct unw_rec_list *next;
 } unw_rec_list;
 
-#define SLOT_NUM_NOT_SET        (unsigned)-1
+#define SLOT_NUM_NOT_SET        -1UL
 
 /* Linked list of saved prologue counts.  A very poor
    implementation of a map from label numbers to prologue counts.  */
@@ -1046,9 +1045,9 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
   const char *sec_name;
   char *sym_name;
   char c;
-  offsetT size;
-  offsetT cur_size;
-  offsetT temp;
+  valueT size;
+  valueT cur_size;
+  valueT temp;
   symbolS *symbolP;
   segT current_seg = now_seg;
   subsegT current_subseg = now_subseg;
@@ -1110,7 +1109,7 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
 
   temp = get_absolute_expression ();
   size = temp;
-  size &= ((offsetT) 2 << (stdoutput->arch_info->bits_per_address - 1)) - 1;
+  size &= ((valueT) 2 << (stdoutput->arch_info->bits_per_address - 1)) - 1;
   if (temp != size)
     {
       as_warn (_("size (%ld) out of range, ignored"), (long) temp);
@@ -1139,7 +1138,7 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
   obj_elf_change_section
     (sec_name, SHT_NOBITS,
      SHF_ALLOC | SHF_WRITE | SHF_IA_64_VMS_OVERLAID | SHF_IA_64_VMS_GLOBAL,
-     0, NULL, 1, 0);
+     0, NULL, true);
 
   S_SET_VALUE (symbolP, 0);
   S_SET_SIZE (symbolP, size);
@@ -1151,11 +1150,9 @@ obj_elf_vms_common (int ignore ATTRIBUTE_UNUSED)
   record_alignment (now_seg, log_align);
 
   cur_size = bfd_section_size (now_seg);
-  if ((int) size > cur_size)
+  if (size > cur_size)
     {
-      char *pfrag
-        = frag_var (rs_fill, 1, 1, (relax_substateT)0, NULL,
-                    (valueT)size - (valueT)cur_size, NULL);
+      char *pfrag = frag_var (rs_fill, 1, 1, 0, NULL, size - cur_size, NULL);
       *pfrag = 0;
       bfd_set_section_size (now_seg, size);
     }
@@ -3172,7 +3169,7 @@ dot_loc (int x)
   dwarf2_directive_loc (x);
 }
 
-/* .sbss, .bss etc. are macros that expand into ".section SECNAME".  */
+/* .sbss, .srodata etc. are macros that expand into ".section SECNAME".  */
 static void
 dot_special_section (int which)
 {
@@ -3575,7 +3572,7 @@ start_unwind_section (const segT text_seg, int sec_index)
       suffix += sizeof (".gnu.linkonce.t.") - 1;
     }
 
-  sec_name = concat (prefix, suffix, NULL);
+  sec_name = concat (prefix, suffix, (const char *) NULL);
 
   /* Handle COMDAT group.  */
   if ((text_seg->flags & SEC_LINK_ONCE) != 0
@@ -3594,7 +3591,8 @@ start_unwind_section (const segT text_seg, int sec_index)
 	}
 
       /* We have to construct a fake section directive.  */
-      section = concat (sec_name, ",\"aG\",@progbits,", group_name, ",comdat", NULL);
+      section = concat (sec_name, ",\"aG\",@progbits,", group_name,
+			",comdat", (const char *) NULL);
       set_section (section);
       free (section);
     }
@@ -3658,7 +3656,7 @@ generate_unwind_image (const segT text_seg)
       unwind.info = expr_build_dot ();
 
       frag_var (rs_machine_dependent, size, size, 0, 0,
-		(offsetT) (long) unwind.personality_routine,
+		(intptr_t) unwind.personality_routine,
 		(char *) list);
 
       /* Add the personality address to the image.  */
@@ -4200,24 +4198,23 @@ dot_unwabi (int dummy ATTRIBUTE_UNUSED)
 static void
 dot_personality (int dummy ATTRIBUTE_UNUSED)
 {
-  char *name, *p, c;
+  char *name, c;
 
   if (!in_procedure ("personality"))
     return;
   SKIP_WHITESPACE ();
   c = get_symbol_name (&name);
-  p = input_line_pointer;
   unwind.personality_routine = symbol_find_or_make (name);
   unwind.force_unwind_entry = 1;
-  *p = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   demand_empty_rest_of_line ();
 }
 
 static void
 dot_proc (int dummy ATTRIBUTE_UNUSED)
 {
-  char *name, *p, c;
+  char *name, c;
   symbolS *sym;
   proc_pending *pending, *last_pending;
 
@@ -4241,7 +4238,6 @@ dot_proc (int dummy ATTRIBUTE_UNUSED)
     {
       SKIP_WHITESPACE ();
       c = get_symbol_name (&name);
-      p = input_line_pointer;
       if (!*name)
 	as_bad (_("Empty argument of .proc"));
       else
@@ -4262,8 +4258,8 @@ dot_proc (int dummy ATTRIBUTE_UNUSED)
 	    }
 	  symbol_get_bfdsym (sym)->flags |= BSF_FUNCTION;
 	}
-      *p = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       if (*input_line_pointer != ',')
 	break;
       ++input_line_pointer;
@@ -4479,13 +4475,14 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
 		    S_SET_SIZE (sym, frag_now_fix () - S_GET_VALUE (sym));
 		  else
 		    {
-		      symbol_get_obj (sym)->size = XNEW (expressionS);
-		      symbol_get_obj (sym)->size->X_op = O_subtract;
-		      symbol_get_obj (sym)->size->X_add_symbol
+		      OBJ_SYMFIELD_TYPE *obj = symbol_get_obj (sym);
+		      obj->size = notes_alloc (sizeof (*obj->size));
+		      obj->size->X_op = O_subtract;
+		      obj->size->X_add_symbol
 			= symbol_new (FAKE_LABEL_NAME, now_seg,
 				      frag_now, frag_now_fix ());
-		      symbol_get_obj (sym)->size->X_op_symbol = sym;
-		      symbol_get_obj (sym)->size->X_add_number = 0;
+		      obj->size->X_op_symbol = sym;
+		      obj->size->X_add_number = 0;
 		    }
 		}
 	    }
@@ -4495,11 +4492,10 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
   /* Parse names of main and alternate entry points.  */
   while (1)
     {
-      char *name, *p, c;
+      char *name, c;
 
       SKIP_WHITESPACE ();
       c = get_symbol_name (&name);
-      p = input_line_pointer;
       if (!*name)
 	(md.unwind_check == unwind_check_warning
 	 ? as_warn
@@ -4519,8 +4515,8 @@ dot_endp (int dummy ATTRIBUTE_UNUSED)
 	  if (!sym || !pending)
 	    as_warn (_("`%s' was not specified with previous .proc"), name);
 	}
-      *p = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       if (*input_line_pointer != ',')
 	break;
       ++input_line_pointer;
@@ -4608,9 +4604,9 @@ dot_rot (int type)
     {
       ch = get_symbol_name (&start);
       len = strlen (ia64_canonicalize_symbol_name (start));
-      *input_line_pointer = ch;
+      restore_line_pointer (ch);
 
-      SKIP_WHITESPACE_AFTER_NAME ();
+      SKIP_WHITESPACE ();
       if (*input_line_pointer != '[')
 	{
 	  as_bad (_("Expected '['"));
@@ -4663,14 +4659,9 @@ dot_rot (int type)
 	}
 
       if (!*drpp)
-	{
-	  *drpp = XOBNEW (&notes, struct dynreg);
-	  memset (*drpp, 0, sizeof (*dr));
-	}
+	*drpp = notes_calloc (1, sizeof (**drpp));
 
-      name = XOBNEWVEC (&notes, char, len + 1);
-      memcpy (name, start, len);
-      name[len] = '\0';
+      name = notes_memdup (start, len, len + 1);
 
       dr = *drpp;
       dr->name = name;
@@ -4682,7 +4673,6 @@ dot_rot (int type)
       if (str_hash_insert (md.dynreg_hash, name, dr, 0) != NULL)
 	{
 	  as_bad (_("Attempt to redefine register set `%s'"), name);
-	  obstack_free (&notes, name);
 	  goto err;
 	}
 
@@ -4747,9 +4737,9 @@ dot_psr (int dummy ATTRIBUTE_UNUSED)
 	md.flags |= EF_IA_64_ABI64;
       else
 	as_bad (_("Unknown psr option `%s'"), option);
-      *input_line_pointer = ch;
+      restore_line_pointer (ch);
 
-      SKIP_WHITESPACE_AFTER_NAME ();
+      SKIP_WHITESPACE ();
       if (*input_line_pointer != ',')
 	break;
 
@@ -5007,7 +4997,7 @@ dot_pred_rel (int type)
 	    type = 'c';
 	  else if (strcmp (form, "imply") == 0)
 	    type = 'i';
-	  obstack_free (&notes, form);
+	  notes_free (form);
 	}
       else if (*input_line_pointer == '@')
 	{
@@ -5105,7 +5095,7 @@ dot_pred_rel (int type)
       if (count == 0)
 	mask = ~(valueT) 0;
       clear_qp_mutex (mask);
-      clear_qp_implies (mask, (valueT) 0);
+      clear_qp_implies (mask, 0);
       break;
     case 'i':
       if (count != 2 || p1 == -1 || p2 == -1)
@@ -5166,8 +5156,8 @@ dot_entry (int dummy ATTRIBUTE_UNUSED)
       if (str_hash_insert (md.entry_hash, S_GET_NAME (symbolP), symbolP, 0))
 	as_bad (_("duplicate entry hint %s"), name);
 
-      *input_line_pointer = c;
-      SKIP_WHITESPACE_AFTER_NAME ();
+      restore_line_pointer (c);
+      SKIP_WHITESPACE ();
       c = *input_line_pointer;
       if (c == ',')
 	{
@@ -5207,7 +5197,6 @@ const pseudo_typeS md_pseudo_table[] =
     { "radix", dot_radix, 0 },
     { "lcomm", s_lcomm_bytes, 1 },
     { "loc", dot_loc, 0 },
-    { "bss", dot_special_section, SPECIAL_SECTION_BSS },
     { "sbss", dot_special_section, SPECIAL_SECTION_SBSS },
     { "sdata", dot_special_section, SPECIAL_SECTION_SDATA },
     { "rodata", dot_special_section, SPECIAL_SECTION_RODATA },
@@ -5993,6 +5982,7 @@ parse_operand (expressionS *e, int more)
   e->X_op = O_absent;
   SKIP_WHITESPACE ();
   expression (e);
+  resolve_register (e);
   sep = *input_line_pointer;
   if (more && (sep == ',' || sep == more))
     ++input_line_pointer;
@@ -7566,7 +7556,7 @@ ia64_target_format (void)
 }
 
 void
-ia64_end_of_source (void)
+ia64_md_finish (void)
 {
   /* terminate insn group upon reaching end of file:  */
   insn_group_break (1, 0, 0);
@@ -9960,11 +9950,8 @@ note_register_values (struct ia64_opcode *idesc)
 	  gr_values[regno].value = CURR_SLOT.opnd[1].X_add_number;
 	  gr_values[regno].path = md.path;
 	  if (md.debug_dv)
-	    {
-	      fprintf (stderr, "  Know gr%d = ", regno);
-	      fprintf_vma (stderr, gr_values[regno].value);
-	      fputs ("\n", stderr);
-	    }
+	    fprintf (stderr, "  Know gr%d = %" PRIx64 "\n",
+		     regno, gr_values[regno].value);
 	}
     }
   /* Look for dep.z imm insns.  */
@@ -9984,11 +9971,8 @@ note_register_values (struct ia64_opcode *idesc)
 	  gr_values[regno].value = value;
 	  gr_values[regno].path = md.path;
 	  if (md.debug_dv)
-	    {
-	      fprintf (stderr, "  Know gr%d = ", regno);
-	      fprintf_vma (stderr, gr_values[regno].value);
-	      fputs ("\n", stderr);
-	    }
+	    fprintf (stderr, "  Know gr%d = %" PRIx64 "\n",
+		     regno, gr_values[regno].value);
 	}
     }
   else
@@ -10202,12 +10186,9 @@ print_dependency (const char *action, int depind)
       if (regdeps[depind].specific && regdeps[depind].index >= 0)
 	fprintf (stderr, " (%d)", regdeps[depind].index);
       if (regdeps[depind].mem_offset.hint)
-	{
-	  fputs (" ", stderr);
-	  fprintf_vma (stderr, regdeps[depind].mem_offset.base);
-	  fputs ("+", stderr);
-	  fprintf_vma (stderr, regdeps[depind].mem_offset.offset);
-	}
+	fprintf (stderr, " %" PRIx64 "+%" PRIx64,
+		 regdeps[depind].mem_offset.base,
+		 regdeps[depind].mem_offset.offset);
       fprintf (stderr, "\n");
     }
 }
@@ -10664,7 +10645,7 @@ md_assemble (char *str)
 
   ch = get_symbol_name (&temp);
   mnemonic = temp;
-  pdesc = (struct pseudo_opcode *) str_hash_find (md.pseudo_hash, mnemonic);
+  pdesc = str_hash_find (md.pseudo_hash, mnemonic);
   if (pdesc)
     {
       (void) restore_line_pointer (ch);
@@ -11534,8 +11515,8 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixp)
 {
   arelent *reloc;
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
   reloc->addend = fixp->fx_offset;
@@ -11546,7 +11527,6 @@ tc_gen_reloc (asection *sec ATTRIBUTE_UNUSED, fixS *fixp)
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("Cannot represent %s relocation in object file"),
 		    bfd_get_reloc_code_name (fixp->fx_r_type));
-      free (reloc);
       return NULL;
     }
   return reloc;
@@ -11683,8 +11663,7 @@ ia64_float_to_chars_bigendian (char *lit, LITTLENUM_TYPE *words,
 {
   while (prec--)
     {
-      number_to_chars_bigendian (lit, (long) (*words++),
-				 sizeof (LITTLENUM_TYPE));
+      number_to_chars_bigendian (lit, *words++, sizeof (LITTLENUM_TYPE));
       lit += sizeof (LITTLENUM_TYPE);
     }
 }
@@ -11695,7 +11674,7 @@ ia64_float_to_chars_littleendian (char *lit, LITTLENUM_TYPE *words,
 {
   while (prec--)
     {
-      number_to_chars_littleendian (lit, (long) (words[prec]),
+      number_to_chars_littleendian (lit, words[prec],
 				    sizeof (LITTLENUM_TYPE));
       lit += sizeof (LITTLENUM_TYPE);
     }
@@ -11747,7 +11726,7 @@ dot_alias (int section)
 
   delim = get_symbol_name (&name);
   end_name = input_line_pointer;
-  *end_name = delim;
+  restore_line_pointer (delim);
 
   if (name == end_name)
     {
@@ -11756,7 +11735,7 @@ dot_alias (int section)
       return;
     }
 
-  SKIP_WHITESPACE_AFTER_NAME ();
+  SKIP_WHITESPACE ();
 
   if (*input_line_pointer != ',')
     {
@@ -11781,9 +11760,7 @@ dot_alias (int section)
     }
 
   /* Make a copy of name string.  */
-  len = strlen (name) + 1;
-  obstack_grow (&notes, name, len);
-  name = obstack_finish (&notes);
+  name = notes_strdup (name);
 
   if (section)
     {
@@ -11800,29 +11777,27 @@ dot_alias (int section)
 
   /* Check if alias has been used before.  */
 
-  h = (struct alias *) str_hash_find (ahash, alias);
+  h = str_hash_find (ahash, alias);
   if (h)
     {
       if (strcmp (h->name, name))
 	as_bad (_("`%s' is already the alias of %s `%s'"),
 		alias, kind, h->name);
-      obstack_free (&notes, name);
-      obstack_free (&notes, alias);
+      notes_free (alias);
       goto out;
     }
 
   /* Check if name already has an alias.  */
-  a = (const char *) str_hash_find (nhash, name);
+  a = str_hash_find (nhash, name);
   if (a)
     {
       if (strcmp (a, alias))
 	as_bad (_("%s `%s' already has an alias `%s'"), kind, name, a);
-      obstack_free (&notes, name);
-      obstack_free (&notes, alias);
+      notes_free (alias);
       goto out;
     }
 
-  h = XNEW (struct alias);
+  h = notes_alloc (sizeof (*h));
   h->file = as_where (&h->line);
   h->name = name;
 
@@ -11863,7 +11838,7 @@ do_alias (void **slot, void *arg ATTRIBUTE_UNUSED)
 void
 ia64_adjust_symtab (void)
 {
-  htab_traverse (alias_hash, do_alias, NULL);
+  htab_traverse_noresize (alias_hash, do_alias, NULL);
 }
 
 /* It renames the original section name to its alias.  */
@@ -11888,7 +11863,7 @@ do_secalias (void **slot, void *arg ATTRIBUTE_UNUSED)
 void
 ia64_frob_file (void)
 {
-  htab_traverse (secalias_hash, do_secalias, NULL);
+  htab_traverse_noresize (secalias_hash, do_secalias, NULL);
 }
 
 #ifdef TE_VMS

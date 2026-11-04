@@ -16,21 +16,25 @@ dnl along with this program; see the file COPYING3.  If not see
 dnl <http://www.gnu.org/licenses/>.
 dnl
 
-dnl See whether 64-bit bfd lib has been enabled.
+dnl Make sure your module depends on `all-bfd' when invoking this macro.
 AC_DEFUN([BFD_64_BIT], [dnl
-AC_ARG_ENABLE(64-bit-bfd,
-  AS_HELP_STRING([--enable-64-bit-bfd],
-		 [64-bit support (on hosts with narrower word sizes)]),
-  [AS_CASE([$enableval],
-	   [yes|no], [],
-	   [*], [AC_MSG_ERROR(bad value ${enableval} for 64-bit-bfd option)])],
-  [enable_64_bit_bfd=no])
-
-dnl If the host is 64-bit, then 64-bit bfd is enabled automatically.
-AS_IF([test "x$enable_64_bit_bfd" = "xno"], [dnl
-  AC_CHECK_SIZEOF(void *)
-  AS_IF([test "x$ac_cv_sizeof_void_p" = "x8"], [enable_64_bit_bfd=yes])
-])
-
-AM_CONDITIONAL([ENABLE_BFD_64_BIT], [test "x$enable_64_bit_bfd" = "xyes"])
-])
+# See whether 64-bit bfd lib has been enabled.
+OLD_CPPFLAGS=$CPPFLAGS
+# Put the old CPPFLAGS last, in case the user's CPPFLAGS point somewhere
+# with bfd, with -I/foo/include.  We always want our bfd.
+CPPFLAGS="-I${srcdir}/../include -I../bfd -I${srcdir}/../bfd $CPPFLAGS"
+# Note we cannot cache the result of this check because BFD64 may change
+# when a secondary target has been added or removed and we have no access
+# to this information here.
+AC_MSG_CHECKING([whether BFD is 64-bit])
+AC_EGREP_CPP([HAVE_BFD64],
+  AC_LANG_PROGRAM(
+    [#include "bfd.h"],
+    [dnl
+#ifdef BFD64
+HAVE_BFD64
+#endif]),
+  [have_64_bit_bfd=yes],
+  [have_64_bit_bfd=no])
+AC_MSG_RESULT([$have_64_bit_bfd])
+CPPFLAGS=$OLD_CPPFLAGS])

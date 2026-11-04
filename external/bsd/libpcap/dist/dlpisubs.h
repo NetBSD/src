@@ -1,4 +1,4 @@
-/*	$NetBSD: dlpisubs.h,v 1.2 2014/11/19 19:33:30 christos Exp $	*/
+/*	$NetBSD: dlpisubs.h,v 1.2.28.1 2026/11/04 22:38:35 perseant Exp $	*/
 
 #ifndef dlpisubs_h
 #define	dlpisubs_h
@@ -32,6 +32,7 @@ int pcap_conf_bufmod(pcap_t *, int);
 #endif
 int pcap_alloc_databuf(pcap_t *);
 int strioctl(int, int, int, char *);
+int handle_nonexistent_dlpi_device(const char *ifname, char *errbuf);
 
 #ifdef __cplusplus
 }

@@ -25,7 +25,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.  */
 #include <fnmatch.h>
 
 /* Defined in arscan.c.  */
-extern long int ar_scan PARAMS ((char *archive, long int (*function) (), long int arg));
+extern long int ar_scan (char *archive, long int (*function) PARAMS ((int, char *, int, long int, long int, long int, long int, int, int, int, void *)), void *arg);
 extern int ar_name_equal PARAMS ((char *name, char *mem, int truncated));
 #ifndef VMS
 extern int ar_member_touch PARAMS ((char *arname, char *memname));
@@ -73,7 +73,7 @@ ar_parse_name (char *name, char **arname_p, char **memname_p)
 }
 
 static long int ar_member_date_1 PARAMS ((int desc, char *mem, int truncated, long int hdrpos,
-	long int datapos, long int size, long int date, int uid, int gid, int mode, char *name));
+	long int datapos, long int size, long int date, int uid, int gid, int mode, void *arg));
 
 /* Return the modtime of NAME.  */
 
@@ -107,7 +107,7 @@ ar_member_date (char *name)
       (void) f_mtime (arfile, 0);
   }
 
-  val = ar_scan (arname, ar_member_date_1, (long int) memname);
+  val = ar_scan (arname, ar_member_date_1, memname);
 
   if (!arname_used)
     free (arname);
@@ -123,8 +123,9 @@ static long int
 ar_member_date_1 (int desc UNUSED, char *mem, int truncated,
 		  long int hdrpos UNUSED, long int datapos UNUSED,
                   long int size UNUSED, long int date,
-                  int uid UNUSED, int gid UNUSED, int mode UNUSED, char *name)
+                  int uid UNUSED, int gid UNUSED, int mode UNUSED, void *arg)
 {
+  char *name = arg;
   return ar_name_equal (name, mem, truncated) ? date : 0;
 }
 
@@ -211,8 +212,10 @@ static long int
 ar_glob_match (int desc UNUSED, char *mem, int truncated UNUSED,
 	       long int hdrpos UNUSED, long int datapos UNUSED,
                long int size UNUSED, long int date UNUSED, int uid UNUSED,
-               int gid UNUSED, int mode UNUSED, struct ar_glob_state *state)
+               int gid UNUSED, int mode UNUSED, void *arg)
 {
+  struct ar_glob_state *state = arg;
+
   if (fnmatch (state->pattern, mem, FNM_PATHNAME|FNM_PERIOD) == 0)
     {
       /* We have a match.  Add it to the chain.  */
@@ -284,7 +287,7 @@ ar_glob (char *arname, char *member_pattern, unsigned int size)
   state.size = size;
   state.chain = 0;
   state.n = 0;
-  (void) ar_scan (arname, ar_glob_match, (long int) &state);
+  (void) ar_scan (arname, ar_glob_match, &state);
 
   if (state.chain == 0)
     return 0;

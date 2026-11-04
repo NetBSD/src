@@ -1,5 +1,5 @@
 /* prdbg.c -- Print out generic debugging information.
-   Copyright (C) 1995-2024 Free Software Foundation, Inc.
+   Copyright (C) 1995-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
    Tags style generation written by Salvador E. Tropea <set@computer.org>.
 
@@ -2449,7 +2449,6 @@ tg_tag_type (void *p, const char *name, unsigned int id,
       t = "union class ";
       break;
     default:
-      abort ();
       return false;
     }
 
@@ -2818,7 +2817,7 @@ visibility_name (enum debug_visibility visibility)
       break;
     default:
       abort ();
-      return false;
+      return NULL;
     }
   return s;
 }

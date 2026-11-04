@@ -7,7 +7,7 @@
      available from http://www.mincom.com/mtr/sdf. -->
 
 <HEAD>
-<TITLE>OpenLDAP Software 2.5 Administrator's Guide</TITLE>
+<TITLE>OpenLDAP Software 2.6 Administrator's Guide</TITLE>
 </HEAD>
 <BODY>
 
@@ -21,9 +21,9 @@
 <BR CLEAR="Left">
 </DIV>
 <DIV CLASS="title">
-<H1 CLASS="doc-title">OpenLDAP Software 2.5 Administrator's Guide</H1>
+<H1 CLASS="doc-title">OpenLDAP Software 2.6 Administrator's Guide</H1>
 <ADDRESS CLASS="doc-author">The OpenLDAP Project &lt;<A HREF="https://www.openldap.org/">https://www.openldap.org/</A>&gt;</ADDRESS>
-<ADDRESS CLASS="doc-modified">27 July 2021</ADDRESS>
+<ADDRESS CLASS="doc-modified">22 May 2025</ADDRESS>
 <BR CLEAR="All">
 </DIV>
 <DIV CLASS="contents">
@@ -49,7 +49,9 @@
 <BR>
 <A HREF="#LDAP vs RDBMS">1.8. LDAP vs RDBMS</A>
 <BR>
-<A HREF="#What is slapd and what can it do">1.9. What is slapd and what can it do?</A></UL>
+<A HREF="#What is slapd and what can it do">1.9. What is slapd and what can it do?</A>
+<BR>
+<A HREF="#What is lloadd and what can it do">1.10. What is lloadd and what can it do?</A></UL>
 <BR>
 <A HREF="#A Quick-Start Guide">2. A Quick-Start Guide</A>
 <BR>
@@ -172,19 +174,21 @@
 <BR>
 <A HREF="#Controlling rootdn access">8.4.3. Controlling rootdn access</A>
 <BR>
-<A HREF="#Managing access with Groups">8.4.4. Managing access with Groups</A>
+<A HREF="#Controlling the LDAP Proxied Authorization Control">8.4.4. Controlling the LDAP Proxied Authorization Control</A>
 <BR>
-<A HREF="#Granting access to a subset of attributes">8.4.5. Granting access to a subset of attributes</A>
+<A HREF="#Managing access with Groups">8.4.5. Managing access with Groups</A>
 <BR>
-<A HREF="#Allowing a user write to all entries below theirs">8.4.6. Allowing a user write to all entries below theirs</A>
+<A HREF="#Granting access to a subset of attributes">8.4.6. Granting access to a subset of attributes</A>
 <BR>
-<A HREF="#Allowing entry creation">8.4.7. Allowing entry creation</A>
+<A HREF="#Allowing a user write to all entries below theirs">8.4.7. Allowing a user write to all entries below theirs</A>
 <BR>
-<A HREF="#Tips for using regular expressions in Access Control">8.4.8. Tips for using regular expressions in Access Control</A>
+<A HREF="#Allowing entry creation">8.4.8. Allowing entry creation</A>
 <BR>
-<A HREF="#Granting and Denying access based on security strength factors (ssf)">8.4.9. Granting and Denying access based on security strength factors (ssf)</A>
+<A HREF="#Tips for using regular expressions in Access Control">8.4.9. Tips for using regular expressions in Access Control</A>
 <BR>
-<A HREF="#When things aren\'t working as expected">8.4.10. When things aren't working as expected</A></UL>
+<A HREF="#Granting and Denying access based on security strength factors (ssf)">8.4.10. Granting and Denying access based on security strength factors (ssf)</A>
+<BR>
+<A HREF="#When things aren\'t working as expected">8.4.11. When things aren't working as expected</A></UL>
 <BR>
 <A HREF="#Sets - Granting rights based on relationships">8.5. Sets - Granting rights based on relationships</A><UL>
 <A HREF="#Groups of Groups">8.5.1. Groups of Groups</A>
@@ -217,7 +221,7 @@
 <BR>
 <A HREF="#Limiting who can do paged searches">9.5.4. Limiting who can do paged searches</A></UL>
 <BR>
-<A HREF="#Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored">9.6. Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored.</A>
+<A HREF="#Glued/Subordinate database configurations">9.6. Glued/Subordinate database configurations</A>
 <BR>
 <A HREF="#Further Information">9.7. Further Information</A></UL>
 <BR>
@@ -591,102 +595,95 @@
 <BR>
 <A HREF="#Waiters">20.4.13. Waiters</A></UL></UL>
 <BR>
-<A HREF="#Tuning">21. Tuning</A><UL>
-<A HREF="#Performance Factors">21.1. Performance Factors</A><UL>
-<A HREF="#Memory">21.1.1. Memory</A>
+<A HREF="#Load Balancing with lloadd">21. Load Balancing with lloadd</A><UL>
+<A HREF="#Overview">21.1. Overview</A>
 <BR>
-<A HREF="#Disks">21.1.2. Disks</A>
+<A HREF="#When to use the OpenLDAP load balancer">21.2. When to use the OpenLDAP load balancer</A>
 <BR>
-<A HREF="#Network Topology">21.1.3. Network Topology</A>
+<A HREF="#Directing operations to backends">21.3. Directing operations to backends</A><UL>
+<A HREF="#Default behaviour">21.3.1. Default behaviour</A>
 <BR>
-<A HREF="#Directory Layout Design">21.1.4. Directory Layout Design</A>
+<A HREF="#Alternate selection strategies">21.3.2. Alternate selection strategies</A>
 <BR>
-<A HREF="#Expected Usage">21.1.5. Expected Usage</A></UL>
+<A HREF="#Coherence">21.3.3. Coherence</A></UL>
 <BR>
-<A HREF="#Indexes">21.2. Indexes</A><UL>
-<A HREF="#Understanding how a search works">21.2.1. Understanding how a search works</A>
+<A HREF="#Runtime configurations">21.4. Runtime configurations</A>
 <BR>
-<A HREF="#What to index">21.2.2. What to index</A>
+<A HREF="#Build Notes">21.5. Build Notes</A>
 <BR>
-<A HREF="#Presence indexing">21.2.3. Presence indexing</A>
+<A HREF="#Sample Runtime">21.6. Sample Runtime</A>
 <BR>
-<A HREF="#Equality indexing">21.2.4. Equality indexing</A>
+<A HREF="#Configuring load balancer">21.7. Configuring load balancer</A><UL>
+<A HREF="#Common configuration options">21.7.1. Common configuration options</A>
 <BR>
-<A HREF="#Substring indexing">21.2.5. Substring indexing</A></UL>
+<A HREF="#Sample backend config">21.7.2. Sample backend config</A></UL></UL>
 <BR>
-<A HREF="#Logging">21.3. Logging</A><UL>
-<A HREF="#What log level to use">21.3.1. What log level to use</A>
+<A HREF="#Tuning">22. Tuning</A><UL>
+<A HREF="#Performance Factors">22.1. Performance Factors</A><UL>
+<A HREF="#Memory">22.1.1. Memory</A>
 <BR>
-<A HREF="#What to watch out for">21.3.2. What to watch out for</A>
+<A HREF="#Disks">22.1.2. Disks</A>
 <BR>
-<A HREF="#Improving throughput">21.3.3. Improving throughput</A></UL>
+<A HREF="#Network Topology">22.1.3. Network Topology</A>
 <BR>
-<A HREF="#{{slapd}}(8) Threads">21.4. <EM>slapd</EM>(8) Threads</A></UL>
+<A HREF="#Directory Layout Design">22.1.4. Directory Layout Design</A>
 <BR>
-<A HREF="#Troubleshooting">22. Troubleshooting</A><UL>
-<A HREF="#User or Software errors">22.1. User or Software errors?</A>
+<A HREF="#Expected Usage">22.1.5. Expected Usage</A></UL>
 <BR>
-<A HREF="#Checklist">22.2. Checklist</A>
+<A HREF="#Indexes">22.2. Indexes</A><UL>
+<A HREF="#Understanding how a search works">22.2.1. Understanding how a search works</A>
 <BR>
-<A HREF="#OpenLDAP Bugs">22.3. OpenLDAP Bugs</A>
+<A HREF="#What to index">22.2.2. What to index</A>
 <BR>
-<A HREF="#3rd party software error">22.4. 3rd party software error</A>
+<A HREF="#Presence indexing">22.2.3. Presence indexing</A>
 <BR>
-<A HREF="#How to contact the OpenLDAP Project">22.5. How to contact the OpenLDAP Project</A>
+<A HREF="#Equality indexing">22.2.4. Equality indexing</A>
 <BR>
-<A HREF="#How to present your problem">22.6. How to present your problem</A>
+<A HREF="#Substring indexing">22.2.5. Substring indexing</A></UL>
 <BR>
-<A HREF="#Debugging {{slapd}}(8)">22.7. Debugging <EM>slapd</EM>(8)</A>
+<A HREF="#Logging">22.3. Logging</A><UL>
+<A HREF="#What log level to use">22.3.1. What log level to use</A>
 <BR>
-<A HREF="#Commercial Support">22.8. Commercial Support</A></UL>
+<A HREF="#What to watch out for">22.3.2. What to watch out for</A>
+<BR>
+<A HREF="#Improving throughput">22.3.3. Improving throughput</A></UL>
+<BR>
+<A HREF="#{{slapd}}(8) Threads">22.4. <EM>slapd</EM>(8) Threads</A></UL>
+<BR>
+<A HREF="#Troubleshooting">23. Troubleshooting</A><UL>
+<A HREF="#User or Software errors">23.1. User or Software errors?</A>
+<BR>
+<A HREF="#Checklist">23.2. Checklist</A>
+<BR>
+<A HREF="#OpenLDAP Bugs">23.3. OpenLDAP Bugs</A>
+<BR>
+<A HREF="#3rd party software error">23.4. 3rd party software error</A>
+<BR>
+<A HREF="#How to contact the OpenLDAP Project">23.5. How to contact the OpenLDAP Project</A>
+<BR>
+<A HREF="#How to present your problem">23.6. How to present your problem</A>
+<BR>
+<A HREF="#Debugging {{slapd}}(8)">23.7. Debugging <EM>slapd</EM>(8)</A>
+<BR>
+<A HREF="#Commercial Support">23.8. Commercial Support</A></UL>
 <BR>
 <A HREF="#Changes Since Previous Release">A. Changes Since Previous Release</A><UL>
-<A HREF="#New Guide Sections">A.1. New Guide Sections</A>
+<A HREF="#New Features and Enhancements in 2.6">A.1. New Features and Enhancements in 2.6</A><UL>
+<A HREF="#New features in slapd">A.1.1. New features in slapd</A>
 <BR>
-<A HREF="#New Features and Enhancements in 2.5">A.2. New Features and Enhancements in 2.5</A><UL>
-<A HREF="#Better {{B:cn=config}} functionality">A.2.1. Better <B>cn=config</B> functionality</A>
+<A HREF="#New features in lloadd">A.1.2. New features in lloadd</A></UL>
 <BR>
-<A HREF="#Better {{B:cn=schema}} functionality">A.2.2. Better <B>cn=schema</B> functionality</A>
+<A HREF="#Obsolete Features Removed From 2.6">A.2. Obsolete Features Removed From 2.6</A><UL>
+<A HREF="#back-ndb">A.2.1. back-ndb</A></UL></UL>
 <BR>
-<A HREF="#More sophisticated Syncrepl configurations">A.2.3. More sophisticated Syncrepl configurations</A>
+<A HREF="#Upgrading from 2.5.x">B. Upgrading from 2.5.x</A><UL>
+<A HREF="#ppolicy overlay">B.1. ppolicy overlay</A>
 <BR>
-<A HREF="#Replicating {{slapd}} Configuration (syncrepl and {{B:cn=config}})">A.2.4. Replicating <EM>slapd</EM> Configuration (syncrepl and <B>cn=config</B>)</A>
+<A HREF="#lloadd backends">B.2. lloadd backends</A>
 <BR>
-<A HREF="#More extensive TLS configuration control">A.2.5. More extensive TLS configuration control</A>
+<A HREF="#monitor backend">B.3. monitor backend</A>
 <BR>
-<A HREF="#Performance enhancements">A.2.6. Performance enhancements</A>
-<BR>
-<A HREF="#New overlays">A.2.7. New overlays</A>
-<BR>
-<A HREF="#New features in existing Overlays">A.2.8. New features in existing Overlays</A>
-<BR>
-<A HREF="#New features in slapd">A.2.9. New features in slapd</A>
-<BR>
-<A HREF="#New features in libldap">A.2.10. New features in libldap</A>
-<BR>
-<A HREF="#New clients, tools and tool enhancements">A.2.11. New clients, tools and tool enhancements</A>
-<BR>
-<A HREF="#New build options">A.2.12. New build options</A></UL>
-<BR>
-<A HREF="#Obsolete Features Removed From 2.5">A.3. Obsolete Features Removed From 2.5</A><UL>
-<A HREF="#back-bdb and back-hdb">A.3.1. back-bdb and back-hdb</A></UL></UL>
-<BR>
-<A HREF="#Upgrading from 2.4.x">B. Upgrading from 2.4.x</A><UL>
-<A HREF="#{{B:cn=config}} olc* attributes">B.1. <B>cn=config</B> olc* attributes</A>
-<BR>
-<A HREF="#ppolicy overlay">B.2. ppolicy overlay</A>
-<BR>
-<A HREF="#unique overlay">B.3. unique overlay</A>
-<BR>
-<A HREF="#ldap and meta backends">B.4. ldap and meta backends</A>
-<BR>
-<A HREF="#shell backend">B.5. shell backend</A>
-<BR>
-<A HREF="#perl and sql backends">B.6. perl and sql backends</A>
-<BR>
-<A HREF="#hdb and bdb backends">B.7. hdb and bdb backends</A>
-<BR>
-<A HREF="#mdb backend">B.8. mdb backend</A></UL>
+<A HREF="#contrib modules">B.4. contrib modules</A></UL>
 <BR>
 <A HREF="#Common errors encountered when using OpenLDAP Software">C. Common errors encountered when using OpenLDAP Software</A><UL>
 <A HREF="#Common causes of LDAP errors">C.1. Common causes of LDAP errors</A><UL>
@@ -931,7 +928,7 @@
 <P>This document is considered a part of OpenLDAP Software.  This document is subject to terms of conditions set forth in <A HREF="#OpenLDAP Software Copyright Notices">OpenLDAP Software Copyright Notices</A> and the <A HREF="#OpenLDAP Public License">OpenLDAP Public License</A>. Complete copies of the notices and associated license can be found in Appendix K and L, respectively.</P>
 <P>Portions of OpenLDAP Software and this document may be copyright by other parties and/or subject to additional restrictions.  Individual source files should be consulted for additional copyright notices.</P>
 <H2>Scope of this Document</H2>
-<P>This document provides a guide for installing OpenLDAP Software 2.5 (<A HREF="http://www.openldap.org/software/">http://www.openldap.org/software/</A>) on <TERM>UNIX</TERM> (and UNIX-like) systems.  The document is aimed at experienced system administrators with basic understanding of <TERM>LDAP</TERM>-based directory services.</P>
+<P>This document provides a guide for installing OpenLDAP Software 2.6 (<A HREF="http://www.openldap.org/software/">http://www.openldap.org/software/</A>) on <TERM>UNIX</TERM> (and UNIX-like) systems.  The document is aimed at experienced system administrators with basic understanding of <TERM>LDAP</TERM>-based directory services.</P>
 <P>This document is meant to be used in conjunction with other OpenLDAP information resources provided with the software package and on the project's site (<A HREF="http://www.OpenLDAP.org/">http://www.OpenLDAP.org/</A>) on the <TERM>World Wide Web</TERM>.  The site makes available a number of resources.</P>
 <TABLE CLASS="columns" BORDER ALIGN='Center'>
 <CAPTION ALIGN=top>OpenLDAP Resources</CAPTION>
@@ -1111,10 +1108,14 @@ Support Pages
 <P><EM>slapd</EM> includes support for <EM>LDAP Sync</EM>-based replication.</P>
 <P><B>Proxy Cache</B>: <EM>slapd</EM> can be configured as a caching LDAP proxy service.</P>
 <P><B>Configuration</B>: <EM>slapd</EM> is highly configurable through a single configuration file which allows you to change just about everything you'd ever want to change.  Configuration options have reasonable defaults, making your job much easier. Configuration can also be performed dynamically using LDAP itself, which greatly improves manageability.</P>
+<H2><A NAME="What is lloadd and what can it do">1.10. What is lloadd and what can it do?</A></H2>
+<P><EM>lloadd</EM>(8) is a daemon that provides an LDAPv3 load balancer service. It is responsible for distributing requests across a set of <EM>slapd</EM> instances.</P>
+<P>See the <A HREF="#Load Balancing with lloadd">Load Balancing with lloadd</A> chapter for information about how to configure and run <EM>lloadd</EM>(8).</P>
+<P>Alternatively, the load balancer can run as a module embedded inside of <EM>slapd</EM>.  This is also described in the <A HREF="#Load Balancing with lloadd">Load Balancing with lloadd</A> chapter.</P>
 <P></P>
 <HR>
 <H1><A NAME="A Quick-Start Guide">2. A Quick-Start Guide</A></H1>
-<P>The following is a quick start guide to OpenLDAP Software 2.5, including the Standalone <TERM>LDAP</TERM> Daemon, <EM>slapd</EM>(8).</P>
+<P>The following is a quick start guide to OpenLDAP Software 2.6, including the Standalone <TERM>LDAP</TERM> Daemon, <EM>slapd</EM>(8).</P>
 <P>It is meant to walk you through the basic steps needed to install and configure <A HREF="https://www.openldap.org/software/">OpenLDAP Software</A>.  It should be used in conjunction with the other chapters of this document, manual pages, and other materials provided with the distribution (e.g. the <TT>INSTALL</TT> document) or on the <A HREF="https://www.openldap.org/">OpenLDAP</A> web site (<A HREF="http://www.OpenLDAP.org">http://www.OpenLDAP.org</A>), in particular the OpenLDAP Software <TERM>FAQ</TERM> (<A HREF="http://www.OpenLDAP.org/faq/?file=2">http://www.OpenLDAP.org/faq/?file=2</A>).</P>
 <P>If you intend to run OpenLDAP Software seriously, you should review all of this document before attempting to install the software.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -1387,7 +1388,7 @@ This command will search for and retrieve every entry in the database.</OL>
 <P>OpenLDAP Software will not be fully LDAPv3 compliant unless OpenLDAP's configure detects a usable Cyrus SASL installation.</P>
 <H3><A NAME="{{TERM[expand]Kerberos}}">4.2.3. <TERM>Kerberos Authentication Service</TERM></A></H3>
 <P>OpenLDAP clients and servers support <TERM>Kerberos</TERM> authentication services.  In particular, OpenLDAP supports the Kerberos V <TERM>GSS-API</TERM> <TERM>SASL</TERM> authentication mechanism known as the <TERM>GSSAPI</TERM> mechanism.  This feature requires, in addition to Cyrus SASL libraries, either <A HREF="https://github.com/heimdal/">Heimdal</A> or <A HREF="https://web.mit.edu/kerberos/">MIT Kerberos</A> V libraries.</P>
-<P>Heimdal Kerberos is available from <A HREF="http://www.pdc.kth.se/heimdal/">http://www.pdc.kth.se/heimdal/</A>. MIT Kerberos is available from <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
+<P>Heimdal Kerberos is available from <A HREF="https://github.com/heimdal/heimdal/">https://github.com/heimdal/heimdal/</A>. MIT Kerberos is available from <A HREF="http://web.mit.edu/kerberos/www/">http://web.mit.edu/kerberos/www/</A>.</P>
 <P>Use of strong authentication services, such as those provided by Kerberos, is highly recommended.</P>
 <H3><A NAME="Database Software">4.2.4. Database Software</A></H3>
 <P>OpenLDAP's <EM>slapd</EM>(8) <TERM>MDB</TERM> primary database backend uses the <TERM>LMDB</TERM> software included with the OpenLDAP source.  There is no need to download any additional software to have <EM>MDB</EM> support.</P>
@@ -1942,14 +1943,6 @@ Monitor backend
 </TR>
 <TR>
 <TD>
-<TT>ndb</TT>
-</TD>
-<TD>
-MySQL NDB backend
-</TD>
-</TR>
-<TR>
-<TD>
 <TT>null</TT>
 </TD>
 <TD>
@@ -2094,6 +2087,7 @@ WiredTiger backend
                 [filter=&lt;filter str&gt;]
                 [scope=sub|one|base]
                 [attrs=&lt;attr list&gt;]
+                [exattrs=&lt;attr list&gt;]
                 [attrsonly]
                 [sizelimit=&lt;limit&gt;]
                 [timelimit=&lt;limit&gt;]
@@ -2121,7 +2115,7 @@ WiredTiger backend
 <P>This directive specifies the current database as a consumer of the provider content by establishing the current <EM>slapd</EM>(8) as a replication consumer site running a syncrepl replication engine. The provider database is located at the provider site specified by the <TT>provider</TT> parameter. The consumer database is kept up-to-date with the provider content using the LDAP Content Synchronization protocol. See <A HREF="https://www.rfc-editor.org/rfc/rfc4533.txt">RFC4533</A> for more information on the protocol.</P>
 <P>The <TT>rid</TT> parameter is used for identification of the current <TT>syncrepl</TT> directive within the replication consumer server, where <TT>&lt;replica ID&gt;</TT> uniquely identifies the syncrepl specification described by the current <TT>syncrepl</TT> directive. <TT>&lt;replica ID&gt;</TT> is non-negative and is no more than three decimal digits in length.</P>
 <P>The <TT>provider</TT> parameter specifies the replication provider site containing the provider content as an LDAP URI. The <TT>provider</TT> parameter specifies a scheme, a host and optionally a port where the provider slapd instance can be found. Either a domain name or IP address may be used for &lt;hostname&gt;. Examples are <TT>ldap://provider.example.com:389</TT> or <TT>ldaps://192.168.1.1:636</TT>. If &lt;port&gt; is not given, the standard LDAP port number (389 or 636) is used. Note that the syncrepl uses a consumer-initiated protocol, and hence its specification is located on the consumer.</P>
-<P>The content of the syncrepl consumer is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified.</P>
+<P>The content of the syncrepl consumer is defined using a search specification as its result set. The consumer slapd will send search requests to the provider slapd according to the search specification. The search specification includes <TT>searchbase</TT>, <TT>scope</TT>, <TT>filter</TT>, <TT>attrs</TT>, <TT>exattrs</TT>, <TT>attrsonly</TT>, <TT>sizelimit</TT>, and <TT>timelimit</TT> parameters as in the normal search specification. The <TT>searchbase</TT> parameter has no default value and must always be specified. The <TT>scope</TT> defaults to <TT>sub</TT>, the <TT>filter</TT> defaults to <TT>(objectclass=*)</TT>, <TT>attrs</TT> defaults to <TT>&quot;*,+&quot;</TT> to replicate all user and operational attributes, and <TT>attrsonly</TT> is unset by default. Both <TT>sizelimit</TT> and <TT>timelimit</TT> default to &quot;unlimited&quot;, and only positive integers or &quot;unlimited&quot; may be specified. The <TT>exattrs</TT> option may also be used to specify attributes that should be omitted from incoming entries.</P>
 <P>The <TERM>LDAP Content Synchronization</TERM> protocol has two operation types: <TT>refreshOnly</TT> and <TT>refreshAndPersist</TT>. The operation type is specified by the <TT>type</TT> parameter. In the <TT>refreshOnly</TT> operation, the next synchronization search operation is periodically rescheduled at an interval time after each synchronization operation finishes. The interval is specified by the <TT>interval</TT> parameter. It is set to one day by default. In the <TT>refreshAndPersist</TT> operation, a synchronization search remains persistent in the provider <EM>slapd</EM> instance. Further updates to the provider will generate <TT>searchResultEntry</TT> to the consumer slapd as the search responses to the persistent synchronization search.</P>
 <P>If an error occurs during replication, the consumer will attempt to reconnect according to the retry parameter which is a list of the &lt;retry interval&gt; and &lt;# of retries&gt; pairs. For example, retry=&quot;60 10 300 3&quot; lets the consumer retry every 60 seconds for the first 10 times and then retry every 300 seconds for the next three times before stop retrying. + in &lt;#  of retries&gt; means indefinite number of retries until success.</P>
 <P>The schema checking can be enforced at the LDAP Sync consumer site by turning on the <TT>schemachecking</TT> parameter. If it is turned on, every replicated entry will be checked for its schema as the entry is stored on the consumer. Every entry in the consumer should contain those attributes required by the schema definition. If it is turned off, entries will be stored without checking schema conformance. The default is off.</P>
@@ -2163,7 +2157,7 @@ olcRootDN: cn=Manager,dc=example,dc=com
 <H3><A NAME="MDB Backend Directives">5.2.6. MDB Backend Directives</A></H3>
 <P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. They will apply to all &quot;database mdb&quot; instances in the configuration. For a complete reference of MDB backend configuration directives, see <EM>slapd-mdb</EM>(5).</P>
 <H4><A NAME="olcBkMdbIdlExp &lt;exponent&gt;">5.2.6.1. olcBkMdbIdlExp &lt;exponent&gt;</A></H4>
-<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-31.</P>
+<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-30.</P>
 <P>This setting helps with the case where certain search filters are slow to return results due to an index slot having collapsed to a range value.  This occurs when the number of candidate entries that match the filter for the index slot exceed the configured slot size.</P>
 <P>If this setting is decreased on a server with existing <TERM>MDB</TERM> databases, each db will immediately need its indices to be rebuilt while slapd is offline with the &quot;slapindex -q -t&quot; command.</P>
 <P>If this setting is increased on a server with existing <TERM>MDB</TERM> databases, each db will need its indices rebuilt to take advantage of the change for indices that have already been converted to ranges.</P>
@@ -2276,66 +2270,67 @@ olcDbIndex: objectClass eq
  15.    # global database parameters
  16.    dn: olcDatabase=frontend,cn=config
  17.    objectClass: olcDatabaseConfig
- 18.    olcDatabase: frontend
- 19.    olcAccess: to * by * read
- 20.
+ 18.    objectClass: olcFrontendConfig
+ 19.    olcDatabase: frontend
+ 20.    olcAccess: to * by * read
+ 21.
 </PRE>
-<P>Line 15 is a comment. Lines 16-18 identify this entry as the global database entry. Line 19 is a global access control. It applies to all entries (after any applicable database-specific access controls). Line 20 is a blank line.</P>
+<P>Line 15 is a comment. Lines 16-18 identify this entry as the global database entry. Line 20 is a global access control. It applies to all entries (after any applicable database-specific access controls). Line 21 is a blank line.</P>
 <P>The next entry defines the config backend.</P>
 <PRE>
- 21.    # set a rootpw for the config database so we can bind.
- 22.    # deny access to everyone else.
- 23.    dn: olcDatabase=config,cn=config
- 24.    objectClass: olcDatabaseConfig
- 25.    olcDatabase: config
- 26.    olcRootPW: {SSHA}XKYnrjvGT3wZFQrDD5040US592LxsdLy
- 27.    olcAccess: to * by * none
- 28.
+ 22.    # set a rootpw for the config database so we can bind.
+ 23.    # deny access to everyone else.
+ 24.    dn: olcDatabase=config,cn=config
+ 25.    objectClass: olcDatabaseConfig
+ 26.    olcDatabase: config
+ 27.    olcRootPW: {SSHA}XKYnrjvGT3wZFQrDD5040US592LxsdLy
+ 28.    olcAccess: to * by * none
+ 29.
 </PRE>
-<P>Lines 21-22 are comments. Lines 23-25 identify this entry as the config database entry. Line 26 defines the <EM>super-user</EM> password for this database. (The DN defaults to <EM>&quot;cn=config&quot;</EM>.) Line 27 denies all access to this database, so only the super-user will be able to access it. (This is already the default access on the config database. It is just listed here for illustration, and to reiterate that unless a means to authenticate as the super-user is explicitly configured, the config database will be inaccessible.)</P>
-<P>Line 28 is a blank line.</P>
+<P>Lines 22-23 are comments. Lines 24-26 identify this entry as the config database entry. Line 27 defines the <EM>super-user</EM> password for this database. (The DN defaults to <EM>&quot;cn=config&quot;</EM>.) Line 28 denies all access to this database, so only the super-user will be able to access it. (This is already the default access on the config database. It is just listed here for illustration, and to reiterate that unless a means to authenticate as the super-user is explicitly configured, the config database will be inaccessible.)</P>
+<P>Line 29 is a blank line.</P>
 <P>The next entry defines an MDB backend that will handle queries for things in the &quot;dc=example,dc=com&quot; portion of the tree. Indices are to be maintained for several attributes, and the <TT>userPassword</TT> attribute is to be protected from unauthorized access.</P>
 <PRE>
- 29.    # MDB definition for example.com
- 30.    dn: olcDatabase=mdb,cn=config
- 31.    objectClass: olcDatabaseConfig
- 32.    objectClass: olcMdbConfig
- 33.    olcDatabase: mdb
- 34.    olcSuffix: dc=example,dc=com
- 35.    olcDbDirectory: /usr/local/var/openldap-data
- 36.    olcRootDN: cn=Manager,dc=example,dc=com
- 37.    olcRootPW: secret
- 38.    olcDbIndex: uid pres,eq
- 39.    olcDbIndex: cn,sn pres,eq,approx,sub
- 40.    olcDbIndex: objectClass eq
- 41.    olcAccess: to attrs=userPassword
- 42.      by self write
- 43.      by anonymous auth
- 44.      by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
- 45.      by * none
- 46.    olcAccess: to *
- 47.      by self write
- 48.      by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
- 49.      by * read
- 50.
+ 30.    # MDB definition for example.com
+ 31.    dn: olcDatabase=mdb,cn=config
+ 32.    objectClass: olcDatabaseConfig
+ 33.    objectClass: olcMdbConfig
+ 34.    olcDatabase: mdb
+ 35.    olcSuffix: dc=example,dc=com
+ 36.    olcDbDirectory: /usr/local/var/openldap-data
+ 37.    olcRootDN: cn=Manager,dc=example,dc=com
+ 38.    olcRootPW: secret
+ 39.    olcDbIndex: uid pres,eq
+ 40.    olcDbIndex: cn,sn pres,eq,approx,sub
+ 41.    olcDbIndex: objectClass eq
+ 42.    olcAccess: to attrs=userPassword
+ 43.      by self write
+ 44.      by anonymous auth
+ 45.      by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
+ 46.      by * none
+ 47.    olcAccess: to *
+ 48.      by self write
+ 49.      by dn.base=&quot;cn=Admin,dc=example,dc=com&quot; write
+ 50.      by * read
+ 51.
 </PRE>
-<P>Line 29 is a comment. Lines 30-33 identify this entry as a MDB database configuration entry.  Line 34 specifies the DN suffix for queries to pass to this database. Line 35 specifies the directory in which the database files will live.</P>
-<P>Lines 36 and 37 identify the database <EM>super-user</EM> entry and associated password. This entry is not subject to access control or size or time limit restrictions.</P>
-<P>Lines 38 through 40 indicate the indices to maintain for various attributes.</P>
-<P>Lines 41 through 49 specify access control for entries in this database. For all applicable entries, the <TT>userPassword</TT> attribute is writable by the entry itself and by the &quot;admin&quot; entry.  It may be used for authentication/authorization purposes, but is otherwise not readable. All other attributes are writable by the entry and the &quot;admin&quot; entry, but may be read by all users (authenticated or not).</P>
-<P>Line 50 is a blank line, indicating the end of this entry.</P>
-<P>The next entry defines another MDB database. This one handles queries involving the <TT>dc=example,dc=net</TT> subtree but is managed by the same entity as the first database.  Note that without line 60, the read access would be allowed due to the global access rule at line 19.</P>
+<P>Line 30 is a comment. Lines 31-34 identify this entry as a MDB database configuration entry.  Line 35 specifies the DN suffix for queries to pass to this database. Line 36 specifies the directory in which the database files will live.</P>
+<P>Lines 37 and 38 identify the database <EM>super-user</EM> entry and associated password. This entry is not subject to access control or size or time limit restrictions.</P>
+<P>Lines 39 through 41 indicate the indices to maintain for various attributes.</P>
+<P>Lines 42 through 50 specify access control for entries in this database. For all applicable entries, the <TT>userPassword</TT> attribute is writable by the entry itself and by the &quot;admin&quot; entry.  It may be used for authentication/authorization purposes, but is otherwise not readable. All other attributes are writable by the entry and the &quot;admin&quot; entry, but may be read by all users (authenticated or not).</P>
+<P>Line 51 is a blank line, indicating the end of this entry.</P>
+<P>The next entry defines another MDB database. This one handles queries involving the <TT>dc=example,dc=net</TT> subtree but is managed by the same entity as the first database.  Note that without line 61, the read access would be allowed due to the global access rule at line 20.</P>
 <PRE>
- 51.    # MDB definition for example.net
- 52.    dn: olcDatabase=mdb,cn=config
- 53.    objectClass: olcDatabaseConfig
- 54.    objectClass: olcMdbConfig
- 55.    olcDatabase: mdb
- 56.    olcSuffix: dc=example,dc=net
- 57.    olcDbDirectory: /usr/local/var/openldap-data-net
- 58.    olcRootDN: cn=Manager,dc=example,dc=com
- 59.    olcDbIndex: objectClass eq
- 60.    olcAccess: to * by users read
+ 52.    # MDB definition for example.net
+ 53.    dn: olcDatabase=mdb,cn=config
+ 54.    objectClass: olcDatabaseConfig
+ 55.    objectClass: olcMdbConfig
+ 56.    olcDatabase: mdb
+ 57.    olcSuffix: dc=example,dc=net
+ 58.    olcDbDirectory: /usr/local/var/openldap-data-net
+ 59.    olcRootDN: cn=Manager,dc=example,dc=com
+ 60.    olcDbIndex: objectClass eq
+ 61.    olcAccess: to * by users read
 </PRE>
 <H2><A NAME="Converting old style {{slapd.conf}}(5) file to {{cn=config}} format">5.4. Converting old style <EM>slapd.conf</EM>(5) file to <EM>cn=config</EM> format</A></H2>
 <P>Before converting to the <EM>cn=config</EM> format you should make sure that the config backend is properly configured in your existing config file. While the config backend is always present inside slapd, by default it is only accessible by its rootDN, and there are no default credentials assigned so unless you explicitly configure a means to authenticate to it, it will be unusable.</P>
@@ -2787,14 +2782,6 @@ Monitor backend
 </TR>
 <TR>
 <TD>
-<TT>ndb</TT>
-</TD>
-<TD>
-MySQL NDB backend
-</TD>
-</TR>
-<TR>
-<TD>
 <TT>null</TT>
 </TD>
 <TD>
@@ -2977,7 +2964,7 @@ WiredTiger backend
 <H3><A NAME="MDB Backend Directives">6.2.4. MDB Backend Directives</A></H3>
 <P>Directives in this category only apply to the <TERM>MDB</TERM> database backend. They will apply to all &quot;database mdb&quot; instances in the configuration. For a complete reference of MDB backend configuration directives, see <EM>slapd-mdb</EM>(5).</P>
 <H4><A NAME="idlexp &lt;exponent&gt;">6.2.4.1. idlexp &lt;exponent&gt;</A></H4>
-<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-31.</P>
+<P>Specify a power of 2 for the maximum size of an index slot. The default is 16, yielding a maximum slot size of 2^16 or 65536. The specified value must be in the range of 16-30.</P>
 <P>This setting helps with the case where certain search filters are slow to return results due to an index slot having collapsed to a range value.  This occurs when the number of candidate entries that match the filter for the index slot exceed the configured slot size.</P>
 <P>If this setting is decreased on a server with existing <TERM>MDB</TERM> databases, each db will immediately need its indices to be rebuilt while slapd is offline with the &quot;slapindex -q -t&quot; command.</P>
 <P>If this setting is increased on a server with existing <TERM>MDB</TERM> databases, each db will need its indices rebuilt to take advantage of the change for indices that have already been converted to ranges.</P>
@@ -3716,7 +3703,7 @@ needed to manage
         by ssf=64 anonymous auth
         by ssf=64 users read
 </PRE>
-<P>This directive allows users to modify their own entries if security protections have of strength 128 or better have been established, allows authentication access to anonymous users, and read access when 64 or better security protections have been established.  If client has not establish sufficient security protections, the implicit <TT>by * none</TT> clause would be applied.</P>
+<P>This directive allows users to modify their own entries if security protections of strength 128 or better have been established, allows authentication access to anonymous users, and read access when 64 or better security protections have been established.  If a client has not established sufficient security protections, the implicit <TT>by * none</TT> clause would be applied.</P>
 <P>The following example shows the use of a style specifiers to select the entries by DN in two access directives where ordering is significant.</P>
 <PRE>
     access to dn.children=&quot;dc=example,dc=com&quot;
@@ -4153,7 +4140,34 @@ needed to manage
       by * none
 </PRE>
 <P>The ACLs above will only allow binding using rootdn from localhost and 192.168.0.0/24.</P>
-<H3><A NAME="Managing access with Groups">8.4.4. Managing access with Groups</A></H3>
+<H3><A NAME="Controlling the LDAP Proxied Authorization Control">8.4.4. Controlling the LDAP Proxied Authorization Control</A></H3>
+<P>The Proxied Authorization Control allows a client to request that an operation be processed under a provided authorization identity instead of under the current authentication identity associated with the connection.</P>
+<P>This facility is controlled by the <TT>authz-policy</TT> configuration option and by the <TT>authzTo</TT> and <TT>authzFrom</TT> attributes. It can be further controlled by applying access control to those attributes.</P>
+<P>A client application might bind as cn=Client,o=MyOrganization whose entry looks like this:</P>
+<PRE>
+    dn: cn=Client,o=MyOrganization
+    cn: Client
+    objectClass: organizationalRole
+    objectClass: simpleSecurityObject
+    objectClass: top
+    userPassword: {SSHA}someSSHAdata
+    authzTo: dn.regex:^cn=[^,]+,ou=People,o=MyOrganization$
+</PRE>
+<P>To make use of the proxy facility, the client needs at least <TT>auth</TT> privilege on the <TT>authzTo</TT> attribute:</P>
+<PRE>
+    access to dn.exact=cn=Client,o=MyOrganization attr=authzTo
+      by self auth
+      by * break
+</PRE>
+<P>This access would be automatically granted if cn=Client,o=MyOrganization has <TT>read</TT> privilege on its own entry.</P>
+<P>Now if you want to lock down the use of this powerful account, you might write an ACL like this:</P>
+<PRE>
+    access to dn.exact=cn=Client,o=MyOrganization attr=authzTo
+      by self peername.regex=192\.168\.0\..*  ssf=256 auth
+      by * none
+</PRE>
+<P>Now, cn=Client,o=MyOrganization can only make use of the proxy authorization control if it has connected from an appropriate IP address using a sufficient level of cryptographic protection. No other IDs can even see the authzTo attribute.</P>
+<H3><A NAME="Managing access with Groups">8.4.5. Managing access with Groups</A></H3>
 <P>There are a few ways to do this. One approach is illustrated here. Consider the following DIT layout:</P>
 <PRE>
     +-dc=example,dc=com
@@ -4204,7 +4218,7 @@ needed to manage
 <STRONG>Note: </STRONG>the specified member attribute type MUST be of DN or <EM>NameAndOptionalUID</EM> syntax, and the specified object class SHOULD allow the attribute type.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <P>Dynamic Groups are also supported in Access Control. Please see <EM>slapo-dynlist</EM>(5) and the <A HREF="#Dynamic Lists">Dynamic Lists</A> overlay section.</P>
-<H3><A NAME="Granting access to a subset of attributes">8.4.5. Granting access to a subset of attributes</A></H3>
+<H3><A NAME="Granting access to a subset of attributes">8.4.6. Granting access to a subset of attributes</A></H3>
 <P>You can grant access to a set of attributes by specifying a list of attribute names in the ACL <EM>to</EM> clause. To be useful, you also need to grant access to the <EM>entry</EM> itself. Also note how <EM>children</EM> controls the ability to add, delete, and rename entries.</P>
 <PRE>
     # mail: self may write, authenticated users may read
@@ -4233,7 +4247,7 @@ needed to manage
       by * none
 </PRE>
 <P>ObjectClass names may also be specified in this list, which will affect all the attributes that are required and/or allowed by that <EM>objectClass</EM>. Actually, names in <EM>attrlist</EM> that are prefixed by <EM>@</EM> are directly treated as objectClass names. A name prefixed by <EM>!</EM> is also treated as an objectClass, but in this case the access rule affects the attributes that are not required nor allowed by that <EM>objectClass</EM>.</P>
-<H3><A NAME="Allowing a user write to all entries below theirs">8.4.6. Allowing a user write to all entries below theirs</A></H3>
+<H3><A NAME="Allowing a user write to all entries below theirs">8.4.7. Allowing a user write to all entries below theirs</A></H3>
 <P>For a setup where a user can write to its own record and to all of its children:</P>
 <PRE>
     access to dn.regex=&quot;(.+,)?(uid=[^,]+,o=Company)$&quot;
@@ -4241,7 +4255,7 @@ needed to manage
        by anonymous auth
 </PRE>
 <P>(Add more examples for above)</P>
-<H3><A NAME="Allowing entry creation">8.4.7. Allowing entry creation</A></H3>
+<H3><A NAME="Allowing entry creation">8.4.8. Allowing entry creation</A></H3>
 <P>Let's say, you have it like this:</P>
 <PRE>
         o=&lt;basedn&gt;
@@ -4303,7 +4317,7 @@ needed to manage
     # submatches from the &quot;what&quot; clause, so a &quot;regex&quot; compilation and evaluation
     # is no longer required.
 </PRE>
-<H3><A NAME="Tips for using regular expressions in Access Control">8.4.8. Tips for using regular expressions in Access Control</A></H3>
+<H3><A NAME="Tips for using regular expressions in Access Control">8.4.9. Tips for using regular expressions in Access Control</A></H3>
 <P>Always use <EM>dn.regex=&lt;pattern&gt;</EM> when you intend to use regular expression matching. <EM>dn=&lt;pattern&gt;</EM> alone defaults to <EM>dn.exact&lt;pattern&gt;</EM>.</P>
 <P>Use <EM>(.+)</EM> instead of <EM>(.*)</EM> when you want at least one char to be matched. <EM>(.*)</EM> matches the empty string as well.</P>
 <P>Don't use regular expressions for matches that can be done otherwise in a safer and cheaper manner. Examples:</P>
@@ -4343,7 +4357,7 @@ needed to manage
       by dn.onelevel,expand=&quot;ou=Admin,$1&quot; write
 </PRE>
 <P>where the regex in the <EM>&lt;what&gt;</EM> clause is more compact, and the one in the <EM>&lt;by&gt;</EM> clause is replaced by a much more efficient scoping style of onelevel with substring expansion.</P>
-<H3><A NAME="Granting and Denying access based on security strength factors (ssf)">8.4.9. Granting and Denying access based on security strength factors (ssf)</A></H3>
+<H3><A NAME="Granting and Denying access based on security strength factors (ssf)">8.4.10. Granting and Denying access based on security strength factors (ssf)</A></H3>
 <P>You can restrict access based on the security strength factor (SSF)</P>
 <PRE>
     access to dn=&quot;cn=example,cn=edu&quot;
@@ -4358,7 +4372,7 @@ needed to manage
 </PRE>
 <P>256 is recommended.</P>
 <P>See <EM>slapd.conf</EM>(5) for information on <EM>ssf</EM>.</P>
-<H3><A NAME="When things aren\'t working as expected">8.4.10. When things aren't working as expected</A></H3>
+<H3><A NAME="When things aren\'t working as expected">8.4.11. When things aren't working as expected</A></H3>
 <P>Consider this example:</P>
 <PRE>
     access to *
@@ -4668,7 +4682,8 @@ Members of a group
    limits users size.soft=5 size.hard=100 size.prtotal=disabled
    limits anonymous size.soft=2 size.hard=5 size.prtotal=disabled
 </PRE>
-<H2><A NAME="Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored">9.6. Glued/Subordinate database configurations When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored.</A></H2>
+<H2><A NAME="Glued/Subordinate database configurations">9.6. Glued/Subordinate database configurations</A></H2>
+<P>When using subordinate databases, it is necessary for any limits that are to be applied across the parent and its subordinates to be defined in both the parent and its subordinates. Otherwise the settings on the subordinate databases are not honored.</P>
 <H2><A NAME="Further Information">9.7. Further Information</A></H2>
 <P>For further information please see <EM>slapd.conf</EM>(5), <EM>ldapsearch</EM>(1) and <EM>slapd.access</EM>(5)</P>
 <P></P>
@@ -4902,7 +4917,7 @@ Members of a group
 <P>It is heavily used by a lot of other <A HREF="#Backends">Backends</A> and <A HREF="#Overlays">Overlays</A>.</P>
 <H3><A NAME="back-ldap Configuration">11.1.2. back-ldap Configuration</A></H3>
 <P>As previously mentioned, <EM>slapd-ldap(5)</EM> is used behind the scenes by many other <A HREF="#Backends">Backends</A> and <A HREF="#Overlays">Overlays</A>. Some of them merely provide a few configuration directive themselves, but have available to the administrator the whole of the <EM>slapd-ldap(5)</EM> options.</P>
-<P>For example, the <A HREF="#Translucent Proxy">Translucent Proxy</A>, which retrieves entries from a remote LDAP server that can be partially overridden by the defined database, has only four specific <EM>translucent-</EM> directives, but can be configured using any of the normal <EM>slapd-ldap(5)</EM> options. See {[slapo-translucent(5)}} for details.</P>
+<P>For example, the <A HREF="#Translucent Proxy">Translucent Proxy</A>, which retrieves entries from a remote LDAP server that can be partially overridden by the defined database, has only four specific <EM>translucent-</EM> directives, but can be configured using any of the normal <EM>slapd-ldap(5)</EM> options. See <EM>slapo-translucent(5)</EM> for details.</P>
 <P>Other <A HREF="#Overlays">Overlays</A> allow you to tag directives in front of a normal <EM>slapd-ldap(5)</EM> directive. For example, the <EM>slapo-chain(5)</EM> overlay does this:</P>
 <P><EM>&quot;There are very few chain overlay specific directives; however, directives related to the instances of the ldap backend that may be implicitly instantiated by the overlay may assume a special meaning when used in conjunction with this overlay.  They are described in slapd-ldap(5), and they also need to be prefixed by chain-.&quot;</EM></P>
 <P>You may have also seen the <EM>slapd-ldap(5)</EM> backend used and described in the <A HREF="#Push Based">Push Based</A> <A HREF="#Replication">Replication</A> section of the guide.</P>
@@ -5706,8 +5721,8 @@ Members of a group
         pcacheTemplate (&amp;(sn=)(givenName=)) 0 3600
         pcacheTemplate (&amp;(departmentNumber=)(secretary=*)) 0 3600
 
-        cachesize 20
         directory ./testrun/db.2.a
+        maxsize   1073741824
         index       objectClass eq
         index       cn,sn,uid,mail  pres,eq,sub
 </PRE>
@@ -5737,7 +5752,7 @@ Members of a group
    objectClass: olcPcacheDatabase
    olcDatabase: {0}mdb
    olcDbDirectory: ./testrun/db.2.a
-   olcDbCacheSize: 20
+   olcDbMaxSize: 1073741824
    olcDbIndex: objectClass eq
    olcDbIndex: cn,sn,uid,mail  pres,eq,sub
 </PRE>
@@ -6892,7 +6907,7 @@ object identifier
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>This is not the same as using a SASL mechanism to authenticate the LDAP session.
 <HR WIDTH="80%" ALIGN="Left"></P>
-<P>Pass-Through authentication works only with plaintext passwords, as used in the &quot;simple bind&quot; and &quot;SASL PLAIN&quot; authentication mechanisms.}}</P>
+<P>Pass-Through authentication works only with plaintext passwords, as used in the &quot;simple bind&quot; and &quot;SASL PLAIN&quot; authentication mechanisms.</P>
 <P>Pass-Through authentication is selective: it only affects users whose <EM>userPassword</EM> attribute has a value marked with the &quot;{SASL}&quot; scheme. The format of the attribute is:</P>
 <PRE>
  userPassword: {SASL}username@realm
@@ -7180,6 +7195,7 @@ object identifier
 <H2><A NAME="SASL Proxy Authorization">15.3. SASL Proxy Authorization</A></H2>
 <P>The SASL offers a feature known as <EM>proxy authorization</EM>, which allows an authenticated user to request that they act on the behalf of another user.  This step occurs after the user has obtained an authentication DN, and involves sending an authorization identity to the server. The server will then make a decision on whether or not to allow the authorization to occur. If it is allowed, the user's LDAP connection is switched to have a binding DN derived from the authorization identity, and the LDAP session proceeds with the access of the new authorization DN.</P>
 <P>The decision to allow an authorization to proceed depends on the rules and policies of the site where LDAP is running, and thus cannot be made by SASL alone. The SASL library leaves it up to the server to make the decision. The LDAP administrator sets the guidelines of who can authorize to what identity by adding information into the LDAP database entries. By default, the authorization features are disabled, and must be explicitly configured by the LDAP administrator before use.</P>
+<P>The rules governing proxy authorization are not just used for SASL: they also control the use of the LDAP Proxied Authorization Control (RFC 4370).</P>
 <H3><A NAME="Uses of Proxy Authorization">15.3.1. Uses of Proxy Authorization</A></H3>
 <P>This sort of service is useful when one entity needs to act on the behalf of many other users. For example, users may be directed to a web page to make changes to their personal information in their LDAP entry. The users authenticate to the web server to establish their identity, but the web server CGI cannot authenticate to the LDAP server as that user to make changes for them. Instead, the web server authenticates itself to the LDAP server as a service identity, say,</P>
 <PRE>
@@ -7229,6 +7245,9 @@ object identifier
 <P>The decision of which type of rules to use, <TT>authzFrom</TT> or <TT>authzTo</TT>, will depend on the site's situation. For example, if the set of people who may become a given identity can easily be written as a search filter, then a single destination rule could be written. If the set of people is not easily defined by a search filter, and the set of people is small, it may be better to write a source rule in the entries of each of those people who should be allowed to perform the proxy authorization.</P>
 <P>By default, processing of proxy authorization rules is disabled. The <TT>authz-policy</TT> directive must be set in the <EM>slapd.conf</EM>(5) file to enable authorization. This directive can be set to <TT>none</TT> for no rules (the default), <TT>to</TT> for source rules, <TT>from</TT> for destination rules, or <TT>both</TT> for both source and destination rules.</P>
 <P>Source rules are extremely powerful. If ordinary users have access to write the <TT>authzTo</TT> attribute in their own entries, then they can write rules that would allow them to authorize as anyone else.  As such, when using source rules, the <TT>authzTo</TT> attribute should be protected with an ACL that only allows privileged users to set its values.</P>
+<H4><A NAME="Access Control requirements">15.3.3.3. Access Control requirements</A></H4>
+<P>When checking whether a particular DN may authorize as another DN, the server applies access control rules to the <TT>authzTo</TT> and <TT>authzFrom</TT> attributes. The <TT>auth</TT> privilege is required for an attribute to be used.</P>
+<P>For example, suppose Alice has authenticated using her own ID and password, and wants to perform an LDAP operation using Bob's permissions. If authorization is granted by an <TT>authzTo</TT> attribute in Alice's entry then Alice needs the <TT>auth</TT> privilege on that attribute. Similarly, if authorization is granted by an <TT>authzFrom</TT> attribute in Bob's entry then Alice needs the <TT>auth</TT> privilege on that. Alice does not need any other access privilege to do a proxy operation.</P>
 <P></P>
 <HR>
 <H1><A NAME="Using TLS">16. Using TLS</A></H1>
@@ -7276,11 +7295,11 @@ object identifier
         certtool --generate-dh-params --bits &lt;numbits&gt; --outfile &lt;filename&gt;
 </PRE>
 <H4><A NAME="TLSECName &lt;name&gt;">16.2.1.8. TLSECName &lt;name&gt;</A></H4>
-<P>This directive specifies the curve to use for Elliptic Curve Diffie-Hellman ephemeral key exchange.  This is required in order to use ECDHE-based cipher suites in OpenSSL.  The names of supported curves may be shown using the following command</P>
+<P>This directive specifies the curve to use for Elliptic Curve Diffie-Hellman ephemeral key exchange.  This option is only needed to use ECDHE-based cipher suites in OpenSSL.  The names of supported curves may be shown using the following command</P>
 <PRE>
         openssl ecparam -list_curves
 </PRE>
-<P>This directive is not used for GnuTLS. For GnuTLS the curves may be specified in the ciphersuite.</P>
+<P>See the OpenSSL documentation for details. This directive is not used for GnuTLS. For GnuTLS the curves may be specified in the ciphersuite.</P>
 <H4><A NAME="TLSVerifyClient { never | allow | try | demand }">16.2.1.9. TLSVerifyClient { never | allow | try | demand }</A></H4>
 <P>This directive specifies what checks to perform on client certificates in an incoming TLS session, if any. This option is set to <TT>never</TT> by default, in which case the server never asks the client for a certificate. With a setting of <TT>allow</TT> the server will ask for a client certificate; if none is provided the session proceeds normally. If a certificate is provided but the server is unable to verify it, the certificate is ignored and the session proceeds normally, as if no certificate had been provided. With a setting of <TT>try</TT> the certificate is requested, and if none is provided, the session proceeds normally. If a certificate is provided and it cannot be verified, the session is immediately terminated. With a setting of <TT>demand</TT> the certificate is requested and a valid certificate must be provided, otherwise the session is immediately terminated.</P>
 <P><HR WIDTH="80%" ALIGN="Left">
@@ -7365,7 +7384,8 @@ object identifier
 <P>Syncrepl keeps track of the status of the replication content by maintaining and exchanging synchronization cookies. Because the syncrepl consumer and provider maintain their content status, the consumer can poll the provider content to perform incremental synchronization by asking for the entries required to make the consumer up-to-date with the provider content. Syncrepl also enables convenient management of consumers by maintaining replication status.  The consumer database can be constructed from a consumer-side or a provider-side backup at any synchronization status. Syncrepl can automatically resynchronize the consumer database to be up-to-date with the current provider content.</P>
 <P>Syncrepl supports both pull-based and push-based synchronization. In its basic refreshOnly synchronization mode, the provider uses pull-based synchronization where the consumer servers need not be tracked and no history information is maintained.  The information required for the provider to process periodic polling requests is contained in the synchronization cookie of the request itself.  To optimize the pull-based synchronization, syncrepl utilizes the present phase of the LDAP Sync protocol as well as its delete phase, instead of falling back on frequent full reloads. To further optimize the pull-based synchronization, the provider can maintain a per-scope session log as a history store. In its refreshAndPersist mode of synchronization, the provider uses a push-based synchronization. The provider keeps track of the consumer servers that have requested a persistent search and sends them necessary updates as the provider replication content gets modified.</P>
 <P>With syncrepl, a consumer can create a replication agreement without changing the provider's configurations and without restarting the provider server, if the consumer server has appropriate access privileges for the DIT fragment to be replicated. The consumer server can stop the replication also without the need for provider-side changes and restart.</P>
-<P>Syncrepl supports partial, sparse, and fractional replications.  The shadow DIT fragment is defined by a general search criteria consisting of base, scope, filter, and attribute list.  The consumer content is also subject to the access privileges of the bind identity of the syncrepl replication connection.</P>
+<P>Syncrepl supports both types of partial replication: sparse and fractional The shadow DIT fragment is defined by a general search criteria consisting of base, scope, filter, and attribute list.  The consumer content is also subject to the access privileges of the bind identity of the syncrepl replication connection.</P>
+<P>Fractional replication uses explicit attribute lists to replicate only a subset of the provider's attributes and sparse replication uses base/scope/filter to replicate only a subset of the provider's entries. Both cases are just refinements of the general search criteria.</P>
 <H4><A NAME="The LDAP Content Synchronization Protocol">18.1.1.1. The LDAP Content Synchronization Protocol</A></H4>
 <P>The LDAP Sync protocol allows a client to maintain a synchronized copy of a DIT fragment. The LDAP Sync operation is defined as a set of controls and other protocol elements which extend the LDAP search operation. This section introduces the LDAP Content Sync protocol only briefly.  For more information, refer to <A HREF="https://www.rfc-editor.org/rfc/rfc4533.txt">RFC4533</A>.</P>
 <P>The LDAP Sync protocol supports both polling and listening for changes by defining two respective synchronization operations: <EM>refreshOnly</EM> and <EM>refreshAndPersist</EM>.  Polling is implemented by the <EM>refreshOnly</EM> operation. The consumer polls the provider using an LDAP Search request with an LDAP Sync control attached. The consumer copy is synchronized to the provider copy at the time of polling using the information returned in the search.  The provider finishes the search operation by returning <EM>SearchResultDone</EM> at the end of the search operation as in the normal search.  Listening is implemented by the <EM>refreshAndPersist</EM> operation. As the name implies, it begins with a search, like refreshOnly. Instead of finishing the search after returning all entries currently matching the search criteria, the synchronization search remains persistent in the provider. Subsequent updates to the synchronization content in the provider cause additional entry updates to be sent to the consumer.</P>
@@ -7400,6 +7420,9 @@ object identifier
 <UL>
 <LI>Where Delta-syncrepl comes in:</UL>
 <P>Delta-syncrepl, a changelog-based variant of syncrepl, is designed to address situations like the one described above. Delta-syncrepl works by maintaining a changelog of a selectable depth in a separate database on the provider. The replication consumer checks the changelog for the changes it needs and, as long as the changelog contains the needed changes, the consumer fetches the changes from the changelog and applies them to its database. If, however, a consumer is too far out of sync (or completely empty), conventional syncrepl is used to bring it up to date and replication then switches back to the delta-syncrepl mode.</P>
+<P><HR WIDTH="80%" ALIGN="Left">
+<STRONG>Note: </STRONG>partial replication is incompatible with deltasync. For deltasync to work, the replication user needs unrestricted read access to both the main database and accesslog database.
+<HR WIDTH="80%" ALIGN="Left"></P>
 <P><HR WIDTH="80%" ALIGN="Left">
 <STRONG>Note: </STRONG>since the database state is stored in both the changelog DB and the main DB on the provider, it is important to backup/restore both the changelog DB and the main DB using slapcat/slapadd when restoring a DB or copying it to another machine.
 <HR WIDTH="80%" ALIGN="Left"></P>
@@ -7451,14 +7474,23 @@ object identifier
 <P>When loading from a backup, it is not required to perform the initial loading from the up-to-date backup of the provider content. The syncrepl engine will automatically synchronize the initial consumer to the current provider content. As a result, it is not required to stop the provider server in order to avoid the replication inconsistency caused by the updates to the provider content during the content backup and loading process.</P>
 <P>When replicating a large scale directory, especially in a bandwidth constrained environment, it is advised to load the consumer from a backup instead of performing a full initial load using syncrepl.</P>
 <H4><A NAME="Set up the provider slapd">18.3.1.2. Set up the provider slapd</A></H4>
-<P>The provider is implemented as an overlay, so the overlay itself must first be configured in <EM>slapd.conf</EM>(5) before it can be used. The provider has two primary configuration directives and two secondary directives for when delta-syncrepl is being used. Because the LDAP Sync search is subject to access control, proper access control privileges should be set up for the replicated content.</P>
+<P>The provider is implemented as an overlay, so the overlay itself must first be configured in <EM>slapd.conf</EM>(5) before it can be used. The provider has two primary configuration directives and two secondary directives for when delta-syncrepl is being used.</P>
+<P>Because the LDAP Sync search is subject to access control, proper access control privileges should be set up for the replicated content. In many environments the replicas are meant to carry the same data as provider so the replication user needs unrestricted read access to the database and as such this tends to be the first access rule for that database:</P>
+<PRE>
+ access to * by &quot;$REPLICATOR&quot; read by * break
+</PRE>
+<P>However if partial replication is desired, the access rules can be tightened appropriately.</P>
 <P>The two primary options to configure are the checkpoint and sessionlog behaviors.</P>
 <P>The <TT>contextCSN</TT> checkpoint is configured by the</P>
 <PRE>
         syncprov-checkpoint &lt;ops&gt; &lt;minutes&gt;
 </PRE>
 <P>directive. Checkpoints are only tested after successful write operations. If <EM>&lt;ops&gt;</EM> operations or more than <EM>&lt;minutes&gt;</EM> time has passed since the last checkpoint, a new checkpoint is performed. Checkpointing is disabled by default.</P>
-<P>The session log is configured by the</P>
+<P>If an accesslog is maintained for this database and contains all the successful writes, it is the preferred way to provide the resync information:</P>
+<PRE>
+ syncprov-sessionlog-source &lt;accesslog db suffix&gt;
+</PRE>
+<P>Otherwise an in memory session session log is configured by the</P>
 <PRE>
         syncprov-sessionlog &lt;ops&gt;
 </PRE>
@@ -7469,7 +7501,6 @@ object identifier
         syncprov-reloadhint &lt;TRUE|FALSE&gt;
 </PRE>
 <P>directive. It must be set TRUE when using the accesslog overlay for delta-based syncrepl replication support. The default is FALSE.</P>
-<P>The nonpresent option should only be configured if the overlay is being placed on top of a log database, such as when used with delta-syncrepl.</P>
 <P>The nonpresent option is configured by the</P>
 <PRE>
         syncprov-nopresent &lt;TRUE|FALSE&gt;
@@ -7486,7 +7517,7 @@ object identifier
 
         overlay syncprov
         syncprov-checkpoint 100 10
-        syncprov-sessionlog 100
+        syncprov-sessionlog-source cn=accesslog
 </PRE>
 <H4><A NAME="Set up the consumer slapd">18.3.1.3. Set up the consumer slapd</A></H4>
 <P>The syncrepl directive is specified in the database section of <EM>slapd.conf</EM>(5) for the consumer context. The syncrepl engine is backend independent and the directive can be defined with any database type.</P>
@@ -8011,7 +8042,8 @@ object identifier
 <H2><A NAME="Checkpointing">19.2. Checkpointing</A></H2>
 <P>Setting a checkpoint is only necessary when back-mdb has the dbnosync flag set. Otherwise it has no effect. With back-mdb the kbyte option is not implemented, meaning it will only run a checkpoint based on the elapsed amount of minutes flag.</P>
 <H2><A NAME="Migration">19.3. Migration</A></H2>
-<P>The simplest steps needed to migrate between versions or upgrade, depending on your deployment type are:</P>
+<P>If upgrading, please consult <A HREF="#Upgrading from 2.5.x">Upgrading from 2.5.x</A> first to see if you need to make changes to your configuration as part of the upgrade.</P>
+<P>After that, the simplest steps needed to migrate between versions or upgrade, depending on your deployment type are:</P>
 <UL>
 &nbsp;</UL><OL>
 <LI><B>Stop the current server when convenient</B>
@@ -8026,6 +8058,9 @@ object identifier
 <LI><B>Perform the software upgrades</B>
 <BR>
 &nbsp;
+<LI><B>Perform any configuration upgrades required</B>
+<BR>
+&nbsp;
 <LI><B>slapadd the exported data back into the directory</B>
 <BR>
 &nbsp;
@@ -8036,7 +8071,7 @@ object identifier
 <H1><A NAME="Monitoring">20. Monitoring</A></H1>
 <P><EM>slapd</EM>(8) supports an optional <TERM>LDAP</TERM> monitoring interface you can use to obtain information regarding the current state of your <EM>slapd</EM> instance.  For instance, the interface allows you to determine how many clients are connected to the server currently. The monitoring information is provided by a specialized backend, the <EM>monitor</EM> backend.  A manual page, <EM>slapd-monitor</EM>(5) is available.</P>
 <P>When the monitoring interface is enabled, LDAP clients may be used to access information provided by the <EM>monitor</EM> backend, subject to access and other controls.</P>
-<P>When enabled, the <EM>monitor</EM> backend dynamically generates and returns objects in response to search requests in the <EM>cn=Monitor</EM> subtree.  Each object contains information about a particular aspect of the server.  The information is held in a combination of user applications and operational attributes.   This information can be access with <EM>ldapsearch(1)</EM>, with any general-purpose LDAP browser, or with specialized monitoring tools.  The <A HREF="#Accessing Monitoring Information">Accessing Monitoring Information</A> section provides a brief tutorial on how to use <EM>ldapsearch</EM>(1) to access monitoring information, while the <A HREF="#Monitor information">Monitor information</A> section details monitoring information base and its organization.</P>
+<P>When enabled, the <EM>monitor</EM> backend dynamically generates and returns objects in response to search requests in the <EM>cn=Monitor</EM> subtree.  Each object contains information about a particular aspect of the server.  The information is held in a combination of user applications and operational attributes.   This information can be accessed with <EM>ldapsearch(1)</EM>, with any general-purpose LDAP browser, or with specialized monitoring tools.  The <A HREF="#Accessing Monitoring Information">Accessing Monitoring Information</A> section provides a brief tutorial on how to use <EM>ldapsearch</EM>(1) to access monitoring information, while the <A HREF="#Monitor information">Monitor information</A> section details monitoring information base and its organization.</P>
 <P>While support for the monitor backend is included in default builds of slapd(8), this support requires some configuration to become active.  This may be done using either <TT>cn=config</TT> or <EM>slapd.conf</EM>(5).  The former is discussed in the <A HREF="#Monitor configuration via cn=config">Monitor configuration via cn=config</A> section of this of this chapter.  The latter is discussed in the <A HREF="#Monitor configuration via slapd.conf(5)">Monitor configuration via slapd.conf(5)</A> section of this chapter.  These sections assume monitor backend is built into <EM>slapd</EM> (e.g., <TT>--enable-monitor=yes</TT>, the default).  If the monitor backend was built as a module (e.g., <TT>--enable-monitor=mod</TT>, this module must loaded.  Loading of modules is discussed in the <A HREF="#Configuring slapd">Configuring slapd</A> and <A HREF="#The slapd Configuration File">The slapd Configuration File</A> chapters.</P>
 <H2><A NAME="Monitor configuration via cn=config(5)">20.1. Monitor configuration via cn=config(5)</A></H2>
 <P>The <EM>monitor backend</EM> is statically built into slapd and can be instantiated via ldapadd.</P>
@@ -8126,7 +8161,7 @@ object identifier
 <STRONG>Note: </STRONG>Examples in this section (and its subsections) have been trimmed to show only key information.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <H3><A NAME="Backends">20.4.1. Backends</A></H3>
-<P>The <TT>cn=Backends,cn=Monitor</TT> object, itself, provides a list of available backends.  The list of available backends all builtin backends, as well as backends loaded by modules.  For example:</P>
+<P>The <TT>cn=Backends,cn=Monitor</TT> object provides a list of available backends.  The list of available backends includes all builtin backends, as well as those backends loaded by modules.  For example:</P>
 <PRE>
         dn: cn=Backends,cn=Monitor
         monitoredInfo: config
@@ -8380,29 +8415,227 @@ Database objects of instances of this backend
 <P>Add new monitored things here and discuss, referencing man pages and present examples</P>
 <P></P>
 <HR>
-<H1><A NAME="Tuning">21. Tuning</A></H1>
+<H1><A NAME="Load Balancing with lloadd">21. Load Balancing with lloadd</A></H1>
+<P>As covered in the <A HREF="#Replication">Replication</A> chapter, replication is a fundamental requirement for delivering a resilient enterprise deployment.  As such there's a need for an LDAPv3 capable load balancer to spread the load between the various directory instances.</P>
+<P><EM>lloadd</EM>(8) provides the capability to distribute LDAP v3 requests between a set of running <EM>slapd</EM> instances.  It can run as a standalone daemon <EM>lloadd</EM>, or as an embedded module running inside of <EM>slapd</EM>.</P>
+<H2><A NAME="Overview">21.1. Overview</A></H2>
+<P><EM>lloadd</EM>(8) was designed to handle LDAP loads. It is protocol-aware and can balance LDAP loads on a per-operation basis rather than on a per-connection basis.</P>
+<P><EM>lloadd</EM>(8) distributes the load across a set of slapd instances. The client connects to the load balancer instance which forwards the request to one of the servers and returns the response back to the client.</P>
+<H2><A NAME="When to use the OpenLDAP load balancer">21.2. When to use the OpenLDAP load balancer</A></H2>
+<P>In general, the OpenLDAP load balancer spreads the load across configured backend servers.  It does not perform so-called intelligent routing. It does not understand semantics behind the operations being performed by the clients.</P>
+<P>More considerations:</P>
+<UL><UL>
+<LI>Servers are indistinguishable with respect to data contents.  The exact same copy of data resides on every server.
+<LI>The sequence of operations isn't important.  For example, read after update isn't required by the client.
+<LI>If your client can handle both connection pooling and load distribution then it's preferable to lloadd.
+<LI>Clients with different requirements (e.g. a coherent session vs. simple but high traffic clients) are directed to separate lloadd configurations.</UL></UL>
+<H2><A NAME="Directing operations to backends">21.3. Directing operations to backends</A></H2>
+<H3><A NAME="Default behaviour">21.3.1. Default behaviour</A></H3>
+<P>In the simplest configuration several backends would be configured within a single roundrobin tier:</P>
+<PRE>
+       feature proxyauthz
+
+       bindconf bindmethod=simple
+                binddn=&quot;cn=Manager,dc=example,dc=com&quot;
+                credentials=secret
+
+       tier roundrobin
+       backend-server uri=ldap://server1.example.com
+                      numconns=5 bindconns=5
+                      max-pending-ops=10 conn-max-pending=3
+                      retry=5000
+       backend-server uri=ldap://server2.example.com
+                      numconns=5 bindconns=5
+                      max-pending-ops=10 conn-max-pending=3
+                      retry=5000
+</PRE>
+<P>After startup <EM>lloadd</EM> will open 10 connections to each <B>ldap://server1.example.com</B> and <B>ldap://server2.example.com</B>, 5 for regular requests, where it will bind as <B>cn=Manager,dc=example,dc=com</B>, and 5 dedicated to serving client Bind requests. If connection set up fails, it will wait 5000ms (5 seconds) before making another attempt to that server.</P>
+<P>When a new Bind request comes from a client, it will be allocated to one of the available <EM>bind connections</EM>, each of which can only carry one request at a time. For other requests that need to be passed on to the backends, backends are considered in order:</P>
+<UL>
+<LI>if the number of pending/in-flight for that backend is at or above 10, it is skipped
+<LI>the first appropriate upstream connection is chosen:<UL>
+<LI>an idle <EM>bind connection</EM> for Bind requests
+<LI>a <EM>regular connection</EM> with less than 3 pending operations for other types of requests</UL>
+<LI>if no such connection is available, the next backend in order is checked
+<LI>if we go through the whole list without choosing an upstream connection, we return a failure to the client, either an <B>LDAP_UNAVAILABLE</B> if no connections of the appropriate type have been established at all or <B>LDAP_BUSY</B> otherwise</UL>
+<P>When a connection is chosen, the operation is forwarded and response(s) returned to the client. Should that connection go away before the final response is received, the client is notified with a <B>LDAP_OTHER</B> failure code.</P>
+<P>So long as <EM>feature proxyauthz</EM> is configured, every operation forwarded over a <EM>regular connection</EM> has the <B>PROXYAUTHZ</B> control (<A HREF="https://www.rfc-editor.org/rfc/rfc4370.txt">RFC4370</A>) prepended indicating the client's bound identity, unless that identity matches the <EM>binddn</EM> configured in <EM>bindconf</EM>.</P>
+<P>If another tier is configured:</P>
+<PRE>
+       tier roundrobin
+       backend-server uri=ldap://fallback.example.com
+                      numconns=5 bindconns=5
+                      max-pending-ops=10 conn-max-pending=3
+                      retry=5000
+</PRE>
+<P>Backends in this tier will only be considered when <EM>lloadd</EM> would have returned <B>LDAP_UNAVAILABLE</B> in the above case.</P>
+<H3><A NAME="Alternate selection strategies">21.3.2. Alternate selection strategies</A></H3>
+<P>For various reasons, the <EM>roundrobin</EM> tier is appropriate in the majority of use cases as it is both very scalable in terms of its implementation and how its self-limiting interacts with backends when multiple <EM>lloadd</EM> instances are being used at the same time.</P>
+<P>Two alternative selection strategies have been implemented:</P>
+<UL><UL>
+<LI><EM>tier weighted</EM> applies predefined weights to how often a backend is considered first
+<LI><EM>tier bestof</EM> measures the time to first response from each backend, when a new operation needs to be forwarded, two backends are selected at random and the backend with better response time is considered first. If connections on neither backend can be used, selection falls back to the regular strategy used by the roundrobin backend</UL></UL>
+<P>The <EM>weighted</EM> tier might be appropriate when servers have differing load capacity. Due to its reinforced self-limiting feedback, the <EM>bestof</EM> tier might be appropriate in large scale environments where each backend's capacity/latency fluctuates widely and rapidly.</P>
+<H3><A NAME="Coherence">21.3.3. Coherence</A></H3>
+<H4><A NAME="Write coherence">21.3.3.1. Write coherence</A></H4>
+<P>In default configurations, every operation submitted by the client is either processed internally (e.g. StartTLS, Abandon, Unbind, ...) or is forwarded to a connection of lloadd's choosing, independent of any other other operation submitted by the same client.</P>
+<P>There are certain traffic patterns where such such freedom is undesirable and some kind of coherency is required. This applies to write traffic, controls like Paged Results or many extended operations.</P>
+<P>Client's operations can be pinned to the same backend as the last write operation:</P>
+<PRE>
+       write_coherence 5
+</PRE>
+<P>In this case, client's requests will be passed over to the same backend (not necessarily over the same upstream connection) from the moment a write request is passed on till at least 5 seconds have elapsed since last write operation has finished.</P>
+<PRE>
+       write_coherence -1
+</PRE>
+<P>Here, there is no timeout and the moment a write request is passed on to a backend, the client's operations will forever be passed on to this backend.</P>
+<P>In both cases above, this limitation is lifted the moment a Bind request is received from the client connection.</P>
+<H4><A NAME="Extended operations/controls">21.3.3.2. Extended operations/controls</A></H4>
+<P>Many controls and Extended operations establish shared state on the session. While <EM>lloadd</EM> implements some of these (StartTLS being one example), it supports the administrator in defining how to deal with those it does not implement special handling for.</P>
+<PRE>
+       restrict_exop 1.1 reject
+       # TXN Exop
+       restrict_exop 1.3.6.1.1.21.1 connection
+       # Password Modify Exop
+       restrict_exop 1.3.6.1.4.1.4203.1.11.1 write
+
+       # Paged Results Control
+       restrict_control 1.2.840.113556.1.4.319 connection
+       # Syncrepl
+       restrict_control 1.3.6.1.4.1.4203.1.9.1 reject
+</PRE>
+<P>The above configuration uses the special invalid OID of <EM>1.1</EM> to instruct <EM>lloadd</EM> to reject any Extended operation it does not recognize, except for Password Modify operation which is treated according to <EM>write_coherence</EM> above and the LDAP transactions, where it forwards all subsequent requests over to the same upstream connection. Similarly, once a Paged results control is seen on an operation, subsequent request will stick to the same upstream connection while LDAP Syncrepl requests will be rejected outright.</P>
+<P>With both <EM>restrict_exop</EM> and <EM>restrict_control</EM>, any such limitation is lifted when a new Bind request comes in as any client state is assumed to be reset.</P>
+<P>When configuring these to anything else than <EM>reject</EM>, keep in mind that many extensions have not been designed or implemented with a multiplexing proxy like <EM>lloadd</EM> in mind and might open considerable operational and/or security concerns when allowed.</P>
+<H2><A NAME="Runtime configurations">21.4. Runtime configurations</A></H2>
+<P>It deploys in one of two ways:</P>
+<OL>
+<LI>Standalone daemon: <EM>lloadd </EM>
+<LI>Loaded into the slapd daemon as a module: <EM>lloadd.la </EM></OL>
+<P>It is recommended to run with the balancer module embedded in slapd because dynamic configuration (cn=config) and the monitor backend are then available.</P>
+<P><B>Sample load balancer scenario:</B></P>
+<P><CENTER><IMG SRC="load-balancer-scenario.png" ALIGN="center"></CENTER></P>
+<P ALIGN="Center">Figure: Load balancer sample scenario</P>
+<OL>
+<LI>The LDAP client submits an LDAP operation to the load balancer daemon.
+<LI>The load balancer forwards the request to one of the backend instances in its pool of servers.
+<LI>The backend slapd server processes the request and returns the response to the load balancer instance.
+<LI>The load balancer returns the response to the client.  The client's unaware that it's connecting to a load balancer instead of slapd.</OL>
+<H2><A NAME="Build Notes">21.5. Build Notes</A></H2>
+<P>To build the load balancer from source, follow the instructions in the <A HREF="#A Quick-Start Guide">A Quick-Start Guide</A> substituting the following commands:</P>
+<OL>
+<LI>To configure as standalone daemon:<UL>
+<TT>./configure --enable-balancer=yes</TT></UL>
+<LI>To configure as embedded module to slapd:<UL>
+<TT>./configure --enable-modules --enable-balancer=mod</TT></UL></OL>
+<H2><A NAME="Sample Runtime">21.6. Sample Runtime</A></H2>
+<OL>
+<LI>To run embedded as <EM>lloadd </EM> module:<UL>
+<TT> slapd [-h URLs]  [-f lloadd-config-file] [-u user] [-g group]</TT></UL><UL>
+<LI>the startup is the same as starting the <EM>slapd </EM> daemon.</UL><UL>
+<LI>URLs is for slapd management. The load balancer's listener URLs set in the configuration file or node. (more later)</UL>
+<LI>To run as standalone daemon:<UL>
+<TT> lloadd [-h URLs]  [-f lloadd-config-file] [-u user] [-g group]</TT></UL><UL>
+<LI>Other than a different daemon name, running standalone has the same options as starting <EM>slapd </EM>.</UL><UL>
+<LI>-h URLs specify the lloadd's interface directly, there is no management interface.</UL></OL>
+<P>For a complete list of options, checkout the man page <EM>lloadd.8 </EM></P>
+<H2><A NAME="Configuring load balancer">21.7. Configuring load balancer</A></H2>
+<H3><A NAME="Common configuration options">21.7.1. Common configuration options</A></H3>
+<P>Many of the same configuration options as slapd. For complete list, check the <EM>lloadd</EM>(5) man page.</P>
+<UL>
+&nbsp; <B>Edit the slapd.conf or cn=config configuration file</B>.</UL>
+<P>To configure your working <EM>lloadd</EM>(8) you need to make the following changes to your configuration file:</P>
+<OL>
+<LI>include <EM>core.schema </EM> (embedded only)
+<LI><EM>TLSShareSlapdCTX { on | off } </EM>
+<LI>Other common TLS slapd options
+<LI>Setup argsfile/pidfile
+<LI>Setup moduleload path (embedded mode only)
+<LI><EM>moduleload      lloadd.la </EM>
+<LI>loglevel, threads, ACL's
+<LI><EM>backend lload </EM> begin lloadd specific backend configurations
+<LI><EM>listen ldap://:PORT </EM> Specify listen port for load balancer
+<LI><EM>feature proxyauthz </EM> Use the proxy authZ control to forward client's identity
+<LI><EM>io-threads INT </EM> specify the number of threads to use for the connection manager.  The default is 1 and this is typically adequate for up to 16 CPU cores</OL>
+<H3><A NAME="Sample backend config">21.7.2. Sample backend config</A></H3>
+<P>Sample setup config for load balancer running in front of four slapd instances.</P>
+<PRE>
+backend lload
+
+# The Load Balancer manages its own sockets, so they have to be separate
+# from the ones slapd manages (as specified with the -h &quot;URLS&quot; option at
+# startup).
+listen ldap://:1389
+
+# Enable authorization tracking
+feature proxyauthz
+
+# Specify the number of threads to use for the connection manager.  The default is 1 and this is typically adequate for up to 16 CPU cores.
+# The value should be set to a power of 2:
+io-threads  2
+
+# If TLS is configured above, use the same context for the Load Balancer
+# If using cn=config, this can be set to false and different settings
+# can be used for the Load Balancer
+TLSShareSlapdCTX true
+
+# Authentication and other options (timeouts) shared between backends.
+bindconf bindmethod=simple
+         binddn=dc=example,dc=com credentials=secret
+         network-timeout=5
+         tls_cacert=&quot;/usr/local/etc/openldap/ca.crt&quot;
+         tls_cert=&quot;/usr/local/etc/openldap/host.crt&quot;
+         tls_key=&quot;/usr/local/etc/openldap/host.pem&quot;
+
+
+# List the backends we should relay operations to, they all have to be
+# practically indistinguishable. Only TLS settings can be specified on
+# a per-backend basis.
+
+tier roundrobin
+backend-server uri=ldap://ldaphost01 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+backend-server uri=ldap://ldaphost02 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+backend-server uri=ldap://ldaphost03 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+backend-server uri=ldap://ldaphost04 starttls=critical retry=5000
+               max-pending-ops=50 conn-max-pending=10
+               numconns=10 bindconns=5
+
+#######################################################################
+# Monitor database
+#######################################################################
+database        monitor
+</PRE>
+<P></P>
+<HR>
+<H1><A NAME="Tuning">22. Tuning</A></H1>
 <P>This is perhaps one of the most important chapters in the guide, because if you have not tuned <EM>slapd</EM>(8) correctly or grasped how to design your directory and environment, you can expect very poor performance.</P>
 <P>Reading, understanding and experimenting using the instructions and information in the following sections, will enable you to fully understand how to tailor your directory server to your specific requirements.</P>
 <P>It should be noted that the following information has been collected over time from our community based FAQ. So obviously the benefit of this real world experience and advice should be of great value to the reader.</P>
-<H2><A NAME="Performance Factors">21.1. Performance Factors</A></H2>
+<H2><A NAME="Performance Factors">22.1. Performance Factors</A></H2>
 <P>Various factors can play a part in how your directory performs on your chosen hardware and environment. We will attempt to discuss these here.</P>
-<H3><A NAME="Memory">21.1.1. Memory</A></H3>
+<H3><A NAME="Memory">22.1.1. Memory</A></H3>
 <P>Scale your cache to use available memory and increase system memory if you can.</P>
-<H3><A NAME="Disks">21.1.2. Disks</A></H3>
+<H3><A NAME="Disks">22.1.2. Disks</A></H3>
 <P>Use fast filesystems, and conduct your own testing to see which filesystem types perform best with your workload. (On our own Linux testing, EXT2 and JFS tend to provide better write performance than everything else, including newer filesystems like EXT4, BTRFS, etc.)</P>
 <P>Use fast subsystems. Put each database on separate disks.</P>
-<H3><A NAME="Network Topology">21.1.3. Network Topology</A></H3>
+<H3><A NAME="Network Topology">22.1.3. Network Topology</A></H3>
 <P>http://www.openldap.org/faq/data/cache/363.html</P>
 <P>Drawing here.</P>
-<H3><A NAME="Directory Layout Design">21.1.4. Directory Layout Design</A></H3>
+<H3><A NAME="Directory Layout Design">22.1.4. Directory Layout Design</A></H3>
 <P>Reference to other sections and good/bad drawing here.</P>
-<H3><A NAME="Expected Usage">21.1.5. Expected Usage</A></H3>
+<H3><A NAME="Expected Usage">22.1.5. Expected Usage</A></H3>
 <P>Discussion.</P>
-<H2><A NAME="Indexes">21.2. Indexes</A></H2>
-<H3><A NAME="Understanding how a search works">21.2.1. Understanding how a search works</A></H3>
+<H2><A NAME="Indexes">22.2. Indexes</A></H2>
+<H3><A NAME="Understanding how a search works">22.2.1. Understanding how a search works</A></H3>
 <P>If you're searching on a filter that has been indexed, then the search reads the index and pulls exactly the entries that are referenced by the index. If the filter term has not been indexed, then the search must read every single entry in the target scope and test to see if each entry matches the filter. Obviously indexing can save a lot of work when it's used correctly.</P>
 <P>In back-mdb, indexes can only track a certain number of entries per key (by default that number is 2^16 = 65536). If more entries' values hash to this key, some/all of them will have to be represented by a range of candidates, making the index less useful over time as deletions cannot usually be tracked accurately.</P>
-<H3><A NAME="What to index">21.2.2. What to index</A></H3>
+<H3><A NAME="What to index">22.2.2. What to index</A></H3>
 <P>As a general rule, to make any use of indexes, you must set up an equality index on objectClass:</P>
 <PRE>
         index objectClass eq
@@ -8414,29 +8647,29 @@ Database objects of instances of this backend
 <P>Each attribute index can be tuned further by selecting the set of index types to generate. For example, substring and approximate search for organizations (o) may make little sense (and isn't like done very often). And searching for <EM>userPassword</EM> likely makes no sense what so ever.</P>
 <P>General rule: don't go overboard with indexes. Unused indexes must be maintained and hence can only slow things down.</P>
 <P>See <EM>slapd.conf</EM>(5) and <EM>slapdindex</EM>(8) for more information</P>
-<H3><A NAME="Presence indexing">21.2.3. Presence indexing</A></H3>
+<H3><A NAME="Presence indexing">22.2.3. Presence indexing</A></H3>
 <P>If your client application uses presence filters and if the target attribute exists on the majority of entries in your target scope, then all of those entries are going to be read anyway, because they are valid members of the result set. In a subtree where 100% of the entries are going to contain the same attributes, the presence index does absolutely NOTHING to benefit the search, because 100% of the entries match that presence filter. As an example, setting a presence index on objectClass provides no benefit since it is present on every entry.</P>
 <P>So the resource cost of generating the index is a complete waste of CPU time, disk, and memory. Don't do it unless you know that it will be used, and that the attribute in question occurs very infrequently in the target data.</P>
 <P>Almost no applications use presence filters in their search queries. Presence indexing is pointless when the target attribute exists on the majority of entries in the database. In most LDAP deployments, presence indexing should not be done, it's just wasted overhead.</P>
 <P>See the <EM>Logging</EM> section below on what to watch out for if you have a frequently searched for attribute that is unindexed.</P>
-<H3><A NAME="Equality indexing">21.2.4. Equality indexing</A></H3>
+<H3><A NAME="Equality indexing">22.2.4. Equality indexing</A></H3>
 <P>Similarly to presence indexes, equality indexes are most useful if the values searched for are uncommon. Most OpenLDAP indexes work by hashing the normalised value and using the hash as the key. Hashing behaviour depends on the matching rule syntax, some matching rules also implement indexers that help speed up inequality (lower than, ...) queries.</P>
 <P>Check the documentation and other parts of this guide if some indexes are mandatory - e.g. to enable replication, it is expected you index certain operational attributes, likewise if you rely on filters in ACL processing.</P>
 <P>Approximate indexes are usually identical to equality indexes unless a matching rule explicitly implements it. As of OpenLDAP 2.5, only directoryStringApproxMatch and IA5StringApproxMatch matchers and indexers are implemented, currently using soundex or metaphone, with metaphone being the default.</P>
-<H3><A NAME="Substring indexing">21.2.5. Substring indexing</A></H3>
+<H3><A NAME="Substring indexing">22.2.5. Substring indexing</A></H3>
 <P>Substring indexes work on splitting the value into short chunks and then indexing those in a similar way to how equality index does. The storage space needed to store all of this data is analogous to the amount of data being indexed, which makes the indexes extremely heavy-handed in most scenarios.</P>
-<H2><A NAME="Logging">21.3. Logging</A></H2>
-<H3><A NAME="What log level to use">21.3.1. What log level to use</A></H3>
+<H2><A NAME="Logging">22.3. Logging</A></H2>
+<H3><A NAME="What log level to use">22.3.1. What log level to use</A></H3>
 <P>The default of <EM>loglevel stats</EM> (256) is really the best bet. There's a corollary to this when problems *do* arise, don't try to trace them using syslog. Use the debug flag instead, and capture slapd's stderr output. syslog is too slow for debug tracing, and it's inherently lossy - it will throw away messages when it can't keep up. See <EM>slapd.conf</EM>(5) or <EM>slapd-config</EM>(5) for more information on how to configure the loglevel.</P>
 <P>Contrary to popular belief, <EM>loglevel 0</EM> is not ideal for production as you won't be able to track when problems first arise.</P>
-<H3><A NAME="What to watch out for">21.3.2. What to watch out for</A></H3>
+<H3><A NAME="What to watch out for">22.3.2. What to watch out for</A></H3>
 <P>The most common message you'll see that you should pay attention to is:</P>
 <PRE>
        &quot;&lt;= mdb_equality_candidates: (foo) index_param failed (18)&quot;
 </PRE>
 <P>That means that some application tried to use an equality filter (<EM>foo=&lt;somevalue&gt;</EM>) and attribute <EM>foo</EM> does not have an equality index. If you see a lot of these messages, you should add the index. If you see one every month or so, it may be acceptable to ignore it.</P>
 <P>The default syslog level is stats (256) which logs the basic parameters of each request; it usually produces 1-3 lines of output. On Solaris and systems that only provide synchronous syslog, you may want to turn it off completely, but usually you want to leave it enabled so that you'll be able to see index messages whenever they arise. On Linux you can configure syslogd to run asynchronously, in which case the performance hit for moderate syslog traffic pretty much disappears.</P>
-<H3><A NAME="Improving throughput">21.3.3. Improving throughput</A></H3>
+<H3><A NAME="Improving throughput">22.3.3. Improving throughput</A></H3>
 <P>You can improve logging performance on some systems by configuring syslog not to sync the file system with every write (<EM>man syslogd/syslog.conf</EM>). In Linux, you can prepend the log file name with a &quot;-&quot; in <EM>syslog.conf</EM>. For example, if you are using the default LOCAL4 logging you could try:</P>
 <PRE>
        # LDAP logs
@@ -8447,23 +8680,23 @@ Database objects of instances of this backend
        options { sync(n); };
 </PRE>
 <P>where n is the number of lines which will be buffered before a write.</P>
-<H2><A NAME="{{slapd}}(8) Threads">21.4. <EM>slapd</EM>(8) Threads</A></H2>
+<H2><A NAME="{{slapd}}(8) Threads">22.4. <EM>slapd</EM>(8) Threads</A></H2>
 <P><EM>slapd</EM>(8) can process requests via a configurable number of threads, which in turn affects the in/out rate of connections.</P>
 <P>This value should generally be a function of the number of &quot;real&quot; cores on the system, for example on a server with 2 CPUs with one core each, set this to 8, or 4 threads per real core.  This is a &quot;read&quot; maximized value. The more threads that are configured per core, the slower <EM>slapd</EM>(8) responds for &quot;read&quot; operations.  On the flip side, it appears to handle write operations faster in a heavy write/low read scenario.</P>
 <P>The upper bound for good read performance appears to be 16 threads (which also happens to be the default setting).</P>
 <P></P>
 <HR>
-<H1><A NAME="Troubleshooting">22. Troubleshooting</A></H1>
+<H1><A NAME="Troubleshooting">23. Troubleshooting</A></H1>
 <P>If you're having trouble using OpenLDAP, get onto the OpenLDAP-Software mailing list, or:</P>
 <UL>
 <LI>Browse the list archives at <A HREF="http://www.openldap.org/lists/#archives">http://www.openldap.org/lists/#archives</A>
 <LI>Search the FAQ at <A HREF="http://www.openldap.org/faq/">http://www.openldap.org/faq/</A>
 <LI>Search the Issue Tracking System at <A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A></UL>
 <P>Chances are the problem has been solved and explained in detail many times before.</P>
-<H2><A NAME="User or Software errors">22.1. User or Software errors?</A></H2>
+<H2><A NAME="User or Software errors">23.1. User or Software errors?</A></H2>
 <P>More often than not, an error is caused by a configuration problem or a misunderstanding of what you are trying to implement and/or achieve.</P>
 <P>We will now attempt to discuss common user errors.</P>
-<H2><A NAME="Checklist">22.2. Checklist</A></H2>
+<H2><A NAME="Checklist">23.2. Checklist</A></H2>
 <P>The following checklist can help track down your problem. Please try to use if <B>before</B> posting to the list, or in the rare circumstances of reporting a bug.</P>
 <UL>
 &nbsp;</UL><OL>
@@ -8486,7 +8719,7 @@ Database objects of instances of this backend
 <BR>
 &nbsp;
 <LI><B>Have your certificates expired?</B></OL>
-<H2><A NAME="OpenLDAP Bugs">22.3. OpenLDAP Bugs</A></H2>
+<H2><A NAME="OpenLDAP Bugs">23.3. OpenLDAP Bugs</A></H2>
 <P>Sometimes you may encounter an actual OpenLDAP bug, in which case please visit our Issue Tracking system <A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A> and report it. However, make sure it's not already a known bug or a common user problem.</P>
 <UL>
 <LI>bugs in historic versions of OpenLDAP will not be considered;
@@ -8496,91 +8729,50 @@ Database objects of instances of this backend
 <STRONG>Note: </STRONG>Our Issue Tracking system is <B>NOT</B> for OpenLDAP <B>Support</B>, please join our mailing Lists: <A HREF="http://www.openldap.org/lists/">http://www.openldap.org/lists/</A> for that.
 <HR WIDTH="80%" ALIGN="Left"></P>
 <P>The information you should provide in your bug report is discussed in our FAQ-O-MATIC at <A HREF="http://www.openldap.org/faq/data/cache/59.html">http://www.openldap.org/faq/data/cache/59.html</A></P>
-<H2><A NAME="3rd party software error">22.4. 3rd party software error</A></H2>
+<H2><A NAME="3rd party software error">23.4. 3rd party software error</A></H2>
 <P>The OpenLDAP Project only supports OpenLDAP software.</P>
 <P>You may however seek commercial support (<A HREF="http://www.openldap.org/support/">http://www.openldap.org/support/</A>) or join the general LDAP forum for non-commercial discussions and information relating to LDAP at: <A HREF="http://www.umich.edu/~dirsvcs/ldap/mailinglist.html">http://www.umich.edu/~dirsvcs/ldap/mailinglist.html</A></P>
-<H2><A NAME="How to contact the OpenLDAP Project">22.5. How to contact the OpenLDAP Project</A></H2>
+<H2><A NAME="How to contact the OpenLDAP Project">23.5. How to contact the OpenLDAP Project</A></H2>
 <UL>
 <LI>Mailing Lists: <A HREF="http://www.openldap.org/lists/">http://www.openldap.org/lists/</A>
 <LI>Project: <A HREF="http://www.openldap.org/project/">http://www.openldap.org/project/</A>
 <LI>Issue Tracking: <A HREF="http://www.openldap.org/its/">http://www.openldap.org/its/</A></UL>
-<H2><A NAME="How to present your problem">22.6. How to present your problem</A></H2>
-<H2><A NAME="Debugging {{slapd}}(8)">22.7. Debugging <EM>slapd</EM>(8)</A></H2>
+<H2><A NAME="How to present your problem">23.6. How to present your problem</A></H2>
+<H2><A NAME="Debugging {{slapd}}(8)">23.7. Debugging <EM>slapd</EM>(8)</A></H2>
 <P>After reading through the above sections and before e-mailing the OpenLDAP lists, you might want to try out some of the following to track down the cause of your problems:</P>
 <UL>
 <LI>A loglevel of stats (256) is generally a good first loglevel to use for getting information useful to list members on issues. This is the default loglevel if none is configured.
 <LI>Running <EM>slapd -d -1</EM> can often track down fairly simple issues, such as missing schemas and incorrect file permissions for the <EM>slapd</EM> user to things like certs
 <LI>Check your logs for errors, as discussed at <A HREF="http://www.openldap.org/faq/data/cache/358.html">http://www.openldap.org/faq/data/cache/358.html</A></UL>
-<H2><A NAME="Commercial Support">22.8. Commercial Support</A></H2>
+<H2><A NAME="Commercial Support">23.8. Commercial Support</A></H2>
 <P>The firms listed at <A HREF="http://www.openldap.org/support/">http://www.openldap.org/support/</A> offer technical support services catering to OpenLDAP community.</P>
 <P>The listing of any given firm should not be viewed as an endorsement or recommendation of any kind, nor as otherwise indicating there exists a business relationship or an affiliation between any listed firm and the OpenLDAP Foundation or the OpenLDAP Project or its contributors.</P>
 <P></P>
 <HR>
 <H1><A NAME="Changes Since Previous Release">A. Changes Since Previous Release</A></H1>
-<P>The following sections attempt to summarize the new features and changes in OpenLDAP software since the 2.4.x release and the OpenLDAP Admin Guide.</P>
-<H2><A NAME="New Guide Sections">A.1. New Guide Sections</A></H2>
-<P>In order to make the Admin Guide more thorough and cover the majority of questions asked on the OpenLDAP mailing lists and scenarios discussed there, we have added the following new sections:</P>
-<UL>
-<LI><A HREF="#When should I use LDAP">When should I use LDAP?</A>
-<LI><A HREF="#When should I not use LDAP">When should I not use LDAP?</A>
-<LI><A HREF="#LDAP vs RDBMS">LDAP vs RDBMS</A>
-<LI><A HREF="#Access Control">Access Control</A>
-<LI><A HREF="#Backends">Backends</A>
-<LI><A HREF="#Overlays">Overlays</A>
-<LI><A HREF="#Replication">Replication</A>
-<LI><A HREF="#Maintenance">Maintenance</A>
-<LI><A HREF="#Monitoring">Monitoring</A>
-<LI><A HREF="#Tuning">Tuning</A>
-<LI><A HREF="#Troubleshooting">Troubleshooting</A>
-<LI><A HREF="#Changes Since Previous Release">Changes Since Previous Release</A>
-<LI><A HREF="#Upgrading from 2.4.x">Upgrading from 2.4.x</A>
-<LI><A HREF="#Common errors encountered when using OpenLDAP Software">Common errors encountered when using OpenLDAP Software</A>
-<LI><A HREF="#Recommended OpenLDAP Software Dependency Versions">Recommended OpenLDAP Software Dependency Versions</A>
-<LI><A HREF="#Real World OpenLDAP Deployments and Examples">Real World OpenLDAP Deployments and Examples</A>
-<LI><A HREF="#OpenLDAP Software Contributions">OpenLDAP Software Contributions</A>
-<LI><A HREF="#Configuration File Examples">Configuration File Examples</A>
-<LI><A HREF="#LDAP Result Codes">LDAP Result Codes</A>
-<LI><A HREF="#Glossary">Glossary</A></UL>
-<P>Also, the table of contents is now 3 levels deep to ease navigation.</P>
-<H2><A NAME="New Features and Enhancements in 2.5">A.2. New Features and Enhancements in 2.5</A></H2>
-<H3><A NAME="Better {{B:cn=config}} functionality">A.2.1. Better <B>cn=config</B> functionality</A></H3>
-<H3><A NAME="Better {{B:cn=schema}} functionality">A.2.2. Better <B>cn=schema</B> functionality</A></H3>
-<H3><A NAME="More sophisticated Syncrepl configurations">A.2.3. More sophisticated Syncrepl configurations</A></H3>
-<H3><A NAME="Replicating {{slapd}} Configuration (syncrepl and {{B:cn=config}})">A.2.4. Replicating <EM>slapd</EM> Configuration (syncrepl and <B>cn=config</B>)</A></H3>
-<H3><A NAME="More extensive TLS configuration control">A.2.5. More extensive TLS configuration control</A></H3>
-<H3><A NAME="Performance enhancements">A.2.6. Performance enhancements</A></H3>
-<H3><A NAME="New overlays">A.2.7. New overlays</A></H3>
-<H3><A NAME="New features in existing Overlays">A.2.8. New features in existing Overlays</A></H3>
-<H3><A NAME="New features in slapd">A.2.9. New features in slapd</A></H3>
-<H3><A NAME="New features in libldap">A.2.10. New features in libldap</A></H3>
-<H3><A NAME="New clients, tools and tool enhancements">A.2.11. New clients, tools and tool enhancements</A></H3>
-<H3><A NAME="New build options">A.2.12. New build options</A></H3>
-<H2><A NAME="Obsolete Features Removed From 2.5">A.3. Obsolete Features Removed From 2.5</A></H2>
-<P>These features were strongly deprecated in 2.4 and removed in 2.5.</P>
-<H3><A NAME="back-bdb and back-hdb">A.3.1. back-bdb and back-hdb</A></H3>
-<P>back-bdb and back-hdb were significantly slower than back-mdb and required significant tuning of multiple parameters to maximize performance. back-mdb requires no tuning and provides all the functionality previously provided via back-bdb and back-hdb.</P>
+<P>The following sections attempt to summarize the new features and changes in OpenLDAP software since the 2.5.x release and the OpenLDAP Admin Guide.</P>
+<H2><A NAME="New Features and Enhancements in 2.6">A.1. New Features and Enhancements in 2.6</A></H2>
+<H3><A NAME="New features in slapd">A.1.1. New features in slapd</A></H3>
+<P>slapd now supports logging directly to a file, bypassing syslog.</P>
+<H3><A NAME="New features in lloadd">A.1.2. New features in lloadd</A></H3>
+<P>lloadd now supports additional balancing mechansims</P>
+<H2><A NAME="Obsolete Features Removed From 2.6">A.2. Obsolete Features Removed From 2.6</A></H2>
+<P>These features were strongly deprecated in 2.5 and removed in 2.6.</P>
+<H3><A NAME="back-ndb">A.2.1. back-ndb</A></H3>
+<P>The experimental and incomplete back-ndb backend was removed.</P>
 <P></P>
 <HR>
-<H1><A NAME="Upgrading from 2.4.x">B. Upgrading from 2.4.x</A></H1>
-<P>The following sections attempt to document the steps you will need to take in order to upgrade from the latest 2.4.x OpenLDAP version.</P>
+<H1><A NAME="Upgrading from 2.5.x">B. Upgrading from 2.5.x</A></H1>
+<P>The following sections attempt to document the steps you will need to take in order to upgrade from the latest 2.5.x OpenLDAP version.</P>
 <P>The normal upgrade procedure, as discussed in the <A HREF="#Maintenance">Maintenance</A> section, should of course still be followed prior to doing any of this.</P>
-<H2><A NAME="{{B:cn=config}} olc* attributes">B.1. <B>cn=config</B> olc* attributes</A></H2>
-<H2><A NAME="ppolicy overlay">B.2. ppolicy overlay</A></H2>
-<P>The overlay now implements version 10 of the ppolicy draft in full. This includes the notion of a password administrator where applicable (as determined by having a <EM>manage</EM> permission to the <EM>userPassword</EM> attribute) and skips certain processing when there is no valid policy in effect or where the operation is initiated by a password administrator. Many attributes are now tagged with <EM>NO-USER-MODIFICATION</EM> in the schema, requiring the use of <EM>relax</EM> control to modify them.</P>
-<P>In OpenLDAP 2.4 the <EM>slapo-ppolicy</EM>(5) overlay relied on a separate schema file to be included for it to function. This schema is now implemented internally in the slapo-ppolicy module. When upgrading <EM>slapd.conf</EM>(5) deployments the include statement for the schema must be removed.  For <EM>slapd-config</EM>(5) deployments, the config database must be exported via slapcat and the old ppolicy schema removed from the export.  The resulting config database can then be imported.</P>
-<H2><A NAME="unique overlay">B.3. unique overlay</A></H2>
-<P>In OpenLDAP 2.4 it was possible to bypass <EM>slapo-unique</EM>(5) checks by using the manageDSAIT control as a part of the request. This is no longer possible. To achieve the same functionality the relax control must be used instead, and the binding identity must have manage permissions on the entry being modified.</P>
-<P>With OpenLDAP 2.5 a new keyword &quot;serialize&quot; has been added as a part of the unique_uri configuration parameter. This will cause all write operations requiring uniqueness to be serialized so as to avoid the scenario where multiple concurrent updates can prevent uniqueness from being enforced. See the <EM>slapo-unique</EM>(5) man page for further details.</P>
-<H2><A NAME="ldap and meta backends">B.4. ldap and meta backends</A></H2>
-<P>Several deprecated configuration directives for <EM>slapd-ldap</EM>(5) and <EM>slapd-meta</EM>(5) have been removed. Configurations using those directive must be updated to use supported directives prior to upgrade.  See the <EM>slapd-ldap</EM>(5) and <EM>slapd-meta</EM>(5) man pages from OpenLDAP 2.4 for a list of deprecated directives.</P>
-<H2><A NAME="shell backend">B.5. shell backend</A></H2>
-<P>This deprecated backend has been removed from OpenLDAP 2.5. Configurations making use of this backend must remove it prior to upgrade. The <EM>slapd-sock</EM>(5) backend is recommended as an alternative.</P>
-<H2><A NAME="perl and sql backends">B.6. perl and sql backends</A></H2>
-<P>The <EM>slapd-perl</EM>(5) and <EM>slapd-sql</EM>(5) backends are now deprecated and no longer automatically enabled with the --enable-backends configure flag.</P>
-<H2><A NAME="hdb and bdb backends">B.7. hdb and bdb backends</A></H2>
-<P>The Berkeley DB based slapd-bdb and slapd-hdb backends have been removed from OpenLDAP 2.5. Deployments making use of these backends must migrate their configurations to use <EM>slapd-mdb</EM>(5) prior to upgrade.</P>
-<H2><A NAME="mdb backend">B.8. mdb backend</A></H2>
-<P>Due to database format changes between OpenLDAP 2.4 and OpenLDAP 2.5 it is mandatory for existing <EM>slapd-mdb</EM>(5) databases to be exported via an OpenLDAP 2.4 slapcat prior to upgrade. They must then be reloaded via an OpenLDAP 2.5 slapadd after the binaries are updated. It is also advised to determine if the new <EM>slapd-mdb</EM>(5) idlexp backend directive and/or the multival database directive should be added to the OpenLDAP 2.5 configuration prior to import.</P>
+<H2><A NAME="ppolicy overlay">B.1. ppolicy overlay</A></H2>
+<P>The pwdCheckModule option has been moved to the overlay configuration. Existing settings in password policy entries will be ignored. It will be necessary to use pwdUseCheckModule instead and add this configuration directive to the overlay when upgrading if it is currently in use.</P>
+<H2><A NAME="lloadd backends">B.2. lloadd backends</A></H2>
+<P>Backends for lloadd are now grouped in tiers specifying the balancing strategy. OpenLDAP 2.5 configurations must be updated to account for this change.</P>
+<H2><A NAME="monitor backend">B.3. monitor backend</A></H2>
+<P>In 2.5 and prior, the managedInfo attribute in the cn=Log entry could be used to change the loglevel of the slapd process. In 2.6, monitorLogLevel can be used to change the slapd log level and monitorDebugLevel can be used to change the slapd debug level.</P>
+<H2><A NAME="contrib modules">B.4. contrib modules</A></H2>
+<P>If still using the lastbind overlay with olcLastBindPrecision (when olcLastBindForwardUpdates is needed), you will need to configure precision on its backend entry instead and the overlay will honour it. The old attribute is no longer accepted or supported.</P>
 <P></P>
 <HR>
 <H1><A NAME="Common errors encountered when using OpenLDAP Software">C. Common errors encountered when using OpenLDAP Software</A></H1>
@@ -10832,6 +11024,20 @@ PS
 </TR>
 <TR>
 <TD>
+<A HREF="https://www.rfc-editor.org/rfc/rfc4370.txt">RFC4370</A>
+</TD>
+<TD>
+Lightweight Directory Access Protocol (LDAP) Proxied Authorization Control
+</TD>
+<TD>
+PS
+</TD>
+<TD>
+<A HREF="https://www.rfc-editor.org/rfc/rfc4370.txt">https://www.rfc-editor.org/rfc/rfc4370.txt</A>
+</TD>
+</TR>
+<TR>
+<TD>
 <A HREF="https://www.rfc-editor.org/rfc/rfc4422.txt">RFC4422</A>
 </TD>
 <TD>
@@ -11297,7 +11503,7 @@ distribute verbatim copies of this document is granted.
 <P>
 <FONT COLOR="#808080" FACE="Arial,Verdana,Helvetica" SIZE="1"><B>
 ________________<BR>
-<SMALL>&copy; Copyright 2011-2021, <A HREF="https://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
+<SMALL>&copy; Copyright 2011-2024, <A HREF="https://www.OpenLDAP.org/foundation/">OpenLDAP Foundation</A>, <A HREF="mailto:info@OpenLDAP.org">info@OpenLDAP.org</A></SMALL></B></FONT>
 
 </DIV>
 

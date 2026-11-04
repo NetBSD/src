@@ -1,5 +1,5 @@
 /* bucomm.h -- binutils common include file.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -75,12 +75,6 @@ extern void set_times (const char *, const struct stat *);
 
 extern int smart_rename (const char *, const char *, int,
 			 struct stat *, bool);
-
-
-/* In libiberty.  */
-void *xmalloc (size_t);
-
-void *xrealloc (void *, size_t);
 
 #if __GNUC__ >= 7
 #define _mul_overflow(a, b, res) __builtin_mul_overflow (a, b, res)

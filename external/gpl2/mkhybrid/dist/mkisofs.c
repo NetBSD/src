@@ -87,6 +87,8 @@ int verbose = 1;
 int all_files  = 0;
 int follow_links = 0;
 int rationalize = 0;
+int force_time_set = 0;
+time_t force_time;
 int generate_tables = 0;
 int print_size = 0;
 int split_output = 0;
@@ -289,6 +291,8 @@ struct ld_option
 #define OPTION_HFS_BLESS		245
 #endif /* APPLE_HYB */
 
+#define OPTION_TIMESTAMP		246
+
 static int	save_pname = 0;
 
 static const struct ld_option ld_options[] =
@@ -341,6 +345,9 @@ static const struct ld_option ld_options[] =
       'L', NULL, "Allow iso9660 filenames to start with '.'", ONE_DASH },
   { {"log-file", required_argument, NULL, OPTION_LOG_FILE},
       '\0', "LOG_FILE", "Re-direct messages to LOG_FILE", ONE_DASH },
+  { {"timestamp", required_argument, NULL, OPTION_TIMESTAMP},
+    '\0', "SECONDS", "Force every timestamp to be this, in epoch-seconds",
+    ONE_DASH},
   { {"exclude", required_argument, NULL, 'm'},
       'm', "GLOBFILE", "Exclude file name" , ONE_DASH },
   { {"exclude-list", required_argument, NULL, OPTION_X_LIST},
@@ -720,6 +727,33 @@ void usage(){
   exit(1);
 }
 
+/*
+ * Parse seconds since the epoch, from command line or env var
+ */
+static int
+FDECL1(parse_timestamp, const char *, s)
+{
+	long long secs;
+	char *n;
+
+	if (NULL == s || *s == '\0') return 0;
+	secs = strtoll(s, &n, 10);
+	if (*n != '\0') return 0;
+
+	force_time = secs;
+	force_time_set = 1;
+	return 1;
+}
+
+/*
+ * What's the time?  It's time to get ill.
+ */
+time_t
+time_now(void)
+{
+	if (force_time_set) return force_time;
+	return time(NULL);
+}
 
 /* 
  * Fill in date in the iso9660 format 
@@ -732,7 +766,13 @@ void usage(){
  */
 int FDECL2(iso9660_date,char *, result, time_t, crtime){
   struct tm *local;
-  local = localtime(&crtime);
+
+  if (force_time_set) {
+	local = gmtime(&crtime);
+  } else {
+	local = localtime(&crtime);
+  }
+	
   result[0] = local->tm_year;
   result[1] = local->tm_mon + 1;
   result[2] = local->tm_mday;
@@ -982,6 +1022,12 @@ int FDECL2(main, int, argc, char **, argv){
      case OPTION_LOG_FILE:
 	log_file = optarg;
 	break;
+     case OPTION_TIMESTAMP:
+       if (!parse_timestamp(optarg)) {
+		fprintf(stderr, "Invalid timestamp %s\n", optarg);
+		exit(1);
+       }
+       break;
       case 'M':
 	merge_image = optarg;
 	break;
@@ -1203,6 +1249,14 @@ int FDECL2(main, int, argc, char **, argv){
       }
 
 parse_input_files:
+
+  /* force a timestamp for the entire volume, if one was given  */
+  if (!force_time_set)
+    (void)parse_timestamp(getenv("SOURCE_DATE_EPOCH")); /* handles NULL */
+#ifdef APPLE_HYB
+  if (force_time_set)
+    d_setnow(force_time);
+#endif
 
 #ifdef HAVE_SBRK
   mem_start = (unsigned long) sbrk(0);
@@ -1474,7 +1528,8 @@ parse_input_files:
 	    while (*xpnt == PATH_SEPARATOR) {
 	      xpnt++;
 	    }
-	    strcpy(graft_point, xpnt);
+	    if (xpnt > graft_point)
+	      memmove(graft_point, xpnt, strlen(xpnt) + 1);
 	  } while (xpnt > graft_point);
 
 	  if (node) {

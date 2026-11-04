@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -27,10 +27,15 @@
 #include <sys/stat.h>
 #include <stdint.h>
 
+#include "libiberty.h"
 #include "gp-defs.h"
 #include "gp-time.h"
 #include "i18n.h"
 #include "debug.h"
+
+#ifndef O_LARGEFILE
+#define O_LARGEFILE 0
+#endif
 
 #define SWAP_ENDIAN(x)  swapByteOrder((void *) (&(x)), sizeof(x))
 #define AppendString(len, arr, ...) len += snprintf(arr + len, sizeof(arr) - len, __VA_ARGS__)
@@ -101,7 +106,7 @@ get_basename (const char* name)
 inline char *
 dbe_strdup (const char *str)
 {
-  return str ? strdup (str) : NULL;
+  return str ? xstrdup (str) : NULL;
 }
 
 inline long
@@ -136,7 +141,13 @@ timestruc2hr (timestruc_t *s)
   return (hrtime_t) s->tv_sec * NANOSEC + (hrtime_t) s->tv_nsec;
 }
 
-struct stat64;
+#if defined(__MUSL_LIBC)
+typedef struct stat dbe_stat_t;
+#define fstat64 fstat
+#define open64 open
+#else
+typedef struct stat64 dbe_stat_t;
+#endif
 
 #if defined(__cplusplus)
 extern "C"
@@ -160,10 +171,9 @@ extern "C"
   char *canonical_path (char *path);
   char *get_relative_path (char *name);
   char *get_relative_link (const char *path_to, const char *path_from);
-  char *get_prog_name (int basename);
   char *dbe_strndup (const char *str, size_t len);
-  int dbe_stat (const char *path, struct stat64 *sbuf);
-  int dbe_stat_file (const char *path, struct stat64 *sbuf);
+  int dbe_stat (const char *path, dbe_stat_t *sbuf);
+  int dbe_stat_file (const char *path, dbe_stat_t *sbuf);
   char *dbe_read_dir (const char *path, const char *format);
   char *dbe_get_processes (const char *format);
   char *dbe_create_directories (const char *pathname);

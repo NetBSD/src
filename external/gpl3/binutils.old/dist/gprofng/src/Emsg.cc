@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -39,7 +39,7 @@ Emsg::Emsg (Cmsg_warn w, const char *i18n_text)
   warn = w;
   flavor = 0;
   par = NULL;
-  text = strdup (i18n_text);
+  text = xstrdup (i18n_text);
   next = NULL;
 }
 
@@ -436,7 +436,7 @@ Emsgqueue::Emsgqueue (char *_qname)
 {
   first = NULL;
   last = NULL;
-  qname = strdup (_qname);
+  qname = xstrdup (_qname);
 }
 
 Emsgqueue::~Emsgqueue ()
@@ -584,7 +584,7 @@ DbeMessages::append_msg (Cmsg_warn w, const char *fmt, ...)
   else
     {
       va_start (vp, fmt);
-      char *buf = (char *) malloc (buf_size);
+      char *buf = (char *) xmalloc (buf_size);
       vsnprintf (buf, buf_size, fmt, vp);
       va_end (vp);
       msg = new Emsg (w, buf);

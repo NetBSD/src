@@ -1,5 +1,5 @@
 /* tc-sparc.h - Macros and type defines for the sparc.
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -75,10 +75,10 @@ extern int sparc_pic_code;
 #define md_cons_align(nbytes) sparc_cons_align (nbytes)
 extern void sparc_cons_align (int);
 
-#define HANDLE_ALIGN(fragp) sparc_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp) sparc_handle_align (fragp)
 extern void sparc_handle_align (struct frag *);
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4 + 4)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4 + 4)
 
 #define DIFF_EXPR_OK    /* foo-. gets turned into PC relative relocs */
 
@@ -125,8 +125,8 @@ extern void sparc_elf_final_processing (void);
 
 #define md_operand(x)
 
-extern void sparc_md_end (void);
-#define md_end() sparc_md_end ()
+extern void sparc_md_finish (void);
+#define md_finish() sparc_md_finish ()
 
 #define TC_PARSE_CONS_RETURN_TYPE const char *
 #define TC_PARSE_CONS_RETURN_NONE NULL

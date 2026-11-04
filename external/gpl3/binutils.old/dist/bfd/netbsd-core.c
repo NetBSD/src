@@ -1,5 +1,5 @@
 /* BFD back end for NetBSD style core files
-   Copyright (C) 1988-2022 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
    Written by Paul Kranenburg, EUR
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -47,7 +47,7 @@
 struct netbsd_core_struct
 {
   struct core core;
-} *rawptr;
+};
 
 /* Handle NetBSD-style core dump file.  */
 
@@ -60,9 +60,9 @@ netbsd_core_file_p (bfd *abfd)
   asection *asect;
   struct core core;
   struct coreseg coreseg;
-  size_t amt = sizeof core;
+  struct netbsd_core_struct *rawptr;
 
-  val = bfd_bread (&core, amt, abfd);
+  val = bfd_read (&core, sizeof core, abfd);
   if (val != sizeof core)
     {
       /* Too small to be a core file.  */
@@ -76,13 +76,15 @@ netbsd_core_file_p (bfd *abfd)
       return 0;
     }
 
-  amt = sizeof (struct netbsd_core_struct);
-  rawptr = (struct netbsd_core_struct *) bfd_zalloc (abfd, amt);
+  rawptr = bfd_alloc (abfd, sizeof (*rawptr) + 1);
   if (rawptr == NULL)
     return 0;
 
-  rawptr->core = core;
   abfd->tdata.netbsd_core_data = rawptr;
+  rawptr->core = core;
+  /* Ensure core_file_failing_command string is terminated.  This is
+     just to stop buffer overflows on fuzzed files.  */
+  ((char *) rawptr)[sizeof (*rawptr)] = 0;
 
   offset = core.c_hdrsize;
   for (i = 0; i < core.c_nseg; i++)
@@ -93,7 +95,7 @@ netbsd_core_file_p (bfd *abfd)
       if (bfd_seek (abfd, offset, SEEK_SET) != 0)
 	goto punt;
 
-      val = bfd_bread (&coreseg, sizeof coreseg, abfd);
+      val = bfd_read (&coreseg, sizeof coreseg, abfd);
       if (val != sizeof coreseg)
 	{
 	  bfd_set_error (bfd_error_file_truncated);

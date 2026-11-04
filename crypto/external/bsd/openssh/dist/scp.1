@@ -1,4 +1,4 @@
-.\"	$NetBSD: scp.1,v 1.31.2.1 2025/08/02 05:18:47 perseant Exp $
+.\"	$NetBSD: scp.1,v 1.31.2.2 2026/11/04 22:36:41 perseant Exp $
 .\"
 .\" scp.1
 .\"
@@ -9,9 +9,9 @@
 .\"
 .\" Created: Sun May  7 00:14:37 1995 ylo
 .\"
-.\" $OpenBSD: scp.1,v 1.113 2024/12/06 15:12:56 djm Exp $
+.\" $OpenBSD: scp.1,v 1.116 2026/09/03 16:02:45 job Exp $
 .\"
-.Dd December 6 2024
+.Dd September 3 2026
 .Dt SCP 1
 .Os
 .Sh NAME
@@ -19,7 +19,7 @@
 .Nd OpenSSH secure file copy
 .Sh SYNOPSIS
 .Nm scp
-.Op Fl 346ABCOpqRrsTv
+.Op Fl 346ABCOpqRrTv
 .Op Fl c Ar cipher
 .Op Fl D Ar sftp_server_path
 .Op Fl F Ar ssh_config
@@ -36,7 +36,7 @@
 copies files between hosts on a network.
 .Pp
 .Nm
-uses the SFTP protocol over a
+uses the SFTP protocol over an
 .Xr ssh 1
 connection for data transfer, and uses the same authentication and provides
 the same security as a login session.
@@ -77,15 +77,16 @@ The options are as follows:
 .Bl -tag -width Ds
 .It Fl 3
 Copies between two remote hosts are transferred through the local host.
-Without this option the data is copied directly between the two remote
-hosts.
-Note that, when using the legacy SCP protocol (via the
+This mode is the default,
+but see also the
+.Fl R
+option for copying data directly between two remote hosts.
+Note that when using the legacy SCP protocol (via the
 .Fl O
 flag), this option
 selects batch mode for the second host as
 .Nm
 cannot ask for passwords or passphrases for both hosts.
-This mode is the default.
 .It Fl 4
 Forces
 .Nm
@@ -279,7 +280,9 @@ Quiet mode: disables the progress meter as well as warning and diagnostic
 messages from
 .Xr ssh 1 .
 .It Fl R
-Copies between two remote hosts are performed by connecting to the origin
+Copies between two remote hosts are transferred through the local host
+by default.
+This option instead copies between two remote hosts by connecting to the origin
 host and executing
 .Nm
 there.

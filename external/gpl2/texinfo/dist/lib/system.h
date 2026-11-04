@@ -1,4 +1,4 @@
-/*	$NetBSD: system.h,v 1.2.28.1 2025/08/02 05:24:37 perseant Exp $	*/
+/*	$NetBSD: system.h,v 1.2.28.2 2026/11/04 22:41:02 perseant Exp $	*/
 
 /* system.h: system-dependent declarations; include this first.
    Id: system.h,v 1.12 2004/04/26 13:56:57 karl Exp 
@@ -64,7 +64,7 @@ extern char *substring (const char *, const char *);
 #include <stdlib.h>
 #undef getopt
 #else
-extern char *getenv ();
+extern char *getenv (const char *);
 #endif
 
 /* Don't use bcopy!  Use memmove if source and destination may overlap,
@@ -88,7 +88,7 @@ extern char *getenv ();
 #endif
 
 #if !HAVE_DECL_MEMCHR
-char *memchr ();
+void *memchr (const void *, int, size_t);
 #endif
 
 /* <unistd.h> defines _POSIX_VERSION, but Paul Eggert points out that is
@@ -106,7 +106,7 @@ extern int errno;
 #endif
 
 #ifndef HAVE_DECL_STRERROR
-extern char *strerror ();
+extern char *strerror (int);
 #endif
 
 #ifdef HAVE_LIMITS_H
@@ -119,24 +119,16 @@ extern char *strerror ();
 #define PATH_MAX _POSIX_PATH_MAX
 #endif
 
-/*
- * configure never checks for the declarations of strcasecmp and strncasecmp.
- * Hence the HAVE_DECL_*s for them are never defined in config.
- * GCC 15.1 make conflicting prototypes an error.
- * Therefore disable the following two conditions to appease GCC 15.1.
- */
-#if 0 /* GCC 15.1 conflicting prototypes */
 #ifndef HAVE_DECL_STRCASECMP
-extern int strcasecmp ();
+extern int strcasecmp (const char *, const char *);
 #endif
 
 #ifndef HAVE_DECL_STRNCASECMP
-extern int strncasecmp ();
+extern int strncasecmp (const char *, const char *, size_t);
 #endif
-#endif /* GCC 15.1 conflicting prototypes */
 
 #ifndef HAVE_DECL_STRCOLL
-extern int strcoll ();
+extern int strcoll (const char *, const char *);
 #endif
 
 #include <sys/stat.h>

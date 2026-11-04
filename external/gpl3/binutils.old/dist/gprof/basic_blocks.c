@@ -2,7 +2,7 @@
    of basic-block info to/from gmon.out; computing and formatting of
    basic-block related statistics.
 
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,7 +20,7 @@
    along with this program; if not, write to the Free Software
    Foundation, Inc., 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
-
+
 #include "gprof.h"
 #include "libiberty.h"
 #include "filenames.h"
@@ -122,6 +122,7 @@ bb_read_rec (FILE *ifp, const char *filename)
   unsigned int nblocks, b;
   bfd_vma addr, ncalls;
   Sym *sym;
+  Sym_Table *symtab;
 
   if (gmon_io_read_32 (ifp, &nblocks))
     {
@@ -129,6 +130,8 @@ bb_read_rec (FILE *ifp, const char *filename)
 	       whoami, filename);
       done (1);
     }
+
+  symtab = get_symtab ();
 
   nblocks = bfd_get_32 (core_bfd, (bfd_byte *) & nblocks);
   if (gmon_file_version == 0)
@@ -163,7 +166,7 @@ bb_read_rec (FILE *ifp, const char *filename)
 	 profiling at the line-by-line level:  */
       if (line_granularity)
 	{
-	  sym = sym_lookup (&symtab, addr);
+	  sym = sym_lookup (symtab, addr);
 
 	  if (sym)
 	    {
@@ -210,9 +213,10 @@ bb_write_blocks (FILE *ofp, const char *filename)
   unsigned int nblocks = 0;
   Sym *sym;
   int i;
+  Sym_Table *symtab = get_symtab ();
 
   /* Count how many non-zero blocks with have:  */
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       for (i = 0; i < NBBS && sym->bb_addr[i]; i++)
 	;
@@ -228,7 +232,7 @@ bb_write_blocks (FILE *ofp, const char *filename)
     }
 
   /* Write counts:  */
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       for (i = 0; i < NBBS && sym->bb_addr[i]; i++)
 	{
@@ -252,6 +256,7 @@ print_exec_counts (void)
 {
   Sym **sorted_bbs, *sym;
   unsigned int i, j, len;
+  Sym_Table *symtab = get_symtab ();
 
   if (first_output)
     first_output = false;
@@ -259,10 +264,10 @@ print_exec_counts (void)
     printf ("\f\n");
 
   /* Sort basic-blocks according to function name and line number:  */
-  sorted_bbs = (Sym **) xmalloc (symtab.len * sizeof (sorted_bbs[0]));
+  sorted_bbs = (Sym **) xmalloc (symtab->len * sizeof (sorted_bbs[0]));
   len = 0;
 
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       /* Accept symbol if it's in the INCL_EXEC table
 	 or there is no INCL_EXEC table
@@ -360,8 +365,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
 	 execution count (if bb_annotate_all_lines is set).  */
       if (b->is_func)
 	{
-	  sprintf (p, "%lu", b->ncalls);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", b->ncalls);
 	  last_count = b->ncalls;
 	  last_print = last_count;
 	  ncalls = b->ncalls;
@@ -370,8 +374,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
       else if (bb_annotate_all_lines
 	       && b->bb_addr[0] && b->bb_addr[0] > b->addr)
 	{
-	  sprintf (p, "%lu", last_count);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", last_count);
 	  last_print = last_count;
 	  ncalls = last_count;
 	  ncalls_set = 1;
@@ -396,8 +399,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
 
 	  if (p > tmpbuf)
 	    *p++ = ',';
-	  sprintf (p, "%lu", last_count);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", last_count);
 
 	  last_print = last_count;
 	}
@@ -410,8 +412,7 @@ annotate_with_count (char *buf, unsigned int width, int line_num, void *arg)
 
       if (bb_annotate_all_lines && p == tmpbuf)
 	{
-	  sprintf (p, "%lu", last_count);
-	  p += strlen (p);
+	  p += sprintf (p, "%lu", last_count);
 	  ncalls = last_count;
 	  ncalls_set = 1;
 	}
@@ -465,10 +466,11 @@ print_annotated_source (void)
   Source_File *sf;
   int i, table_len;
   FILE *ofp;
+  Sym_Table *symtab = get_symtab ();
 
   /* Find maximum line number for each source file that user is
      interested in:  */
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       /* Accept symbol if it's file is known, its line number is
 	 bigger than anything we have seen for that file so far and
@@ -494,7 +496,7 @@ print_annotated_source (void)
     }
 
   /* Count executions per line:  */
-  for (sym = symtab.base; sym < symtab.limit; ++sym)
+  for (sym = symtab->base; sym < symtab->limit; ++sym)
     {
       if (sym->file && sym->file->num_lines
 	  && (sym_lookup (&syms[INCL_ANNO], sym->addr)

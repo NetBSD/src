@@ -1,74 +1,26 @@
 # $OpenLDAP$
-# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Changes Since Previous Release
 
 The following sections attempt to summarize the new features and changes in OpenLDAP
-software since the 2.4.x release and the OpenLDAP Admin Guide.
+software since the 2.5.x release and the OpenLDAP Admin Guide.
 
-H2: New Guide Sections
-
-In order to make the Admin Guide more thorough and cover the majority of questions
-asked on the OpenLDAP mailing lists and scenarios discussed there, we have added the following new sections:
-
-* {{SECT:When should I use LDAP?}}
-* {{SECT:When should I not use LDAP?}}
-* {{SECT:LDAP vs RDBMS}}
-* {{SECT:Access Control}}
-* {{SECT:Backends}}
-* {{SECT:Overlays}}
-* {{SECT:Replication}}
-* {{SECT:Maintenance}}
-* {{SECT:Monitoring}}
-* {{SECT:Tuning}}
-* {{SECT:Troubleshooting}}
-* {{SECT:Changes Since Previous Release}}
-* {{SECT:Upgrading from 2.4.x}}
-* {{SECT:Common errors encountered when using OpenLDAP Software}}
-* {{SECT:Recommended OpenLDAP Software Dependency Versions}}
-* {{SECT:Real World OpenLDAP Deployments and Examples}}
-* {{SECT:OpenLDAP Software Contributions}}
-* {{SECT:Configuration File Examples}}
-* {{SECT:LDAP Result Codes}}
-* {{SECT:Glossary}}
-
-Also, the table of contents is now 3 levels deep to ease navigation.
-
-
-H2: New Features and Enhancements in 2.5
-
-H3: Better {{B:cn=config}} functionality
-
-H3: Better {{B:cn=schema}} functionality
-
-H3: More sophisticated Syncrepl configurations
-
-H3: Replicating {{slapd}} Configuration (syncrepl and {{B:cn=config}})
-
-H3: More extensive TLS configuration control
-
-H3: Performance enhancements
-
-H3: New overlays
-
-H3: New features in existing Overlays
+H2: New Features and Enhancements in 2.6
 
 H3: New features in slapd
 
-H3: New features in libldap
+slapd now supports logging directly to a file, bypassing syslog.
 
-H3: New clients, tools and tool enhancements
+H3: New features in lloadd
 
-H3: New build options
+lloadd now supports additional balancing mechansims
 
-H2: Obsolete Features Removed From 2.5
+H2: Obsolete Features Removed From 2.6
 
-These features were strongly deprecated in 2.4 and removed in 2.5.
+These features were strongly deprecated in 2.5 and removed in 2.6.
 
-H3: back-bdb and back-hdb
+H3: back-ndb
 
-back-bdb and back-hdb were significantly slower than back-mdb and
-required significant tuning of multiple parameters to maximize
-performance. back-mdb requires no tuning and provides all the
-functionality previously provided via back-bdb and back-hdb.
+The experimental and incomplete back-ndb backend was removed.

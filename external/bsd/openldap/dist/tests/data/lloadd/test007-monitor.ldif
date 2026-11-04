@@ -1,0 +1,456 @@
+# with first backend
+dn: cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancer
+olmOutgoingConnections: 4
+
+dn: cn=Incoming Connections,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=Bind,cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancerOperation
+olmReceivedOps: 1
+olmForwardedOps: 0
+olmRejectedOps: 1
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Other,cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancerOperation
+olmReceivedOps: 1
+olmForwardedOps: 0
+olmRejectedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monit
+ or
+objectClass: olmBalancerServer
+olmServerURI: @URI2@
+olmActiveConnections: 4
+olmPendingConnections: 0
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 1,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 2,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 3,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 4,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+
+# second backend and a rejected search, paged search (19 times x 1 entry), pwmod
+dn: cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancer
+olmOutgoingConnections: 13
+
+dn: cn=Incoming Connections,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=Bind,cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancerOperation
+olmReceivedOps: 4
+olmForwardedOps: 3
+olmRejectedOps: 1
+olmCompletedOps: 3
+olmFailedOps: 0
+
+dn: cn=Other,cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancerOperation
+olmReceivedOps: 25
+olmForwardedOps: 20
+olmRejectedOps: 1
+olmCompletedOps: 20
+olmFailedOps: 0
+
+dn: cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monit
+ or
+objectClass: olmBalancerServer
+olmServerURI: @URI2@
+olmActiveConnections: 4
+olmPendingConnections: 0
+olmPendingOps: 0
+olmReceivedOps: 21
+olmCompletedOps: 21
+olmFailedOps: 0
+
+dn: cn=Connection 1,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 19
+olmCompletedOps: 19
+olmFailedOps: 0
+
+dn: cn=Connection 2,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 3,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 4,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Moni
+ tor
+objectClass: olmBalancerServer
+olmServerURI: @URI3@
+olmActiveConnections: 9
+olmPendingConnections: 0
+olmPendingOps: 0
+olmReceivedOps: 2
+olmCompletedOps: 2
+olmFailedOps: 0
+
+dn: cn=Connection 5,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 6,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 7,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 8,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 9,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 10,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 11,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 12,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 13,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+
+# two runs of modifies (with and without TXN)
+dn: cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancer
+olmOutgoingConnections: 13
+
+dn: cn=Incoming Connections,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=Bind,cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancerOperation
+olmReceivedOps: 6
+olmForwardedOps: 5
+olmRejectedOps: 1
+olmCompletedOps: 5
+olmFailedOps: 0
+
+dn: cn=Other,cn=Operations,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: olmBalancerOperation
+olmReceivedOps: 35
+olmForwardedOps: 28
+olmRejectedOps: 1
+olmCompletedOps: 28
+olmFailedOps: 0
+
+dn: cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monitor
+objectClass: monitorContainer
+
+dn: cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Monit
+ or
+objectClass: olmBalancerServer
+olmServerURI: @URI2@
+olmActiveConnections: 4
+olmPendingConnections: 0
+olmPendingOps: 0
+olmReceivedOps: 24
+olmCompletedOps: 24
+olmFailedOps: 0
+
+dn: cn=Connection 1,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 20
+olmCompletedOps: 20
+olmFailedOps: 0
+
+dn: cn=Connection 2,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 3,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 2
+olmCompletedOps: 2
+olmFailedOps: 0
+
+dn: cn=Connection 4,cn=backend,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=B
+ ackends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=Backends,cn=Moni
+ tor
+objectClass: olmBalancerServer
+olmServerURI: @URI3@
+olmActiveConnections: 9
+olmPendingConnections: 0
+olmPendingOps: 0
+olmReceivedOps: 9
+olmCompletedOps: 9
+olmFailedOps: 0
+
+dn: cn=Connection 5,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 6,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 7,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 5
+olmCompletedOps: 5
+olmFailedOps: 0
+
+dn: cn=Connection 8,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 9,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn=
+ Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: regular
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 10,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 11,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 1
+olmCompletedOps: 1
+olmFailedOps: 0
+
+dn: cn=Connection 12,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+
+dn: cn=Connection 13,cn=server 2,cn=first,cn=Backend Tiers,cn=Load Balancer,cn
+ =Backends,cn=Monitor
+objectClass: olmBalancerConnection
+olmConnectionType: bind
+olmConnectionState: ready
+olmPendingOps: 0
+olmReceivedOps: 0
+olmCompletedOps: 0
+olmFailedOps: 0
+

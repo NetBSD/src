@@ -1,7 +1,7 @@
 # $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 1998-2021 The OpenLDAP Foundation.
+# Copyright 1998-2024 The OpenLDAP Foundation.
 # Copyright 2004 Howard Chu, Symas Corp. All Rights Reserved.
 #
 # Redistribution and use in source and binary forms, with or without
@@ -18,6 +18,11 @@ LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/s
 LDAP_LIB = $(LDAP_BUILD)/libraries/libldap/libldap.la \
 	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
+PLAT = UNIX
+NT_LIB = -L$(LDAP_BUILD)/servers/slapd -lslapd
+NT_LDFLAGS = -no-undefined -avoid-version
+UNIX_LDFLAGS = -version-info $(LTVER)
+
 LIBTOOL = $(LDAP_BUILD)/libtool
 CC = gcc
 OPT = -g -O2
@@ -25,7 +30,8 @@ DEFS = -DSLAPD_OVER_RDNVAL=SLAPD_MOD_DYNAMIC \
 	-DSLAPD_OVER_PGUID=SLAPD_MOD_DYNAMIC \
 	-DSLAPD_OVER_VERNUM=SLAPD_MOD_DYNAMIC
 INCS = $(LDAP_INC)
-LIBS = $(LDAP_LIB)
+LIBS = $($(PLAT)_LIB) $(LDAP_LIB)
+LD_FLAGS = $(LDFLAGS) $($(PLAT)_LDFLAGS) -rpath $(moduledir) -module
 
 PROGRAMS = pguid.la rdnval.la vernum.la
 LTVER = 0:0:0
@@ -46,16 +52,13 @@ moduledir = $(libexecdir)$(ldap_subdir)
 all: $(PROGRAMS)
 
 pguid.la: pguid.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 rdnval.la: rdnval.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 vernum.la: vernum.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 clean:
 	rm -rf *.o *.lo *.la .libs

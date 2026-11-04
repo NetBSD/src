@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23.2.1 2025/08/02 05:22:07 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.23.2.2 2026/11/04 22:38:44 perseant Exp $
 
 .if !defined(NTP_MAKEFILE_INC)
 NTP_MAKEFILE_INC=yes
@@ -35,8 +35,8 @@ LIBPARSE!=	cd ${.CURDIR}/../../lib/libparse && ${PRINTOBJDIR}
 LDADD+=		-L${LIBNTP} -lntp -L${LIBOPTS} -lopts
 DPADD+=		${LIBNTP}/libntp.a ${LIBOPTS}/libopts.a
 
-LDADD+=		-lcrypto -lcrypt -lpthread
-DPADD+=		${LIBCRYPTO} ${LIBCRYPT} ${LIBPTHREAD}
+LDADD+=		-lcrypto -lcrypt
+DPADD+=		${LIBCRYPTO} ${LIBCRYPT}
 
 .if ${MKMDNS:Uno} != "no"
 CPPFLAGS+=-DHAVE_DNSREGISTRATION=1

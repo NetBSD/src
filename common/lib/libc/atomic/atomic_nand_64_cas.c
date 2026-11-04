@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_nand_64_cas.c,v 1.2 2014/02/18 13:21:04 martin Exp $	*/
+/*	$NetBSD: atomic_nand_64_cas.c,v 1.2.50.1 2026/11/04 22:36:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -28,6 +28,8 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#include "atomic_op_namespace.h"
 
 #include <sys/atomic.h>
 

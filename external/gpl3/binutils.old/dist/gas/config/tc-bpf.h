@@ -1,5 +1,5 @@
 /* tc-bpf.h -- Header file for tc-ebpf.c.
-   Copyright (C) 2019-2022 Free Software Foundation, Inc.
+   Copyright (C) 2019-2025 Free Software Foundation, Inc.
    Contributed by Oracle, Inc.
 
    This file is part of GAS, the GNU Assembler.
@@ -35,9 +35,11 @@
 #define TARGET_BYTES_BIG_ENDIAN 0
 #endif
 
+/* Permit // comments.  */
+#define DOUBLESLASH_LINE_COMMENTS 1
+
 /* .-foo gets turned into PC relative relocs.  */
 #define DIFF_EXPR_OK    1
-#define GAS_CGEN_PCREL_R_TYPE(R_TYPE) gas_cgen_pcrel_r_type (R_TYPE)
 
 /* Call md_pcrel_from_section(), not md_pcrel_from().  */
 #define MD_PCREL_FROM_SECTION(FIXP, SEC) md_pcrel_from_section (FIXP, SEC)
@@ -51,3 +53,13 @@
 /* The Linux kernel verifier expects NOPs to be encoded in this way;
    a jump to offset 0 means jump to the next instruction.  */
 #define md_single_noop_insn "ja 0"
+
+#define md_parse_name(name, exp, mode, c) \
+  bpf_parse_name (name, exp, mode)
+bool bpf_parse_name (const char *, struct expressionS *, enum expr_mode);
+
+#define TC_EQUAL_IN_INSN(c, s) bpf_tc_equal_in_insn ((c), (s))
+extern bool bpf_tc_equal_in_insn (int, char *);
+
+#define elf_tc_final_processing bpf_elf_final_processing
+extern void bpf_elf_final_processing (void);

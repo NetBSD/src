@@ -1,5 +1,5 @@
 /* libdeps plugin for the GNU linker.
-   Copyright (C) 2020-2022 Free Software Foundation, Inc.
+   Copyright (C) 2020-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -132,88 +132,68 @@ get_libdeps (int fd)
   return rc;
 }
 
-/* Turn a string into an argvec.  */
-static char **
-str2vec (char *in)
+/* Parse arguments in-place as contiguous C-strings
+   and return the number of arguments.  */
+
+static int
+parse_libdep (char *str)
 {
-  char **res;
-  char *s, *first, *end;
-  char *sq, *dq;
-  int i;
+  char *src, *dst;
+  char quote;
+  int narg;
 
-  end = in + strlen (in);
-  s = in;
-  while (isspace ((unsigned char) *s)) s++;
-  first = s;
+  src = dst = str;
 
-  i = 1;
-  while ((s = strchr (s, ' ')))
+  for (; isspace ((unsigned char) *src); ++src)
+    ;
+
+  if (*src == '\0')
+    return 0;
+
+  narg = 1;
+  quote = 0;
+
+  while (*src)
     {
-      s++;
-      i++;
-    }
-  res = (char **)malloc ((i+1) * sizeof (char *));
-  if (!res)
-    return res;
-
-  i = 0;
-  sq = NULL;
-  dq = NULL;
-  res[0] = first;
-  for (s = first; *s; s++)
-    {
-      if (*s == '\\')
+      if (*src == '\'' || *src == '\"')
 	{
-	  memmove (s, s+1, end-s-1);
-	  end--;
-	}
-      if (isspace ((unsigned char) *s))
-	{
-	  if (sq || dq)
-	    continue;
-	  *s++ = '\0';
-	  while (isspace ((unsigned char) *s)) s++;
-	  if (*s)
-	    res[++i] = s;
-	}
-      if (*s == '\'' && !dq)
-	{
-	  if (sq)
+	  if (!quote)
+	    quote = *src++;
+	  else if (*src == quote)
 	    {
-	      memmove (sq, sq+1, s-sq-1);
-	      memmove (s-2, s+1, end-s-1);
-	      end -= 2;
-	      s--;
-	      sq = NULL;
+	      ++src;
+	      quote = 0;
 	    }
 	  else
-	    {
-	      sq = s;
-	    }
+	    *dst++ = *src++;
 	}
-      if (*s == '"' && !sq)
+      else if (!quote && isspace ((unsigned char) *src))
 	{
-	  if (dq)
-	    {
-	      memmove (dq, dq+1, s-dq-1);
-	      memmove (s-2, s+1, end-s-1);
-	      end -= 2;
-	      s--;
-	      dq = NULL;
-	    }
-	  else
-	    {
-	      dq = s;
-	    }
+	  ++narg;
+	  ++src;
+	  *dst++ = '\0';
+	  for (; isspace ((unsigned char) *src); ++src);
 	}
+      else
+	*dst++ = *src++;
     }
-  res[++i] = NULL;
-  return res;
+
+  *dst = '\0';
+
+  if (quote)
+    {
+      TV_MESSAGE (LDPL_WARNING,
+		  "libdep syntax error: unterminated quoted string");
+      return 0;
+    }
+
+  return narg;
 }
 
 static char *prevfile;
 
 /* Standard plugin API registerable hook.  */
+
 static enum ld_plugin_status
 onclaim_file (const struct ld_plugin_input_file *file, int *claimed)
 {
@@ -237,8 +217,8 @@ onclaim_file (const struct ld_plugin_input_file *file, int *claimed)
     return LDPS_ERR;
 
   /* This hook only gets called on actual object files.
-   * We have to examine the archive ourselves, to find
-   * our LIBDEPS member.  */
+     We have to examine the archive ourselves, to find
+     our LIBDEPS member.  */
   rv = get_libdeps (file->fd);
   if (rv == LDPS_ERR)
     return rv;
@@ -256,51 +236,51 @@ onclaim_file (const struct ld_plugin_input_file *file, int *claimed)
 }
 
 /* Standard plugin API registerable hook.  */
+
 static enum ld_plugin_status
 onall_symbols_read (void)
 {
   linerec *lr;
-  char **vec;
+  int nargs;
+  char const *arg;
   enum ld_plugin_status rv = LDPS_OK;
 
   while ((lr = line_head))
     {
       line_head = lr->next;
-      vec = str2vec (lr->line);
-      if (vec)
+      nargs = parse_libdep (lr->line);
+      arg = lr->line;
+
+      int i;
+      for (i = 0; i < nargs; i++, arg = strchr (arg, '\0') + 1)
 	{
-	  int i;
-	  for (i = 0; vec[i]; i++)
+	  if (arg[0] != '-')
 	    {
-	      if (vec[i][0] != '-')
-		{
-		  TV_MESSAGE (LDPL_WARNING, "ignoring libdep argument %s",
-			      vec[i]);
-		  fflush (NULL);
-		  continue;
-		}
-	      if (vec[i][1] == 'l')
-		rv = tv_add_input_library (vec[i]+2);
-	      else if (vec[i][1] == 'L')
-		rv = tv_set_extra_library_path (vec[i]+2);
-	      else
-		{
-		  TV_MESSAGE (LDPL_WARNING, "ignoring libdep argument %s",
-			      vec[i]);
-		  fflush (NULL);
-		}
-	      if (rv != LDPS_OK)
-		break;
+	      TV_MESSAGE (LDPL_WARNING, "ignoring libdep argument %s", arg);
+	      fflush (NULL);
+	      continue;
 	    }
-	  free (vec);
+	  if (arg[1] == 'l')
+	    rv = tv_add_input_library (arg + 2);
+	  else if (arg[1] == 'L')
+	    rv = tv_set_extra_library_path (arg + 2);
+	  else
+	    {
+	      TV_MESSAGE (LDPL_WARNING, "ignoring libdep argument %s", arg);
+	      fflush (NULL);
+	    }
+	  if (rv != LDPS_OK)
+	    break;
 	}
       free (lr);
     }
+
   line_tail = NULL;
   return rv;
 }
 
 /* Standard plugin API registerable hook.  */
+
 static enum ld_plugin_status
 oncleanup (void)
 {
@@ -309,20 +289,25 @@ oncleanup (void)
       free (prevfile);
       prevfile = NULL;
     }
+
   if (line_head)
     {
       linerec *lr;
+
       while ((lr = line_head))
 	{
 	  line_head = lr->next;
 	  free (lr);
 	}
+
       line_tail = NULL;
     }
+
   return LDPS_OK;
 }
 
 /* Standard plugin API entry point.  */
+
 enum ld_plugin_status
 onload (struct ld_plugin_tv *tv)
 {
@@ -351,6 +336,7 @@ onload (struct ld_plugin_tv *tv)
       (*tv_register_all_symbols_read) (onall_symbols_read);
       (*tv_register_cleanup) (oncleanup);
     }
+
   fflush (NULL);
   return LDPS_OK;
 }

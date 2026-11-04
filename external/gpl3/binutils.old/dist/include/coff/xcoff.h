@@ -1,6 +1,6 @@
 /* Internal format of XCOFF object file data structures for BFD.
 
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>, Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -204,30 +204,30 @@ struct internal_ldhdr
   /* The version number: 
      1 : 32 bit
      2 : 64 bit */
-  unsigned long l_version;
+  unsigned int l_version;
 
   /* The number of symbol table entries.  */
-  bfd_size_type l_nsyms;
+  size_t l_nsyms;
 
   /* The number of relocation table entries.  */
-  bfd_size_type l_nreloc;
+  size_t l_nreloc;
 
   /* The length of the import file string table.  */
-  bfd_size_type l_istlen;
+  size_t l_istlen;
 
   /* The number of import files.  */
-  bfd_size_type l_nimpid;
+  size_t l_nimpid;
+
+  /* The length of the string table.  */
+  size_t l_stlen;
 
   /* The offset from the start of the .loader section to the first
      entry in the import file table.  */
-  bfd_size_type l_impoff;
-
-  /* The length of the string table.  */
-  bfd_size_type l_stlen;
+  bfd_vma l_impoff;
 
   /* The offset from the start of the .loader section to the first
      entry in the string table.  */
-  bfd_size_type l_stoff;
+  bfd_vma l_stoff;
 
   /* The offset to start of the symbol table, only in XCOFF64 */
   bfd_vma l_symoff;
@@ -248,11 +248,11 @@ struct internal_ldsym
     struct
     {
       /* Zero if the symbol name is more than SYMNMLEN characters.  */
-	long _l_zeroes;
+      uint32_t _l_zeroes;
       
       /* The offset in the string table if the symbol name is more
 	 than SYMNMLEN characters.  */
-      long _l_offset;
+      uint32_t _l_offset;
     } 
     _l_l;
   }
@@ -298,13 +298,13 @@ struct internal_ldrel
   bfd_vma l_vaddr;
 
   /* The symbol table index in the .loader section symbol table.  */
-  bfd_size_type l_symndx;
+  uint32_t l_symndx;
 
   /* The relocation type and size.  */
-  short l_rtype;
+  int16_t l_rtype;
 
   /* The section number this relocation applies to.  */
-  short l_rsecnm;
+  int16_t l_rsecnm;
 };
 
 /* An entry in the XCOFF linker hash table.  */
@@ -526,7 +526,7 @@ struct xcoff_ar_file_hdr
   char freeoff[XCOFFARMAG_ELEMENT_SIZE];
 };
 
-#define SIZEOF_AR_FILE_HDR (SXCOFFARMAG + 5 * XCOFFARMAG_ELEMENT_SIZE)
+#define SIZEOF_AR_FILE_HDR (sizeof (struct xcoff_ar_file_hdr))
 
 /* This is the equivalent data structure for the big archive format.  */
 
@@ -557,7 +557,7 @@ struct xcoff_ar_file_hdr_big
   char freeoff[XCOFFARMAGBIG_ELEMENT_SIZE];
 };
 
-#define SIZEOF_AR_FILE_HDR_BIG (SXCOFFARMAG + 6 * XCOFFARMAGBIG_ELEMENT_SIZE)
+#define SIZEOF_AR_FILE_HDR_BIG (sizeof (struct xcoff_ar_file_hdr_big))
 
 /* Each XCOFF archive member starts with this (printable) structure.  */
 
@@ -595,7 +595,7 @@ struct xcoff_ar_hdr
      bytes is given in the size field.  */
 };
 
-#define SIZEOF_AR_HDR (3 * XCOFFARMAG_ELEMENT_SIZE + 4 * 12 + 4)
+#define SIZEOF_AR_HDR (sizeof (struct xcoff_ar_hdr))
 
 /* The equivalent for the big archive format.  */
 
@@ -633,34 +633,46 @@ struct xcoff_ar_hdr_big
      bytes is given in the size field.  */
 };
 
-#define SIZEOF_AR_HDR_BIG (3 * XCOFFARMAGBIG_ELEMENT_SIZE + 4 * 12 + 4)
+#define SIZEOF_AR_HDR_BIG (sizeof (struct xcoff_ar_hdr_big))
+
+/* Track archive file offsets used by elements and the header.  */
+struct ar_ranges
+{
+  ufile_ptr start, end;
+  struct ar_ranges *next;
+};
+
+/* An archive bfd has tdata pointing to a struct artdata.  The xcoff
+   backend has artdata.tdata pointing to the following.  */
+struct xcoff_artdata
+{
+  union
+  {
+    struct xcoff_ar_file_hdr hdr;
+    struct xcoff_ar_file_hdr_big bhdr;
+  } u;
+  struct ar_ranges ranges;
+  /* Anything less than this size can't hold an archive element.  */
+  unsigned int ar_hdr_size;
+};
+
+#define x_artdata(abfd) ((struct xcoff_artdata *) bfd_ardata (abfd)->tdata)
 
 /* We often have to distinguish between the old and big file format.
-   Make it a bit cleaner.  We can use `xcoff_ardata' here because the
-   `hdr' member has the same size and position in both formats.  
-   <bigaf> is the default format, return TRUE even when xcoff_ardata is 
-   NULL. */
+   u.hdr.magic and u.bhdr.magic have the same size and position.  */
 #ifndef SMALL_ARCHIVE
 /* Creates big archives by default */
 #define xcoff_big_format_p(abfd) \
-  ((NULL != bfd_ardata (abfd) && NULL == xcoff_ardata (abfd)) || \
-   ((NULL != bfd_ardata (abfd)) && \
-    (NULL != xcoff_ardata (abfd)) && \
-    (xcoff_ardata (abfd)->magic[1] == 'b')))
+  (bfd_ardata (abfd) == NULL			\
+   || x_artdata (abfd) == NULL			\
+   || x_artdata (abfd)->u.hdr.magic[1] != 'a')
 #else
 /* Creates small archives by default. */
 #define xcoff_big_format_p(abfd) \
-  (((NULL != bfd_ardata (abfd)) && \
-    (NULL != xcoff_ardata (abfd)) && \
-    (xcoff_ardata (abfd)->magic[1] == 'b')))
+  (bfd_ardata (abfd) != NULL			\
+   && x_artdata (abfd) != NULL			\
+   && x_artdata (abfd)->u.hdr.magic[1] == 'b')
 #endif
-
-/* We store a copy of the xcoff_ar_file_hdr in the tdata field of the
-   artdata structure.  Similar for the big archive.  */
-#define xcoff_ardata(abfd) \
-  ((struct xcoff_ar_file_hdr *) bfd_ardata (abfd)->tdata)
-#define xcoff_ardata_big(abfd) \
-  ((struct xcoff_ar_file_hdr_big *) bfd_ardata (abfd)->tdata)
 
 /* We store a copy of the xcoff_ar_hdr in the arelt_data field of an
    archive element.  Similar for the big archive.  */

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21.2.1 2025/08/02 05:18:43 perseant Exp $
+#	$NetBSD: Makefile,v 1.21.2.2 2026/11/04 22:36:35 perseant Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -13,6 +13,7 @@ SRCS+= md5c.c rmd160.c sha1.c sha2.c
 
 CPPFLAGS+=-I${.CURDIR} -I${EXTDIST}/src/netpgpverify
 COPTS.libverify.c+= -Wno-format-nonliteral
+COPTS.bufgap.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .ifndef PRODUCTION
 CPPFLAGS+=-g -O0

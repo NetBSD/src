@@ -1,5 +1,5 @@
 /* IBM RS/6000 "XCOFF" back-end for BFD.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
    Written by Tom Rix
    Contributed by Red Hat Inc.
 
@@ -66,8 +66,7 @@ xcoff64_core_p (bfd *abfd)
   if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     goto xcoff64_core_p_error;
 
-  if (sizeof (struct core_dumpxx)
-      != bfd_bread (&core, sizeof (struct core_dumpxx), abfd))
+  if (sizeof core != bfd_read (&core, sizeof core, abfd))
     goto xcoff64_core_p_error;
 
   if (bfd_stat (abfd, &statbuf) < 0)
@@ -111,14 +110,16 @@ xcoff64_core_p (bfd *abfd)
       return NULL;
     }
 
-  new_core_hdr = bfd_zalloc (abfd, sizeof (struct core_dumpxx));
+  new_core_hdr = bfd_alloc (abfd, sizeof (*new_core_hdr) + 1);
   if (NULL == new_core_hdr)
     return NULL;
 
-  memcpy (new_core_hdr, &core, sizeof (struct core_dumpxx));
-  /* The core_hdr() macro is no longer used here because it would
-     expand to code relying on gcc's cast-as-lvalue extension,
-     which was removed in gcc 4.0.  */
+  memcpy (new_core_hdr, &core, sizeof (*new_core_hdr));
+
+  /* Ensure core_file_failing_command string is terminated.  This is
+     just to stop buffer overflows on fuzzed files.  */
+  ((char *) new_core_hdr)[sizeof (*new_core_hdr)] = 0;
+
   abfd->tdata.any = new_core_hdr;
 
   /* .stack section.  */
@@ -141,6 +142,27 @@ xcoff64_core_p (bfd *abfd)
   sec->vma = 0;
   sec->filepos = 0;
   sec->contents = (bfd_byte *)&new_core_hdr->c_flt.r64;
+
+  if (core.c_extctx)
+    {
+      /* vmx section.  */
+      flags = SEC_HAS_CONTENTS;
+      sec = bfd_make_section_anyway_with_flags (abfd, ".aix-vmx", flags);
+      if (sec == NULL)
+	return NULL;
+      sec->size = 560;
+      sec->vma = 0;
+      sec->filepos = core.c_extctx;
+
+      /* vmx section.  */
+      flags = SEC_HAS_CONTENTS;
+      sec = bfd_make_section_anyway_with_flags (abfd, ".aix-vsx", flags);
+      if (sec == NULL)
+	return NULL;
+      sec->size = 256;
+      sec->vma = 0;
+      sec->filepos = core.c_extctx + 584;
+    }
 
   /* .ldinfo section.
      To actually find out how long this section is in this particular
@@ -178,7 +200,7 @@ xcoff64_core_p (bfd *abfd)
 	return NULL;
 
       if (sizeof (struct __ld_info64) !=
-	  bfd_bread (&ldinfo, sizeof (struct __ld_info64), abfd))
+	  bfd_read (&ldinfo, sizeof (struct __ld_info64), abfd))
 	return NULL;
 
       if (ldinfo.ldinfo_core)
@@ -206,7 +228,7 @@ xcoff64_core_p (bfd *abfd)
 
       for (i = 0; i < core.c_vmregions; i++)
 	if (sizeof (struct vm_infox) !=
-	    bfd_bread (&vminfo, sizeof (struct vm_infox), abfd))
+	    bfd_read (&vminfo, sizeof (struct vm_infox), abfd))
 	  return NULL;
 
       if (vminfo.vminfo_offset)
@@ -252,7 +274,7 @@ xcoff64_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
     return return_value;
 
   if (sizeof (struct core_dumpxx) !=
-      bfd_bread (&core, sizeof (struct core_dumpxx), core_bfd))
+      bfd_read (&core, sizeof (struct core_dumpxx), core_bfd))
     return return_value;
 
   if (bfd_seek (core_bfd, core.c_loader, SEEK_SET) != 0)
@@ -267,7 +289,7 @@ xcoff64_core_file_matches_executable_p (bfd *core_bfd, bfd *exec_bfd)
 
   while (1)
     {
-      if (bfd_bread (s, 1, core_bfd) != 1)
+      if (bfd_read (s, 1, core_bfd) != 1)
 	goto xcoff64_core_file_matches_executable_p_end_1;
 
       if (*s == '\0')

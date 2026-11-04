@@ -1,5 +1,5 @@
 /* strings -- print the strings of printable characters in files
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
 
    This program is free software; you can redistribute it and/or modify
    it under the terms of the GNU General Public License as published by
@@ -757,8 +757,8 @@ display_utf8_char (const unsigned char * buffer)
 
 	case 4:
 	  printf ("\\u%02x%02x%02x",
-		  ((buffer[0] & 0x07) << 6) | ((buffer[1] & 0x3c) >> 2),
-		  ((buffer[1] & 0x03) << 6) | ((buffer[2] & 0x3c) >> 2),
+		  ((buffer[0] & 0x07) << 2) | ((buffer[1] & 0x30) >> 4),
+		  ((buffer[1] & 0x0f) << 4) | ((buffer[2] & 0x3c) >> 2),
 		  ((buffer[2] & 0x03) << 6) | ((buffer[3] & 0x3f)));
 	  break;
 	default:
@@ -1350,8 +1350,8 @@ usage (FILE *stream, int status)
   -T --target=<BFDNAME>     Specify the binary file format\n\
   -e --encoding={s,S,b,l,B,L} Select character size and endianness:\n\
                             s = 7-bit, S = 8-bit, {b,l} = 16-bit, {B,L} = 32-bit\n\
-  --unicode={default|show|invalid|hex|escape|highlight}\n\
-  -U {d|s|i|x|e|h}          Specify how to treat UTF-8 encoded unicode characters\n\
+  --unicode={default|locale|invalid|hex|escape|highlight}\n\
+  -U {d|l|i|x|e|h}          Specify how to treat UTF-8 encoded unicode characters\n\
   -s --output-separator=<string> String used to separate strings in output.\n\
   @<file>                   Read options from <file>\n\
   -h --help                 Display this information\n\

@@ -1,9 +1,9 @@
-/*	$NetBSD: proto-meta.h,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: proto-meta.h,v 1.3.4.1 2026/11/04 22:39:25 perseant Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1999-2021 The OpenLDAP Foundation.
+ * Copyright 1999-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2003 Pierangelo Masarati.
  * Portions Copyright 1999-2003 Howard Chu.
  * All rights reserved.

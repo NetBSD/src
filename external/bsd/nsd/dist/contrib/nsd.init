@@ -155,6 +155,7 @@ controlled_stop() {
 			fi
 		fi
 	done
+	rm -f ${pidfile}
 
 	return 0
 }
@@ -171,6 +172,7 @@ do_controlled_stop() {
 
 do_stop() {
 	signal "TERM"
+	rm -f ${pidfile}
 }
 
 do_reload() {

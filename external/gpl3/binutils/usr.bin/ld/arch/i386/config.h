@@ -36,6 +36,18 @@
    when a .note-GNU-stack section is missing. */
 #define DEFAULT_LD_EXECSTACK 0
 
+/* Define to 1 if you want to enable --gnu2-tls-tag in ELF i386/x86-64 linker
+   by default. */
+#define DEFAULT_LD_GNU2_TLS_TAG 2
+
+/* Define to 1 if you want to enable --gnu-tls-tag in ELF i386 linker by
+   default. */
+#define DEFAULT_LD_GNU_TLS_TAG 2
+
+/* Define to 1 if you want to enable --rosegment in the ELF linker by default.
+   */
+#define DEFAULT_LD_ROSEGMENT 0
+
 /* The default method for DT_TEXTREL check in ELF linker. */
 #define DEFAULT_LD_TEXTREL_CHECK textrel_check_warning
 
@@ -54,6 +66,10 @@
    default. */
 #define DEFAULT_LD_Z_MARK_PLT 0
 
+/* Define to 1 if you want to enable -z memory_seal in ELF linker by default.
+   */
+#define DEFAULT_LD_Z_MEMORY_SEAL 0
+
 /* Define to 1 if you want to enable -z relro in ELF linker by default. */
 #define DEFAULT_LD_Z_RELRO 0
 
@@ -66,7 +82,7 @@
 #define DEFAULT_NEW_DTAGS 0
 
 /* Define if you want run-time sanity checks. */
-/* #undef ENABLE_CHECKING */
+#define ENABLE_CHECKING 1
 
 /* Handle .ctf type-info sections */
 #define ENABLE_LIBCTF 1
@@ -96,10 +112,6 @@
    */
 /* #undef HAVE_DCGETTEXT */
 
-/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
-   don't. */
-#define HAVE_DECL_ASPRINTF 1
-
 /* Define to 1 if you have the declaration of `environ', and to 0 if you
    don't. */
 #define HAVE_DECL_ENVIRON 0
@@ -110,6 +122,10 @@
 /* Define to 1 if you have the declaration of `stpcpy', and to 0 if you don't.
    */
 #define HAVE_DECL_STPCPY 1
+
+/* Define to 1 if you have the declaration of `strtoull', and to 0 if you
+   don't. */
+#define HAVE_DECL_STRTOULL 1
 
 /* Define to 1 if you have the <dlfcn.h> header file. */
 #define HAVE_DLFCN_H 1
@@ -122,6 +138,9 @@
 
 /* Define to 1 if you have the `getpagesize' function. */
 #define HAVE_GETPAGESIZE 1
+
+/* Define to 1 if you have the `getrusage' function. */
+#define HAVE_GETRUSAGE 1
 
 /* Define if the GNU gettext() function is already present or preinstalled. */
 /* #undef HAVE_GETTEXT */
@@ -149,6 +168,12 @@
 
 /* Define to 1 if you have the `lseek' function. */
 #define HAVE_LSEEK 1
+
+/* Define to 1 if you have the `mallinfo' function. */
+/* #undef HAVE_MALLINFO */
+
+/* Define to 1 if you have the `mallinfo2' function. */
+/* #undef HAVE_MALLINFO2 */
 
 /* Define to 1 if you have the <memory.h> header file. */
 #define HAVE_MEMORY_H 1
@@ -221,7 +246,7 @@
 #define PACKAGE_NAME "ld"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "ld 2.42"
+#define PACKAGE_STRING "ld 2.46.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "ld"
@@ -230,10 +255,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "2.42"
-
-/* The size of `void *', as computed by sizeof. */
-#define SIZEOF_VOID_P 4
+#define PACKAGE_VERSION "2.46.0"
 
 /* Define to 1 if you have the ANSI C header files. */
 #define STDC_HEADERS 1
@@ -268,7 +290,10 @@
 
 
 /* Version number of package */
-#define VERSION "2.42"
+#define VERSION "2.46.0"
+
+/* whether to use inline xxhash */
+/* #undef WITH_XXHASH */
 
 /* Define to 1 if `lex' declares `yytext' as a `char *' by default, not a
    `char[]'. */

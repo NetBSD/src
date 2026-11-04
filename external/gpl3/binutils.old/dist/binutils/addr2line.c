@@ -1,5 +1,5 @@
 /* addr2line.c -- convert addresses to line number and function name
-   Copyright (C) 1997-2022 Free Software Foundation, Inc.
+   Copyright (C) 1997-2025 Free Software Foundation, Inc.
    Contributed by Ulrich Lauther <Ulrich.Lauther@mchp.siemens.de>
 
    This file is part of GNU Binutils.
@@ -130,7 +130,10 @@ slurp_symtab (bfd *abfd)
       dynamic = true;
     }
   if (storage < 0)
-    bfd_fatal (bfd_get_filename (abfd));
+    {
+      bfd_nonfatal (bfd_get_filename (abfd));
+      return;
+    }
 
   syms = (asymbol **) xmalloc (storage);
   if (dynamic)
@@ -138,7 +141,7 @@ slurp_symtab (bfd *abfd)
   else
     symcount = bfd_canonicalize_symtab (abfd, syms);
   if (symcount < 0)
-    bfd_fatal (bfd_get_filename (abfd));
+    bfd_nonfatal (bfd_get_filename (abfd));
 
   /* If there are no symbols left after canonicalization and
      we have not tried the dynamic symbols then give them a go.  */
@@ -446,21 +449,30 @@ process_file (const char *file_name, const char *section_name,
   abfd->flags |= BFD_DECOMPRESS;
 
   if (bfd_check_format (abfd, bfd_archive))
-    fatal (_("%s: cannot get addresses from archive"), file_name);
+    {
+      non_fatal (_("%s: cannot get addresses from archive"), file_name);
+      bfd_close (abfd);
+      return 1;
+    }
 
   if (! bfd_check_format_matches (abfd, bfd_object, &matching))
     {
       bfd_nonfatal (bfd_get_filename (abfd));
       if (bfd_get_error () == bfd_error_file_ambiguously_recognized)
 	list_matching_formats (matching);
-      xexit (1);
+      bfd_close (abfd);
+      return 1;
     }
 
   if (section_name != NULL)
     {
       section = bfd_get_section_by_name (abfd, section_name);
       if (section == NULL)
-	fatal (_("%s: cannot find section %s"), file_name, section_name);
+	{
+	  non_fatal (_("%s: cannot find section %s"), file_name, section_name);
+	  bfd_close (abfd);
+	  return 1;
+	}
     }
   else
     section = NULL;

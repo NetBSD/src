@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2023/06/03 09:09:06 lukem Exp $
+#	$NetBSD: Makefile,v 1.11.2.1 2026/11/04 22:40:59 perseant Exp $
 
 # $FreeBSD: head/cddl/usr.bin/ctfconvert/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -38,5 +38,6 @@ COPTS.dwarf.c +=	${CC_WNO_STRINGOP_TRUNCATION}
 COPTS.st_parse.c +=	-Wno-format-nonliteral
 COPTS.util.c +=		-Wno-format-nonliteral
 COPTS.st_parse.c +=	${CC_WNO_MAYBE_UNINITIALIZED}
+COPTS.st_parse.c +=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.prog.mk>

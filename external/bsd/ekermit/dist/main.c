@@ -213,7 +213,7 @@ doarg(char c) {				/* Command-line option parser */
 	      fatal("Missing option argument",(char *)0,(char *)0);
 	    s = *xargv;
 	    while (*s) {
-		if (!isdigit(*s))
+		if (!isdigit((unsigned char)*s))
 		  fatal("Numeric argument required",(char *)0,(char *)0);
 		s++;
 	    }

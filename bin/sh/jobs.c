@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.122.2.1 2025/08/02 05:18:26 perseant Exp $	*/
+/*	$NetBSD: jobs.c,v 1.122.2.2 2026/11/04 22:36:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.122.2.1 2025/08/02 05:18:26 perseant Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.122.2.2 2026/11/04 22:36:15 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,6 +104,7 @@ static int ttyfd = -1;
 
 STATIC void restartjob(struct job *);
 STATIC void freejob(struct job *);
+STATIC void clear_jobs(void);
 STATIC struct job *getjob(const char *, int);
 STATIC int dowait(int, struct job *, struct job **);
 #define WBLOCK	1
@@ -586,8 +587,8 @@ jobscmd(int argc, char **argv)
 
 
 /*
- * Print a list of jobs.  If "change" is nonzero, only print jobs whose
- * statuses have changed since the last call to showjobs.
+ * Print a list of jobs.  If mode includes SHOW_CHANGED, only print jobs
+ * whose statuses have changed since the last call to showjobs.
  *
  * If the shell is interrupted in the process of creating a job, the
  * result may be a job structure containing zero processes.  Such structures
@@ -658,6 +659,21 @@ freejob(struct job *jp)
 #endif
 	INTON;
 }
+
+STATIC void
+clear_jobs(void)
+{
+	int i;
+	struct job *jp;
+
+	INTOFF;
+	for (i = njobs, jp = jobtab ; --i >= 0 ; jp++) {
+		if (jp->used)
+			freejob(jp);
+	}
+	INTON;
+}
+
 
 /*
  * Extract the status of a completed job (for $?)
@@ -960,6 +976,9 @@ jobidcmd(int argc, char **argv)
 		error("usage: jobid [-g|-p|-r] jobid");
 
 	jp = getjob(*argptr, 0);
+	VTRACE(DBG_JOBS, ("jobidcmd.  jp=%p [%%%d] pg=%d pid=%d\n",
+	    jp, JNUM(jp), jp->pgrp, jp->ps[0].pid));
+
 	if (job) {
 		out1fmt("%%%d\n", JNUM(jp));
 		return 0;
@@ -1243,13 +1262,10 @@ makejob(union node *node, int nprocs)
 	int i;
 	struct job *jp;
 
-	if (jobs_invalid) {
+	if (jobs_invalid && nprocs > 0) {
 		VTRACE(DBG_JOBS, ("makejob(%p, %d) clearing jobtab (%d)\n",
 			(void *)node, nprocs, njobs));
-		for (i = njobs, jp = jobtab ; --i >= 0 ; jp++) {
-			if (jp->used)
-				freejob(jp);
-		}
+		clear_jobs();
 		jobs_invalid = 0;
 	}
 
@@ -1286,8 +1302,11 @@ makejob(union node *node, int nprocs)
 	jp->nprocs = 0;
 	jp->pgrp = 0;
 #if JOBS
-	jp->jobctl = jobctl;
-	set_curjob(jp, 1);
+	if (nprocs > 0) {
+		jp->jobctl = jobctl;
+		set_curjob(jp, 1);
+	} else
+		jp->jobctl = 0;
 #endif
 	if (nprocs > 1) {
 		jp->ps = ckmalloc(nprocs * sizeof (struct procstat));
@@ -1321,21 +1340,36 @@ forkshell(struct job *jp, union node *n, int mode)
 {
 	pid_t pid;
 	int serrno;
+	sigset_t block_all, oldstate;
 
 	CTRACE(DBG_JOBS, ("forkshell(%%%d, %p, %d) called\n",
 	    JNUM(jp), n, mode));
 
+	/*
+	 * Immediately after the fork(), until the child process
+	 * has had a chance to reset its idea of how signals should
+	 * be processed, it is vulnerable to receiving signals which
+	 * were trapped in the parent, but cannot be in the child,
+	 * without having any good way to recognise that.
+	 * So block all signals, temporarily, in the parent, just
+	 * over the fork() sys call, in the child, until it is ready.
+	 */
+	(void)sigfillset(&block_all);
+	(void)sigprocmask(SIG_BLOCK, &block_all, &oldstate);
 	switch ((pid = fork())) {
 	case -1:
 		serrno = errno;
+		(void)sigprocmask(SIG_SETMASK, &oldstate, NULL);
 		VTRACE(DBG_JOBS, ("Fork failed, errno=%d\n", serrno));
 		error("Cannot fork (%s)", strerror(serrno));
+		/* NOTREACHED */
 		break;
 	case 0:
 		SHELL_FORKED();
-		forkchild(jp, n, mode, 0);
+		forkchild(jp, n, mode, 0, &oldstate);
 		return 0;
 	default:
+		(void)sigprocmask(SIG_SETMASK, &oldstate, NULL);
 		return forkparent(jp, n, mode, pid);
 	}
 }
@@ -1375,7 +1409,7 @@ forkparent(struct job *jp, union node *n, int mode, pid_t pid)
 }
 
 void
-forkchild(struct job *jp, union node *n, int mode, int vforked)
+forkchild(struct job *jp, union node *n, int mode, int vforked, sigset_t *sigs)
 {
 	int wasroot;
 	int pgrp;
@@ -1393,6 +1427,25 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 
 	closescript(vforked);
 	clear_traps(vforked);
+
+	/*
+	 * If the jobs table is invalid (belongs to our parent) when we are
+	 * forking another child (jobs table belongs to its grandparent)
+	 * Then simply zap it (it cannot have any useful information for us)
+	 *
+	 * We don't do this if vforked, as we're not allowed to touch any
+	 * memory (almost) in that state, certainly not call malloc/free,
+	 * but we don't need to, vfork() will never be used in a
+	 * situation where it matters (running subshells, cmdsubs)
+	 */
+	if (jobs_invalid && !vforked)
+		clear_jobs();
+
+	/*
+	 * Now we have the trap state as we want it, signals can
+	 * be allowed to arrive again
+	 */
+	(void)sigprocmask(SIG_SETMASK, sigs, NULL);
 #if JOBS
 	if (!vforked)
 		jobctl = 0;		/* do job control only in root shell */
@@ -1408,9 +1461,13 @@ forkchild(struct job *jp, union node *n, int mode, int vforked)
 				error("Cannot set tty process group (%s) at %d",
 				    strerror(errno), __LINE__);
 		}
+		VTRACE(DBG_SIG, ("Child, resetting TSTP TTOU (mode=%d)\n",
+		    mode));
 		setsignal(SIGTSTP, vforked);
 		setsignal(SIGTTOU, vforked);
 	} else if (mode == FORK_BG) {
+		VTRACE(DBG_SIG, ("BG Child, ignoring INT QUIT "
+		    "(wasroot=%d mode=%d mflag=%d)\n", wasroot, mode, mflag));
 		ignoresig(SIGINT, vforked);
 		ignoresig(SIGQUIT, vforked);
 		if ((jp == NULL || jp->nprocs == 0) &&
@@ -2063,14 +2120,7 @@ cmdputs(const char *s)
 			break;
 		case CTLVAR:
 			subtype = *p++;
-			if (subtype & VSLINENO) {	/* undo LINENO hack */
-				if ((subtype & VSTYPE) == VSLENGTH)
-					str = "${#LINENO";	/*}*/
-				else
-					str = "${LINENO";	/*}*/
-				while (is_digit(*p))
-					p++;
-			} else if ((subtype & VSTYPE) == VSLENGTH)
+			if ((subtype & VSTYPE) == VSLENGTH)
 				str = "${#"; /*}*/
 			else
 				str = "${"; /*}*/

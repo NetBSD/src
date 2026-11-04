@@ -1,11 +1,11 @@
-/*	$NetBSD: mkpar.c,v 1.13.8.1 2025/08/02 05:20:54 perseant Exp $	*/
+/*	$NetBSD: mkpar.c,v 1.13.8.2 2026/11/04 22:37:23 perseant Exp $	*/
 
-/* Id: mkpar.c,v 1.18 2021/05/20 23:57:23 tom Exp  */
+/* Id: mkpar.c,v 1.20 2025/10/08 00:22:08 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkpar.c,v 1.13.8.1 2025/08/02 05:20:54 perseant Exp $");
+__RCSID("$NetBSD: mkpar.c,v 1.13.8.2 2026/11/04 22:37:23 perseant Exp $");
 
 #define NotSuppressed(p)	((p)->suppressed == 0)
 
@@ -79,10 +79,10 @@ static action *
 get_shifts(int stateno)
 {
     action *actions, *temp;
-    shifts *sp;
-    Value_t *to_state2;
+    const shifts *sp;
+    const Value_t *to_state2;
 
-    actions = 0;
+    actions = NULL;
     sp = shift_table[stateno];
     if (sp)
     {
@@ -122,7 +122,7 @@ add_reductions(int stateno, action *actions)
     for (i = m; i < n; i++)
     {
 	int ruleno = LAruleno[i];
-	unsigned *rowp = LA + i * tokensetsize;
+	const unsigned *rowp = LA + i * tokensetsize;
 
 	for (j = ntokens - 1; j >= 0; j--)
 	{
@@ -140,7 +140,7 @@ add_reduce(action *actions,
 {
     action *temp, *prev, *next;
 
-    prev = 0;
+    prev = NULL;
     for (next = actions; next && next->symbol < symbol; next = next->next)
 	prev = next;
 
@@ -176,10 +176,10 @@ add_reduce(action *actions,
 static void
 find_final_state(void)
 {
-    Value_t *to_state2;
-    shifts *p;
+    const Value_t *to_state2;
+    const shifts *p;
 
-    if ((p = shift_table[0]) != 0)
+    if ((p = shift_table[0]) != NULL)
     {
 	int i;
 	int goal = ritem[1];
@@ -233,7 +233,7 @@ static void
 remove_conflicts(void)
 {
     int i;
-    action *p, *pref = 0;
+    action *p, *pref = NULL;
 
     SRtotal = 0;
     RRtotal = 0;
@@ -263,7 +263,7 @@ remove_conflicts(void)
 		p->suppressed = 1;
 		StartBacktrack(pref);
 	    }
-	    else if (pref != 0 && pref->action_code == SHIFT)
+	    else if (pref != NULL && pref->action_code == SHIFT)
 	    {
 		if (pref->prec > 0 && p->prec > 0)
 		{

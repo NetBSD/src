@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-udp.c,v 1.10.2.1 2025/08/02 05:23:27 perseant Exp $");
+__RCSID("$NetBSD: print-udp.c,v 1.10.2.2 2026/11/04 22:39:56 perseant Exp $");
 #endif
 
 /* \summary: UDP printer */
@@ -703,8 +703,8 @@ udp_print(netdissect_options *ndo, const u_char *bp, u_int length,
 			lwapp_data_print(ndo, cp, length);
 		else if (IS_SRC_OR_DST_PORT(SIP_PORT))
 			sip_print(ndo, cp, length);
-		else if (IS_SRC_OR_DST_PORT(OTV_PORT))
-			otv_print(ndo, cp, length);
+		else if (IS_SRC_OR_DST_PORT(VXLAN_LINUX_PORT))
+			vxlan_print(ndo, cp, length);
 		else if (IS_SRC_OR_DST_PORT(VXLAN_PORT))
 			vxlan_print(ndo, cp, length);
 		else if (dport == GENEVE_PORT)

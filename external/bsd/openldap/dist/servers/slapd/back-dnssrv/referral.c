@@ -1,10 +1,10 @@
-/*	$NetBSD: referral.c,v 1.3 2021/08/14 16:14:59 christos Exp $	*/
+/*	$NetBSD: referral.c,v 1.3.4.1 2026/11/04 22:39:23 perseant Exp $	*/
 
 /* referral.c - DNS SRV backend referral handler */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * Portions Copyright 2000-2003 Kurt D. Zeilenga.
  * All rights reserved.
  *
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: referral.c,v 1.3 2021/08/14 16:14:59 christos Exp $");
+__RCSID("$NetBSD: referral.c,v 1.3.4.1 2026/11/04 22:39:23 perseant Exp $");
 
 #include "portable.h"
 

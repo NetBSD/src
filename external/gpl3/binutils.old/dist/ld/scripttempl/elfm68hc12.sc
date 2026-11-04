@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -163,7 +163,7 @@ SOFT_REGS_RELOC="
 "
 
 cat <<EOF
-/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -430,24 +430,18 @@ SECTIONS
   } ${RELOCATING+ > ${EEPROM_MEMORY}}
 
   ${RELOCATING+${VECTORS}}
+EOF
 
-  /* Stabs debugging sections.  */
-  .stab		 0 : { *(.stab) }
-  .stabstr	 0 : { *(.stabstr) }
-  .stab.excl	 0 : { *(.stab.excl) }
-  .stab.exclstr	 0 : { *(.stab.exclstr) }
-  .stab.index	 0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
+source_sh $srcdir/scripttempl/misc-sections.sc
 
-  .comment	 0 : { *(.comment) }
-
+cat <<EOF
   /* Treatment of DWARF debug section must be at end of the linker
      script to avoid problems when there are undefined symbols. It's necessary
      to avoid that the DWARF section is relocated before such undefined
      symbols are found.  */
 EOF
 
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
 }

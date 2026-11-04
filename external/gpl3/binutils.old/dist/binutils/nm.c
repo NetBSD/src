@@ -1,5 +1,5 @@
 /* nm.c -- Describe symbol table of a rel file.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -20,7 +20,6 @@
 
 #include "sysdep.h"
 #include "bfd.h"
-#include "progress.h"
 #include "getopt.h"
 #include "aout/stab_gnu.h"
 #include "aout/ranlib.h"
@@ -54,15 +53,16 @@ struct size_sym
   bfd_vma size;
 };
 
-/* When fetching relocs, we use this structure to pass information to
-   get_relocs.  */
+/* line number related info cached in bfd usrdata.  */
 
-struct get_relocs_info
+struct lineno_cache
 {
   asection **secs;
   arelent ***relocs;
   long *relcount;
   asymbol **syms;
+  long symcount;
+  unsigned int seccount;
 };
 
 struct extended_symbol_info
@@ -79,7 +79,15 @@ struct extended_symbol_info
 #define SYM_STAB_DESC(sym)   (sym->sinfo->stab_desc)
 #define SYM_STAB_OTHER(sym)  (sym->sinfo->stab_other)
 #define SYM_SIZE(sym) \
-  (sym->elfinfo ? sym->elfinfo->internal_elf_sym.st_size: sym->ssize)
+  (sym->elfinfo \
+   && sym->elfinfo->internal_elf_sym.st_size \
+   ? sym->elfinfo->internal_elf_sym.st_size \
+   : sym->coffinfo \
+     && ISFCN (sym->coffinfo->native->u.syment.n_type) \
+     && sym->coffinfo->native->u.syment.n_numaux \
+     && sym->coffinfo->native[1].u.auxent.x_sym.x_misc.x_fsize \
+     ? sym->coffinfo->native[1].u.auxent.x_sym.x_misc.x_fsize \
+     : sym->ssize)
 
 /* The output formatting functions.  */
 static void print_object_filename_bsd (const char *);
@@ -141,7 +149,7 @@ enum formats
 
 #define FORMAT_DEFAULT FORMAT_BSD
 
-static struct output_fns formats[FORMAT_MAX] =
+static const struct output_fns formats[FORMAT_MAX] =
 {
   {print_object_filename_bsd,
    print_archive_filename_bsd,
@@ -167,9 +175,9 @@ static struct output_fns formats[FORMAT_MAX] =
 
 
 /* The output format to use.  */
-static struct output_fns *format = &formats[FORMAT_DEFAULT];
+static const struct output_fns *format = &formats[FORMAT_DEFAULT];
 static unsigned int print_format = FORMAT_DEFAULT;
-static const char *print_format_string = NULL;
+static char print_format_string[10];
 
 /* Command options.  */
 
@@ -218,10 +226,6 @@ static const char *plugin_target = "plugin";
 #else
 static const char *plugin_target = NULL;
 #endif
-
-/* Used to cache the line numbers for a BFD.  */
-static bfd *lineno_cache_bfd;
-static bfd *lineno_cache_rel_bfd;
 
 typedef enum unicode_display_type
 {
@@ -369,7 +373,7 @@ usage (FILE *stream, int status)
   fprintf (stream, _("\
   -W, --no-weak          Ignore weak symbols\n"));
   fprintf (stream, _("\
-      --with-symbol-versions  Display version strings after symbol names\n"));
+      --without-symbol-versions  Do not display version strings after symbol names\n"));
   fprintf (stream, _("\
   -X 32_64               (ignored)\n"));
   fprintf (stream, _("\
@@ -437,7 +441,6 @@ static const char *
 get_elf_symbol_type (unsigned int type)
 {
   static char *bufp;
-  int n;
 
   switch (type)
     {
@@ -452,13 +455,11 @@ get_elf_symbol_type (unsigned int type)
 
   free (bufp);
   if (type >= STT_LOPROC && type <= STT_HIPROC)
-    n = asprintf (&bufp, _("<processor specific>: %d"), type);
+    bufp = xasprintf (_("<processor specific>: %d"), type);
   else if (type >= STT_LOOS && type <= STT_HIOS)
-    n = asprintf (&bufp, _("<OS specific>: %d"), type);
+    bufp = xasprintf (_("<OS specific>: %d"), type);
   else
-    n = asprintf (&bufp, _("<unknown>: %d"), type);
-  if (n < 0)
-    fatal ("%s", xstrerror (errno));
+    bufp = xasprintf (_("<unknown>: %d"), type);
   return bufp;
 }
 
@@ -466,7 +467,6 @@ static const char *
 get_coff_symbol_type (const struct internal_syment *sym)
 {
   static char *bufp;
-  int n;
 
   switch (sym->n_sclass)
     {
@@ -486,9 +486,7 @@ get_coff_symbol_type (const struct internal_syment *sym)
     }
 
   free (bufp);
-  n = asprintf (&bufp, _("<unknown>: %d/%d"), sym->n_sclass, sym->n_type);
-  if (n < 0)
-    fatal ("%s", xstrerror (errno));
+  bufp = xasprintf (_("<unknown>: %d/%d"), sym->n_sclass, sym->n_type);
   return bufp;
 }
 
@@ -545,13 +543,14 @@ display_utf8 (const unsigned char * in, char * out, unsigned int * consumed)
 
     case unicode_invalid:
     case unicode_hex:
-      out += sprintf (out, "%c", unicode_display == unicode_hex ? '<' : '{');
-      out += sprintf (out, "0x");
+      *out++ = unicode_display == unicode_hex ? '<' : '{';
+      *out++ = '0';
+      *out++ = 'x';
       for (j = 0; j < nchars; j++)
 	out += sprintf (out, "%02x", in [j]);
-      out += sprintf (out, "%c", unicode_display == unicode_hex ? '>' : '}');
+      *out++ = unicode_display == unicode_hex ? '>' : '}';
       break;
-      
+
     case unicode_highlight:
       if (isatty (1))
 	out += sprintf (out, "\x1B[31;47m"); /* Red.  */
@@ -561,7 +560,7 @@ display_utf8 (const unsigned char * in, char * out, unsigned int * consumed)
 	{
 	case 2:
 	  out += sprintf (out, "\\u%02x%02x",
-		  ((in[0] & 0x1c) >> 2), 
+		  ((in[0] & 0x1c) >> 2),
 		  ((in[0] & 0x03) << 6) | (in[1] & 0x3f));
 	  break;
 
@@ -583,7 +582,7 @@ display_utf8 (const unsigned char * in, char * out, unsigned int * consumed)
 	}
 
       if (unicode_display == unicode_highlight && isatty (1))
-	out += sprintf (out, "\033[0m"); /* Default colour.  */
+	out += sprintf (out, "\x1B[0m"); /* Default colour.  */
       break;
 
     default:
@@ -637,11 +636,15 @@ convert_utf8 (const char * in)
 
   /* Copy the input, translating as needed.  */
   in = original;
-  if (buffer_len < (strlen (in) * 9))
+  /* For 2 char unicode, max out is 12 (colour escapes) + 6, ie. 9 per in
+     For hex, max out is 8 for 2 char unicode, ie. 4 per in.
+     3 and 4 char unicode produce less output for input.  */
+  size_t max_needed = strlen (in) * 9 + 1;
+  if (buffer_len < max_needed)
     {
-      free ((void *) buffer);
-      buffer_len = strlen (in) * 9;
-      buffer = xmalloc (buffer_len + 1);
+      buffer_len = max_needed;
+      free (buffer);
+      buffer = xmalloc (buffer_len);
     }
 
   out = buffer;
@@ -661,8 +664,8 @@ convert_utf8 (const char * in)
 	{
 	  unsigned int num_consumed;
 
-	  out += display_utf8 ((const unsigned char *)(in - 1), out, & num_consumed);
-	  in += num_consumed - 1;
+	  out += display_utf8 ((const unsigned char *) --in, out, &num_consumed);
+	  in += num_consumed;
 	}
       else
 	*out++ = c;
@@ -681,7 +684,7 @@ print_symname (const char *form, struct extended_symbol_info *info,
 	       const char *name, bfd *abfd)
 {
   char *alloc = NULL;
-  char *atver = NULL;
+  char *atname = NULL;
 
   if (name == NULL)
     name = info->sinfo->name;
@@ -689,9 +692,19 @@ print_symname (const char *form, struct extended_symbol_info *info,
   if (!with_symbol_versions
       && bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
-      atver = strchr (name, '@');
+      char *atver = strchr (name, '@');
+
       if (atver)
-	*atver = 0;
+	{
+	  /* PR 32467 - Corrupt binaries might include an @ character in a
+	     symbol name.  Since non-versioned symbol names can be in
+	     read-only memory (via memory mapping of a file's contents) we
+	     cannot just replace the @ character with a NUL.  Instead we
+	     create a truncated copy of the name.  */
+	  atname = xstrdup (name);
+	  atname [atver - name] = 0;
+	  name = atname;
+	}
     }
 
   if (do_demangle && *name)
@@ -702,9 +715,7 @@ print_symname (const char *form, struct extended_symbol_info *info,
     }
 
   if (unicode_display != unicode_default)
-    {
-      name = convert_utf8 (name);
-    }
+    name = convert_utf8 (name);
 
   if (info != NULL && info->elfinfo && with_symbol_versions)
     {
@@ -725,8 +736,8 @@ print_symname (const char *form, struct extended_symbol_info *info,
 	}
     }
   printf (form, name);
-  if (atver)
-    *atver = '@';
+
+  free (atname);
   free (alloc);
 }
 
@@ -741,19 +752,19 @@ print_symdef_entry (bfd *abfd)
        idx != BFD_NO_MORE_SYMBOLS;
        idx = bfd_get_next_mapent (abfd, idx, &thesym))
     {
-      bfd *elt;
       if (!everprinted)
 	{
 	  printf (_("\nArchive index:\n"));
 	  everprinted = true;
 	}
-      elt = bfd_get_elt_at_index (abfd, idx);
-      if (elt == NULL)
-	bfd_fatal ("bfd_get_elt_at_index");
-      if (thesym->name != (char *) NULL)
+      if (thesym->name != NULL)
 	{
 	  print_symname ("%s", NULL, thesym->name, abfd);
-	  printf (" in %s\n", bfd_get_filename (elt));
+	  bfd *elt = bfd_get_elt_at_index (abfd, idx);
+	  if (elt)
+	    printf (" in %s\n", bfd_get_filename (elt));
+	  else
+	    printf ("\n");
 	}
     }
 }
@@ -786,16 +797,11 @@ filter_symbols (bfd *abfd, bool is_dynamic, void *minisyms,
       int keep = 0;
       asymbol *sym;
 
-      PROGRESS (1);
-
-      sym = bfd_minisymbol_to_symbol (abfd, is_dynamic, (const void *) from, store);
+      sym = bfd_minisymbol_to_symbol (abfd, is_dynamic, from, store);
       if (sym == NULL)
-	bfd_fatal (bfd_get_filename (abfd));
+	continue;
 
-      if (sym->name != NULL
-	  && sym->name[0] == '_'
-	  && sym->name[1] == '_'
-	  && strcmp (sym->name + (sym->name[2] == '_'), "__gnu_lto_slim") == 0
+      if (bfd_lto_slim_symbol_p (abfd, sym->name)
 	  && report_plugin_err)
 	{
 	  report_plugin_err = false;
@@ -1035,9 +1041,9 @@ size_forward2 (const void *P_x, const void *P_y)
     return sorters[0][reverse_sort] (x->minisym, y->minisym);
 }
 
-/* Sort the symbols by size.  ELF provides a size but for other formats
-   we have to make a guess by assuming that the difference between the
-   address of a symbol and the address of the next higher symbol is the
+/* Sort the symbols by size.  ELF and COFF may provide a size but for other
+   formats we have to make a guess by assuming that the difference between
+   the address of a symbol and the address of the next higher symbol is the
    size.  */
 
 static long
@@ -1080,6 +1086,8 @@ sort_symbols_by_size (bfd *abfd, bool is_dynamic, void *minisyms,
       asection *sec;
       bfd_vma sz;
       asymbol *temp;
+      const elf_symbol_type *elfsym;
+      const coff_symbol_type *coffsym;
 
       if (from + size < fromend)
 	{
@@ -1099,8 +1107,15 @@ sort_symbols_by_size (bfd *abfd, bool is_dynamic, void *minisyms,
 	 we can't rely on that information for the symbol size.  Ditto for
 	 bfd/section.c:global_syms like *ABS*.  */
       if ((sym->flags & (BSF_SECTION_SYM | BSF_SYNTHETIC)) == 0
-	  && bfd_get_flavour (abfd) == bfd_target_elf_flavour)
-	sz = ((elf_symbol_type *) sym)->internal_elf_sym.st_size;
+	  && (elfsym = elf_symbol_from (sym)) != NULL
+	  && elfsym->internal_elf_sym.st_size != 0)
+	sz = elfsym->internal_elf_sym.st_size;
+      else if ((sym->flags & (BSF_SECTION_SYM | BSF_SYNTHETIC)) == 0
+	       && (coffsym = coff_symbol_from (sym)) != NULL
+	       && ISFCN (coffsym->native->u.syment.n_type)
+	       && coffsym->native->u.syment.n_numaux != 0
+	       && coffsym->native[1].u.auxent.x_sym.x_misc.x_fsize != 0)
+	sz = coffsym->native[1].u.auxent.x_sym.x_misc.x_fsize;
       else if ((sym->flags & (BSF_SECTION_SYM | BSF_SYNTHETIC)) == 0
 	       && bfd_is_com_section (sec))
 	sz = sym->value;
@@ -1143,33 +1158,45 @@ sort_symbols_by_size (bfd *abfd, bool is_dynamic, void *minisyms,
 static void
 get_relocs (bfd *abfd, asection *sec, void *dataarg)
 {
-  struct get_relocs_info *data = (struct get_relocs_info *) dataarg;
+  struct lineno_cache *data = (struct lineno_cache *) dataarg;
 
   *data->secs = sec;
+  *data->relocs = NULL;
+  *data->relcount = 0;
 
-  if ((sec->flags & SEC_RELOC) == 0)
+  if ((sec->flags & SEC_RELOC) != 0)
     {
-      *data->relocs = NULL;
-      *data->relcount = 0;
-    }
-  else
-    {
-      long relsize;
-
-      relsize = bfd_get_reloc_upper_bound (abfd, sec);
-      if (relsize < 0)
-	bfd_fatal (bfd_get_filename (abfd));
-
-      *data->relocs = (arelent **) xmalloc (relsize);
-      *data->relcount = bfd_canonicalize_reloc (abfd, sec, *data->relocs,
-						data->syms);
-      if (*data->relcount < 0)
-	bfd_fatal (bfd_get_filename (abfd));
+      long relsize = bfd_get_reloc_upper_bound (abfd, sec);
+      if (relsize > 0)
+	{
+	  *data->relocs = (arelent **) xmalloc (relsize);
+	  *data->relcount = bfd_canonicalize_reloc (abfd, sec, *data->relocs,
+						    data->syms);
+	}
     }
 
   ++data->secs;
   ++data->relocs;
   ++data->relcount;
+}
+
+static void
+free_lineno_cache (bfd *abfd)
+{
+  struct lineno_cache *lc = bfd_usrdata (abfd);
+
+  if (lc)
+    {
+      if (lc->relocs)
+	for (unsigned int i = 0; i < lc->seccount; i++)
+	  free (lc->relocs[i]);
+      free (lc->relcount);
+      free (lc->relocs);
+      free (lc->secs);
+      free (lc->syms);
+      free (lc);
+      bfd_set_usrdata (abfd, NULL);
+    }
 }
 
 /* Print a single symbol.  */
@@ -1182,8 +1209,6 @@ print_symbol (bfd *        abfd,
 {
   symbol_info syminfo;
   struct extended_symbol_info info;
-
-  PROGRESS (1);
 
   format->print_symbol_filename (archive_bfd, abfd);
 
@@ -1218,100 +1243,76 @@ print_symbol (bfd *        abfd,
 
   format->print_symbol_info (&info, abfd);
 
-  if (line_numbers)
+  const char *symname = bfd_asymbol_name (sym);
+  if (line_numbers && symname != NULL && symname[0] != 0)
     {
-      static asymbol **syms;
-      static long symcount;
+      struct lineno_cache *lc = bfd_usrdata (abfd);
       const char *filename, *functionname;
       unsigned int lineno;
 
       /* We need to get the canonical symbols in order to call
          bfd_find_nearest_line.  This is inefficient, but, then, you
          don't have to use --line-numbers.  */
-      if (abfd != lineno_cache_bfd && syms != NULL)
+      if (lc == NULL)
 	{
-	  free (syms);
-	  syms = NULL;
+	  lc = xcalloc (1, sizeof (*lc));
+	  bfd_set_usrdata (abfd, lc);
 	}
-      if (syms == NULL)
+      if (lc->syms == NULL && lc->symcount == 0)
 	{
-	  long symsize;
-
-	  symsize = bfd_get_symtab_upper_bound (abfd);
-	  if (symsize < 0)
-	    bfd_fatal (bfd_get_filename (abfd));
-	  syms = (asymbol **) xmalloc (symsize);
-	  symcount = bfd_canonicalize_symtab (abfd, syms);
-	  if (symcount < 0)
-	    bfd_fatal (bfd_get_filename (abfd));
-	  lineno_cache_bfd = abfd;
+	  long symsize = bfd_get_symtab_upper_bound (abfd);
+	  if (symsize <= 0)
+	    lc->symcount = -1;
+	  else
+	    {
+	      lc->syms = xmalloc (symsize);
+	      lc->symcount = bfd_canonicalize_symtab (abfd, lc->syms);
+	    }
 	}
 
-      if (bfd_is_und_section (bfd_asymbol_section (sym)))
+      if (lc->symcount <= 0)
+	;
+      else if (bfd_is_und_section (bfd_asymbol_section (sym)))
 	{
-	  static asection **secs;
-	  static arelent ***relocs;
-	  static long *relcount;
-	  static unsigned int seccount;
 	  unsigned int i;
-	  const char *symname;
 
 	  /* For an undefined symbol, we try to find a reloc for the
              symbol, and print the line number of the reloc.  */
-	  if (abfd != lineno_cache_rel_bfd && relocs != NULL)
+	  if (lc->relocs == NULL)
 	    {
-	      for (i = 0; i < seccount; i++)
-		if (relocs[i] != NULL)
-		  free (relocs[i]);
-	      free (secs);
-	      free (relocs);
-	      free (relcount);
-	      secs = NULL;
-	      relocs = NULL;
-	      relcount = NULL;
+	      unsigned int seccount = bfd_count_sections (abfd);
+	      lc->seccount = seccount;
+	      lc->secs = xmalloc (seccount * sizeof (*lc->secs));
+	      lc->relocs = xmalloc (seccount * sizeof (*lc->relocs));
+	      lc->relcount = xmalloc (seccount * sizeof (*lc->relcount));
+
+	      struct lineno_cache rinfo = *lc;
+	      bfd_map_over_sections (abfd, get_relocs, &rinfo);
 	    }
 
-	  if (relocs == NULL)
-	    {
-	      struct get_relocs_info rinfo;
-
-	      seccount = bfd_count_sections (abfd);
-
-	      secs = (asection **) xmalloc (seccount * sizeof *secs);
-	      relocs = (arelent ***) xmalloc (seccount * sizeof *relocs);
-	      relcount = (long *) xmalloc (seccount * sizeof *relcount);
-
-	      rinfo.secs = secs;
-	      rinfo.relocs = relocs;
-	      rinfo.relcount = relcount;
-	      rinfo.syms = syms;
-	      bfd_map_over_sections (abfd, get_relocs, (void *) &rinfo);
-	      lineno_cache_rel_bfd = abfd;
-	    }
-
-	  symname = bfd_asymbol_name (sym);
-	  for (i = 0; i < seccount; i++)
+	  for (i = 0; i < lc->seccount; i++)
 	    {
 	      long j;
 
-	      for (j = 0; j < relcount[i]; j++)
+	      for (j = 0; j < lc->relcount[i]; j++)
 		{
 		  arelent *r;
 
-		  r = relocs[i][j];
+		  r = lc->relocs[i][j];
 		  if (r->sym_ptr_ptr != NULL
 		      && (*r->sym_ptr_ptr)->section == sym->section
 		      && (*r->sym_ptr_ptr)->value == sym->value
+		      && bfd_asymbol_name (*r->sym_ptr_ptr) != NULL
 		      && strcmp (symname,
 				 bfd_asymbol_name (*r->sym_ptr_ptr)) == 0
-		      && bfd_find_nearest_line (abfd, secs[i], syms,
+		      && bfd_find_nearest_line (abfd, lc->secs[i], lc->syms,
 						r->address, &filename,
 						&functionname, &lineno)
 		      && filename != NULL)
 		    {
 		      /* We only print the first one we find.  */
 		      printf ("\t%s:%u", filename, lineno);
-		      i = seccount;
+		      i = lc->seccount;
 		      break;
 		    }
 		}
@@ -1319,9 +1320,9 @@ print_symbol (bfd *        abfd,
 	}
       else if (bfd_asymbol_section (sym)->owner == abfd)
 	{
-	  if ((bfd_find_line (abfd, syms, sym, &filename, &lineno)
+	  if ((bfd_find_line (abfd, lc->syms, sym, &filename, &lineno)
 	       || bfd_find_nearest_line (abfd, bfd_asymbol_section (sym),
-					 syms, sym->value, &filename,
+					 lc->syms, sym->value, &filename,
 					 &functionname, &lineno))
 	      && filename != NULL
 	      && lineno != 0)
@@ -1426,19 +1427,7 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
     }
 
   symcount = bfd_read_minisymbols (abfd, dynamic, &minisyms, &size);
-  if (symcount < 0)
-    {
-      if (dynamic && bfd_get_error () == bfd_error_no_symbols)
-	{
-	  if (!quiet)
-	    non_fatal (_("%s: no symbols"), bfd_get_filename (abfd));
-	  return;
-	}
-
-      bfd_fatal (bfd_get_filename (abfd));
-    }
-
-  if (symcount == 0)
+  if (symcount <= 0)
     {
       if (!quiet)
 	non_fatal (_("%s: no symbols"), bfd_get_filename (abfd));
@@ -1470,7 +1459,7 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
 	      dyn_syms = (asymbol **) xmalloc (storage);
 	      dyn_count = bfd_canonicalize_dynamic_symtab (abfd, dyn_syms);
 	      if (dyn_count < 0)
-		bfd_fatal (bfd_get_filename (abfd));
+		dyn_count = 0;
 	    }
 	}
 
@@ -1493,9 +1482,9 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
 	free (dyn_syms);
     }
 
-  /* lto_slim_object is set to false when a bfd is loaded with a compiler
-     LTO plugin.  */
-  if (abfd->lto_slim_object)
+  /* lto_type is set to lto_non_ir_object when a bfd is loaded with a
+     compiler LTO plugin.  */
+  if (bfd_get_lto_type (abfd) == lto_slim_ir_object)
     {
       report_plugin_err = false;
       non_fatal (_("%s: plugin needed to handle lto object"),
@@ -1531,45 +1520,16 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
   else
     print_size_symbols (abfd, dynamic, symsizes, symcount, archive_bfd);
 
-  if (synthsyms)
-    free (synthsyms);
+  free_lineno_cache (abfd);
+  free (synthsyms);
   free (minisyms);
   free (symsizes);
 }
 
 /* Construct a formatting string for printing symbol values.  */
 
-static const char *
-get_print_format (void)
-{
-  const char * padding;
-  if (print_format == FORMAT_POSIX || print_format == FORMAT_JUST_SYMBOLS)
-    {
-      /* POSIX compatible output does not have any padding.  */
-      padding = "";
-    }
-  else if (print_width == 32)
-    {
-      padding ="08";
-    }
-  else /* print_width == 64 */
-    {
-      padding = "016";
-    }
-
-  const char * radix = NULL;
-  switch (print_radix)
-    {
-    case 8:  radix = PRIo64; break;
-    case 10: radix = PRId64; break;
-    case 16: radix = PRIx64; break;
-    }
-
-  return concat ("%", padding, radix, NULL);
-}
-
 static void
-set_print_width (bfd *file)
+set_print_format (bfd *file)
 {
   print_width = bfd_get_arch_size (file);
 
@@ -1586,38 +1546,74 @@ set_print_width (bfd *file)
       else
 	print_width = 32;
     }
-  free ((char *) print_format_string);
-  print_format_string = get_print_format ();
+
+  char *p = print_format_string;
+  *p++ = '%';
+  if (print_format == FORMAT_POSIX || print_format == FORMAT_JUST_SYMBOLS)
+    {
+      /* POSIX compatible output does not have any padding.  */
+    }
+  else if (print_width == 32)
+    {
+      *p++ = '0';
+      *p++ = '8';
+    }
+  else /* print_width == 64.  */
+    {
+      *p++ = '0';
+      *p++ = '1';
+      *p++ = '6';
+    }
+
+  if (print_width == 32)
+    {
+      switch (print_radix)
+	{
+	case 8:  strcpy (p, PRIo32); break;
+	case 10: strcpy (p, PRId32); break;
+	case 16: strcpy (p, PRIx32); break;
+	}
+    }
+  else
+    {
+      switch (print_radix)
+	{
+	case 8:  strcpy (p, PRIo64); break;
+	case 10: strcpy (p, PRId64); break;
+	case 16: strcpy (p, PRIx64); break;
+	}
+    }
 }
 
 static void
 display_archive (bfd *file)
 {
-  bfd *arfile = NULL;
-  bfd *last_arfile = NULL;
-  char **matching;
-
   format->print_archive_filename (bfd_get_filename (file));
 
   if (print_armap)
     print_symdef_entry (file);
 
+  bfd *last_arfile = NULL;
   for (;;)
     {
-      PROGRESS (1);
-
-      arfile = bfd_openr_next_archived_file (file, arfile);
-
-      if (arfile == NULL)
+      bfd *arfile = bfd_openr_next_archived_file (file, last_arfile);
+      if (arfile == NULL
+	  || arfile == last_arfile)
 	{
+	  if (arfile != NULL)
+	    bfd_set_error (bfd_error_malformed_archive);
 	  if (bfd_get_error () != bfd_error_no_more_archived_files)
-	    bfd_fatal (bfd_get_filename (file));
+	    bfd_nonfatal (bfd_get_filename (file));
 	  break;
 	}
 
+      if (last_arfile != NULL)
+	bfd_close (last_arfile);
+
+      char **matching;
       if (bfd_check_format_matches (arfile, bfd_object, &matching))
 	{
-	  set_print_width (arfile);
+	  set_print_format (arfile);
 	  format->print_archive_member (bfd_get_filename (file),
 					bfd_get_filename (arfile));
 	  display_rel_file (arfile, file);
@@ -1629,23 +1625,11 @@ display_archive (bfd *file)
 	    list_matching_formats (matching);
 	}
 
-      if (last_arfile != NULL)
-	{
-	  bfd_close (last_arfile);
-	  lineno_cache_bfd = NULL;
-	  lineno_cache_rel_bfd = NULL;
-	  if (arfile == last_arfile)
-	    return;
-	}
       last_arfile = arfile;
     }
 
   if (last_arfile != NULL)
-    {
-      bfd_close (last_arfile);
-      lineno_cache_bfd = NULL;
-      lineno_cache_rel_bfd = NULL;
-    }
+    bfd_close (last_arfile);
 }
 
 static bool
@@ -1675,7 +1659,7 @@ display_file (char *filename)
     }
   else if (bfd_check_format_matches (file, bfd_object, &matching))
     {
-      set_print_width (file);
+      set_print_format (file);
       format->print_object_filename (filename);
       display_rel_file (file, NULL);
     }
@@ -1688,10 +1672,7 @@ display_file (char *filename)
     }
 
   if (!bfd_close (file))
-    bfd_fatal (filename);
-
-  lineno_cache_bfd = NULL;
-  lineno_cache_rel_bfd = NULL;
+    retval = false;
 
   return retval;
 }
@@ -1854,6 +1835,9 @@ print_value (bfd *abfd ATTRIBUTE_UNUSED, bfd_vma val)
   switch (print_width)
     {
     case 32:
+      printf (print_format_string, (uint32_t) val);
+      break;
+
     case 64:
       printf (print_format_string, (uint64_t) val);
       break;
@@ -2005,15 +1989,13 @@ main (int argc, char **argv)
   bfd_plugin_set_program_name (program_name);
 #endif
 
-  START_PROGRESS (program_name, 0);
-
   expandargv (&argc, &argv);
 
   if (bfd_init () != BFD_INIT_MAGIC)
     fatal (_("fatal error: libbfd ABI mismatch"));
   set_default_bfd_target ();
 
-  while ((c = getopt_long (argc, argv, "aABCDef:gHhjJlnopPrSst:uU:vVvWX:",
+  while ((c = getopt_long (argc, argv, "aABCDef:gHhjJlnopPrSst:uUvVvWX:",
 			   long_options, (int *) 0)) != EOF)
     {
       switch (c)
@@ -2193,12 +2175,9 @@ main (int argc, char **argv)
   /* We were given several filenames to do.  */
   while (optind < argc)
     {
-      PROGRESS (1);
       if (!display_file (argv[optind++]))
 	retval++;
     }
-
-  END_PROGRESS (program_name);
 
   exit (retval);
   return retval;

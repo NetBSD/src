@@ -1,6 +1,6 @@
 /* tc-microblaze.c -- Assemble code for Xilinx MicroBlaze
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -135,27 +135,6 @@ microblaze_generate_symbol (char *sym)
 
 /* Handle the section changing pseudo-ops. */
 
-static void
-microblaze_s_text (int ignore ATTRIBUTE_UNUSED)
-{
-#ifdef OBJ_ELF
-  obj_elf_text (ignore);
-#else
-  s_text (ignore);
-#endif
-}
-
-static void
-microblaze_s_data (int ignore ATTRIBUTE_UNUSED)
-{
-#ifdef OBJ_ELF
-  obj_elf_change_section (".data", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE,
-			  0, 0, 0, 0);
-#else
-  s_data (ignore);
-#endif
-}
-
 /* Things in the .sdata segment are always considered to be in the small data section.  */
 
 static void
@@ -163,7 +142,7 @@ microblaze_s_sdata (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
   obj_elf_change_section (".sdata", SHT_PROGBITS, SHF_ALLOC+SHF_WRITE,
-			  0, 0, 0, 0);
+			  0, 0, false);
 #else
   s_data (ignore);
 #endif
@@ -265,8 +244,7 @@ microblaze_s_lcomm (int xxx ATTRIBUTE_UNUSED)
   if (S_GET_SEGMENT (symbolP) == current_seg)
     symbol_get_frag (symbolP)->fr_symbol = 0;
   symbol_set_frag (symbolP, frag_now);
-  pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
-		    (char *) 0);
+  pfrag = frag_var (rs_org, 1, 1, 0, symbolP, size, NULL);
   *pfrag = 0;
   S_SET_SIZE (symbolP, size);
   S_SET_SEGMENT (symbolP, current_seg);
@@ -282,7 +260,7 @@ microblaze_s_rdata (int localvar)
     {
       /* rodata.  */
       obj_elf_change_section (".rodata", SHT_PROGBITS, SHF_ALLOC,
-			      0, 0, 0, 0);
+			      0, 0, false);
       if (rodata_segment == 0)
 	rodata_segment = subseg_new (".rodata", 0);
     }
@@ -290,7 +268,7 @@ microblaze_s_rdata (int localvar)
     {
       /* 1 .sdata2.  */
       obj_elf_change_section (".sdata2", SHT_PROGBITS, SHF_ALLOC,
-			      0, 0, 0, 0);
+			      0, 0, false);
     }
 #else
   s_data (ignore);
@@ -298,20 +276,13 @@ microblaze_s_rdata (int localvar)
 }
 
 static void
-microblaze_s_bss (int localvar)
+microblaze_s_sbss (int ignore ATTRIBUTE_UNUSED)
 {
 #ifdef OBJ_ELF
-  if (localvar == 0) /* bss.  */
-    obj_elf_change_section (".bss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
-			    0, 0, 0, 0);
-  else if (localvar == 1)
-    {
-      /* sbss.  */
-      obj_elf_change_section (".sbss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
-			      0, 0, 0, 0);
-      if (sbss_segment == 0)
-	sbss_segment = subseg_new (".sbss", 0);
-    }
+  obj_elf_change_section (".sbss", SHT_NOBITS, SHF_ALLOC+SHF_WRITE,
+			  0, 0, false);
+  if (sbss_segment == 0)
+    sbss_segment = subseg_new (".sbss", 0);
 #else
   s_data (ignore);
 #endif
@@ -346,7 +317,7 @@ microblaze_s_weakext (int ignore ATTRIBUTE_UNUSED)
 
   SKIP_WHITESPACE ();
 
-  if (!is_end_of_line[(unsigned char) *input_line_pointer])
+  if (!is_end_of_stmt (*input_line_pointer))
     {
       if (S_IS_DEFINED (symbolP))
 	{
@@ -385,7 +356,6 @@ microblaze_s_weakext (int ignore ATTRIBUTE_UNUSED)
 const pseudo_typeS md_pseudo_table[] =
 {
   {"lcomm", microblaze_s_lcomm, 1},
-  {"data", microblaze_s_data, 0},
   {"data8", cons, 1},      /* Same as byte.  */
   {"data16", cons, 2},     /* Same as hword.  */
   {"data32", cons, 4},     /* Same as word.  */
@@ -396,9 +366,10 @@ const pseudo_typeS md_pseudo_table[] =
   {"rodata", microblaze_s_rdata, 0},
   {"sdata2", microblaze_s_rdata, 1},
   {"sdata", microblaze_s_sdata, 0},
-  {"bss", microblaze_s_bss, 0},
-  {"sbss", microblaze_s_bss, 1},
-  {"text", microblaze_s_text, 0},
+#ifndef OBJ_ELF
+  {"bss", s_data, 0},
+#endif
+  {"sbss", microblaze_s_sbss, 0},
   {"word", cons, 4},
   {"frame", s_ignore, 0},
   {"mask", s_ignore, 0}, /* Emitted by gcc.  */
@@ -428,7 +399,7 @@ parse_reg (char * s, unsigned * reg)
   unsigned tmpreg = 0;
 
   /* Strip leading whitespace.  */
-  while (ISSPACE (* s))
+  while (is_whitespace (* s))
     ++ s;
 
   if (strncasecmp (s, "rpc", 3) == 0)
@@ -513,7 +484,7 @@ parse_reg (char * s, unsigned * reg)
         }
       else
         as_bad (_("register expected, but saw '%.6s'"), s);
-      if ((int) tmpreg >= MIN_PVR_REGNUM && tmpreg <= MAX_PVR_REGNUM)
+      if (tmpreg - MIN_PVR_REGNUM <= MAX_PVR_REGNUM - MIN_PVR_REGNUM)
         *reg = REG_PVR + tmpreg;
       else
         {
@@ -542,7 +513,7 @@ parse_reg (char * s, unsigned * reg)
       else
 	as_bad (_("register expected, but saw '%.6s'"), s);
 
-      if ((int) tmpreg >= MIN_REGNUM && tmpreg <= MAX_REGNUM)
+      if (tmpreg - MIN_REGNUM <= MAX_REGNUM - MIN_REGNUM)
         *reg = tmpreg;
       else
 	{
@@ -579,7 +550,7 @@ parse_reg (char * s, unsigned * reg)
           else
             as_bad (_("register expected, but saw '%.6s'"), s);
 
-          if ((int)tmpreg >= MIN_REGNUM && tmpreg <= MAX_REGNUM)
+          if (tmpreg - MIN_REGNUM <= MAX_REGNUM - MIN_REGNUM)
             *reg = tmpreg;
           else
 	    {
@@ -601,7 +572,7 @@ parse_exp (char *s, expressionS *e)
   char *new_pointer;
 
   /* Skip whitespace.  */
-  while (ISSPACE (* s))
+  while (is_whitespace (* s))
     ++ s;
 
   save = input_line_pointer;
@@ -708,7 +679,7 @@ parse_imm (char * s, expressionS * e, offsetT min, offsetT max)
 
   /* Find the start of "@GOT" or "@PLT" suffix (if any) */
   for (atp = s; *atp != '@'; atp++)
-    if (is_end_of_line[(unsigned char) *atp])
+    if (is_end_of_stmt (*atp))
       break;
 
   if (*atp == '@')
@@ -755,7 +726,7 @@ parse_imm (char * s, expressionS * e, offsetT min, offsetT max)
       if ((e->X_add_number >> 31) == 1)
 	e->X_add_number |= -((addressT) (1U << 31));
 
-      if (e->X_add_number < min || e->X_add_number > max)
+      if ((int)e->X_add_number < min || (int)e->X_add_number > max)
 	{
 	  as_fatal (_("operand must be absolute in range %lx..%lx, not %lx"),
 		    (long) min, (long) max, (long) e->X_add_number);
@@ -782,7 +753,7 @@ check_got (int * got_type, int * got_len)
 
   /* Find the start of "@GOT" or "@PLT" suffix (if any).  */
   for (atp = input_line_pointer; *atp != '@'; atp++)
-    if (is_end_of_line[(unsigned char) *atp])
+    if (is_end_of_stmt (*atp))
       return NULL;
 
   if (startswith (atp + 1, "GOTOFF"))
@@ -809,7 +780,7 @@ check_got (int * got_type, int * got_len)
   first = atp - input_line_pointer;
 
   past_got = atp + *got_len + 1;
-  for (new_pointer = past_got; !is_end_of_line[(unsigned char) *new_pointer++];)
+  for (new_pointer = past_got; !is_end_of_stmt (*new_pointer++); )
     ;
   second = new_pointer - past_got;
   /* One extra byte for ' ' and one for NUL.  */
@@ -915,17 +886,17 @@ md_assemble (char * str)
   unsigned reg2;
   unsigned reg3;
   unsigned isize;
-  unsigned int immed = 0, temp;
+  unsigned int immed = 0, immed2 = 0, temp;
   expressionS exp;
   char name[20];
 
   /* Drop leading whitespace.  */
-  while (ISSPACE (* str))
+  while (is_whitespace (* str))
     str ++;
 
   /* Find the op code end.  */
   for (op_start = op_end = str;
-       *op_end && !is_end_of_line[(unsigned char) *op_end] && *op_end != ' ';
+       !is_end_of_stmt (*op_end) && !is_whitespace (*op_end);
        op_end++)
     {
       name[nlen] = op_start[nlen];
@@ -942,7 +913,7 @@ md_assemble (char * str)
       return;
     }
 
-  opcode = (struct op_code_struct *) str_hash_find (opcode_hash_control, name);
+  opcode = str_hash_find (opcode_hash_control, name);
   if (opcode == NULL)
     {
       as_bad (_("unknown opcode \"%s\""), name);
@@ -1072,13 +1043,9 @@ md_assemble (char * str)
 
           count = 32 - reg1;
           if (streq (name, "lmi"))
-	    opcode
-	      = (struct op_code_struct *) str_hash_find (opcode_hash_control,
-							 "lwi");
+	    opcode = str_hash_find (opcode_hash_control, "lwi");
           else
-	    opcode
-	      = (struct op_code_struct *) str_hash_find (opcode_hash_control,
-							 "swi");
+	    opcode = str_hash_find (opcode_hash_control, "swi");
           if (opcode == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "lwi");
@@ -1110,9 +1077,7 @@ md_assemble (char * str)
           if ((temp != 0) && (temp != 0xFFFF8000))
 	    {
               /* Needs an immediate inst.  */
-	      opcode1
-		= (struct op_code_struct *) str_hash_find (opcode_hash_control,
-							   "imm");
+	      opcode1 = str_hash_find (opcode_hash_control, "imm");
               if (opcode1 == NULL)
                 {
                   as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1175,6 +1140,87 @@ md_assemble (char * str)
       inst |= (reg1 << RD_LOW) & RD_MASK;
       inst |= (reg2 << RA_LOW) & RA_MASK;
       inst |= (immed << IMM_LOW) & IMM5_MASK;
+      break;
+
+    case INST_TYPE_RD_R1_IMMW_IMMS:
+      if (strcmp (op_end, ""))
+	op_end = parse_reg (op_end + 1, &reg1);  /* Get rd.  */
+      else
+	{
+	  as_fatal (_("Error in statement syntax"));
+	  reg1 = 0;
+	}
+
+      if (strcmp (op_end, ""))
+	op_end = parse_reg (op_end + 1, &reg2);  /* Get r1.  */
+      else
+	{
+	  as_fatal (_("Error in statement syntax"));
+	  reg2 = 0;
+	}
+
+      /* Check for spl registers.  */
+      if (check_spl_reg (&reg1))
+	as_fatal (_("Cannot use special register with this instruction"));
+      if (check_spl_reg (&reg2))
+	as_fatal (_("Cannot use special register with this instruction"));
+
+      /* Width immediate value.  */
+      if (strcmp (op_end, ""))
+	op_end = parse_imm (op_end + 1, &exp, MIN_IMM_WIDTH, MAX_IMM_WIDTH);
+      else
+	as_fatal (_("Error in statement syntax"));
+
+      if (exp.X_op != O_constant)
+	{
+	  as_warn (_(
+	  "Symbol used as immediate width value for bit field instruction"));
+	  immed = 1;
+	}
+      else
+	immed = exp.X_add_number;
+
+      if (opcode->instr == bsefi && immed > 31)
+	as_fatal (_("Width value must be less than 32"));
+
+      /* Shift immediate value.  */
+      if (strcmp (op_end, ""))
+	op_end = parse_imm (op_end + 1, &exp, MIN_IMM, MAX_IMM);
+      else
+	as_fatal (_("Error in statement syntax"));
+
+      if (exp.X_op != O_constant)
+	{
+	  as_warn (_(
+	  "Symbol used as immediate shift value for bit field instruction"));
+	  immed2 = 0;
+	}
+      else
+	{
+	  output = frag_more (isize);
+	  immed2 = exp.X_add_number;
+	}
+
+      if (immed2 != (immed2 % 32))
+	{
+	  as_warn (_("Shift value greater than 32. using <value %% 32>"));
+	  immed2 = immed2 % 32;
+	}
+
+      /* Check combined value.  */
+      if (immed + immed2 > 32)
+	as_fatal (_("Width value + shift value must not be greater than 32"));
+
+      inst |= (reg1 << RD_LOW) & RD_MASK;
+      inst |= (reg2 << RA_LOW) & RA_MASK;
+
+      if (opcode->instr == bsefi)
+	inst |= (immed & IMM5_MASK) << IMM_WIDTH_LOW; /* bsefi */
+      else
+	inst |= ((immed + immed2 - 1) & IMM5_MASK)
+		<< IMM_WIDTH_LOW; /* bsifi */
+
+      inst |= (immed2 << IMM_LOW) & IMM5_MASK;
       break;
 
     case INST_TYPE_R1_R2:
@@ -1565,9 +1611,7 @@ md_assemble (char * str)
       if ((temp != 0) && (temp != 0xFFFF8000))
 	{
           /* Needs an immediate inst.  */
-	  opcode1
-	    = (struct op_code_struct *) str_hash_find (opcode_hash_control,
-						       "imm");
+	  opcode1 = str_hash_find (opcode_hash_control, "imm");
           if (opcode1 == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1633,9 +1677,7 @@ md_assemble (char * str)
       if ((temp != 0) && (temp != 0xFFFF8000))
 	{
           /* Needs an immediate inst.  */
-          opcode1
-	    = (struct op_code_struct *) str_hash_find (opcode_hash_control,
-						       "imm");
+          opcode1 = str_hash_find (opcode_hash_control, "imm");
           if (opcode1 == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1708,9 +1750,7 @@ md_assemble (char * str)
       if ((temp != 0) && (temp != 0xFFFF8000))
 	{
           /* Needs an immediate inst.  */
-          opcode1
-	    = (struct op_code_struct *) str_hash_find (opcode_hash_control,
-						       "imm");
+          opcode1 = str_hash_find (opcode_hash_control, "imm");
           if (opcode1 == NULL)
             {
               as_bad (_("unknown opcode \"%s\""), "imm");
@@ -1755,7 +1795,7 @@ md_assemble (char * str)
     }
 
   /* Drop whitespace after all the operands have been parsed.  */
-  while (ISSPACE (* op_end))
+  while (is_whitespace (* op_end))
     op_end ++;
 
   /* Give warning message if the insn has more operands than required.  */
@@ -1832,32 +1872,32 @@ md_atof (int type, char * litP, int * sizeP)
     {
       for (i = prec - 1; i >= 0; i--)
         {
-          md_number_to_chars (litP, (valueT) words[i],
-                              sizeof (LITTLENUM_TYPE));
-          litP += sizeof (LITTLENUM_TYPE);
+	  md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
+	  litP += sizeof (LITTLENUM_TYPE);
         }
     }
   else
     for (i = 0; i < prec; i++)
       {
-        md_number_to_chars (litP, (valueT) words[i],
-                            sizeof (LITTLENUM_TYPE));
-        litP += sizeof (LITTLENUM_TYPE);
+	md_number_to_chars (litP, words[i], sizeof (LITTLENUM_TYPE));
+	litP += sizeof (LITTLENUM_TYPE);
       }
 
   return NULL;
 }
 
-const char * md_shortopts = "";
+const char md_shortopts[] = "";
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   {"EB", no_argument, NULL, OPTION_EB},
   {"EL", no_argument, NULL, OPTION_EL},
+  {"mlittle-endian", no_argument, NULL, OPTION_EL},
+  {"mbig-endian", no_argument, NULL, OPTION_EB},
   { NULL,          no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int md_short_jump_size;
 
@@ -1999,7 +2039,7 @@ md_apply_fix (fixS *   fixP,
   const char *       file = fixP->fx_file ? fixP->fx_file : _("unknown");
   const char * symname;
   /* Note: use offsetT because it is signed, valueT is unsigned.  */
-  offsetT      val  = (offsetT) * valp;
+  offsetT      val  = *valp;
   int          i;
   struct op_code_struct * opcode1;
   unsigned long inst1;
@@ -2130,8 +2170,7 @@ md_apply_fix (fixS *   fixP,
 	buf[i + INST_WORD_SIZE] = buf[i];
 
       /* Generate the imm instruction.  */
-      opcode1
-	= (struct op_code_struct *) str_hash_find (opcode_hash_control, "imm");
+      opcode1 = str_hash_find (opcode_hash_control, "imm");
       if (opcode1 == NULL)
 	{
 	  as_bad (_("unknown opcode \"%s\""), "imm");
@@ -2179,8 +2218,7 @@ md_apply_fix (fixS *   fixP,
 	buf[i + INST_WORD_SIZE] = buf[i];
 
       /* Generate the imm instruction.  */
-      opcode1
-	= (struct op_code_struct *) str_hash_find (opcode_hash_control, "imm");
+      opcode1 = str_hash_find (opcode_hash_control, "imm");
       if (opcode1 == NULL)
 	{
 	  as_bad (_("unknown opcode \"%s\""), "imm");
@@ -2207,6 +2245,8 @@ md_apply_fix (fixS *   fixP,
 	 moves code around due to relaxing.  */
       if (fixP->fx_r_type == BFD_RELOC_64_PCREL)
 	fixP->fx_r_type = BFD_RELOC_MICROBLAZE_64_NONE;
+      else if (fixP->fx_r_type == BFD_RELOC_32)
+	fixP->fx_r_type = BFD_RELOC_MICROBLAZE_32_NONE;
       else
 	fixP->fx_r_type = BFD_RELOC_NONE;
       fixP->fx_addsy = section_symbol (absolute_section);
@@ -2402,7 +2442,7 @@ md_pcrel_from_section (fixS * fixp, segT sec ATTRIBUTE_UNUSED)
      we leave the add number alone for the linker to fix it later.
      Only account for the PC pre-bump (No PC-pre-bump on the Microblaze). */
 
-  if (fixp->fx_addsy != (symbolS *) NULL
+  if (fixp->fx_addsy != NULL
       && (!S_IS_DEFINED (fixp->fx_addsy)
           || (S_GET_SEGMENT (fixp->fx_addsy) != sec)))
     return 0;
@@ -2430,6 +2470,7 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
   switch (fixp->fx_r_type)
     {
     case BFD_RELOC_NONE:
+    case BFD_RELOC_MICROBLAZE_32_NONE:
     case BFD_RELOC_MICROBLAZE_64_NONE:
     case BFD_RELOC_32:
     case BFD_RELOC_MICROBLAZE_32_LO:
@@ -2475,8 +2516,8 @@ tc_gen_reloc (asection * section ATTRIBUTE_UNUSED, fixS * fixp)
       break;
     }
 
-  rel = XNEW (arelent);
-  rel->sym_ptr_ptr = XNEW (asymbol *);
+  rel = notes_alloc (sizeof (arelent));
+  rel->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
 
   if (code == BFD_RELOC_MICROBLAZE_32_SYM_OP_SYM)
     *rel->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_subsy);
@@ -2524,6 +2565,9 @@ md_show_usage (FILE * stream ATTRIBUTE_UNUSED)
   /*  fprintf(stream, _("\
       MicroBlaze options:\n\
       -noSmall         Data in the comm and data sections do not go into the small data section\n")); */
+  fprintf (stream, _(" MicroBlaze specific assembler options:\n"));
+  fprintf (stream, "  -%-23s%s\n", "mbig-endian", N_("assemble for a big endian cpu"));
+  fprintf (stream, "  -%-23s%s\n", "mlittle-endian", N_("assemble for a little endian cpu"));      
 }
 
 

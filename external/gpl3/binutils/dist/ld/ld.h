@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -196,6 +196,9 @@ typedef struct
 
   /* Default linker script.  */
   char *default_script;
+
+  /* Linker script fragment provided by the --section-order command line option.  */
+  char *section_ordering_file;
 } args_type;
 
 extern args_type command_line;
@@ -292,6 +295,10 @@ typedef struct
   char *map_filename;
   FILE *map_file;
 
+  char *stats_filename;
+  /* If non-NULL then resource use information should be written to this file.  */
+  FILE *stats_file;
+
   char *dependency_file;
 
   unsigned int split_by_reloc;
@@ -299,6 +306,15 @@ typedef struct
 
   /* The size of the hash table to use.  */
   unsigned long hash_table_size;
+
+  /* If set, store plugin intermediate files permanently.  */
+  bool plugin_save_temps;
+
+  /* If set, if the .gnu_object_only section should be created.  */
+  bool emit_gnu_object_only;
+
+  /* If set, if the .gnu_object_only section is being created.  */
+  bool emitting_gnu_object_only;
 
   /* If set, print discarded sections in map file output.  */
   bool print_map_discarded;
@@ -318,10 +334,66 @@ typedef struct
   enum compressed_debug_section_type compress_debug;
 } ld_config_type;
 
+/* An enumeration of the linker phases for which resource usage information
+   is recorded.  PHASE_ALL is special as it covers the entire link process.
+   
+   PHASE_DEBUG is special as it causes an instant resource report to be
+   displayed each time ld_stop_phase(PHASE_DEBUG) is called.  If there has
+   been a previous ld_start_phase(PHASE_DEBUG) then the report just covers
+   the resource usage between the two calls.  Otherwise it reports the
+   resource usage in total so far.  Unfortunately the two types of use
+   cannot be mixed.
+
+   Note: ld_set_phase_name() can be used to change the name displayed when
+   PHASE_DEBUG is reported.  Possibly helping to identify specific resource
+   reports.  Typical code usage would look like this:
+
+     ld_start_phase (PHASE_DEBUG);
+       <code to be investigated>
+     ld_set_phase_name (PHASE_DEBUG, "description of code");
+     ld_stop_phase (PHASE_DEBUG);
+     
+   Instructions for adding a new phase:
+     1. Add an entry to this enumeration.
+     2. Add an entry for the phase to the phase_data[] structure in ldmain.c.
+     3. Add calls to ld_start_phase(PHASE_xxx) and ld_stop_phase(PHASE_xxx)
+        at the appropriate place(s) in the code.  It does not matter if the
+	new phase overlaps with or is contained by other phases, but it must
+	not overlap with or contain itself.
+
+    Instructions for adding a new resource:
+      1. If necessary add a new field to the phase_data structure defined in
+         ldmain.c.
+      2. Add code to initialise the field in ld_main.c:ld_start_phase().
+      3. Add code to finalise the field in ld_main.c:ld_stop_phase().
+      4. Add code to report the field in ld_main.c:report_phases().
+*/
+typedef enum
+{
+  PHASE_ALL = 0,
+  PHASE_CTF,
+  PHASE_MERGE,
+  PHASE_PARSE,
+  PHASE_PLUGINS,
+  PHASE_PROCESS,
+  PHASE_WRITE,
+
+  PHASE_DEBUG, /* Not a real phase.  Used to help debug linker resource usage.  */
+
+  NUM_PHASES /* This must be the last entry.  */
+}
+ld_phase;
+
+extern void ld_start_phase (ld_phase);
+extern void ld_stop_phase (ld_phase);
+/* Change the name of a phase.  Only really useful for PHASE_DEBUG.  */
+extern void ld_set_phase_name (ld_phase, const char *);
+
 extern ld_config_type config;
 
 extern FILE * saved_script_handle;
 extern bool force_make_executable;
+extern bool in_section_ordering;
 
 extern int yyparse (void);
 extern void add_cref (const char *, bfd *, asection *, bfd_vma);

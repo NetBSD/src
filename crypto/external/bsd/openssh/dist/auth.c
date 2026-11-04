@@ -1,6 +1,6 @@
-/*	$NetBSD: auth.c,v 1.34.2.1 2025/08/02 05:18:45 perseant Exp $	*/
-/* $OpenBSD: auth.c,v 1.162 2024/09/15 01:18:26 djm Exp $ */
-
+/*	$NetBSD: auth.c,v 1.34.2.2 2026/11/04 22:36:37 perseant Exp $	*/
+/* $OpenBSD: auth.c,v 1.164 2026/02/11 22:57:16 djm Exp $ */
+/* $OpenBSD: auth.c,v 1.165 2026/07/21 06:17:42 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth.c,v 1.34.2.1 2025/08/02 05:18:45 perseant Exp $");
+__RCSID("$NetBSD: auth.c,v 1.34.2.2 2026/11/04 22:36:37 perseant Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -564,7 +564,10 @@ getpwnamallow(struct ssh *ssh, const char *user)
 	log_verbose_reset();
 	for (i = 0; i < options.num_log_verbose; i++)
 		log_verbose_add(options.log_verbose[i]);
+	server_process_channel_timeouts(ssh);
 	server_process_permitopen(ssh);
+	ssh_packet_set_rekey_limits(ssh, options.rekey_limit,
+	    options.rekey_interval);
 
 	pw = getpwnam(user);
 	if (pw == NULL) {
@@ -600,9 +603,10 @@ int
 auth_key_is_revoked(struct sshkey *key)
 {
 	char *fp = NULL;
+	u_int i;
 	int r;
 
-	if (options.revoked_keys_file == NULL)
+	if (options.num_revoked_keys_files == 0)
 		return 0;
 	if ((fp = sshkey_fingerprint(key, options.fingerprint_hash,
 	    SSH_FP_DEFAULT)) == NULL) {
@@ -611,19 +615,22 @@ auth_key_is_revoked(struct sshkey *key)
 		goto out;
 	}
 
-	r = sshkey_check_revoked(key, options.revoked_keys_file);
-	switch (r) {
-	case 0:
-		break; /* not revoked */
-	case SSH_ERR_KEY_REVOKED:
-		error("Authentication key %s %s revoked by file %s",
-		    sshkey_type(key), fp, options.revoked_keys_file);
-		goto out;
-	default:
-		error_r(r, "Error checking authentication key %s %s in "
-		    "revoked keys file %s", sshkey_type(key), fp,
-		    options.revoked_keys_file);
-		goto out;
+	for (i = 0; i < options.num_revoked_keys_files; i++) {
+		r = sshkey_check_revoked(key, options.revoked_keys_files[i]);
+		switch (r) {
+		case 0:
+			break; /* not revoked */
+		case SSH_ERR_KEY_REVOKED:
+			error("Authentication key %s %s revoked by file %s",
+			    sshkey_type(key), fp,
+			    options.revoked_keys_files[i]);
+			goto out;
+		default:
+			error_r(r, "Error checking authentication key %s %s in "
+			    "revoked keys file %s", sshkey_type(key), fp,
+			    options.revoked_keys_files[i]);
+			goto out;
+		}
 	}
 
 	/* Success */
@@ -808,6 +815,7 @@ auth_activate_options(struct ssh *ssh, struct sshauthopt *opts)
 		error("Inconsistent authentication options: %s", emsg);
 		return -1;
 	}
+	sshauthopt_free(old);
 	return 0;
 }
 

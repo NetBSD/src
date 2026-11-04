@@ -1,5 +1,5 @@
 /* This file is tc-z8k.h
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,7 +27,6 @@ struct internal_reloc;
 
 #define WORKING_DOT_WORD
 
-#define COFF_MAGIC 0x8000
 #define IGNORE_NONSTANDARD_ESCAPES
 #undef WARN_SIGNED_OVERFLOW_WORD
 

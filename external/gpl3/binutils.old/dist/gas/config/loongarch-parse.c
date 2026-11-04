@@ -94,7 +94,7 @@ is_const (struct reloc_info *info)
 }
 
 int
-loongarch_parse_expr (const char *expr,
+loongarch_parse_expr (const char *exp,
 		      struct reloc_info *reloc_stack_top,
 		      size_t max_reloc_num,
 		      size_t *reloc_num,
@@ -104,7 +104,7 @@ loongarch_parse_expr (const char *expr,
   struct yy_buffer_state *buffstate;
   top = reloc_stack_top;
   end = top + max_reloc_num;
-  buffstate = yy_scan_string (expr);
+  buffstate = yy_scan_string (exp);
   ret = yyparse ();
 
   if (ret == 0)
@@ -135,11 +135,11 @@ static const char *
 my_getExpression (expressionS *ep, const char *str)
 {
   char *save_in, *ret;
+
   if (*str == ':')
     {
       unsigned long j;
       char *str_1 = (char *) str;
-      str_1++;
       j = strtol (str_1, &str_1, 10);
       get_internal_label (ep, j, *str_1 == 'f');
       return NULL;
@@ -153,68 +153,57 @@ my_getExpression (expressionS *ep, const char *str)
 }
 
 static void
-reloc (const char *op_c_str, const char *id_c_str, offsetT addend)
+emit_const_var (const char *op)
 {
-  expressionS id_sym_expr;
+  expressionS ep;
 
   if (end <= top)
     as_fatal (_("expr too huge"));
 
-  if (id_c_str)
-    {
-      my_getExpression (&id_sym_expr, id_c_str);
-      id_sym_expr.X_add_number += addend;
-    }
+  my_getExpression (&ep, op);
+
+  if (ep.X_op != O_constant)
+    as_bad ("illegal operand: %s", op);
+
+  top->value.X_op = O_constant;
+  top->value.X_add_number = ep.X_add_number;
+  top->type = BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE;
+  top++;
+}
+
+static void
+reloc (const char *op_c_str, const char *id_c_str, offsetT addend)
+{
+  expressionS id_sym_expr;
+  bfd_reloc_code_real_type btype;
+
+  if (end <= top)
+    as_fatal (_("expr too huge"));
+
+  /* For compatible old asm code.  */
+  if (0 == strcmp (op_c_str, "plt"))
+    btype = BFD_RELOC_LARCH_B26;
   else
     {
-      id_sym_expr.X_op = O_constant;
-      id_sym_expr.X_add_number = addend;
+      btype = loongarch_larch_reloc_name_lookup (NULL, op_c_str);
+      if (btype == BFD_RELOC_NONE)
+	as_fatal (_("unsupported modifier %s"), op_c_str);
     }
 
-  if (strcmp (op_c_str, "abs") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_ABSOLUTE;
-      top++;
-    }
-  else if (strcmp (op_c_str, "pcrel") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_PCREL;
-      top++;
-    }
-  else if (strcmp (op_c_str, "gprel") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_GPREL;
-      top++;
-    }
-  else if (strcmp (op_c_str, "tprel") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_TLS_TPREL;
-      top++;
-    }
-  else if (strcmp (op_c_str, "tlsgot") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_TLS_GOT;
-      top++;
-    }
-  else if (strcmp (op_c_str, "tlsgd") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_TLS_GD;
-      top++;
-    }
-  else if (strcmp (op_c_str, "plt") == 0)
-    {
-      top->value = id_sym_expr;
-      top->type = BFD_RELOC_LARCH_SOP_PUSH_PLT_PCREL;
-      top++;
-    }
+  if (id_c_str)
+  {
+    my_getExpression (&id_sym_expr, id_c_str);
+    id_sym_expr.X_add_number += addend;
+  }
   else
-    as_fatal (_("unknown reloc hint: %s"), op_c_str);
+  {
+    id_sym_expr.X_op = O_constant;
+    id_sym_expr.X_add_number = addend;
+  }
+
+  top->value = id_sym_expr;
+  top->type = btype;
+  top++;
 }
 
 static void
@@ -270,26 +259,41 @@ emit_bin (int op)
       switch (op)
 	{
 	case '*':
-	  opr1 = opr1 * opr2;
+	  opr1 = (valueT) opr1 * (valueT) opr2;
 	  break;
 	case '/':
-	  opr1 = opr1 / opr2;
+	  if (opr2 == 0)
+	    {
+	      as_warn (_("Divide by zero!"));
+	      opr1 = 0;
+	    }
+	  else
+	    opr1 = opr1 / opr2;
 	  break;
 	case '%':
-	  opr1 = opr1 % opr2;
+	  if (opr2 == 0)
+	    {
+	      as_warn (_("Divide by zero!"));
+	      opr1 = 0;
+	    }
+	  else
+	    opr1 = opr1 % opr2;
 	  break;
 	case '+':
-	  opr1 = opr1 + opr2;
+	  opr1 = (valueT) opr1 + (valueT) opr2;
 	  break;
 	case '-':
-	  opr1 = opr1 - opr2;
+	  opr1 = (valueT) opr1 - (valueT) opr2;
 	  break;
 	case LEFT_OP:
-	  opr1 = opr1 << opr2;
+	  opr1 = (valueT) opr1 << opr2;
 	  break;
 	case RIGHT_OP:
-	  /* Algorithm right shift.  */
-	  opr1 = (offsetT)opr1 >> (offsetT)opr2;
+	  if (opr1 < 0)
+	    as_warn (_("Right shift of negative numbers may be changed "
+		       "from arithmetic right shift to logical right shift!"));
+	  /* Arithmetic right shift.  */
+	  opr1 = opr1 >> opr2;
 	  break;
 	case '<':
 	  opr1 = opr1 < opr2;
@@ -388,7 +392,7 @@ emit_if_else (void)
 }
 
 
-#line 392 "config/loongarch-parse.c"
+#line 396 "config/loongarch-parse.c"
 
 # ifndef YY_CAST
 #  ifdef __cplusplus
@@ -465,12 +469,12 @@ extern int yydebug;
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
 union YYSTYPE
 {
-#line 340 "./config/loongarch-parse.y"
+#line 344 "./config/loongarch-parse.y"
 
 char *c_str;
 offsetT imm;
 
-#line 474 "config/loongarch-parse.c"
+#line 478 "config/loongarch-parse.c"
 
 };
 typedef union YYSTYPE YYSTYPE;
@@ -524,8 +528,8 @@ enum yysymbol_kind_t
   YYSYMBOL_addend = 31,                    /* addend  */
   YYSYMBOL_unary_expression = 32,          /* unary_expression  */
   YYSYMBOL_multiplicative_expression = 33, /* multiplicative_expression  */
-  YYSYMBOL_additive_expression = 34,       /* additive_expression  */
-  YYSYMBOL_shift_expression = 35,          /* shift_expression  */
+  YYSYMBOL_shift_expression = 34,          /* shift_expression  */
+  YYSYMBOL_additive_expression = 35,       /* additive_expression  */
   YYSYMBOL_relational_expression = 36,     /* relational_expression  */
   YYSYMBOL_equality_expression = 37,       /* equality_expression  */
   YYSYMBOL_and_expression = 38,            /* and_expression  */
@@ -860,18 +864,18 @@ union yyalloc
 #endif /* !YYCOPY_NEEDED */
 
 /* YYFINAL -- State number of the termination state.  */
-#define YYFINAL  47
+#define YYFINAL  48
 /* YYLAST -- Last index in YYTABLE.  */
-#define YYLAST   73
+#define YYLAST   74
 
 /* YYNTOKENS -- Number of terminals.  */
 #define YYNTOKENS  29
 /* YYNNTS -- Number of nonterminals.  */
 #define YYNNTS  16
 /* YYNRULES -- Number of rules.  */
-#define YYNRULES  44
+#define YYNRULES  45
 /* YYNSTATES -- Number of states.  */
-#define YYNSTATES  81
+#define YYNSTATES  82
 
 /* YYMAXUTOK -- Last valid token kind.  */
 #define YYMAXUTOK   267
@@ -921,11 +925,11 @@ static const yytype_int8 yytranslate[] =
 /* YYRLINE[YYN] -- Source line where rule number YYN was defined.  */
 static const yytype_int16 yyrline[] =
 {
-       0,   354,   354,   355,   356,   357,   361,   362,   363,   367,
-     368,   369,   370,   371,   375,   376,   377,   378,   382,   383,
-     384,   388,   389,   390,   394,   395,   396,   397,   398,   402,
-     403,   404,   408,   409,   413,   414,   418,   419,   423,   424,
-     428,   429,   433,   434,   438
+       0,   358,   358,   359,   360,   361,   362,   366,   367,   368,
+     372,   373,   374,   375,   376,   380,   381,   382,   383,   387,
+     388,   389,   393,   394,   395,   399,   400,   401,   402,   403,
+     407,   408,   409,   413,   414,   418,   419,   423,   424,   428,
+     429,   433,   434,   438,   439,   443
 };
 #endif
 
@@ -946,7 +950,7 @@ static const char *const yytname[] =
   "AND_OP", "OR_OP", "'('", "')'", "'%'", "'-'", "'+'", "'~'", "'!'",
   "'*'", "'/'", "'<'", "'>'", "'&'", "'^'", "'|'", "'?'", "':'", "$accept",
   "primary_expression", "addend", "unary_expression",
-  "multiplicative_expression", "additive_expression", "shift_expression",
+  "multiplicative_expression", "shift_expression", "additive_expression",
   "relational_expression", "equality_expression", "and_expression",
   "exclusive_or_expression", "inclusive_or_expression",
   "logical_and_expression", "logical_or_expression",
@@ -960,7 +964,7 @@ yysymbol_name (yysymbol_kind_t yysymbol)
 }
 #endif
 
-#define YYPACT_NINF (-11)
+#define YYPACT_NINF (-28)
 
 #define yypact_value_is_default(Yyn) \
   ((Yyn) == YYPACT_NINF)
@@ -974,15 +978,15 @@ yysymbol_name (yysymbol_kind_t yysymbol)
    STATE-NUM.  */
 static const yytype_int8 yypact[] =
 {
-       2,   -11,     2,    10,     2,     2,     2,     2,   -11,   -11,
-      -9,    -7,    36,     0,    37,    -8,    -1,     8,    27,     1,
-     -11,    43,    31,    40,   -11,   -11,   -11,   -11,     2,     2,
+       2,   -28,   -28,     2,    10,     2,     2,     2,     2,   -28,
+     -28,     9,    34,    25,     0,    36,    -8,     7,    23,    32,
+       1,   -28,    52,    22,    45,   -28,   -28,   -28,   -28,     2,
        2,     2,     2,     2,     2,     2,     2,     2,     2,     2,
-       2,     2,     2,     2,     2,     2,     2,   -11,   -11,    45,
-     -11,   -11,   -11,    -9,    -9,    -7,    -7,    36,    36,    36,
-      36,     0,     0,    37,    -8,    -1,     8,    27,    22,   -11,
-     -11,     2,    19,    23,   -11,   -11,    55,    56,   -11,   -11,
-     -11
+       2,     2,     2,     2,     2,     2,     2,     2,   -28,   -28,
+      44,   -28,   -28,   -28,     9,     9,    34,    34,    25,    25,
+      25,    25,     0,     0,    36,    -8,     7,    23,    32,    29,
+     -28,   -28,     2,    17,    21,   -28,   -28,    56,    57,   -28,
+     -28,   -28
 };
 
 /* YYDEFACT[STATE-NUM] -- Default reduction number in state STATE-NUM.
@@ -990,29 +994,29 @@ static const yytype_int8 yypact[] =
    means the default is an error.  */
 static const yytype_int8 yydefact[] =
 {
-       0,     2,     0,     0,     0,     0,     0,     0,     9,    14,
-      18,    21,    24,    29,    32,    34,    36,    38,    40,    42,
-      44,     0,     0,     0,    11,    10,    12,    13,     0,     0,
+       0,     2,     3,     0,     0,     0,     0,     0,     0,    10,
+      15,    19,    22,    25,    30,    33,    35,    37,    39,    41,
+      43,    45,     0,     0,     0,    12,    11,    13,    14,     0,
        0,     0,     0,     0,     0,     0,     0,     0,     0,     0,
-       0,     0,     0,     0,     0,     0,     0,     1,     3,     0,
-      17,    15,    16,    20,    19,    22,    23,    27,    28,    25,
-      26,    30,    31,    33,    35,    37,    39,    41,     0,     8,
-       8,     0,     0,     0,    43,     5,     0,     0,     4,     6,
-       7
+       0,     0,     0,     0,     0,     0,     0,     0,     1,     4,
+       0,    18,    16,    17,    20,    21,    24,    23,    28,    29,
+      26,    27,    31,    32,    34,    36,    38,    40,    42,     0,
+       9,     9,     0,     0,     0,    44,     6,     0,     0,     5,
+       7,     8
 };
 
 /* YYPGOTO[NTERM-NUM].  */
 static const yytype_int8 yypgoto[] =
 {
-     -11,   -11,   -10,    -3,    20,    21,    -6,    17,    24,    25,
-      18,    26,    28,   -11,    -5,    -2
+     -28,   -28,   -10,    -4,    18,    19,   -27,    15,    20,    24,
+      26,    27,    28,   -28,    -9,    -3
 };
 
 /* YYDEFGOTO[NTERM-NUM].  */
 static const yytype_int8 yydefgoto[] =
 {
-       0,     8,    72,     9,    10,    11,    12,    13,    14,    15,
-      16,    17,    18,    19,    20,    21
+       0,     9,    73,    10,    11,    12,    13,    14,    15,    16,
+      17,    18,    19,    20,    21,    22
 };
 
 /* YYTABLE[YYPACT[STATE-NUM]] -- What to do in state STATE-NUM.  If
@@ -1020,61 +1024,61 @@ static const yytype_int8 yydefgoto[] =
    number is the opposite.  If YYTABLE_NINF, syntax error.  */
 static const yytype_int8 yytable[] =
 {
-      22,    24,    25,    26,    27,     1,    28,    35,    36,    31,
-      32,    29,    30,    45,    23,     2,    41,     3,     4,     5,
-       6,     7,    37,    38,    42,    50,    51,    52,    46,    57,
-      58,    59,    60,    75,    43,    76,    77,    78,    44,    76,
-      77,    33,    34,    47,    68,    48,    39,    40,    69,    70,
-      71,    53,    54,    49,    55,    56,    61,    62,    79,    80,
-      73,    65,     0,     0,     0,    63,    74,    64,     0,     0,
-      66,     0,     0,    67
+      23,    25,    26,    27,    28,     1,     2,    36,    37,    58,
+      59,    60,    61,    46,    24,     3,    42,     4,     5,     6,
+       7,     8,    38,    39,    29,    51,    52,    53,    47,    30,
+      31,    76,    43,    77,    78,    79,    49,    77,    78,    32,
+      33,    34,    35,    45,    69,    40,    41,    70,    71,    44,
+      54,    55,    48,    56,    57,    62,    63,    72,    50,    80,
+      81,    74,    64,    75,     0,     0,     0,    65,     0,     0,
+      66,     0,    67,     0,    68
 };
 
 static const yytype_int8 yycheck[] =
 {
-       2,     4,     5,     6,     7,     3,    15,     7,     8,    16,
-      17,    20,    21,    12,     4,    13,    24,    15,    16,    17,
-      18,    19,    22,    23,    25,    28,    29,    30,    27,    35,
-      36,    37,    38,    14,    26,    16,    17,    14,    11,    16,
-      17,     5,     6,     0,    46,    14,     9,    10,     3,     4,
-      28,    31,    32,    13,    33,    34,    39,    40,     3,     3,
-      70,    43,    -1,    -1,    -1,    41,    71,    42,    -1,    -1,
-      44,    -1,    -1,    45
+       3,     5,     6,     7,     8,     3,     4,     7,     8,    36,
+      37,    38,    39,    12,     4,    13,    24,    15,    16,    17,
+      18,    19,    22,    23,    15,    29,    30,    31,    27,    20,
+      21,    14,    25,    16,    17,    14,    14,    16,    17,     5,
+       6,    16,    17,    11,    47,     9,    10,     3,     4,    26,
+      32,    33,     0,    34,    35,    40,    41,    28,    13,     3,
+       3,    71,    42,    72,    -1,    -1,    -1,    43,    -1,    -1,
+      44,    -1,    45,    -1,    46
 };
 
 /* YYSTOS[STATE-NUM] -- The symbol kind of the accessing symbol of
    state STATE-NUM.  */
 static const yytype_int8 yystos[] =
 {
-       0,     3,    13,    15,    16,    17,    18,    19,    30,    32,
-      33,    34,    35,    36,    37,    38,    39,    40,    41,    42,
-      43,    44,    44,     4,    32,    32,    32,    32,    15,    20,
-      21,    16,    17,     5,     6,     7,     8,    22,    23,     9,
-      10,    24,    25,    26,    11,    12,    27,     0,    14,    13,
-      32,    32,    32,    33,    33,    34,    34,    35,    35,    35,
-      35,    36,    36,    37,    38,    39,    40,    41,    44,     3,
-       4,    28,    31,    31,    43,    14,    16,    17,    14,     3,
-       3
+       0,     3,     4,    13,    15,    16,    17,    18,    19,    30,
+      32,    33,    34,    35,    36,    37,    38,    39,    40,    41,
+      42,    43,    44,    44,     4,    32,    32,    32,    32,    15,
+      20,    21,     5,     6,    16,    17,     7,     8,    22,    23,
+       9,    10,    24,    25,    26,    11,    12,    27,     0,    14,
+      13,    32,    32,    32,    33,    33,    34,    34,    35,    35,
+      35,    35,    36,    36,    37,    38,    39,    40,    41,    44,
+       3,     4,    28,    31,    31,    43,    14,    16,    17,    14,
+       3,     3
 };
 
 /* YYR1[RULE-NUM] -- Symbol kind of the left-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr1[] =
 {
-       0,    29,    30,    30,    30,    30,    31,    31,    31,    32,
-      32,    32,    32,    32,    33,    33,    33,    33,    34,    34,
-      34,    35,    35,    35,    36,    36,    36,    36,    36,    37,
-      37,    37,    38,    38,    39,    39,    40,    40,    41,    41,
-      42,    42,    43,    43,    44
+       0,    29,    30,    30,    30,    30,    30,    31,    31,    31,
+      32,    32,    32,    32,    32,    33,    33,    33,    33,    34,
+      34,    34,    35,    35,    35,    36,    36,    36,    36,    36,
+      37,    37,    37,    38,    38,    39,    39,    40,    40,    41,
+      41,    42,    42,    43,    43,    44
 };
 
 /* YYR2[RULE-NUM] -- Number of symbols on the right-hand side of rule RULE-NUM.  */
 static const yytype_int8 yyr2[] =
 {
-       0,     2,     1,     3,     6,     6,     3,     3,     0,     1,
-       2,     2,     2,     2,     1,     3,     3,     3,     1,     3,
-       3,     1,     3,     3,     1,     3,     3,     3,     3,     1,
-       3,     3,     1,     3,     1,     3,     1,     3,     1,     3,
-       1,     3,     1,     5,     1
+       0,     2,     1,     1,     3,     6,     6,     3,     3,     0,
+       1,     2,     2,     2,     2,     1,     3,     3,     3,     1,
+       3,     3,     1,     3,     3,     1,     3,     3,     3,     3,
+       1,     3,     3,     1,     3,     1,     3,     1,     3,     1,
+       3,     1,     3,     1,     5,     1
 };
 
 
@@ -1538,181 +1542,187 @@ yyreduce:
   switch (yyn)
     {
   case 2: /* primary_expression: INTEGER  */
-#line 354 "./config/loongarch-parse.y"
+#line 358 "./config/loongarch-parse.y"
                   {emit_const ((yyvsp[0].imm));}
-#line 1544 "config/loongarch-parse.c"
+#line 1548 "config/loongarch-parse.c"
     break;
 
-  case 4: /* primary_expression: '%' IDENTIFIER '(' IDENTIFIER addend ')'  */
-#line 356 "./config/loongarch-parse.y"
-                                                   {reloc ((yyvsp[-4].c_str), (yyvsp[-2].c_str), (yyvsp[-1].imm)); free ((yyvsp[-4].c_str)); free ((yyvsp[-2].c_str));}
-#line 1550 "config/loongarch-parse.c"
+  case 3: /* primary_expression: IDENTIFIER  */
+#line 359 "./config/loongarch-parse.y"
+                     {emit_const_var ((yyvsp[0].c_str));}
+#line 1554 "config/loongarch-parse.c"
     break;
 
-  case 5: /* primary_expression: '%' IDENTIFIER '(' INTEGER addend ')'  */
-#line 357 "./config/loongarch-parse.y"
-                                                {reloc ((yyvsp[-4].c_str), NULL, (yyvsp[-2].imm) + (yyvsp[-1].imm)); free ((yyvsp[-4].c_str));}
-#line 1556 "config/loongarch-parse.c"
-    break;
-
-  case 6: /* addend: addend '-' INTEGER  */
+  case 5: /* primary_expression: '%' IDENTIFIER '(' IDENTIFIER addend ')'  */
 #line 361 "./config/loongarch-parse.y"
-                             {(yyval.imm) -= (yyvsp[0].imm);}
-#line 1562 "config/loongarch-parse.c"
+                                                   {reloc ((yyvsp[-4].c_str), (yyvsp[-2].c_str), (yyvsp[-1].imm)); free ((yyvsp[-4].c_str)); free ((yyvsp[-2].c_str));}
+#line 1560 "config/loongarch-parse.c"
     break;
 
-  case 7: /* addend: addend '+' INTEGER  */
+  case 6: /* primary_expression: '%' IDENTIFIER '(' INTEGER addend ')'  */
 #line 362 "./config/loongarch-parse.y"
+                                                {reloc ((yyvsp[-4].c_str), NULL, (yyvsp[-2].imm) + (yyvsp[-1].imm)); free ((yyvsp[-4].c_str));}
+#line 1566 "config/loongarch-parse.c"
+    break;
+
+  case 7: /* addend: addend '-' INTEGER  */
+#line 366 "./config/loongarch-parse.y"
+                             {(yyval.imm) -= (yyvsp[0].imm);}
+#line 1572 "config/loongarch-parse.c"
+    break;
+
+  case 8: /* addend: addend '+' INTEGER  */
+#line 367 "./config/loongarch-parse.y"
                              {(yyval.imm) += (yyvsp[0].imm);}
-#line 1568 "config/loongarch-parse.c"
+#line 1578 "config/loongarch-parse.c"
     break;
 
-  case 8: /* addend: %empty  */
-#line 363 "./config/loongarch-parse.y"
-          {(yyval.imm) = 0;}
-#line 1574 "config/loongarch-parse.c"
-    break;
-
-  case 10: /* unary_expression: '+' unary_expression  */
+  case 9: /* addend: %empty  */
 #line 368 "./config/loongarch-parse.y"
+          {(yyval.imm) = 0;}
+#line 1584 "config/loongarch-parse.c"
+    break;
+
+  case 11: /* unary_expression: '+' unary_expression  */
+#line 373 "./config/loongarch-parse.y"
                                {emit_unary ('+');}
-#line 1580 "config/loongarch-parse.c"
+#line 1590 "config/loongarch-parse.c"
     break;
 
-  case 11: /* unary_expression: '-' unary_expression  */
-#line 369 "./config/loongarch-parse.y"
+  case 12: /* unary_expression: '-' unary_expression  */
+#line 374 "./config/loongarch-parse.y"
                                {emit_unary ('-');}
-#line 1586 "config/loongarch-parse.c"
+#line 1596 "config/loongarch-parse.c"
     break;
 
-  case 12: /* unary_expression: '~' unary_expression  */
-#line 370 "./config/loongarch-parse.y"
+  case 13: /* unary_expression: '~' unary_expression  */
+#line 375 "./config/loongarch-parse.y"
                                {emit_unary ('~');}
-#line 1592 "config/loongarch-parse.c"
+#line 1602 "config/loongarch-parse.c"
     break;
 
-  case 13: /* unary_expression: '!' unary_expression  */
-#line 371 "./config/loongarch-parse.y"
-                               {emit_unary ('!');}
-#line 1598 "config/loongarch-parse.c"
-    break;
-
-  case 15: /* multiplicative_expression: multiplicative_expression '*' unary_expression  */
+  case 14: /* unary_expression: '!' unary_expression  */
 #line 376 "./config/loongarch-parse.y"
+                               {emit_unary ('!');}
+#line 1608 "config/loongarch-parse.c"
+    break;
+
+  case 16: /* multiplicative_expression: multiplicative_expression '*' unary_expression  */
+#line 381 "./config/loongarch-parse.y"
                                                          {emit_bin ('*');}
-#line 1604 "config/loongarch-parse.c"
+#line 1614 "config/loongarch-parse.c"
     break;
 
-  case 16: /* multiplicative_expression: multiplicative_expression '/' unary_expression  */
-#line 377 "./config/loongarch-parse.y"
+  case 17: /* multiplicative_expression: multiplicative_expression '/' unary_expression  */
+#line 382 "./config/loongarch-parse.y"
                                                          {emit_bin ('/');}
-#line 1610 "config/loongarch-parse.c"
+#line 1620 "config/loongarch-parse.c"
     break;
 
-  case 17: /* multiplicative_expression: multiplicative_expression '%' unary_expression  */
-#line 378 "./config/loongarch-parse.y"
-                                                         {emit_bin ('%');}
-#line 1616 "config/loongarch-parse.c"
-    break;
-
-  case 19: /* additive_expression: additive_expression '+' multiplicative_expression  */
+  case 18: /* multiplicative_expression: multiplicative_expression '%' unary_expression  */
 #line 383 "./config/loongarch-parse.y"
-                                                            {emit_bin ('+');}
-#line 1622 "config/loongarch-parse.c"
+                                                         {emit_bin ('%');}
+#line 1626 "config/loongarch-parse.c"
     break;
 
-  case 20: /* additive_expression: additive_expression '-' multiplicative_expression  */
-#line 384 "./config/loongarch-parse.y"
-                                                            {emit_bin ('-');}
-#line 1628 "config/loongarch-parse.c"
+  case 20: /* shift_expression: shift_expression LEFT_OP multiplicative_expression  */
+#line 388 "./config/loongarch-parse.y"
+                                                             {emit_bin (LEFT_OP);}
+#line 1632 "config/loongarch-parse.c"
     break;
 
-  case 22: /* shift_expression: shift_expression LEFT_OP additive_expression  */
+  case 21: /* shift_expression: shift_expression RIGHT_OP multiplicative_expression  */
 #line 389 "./config/loongarch-parse.y"
-                                                       {emit_bin (LEFT_OP);}
-#line 1634 "config/loongarch-parse.c"
+                                                              {emit_bin (RIGHT_OP);}
+#line 1638 "config/loongarch-parse.c"
     break;
 
-  case 23: /* shift_expression: shift_expression RIGHT_OP additive_expression  */
-#line 390 "./config/loongarch-parse.y"
-                                                        {emit_bin (RIGHT_OP);}
-#line 1640 "config/loongarch-parse.c"
+  case 23: /* additive_expression: additive_expression '+' shift_expression  */
+#line 394 "./config/loongarch-parse.y"
+                                                   {emit_bin ('+');}
+#line 1644 "config/loongarch-parse.c"
     break;
 
-  case 25: /* relational_expression: relational_expression '<' shift_expression  */
+  case 24: /* additive_expression: additive_expression '-' shift_expression  */
 #line 395 "./config/loongarch-parse.y"
-                                                     {emit_bin ('<');}
-#line 1646 "config/loongarch-parse.c"
+                                                   {emit_bin ('-');}
+#line 1650 "config/loongarch-parse.c"
     break;
 
-  case 26: /* relational_expression: relational_expression '>' shift_expression  */
-#line 396 "./config/loongarch-parse.y"
-                                                     {emit_bin ('>');}
-#line 1652 "config/loongarch-parse.c"
+  case 26: /* relational_expression: relational_expression '<' additive_expression  */
+#line 400 "./config/loongarch-parse.y"
+                                                        {emit_bin ('<');}
+#line 1656 "config/loongarch-parse.c"
     break;
 
-  case 27: /* relational_expression: relational_expression LE_OP shift_expression  */
-#line 397 "./config/loongarch-parse.y"
-                                                       {emit_bin (LE_OP);}
-#line 1658 "config/loongarch-parse.c"
+  case 27: /* relational_expression: relational_expression '>' additive_expression  */
+#line 401 "./config/loongarch-parse.y"
+                                                        {emit_bin ('>');}
+#line 1662 "config/loongarch-parse.c"
     break;
 
-  case 28: /* relational_expression: relational_expression GE_OP shift_expression  */
-#line 398 "./config/loongarch-parse.y"
-                                                       {emit_bin (GE_OP);}
-#line 1664 "config/loongarch-parse.c"
+  case 28: /* relational_expression: relational_expression LE_OP additive_expression  */
+#line 402 "./config/loongarch-parse.y"
+                                                          {emit_bin (LE_OP);}
+#line 1668 "config/loongarch-parse.c"
     break;
 
-  case 30: /* equality_expression: equality_expression EQ_OP relational_expression  */
+  case 29: /* relational_expression: relational_expression GE_OP additive_expression  */
 #line 403 "./config/loongarch-parse.y"
+                                                          {emit_bin (GE_OP);}
+#line 1674 "config/loongarch-parse.c"
+    break;
+
+  case 31: /* equality_expression: equality_expression EQ_OP relational_expression  */
+#line 408 "./config/loongarch-parse.y"
                                                           {emit_bin (EQ_OP);}
-#line 1670 "config/loongarch-parse.c"
+#line 1680 "config/loongarch-parse.c"
     break;
 
-  case 31: /* equality_expression: equality_expression NE_OP relational_expression  */
-#line 404 "./config/loongarch-parse.y"
-                                                          {emit_bin (NE_OP);}
-#line 1676 "config/loongarch-parse.c"
-    break;
-
-  case 33: /* and_expression: and_expression '&' equality_expression  */
+  case 32: /* equality_expression: equality_expression NE_OP relational_expression  */
 #line 409 "./config/loongarch-parse.y"
-                                                 {emit_bin ('&');}
-#line 1682 "config/loongarch-parse.c"
+                                                          {emit_bin (NE_OP);}
+#line 1686 "config/loongarch-parse.c"
     break;
 
-  case 35: /* exclusive_or_expression: exclusive_or_expression '^' and_expression  */
+  case 34: /* and_expression: and_expression '&' equality_expression  */
 #line 414 "./config/loongarch-parse.y"
-                                                     {emit_bin ('^');}
-#line 1688 "config/loongarch-parse.c"
+                                                 {emit_bin ('&');}
+#line 1692 "config/loongarch-parse.c"
     break;
 
-  case 37: /* inclusive_or_expression: inclusive_or_expression '|' exclusive_or_expression  */
+  case 36: /* exclusive_or_expression: exclusive_or_expression '^' and_expression  */
 #line 419 "./config/loongarch-parse.y"
-                                                              {emit_bin ('|');}
-#line 1694 "config/loongarch-parse.c"
+                                                     {emit_bin ('^');}
+#line 1698 "config/loongarch-parse.c"
     break;
 
-  case 39: /* logical_and_expression: logical_and_expression AND_OP inclusive_or_expression  */
+  case 38: /* inclusive_or_expression: inclusive_or_expression '|' exclusive_or_expression  */
 #line 424 "./config/loongarch-parse.y"
-                                                                {emit_bin (AND_OP);}
-#line 1700 "config/loongarch-parse.c"
+                                                              {emit_bin ('|');}
+#line 1704 "config/loongarch-parse.c"
     break;
 
-  case 41: /* logical_or_expression: logical_or_expression OR_OP logical_and_expression  */
+  case 40: /* logical_and_expression: logical_and_expression AND_OP inclusive_or_expression  */
 #line 429 "./config/loongarch-parse.y"
-                                                             {emit_bin (OR_OP);}
-#line 1706 "config/loongarch-parse.c"
+                                                                {emit_bin (AND_OP);}
+#line 1710 "config/loongarch-parse.c"
     break;
 
-  case 43: /* conditional_expression: logical_or_expression '?' expression ':' conditional_expression  */
+  case 42: /* logical_or_expression: logical_or_expression OR_OP logical_and_expression  */
 #line 434 "./config/loongarch-parse.y"
+                                                             {emit_bin (OR_OP);}
+#line 1716 "config/loongarch-parse.c"
+    break;
+
+  case 44: /* conditional_expression: logical_or_expression '?' expression ':' conditional_expression  */
+#line 439 "./config/loongarch-parse.y"
                                                                           {emit_if_else ();}
-#line 1712 "config/loongarch-parse.c"
+#line 1722 "config/loongarch-parse.c"
     break;
 
 
-#line 1716 "config/loongarch-parse.c"
+#line 1726 "config/loongarch-parse.c"
 
       default: break;
     }
@@ -1905,6 +1915,6 @@ yyreturnlab:
   return yyresult;
 }
 
-#line 440 "./config/loongarch-parse.y"
+#line 445 "./config/loongarch-parse.y"
 
 

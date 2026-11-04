@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -212,7 +212,7 @@ BaseMetric::BaseMetric (const char *_cmd, const char *_username,
   clock_unit = CUNIT_NULL; // should it be CUNIT_TIME or 0 or something?
 
   /* we're not going to process packets for derived metrics */
-  packet_type = (ProfData_type) (-1);
+  packet_type = DATA_NONE;
   value_styles = VAL_VALUE;
   valtype = VT_DOUBLE;
   precision = 1000;
@@ -238,7 +238,7 @@ BaseMetric::BaseMetric (const BaseMetric& m)
     default_visbits[ii] = m.default_visbits[ii];
   if (m.cond_spec)
     {
-      cond_spec = strdup (m.cond_spec);
+      cond_spec = xstrdup (m.cond_spec);
       cond = m.cond->copy ();
     }
   else
@@ -248,7 +248,7 @@ BaseMetric::BaseMetric (const BaseMetric& m)
     }
   if (m.val_spec)
     {
-      val_spec = strdup (m.val_spec);
+      val_spec = xstrdup (m.val_spec);
       val = m.val->copy ();
     }
   else
@@ -258,7 +258,7 @@ BaseMetric::BaseMetric (const BaseMetric& m)
     }
   if (m.expr_spec)
     {
-      expr_spec = strdup (m.expr_spec);
+      expr_spec = xstrdup (m.expr_spec);
       expr = m.expr->copy ();
     }
   else
@@ -443,7 +443,7 @@ BaseMetric::specify ()
 
   char buf[256];
   char buf2[256];
-  packet_type = (ProfData_type) - 1; // illegal value
+  packet_type = DATA_NONE;
   clock_unit = CUNIT_TIME;
   switch (type)
     {

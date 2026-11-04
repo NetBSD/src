@@ -30,9 +30,11 @@
 #include <rpc/xdr.h>
 
 #if defined(_KERNEL) && !defined(_BOOT)
+#include <sys/endian.h>
 #include <sys/varargs.h>
 #include <sys/sunddi.h>
 #else
+#include <endian.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -142,6 +144,10 @@ static int nvlist_add_common(nvlist_t *nvl, const char *name, data_type_t type,
 #define	NVPAIR2I_NVP(nvp) \
 	((i_nvp_t *)((size_t)(nvp) - offsetof(i_nvp_t, nvi_nvp)))
 
+
+#ifndef BYTE_ORDER
+#error BYTE_ORDER is undefined!
+#endif
 
 int
 nv_alloc_init(nv_alloc_t *nva, const nv_alloc_ops_t *nvo, /* args */ ...)

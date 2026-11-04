@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -35,7 +35,7 @@
 #include "dbe_structs.h"
 #include "StringBuilder.h"
 #include "StringMap.h"      // For directory names
-#include "Application.h"    // Only for get_prog_name
+#include "Application.h"
 #include "vec.h"
 
 void
@@ -340,7 +340,7 @@ read_line (FILE *fptr)
 {
   // get an input line, no size limit
   int line_sz = 128; // starting size
-  char *line = (char *) malloc (line_sz);
+  char *line = (char *) xmalloc (line_sz);
 
   // read as much of the line as will fit in memory
   line[0] = 0;
@@ -353,7 +353,7 @@ read_line (FILE *fptr)
 	  if (len == 0 || line[len - 1] == '\n')
 	    break;
 	  // increase the buffer
-	  char *lineNew = (char *) malloc (2 * line_sz);
+	  char *lineNew = (char *) xmalloc (2 * line_sz);
 	  strncpy (lineNew, line, line_sz);
 	  lineNew[line_sz] = '\0';
 	  free (line);
@@ -531,7 +531,7 @@ parse_fname (char *in_str, char **fcontext)
   int ch = '`';
   if (in_str == NULL)
     return NULL;
-  char *copy = strdup (in_str);
+  char *copy = xstrdup (in_str);
   char *p = strchr (copy, ch);
   if (p != NULL)
     {
@@ -556,7 +556,7 @@ parse_fname (char *in_str, char **fcontext)
 	  return NULL;
 	}
       free (*fcontext);
-      *fcontext = strdup (p);
+      *fcontext = xstrdup (p);
     }
   return copy;
 }
@@ -741,17 +741,13 @@ get_relative_link (const char *path_from, const char *path_to)
   s2 = canonical_path (s2);
   long l = dbe_sstrlen (s1);
   // try to find common directories
-  int common_slashes = 0;
   int last_common_slash = -1;
   for (int i = 0; i < l; i++)
     {
-      if (s1[i] != s2[i]) break;
-      if (s1[i] == 0) break;
+      if (s1[i] != s2[i] || s1[i] == 0)
+	break;
       if (s1[i] == '/')
-	{
-	  common_slashes++;
-	  last_common_slash = i;
-	}
+	last_common_slash = i;
     }
   // find slashes in remaining path_to
   int slashes = 0;
@@ -782,24 +778,11 @@ get_relative_link (const char *path_from, const char *path_to)
 }
 
 char *
-get_prog_name (int basename)
-{
-  char *nm = NULL;
-  if (theApplication)
-    {
-      nm = theApplication->get_name ();
-      if (nm && basename)
-	nm = get_basename (nm);
-    }
-  return nm;
-}
-
-char *
 dbe_strndup (const char *str, size_t len)
 {
   if (str == NULL)
     return NULL;
-  char *s = (char *) malloc (len + 1);
+  char *s = (char *) xmalloc (len + 1);
   strncpy (s, str, len);
   s[len] = '\0';
   return s;
@@ -819,11 +802,11 @@ dbe_sprintf (const char *fmt, ...)
     {
       if (buf_size <= 1)
 	buffer[0] = 0;
-      return strdup (buffer);
+      return xstrdup (buffer);
     }
 
   va_start (vp, fmt);
-  char *buf = (char *) malloc (buf_size);
+  char *buf = (char *) xmalloc (buf_size);
   vsnprintf (buf, buf_size, fmt, vp);
   va_end (vp);
   return buf;
@@ -847,7 +830,7 @@ dbe_write (int f, const char *fmt, ...)
     }
 
   va_start (vp, fmt);
-  char *buf = (char *) malloc (buf_size);
+  char *buf = (char *) xmalloc (buf_size);
   vsnprintf (buf, buf_size, fmt, vp);
   va_end (vp);
   ssize_t val = write (f, buf, strlen (buf));
@@ -880,7 +863,7 @@ struct worker_thread_info
   int thread_num;           /* Application-defined thread # */
   volatile int control;     /* Thread state */
   volatile int result;      /* Return status */
-  struct stat64 statbuf;    /* File info from stat64() */
+  dbe_stat_t statbuf;       /* File info from stat64() */
   const char *path;         /* File */
 };
 
@@ -1058,9 +1041,9 @@ extract_and_save_dirname (const char *path, int status)
 
 // get status for specified file
 static int
-dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
+dbe_stat_internal (const char *path, dbe_stat_t *sbuf, bool file_only)
 {
-  struct stat64 statbuf;
+  dbe_stat_t statbuf;
   int dir_status = check_dirname (path);
   if (dir_status == DIR_STATUS_UNKNOWN)
     {
@@ -1068,35 +1051,32 @@ dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
       if (theApplication->get_number_of_worker_threads () > 0)
 	{
 	  struct worker_thread_info *wt_info;
-	  wt_info = (worker_thread_info *) calloc (1, sizeof (worker_thread_info));
-	  if (wt_info != NULL)
+	  wt_info = (worker_thread_info *) xcalloc (1, sizeof (worker_thread_info));
+	  int res = dbe_dispatch_on_thread (path, wt_info);
+	  if (THREAD_FINISHED == res)
 	    {
-	      int res = dbe_dispatch_on_thread (path, wt_info);
-	      if (THREAD_FINISHED == res)
+	      int st = wt_info->result;
+	      extract_and_save_dirname (path, st);
+	      if (st == 0 && file_only)
+		if (S_ISREG ((wt_info->statbuf).st_mode) == 0)
+		  st = -1; // It is not a regular file
+	      if (sbuf != NULL)
+		*sbuf = wt_info->statbuf;
+	      free (wt_info);
+	      return st;
+	    }
+	  else
+	    {
+	      if (THREAD_CANCEL == res)
 		{
-		  int st = wt_info->result;
-		  extract_and_save_dirname (path, st);
-		  if (st == 0 && file_only)
-		    if (S_ISREG ((wt_info->statbuf).st_mode) == 0)
-		      st = -1; // It is not a regular file
-		  if (sbuf != NULL)
-		    *sbuf = wt_info->statbuf;
-		  free (wt_info);
-		  return st;
+		  // Worker thread hung. Cannot free wt_info.
+		  // Allocated memory will be freed by worker thread.
+		  // save directory
+		  extract_and_save_dirname (path, 1);
+		  return 1; // stat64 failed
 		}
-	      else
-		{
-		  if (THREAD_CANCEL == res)
-		    {
-		      // Worker thread hung. Cannot free wt_info.
-		      // Allocated memory will be freed by worker thread.
-		      // save directory
-		      extract_and_save_dirname (path, 1);
-		      return 1; // stat64 failed
-		    }
-		  else  // THREAD_NOT_CREATED - continue on current thread
-		    free (wt_info);
-		}
+	      else  // THREAD_NOT_CREATED - continue on current thread
+		free (wt_info);
 	    }
 	}
     }
@@ -1116,7 +1096,7 @@ dbe_stat_internal (const char *path, struct stat64 *sbuf, bool file_only)
 // get status for the regular file
 
 int
-dbe_stat_file (const char *path, struct stat64 *sbuf)
+dbe_stat_file (const char *path, dbe_stat_t *sbuf)
 {
   int res = dbe_stat_internal (path, sbuf, true);
   return res;
@@ -1125,7 +1105,7 @@ dbe_stat_file (const char *path, struct stat64 *sbuf)
 // get status for specified file
 
 int
-dbe_stat (const char *path, struct stat64 *sbuf)
+dbe_stat (const char *path, dbe_stat_t *sbuf)
 {
   int res = dbe_stat_internal (path, sbuf, false);
   return res;
@@ -1159,7 +1139,7 @@ dbe_read_dir (const char *path, const char *format)
 	  if (format_aF)
 	    {
 	      const char *attr = NTXT ("@"); // Link
-	      struct stat64 sbuf;
+	      dbe_stat_t sbuf;
 	      sbuf.st_mode = 0;
 	      char filename[MAXPATHLEN + 1];
 	      snprintf (filename, sizeof (filename), NTXT ("%s/%s"), path, entry->d_name);
@@ -1253,7 +1233,7 @@ dbe_delete_file (const char *pathname)
 {
   StringBuilder sb;
   char *cmd = NULL;
-  struct stat64 sbuf;
+  dbe_stat_t sbuf;
   sbuf.st_mode = 0;
   int st = dbe_stat (pathname, &sbuf);
   if (st == 0)

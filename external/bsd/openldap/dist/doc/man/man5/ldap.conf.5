@@ -1,6 +1,6 @@
 .TH LDAP.CONF 5 "RELEASEDATE" "OpenLDAP LDVERSION"
 .\" $OpenLDAP$
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap.conf, .ldaprc \- LDAP configuration file/environment variables
@@ -159,7 +159,6 @@ Aliases are dereferenced both in searching and in locating the base object
 of the search.
 .RE
 .TP
-.TP
 .B HOST <name[:port] ...>
 Specifies the name(s) of an LDAP server(s) to which the
 .I LDAP 
@@ -184,15 +183,18 @@ Sets/gets the interval in seconds between individual keepalive probes.
 Linux only.
 .TP
 .B NETWORK_TIMEOUT <integer>
-Specifies the timeout (in seconds) after which the poll(2)/select(2)
-following a connect(2) returns in case of no activity.
+Specifies the timeout (in seconds) after which the
+.BR poll (2)/ select (2)
+following a
+.BR connect (2)
+returns in case of no activity.
 .TP
 .B PORT <port>
 Specifies the default port used when connecting to LDAP servers(s).
 The port may be specified as a number.
 .B PORT
 is deprecated in favor of
-.BR URI.
+.BR URI .
 .TP
 .B REFERRALS <on/true/yes/off/false/no>
 Specifies if the client should automatically follow referrals returned
@@ -295,7 +297,7 @@ as an integer (see
 description).  The default is
 .BR INT_MAX .
 .TP
-.B maxbufsize=<factor> 
+.B maxbufsize=<factor>
 specifies the maximum security layer receive buffer
 size allowed.  0 disables security layers.  The default is 65536.
 .RE
@@ -333,11 +335,12 @@ Specifies the file that contains certificates for all of the Certificate
 Authorities the client will recognize.
 .TP
 .B TLS_CACERTDIR <path>
-Specifies the path of a directory that contains Certificate Authority
-certificates in separate individual files. The
+Specifies the path of directories that contain Certificate Authority
+certificates in separate individual files. Multiple directories may
+be specified, separated by a semi-colon.  The
 .B TLS_CACERT
 is always used before
-.B TLS_CACERTDIR.
+.BR TLS_CACERTDIR .
 .TP
 .B TLS_CERT <filename>
 Specifies the file that contains the client certificate.

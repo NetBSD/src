@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAPURL 1 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAPURL 1 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 2008-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2008-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldapurl \- LDAP URL formatting tool
@@ -77,7 +77,7 @@ General extensions:
   [!]postread[=<attrs>] (a comma-separated attribute list)
   [!]preread[=<attrs>]  (a comma-separated attribute list)
   [!]relax
-  sessiontracking
+  sessiontracking[=<username>]
   abandon,cancel,ignore (SIGINT sends abandon/cancel,
   or ignores response; if critical, doesn't wait for SIGINT.
   not really controls)

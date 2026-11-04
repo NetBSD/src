@@ -172,10 +172,14 @@ rr_test_file(const char* input, const char* check)
 		if(txt_in[0] == 0 || txt_in[0] == '\n' || txt_in[0] == ';')
 			continue;
 		/* read check lines */
-		if(!fgets(wire_chk, (int)bufs, chf))
+		if(!fgets(wire_chk, (int)bufs, chf)) {
 			printf("%s too short\n", check);
-		if(!fgets(txt_chk, (int)bufs, chf))
+			unit_assert(0);
+		}
+		if(!fgets(txt_chk, (int)bufs, chf)) {
 			printf("%s too short\n", check);
+			unit_assert(0);
+		}
 		chlineno += 2;
 		if(vbmp) printf("%s:%d %s", check, chlineno-1, wire_chk);
 		if(vbmp) printf("%s:%d %s", check, chlineno, txt_chk);
@@ -203,7 +207,11 @@ rr_test_file(const char* input, const char* check)
 #define xstr(s) str(s)
 #define str(s) #s
 
+#ifndef __QNX__
 #define SRCDIRSTR xstr(SRCDIR)
+#else /* !__QNX__ */
+#define SRCDIRSTR "."
+#endif /* __QNX__ */
 
 /** read rrs to and from string, to and from wireformat */
 static void
@@ -271,10 +279,24 @@ b64_test(void)
 	unit_assert(result == -1);
 }
 
+/** test SVCB ech svcparam */
+static void
+svcb_ech_test(void)
+{
+	uint8_t rr[LDNS_RR_BUF_SIZE];
+	size_t rr_len = sizeof(rr), dname_len = 0;
+	int e = sldns_str2wire_rr_buf("x. 300 IN HTTPS 1 . ech=0",
+		rr, &rr_len, &dname_len, 300, NULL, 0, NULL, 0);
+	unit_assert(e == LDNS_WIREPARSE_ERR_OK);
+	unit_assert(rr_len == dname_len + 10 /* type,class,ttl,rdatalen */ + 7 /* rdata */);
+	unit_assert(sldns_read_uint16(rr + dname_len + 8 /* rdlen */) == 7);
+}
+
 void
 ldns_test(void)
 {
 	unit_show_feature("sldns");
 	rr_tests();
 	b64_test();
+	svcb_ech_test();
 }

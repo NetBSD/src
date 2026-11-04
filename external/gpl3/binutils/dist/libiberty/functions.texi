@@ -101,7 +101,7 @@ is respectively less than, matching, or greater than the array member.
 
 @end deftypefn
 
-@c argv.c:138
+@c argv.c:129
 @deftypefn Extension char** buildargv (char *@var{sp})
 
 Given a pointer to a string, parse the string extracting fields
@@ -192,7 +192,7 @@ Concatenate zero or more of strings and return the result in freshly
 
 @end deftypefn
 
-@c argv.c:485
+@c argv.c:474
 @deftypefn Extension int countargv (char * const *@var{argv})
 
 Return the number of elements in @var{argv}.
@@ -257,7 +257,7 @@ symbolic name or message.
 
 @end deftypefn
 
-@c argv.c:339
+@c argv.c:337
 @deftypefn Extension void expandargv (int *@var{argcp}, char ***@var{argvp})
 
 The @var{argcp} and @code{argvp} arguments are pointers to the usual
@@ -690,6 +690,19 @@ and a path ending in @code{/} returns the empty string after it.
 
 @end deftypefn
 
+@c ldirname.c:23
+@deftypefn Replacement {char*} ldirname (const char *@var{name})
+
+Given a pointer to a string containing a typical pathname
+(@samp{/usr/src/cmd/ls/ls.c} for example), returns a string containing the
+passed string up to, but not including, the final directory separator.
+
+If the given pathname doesn't contain a directory separator then this funtion
+returns the empty string; this includes an empty given pathname.  @code{NULL}
+is returned on memory allocation error.
+
+@end deftypefn
+
 @c lrealpath.c:25
 @deftypefn Replacement {const char*} lrealpath (const char *@var{name})
 
@@ -795,6 +808,20 @@ Copies @var{count} bytes from memory area @var{from} to memory area
 
 Copies @var{length} bytes from memory region @var{in} to region
 @var{out}.  Returns a pointer to @var{out} + @var{length}.
+
+@end deftypefn
+
+@c memrchr.c:3
+@deftypefn Supplemental void* memrchr (const void *@var{s}, int @var{c}, @
+  size_t @var{n})
+
+This function searches memory for the character @var{c} in reverse order,
+starting at @code{*@var{s}+@var{n}-1} .  The search only ends with
+the first occurrence of @var{c}, or when the start us reached; in particular,
+a null character does not terminate the search.  If the character @var{c} is
+found within @var{length} characters of @code{*@var{s}}, a pointer
+to the character is returned.  If @var{c} is not found, then @code{NULL} is
+returned.
 
 @end deftypefn
 
@@ -1934,7 +1961,7 @@ does the return value.  The third argument is unused in @libib{}.
 
 @end deftypefn
 
-@c argv.c:289
+@c argv.c:287
 @deftypefn Extension int writeargv (char * const *@var{argv}, FILE *@var{file})
 
 Write each member of ARGV, handling all necessary quoting, to the file

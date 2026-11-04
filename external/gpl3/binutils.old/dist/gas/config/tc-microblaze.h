@@ -1,6 +1,6 @@
 /* tc-microblaze.h -- Header file for tc-microblaze.c.
 
-   Copyright (C) 2009-2022 Free Software Foundation, Inc.
+   Copyright (C) 2009-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 

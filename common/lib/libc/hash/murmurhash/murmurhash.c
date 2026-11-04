@@ -1,4 +1,4 @@
-/*	$NetBSD: murmurhash.c,v 1.8 2019/08/20 15:17:02 para Exp $	*/
+/*	$NetBSD: murmurhash.c,v 1.8.18.1 2026/11/04 22:36:30 perseant Exp $	*/
 
 /*
  * MurmurHash2 -- from the original code:
@@ -14,14 +14,14 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.8 2019/08/20 15:17:02 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: murmurhash.c,v 1.8.18.1 2026/11/04 22:36:30 perseant Exp $");
 
 #include <lib/libkern/libkern.h>
 
 #else
 
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: murmurhash.c,v 1.8 2019/08/20 15:17:02 para Exp $");
+__RCSID("$NetBSD: murmurhash.c,v 1.8.18.1 2026/11/04 22:36:30 perseant Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: murmurhash.c,v 1.8 2019/08/20 15:17:02 para Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
+#include <sys/endian.h>
 #include <sys/hash.h>
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
@@ -77,7 +78,7 @@ murmurhash2(const void *key, size_t len, uint32_t seed)
 			k  = data[0];
 			k |= data[1] << 8;
 			k |= data[2] << 16;
-			k |= data[3] << 24;
+			k |= (uint32_t)data[3] << 24;
 
 			k *= m;
 			k ^= k >> r;

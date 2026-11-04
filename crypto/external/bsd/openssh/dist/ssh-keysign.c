@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.25.2.1 2025/08/02 05:18:48 perseant Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.75 2025/02/15 01:48:30 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.25.2.2 2026/11/04 22:36:42 perseant Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.81 2026/06/14 03:59:34 djm Exp $ */
 
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.25.2.1 2025/08/02 05:18:48 perseant Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.25.2.2 2026/11/04 22:36:42 perseant Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -130,8 +130,10 @@ valid_request(struct passwd *pw, char *host, struct sshkey **ret, char **pkalgp,
 	/* client host name, handle trailing dot */
 	if ((r = sshbuf_get_cstring(b, &p, &len)) != 0)
 		fatal_fr(r, "parse hostname");
-	debug2_f("check expect chost %s got %s", host, p);
-	if (strlen(host) != len - 1)
+	debug2_f("check expect chost \"%s\" got \"%s\"", host, p);
+	if (len == 0)
+		fail++;
+	else if (strlen(host) != len - 1)
 		fail++;
 	else if (p[len - 1] != '.')
 		fail++;
@@ -184,11 +186,6 @@ main(int argc, char **argv)
 	char *host, *fp, *pkalg;
 	size_t slen, dlen;
 
-#ifdef __OpenBSD__
-	if (pledge("stdio rpath getpw dns id", NULL) != 0)
-		fatal("%s: pledge: %s", __progname, strerror(errno));
-#endif
-
 	/* Ensure that stdin and stdout are connected */
 	if ((fd = open(_PATH_DEVNULL, O_RDWR)) < 2)
 		exit(1);
@@ -196,18 +193,20 @@ main(int argc, char **argv)
 	if (fd > 2)
 		close(fd);
 
+#ifdef __OpenBSD__
+	if (pledge("stdio rpath getpw dns id", NULL) != 0)
+		fatal("%s: pledge: %s", __progname, strerror(errno));
+#endif
+
 	for (i = 0; i < NUM_KEYTYPES; i++)
 		key_fd[i] = -1;
 
 	i = 0;
 	/* XXX This really needs to read sshd_config for the paths */
-#ifdef WITH_DSA
-	key_fd[i++] = open(_PATH_HOST_DSA_KEY_FILE, O_RDONLY);
-#endif
 	key_fd[i++] = open(_PATH_HOST_ECDSA_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_ED25519_KEY_FILE, O_RDONLY);
-	key_fd[i++] = open(_PATH_HOST_XMSS_KEY_FILE, O_RDONLY);
 	key_fd[i++] = open(_PATH_HOST_RSA_KEY_FILE, O_RDONLY);
+	key_fd[i++] = open(_PATH_HOST_MLDSA44_ED25519_KEY_FILE, O_RDONLY);
 
 	if ((pw = getpwuid(getuid())) == NULL)
 		fatal("getpwuid failed");
@@ -239,10 +238,6 @@ main(int argc, char **argv)
 	}
 	if (found == 0)
 		fatal("could not open any host key");
-
-#ifdef WITH_OPENSSL
-	OpenSSL_add_all_algorithms();
-#endif
 
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {

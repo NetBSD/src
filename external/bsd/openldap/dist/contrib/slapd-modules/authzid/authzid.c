@@ -1,10 +1,10 @@
-/*	$NetBSD: authzid.c,v 1.2 2021/08/14 16:14:50 christos Exp $	*/
+/*	$NetBSD: authzid.c,v 1.2.4.1 2026/11/04 22:38:55 perseant Exp $	*/
 
 /* authzid.c - RFC 3829 Authzid Control */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2010-2021 The OpenLDAP Foundation.
+ * Copyright 2010-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: authzid.c,v 1.2 2021/08/14 16:14:50 christos Exp $");
+__RCSID("$NetBSD: authzid.c,v 1.2.4.1 2026/11/04 22:38:55 perseant Exp $");
 
 #include "portable.h"
 

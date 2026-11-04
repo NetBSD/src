@@ -210,6 +210,34 @@ any of the following arguments (not a definitive list) to 'configure':
     Disable C++ integration.  This will cause new and delete operator
     implementations to be omitted.
 
+* `--enable-cxx-infallible-new`
+
+    Make the throwing `operator new` abort on allocation failure (logging the
+    requested size) instead of throwing `std::bad_alloc`; the `std::nothrow`
+    overloads still return null.  Disabled by default, and has no effect when
+    C++ integration is disabled (`--disable-cxx`).  When enabled, under LTO
+    this lets the compiler treat `operator new` as non-throwing and elide
+    exception-handling cleanup in callers.  The installed public header always
+    defines `JEMALLOC_INFALLIBLE_NEW` to `1` when this behavior is
+    enabled, and to `0` otherwise.
+
+* `--enable-experimental-fiber-safe-tls`
+
+    Make jemalloc's own thread-local (TSD) access safe for fibers / stackful
+    coroutines that migrate between OS threads.
+
+    The compiler may legally compute a thread-local's address once and reuse
+    it; inlined into the allocator fast paths under whole-program LTO, that
+    address can be cached in a callee-saved register across a user-space
+    context switch and reused on the OS thread the fiber migrated to, so two
+    threads race on one tcache -- silent heap corruption (see issue #2890).
+    With this option every internal TSD access re-derives the address through
+    an out-of-line accessor behind an optimization barrier, which the compiler
+    cannot hoist or reuse across the switch.
+
+    This is a partial mitigation, not a whole-program fix: only TLS accesses
+    made by jemalloc itself are protected.
+
 * `--with-xslroot=<path>`
 
     Specify where to find DocBook XSL stylesheets when building the
@@ -315,13 +343,13 @@ behavior:
     'configure' uses this to find programs.
 
 In some cases it may be necessary to work around configuration results that do
-not match reality.  For example, Linux 4.5 added support for the MADV_FREE flag
-to madvise(2), which can cause problems if building on a host with MADV_FREE
-support and deploying to a target without.  To work around this, use a cache
-file to override the relevant configuration variable defined in configure.ac,
-e.g.:
+not match reality.  For example, Linux 3.4 added support for the MADV_DONTDUMP
+flag to madvise(2), which can cause problems if building on a host with
+MADV_DONTDUMP support and deploying to a target without.  To work around this,
+use a cache file to override the relevant configuration variable defined in
+configure.ac, e.g.:
 
-    echo "je_cv_madv_free=no" > config.cache && ./configure -C
+    echo "je_cv_madv_dontdump=no" > config.cache && ./configure -C
 
 
 ## Advanced compilation
@@ -396,6 +424,103 @@ exclusively):
 
     Use this to search for programs used during configuration and building.
 
+## Building for Windows
+
+There are at least two ways to build jemalloc's libraries for Windows. They
+differ in their ease of use and flexibility.
+
+### With MSVC solutions
+This is the easy, but less flexible approach. It doesn't let you specify
+arguments to the `configure` script.
+
+1. Install Cygwin with at least the following packages:
+   * autoconf
+   * autogen
+   * gawk
+   * grep
+   * sed
+
+2. Install Visual Studio with Visual C++. We currently test on 2022 and provide
+solution files back to 2015.
+
+3. Add Cygwin\bin to the PATH environment variable
+
+4. Open "x64 Native Tools Command Prompt" for your version of Visual Studio
+   (note: x86/x64 doesn't matter at this point)
+
+5. Generate header files:
+   sh -c "CC=cl ./autogen.sh"
+
+6. Now the project can be opened and built in Visual Studio using the
+   corresponding solution files in the `msvc\` folder.
+
+### With MSYS
+This is a more involved approach that offers the same configuration flexibility
+as Linux builds. We use it for our CI workflow to test different jemalloc
+configurations on Windows.
+
+1. Install the prerequisites
+    1. MSYS2
+    2. Chocolatey
+    3. Visual Studio if you want to compile with MSVC compiler
+
+2. Run your bash emulation. It could be MSYS2 or Git Bash (this manual was
+   tested on both)
+3. Manually and selectively follow
+   [before_install.sh](https://github.com/jemalloc/jemalloc/blob/dev/scripts/windows/before_install.sh)
+   script.
+    1. Skip the `TRAVIS_OS_NAME` check, `rm -rf C:/tools/msys64` and `choco
+       uninstall/upgrade` part.
+    2.  If using `msys2` shell, add path to `RefreshEnv.cmd` to `PATH`:
+        `PATH="$PATH:/c/ProgramData/chocolatey/bin"`
+    3. Assign `msys_shell_cmd`, `msys2`, `mingw32` and `mingw64` as in the
+       script.
+    4. Pick `CROSS_COMPILE_32BIT` , `CC` and `USE_MSVC` values depending on
+       your needs. For instance, if you'd like to build for x86_64 Windows
+       with `gcc`, then `CROSS_COMPILE_32BIT="no"`, `CC="gcc"` and
+       `USE_MSVC=""`. If you'd like to build for x86 Windows with `cl.exe`,
+       then `CROSS_COMPILE_32BIT="yes"`, `CC="cl.exe"`, `USE_MSVC="x86"`.
+       For x86_64 builds with `cl.exe`, assign `USE_MSVC="amd64"` and
+       `CROSS_COMPILE_32BIT="no"`.
+    5. Replace the path to `vcvarsall.bat` with the path on your system. For
+       instance, on my Windows PC with Visual Studio 17, the path is
+       `C:\Program Files (x86)\Microsoft Visual
+       Studio\2017\BuildTools\VC\Auxiliary\Build\vcvarsall.bat`.
+    6. Execute the rest of the script. It will install the required
+       dependencies and assign the variable `build_env`, which is a function
+       that executes following commands with the correct environment
+       variables set.
+4. Use `$build_env <command>` as you would in a Linux shell:
+     1. `$build_env autoconf`
+     2. `$build_env ./configure CC="<desired compiler>" <configuration flags>`
+     3. `$build_env mingw32-make`
+
+If you're having any issues with the above, ensure the following:
+
+5. When you run `cmd //C RefreshEnv.cmd`, you get an output line starting with
+   `Refreshing` . If it errors saying `RefreshEnv.cmd` is not found, then you
+   need to add it to your `PATH` as described above in item 3.2
+
+6. When you run `cmd //C $vcvarsall`, it prints a bunch of environment
+   variables. Otherwise, check the path to the `vcvarsall.bat` in `$vcvarsall`
+   script and fix it.
+
+### Building from vcpkg
+
+The jemalloc port in vcpkg is kept up to date by Microsoft team members and
+community contributors. The url of vcpkg is: https://github.com/Microsoft/vcpkg
+. You can download and install jemalloc using the vcpkg dependency manager:
+
+```shell
+git clone https://github.com/Microsoft/vcpkg.git
+cd vcpkg
+./bootstrap-vcpkg.sh  # ./bootstrap-vcpkg.bat for Windows
+./vcpkg integrate install
+./vcpkg install jemalloc
+```
+
+If the version is out of date, please [create an issue or pull
+request](https://github.com/Microsoft/vcpkg) on the vcpkg repository.
 
 ## Development
 

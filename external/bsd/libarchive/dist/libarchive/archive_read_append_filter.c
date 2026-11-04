@@ -96,9 +96,17 @@ archive_read_append_filter(struct archive *_a, int code)
       strcpy(str, "lzip");
       r1 = archive_read_support_filter_lzip(_a);
       break;
+    case ARCHIVE_FILTER_LZOP:
+      strcpy(str, "lzop");
+      r1 = archive_read_support_filter_lzop(_a);
+      break;
     case ARCHIVE_FILTER_LRZIP:
       strcpy(str, "lrzip");
       r1 = archive_read_support_filter_lrzip(_a);
+      break;
+    case ARCHIVE_FILTER_GRZIP:
+      strcpy(str, "grzip");
+      r1 = archive_read_support_filter_grzip(_a);
       break;
     default:
       archive_set_error(&a->archive, ARCHIVE_ERRNO_PROGRAMMER,

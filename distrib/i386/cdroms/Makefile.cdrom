@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.cdrom,v 1.44.2.1 2025/08/02 05:20:21 perseant Exp $
+# $NetBSD: Makefile.cdrom,v 1.44.2.2 2026/11/04 22:36:54 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -6,7 +6,7 @@ SYSINSTDIR!= cd ${.CURDIR}/../../../../usr.sbin/sysinst/arch/${MACHINE} && ${PRI
 
 # Need multidot for the boot loader to read kernel modules as it doesn't
 # understand rockridge.
-CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot
+CDMAKEFSOPTIONS= bootimage=i386;bootxx.${MACHINE},no-emul-boot,allow-multidot,generic-bootimage=${DESTDIR}/usr/mdec/bootxx_hd9660
 CDINSTKERNEL=	../../instkernel
 .if ${KERNEL_DIR:Uno} == "yes"
 CDKERNELS=	netbsd-GENERIC.gz		netbsd/kernel
@@ -25,6 +25,9 @@ SPEC_EXTRA:=${.PARSEDIR}/spec.in
 
 image_md_pre:
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc cdrom/install.sh
+.for file in ${CDSETS_EXCLUDE}
+	${RM} -f cdrom/${file}
+.endfor
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/../etc.rc cdrom/etc/rc

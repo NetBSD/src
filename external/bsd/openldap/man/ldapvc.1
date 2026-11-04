@@ -1,0 +1,220 @@
+.lf 1 stdin
+.TH LDAPVC 1 "2025/05/22" "OpenLDAP 2.6.10"
+.\" $OpenLDAP$
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
+.\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
+.SH NAME
+ldapvc \- LDAP verify credentials tool
+.SH SYNOPSIS
+.B ldapvc
+[\c
+.BR \-V [ V ]]
+[\c
+.BI \-d \ debuglevel\fR]
+[\c
+.BR \-a ]
+[\c
+.BR \-b ]
+[\c
+.BR \-n ]
+[\c
+.BR \-v ]
+[\c
+.BR \-x ]
+[\c
+.BI \-D \ binddn\fR]
+[\c
+.BR \-W ]
+[\c
+.BI \-w \ passwd\fR]
+[\c
+.BI \-y \ passwdfile\fR]
+[\c
+.BI \-H \ ldapuri\fR]
+[\c
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]]
+[\c
+.BI \-o \ opt \fR[= optparam \fR]]
+[\c
+.BI \-O \ security-properties\fR]
+[\c
+.BR \-I ]
+[\c
+.BR \-Q ]
+[\c
+.BR \-N ]
+[\c
+.BI \-U \ authcid\fR]
+[\c
+.BI \-R \ realm\fR]
+[\c
+.BI \-X \ authzid\fR]
+[\c
+.BI \-Y \ mech\fR]
+[\c
+.BR \-Z [ Z ]]
+\c
+.I Distinguished Name \
+\c
+.I [Credentials]
+.SH DESCRIPTION
+.I ldapvc
+implements the LDAP "Verify Credentials" extended operation.
+.LP
+.B Verify Credentials
+operation behaves like LDAP Bind but has no impact upon the underlying LDAP session.
+.SH OPTIONS
+.TP
+.BR \-V [ V ]
+Print version info.
+If \fB\-VV\fP is given, only the version information is printed.
+.TP
+.BI \-d \ debuglevel
+Set the LDAP debugging level to \fIdebuglevel\fP.
+.B ldapvc
+must be compiled with LDAP_DEBUG defined for this option to have any effect.
+.TP
+.B \-a
+Print the authzID resulting from a successful verification of credentials.
+.TP
+.B \-b
+Print the results from the ppolicy control after verification of credentials.
+.TP
+.B \-n
+Show what would be done, but don't actually perform the operation.
+Useful for
+debugging in conjunction with \fB\-v\fP.
+.TP
+.B \-v
+Run in verbose mode, with many diagnostics written to standard output.
+.TP
+.B \-x 
+Use simple authentication instead of SASL.
+.TP
+.BI \-D \ binddn
+Use the Distinguished Name \fIbinddn\fP to bind to the LDAP directory.
+For SASL binds, the server is expected to ignore this value.
+.TP
+.B \-W
+Prompt for simple authentication.
+This is used instead of specifying the password on the command line.
+.TP
+.BI \-w \ passwd
+Use \fIpasswd\fP as the password for simple authentication.
+.TP
+.BI \-y \ passwdfile
+Use complete contents of \fIpasswdfile\fP as the password for
+simple authentication.
+.TP
+.BI \-H \ ldapuri
+Specify URI(s) referring to the ldap server(s); only the protocol/host/port
+fields are allowed; a list of URI, separated by whitespace or commas
+is expected.
+.TP
+.BR \-e \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+.TP
+.BR \-E \ [ ! ] \fIext\fP [ =\fIextparam\fP ]
+
+Specify general extensions with \fB\-e\fP and Verify Credentials extensions with \fB\-E\fP.
+\'\fB!\fP\' indicates criticality.
+
+General extensions:
+.nf
+  [!]assert=<filter>    (an RFC 4515 Filter)
+  [!]bauthzid           (RFC 3829 authzid control)
+  [!]chaining[=<resolve>[/<cont>]]
+  [!]manageDSAit
+  [!]noop
+  ppolicy
+  [!]postread[=<attrs>] (a comma-separated attribute list)
+  [!]preread[=<attrs>]  (a comma-separated attribute list)
+  [!]relax
+  sessiontracking[=<username>]
+  abandon,cancel,ignore (SIGINT sends abandon/cancel,
+  or ignores response; if critical, doesn't wait for SIGINT.
+  not really controls)
+.fi
+.sp
+Verify Credentials extensions:
+.sp
+The following options set SASL params on the Verify Credentials request:
+.nf
+  authcid=<authcid>    (SASL Authentication Identity "dn:<dn>" or "u:<user>")
+  authzid=<authzid>    (SASL Authorization Identity "dn:<dn>" or "u:<user>")
+  mech=<mech>          (SASL mechanism default e.g. Simple)
+  realm=<realm>        (SASL Realm, defaults to none)
+  sasl=a[utomatic]|i[nteractive]|q[uiet]  (SASL mode defaults to automatic if any other -E option provided, otherwise none)
+  secprops=<secprops>  (SASL Security Properties)
+.fi
+.TP
+.BI \-o \ opt \fR[= optparam \fR]
+
+Specify any
+.BR ldap.conf (5)
+option or one of the following:
+.nf
+  nettimeout=<timeout>  (in seconds, or "none" or "max")
+  ldif_wrap=<width>     (in columns, or "no" for no wrapping)
+.fi
+
+.B -o
+option that can be passed here, check
+.BR ldap.conf (5)
+for details.
+.TP
+.BI \-O \ security-properties
+Specify SASL security properties.
+.TP
+.B \-I
+Enable SASL Interactive mode.  Always prompt.  Default is to prompt
+only as needed.
+.TP
+.B \-Q
+Enable SASL Quiet mode.  Never prompt.
+.TP
+.B \-N
+Do not use reverse DNS to canonicalize SASL host name.
+.TP
+.BI \-U \ authcid
+Specify the authentication ID for SASL bind. The form of the ID
+depends on the actual SASL mechanism used.
+.TP
+.BI \-R \ realm
+Specify the realm of authentication ID for SASL bind. The form of the realm
+depends on the actual SASL mechanism used.
+.TP
+.BI \-X \ authzid
+Specify the requested authorization ID for SASL bind.
+.I authzid
+must be one of the following formats:
+.BI dn: "<distinguished name>"
+or
+.BI u: <username>
+.TP
+.BI \-Y \ mech
+Specify the SASL mechanism to be used for authentication. If it's not
+specified, the program will choose the best mechanism the server knows.
+.TP
+.BR \-Z [ Z ]
+Issue StartTLS (Transport Layer Security) extended operation. If you use
+\fB\-ZZ\fP, the command will require the operation to be successful.
+.SH EXAMPLE
+.nf
+    ldapvc \-x "uid=Alice,ou=People,dc=example,dc=com"
+.fi
+.SH "SEE ALSO"
+.BR ldap.conf (5),
+.BR ldap (3),
+.BR ldap_extended_operation (3)
+.SH AUTHOR
+The OpenLDAP Project <http://www.openldap.org/>
+.SH ACKNOWLEDGEMENTS
+.lf 1 ./../Project
+.\" Shared Project Acknowledgement Text
+.B "OpenLDAP Software"
+is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
+.B "OpenLDAP Software"
+is derived from the University of Michigan LDAP 3.3 Release.  
+.lf 214 stdin

@@ -1,5 +1,5 @@
 /* tc-sparc.c -- Assemble for the SPARC
-   Copyright (C) 1989-2024 Free Software Foundation, Inc.
+   Copyright (C) 1989-2026 Free Software Foundation, Inc.
    This file is part of GAS, the GNU Assembler.
 
    GAS is free software; you can redistribute it and/or modify
@@ -275,8 +275,9 @@ static struct sparc_arch {
   { "v9m",     "v9m", v9,  0, 1, 0, 0 },
   { "v9m8",     "m8", v9,  0, 1, 0, 0 },
 
-  /* This exists to allow configure.tgt to pass one
+  /* These exist to allow configure.tgt to pass one
      value to specify both the default machine and default word size.  */
+  { "v8plus-32", "v9", v9, 32, 0, 0, 0 },
   { "v9-64",   "v9",  v9, 64, 0, 0, 0 },
   { NULL, NULL, v8, 0, 0, 0, 0 }
 };
@@ -401,8 +402,8 @@ sparc_target_format (void)
  *		error.  For example, from sparclite to v9.
  */
 
-const char *md_shortopts = "A:K:VQ:sq";
-struct option md_longopts[] = {
+const char md_shortopts[] = "A:K:VQ:sq";
+const struct option md_longopts[] = {
 #define OPTION_BUMP (OPTION_MD_BASE)
   {"bump", no_argument, NULL, OPTION_BUMP},
 #define OPTION_SPARC (OPTION_MD_BASE + 1)
@@ -442,7 +443,7 @@ struct option md_longopts[] = {
   {NULL, no_argument, NULL, 0}
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 int
 md_parse_option (int c, const char *arg)
@@ -805,8 +806,8 @@ struct priv_reg_entry v9a_asr_table[] =
 static int
 cmp_reg_entry (const void *parg, const void *qarg)
 {
-  const struct priv_reg_entry *p = (const struct priv_reg_entry *) parg;
-  const struct priv_reg_entry *q = (const struct priv_reg_entry *) qarg;
+  const struct priv_reg_entry *p = parg;
+  const struct priv_reg_entry *q = qarg;
 
   if (p->name == q->name)
     return 0;
@@ -921,8 +922,8 @@ struct perc_entry perc_table[NUM_PERC_ENTRIES];
 static int
 cmp_perc_entry (const void *parg, const void *qarg)
 {
-  const struct perc_entry *p = (const struct perc_entry *) parg;
-  const struct perc_entry *q = (const struct perc_entry *) qarg;
+  const struct perc_entry *p = parg;
+  const struct perc_entry *q = qarg;
 
   if (p->name == q->name)
     return 0;
@@ -979,9 +980,9 @@ md_begin (void)
     {
       const struct sparc_opcode *insn;
       const char *name = ((sparc_arch_size == 32)
-		    ? native_op_table[i].name32
-		    : native_op_table[i].name64);
-      insn = (struct sparc_opcode *) str_hash_find (op_hash, name);
+			  ? native_op_table[i].name32
+			  : native_op_table[i].name64);
+      insn = str_hash_find (op_hash, name);
       if (insn == NULL)
 	{
 	  as_bad (_("Internal error: can't find opcode `%s' for `%s'\n"),
@@ -1254,7 +1255,7 @@ synthetize_setuw (const struct sparc_opcode *insn)
 	      && (the_insn.exp.X_add_number < -(offsetT) U0x80000000
 		  || the_insn.exp.X_add_number > (offsetT) U0xffffffff))
 	    as_warn (_("set: number not in -2147483648..4294967295 range"));
-	  the_insn.exp.X_add_number = (int) the_insn.exp.X_add_number;
+	  the_insn.exp.X_add_number = (int32_t) the_insn.exp.X_add_number;
 	}
     }
 
@@ -1743,18 +1744,20 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 
     case ',':
       comma = 1;
-      /* Fall through.  */
-
-    case ' ':
       *s++ = '\0';
       break;
 
     default:
+      if (is_whitespace (*s))
+	{
+	  *s++ = '\0';
+	  break;
+	}
       as_bad (_("Unknown opcode: `%s'"), str);
       *pinsn = NULL;
       return special_case;
     }
-  insn = (struct sparc_opcode *) str_hash_find (op_hash, str);
+  insn = str_hash_find (op_hash, str);
   *pinsn = insn;
   if (insn == NULL)
     {
@@ -1798,11 +1801,11 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 			    goto error;
 			  }
 			kmask |= jmask;
-			while (*s == ' ')
+			while (is_whitespace (*s))
 			  ++s;
 			if (*s == '|' || *s == '+')
 			  ++s;
-			while (*s == ' ')
+			while (is_whitespace (*s))
 			  ++s;
 		      }
 		  }
@@ -2039,7 +2042,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      goto immediate;
 
 	    case ')':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		s++;
 	      if ((s[0] == '0' && s[1] == 'x' && ISXDIGIT (s[2]))
 		  || ISDIGIT (*s))
@@ -2131,7 +2134,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      break;
 
 	    case 'z':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		{
 		  ++s;
 		}
@@ -2144,7 +2147,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      break;
 
 	    case 'Z':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		{
 		  ++s;
 		}
@@ -2157,7 +2160,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      break;
 
 	    case '6':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		{
 		  ++s;
 		}
@@ -2169,7 +2172,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      break;
 
 	    case '7':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		{
 		  ++s;
 		}
@@ -2181,7 +2184,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      break;
 
 	    case '8':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		{
 		  ++s;
 		}
@@ -2193,7 +2196,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      break;
 
 	    case '9':
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		{
 		  ++s;
 		}
@@ -2303,8 +2306,12 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	    case '[':		/* These must match exactly.  */
 	    case ']':
 	    case ',':
-	    case ' ':
 	      if (*s++ == *args)
+		continue;
+	      break;
+
+	    case ' ':
+	      if (is_whitespace (*s++))
 		continue;
 	      break;
 
@@ -2593,13 +2600,6 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 		    break;
 		  }	/* if not an 'f' register.  */
 
-		if (*args == '}' && mask != RS2 (opcode))
-		  {
-		    error_message
-		      = _(": Instruction requires frs2 and frsd must be the same register");
-		    goto error;
-		  }
-
 		switch (*args)
 		  {
 		  case 'v':
@@ -2628,9 +2628,17 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 		  case 'g':
 		  case 'H':
 		  case 'J':
-		  case '}':
                   case '^':
 		    opcode |= RD (mask);
+		    continue;
+
+		  case '}':
+		    if (RD (mask) != (opcode & RD (0x1f)))
+		      {
+			error_message = _(": Instruction requires frs2 and "
+					  "frsd must be the same register");
+			goto error;
+		      }
 		    continue;
 		  }		/* Pack it in.  */
 
@@ -2679,7 +2687,7 @@ sparc_ip (char *str, const struct sparc_opcode **pinsn)
 	      /* fallthrough */
 
 	    immediate:
-	      if (*s == ' ')
+	      if (is_whitespace (*s))
 		s++;
 
 	      {
@@ -3395,9 +3403,9 @@ output_insn (const struct sparc_opcode *insn, struct sparc_it *theinsn)
 
   /* Put out the opcode.  */
   if (INSN_BIG_ENDIAN)
-    number_to_chars_bigendian (toP, (valueT) theinsn->opcode, 4);
+    number_to_chars_bigendian (toP, theinsn->opcode, 4);
   else
-    number_to_chars_littleendian (toP, (valueT) theinsn->opcode, 4);
+    number_to_chars_littleendian (toP, theinsn->opcode, 4);
 
   /* Put out the symbol-dependent stuff.  */
   if (theinsn->reloc != BFD_RELOC_NONE)
@@ -3453,7 +3461,7 @@ void
 md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
 {
   char *buf = fixP->fx_where + fixP->fx_frag->fr_literal;
-  offsetT val = * (offsetT *) valP;
+  offsetT val = *valP;
   long insn;
 
   gas_assert (fixP->fx_r_type < BFD_RELOC_UNUSED);
@@ -3537,9 +3545,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
       /* It's a relocation against an instruction.  */
 
       if (INSN_BIG_ENDIAN)
-	insn = bfd_getb32 ((unsigned char *) buf);
+	insn = bfd_getb32 (buf);
       else
-	insn = bfd_getl32 ((unsigned char *) buf);
+	insn = bfd_getl32 (buf);
 
       switch (fixP->fx_r_type)
 	{
@@ -3581,9 +3589,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
 		 then we can optimize if the call destination is near
 		 by changing the call into a branch always.  */
 	      if (INSN_BIG_ENDIAN)
-		delay = bfd_getb32 ((unsigned char *) buf + 4);
+		delay = bfd_getb32 (buf + 4);
 	      else
-		delay = bfd_getl32 ((unsigned char *) buf + 4);
+		delay = bfd_getl32 (buf + 4);
 	      if ((insn & OP (~0)) != OP (1) || (delay & OP (~0)) != OP (2))
 		break;
 	      if ((delay & OP3 (~0)) != OP3 (0x3d) /* Restore.  */
@@ -3617,9 +3625,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
 		  int reg;
 
 		  if (INSN_BIG_ENDIAN)
-		    setter = bfd_getb32 ((unsigned char *) buf - 4);
+		    setter = bfd_getb32 (buf - 4);
 		  else
-		    setter = bfd_getl32 ((unsigned char *) buf - 4);
+		    setter = bfd_getl32 (buf - 4);
 		  if ((setter & (0xffffffff ^ RD (~0)))
 		      != (INSN_OR | RS1 (O7) | RS2 (G0)))
 		    break;
@@ -3636,9 +3644,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
 		    break;
 
 		  if (INSN_BIG_ENDIAN)
-		    bfd_putb32 (INSN_NOP, (unsigned char *) buf + 4);
+		    bfd_putb32 (INSN_NOP, buf + 4);
 		  else
-		    bfd_putl32 (INSN_NOP, (unsigned char *) buf + 4);
+		    bfd_putl32 (INSN_NOP, buf + 4);
 		}
 	    }
 	  break;
@@ -3813,9 +3821,9 @@ md_apply_fix (fixS *fixP, valueT *valP, segT segment ATTRIBUTE_UNUSED)
 	}
 
       if (INSN_BIG_ENDIAN)
-	bfd_putb32 (insn, (unsigned char *) buf);
+	bfd_putb32 (insn, buf);
       else
-	bfd_putl32 (insn, (unsigned char *) buf);
+	bfd_putl32 (insn, buf);
     }
 
   /* Are we finished with this relocation now?  */
@@ -3833,10 +3841,10 @@ tc_gen_reloc (asection *section, fixS *fixp)
   arelent *reloc;
   bfd_reloc_code_real_type code;
 
-  relocs[0] = reloc = XNEW (arelent);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+  relocs[0] = reloc;
   relocs[1] = NULL;
-
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
 
@@ -3907,8 +3915,8 @@ tc_gen_reloc (asection *section, fixS *fixp)
     case BFD_RELOC_16_PCREL:
     case BFD_RELOC_32_PCREL:
     case BFD_RELOC_64_PCREL:
-    case BFD_RELOC_SPARC_PLT32:
-    case BFD_RELOC_SPARC_PLT64:
+    case BFD_RELOC_32_PLT_PCREL:
+    case BFD_RELOC_64_PLT_PCREL:
     case BFD_RELOC_VTABLE_ENTRY:
     case BFD_RELOC_VTABLE_INHERIT:
     case BFD_RELOC_SPARC_TLS_GD_HI22:
@@ -4013,7 +4021,6 @@ tc_gen_reloc (asection *section, fixS *fixp)
       as_bad_where (fixp->fx_file, fixp->fx_line,
 		    _("internal error: can't export reloc type %d (`%s')"),
 		    fixp->fx_r_type, bfd_get_reloc_code_name (code));
-      xfree (reloc);
       relocs[0] = NULL;
       return relocs;
     }
@@ -4039,10 +4046,10 @@ tc_gen_reloc (asection *section, fixS *fixp)
      on the same location.  */
   if (code == BFD_RELOC_SPARC_OLO10)
     {
-      relocs[1] = reloc = XNEW (arelent);
+      reloc = notes_alloc (sizeof (arelent));
+      reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
+      relocs[1] = reloc;
       relocs[2] = NULL;
-
-      reloc->sym_ptr_ptr = XNEW (asymbol *);
       *reloc->sym_ptr_ptr
 	= symbol_get_bfdsym (section_symbol (absolute_section));
       reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -4118,8 +4125,8 @@ s_reserve (int ignore ATTRIBUTE_UNUSED)
 
   c = get_symbol_name (&name);
   p = input_line_pointer;
-  *p = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
 
   if (*input_line_pointer != ',')
     {
@@ -4213,8 +4220,7 @@ s_reserve (int ignore ATTRIBUTE_UNUSED)
 	    symbol_get_frag (symbolP)->fr_symbol = NULL;
 
 	  symbol_set_frag (symbolP, frag_now);
-	  pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP,
-			    (offsetT) size, (char *) 0);
+	  pfrag = frag_var (rs_org, 1, 1, 0, symbolP, size, NULL);
 	  *pfrag = 0;
 
 	  S_SET_SEGMENT (symbolP, bss_section);
@@ -4245,8 +4251,8 @@ s_common (int ignore ATTRIBUTE_UNUSED)
   c = get_symbol_name (&name);
   /* Just after name is now '\0'.  */
   p = input_line_pointer;
-  *p = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   if (*input_line_pointer != ',')
     {
       as_bad (_("Expected comma after symbol-name"));
@@ -4330,8 +4336,7 @@ s_common (int ignore ATTRIBUTE_UNUSED)
 	  if (S_GET_SEGMENT (symbolP) == bss_section)
 	    symbol_get_frag (symbolP)->fr_symbol = 0;
 	  symbol_set_frag (symbolP, frag_now);
-	  p = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP,
-			(offsetT) size, (char *) 0);
+	  p = frag_var (rs_org, 1, 1, 0, symbolP, size, NULL);
 	  *p = 0;
 	  S_SET_SEGMENT (symbolP, bss_section);
 	  S_CLEAR_EXTERNAL (symbolP);
@@ -4341,7 +4346,7 @@ s_common (int ignore ATTRIBUTE_UNUSED)
       else
 	{
 	allocate_common:
-	  S_SET_VALUE (symbolP, (valueT) size);
+	  S_SET_VALUE (symbolP, size);
 	  S_SET_ALIGN (symbolP, temp);
 	  S_SET_SIZE (symbolP, size);
 	  S_SET_EXTERNAL (symbolP);
@@ -4444,7 +4449,7 @@ s_data1 (void)
 static void
 s_proc (int ignore ATTRIBUTE_UNUSED)
 {
-  while (!is_end_of_line[(unsigned char) *input_line_pointer])
+  while (!is_end_of_stmt (*input_line_pointer))
     {
       ++input_line_pointer;
     }
@@ -4547,7 +4552,7 @@ s_register (int ignore ATTRIBUTE_UNUSED)
 	      if (! (flags & (BSF_GLOBAL|BSF_LOCAL|BSF_WEAK)))
 		flags |= BSF_GLOBAL;
 	      symbol_get_bfdsym (globals[reg])->flags = flags;
-	      S_SET_VALUE (globals[reg], (valueT) reg);
+	      S_SET_VALUE (globals[reg], reg);
 	      S_SET_ALIGN (globals[reg], reg);
 	      S_SET_SIZE (globals[reg], 0);
 	      /* Although we actually want undefined_section here,
@@ -4629,8 +4634,7 @@ sparc_cons_align (int nbytes)
       return;
     }
 
-  frag_var (rs_align_test, 1, 1, (relax_substateT) 0,
-	    (symbolS *) NULL, (offsetT) nalign, (char *) NULL);
+  frag_var (rs_align_test, 1, 1, 0, NULL, nalign, NULL);
 
   record_alignment (now_seg, nalign);
 }
@@ -4811,7 +4815,7 @@ sparc_cons (expressionS *exp, int size)
 	      char *end = ++input_line_pointer;
 	      int npar = 0;
 
-	      while (! is_end_of_line[(c = *end)])
+	      while (! is_end_of_stmt (c = *end))
 		{
 		  if (c == '(')
 	  	    npar++;
@@ -4842,7 +4846,7 @@ sparc_cons (expressionS *exp, int size)
 		      input_line_pointer++;
 		      SKIP_WHITESPACE ();
 		      c = *input_line_pointer;
-		      if (! is_end_of_line[c] && c != ',')
+		      if (! is_end_of_stmt (c) && c != ',')
 			as_bad (_("Illegal operands: garbage after %%r_%s%d()"),
 			        sparc_cons_special_reloc, size * 8);
 		    }
@@ -4900,8 +4904,8 @@ cons_fix_new_sparc (fragS *frag,
       else if (*sparc_cons_special_reloc == 'p')
 	switch (nbytes)
 	  {
-	  case 4: r = BFD_RELOC_SPARC_PLT32; break;
-	  case 8: r = BFD_RELOC_SPARC_PLT64; break;
+	  case 4: r = BFD_RELOC_32_PLT_PCREL; break;
+	  case 8: r = BFD_RELOC_64_PLT_PCREL; break;
 	  }
       else
 	switch (nbytes)
@@ -4931,7 +4935,7 @@ cons_fix_new_sparc (fragS *frag,
 	}
    }
 
-  fix_new_exp (frag, where, (int) nbytes, exp, 0, r);
+  fix_new_exp (frag, where, nbytes, exp, 0, r);
 }
 
 void

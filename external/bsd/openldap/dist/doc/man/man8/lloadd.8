@@ -1,5 +1,5 @@
 .TH LLOADD 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2017-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2017-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -262,6 +262,35 @@ clients have no access to slapd databases, similarly,
 client traffic does not propagate to the
 .B lloadd
 backend servers in any way.
+
+.SH CN=MONITOR INTERFACE
+As part of
+.BR lloadd 's
+.B cn=monitor
+interface it is possible to close a client connection it manages by writing to
+the corresponding entry,
+.B replacing
+the
+.B olmConnectionState
+attribute with the value
+.BR closing .
+This is subject to ACLs configured on the monitor database. The server will
+send a
+.B Notice of Disconnection
+to the client, refuse any new operations and once all pending operations have
+finished, close the connection.
+
+For example, to close connection number 42:
+
+.LP
+.nf
+.ft tt
+    dn: cn=connection 42,cn=incoming connections,cn=load balancer,cn=backends,cn=monitor
+    changetype: modify
+    replace: olmConnectionState
+    olmConnectionState: closing
+.ft
+.fi
 
 .SH EXAMPLES
 To start

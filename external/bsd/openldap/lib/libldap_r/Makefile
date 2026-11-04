@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.7 2021/08/17 01:59:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.7.4.1 2026/11/04 22:39:44 perseant Exp $
 
 USE_FORT?=	yes
 CWARNFLAGS.clang=	-Wno-format-extra-args
@@ -15,5 +15,17 @@ SRCS+=		threads.c rdwr.c rq.c \
 
 COPTS+=		-pthread
 LIBDPLIBS+=	pthread	${.CURDIR}/../../../../../lib/libpthread
+
+EXPSYM_SRCS+=	ldap_r.common.expsym
+.if ${MKKERBEROS:Uno} != "no"
+EXPSYM_SRCS+=	ldap_r.kerberos.expsym
+.endif
+
+LIB_EXPSYM=	ldap_r.expsym
+${LIB_EXPSYM}: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} > ${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=	${LIB_EXPSYM} ${LIB_EXPSYM}.tmp
 
 .include <bsd.lib.mk>

@@ -519,7 +519,7 @@ int v_adjvalence(hfsvol *vol, long parid, int isdir, int adj)
     }
 
   data.u.dir.dirVal  += adj;
-  data.u.dir.dirMdDat = d_tomtime(time(0));
+  data.u.dir.dirMdDat = d_tomtime(d_getnow());
 
   return v_putcatrec(&data, &n);
 }
@@ -550,7 +550,7 @@ int v_newfolder(hfsvol *vol, long parid, char *name)
   data.u.dir.dirFlags = 0;
   data.u.dir.dirVal   = 0;
   data.u.dir.dirDirID = id;
-  data.u.dir.dirCrDat = d_tomtime(time(0));
+  data.u.dir.dirCrDat = d_tomtime(d_getnow());
   data.u.dir.dirMdDat = data.u.dir.dirCrDat;
   data.u.dir.dirBkDat = 0;
 

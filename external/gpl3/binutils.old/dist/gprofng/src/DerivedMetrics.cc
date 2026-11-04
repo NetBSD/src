@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -119,7 +119,7 @@ DerivedMetrics::construct_map (Vector<Metric*> *mitems, BaseMetric::SubType st, 
   int nmetrics = mitems->size ();
 
   // allocate arrays for the mapping between derived metrics and requested values
-  int *map = (int *) malloc (ndm * sizeof (int));
+  int *map = (int *) xmalloc (ndm * sizeof (int));
 
   // map derived metrics to requested metrics    // EUGENE explain this more clearly
   //   0  means not mapped
@@ -194,7 +194,7 @@ DerivedMetrics::get_dependencies (definition *def)
   int n = items->size ();
 
   // zero out a vector representing definitions
-  int *vec = (int *) malloc (n * sizeof (int));
+  int *vec = (int *) xmalloc (n * sizeof (int));
   for (int i = 0; i < n; i++)
     vec[i] = 0;
   fill_dependencies (def, vec);

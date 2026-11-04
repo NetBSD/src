@@ -1,5 +1,5 @@
 /* tc-mips.h -- header file for tc-mips.c.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Contributed by the OSF and Ralph Campbell.
    Written by Keith Knowles and Ralph Campbell, working independently.
    Modified for ECOFF support by Ian Lance Taylor of Cygnus Support.
@@ -59,9 +59,9 @@ extern char mips_nop_opcode (void);
 #define NOP_OPCODE (mips_nop_opcode ())
 
 extern void mips_handle_align (struct frag *);
-#define HANDLE_ALIGN(fragp)  mips_handle_align (fragp)
+#define HANDLE_ALIGN(sec, fragp)  mips_handle_align (fragp)
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE  (3 + 4)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4)
 
 struct insn_label_list;
 struct mips_segment_info {
@@ -216,5 +216,8 @@ extern bfd_reloc_code_real_type mips_cfi_reloc_for_encoding (int encoding);
 
 #define CONVERT_SYMBOLIC_ATTRIBUTE(name) mips_convert_symbolic_attribute (name)
 extern int mips_convert_symbolic_attribute (const char *);
+
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
 
 #endif /* TC_MIPS */

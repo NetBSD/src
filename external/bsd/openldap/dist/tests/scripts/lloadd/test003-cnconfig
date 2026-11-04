@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -16,7 +16,7 @@
 echo "running defines.sh"
 . $SRCDIR/scripts/defines.sh
 
-mkdir -p $TESTDIR $DBDIR1 $DBDIR2
+mkdir -p $TESTDIR $CONF1.d $DBDIR1 $DBDIR2 $CFDIR
 
 $SLAPPASSWD -g -n >$CONFIGPWF
 echo "rootpw `$SLAPPASSWD -T $CONFIGPWF`" >$TESTDIR/configpw.conf
@@ -75,6 +75,7 @@ $SLAPADD -f $CONF3 -l $LDIFORDERED
 RC=$?
 if test $RC != 0 ; then
     echo "slapadd failed ($RC)!"
+    test $KILLSERVERS != no && kill -HUP $KILLPIDS
     exit $RC
 fi
 
@@ -118,7 +119,8 @@ fi
 echo "Starting lloadd on TCP/IP port $PORT1..."
 . $CONFFILTER $BACKEND < $LLOADDUNREACHABLECONF > $CONF1.lloadd
 . $CONFFILTER $BACKEND < $SLAPDLLOADCONF > $CONF1.slapd
-$SLAPD -f $CONF1.slapd -h $URI6 -d $LVL > $LOG1 2>&1 &
+$SLAPD -Tt -f $CONF1.slapd -F $CONF1.d -d $LVL > $LOG1 2>&1
+$SLAPD -F $CONF1.d -h $URI6 -d $LVL >> $LOG1 2>&1 &
 PID=$!
 if test $WAIT != 0 ; then
     echo PID $PID
@@ -157,10 +159,29 @@ fi
 
 echo "Deleting backends"
 
-for i in 1 2 3 4 ; do
-    echo "cn={0}server "$i",olcBackend={0}lload,cn=config"
+# weighted backends are sorted before we get to _cfadd to create their entries
+for i in 3 2 4 1 ; do
+    echo "cn={0}server $i,cn={1}tier 2,olcBackend={0}lload,cn=config"
     $LDAPDELETE -H $URI6 -D cn=config -y $CONFIGPWF \
-    "cn={0}server "$i",olcBackend={0}lload,cn=config" > /dev/null 2>&1
+    "cn={0}server $i,cn={1}tier 2,olcBackend={0}lload,cn=config" > /dev/null 2>&1
+    RC=$?
+    if test $RC != 0 ; then
+           echo "deleting server failed ($RC)!"
+           test $KILLSERVERS != no && kill -HUP $KILLPIDS
+           exit $RC
+    fi
+done
+
+echo "Testing cn=config searching..."
+$LDAPSEARCH -H $URI6 -D cn=config -y $CONFIGPWF \
+        -s sub -b "olcBackend={0}lload,cn=config" '(objectclass=*)' > /dev/null 2>&1
+
+echo "Deleting tiers"
+
+for i in 1 2; do
+    echo "cn={0}tier $i,olcBackend={0}lload,cn=config"
+    $LDAPDELETE -H $URI6 -D cn=config -y $CONFIGPWF \
+    "cn={0}tier $i,olcBackend={0}lload,cn=config" > /dev/null 2>&1
     RC=$?
     if test $RC != 0 ; then
            echo "deleting server failed ($RC)!"
@@ -185,9 +206,35 @@ if test $RC != 52 ; then
     exit $RC
 fi
 
-echo "Testing adding Server "
+echo "Testing adding a tier"
 $LDAPADD -D cn=config -H $URI6 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
-dn: cn=server 7,olcBackend={0}lload,cn=config
+dn: cn=roundrobin tier,olcBackend={0}lload,cn=config
+objectClass: olcBkLloadTierConfig
+olcBkLloadTierType: roundrobin
+EOF
+RC=$?
+if test $RC != 0 ; then
+    echo "ldapadd failed for cn=roundrobin tier ($RC)!"
+    test $KILLSERVERS != no && kill -HUP $KILLPIDS
+    exit $RC
+fi
+
+echo "Testing adding a weighted tier"
+$LDAPADD -D cn=config -H $URI6 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
+dn: cn=weighted tier,olcBackend={0}lload,cn=config
+objectClass: olcBkLloadTierConfig
+olcBkLloadTierType: weighted
+EOF
+RC=$?
+if test $RC != 0 ; then
+    echo "ldapadd failed for cn=weighted tier ($RC)!"
+    test $KILLSERVERS != no && kill -HUP $KILLPIDS
+    exit $RC
+fi
+
+echo "Testing adding a backend server"
+$LDAPADD -D cn=config -H $URI6 -y $CONFIGPWF <<EOF > $TESTOUT 2>&1
+dn: cn=server 7,cn={1}weighted tier,olcBackend={0}lload,cn=config
 objectClass: olcBkLloadBackendConfig
 cn: server 7
 olcBkLloadBackendUri: $URI3
@@ -196,6 +243,7 @@ olcBkLloadMaxPendingConns: 3
 olcBkLloadMaxPendingOps: 5
 olcBkLloadNumconns: 3
 olcBkLloadRetry: 5000
+olcBkLloadWeight: 10
 EOF
 RC=$?
 if test $RC != 0 ; then
@@ -276,7 +324,7 @@ $LDAPMODIFY -D cn=config -H $URI6 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
 dn: olcBackend={0}lload,cn=config
 changetype: modify
 replace: olcBkLloadMaxPDUPerCycle
-olcBkLloadMaxPDUPerCycle: 2000
+olcBkLloadMaxPDUPerCycle: 0
 EOF
 
 RC=$?
@@ -374,7 +422,7 @@ fi
 echo "Testing backend attributes"
 echo "Testing olcBkLloadBindconns modify"
 $LDAPMODIFY -D cn=config -H $URI6 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
-dn: cn={0}server 7,olcBackend={0}lload,cn=config
+dn: cn={0}server 7,cn={1}weighted tier,olcBackend={0}lload,cn=config
 changetype: modify
 replace: olcBkLloadBindconns
 olcBkLloadBindconns: 20
@@ -400,7 +448,7 @@ fi
 
 echo "Testing olcBkLloadMaxPendingConns modify"
 $LDAPMODIFY -D cn=config -H $URI6 -y $CONFIGPWF <<EOF >> $TESTOUT 2>&1
-dn: cn={0}server 7,olcBackend={0}lload,cn=config
+dn: cn={0}server 7,cn={1}weighted tier,olcBackend={0}lload,cn=config
 changetype: modify
 replace: olcBkLloadMaxPendingConns
 olcBkLloadMaxPendingConns: 30

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -31,7 +31,6 @@ enum Platform_t;
 class Disasm
 {
 public:
-  Disasm (char *fname);
   Disasm (Platform_t _platform, Stabs *_stabs);
   ~Disasm ();
   void remove_disasm_hndl (void *hndl);
@@ -48,7 +47,10 @@ public:
   char *get_disasm (uint64_t inst_address, uint64_t end_address,
 		 uint64_t start_address, uint64_t f_offset, int64_t &inst_size);
   void set_img_name (char *fname);  // Only for dynfunc
+  Function *map_PC_to_func(uint64_t pc);
+  const char *get_funcname_in_plt (uint64_t pc);
 
+  uint64_t inst_addr;	// address of current instruction
   StringBuilder *dis_str;
 
 private:
@@ -56,7 +58,7 @@ private:
 
   disassemble_info dis_info;
   Data_window *dwin;
-  Stabs *stabs, *my_stabs;
+  Stabs *stabs;
   Platform_t platform;
   char addr_fmt[32];
   int hex_visible;

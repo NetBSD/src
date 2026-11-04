@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.3 2013/09/12 15:36:14 joerg Exp $	*/
+/*	$NetBSD: ffs.S,v 1.3.46.1 2026/11/04 22:36:28 perseant Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -40,7 +40,7 @@
 #if 0
 	.asciz "@(#)ffs.s	8.1 (Berkeley) 6/4/93"
 #else
-	RCSID("$NetBSD: ffs.S,v 1.3 2013/09/12 15:36:14 joerg Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.3.46.1 2026/11/04 22:36:28 perseant Exp $")
 #endif
 #endif  /* LIBC_SCCS and not lint */
 
@@ -55,7 +55,7 @@
 	 *	return popc( zz ^ ( ~ (-zz)));
 	 * }
 	 *
-	 * XXXX sptifires and blackbirds don't implement popc,
+	 * XXXX spitfire and blackbirds don't implement popc,
 	 * so we won't use this nice clean code 8^(.
 	 */
 ENTRY(ffs)

@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -29,12 +29,12 @@
 #ifndef IPV4LL_H
 #define IPV4LL_H
 
-#define	LINKLOCAL_ADDR		0xa9fe0000
-#define	LINKLOCAL_MASK		IN_CLASSB_NET
-#define	LINKLOCAL_BCAST		(LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
+#define LINKLOCAL_ADDR	0xa9fe0000
+#define LINKLOCAL_MASK	IN_CLASSB_NET
+#define LINKLOCAL_BCAST (LINKLOCAL_ADDR | ~LINKLOCAL_MASK)
 
 #ifndef IN_LINKLOCAL
-# define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
+#define IN_LINKLOCAL(addr) ((addr & IN_CLASSB_NET) == LINKLOCAL_ADDR)
 #endif
 
 #ifdef IPV4LL
@@ -53,16 +53,16 @@ struct ipv4ll_state {
 #endif
 };
 
-#define	IPV4LL_STATE(ifp)						       \
+#define IPV4LL_STATE(ifp) \
 	((struct ipv4ll_state *)(ifp)->if_data[IF_DATA_IPV4LL])
-#define	IPV4LL_CSTATE(ifp)						       \
+#define IPV4LL_CSTATE(ifp) \
 	((const struct ipv4ll_state *)(ifp)->if_data[IF_DATA_IPV4LL])
-#define	IPV4LL_STATE_RUNNING(ifp)					       \
-	(IPV4LL_CSTATE((ifp)) && !IPV4LL_CSTATE((ifp))->down &&		       \
-	(IPV4LL_CSTATE((ifp))->addr != NULL))
+#define IPV4LL_STATE_RUNNING(ifp)                               \
+	(IPV4LL_CSTATE((ifp)) && !IPV4LL_CSTATE((ifp))->down && \
+	    (IPV4LL_CSTATE((ifp))->addr != NULL))
 
 int ipv4ll_subnetroute(rb_tree_t *, struct interface *);
-int ipv4ll_defaultroute(rb_tree_t *,struct interface *);
+int ipv4ll_defaultroute(rb_tree_t *, struct interface *);
 ssize_t ipv4ll_env(FILE *, const char *, const struct interface *);
 void ipv4ll_start(void *);
 void ipv4ll_claimed(void *);

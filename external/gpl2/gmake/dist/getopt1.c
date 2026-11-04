@@ -55,11 +55,7 @@ Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA.  */
 #ifndef ELIDE_CODE
 
 
-/* This needs to come after some library #include
-   to get __GNU_LIBRARY__ defined.  */
-#ifdef __GNU_LIBRARY__
 #include <stdlib.h>
-#endif
 
 #ifndef	NULL
 #define NULL 0

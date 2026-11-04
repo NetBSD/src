@@ -1,5 +1,5 @@
-/*	$NetBSD: sshsig.c,v 1.13.2.1 2025/08/02 05:18:49 perseant Exp $	*/
-/* $OpenBSD: sshsig.c,v 1.38 2025/02/18 08:02:48 djm Exp $ */
+/*	$NetBSD: sshsig.c,v 1.13.2.2 2026/11/04 22:36:44 perseant Exp $	*/
+/* $OpenBSD: sshsig.c,v 1.41 2025/12/22 01:49:03 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Google LLC
@@ -17,7 +17,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshsig.c,v 1.13.2.1 2025/08/02 05:18:49 perseant Exp $");
+__RCSID("$NetBSD: sshsig.c,v 1.13.2.2 2026/11/04 22:36:44 perseant Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -856,8 +856,8 @@ cert_filter_principals(const char *path, u_long linenum,
 
 	while ((cp = strsep(&principals, ",")) != NULL && *cp != '\0') {
 		/* Check certificate validity */
-		if ((r = sshkey_cert_check_authority(cert, 0, 1, 0,
-		    verify_time, NULL, &reason)) != 0) {
+		if ((r = sshkey_cert_check_authority(cert, 0, 0, verify_time,
+		    NULL, &reason)) != 0) {
 			debug("%s:%lu: principal \"%s\" not authorized: %s",
 			    path, linenum, cp, reason);
 			continue;
@@ -922,7 +922,7 @@ check_allowed_keys_line(const char *path, u_long linenum, char *line,
 	    sshkey_equal_public(sign_key->cert->signature_key, found_key)) {
 		if (principal) {
 			/* Match certificate CA key with specified principal */
-			if ((r = sshkey_cert_check_authority(sign_key, 0, 1, 0,
+			if ((r = sshkey_cert_check_authority(sign_key, 0, 0,
 			    verify_time, principal, &reason)) != 0) {
 				error("%s:%lu: certificate not authorized: %s",
 				    path, linenum, reason);
@@ -1125,11 +1125,12 @@ sshsig_match_principals(const char *path, const char *principal,
 		linesize = 0;
 	}
 	fclose(f);
+	free(line);
 
 	if (ret == 0) {
 		if (nprincipals == 0)
 			ret = SSH_ERR_KEY_NOT_FOUND;
-		if (nprincipalsp != 0)
+		if (nprincipalsp != NULL)
 			*nprincipalsp = nprincipals;
 		if (principalsp != NULL) {
 			*principalsp = principals;

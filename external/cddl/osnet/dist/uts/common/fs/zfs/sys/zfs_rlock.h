@@ -61,6 +61,7 @@ typedef struct rl {
  * end of file.  Returns the range lock structure.
  */
 rl_t *zfs_range_lock(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type);
+rl_t *zfs_range_lock_try(znode_t *zp, uint64_t off, uint64_t len, rl_type_t type);
 
 /* Unlock range and destroy range lock structure. */
 void zfs_range_unlock(rl_t *rl);

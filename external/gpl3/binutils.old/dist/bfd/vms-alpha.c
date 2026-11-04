@@ -1,5 +1,5 @@
 /* vms.c -- BFD back-end for EVAX (openVMS/Alpha) files.
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    Initial version written by Klaus Kaempf (kkaempf@rmi.de)
    Major rewrite by Adacore.
@@ -266,8 +266,9 @@ struct module
 
 struct vms_private_data_struct
 {
-  /* If true, relocs have been read.  */
-  bool reloc_done;
+  /* If 1, relocs have been read successfully, if 0 they have yet to be
+     read, if -1 reading relocs failed.  */
+  int reloc_done;
 
   /* Record input buffer.  */
   struct vms_rec_rd recrd;
@@ -801,7 +802,7 @@ _bfd_vms_get_object_record (bfd *abfd)
   /* Skip alignment byte if the current position is odd.  */
   if (PRIV (recrd.file_format) == FF_FOREIGN && (bfd_tell (abfd) & 1))
     {
-      if (bfd_bread (PRIV (recrd.buf), 1, abfd) != 1)
+      if (bfd_read (PRIV (recrd.buf), 1, abfd) != 1)
 	{
 	  bfd_set_error (bfd_error_file_truncated);
 	  return -1;
@@ -809,7 +810,7 @@ _bfd_vms_get_object_record (bfd *abfd)
     }
 
   /* Read the record header  */
-  if (bfd_bread (PRIV (recrd.buf), test_len, abfd) != test_len)
+  if (bfd_read (PRIV (recrd.buf), test_len, abfd) != test_len)
     {
       bfd_set_error (bfd_error_file_truncated);
       return -1;
@@ -879,7 +880,7 @@ vms_get_remaining_object_record (bfd *abfd, unsigned int read_so_far)
 
   vms_debug2 ((8, "vms_get_remaining_obj_record: to_read %d\n", to_read));
 
-  if (bfd_bread (PRIV (recrd.buf) + read_so_far, to_read, abfd) != to_read)
+  if (bfd_read (PRIV (recrd.buf) + read_so_far, to_read, abfd) != to_read)
     {
       bfd_set_error (bfd_error_file_truncated);
       return 0;
@@ -1570,6 +1571,8 @@ dst_define_location (bfd *abfd, unsigned int loc)
 			       (loc + 1) * sizeof (unsigned int));
       if (PRIV (dst_ptr_offsets) == NULL)
 	return false;
+      memset (PRIV (dst_ptr_offsets) + PRIV (dst_ptr_offsets_count), 0,
+	      (loc - PRIV (dst_ptr_offsets_count)) * sizeof (unsigned int));
       PRIV (dst_ptr_offsets_count) = loc + 1;
     }
 
@@ -1625,7 +1628,7 @@ image_write (bfd *abfd, unsigned char *ptr, unsigned int size)
 
 #if VMS_DEBUG
   _bfd_vms_debug (8, "image_write from (%p, %d) to (%ld)\n", ptr, size,
-		  (long) off));
+		  (long) off);
 #endif
 
   if (PRIV (image_section)->contents != NULL)
@@ -2787,7 +2790,6 @@ alpha_vms_free_private (bfd *abfd)
 static bfd_cleanup
 alpha_vms_object_p (bfd *abfd)
 {
-  void *tdata_save = abfd->tdata.any;
   unsigned int test_len;
   unsigned char *buf;
 
@@ -2795,12 +2797,9 @@ alpha_vms_object_p (bfd *abfd)
 
   /* Allocate alpha-vms specific data.  */
   if (!vms_initialize (abfd))
-    {
-      abfd->tdata.any = tdata_save;
-      return NULL;
-    }
+    return NULL;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET))
+  if (bfd_seek (abfd, 0, SEEK_SET))
     goto error_ret;
 
   /* The first challenge with VMS is to discover the kind of the file.
@@ -2845,7 +2844,7 @@ alpha_vms_object_p (bfd *abfd)
       if (PRIV (recrd.rec_size) < sizeof (struct vms_eihd))
 	goto err_wrong_format;
 
-      if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET))
+      if (bfd_seek (abfd, 0, SEEK_SET))
 	goto error_ret;
 
       free (PRIV (recrd.buf));
@@ -2910,9 +2909,7 @@ alpha_vms_object_p (bfd *abfd)
 
  error_ret:
   alpha_vms_free_private (abfd);
-  if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-    bfd_release (abfd, abfd->tdata.any);
-  abfd->tdata.any = tdata_save;
+  bfd_release (abfd, abfd->tdata.any);
   return NULL;
 }
 
@@ -2920,7 +2917,7 @@ alpha_vms_object_p (bfd *abfd)
 
 /* Write an EMH/MHD record.  */
 
-static void
+static bool
 _bfd_vms_write_emh (bfd *abfd)
 {
   struct vms_rec_wr *recwr = &PRIV (recwr);
@@ -2949,12 +2946,12 @@ _bfd_vms_write_emh (bfd *abfd)
   _bfd_vms_output_counted (recwr, BFD_VERSION_STRING);
   _bfd_vms_output_dump (recwr, get_vms_time_string (tbuf), EMH_DATE_LENGTH);
   _bfd_vms_output_fill (recwr, 0, EMH_DATE_LENGTH);
-  _bfd_vms_output_end (abfd, recwr);
+  return _bfd_vms_output_end (abfd, recwr);
 }
 
 /* Write an EMH/LMN record.  */
 
-static void
+static bool
 _bfd_vms_write_lmn (bfd *abfd, const char *name)
 {
   char version [64];
@@ -2967,7 +2964,7 @@ _bfd_vms_write_lmn (bfd *abfd, const char *name)
   snprintf (version, sizeof (version), "%s %d.%d.%d", name,
 	    ver / 10000, (ver / 100) % 100, ver % 100);
   _bfd_vms_output_dump (recwr, (unsigned char *)version, strlen (version));
-  _bfd_vms_output_end (abfd, recwr);
+  return _bfd_vms_output_end (abfd, recwr);
 }
 
 
@@ -3005,8 +3002,7 @@ _bfd_vms_write_eeom (bfd *abfd)
       _bfd_vms_output_long (recwr, 0);
     }
 
-  _bfd_vms_output_end (abfd, recwr);
-  return true;
+  return _bfd_vms_output_end (abfd, recwr);
 }
 
 static void *
@@ -3378,7 +3374,8 @@ alpha_vms_write_exec (bfd *abfd)
   /* Place sections.  */
   for (sec = abfd->sections; sec; sec = sec->next)
     {
-      if (!(sec->flags & SEC_HAS_CONTENTS))
+      if (!(sec->flags & SEC_HAS_CONTENTS)
+	  || sec->contents == NULL)
 	continue;
 
       eisd = vms_section_data (sec)->eisd;
@@ -3422,7 +3419,7 @@ alpha_vms_write_exec (bfd *abfd)
 
   /* Write first block.  */
   bfd_putl32 (lnkflags, eihd.lnkflags);
-  if (bfd_bwrite (&eihd, sizeof (eihd), abfd) != sizeof (eihd))
+  if (bfd_write (&eihd, sizeof (eihd), abfd) != sizeof (eihd))
     return false;
 
   /* Write remaining eisd.  */
@@ -3443,7 +3440,7 @@ alpha_vms_write_exec (bfd *abfd)
 	      || (next_eisd->file_pos / VMS_BLOCK_SIZE
 		  != eisd->file_pos / VMS_BLOCK_SIZE))
 	    {
-	      if (bfd_bwrite (blk, sizeof (blk), abfd) != sizeof (blk))
+	      if (bfd_write (blk, sizeof (blk), abfd) != sizeof (blk))
 		return false;
 
 	      memset (blk, 0xff, sizeof (blk));
@@ -3458,9 +3455,10 @@ alpha_vms_write_exec (bfd *abfd)
       unsigned char blk[VMS_BLOCK_SIZE];
       bfd_size_type len;
 
-      if (sec->size == 0 || !(sec->flags & SEC_HAS_CONTENTS))
+      if (sec->size == 0 || !(sec->flags & SEC_HAS_CONTENTS)
+	  || sec->contents == NULL)
 	continue;
-      if (bfd_bwrite (sec->contents, sec->size, abfd) != sec->size)
+      if (bfd_write (sec->contents, sec->size, abfd) != sec->size)
 	return false;
 
       /* Pad.  */
@@ -3468,7 +3466,7 @@ alpha_vms_write_exec (bfd *abfd)
       if (len != VMS_BLOCK_SIZE)
 	{
 	  memset (blk, 0, len);
-	  if (bfd_bwrite (blk, len, abfd) != len)
+	  if (bfd_write (blk, len, abfd) != len)
 	    return false;
 	}
     }
@@ -3479,8 +3477,9 @@ alpha_vms_write_exec (bfd *abfd)
       struct vms_rec_wr *recwr = &PRIV (recwr);
       unsigned int i;
 
-      _bfd_vms_write_emh (abfd);
-      _bfd_vms_write_lmn (abfd, "GNU LD");
+      if (!_bfd_vms_write_emh (abfd)
+	  || !_bfd_vms_write_lmn (abfd, "GNU LD"))
+	return false;
 
       /* PSC for the absolute section.  */
       _bfd_vms_output_begin (recwr, EOBJ__C_EGSD);
@@ -3491,7 +3490,8 @@ alpha_vms_write_exec (bfd *abfd)
       _bfd_vms_output_long (recwr, 0);
       _bfd_vms_output_counted (recwr, ".$$ABS$$.");
       _bfd_vms_output_end_subrec (recwr);
-      _bfd_vms_output_end (abfd, recwr);
+      if (!_bfd_vms_output_end (abfd, recwr))
+	return false;
 
       for (i = 0; i < PRIV (gsd_sym_count); i++)
 	{
@@ -3524,11 +3524,13 @@ alpha_vms_write_exec (bfd *abfd)
 	  _bfd_vms_output_long (recwr, 0);
 	  _bfd_vms_output_counted (recwr, sym->name);
 	  _bfd_vms_output_end_subrec (recwr);
-	  if ((i % 5) == 4)
-	    _bfd_vms_output_end (abfd, recwr);
+	  if ((i % 5) == 4
+	      && !_bfd_vms_output_end (abfd, recwr))
+	    return false;
 	}
-      if ((i % 5) != 0)
-	_bfd_vms_output_end (abfd, recwr);
+      if ((i % 5) != 0
+	  && !_bfd_vms_output_end (abfd, recwr))
+	return false;
 
       if (!_bfd_vms_write_eeom (abfd))
 	return false;
@@ -3586,7 +3588,8 @@ _bfd_vms_write_egsd (bfd *abfd)
       /* 13 bytes egsd, max 31 chars name -> should be 44 bytes.  */
       if (_bfd_vms_output_check (recwr, 64) < 0)
 	{
-	  _bfd_vms_output_end (abfd, recwr);
+	  if (!_bfd_vms_output_end (abfd, recwr))
+	    return false;
 	  _bfd_vms_output_begin (recwr, EOBJ__C_EGSD);
 	  _bfd_vms_output_long (recwr, 0);
 	}
@@ -3682,7 +3685,8 @@ _bfd_vms_write_egsd (bfd *abfd)
 	 bytes for a possible ABS section.  */
       if (_bfd_vms_output_check (recwr, 80 + 16) < 0)
 	{
-	  _bfd_vms_output_end (abfd, recwr);
+	  if (!_bfd_vms_output_end (abfd, recwr))
+	    return false;
 	  _bfd_vms_output_begin (recwr, EOBJ__C_EGSD);
 	  _bfd_vms_output_long (recwr, 0);
 	}
@@ -3761,9 +3765,7 @@ _bfd_vms_write_egsd (bfd *abfd)
     }
 
   _bfd_vms_output_alignment (recwr, 8);
-  _bfd_vms_output_end (abfd, recwr);
-
-  return true;
+  return _bfd_vms_output_end (abfd, recwr);
 }
 
 /* Write object header for bfd abfd.  Return FALSE on error.  */
@@ -3779,8 +3781,9 @@ _bfd_vms_write_ehdr (bfd *abfd)
 
   _bfd_vms_output_alignment (recwr, 2);
 
-  _bfd_vms_write_emh (abfd);
-  _bfd_vms_write_lmn (abfd, "GNU AS");
+  if (!_bfd_vms_write_emh (abfd)
+      || !_bfd_vms_write_lmn (abfd, "GNU AS"))
+    return false;
 
   /* SRC.  */
   _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
@@ -3801,13 +3804,15 @@ _bfd_vms_write_ehdr (bfd *abfd)
   if (symnum == abfd->symcount)
     _bfd_vms_output_dump (recwr, (unsigned char *) STRING_COMMA_LEN ("noname"));
 
-  _bfd_vms_output_end (abfd, recwr);
+  if (!_bfd_vms_output_end (abfd, recwr))
+    return false;
 
   /* TTL.  */
   _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
   _bfd_vms_output_short (recwr, EMH__C_TTL);
   _bfd_vms_output_dump (recwr, (unsigned char *) STRING_COMMA_LEN ("TTL"));
-  _bfd_vms_output_end (abfd, recwr);
+  if (!_bfd_vms_output_end (abfd, recwr))
+    return false;
 
   /* CPR.  */
   _bfd_vms_output_begin (recwr, EOBJ__C_EMH);
@@ -3815,9 +3820,7 @@ _bfd_vms_write_ehdr (bfd *abfd)
   _bfd_vms_output_dump (recwr,
 			(unsigned char *)"GNU BFD ported by Klaus Kämpf 1994-1996",
 			 39);
-  _bfd_vms_output_end (abfd, recwr);
-
-  return true;
+  return _bfd_vms_output_end (abfd, recwr);
 }
 
 /* Part 4.6, relocations.  */
@@ -3829,12 +3832,12 @@ _bfd_vms_write_ehdr (bfd *abfd)
 
 /* Close the etir/etbt record.  */
 
-static void
+static bool
 end_etir_record (bfd * abfd)
 {
   struct vms_rec_wr *recwr = &PRIV (recwr);
 
-  _bfd_vms_output_end (abfd, recwr);
+  return _bfd_vms_output_end (abfd, recwr);
 }
 
 static void
@@ -3880,7 +3883,7 @@ start_etir_or_etbt_record (bfd *abfd, asection *section, bfd_vma offset)
 /* Output a STO_IMM command for SSIZE bytes of data from CPR at virtual
    address VADDR in section specified by SEC_INDEX and NAME.  */
 
-static void
+static bool
 sto_imm (bfd *abfd, asection *section,
 	 bfd_size_type ssize, unsigned char *cptr, bfd_vma vaddr)
 {
@@ -3900,7 +3903,8 @@ sto_imm (bfd *abfd, asection *section,
       if (_bfd_vms_output_check (recwr, size) < 0)
 	{
 	  /* Doesn't fit, split !  */
-	  end_etir_record (abfd);
+	  if (!end_etir_record (abfd))
+	    return false;
 
 	  start_etir_or_etbt_record (abfd, section, vaddr);
 
@@ -3923,17 +3927,20 @@ sto_imm (bfd *abfd, asection *section,
       cptr += size;
       ssize -= size;
     }
+  return true;
 }
 
-static void
+static bool
 etir_output_check (bfd *abfd, asection *section, bfd_vma vaddr, int checklen)
 {
   if (_bfd_vms_output_check (&PRIV (recwr), checklen) < 0)
     {
       /* Not enough room in this record.  Close it and open a new one.  */
-      end_etir_record (abfd);
+      if (!end_etir_record (abfd))
+	return false;
       start_etir_or_etbt_record (abfd, section, vaddr);
     }
+  return true;
 }
 
 /* Return whether RELOC must be deferred till the end.  */
@@ -4051,7 +4058,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    _bfd_error_handler (_("size error in section %pA"),
 					section);
 		  size = addr - curr_addr;
-		  sto_imm (abfd, section, size, curr_data, curr_addr);
+		  if (!sto_imm (abfd, section, size, curr_data, curr_addr))
+		    return false;
 		  curr_data += size;
 		  curr_addr += size;
 		}
@@ -4068,7 +4076,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    {
 		      bfd_vma addend = rptr->addend;
 		      slen = strlen ((char *) sym->name);
-		      etir_output_check (abfd, section, curr_addr, slen);
+		      if (!etir_output_check (abfd, section, curr_addr, slen))
+			return false;
 		      if (addend)
 			{
 			  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STA_GBL);
@@ -4092,7 +4101,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    }
 		  else if (bfd_is_abs_section (sym->section))
 		    {
-		      etir_output_check (abfd, section, curr_addr, 16);
+		      if (!etir_output_check (abfd, section, curr_addr, 16))
+			return false;
 		      _bfd_vms_output_begin_subrec (recwr, ETIR__C_STA_LW);
 		      _bfd_vms_output_long (recwr, (unsigned long) sym->value);
 		      _bfd_vms_output_end_subrec (recwr);
@@ -4101,7 +4111,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    }
 		  else
 		    {
-		      etir_output_check (abfd, section, curr_addr, 32);
+		      if (!etir_output_check (abfd, section, curr_addr, 32))
+			return false;
 		      _bfd_vms_output_begin_subrec (recwr, ETIR__C_STA_PQ);
 		      _bfd_vms_output_long (recwr,
 					    (unsigned long) sec->target_index);
@@ -4121,7 +4132,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    {
 		      bfd_vma addend = rptr->addend;
 		      slen = strlen ((char *) sym->name);
-		      etir_output_check (abfd, section, curr_addr, slen);
+		      if (!etir_output_check (abfd, section, curr_addr, slen))
+			return false;
 		      if (addend)
 			{
 			  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STA_GBL);
@@ -4144,7 +4156,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    }
 		  else if (bfd_is_abs_section (sym->section))
 		    {
-		      etir_output_check (abfd, section, curr_addr, 16);
+		      if (!etir_output_check (abfd, section, curr_addr, 16))
+			return false;
 		      _bfd_vms_output_begin_subrec (recwr, ETIR__C_STA_QW);
 		      _bfd_vms_output_quad (recwr, sym->value);
 		      _bfd_vms_output_end_subrec (recwr);
@@ -4153,7 +4166,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		    }
 		  else
 		    {
-		      etir_output_check (abfd, section, curr_addr, 32);
+		      if (!etir_output_check (abfd, section, curr_addr, 32))
+			return false;
 		      _bfd_vms_output_begin_subrec (recwr, ETIR__C_STA_PQ);
 		      _bfd_vms_output_long (recwr,
 					    (unsigned long) sec->target_index);
@@ -4165,12 +4179,14 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		  break;
 
 		case ALPHA_R_HINT:
-		  sto_imm (abfd, section, size, curr_data, curr_addr);
+		  if (!sto_imm (abfd, section, size, curr_data, curr_addr))
+		    return false;
 		  break;
 
 		case ALPHA_R_LINKAGE:
 		  size = 16;
-		  etir_output_check (abfd, section, curr_addr, 64);
+		  if (!etir_output_check (abfd, section, curr_addr, 64))
+		    return false;
 		  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STC_LP_PSB);
 		  _bfd_vms_output_long
 		    (recwr, (unsigned long) rptr->addend);
@@ -4183,7 +4199,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 
 		case ALPHA_R_CODEADDR:
 		  slen = strlen ((char *) sym->name);
-		  etir_output_check (abfd, section, curr_addr, slen);
+		  if (!etir_output_check (abfd, section, curr_addr, slen))
+		    return false;
 		  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STO_CA);
 		  _bfd_vms_output_counted (recwr, sym->name);
 		  _bfd_vms_output_end_subrec (recwr);
@@ -4192,8 +4209,9 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		case ALPHA_R_NOP:
 		  udata
 		    = (struct evax_private_udata_struct *) rptr->sym_ptr_ptr;
-		  etir_output_check (abfd, section, curr_addr,
-				     32 + 1 + strlen (udata->origname));
+		  if (!etir_output_check (abfd, section, curr_addr,
+					  32 + 1 + strlen (udata->origname)))
+		    return false;
 		  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STC_NOP_GBL);
 		  _bfd_vms_output_long (recwr, (unsigned long) udata->lkindex);
 		  _bfd_vms_output_long
@@ -4214,8 +4232,9 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		case ALPHA_R_LDA:
 		  udata
 		    = (struct evax_private_udata_struct *) rptr->sym_ptr_ptr;
-		  etir_output_check (abfd, section, curr_addr,
-				     32 + 1 + strlen (udata->origname));
+		  if (!etir_output_check (abfd, section, curr_addr,
+					  32 + 1 + strlen (udata->origname)))
+		    return false;
 		  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STC_LDA_GBL);
 		  _bfd_vms_output_long
 		    (recwr, (unsigned long) udata->lkindex + 1);
@@ -4233,8 +4252,9 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		case ALPHA_R_BOH:
 		  udata
 		    = (struct evax_private_udata_struct *) rptr->sym_ptr_ptr;
-		  etir_output_check (abfd, section, curr_addr,
-				       32 + 1 + strlen (udata->origname));
+		  if (!etir_output_check (abfd, section, curr_addr,
+					  32 + 1 + strlen (udata->origname)))
+		    return false;
 		  _bfd_vms_output_begin_subrec (recwr, ETIR__C_STC_BOH_GBL);
 		  _bfd_vms_output_long (recwr, (unsigned long) udata->lkindex);
 		  _bfd_vms_output_long
@@ -4267,7 +4287,8 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 		  return false;
 		}
 	      size = section->size - curr_addr;
-	      sto_imm (abfd, section, size, curr_data, curr_addr);
+	      if (!sto_imm (abfd, section, size, curr_data, curr_addr))
+		return false;
 	      curr_data += size;
 	      curr_addr += size;
 
@@ -4280,9 +4301,11 @@ _bfd_vms_write_etir (bfd * abfd, int objtype ATTRIBUTE_UNUSED)
 	}
 
       else /* (section->flags & SEC_RELOC) */
-	sto_imm (abfd, section, section->size, section->contents, 0);
+	if (!sto_imm (abfd, section, section->size, section->contents, 0))
+	  return false;
 
-      end_etir_record (abfd);
+      if (!end_etir_record (abfd))
+	return false;
     }
 
   _bfd_vms_output_alignment (recwr, 2);
@@ -4332,7 +4355,7 @@ new_module (bfd *abfd)
     = (struct module *) bfd_zalloc (abfd, sizeof (struct module));
   module->file_table_count = 16; /* Arbitrary.  */
   module->file_table
-    = bfd_malloc (module->file_table_count * sizeof (struct fileinfo));
+    = bfd_zmalloc (module->file_table_count * sizeof (struct fileinfo));
   return module;
 }
 
@@ -4340,7 +4363,7 @@ new_module (bfd *abfd)
 
 static bool
 parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
-	      int length)
+	      bfd_size_type length)
 {
   unsigned char *maxptr = ptr + length;
   unsigned char *src_ptr, *pcl_ptr;
@@ -4361,7 +4384,7 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
     return false;
   module->line_table = curr_line;
 
-  while (length == -1 || ptr < maxptr)
+  while (ptr + 3 < maxptr)
     {
       /* The first byte is not counted in the recorded length.  */
       int rec_length = bfd_getl16 (ptr) + 1;
@@ -4369,15 +4392,19 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 
       vms_debug2 ((2, "DST record: leng %d, type %d\n", rec_length, rec_type));
 
-      if (length == -1 && rec_type == DST__K_MODEND)
+      if (rec_length > maxptr - ptr)
+	break;
+      if (rec_type == DST__K_MODEND)
 	break;
 
       switch (rec_type)
 	{
 	case DST__K_MODBEG:
+	  if (rec_length <= DST_S_B_MODBEG_NAME)
+	    break;
 	  module->name
 	    = _bfd_vms_save_counted_string (abfd, ptr + DST_S_B_MODBEG_NAME,
-					    maxptr - (ptr + DST_S_B_MODBEG_NAME));
+					    rec_length - DST_S_B_MODBEG_NAME);
 
 	  curr_pc = 0;
 	  prev_pc = 0;
@@ -4391,13 +4418,15 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 	  break;
 
 	case DST__K_RTNBEG:
+	  if (rec_length <= DST_S_B_RTNBEG_NAME)
+	    break;
 	  funcinfo = (struct funcinfo *)
 	    bfd_zalloc (abfd, sizeof (struct funcinfo));
 	  if (!funcinfo)
 	    return false;
 	  funcinfo->name
 	    = _bfd_vms_save_counted_string (abfd, ptr + DST_S_B_RTNBEG_NAME,
-					    maxptr - (ptr + DST_S_B_RTNBEG_NAME));
+					    rec_length - DST_S_B_RTNBEG_NAME);
 	  funcinfo->low = bfd_getl32 (ptr + DST_S_L_RTNBEG_ADDRESS);
 	  funcinfo->next = module->func_table;
 	  module->func_table = funcinfo;
@@ -4407,6 +4436,8 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 	  break;
 
 	case DST__K_RTNEND:
+	  if (rec_length < DST_S_L_RTNEND_SIZE + 4)
+	    break;
 	  if (!module->func_table)
 	    return false;
 	  module->func_table->high = module->func_table->low
@@ -4439,9 +4470,62 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 
 	  vms_debug2 ((3, "source info\n"));
 
-	  while (src_ptr < ptr + rec_length)
+	  while (src_ptr - ptr < rec_length)
 	    {
 	      int cmd = src_ptr[0], cmd_length, data;
+
+	      switch (cmd)
+		{
+		case DST__K_SRC_DECLFILE:
+		  if (src_ptr - ptr + DST_S_B_SRC_DF_LENGTH >= rec_length)
+		    cmd_length = 0x10000;
+		  else
+		    cmd_length = src_ptr[DST_S_B_SRC_DF_LENGTH] + 2;
+		  break;
+
+		case DST__K_SRC_DEFLINES_B:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_SRC_DEFLINES_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_SRC_INCRLNUM_B:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_SRC_SETFILE:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_SRC_SETLNUM_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_SRC_SETLNUM_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_SRC_SETREC_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_SRC_SETREC_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_SRC_FORMFEED:
+		  cmd_length = 1;
+		  break;
+
+		default:
+		  cmd_length = 2;
+		  break;
+		}
+
+	      if (src_ptr - ptr + cmd_length > rec_length)
+		break;
 
 	      switch (cmd)
 		{
@@ -4454,20 +4538,22 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		       src_ptr + DST_S_B_SRC_DF_FILENAME,
 		       ptr + rec_length - (src_ptr + DST_S_B_SRC_DF_FILENAME));
 
-		    while (fileid >= module->file_table_count)
+		    if (fileid >= module->file_table_count)
 		      {
-			module->file_table_count *= 2;
+			unsigned int old_count = module->file_table_count;
+			module->file_table_count += fileid;
 			module->file_table
 			  = bfd_realloc_or_free (module->file_table,
 						 module->file_table_count
 						 * sizeof (struct fileinfo));
 			if (module->file_table == NULL)
 			  return false;
+			memset (module->file_table + old_count, 0,
+				fileid * sizeof (struct fileinfo));
 		      }
 
 		    module->file_table [fileid].name = filename;
 		    module->file_table [fileid].srec = 1;
-		    cmd_length = src_ptr[DST_S_B_SRC_DF_LENGTH] + 2;
 		    vms_debug2 ((4, "DST_S_C_SRC_DECLFILE: %d, %s\n",
 				 fileid, module->file_table [fileid].name));
 		  }
@@ -4484,7 +4570,6 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		  srec->sfile = curr_srec->sfile;
 		  curr_srec->next = srec;
 		  curr_srec = srec;
-		  cmd_length = 2;
 		  vms_debug2 ((4, "DST_S_C_SRC_DEFLINES_B: %d\n", data));
 		  break;
 
@@ -4499,36 +4584,34 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		  srec->sfile = curr_srec->sfile;
 		  curr_srec->next = srec;
 		  curr_srec = srec;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST_S_C_SRC_DEFLINES_W: %d\n", data));
 		  break;
 
 		case DST__K_SRC_INCRLNUM_B:
 		  data = src_ptr[DST_S_B_SRC_UNSBYTE];
 		  curr_srec->line += data;
-		  cmd_length = 2;
 		  vms_debug2 ((4, "DST_S_C_SRC_INCRLNUM_B: %d\n", data));
 		  break;
 
 		case DST__K_SRC_SETFILE:
 		  data = bfd_getl16 (src_ptr + DST_S_W_SRC_UNSWORD);
-		  curr_srec->sfile = data;
-		  curr_srec->srec = module->file_table[data].srec;
-		  cmd_length = 3;
+		  if ((unsigned int) data < module->file_table_count)
+		    {
+		      curr_srec->sfile = data;
+		      curr_srec->srec = module->file_table[data].srec;
+		    }
 		  vms_debug2 ((4, "DST_S_C_SRC_SETFILE: %d\n", data));
 		  break;
 
 		case DST__K_SRC_SETLNUM_L:
 		  data = bfd_getl32 (src_ptr + DST_S_L_SRC_UNSLONG);
 		  curr_srec->line = data;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST_S_C_SRC_SETLNUM_L: %d\n", data));
 		  break;
 
 		case DST__K_SRC_SETLNUM_W:
 		  data = bfd_getl16 (src_ptr + DST_S_W_SRC_UNSWORD);
 		  curr_srec->line = data;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST_S_C_SRC_SETLNUM_W: %d\n", data));
 		  break;
 
@@ -4536,7 +4619,6 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		  data = bfd_getl32 (src_ptr + DST_S_L_SRC_UNSLONG);
 		  curr_srec->srec = data;
 		  module->file_table[curr_srec->sfile].srec = data;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST_S_C_SRC_SETREC_L: %d\n", data));
 		  break;
 
@@ -4544,19 +4626,16 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		  data = bfd_getl16 (src_ptr + DST_S_W_SRC_UNSWORD);
 		  curr_srec->srec = data;
 		  module->file_table[curr_srec->sfile].srec = data;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST_S_C_SRC_SETREC_W: %d\n", data));
 		  break;
 
 		case DST__K_SRC_FORMFEED:
-		  cmd_length = 1;
 		  vms_debug2 ((4, "DST_S_C_SRC_FORMFEED\n"));
 		  break;
 
 		default:
 		  _bfd_error_handler (_("unknown source command %d"),
 				      cmd);
-		  cmd_length = 2;
 		  break;
 		}
 
@@ -4569,7 +4648,7 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 
 	  vms_debug2 ((3, "line info\n"));
 
-	  while (pcl_ptr < ptr + rec_length)
+	  while (pcl_ptr - ptr < rec_length)
 	    {
 	      /* The command byte is signed so we must sign-extend it.  */
 	      int cmd = ((signed char *)pcl_ptr)[0], cmd_length, data;
@@ -4577,10 +4656,106 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 	      switch (cmd)
 		{
 		case DST__K_DELTA_PC_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_DELTA_PC_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_INCR_LINUM:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_INCR_LINUM_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_INCR_LINUM_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_SET_LINUM_INCR:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_SET_LINUM_INCR_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_RESET_LINUM_INCR:
+		  cmd_length = 1;
+		  break;
+
+		case DST__K_BEG_STMT_MODE:
+		  cmd_length = 1;
+		  break;
+
+		case DST__K_END_STMT_MODE:
+		  cmd_length = 1;
+		  break;
+
+		case DST__K_SET_LINUM_B:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_SET_LINUM:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_SET_LINUM_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_SET_PC:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_SET_PC_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_SET_PC_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_SET_STMTNUM:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_TERM:
+		  cmd_length = 2;
+		  break;
+
+		case DST__K_TERM_W:
+		  cmd_length = 3;
+		  break;
+
+		case DST__K_TERM_L:
+		  cmd_length = 5;
+		  break;
+
+		case DST__K_SET_ABS_PC:
+		  cmd_length = 5;
+		  break;
+
+		default:
+		  if (cmd <= 0)
+		    cmd_length = 1;
+		  else
+		    cmd_length = 2;
+		  break;
+		}
+
+	      if (pcl_ptr - ptr + cmd_length > rec_length)
+		break;
+
+	      switch (cmd)
+		{
+		case DST__K_DELTA_PC_W:
 		  data = bfd_getl16 (pcl_ptr + DST_S_W_PCLINE_UNSWORD);
 		  curr_pc += data;
 		  curr_linenum += 1;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST__K_DELTA_PC_W: %d\n", data));
 		  break;
 
@@ -4588,131 +4763,111 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		  data = bfd_getl32 (pcl_ptr + DST_S_L_PCLINE_UNSLONG);
 		  curr_pc += data;
 		  curr_linenum += 1;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST__K_DELTA_PC_L: %d\n", data));
 		  break;
 
 		case DST__K_INCR_LINUM:
 		  data = pcl_ptr[DST_S_B_PCLINE_UNSBYTE];
 		  curr_linenum += data;
-		  cmd_length = 2;
 		  vms_debug2 ((4, "DST__K_INCR_LINUM: %d\n", data));
 		  break;
 
 		case DST__K_INCR_LINUM_W:
 		  data = bfd_getl16 (pcl_ptr + DST_S_W_PCLINE_UNSWORD);
 		  curr_linenum += data;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST__K_INCR_LINUM_W: %d\n", data));
 		  break;
 
 		case DST__K_INCR_LINUM_L:
 		  data = bfd_getl32 (pcl_ptr + DST_S_L_PCLINE_UNSLONG);
 		  curr_linenum += data;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST__K_INCR_LINUM_L: %d\n", data));
 		  break;
 
 		case DST__K_SET_LINUM_INCR:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_SET_LINUM_INCR");
-		  cmd_length = 2;
 		  break;
 
 		case DST__K_SET_LINUM_INCR_W:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_SET_LINUM_INCR_W");
-		  cmd_length = 3;
 		  break;
 
 		case DST__K_RESET_LINUM_INCR:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_RESET_LINUM_INCR");
-		  cmd_length = 1;
 		  break;
 
 		case DST__K_BEG_STMT_MODE:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_BEG_STMT_MODE");
-		  cmd_length = 1;
 		  break;
 
 		case DST__K_END_STMT_MODE:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_END_STMT_MODE");
-		  cmd_length = 1;
 		  break;
 
 		case DST__K_SET_LINUM_B:
 		  data = pcl_ptr[DST_S_B_PCLINE_UNSBYTE];
 		  curr_linenum = data;
-		  cmd_length = 2;
 		  vms_debug2 ((4, "DST__K_SET_LINUM_B: %d\n", data));
 		  break;
 
 		case DST__K_SET_LINUM:
 		  data = bfd_getl16 (pcl_ptr + DST_S_W_PCLINE_UNSWORD);
 		  curr_linenum = data;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST__K_SET_LINE_NUM: %d\n", data));
 		  break;
 
 		case DST__K_SET_LINUM_L:
 		  data = bfd_getl32 (pcl_ptr + DST_S_L_PCLINE_UNSLONG);
 		  curr_linenum = data;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST__K_SET_LINUM_L: %d\n", data));
 		  break;
 
 		case DST__K_SET_PC:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_SET_PC");
-		  cmd_length = 2;
 		  break;
 
 		case DST__K_SET_PC_W:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_SET_PC_W");
-		  cmd_length = 3;
 		  break;
 
 		case DST__K_SET_PC_L:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_SET_PC_L");
-		  cmd_length = 5;
 		  break;
 
 		case DST__K_SET_STMTNUM:
 		  _bfd_error_handler
 		    (_("%s not implemented"), "DST__K_SET_STMTNUM");
-		  cmd_length = 2;
 		  break;
 
 		case DST__K_TERM:
 		  data = pcl_ptr[DST_S_B_PCLINE_UNSBYTE];
 		  curr_pc += data;
-		  cmd_length = 2;
 		  vms_debug2 ((4, "DST__K_TERM: %d\n", data));
 		  break;
 
 		case DST__K_TERM_W:
 		  data = bfd_getl16 (pcl_ptr + DST_S_W_PCLINE_UNSWORD);
 		  curr_pc += data;
-		  cmd_length = 3;
 		  vms_debug2 ((4, "DST__K_TERM_W: %d\n", data));
 		  break;
 
 		case DST__K_TERM_L:
 		  data = bfd_getl32 (pcl_ptr + DST_S_L_PCLINE_UNSLONG);
 		  curr_pc += data;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST__K_TERM_L: %d\n", data));
 		  break;
 
 		case DST__K_SET_ABS_PC:
 		  data = bfd_getl32 (pcl_ptr + DST_S_L_PCLINE_UNSLONG);
 		  curr_pc = data;
-		  cmd_length = 5;
 		  vms_debug2 ((4, "DST__K_SET_ABS_PC: 0x%x\n", data));
 		  break;
 
@@ -4721,15 +4876,11 @@ parse_module (bfd *abfd, struct module *module, unsigned char *ptr,
 		    {
 		      curr_pc -= cmd;
 		      curr_linenum += 1;
-		      cmd_length = 1;
 		      vms_debug2 ((4, "bump pc to 0x%lx and line to %d\n",
 				   (unsigned long)curr_pc, curr_linenum));
 		    }
 		  else
-		    {
-		      _bfd_error_handler (_("unknown line command %d"), cmd);
-		      cmd_length = 2;
-		    }
+		    _bfd_error_handler (_("unknown line command %d"), cmd);
 		  break;
 		}
 
@@ -4859,7 +5010,8 @@ build_module_list (bfd *abfd)
 	return NULL;
 
       module = new_module (abfd);
-      if (!parse_module (abfd, module, PRIV (dst_section)->contents, -1))
+      if (!parse_module (abfd, module, PRIV (dst_section)->contents,
+			 PRIV (dst_section)->size))
 	return NULL;
       list = module;
     }
@@ -5120,15 +5272,14 @@ alpha_vms_slurp_relocs (bfd *abfd)
   vms_debug2 ((3, "alpha_vms_slurp_relocs\n"));
 
   /* We slurp relocs only once, for all sections.  */
-  if (PRIV (reloc_done))
-      return true;
-  PRIV (reloc_done) = true;
+  if (PRIV (reloc_done) != 0)
+    return PRIV (reloc_done) == 1;
 
   if (alpha_vms_canonicalize_symtab (abfd, NULL) < 0)
-    return false;
+    goto fail;
 
   if (bfd_seek (abfd, 0, SEEK_SET) != 0)
-    return false;
+    goto fail;
 
   while (1)
     {
@@ -5149,6 +5300,8 @@ alpha_vms_slurp_relocs (bfd *abfd)
 
       /* Skip non-ETIR records.  */
       type = _bfd_vms_get_object_record (abfd);
+      if (type < 0)
+	goto fail;
       if (type == EOBJ__C_EEOM)
 	break;
       if (type != EOBJ__C_ETIR)
@@ -5157,12 +5310,18 @@ alpha_vms_slurp_relocs (bfd *abfd)
       begin = PRIV (recrd.rec) + 4;
       end = PRIV (recrd.rec) + PRIV (recrd.rec_size);
 
-      for (ptr = begin; ptr < end; ptr += length)
+      for (ptr = begin; ptr + 4 <= end; ptr += length)
 	{
 	  int cmd;
 
 	  cmd = bfd_getl16 (ptr);
 	  length = bfd_getl16 (ptr + 2);
+	  if (length < 4 || length > end - ptr)
+	    {
+	    bad_rec:
+	      _bfd_error_handler (_("corrupt reloc record"));
+	      goto fail;
+	    }
 
 	  cur_address = vaddr;
 
@@ -5178,6 +5337,8 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	      continue;
 
 	    case ETIR__C_STA_PQ: /* ALPHA_R_REF{LONG|QUAD}, others part 1 */
+	      if (length < 16)
+		goto bad_rec;
 	      cur_psidx = bfd_getl32 (ptr + 4);
 	      cur_addend = bfd_getl64 (ptr + 8);
 	      prev_cmd = cmd;
@@ -5190,7 +5351,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		    /* xgettext:c-format */
 		    (_("unknown reloc %s + %s"), _bfd_vms_etir_name (prev_cmd),
 		     _bfd_vms_etir_name (cmd));
-		  return false;
+		  goto fail;
 		}
 	      cur_psect = cur_psidx;
 	      vaddr = cur_addend;
@@ -5208,9 +5369,11 @@ alpha_vms_slurp_relocs (bfd *abfd)
 			/* xgettext:c-format */
 			(_("unknown reloc %s + %s"), _bfd_vms_etir_name (cmd),
 			 _bfd_vms_etir_name (ETIR__C_STA_LW));
-		      return false;
+		      goto fail;
 		    }
 		}
+	      if (length < 8)
+		goto bad_rec;
 	      cur_addend = bfd_getl32 (ptr + 4);
 	      prev_cmd = cmd;
 	      continue;
@@ -5223,8 +5386,10 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		    /* xgettext:c-format */
 		    (_("unknown reloc %s + %s"), _bfd_vms_etir_name (cmd),
 		     _bfd_vms_etir_name (ETIR__C_STA_QW));
-		  return false;
+		  goto fail;
 		}
+	      if (length < 12)
+		goto bad_rec;
 	      cur_addend = bfd_getl64 (ptr + 4);
 	      prev_cmd = cmd;
 	      continue;
@@ -5240,7 +5405,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		  _bfd_error_handler (_("unknown reloc %s + %s"),
 				      _bfd_vms_etir_name (prev_cmd),
 				      _bfd_vms_etir_name (ETIR__C_STO_LW));
-		  return false;
+		  goto fail;
 		}
 	      reloc_code = BFD_RELOC_32;
 	      break;
@@ -5253,7 +5418,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		  _bfd_error_handler (_("unknown reloc %s + %s"),
 				      _bfd_vms_etir_name (prev_cmd),
 				      _bfd_vms_etir_name (ETIR__C_STO_QW));
-		  return false;
+		  goto fail;
 		}
 	      reloc_code = BFD_RELOC_64;
 	      break;
@@ -5265,7 +5430,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		  _bfd_error_handler (_("unknown reloc %s + %s"),
 				      _bfd_vms_etir_name (prev_cmd),
 				      _bfd_vms_etir_name (ETIR__C_STO_OFF));
-		  return false;
+		  goto fail;
 		}
 	      reloc_code = BFD_RELOC_64;
 	      break;
@@ -5278,7 +5443,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		  _bfd_error_handler (_("unknown reloc %s + %s"),
 				      _bfd_vms_etir_name (prev_cmd),
 				      _bfd_vms_etir_name (ETIR__C_OPR_ADD));
-		  return false;
+		  goto fail;
 		}
 	      prev_cmd = ETIR__C_OPR_ADD;
 	      continue;
@@ -5320,19 +5485,23 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	      goto call_reloc;
 
 	    call_reloc:
+	      if (length < 36)
+		goto bad_rec;
 	      cur_sym = ptr + 4 + 32;
 	      cur_address = bfd_getl64 (ptr + 4 + 8);
 	      cur_addend = bfd_getl64 (ptr + 4 + 24);
 	      break;
 
 	    case ETIR__C_STO_IMM:
+	      if (length < 8)
+		goto bad_rec;
 	      vaddr += bfd_getl32 (ptr + 4);
 	      continue;
 
 	    default:
 	      _bfd_error_handler (_("unknown reloc %s"),
 				  _bfd_vms_etir_name (cmd));
-	      return false;
+	      goto fail;
 	    }
 
 	  {
@@ -5345,16 +5514,16 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	    if (cur_psect < 0 || cur_psect > (int)PRIV (section_count))
 	      {
 		_bfd_error_handler (_("invalid section index in ETIR"));
-		return false;
+		goto fail;
 	      }
 
 	    if (PRIV (sections) == NULL)
-	      return false;
+	      goto fail;
 	    sec = PRIV (sections)[cur_psect];
 	    if (sec == bfd_abs_section_ptr)
 	      {
 		_bfd_error_handler (_("relocation for non-REL psect"));
-		return false;
+		goto fail;
 	      }
 
 	    vms_sec = vms_section_data (sec);
@@ -5374,7 +5543,7 @@ alpha_vms_slurp_relocs (bfd *abfd)
 		    sec->relocation = bfd_realloc_or_free
 		      (sec->relocation, vms_sec->reloc_max * sizeof (arelent));
 		    if (sec->relocation == NULL)
-		      return false;
+		      goto fail;
 		  }
 	      }
 	    reloc = &sec->relocation[sec->reloc_count];
@@ -5385,12 +5554,16 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	    if (cur_sym != NULL)
 	      {
 		unsigned int j;
-		unsigned int symlen = *cur_sym;
+		int symlen;
 		asymbol **sym;
 
 		/* Linear search.  */
+		if (end - cur_sym < 1)
+		  goto bad_rec;
 		symlen = *cur_sym;
 		cur_sym++;
+		if (end - cur_sym < symlen)
+		  goto bad_rec;
 		sym = NULL;
 
 		for (j = 0; j < PRIV (gsd_sym_count); j++)
@@ -5412,9 +5585,8 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	    else if (cur_psidx >= 0)
 	      {
 		if (PRIV (sections) == NULL || cur_psidx >= (int) PRIV (section_count))
-		  return false;
-		reloc->sym_ptr_ptr =
-		  PRIV (sections)[cur_psidx]->symbol_ptr_ptr;
+		  goto fail;
+		reloc->sym_ptr_ptr = &PRIV (sections)[cur_psidx]->symbol;
 	      }
 	    else
 	      reloc->sym_ptr_ptr = NULL;
@@ -5436,8 +5608,12 @@ alpha_vms_slurp_relocs (bfd *abfd)
 	}
     }
   vms_debug2 ((3, "alpha_vms_slurp_relocs: result = true\n"));
-
+  PRIV (reloc_done) = 1;
   return true;
+
+fail:
+  PRIV (reloc_done) = -1;
+  return false;
 }
 
 /* Return the number of bytes required to store the relocation
@@ -5446,7 +5622,8 @@ alpha_vms_slurp_relocs (bfd *abfd)
 static long
 alpha_vms_get_reloc_upper_bound (bfd *abfd ATTRIBUTE_UNUSED, asection *section)
 {
-  alpha_vms_slurp_relocs (abfd);
+  if (!alpha_vms_slurp_relocs (abfd))
+    return -1;
 
   return (section->reloc_count + 1L) * sizeof (arelent *);
 }
@@ -5926,20 +6103,23 @@ static void
 evax_bfd_print_emh (FILE *file, unsigned char *rec, unsigned int rec_len)
 {
   struct vms_emh_common *emh = (struct vms_emh_common *)rec;
-  unsigned int subtype;
+  int subtype = -1;
   int extra;
 
-  subtype = (unsigned) bfd_getl16 (emh->subtyp);
+  if (rec_len >= sizeof (*emh))
+    subtype = bfd_getl16 (emh->subtyp);
 
   /* xgettext:c-format */
-  fprintf (file, _("  EMH %u (len=%u): "), subtype, rec_len);
+  fprintf (file, _("  EMH %d (len=%u): "), subtype, rec_len);
 
   /* PR 21618: Check for invalid lengths.  */
-  if (rec_len < sizeof (* emh))
+  if (rec_len < sizeof (*emh))
     {
-      fprintf (file, _("   Error: The length is less than the length of an EMH record\n"));
+      fprintf (file, _("   Error: %s min length is %u\n"),
+	       "EMH", (unsigned) sizeof (*emh));
       return;
     }
+
   extra = rec_len - sizeof (struct vms_emh_common);
 
   switch (subtype)
@@ -5954,7 +6134,8 @@ evax_bfd_print_emh (FILE *file, unsigned char *rec, unsigned int rec_len)
 	/* PR 21840: Check for invalid lengths.  */
 	if (rec_len < sizeof (* mhd))
 	  {
-	    fprintf (file, _("   Error: The record length is less than the size of an EMH_MHD record\n"));
+	    fprintf (file, _("   Error: %s min length is %u\n"),
+		     "EMH_MHD", (unsigned) sizeof (*mhd));
 	    return;
 	  }
 	fprintf (file, _("Module header\n"));
@@ -6030,9 +6211,10 @@ evax_bfd_print_eeom (FILE *file, unsigned char *rec, unsigned int rec_len)
   fprintf (file, _("  EEOM (len=%u):\n"), rec_len);
 
   /* PR 21618: Check for invalid lengths.  */
-  if (rec_len < sizeof (* eeom))
+  if (rec_len < 10)
     {
-      fprintf (file, _("   Error: The length is less than the length of an EEOM record\n"));
+      fprintf (file, _("   Error: %s min length is %u\n"),
+	       "EEOM", 10);
       return;
     }
 
@@ -6040,7 +6222,8 @@ evax_bfd_print_eeom (FILE *file, unsigned char *rec, unsigned int rec_len)
 	   (unsigned)bfd_getl32 (eeom->total_lps));
   fprintf (file, _("   completion code: %u\n"),
 	   (unsigned)bfd_getl16 (eeom->comcod));
-  if (rec_len > 10)
+
+  if (rec_len >= sizeof (*eeom))
     {
       fprintf (file, _("   transfer addr flags: 0x%02x\n"), eeom->tfrflg);
       fprintf (file, _("   transfer addr psect: %u\n"),
@@ -6713,7 +6896,7 @@ static void
 evax_bfd_print_eobj (struct bfd *abfd, FILE *file)
 {
   bool is_first = true;
-  bool has_records = false;
+  bool has_records = true;
 
   while (1)
     {
@@ -6722,89 +6905,75 @@ evax_bfd_print_eobj (struct bfd *abfd, FILE *file)
       unsigned char *rec;
       unsigned int hdr_size;
       unsigned int type;
+      unsigned char buf[6];
 
-      if (is_first)
+      hdr_size = has_records ? 6 : 4;
+      if (bfd_read (buf, hdr_size, abfd) != hdr_size)
 	{
-	  unsigned char buf[6];
-
-	  is_first = false;
-
-	  /* Read 6 bytes.  */
-	  if (bfd_bread (buf, sizeof (buf), abfd) != sizeof (buf))
-	    {
-	      fprintf (file, _("cannot read GST record length\n"));
-	      return;
-	    }
-	  rec_len = bfd_getl16 (buf + 0);
-	  if (rec_len == bfd_getl16 (buf + 4)
-	      && bfd_getl16 (buf + 2) == EOBJ__C_EMH)
-	    {
-	      /* The format is raw: record-size, type, record-size.  */
-	      has_records = true;
-	      pad_len = (rec_len + 1) & ~1U;
-	      hdr_size = 4;
-	    }
-	  else if (rec_len == EOBJ__C_EMH)
-	    {
-	      has_records = false;
-	      pad_len = bfd_getl16 (buf + 2);
-	      hdr_size = 6;
-	    }
-	  else
-	    {
-	      /* Ill-formed.  */
-	      fprintf (file, _("cannot find EMH in first GST record\n"));
-	      return;
-	    }
-	  rec = bfd_malloc (pad_len);
-	  memcpy (rec, buf + sizeof (buf) - hdr_size, hdr_size);
-	}
-      else
-	{
-	  unsigned int rec_len2 = 0;
-	  unsigned char hdr[4];
-
-	  if (has_records)
-	    {
-	      unsigned char buf_len[2];
-
-	      if (bfd_bread (buf_len, sizeof (buf_len), abfd)
-		  != sizeof (buf_len))
-		{
-		  fprintf (file, _("cannot read GST record length\n"));
-		  return;
-		}
-	      rec_len2 = (unsigned)bfd_getl16 (buf_len);
-	    }
-
-	  if (bfd_bread (hdr, sizeof (hdr), abfd) != sizeof (hdr))
-	    {
-	      fprintf (file, _("cannot read GST record header\n"));
-	      return;
-	    }
-	  rec_len = (unsigned)bfd_getl16 (hdr + 2);
-	  if (has_records)
-	    pad_len = (rec_len + 1) & ~1U;
-	  else
-	    pad_len = rec_len;
-	  rec = bfd_malloc (pad_len);
-	  memcpy (rec, hdr, sizeof (hdr));
-	  hdr_size = sizeof (hdr);
-	  if (has_records && rec_len2 != rec_len)
-	    {
-	      fprintf (file, _(" corrupted GST\n"));
-	      break;
-	    }
-	}
-
-      if (bfd_bread (rec + hdr_size, pad_len - hdr_size, abfd)
-	  != pad_len - hdr_size)
-	{
-	  fprintf (file, _("cannot read GST record\n"));
+	  fprintf (file, _("cannot read GST record header\n"));
 	  return;
 	}
 
-      type = (unsigned)bfd_getl16 (rec);
+      type = bfd_getl16 (buf);
+      rec_len = bfd_getl16 (buf + 2);
+      pad_len = rec_len;
+      if (has_records)
+	{
+	  unsigned int rec_len2 = bfd_getl16 (buf + 4);
+
+	  if (is_first)
+	    {
+	      is_first = false;
+	      if (type == rec_len2 && rec_len == EOBJ__C_EMH)
+		/* Matched a VMS record EMH.  */
+		;
+	      else
+		{
+		  has_records = false;
+		  if (type != EOBJ__C_EMH)
+		    {
+		      /* Ill-formed.  */
+		      fprintf (file, _("cannot find EMH in first GST record\n"));
+		      return;
+		    }
+		}
+	    }
+
+	  if (has_records)
+	    {
+	      /* VMS record format is: record-size, type, record-size.
+		 See maybe_adjust_record_pointer_for_object comment.  */
+	      if (type == rec_len2)
+		{
+		  type = rec_len;
+		  rec_len = rec_len2;
+		}
+	      else
+		rec_len = 0;
+	      pad_len = (rec_len + 1) & ~1U;
+	      hdr_size = 4;
+	    }
+	}
+
+      if (rec_len < hdr_size)
+	{
+	  fprintf (file, _("corrupted GST\n"));
+	  return;
+	}
+
+      rec = bfd_malloc (pad_len);
+      if (rec == NULL)
+	return;
+
+      memcpy (rec, buf + (has_records ? 2 : 0), hdr_size);
+
+      if (bfd_read (rec + hdr_size, pad_len - hdr_size, abfd)
+	  != pad_len - hdr_size)
+	{
+	  fprintf (file, _("cannot read GST record\n"));
+	  free (rec);
+	  return;
+	}
 
       switch (type)
 	{
@@ -6818,7 +6987,6 @@ evax_bfd_print_eobj (struct bfd *abfd, FILE *file)
 	  evax_bfd_print_eeom (file, rec, rec_len);
 	  free (rec);
 	  return;
-	  break;
 	case EOBJ__C_ETIR:
 	  evax_bfd_print_etir (file, "ETIR", rec, rec_len);
 	  break;
@@ -7326,7 +7494,7 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
       unsigned int type;
       unsigned char *buf;
 
-      if (bfd_bread (&dsth, sizeof (dsth), abfd) != sizeof (dsth))
+      if (bfd_read (&dsth, sizeof (dsth), abfd) != sizeof (dsth))
 	{
 	  fprintf (file, _("cannot read DST header\n"));
 	  return;
@@ -7336,6 +7504,8 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
       /* xgettext:c-format */
       fprintf (file, _(" type: %3u, len: %3u (at 0x%08x): "),
 	       type, len, off);
+      if (len > dst_size)
+	len = dst_size;
       if (len < sizeof (dsth))
 	{
 	  fputc ('\n', file);
@@ -7544,16 +7714,19 @@ evax_bfd_print_dst (struct bfd *abfd, unsigned int dst_size, FILE *file)
 	case DST__K_RECBEG:
 	  {
 	    struct vms_dst_recbeg *recbeg = (void *)buf;
-	    unsigned char *name = buf + sizeof (*recbeg);
 
 	    if (len > sizeof (*recbeg))
 	      {
+		unsigned char *name = buf + sizeof (*recbeg);
 		int nlen = len - sizeof (*recbeg) - 1;
+
 		if (name[0] < nlen)
 		  nlen = name[0];
 		fprintf (file, _("recbeg: name: %.*s\n"), nlen, name + 1);
+
 		evax_bfd_print_valspec (buf, len, 4, file);
-		len -= 1 + nlen;
+
+		len -= sizeof (*recbeg) + 1 + nlen;
 		if (len >= 4)
 		  fprintf (file, _("    len: %u bits\n"),
 			   (unsigned) bfd_getl32 (name + 1 + nlen));
@@ -7888,8 +8061,8 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
   unsigned int eiaf_size = 0;
   unsigned int eihvn_off;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET)
-      || bfd_bread (&eihd, sizeof (eihd), abfd) != sizeof (eihd))
+  if (bfd_seek (abfd, 0, SEEK_SET)
+      || bfd_read (&eihd, sizeof (eihd), abfd) != sizeof (eihd))
     {
       fprintf (file, _("cannot read EIHD\n"));
       return;
@@ -8016,8 +8189,8 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
       unsigned int j;
 
       fprintf (file, _("system version array information:\n"));
-      if (bfd_seek (abfd, (file_ptr) eihvn_off, SEEK_SET)
-	  || bfd_bread (&eihvn, sizeof (eihvn), abfd) != sizeof (eihvn))
+      if (bfd_seek (abfd, eihvn_off, SEEK_SET)
+	  || bfd_read (&eihvn, sizeof (eihvn), abfd) != sizeof (eihvn))
 	{
 	  fprintf (file, _("cannot read EIHVN header\n"));
 	  return;
@@ -8027,7 +8200,7 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	if (mask & (1u << j))
 	  {
 	    struct vms_eihvn_subversion ver;
-	    if (bfd_bread (&ver, sizeof (ver), abfd) != sizeof (ver))
+	    if (bfd_read (&ver, sizeof (ver), abfd) != sizeof (ver))
 	      {
 		fprintf (file, _("cannot read EIHVN version\n"));
 		return;
@@ -8109,8 +8282,8 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
     {
       struct vms_eiha eiha;
 
-      if (bfd_seek (abfd, (file_ptr) eiha_off, SEEK_SET)
-	  || bfd_bread (&eiha, sizeof (eiha), abfd) != sizeof (eiha))
+      if (bfd_seek (abfd, eiha_off, SEEK_SET)
+	  || bfd_read (&eiha, sizeof (eiha), abfd) != sizeof (eiha))
 	{
 	  fprintf (file, _("cannot read EIHA\n"));
 	  return;
@@ -8142,33 +8315,41 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
     {
       struct vms_eihi eihi;
 
-      if (bfd_seek (abfd, (file_ptr) eihi_off, SEEK_SET)
-	  || bfd_bread (&eihi, sizeof (eihi), abfd) != sizeof (eihi))
+      if (bfd_seek (abfd, eihi_off, SEEK_SET)
+	  || bfd_read (&eihi, sizeof (eihi), abfd) != sizeof (eihi))
 	{
 	  fprintf (file, _("cannot read EIHI\n"));
 	  return;
 	}
       /* xgettext:c-format */
       fprintf (file, _("Image identification: (major: %u, minor: %u)\n"),
-	       (unsigned)bfd_getl32 (eihi.majorid),
-	       (unsigned)bfd_getl32 (eihi.minorid));
-      fprintf (file, _(" image name       : %.*s\n"),
-	       eihi.imgnam[0], eihi.imgnam + 1);
+	       (unsigned) bfd_getl32 (eihi.majorid),
+	       (unsigned) bfd_getl32 (eihi.minorid));
+      unsigned int nlen = eihi.imgnam[0];
+      if (nlen > sizeof (eihi.imgnam) - 1)
+	nlen = sizeof (eihi.imgnam) - 1;
+      fprintf (file, _(" image name       : %.*s\n"), nlen, eihi.imgnam + 1);
       fprintf (file, _(" link time        : %s\n"),
 	       vms_time_to_str (eihi.linktime));
-      fprintf (file, _(" image ident      : %.*s\n"),
-	       eihi.imgid[0], eihi.imgid + 1);
-      fprintf (file, _(" linker ident     : %.*s\n"),
-	       eihi.linkid[0], eihi.linkid + 1);
-      fprintf (file, _(" image build ident: %.*s\n"),
-	       eihi.imgbid[0], eihi.imgbid + 1);
+      nlen = eihi.imgid[0];
+      if (nlen > sizeof (eihi.imgid) - 1)
+	nlen = sizeof (eihi.imgid) - 1;
+      fprintf (file, _(" image ident      : %.*s\n"), nlen, eihi.imgid + 1);
+      nlen = eihi.linkid[0];
+      if (nlen > sizeof (eihi.linkid) - 1)
+	nlen = sizeof (eihi.linkid) - 1;
+      fprintf (file, _(" linker ident     : %.*s\n"), nlen, eihi.linkid + 1);
+      nlen = eihi.imgbid[0];
+      if (nlen > sizeof (eihi.imgbid) -1 )
+	nlen = sizeof (eihi.imgbid) - 1;
+      fprintf (file, _(" image build ident: %.*s\n"), nlen, eihi.imgbid + 1);
     }
   if (eihs_off != 0)
     {
       struct vms_eihs eihs;
 
-      if (bfd_seek (abfd, (file_ptr) eihs_off, SEEK_SET)
-	  || bfd_bread (&eihs, sizeof (eihs), abfd) != sizeof (eihs))
+      if (bfd_seek (abfd, eihs_off, SEEK_SET)
+	  || bfd_read (&eihs, sizeof (eihs), abfd) != sizeof (eihs))
 	{
 	  fprintf (file, _("cannot read EIHS\n"));
 	  return;
@@ -8200,8 +8381,8 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 
       while (1)
 	{
-	  if (bfd_seek (abfd, (file_ptr) eisd_off, SEEK_SET)
-	      || bfd_bread (&eisd, sizeof (eisd), abfd) != sizeof (eisd))
+	  if (bfd_seek (abfd, eisd_off, SEEK_SET)
+	      || bfd_read (&eisd, sizeof (eisd), abfd) != sizeof (eisd))
 	    {
 	      fprintf (file, _("cannot read EISD\n"));
 	      return;
@@ -8294,10 +8475,15 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	}
       fputs (_(")\n"), file);
       if (val & EISD__M_GBL)
-	/* xgettext:c-format */
-	fprintf (file, _(" ident: 0x%08x, name: %.*s\n"),
-		 (unsigned)bfd_getl32 (eisd.ident),
-		 eisd.gblnam[0], eisd.gblnam + 1);
+	{
+	  unsigned int nlen = eisd.gblnam[0];
+	  if (nlen > sizeof (eisd.gblnam) - 1)
+	    nlen = sizeof (eisd.gblnam) - 1;
+	  /* xgettext:c-format */
+	  fprintf (file, _(" ident: 0x%08x, name: %.*s\n"),
+		   (unsigned) bfd_getl32 (eisd.ident),
+		   nlen, eisd.gblnam + 1);
+	}
       eisd_off += len;
     }
 
@@ -8316,7 +8502,7 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	  struct vms_dmt_header dmth;
 	  unsigned int count;
 
-	  if (bfd_bread (&dmth, sizeof (dmth), abfd) != sizeof (dmth))
+	  if (bfd_read (&dmth, sizeof (dmth), abfd) != sizeof (dmth))
 	    {
 	      fprintf (file, _("cannot read DMT header\n"));
 	      return;
@@ -8332,7 +8518,7 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	    {
 	      struct vms_dmt_psect dmtp;
 
-	      if (bfd_bread (&dmtp, sizeof (dmtp), abfd) != sizeof (dmtp))
+	      if (bfd_read (&dmtp, sizeof (dmtp), abfd) != sizeof (dmtp))
 		{
 		  fprintf (file, _("cannot read DMT psect\n"));
 		  return;
@@ -8448,11 +8634,14 @@ evax_bfd_print_image (bfd *abfd, FILE *file)
 	       j++, shlstoff += sizeof (struct vms_shl))
 	    {
 	      struct vms_shl *shl = (struct vms_shl *) (buf + shlstoff);
+	      unsigned int nlen = shl->imgnam[0];
+	      if (nlen > sizeof (shl->imgnam) - 1)
+		nlen = sizeof (shl->imgnam) - 1;
 	      fprintf (file,
 		       /* xgettext:c-format */
 		       _("  %u: size: %u, flags: 0x%02x, name: %.*s\n"),
 		       j, shl->size, shl->flags,
-		       shl->imgnam[0], shl->imgnam + 1);
+		       nlen, shl->imgnam + 1);
 	    }
 	}
       if (qrelfixoff != 0)
@@ -9091,6 +9280,7 @@ alpha_vms_build_fixups (struct bfd_link_info *info)
 
   sec = alpha_vms_link_hash (info)->fixup;
   sec->contents = content;
+  sec->alloced = 1;
   sec->size = sz;
 
   eiaf = (struct vms_eiaf *)content;
@@ -9496,6 +9686,7 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	  o->contents = bfd_alloc (abfd, o->size);
 	  if (o->contents == NULL)
 	    return false;
+	  o->alloced = 1;
 	}
       if (o->flags & SEC_LOAD)
 	{
@@ -9644,6 +9835,7 @@ alpha_vms_bfd_final_link (bfd *abfd, struct bfd_link_info *info)
 	      if (contents == NULL)
 		return false;
 	      dmt->contents = contents;
+	      dmt->alloced = 1;
 	      dmt->size = off;
 	    }
 	  else
@@ -9665,12 +9857,15 @@ alpha_vms_get_section_contents (bfd *abfd, asection *section,
 				void *buf, file_ptr offset,
 				bfd_size_type count)
 {
-  asection *sec;
-
-  /* Image are easy.  */
-  if (bfd_get_file_flags (abfd) & (EXEC_P | DYNAMIC))
+  /* Handle image sections.  */
+  if (section->filepos != 0
+      || (section->flags & SEC_HAS_CONTENTS) == 0)
     return _bfd_generic_get_section_contents (abfd, section,
 					      buf, offset, count);
+
+  /* A section with a zero filepos implies the section has no direct
+     file backing.  Its contents must be calculated by processing ETIR
+     records.  */
 
   /* Safety check.  */
   if (offset + count < count
@@ -9680,33 +9875,33 @@ alpha_vms_get_section_contents (bfd *abfd, asection *section,
       return false;
     }
 
-  /* If the section is already in memory, just copy it.  */
-  if (section->flags & SEC_IN_MEMORY)
-    {
-      BFD_ASSERT (section->contents != NULL);
-      memcpy (buf, section->contents + offset, count);
-      return true;
-    }
   if (section->size == 0)
     return true;
 
-  /* Alloc in memory and read ETIRs.  */
-  for (sec = abfd->sections; sec; sec = sec->next)
+  /* If we haven't yet read ETIR/EDBG/ETBT records, do so.  */
+  if ((section->flags & SEC_IN_MEMORY) == 0)
     {
-      BFD_ASSERT (sec->contents == NULL);
-
-      if (sec->size != 0 && (sec->flags & SEC_HAS_CONTENTS))
+      /* Alloc memory and read ETIRs.  */
+      for (asection *sec = abfd->sections; sec; sec = sec->next)
 	{
-	  sec->contents = bfd_alloc (abfd, sec->size);
-	  if (sec->contents == NULL)
-	    return false;
+	  if (sec->size != 0
+	      && sec->filepos == 0
+	      && (sec->flags & SEC_HAS_CONTENTS) != 0)
+	    {
+	      BFD_ASSERT (sec->contents == NULL);
+
+	      sec->contents = bfd_zalloc (abfd, sec->size);
+	      sec->flags |= SEC_IN_MEMORY;
+	      if (sec->contents == NULL)
+		return false;
+	      sec->alloced = 1;
+	    }
 	}
+      if (!alpha_vms_read_sections_content (abfd, NULL))
+	return false;
     }
-  if (!alpha_vms_read_sections_content (abfd, NULL))
-    return false;
-  for (sec = abfd->sections; sec; sec = sec->next)
-    if (sec->contents)
-      sec->flags |= SEC_IN_MEMORY;
+
+  BFD_ASSERT (section->contents != NULL);
   memcpy (buf, section->contents + offset, count);
   return true;
 }
@@ -9920,6 +10115,7 @@ _bfd_vms_set_section_contents (bfd * abfd,
       section->contents = bfd_alloc (abfd, section->size);
       if (section->contents == NULL)
 	return false;
+      section->alloced = 1;
 
       memcpy (section->contents + offset, location, (size_t) count);
     }
@@ -9958,25 +10154,12 @@ bfd_vms_get_data (bfd *abfd)
   return (struct vms_private_data_struct *)abfd->tdata.any;
 }
 
-#define vms_bfd_is_target_special_symbol  _bfd_bool_bfd_asymbol_false
-#define vms_bfd_link_just_syms		  _bfd_generic_link_just_syms
-#define vms_bfd_copy_link_hash_symbol_type \
-  _bfd_generic_copy_link_hash_symbol_type
-#define vms_bfd_is_group_section	  bfd_generic_is_group_section
-#define vms_bfd_group_name		  bfd_generic_group_name
-#define vms_bfd_discard_group		  bfd_generic_discard_group
-#define vms_section_already_linked	  _bfd_generic_section_already_linked
-#define vms_bfd_define_common_symbol	  bfd_generic_define_common_symbol
-#define vms_bfd_link_hide_symbol	  _bfd_generic_link_hide_symbol
-#define vms_bfd_define_start_stop         bfd_generic_define_start_stop
-#define vms_bfd_copy_private_header_data  _bfd_generic_bfd_copy_private_header_data
-
 #define vms_bfd_copy_private_bfd_data	  _bfd_generic_bfd_copy_private_bfd_data
-#define vms_bfd_free_cached_info	  _bfd_generic_bfd_free_cached_info
+#define vms_bfd_merge_private_bfd_data	  _bfd_generic_bfd_merge_private_bfd_data
 #define vms_bfd_copy_private_section_data _bfd_generic_bfd_copy_private_section_data
 #define vms_bfd_copy_private_symbol_data  _bfd_generic_bfd_copy_private_symbol_data
+#define vms_bfd_copy_private_header_data  _bfd_generic_bfd_copy_private_header_data
 #define vms_bfd_set_private_flags	  _bfd_generic_bfd_set_private_flags
-#define vms_bfd_merge_private_bfd_data	  _bfd_generic_bfd_merge_private_bfd_data
 
 /* Symbols table.  */
 #define alpha_vms_make_empty_symbol	   _bfd_generic_make_empty_symbol
@@ -9992,15 +10175,16 @@ bfd_vms_get_data (bfd *abfd)
 #define alpha_vms_find_inliner_info	   _bfd_nosymbols_find_inliner_info
 #define alpha_vms_bfd_make_debug_symbol	   _bfd_nosymbols_bfd_make_debug_symbol
 #define alpha_vms_find_nearest_line	   _bfd_vms_find_nearest_line
+#define alpha_vms_find_nearest_line_with_alt \
+   _bfd_nosymbols_find_nearest_line_with_alt
 #define alpha_vms_find_line		   _bfd_nosymbols_find_line
 #define alpha_vms_bfd_is_local_label_name  vms_bfd_is_local_label_name
 
 /* Generic table.  */
 #define alpha_vms_close_and_cleanup	   vms_close_and_cleanup
-#define alpha_vms_bfd_free_cached_info	   vms_bfd_free_cached_info
+#define alpha_vms_bfd_free_cached_info	   _bfd_bool_bfd_true
 #define alpha_vms_new_section_hook	   vms_new_section_hook
 #define alpha_vms_set_section_contents	   _bfd_vms_set_section_contents
-#define alpha_vms_get_section_contents_in_window _bfd_generic_get_section_contents_in_window
 
 #define alpha_vms_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents

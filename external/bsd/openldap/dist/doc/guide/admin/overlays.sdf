@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 2007-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 2007-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 
 H1: Overlays
@@ -783,8 +783,8 @@ at server {{EX:ldap.example.com}}.
 >	pcacheTemplate (&(sn=)(givenName=)) 0 3600
 >	pcacheTemplate (&(departmentNumber=)(secretary=*)) 0 3600
 >
->	cachesize 20
 >	directory ./testrun/db.2.a
+>	maxsize   1073741824
 >	index       objectClass eq
 >	index       cn,sn,uid,mail  pres,eq,sub
 
@@ -817,7 +817,7 @@ at server {{EX:ldap.example.com}}.
 >   objectClass: olcPcacheDatabase
 >   olcDatabase: {0}mdb
 >   olcDbDirectory: ./testrun/db.2.a
->   olcDbCacheSize: 20
+>   olcDbMaxSize: 1073741824
 >   olcDbIndex: objectClass eq
 >   olcDbIndex: cn,sn,uid,mail  pres,eq,sub
 

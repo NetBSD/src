@@ -1,6 +1,6 @@
-/*	$NetBSD: defs.h,v 1.19.8.1 2025/08/02 05:20:54 perseant Exp $	*/
+/*	$NetBSD: defs.h,v 1.19.8.2 2026/11/04 22:37:23 perseant Exp $	*/
 
-/* Id: defs.h,v 1.74 2023/05/18 21:28:05 tom Exp  */
+/* Id: defs.h,v 1.76 2026/01/24 13:46:31 tom Exp  */
 
 #if HAVE_NBTOOL_CONFIG_H
 #include "nbtool_config.h"
@@ -192,9 +192,9 @@ SYM_CASES;
 #define REALLOC(p,n)	(realloc((char*)(p),(size_t)(n)))
 #define TREALLOC(t,p,n)	((t*)realloc((char*)(p), (size_t)(n) * sizeof(t)))
 
-#define DO_FREE(x)	if (x) { FREE(x); x = 0; }
+#define DO_FREE(x)	if (x) { FREE(x); x = NULL; }
 
-#define NO_SPACE(p)	do { if (p == 0) on_error(); assert(p != 0); } while (0)
+#define NO_SPACE(p)	do { if (p == NULL) on_error(); assert(p != NULL); } while (0)
 
 /* messages */
 #define PLURAL(n) ((n) > 1 ? "s" : "")
@@ -569,6 +569,7 @@ extern unsigned int strnshash(const char *);
 			 : (*(m)->ptr++ = (char) (ch)))
 
 /* output.c */
+extern void puts_trim(const char *, FILE *);
 extern void output(void);
 
 /* reader.c */

@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-PCACHE 5 "2020/04/28" "OpenLDAP 2.4.50"
-.\" Copyright 1998-2020 The OpenLDAP Foundation, All Rights Reserved.
+.TH SLAPO-PCACHE 5 "2025/05/22" "OpenLDAP 2.6.10"
+.\" Copyright 1998-2024 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -81,6 +81,9 @@ or both; in the latter case, any other attribute is redundant and should
 be avoided for clarity.  A set of attributes can contain "1.1" as the only
 attribute; in this case, only the presence of the entries is cached.
 Attributes prefixed by "undef:" need not be present in the schema.
+The "undef" keyword cannot be used with the
+.BR slapd\-mdb(5)
+backend as it requires all schema elements be fully defined.
 
 .TP
 .B pcacheMaxQueries <queries>
@@ -209,7 +212,7 @@ shown here:
 .RS
 .nf
 directory /var/tmp/cache
-cachesize 100
+maxsize   1073741824
 .fi
 .RE
 .LP
@@ -257,6 +260,10 @@ for the duration of the
 .B pcacheTemplate
 .BR TTL .
 These inconsistencies can be minimized by careful use of the TTR.
+
+The proxy cache overlay requires a full result set of data to properly
+function. Therefore it will strip out the paged results control if it is
+requested by the client.
 
 The remote server should expose the
 .B objectClass 

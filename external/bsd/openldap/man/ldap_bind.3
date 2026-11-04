@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LDAP_BIND 3 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LDAP_BIND 3 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ldap_bind, ldap_bind_s, ldap_simple_bind, ldap_simple_bind_s, ldap_sasl_bind, ldap_sasl_bind_s, ldap_sasl_interactive_bind_s, ldap_parse_sasl_bind_result, ldap_unbind, ldap_unbind_s, ldap_unbind_ext, ldap_unbind_ext_s, ldap_set_rebind_proc \- LDAP bind routines
@@ -159,6 +159,9 @@ call to
 The result must be additionally parsed by
 .BR ldap_parse_sasl_bind_result ()
 to obtain any server credentials sent from the server.
+
+Any returned server credentials should be freed using
+.BR ber_bvfree ().
 .LP
 Many SASL mechanisms require multiple message exchanges to perform a
 complete authentication. Applications should generally use
@@ -338,4 +341,4 @@ The bind method must be synchronous.
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 335 stdin
+.lf 338 stdin

@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-client.h,v 1.18 2023/10/25 20:19:57 christos Exp $	*/
-/* $OpenBSD: sftp-client.h,v 1.39 2023/09/08 05:56:13 djm Exp $ */
+/*	$NetBSD: sftp-client.h,v 1.18.2.1 2026/11/04 22:36:41 perseant Exp $	*/
+/* $OpenBSD: sftp-client.h,v 1.42 2026/09/07 20:24:22 job Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -35,25 +35,25 @@ struct SFTP_DIRENT {
  * server's native format may be larger than the client's.
  */
 struct sftp_statvfs {
-	u_int64_t f_bsize;
-	u_int64_t f_frsize;
-	u_int64_t f_blocks;
-	u_int64_t f_bfree;
-	u_int64_t f_bavail;
-	u_int64_t f_files;
-	u_int64_t f_ffree;
-	u_int64_t f_favail;
-	u_int64_t f_fsid;
-	u_int64_t f_flag;
-	u_int64_t f_namemax;
+	uint64_t f_bsize;
+	uint64_t f_frsize;
+	uint64_t f_blocks;
+	uint64_t f_bfree;
+	uint64_t f_bavail;
+	uint64_t f_files;
+	uint64_t f_ffree;
+	uint64_t f_favail;
+	uint64_t f_fsid;
+	uint64_t f_flag;
+	uint64_t f_namemax;
 };
 
 /* Used for limits response on the wire from the server */
 struct sftp_limits {
-	u_int64_t packet_length;
-	u_int64_t read_length;
-	u_int64_t write_length;
-	u_int64_t open_handles;
+	uint64_t packet_length;
+	uint64_t read_length;
+	uint64_t write_length;
+	uint64_t open_handles;
 };
 
 /* print flag values */
@@ -65,7 +65,8 @@ struct sftp_limits {
  * Initialise a SSH filexfer connection. Returns NULL on error or
  * a pointer to a initialized sftp_conn struct on success.
  */
-struct sftp_conn *sftp_init(int, int, u_int, u_int, u_int64_t);
+struct sftp_conn *sftp_init(int, int, u_int, u_int, uint64_t);
+void sftp_free(struct sftp_conn *);
 
 u_int sftp_proto_version(struct sftp_conn *);
 
@@ -86,6 +87,9 @@ int sftp_rm(struct sftp_conn *, const char *);
 
 /* Create directory 'path' */
 int sftp_mkdir(struct sftp_conn *, const char *, Attrib *, int);
+
+/* Create directory 'path' and intermediate directories as required */
+int sftp_mkpath(struct sftp_conn *, const char *, Attrib *, int);
 
 /* Remove directory 'path' */
 int sftp_rmdir(struct sftp_conn *, const char *);

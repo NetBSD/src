@@ -14,10 +14,12 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <time.h>
+#include "bitset.h"
 struct rr;
 struct buffer;
 struct region;
 struct nsd;
+struct nsd_options;
 
 #ifdef HAVE_SYSLOG_H
 #  include <syslog.h>
@@ -42,6 +44,15 @@ struct nsd;
  * until log_open and log_set_log_function are called.
  */
 void log_init(const char *ident);
+
+#ifdef USE_LOG_PROCESS_ROLE
+/*
+ * Set the name of the role for the process (for debugging purposes)
+ */
+void log_set_process_role(const char* role);
+#else
+#define log_set_process_role(role) /* empty */
+#endif
 
 /*
  * Open the system log.  If FILENAME is not NULL, a log file is opened
@@ -120,7 +131,7 @@ void clear_bit(uint8_t bits[], size_t index);
 /*
  * Return the value of the INDEXth bit of BITS.
  */
-int get_bit(uint8_t bits[], size_t index);
+int get_bit(const uint8_t bits[], size_t index);
 
 /* A general purpose lookup table */
 typedef struct lookup_table lookup_table_type;
@@ -245,7 +256,7 @@ read_uint32(const void *src)
 	return ntohl(* (const uint32_t *) src);
 #else
 	const uint8_t *p = (const uint8_t *) src;
-	return (p[0] << 24) | (p[1] << 16) | (p[2] << 8) | p[3];
+	return ((uint32_t)p[0] << 24) | ((uint32_t)p[1] << 16) | ((uint32_t)p[2] << 8) | (uint32_t)p[3];
 #endif
 }
 
@@ -294,6 +305,9 @@ extern int nsd_debug_level;
 /* set to true to log time prettyprinted, or false to print epoch */
 extern int log_time_asc;
 
+/* set to true to log time in iso format */
+extern int log_time_iso;
+
 /*
  * Timespec functions.
  */
@@ -311,25 +325,6 @@ timeval_to_timespec(struct timespec *left,
 
 /* get the time */
 void get_time(struct timespec* t);
-
-/*
- * Converts a string representation of a period of time into
- * a long integer of seconds or serial value.
- *
- * Set the endptr to the first illegal character.
- *
- * Interface is similar as strtol(3)
- *
- * Returns:
- *	LONG_MIN if underflow occurs
- *	LONG_MAX if overflow occurs.
- *	otherwise number of seconds
- *
- * XXX These functions do not check the range.
- *
- */
-uint32_t strtoserial(const char *nptr, const char **endptr);
-uint32_t strtottl(const char *nptr, const char **endptr);
 
 /*
  * Convert binary data to a string of hexadecimal characters.
@@ -355,12 +350,6 @@ void strip_string(char *str);
  * Convert a single (hexadecimal) digit to its integer value.
  */
 int hexdigit_to_int(char ch);
-
-/*
- * Convert TM to seconds since epoch (midnight, January 1st, 1970).
- * Like timegm(3), which is not always available.
- */
-time_t mktime_from_utc(const struct tm *tm);
 
 /*
  * Add bytes to given crc. Returns new CRC sum.
@@ -451,4 +440,20 @@ void activate_cookie_secret(struct nsd* nsd);
 /* Drop a cookie secret. Drops the staging secret. An active secret will not
  * be dropped. */
 void drop_cookie_secret(struct nsd* nsd);
+/* Configure nsd struct with how to respond to DNS Cookies based on options */
+void reconfig_cookies(struct nsd* nsd, struct nsd_options* options);
+
+/* print server affinity for given socket's bitset.
+ * o "(all)";	if socket has no affinity with any specific server,
+ * o "(none)";	if no server uses the socket,
+ * o "x-y";	if socket has affinity with 'more than two consecutively'
+ *		numbered servers,
+ * o "x";	if socket has affinity with a specific server number, which is
+ *		not necessarily just one server. e.g. "1 3" is printed if
+ *		socket has affinity with servers number one and three, but not
+ *		server number two. Likewise "1 2" is printed if socket has
+ *		affinity with servers one and two, but not server number three.
+ */
+ssize_t print_socket_servers(struct nsd_bitset *bitset, char *buf, size_t bufsz);
+
 #endif /* UTIL_H */

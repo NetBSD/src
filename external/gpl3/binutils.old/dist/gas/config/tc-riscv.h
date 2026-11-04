@@ -1,5 +1,5 @@
 /* tc-riscv.h -- header file for tc-riscv.c.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
 
    Contributed by Andrew Waterman (andrew@sifive.com).
    Based on MIPS target.
@@ -62,9 +62,9 @@ extern bool riscv_frag_align_code (int);
     }
 
 extern void riscv_handle_align (fragS *);
-#define HANDLE_ALIGN riscv_handle_align
+#define HANDLE_ALIGN(s, f) riscv_handle_align (f)
 
-#define MAX_MEM_FOR_RS_ALIGN_CODE (3 + 4)
+#define MAX_MEM_FOR_RS_ALIGN_CODE(p2align, max) (3 + 4)
 
 /* The ISA of the target may change based on command-line arguments.  */
 #define TARGET_FORMAT riscv_target_format ()
@@ -79,6 +79,9 @@ extern int riscv_parse_long_option (const char *);
 #define md_pre_output_hook riscv_pre_output_hook ()
 extern void riscv_pre_output_hook (void);
 #define GAS_SORT_RELOCS 1
+
+#define md_end riscv_md_end
+extern void riscv_md_end (void);
 
 /* Let the linker resolve all the relocs due to relaxation.  */
 #define tc_fix_adjustable(fixp) 0
@@ -101,6 +104,14 @@ extern void riscv_pre_output_hook (void);
 #define TC_FORCE_RELOCATION_LOCAL(FIX) 1
 #define DIFF_EXPR_OK 1
 
+struct riscv_fix
+{
+  int source_macro;
+};
+
+#define TC_FIX_TYPE struct riscv_fix
+#define TC_INIT_FIX_DATA(FIX) (FIX)->tc_fix_data.source_macro = -1
+
 extern void riscv_pop_insert (void);
 #define md_pop_insert()		riscv_pop_insert ()
 
@@ -117,27 +128,38 @@ extern int tc_riscv_regname_to_dw2regnum (char *);
 /* Even on RV64, use 4-byte alignment, as F registers may be only 32 bits.  */
 #define DWARF2_CIE_DATA_ALIGNMENT -4
 
+#define md_elf_section_change_hook riscv_elf_section_change_hook
+extern void riscv_elf_section_change_hook (void);
+
 #define elf_tc_final_processing riscv_elf_final_processing
 extern void riscv_elf_final_processing (void);
 
 /* Adjust debug_line after relaxation.  */
 #define DWARF2_USE_FIXED_ADVANCE_PC 1
 
-#define md_end riscv_md_end
+#define md_parse_name(name, exp, mode, c) \
+  riscv_parse_name (name, exp, mode)
+bool riscv_parse_name (const char *, struct expressionS *, enum expr_mode);
+
+#define md_finish riscv_md_finish
 #define CONVERT_SYMBOLIC_ATTRIBUTE riscv_convert_symbolic_attribute
 
-extern void riscv_md_end (void);
+extern void riscv_md_finish (void);
 extern int riscv_convert_symbolic_attribute (const char *);
 
 /* Set mapping symbol states.  */
-#define md_cons_align(nbytes) riscv_mapping_state (MAP_DATA, 0)
-void riscv_mapping_state (enum riscv_seg_mstate, int);
+#define md_cons_align(nbytes) riscv_mapping_state (MAP_DATA, 0, 0)
+void riscv_mapping_state (enum riscv_seg_mstate, int, bool);
 
 /* Define target segment type.  */
 #define TC_SEGMENT_INFO_TYPE struct riscv_segment_info_type
 struct riscv_segment_info_type
 {
   enum riscv_seg_mstate map_state;
+  bool rvc;
+  bool last_insn16;
+  /* The current mapping symbol with architecture string.  */
+  symbolS *arch_map_symbol;
 };
 
 /* Define target fragment type.  */
@@ -153,8 +175,16 @@ extern void riscv_init_frag (struct frag *, int);
 #define obj_adjust_symtab() riscv_adjust_symtab ()
 extern void riscv_adjust_symtab (void);
 
-void riscv_elf_copy_symbol_attributes (symbolS *, symbolS *);
+/* Don't copy st_other.
+   This is needed so RISC-V specific st_other values can be independently
+   specified for an IFUNC resolver (that is called by the dynamic linker)
+   and the symbol it resolves (aliased to the resolver).  In particular,
+   if a function symbol has special st_other value set via directives,
+   then attaching an IFUNC resolver to that symbol should not override
+   the st_other setting.  Requiring the directive on the IFUNC resolver
+   symbol would be unexpected and problematic in C code, where the two
+   symbols appear as two independent function declarations.  */
 #define OBJ_COPY_SYMBOL_ATTRIBUTES(DEST, SRC)  \
-  riscv_elf_copy_symbol_attributes (DEST, SRC)
+  elf_copy_symbol_size (DEST, SRC)
 
 #endif /* TC_RISCV */

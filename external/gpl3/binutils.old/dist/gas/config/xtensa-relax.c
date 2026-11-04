@@ -1,5 +1,5 @@
 /* Table of relaxations for Xtensa assembly.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -93,11 +93,7 @@
 #include "xtensa-isa.h"
 #include "xtensa-relax.h"
 #include <stddef.h>
-#include "xtensa-config.h"
-
-#ifndef XCHAL_HAVE_WIDE_BRANCHES
-#define XCHAL_HAVE_WIDE_BRANCHES 0
-#endif
+#include "xtensa-dynconfig.h"
 
 /* Imported from bfd.  */
 extern xtensa_isa xtensa_default_isa;

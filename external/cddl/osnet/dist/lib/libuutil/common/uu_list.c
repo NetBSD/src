@@ -716,3 +716,15 @@ uu_list_release(void)
 		(void) pthread_mutex_unlock(&pp->ulp_lock);
 	(void) pthread_mutex_unlock(&uu_lpool_list_lock);
 }
+
+__dso_hidden
+void
+uu_list_release_child(void)
+{
+	uu_list_pool_t *pp;
+
+	for (pp = uu_null_lpool.ulp_next; pp != &uu_null_lpool;
+	    pp = pp->ulp_next)
+		(void) pthread_mutex_init(&pp->ulp_lock, NULL);
+	(void) pthread_mutex_init(&uu_lpool_list_lock, NULL);
+}

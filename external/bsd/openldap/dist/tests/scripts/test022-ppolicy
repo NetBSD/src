@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -78,7 +78,7 @@ if test $RC = 0 ; then
 fi
 
 echo "Using ldapadd to populate the database..."
-$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD -e '!relax' \
+$LDAPADD -D "$MANAGERDN" -H $URI1 -w $PASSWD \
 	< $LDIFPPOLICY >> $TESTOUT 2>&1
 RC=$?
 if test $RC != 0 ; then
@@ -103,8 +103,9 @@ if test $COUNT != 2 ; then
 	exit 1
 fi
 
-DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
-    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*seconds_before_unlock=\(\d*\)/\1/p'`
+DELAYATTR=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD -b "$USER" -E accountUsability 1.1`
+echo "$DELAYATTR" >> $SEARCHOUT
+DELAY=`echo "$DELAYATTR" | sed -n -e 's/.*seconds_before_unlock=\([[:digit:]]*\)/\1/p'`
 
 echo "Waiting $DELAY seconds for lockout to reset..."
 sleep $DELAY
@@ -119,8 +120,9 @@ if test $RC != 0 ; then
 	exit $RC
 fi
 
-DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
-    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*expire=\(\d*\)/\1/p'`
+DELAYATTR=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD -b "$USER" -E accountUsability 1.1`
+echo "$DELAYATTR" >> $SEARCHOUT
+DELAY=`echo "$DELAYATTR" | sed -n -e 's/.*expire=\([[:digit:]]*\)/\1/p'`
 
 echo "Testing password expiration"
 echo "Waiting $DELAY seconds for password to expire..."
@@ -489,8 +491,9 @@ fi
 $LDAPSEARCH -e ppolicy -H $URI1 -D "$USER" -w $PASS \
 	-b "$BASEDN" -s base > $SEARCHOUT 2>&1
 
-DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
-    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*expire=\(\d*\)/\1/p'`
+DELAYATTR=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD -b "$USER" -E accountUsability 1.1`
+echo "$DELAYATTR" >> $SEARCHOUT
+DELAY=`echo "$DELAYATTR" | sed -n -e 's/.*expire=\([[:digit:]]*\)/\1/p'`
 
 echo "Waiting $DELAY seconds for password to expire..."
 sleep $DELAY
@@ -734,8 +737,9 @@ delete: pwdReset
 
 EOMODS
 
-DELAY=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD \
-    -b "$USER" -E accountUsability 1.1 | sed -n -e 's/.*expire=\(\d*\)/\1/p'`
+DELAYATTR=`$LDAPSEARCH -D "$MANAGERDN" -H $URI1 -w $PASSWD -b "$USER" -E accountUsability 1.1`
+echo "$DELAYATTR" >> $TESTOUT
+DELAY=`echo "$DELAYATTR" | sed -n -e 's/.*expire=\([[:digit:]]*\)/\1/p'`
 DELAY=`expr $DELAY - 10`
 
 echo "Testing password expiration"

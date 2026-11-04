@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPD.ACCESS 5 "2020/04/28" "OpenLDAP 2.4.50"
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPD.ACCESS 5 "2025/05/22" "OpenLDAP 2.6.10"
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -19,6 +19,7 @@ daemon. This configuration file is also used by the SLAPD tools
 .BR slapcat (8),
 .BR slapdn (8),
 .BR slapindex (8),
+.BR slapmodify (8),
 and
 .BR slaptest (8).
 .LP
@@ -96,6 +97,8 @@ clause matches the accessor's properties, its
 and
 .B <control>
 clauses are evaluated.
+
+.LP
 Access control checking stops at the first match of the
 .B <what>
 and
@@ -111,8 +114,26 @@ clause list is implicitly terminated by a
 	by * none stop
 .fi
 .LP
-clause that results in stopping the access control with no access 
-privileges granted.
+.B <control>
+clause.  This implicit
+.B <control>
+stops access directive evaluation with no more access privileges
+granted to anyone else.
+To stop access directive evaluation only when both
+.B <who>
+and
+.B <what>
+match, add an explicit
+.LP
+.nf
+	by * break
+.fi
+.LP
+to the end of the
+.B <who>
+clause list.
+
+.LP
 Each
 .B <what>
 clause list is implicitly terminated by a
@@ -777,7 +798,11 @@ and
 .BR manage .
 Each access level implies all the preceding ones, thus 
 .B manage
-grants all access including administrative access.
+grants all access including administrative access. This access
+allows some modifications which would otherwise be prohibited by the
+LDAP data model or the directory schema, e.g. changing the
+structural objectclass of an entry, or modifying an operational
+attribute that is defined as not user modifiable.
 The 
 .BR write
 access is actually the combination of
@@ -921,9 +946,8 @@ identity, control is passed straight to the subsequent rules.
 
 .SH OPERATION REQUIREMENTS
 Operations require different privileges on different portions of entries.
-The following summary applies to primary MDB database backend and the
-deprecated BDB and HDB backends.   Requirements for other backends may
-(and often do) differ.
+The following summary applies to primary MDB database backend. Requirements
+for other backends may (and often do) differ.
 
 .LP
 The
@@ -1060,9 +1084,11 @@ attribute).
 Some internal operations and some
 .B controls
 require specific access privileges.
-The
+
+.LP
+The SASL
 .B authzID
-mapping and the 
+mapping and the LDAP
 .B proxyAuthz
 control require
 .B auth (=x)
@@ -1076,6 +1102,11 @@ privileges are also required on the
 attribute of the authorizing identity and/or on the 
 .B authzFrom
 attribute of the authorized identity.
+In both cases, it is the authorizing identity that requires the privileges
+(i.e. the identity that has authenticated and is now trying to do
+some operation using another entity's permissions).
+
+.LP
 In general, when an internal lookup is performed for authentication
 or authorization purposes, search-specific privileges (see the access
 requirements for the search operation illustrated above) are relaxed to
@@ -1086,12 +1117,10 @@ Access control to search entries is checked by the frontend,
 so it is fully honored by all backends; for all other operations
 and for the discovery phase of the search operation,
 full ACL semantics is only supported by the primary backends, i.e.
-.BR back\-bdb (5),
-and
-.BR back\-hdb (5).
+.BR slapd\-mdb (5).
 
 Some other backend, like
-.BR back\-sql (5),
+.BR slapd\-sql (5),
 may fully support them; others may only support a portion of the 
 described semantics, or even differ in some aspects.
 The relevant details are described in the backend-specific man pages.
@@ -1187,4 +1216,4 @@ default slapd configuration file
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 1184 stdin
+.lf 1213 stdin

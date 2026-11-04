@@ -105,6 +105,11 @@ For operations which index on the BFD format:
 #define TARGET_KEEP_UNUSED_SECTION_SYMBOLS true
 #endif
 
+/* Define to TRUE if section merging is supported by the backend.  */
+#ifndef TARGET_MERGE_SECTIONS
+#define TARGET_MERGE_SECTIONS false
+#endif
+
 @end example
 This is the structure which defines the type of BFD this is.  The
 @code{xvec} member of the struct @code{bfd} itself points here.  Each
@@ -157,6 +162,9 @@ typedef struct bfd_target
  /* TRUE if unused section symbols should be kept.  */
   bool keep_unused_section_symbols;
 
+  /* TRUE if section merging is supported by the backend.  */
+  bool merge_sections;
+
   /* Entries for byte swapping for data. These are different from the
      other entry points, since they don't take a BFD as the first argument.
      Certain other handlers could do the same.  */
@@ -203,8 +211,7 @@ BFD_JUMP_TABLE macros.
   NAME##_close_and_cleanup, \
   NAME##_bfd_free_cached_info, \
   NAME##_new_section_hook, \
-  NAME##_get_section_contents, \
-  NAME##_get_section_contents_in_window
+  NAME##_get_section_contents
 
   /* Called when the BFD is being closed to do any necessary cleanup.  */
   bool (*_close_and_cleanup) (bfd *);
@@ -215,14 +222,11 @@ BFD_JUMP_TABLE macros.
   /* Read the contents of a section.  */
   bool (*_bfd_get_section_contents) (bfd *, sec_ptr, void *, file_ptr,
                                      bfd_size_type);
-  bool (*_bfd_get_section_contents_in_window) (bfd *, sec_ptr, bfd_window *,
-                                               file_ptr, bfd_size_type);
 
   /* Entry points to copy private data.  */
 #define BFD_JUMP_TABLE_COPY(NAME) \
   NAME##_bfd_copy_private_bfd_data, \
   NAME##_bfd_merge_private_bfd_data, \
-  _bfd_generic_init_private_section_data, \
   NAME##_bfd_copy_private_section_data, \
   NAME##_bfd_copy_private_symbol_data, \
   NAME##_bfd_copy_private_header_data, \
@@ -235,20 +239,14 @@ BFD_JUMP_TABLE macros.
   /* Called to merge BFD general private data from one object file
      to a common output file when linking.  */
   bool (*_bfd_merge_private_bfd_data) (bfd *, struct bfd_link_info *);
-  /* Called to initialize BFD private section data from one object file
-     to another.  */
-#define bfd_init_private_section_data(ibfd, isec, obfd, osec, link_info) \
-       BFD_SEND (obfd, _bfd_init_private_section_data, \
-                 (ibfd, isec, obfd, osec, link_info))
-  bool (*_bfd_init_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
-                                          struct bfd_link_info *);
   /* Called to copy BFD private section data from one object file
      to another.  */
-  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr);
+  bool (*_bfd_copy_private_section_data) (bfd *, sec_ptr, bfd *, sec_ptr,
+                                          struct bfd_link_info *);
   /* Called to copy BFD private symbol data from one symbol
      to another.  */
-  bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol *,
-                                         bfd *, asymbol *);
+  bool (*_bfd_copy_private_symbol_data) (bfd *, asymbol **,
+                                         bfd *, asymbol **);
   /* Called to copy BFD private header data from one object file
      to another.  */
   bool (*_bfd_copy_private_header_data) (bfd *, bfd *);
@@ -370,14 +368,15 @@ BFD_JUMP_TABLE macros.
 #define BFD_JUMP_TABLE_RELOCS(NAME) \
   NAME##_get_reloc_upper_bound, \
   NAME##_canonicalize_reloc, \
-  NAME##_set_reloc, \
+  NAME##_finalize_section_relocs, \
   NAME##_bfd_reloc_type_lookup, \
   NAME##_bfd_reloc_name_lookup
 
   long (*_get_reloc_upper_bound) (bfd *, sec_ptr);
   long (*_bfd_canonicalize_reloc) (bfd *, sec_ptr, arelent **,
                                    struct bfd_symbol **);
-  void (*_bfd_set_reloc) (bfd *, sec_ptr, arelent **, unsigned int);
+  bool (*_bfd_finalize_section_relocs) (bfd *, sec_ptr, arelent **,
+                                        unsigned int);
   /* See documentation on reloc types.  */
   reloc_howto_type *
        (*reloc_type_lookup) (bfd *, bfd_reloc_code_real_type);
@@ -408,7 +407,6 @@ BFD_JUMP_TABLE macros.
   NAME##_bfd_link_check_relocs, \
   NAME##_bfd_gc_sections, \
   NAME##_bfd_lookup_section_flags, \
-  NAME##_bfd_merge_sections, \
   NAME##_bfd_is_group_section, \
   NAME##_bfd_group_name, \
   NAME##_bfd_discard_group, \
@@ -463,9 +461,6 @@ BFD_JUMP_TABLE macros.
   /* Sets the bitmask of allowed and disallowed section flags.  */
   bool (*_bfd_lookup_section_flags) (struct bfd_link_info *,
                                      struct flag_info *, asection *);
-
-  /* Attempt to merge SEC_MERGE sections.  */
-  bool (*_bfd_merge_sections) (bfd *, struct bfd_link_info *);
 
   /* Is this section a member of a group?  */
   bool (*_bfd_is_group_section) (bfd *, const struct bfd_section *);
@@ -606,20 +601,14 @@ bfd_keep_unused_section_symbols (const bfd *abfd)
   return abfd->xvec->keep_unused_section_symbols;
 @}
 
-@end example
-@findex _bfd_per_xvec_warn
-@subsubsection @code{_bfd_per_xvec_warn}
-@deftypefn {Function} struct per_xvec_message **_bfd_per_xvec_warn (const bfd_target *, size_t); 
-Return a location for the given target xvec to use for
-warnings specific to that target.  If TARG is NULL, returns
-the array of per_xvec_message pointers, otherwise if ALLOC is
-zero, returns a pointer to a pointer to the list of messages
-for TARG, otherwise (both TARG and ALLOC non-zero), allocates
-a new   per_xvec_message with space for a string of ALLOC
-bytes and returns a pointer to a pointer to it.  May return a
-pointer to a NULL pointer on allocation failure.
+static inline bool
+bfd_target_supports_archives (const bfd *abfd)
+@{
+  return (abfd->xvec->_bfd_check_format[bfd_archive]
+          != abfd->xvec->_bfd_check_format[bfd_unknown]);
+@}
 
-@end deftypefn
+@end example
 @findex bfd_set_default_target
 @subsubsection @code{bfd_set_default_target}
 @deftypefn {Function} bool bfd_set_default_target (const char *name); 

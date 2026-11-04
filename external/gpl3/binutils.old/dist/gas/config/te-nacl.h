@@ -1,4 +1,4 @@
-/* Copyright (C) 2012-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -24,7 +24,7 @@
 
 /* These are for ARM but don't hurt other CPU targets.
    They match the settings from te-armeabi.h; NaCl/ARM is based on EABI.  */
-#define FPU_DEFAULT FPU_ARCH_VFP
+#define FPU_DEFAULT FPU_ARCH_SOFTVFP
 #define EABI_DEFAULT EF_ARM_EABI_VER5
 
 #include "obj-format.h"

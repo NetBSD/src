@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7.10.1 2025/08/02 05:21:04 perseant Exp $
+#	$NetBSD: Makefile.inc,v 1.7.10.2 2026/11/04 22:37:38 perseant Exp $
 
 WARNS=4
 DIST=${NETBSDSRCDIR}/external/bsd/file/dist
@@ -25,9 +25,7 @@ CPPFLAGS+=	${ZSTDCPPFLAGS}
 
 .PATH:		${DIST}/src ${DIST}/doc
 
-
-DPLIBS+=     lzma    ${NETBSDSRCDIR}/external/public-domain/xz/lib
-DPLIBS+=     ${ZSTDDPLIBS}
-DPLIBS+=     bz2     ${NETBSDSRCDIR}/lib/libbz2
-DPLIBS+=     z       ${NETBSDSRCDIR}/lib/libz
-
+DPLIBS+=	lzma	${NETBSDSRCDIR}/external/public-domain/xz/lib
+DPLIBS+=	${ZSTDDPLIBS}
+DPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2
+DPLIBS+=	z	${NETBSDSRCDIR}/lib/libz

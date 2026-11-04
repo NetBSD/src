@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -82,6 +82,7 @@ public:
   char *toString ();
   void toFile (FILE *fp);
   void toFileLn (FILE *fp);
+  void write (int fd);
 
   // Not in Java
   StringBuilder *appendf (const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));

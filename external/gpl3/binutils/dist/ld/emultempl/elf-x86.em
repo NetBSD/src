@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-# Copyright (C) 2019-2024 Free Software Foundation, Inc.
+# Copyright (C) 2019-2026 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -33,7 +33,7 @@ static struct elf_linker_x86_params params;
 static void
 elf_x86_create_output_section_statements (void)
 {
-  _bfd_elf_linker_x86_set_options (&link_info, &params);
+  bfd_elf_linker_x86_set_options (&link_info, &params);
 }
 
 EOF
@@ -56,20 +56,3 @@ EOF
 
 LDEMUL_BEFORE_PARSE=elf_x86_before_parse
 fi
-
-case x${OUTPUT_FORMAT}${CALL_NOP_BYTE} in
-  x*x86-64*0x67)
-fragment <<EOF
-
-static void
-elf_x86_64_before_parse (void)
-{
-  params.mark_plt = DEFAULT_LD_Z_MARK_PLT;
-
-  elf_x86_before_parse ();
-}
-EOF
-
-    LDEMUL_BEFORE_PARSE=elf_x86_64_before_parse
-    ;;
-esac

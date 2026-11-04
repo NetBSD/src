@@ -1,10 +1,17 @@
 #include "jemalloc/internal/jemalloc_preamble.h"
-#include "jemalloc/internal/jemalloc_internal_includes.h"
 
+#include "jemalloc/internal/arenas_management.h"
 #include "jemalloc/internal/assert.h"
-#include "jemalloc/internal/san.h"
+#include "jemalloc/internal/background_thread.h"
+#include "jemalloc/internal/ckh.h"
 #include "jemalloc/internal/mutex.h"
+#include "jemalloc/internal/prof.h"
 #include "jemalloc/internal/rtree.h"
+#include "jemalloc/internal/san.h"
+#include "jemalloc/internal/tcache.h"
+#include "jemalloc/internal/thread_event.h"
+#include "jemalloc/internal/tsd.h"
+#include "jemalloc/internal/witness.h"
 
 /******************************************************************************/
 /* Data. */
@@ -16,15 +23,28 @@ JEMALLOC_DIAGNOSTIC_IGNORE_MISSING_STRUCT_FIELD_INITIALIZERS
 #ifdef JEMALLOC_MALLOC_THREAD_CLEANUP
 JEMALLOC_TSD_TYPE_ATTR(tsd_t) tsd_tls = TSD_INITIALIZER;
 JEMALLOC_TSD_TYPE_ATTR(bool) JEMALLOC_TLS_MODEL tsd_initialized = false;
+JEMALLOC_TLS_ADDR_DEFINE(tsd_tls)
+JEMALLOC_TLS_ADDR_DEFINE(tsd_initialized)
 bool tsd_booted = false;
 #elif (defined(JEMALLOC_TLS))
 JEMALLOC_TSD_TYPE_ATTR(tsd_t) tsd_tls = TSD_INITIALIZER;
+JEMALLOC_TLS_ADDR_DEFINE(tsd_tls)
 pthread_key_t tsd_tsd;
-bool tsd_booted = false;
+bool          tsd_booted = false;
 #elif (defined(_WIN32))
-DWORD tsd_tsd;
-tsd_wrapper_t tsd_boot_wrapper = {false, TSD_INITIALIZER};
+#	if defined(JEMALLOC_LEGACY_WINDOWS_SUPPORT) || !defined(_MSC_VER)
+DWORD         tsd_tsd;
+tsd_wrapper_t tsd_boot_wrapper = {TSD_INITIALIZER, false};
+#	else
+JEMALLOC_TSD_TYPE_ATTR(tsd_wrapper_t)
+tsd_wrapper_tls = {TSD_INITIALIZER, false};
+JEMALLOC_TLS_ADDR_DEFINE(tsd_wrapper_tls)
+#	endif
 bool tsd_booted = false;
+#	if JEMALLOC_WIN32_TLSGETVALUE2
+TGV2    tls_get_value2 = NULL;
+HMODULE tgv2_mod = NULL;
+#	endif
 #else
 
 /*
@@ -37,122 +57,21 @@ struct tsd_init_head_s {
 	malloc_mutex_t lock;
 };
 
-pthread_key_t tsd_tsd;
-tsd_init_head_t	tsd_init_head = {
-	ql_head_initializer(blocks),
-#ifndef __lint__
-	// XXX: broken lint
-	MALLOC_MUTEX_INITIALIZER
-#endif
-};
+pthread_key_t   tsd_tsd;
+pthread_key_t   tsd_thread_initialized_tsd;
+tsd_init_head_t tsd_init_head = {
+    ql_head_initializer(blocks), MALLOC_MUTEX_INITIALIZER};
 
-tsd_wrapper_t tsd_boot_wrapper = {
-	false,
-	TSD_INITIALIZER
-};
-bool tsd_booted = false;
+tsd_wrapper_t tsd_boot_wrapper = {false, TSD_INITIALIZER};
+bool          tsd_booted = false;
 #endif
 
 JEMALLOC_DIAGNOSTIC_POP
-
-/******************************************************************************/
-
-/* A list of all the tsds in the nominal state. */
-typedef ql_head(tsd_t) tsd_list_t;
-static tsd_list_t tsd_nominal_tsds = ql_head_initializer(tsd_nominal_tsds);
-static malloc_mutex_t tsd_nominal_tsds_lock;
-
-/* How many slow-path-enabling features are turned on. */
-static atomic_u32_t tsd_global_slow_count = ATOMIC_INIT(0);
-
-static bool
-tsd_in_nominal_list(tsd_t *tsd) {
-	tsd_t *tsd_list;
-	bool found = false;
-	/*
-	 * We don't know that tsd is nominal; it might not be safe to get data
-	 * out of it here.
-	 */
-	malloc_mutex_lock(TSDN_NULL, &tsd_nominal_tsds_lock);
-	ql_foreach(tsd_list, &tsd_nominal_tsds, TSD_MANGLE(tsd_link)) {
-		if (tsd == tsd_list) {
-			found = true;
-			break;
-		}
-	}
-	malloc_mutex_unlock(TSDN_NULL, &tsd_nominal_tsds_lock);
-	return found;
-}
-
-static void
-tsd_add_nominal(tsd_t *tsd) {
-	assert(!tsd_in_nominal_list(tsd));
-	assert(tsd_state_get(tsd) <= tsd_state_nominal_max);
-	ql_elm_new(tsd, TSD_MANGLE(tsd_link));
-	malloc_mutex_lock(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-	ql_tail_insert(&tsd_nominal_tsds, tsd, TSD_MANGLE(tsd_link));
-	malloc_mutex_unlock(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-}
-
-static void
-tsd_remove_nominal(tsd_t *tsd) {
-	assert(tsd_in_nominal_list(tsd));
-	assert(tsd_state_get(tsd) <= tsd_state_nominal_max);
-	malloc_mutex_lock(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-	ql_remove(&tsd_nominal_tsds, tsd, TSD_MANGLE(tsd_link));
-	malloc_mutex_unlock(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-}
-
-static void
-tsd_force_recompute(tsdn_t *tsdn) {
-	/*
-	 * The stores to tsd->state here need to synchronize with the exchange
-	 * in tsd_slow_update.
-	 */
-	atomic_fence(ATOMIC_RELEASE);
-	malloc_mutex_lock(tsdn, &tsd_nominal_tsds_lock);
-	tsd_t *remote_tsd;
-	ql_foreach(remote_tsd, &tsd_nominal_tsds, TSD_MANGLE(tsd_link)) {
-		assert(tsd_atomic_load(&remote_tsd->state, ATOMIC_RELAXED)
-		    <= tsd_state_nominal_max);
-		tsd_atomic_store(&remote_tsd->state,
-		    tsd_state_nominal_recompute, ATOMIC_RELAXED);
-		/* See comments in te_recompute_fast_threshold(). */
-		atomic_fence(ATOMIC_SEQ_CST);
-		te_next_event_fast_set_non_nominal(remote_tsd);
-	}
-	malloc_mutex_unlock(tsdn, &tsd_nominal_tsds_lock);
-}
-
-void
-tsd_global_slow_inc(tsdn_t *tsdn) {
-	atomic_fetch_add_u32(&tsd_global_slow_count, 1, ATOMIC_RELAXED);
-	/*
-	 * We unconditionally force a recompute, even if the global slow count
-	 * was already positive.  If we didn't, then it would be possible for us
-	 * to return to the user, have the user synchronize externally with some
-	 * other thread, and then have that other thread not have picked up the
-	 * update yet (since the original incrementing thread might still be
-	 * making its way through the tsd list).
-	 */
-	tsd_force_recompute(tsdn);
-}
-
-void tsd_global_slow_dec(tsdn_t *tsdn) {
-	atomic_fetch_sub_u32(&tsd_global_slow_count, 1, ATOMIC_RELAXED);
-	/* See the note in ..._inc(). */
-	tsd_force_recompute(tsdn);
-}
 
 static bool
 tsd_local_slow(tsd_t *tsd) {
 	return !tsd_tcache_enabled_get(tsd)
 	    || tsd_reentrancy_level_get(tsd) > 0;
-}
-
-bool
-tsd_global_slow(void) {
-	return atomic_load_u32(&tsd_global_slow_count, ATOMIC_RELAXED) > 0;
 }
 
 /******************************************************************************/
@@ -163,7 +82,7 @@ tsd_state_compute(tsd_t *tsd) {
 		return tsd_state_get(tsd);
 	}
 	/* We're in *a* nominal state; but which one? */
-	if (malloc_slow || tsd_local_slow(tsd) || tsd_global_slow()) {
+	if (malloc_slow || tsd_local_slow(tsd)) {
 		return tsd_state_nominal_slow;
 	} else {
 		return tsd_state_nominal;
@@ -172,53 +91,29 @@ tsd_state_compute(tsd_t *tsd) {
 
 void
 tsd_slow_update(tsd_t *tsd) {
-	uint8_t old_state;
-	do {
-		uint8_t new_state = tsd_state_compute(tsd);
-		old_state = tsd_atomic_exchange(&tsd->state, new_state,
-		    ATOMIC_ACQUIRE);
-	} while (old_state == tsd_state_nominal_recompute);
+	assert(!tsd_booted_get() || tsd_get(false) == tsd
+	    || (tsd_get_allocates() && tsd_get(false) == NULL));
+	tsd->state = tsd_state_compute(tsd);
 
 	te_recompute_fast_threshold(tsd);
 }
 
 void
 tsd_state_set(tsd_t *tsd, uint8_t new_state) {
-	/* Only the tsd module can change the state *to* recompute. */
-	assert(new_state != tsd_state_nominal_recompute);
-	uint8_t old_state = tsd_atomic_load(&tsd->state, ATOMIC_RELAXED);
-	if (old_state > tsd_state_nominal_max) {
+	assert(!tsd_booted_get() || tsd_get(false) == tsd
+	    || (tsd_get_allocates() && tsd_get(false) == NULL));
+	if (tsd->state <= tsd_state_nominal_max
+	    && new_state <= tsd_state_nominal_max) {
 		/*
-		 * Not currently in the nominal list, but it might need to be
-		 * inserted there.
+		 * We're transitioning from one nominal state to another.
+		 * Recompute the state from the underlying slow-path data rather
+		 * than trusting the caller's requested nominal state.
 		 */
-		assert(!tsd_in_nominal_list(tsd));
-		tsd_atomic_store(&tsd->state, new_state, ATOMIC_RELAXED);
-		if (new_state <= tsd_state_nominal_max) {
-			tsd_add_nominal(tsd);
-		}
+		tsd_slow_update(tsd);
 	} else {
-		/*
-		 * We're currently nominal.  If the new state is non-nominal,
-		 * great; we take ourselves off the list and just enter the new
-		 * state.
-		 */
-		assert(tsd_in_nominal_list(tsd));
-		if (new_state > tsd_state_nominal_max) {
-			tsd_remove_nominal(tsd);
-			tsd_atomic_store(&tsd->state, new_state,
-			    ATOMIC_RELAXED);
-		} else {
-			/*
-			 * This is the tricky case.  We're transitioning from
-			 * one nominal state to another.  The caller can't know
-			 * about any races that are occurring at the same time,
-			 * so we always have to recompute no matter what.
-			 */
-			tsd_slow_update(tsd);
-		}
+		tsd->state = new_state;
+		te_recompute_fast_threshold(tsd);
 	}
-	te_recompute_fast_threshold(tsd);
 }
 
 static void
@@ -230,8 +125,7 @@ tsd_prng_state_init(tsd_t *tsd) {
 	 * cost of test repeatability.  For debug builds, instead use a
 	 * deterministic seed.
 	 */
-	*tsd_prng_statep_get(tsd) = config_debug ? 0 :
-	    (uint64_t)(uintptr_t)tsd;
+	*tsd_prng_statep_get(tsd) = config_debug ? 0 : (uint64_t)(uintptr_t)tsd;
 }
 
 static bool
@@ -250,7 +144,6 @@ tsd_data_init(tsd_t *tsd) {
 static void
 assert_tsd_data_cleanup_done(tsd_t *tsd) {
 	assert(!tsd_nominal(tsd));
-	assert(!tsd_in_nominal_list(tsd));
 	assert(*tsd_arenap_get_unsafe(tsd) == NULL);
 	assert(*tsd_iarenap_get_unsafe(tsd) == NULL);
 	assert(*tsd_tcache_enabledp_get_unsafe(tsd) == false);
@@ -259,8 +152,8 @@ assert_tsd_data_cleanup_done(tsd_t *tsd) {
 
 static bool
 tsd_data_init_nocleanup(tsd_t *tsd) {
-	assert(tsd_state_get(tsd) == tsd_state_reincarnated ||
-	    tsd_state_get(tsd) == tsd_state_minimal_initialized);
+	assert(tsd_state_get(tsd) == tsd_state_reincarnated
+	    || tsd_state_get(tsd) == tsd_state_minimal_initialized);
 	/*
 	 * During reincarnation, there is no guarantee that the cleanup function
 	 * will be called (deallocation may happen after all tsd destructors).
@@ -283,13 +176,10 @@ tsd_fetch_slow(tsd_t *tsd, bool minimal) {
 
 	if (tsd_state_get(tsd) == tsd_state_nominal_slow) {
 		/*
-		 * On slow path but no work needed.  Note that we can't
-		 * necessarily *assert* that we're slow, because we might be
-		 * slow because of an asynchronous modification to global state,
-		 * which might be asynchronously modified *back*.
+		 * On slow path but no work needed.  Local slow-path state may
+		 * have changed since we computed the TSD state, so don't assert
+		 * on the underlying cause here.
 		 */
-	} else if (tsd_state_get(tsd) == tsd_state_nominal_recompute) {
-		tsd_slow_update(tsd);
 	} else if (tsd_state_get(tsd) == tsd_state_uninitialized) {
 		if (!minimal) {
 			if (tsd_booted) {
@@ -303,9 +193,25 @@ tsd_fetch_slow(tsd_t *tsd, bool minimal) {
 			tsd_state_set(tsd, tsd_state_minimal_initialized);
 			tsd_set(tsd);
 			tsd_data_init_nocleanup(tsd);
+			*tsd_min_init_state_nfetchedp_get(tsd) = 1;
 		}
 	} else if (tsd_state_get(tsd) == tsd_state_minimal_initialized) {
-		if (!minimal) {
+		/*
+		 * If a thread only ever deallocates (e.g. dedicated reclamation
+		 * threads), we want to help it to eventually escape the slow
+		 * path (caused by the minimal initialized state).  The nfetched
+		 * counter tracks the number of times the tsd has been accessed
+		 * under the min init state, and triggers the switch to nominal
+		 * once reached the max allowed count.
+		 *
+		 * This means at most 128 deallocations stay on the slow path.
+		 *
+		 * Also see comments in free_default().
+		 */
+		uint8_t *nfetched = tsd_min_init_state_nfetchedp_get(tsd);
+		assert(*nfetched >= 1);
+		(*nfetched)++;
+		if (!minimal || *nfetched == TSD_MIN_INIT_STATE_MAX_FETCHED) {
 			/* Switch to fully initialized. */
 			tsd_state_set(tsd, tsd_state_nominal);
 			assert(*tsd_reentrancy_levelp_get(tsd) >= 1);
@@ -336,20 +242,18 @@ malloc_tsd_dalloc(void *wrapper) {
 	a0dalloc(wrapper);
 }
 
-__BEGIN_DECLS
-void _malloc_thread_cleanup(void);
-__END_DECLS
-
 #if defined(JEMALLOC_MALLOC_THREAD_CLEANUP) || defined(_WIN32)
-static unsigned ncleanups;
+void
+_malloc_thread_cleanup(void);
+static unsigned             ncleanups;
 static malloc_tsd_cleanup_t cleanups[MALLOC_TSD_CLEANUPS_MAX];
 
-#ifndef _WIN32
+#	ifndef _WIN32
 JEMALLOC_EXPORT
-#endif
+#	endif
 void
 _malloc_thread_cleanup(void) {
-	bool pending[MALLOC_TSD_CLEANUPS_MAX], again;
+	bool     pending[MALLOC_TSD_CLEANUPS_MAX], again;
 	unsigned i;
 
 	for (i = 0; i < ncleanups; i++) {
@@ -369,9 +273,9 @@ _malloc_thread_cleanup(void) {
 	} while (again);
 }
 
-#ifndef _WIN32
+#	ifndef _WIN32
 JEMALLOC_EXPORT
-#endif
+#	endif
 void
 _malloc_tsd_cleanup_register(bool (*f)(void)) {
 	assert(ncleanups < MALLOC_TSD_CLEANUPS_MAX);
@@ -429,7 +333,7 @@ tsd_cleanup(void *arg) {
 	}
 #ifdef JEMALLOC_JET
 	test_callback_t test_callback = *tsd_test_callbackp_get_unsafe(tsd);
-	int *data = tsd_test_datap_get_unsafe(tsd);
+	int            *data = tsd_test_datap_get_unsafe(tsd);
 	if (test_callback != NULL) {
 		test_callback(data);
 	}
@@ -443,10 +347,6 @@ malloc_tsd_boot0(void) {
 #if defined(JEMALLOC_MALLOC_THREAD_CLEANUP) || defined(_WIN32)
 	ncleanups = 0;
 #endif
-	if (malloc_mutex_init(&tsd_nominal_tsds_lock, "tsd_nominal_tsds_lock",
-	    WITNESS_RANK_OMIT, malloc_mutex_rank_exclusive)) {
-		return NULL;
-	}
 	if (tsd_boot0()) {
 		return NULL;
 	}
@@ -466,11 +366,11 @@ malloc_tsd_boot1(void) {
 static BOOL WINAPI
 _tls_callback(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
 	switch (fdwReason) {
-#ifdef JEMALLOC_LAZY_LOCK
+#	ifdef JEMALLOC_LAZY_LOCK
 	case DLL_THREAD_ATTACH:
 		isthreaded = true;
 		break;
-#endif
+#	endif
 	case DLL_THREAD_DETACH:
 		_malloc_thread_cleanup();
 		break;
@@ -485,36 +385,49 @@ _tls_callback(HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) {
  * hooked "read". We won't read for the rest of the file, so we can get away
  * with unhooking.
  */
-#ifdef read
-#  undef read
+#	ifdef read
+#		undef read
+#	endif
+
+#	ifdef _MSC_VER
+#		ifdef _M_IX86
+#			pragma comment(linker, "/INCLUDE:__tls_used")
+#			pragma comment(linker, "/INCLUDE:_tls_callback")
+#		else
+#			pragma comment(linker, "/INCLUDE:_tls_used")
+#			pragma comment(                                       \
+			    linker, "/INCLUDE:" STRINGIFY(tls_callback))
+#		endif
+#		pragma section(".CRT$XLY", long, read)
+#	elif defined(__GNUC__)
+/*
+ * MinGW analog of the MSVC "/INCLUDE:_tls_used" directives above.  Referencing
+ * _tls_used forces the linker to pull in the CRT's TLS support (tlssup), which
+ * emits the PE TLS directory so the loader actually invokes our .CRT$XLY
+ * callback (_tls_callback) on DLL_THREAD_DETACH.  Without it, a statically
+ * linked MinGW binary (e.g. the unit tests) never runs per-thread TSD cleanup
+ * on thread exit.  The compiler applies the correct symbol decoration, so this
+ * works for both 32- and 64-bit targets.
+ */
+extern char _tls_used;
+JEMALLOC_ATTR(used) static char *const tls_used_ref = &_tls_used;
+#	endif
+JEMALLOC_SECTION(".CRT$XLY")
+JEMALLOC_ATTR(used) BOOL(WINAPI *const tls_callback)(
+    HINSTANCE hinstDLL, DWORD fdwReason, LPVOID lpvReserved) = _tls_callback;
 #endif
 
-#ifdef _MSC_VER
-#  ifdef _M_IX86
-#    pragma comment(linker, "/INCLUDE:__tls_used")
-#    pragma comment(linker, "/INCLUDE:_tls_callback")
-#  else
-#    pragma comment(linker, "/INCLUDE:_tls_used")
-#    pragma comment(linker, "/INCLUDE:" STRINGIFY(tls_callback) )
-#  endif
-#  pragma section(".CRT$XLY",long,read)
-#endif
-JEMALLOC_SECTION(".CRT$XLY") JEMALLOC_ATTR(used)
-BOOL	(WINAPI *const tls_callback)(HINSTANCE hinstDLL,
-    DWORD fdwReason, LPVOID lpvReserved) = _tls_callback;
-#endif
-
-#if (!defined(JEMALLOC_MALLOC_THREAD_CLEANUP) && !defined(JEMALLOC_TLS) && \
-    !defined(_WIN32))
+#if (!defined(JEMALLOC_MALLOC_THREAD_CLEANUP) && !defined(JEMALLOC_TLS)        \
+    && !defined(_WIN32))
 void *
 tsd_init_check_recursion(tsd_init_head_t *head, tsd_init_block_t *block) {
-	pthread_t self = pthread_self();
+	pthread_t         self = pthread_self();
 	tsd_init_block_t *iter;
 
 	/* Check whether this thread has already inserted into the list. */
 	malloc_mutex_lock(TSDN_NULL, &head->lock);
-	ql_foreach(iter, &head->blocks, link) {
-		if (iter->thread == self) {
+	ql_foreach (iter, &head->blocks, link) {
+		if (pthread_equal(iter->thread, self)) {
 			malloc_mutex_unlock(TSDN_NULL, &head->lock);
 			return iter->data;
 		}
@@ -534,23 +447,3 @@ tsd_init_finish(tsd_init_head_t *head, tsd_init_block_t *block) {
 	malloc_mutex_unlock(TSDN_NULL, &head->lock);
 }
 #endif
-
-void
-tsd_prefork(tsd_t *tsd) {
-	malloc_mutex_prefork(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-}
-
-void
-tsd_postfork_parent(tsd_t *tsd) {
-	malloc_mutex_postfork_parent(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-}
-
-void
-tsd_postfork_child(tsd_t *tsd) {
-	malloc_mutex_postfork_child(tsd_tsdn(tsd), &tsd_nominal_tsds_lock);
-	ql_new(&tsd_nominal_tsds);
-
-	if (tsd_state_get(tsd) <= tsd_state_nominal_max) {
-		tsd_add_nominal(tsd);
-	}
-}

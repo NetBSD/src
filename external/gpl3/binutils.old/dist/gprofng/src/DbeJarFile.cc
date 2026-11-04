@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -123,7 +123,7 @@ template<> void Vector<ZipEntry *>::dump (const char *msg)
 
 DbeJarFile::DbeJarFile (const char *jarName)
 {
-  name = strdup (jarName);
+  name = xstrdup (jarName);
   fnames = NULL;
   dwin = new Data_window (name);
   get_entries ();
@@ -211,7 +211,7 @@ DbeJarFile::get_entries ()
       char *nm = (char *) dwin->bind (offset + 46, name_len);
       if (nm)
 	{
-	  ze->name = (char *) malloc (name_len + 1);
+	  ze->name = (char *) xmalloc (name_len + 1);
 	  strncpy (ze->name, nm, name_len);
 	  ze->name[name_len] = 0;
 	}
@@ -320,7 +320,7 @@ DbeJarFile::copy (char *toFileNname, int fromEntryNum)
   strm.avail_in = ze->csize;
   strm.next_in = b;
   int retval = ze->size;
-  unsigned char *buf = (unsigned char *) malloc (ze->size);
+  unsigned char *buf = (unsigned char *) xmalloc (ze->size);
   for (;;)
     {
       strm.next_out = buf;

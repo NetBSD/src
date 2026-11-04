@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -512,7 +512,7 @@ DbeFile::find_in_classpath (char *filename, Vector<DbeFile*> *classPath)
     }
 }
 
-struct stat64 *
+dbe_stat_t *
 DbeFile::get_stat ()
 {
   if (sbuf.st_atim.tv_sec == 0)
@@ -529,8 +529,8 @@ DbeFile::compare (DbeFile *df)
 {
   if (df == NULL)
     return false;
-  struct stat64 *st1 = get_stat ();
-  struct stat64 *st2 = df->get_stat ();
+  dbe_stat_t *st1 = get_stat ();
+  dbe_stat_t *st2 = df->get_stat ();
   if (st1 == NULL || st2 == NULL)
     return false;
   if (st1->st_size != st2->st_size)

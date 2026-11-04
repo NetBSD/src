@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1345.2.2 2025/08/02 05:20:26 perseant Exp $
+# $NetBSD: mi,v 1.1345.2.3 2026/11/04 22:36:59 perseant Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -109,6 +109,9 @@
 ./etc/mtree					base-sys-root
 ./etc/mtree/set.base				base-sys-root
 ./etc/namedb					base-bind-root
+./etc/namedb/cache				base-bind-root
+./etc/namedb/keys				base-bind-root
+./etc/namedb/nta				base-bind-root
 ./etc/nsd					base-sys-root
 ./etc/obsolete					base-obsolete		obsolete
 ./etc/openldap					base-ldap-root
@@ -173,6 +176,7 @@
 ./libdata/firmware/if_iwi/ipw2200-ibss.fw	base-firmware-root	firmware
 ./libdata/firmware/if_iwi/ipw2200-sniffer.fw	base-firmware-root	firmware
 ./libdata/firmware/if_iwm			base-firmware-root
+./libdata/firmware/if_iwm/LICENCE.iwlwifi_firmware	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-3160-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-3168-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/LICENSE.iwlwifi-7260-ucode	base-firmware-root	firmware
@@ -189,6 +193,7 @@
 ./libdata/firmware/if_iwm/iwlwifi-3160-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-3160-9.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-3168-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-3168-29.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7260-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7260-17.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-7260-9.ucode	base-obsolete	obsolete
@@ -198,9 +203,12 @@
 ./libdata/firmware/if_iwm/iwlwifi-7265D-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-17.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-7265D-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-7265D-29.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-8000C-16.ucode	base-obsolete	obsolete
 ./libdata/firmware/if_iwm/iwlwifi-8000C-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-8000C-36.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwm/iwlwifi-8265-22.ucode	base-firmware-root	firmware
+./libdata/firmware/if_iwm/iwlwifi-8265-36.ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn			base-firmware-root
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-100-ucode	base-firmware-root	firmware
 ./libdata/firmware/if_iwn/LICENSE.iwlwifi-1000-ucode	base-firmware-root	firmware
@@ -327,7 +335,7 @@
 ./libexec/dhcpcd-hooks/30-hostname		base-dhcpcd-root
 ./libexec/dhcpcd-hooks/50-ntp.conf		base-dhcpcd-root
 ./libexec/dhcpcd-run-hooks			base-dhcpcd-root
-./libexec/lfs_cleanerd				base-sysutil-bin
+./libexec/lfs_cleanerd				base-sysutil-bin	lfs
 ./libexec/resolvconf				base-resolvconf-root
 ./libexec/resolvconf/dnsmasq			base-resolvconf-root
 ./libexec/resolvconf/libc			base-resolvconf-root
@@ -343,11 +351,11 @@
 ./rescue					base-sys-root
 ./root						base-sys-root
 ./sbin						base-sys-root
-./sbin/amrctl					base-sysutil-root
+./sbin/amrctl					base-sysutil-root	raid
 ./sbin/apmlabel					base-sysutil-root
 ./sbin/atactl					base-sysutil-root
 ./sbin/badsect					base-sysutil-root
-./sbin/bioctl					base-sysutil-root
+./sbin/bioctl					base-sysutil-root	raid
 ./sbin/blacklistctl				base-obsolete		obsolete
 ./sbin/blacklistd				base-obsolete		obsolete
 ./sbin/blkdiscard				base-sysutil-root
@@ -355,7 +363,7 @@
 ./sbin/blocklistd				base-sysutil-root
 ./sbin/brconfig					base-netutil-root
 ./sbin/canconfig				base-netutil-root
-./sbin/ccdconfig				base-sysutil-root
+./sbin/ccdconfig				base-sysutil-root	raid
 ./sbin/cgdconfig				base-sysutil-root
 ./sbin/chown					base-sysutil-root
 ./sbin/clri					base-sysutil-root
@@ -371,7 +379,7 @@
 ./sbin/dmsetup					base-lvm-root		lvm
 ./sbin/drvctl					base-sysutil-root
 ./sbin/dump					base-sysutil-root
-./sbin/dump_lfs					base-sysutil-root
+./sbin/dump_lfs					base-sysutil-root	lfs
 ./sbin/dumpfs					base-obsolete		obsolete
 ./sbin/dumplfs					base-obsolete		obsolete
 ./sbin/efi					base-sysutil-root	efi_rt
@@ -381,12 +389,12 @@
 ./sbin/fdisk					base-sysutil-root
 ./sbin/fsck					base-sysutil-root
 ./sbin/fsck_exfatfs				base-exfatfs-root	exfatfs
-./sbin/fsck_ext2fs				base-ext2fs-root
+./sbin/fsck_ext2fs				base-ext2fs-root	ext2fs
 ./sbin/fsck_ffs					base-sysutil-root
-./sbin/fsck_lfs					base-sysutil-root
-./sbin/fsck_msdos				base-sysutil-root
-./sbin/fsck_udf					base-sysutil-root
-./sbin/fsck_v7fs				base-sysutil-root
+./sbin/fsck_lfs					base-sysutil-root	lfs
+./sbin/fsck_msdos				base-sysutil-root	msdosfs
+./sbin/fsck_udf					base-sysutil-root	udf
+./sbin/fsck_v7fs				base-sysutil-root	v7fs
 ./sbin/fsdb					base-sysutil-root
 ./sbin/fsirand					base-sysutil-root
 ./sbin/gpt					base-sysutil-root
@@ -407,51 +415,51 @@
 ./sbin/modstat					base-sysutil-root
 ./sbin/modunload				base-sysutil-root
 ./sbin/mount					base-sysutil-root
-./sbin/mount_ados				base-adosfs-root
-./sbin/mount_autofs				base-sysutil-root
-./sbin/mount_cd9660				base-sysutil-root
-./sbin/mount_chfs				base-sysutil-root
-./sbin/mount_efs				base-efs-root
+./sbin/mount_ados				base-adosfs-root	adosfs
+./sbin/mount_autofs				base-sysutil-root	autofs
+./sbin/mount_cd9660				base-sysutil-root	cd9660fs
+./sbin/mount_chfs				base-sysutil-root	chfs
+./sbin/mount_efs				base-efs-root		efs
 ./sbin/mount_exfatfs				base-exfatfs-root	exfatfs
-./sbin/mount_ext2fs				base-ext2fs-root
-./sbin/mount_fdesc				base-miscfs-root
+./sbin/mount_ext2fs				base-ext2fs-root	ext2fs
+./sbin/mount_fdesc				base-miscfs-root	fdescfs
 ./sbin/mount_ffs				base-sysutil-root
-./sbin/mount_filecore				base-filecorefs-root
-./sbin/mount_hfs				base-hfs-root
+./sbin/mount_filecore				base-filecorefs-root	filecorefs
+./sbin/mount_hfs				base-hfs-root		hfs
 ./sbin/mount_hfsp				base-obsolete		obsolete
-./sbin/mount_kernfs				base-sysutil-root
-./sbin/mount_lfs				base-sysutil-root
+./sbin/mount_kernfs				base-sysutil-root	kernfs
+./sbin/mount_lfs				base-sysutil-root	lfs
 ./sbin/mount_mfs				base-sysutil-root
-./sbin/mount_msdos				base-sysutil-root
-./sbin/mount_nfs				base-nfsclient-root
-./sbin/mount_nilfs				base-sysutil-root
-./sbin/mount_ntfs				base-ntfs-root
-./sbin/mount_null				base-miscfs-root
-./sbin/mount_overlay				base-miscfs-root
+./sbin/mount_msdos				base-sysutil-root	msdosfs
+./sbin/mount_nfs				base-nfsclient-root	nfs
+./sbin/mount_nilfs				base-sysutil-root	nilfs
+./sbin/mount_ntfs				base-ntfs-root		ntfs
+./sbin/mount_null				base-miscfs-root	nullfs
+./sbin/mount_overlay				base-miscfs-root	overlayfs
 ./sbin/mount_portal				base-puffs-bin
-./sbin/mount_procfs				base-sysutil-root
-./sbin/mount_ptyfs				base-miscfs-root
+./sbin/mount_procfs				base-sysutil-root	procfs
+./sbin/mount_ptyfs				base-miscfs-root	ptyfs
 ./sbin/mount_puffs				base-sysutil-root
-./sbin/mount_qemufwcfg				base-sysutil-root
+./sbin/mount_qemufwcfg				base-sysutil-root	qemufwcfg
 ./sbin/mount_smbfs				base-obsolete		obsolete
-./sbin/mount_sysvbfs				base-sysutil-root
-./sbin/mount_tmpfs				base-miscfs-root
-./sbin/mount_udf				base-sysutil-root
+./sbin/mount_sysvbfs				base-sysutil-root	sysvbfs
+./sbin/mount_tmpfs				base-miscfs-root	tmpfs
+./sbin/mount_udf				base-sysutil-root	udf
 ./sbin/mount_ufs				base-sysutil-root
-./sbin/mount_umap				base-miscfs-root
-./sbin/mount_union				base-miscfs-root
-./sbin/mount_v7fs				base-sysutil-root
+./sbin/mount_umap				base-miscfs-root	umapfs
+./sbin/mount_union				base-miscfs-root	unionfs
+./sbin/mount_v7fs				base-sysutil-root	v7fs
 ./sbin/mount_zfs				base-zfs-root		zfs
 ./sbin/mountd					base-obsolete		obsolete
 ./sbin/newbtconf				base-sysutil-root
 ./sbin/newfs					base-sysutil-root
 ./sbin/newfs_exfatfs				base-sysutil-root	exfatfs
-./sbin/newfs_ext2fs				base-sysutil-root
-./sbin/newfs_lfs				base-sysutil-root
-./sbin/newfs_msdos				base-sysutil-root
-./sbin/newfs_sysvbfs				base-sysutil-root
-./sbin/newfs_udf				base-sysutil-root
-./sbin/newfs_v7fs				base-sysutil-root
+./sbin/newfs_ext2fs				base-sysutil-root	ext2fs
+./sbin/newfs_lfs				base-sysutil-root	lfs
+./sbin/newfs_msdos				base-sysutil-root	msdosfs
+./sbin/newfs_sysvbfs				base-sysutil-root	sysvbfs
+./sbin/newfs_udf				base-sysutil-root	udf
+./sbin/newfs_v7fs				base-sysutil-root	v7fs
 ./sbin/newlfs					base-obsolete		obsolete
 ./sbin/nfsd					base-obsolete		obsolete
 ./sbin/nfsiod					base-obsolete		obsolete
@@ -467,13 +475,13 @@
 ./sbin/poweroff					base-sysutil-root
 ./sbin/pppoectl					base-netutil-root
 ./sbin/quotacheck				base-obsolete		obsolete
-./sbin/raidctl					base-sysutil-root
+./sbin/raidctl					base-sysutil-root	raid
 ./sbin/rcorder					base-sysutil-root
 ./sbin/rdump					base-sysutil-root
-./sbin/rdump_lfs				base-sysutil-root
+./sbin/rdump_lfs				base-sysutil-root	lfs
 ./sbin/reboot					base-sysutil-root
 ./sbin/resize_ffs				base-sysutil-root
-./sbin/resize_lfs				base-sysutil-root
+./sbin/resize_lfs				base-sysutil-root	lfs
 ./sbin/resolvconf				base-resolvconf-root
 ./sbin/restore					base-sysutil-root
 ./sbin/rndctl					base-sysutil-root
@@ -493,9 +501,9 @@
 ./sbin/rump.sysctl				base-sysutil-root	rump
 ./sbin/savecore					base-sysutil-root
 ./sbin/scan_ffs					base-sysutil-root
-./sbin/scan_lfs					base-sysutil-root
+./sbin/scan_lfs					base-sysutil-root	lfs
 ./sbin/scsictl					base-sysutil-root
-./sbin/setkey					base-netutil-root
+./sbin/setkey					base-netutil-root	ipsec
 ./sbin/shutdown					base-sysutil-root
 ./sbin/slattach					base-slip-root
 ./sbin/svhlabel					base-sysutil-root
@@ -505,7 +513,7 @@
 ./sbin/tbrconfig				base-router-root
 ./sbin/ttyflags					base-sysutil-root
 ./sbin/tunefs					base-sysutil-root
-./sbin/umbctl					base-netutil-root
+./sbin/umbctl					base-netutil-root	usb
 ./sbin/umount					base-sysutil-root
 ./sbin/veriexecctl				base-sysutil-root
 ./sbin/verifiedexec_load			base-obsolete		obsolete
@@ -520,10 +528,10 @@
 ./usr/bin					base-sys-usr
 ./usr/bin/Mail					base-obsolete		obsolete
 ./usr/bin/agrep					base-util-bin
-./usr/bin/aiomixer				base-audio-bin
+./usr/bin/aiomixer				base-audio-bin		audio
 ./usr/bin/apply					base-util-bin
 ./usr/bin/apropos				base-man-bin
-./usr/bin/arpaname				base-bind-bin
+./usr/bin/arpaname				base-bind-bin		bind
 ./usr/bin/at					base-cron-bin
 ./usr/bin/atf-check				base-obsolete		obsolete
 ./usr/bin/atf-config				base-atf-bin		atf,!kyua
@@ -538,10 +546,11 @@
 ./usr/bin/atf2kyua				base-kyua-bin		kyua
 ./usr/bin/atq					base-cron-bin
 ./usr/bin/atrm					base-cron-bin
-./usr/bin/audiocfg				base-audio-bin
-./usr/bin/audioctl				base-audio-bin
-./usr/bin/audioplay				base-audio-bin
-./usr/bin/audiorecord				base-audio-bin
+./usr/bin/atto					base-util-bin
+./usr/bin/audiocfg				base-audio-bin		audio
+./usr/bin/audioctl				base-audio-bin		audio
+./usr/bin/audioplay				base-audio-bin		audio
+./usr/bin/audiorecord				base-audio-bin		audio
 ./usr/bin/awk					base-util-bin
 ./usr/bin/banner				base-util-bin
 ./usr/bin/base64				base-util-bin
@@ -550,9 +559,9 @@
 ./usr/bin/bc					base-util-bin
 ./usr/bin/bdes					base-crypto-bin
 ./usr/bin/biff					base-mail-bin
-./usr/bin/bthset				base-util-bin
-./usr/bin/btkey					base-util-bin
-./usr/bin/btpin					base-util-bin
+./usr/bin/bthset				base-util-bin		bluetooth
+./usr/bin/btkey					base-util-bin		bluetooth
+./usr/bin/btpin					base-util-bin		bluetooth
 ./usr/bin/bunzip2				base-util-bin
 ./usr/bin/bzcat					base-util-bin
 ./usr/bin/bzip2					base-util-bin
@@ -588,11 +597,11 @@
 ./usr/bin/cut					base-util-bin
 ./usr/bin/db					base-util-bin
 ./usr/bin/dc					base-util-bin
-./usr/bin/delv					base-bind-bin
+./usr/bin/delv					base-bind-bin		bind
 ./usr/bin/deroff				base-util-bin
 ./usr/bin/diff					base-util-bin
 ./usr/bin/diff3					base-util-bin
-./usr/bin/dig					base-netutil-bin
+./usr/bin/dig					base-netutil-bin	bind
 ./usr/bin/dirname				base-util-bin
 ./usr/bin/dns-sd				base-mdns-bin		mdns
 ./usr/bin/dnsquery				base-obsolete	obsolete
@@ -606,9 +615,9 @@
 ./usr/bin/expand				base-util-bin
 ./usr/bin/false					base-util-bin
 ./usr/bin/fgrep					base-util-bin
-./usr/bin/fido2-assert				base-util-bin
-./usr/bin/fido2-cred				base-util-bin
-./usr/bin/fido2-token				base-util-bin
+./usr/bin/fido2-assert				base-util-bin		fido2
+./usr/bin/fido2-cred				base-util-bin		fido2
+./usr/bin/fido2-token				base-util-bin		fido2
 ./usr/bin/file					base-util-bin
 ./usr/bin/fincore				base-util-bin
 ./usr/bin/find					base-util-bin
@@ -642,21 +651,18 @@
 ./usr/bin/head					base-util-bin
 ./usr/bin/hesinfo				base-hesiod-bin		hesiod
 ./usr/bin/hexdump				base-util-bin
-./usr/bin/host					base-netutil-bin
+./usr/bin/host					base-netutil-bin	bind
 ./usr/bin/hoststat				base-mailwrapper-bin
 ./usr/bin/hxtool				base-krb5-bin		kerberos
-./usr/bin/iasl					base-util-bin		acpi
 ./usr/bin/iconv					base-util-bin
 ./usr/bin/id					base-util-bin
 ./usr/bin/ident					base-util-bin
-./usr/bin/indent				base-c-bin
 ./usr/bin/info					base-texinfo-bin
 ./usr/bin/infocmp				base-util-bin
 ./usr/bin/innetgr				base-nis-bin
 ./usr/bin/install				base-util-bin
 ./usr/bin/install-info				base-texinfo-bin
 ./usr/bin/install-sid				base-gnats-bin
-./usr/bin/ioctlprint				base-debug-bin
 ./usr/bin/ipcrm					base-util-bin
 ./usr/bin/ipcs					base-util-bin
 ./usr/bin/join					base-util-bin
@@ -722,7 +728,7 @@
 ./usr/bin/md2					base-util-bin
 ./usr/bin/md4					base-util-bin
 ./usr/bin/md5					base-util-bin
-./usr/bin/mdig					base-bind-bin
+./usr/bin/mdig					base-bind-bin		 bind
 ./usr/bin/merge					base-util-bin
 ./usr/bin/mesg					base-util-bin
 ./usr/bin/midiplay				base-audio-bin
@@ -730,7 +736,6 @@
 ./usr/bin/mixerctl				base-audio-bin
 ./usr/bin/mk_cmds				base-obsolete		obsolete
 ./usr/bin/mkcsmapper				base-util-bin
-./usr/bin/mkdep					base-c-bin
 ./usr/bin/mkesdb				base-util-bin
 ./usr/bin/mkfifo				base-util-bin
 ./usr/bin/mklocale				base-locale-bin
@@ -739,6 +744,7 @@
 ./usr/bin/more					base-util-bin
 ./usr/bin/mset					base-obsolete		obsolete
 ./usr/bin/msgs					base-util-bin
+./usr/bin/natto					base-util-bin
 ./usr/bin/nbsvtool				base-crypto-bin
 ./usr/bin/nc					base-netutil-bin
 ./usr/bin/netgroup				base-nis-bin
@@ -750,12 +756,12 @@
 ./usr/bin/newgrp				base-util-bin
 ./usr/bin/newsyslog				base-util-bin
 ./usr/bin/nex					base-obsolete		obsolete
-./usr/bin/nfsstat				base-nfsclient-bin
+./usr/bin/nfsstat				base-nfsclient-bin	nfs
 ./usr/bin/nice					base-util-bin
 ./usr/bin/nl					base-util-bin
 ./usr/bin/nohup					base-util-bin
-./usr/bin/nslookup				base-netutil-bin
-./usr/bin/nsupdate				base-netutil-bin
+./usr/bin/nslookup				base-netutil-bin	bind
+./usr/bin/nsupdate				base-netutil-bin	bind
 ./usr/bin/nvi					base-obsolete		obsolete
 ./usr/bin/nview					base-obsolete		obsolete
 ./usr/bin/od					base-util-bin
@@ -802,7 +808,7 @@
 ./usr/bin/resize				base-util-bin
 ./usr/bin/rev					base-util-bin
 ./usr/bin/revoke				base-util-bin
-./usr/bin/rfcomm_sppd				base-util-bin
+./usr/bin/rfcomm_sppd				base-util-bin		bluetooth
 ./usr/bin/rlog					base-rcs-bin
 ./usr/bin/rlogin				base-netutil-bin
 ./usr/bin/rmd160				base-util-bin
@@ -823,15 +829,15 @@
 ./usr/bin/rwall					base-netutil-bin
 ./usr/bin/rwho					base-netutil-bin
 ./usr/bin/scmdctl				base-util-bin
-./usr/bin/scp					base-secsh-bin
+./usr/bin/scp					base-secsh-bin		ssh
 ./usr/bin/script				base-util-bin
 ./usr/bin/sdiff					base-util-bin
-./usr/bin/sdpquery				base-util-bin
+./usr/bin/sdpquery				base-util-bin		bluetooth
 ./usr/bin/sed					base-util-bin
 ./usr/bin/send-pr				base-gnats-bin
 ./usr/bin/seq					base-util-bin
 ./usr/bin/setextattr				base-util-bin
-./usr/bin/sftp					base-secsh-bin
+./usr/bin/sftp					base-secsh-bin		ssh
 ./usr/bin/sha1					base-util-bin
 ./usr/bin/sha256				base-util-bin
 ./usr/bin/sha384				base-util-bin
@@ -840,25 +846,25 @@
 ./usr/bin/shlock				base-util-bin
 ./usr/bin/shmif_dumpbus				base-util-bin		rump
 ./usr/bin/shmif_pcapin				base-util-bin		rump
-./usr/bin/showmount				base-nfsclient-bin
+./usr/bin/showmount				base-nfsclient-bin	nfs
 ./usr/bin/shuffle				base-util-bin
 ./usr/bin/skey					base-util-bin		skey
 ./usr/bin/skeyaudit				base-util-bin		skey
 ./usr/bin/skeyinfo				base-util-bin		skey
 ./usr/bin/skeyinit				base-util-bin		skey
-./usr/bin/slogin				base-secsh-bin
+./usr/bin/slogin				base-secsh-bin		ssh
 ./usr/bin/smbutil				base-obsolete		obsolete
 ./usr/bin/sockstat				base-util-bin
 ./usr/bin/sort					base-util-bin
 ./usr/bin/spell					base-util-bin
 ./usr/bin/split					base-util-bin
 ./usr/bin/sqlite3				base-util-bin
-./usr/bin/ssh					base-secsh-bin
-./usr/bin/ssh-add				base-secsh-bin
-./usr/bin/ssh-agent				base-secsh-bin
-./usr/bin/ssh-copy-id				base-secsh-bin
-./usr/bin/ssh-keygen				base-secsh-bin
-./usr/bin/ssh-keyscan				base-secsh-bin
+./usr/bin/ssh					base-secsh-bin		ssh
+./usr/bin/ssh-add				base-secsh-bin		ssh
+./usr/bin/ssh-agent				base-secsh-bin		ssh
+./usr/bin/ssh-copy-id				base-secsh-bin		ssh
+./usr/bin/ssh-keygen				base-secsh-bin		ssh
+./usr/bin/ssh-keyscan				base-secsh-bin		ssh
 ./usr/bin/stat					base-util-bin
 ./usr/bin/string2key				base-krb5-bin		kerberos
 ./usr/bin/su					base-util-bin
@@ -908,8 +914,8 @@
 ./usr/bin/unzip					base-util-bin
 ./usr/bin/unzstd				base-util-bin
 ./usr/bin/uptime				base-util-bin
-./usr/bin/usbhidaction				base-util-bin
-./usr/bin/usbhidctl				base-util-bin
+./usr/bin/usbhidaction				base-util-bin		usb
+./usr/bin/usbhidctl				base-util-bin		usb
 ./usr/bin/users					base-util-bin
 ./usr/bin/utoppya				base-util-bin
 ./usr/bin/uucp					base-obsolete		obsolete
@@ -1096,10 +1102,13 @@
 ./usr/include/g++/tr1				base-cxx-usr
 ./usr/include/g++/tr1_impl			base-cxx-usr
 ./usr/include/g++/tr2				base-cxx-usr
-./usr/include/gcc-10				base-c-usr
-./usr/include/gcc-10/sanitizer			base-c-usr
+./usr/include/gcc-10				base-obsolete		obsolete
+./usr/include/gcc-10/sanitizer			base-obsolete		obsolete
 ./usr/include/gcc-12				base-c-usr
 ./usr/include/gcc-12/sanitizer			base-c-usr
+./usr/include/gcc-14				base-c-usr
+./usr/include/gcc-14/finclude			base-c-usr
+./usr/include/gcc-14/sanitizer			base-c-usr
 ./usr/include/gcc-4.1				base-obsolete		obsolete
 ./usr/include/gcc-4.5				base-obsolete		obsolete
 ./usr/include/gcc-4.8				base-obsolete		obsolete
@@ -1240,6 +1249,7 @@
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		compatfile,pic,openssl=30
 ./usr/lib/openssl/modules/legacy.so		base-crypto-usr		compatfile,pic,openssl=35
 ./usr/lib/postfix				base-postfix-usr
+./usr/lib/private				base-sys-usr		compatfile
 ./usr/lib/runemodule				base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.a			base-obsolete		obsolete
 ./usr/lib/runemodule/libBIG5.so			base-obsolete		obsolete
@@ -1285,6 +1295,7 @@
 ./usr/libdata/debug/usr/lib/i18n		base-i18n-root		compatfile
 ./usr/libdata/debug/usr/lib/named		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/lib/npf			base-obsolete		obsolete
+./usr/libdata/debug/usr/lib/private		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/lib/security		base-sys-usr		compatfile
 ./usr/libdata/debug/usr/libexec			base-sys-usr
 ./usr/libdata/debug/usr/libexec/ching		base-sys-usr
@@ -1385,7 +1396,7 @@
 ./usr/libexec/rexecd				base-netutil-bin
 ./usr/libexec/rlogind				base-netutil-bin
 ./usr/libexec/rmail				base-obsolete		obsolete
-./usr/libexec/rpc.rquotad			base-nfsserver-bin
+./usr/libexec/rpc.rquotad			base-nfsserver-bin	nfs
 ./usr/libexec/rpc.rstatd			base-rpcserver-bin
 ./usr/libexec/rpc.rusersd			base-rpcserver-bin
 ./usr/libexec/rpc.rwalld			base-rpcserver-bin
@@ -1393,18 +1404,18 @@
 ./usr/libexec/rshd				base-netutil-bin
 ./usr/libexec/sendmail				base-obsolete		obsolete
 ./usr/libexec/sendmail/sendmail			base-obsolete		obsolete
-./usr/libexec/sftp-server			base-secsh-bin
+./usr/libexec/sftp-server			base-secsh-bin		ssh
 ./usr/libexec/sm.bin				base-obsolete		obsolete
 ./usr/libexec/smrsh				base-obsolete		obsolete
 ./usr/libexec/spamd				base-obsolete		obsolete
 ./usr/libexec/spamd-setup			base-obsolete		obsolete
 ./usr/libexec/spamlogd				base-obsolete		obsolete
 ./usr/libexec/spellprog				base-util-bin
-./usr/libexec/ssh-keysign			base-secsh-bin
-./usr/libexec/ssh-pkcs11-helper			base-secsh-bin
-./usr/libexec/ssh-sk-helper			base-secsh-bin
-./usr/libexec/sshd-auth				base-secsh-bin
-./usr/libexec/sshd-session			base-secsh-bin
+./usr/libexec/ssh-keysign			base-secsh-bin		ssh
+./usr/libexec/ssh-pkcs11-helper			base-secsh-bin		ssh
+./usr/libexec/ssh-sk-helper			base-secsh-bin		ssh,fido2
+./usr/libexec/sshd-auth				base-secsh-bin		ssh
+./usr/libexec/sshd-session			base-secsh-bin		ssh
 ./usr/libexec/telnetd				base-netutil-bin
 ./usr/libexec/tftp-proxy			base-pf-bin		pf
 ./usr/libexec/tftpd				base-netutil-bin
@@ -1463,21 +1474,21 @@
 ./usr/sbin/arp					base-netutil-bin
 ./usr/sbin/audit-packages			base-pkgutil-bin
 ./usr/sbin/authpf				base-pf-bin		pf
-./usr/sbin/automount				base-sysutil-root
-./usr/sbin/automountd				base-sysutil-root
-./usr/sbin/autounmountd				base-sysutil-root
+./usr/sbin/automount				base-sysutil-root	autofs
+./usr/sbin/automountd				base-sysutil-root	autofs
+./usr/sbin/autounmountd				base-sysutil-root	autofs
 ./usr/sbin/bootpd				base-bootserver-bin
 ./usr/sbin/bootpef				base-bootserver-bin
 ./usr/sbin/bootpgw				base-bootserver-bin
 ./usr/sbin/bootptest				base-bootserver-bin
 ./usr/sbin/bpm					base-obsolete		obsolete
-./usr/sbin/bta2dpd				base-sysutil-bin
-./usr/sbin/btattach				base-sysutil-bin
-./usr/sbin/btconfig				base-sysutil-bin
+./usr/sbin/bta2dpd				base-sysutil-bin	bluetooth
+./usr/sbin/btattach				base-sysutil-bin	bluetooth
+./usr/sbin/btconfig				base-sysutil-bin	bluetooth
 ./usr/sbin/btcontrol				base-obsolete		obsolete
-./usr/sbin/btdevctl				base-sysutil-bin
-./usr/sbin/bthcid				base-sysutil-bin
-./usr/sbin/btpand				base-sysutil-bin
+./usr/sbin/btdevctl				base-sysutil-bin	bluetooth
+./usr/sbin/bthcid				base-sysutil-bin	bluetooth
+./usr/sbin/btpand				base-sysutil-bin	bluetooth
 ./usr/sbin/btuartd				base-obsolete		obsolete
 ./usr/sbin/catman				base-man-bin
 ./usr/sbin/certctl				base-sysutil-bin
@@ -1485,37 +1496,37 @@
 ./usr/sbin/chown				base-sysutil-bin
 ./usr/sbin/chroot				base-sysutil-bin
 ./usr/sbin/chrtbl				base-obsolete		obsolete
-./usr/sbin/cnwctl				base-netutil-bin
+./usr/sbin/cnwctl				base-netutil-bin	wlan
 ./usr/sbin/cpuctl				base-sysutil-bin
 ./usr/sbin/crash				base-sysutil-bin
 ./usr/sbin/cron					base-cron-bin
 ./usr/sbin/daicctl				base-obsolete		obsolete
 ./usr/sbin/dbsym				base-sysutil-bin	binutils
-./usr/sbin/ddns-confgen				base-bind-bin
+./usr/sbin/ddns-confgen				base-bind-bin		bind
 ./usr/sbin/dev_mkdb				base-sysutil-bin
 ./usr/sbin/dhcpd				base-dhcpd-bin
 ./usr/sbin/dhcrelay				base-dhcpd-bin
 ./usr/sbin/dig					base-obsolete		obsolete
 ./usr/sbin/diskpart				base-sysutil-bin
 ./usr/sbin/dnsquery				base-obsolete		obsolete
-./usr/sbin/dnssec-cds				base-bind-bin
-./usr/sbin/dnssec-dsfromkey			base-bind-bin
-./usr/sbin/dnssec-importkey			base-bind-bin
-./usr/sbin/dnssec-keyfromlabel			base-bind-bin
-./usr/sbin/dnssec-keygen			base-bind-bin
+./usr/sbin/dnssec-cds				base-bind-bin		bind
+./usr/sbin/dnssec-dsfromkey			base-bind-bin		bind
+./usr/sbin/dnssec-importkey			base-bind-bin		bind
+./usr/sbin/dnssec-keyfromlabel			base-bind-bin		bind
+./usr/sbin/dnssec-keygen			base-bind-bin		bind
 ./usr/sbin/dnssec-makekeyset			base-obsolete		obsolete
-./usr/sbin/dnssec-revoke			base-bind-bin
-./usr/sbin/dnssec-settime			base-bind-bin
+./usr/sbin/dnssec-revoke			base-bind-bin		bind
+./usr/sbin/dnssec-settime			base-bind-bin		bind
 ./usr/sbin/dnssec-signkey			base-obsolete		obsolete
-./usr/sbin/dnssec-signzone			base-bind-bin
-./usr/sbin/dnssec-verify			base-bind-bin
+./usr/sbin/dnssec-signzone			base-bind-bin		bind
+./usr/sbin/dnssec-verify			base-bind-bin		bind
 ./usr/sbin/download-vulnerability-list		base-pkgutil-bin
 ./usr/sbin/dtmfdecode				base-obsolete		obsolete
 ./usr/sbin/dtrace				base-debug-bin		dtrace
 ./usr/sbin/dtruss				base-debug-bin		dtrace
 ./usr/sbin/dumpfs				base-sysutil-bin
 ./usr/sbin/dumpexfatfs				base-sysutil-bin	exfatfs
-./usr/sbin/dumplfs				base-sysutil-bin
+./usr/sbin/dumplfs				base-sysutil-bin	lfs
 ./usr/sbin/eaytest				base-obsolete		obsolete
 ./usr/sbin/editmap				base-obsolete		obsolete
 ./usr/sbin/edquota				base-sysutil-bin
@@ -1546,11 +1557,11 @@
 ./usr/sbin/groupdel				base-sysutil-bin
 ./usr/sbin/groupinfo				base-sysutil-bin
 ./usr/sbin/groupmod				base-sysutil-bin
-./usr/sbin/hdaudioctl				base-sysutil-bin
+./usr/sbin/hdaudioctl				base-sysutil-bin	audio
 ./usr/sbin/hlfsd				base-amd-bin
 ./usr/sbin/host					base-obsolete		obsolete
-./usr/sbin/hostapd				base-sysutil-bin
-./usr/sbin/hostapd_cli				base-sysutil-bin
+./usr/sbin/hostapd				base-sysutil-bin	wlan
+./usr/sbin/hostapd_cli				base-sysutil-bin	wlan
 ./usr/sbin/hprop				base-krb5-bin		kerberos
 ./usr/sbin/htable				base-obsolete		obsolete
 ./usr/sbin/i2cscan				base-sysutil-bin
@@ -1559,7 +1570,7 @@
 ./usr/sbin/inetd				base-netutil-bin
 ./usr/sbin/installboot				base-sysutil-bin
 ./usr/sbin/intrctl				base-sysutil-bin
-./usr/sbin/iopctl				base-sysutil-bin
+./usr/sbin/iopctl				base-sysutil-bin	raid
 ./usr/sbin/iostat				base-sysutil-bin
 ./usr/sbin/ip6addrctl				base-netutil-bin	inet6
 ./usr/sbin/ipfs					base-ipf-bin		ipfilter
@@ -1582,7 +1593,7 @@
 ./usr/sbin/isdntrace				base-obsolete		obsolete
 ./usr/sbin/isibootd				base-bootserver-bin
 ./usr/sbin/ispppcontrol				base-obsolete		obsolete
-./usr/sbin/iwictl				base-sysutil-bin
+./usr/sbin/iwictl				base-sysutil-bin	wlan
 ./usr/sbin/kadmin				base-krb5-bin		kerberos
 ./usr/sbin/kcm					base-krb5-bin		kerberos
 ./usr/sbin/kdc					base-krb5-bin		kerberos
@@ -1618,7 +1629,7 @@
 ./usr/sbin/mkalias				base-nis-bin		yp
 ./usr/sbin/mknetid				base-nis-bin		yp
 ./usr/sbin/mld6query				base-netutil-bin	use_inet6
-./usr/sbin/mlxctl				base-sysutil-bin
+./usr/sbin/mlxctl				base-sysutil-bin	raid
 ./usr/sbin/mmcformat				base-sysutil-bin
 ./usr/sbin/mopa.out				base-obsolete		obsolete
 ./usr/sbin/mopchk				base-bootserver-bin
@@ -1630,7 +1641,7 @@
 ./usr/sbin/mount_psshfs				base-puffs-bin
 ./usr/sbin/mount_puffsportal			base-obsolete		obsolete
 ./usr/sbin/mount_sysctlfs			base-puffs-bin
-./usr/sbin/mountd				base-nfsserver-bin
+./usr/sbin/mountd				base-nfsserver-bin	nfs
 ./usr/sbin/moused				base-sysutil-bin
 ./usr/sbin/mrinfo				base-router-bin
 ./usr/sbin/mrouted				base-router-bin
@@ -1638,13 +1649,13 @@
 ./usr/sbin/mtrace				base-netutil-bin
 ./usr/sbin/mtrace6				base-obsolete		obsolete
 ./usr/sbin/mtree				base-sysutil-bin
-./usr/sbin/named				base-bind-bin
+./usr/sbin/named				base-bind-bin		bind
 ./usr/sbin/named-bootconf			base-obsolete		obsolete
-./usr/sbin/named-checkconf			base-bind-bin
-./usr/sbin/named-checkzone			base-bind-bin
-./usr/sbin/named-compilezone			base-bind-bin
-./usr/sbin/named-journalprint			base-bind-bin
-./usr/sbin/named-rrchecker			base-bind-bin
+./usr/sbin/named-checkconf			base-bind-bin		bind
+./usr/sbin/named-checkzone			base-bind-bin		bind
+./usr/sbin/named-compilezone			base-bind-bin		bind
+./usr/sbin/named-journalprint			base-bind-bin		bind
+./usr/sbin/named-rrchecker			base-bind-bin		bind
 ./usr/sbin/named.reload				base-obsolete		obsolete
 ./usr/sbin/named.restart			base-obsolete		obsolete
 ./usr/sbin/ncdcs				base-sysutil-root	binutils
@@ -1652,7 +1663,7 @@
 ./usr/sbin/ndc					base-obsolete		obsolete
 ./usr/sbin/ndp					base-netutil-bin	inet6
 ./usr/sbin/netgroup_mkdb			base-nis-bin
-./usr/sbin/nfsd					base-nfsserver-bin
+./usr/sbin/nfsd					base-nfsserver-bin	nfs
 ./usr/sbin/nfsiod				base-obsolete		obsolete
 ./usr/sbin/npfctl				base-obsolete		obsolete
 ./usr/sbin/npfd					base-npf-bin		npf
@@ -1662,7 +1673,7 @@
 ./usr/sbin/nsd-checkzone			base-nsd-bin		nsd
 ./usr/sbin/nsd-control				base-nsd-bin		nsd
 ./usr/sbin/nsd-control-setup			base-nsd-bin		nsd
-./usr/sbin/nsec3hash				base-bind-bin
+./usr/sbin/nsec3hash				base-bind-bin		bind
 ./usr/sbin/nslookup				base-obsolete		obsolete
 ./usr/sbin/nsquery				base-obsolete		obsolete
 ./usr/sbin/nstest				base-obsolete		obsolete
@@ -1691,7 +1702,7 @@
 ./usr/sbin/pkg_delete				base-pkgutil-bin
 ./usr/sbin/pkg_info				base-pkgutil-bin
 ./usr/sbin/pkg_view				base-obsolete		obsolete
-./usr/sbin/plainrsa-gen			base-netutil-bin
+./usr/sbin/plainrsa-gen				base-netutil-bin	ipsec
 ./usr/sbin/portmap				base-obsolete		obsolete
 ./usr/sbin/postalias				base-postfix-bin	postfix
 ./usr/sbin/postcat				base-postfix-bin	postfix
@@ -1726,8 +1737,8 @@
 ./usr/sbin/quotaoff				base-sysutil-bin
 ./usr/sbin/quotaon				base-sysutil-bin
 ./usr/sbin/quotarestore				base-sysutil-bin
-./usr/sbin/racoon				base-netutil-bin
-./usr/sbin/racoonctl				base-netutil-bin
+./usr/sbin/racoon				base-netutil-bin	ipsec
+./usr/sbin/racoonctl				base-netutil-bin	ipsec
 ./usr/sbin/rarpd				base-bootserver-bin
 ./usr/sbin/rbootd				base-bootserver-bin
 ./usr/sbin/rdate				base-netutil-bin
@@ -1736,13 +1747,13 @@
 ./usr/sbin/revnetgroup				base-nis-bin		yp
 ./usr/sbin/rip6query				base-netutil-bin	inet6
 ./usr/sbin/rmt					base-sysutil-bin
-./usr/sbin/rndc					base-bind-bin
-./usr/sbin/rndc-confgen				base-bind-bin
+./usr/sbin/rndc					base-bind-bin		bind
+./usr/sbin/rndc-confgen				base-bind-bin		bind
 ./usr/sbin/route6d				base-router-bin		use_inet6
 ./usr/sbin/rpc.bootparamd			base-bootserver-bin
-./usr/sbin/rpc.lockd				base-nfsserver-bin
-./usr/sbin/rpc.pcnfsd				base-nfsserver-bin
-./usr/sbin/rpc.statd				base-nfsserver-bin
+./usr/sbin/rpc.lockd				base-nfsserver-bin	nfs
+./usr/sbin/rpc.pcnfsd				base-nfsserver-bin	nfs
+./usr/sbin/rpc.statd				base-nfsserver-bin	nfs
 ./usr/sbin/rpc.yppasswdd			base-nis-bin		yp
 ./usr/sbin/rpcapd				base-netutil-bin
 ./usr/sbin/rpcbind				base-rpcbind-bin
@@ -1756,28 +1767,28 @@
 ./usr/sbin/rump.powerd				base-sysutil-bin	rump
 ./usr/sbin/rump.rtadvd				base-router-bin		use_inet6,rump
 ./usr/sbin/rump.traceroute			base-netutil-bin	rump
-./usr/sbin/rump_cd9660				base-puffs-bin	rump
-./usr/sbin/rump_efs				base-puffs-bin	rump
+./usr/sbin/rump_cd9660				base-puffs-bin	cd9660fs,rump
+./usr/sbin/rump_efs				base-puffs-bin	efs,rump
 ./usr/sbin/rump_exfatfs				base-puffs-bin	rump,exfatfs
-./usr/sbin/rump_ext2fs				base-puffs-bin	rump
+./usr/sbin/rump_ext2fs				base-puffs-bin	ext2fs,rump
 ./usr/sbin/rump_ffs				base-puffs-bin	rump
-./usr/sbin/rump_hfs				base-puffs-bin	rump
-./usr/sbin/rump_lfs				base-puffs-bin	rump
-./usr/sbin/rump_msdos				base-puffs-bin	rump
-./usr/sbin/rump_nfs				base-puffs-bin	rump
-./usr/sbin/rump_ntfs				base-puffs-bin	rump
+./usr/sbin/rump_hfs				base-puffs-bin	hfs,rump
+./usr/sbin/rump_lfs				base-puffs-bin	lfs,rump
+./usr/sbin/rump_msdos				base-puffs-bin	msdosfs,rump
+./usr/sbin/rump_nfs				base-puffs-bin	nfs,rump
+./usr/sbin/rump_ntfs				base-puffs-bin	ntfs,rump
 ./usr/sbin/rump_smbfs				base-obsolete		obsolete
 ./usr/sbin/rump_syspuffs			base-puffs-bin	rump
-./usr/sbin/rump_sysvbfs				base-puffs-bin	rump
-./usr/sbin/rump_tmpfs				base-puffs-bin	rump
-./usr/sbin/rump_udf				base-puffs-bin	rump
-./usr/sbin/rump_v7fs				base-puffs-bin	rump
+./usr/sbin/rump_sysvbfs				base-puffs-bin	sysvbfs,rump
+./usr/sbin/rump_tmpfs				base-puffs-bin	tmpfs,rump
+./usr/sbin/rump_udf				base-puffs-bin	udf,rump
+./usr/sbin/rump_v7fs				base-puffs-bin	v7fs,rump
 ./usr/sbin/rwhod				base-netutil-bin
 ./usr/sbin/sa					base-sysutil-bin
 ./usr/sbin/schedctl				base-sysutil-bin
 ./usr/sbin/screenblank				base-sysutil-bin
 ./usr/sbin/scriptdump				base-obsolete		obsolete
-./usr/sbin/sdpd					base-sysutil-bin
+./usr/sbin/sdpd					base-sysutil-bin	bluetooth
 ./usr/sbin/sendmail				base-mailwrapper-bin
 ./usr/sbin/service				base-sysutil-bin
 ./usr/sbin/services_mkdb			base-sysutil-bin
@@ -1793,7 +1804,7 @@
 ./usr/sbin/spawn				base-obsolete		obsolete
 ./usr/sbin/spray				base-rpcutil-bin
 ./usr/sbin/srtconfig				base-netutil-bin
-./usr/sbin/sshd					base-secsh-bin
+./usr/sbin/sshd					base-secsh-bin		ssh
 ./usr/sbin/statmsg				base-obsolete		obsolete
 ./usr/sbin/stdethers				base-nis-bin		yp
 ./usr/sbin/stdhosts				base-nis-bin		yp
@@ -1841,8 +1852,8 @@
 ./usr/sbin/traceroute6				base-netutil-bin	use_inet6
 ./usr/sbin/trpt					base-netutil-bin
 ./usr/sbin/trsp					base-obsolete		obsolete
-./usr/sbin/tsig-keygen				base-bind-bin
-./usr/sbin/umcpmioctl				base-sysutil-bin
+./usr/sbin/tsig-keygen				base-bind-bin		bind
+./usr/sbin/umcpmioctl				base-sysutil-bin	usb
 ./usr/sbin/unbound				base-netutil-bin	unbound
 ./usr/sbin/unbound-anchor			base-netutil-bin	unbound
 ./usr/sbin/unbound-checkconf			base-netutil-bin	unbound
@@ -1850,7 +1861,7 @@
 ./usr/sbin/unbound-control-setup		base-netutil-bin	unbound
 ./usr/sbin/unlink				base-sysutil-bin
 ./usr/sbin/update				base-obsolete		obsolete
-./usr/sbin/usbdevs				base-sysutil-bin
+./usr/sbin/usbdevs				base-sysutil-bin	usb
 ./usr/sbin/user					base-sysutil-bin
 ./usr/sbin/useradd				base-sysutil-bin
 ./usr/sbin/userdel				base-sysutil-bin
@@ -1866,12 +1877,12 @@
 ./usr/sbin/wg-keygen				base-netutil-bin
 ./usr/sbin/wg-userspace				base-netutil-bin
 ./usr/sbin/wgconfig				base-netutil-bin
-./usr/sbin/wiconfig				base-sysutil-bin
+./usr/sbin/wiconfig				base-sysutil-bin	wlan
 ./usr/sbin/wire-test				base-netutil-bin
-./usr/sbin/wlanctl				base-sysutil-bin
-./usr/sbin/wpa_cli				base-sysutil-bin
-./usr/sbin/wpa_passphrase			base-sysutil-bin
-./usr/sbin/wpa_supplicant			base-sysutil-bin
+./usr/sbin/wlanctl				base-sysutil-bin	wlan
+./usr/sbin/wpa_cli				base-sysutil-bin	wlan
+./usr/sbin/wpa_passphrase			base-sysutil-bin	wlan
+./usr/sbin/wpa_supplicant			base-sysutil-bin	wlan
 ./usr/sbin/wsconscfg				base-sysutil-bin
 ./usr/sbin/wsfontload				base-sysutil-bin
 ./usr/sbin/wsmoused				base-sysutil-bin
@@ -1917,10 +1928,10 @@
 ./usr/share/certs/mozilla/all/AC_RAIZ_FNMT-RCM_SERVIDORES_SEGUROS.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/ANF_Secure_Server_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Actalis_Authentication_Root_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/AffirmTrust_Commercial.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/AffirmTrust_Networking.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/AffirmTrust_Premium.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/AffirmTrust_Premium_ECC.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/AffirmTrust_Commercial.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/AffirmTrust_Networking.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/AffirmTrust_Premium.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/AffirmTrust_Premium_ECC.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Amazon_Root_CA_1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Amazon_Root_CA_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Amazon_Root_CA_3.pem	base-mozcerts-share	share
@@ -1934,7 +1945,7 @@
 ./usr/share/certs/mozilla/all/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/BJCA_Global_Root_CA1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/BJCA_Global_Root_CA2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Baltimore_CyberTrust_Root.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Baltimore_CyberTrust_Root.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Buypass_Class_2_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Buypass_Class_3_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/CA_Disig_Root_R2.pem	base-mozcerts-share	share
@@ -1952,13 +1963,15 @@
 ./usr/share/certs/mozilla/all/Certum_Trusted_Network_CA_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Certum_Trusted_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Chambers_of_Commerce_Root_-_2008.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/all/CommScope_Public_Trust_ECC_Root-01.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/CommScope_Public_Trust_ECC_Root-02.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/CommScope_Public_Trust_RSA_Root-01.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/CommScope_Public_Trust_RSA_Root-02.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/CommScope_Public_Trust_ECC_Root-01.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/CommScope_Public_Trust_ECC_Root-02.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/CommScope_Public_Trust_RSA_Root-01.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/CommScope_Public_Trust_RSA_Root-02.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Comodo_AAA_Services_root.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/D-TRUST_BR_Root_CA_1_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/D-TRUST_BR_Root_CA_2_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/D-TRUST_EV_Root_CA_1_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/D-TRUST_EV_Root_CA_2_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/D-TRUST_Root_CA_3_2013.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/D-TRUST_Root_Class_3_CA_2_2009.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/D-TRUST_Root_Class_3_CA_2_EV_2009.pem	base-mozcerts-share	share
@@ -1979,14 +1992,14 @@
 ./usr/share/certs/mozilla/all/DigiCert_TLS_RSA4096_Root_G5.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/DigiCert_Trusted_Root_G4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Entrust.net_Premium_2048_Secure_Server_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority_-_EC1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Entrust_Root_Certification_Authority_-_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Explicitly_Distrust_DigiNotar_Root_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Explicitly_Distrust_DigiNotar_Root_CA.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/GDCA_TrustAUTH_R5_ROOT.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/GLOBALTRUST_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/GLOBALTRUST_2020.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/GTS_Root_R1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/GTS_Root_R2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/GTS_Root_R3.pem	base-mozcerts-share	share
@@ -2022,6 +2035,10 @@
 ./usr/share/certs/mozilla/all/Microsoft_RSA_Root_Certificate_Authority_2017.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/NAVER_Global_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/NetLock_Arany_Class_Gold.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/OISTE_Client_Root_ECC_G1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/OISTE_Client_Root_RSA_G1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/OISTE_Server_Root_ECC_G1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/OISTE_Server_Root_RSA_G1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/OISTE_WISeKey_Global_Root_GA_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/OISTE_WISeKey_Global_Root_GB_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/OISTE_WISeKey_Global_Root_GC_CA.pem	base-mozcerts-share	share
@@ -2030,6 +2047,9 @@
 ./usr/share/certs/mozilla/all/QuoVadis_Root_CA_2_G3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/QuoVadis_Root_CA_3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/QuoVadis_Root_CA_3_G3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SECOM_SMIME_RSA_Root_CA_2024.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SECOM_TLS_ECC_Root_CA_2024.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SECOM_TLS_RSA_Root_CA_2024.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SSL.com_Client_ECC_Root_CA_2022.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SSL.com_Client_RSA_Root_CA_2022.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SSL.com_EV_Root_Certification_Authority_ECC.pem	base-mozcerts-share	share
@@ -2043,22 +2063,25 @@
 ./usr/share/certs/mozilla/all/Sectigo_Public_Email_Protection_Root_R46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Sectigo_Public_Server_Authentication_Root_E46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Sectigo_Public_Server_Authentication_Root_R46.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/SecureSign_RootCA11.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/SecureSign_Root_CA12.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SecureSign_RootCA11.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/SecureSign_Root_CA12.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/SecureSign_Root_CA14.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SecureSign_Root_CA15.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/SecureTrust_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Secure_Global_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SecureSign_Root_CA16.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SecureTrust_CA.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Secure_Global_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Security_Communication_ECC_RootCA1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Security_Communication_RootCA2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Security_Communication_RootCA3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Security_Communication_RootCA3.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Security_Communication_Root_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Staat_der_Nederlanden_Root_CA_-_G3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Starfield_Class_2_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Starfield_Root_Certificate_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Starfield_Services_Root_Certificate_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/SwissSign_Gold_CA_-_G2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/SwissSign_Silver_CA_-_G2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SwissSign_RSA_SMIME_Root_CA_2022_-_1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SwissSign_RSA_TLS_Root_CA_2022_-_1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/SwissSign_Silver_CA_-_G2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Symantec_Class_1_Public_Primary_Certification_Authority_-_G6.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Symantec_Class_2_Public_Primary_Certification_Authority_-_G6.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/T-TeleSec_GlobalRoot_Class_2.pem	base-mozcerts-share	share
@@ -2072,16 +2095,24 @@
 ./usr/share/certs/mozilla/all/Telekom_Security_SMIME_RSA_Root_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telekom_Security_TLS_ECC_Root_2020.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telekom_Security_TLS_RSA_Root_2023.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/TeliaSonera_Root_CA_v1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TeliaSonera_Root_CA_v1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Telia_EC_Email_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Telia_EC_TLS_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Telia_RSA_Email_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Telia_RSA_TLS_Root_CA_v3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Telia_Root_CA_v2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TrustAsia_Global_Root_CA_G4.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_SMIME_ECC_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_SMIME_RSA_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_TLS_ECC_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/TrustAsia_TLS_RSA_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/TrustCor_ECA-1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustCor_RootCert_CA-1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TrustCor_RootCert_CA-2.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/all/Trustwave_Global_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/Trustwave_Global_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/TunTrust_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/UCA_Extended_Validation_Root.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/UCA_Global_G2_Root.pem	base-mozcerts-share	share
@@ -2089,14 +2120,15 @@
 ./usr/share/certs/mozilla/all/USERTrust_RSA_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/Verisign_Class_1_Public_Primary_Certification_Authority_-_G3.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/Verisign_Class_2_Public_Primary_Certification_Authority_-_G3.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/all/XRamp_Global_CA_Root.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/certSIGN_ROOT_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/XRamp_Global_CA_Root.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/certSIGN_ROOT_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/certSIGN_Root_CA_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/e-Szigno_Root_CA_2017.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/ePKI_Root_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/emSign_ECC_Root_CA_-_C3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/emSign_ECC_Root_CA_-_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/all/emSign_Root_CA_-_C1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/e-Szigno_TLS_Root_CA_2023.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/all/ePKI_Root_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/emSign_ECC_Root_CA_-_C3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/emSign_ECC_Root_CA_-_G3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/all/emSign_Root_CA_-_C1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/all/emSign_Root_CA_-_G1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/vTrus_ECC_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/all/vTrus_Root_CA.pem	base-mozcerts-share	share
@@ -2104,18 +2136,18 @@
 ./usr/share/certs/mozilla/email			base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/ACCVRAIZ1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Actalis_Authentication_Root_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Amazon_Root_CA_1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Amazon_Root_CA_2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Amazon_Root_CA_3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Amazon_Root_CA_4.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Amazon_Root_CA_1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Amazon_Root_CA_2.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Amazon_Root_CA_3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Amazon_Root_CA_4.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Atos_TrustedRoot_2011.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Atos_TrustedRoot_Root_CA_ECC_G2_2020.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Atos_TrustedRoot_Root_CA_RSA_G2_2020.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/email/BJCA_Global_Root_CA1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/BJCA_Global_Root_CA2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Baltimore_CyberTrust_Root.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/BJCA_Global_Root_CA1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/BJCA_Global_Root_CA2.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Baltimore_CyberTrust_Root.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/CA_Disig_Root_R2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/COMODO_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/COMODO_ECC_Certification_Authority.pem	base-mozcerts-share	share
@@ -2144,16 +2176,16 @@
 ./usr/share/certs/mozilla/email/DigiCert_SMIME_ECC_P384_Root_G5.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/DigiCert_SMIME_RSA4096_Root_G5.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/DigiCert_Trusted_Root_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Entrust.net_Premium_2048_Secure_Server_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_EC1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_G2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Entrust.net_Premium_2048_Secure_Server_CA.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_EC1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_G2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Entrust_Root_Certification_Authority_-_G4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/GLOBALTRUST_2020.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/email/GTS_Root_R1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/GTS_Root_R1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/GTS_Root_R2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/GTS_Root_R3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/GTS_Root_R4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/GlobalSign_ECC_Root_CA_-_R4.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/GTS_Root_R3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/GTS_Root_R4.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/GlobalSign_ECC_Root_CA_-_R4.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/GlobalSign_ECC_Root_CA_-_R5.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/GlobalSign_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/GlobalSign_Root_CA_-_R3.pem	base-mozcerts-share	share
@@ -2161,7 +2193,7 @@
 ./usr/share/certs/mozilla/email/GlobalSign_Secure_Mail_Root_E45.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/GlobalSign_Secure_Mail_Root_R45.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Global_Chambersign_Root_-_2008.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/email/Go_Daddy_Class_2_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Go_Daddy_Class_2_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/HARICA_Client_ECC_Root_CA_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/HARICA_Client_RSA_Root_CA_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Hellenic_Academic_and_Research_Institutions_ECC_RootCA_2015.pem	base-mozcerts-share	share
@@ -2171,6 +2203,8 @@
 ./usr/share/certs/mozilla/email/LAWtrust_Root_CA2_4096.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Microsec_e-Szigno_Root_CA_2009.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/NetLock_Arany_Class_Gold.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/OISTE_Client_Root_ECC_G1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/OISTE_Client_Root_RSA_G1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/OISTE_WISeKey_Global_Root_GA_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/OISTE_WISeKey_Global_Root_GB_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/OISTE_WISeKey_Global_Root_GC_CA.pem	base-obsolete	obsolete
@@ -2178,6 +2212,7 @@
 ./usr/share/certs/mozilla/email/QuoVadis_Root_CA_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/QuoVadis_Root_CA_3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/QuoVadis_Root_CA_3_G3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/SECOM_SMIME_RSA_Root_CA_2024.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/SSL.com_Client_ECC_Root_CA_2022.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/SSL.com_Client_RSA_Root_CA_2022.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/SSL.com_Root_Certification_Authority_ECC.pem	base-mozcerts-share	share
@@ -2185,38 +2220,44 @@
 ./usr/share/certs/mozilla/email/SZAFIR_ROOT_CA2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Sectigo_Public_Email_Protection_Root_E46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Sectigo_Public_Email_Protection_Root_R46.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Secure_Global_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Security_Communication_ECC_RootCA1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/SecureSign_Root_CA16.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Secure_Global_CA.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Security_Communication_ECC_RootCA1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Security_Communication_RootCA2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Security_Communication_RootCA3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Security_Communication_RootCA3.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Security_Communication_Root_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/Staat_der_Nederlanden_Root_CA_-_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Starfield_Class_2_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Starfield_Class_2_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/SwissSign_Gold_CA_-_G2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/SwissSign_Silver_CA_-_G2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/SwissSign_RSA_SMIME_Root_CA_2022_-_1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/SwissSign_Silver_CA_-_G2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/T-TeleSec_GlobalRoot_Class_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/TWCA_Global_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/TWCA_Global_Root_CA_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/TWCA_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Telekom_Security_SMIME_ECC_Root_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Telekom_Security_SMIME_RSA_Root_2023.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/TeliaSonera_Root_CA_v1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/TeliaSonera_Root_CA_v1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Telia_EC_Email_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Telia_RSA_Email_Root_CA_v3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/Telia_Root_CA_v2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/TrustAsia_Global_Root_CA_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/TrustAsia_Global_Root_CA_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Trustwave_Global_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/TrustAsia_Global_Root_CA_G3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/TrustAsia_Global_Root_CA_G4.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/TrustAsia_SMIME_ECC_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/TrustAsia_SMIME_RSA_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/Trustwave_Global_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/UCA_Global_G2_Root.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/USERTrust_ECC_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/email/USERTrust_RSA_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/XRamp_Global_CA_Root.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/XRamp_Global_CA_Root.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/certSIGN_ROOT_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/e-Szigno_Root_CA_2017.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/ePKI_Root_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/emSign_ECC_Root_CA_-_C3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/emSign_ECC_Root_CA_-_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/email/emSign_Root_CA_-_C1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/email/ePKI_Root_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/emSign_ECC_Root_CA_-_C3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/emSign_ECC_Root_CA_-_G3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/email/emSign_Root_CA_-_C1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/email/emSign_Root_CA_-_G1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server		base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/ACCVRAIZ1.pem	base-mozcerts-share	share
@@ -2224,76 +2265,78 @@
 ./usr/share/certs/mozilla/server/AC_RAIZ_FNMT-RCM_SERVIDORES_SEGUROS.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/ANF_Secure_Server_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Actalis_Authentication_Root_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/AffirmTrust_Commercial.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/AffirmTrust_Networking.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/AffirmTrust_Premium.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/AffirmTrust_Premium_ECC.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/AffirmTrust_Commercial.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/AffirmTrust_Networking.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/AffirmTrust_Premium.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/AffirmTrust_Premium_ECC.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Amazon_Root_CA_1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Amazon_Root_CA_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Amazon_Root_CA_3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Amazon_Root_CA_4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Atos_TrustedRoot_2011.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Atos_TrustedRoot_2011.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Atos_TrustedRoot_Root_CA_ECC_TLS_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Atos_TrustedRoot_Root_CA_RSA_TLS_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Autoridad_de_Certificacion_Firmaprofesional_CIF_A62634068.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/BJCA_Global_Root_CA1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/BJCA_Global_Root_CA2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Baltimore_CyberTrust_Root.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Baltimore_CyberTrust_Root.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Buypass_Class_2_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Buypass_Class_3_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/CA_Disig_Root_R2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/CFCA_EV_ROOT.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/COMODO_Certification_Authority.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/COMODO_Certification_Authority.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/COMODO_ECC_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/COMODO_RSA_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Certainly_Root_E1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Certainly_Root_R1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Certigna.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Certigna.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Certigna_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Certum_EC-384_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Certum_Trusted_Network_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Certum_Trusted_Network_CA_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Certum_Trusted_Root_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/CommScope_Public_Trust_ECC_Root-01.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/CommScope_Public_Trust_ECC_Root-02.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/CommScope_Public_Trust_RSA_Root-01.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/CommScope_Public_Trust_RSA_Root-02.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Comodo_AAA_Services_root.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/CommScope_Public_Trust_ECC_Root-01.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/CommScope_Public_Trust_ECC_Root-02.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/CommScope_Public_Trust_RSA_Root-01.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/CommScope_Public_Trust_RSA_Root-02.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Comodo_AAA_Services_root.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/D-TRUST_BR_Root_CA_1_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/D-TRUST_BR_Root_CA_2_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/D-TRUST_EV_Root_CA_1_2020.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/D-TRUST_EV_Root_CA_2_2023.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/D-TRUST_Root_Class_3_CA_2_2009.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/D-TRUST_Root_Class_3_CA_2_EV_2009.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/DigiCert_Assured_ID_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/DigiCert_Assured_ID_Root_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/DigiCert_Assured_ID_Root_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/DigiCert_Assured_ID_Root_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/DigiCert_Global_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/DigiCert_Global_Root_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/DigiCert_Global_Root_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/DigiCert_Global_Root_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/DigiCert_High_Assurance_EV_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/DigiCert_High_Assurance_EV_Root_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/DigiCert_TLS_ECC_P384_Root_G5.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/DigiCert_TLS_RSA4096_Root_G5.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/DigiCert_Trusted_Root_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Entrust.net_Premium_2048_Secure_Server_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_EC1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_G2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Entrust.net_Premium_2048_Secure_Server_CA.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_EC1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_G2.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Entrust_Root_Certification_Authority_-_G4.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/FIRMAPROFESIONAL_CA_ROOT-A_WEB.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/GDCA_TrustAUTH_R5_ROOT.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GLOBALTRUST_2020.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/GTS_Root_R1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/GTS_Root_R2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/GTS_Root_R2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/GTS_Root_R3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GTS_Root_R4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GlobalSign_ECC_Root_CA_-_R4.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GlobalSign_ECC_Root_CA_-_R5.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/GlobalSign_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/GlobalSign_Root_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/GlobalSign_Root_CA_-_R3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GlobalSign_Root_CA_-_R6.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GlobalSign_Root_E46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/GlobalSign_Root_R46.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Go_Daddy_Class_2_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Go_Daddy_Class_2_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Go_Daddy_Root_Certificate_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/HARICA_TLS_ECC_Root_CA_2021.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/HARICA_TLS_RSA_Root_CA_2021.pem	base-mozcerts-share	share
@@ -2305,19 +2348,23 @@
 ./usr/share/certs/mozilla/server/ISRG_Root_X2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/IdenTrust_Commercial_Root_CA_1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/IdenTrust_Public_Sector_Root_CA_1.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Izenpe.com.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Izenpe.com.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Microsec_e-Szigno_Root_CA_2009.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Microsoft_ECC_Root_Certificate_Authority_2017.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Microsoft_RSA_Root_Certificate_Authority_2017.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/NAVER_Global_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/NetLock_Arany_Class_Gold.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/OISTE_Server_Root_ECC_G1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/OISTE_Server_Root_RSA_G1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/OISTE_WISeKey_Global_Root_GB_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/OISTE_WISeKey_Global_Root_GC_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/QuoVadis_Root_CA_1_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/QuoVadis_Root_CA_2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/QuoVadis_Root_CA_2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/QuoVadis_Root_CA_2_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/QuoVadis_Root_CA_3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/QuoVadis_Root_CA_3.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/QuoVadis_Root_CA_3_G3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SECOM_TLS_ECC_Root_CA_2024.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SECOM_TLS_RSA_Root_CA_2024.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/SSL.com_EV_Root_Certification_Authority_ECC.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/SSL.com_EV_Root_Certification_Authority_RSA_R2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/SSL.com_Root_Certification_Authority_ECC.pem	base-mozcerts-share	share
@@ -2327,21 +2374,22 @@
 ./usr/share/certs/mozilla/server/SZAFIR_ROOT_CA2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Sectigo_Public_Server_Authentication_Root_E46.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Sectigo_Public_Server_Authentication_Root_R46.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/SecureSign_RootCA11.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/SecureSign_Root_CA12.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SecureSign_RootCA11.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/SecureSign_Root_CA12.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/SecureSign_Root_CA14.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/SecureSign_Root_CA15.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/SecureTrust_CA.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Secure_Global_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SecureTrust_CA.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Secure_Global_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Security_Communication_ECC_RootCA1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Security_Communication_RootCA2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Security_Communication_RootCA3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Security_Communication_RootCA3.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Security_Communication_Root_CA.pem	base-obsolete	obsolete
-./usr/share/certs/mozilla/server/Starfield_Class_2_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Starfield_Class_2_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/Starfield_Root_Certificate_Authority_-_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Starfield_Services_Root_Certificate_Authority_-_G2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/SwissSign_Gold_CA_-_G2.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/SwissSign_Silver_CA_-_G2.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SwissSign_Gold_CA_-_G2.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/SwissSign_RSA_TLS_Root_CA_2022_-_1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/SwissSign_Silver_CA_-_G2.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/T-TeleSec_GlobalRoot_Class_2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/T-TeleSec_GlobalRoot_Class_3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/TWCA_CYBER_Root_CA.pem	base-mozcerts-share	share
@@ -2349,26 +2397,31 @@
 ./usr/share/certs/mozilla/server/TWCA_Root_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Telekom_Security_TLS_ECC_Root_2020.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Telekom_Security_TLS_RSA_Root_2023.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/TeliaSonera_Root_CA_v1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/TeliaSonera_Root_CA_v1.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Telia_EC_TLS_Root_CA_v3.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Telia_RSA_TLS_Root_CA_v3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/Telia_Root_CA_v2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/TrustAsia_Global_Root_CA_G3.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/TrustAsia_Global_Root_CA_G4.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Trustwave_Global_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/TrustAsia_TLS_ECC_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/TrustAsia_TLS_RSA_Root_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/Trustwave_Global_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Trustwave_Global_ECC_P256_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/Trustwave_Global_ECC_P384_Certification_Authority.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/TunTrust_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/UCA_Extended_Validation_Root.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/UCA_Global_G2_Root.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/USERTrust_ECC_Certification_Authority.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/USERTrust_RSA_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/XRamp_Global_CA_Root.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/certSIGN_ROOT_CA.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/XRamp_Global_CA_Root.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/certSIGN_ROOT_CA.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/certSIGN_Root_CA_G2.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/e-Szigno_Root_CA_2017.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/ePKI_Root_Certification_Authority.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/emSign_ECC_Root_CA_-_C3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/emSign_ECC_Root_CA_-_G3.pem	base-mozcerts-share	share
-./usr/share/certs/mozilla/server/emSign_Root_CA_-_C1.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/e-Szigno_TLS_Root_CA_2023.pem	base-mozcerts-share	share
+./usr/share/certs/mozilla/server/ePKI_Root_Certification_Authority.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/emSign_ECC_Root_CA_-_C3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/emSign_ECC_Root_CA_-_G3.pem	base-obsolete	obsolete
+./usr/share/certs/mozilla/server/emSign_Root_CA_-_C1.pem	base-obsolete	obsolete
 ./usr/share/certs/mozilla/server/emSign_Root_CA_-_G1.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/vTrus_ECC_Root_CA.pem	base-mozcerts-share	share
 ./usr/share/certs/mozilla/server/vTrus_Root_CA.pem	base-mozcerts-share	share
@@ -2582,7 +2635,7 @@
 ./usr/share/examples/verifiedexec_load/gen_md5	base-obsolete		obsolete
 ./usr/share/examples/verifiedexec_load/gen_sha1	base-obsolete		obsolete
 ./usr/share/examples/wpa_supplicant		base-netutil-examples
-./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	share
+./usr/share/examples/wpa_supplicant/wpa_supplicant.conf		base-netutil-examples	wlan,share
 ./usr/share/examples/wsmoused			base-sysutil-examples
 ./usr/share/examples/wsmoused/wsmoused.conf	base-sysutil-examples	share
 ./usr/share/games				base-games-share
@@ -3376,6 +3429,8 @@
 ./usr/share/installboot/evbarm/boards.plist	base-sysutil-share
 ./usr/share/installboot/evbmips			base-sysutil-share
 ./usr/share/installboot/evbmips/boards.plist	base-sysutil-share
+./usr/share/installboot/riscv			base-sysutil-share
+./usr/share/installboot/riscv/boards.plist	base-sysutil-share
 ./usr/share/keymaps				base-sys-share
 ./usr/share/keymaps/amiga			base-sys-share
 ./usr/share/keymaps/atari			base-sys-share
@@ -4617,6 +4672,27 @@
 ./usr/share/locale/uk_UA.UTF-8/LC_MONETARY	base-locale-uk		nls
 ./usr/share/locale/uk_UA.UTF-8/LC_NUMERIC	base-locale-uk		nls
 ./usr/share/locale/uk_UA.UTF-8/LC_TIME		base-locale-uk		nls
+./usr/share/locale/x1_X1.UTF-8			base-locale-x1
+./usr/share/locale/x1_X1.UTF-8/LC_CTYPE		base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_MESSAGES	base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-x1	nls
+./usr/share/locale/x1_X1.UTF-8/LC_MONETARY	base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_NUMERIC	base-locale-x1		nls
+./usr/share/locale/x1_X1.UTF-8/LC_TIME		base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8			base-locale-x1
+./usr/share/locale/x1_X2.UTF-8/LC_CTYPE		base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_MESSAGES	base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-x1	nls
+./usr/share/locale/x1_X2.UTF-8/LC_MONETARY	base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_NUMERIC	base-locale-x1		nls
+./usr/share/locale/x1_X2.UTF-8/LC_TIME		base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8			base-locale-x1
+./usr/share/locale/x1_X3.UTF-8/LC_CTYPE		base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_MESSAGES	base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_MESSAGES/SYS_LC_MESSAGES	base-locale-x1	nls
+./usr/share/locale/x1_X3.UTF-8/LC_MONETARY	base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_NUMERIC	base-locale-x1		nls
+./usr/share/locale/x1_X3.UTF-8/LC_TIME		base-locale-x1		nls
 ./usr/share/locale/zh_CN			base-locale-zh
 ./usr/share/locale/zh_CN.GB18030		base-locale-zh
 ./usr/share/locale/zh_CN.GB18030/LC_CTYPE	base-locale-zh		nls
@@ -4692,6 +4768,7 @@
 ./usr/share/man/cat1				base-man-share
 ./usr/share/man/cat1/atari			base-man-share
 ./usr/share/man/cat1/hp300			base-man-share
+./usr/share/man/cat1/sgimips			base-man-share
 ./usr/share/man/cat1/x68k			base-man-share
 ./usr/share/man/cat2				base-man-share
 ./usr/share/man/cat3				base-man-share
@@ -4824,6 +4901,7 @@
 ./usr/share/man/html1				base-man-share
 ./usr/share/man/html1/atari			base-man-share
 ./usr/share/man/html1/hp300			base-man-share
+./usr/share/man/html1/sgimips			base-man-share
 ./usr/share/man/html1/x68k			base-man-share
 ./usr/share/man/html2				base-man-share
 ./usr/share/man/html3				base-man-share
@@ -4955,6 +5033,7 @@
 ./usr/share/man/man1				base-man-share
 ./usr/share/man/man1/atari			base-man-share
 ./usr/share/man/man1/hp300			base-man-share
+./usr/share/man/man1/sgimips			base-man-share
 ./usr/share/man/man1/x68k			base-man-share
 ./usr/share/man/man2				base-man-share
 ./usr/share/man/man3				base-man-share
@@ -5107,7 +5186,7 @@
 ./usr/share/misc/terminfo.cdb			base-terminfo-share	share
 ./usr/share/misc/terminfo2.cdb			base-obsolete		obsolete
 ./usr/share/misc/units.lib			base-reference-share	share
-./usr/share/misc/usb_hid_usages			base-reference-share	share
+./usr/share/misc/usb_hid_usages			base-reference-share	usb,share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
 ./usr/share/mk					base-util-share
 ./usr/share/mk/bsd.README			base-mk-share		share

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -304,6 +304,8 @@ static amd_generic_event_t family_10h_generic_events[] = {
 };
 
 static amd_event_t *amd_events = NULL;
+static const char *amd_impl_name = "";
+static const char *amd_cpuref = "";
 static uint_t amd_family;
 static amd_generic_event_t *amd_generic_events = NULL;
 
@@ -315,30 +317,45 @@ static int
 opt_pcbe_init (void)
 {
   amd_family = cpuid_getfamily ();
-  /*
-   * Make sure this really _is_ an Opteron or Athlon 64 system. The kernel
-   * loads this module based on its name in the module directory, but it
-   * could have been renamed.
-   */
-  if (cpuid_getvendor () != X86_VENDOR_AMD
-      || (amd_family != OPTERON_FAMILY && amd_family != AMD_FAMILY_10H))
-    return (-1);
+  if (cpuid_getvendor () != X86_VENDOR_AMD)
+    return -1;
 
-  /*
-   * Figure out processor revision here and assign appropriate
-   * event configuration.
-   */
-  if (amd_family == OPTERON_FAMILY)
+  amd_impl_name = GTXT ("Unknown AMD processor");
+  switch (amd_family)
     {
+    case OPTERON_FAMILY:
       amd_events = opt_events_rev_E;
       amd_generic_events = opt_generic_events;
-    }
-  else
-    {
+      amd_impl_name = "AMD Opteron & Athlon64";
+      amd_cpuref = GTXT ("See Chapter 10 of the \"BIOS and Kernel Developer's"
+		" Guide for the AMD Athlon 64 and AMD Opteron Processors,\"\n"
+		"AMD publication #26094");
+      break;
+    case AMD_FAMILY_10H:
       amd_events = family_10h_events;
       amd_generic_events = family_10h_generic_events;
+      amd_impl_name = "AMD Family 10h";
+      amd_cpuref = GTXT ("See section 3.15 of the \"BIOS and Kernel Developer's"
+			 " Guide (BKDG) For AMD Family 10h Processors,\"\n"
+			 "AMD publication #31116");
+      break;
+    case AMD_ZEN3_FAMILY:
+      switch (cpuid_getmodel ())
+	{
+	case AMD_ZEN3_RYZEN:
+	case AMD_ZEN3_RYZEN2:
+	case AMD_ZEN3_RYZEN3:
+	case AMD_ZEN3_EPYC_TRENTO:
+	  amd_impl_name = AMD_FAM_19H_ZEN3_NAME;
+	  break;
+	case AMD_ZEN4_RYZEN:
+	case AMD_ZEN4_EPYC:
+	  amd_impl_name = AMD_FAM_19H_ZEN4_NAME;
+	  break;
+	}
+      break;
     }
-  return (0);
+  return 0;
 }
 
 static uint_t
@@ -350,27 +367,17 @@ opt_pcbe_ncounters (void)
 static const char *
 opt_pcbe_impl_name (void)
 {
-  if (amd_family == OPTERON_FAMILY)
-    return ("AMD Opteron & Athlon64");
-  else if (amd_family == AMD_FAMILY_10H)
-    return ("AMD Family 10h");
-  else
-    return ("Unknown AMD processor");
+  return amd_impl_name;
 }
 
 static const char *
 opt_pcbe_cpuref (void)
 {
-  if (amd_family == OPTERON_FAMILY)
-    return GTXT ("See Chapter 10 of the \"BIOS and Kernel Developer's Guide for the AMD Athlon 64 and AMD Opteron Processors,\"\nAMD publication #26094");
-  else if (amd_family == AMD_FAMILY_10H)
-    return GTXT ("See section 3.15 of the \"BIOS and Kernel Developer's Guide (BKDG) For AMD Family 10h Processors,\"\nAMD publication #31116");
-  else
-    return GTXT ("Unknown AMD processor");
+  return amd_cpuref;
 }
 
 static int
-opt_pcbe_get_events (hwcf_hwc_cb_t *hwc_cb)
+opt_pcbe_get_events (hwcf_hwc_cb_t *hwc_cb, Hwcentry *raw_hwc_tbl)
 {
   int count = 0;
   for (uint_t kk = 0; amd_events && amd_events[kk].name; kk++)
@@ -385,6 +392,14 @@ opt_pcbe_get_events (hwcf_hwc_cb_t *hwc_cb)
 	hwc_cb (jj, amd_generic_events[kk].name);
 	count++;
       }
+  if (raw_hwc_tbl)
+    for (Hwcentry *h = raw_hwc_tbl; h->name; h++)
+      if (h->use_perf_event_type)
+	for (uint_t jj = 0; jj < opt_pcbe_ncounters (); jj++)
+	  {
+	    hwc_cb (jj, h->name);
+	    count++;
+	  }
   return count;
 }
 
@@ -396,6 +411,12 @@ opt_pcbe_get_eventnum (const char *eventname, uint_t pmc, eventsel_t *eventsel,
   *pmc_sel = pmc; /* for AMD, pmc doesn't need to be adjusted */
   *eventsel = (eventsel_t) - 1;
   *event_valid_umask = 0x0;
+
+  if (amd_events == NULL && amd_generic_events == NULL)
+    { // These tables are created only for old hardware.
+      *eventsel = 0;
+      return 0;
+    }
 
   /* search table */
   for (kk = 0; amd_events && amd_events[kk].name; kk++)

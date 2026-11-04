@@ -9,9 +9,9 @@ AC_DEFUN([DEJAGNU_CHECK_VERSION],
   AC_MSG_CHECKING([for incompatibility between DejaGnu and GCC])
   AC_MSG_RESULT([$ac_cv_dejagnu_compat])
 
-  AC_TRY_LINK([#include <dejagnu.h>],
-	      [pass ("test foo");
-	       return 0;],
+  AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <dejagnu.h>]],
+				  [[pass ("test foo");
+	       return 0;]])],
 	      [ac_cv_dejagnu_compat=yes],
 	      [ac_cv_dejagnu_compat=no])
   AC_MSG_RESULT([$ac_cv_dejagnu_compat])

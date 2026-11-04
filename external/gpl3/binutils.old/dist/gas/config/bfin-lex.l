@@ -1,7 +1,7 @@
 %option noyywrap
 
 /* bfin-lex.l  ADI Blackfin lexer
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -287,7 +287,6 @@ int yylex (void);
 "%"                     return PERCENT;
 "!"                     return BANG;
 ";"                     return SEMICOLON;
-"=!"			return _ASSIGN_BANG;
 "||"			return DOUBLE_BAR;
 "@"			return AT;
 <KEYWORD>[pP][rR][eE][fF][eE][tT][cC][hH]        return PREFETCH;

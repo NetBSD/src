@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -39,11 +39,6 @@ EOF
 # Define some shell vars to insert bits of code into the standard elf
 # parse_args and list_options functions.
 #
-PARSE_AND_LIST_PROLOGUE='
-#define OPTION_CODE_IN_L1		300
-#define OPTION_DATA_IN_L1		301
-'
-
 PARSE_AND_LIST_LONGOPTS='
   { "code-in-l1", no_argument, NULL, OPTION_CODE_IN_L1 },
   { "data-in-l1", no_argument, NULL, OPTION_DATA_IN_L1 },

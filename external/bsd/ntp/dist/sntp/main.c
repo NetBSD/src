@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.18.8.1 2025/08/02 05:22:48 perseant Exp $	*/
+/*	$NetBSD: main.c,v 1.18.8.2 2026/11/04 22:38:45 perseant Exp $	*/
 
 #include <config.h>
 
@@ -984,6 +984,7 @@ void sntp_addremove_fd(
 		return;
 	}
 
+	make_socket_nonblocking(fd);
 	ev = event_new(base, fd, EV_READ | EV_PERSIST,
 		       &worker_resp_cb, c);
 	if (NULL == ev) {

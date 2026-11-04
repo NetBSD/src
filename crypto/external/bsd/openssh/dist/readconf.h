@@ -1,5 +1,5 @@
-/*	$NetBSD: readconf.h,v 1.35.2.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: readconf.h,v 1.159 2025/02/15 01:48:30 djm Exp $ */
+/*	$NetBSD: readconf.h,v 1.35.2.2 2026/11/04 22:36:40 perseant Exp $	*/
+/* $OpenBSD: readconf.h,v 1.164 2026/09/16 00:13:58 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -60,13 +60,13 @@ typedef struct {
 	int     strict_host_key_checking;	/* Strict host key checking. */
 	int     compression;	/* Compress packets in both directions. */
 	int     tcp_keep_alive;	/* Set SO_KEEPALIVE. */
-	int	ip_qos_interactive;	/* IP ToS/DSCP/class for interactive */
-	int	ip_qos_bulk;		/* IP ToS/DSCP/class for bulk traffic */
 	int     tcp_rcv_buf; /* user switch to set tcp recv buffer */
 	int	tcp_rcv_buf_poll; /* Option to poll recv buf every window transfer */
 	int 	hpn_disabled; 	 /* Switch to disable HPN buffer management */
 	int	hpn_buffer_size; /* User definable size for HPN buffer window */
 
+	int	ip_qos_interactive;	/* DSCP value for interactive */
+	int	ip_qos_bulk;		/* DSCP value for bulk traffic */
 	SyslogFacility log_facility;	/* Facility for system logging. */
 	LogLevel log_level;	/* Level for logging. */
 	u_int	num_log_verbose;	/* Verbose log overrides */
@@ -83,6 +83,7 @@ typedef struct {
 	char   *macs;		/* SSH2 macs in order of preference. */
 	char   *hostkeyalgorithms;	/* SSH2 server key types in order of preference. */
 	char   *kex_algorithms;	/* SSH2 kex methods in order of preference. */
+	int	kex_algorithms_set; /* KexAlgorithms was set by the user */
 	char   *ca_sign_algorithms;	/* Allowed CA signature algorithms */
 	char   *hostname;	/* Real host to connect. */
 	char   *tag;		/* Configuration tag name. */
@@ -181,7 +182,8 @@ typedef struct {
 	int	num_permitted_cnames;
 	struct allowed_cname *permitted_cnames;
 
-	char	*revoked_host_keys;
+	u_int	num_revoked_host_keys;
+	char	**revoked_host_keys;
 
 	int	 fingerprint_hash;
 
@@ -200,6 +202,7 @@ typedef struct {
 	int	required_rsa_size;	/* minimum size of RSA keys */
 	int	enable_escape_commandline;	/* ~C commandline */
 	int	obscure_keystroke_timing_interval;
+	int	warn_weak_crypto;
 
 	char	**channel_timeouts;	/* inactivity timeout by channel type */
 	u_int	num_channel_timeouts;
@@ -252,6 +255,10 @@ typedef struct {
 #define SSH_KEYSTROKE_CHAFF_MIN_MS		1024
 #define SSH_KEYSTROKE_CHAFF_RNG_MS		2048
 
+#define SSH_KEEPALIVES_OFF		0
+#define SSH_KEEPALIVES_TRANSPORT	1
+#define SSH_KEEPALIVES_ALL		2
+
 const char *kex_default_pk_alg(void);
 char	*ssh_connection_hash(const char *thishost, const char *host,
     const char *portstr, const char *user, const char *jump_host);
@@ -264,7 +271,9 @@ int	 process_config_line(Options *, struct passwd *, const char *,
 int	 read_config_file(const char *, struct passwd *, const char *,
     const char *, const char *, Options *, int, int *);
 int	 parse_forward(struct Forward *, const char *, int, int);
-int	 parse_jump(const char *, Options *, int);
+int	 ssh_valid_hostname(const char *);
+int	 ssh_valid_ruser(const char *);
+int	 parse_jump(const char *, Options *, int, int);
 int	 parse_ssh_uri(const char *, char **, char **, int *);
 int	 default_ssh_port(void);
 int	 option_clear_or_none(const char *);

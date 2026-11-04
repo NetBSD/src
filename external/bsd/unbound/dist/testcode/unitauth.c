@@ -279,14 +279,14 @@ static struct q_ans example_com_queries[] = {
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir.example.com.	3600	IN	DNAME	redir.example.org.\n"
-"abc.redir.example.com.	0	IN	CNAME	abc.redir.example.org.\n"
+"abc.redir.example.com.	3600	IN	CNAME	abc.redir.example.org.\n"
 	},
 
 	{ "example.com", "foo.abc.redir.example.com. A", "",
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir.example.com.	3600	IN	DNAME	redir.example.org.\n"
-"foo.abc.redir.example.com.	0	IN	CNAME	foo.abc.redir.example.org.\n"
+"foo.abc.redir.example.com.	3600	IN	CNAME	foo.abc.redir.example.org.\n"
 	},
 
 	{ "example.com", "redir2.example.com. DNAME", "",
@@ -299,42 +299,42 @@ static struct q_ans example_com_queries[] = {
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
-"abc.redir2.example.com.	0	IN	CNAME	abc.redir2.example.org.\n"
+"abc.redir2.example.com.	3600	IN	CNAME	abc.redir2.example.org.\n"
 	},
 
 	{ "example.com", "obscured.redir2.example.com. A", "",
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
-"obscured.redir2.example.com.	0	IN	CNAME	obscured.redir2.example.org.\n"
+"obscured.redir2.example.com.	3600	IN	CNAME	obscured.redir2.example.org.\n"
 	},
 
 	{ "example.com", "under2.redir2.example.com. A", "",
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
-"under2.redir2.example.com.	0	IN	CNAME	under2.redir2.example.org.\n"
+"under2.redir2.example.com.	3600	IN	CNAME	under2.redir2.example.org.\n"
 	},
 
 	{ "example.com", "doubleobscured.under2.redir2.example.com. A", "",
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
-"doubleobscured.under2.redir2.example.com.	0	IN	CNAME	doubleobscured.under2.redir2.example.org.\n"
+"doubleobscured.under2.redir2.example.com.	3600	IN	CNAME	doubleobscured.under2.redir2.example.org.\n"
 	},
 
 	{ "example.com", "foo.doubleobscured.under2.redir2.example.com. A", "",
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
-"foo.doubleobscured.under2.redir2.example.com.	0	IN	CNAME	foo.doubleobscured.under2.redir2.example.org.\n"
+"foo.doubleobscured.under2.redir2.example.com.	3600	IN	CNAME	foo.doubleobscured.under2.redir2.example.org.\n"
 	},
 
 	{ "example.com", "foo.under2.redir2.example.com. A", "",
 ";flags QR AA rcode NOERROR\n"
 ";answer section\n"
 "redir2.example.com.	3600	IN	DNAME	redir2.example.org.\n"
-"foo.under2.redir2.example.com.	0	IN	CNAME	foo.under2.redir2.example.org.\n"
+"foo.under2.redir2.example.com.	3600	IN	CNAME	foo.under2.redir2.example.org.\n"
 	},
 
 	{ "example.com", "sub.example.com. NS", "",
@@ -670,6 +670,7 @@ authtest_addzone(struct auth_zones* az, const char* name, char* fname)
 	auth_zone_set_zonefile(z, fname);
 	z->for_upstream = 1;
 	cfg = config_create();
+	config_auto_slab_values(cfg);
 	free(cfg->chrootdir);
 	cfg->chrootdir = NULL;
 
@@ -1026,6 +1027,38 @@ authzone_query_test(void)
 	check_queries("example.com", zone_example_com, example_com_queries);
 }
 
+/** Test chunkline_count_parens output */
+static void
+authzone_chunkline_count_parens_test(void)
+{
+	sldns_buffer* buf;
+	if(vbmp) printf("Testing chunkline_count_parens\n");
+	buf = sldns_buffer_new(1024);
+	if(!buf) fatal_exit("out of memory");
+
+	/* Check that escaped characters are handled, '\x', and in quotes. */
+	sldns_buffer_printf(buf, "TXT \"x\" \\(");
+	unit_assert(chunkline_count_parens(buf, 0) == 0);
+
+	sldns_buffer_clear(buf);
+	sldns_buffer_printf(buf, "TXT ';x' (");
+	unit_assert(chunkline_count_parens(buf, 0) == 0);
+
+	sldns_buffer_clear(buf);
+	sldns_buffer_printf(buf, "TXT \"a;b\" (");
+	unit_assert(chunkline_count_parens(buf, 0) == 1);
+
+	sldns_buffer_clear(buf);
+	sldns_buffer_printf(buf, "TXT \\) )");
+	unit_assert(chunkline_count_parens(buf, 0) == -1);
+
+	sldns_buffer_clear(buf);
+	sldns_buffer_printf(buf, "TXT \"a\\\\\" \"(\" ");
+	unit_assert(chunkline_count_parens(buf, 0) == 0);
+
+	sldns_buffer_free(buf);
+}
+
 /** test authzone code */
 void 
 authzone_test(void)
@@ -1035,4 +1068,5 @@ authzone_test(void)
 	authzone_compare_serial();
 	authzone_read_test();
 	authzone_query_test();
+	authzone_chunkline_count_parens_test();
 }

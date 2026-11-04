@@ -1,5 +1,5 @@
 /* Compressed section support (intended for debug sections).
-   Copyright (C) 2008-2024 Free Software Foundation, Inc.
+   Copyright (C) 2008-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -24,7 +24,9 @@
 #include <zstd.h>
 #endif
 #include "bfd.h"
+#ifdef OBJ_MAYBE_ELF
 #include "elf-bfd.h"
+#endif
 #include "libbfd.h"
 #include "safe-ctype.h"
 #include "libiberty.h"
@@ -155,10 +157,11 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
 
   switch (bfd_get_flavour (abfd))
     {
+#ifdef OBJ_MAYBE_ELF
     case bfd_target_elf_flavour:
       if ((abfd->flags & BFD_COMPRESS_GABI) != 0)
 	{
-	  const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+	  elf_backend_data *bed = get_elf_backend_data (abfd);
 	  struct bfd_elf_section_data * esd = elf_section_data (sec);
 	  enum compression_type ch_type = (abfd->flags & BFD_COMPRESS_ZSTD
 					   ? ch_compress_zstd
@@ -195,6 +198,7 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
 
       /* Clear the SHF_COMPRESSED bit.  */
       elf_section_flags (sec) &= ~SHF_COMPRESSED;
+#endif /* OBJ_MAYBE_ELF */
       /* Fall through.  */
 
     default:
@@ -215,17 +219,19 @@ bfd_update_compression_header (bfd *abfd, bfd_byte *contents,
    compression header is valid.  */
 
 static bool
-bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
-			      asection *sec,
-			      enum compression_type *ch_type,
-			      bfd_size_type *uncompressed_size,
-			      unsigned int *uncompressed_alignment_power)
+bfd_check_compression_header (bfd *abfd ATTRIBUTE_UNUSED,
+			      bfd_byte *contents ATTRIBUTE_UNUSED,
+			      asection *sec ATTRIBUTE_UNUSED,
+			      enum compression_type *ch_type ATTRIBUTE_UNUSED,
+			      bfd_size_type *uncompressed_size ATTRIBUTE_UNUSED,
+			      unsigned int *uncompressed_alignment_power ATTRIBUTE_UNUSED)
 {
+#ifdef OBJ_MAYBE_ELF
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour
       && (elf_section_flags (sec) & SHF_COMPRESSED) != 0)
     {
       Elf_Internal_Chdr chdr;
-      const struct elf_backend_data *bed = get_elf_backend_data (abfd);
+      elf_backend_data *bed = get_elf_backend_data (abfd);
       if (bed->s->elfclass == ELFCLASS32)
 	{
 	  Elf32_External_Chdr *echdr = (Elf32_External_Chdr *) contents;
@@ -250,6 +256,7 @@ bfd_check_compression_header (bfd *abfd, bfd_byte *contents,
 	  return true;
 	}
     }
+#endif /* OBJ_MAYBE_ELF */
 
   return false;
 }
@@ -266,8 +273,10 @@ DESCRIPTION
 */
 
 int
-bfd_get_compression_header_size (bfd *abfd, asection *sec)
+bfd_get_compression_header_size (bfd *abfd ATTRIBUTE_UNUSED,
+				 asection *sec ATTRIBUTE_UNUSED)
 {
+#ifdef OBJ_MAYBE_ELF
   if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
       if (sec == NULL)
@@ -283,6 +292,7 @@ bfd_get_compression_header_size (bfd *abfd, asection *sec)
       else
 	return sizeof (Elf64_External_Chdr);
     }
+#endif /* OBJ_MAYBE_ELF */
 
   return 0;
 }
@@ -303,11 +313,10 @@ DESCRIPTION
 */
 
 bool
-bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
-			   const char **new_name, bfd_size_type *new_size)
+bfd_convert_section_setup (bfd *ibfd ATTRIBUTE_UNUSED, asection *isec,
+			   bfd *obfd, const char **new_name,
+			   bfd_size_type *new_size)
 {
-  bfd_size_type hdr_size;
-
   if ((isec->flags & SEC_DEBUGGING) != 0
       && (isec->flags & SEC_HAS_CONTENTS) != 0)
     {
@@ -340,6 +349,7 @@ bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
     }
   *new_size = bfd_section_size (isec);
 
+#ifdef OBJ_MAYBE_ELF
   /* Do nothing if either input or output aren't ELF.  */
   if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour
       || bfd_get_flavour (obfd) != bfd_target_elf_flavour)
@@ -362,7 +372,7 @@ bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
     return true;
 
   /* Do nothing if the input section isn't a SHF_COMPRESSED section. */
-  hdr_size = bfd_get_compression_header_size (ibfd, isec);
+  bfd_size_type hdr_size = bfd_get_compression_header_size (ibfd, isec);
   if (hdr_size == 0)
     return true;
 
@@ -371,6 +381,9 @@ bfd_convert_section_setup (bfd *ibfd, asection *isec, bfd *obfd,
     *new_size += sizeof (Elf64_External_Chdr) - sizeof (Elf32_External_Chdr);
   else
     *new_size -= sizeof (Elf64_External_Chdr) - sizeof (Elf32_External_Chdr);
+
+#endif /* OBJ_MAYBE_ELF */
+
   return true;
 }
 
@@ -392,9 +405,13 @@ DESCRIPTION
 */
 
 bool
-bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
-			      bfd_byte **ptr, bfd_size_type *ptr_size)
+bfd_convert_section_contents (bfd *ibfd ATTRIBUTE_UNUSED,
+			      sec_ptr isec ATTRIBUTE_UNUSED,
+			      bfd *obfd ATTRIBUTE_UNUSED,
+			      bfd_byte **ptr ATTRIBUTE_UNUSED,
+			      bfd_size_type *ptr_size ATTRIBUTE_UNUSED)
 {
+#ifdef OBJ_MAYBE_ELF
   bfd_byte *contents;
   bfd_size_type ihdr_size, ohdr_size, size;
   Elf_Internal_Chdr chdr;
@@ -499,6 +516,8 @@ bfd_convert_section_contents (bfd *ibfd, sec_ptr isec, bfd *obfd,
     }
 
   *ptr_size = size;
+#endif /* OBJ_MAYBE_ELF */
+
   return true;
 }
 
@@ -517,40 +536,23 @@ decompress_contents (bool is_zstd, bfd_byte *compressed_buffer,
 #endif
     }
 
-  z_stream strm;
-  int rc;
-
   /* It is possible the section consists of several compressed
      buffers concatenated together, so we uncompress in a loop.  */
-  /* PR 18313: The state field in the z_stream structure is supposed
-     to be invisible to the user (ie us), but some compilers will
-     still complain about it being used without initialisation.  So
-     we first zero the entire z_stream structure and then set the fields
-     that we need.  */
-  memset (& strm, 0, sizeof strm);
-  strm.avail_in = compressed_size;
-  strm.next_in = (Bytef*) compressed_buffer;
-  strm.avail_out = uncompressed_size;
-  /* FIXME: strm.avail_in and strm.avail_out are typically unsigned
-     int.  Supporting sizes that don't fit in an unsigned int is
-     possible but will require some rewriting of this function.  */
-  if (strm.avail_in != compressed_size || strm.avail_out != uncompressed_size)
-    return false;
-
-  BFD_ASSERT (Z_OK == 0);
-  rc = inflateInit (&strm);
-  while (strm.avail_in > 0 && strm.avail_out > 0)
+  do
     {
+      uLongf dst_len = uncompressed_size;
+      uLong src_len = compressed_size;
+      int rc = uncompress2 ((Bytef *) uncompressed_buffer, &dst_len,
+			    (Bytef *) compressed_buffer, &src_len);
       if (rc != Z_OK)
-	break;
-      strm.next_out = ((Bytef*) uncompressed_buffer
-		       + (uncompressed_size - strm.avail_out));
-      rc = inflate (&strm, Z_FINISH);
-      if (rc != Z_STREAM_END)
-	break;
-      rc = inflateReset (&strm);
+	return false;
+      uncompressed_buffer += dst_len;
+      uncompressed_size -= dst_len;
+      compressed_buffer += src_len;
+      compressed_size -= src_len;
     }
-  return inflateEnd (&strm) == Z_OK && rc == Z_OK && strm.avail_out == 0;
+  while (compressed_size > 0 && uncompressed_size > 0);
+  return compressed_size == 0 && uncompressed_size == 0;
 }
 
 /* Compress section contents using zlib/zstd and store
@@ -584,6 +586,10 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec)
   /* We shouldn't be trying to decompress unsupported compressed sections.  */
   if (compressed && orig_header_size < 0)
     abort ();
+
+  /* PR 31455: Check for a corrupt uncompressed size.  */
+  if (uncompressed_size == (bfd_size_type) -1)
+    return uncompressed_size;
 
   /* Either ELF compression header or the 12-byte, "ZLIB" + 8-byte size,
      overhead in .zdebug* section.  */
@@ -679,8 +685,10 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec)
   if (compressed_size >= uncompressed_size)
     {
       memcpy (buffer, input_buffer, uncompressed_size);
+#ifdef OBJ_MAYBE_ELF
       if (bfd_get_flavour (abfd) == bfd_target_elf_flavour)
 	elf_section_flags (sec) &= ~SHF_COMPRESSED;
+#endif
       sec->compress_status = COMPRESS_SECTION_NONE;
     }
   else
@@ -690,6 +698,7 @@ bfd_compress_section_contents (bfd *abfd, sec_ptr sec)
       sec->size = compressed_size;
       sec->compress_status = COMPRESS_SECTION_DONE;
     }
+  sec->alloced = 1;
   sec->contents = buffer;
   sec->flags |= SEC_IN_MEMORY;
   free (input_buffer);
@@ -735,7 +744,7 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
 
   if (p == NULL
       && compress_status != COMPRESS_SECTION_DONE
-      && _bfd_section_size_insane (abfd, sec))
+      && bfd_section_size_insane (abfd, sec))
     {
       /* PR 24708: Avoid attempts to allocate a ridiculous amount
 	 of memory.  */
@@ -749,7 +758,7 @@ bfd_get_full_section_contents (bfd *abfd, sec_ptr sec, bfd_byte **ptr)
   switch (compress_status)
     {
     case COMPRESS_SECTION_NONE:
-      if (p == NULL)
+      if (p == NULL && !sec->mmapped_p)
 	{
 	  p = (bfd_byte *) bfd_malloc (allocsz);
 	  if (p == NULL)
@@ -982,7 +991,6 @@ bfd_init_section_decompress_status (bfd *abfd, sec_ptr sec)
   bfd_size_type uncompressed_size;
   unsigned int uncompressed_alignment_power = 0;
   enum compression_type ch_type;
-  z_stream strm;
 
   compression_header_size = bfd_get_compression_header_size (abfd, sec);
   if (compression_header_size > MAX_COMPRESSION_HEADER_SIZE)
@@ -1020,10 +1028,11 @@ bfd_init_section_decompress_status (bfd *abfd, sec_ptr sec)
       return false;
     }
 
-  /* PR28530, reject sizes unsupported by decompress_contents.  */
-  strm.avail_in = sec->size;
-  strm.avail_out = uncompressed_size;
-  if (strm.avail_in != sec->size || strm.avail_out != uncompressed_size)
+  /* PR28530, reject sizes unsupported by decompress_contents. zlib
+     supports only up to 4 GiB input on machines whose long is 32 bits. */
+  if (ch_type == ch_compress_zlib
+      && (sec->size != (uLong) sec->size
+	  || uncompressed_size != (uLongf) uncompressed_size))
     {
       bfd_set_error (bfd_error_nonrepresentable_section);
       return false;
@@ -1066,7 +1075,7 @@ bfd_init_section_compress_status (bfd *abfd, sec_ptr sec)
       || sec->rawsize != 0
       || sec->contents != NULL
       || sec->compress_status != COMPRESS_SECTION_NONE
-      || _bfd_section_size_insane (abfd, sec))
+      || bfd_section_size_insane (abfd, sec))
     {
       bfd_set_error (bfd_error_invalid_operation);
       return false;

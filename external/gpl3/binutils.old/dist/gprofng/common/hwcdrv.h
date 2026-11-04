@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -41,29 +41,6 @@
 #include "libcol_util.h"
 
 #define get_hwcdrv                  __collector_get_hwcdrv
-#define hwcdrv_drivers              __collector_hwcdrv_drivers
-#define hwcdrv_cpc1_api             __collector_hwcdrv_cpc1_api
-#define hwcdrv_cpc2_api             __collector_hwcdrv_cpc2_api
-#define hwcdrv_default              __collector_hwcdrv_default
-#define hwcdrv_driver               __collector_hwcdrv_driver
-#define hwcdrv_init                 __collector_hwcdrv_init
-#define hwcdrv_get_info             __collector_hwcdrv_get_info
-#define hwcdrv_enable_mt            __collector_hwcdrv_enable_mt
-#define hwcdrv_get_descriptions     __collector_hwcdrv_get_descriptions
-#define hwcdrv_assign_regnos        __collector_hwcdrv_assign_regnos
-#define hwcdrv_create_counters      __collector_hwcdrv_create_counters
-#define hwcdrv_start                __collector_hwcdrv_start
-#define hwcdrv_overflow             __collector_hwcdrv_overflow
-#define hwcdrv_read_events          __collector_hwcdrv_read_events
-#define hwcdrv_sighlr_restart       __collector_hwcdrv_sighlr_restart
-#define hwcdrv_lwp_suspend          __collector_hwcdrv_lwp_suspend
-#define hwcdrv_lwp_resume           __collector_hwcdrv_lwp_resume
-#define hwcdrv_free_counters        __collector_hwcdrv_free_counters
-#define hwcdrv_lwp_init             __collector_hwcdrv_lwp_init
-#define hwcdrv_lwp_fini             __collector_hwcdrv_lwp_fini
-#define hwcdrv_assign_all_regnos    __collector_hwcdrv_assign_all_regnos
-#define hwcdrv_lookup_cpuver        __collector_hwcdrv_lookup_cpuver
-#define hwcfuncs_int_capture_errmsg  __collector_hwcfuncs_int_capture_errmsg
 
 #define GTXT(x) x
 
@@ -149,11 +126,13 @@ extern "C"
      */
 
     int (*hwcdrv_get_descriptions)(hwcf_hwc_cb_t *hwc_find_action,
-				   hwcf_attr_cb_t *attr_find_action);
-    /* Initiate callbacks with all available HWC names and and HWC attributes.
+				   hwcf_attr_cb_t *attr_find_action,
+				   Hwcentry *raw_hwc_tbl);
+    /* Initiate callbacks with all available HWC names and HWC attributes.
        Input:
 	 <hwc_find_action>: if not NULL, will be called once for each HWC
 	 <attr_find_action>: if not NULL, will be called once for each attribute
+	 <raw_hwc_tbl>: counter definitions.
        Return: 0 if successful
 	  or a cpc return code upon error
      */
@@ -263,7 +242,6 @@ extern "C"
   extern hwcdrv_api_t *__collector_get_hwcdrv ();
   extern int __collector_hwcfuncs_bind_descriptor (const char *defstring);
   extern Hwcentry **__collector_hwcfuncs_get_ctrs (unsigned *defcnt);
-  extern hwcdrv_api_t *hwcdrv_drivers[]; // array of available drivers
 
   /* prototypes for internal use by hwcdrv drivers */
   typedef struct
@@ -274,14 +252,6 @@ extern "C"
     const char *cpcN_cciname;
   } hwcdrv_about_t;
 
-  extern int hwcdrv_assign_all_regnos (Hwcentry* entries[], unsigned numctrs);
-  /* assign user's counters to specific CPU registers */
-
-  extern int hwcdrv_lookup_cpuver (const char * cpcN_cciname);
-  /* returns hwc_cpus.h ID for a given string. */
-
-  extern void hwcfuncs_int_capture_errmsg (const char *fn, int subcode,
-					   const char *fmt, va_list ap);
 #define logerr  hwcfuncs_int_logerr
 
   /*---------------------------------------------------------------------------*/
@@ -292,15 +262,6 @@ extern "C"
   ( (((eventsel_t)(evnum) & 0x0f00ULL) << 24) | ((eventsel_t)(evnum) & ~0x0f00ULL) )
 
   typedef uint64_t eventsel_t;
-  extern int  hwcfuncs_get_x86_eventsel (unsigned int regno, const char *int_name,
-			     eventsel_t *return_event, uint_t *return_pmc_sel);
-
-  typedef int (hwcdrv_get_events_fn_t) (hwcf_hwc_cb_t *hwc_cb);
-  typedef int (hwcdrv_get_eventnum_fn_t) (const char *eventname, uint_t pmc,
-					  eventsel_t *eventnum,
-					  eventsel_t *valid_umask, uint_t *pmc_sel);
-  extern hwcdrv_get_eventnum_fn_t *hwcdrv_get_x86_eventnum;
-
   typedef struct
   {
     const char * attrname;  // user-visible name of attribute
@@ -317,7 +278,7 @@ extern "C"
     uint_t (*hdrv_pcbe_ncounters)(void);
     const char *(*hdrv_pcbe_impl_name)(void);
     const char *(*hdrv_pcbe_cpuref)(void);
-    int (*hdrv_pcbe_get_events)(hwcf_hwc_cb_t *hwc_cb);
+    int (*hdrv_pcbe_get_events)(hwcf_hwc_cb_t *hwc_cb, Hwcentry *raw_hwc_tbl);
     int (*hdrv_pcbe_get_eventnum)(const char * eventname, uint_t pmc,
 				  eventsel_t *eventnum, eventsel_t *valid_umask,
 				  uint_t *pmc_sel);

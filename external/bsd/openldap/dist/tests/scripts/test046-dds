@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 2005-2021 The OpenLDAP Foundation.
+## Copyright 2005-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -176,7 +176,7 @@ case $RC in
 0)
 	echo "ldapadd should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 19)
 	echo "ldapadd failed ($RC)"
@@ -201,7 +201,7 @@ case $RC in
 0)
 	echo "ldapmodify should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 65)
 	echo "ldapmodify failed ($RC)"
@@ -226,7 +226,7 @@ case $RC in
 0)
 	echo "ldapmodify should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 65)
 	echo "ldapmodify failed ($RC)"
@@ -451,7 +451,7 @@ case $RC in
 0)
 	echo "ldapmodify should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 50)
 	echo "ldapmodify failed ($RC)"
@@ -482,7 +482,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "ldapexop should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 echo "Trying to refresh the meeting as $JAJDN (should fail)..."
@@ -493,7 +493,7 @@ RC=$?
 if test $RC = 0 ; then
 	echo "ldapexop should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 echo "Trying to delete the meeting as $BABSDN (should fail)..."
@@ -507,7 +507,7 @@ case $RC in
 0)
 	echo "ldapdelete should have failed ($RC)!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 50)
 	echo "ldapdelete failed ($RC)"

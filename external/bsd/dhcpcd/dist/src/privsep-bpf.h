@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -29,10 +29,9 @@
 #ifndef PRIVSEP_BPF_H
 #define PRIVSEP_BPF_H
 
-ssize_t ps_bpf_cmd(struct dhcpcd_ctx *,
-    struct ps_msghdr *, struct msghdr *);
-ssize_t ps_bpf_dispatch(struct dhcpcd_ctx *,
-    struct ps_msghdr *, struct msghdr *);
+ssize_t ps_bpf_cmd(struct dhcpcd_ctx *, struct ps_msghdr *, struct msghdr *);
+ssize_t ps_bpf_dispatch(struct dhcpcd_ctx *, struct ps_msghdr *,
+    struct msghdr *);
 
 #ifdef ARP
 ssize_t ps_bpf_openarp(const struct interface *, const struct in_addr *);

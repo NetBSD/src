@@ -1,5 +1,5 @@
 .TH SLAPACL 8C "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2004-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2004-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -131,15 +131,15 @@ See the related fields in
 for details.
 .RE
 .TP
-.BI \-u
-do not fetch the entry from the database.
-In this case, if the entry does not exist, a fake entry with the
+.B \-u
+enable dry-run mode. Do not fetch any entries from the database.
+In this case, a fake entry with the
 .I DN
 given with the
 .B \-b
 option is used, with no attributes.
 As a consequence, those rules that depend on the contents 
-of the target object will not behave as with the real object.
+of the target object or any other database objects will not behave as with the real object.
 The
 .I DN
 given with the

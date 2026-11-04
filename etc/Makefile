@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.473.2.1 2025/08/02 05:20:42 perseant Exp $
+#	$NetBSD: Makefile,v 1.473.2.2 2026/11/04 22:37:14 perseant Exp $
 #	from: @(#)Makefile	8.7 (Berkeley) 5/25/95
 
 # Environment variables without default values:
@@ -48,6 +48,9 @@ DISTRIBVER!=	${HOST_SH} ${NETBSDSRCDIR}/sys/conf/osrelease.sh
 
 GZIP_FLAGS= -9 ${GZIP_N_FLAG}
 
+HASHES+=	MD5
+HASHES+=	SHA512
+
 # Flags for creating ISO CDROM image for mac68k and macppc that require
 # tools mkhybrid(8) to create hybrid ISO9660/HFS images.
 MKISOFS?=	${TOOL_MKHYBRID}
@@ -61,7 +64,7 @@ MKISOFS_FLAGS+= -J -l -r \
 .if ${MKISOFS_FLAGS:N-v}
 MKISOFS_FLAGS+=	-quiet
 .endif
- 
+
 # Reproducible build parameters
 .if ${MKREPRO:Uno} == "no"
 BUILDER!=	echo $${USER-root}@$$(hostname)
@@ -74,6 +77,9 @@ BUILD_DATE!=	date -u
 .else
 PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 BUILD_DATE!=	${TOOL_DATE} -u -r "${MKREPRO_TIMESTAMP}"
+.if ${MKISOFS} == ${TOOL_MKHYBRID}
+MKISOFS_FLAGS+=	-timestamp "${MKREPRO_TIMESTAMP}"
+.endif
 .endif
 
 # MD Makefile.inc may append MD targets to BIN[123].  Make sure all
@@ -339,7 +345,7 @@ install-etc-files: .PHONY .MAKE check_DESTDIR MAKEDEV
 			/dev/null ${DESTDIR}${file}; \
 	else true; fi
 .endfor
-.for subdir in . defaults autofs bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh
+.for subdir in . defaults autofs bluetooth iscsi mtree namedb pam.d powerd rc.d root skel ssh unbound
 	${MAKEDIRTARGET} ${subdir} configinstall
 .endfor
 	${MAKEDIRTARGET} ${NETBSDSRCDIR}/external/bsd/dhcpcd/sbin/dhcpcd configinstall
@@ -687,15 +693,17 @@ releasekern-${configfile}: .PHONY build_kernels snap_pre
 #	kernels. This mess is needed because checkflist runs before the
 #	kernels are built. It should really run before the sets are build.
 install-debugkernels:
-.if ${MKDEBUG:Uno} == "yes"
-	@for i in $$(${NETBSDSRCDIR}/distrib/sets/makeflist debug | \
+.if ${MKDEBUGKERNEL:Uno} == "yes"
+	@for i in $$(MKDEBUGKERNEL=${MKDEBUGKERNEL:Uno} \
+	    MAKE=${MAKE:Q} \
+	    ${NETBSDSRCDIR}/distrib/sets/makeflist debug | \
 	    ${TOOL_GREP} -E '^./usr/libdata/debug/(nfs)?netbsd-'); do \
 		echo touch ${DESTDIR}/$$i; \
 		touch ${DESTDIR}/$$i; \
 	done
 .	for k in ${ALL_KERNELS}
 install-debugkernels: ${DESTDIR}${DEBUGDIR}/netbsd-${k}.debug
-		
+
 ${DESTDIR}${DEBUGDIR}/netbsd-${k}.debug:
 	${_MKTARGET_INSTALL}
 	touch ${.TARGET}

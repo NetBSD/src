@@ -1,5 +1,5 @@
 /* BFD back-end for binary objects.
-   Copyright (C) 1994-2024 Free Software Foundation, Inc.
+   Copyright (C) 1994-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -40,6 +40,8 @@
 /* Any bfd we create by reading a binary file has three symbols:
    a start symbol, an end symbol, and an absolute length symbol.  */
 #define BIN_SYMS 3
+
+char *bfd_binary_symbol_prefix = NULL;
 
 /* Create a binary object.  Invoked via bfd_set_format.  */
 
@@ -122,18 +124,25 @@ static char *
 mangle_name (bfd *abfd, char *suffix)
 {
   bfd_size_type size;
+  const char *prefix;
+  const char *prefix_amend = "";
   char *buf;
   char *p;
 
-  size = (strlen (bfd_get_filename (abfd))
-	  + strlen (suffix)
-	  + sizeof "_binary__");
+  prefix = bfd_binary_symbol_prefix;
+  if (prefix == NULL)
+    {
+      prefix = "_binary_";
+      prefix_amend = bfd_get_filename (abfd);
+    }
+
+  size = strlen (prefix) + strlen (prefix_amend) + strlen (suffix) + 2;
 
   buf = (char *) bfd_alloc (abfd, size);
   if (buf == NULL)
     return "";
 
-  sprintf (buf, "_binary_%s_%s", bfd_get_filename (abfd), suffix);
+  sprintf (buf, "%s%s_%s", prefix, prefix_amend, suffix);
 
   /* Change any non-alphanumeric characters to underscores.  */
   for (p = buf; *p; p++)
@@ -293,20 +302,11 @@ binary_set_section_contents (bfd *abfd,
   return _bfd_generic_set_section_contents (abfd, sec, data, offset, size);
 }
 
-/* No space is required for header information.  */
-
-static int
-binary_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
-		       struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return 0;
-}
-
+#define binary_sizeof_headers			   _bfd_nolink_sizeof_headers
 #define binary_bfd_get_relocated_section_contents  bfd_generic_get_relocated_section_contents
 #define binary_bfd_relax_section		   bfd_generic_relax_section
 #define binary_bfd_gc_sections			   bfd_generic_gc_sections
 #define binary_bfd_lookup_section_flags		   bfd_generic_lookup_section_flags
-#define binary_bfd_merge_sections		   bfd_generic_merge_sections
 #define binary_bfd_is_group_section		   bfd_generic_is_group_section
 #define binary_bfd_group_name			   bfd_generic_group_name
 #define binary_bfd_discard_group		   bfd_generic_discard_group
@@ -320,7 +320,6 @@ binary_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
 #define binary_bfd_link_add_symbols		  _bfd_generic_link_add_symbols
 #define binary_bfd_final_link			  _bfd_generic_final_link
 #define binary_bfd_link_split_section		  _bfd_generic_link_split_section
-#define binary_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
 #define binary_bfd_link_check_relocs		  _bfd_generic_link_check_relocs
 
 const bfd_target binary_vec =
@@ -330,13 +329,14 @@ const bfd_target binary_vec =
   BFD_ENDIAN_UNKNOWN,		/* byteorder */
   BFD_ENDIAN_UNKNOWN,		/* header_byteorder */
   EXEC_P,			/* object_flags */
-  (SEC_ALLOC | SEC_LOAD | SEC_READONLY | SEC_CODE | SEC_DATA
-   | SEC_ROM | SEC_HAS_CONTENTS), /* section_flags */
+  (SEC_CODE | SEC_DATA | SEC_ROM | SEC_HAS_CONTENTS
+   | SEC_ALLOC | SEC_LOAD),	/* section_flags */
   0,				/* symbol_leading_char */
   ' ',				/* ar_pad_char */
   16,				/* ar_max_namelen */
   255,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* data */

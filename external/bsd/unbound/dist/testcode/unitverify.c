@@ -61,6 +61,12 @@
 #include "sldns/str2wire.h"
 #include "sldns/wire2str.h"
 
+#ifdef HAVE_SSL
+#ifdef HAVE_OPENSSL_ERR_H
+#include <openssl/err.h>
+#endif
+#endif
+
 /** verbose signature test */
 static int vsig = 0;
 
@@ -178,6 +184,7 @@ verifytest_rrset(struct module_env* env, struct val_env* ve,
 	struct query_info* qinfo)
 {
 	enum sec_status sec;
+	char reasonbuf[256];
 	char* reason = NULL;
 	uint8_t sigalg[ALGO_NEEDS_MAX+1];
 	int verified = 0;
@@ -188,8 +195,9 @@ verifytest_rrset(struct module_env* env, struct val_env* ve,
 	}
 	setup_sigalg(dnskey, sigalg); /* check all algorithms in the dnskey */
 	/* ok to give null as qstate here, won't be used for answer section. */
-	sec = dnskeyset_verify_rrset(env, ve, rrset, dnskey, sigalg, &reason, NULL,
-		LDNS_SECTION_ANSWER, NULL, &verified);
+	sec = dnskeyset_verify_rrset(env, ve, rrset, dnskey, sigalg, &reason,
+		NULL, LDNS_SECTION_ANSWER, NULL, NULL, &verified, reasonbuf,
+		sizeof(reasonbuf));
 	if(vsig) {
 		printf("verify outcome is: %s %s\n", sec_status_to_string(sec),
 			reason?reason:"");
@@ -423,7 +431,7 @@ nsec3_hash_test_entry(struct entry* e, rbtree_type* ct,
 {
 	struct query_info qinfo;
 	struct reply_info* rep = NULL;
-	struct ub_packed_rrset_key* answer, *nsec3;
+	struct ub_packed_rrset_key* answer, *nsec3, *nsec3_region;
 	struct nsec3_cached_hash* hash = NULL;
 	int ret;
 	uint8_t* qname;
@@ -441,7 +449,11 @@ nsec3_hash_test_entry(struct entry* e, rbtree_type* ct,
 	/* check test is OK */
 	unit_assert(nsec3 && answer && qname);
 
-	ret = nsec3_hash_name(ct, region, buf, nsec3, 0, qname,
+	/* Copy the nsec3 to the region, so it can stay referenced by the
+	 * ct tree entry. The region is freed when the file is done. */
+	nsec3_region = packed_rrset_copy_region(nsec3, region, 0);
+
+	ret = nsec3_hash_name(ct, region, buf, nsec3_region, 0, qname,
 		qinfo.qname_len, &hash);
 	if(ret < 1) {
 		printf("Bad nsec3_hash_name retcode %d\n", ret);
@@ -498,33 +510,317 @@ nsec3_hash_test(const char* fname)
 	sldns_buffer_free(buf);
 }
 
+/** Test the rrset_canonicalize_to_buffer function to see if the
+ * size of canon_owner name is properly checked for. */
+static void
+canon_owner_buf_test(void)
+{
+	struct regional* region;
+	sldns_buffer* buf;
+	struct ub_packed_rrset_key k;
+	struct packed_rrset_data d;
+	size_t rr_len[2];
+	time_t rr_ttl[2];
+	uint8_t* rr_data[2];
+	int ret;
+	unit_show_func("validator/val_sigcrypt.c",
+		"rrset_canonicalize_to_buffer");
+	region = regional_create();
+	if(!region)
+		fatal_exit("out of memory");
+	/* Purposefully a very small buffer, to overflow it */
+	buf = sldns_buffer_new(28);
+	if(!buf)
+		fatal_exit("out of memory");
+
+	/* An RRset to canonicalize. The buffer is made smaller, so
+	 * it can fail on bounds checks. */
+	memset(&d, 0, sizeof(d));
+	d.ttl = 3600;
+	d.count = 1;
+	d.rrsig_count = 1;
+	d.rr_len = rr_len;
+	d.rr_ttl = rr_ttl;
+	d.rr_data = rr_data;
+	rr_len[0] = 18;
+	rr_len[1] = 36;
+	rr_ttl[0] = 3600;
+	rr_ttl[1] = 3600;
+	rr_data[0] = (uint8_t*)"\x00\x10\x0Fzzaaaaaaaaaaaaa";
+	rr_data[1] = (uint8_t*)"\x00\x24\x00\x06\x08\x3\x01\x02\x03\x04\x01\x02\x03\x04\x01\x02\x03\x04\x12\x34\x03zzz\x00zzaaaaaaaaaaa";
+
+	memset(&k, 0, sizeof(k));
+	k.rk.dname = (uint8_t*) "\x0f" "aaaaaaaaaaaaaaa" "\x00";
+	k.rk.dname_len = 17;
+	k.rk.type = htons(LDNS_RR_TYPE_TXT);
+	k.rk.rrset_class = htons(LDNS_RR_CLASS_IN);
+	k.entry.data = &d;
+
+	/* There should be no buffer overflow, assertion failure, here */
+	ret = rrset_canonicalize_to_buffer(region, buf, &k);
+	unit_assert(ret == 0);
+
+	regional_destroy(region);
+	sldns_buffer_free(buf);
+}
+
+/** Test if ds_digest_match_dnskey that calls ds_create_dnskey_digest,
+ * checks the buffer size. */
+static void
+dnskey_ds_digest_test(void)
+{
+	struct regional* region;
+	sldns_buffer* buf;
+	struct module_env env;
+	struct ub_packed_rrset_key k1, k2;
+	struct packed_rrset_data d1, d2;
+	size_t rr_len1[1], rr_len2[1];
+	time_t rr_ttl1[1], rr_ttl2[1];
+	uint8_t* rr_rdata1[1], *rr_rdata2[1];
+	int ret;
+	unit_show_func("validator/val_sigcrypt.c", "ds_digest_match_dnskey");
+	region = regional_create();
+	if(!region)
+		fatal_exit("out of memory");
+	/* Purposefully a very small buffer, to overflow it */
+	buf = sldns_buffer_new(28);
+	if(!buf)
+		fatal_exit("out of memory");
+	memset(&env, 0, sizeof(env));
+	env.scratch = region;
+	env.scratch_buffer = buf;
+
+	/* A DNSKEY and DS RRset to match together. The buffer is made
+	 * smaller, so it can fail on bounds checks. */
+	memset(&d1, 0, sizeof(d1));
+	d1.ttl = 3600;
+	d1.count = 1;
+	d1.rr_len = rr_len1;
+	d1.rr_ttl = rr_ttl1;
+	d1.rr_data = rr_rdata1;
+	rr_len1[0] = 38;
+	rr_ttl1[0] = 3600;
+	/* DS rdata has: keytag (2bytes), algorithm (1byte),
+	 * digesttype (1byte), digest (remainder). */
+	rr_rdata1[0] = (uint8_t*)"\x00\x24"
+		"\x12\x34"
+		"\x08" /* RSASHA256 */
+		"\x02" /* SHA256 */
+		"0123456789abcdef0123456789abcdef"; /* 32 bytes */
+		;
+
+	memset(&k1, 0, sizeof(k1));
+	k1.rk.dname = (uint8_t*) "\x03" "foo" "\x00";
+	k1.rk.dname_len = 5;
+	k1.rk.type = htons(LDNS_RR_TYPE_DS);
+	k1.rk.rrset_class = htons(LDNS_RR_CLASS_IN);
+	k1.entry.data = &d1;
+
+	memset(&d2, 0, sizeof(d2));
+	d2.ttl = 3600;
+	d2.count = 1;
+	d2.rr_len = rr_len2;
+	d2.rr_ttl = rr_ttl2;
+	d2.rr_data = rr_rdata2;
+	rr_len2[0] = 38;
+	rr_ttl2[0] = 3600;
+	/* DNSKEY rdata has: flags (2bytes), protocol (1byte),
+	 * algorithm (1byte), publickey (remainder). */
+	rr_rdata2[0] = (uint8_t*)"\x00\x24"
+		"\x01\x01" /* KSK */
+		"\x03" /* DNSSEC_KEYPROTO */
+		"\x08" /* RSASHA256 */
+		"0123456789abcdef0123456789abcdef"; /* 32 bytes of content */
+		;
+
+	memset(&k2, 0, sizeof(k2));
+	k2.rk.dname = (uint8_t*) "\x03" "foo" "\x00";
+	k2.rk.dname_len = 5;
+	k2.rk.type = htons(LDNS_RR_TYPE_DNSKEY);
+	k2.rk.rrset_class = htons(LDNS_RR_CLASS_IN);
+	k2.entry.data = &d2;
+	/* 36 byte rdata length for DNSKEY (38-2), and dname length of 5,
+	 * exceeds the (small) buffer size. */
+
+	/* There should be no buffer overflow, assertion failure, here */
+	ret = ds_digest_match_dnskey(&env, &k2, 0, &k1, 0);
+	unit_assert(ret == 0);
+
+	regional_destroy(region);
+	sldns_buffer_free(buf);
+}
+
 #define xstr(s) str(s)
 #define str(s) #s
 
+#ifndef __QNX__
 #define SRCDIRSTR xstr(SRCDIR)
+#else /* !__QNX__ */
+#define SRCDIRSTR "."
+#endif /* __QNX__ */
+#if defined(HAVE_SSL) && defined(USE_SHA1)
+/* Detect if openssl is configured to disable RSASHA1 signatures,
+ * with the rh-allow-sha1-signatures disabled. */
+static int
+rh_allow_sha1_signatures_disabled(void)
+{
+	EVP_MD_CTX* ctx;
+	EVP_PKEY* evp_key;
+	/* This key is rdata from nlnetlabs.nl DNSKEY from 20250424005001,
+	 * with id=50602 (ksk), size=2048b.
+	 * A 2048 bit key is taken to avoid key too small errors. */
+	unsigned char key[] = {
+		0x03, 0x01, 0x00, 0x01, 0xBC, 0x0B, 0xE8, 0xBB,
+		0x97, 0x4C, 0xB5, 0xED, 0x6F, 0x6D, 0xC2, 0xB1,
+		0x78, 0x69, 0x93, 0x1C, 0x72, 0x19, 0xB1, 0x05,
+		0x51, 0x13, 0xA1, 0xFC, 0xBF, 0x01, 0x58, 0x0D,
+		0x44, 0x10, 0x5F, 0x0B, 0x75, 0x0E, 0x11, 0x9A,
+		0xC8, 0xF8, 0x0F, 0x90, 0xFC, 0xB8, 0x09, 0xD1,
+		0x14, 0x39, 0x0D, 0x84, 0xCE, 0x97, 0x88, 0x82,
+		0x3D, 0xC5, 0xCB, 0x1A, 0xBF, 0x00, 0x46, 0x37,
+		0x01, 0xF1, 0xCD, 0x46, 0xA2, 0x8F, 0x83, 0x19,
+		0x42, 0xED, 0x6F, 0xAF, 0x37, 0x1F, 0x18, 0x82,
+		0x4B, 0x70, 0x2D, 0x50, 0xA5, 0xA6, 0x66, 0x48,
+		0x7F, 0x56, 0xA8, 0x86, 0x05, 0x41, 0xC8, 0xBE,
+		0x4F, 0x8B, 0x38, 0x51, 0xF0, 0xEB, 0xAD, 0x2F,
+		0x7A, 0xC0, 0xEF, 0xC7, 0xD2, 0x72, 0x6F, 0x16,
+		0x66, 0xAF, 0x59, 0x55, 0xFF, 0xEE, 0x9D, 0x50,
+		0xE9, 0xDB, 0xF4, 0x02, 0xBC, 0x33, 0x5C, 0xC5,
+		0xDA, 0x1C, 0x6A, 0xD1, 0x55, 0xD1, 0x20, 0x2B,
+		0x63, 0x03, 0x4B, 0x77, 0x45, 0x46, 0x78, 0x31,
+		0xE4, 0x90, 0xB9, 0x7F, 0x00, 0xFB, 0x62, 0x7C,
+		0x07, 0xD3, 0xC1, 0x00, 0xA0, 0x54, 0x63, 0x74,
+		0x0A, 0x17, 0x7B, 0xE7, 0xAD, 0x38, 0x07, 0x86,
+		0x68, 0xE4, 0xFD, 0x20, 0x68, 0xD5, 0x33, 0x92,
+		0xCA, 0x90, 0xDD, 0xA4, 0xE9, 0xF2, 0x11, 0xBD,
+		0x9D, 0xA5, 0xF5, 0xEB, 0xB9, 0xFE, 0x8F, 0xA1,
+		0xE4, 0xBF, 0xA4, 0xA4, 0x34, 0x5C, 0x6A, 0x95,
+		0xB6, 0x42, 0x22, 0xF6, 0xD6, 0x10, 0x9C, 0x9B,
+		0x0A, 0x56, 0xE7, 0x42, 0xE5, 0x7F, 0x1F, 0x4E,
+		0xBE, 0x4F, 0x8C, 0xED, 0x30, 0x63, 0xA7, 0x88,
+		0x93, 0xED, 0x37, 0x3C, 0x80, 0xBC, 0xD1, 0x66,
+		0xBD, 0xB8, 0x2E, 0x65, 0xC4, 0xC8, 0x00, 0x5B,
+		0xE7, 0x85, 0x96, 0xDD, 0xAA, 0x05, 0xE6, 0x4F,
+		0x03, 0x64, 0xFA, 0x2D, 0xF6, 0x88, 0x14, 0x8F,
+		0x15, 0x4D, 0xFD, 0xD3
+	};
+	size_t keylen = 260;
+
+#ifdef HAVE_EVP_MD_CTX_NEW
+	ctx = EVP_MD_CTX_new();
+#else
+	ctx = (EVP_MD_CTX*)malloc(sizeof(*ctx));
+	if(ctx) EVP_MD_CTX_init(ctx);
+#endif
+	if(!ctx) return 0;
+
+	evp_key = sldns_key_rsa2pkey_raw(key, keylen);
+	if(!evp_key) {
+#ifdef HAVE_EVP_MD_CTX_NEW
+		EVP_MD_CTX_destroy(ctx);
+#else
+		EVP_MD_CTX_cleanup(ctx);
+		free(ctx);
+#endif
+		return 0;
+	}
+
+#ifndef HAVE_EVP_DIGESTVERIFY
+	(void)evp_key; /* not used */
+	if(EVP_DigestInit(ctx, EVP_sha1()) == 0)
+#else
+	if(EVP_DigestVerifyInit(ctx, NULL, EVP_sha1(), NULL, evp_key) == 0)
+#endif
+	{
+		unsigned long e = ERR_get_error();
+#ifdef EVP_R_INVALID_DIGEST
+		if (ERR_GET_LIB(e) == ERR_LIB_EVP &&
+			ERR_GET_REASON(e) == EVP_R_INVALID_DIGEST) {
+			/* rh-allow-sha1-signatures makes use of sha1 invalid. */
+			if(vsig)
+				printf("Detected that rh-allow-sha1-signatures is off, and disables SHA1 signatures\n");
+#ifdef HAVE_EVP_MD_CTX_NEW
+			EVP_MD_CTX_destroy(ctx);
+#else
+			EVP_MD_CTX_cleanup(ctx);
+			free(ctx);
+#endif
+			EVP_PKEY_free(evp_key);
+			return 1;
+		}
+#endif /* EVP_R_INVALID_DIGEST */
+		/* The signature verify failed for another reason. */
+		log_crypto_err_code("EVP_DigestVerifyInit", e);
+#ifdef HAVE_EVP_MD_CTX_NEW
+		EVP_MD_CTX_destroy(ctx);
+#else
+		EVP_MD_CTX_cleanup(ctx);
+		free(ctx);
+#endif
+		EVP_PKEY_free(evp_key);
+		return 0;
+	}
+#ifdef HAVE_EVP_MD_CTX_NEW
+	EVP_MD_CTX_destroy(ctx);
+#else
+	EVP_MD_CTX_cleanup(ctx);
+	free(ctx);
+#endif
+	EVP_PKEY_free(evp_key);
+	return 0;
+}
+#endif /* HAVE_SSL && USE_SHA1 */
 
 void 
 verify_test(void)
 {
+	int do_sha1 = 1;
 	unit_show_feature("signature verify");
+
+#if defined(HAVE_SSL) && defined(USE_SHA1)
+	if(rh_allow_sha1_signatures_disabled()) {
+		/* Allow the use of SHA1 signatures for the test,
+		 * in case that OpenSSL disallows use of RSASHA1
+		 * with rh-allow-sha1-signatures disabled. */
+#ifndef UB_ON_WINDOWS
+		setenv("OPENSSL_ENABLE_SHA1_SIGNATURES", "1", 0);
+#else
+		_putenv("OPENSSL_ENABLE_SHA1_SIGNATURES=1");
+#endif
+		do_sha1 = 1;
+	}
+#ifdef HAVE_EVP_DEFAULT_PROPERTIES_IS_FIPS_ENABLED
+	if (EVP_default_properties_is_fips_enabled(NULL))
+		do_sha1 = 0;
+#endif
+#endif /* HAVE_SSL and USE_SHA1 */
+
 #ifdef USE_SHA1
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.1", "20070818005004");
+	if(do_sha1) {
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.1", "20070818005004");
+	}
 #endif
 #if defined(USE_DSA) && defined(USE_SHA1)
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.2", "20080414005004");
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.3", "20080416005004");
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.4", "20080416005004");
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.5", "20080416005004");
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.6", "20080416005004");
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.7", "20070829144150");
+	if(do_sha1) {
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.2", "20080414005004");
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.3", "20080416005004");
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.4", "20080416005004");
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.5", "20080416005004");
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.6", "20080416005004");
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.7", "20070829144150");
+	}
 #endif /* USE_DSA */
 #ifdef USE_SHA1
-	verifytest_file(SRCDIRSTR "/testdata/test_signatures.8", "20070829144150");
+	if(do_sha1) {
+		verifytest_file(SRCDIRSTR "/testdata/test_signatures.8", "20070829144150");
+	}
 #endif
 #if (defined(HAVE_EVP_SHA256) || defined(HAVE_NSS) || defined(HAVE_NETTLE)) && defined(USE_SHA2)
 	verifytest_file(SRCDIRSTR "/testdata/test_sigs.rsasha256", "20070829144150");
 #  ifdef USE_SHA1
-	verifytest_file(SRCDIRSTR "/testdata/test_sigs.sha1_and_256", "20070829144150");
+	if(do_sha1) {
+		verifytest_file(SRCDIRSTR "/testdata/test_sigs.sha1_and_256", "20070829144150");
+	}
 #  endif
 	verifytest_file(SRCDIRSTR "/testdata/test_sigs.rsasha256_draft", "20090101000000");
 #endif
@@ -533,8 +829,10 @@ verify_test(void)
 	verifytest_file(SRCDIRSTR "/testdata/test_signatures.9", "20171215000000");
 #endif
 #ifdef USE_SHA1
-	verifytest_file(SRCDIRSTR "/testdata/test_sigs.hinfo", "20090107100022");
-	verifytest_file(SRCDIRSTR "/testdata/test_sigs.revoked", "20080414005004");
+	if(do_sha1) {
+		verifytest_file(SRCDIRSTR "/testdata/test_sigs.hinfo", "20090107100022");
+		verifytest_file(SRCDIRSTR "/testdata/test_sigs.revoked", "20080414005004");
+	}
 #endif
 #ifdef USE_GOST
 	if(sldns_key_EVP_load_gost_id())
@@ -560,8 +858,12 @@ verify_test(void)
 	}
 #endif
 #ifdef USE_SHA1
-	dstest_file(SRCDIRSTR "/testdata/test_ds.sha1");
+	if(do_sha1) {
+		dstest_file(SRCDIRSTR "/testdata/test_ds.sha1");
+	}
 #endif
 	nsectest();
 	nsec3_hash_test(SRCDIRSTR "/testdata/test_nsec3_hash.1");
+	dnskey_ds_digest_test();
+	canon_owner_buf_test();
 }

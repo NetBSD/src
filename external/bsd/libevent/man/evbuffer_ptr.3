@@ -1,4 +1,4 @@
-.TH "evbuffer_ptr" 3 "Tue Jan 31 2017" "libevent" \" -*- nroff -*-
+.TH "evbuffer_ptr" 3 "libevent-2.1.13-stable" \" -*- nroff -*-
 .ad l
 .nh
 .SH NAME
@@ -8,7 +8,7 @@ evbuffer_ptr \- Pointer to a position within an evbuffer\&.
 .br
 .PP
 .PP
-\fC#include <buffer\&.h>\fP
+\fR#include <buffer\&.h>\fP
 .SS "Data Fields"
 
 .in +1c
@@ -33,10 +33,12 @@ evbuffer_ptr \- Pointer to a position within an evbuffer\&.
 Pointer to a position within an evbuffer\&. 
 
 Used when repeatedly searching through a buffer\&. Calling any function that modifies or re-packs the buffer contents may invalidate all evbuffer_ptrs for that buffer\&. Do not modify or contruct these values except with evbuffer_ptr_set\&.
+
 .PP
 An \fBevbuffer_ptr\fP can represent any position from the start of a buffer up to a position immediately after the end of a buffer\&.
+
 .PP
-\fBSee also:\fP
+\fBSee also\fP
 .RS 4
 \fBevbuffer_ptr_set()\fP 
 .RE
@@ -45,4 +47,4 @@ An \fBevbuffer_ptr\fP can represent any position from the start of a buffer up t
 
 .SH "Author"
 .PP 
-Generated automatically by Doxygen for libevent from the source code\&.
+Generated automatically by Doxygen for libevent-2\&.1\&.13-stable from the source code\&.

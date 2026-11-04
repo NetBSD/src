@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.58.2.1 2025/08/02 05:18:25 perseant Exp $	*/
+/*	$NetBSD: exec.c,v 1.58.2.2 2026/11/04 22:36:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)exec.c	8.4 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: exec.c,v 1.58.2.1 2025/08/02 05:18:25 perseant Exp $");
+__RCSID("$NetBSD: exec.c,v 1.58.2.2 2026/11/04 22:36:14 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -844,15 +844,14 @@ hashcd(void)
  */
 
 void
-changepath(char *newval, int flags __unused)
+changepath(const char *new, int flags __unused, struct var *vp __unused)
 {
-	const char *old, *new;
+	const char *old;
 	int idx;
 	int firstchange;
 	int bltin;
 
 	old = pathval();
-	new = newval;
 	firstchange = 9999;	/* assume no change */
 	idx = 0;
 	bltin = -1;
@@ -1132,6 +1131,10 @@ typecmd(int argc, char **argv)
 		    argv[0][0] == 'c' ? " [-p] [-v|-V]" : "");
 
 	while ((arg = *argptr++)) {
+		if (arg[0] == '\0' && !v_flag) {
+			out1str("'' is an empty string\n");
+			continue;
+		}
 		if (!v_flag)
 			out1str(arg);
 		/* First look at the keywords */
@@ -1190,13 +1193,12 @@ typecmd(int argc, char **argv)
 					stunalloc(name);
 				} while (--j >= 0);
 				if (!v_flag)
-					out1fmt(" is%s ",
-					    cmdp ? " a tracked alias for" : "");
+					out1str(" is ");
 				out1fmt("%s\n", name);
 			} else {
 				if (access(arg, X_OK) == 0) {
 					if (!v_flag)
-						out1fmt(" is ");
+						out1str(" is ");
 					out1fmt("%s\n", arg);
 				} else {
 					if (!v_flag)

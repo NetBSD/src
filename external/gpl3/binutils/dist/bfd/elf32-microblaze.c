@@ -1,6 +1,6 @@
 /* Xilinx MicroBlaze-specific support for 32-bit ELF
 
-   Copyright (C) 2009-2024 Free Software Foundation, Inc.
+   Copyright (C) 2009-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -660,7 +660,7 @@ microblaze_elf_reloc_type_lookup (bfd * abfd ATTRIBUTE_UNUSED,
     case BFD_RELOC_MICROBLAZE_64_TLSTPREL:
       microblaze_reloc = R_MICROBLAZE_TLSTPREL32;
       break;
-    case BFD_RELOC_MICROBLAZE_COPY:
+    case BFD_RELOC_COPY:
       microblaze_reloc = R_MICROBLAZE_COPY;
       break;
     default:
@@ -742,16 +742,12 @@ struct _microblaze_elf_section_data
 static bool
 microblaze_elf_new_section_hook (bfd *abfd, asection *sec)
 {
-  if (!sec->used_by_bfd)
-    {
-      struct _microblaze_elf_section_data *sdata;
-      size_t amt = sizeof (*sdata);
+  struct _microblaze_elf_section_data *sdata;
 
-      sdata = bfd_zalloc (abfd, amt);
-      if (sdata == NULL)
-	return false;
-      sec->used_by_bfd = sdata;
-    }
+  sdata = bfd_zalloc (abfd, sizeof (*sdata));
+  if (sdata == NULL)
+    return false;
+  sec->used_by_bfd = sdata;
 
   return _bfd_elf_new_section_hook (abfd, sec);
 }
@@ -861,8 +857,7 @@ microblaze_elf_link_hash_table_create (bfd *abfd)
     return NULL;
 
   if (!_bfd_elf_link_hash_table_init (&ret->elf, abfd, link_hash_newfunc,
-				      sizeof (struct elf32_mb_link_hash_entry),
-				      MICROBLAZE_ELF_DATA))
+				      sizeof (struct elf32_mb_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1770,7 +1765,6 @@ microblaze_elf_relax_section (bfd *abfd,
   Elf_Internal_Rela *irel, *irelend;
   bfd_byte *contents = NULL;
   bfd_byte *free_contents = NULL;
-  int rel_count;
   unsigned int shndx;
   size_t i, sym_index;
   asection *o;
@@ -1823,8 +1817,7 @@ microblaze_elf_relax_section (bfd *abfd,
     goto error_return;
 
   irelend = internal_relocs + sec->reloc_count;
-  rel_count = 0;
-  for (irel = internal_relocs; irel < irelend; irel++, rel_count++)
+  for (irel = internal_relocs; irel < irelend; irel++)
     {
       bfd_vma symval;
       if ((ELF32_R_TYPE (irel->r_info) != (int) R_MICROBLAZE_64_PCREL)
@@ -1940,10 +1933,9 @@ microblaze_elf_relax_section (bfd *abfd,
   if (sdata->relax_count > 0)
     {
       shndx = _bfd_elf_section_from_bfd_section (abfd, sec);
-      rel_count = 0;
       sdata->relax[sdata->relax_count].addr = sec->size;
 
-      for (irel = internal_relocs; irel < irelend; irel++, rel_count++)
+      for (irel = internal_relocs; irel < irelend; irel++)
 	{
 	  bfd_vma nraddr;
 
@@ -2318,20 +2310,20 @@ microblaze_elf_relax_section (bfd *abfd,
 
 static asection *
 microblaze_elf_gc_mark_hook (asection *sec,
-			     struct bfd_link_info * info,
-			     Elf_Internal_Rela * rel,
-			     struct elf_link_hash_entry * h,
-			     Elf_Internal_Sym * sym)
+			     struct bfd_link_info *info,
+			     struct elf_reloc_cookie *cookie,
+			     struct elf_link_hash_entry *h,
+			     unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_MICROBLAZE_GNU_VTINHERIT:
       case R_MICROBLAZE_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 /* PIC support.  */
@@ -2748,11 +2740,8 @@ microblaze_elf_adjust_dynamic_symbol (struct bfd_link_info *info,
 
   /* Apply the required alignment.  */
   s->size = BFD_ALIGN (s->size, (bfd_size_type) (1 << power_of_two));
-  if (power_of_two > s->alignment_power)
-    {
-      if (!bfd_set_section_alignment (s, power_of_two))
-	return false;
-    }
+  if (!bfd_link_align_section (s, power_of_two))
+    return false;
 
   /* Define the symbol as being at this point in the section.  */
   h->root.u.def.section = s;
@@ -2966,8 +2955,8 @@ allocate_dynrelocs (struct elf_link_hash_entry *h, void * dat)
 /* Set the sizes of the dynamic sections.  */
 
 static bool
-microblaze_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				      struct bfd_link_info *info)
+microblaze_elf_late_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				   struct bfd_link_info *info)
 {
   struct elf32_mb_link_hash_table *htab;
   bfd *dynobj;
@@ -2979,7 +2968,8 @@ microblaze_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
     return false;
 
   dynobj = htab->elf.dynobj;
-  BFD_ASSERT (dynobj != NULL);
+  if (dynobj == NULL)
+    return true;
 
   /* Set up .got offsets for local syms, and space for local dynamic
      relocs.  */
@@ -3148,6 +3138,7 @@ microblaze_elf_size_dynamic_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
       s->contents = (bfd_byte *) bfd_zalloc (dynobj, s->size);
       if (s->contents == NULL && s->size != 0)
 	return false;
+      s->alloced = 1;
     }
 
   /* ??? Force DF_BIND_NOW?  */
@@ -3168,8 +3159,6 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
   struct elf32_mb_link_hash_entry *eh = elf32_mb_hash_entry(h);
 
   htab = elf32_mb_hash_table (info);
-  if (htab == NULL)
-    return false;
 
   if (h->plt.offset != (bfd_vma) -1)
     {
@@ -3331,7 +3320,8 @@ microblaze_elf_finish_dynamic_symbol (bfd *output_bfd,
 
 static bool
 microblaze_elf_finish_dynamic_sections (bfd *output_bfd,
-					struct bfd_link_info *info)
+					struct bfd_link_info *info,
+					bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj;
   asection *sdyn, *sgot;
@@ -3497,7 +3487,7 @@ microblaze_elf_add_symbol_hook (bfd *abfd,
 #define elf_backend_create_dynamic_sections	_bfd_elf_create_dynamic_sections
 #define elf_backend_finish_dynamic_sections	microblaze_elf_finish_dynamic_sections
 #define elf_backend_finish_dynamic_symbol	microblaze_elf_finish_dynamic_symbol
-#define elf_backend_size_dynamic_sections	microblaze_elf_size_dynamic_sections
+#define elf_backend_late_size_sections		microblaze_elf_late_size_sections
 #define elf_backend_add_symbol_hook		microblaze_elf_add_symbol_hook
 
 #include "elf32-target.h"

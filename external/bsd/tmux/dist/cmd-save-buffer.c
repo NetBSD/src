@@ -65,7 +65,7 @@ cmd_save_buffer_done(__unused struct client *c, const char *path, int error,
 		return;
 
 	if (error != 0)
-		cmdq_error(item, "%s: %s", path, strerror(error));
+		cmdq_error(item, "%s: %s", strerror(error), path);
 	cmdq_continue(item);
 }
 
@@ -101,7 +101,7 @@ cmd_save_buffer_exec(struct cmd *self, struct cmdq_item *item)
 			if (evb == NULL)
 				fatalx("out of memory");
 			evbuffer_add(evb, bufdata, bufsize);
-			cmdq_print_data(item, 1, evb);
+			cmdq_print_data(item, evb);
 			evbuffer_free(evb);
 			return (CMD_RETURN_NORMAL);
 		}

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2016/01/14 00:34:52 christos Exp $
+#	$NetBSD: Makefile,v 1.1.28.1 2026/11/04 22:41:02 perseant Exp $
 
 .include <bsd.init.mk>
 .include "Makefile.inc"
 
-SUBDIR=		makedoc .WAIT lib .WAIT bin
+SUBDIR=		lib .WAIT bin
 
 .if ${MKSHARE} != "no"
 FILESDIR=	/usr/share/misc

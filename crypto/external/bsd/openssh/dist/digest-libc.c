@@ -1,4 +1,4 @@
-/* $OpenBSD: digest-libc.c,v 1.7 2020/02/26 13:40:09 jsg Exp $ */
+/* $OpenBSD: digest-libc.c,v 1.10 2026/03/03 09:57:25 dtucker Exp $ */
 /*
  * Copyright (c) 2013 Damien Miller <djm@mindrot.org>
  * Copyright (c) 2014 Markus Friedl.  All rights reserved.
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: digest-libc.c,v 1.8 2020/05/28 17:05:49 christos Exp $");
+__RCSID("$NetBSD: digest-libc.c,v 1.8.8.1 2026/11/04 22:36:38 perseant Exp $");
 
 #include <sys/types.h>
 #include <limits.h>
@@ -24,7 +24,6 @@ __RCSID("$NetBSD: digest-libc.c,v 1.8 2020/05/28 17:05:49 christos Exp $");
 #include <string.h>
 
 #include <md5.h>
-#include <rmd160.h>
 #include <sha1.h>
 #include <sha2.h>
 
@@ -33,8 +32,8 @@ __RCSID("$NetBSD: digest-libc.c,v 1.8 2020/05/28 17:05:49 christos Exp $");
 #include "digest.h"
 
 typedef void md_init_fn(void *mdctx);
-typedef void md_update_fn(void *mdctx, const u_int8_t *m, size_t mlen);
-typedef void md_final_fn(u_int8_t[], void *mdctx);
+typedef void md_update_fn(void *mdctx, const uint8_t *m, size_t mlen);
+typedef void md_final_fn(uint8_t[], void *mdctx);
 
 struct ssh_digest_ctx {
 	int alg;
@@ -79,7 +78,7 @@ const struct ssh_digest digests[SSH_DIGEST_MAX] = {
 		"SHA256",
 		SHA256_BLOCK_LENGTH,
 		SHA256_DIGEST_LENGTH,
-		sizeof(SHA2_CTX),
+		sizeof(SHA256_CTX),
 		(md_init_fn *) SHA256Init,
 		(md_update_fn *) SHA256Update,
 		(md_final_fn *) SHA256Final
@@ -89,7 +88,7 @@ const struct ssh_digest digests[SSH_DIGEST_MAX] = {
 		"SHA384",
 		SHA384_BLOCK_LENGTH,
 		SHA384_DIGEST_LENGTH,
-		sizeof(SHA2_CTX),
+		sizeof(SHA384_CTX),
 		(md_init_fn *) SHA384Init,
 		(md_update_fn *) SHA384Update,
 		(md_final_fn *) SHA384Final
@@ -99,7 +98,7 @@ const struct ssh_digest digests[SSH_DIGEST_MAX] = {
 		"SHA512",
 		SHA512_BLOCK_LENGTH,
 		SHA512_DIGEST_LENGTH,
-		sizeof(SHA2_CTX),
+		sizeof(SHA512_CTX),
 		(md_init_fn *) SHA512Init,
 		(md_update_fn *) SHA512Update,
 		(md_final_fn *) SHA512Final
@@ -231,14 +230,15 @@ int
 ssh_digest_memory(int alg, const void *m, size_t mlen, u_char *d, size_t dlen)
 {
 	struct ssh_digest_ctx *ctx = ssh_digest_start(alg);
+	int ret = 0;
 
 	if (ctx == NULL)
 		return SSH_ERR_INVALID_ARGUMENT;
 	if (ssh_digest_update(ctx, m, mlen) != 0 ||
 	    ssh_digest_final(ctx, d, dlen) != 0)
-		return SSH_ERR_INVALID_ARGUMENT;
+		ret = SSH_ERR_INVALID_ARGUMENT;
 	ssh_digest_free(ctx);
-	return 0;
+	return ret;
 }
 
 int

@@ -243,6 +243,7 @@ distcleancheck_listfiles = \
 
 all: config.h
 	$(MAKE) $(AM_MAKEFLAGS) all-recursive
+	@TOOLS_ONLY_FALSE@ (cd info && $(MAKE) $(AM_MAKEFLAGS) makedoc$(EXEEXT))
 
 .SUFFIXES:
 am--refresh:

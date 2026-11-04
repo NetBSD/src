@@ -138,7 +138,10 @@ DEFINE_TEST(test_read_append_filter)
     assertEqualInt(ARCHIVE_OK, archive_read_free(a));
     return;
   }
-  assertEqualIntA(a, ARCHIVE_OK, r);
+  if (r == ARCHIVE_WARN && canGzip())
+    assertEqualString(archive_error_string(a), "Using external gzip program");
+  else
+    assertEqualIntA(a, ARCHIVE_OK, r);
   assertEqualInt(ARCHIVE_OK,
       archive_read_open_memory(a, archive, sizeof(archive)));
   assertEqualInt(ARCHIVE_OK, archive_read_next_header(a, &ae));
@@ -172,6 +175,40 @@ DEFINE_TEST(test_read_append_wrong_filter)
     assertEqualIntA(a, ARCHIVE_OK, archive_read_close(a));
   }
   assertEqualInt(ARCHIVE_OK,archive_read_free(a));
+}
+
+DEFINE_TEST(test_read_append_lzop_filter)
+{
+  struct archive *a;
+  int r;
+
+  assert((a = archive_read_new()) != NULL);
+  assertA(0 == archive_read_set_format(a, ARCHIVE_FORMAT_TAR));
+  r = archive_read_append_filter(a, ARCHIVE_FILTER_LZOP);
+  if (archive_liblzo2_version() != NULL) {
+    assertEqualIntA(a, ARCHIVE_OK, r);
+  } else if (canLzop()) {
+    // We're using an external program
+    assertEqualIntA(a, ARCHIVE_WARN, r);
+  }
+
+  archive_read_free(a);
+}
+
+DEFINE_TEST(test_read_append_grzip_filter)
+{
+  struct archive *a;
+  int r;
+
+  assert((a = archive_read_new()) != NULL);
+  assertA(0 == archive_read_set_format(a, ARCHIVE_FORMAT_TAR));
+  r = archive_read_append_filter(a, ARCHIVE_FILTER_GRZIP);
+  // Grzip currently always uses an external program.
+  if (canGrzip()) {
+    assertEqualIntA(a, ARCHIVE_WARN, r);
+  }
+
+  archive_read_free(a);
 }
 
 DEFINE_TEST(test_read_append_filter_program)
@@ -210,7 +247,7 @@ DEFINE_TEST(test_read_append_filter_wrong_program)
   /*
    * If we have "bunzip2 -q", try using that.
    */
-  if (!canRunCommand("bunzip2 -h")) {
+  if (!canRunCommand("bunzip2 -h", NULL)) {
     skipping("Can't run bunzip2 program on this platform");
     return;
   }

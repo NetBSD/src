@@ -1,4 +1,4 @@
-/*	$NetBSD: gen_subs.c,v 1.37 2018/11/30 00:53:11 christos Exp $	*/
+/*	$NetBSD: gen_subs.c,v 1.37.12.1 2026/11/04 22:36:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1992 Keith Muller.
@@ -42,7 +42,7 @@
 #if 0
 static char sccsid[] = "@(#)gen_subs.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: gen_subs.c,v 1.37 2018/11/30 00:53:11 christos Exp $");
+__RCSID("$NetBSD: gen_subs.c,v 1.37.12.1 2026/11/04 22:36:14 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -166,7 +166,7 @@ ls_list(ARCHD *arcn, time_t now, FILE *fp)
 }
 
 /*
- * tty_ls()
+ * ls_tty()
  *	print a short summary of file to tty.
  */
 

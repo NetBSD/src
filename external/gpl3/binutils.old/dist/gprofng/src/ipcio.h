@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -40,6 +40,7 @@ typedef char *String;
 #define RESPONSE_STATUS_SUCCESS     1
 #define RESPONSE_STATUS_FAILURE     2
 #define RESPONSE_STATUS_CANCELLED   3
+#define RESPONSE_STATUS_ERROR       4
 
 #define RESPONSE_TYPE_ACK           0
 #define RESPONSE_TYPE_PROGRESS      1
@@ -60,7 +61,8 @@ enum IPCrequestStatus
   IN_PROGRESS,
   COMPLETED,
   CANCELLED_DEFAULT,
-  CANCELLED_IMMEDIATE
+  CANCELLED_IMMEDIATE,
+  UNDEFINED_REGUEST
 };
 
 enum IPCTraceLevel
@@ -151,6 +153,7 @@ String readString (IPCrequest*);
 void readRequestHeader ();
 
 // write to the wire
+void writeError (const char *, IPCrequest*);
 void writeString (const char *, IPCrequest*);
 void writeBoolean (bool, IPCrequest*);
 void writeInt (int, IPCrequest*);
@@ -168,6 +171,8 @@ extern int ipc_single_threaded_mode;
 extern DbeThreadPool *responseThreadPool;
 extern DbeThreadPool *ipcThreadPool;
 extern int cancelRequestedChannelID;
+extern int cancellableChannelID;
+extern int error_flag;
 
 void ipc_default_log (const char *fmt, ...) __attribute__ ((format (printf, 1, 2)));
 void ipc_response_log (IPCTraceLevel, const char *fmt, ...) __attribute__ ((format (printf, 2, 3)));

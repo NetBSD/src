@@ -143,7 +143,7 @@
  * also contain an rcode that is nonzero, but in this case additional
  * information (query, additional) can be passed along.
  *
- * The rcode and dns_msg are used to pass the result from the the rightmost
+ * The rcode and dns_msg are used to pass the result from the rightmost
  * module towards the leftmost modules and then towards the user.
  *
  * If you want to avoid recursion-cycles where queries need other queries
@@ -177,9 +177,11 @@ struct val_anchors;
 struct val_neg_cache;
 struct iter_forwards;
 struct iter_hints;
+struct views;
 struct respip_set;
 struct respip_client_info;
 struct respip_addr_info;
+struct module_stack;
 
 /** Maximum number of modules in operation */
 #define MAX_MODULE 16
@@ -318,13 +320,15 @@ typedef int inplace_cb_query_response_func_type(struct module_qstate* qstate,
 /**
  * Function called when looking for (expired) cached answers during the serve
  * expired logic.
- * Called as func(qstate, lookup_qinfo)
+ * Called as func(qstate, lookup_qinfo, &is_expired)
  * Where:
  *	qstate: the query state.
  *	lookup_qinfo: the qinfo to lookup for.
+ *      is_expired: set if the cached answer is expired.
  */
 typedef struct dns_msg* serve_expired_lookup_func_type(
-	struct module_qstate* qstate, struct query_info* lookup_qinfo);
+	struct module_qstate* qstate, struct query_info* lookup_qinfo,
+	int* is_expired);
 
 /**
  * Module environment.
@@ -371,6 +375,8 @@ struct module_env {
 	 * @param q: which query state to reactivate upon return.
 	 * @param was_ratelimited: it will signal back if the query failed to pass the
 	 *	ratelimit check.
+	 * @param ratelimit_incremented: set to true if the ratelimit counter
+	 *	was increased.
 	 * @return: false on failure (memory or socket related). no query was
 	 *	sent. Or returns an outbound entry with qsent and qstate set.
 	 *	This outbound_entry will be used on later module invocations
@@ -381,7 +387,8 @@ struct module_env {
 		int check_ratelimit,
 		struct sockaddr_storage* addr, socklen_t addrlen,
 		uint8_t* zone, size_t zonelen, int tcp_upstream, int ssl_upstream,
-		char* tls_auth_name, struct module_qstate* q, int* was_ratelimited);
+		char* tls_auth_name, struct module_qstate* q, int* was_ratelimited,
+		int* ratelimit_incremented);
 
 	/**
 	 * Detach-subqueries.
@@ -407,6 +414,8 @@ struct module_env {
 	 * @param qstate: the state to find mesh state, and that wants to 
 	 * 	receive the results from the new subquery.
 	 * @param qinfo: what to query for (copied).
+	 * @param cinfo: if non-NULL client specific info that may affect
+	 *	IP-based actions that apply to the query result.
 	 * @param qflags: what flags to use (RD, CD flag or not).
 	 * @param prime: if it is a (stub) priming query.
 	 * @param valrec: validation lookup recursion, does not need validation
@@ -415,8 +424,9 @@ struct module_env {
 	 * @return: false on error, true if success (and init may be needed).
 	 */ 
 	int (*attach_sub)(struct module_qstate* qstate, 
-		struct query_info* qinfo, uint16_t qflags, int prime, 
-		int valrec, struct module_qstate** newq);
+		struct query_info* qinfo, struct respip_client_info* cinfo,
+		uint16_t qflags, int prime, int valrec,
+		struct module_qstate** newq);
 
 	/**
 	 * Add detached query.
@@ -436,6 +446,8 @@ struct module_env {
 	 * @param qstate: the state to find mesh state, and that wants to receive
 	 * 	the results from the new subquery.
 	 * @param qinfo: what to query for (copied).
+	 * @param cinfo: if non-NULL client specific info that may affect
+	 *	IP-based actions that apply to the query result.
 	 * @param qflags: what flags to use (RD / CD flag or not).
 	 * @param prime: if it is a (stub) priming query.
 	 * @param valrec: if it is a validation recursion query (lookup of key, DS).
@@ -445,9 +457,9 @@ struct module_env {
 	 * @return: false on error, true if success (and init may be needed).
 	 */
 	int (*add_sub)(struct module_qstate* qstate, 
-		struct query_info* qinfo, uint16_t qflags, int prime, 
-		int valrec, struct module_qstate** newq,
-		struct mesh_state** sub);
+		struct query_info* qinfo, struct respip_client_info* cinfo,
+		uint16_t qflags, int prime, int valrec,
+		struct module_qstate** newq, struct mesh_state** sub);
 
 	/**
 	 * Kill newly attached sub. If attach_sub returns newq for 
@@ -511,16 +523,20 @@ struct module_env {
 	/** auth zones */
 	struct auth_zones* auth_zones;
 	/** Mapping of forwarding zones to targets.
-	 * iterator forwarder information. per-thread, created by worker */
+	 * iterator forwarder information. */
 	struct iter_forwards* fwds;
 	/** 
-	 * iterator forwarder information. per-thread, created by worker.
+	 * iterator stub information.
 	 * The hints -- these aren't stored in the cache because they don't 
 	 * expire. The hints are always used to "prime" the cache. Note 
 	 * that both root hints and stub zone "hints" are stored in this 
 	 * data structure. 
 	 */
 	struct iter_hints* hints;
+	/** views structure containing view tree */
+	struct views* views;
+	/** response-ip set with associated actions and tags. */
+	struct respip_set* respip_set;
 	/** module specific data. indexed by module id. */
 	void* modinfo[MAX_MODULE];
 
@@ -537,6 +553,12 @@ struct module_env {
 	/** EDNS client string information */
 	struct edns_strings* edns_strings;
 
+	/** module stack */
+	struct module_stack* modstack;
+#ifdef USE_CACHEDB
+	/** the cachedb enabled value, copied and stored here. */
+	int cachedb_enabled;
+#endif
 	/* Make every mesh state unique, do not aggregate mesh states. */
 	int unique_mesh;
 };
@@ -679,6 +701,16 @@ struct module_qstate {
 	time_t qstarttime;
 	/** whether a message from cachedb will be used for the reply */
 	int is_cachedb_answer;
+	/** whether the reply is subnet specific */
+	int is_subnet_answer;
+	/** if the response as error is from error_response_cache, and is
+	 * suitable for caching (briefly) the error response. Set by the
+	 * iterator when no_cache_store is enabled, and there is an error. */
+	int error_response_cache;
+	/** if the iterator sees that the forward/stub has no_cache set.
+	 * to signal to calling modules that their setting of no_cache for
+	 * other reasons, has to take into account the fwd/stub no_cache. */
+	int fwd_stub_no_cache;
 
 	/**
 	 * Attributes of clients that share the qstate that may affect IP-based
@@ -689,6 +721,8 @@ struct module_qstate {
 	/** Extended result of response-ip action processing, mainly
 	 *  for logging purposes. */
 	struct respip_action_info* respip_action_info;
+	/** if the query has been modified by rpz processing. */
+	int rpz_applied;
 	/** if the query is rpz passthru, no further rpz processing for it */
 	int rpz_passthru;
 	/* Flag tcp required. */
@@ -696,6 +730,12 @@ struct module_qstate {
 
 	/** whether the reply should be dropped */
 	int is_drop;
+	/** the global quota that was reached, by one of the modules.
+	 * So that continued counting can go on from that point. */
+	int global_quota_reached;
+	/** the global quota that a query started with, it is a subquery,
+	 * so that calling mesh states can see the increase. */
+	int global_quota_started;
 };
 
 /** 
@@ -705,8 +745,29 @@ struct module_func_block {
 	/** text string name of module */
 	const char* name;
 
-	/** 
-	 * init the module. Called once for the global state.
+	/**
+	 * Set up the module for start. This is called only once at startup.
+	 * Privileged operations like opening device files may be done here.
+	 * The function ptr can be NULL, if it is not used.
+	 * @param env: module environment.
+	 * @param id: module id number.
+	 * return: 0 on error
+	 */
+	int (*startup)(struct module_env* env, int id);
+
+	/**
+	 * Close down the module for stop. This is called only once before
+	 * shutdown to free resources allocated during startup().
+	 * Closing privileged ports or files must be done here.
+	 * The function ptr can be NULL, if it is not used.
+	 * @param env: module environment.
+	 * @param id: module id number.
+	 */
+	void (*destartup)(struct module_env* env, int id);
+
+	/**
+	 * Initialise the module. Called when restarting or reloading the
+	 * daemon.
 	 * This is the place to apply settings from the config file.
 	 * @param env: module environment.
 	 * @param id: module id number.
@@ -715,7 +776,8 @@ struct module_func_block {
 	int (*init)(struct module_env* env, int id);
 
 	/**
-	 * de-init, delete, the module. Called once for the global state.
+	 * Deinitialise the module, undo stuff done during init().
+	 * Called before reloading the daemon.
 	 * @param env: module environment.
 	 * @param id: module id number.
 	 */
@@ -824,10 +886,11 @@ void errinf_dname(struct module_qstate* qstate, const char* str,
 /**
  * Create error info in string.  For validation failures.
  * @param qstate: query state.
+ * @param region: the region for the result or NULL for malloced result.
  * @return string or NULL on malloc failure (already logged).
- *    This string is malloced and has to be freed by caller.
+ *    This string is malloced if region is NULL and has to be freed by caller.
  */
-char* errinf_to_str_bogus(struct module_qstate* qstate);
+char* errinf_to_str_bogus(struct module_qstate* qstate, struct regional* region);
 
 /**
  * Check the sldns_ede_code of the qstate->errinf.
@@ -840,7 +903,6 @@ sldns_ede_code errinf_to_reason_bogus(struct module_qstate* qstate);
  * Create error info in string.  For other servfails.
  * @param qstate: query state.
  * @return string or NULL on malloc failure (already logged).
- *    This string is malloced and has to be freed by caller.
  */
 char* errinf_to_str_servfail(struct module_qstate* qstate);
 
@@ -848,7 +910,6 @@ char* errinf_to_str_servfail(struct module_qstate* qstate);
  * Create error info in string.  For misc failures that are not servfail.
  * @param qstate: query state.
  * @return string or NULL on malloc failure (already logged).
- *    This string is malloced and has to be freed by caller.
  */
 char* errinf_to_str_misc(struct module_qstate* qstate);
 

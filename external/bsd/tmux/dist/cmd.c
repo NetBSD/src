@@ -220,6 +220,7 @@ struct cmd {
 
 	char			 *file;
 	u_int			  line;
+	int			  parse_flags;
 
 	TAILQ_ENTRY(cmd)	  qentry;
 };
@@ -412,6 +413,13 @@ cmd_get_source(struct cmd *cmd, const char **file, u_int *line)
 		*line = cmd->line;
 }
 
+/* Get parse flags for command. */
+int
+cmd_get_parse_flags(struct cmd *cmd)
+{
+	return (cmd->parse_flags);
+}
+
 /* Look for an alias for a command. */
 char *
 cmd_get_alias(const char *name)
@@ -444,7 +452,7 @@ cmd_get_alias(const char *name)
 }
 
 /* Look up a command entry by name. */
-static const struct cmd_entry *
+const struct cmd_entry *
 cmd_find(const char *name, char **cause)
 {
 	const struct cmd_entry	**loop, *entry, *found = NULL;
@@ -496,7 +504,7 @@ ambiguous:
 /* Parse a single command from an argument vector. */
 struct cmd *
 cmd_parse(struct args_value *values, u_int count, const char *file, u_int line,
-    char **cause)
+    int parse_flags, char **cause)
 {
 	const struct cmd_entry	*entry;
 	struct cmd		*cmd;
@@ -525,6 +533,7 @@ cmd_parse(struct args_value *values, u_int count, const char *file, u_int line,
 	cmd = xcalloc(1, sizeof *cmd);
 	cmd->entry = entry;
 	cmd->args = args;
+	cmd->parse_flags = parse_flags;
 
 	if (file != NULL)
 		cmd->file = xstrdup(file);
@@ -636,7 +645,7 @@ cmd_list_free(struct cmd_list *cmdlist)
 
 /* Copy a command list, expanding %s in arguments. */
 struct cmd_list *
-cmd_list_copy(struct cmd_list *cmdlist, int argc, char **argv)
+cmd_list_copy(const struct cmd_list *cmdlist, int argc, char **argv)
 {
 	struct cmd	*cmd;
 	struct cmd_list	*new_cmdlist;
@@ -667,7 +676,7 @@ cmd_list_copy(struct cmd_list *cmdlist, int argc, char **argv)
 
 /* Get a command list as a string. */
 char *
-cmd_list_print(struct cmd_list *cmdlist, int escaped)
+cmd_list_print(const struct cmd_list *cmdlist, int escaped)
 {
 	struct cmd	*cmd, *next;
 	char		*buf, *this;

@@ -1,5 +1,5 @@
 /* Routines to link ECOFF debugging information.
-   Copyright (C) 1993-2024 Free Software Foundation, Inc.
+   Copyright (C) 1993-2026 Free Software Foundation, Inc.
    Written by Ian Lance Taylor, Cygnus Support, <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -32,7 +32,18 @@
 #include "coff/ecoff.h"
 #include "libcoff.h"
 #include "libecoff.h"
-
+
+/* ECOFF uses two common sections.  One is the usual one, and the
+   other is for small objects.  All the small objects are kept
+   together, and then referenced via the gp pointer, which yields
+   faster assembler code.  This is what we use for the small common
+   section.  */
+static const asymbol ecoff_scom_symbol =
+  GLOBAL_SYM_INIT (SCOMMON, &_bfd_ecoff_scom_section);
+asection _bfd_ecoff_scom_section =
+  BFD_FAKE_SECTION (_bfd_ecoff_scom_section, &ecoff_scom_symbol,
+		    SCOMMON, 0, SEC_IS_COMMON | SEC_SMALL_DATA);
+
 /* Routines to swap auxiliary information in and out.  I am assuming
    that the auxiliary information format is always going to be target
    independent.  */
@@ -2044,7 +2055,7 @@ lookup_line (bfd *abfd,
       PDR pdr;
       unsigned char *line_ptr;
       unsigned char *line_end;
-      int lineno;
+      unsigned int lineno;
       /* This file uses ECOFF debugging information.  Each FDR has a
 	 list of procedure descriptors (PDR).  The address in the FDR
 	 is the absolute address of the first procedure.  The address
@@ -2192,16 +2203,14 @@ lookup_line (bfd *abfd,
 	  int delta;
 	  unsigned int count;
 
-	  delta = *line_ptr >> 4;
-	  if (delta >= 0x8)
-	    delta -= 0x10;
+	  delta = (*line_ptr >> 4) & 0xf;
+	  delta = (delta ^ 8) - 8;
 	  count = (*line_ptr & 0xf) + 1;
 	  ++line_ptr;
 	  if (delta == -8)
 	    {
-	      delta = (((line_ptr[0]) & 0xff) << 8) + ((line_ptr[1]) & 0xff);
-	      if (delta >= 0x8000)
-		delta -= 0x10000;
+	      delta = (((line_ptr[0]) & 0xff) << 8) | ((line_ptr[1]) & 0xff);
+	      delta = (delta ^ 0x8000) - 0x8000;
 	      line_ptr += 2;
 	    }
 	  lineno += delta;
@@ -2262,7 +2271,7 @@ lookup_line (bfd *abfd,
 						 + proc_sym.iss);
 	    }
 	}
-      if (lineno == ilineNil)
+      if (lineno == (unsigned) ilineNil)
 	lineno = 0;
       line_info->cache.line_num = lineno;
     }

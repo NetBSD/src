@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -32,14 +32,14 @@
 #include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
+#include <stdbool.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 
 #include "common.h"
-#include "dhcpcd.h"
 #include "eloop.h"
-#include "if-options.h"
 
 const char *
 hwaddr_ntoa(const void *hwaddr, size_t hwlen, char *buf, size_t buflen)
@@ -65,10 +65,10 @@ hwaddr_ntoa(const void *hwaddr, size_t hwlen, char *buf, size_t buflen)
 	p = buf;
 	while (hp < ep) {
 		if (hp != hwaddr)
-			*p ++= ':';
+			*p++ = ':';
 		p += snprintf(p, 3, "%.2x", *hp++);
 	}
-	*p ++= '\0';
+	*p++ = '\0';
 	return buf;
 }
 
@@ -85,16 +85,15 @@ hwaddr_aton(uint8_t *buffer, const char *addr)
 		/* Skip separators */
 		c[0] = *p++;
 		switch (c[0]) {
-		case '\n':	/* long duid split on lines */
-		case ':':	/* typical mac address */
-		case '-':	/* uuid */
+		case '\n': /* long duid split on lines */
+		case ':':  /* typical mac address */
+		case '-':  /* uuid */
 			continue;
 		}
 		c[1] = *p++;
 		/* Ensure that digits are hex */
 		if (isxdigit((unsigned char)c[0]) == 0 ||
-		    isxdigit((unsigned char)c[1]) == 0)
-		{
+		    isxdigit((unsigned char)c[1]) == 0) {
 			errno = EINVAL;
 			return 0;
 		}
@@ -111,20 +110,39 @@ hwaddr_aton(uint8_t *buffer, const char *addr)
 }
 
 ssize_t
-readfile(const char *file, void *data, size_t len)
+readfile(const char *file, void **data, size_t *len)
 {
 	int fd;
-	ssize_t bytes;
+	ssize_t bytes = -1;
+	struct stat st;
+	size_t nlen;
+	char *buf;
 
 	fd = open(file, O_RDONLY);
 	if (fd == -1)
 		return -1;
-	bytes = read(fd, data, len);
-	close(fd);
-	if ((size_t)bytes == len) {
-		errno = ENOBUFS;
-		return -1;
+	if (fstat(fd, &st) == -1)
+		goto out;
+
+	/* Ensure that what we read is NUL terminated
+	 * because it's mainly text files and this just
+	 * makes it easier. */
+	nlen = (size_t)st.st_size + 1;
+	if (nlen > *len) {
+		void *ndata = realloc(*data, nlen);
+		if (ndata == NULL)
+			goto out;
+		*data = ndata;
+		*len = nlen;
 	}
+	bytes = read(fd, *data, *len - 1);
+
+out:
+	close(fd);
+	if (bytes == -1)
+		return -1;
+	buf = *data;
+	buf[bytes] = '\0';
 	return bytes;
 }
 
@@ -158,7 +176,7 @@ filemtime(const char *file, time_t *time)
  * We strip leading space and avoid comment lines, making the code that calls
  * us smaller. */
 char *
-get_line(char ** __restrict buf, ssize_t * __restrict buflen)
+get_line(char **__restrict buf, size_t *__restrict buflen)
 {
 	char *p, *c;
 	bool quoted;
@@ -167,16 +185,16 @@ get_line(char ** __restrict buf, ssize_t * __restrict buflen)
 		p = *buf;
 		if (*buf == NULL)
 			return NULL;
-		c = memchr(*buf, '\n', (size_t)*buflen);
+		c = memchr(*buf, '\n', *buflen);
 		if (c == NULL) {
-			c = memchr(*buf, '\0', (size_t)*buflen);
+			c = memchr(*buf, '\0', *buflen);
 			if (c == NULL)
 				return NULL;
-			*buflen = c - *buf;
+			*buflen = (size_t)(c - *buf);
 			*buf = NULL;
 		} else {
 			*c++ = '\0';
-			*buflen -= c - *buf;
+			*buflen -= (size_t)(c - *buf);
 			*buf = c;
 		}
 		for (; *p == ' ' || *p == '\t'; p++)
@@ -200,7 +218,6 @@ get_line(char ** __restrict buf, ssize_t * __restrict buflen)
 	return p;
 }
 
-
 int
 is_root_local(void)
 {
@@ -217,7 +234,8 @@ is_root_local(void)
 }
 
 uint32_t
-lifetime_left(uint32_t lifetime, const struct timespec *acquired, struct timespec *now)
+lifetime_left(uint32_t lifetime, const struct timespec *acquired,
+    struct timespec *now)
 {
 	uint32_t elapsed;
 	struct timespec n;

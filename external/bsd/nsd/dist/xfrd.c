@@ -20,6 +20,7 @@
 #include "xfrd-tcp.h"
 #include "xfrd-disk.h"
 #include "xfrd-notify.h"
+#include "xfrd-catalog-zones.h"
 #include "options.h"
 #include "util.h"
 #include "netio.h"
@@ -34,9 +35,18 @@
 #ifdef USE_DNSTAP
 #include "dnstap/dnstap_collector.h"
 #endif
+#ifdef USE_METRICS
+#include "metrics.h"
+#endif /* USE_METRICS */
 
 #ifdef HAVE_SYSTEMD
 #include <systemd/sd-daemon.h>
+#endif
+
+#ifdef HAVE_SSL
+#include <openssl/ssl.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
 #endif
 
 #define XFRD_UDP_TIMEOUT 10 /* seconds, before a udp request times out */
@@ -130,6 +140,7 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	pid_t nsd_pid)
 {
 	region_type* region;
+	size_t i;
 
 	assert(xfrd == 0);
 	/* to setup signalhandling */
@@ -157,7 +168,6 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	xfrd->zonestat_safe = nsd->zonestatdesired;
 #endif
 	xfrd->activated_first = NULL;
-	xfrd->ipc_pass = buffer_create(xfrd->region, QIOBUFSZ);
 	xfrd->last_task = region_alloc(xfrd->region, sizeof(*xfrd->last_task));
 	udb_ptr_init(xfrd->last_task, xfrd->nsd->task[xfrd->nsd->mytask]);
 	assert(shortsoa || udb_base_get_userdata(xfrd->nsd->task[xfrd->nsd->mytask])->data == 0);
@@ -181,10 +191,22 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	if(event_add(&xfrd->ipc_handler, NULL) != 0)
 		log_msg(LOG_ERR, "xfrd ipc handler: event_add failed");
 	xfrd->ipc_handler_flags = EV_PERSIST|EV_READ;
-	xfrd->ipc_conn = xfrd_tcp_create(xfrd->region, QIOBUFSZ);
-	/* not reading using ipc_conn yet */
-	xfrd->ipc_conn->is_reading = 0;
-	xfrd->ipc_conn->fd = socket;
+	xfrd->notify_events = (struct event *) region_alloc_array_zero(
+		xfrd->region, nsd->child_count * 2, sizeof(struct event));
+	xfrd->notify_pipes = (struct xfrd_tcp *) region_alloc_array_zero(
+		xfrd->region, nsd->child_count * 2, sizeof(struct xfrd_tcp));
+	for(i = 0; i < 2 * nsd->child_count; i++) {
+		int fd = nsd->serve2xfrd_fd_recv[i];
+		xfrd->notify_pipes[i].fd = fd;
+		xfrd->notify_pipes[i].packet = buffer_create(xfrd->region, QIOBUFSZ);
+		event_set(&xfrd->notify_events[i], fd,
+				EV_PERSIST|EV_READ, xfrd_handle_notify, &xfrd->notify_pipes[i]);
+		if(event_base_set(xfrd->event_base, &xfrd->notify_events[i]) != 0)
+			log_msg( LOG_ERR
+			       , "xfrd notify_event: event_base_set failed");
+		if(event_add(&xfrd->notify_events[i], NULL) != 0)
+			log_msg(LOG_ERR, "xfrd notify_event: event_add failed");
+	}
 	xfrd->need_to_send_reload = 0;
 	xfrd->need_to_send_shutdown = 0;
 	xfrd->need_to_send_stats = 0;
@@ -198,6 +220,10 @@ xfrd_init(int socket, struct nsd* nsd, int shortsoa, int reload_active,
 	xfrd->notify_udp_num = 0;
 
 	daemon_remote_attach(xfrd->nsd->rc, xfrd);
+
+#ifdef USE_METRICS
+	daemon_metrics_attach(xfrd->nsd->metrics, xfrd);
+#endif /* USE_METRICS */
 
 	xfrd->tcp_set = xfrd_tcp_set_create(xfrd->region, nsd->options->tls_cert_bundle, nsd->options->xfrd_tcp_max, nsd->options->xfrd_tcp_pipeline);
 	xfrd->tcp_set->tcp_timeout = nsd->tcp_timeout;
@@ -271,6 +297,9 @@ xfrd_sig_process(void)
 	} else if(xfrd->nsd->signal_hint_reload_hup) {
 		log_msg(LOG_WARNING, "SIGHUP received, reloading...");
 		xfrd->nsd->signal_hint_reload_hup = 0;
+		if(xfrd->nsd->options->reload_config) {
+			xfrd_reload_config(xfrd);
+		}
 		if(xfrd->nsd->options->zonefiles_check) {
 			task_new_check_zonefiles(xfrd->nsd->task[
 				xfrd->nsd->mytask], xfrd->last_task, NULL);
@@ -315,6 +344,9 @@ xfrd_main(void)
 	xfrd->shutdown = 0;
 	while(!xfrd->shutdown)
 	{
+		/* xfrd_sig_process takes care of reading zones on SIGHUP */
+		xfrd_process_catalog_producer_zones();
+		xfrd_process_catalog_consumer_zones();
 		/* process activated zones before blocking in select again */
 		xfrd_process_activated();
 		/* dispatch may block for a longer period, so current is gone */
@@ -408,8 +440,17 @@ xfrd_shutdown()
 	if (xfrd->nsd->tls_ctx)
 		SSL_CTX_free(xfrd->nsd->tls_ctx);
 #  ifdef HAVE_TLS_1_3
-	if (xfrd->tcp_set->ssl_ctx)
+	if (xfrd->tcp_set->ssl_ctx) {
+		int i;
+		for(i=0; i<xfrd->tcp_set->tcp_max; i++) {
+			if(xfrd->tcp_set->tcp_state[i] &&
+				xfrd->tcp_set->tcp_state[i]->ssl) {
+				SSL_free(xfrd->tcp_set->tcp_state[i]->ssl);
+				xfrd->tcp_set->tcp_state[i]->ssl = NULL;
+			}
+		}
 		SSL_CTX_free(xfrd->tcp_set->ssl_ctx);
+	}
 #  endif
 #endif
 #ifdef USE_DNSTAP
@@ -419,6 +460,10 @@ xfrd_shutdown()
 	/* process-exit cleans up memory used by xfrd process */
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd shutdown complete"));
 #ifdef MEMCLEAN /* OS collects memory pages */
+	if(xfrd->nsd->db) {
+		namedb_close(xfrd->nsd->db);
+	}
+	/* TODO: cleanup xfrd->catalog_consumer_zones and xfrd->catalog_producer_zones */
 	if(xfrd->zones) {
 		xfrd_zone_type* z;
 		RBTREE_FOR(z, xfrd_zone_type*, xfrd->zones) {
@@ -542,12 +587,25 @@ xfrd_init_zones()
 		(int (*)(const void *, const void *)) dname_compare);
 	xfrd->notify_zones = rbtree_create(xfrd->region,
 		(int (*)(const void *, const void *)) dname_compare);
+	xfrd->catalog_consumer_zones = rbtree_create(xfrd->region,
+		(int (*)(const void *, const void *)) dname_compare);
+	xfrd->catalog_producer_zones = rbtree_create(xfrd->region,
+		(int (*)(const void *, const void *)) dname_compare);
 
 	RBTREE_FOR(zone_opt, struct zone_options*, xfrd->nsd->options->zone_options)
 	{
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: adding %s zone",
 			zone_opt->name));
 
+		if(zone_is_catalog_consumer(zone_opt)) {
+			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s "
+				"is a catalog consumer zone", zone_opt->name));
+			xfrd_init_catalog_consumer_zone(xfrd, zone_opt);
+		}
+		if(zone_is_catalog_producer_member(zone_opt)) {
+			xfrd_add_catalog_producer_member(
+					as_catalog_member_zone(zone_opt));
+		}
 		init_notify_send(xfrd->notify_zones, xfrd->region, zone_opt);
 		if(!zone_is_slave(zone_opt)) {
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s, "
@@ -558,7 +616,77 @@ xfrd_init_zones()
 		xfrd_init_slave_zone(xfrd, zone_opt);
 	}
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: started server %d "
-		"secondary zones", (int)xfrd->zones->count));
+		"secondary zones, %d catalog zones", (int)xfrd->zones->count,
+		(int)xfrd->catalog_consumer_zones->count));
+}
+
+static void
+apply_xfrs_to_consumer_zone(struct xfrd_catalog_consumer_zone* consumer_zone,
+		zone_type* dbzone, xfrd_xfr_type* xfr)
+{
+	FILE* df;
+
+	if(xfr->msg_is_ixfr) {
+		uint32_t soa_serial=0, after_serial=0;
+		xfrd_xfr_type* prev;
+
+		if(dbzone->soa_rrset == NULL || dbzone->soa_rrset->rrs == NULL
+		|| dbzone->soa_rrset->rrs[0]->rdlength < 20+2*sizeof(void*)
+		|| !retrieve_soa_rdata_serial(dbzone->soa_rrset->rrs[0],
+			&soa_serial)) {
+
+			make_catalog_consumer_invalid(consumer_zone,
+			       "could not apply ixfr on catalog consumer zone "
+			       "\'%s\': invalid SOA resource record",
+			       consumer_zone->options->name);
+			return;
+		}
+		if(soa_serial == xfr->msg_old_serial) 
+			goto apply_xfr;
+		for(prev = xfr->prev; prev; prev = prev->prev) {
+			if(!prev->sent)
+				continue;
+			if(xfr->msg_old_serial != prev->msg_new_serial)
+				continue;
+			apply_xfrs_to_consumer_zone(consumer_zone, dbzone, prev);
+			break;
+		}
+		if(!prev
+		|| !retrieve_soa_rdata_serial(dbzone->soa_rrset->rrs[0],
+			&after_serial)
+		|| xfr->msg_old_serial != after_serial) {
+			make_catalog_consumer_invalid(consumer_zone,
+			       "could not find and/or apply xfrs for catalog "
+			       "consumer zone \'%s\': to update to serial %u",
+			       consumer_zone->options->name,
+			       xfr->msg_new_serial);
+			return;
+		}
+	}
+apply_xfr:
+	DEBUG(DEBUG_IPC,1, (LOG_INFO, "apply %sXFR %u -> %u to consumer zone "
+		"\'%s\'", (xfr->msg_is_ixfr ? "I" : "A"), xfr->msg_old_serial,
+		xfr->msg_new_serial, consumer_zone->options->name));
+
+	if(!(df = xfrd_open_xfrfile(xfrd->nsd, xfr->xfrfilenumber, "r"))) {
+		make_catalog_consumer_invalid(consumer_zone,
+		       "could not open transfer file %lld: %s",
+		       (long long)xfr->xfrfilenumber, strerror(errno));
+
+	} else if(0 >= apply_ixfr_for_zone(xfrd->nsd, dbzone, df,
+			xfrd->nsd->options, NULL, xfr->xfrfilenumber)) {
+		make_catalog_consumer_invalid(consumer_zone,
+			"error processing transfer file %lld",
+			(long long)xfr->xfrfilenumber);
+		fclose(df);
+	} else {
+		/* Make valid for reprocessing */
+		make_catalog_consumer_valid(consumer_zone);
+		fclose(df);
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "%sXFR %u -> %u to consumer zone \'%s\' "
+			"applied", (xfr->msg_is_ixfr ? "I" : "A"), xfr->msg_old_serial,
+			xfr->msg_new_serial, consumer_zone->options->name));
+	}
 }
 
 static void
@@ -567,6 +695,9 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 	xfrd_soa_type soa;
 	xfrd_soa_type* soa_ptr = &soa;
 	xfrd_zone_type* zone;
+	struct xfrd_catalog_producer_zone* producer_zone;
+	struct xfrd_catalog_consumer_zone* consumer_zone = NULL;
+	zone_type* dbzone = NULL;
 	xfrd_xfr_type* xfr;
 	xfrd_xfr_type* prev_xfr;
 	enum soainfo_hint hint;
@@ -598,7 +729,6 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 		soa.klass = htons(CLASS_IN);
 		memmove(&soa.ttl, p, sizeof(uint32_t));
 		p += sizeof(uint32_t);
-		soa.rdata_count = htons(7);
 		memmove(soa.prim_ns, p, sizeof(uint8_t));
 		p += sizeof(uint8_t);
 		memmove(soa.prim_ns+1, p, soa.prim_ns[0]);
@@ -627,14 +757,71 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 #endif
 	}
 
-	if(!zone) {
-		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: zone %s master zone updated",
+	if(zone) 
+		; /* pass */
+
+	else if((producer_zone = (struct xfrd_catalog_producer_zone*)
+			rbtree_search(xfrd->catalog_producer_zones, task->zname))) {
+		struct xfrd_producer_xfr* pxfr, *next_pxfr;
+
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "Zone %s is catalog producer",
+			dname_to_string(task->zname,0)));
+
+		if(hint != soainfo_ok)
+			producer_zone->axfr = 1;
+
+		for(pxfr = producer_zone->latest_pxfr; pxfr; pxfr = next_pxfr) {
+			next_pxfr = pxfr->next;
+
+			DEBUG(DEBUG_IPC,1, (LOG_INFO, "pxfr for zone %s for serial %u",
+				dname_to_string(task->zname,0), pxfr->serial));
+			
+			if(hint != soainfo_ok)
+				; /* pass */
+			else if(!soa_ptr || soa_ptr->serial != htonl(pxfr->serial))
+				continue;
+
+			else if(xfrd->reload_failed) {
+				DEBUG(DEBUG_IPC, 1,
+					(LOG_INFO, "xfrd: zone %s mark update "
+					           "to serial %u verified",
+					           producer_zone->options->name,
+					           pxfr->serial));
+				diff_update_commit(
+					producer_zone->options->name,
+					DIFF_VERIFIED, xfrd->nsd,
+					pxfr->xfrfilenumber);
+				return;
+			}
+			DEBUG(DEBUG_IPC, 1,
+				(LOG_INFO, "xfrd: zone %s delete update to "
+				 "serial %u", producer_zone->options->name,
+				 pxfr->serial));
+			xfrd_unlink_xfrfile(xfrd->nsd, pxfr->xfrfilenumber);
+			if((*pxfr->prev_next_ptr = pxfr->next))
+				pxfr->next->prev_next_ptr = pxfr->prev_next_ptr;
+			region_recycle(xfrd->region, pxfr, sizeof(*pxfr));
+			notify_handle_master_zone_soainfo(xfrd->notify_zones,
+				task->zname, soa_ptr);
+		}
+		return;
+	} else {
+		DEBUG(DEBUG_IPC,1, (LOG_INFO, "xfrd: zone %s primary zone updated",
 			dname_to_string(task->zname,0)));
 		notify_handle_master_zone_soainfo(xfrd->notify_zones,
 			task->zname, soa_ptr);
 		return;
 	}
-
+	if(xfrd->nsd->db
+	&& xfrd->catalog_consumer_zones
+#ifndef MULTIPLE_CATALOG_CONSUMER_ZONES
+	&& xfrd->catalog_consumer_zones->count == 1
+#endif
+	&& (consumer_zone = (struct xfrd_catalog_consumer_zone*)rbtree_search(
+			xfrd->catalog_consumer_zones, task->zname))) {
+		dbzone = namedb_find_or_create_zone( xfrd->nsd->db, task->zname
+		                                   , consumer_zone->options);
+	}
 	/* soainfo_gone and soainfo_bad are straightforward, delete all updates
 	   that were transfered, i.e. acquired != 0. soainfo_ok is more
 	   complicated as it is possible that there are subsequent corrupt or
@@ -650,10 +837,12 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 			if(!xfr->sent)
 				continue;
 			assert(xfr->acquired <= before);
-			/* skip non-applied updates */
-			if(!soa_ptr ||
-			    soa_ptr->serial != htonl(xfr->msg_new_serial))
-				continue;
+		}
+		if(hint == soainfo_ok && soa_ptr) {
+			/* soa_ptr should be true if soainfo_ok. If no
+			 * soa_ptr or soa_info_bad or gone delete all
+			 * the transfers. */
+
 			/* updates are applied in-order, acquired time of
 			   most-recent update is used as baseline */
 			if(!acquired) {
@@ -670,6 +859,11 @@ xfrd_process_soa_info_task(struct task_list_d* task)
 					xfrd->nsd, xfr->xfrfilenumber);
 				return;
 			}
+			if(consumer_zone && dbzone &&
+				/* Call consumer apply for most recent update*/
+				(soa_ptr && soa_ptr->serial == htonl(xfr->msg_new_serial)))
+				apply_xfrs_to_consumer_zone(
+					consumer_zone, dbzone, xfr);
 		}
 		DEBUG(DEBUG_IPC, 1,
 			(LOG_INFO, "xfrd: zone %s delete update to serial %u",
@@ -857,7 +1051,8 @@ xfrd_del_slave_zone(xfrd_state_type* xfrd, const dname_type* dname)
 		xfrd_tcp_release(xfrd->tcp_set, z);
 	} else if(z->zone_handler.ev_fd != -1 && z->event_added) {
 		xfrd_udp_release(z);
-	} else if(z->event_added)
+	}
+	if(z->event_added)
 		event_del(&z->zone_handler);
 
 	while(z->latest_xfr) xfrd_delete_zone_xfr(z, z->latest_xfr);
@@ -1023,7 +1218,7 @@ xfrd_make_request(xfrd_zone_type* zone)
 	if(zone->next_master != -1) {
 		/* we are told to use this next master */
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO,
-			"xfrd zone %s use master %i",
+			"xfrd zone %s use primary %i",
 			zone->apex_str, zone->next_master));
 		zone->master_num = zone->next_master;
 		zone->master = acl_find_num(zone->zone_options->pattern->
@@ -1063,13 +1258,13 @@ xfrd_make_request(xfrd_zone_type* zone)
 	}
 
 	/* multi-master-check */
-	if(zone->zone_options->pattern->multi_master_check) {
+	if(zone->zone_options->pattern->multi_primary_check) {
 		if(zone->multi_master_first_master == zone->master_num &&
 			zone->round_num > 0 &&
 			zone->state != xfrd_zone_expired) {
 			/* tried all servers and update zone */
 			if(zone->multi_master_update_check >= 0) {
-				VERBOSITY(2, (LOG_INFO, "xfrd: multi master "
+				VERBOSITY(2, (LOG_INFO, "xfrd: multi primary "
 					"check: zone %s completed transfers",
 					zone->apex_str));
 			}
@@ -1088,7 +1283,7 @@ xfrd_make_request(xfrd_zone_type* zone)
 	if (zone->master->ixfr_disabled &&
 	   (zone->master->ixfr_disabled + XFRD_NO_IXFR_CACHE) <= time(NULL)) {
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "clear negative caching ixfr "
-						"disabled for master %s num "
+						"disabled for primary %s num "
 						"%d ",
 			zone->master->ip_address_spec, zone->master_num));
 		zone->master->ixfr_disabled = 0;
@@ -1119,7 +1314,7 @@ xfrd_make_request(xfrd_zone_type* zone)
 			xfrd_tcp_obtain(xfrd->tcp_set, zone);
 		} else {
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd zone %s axfr "
-				"fallback not allowed, skipping master %s.",
+				"fallback not allowed, skipping primary %s.",
 				zone->apex_str, zone->master->ip_address_spec));
 		}
 	}
@@ -1181,22 +1376,24 @@ xfrd_time()
 void
 xfrd_copy_soa(xfrd_soa_type* soa, rr_type* rr)
 {
-	const uint8_t* rr_ns_wire = dname_name(domain_dname(rdata_atom_domain(rr->rdatas[0])));
-	uint8_t rr_ns_len = domain_dname(rdata_atom_domain(rr->rdatas[0]))->name_size;
-	const uint8_t* rr_em_wire = dname_name(domain_dname(rdata_atom_domain(rr->rdatas[1])));
-	uint8_t rr_em_len = domain_dname(rdata_atom_domain(rr->rdatas[1]))->name_size;
+	const uint8_t* rr_ns_wire = dname_name(domain_dname(rdata_domain_ref(rr)));
+	uint8_t rr_ns_len = domain_dname(rdata_domain_ref(rr))->name_size;
+	const uint8_t* rr_em_wire = dname_name(domain_dname(
+		rdata_domain_ref_offset(rr, sizeof(void*))));
+	uint8_t rr_em_len = domain_dname(rdata_domain_ref_offset(rr,
+		sizeof(void*)))->name_size;
+	uint8_t* p;
 
-	if(rr->type != TYPE_SOA || rr->rdata_count != 7) {
+	if(rr->type != TYPE_SOA || rr->rdlength != 20+2*sizeof(void*)) {
 		log_msg(LOG_ERR, "xfrd: copy_soa called with bad rr, type %d rrs %u.",
-			rr->type, rr->rdata_count);
+			rr->type, (unsigned)rr->rdlength);
 		return;
 	}
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: copy_soa rr, type %d rrs %u, ttl %u.",
-			(int)rr->type, (unsigned)rr->rdata_count, (unsigned)rr->ttl));
+			(int)rr->type, (unsigned)rr->rdlength, (unsigned)rr->ttl));
 	soa->type = htons(rr->type);
 	soa->klass = htons(rr->klass);
 	soa->ttl = htonl(rr->ttl);
-	soa->rdata_count = htons(rr->rdata_count);
 
 	/* copy dnames */
 	soa->prim_ns[0] = rr_ns_len;
@@ -1205,11 +1402,12 @@ xfrd_copy_soa(xfrd_soa_type* soa, rr_type* rr)
 	memcpy(soa->email+1, rr_em_wire, rr_em_len);
 
 	/* already in network format */
-	memcpy(&soa->serial, rdata_atom_data(rr->rdatas[2]), sizeof(uint32_t));
-	memcpy(&soa->refresh, rdata_atom_data(rr->rdatas[3]), sizeof(uint32_t));
-	memcpy(&soa->retry, rdata_atom_data(rr->rdatas[4]), sizeof(uint32_t));
-	memcpy(&soa->expire, rdata_atom_data(rr->rdatas[5]), sizeof(uint32_t));
-	memcpy(&soa->minimum, rdata_atom_data(rr->rdatas[6]), sizeof(uint32_t));
+	p = rr->rdata + 2*sizeof(void*);
+	memcpy(&soa->serial, p, sizeof(uint32_t));
+	memcpy(&soa->refresh, p+4, sizeof(uint32_t));
+	memcpy(&soa->retry, p+8, sizeof(uint32_t));
+	memcpy(&soa->expire, p+12, sizeof(uint32_t));
+	memcpy(&soa->minimum, p+16, sizeof(uint32_t));
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 		"xfrd: copy_soa rr, serial %u refresh %u retry %u expire %u",
 		(unsigned)ntohl(soa->serial), (unsigned)ntohl(soa->refresh),
@@ -1527,7 +1725,7 @@ xfrd_udp_read(xfrd_zone_type* zone)
 			xfrd_tcp_obtain(xfrd->tcp_set, zone);
 			break;
 		case xfrd_packet_transfer:
-			if(zone->zone_options->pattern->multi_master_check) {
+			if(zone->zone_options->pattern->multi_primary_check) {
 				xfrd_udp_release(zone);
 				xfrd_make_request(zone);
 				break;
@@ -1727,7 +1925,7 @@ xfrd_tsig_sign_request(buffer_type* packet, tsig_record_type* tsig,
 static int
 xfrd_send_ixfr_request_udp(xfrd_zone_type* zone)
 {
-	int fd;
+	int fd, apex_compress = 0;
 
 	/* make sure we have a master to query the ixfr request to */
 	assert(zone->master);
@@ -1739,12 +1937,13 @@ xfrd_send_ixfr_request_udp(xfrd_zone_type* zone)
 		return -1;
 	}
 	xfrd_setup_packet(xfrd->packet, TYPE_IXFR, CLASS_IN, zone->apex,
-		qid_generate());
+		qid_generate(), &apex_compress);
 	zone->query_id = ID(xfrd->packet);
 	xfrd_prepare_zone_xfr(zone, TYPE_IXFR);
 	DEBUG(DEBUG_XFRD,1, (LOG_INFO, "sent query with ID %d", zone->query_id));
         NSCOUNT_SET(xfrd->packet, 1);
-	xfrd_write_soa_buffer(xfrd->packet, zone->apex, &zone->soa_disk);
+	xfrd_write_soa_buffer(xfrd->packet, zone->apex, &zone->soa_disk,
+		apex_compress);
 	/* if we have tsig keys, sign the ixfr query */
 	if(zone->master->key_options && zone->master->key_options->tsig_key) {
 		xfrd_tsig_sign_request(
@@ -1782,7 +1981,6 @@ static int xfrd_parse_soa_info(buffer_type* packet, xfrd_soa_type* soa)
 	{
 		return 0;
 	}
-	soa->rdata_count = 7; /* rdata in SOA */
 	soa->serial = htonl(buffer_read_u32(packet));
 	soa->refresh = htonl(buffer_read_u32(packet));
 	soa->retry = htonl(buffer_read_u32(packet));
@@ -1805,12 +2003,14 @@ xfrd_xfr_check_rrs(xfrd_zone_type* zone, buffer_type* packet, size_t count,
 	int *done, xfrd_soa_type* soa, region_type* temp)
 {
 	/* first RR has already been checked */
+	const struct nsd_type_descriptor *descriptor;
 	uint32_t tmp_serial = 0;
 	uint16_t type, rrlen;
 	size_t i, soapos, mempos;
 	const dname_type* dname;
+	struct rr* rr;
+	int32_t code;
 	domain_table_type* owners;
-	rdata_atom_type* rdatas;
 
 	for(i=0; i<count; ++i,++zone->latest_xfr->msg_rr_count)
 	{
@@ -1844,10 +2044,15 @@ xfrd_xfr_check_rrs(xfrd_zone_type* zone, buffer_type* packet, size_t count,
 			return 0;
 		}
 		mempos = buffer_position(packet);
-		if(rdata_wireformat_to_rdata_atoms(temp, owners, type, rrlen,
-			packet, &rdatas) == -1) {
+
+		descriptor = nsd_type_descriptor(type);
+		code = descriptor->read_rdata(owners, rrlen, packet, &rr);
+		if(code < 0) {
 			DEBUG(DEBUG_XFRD,1, (LOG_ERR, "xfrd: zone %s xfr unable "
-				"to parse rdata", zone->apex_str));
+				"to parse rdata %s %s %s", zone->apex_str,
+				dname_to_string(dname,0),
+				rrtype_to_string(type),
+				read_rdata_fail_str(code)));
 			return 0;
 		}
 		if(type == TYPE_SOA) {
@@ -2115,7 +2320,7 @@ xfrd_parse_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet,
 			xfrd_set_zone_state(zone, xfrd_zone_ok);
  			DEBUG(DEBUG_XFRD,1, (LOG_INFO, "xfrd: zone %s is ok",
 				zone->apex_str));
-			if(zone->zone_options->pattern->multi_master_check) {
+			if(zone->zone_options->pattern->multi_primary_check) {
 				region_destroy(tempregion);
 				return xfrd_packet_drop;
 			}
@@ -2313,10 +2518,20 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 		zone->latest_xfr->msg_seq_nr,
 		buffer_begin(packet), buffer_limit(packet), xfrd->nsd,
 		zone->latest_xfr->xfrfilenumber);
-	VERBOSITY(3, (LOG_INFO,
-		"xfrd: zone %s written received XFR packet from %s with serial %u to "
-		"disk", zone->apex_str, zone->master->ip_address_spec,
-		(int)zone->latest_xfr->msg_new_serial));
+
+	if(verbosity < 4 || zone->latest_xfr->msg_seq_nr == 0)
+		; /* pass */
+
+	else if((verbosity >= 6)
+	     || (verbosity >= 5 && zone->latest_xfr->msg_seq_nr %  1000 == 0)
+	     || (verbosity >= 4 && zone->latest_xfr->msg_seq_nr % 10000 == 0)) {
+		VERBOSITY(4, (LOG_INFO,
+			"xfrd: zone %s written received XFR packet %u from %s "
+			"with serial %u to disk", zone->apex_str,
+			zone->latest_xfr->msg_seq_nr,
+			zone->master->ip_address_spec,
+			(int)zone->latest_xfr->msg_new_serial));
+	}
 	zone->latest_xfr->msg_seq_nr++;
 
 	xfrfile_size = xfrd_get_xfrfile_size(
@@ -2341,6 +2556,57 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 	if(zone->master->key_options) {
 		buffer_printf(packet, " TSIG verified with key %s",
 			zone->master->key_options->name);
+	}
+
+	if(zone->master->tls_auth_options && zone->master->tls_auth_options->auth_domain_name) {
+		buffer_printf(packet, " TLS authenticated with domain %s",
+			zone->master->tls_auth_options->auth_domain_name);
+#ifdef HAVE_TLS_1_3
+		/* Get certificate information from the TLS connection */
+		if (zone->tcp_conn != -1) {
+			struct xfrd_tcp_pipeline* tp = NULL;
+			struct region* tmpregion = region_create(xalloc, free);
+			char *cert_serial=NULL, *key_id=NULL,
+				*cert_algorithm=NULL, *tls_version=NULL;
+			/* Find the pipeline for this zone */
+			for (int i = 0; i < xfrd->tcp_set->tcp_max; i++) {
+				struct xfrd_tcp_pipeline* test_tp = xfrd->tcp_set->tcp_state[i];
+				if (test_tp && test_tp->ssl && test_tp->handshake_done) {
+					/* Check if this pipeline is handling our zone */
+					struct xfrd_tcp_pipeline_id* zid;
+					RBTREE_FOR(zid, struct xfrd_tcp_pipeline_id*, test_tp->zone_per_id) {
+						if (zid->zone == zone) {
+							tp = test_tp;
+							break;
+						}
+					}
+					if (tp) break;
+				}
+			}
+			if(!tmpregion)
+				tp = NULL;
+			if(tp && tp->ssl) {
+				get_cert_info(tp->ssl, tmpregion, &cert_serial,
+					&key_id, &cert_algorithm, &tls_version);
+			} else {
+				tp = NULL;
+			}
+
+			if (tp && cert_serial && cert_serial[0] != '\0') {
+				buffer_printf(packet, " cert-serial:%s", cert_serial);
+			}
+			if (tp && key_id && key_id[0] != '\0') {
+				buffer_printf(packet, " key-id:%s", key_id);
+			}
+			if (tp && cert_algorithm && cert_algorithm[0] != '\0') {
+				buffer_printf(packet, " cert-algo:%s", cert_algorithm);
+			}
+			if (tp && tls_version && tls_version[0] != '\0') {
+				buffer_printf(packet, " tls-version:%s", tls_version);
+			}
+			region_destroy(tmpregion);
+		}
+#endif
 	}
 	buffer_flip(packet);
 	diff_write_commit(zone->apex_str, zone->latest_xfr->msg_old_serial,
@@ -2384,7 +2650,7 @@ xfrd_handle_received_xfr_packet(xfrd_zone_type* zone, buffer_type* packet)
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO,
 			"xfrd: zone %s is waiting for reload",
 			zone->apex_str));
-		if(zone->zone_options->pattern->multi_master_check) {
+		if(zone->zone_options->pattern->multi_primary_check) {
 			zone->multi_master_update_check = zone->master_num;
 			xfrd_set_reload_timeout();
 			return xfrd_packet_transfer;
@@ -2438,7 +2704,7 @@ static void
 xfrd_handle_reload(int ATTR_UNUSED(fd), short event, void* ATTR_UNUSED(arg))
 {
 	/* reload timeout */
-	assert(event & EV_TIMEOUT);
+	assert((event & EV_TIMEOUT));
 	(void)event;
 	/* timeout wait period after this request is sent */
 	xfrd->reload_added = 0;
@@ -2514,7 +2780,7 @@ xfrd_handle_passed_packet(buffer_type* packet,
 		if(next != -1) {
 			zone->next_master = next;
 			DEBUG(DEBUG_XFRD,1, (LOG_INFO,
-				"xfrd: notify set next master to query %d",
+				"xfrd: notify set next primary to query %d",
 				next));
 		}
 	}
@@ -2760,7 +3026,7 @@ static void
 xfrd_handle_write_timer(int ATTR_UNUSED(fd), short event, void* ATTR_UNUSED(arg))
 {
 	/* timeout for write events */
-	assert(event & EV_TIMEOUT);
+	assert((event & EV_TIMEOUT));
 	(void)event;
 	if(xfrd->nsd->options->zonefiles_write == 0)
 		return;
@@ -2797,7 +3063,7 @@ static void xfrd_write_timer_set()
 static void xfrd_handle_child_timer(int ATTR_UNUSED(fd), short event,
 	void* ATTR_UNUSED(arg))
 {
-	assert(event & EV_TIMEOUT);
+	assert((event & EV_TIMEOUT));
 	(void)event;
 	/* only used to wakeup the process to reap children, note the
 	 * event is no longer registered */

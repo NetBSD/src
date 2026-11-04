@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -63,7 +63,7 @@ hwcdrv_enable_mt (hwcfuncs_tsd_get_fn_t tsd_ftn)
 
 HWCDRV_API int
 hwcdrv_get_descriptions (hwcf_hwc_cb_t *hwc_find_action,
-			 hwcf_attr_cb_t *attr_find_action)
+			 hwcf_attr_cb_t *attr_find_action, Hwcentry *hwcdef)
 {
   return 0;
 }
@@ -162,10 +162,10 @@ ctrdefprint (int dbg_lvl, const char * hdr, Hwcentry*phwcdef)
 {
   TprintfT (dbg_lvl, "%s: name='%s', int_name='%s',"
 	    " reg_num=%d, timecvt=%d, memop=%d, "
-	    "interval=%d, tag=%u, reg_list=%p\n",
+	    "interval=%d, tag=%u\n",
 	    hdr, phwcdef->name, phwcdef->int_name, phwcdef->reg_num,
 	    phwcdef->timecvt, phwcdef->memop, phwcdef->val,
-	    phwcdef->sort_order, phwcdef->reg_list);
+	    phwcdef->sort_order);
 }
 
 /*---------------------------------------------------------------------------*/
@@ -198,7 +198,7 @@ hwcfuncs_errmsg_get (char *buf, size_t bufsize, int enable)
 }
 
 /* used by cpc to log an error */
-IS_GLOBAL void
+static void
 hwcfuncs_int_capture_errmsg (const char *fn, int subcode,
 			     const char *fmt, va_list ap)
 {
@@ -259,18 +259,11 @@ process_data_descriptor (const char *defstring)
 
   clear_hwcdefs ();
   if (!defstring || !strlen (defstring))
-    {
-      err = HWCFUNCS_ERROR_HWCARGS;
-      goto ext_hw_install_end;
-    }
+    return HWCFUNCS_ERROR_HWCARGS;
   ds = strdup (defstring);
   if (!ds)
-    {
-      err = HWCFUNCS_ERROR_HWCINIT;
-      goto ext_hw_install_end;
-    }
+    return HWCFUNCS_ERROR_HWCINIT;
   dsp = ds;
-
   for (idx = 0; idx < MAX_PICS && *dsp; idx++)
     {
       char *name = NULL;
@@ -281,13 +274,39 @@ process_data_descriptor (const char *defstring)
       int timecvt = 0;
       unsigned sort_order = (unsigned) - 1;
 
+      // Read use_perf_event_type, type, config
+      hwcdef[idx].use_perf_event_type = (int) strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+      hwcdef[idx].type = (int) strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+      hwcdef[idx].config = strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+      hwcdef[idx].config1 = strtol (dsp, &dsp, 0);
+      if (*dsp++ != ':')
+	{
+	  err = HWCFUNCS_ERROR_HWCARGS;
+	  break;
+	}
+
       /* name */
       name = dsp;
       dsp = strchr (dsp, ':');
       if (dsp == NULL)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       *dsp++ = (char) 0;
 
@@ -297,7 +316,7 @@ process_data_descriptor (const char *defstring)
       if (dsp == NULL)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       *dsp++ = (char) 0;
 
@@ -306,12 +325,12 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       if (reg < 0 && reg != -1)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       if (reg >= 0)
 	hwcdef[idx].reg_num = reg;
@@ -321,21 +340,16 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       if (interval < 0)
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].val = interval;
 
       /* min_time */
-      /*
-       * This is a new field.
-       * An old launcher (dbx, etc.) would not include it.
-       * Detect the presence of the field by the char 'm'.
-       */
       if (*dsp == 'm')
 	{
 	  long long tmp_ll = 0;
@@ -344,12 +358,12 @@ process_data_descriptor (const char *defstring)
 	  if (*dsp++ != ':')
 	    {
 	      err = HWCFUNCS_ERROR_HWCARGS;
-	      goto ext_hw_install_end;
+	      break;
 	    }
 	  if (tmp_ll < 0)
 	    {
 	      err = HWCFUNCS_ERROR_HWCARGS;
-	      goto ext_hw_install_end;
+	      break;
 	    }
 	  hwcdef[idx].min_time = tmp_ll;
 	}
@@ -361,7 +375,7 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].sort_order = sort_order;
 
@@ -370,7 +384,7 @@ process_data_descriptor (const char *defstring)
       if (*dsp++ != ':')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].timecvt = timecvt;
 
@@ -379,7 +393,7 @@ process_data_descriptor (const char *defstring)
       if (*dsp != 0 && *dsp++ != ',')
 	{
 	  err = HWCFUNCS_ERROR_HWCARGS;
-	  goto ext_hw_install_end;
+	  break;
 	}
       hwcdef[idx].memop = memop;
       if (*name)
@@ -394,27 +408,11 @@ process_data_descriptor (const char *defstring)
     }
 
   if (*dsp)
-    {
-      TprintfT (DBG_LT0, "hwcfuncs: ERROR: process_data_descriptor(): "
-		"ctr string had some trailing garbage:"
-		" '%s'\n", dsp);
-      err = HWCFUNCS_ERROR_HWCARGS;
-      goto ext_hw_install_end;
-    }
-  free (ds);
-  hwcdef_cnt = idx;
-  return 0;
-
-ext_hw_install_end:
-  if (dsp && *dsp)
-    {
-      TprintfT (DBG_LT0, "hwcfuncs: ERROR: process_data_descriptor(): "
-		" syntax error just before:"
-		" '%s;\n", dsp);
-      logerr (GTXT ("Data descriptor syntax error near `%s'\n"), dsp);
-    }
+    err = HWCFUNCS_ERROR_HWCARGS;
+  if (err != 0)
+    logerr (GTXT ("Data descriptor syntax error near `%s'\n"), dsp);
   else
-    logerr (GTXT ("Data descriptor syntax error\n"));
+    hwcdef_cnt = idx;
   free (ds);
   return err;
 }
@@ -645,39 +643,6 @@ hwcfuncs_get_ctrs (unsigned *defcnt)
   if (defcnt)
     *defcnt = hwcdef_cnt;
   return hwctable;
-}
-
-/* return 1 if <regno> is in Hwcentry's list */
-IS_GLOBAL int
-regno_is_valid (const Hwcentry * pctr, regno_t regno)
-{
-  regno_t *reg_list = pctr->reg_list;
-  if (REG_LIST_IS_EMPTY (reg_list))
-    return 0;
-  if (regno == REGNO_ANY)   /* wildcard */
-    return 1;
-  for (int ii = 0; ii < MAX_PICS; ii++)
-    {
-      regno_t tmp = reg_list[ii];
-      if (REG_LIST_EOL (tmp))   /* end of list */
-	break;
-      if (tmp == regno)     /* is in list */
-	return 1;
-    }
-  return 0;
-}
-
-/* supplied by hwcdrv_api drivers */
-IS_GLOBAL int
-hwcfuncs_assign_regnos (Hwcentry* entries[],
-			unsigned numctrs)
-{
-  if (numctrs > cpcN_npics)
-    {
-      logerr (GTXT ("More than %d counters were specified\n"), cpcN_npics); /*!*/
-      return HWCFUNCS_ERROR_HWCARGS;
-    }
-  return hwcdrv_driver->hwcdrv_assign_regnos (entries, numctrs);
 }
 
 extern hwcdrv_api_t hwcdrv_pcl_api;

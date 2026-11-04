@@ -1,5 +1,5 @@
 /* A YACC grammar to parse a superset of the AT&T linker scripting language.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support (steve@cygnus.com).
 
    This file is part of the GNU Binutils.
@@ -27,6 +27,7 @@
 #define DONTDECLARE_MALLOC
 
 #include "sysdep.h"
+#include "libiberty.h"
 #include "bfd.h"
 #include "bfdlink.h"
 #include "ctf-api.h"
@@ -58,6 +59,8 @@ static char *error_names[ERROR_NAME_MAX];
 static int error_index;
 #define PUSH_ERROR(x) if (error_index < ERROR_NAME_MAX) error_names[error_index] = x; error_index++;
 #define POP_ERROR()   error_index--;
+
+static void yyerror (const char *);
 %}
 %union {
   bfd_vma integer;
@@ -99,7 +102,7 @@ static int error_index;
 %type <flag_info> sect_flags
 %type <name> memspec_opt memspec_at_opt paren_script_name casesymlist
 %type <cname> wildcard_name
-%type <wildcard> section_name_spec filename_spec wildcard_maybe_exclude
+%type <wildcard> section_name_spec filename_spec wildcard_maybe_exclude wildcard_maybe_reverse
 %token <bigint> INT
 %token <name> NAME LNAME
 %type <integer> length
@@ -108,7 +111,7 @@ static int error_index;
 %type <section_phdr> phdr_opt
 %type <integer> opt_nocrossrefs
 
-%right <token> PLUSEQ MINUSEQ MULTEQ DIVEQ  '=' LSHIFTEQ RSHIFTEQ   ANDEQ OREQ
+%right <token> PLUSEQ MINUSEQ MULTEQ DIVEQ  '=' LSHIFTEQ RSHIFTEQ   ANDEQ OREQ XOREQ
 %right <token> '?' ':'
 %left <token> OROR
 %left <token>  ANDAND
@@ -125,11 +128,11 @@ static int error_index;
 %right UNARY
 %token END
 %left <token> '('
-%token <token> ALIGN_K BLOCK BIND QUAD SQUAD LONG SHORT BYTE
-%token SECTIONS PHDRS INSERT_K AFTER BEFORE
+%token <token> ALIGN_K BLOCK BIND QUAD SQUAD LONG SHORT BYTE ASCIZ
+%token SECTIONS PHDRS INSERT_K AFTER BEFORE LINKER_VERSION
 %token DATA_SEGMENT_ALIGN DATA_SEGMENT_RELRO_END DATA_SEGMENT_END
 %token SORT_BY_NAME SORT_BY_ALIGNMENT SORT_NONE
-%token SORT_BY_INIT_PRIORITY
+%token SORT_BY_INIT_PRIORITY REVERSE
 %token '{' '}'
 %token SIZEOF_HEADERS OUTPUT_FORMAT FORCE_COMMON_ALLOCATION OUTPUT_ARCH
 %token INHIBIT_COMMON_ALLOCATION FORCE_GROUP_ALLOCATION
@@ -154,7 +157,7 @@ static int error_index;
 %token LOG2CEIL FORMAT PUBLIC DEFSYMEND BASE ALIAS TRUNCATE REL
 %token INPUT_SCRIPT INPUT_MRI_SCRIPT INPUT_DEFSYM CASE EXTERN START
 %token <name> VERS_TAG VERS_IDENTIFIER
-%token GLOBAL LOCAL VERSIONK INPUT_VERSION_SCRIPT
+%token GLOBAL LOCAL VERSIONK INPUT_VERSION_SCRIPT INPUT_SECTION_ORDERING_SCRIPT
 %token KEEP ONLY_IF_RO ONLY_IF_RW SPECIAL INPUT_SECTION_FLAGS ALIGN_WITH_INPUT
 %token EXCLUDE_FILE
 %token CONSTANT
@@ -169,6 +172,7 @@ file:
 		INPUT_SCRIPT script_file
 	|	INPUT_MRI_SCRIPT mri_script_file
 	|	INPUT_VERSION_SCRIPT version_script_file
+	|	INPUT_SECTION_ORDERING_SCRIPT section_ordering_script_file
 	|	INPUT_DYNAMIC_LIST dynamic_list_file
 	|	INPUT_DEFSYM defsym_expr
 	;
@@ -206,7 +210,7 @@ mri_script_command:
 		CHIP  exp
 	|	CHIP  exp ',' exp
 	|	NAME	{
-			einfo(_("%F%P: unrecognised keyword in MRI style script '%s'\n"),$1);
+			fatal (_("%P: unrecognised keyword in MRI style script '%s'\n"), $1);
 			}
 	|	LIST	{
 			config.map_filename = "-";
@@ -437,6 +441,7 @@ wildcard_maybe_exclude:
 			  $$.sorted = none;
 			  $$.exclude_name_list = NULL;
 			  $$.section_flag_list = NULL;
+			  $$.reversed = false;
 			}
 	|	EXCLUDE_FILE '(' exclude_name_list ')' wildcard_name
 			{
@@ -444,71 +449,101 @@ wildcard_maybe_exclude:
 			  $$.sorted = none;
 			  $$.exclude_name_list = $3;
 			  $$.section_flag_list = NULL;
+			  $$.reversed = false;
+			}
+	;
+
+wildcard_maybe_reverse:
+		wildcard_maybe_exclude
+	|	REVERSE '(' wildcard_maybe_exclude ')'
+			{
+			  $$ = $3;
+			  $$.reversed = true;
+			  $$.sorted = by_name;
 			}
 	;
 
 filename_spec:
-		wildcard_maybe_exclude
-	|	SORT_BY_NAME '(' wildcard_maybe_exclude ')'
+		wildcard_maybe_reverse
+	|	SORT_BY_NAME '(' wildcard_maybe_reverse ')'
 			{
 			  $$ = $3;
 			  $$.sorted = by_name;
 			}
-	|	SORT_NONE '(' wildcard_maybe_exclude ')'
+	|	SORT_NONE '(' wildcard_maybe_reverse ')'
 			{
 			  $$ = $3;
 			  $$.sorted = by_none;
+			  $$.reversed = false;
+			}
+	|	REVERSE '(' SORT_BY_NAME '(' wildcard_maybe_exclude ')' ')'
+			{
+			  $$ = $5;
+			  $$.sorted = by_name;
+			  $$.reversed = true;
 			}
 	;
 
 section_name_spec:
-		wildcard_maybe_exclude
-	|	SORT_BY_NAME '(' wildcard_maybe_exclude ')'
+		wildcard_maybe_reverse
+	|	SORT_BY_NAME '(' wildcard_maybe_reverse ')'
 			{
 			  $$ = $3;
 			  $$.sorted = by_name;
 			}
-	|	SORT_BY_ALIGNMENT '(' wildcard_maybe_exclude ')'
+	|	SORT_BY_ALIGNMENT '(' wildcard_maybe_reverse ')'
 			{
 			  $$ = $3;
 			  $$.sorted = by_alignment;
 			}
-	|	SORT_NONE '(' wildcard_maybe_exclude ')'
+	|	SORT_NONE '(' wildcard_maybe_reverse ')'
 			{
 			  $$ = $3;
 			  $$.sorted = by_none;
 			}
-	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_maybe_exclude ')' ')'
+	|	SORT_BY_NAME '(' SORT_BY_ALIGNMENT '(' wildcard_maybe_reverse ')' ')'
 			{
 			  $$ = $5;
 			  $$.sorted = by_name_alignment;
 			}
-	|	SORT_BY_NAME '(' SORT_BY_NAME '(' wildcard_maybe_exclude ')' ')'
+	|	SORT_BY_NAME '(' SORT_BY_NAME '(' wildcard_maybe_reverse ')' ')'
 			{
 			  $$ = $5;
 			  $$.sorted = by_name;
 			}
-	|	SORT_BY_ALIGNMENT '(' SORT_BY_NAME '(' wildcard_maybe_exclude ')' ')'
+	|	SORT_BY_ALIGNMENT '(' SORT_BY_NAME '(' wildcard_maybe_reverse ')' ')'
 			{
 			  $$ = $5;
 			  $$.sorted = by_alignment_name;
 			}
-	|	SORT_BY_ALIGNMENT '(' SORT_BY_ALIGNMENT '(' wildcard_maybe_exclude ')' ')'
+	|	SORT_BY_ALIGNMENT '(' SORT_BY_ALIGNMENT '(' wildcard_maybe_reverse ')' ')'
 			{
 			  $$ = $5;
 			  $$.sorted = by_alignment;
 			}
-	|	SORT_BY_INIT_PRIORITY '(' wildcard_maybe_exclude ')'
+	|	SORT_BY_INIT_PRIORITY '(' wildcard_maybe_reverse ')'
 			{
 			  $$ = $3;
 			  $$.sorted = by_init_priority;
+			}
+	|	REVERSE '(' SORT_BY_NAME '(' wildcard_maybe_exclude ')' ')'
+			{
+			  $$ = $5;
+			  $$.sorted = by_name;
+			  $$.reversed = true;
+			}
+	|	REVERSE '(' SORT_BY_INIT_PRIORITY '(' wildcard_maybe_exclude ')' ')'
+			{
+			  $$ = $5;
+			  $$.sorted = by_init_priority;
+			  $$.reversed = true;
 			}
 	;
 
 sect_flag_list:	NAME
 			{
 			  struct flag_info_list *n;
-			  n = ((struct flag_info_list *) xmalloc (sizeof *n));
+			  n = stat_alloc (sizeof *n);
 			  if ($1[0] == '!')
 			    {
 			      n->with = without_flags;
@@ -526,7 +561,7 @@ sect_flag_list:	NAME
 	|	sect_flag_list '&' NAME
 			{
 			  struct flag_info_list *n;
-			  n = ((struct flag_info_list *) xmalloc (sizeof *n));
+			  n = stat_alloc (sizeof *n);
 			  if ($3[0] == '!')
 			    {
 			      n->with = without_flags;
@@ -547,7 +582,7 @@ sect_flags:
 		INPUT_SECTION_FLAGS '(' sect_flag_list ')'
 			{
 			  struct flag_info *n;
-			  n = ((struct flag_info *) xmalloc (sizeof *n));
+			  n = stat_alloc (sizeof *n);
 			  n->flag_list = $3;
 			  n->flags_initialized = false;
 			  n->not_with_flags = 0;
@@ -560,7 +595,7 @@ exclude_name_list:
 		exclude_name_list wildcard_name
 			{
 			  struct name_list *tmp;
-			  tmp = (struct name_list *) xmalloc (sizeof *tmp);
+			  tmp = stat_alloc (sizeof *tmp);
 			  tmp->name = $2;
 			  tmp->next = $1;
 			  $$ = tmp;
@@ -569,7 +604,7 @@ exclude_name_list:
 		wildcard_name
 			{
 			  struct name_list *tmp;
-			  tmp = (struct name_list *) xmalloc (sizeof *tmp);
+			  tmp = stat_alloc (sizeof *tmp);
 			  tmp->name = $1;
 			  tmp->next = NULL;
 			  $$ = tmp;
@@ -580,7 +615,7 @@ section_name_list:
 		section_name_list opt_comma section_name_spec
 			{
 			  struct wildcard_list *tmp;
-			  tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
+			  tmp = stat_alloc (sizeof *tmp);
 			  tmp->next = $1;
 			  tmp->spec = $3;
 			  $$ = tmp;
@@ -589,7 +624,7 @@ section_name_list:
 		section_name_spec
 			{
 			  struct wildcard_list *tmp;
-			  tmp = (struct wildcard_list *) xmalloc (sizeof *tmp);
+			  tmp = stat_alloc (sizeof *tmp);
 			  tmp->next = NULL;
 			  tmp->spec = $1;
 			  $$ = tmp;
@@ -668,10 +703,17 @@ statement:
 		{
 		  lang_add_data ((int) $1, $3);
 		}
-
+	| ASCIZ NAME
+		{
+		  lang_add_string ($2);
+		}
 	| FILL '(' fill_exp ')'
 		{
 		  lang_add_fill ($3);
+		}
+	| LINKER_VERSION
+		{
+		  lang_add_version_string ();
 		}
 	| ASSERT_K
 		{ ldlex_expression (); }
@@ -713,7 +755,7 @@ length:
 fill_exp:
 	mustbe_exp
 		{
-		  $$ = exp_get_fill ($1, 0, "fill value");
+		  $$ = exp_get_fill ($1, 0, _("fill value"));
 		}
 	;
 
@@ -740,6 +782,8 @@ assign_op:
 			{ $$ = '&'; }
 	|	OREQ
 			{ $$ = '|'; }
+	|	XOREQ
+			{ $$ = '^'; }
 
 	;
 
@@ -882,7 +926,7 @@ nocrossref_list:
 		{
 		  struct lang_nocrossref *n;
 
-		  n = (struct lang_nocrossref *) xmalloc (sizeof *n);
+		  n = stat_alloc (sizeof *n);
 		  n->name = $1;
 		  n->next = $2;
 		  $$ = n;
@@ -891,7 +935,7 @@ nocrossref_list:
 		{
 		  struct lang_nocrossref *n;
 
-		  n = (struct lang_nocrossref *) xmalloc (sizeof *n);
+		  n = stat_alloc (sizeof *n);
 		  n->name = $1;
 		  n->next = $3;
 		  $$ = n;
@@ -1181,8 +1225,7 @@ phdr_opt:
 		{
 		  struct lang_output_section_phdr_list *n;
 
-		  n = ((struct lang_output_section_phdr_list *)
-		       xmalloc (sizeof *n));
+		  n = stat_alloc (sizeof *n);
 		  n->name = $3;
 		  n->used = false;
 		  n->next = $1;
@@ -1496,16 +1539,48 @@ opt_semicolon:
 	|	';'
 	;
 
+section_ordering_script_file:
+		{
+		  ldlex_script ();
+		  PUSH_ERROR (_("section-ordering-file script"));
+		}
+		section_ordering_list
+		{
+		  ldlex_popstate ();
+		  POP_ERROR ();
+		}
+	;
+
+section_ordering_list:
+		section_ordering_list section_order
+	|	section_ordering_list statement_anywhere
+	|
+	;
+
+section_order:	NAME ':'
+		{
+		  ldlex_wild ();
+		  lang_enter_output_section_statement
+		    ($1, NULL, 0, NULL, NULL, NULL, NULL, 0, 0);
+		}
+		'{'
+		statement_list_opt
+		'}'
+		{
+		  ldlex_popstate ();
+		  lang_leave_output_section_statement (NULL, NULL, NULL, NULL);
+		}
+		opt_comma
+
 %%
-void
-yyerror(arg)
-     const char *arg;
+static void
+yyerror (const char *arg)
 {
   if (ldfile_assumed_script)
     einfo (_("%P:%s: file format not recognized; treating as linker script\n"),
 	   ldlex_filename ());
   if (error_index > 0 && error_index < ERROR_NAME_MAX)
-    einfo ("%F%P:%pS: %s in %s\n", NULL, arg, error_names[error_index - 1]);
+    fatal (_("%P:%pS: %s in %s\n"), NULL, arg, error_names[error_index - 1]);
   else
-    einfo ("%F%P:%pS: %s\n", NULL, arg);
+    fatal ("%P:%pS: %s\n", NULL, arg);
 }

@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -139,10 +139,10 @@ fi
 
 echo "Checking that proxy has created connections towards backend (time_t now=`date +%s`)"
 
-$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 0 ; then
     echo "Error: LDAP connection to remote LDAP server is not found ($RC)"
@@ -150,10 +150,10 @@ if test $RC != 0 ; then
     exit $RC
 fi
 
-$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 0 ; then
     echo "Error: LDAP connection to remote LDAP server is not found ($RC)"
@@ -171,10 +171,10 @@ sleep `expr $CONN_EXPIRES - $NOW + 2`
 
 echo "Checking that proxy has closed expired connections towards the remote LDAP server (time_t now=`date +%s`)"
 
-$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 1 ; then
     echo "Error: LDAP connection to remote LDAP server was not closed"
@@ -182,10 +182,10 @@ if test $RC != 1 ; then
     exit $RC
 fi
 
-$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 1 ; then
     echo "Error: LDAP connection to remote LDAP server was not closed"
@@ -235,10 +235,10 @@ sleep 2
 
 echo "Checking that proxy has created connections towards backend (time_t now=`date +%s`)"
 
-$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 0 ; then
     echo "Error: LDAP connection to remote LDAP server is not found ($RC)"
@@ -246,10 +246,10 @@ if test $RC != 0 ; then
     exit $RC
 fi
 
-$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 0 ; then
     echo "Error: LDAP connection to remote LDAP server is not found ($RC)"
@@ -267,10 +267,10 @@ sleep `expr $CONN_EXPIRES - $NOW + 2`
 
 echo "Checking that proxy has closed expired connections towards the remote LDAP server (time_t now=`date +%s`)"
 
-$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 1 ; then
     echo "Error: LDAP connection to remote LDAP server was not closed"
@@ -278,10 +278,10 @@ if test $RC != 1 ; then
     exit $RC
 fi
 
-$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 3,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 1 ; then
     echo "Error: LDAP connection to remote LDAP server was not closed"
@@ -339,10 +339,10 @@ fi
 NOW=`date +%s`
 sleep `expr $CONN_EXPIRES - $NOW - 2`
 echo "Check that connection is still alive due to idle-timeout reset (time_t now=`date +%s`)"
-$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD 2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 0 ; then
     echo "Error: LDAP connection to remote LDAP server is not found ($RC)"
@@ -354,10 +354,10 @@ fi
 NOW=`date +%s`
 sleep `expr $CONN_EXPIRES - $NOW + 2`
 echo "Check that connection is closed after extended idle-timeout has passed (time_t now=`date +%s`)"
-$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL olmDbConnURI \
+$LDAPSEARCH -b "cn=Connections,cn=database 2,cn=databases,cn=monitor" -s one -LLL \
         -D "cn=Manager,dc=local,dc=com" \
-        -H $URI2 \
-        -w $PASSWD  2>&1 | tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
+        -H $URI2 -w $PASSWD olmDbConnURI 2>&1 | \
+	tee -a $TESTOUT | grep ldap://${LOCALHOST}:$PORT1 >/dev/null
 RC=$?
 if test $RC != 1 ; then
     echo "Error: LDAP connection to remote LDAP server was not closed"

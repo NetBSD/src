@@ -1,5 +1,5 @@
 /* debug.h -- Describe generic debugging information.
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GNU Binutils.
@@ -425,7 +425,12 @@ struct debug_write_fns
 
 /* Return a debugging handle.  */
 
-extern void *debug_init (void);
+extern void *debug_init (bfd *);
+
+/* Allocate bytes on the debug handle objalloc memory pool.  */
+
+extern void *debug_xalloc (void *, size_t);
+extern void *debug_xzalloc (void *, size_t);
 
 /* Set the source filename.  This implicitly starts a new compilation
    unit.  */

@@ -1,5 +1,5 @@
 /* nm.c -- Describe symbol table of a rel file.
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -36,9 +36,8 @@
 #include "libcoff.h"
 #include "bucomm.h"
 #include "demanguse.h"
-#include "plugin-api.h"
-#include "plugin.h"
 #include "safe-ctype.h"
+#include "plugin.h"
 
 #ifndef streq
 #define streq(a,b) (strcmp ((a),(b)) == 0)
@@ -71,6 +70,7 @@ struct extended_symbol_info
   bfd_vma ssize;
   elf_symbol_type *elfinfo;
   coff_symbol_type *coffinfo;
+  bool is_stab;
   /* FIXME: We should add more fields for Type, Line, Section.  */
 };
 #define SYM_VALUE(sym)       (sym->sinfo->value)
@@ -79,7 +79,15 @@ struct extended_symbol_info
 #define SYM_STAB_DESC(sym)   (sym->sinfo->stab_desc)
 #define SYM_STAB_OTHER(sym)  (sym->sinfo->stab_other)
 #define SYM_SIZE(sym) \
-  (sym->elfinfo ? sym->elfinfo->internal_elf_sym.st_size: sym->ssize)
+  (sym->elfinfo \
+   && sym->elfinfo->internal_elf_sym.st_size \
+   ? sym->elfinfo->internal_elf_sym.st_size \
+   : sym->coffinfo \
+     && ISFCN (sym->coffinfo->native->u.syment.n_type) \
+     && sym->coffinfo->native->u.syment.n_numaux \
+     && sym->coffinfo->native[1].u.auxent.x_sym.x_misc.x_fsize \
+     ? sym->coffinfo->native[1].u.auxent.x_sym.x_misc.x_fsize \
+     : sym->ssize)
 
 /* The output formatting functions.  */
 static void print_object_filename_bsd (const char *);
@@ -213,11 +221,6 @@ static char other_format[] = "%02x";
 static char desc_format[] = "%04x";
 
 static char *target = NULL;
-#if BFD_SUPPORTS_PLUGINS
-static const char *plugin_target = "plugin";
-#else
-static const char *plugin_target = NULL;
-#endif
 
 typedef enum unicode_display_type
 {
@@ -335,10 +338,9 @@ usage (FILE *stream, int status)
   -P, --portability      Same as --format=posix\n"));
   fprintf (stream, _("\
   -r, --reverse-sort     Reverse the sense of the sort\n"));
-#if BFD_SUPPORTS_PLUGINS
-  fprintf (stream, _("\
+  if (bfd_plugin_enabled ())
+    fprintf (stream, _("\
       --plugin NAME      Load the specified plugin\n"));
-#endif
   fprintf (stream, _("\
   -S, --print-size       Print size of defined symbols\n"));
   fprintf (stream, _("\
@@ -433,7 +435,6 @@ static const char *
 get_elf_symbol_type (unsigned int type)
 {
   static char *bufp;
-  int n;
 
   switch (type)
     {
@@ -448,13 +449,11 @@ get_elf_symbol_type (unsigned int type)
 
   free (bufp);
   if (type >= STT_LOPROC && type <= STT_HIPROC)
-    n = asprintf (&bufp, _("<processor specific>: %d"), type);
+    bufp = xasprintf (_("<processor specific>: %d"), type);
   else if (type >= STT_LOOS && type <= STT_HIOS)
-    n = asprintf (&bufp, _("<OS specific>: %d"), type);
+    bufp = xasprintf (_("<OS specific>: %d"), type);
   else
-    n = asprintf (&bufp, _("<unknown>: %d"), type);
-  if (n < 0)
-    fatal ("%s", xstrerror (errno));
+    bufp = xasprintf (_("<unknown>: %d"), type);
   return bufp;
 }
 
@@ -462,7 +461,6 @@ static const char *
 get_coff_symbol_type (const struct internal_syment *sym)
 {
   static char *bufp;
-  int n;
 
   switch (sym->n_sclass)
     {
@@ -482,9 +480,7 @@ get_coff_symbol_type (const struct internal_syment *sym)
     }
 
   free (bufp);
-  n = asprintf (&bufp, _("<unknown>: %d/%d"), sym->n_sclass, sym->n_type);
-  if (n < 0)
-    fatal ("%s", xstrerror (errno));
+  bufp = xasprintf (_("<unknown>: %d/%d"), sym->n_sclass, sym->n_type);
   return bufp;
 }
 
@@ -570,8 +566,8 @@ display_utf8 (const unsigned char * in, char * out, unsigned int * consumed)
 
 	case 4:
 	  out += sprintf (out, "\\u%02x%02x%02x",
-		  ((in[0] & 0x07) << 6) | ((in[1] & 0x3c) >> 2),
-		  ((in[1] & 0x03) << 6) | ((in[2] & 0x3c) >> 2),
+		  ((in[0] & 0x07) << 2) | ((in[1] & 0x30) >> 4),
+		  ((in[1] & 0x0f) << 4) | ((in[2] & 0x3c) >> 2),
 		  ((in[2] & 0x03) << 6) | ((in[3] & 0x3f)));
 	  break;
 	default:
@@ -682,7 +678,7 @@ print_symname (const char *form, struct extended_symbol_info *info,
 	       const char *name, bfd *abfd)
 {
   char *alloc = NULL;
-  char *atver = NULL;
+  char *atname = NULL;
 
   if (name == NULL)
     name = info->sinfo->name;
@@ -690,9 +686,19 @@ print_symname (const char *form, struct extended_symbol_info *info,
   if (!with_symbol_versions
       && bfd_get_flavour (abfd) == bfd_target_elf_flavour)
     {
-      atver = strchr (name, '@');
+      char *atver = strchr (name, '@');
+
       if (atver)
-	*atver = 0;
+	{
+	  /* PR 32467 - Corrupt binaries might include an @ character in a
+	     symbol name.  Since non-versioned symbol names can be in
+	     read-only memory (via memory mapping of a file's contents) we
+	     cannot just replace the @ character with a NUL.  Instead we
+	     create a truncated copy of the name.  */
+	  atname = xstrdup (name);
+	  atname [atver - name] = 0;
+	  name = atname;
+	}
     }
 
   if (do_demangle && *name)
@@ -703,9 +709,7 @@ print_symname (const char *form, struct extended_symbol_info *info,
     }
 
   if (unicode_display != unicode_default)
-    {
-      name = convert_utf8 (name);
-    }
+    name = convert_utf8 (name);
 
   if (info != NULL && info->elfinfo && with_symbol_versions)
     {
@@ -726,8 +730,8 @@ print_symname (const char *form, struct extended_symbol_info *info,
 	}
     }
   printf (form, name);
-  if (atver)
-    *atver = '@';
+
+  free (atname);
   free (alloc);
 }
 
@@ -791,10 +795,8 @@ filter_symbols (bfd *abfd, bool is_dynamic, void *minisyms,
       if (sym == NULL)
 	continue;
 
-      if (sym->name != NULL
-	  && sym->name[0] == '_'
-	  && sym->name[1] == '_'
-	  && strcmp (sym->name + (sym->name[2] == '_'), "__gnu_lto_slim") == 0
+      if (bfd_lto_slim_symbol_p (abfd, sym->name)
+	  && !bfd_plugin_target_p (abfd->xvec)
 	  && report_plugin_err)
 	{
 	  report_plugin_err = false;
@@ -1034,9 +1036,9 @@ size_forward2 (const void *P_x, const void *P_y)
     return sorters[0][reverse_sort] (x->minisym, y->minisym);
 }
 
-/* Sort the symbols by size.  ELF provides a size but for other formats
-   we have to make a guess by assuming that the difference between the
-   address of a symbol and the address of the next higher symbol is the
+/* Sort the symbols by size.  ELF and COFF may provide a size but for other
+   formats we have to make a guess by assuming that the difference between
+   the address of a symbol and the address of the next higher symbol is the
    size.  */
 
 static long
@@ -1079,6 +1081,8 @@ sort_symbols_by_size (bfd *abfd, bool is_dynamic, void *minisyms,
       asection *sec;
       bfd_vma sz;
       asymbol *temp;
+      const elf_symbol_type *elfsym;
+      const coff_symbol_type *coffsym;
 
       if (from + size < fromend)
 	{
@@ -1098,8 +1102,15 @@ sort_symbols_by_size (bfd *abfd, bool is_dynamic, void *minisyms,
 	 we can't rely on that information for the symbol size.  Ditto for
 	 bfd/section.c:global_syms like *ABS*.  */
       if ((sym->flags & (BSF_SECTION_SYM | BSF_SYNTHETIC)) == 0
-	  && bfd_get_flavour (abfd) == bfd_target_elf_flavour)
-	sz = ((elf_symbol_type *) sym)->internal_elf_sym.st_size;
+	  && (elfsym = elf_symbol_from (sym)) != NULL
+	  && elfsym->internal_elf_sym.st_size != 0)
+	sz = elfsym->internal_elf_sym.st_size;
+      else if ((sym->flags & (BSF_SECTION_SYM | BSF_SYNTHETIC)) == 0
+	       && (coffsym = coff_symbol_from (sym)) != NULL
+	       && ISFCN (coffsym->native->u.syment.n_type)
+	       && coffsym->native->u.syment.n_numaux != 0
+	       && coffsym->native[1].u.auxent.x_sym.x_misc.x_fsize != 0)
+	sz = coffsym->native[1].u.auxent.x_sym.x_misc.x_fsize;
       else if ((sym->flags & (BSF_SECTION_SYM | BSF_SYNTHETIC)) == 0
 	       && bfd_is_com_section (sec))
 	sz = sym->value;
@@ -1198,8 +1209,11 @@ print_symbol (bfd *        abfd,
 
   bfd_get_symbol_info (abfd, sym, &syminfo);
 
+  info.is_stab = false;
+  if (syminfo.type == '-')
+    info.is_stab = true;
   /* PR 22967 - Distinguish between local and global ifunc symbols.  */
-  if (syminfo.type == 'i'
+  else if (syminfo.type == 'i'
       && sym->flags & BSF_GNU_INDIRECT_FUNCTION)
     {
       if (ifunc_type_chars == NULL || ifunc_type_chars[0] == 0)
@@ -1227,7 +1241,8 @@ print_symbol (bfd *        abfd,
 
   format->print_symbol_info (&info, abfd);
 
-  if (line_numbers)
+  const char *symname = bfd_asymbol_name (sym);
+  if (line_numbers && symname != NULL && symname[0] != 0)
     {
       struct lineno_cache *lc = bfd_usrdata (abfd);
       const char *filename, *functionname;
@@ -1258,7 +1273,6 @@ print_symbol (bfd *        abfd,
       else if (bfd_is_und_section (bfd_asymbol_section (sym)))
 	{
 	  unsigned int i;
-	  const char *symname;
 
 	  /* For an undefined symbol, we try to find a reloc for the
              symbol, and print the line number of the reloc.  */
@@ -1274,7 +1288,6 @@ print_symbol (bfd *        abfd,
 	      bfd_map_over_sections (abfd, get_relocs, &rinfo);
 	    }
 
-	  symname = bfd_asymbol_name (sym);
 	  for (i = 0; i < lc->seccount; i++)
 	    {
 	      long j;
@@ -1287,6 +1300,7 @@ print_symbol (bfd *        abfd,
 		  if (r->sym_ptr_ptr != NULL
 		      && (*r->sym_ptr_ptr)->section == sym->section
 		      && (*r->sym_ptr_ptr)->value == sym->value
+		      && bfd_asymbol_name (*r->sym_ptr_ptr) != NULL
 		      && strcmp (symname,
 				 bfd_asymbol_name (*r->sym_ptr_ptr)) == 0
 		      && bfd_find_nearest_line (abfd, lc->secs[i], lc->syms,
@@ -1466,9 +1480,10 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
 	free (dyn_syms);
     }
 
-  /* lto_slim_object is set to false when a bfd is loaded with a compiler
-     LTO plugin.  */
-  if (abfd->lto_slim_object)
+  /* lto_type is set to lto_non_ir_object when a bfd is loaded with a
+     compiler LTO plugin.  */
+  if (bfd_get_lto_type (abfd) == lto_slim_ir_object
+      && !bfd_plugin_target_p (abfd->xvec))
     {
       report_plugin_err = false;
       non_fatal (_("%s: plugin needed to handle lto object"),
@@ -1504,8 +1519,8 @@ display_rel_file (bfd *abfd, bfd *archive_bfd)
   else
     print_size_symbols (abfd, dynamic, symsizes, symcount, archive_bfd);
 
-  if (synthsyms)
-    free (synthsyms);
+  free_lineno_cache (abfd);
+  free (synthsyms);
   free (minisyms);
   free (symsizes);
 }
@@ -1572,26 +1587,29 @@ set_print_format (bfd *file)
 static void
 display_archive (bfd *file)
 {
-  bfd *arfile = NULL;
-  bfd *last_arfile = NULL;
-  char **matching;
-
   format->print_archive_filename (bfd_get_filename (file));
 
   if (print_armap)
     print_symdef_entry (file);
 
+  bfd *last_arfile = NULL;
   for (;;)
     {
-      arfile = bfd_openr_next_archived_file (file, arfile);
-
-      if (arfile == NULL)
+      bfd *arfile = bfd_openr_next_archived_file (file, last_arfile);
+      if (arfile == NULL
+	  || arfile == last_arfile)
 	{
+	  if (arfile != NULL)
+	    bfd_set_error (bfd_error_malformed_archive);
 	  if (bfd_get_error () != bfd_error_no_more_archived_files)
 	    bfd_nonfatal (bfd_get_filename (file));
 	  break;
 	}
 
+      if (last_arfile != NULL)
+	bfd_close (last_arfile);
+
+      char **matching;
       if (bfd_check_format_matches (arfile, bfd_object, &matching))
 	{
 	  set_print_format (arfile);
@@ -1606,21 +1624,11 @@ display_archive (bfd *file)
 	    list_matching_formats (matching);
 	}
 
-      if (last_arfile != NULL)
-	{
-	  free_lineno_cache (last_arfile);
-	  bfd_close (last_arfile);
-	  if (arfile == last_arfile)
-	    return;
-	}
       last_arfile = arfile;
     }
 
   if (last_arfile != NULL)
-    {
-      free_lineno_cache (last_arfile);
-      bfd_close (last_arfile);
-    }
+    bfd_close (last_arfile);
 }
 
 static bool
@@ -1633,7 +1641,7 @@ display_file (char *filename)
   if (get_file_size (filename) < 1)
     return false;
 
-  file = bfd_openr (filename, target ? target : plugin_target);
+  file = bfd_openr (filename, target);
   if (file == NULL)
     {
       bfd_nonfatal (filename);
@@ -1662,7 +1670,6 @@ display_file (char *filename)
       retval = false;
     }
 
-  free_lineno_cache (file);
   if (!bfd_close (file))
     retval = false;
 
@@ -1870,7 +1877,7 @@ print_symbol_info_bsd (struct extended_symbol_info *info, bfd *abfd)
 
   printf (" %c", SYM_TYPE (info));
 
-  if (SYM_TYPE (info) == '-')
+  if (info->is_stab)
     {
       /* A stab.  */
       printf (" ");
@@ -1899,7 +1906,7 @@ print_symbol_info_sysv (struct extended_symbol_info *info, bfd *abfd)
 
   printf ("|   %c  |", SYM_TYPE (info));
 
-  if (SYM_TYPE (info) == '-')
+  if (info->is_stab)
     {
       /* A stab.  */
       printf ("%18s|  ", SYM_STAB_NAME (info));		/* (C) Type.  */
@@ -1977,9 +1984,7 @@ main (int argc, char **argv)
   program_name = *argv;
   xmalloc_set_program_name (program_name);
   bfd_set_error_program_name (program_name);
-#if BFD_SUPPORTS_PLUGINS
   bfd_plugin_set_program_name (program_name);
-#endif
 
   expandargv (&argc, &argv);
 
@@ -2126,11 +2131,9 @@ main (int argc, char **argv)
 	  break;
 
 	case OPTION_PLUGIN:	/* --plugin */
-#if BFD_SUPPORTS_PLUGINS
+	  if (!bfd_plugin_enabled ())
+	    fatal (_("sorry - this program has been built without plugin support\n"));
 	  bfd_plugin_set_plugin (optarg);
-#else
-	  fatal (_("sorry - this program has been built without plugin support\n"));
-#endif
 	  break;
 
 	case OPTION_IFUNC_CHARS:

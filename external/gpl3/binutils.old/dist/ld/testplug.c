@@ -1,5 +1,5 @@
 /* Test plugin for the GNU linker.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -82,6 +82,7 @@ static const tag_name_t tag_names[] =
   ADDENTRY(LDPT_LINKER_OUTPUT),
   ADDENTRY(LDPT_OPTION),
   ADDENTRY(LDPT_REGISTER_CLAIM_FILE_HOOK),
+  ADDENTRY(LDPT_REGISTER_CLAIM_FILE_HOOK_V2),
   ADDENTRY(LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK),
   ADDENTRY(LDPT_REGISTER_CLEANUP_HOOK),
   ADDENTRY(LDPT_ADD_SYMBOLS),
@@ -100,6 +101,7 @@ static const tag_name_t tag_names[] =
 
 /* Function pointers to cache hooks passed at onload time.  */
 static ld_plugin_register_claim_file tv_register_claim_file = 0;
+static ld_plugin_register_claim_file_v2 tv_register_claim_file_v2 = 0;
 static ld_plugin_register_all_symbols_read tv_register_all_symbols_read = 0;
 static ld_plugin_register_cleanup tv_register_cleanup = 0;
 static ld_plugin_add_symbols tv_add_symbols = 0;
@@ -389,6 +391,7 @@ dump_tv_tag (size_t n, struct ld_plugin_tv *tv)
 		    tv->tv_u.tv_string);
         break;
       case LDPT_REGISTER_CLAIM_FILE_HOOK:
+      case LDPT_REGISTER_CLAIM_FILE_HOOK_V2:
       case LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK:
       case LDPT_REGISTER_CLEANUP_HOOK:
       case LDPT_ADD_SYMBOLS:
@@ -439,6 +442,9 @@ parse_tv_tag (struct ld_plugin_tv *tv)
 	break;
       case LDPT_REGISTER_CLAIM_FILE_HOOK:
 	SETVAR(tv_register_claim_file);
+	break;
+      case LDPT_REGISTER_CLAIM_FILE_HOOK_V2:
+	SETVAR(tv_register_claim_file_v2);
 	break;
       case LDPT_REGISTER_ALL_SYMBOLS_READ_HOOK:
 	SETVAR(tv_register_all_symbols_read);

@@ -58,7 +58,7 @@ IVT="
  /* If the 'ivtbase_addr' symbol is defined, it indicates  the base address of
     the interrupt vectors.  See description of INT_VECTOR_BASE register.  */
 
- .ivt DEFINED (ivtbase_addr) ? ivtbase_addr : 0x00 :
+ .ivt DEFINED (ivtbase_addr) ? ivtbase_addr : ORIGIN(${STARTUP_MEMORY}) :
  {
    ${RELOCATING+ PROVIDE (__ivtbase_addr = .); }
    KEEP (*(.ivt));
@@ -104,21 +104,25 @@ fi
 #
 case $GENERIC_BOARD in
   yes|1|YES)
+	test -z "$MEMORY_FILE" && MEMORY_FILE="memory.x"
 	MEMORY_DEF="
 /* Get memory banks definition from some user configuration file.
    This file must be located in some linker directory (search path
    with -L<dir>). See fixed memory banks emulation script.  */
-INCLUDE memory.x;
+INCLUDE ${MEMORY_FILE};
 "
 	;;
   *)
-MEMORY_DEF="
-/* Fixed definition of the available memory banks.
-   See generic emulation script for a user defined configuration.  */
+	MEMORY_DEF="
+__TEXT_REGION_ORIGIN__ = DEFINED(__TEXT_REGION_ORIGIN__) ? __TEXT_REGION_ORIGIN__ : 0x00;
+__TEXT_REGION_LENGTH__ = DEFINED(__TEXT_REGION_LENGTH__) ? __TEXT_REGION_LENGTH__ : ${ICCM_SIZE};
+__DATA_REGION_ORIGIN__ = DEFINED(__DATA_REGION_ORIGIN__) ? __DATA_REGION_ORIGIN__ : ${RAM_START_ADDR};
+__DATA_REGION_LENGTH__ = DEFINED(__DATA_REGION_LENGTH__) ? __DATA_REGION_LENGTH__ : ${RAM_SIZE};
+
 MEMORY
 {
-    ICCM : ORIGIN = 0x00000000, LENGTH = ${ICCM_SIZE}
-    DCCM : ORIGIN = ${RAM_START_ADDR}, LENGTH = ${RAM_SIZE}
+    ICCM : ORIGIN = __TEXT_REGION_ORIGIN__, LENGTH = __TEXT_REGION_LENGTH__
+    DCCM : ORIGIN = __DATA_REGION_ORIGIN__, LENGTH = __DATA_REGION_LENGTH__
 }
 "
 	;;
@@ -291,19 +295,11 @@ SECTIONS
   ${RELOCATING+ PROVIDE (__stack_top = (ORIGIN (${DATA_MEMORY}) + LENGTH (${DATA_MEMORY}) - 1) & -4);}
   ${RELOCATING+ PROVIDE (__end_heap = ORIGIN (${DATA_MEMORY}) + LENGTH (${DATA_MEMORY}) - 1);}
 
-  /* Stabs debugging sections.  */
-  .stab          0 : { *(.stab) }
-  .stabstr       0 : { *(.stabstr) }
-  .stab.excl     0 : { *(.stab.excl) }
-  .stab.exclstr  0 : { *(.stab.exclstr) }
-  .stab.index    0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
-
-  .comment       0 : { *(.comment) }
   .note.gnu.build-id : { *(.note.gnu.build-id) }
 EOF
 
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/misc-sections.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
   /* ARC Extension Sections */

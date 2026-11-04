@@ -1,5 +1,5 @@
-/*	$NetBSD: sshconnect.c,v 1.38.2.1 2025/08/02 05:18:48 perseant Exp $	*/
-/* $OpenBSD: sshconnect.c,v 1.369 2024/12/06 16:21:48 djm Exp $ */
+/*	$NetBSD: sshconnect.c,v 1.38.2.2 2026/11/04 22:36:43 perseant Exp $	*/
+/* $OpenBSD: sshconnect.c,v 1.386 2026/09/16 00:29:44 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -16,15 +16,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshconnect.c,v 1.38.2.1 2025/08/02 05:18:48 perseant Exp $");
+__RCSID("$NetBSD: sshconnect.c,v 1.38.2.2 2026/11/04 22:36:43 perseant Exp $");
 
 #include <sys/param.h>	/* roundup */
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/wait.h>
-#include <sys/stat.h>
 #include <sys/socket.h>
-#include <sys/time.h>
 
 #include <net/if.h>
 #include <netinet/in.h>
@@ -32,14 +30,14 @@ __RCSID("$NetBSD: sshconnect.c,v 1.38.2.1 2025/08/02 05:18:48 perseant Exp $");
 #include <netinet6/ip6_var.h>
 #include <rpc/rpc.h>
 
-#include <ctype.h>
 #include <errno.h>
 #include <fcntl.h>
-#include <netdb.h>
 #include <limits.h>
+#include <netdb.h>
 #include <paths.h>
-#include <signal.h>
 #include <pwd.h>
+#include <poll.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <stdarg.h>
@@ -48,21 +46,18 @@ __RCSID("$NetBSD: sshconnect.c,v 1.38.2.1 2025/08/02 05:18:48 perseant Exp $");
 #include <ifaddrs.h>
 
 #include "xmalloc.h"
+#include "hostfile.h"
 #include "ssh.h"
-#include "sshbuf.h"
+#include "compat.h"
 #include "packet.h"
 #include "sshkey.h"
 #include "sshconnect.h"
-#include "hostfile.h"
 #include "log.h"
 #include "match.h"
 #include "misc.h"
 #include "readconf.h"
-#include "atomicio.h"
 #include "dns.h"
 #include "monitor_fdpass.h"
-#include "ssh2.h"
-#include "version.h"
 #include "authfile.h"
 #include "ssherr.h"
 #include "authfd.h"
@@ -81,6 +76,49 @@ extern char *__progname;
 
 static int show_other_keys(struct hostkeys *, struct sshkey *);
 static void warn_changed_key(struct sshkey *);
+
+void
+ssh_conn_info_free(struct ssh_conn_info *cinfo)
+{
+	if (cinfo == NULL)
+		return;
+	free(cinfo->conn_hash_hex);
+	free(cinfo->shorthost);
+	free(cinfo->uidstr);
+	free(cinfo->keyalias);
+	free(cinfo->thishost);
+	free(cinfo->host_arg);
+	free(cinfo->portstr);
+	free(cinfo->remhost);
+	free(cinfo->remuser);
+	free(cinfo->homedir);
+	free(cinfo->locuser);
+	free(cinfo->jmphost);
+	freezero(cinfo, sizeof(*cinfo));
+}
+
+struct ssh_conn_info *
+ssh_conn_info_dup(const struct ssh_conn_info *cinfo)
+{
+	struct ssh_conn_info *ret;
+
+	if (cinfo == NULL)
+		return NULL;
+	ret = xcalloc(1, sizeof(*ret));
+	ret->conn_hash_hex = xstrdup(cinfo->conn_hash_hex);
+	ret->shorthost = xstrdup(cinfo->shorthost);
+	ret->uidstr = xstrdup(cinfo->uidstr);
+	ret->keyalias = xstrdup(cinfo->keyalias);
+	ret->thishost = xstrdup(cinfo->thishost);
+	ret->host_arg = xstrdup(cinfo->host_arg);
+	ret->portstr = xstrdup(cinfo->portstr);
+	ret->remhost = xstrdup(cinfo->remhost);
+	ret->remuser = xstrdup(cinfo->remuser);
+	ret->homedir = xstrdup(cinfo->homedir);
+	ret->locuser = xstrdup(cinfo->locuser);
+	ret->jmphost = xstrdup(cinfo->jmphost);
+	return ret;
+}
 
 /* Expand a proxy command */
 static char *
@@ -501,7 +539,7 @@ ssh_connect_direct(struct ssh *ssh, const char *host, struct addrinfo *aitop,
     struct sockaddr_storage *hostaddr, u_short port, int connection_attempts,
     int *timeout_ms, int want_keepalive)
 {
-	int on = 1, saved_timeout_ms = *timeout_ms;
+	int saved_timeout_ms = *timeout_ms;
 	int oerrno, sock = -1, attempt;
 	char ntop[NI_MAXHOST], strport[NI_MAXSERV];
 	struct addrinfo *ai;
@@ -582,10 +620,8 @@ ssh_connect_direct(struct ssh *ssh, const char *host, struct addrinfo *aitop,
 	debug("Connection established.");
 
 	/* Set SO_KEEPALIVE if requested. */
-	if (want_keepalive &&
-	    setsockopt(sock, SOL_SOCKET, SO_KEEPALIVE, (void *)&on,
-	    sizeof(on)) == -1)
-		error("setsockopt SO_KEEPALIVE: %.100s", strerror(errno));
+	if (want_keepalive)
+		set_keepalive(sock); /* logs errors */
 
 	/* Set the connection. */
 	if (ssh_packet_set_connection(ssh, sock, sock) == NULL)
@@ -833,7 +869,7 @@ hostkeys_find_by_key(const char *host, const char *ip, const struct sshkey *key,
     char **system_hostfiles, u_int num_system_hostfiles,
     char ***names, u_int *nnames)
 {
-	struct find_by_key_ctx ctx = {0, 0, 0, 0, 0};
+	struct find_by_key_ctx ctx = {NULL, NULL, NULL, NULL, 0};
 	u_int i;
 
 	*names = NULL;
@@ -1128,7 +1164,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		if (want_cert) {
 			if (sshkey_cert_check_host(host_key,
 			    options.host_key_alias == NULL ?
-			    hostname : options.host_key_alias, 0,
+			    hostname : options.host_key_alias,
 			    options.ca_sign_algorithms, &fail_reason) != 0) {
 				error("%s", fail_reason);
 				goto fail;
@@ -1181,7 +1217,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 			    options.fingerprint_hash, SSH_FP_RANDOMART);
 			if (fp == NULL || ra == NULL)
 				fatal_f("sshkey_fingerprint failed");
-			logit("Host key fingerprint is %s\n%s", fp, ra);
+			logit("Host key fingerprint is: %s\n%s", fp, ra);
 			free(ra);
 			free(fp);
 		}
@@ -1232,7 +1268,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 			    options.fingerprint_hash, SSH_FP_RANDOMART);
 			if (fp == NULL || ra == NULL)
 				fatal_f("sshkey_fingerprint failed");
-			xextendf(&msg1, "\n", "%s key fingerprint is %s.",
+			xextendf(&msg1, "\n", "%s key fingerprint is: %s",
 			    type, fp);
 			if (options.visual_host_key)
 				xextendf(&msg1, "\n", "%s", ra);
@@ -1470,6 +1506,7 @@ check_host_key(char *hostname, const struct ssh_conn_info *cinfo,
 		options.update_hostkeys = 0;
 	}
 
+	sshkey_free(raw_key);
 	free(ip);
 	free(host);
 	if (host_hostkeys != NULL)
@@ -1550,22 +1587,23 @@ verify_host_key(char *host, struct sockaddr *hostaddr, struct sshkey *host_key,
 		goto out;
 	}
 
-	/* Check in RevokedHostKeys file if specified */
-	if (options.revoked_host_keys != NULL) {
-		r = sshkey_check_revoked(host_key, options.revoked_host_keys);
+	/* Check in RevokedHostKeys files if specified */
+	for (i = 0; i < options.num_revoked_host_keys; i++) {
+		r = sshkey_check_revoked(host_key,
+		    options.revoked_host_keys[i]);
 		switch (r) {
 		case 0:
 			break; /* not revoked */
 		case SSH_ERR_KEY_REVOKED:
 			error("Host key %s %s revoked by file %s",
 			    sshkey_type(host_key), fp,
-			    options.revoked_host_keys);
+			    options.revoked_host_keys[i]);
 			r = -1;
 			goto out;
 		default:
 			error_r(r, "Error checking host key %s %s in "
 			    "revoked keys file %s", sshkey_type(host_key),
-			    fp, options.revoked_host_keys);
+			    fp, options.revoked_host_keys[i]);
 			r = -1;
 			goto out;
 		}
@@ -1616,6 +1654,14 @@ out:
 	return r;
 }
 
+static void
+warn_nonpq_kex(void)
+{
+	logit("** WARNING: connection is not using a post-quantum key exchange algorithm.");
+	logit("** This session may be vulnerable to \"store now, decrypt later\" attacks.");
+	logit("** The server may need to be upgraded. See https://openssh.com/pq.html");
+}
+
 /*
  * Starts a dialog with the server, and authenticates the current user on the
  * server.  This does not need any extra privileges.  The basic connection
@@ -1625,8 +1671,8 @@ out:
  */
 void
 ssh_login(struct ssh *ssh, Sensitive *sensitive, const char *orighost,
-    struct sockaddr *hostaddr, u_short port, struct passwd *pw, int timeout_ms,
-    const struct ssh_conn_info *cinfo)
+    struct sockaddr_storage *hostaddr, u_short port, struct passwd *pw,
+    int timeout_ms, const struct ssh_conn_info *cinfo)
 {
 	char *host;
 	char *server_user, *local_user;
@@ -1644,6 +1690,11 @@ ssh_login(struct ssh *ssh, Sensitive *sensitive, const char *orighost,
 	    options.version_addendum)) != 0)
 		sshpkt_fatal(ssh, r, "banner exchange");
 
+	if ((ssh->compat & SSH_BUG_NOREKEY)) {
+		logit("Warning: this server does not support rekeying.");
+		logit("This session will eventually fail");
+	}
+
 	/* Put the connection into non-blocking mode. */
 	ssh_packet_set_nonblocking(ssh);
 
@@ -1651,6 +1702,14 @@ ssh_login(struct ssh *ssh, Sensitive *sensitive, const char *orighost,
 	/* authenticate user */
 	debug("Authenticating to %s:%d as '%s'", host, port, server_user);
 	ssh_kex2(ssh, host, hostaddr, port, cinfo);
+	kex_set_warn_weak_crypto(ssh, options.warn_weak_crypto &&
+	    !options.kex_algorithms_set);
+	if (!options.kex_algorithms_set && ssh->kex != NULL &&
+	    ssh->kex->name != NULL && options.warn_weak_crypto &&
+	    !kex_is_pq_from_name(ssh->kex->name)) {
+		warn_nonpq_kex();
+		ssh->kex->non_pq_kex_warned = 1;
+	}
 	ssh_userauth2(ssh, local_user, server_user, host, sensitive);
 	free(local_user);
 	free(host);
@@ -1662,12 +1721,9 @@ show_other_keys(struct hostkeys *hostkeys, struct sshkey *key)
 {
 	int type[] = {
 		KEY_RSA,
-#ifdef WITH_DSA
-		KEY_DSA,
-#endif
 		KEY_ECDSA,
 		KEY_ED25519,
-		KEY_XMSS,
+		KEY_MLDSA44_ED25519,
 		-1
 	};
 	int i, ret = 0;
@@ -1790,7 +1846,7 @@ maybe_add_key_to_agent(const char *authfile, struct sshkey *private,
 	if ((r = ssh_add_identity_constrained(auth_sock, private,
 	    comment == NULL ? authfile : comment,
 	    options.add_keys_to_agent_lifespan,
-	    (options.add_keys_to_agent == 3), 0, skprovider, NULL, 0)) == 0)
+	    (options.add_keys_to_agent == 3), skprovider, NULL, 0)) == 0)
 		debug("identity added to agent: %s", authfile);
 	else
 		debug("could not add identity to agent: %s (%d)", authfile, r);

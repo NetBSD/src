@@ -1,4 +1,4 @@
-# Copyright (C) 2014-2022 Free Software Foundation, Inc.
+# Copyright (C) 2014-2025 Free Software Foundation, Inc.
 #
 # Copying and distribution of this file, with or without modification,
 # are permitted in any medium without royalty provided the copyright
@@ -145,7 +145,7 @@ fi
 DYNAMIC=".dynamic      ${RELOCATING-0} : { *(.dynamic) }"
 RODATA=".rodata       ${RELOCATING-0} : { *(.rodata${RELOCATING+ .rodata.* .gnu.linkonce.r.*}) }"
 DATARELRO=".data.rel.ro : { *(.data.rel.ro.local* .gnu.linkonce.d.rel.ro.local.*) *(.data.rel.ro .data.rel.ro.* .gnu.linkonce.d.rel.ro.*) }"
-DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink)  *(.gnu.lto_*) }"
+DISCARDED="/DISCARD/ : { *(.note.GNU-stack) *(.gnu_debuglink) *(.gnu.lto_*) *(.gnu_object_only) }"
 INIT_LIT=".init.literal 0 : { *(.init.literal)	}"
 INIT=".init         0 : { KEEP (*(SORT_NONE(.init))) }"
 FINI_LIT=".fini.literal 0 : { *(.fini.literal)	}"
@@ -287,7 +287,7 @@ else
 fi
 
 cat <<EOF
-/* Copyright (C) 2014-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2025 Free Software Foundation, Inc.
 
    Copying and distribution of this script, with or without modification,
    are permitted in any medium without royalty provided the copyright
@@ -305,6 +305,10 @@ ${RELOCATING- /* For some reason, the Solaris linker makes bad executables
 
 SECTIONS
 {
+  /* PR 32100: GDB makes use of the fact that the .note.gnu.build-id
+     section is typically placed next to the ELF headers.  */
+  .note.gnu.build-id ${RELOCATING-0}: { *(.note.gnu.build-id) }
+
   /* Read-only sections, merged into text segment: */
   ${CREATE_SHLIB-${CREATE_PIE-${RELOCATING+PROVIDE (__executable_start = ${TEXT_START_ADDR}); . = ${TEXT_BASE_ADDRESS};}}}
   ${CREATE_SHLIB+${RELOCATING+. = ${SHLIB_TEXT_START_ADDR:-0} + SIZEOF_HEADERS;}}
@@ -500,6 +504,7 @@ cat <<EOF
   ${SDATA}
   ${OTHER_SDATA_SECTIONS}
   ${RELOCATING+${DATA_END_SYMBOLS-${USER_LABEL_PREFIX}_edata = .; PROVIDE (${USER_LABEL_PREFIX}edata = .);}}
+  ${RELOCATING+. = ALIGN(ALIGNOF(NEXT_SECTION));}
   ${RELOCATING+__bss_start = .;}
   ${RELOCATING+${OTHER_BSS_SYMBOLS}}
   ${SBSS}
@@ -543,23 +548,12 @@ if test -n "${NON_ALLOC_DYN}"; then
   rm -f ldscripts/dyntmp.$$
 fi
 
-cat <<EOF
-  /* Stabs debugging sections.  */
-  .stab          0 : { *(.stab) }
-  .stabstr       0 : { *(.stabstr) }
-  .stab.excl     0 : { *(.stab.excl) }
-  .stab.exclstr  0 : { *(.stab.exclstr) }
-  .stab.index    0 : { *(.stab.index) }
-  .stab.indexstr 0 : { *(.stab.indexstr) }
-
-  .comment       0 : { *(.comment) }
-
-EOF
-
-. $srcdir/scripttempl/DWARF.sc
+source_sh $srcdir/scripttempl/misc-sections.sc
+source_sh $srcdir/scripttempl/DWARF.sc
 
 cat <<EOF
   ${ATTRS_SECTIONS}
+  .xtensa.info : { *(.xtensa.info) }
   ${OTHER_SECTIONS}
   ${RELOCATING+${OTHER_SYMBOLS}}
   ${RELOCATING+${DISCARDED}}

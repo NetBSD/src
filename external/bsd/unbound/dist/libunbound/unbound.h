@@ -772,6 +772,8 @@ struct ub_server_stats {
 	long long ans_bogus;
 	/** rrsets marked bogus by validator */
 	long long rrset_bogus;
+	/** number of signature validation operations performed by validator */
+	long long val_ops;
 	/** number of queries that have been ratelimited by domain recursion. */
 	long long queries_ratelimited;
 	/** unwanted traffic received on server-facing ports */
@@ -845,6 +847,18 @@ struct ub_server_stats {
 	long long qtls_resume;
 	/** RPZ action stats */
 	long long rpz_action[UB_STATS_RPZ_ACTION_NUM];
+	/** number of bytes in QUIC buffers */
+	long long mem_quic;
+	/** number of queries over (DNS over) QUIC */
+	long long qquic;
+	/** number of queries removed due to discard-timeout */
+	long long num_queries_discard_timeout;
+	/** number of queries removed due to replyaddr limit */
+	long long num_queries_replyaddr_limit;
+	/** number of queries removed due to wait-limit */
+	long long num_queries_wait_limit;
+	/** number of dns error reports generated */
+	long long num_dns_error_reports;
 };
 
 /**
@@ -860,6 +874,8 @@ struct ub_stats_info {
 	long long mesh_num_states;
 	/** mesh stats: current number of reply (user) states */
 	long long mesh_num_reply_states;
+	/** mesh stats: current number of reply entries */
+	long long mesh_num_reply_addrs;
 	/** mesh stats: number of reply states overwritten with a new one */
 	long long mesh_jostled;
 	/** mesh stats: number of incoming queries dropped */

@@ -1,4 +1,4 @@
-.\"	$NetBSD: sh.1,v 1.260.2.1 2025/08/02 05:18:26 perseant Exp $
+.\"	$NetBSD: sh.1,v 1.260.2.2 2026/11/04 22:36:15 perseant Exp $
 .\" Copyright (c) 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
 .\"
@@ -31,7 +31,7 @@
 .\"
 .\"	@(#)sh.1	8.6 (Berkeley) 5/4/95
 .\"
-.Dd November 11, 2024
+.Dd August 15, 2026
 .Dt SH 1
 .\" everything except c o and s (keep them ordered)
 .ds flags abCEeFfhIiLlmnpqruVvXx
@@ -345,15 +345,14 @@ will be set from the
 .Ar command_name
 operand if given, and the positional parameters
 .Dv ( 1 , 2 ,
-etc.)
-set from the remaining argument operands, if any.
+etc.) set from the remaining argument operands, if any.
 .Fl c
 is only available at invocation, it cannot be
 .Ic set ,
 and there is no form using
 .Dq Cm \&+ .
 .It Fl E Em emacs
-Enable the built-in emacs style
+Enable the built in emacs style
 command line editor (disables
 .Fl V
 if it had been set).
@@ -413,7 +412,9 @@ Ignore EOFs from input when interactive.
 (After a large number of consecutive EOFs the shell will exit anyway.)
 .It Fl i Em interactive
 Force the shell to behave interactively.
-If not set on the command line,
+If not cleared
+.Pq Cm \&+i
+on the command line,
 this option is set automatically at shell startup if
 the shell is reading from standard input (no
 .Fl c ,
@@ -423,6 +424,15 @@ given at invocation of
 .Nm ) ,
 and standard input and standard error refer to
 terminal type devices.
+Attempting to force set the
+.Fl i
+flag from the command line will usually be ignored.
+Altering the value of this flag after initialisation
+using the
+.Ic set
+built-in command is non-standard,
+and can have negative effects upon the operation of the shell.
+It should normally be avoided.
 .It Fl L Em local_lineno
 When set, before a function is defined,
 causes the variable
@@ -543,7 +553,7 @@ operators test if the variable is set, before attempting to
 obtain its value, and hence are unaffected by
 .Fl u .
 .It Fl V Em vi
-Enable the built-in
+Enable the built in
 .Xr vi 1
 command line editor (disables
 .Fl E
@@ -608,6 +618,37 @@ However,
 .Em cdprint
 is an extension to POSIX, so these two options should
 rarely be set at the same time.
+.It "\ \ " Em dotglob
+When matching filenames, either for filename expansion,
+or if both input line editing
+.Pq Fl E No or Fl V
+and the
+.Ic tabcomplete
+option are enabled, for filename completion,
+match files that begin with a
+.Sq \&.
+.Pq sometimes called hidden files
+other than
+.Dq \&.
+and
+.Dq \&.. ,
+even if the pattern does not begin with a
+.Sq \&. .
+In other than filename matching,
+.Sq \&.
+is just any other ordinary character,
+and this option is irrelevant.
+When matching filenames, the file names
+.Dq \&.
+and
+.Dq \&..
+only ever match patterns starting with a
+.Sq \&. ,
+regardless of the value of
+.Ic dotglob .
+The
+.Ic dotglob
+option does not exist in SMALL shells.
 .It "\ \ " Em nolog
 Prevent the entry of function definitions into the command history (see
 .Ic fc
@@ -1050,29 +1091,53 @@ command or some other special construct may have been recognized.
 .Ss Simple Commands
 .\"
 If a simple command has been recognized, the shell performs
-the following actions:
+the following actions, though not precisely in the order suggested:
 .Bl -enum -offset indent
 .It
 Leading words of the form
-.Dq Ar name Ns Li = Ns Ar value
-are stripped off, the value is expanded, as described below,
-and the results are assigned to the environment of the simple command.
+.Dq Ar name Ns Li = Ns Ar value ,
+where no part of
+.Ar name Ns Li =
+is quoted,
+are set aside.
+The
+.Ar value
+is then expanded, as described below, by performing
+tilde, parameter, and arithmetic expansions, and command substitutions.
+No pathname expansion or field splitting is performed.
+The result has quotes removed and is then assigned to the environment of
+the simple command.
 Redirection operators and their arguments (as described below) are
 stripped off and saved for processing in step 3 below.
 .It
 The remaining words are expanded as described in the
 .Sx Word Expansions
 section below.
+All expansions are applied.
 The first remaining word is considered the command name and the
 command is located.
-Any remaining words are considered the arguments of the command.
+Any more remaining words are considered the arguments of the command.
 If no command name resulted, then the
 .Dq Ar name Ns Li = Ns Ar value
 variable assignments recognized in item 1 affect the current shell,
-but are not automatically added to the environment (are not exported).
+but are not automatically added to the environment (are not exported),
+unless the variable
+.Ar name
+was previously exported, or the
+.Fl a
+option is enabled.
+This also occurs in this
+.Nm
+if the command being invoked is one of the special-built-in commands.
 .It
 Redirections are performed, from first to last, in the order given,
 as described in the next section.
+In the case where no command name results from the expansions of the
+argument words (if any), once performed, the redirections are undone.
+To have redirections apply to the current shell environment, specify
+them with the
+.Ic exec
+special-built-in command, with no other arguments (no command to execute).
 .El
 .\"
 .\"
@@ -2859,7 +2924,7 @@ With
 the specified names are un-exported.
 Variables can also be un-exported using the
 .Ic unset
-built in command.
+built-in command.
 With
 .Fl x
 .Pq exclude
@@ -3735,7 +3800,7 @@ the program will use
 and the built-in uses a separately cached value.
 .\"
 .Pp
-.It Ic read Oo Fl br Oc Oo Fl d Ar delim Oc Oo Fl n Ar max Oc Oo Fl p Ar prompt Oc Ar variable Op Ar ...
+.It Ic read Oo Fl bcr Oc Oo Fl d Ar delim Oc Oo Fl n Ar max Oc Oo Fl p Ar prompt Oc Ar variable Op Ar ...
 .Pp
 The
 .Ic read
@@ -3757,6 +3822,17 @@ utility actually processes,
 causing some data from standard input to be unavailable
 to any subsequent utility that expects to obtain them,
 though this will be avoided wherever possible.
+.It Fl c
+Continue the
+.Ic read
+if a trapped signal
+.Pq other than Dv SIGINT in an interactive shell
+is received while waiting for input.
+In interactive shells, a
+.Dv SIGINT ,
+trapped or not,
+received while waiting for input, always aborts the
+.Ic read .
 .It Fl d Ar delim
 End the read when the first byte of
 .Ar delim
@@ -3797,7 +3873,7 @@ byte, without attempting to obtain it.
 However, even if the
 .Fl r
 option is not given and the final byte actually read
-were the escape character (not itself escaped), 
+were the escape character (not itself escaped),
 no more bytes will be read, and that escape
 character would simply be removed as described below.
 .It Fl p Ar prompt
@@ -3861,8 +3937,7 @@ If the
 .Fl r
 option was not given,
 and the two character sequence
-.Sq \&\e
-.Sq \en
+.So \&\e Sc Ns \&\  Ns Sq \en
 is encountered,
 those two characters are simply deleted,
 and provided that
@@ -3887,7 +3962,7 @@ flag was not given, the
 .Aq backslash
 character
 .Pq Sq \e
-character is then treated as an escape character,
+is then treated as an escape character,
 the character following it, if not
 .Sq \e0 ,
 is always treated as a normal,
@@ -3900,8 +3975,7 @@ but before data has been
 assigned to any variables,
 all escape characters are removed.
 Note that the two character sequence
-.Sq \&\e
-.Sq \&\e
+.So \&\e Sc Ns \&\  Ns Sq \e
 can be used to enter the escape character as data,
 the first acts as the escape character, the second
 becomes just a normal data character.
@@ -3931,7 +4005,12 @@ is encountered on input, before encountering the delimiter,
 or having read
 .Ar max
 bytes.
-In this case any data previously read will be assigned to
+If a read error occurred,
+.Ic read
+will immediately exit with a status larger than 1.
+In case of EOF, or
+.Ar max
+bytes having been read, any data previously read will be assigned to
 the variables, as if the delimiter had been located at that
 point, and
 .Ic read
@@ -3941,12 +4020,28 @@ no variables will be altered,
 .Ic read
 will issue a diagnostic to standard error,
 and exit with a status greater than 1.
+If the
+.Ic read
+was interrupted by a trapped signal, and the
+.Fl c
+flag was not given, or the signal was
+.Dv SIGINT
+in an interactive shell,
+the exit status will be 130, and variables might have been altered,
+as described, or not.
 .Pp
-The
-.Fl b
+In SMALL shells, the
+.Fl b ,
+.Fl c
 and
 .Fl n
-options are not available in SMALL shells.
+options are not available,
+an input I/O error is treated as if it were EOF,
+trapped signals interrupt the read,
+act similarly to receiving EOF,
+and the trap will not be executed until after the
+.Ic read
+has completed.
 .\"
 .Pp
 .It Ic readonly Ar name Ns Oo =value Oc ...
@@ -4503,11 +4598,10 @@ Interpret each
 .Ar name
 as a command and print the resolution of the command search.
 Possible resolutions are:
-shell keyword, alias, shell built-in,
-command, tracked alias and not found.
-For aliases the alias expansion is
-printed; for commands and tracked aliases the complete pathname of the
-command is printed.
+shell keyword, alias, shell built-in, function,
+command, and not found.
+For aliases the alias expansion is printed;
+for commands the complete pathname of the command is printed.
 .\"
 .Pp
 .It Ic ulimit Oo Fl H Ns \*(Ba Ns Fl S Oc Op Fl a \*(Ba Fl btfdscmlrpnv Op Ar value
@@ -4788,7 +4882,7 @@ and
 .Sq Li \&]
 .Pc .
 Whenever the job table becomes empty, the numbers begin at one again.
-In addition, there is the concept of a current, and a previous job,
+In addition, there is the concept of a current job,
 identified by
 .Dq Li \&%+
 .Po
@@ -4853,7 +4947,7 @@ character (usually control-Z).
 To cause a background process to stop,
 use the
 .Ic suspend
-built in command, or
+built-in command, or
 send it a
 .Dv STOP
 signal, using the kill command.
@@ -5066,11 +5160,12 @@ a terminal, this same prompt will usually work with
 .Xr editline 7
 enabled or disabled.
 .Sh ENVIRONMENT
-.Bl -tag -width MAILCHECK
+.Bl -tag -width MAILCHECK -compact
 .It Ev CDPATH
 The search path used with the
 .Ic cd
 built-in.
+.Pp
 .It Ev EDITRC
 Gives the name of the file containing commands for
 .Xr editline 7 .
@@ -5096,6 +5191,7 @@ above, which are documented further above in
 If unset
 .Dq $HOME/.editrc
 is used.
+.Pp
 .It Ev ENV
 Names the file sourced at startup by the shell.
 Unused by this shell after initialization,
@@ -5106,6 +5202,7 @@ See the
 section above for details of how
 .Ev ENV
 is processed and used.
+.Pp
 .It Ev EUSER
 Set to the login name of the effective user id running the shell,
 as returned by
@@ -5128,6 +5225,7 @@ If set it loses its special properties, and is simply a variable.
 See the
 .Ic specialvar
 built-in command for remedial action.
+.Pp
 .It Ev HISTAPPEND
 If set to one of
 .Ql true ,
@@ -5141,6 +5239,7 @@ then as commands are read and added to the
 history buffer, they are also written to the
 .Ev HISTFILE
 named.
+.Pp
 .It Ev HISTFILE
 When assigned to in an interactive shell
 the contents of the file named by expanding
@@ -5151,8 +5250,8 @@ can be opened for reading,
 and is a suitable
 .Nm
 history file (one previously written by
-.Nm ) , 
-be read into the history buffer, 
+.Nm ) ,
+be read into the history buffer,
 appending its contents to any existing history entries.
 If
 .Ev HISTFILE
@@ -5188,12 +5287,14 @@ command substitutions will also be performed.
 No file will be used if an expansion error occurs,
 or if there is a command substitution in a value obtained
 from the environment.
+.Pp
 .It Ev HISTSIZE
 The number of lines in the history buffer for the shell.
 If unset, or set to an empty string, 100 lines will be used.
 Attempts to set HISTSIZE to anything other than a string of
 digits will generate an error.
 An invalid value found in the environment will be ignored.
+.Pp
 .It Ev HOME
 Set automatically by
 .Xr login 1
@@ -5202,6 +5303,7 @@ from the user's login directory in the password file
 This environment variable also functions as the default argument for the
 .Ic cd
 built-in, and as the value of a tilde expansion without a user name.
+.Pp
 .It Ev HOSTNAME
 Set to the current hostname of the system, as returned by
 .Xr gethostname 3 .
@@ -5214,6 +5316,7 @@ If set it loses its special properties, and is simply a variable.
 See the
 .Ic specialvar
 built-in command for remedial action.
+.Pp
 .It Ev IFS
 Input Field Separators.
 This is normally set to
@@ -5224,16 +5327,40 @@ and
 See the
 .Sx Field Splitting
 section for more details.
+.Pp
 .It Ev LANG
-The string used to specify localization information that allows users
-to work with different culture-specific and language conventions.
-See
-.Xr nls 7 .
+.It Ev LC_ALL
+.It Ev LC_COLLATE
+.It Ev LC_CTYPE
+.It Ev LC_MESSAGES
+.It Ev LC_MONETARY
+.It Ev LC_NUMERIC
+.It Ev LC_TIME
+These variables, if present in the environment of the shell
+at initialization, affect the operation of the shell with
+respect to various localization issues, such as language and
+cultural conventions.
+If exported to the environment of utilities executed by the
+shell
+.Pq including those built into Nm
+they will have a similar effect upon those commands.
+See the
+.Sx LOCALES
+section below for information upon how these affect
+.Nm ,
+and how manipulations of them while the shell is running
+alters the behavior of
+.Nm ;
+and
+.Xr nls 7
+for more general information about their usage and effects.
+.Pp
 .It Dv LINENO
 The current line number in the script or function.
 See the section
 .Sx Using Dv LINENO
 below for more details.
+.Pp
 .It Ev MAIL
 The name of a mail file, that will be checked for the arrival of new mail.
 Overridden by
@@ -5244,6 +5371,7 @@ is written, immediately after reporting jobs which have changed status,
 in interactive shells only.
 New mail is considered to have arrived if the monitored file
 has increased in size since the last check.
+.\" .Pp
 .\" .It Ev MAILCHECK
 .\" The frequency in seconds that the shell checks for the arrival of mail
 .\" in the files specified by the
@@ -5252,6 +5380,7 @@ has increased in size since the last check.
 .\" .Ev MAIL
 .\" file.
 .\" If set to 0, the check will occur at each prompt.
+.Pp
 .It Ev MAILPATH
 A colon
 .Dq \&:
@@ -5260,6 +5389,7 @@ This environment setting overrides the
 .Ev MAIL
 setting.
 There is a maximum of 10 mailboxes that can be monitored at once.
+.Pp
 .It Ev NBSH_INVOCATION
 When
 .Nm
@@ -5398,11 +5528,13 @@ The
 option was given, or implied.
 This does not imply that the shell is interactive.
 .El
+.Pp
 .It Ev PATH
 The default search path for executables.
 See the
 .Sx Path Search
 section above.
+.Pp
 .It Ev POSIXLY_CORRECT
 If set in the environment upon initialization of the shell,
 then the shell option
@@ -5419,11 +5551,13 @@ After initialization it is unused by the shell,
 but is usually passed through the environment to
 descendant processes, including other instances of the shell,
 which may interpret it in a similar way.
+.Pp
 .It Ev PPID
-The process identified of the parent process of the
+The process identifier of the parent process of the
 current shell.
 This value is set at shell startup, ignoring
 any value in the environment, and then made readonly.
+.Pp
 .It Ev PS1
 The primary prompt string, which defaults to
 .Dq Li "$ " ,
@@ -5449,6 +5583,7 @@ To verify parsing of
 the method suggested for
 .Ev ENV
 can be used.
+.Pp
 .It Ev PS2
 The secondary prompt string, which defaults to
 .Dq Li "> " .
@@ -5456,6 +5591,7 @@ After expansion (as for
 .Ev PS1 )
 it is written whenever more input is required to complete the
 current command.
+.Pp
 .It Ev PS4
 is output, after expansion as described for
 .Ev PS1 ,
@@ -5465,6 +5601,7 @@ is enabled.
 .Ev PS4
 defaults to
 .Dq Li "+ " .
+.Pp
 .It Ev PSc
 Initialized by the shell, ignoring any value from the environment,
 to a single character string, either
@@ -5484,6 +5621,7 @@ to
 or
 .Dq \&$ ,
 as appropriate for its new privilege level.
+.Pp
 .It Ev PSlit
 Defines the character which may be embedded in pairs, in
 .Ev PS1
@@ -5500,6 +5638,7 @@ which must be present.
 See
 .Sx Command Line Editing
 above for more information.
+.Pp
 .It Ev RANDOM
 Returns a different pseudo-random integer,
 in the range [0,32767] each time it is accessed.
@@ -5531,6 +5670,7 @@ of good random numbers was not available, and
 has instead been seeded with a more predictable value.
 The following sequence of random numbers will
 not be as unpredictable as they otherwise would be.
+.Pp
 .It Ev SECONDS
 Returns the number of seconds since the current shell was started.
 If unset, it remains unset, and returns nothing, unless set again.
@@ -5538,6 +5678,7 @@ If set, it loses its special properties, and becomes a normal variable.
 See the
 .Ic specialvar
 built-in command for remedial action.
+.Pp
 .It Ev START_TIME
 Initialized by the shell to the number of seconds since the Epoch
 (see
@@ -5550,10 +5691,12 @@ represents the current time, if
 has not been modified, and
 .Ev SECONDS
 has not been set or unset.
+.Pp
 .It Ev TERM
 The default terminal setting for the shell.
 This is inherited by
 children of the shell, and is used in the history editing modes.
+.Pp
 .It Ev ToD
 When referenced, uses the value of
 .Ev ToD_FORMAT
@@ -5574,12 +5717,14 @@ If set, it loses its special properties, and becomes a normal variable.
 See the
 .Ic specialvar
 built-in command for remedial action.
+.Pp
 .It Ev ToD_FORMAT
 Can be set to the
 .Xr strftime 3
 format string to be used when expanding
 .Ev ToD .
 Initially unset.
+.Pp
 .It Ev TZ
 If set, gives the time zone
 (see
@@ -5589,6 +5734,7 @@ to use when formatting
 .Ev ToD
 and if exported, other utilities that deal with times.
 If unset, the system's local wall clock time zone is used.
+.Pp
 .\"
 .\" ==========================================================
 .\" This is explicitly last, not in sort order - please leave!
@@ -5770,6 +5916,176 @@ This means that references to
 in such a case can produce values larger than would be
 produced by a reference on the line after the
 .Ic eval .
+.Sh LOCALES
+In general,
+.Nm
+is unaffected by settings of the locale variables
+.Pq Dv LANG No and the Dv LC_* No variables .
+However (except in statically compiled versions, where the
+.Nx
+locale system does not work),
+the value of
+.Dv LC_CTYPE
+as interpreted by the locale system, will affect pattern
+matching using named classes of characters in character classes.
+Characters matching a named character class will use that class as
+defined by the character set implied by the setting assigned
+to this locale value
+.Pq not necessarily the value of the Ev LC_CTYPE No variable .
+See
+.Xr nls 7 .
+.Dv LC_CTYPE
+also affects the behavior of
+.Xr editline 7 ,
+which is used by
+.Nm
+when input line editing is enabled
+.Pq see the Ic set No built-in command's Fl E No and Fl V No options .
+The value of
+.Dv LC_TIME
+can affect the interpretation of the
+.Ev ToD
+special variable.
+.Pp
+The locale settings in no way affect the way
+.Nm
+parses its input, determine what characters are legitimate
+for specific purposes, or almost anything else.
+The script itself
+.Pq which includes typed user keyboard input ,
+is interpreted for character types, using only the
+.Dq C
+locale,
+which more or less means, as ASCII characters.
+That is, anywhere a particular character, or character type
+(letters, digits, white space, quoting characters) is required,
+only ASCII characters meeting that requirement suffice.
+Other data, however, general shell
+.Do word Dc Ns s ,
+including values of variables, filenames, the content of
+quoted strings, even sometimes unquoted strings, etc., can
+be any bytes at all, provided no NUL
+.Pq Sq \e0
+bytes appear.
+The shell does not attempt to interpret such data, other than
+potentially for pattern matching, at all, simply transmitting
+to wherever it is intended to go, any such data it encounters.
+In general, using a UTF-8 encoded character set (or a subset
+of that, such as ASCII) is recommended.
+.Pp
+When the shell starts, the internal locale environment is set as
+described in
+.Xr nls 7
+with
+.Dv LC_ALL
+.Pq if set
+overriding everything,
+.Dv LANG
+providing a default for any of the environment settings not otherwise set,
+and itself defaulting to the
+.Dq C
+locale,
+and the other environment variables
+.Pq listed in the section Sx ENVIRONMENT No above
+overriding
+.Dv LANG
+for their specific category, if set.
+However, after startup, in other than SMALL shells
+.Pq typically only encountered on some boot/install media
+setting any of the locale variables,
+whether exported or not,
+will take immediate effect inside
+.Nm
+for the category being set,
+regardless of any of the other locale variables which might be set.
+Only exported variables affect other utilities.
+That is, setting
+.Dv LC_ALL
+will change the environment for all categories,
+but then later setting one of the specific category
+locale variables will affect that category, ignoring
+a previously (and remaining) set value of
+.Dv LC_ALL .
+This is how the
+.Xr setlocale 3
+library function operates.
+Setting
+.Dv LANG
+will have no effect (other than setting the
+.Nm
+.Dv LANG
+variable) if
+.Dv LC_ALL
+is set, otherwise will set the categories for
+which there is no specific locale variable currently set.
+If
+.Xr setlocale 3
+fails when any attempt is made to use it to alter the
+value of a locale category,
+usually because the value assigned is not valid for the
+category with the installed locales,
+.Nm
+will write a diagnostic to the standard error stream.
+Any associated variable setting will still be performed as specified,
+and might cause further diagnostics,
+if further attempts are required to use the value of the variable.
+.Pp
+Unsetting
+.Dv LC_ALL ,
+as with any other
+.Nm
+variable, will remove it from the environment, and also
+cause all locale settings to be reset to the values given
+by the other locale variables.
+Unsetting
+.Dv LANG
+will, if
+.Dv LC_ALL
+is not set, have the effect of returning all locale categories
+for which a specific locale variable is not set, to the
+.Dq C
+locale.
+Unsetting any other (previously set) locale variable will
+cause that variable to be set to the value given by
+.Dv LC_All
+if set, otherwise to the value of
+.Dv LANG
+if set, or to the
+.Dq C
+locale otherwise.
+.Pp
+Whenever the value of the
+.Dv LC_CTYPE
+locale value is changed, regardless of what causes that change,
+if input line editing is enabled,
+it will be very briefly disabled, and then re-enabled.
+This happens at a time when no input is being read,
+so should not be obviously visible,
+however it does cause
+.Xr editline 3
+reinitialization,
+which can alter local settings that had been
+made during the lifetime of the current
+.Nm ,
+other than those made by setting
+.Nm
+variables, which will be performed again.
+.Pp
+Other than having the (limited) effects upon the internal
+.Nm
+locale environment, the locale variables act as any other
+.Nm
+variable, with all normal variable expansion possibilities,
+and other settings.
+They are not
+.Dq special
+variables within the meaning of
+.Nm ,
+they always behave as indicated, unsetting them does not
+cause them to lose their behavior of affecting the shell's
+operating environment when set again, nor will the
+.Ic specialvar
+built-in command recognize them as special.
 .Sh FILES
 .Bl -item
 .It
@@ -5796,6 +6112,7 @@ argument.
 .Xr test 1 ,
 .Xr editline 3 ,
 .Xr getopt 3 ,
+.Xr setlocale 3 ,
 .\" .Xr profile 4 ,
 .Xr editrc 5 ,
 .Xr passwd 5 ,

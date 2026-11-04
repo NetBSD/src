@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pflog.c,v 1.9.2.1 2025/08/02 05:23:25 perseant Exp $");
+__RCSID("$NetBSD: print-pflog.c,v 1.9.2.2 2026/11/04 22:39:56 perseant Exp $");
 #endif
 
 /* \summary: *BSD/Darwin packet filter log file printer */
@@ -69,6 +69,7 @@ static const struct tok pf_actions[] = {
 	{ PF_PASS,		"pass" },
 	{ PF_DROP,		"block" },
 	{ PF_SCRUB,		"scrub" },
+	{ PF_NOSCRUB,		"noscrub" },
 	{ PF_NAT,		"nat" },
 	{ PF_NONAT,		"nonat" },
 	{ PF_BINAT,		"binat" },
@@ -78,6 +79,7 @@ static const struct tok pf_actions[] = {
 	{ PF_SYNPROXY_DROP,	"synproxy-drop" },
 #if defined(__FreeBSD__)
 	{ PF_DEFER,		"defer" },
+	{ PF_MATCH,		"match" },
 #elif defined(__OpenBSD__)
 	{ PF_DEFER,		"defer" },
 	{ PF_MATCH,		"match" },

@@ -1,5 +1,5 @@
 /* ld.h -- general linker header file
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -96,10 +96,14 @@ extern sort_type sort_section;
 
 struct wildcard_spec
 {
-  const char *name;
-  struct name_list *exclude_name_list;
-  sort_type sorted;
-  struct flag_info *section_flag_list;
+  const char *        name;
+  struct name_list *  exclude_name_list;
+  struct flag_info *  section_flag_list;
+  size_t              namelen;
+  size_t              prefixlen;
+  size_t              suffixlen;
+  sort_type           sorted;
+  bool                reversed;
 };
 
 struct wildcard_list
@@ -192,6 +196,9 @@ typedef struct
 
   /* Default linker script.  */
   char *default_script;
+
+  /* Linker script fragment provided by the --section-order command line option.  */
+  char *section_ordering_file;
 } args_type;
 
 extern args_type command_line;
@@ -252,8 +259,11 @@ typedef struct
      changes due to the alignment of an input section.  */
   bool warn_section_align;
 
-  /* If TRUE, warning messages are fatal */
+  /* If TRUE, warning messages are fatal.  */
   bool fatal_warnings;
+
+  /* If TRUE, warning and error messages are ignored.  */
+  bool no_warnings;
 
   sort_order sort_common;
 
@@ -276,11 +286,18 @@ typedef struct
   /* If set, code and non-code sections should never be in one segment.  */
   bool separate_code;
 
+  /* If set, generation of ELF section header should be suppressed.  */
+  bool no_section_header;
+
   /* The rpath separation character.  Usually ':'.  */
   char rpath_separator;
 
   char *map_filename;
   FILE *map_file;
+
+  char *stats_filename;
+  /* If non-NULL then resource use information should be written to this file.  */
+  FILE *stats_file;
 
   char *dependency_file;
 
@@ -290,8 +307,20 @@ typedef struct
   /* The size of the hash table to use.  */
   unsigned long hash_table_size;
 
+  /* If set, store plugin intermediate files permanently.  */
+  bool plugin_save_temps;
+
+  /* If set, if the .gnu_object_only section should be created.  */
+  bool emit_gnu_object_only;
+
+  /* If set, if the .gnu_object_only section is being created.  */
+  bool emitting_gnu_object_only;
+
   /* If set, print discarded sections in map file output.  */
   bool print_map_discarded;
+
+  /* If set, print local symbols in map file output.  */
+  bool print_map_locals;
 
   /* If set, emit the names and types of statically-linked variables
      into the CTF.  */
@@ -300,12 +329,49 @@ typedef struct
   /* If set, share only duplicated types in CTF, rather than sharing
      all types that are not in conflict.  */
   bool ctf_share_duplicated;
+
+  /* Compress DWARF debug sections.  */
+  enum compressed_debug_section_type compress_debug;
 } ld_config_type;
+
+/* An enumeration of the linker phases for which resource usage information
+   is recorded.  PHASE_ALL is special as it covers the entire link process.
+
+   Instructions for adding a new phase:
+     1. Add an entry to this enumeration.
+     2. Add an entry for the phase to the phase_data[] structure in ldmain.c.
+     3. Add calls to ld_start_phase(PHASE_xxx) and ld_stop_phase(PHASE_xxx)
+        at the appropriate place(s) in the code.  It does not matter if the
+	new phase overlaps with or is contained by any other phase.
+
+    Instructions for adding a new resource:
+      1. If necessary add a new field to the phase_data structure defined in
+         ldmain.c.
+      2. Add code to initialise the field in ld_main.c:ld_start_phase().
+      3. Add code to finalise the field in ld_main.c:ld_stop_phase().
+      4. Add code to report the field in ld_main.c:report_phases().  */
+typedef enum
+{
+  PHASE_ALL = 0,
+  PHASE_CTF,
+  PHASE_MERGE,
+  PHASE_PARSE,
+  PHASE_PLUGINS,
+  PHASE_PROCESS,
+  PHASE_WRITE,
+
+  NUM_PHASES /* This must be the last entry.  */
+}
+ld_phase;
+
+extern void ld_start_phase (ld_phase);
+extern void ld_stop_phase (ld_phase);
 
 extern ld_config_type config;
 
 extern FILE * saved_script_handle;
 extern bool force_make_executable;
+extern bool in_section_ordering;
 
 extern int yyparse (void);
 extern void add_cref (const char *, bfd *, asection *, bfd_vma);

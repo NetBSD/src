@@ -70,7 +70,8 @@ struct auth_chunk;
  * Authoritative zones, shared.
  */
 struct auth_zones {
-	/** lock on the authzone trees */
+	/** lock on the authzone trees. It is locked after views, respip,
+	 * local_zones and before fwds and stubs. */
 	lock_rw_type lock;
 	/** rbtree of struct auth_zone */
 	rbtree_type ztree;
@@ -78,10 +79,6 @@ struct auth_zones {
 	rbtree_type xtree;
 	/** do we have downstream enabled */
 	int have_downstream;
-	/** number of queries upstream */
-	size_t num_query_up;
-	/** number of queries downstream */
-	size_t num_query_down;
 	/** first auth zone containing rpz item in linked list */
 	struct auth_zone* rpz_first;
 	/** rw lock for rpz linked list, needed when iterating or editing linked
@@ -121,6 +118,8 @@ struct auth_zone {
 	char* zonefile;
 	/** fallback to the internet on failure or ttl-expiry of auth zone */
 	int fallback_enabled;
+	/** the time when zone was transferred from upstream */
+	time_t soa_zone_acquired;
 	/** the zone has expired (enabled by the xfer worker), fallback
 	 * happens if that option is enabled. */
 	int zone_expired;
@@ -145,6 +144,12 @@ struct auth_zone {
 	struct module_env* zonemd_callback_env;
 	/** for the zonemd callback, the type of data looked up */
 	uint16_t zonemd_callback_qtype;
+	/** for the zonemd callback, the unique info */
+	void* zonemd_callback_unique_info;
+	/** if the zonemd callback should write to file */
+	int zonemd_callback_perform_write;
+	/** chunklist to write for chunked transfer. */
+	struct auth_chunk* perform_write_chunk_list;
 	/** zone has been deleted */
 	int zone_deleted;
 	/** deletelist pointer, unused normally except during delete */
@@ -154,6 +159,10 @@ struct auth_zone {
 	struct auth_zone* rpz_az_next;
 	/** previous auth zone containing RPZ data, or NULL */
 	struct auth_zone* rpz_az_prev;
+	/** The maximum auth zone transfer size, in bytes. */
+	size_t max_transfer_size;
+	/** The maximum auth zone transfer time taken, in msec. */
+	int max_transfer_time;
 };
 
 /**
@@ -211,7 +220,9 @@ struct auth_xfer {
 	 * one of the tasks. 
 	 * Once it has the task assigned to it, the worker can access the
 	 * other elements of the task structure without a lock, because that
-	 * is necessary for the eventloop and callbacks from that. */
+	 * is necessary for the eventloop and callbacks from that.
+	 * The auth_zone->lock is locked before this lock.
+	 */
 	lock_basic_type lock;
 
 	/** zone name, in uncompressed wireformat */
@@ -262,6 +273,8 @@ struct auth_xfer {
 	int zone_expired;
 	/** do we have a zone (if 0, no zone data at all) */
 	int have_zone;
+	/** the time when zone was transferred from upstream */
+	time_t soa_zone_acquired;
 
 	/** current serial (from SOA), if we have no zone, 0 */
 	uint32_t serial;
@@ -280,6 +293,15 @@ struct auth_xfer {
 	 * this is renewed every SOA probe and transfer.  On zone load
 	 * from zonefile it is also set (with probe set soon to check) */
 	time_t lease_time;
+
+	/** The maximum auth zone transfer size, in bytes. */
+	size_t max_transfer_size;
+	/** The maximum auth zone transfer time taken, in msec. */
+	int max_transfer_time;
+	/** the zone is an rpz zone */
+	int is_rpz;
+	/** the number of IXFRs since the last full transfer. */
+	int num_ixfrs;
 };
 
 /**
@@ -328,6 +350,8 @@ struct auth_probe {
 
 	/** for the hostname lookups, which master is current */
 	struct auth_master* lookup_target;
+	/** for the lookup, the callback unique info */
+	void* lookup_unique_info;
 	/** are we looking up A or AAAA, first A, then AAAA (if ip6 enabled) */
 	int lookup_aaaa;
 	/** we only want to do lookups for making config work (for notify),
@@ -376,12 +400,18 @@ struct auth_transfer {
 	struct auth_chunk* chunks_first;
 	/** last element in chunks list (to append new data at the end) */
 	struct auth_chunk* chunks_last;
+	/** running total of bytes held in chunks_first..chunks_last */
+	size_t chunks_total;
+	/** start time of the transfer */
+	struct timeval start_time;
 
 	/** list of upstream masters for this zone, from config */
 	struct auth_master* masters;
 
 	/** for the hostname lookups, which master is current */
 	struct auth_master* lookup_target;
+	/** for the lookup, the callback unique info */
+	void* lookup_unique_info;
 	/** are we looking up A or AAAA, first A, then AAAA (if ip6 enabled) */
 	int lookup_aaaa;
 
@@ -551,9 +581,10 @@ int auth_zones_lookup(struct auth_zones* az, struct query_info* qinfo,
  * @param temp: temporary storage region.
  * @return false if not answered
  */
-int auth_zones_answer(struct auth_zones* az, struct module_env* env,
+int auth_zones_downstream_answer(struct auth_zones* az, struct module_env* env,
 	struct query_info* qinfo, struct edns_data* edns,
-	struct comm_reply* repinfo, struct sldns_buffer* buf, struct regional* temp);
+	struct comm_reply* repinfo, struct sldns_buffer* buf,
+	struct regional* temp);
 
 /** 
  * Find the auth zone that is above the given qname.
@@ -786,5 +817,48 @@ void auth_zonemd_dnskey_lookup_callback(void* arg, int rcode,
  */
 void auth_zones_pickup_zonemd_verify(struct auth_zones* az,
 	struct module_env* env);
+
+/** Get memory usage for auth zones. The routine locks and unlocks
+ * for reading. */
+size_t auth_zones_get_mem(struct auth_zones* zones);
+
+/**
+ * Initial pick up of the auth zone nextprobe timeout and that turns
+ * into further zone transfer work, if any. Also sets the lease time.
+ * @param x: xfer structure, locked by caller.
+ * @param env: environment of the worker that picks up the task.
+ */
+void auth_xfer_pickup_initial_zone(struct auth_xfer* x,
+	struct module_env* env);
+
+/**
+ * Initial pick up of the auth zone, it sets the acquired time.
+ * @param z: the zone, write locked by caller.
+ * @param env: environment of the worker, with current time.
+ */
+void auth_zone_pickup_initial_zone(struct auth_zone* z,
+	struct module_env* env);
+
+/**
+ * Delete auth xfer structure
+ * @param xfr: delete this xfer and its tasks.
+ */
+void auth_xfer_delete(struct auth_xfer* xfr);
+
+/**
+ * Disown tasks from the xfr that belong to this worker.
+ * Only tasks for the worker in question, the comm point and timer
+ * delete functions need to run in the thread of that worker to be
+ * able to delete the callback from the event base.
+ * @param xfr: xfr structure
+ * @param worker: the worker for which to stop tasks.
+ */
+void xfr_disown_tasks(struct auth_xfer* xfr, struct worker* worker);
+
+/** count number of open and closed parenthesis in a chunkline */
+int chunkline_count_parens(struct sldns_buffer* buf, size_t start);
+
+/** Clear data in auth zone */
+void auth_zone_clear_data(struct auth_zone* z);
 
 #endif /* SERVICES_AUTHZONE_H */

@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Socket Address handling for dhcpcd
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2015-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -30,34 +30,29 @@
 #define SA_H
 
 #include <sys/socket.h>
-#include <netinet/in.h>
 
-union sa_ss {
-	struct sockaddr		sa;
-	struct sockaddr_in	sin;
-	struct sockaddr_in6	sin6;
-};
+#include <netinet/in.h>
 
 #ifdef BSD
 #define HAVE_SA_LEN
 #endif
 
 /* Allow for a sockaddr_dl being printed too. */
-#define INET_MAX_ADDRSTRLEN	(20 * 3)
+#define INET_MAX_ADDRSTRLEN (20 * 3)
 
 #ifdef INET
-#define satosin(sa) ((struct sockaddr_in *)(void *)(sa))
+#define satosin(sa)  ((struct sockaddr_in *)(void *)(sa))
 #define satocsin(sa) ((const struct sockaddr_in *)(const void *)(sa))
 #endif
 #ifdef INET6
-#define satosin6(sa) ((struct sockaddr_in6 *)(void *)(sa))
+#define satosin6(sa)  ((struct sockaddr_in6 *)(void *)(sa))
 #define satocsin6(sa) ((const struct sockaddr_in6 *)(const void *)(sa))
 #endif
 
 socklen_t sa_addroffset(const struct sockaddr *sa);
 socklen_t sa_addrlen(const struct sockaddr *sa);
 #ifdef HAVE_SA_LEN
-#define	sa_len(sa)	((sa)->sa_len)
+#define sa_len(sa) ((sa)->sa_len)
 #else
 socklen_t sa_len(const struct sockaddr *sa);
 #endif

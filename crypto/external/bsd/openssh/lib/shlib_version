@@ -1,5 +1,5 @@
-#	$NetBSD: shlib_version,v 1.36.2.1 2025/08/02 05:18:50 perseant Exp $
+#	$NetBSD: shlib_version,v 1.36.2.2 2026/11/04 22:36:47 perseant Exp $
 #	Remember to update distrib/sets/lists/base/shl.* when changing
 #
-major=49
+major=52
 minor=0

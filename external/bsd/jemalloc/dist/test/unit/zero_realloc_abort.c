@@ -4,13 +4,15 @@
 
 static bool abort_called = false;
 
-void set_abort_called() {
+void
+set_abort_called(const char *message) {
+	(void)message;
 	abort_called = true;
 };
 
 TEST_BEGIN(test_realloc_abort) {
 	abort_called = false;
-	safety_check_set_abort(&set_abort_called);
+	test_hooks_safety_check_abort = &set_abort_called;
 	void *ptr = mallocx(42, 0);
 	expect_ptr_not_null(ptr, "Unexpected mallocx error");
 	ptr = realloc(ptr, 0);
@@ -20,7 +22,5 @@ TEST_END
 
 int
 main(void) {
-	return test(
-	    test_realloc_abort);
+	return test(test_realloc_abort);
 }
-

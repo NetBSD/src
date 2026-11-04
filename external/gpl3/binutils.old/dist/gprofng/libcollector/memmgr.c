@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -29,13 +29,6 @@
 #include "libcol_util.h"
 #include "gp-experiment.h"
 #include "memmgr.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
-#define DBG_LT4 4
 
 /*
  * Memory allocation.
@@ -131,7 +124,7 @@ alloc_chunk (unsigned sz, int log)
   if (log == 1)
     Tprintf (DBG_LT2, "alloc_chunk mapping %u, rounded up from %u\n", (unsigned int) chunksz, sz);
   /* mmap64 is only in 32-bits; this call goes to mmap in 64-bits */
-  ptr = (char*) CALL_UTIL (mmap64)(0, chunksz, PROT_READ | PROT_WRITE,
+  ptr = (char*) CALL_UTIL (mmap64_)(0, chunksz, PROT_READ | PROT_WRITE,
 				   MAP_PRIVATE | MAP_ANON, (int) -1, (off64_t) 0);
   if (ptr == MAP_FAILED)
     {

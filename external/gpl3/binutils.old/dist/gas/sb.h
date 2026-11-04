@@ -1,5 +1,5 @@
 /* sb.h - header file for string buffer manipulation routines
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Written by Steve and Judy Chamberlain of Cygnus Support,
       sac@cygnus.com
@@ -57,7 +57,7 @@ extern void sb_kill (sb *);
 extern void sb_add_sb (sb *, sb *);
 extern void sb_scrub_and_add_sb (sb *, sb *);
 extern void sb_reset (sb *);
-extern void sb_add_char (sb *, size_t);
+extern void sb_add_char (sb *, char);
 extern void sb_add_string (sb *, const char *);
 extern void sb_add_buffer (sb *, const char *, size_t);
 extern char *sb_terminate (sb *);
@@ -66,11 +66,10 @@ extern size_t sb_skip_comma (size_t, sb *);
 
 /* Actually in input-scrub.c.  */
 enum expansion {
-  /* Note: Order matters!  */
   expanding_none,
   expanding_repeat,
   expanding_macro,
-  expanding_nested, /* Only for internal use of input-scrub.c.  */
+  expanding_app,
 };
 extern void input_scrub_include_sb (sb *, char *, enum expansion);
 

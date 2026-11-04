@@ -1,6 +1,6 @@
-/*	$NetBSD: ftp.c,v 1.8 2024/02/02 22:19:05 christos Exp $	*/
+/*	$NetBSD: ftp.c,v 1.8.2.1 2026/11/04 22:37:38 perseant Exp $	*/
 /*-
- * Copyright (c) 1998-2004 Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 1998-2004 Dag-Erling CoÃ¯dan SmÃ¸rgrav
  * Copyright (c) 2008, 2009, 2010 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
  *
@@ -42,7 +42,7 @@
  *
  * Major Changelog:
  *
- * Dag-Erling Coïdan Smørgrav
+ * Dag-Erling CoÃ¯dan SmÃ¸rgrav
  * 9 Jun 1998
  *
  * Incorporated into libfetch
@@ -98,6 +98,7 @@
 #include "common.h"
 #include "ftperr.h"
 
+static int ftp_cmd(conn_t *, const char *, ...) LIBFETCH_PRINTFLIKE(2, 3);
 #define FTP_ANONYMOUS_USER	"anonymous"
 
 #define FTP_CONNECTION_ALREADY_OPEN	125
@@ -691,14 +692,13 @@ ftp_transfer(conn_t *conn, const char *oper, const char *file, const char *op_ar
 	const char *filename;
 	size_t filenamelen;
 	int type;
-	int low, pasv, verbose;
+	int pasv, verbose;
 	int e, sd = -1;
 	socklen_t l;
 	char *s;
 	fetchIO *df;
 
 	/* check flags */
-	low = CHECK_FLAG('l');
 	pasv = !CHECK_FLAG('a');
 	verbose = CHECK_FLAG('v');
 
@@ -864,6 +864,7 @@ retry_mode:
 		uint16_t p;
 #if defined(IPV6_PORTRANGE) || defined(IP_PORTRANGE)
 		int arg;
+		int low = CHECK_FLAG('l');
 #endif
 		int d;
 		char hname[INET6_ADDRSTRLEN];
@@ -1110,22 +1111,18 @@ static struct url *
 ftp_get_proxy(struct url * url, const char *flags)
 {
 	struct url *purl;
-	char *p, *fp, *FP, *hp, *HP;
+	char *p;
 
 	if (flags != NULL && strchr(flags, 'd') != NULL)
-		return NULL;
+		return (NULL);
 	if (fetch_no_proxy_match(url->host))
-		return NULL;
+		return (NULL);
 
-	FP = getenv("FTP_PROXY");
-	fp = getenv("ftp_proxy");
-	HP = getenv("HTTP_PROXY");
-	hp = getenv("http_proxy");
-
-	if ((((p = FP) || (p = fp) || (p = HP) || (p = hp))) &&
+	if (((p = getenv("FTP_PROXY")) || (p = getenv("ftp_proxy")) ||
+		(p = getenv("HTTP_PROXY")) || (p = getenv("http_proxy"))) &&
 	    *p && (purl = fetchParseURL(p)) != NULL) {
 		if (!*purl->scheme) {
-			if (fp || FP)
+			if (getenv("FTP_PROXY") || getenv("ftp_proxy"))
 				strcpy(purl->scheme, SCHEME_FTP);
 			else
 				strcpy(purl->scheme, SCHEME_HTTP);
@@ -1134,10 +1131,10 @@ ftp_get_proxy(struct url * url, const char *flags)
 			purl->port = fetch_default_proxy_port(purl->scheme);
 		if (strcasecmp(purl->scheme, SCHEME_FTP) == 0 ||
 		    strcasecmp(purl->scheme, SCHEME_HTTP) == 0)
-			return purl;
+			return (purl);
 		fetchFreeURL(purl);
 	}
-	return NULL;
+	return (NULL);
 }
 
 /*

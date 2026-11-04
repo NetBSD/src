@@ -46,8 +46,6 @@
 #include "util/data/msgreply.h"
 #include "util/module.h"
 struct delegpt;
-struct iter_hints;
-struct iter_forwards;
 struct iter_donotq;
 struct iter_prep_list;
 struct iter_priv;
@@ -55,6 +53,9 @@ struct rbtree_type;
 
 /** max number of targets spawned for a query and its subqueries */
 #define MAX_TARGET_COUNT	64
+/** max number of upstream queries for a query and its subqueries, it is
+ * never reset. */
+extern int MAX_GLOBAL_QUOTA;
 /** max number of target lookups per qstate, per delegation point */
 #define MAX_DP_TARGET_COUNT	16
 /** max number of nxdomains allowed for target lookups for a query and
@@ -103,17 +104,16 @@ extern int BLACKLIST_PENALTY;
 #define RTT_BAND 400
 /** Number of retries for empty nodata packets before it is accepted. */
 #define EMPTY_NODATA_RETRY_COUNT 2
+/** max label-strip iterations in DSNS_FIND_STATE (RFC 4035 4.2 parent-NS
+ * search) before giving up; bounds upstream NS sends per client DS.
+ * Means the max number of labels in grandchild to the grandparent zone that
+ * are co-hosted. */
+#define MAX_DSNS_FIND_COUNT    20
 
 /**
- * Global state for the iterator.
+ * Iterator global state for nat64.
  */
-struct iter_env {
-	/** A flag to indicate whether or not we have an IPv6 route */
-	int supports_ipv6;
-
-	/** A flag to indicate whether or not we have an IPv4 route */
-	int supports_ipv4;
-
+struct iter_nat64 {
 	/** A flag to locally apply NAT64 to make IPv4 addrs into IPv6 */
 	int use_nat64;
 
@@ -125,6 +125,20 @@ struct iter_env {
 
 	/** CIDR mask length of NAT64 prefix */
 	int nat64_prefix_net;
+};
+
+/**
+ * Global state for the iterator.
+ */
+struct iter_env {
+	/** A flag to indicate whether or not we have an IPv6 route */
+	int supports_ipv6;
+
+	/** A flag to indicate whether or not we have an IPv4 route */
+	int supports_ipv4;
+
+	/** State for nat64 */
+	struct iter_nat64 nat64;
 
 	/** A set of inetaddrs that should never be queried. */
 	struct iter_donotq* donotq;
@@ -248,6 +262,9 @@ enum target_count_variables {
 	TARGET_COUNT_QUERIES,
 	/** Number of nxdomain responses encountered. */
 	TARGET_COUNT_NX,
+	/** Global quota on number of queries to upstream servers per
+	 * client request, that is never reset. */
+	TARGET_COUNT_GLOBAL_QUOTA,
 
 	/** This should stay last here, it is used for the allocation */
 	TARGET_COUNT_MAX,
@@ -363,6 +380,10 @@ struct iter_qstate {
 	/** if true, already tested for ratelimiting and passed the test */
 	int ratelimit_ok;
 
+	/** If the last query, that may be a referral, incremented the
+	 * ratelimit counter. */
+	int ratelimit_incremented;
+
 	/**
 	 * The query must store NS records from referrals as parentside RRs
 	 * Enabled once it hits resolution problems, to throttle retries.
@@ -387,6 +408,8 @@ struct iter_qstate {
 	uint8_t* dsns_point;
 	/** length of the dname in dsns_point */
 	size_t dsns_point_len;
+	/** number of label-strip iterations performed in DSNS_FIND_STATE */
+	int dsns_count;
 
 	/** 
 	 * expected dnssec information for this iteration step. 
@@ -421,6 +444,13 @@ struct iter_qstate {
 	 * This flag detects that a completely empty nodata was received,
 	 * already so that it is accepted later. */
 	int empty_nodata_found;
+
+	/** Store if the answer was empty, but lame, before it became empty.*/
+	int msg_lame_empty;
+
+	/** Store if the answer was a referral, to self, before scrub. So the
+	 * it is not some sort of answer. */
+	int msg_lame_referral;
 
 	/** list of pending queries to authoritative servers. */
 	struct outbound_list outlist;

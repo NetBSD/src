@@ -46,6 +46,7 @@ mips_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   int offset;
   Sym *child;
   static bool inited = false;
+  Sym_Table *symtab = get_symtab ();
 
   if (!inited)
     {
@@ -59,6 +60,8 @@ mips_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   DBG (CALLDEBUG, printf (_("[find_call] %s: 0x%lx to 0x%lx\n"),
 			  parent->name, (unsigned long) p_lowpc,
 			  (unsigned long) p_highpc));
+  p_lowpc = (p_lowpc + 3) & ~3;
+  p_highpc &= ~3;
   for (pc = p_lowpc; pc < p_highpc; pc += 4)
     {
       op = bfd_get_32 (core_bfd, ((unsigned char *)core_text_space
@@ -73,7 +76,7 @@ mips_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 	  dest_pc = (pc & ~(bfd_vma) 0xfffffff) | offset;
 	  if (hist_check_address (dest_pc))
 	    {
-	      child = sym_lookup (&symtab, dest_pc);
+	      child = sym_lookup (symtab, dest_pc);
               if (child)
 		{
 	          DBG (CALLDEBUG,

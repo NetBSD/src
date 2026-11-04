@@ -1,5 +1,5 @@
 .TH SLAPD-CONFIG 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -501,7 +501,7 @@ feature.  The default is 0. You may also want to set the
 .B olcWriteTimeout
 option.
 .TP
-.B olcIndexHash64: { on | off }
+.B olcIndexHash64: { TRUE | FALSE }
 Use a 64 bit hash for indexing. The default is to use 32 bit hashes.
 These hashes are used for equality and substring indexing. The 64 bit
 version may be needed to avoid index collisions when the number of
@@ -564,12 +564,33 @@ see
 option description.  The default is 71.
 .TP
 .B olcLogFile: <filename>
-Specify a file for recording slapd debug messages. By default these messages
-only go to stderr, are not recorded anywhere else, and are unrelated to
-messages exposed by the
-.B loglevel
-configuration parameter. Specifying a logfile copies messages to both stderr
-and the logfile.
+Specify a file for recording slapd debug messages. These messages are
+unrelated to messages exposed by the
+.B olcLogLevel
+configuration parameter. This setting only affects the slapd daemon and has
+no effect on the command line tools. By default these messages
+only go to stderr and are not recorded anywhere else.
+Specifying a logfile copies messages to both stderr and the logfile.
+.TP
+.B olcLogFileFormat: debug|syslog-utc|syslog-localtime|rfc3339-utc
+Specify the prefix format for messages written to the logfile. The debug
+format is the normal format used for slapd debug messages, with a timestamp
+in hexadecimal, followed by a thread ID.  The other options are to
+use syslog(3) style prefixes, with timestamps either in UTC or in the
+local timezone. The default is debug format.
+.TP
+.B olcLogFileOnly: TRUE | FALSE
+Specify that debug messages should only go to the configured logfile, and
+not to stderr.
+.TP
+.B olcLogFileRotate: <max> <Mbytes> <hours>
+Specify automatic rotation for the configured logfile as the maximum
+number of old logfiles to retain, a maximum size in megabytes to allow a
+logfile to grow before rotation, and a maximum age in hours for a logfile
+to be used before rotation. The maximum number must be in the range 1-99.
+Setting Mbytes or hours to zero disables the size or age check, respectively.
+At least one of Mbytes or hours must be non-zero. By default no automatic
+rotation will be performed.
 .TP
 .B olcLogLevel: <integer> [...]
 Specify the level at which debugging statements and operation 
@@ -926,10 +947,18 @@ the top-level CA should be present. Multiple certificates are simply
 appended to the file; the order is not significant.
 .TP
 .B olcTLSCACertificatePath: <path>
-Specifies the path of a directory that contains Certificate Authority
+Specifies the path of directories that contain Certificate Authority
 certificates in separate individual files. Usually only one of this
 or the olcTLSCACertificateFile is defined. If both are specified, both
-locations will be used.
+locations will be used. Multiple directories may be specified,
+separated by a semi-colon.
+.TP
+.B olcTLSCACertificate: <CA cert>
+Stores a single CA certificate that will be trusted by the server, in DER format.
+If this option is set, the \fBolcTLSCACertificateFile\fP and
+\fBolcTLSCACertificatePath\fP options are ignored. If multiple
+CA certificates are required, the \fBolcTLSCACertificateFile\fP
+or \fBolcTLSCACertificatePath\fP options must be used instead of this option.
 .TP
 .B olcTLSCertificateFile: <filename>
 Specifies the file that contains the
@@ -939,16 +968,23 @@ server certificate.
 When using OpenSSL that file may also contain any number of intermediate
 certificates after the server certificate.
 .TP
+.B olcTLSCertificate: <cert>
+Stores a single certificate for the server, in DER format. If this option is
+used, the \fBolcTLSCertificateFile\fP option is ignored.
+.TP
 .B olcTLSCertificateKeyFile: <filename>
 Specifies the file that contains the
 .B slapd
-server private key that matches the certificate stored in the
-.B olcTLSCertificateFile
-file. If the private key is protected with a password, the password must
+server private key that matches the specified server certificate.
+If the private key file is protected with a password, the password must
 be manually typed in when slapd starts.  Usually the private key is not
 protected with a password, to allow slapd to start without manual
 intervention, so
 it is of critical importance that the file is protected carefully. 
+.TP
+.B olcTLSCertificateKey <key>
+Stores the private key that matches the server certificate. If this option is
+used, the \fBolcTLSCertificateKeyFile\fP option is ignored.
 .TP
 .B olcTLSDHParamFile: <filename>
 This directive specifies the file that contains parameters for Diffie-Hellman
@@ -1202,7 +1238,6 @@ should be one of
 .BR mdb ,
 .BR meta ,
 .BR monitor ,
-.BR ndb ,
 .BR null ,
 .BR passwd ,
 .BR perl ,
@@ -1482,6 +1517,14 @@ Controls whether
 will automatically maintain the pwdLastSuccess attribute for
 entries. By default, olcLastBind is FALSE.
 .TP
+.B olcLastBindPrecision: <integer>
+If olcLastBind is enabled, specifies how frequently pwdLastSuccess
+will be updated. More than
+.B integer
+seconds must have passed since the last successful bind. In a
+replicated environment with frequent bind activity it may be
+useful to set this to a large value.
+.TP
 .B olcLimits: <selector> <limit> [<limit> [...]]
 Specify time and size limits based on the operation's initiator or
 base DN.
@@ -1733,12 +1776,14 @@ before this keyword may be set. This mode also requires a
 .B olcServerID
 (see above) to be configured.
 By default, this setting is FALSE.
+.TP
 .B olcMonitoring: TRUE | FALSE
 This option enables database-specific monitoring in the entry related
 to the current database in the "cn=Databases,cn=Monitor" subtree
 of the monitor database, if the monitor database is enabled.
 Currently, only the MDB database provides database-specific monitoring.
-The default depends on the backend type.
+If monitoring is supported by the backend it defaults to TRUE, otherwise
+FALSE.
 .TP
 .B olcPlugin: <plugin_type> <lib_path> <init_function> [<arguments>]
 Configure a SLAPI plugin. See the
@@ -1943,9 +1988,8 @@ The \fBsizelimit\fP and \fBtimelimit\fP only
 accept "unlimited" and positive integers, and both default to "unlimited".
 The \fBsizelimit\fP and \fBtimelimit\fP parameters define
 a consumer requested limitation on the number of entries that can be returned
-by the LDAP Content Synchronization operation; as such, it is intended
-to implement partial replication based on the size of the replicated database
-and on the time required by the synchronization.
+by the LDAP Content Synchronization operation; these should be left unchanged
+from the default otherwise replication may never succeed.
 Note, however, that any provider-side limits for the replication identity
 will be enforced by the provider regardless of the limits requested
 by the LDAP Content Synchronization operation, much like for any other

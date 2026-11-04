@@ -196,7 +196,7 @@ int b_writeab(hfsvol *vol,
     }
 
   vol->mdb.drAtrb &= ~HFS_ATRB_UMOUNTED;
-  vol->mdb.drLsMod = d_tomtime(time(0));
+  vol->mdb.drLsMod = d_tomtime(d_getnow());
   ++vol->mdb.drWrCnt;
 
   vol->flags |= HFS_UPDATE_MDB;

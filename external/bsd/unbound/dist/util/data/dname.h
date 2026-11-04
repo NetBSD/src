@@ -110,6 +110,22 @@ int query_dname_compare(uint8_t* d1, uint8_t* d2);
 size_t pkt_dname_len(struct sldns_buffer* pkt);
 
 /**
+ * Determine correct, compressed, dname present in packet.
+ * Checks for parse errors. Has a budget and limit for decompression,
+ * if the limit is exceeded, this is an error.
+ * @param pkt: packet to read from (from current start position).
+ * @param budget: the budget of decompression pointer follows.
+ *	It is updated with the additional count (if any) of pointer follows,
+ *	so that a running total can be kept over a number of dnames.
+ * @param limit: the limit of decompression pointer follows.
+ * @return: 0 on parse error.
+ *	At exit the position is right after the (compressed) dname.
+ *	Compression pointers are followed and checked for loops.
+ *	The uncompressed wireformat length is returned.
+ */
+size_t pkt_dname_len_budget(struct sldns_buffer* pkt, int* budget, int limit);
+
+/**
  * Compare dnames in packet (compressed). Dnames must be valid.
  * routine performs lowercasing, so the packet casing is preserved.
  * @param pkt: packet, used to resolve compression pointers.
@@ -225,7 +241,7 @@ int dname_strict_subdomain(uint8_t* d1, int labs1, uint8_t* d2, int labs2);
 int dname_strict_subdomain_c(uint8_t* d1, uint8_t* d2);
 
 /**
- * Counts labels. Tests is d1 is a subdomain of d2.
+ * Counts labels. Tests if d1 is a subdomain of d2.
  * @param d1: domain name, uncompressed wireformat
  * @param d2: domain name, uncompressed wireformat
  * @return true if d1 is a subdomain of d2.
@@ -242,11 +258,12 @@ void dname_print(FILE* out, struct sldns_buffer* pkt, uint8_t* dname);
 
 /** 
  * Debug helper. Print dname to given string buffer (string buffer must
- * be at least 255 chars + 1 for the 0, in printable form.
+ * be at least 255 chars, in printable form.
  * This may lose information (? for nonprintable characters, or & if
  * the name is too long, # for a bad label length).
+ * Upon return, the buffer will always have a terminating \0 value.
  * @param dname: uncompressed wireformat.
- * @param str: buffer of 255+1 length.
+ * @param str: buffer of at least 255 length.
  */
 void dname_str(uint8_t* dname, char* str);
 
@@ -261,9 +278,22 @@ int dname_is_root(uint8_t* dname);
  * Snip off first label from a dname, returning the parent zone.
  * @param dname: from what to strip off. uncompressed wireformat.
  * @param len: length, adjusted to become less.
- * return stripped off, or "." if input was ".".
+ * return dname stripped off, or "." if input was ".".
  */
 void dname_remove_label(uint8_t** dname, size_t* len);
+
+/**
+ * Same as dname_remove_label but fails if removal would surpass lenlimit.
+ * If no failure,
+ * snip off first label from a dname, returning the parent zone.
+ * @param dname: from what to strip off. uncompressed wireformat.
+ * @param len: length, adjusted to become less.
+ * @param lenlimit: length limit that we can't surpass (usually the zone apex).
+ * @return
+ *	o 1,  and dname stripped off, or "." if input was ".", else
+ *	o 0, if going up would surpass lenlimit.
+ */
+int dname_remove_label_limit_len(uint8_t** dname, size_t* len, size_t lenlimit);
 
 /**
  * Snip off first N labels from a dname, returning the parent zone.

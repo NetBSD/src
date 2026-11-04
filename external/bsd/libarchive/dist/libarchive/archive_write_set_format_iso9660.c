@@ -911,7 +911,7 @@ static int	iso9660_finish_entry(struct archive_write *);
 static int	iso9660_close(struct archive_write *);
 static int	iso9660_free(struct archive_write *);
 
-static void	get_system_identitier(char *, size_t);
+static void	get_system_identifier(char *, size_t);
 static void	set_str(unsigned char *, const char *, size_t, char,
 		    const char *);
 static inline int joliet_allowed_char(unsigned char, unsigned char);
@@ -1167,7 +1167,12 @@ archive_write_set_format_iso9660(struct archive *_a)
 	iso9660->primary.rootent->parent = iso9660->primary.rootent;
 	iso9660->cur_dirent = iso9660->primary.rootent;
 	archive_string_init(&(iso9660->cur_dirstr));
-	archive_string_ensure(&(iso9660->cur_dirstr), 1);
+	if (archive_string_ensure(&(iso9660->cur_dirstr), 1) == NULL) {
+		free(iso9660);
+		archive_set_error(&a->archive, ENOMEM,
+		    "Can't allocate memory");
+		return (ARCHIVE_FATAL);
+	}
 	iso9660->cur_dirstr.s[0] = 0;
 	iso9660->sconv_to_utf16be = NULL;
 	iso9660->sconv_from_utf16be = NULL;
@@ -1376,7 +1381,7 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Option ``%s'' "
-			    "is not supported on this platform.", key);
+			    "is not supported on this platform", key);
 			return (ARCHIVE_FATAL);
 #endif
 		}
@@ -1498,7 +1503,7 @@ iso9660_options(struct archive_write *a, const char *key, const char *value)
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_MISC,
 				    "``zisofs'' "
-				    "is not supported on this platform.");
+				    "is not supported on this platform");
 				return (ARCHIVE_FATAL);
 #endif
 			}
@@ -1534,7 +1539,7 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 	if (archive_entry_filetype(entry) == AE_IFLNK
 	    && iso9660->opt.rr == OPT_RR_DISABLED) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Ignore symlink file.");
+		    "Ignore symlink file");
 		iso9660->cur_file = NULL;
 		return (ARCHIVE_WARN);
 	}
@@ -1544,7 +1549,7 @@ iso9660_write_header(struct archive_write *a, struct archive_entry *entry)
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_MISC,
 			    "Ignore over %lld bytes file. "
-			    "This file too large.",
+			    "This file too large",
 			    MULTI_EXTENT_SIZE);
 				iso9660->cur_file = NULL;
 			return (ARCHIVE_WARN);
@@ -2098,7 +2103,7 @@ iso9660_close(struct archive_write *a)
 
 	if (iso9660->directories_too_deep != NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "%s: Directories too deep.",
+		    "%s: Directories too deep",
 		    archive_entry_pathname(
 			iso9660->directories_too_deep->file->entry));
 		return (ARCHIVE_WARN);
@@ -2166,7 +2171,7 @@ iso9660_free(struct archive_write *a)
  * Get the System Identifier
  */
 static void
-get_system_identitier(char *system_id, size_t size)
+get_system_identifier(char *system_id, size_t size)
 {
 #if defined(HAVE_SYS_UTSNAME_H)
 	struct utsname u;
@@ -3794,7 +3799,7 @@ set_file_identifier(unsigned char *bp, int from, int to, enum vdc vdc,
 		isoent = isoent_find_entry(vdd->rootent, ids);
 		if (isoent == NULL) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Not Found %s `%s'.",
+			    "Not Found %s `%s'",
 			    label, ids);
 			return (ARCHIVE_FATAL);
 		}
@@ -3872,7 +3877,7 @@ write_VD(struct archive_write *a, struct vdd *vdd)
 	/* Unused Field */
 	set_unused_field_bp(bp, 8, 8);
 	/* System Identifier */
-	get_system_identitier(identifier, sizeof(identifier));
+	get_system_identifier(identifier, sizeof(identifier));
 	r = set_str_a_characters_bp(a, bp, 9, 40, identifier, vdc);
 	if (r != ARCHIVE_OK)
 		return (r);
@@ -4037,7 +4042,7 @@ set_option_info(struct archive_string *info, int *opt, const char *key,
 	case KEY_HEX:
 		d = va_arg(ap, int);
 		archive_string_sprintf(info, "%c%s=%x",
-		    prefix, key, d);
+		    prefix, key, (unsigned int)d);
 		break;
 	}
 	va_end(ap);
@@ -5666,9 +5671,15 @@ isoent_tree(struct archive_write *a, struct isoent **isoentpp)
 		 * inserted. */
 		iso9660->cur_dirent = dent;
 		archive_string_empty(&(iso9660->cur_dirstr));
-		archive_string_ensure(&(iso9660->cur_dirstr),
+		if (archive_string_ensure(&(iso9660->cur_dirstr),
 		    archive_strlen(&(dent->file->parentdir)) +
-		    archive_strlen(&(dent->file->basename)) + 2);
+		    archive_strlen(&(dent->file->basename)) + 2) == NULL) {
+			archive_set_error(&a->archive, ENOMEM,
+			    "Can't allocate memory");
+			_isoent_free(isoent);
+			*isoentpp = NULL;
+			return (ARCHIVE_FATAL);
+		}
 		if (archive_strlen(&(dent->file->parentdir)) +
 		    archive_strlen(&(dent->file->basename)) == 0)
 			iso9660->cur_dirstr.s[0] = 0;
@@ -7069,7 +7080,7 @@ isoent_make_path_table(struct archive_write *a)
 		 * See also ISO9660 Standard 9.4.
 		 */
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-		    "Too many directories(%d) over 65535.", dir_number);
+		    "Too many directories(%d) over 65535", dir_number);
 		return (ARCHIVE_FATAL);
 	}
 
@@ -7192,7 +7203,7 @@ isoent_create_boot_catalog(struct archive_write *a, struct isoent *rootent)
 		else {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Boot image file(``%s'') size is too big "
-			    "for fd type.",
+			    "for fd type",
 			    iso9660->el_torito.boot_filename.s);
 			return (ARCHIVE_FATAL);
 		}
@@ -7953,7 +7964,7 @@ zisofs_extract(struct archive_write *a, struct zisofs_extract *zisofs,
 			r = inflateInit(&zisofs->stream);
 		if (r != Z_OK) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Can't initialize zisofs decompression.");
+			    "Can't initialize zisofs decompression");
 			return (ARCHIVE_FATAL);
 		}
 		zisofs->stream_valid = 1;

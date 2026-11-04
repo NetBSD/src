@@ -1,5 +1,5 @@
 .TH SLAPO-PCACHE 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2001, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -80,6 +80,9 @@ or both; in the latter case, any other attribute is redundant and should
 be avoided for clarity.  A set of attributes can contain "1.1" as the only
 attribute; in this case, only the presence of the entries is cached.
 Attributes prefixed by "undef:" need not be present in the schema.
+The "undef" keyword cannot be used with the
+.BR slapd\-mdb(5)
+backend as it requires all schema elements be fully defined.
 
 .TP
 .B pcacheMaxQueries <queries>
@@ -208,7 +211,7 @@ shown here:
 .RS
 .nf
 directory /var/tmp/cache
-cachesize 100
+maxsize   1073741824
 .fi
 .RE
 .LP

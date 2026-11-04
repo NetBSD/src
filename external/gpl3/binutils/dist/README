@@ -4,9 +4,9 @@ This directory contains various GNU compilers, assemblers, linkers,
 debuggers, etc., plus their support routines, definitions, and documentation.
 
 If you are receiving this as part of a GDB release, see the file gdb/README.
-If with a binutils release, see binutils/README;  if with a libg++ release,
-see libg++/README, etc.  That'll give you info about this
-package -- supported targets, how to use it, how to report bugs, etc.
+If with a binutils release, see binutils/README, and so on. That'll give you
+info about this package -- supported targets, how to use it, how to report
+bugs, etc.
 
 It is now possible to automatically configure and build a variety of
 tools with one command.  To build all of the tools contained herein,

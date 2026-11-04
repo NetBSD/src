@@ -264,14 +264,19 @@ status_line_size(struct client *c)
 }
 
 /* Get the prompt line number for client's session. 1 means at the bottom. */
-static u_int
+u_int
 status_prompt_line_at(struct client *c)
 {
 	struct session	*s = c->session;
+	u_int		 line, lines;
 
-	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
-		return (1);
-	return (options_get_number(s->options, "message-line"));
+	lines = status_line_size(c);
+	if (lines == 0)
+		return (0);
+	line = options_get_number(s->options, "message-line");
+	if (line >= lines)
+		return (lines - 1);
+	return (line);
 }
 
 /* Get window at window list position. */
@@ -470,7 +475,7 @@ status_redraw(struct client *c)
 /* Set a status line message. */
 void
 status_message_set(struct client *c, int delay, int ignore_styles,
-    int ignore_keys, const char *fmt, ...)
+    int ignore_keys, int no_freeze, const char *fmt, ...)
 {
 	struct timeval	 tv;
 	va_list		 ap;
@@ -514,7 +519,9 @@ status_message_set(struct client *c, int delay, int ignore_styles,
 		c->message_ignore_keys = ignore_keys;
 	c->message_ignore_styles = ignore_styles;
 
-	c->tty.flags |= (TTY_NOCURSOR|TTY_FREEZE);
+	if (!no_freeze)
+		c->tty.flags |= TTY_FREEZE;
+	c->tty.flags |= TTY_NOCURSOR;
 	c->flags |= CLIENT_REDRAWSTATUS;
 }
 
@@ -598,6 +605,19 @@ status_message_redraw(struct client *c)
 	return (1);
 }
 
+/* Accept prompt immediately. */
+static enum cmd_retval
+status_prompt_accept(__unused struct cmdq_item *item, void *data)
+{
+	struct client	*c = data;
+
+	if (c->prompt_string != NULL) {
+		c->prompt_inputcb(c, c->prompt_data, "y", 1);
+		status_prompt_clear(c);
+	}
+	return (CMD_RETURN_NORMAL);
+}
+
 /* Enable status line prompt. */
 void
 status_prompt_set(struct client *c, struct cmd_find_state *fs,
@@ -616,17 +636,18 @@ status_prompt_set(struct client *c, struct cmd_find_state *fs,
 
 	if (input == NULL)
 		input = "";
-	if (flags & PROMPT_NOFORMAT)
-		tmp = xstrdup(input);
-	else
-		tmp = format_expand_time(ft, input);
 
 	status_message_clear(c);
 	status_prompt_clear(c);
 	status_push_screen(c);
 
-	c->prompt_string = format_expand_time(ft, msg);
+	c->prompt_formats = ft;
+	c->prompt_string = xstrdup (msg);
 
+	if (flags & PROMPT_NOFORMAT)
+		tmp = xstrdup(input);
+	else
+		tmp = format_expand_time(ft, input);
 	if (flags & PROMPT_INCREMENTAL) {
 		c->prompt_last = xstrdup(tmp);
 		c->prompt_buffer = utf8_fromcstr("");
@@ -635,6 +656,7 @@ status_prompt_set(struct client *c, struct cmd_find_state *fs,
 		c->prompt_buffer = utf8_fromcstr(tmp);
 	}
 	c->prompt_index = utf8_strlen(c->prompt_buffer);
+	free(tmp);
 
 	c->prompt_inputcb = inputcb;
 	c->prompt_freecb = freecb;
@@ -647,14 +669,14 @@ status_prompt_set(struct client *c, struct cmd_find_state *fs,
 	c->prompt_mode = PROMPT_ENTRY;
 
 	if (~flags & PROMPT_INCREMENTAL)
-		c->tty.flags |= (TTY_NOCURSOR|TTY_FREEZE);
+		c->tty.flags |= TTY_FREEZE;
 	c->flags |= CLIENT_REDRAWSTATUS;
 
 	if (flags & PROMPT_INCREMENTAL)
 		c->prompt_inputcb(c, c->prompt_data, "=", 0);
 
-	free(tmp);
-	format_free(ft);
+	if ((flags & PROMPT_SINGLE) && (flags & PROMPT_ACCEPT))
+		cmdq_append(c, cmdq_get_callback(status_prompt_accept, c));
 }
 
 /* Remove status line prompt. */
@@ -669,6 +691,9 @@ status_prompt_clear(struct client *c)
 
 	free(c->prompt_last);
 	c->prompt_last = NULL;
+
+	format_free(c->prompt_formats);
+	c->prompt_formats = NULL;
 
 	free(c->prompt_string);
 	c->prompt_string = NULL;
@@ -689,27 +714,69 @@ status_prompt_clear(struct client *c)
 void
 status_prompt_update(struct client *c, const char *msg, const char *input)
 {
-	struct format_tree	*ft;
-	char			*tmp;
-
-	ft = format_create(c, NULL, FORMAT_NONE, 0);
-	format_defaults(ft, c, NULL, NULL, NULL);
-
-	tmp = format_expand_time(ft, input);
+	char	*tmp;
 
 	free(c->prompt_string);
-	c->prompt_string = format_expand_time(ft, msg);
+	c->prompt_string = xstrdup(msg);
 
 	free(c->prompt_buffer);
+	tmp = format_expand_time(c->prompt_formats, input);
 	c->prompt_buffer = utf8_fromcstr(tmp);
 	c->prompt_index = utf8_strlen(c->prompt_buffer);
+	free(tmp);
 
 	memset(c->prompt_hindex, 0, sizeof c->prompt_hindex);
 
 	c->flags |= CLIENT_REDRAWSTATUS;
+}
 
-	free(tmp);
-	format_free(ft);
+/* Redraw character. Return 1 if can continue redrawing, 0 otherwise. */
+static int
+status_prompt_redraw_character(struct screen_write_ctx *ctx, u_int offset,
+    u_int pwidth, u_int *width, struct grid_cell *gc,
+    const struct utf8_data *ud)
+{
+	u_char	ch;
+
+	if (*width < offset) {
+		*width += ud->width;
+		return (1);
+	}
+	if (*width >= offset + pwidth)
+		return (0);
+	*width += ud->width;
+	if (*width > offset + pwidth)
+		return (0);
+
+	ch = *ud->data;
+	if (ud->size == 1 && (ch <= 0x1f || ch == 0x7f)) {
+		gc->data.data[0] = '^';
+		gc->data.data[1] = (ch == 0x7f) ? '?' : ch|0x40;
+		gc->data.size = gc->data.have = 2;
+		gc->data.width = 2;
+	} else
+		utf8_copy(&gc->data, ud);
+	screen_write_cell(ctx, gc);
+	return (1);
+}
+
+/*
+ * Redraw quote indicator '^' if necessary. Return 1 if can continue redrawing,
+ * 0 otherwise.
+ */
+static int
+status_prompt_redraw_quote(const struct client *c, u_int pcursor,
+    struct screen_write_ctx *ctx, u_int offset, u_int pwidth, u_int *width,
+    struct grid_cell *gc)
+{
+	struct utf8_data	ud;
+
+	if (c->prompt_flags & PROMPT_QUOTENEXT && ctx->s->cx == pcursor + 1) {
+		utf8_set(&ud, '^');
+		return (status_prompt_redraw_character(ctx, offset, pwidth,
+		    width, gc, &ud));
+	}
+	return (1);
 }
 
 /* Draw client prompt on status line of present else on last line. */
@@ -720,10 +787,11 @@ status_prompt_redraw(struct client *c)
 	struct screen_write_ctx	 ctx;
 	struct session		*s = c->session;
 	struct screen		 old_screen;
-	u_int			 i, lines, offset, left, start, width;
+	u_int			 i, lines, offset, left, start, width, n;
 	u_int			 pcursor, pwidth, promptline;
-	struct grid_cell	 gc, cursorgc;
-	struct format_tree	*ft;
+	struct grid_cell	 gc;
+	struct format_tree	*ft = c->prompt_formats;
+	char			*prompt, *tmp;
 
 	if (c->tty.sx == 0 || c->tty.sy == 0)
 		return (0);
@@ -734,21 +802,27 @@ status_prompt_redraw(struct client *c)
 		lines = 1;
 	screen_init(sl->active, c->tty.sx, lines, 0);
 
+	n = options_get_number(s->options, "prompt-cursor-colour");
+	sl->active->default_ccolour = n;
+	n = options_get_number(s->options, "prompt-cursor-style");
+	screen_set_cursor_style(n, &sl->active->default_cstyle,
+	    &sl->active->default_mode);
+
 	promptline = status_prompt_line_at(c);
 	if (promptline > lines - 1)
 		promptline = lines - 1;
 
-	ft = format_create_defaults(NULL, c, NULL, NULL, NULL);
 	if (c->prompt_mode == PROMPT_COMMAND)
 		style_apply(&gc, s->options, "message-command-style", ft);
 	else
 		style_apply(&gc, s->options, "message-style", ft);
-	format_free(ft);
 
-	memcpy(&cursorgc, &gc, sizeof cursorgc);
-	cursorgc.attr ^= GRID_ATTR_REVERSE;
+	tmp = utf8_tocstr(c->prompt_buffer);
+	format_add(c->prompt_formats, "prompt-input", "%s", tmp);
+	prompt = format_expand_time(c->prompt_formats, c->prompt_string);
+	free (tmp);
 
-	start = format_width(c->prompt_string);
+	start = format_width(prompt);
 	if (start > c->tty.sx)
 		start = c->tty.sx;
 
@@ -758,7 +832,7 @@ status_prompt_redraw(struct client *c)
 	for (offset = 0; offset < c->tty.sx; offset++)
 		screen_write_putc(&ctx, &gc, ' ');
 	screen_write_cursormove(&ctx, 0, promptline, 0);
-	format_draw(&ctx, &gc, start, c->prompt_string, NULL, 0);
+	format_draw(&ctx, &gc, start, prompt, NULL, 0);
 	screen_write_cursormove(&ctx, start, promptline, 0);
 
 	left = c->tty.sx - start;
@@ -767,6 +841,8 @@ status_prompt_redraw(struct client *c)
 
 	pcursor = utf8_strwidth(c->prompt_buffer, c->prompt_index);
 	pwidth = utf8_strwidth(c->prompt_buffer, -1);
+	if (c->prompt_flags & PROMPT_QUOTENEXT)
+		pwidth++;
 	if (pcursor >= left) {
 		/*
 		 * The cursor would be outside the screen so start drawing
@@ -778,30 +854,19 @@ status_prompt_redraw(struct client *c)
 		offset = 0;
 	if (pwidth > left)
 		pwidth = left;
-	c->prompt_cursor = start + c->prompt_index - offset;
+	c->prompt_cursor = start + pcursor - offset;
 
 	width = 0;
 	for (i = 0; c->prompt_buffer[i].size != 0; i++) {
-		if (width < offset) {
-			width += c->prompt_buffer[i].width;
-			continue;
-		}
-		if (width >= offset + pwidth)
+		if (!status_prompt_redraw_quote(c, pcursor, &ctx, offset,
+		    pwidth, &width, &gc))
 			break;
-		width += c->prompt_buffer[i].width;
-		if (width > offset + pwidth)
+		if (!status_prompt_redraw_character(&ctx, offset, pwidth,
+		    &width, &gc, &c->prompt_buffer[i]))
 			break;
-
-		if (i != c->prompt_index) {
-			utf8_copy(&gc.data, &c->prompt_buffer[i]);
-			screen_write_cell(&ctx, &gc);
-		} else {
-			utf8_copy(&cursorgc.data, &c->prompt_buffer[i]);
-			screen_write_cell(&ctx, &cursorgc);
-		}
 	}
-	if (sl->active->cx < screen_size_x(sl->active) && c->prompt_index >= i)
-		screen_write_putc(&ctx, &cursorgc, ' ');
+	status_prompt_redraw_quote(c, pcursor, &ctx, offset, pwidth, &width,
+	    &gc);
 
 finished:
 	screen_write_stop(&ctx);
@@ -852,6 +917,7 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 		case 'p'|KEYC_CTRL:
 		case 't'|KEYC_CTRL:
 		case 'u'|KEYC_CTRL:
+		case 'v'|KEYC_CTRL:
 		case 'w'|KEYC_CTRL:
 		case 'y'|KEYC_CTRL:
 		case '\n':
@@ -1250,6 +1316,19 @@ status_prompt_key(struct client *c, key_code key)
 	}
 	key &= ~KEYC_MASK_FLAGS;
 
+	if (c->prompt_flags & (PROMPT_SINGLE|PROMPT_QUOTENEXT)) {
+		if ((key & KEYC_MASK_KEY) == KEYC_BSPACE)
+			key = 0x7f;
+		else if ((key & KEYC_MASK_KEY) > 0x7f) {
+			if (!KEYC_IS_UNICODE(key))
+				return (0);
+			key &= KEYC_MASK_KEY;
+		} else
+			key &= (key & KEYC_CTRL) ? 0x1f : KEYC_MASK_KEY;
+		c->prompt_flags &= ~PROMPT_QUOTENEXT;
+		goto append_key;
+	}
+
 	keys = options_get_number(c->session->options, "status-keys");
 	if (keys == MODEKEY_VI) {
 		switch (status_prompt_translate_key(c, key, &key)) {
@@ -1472,6 +1551,9 @@ process_key:
 		} else
 			prefix = '+';
 		goto changed;
+	case 'v'|KEYC_CTRL:
+		c->prompt_flags |= PROMPT_QUOTENEXT;
+		break;
 	default:
 		goto append_key;
 	}
@@ -1480,9 +1562,11 @@ process_key:
 	return (0);
 
 append_key:
-	if (key <= 0x7f)
+	if (key <= 0x7f) {
 		utf8_set(&tmp, key);
-	else if (KEYC_IS_UNICODE(key))
+		if (key <= 0x1f || key == 0x7f)
+			tmp.width = 2;
+	} else if (KEYC_IS_UNICODE(key))
 		utf8_to_data(key, &tmp);
 	else
 		return (0);

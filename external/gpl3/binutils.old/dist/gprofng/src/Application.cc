@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -100,7 +100,8 @@ Application::get_realpath (const char *_name)
 	    {
 	      if (path != s)
 		{
-		  char *nm = dbe_sprintf (NTXT ("%.*s/%s"), (int) (path - s - 1), path, _name);
+		  char *nm = dbe_sprintf (NTXT ("%.*s/%s"), (int) (s - path),
+				   path, _name);
 		  exe_name = realpath (nm, NULL);
 		  free (nm);
 		  if (exe_name)
@@ -111,7 +112,7 @@ Application::get_realpath (const char *_name)
 	      path = s + 1;
 	    }
     }
-  return strdup (_name);
+  return xstrdup (_name);
 }
 
 // Set the directory where all binaries are found
@@ -201,11 +202,7 @@ Application::check_args (int argc, char *argv[])
     switch (opt)
       {
       case 'V':
-// Ruud
 	Application::print_version_info ();
-/*
-	printf (NTXT ("GNU %s version %s\n"), get_basename (prog_name), VERSION);
-*/
 	exit (0);
       default:
 	usage ();
@@ -245,13 +242,12 @@ Application::set_progress (int percentage, const char *proc_str)
   return 0;
 }
 
-// Ruud
 void
 Application::print_version_info ()
 {
   printf ( GTXT (
     "GNU %s binutils version %s\n"
-    "Copyright (C) 2021 Free Software Foundation, Inc.\n"
+    "Copyright (C) 2025 Free Software Foundation, Inc.\n"
     "License GPLv3+: GNU GPL version 3 or later <https://gnu.org/licenses/gpl.html>.\n"
     "This is free software: you are free to change and redistribute it.\n"
     "There is NO WARRANTY, to the extent permitted by law.\n"),

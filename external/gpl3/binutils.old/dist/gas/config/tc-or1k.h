@@ -1,5 +1,5 @@
 /* tc-or1k.h -- Header file for tc-or1k.c.
-   Copyright (C) 2001-2022 Free Software Foundation, Inc.
+   Copyright (C) 2001-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -28,9 +28,6 @@ extern unsigned long or1k_machine;
 
 #define TARGET_FORMAT           "elf32-or1k"
 #define TARGET_BYTES_BIG_ENDIAN 1
-
-extern const char or1k_comment_chars [];
-#define tc_comment_chars or1k_comment_chars
 
 /* Permit temporary numeric labels.  */
 #define LOCAL_LABELS_FB 1

@@ -72,7 +72,13 @@ enum worker_commands {
 	/** obtain statistics without statsclear */
 	worker_cmd_stats_noreset,
 	/** execute remote control command */
-	worker_cmd_remote
+	worker_cmd_remote,
+	/** for fast-reload, perform stop */
+	worker_cmd_reload_stop,
+	/** for fast-reload, start again */
+	worker_cmd_reload_start,
+	/** for fast-reload, poll to make sure worker has released data */
+	worker_cmd_reload_poll
 };
 
 /**
@@ -98,10 +104,6 @@ struct worker {
 	struct listen_dnsport* front;
 	/** the backside outside network interface to the auth servers */
 	struct outside_network* back;
-	/** ports to be used by this worker. */
-	int* ports;
-	/** number of ports for this worker */
-	int numports;
 	/** the signal handler */
 	struct comm_signal* comsig;
 	/** commpoint to listen to commands. */
@@ -140,11 +142,9 @@ struct worker {
  * with backpointers only. Use worker_init on it later.
  * @param daemon: the daemon that this worker thread is part of.
  * @param id: the thread number from 0.. numthreads-1.
- * @param ports: the ports it is allowed to use, array.
- * @param n: the number of ports.
  * @return: the new worker or NULL on alloc failure.
  */
-struct worker* worker_create(struct daemon* daemon, int id, int* ports, int n);
+struct worker* worker_create(struct daemon* daemon, int id);
 
 /**
  * Initialize worker.

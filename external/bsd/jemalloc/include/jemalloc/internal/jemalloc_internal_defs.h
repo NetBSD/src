@@ -15,10 +15,13 @@
  */
 /* #undef JEMALLOC_OVERRIDE___LIBC_CALLOC */
 /* #undef JEMALLOC_OVERRIDE___LIBC_FREE */
+/* #undef JEMALLOC_OVERRIDE___LIBC_FREE_SIZED */
+/* #undef JEMALLOC_OVERRIDE___LIBC_FREE_ALIGNED_SIZED */
 /* #undef JEMALLOC_OVERRIDE___LIBC_MALLOC */
 /* #undef JEMALLOC_OVERRIDE___LIBC_MEMALIGN */
 /* #undef JEMALLOC_OVERRIDE___LIBC_REALLOC */
 /* #undef JEMALLOC_OVERRIDE___LIBC_VALLOC */
+/* #undef JEMALLOC_OVERRIDE___LIBC_PVALLOC */
 /* #undef JEMALLOC_OVERRIDE___POSIX_MEMALIGN */
 
 /*
@@ -110,8 +113,14 @@
 /* Defined if pthread_getname_np(3) is available. */
 #define JEMALLOC_HAVE_PTHREAD_GETNAME_NP 
 
+/* Defined if pthread_set_name_np(3) is available. */
+/* #undef JEMALLOC_HAVE_PTHREAD_SET_NAME_NP */
+
 /* Defined if pthread_get_name_np(3) is available. */
 /* #undef JEMALLOC_HAVE_PTHREAD_GET_NAME_NP */
+
+/* Defined if pthread_condattr_setclock(..., CLOCK_MONOTONIC) is available. */
+#define JEMALLOC_HAVE_PTHREAD_COND_TIMEDWAIT_MONOTONIC 
 
 /*
  * Defined if clock_gettime(CLOCK_MONOTONIC_COARSE, ...) is available.
@@ -132,6 +141,11 @@
  * Defined if clock_gettime(CLOCK_REALTIME, ...) is available.
  */
 #define JEMALLOC_HAVE_CLOCK_REALTIME 
+
+/*
+ * Defined if clock_gettime_nsec_np(CLOCK_UPTIME_RAW) is available.
+ */
+/* #undef JEMALLOC_HAVE_CLOCK_GETTIME_NSEC_NP */
 
 /*
  * Defined if _malloc_thread_cleanup() exists.  At least in the case of
@@ -160,6 +174,14 @@
 #define JEMALLOC_TLS_MODEL __attribute__((tls_model("initial-exec")))
 
 /*
+ * Route TSD thread-local address computation through a noinline
+ * optimization-barrier accessor so the compiler cannot cache it across a
+ * user-space context switch (fibers migrating between OS threads).  See
+ * tsd_tls_addr.h.
+ */
+/* #undef JEMALLOC_EXPERIMENTAL_FIBER_SAFE_TLS */
+
+/*
  * JEMALLOC_DEBUG enables assertions and other sanity checks, and disables
  * inline functions.
  */
@@ -182,6 +204,12 @@
 
 /* Use gcc intrinsics for profile backtracing if defined. */
 /* #undef JEMALLOC_PROF_GCC */
+
+/* JEMALLOC_PAGEID enabled page id */
+/* #undef JEMALLOC_PAGEID */
+
+/* JEMALLOC_HAVE_PRCTL checks prctl */
+/* #undef JEMALLOC_HAVE_PRCTL */
 
 /*
  * JEMALLOC_DSS enables use of sbrk(2) to allocate extents from the data storage
@@ -289,18 +317,15 @@
 /* #undef JEMALLOC_READLINKAT */
 
 /*
+ * If defined, use getenv() (instead of secure_getenv() or
+ * alternatives) to access MALLOC_CONF.
+ */
+/* #undef JEMALLOC_FORCE_GETENV */
+
+/*
  * Darwin (OS X) uses zones to work around Mach-O symbol override shortcomings.
  */
 /* #undef JEMALLOC_ZONE */
-
-/*
- * Methods for determining whether the OS overcommits.
- * JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY: Linux's
- *                                         /proc/sys/vm.overcommit_memory file.
- * JEMALLOC_SYSCTL_VM_OVERCOMMIT: FreeBSD's vm.overcommit sysctl.
- */
-/* #undef JEMALLOC_SYSCTL_VM_OVERCOMMIT */
-/* #undef JEMALLOC_PROC_SYS_VM_OVERCOMMIT_MEMORY */
 
 /* Defined if madvise(2) is available. */
 #define JEMALLOC_HAVE_MADVISE 
@@ -310,6 +335,13 @@
  * arguments to madvise(2).
  */
 /* #undef JEMALLOC_HAVE_MADVISE_HUGE */
+
+/*
+ * Defined if best-effort synchronous collapse of the native
+ * pages mapped by the memory range into transparent huge pages is supported
+ * via MADV_COLLAPSE arguments to madvise(2).
+ */
+/* #undef JEMALLOC_HAVE_MADVISE_COLLAPSE */
 
 /*
  * Methods for purging unused pages differ between operating systems.
@@ -341,8 +373,22 @@
  */
 /* #undef JEMALLOC_MADVISE_NOCORE */
 
+/* Defined if process_madvise(2) is available. */
+/* #undef JEMALLOC_HAVE_PROCESS_MADVISE */
+
+/* #undef EXPERIMENTAL_SYS_PROCESS_MADVISE_NR */
+
 /* Defined if mprotect(2) is available. */
 #define JEMALLOC_HAVE_MPROTECT 
+
+/* Defined if sys/sdt.h is available and sdt tracing enabled */
+/* #undef JEMALLOC_EXPERIMENTAL_USDT_STAP */
+
+/*
+ * Defined if sys/sdt.h is unavailable, sdt tracing enabled, and
+ * platform is supported
+ */
+/* #undef JEMALLOC_EXPERIMENTAL_USDT_CUSTOM */
 
 /*
  * Defined if transparent huge pages (THPs) are supported via the
@@ -414,11 +460,17 @@
 /* Adaptive mutex support in pthreads. */
 /* #undef JEMALLOC_HAVE_PTHREAD_MUTEX_ADAPTIVE_NP */
 
+/* gettid() support */
+/* #undef JEMALLOC_HAVE_GETTID */
+
 /* GNU specific sched_getcpu support */
 /* #undef JEMALLOC_HAVE_SCHED_GETCPU */
 
 /* GNU specific sched_setaffinity support */
 /* #undef JEMALLOC_HAVE_SCHED_SETAFFINITY */
+
+/* pthread_setaffinity_np support */
+#define JEMALLOC_HAVE_PTHREAD_SETAFFINITY_NP 
 
 /*
  * If defined, all the features necessary for background threads are present.
@@ -448,6 +500,16 @@
 /* Is C++ support being built? */
 #define JEMALLOC_ENABLE_CXX 
 
+/* Are C++ exceptions enabled? */
+#define JEMALLOC_HAVE_CXX_EXCEPTIONS 
+
+/*
+ * If defined, throwing operator new aborts on OOM (with size logged) instead
+ * of throwing std::bad_alloc. Nothrow new still returns null. With LTO this
+ * lets the compiler prove operator new is no-throw and elide exception cleanup.
+ */
+/* #undef JEMALLOC_INFALLIBLE_NEW */
+
 /* Performs additional size checks when defined. */
 /* #undef JEMALLOC_OPT_SIZE_CHECKS */
 
@@ -459,5 +521,25 @@
 
 /* If defined, realloc(ptr, 0) defaults to "free" instead of "alloc". */
 /* #undef JEMALLOC_ZERO_REALLOC_DEFAULT_FREE */
+
+/* If defined, use volatile asm during benchmarks. */
+#define JEMALLOC_HAVE_ASM_VOLATILE 
+
+/*
+ * If defined, support the use of rdtscp to get the time stamp counter
+ * and the processor ID.
+ */
+#if defined(__x86_64__) || defined(__i386__)
+#define JEMALLOC_HAVE_RDTSCP 
+#endif
+
+/* If defined, use __int128 for optimization. */
+#ifndef __lint__
+#if __SIZEOF_INT128__
+#define JEMALLOC_HAVE_INT128 
+#endif
+#endif
+
+#include "jemalloc/internal/jemalloc_internal_overrides.h"
 
 #endif /* JEMALLOC_INTERNAL_DEFS_H_ */

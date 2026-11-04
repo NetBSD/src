@@ -35,6 +35,8 @@
 
 static int	tty_log_fd = -1;
 
+static void	tty_start_timer_callback(int, short, void *);
+static void	tty_clipboard_query_callback(int, short, void *);
 static void	tty_set_italics(struct tty *);
 static int	tty_try_colour(struct tty *, int, const char *);
 static void	tty_force_cursor_colour(struct tty *, int);
@@ -42,14 +44,13 @@ static void	tty_cursor_pane(struct tty *, const struct tty_ctx *, u_int,
 		    u_int);
 static void	tty_cursor_pane_unless_wrap(struct tty *,
 		    const struct tty_ctx *, u_int, u_int);
-static void	tty_invalidate(struct tty *);
 static void	tty_colours(struct tty *, const struct grid_cell *);
 static void	tty_check_fg(struct tty *, struct colour_palette *,
-    		    struct grid_cell *);
+		    struct grid_cell *);
 static void	tty_check_bg(struct tty *, struct colour_palette *,
-    		    struct grid_cell *);
+		    struct grid_cell *);
 static void	tty_check_us(struct tty *, struct colour_palette *,
-    		    struct grid_cell *);
+		    struct grid_cell *);
 static void	tty_colours_fg(struct tty *, const struct grid_cell *);
 static void	tty_colours_bg(struct tty *, const struct grid_cell *);
 static void	tty_colours_us(struct tty *, const struct grid_cell *);
@@ -140,6 +141,14 @@ tty_resize(struct tty *tty)
 			ypixel = 0;
 		} else
 			ypixel = ws.ws_ypixel / sy;
+
+		if ((xpixel == 0 || ypixel == 0) &&
+		    tty->out != NULL &&
+		    !(tty->flags & TTY_WINSIZEQUERY) &&
+		    (tty->term->flags & TERM_VT100LIKE)) {
+			tty_puts(tty, "\033[18t\033[14t");
+			tty->flags |= TTY_WINSIZEQUERY;
+		}
 	} else {
 		sx = 80;
 		sy = 24;
@@ -289,6 +298,8 @@ tty_open(struct tty *tty, char **cause)
 	if (tty->out == NULL)
 		fatal("out of memory");
 
+	evtimer_set(&tty->clipboard_timer, tty_clipboard_query_callback, tty);
+	evtimer_set(&tty->start_timer, tty_start_timer_callback, tty);
 	evtimer_set(&tty->timer, tty_timer_callback, tty);
 
 	tty_start_tty(tty);
@@ -304,9 +315,23 @@ tty_start_timer_callback(__unused int fd, __unused short events, void *data)
 	struct client	*c = tty->client;
 
 	log_debug("%s: start timer fired", c->name);
+
 	if ((tty->flags & (TTY_HAVEDA|TTY_HAVEDA2|TTY_HAVEXDA)) == 0)
 		tty_update_features(tty);
 	tty->flags |= TTY_ALL_REQUEST_FLAGS;
+
+	tty->flags &= ~(TTY_WAITBG|TTY_WAITFG);
+}
+
+static void
+tty_start_start_timer(struct tty *tty)
+{
+	struct client	*c = tty->client;
+	struct timeval	 tv = { .tv_sec = TTY_QUERY_TIMEOUT };
+
+	log_debug("%s: start timer started", c->name);
+	evtimer_del(&tty->start_timer);
+	evtimer_add(&tty->start_timer, &tv);
 }
 
 void
@@ -314,7 +339,6 @@ tty_start_tty(struct tty *tty)
 {
 	struct client	*c = tty->client;
 	struct termios	 tio;
-	struct timeval	 tv = { .tv_sec = TTY_QUERY_TIMEOUT };
 
 	setblocking(c->fd, 0);
 	event_add(&tty->event_in, NULL);
@@ -349,8 +373,12 @@ tty_start_tty(struct tty *tty)
 	if (tty_term_has(tty->term, TTYC_ENBP))
 		tty_putcode(tty, TTYC_ENBP);
 
-	evtimer_set(&tty->start_timer, tty_start_timer_callback, tty);
-	evtimer_add(&tty->start_timer, &tv);
+	if (tty->term->flags & TERM_VT100LIKE) {
+		/* Subscribe to theme changes and request theme now. */
+		tty_puts(tty, "\033[?2031h\033[?996n");
+	}
+
+	tty_start_start_timer(tty);
 
 	tty->flags |= TTY_STARTED;
 	tty_invalidate(tty);
@@ -370,35 +398,43 @@ tty_send_requests(struct tty *tty)
 		return;
 
 	if (tty->term->flags & TERM_VT100LIKE) {
-		if (~tty->term->flags & TTY_HAVEDA)
+		if (~tty->flags & TTY_HAVEDA)
 			tty_puts(tty, "\033[c");
 		if (~tty->flags & TTY_HAVEDA2)
 			tty_puts(tty, "\033[>c");
 		if (~tty->flags & TTY_HAVEXDA)
 			tty_puts(tty, "\033[>q");
-		tty_puts(tty, "\033]10;?\033\\");
-		tty_puts(tty, "\033]11;?\033\\");
+		tty_puts(tty, "\033]10;?\033\\\033]11;?\033\\");
+		tty->flags |= (TTY_WAITBG|TTY_WAITFG);
 	} else
 		tty->flags |= TTY_ALL_REQUEST_FLAGS;
 	tty->last_requests = time(NULL);
 }
 
 void
-tty_repeat_requests(struct tty *tty)
+tty_repeat_requests(struct tty *tty, int force)
 {
-	time_t	t = time(NULL);
+	struct client	*c = tty->client;
+	time_t		 t = time(NULL);
+	u_int		 n = t - tty->last_requests;
 
 	if (~tty->flags & TTY_STARTED)
 		return;
 
-	if (t - tty->last_requests <= TTY_REQUEST_LIMIT)
+	if (!force && n <= TTY_REQUEST_LIMIT) {
+		log_debug("%s: not repeating requests (%u seconds)", c->name,
+		    n);
 		return;
+	}
+	log_debug("%s: %srepeating requests (%u seconds)", c->name,
+	    force ? "(force) " : "" , n);
 	tty->last_requests = t;
 
 	if (tty->term->flags & TERM_VT100LIKE) {
-		tty_puts(tty, "\033]10;?\033\\");
-		tty_puts(tty, "\033]11;?\033\\");
+		tty_puts(tty, "\033]10;?\033\\\033]11;?\033\\");
+		tty->flags |= (TTY_WAITBG|TTY_WAITFG);
 	}
+	tty_start_start_timer(tty);
 }
 
 void
@@ -412,6 +448,7 @@ tty_stop_tty(struct tty *tty)
 	tty->flags &= ~TTY_STARTED;
 
 	evtimer_del(&tty->start_timer);
+	evtimer_del(&tty->clipboard_timer);
 
 	event_del(&tty->timer);
 	tty->flags &= ~TTY_BLOCK;
@@ -460,6 +497,9 @@ tty_stop_tty(struct tty *tty)
 	if (tty_use_margin(tty))
 		tty_raw(tty, tty_term_string(tty->term, TTYC_DSMG));
 	tty_raw(tty, tty_term_string(tty->term, TTYC_RMCUP));
+
+	if (tty->term->flags & TERM_VT100LIKE)
+		tty_raw(tty, "\033[?2031l");
 
 	setblocking(c->fd, 1);
 }
@@ -1359,6 +1399,8 @@ tty_check_codeset(struct tty *tty, const struct grid_cell *gc)
 	/* Characters less than 0x7f are always fine, no matter what. */
 	if (gc->data.size == 1 && *gc->data.data < 0x7f)
 		return (gc);
+	if (gc->flags & GRID_FLAG_TAB)
+		return (gc);
 
 	/* UTF-8 terminal and a UTF-8 character - fine. */
 	if (tty->client->flags & CLIENT_UTF8)
@@ -1683,7 +1725,7 @@ tty_sync_end(struct tty *tty)
 	tty->flags &= ~TTY_SYNCING;
 
 	if (tty_term_has(tty->term, TTYC_SYNC)) {
- 		log_debug("%s sync end", tty->client->name);
+		log_debug("%s sync end", tty->client->name);
 		tty_putcode_i(tty, TTYC_SYNC, 2);
 	}
 }
@@ -2369,7 +2411,7 @@ tty_reset(struct tty *tty)
 	memcpy(&tty->last_cell, &grid_default_cell, sizeof tty->last_cell);
 }
 
-static void
+void
 tty_invalidate(struct tty *tty)
 {
 	memcpy(&tty->cell, &grid_default_cell, sizeof tty->cell);
@@ -2739,8 +2781,7 @@ tty_attributes(struct tty *tty, const struct grid_cell *gc,
 	if (changed & GRID_ATTR_ITALICS)
 		tty_set_italics(tty);
 	if (changed & GRID_ATTR_ALL_UNDERSCORE) {
-		if ((changed & GRID_ATTR_UNDERSCORE) ||
-		    !tty_term_has(tty->term, TTYC_SMULX))
+		if (changed & GRID_ATTR_UNDERSCORE)
 			tty_putcode(tty, TTYC_SMUL);
 		else if (changed & GRID_ATTR_UNDERSCORE_2)
 			tty_putcode_i(tty, TTYC_SMULX, 2);
@@ -2865,13 +2906,23 @@ tty_check_fg(struct tty *tty, struct colour_palette *palette,
 	/* Is this a 256-colour colour? */
 	if (gc->fg & COLOUR_FLAG_256) {
 		/* And not a 256 colour mode? */
-		if (colours < 256) {
-			gc->fg = colour_256to16(gc->fg);
-			if (gc->fg & 8) {
-				gc->fg &= 7;
-				if (colours >= 16)
-					gc->fg += 90;
-			}
+		if (colours >= 256)
+			return;
+		gc->fg = colour_256to16(gc->fg);
+		if (~gc->fg & 8)
+			return;
+		gc->fg &= 7;
+		if (colours >= 16)
+			gc->fg += 90;
+		else {
+			/*
+			 * Mapping to black-on-black or white-on-white is not
+			 * much use, so change the foreground.
+			 */
+			if (gc->fg == 0 && gc->bg == 0)
+				gc->fg = 7;
+			else if (gc->fg == 7 && gc->bg == 7)
+				gc->fg = 0;
 		}
 		return;
 	}
@@ -2919,14 +2970,14 @@ tty_check_bg(struct tty *tty, struct colour_palette *palette,
 		 * palette. Bold background doesn't exist portably, so just
 		 * discard the bold bit if set.
 		 */
-		if (colours < 256) {
-			gc->bg = colour_256to16(gc->bg);
-			if (gc->bg & 8) {
-				gc->bg &= 7;
-				if (colours >= 16)
-					gc->bg += 90;
-			}
-		}
+		if (colours >= 256)
+			return;
+		gc->bg = colour_256to16(gc->bg);
+		if (~gc->bg & 8)
+			return;
+		gc->bg &= 7;
+		if (colours >= 16)
+			gc->bg += 90;
 		return;
 	}
 
@@ -3181,6 +3232,5 @@ tty_clipboard_query(struct tty *tty)
 	tty_putcode_ss(tty, TTYC_MS, "", "?");
 
 	tty->flags |= TTY_OSC52QUERY;
-	evtimer_set(&tty->clipboard_timer, tty_clipboard_query_callback, tty);
 	evtimer_add(&tty->clipboard_timer, &tv);
 }

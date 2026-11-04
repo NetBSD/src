@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -129,14 +129,14 @@ Function::get_name (NameFormat nfmt)
   bool soname_fmt = Histable::soname_fmt (nfmt);
   int fname_fmt = Histable::fname_fmt (nfmt);
   if (fname_fmt == Histable::MANGLED)
-    name_buf = strdup (mangled_name);
+    name_buf = xstrdup (mangled_name);
   else
     {
       if (module && module->is_fortran ()
 	  && (streq (name, "MAIN") || streq (name, "MAIN_")))
-	name_buf = strdup (match_name);
+	name_buf = xstrdup (match_name);
       else
-	name_buf = strdup (name);
+	name_buf = xstrdup (name);
 
       if (fname_fmt == Histable::SHORT)
 	{
@@ -416,6 +416,8 @@ SrcInfo *
 Function::new_srcInfo ()
 {
   SrcInfo *t = new SrcInfo ();
+  t->src_line = NULL;
+  t->included_from = NULL;
   t->next = srcinfo_list;
   srcinfo_list = t;
   return t;

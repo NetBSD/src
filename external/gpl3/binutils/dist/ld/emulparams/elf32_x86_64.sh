@@ -6,6 +6,7 @@ source_sh ${srcdir}/emulparams/call_nop.sh
 source_sh ${srcdir}/emulparams/cet.sh
 source_sh ${srcdir}/emulparams/x86-report-relative.sh
 source_sh ${srcdir}/emulparams/x86-64-level.sh
+source_sh ${srcdir}/emulparams/x86-64-level-report.sh
 source_sh ${srcdir}/emulparams/x86-64-plt.sh
 source_sh ${srcdir}/emulparams/static.sh
 source_sh ${srcdir}/emulparams/dt-relr.sh
@@ -19,7 +20,7 @@ COMMONPAGESIZE="CONSTANT (COMMONPAGESIZE)"
 ARCH="i386:x64-32"
 MACHINE=
 TEMPLATE_NAME=elf
-EXTRA_EM_FILE="elf-x86"
+EXTRA_EM_FILE="elf-x86-64-glibc"
 GENERATE_SHLIB_SCRIPT=yes
 GENERATE_PIE_SCRIPT=yes
 NO_SMALL_DATA=yes
@@ -32,6 +33,8 @@ OTHER_PLT_SECTIONS="
 .plt.got      ${RELOCATING-0} : { *(.plt.got) }
 .plt.sec      ${RELOCATING-0} : { *(.plt.sec) }
 "
+OTHER_GOT_RELOC_SECTIONS="
+  .rela.tls	${RELOCATING-0} : { *(.rela.tls) }"
 
 if [ "x${host}" = "x${target}" ]; then
   case " $EMULATION_LIBPATH " in

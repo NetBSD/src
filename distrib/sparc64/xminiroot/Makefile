@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34.18.1 2025/08/02 05:20:40 perseant Exp $
+#	$NetBSD: Makefile,v 1.34.18.2 2026/11/04 22:37:09 perseant Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -7,7 +7,7 @@
 
 .include "${.CURDIR}/../instfs/Makefile.instfs"
 IMAGE=		miniroot.fs
-NUMCYLS=	19 	# size of image in MB, tune this if we need more space
+NUMCYLS=	20 	# size of image in MB, tune this if we need more space
 			# (slightly bigger than ../instfs IMGSIZE)
 SECSPERCYL=	2048
 CYLSIZE=	$$(( ${SECSPERCYL} * 512 ))

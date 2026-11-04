@@ -1,4 +1,4 @@
-/* Copyright (C) 2005-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -18,7 +18,7 @@
    02110-1301, USA.  */
 
 /* The EABI requires the use of VFP.  */
-#define FPU_DEFAULT FPU_ARCH_VFP
+#define FPU_DEFAULT FPU_ARCH_SOFTVFP
 #define EABI_DEFAULT EF_ARM_EABI_VER5
 
 #define LOCAL_LABELS_DOLLAR 1

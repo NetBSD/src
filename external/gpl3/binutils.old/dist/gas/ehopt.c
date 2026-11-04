@@ -1,5 +1,5 @@
 /* ehopt.c--optimize gcc exception frame information.
-   Copyright (C) 1998-2022 Free Software Foundation, Inc.
+   Copyright (C) 1998-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor <ian@cygnus.com>.
 
    This file is part of GAS, the GNU Assembler.
@@ -90,19 +90,17 @@ __FRAME_BEGIN__:
 
 struct cie_info
 {
+  fragS *f;
   unsigned code_alignment;
   int z_augmentation;
 };
 
-static int get_cie_info (struct cie_info *);
-
 /* Extract information from the CIE.  */
 
-static int
+static bool
 get_cie_info (struct cie_info *info)
 {
   fragS *f;
-  fixS *fix;
   unsigned int offset;
   char CIE_id;
   char augmentation[10];
@@ -112,9 +110,10 @@ get_cie_info (struct cie_info *info)
   /* We should find the CIE at the start of the section.  */
 
   f = seg_info (now_seg)->frchainP->frch_root;
-  fix = seg_info (now_seg)->frchainP->fix_root;
-
-  /* Look through the frags of the section to find the code alignment.  */
+  while (f != NULL && f->fr_fix == 0)
+    f = f->fr_next;
+  if (f != info->f)
+    return false;
 
   /* First make sure that the CIE Identifier Tag is 0/-1.  */
 
@@ -135,7 +134,7 @@ get_cie_info (struct cie_info *info)
       || f->fr_literal[offset + 1] != CIE_id
       || f->fr_literal[offset + 2] != CIE_id
       || f->fr_literal[offset + 3] != CIE_id)
-    return 0;
+    return false;
 
   /* Next make sure the CIE version number is 1.  */
 
@@ -148,7 +147,7 @@ get_cie_info (struct cie_info *info)
   if (f == NULL
       || f->fr_fix - offset < 1
       || f->fr_literal[offset] != 1)
-    return 0;
+    return false;
 
   /* Skip the augmentation (a null terminated string).  */
 
@@ -162,7 +161,7 @@ get_cie_info (struct cie_info *info)
 	  f = f->fr_next;
 	}
       if (f == NULL)
-	return 0;
+	return false;
 
       while (offset < f->fr_fix && f->fr_literal[offset] != '\0')
 	{
@@ -183,7 +182,7 @@ get_cie_info (struct cie_info *info)
       f = f->fr_next;
     }
   if (f == NULL)
-    return 0;
+    return false;
 
   augmentation[iaug] = '\0';
   if (augmentation[0] == '\0')
@@ -194,6 +193,7 @@ get_cie_info (struct cie_info *info)
     {
       /* We have to skip a pointer.  Unfortunately, we don't know how
 	 large it is.  We find out by looking for a matching fixup.  */
+      fixS *fix = seg_info (now_seg)->frchainP->fix_root;
       while (fix != NULL
 	     && (fix->fx_frag != f || fix->fx_where != offset))
 	fix = fix->fx_next;
@@ -207,10 +207,10 @@ get_cie_info (struct cie_info *info)
 	  f = f->fr_next;
 	}
       if (f == NULL)
-	return 0;
+	return false;
     }
   else if (augmentation[0] != 'z')
-    return 0;
+    return false;
 
   /* We're now at the code alignment factor, which is a ULEB128.  If
      it isn't a single byte, forget it.  */
@@ -222,7 +222,7 @@ get_cie_info (struct cie_info *info)
   info->code_alignment = code_alignment;
   info->z_augmentation = (augmentation[0] == 'z');
 
-  return 1;
+  return true;
 }
 
 enum frame_state
@@ -237,6 +237,27 @@ enum frame_state
   state_saw_loc4,
   state_error,
 };
+
+struct frame_data
+{
+  enum frame_state state;
+
+  bool cie_info_ok;
+  struct cie_info cie_info;
+
+  symbolS *size_end_sym;
+  fragS *loc4_frag;
+  int loc4_fix;
+
+  int aug_size;
+  int aug_shift;
+};
+
+static struct eh_state
+{
+  struct frame_data eh_data;
+  struct frame_data debug_data;
+} frame;
 
 /* This function is called from emit_expr.  It looks for cases which
    we can optimize.
@@ -254,23 +275,6 @@ enum frame_state
 int
 check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 {
-  struct frame_data
-  {
-    enum frame_state state;
-
-    int cie_info_ok;
-    struct cie_info cie_info;
-
-    symbolS *size_end_sym;
-    fragS *loc4_frag;
-    int loc4_fix;
-
-    int aug_size;
-    int aug_shift;
-  };
-
-  static struct frame_data eh_frame_data;
-  static struct frame_data debug_frame_data;
   struct frame_data *d;
 
   /* Don't optimize.  */
@@ -285,9 +289,9 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
   /* Select the proper section data.  */
   if (startswith (segment_name (now_seg), ".eh_frame")
       && segment_name (now_seg)[9] != '_')
-    d = &eh_frame_data;
+    d = &frame.eh_data;
   else if (startswith (segment_name (now_seg), ".debug_frame"))
-    d = &debug_frame_data;
+    d = &frame.debug_data;
   else
     return 0;
 
@@ -318,20 +322,27 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 	    {
 	      d->state = state_saw_size;
 	      d->size_end_sym = exp->X_add_symbol;
+	      if (!d->cie_info.f)
+		d->cie_info.f = frag_now;
 	    }
 	}
       break;
 
     case state_saw_size:
     case state_saw_cie_offset:
-      /* Assume whatever form it appears in, it appears atomically.  */
-      d->state = (enum frame_state) (d->state + 1);
+      if (!(*pnbytes == 4 || *pnbytes == 8))
+	/* Stop scanning if we don't see the expected FDE fields.  */
+	d->state = state_error;
+      else
+	d->state++;
       break;
 
     case state_saw_pc_begin:
       /* Decide whether we should see an augmentation.  */
-      if (! d->cie_info_ok
-	  && ! (d->cie_info_ok = get_cie_info (&d->cie_info)))
+      if (!(*pnbytes == 4 || *pnbytes == 8))
+	d->state = state_error;
+      else if (!d->cie_info_ok
+	       && !(d->cie_info_ok = get_cie_info (&d->cie_info)))
 	d->state = state_error;
       else if (d->cie_info.z_augmentation)
 	{
@@ -345,7 +356,7 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 
     case state_seeing_aug_size:
       /* Bytes == -1 means this comes from an leb128 directive.  */
-      if ((int)*pnbytes == -1 && exp->X_op == O_constant)
+      if ((int) *pnbytes == -1 && exp->X_op == O_constant)
 	{
 	  d->aug_size = exp->X_add_number;
 	  d->state = state_skipping_aug;
@@ -365,7 +376,7 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
       break;
 
     case state_skipping_aug:
-      if ((int)*pnbytes < 0)
+      if ((int) *pnbytes < 0)
 	d->state = state_error;
       else
 	{
@@ -384,7 +395,7 @@ check_eh_frame (expressionS *exp, unsigned int *pnbytes)
 	{
 	  /* This might be a DW_CFA_advance_loc4.  Record the frag and the
 	     position within the frag, so that we can change it later.  */
-	  frag_grow (1);
+	  frag_grow (1 + 4);
 	  d->state = state_saw_loc4;
 	  d->loc4_frag = frag_now;
 	  d->loc4_fix = frag_now_fix ();
@@ -526,7 +537,7 @@ eh_frame_convert_frag (fragS *frag)
   int loc4_fix, ca;
 
   loc4_frag = (fragS *) frag->fr_opcode;
-  loc4_fix = (int) frag->fr_offset;
+  loc4_fix = frag->fr_offset;
 
   diff = resolve_symbol_value (frag->fr_symbol);
 
@@ -569,4 +580,10 @@ eh_frame_convert_frag (fragS *frag)
   frag->fr_type = rs_fill;
   frag->fr_subtype = 0;
   frag->fr_offset = 0;
+}
+
+void
+eh_begin (void)
+{
+  memset (&frame, 0, sizeof (frame));
 }

@@ -1,5 +1,5 @@
 /* This file is listing.h
-   Copyright (C) 1987-2022 Free Software Foundation, Inc.
+   Copyright (C) 1987-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,6 +29,7 @@
 #define LISTING_NOCOND    32
 #define LISTING_MACEXP    64
 #define LISTING_GENERAL  128
+#define LISTING_GINSN_SCFI  256
 
 #define LISTING_DEFAULT    (LISTING_LISTING | LISTING_HLL | LISTING_SYMBOLS)
 
@@ -46,6 +47,7 @@ void listing_error (const char *message);
 void listing_file (const char *name);
 void listing_list (int on);
 void listing_newline (char *ps);
+struct list_info_struct *listing_override_tail (struct list_info_struct *);
 void listing_prev_line (void);
 void listing_print (char *, char **);
 void listing_psize (int);
@@ -56,10 +58,24 @@ void listing_title (int depth);
 void listing_warning (const char *message);
 void listing_width (unsigned int x);
 
-extern int listing_lhs_width;
-extern int listing_lhs_width_second;
-extern int listing_lhs_cont_lines;
-extern int listing_rhs_width;
+#ifdef NO_LISTING
+#define listing_list s_ignore
+#define listing_eject s_ignore
+#define listing_psize s_ignore
+#define listing_nopage s_ignore
+#define listing_title s_ignore
+#define listing_file(name) ((void)(name))
+#define listing_newline(ps) ((void)(ps))
+#define listing_source_file(file) ((void)(file))
+#define listing_source_line(line) ((void)(line))
+#endif
+
+extern unsigned int listing_lhs_width;
+extern unsigned int listing_lhs_width_second;
+extern unsigned int listing_lhs_cont_lines;
+extern unsigned int listing_rhs_width;
+
+extern struct list_info_struct *listing_tail;
 
 #endif /* __listing_h__ */
 

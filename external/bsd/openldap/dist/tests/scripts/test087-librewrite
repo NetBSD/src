@@ -1,0 +1,91 @@
+#! /bin/sh
+# $OpenLDAP$
+## This work is part of OpenLDAP Software <http://www.openldap.org/>.
+##
+## Copyright 1998-2024 The OpenLDAP Foundation.
+## All rights reserved.
+##
+## Redistribution and use in source and binary forms, with or without
+## modification, are permitted only as authorized by the OpenLDAP
+## Public License.
+##
+## A copy of this license is available in the file LICENSE in the
+## top-level directory of the distribution or, alternatively, at
+## <http://www.OpenLDAP.org/license.html>.
+
+echo "running defines.sh"
+. $SRCDIR/scripts/defines.sh
+
+if test $RWM = rwmno ; then
+	echo "rwm (Rewrite/remap) overlay not available, test skipped"
+	exit 0
+fi
+
+mkdir -p $TESTDIR
+
+echo "" >>$TESTOUT
+echo "# making a filter from a DN" > $TESTOUT
+echo "Testing DN unescaping then escaping for use in a filter..."
+for input in \
+	"uid=test\\20\\2c\\31\\\\" \
+	"uid=test,ou=People,dc=example,dc=com" \
+	"cn=test\\00)(uid=test,dc=example,dc=com" \
+	"cn=*" \
+	"cn=*\\\\" \
+	"cn=*\\" \
+	; do
+
+	$TESTWD/../libraries/librewrite/rewrite -f $DATADIR/rewrite.conf \
+		-r testdn2filter "$input" >>$TESTOUT 2>/dev/null
+	if test $? != 0 ; then
+		echo "rewriting failed"
+		exit 1
+	fi
+done
+
+echo "" >>$TESTOUT
+echo "# pasting a DN into a filter" >> $TESTOUT
+echo "Testing filter escaping..."
+for input in \
+	"uid=test\\20\\31\\\\" \
+	"cn=test)(uid=test,dc=example,dc=com" \
+	"cn=*" \
+	"cn=*\\\\" \
+	"cn=*\\" \
+	; do
+
+	$TESTWD/../libraries/librewrite/rewrite -f $DATADIR/rewrite.conf \
+		-r testdn2dnfilter "$input" >>$TESTOUT 2>/dev/null
+	if test $? != 0 ; then
+		echo "rewriting failed"
+		exit 1
+	fi
+done
+
+echo "" >>$TESTOUT
+echo "# pasting a filter into a DN" >> $TESTOUT
+echo "Testing filter unescaping then escaping the value into a DN..."
+for input in \
+	"(uid=test)" \
+	"(cn=something ,\\29+\\28 \\2A=)" \
+	"(description=test\\20\\31*)" \
+	"(description=test\\20\\31)" \
+	; do
+
+	$TESTWD/../libraries/librewrite/rewrite -f $DATADIR/rewrite.conf \
+		-r testfilter2dn "$input" >>$TESTOUT 2>/dev/null
+	if test $? != 0 ; then
+		echo "rewriting failed"
+		exit 1
+	fi
+done
+
+$CMP $DATADIR/rewrite.out $TESTOUT > $CMPOUT
+
+if test $? != 0 ; then
+	echo "comparison failed - rewriting did not complete correctly"
+	exit 1
+fi
+
+echo ">>>>> Test succeeded"
+exit 0

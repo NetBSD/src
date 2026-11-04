@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.55.2.1 2025/08/02 05:18:26 perseant Exp $	*/
+/*	$NetBSD: show.c,v 1.55.2.2 2026/11/04 22:36:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.55.2.1 2025/08/02 05:18:26 perseant Exp $");
+__RCSID("$NetBSD: show.c,v 1.55.2.2 2026/11/04 22:36:15 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -663,8 +663,6 @@ sharg(union node *arg, TFILE *fp)
 			trace_putc('{', fp);	/*}*/
 			if ((subtype & VSTYPE) == VSLENGTH)
 				trace_putc('#', fp);
-			if (subtype & VSLINENO)
-				trace_puts("LINENO=", fp);
 
 			while (*++p != '=')
 				trace_putc(*p, fp);

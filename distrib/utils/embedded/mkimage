@@ -1,5 +1,5 @@
 #!/bin/sh
-# $NetBSD: mkimage,v 1.82.2.1 2025/08/02 05:20:40 perseant Exp $
+# $NetBSD: mkimage,v 1.82.2.2 2026/11/04 22:37:10 perseant Exp $
 #
 # Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -194,17 +194,25 @@ Usage: $PROG -h <host-arch> [-bdmx] [-B <byte-order>] [-K <kerneldir>] [-S <srcd
 -b	Boot only, no sets loaded
 -r	root device kind (sd, wd, ld)
 -d	Add the debug sets
--m	Optimize the OS installation to mimimize disk writes for SSDs
+-m	Optimize the OS installation to minimize disk writes for SSDs
 -x	Load the X sets too, not just the base ones
 EOF
 	exit 1
 }
 
 # First pass for options to get the host and src directories
-OPTS="B:D:K:S:bc:dh:mr:s:x"
+OPTS="B:C:D:K:S:bc:dh:mr:s:x"
 while getopts "$OPTS" f
 do
 	case $f in
+	C)	conf="$OPTARG"
+		# Take -C relative to working directory; don't search
+		# in PATH.
+		case $conf in
+		/*)	;;
+		*)	conf=./"$conf";;
+		esac
+		;;
 	h)	h="$OPTARG";;
 	S)	src="$OPTARG";;
 	*)	;;
@@ -216,9 +224,10 @@ then
 	usage
 fi
 
-if [ ! -f "${DIR}/conf/${h}.conf" ]
+: ${conf:=${DIR}/conf/${h}.conf}
+if [ ! -f "$conf" ]
 then
-	echo $PROG: ${DIR}/conf/${h}.conf is not present 1>&2
+	echo $PROG: $conf is not present 1>&2
 	exit 1
 fi
 
@@ -229,7 +238,7 @@ fsize=8192
 bsize=65536
 ffsversion=1
 
-. "${DIR}/conf/${h}.conf"
+. "$conf"
 release="/usr/obj/${MACHINE}/release"
 
 selected_sets="$sets"
@@ -244,6 +253,7 @@ while getopts "$OPTS" f
 do
 	case $f in
 	B)	endian="-B $OPTARG";;
+	C)	;;
 	D)	release="$OPTARG";;
 	K)	kernel="$OPTARG";;
 	S)	;;
@@ -348,7 +358,7 @@ if [ "${size}" = 0 ]; then
 	alignsize=$((alignunit*((size + alignunit - 1)/alignunit)))
 	alignsize=$((alignsize + 1024*1024))
 	if [ "${size}" -lt "${alignsize}" ]; then
-		dd bs=1 count="$((alignsize - size))" if=/dev/zero \
+		dd bs="$((alignsize - size))" count=1 if=/dev/zero conv=sync \
 			>> "${image}" 2> /dev/null
 		size="${alignsize}"
 	fi
@@ -414,9 +424,5 @@ if $compress; then
 	${GZIP_CMD} -n -9 ${image}
 	image="${image}.gz"
 fi
-
-cd "${IMAGEDIR}"
-${CKSUM} -a MD5 "$(basename "${image}")" > MD5
-${CKSUM} -a SHA512 "$(basename "${image}")" > SHA512
 
 echo ${bar} Image is ${image} ${bar}

@@ -1,5 +1,5 @@
 # $OpenLDAP$
-# Copyright 1999-2021 The OpenLDAP Foundation, All Rights Reserved.
+# Copyright 1999-2024 The OpenLDAP Foundation, All Rights Reserved.
 # COPYING RESTRICTIONS APPLY, see COPYRIGHT.
 H1: Introduction to OpenLDAP Directory Services
 
@@ -449,4 +449,17 @@ everything you'd ever want to change.  Configuration options have
 reasonable defaults, making your job much easier. Configuration can
 also be performed dynamically using LDAP itself, which greatly
 improves manageability.
+
+H2: What is lloadd and what can it do?
+
+{{lloadd}}(8) is a daemon that provides an LDAPv3 load balancer service.
+It is responsible for distributing requests across a set of {{slapd}}
+instances.
+
+See the {{SECT:Load Balancing with lloadd}} chapter for information
+about how to configure and run {{lloadd}}(8).
+
+Alternatively, the load balancer can run as a module embedded inside of
+{{slapd}}.  This is also described in the {{SECT:Load Balancing with lloadd}} chapter.
+
 

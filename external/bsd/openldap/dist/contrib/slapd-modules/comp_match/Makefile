@@ -1,7 +1,7 @@
 # $OpenLDAP$
 # This work is part of OpenLDAP Software <http://www.openldap.org/>.
 #
-# Copyright 2003-2021 The OpenLDAP Foundation.
+# Copyright 2003-2024 The OpenLDAP Foundation.
 # Portions Copyright 2004 by IBM Corporation.
 # All rights reserved.
 
@@ -29,12 +29,18 @@ SSL_DIR = /usr/local
 SSL_INC = -I$(SSL_DIR)/include/openssl
 SSL_LIB = -lcrypto -L$(SSL_DIR)/lib
 
+PLAT = UNIX
+NT_LIB = -L$(LDAP_BUILD)/servers/slapd -lslapd
+NT_LDFLAGS = -no-undefined -avoid-version
+UNIX_LDFLAGS = -version-info $(LTVER)
+
 LIBTOOL = $(LDAP_BUILD)/libtool
 CC = gcc
 OPT = -g -O2
 DEFS = -DLDAP_COMPONENT
 INCS = $(LDAP_INC) $(SNACC_INC) $(SSL_INC)
-LIBS = $(LDAP_LIB) $(SNACC_LIB) $(SSL_LIB)
+LIBS = $($(PLAT)_LIB) $(LDAP_LIB) $(SNACC_LIB) $(SSL_LIB)
+LD_FLAGS = $(LDFLAGS) $($(PLAT)_LDFLAGS) -rpath $(moduledir) -module
 
 PROGRAMS = compmatch.la
 LTVER = 0:0:0
@@ -55,8 +61,7 @@ moduledir = $(libexecdir)$(ldap_subdir)
 all: $(PROGRAMS)
 
 compmatch.la: componentlib.lo init.lo certificate.lo asn_to_syn_mr.lo authorityKeyIdentifier.lo crl.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 clean:
 	rm -rf *.o *.lo *.la .libs

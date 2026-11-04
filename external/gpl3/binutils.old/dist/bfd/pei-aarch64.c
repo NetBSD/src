@@ -1,5 +1,5 @@
 /* BFD back-end for AArch64 PE IMAGE COFF files.
-   Copyright (C) 2021-2022 Free Software Foundation, Inc.
+   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -21,7 +21,7 @@
 #include "sysdep.h"
 #include "bfd.h"
 
-#define TARGET_SYM		aarch64_pei_vec
+#define TARGET_SYM		aarch64_pei_le_vec
 #define TARGET_NAME		"pei-aarch64-little"
 #define TARGET_ARCHITECTURE	bfd_arch_aarch64
 #define TARGET_PAGESIZE		4096
@@ -49,6 +49,8 @@
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
 { COFF_SECTION_NAME_PARTIAL_MATCH (".idata"), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
+{ COFF_SECTION_NAME_PARTIAL_MATCH (".didat"), \
+  COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
 { COFF_SECTION_NAME_EXACT_MATCH (".pdata"), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 2 }, \
 { COFF_SECTION_NAME_PARTIAL_MATCH (".debug"), \
@@ -56,7 +58,6 @@
 { COFF_SECTION_NAME_PARTIAL_MATCH (".gnu.linkonce.wi."), \
   COFF_ALIGNMENT_FIELD_EMPTY, COFF_ALIGNMENT_FIELD_EMPTY, 0 }
 
-#define PEI_HEADERS
 #include "sysdep.h"
 #include "bfd.h"
 #include "libbfd.h"

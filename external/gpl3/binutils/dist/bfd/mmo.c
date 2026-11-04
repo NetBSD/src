@@ -1,5 +1,5 @@
 /* BFD back-end for mmo objects (MMIX-specific object-format).
-   Copyright (C) 2001-2024 Free Software Foundation, Inc.
+   Copyright (C) 2001-2026 Free Software Foundation, Inc.
    Written by Hans-Peter Nilsson (hp@bitrange.com).
    Infrastructure and other bits originally copied from srec.c and
    binary.c.
@@ -565,21 +565,16 @@ mmo_mkobject (bfd *abfd)
 {
   mmo_init ();
 
-  if (abfd->tdata.mmo_data == NULL)
-    {
-      time_t created;
+  /* All fields are zero-initialized, so we don't have to explicitly
+     initialize most.  */
+  tdata_type *tdata = bfd_zalloc (abfd, sizeof (tdata_type));
+  if (tdata == NULL)
+    return false;
 
-      /* All fields are zero-initialized, so we don't have to explicitly
-	 initialize most.  */
-      tdata_type *tdata = (tdata_type *) bfd_zalloc (abfd, sizeof (tdata_type));
-      if (tdata == NULL)
-	return false;
+  time_t created = time (NULL);
+  bfd_put_32 (abfd, created, tdata->created);
 
-      created = time (NULL);
-      bfd_put_32 (abfd, created, tdata->created);
-
-      abfd->tdata.mmo_data = tdata;
-    }
+  abfd->tdata.mmo_data = tdata;
 
   return true;
 }
@@ -615,8 +610,7 @@ mmo_ignore_symbol_consistency (bfd *abfd)
 static bool
 mmo_bfd_copy_private_bfd_data (bfd *ibfd, bfd *obfd)
 {
-  if (bfd_get_flavour (ibfd) != bfd_target_mmo_flavour
-      || bfd_get_flavour (obfd) != bfd_target_mmo_flavour)
+  if (bfd_get_flavour (ibfd) != bfd_target_mmo_flavour)
     return true;
 
   /* Copy the time the copied-from file was created.  If people want the
@@ -2134,15 +2128,12 @@ mmo_scan (bfd *abfd)
 static bool
 mmo_new_section_hook (bfd *abfd, asection *newsect)
 {
+  /* We zero-fill all fields and assume NULL is represented by an all
+     zero-bit pattern.  */
+  newsect->used_by_bfd
+    = bfd_zalloc (abfd, sizeof (struct mmo_section_data_struct));
   if (!newsect->used_by_bfd)
-    {
-      /* We zero-fill all fields and assume NULL is represented by an all
-	 zero-bit pattern.  */
-      newsect->used_by_bfd
-	= bfd_zalloc (abfd, sizeof (struct mmo_section_data_struct));
-      if (!newsect->used_by_bfd)
-	return false;
-    }
+    return false;
 
   /* Always align to at least 32-bit words.  */
   newsect->alignment_power = 2;
@@ -3323,8 +3314,6 @@ mmo_write_object_contents (bfd *abfd)
 #define mmo_read_minisymbols _bfd_generic_read_minisymbols
 #define mmo_minisymbol_to_symbol _bfd_generic_minisymbol_to_symbol
 
-#define mmo_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 #define mmo_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define mmo_bfd_gc_sections bfd_generic_gc_sections
@@ -3342,7 +3331,6 @@ mmo_write_object_contents (bfd *abfd)
    stop anybody from shooting themselves in the foot.  */
 #define mmo_set_arch_mach bfd_default_set_arch_mach
 #define mmo_bfd_relax_section bfd_generic_relax_section
-#define mmo_bfd_merge_sections bfd_generic_merge_sections
 #define mmo_bfd_is_group_section bfd_generic_is_group_section
 #define mmo_bfd_group_name bfd_generic_group_name
 #define mmo_bfd_discard_group bfd_generic_discard_group
@@ -3382,6 +3370,7 @@ const bfd_target mmix_mmo_vec =
   16,				/* ar_max_namelen */
   0,				/* match priority.  */
   TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+  TARGET_MERGE_SECTIONS,
   bfd_getb64, bfd_getb_signed_64, bfd_putb64,
   bfd_getb32, bfd_getb_signed_32, bfd_putb32,
   bfd_getb16, bfd_getb_signed_16, bfd_putb16,	/* data */

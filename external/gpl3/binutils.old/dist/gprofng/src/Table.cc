@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -85,7 +85,7 @@ int assert_level = 0; // set to 1 to bypass problematic asserts
 PropDescr::PropDescr (int _propID, const char *_name)
 {
   propID = _propID;
-  name = strdup (_name ? _name : NTXT (""));
+  name = xstrdup (_name ? _name : NTXT (""));
   uname = NULL;
   vtype = TYPE_NONE;
   flags = 0;
@@ -116,10 +116,10 @@ PropDescr::addState (int value, const char *stname, const char *stuname)
     return;
   if (stateNames == NULL)
     stateNames = new Vector<char*>;
-  stateNames->store (value, strdup (stname));
+  stateNames->store (value, xstrdup (stname));
   if (stateUNames == NULL)
     stateUNames = new Vector<char*>;
-  stateUNames->store (value, strdup (stuname));
+  stateUNames->store (value, xstrdup (stuname));
 }
 
 char *
@@ -145,7 +145,7 @@ PropDescr::getStateUName (int value)
 FieldDescr::FieldDescr (int _propID, const char *_name)
 {
   propID = _propID;
-  name = _name ? strdup (_name) : NULL;
+  name = _name ? xstrdup (_name) : NULL;
   offset = 0;
   vtype = TYPE_NONE;
   format = NULL;
@@ -820,7 +820,7 @@ public:
   virtual char *
   fetchString (long i)
   {
-    return strdup (data->fetch (i));
+    return xstrdup (data->fetch (i));
   }
 
   virtual double
@@ -1008,8 +1008,8 @@ DataDescriptor::DataDescriptor (int _id, const char *_name, const char *_uname,
 {
   isMaster = true;
   id = _id;
-  name = _name ? strdup (_name) : strdup (NTXT (""));
-  uname = _uname ? strdup (_uname) : strdup (NTXT (""));
+  name = _name ? xstrdup (_name) : xstrdup (NTXT (""));
+  uname = _uname ? xstrdup (_uname) : xstrdup (NTXT (""));
   flags = _flags;
 
   // master data, shared with reference copies:
@@ -1029,8 +1029,8 @@ DataDescriptor::DataDescriptor (int _id, const char *_name, const char *_uname,
 {
   isMaster = false;
   id = _id;
-  name = _name ? strdup (_name) : strdup (NTXT (""));
-  uname = _uname ? strdup (_uname) : strdup (NTXT (""));
+  name = _name ? xstrdup (_name) : xstrdup (NTXT (""));
+  uname = _uname ? xstrdup (_uname) : xstrdup (NTXT (""));
   flags = dDscr->flags;
 
   // references point to master DataDescriptor

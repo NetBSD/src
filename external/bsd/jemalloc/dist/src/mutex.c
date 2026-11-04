@@ -1,13 +1,10 @@
 #include "jemalloc/internal/jemalloc_preamble.h"
-#include "jemalloc/internal/jemalloc_internal_includes.h"
 
 #include "jemalloc/internal/assert.h"
+#include "jemalloc/internal/background_thread.h"
 #include "jemalloc/internal/malloc_io.h"
+#include "jemalloc/internal/mutex.h"
 #include "jemalloc/internal/spin.h"
-
-#ifndef _CRT_SPINCOUNT
-#define _CRT_SPINCOUNT 4000
-#endif
 
 /*
  * Based on benchmark results, a fixed spin with this amount of retries works
@@ -22,17 +19,19 @@ int64_t opt_mutex_max_spin = 600;
 bool isthreaded = false;
 #endif
 #ifdef JEMALLOC_MUTEX_INIT_CB
-static bool		postpone_init = true;
-static malloc_mutex_t	*postponed_mutexes = NULL;
+static bool            postpone_init = true;
+static malloc_mutex_t *postponed_mutexes = NULL;
 #endif
 
 /******************************************************************************/
 /*
  * We intercept pthread_create() calls in order to toggle isthreaded if the
- * process goes multi-threaded.
+ * process goes multi-threaded.  Note JEMALLOC_LAZY_LOCK is already
+ * force-disabled in configure.ac for all Windows so no extra _WIN32 check
+ * is needed here.
  */
 
-#if defined(JEMALLOC_LAZY_LOCK) && !defined(_WIN32)
+#ifdef JEMALLOC_LAZY_LOCK
 JEMALLOC_EXPORT int
 pthread_create(pthread_t *__restrict thread,
     const pthread_attr_t *__restrict attr, void *(*start_routine)(void *),
@@ -44,14 +43,14 @@ pthread_create(pthread_t *__restrict thread,
 /******************************************************************************/
 
 #ifdef JEMALLOC_MUTEX_INIT_CB
-JEMALLOC_EXPORT int	_pthread_mutex_init_calloc_cb(pthread_mutex_t *mutex,
-    void *(calloc_cb)(size_t, size_t));
+JEMALLOC_EXPORT int _pthread_mutex_init_calloc_cb(
+    pthread_mutex_t *mutex, void *(calloc_cb)(size_t, size_t));
 #endif
 
 void
 malloc_mutex_lock_slow(malloc_mutex_t *mutex) {
 	mutex_prof_data_t *data = &mutex->prof_data;
-	nstime_t before;
+	nstime_t           before;
 
 	if (ncpus == 1) {
 		goto label_spin_done;
@@ -61,7 +60,7 @@ malloc_mutex_lock_slow(malloc_mutex_t *mutex) {
 	do {
 		spin_cpu_spinwait();
 		if (!atomic_load_b(&mutex->locked, ATOMIC_RELAXED)
-                    && !malloc_mutex_trylock_final(mutex)) {
+		    && !malloc_mutex_trylock_final(mutex)) {
 			data->n_spin_acquired++;
 			return;
 		}
@@ -77,8 +76,9 @@ label_spin_done:
 	/* Copy before to after to avoid clock skews. */
 	nstime_t after;
 	nstime_copy(&after, &before);
-	uint32_t n_thds = atomic_fetch_add_u32(&data->n_waiting_thds, 1,
-	    ATOMIC_RELAXED) + 1;
+	uint32_t n_thds = atomic_fetch_add_u32(
+	                      &data->n_waiting_thds, 1, ATOMIC_RELAXED)
+	    + 1;
 	/* One last try as above two calls may take quite some cycles. */
 	if (!malloc_mutex_trylock_final(mutex)) {
 		atomic_fetch_sub_u32(&data->n_waiting_thds, 1, ATOMIC_RELAXED);
@@ -137,27 +137,27 @@ mutex_addr_comp(const witness_t *witness1, void *mutex1,
 }
 
 bool
-malloc_mutex_init(malloc_mutex_t *mutex, const char *name,
-    witness_rank_t rank, malloc_mutex_lock_order_t lock_order) {
+malloc_mutex_init(malloc_mutex_t *mutex, const char *name, witness_rank_t rank,
+    malloc_mutex_lock_order_t lock_order) {
 	mutex_prof_data_init(&mutex->prof_data);
-#ifdef _WIN32
-#  if _WIN32_WINNT >= 0x0600
-	InitializeSRWLock(&mutex->lock);
-#  else
-	if (!InitializeCriticalSectionAndSpinCount(&mutex->lock,
-	    _CRT_SPINCOUNT)) {
-		return true;
-	}
-#  endif
-#elif (defined(JEMALLOC_OS_UNFAIR_LOCK))
-       mutex->lock = OS_UNFAIR_LOCK_INIT;
-#elif (defined(JEMALLOC_MUTEX_INIT_CB))
+#ifdef JEMALLOC_MUTEX_INIT_CB
+	/*
+	 * Targets platforms with _pthread_mutex_init_calloc_cb(), which is
+	 * currently just FreeBSD/libthr: its pthread_mutex_init() can calloc()
+	 * internally, which would recurse back into jemalloc before it is safe
+	 * safe to allocate.  Until malloc_mutex_boot() runs, defer real
+	 * initialization by queuing the mutex here instead; malloc_mutex_boot()
+	 * later drains the queue, calling _pthread_mutex_init_calloc_cb() with
+	 * bootstrap_calloc (jemalloc's own early-bootstrap allocation path) as
+	 * the callback, once that's safe to use.
+	 */
 	if (postpone_init) {
 		mutex->postponed_next = postponed_mutexes;
 		postponed_mutexes = mutex;
 	} else {
-		if (_pthread_mutex_init_calloc_cb(&mutex->lock,
-		    bootstrap_calloc) != 0) {
+		if (_pthread_mutex_init_calloc_cb(
+		        &mutex->lock, bootstrap_calloc)
+		    != 0) {
 			return true;
 		}
 	}
@@ -165,17 +165,9 @@ malloc_mutex_init(malloc_mutex_t *mutex, const char *name,
 	if (pthread_mutex_init(&mutex->lock, NULL) == -1)
 		return true;
 #else
-	pthread_mutexattr_t attr;
-
-	if (pthread_mutexattr_init(&attr) != 0) {
+	if (os_mutex_init(&mutex->lock)) {
 		return true;
 	}
-	pthread_mutexattr_settype(&attr, MALLOC_MUTEX_TYPE);
-	if (pthread_mutex_init(&mutex->lock, &attr) != 0) {
-		pthread_mutexattr_destroy(&attr);
-		return true;
-	}
-	pthread_mutexattr_destroy(&attr);
 #endif
 	if (config_debug) {
 		mutex->lock_order = lock_order;
@@ -204,9 +196,10 @@ malloc_mutex_postfork_child(tsdn_t *tsdn, malloc_mutex_t *mutex) {
 #ifdef JEMALLOC_MUTEX_INIT_CB
 	malloc_mutex_unlock(tsdn, mutex);
 #else
-	if (malloc_mutex_init(mutex, mutex->witness.name,
-	    mutex->witness.rank, mutex->lock_order)) {
-		malloc_printf("<jemalloc>: Error re-initializing mutex in "
+	if (malloc_mutex_init(mutex, mutex->witness.name, mutex->witness.rank,
+	        mutex->lock_order)) {
+		malloc_printf(
+		    "<jemalloc>: Error re-initializing mutex in "
 		    "child\n");
 		if (opt_abort) {
 			abort();
@@ -220,8 +213,9 @@ malloc_mutex_boot(void) {
 #ifdef JEMALLOC_MUTEX_INIT_CB
 	postpone_init = false;
 	while (postponed_mutexes != NULL) {
-		if (_pthread_mutex_init_calloc_cb(&postponed_mutexes->lock,
-		    bootstrap_calloc) != 0) {
+		if (_pthread_mutex_init_calloc_cb(
+		        &postponed_mutexes->lock, bootstrap_calloc)
+		    != 0) {
 			return true;
 		}
 		postponed_mutexes = postponed_mutexes->postponed_next;

@@ -1,5 +1,5 @@
 /* BFD back end for traditional Unix core files (U-area and raw sections)
-   Copyright (C) 1988-2022 Free Software Foundation, Inc.
+   Copyright (C) 1988-2025 Free Software Foundation, Inc.
    Written by John Gilmore of Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -65,16 +65,15 @@ trad_unix_core_file_p (bfd *abfd)
   int val;
   struct user u;
   struct trad_core_struct *rawptr;
-  size_t amt;
   flagword flags;
 
 #ifdef TRAD_CORE_USER_OFFSET
   /* If defined, this macro is the file position of the user struct.  */
-  if (bfd_seek (abfd, (file_ptr) TRAD_CORE_USER_OFFSET, SEEK_SET) != 0)
+  if (bfd_seek (abfd, TRAD_CORE_USER_OFFSET, SEEK_SET) != 0)
     return 0;
 #endif
 
-  val = bfd_bread ((void *) &u, (bfd_size_type) sizeof u, abfd);
+  val = bfd_read (&u, sizeof u, abfd);
   if (val != sizeof u)
     {
       /* Too small to be a core file */
@@ -132,14 +131,17 @@ trad_unix_core_file_p (bfd *abfd)
 
   /* Allocate both the upage and the struct core_data at once, so
      a single free() will free them both.  */
-  amt = sizeof (struct trad_core_struct);
-  rawptr = (struct trad_core_struct *) bfd_zmalloc (amt);
+  rawptr = bfd_alloc (abfd, sizeof (*rawptr) + 1);
   if (rawptr == NULL)
     return 0;
 
   abfd->tdata.trad_core_data = rawptr;
 
   rawptr->u = u; /*Copy the uarea into the tdata part of the bfd */
+
+  /* Ensure core_file_failing_command string is terminated.  This is
+     just to stop buffer overflows on fuzzed files.  */
+  ((char *) rawptr)[sizeof (*rawptr)] = 0;
 
   /* Create the sections.  */
 

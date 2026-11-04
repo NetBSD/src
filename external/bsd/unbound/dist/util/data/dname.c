@@ -57,7 +57,7 @@ query_dname_len(sldns_buffer* query)
 		if(sldns_buffer_remaining(query) < 1)
 			return 0; /* parse error, need label len */
 		labellen = sldns_buffer_read_u8(query);
-		if(labellen&0xc0)
+		if((labellen&0xc0))
 			return 0; /* no compression allowed in queries */
 		len += labellen + 1;
 		if(len > LDNS_MAX_DOMAINLEN)
@@ -79,7 +79,7 @@ dname_valid(uint8_t* dname, size_t maxlen)
 		return 0; /* too short, shortest is '0' root label */
 	labellen = *dname++;
 	while(labellen) {
-		if(labellen&0xc0)
+		if((labellen&0xc0))
 			return 0; /* no compression ptrs allowed */
 		len += labellen + 1;
 		if(len >= LDNS_MAX_DOMAINLEN)
@@ -192,6 +192,63 @@ pkt_dname_len(sldns_buffer* pkt)
 	while(1) {
 		/* read next label */
 		if(sldns_buffer_remaining(pkt) < 1)
+			goto fail;
+		labellen = sldns_buffer_read_u8(pkt);
+		if(LABEL_IS_PTR(labellen)) {
+			/* compression ptr */
+			uint16_t ptr;
+			if(sldns_buffer_remaining(pkt) < 1)
+				goto fail;
+			ptr = PTR_OFFSET(labellen, sldns_buffer_read_u8(pkt));
+			if(ptrcount++ > MAX_COMPRESS_PTRS)
+				goto fail; /* loop! */
+			if(sldns_buffer_limit(pkt) <= ptr)
+				goto fail; /* out of bounds! */
+			if(!endpos)
+				endpos = sldns_buffer_position(pkt);
+			sldns_buffer_set_position(pkt, ptr);
+		} else {
+			/* label contents */
+			if(labellen > 0x3f)
+				goto fail; /* label too long */
+			len += 1 + labellen;
+			if(len > LDNS_MAX_DOMAINLEN)
+				goto fail;
+			if(labellen == 0) {
+				/* end of dname */
+				break;
+			}
+			if(sldns_buffer_remaining(pkt) < labellen)
+				goto fail;
+			sldns_buffer_skip(pkt, (ssize_t)labellen);
+		}
+	}
+	if(endpos)
+		sldns_buffer_set_position(pkt, endpos);
+
+	return len;
+fail:
+	/* Restore the position on failure too: callers (rdata_copy) compute
+	 * the consumed field length from the buffer position and must not
+	 * see a partial walk of a name that failed to parse. */
+	if(endpos)
+		sldns_buffer_set_position(pkt, endpos);
+	return 0;
+}
+
+size_t
+pkt_dname_len_budget(struct sldns_buffer* pkt, int* budget, int limit)
+{
+	size_t len = 0;
+	int ptrcount = 0;
+	uint8_t labellen;
+	size_t endpos = 0;
+
+	/* read dname and determine length */
+	/* check compression pointers, loops, out of bounds */
+	while(1) {
+		/* read next label */
+		if(sldns_buffer_remaining(pkt) < 1)
 			return 0;
 		labellen = sldns_buffer_read_u8(pkt);
 		if(LABEL_IS_PTR(labellen)) {
@@ -200,6 +257,11 @@ pkt_dname_len(sldns_buffer* pkt)
 			if(sldns_buffer_remaining(pkt) < 1)
 				return 0;
 			ptr = PTR_OFFSET(labellen, sldns_buffer_read_u8(pkt));
+			if(++(*budget) > limit) {
+				verbose(VERB_ALGO, "The decompression pointer "
+					"limit of %d has been exceeded", limit);
+				return 0; /* too many decompression pointers */
+			}
 			if(ptrcount++ > MAX_COMPRESS_PTRS)
 				return 0; /* loop! */
 			if(sldns_buffer_limit(pkt) <= ptr)
@@ -648,20 +710,22 @@ void dname_str(uint8_t* dname, char* str)
 	}
 	lablen = *dname++;
 	while(lablen) {
+		len += lablen+1;
+		if(len >= LDNS_MAX_DOMAINLEN) {
+			if ((s-str) >= (LDNS_MAX_DOMAINLEN-1))
+				s = str + LDNS_MAX_DOMAINLEN - 2;
+			*s++ = '&';
+			*s = 0;
+			return;
+		}
 		if(lablen > LDNS_MAX_LABELLEN) {
 			*s++ = '#';
 			*s = 0;
 			return;
 		}
-		len += lablen+1;
-		if(len >= LDNS_MAX_DOMAINLEN-1) {
-			*s++ = '&';
-			*s = 0;
-			return;
-		}
 		while(lablen--) {
-			if(isalnum((unsigned char)*dname) 
-				|| *dname == '-' || *dname == '_' 
+			if(isalnum((unsigned char)*dname)
+				|| *dname == '-' || *dname == '_'
 				|| *dname == '*')
 				*s++ = *(char*)dname++;
 			else	{
@@ -724,7 +788,7 @@ dname_is_root(uint8_t* dname)
 	return (len == 0);
 }
 
-void 
+void
 dname_remove_label(uint8_t** dname, size_t* len)
 {
 	size_t lablen;
@@ -738,7 +802,23 @@ dname_remove_label(uint8_t** dname, size_t* len)
 	*dname += lablen+1;
 }
 
-void 
+int
+dname_remove_label_limit_len(uint8_t** dname, size_t* len, size_t lenlimit)
+{
+	size_t lablen;
+	log_assert(dname && *dname && len);
+	lablen = (*dname)[0];
+	log_assert(!LABEL_IS_PTR(lablen));
+	log_assert(*len > lablen);
+	if(lablen == 0)
+		return 0; /* do not modify root label */
+	if(*len - (lablen + 1) < lenlimit) return 0;
+	*len -= lablen+1;
+	*dname += lablen+1;
+	return 1;
+}
+
+void
 dname_remove_labels(uint8_t** dname, size_t* len, int n)
 {
 	int i;

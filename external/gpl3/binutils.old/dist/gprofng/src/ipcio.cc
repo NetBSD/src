@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -23,10 +23,7 @@
 #include <stdlib.h>
 #include <signal.h>
 #include <unistd.h>
-#include <iostream>
-#include <iomanip>
-#include <sstream>
-#include <queue>
+
 #include "vec.h"
 #include "util.h"
 #include "ipcio.h"
@@ -52,13 +49,6 @@ static const int L_CHAR     = 8;
 
 int currentRequestID;
 int currentChannelID;
-static long maxSize;
-
-extern int cancellableChannelID;
-extern int error_flag;
-extern int ipc_delay_microsec;
-extern FILE *responseLogFileP;
-
 IPCresponse *IPCresponseGlobal;
 
 BufferPool *responseBufferPool;
@@ -70,7 +60,7 @@ IPCrequest::IPCrequest (int sz, int reqID, int chID)
   channelID = chID;
   status = INITIALIZED;
   idx = 0;
-  buf = (char *) malloc (size);
+  buf = (char *) xmalloc (size);
   cancelImmediate = false;
 }
 
@@ -156,7 +146,7 @@ readSVal (IPCrequest *req)
       ipc_trace ("  readSVal: <NULL>\n");
       return NULL;
     }
-  char *str = (char *) malloc (len + 1);
+  char *str = (char *) xmalloc (len + 1);
   char *s = str;
   *s = (char) 0;
   while (len--)
@@ -624,52 +614,6 @@ IPCresponse::sendAVal (void *ptr)
     }
 }
 
-static void
-writeResponseHeader (int requestID, int responseType, int responseStatus, int nBytes)
-{
-  if (responseType == RESPONSE_TYPE_HANDSHAKE)
-    nBytes = IPC_VERSION_NUMBER;
-  int use_write = 2;
-  ipc_response_trace (TRACE_LVL_1, "ResponseHeaderBegin----- %x ---- %x ----- %x -----%x -------\n", requestID, responseType, responseStatus, nBytes);
-  if (use_write)
-    {
-      char buf[23];
-      if (use_write == 1)
-	{
-	  int i = 0;
-	  snprintf (buf + i, 3, "%2x", HEADER_MARKER);
-	  i += 2;
-	  snprintf (buf + i, 9, "%8x", requestID);
-	  i += 8;
-	  snprintf (buf + i, 3, "%2x", responseType);
-	  i += 2;
-	  snprintf (buf + i, 3, "%2x", responseStatus);
-	  i += 2;
-	  snprintf (buf + i, 9, "%8x", nBytes);
-	}
-      else
-	snprintf (buf, 23, "%02x%08x%02x%02x%08x", HEADER_MARKER, requestID,
-		  responseType, responseStatus, nBytes);
-      buf[22] = 0;
-      write (1, buf, 22);
-    }
-  else
-    {
-      cout << setfill ('0') << setw (2) << hex << HEADER_MARKER;
-      cout << setfill ('0') << setw (8) << hex << requestID;
-      cout << setfill ('0') << setw (2) << hex << responseType;
-      cout << setfill ('0') << setw (2) << hex << responseStatus;
-      cout << setfill ('0') << setw (8) << hex << nBytes;
-      cout.flush ();
-    }
-  ipc_response_trace (TRACE_LVL_1, "----------------------------ResponseHeaderEnd\n");
-  if (nBytes > maxSize)
-    {
-      maxSize = nBytes;
-      ipc_trace ("New maxsize %ld\n", maxSize);
-    }
-}
-
 bool
 cancelNeeded (int chID)
 {
@@ -699,12 +643,6 @@ writeResponseWithHeader (int requestID, int channelID, int responseType,
 }
 
 void
-writeAckFast (int requestID)
-{
-  writeResponseHeader (requestID, RESPONSE_TYPE_ACK, RESPONSE_STATUS_SUCCESS, 0);
-}
-
-void
 writeAck (int requestID, int channelID)
 {
 #if DEBUG
@@ -731,7 +669,6 @@ writeHandshake (int requestID, int channelID)
 {
   IPCresponse *OUTS = responseBufferPool->getNewResponse (BUFFER_SIZE_SMALL);
   writeResponseWithHeader (requestID, channelID, RESPONSE_TYPE_HANDSHAKE, RESPONSE_STATUS_SUCCESS, OUTS);
-  // writeResponseHeader(requestID, RESPONSE_TYPE_HANDSHAKE, RESPONSE_STATUS_SUCCESS, IPC_VERSION_NUMBER);
 }
 
 void
@@ -837,6 +774,16 @@ writeString (const char *s, IPCrequest* req)
 }
 
 void
+writeError (const char *s, IPCrequest* req)
+{
+  IPCresponse *OUTS = responseBufferPool->getNewResponse (BUFFER_SIZE_LARGE);
+  OUTS->sendByte (L_STRING);
+  OUTS->sendSVal (s);
+  writeResponseWithHeader (req->getRequestID (), req->getChannelID (),
+			   RESPONSE_TYPE_COMPLETE, RESPONSE_STATUS_ERROR, OUTS);
+}
+
+void
 writeObject (DbeObj obj, IPCrequest* req)
 {
   writeLong ((long long) obj, req);
@@ -923,30 +870,23 @@ setProgress (int percentage, const char *proc_str)
   return 0;
 }
 
+static pthread_mutex_t responce_lock = PTHREAD_MUTEX_INITIALIZER;
+
 void
 IPCresponse::print (void)
 {
-  if (ipc_delay_microsec)
-    usleep (ipc_delay_microsec);
-  int stringSize = sb->length ();
-  writeResponseHeader (requestID, responseType, responseStatus, stringSize);
-  if (stringSize > 0)
-    {
-      char *s = sb->toString ();
-      hrtime_t start_time = gethrtime ();
-      int use_write = 1;
-      if (use_write)
-	write (1, s, stringSize); // write(1, sb->toString(), stringSize);
-      else
-	{
-	  cout << s;
-	  cout.flush ();
-	}
-      hrtime_t end_time = gethrtime ();
-      unsigned long long time_stamp = end_time - start_time;
-      ipc_response_log (TRACE_LVL_3, "ReqID %x flush time %llu  nanosec \n", requestID, time_stamp);
-      free (s);
-    }
+  char buf[23];
+  int sz = responseType == RESPONSE_TYPE_HANDSHAKE ?
+      IPC_VERSION_NUMBER : sb->length ();
+  snprintf (buf, sizeof (buf), "%02x%08x%02x%02x%08x", HEADER_MARKER,
+	    requestID, responseType, responseStatus, sz);
+  pthread_mutex_lock (&responce_lock);
+  ipc_response_trace (TRACE_LVL_1,
+		      "IPCresponse: ID=%08x type=%02x status=%02x sz:%6d\n",
+		      requestID, responseType, responseStatus, sz);
+  write (1, buf, 22);
+  sb->write (1);
+  pthread_mutex_unlock (&responce_lock);
 }
 
 void
@@ -974,9 +914,7 @@ readRequestHeader ()
   if (requestType == REQUEST_TYPE_HANDSHAKE)
     {
       // write the ack directly to the wire, not through the response queue
-      // writeAckFast(requestID);
       writeAck (requestID, channelID);
-      maxSize = 0;
       writeHandshake (requestID, channelID);
       ipc_request_trace (TRACE_LVL_1, "RQ: HANDSHAKE --- %x ----- %x ---- %x --- %x -RequestHeaderEnd\n", requestID, requestType, channelID, nBytes);
     }

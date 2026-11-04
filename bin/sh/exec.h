@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.27.14.1 2025/08/02 05:18:25 perseant Exp $	*/
+/*	$NetBSD: exec.h,v 1.27.14.2 2026/11/04 22:36:14 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -63,13 +63,15 @@ struct cmdentry {
 
 extern const char *pathopt;	/* set by padvance */
 
+struct var;
+
 void shellexec(char **, char **, const char *, int, int) __dead;
 char *padvance(const char **, const char *, int);
 void find_command(char *, struct cmdentry *, int, const char *);
 int (*find_builtin(char *))(int, char **);
 int (*find_splbltin(char *))(int, char **);
 void hashcd(void);
-void changepath(char *, int);
+void changepath(const char *, int, struct var *);
 void deletefuncs(void);
 void getcmdentry(char *, struct cmdentry *);
 union node;

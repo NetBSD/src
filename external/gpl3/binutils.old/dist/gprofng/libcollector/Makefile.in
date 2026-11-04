@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2021 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -325,7 +325,6 @@ EGREP = @EGREP@
 EXEEXT = @EXEEXT@
 FGREP = @FGREP@
 GPROFNG_NO_NONNULL_COMPARE_CFLAGS = @GPROFNG_NO_NONNULL_COMPARE_CFLAGS@
-GPROFNG_VARIANT = @GPROFNG_VARIANT@
 GREP = @GREP@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
@@ -448,7 +447,7 @@ AM_CPPFLAGS = $(GPROFNG_CPPFLAGS) -I.. -I$(srcdir) \
 	-I$(srcdir)/../../include
 
 AM_LDFLAGS = -module -avoid-version \
-	-Wl,--version-script,$(srcdir)/mapfile.$(GPROFNG_VARIANT) \
+	-Wl,--version-script,$(srcdir)/libgprofng.ver \
 	$(LD_NO_AS_NEEDED) -Wl,-lrt -Wl,-ldl
 
 myincludedir = @includedir@

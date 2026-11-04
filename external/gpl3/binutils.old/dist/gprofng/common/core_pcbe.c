@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -2597,102 +2597,95 @@ struct events_table_t
 
 static const struct events_table_t *events_table = NULL;
 
-const struct events_table_t events_fam6_mod23[] = {
+static const struct events_table_t events_fam6_mod23[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD23
   NT_END
 };
 
-const struct events_table_t events_fam6_mod28[] = {
+static const struct events_table_t events_fam6_mod28[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD28
   NT_END
 };
 
-const struct events_table_t events_fam6_mod26[] = {
+static const struct events_table_t events_fam6_mod26[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD26
   NT_END
 };
 
-const struct events_table_t events_fam6_mod46[] = {
+static const struct events_table_t events_fam6_mod46[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD26
   EVENTS_FAM6_MOD46_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod37[] = {
+static const struct events_table_t events_fam6_mod37[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD37
   EVENTS_FAM6_MOD37_ALSO
   NT_END
 };
 
-const struct events_table_t events_fam6_mod47[] = {
+static const struct events_table_t events_fam6_mod47[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD37
   NT_END
 };
 
-const struct events_table_t events_fam6_mod42[] = {
+static const struct events_table_t events_fam6_mod42[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD42
   EVENTS_FAM6_MOD42_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod45[] = {
+static const struct events_table_t events_fam6_mod45[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD42
   EVENTS_FAM6_MOD45_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod58[] = {
+static const struct events_table_t events_fam6_mod58[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD58
   NT_END
 };
 
-const struct events_table_t events_fam6_mod62[] = {
+static const struct events_table_t events_fam6_mod62[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD58
   EVENTS_FAM6_MOD62_ONLY
   NT_END
 };
 
-const struct events_table_t events_fam6_mod60[] = {
+static const struct events_table_t events_fam6_mod60[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD60
   NT_END
 };
 
-const struct events_table_t events_fam6_mod61[] = {
+static const struct events_table_t events_fam6_mod61[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD61
   NT_END
 };
 
-const struct events_table_t events_fam6_mod78[] = {
+static const struct events_table_t events_fam6_mod78[] = {
   ARCH_EVENTS
   EVENTS_FAM6_MOD78
   NT_END
 };
 
-const struct events_table_t events_fam6_unknown[] = {
+static const struct events_table_t events_fam6_unknown[] = {
   ARCH_EVENTS
   NT_END
 };
 
-const struct events_table_t events_fam_arm[] = {
-//	ARCH_EVENTS
-//    *eventnum = pevent->eventselect;
-//    *eventnum |= (pevent->unitmask << PERFCTR_UMASK_SHIFT);
-//    *eventnum |= (pevent->attrs << 16);
-//    *eventnum |= (pevent->cmask << 24);
-// eventselect, unitmask, supported_counters, name, cmask, attrs, msr_offset
-
+const struct events_table_t events_generic[] = {
 // Hardware event
 #define HWE(nm, id)     { id, 0, C_ALL, nm, PERF_TYPE_HARDWARE, 0, 0 },
   HWE("branch-instructions",    PERF_COUNT_HW_BRANCH_INSTRUCTIONS)
@@ -2746,19 +2739,27 @@ core_pcbe_init (void)
     case ARM_CPU_IMP_CAVIUM:
     case ARM_CPU_IMP_APM:
     case ARM_CPU_IMP_QCOM:
+    case ARM_CPU_IMP_FUJITSU:
+    case ARM_CPU_IMP_NVIDIA:
+    case ARM_CPU_IMP_HISI:
+    case ARM_CPU_IMP_APPLE:
+    case ARM_CPU_IMP_AMPERE:
       snprintf (core_impl_name, sizeof (core_impl_name), "%s", AARCH64_VENDORSTR_ARM);
-      events_table = events_fam_arm;
+      events_table = events_generic;
       num_gpc = 4;  // MEZ: a real implementation is needed
       num_ffc = 0;
       total_pmc = num_gpc + num_ffc;
       return 0;
     case X86_VENDOR_Intel:
       break;
+    case ANDES_VENDOR_ID:
+    case SIFIVE_VENDOR_ID:
+    case THEAD_VENDOR_ID:
     default:
       return -1;
     }
 
-#if defined(__i386__) || defined(__x86_64)
+#if defined(__i386__) || defined(__x86_64__)
   /* No Architectural Performance Monitoring Leaf returned by CPUID */
   if (get_cpuid_info ()->cpi_maxeax < 0xa)
     return (-1);
@@ -2915,9 +2916,9 @@ core_pcbe_impl_name (void)
 static const char *
 core_pcbe_cpuref (void)
 {
-#if defined(__aarch64__)
+#if defined(__aarch64__) || defined(__riscv)
   return "";
-#elif defined(__i386__) || defined(__x86_64)
+#elif defined(__i386__) || defined(__x86_64__)
   switch (cpuid_getmodel ())
     {
     case 60: /* Haswell */
@@ -2937,11 +2938,13 @@ core_pcbe_cpuref (void)
       return
       GTXT ("See Chapter 19 of the \"Intel 64 and IA-32 Architectures Software Developer's Manual Volume 3B: System Programming Guide, Part 2\"\nOrder Number: 253669-045US, January 2013");
     }
+#else
+  return GTXT ("Unknown cpu model");
 #endif
 }
 
 static int
-core_pcbe_get_events (hwcf_hwc_cb_t *hwc_cb)
+core_pcbe_get_events (hwcf_hwc_cb_t *hwc_cb, Hwcentry *raw_hwc_tbl)
 {
   int count = 0;
   const struct events_table_t *pevent;
@@ -2959,6 +2962,14 @@ core_pcbe_get_events (hwcf_hwc_cb_t *hwc_cb)
       count++;
     }
   /* add generic events here */
+  if (raw_hwc_tbl)
+    for (Hwcentry *h = raw_hwc_tbl; h->name; h++)
+      if (h->use_perf_event_type)
+	for (int jj = 0; jj < num_gpc; jj++)
+	  {
+	    hwc_cb (jj, h->name);
+	    count++;
+	  }
   return count;
 }
 
@@ -3009,8 +3020,7 @@ core_pcbe_get_eventnum (const char *eventname, uint_t pmc, eventsel_t *eventnum,
 	  return 0;
 	}
     }
-  *eventnum = (eventsel_t) - 1;
-  return -1;
+  return 0;
 }
 
 static hdrv_pcbe_api_t hdrv_pcbe_core_api = {

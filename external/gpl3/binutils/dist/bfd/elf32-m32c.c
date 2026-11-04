@@ -1,5 +1,5 @@
 /* M16C/M32C specific support for 32-bit ELF.
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -485,7 +485,8 @@ m32c_elf_relocate_section
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_M32C_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	{
@@ -750,7 +751,8 @@ m32c_elf_check_relocs
 
 static bool
 m32c_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
-				  struct bfd_link_info *info)
+				  struct bfd_link_info *info,
+				  bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj = elf_hash_table (info)->dynobj;
   asection *splt = elf_hash_table (info)->splt;
@@ -773,8 +775,8 @@ m32c_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
 }
 
 static bool
-m32c_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-			       struct bfd_link_info *info)
+m32c_elf_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+			      struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *splt;
@@ -792,6 +794,7 @@ m32c_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   splt->contents = (bfd_byte *) bfd_zalloc (dynobj, splt->size);
   if (splt->contents == NULL)
     return false;
+  splt->alloced = 1;
 
   return true;
 }
@@ -818,6 +821,9 @@ m32c_elf_merge_private_bfd_data (bfd *ibfd, struct bfd_link_info *info)
   bool error = false;
   char new_opt[80];
   char old_opt[80];
+
+  if (bfd_get_flavour (ibfd) != bfd_target_elf_flavour)
+    return true;
 
   new_opt[0] = old_opt[0] = '\0';
   new_flags = elf_elfheader (ibfd)->e_flags;
@@ -2132,8 +2138,8 @@ _bfd_m32c_elf_eh_frame_address_size (bfd *abfd,
 #define elf_backend_check_relocs		m32c_elf_check_relocs
 #define elf_backend_object_p			m32c_elf_object_p
 #define elf_symbol_leading_char			('_')
-#define elf_backend_always_size_sections \
-  m32c_elf_always_size_sections
+#define elf_backend_early_size_sections \
+  m32c_elf_early_size_sections
 #define elf_backend_finish_dynamic_sections \
   m32c_elf_finish_dynamic_sections
 

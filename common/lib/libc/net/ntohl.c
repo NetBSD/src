@@ -1,4 +1,4 @@
-/*	$NetBSD: ntohl.c,v 1.3 2012/03/21 20:02:56 he Exp $	*/
+/*	$NetBSD: ntohl.c,v 1.3.54.1 2026/11/04 22:36:30 perseant Exp $	*/
 
 /*
  * Written by J.T. Conklin <jtc@NetBSD.org>.
@@ -7,10 +7,11 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: ntohl.c,v 1.3 2012/03/21 20:02:56 he Exp $");
+__RCSID("$NetBSD: ntohl.c,v 1.3.54.1 2026/11/04 22:36:30 perseant Exp $");
 #endif
 
 #include <sys/types.h>
+#include <sys/endian.h>
 
 #undef ntohl
 

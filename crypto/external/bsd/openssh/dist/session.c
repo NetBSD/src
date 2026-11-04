@@ -1,5 +1,5 @@
-/*	$NetBSD: session.c,v 1.39.2.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: session.c,v 1.341 2025/04/09 07:00:03 djm Exp $ */
+/*	$NetBSD: session.c,v 1.39.2.2 2026/11/04 22:36:41 perseant Exp $	*/
+/* $OpenBSD: session.c,v 1.351 2026/09/16 00:25:50 djm Exp $ */
 
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: session.c,v 1.39.2.1 2025/08/02 05:18:47 perseant Exp $");
+__RCSID("$NetBSD: session.c,v 1.39.2.2 2026/11/04 22:36:41 perseant Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/un.h>
@@ -92,7 +92,7 @@ __RCSID("$NetBSD: session.c,v 1.39.2.1 2025/08/02 05:18:47 perseant Exp $");
 #include "sftp.h"
 #include "atomicio.h"
 
-#ifdef KRB5
+#if defined(KRB5) && defined(USE_AFS)
 #include <krb5/kafs.h>
 #endif
 
@@ -125,9 +125,6 @@ static int session_pty_req(struct ssh *, Session *);
 extern ServerOptions options;
 extern char *__progname;
 extern int debug_flag;
-extern u_int utmp_len;
-extern int startup_pipe;
-extern void destroy_sensitive_data(void);
 extern struct sshbuf *loginmsg;
 extern struct sshauthopt *auth_opts;
 extern char *tun_fwd_ifnames; /* serverloop.c */
@@ -157,7 +154,7 @@ static char *auth_info_file = NULL;
 
 /* Name and directory of socket for authentication agent forwarding. */
 static char *auth_sock_name = NULL;
-static char *auth_sock_dir = NULL;
+static char *auth_sock_dir = NULL; /* only set if directory needs cleanup */
 
 /* removes the agent forwarding socket */
 
@@ -166,15 +163,16 @@ auth_sock_cleanup_proc(struct passwd *pw)
 {
 	if (auth_sock_name != NULL) {
 		temporarily_use_uid(pw);
-		unlink(auth_sock_name);
-		rmdir(auth_sock_dir);
+		agent_listener_cleanup(options.agent_socket_path,
+		    auth_sock_name, auth_sock_dir);
+		free(auth_sock_name);
 		auth_sock_name = NULL;
 		restore_uid();
 	}
 }
 
 static int
-auth_input_request_forwarding(struct ssh *ssh, struct passwd * pw)
+auth_input_request_forwarding(struct ssh *ssh, struct passwd *pw, int agent_new)
 {
 	Channel *nc;
 	int sock = -1;
@@ -187,31 +185,16 @@ auth_input_request_forwarding(struct ssh *ssh, struct passwd * pw)
 	/* Temporarily drop privileged uid for mkdir/bind. */
 	temporarily_use_uid(pw);
 
-	/* Allocate a buffer for the socket name, and format the name. */
-	auth_sock_dir = xstrdup("/tmp/ssh-XXXXXXXXXX");
-
-	/* Create private directory for socket */
-	if (mkdtemp(auth_sock_dir) == NULL) {
+	if (agent_listener(options.agent_socket_path, pw->pw_name, pw->pw_uid,
+	    pw->pw_dir, getpid(), "sshd", &sock, &auth_sock_name,
+	    &auth_sock_dir) != 0) {
+		/* a more detailed error is already logged */
 		ssh_packet_send_debug(ssh, "Agent forwarding disabled: "
-		    "mkdtemp() failed: %.100s", strerror(errno));
+		    "couldn't create listener socket");
 		restore_uid();
-		free(auth_sock_dir);
-		auth_sock_dir = NULL;
 		goto authsock_err;
 	}
-
-	xasprintf(&auth_sock_name, "%s/agent.%ld",
-	    auth_sock_dir, (long) getpid());
-
-	/* Start a Unix listener on auth_sock_name. */
-	sock = unix_listener(auth_sock_name, SSH_LISTEN_BACKLOG, 0);
-
-	/* Restore the privileged uid. */
 	restore_uid();
-
-	/* Check for socket/bind/listen failure. */
-	if (sock < 0)
-		goto authsock_err;
 
 	/* Allocate a channel for the authentication agent socket. */
 	nc = channel_new(ssh, "auth-listener",
@@ -219,20 +202,14 @@ auth_input_request_forwarding(struct ssh *ssh, struct passwd * pw)
 	    CHAN_X11_WINDOW_DEFAULT, CHAN_X11_PACKET_DEFAULT,
 	    0, "auth socket", 1);
 	nc->path = xstrdup(auth_sock_name);
+	nc->agent_new = agent_new;
 	return 1;
 
  authsock_err:
 	free(auth_sock_name);
-	if (auth_sock_dir != NULL) {
-		temporarily_use_uid(pw);
-		rmdir(auth_sock_dir);
-		restore_uid();
-		free(auth_sock_dir);
-	}
 	if (sock != -1)
 		close(sock);
 	auth_sock_name = NULL;
-	auth_sock_dir = NULL;
 	return 0;
 }
 
@@ -329,7 +306,7 @@ do_authenticated(struct ssh *ssh, Authctxt *authctxt)
 
 	auth_log_authopts("active", auth_opts, 0);
 
-	/* setup the channel layer */
+	/* set up the channel layer */
 	/* XXX - streamlocal? */
 	set_fwdpermit_from_authopts(ssh, auth_opts);
 
@@ -502,9 +479,6 @@ do_exec_no_pty(struct ssh *ssh, Session *s, const char *command)
 	}
 
 	s->pid = pid;
-	/* Set interactive/non-interactive mode. */
-	ssh_packet_set_interactive(ssh, s->display != NULL,
-	    options.ip_qos_interactive, options.ip_qos_bulk);
 
 #ifdef USE_PIPES
 	/* We are the parent.  Close the child sides of the pipes. */
@@ -619,8 +593,6 @@ do_exec_pty(struct ssh *ssh, Session *s, const char *command)
 
 	/* Enter interactive session. */
 	s->ptymaster = ptymaster;
-	ssh_packet_set_interactive(ssh, 1,
-	    options.ip_qos_interactive, options.ip_qos_bulk);
 	session_set_fds(ssh, s, ptyfd, fdout, -1, 1, 1);
 	return 0;
 }
@@ -906,6 +878,10 @@ do_setup_env(struct ssh *ssh, Session *s, const char *shell)
 
 	if (getenv("TZ"))
 		child_set_env(&env, &envsize, "TZ", getenv("TZ"));
+	if (getenv("XDG_RUNTIME_DIR")) {
+		child_set_env(&env, &envsize, "XDG_RUNTIME_DIR",
+		    getenv("XDG_RUNTIME_DIR"));
+	}
 	if (s->term)
 		child_set_env(&env, &envsize, "TERM", s->term);
 	if (s->display)
@@ -1411,7 +1387,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 	 */
 	environ = env;
 
-#ifdef KRB5
+#if defined(KRB5) && defined(USE_AFS)
 	/*
 	 * At this point, we check to see if AFS is active and if we have
 	 * a valid Kerberos 5 TGT. If so, it seems like a good idea to see
@@ -1465,18 +1441,19 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 		exit(1);
 	} else if (s->is_subsystem == SUBSYSTEM_INT_SFTP) {
 		extern int optind, optreset;
-		int i;
-		char *p, *args;
+		int sftp_argc;
+		char **sftp_argv;
 
 		setproctitle("%s@%s", s->pw->pw_name, INTERNAL_SFTP_NAME);
-		args = xstrdup(command ? command : "sftp-server");
-		for (i = 0, (p = strtok(args, " ")); p; (p = strtok(NULL, " ")))
-			if (i < ARGV_MAX - 1)
-				argv[i++] = p;
-		argv[i] = NULL;
+		if (argv_split(command == NULL ? "sftp-server" : command,
+		    &sftp_argc, &sftp_argv, 1) != 0) {
+			error("internal error: can't split internal-sftp "
+			    "arguments");
+			exit(1);
+		}
 		optind = optreset = 1;
-		__progname = argv[0];
-		exit(sftp_server_main(i, argv, s->pw));
+		__progname = sftp_argv[0];
+		exit(sftp_server_main(sftp_argc, sftp_argv, s->pw));
 	}
 
 	fflush(NULL);
@@ -1762,7 +1739,7 @@ static int
 session_subsystem_req(struct ssh *ssh, Session *s)
 {
 	struct stat st;
-	int r, success = 0;
+	int r, success = 0, found = 0;
 	char *prog, *cmd, *type;
 	u_int i;
 
@@ -1773,31 +1750,34 @@ session_subsystem_req(struct ssh *ssh, Session *s)
 	    s->pw->pw_name);
 
 	for (i = 0; i < options.num_subsystems; i++) {
-		if (strcmp(s->subsys, options.subsystem_name[i]) == 0) {
-			prog = options.subsystem_command[i];
-			cmd = options.subsystem_args[i];
-			if (strcmp(INTERNAL_SFTP_NAME, prog) == 0) {
-				s->is_subsystem = SUBSYSTEM_INT_SFTP;
-				debug("subsystem: %s", prog);
-			} else {
-				if (stat(prog, &st) == -1)
-					debug("subsystem: cannot stat %s: %s",
-					    prog, strerror(errno));
-				s->is_subsystem = SUBSYSTEM_EXT;
-				debug("subsystem: exec() %s", cmd);
-			}
-			xasprintf(&type, "session:subsystem:%s",
-			    options.subsystem_name[i]);
-			channel_set_xtype(ssh, s->chanid, type);
-			free(type);
-			success = do_exec(ssh, s, cmd) == 0;
-			break;
+		if (strcmp(s->subsys, options.subsystem_name[i]) != 0)
+			continue;
+		found = 1;
+		prog = options.subsystem_command[i];
+		cmd = options.subsystem_args[i];
+		if (strcmp(INTERNAL_SFTP_NAME, prog) == 0) {
+			s->is_subsystem = SUBSYSTEM_INT_SFTP;
+			debug("subsystem: %s", prog);
+		} else {
+			if (stat(prog, &st) == -1)
+				debug("subsystem: cannot stat %s: %s",
+				    prog, strerror(errno));
+			s->is_subsystem = SUBSYSTEM_EXT;
+			debug("subsystem: exec() %s", cmd);
 		}
+		xasprintf(&type, "session:subsystem:%s",
+		    options.subsystem_name[i]);
+		channel_set_xtype(ssh, s->chanid, type);
+		free(type);
+		success = do_exec(ssh, s, cmd) == 0;
+		break;
 	}
 
-	if (!success)
-		logit("subsystem request for %.100s by user %s failed, "
-		    "subsystem not found", s->subsys, s->pw->pw_name);
+	if (!success) {
+		logit("subsystem request for %.100s by user %s failed, %s",
+		    s->subsys, s->pw->pw_name,
+		    found ? "execution failed" : "subsystem not found");
+	}
 
 	return success;
 }
@@ -1985,7 +1965,7 @@ session_signal_req(struct ssh *ssh, Session *s)
 }
 
 static int
-session_auth_agent_req(struct ssh *ssh, Session *s)
+session_auth_agent_req(struct ssh *ssh, Session *s, int agent_new)
 {
 	static int called = 0;
 	int r;
@@ -1998,12 +1978,11 @@ session_auth_agent_req(struct ssh *ssh, Session *s)
 		debug_f("agent forwarding disabled");
 		return 0;
 	}
-	if (called) {
+	if (called)
 		return 0;
-	} else {
-		called = 1;
-		return auth_input_request_forwarding(ssh, s->pw);
-	}
+
+	called = 1;
+	return auth_input_request_forwarding(ssh, s->pw, agent_new);
 }
 
 int
@@ -2032,7 +2011,9 @@ session_input_channel_req(struct ssh *ssh, Channel *c, const char *rtype)
 		} else if (strcmp(rtype, "x11-req") == 0) {
 			success = session_x11_req(ssh, s);
 		} else if (strcmp(rtype, "auth-agent-req@openssh.com") == 0) {
-			success = session_auth_agent_req(ssh, s);
+			success = session_auth_agent_req(ssh, s, 0);
+		} else if (strcmp(rtype, "agent-req") == 0) {
+			success = session_auth_agent_req(ssh, s, 1);
 		} else if (strcmp(rtype, "subsystem") == 0) {
 			success = session_subsystem_req(ssh, s);
 		} else if (strcmp(rtype, "env") == 0) {

@@ -153,7 +153,7 @@ static const char template_header[] = {
 static int      archive_write_gnutar_options(struct archive_write *,
 		    const char *, const char *);
 static int	archive_format_gnutar_header(struct archive_write *, char h[512],
-		    struct archive_entry *, int tartype);
+		    struct archive_entry *, char tartype);
 static int      archive_write_gnutar_header(struct archive_write *,
 		    struct archive_entry *entry);
 static ssize_t	archive_write_gnutar_data(struct archive_write *a, const void *buff,
@@ -274,7 +274,7 @@ archive_write_gnutar_header(struct archive_write *a,
 {
 	char buff[512];
 	int r, ret, ret2 = ARCHIVE_OK;
-	int tartype;
+	char tartype;
 	struct gnutar *gnutar;
 	struct archive_string_conv *sconv;
 	struct archive_entry *entry_main;
@@ -292,6 +292,17 @@ archive_write_gnutar_header(struct archive_write *a,
 		sconv = gnutar->sconv_default;
 	} else
 		sconv = gnutar->opt_sconv;
+
+	/* Sanity check. */
+	if (archive_entry_pathname(entry) == NULL
+#if defined(_WIN32) && !defined(__CYGWIN__)
+	    && archive_entry_pathname_w(entry) == NULL
+#endif
+	    ) {
+		archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
+		    "Can't record entry in tar file without pathname");
+		return ARCHIVE_FAILED;
+	}
 
 	/* Only regular files (not hardlinks) have data. */
 	if (archive_entry_hardlink(entry) != NULL ||
@@ -385,17 +396,30 @@ archive_write_gnutar_header(struct archive_write *a,
 	r = archive_entry_pathname_l(entry, &(gnutar->pathname),
 	    &(gnutar->pathname_length), sconv);
 	if (r != 0) {
+		const char* p_mbs;
 		if (errno == ENOMEM) {
 			archive_set_error(&a->archive, ENOMEM,
 			    "Can't allocate memory for pathname");
 			ret = ARCHIVE_FATAL;
 			goto exit_write_header;
 		}
-		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Can't translate pathname '%s' to %s",
-		    archive_entry_pathname(entry),
-		    archive_string_conversion_charset_name(sconv));
-		ret2 = ARCHIVE_WARN;
+		p_mbs = archive_entry_pathname(entry);
+		if (p_mbs) {
+			/* We have a wrongly-encoded MBS pathname.
+			 * Warn and use it.  */
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "Can't translate pathname '%s' to %s", p_mbs,
+			    archive_string_conversion_charset_name(sconv));
+			ret2 = ARCHIVE_WARN;
+		} else {
+			/* We have no MBS pathname.  Fail.  */
+			archive_set_error(&a->archive,
+			    ARCHIVE_ERRNO_FILE_FORMAT,
+			    "Can't translate pathname to %s",
+			    archive_string_conversion_charset_name(sconv));
+			return ARCHIVE_FAILED;
+		}
 	}
 	r = archive_entry_uname_l(entry, &(gnutar->uname),
 	    &(gnutar->uname_length), sconv);
@@ -504,7 +528,7 @@ archive_write_gnutar_header(struct archive_write *a,
 		archive_entry_set_uname(temp, "root");
 		archive_entry_set_gname(temp, "wheel");
 
-		archive_entry_set_pathname(temp, "././@LongLink");
+		archive_entry_set_pathname(temp, "././@LongName");
 		archive_entry_set_size(temp, length);
 		ret = archive_format_gnutar_header(a, buff, temp, 'L');
 		archive_entry_free(temp);
@@ -562,7 +586,7 @@ exit_write_header:
 
 static int
 archive_format_gnutar_header(struct archive_write *a, char h[512],
-    struct archive_entry *entry, int tartype)
+    struct archive_entry *entry, char tartype)
 {
 	unsigned int checksum;
 	int i, ret;
@@ -640,7 +664,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 	if (format_number(archive_entry_uid(entry), h + GNUTAR_uid_offset,
 		GNUTAR_uid_size, GNUTAR_uid_max_size)) {
 		archive_set_error(&a->archive, ERANGE,
-		    "Numeric user ID %jd too large",
+		    "Numeric user ID %jd too large for gnutar format",
 		    (intmax_t)archive_entry_uid(entry));
 		ret = ARCHIVE_FAILED;
 	}
@@ -649,7 +673,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 	if (format_number(archive_entry_gid(entry), h + GNUTAR_gid_offset,
 		GNUTAR_gid_size, GNUTAR_gid_max_size)) {
 		archive_set_error(&a->archive, ERANGE,
-		    "Numeric group ID %jd too large",
+		    "Numeric group ID %jd too large for gnutar format",
 		    (intmax_t)archive_entry_gid(entry));
 		ret = ARCHIVE_FAILED;
 	}
@@ -672,7 +696,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 		    h + GNUTAR_rdevmajor_offset,
 			GNUTAR_rdevmajor_size)) {
 			archive_set_error(&a->archive, ERANGE,
-			    "Major device number too large");
+			    "Major device number too large for gnutar format");
 			ret = ARCHIVE_FAILED;
 		}
 
@@ -680,7 +704,7 @@ archive_format_gnutar_header(struct archive_write *a, char h[512],
 		    h + GNUTAR_rdevminor_offset,
 			GNUTAR_rdevminor_size)) {
 			archive_set_error(&a->archive, ERANGE,
-			    "Minor device number too large");
+			    "Minor device number too large for gnutar format");
 			ret = ARCHIVE_FAILED;
 		}
 	}

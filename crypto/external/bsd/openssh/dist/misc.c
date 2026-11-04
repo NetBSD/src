@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.c,v 1.36.2.1 2025/08/02 05:18:46 perseant Exp $	*/
-/* $OpenBSD: misc.c,v 1.198 2024/10/24 03:14:37 djm Exp $ */
+/*	$NetBSD: misc.c,v 1.36.2.2 2026/11/04 22:36:40 perseant Exp $	*/
+/* $OpenBSD: misc.c,v 1.221 2026/09/16 17:31:27 dtucker Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -20,10 +20,11 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: misc.c,v 1.36.2.1 2025/08/02 05:18:46 perseant Exp $");
+__RCSID("$NetBSD: misc.c,v 1.36.2.2 2026/11/04 22:36:40 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <sys/mman.h>
 #include <sys/socket.h>
 #include <sys/stat.h>
 #include <sys/time.h>
@@ -53,6 +54,7 @@ __RCSID("$NetBSD: misc.c,v 1.36.2.1 2025/08/02 05:18:46 perseant Exp $");
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
+#include <time.h>
 #include <unistd.h>
 
 #include "xmalloc.h"
@@ -86,10 +88,13 @@ rtrim(char *s)
 
 	if ((i = strlen(s)) == 0)
 		return;
-	for (i--; i > 0; i--) {
+	do {
+		i--;
 		if (isspace((unsigned char)s[i]))
 			s[i] = '\0';
-	}
+		else
+			break;
+	} while (i > 0);
 }
 
 /*
@@ -111,6 +116,34 @@ strprefix(const char *s, const char *prefix, int ignorecase)
 			return NULL;
 	}
 	return s + prefixlen;
+}
+
+/* Append string 's' to a NULL-terminated array of strings */
+void
+stringlist_append(char ***listp, const char *s)
+{
+	size_t i = 0;
+
+	if (*listp == NULL)
+		*listp = xcalloc(2, sizeof(**listp));
+	else {
+		for (i = 0; (*listp)[i] != NULL; i++)
+			; /* count */
+		*listp = xrecallocarray(*listp, i + 1, i + 2, sizeof(**listp));
+	}
+	(*listp)[i] = xstrdup(s);
+}
+
+void
+stringlist_free(char **list)
+{
+	size_t i = 0;
+
+	if (list == NULL)
+		return;
+	for (i = 0; list[i] != NULL; i++)
+		free(list[i]);
+	free(list);
 }
 
 /* set/unset filedescriptor to non-blocking */
@@ -205,6 +238,19 @@ set_reuseaddr(int fd)
 	return 0;
 }
 
+/* Set TCP keepalives */
+int
+set_keepalive(int fd)
+{
+	int on = 1;
+
+	if (setsockopt(fd, SOL_SOCKET, SO_KEEPALIVE, &on, sizeof(on)) == -1) {
+		error("setsockopt SO_KEEPALIVE fd %d: %s", fd, strerror(errno));
+		return -1;
+	}
+	return 0;
+}
+
 /* Get/set routing domain */
 char *
 get_rdomain(int fd)
@@ -271,6 +317,10 @@ set_sock_tos(int fd, int tos)
 {
 	int af;
 
+	if (tos < 0 || tos == INT_MAX) {
+		debug_f("invalid TOS %d", tos);
+		return;
+	}
 	switch ((af = get_sock_af(fd))) {
 	case -1:
 		/* assume not a socket */
@@ -452,7 +502,7 @@ strdelim_internal(char **s, int split_equals)
 }
 
 /*
- * Return next token in configuration line; splts on whitespace or a
+ * Return next token in configuration line; splits on whitespace or a
  * single '=' character.
  */
 char *
@@ -462,7 +512,7 @@ strdelim(char **s)
 }
 
 /*
- * Return next token in configuration line; splts on whitespace only.
+ * Return next token in configuration line; splits on whitespace only.
  */
 char *
 strdelimw(char **s)
@@ -486,6 +536,21 @@ pwcopy(struct passwd *pw)
 	copy->pw_dir = xstrdup(pw->pw_dir);
 	copy->pw_shell = xstrdup(pw->pw_shell);
 	return copy;
+}
+
+void
+pwfree(struct passwd *pw)
+{
+	if (pw == NULL)
+		return;
+	free(pw->pw_name);
+	freezero(pw->pw_passwd,
+	    pw->pw_passwd == NULL ? 0 : strlen(pw->pw_passwd));
+	free(pw->pw_gecos);
+	free(pw->pw_class);
+	free(pw->pw_dir);
+	free(pw->pw_shell);
+	freezero(pw, sizeof(*pw));
 }
 
 /*
@@ -539,24 +604,21 @@ a2tun(const char *s, int *remote)
 	return (tun);
 }
 
-#define SECONDS		1
+#define SECONDS		1.0
 #define MINUTES		(SECONDS * 60)
 #define HOURS		(MINUTES * 60)
 #define DAYS		(HOURS * 24)
 #define WEEKS		(DAYS * 7)
 
-static char *
-scandigits(char *s)
-{
-	while (isdigit((unsigned char)*s))
-		s++;
-	return s;
-}
-
 /*
- * Convert a time string into seconds; format is
- * a sequence of:
+ * Convert an interval/duration time string into seconds, which may include
+ * fractional seconds.
+ *
+ * The format is a sequence of:
  *      time[qualifier]
+ *
+ * This supports fractional values for the seconds value only. All other
+ * values must be integers.
  *
  * Valid time qualifiers are:
  *      <none>  seconds
@@ -567,44 +629,46 @@ scandigits(char *s)
  *      w|W     weeks
  *
  * Examples:
- *      90m     90 minutes
- *      1h30m   90 minutes
- *      2d      2 days
- *      1w      1 week
+ *      90m      90 minutes
+ *      1h30m    90 minutes
+ *      1.5s     1.5 seconds
+ *      2d       2 days
+ *      1w       1 week
  *
- * Return -1 if time string is invalid.
+ * Returns <0.0 if the time string is invalid.
  */
-int
-convtime(const char *s)
+double
+convtime_double(const char *s)
 {
-	int secs, total = 0, multiplier;
-	char *p, *os, *np, c = 0;
-	const char *errstr;
+	double val, total_sec = 0.0, multiplier;
+	const char *p, *start_p;
+	char *endp;
+	int seen_seconds = 0;
 
 	if (s == NULL || *s == '\0')
-		return -1;
-	p = os = strdup(s);	/* deal with const */
-	if (os == NULL)
-		return -1;
+		return -1.0;
 
-	while (*p) {
-		np = scandigits(p);
-		if (np) {
-			c = *np;
-			*np = '\0';
-		}
-		secs = (int)strtonum(p, 0, INT_MAX, &errstr);
-		if (errstr)
-			goto fail;
-		*np = c;
+	for (p = s; *p != '\0';) {
+		if (!isdigit((unsigned char)*p) && *p != '.')
+			return -1.0;
 
-		multiplier = 1;
-		switch (c) {
+		errno = 0;
+		if ((val = strtod(p, &endp)) < 0 || errno != 0 || p == endp)
+			return -1.0;
+		/* Allow only decimal forms */
+		if (p + strspn(p, "0123456789.") != endp)
+			return -1.0;
+		start_p = p;
+		p = endp;
+
+		switch (*p) {
 		case '\0':
-			np--;	/* back up */
-			break;
+			/* FALLTHROUGH */
 		case 's':
 		case 'S':
+			if (seen_seconds++)
+				return -1.0;
+			multiplier = SECONDS;
 			break;
 		case 'm':
 		case 'M':
@@ -623,23 +687,44 @@ convtime(const char *s)
 			multiplier = WEEKS;
 			break;
 		default:
-			goto fail;
+			return -1.0;
 		}
-		if (secs > INT_MAX / multiplier)
-			goto fail;
-		secs *= multiplier;
-		if  (total > INT_MAX - secs)
-			goto fail;
-		total += secs;
-		if (total < 0)
-			goto fail;
-		p = ++np;
+
+		/* Special handling if this was a decimal */
+		if (memchr(start_p, '.', endp - start_p) != NULL) {
+			/* Decimal point present */
+			if (multiplier > 1.0)
+				return -1.0; /* No fractionals for non-seconds */
+			/* For seconds, ensure digits follow */
+			if (!isdigit((unsigned char)*(endp - 1)))
+				return -1.0;
+		}
+
+		total_sec += val * multiplier;
+
+		if (*p != '\0')
+			p++;
 	}
-	free(os);
-	return total;
-fail:
-	free(os);
-	return -1;
+	return total_sec;
+}
+
+/*
+ * Same as convtime_double() above but fractional seconds are ignored.
+ * Return -1 if time string is invalid.
+ */
+int
+convtime(const char *s)
+{
+	double sec_val;
+
+	if ((sec_val = convtime_double(s)) < 0.0)
+		return -1;
+
+	/* Check for overflow into int */
+	if (sec_val < 0 || sec_val > INT_MAX)
+		return -1;
+
+	return (int)sec_val;
 }
 
 #define TF_BUFS	8
@@ -951,7 +1036,7 @@ urldecode(const char *src)
 	size_t srclen;
 
 	if ((srclen = strlen(src)) >= SIZE_MAX)
-		fatal_f("input too large");
+		return NULL;
 	ret = xmalloc(srclen + 1);
 	for (dst = ret; *src != '\0'; src++) {
 		switch (*src) {
@@ -959,9 +1044,10 @@ urldecode(const char *src)
 			*dst++ = ' ';
 			break;
 		case '%':
+			/* note: don't allow \0 characters */
 			if (!isxdigit((unsigned char)src[1]) ||
 			    !isxdigit((unsigned char)src[2]) ||
-			    (ch = hexchar(src + 1)) == -1) {
+			    (ch = hexchar(src + 1)) == -1 || ch == 0) {
 				free(ret);
 				return NULL;
 			}
@@ -1565,66 +1651,66 @@ xextendf(char **sp, const char *sep, const char *fmt, ...)
 }
 
 
-u_int64_t
+uint64_t
 get_u64(const void *vp)
 {
 	const u_char *p = (const u_char *)vp;
-	u_int64_t v;
+	uint64_t v;
 
-	v  = (u_int64_t)p[0] << 56;
-	v |= (u_int64_t)p[1] << 48;
-	v |= (u_int64_t)p[2] << 40;
-	v |= (u_int64_t)p[3] << 32;
-	v |= (u_int64_t)p[4] << 24;
-	v |= (u_int64_t)p[5] << 16;
-	v |= (u_int64_t)p[6] << 8;
-	v |= (u_int64_t)p[7];
+	v  = (uint64_t)p[0] << 56;
+	v |= (uint64_t)p[1] << 48;
+	v |= (uint64_t)p[2] << 40;
+	v |= (uint64_t)p[3] << 32;
+	v |= (uint64_t)p[4] << 24;
+	v |= (uint64_t)p[5] << 16;
+	v |= (uint64_t)p[6] << 8;
+	v |= (uint64_t)p[7];
 
 	return (v);
 }
 
-u_int32_t
+uint32_t
 get_u32(const void *vp)
 {
 	const u_char *p = (const u_char *)vp;
-	u_int32_t v;
+	uint32_t v;
 
-	v  = (u_int32_t)p[0] << 24;
-	v |= (u_int32_t)p[1] << 16;
-	v |= (u_int32_t)p[2] << 8;
-	v |= (u_int32_t)p[3];
+	v  = (uint32_t)p[0] << 24;
+	v |= (uint32_t)p[1] << 16;
+	v |= (uint32_t)p[2] << 8;
+	v |= (uint32_t)p[3];
 
 	return (v);
 }
 
-u_int32_t
+uint32_t
 get_u32_le(const void *vp)
 {
 	const u_char *p = (const u_char *)vp;
-	u_int32_t v;
+	uint32_t v;
 
-	v  = (u_int32_t)p[0];
-	v |= (u_int32_t)p[1] << 8;
-	v |= (u_int32_t)p[2] << 16;
-	v |= (u_int32_t)p[3] << 24;
+	v  = (uint32_t)p[0];
+	v |= (uint32_t)p[1] << 8;
+	v |= (uint32_t)p[2] << 16;
+	v |= (uint32_t)p[3] << 24;
 
 	return (v);
 }
 
-u_int16_t
+uint16_t
 get_u16(const void *vp)
 {
 	const u_char *p = (const u_char *)vp;
-	u_int16_t v;
+	uint16_t v;
 
-	v  = (u_int16_t)p[0] << 8;
-	v |= (u_int16_t)p[1];
+	v  = (uint16_t)p[0] << 8;
+	v |= (uint16_t)p[1];
 
 	return (v);
 }
 
 void
-put_u64(void *vp, u_int64_t v)
+put_u64(void *vp, uint64_t v)
 {
 	u_char *p = (u_char *)vp;
 
@@ -1639,7 +1725,7 @@ put_u64(void *vp, u_int64_t v)
 }
 
 void
-put_u32(void *vp, u_int32_t v)
+put_u32(void *vp, uint32_t v)
 {
 	u_char *p = (u_char *)vp;
 
@@ -1650,7 +1736,7 @@ put_u32(void *vp, u_int32_t v)
 }
 
 void
-put_u32_le(void *vp, u_int32_t v)
+put_u32_le(void *vp, uint32_t v)
 {
 	u_char *p = (u_char *)vp;
 
@@ -1661,7 +1747,7 @@ put_u32_le(void *vp, u_int32_t v)
 }
 
 void
-put_u16(void *vp, u_int16_t v)
+put_u16(void *vp, uint16_t v)
 {
 	u_char *p = (u_char *)vp;
 
@@ -1724,7 +1810,7 @@ monotime_double(void)
 }
 
 void
-bandwidth_limit_init(struct bwlimit *bw, u_int64_t kbps, size_t buflen)
+bandwidth_limit_init(struct bwlimit *bw, uint64_t kbps, size_t buflen)
 {
 	bw->buflen = buflen;
 	bw->rate = kbps;
@@ -1738,7 +1824,7 @@ bandwidth_limit_init(struct bwlimit *bw, u_int64_t kbps, size_t buflen)
 void
 bandwidth_limit(struct bwlimit *bw, size_t read_len)
 {
-	u_int64_t waitlen;
+	uint64_t waitlen;
 	struct timespec ts, rm;
 
 	bw->lamt += read_len;
@@ -1832,9 +1918,12 @@ static const struct {
 #ifdef IPTOS_DSCP_LE
 	{ "le", IPTOS_DSCP_LE },
 #endif
-	{ "lowdelay", IPTOS_LOWDELAY },
-	{ "throughput", IPTOS_THROUGHPUT },
-	{ "reliability", IPTOS_RELIABILITY },
+#ifdef IPTOS_DSCP_VA
+	{ "va",	IPTOS_DSCP_VA },
+#endif
+	{ "lowdelay", INT_MIN },	/* deprecated */
+	{ "throughput", INT_MIN },	/* deprecated */
+	{ "reliability", INT_MIN },	/* deprecated */
 	{ NULL, -1 }
 };
 
@@ -2189,7 +2278,7 @@ int
 safe_path(const char *name, struct stat *stp, const char *pw_dir,
     uid_t uid, char *err, size_t errlen)
 {
-	char buf[PATH_MAX], homedir[PATH_MAX];
+	char buf[PATH_MAX], buf2[PATH_MAX], homedir[PATH_MAX];
 	char *cp;
 	int comparehome = 0;
 	struct stat st;
@@ -2215,7 +2304,12 @@ safe_path(const char *name, struct stat *stp, const char *pw_dir,
 
 	/* for each component of the canonical path, walking upwards */
 	for (;;) {
-		if ((cp = dirname(buf)) == NULL) {
+		/*
+		 * POSIX allows dirname to modify its argument and return a
+		 * pointer into it, so make a copy to avoid overlapping strlcpy.
+		 */
+		strlcpy(buf2, buf, sizeof(buf2));
+		if ((cp = dirname(buf2)) == NULL) {
 			snprintf(err, errlen, "dirname() failed");
 			return -1;
 		}
@@ -2441,10 +2535,13 @@ parse_absolute_time(const char *s, uint64_t *tp)
 	if ((cp = strptime(buf, fmt, &tm)) == NULL || *cp != '\0')
 		return SSH_ERR_INVALID_FORMAT;
 	if (is_utc) {
-		if ((tt = timegm(&tm)) < 0)
+		tm.tm_wday = -1;	/* sentinel for error */
+		if ((tt = timegm(&tm)) == -1 && tm.tm_wday == -1)
 			return SSH_ERR_INVALID_FORMAT;
 	} else {
-		if ((tt = mktime(&tm)) < 0)
+		tm.tm_wday = -1;	/* sentinel for error */
+		tm.tm_isdst = -1;	/* mktime decides DST */
+		if ((tt = mktime(&tm)) == -1 && tm.tm_wday == -1)
 			return SSH_ERR_INVALID_FORMAT;
 	}
 	/* success */
@@ -2458,8 +2555,10 @@ format_absolute_time(uint64_t t, char *buf, size_t len)
 	time_t tt = t > SSH_TIME_T_MAX ? SSH_TIME_T_MAX : t;
 	struct tm tm;
 
-	localtime_r(&tt, &tm);
-	strftime(buf, len, "%Y-%m-%dT%H:%M:%S", &tm);
+	if (localtime_r(&tt, &tm) == NULL)
+		strlcpy(buf, "UNKNOWN-TIME", len);
+	else
+		strftime(buf, len, "%Y-%m-%dT%H:%M:%S", &tm);
 }
 
 /*
@@ -2468,10 +2567,10 @@ format_absolute_time(uint64_t t, char *buf, size_t len)
  * Caller must free *typep.
  */
 int
-parse_pattern_interval(const char *s, char **typep, int *secsp)
+parse_pattern_interval(const char *s, char **typep, double *secsp)
 {
 	char *cp, *sdup;
-	int secs;
+	double secs;
 
 	if (typep != NULL)
 		*typep = NULL;
@@ -2486,7 +2585,7 @@ parse_pattern_interval(const char *s, char **typep, int *secsp)
 		return -1;
 	}
 	*cp++ = '\0';
-	if ((secs = convtime(cp)) < 0) {
+	if ((secs = convtime_double(cp)) < 0.0) {
 		free(sdup);
 		return -1;
 	}
@@ -2923,6 +3022,22 @@ ptimeout_deadline_ms(struct timespec *pt, long ms)
 	ptimeout_deadline_tsp(pt, &p);
 }
 
+/* Specify a poll/ppoll deadline of at most 'sec' seconds (double) */
+void
+ptimeout_deadline_sec_double(struct timespec *pt, double sec)
+{
+	struct timespec t;
+
+	memset(&t, 0, sizeof(t));
+	if ((int64_t)sec >= SSH_TIME_T_MAX)
+		t.tv_sec = SSH_TIME_T_MAX;
+	else if (sec > 0) {
+		t.tv_sec = sec;
+		t.tv_nsec = (sec - (double)t.tv_sec) * 1000000000.0;
+	}
+	ptimeout_deadline_tsp(pt, &t);
+}
+
 /* Specify a poll/ppoll deadline at wall clock monotime 'when' (timespec) */
 void
 ptimeout_deadline_monotime_tsp(struct timespec *pt, struct timespec *when)
@@ -2939,6 +3054,13 @@ ptimeout_deadline_monotime_tsp(struct timespec *pt, struct timespec *when)
 		timespecsub(when, &now, &t);
 		ptimeout_deadline_tsp(pt, &t);
 	}
+}
+
+/* Specify a poll/ppoll deadline at wall clock monotime 'when' (double) */
+void
+ptimeout_deadline_monotime_double(struct timespec *pt, double when)
+{
+	ptimeout_deadline_sec_double(pt, when - monotime_double());
 }
 
 /* Specify a poll/ppoll deadline at wall clock monotime 'when' */
@@ -3020,4 +3142,67 @@ signal_is_crash(int sig)
 		return 1;
 	}
 	return 0;
+}
+
+char *
+get_homedir(void)
+{
+	char *cp;
+	struct passwd *pw;
+
+	if ((cp = getenv("HOME")) != NULL && *cp != '\0')
+		return xstrdup(cp);
+
+	if ((pw = getpwuid(getuid())) != NULL && *pw->pw_dir != '\0')
+		return xstrdup(pw->pw_dir);
+
+	return NULL;
+}
+
+int
+mkdir_path(const char *target, mode_t mode)
+{
+	char *dir, *odir = NULL, *next;
+	int fd = AT_FDCWD, fd2, subpath_len, ret = -1;
+
+	dir = odir = xstrdup(target);
+
+	if (*dir == '/' &&
+	    (fd = open("/", O_RDONLY|O_DIRECTORY)) == -1) {
+		error_f("open(\"/\"): %s", strerror(errno));
+		free(odir);
+		return -1;
+	}
+	/* Work through the path, component-wise */
+	for (; dir != NULL && *dir != '\0'; dir = next) {
+		if ((next = strchr(dir, '/')) != NULL)
+			*(next++) = '\0';
+		if (*dir == '\0')
+			continue;
+		subpath_len = (next == NULL) ? INT_MAX : next - odir - 1;
+		if (mkdirat(fd, dir, mode) == 0)
+			debug_f("created directory %.*s", subpath_len, target);
+		else if (errno != EEXIST) {
+			error_f("mkdir(\"%.*s\"): %s",
+			    subpath_len, target, strerror(errno));
+			goto out;
+		}
+
+		/* descend */
+		if ((fd2 = openat(fd, dir, O_RDONLY|O_DIRECTORY)) == -1) {
+			error_f("open(\"%.*s\"): %s",
+			    subpath_len, target, strerror(errno));
+			goto out;
+		}
+		if (fd != AT_FDCWD)
+			close(fd);
+		fd = fd2;
+	}
+	/* success */
+	ret = 0;
+ out:
+	free(odir);
+	if (fd != AT_FDCWD)
+		close(fd);
+	return ret;
 }

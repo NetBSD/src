@@ -1,4 +1,4 @@
-/*	$NetBSD: miscbltin.c,v 1.54.2.1 2025/08/02 05:18:26 perseant Exp $	*/
+/*	$NetBSD: miscbltin.c,v 1.54.2.2 2026/11/04 22:36:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)miscbltin.c	8.4 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: miscbltin.c,v 1.54.2.1 2025/08/02 05:18:26 perseant Exp $");
+__RCSID("$NetBSD: miscbltin.c,v 1.54.2.2 2026/11/04 22:36:15 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -72,6 +72,7 @@ __RCSID("$NetBSD: miscbltin.c,v 1.54.2.1 2025/08/02 05:18:26 perseant Exp $");
 #include "builtins.h"
 #include "mystring.h"
 #include "redir.h"		/* for user_fd_limit */
+#include "trap.h"		/* for run_traps() */
 
 /*
  * The read builtin.
@@ -127,10 +128,22 @@ is_a_pipe(int fd)
 	return 0;
 }
 
+/* what to do with caught signals during read */
+static int
+read_trap(int retry)
+{
+	if (pendingsigs) {	/* the signal was trapped */
+		run_traps(1);	/* process it */
+		if (!retry)	/* and if not "read -c", just finish */
+			return 0;
+	}
+	return 1;		/* any other case, restart the read */
+}
+
 #define	READ_BUFFER_SIZE	512
 
 static int
-next_read_char(int fd, size_t max)
+next_read_char(int fd, size_t max, int retry)
 {
 	static char buffer[READ_BUFFER_SIZE];
 	static int pos = 0, len = 0;
@@ -155,8 +168,14 @@ next_read_char(int fd, size_t max)
 		char c;
 
 		(void) max;
-		if (read(fd, &c, 1) != 1)
-			return -1;
+		while ((len = read(fd, &c, 1)) != 1) {
+			if (len == -1 && errno == EINTR) {
+				if (read_trap(retry))
+					continue;
+				errno = EINTR;
+			}
+			return len - 1;
+		}
 		return (c & 0xFF);
 	}
 
@@ -164,33 +183,53 @@ next_read_char(int fd, size_t max)
 		pos = 0;
 		if (max > sizeof buffer)
 			max = sizeof buffer;
-		len = read(fd, buffer, max);
+		while ((len = read(fd, buffer, max)) < 0) {
+			if (len == -1 && errno == EINTR) {
+				if (read_trap(retry))
+					continue;
+				errno = EINTR;
+			}
+			break;
+		}
 		if (len <= 0)
-			return -1;
+			return len - 1;
 	}
 
 	return buffer[pos++] & 0xFF;
 }
 
-#define READ_OPTS	"bd:n:p:r"
+static void
+read_reset(int setraw, struct termios *ttystate)
+{
+	(void)next_read_char(0, (size_t)-1, 0);	/* attempt to seek back */
+	if (setraw)
+		setrawmode(0, 0, 0, ttystate);
+}
+
+#define READ_OPTS	"bcd:n:p:r"
 
 #else
 
 static inline int
-next_read_char(int fd, size_t max)
+simple_next_read_char(int fd, size_t max)
 {
 	char c;
+	int len;
 
 	if (max == 0 || max == (size_t)-1)
 		return 0;
 
-	if (read(fd, &c, 1) != 1)
-		return -1;
+	if ((len = read(fd, &c, 1)) != 1)
+		return len - 1;
 	return (c & 0xFF);
 }
 
+#define	next_read_char(fd, max, retry)	simple_next_read_char((fd), (max))
+
+#define read_reset(a, b) __nothing
 #define n_flag 0
 #define maxlen 0
+#define retry_reads 0
 
 #define READ_OPTS	"d:p:r"
 
@@ -220,6 +259,7 @@ readcmd(int argc, char **argv)
 	struct termios ttystate;
 	int n_flag, maxlen;
 	int setraw = 0;
+	int retry_reads = 0;
 
 	b_flag = 0;
 	n_flag = 0;
@@ -243,15 +283,18 @@ readcmd(int argc, char **argv)
 			r_flag = 1;
 			break;
 #ifndef SMALL
+		case 'b':
+			if (!is_a_pipe(0))
+				b_flag = 1;
+			break;
+		case 'c':
+			retry_reads = 1;	/* upon EINTR */
+			break;
 		case 'n':
 			maxlen = number(optionarg);
 			if (maxlen > (INT_MAX >> 8) + 1)	/* sanity */
 				error("-n %s too large", optionarg);
 			n_flag = 1;
-			break;
-		case 'b':
-			if (!is_a_pipe(0))
-				b_flag = 1;
 			break;
 #endif
 		}
@@ -271,7 +314,7 @@ readcmd(int argc, char **argv)
 	}
 	ap = argptr;
 
-	(void)next_read_char(0, 0);	/* make sure the buffer is empty */
+	(void)next_read_char(0, 0, 0);	/* ensure the buffer is empty */
 #endif
 
 	if (isatty(0)) {
@@ -301,8 +344,17 @@ readcmd(int argc, char **argv)
 #else
 	for ( ; !n_flag || --maxlen >= 0 ; ) {
 #endif
-		if ((c = next_read_char(0, maxlen + 1)) < 0) {
-			status = 1;
+		if ((c = next_read_char(0, maxlen + 1, retry_reads)) < 0) {
+#ifndef SMALL
+			if (c <= -2 && errno != EINTR) {
+				read_reset(setraw, &ttystate);
+				error("read error");
+			}
+			if (errno == EINTR)
+				status = 128 + SIGINT;
+			else
+#endif
+				status = 1;
 			break;
 		}
 		if (c == '\\' && c != end && !r_flag) {
@@ -310,8 +362,18 @@ readcmd(int argc, char **argv)
 			if (n_flag && --maxlen < 0)
 				break;
 #endif
-			if ((c = next_read_char(0, maxlen + 1)) < 0) {
-				status = 1;
+			if ((c = next_read_char(0, maxlen + 1, retry_reads))
+			    < 0) {
+#ifndef SMALL
+				if (c <= -2 && errno != EINTR) {
+					read_reset(setraw, &ttystate);
+					error("read error");
+				}
+				if (errno == EINTR)
+					status = 128 + SIGINT;
+				else
+#endif
+					status = 1;
 				break;
 			}
 			if (c != '\n')	/* \ \n is always just removed */
@@ -391,12 +453,7 @@ readcmd(int argc, char **argv)
 	}
 	STACKSTRNUL(p);
 
-#ifndef SMALL
-	(void)next_read_char(0, (size_t)-1);	/* attempt to seek back */
-	if (setraw)
-		setrawmode(0, 0, end, &ttystate);
-#endif
-
+	read_reset(setraw, &ttystate);
 
 	/* Remove trailing IFS chars */
 	for (; stackblock() + wordlen <= --p; *p = 0) {
@@ -431,7 +488,12 @@ readcmd(int argc, char **argv)
 	return status;
 }
 
+/* -- end read builtin */
 
+
+/*
+ * Other small builtin utilities   (the u*s)
+ */
 
 int
 umaskcmd(int argc, char **argv)

@@ -64,16 +64,22 @@ none of the backends recognised the file format.
 @code{bfd_error_file_ambiguously_recognized} -
 more than one backend recognised the file format.
 @end itemize
+When calling bfd_check_format (or bfd_check_format_matches),
+any underlying file descriptor will be kept open for the
+duration of the call.  This is done to avoid races when
+another thread calls bfd_cache_close_all.  In this scenario,
+the thread calling bfd_check_format must call bfd_cache_close
+itself.
 
 @end deftypefn
 @findex bfd_check_format_matches
 @subsubsection @code{bfd_check_format_matches}
 @deftypefn {Function} bool bfd_check_format_matches (bfd *abfd, bfd_format format, char ***matching); 
 Like @code{bfd_check_format}, except when it returns FALSE with
-@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.  In that
-case, if @var{matching} is not NULL, it will be filled in with
-a NULL-terminated list of the names of the formats that matched,
-allocated with @code{malloc}.
+@code{bfd_errno} set to @code{bfd_error_file_ambiguously_recognized}.
+In that case, if @var{matching} is not NULL, it will be filled
+in with a NULL-terminated list of the names of the formats
+that matched, allocated with @code{malloc}.
 Then the user may choose a format and try again.
 
 When done with the list that @var{matching} points to, the caller

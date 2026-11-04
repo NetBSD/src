@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -24,19 +24,13 @@
 
 #include "config.h"
 #include <dlfcn.h>
+#include <stddef.h>
 
 #include "gp-defs.h"
-#include "collector_module.h"
+#include "collector.h"
 #include "gp-experiment.h"
 #include "data_pckts.h"
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
-#define DBG_LT4 4
 
 /* define the packets to be written out */
 typedef struct Heap_packet
@@ -67,23 +61,16 @@ static ModuleInterface module_interface = {
 
 static CollectorInterface *collector_interface = NULL;
 static int heap_mode = 0;
+static size_t start_range = 0;
+static size_t end_range = SIZE_MAX;
 static CollectorModule heap_hndl = COLLECTOR_MODULE_ERR;
-static unsigned heap_key = COLLECTOR_TSD_INVALID_KEY;
+static const Heap_packet heap_packet0 = { .comm.tsize = sizeof ( Heap_packet) };
+static __thread int reentrance = 0;
 
-#define CHCK_REENTRANCE(x)  ( !heap_mode || ((x) = collector_interface->getKey( heap_key )) == NULL || (*(x) != 0) )
-#define PUSH_REENTRANCE(x)  ((*(x))++)
-#define POP_REENTRANCE(x)   ((*(x))--)
-#define CALL_REAL(x)        (__real_##x)
-#define NULL_PTR(x)         (__real_##x == NULL)
+#define CHCK_REENTRANCE  ( !heap_mode || reentrance != 0 )
+#define PUSH_REENTRANCE  (reentrance++)
+#define POP_REENTRANCE   (reentrance--)
 #define gethrtime collector_interface->getHiResTime
-
-#ifdef DEBUG
-#define Tprintf(...)   if (collector_interface) collector_interface->writeDebugInfo( 0, __VA_ARGS__ )
-#define TprintfT(...)  if (collector_interface) collector_interface->writeDebugInfo( 1, __VA_ARGS__ )
-#else
-#define Tprintf(...)
-#define TprintfT(...)
-#endif
 
 static void *(*__real_malloc)(size_t) = NULL;
 static void (*__real_free)(void *);
@@ -96,14 +83,6 @@ static char *(*__real_strchr)(const char *, int);
 void *__libc_malloc (size_t);
 void __libc_free (void *);
 void *__libc_realloc (void *, size_t);
-
-static void
-collector_memset (void *s, int c, size_t n)
-{
-  unsigned char *s1 = s;
-  while (n--)
-    *s1++ = (unsigned char) c;
-}
 
 void
 __collector_module_init (CollectorInterface *_collector_interface)
@@ -155,39 +134,48 @@ open_experiment (const char *exp)
   if (params == NULL)   /* Heap data collection not specified */
     return COL_ERROR_HEAPINIT;
 
-  heap_key = collector_interface->createKey (sizeof ( int), NULL, NULL);
-  if (heap_key == (unsigned) - 1)
+  if (*params != 'o') // Not -H on. Read a range.
     {
-      Tprintf (0, "heaptrace: TSD key create failed.\n");
-      collector_interface->writeLog ("<event kind=\"%s\" id=\"%d\">TSD key not created</event>\n",
-				     SP_JCMD_CERROR, COL_ERROR_HEAPINIT);
-      return COL_ERROR_HEAPINIT;
+      char *s;
+      start_range = (size_t) CALL_UTIL (strtoull) (params, &s, 0);
+      if (*s == '-')
+	end_range = (size_t) CALL_UTIL (strtoull) (s + 1, &s, 0);
+      fprintf(stderr, "Range: %lld - %lld\n", (long long) start_range, (long long) end_range);
     }
+  
   collector_interface->writeLog ("<profile name=\"%s\">\n", SP_JCMD_HEAPTRACE);
   collector_interface->writeLog ("  <profdata fname=\"%s\"/>\n",
 				 module_interface.description);
 
   /* Record Heap_packet description */
-  Heap_packet *pp = NULL;
   collector_interface->writeLog ("  <profpckt kind=\"%d\" uname=\"Heap tracing data\">\n", HEAP_PCKT);
   collector_interface->writeLog ("    <field name=\"LWPID\" uname=\"Lightweight process id\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.lwp_id, sizeof (pp->comm.lwp_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Heap_packet, comm.lwp_id),
+		fld_sizeof (Heap_packet, comm.lwp_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"THRID\" uname=\"Thread number\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.thr_id, sizeof (pp->comm.thr_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Heap_packet, comm.thr_id),
+		fld_sizeof (Heap_packet, comm.thr_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"CPUID\" uname=\"CPU id\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.cpu_id, sizeof (pp->comm.cpu_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Heap_packet, comm.cpu_id),
+		fld_sizeof (Heap_packet, comm.cpu_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"TSTAMP\" uname=\"High resolution timestamp\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.tstamp, sizeof (pp->comm.tstamp) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Heap_packet, comm.tstamp),
+		fld_sizeof (Heap_packet, comm.tstamp) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"FRINFO\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->comm.frinfo, sizeof (pp->comm.frinfo) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Heap_packet, comm.frinfo),
+		fld_sizeof (Heap_packet, comm.frinfo) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"HTYPE\" uname=\"Heap trace function type\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->mtype, sizeof (pp->mtype) == 4 ? "INT32" : "INT64");
+		(int) offsetof (Heap_packet, mtype),
+		fld_sizeof (Heap_packet, mtype) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"HSIZE\" uname=\"Memory size\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->size, sizeof (pp->size) == 4 ? "UINT32" : "UINT64");
+		(int) offsetof (Heap_packet, size),
+		fld_sizeof (Heap_packet, size) == 4 ? "UINT32" : "UINT64");
   collector_interface->writeLog ("    <field name=\"HVADDR\" uname=\"Memory address\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->vaddr, sizeof (pp->vaddr) == 4 ? "UINT32" : "UINT64");
+		(int) offsetof (Heap_packet, vaddr),
+		fld_sizeof (Heap_packet, vaddr) == 4 ? "UINT32" : "UINT64");
   collector_interface->writeLog ("    <field name=\"HOVADDR\" uname=\"Previous memory address\" offset=\"%d\" type=\"%s\"/>\n",
-				 &pp->ovaddr, sizeof (pp->ovaddr) == 4 ? "UINT32" : "UINT64");
+		(int) offsetof (Heap_packet, ovaddr),
+		fld_sizeof (Heap_packet, ovaddr) == 4 ? "UINT32" : "UINT64");
   collector_interface->writeLog ("  </profpckt>\n");
   collector_interface->writeLog ("</profile>\n");
   return COL_ERROR_NONE;
@@ -213,7 +201,6 @@ static int
 close_experiment (void)
 {
   heap_mode = 0;
-  heap_key = COLLECTOR_TSD_INVALID_KEY;
   Tprintf (0, "heaptrace: close_experiment\n");
   return 0;
 }
@@ -223,7 +210,6 @@ detach_experiment (void)
 /* fork child.  Clean up state but don't write to experiment */
 {
   heap_mode = 0;
-  heap_key = COLLECTOR_TSD_INVALID_KEY;
   Tprintf (0, "heaptrace: detach_experiment\n");
   return 0;
 }
@@ -273,36 +259,39 @@ void *
 malloc (size_t size)
 {
   void *ret;
-  int *guard;
-  Heap_packet hpacket;
   /* Linux startup workaround  */
   if (!heap_mode)
     {
-      void *ppp = (void *) __libc_malloc (size);
-      Tprintf (DBG_LT4, "heaptrace: LINUX malloc(%ld, %p)...\n", (long) size, ppp);
-      return ppp;
+      ret = (void *) __libc_malloc (size);
+      Tprintf (DBG_LT4, "heaptrace: LINUX malloc(%ld, %p)\n", (long) size, ret);
+      return ret;
     }
   if (NULL_PTR (malloc))
     init_heap_intf ();
-  if (CHCK_REENTRANCE (guard))
+  if (CHCK_REENTRANCE)
     {
       ret = (void *) CALL_REAL (malloc)(size);
       Tprintf (DBG_LT4, "heaptrace: real malloc(%ld) = %p\n", (long) size, ret);
       return ret;
     }
-  PUSH_REENTRANCE (guard);
-
-  ret = (void *) CALL_REAL (malloc)(size);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
+  PUSH_REENTRANCE;
+  if (size < start_range || size >= end_range)
+    {
+      ret = (void *) CALL_REAL (malloc)(size);
+      POP_REENTRANCE;
+      return ret;
+    }
+  Heap_packet hpacket = heap_packet0;
   hpacket.comm.tstamp = gethrtime ();
+  ret = (void *) CALL_REAL (malloc)(size);
   hpacket.mtype = MALLOC_TRACE;
   hpacket.size = (Size_type) size;
   hpacket.vaddr = (intptr_t) ret;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
-  return (void *) ret;
+  POP_REENTRANCE;
+  return ret;
 }
 
 /*------------------------------------------------------------- free */
@@ -310,8 +299,6 @@ malloc (size_t size)
 void
 free (void *ptr)
 {
-  int *guard;
-  Heap_packet hpacket;
   /* Linux startup workaround  */
   if (!heap_mode)
     {
@@ -319,28 +306,26 @@ free (void *ptr)
       __libc_free (ptr);
       return;
     }
-  if (NULL_PTR (malloc))
+  if (NULL_PTR (free))
     init_heap_intf ();
-  if (CHCK_REENTRANCE (guard))
+  if (ptr == NULL)
+    return;
+  if (CHCK_REENTRANCE)
     {
       CALL_REAL (free)(ptr);
       return;
     }
-  if (ptr == NULL)
-    return;
-  PUSH_REENTRANCE (guard);
-
+  PUSH_REENTRANCE;
   /* Get a timestamp before 'free' to enforce consistency */
-  hrtime_t ts = gethrtime ();
+  Heap_packet hpacket = heap_packet0;
+  hpacket.comm.tstamp = gethrtime ();
   CALL_REAL (free)(ptr);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
-  hpacket.comm.tstamp = ts;
   hpacket.mtype = FREE_TRACE;
   hpacket.vaddr = (intptr_t) ptr;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
+  POP_REENTRANCE;
   return;
 }
 
@@ -349,9 +334,6 @@ void *
 realloc (void *ptr, size_t size)
 {
   void *ret;
-  int *guard;
-  Heap_packet hpacket;
-
   /* Linux startup workaround  */
   if (!heap_mode)
     {
@@ -362,24 +344,29 @@ realloc (void *ptr, size_t size)
     }
   if (NULL_PTR (realloc))
     init_heap_intf ();
-  if (CHCK_REENTRANCE (guard))
+  if (CHCK_REENTRANCE)
     {
       ret = (void *) CALL_REAL (realloc)(ptr, size);
       return ret;
     }
-  PUSH_REENTRANCE (guard);
-  hrtime_t ts = gethrtime ();
+  PUSH_REENTRANCE;
+  if (size < start_range || size >= end_range)
+    {
+      ret = (void *) CALL_REAL (realloc)(ptr, size);
+      POP_REENTRANCE;
+      return ret;
+    }
+  Heap_packet hpacket = heap_packet0;
+  hpacket.comm.tstamp = gethrtime ();
   ret = (void *) CALL_REAL (realloc)(ptr, size);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
-  hpacket.comm.tstamp = ts;
   hpacket.mtype = REALLOC_TRACE;
   hpacket.size = (Size_type) size;
   hpacket.vaddr = (intptr_t) ret;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
-  return (void *) ret;
+  POP_REENTRANCE;
+  return ret;
 }
 
 /*------------------------------------------------------------- memalign */
@@ -387,26 +374,30 @@ void *
 memalign (size_t align, size_t size)
 {
   void *ret;
-  int *guard;
-  Heap_packet hpacket;
   if (NULL_PTR (memalign))
     init_heap_intf ();
-  if (CHCK_REENTRANCE (guard))
+  if (CHCK_REENTRANCE)
     {
       ret = (void *) CALL_REAL (memalign)(align, size);
       return ret;
     }
-  PUSH_REENTRANCE (guard);
-  ret = (void *) CALL_REAL (memalign)(align, size);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
+  PUSH_REENTRANCE;
+  if (size < start_range || size >= end_range)
+    {
+      ret = (void *) CALL_REAL (memalign)(align, size);
+      POP_REENTRANCE;
+      return ret;
+    }
+  Heap_packet hpacket = heap_packet0;
   hpacket.comm.tstamp = gethrtime ();
+  ret = (void *) CALL_REAL (memalign)(align, size);
   hpacket.mtype = MALLOC_TRACE;
   hpacket.size = (Size_type) size;
   hpacket.vaddr = (intptr_t) ret;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
+  POP_REENTRANCE;
   return ret;
 }
 
@@ -416,26 +407,30 @@ void *
 valloc (size_t size)
 {
   void *ret;
-  int *guard;
-  Heap_packet hpacket;
-  if (NULL_PTR (memalign))
+  if (NULL_PTR (valloc))
     init_heap_intf ();
-  if (CHCK_REENTRANCE (guard))
+  if (CHCK_REENTRANCE)
     {
       ret = (void *) CALL_REAL (valloc)(size);
       return ret;
     }
-  PUSH_REENTRANCE (guard);
-  ret = (void *) CALL_REAL (valloc)(size);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
+  PUSH_REENTRANCE;
+  if (size < start_range || size >= end_range)
+    {
+      ret = (void *) CALL_REAL (valloc)(size);
+      POP_REENTRANCE;
+      return ret;
+    }
+  Heap_packet hpacket = heap_packet0;
   hpacket.comm.tstamp = gethrtime ();
+  ret = (void *) CALL_REAL (valloc)(size);
   hpacket.mtype = MALLOC_TRACE;
   hpacket.size = (Size_type) size;
   hpacket.vaddr = (intptr_t) ret;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
+  POP_REENTRANCE;
   return ret;
 }
 
@@ -444,30 +439,35 @@ void *
 calloc (size_t size, size_t esize)
 {
   void *ret;
-  int *guard;
-  Heap_packet hpacket;
   if (NULL_PTR (calloc))
     {
       if (in_init_heap_intf != 0)
 	return NULL; // Terminate infinite loop
       init_heap_intf ();
     }
-  if (CHCK_REENTRANCE (guard))
+  if (CHCK_REENTRANCE)
     {
       ret = (void *) CALL_REAL (calloc)(size, esize);
       return ret;
     }
-  PUSH_REENTRANCE (guard);
-  ret = (void *) CALL_REAL (calloc)(size, esize);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
+  PUSH_REENTRANCE;
+  size_t sz = size * esize;
+  if (sz < start_range || sz >= end_range)
+    {
+      ret = (void *) CALL_REAL (calloc)(size, esize);
+      POP_REENTRANCE;
+      return ret;
+    }
+  Heap_packet hpacket = heap_packet0;
   hpacket.comm.tstamp = gethrtime ();
+  ret = (void *) CALL_REAL (calloc)(size, esize);
   hpacket.mtype = MALLOC_TRACE;
   hpacket.size = (Size_type) (size * esize);
   hpacket.vaddr = (intptr_t) ret;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
+  POP_REENTRANCE;
   return ret;
 }
 
@@ -477,19 +477,17 @@ calloc (size_t size, size_t esize)
 void
 __collector_heap_record (int mtype, size_t size, void *vaddr)
 {
-  int *guard;
-  Heap_packet hpacket;
-  if (CHCK_REENTRANCE (guard))
+  if (CHCK_REENTRANCE)
     return;
-  PUSH_REENTRANCE (guard);
-  collector_memset (&hpacket, 0, sizeof ( Heap_packet));
-  hpacket.comm.tsize = sizeof ( Heap_packet);
+  PUSH_REENTRANCE;
+  Heap_packet hpacket = heap_packet0;
   hpacket.comm.tstamp = gethrtime ();
   hpacket.mtype = mtype;
   hpacket.size = (Size_type) size;
   hpacket.vaddr = (intptr_t) vaddr;
-  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl, hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
+  hpacket.comm.frinfo = collector_interface->getFrameInfo (heap_hndl,
+			hpacket.comm.tstamp, FRINFO_FROM_STACK, &hpacket);
   collector_interface->writeDataRecord (heap_hndl, (Common_packet*) & hpacket);
-  POP_REENTRANCE (guard);
+  POP_REENTRANCE;
   return;
 }

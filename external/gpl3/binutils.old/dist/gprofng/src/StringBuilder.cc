@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -24,7 +24,9 @@
 #include <string.h>
 #include <values.h>
 #include <stdarg.h>
+#include <unistd.h>
 
+#include "libiberty.h"
 #include "gp-defs.h"
 #include "StringBuilder.h"
 #include "i18n.h"
@@ -33,7 +35,7 @@ StringBuilder::StringBuilder ()
 {
   count = 0;
   maxCapacity = 16;
-  value = (char *) malloc (maxCapacity);
+  value = (char *) xmalloc (maxCapacity);
   memset (value, 0, maxCapacity);
 }
 
@@ -41,7 +43,7 @@ StringBuilder::StringBuilder (int capacity)
 {
   count = 0;
   maxCapacity = capacity;
-  value = (char *) malloc (maxCapacity);
+  value = (char *) xmalloc (maxCapacity);
   memset (value, 0, maxCapacity);
 }
 
@@ -65,7 +67,7 @@ StringBuilder::expandCapacity (int minimumCapacity)
     newCapacity = MAXINT;
   else if (minimumCapacity > newCapacity)
     newCapacity = minimumCapacity;
-  char *newValue = (char *) malloc (newCapacity);
+  char *newValue = (char *) xmalloc (newCapacity);
   maxCapacity = newCapacity;
   memcpy (newValue, value, count);
   memset (newValue + count, 0, maxCapacity - count);
@@ -78,7 +80,7 @@ StringBuilder::trimToSize ()
 {
   if (count < maxCapacity)
     {
-      char *newValue = (char *) malloc (count);
+      char *newValue = (char *) xmalloc (count);
       maxCapacity = count;
       memcpy (newValue, value, count);
       free (value);
@@ -424,7 +426,7 @@ StringBuilder::reverse ()
 char *
 StringBuilder::toString ()
 {
-  char *str = (char *) malloc (count + 1);
+  char *str = (char *) xmalloc (count + 1);
   memcpy (str, value, count);
   str[count] = '\0';
   return str;
@@ -445,6 +447,13 @@ StringBuilder::toFileLn (FILE *fp)
   append ('\0');
   count--;
   fprintf (fp, NTXT ("%s\n"), value);
+}
+
+void
+StringBuilder::write (int fd)
+{
+  if (count > 0)
+    ::write (fd, value, count);
 }
 
 StringBuilder *

@@ -1,3 +1,4 @@
+/*	$NetBSD: addr.h,v 1.1.1.2.4.2 2026/11/04 22:36:37 perseant Exp $	*/
 /*
  * Copyright (c) 2004,2005 Damien Miller <djm@mindrot.org>
  *
@@ -27,11 +28,11 @@ struct xaddr {
 	union {
 		struct in_addr		v4;
 		struct in6_addr		v6;
-		u_int8_t		addr8[16];
-		u_int16_t		addr16[8];
-		u_int32_t		addr32[4];
+		uint8_t			addr8[16];
+		uint16_t		addr16[8];
+		uint32_t		addr32[4];
 	} xa;		    /* 128-bit address */
-	u_int32_t	scope_id;	/* iface scope id for v6 */
+	uint32_t	scope_id;	/* iface scope id for v6 */
 #define v4	xa.v4
 #define v6	xa.v6
 #define addr8	xa.addr8

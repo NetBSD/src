@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -87,7 +87,6 @@ public:
   void set_clk_params(int min, int res, int max, int hi, int norm, int lo);
   char *set_clkprof(const char *valptr, char **warn);
   char *reset_clkprof(int val); /* called if profiler must reset value */
-  int get_sys_period()    { return clk_params.min; };
   int get_clk_min()       { return clk_params.min; };
   int get_clk_max()       { return clk_params.max; };
   int get_clk_res()       { return clk_params.res; };
@@ -102,8 +101,7 @@ public:
 
   /* set the parameters for heap tracing */
   char *set_heaptrace(const char *);
-  int get_heaptrace_mode()    { return heaptrace_enabled; };
-  int get_heaptrace_checkmode() { return heaptrace_checkenabled; };
+  char *get_heaptrace_mode()  { return heaptrace_mode; };
 
   /* set the parameters for I/O tracing */
   char *set_iotrace(const char *);
@@ -251,7 +249,6 @@ public:
   char *get_node_name ()        { return node_name; };
   long get_ncpus ()             { return ncpus; };
   int get_cpu_clk_freq ()       { return cpu_clk_freq; };
-  int get_cpc_cpuver ()         { return cpc_cpuver; };
 
     /* disable warning about non-local filesystems */
   void set_nofswarn ()          { nofswarn = 1; };
@@ -274,9 +271,7 @@ private:
   char *node_name;      /* name of machine on which experiment is run */
   long ncpus;           /* number of online CPUs */
   int cpu_clk_freq;     /* chip clock (MHz.), as reported from processor_info */
-  int cpc_cpuver;       /* chip version, as reported from libcpc */
   long sys_resolution;  /* system clock resolution */
-  int sys_period;       /* profiling clock resolution on the system */
   int sample_period;    /* period for sampling, seconds */
   int sample_default;    /* if period for sampling set by default */
   int size_limit;       /* experiment size limit, MB */
@@ -345,12 +340,7 @@ private:
   /* 	definitions in data_pckts.h */
   int synctrace_scope;
 
-  int heaptrace_enabled;    /* T if heap tracing */
-  /* if 0 no checking;
-   * if 1, check for over- and under-write
-   * if 2, also set patterns in malloc'd and free'd areas
-   */
-  int heaptrace_checkenabled;
+  char *heaptrace_mode; /* NULL, or on, or off, or range */
   int iotrace_enabled;  /* T if I/O tracing */
 
   /* count controls */

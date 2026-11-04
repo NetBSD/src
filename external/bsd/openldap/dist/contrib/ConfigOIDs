@@ -6,3 +6,7 @@ OLcfgCt{Oc|At}:3	nssov
 OLcfgCt{Oc|At}:4	cloak
 OLcfgCt{Oc|At}:5	lastbind
 OLcfgCt{Oc|At}:6	adremap
+OLcfgCt{Oc|At}:7	rbac
+OLcfgCt{Oc|At}:8	datamorph
+OLcfgCt{Oc|At}:9	variant
+OLcfgCt{Oc|At}:10	alias

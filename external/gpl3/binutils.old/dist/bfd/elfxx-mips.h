@@ -1,5 +1,5 @@
 /* MIPS ELF specific backend routines.
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -22,7 +22,22 @@
 #include "elf/internal.h"
 #include "elf/mips.h"
 
+enum reloc_check
+{
+  check_std,
+  check_inplace,
+  check_shuffle
+};
+
+#ifndef MIPS_DEFAULT_R6
+#define MIPS_DEFAULT_R6 0
+#endif
+
+struct ecoff_debug_info;
+
 extern bool _bfd_mips_elf_mkobject
+  (bfd *);
+extern bool _bfd_mips_elf_free_cached_info
   (bfd *);
 extern bool _bfd_mips_elf_new_section_hook
   (bfd *, asection *);
@@ -52,9 +67,7 @@ extern bool _bfd_mips_elf_check_relocs
   (bfd *, struct bfd_link_info *, asection *, const Elf_Internal_Rela *);
 extern bool _bfd_mips_elf_adjust_dynamic_symbol
   (struct bfd_link_info *, struct elf_link_hash_entry *);
-extern bool _bfd_mips_elf_always_size_sections
-  (bfd *, struct bfd_link_info *);
-extern bool _bfd_mips_elf_size_dynamic_sections
+extern bool _bfd_mips_elf_late_size_sections
   (bfd *, struct bfd_link_info *);
 extern int _bfd_mips_elf_relocate_section
   (bfd *, struct bfd_link_info *, bfd *, asection *, bfd_byte *,
@@ -92,6 +105,8 @@ extern bool _bfd_mips_elf_is_target_special_symbol
 extern bool _bfd_mips_elf_find_nearest_line
   (bfd *, asymbol **, asection *, bfd_vma,
    const char **, const char **, unsigned int *, unsigned int *);
+#define _bfd_mips_elf_find_nearest_line_with_alt \
+  _bfd_nosymbols_find_nearest_line_with_alt
 extern bool _bfd_mips_elf_find_inliner_info
   (bfd *, const char **, const char **, unsigned int *);
 extern bool _bfd_mips_elf_set_section_contents
@@ -127,6 +142,8 @@ extern void _bfd_mips_elf_reloc_unshuffle
   (bfd *, int, bool, bfd_byte *);
 extern void _bfd_mips_elf_reloc_shuffle
   (bfd *, int, bool, bfd_byte *);
+extern bool _bfd_mips_reloc_offset_in_range
+  (bfd *, asection *, arelent *, enum reloc_check);
 extern bfd_reloc_status_type _bfd_mips_elf_gprel16_with_gp
   (bfd *, asymbol *, arelent *, asection *, bool, void *, bfd_vma);
 extern bfd_reloc_status_type _bfd_mips_elf32_gprel16_reloc

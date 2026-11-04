@@ -1,4 +1,4 @@
-/*	$NetBSD: ntp_lists.h,v 1.6.8.1 2025/08/02 05:22:20 perseant Exp $	*/
+/*	$NetBSD: ntp_lists.h,v 1.6.8.2 2026/11/04 22:38:45 perseant Exp $	*/
 
 /*
  * ntp_lists.h - linked lists common code
@@ -155,7 +155,7 @@ do {								\
 								\
 	ppentry = &(listhead);					\
 	while (TRUE) {						\
-		if (beforecur) {				\
+		if (NULL == *ppentry || (beforecur)) {		\
 			(pentry)->nextlink = *ppentry;		\
 			*ppentry = (pentry);			\
 			break;					\

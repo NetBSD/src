@@ -1,5 +1,5 @@
 /* BFD backend for core files which use the ptrace_user structure
-   Copyright (C) 1993-2022 Free Software Foundation, Inc.
+   Copyright (C) 1993-2025 Free Software Foundation, Inc.
    The structure of this file is based on trad-core.c written by John Gilmore
    of Cygnus Support.
    Modified to work with the ptrace_user structure by Kevin A. Buettner.
@@ -48,7 +48,7 @@ struct trad_core_struct
 
 /* forward declarations */
 
-const bfd_target *ptrace_unix_core_file_p (bfd *abfd);
+bfd_cleanup ptrace_unix_core_file_p (bfd *abfd);
 char * ptrace_unix_core_file_failing_command (bfd *abfd);
 int ptrace_unix_core_file_failing_signal (bfd *abfd);
 #define ptrace_unix_core_file_matches_executable_p generic_core_file_matches_executable_p
@@ -61,10 +61,9 @@ ptrace_unix_core_file_p (bfd *abfd)
   int val;
   struct ptrace_user u;
   struct trad_core_struct *rawptr;
-  size_t amt;
   flagword flags;
 
-  val = bfd_bread ((void *)&u, (bfd_size_type) sizeof u, abfd);
+  val = bfd_read (&u, sizeof u, abfd);
   if (val != sizeof u || u.pt_magic != _BCS_PTRACE_MAGIC
       || u.pt_rev != _BCS_PTRACE_REV)
     {
@@ -77,8 +76,7 @@ ptrace_unix_core_file_p (bfd *abfd)
 
   /* Allocate both the upage and the struct core_data at once, so
      a single free() will free them both.  */
-  amt = sizeof (struct trad_core_struct);
-  rawptr = (struct trad_core_struct *) bfd_zalloc (abfd, amt);
+  rawptr = bfd_alloc (abfd, sizeof (*rawptr) + 1);
 
   if (rawptr == NULL)
     return 0;
@@ -86,6 +84,10 @@ ptrace_unix_core_file_p (bfd *abfd)
   abfd->tdata.trad_core_data = rawptr;
 
   rawptr->u = u; /*Copy the uarea into the tdata part of the bfd */
+
+  /* Ensure core_file_failing_command string is terminated.  This is
+     just to stop buffer overflows on fuzzed files.  */
+  ((char *) rawptr)[sizeof (*rawptr)] = 0;
 
   /* Create the sections.  */
 
@@ -192,12 +194,16 @@ const bfd_target core_ptrace_vec =
       ptrace_unix_core_file_p		/* a core file */
     },
     {				/* bfd_set_format */
-      _bfd_bool_bfd_false_error, bfd_false,
-      _bfd_bool_bfd_false_error, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
     },
     {				/* bfd_write_contents */
-      _bfd_bool_bfd_false_error, bfd_false,
-      _bfd_bool_bfd_false_error, bfd_false
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
+      _bfd_bool_bfd_false_error,
     },
 
     BFD_JUMP_TABLE_GENERIC (_bfd_generic),

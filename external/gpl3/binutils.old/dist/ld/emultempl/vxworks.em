@@ -1,5 +1,5 @@
 # This shell script emits a C file. -*- C -*-
-#   Copyright (C) 2006-2022 Free Software Foundation, Inc.
+#   Copyright (C) 2006-2025 Free Software Foundation, Inc.
 #
 # This file is part of the GNU Binutils.
 #
@@ -54,12 +54,6 @@ vxworks_after_open (void)
 }
 
 EOF
-
-PARSE_AND_LIST_PROLOGUE=$PARSE_AND_LIST_PROLOGUE'
-enum {
-  OPTION_FORCE_DYNAMIC = 501
-};
-'
 
 PARSE_AND_LIST_LONGOPTS=$PARSE_AND_LIST_LONGOPTS'
   {"force-dynamic", no_argument, NULL, OPTION_FORCE_DYNAMIC},

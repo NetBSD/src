@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -107,7 +107,7 @@ $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 if test $? != 0 ; then
 	echo "comparison failed - modrdn operations did not complete correctly"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 
@@ -134,7 +134,7 @@ $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 if test $? != 0 ; then
 	echo "comparison failed - modrdn operations did not complete correctly"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 # Ensure that you cannot find the entry for which the rdn was deleted as
@@ -153,7 +153,7 @@ $CMP $SEARCHOUT - < /dev/null > $CMPOUT
 if test $? != 0 ; then
 	echo "failure: ldapsearch found attribute that was to be removed!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 echo "Using ldapsearch to retrieve all the entries..."
@@ -178,7 +178,7 @@ $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 if test $? != 0 ; then
 	echo "comparison failed - modrdn operations did not complete correctly"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 # Test that you can use modrdn with an attribute value which was previously
@@ -218,7 +218,7 @@ $CMP $SEARCHFLT $LDIFFLT > $CMPOUT
 if test $? != 0 ; then
 	echo "comparison failed - modrdn operations did not complete correctly"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 echo "Testing modrdn to another database (should fail with affectsMultipleDSAs)"
@@ -229,7 +229,7 @@ case $RC in
 0)
 	echo "ldapmodrdn succeeded, should have failed!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 71)
 	;;
@@ -250,7 +250,7 @@ case $RC in
 0)
 	echo "ldapmodrdn succeeded, should have failed!"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 	;;
 53)
 	;;

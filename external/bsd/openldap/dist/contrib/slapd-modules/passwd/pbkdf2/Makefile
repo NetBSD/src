@@ -6,6 +6,11 @@ LDAP_INC = -I$(LDAP_BUILD)/include -I$(LDAP_SRC)/include -I$(LDAP_SRC)/servers/s
 LDAP_LIB = $(LDAP_BUILD)/libraries/libldap/libldap.la \
 	$(LDAP_BUILD)/libraries/liblber/liblber.la
 
+PLAT = UNIX
+NT_LIB = -L$(LDAP_BUILD)/servers/slapd -lslapd
+NT_LDFLAGS = -no-undefined -avoid-version
+UNIX_LDFLAGS = -version-info $(LTVER)
+
 LIBTOOL = $(LDAP_BUILD)/libtool
 INSTALL = /usr/bin/install
 CC = gcc
@@ -16,7 +21,8 @@ SSL_INC =
 SSL_LIB = -lcrypto
 
 INCS = $(LDAP_INC) $(SSL_INC)
-LIBS = $(LDAP_LIB) $(SSL_LIB)
+LIBS = $($(PLAT)_LIB) $(LDAP_LIB) $(SSL_LIB)
+LD_FLAGS= $(LDFLAGS) $($(PLAT)_LDFLAGS) -rpath $(moduledir) -module
 
 PROGRAMS = pw-pbkdf2.la
 MANPAGES = slapd-pw-pbkdf2.5
@@ -40,8 +46,7 @@ man5dir = $(mandir)/man5
 all:		$(PROGRAMS)
 
 pw-pbkdf2.la: pw-pbkdf2.lo
-	$(LIBTOOL) --mode=link $(CC) $(LDFLAGS) -version-info $(LTVER) \
-	-rpath $(moduledir) -module -o $@ $? $(LIBS)
+	$(LIBTOOL) --mode=link $(CC) $(LD_FLAGS) -o $@ $? $(LIBS)
 
 clean:
 	rm -rf *.o *.lo *.la .libs

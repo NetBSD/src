@@ -50,6 +50,7 @@ extern "C" {
 #ifndef _ASM
 
 #include <sys/types.h>
+#include <sys/endian.h>
 #include <sys/modctl.h>
 #include <sys/processor.h>
 #ifdef illumos
@@ -556,6 +557,10 @@ typedef struct dtrace_difv {
 #define	DTRACE_USTACK_STRSIZE(x)	(uint32_t)((x) >> 32)
 #define	DTRACE_USTACK_ARG(x, y)		\
 	((((uint64_t)(y)) << 32) | ((x) & UINT32_MAX))
+
+#ifndef BYTE_ORDER
+#error BYTE_ORDER is undefined!
+#endif
 
 #ifndef _LP64
 #if BYTE_ORDER == _BIG_ENDIAN

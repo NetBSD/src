@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.7 2016/01/26 19:37:48 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.7.28.1 2026/11/04 22:43:56 perseant Exp $
 
 .include "${.PARSEDIR}/../Makefile.inc"
 BINDIR?=	/usr/sbin
@@ -7,6 +7,6 @@ WARNS?=		1
 CPPFLAGS+=-DPACKAGE -DPACKAGE_VERSION
 LDADD+=-lz
 .ifndef HOSTPROG
-BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+BINUTILS_MACHINE_ARCH?=${MACHINE_ARCH:C/armv[4-7]/arm/}
 DPADD+=${LIBZ}
 .endif

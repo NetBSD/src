@@ -1,5 +1,5 @@
 .TH SLAPD-MDB 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2011-2021 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 2011-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -27,7 +27,7 @@ come before any subsequent "backend" or "database" lines.
 Specify a power of 2 for the maximum size of an index slot.
 The default is 16, yielding a maximum slot size of 2^16 or 65536.
 Once set, this option applies to every \fBmdb\fP database instance.
-The specified value must be in the range of 16-31.
+The specified value must be in the range of 16-30.
 .LP
 
 These

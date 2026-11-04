@@ -1,5 +1,5 @@
 /* This file is tc-msp430.h
-   Copyright (C) 2002-2024 Free Software Foundation, Inc.
+   Copyright (C) 2002-2026 Free Software Foundation, Inc.
 
    Contributed by Dmitry Diky <diwil@mail.ru>
 
@@ -20,6 +20,7 @@
    Software Foundation, 51 Franklin Street - Fifth Floor, Boston, MA
    02110-1301, USA.  */
 
+#ifndef TC_MSP430
 #define TC_MSP430
 /*   By convention, you should define this macro in the `.h' file.  For
      example, `tc-m68k.h' defines `TC_M68K'.  You might have to use this
@@ -99,7 +100,7 @@
 
 /* Support symbols like: C$$IO$$.  */
 #undef  LEX_DOLLAR
-#define LEX_DOLLAR 1
+#define LEX_DOLLAR LEX_NAME
 
 #define TC_IMPLICIT_LCOMM_ALIGNMENT(SIZE, P2VAR) (P2VAR) = 0
 /*   An `.lcomm' directive with no explicit alignment parameter will
@@ -172,3 +173,8 @@ extern bool msp430_allow_local_subtract (expressionS *, expressionS *, segT);
 #define TC_LINKRELAX_FIXUP(seg) ((seg->flags & SEC_CODE) || (seg->flags & SEC_DEBUGGING))
 
 #define DWARF2_ADDR_SIZE(bfd) 4
+
+/* The target supports Object Attributes v1.  */
+#define TC_OBJ_ATTR_v1 1
+
+#endif /* TC_MSP430 */

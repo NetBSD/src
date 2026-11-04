@@ -15,7 +15,7 @@
 @SET_MAKE@
 
 #
-#   Copyright (C) 2021 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -150,7 +150,7 @@ am__uninstall_files_from_dir = { \
     || { echo " ( cd '$$dir' && rm -f" $$files ")"; \
          $(am__cd) "$$dir" && rm -f $$files; }; \
   }
-am__installdirs = "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"
+am__installdirs = "$(DESTDIR)$(bindir)"
 SCRIPTS = $(bin_SCRIPTS)
 AM_V_P = $(am__v_P_@AM_V@)
 am__v_P_ = $(am__v_P_@AM_DEFAULT_V@)
@@ -171,9 +171,6 @@ am__can_run_installinfo = \
     n|no|NO) false;; \
     *) (install-info --version) >/dev/null 2>&1;; \
   esac
-man1dir = $(mandir)/man1
-NROFF = nroff
-MANS = $(man_MANS)
 am__tagged_files = $(HEADERS) $(SOURCES) $(TAGS_FILES) $(LISP)
 am__DIST_COMMON = $(srcdir)/Makefile.in $(top_srcdir)/../mkinstalldirs
 DISTFILES = $(DIST_COMMON) $(DIST_SOURCES) $(TEXINFOS) $(EXTRA_DIST)
@@ -185,6 +182,7 @@ AUTOCONF = @AUTOCONF@
 AUTOHEADER = @AUTOHEADER@
 AUTOMAKE = @AUTOMAKE@
 AWK = @AWK@
+BASH = @BASH@
 BISON = @BISON@
 BUILD_SUBDIRS = @BUILD_SUBDIRS@
 CC = @CC@
@@ -216,7 +214,6 @@ GPROFNG_LIBADD = @GPROFNG_LIBADD@
 GPROFNG_NO_FORMAT_TRUNCATION_CFLAGS = @GPROFNG_NO_FORMAT_TRUNCATION_CFLAGS@
 GPROFNG_NO_SWITCH_CFLAGS = @GPROFNG_NO_SWITCH_CFLAGS@
 GREP = @GREP@
-HELP2MAN = @HELP2MAN@
 INSTALL = @INSTALL@
 INSTALL_DATA = @INSTALL_DATA@
 INSTALL_PROGRAM = @INSTALL_PROGRAM@
@@ -325,30 +322,9 @@ zlibdir = @zlibdir@
 zlibinc = @zlibinc@
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I . -I .. -I ../.. 
-bin_SCRIPTS = gp-display-html
+bin_SCRIPTS = gprofng-display-html
 CLEANFILES = $(bin_SCRIPTS)
 do_subst = sed -e 's/BINUTILS_VERSION/$(VERSION)/'
-@BUILD_MAN_TRUE@man_MANS = gp-display-html.1
-@BUILD_MAN_TRUE@MAINTAINERCLEANFILES = $(man_MANS)
-
-# Use this if the man pages depend on the version number. 
-# common_mandeps = $(top_srcdir)/../bfd/version.m4
-#
-# Also change the dependence line below to this:
-# gp-display-html.1: $(common_mandeps) gp-display-html
-#
-# Currently, the version number shown in the man page is derived from
-# the output printed with --version.
-
-# These variables are used by help2man to generate the man pages.
-@BUILD_MAN_TRUE@INFO_PAGE = "gprofng"
-@BUILD_MAN_TRUE@MANUAL = "User Commands"
-@BUILD_MAN_TRUE@TEXT_GP_DISPLAY_HTML = "generate an HTML based directory structure to browse the profiles"
-@BUILD_MAN_TRUE@HELP2MAN_OPT = --libtool --no-info --info-page=$(INFO_PAGE) --manual=$(MANUAL)
-@BUILD_MAN_TRUE@H2M_FILTER = | sed 's/\.TP/\.TP\n.B/' | sed 's/Commands:/\.SH COMMANDS/' \
-@BUILD_MAN_TRUE@  | sed 's/See also:/\.SH SEE ALSO/' | sed 's/Documentation:/.SH DOCUMENTATION/' \
-@BUILD_MAN_TRUE@  | sed 's/Limitations:/.SH LIMITATIONS/'
-
 all: all-am
 
 .SUFFIXES:
@@ -422,49 +398,6 @@ mostlyclean-libtool:
 
 clean-libtool:
 	-rm -rf .libs _libs
-install-man1: $(man_MANS)
-	@$(NORMAL_INSTALL)
-	@list1=''; \
-	list2='$(man_MANS)'; \
-	test -n "$(man1dir)" \
-	  && test -n "`echo $$list1$$list2`" \
-	  || exit 0; \
-	echo " $(MKDIR_P) '$(DESTDIR)$(man1dir)'"; \
-	$(MKDIR_P) "$(DESTDIR)$(man1dir)" || exit 1; \
-	{ for i in $$list1; do echo "$$i"; done;  \
-	if test -n "$$list2"; then \
-	  for i in $$list2; do echo "$$i"; done \
-	    | sed -n '/\.1[a-z]*$$/p'; \
-	fi; \
-	} | while read p; do \
-	  if test -f $$p; then d=; else d="$(srcdir)/"; fi; \
-	  echo "$$d$$p"; echo "$$p"; \
-	done | \
-	sed -e 'n;s,.*/,,;p;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
-	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,' | \
-	sed 'N;N;s,\n, ,g' | { \
-	list=; while read file base inst; do \
-	  if test "$$base" = "$$inst"; then list="$$list $$file"; else \
-	    echo " $(INSTALL_DATA) '$$file' '$(DESTDIR)$(man1dir)/$$inst'"; \
-	    $(INSTALL_DATA) "$$file" "$(DESTDIR)$(man1dir)/$$inst" || exit $$?; \
-	  fi; \
-	done; \
-	for i in $$list; do echo "$$i"; done | $(am__base_list) | \
-	while read files; do \
-	  test -z "$$files" || { \
-	    echo " $(INSTALL_DATA) $$files '$(DESTDIR)$(man1dir)'"; \
-	    $(INSTALL_DATA) $$files "$(DESTDIR)$(man1dir)" || exit $$?; }; \
-	done; }
-
-uninstall-man1:
-	@$(NORMAL_UNINSTALL)
-	@list=''; test -n "$(man1dir)" || exit 0; \
-	files=`{ for i in $$list; do echo "$$i"; done; \
-	l2='$(man_MANS)'; for i in $$l2; do echo "$$i"; done | \
-	  sed -n '/\.1[a-z]*$$/p'; \
-	} | sed -e 's,.*/,,;h;s,.*\.,,;s,^[^1][0-9a-z]*$$,1,;x' \
-	      -e 's,\.[0-9a-z]*$$,,;$(transform);G;s,\n,.,'`; \
-	dir='$(DESTDIR)$(man1dir)'; $(am__uninstall_files_from_dir)
 tags TAGS:
 
 ctags CTAGS:
@@ -504,9 +437,9 @@ distdir: $(DISTFILES)
 	done
 check-am: all-am
 check: check-am
-all-am: Makefile $(SCRIPTS) $(MANS)
+all-am: Makefile $(SCRIPTS)
 installdirs:
-	for dir in "$(DESTDIR)$(bindir)" "$(DESTDIR)$(man1dir)"; do \
+	for dir in "$(DESTDIR)$(bindir)"; do \
 	  test -z "$$dir" || $(MKDIR_P) "$$dir"; \
 	done
 install: install-am
@@ -540,7 +473,6 @@ distclean-generic:
 maintainer-clean-generic:
 	@echo "This command is intended for maintainers to use"
 	@echo "it deletes files that may require special tools to rebuild."
-	-test -z "$(MAINTAINERCLEANFILES)" || rm -f $(MAINTAINERCLEANFILES)
 clean: clean-am
 
 clean-am: clean-generic clean-libtool mostlyclean-am
@@ -561,7 +493,7 @@ info: info-am
 
 info-am:
 
-install-data-am: install-man
+install-data-am:
 
 install-dvi: install-dvi-am
 
@@ -577,7 +509,7 @@ install-info: install-info-am
 
 install-info-am:
 
-install-man: install-man1
+install-man:
 
 install-pdf: install-pdf-am
 
@@ -605,9 +537,7 @@ ps: ps-am
 
 ps-am:
 
-uninstall-am: uninstall-binSCRIPTS uninstall-man
-
-uninstall-man: uninstall-man1
+uninstall-am: uninstall-binSCRIPTS
 
 .MAKE: install-am install-strip
 
@@ -617,23 +547,19 @@ uninstall-man: uninstall-man1
 	install install-am install-binSCRIPTS install-data \
 	install-data-am install-dvi install-dvi-am install-exec \
 	install-exec-am install-html install-html-am install-info \
-	install-info-am install-man install-man1 install-pdf \
-	install-pdf-am install-ps install-ps-am install-strip \
-	installcheck installcheck-am installdirs maintainer-clean \
+	install-info-am install-man install-pdf install-pdf-am \
+	install-ps install-ps-am install-strip installcheck \
+	installcheck-am installdirs maintainer-clean \
 	maintainer-clean-generic mostlyclean mostlyclean-generic \
 	mostlyclean-libtool pdf pdf-am ps ps-am tags-am uninstall \
-	uninstall-am uninstall-binSCRIPTS uninstall-man uninstall-man1
+	uninstall-am uninstall-binSCRIPTS
 
 .PRECIOUS: Makefile
 
 
-gp-display-html: gp-display-html.in Makefile
+gprofng-display-html: $(srcdir)/gp-display-html.in
 	$(do_subst) < $(srcdir)/gp-display-html.in > $@
 	chmod +x $@
-
-@BUILD_MAN_TRUE@gp-display-html.1: gp-display-html
-@BUILD_MAN_TRUE@	$(AM_V_GEN)_BUILDING_MANPAGE=1 $(HELP2MAN) $(HELP2MAN_OPT) \
-@BUILD_MAN_TRUE@	  --name=$(TEXT_GP_DISPLAY_HTML) ./gp-display-html $(H2M_FILTER) > $@
 
 # Tell versions [3.59,3.63) of GNU make to not export all variables.
 # Otherwise a system limit (for SysV at least) may be exceeded.

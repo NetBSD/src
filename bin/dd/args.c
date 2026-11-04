@@ -1,4 +1,4 @@
-/*	$NetBSD: args.c,v 1.43 2024/01/26 07:10:04 mlelstv Exp $	*/
+/*	$NetBSD: args.c,v 1.43.2.1 2026/11/04 22:36:13 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -38,7 +38,7 @@
 #if 0
 static char sccsid[] = "@(#)args.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: args.c,v 1.43 2024/01/26 07:10:04 mlelstv Exp $");
+__RCSID("$NetBSD: args.c,v 1.43.2.1 2026/11/04 22:36:13 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -94,6 +94,7 @@ static void	f_of(char *);
 static void	f_seek(char *);
 static void	f_skip(char *);
 static void	f_progress(char *);
+static void	f_iflags(char *);
 
 static const struct arg {
 	const char *name;
@@ -110,6 +111,7 @@ static const struct arg {
 	{ "ibs",	f_ibs,		C_IBS,	 C_BS|C_IBS },
 	{ "if",		f_if,		C_IF,	 C_IF },
 	{ "iflag",	f_iflag,	C_IFLAG, C_IFLAG },
+	{ "iflags",	f_iflags,	0,	 0 },
 	{ "iseek",	f_skip,		C_SKIP,	 C_SKIP },
 	{ "msgfmt",	f_msgfmt,	0,	 0 },
 	{ "obs",	f_obs,		C_OBS,	 C_BS|C_OBS },
@@ -248,10 +250,6 @@ f_count(char *arg)
 {
 
 	cpy_cnt = strsuftoll("block count", arg, 0, LLONG_MAX);
-	if (!cpy_cnt) {
-		summary();
-		exit(0);
-	}
 }
 
 static void
@@ -509,3 +507,16 @@ c_ioflag(const void *a, const void *b)
 	    ((const struct ioflag *)b)->name));
 }
 #endif	/* NO_IOFLAG */
+
+static void
+f_iflags(char *flags)
+{
+	/*
+	 * should probably allow for more than one, but for now...
+	 */
+	if (strcmp(flags, "fullblock") == 0) {
+		in.flags |= FULLBLOCK;
+		return;
+	}
+	errx(EXIT_FAILURE, "unknown %s %s", "iflags", flags);
+}

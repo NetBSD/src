@@ -27,13 +27,13 @@ Building
 1) Customize the LDAP_SRC variable in Makefile to point to the OpenLDAP
 source root.
 
-2) Run 'make' to produce slapd-totp.so
+2) Run 'make' to produce pw-totp.so
 
-3) Copy slapd-totp.so somewhere permanent.
+3) Copy pw-totp.so somewhere permanent.
 
 4) Edit your slapd.conf (eg. /etc/ldap/slapd.conf), and add:
 
-moduleload ...path/to/slapd-totp.so
+moduleload ...path/to/pw-totp.so
 
 5) This module replaces the function of the slapo-lastbind overlay. You
 cannot use that overlay on the same database as this one.
@@ -73,7 +73,7 @@ The TOTP1 algorithm is compatible with Google Authenticator.
 
 This work is part of OpenLDAP Software <http://www.openldap.org/>.
 
-Copyright 2015-2021 The OpenLDAP Foundation.
+Copyright 2015-2024 The OpenLDAP Foundation.
 Portions Copyright 2015 by Howard Chu, Symas Corp.
 All rights reserved.
 

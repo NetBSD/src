@@ -52,7 +52,7 @@ alter table ldap_entries add
 drop table if exists ldap_entry_objclasses;
 create table ldap_entry_objclasses
  (
-	entry_id integer not null references ldap_entries(id),
+	entry_id integer unsigned not null references ldap_entries(id),
 	oc_name varchar(64)
  );
 

@@ -1,13 +1,20 @@
 #ifdef JEMALLOC_INTERNAL_TSD_TLS_H
-#error This file should be included only once, by tsd.h.
+#	error This file should be included only once, by tsd.h.
 #endif
 #define JEMALLOC_INTERNAL_TSD_TLS_H
+
+#include "jemalloc/internal/jemalloc_preamble.h"
+#include "jemalloc/internal/tsd_internals.h"
+#include "jemalloc/internal/tsd_tls_addr.h"
+#include "jemalloc/internal/tsd_types.h"
 
 #define JEMALLOC_TSD_TYPE_ATTR(type) __thread type JEMALLOC_TLS_MODEL
 
 extern JEMALLOC_TSD_TYPE_ATTR(tsd_t) tsd_tls;
 extern pthread_key_t tsd_tsd;
-extern bool tsd_booted;
+extern bool          tsd_booted;
+
+JEMALLOC_TLS_ADDR_DECLARE(tsd_tls)
 
 /* Initialization/cleanup. */
 JEMALLOC_ALWAYS_INLINE bool
@@ -39,19 +46,26 @@ tsd_get_allocates(void) {
 	return false;
 }
 
+JEMALLOC_ALWAYS_INLINE bool
+tsd_teardown_done(void) {
+	return false;
+}
+
 /* Get/set. */
 JEMALLOC_ALWAYS_INLINE tsd_t *
 tsd_get(bool init) {
-	return &tsd_tls;
+	return JEMALLOC_TLS_ADDR(tsd_tls);
 }
 
 JEMALLOC_ALWAYS_INLINE void
 tsd_set(tsd_t *val) {
+	tsd_t *tsd = JEMALLOC_TLS_ADDR(tsd_tls);
+
 	assert(tsd_booted);
-	if (likely(&tsd_tls != val)) {
-		tsd_tls = (*val);
+	if (likely(tsd != val)) {
+		*tsd = (*val);
 	}
-	if (pthread_setspecific(tsd_tsd, (void *)(&tsd_tls)) != 0) {
+	if (pthread_setspecific(tsd_tsd, (void *)tsd) != 0) {
 		malloc_write("<jemalloc>: Error setting tsd.\n");
 		if (opt_abort) {
 			abort();

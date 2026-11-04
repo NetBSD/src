@@ -1,5 +1,5 @@
 /* ldmisc.c
-   Copyright (C) 1991-2024 Free Software Foundation, Inc.
+   Copyright (C) 1991-2026 Free Software Foundation, Inc.
    Written by Steve Chamberlain of Cygnus Support.
 
    This file is part of the GNU Binutils.
@@ -37,12 +37,32 @@
 #include "ldmain.h"
 #include "ldfile.h"
 
+static size_t
+count_modifiers (const char *scan)
+{
+  size_t mods = strspn (scan, "-+ #0");
+
+  while (scan[mods] != '0' && ISDIGIT (scan[mods]))
+    ++mods;
+  if (scan[mods] == '.')
+    ++mods;
+  while (scan[mods] != '0' && ISDIGIT (scan[mods]))
+    ++mods;
+
+  return mods;
+}
+
+static char *
+make_cfmt (const char *fmt, int nr)
+{
+  return xasprintf ("%%%.*s", nr, fmt);
+}
+
 /*
  %% literal %
  %C clever filename:linenumber with function
  %D like %C, but no function name
  %E current bfd error or errno
- %F error is fatal
  %G like %D, but only function name
  %H like %C but in addition emit section+offset
  %P print program name
@@ -70,7 +90,6 @@
 void
 vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 {
-  bool fatal = false;
   const char *scan;
   int arg_type;
   unsigned int arg_count = 0;
@@ -79,6 +98,7 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
   {
     int i;
     long l;
+    long long ll;
     void *p;
     bfd_vma v;
     struct {
@@ -91,6 +111,7 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	Bad,
 	Int,
 	Long,
+	LongLong,
 	Ptr,
 	Vma,
 	RelAddr
@@ -120,6 +141,9 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      arg_no = *scan - '1';
 	      scan += 2;
 	    }
+
+	  /* Skip most modifiers that printf() permits.  */
+	  scan += count_modifiers (scan);
 
 	  arg_type = Bad;
 	  switch (*scan++)
@@ -159,11 +183,19 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      break;
 
 	    case 'l':
-	      if (*scan == 'd' || *scan == 'u' || *scan == 'x')
-		{
-		  ++scan;
-		  arg_type = Long;
-		}
+	      {
+		bool ll_type = false;
+		if (*scan == 'l')
+		  {
+		    ll_type = true;
+		    ++scan;
+		  }
+		if (*scan == 'd' || *scan == 'u' || *scan == 'x')
+		  {
+		    ++scan;
+		    arg_type = (ll_type ? LongLong : Long);
+		  }
+	      }
 	      break;
 
 	    default:
@@ -188,6 +220,9 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	  break;
 	case Long:
 	  args[arg_no].l = va_arg (ap, long);
+	  break;
+	case LongLong:
+	  args[arg_no].ll = va_arg (ap, long long);
 	  break;
 	case Ptr:
 	  args[arg_no].p = va_arg (ap, void *);
@@ -219,6 +254,8 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 
       if (*fmt == '%')
 	{
+	  size_t mods;
+
 	  fmt++;
 
 	  arg_no = arg_count;
@@ -228,8 +265,14 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      fmt += 2;
 	    }
 
+	  /* Record modifiers that printf() permits and that we support.  */
+	  mods = count_modifiers (fmt);
+	  fmt += mods;
+
 	  switch (*fmt++)
 	    {
+	      char *cfmt;
+
 	    case '\0':
 	      --fmt;
 	      /* Fall through.  */
@@ -280,11 +323,6 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 	      }
 	      break;
 
-	    case 'F':
-	      /* Error is fatal.  */
-	      fatal = true;
-	      break;
-
 	    case 'P':
 	      /* Print program name.  */
 	      fprintf (fp, "%s", program_name);
@@ -324,7 +362,7 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 		if (abfd != NULL)
 		  {
 		    if (!bfd_generic_link_read_symbols (abfd))
-		      einfo (_("%F%P: %pB: could not read symbols: %E\n"), abfd);
+		      fatal (_("%P: %pB: could not read symbols: %E\n"), abfd);
 
 		    asymbols = bfd_get_outsymbols (abfd);
 		  }
@@ -521,60 +559,48 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 		    }
 		  fprintf (fp, "%s", name);
 		}
-	      else
+	      else /* Native (host) void* pointer, like printf().  */
 		{
-		  /* native (host) void* pointer, like printf */
-		  fprintf (fp, "%p", args[arg_no].p);
+		  /* Fallthru */
+	    case 's': /* Arbitrary string, like printf().  */
+		  cfmt = make_cfmt (fmt - 1 - mods, mods + 1);
+		  fprintf (fp, cfmt, args[arg_no].p);
+		  free (cfmt);
 		  ++arg_count;
 		}
 	      break;
 
-	    case 's':
-	      /* arbitrary string, like printf */
-	      fprintf (fp, "%s", (char *) args[arg_no].p);
+	    case 'd': /* Integer, like printf().  */
+	    case 'u': /* Unsigned integer, like printf().  */
+	    case 'x': /* Unsigned integer, like printf().  */
+	      cfmt = make_cfmt (fmt - 1 - mods, mods + 1);
+	      fprintf (fp, cfmt, args[arg_no].i);
+	      free (cfmt);
 	      ++arg_count;
 	      break;
 
-	    case 'd':
-	      /* integer, like printf */
-	      fprintf (fp, "%d", args[arg_no].i);
-	      ++arg_count;
-	      break;
-
-	    case 'u':
-	      /* unsigned integer, like printf */
-	      fprintf (fp, "%u", args[arg_no].i);
-	      ++arg_count;
-	      break;
-
-	    case 'x':
-	      /* unsigned integer, like printf */
-	      fprintf (fp, "%x", args[arg_no].i);
-	      ++arg_count;
-	      break;
-
-	    case 'l':
-	      if (*fmt == 'd')
-		{
-		  fprintf (fp, "%ld", args[arg_no].l);
-		  ++arg_count;
-		  ++fmt;
-		  break;
-		}
-	      else if (*fmt == 'u')
-		{
-		  fprintf (fp, "%lu", args[arg_no].l);
-		  ++arg_count;
-		  ++fmt;
-		  break;
-		}
-	      else if (*fmt == 'x')
-		{
-		  fprintf (fp, "%lx", args[arg_no].l);
-		  ++arg_count;
-		  ++fmt;
-		  break;
-		}
+	    case 'l': /* (Unsigned) (long) long integer, like printf().  */
+	      {
+		bool ll_type = false;
+		if (*fmt == 'l')
+		  {
+		    fmt++;
+		    ll_type = true;
+		  }
+		if (*fmt == 'd' || *fmt == 'u' || *fmt == 'x')
+		  {
+		    unsigned int mods_len = (ll_type ? 2 : 1);
+		    cfmt = make_cfmt (fmt - mods_len - mods, mods + mods_len + 1);
+		    if (ll_type)
+		      fprintf (fp, cfmt, args[arg_no].ll);
+		    else
+		      fprintf (fp, cfmt, args[arg_no].l);
+		    free (cfmt);
+		    ++arg_count;
+		    ++fmt;
+		    break;
+		  }
+	      }
 	      /* Fallthru */
 
 	    default:
@@ -586,9 +612,6 @@ vfinfo (FILE *fp, const char *fmt, va_list ap, bool is_warning)
 
   if (is_warning && config.fatal_warnings)
     config.make_executable = false;
-
-  if (fatal)
-    xexit (1);
 }
 
 /* Format info message and print on stdout.  */
@@ -620,10 +643,100 @@ einfo (const char *fmt, ...)
   fflush (stderr);
 }
 
+/* Fatal error.  */
+
+void
+fatal (const char *fmt, ...)
+{
+  va_list arg;
+
+  fflush (stdout);
+  va_start (arg, fmt);
+  vfinfo (stderr, fmt, arg, true);
+  va_end (arg);
+  fflush (stderr);
+  xexit (1);
+}
+
+/* The buffer size for each command-line option warning.  */
+#define CMDLINE_WARNING_SIZE	256
+
+/* A linked list of command-line option warnings.  */
+
+struct cmdline_warning_list
+{
+  struct cmdline_warning_list *next;
+  char *warning;
+};
+
+/* The head of the linked list of command-line option warnings.  */
+static struct cmdline_warning_list *cmdline_warning_head = NULL;
+
+/* The tail of the linked list of command-line option warnings.  */
+static struct cmdline_warning_list **cmdline_warning_tail
+  = &cmdline_warning_head;
+
+/* Queue an unknown command-line option warning.  */
+
+void
+queue_unknown_cmdline_warning (const char *fmt, ...)
+{
+  va_list arg;
+  struct cmdline_warning_list *warning_ptr
+    = xmalloc (sizeof (*warning_ptr));
+  warning_ptr->warning = xmalloc (CMDLINE_WARNING_SIZE);
+  warning_ptr->next = NULL;
+  int written;
+
+  va_start (arg, fmt);
+  written = vsnprintf (warning_ptr->warning, CMDLINE_WARNING_SIZE, fmt,
+		       arg);
+  if (written < 0 || written >= CMDLINE_WARNING_SIZE)
+    {
+      /* If vsnprintf fails or truncates, output the warning directly.  */
+      fflush (stdout);
+      va_start (arg, fmt);
+      vfinfo (stderr, fmt, arg, true);
+      fflush (stderr);
+    }
+  else
+    {
+      *cmdline_warning_tail = warning_ptr;
+      cmdline_warning_tail = &warning_ptr->next;
+    }
+  va_end (arg);
+}
+
+/* Output queued unknown command-line option warnings.  */
+
+void
+output_unknown_cmdline_warnings (void)
+{
+  struct cmdline_warning_list *list = cmdline_warning_head;
+  struct cmdline_warning_list *next;
+  if (list == NULL)
+    return;
+
+  fflush (stdout);
+
+  for (; list != NULL; list = next)
+    {
+      next = list->next;
+      if (config.fatal_warnings)
+	einfo (_("%P: error: unsupported option: %s\n"), list->warning);
+      else
+	einfo (_("%P: warning: %s ignored\n"), list->warning);
+      free (list->warning);
+      free (list);
+    }
+
+  fflush (stderr);
+}
+
 void
 info_assert (const char *file, unsigned int line)
 {
-  einfo (_("%F%P: internal error %s %d\n"), file, line);
+  fatal (_("%P: internal error %s %d\n"), file, line);
 }
 
 /* ('m' for map) Format info message and print on map.  */
@@ -692,6 +805,83 @@ ld_abort (const char *file, int line, const char *fn)
   else
     einfo (_("%P: internal error: aborting at %s:%d\n"),
 	   file, line);
-  einfo (_("%F%P: please report this bug\n"));
-  xexit (1);
+  fatal (_("%P: please report this bug\n"));
+}
+
+/* Decode a hexadecimal character. Return -1 on error. */
+static int
+hexdecode (char c)
+{
+  if ('0' <= c && c <= '9')
+    return c - '0';
+  if ('A' <= c && c <= 'F')
+    return c - 'A' + 10;
+  if ('a' <= c && c <= 'f')
+    return c - 'a' + 10;
+  return -1;
+}
+
+/* Decode a percent and/or %[string] encoded string. dst must be at least
+   the same size as src. It can be converted in place.
+
+   Following %[string] encodings are supported:
+
+   %[comma] for ,
+   %[lbrace] for {
+   %[quot] for "
+   %[rbrace] for }
+   %[space] for ' '
+
+   The percent decoding behaves the same as Python's urllib.parse.unquote. */
+void
+percent_decode (const char *src, char *dst)
+{
+  while (*src != '\0')
+    {
+      char c = *src++;
+      if (c == '%')
+	{
+	  char next1 = *src;
+	  int hex1 = hexdecode (next1);
+	  if (hex1 != -1)
+	    {
+	      int hex2 = hexdecode (*(src + 1));
+	      if (hex2 != -1)
+		{
+		  c = (char) ((hex1 << 4) + hex2);
+		  src += 2;
+		}
+	    }
+	  else if (next1 == '[')
+	    {
+	      if (strncmp (src + 1, "comma]", 6) == 0)
+		{
+		  c = ',';
+		  src += 7;
+		}
+	      else if (strncmp (src + 1, "lbrace]", 7) == 0)
+		{
+		  c = '{';
+		  src += 8;
+		}
+	      else if (strncmp (src + 1, "quot]", 5) == 0)
+		{
+		  c = '"';
+		  src += 6;
+		}
+	      else if (strncmp (src + 1, "rbrace]", 7) == 0)
+		{
+		  c = '}';
+		  src += 8;
+		}
+	      else if (strncmp (src + 1, "space]", 6) == 0)
+		{
+		  c = ' ';
+		  src += 7;
+		}
+	    }
+	}
+      *dst++ = c;
+    }
+  *dst = '\0';
 }

@@ -1,5 +1,5 @@
 .TH SLAPD-ASYNCMETA 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 2016-2021 The OpenLDAP Foundation.
+.\" Copyright 2016-2024 The OpenLDAP Foundation.
 .\" Portions Copyright 2016 Symas Corporation.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" $OpenLDAP$
@@ -54,8 +54,7 @@ works with a configured maximum number of connections per target.
 For each request redirected to a target, a different connection is selected.
 Each connection has a queue, to which the request is added before it is sent to the
 remote server, and is removed after the last response for that request is received.
- For each new request, the connection with the smallest number of pending requests
-is selected, or using round\-robin if the numbers are equal.
+ For each new request, a new connection is chosen using round\-robin scheduling.
 .LP
 .B Overlays:
 .LP
@@ -405,15 +404,6 @@ the global value can be overridden by redefinitions inside each target
 specification.
 
 .TP
-.B rewrite* ...
-The rewrite options are identical to the
-.B meta
-backend. See the
-.B REWRITING
-section of
-.B slapd\-meta(5).
-
-.TP
 .B subtree\-{exclude|include} "<rule>"
 This directive allows one to indicate what subtrees are actually served
 by a target. See
@@ -474,10 +464,11 @@ connection unless the URI directive protocol scheme is \fBldaps://\fP.
 In that case this keyword may only be set to "ldaps" and the StartTLS
 operation will not be used.
 
-\fBpropagate\fP issues the StartTLS operation only if the original
-connection did.
+With \fBpropagate\fP, the proxy issues the StartTLS operation only if
+the original connection has a TLS layer set up.
 The \fBtry\-\fP prefix instructs the proxy to continue operations
-if the StartTLS operation failed; its use is highly deprecated.
+if the StartTLS operation failed; its use is \fBnot\fP recommended.
+
 The TLS settings default to the same as the main slapd TLS settings,
 except for
 .B tls_reqcert

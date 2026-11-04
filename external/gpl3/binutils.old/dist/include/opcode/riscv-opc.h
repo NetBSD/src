@@ -1,5 +1,5 @@
 /* riscv-opc.h.  RISC-V instruction opcode and CSR macros.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
    Contributed by Andrew Waterman
 
    This file is part of GDB, GAS, and the GNU binutils.
@@ -235,6 +235,46 @@
 #define MASK_LR_D  0xf9f0707f
 #define MATCH_SC_D 0x1800302f
 #define MASK_SC_D  0xf800707f
+#define MATCH_AMOADD_B 0x02f
+#define MASK_AMOADD_B  0xf800707f
+#define MATCH_AMOXOR_B 0x2000002f
+#define MASK_AMOXOR_B  0xf800707f
+#define MATCH_AMOOR_B 0x4000002f
+#define MASK_AMOOR_B  0xf800707f
+#define MATCH_AMOAND_B 0x6000002f
+#define MASK_AMOAND_B  0xf800707f
+#define MATCH_AMOMIN_B 0x8000002f
+#define MASK_AMOMIN_B  0xf800707f
+#define MATCH_AMOMAX_B 0xa000002f
+#define MASK_AMOMAX_B  0xf800707f
+#define MATCH_AMOMINU_B 0xc000002f
+#define MASK_AMOMINU_B  0xf800707f
+#define MATCH_AMOMAXU_B 0xe000002f
+#define MASK_AMOMAXU_B  0xf800707f
+#define MATCH_AMOSWAP_B 0x800002f
+#define MASK_AMOSWAP_B  0xf800707f
+#define MATCH_AMOCAS_B 0x2800002f
+#define MASK_AMOCAS_B 0xf800707f
+#define MATCH_AMOADD_H 0x102f
+#define MASK_AMOADD_H  0xf800707f
+#define MATCH_AMOXOR_H 0x2000102f
+#define MASK_AMOXOR_H  0xf800707f
+#define MATCH_AMOOR_H 0x4000102f
+#define MASK_AMOOR_H  0xf800707f
+#define MATCH_AMOAND_H 0x6000102f
+#define MASK_AMOAND_H  0xf800707f
+#define MATCH_AMOMIN_H 0x8000102f
+#define MASK_AMOMIN_H  0xf800707f
+#define MATCH_AMOMAX_H 0xa000102f
+#define MASK_AMOMAX_H  0xf800707f
+#define MATCH_AMOMINU_H 0xc000102f
+#define MASK_AMOMINU_H  0xf800707f
+#define MATCH_AMOMAXU_H 0xe000102f
+#define MASK_AMOMAXU_H  0xf800707f
+#define MATCH_AMOSWAP_H 0x800102f
+#define MASK_AMOSWAP_H  0xf800707f
+#define MATCH_AMOCAS_H 0x2800102f
+#define MASK_AMOCAS_H 0xf800707f
 #define MATCH_ECALL 0x73
 #define MASK_ECALL  0xffffffff
 #define MATCH_EBREAK 0x100073
@@ -249,8 +289,6 @@
 #define MASK_MRET  0xffffffff
 #define MATCH_DRET 0x7b200073
 #define MASK_DRET  0xffffffff
-#define MATCH_SFENCE_VM 0x10400073
-#define MASK_SFENCE_VM  0xfff07fff
 #define MATCH_SFENCE_VMA 0x12000073
 #define MASK_SFENCE_VMA  0xfe007fff
 #define MATCH_WFI 0x10500073
@@ -419,6 +457,72 @@
 #define MASK_FCVT_Q_L  0xfff0007f
 #define MATCH_FCVT_Q_LU 0xd6300053
 #define MASK_FCVT_Q_LU  0xfff0007f
+#define MATCH_FLI_H 0xf4100053
+#define MASK_FLI_H 0xfff0707f
+#define MATCH_FMINM_H 0x2c002053
+#define MASK_FMINM_H 0xfe00707f
+#define MATCH_FMAXM_H 0x2c003053
+#define MASK_FMAXM_H 0xfe00707f
+#define MATCH_FROUND_H 0x44400053
+#define MASK_FROUND_H 0xfff0007f
+#define MATCH_FROUNDNX_H 0x44500053
+#define MASK_FROUNDNX_H 0xfff0007f
+#define MATCH_FLTQ_H 0xa4005053
+#define MASK_FLTQ_H 0xfe00707f
+#define MATCH_FLEQ_H 0xa4004053
+#define MASK_FLEQ_H 0xfe00707f
+#define MATCH_FLI_S 0xf0100053
+#define MASK_FLI_S 0xfff0707f
+#define MATCH_FMINM_S 0x28002053
+#define MASK_FMINM_S 0xfe00707f
+#define MATCH_FMAXM_S 0x28003053
+#define MASK_FMAXM_S 0xfe00707f
+#define MATCH_FROUND_S 0x40400053
+#define MASK_FROUND_S 0xfff0007f
+#define MATCH_FROUNDNX_S 0x40500053
+#define MASK_FROUNDNX_S 0xfff0007f
+#define MATCH_FLTQ_S 0xa0005053
+#define MASK_FLTQ_S 0xfe00707f
+#define MATCH_FLEQ_S 0xa0004053
+#define MASK_FLEQ_S 0xfe00707f
+#define MATCH_FLI_D 0xf2100053
+#define MASK_FLI_D 0xfff0707f
+#define MATCH_FMINM_D 0x2a002053
+#define MASK_FMINM_D 0xfe00707f
+#define MATCH_FMAXM_D 0x2a003053
+#define MASK_FMAXM_D 0xfe00707f
+#define MATCH_FROUND_D 0x42400053
+#define MASK_FROUND_D 0xfff0007f
+#define MATCH_FROUNDNX_D 0x42500053
+#define MASK_FROUNDNX_D 0xfff0007f
+#define MATCH_FLTQ_D 0xa2005053
+#define MASK_FLTQ_D 0xfe00707f
+#define MATCH_FLEQ_D 0xa2004053
+#define MASK_FLEQ_D 0xfe00707f
+#define MATCH_FLI_Q 0xf6100053
+#define MASK_FLI_Q 0xfff0707f
+#define MATCH_FMINM_Q 0x2e002053
+#define MASK_FMINM_Q 0xfe00707f
+#define MATCH_FMAXM_Q 0x2e003053
+#define MASK_FMAXM_Q 0xfe00707f
+#define MATCH_FROUND_Q 0x46400053
+#define MASK_FROUND_Q 0xfff0007f
+#define MATCH_FROUNDNX_Q 0x46500053
+#define MASK_FROUNDNX_Q 0xfff0007f
+#define MATCH_FLTQ_Q 0xa6005053
+#define MASK_FLTQ_Q 0xfe00707f
+#define MATCH_FLEQ_Q 0xa6004053
+#define MASK_FLEQ_Q 0xfe00707f
+#define MATCH_FCVTMOD_W_D 0xc2801053
+#define MASK_FCVTMOD_W_D 0xfff0707f
+#define MATCH_FMVH_X_D 0xe2100053
+#define MASK_FMVH_X_D 0xfff0707f
+#define MATCH_FMVH_X_Q 0xe6100053
+#define MASK_FMVH_X_Q 0xfff0707f
+#define MATCH_FMVP_D_X 0xb2000053
+#define MASK_FMVP_D_X 0xfe00707f
+#define MATCH_FMVP_Q_X 0xb6000053
+#define MASK_FMVP_Q_X 0xfe00707f
 #define MATCH_CLZ 0x60001013
 #define MASK_CLZ  0xfff0707f
 #define MATCH_CTZ 0x60101013
@@ -2055,6 +2159,161 @@
 #define MASK_VDOTUVV  0xfc00707f
 #define MATCH_VFDOTVV  0xe4001057
 #define MASK_VFDOTVV  0xfc00707f
+/* Zvbb/Zvkb instructions.  */
+#define MATCH_VANDN_VV 0x4000057
+#define MASK_VANDN_VV 0xfc00707f
+#define MATCH_VANDN_VX 0x4004057
+#define MASK_VANDN_VX 0xfc00707f
+#define MATCH_VBREV8_V 0x48042057
+#define MASK_VBREV8_V 0xfc0ff07f
+#define MATCH_VBREV_V 0x48052057
+#define MASK_VBREV_V 0xfc0ff07f
+#define MATCH_VCLZ_V 0x48062057
+#define MASK_VCLZ_V 0xfc0ff07f
+#define MATCH_VCPOP_V 0x48072057
+#define MASK_VCPOP_V 0xfc0ff07f
+#define MATCH_VCTZ_V 0x4806a057
+#define MASK_VCTZ_V 0xfc0ff07f
+#define MATCH_VREV8_V 0x4804a057
+#define MASK_VREV8_V 0xfc0ff07f
+#define MATCH_VROL_VV 0x54000057
+#define MASK_VROL_VV 0xfc00707f
+#define MATCH_VROL_VX 0x54004057
+#define MASK_VROL_VX 0xfc00707f
+#define MATCH_VROR_VI 0x50003057
+#define MASK_VROR_VI 0xf800707f
+#define MATCH_VROR_VV 0x50000057
+#define MASK_VROR_VV 0xfc00707f
+#define MATCH_VROR_VX 0x50004057
+#define MASK_VROR_VX 0xfc00707f
+#define MATCH_VWSLL_VI 0xd4003057
+#define MASK_VWSLL_VI 0xfc00707f
+#define MATCH_VWSLL_VV 0xd4000057
+#define MASK_VWSLL_VV 0xfc00707f
+#define MATCH_VWSLL_VX 0xd4004057
+#define MASK_VWSLL_VX 0xfc00707f
+/* Zvbc instructions. */
+#define MATCH_VCLMUL_VV 0x30002057
+#define MASK_VCLMUL_VV 0xfc00707f
+#define MATCH_VCLMUL_VX 0x30006057
+#define MASK_VCLMUL_VX 0xfc00707f
+#define MATCH_VCLMULH_VV 0x34002057
+#define MASK_VCLMULH_VV 0xfc00707f
+#define MATCH_VCLMULH_VX 0x34006057
+#define MASK_VCLMULH_VX 0xfc00707f
+/* Zvkg instructions.  */
+#define MATCH_VGHSH_VV 0xb2002077
+#define MASK_VGHSH_VV 0xfe00707f
+#define MATCH_VGMUL_VV 0xa208a077
+#define MASK_VGMUL_VV 0xfe0ff07f
+/* Zvkned instructions.  */
+#define MATCH_VAESDF_VS 0xa600a077
+#define MASK_VAESDF_VS 0xfe0ff07f
+#define MATCH_VAESDF_VV 0xa200a077
+#define MASK_VAESDF_VV 0xfe0ff07f
+#define MATCH_VAESDM_VS 0xa6002077
+#define MASK_VAESDM_VS 0xfe0ff07f
+#define MATCH_VAESDM_VV 0xa2002077
+#define MASK_VAESDM_VV 0xfe0ff07f
+#define MATCH_VAESEF_VS 0xa601a077
+#define MASK_VAESEF_VS 0xfe0ff07f
+#define MATCH_VAESEF_VV 0xa201a077
+#define MASK_VAESEF_VV 0xfe0ff07f
+#define MATCH_VAESEM_VS 0xa6012077
+#define MASK_VAESEM_VS 0xfe0ff07f
+#define MATCH_VAESEM_VV 0xa2012077
+#define MASK_VAESEM_VV 0xfe0ff07f
+#define MATCH_VAESKF1_VI 0x8a002077
+#define MASK_VAESKF1_VI 0xfe00707f
+#define MATCH_VAESKF2_VI 0xaa002077
+#define MASK_VAESKF2_VI 0xfe00707f
+#define MATCH_VAESZ_VS 0xa603a077
+#define MASK_VAESZ_VS 0xfe0ff07f
+/* Zvknh[a,b] instructions.  */
+#define MATCH_VSHA2CH_VV 0xba002077
+#define MASK_VSHA2CH_VV 0xfe00707f
+#define MATCH_VSHA2CL_VV 0xbe002077
+#define MASK_VSHA2CL_VV 0xfe00707f
+#define MATCH_VSHA2MS_VV 0xb6002077
+#define MASK_VSHA2MS_VV 0xfe00707f
+/* Zvksed instructions.  */
+#define MATCH_VSM4K_VI 0x86002077
+#define MASK_VSM4K_VI 0xfe00707f
+#define MATCH_VSM4R_VS 0xa6082077
+#define MASK_VSM4R_VS 0xfe0ff07f
+#define MATCH_VSM4R_VV 0xa2082077
+#define MASK_VSM4R_VV 0xfe0ff07f
+/* Zvksh instructions.  */
+#define MATCH_VSM3C_VI 0xae002077
+#define MASK_VSM3C_VI 0xfe00707f
+#define MATCH_VSM3ME_VV 0x82002077
+#define MASK_VSM3ME_VV 0xfe00707f
+/* Zcb instructions.  */
+#define MATCH_C_LBU 0x8000
+#define MASK_C_LBU 0xfc03
+#define MATCH_C_LHU 0x8400
+#define MASK_C_LHU 0xfc43
+#define MATCH_C_LH 0x8440
+#define MASK_C_LH 0xfc43
+#define MATCH_C_SB 0x8800
+#define MASK_C_SB 0xfc03
+#define MATCH_C_SH 0x8c00
+#define MASK_C_SH 0xfc43
+#define MATCH_C_ZEXT_B 0x9c61
+#define MASK_C_ZEXT_B 0xfc7f
+#define MATCH_C_SEXT_B 0x9c65
+#define MASK_C_SEXT_B 0xfc7f
+#define MATCH_C_ZEXT_H 0x9c69
+#define MASK_C_ZEXT_H 0xfc7f
+#define MATCH_C_SEXT_H 0x9c6d
+#define MASK_C_SEXT_H 0xfc7f
+#define MATCH_C_ZEXT_W 0x9c71
+#define MASK_C_ZEXT_W 0xfc7f
+#define MATCH_C_NOT 0x9c75
+#define MASK_C_NOT 0xfc7f
+#define MATCH_C_MUL 0x9c41
+#define MASK_C_MUL 0xfc63
+/* Zcmop instructions.  */
+#define MATCH_C_MOP_1 0x6081
+#define MASK_C_MOP_1 0xffff
+#define MATCH_C_MOP_3 0x6181
+#define MASK_C_MOP_3 0xffff
+#define MATCH_C_MOP_5 0x6281
+#define MASK_C_MOP_5 0xffff
+#define MATCH_C_MOP_7 0x6381
+#define MASK_C_MOP_7 0xffff
+#define MATCH_C_MOP_9 0x6481
+#define MASK_C_MOP_9 0xffff
+#define MATCH_C_MOP_11 0x6581
+#define MASK_C_MOP_11 0xffff
+#define MATCH_C_MOP_13 0x6681
+#define MASK_C_MOP_13 0xffff
+#define MATCH_C_MOP_15 0x6781
+#define MASK_C_MOP_15 0xffff
+/* Zcmp instructions.  */
+#define MATCH_CM_PUSH 0xb802
+#define MASK_CM_PUSH 0xff03
+#define MATCH_CM_POP 0xba02
+#define MASK_CM_POP 0xff03
+#define MATCH_CM_POPRET 0xbe02
+#define MASK_CM_POPRET 0xff03
+#define MATCH_CM_POPRETZ 0xbc02
+#define MASK_CM_POPRETZ 0xff03
+#define MATCH_CM_MVA01S 0xac62
+#define MASK_CM_MVA01S 0xfc63
+#define MATCH_CM_MVSA01 0xac22
+#define MASK_CM_MVSA01 0xfc63
+/* Zcmt instructions.  */
+#define MATCH_CM_JT 0xa002
+#define MASK_CM_JT 0xfc03
+#define MATCH_CM_JALT 0xa002
+#define MASK_CM_JALT 0xfc03
+/* Smctr/Ssctr instruction.  */
+#define MATCH_SCTRCLR 0x10400073
+#define MASK_SCTRCLR 0xffffffff
+/* Smrnmi instruction.  */
+#define MATCH_MNRET 0x70200073
+#define MASK_MNRET 0xffffffff
 /* Svinval instruction.  */
 #define MATCH_SINVAL_VMA 0x16000073
 #define MASK_SINVAL_VMA 0xfe007fff
@@ -2097,6 +2356,24 @@
 #define MASK_HSV_W 0xfe007fff
 #define MATCH_HSV_D 0x6e004073
 #define MASK_HSV_D 0xfe007fff
+/* Zicfiss instructions.  */
+#define MATCH_SSPUSH 0xce004073
+#define MASK_SSPUSH 0xfe0fffff
+#define MATCH_SSPOPCHK 0xcdc04073
+#define MASK_SSPOPCHK 0xfff07fff
+#define MATCH_SSRDP 0xcdc04073
+#define MASK_SSRDP 0xfffff07f
+#define MATCH_SSAMOSWAP_W 0x4800202f
+#define MASK_SSAMOSWAP_W 0xf800707f
+#define MATCH_SSAMOSWAP_D 0x4800302f
+#define MASK_SSAMOSWAP_D 0xf800707f
+#define MATCH_C_SSPUSH 0x6081
+#define MASK_C_SSPUSH 0xffff
+#define MATCH_C_SSPOPCHK 0x6281
+#define MASK_C_SSPOPCHK 0xffff
+/* Zicfilp instructions.  */
+#define MATCH_LPAD 0x17
+#define MASK_LPAD  0xfff
 /* Zicbop hint instructions. */
 #define MATCH_PREFETCH_I 0x6013
 #define MASK_PREFETCH_I 0x1f07fff
@@ -2113,6 +2390,1439 @@
 #define MASK_CBO_INVAL 0xfff07fff
 #define MATCH_CBO_ZERO 0x40200f
 #define MASK_CBO_ZERO 0xfff07fff
+/* Zicond instructions. */
+#define MATCH_CZERO_EQZ 0xe005033
+#define MASK_CZERO_EQZ 0xfe00707f
+#define MATCH_CZERO_NEZ 0xe007033
+#define MASK_CZERO_NEZ 0xfe00707f
+/* Zihintntl hint instructions.  */
+#define MATCH_NTL_P1 0x200033
+#define MASK_NTL_P1 0xffffffff
+#define MATCH_NTL_PALL 0x300033
+#define MASK_NTL_PALL 0xffffffff
+#define MATCH_NTL_S1 0x400033
+#define MASK_NTL_S1 0xffffffff
+#define MATCH_NTL_ALL 0x500033
+#define MASK_NTL_ALL 0xffffffff
+#define MATCH_C_NTL_P1 0x900a
+#define MASK_C_NTL_P1 0xffff
+#define MATCH_C_NTL_PALL 0x900e
+#define MASK_C_NTL_PALL 0xffff
+#define MATCH_C_NTL_S1 0x9012
+#define MASK_C_NTL_S1 0xffff
+#define MATCH_C_NTL_ALL 0x9016
+#define MASK_C_NTL_ALL 0xffff
+/* Zimop instructions.  */
+#define MATCH_MOP_R_0 0x81c04073
+#define MASK_MOP_R_0 0xfff0707f
+#define MATCH_MOP_R_1 0x81d04073
+#define MASK_MOP_R_1 0xfff0707f
+#define MATCH_MOP_R_2 0x81e04073
+#define MASK_MOP_R_2 0xfff0707f
+#define MATCH_MOP_R_3 0x81f04073
+#define MASK_MOP_R_3 0xfff0707f
+#define MATCH_MOP_R_4 0x85c04073
+#define MASK_MOP_R_4 0xfff0707f
+#define MATCH_MOP_R_5 0x85d04073
+#define MASK_MOP_R_5 0xfff0707f
+#define MATCH_MOP_R_6 0x85e04073
+#define MASK_MOP_R_6 0xfff0707f
+#define MATCH_MOP_R_7 0x85f04073
+#define MASK_MOP_R_7 0xfff0707f
+#define MATCH_MOP_R_8 0x89c04073
+#define MASK_MOP_R_8 0xfff0707f
+#define MATCH_MOP_R_9 0x89d04073
+#define MASK_MOP_R_9 0xfff0707f
+#define MATCH_MOP_R_10 0x89e04073
+#define MASK_MOP_R_10 0xfff0707f
+#define MATCH_MOP_R_11 0x89f04073
+#define MASK_MOP_R_11 0xfff0707f
+#define MATCH_MOP_R_12 0x8dc04073
+#define MASK_MOP_R_12 0xfff0707f
+#define MATCH_MOP_R_13 0x8dd04073
+#define MASK_MOP_R_13 0xfff0707f
+#define MATCH_MOP_R_14 0x8de04073
+#define MASK_MOP_R_14 0xfff0707f
+#define MATCH_MOP_R_15 0x8df04073
+#define MASK_MOP_R_15 0xfff0707f
+#define MATCH_MOP_R_16 0xc1c04073
+#define MASK_MOP_R_16 0xfff0707f
+#define MATCH_MOP_R_17 0xc1d04073
+#define MASK_MOP_R_17 0xfff0707f
+#define MATCH_MOP_R_18 0xc1e04073
+#define MASK_MOP_R_18 0xfff0707f
+#define MATCH_MOP_R_19 0xc1f04073
+#define MASK_MOP_R_19 0xfff0707f
+#define MATCH_MOP_R_20 0xc5c04073
+#define MASK_MOP_R_20 0xfff0707f
+#define MATCH_MOP_R_21 0xc5d04073
+#define MASK_MOP_R_21 0xfff0707f
+#define MATCH_MOP_R_22 0xc5e04073
+#define MASK_MOP_R_22 0xfff0707f
+#define MATCH_MOP_R_23 0xc5f04073
+#define MASK_MOP_R_23 0xfff0707f
+#define MATCH_MOP_R_24 0xc9c04073
+#define MASK_MOP_R_24 0xfff0707f
+#define MATCH_MOP_R_25 0xc9d04073
+#define MASK_MOP_R_25 0xfff0707f
+#define MATCH_MOP_R_26 0xc9e04073
+#define MASK_MOP_R_26 0xfff0707f
+#define MATCH_MOP_R_27 0xc9f04073
+#define MASK_MOP_R_27 0xfff0707f
+#define MATCH_MOP_R_28 0xcdc04073
+#define MASK_MOP_R_28 0xfff0707f
+#define MATCH_MOP_R_29 0xcdd04073
+#define MASK_MOP_R_29 0xfff0707f
+#define MATCH_MOP_R_30 0xcde04073
+#define MASK_MOP_R_30 0xfff0707f
+#define MATCH_MOP_R_31 0xcdf04073
+#define MASK_MOP_R_31 0xfff0707f
+#define MATCH_MOP_RR_0 0x82004073
+#define MASK_MOP_RR_0 0xfe00707f
+#define MATCH_MOP_RR_1 0x86004073
+#define MASK_MOP_RR_1 0xfe00707f
+#define MATCH_MOP_RR_2 0x8a004073
+#define MASK_MOP_RR_2 0xfe00707f
+#define MATCH_MOP_RR_3 0x8e004073
+#define MASK_MOP_RR_3 0xfe00707f
+#define MATCH_MOP_RR_4 0xc2004073
+#define MASK_MOP_RR_4 0xfe00707f
+#define MATCH_MOP_RR_5 0xc6004073
+#define MASK_MOP_RR_5 0xfe00707f
+#define MATCH_MOP_RR_6 0xca004073
+#define MASK_MOP_RR_6 0xfe00707f
+#define MATCH_MOP_RR_7 0xce004073
+#define MASK_MOP_RR_7 0xfe00707f
+/* Zacas instructions.  */
+#define MATCH_AMOCAS_W 0x2800202f
+#define MASK_AMOCAS_W 0xf800707f
+#define MATCH_AMOCAS_D 0x2800302f
+#define MASK_AMOCAS_D 0xf800707f
+#define MATCH_AMOCAS_Q 0x2800402f
+#define MASK_AMOCAS_Q 0xf800707f
+/* Zawrs instructions.  */
+#define MATCH_WRS_NTO 0x00d00073
+#define MASK_WRS_NTO 0xffffffff
+#define MATCH_WRS_STO 0x01d00073
+#define MASK_WRS_STO 0xffffffff
+/* Zfbfmin intructions.  */
+#define MATCH_FCVT_BF16_S 0x44800053
+#define MASK_FCVT_BF16_S 0xfff0007f
+#define MATCH_FCVT_S_BF16 0x40600053
+#define MASK_FCVT_S_BF16 0xfff0007f
+/* Zvfbfmin intructions.  */
+#define MATCH_VFNCVTBF16_F_F_W 0x480e9057
+#define MASK_VFNCVTBF16_F_F_W 0xfc0ff07f
+#define MATCH_VFWCVTBF16_F_F_V 0x48069057
+#define MASK_VFWCVTBF16_F_F_V 0xfc0ff07f
+/* Zvfbfwma intructions.  */
+#define MATCH_VFWMACCBF16_VF 0xec005057
+#define MASK_VFWMACCBF16_VF 0xfc00707f
+#define MATCH_VFWMACCBF16_VV 0xec001057
+#define MASK_VFWMACCBF16_VV 0xfc00707f
+/* Vendor-specific (CORE-V) Xcvmac instructions.  */
+#define MATCH_CV_MAC       0x9000302b
+#define MASK_CV_MAC        0xfe00707f
+#define MATCH_CV_MSU       0x9200302b
+#define MASK_CV_MSU        0xfe00707f
+#define MATCH_CV_MULSN     0x405b
+#define MASK_CV_MULSN      0xc000707f
+#define MATCH_CV_MULHHSN   0x4000405b
+#define MASK_CV_MULHHSN    0xc000707f
+#define MATCH_CV_MULSRN    0x8000405b
+#define MASK_CV_MULSRN     0xc000707f
+#define MATCH_CV_MULHHSRN  0xc000405b
+#define MASK_CV_MULHHSRN   0xc000707f
+#define MATCH_CV_MULUN     0x505b
+#define MASK_CV_MULUN      0xc000707f
+#define MATCH_CV_MULHHUN   0x4000505b
+#define MASK_CV_MULHHUN    0xc000707f
+#define MATCH_CV_MULURN    0x8000505b
+#define MASK_CV_MULURN     0xc000707f
+#define MATCH_CV_MULHHURN  0xc000505b
+#define MASK_CV_MULHHURN   0xc000707f
+#define MATCH_CV_MACSN     0x605b
+#define MASK_CV_MACSN      0xc000707f
+#define MATCH_CV_MACHHSN   0x4000605b
+#define MASK_CV_MACHHSN    0xc000707f
+#define MATCH_CV_MACSRN    0x8000605b
+#define MASK_CV_MACSRN     0xc000707f
+#define MATCH_CV_MACHHSRN  0xc000605b
+#define MASK_CV_MACHHSRN   0xc000707f
+#define MATCH_CV_MACUN     0x705b
+#define MASK_CV_MACUN      0xc000707f
+#define MATCH_CV_MACHHUN   0x4000705b
+#define MASK_CV_MACHHUN    0xc000707f
+#define MATCH_CV_MACURN    0x8000705b
+#define MASK_CV_MACURN     0xc000707f
+#define MATCH_CV_MACHHURN  0xc000705b
+#define MASK_CV_MACHHURN   0xc000707f
+/* Vendor-specific (CORE-V) Xcvalu instructions.  */
+#define MATCH_CV_ABS 0x5000302b
+#define MASK_CV_ABS 0xfff0707f
+#define MATCH_CV_SLE 0x5200302b
+#define MASK_CV_SLE 0xfe00707f
+#define MATCH_CV_SLET 0x5200302b
+#define MASK_CV_SLET 0xfe00707f
+#define MATCH_CV_SLEU 0x5400302b
+#define MASK_CV_SLEU 0xfe00707f
+#define MATCH_CV_SLETU 0x5400302b
+#define MASK_CV_SLETU 0xfe00707f
+#define MATCH_CV_MIN 0x5600302b
+#define MASK_CV_MIN 0xfe00707f
+#define MATCH_CV_MINU 0x5800302b
+#define MASK_CV_MINU 0xfe00707f
+#define MATCH_CV_MAX 0x5a00302b
+#define MASK_CV_MAX 0xfe00707f
+#define MATCH_CV_MAXU 0x5c00302b
+#define MASK_CV_MAXU 0xfe00707f
+#define MATCH_CV_EXTHS 0x6000302b
+#define MASK_CV_EXTHS 0xfff0707f
+#define MATCH_CV_EXTHZ 0x6200302b
+#define MASK_CV_EXTHZ 0xfff0707f
+#define MATCH_CV_EXTBS 0x6400302b
+#define MASK_CV_EXTBS 0xfff0707f
+#define MATCH_CV_EXTBZ 0x6600302b
+#define MASK_CV_EXTBZ 0xfff0707f
+#define MATCH_CV_CLIP 0x7000302b
+#define MASK_CV_CLIP 0xfe00707f
+#define MATCH_CV_CLIPU 0x7200302b
+#define MASK_CV_CLIPU 0xfe00707f
+#define MATCH_CV_CLIPR 0x7400302b
+#define MASK_CV_CLIPR 0xfe00707f
+#define MATCH_CV_CLIPUR 0x7600302b
+#define MASK_CV_CLIPUR 0xfe00707f
+#define MATCH_CV_ADDNR 0x8000302b
+#define MASK_CV_ADDNR 0xfe00707f
+#define MATCH_CV_ADDUNR 0x8200302b
+#define MASK_CV_ADDUNR 0xfe00707f
+#define MATCH_CV_ADDRNR 0x8400302b
+#define MASK_CV_ADDRNR 0xfe00707f
+#define MATCH_CV_ADDURNR 0x8600302b
+#define MASK_CV_ADDURNR 0xfe00707f
+#define MATCH_CV_SUBNR 0x8800302b
+#define MASK_CV_SUBNR 0xfe00707f
+#define MATCH_CV_SUBUNR 0x8a00302b
+#define MASK_CV_SUBUNR 0xfe00707f
+#define MATCH_CV_SUBRNR 0x8c00302b
+#define MASK_CV_SUBRNR 0xfe00707f
+#define MATCH_CV_SUBURNR 0x8e00302b
+#define MASK_CV_SUBURNR 0xfe00707f
+#define MATCH_CV_ADDN 0x205b
+#define MASK_CV_ADDN 0xc000707f
+#define MATCH_CV_ADDUN 0x4000205b
+#define MASK_CV_ADDUN 0xc000707f
+#define MATCH_CV_ADDRN 0x8000205b
+#define MASK_CV_ADDRN 0xc000707f
+#define MATCH_CV_ADDURN 0xc000205b
+#define MASK_CV_ADDURN 0xc000707f
+#define MATCH_CV_SUBN 0x305b
+#define MASK_CV_SUBN 0xc000707f
+#define MATCH_CV_SUBUN 0x4000305b
+#define MASK_CV_SUBUN 0xc000707f
+#define MATCH_CV_SUBRN 0x8000305b
+#define MASK_CV_SUBRN 0xc000707f
+#define MATCH_CV_SUBURN 0xc000305b
+#define MASK_CV_SUBURN 0xc000707f
+/* Vendor-specific (CORE-V) Xcvelw instructions. */
+#define MATCH_CV_ELW 0x600b
+#define MASK_CV_ELW 0x707f
+/* Vendor-specific (CORE-V) Xcvbi instructions. */
+#define MATCH_CV_BNEIMM 0x700b
+#define MASK_CV_BNEIMM 0x707f
+#define MATCH_CV_BEQIMM 0x600b
+#define MASK_CV_BEQIMM 0x707f
+/* Vendor-specific (CORE-V) Xcvmem instructions. */
+#define MASK_CV_LBPOST     0x707f
+#define MATCH_CV_LBPOST    0xb
+#define MASK_CV_LBUPOST    0x707f
+#define MATCH_CV_LBUPOST   0x400b
+#define MASK_CV_LHPOST     0x707f
+#define MATCH_CV_LHPOST    0x100b
+#define MASK_CV_LHUPOST    0x707f
+#define MATCH_CV_LHUPOST   0x500b
+#define MASK_CV_LWPOST     0x707f
+#define MATCH_CV_LWPOST    0x200b
+#define MASK_CV_LBRRPOST   0xfe00707f
+#define MATCH_CV_LBRRPOST  0x302b
+#define MASK_CV_LBURRPOST  0xfe00707f
+#define MATCH_CV_LBURRPOST 0x1000302b
+#define MASK_CV_LHRRPOST   0xfe00707f
+#define MATCH_CV_LHRRPOST  0x200302b
+#define MASK_CV_LHURRPOST  0xfe00707f
+#define MATCH_CV_LHURRPOST 0x1200302b
+#define MASK_CV_LWRRPOST   0xfe00707f
+#define MATCH_CV_LWRRPOST  0x400302b
+#define MASK_CV_LBRR       0xfe00707f
+#define MATCH_CV_LBRR      0x800302b
+#define MASK_CV_LBURR      0xfe00707f
+#define MATCH_CV_LBURR     0x1800302b
+#define MASK_CV_LHRR       0xfe00707f
+#define MATCH_CV_LHRR      0xa00302b
+#define MASK_CV_LHURR      0xfe00707f
+#define MATCH_CV_LHURR     0x1a00302b
+#define MASK_CV_LWRR       0xfe00707f
+#define MATCH_CV_LWRR      0xc00302b
+#define MASK_CV_SBPOST     0x707f
+#define MATCH_CV_SBPOST    0x2b
+#define MASK_CV_SHPOST     0x707f
+#define MATCH_CV_SHPOST    0x102b
+#define MASK_CV_SWPOST     0x707f
+#define MATCH_CV_SWPOST    0x202b
+#define MASK_CV_SBRRPOST   0xfe00707f
+#define MATCH_CV_SBRRPOST  0x2000302b
+#define MASK_CV_SHRRPOST   0xfe00707f
+#define MATCH_CV_SHRRPOST  0x2200302b
+#define MASK_CV_SWRRPOST   0xfe00707f
+#define MATCH_CV_SWRRPOST  0x2400302b
+#define MASK_CV_SBRR       0xfe00707f
+#define MATCH_CV_SBRR      0x2800302b
+#define MASK_CV_SHRR       0xfe00707f
+#define MATCH_CV_SHRR      0x2a00302b
+#define MASK_CV_SWRR       0xfe00707f
+#define MATCH_CV_SWRR      0x2c00302b
+/* Vendor-specific (CORE-V) Xcvbitmanip instructions.  */
+#define MATCH_CV_EXTRACTR     0x3000302b
+#define MATCH_CV_EXTRACTUR    0x3200302b
+#define MATCH_CV_INSERTR      0x3400302b
+#define MATCH_CV_BCLRR        0x3800302b
+#define MATCH_CV_BSETR        0x3a00302b
+#define MATCH_CV_ROR          0x4000302b
+#define MATCH_CV_FF1          0x4200302b
+#define MATCH_CV_FL1          0x4400302b
+#define MATCH_CV_CLB          0x4600302b
+#define MATCH_CV_CNT          0x4800302b
+#define MATCH_CV_EXTRACT      0x5b
+#define MATCH_CV_EXTRACTU     0x4000005b
+#define MATCH_CV_INSERT       0x8000005b
+#define MATCH_CV_BCLR         0x105b
+#define MATCH_CV_BSET         0x4000105b
+#define MATCH_CV_BITREV       0xc000105b
+#define MASK_CV_EXTRACTR      0xfe00707f
+#define MASK_CV_EXTRACTUR     0xfe00707f
+#define MASK_CV_INSERTR       0xfe00707f
+#define MASK_CV_BCLRR         0xfe00707f
+#define MASK_CV_BSETR         0xfe00707f
+#define MASK_CV_ROR           0xfe00707f
+#define MASK_CV_FF1           0xfff0707f
+#define MASK_CV_FL1           0xfff0707f
+#define MASK_CV_CLB           0xfff0707f
+#define MASK_CV_CNT           0xfff0707f
+#define MASK_CV_EXTRACT       0xc000707f
+#define MASK_CV_EXTRACTU      0xc000707f
+#define MASK_CV_INSERT        0xc000707f
+#define MASK_CV_BCLR          0xc000707f
+#define MASK_CV_BSET          0xc000707f
+#define MASK_CV_BITREV        0xf800707f
+/* Vendor-specific (CORE-V) Xcvsimd instructions. */
+#define MATCH_CV_ADD_H             0x7b
+#define MATCH_CV_ADD_B             0x107b
+#define MATCH_CV_ADD_SC_H          0x407b
+#define MATCH_CV_ADD_SC_B          0x507b
+#define MATCH_CV_ADD_SCI_H         0x607b
+#define MATCH_CV_ADD_SCI_B         0x707b
+#define MATCH_CV_SUB_H             0x800007b
+#define MATCH_CV_SUB_B             0x800107b
+#define MATCH_CV_SUB_SC_H          0x800407b
+#define MATCH_CV_SUB_SC_B          0x800507b
+#define MATCH_CV_SUB_SCI_H         0x800607b
+#define MATCH_CV_SUB_SCI_B         0x800707b
+#define MATCH_CV_AVG_H             0x1000007b
+#define MATCH_CV_AVG_B             0x1000107b
+#define MATCH_CV_AVG_SC_H          0x1000407b
+#define MATCH_CV_AVG_SC_B          0x1000507b
+#define MATCH_CV_AVG_SCI_H         0x1000607b
+#define MATCH_CV_AVG_SCI_B         0x1000707b
+#define MATCH_CV_AVGU_H            0x1800007b
+#define MATCH_CV_AVGU_B            0x1800107b
+#define MATCH_CV_AVGU_SC_H         0x1800407b
+#define MATCH_CV_AVGU_SC_B         0x1800507b
+#define MATCH_CV_AVGU_SCI_H        0x1800607b
+#define MATCH_CV_AVGU_SCI_B        0x1800707b
+#define MATCH_CV_MIN_H             0x2000007b
+#define MATCH_CV_MIN_B             0x2000107b
+#define MATCH_CV_MIN_SC_H          0x2000407b
+#define MATCH_CV_MIN_SC_B          0x2000507b
+#define MATCH_CV_MIN_SCI_H         0x2000607b
+#define MATCH_CV_MIN_SCI_B         0x2000707b
+#define MATCH_CV_MINU_H            0x2800007b
+#define MATCH_CV_MINU_B            0x2800107b
+#define MATCH_CV_MINU_SC_H         0x2800407b
+#define MATCH_CV_MINU_SC_B         0x2800507b
+#define MATCH_CV_MINU_SCI_H        0x2800607b
+#define MATCH_CV_MINU_SCI_B        0x2800707b
+#define MATCH_CV_MAX_H             0x3000007b
+#define MATCH_CV_MAX_B             0x3000107b
+#define MATCH_CV_MAX_SC_H          0x3000407b
+#define MATCH_CV_MAX_SC_B          0x3000507b
+#define MATCH_CV_MAX_SCI_H         0x3000607b
+#define MATCH_CV_MAX_SCI_B         0x3000707b
+#define MATCH_CV_MAXU_H            0x3800007b
+#define MATCH_CV_MAXU_B            0x3800107b
+#define MATCH_CV_MAXU_SC_H         0x3800407b
+#define MATCH_CV_MAXU_SC_B         0x3800507b
+#define MATCH_CV_MAXU_SCI_H        0x3800607b
+#define MATCH_CV_MAXU_SCI_B        0x3800707b
+#define MATCH_CV_SRL_H             0x4000007b
+#define MATCH_CV_SRL_B             0x4000107b
+#define MATCH_CV_SRL_SC_H          0x4000407b
+#define MATCH_CV_SRL_SC_B          0x4000507b
+#define MATCH_CV_SRL_SCI_H         0x4000607b
+#define MATCH_CV_SRL_SCI_B         0x4000707b
+#define MATCH_CV_SRA_H             0x4800007b
+#define MATCH_CV_SRA_B             0x4800107b
+#define MATCH_CV_SRA_SC_H          0x4800407b
+#define MATCH_CV_SRA_SC_B          0x4800507b
+#define MATCH_CV_SRA_SCI_H         0x4800607b
+#define MATCH_CV_SRA_SCI_B         0x4800707b
+#define MATCH_CV_SLL_H             0x5000007b
+#define MATCH_CV_SLL_B             0x5000107b
+#define MATCH_CV_SLL_SC_H          0x5000407b
+#define MATCH_CV_SLL_SC_B          0x5000507b
+#define MATCH_CV_SLL_SCI_H         0x5000607b
+#define MATCH_CV_SLL_SCI_B         0x5000707b
+#define MATCH_CV_OR_H              0x5800007b
+#define MATCH_CV_OR_B              0x5800107b
+#define MATCH_CV_OR_SC_H           0x5800407b
+#define MATCH_CV_OR_SC_B           0x5800507b
+#define MATCH_CV_OR_SCI_H          0x5800607b
+#define MATCH_CV_OR_SCI_B          0x5800707b
+#define MATCH_CV_XOR_H             0x6000007b
+#define MATCH_CV_XOR_B             0x6000107b
+#define MATCH_CV_XOR_SC_H          0x6000407b
+#define MATCH_CV_XOR_SC_B          0x6000507b
+#define MATCH_CV_XOR_SCI_H         0x6000607b
+#define MATCH_CV_XOR_SCI_B         0x6000707b
+#define MATCH_CV_AND_H             0x6800007b
+#define MATCH_CV_AND_B             0x6800107b
+#define MATCH_CV_AND_SC_H          0x6800407b
+#define MATCH_CV_AND_SC_B          0x6800507b
+#define MATCH_CV_AND_SCI_H         0x6800607b
+#define MATCH_CV_AND_SCI_B         0x6800707b
+#define MATCH_CV_ABS_H             0x7000007b
+#define MATCH_CV_ABS_B             0x7000107b
+#define MATCH_CV_DOTUP_H           0x8000007b
+#define MATCH_CV_DOTUP_B           0x8000107b
+#define MATCH_CV_DOTUP_SC_H        0x8000407b
+#define MATCH_CV_DOTUP_SC_B        0x8000507b
+#define MATCH_CV_DOTUP_SCI_H       0x8000607b
+#define MATCH_CV_DOTUP_SCI_B       0x8000707b
+#define MATCH_CV_DOTUSP_H          0x8800007b
+#define MATCH_CV_DOTUSP_B          0x8800107b
+#define MATCH_CV_DOTUSP_SC_H       0x8800407b
+#define MATCH_CV_DOTUSP_SC_B       0x8800507b
+#define MATCH_CV_DOTUSP_SCI_H      0x8800607b
+#define MATCH_CV_DOTUSP_SCI_B      0x8800707b
+#define MATCH_CV_DOTSP_H           0x9000007b
+#define MATCH_CV_DOTSP_B           0x9000107b
+#define MATCH_CV_DOTSP_SC_H        0x9000407b
+#define MATCH_CV_DOTSP_SC_B        0x9000507b
+#define MATCH_CV_DOTSP_SCI_H       0x9000607b
+#define MATCH_CV_DOTSP_SCI_B       0x9000707b
+#define MATCH_CV_SDOTUP_H          0x9800007b
+#define MATCH_CV_SDOTUP_B          0x9800107b
+#define MATCH_CV_SDOTUP_SC_H       0x9800407b
+#define MATCH_CV_SDOTUP_SC_B       0x9800507b
+#define MATCH_CV_SDOTUP_SCI_H      0x9800607b
+#define MATCH_CV_SDOTUP_SCI_B      0x9800707b
+#define MATCH_CV_SDOTUSP_H         0xa000007b
+#define MATCH_CV_SDOTUSP_B         0xa000107b
+#define MATCH_CV_SDOTUSP_SC_H      0xa000407b
+#define MATCH_CV_SDOTUSP_SC_B      0xa000507b
+#define MATCH_CV_SDOTUSP_SCI_H     0xa000607b
+#define MATCH_CV_SDOTUSP_SCI_B     0xa000707b
+#define MATCH_CV_SDOTSP_H          0xa800007b
+#define MATCH_CV_SDOTSP_B          0xa800107b
+#define MATCH_CV_SDOTSP_SC_H       0xa800407b
+#define MATCH_CV_SDOTSP_SC_B       0xa800507b
+#define MATCH_CV_SDOTSP_SCI_H      0xa800607b
+#define MATCH_CV_SDOTSP_SCI_B      0xa800707b
+#define MATCH_CV_EXTRACT_H         0xb800007b
+#define MATCH_CV_EXTRACT_B         0xb800107b
+#define MATCH_CV_EXTRACTU_H        0xb800207b
+#define MATCH_CV_EXTRACTU_B        0xb800307b
+#define MATCH_CV_INSERT_H          0xb800407b
+#define MATCH_CV_INSERT_B          0xb800507b
+#define MATCH_CV_SHUFFLE_H         0xc000007b
+#define MATCH_CV_SHUFFLE_B         0xc000107b
+#define MATCH_CV_SHUFFLE_SCI_H     0xc000607b
+#define MATCH_CV_SHUFFLEI0_SCI_B   0xc000707b
+#define MATCH_CV_SHUFFLEI1_SCI_B   0xc800707b
+#define MATCH_CV_SHUFFLEI2_SCI_B   0xd000707b
+#define MATCH_CV_SHUFFLEI3_SCI_B   0xd800707b
+#define MATCH_CV_SHUFFLE2_H        0xe000007b
+#define MATCH_CV_SHUFFLE2_B        0xe000107b
+#define MATCH_CV_PACK              0xf000007b
+#define MATCH_CV_PACK_H            0xf200007b
+#define MATCH_CV_PACKHI_B          0xfa00107b
+#define MATCH_CV_PACKLO_B          0xf800107b
+#define MATCH_CV_CMPEQ_H           0x400007b
+#define MATCH_CV_CMPEQ_B           0x400107b
+#define MATCH_CV_CMPEQ_SC_H        0x400407b
+#define MATCH_CV_CMPEQ_SC_B        0x400507b
+#define MATCH_CV_CMPEQ_SCI_H       0x400607b
+#define MATCH_CV_CMPEQ_SCI_B       0x400707b
+#define MATCH_CV_CMPNE_H           0xc00007b
+#define MATCH_CV_CMPNE_B           0xc00107b
+#define MATCH_CV_CMPNE_SC_H        0xc00407b
+#define MATCH_CV_CMPNE_SC_B        0xc00507b
+#define MATCH_CV_CMPNE_SCI_H       0xc00607b
+#define MATCH_CV_CMPNE_SCI_B       0xc00707b
+#define MATCH_CV_CMPGT_H           0x1400007b
+#define MATCH_CV_CMPGT_B           0x1400107b
+#define MATCH_CV_CMPGT_SC_H        0x1400407b
+#define MATCH_CV_CMPGT_SC_B        0x1400507b
+#define MATCH_CV_CMPGT_SCI_H       0x1400607b
+#define MATCH_CV_CMPGT_SCI_B       0x1400707b
+#define MATCH_CV_CMPGE_H           0x1c00007b
+#define MATCH_CV_CMPGE_B           0x1c00107b
+#define MATCH_CV_CMPGE_SC_H        0x1c00407b
+#define MATCH_CV_CMPGE_SC_B        0x1c00507b
+#define MATCH_CV_CMPGE_SCI_H       0x1c00607b
+#define MATCH_CV_CMPGE_SCI_B       0x1c00707b
+#define MATCH_CV_CMPLT_H           0x2400007b
+#define MATCH_CV_CMPLT_B           0x2400107b
+#define MATCH_CV_CMPLT_SC_H        0x2400407b
+#define MATCH_CV_CMPLT_SC_B        0x2400507b
+#define MATCH_CV_CMPLT_SCI_H       0x2400607b
+#define MATCH_CV_CMPLT_SCI_B       0x2400707b
+#define MATCH_CV_CMPLE_H           0x2c00007b
+#define MATCH_CV_CMPLE_B           0x2c00107b
+#define MATCH_CV_CMPLE_SC_H        0x2c00407b
+#define MATCH_CV_CMPLE_SC_B        0x2c00507b
+#define MATCH_CV_CMPLE_SCI_H       0x2c00607b
+#define MATCH_CV_CMPLE_SCI_B       0x2c00707b
+#define MATCH_CV_CMPGTU_H          0x3400007b
+#define MATCH_CV_CMPGTU_B          0x3400107b
+#define MATCH_CV_CMPGTU_SC_H       0x3400407b
+#define MATCH_CV_CMPGTU_SC_B       0x3400507b
+#define MATCH_CV_CMPGTU_SCI_H      0x3400607b
+#define MATCH_CV_CMPGTU_SCI_B      0x3400707b
+#define MATCH_CV_CMPGEU_H          0x3c00007b
+#define MATCH_CV_CMPGEU_B          0x3c00107b
+#define MATCH_CV_CMPGEU_SC_H       0x3c00407b
+#define MATCH_CV_CMPGEU_SC_B       0x3c00507b
+#define MATCH_CV_CMPGEU_SCI_H      0x3c00607b
+#define MATCH_CV_CMPGEU_SCI_B      0x3c00707b
+#define MATCH_CV_CMPLTU_H          0x4400007b
+#define MATCH_CV_CMPLTU_B          0x4400107b
+#define MATCH_CV_CMPLTU_SC_H       0x4400407b
+#define MATCH_CV_CMPLTU_SC_B       0x4400507b
+#define MATCH_CV_CMPLTU_SCI_H      0x4400607b
+#define MATCH_CV_CMPLTU_SCI_B      0x4400707b
+#define MATCH_CV_CMPLEU_H          0x4c00007b
+#define MATCH_CV_CMPLEU_B          0x4c00107b
+#define MATCH_CV_CMPLEU_SC_H       0x4c00407b
+#define MATCH_CV_CMPLEU_SC_B       0x4c00507b
+#define MATCH_CV_CMPLEU_SCI_H      0x4c00607b
+#define MATCH_CV_CMPLEU_SCI_B      0x4c00707b
+#define MATCH_CV_CPLXMUL_R         0x5400007b
+#define MATCH_CV_CPLXMUL_I         0x5600007b
+#define MATCH_CV_CPLXMUL_R_DIV2    0x5400207b
+#define MATCH_CV_CPLXMUL_I_DIV2    0x5600207b
+#define MATCH_CV_CPLXMUL_R_DIV4    0x5400407b
+#define MATCH_CV_CPLXMUL_I_DIV4    0x5600407b
+#define MATCH_CV_CPLXMUL_R_DIV8    0x5400607b
+#define MATCH_CV_CPLXMUL_I_DIV8    0x5600607b
+#define MATCH_CV_CPLXCONJ          0x5c00007b
+#define MATCH_CV_SUBROTMJ          0x6400007b
+#define MATCH_CV_SUBROTMJ_DIV2     0x6400207b
+#define MATCH_CV_SUBROTMJ_DIV4     0x6400407b
+#define MATCH_CV_SUBROTMJ_DIV8     0x6400607b
+#define MATCH_CV_ADD_DIV2          0x6c00207b
+#define MATCH_CV_ADD_DIV4          0x6c00407b
+#define MATCH_CV_ADD_DIV8          0x6c00607b
+#define MATCH_CV_SUB_DIV2          0x7400207b
+#define MATCH_CV_SUB_DIV4          0x7400407b
+#define MATCH_CV_SUB_DIV8          0x7400607b
+#define MASK_CV_ADD_H              0xfe00707f
+#define MASK_CV_ADD_B              0xfe00707f
+#define MASK_CV_ADD_SC_H           0xfe00707f
+#define MASK_CV_ADD_SC_B           0xfe00707f
+#define MASK_CV_ADD_SCI_H          0xfc00707f
+#define MASK_CV_ADD_SCI_B          0xfc00707f
+#define MASK_CV_SUB_H              0xfe00707f
+#define MASK_CV_SUB_B              0xfe00707f
+#define MASK_CV_SUB_SC_H           0xfe00707f
+#define MASK_CV_SUB_SC_B           0xfe00707f
+#define MASK_CV_SUB_SCI_H          0xfc00707f
+#define MASK_CV_SUB_SCI_B          0xfc00707f
+#define MASK_CV_AVG_H              0xfe00707f
+#define MASK_CV_AVG_B              0xfe00707f
+#define MASK_CV_AVG_SC_H           0xfe00707f
+#define MASK_CV_AVG_SC_B           0xfe00707f
+#define MASK_CV_AVG_SCI_H          0xfc00707f
+#define MASK_CV_AVG_SCI_B          0xfc00707f
+#define MASK_CV_AVGU_H             0xfe00707f
+#define MASK_CV_AVGU_B             0xfe00707f
+#define MASK_CV_AVGU_SC_H          0xfe00707f
+#define MASK_CV_AVGU_SC_B          0xfe00707f
+#define MASK_CV_AVGU_SCI_H         0xfc00707f
+#define MASK_CV_AVGU_SCI_B         0xfc00707f
+#define MASK_CV_MIN_H              0xfe00707f
+#define MASK_CV_MIN_B              0xfe00707f
+#define MASK_CV_MIN_SC_H           0xfe00707f
+#define MASK_CV_MIN_SC_B           0xfe00707f
+#define MASK_CV_MIN_SCI_H          0xfc00707f
+#define MASK_CV_MIN_SCI_B          0xfc00707f
+#define MASK_CV_MINU_H             0xfe00707f
+#define MASK_CV_MINU_B             0xfe00707f
+#define MASK_CV_MINU_SC_H          0xfe00707f
+#define MASK_CV_MINU_SC_B          0xfe00707f
+#define MASK_CV_MINU_SCI_H         0xfc00707f
+#define MASK_CV_MINU_SCI_B         0xfc00707f
+#define MASK_CV_MAX_H              0xfe00707f
+#define MASK_CV_MAX_B              0xfe00707f
+#define MASK_CV_MAX_SC_H           0xfe00707f
+#define MASK_CV_MAX_SC_B           0xfe00707f
+#define MASK_CV_MAX_SCI_H          0xfc00707f
+#define MASK_CV_MAX_SCI_B          0xfc00707f
+#define MASK_CV_MAXU_H             0xfe00707f
+#define MASK_CV_MAXU_B             0xfe00707f
+#define MASK_CV_MAXU_SC_H          0xfe00707f
+#define MASK_CV_MAXU_SC_B          0xfe00707f
+#define MASK_CV_MAXU_SCI_H         0xfc00707f
+#define MASK_CV_MAXU_SCI_B         0xfc00707f
+#define MASK_CV_SRL_H              0xfe00707f
+#define MASK_CV_SRL_B              0xfe00707f
+#define MASK_CV_SRL_SC_H           0xfe00707f
+#define MASK_CV_SRL_SC_B           0xfe00707f
+#define MASK_CV_SRL_SCI_H          0xfc00707f
+#define MASK_CV_SRL_SCI_B          0xfc00707f
+#define MASK_CV_SRA_H              0xfe00707f
+#define MASK_CV_SRA_B              0xfe00707f
+#define MASK_CV_SRA_SC_H           0xfe00707f
+#define MASK_CV_SRA_SC_B           0xfe00707f
+#define MASK_CV_SRA_SCI_H          0xfc00707f
+#define MASK_CV_SRA_SCI_B          0xfc00707f
+#define MASK_CV_SLL_H              0xfe00707f
+#define MASK_CV_SLL_B              0xfe00707f
+#define MASK_CV_SLL_SC_H           0xfe00707f
+#define MASK_CV_SLL_SC_B           0xfe00707f
+#define MASK_CV_SLL_SCI_H          0xfc00707f
+#define MASK_CV_SLL_SCI_B          0xfc00707f
+#define MASK_CV_OR_H               0xfe00707f
+#define MASK_CV_OR_B               0xfe00707f
+#define MASK_CV_OR_SC_H            0xfe00707f
+#define MASK_CV_OR_SC_B            0xfe00707f
+#define MASK_CV_OR_SCI_H           0xfc00707f
+#define MASK_CV_OR_SCI_B           0xfc00707f
+#define MASK_CV_XOR_H              0xfe00707f
+#define MASK_CV_XOR_B              0xfe00707f
+#define MASK_CV_XOR_SC_H           0xfe00707f
+#define MASK_CV_XOR_SC_B           0xfe00707f
+#define MASK_CV_XOR_SCI_H          0xfc00707f
+#define MASK_CV_XOR_SCI_B          0xfc00707f
+#define MASK_CV_AND_H              0xfe00707f
+#define MASK_CV_AND_B              0xfe00707f
+#define MASK_CV_AND_SC_H           0xfe00707f
+#define MASK_CV_AND_SC_B           0xfe00707f
+#define MASK_CV_AND_SCI_H          0xfc00707f
+#define MASK_CV_AND_SCI_B          0xfc00707f
+#define MASK_CV_ABS_H              0xfff0707f
+#define MASK_CV_ABS_B              0xfff0707f
+#define MASK_CV_DOTUP_H            0xfe00707f
+#define MASK_CV_DOTUP_B            0xfe00707f
+#define MASK_CV_DOTUP_SC_H         0xfe00707f
+#define MASK_CV_DOTUP_SC_B         0xfe00707f
+#define MASK_CV_DOTUP_SCI_H        0xfc00707f
+#define MASK_CV_DOTUP_SCI_B        0xfc00707f
+#define MASK_CV_DOTUSP_H           0xfe00707f
+#define MASK_CV_DOTUSP_B           0xfe00707f
+#define MASK_CV_DOTUSP_SC_H        0xfe00707f
+#define MASK_CV_DOTUSP_SC_B        0xfe00707f
+#define MASK_CV_DOTUSP_SCI_H       0xfc00707f
+#define MASK_CV_DOTUSP_SCI_B       0xfc00707f
+#define MASK_CV_DOTSP_H            0xfe00707f
+#define MASK_CV_DOTSP_B            0xfe00707f
+#define MASK_CV_DOTSP_SC_H         0xfe00707f
+#define MASK_CV_DOTSP_SC_B         0xfe00707f
+#define MASK_CV_DOTSP_SCI_H        0xfc00707f
+#define MASK_CV_DOTSP_SCI_B        0xfc00707f
+#define MASK_CV_SDOTUP_H           0xfe00707f
+#define MASK_CV_SDOTUP_B           0xfe00707f
+#define MASK_CV_SDOTUP_SC_H        0xfe00707f
+#define MASK_CV_SDOTUP_SC_B        0xfe00707f
+#define MASK_CV_SDOTUP_SCI_H       0xfc00707f
+#define MASK_CV_SDOTUP_SCI_B       0xfc00707f
+#define MASK_CV_SDOTUSP_H          0xfe00707f
+#define MASK_CV_SDOTUSP_B          0xfe00707f
+#define MASK_CV_SDOTUSP_SC_H       0xfe00707f
+#define MASK_CV_SDOTUSP_SC_B       0xfe00707f
+#define MASK_CV_SDOTUSP_SCI_H      0xfc00707f
+#define MASK_CV_SDOTUSP_SCI_B      0xfc00707f
+#define MASK_CV_SDOTSP_H           0xfe00707f
+#define MASK_CV_SDOTSP_B           0xfe00707f
+#define MASK_CV_SDOTSP_SC_H        0xfe00707f
+#define MASK_CV_SDOTSP_SC_B        0xfe00707f
+#define MASK_CV_SDOTSP_SCI_H       0xfc00707f
+#define MASK_CV_SDOTSP_SCI_B       0xfc00707f
+#define MASK_CV_EXTRACT_H          0xfc00707f
+#define MASK_CV_EXTRACT_B          0xfc00707f
+#define MASK_CV_EXTRACTU_H         0xfc00707f
+#define MASK_CV_EXTRACTU_B         0xfc00707f
+#define MASK_CV_INSERT_H           0xfc00707f
+#define MASK_CV_INSERT_B           0xfc00707f
+#define MASK_CV_SHUFFLE_H          0xfe00707f
+#define MASK_CV_SHUFFLE_B          0xfe00707f
+#define MASK_CV_SHUFFLE_SCI_H      0xfc00707f
+#define MASK_CV_SHUFFLEI0_SCI_B    0xfc00707f
+#define MASK_CV_SHUFFLEI1_SCI_B    0xfc00707f
+#define MASK_CV_SHUFFLEI2_SCI_B    0xfc00707f
+#define MASK_CV_SHUFFLEI3_SCI_B    0xfc00707f
+#define MASK_CV_SHUFFLE2_H         0xfe00707f
+#define MASK_CV_SHUFFLE2_B         0xfe00707f
+#define MASK_CV_PACK               0xfe00707f
+#define MASK_CV_PACK_H             0xfe00707f
+#define MASK_CV_PACKHI_B           0xfe00707f
+#define MASK_CV_PACKLO_B           0xfe00707f
+#define MASK_CV_CMPEQ_H            0xfe00707f
+#define MASK_CV_CMPEQ_B            0xfe00707f
+#define MASK_CV_CMPEQ_SC_H         0xfe00707f
+#define MASK_CV_CMPEQ_SC_B         0xfe00707f
+#define MASK_CV_CMPEQ_SCI_H        0xfc00707f
+#define MASK_CV_CMPEQ_SCI_B        0xfc00707f
+#define MASK_CV_CMPNE_H            0xfe00707f
+#define MASK_CV_CMPNE_B            0xfe00707f
+#define MASK_CV_CMPNE_SC_H         0xfe00707f
+#define MASK_CV_CMPNE_SC_B         0xfe00707f
+#define MASK_CV_CMPNE_SCI_H        0xfc00707f
+#define MASK_CV_CMPNE_SCI_B        0xfc00707f
+#define MASK_CV_CMPGT_H            0xfe00707f
+#define MASK_CV_CMPGT_B            0xfe00707f
+#define MASK_CV_CMPGT_SC_H         0xfe00707f
+#define MASK_CV_CMPGT_SC_B         0xfe00707f
+#define MASK_CV_CMPGT_SCI_H        0xfc00707f
+#define MASK_CV_CMPGT_SCI_B        0xfc00707f
+#define MASK_CV_CMPGE_H            0xfe00707f
+#define MASK_CV_CMPGE_B            0xfe00707f
+#define MASK_CV_CMPGE_SC_H         0xfe00707f
+#define MASK_CV_CMPGE_SC_B         0xfe00707f
+#define MASK_CV_CMPGE_SCI_H        0xfc00707f
+#define MASK_CV_CMPGE_SCI_B        0xfc00707f
+#define MASK_CV_CMPLT_H            0xfe00707f
+#define MASK_CV_CMPLT_B            0xfe00707f
+#define MASK_CV_CMPLT_SC_H         0xfe00707f
+#define MASK_CV_CMPLT_SC_B         0xfe00707f
+#define MASK_CV_CMPLT_SCI_H        0xfc00707f
+#define MASK_CV_CMPLT_SCI_B        0xfc00707f
+#define MASK_CV_CMPLE_H            0xfe00707f
+#define MASK_CV_CMPLE_B            0xfe00707f
+#define MASK_CV_CMPLE_SC_H         0xfe00707f
+#define MASK_CV_CMPLE_SC_B         0xfe00707f
+#define MASK_CV_CMPLE_SCI_H        0xfc00707f
+#define MASK_CV_CMPLE_SCI_B        0xfc00707f
+#define MASK_CV_CMPGTU_H           0xfe00707f
+#define MASK_CV_CMPGTU_B           0xfe00707f
+#define MASK_CV_CMPGTU_SC_H        0xfe00707f
+#define MASK_CV_CMPGTU_SC_B        0xfe00707f
+#define MASK_CV_CMPGTU_SCI_H       0xfc00707f
+#define MASK_CV_CMPGTU_SCI_B       0xfc00707f
+#define MASK_CV_CMPGEU_H           0xfe00707f
+#define MASK_CV_CMPGEU_B           0xfe00707f
+#define MASK_CV_CMPGEU_SC_H        0xfe00707f
+#define MASK_CV_CMPGEU_SC_B        0xfe00707f
+#define MASK_CV_CMPGEU_SCI_H       0xfc00707f
+#define MASK_CV_CMPGEU_SC_B        0xfe00707f
+#define MASK_CV_CMPGEU_SCI_H       0xfc00707f
+#define MASK_CV_CMPGEU_SCI_B       0xfc00707f
+#define MASK_CV_CMPLTU_H           0xfe00707f
+#define MASK_CV_CMPLTU_B           0xfe00707f
+#define MASK_CV_CMPLTU_SC_H        0xfe00707f
+#define MASK_CV_CMPLTU_SC_B        0xfe00707f
+#define MASK_CV_CMPLTU_SCI_H       0xfc00707f
+#define MASK_CV_CMPLTU_SCI_B       0xfc00707f
+#define MASK_CV_CMPLEU_H           0xfe00707f
+#define MASK_CV_CMPLEU_B           0xfe00707f
+#define MASK_CV_CMPLEU_SC_H        0xfe00707f
+#define MASK_CV_CMPLEU_SC_B        0xfe00707f
+#define MASK_CV_CMPLEU_SCI_H       0xfc00707f
+#define MASK_CV_CMPLEU_SCI_B       0xfc00707f
+#define MASK_CV_CPLXMUL_R          0xfe00707f
+#define MASK_CV_CPLXMUL_I          0xfe00707f
+#define MASK_CV_CPLXMUL_R_DIV2     0xfe00707f
+#define MASK_CV_CPLXMUL_I_DIV2     0xfe00707f
+#define MASK_CV_CPLXMUL_R_DIV4     0xfe00707f
+#define MASK_CV_CPLXMUL_I_DIV4     0xfe00707f
+#define MASK_CV_CPLXMUL_R_DIV8     0xfe00707f
+#define MASK_CV_CPLXMUL_I_DIV8     0xfe00707f
+#define MASK_CV_CPLXCONJ           0xfff0707f
+#define MASK_CV_SUBROTMJ           0xfe00707f
+#define MASK_CV_SUBROTMJ_DIV2      0xfe00707f
+#define MASK_CV_SUBROTMJ_DIV4      0xfe00707f
+#define MASK_CV_SUBROTMJ_DIV8      0xfe00707f
+#define MASK_CV_ADD_DIV2           0xfe00707f
+#define MASK_CV_ADD_DIV4           0xfe00707f
+#define MASK_CV_ADD_DIV8           0xfe00707f
+#define MASK_CV_SUB_DIV2           0xfe00707f
+#define MASK_CV_SUB_DIV4           0xfe00707f
+#define MASK_CV_SUB_DIV8           0xfe00707f
+/* Vendor-specific (T-Head) XTheadBa instructions.  */
+#define MATCH_TH_ADDSL 0x0000100b
+#define MASK_TH_ADDSL 0xf800707f
+/* Vendor-specific (T-Head) XTheadBb instructions.  */
+#define MATCH_TH_SRRI 0x1000100b
+#define MASK_TH_SRRI 0xfc00707f
+#define MATCH_TH_SRRIW 0x1400100b
+#define MASK_TH_SRRIW 0xfe00707f
+#define MATCH_TH_EXT 0x0000200b
+#define MASK_TH_EXT 0x0000707f
+#define MATCH_TH_EXTU 0x0000300b
+#define MASK_TH_EXTU 0x0000707f
+#define MATCH_TH_FF0 0x8400100b
+#define MASK_TH_FF0 0xfff0707f
+#define MATCH_TH_FF1 0x8600100b
+#define MASK_TH_FF1 0xfff0707f
+#define MATCH_TH_REV 0x8200100b
+#define MASK_TH_REV 0xfff0707f
+#define MATCH_TH_REVW 0x9000100b
+#define MASK_TH_REVW 0xfff0707f
+#define MATCH_TH_TSTNBZ 0x8000100b
+#define MASK_TH_TSTNBZ 0xfff0707f
+/* Vendor-specific (T-Head) XTheadBs instructions.  */
+#define MATCH_TH_TST 0x8800100b
+#define MASK_TH_TST 0xfc00707f
+/* Vendor-specific (T-Head) XTheadCmo instructions.  */
+#define MATCH_TH_DCACHE_CALL 0x0010000b
+#define MASK_TH_DCACHE_CALL 0xffffffff
+#define MATCH_TH_DCACHE_CIALL 0x0030000b
+#define MASK_TH_DCACHE_CIALL 0xffffffff
+#define MATCH_TH_DCACHE_IALL 0x0020000b
+#define MASK_TH_DCACHE_IALL 0xffffffff
+#define MATCH_TH_DCACHE_CPA 0x0290000b
+#define MASK_TH_DCACHE_CPA 0xfff07fff
+#define MATCH_TH_DCACHE_CIPA 0x02b0000b
+#define MASK_TH_DCACHE_CIPA 0xfff07fff
+#define MATCH_TH_DCACHE_IPA 0x02a0000b
+#define MASK_TH_DCACHE_IPA 0xfff07fff
+#define MATCH_TH_DCACHE_CVA 0x0250000b
+#define MASK_TH_DCACHE_CVA 0xfff07fff
+#define MATCH_TH_DCACHE_CIVA 0x0270000b
+#define MASK_TH_DCACHE_CIVA 0xfff07fff
+#define MATCH_TH_DCACHE_IVA 0x0260000b
+#define MASK_TH_DCACHE_IVA 0xfff07fff
+#define MATCH_TH_DCACHE_CSW 0x0210000b
+#define MASK_TH_DCACHE_CSW 0xfff07fff
+#define MATCH_TH_DCACHE_CISW 0x0230000b
+#define MASK_TH_DCACHE_CISW 0xfff07fff
+#define MATCH_TH_DCACHE_ISW 0x0220000b
+#define MASK_TH_DCACHE_ISW 0xfff07fff
+#define MATCH_TH_DCACHE_CPAL1 0x0280000b
+#define MASK_TH_DCACHE_CPAL1 0xfff07fff
+#define MATCH_TH_DCACHE_CVAL1 0x0240000b
+#define MASK_TH_DCACHE_CVAL1 0xfff07fff
+#define MATCH_TH_ICACHE_IALL 0x0100000b
+#define MASK_TH_ICACHE_IALL 0xffffffff
+#define MATCH_TH_ICACHE_IALLS 0x0110000b
+#define MASK_TH_ICACHE_IALLS 0xffffffff
+#define MATCH_TH_ICACHE_IPA 0x0380000b
+#define MASK_TH_ICACHE_IPA 0xfff07fff
+#define MATCH_TH_ICACHE_IVA 0x0300000b
+#define MASK_TH_ICACHE_IVA 0xfff07fff
+#define MATCH_TH_L2CACHE_CALL 0x0150000b
+#define MASK_TH_L2CACHE_CALL 0xffffffff
+#define MATCH_TH_L2CACHE_CIALL 0x0170000b
+#define MASK_TH_L2CACHE_CIALL 0xffffffff
+#define MATCH_TH_L2CACHE_IALL 0x0160000b
+#define MASK_TH_L2CACHE_IALL 0xffffffff
+/* Vendor-specific (T-Head) XTheadCondMov instructions.  */
+#define MATCH_TH_MVEQZ 0x4000100b
+#define MASK_TH_MVEQZ 0xfe00707f
+#define MATCH_TH_MVNEZ 0x4200100b
+#define MASK_TH_MVNEZ 0xfe00707f
+/* Vendor-specific (T-Head) XTheadFMemIdx instructions. */
+#define MATCH_TH_FLRD 0x6000600b
+#define MASK_TH_FLRD 0xf800707f
+#define MATCH_TH_FLRW 0x4000600b
+#define MASK_TH_FLRW 0xf800707f
+#define MATCH_TH_FLURD 0x7000600b
+#define MASK_TH_FLURD 0xf800707f
+#define MATCH_TH_FLURW 0x5000600b
+#define MASK_TH_FLURW 0xf800707f
+#define MATCH_TH_FSRD 0x6000700b
+#define MASK_TH_FSRD 0xf800707f
+#define MATCH_TH_FSRW 0x4000700b
+#define MASK_TH_FSRW 0xf800707f
+#define MATCH_TH_FSURD 0x7000700b
+#define MASK_TH_FSURD 0xf800707f
+#define MATCH_TH_FSURW 0x5000700b
+#define MASK_TH_FSURW 0xf800707f
+/* Vendor-specific (T-Head) XTheadFmv instructions. */
+#define MATCH_TH_FMV_X_HW 0xc000100b
+#define MASK_TH_FMV_X_HW  0xfff0707f
+#define MATCH_TH_FMV_HW_X 0xa000100b
+#define MASK_TH_FMV_HW_X  0xfff0707f
+/* Vendor-specific (T-Head) XTheadInt instructions. */
+#define MATCH_TH_IPOP 0x0050000b
+#define MASK_TH_IPOP 0xffffffff
+#define MATCH_TH_IPUSH 0x0040000b
+#define MASK_TH_IPUSH 0xffffffff
+/* Vendor-specific (T-Head) XTheadMac instructions.  */
+#define MATCH_TH_MULA 0x2000100b
+#define MASK_TH_MULA 0xfe00707f
+#define MATCH_TH_MULAH 0x2800100b
+#define MASK_TH_MULAH 0xfe00707f
+#define MATCH_TH_MULAW 0x2400100b
+#define MASK_TH_MULAW 0xfe00707f
+#define MATCH_TH_MULS 0x2200100b
+#define MASK_TH_MULS 0xfe00707f
+#define MATCH_TH_MULSH 0x2a00100b
+#define MASK_TH_MULSH 0xfe00707f
+#define MATCH_TH_MULSW 0x2600100b
+#define MASK_TH_MULSW 0xfe00707f
+/* Vendor-specific (T-Head) XTheadMemPair instructions. */
+#define MATCH_TH_LDD 0xf800400b
+#define MASK_TH_LDD 0xf800707f
+#define MATCH_TH_LWD 0xe000400b
+#define MASK_TH_LWD 0xf800707f
+#define MATCH_TH_LWUD 0xf000400b
+#define MASK_TH_LWUD 0xf800707f
+#define MATCH_TH_SDD 0xf800500b
+#define MASK_TH_SDD 0xf800707f
+#define MATCH_TH_SWD 0xe000500b
+#define MASK_TH_SWD 0xf800707f
+/* Vendor-specific (T-Head) XTheadMemIdx instructions. */
+#define MATCH_TH_LDIA 0x7800400b
+#define MASK_TH_LDIA 0xf800707f
+#define MATCH_TH_LDIB 0x6800400b
+#define MASK_TH_LDIB 0xf800707f
+#define MATCH_TH_LWIA 0x5800400b
+#define MASK_TH_LWIA 0xf800707f
+#define MATCH_TH_LWIB 0x4800400b
+#define MASK_TH_LWIB 0xf800707f
+#define MATCH_TH_LWUIA 0xd800400b
+#define MASK_TH_LWUIA 0xf800707f
+#define MATCH_TH_LWUIB 0xc800400b
+#define MASK_TH_LWUIB 0xf800707f
+#define MATCH_TH_LHIA 0x3800400b
+#define MASK_TH_LHIA 0xf800707f
+#define MATCH_TH_LHIB 0x2800400b
+#define MASK_TH_LHIB 0xf800707f
+#define MATCH_TH_LHUIA 0xb800400b
+#define MASK_TH_LHUIA 0xf800707f
+#define MATCH_TH_LHUIB 0xa800400b
+#define MASK_TH_LHUIB 0xf800707f
+#define MATCH_TH_LBIA 0x1800400b
+#define MASK_TH_LBIA 0xf800707f
+#define MATCH_TH_LBIB 0x0800400b
+#define MASK_TH_LBIB 0xf800707f
+#define MATCH_TH_LBUIA 0x9800400b
+#define MASK_TH_LBUIA 0xf800707f
+#define MATCH_TH_LBUIB 0x8800400b
+#define MASK_TH_LBUIB 0xf800707f
+#define MATCH_TH_SDIA 0x7800500b
+#define MASK_TH_SDIA 0xf800707f
+#define MATCH_TH_SDIB 0x6800500b
+#define MASK_TH_SDIB 0xf800707f
+#define MATCH_TH_SWIA 0x5800500b
+#define MASK_TH_SWIA 0xf800707f
+#define MATCH_TH_SWIB 0x4800500b
+#define MASK_TH_SWIB 0xf800707f
+#define MATCH_TH_SHIA 0x3800500b
+#define MASK_TH_SHIA 0xf800707f
+#define MATCH_TH_SHIB 0x2800500b
+#define MASK_TH_SHIB 0xf800707f
+#define MATCH_TH_SBIA 0x1800500b
+#define MASK_TH_SBIA 0xf800707f
+#define MATCH_TH_SBIB 0x0800500b
+#define MASK_TH_SBIB 0xf800707f
+#define MATCH_TH_LRD 0x6000400b
+#define MASK_TH_LRD 0xf800707f
+#define MATCH_TH_LRW 0x4000400b
+#define MASK_TH_LRW 0xf800707f
+#define MATCH_TH_LRWU 0xc000400b
+#define MASK_TH_LRWU 0xf800707f
+#define MATCH_TH_LRH 0x2000400b
+#define MASK_TH_LRH 0xf800707f
+#define MATCH_TH_LRHU 0xa000400b
+#define MASK_TH_LRHU 0xf800707f
+#define MATCH_TH_LRB 0x0000400b
+#define MASK_TH_LRB 0xf800707f
+#define MATCH_TH_LRBU 0x8000400b
+#define MASK_TH_LRBU 0xf800707f
+#define MATCH_TH_SRD 0x6000500b
+#define MASK_TH_SRD 0xf800707f
+#define MATCH_TH_SRW 0x4000500b
+#define MASK_TH_SRW 0xf800707f
+#define MATCH_TH_SRH 0x2000500b
+#define MASK_TH_SRH 0xf800707f
+#define MATCH_TH_SRB 0x0000500b
+#define MASK_TH_SRB 0xf800707f
+#define MATCH_TH_LURD 0x7000400b
+#define MASK_TH_LURD 0xf800707f
+#define MATCH_TH_LURW 0x5000400b
+#define MASK_TH_LURW 0xf800707f
+#define MATCH_TH_LURWU 0xd000400b
+#define MASK_TH_LURWU 0xf800707f
+#define MATCH_TH_LURH 0x3000400b
+#define MASK_TH_LURH 0xf800707f
+#define MATCH_TH_LURHU 0xb000400b
+#define MASK_TH_LURHU 0xf800707f
+#define MATCH_TH_LURB 0x1000400b
+#define MASK_TH_LURB 0xf800707f
+#define MATCH_TH_LURBU 0x9000400b
+#define MASK_TH_LURBU 0xf800707f
+#define MATCH_TH_SURD 0x7000500b
+#define MASK_TH_SURD 0xf800707f
+#define MATCH_TH_SURW 0x5000500b
+#define MASK_TH_SURW 0xf800707f
+#define MATCH_TH_SURH 0x3000500b
+#define MASK_TH_SURH 0xf800707f
+#define MATCH_TH_SURB 0x1000500b
+#define MASK_TH_SURB 0xf800707f
+/* Vendor-specific (T-Head) XTheadSync instructions.  */
+#define MATCH_TH_SFENCE_VMAS 0x0400000b
+#define MASK_TH_SFENCE_VMAS 0xfe007fff
+#define MATCH_TH_SYNC 0x0180000b
+#define MASK_TH_SYNC 0xffffffff
+#define MATCH_TH_SYNC_I 0x01a0000b
+#define MASK_TH_SYNC_I 0xffffffff
+#define MATCH_TH_SYNC_IS 0x01b0000b
+#define MASK_TH_SYNC_IS 0xffffffff
+#define MATCH_TH_SYNC_S 0x0190000b
+#define MASK_TH_SYNC_S 0xffffffff
+/* Vendor-specific (T-Head) XTheadVector instructions.  */
+#define MATCH_TH_VLBV  0x10000007
+#define MASK_TH_VLBV   0xfdf0707f
+#define MATCH_TH_VLHV  0x10005007
+#define MASK_TH_VLHV   0xfdf0707f
+#define MATCH_TH_VLWV  0x10006007
+#define MASK_TH_VLWV   0xfdf0707f
+#define MATCH_TH_VLSBV    0x18000007
+#define MASK_TH_VLSBV     0xfc00707f
+#define MATCH_TH_VLSHV    0x18005007
+#define MASK_TH_VLSHV     0xfc00707f
+#define MATCH_TH_VLSWV    0x18006007
+#define MASK_TH_VLSWV     0xfc00707f
+#define MATCH_TH_VLXBV    0x1c000007
+#define MASK_TH_VLXBV     0xfc00707f
+#define MATCH_TH_VLXHV    0x1c005007
+#define MASK_TH_VLXHV     0xfc00707f
+#define MATCH_TH_VLXWV    0x1c006007
+#define MASK_TH_VLXWV     0xfc00707f
+#define MATCH_TH_VSUXBV   0x1c000027
+#define MASK_TH_VSUXBV    0xfc00707f
+#define MATCH_TH_VSUXHV   0x1c005027
+#define MASK_TH_VSUXHV    0xfc00707f
+#define MATCH_TH_VSUXWV   0x1c006027
+#define MASK_TH_VSUXWV    0xfc00707f
+#define MATCH_TH_VSUXEV   0x1c007027
+#define MASK_TH_VSUXEV    0xfc00707f
+#define MATCH_TH_VLBFFV  0x11000007
+#define MASK_TH_VLBFFV   0xfdf0707f
+#define MATCH_TH_VLHFFV  0x11005007
+#define MASK_TH_VLHFFV   0xfdf0707f
+#define MATCH_TH_VLWFFV  0x11006007
+#define MASK_TH_VLWFFV   0xfdf0707f
+#define MATCH_TH_VLSEG2BV 0x30000007
+#define MASK_TH_VLSEG2BV 0xfdf0707f
+#define MATCH_TH_VLSEG2HV 0x30005007
+#define MASK_TH_VLSEG2HV 0xfdf0707f
+#define MATCH_TH_VLSEG2WV 0x30006007
+#define MASK_TH_VLSEG2WV 0xfdf0707f
+#define MATCH_TH_VLSEG3BV 0x50000007
+#define MASK_TH_VLSEG3BV 0xfdf0707f
+#define MATCH_TH_VLSEG3HV 0x50005007
+#define MASK_TH_VLSEG3HV 0xfdf0707f
+#define MATCH_TH_VLSEG3WV 0x50006007
+#define MASK_TH_VLSEG3WV 0xfdf0707f
+#define MATCH_TH_VLSEG4BV 0x70000007
+#define MASK_TH_VLSEG4BV 0xfdf0707f
+#define MATCH_TH_VLSEG4HV 0x70005007
+#define MASK_TH_VLSEG4HV 0xfdf0707f
+#define MATCH_TH_VLSEG4WV 0x70006007
+#define MASK_TH_VLSEG4WV 0xfdf0707f
+#define MATCH_TH_VLSEG5BV 0x90000007
+#define MASK_TH_VLSEG5BV 0xfdf0707f
+#define MATCH_TH_VLSEG5HV 0x90005007
+#define MASK_TH_VLSEG5HV 0xfdf0707f
+#define MATCH_TH_VLSEG5WV 0x90006007
+#define MASK_TH_VLSEG5WV 0xfdf0707f
+#define MATCH_TH_VLSEG6BV 0xb0000007
+#define MASK_TH_VLSEG6BV 0xfdf0707f
+#define MATCH_TH_VLSEG6HV 0xb0005007
+#define MASK_TH_VLSEG6HV 0xfdf0707f
+#define MATCH_TH_VLSEG6WV 0xb0006007
+#define MASK_TH_VLSEG6WV 0xfdf0707f
+#define MATCH_TH_VLSEG7BV 0xd0000007
+#define MASK_TH_VLSEG7BV 0xfdf0707f
+#define MATCH_TH_VLSEG7HV 0xd0005007
+#define MASK_TH_VLSEG7HV 0xfdf0707f
+#define MATCH_TH_VLSEG7WV 0xd0006007
+#define MASK_TH_VLSEG7WV 0xfdf0707f
+#define MATCH_TH_VLSEG8BV 0xf0000007
+#define MASK_TH_VLSEG8BV 0xfdf0707f
+#define MATCH_TH_VLSEG8HV 0xf0005007
+#define MASK_TH_VLSEG8HV 0xfdf0707f
+#define MATCH_TH_VLSEG8WV 0xf0006007
+#define MASK_TH_VLSEG8WV 0xfdf0707f
+#define MATCH_TH_VLSSEG2BV 0x38000007
+#define MASK_TH_VLSSEG2BV 0xfc00707f
+#define MATCH_TH_VLSSEG2HV 0x38005007
+#define MASK_TH_VLSSEG2HV 0xfc00707f
+#define MATCH_TH_VLSSEG2WV 0x38006007
+#define MASK_TH_VLSSEG2WV 0xfc00707f
+#define MATCH_TH_VLSSEG3BV 0x58000007
+#define MASK_TH_VLSSEG3BV 0xfc00707f
+#define MATCH_TH_VLSSEG3HV 0x58005007
+#define MASK_TH_VLSSEG3HV 0xfc00707f
+#define MATCH_TH_VLSSEG3WV 0x58006007
+#define MASK_TH_VLSSEG3WV 0xfc00707f
+#define MATCH_TH_VLSSEG4BV 0x78000007
+#define MASK_TH_VLSSEG4BV 0xfc00707f
+#define MATCH_TH_VLSSEG4HV 0x78005007
+#define MASK_TH_VLSSEG4HV 0xfc00707f
+#define MATCH_TH_VLSSEG4WV 0x78006007
+#define MASK_TH_VLSSEG4WV 0xfc00707f
+#define MATCH_TH_VLSSEG5BV 0x98000007
+#define MASK_TH_VLSSEG5BV 0xfc00707f
+#define MATCH_TH_VLSSEG5HV 0x98005007
+#define MASK_TH_VLSSEG5HV 0xfc00707f
+#define MATCH_TH_VLSSEG5WV 0x98006007
+#define MASK_TH_VLSSEG5WV 0xfc00707f
+#define MATCH_TH_VLSSEG6BV 0xb8000007
+#define MASK_TH_VLSSEG6BV 0xfc00707f
+#define MATCH_TH_VLSSEG6HV 0xb8005007
+#define MASK_TH_VLSSEG6HV 0xfc00707f
+#define MATCH_TH_VLSSEG6WV 0xb8006007
+#define MASK_TH_VLSSEG6WV 0xfc00707f
+#define MATCH_TH_VLSSEG7BV 0xd8000007
+#define MASK_TH_VLSSEG7BV 0xfc00707f
+#define MATCH_TH_VLSSEG7HV 0xd8005007
+#define MASK_TH_VLSSEG7HV 0xfc00707f
+#define MATCH_TH_VLSSEG7WV 0xd8006007
+#define MASK_TH_VLSSEG7WV 0xfc00707f
+#define MATCH_TH_VLSSEG8BV 0xf8000007
+#define MASK_TH_VLSSEG8BV 0xfc00707f
+#define MATCH_TH_VLSSEG8HV 0xf8005007
+#define MASK_TH_VLSSEG8HV 0xfc00707f
+#define MATCH_TH_VLSSEG8WV 0xf8006007
+#define MASK_TH_VLSSEG8WV 0xfc00707f
+#define MATCH_TH_VLXSEG2BV 0x3c000007
+#define MASK_TH_VLXSEG2BV 0xfc00707f
+#define MATCH_TH_VLXSEG2HV 0x3c005007
+#define MASK_TH_VLXSEG2HV 0xfc00707f
+#define MATCH_TH_VLXSEG2WV 0x3c006007
+#define MASK_TH_VLXSEG2WV 0xfc00707f
+#define MATCH_TH_VLXSEG3BV 0x5c000007
+#define MASK_TH_VLXSEG3BV 0xfc00707f
+#define MATCH_TH_VLXSEG3HV 0x5c005007
+#define MASK_TH_VLXSEG3HV 0xfc00707f
+#define MATCH_TH_VLXSEG3WV 0x5c006007
+#define MASK_TH_VLXSEG3WV 0xfc00707f
+#define MATCH_TH_VLXSEG4BV 0x7c000007
+#define MASK_TH_VLXSEG4BV 0xfc00707f
+#define MATCH_TH_VLXSEG4HV 0x7c005007
+#define MASK_TH_VLXSEG4HV 0xfc00707f
+#define MATCH_TH_VLXSEG4WV 0x7c006007
+#define MASK_TH_VLXSEG4WV 0xfc00707f
+#define MATCH_TH_VLXSEG5BV 0x9c000007
+#define MASK_TH_VLXSEG5BV 0xfc00707f
+#define MATCH_TH_VLXSEG5HV 0x9c005007
+#define MASK_TH_VLXSEG5HV 0xfc00707f
+#define MATCH_TH_VLXSEG5WV 0x9c006007
+#define MASK_TH_VLXSEG5WV 0xfc00707f
+#define MATCH_TH_VLXSEG6BV 0xbc000007
+#define MASK_TH_VLXSEG6BV 0xfc00707f
+#define MATCH_TH_VLXSEG6HV 0xbc005007
+#define MASK_TH_VLXSEG6HV 0xfc00707f
+#define MATCH_TH_VLXSEG6WV 0xbc006007
+#define MASK_TH_VLXSEG6WV 0xfc00707f
+#define MATCH_TH_VLXSEG7BV 0xdc000007
+#define MASK_TH_VLXSEG7BV 0xfc00707f
+#define MATCH_TH_VLXSEG7HV 0xdc005007
+#define MASK_TH_VLXSEG7HV 0xfc00707f
+#define MATCH_TH_VLXSEG7WV 0xdc006007
+#define MASK_TH_VLXSEG7WV 0xfc00707f
+#define MATCH_TH_VLXSEG8BV 0xfc000007
+#define MASK_TH_VLXSEG8BV 0xfc00707f
+#define MATCH_TH_VLXSEG8HV 0xfc005007
+#define MASK_TH_VLXSEG8HV 0xfc00707f
+#define MATCH_TH_VLXSEG8WV 0xfc006007
+#define MASK_TH_VLXSEG8WV 0xfc00707f
+#define MATCH_TH_VLSEG2BFFV 0x31000007
+#define MASK_TH_VLSEG2BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG2HFFV 0x31005007
+#define MASK_TH_VLSEG2HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG2WFFV 0x31006007
+#define MASK_TH_VLSEG2WFFV 0xfdf0707f
+#define MATCH_TH_VLSEG3BFFV 0x51000007
+#define MASK_TH_VLSEG3BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG3HFFV 0x51005007
+#define MASK_TH_VLSEG3HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG3WFFV 0x51006007
+#define MASK_TH_VLSEG3WFFV 0xfdf0707f
+#define MATCH_TH_VLSEG4BFFV 0x71000007
+#define MASK_TH_VLSEG4BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG4HFFV 0x71005007
+#define MASK_TH_VLSEG4HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG4WFFV 0x71006007
+#define MASK_TH_VLSEG4WFFV 0xfdf0707f
+#define MATCH_TH_VLSEG5BFFV 0x91000007
+#define MASK_TH_VLSEG5BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG5HFFV 0x91005007
+#define MASK_TH_VLSEG5HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG5WFFV 0x91006007
+#define MASK_TH_VLSEG5WFFV 0xfdf0707f
+#define MATCH_TH_VLSEG6BFFV 0xb1000007
+#define MASK_TH_VLSEG6BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG6HFFV 0xb1005007
+#define MASK_TH_VLSEG6HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG6WFFV 0xb1006007
+#define MASK_TH_VLSEG6WFFV 0xfdf0707f
+#define MATCH_TH_VLSEG7BFFV 0xd1000007
+#define MASK_TH_VLSEG7BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG7HFFV 0xd1005007
+#define MASK_TH_VLSEG7HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG7WFFV 0xd1006007
+#define MASK_TH_VLSEG7WFFV 0xfdf0707f
+#define MATCH_TH_VLSEG8BFFV 0xf1000007
+#define MASK_TH_VLSEG8BFFV 0xfdf0707f
+#define MATCH_TH_VLSEG8HFFV 0xf1005007
+#define MASK_TH_VLSEG8HFFV 0xfdf0707f
+#define MATCH_TH_VLSEG8WFFV 0xf1006007
+#define MASK_TH_VLSEG8WFFV 0xfdf0707f
+#define MATCH_TH_VAMOADDWV 0x0000602f
+#define MASK_TH_VAMOADDWV 0xf800707f
+#define MATCH_TH_VAMOADDDV 0x0000702f
+#define MASK_TH_VAMOADDDV 0xf800707f
+#define MATCH_TH_VAMOSWAPWV 0x0800602f
+#define MASK_TH_VAMOSWAPWV 0xf800707f
+#define MATCH_TH_VAMOSWAPDV 0x0800702f
+#define MASK_TH_VAMOSWAPDV 0xf800707f
+#define MATCH_TH_VAMOXORWV 0x2000602f
+#define MASK_TH_VAMOXORWV 0xf800707f
+#define MATCH_TH_VAMOXORDV 0x2000702f
+#define MASK_TH_VAMOXORDV 0xf800707f
+#define MATCH_TH_VAMOANDWV 0x6000602f
+#define MASK_TH_VAMOANDWV 0xf800707f
+#define MATCH_TH_VAMOANDDV 0x6000702f
+#define MASK_TH_VAMOANDDV 0xf800707f
+#define MATCH_TH_VAMOORWV 0x4000602f
+#define MASK_TH_VAMOORWV 0xf800707f
+#define MATCH_TH_VAMOORDV 0x4000702f
+#define MASK_TH_VAMOORDV 0xf800707f
+#define MATCH_TH_VAMOMINWV 0x8000602f
+#define MASK_TH_VAMOMINWV 0xf800707f
+#define MATCH_TH_VAMOMINDV 0x8000702f
+#define MASK_TH_VAMOMINDV 0xf800707f
+#define MATCH_TH_VAMOMAXWV 0xa000602f
+#define MASK_TH_VAMOMAXWV 0xf800707f
+#define MATCH_TH_VAMOMAXDV 0xa000702f
+#define MASK_TH_VAMOMAXDV 0xf800707f
+#define MATCH_TH_VAMOMINUWV 0xc000602f
+#define MASK_TH_VAMOMINUWV 0xf800707f
+#define MATCH_TH_VAMOMINUDV 0xc000702f
+#define MASK_TH_VAMOMINUDV 0xf800707f
+#define MATCH_TH_VAMOMAXUWV 0xe000602f
+#define MASK_TH_VAMOMAXUWV 0xf800707f
+#define MATCH_TH_VAMOMAXUDV 0xe000702f
+#define MASK_TH_VAMOMAXUDV 0xf800707f
+#define MATCH_TH_VADCVVM 0x42000057
+#define MASK_TH_VADCVVM 0xfe00707f
+#define MATCH_TH_VADCVXM 0x42004057
+#define MASK_TH_VADCVXM 0xfe00707f
+#define MATCH_TH_VADCVIM 0x42003057
+#define MASK_TH_VADCVIM 0xfe00707f
+#define MATCH_TH_VSBCVVM 0x4a000057
+#define MASK_TH_VSBCVVM 0xfe00707f
+#define MATCH_TH_VSBCVXM 0x4a004057
+#define MASK_TH_VSBCVXM 0xfe00707f
+#define MATCH_TH_VWMACCSUVV 0xf8002057
+#define MASK_TH_VWMACCSUVV 0xfc00707f
+#define MATCH_TH_VAADDVV 0x90000057
+#define MASK_TH_VAADDVV 0xfc00707f
+#define MATCH_TH_VAADDVX 0x90004057
+#define MASK_TH_VAADDVX 0xfc00707f
+#define MATCH_TH_VAADDVI 0x90003057
+#define MASK_TH_VAADDVI 0xfc00707f
+#define MATCH_TH_VASUBVV 0x98000057
+#define MASK_TH_VASUBVV 0xfc00707f
+#define MATCH_TH_VASUBVX 0x98004057
+#define MASK_TH_VASUBVX 0xfc00707f
+#define MATCH_TH_VWSMACCSUVV 0xf8000057
+#define MASK_TH_VWSMACCSUVV 0xfc00707f
+#define MATCH_TH_VFSQRTV 0x8c001057
+#define MASK_TH_VFSQRTV 0xfc0ff07f
+#define MATCH_TH_VMFORDVV 0x68001057
+#define MASK_TH_VMFORDVV 0xfc00707f
+#define MATCH_TH_VMFORDVF 0x68005057
+#define MASK_TH_VMFORDVF 0xfc00707f
+#define MATCH_TH_VFCLASSV 0x8c081057
+#define MASK_TH_VFCLASSV 0xfc0ff07f
+#define MATCH_TH_VFCVTXUFV 0x88001057
+#define MASK_TH_VFCVTXUFV 0xfc0ff07f
+#define MATCH_TH_VFCVTXFV 0x88009057
+#define MASK_TH_VFCVTXFV 0xfc0ff07f
+#define MATCH_TH_VFCVTFXUV 0x88011057
+#define MASK_TH_VFCVTFXUV 0xfc0ff07f
+#define MATCH_TH_VFCVTFXV 0x88019057
+#define MASK_TH_VFCVTFXV 0xfc0ff07f
+#define MATCH_TH_VFWCVTXUFV 0x88041057
+#define MASK_TH_VFWCVTXUFV 0xfc0ff07f
+#define MATCH_TH_VFWCVTXFV 0x88049057
+#define MASK_TH_VFWCVTXFV 0xfc0ff07f
+#define MATCH_TH_VFWCVTFXUV 0x88051057
+#define MASK_TH_VFWCVTFXUV 0xfc0ff07f
+#define MATCH_TH_VFWCVTFXV 0x88059057
+#define MASK_TH_VFWCVTFXV 0xfc0ff07f
+#define MATCH_TH_VFWCVTFFV 0x88061057
+#define MASK_TH_VFWCVTFFV 0xfc0ff07f
+#define MATCH_TH_VFNCVTXUFV 0x88081057
+#define MASK_TH_VFNCVTXUFV 0xfc0ff07f
+#define MATCH_TH_VFNCVTXFV 0x88089057
+#define MASK_TH_VFNCVTXFV 0xfc0ff07f
+#define MATCH_TH_VFNCVTFXUV 0x88091057
+#define MASK_TH_VFNCVTFXUV 0xfc0ff07f
+#define MATCH_TH_VFNCVTFXV 0x88099057
+#define MASK_TH_VFNCVTFXV 0xfc0ff07f
+#define MATCH_TH_VFNCVTFFV 0x880a1057
+#define MASK_TH_VFNCVTFFV 0xfc0ff07f
+#define MATCH_TH_VMPOPCM 0x50002057
+#define MASK_TH_VMPOPCM 0xfc0ff07f
+#define MATCH_TH_VMFIRSTM 0x54002057
+#define MASK_TH_VMFIRSTM 0xfc0ff07f
+#define MATCH_TH_VMSBFM 0x5800a057
+#define MASK_TH_VMSBFM 0xfc0ff07f
+#define MATCH_TH_VMSIFM 0x5801a057
+#define MASK_TH_VMSIFM 0xfc0ff07f
+#define MATCH_TH_VMSOFM 0x58012057
+#define MASK_TH_VMSOFM 0xfc0ff07f
+#define MATCH_TH_VIOTAM 0x58082057
+#define MASK_TH_VIOTAM 0xfc0ff07f
+#define MATCH_TH_VIDV 0x5808a057
+#define MASK_TH_VIDV 0xfdfff07f
+#define MATCH_TH_VMVXS 0x32002057
+#define MASK_TH_VMVXS 0xfe0ff07f
+#define MATCH_TH_VEXTXV 0x32002057
+#define MASK_TH_VEXTXV 0xfe00707f
+#define MATCH_TH_VMVSX 0x36006057
+#define MASK_TH_VMVSX 0xfff0707f
+#define MATCH_TH_VFMVFS 0x32001057
+#define MASK_TH_VFMVFS 0xfe0ff07f
+#define MATCH_TH_VFMVSF 0x36005057
+#define MASK_TH_VFMVSF 0xfff0707f
+/* Vendor-specific (T-Head) XTheadVdot instructions.  */
+#define MATCH_TH_VMAQA_VV 0x8000600b
+#define MASK_TH_VMAQA_VV 0xfc00707f
+#define MATCH_TH_VMAQA_VX 0x8400600b
+#define MASK_TH_VMAQA_VX 0xfc00707f
+#define MATCH_TH_VMAQAU_VV 0x8800600b
+#define MASK_TH_VMAQAU_VV 0xfc00707f
+#define MATCH_TH_VMAQAU_VX 0x8c00600b
+#define MASK_TH_VMAQAU_VX 0xfc00707f
+#define MATCH_TH_VMAQASU_VV 0x9000600b
+#define MASK_TH_VMAQASU_VV 0xfc00707f
+#define MATCH_TH_VMAQASU_VX 0x9400600b
+#define MASK_TH_VMAQASU_VX 0xfc00707f
+#define MATCH_TH_VMAQAUS_VX 0x9c00600b
+#define MASK_TH_VMAQAUS_VX 0xfc00707f
+/* Vendor-specific (Ventana Microsystems) XVentanaCondOps instructions */
+#define MATCH_VT_MASKC 0x607b
+#define MASK_VT_MASKC 0xfe00707f
+#define MATCH_VT_MASKCN 0x707b
+#define MASK_VT_MASKCN 0xfe00707f
+/* Vendor-specific (SiFive) vector coprocessor interface instructions.  */
+#define MATCH_SF_VC_X 0x0200405b
+#define MASK_SF_VC_X 0xf200707f
+#define MATCH_SF_VC_V_X 0x0000405b
+#define MASK_SF_VC_V_X 0xf200707f
+#define MATCH_SF_VC_I 0x0200305b
+#define MASK_SF_VC_I 0xf200707f
+#define MATCH_SF_VC_V_I 0x0000305b
+#define MASK_SF_VC_V_I 0xf200707f
+#define MATCH_SF_VC_VV 0x2200005b
+#define MASK_SF_VC_VV 0xf200707f
+#define MATCH_SF_VC_V_VV 0x2000005b
+#define MASK_SF_VC_V_VV 0xf200707f
+#define MATCH_SF_VC_XV 0x2200405b
+#define MASK_SF_VC_XV 0xf200707f
+#define MATCH_SF_VC_V_XV 0x2000405b
+#define MASK_SF_VC_V_XV 0xf200707f
+#define MATCH_SF_VC_IV 0x2200305b
+#define MASK_SF_VC_IV 0xf200707f
+#define MATCH_SF_VC_V_IV 0x2000305b
+#define MASK_SF_VC_V_IV 0xf200707f
+#define MATCH_SF_VC_FV 0x2a00505b
+#define MASK_SF_VC_FV 0xfa00707f
+#define MATCH_SF_VC_V_FV 0x2800505b
+#define MASK_SF_VC_V_FV 0xfa00707f
+#define MATCH_SF_VC_VVV 0xa200005b
+#define MASK_SF_VC_VVV 0xf200707f
+#define MATCH_SF_VC_V_VVV 0xa000005b
+#define MASK_SF_VC_V_VVV 0xf200707f
+#define MATCH_SF_VC_XVV 0xa200405b
+#define MASK_SF_VC_XVV 0xf200707f
+#define MATCH_SF_VC_V_XVV 0xa000405b
+#define MASK_SF_VC_V_XVV 0xf200707f
+#define MATCH_SF_VC_IVV 0xa200305b
+#define MASK_SF_VC_IVV 0xf200707f
+#define MATCH_SF_VC_V_IVV 0xa000305b
+#define MASK_SF_VC_V_IVV 0xf200707f
+#define MATCH_SF_VC_FVV 0xaa00505b
+#define MASK_SF_VC_FVV 0xfa00707f
+#define MATCH_SF_VC_V_FVV 0xa800505b
+#define MASK_SF_VC_V_FVV 0xfa00707f
+#define MATCH_SF_VC_VVW 0xf200005b
+#define MASK_SF_VC_VVW 0xf200707f
+#define MATCH_SF_VC_V_VVW 0xf000005b
+#define MASK_SF_VC_V_VVW 0xf200707f
+#define MATCH_SF_VC_XVW 0xf200405b
+#define MASK_SF_VC_XVW 0xf200707f
+#define MATCH_SF_VC_V_XVW 0xf000405b
+#define MASK_SF_VC_V_XVW 0xf200707f
+#define MATCH_SF_VC_IVW 0xf200305b
+#define MASK_SF_VC_IVW 0xf200707f
+#define MATCH_SF_VC_V_IVW 0xf000305b
+#define MASK_SF_VC_V_IVW 0xf200707f
+#define MATCH_SF_VC_FVW 0xfa00505b
+#define MASK_SF_VC_FVW 0xfa00707f
+#define MATCH_SF_VC_V_FVW 0xf800505b
+#define MASK_SF_VC_V_FVW 0xfa00707f
+/* Vendor-specific (SiFive) cease instruction.  */
+#define MATCH_SF_CEASE 0x30500073
+#define MASK_SF_CEASE 0xffffffff
+/* SiFive custom int8 matrix-multiply instruction.  */
+#define MATCH_SFVQMACCU4X8X4 0xf200205b
+#define MASK_SFVQMACCU4X8X4 0xfe00707f
+#define MATCH_SFVQMACC4X8X4 0xf600205b
+#define MASK_SFVQMACC4X8X4 0xfe00707f
+#define MATCH_SFVQMACCUS4X8X4 0xfa00205b
+#define MASK_SFVQMACCUS4X8X4 0xfe00707f
+#define MATCH_SFVQMACCSU4X8X4 0xfe00205b
+#define MASK_SFVQMACCSU4X8X4 0xfe00707f
+#define MATCH_SFVQMACCU2X8X2 0xb200205b
+#define MASK_SFVQMACCU2X8X2 0xfe00707f
+#define MATCH_SFVQMACC2X8X2 0xb600205b
+#define MASK_SFVQMACC2X8X2 0xfe00707f
+#define MATCH_SFVQMACCUS2X8X2 0xba00205b
+#define MASK_SFVQMACCUS2X8X2 0xfe00707f
+#define MATCH_SFVQMACCSU2X8X2 0xbe00205b
+#define MASK_SFVQMACCSU2X8X2 0xfe00707f
+/* FP32-to-int8 Ranged Clip Instructions (Xsfvfnrclipxfqf).  */
+#define MATCH_SFVFNRCLIPXUFQF 0x8a00505b
+#define MASK_SFVFNRCLIPXUFQF 0xfe00707f
+#define MATCH_SFVFNRCLIPXFQF 0x8e00505b
+#define MASK_SFVFNRCLIPXFQF 0xfe00707f
+/* MIPS custom instruction.  */
+#define MATCH_MIPS_CCMOV 0x600300b
+#define MASK_MIPS_CCMOV 0x600707f
+#define MATCH_MIPS_LWP 0x0010400b
+#define MASK_MIPS_LWP  0x0030707f
+#define MATCH_MIPS_LDP 0x0000400b
+#define MASK_MIPS_LDP  0x0070707f
+#define MATCH_MIPS_SWP 0x0000508b
+#define MASK_MIPS_SWP  0x000071ff
+#define MATCH_MIPS_SDP 0x0000500b
+#define MASK_MIPS_SDP  0x000073ff
+#define MATCH_MIPS_EHB 0x00301013
+#define MASK_MIPS_EHB  0xffffffff
+#define MATCH_MIPS_IHB 0x00101013
+#define MASK_MIPS_IHB  0xffffffff
+#define MATCH_MIPS_PAUSE 0x00501013
+#define MASK_MIPS_PAUSE  0xffffffff
+#define MATCH_MIPS_PREF 0x0000000b
+#define MASK_MIPS_PREF 0xe000707f
 /* Unprivileged Counter/Timers CSR addresses.  */
 #define CSR_CYCLE 0xc00
 #define CSR_TIME 0xc01
@@ -2204,6 +3914,7 @@
 #define CSR_MTVEC 0x305
 #define CSR_MCOUNTEREN 0x306
 #define CSR_MSTATUSH 0x310
+#define CSR_MEDELEGH 0x312
 #define CSR_MSCRATCH 0x340
 #define CSR_MEPC 0x341
 #define CSR_MCAUSE 0x342
@@ -2394,6 +4105,7 @@
 #define CSR_HIE 0x604
 #define CSR_HCOUNTEREN 0x606
 #define CSR_HGEIE 0x607
+#define CSR_HEDELEGH 0x612
 #define CSR_HTVAL 0x643
 #define CSR_HIP 0x644
 #define CSR_HVIP 0x645
@@ -2414,14 +4126,6 @@
 #define CSR_VSIP 0x244
 #define CSR_VSATP 0x280
 /* Droppped CSR addresses.  */
-#define CSR_MBASE 0x380
-#define CSR_MBOUND 0x381
-#define CSR_MIBASE 0x382
-#define CSR_MIBOUND 0x383
-#define CSR_MDBASE 0x384
-#define CSR_MDBOUND 0x385
-#define CSR_MSCOUNTEREN 0x321
-#define CSR_MHCOUNTEREN 0x322
 #define CSR_USTATUS 0x0
 #define CSR_UIE 0x4
 #define CSR_UTVEC 0x5
@@ -2432,6 +4136,34 @@
 #define CSR_UIP 0x44
 #define CSR_SEDELEG 0x102
 #define CSR_SIDELEG 0x103
+/* Smaia extension */
+#define CSR_MISELECT 0x350
+#define CSR_MIREG    0x351
+#define CSR_MTOPEI   0x35c
+#define CSR_MTOPI    0xfb0
+#define CSR_MVIEN    0x308
+#define CSR_MVIP     0x309
+#define CSR_MIDELEGH 0x313
+#define CSR_MIEH     0x314
+#define CSR_MVIENH   0x318
+#define CSR_MVIPH    0x319
+#define CSR_MIPH     0x354
+/*Smcsrind extension */
+#define CSR_MIREG2    0x352
+#define CSR_MIREG3    0x353
+#define CSR_MIREG4    0x355
+#define CSR_MIREG5    0x356
+#define CSR_MIREG6    0x357
+/* Smcntrpmf extension.  */
+#define CSR_MCYCLECFG    0x321
+#define CSR_MINSTRETCFG  0x322
+#define CSR_MCYCLECFGH   0x721
+#define CSR_MINSTRETCFGH 0x722
+/* Smrnmi extension.  */
+#define CSR_MNSCRATCH       0x740
+#define CSR_MNEPC           0x741
+#define CSR_MNCAUSE         0x742
+#define CSR_MNSTATUS        0x744
 /* Smstateen extension */
 #define CSR_MSTATEEN0 0x30c
 #define CSR_MSTATEEN1 0x30d
@@ -2453,6 +4185,41 @@
 #define CSR_HSTATEEN1H 0x61d
 #define CSR_HSTATEEN2H 0x61e
 #define CSR_HSTATEEN3H 0x61f
+/* Ssaia extension */
+#define CSR_SISELECT 0x150
+#define CSR_SIREG    0x151
+#define CSR_STOPEI   0x15c
+#define CSR_STOPI    0xdb0
+#define CSR_SIEH     0x114
+#define CSR_SIPH     0x154
+#define CSR_HVIEN     0x608
+#define CSR_HVICTL    0x609
+#define CSR_HVIPRIO1  0x646
+#define CSR_HVIPRIO2  0x647
+#define CSR_VSISELECT 0x250
+#define CSR_VSIREG    0x251
+#define CSR_VSTOPEI   0x25c
+#define CSR_VSTOPI    0xeb0
+#define CSR_HIDELEGH  0x613
+#define CSR_HVIENH    0x618
+#define CSR_HVIPH     0x655
+#define CSR_HVIPRIO1H 0x656
+#define CSR_HVIPRIO2H 0x657
+#define CSR_VSIEH     0x214
+#define CSR_VSIPH     0x254
+/* Ssccfg CSR address.  */
+#define CSR_SCOUNTINHIBIT 0x120
+/* Sscsrind extension */
+#define CSR_SIREG2    0x152
+#define CSR_SIREG3    0x153
+#define CSR_SIREG4    0x155
+#define CSR_SIREG5    0x156
+#define CSR_SIREG6    0x157
+#define CSR_VSIREG2    0x252
+#define CSR_VSIREG3    0x253
+#define CSR_VSIREG4    0x255
+#define CSR_VSIREG5    0x256
+#define CSR_VSIREG6    0x257
 /* Sscofpmf extension */
 #define CSR_SCOUNTOVF 0xda0
 #define CSR_MHPMEVENT3H 0x723
@@ -2489,6 +4256,14 @@
 #define CSR_STIMECMPH 0x15d
 #define CSR_VSTIMECMP 0x24d
 #define CSR_VSTIMECMPH 0x25d
+/* Smctr/Ssctr CSR addresses.  */
+#define CSR_SCTRCTL 0x14e
+#define CSR_SCTRSTATUS 0x14f
+#define CSR_SCTRDEPTH 0x15f
+#define CSR_VSCTRCTL 0x24e
+#define CSR_MCTRCTL 0x34e
+/* Zicfissp CSR addresses.  */
+#define CSR_SSP 0x11
 /* Unprivileged Floating-Point CSR addresses.  */
 #define CSR_FFLAGS 0x1
 #define CSR_FRM 0x2
@@ -2510,6 +4285,8 @@
 #define CSR_MSCONTEXT 0x7aa
 /* Unprivileged Scalar Crypto CSR addresses.  */
 #define CSR_SEED 0x015
+/* Unprivileged Zcmt CSR addresses.  */
+#define CSR_JVT 0x017
 /* Unprivileged Vector CSR addresses.  */
 #define CSR_VSTART 0x008
 #define CSR_VXSAT 0x009
@@ -2518,6 +4295,8 @@
 #define CSR_VL 0xc20
 #define CSR_VTYPE 0xc21
 #define CSR_VLENB 0xc22
+/* Ssqosid CSR addresses.  */
+#define CSR_SRMCFG 0x181
 #endif /* RISCV_ENCODING_H */
 #ifdef DECLARE_INSN
 DECLARE_INSN(slli_rv32, MATCH_SLLI_RV32, MASK_SLLI_RV32)
@@ -2626,6 +4405,26 @@ DECLARE_INSN(amomaxu_d, MATCH_AMOMAXU_D, MASK_AMOMAXU_D)
 DECLARE_INSN(amoswap_d, MATCH_AMOSWAP_D, MASK_AMOSWAP_D)
 DECLARE_INSN(lr_d, MATCH_LR_D, MASK_LR_D)
 DECLARE_INSN(sc_d, MATCH_SC_D, MASK_SC_D)
+DECLARE_INSN(amoadd_b, MATCH_AMOADD_B, MASK_AMOADD_B)
+DECLARE_INSN(amoxor_b, MATCH_AMOXOR_B, MASK_AMOXOR_B)
+DECLARE_INSN(amoor_b, MATCH_AMOOR_B, MASK_AMOOR_B)
+DECLARE_INSN(amoand_b, MATCH_AMOAND_B, MASK_AMOAND_B)
+DECLARE_INSN(amomin_b, MATCH_AMOMIN_B, MASK_AMOMIN_B)
+DECLARE_INSN(amomax_b, MATCH_AMOMAX_B, MASK_AMOMAX_B)
+DECLARE_INSN(amominu_b, MATCH_AMOMINU_B, MASK_AMOMINU_B)
+DECLARE_INSN(amomaxu_b, MATCH_AMOMAXU_B, MASK_AMOMAXU_B)
+DECLARE_INSN(amoswap_b, MATCH_AMOSWAP_B, MASK_AMOSWAP_B)
+DECLARE_INSN(amocas_b, MATCH_AMOCAS_B, MASK_AMOCAS_B)
+DECLARE_INSN(amoadd_h, MATCH_AMOADD_H, MASK_AMOADD_H)
+DECLARE_INSN(amoxor_h, MATCH_AMOXOR_H, MASK_AMOXOR_H)
+DECLARE_INSN(amoor_h, MATCH_AMOOR_H, MASK_AMOOR_H)
+DECLARE_INSN(amoand_h, MATCH_AMOAND_H, MASK_AMOAND_H)
+DECLARE_INSN(amomin_h, MATCH_AMOMIN_H, MASK_AMOMIN_H)
+DECLARE_INSN(amomax_h, MATCH_AMOMAX_H, MASK_AMOMAX_H)
+DECLARE_INSN(amominu_h, MATCH_AMOMINU_H, MASK_AMOMINU_H)
+DECLARE_INSN(amomaxu_h, MATCH_AMOMAXU_H, MASK_AMOMAXU_H)
+DECLARE_INSN(amoswap_h, MATCH_AMOSWAP_H, MASK_AMOSWAP_H)
+DECLARE_INSN(amocas_h, MATCH_AMOCAS_H, MASK_AMOCAS_H)
 DECLARE_INSN(ecall, MATCH_ECALL, MASK_ECALL)
 DECLARE_INSN(ebreak, MATCH_EBREAK, MASK_EBREAK)
 DECLARE_INSN(uret, MATCH_URET, MASK_URET)
@@ -2633,7 +4432,6 @@ DECLARE_INSN(sret, MATCH_SRET, MASK_SRET)
 DECLARE_INSN(hret, MATCH_HRET, MASK_HRET)
 DECLARE_INSN(mret, MATCH_MRET, MASK_MRET)
 DECLARE_INSN(dret, MATCH_DRET, MASK_DRET)
-DECLARE_INSN(sfence_vm, MATCH_SFENCE_VM, MASK_SFENCE_VM)
 DECLARE_INSN(sfence_vma, MATCH_SFENCE_VMA, MASK_SFENCE_VMA)
 DECLARE_INSN(wfi, MATCH_WFI, MASK_WFI)
 DECLARE_INSN(csrrw, MATCH_CSRRW, MASK_CSRRW)
@@ -2718,6 +4516,39 @@ DECLARE_INSN(fcvt_q_w, MATCH_FCVT_Q_W, MASK_FCVT_Q_W)
 DECLARE_INSN(fcvt_q_wu, MATCH_FCVT_Q_WU, MASK_FCVT_Q_WU)
 DECLARE_INSN(fcvt_q_l, MATCH_FCVT_Q_L, MASK_FCVT_Q_L)
 DECLARE_INSN(fcvt_q_lu, MATCH_FCVT_Q_LU, MASK_FCVT_Q_LU)
+DECLARE_INSN(fli_h, MATCH_FLI_H, MASK_FLI_H)
+DECLARE_INSN(fminm_h, MATCH_FMINM_H, MASK_FMINM_H)
+DECLARE_INSN(fmaxm_h, MATCH_FMAXM_H, MASK_FMAXM_H)
+DECLARE_INSN(fround_h, MATCH_FROUND_H, MASK_FROUND_H)
+DECLARE_INSN(fround_nx_h, MATCH_FROUNDNX_H, MASK_FROUNDNX_H)
+DECLARE_INSN(fltq_h, MATCH_FLTQ_H, MASK_FLTQ_H)
+DECLARE_INSN(fleq_h, MATCH_FLEQ_H, MASK_FLEQ_H)
+DECLARE_INSN(fli_s, MATCH_FLI_S, MASK_FLI_S)
+DECLARE_INSN(fminm_s, MATCH_FMINM_S, MASK_FMINM_S)
+DECLARE_INSN(fmaxm_s, MATCH_FMAXM_S, MASK_FMAXM_S)
+DECLARE_INSN(fround_s, MATCH_FROUND_S, MASK_FROUND_S)
+DECLARE_INSN(fround_nx_s, MATCH_FROUNDNX_S, MASK_FROUNDNX_S)
+DECLARE_INSN(fltq_s, MATCH_FLTQ_S, MASK_FLTQ_S)
+DECLARE_INSN(fleq_s, MATCH_FLEQ_S, MASK_FLEQ_S)
+DECLARE_INSN(fli_d, MATCH_FLI_D, MASK_FLI_D)
+DECLARE_INSN(fminm_d, MATCH_FMINM_D, MASK_FMINM_D)
+DECLARE_INSN(fmaxm_d, MATCH_FMAXM_D, MASK_FMAXM_D)
+DECLARE_INSN(fround_d, MATCH_FROUND_D, MASK_FROUND_D)
+DECLARE_INSN(fround_nx_d, MATCH_FROUNDNX_D, MASK_FROUNDNX_D)
+DECLARE_INSN(fltq_d, MATCH_FLTQ_D, MASK_FLTQ_D)
+DECLARE_INSN(fleq_d, MATCH_FLEQ_D, MASK_FLEQ_D)
+DECLARE_INSN(fli_q, MATCH_FLI_Q, MASK_FLI_Q)
+DECLARE_INSN(fminm_q, MATCH_FMINM_Q, MASK_FMINM_Q)
+DECLARE_INSN(fmaxm_q, MATCH_FMAXM_Q, MASK_FMAXM_Q)
+DECLARE_INSN(fround_q, MATCH_FROUND_Q, MASK_FROUND_Q)
+DECLARE_INSN(fround_nx_q, MATCH_FROUNDNX_Q, MASK_FROUNDNX_Q)
+DECLARE_INSN(fltq_q, MATCH_FLTQ_Q, MASK_FLTQ_Q)
+DECLARE_INSN(fleq_q, MATCH_FLEQ_Q, MASK_FLEQ_Q)
+DECLARE_INSN(fcvtmod_w_d, MATCH_FCVTMOD_W_D, MASK_FCVTMOD_W_D)
+DECLARE_INSN(fmvh_x_d, MATCH_FMVH_X_D, MASK_FMVH_X_D)
+DECLARE_INSN(fmvh_x_q, MATCH_FMVH_X_Q, MASK_FMVH_X_Q)
+DECLARE_INSN(fmvp_d_x, MATCH_FMVP_D_X, MASK_FMVP_D_X)
+DECLARE_INSN(fmvp_q_x, MATCH_FMVP_Q_X, MASK_FMVP_Q_X)
 DECLARE_INSN(clz, MATCH_CLZ, MASK_CLZ)
 DECLARE_INSN(ctz, MATCH_CTZ, MASK_CTZ)
 DECLARE_INSN(cpop, MATCH_CPOP, MASK_CPOP)
@@ -2844,112 +4675,408 @@ DECLARE_INSN(hsv_h, MATCH_HSV_H, MASK_HSV_H)
 DECLARE_INSN(hsv_w, MATCH_HSV_W, MASK_HSV_W)
 DECLARE_INSN(hsv_d, MATCH_HSV_D, MASK_HSV_D)
 /* Zicbop instructions.  */
-DECLARE_INSN(prefetch_r, MATCH_PREFETCH_R, MASK_PREFETCH_R);
-DECLARE_INSN(prefetch_w, MATCH_PREFETCH_W, MASK_PREFETCH_W);
-DECLARE_INSN(prefetch_i, MATCH_PREFETCH_I, MASK_PREFETCH_I);
+DECLARE_INSN(prefetch_r, MATCH_PREFETCH_R, MASK_PREFETCH_R)
+DECLARE_INSN(prefetch_w, MATCH_PREFETCH_W, MASK_PREFETCH_W)
+DECLARE_INSN(prefetch_i, MATCH_PREFETCH_I, MASK_PREFETCH_I)
 /* Zicbom/Zicboz instructions. */
-DECLARE_INSN(cbo_clean, MATCH_CBO_CLEAN, MASK_CBO_CLEAN);
-DECLARE_INSN(cbo_flush, MATCH_CBO_FLUSH, MASK_CBO_FLUSH);
-DECLARE_INSN(cbo_inval, MATCH_CBO_INVAL, MASK_CBO_INVAL);
-DECLARE_INSN(cbo_zero, MATCH_CBO_ZERO, MASK_CBO_ZERO);
+DECLARE_INSN(cbo_clean, MATCH_CBO_CLEAN, MASK_CBO_CLEAN)
+DECLARE_INSN(cbo_flush, MATCH_CBO_FLUSH, MASK_CBO_FLUSH)
+DECLARE_INSN(cbo_inval, MATCH_CBO_INVAL, MASK_CBO_INVAL)
+DECLARE_INSN(cbo_zero, MATCH_CBO_ZERO, MASK_CBO_ZERO)
+/* Zicond instructions. */
+DECLARE_INSN(czero_eqz, MATCH_CZERO_EQZ, MASK_CZERO_EQZ)
+DECLARE_INSN(czero_nez, MATCH_CZERO_NEZ, MASK_CZERO_NEZ)
+/* Zihintntl hint instructions.  */
+DECLARE_INSN(ntl_p1, MATCH_NTL_P1, MASK_NTL_P1)
+DECLARE_INSN(ntl_pall, MATCH_NTL_PALL, MASK_NTL_PALL)
+DECLARE_INSN(ntl_s1, MATCH_NTL_S1, MASK_NTL_S1)
+DECLARE_INSN(ntl_all, MATCH_NTL_ALL, MASK_NTL_ALL)
+DECLARE_INSN(c_ntl_p1, MATCH_C_NTL_P1, MASK_C_NTL_P1)
+DECLARE_INSN(c_ntl_pall, MATCH_C_NTL_PALL, MASK_C_NTL_PALL)
+DECLARE_INSN(c_ntl_s1, MATCH_C_NTL_S1, MASK_C_NTL_S1)
+DECLARE_INSN(c_ntl_all, MATCH_C_NTL_ALL, MASK_C_NTL_ALL)
+/* Zimop instructions.  */
+DECLARE_INSN(MOP_R_0, MATCH_MOP_R_0, MASK_MOP_R_0)
+DECLARE_INSN(MOP_R_1, MATCH_MOP_R_1, MASK_MOP_R_1)
+DECLARE_INSN(MOP_R_2, MATCH_MOP_R_2, MASK_MOP_R_2)
+DECLARE_INSN(MOP_R_3, MATCH_MOP_R_3, MASK_MOP_R_3)
+DECLARE_INSN(MOP_R_4, MATCH_MOP_R_4, MASK_MOP_R_4)
+DECLARE_INSN(MOP_R_5, MATCH_MOP_R_5, MASK_MOP_R_5)
+DECLARE_INSN(MOP_R_6, MATCH_MOP_R_6, MASK_MOP_R_6)
+DECLARE_INSN(MOP_R_7, MATCH_MOP_R_7, MASK_MOP_R_7)
+DECLARE_INSN(MOP_R_8, MATCH_MOP_R_8, MASK_MOP_R_8)
+DECLARE_INSN(MOP_R_9, MATCH_MOP_R_9, MASK_MOP_R_9)
+DECLARE_INSN(MOP_R_10, MATCH_MOP_R_10, MASK_MOP_R_10)
+DECLARE_INSN(MOP_R_11, MATCH_MOP_R_11, MASK_MOP_R_11)
+DECLARE_INSN(MOP_R_12, MATCH_MOP_R_12, MASK_MOP_R_12)
+DECLARE_INSN(MOP_R_13, MATCH_MOP_R_13, MASK_MOP_R_13)
+DECLARE_INSN(MOP_R_14, MATCH_MOP_R_14, MASK_MOP_R_14)
+DECLARE_INSN(MOP_R_15, MATCH_MOP_R_15, MASK_MOP_R_15)
+DECLARE_INSN(MOP_R_16, MATCH_MOP_R_16, MASK_MOP_R_16)
+DECLARE_INSN(MOP_R_17, MATCH_MOP_R_17, MASK_MOP_R_17)
+DECLARE_INSN(MOP_R_18, MATCH_MOP_R_18, MASK_MOP_R_18)
+DECLARE_INSN(MOP_R_19, MATCH_MOP_R_19, MASK_MOP_R_19)
+DECLARE_INSN(MOP_R_20, MATCH_MOP_R_20, MASK_MOP_R_20)
+DECLARE_INSN(MOP_R_21, MATCH_MOP_R_21, MASK_MOP_R_21)
+DECLARE_INSN(MOP_R_22, MATCH_MOP_R_22, MASK_MOP_R_22)
+DECLARE_INSN(MOP_R_23, MATCH_MOP_R_23, MASK_MOP_R_23)
+DECLARE_INSN(MOP_R_24, MATCH_MOP_R_24, MASK_MOP_R_24)
+DECLARE_INSN(MOP_R_25, MATCH_MOP_R_25, MASK_MOP_R_25)
+DECLARE_INSN(MOP_R_26, MATCH_MOP_R_26, MASK_MOP_R_26)
+DECLARE_INSN(MOP_R_27, MATCH_MOP_R_27, MASK_MOP_R_27)
+DECLARE_INSN(MOP_R_28, MATCH_MOP_R_28, MASK_MOP_R_28)
+DECLARE_INSN(MOP_R_29, MATCH_MOP_R_29, MASK_MOP_R_29)
+DECLARE_INSN(MOP_R_30, MATCH_MOP_R_30, MASK_MOP_R_30)
+DECLARE_INSN(MOP_R_31, MATCH_MOP_R_31, MASK_MOP_R_31)
+DECLARE_INSN(MOP_RR_0, MATCH_MOP_RR_0, MASK_MOP_RR_0)
+DECLARE_INSN(MOP_RR_1, MATCH_MOP_RR_1, MASK_MOP_RR_1)
+DECLARE_INSN(MOP_RR_2, MATCH_MOP_RR_2, MASK_MOP_RR_2)
+DECLARE_INSN(MOP_RR_3, MATCH_MOP_RR_3, MASK_MOP_RR_3)
+DECLARE_INSN(MOP_RR_4, MATCH_MOP_RR_4, MASK_MOP_RR_4)
+DECLARE_INSN(MOP_RR_5, MATCH_MOP_RR_5, MASK_MOP_RR_5)
+DECLARE_INSN(MOP_RR_6, MATCH_MOP_RR_6, MASK_MOP_RR_6)
+DECLARE_INSN(MOP_RR_7, MATCH_MOP_RR_7, MASK_MOP_RR_7)
+/* Zacas instructions.  */
+DECLARE_INSN(amocas_w, MATCH_AMOCAS_W, MASK_AMOCAS_W)
+DECLARE_INSN(amocas_d, MATCH_AMOCAS_D, MASK_AMOCAS_D)
+DECLARE_INSN(amocas_q, MATCH_AMOCAS_Q, MASK_AMOCAS_Q)
+/* Zawrs instructions.  */
+DECLARE_INSN(wrs_nto, MATCH_WRS_NTO, MASK_WRS_NTO)
+DECLARE_INSN(wrs_sto, MATCH_WRS_STO, MASK_WRS_STO)
+/* Zfbfmin instructions.  */
+DECLARE_INSN(FCVT_BF16_S, MATCH_FCVT_BF16_S, MASK_FCVT_BF16_S)
+DECLARE_INSN(FCVT_S_BF16, MATCH_FCVT_S_BF16, MASK_FCVT_S_BF16)
+/* Zvfbfmin instructions.  */
+DECLARE_INSN(VFNCVTBF16_F_F_W, MATCH_VFNCVTBF16_F_F_W, MASK_VFNCVTBF16_F_F_W)
+DECLARE_INSN(VFWCVTBF16_F_F_V, MATCH_VFWCVTBF16_F_F_V, MASK_VFWCVTBF16_F_F_V)
+/* Zvfbfwma instructions.  */
+DECLARE_INSN(VFWMACCBF16_VF, MATCH_VFWMACCBF16_VF, MASK_VFWMACCBF16_VF)
+DECLARE_INSN(VFWMACCBF16_VV, MATCH_VFWMACCBF16_VV, MASK_VFWMACCBF16_VV)
+/* Zvbb/Zvkb instructions.  */
+DECLARE_INSN(vandn_vv, MATCH_VANDN_VV, MASK_VANDN_VV)
+DECLARE_INSN(vandn_vx, MATCH_VANDN_VX, MASK_VANDN_VX)
+DECLARE_INSN(vbrev8_v, MATCH_VBREV8_V, MASK_VBREV8_V)
+DECLARE_INSN(vbrev_v, MATCH_VBREV_V, MASK_VBREV_V)
+DECLARE_INSN(vclz_v, MATCH_VCLZ_V, MASK_VCLZ_V)
+DECLARE_INSN(vcpop_v, MATCH_VCPOP_V, MASK_VCPOP_V)
+DECLARE_INSN(vctz_v, MATCH_VCTZ_V, MASK_VCTZ_V)
+DECLARE_INSN(vrev8_v, MATCH_VREV8_V, MASK_VREV8_V)
+DECLARE_INSN(vrol_vv, MATCH_VROL_VV, MASK_VROL_VV)
+DECLARE_INSN(vrol_vx, MATCH_VROL_VX, MASK_VROL_VX)
+DECLARE_INSN(vror_vi, MATCH_VROR_VI, MASK_VROR_VI)
+DECLARE_INSN(vror_vv, MATCH_VROR_VV, MASK_VROR_VV)
+DECLARE_INSN(vror_vx, MATCH_VROR_VX, MASK_VROR_VX)
+DECLARE_INSN(vwsll_vi, MATCH_VWSLL_VI, MASK_VWSLL_VI)
+DECLARE_INSN(vwsll_vv, MATCH_VWSLL_VV, MASK_VWSLL_VV)
+DECLARE_INSN(vwsll_vx, MATCH_VWSLL_VX, MASK_VWSLL_VX)
+/* Zvbc instructions.  */
+DECLARE_INSN(vclmul_vv, MATCH_VCLMUL_VV, MASK_VCLMUL_VV)
+DECLARE_INSN(vclmul_vx, MATCH_VCLMUL_VX, MASK_VCLMUL_VX)
+DECLARE_INSN(vclmulh_vv, MATCH_VCLMULH_VV, MASK_VCLMULH_VV)
+DECLARE_INSN(vclmulh_vx, MATCH_VCLMULH_VX, MASK_VCLMULH_VX)
+/* Zvkg instructions.  */
+DECLARE_INSN(vghsh_vv, MATCH_VGHSH_VV, MASK_VGHSH_VV)
+DECLARE_INSN(vgmul_vv, MATCH_VGMUL_VV, MASK_VGMUL_VV)
+/* Zvkned instructions.  */
+DECLARE_INSN(vaesdf_vs, MATCH_VAESDF_VS, MASK_VAESDF_VS)
+DECLARE_INSN(vaesdf_vv, MATCH_VAESDF_VV, MASK_VAESDF_VV)
+DECLARE_INSN(vaesdm_vs, MATCH_VAESDM_VS, MASK_VAESDM_VS)
+DECLARE_INSN(vaesdm_vv, MATCH_VAESDM_VV, MASK_VAESDM_VV)
+DECLARE_INSN(vaesef_vs, MATCH_VAESEF_VS, MASK_VAESEF_VS)
+DECLARE_INSN(vaesef_vv, MATCH_VAESEF_VV, MASK_VAESEF_VV)
+DECLARE_INSN(vaesem_vs, MATCH_VAESEM_VS, MASK_VAESEM_VS)
+DECLARE_INSN(vaesem_vv, MATCH_VAESEM_VV, MASK_VAESEM_VV)
+DECLARE_INSN(vaeskf1_vi, MATCH_VAESKF1_VI, MASK_VAESKF1_VI)
+DECLARE_INSN(vaeskf2_vi, MATCH_VAESKF2_VI, MASK_VAESKF2_VI)
+DECLARE_INSN(vaesz_vs, MATCH_VAESZ_VS, MASK_VAESZ_VS)
+/* Zvknh[a,b] instructions.  */
+DECLARE_INSN(vsha2ch_vv, MATCH_VSHA2CH_VV, MASK_VSHA2CH_VV)
+DECLARE_INSN(vsha2cl_vv, MATCH_VSHA2CL_VV, MASK_VSHA2CL_VV)
+DECLARE_INSN(vsha2ms_vv, MATCH_VSHA2MS_VV, MASK_VSHA2MS_VV)
+/* Zvksed instructions.  */
+DECLARE_INSN(vsm4k_vi, MATCH_VSM4K_VI, MASK_VSM4K_VI)
+DECLARE_INSN(vsm4r_vs, MATCH_VSM4R_VS, MASK_VSM4R_VS)
+DECLARE_INSN(vsm4r_vv, MATCH_VSM4R_VV, MASK_VSM4R_VV)
+/* Zvksh instructions.  */
+DECLARE_INSN(vsm3c_vi, MATCH_VSM3C_VI, MASK_VSM3C_VI)
+DECLARE_INSN(vsm3me_vv, MATCH_VSM3ME_VV, MASK_VSM3ME_VV)
+/* Zcb instructions.  */
+DECLARE_INSN(c_sext_b, MATCH_C_SEXT_B, MASK_C_SEXT_B)
+DECLARE_INSN(c_sext_h, MATCH_C_SEXT_H, MASK_C_SEXT_H)
+DECLARE_INSN(c_zext_b, MATCH_C_ZEXT_B, MASK_C_ZEXT_B)
+DECLARE_INSN(c_zext_h, MATCH_C_ZEXT_H, MASK_C_ZEXT_H)
+DECLARE_INSN(c_zext_w, MATCH_C_ZEXT_W, MASK_C_ZEXT_W)
+DECLARE_INSN(c_mul, MATCH_C_MUL, MASK_C_MUL)
+DECLARE_INSN(c_not, MATCH_C_NOT, MASK_C_NOT)
+DECLARE_INSN(c_lbu, MATCH_C_LBU, MASK_C_LBU)
+DECLARE_INSN(c_lhu, MATCH_C_LHU, MASK_C_LHU)
+DECLARE_INSN(c_lh, MATCH_C_LH, MASK_C_LH)
+DECLARE_INSN(c_sb, MATCH_C_SB, MASK_C_SB)
+DECLARE_INSN(c_sh, MATCH_C_SH, MASK_C_SH)
+/* Zcmop instructions.  */
+DECLARE_INSN(c_mop_1, MATCH_C_MOP_1, MASK_C_MOP_1)
+DECLARE_INSN(c_mop_3, MATCH_C_MOP_3, MASK_C_MOP_3)
+DECLARE_INSN(c_mop_5, MATCH_C_MOP_5, MASK_C_MOP_5)
+DECLARE_INSN(c_mop_7, MATCH_C_MOP_7, MASK_C_MOP_7)
+DECLARE_INSN(c_mop_9, MATCH_C_MOP_9, MASK_C_MOP_9)
+DECLARE_INSN(c_mop_11, MATCH_C_MOP_11, MASK_C_MOP_11)
+DECLARE_INSN(c_mop_13, MATCH_C_MOP_13, MASK_C_MOP_13)
+DECLARE_INSN(c_mop_15, MATCH_C_MOP_15, MASK_C_MOP_15)
+/* Zcmp instructions.  */
+DECLARE_INSN(cm_push, MATCH_CM_PUSH, MASK_CM_PUSH)
+DECLARE_INSN(cm_pop, MATCH_CM_POP, MASK_CM_POP)
+DECLARE_INSN(cm_popret, MATCH_CM_POPRET, MASK_CM_POPRET)
+DECLARE_INSN(cm_popretz, MATCH_CM_POPRETZ, MASK_CM_POPRETZ)
+DECLARE_INSN(cm_mvsa01, MATCH_CM_MVSA01, MASK_CM_MVSA01)
+DECLARE_INSN(cm_mva01s, MATCH_CM_MVA01S, MASK_CM_MVA01S)
+/* Zcmt instructions.  */
+DECLARE_INSN(cm_jt, MATCH_CM_JT, MASK_CM_JT)
+DECLARE_INSN(cm_jalt, MATCH_CM_JALT, MASK_CM_JALT)
+/* Smctr/Ssctr instruction.  */
+DECLARE_INSN(sctrclr, MATCH_SCTRCLR, MASK_SCTRCLR)
+/* Smrnmi instruction */
+DECLARE_INSN(mnret, MATCH_MNRET, MASK_MNRET)
+/* Vendor-specific (T-Head) XTheadBa instructions.  */
+DECLARE_INSN(th_addsl, MATCH_TH_ADDSL, MASK_TH_ADDSL)
+/* Vendor-specific (T-Head) XTheadBb instructions.  */
+DECLARE_INSN(th_srri, MATCH_TH_SRRI, MASK_TH_SRRI)
+DECLARE_INSN(th_srriw, MATCH_TH_SRRIW, MASK_TH_SRRIW)
+DECLARE_INSN(th_ext, MATCH_TH_EXT, MASK_TH_EXT)
+DECLARE_INSN(th_extu, MATCH_TH_EXTU, MASK_TH_EXTU)
+DECLARE_INSN(th_ff0, MATCH_TH_FF0, MASK_TH_FF0)
+DECLARE_INSN(th_ff1, MATCH_TH_FF1, MASK_TH_FF1)
+DECLARE_INSN(th_rev, MATCH_TH_REV, MASK_TH_REV)
+DECLARE_INSN(th_revw, MATCH_TH_REVW, MASK_TH_REVW)
+DECLARE_INSN(th_tstbnz, MATCH_TH_TSTNBZ, MASK_TH_TSTNBZ)
+/* Vendor-specific (T-Head) XTheadBs instructions.  */
+DECLARE_INSN(th_tst, MATCH_TH_TST, MASK_TH_TST)
+/* Vendor-specific (T-Head) XTheadCmo instructions.  */
+DECLARE_INSN(th_dcache_call, MATCH_TH_DCACHE_CALL, MASK_TH_DCACHE_CALL)
+DECLARE_INSN(th_dcache_ciall, MATCH_TH_DCACHE_CIALL, MASK_TH_DCACHE_CIALL)
+DECLARE_INSN(th_dcache_iall, MATCH_TH_DCACHE_IALL, MASK_TH_DCACHE_IALL)
+DECLARE_INSN(th_dcache_cpa, MATCH_TH_DCACHE_CPA, MASK_TH_DCACHE_CPA)
+DECLARE_INSN(th_dcache_cipa, MATCH_TH_DCACHE_CIPA, MASK_TH_DCACHE_CIPA)
+DECLARE_INSN(th_dcache_ipa, MATCH_TH_DCACHE_IPA, MASK_TH_DCACHE_IPA)
+DECLARE_INSN(th_dcache_cva, MATCH_TH_DCACHE_CVA, MASK_TH_DCACHE_CVA)
+DECLARE_INSN(th_dcache_civa, MATCH_TH_DCACHE_CIVA, MASK_TH_DCACHE_CIVA)
+DECLARE_INSN(th_dcache_iva, MATCH_TH_DCACHE_IVA, MASK_TH_DCACHE_IVA)
+DECLARE_INSN(th_dcache_csw, MATCH_TH_DCACHE_CSW, MASK_TH_DCACHE_CSW)
+DECLARE_INSN(th_dcache_cisw, MATCH_TH_DCACHE_CISW, MASK_TH_DCACHE_CISW)
+DECLARE_INSN(th_dcache_isw, MATCH_TH_DCACHE_ISW, MASK_TH_DCACHE_ISW)
+DECLARE_INSN(th_dcache_cpal1, MATCH_TH_DCACHE_CPAL1, MASK_TH_DCACHE_CPAL1)
+DECLARE_INSN(th_dcache_cval1, MATCH_TH_DCACHE_CVAL1, MASK_TH_DCACHE_CVAL1)
+DECLARE_INSN(th_icache_iall, MATCH_TH_ICACHE_IALL, MASK_TH_ICACHE_IALL)
+DECLARE_INSN(th_icache_ialls, MATCH_TH_ICACHE_IALLS, MASK_TH_ICACHE_IALLS)
+DECLARE_INSN(th_icache_ipa, MATCH_TH_ICACHE_IPA, MASK_TH_ICACHE_IPA)
+DECLARE_INSN(th_icache_iva, MATCH_TH_ICACHE_IVA, MASK_TH_ICACHE_IVA)
+DECLARE_INSN(th_l2cache_call, MATCH_TH_L2CACHE_CALL, MASK_TH_L2CACHE_CALL)
+DECLARE_INSN(th_l2cache_ciall, MATCH_TH_L2CACHE_CIALL, MASK_TH_L2CACHE_CIALL)
+DECLARE_INSN(th_l2cache_iall, MATCH_TH_L2CACHE_IALL, MASK_TH_L2CACHE_IALL)
+/* Vendor-specific (T-Head) XTheadCondMov instructions.  */
+DECLARE_INSN(th_mveqz, MATCH_TH_MVEQZ, MASK_TH_MVEQZ)
+DECLARE_INSN(th_mvnez, MATCH_TH_MVNEZ, MASK_TH_MVNEZ)
+/* Vendor-specific (T-Head) XTheadFMemIdx instructions. */
+DECLARE_INSN(th_flrd, MATCH_TH_FLRD, MASK_TH_FLRD)
+DECLARE_INSN(th_flrw, MATCH_TH_FLRW, MASK_TH_FLRW)
+DECLARE_INSN(th_flurd, MATCH_TH_FLURD, MASK_TH_FLURD)
+DECLARE_INSN(th_flurw, MATCH_TH_FLURW, MASK_TH_FLURW)
+DECLARE_INSN(th_fsrd, MATCH_TH_FSRD, MASK_TH_FSRD)
+DECLARE_INSN(th_fsrw, MATCH_TH_FSRW, MASK_TH_FSRW)
+DECLARE_INSN(th_fsurd, MATCH_TH_FSURD, MASK_TH_FSURD)
+DECLARE_INSN(th_fsurw, MATCH_TH_FSURW, MASK_TH_FSURW)
+/* Vendor-specific (T-Head) XTheadFmv instructions. */
+DECLARE_INSN(th_fmv_hw_x, MATCH_TH_FMV_HW_X, MASK_TH_FMV_HW_X)
+DECLARE_INSN(th_fmv_x_hw, MATCH_TH_FMV_X_HW, MASK_TH_FMV_X_HW)
+/* Vendor-specific (T-Head) XTheadInt instructions. */
+DECLARE_INSN(th_ipop, MATCH_TH_IPOP, MASK_TH_IPOP)
+DECLARE_INSN(th_ipush, MATCH_TH_IPUSH, MASK_TH_IPUSH)
+/* Vendor-specific (T-Head) XTheadMac instructions.  */
+DECLARE_INSN(th_mula, MATCH_TH_MULA, MASK_TH_MULA)
+DECLARE_INSN(th_mulah, MATCH_TH_MULAH, MASK_TH_MULAH)
+DECLARE_INSN(th_mulaw, MATCH_TH_MULAW, MASK_TH_MULAW)
+DECLARE_INSN(th_muls, MATCH_TH_MULS, MASK_TH_MULS)
+DECLARE_INSN(th_mulsh, MATCH_TH_MULSH, MASK_TH_MULSH)
+DECLARE_INSN(th_mulsw, MATCH_TH_MULSW, MASK_TH_MULSW)
+/* Vendor-specific (T-Head) XTheadMemIdx instructions. */
+DECLARE_INSN(th_ldia, MATCH_TH_LDIA, MASK_TH_LDIA)
+DECLARE_INSN(th_ldib, MATCH_TH_LDIB, MASK_TH_LDIB)
+DECLARE_INSN(th_lwia, MATCH_TH_LWIA, MASK_TH_LWIA)
+DECLARE_INSN(th_lwib, MATCH_TH_LWIB, MASK_TH_LWIB)
+DECLARE_INSN(th_lwuia, MATCH_TH_LWUIA, MASK_TH_LWUIA)
+DECLARE_INSN(th_lwuib, MATCH_TH_LWUIB, MASK_TH_LWUIB)
+DECLARE_INSN(th_lhia, MATCH_TH_LHIA, MASK_TH_LHIA)
+DECLARE_INSN(th_lhib, MATCH_TH_LHIB, MASK_TH_LHIB)
+DECLARE_INSN(th_lhuia, MATCH_TH_LHUIA, MASK_TH_LHUIA)
+DECLARE_INSN(th_lhuib, MATCH_TH_LHUIB, MASK_TH_LHUIB)
+DECLARE_INSN(th_lbia, MATCH_TH_LBIA, MASK_TH_LBIA)
+DECLARE_INSN(th_lbib, MATCH_TH_LBIB, MASK_TH_LBIB)
+DECLARE_INSN(th_lbuia, MATCH_TH_LBUIA, MASK_TH_LBUIA)
+DECLARE_INSN(th_lbuib, MATCH_TH_LBUIB, MASK_TH_LBUIB)
+DECLARE_INSN(th_sdia, MATCH_TH_SDIA, MASK_TH_SDIA)
+DECLARE_INSN(th_sdib, MATCH_TH_SDIB, MASK_TH_SDIB)
+DECLARE_INSN(th_swia, MATCH_TH_SWIA, MASK_TH_SWIA)
+DECLARE_INSN(th_swib, MATCH_TH_SWIB, MASK_TH_SWIB)
+DECLARE_INSN(th_shia, MATCH_TH_SHIA, MASK_TH_SHIA)
+DECLARE_INSN(th_shib, MATCH_TH_SHIB, MASK_TH_SHIB)
+DECLARE_INSN(th_sbia, MATCH_TH_SBIA, MASK_TH_SBIA)
+DECLARE_INSN(th_sbib, MATCH_TH_SBIB, MASK_TH_SBIB)
+DECLARE_INSN(th_lrd, MATCH_TH_LRD, MASK_TH_LRD)
+DECLARE_INSN(th_lrw, MATCH_TH_LRW, MASK_TH_LRW)
+DECLARE_INSN(th_lrwu, MATCH_TH_LRWU, MASK_TH_LRWU)
+DECLARE_INSN(th_lrh, MATCH_TH_LRH, MASK_TH_LRH)
+DECLARE_INSN(th_lrhu, MATCH_TH_LRHU, MASK_TH_LRHU)
+DECLARE_INSN(th_lrb, MATCH_TH_LRB, MASK_TH_LRB)
+DECLARE_INSN(th_lrbu, MATCH_TH_LRBU, MASK_TH_LRBU)
+DECLARE_INSN(th_srd, MATCH_TH_SRD, MASK_TH_SRD)
+DECLARE_INSN(th_srw, MATCH_TH_SRW, MASK_TH_SRW)
+DECLARE_INSN(th_srh, MATCH_TH_SRH, MASK_TH_SRH)
+DECLARE_INSN(th_srb, MATCH_TH_SRB, MASK_TH_SRB)
+DECLARE_INSN(th_lurd, MATCH_TH_LURD, MASK_TH_LURD)
+DECLARE_INSN(th_lurw, MATCH_TH_LURW, MASK_TH_LURW)
+DECLARE_INSN(th_lurwu, MATCH_TH_LURWU, MASK_TH_LURWU)
+DECLARE_INSN(th_lurh, MATCH_TH_LURH, MASK_TH_LURH)
+DECLARE_INSN(th_lurhu, MATCH_TH_LURHU, MASK_TH_LURHU)
+DECLARE_INSN(th_lurb, MATCH_TH_LURB, MASK_TH_LURB)
+DECLARE_INSN(th_lurbu, MATCH_TH_LURBU, MASK_TH_LURBU)
+DECLARE_INSN(th_surd, MATCH_TH_SURD, MASK_TH_SURD)
+DECLARE_INSN(th_surw, MATCH_TH_SURW, MASK_TH_SURW)
+DECLARE_INSN(th_surh, MATCH_TH_SURH, MASK_TH_SURH)
+DECLARE_INSN(th_surb, MATCH_TH_SURB, MASK_TH_SURB)
+/* Vendor-specific (T-Head) XTheadMemPair instructions. */
+DECLARE_INSN(th_ldd, MATCH_TH_LDD, MASK_TH_LDD)
+DECLARE_INSN(th_lwd, MATCH_TH_LWD, MASK_TH_LWD)
+DECLARE_INSN(th_lwud, MATCH_TH_LWUD, MASK_TH_LWUD)
+DECLARE_INSN(th_sdd, MATCH_TH_SDD, MASK_TH_SDD)
+DECLARE_INSN(th_swd, MATCH_TH_SWD, MASK_TH_SWD)
+/* Vendor-specific (T-Head) XTheadSync instructions.  */
+DECLARE_INSN(th_sfence_vmas, MATCH_TH_SFENCE_VMAS, MASK_TH_SFENCE_VMAS)
+DECLARE_INSN(th_sync, MATCH_TH_SYNC, MASK_TH_SYNC)
+DECLARE_INSN(th_sync_i, MATCH_TH_SYNC_I, MASK_TH_SYNC_I)
+DECLARE_INSN(th_sync_is, MATCH_TH_SYNC_IS, MASK_TH_SYNC_IS)
+DECLARE_INSN(th_sync_s, MATCH_TH_SYNC_S, MASK_TH_SYNC_S)
+/* XVentanaCondOps instructions. */
+DECLARE_INSN(vt_maskc, MATCH_VT_MASKC, MASK_VT_MASKC)
+DECLARE_INSN(vt_maskcn, MATCH_VT_MASKCN, MASK_VT_MASKCN)
+
+/* Zicfiss instructions.  */
+DECLARE_INSN(sspush, MATCH_SSPUSH, MASK_SSPUSH)
+DECLARE_INSN(sspopchk, MATCH_SSPOPCHK, MASK_SSPOPCHK)
+DECLARE_INSN(c_sspush, MATCH_C_SSPUSH, MASK_C_SSPUSH)
+DECLARE_INSN(c_sspopchk, MATCH_C_SSPOPCHK, MASK_C_SSPOPCHK)
+DECLARE_INSN(ssrdp, MATCH_SSRDP, MASK_SSRDP)
+DECLARE_INSN(ssamoswap_w, MATCH_SSAMOSWAP_W, MASK_SSAMOSWAP_W)
+DECLARE_INSN(ssamoswap_d, MATCH_SSAMOSWAP_D, MASK_SSAMOSWAP_D)
+/* Zicfilp instructions.  */
+DECLARE_INSN(lpad, MATCH_LPAD, MASK_LPAD)
+/* MIPS custom instructions.  */
+DECLARE_INSN(mips_ccmov, MATCH_MIPS_CCMOV, MASK_MIPS_CCMOV)
+DECLARE_INSN(mips_lwp, MATCH_MIPS_LWP, MASK_MIPS_LWP)
+DECLARE_INSN(mips_ldp, MATCH_MIPS_LDP, MASK_MIPS_LDP)
+DECLARE_INSN(mips_swp, MATCH_MIPS_SWP, MASK_MIPS_SWP)
+DECLARE_INSN(mips_sdp, MATCH_MIPS_SDP, MASK_MIPS_SDP)
+DECLARE_INSN(mips_ehb, MATCH_MIPS_EHB, MASK_MIPS_EHB)
+DECLARE_INSN(mips_ihb, MATCH_MIPS_IHB, MASK_MIPS_IHB)
+DECLARE_INSN(mips_pause, MATCH_MIPS_PAUSE, MASK_MIPS_PAUSE)
+DECLARE_INSN(mips_pref, MATCH_MIPS_PREF, MASK_MIPS_PREF)
 #endif /* DECLARE_INSN */
 #ifdef DECLARE_CSR
 /* Unprivileged Counter/Timers CSRs.  */
-DECLARE_CSR(cycle, CSR_CYCLE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(time, CSR_TIME, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(instret, CSR_INSTRET, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter3, CSR_HPMCOUNTER3, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter4, CSR_HPMCOUNTER4, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter5, CSR_HPMCOUNTER5, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter6, CSR_HPMCOUNTER6, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter7, CSR_HPMCOUNTER7, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter8, CSR_HPMCOUNTER8, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter9, CSR_HPMCOUNTER9, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter10, CSR_HPMCOUNTER10, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter11, CSR_HPMCOUNTER11, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter12, CSR_HPMCOUNTER12, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter13, CSR_HPMCOUNTER13, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter14, CSR_HPMCOUNTER14, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter15, CSR_HPMCOUNTER15, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter16, CSR_HPMCOUNTER16, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter17, CSR_HPMCOUNTER17, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter18, CSR_HPMCOUNTER18, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter19, CSR_HPMCOUNTER19, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter20, CSR_HPMCOUNTER20, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter21, CSR_HPMCOUNTER21, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter22, CSR_HPMCOUNTER22, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter23, CSR_HPMCOUNTER23, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter24, CSR_HPMCOUNTER24, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter25, CSR_HPMCOUNTER25, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter26, CSR_HPMCOUNTER26, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter27, CSR_HPMCOUNTER27, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter28, CSR_HPMCOUNTER28, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter29, CSR_HPMCOUNTER29, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter30, CSR_HPMCOUNTER30, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter31, CSR_HPMCOUNTER31, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(cycleh, CSR_CYCLEH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(timeh, CSR_TIMEH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(instreth, CSR_INSTRETH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter3h, CSR_HPMCOUNTER3H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter4h, CSR_HPMCOUNTER4H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter5h, CSR_HPMCOUNTER5H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter6h, CSR_HPMCOUNTER6H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter7h, CSR_HPMCOUNTER7H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter8h, CSR_HPMCOUNTER8H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter9h, CSR_HPMCOUNTER9H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter10h, CSR_HPMCOUNTER10H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter11h, CSR_HPMCOUNTER11H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter12h, CSR_HPMCOUNTER12H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter13h, CSR_HPMCOUNTER13H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter14h, CSR_HPMCOUNTER14H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter15h, CSR_HPMCOUNTER15H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter16h, CSR_HPMCOUNTER16H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter17h, CSR_HPMCOUNTER17H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter18h, CSR_HPMCOUNTER18H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter19h, CSR_HPMCOUNTER19H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter20h, CSR_HPMCOUNTER20H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter21h, CSR_HPMCOUNTER21H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter22h, CSR_HPMCOUNTER22H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter23h, CSR_HPMCOUNTER23H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter24h, CSR_HPMCOUNTER24H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter25h, CSR_HPMCOUNTER25H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter26h, CSR_HPMCOUNTER26H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter27h, CSR_HPMCOUNTER27H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter28h, CSR_HPMCOUNTER28H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter29h, CSR_HPMCOUNTER29H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter30h, CSR_HPMCOUNTER30H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(hpmcounter31h, CSR_HPMCOUNTER31H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(cycle, CSR_CYCLE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(time, CSR_TIME, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(instret, CSR_INSTRET, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter3, CSR_HPMCOUNTER3, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter4, CSR_HPMCOUNTER4, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter5, CSR_HPMCOUNTER5, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter6, CSR_HPMCOUNTER6, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter7, CSR_HPMCOUNTER7, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter8, CSR_HPMCOUNTER8, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter9, CSR_HPMCOUNTER9, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter10, CSR_HPMCOUNTER10, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter11, CSR_HPMCOUNTER11, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter12, CSR_HPMCOUNTER12, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter13, CSR_HPMCOUNTER13, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter14, CSR_HPMCOUNTER14, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter15, CSR_HPMCOUNTER15, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter16, CSR_HPMCOUNTER16, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter17, CSR_HPMCOUNTER17, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter18, CSR_HPMCOUNTER18, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter19, CSR_HPMCOUNTER19, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter20, CSR_HPMCOUNTER20, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter21, CSR_HPMCOUNTER21, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter22, CSR_HPMCOUNTER22, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter23, CSR_HPMCOUNTER23, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter24, CSR_HPMCOUNTER24, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter25, CSR_HPMCOUNTER25, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter26, CSR_HPMCOUNTER26, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter27, CSR_HPMCOUNTER27, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter28, CSR_HPMCOUNTER28, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter29, CSR_HPMCOUNTER29, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter30, CSR_HPMCOUNTER30, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter31, CSR_HPMCOUNTER31, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(cycleh, CSR_CYCLEH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(timeh, CSR_TIMEH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(instreth, CSR_INSTRETH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter3h, CSR_HPMCOUNTER3H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter4h, CSR_HPMCOUNTER4H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter5h, CSR_HPMCOUNTER5H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter6h, CSR_HPMCOUNTER6H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter7h, CSR_HPMCOUNTER7H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter8h, CSR_HPMCOUNTER8H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter9h, CSR_HPMCOUNTER9H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter10h, CSR_HPMCOUNTER10H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter11h, CSR_HPMCOUNTER11H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter12h, CSR_HPMCOUNTER12H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter13h, CSR_HPMCOUNTER13H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter14h, CSR_HPMCOUNTER14H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter15h, CSR_HPMCOUNTER15H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter16h, CSR_HPMCOUNTER16H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter17h, CSR_HPMCOUNTER17H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter18h, CSR_HPMCOUNTER18H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter19h, CSR_HPMCOUNTER19H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter20h, CSR_HPMCOUNTER20H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter21h, CSR_HPMCOUNTER21H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter22h, CSR_HPMCOUNTER22H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter23h, CSR_HPMCOUNTER23H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter24h, CSR_HPMCOUNTER24H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter25h, CSR_HPMCOUNTER25H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter26h, CSR_HPMCOUNTER26H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter27h, CSR_HPMCOUNTER27H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter28h, CSR_HPMCOUNTER28H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter29h, CSR_HPMCOUNTER29H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter30h, CSR_HPMCOUNTER30H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(hpmcounter31h, CSR_HPMCOUNTER31H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 /* Privileged Supervisor CSRs.  */
-DECLARE_CSR(sstatus, CSR_SSTATUS, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(sie, CSR_SIE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(stvec, CSR_STVEC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(sstatus, CSR_SSTATUS, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(sie, CSR_SIE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(stvec, CSR_STVEC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(scounteren, CSR_SCOUNTEREN, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(senvcfg, CSR_SENVCFG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(sscratch, CSR_SSCRATCH, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(sepc, CSR_SEPC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(scause, CSR_SCAUSE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(sscratch, CSR_SSCRATCH, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(sepc, CSR_SEPC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(scause, CSR_SCAUSE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(stval, CSR_STVAL, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(sip, CSR_SIP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(sip, CSR_SIP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(satp, CSR_SATP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 /* Privileged Machine CSRs.  */
-DECLARE_CSR(mvendorid, CSR_MVENDORID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(marchid, CSR_MARCHID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mimpid, CSR_MIMPID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhartid, CSR_MHARTID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mvendorid, CSR_MVENDORID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(marchid, CSR_MARCHID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mimpid, CSR_MIMPID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhartid, CSR_MHARTID, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mconfigptr, CSR_MCONFIGPTR, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mstatus, CSR_MSTATUS, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(misa, CSR_MISA, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(medeleg, CSR_MEDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mideleg, CSR_MIDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mie, CSR_MIE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mtvec, CSR_MTVEC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mstatus, CSR_MSTATUS, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(misa, CSR_MISA, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(medeleg, CSR_MEDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(medelegh, CSR_MEDELEGH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P13, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mideleg, CSR_MIDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mie, CSR_MIE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mtvec, CSR_MTVEC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mcounteren, CSR_MCOUNTEREN, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mstatush, CSR_MSTATUSH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mscratch, CSR_MSCRATCH, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mepc, CSR_MEPC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mcause, CSR_MCAUSE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mscratch, CSR_MSCRATCH, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mepc, CSR_MEPC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mcause, CSR_MCAUSE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mtval, CSR_MTVAL, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mip, CSR_MIP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mip, CSR_MIP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mtinst, CSR_MTINST, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mtval2, CSR_MTVAL2, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(menvcfg, CSR_MENVCFG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
@@ -3036,101 +5163,102 @@ DECLARE_CSR(pmpaddr60, CSR_PMPADDR60, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SP
 DECLARE_CSR(pmpaddr61, CSR_PMPADDR61, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(pmpaddr62, CSR_PMPADDR62, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(pmpaddr63, CSR_PMPADDR63, CSR_CLASS_I, PRIV_SPEC_CLASS_1P12, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mcycle, CSR_MCYCLE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(minstret, CSR_MINSTRET, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter3, CSR_MHPMCOUNTER3, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter4, CSR_MHPMCOUNTER4, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter5, CSR_MHPMCOUNTER5, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter6, CSR_MHPMCOUNTER6, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter7, CSR_MHPMCOUNTER7, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter8, CSR_MHPMCOUNTER8, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter9, CSR_MHPMCOUNTER9, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter10, CSR_MHPMCOUNTER10, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter11, CSR_MHPMCOUNTER11, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter12, CSR_MHPMCOUNTER12, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter13, CSR_MHPMCOUNTER13, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter14, CSR_MHPMCOUNTER14, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter15, CSR_MHPMCOUNTER15, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter16, CSR_MHPMCOUNTER16, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter17, CSR_MHPMCOUNTER17, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter18, CSR_MHPMCOUNTER18, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter19, CSR_MHPMCOUNTER19, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter20, CSR_MHPMCOUNTER20, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter21, CSR_MHPMCOUNTER21, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter22, CSR_MHPMCOUNTER22, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter23, CSR_MHPMCOUNTER23, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter24, CSR_MHPMCOUNTER24, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter25, CSR_MHPMCOUNTER25, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter26, CSR_MHPMCOUNTER26, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter27, CSR_MHPMCOUNTER27, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter28, CSR_MHPMCOUNTER28, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter29, CSR_MHPMCOUNTER29, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter30, CSR_MHPMCOUNTER30, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter31, CSR_MHPMCOUNTER31, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mcycleh, CSR_MCYCLEH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(minstreth, CSR_MINSTRETH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter3h, CSR_MHPMCOUNTER3H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter4h, CSR_MHPMCOUNTER4H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter5h, CSR_MHPMCOUNTER5H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter6h, CSR_MHPMCOUNTER6H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter7h, CSR_MHPMCOUNTER7H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter8h, CSR_MHPMCOUNTER8H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter9h, CSR_MHPMCOUNTER9H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter10h, CSR_MHPMCOUNTER10H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter11h, CSR_MHPMCOUNTER11H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter12h, CSR_MHPMCOUNTER12H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter13h, CSR_MHPMCOUNTER13H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter14h, CSR_MHPMCOUNTER14H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter15h, CSR_MHPMCOUNTER15H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter16h, CSR_MHPMCOUNTER16H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter17h, CSR_MHPMCOUNTER17H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter18h, CSR_MHPMCOUNTER18H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter19h, CSR_MHPMCOUNTER19H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter20h, CSR_MHPMCOUNTER20H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter21h, CSR_MHPMCOUNTER21H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter22h, CSR_MHPMCOUNTER22H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter23h, CSR_MHPMCOUNTER23H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter24h, CSR_MHPMCOUNTER24H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter25h, CSR_MHPMCOUNTER25H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter26h, CSR_MHPMCOUNTER26H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter27h, CSR_MHPMCOUNTER27H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter28h, CSR_MHPMCOUNTER28H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter29h, CSR_MHPMCOUNTER29H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter30h, CSR_MHPMCOUNTER30H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmcounter31h, CSR_MHPMCOUNTER31H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mcycle, CSR_MCYCLE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(minstret, CSR_MINSTRET, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter3, CSR_MHPMCOUNTER3, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter4, CSR_MHPMCOUNTER4, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter5, CSR_MHPMCOUNTER5, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter6, CSR_MHPMCOUNTER6, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter7, CSR_MHPMCOUNTER7, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter8, CSR_MHPMCOUNTER8, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter9, CSR_MHPMCOUNTER9, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter10, CSR_MHPMCOUNTER10, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter11, CSR_MHPMCOUNTER11, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter12, CSR_MHPMCOUNTER12, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter13, CSR_MHPMCOUNTER13, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter14, CSR_MHPMCOUNTER14, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter15, CSR_MHPMCOUNTER15, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter16, CSR_MHPMCOUNTER16, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter17, CSR_MHPMCOUNTER17, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter18, CSR_MHPMCOUNTER18, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter19, CSR_MHPMCOUNTER19, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter20, CSR_MHPMCOUNTER20, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter21, CSR_MHPMCOUNTER21, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter22, CSR_MHPMCOUNTER22, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter23, CSR_MHPMCOUNTER23, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter24, CSR_MHPMCOUNTER24, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter25, CSR_MHPMCOUNTER25, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter26, CSR_MHPMCOUNTER26, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter27, CSR_MHPMCOUNTER27, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter28, CSR_MHPMCOUNTER28, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter29, CSR_MHPMCOUNTER29, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter30, CSR_MHPMCOUNTER30, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter31, CSR_MHPMCOUNTER31, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mcycleh, CSR_MCYCLEH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(minstreth, CSR_MINSTRETH, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter3h, CSR_MHPMCOUNTER3H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter4h, CSR_MHPMCOUNTER4H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter5h, CSR_MHPMCOUNTER5H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter6h, CSR_MHPMCOUNTER6H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter7h, CSR_MHPMCOUNTER7H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter8h, CSR_MHPMCOUNTER8H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter9h, CSR_MHPMCOUNTER9H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter10h, CSR_MHPMCOUNTER10H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter11h, CSR_MHPMCOUNTER11H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter12h, CSR_MHPMCOUNTER12H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter13h, CSR_MHPMCOUNTER13H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter14h, CSR_MHPMCOUNTER14H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter15h, CSR_MHPMCOUNTER15H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter16h, CSR_MHPMCOUNTER16H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter17h, CSR_MHPMCOUNTER17H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter18h, CSR_MHPMCOUNTER18H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter19h, CSR_MHPMCOUNTER19H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter20h, CSR_MHPMCOUNTER20H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter21h, CSR_MHPMCOUNTER21H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter22h, CSR_MHPMCOUNTER22H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter23h, CSR_MHPMCOUNTER23H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter24h, CSR_MHPMCOUNTER24H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter25h, CSR_MHPMCOUNTER25H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter26h, CSR_MHPMCOUNTER26H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter27h, CSR_MHPMCOUNTER27H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter28h, CSR_MHPMCOUNTER28H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter29h, CSR_MHPMCOUNTER29H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter30h, CSR_MHPMCOUNTER30H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmcounter31h, CSR_MHPMCOUNTER31H, CSR_CLASS_I_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(mcountinhibit, CSR_MCOUNTINHIBIT, CSR_CLASS_I, PRIV_SPEC_CLASS_1P11, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent3, CSR_MHPMEVENT3, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent4, CSR_MHPMEVENT4, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent5, CSR_MHPMEVENT5, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent6, CSR_MHPMEVENT6, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent7, CSR_MHPMEVENT7, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent8, CSR_MHPMEVENT8, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent9, CSR_MHPMEVENT9, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent10, CSR_MHPMEVENT10, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent11, CSR_MHPMEVENT11, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent12, CSR_MHPMEVENT12, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent13, CSR_MHPMEVENT13, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent14, CSR_MHPMEVENT14, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent15, CSR_MHPMEVENT15, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent16, CSR_MHPMEVENT16, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent17, CSR_MHPMEVENT17, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent18, CSR_MHPMEVENT18, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent19, CSR_MHPMEVENT19, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent20, CSR_MHPMEVENT20, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent21, CSR_MHPMEVENT21, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent22, CSR_MHPMEVENT22, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent23, CSR_MHPMEVENT23, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent24, CSR_MHPMEVENT24, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent25, CSR_MHPMEVENT25, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent26, CSR_MHPMEVENT26, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent27, CSR_MHPMEVENT27, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent28, CSR_MHPMEVENT28, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent29, CSR_MHPMEVENT29, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent30, CSR_MHPMEVENT30, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
-DECLARE_CSR(mhpmevent31, CSR_MHPMEVENT31, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent3, CSR_MHPMEVENT3, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent4, CSR_MHPMEVENT4, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent5, CSR_MHPMEVENT5, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent6, CSR_MHPMEVENT6, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent7, CSR_MHPMEVENT7, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent8, CSR_MHPMEVENT8, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent9, CSR_MHPMEVENT9, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent10, CSR_MHPMEVENT10, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent11, CSR_MHPMEVENT11, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent12, CSR_MHPMEVENT12, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent13, CSR_MHPMEVENT13, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent14, CSR_MHPMEVENT14, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent15, CSR_MHPMEVENT15, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent16, CSR_MHPMEVENT16, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent17, CSR_MHPMEVENT17, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent18, CSR_MHPMEVENT18, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent19, CSR_MHPMEVENT19, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent20, CSR_MHPMEVENT20, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent21, CSR_MHPMEVENT21, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent22, CSR_MHPMEVENT22, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent23, CSR_MHPMEVENT23, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent24, CSR_MHPMEVENT24, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent25, CSR_MHPMEVENT25, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent26, CSR_MHPMEVENT26, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent27, CSR_MHPMEVENT27, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent28, CSR_MHPMEVENT28, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent29, CSR_MHPMEVENT29, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent30, CSR_MHPMEVENT30, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mhpmevent31, CSR_MHPMEVENT31, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
 /* Privileged Hypervisor CSRs.  */
 DECLARE_CSR(hstatus, CSR_HSTATUS, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(hedeleg, CSR_HEDELEG, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hedelegh, CSR_HEDELEGH, CSR_CLASS_H_32, PRIV_SPEC_CLASS_1P13, PRIV_SPEC_CLASS_DRAFT)
 DECLARE_CSR(hideleg, CSR_HIDELEG, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(hie, CSR_HIE, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(hcounteren, CSR_HCOUNTEREN, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
@@ -3154,27 +5282,90 @@ DECLARE_CSR(vscause, CSR_VSCAUSE, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_C
 DECLARE_CSR(vstval, CSR_VSTVAL, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vsip, CSR_VSIP, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vsatp, CSR_VSATP, CSR_CLASS_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-/* Smstateen extension */
+/* Smaia extension */
+DECLARE_CSR(miselect, CSR_MISELECT, CSR_CLASS_SMAIA_OR_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mireg, CSR_MIREG, CSR_CLASS_SMAIA_OR_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mtopei, CSR_MTOPEI, CSR_CLASS_SMAIA, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mtopi, CSR_MTOPI, CSR_CLASS_SMAIA, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mvien, CSR_MVIEN, CSR_CLASS_SMAIA, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mvip, CSR_MVIP, CSR_CLASS_SMAIA, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(midelegh, CSR_MIDELEGH, CSR_CLASS_SMAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mieh, CSR_MIEH, CSR_CLASS_SMAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mvienh, CSR_MVIENH, CSR_CLASS_SMAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mviph, CSR_MVIPH, CSR_CLASS_SMAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(miph, CSR_MIPH, CSR_CLASS_SMAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Smcsrind extension */
+DECLARE_CSR(mireg2, CSR_MIREG2, CSR_CLASS_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mireg3, CSR_MIREG3, CSR_CLASS_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mireg4, CSR_MIREG4, CSR_CLASS_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mireg5, CSR_MIREG5, CSR_CLASS_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mireg6, CSR_MIREG6, CSR_CLASS_SMCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Smcntrpmf extension (incompatible with the privileged spec v1.9.1).  */
+DECLARE_CSR(mcyclecfg, CSR_MCYCLECFG, CSR_CLASS_SMCNTRPMF, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(minstretcfg, CSR_MINSTRETCFG, CSR_CLASS_SMCNTRPMF, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(mcyclecfgh, CSR_MCYCLECFGH, CSR_CLASS_SMCNTRPMF_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+DECLARE_CSR(minstretcfgh, CSR_MINSTRETCFGH, CSR_CLASS_SMCNTRPMF_32, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_DRAFT)
+/* Smrnmi extensions.  */
+DECLARE_CSR(mnepc, CSR_MNEPC, CSR_CLASS_SMRNMI, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mncause, CSR_MNCAUSE, CSR_CLASS_SMRNMI, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mnscratch, CSR_MNSCRATCH, CSR_CLASS_SMRNMI, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mnstatus, CSR_MNSTATUS, CSR_CLASS_SMRNMI, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Smstateen/Ssstateen extensions.  */
 DECLARE_CSR(mstateen0, CSR_MSTATEEN0, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen1, CSR_MSTATEEN1, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen2, CSR_MSTATEEN2, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen3, CSR_MSTATEEN3, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(sstateen0, CSR_SSTATEEN0, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(sstateen1, CSR_SSTATEEN1, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(sstateen2, CSR_SSTATEEN2, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(sstateen3, CSR_SSTATEEN3, CSR_CLASS_SMSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen0, CSR_HSTATEEN0, CSR_CLASS_SMSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen1, CSR_HSTATEEN1, CSR_CLASS_SMSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen2, CSR_HSTATEEN2, CSR_CLASS_SMSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen3, CSR_HSTATEEN3, CSR_CLASS_SMSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sstateen0, CSR_SSTATEEN0, CSR_CLASS_SSSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sstateen1, CSR_SSTATEEN1, CSR_CLASS_SSSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sstateen2, CSR_SSTATEEN2, CSR_CLASS_SSSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sstateen3, CSR_SSTATEEN3, CSR_CLASS_SSSTATEEN, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen0, CSR_HSTATEEN0, CSR_CLASS_SSSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen1, CSR_HSTATEEN1, CSR_CLASS_SSSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen2, CSR_HSTATEEN2, CSR_CLASS_SSSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen3, CSR_HSTATEEN3, CSR_CLASS_SSSTATEEN_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen0h, CSR_MSTATEEN0H, CSR_CLASS_SMSTATEEN_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen1h, CSR_MSTATEEN1H, CSR_CLASS_SMSTATEEN_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen2h, CSR_MSTATEEN2H, CSR_CLASS_SMSTATEEN_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mstateen3h, CSR_MSTATEEN3H, CSR_CLASS_SMSTATEEN_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen0h, CSR_HSTATEEN0H, CSR_CLASS_SMSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen1h, CSR_HSTATEEN1H, CSR_CLASS_SMSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen2h, CSR_HSTATEEN2H, CSR_CLASS_SMSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
-DECLARE_CSR(hstateen3h, CSR_HSTATEEN3H, CSR_CLASS_SMSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen0h, CSR_HSTATEEN0H, CSR_CLASS_SSSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen1h, CSR_HSTATEEN1H, CSR_CLASS_SSSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen2h, CSR_HSTATEEN2H, CSR_CLASS_SSSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hstateen3h, CSR_HSTATEEN3H, CSR_CLASS_SSSTATEEN_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Ssaia extension */
+DECLARE_CSR(siselect, CSR_SISELECT, CSR_CLASS_SSAIA_OR_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sireg, CSR_SIREG, CSR_CLASS_SSAIA_OR_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(stopei, CSR_STOPEI, CSR_CLASS_SSAIA, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(stopi, CSR_STOPI, CSR_CLASS_SSAIA, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sieh, CSR_SIEH, CSR_CLASS_SSAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(siph, CSR_SIPH, CSR_CLASS_SSAIA_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hvien, CSR_HVIEN, CSR_CLASS_SSAIA_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hvictl, CSR_HVICTL, CSR_CLASS_SSAIA_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hviprio1, CSR_HVIPRIO1, CSR_CLASS_SSAIA_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hviprio2, CSR_HVIPRIO2, CSR_CLASS_SSAIA_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsiselect, CSR_VSISELECT, CSR_CLASS_SSAIA_OR_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsireg, CSR_VSIREG, CSR_CLASS_SSAIA_OR_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vstopei, CSR_VSTOPEI, CSR_CLASS_SSAIA_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vstopi, CSR_VSTOPI, CSR_CLASS_SSAIA_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hidelegh, CSR_HIDELEGH, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hvienh, CSR_HVIENH, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hviph, CSR_HVIPH, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hviprio1h, CSR_HVIPRIO1H, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(hviprio2h, CSR_HVIPRIO2H, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsieh, CSR_VSIEH, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsiph, CSR_VSIPH, CSR_CLASS_SSAIA_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Ssccfg CSR.  */
+DECLARE_CSR(scountinhibit, CSR_SCOUNTINHIBIT, CSR_CLASS_SSCCFG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Sscsrind extension */
+DECLARE_CSR(sireg2, CSR_SIREG2, CSR_CLASS_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sireg3, CSR_SIREG3, CSR_CLASS_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sireg4, CSR_SIREG4, CSR_CLASS_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sireg5, CSR_SIREG5, CSR_CLASS_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sireg6, CSR_SIREG6, CSR_CLASS_SSCSRIND, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsireg2, CSR_VSIREG2, CSR_CLASS_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsireg3, CSR_VSIREG3, CSR_CLASS_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsireg4, CSR_VSIREG4, CSR_CLASS_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsireg5, CSR_VSIREG5, CSR_CLASS_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsireg6, CSR_VSIREG6, CSR_CLASS_SSCSRIND_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 /* Sscofpmf extension */
 DECLARE_CSR(scountovf, CSR_SCOUNTOVF, CSR_CLASS_SSCOFPMF, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(mhpmevent3h, CSR_MHPMEVENT3H, CSR_CLASS_SSCOFPMF_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
@@ -3211,25 +5402,25 @@ DECLARE_CSR(stimecmp, CSR_STIMECMP, CSR_CLASS_SSTC, PRIV_SPEC_CLASS_NONE, PRIV_S
 DECLARE_CSR(stimecmph, CSR_STIMECMPH, CSR_CLASS_SSTC_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vstimecmp, CSR_VSTIMECMP, CSR_CLASS_SSTC_AND_H, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vstimecmph, CSR_VSTIMECMPH, CSR_CLASS_SSTC_AND_H_32, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Smctr/Ssctr CSRs.  */
+DECLARE_CSR(sctrctl, CSR_SCTRCTL, CSR_CLASS_SSCTR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sctrstatus, CSR_SCTRSTATUS, CSR_CLASS_SSCTR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(sctrdepth, CSR_SCTRDEPTH, CSR_CLASS_SSCTR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(vsctrctl, CSR_VSCTRCTL, CSR_CLASS_SSCTR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR(mctrctl, CSR_MCTRCTL, CSR_CLASS_SMCTR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Zicfiss CSRs.  */
+DECLARE_CSR(ssp, CSR_SSP, CSR_CLASS_ZICFISS, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 /* Dropped CSRs.  */
-DECLARE_CSR(mbase, CSR_MBASE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mbound, CSR_MBOUND, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mibase, CSR_MIBASE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mibound, CSR_MIBOUND, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mdbase, CSR_MDBASE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mdbound, CSR_MDBOUND, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mscounteren, CSR_MSCOUNTEREN, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(mhcounteren, CSR_MHCOUNTEREN, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR(ustatus, CSR_USTATUS, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(uie, CSR_UIE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(utvec, CSR_UTVEC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(uscratch, CSR_USCRATCH, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(uepc, CSR_UEPC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(ucause, CSR_UCAUSE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(ustatus, CSR_USTATUS, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(uie, CSR_UIE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(utvec, CSR_UTVEC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(uscratch, CSR_USCRATCH, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(uepc, CSR_UEPC, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(ucause, CSR_UCAUSE, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
 DECLARE_CSR(utval, CSR_UTVAL, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(uip, CSR_UIP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(sedeleg, CSR_SEDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
-DECLARE_CSR(sideleg, CSR_SIDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(uip, CSR_UIP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(sedeleg, CSR_SEDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
+DECLARE_CSR(sideleg, CSR_SIDELEG, CSR_CLASS_I, PRIV_SPEC_CLASS_1P10, PRIV_SPEC_CLASS_1P12)
 /* Unprivileged Floating-Point CSRs.  */
 DECLARE_CSR(fflags, CSR_FFLAGS, CSR_CLASS_F, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(frm, CSR_FRM, CSR_CLASS_F, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
@@ -3251,6 +5442,8 @@ DECLARE_CSR(mcontext, CSR_MCONTEXT, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_
 DECLARE_CSR(mscontext, CSR_MSCONTEXT, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 /* Unprivileged Scalar Crypto CSRs.  */
 DECLARE_CSR(seed, CSR_SEED, CSR_CLASS_ZKR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Unprivileged Zcmt CSRs.  */
+DECLARE_CSR(jvt, CSR_JVT, CSR_CLASS_ZCMT, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 /* Unprivileged Vector CSRs.  */
 DECLARE_CSR(vstart, CSR_VSTART, CSR_CLASS_V, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vxsat, CSR_VXSAT, CSR_CLASS_V, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
@@ -3259,13 +5452,10 @@ DECLARE_CSR(vcsr, CSR_VCSR, CSR_CLASS_V, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_N
 DECLARE_CSR(vl, CSR_VL, CSR_CLASS_V, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vtype, CSR_VTYPE, CSR_CLASS_V, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR(vlenb, CSR_VLENB, CSR_CLASS_V, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Ssqosid CSR.  */
+DECLARE_CSR(srmcfg, CSR_SRMCFG, CSR_CLASS_SSQOSID, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 #endif /* DECLARE_CSR */
 #ifdef DECLARE_CSR_ALIAS
-DECLARE_CSR_ALIAS(ubadaddr, CSR_UTVAL, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR_ALIAS(sbadaddr, CSR_STVAL, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR_ALIAS(sptbr, CSR_SATP, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR_ALIAS(mbadaddr, CSR_MTVAL, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
-DECLARE_CSR_ALIAS(mucounteren, CSR_MCOUNTINHIBIT, CSR_CLASS_I, PRIV_SPEC_CLASS_1P9P1, PRIV_SPEC_CLASS_1P10)
 DECLARE_CSR_ALIAS(dscratch, CSR_DSCRATCH0, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR_ALIAS(mcontrol, CSR_TDATA1, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR_ALIAS(mcontrol6, CSR_TDATA1, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
@@ -3275,4 +5465,11 @@ DECLARE_CSR_ALIAS(etrigger, CSR_TDATA1, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, P
 DECLARE_CSR_ALIAS(tmexttrigger, CSR_TDATA1, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR_ALIAS(textra32, CSR_TDATA3, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 DECLARE_CSR_ALIAS(textra64, CSR_TDATA3, CSR_CLASS_DEBUG, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+/* Unprivileged T-Head Vector CSRs.  */
+DECLARE_CSR_ALIAS(th.vstart, CSR_VSTART, CSR_CLASS_XTHEADVECTOR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR_ALIAS(th.vxsat, CSR_VXSAT, CSR_CLASS_XTHEADVECTOR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR_ALIAS(th.vxrm, CSR_VXRM, CSR_CLASS_XTHEADVECTOR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR_ALIAS(th.vl, CSR_VL, CSR_CLASS_XTHEADVECTOR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR_ALIAS(th.vtype, CSR_VTYPE, CSR_CLASS_XTHEADVECTOR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
+DECLARE_CSR_ALIAS(th.vlenb, CSR_VLENB, CSR_CLASS_XTHEADVECTOR, PRIV_SPEC_CLASS_NONE, PRIV_SPEC_CLASS_NONE)
 #endif /* DECLARE_CSR_ALIAS */

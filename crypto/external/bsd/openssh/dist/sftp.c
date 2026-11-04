@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.40.2.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: sftp.c,v 1.240 2025/03/28 06:04:07 dtucker Exp $ */
+/*	$NetBSD: sftp.c,v 1.40.2.2 2026/11/04 22:36:41 perseant Exp $	*/
+/* $OpenBSD: sftp.c,v 1.260 2026/10/01 03:11:49 djm Exp $ */
 
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
@@ -18,22 +18,24 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.40.2.1 2025/08/02 05:18:47 perseant Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.40.2.2 2026/11/04 22:36:41 perseant Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
 #include <sys/ioctl.h>
-#include <sys/wait.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
 #include <sys/statvfs.h>
+#include <sys/wait.h>
 
 #include <ctype.h>
 #include <errno.h>
+#include <fcntl.h>
 #include <glob.h>
 #include <histedit.h>
 #include <paths.h>
 #include <libgen.h>
+#include <limits.h>
 #include <locale.h>
 #include <signal.h>
 #include <stdarg.h>
@@ -41,7 +43,6 @@ __RCSID("$NetBSD: sftp.c,v 1.40.2.1 2025/08/02 05:18:47 perseant Exp $");
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
-#include <limits.h>
 #include <util.h>
 
 #include "xmalloc.h"
@@ -286,12 +287,12 @@ help(void)
 	    "help                               Display this help text\n"
 	    "lcd path                           Change local directory to 'path'\n"
 	    "lls [ls-options [path]]            Display local directory listing\n"
-	    "lmkdir path                        Create local directory\n"
+	    "lmkdir [-p] path                   Create local directory\n"
 	    "ln [-s] oldpath newpath            Link remote file (-s for symlink)\n"
 	    "lpwd                               Print local working directory\n"
 	    "ls [-1afhlnrSt] [path]             Display remote directory listing\n"
 	    "lumask umask                       Set local umask to 'umask'\n"
-	    "mkdir path                         Create remote directory\n"
+	    "mkdir [-p] path                    Create remote directory\n"
 	    "progress                           Toggle display of progress meter\n"
 	    "put [-afpR] local [remote]         Upload file\n"
 	    "pwd                                Display remote working directory\n"
@@ -325,7 +326,6 @@ local_do_shell(const char *args)
 		fatal("Couldn't fork: %s", strerror(errno));
 
 	if (pid == 0) {
-		/* XXX: child has pipe fds to ssh subproc open - issue? */
 		if (args) {
 			debug3("Executing %s -c \"%s\"", shell, args);
 			execl(shell, shell, "-c", args, (char *)NULL);
@@ -368,10 +368,9 @@ path_strip(const char *path, const char *strip)
 {
 	size_t len;
 
-	if (strip == NULL)
+	if (strip == NULL || (len = strlen(strip)) == 0)
 		return (xstrdup(path));
 
-	len = strlen(strip);
 	if (strncmp(path, strip, len) == 0) {
 		if (strip[len - 1] != '/' && path[len] == '/')
 			len++;
@@ -407,6 +406,30 @@ parse_getput_flags(const char *cmd, char **argv, int argc,
 		case 'r':
 		case 'R':
 			*rflag = 1;
+			break;
+		default:
+			error("%s: Invalid flag -%c", cmd, optopt);
+			return -1;
+		}
+	}
+
+	return optind;
+}
+
+static int
+parse_mkdir_flags(const char *cmd, char **argv, int argc, int *pflag)
+{
+	extern int opterr, optind, optopt, optreset;
+	int ch;
+
+	optind = optreset = 1;
+	opterr = 0;
+
+	*pflag = 0;
+	while ((ch = getopt(argc, argv, "p")) != -1) {
+		switch (ch) {
+		case 'p':
+			*pflag = 1;
 			break;
 		default:
 			error("%s: Invalid flag -%c", cmd, optopt);
@@ -637,7 +660,8 @@ static int
 process_get(struct sftp_conn *conn, const char *src, const char *dst,
     const char *pwd, int pflag, int rflag, int resume, int fflag)
 {
-	char *filename, *abs_src = NULL, *abs_dst = NULL, *tmp = NULL;
+	const char *filename;
+	char *abs_src = NULL, *abs_dst = NULL, *tmp = NULL;
 	glob_t g;
 	int i, r, err = 0;
 
@@ -674,6 +698,16 @@ process_get(struct sftp_conn *conn, const char *src, const char *dst,
 			err = -1;
 			goto out;
 		}
+
+		/*
+		 * Special handling for destinations of '..' and remote roots.
+		 * In particular, never select the local root as an implicit
+		 * destination for a remote root.
+		 */
+		if (strcmp(filename, "..") == 0 ||
+		    (filename[0] != '\0' &&
+		    filename[strspn(filename, "/")] == '\0'))
+			filename = ".";
 
 		if (g.gl_matchc == 1 && dst) {
 			if (local_is_dir(dst)) {
@@ -724,7 +758,8 @@ process_put(struct sftp_conn *conn, const char *src, const char *dst,
 {
 	char *tmp_dst = NULL;
 	char *abs_dst = NULL;
-	char *tmp = NULL, *filename = NULL;
+	char *tmp = NULL;
+	const char *filename = NULL;
 	glob_t g;
 	int err = 0;
 	int i, dst_is_dir = 1;
@@ -769,6 +804,9 @@ process_put(struct sftp_conn *conn, const char *src, const char *dst,
 			err = -1;
 			goto out;
 		}
+		/* Special handling for source of '..' */
+		if (strcmp(filename, "..") == 0)
+			filename = "."; /* Upload to dest, not dest/.. */
 
 		free(abs_dst);
 		abs_dst = NULL;
@@ -896,13 +934,16 @@ do_ls_dir(struct sftp_conn *conn, const char *path,
 			    sftp_can_get_users_groups_by_id(conn)) {
 				char *lname;
 				struct stat sb;
+				const char *user = NULL, *group = NULL;
 
 				memset(&sb, 0, sizeof(sb));
 				attrib_to_stat(&d[n]->a, &sb);
+				if ((lflag & LS_NUMERIC_VIEW) == 0) {
+					user = ruser_name(sb.st_uid);
+					group = rgroup_name(sb.st_gid);
+				}
 				lname = ls_file(fname, &sb, 1,
-				    (lflag & LS_SI_UNITS),
-				    ruser_name(sb.st_uid),
-				    rgroup_name(sb.st_gid));
+				    (lflag & LS_SI_UNITS), user, group);
 				mprintf("%s\n", lname);
 				free(lname);
 			} else
@@ -933,7 +974,7 @@ sglob_comp(const void *aa, const void *bb)
 	u_int b = *(const u_int *)bb;
 	const char *ap = sort_glob->gl_pathv[a];
 	const char *bp = sort_glob->gl_pathv[b];
-#if 0
+#if GLOB_KEEPSTAT != 0
 	const struct stat *as = sort_glob->gl_statv[a];
 	const struct stat *bs = sort_glob->gl_statv[b];
 #else
@@ -944,7 +985,11 @@ sglob_comp(const void *aa, const void *bb)
 	int rmul = sort_flag & LS_REVERSE_SORT ? -1 : 1;
 
 #define NCMP(a,b) (a == b ? 0 : (a < b ? 1 : -1))
-#if 1
+#if GLOB_KEEPSTAT != 0
+	/* order entries without stat information last */
+	if (as == NULL || bs == NULL)
+		return (as == bs) ? 0 : (as == NULL ? rmul : -rmul);
+#else
 	if (stat(ap, &ass) == -1 || stat(bp, &bss) == -1)
 		return 0;
 #endif
@@ -1049,6 +1094,7 @@ do_globbed_ls(struct sftp_conn *conn, const char *path,
 		i = indices[j];
 		fname = path_strip(g.gl_pathv[i], strip_path);
 		if (lflag & LS_LONG_VIEW) {
+			const char *user = NULL, *group = NULL;
 #if GLOB_KEEPSTAT != 0
 			stp = g.gl_statv[i];
 #else
@@ -1060,10 +1106,12 @@ do_globbed_ls(struct sftp_conn *conn, const char *path,
 				free(fname);
 				continue;
 			}
+			if ((lflag & LS_NUMERIC_VIEW) == 0) {
+				user = ruser_name(stp->st_uid);
+				group = rgroup_name(stp->st_gid);
+			}
 			lname = ls_file(fname, stp, 1,
-			    (lflag & LS_SI_UNITS),
-			    ruser_name(stp->st_uid),
-			    rgroup_name(stp->st_gid));
+			    (lflag & LS_SI_UNITS), user, group);
 			mprintf("%s\n", lname);
 			free(lname);
 		} else {
@@ -1299,6 +1347,8 @@ makeargv(const char *arg, int *argcp, int sloppy, char *lastquote,
 					/* Unescape everything */
 					/* XXX support \n and friends? */
 					i++;
+					if (arg[i] == '\0')
+						goto early_nul;
 					argvs[j++] = arg[i];
 				}
 			}
@@ -1309,6 +1359,7 @@ makeargv(const char *arg, int *argcp, int sloppy, char *lastquote,
 				goto string_done;
 		} else if (arg[i] == '\0') {
 			if (state == MA_SQUOTE || state == MA_DQUOTE) {
+ early_nul:
 				if (sloppy) {
 					state = MA_UNQUOTED;
 					if (terminated != NULL)
@@ -1462,16 +1513,21 @@ parse_args(const char **cpp, int *ignore_errors, int *disable_echo, int *aflag,
 		undo_glob_escape(*path1);
 		undo_glob_escape(*path2);
 		break;
-	case I_RM:
 	case I_MKDIR:
-	case I_RMDIR:
 	case I_LMKDIR:
+		if ((optidx = parse_mkdir_flags(cmd, argv, argc, pflag)) == -1)
+			return -1;
+		path1_mandatory = 1;
+		goto parse_one_path;
+	case I_RM:
+	case I_RMDIR:
 		path1_mandatory = 1;
 		/* FALLTHROUGH */
 	case I_CHDIR:
 	case I_LCHDIR:
 		if ((optidx = parse_no_flags(cmd, argv, argc)) == -1)
 			return -1;
+ parse_one_path:
 		/* Get pathname (mandatory) */
 		if (argc - optidx < 1) {
 			if (!path1_mandatory)
@@ -1652,7 +1708,10 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 		attrib_clear(&a);
 		a.flags |= SSH2_FILEXFER_ATTR_PERMISSIONS;
 		a.perm = 0777;
-		err = sftp_mkdir(conn, path1, &a, 1);
+		if (pflag)
+			err = sftp_mkpath(conn, path1, &a, 1);
+		else
+			err = sftp_mkdir(conn, path1, &a, 1);
 		break;
 	case I_RMDIR:
 		path1 = sftp_make_absolute(path1, *pwd);
@@ -1721,6 +1780,11 @@ parse_dispatch_command(struct sftp_conn *conn, const char *cmd, char **pwd,
 		}
 		break;
 	case I_LMKDIR:
+		if (pflag) {
+			if (mkdir_path(path1, 0777) != 0)
+				err = 1;
+			break;
+		}
 		if (mkdir(path1, 0777) == -1) {
 			error("Couldn't create local directory "
 			    "\"%s\": %s", path1, strerror(errno));
@@ -1882,35 +1946,50 @@ complete_display(char **list, u_int len)
 
 /*
  * Given a "list" of words that begin with a common prefix of "word",
- * attempt to find an autocompletion to extends "word" by the next
+ * attempt to find an autocompletion that extends "word" by the next
  * characters common to all entries in "list".
  */
 static char *
 complete_ambiguous(const char *word, char **list, size_t count)
 {
+	size_t i, j, matchlen;
+	char *tmp;
+	int len;
+
 	if (word == NULL)
 		return NULL;
 
-	if (count > 0) {
-		u_int y, matchlen = strlen(list[0]);
+	if (count == 0)
+		return xstrdup(word); /* no options to complete */
 
-		/* Find length of common stem */
-		for (y = 1; list[y]; y++) {
-			u_int x;
+	/* Find length of common stem across list */
+	matchlen = strlen(list[0]);
+	for (i = 1; i < count && list[i] != NULL; i++) {
+		for (j = 0; j < matchlen; j++)
+			if (list[0][j] != list[i][j])
+				break;
+		matchlen = j;
+	}
 
-			for (x = 0; x < matchlen; x++)
-				if (list[0][x] != list[y][x])
-					break;
+	/*
+	 * Now check that the common stem doesn't finish in the middle of
+	 * a multibyte character.
+	 */
+	mblen(NULL, 0);
+	for (i = 0; i < matchlen;) {
+		len = mblen(list[0] + i, matchlen - i);
+		if (len <= 0 || i + (size_t)len > matchlen)
+			break;
+		i += (size_t)len;
+	}
+	/* If so, truncate */
+	if (i < matchlen)
+		matchlen = i;
 
-			matchlen = x;
-		}
-
-		if (matchlen > strlen(word)) {
-			char *tmp = xstrdup(list[0]);
-
-			tmp[matchlen] = '\0';
-			return tmp;
-		}
+	if (matchlen > strlen(word)) {
+		tmp = xstrdup(list[0]);
+		tmp[matchlen] = '\0';
+		return tmp;
 	}
 
 	return xstrdup(word);
@@ -2090,6 +2169,7 @@ complete_match(EditLine *el, struct sftp_conn *conn, char *remote_path,
 		tmp2 = tmp + filelen - cesc;
 		len = strlen(tmp2);
 		/* quote argument on way out */
+		mblen(NULL, 0);
 		for (i = 0; i < len; i += clen) {
 			if ((clen = mblen(tmp2 + i, len - i)) < 0 ||
 			    (size_t)clen > sizeof(ins) - 2)
@@ -2226,6 +2306,7 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 	char *remote_path;
 	char *dir = NULL, *startdir = NULL;
 	char cmd[2048];
+	const char *editor;
 	int err, interactive;
 	EditLine *el = NULL;
 	History *hl = NULL;
@@ -2261,6 +2342,10 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 		el_set(el, EL_BIND, "\\e\\e[D", "ed-prev-word", NULL);
 		/* make ^w match ksh behaviour */
 		el_set(el, EL_BIND, "^w", "ed-delete-prev-word", NULL);
+
+		/* el_source() may have changed EL_EDITOR to vi */
+		if (el_get(el, EL_EDITOR, &editor) == 0 && editor[0] == 'v')
+			el_set(el, EL_BIND, "^[", "vi-command-mode", NULL);
 	}
 
 	if ((remote_path = sftp_realpath(conn, ".")) == NULL)
@@ -2284,13 +2369,8 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 				return (-1);
 			}
 		} else {
-			/* XXX this is wrong wrt quoting */
-			snprintf(cmd, sizeof cmd, "get%s %s%s%s",
-			    global_aflag ? " -a" : "", dir,
-			    file2 == NULL ? "" : " ",
-			    file2 == NULL ? "" : file2);
-			err = parse_dispatch_command(conn, cmd,
-			    &remote_path, startdir, 1, 0);
+			err = process_get(conn, dir, file2, remote_path, 0, 0,
+			    global_aflag, 0);
 			free(dir);
 			free(startdir);
 			free(remote_path);
@@ -2361,6 +2441,8 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 	free(startdir);
 	free(conn);
 
+	if (hl != NULL)
+		history_end(hl);
 	if (el != NULL)
 		el_end(el);
 
@@ -2377,6 +2459,8 @@ connect_to_server(const char *path, char **args, int *in, int *out)
 		fatal("socketpair: %s", strerror(errno));
 	*in = *out = inout[0];
 	c_in = c_out = inout[1];
+	FD_CLOSEONEXEC(*in);
+	FD_CLOSEONEXEC(*out);
 
 	if ((sshpid = fork()) == -1)
 		fatal("fork: %s", strerror(errno));
@@ -2658,7 +2742,7 @@ main(int argc, char **argv)
 	} else {
 		if ((r = argv_split(sftp_direct, &tmp, &cpp, 1)) != 0)
 			fatal_r(r, "Parse -D arguments");
-		if (cpp[0] == 0)
+		if (cpp[0] == NULL)
 			fatal("No sftp server specified via -D");
 		connect_to_server(cpp[0], cpp, &in, &out);
 		argv_free(cpp, tmp);

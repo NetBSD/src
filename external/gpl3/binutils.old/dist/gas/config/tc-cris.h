@@ -1,5 +1,5 @@
 /* tc-cris.h -- Header file for tc-cris.c, the CRIS GAS port.
-   Copyright (C) 2000-2022 Free Software Foundation, Inc.
+   Copyright (C) 2000-2025 Free Software Foundation, Inc.
 
    Contributed by Axis Communications AB, Lund, Sweden.
    Originally written for GAS 1.38.1 by Mikael Asker.
@@ -44,16 +44,7 @@ extern unsigned int cris_mach (void);
 
 #define TARGET_BYTES_BIG_ENDIAN 0
 
-extern const char *md_shortopts;
-extern struct option md_longopts[];
-extern size_t md_longopts_size;
-
 extern const pseudo_typeS md_pseudo_table[];
-
-#define tc_comment_chars cris_comment_chars
-extern const char cris_comment_chars[];
-extern const char line_comment_chars[];
-extern const char line_separator_chars[];
 
 /* This should be optional, since it is ignored as an escape (assumed to
    be itself) if it is not recognized.  */

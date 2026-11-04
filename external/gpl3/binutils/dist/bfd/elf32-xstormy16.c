@@ -1,5 +1,5 @@
 /* Xstormy16-specific support for 32-bit ELF.
-   Copyright (C) 2000-2024 Free Software Foundation, Inc.
+   Copyright (C) 2000-2026 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -706,8 +706,8 @@ xstormy16_elf_relax_section (bfd *dynobj,
 }
 
 static bool
-xstormy16_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
-				    struct bfd_link_info *info)
+xstormy16_elf_early_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
+				   struct bfd_link_info *info)
 {
   bfd *dynobj;
   asection *splt;
@@ -725,6 +725,7 @@ xstormy16_elf_always_size_sections (bfd *output_bfd ATTRIBUTE_UNUSED,
   splt->contents = bfd_zalloc (dynobj, splt->size);
   if (splt->contents == NULL)
     return false;
+  splt->alloced = 1;
 
   return true;
 }
@@ -823,7 +824,8 @@ xstormy16_elf_relocate_section (bfd *			output_bfd ATTRIBUTE_UNUSED,
 
       if (sec != NULL && discarded_section (sec))
 	RELOC_AGAINST_DISCARDED_SECTION (info, input_bfd, input_section,
-					 rel, 1, relend, howto, 0, contents);
+					 rel, 1, relend, R_XSTORMY16_NONE,
+					 howto, 0, contents);
 
       if (bfd_link_relocatable (info))
 	continue;
@@ -956,7 +958,8 @@ xstormy16_elf_relocate_section (bfd *			output_bfd ATTRIBUTE_UNUSED,
 
 static bool
 xstormy16_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
-				       struct bfd_link_info *info)
+				       struct bfd_link_info *info,
+				       bfd_byte *buf ATTRIBUTE_UNUSED)
 {
   bfd *dynobj = elf_hash_table (info)->dynobj;
   asection *splt = elf_hash_table (info)->splt;
@@ -986,19 +989,19 @@ xstormy16_elf_finish_dynamic_sections (bfd *abfd ATTRIBUTE_UNUSED,
 static asection *
 xstormy16_elf_gc_mark_hook (asection *sec,
 			    struct bfd_link_info *info,
-			    Elf_Internal_Rela *rel,
+			    struct elf_reloc_cookie *cookie,
 			    struct elf_link_hash_entry *h,
-			    Elf_Internal_Sym *sym)
+			    unsigned int symndx)
 {
   if (h != NULL)
-    switch (ELF32_R_TYPE (rel->r_info))
+    switch (ELF32_R_TYPE (cookie->rel->r_info))
       {
       case R_XSTORMY16_GNU_VTINHERIT:
       case R_XSTORMY16_GNU_VTENTRY:
 	return NULL;
       }
 
-  return _bfd_elf_gc_mark_hook (sec, info, rel, h, sym);
+  return _bfd_elf_gc_mark_hook (sec, info, cookie, h, symndx);
 }
 
 #define ELF_ARCH		bfd_arch_xstormy16
@@ -1013,8 +1016,8 @@ xstormy16_elf_gc_mark_hook (asection *sec,
 #define elf_backend_relocate_section		xstormy16_elf_relocate_section
 #define elf_backend_gc_mark_hook		xstormy16_elf_gc_mark_hook
 #define elf_backend_check_relocs		xstormy16_elf_check_relocs
-#define elf_backend_always_size_sections \
-  xstormy16_elf_always_size_sections
+#define elf_backend_early_size_sections \
+  xstormy16_elf_early_size_sections
 #define elf_backend_omit_section_dynsym \
   _bfd_elf_omit_section_dynsym_all
 #define elf_backend_finish_dynamic_sections \

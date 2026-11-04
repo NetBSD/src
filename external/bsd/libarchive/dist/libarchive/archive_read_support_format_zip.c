@@ -71,11 +71,18 @@
 #include "archive_private.h"
 #include "archive_rb.h"
 #include "archive_read_private.h"
+#include "archive_time_private.h"
 #include "archive_ppmd8_private.h"
 
 #ifndef HAVE_ZLIB_H
 #include "archive_crc32.h"
 #endif
+
+/* length of local file header, not including filename and extra */
+#define ZIP_LOCHDR_LEN		30U
+
+/* maximum length of Mac metadata in MiB */
+#define ZIP_MAX_METADATA	10U
 
 struct zip_entry {
 	struct archive_rb_node	node;
@@ -463,27 +470,6 @@ compression_name(const int compression)
 		i++;
 	}
 	return "??";
-}
-
-/* Convert an MSDOS-style date/time into Unix-style time. */
-static time_t
-zip_time(const char *p)
-{
-	int msTime, msDate;
-	struct tm ts;
-
-	msTime = (0xff & (unsigned)p[0]) + 256 * (0xff & (unsigned)p[1]);
-	msDate = (0xff & (unsigned)p[2]) + 256 * (0xff & (unsigned)p[3]);
-
-	memset(&ts, 0, sizeof(ts));
-	ts.tm_year = ((msDate >> 9) & 0x7f) + 80; /* Years since 1900. */
-	ts.tm_mon = ((msDate >> 5) & 0x0f) - 1; /* Month number. */
-	ts.tm_mday = msDate & 0x1f; /* Day of month. */
-	ts.tm_hour = (msTime >> 11) & 0x1f;
-	ts.tm_min = (msTime >> 5) & 0x3f;
-	ts.tm_sec = (msTime << 1) & 0x3e;
-	ts.tm_isdst = -1;
-	return mktime(&ts);
 }
 
 /*
@@ -953,7 +939,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 		zip->init_default_conversion = 1;
 	}
 
-	if ((p = __archive_read_ahead(a, 30, NULL)) == NULL) {
+	if ((p = __archive_read_ahead(a, ZIP_LOCHDR_LEN, NULL)) == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_FATAL);
@@ -978,7 +964,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	}
 	zip->init_decryption = (zip_entry->zip_flags & ZIP_ENCRYPTED);
 	zip_entry->compression = (char)archive_le16dec(p + 8);
-	zip_entry->mtime = zip_time(p + 10);
+	zip_entry->mtime = dos_to_unix(archive_le32dec(p + 10));
 	zip_entry->crc32 = archive_le32dec(p + 14);
 	if (zip_entry->zip_flags & ZIP_LENGTH_AT_END)
 		zip_entry->decdat = p[11];
@@ -989,7 +975,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 	filename_length = archive_le16dec(p + 26);
 	extra_length = archive_le16dec(p + 28);
 
-	__archive_read_consume(a, 30);
+	__archive_read_consume(a, ZIP_LOCHDR_LEN);
 
 	/* Read the filename. */
 	if ((h = __archive_read_ahead(a, filename_length, NULL)) == NULL) {
@@ -1022,7 +1008,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 		archive_set_error(&a->archive,
 		    ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Pathname cannot be converted "
-		    "from %s to current locale.",
+		    "from %s to current locale",
 		    archive_string_conversion_charset_name(sconv));
 		ret = ARCHIVE_WARN;
 	}
@@ -1270,7 +1256,7 @@ zip_read_local_file_header(struct archive_read *a, struct archive_entry *entry,
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Symlink cannot be converted "
-				    "from %s to current locale.",
+				    "from %s to current locale",
 				    archive_string_conversion_charset_name(
 					sconv));
 				ret = ARCHIVE_WARN;
@@ -1740,7 +1726,7 @@ zipx_xz_init(struct archive_read *a, struct zip *zip)
 	r = lzma_stream_decoder(&zip->zipx_lzma_stream, UINT64_MAX, 0);
 	if (r != LZMA_OK) {
 		archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
-		    "xz initialization failed(%d)",
+		    "xz initialization failed (%d)",
 		    r);
 
 		return (ARCHIVE_FAILED);
@@ -1792,7 +1778,7 @@ zipx_lzma_alone_init(struct archive_read *a, struct zip *zip)
 	r = lzma_alone_decoder(&zip->zipx_lzma_stream, UINT64_MAX);
 	if (r != LZMA_OK) {
 		archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
-		    "lzma initialization failed(%d)", r);
+		    "lzma initialization failed (%d)", r);
 
 		return (ARCHIVE_FAILED);
 	}
@@ -1935,7 +1921,7 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 	switch(lz_ret) {
 		case LZMA_DATA_ERROR:
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "xz data error (error %d)", (int) lz_ret);
+			    "xz data error (%d)", (int) lz_ret);
 			return (ARCHIVE_FATAL);
 
 		case LZMA_NO_CHECK:
@@ -1944,7 +1930,7 @@ zip_read_data_zipx_xz(struct archive_read *a, const void **buff,
 
 		default:
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "xz unknown error %d", (int) lz_ret);
+			    "xz unknown error (%d)", (int) lz_ret);
 			return (ARCHIVE_FATAL);
 
 		case LZMA_STREAM_END:
@@ -2032,7 +2018,7 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 	switch(lz_ret) {
 		case LZMA_DATA_ERROR:
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "lzma data error (error %d)", (int) lz_ret);
+			    "lzma data error (%d)", (int) lz_ret);
 			return (ARCHIVE_FATAL);
 
 		/* This case is optional in lzma alone format. It can happen,
@@ -2055,7 +2041,7 @@ zip_read_data_zipx_lzma_alone(struct archive_read *a, const void **buff,
 
 		default:
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "lzma unknown error %d", (int) lz_ret);
+			    "lzma unknown error (%d)", (int) lz_ret);
 			return (ARCHIVE_FATAL);
 	}
 
@@ -2134,15 +2120,15 @@ zipx_ppmd8_init(struct archive_read *a, struct zip *zip)
 
 	if(order < 2 || restore_method > 2) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Invalid parameter set in PPMd8 stream (order=%" PRId32 ", "
-		    "restore=%" PRId32 ")", order, restore_method);
+		    "Invalid parameter set in PPMd8 stream (order=%" PRIu32 ", "
+		    "restore=%" PRIu32 ")", order, restore_method);
 		return (ARCHIVE_FAILED);
 	}
 
 	/* Allocate the memory needed to properly decompress the file. */
 	if(!__archive_ppmd8_functions.Ppmd8_Alloc(&zip->ppmd8, mem << 20)) {
 		archive_set_error(&a->archive, ENOMEM,
-		    "Unable to allocate memory for PPMd8 stream: %" PRId32 " bytes",
+		    "Unable to allocate memory for PPMd8 stream: %" PRIu32 " bytes",
 		    mem << 20);
 		return (ARCHIVE_FATAL);
 	}
@@ -2275,7 +2261,7 @@ zipx_bzip2_init(struct archive_read *a, struct zip *zip)
 	r = BZ2_bzDecompressInit(&zip->bzstream, 0, 1);
 	if(r != BZ_OK) {
 		archive_set_error(&(a->archive), ARCHIVE_ERRNO_MISC,
-		    "bzip2 initialization failed(%d)",
+		    "bzip2 initialization failed (%d)",
 		    r);
 
 		return ARCHIVE_FAILED;
@@ -2541,7 +2527,7 @@ zip_deflate_init(struct archive_read *a, struct zip *zip)
 			    -15 /* Don't check for zlib header */);
 		if (r != Z_OK) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Can't initialize ZIP decompression.");
+			    "Can't initialize ZIP decompression");
 			return (ARCHIVE_FATAL);
 		}
 		/* Stream structure has been set up. */
@@ -3035,8 +3021,8 @@ init_WinZip_AES_decryption(struct archive_read *a)
 		    p, salt_len, 1000, derived_key, key_len * 2 + 2);
 		if (r != 0) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Decryption is unsupported due to lack of "
-			    "crypto library");
+			    r == CRYPTOR_STUB_FUNCTION ? "Decryption is unsupported due "
+				"to lack of crypto library" : "Failed to process passphrase");
 			return (ARCHIVE_FAILED);
 		}
 
@@ -3168,7 +3154,6 @@ archive_read_format_zip_read_data(struct archive_read *a,
 		/* We can't decompress this entry, but we will
 		 * be able to skip() it and try the next entry. */
 		return (ARCHIVE_FAILED);
-		break;
 	}
 	if (r != ARCHIVE_OK)
 		return (r);
@@ -3208,7 +3193,7 @@ archive_read_format_zip_read_data(struct archive_read *a,
 		    != (zip->entry_uncompressed_bytes_read & UINT32_MAX)) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "ZIP uncompressed data is wrong size "
-			    "(read %jd, expected %jd)\n",
+			    "(read %jd, expected %jd)",
 			    (intmax_t)zip->entry_uncompressed_bytes_read,
 			    (intmax_t)zip->entry->uncompressed_size);
 			return (ARCHIVE_FAILED);
@@ -3658,7 +3643,7 @@ read_eocd(struct zip *zip, const char *p, int64_t current_offset)
 {
 	uint16_t disk_num;
 	uint32_t cd_size, cd_offset;
-	
+
 	disk_num = archive_le16dec(p + 4);
 	cd_size = archive_le32dec(p + 12);
 	cd_offset = archive_le32dec(p + 16);
@@ -3987,7 +3972,7 @@ slurp_central_directory(struct archive_read *a, struct archive_entry* entry,
 			zip->has_encrypted_entries = 1;
 		}
 		zip_entry->compression = (char)archive_le16dec(p + 10);
-		zip_entry->mtime = zip_time(p + 12);
+		zip_entry->mtime = dos_to_unix(archive_le32dec(p + 12));
 		zip_entry->crc32 = archive_le32dec(p + 16);
 		if (zip_entry->zip_flags & ZIP_LENGTH_AT_END)
 			zip_entry->decdat = p[13];
@@ -4118,7 +4103,7 @@ zip_get_local_file_header_size(struct archive_read *a, size_t extra)
 	const char *p;
 	ssize_t filename_length, extra_length;
 
-	if ((p = __archive_read_ahead(a, extra + 30, NULL)) == NULL) {
+	if ((p = __archive_read_ahead(a, extra + ZIP_LOCHDR_LEN, NULL)) == NULL) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
 		    "Truncated ZIP file header");
 		return (ARCHIVE_WARN);
@@ -4132,7 +4117,7 @@ zip_get_local_file_header_size(struct archive_read *a, size_t extra)
 	filename_length = archive_le16dec(p + 26);
 	extra_length = archive_le16dec(p + 28);
 
-	return (30 + filename_length + extra_length);
+	return (ZIP_LOCHDR_LEN + filename_length + extra_length);
 }
 
 static int
@@ -4169,16 +4154,16 @@ zip_read_mac_metadata(struct archive_read *a, struct archive_entry *entry,
 		return (ARCHIVE_WARN);
 	}
 
-	if (rsrc->uncompressed_size > (4 * 1024 * 1024)) {
+	if (rsrc->uncompressed_size > ZIP_MAX_METADATA * 1048576U) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Mac metadata is too large: %jd > 4M bytes",
-		    (intmax_t)rsrc->uncompressed_size);
+		    "Mac metadata is too large: %jd > %u MiB",
+		    (intmax_t)rsrc->uncompressed_size, ZIP_MAX_METADATA);
 		return (ARCHIVE_WARN);
 	}
-	if (rsrc->compressed_size > (4 * 1024 * 1024)) {
+	if (rsrc->compressed_size > ZIP_MAX_METADATA * 1048576U) {
 		archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-		    "Mac metadata is too large: %jd > 4M bytes",
-		    (intmax_t)rsrc->compressed_size);
+		    "Mac metadata is too large: %jd > %u MiB",
+		    (intmax_t)rsrc->compressed_size, ZIP_MAX_METADATA);
 		return (ARCHIVE_WARN);
 	}
 

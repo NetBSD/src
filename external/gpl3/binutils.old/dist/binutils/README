@@ -2,12 +2,12 @@
 
 These are the GNU binutils.  These are utilities of use when dealing
 with binary files, either object files or executables.  These tools
-consist of the linker (ld), the assembler (gas), and the profiler
-(gprof) each of which have their own sub-directory named after them.
-There is also a collection of other binary tools, including the
-disassembler (objdump) in this directory.  These tools make use of a
-pair of libraries (bfd and opcodes) and a common set of header files
-(include).
+consist of the linkers (ld and gold), the assembler (gas), and the
+profiler (gprof and gprofng) each of which have their own
+sub-directory named after them.  There is also a collection of other
+binary tools, including the disassembler (objdump) in this directory.
+These tools make use of a pair of libraries (bfd and opcodes) and a
+common set of header files (include).
 
 There are README and NEWS files in most of the program sub-directories
 which give more information about those specific programs.
@@ -43,6 +43,20 @@ You can just do:
 
 This will configure and build all the libraries as well as the
 assembler, the binutils, and the linker.
+
+Note - if you have obtained the sources by checking out a copy from
+the git repository then you will have both the binutils and GDB
+sources in one place.  In this case you may wish to add an option to
+the configure command line to stop it from configuring GDB.  This will
+also stop the configure script from checking the libraries that are
+needed by GDB, but not by the binutils.
+
+	./configure --disable-gdb 
+
+Since the configure script can be quite verbose, you may also
+want to add the --quiet option to reduce the amount of output. ie:
+
+	./configure --quiet
 
 If you have GNU make, we recommend building in a different directory:
 
@@ -110,7 +124,7 @@ Native Language Support
 By default Native Language Support will be enabled for binutils.  On
 some systems however this support is not present and can lead to error
 messages such as "undefined reference to `libintl_gettext'" when
-building there tools.  If that happens the NLS support can be disabled
+building these tools.  If that happens the NLS support can be disabled
 by adding the --disable-nls switch to the configure line like this:
 
 	../binutils-XXX/configure --disable-nls
@@ -293,7 +307,7 @@ unneeded objects and libraries:
 If you have any problems or questions about the binutils on VMS, feel
 free to mail me at kkaempf@rmi.de.
 
-Copyright (C) 2012-2022 Free Software Foundation, Inc.
+Copyright (C) 2012-2025 Free Software Foundation, Inc.
 
 Copying and distribution of this file, with or without modification,
 are permitted in any medium without royalty provided the copyright

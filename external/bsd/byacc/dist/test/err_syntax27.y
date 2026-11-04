@@ -1,11 +1,11 @@
-/*	$NetBSD: err_syntax27.y,v 1.1.1.3 2016/01/09 21:59:45 christos Exp $	*/
+/*	$NetBSD: err_syntax27.y,v 1.1.1.3.28.1 2026/11/04 22:37:24 perseant Exp $	*/
 
 %pure-parser
 
-%parse-param { int regs[26] 
-%parse-param { int *base 
+%parse-param { int regs[26]
+%parse-param { int *base
 
-%lex-param { int *base 
+%lex-param { int *base
 
 %{
 # include <stdio.h>

@@ -1322,7 +1322,7 @@ archive_read_format_iso9660_read_header(struct archive_read *a,
 			archive_set_error(&a->archive,
 			    ARCHIVE_ERRNO_FILE_FORMAT,
 			    "Pathname cannot be converted "
-			    "from %s to current locale.",
+			    "from %s to current locale",
 			    archive_string_conversion_charset_name(
 			      iso9660->sconv_utf16be));
 
@@ -1400,7 +1400,7 @@ archive_read_format_iso9660_read_header(struct archive_read *a,
 				archive_set_error(&a->archive,
 				    ARCHIVE_ERRNO_FILE_FORMAT,
 				    "Linkname cannot be converted "
-				    "from %s to current locale.",
+				    "from %s to current locale",
 				    archive_string_conversion_charset_name(
 				      iso9660->sconv_utf16be));
 				rd_r = ARCHIVE_WARN;
@@ -1429,7 +1429,7 @@ archive_read_format_iso9660_read_header(struct archive_read *a,
 			 * information first, then store all file bodies. */
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
 			    "Ignoring out-of-order file @%jx (%s) %jd < %jd",
-			    (intmax_t)file->number,
+			    (uintmax_t)file->number,
 			    iso9660->pathname.s,
 			    (intmax_t)file->offset,
 			    (intmax_t)iso9660->current_position);
@@ -1663,7 +1663,7 @@ zisofs_read_data(struct archive_read *a,
 			r = inflateInit(&zisofs->stream);
 		if (r != Z_OK) {
 			archive_set_error(&a->archive, ARCHIVE_ERRNO_MISC,
-			    "Can't initialize zisofs decompression.");
+			    "Can't initialize zisofs decompression");
 			return (ARCHIVE_FATAL);
 		}
 		zisofs->stream_valid = 1;
@@ -1728,7 +1728,7 @@ zisofs_read_data(struct archive_read *a,
 	(void)size;/* UNUSED */
 	(void)offset;/* UNUSED */
 	archive_set_error(&a->archive, ARCHIVE_ERRNO_FILE_FORMAT,
-	    "zisofs is not supported on this platform.");
+	    "zisofs is not supported on this platform");
 	return (ARCHIVE_FAILED);
 }
 
@@ -2273,7 +2273,7 @@ parse_rockridge(struct archive_read *a, struct file_info *file,
 				if (version == 1) {
 					if (data_length >= 8)
 						file->mode
-						    = toi(data, 4);
+						    = (__LA_MODE_T)toi(data, 4);
 					if (data_length >= 16)
 						file->nlinks
 						    = toi(data + 8, 4);
@@ -2756,11 +2756,19 @@ parse_rockridge_ZF1(struct file_info *file, const unsigned char *data,
 {
 
 	if (data[0] == 0x70 && data[1] == 0x7a && data_length == 12) {
-		/* paged zlib */
-		file->pz = 1;
-		file->pz_log2_bs = data[3];
-		file->pz_uncompressed_size = archive_le32dec(&data[4]);
-	}
+        /* paged zlib */
+        file->pz = 1;
+        file->pz_log2_bs = data[3];
+        if (file->pz_log2_bs < 15 || file->pz_log2_bs > 17) {
+            /* TODO: Return an error here instead of silently
+             * disabling zisofs. That requires propagating an
+             * error return through parse_rockridge() and its
+             * callers. */
+            file->pz = 0;
+            return;
+        }
+        file->pz_uncompressed_size = archive_le32dec(&data[4]);
+    }
 }
 
 static void

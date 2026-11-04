@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -25,6 +25,7 @@
 #include <values.h>
 #include <assert.h>
 
+#include "libiberty.h"
 #include "comp_com.h"
 
 /*
@@ -839,9 +840,7 @@ ccm_vis_init ()
     return;
   done = 1;
   size = ccm_vis_index ((COMPMSG_ID) (CCMV_BASIC << 8));
-  ccm_attrs = (Ccm_Attr_t *) calloc (size, sizeof (Ccm_Attr_t));
-  if (ccm_attrs == NULL)
-    exit (1);
+  ccm_attrs = (Ccm_Attr_t *) xcalloc (size, sizeof (Ccm_Attr_t));
   vindex = ccm_vis_index (CCM_MODDATE);
   ccm_attrs[vindex].vis = CCMV_VER | CCMV_BASIC | CCMV_UNIMPL;
   ccm_attrs[vindex].name = "CCM_MODDATE";

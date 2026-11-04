@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile.inc,v 1.4 2016/01/26 19:37:47 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.4.28.1 2026/11/04 22:43:36 perseant Exp $
 
 .if !defined(__COMMON_MAKEFILE_INC_INCLUDED__)
 __COMMON_MAKEFILE_INC_INCLUDED__=1
 .include <bsd.init.mk>
 
-BINUTILS_MACHINE_ARCH=	${MACHINE_ARCH:C/armv[4-7]/arm/}
+BINUTILS_MACHINE_ARCH?=	${MACHINE_ARCH:C/armv[4-7]/arm/}
 
 GNUHOSTDIST=	${DIST}
 GNUCPPFLAGS=	${G_DEFS} ${G_INCLUDES}
@@ -13,7 +13,7 @@ CPPFLAGS+=	${GNUCPPFLAGS:M-D*:N-DLOCALEDIR*} ${GNUCPPFLAGS:M-I*:N-I.*} \
 		-I${DIST}/include -I${DIST}/bfd -I${DIST}/binutils \
 		-DLOCALEDIR=\"${LOCALEDIR}\"
 
-BINUTILS_MACHINE_ARCH=${MACHINE_ARCH:C/armv[4-7]/arm/}
+BINUTILS_MACHINE_ARCH?=${MACHINE_ARCH:C/armv[4-7]/arm/}
 BFDSUBDIR=	lib
 
 .endif

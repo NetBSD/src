@@ -3,7 +3,7 @@ dnl
 dnl And be careful when changing it!  If you must add tests with square
 dnl brackets, be sure changequote invocations surround it.
 dnl
-dnl   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@ dnl <http://www.gnu.org/licenses/>.
 dnl
 dnl v2.5 needed for --bindir et al
 m4_include([../bfd/version.m4])
-AC_INIT([gas], BFD_VERSION)
+AC_INIT([gas], [BFD_VERSION])
 AC_CONFIG_SRCDIR(as.h)
 
 dnl Autoconf 2.57 will find the aux dir without this.  However, unless
@@ -34,7 +34,6 @@ AM_INIT_AUTOMAKE
 AM_SILENT_RULES([yes])
 
 AC_PROG_CC
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 
 LT_INIT
@@ -76,6 +75,15 @@ AC_ARG_ENABLE(compressed_debug_sections,
   *)   ac_default_compressed_debug_sections=unset ;;
 esac])dnl
 
+# Select default compression algorithm.
+ac_default_compressed_debug_sections_algorithm=COMPRESS_DEBUG_GABI_ZLIB
+AC_ARG_ENABLE(default_compressed_debug_sections_algorithm,
+	      AS_HELP_STRING([--enable-default-compressed-debug-sections-algorithm={zlib,zstd}],
+	      [Default compression algorithm for --enable-compressed-debug-sections.]),
+[case "${enableval}" in
+   zstd) ac_default_compressed_debug_sections_algorithm=COMPRESS_DEBUG_ZSTD ;;
+esac])dnl
+
 # PR gas/19520
 # Decide if x86 assembler should generate relax relocations.
 ac_default_x86_relax_relocations=unset
@@ -85,6 +93,17 @@ AC_ARG_ENABLE(x86_relax_relocations,
 	      [generate x86 relax relocations by default]),
 [case "${enableval}" in
   no)  ac_default_x86_relax_relocations=0 ;;
+esac])dnl
+
+# PR gas/32022
+# Decide if x86 assembler should check TLS relocation.
+ac_default_x86_tls_check=unset
+# Provide a configure time option to override our default.
+AC_ARG_ENABLE(x86_tls_check,
+	      AS_HELP_STRING([--enable-x86-tls-check],
+	      [check x86 TLS relocation by default]),
+[case "${enableval}" in
+  no)  ac_default_x86_tls_check=0 ;;
 esac])dnl
 
 # Decide if ELF assembler should generate common symbols with the
@@ -237,8 +256,7 @@ for this_target in $target $canon_targets ; do
     generic_target=${cpu_type}-${target_vendor}-${target_os}
     case ${generic_target} in
       i386-*-msdosdjgpp* \
-      | i386-*-go32* \
-      | i386-go32-rtems*)
+      | i386-*-go32*)
 	AC_DEFINE(STRICTCOFF, 1, [Using strict COFF?])
 	;;
 
@@ -264,6 +282,8 @@ for this_target in $target $canon_targets ; do
         ;;
 
 changequote(,)dnl
+      ppc-*-aix5.[01]*)
+	;;
       ppc-*-aix[5-9].*)
 changequote([,])dnl
 	AC_DEFINE(AIX_WEAK_SUPPORT, 1,
@@ -362,14 +382,23 @@ changequote([,])dnl
 	    AC_MSG_ERROR($target_cpu isn't a supported MIPS CPU name)
 	    ;;
 	esac
-	# See whether it's appropriate to set E_MIPS_ABI_O32 for o32
+	# See whether it's appropriate to set EF_MIPS_ABI_O32 for o32
 	# binaries.  It's a GNU extension that some OSes don't understand.
 	case ${target} in
 	  *-*-irix*)
-	    use_e_mips_abi_o32=0
+	    use_ef_mips_abi_o32=0
 	    ;;
 	  *)
-	    use_e_mips_abi_o32=1
+	    use_ef_mips_abi_o32=1
+	    ;;
+	esac
+	# If target vendor is IMG, then MIPSr6 is used.
+	case ${target} in
+	  mips64*-img-*)
+	    mips_cpu=mips64r6
+	    ;;
+	  mips*-img-*)
+	    mips_cpu=mips32r6
 	    ;;
 	esac
 	# Decide whether to generate 32-bit or 64-bit code by default.
@@ -384,6 +413,9 @@ changequote([,])dnl
 	esac
 	# Decide which ABI to target by default.
 	case ${target} in
+	  mips64*-openbsd* | mips64*-linux-gnuabi64)
+	    mips_default_abi=N64_ABI
+	    ;;
 	  mips64*-linux* | mips-sgi-irix6* | mips64*-freebsd* \
 	  | mips64*-kfreebsd*-gnu | mips64*-ps2-elf*)
 	    mips_default_abi=N32_ABI
@@ -391,17 +423,14 @@ changequote([,])dnl
 	  mips*-linux* | mips*-freebsd* | mips*-kfreebsd*-gnu)
 	    mips_default_abi=O32_ABI
 	    ;;
-	  mips64*-openbsd*)
-	    mips_default_abi=N64_ABI
-	    ;;
 	  *)
 	    mips_default_abi=NO_ABI
 	    ;;
 	esac
 	AC_DEFINE_UNQUOTED(MIPS_CPU_STRING_DEFAULT, "$mips_cpu",
 			   [Default CPU for MIPS targets. ])
-	AC_DEFINE_UNQUOTED(USE_E_MIPS_ABI_O32, $use_e_mips_abi_o32,
-			   [Allow use of E_MIPS_ABI_O32 on MIPS targets. ])
+	AC_DEFINE_UNQUOTED(USE_EF_MIPS_ABI_O32, $use_ef_mips_abi_o32,
+			   [Allow use of EF_MIPS_ABI_O32 on MIPS targets. ])
 	AC_DEFINE_UNQUOTED(MIPS_DEFAULT_64BIT, $mips_default_64bit,
 			   [Generate 64-bit code by default on MIPS targets. ])
 	AC_DEFINE_UNQUOTED(MIPS_DEFAULT_ABI, $mips_default_abi,
@@ -411,7 +440,7 @@ changequote([,])dnl
 
     # Do we need the opcodes library?
     case ${cpu_type} in
-      vax | tic30)
+      vax | tic30 | i386 | arm)
 	;;
 
       *)
@@ -441,7 +470,6 @@ changequote([,])dnl
       	if test $this_target = $target ; then
 	  AC_DEFINE_UNQUOTED(DEFAULT_ARCH, "${arch}", [Default architecture.])
 	fi
-        using_cgen=yes
         ;;
       epiphany | fr30 | ip2k | iq2000 | lm32 | m32r | or1k)
 	using_cgen=yes
@@ -465,6 +493,14 @@ changequote([,])dnl
 	;;
       frv)
 	using_cgen=yes
+	;;
+      kvx)
+	for f in config/kvx-parse.o; do
+	  case " $extra_objects " in
+	    *" $f "*) ;;
+	    *) extra_objects="$extra_objects $f" ;;
+	  esac
+	done
 	;;
       m68k)
 	f=config/m68k-parse.o
@@ -617,7 +653,7 @@ changequote([,])dnl
         fi
         AC_MSG_RESULT($with_isa_spec)
 
-        # --with-priv-spec=[1.9.1|1.10|1.11|1.12].
+        # --with-priv-spec=[1.9.1|1.10|1.11|1.12|1.13].
         AC_MSG_CHECKING(for default configuration of --with-priv-spec)
         if test "x${with_priv_spec}" != x; then
           AC_DEFINE_UNQUOTED(DEFAULT_RISCV_PRIV_SPEC, "$with_priv_spec",
@@ -689,15 +725,6 @@ changequote([,])dnl
 			big)	emulation="mipsbelf mipslelf mipself" ;;
 			*)	emulation="mipslelf mipsbelf mipself" ;;
 			esac ;;
-      # i386-pc-pe-coff != i386-pc-coff.
-      i386-*-pe-coff)	;;
-      # Uncommenting the next line will turn on support for i386 AOUT
-      # for the default linux configuration
-      # i386-*-linux*-elf) emulation="i386elf i386aout" ;;
-      #
-      i386-*-aout)	emulation="i386aout" ;;
-      i386-*-coff)	emulation="i386coff" ;;
-      i386-*-elf)	emulation="i386elf" ;;
 
       # Always all formats.  The first stated emulation becomes the default.
       cris-*-*aout*)	emulation="crisaout criself" ;;
@@ -714,6 +741,13 @@ fi
 AC_DEFINE_UNQUOTED(DEFAULT_GENERATE_X86_RELAX_RELOCATIONS,
   $ac_default_x86_relax_relocations,
   [Define to 1 if you want to generate x86 relax relocations by default.])
+
+if test ${ac_default_x86_tls_check} = unset; then
+  ac_default_x86_tls_check=1
+fi
+AC_DEFINE_UNQUOTED(DEFAULT_X86_TLS_CHECK,
+  $ac_default_x86_tls_check,
+  [Define to 1 if you want to check x86 TLS relocation by default.])
 
 if test ${ac_default_elf_stt_common} = unset; then
   ac_default_elf_stt_common=0
@@ -755,37 +789,8 @@ if test x$ac_default_compressed_debug_sections = xyes ; then
   AC_DEFINE(DEFAULT_FLAG_COMPRESS_DEBUG, 1, [Define if you want compressed debug sections by default.])
 fi
 
-# Turn on all targets if possible
-if test ${all_targets} = "yes"; then
-  case ${target_cpu_type} in
-  i386)
-    case ${obj_format} in
-    aout)
-      emulations="$emulations i386coff i386elf"
-      ;;
-    coff)
-      emulations="$emulations i386aout i386elf"
-    ;;
-    elf)
-      emulations="$emulations i386aout i386coff"
-      ;;
-    esac
-  ;;
-  x86_64)
-    case ${obj_format} in
-    aout)
-      emulations="$emulations i386coff i386elf"
-      ;;
-    coff)
-      emulations="$emulations i386aout i386elf"
-    ;;
-    elf)
-      emulations="$emulations i386aout i386coff"
-      ;;
-    esac
-  ;;
-  esac
-fi
+AC_DEFINE_UNQUOTED(DEFAULT_COMPRESSED_DEBUG_ALGORITHM, $ac_default_compressed_debug_sections_algorithm,
+		   [Default compression algorithm for --enable-compressed-debug-sections.])
 
 # PE code has way too many macros tweaking behaviour
 case ${te_file} in
@@ -936,8 +941,8 @@ AC_PROG_YACC
 AM_PROG_LEX
 
 ALL_LINGUAS="es fi fr id ja ru rw sv tr uk zh_CN"
-ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
+ZW_GNU_GETTEXT_SISTER_DIR
 
 AM_MAINTAINER_MODE
 AM_CONDITIONAL(GENINSRC_NEVER, false)
@@ -1000,12 +1005,13 @@ fi
 GAS_CHECK_DECL_NEEDED(environ, f, char **f, $gas_test_headers)
 GAS_CHECK_DECL_NEEDED(ffs, f, int (*f)(int), $gas_test_headers)
 
-AC_CHECK_DECLS([asprintf, mempcpy, stpcpy])
+AC_CHECK_DECLS([mempcpy, stpcpy])
 
 BFD_BINARY_FOPEN
 
-# Link in zlib if we can.  This allows us to write compressed debug sections.
+# Link in zlib/zstd if we can.  This allows us to write compressed debug sections.
 AM_ZLIB
+AC_ZSTD
 
 # Support for VMS timestamps via cross compile
 

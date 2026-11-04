@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Privilege Separation for dhcpcd
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -31,7 +31,8 @@
 
 #include "if.h"
 
-#if defined(PRIVSEP) && (defined(HAVE_CAPSICUM) || defined(__linux__))
+#if defined(PRIVSEP) && \
+    (defined(HAVE_CAPSICUM) || defined(__linux__) || defined(__sun))
 #define PRIVSEP_GETIFADDRS
 #endif
 
@@ -45,13 +46,17 @@ ssize_t ps_root_mreaderror(struct dhcpcd_ctx *, void **, size_t *);
 ssize_t ps_root_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
 ssize_t ps_root_unlink(struct dhcpcd_ctx *, const char *);
 ssize_t ps_root_filemtime(struct dhcpcd_ctx *, const char *, time_t *);
-ssize_t ps_root_readfile(struct dhcpcd_ctx *, const char *, void *, size_t);
+ssize_t ps_root_readfile(struct dhcpcd_ctx *, const char *, void **, size_t *);
 ssize_t ps_root_writefile(struct dhcpcd_ctx *, const char *, mode_t,
     const void *, size_t);
 ssize_t ps_root_logreopen(struct dhcpcd_ctx *);
 ssize_t ps_root_script(struct dhcpcd_ctx *, const void *, size_t);
 ssize_t ps_root_stopprocesses(struct dhcpcd_ctx *);
 int ps_root_getauthrdm(struct dhcpcd_ctx *, uint64_t *);
+ssize_t ps_root_user_ingroup(struct dhcpcd_ctx *, uid_t, gid_t, gid_t);
+#ifdef PRIVSEP_GETHOSTNAME
+int ps_root_gethostname(struct dhcpcd_ctx *, char *, size_t);
+#endif
 #ifdef PRIVSEP_GETIFADDRS
 int ps_root_getifaddrs(struct dhcpcd_ctx *, struct ifaddrs **);
 #endif
@@ -65,8 +70,8 @@ ssize_t ps_root_ioctl6(struct dhcpcd_ctx *, unsigned long, void *, size_t);
 ssize_t ps_root_indirectioctl(struct dhcpcd_ctx *, unsigned long, const char *,
     void *, size_t);
 ssize_t ps_root_ifignoregroup(struct dhcpcd_ctx *, const char *);
-ssize_t ps_root_sysctl(struct dhcpcd_ctx *, const int *, unsigned int,
-    void *, size_t *, const void *, size_t);
+ssize_t ps_root_sysctl(struct dhcpcd_ctx *, const int *, unsigned int, void *,
+    size_t *, const void *, size_t);
 #endif
 #ifdef __linux__
 ssize_t ps_root_sendnetlink(struct dhcpcd_ctx *, int, struct msghdr *);

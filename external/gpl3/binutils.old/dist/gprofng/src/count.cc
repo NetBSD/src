@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -33,6 +33,7 @@
 #include <collctrl.h>
 #include <StringBuilder.h>
 #include "collect.h"
+#include "libiberty.h"
 
 /* get_count_data -- format exec of bit to do the real work */
 void
@@ -44,7 +45,7 @@ collect::get_count_data ()
 
   // reserve space for original args, plus 30 arguments to bit
   nargs = origargc + 30;
-  char **narglist = (char **) calloc (nargs, sizeof (char *));
+  char **narglist = (char **) xcalloc (nargs, sizeof (char *));
   arglist = narglist;
 
   // construct the command for bit
@@ -57,7 +58,7 @@ collect::get_count_data ()
       if (stat (command, &statbuf) == -1)
 	{
 	  // if bit command does not exist there
-	  char *first_look = strdup (command);
+	  char *first_look = xstrdup (command);
 	  snprintf (command, sizeof (command), NTXT ("%s"), run_dir);
 	  s = strstr (command, NTXT ("/bin"));
 	  snprintf (s, sizeof (command) - (s - command), NTXT ("/prod/bin/bit"));
@@ -69,7 +70,7 @@ collect::get_count_data ()
 	    }
 	  free (first_look);
 	}
-      *arglist++ = strdup (command);
+      *arglist++ = xstrdup (command);
     }
   else
     {

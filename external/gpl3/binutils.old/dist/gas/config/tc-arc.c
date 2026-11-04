@@ -1,5 +1,5 @@
 /* tc-arc.c -- Assembler for the ARC
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    Contributor: Claudiu Zissulescu <claziss@synopsys.com>
 
@@ -49,7 +49,7 @@
 			  && (SUB_OPCODE (x) == 0x28))
 
 #ifndef TARGET_WITH_CPU
-#define TARGET_WITH_CPU "arc700"
+#define TARGET_WITH_CPU "hs38_linux"
 #endif /* TARGET_WITH_CPU */
 
 #define ARC_GET_FLAG(s)   	(*symbol_get_tc (s))
@@ -109,6 +109,7 @@ enum arc_rlx_types
 				  || (op)->insn_class == BBIT0		\
 				  || (op)->insn_class == BBIT1		\
 				  || (op)->insn_class == BI		\
+				  || (op)->insn_class == DBNZ		\
 				  || (op)->insn_class == EI		\
 				  || (op)->insn_class == ENTER		\
 				  || (op)->insn_class == JLI		\
@@ -182,7 +183,7 @@ const pseudo_typeS md_pseudo_table[] =
   { NULL, NULL, 0 }
 };
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
 enum options
 {
@@ -228,7 +229,7 @@ enum options
   OPTION_RTSC
 };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "EB",		no_argument,	   NULL, OPTION_EB },
   { "EL",		no_argument,	   NULL, OPTION_EL },
@@ -291,7 +292,7 @@ struct option md_longopts[] =
   { NULL,		no_argument, NULL, 0 }
 };
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* Local data and data types.  */
 
@@ -521,7 +522,7 @@ static unsigned cl_features = 0;
 #define ARC_RELOC_TABLE(op)				\
   (&arc_reloc_op[ ((!USER_RELOC_P (op))			\
 		   ? (abort (), 0)			\
-		   : (int) (op) - (int) O_gotoff) ])
+		   : (op) - O_gotoff) ])
 
 #define DEF(NAME, RELOC, REQ)				\
   { #NAME, sizeof (#NAME)-1, O_##NAME, RELOC, REQ}
@@ -774,6 +775,15 @@ arc_insert_opcode (const struct arc_opcode *opcode)
   entry->count++;
 }
 
+static void
+arc_opcode_free (void *elt)
+{
+  string_tuple_t *tuple = elt;
+  struct arc_opcode_hash_entry *entry = (void *) tuple->value;
+  free (entry->opcode);
+  free (entry);
+  free (tuple);
+}
 
 /* Like md_number_to_chars but for middle-endian values.  The 4-byte limm
    value, is encoded as 'middle-endian' for a little-endian target.  This
@@ -1142,8 +1152,8 @@ parse_reloc_symbol (expressionS *resultP)
       return;
     }
 
-  *input_line_pointer = c;
-  SKIP_WHITESPACE_AFTER_NAME ();
+  restore_line_pointer (c);
+  SKIP_WHITESPACE ();
   /* Extra check for TLS: base.  */
   if (*input_line_pointer == '@')
     {
@@ -1303,6 +1313,8 @@ tokenize_arguments (char *str,
 	     relocation type as well.  */
 	  if (*input_line_pointer == '@')
 	    parse_reloc_symbol (tok);
+	  else
+	    resolve_register (tok);
 
 	  debug_exp (tok);
 
@@ -1362,10 +1374,6 @@ tokenize_flags (const char *str,
     {
       switch (*input_line_pointer)
 	{
-	case ' ':
-	case '\0':
-	  goto fini;
-
 	case '.':
 	  input_line_pointer++;
 	  if (saw_dot)
@@ -1375,6 +1383,10 @@ tokenize_flags (const char *str,
 	  break;
 
 	default:
+	  if (is_end_of_stmt (*input_line_pointer)
+	      || is_whitespace (*input_line_pointer))
+	    goto fini;
+
 	  if (saw_flg && !saw_dot)
 	    goto err;
 
@@ -1432,7 +1444,7 @@ apply_fixups (struct arc_insn *insn, fragS *fragP, int fix)
 	offset = insn->len;
 
       /* Some fixups are only used internally, thus no howto.  */
-      if ((int) fixup->reloc == 0)
+      if (fixup->reloc == 0)
 	as_fatal (_("Unhandled reloc type"));
 
       if ((int) fixup->reloc < 0)
@@ -1445,8 +1457,7 @@ apply_fixups (struct arc_insn *insn, fragS *fragP, int fix)
       else
 	{
 	  reloc_howto_type *reloc_howto =
-	    bfd_reloc_type_lookup (stdoutput,
-				   (bfd_reloc_code_real_type) fixup->reloc);
+	    bfd_reloc_type_lookup (stdoutput, fixup->reloc);
 	  gas_assert (reloc_howto);
 
 	  /* FIXME! the reloc size is wrong in the BFD file.
@@ -2508,7 +2519,7 @@ md_assemble (char *str)
   struct arc_flags flags[MAX_INSN_FLGS];
 
   /* Split off the opcode.  */
-  opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_0123468");
+  opnamelen = strspn (str, "abcdefghijklmnopqrstuvwxyz_0123456789");
   opname = xmemdup0 (str, opnamelen);
 
   /* Signalize we are assembling the instructions.  */
@@ -2524,8 +2535,8 @@ md_assemble (char *str)
   /* Scan up to the end of the mnemonic which must end in space or end
      of string.  */
   str += opnamelen;
-  for (; *str != '\0'; str++)
-    if (*str == ' ')
+  for (; !is_end_of_stmt (*str); str++)
+    if (is_whitespace (*str))
       break;
 
   /* Tokenize the rest of the line.  */
@@ -2605,7 +2616,8 @@ md_begin (void)
   bfd_set_private_flags (stdoutput, selected_cpu.eflags);
 
   /* Set up a hash table for the instructions.  */
-  arc_opcode_hash = str_htab_create ();
+  arc_opcode_hash = htab_create_alloc (16, hash_string_tuple, eq_string_tuple,
+				       arc_opcode_free, xcalloc, free);
 
   /* Initialize the hash table with the insns.  */
   do
@@ -2710,6 +2722,15 @@ md_begin (void)
   declare_addrtype ("cxd", ARC_NPS400_ADDRTYPE_CXD);
 }
 
+void
+arc_md_end (void)
+{
+  htab_delete (arc_opcode_hash);
+  htab_delete (arc_reg_hash);
+  htab_delete (arc_aux_hash);
+  htab_delete (arc_addrtype_hash);
+}
+
 /* Write a value out to the object file, using the appropriate
    endianness.  */
 
@@ -2746,7 +2767,7 @@ md_pcrel_from_section (fixS *fixP,
 
   pr_debug ("pcrel_from_section, fx_offset = %d\n", (int) fixP->fx_offset);
 
-  if (fixP->fx_addsy != (symbolS *) NULL
+  if (fixP->fx_addsy != NULL
       && (!S_IS_DEFINED (fixP->fx_addsy)
 	  || S_GET_SEGMENT (fixP->fx_addsy) != sec))
     {
@@ -2796,11 +2817,11 @@ md_pcrel_from_section (fixS *fixP,
 	}
     }
 
-  pr_debug ("pcrel from %"BFD_VMA_FMT"x + %lx = %"BFD_VMA_FMT"x, "
-	    "symbol: %s (%"BFD_VMA_FMT"x)\n",
-	    fixP->fx_frag->fr_address, fixP->fx_where, base,
+  pr_debug ("pcrel from %" PRIx64 " + %lx = %" PRIx64 ", "
+	    "symbol: %s (%" PRIx64 ")\n",
+	    (uint64_t) fixP->fx_frag->fr_address, fixP->fx_where, (uint64_t) base,
 	    fixP->fx_addsy ? S_GET_NAME (fixP->fx_addsy) : "(null)",
-	    fixP->fx_addsy ? S_GET_VALUE (fixP->fx_addsy) : 0);
+	    fixP->fx_addsy ? (uint64_t) S_GET_VALUE (fixP->fx_addsy) : (uint64_t) 0);
 
   return base;
 }
@@ -3229,8 +3250,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED,
   arelent *reloc;
   bfd_reloc_code_real_type code;
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixP->fx_addsy);
   reloc->address = fixP->fx_frag->fr_address + fixP->fx_where;
 
@@ -3292,9 +3313,9 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED,
   table_entry = TC_GENERIC_RELAX_TABLE + fragP->fr_subtype;
 
   pr_debug ("%s:%d: md_convert_frag, subtype: %d, fix: %d, "
-	    "var: %"BFD_VMA_FMT"d\n",
+	    "var: %" PRId64 "\n",
 	    fragP->fr_file, fragP->fr_line,
-	    fragP->fr_subtype, fix, fragP->fr_var);
+	    fragP->fr_subtype, fix, (int64_t) fragP->fr_var);
 
   if (fragP->fr_subtype <= 0
       && fragP->fr_subtype >= arc_num_relax_opcodes)
@@ -3638,7 +3659,7 @@ find_reloc (const char *name,
 	  if (!nflg)
 	    continue;
 	  found_flag = false;
-	  unsigned * psflg = (unsigned *)r->flags;
+	  const unsigned *psflg = r->flags;
 	  do
 	    {
 	      tmp = false;
@@ -3896,7 +3917,7 @@ assemble_insn (const struct arc_opcode *opcode,
   for (argidx = opcode->operands; *argidx; ++argidx)
     {
       const struct arc_operand *operand = &arc_operands[*argidx];
-      const expressionS *t = (const expressionS *) 0;
+      const expressionS *t = NULL;
 
       if (ARC_OPERAND_IS_FAKE (operand))
 	continue;
@@ -4036,8 +4057,7 @@ assemble_insn (const struct arc_opcode *opcode,
 	    {
 	      /* sanity checks.  */
 	      reloc_howto_type *reloc_howto
-		= bfd_reloc_type_lookup (stdoutput,
-					 (bfd_reloc_code_real_type) reloc);
+		= bfd_reloc_type_lookup (stdoutput, reloc);
 	      unsigned reloc_bitsize = reloc_howto->bitsize;
 	      if (reloc_howto->rightshift)
 		reloc_bitsize -= reloc_howto->rightshift;
@@ -4061,8 +4081,7 @@ assemble_insn (const struct arc_opcode *opcode,
 	  else
 	    {
 	      reloc_howto_type *reloc_howto =
-		bfd_reloc_type_lookup (stdoutput,
-				       (bfd_reloc_code_real_type) fixup->reloc);
+		bfd_reloc_type_lookup (stdoutput, fixup->reloc);
 	      pcrel = reloc_howto->pc_relative;
 	    }
 	  fixup->pcrel = pcrel;
@@ -4654,7 +4673,7 @@ arc_extinsn (int ignore ATTRIBUTE_UNUSED)
     as_warn ("%s", errmsg);
 
   /* Insert the extension instruction.  */
-  arc_insert_opcode ((const struct arc_opcode *) arc_ext_opcodes);
+  arc_insert_opcode (arc_ext_opcodes);
 
   create_extinst_section (&einsn);
 }
@@ -4920,7 +4939,9 @@ arc_set_attribute_int (int tag, int value)
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
       || !attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_int (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_int (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 static void
@@ -4929,7 +4950,9 @@ arc_set_attribute_string (int tag, const char *value)
   if (tag < 1
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES
       || !attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_string (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_string (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 /* Allocate and concatenate two strings.  s1 can be NULL but not
@@ -4948,7 +4971,7 @@ arc_stralloc (char * s1, const char * s2)
   gas_assert (s2);
   len += strlen (s2) + 1;
 
-  p = (char *) xmalloc (len);
+  p = xmalloc (len);
 
   if (s1)
     {
@@ -4999,7 +5022,9 @@ arc_set_public_attributes (void)
       && (base != bfd_elf_get_obj_attr_int (stdoutput, OBJ_ATTR_PROC,
 					    Tag_ARC_CPU_base)))
     as_warn (_("Overwrite explicitly set Tag_ARC_CPU_base"));
-  bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_CPU_base, base);
+  if (!bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_CPU_base, base))
+    as_fatal (_("error adding attribute: %s"),
+	      bfd_errmsg (bfd_get_error ()));
 
   /* Tag_ARC_ABI_osver.  */
   if (attributes_set_explicitly[Tag_ARC_ABI_osver])
@@ -5048,14 +5073,16 @@ arc_set_public_attributes (void)
     {
       as_warn (_("Overwrite explicitly set Tag_ARC_ABI_rf16 to full "
 		 "register file"));
-      bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_ABI_rf16, 0);
+      if (!bfd_elf_add_proc_attr_int (stdoutput, Tag_ARC_ABI_rf16, 0))
+	as_fatal (_("error adding attribute: %s"),
+		  bfd_errmsg (bfd_get_error ()));
     }
 }
 
 /* Add the default contents for the .ARC.attributes section.  */
 
 void
-arc_md_end (void)
+arc_md_finish (void)
 {
   arc_set_public_attributes ();
 

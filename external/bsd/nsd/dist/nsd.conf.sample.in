@@ -73,8 +73,8 @@ server:
 	# reuseport: no
 
 	# override maximum socket send buffer size.  Default of 0 results in
-	# send buffer size being set to 1048576 (bytes).
-	# send-buffer-size: 1048576
+	# send buffer size being set to 4194304 (bytes).
+	# send-buffer-size: 4194304
 
 	# override maximum socket receive buffer size. Default of 0 results in
 	# receive buffer size being set to 1048576 (bytes).
@@ -170,6 +170,10 @@ server:
 	# Default is 0, system default MSS.
 	# outgoing-tcp-mss: 0
 
+	# Set the TCP backlog for listening sockets.
+	# Default 256, or -1 on BSDs and Linux.
+	# tcp-listen-queue: 256
+
 	# reduce these settings to save memory for NSD, to about
 	# xfrd-tcp-max: 32 and xfrd-tcp-pipeline: 128, also rrl-size: 1000
 	# other memory is determined by server-count, tcp-count and zone data
@@ -195,6 +199,10 @@ server:
 	# log timestamp in ascii (y-m-d h:m:s.msec), yes is default.
 	# log-time-ascii: yes
 
+	# log timestamp in ISO8601 format if also log-time-ascii is enabled.
+	# (y-m-dTh:m:s.msec[+-]tzhours:tzminutes)
+	# log-time-iso: no
+
 	# round robin rotation of records in the answer.
 	# round-robin: no
 
@@ -216,14 +224,17 @@ server:
 	# default is 3600.
 	# zonefiles-write: 3600
 
-	# RRLconfig
+	# Reload nsd.conf and update TSIG keys and zones on SIGHUP.
+	# reload-config: no
+
 	# Response Rate Limiting, size of the hashtable. Default 1000000.
 	# rrl-size: 1000000
 
 	# Response Rate Limiting, maximum QPS allowed (from one query source).
 	# If set to 0, ratelimiting is disabled. Also set
 	# rrl-whitelist-ratelimit to 0 to disable ratelimit processing.
-	# Default is @ratelimit_default@.
+	# Default is @ratelimit_default@. If not compiled in, the option is
+	# ignored.
 	# rrl-ratelimit: 200
 
 	# Response Rate Limiting, number of packets to discard before
@@ -256,6 +267,18 @@ server:
 	# tls-service-ocsp: "path/to/ocsp.pem"
 	# tls-port: 853
 	
+	# Provides a dedidated TLS port where only authenticated clients can
+	# connect. Used for zone transfers to secondary servers. It uses
+	# tls-service-key and tls-service-pem and verifies client certificates
+	# using tls-cert-bundle.
+	# Default is "" (disabled). Requires restart to take effect.
+	# tls-auth-port: ""
+
+	# Allow zone transfers only on the tls-auth-port port and only to
+	# authenticated clients. Requests for zone transfers on other ports
+	# are refused. Default is no. Requires restart to change it.
+	# tls-auth-xfr-only: no
+
 	# Certificates used to authenticate connections made upstream for
 	# Transfers over TLS (XoT). Default is "" (default verify locations).
 	# tls-cert-bundle: "path/to/ca-bundle.pem"
@@ -263,6 +286,58 @@ server:
 	# The interfaces that use these listed port numbers will support and
 	# expect PROXYv2. For UDP and TCP/TLS interfaces.
 	# proxy-protocol-port: portno for each of the port numbers.
+
+	# The interface to use XDP with. Default is "", disabled.
+	# xdp-interface: eth0
+
+	# The eBPF XDP program to extract the XSKMAP from. Specify your own
+	# program here, if you want to use a custom XDP program.
+	# The default program shipped with NSD only redirects UDP
+	# (over Ethernet[+VLAN]+IPv4/6) traffic to port 53. When using your own
+	# XDP program, it needs to define a BPF_MAP_TYPE_XSKMAP named "xsks_map"
+	# and pin it (see xdp-bpffs-path) with read and write permission for NSD.
+	# This option needs to be set even when NSD is configured not to load
+	# the specified XDP program (see xdp-program-load), to be able to
+	# access the XSKMAP. Default is "@sharedfilesdir@/xdp-dns-redirect_kern.o".
+	# xdp-program-path: "@sharedfilesdir@/xdp-dns-redirect_kern.o"
+
+	# Specify whether NSD should load the XDP program. If set to no, you need
+	# to load the XDP program yourself. Default is yes, if xdp-interface is set.
+	# xdp-program-load: yes
+
+	# The path to the bpffs to store/read the xsks_map pin. The default XDP
+	# program loaded by NSD doesn't need this option, it is only necessary if
+	# you load a program that pins its BPF map.
+	# If NSD is configured to load an XDP program that pins its map, NSD needs
+	# to have read/write/execute access to the specified bpffs to be able to
+	# create and later delete the map pin. If you load the XDP program
+	# yourself, NSD only needs read and write access to the pin file itself
+	# (but at least execute access to the parent directories). The default
+	# bpffs (/sys/fs/bpf) usually doesn't have the necessary permissions set
+	# for non-root users. You can either set the necessary permissions or mount
+	# your own bpffs. Default is "/sys/fs/bpf".
+	# xdp-bpffs-path: "/sys/fs/bpf"
+
+	# Force the use of XDP_COPY mode instead of zero copy for AF_XDP sockets.
+	# This can help with drivers with broken AF_XDP support. Default is no.
+	# xdp-force-copy: no
+
+	# Enable the prometheus metrics HTTP endpoint. Default is no.
+	# metrics-enable: no
+
+	# Interfaces to expose the HTTP endpoint on, default is on localhost.
+	# Interfaces can be specified by IP address or interface name.
+	# With an interface name, all IP addresses associated with that
+	# interface are used. Default is 127.0.0.1 and ::1.
+	# metrics-interface: 127.0.0.1
+	# metrics-interface: ::1
+	# metrics-interface: lo
+
+	# Port number for the HTTP metrics endpoint. Default is 9100.
+	# metrics-port: 9100
+
+	# HTTP path for the metrics endpoint. Default is "/metrics".
+	# metrics-path: "/metrics"
 
 verify:
 	# Enable zone verification. Default is no.
@@ -296,7 +371,7 @@ verify:
 	# Number of seconds before verifier is killed (0 is forever).
 	# verifier-timeout: 0
 
-# DNSTAP config section, if compiled with that
+# DNSTAP config section, ignored if not compiled with that
 # dnstap:
 	# set this to yes and set one or more of dnstap-log-..-messages to yes.
 	# dnstap-enable: no
@@ -325,11 +400,13 @@ remote-control:
 	# interfaces can be specified by IP address or interface name.
 	# with an interface name, all IP addresses associated with that
 	# interface are used.
-	# with an absolute path, a unix local named pipe is used for control
-	# (and key and cert files are not needed, use directory permissions).
 	# control-interface: 127.0.0.1
 	# control-interface: ::1
 	# control-interface: lo
+
+	# with an absolute path, a unix local named pipe is used for control
+	# (and key and cert files are not needed, use directory permissions).
+	# control-interface: @runstatedir@/nsd/nsd.sock
 
 	# port number for remote control operations (uses TLS over TCP).
 	# control-port: 8952
@@ -399,12 +476,12 @@ remote-control:
 	# which is only offered for transfer to secondaries over TLS.
 	#allow-query: 192.0.2.0/24 NOKEY
 
-	# If no master and slave access control elements are provided,
+	# If no primary and secondary access control elements are provided,
 	# this zone will not be served to/from other servers.
 
-	# A master zone needs notify: and provide-xfr: lists.  A slave
+	# A primary zone needs notify: and provide-xfr: lists.  A secondary
 	# may also allow zone transfer (for debug or other secondaries).
-	# notify these slaves when the master zone changes, address TSIG|NOKEY
+	# notify these secondaries when the primary zone changes, address TSIG|NOKEY
 	# IP can be ipv4 and ipv6, with @port for a nondefault port number.
 	#notify: 192.0.2.1 NOKEY
 	# allow these IPs and TSIG to transfer zones, addr TSIG|NOKEY|BLOCKED
@@ -425,17 +502,17 @@ remote-control:
 	# provide-xfr: 0.0.0.0/0 NOKEY
 	# provide-xfr: ::0/0 NOKEY
 
-	# A slave zone needs allow-notify: and request-xfr: lists.
+	# A secondary zone needs allow-notify: and request-xfr: lists.
 	#allow-notify: 2001:db8::0/64 my_tsig_key_name
-	# By default, a slave will request a zone transfer with IXFR/TCP.
+	# By default, a secondary will request a zone transfer with IXFR/TCP.
 	# If you want to make use of IXFR/UDP use: UDP addr tsigkey
-	# for a master that only speaks AXFR (like NSD) use AXFR addr tsigkey
+	# for a primary that only speaks AXFR use AXFR addr tsigkey
 	# If you want to require use of XFR-over-TLS use: addr tsigkey tlsauthname
 	#request-xfr: 192.0.2.2 the_tsig_key_name
 	#request-xfr: 192.0.2.2 the_tsig_key_name the_tls_auth_name
 	# Attention: You cannot use UDP and AXFR together. AXFR is always over
 	# TCP. If you use UDP, we highly recommend you to deploy TSIG.
-	# Allow AXFR fallback if the master does not support IXFR. Default
+	# Allow AXFR fallback if the primary does not support IXFR. Default
 	# is yes.
 	#allow-axfr-fallback: yes
 	# set local interface for sending zone transfer requests.
@@ -451,15 +528,15 @@ remote-control:
 	# retry values (limited to the bounds given with the above parameters), plus 1.
 	#min-expire-time: 0
 
-	# Slave server tries zone transfer to all masters and picks highest
-	# zone version available, for when masters have different versions.
-	#multi-master-check: no
+	# Secondary server tries zone transfer to all primaries and picks highest
+	# zone version available, for when primaries have different versions.
+	#multi-primary-check: no
 
 	# limit the zone transfer size (in bytes), stops very large transfers
 	# 0 is no limits enforced.
 	# size-limit-xfr: 0
 
-	# if compiled with --enable-zone-stats, give name of stat block for
+	# if not compiled without zone-stats, give name of stat block for
 	# this zone (or group of zones).  Output from nsd-control stats.
 	# zonestats: "%s"
 
@@ -467,8 +544,8 @@ remote-control:
 	# from that pattern are inserted into this one (as if it were a
 	# macro).  The statement can be given in between other statements,
 	# because the order of access control elements can make a difference
-	# (which master to request from first, which slave to notify first).
-	#include-pattern: "common-masters"
+	# (which primary to request from first, which secondary to notify first).
+	#include-pattern: "common-primaries"
 
 	# Verify zone before publishing.
 	# Default is value of verify-zones in verify.
@@ -488,6 +565,24 @@ remote-control:
 	# Default is verifier-timeout in verify.
 	# verifier-timeout: 0
 
+	# Turn this zone into a catalog consumer zone.
+	# The catalog-member-pattern option is the default pattern that
+	# will be used for members without or with invalid group property.
+	# catalog: consumer
+	# catalog-member-pattern: "example-pattern"
+
+	# Turn this zone into a catalog producer zone.
+	# Member zones can be added using nsd-control addzone <zone> <pattern>
+	# where <pattern> is a pattern containing a catalog-producer-zone
+	# option pointing to this zone.
+	# catalog: producer
+
+	# Use this pattern to add catalog producer members. "catalog1.invalid"
+	# needs to be a valid catalog producer zone; i.e. a primary zone
+	# without a request-xfr option and with and catalog option set to
+	# producer.
+	# catalog-producer-member: "catalog1.invalid"
+
 # Fixed zone entries.  Here you can config zones that cannot be deleted.
 # Zones that are dynamically added and deleted are put in the zonelist file.
 #
@@ -495,12 +590,11 @@ remote-control:
 	# name: "example.com"
 	# you can give a pattern here, all the settings from that pattern
 	# are then inserted at this point
-	# include-pattern: "master"
+	# include-pattern: "primary"
 	# You can also specify (additional) options directly for this zone.
 	# zonefile: "example.com.zone"
 	# request-xfr: 192.0.2.1 example.com.key
 
-	# RRLconfig
 	# Response Rate Limiting, whitelist types
 	# rrl-whitelist: nxdomain
 	# rrl-whitelist: error
@@ -512,5 +606,4 @@ remote-control:
 	# rrl-whitelist: dnskey
 	# rrl-whitelist: positive
 	# rrl-whitelist: all
-	# RRLend
 

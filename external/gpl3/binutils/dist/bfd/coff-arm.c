@@ -1,5 +1,5 @@
 /* BFD back-end for ARM COFF files.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Cygnus Support.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -1809,6 +1809,7 @@ bfd_arm_allocate_interworking_sections (struct bfd_link_info * info)
 
       s->size = globals->arm_glue_size;
       s->contents = foo;
+      s->alloced = 1;
     }
 
   if (globals->thumb_glue_size != 0)
@@ -1824,6 +1825,7 @@ bfd_arm_allocate_interworking_sections (struct bfd_link_info * info)
 
       s->size = globals->thumb_glue_size;
       s->contents = foo;
+      s->alloced = 1;
     }
 
   return true;
@@ -1874,8 +1876,8 @@ record_arm_to_thumb_glue (struct bfd_link_info *	info,
      it.  */
   bh = NULL;
   val = globals->arm_glue_size + 1;
-  bfd_coff_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
-				BSF_GLOBAL, s, val, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
+				    BSF_GLOBAL, s, val, NULL, true, false, &bh);
 
   free (tmp_name);
 
@@ -1927,8 +1929,8 @@ record_thumb_to_arm_glue (struct bfd_link_info *	info,
 
   bh = NULL;
   val = globals->thumb_glue_size + 1;
-  bfd_coff_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
-				BSF_GLOBAL, s, val, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
+				    BSF_GLOBAL, s, val, NULL, true, false, &bh);
 
   /* If we mark it 'thumb', the disassembler will do a better job.  */
   myh = (struct coff_link_hash_entry *) bh;
@@ -1950,8 +1952,8 @@ record_thumb_to_arm_glue (struct bfd_link_info *	info,
 
   bh = NULL;
   val = globals->thumb_glue_size + (globals->support_old_code ? 8 : 4);
-  bfd_coff_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
-				BSF_LOCAL, s, val, NULL, true, false, &bh);
+  _bfd_generic_link_add_one_symbol (info, globals->bfd_of_glue_owner, tmp_name,
+				    BSF_LOCAL, s, val, NULL, true, false, &bh);
 
   free (tmp_name);
 
@@ -2058,7 +2060,7 @@ bfd_arm_process_before_allocation (bfd *		   abfd,
 
       /* Load the relocs.  */
       /* FIXME: there may be a storage leak here.  */
-      i = _bfd_coff_read_internal_relocs (abfd, sec, 1, 0, 0, 0);
+      i = bfd_coff_read_internal_relocs (abfd, sec, true, NULL, false, NULL);
 
       BFD_ASSERT (i != 0);
 
@@ -2191,8 +2193,7 @@ coff_arm_merge_private_bfd_data (bfd * ibfd, struct bfd_link_info *info)
   /* If the two formats are different we cannot merge anything.
      This is not an error, since it is permissable to change the
      input and output formats.  */
-  if (   ibfd->xvec->flavour != bfd_target_coff_flavour
-      || obfd->xvec->flavour != bfd_target_coff_flavour)
+  if (ibfd->xvec->flavour != bfd_target_coff_flavour)
     return true;
 
   /* Determine what should happen if the input ARM architecture
@@ -2558,17 +2559,9 @@ coff_arm_final_link_postscript (bfd * abfd ATTRIBUTE_UNUSED,
 #define TARGET_UNDERSCORE 0
 #endif
 
-#ifndef EXTRA_S_FLAGS
-#ifdef COFF_WITH_PE
-#define EXTRA_S_FLAGS (SEC_CODE | SEC_LINK_ONCE | SEC_LINK_DUPLICATES)
-#else
-#define EXTRA_S_FLAGS SEC_CODE
-#endif
-#endif
-
 /* Forward declaration for use initialising alternative_target field.  */
 extern const bfd_target TARGET_BIG_SYM ;
 
 /* Target vectors.  */
-CREATE_LITTLE_COFF_TARGET_VEC (TARGET_LITTLE_SYM, TARGET_LITTLE_NAME, D_PAGED, EXTRA_S_FLAGS, TARGET_UNDERSCORE, & TARGET_BIG_SYM, COFF_SWAP_TABLE)
-CREATE_BIG_COFF_TARGET_VEC (TARGET_BIG_SYM, TARGET_BIG_NAME, D_PAGED, EXTRA_S_FLAGS, TARGET_UNDERSCORE, & TARGET_LITTLE_SYM, COFF_SWAP_TABLE)
+CREATE_LITTLE_COFF_TARGET_VEC (TARGET_LITTLE_SYM, TARGET_LITTLE_NAME, D_PAGED, SEC_CODE, TARGET_UNDERSCORE, & TARGET_BIG_SYM, COFF_SWAP_TABLE)
+CREATE_BIG_COFF_TARGET_VEC (TARGET_BIG_SYM, TARGET_BIG_NAME, D_PAGED, SEC_CODE, TARGET_UNDERSCORE, & TARGET_LITTLE_SYM, COFF_SWAP_TABLE)

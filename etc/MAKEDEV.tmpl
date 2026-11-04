@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.234.2.1 2025/08/02 05:20:42 perseant Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.234.2.2 2026/11/04 22:37:14 perseant Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1048,6 +1048,7 @@ umcpmio[0-9]*)
         do
                 mkdev umcpmio${unit}GP$(($j + 1)) c %umcpmio_chr% $(($unit * 3 + 128 + ${j#})) 666
         done
+        mkdev umcpmio${unit}EEP c %umcpmio_chr% $(($unit + 256)) 660
         ;;
 
 wscons)
@@ -1585,7 +1586,7 @@ gpiopps[0-9]*)
 
 lua[0-9]*)
 	unit=${i#lua}
-	mkdev lua$unit c %lua_chr% $unit 664
+	mkdev lua$unit c %lua_chr% $unit 600
 	;;
 
 rmidi[0-9]*)

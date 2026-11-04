@@ -76,6 +76,7 @@ elf_getshdrnum
 elf_getshdrstrndx
 elf_getshnum
 elf_getshstrndx
+elf_getversion
 elf_hash
 elf_kind
 elf_memory

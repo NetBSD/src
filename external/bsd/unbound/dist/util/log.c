@@ -45,6 +45,7 @@
 #ifdef HAVE_TIME_H
 #include <time.h>
 #endif
+#include <sys/time.h>
 #ifdef HAVE_SYSLOG_H
 #  include <syslog.h>
 #else
@@ -81,6 +82,8 @@ static int logging_to_syslog = 0;
 #endif /* HAVE_SYSLOG_H */
 /** print time in UTC or in secondsfrom1970 */
 static int log_time_asc = 0;
+/** print time in iso format */
+static int log_time_iso = 0;
 
 void
 log_init(const char* filename, int use_syslog, const char* chrootdir)
@@ -171,10 +174,10 @@ void log_thread_set(int* num)
 
 int log_thread_get(void)
 {
-	unsigned int* tid;
+	int* tid;
 	if(!key_created) return 0;
-	tid = (unsigned int*)ub_thread_key_get(logkey);
-	return (int)(tid?*tid:0);
+	tid = ub_thread_key_get(logkey);
+	return (tid?*tid:0);
 }
 
 void log_ident_set(const char* id)
@@ -205,6 +208,11 @@ void log_set_time_asc(int use_asc)
 	log_time_asc = use_asc;
 }
 
+void log_set_time_iso(int use_iso)
+{
+	log_time_iso = use_iso;
+}
+
 void* log_get_lock(void)
 {
 	if(!key_created)
@@ -221,7 +229,7 @@ log_vmsg(int pri, const char* type,
 	const char *format, va_list args)
 {
 	char message[MAXSYSLOGMSGLEN];
-	unsigned int* tid = (unsigned int*)ub_thread_key_get(logkey);
+	int tid = log_thread_get();
 	time_t now;
 #if defined(HAVE_STRFTIME) && defined(HAVE_LOCALTIME_R) 
 	char tmbuf[32];
@@ -233,8 +241,8 @@ log_vmsg(int pri, const char* type,
 	vsnprintf(message, sizeof(message), format, args);
 #ifdef HAVE_SYSLOG_H
 	if(logging_to_syslog) {
-		syslog(pri, "[%d:%x] %s: %s", 
-			(int)getpid(), tid?*tid:0, type, message);
+		syslog(pri, "[%d:%d] %s: %s",
+			(int)getpid(), tid, type, message);
 		return;
 	}
 #elif defined(UB_ON_WINDOWS)
@@ -255,8 +263,8 @@ log_vmsg(int pri, const char* type,
 			tp=MSG_GENERIC_SUCCESS;
 			wt=EVENTLOG_SUCCESS;
 		}
-		snprintf(m, sizeof(m), "[%s:%x] %s: %s", 
-			ident, tid?*tid:0, type, message);
+		snprintf(m, sizeof(m), "[%s:%d] %s: %s",
+			ident, tid, type, message);
 		s = RegisterEventSource(NULL, SERVICE_NAME);
 		if(!s) return;
 		ReportEvent(s, wt, 0, tp, NULL, 1, 0, &str, NULL);
@@ -269,24 +277,52 @@ log_vmsg(int pri, const char* type,
 		lock_basic_unlock(&log_lock);
 		return;
 	}
+#if defined(HAVE_STRFTIME) && defined(HAVE_LOCALTIME_R)
+	if(log_time_iso && log_time_asc) {
+		char tzbuf[16];
+		struct timeval tv;
+		struct tm *tm_p;
+		if(gettimeofday(&tv, NULL) < 0)
+			memset(&tv, 0, sizeof(tv));
+		now = (time_t)tv.tv_sec;
+		tm_p = localtime_r(&now, &tm);
+		strftime(tmbuf, sizeof(tmbuf), "%Y-%m-%dT%H:%M:%S", tm_p);
+		if(strftime(tzbuf, sizeof(tzbuf), "%z", tm_p) == 5) {
+			/* put ':' in "+hh:mm" */
+			tzbuf[5] = tzbuf[4];
+			tzbuf[4] = tzbuf[3];
+			tzbuf[3] = ':';
+			tzbuf[6] = 0;
+		}
+		fprintf(logfile, "%s.%3.3d%s %s[%d:%d] %s: %s\n",
+			tmbuf, (int)tv.tv_usec/1000, tzbuf,
+			ident, (int)getpid(), tid, type, message);
+#ifdef UB_ON_WINDOWS
+		/* line buffering does not work on windows */
+		fflush(logfile);
+#endif
+		lock_basic_unlock(&log_lock);
+		return;
+	}
+#endif /* HAVE_STRFTIME && HAVE_LOCALTIME_R */
 	now = (time_t)time(NULL);
 #if defined(HAVE_STRFTIME) && defined(HAVE_LOCALTIME_R) 
 	if(log_time_asc && strftime(tmbuf, sizeof(tmbuf), "%b %d %H:%M:%S",
 		localtime_r(&now, &tm))%(sizeof(tmbuf)) != 0) {
 		/* %sizeof buf!=0 because old strftime returned max on error */
-		fprintf(logfile, "%s %s[%d:%x] %s: %s\n", tmbuf, 
-			ident, (int)getpid(), tid?*tid:0, type, message);
+		fprintf(logfile, "%s %s[%d:%d] %s: %s\n", tmbuf,
+			ident, (int)getpid(), tid, type, message);
 	} else
 #elif defined(UB_ON_WINDOWS)
 	if(log_time_asc && GetTimeFormat(LOCALE_USER_DEFAULT, 0, NULL, NULL,
 		tmbuf, sizeof(tmbuf)) && GetDateFormat(LOCALE_USER_DEFAULT, 0,
 		NULL, NULL, dtbuf, sizeof(dtbuf))) {
-		fprintf(logfile, "%s %s %s[%d:%x] %s: %s\n", dtbuf, tmbuf, 
-			ident, (int)getpid(), tid?*tid:0, type, message);
+		fprintf(logfile, "%s %s %s[%d:%d] %s: %s\n", dtbuf, tmbuf,
+			ident, (int)getpid(), tid, type, message);
 	} else
 #endif
-	fprintf(logfile, "[" ARG_LL "d] %s[%d:%x] %s: %s\n", (long long)now, 
-		ident, (int)getpid(), tid?*tid:0, type, message);
+	fprintf(logfile, "[" ARG_LL "d] %s[%d:%d] %s: %s\n", (long long)now,
+		ident, (int)getpid(), tid, type, message);
 #ifdef UB_ON_WINDOWS
 	/* line buffering does not work on windows */
 	fflush(logfile);

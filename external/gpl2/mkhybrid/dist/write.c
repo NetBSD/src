@@ -336,6 +336,7 @@ static void FDECL1(write_files, FILE *, outfile)
 		char blk[SECTOR_SIZE];
 		int i;
 
+		memset(blk, 0, sizeof(blk));
 		for(i=0;i<dwpnt->pad;i++)
 		    xfwrite(blk, 1, SECTOR_SIZE, outfile);
 
@@ -1307,10 +1308,10 @@ static int FDECL1(pvd_write, FILE *, outfile)
   struct tm			gmt;
 
 
-  time(&begun);
+  begun = time_now();
 
-  local = *localtime(&begun);
   gmt   = *gmtime(&begun);
+  local = force_time_set ? gmt : *localtime(&begun);
 
   /*
    * This will break  in the year  2000, I supose, but there is no good way

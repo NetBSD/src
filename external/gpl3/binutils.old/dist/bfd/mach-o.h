@@ -1,5 +1,5 @@
 /* Mach-O support for BFD.
-   Copyright (C) 1999-2022 Free Software Foundation, Inc.
+   Copyright (C) 1999-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -691,7 +691,8 @@ bool bfd_mach_o_write_contents (bfd *);
 bool bfd_mach_o_bfd_copy_private_symbol_data (bfd *, asymbol *,
 					      bfd *, asymbol *);
 bool bfd_mach_o_bfd_copy_private_section_data (bfd *, asection *,
-					       bfd *, asection *);
+					       bfd *, asection *,
+					       struct bfd_link_info *);
 bool bfd_mach_o_bfd_copy_private_header_data (bfd *, bfd *);
 bool bfd_mach_o_bfd_set_private_flags (bfd *, flagword);
 bool bfd_mach_o_bfd_print_private_bfd_data (bfd *, void *);
@@ -729,9 +730,11 @@ bool bfd_mach_o_find_nearest_line (bfd *, asymbol **,
 					  asection *, bfd_vma,
 					  const char **, const char **,
 					  unsigned int *, unsigned int *);
+#define bfd_mach_o_find_nearest_line_with_alt \
+  _bfd_nosymbols_find_nearest_line_with_alt
 #define bfd_mach_o_find_line _bfd_nosymbols_find_line
 bool bfd_mach_o_close_and_cleanup (bfd *);
-bool bfd_mach_o_free_cached_info (bfd *);
+bool bfd_mach_o_bfd_free_cached_info (bfd *);
 
 unsigned int bfd_mach_o_section_get_nbr_indirect (bfd *, bfd_mach_o_section *);
 unsigned int bfd_mach_o_section_get_entry_size (bfd *, bfd_mach_o_section *);

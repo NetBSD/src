@@ -495,6 +495,7 @@ dsl_dataset_hold_obj(dsl_pool_t *dp, uint64_t dsobj, void *tag,
 			mutex_destroy(&ds->ds_opening_lock);
 			mutex_destroy(&ds->ds_sendstream_lock);
 			refcount_destroy(&ds->ds_longholds);
+			rrw_destroy(&ds->ds_bp_rwlock);
 			bplist_destroy(&ds->ds_pending_deadlist);
 			dsl_deadlist_close(&ds->ds_deadlist);
 			kmem_free(ds, sizeof (dsl_dataset_t));
@@ -557,6 +558,7 @@ dsl_dataset_hold_obj(dsl_pool_t *dp, uint64_t dsobj, void *tag,
 			mutex_destroy(&ds->ds_opening_lock);
 			mutex_destroy(&ds->ds_sendstream_lock);
 			refcount_destroy(&ds->ds_longholds);
+			rrw_destroy(&ds->ds_bp_rwlock);
 			kmem_free(ds, sizeof (dsl_dataset_t));
 			if (err != 0) {
 				dmu_buf_rele(dbuf, tag);

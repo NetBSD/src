@@ -1,4 +1,4 @@
-@c Copyright (C) 2011-2022 Free Software Foundation, Inc.
+@c Copyright (C) 2011-2025 Free Software Foundation, Inc.
 @c This is part of the GAS manual.
 @c For copying conditions, see the file as.texinfo.
 
@@ -43,9 +43,9 @@ are recognized:
 @code{z80n},
 @code{r800}.
 In addition to the basic instruction set, the assembler can be told to
-accept some extention mnemonics. For example,
+accept some extension mnemonics. For example,
 @code{-march=z180+sli+infc} extends @var{z180} with @var{SLI} instructions and
-@var{IN F,(C)}. The following extentions are currently supported:
+@var{IN F,(C)}. The following extensions are currently supported:
 @code{full} (all known instructions),
 @code{adl} (ADL CPU mode by default, eZ80 only),
 @code{sli} (instruction known as @var{SLI}, @var{SLL} or @var{SL1}),
@@ -54,9 +54,9 @@ accept some extention mnemonics. For example,
 @code{xdcb} (instructions like @var{RotOp (II+d),R} and @var{BitOp n,(II+d),R}),
 @code{infc} (instruction @var{IN F,(C)} or @var{IN (C)}),
 @code{outc0} (instruction @var{OUT (C),0}).
-Note that rather than extending a basic instruction set, the extention
+Note that rather than extending a basic instruction set, the extension
 mnemonics starting with @code{-} revoke the respective functionality:
-@code{-march=z80-full+xyhl} first removes all default extentions and adds
+@code{-march=z80-full+xyhl} first removes all default extensions and adds
 support for index registers halves only.
 
 If this option is not specified then @code{-march=z80+xyhl+infc} is assumed.

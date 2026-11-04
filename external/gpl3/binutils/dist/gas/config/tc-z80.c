@@ -1,5 +1,5 @@
 /* tc-z80.c -- Assemble code for the Zilog Z80, Z180, EZ80 and ASCII R800
-   Copyright (C) 2005-2024 Free Software Foundation, Inc.
+   Copyright (C) 2005-2026 Free Software Foundation, Inc.
    Contributed by Arnold Metselaar <arnold_m@operamail.com>
 
    This file is part of GAS, the GNU Assembler.
@@ -34,7 +34,7 @@ const char EXP_CHARS[] = "eE\0";
 const char FLT_CHARS[] = "RrDdFfSsHh\0";
 
 /* For machine specific options.  */
-const char * md_shortopts = ""; /* None yet.  */
+const char md_shortopts[] = ""; /* None yet.  */
 
 enum options
 {
@@ -80,7 +80,7 @@ enum options
 #define INS_UNDOC (INS_IDX_HALF | INS_IN_F_C)
 #define INS_UNPORT (INS_OUT_C_0 | INS_SLI | INS_ROT_II_LD)
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
 {
   { "march",     required_argument, NULL, OPTION_MARCH},
   { "z80",       no_argument, NULL, OPTION_MACH_Z80},
@@ -115,7 +115,7 @@ struct option md_longopts[] =
   { NULL, no_argument, NULL, 0 }
 } ;
 
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 extern int coff_flags;
 /* Instruction classes that silently assembled.  */
@@ -582,7 +582,7 @@ z80_elf_final_processing (void)
 static const char *
 skip_space (const char *s)
 {
-  while (*s == ' ' || *s == '\t')
+  while (is_whitespace (*s))
     ++s;
   return s;
 }
@@ -623,7 +623,7 @@ z80_start_line_hook (void)
 	case '#': /* force to use next expression as immediate value in SDCC */
 	  if (!sdcc_compat)
 	   break;
-	  if (ISSPACE(p[1]) && *skip_space (p + 1) == '(')
+	  if (is_whitespace (p[1]) && *skip_space (p + 1) == '(')
 	    { /* ld a,# (expr)... -> ld a,0+(expr)... */
 	      *p++ = '0';
 	      *p = '+';
@@ -631,6 +631,33 @@ z80_start_line_hook (void)
 	  else /* ld a,#(expr)... -> ld a,+(expr); ld a,#expr -> ld a, expr */
 	    *p = (p[1] == '(') ? '+' : ' ';
 	  break;
+	}
+    }
+  /* Remove leading zeros from dollar local labels if SDCC compat enabled.  */
+  if (sdcc_compat && *input_line_pointer == '0')
+    {
+      char *dollar;
+
+      /* SDCC emits at most one label definition per line, so it is
+	 enough to look at only the first label.  Hand-written asm
+	 might use more, but then it is unlikely to use leading zeros
+	 on dollar local labels.  */
+
+      /* Place p at the first character after [0-9]+.  */
+      for (p = input_line_pointer; *p >= '0' && *p <= '9'; ++p)
+	;
+
+      /* Is this a dollar sign label?
+	 GAS allows spaces between $ and :, but SDCC does not.  */
+      if (p[0] == '$' && p[1] == ':')
+	{
+	  dollar = p;
+	  /* Replace zeros with spaces until the first non-zero,
+	     but leave the last character before $ intact (for e.g. 0$:).  */
+	  for (p = input_line_pointer; *p == '0' && p < dollar - 1; ++p)
+	    {
+	      *p = ' ';
+	    }
 	}
     }
   /* Check for <label>[:] =|([.](EQU|DEFL)) <value>.  */
@@ -1436,36 +1463,11 @@ emit_s (char prefix, char opcode, const char *args)
 
   p = parse_exp (args, & arg_s);
   if (*p == ',' && arg_s.X_md == 0 && arg_s.X_op == O_register && arg_s.X_add_number == REG_A)
-    { /* possible instruction in generic format op A,x */
-      if (!(ins_ok & INS_EZ80) && !sdcc_compat)
-        ill_op ();
+    {
+      /* Allow both op A,x and op x */
       ++p;
       p = parse_exp (p, & arg_s);
     }
-  emit_sx (prefix, opcode, & arg_s);
-  return p;
-}
-
-static const char *
-emit_sub (char prefix, char opcode, const char *args)
-{
-  expressionS arg_s;
-  const char *p;
-
-  if (!(ins_ok & INS_GBZ80))
-    return emit_s (prefix, opcode, args);
-  p = parse_exp (args, & arg_s);
-  if (*p++ != ',')
-    {
-      error (_("bad instruction syntax"));
-      return p;
-    }
-
-  if (arg_s.X_md != 0 || arg_s.X_op != O_register || arg_s.X_add_number != REG_A)
-    ill_op ();
-
-  p = parse_exp (p, & arg_s);
-
   emit_sx (prefix, opcode, & arg_s);
   return p;
 }
@@ -1704,8 +1706,8 @@ emit_adc (char prefix, char opcode, const char * args)
   p = parse_exp (args, &term);
   if (*p++ != ',')
     {
-      error (_("bad instruction syntax"));
-      return p;
+      /* "op x" -> "op A,x" */
+      return emit_s (prefix, opcode, args);
     }
 
   if ((term.X_md) || (term.X_op != O_register))
@@ -1747,8 +1749,8 @@ emit_add (char prefix, char opcode, const char * args)
   p = parse_exp (args, &term);
   if (*p++ != ',')
     {
-      error (_("bad instruction syntax"));
-      return p;
+      /* "op x" -> "op A,x" */
+      return emit_s (prefix, opcode, args);
     }
 
   if ((term.X_md) || (term.X_op != O_register))
@@ -2966,10 +2968,10 @@ emit_lea (char prefix, char opcode, const char * args)
   switch (rnum)
     {
     case REG_IX:
-      opcode = (opcode == (char)0x33) ? 0x55 : (opcode|0x00);
+      opcode = opcode == 0x33 ? 0x55 : opcode | 0x00;
       break;
     case REG_IY:
-      opcode = (opcode == (char)0x32) ? 0x54 : (opcode|0x01);
+      opcode = opcode == 0x32 ? 0x54 : opcode | 0x01;
     }
 
   q = frag_more (2);
@@ -3362,7 +3364,7 @@ static int
 assemble_suffix (const char **suffix)
 {
   static
-  const char sf[8][4] = 
+  const char sf[8][4] =
     {
       "il",
       "is",
@@ -3384,7 +3386,7 @@ assemble_suffix (const char **suffix)
 
   for (i = 0; (i < 3) && (ISALPHA (*p)); i++)
     sbuf[i] = TOLOWER (*p++);
-  if (*p && !ISSPACE (*p))
+  if (*p && !is_whitespace (*p))
     return 0;
   *suffix = p;
   sbuf[i] = 0;
@@ -3420,7 +3422,7 @@ assemble_suffix (const char **suffix)
         i = 0x40;
         break;
     }
-  *frag_more (1) = (char)i;
+  *frag_more (1) = i;
   switch (i)
     {
     case 0x40: inst_mode = INST_MODE_FORCED | INST_MODE_S | INST_MODE_IS; break;
@@ -3637,7 +3639,7 @@ static table_t instab[] =
   { "srl",  0xCB, 0x38, emit_mr,   INS_ALL },
   { "stmix",0xED, 0x7D, emit_insn, INS_EZ80 },
   { "stop", 0x00, 0x10, emit_insn, INS_GBZ80 },
-  { "sub",  0x00, 0x90, emit_sub,  INS_ALL },
+  { "sub",  0x00, 0x90, emit_s,    INS_ALL },
   { "swap", 0xCB, 0x30, emit_swap, INS_GBZ80|INS_Z80N },
   { "swapnib",0xED,0x23,emit_insn, INS_Z80N },
   { "test", 0xED, 0x27, emit_insn_n, INS_Z80N },
@@ -3670,7 +3672,7 @@ md_assemble (char *str)
   else
     {
       dwarf2_emit_insn (0);
-      if ((*p) && (!ISSPACE (*p)))
+      if ((*p) && !is_whitespace (*p))
         {
           if (*p != '.' || !(ins_ok & INS_EZ80) || !assemble_suffix (&p))
             {
@@ -3720,7 +3722,7 @@ is_overflow (long value, unsigned bitsize)
 {
   if (value < 0)
     return signed_overflow (value, bitsize);
-  return unsigned_overflow ((unsigned long)value, bitsize);
+  return unsigned_overflow (value, bitsize);
 }
 
 void
@@ -3859,12 +3861,12 @@ tc_gen_reloc (asection *seg ATTRIBUTE_UNUSED , fixS *fixp)
       return NULL;
     }
 
-  reloc               = XNEW (arelent);
-  reloc->sym_ptr_ptr  = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   *reloc->sym_ptr_ptr = symbol_get_bfdsym (fixp->fx_addsy);
-  reloc->address      = fixp->fx_frag->fr_address + fixp->fx_where;
-  reloc->addend       = fixp->fx_offset;
-  reloc->howto        = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
+  reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
+  reloc->addend = fixp->fx_offset;
+  reloc->howto = bfd_reloc_type_lookup (stdoutput, fixp->fx_r_type);
   if (reloc->howto == NULL)
     {
       as_bad_where (fixp->fx_file, fixp->fx_line,
@@ -4064,8 +4066,8 @@ str_to_zeda32(char *litP, int *sizeP)
   else if (!sign)
     mantissa &= (1ull << 23) - 1;
   for (i = 0; i < 24; i += 8)
-    *litP++ = (char)(mantissa >> i);
-  *litP = (char)(0x80 + exponent);
+    *litP++ = mantissa >> i;
+  *litP = 0x80 + exponent;
   return NULL;
 }
 
@@ -4111,9 +4113,9 @@ str_to_float48(char *litP, int *sizeP)
     return _("overflow");
   if (!sign)
     mantissa &= (1ull << 39) - 1;
-  *litP++ = (char)(0x80 + exponent);
+  *litP++ = 0x80 + exponent;
   for (i = 0; i < 40; i += 8)
-    *litP++ = (char)(mantissa >> i);
+    *litP++ = mantissa >> i;
   return NULL;
 }
 

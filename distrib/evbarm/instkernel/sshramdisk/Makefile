@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.28 2024/05/17 21:31:10 christos Exp $
+#	$NetBSD: Makefile,v 1.28.2.1 2026/11/04 22:36:53 perseant Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
 
 IMAGE=		sshramdisk.fs
-IMAGESIZE=	45000k
+IMAGESIZE=	51000k
 MAKEFS_FLAGS+=	-f 15
 
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
@@ -47,6 +47,17 @@ USE_LDAP := no
 .export USE_SKEY
 .export USE_KERBEROS
 .export USE_LDAP
+
+# libssh is private, so libssh.a is not installed in DESTDIR, so we
+# have to get it out of the objdir.
+#
+# XXX Should do this differently, and uniformly for all libraries.
+.if !defined(LIBDO.ssh)
+LIBDO.ssh!=	cd ${NETBSDSRCDIR}/crypto/external/bsd/openssh/lib && \
+		${PRINTOBJDIR}
+.MAKEOVERRIDES+=LIBDO.ssh
+.endif
+CRUNCHGEN_FLAGS+=-L ${LIBDO.ssh}
 
 .include "${DISTRIBDIR}/common/Makefile.crunch"
 .include "${DISTRIBDIR}/common/Makefile.dhcpcd"

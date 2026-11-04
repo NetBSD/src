@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.259 2024/04/08 12:38:59 christos Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.259.2.1 2026/11/04 22:37:18 perseant Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -39,6 +39,9 @@
 ./etc/mail
 ./etc/mtree
 ./etc/namedb
+./etc/namedb/cache	mode=0775 uname=named gname=named
+./etc/namedb/keys	type=dir mode=0775 uname=named gname=named
+./etc/namedb/nta	type=dir mode=0775 uname=named gname=named
 ./etc/nsd
 ./etc/openldap
 ./etc/openssl
@@ -283,10 +286,11 @@
 ./usr/include/g++/tr1
 ./usr/include/g++/tr1_impl
 ./usr/include/g++/tr2
-./usr/include/gcc-10
-./usr/include/gcc-10/sanitizer
 ./usr/include/gcc-12
 ./usr/include/gcc-12/sanitizer
+./usr/include/gcc-14
+./usr/include/gcc-14/finclude
+./usr/include/gcc-14/sanitizer
 ./usr/include/gssapi
 ./usr/include/isofs
 ./usr/include/isofs/cd9660
@@ -360,6 +364,7 @@
 ./usr/lib/openssl/modules
 ./usr/lib/pkgconfig
 ./usr/lib/postfix
+./usr/lib/private
 ./usr/lib/security
 ./usr/libdata
 ./usr/libdata/debug
@@ -375,6 +380,7 @@
 ./usr/libdata/debug/usr/lib
 ./usr/libdata/debug/usr/lib/i18n
 ./usr/libdata/debug/usr/lib/named
+./usr/libdata/debug/usr/lib/private
 ./usr/libdata/debug/usr/lib/security
 ./usr/libdata/debug/usr/libexec
 ./usr/libdata/debug/usr/libexec/ching
@@ -592,6 +598,7 @@
 ./usr/share/installboot
 ./usr/share/installboot/evbarm
 ./usr/share/installboot/evbmips
+./usr/share/installboot/riscv
 ./usr/share/keymaps
 ./usr/share/keymaps/amiga
 ./usr/share/keymaps/atari
@@ -962,6 +969,12 @@
 ./usr/share/locale/uk_UA.KOI8-U/LC_MESSAGES
 ./usr/share/locale/uk_UA.UTF-8
 ./usr/share/locale/uk_UA.UTF-8/LC_MESSAGES
+./usr/share/locale/x1_X1.UTF-8
+./usr/share/locale/x1_X1.UTF-8/LC_MESSAGES
+./usr/share/locale/x1_X2.UTF-8
+./usr/share/locale/x1_X2.UTF-8/LC_MESSAGES
+./usr/share/locale/x1_X3.UTF-8
+./usr/share/locale/x1_X3.UTF-8/LC_MESSAGES
 ./usr/share/locale/zh_CN
 ./usr/share/locale/zh_CN.GB18030
 ./usr/share/locale/zh_CN.GB18030/LC_MESSAGES
@@ -988,6 +1001,7 @@
 ./usr/share/man/cat1
 ./usr/share/man/cat1/atari
 ./usr/share/man/cat1/hp300
+./usr/share/man/cat1/sgimips
 ./usr/share/man/cat1/x68k
 ./usr/share/man/cat2
 ./usr/share/man/cat3
@@ -1097,6 +1111,7 @@
 ./usr/share/man/html1
 ./usr/share/man/html1/atari
 ./usr/share/man/html1/hp300
+./usr/share/man/html1/sgimips
 ./usr/share/man/html1/x68k
 ./usr/share/man/html2
 ./usr/share/man/html3
@@ -1207,6 +1222,7 @@
 ./usr/share/man/man1
 ./usr/share/man/man1/atari
 ./usr/share/man/man1/hp300
+./usr/share/man/man1/sgimips
 ./usr/share/man/man1/x68k
 ./usr/share/man/man2
 ./usr/share/man/man3

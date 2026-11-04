@@ -1,7 +1,7 @@
 .lf 1 stdin
-.TH LBER_ENCODE 3 "2020/04/28" "OpenLDAP 2.4.50"
+.TH LBER_ENCODE 3 "2025/05/22" "OpenLDAP 2.6.10"
 .\" $OpenLDAP$
-.\" Copyright 1998-2020 The OpenLDAP Foundation All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .SH NAME
 ber_alloc_t, ber_flush, ber_flush2, ber_printf, ber_put_int, ber_put_enum, ber_put_ostring, ber_put_string, ber_put_null, ber_put_boolean, ber_put_bitstring, ber_start_seq, ber_start_set, ber_put_seq, ber_put_set \- OpenLDAP LBER simplified Basic Encoding Rules library routines for encoding
@@ -116,15 +116,15 @@ The format string can contain the following characters:
 .LP
 .TP 3
 .B b
-Boolean.  A ber_int_t parameter should be supplied.  A boolean element
+Boolean.  An ber_int_t parameter should be supplied.  A boolean element
 is output.
 .TP
 .B e
-Enumeration.  A ber_int_t parameter should be supplied.  An
+Enumeration.  An ber_int_t parameter should be supplied.  An
 enumeration element is output.
 .TP
 .B i
-Integer.  A ber_int_t parameter should be supplied.  An integer element
+Integer.  An ber_int_t parameter should be supplied.  An integer element
 is output.
 .TP
 .B B

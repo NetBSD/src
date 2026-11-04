@@ -1,4 +1,4 @@
-/*	$NetBSD: work_fork.c,v 1.15 2020/10/10 13:41:14 christos Exp $	*/
+/*	$NetBSD: work_fork.c,v 1.15.8.1 2026/11/04 22:38:45 perseant Exp $	*/
 
 /*
  * work_fork.c - fork implementation for blocking worker child.
@@ -57,6 +57,8 @@ netread(
 
 	while (l) {
 		r = read(fd, b, l);
+		if (r == -1 && errno == EAGAIN)
+			continue;
 		if (r > 0) {
 			l -= r;
 			b += r;

@@ -1,5 +1,5 @@
 /* tc-bfin.h - header file for tc-bfin.c
-   Copyright (C) 2005-2022 Free Software Foundation, Inc.
+   Copyright (C) 2005-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -44,7 +44,7 @@ extern bool bfin_start_label (char *);
 #define md_convert_frag(b,s,f)	as_fatal ("bfin convert_frag\n");
 
 /* Allow for [, ], etc.  */
-#define LEX_BR 6
+#define LEX_BR (LEX_BEGIN_NAME | LEX_END_NAME)
 
 #define TC_EOL_IN_INSN(PTR) (bfin_eol_in_insn(PTR) ? 1 : 0)
 extern bool bfin_eol_in_insn (char *);

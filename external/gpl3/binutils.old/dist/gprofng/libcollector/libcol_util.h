@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -38,7 +38,8 @@ extern  void __collector_libscf_funcs_init();
 
 /* -------  functions from libcol_util.c ----------------- */
 extern void * __collector_memcpy (void *s1, const void *s2, size_t n);
-extern int (*__collector_sscanfp)(const char *restrict s, const char *restrict fmt, ...);
+extern int (*__collector_sscanfp)(const char *restrict s, const char *restrict fmt, ...)
+	__attribute__ ((format (scanf, 2, 3)));
 extern char * __collector_strcat (char *s1, const char *s2);
 extern char * __collector_strchr (const char *s1, int chr);
 extern size_t __collector_strlcpy (char *dst, const char *src, size_t dstsize);
@@ -59,12 +60,11 @@ extern int __collector_xml_snprintf (char *s, size_t n, const char *format, ...)
 extern int __collector_xml_vsnprintf (char *s, size_t n, const char *format, va_list args);
 
 /* -------  collector_thread ----------------- */
-pid_t __collector_gettid ();
+extern pid_t __collector_gettid ();
 extern void __collector_ext_gettid_tsd_create_key ();
-#define collector_thread_t pthread_t            // not using pid_t, since tid is defined as pthread_t in package structures, and other codes assume this type
-#define statvfs_t  struct statvfs
-#define __collector_lwp_self() (collector_thread_t)__collector_gettid() // not using pthread_self()
-#define __collector_thr_self() (collector_thread_t)__collector_gettid() // not using pthread_self()
+typedef pthread_t collector_thread_t;
+#define __collector_lwp_self() ((collector_thread_t) ((unsigned long) __collector_gettid()))
+#define __collector_thr_self() ((collector_thread_t) ((unsigned long) __collector_gettid()))
 
 /* -------  collector_mutex ----------------- */
 /*
@@ -80,12 +80,6 @@ extern int __collector_mutex_trylock (collector_mutex_t *mp);
 
 #define __collector_mutex_init(xx) \
   do { collector_mutex_t tmp=COLLECTOR_MUTEX_INITIALIZER; *(xx)=tmp; } while(0)
-
-void __collector_sample (char *name);
-void __collector_terminate_expt ();
-void __collector_pause ();
-void __collector_pause_m ();
-void __collector_resume ();
 
 struct DT_lineno;
 
@@ -189,7 +183,7 @@ static __attribute__ ((always_inline)) inline void *
 __collector_getpc ()
 {
   void *r;
-#if defined(__x86_64)
+#if defined(__x86_64__)
   __asm__ __volatile__("lea (%%rip), %0" : "=r" (r));
 #else
   __asm__ __volatile__("call  1f \n"
@@ -270,7 +264,7 @@ __collector_cas_ptr (void *mem, void *cmp, void *new)
   return r;
 }
 
-#elif ARCH(Aarch64)
+#elif ARCH(Aarch64) || ARCH(RISCV)
 static __attribute__ ((always_inline)) inline uint32_t
 __collector_inc_32 (volatile uint32_t *ptr)
 {

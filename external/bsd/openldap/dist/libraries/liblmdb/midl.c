@@ -1,11 +1,11 @@
-/*	$NetBSD: midl.c,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
+/*	$NetBSD: midl.c,v 1.3.4.1 2026/11/04 22:39:14 perseant Exp $	*/
 
 /**	@file midl.c
  *	@brief ldap bdb back-end ID List functions */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * Portions Copyright 2001-2021 Howard Chu, Symas Corp.
  * All rights reserved.
  *

@@ -1,5 +1,5 @@
 /* tc-dlx.h -- Assemble for the DLX
-   Copyright (C) 2002-2022 Free Software Foundation, Inc.
+   Copyright (C) 2002-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -29,7 +29,7 @@
 
 #define WORKING_DOT_WORD
 
-#define LEX_DOLLAR 1
+#define LEX_DOLLAR LEX_NAME
 
 #include "bit_fix.h"
 

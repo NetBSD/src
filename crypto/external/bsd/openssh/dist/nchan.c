@@ -1,5 +1,5 @@
-/*	$NetBSD: nchan.c,v 1.15.2.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: nchan.c,v 1.76 2024/07/25 22:40:08 djm Exp $ */
+/*	$NetBSD: nchan.c,v 1.15.2.2 2026/11/04 22:36:40 perseant Exp $	*/
+/* $OpenBSD: nchan.c,v 1.77 2026/02/14 00:18:34 jsg Exp $ */
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002 Markus Friedl.  All rights reserved.
@@ -26,10 +26,9 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: nchan.c,v 1.15.2.1 2025/08/02 05:18:47 perseant Exp $");
+__RCSID("$NetBSD: nchan.c,v 1.15.2.2 2026/11/04 22:36:40 perseant Exp $");
 #include <sys/types.h>
 #include <sys/socket.h>
-#include <sys/queue.h>
 
 #include <errno.h>
 #include <string.h>
@@ -37,7 +36,6 @@ __RCSID("$NetBSD: nchan.c,v 1.15.2.1 2025/08/02 05:18:47 perseant Exp $");
 
 #include "ssh2.h"
 #include "sshbuf.h"
-#include "ssherr.h"
 #include "packet.h"
 #include "channels.h"
 #include "compat.h"

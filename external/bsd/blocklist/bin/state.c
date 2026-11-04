@@ -1,4 +1,4 @@
-/*	$NetBSD: state.c,v 1.1.1.1.8.1 2025/08/02 05:20:51 perseant Exp $	*/
+/*	$NetBSD: state.c,v 1.1.1.1.8.2 2026/11/04 22:37:21 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #ifdef HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: state.c,v 1.1.1.1.8.1 2025/08/02 05:20:51 perseant Exp $");
+__RCSID("$NetBSD: state.c,v 1.1.1.1.8.2 2026/11/04 22:37:21 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -131,7 +131,7 @@ state_del(DB *db, const struct conf *c)
 			(*lfun)(LOG_DEBUG, "%s: returns %d", __func__, rv);
 			(*db->sync)(db, 0);
 		}
-		return 0;
+		return rv;
 	default:
 		(*lfun)(LOG_ERR, "%s: failed (%m)", __func__);
 		return -1;

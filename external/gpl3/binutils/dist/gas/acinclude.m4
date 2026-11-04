@@ -2,12 +2,12 @@ dnl GAS_CHECK_DECL_NEEDED(name, typedefname, typedef, headers)
 AC_DEFUN([GAS_CHECK_DECL_NEEDED],[
 AC_MSG_CHECKING(whether declaration is required for $1)
 AC_CACHE_VAL(gas_cv_decl_needed_$1,
-AC_TRY_LINK([$4],
-[
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[$4]],
+[[
 typedef $3;
 $2 x;
 x = ($2) $1;
-], gas_cv_decl_needed_$1=no, gas_cv_decl_needed_$1=yes))dnl
+]])],[gas_cv_decl_needed_$1=no], [gas_cv_decl_needed_$1=yes]))dnl
 AC_MSG_RESULT($gas_cv_decl_needed_$1)
 if test $gas_cv_decl_needed_$1 = yes; then
  AC_DEFINE([NEED_DECLARATION_]translit($1, [a-z], [A-Z]), 1,
@@ -22,9 +22,9 @@ dnl GAS_WORKING_ASSERT
 AC_DEFUN([GAS_WORKING_ASSERT],
 [AC_MSG_CHECKING([for working assert macro])
 AC_CACHE_VAL(gas_cv_assert_ok,
-AC_TRY_LINK([#include <assert.h>
+AC_LINK_IFELSE([AC_LANG_PROGRAM([[#include <assert.h>
 #include <string.h>
-#include <stdio.h>], [
+#include <stdio.h>]], [[
 /* check for requoting problems */
 static int a, b, c, d;
 static char *s;
@@ -32,7 +32,7 @@ assert (!strcmp(s, "foo bar baz quux"));
 /* check for newline handling */
 assert (a == b
         || c == d);
-], gas_cv_assert_ok=yes, gas_cv_assert_ok=no))dnl
+]])],[gas_cv_assert_ok=yes], [gas_cv_assert_ok=no]))dnl
 AC_MSG_RESULT($gas_cv_assert_ok)
 test $gas_cv_assert_ok = yes || AC_DEFINE(BROKEN_ASSERT, 1, [assert broken?])
 ])dnl
@@ -61,12 +61,12 @@ dnl
 AC_DEFUN([GAS_HAVE_TIME_TYPE_MEMBER],
 [AC_MSG_CHECKING([for $1.$2 in time.h])
  AC_CACHE_VAL(gas_cv_have_time_type_member_$2,
-   [AC_TRY_COMPILE([
+   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _BSD_SOURCE 1
-#include <time.h>],
-      [$1 avar; void* aref = (void*) &avar.$2],
-      gas_cv_have_time_type_member_$2=yes,
-      gas_cv_have_time_type_member_$2=no
+#include <time.h>]],
+      [[$1 avar; void* aref = (void*) &avar.$2]])],
+      [gas_cv_have_time_type_member_$2=yes],
+      [gas_cv_have_time_type_member_$2=no]
    )])
  if test $gas_cv_have_time_type_member_$2 = yes; then
    AC_DEFINE([HAVE_]translit($2, [a-z], [A-Z]), 1,
@@ -80,12 +80,12 @@ dnl
 AC_DEFUN([GAS_HAVE_SYS_STAT_TYPE_MEMBER],
 [AC_MSG_CHECKING([for $1.$2.$3 in sys/stat.h])
  AC_CACHE_VAL(gas_cv_have_sys_stat_type_member_$2_$3,
-   [AC_TRY_COMPILE([
+   [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
 #define _BSD_SOURCE 1
-#include <sys/stat.h>],
-      [$1 avar; void* aref = (void*) &avar.$2.$3],
-      gas_cv_have_sys_stat_type_member_$2_$3=yes,
-      gas_cv_have_sys_stat_type_member_$2_$3=no
+#include <sys/stat.h>]],
+      [[$1 avar; void* aref = (void*) &avar.$2.$3]])],
+      [gas_cv_have_sys_stat_type_member_$2_$3=yes],
+      [gas_cv_have_sys_stat_type_member_$2_$3=no]
    )])
  if test $gas_cv_have_sys_stat_type_member_$2_$3 = yes; then
    AC_DEFINE([HAVE_]translit($2, [a-z], [A-Z])[_]translit($3, [a-z], [A-Z]), 1,

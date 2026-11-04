@@ -1,12 +1,14 @@
-# $NetBSD: Makefile,v 1.1 2017/01/07 19:51:21 christos Exp $
+# $NetBSD: Makefile,v 1.1.28.1 2026/11/04 22:38:44 perseant Exp $
 
 LIBISPRIVATE=yes
 .include <bsd.init.mk>
 
 LIB=xfrd
 SRCS=\
+metrics.c \
 remote.c \
 xfrd.c \
+xfrd-catalog-zones.c \
 xfrd-disk.c \
 xfrd-notify.c \
 xfrd-tcp.c

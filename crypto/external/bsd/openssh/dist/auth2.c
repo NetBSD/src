@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2.c,v 1.30.2.1 2025/08/02 05:18:45 perseant Exp $	*/
-/* $OpenBSD: auth2.c,v 1.170 2025/01/17 00:09:41 dtucker Exp $ */
+/*	$NetBSD: auth2.c,v 1.30.2.2 2026/11/04 22:36:37 perseant Exp $	*/
+/* $OpenBSD: auth2.c,v 1.176 2026/09/16 00:37:07 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.30.2.1 2025/08/02 05:18:45 perseant Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.30.2.2 2026/11/04 22:36:37 perseant Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -54,14 +54,13 @@ __RCSID("$NetBSD: auth2.c,v 1.30.2.1 2025/08/02 05:18:45 perseant Exp $");
 #include "auth.h"
 #include "dispatch.h"
 #include "pathnames.h"
-#include "canohost.h"
 
+#include "ssherr.h"
 #ifdef GSSAPI
 #include "ssh-gss.h"
 #endif
 
 #include "monitor_wrap.h"
-#include "ssherr.h"
 #include "digest.h"
 #include "kex.h"
 
@@ -102,8 +101,8 @@ Authmethod *authmethods[] = {
 
 /* protocol */
 
-static int input_service_request(int, u_int32_t, struct ssh *);
-static int input_userauth_request(int, u_int32_t, struct ssh *);
+static int input_service_request(int, uint32_t, struct ssh *);
+static int input_userauth_request(int, uint32_t, struct ssh *);
 
 /* helper */
 static Authmethod *authmethod_byname(const char *);
@@ -195,7 +194,7 @@ do_authentication2(struct ssh *ssh)
 }
 
 static int
-input_service_request(int type, u_int32_t seq, struct ssh *ssh)
+input_service_request(int type, uint32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	char *service = NULL;
@@ -279,8 +278,14 @@ ensure_minimum_time_since(double start, double seconds)
 	nanosleep(&ts, NULL);
 }
 
+void
+auth_failure_delay(Authctxt *authctxt, double tstart)
+{
+	ensure_minimum_time_since(tstart, user_specific_delay(authctxt->user));
+}
+
 static int
-input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
+input_userauth_request(int type, uint32_t seq, struct ssh *ssh)
 {
 	Authctxt *authctxt = ssh->authctxt;
 	Authmethod *m = NULL;
@@ -311,6 +316,9 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 	if (authctxt->attempt++ == 0) {
 		/* setup auth context */
 		authctxt->pw = mm_getpwnamallow(ssh, user);
+		authctxt->user = xstrdup(user);
+		authctxt->service = xstrdup(service);
+		authctxt->style = style ? xstrdup(style) : NULL;
 		if (authctxt->pw && strcmp(service, "ssh-connection")==0) {
 			authctxt->valid = 1;
 			debug2_f("setting up authctxt for %s", user);
@@ -326,9 +334,6 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 		ssh_packet_set_log_preamble(ssh, "%suser %s",
 		    authctxt->valid ? "authenticating " : "invalid ", user);
 		setproctitle("%s [net]", authctxt->valid ? user : "unknown");
-		authctxt->user = xstrdup(user);
-		authctxt->service = xstrdup(service);
-		authctxt->style = style ? xstrdup(style) : NULL;
 		mm_inform_authserv(service, style);
 		userauth_banner(ssh);
 		if ((r = kex_server_update_ext_info(ssh)) != 0)
@@ -346,6 +351,7 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 	auth2_challenge_stop(ssh);
 
 #ifdef GSSAPI
+	ssh_gssapi_cleanup_global_client();
 	/* XXX move to auth2_gssapi_stop() */
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_GSSAPI_TOKEN, NULL);
 	ssh_dispatch_set(ssh, SSH2_MSG_USERAUTH_GSSAPI_EXCHANGE_COMPLETE, NULL);
@@ -354,6 +360,7 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 	auth2_authctxt_reset_info(authctxt);
 	authctxt->postponed = 0;
 	authctxt->server_caused_failure = 0;
+	authctxt->auth_failure_already_counted = 0;
 
 	/* try to authenticate user */
 	m = authmethod_lookup(authctxt, method);
@@ -362,8 +369,8 @@ input_userauth_request(int type, u_int32_t seq, struct ssh *ssh)
 		authenticated =	m->userauth(ssh, method);
 	}
 	if (!authctxt->authenticated && strcmp(method, "none") != 0)
-		ensure_minimum_time_since(tstart,
-		    user_specific_delay(authctxt->user));
+		auth_failure_delay(authctxt, tstart);
+
 	userauth_finish(ssh, authenticated, method, NULL);
 	r = 0;
  out:
@@ -459,6 +466,7 @@ userauth_finish(struct ssh *ssh, int authenticated, const char *packet_method,
 	} else {
 		/* Allow initial try of "none" auth without failure penalty */
 		if (!partial && !authctxt->server_caused_failure &&
+		    !authctxt->auth_failure_already_counted &&
 		    (authctxt->attempt > 1 || strcmp(method, "none") != 0))
 			authctxt->failures++;
 		if (authctxt->failures >= options.max_authtries)

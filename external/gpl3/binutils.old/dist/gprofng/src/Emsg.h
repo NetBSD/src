@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -38,6 +38,7 @@ class StringBuilder;
 
 typedef enum
 {
+  CMSG_NONE = -1,
   CMSG_WARN = 0,
   CMSG_ERROR,
   CMSG_FATAL,
@@ -105,7 +106,8 @@ public:
   Vector<Emsg*> *msgs;
   void remove_msg (Emsg *msg);
   Emsg *get_error ();
-  Emsg *append_msg (Cmsg_warn w, const char *fmt, ...);
+  Emsg *append_msg (Cmsg_warn w, const char *fmt, ...)
+	__attribute__ ((format (printf, 3, 4)));
   void append_msgs (Vector<Emsg*> *lst);
 };
 

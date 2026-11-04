@@ -16,7 +16,7 @@ the source of the miniroot image to be on any of these:
 
 The easiest is loading from tape, which is done as follows:
 	mt -f /dev/nrst0 rewind
-	mt -f /dev/nrst0 fsf 2
+	mt -f /dev/nrst0 fsf 3
 	dd bs=32k if=/dev/nrst0 of=/dev/rsd0b
 (For help with other methods, please see the install notes.)
 

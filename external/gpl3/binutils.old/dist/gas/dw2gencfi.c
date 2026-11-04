@@ -1,5 +1,5 @@
 /* dw2gencfi.c - Support for generating Dwarf2 CFI information.
-   Copyright (C) 2003-2022 Free Software Foundation, Inc.
+   Copyright (C) 2003-2025 Free Software Foundation, Inc.
    Contributed by Michal Ludvig <mludvig@suse.cz>
 
    This file is part of GAS, the GNU Assembler.
@@ -23,6 +23,7 @@
 #include "dw2gencfi.h"
 #include "subsegs.h"
 #include "dwarf2dbg.h"
+#include "gen-sframe.h"
 
 #ifdef TARGET_USE_CFIPOP
 
@@ -63,19 +64,8 @@
 #define EH_FRAME_ALIGNMENT (bfd_get_arch_size (stdoutput) == 64 ? 3 : 2)
 #endif
 
-#ifndef tc_cfi_frame_initial_instructions
-#define tc_cfi_frame_initial_instructions() ((void)0)
-#endif
-
-#ifndef tc_cfi_startproc
-# define tc_cfi_startproc() ((void)0)
-#endif
-
-#ifndef tc_cfi_endproc
-# define tc_cfi_endproc(fde) ((void) (fde))
-#endif
-
-#define EH_FRAME_LINKONCE (SUPPORT_FRAME_LINKONCE || compact_eh)
+#define EH_FRAME_LINKONCE (SUPPORT_FRAME_LINKONCE || compact_eh \
+			   || TARGET_MULTIPLE_EH_FRAME_SECTIONS)
 
 #ifndef DWARF2_FORMAT
 #define DWARF2_FORMAT(SEC) dwarf2_format_32bit
@@ -229,13 +219,10 @@ get_debugseg_name (segT seg, const char *base_name)
   const char * dollar;
   const char * dot;
 
-  if (!seg)
-    return concat (base_name, NULL);
-
-  name = bfd_section_name (seg);
-
-  if (name == NULL || *name == 0)
-    return concat (base_name, NULL);
+  if (!seg
+      || (name = bfd_section_name (seg)) == NULL
+      || *name == 0)
+    return notes_strdup (base_name);
 	
   dollar = strchr (name, '$');
   dot = strchr (name + 1, '.');
@@ -244,7 +231,7 @@ get_debugseg_name (segT seg, const char *base_name)
     {
       if (!strcmp (base_name, ".eh_frame_entry")
 	  && strcmp (name, ".text") != 0)
-	return concat (base_name, ".", name, NULL);
+	return notes_concat (base_name, ".", name, (const char *) NULL);
 
       name = "";
     }
@@ -257,7 +244,7 @@ get_debugseg_name (segT seg, const char *base_name)
   else
     name = dollar;
 
-  return concat (base_name, name, NULL);
+  return notes_concat (base_name, name, (const char *) NULL);
 }
 
 /* Allocate a dwcfi_seg_list structure.  */
@@ -267,8 +254,7 @@ alloc_debugseg_item (segT seg, int subseg, char *name)
 {
   struct dwcfi_seg_list *r;
 
-  r = (struct dwcfi_seg_list *)
-    xmalloc (sizeof (struct dwcfi_seg_list) + strlen (name));
+  r = notes_alloc (sizeof (*r) + strlen (name));
   r->seg = seg;
   r->subseg = subseg;
   r->seg_name = name;
@@ -279,6 +265,9 @@ static segT
 is_now_linkonce_segment (void)
 {
   if (compact_eh)
+    return now_seg;
+
+  if (TARGET_MULTIPLE_EH_FRAME_SECTIONS)
     return now_seg;
 
   if ((bfd_section_flags (now_seg)
@@ -351,7 +340,7 @@ dwcfi_hash_find_or_make (segT cseg, const char *base_name, int flags)
       str_hash_insert (dwcfi_hash, item->seg_name, item, 0);
     }
   else
-    free (name);
+    notes_free (name);
 
   return item;
 }
@@ -373,12 +362,6 @@ generic_dwarf2_emit_offset (symbolS *symbol, unsigned int size)
   emit_expr (&exp, size);
 }
 #endif
-
-struct cfi_escape_data
-{
-  struct cfi_escape_data *next;
-  expressionS exp;
-};
 
 struct cie_entry
 {
@@ -412,9 +395,9 @@ static struct cie_entry *cie_root;
 static struct fde_entry *
 alloc_fde_entry (void)
 {
-  struct fde_entry *fde = XCNEW (struct fde_entry);
+  struct fde_entry *fde = notes_calloc (1, sizeof (*fde));
 
-  frchain_now->frch_cfi_data = XCNEW (struct frch_cfi_data);
+  frchain_now->frch_cfi_data = notes_calloc (1, sizeof (struct frch_cfi_data));
   frchain_now->frch_cfi_data->cur_fde_data = fde;
   *last_fde_data = fde;
   last_fde_data = &fde->next;
@@ -426,7 +409,7 @@ alloc_fde_entry (void)
   fde->lsda_encoding = DW_EH_PE_omit;
   fde->eh_header_type = EH_COMPACT_UNKNOWN;
 #ifdef tc_fde_entry_init_extra
-  tc_fde_entry_init_extra (fde)
+  tc_fde_entry_init_extra (fde);
 #endif
 
   return fde;
@@ -446,22 +429,31 @@ static struct fde_entry *last_fde;
 static struct cfi_insn_data *
 alloc_cfi_insn_data (void)
 {
-  struct cfi_insn_data *insn = XCNEW (struct cfi_insn_data);
+  struct cfi_insn_data *insn = notes_calloc (1, sizeof (*insn));
   struct fde_entry *cur_fde_data = frchain_now->frch_cfi_data->cur_fde_data;
 
   *cur_fde_data->last = insn;
   cur_fde_data->last = &insn->next;
   SET_CUR_SEG (insn, is_now_linkonce_segment ());
+#ifndef NO_LISTING
+  insn->listing_ctxt = cur_fde_data->listing_ctxt ? listing_tail : NULL;
+#endif
   return insn;
 }
 
 /* Construct a new FDE structure that begins at LABEL.  */
 
 void
-cfi_new_fde (symbolS *label)
+cfi_new_fde (symbolS *label, bool do_listing)
 {
   struct fde_entry *fde = alloc_fde_entry ();
   fde->start_address = label;
+  if (do_listing)
+    {
+#ifndef NO_LISTING
+      fde->listing_ctxt = listing_tail;
+#endif
+    }
   frchain_now->frch_cfi_data->last_address = label;
 }
 
@@ -470,9 +462,20 @@ cfi_new_fde (symbolS *label)
 void
 cfi_end_fde (symbolS *label)
 {
-  frchain_now->frch_cfi_data->cur_fde_data->end_address = label;
-  free (frchain_now->frch_cfi_data);
+  struct fde_entry *cur_fde_data = frchain_now->frch_cfi_data->cur_fde_data;
+
+  cur_fde_data->end_address = label;
+#ifndef NO_LISTING
+  cur_fde_data->listing_end = cur_fde_data->listing_ctxt ? listing_tail : NULL;
+#endif
   frchain_now->frch_cfi_data = NULL;
+}
+
+/* Set the last FDE  .*/
+void
+cfi_set_last_fde (struct fde_entry *fde)
+{
+  last_fde = fde;
 }
 
 /* Set the return column for the current FDE.  */
@@ -486,6 +489,7 @@ cfi_set_return_column (unsigned regno)
 void
 cfi_set_sections (void)
 {
+  all_cfi_sections |= cfi_sections;
   frchain_now->frch_cfi_data->cur_fde_data->sections = all_cfi_sections;
   cfi_sections_set = true;
 }
@@ -557,12 +561,10 @@ cfi_add_advance_loc (symbolS *label)
 void
 cfi_add_label (const char *name)
 {
-  unsigned int len = strlen (name) + 1;
   struct cfi_insn_data *insn = alloc_cfi_insn_data ();
 
   insn->insn = CFI_label;
-  obstack_grow (&notes, name, len);
-  insn->u.sym_name = (char *) obstack_finish (&notes);
+  insn->u.sym_name = notes_strdup (name);
 }
 
 /* Add a DW_CFA_offset record to the CFI data.  */
@@ -656,7 +658,7 @@ cfi_add_CFA_remember_state (void)
 
   cfi_add_CFA_insn (DW_CFA_remember_state);
 
-  p = XNEW (struct cfa_save_data);
+  p = notes_alloc (sizeof (*p));
   p->cfa_offset = frchain_now->frch_cfi_data->cur_cfa_offset;
   p->next = frchain_now->frch_cfi_data->cfa_save_stack;
   frchain_now->frch_cfi_data->cfa_save_stack = p;
@@ -674,7 +676,6 @@ cfi_add_CFA_restore_state (void)
     {
       frchain_now->frch_cfi_data->cur_cfa_offset = p->cfa_offset;
       frchain_now->frch_cfi_data->cfa_save_stack = p->next;
-      free (p);
     }
   else
     as_bad (_("CFI state restore without previous remember"));
@@ -685,7 +686,6 @@ cfi_add_CFA_restore_state (void)
 
 static void dot_cfi (int);
 static void dot_cfi_escape (int);
-static void dot_cfi_sections (int);
 static void dot_cfi_startproc (int);
 static void dot_cfi_endproc (int);
 static void dot_cfi_fde_data (int);
@@ -717,6 +717,7 @@ const pseudo_typeS cfi_pseudo_table[] =
     { "cfi_restore_state", dot_cfi, DW_CFA_restore_state },
     { "cfi_window_save", dot_cfi, DW_CFA_GNU_window_save },
     { "cfi_negate_ra_state", dot_cfi, DW_CFA_AARCH64_negate_ra_state },
+    { "cfi_negate_ra_state_with_pc", dot_cfi, DW_CFA_AARCH64_negate_ra_state_with_pc },
     { "cfi_escape", dot_cfi_escape, 0 },
     { "cfi_signal_frame", dot_cfi, CFI_signal_frame },
     { "cfi_personality", dot_cfi_personality, 0 },
@@ -917,6 +918,10 @@ dot_cfi (int arg)
       cfi_add_CFA_insn (DW_CFA_GNU_window_save);
       break;
 
+    case DW_CFA_AARCH64_negate_ra_state_with_pc:
+      cfi_add_CFA_insn (DW_CFA_AARCH64_negate_ra_state_with_pc);
+      break;
+
     case CFI_signal_frame:
       frchain_now->frch_cfi_data->cur_fde_data->signal_frame = 1;
       break;
@@ -928,10 +933,25 @@ dot_cfi (int arg)
   demand_empty_rest_of_line ();
 }
 
+#ifndef TC_ADDRESS_BYTES
+#define TC_ADDRESS_BYTES address_bytes
+
+static inline unsigned int
+address_bytes (void)
+{
+  /* Choose smallest of 1, 2, 4, 8 bytes that is large enough to
+     contain an address.  */
+  unsigned int n = (stdoutput->arch_info->bits_per_address - 1) / 8;
+  n |= n >> 1;
+  n |= n >> 2;
+  return n + 1;
+}
+#endif
+
 static void
 dot_cfi_escape (int ignored ATTRIBUTE_UNUSED)
 {
-  struct cfi_escape_data *head, **tail, *e;
+  struct cfi_escape_data *head, **tail;
   struct cfi_insn_data *insn;
 
   if (frchain_now->frch_cfi_data == NULL)
@@ -950,8 +970,51 @@ dot_cfi_escape (int ignored ATTRIBUTE_UNUSED)
   tail = &head;
   do
     {
-      e = XNEW (struct cfi_escape_data);
-      do_parse_cons_expression (&e->exp, 1);
+      struct cfi_escape_data *e = notes_alloc (sizeof (*e));
+      char *id, *ilp_save = input_line_pointer;
+      char c = get_symbol_name (&id);
+
+      if (strcmp (id, "sleb128") == 0)
+	e->type = CFI_ESC_sleb128;
+      else if (strcmp (id, "uleb128") == 0)
+	e->type = CFI_ESC_uleb128;
+      else if (strcmp (id, "data2") == 0)
+	e->type = 2;
+      else if (TC_ADDRESS_BYTES () >= 4 && strcmp (id, "data4") == 0)
+	e->type = 4;
+      else if (TC_ADDRESS_BYTES () >= 8 && strcmp (id, "data8") == 0)
+	e->type = 8;
+      else if (strcmp (id, "addr") == 0)
+	e->type = TC_ADDRESS_BYTES ();
+      else
+	e->type = CFI_ESC_byte;
+
+      c = restore_line_pointer (c);
+
+      if (e->type != CFI_ESC_byte)
+	{
+	  if (is_whitespace (c))
+	    c = *++input_line_pointer;
+	  if (c != '(')
+	    {
+	      input_line_pointer = ilp_save;
+	      e->type = CFI_ESC_byte;
+	    }
+	}
+
+      if (e->type == CFI_ESC_sleb128 || e->type == CFI_ESC_uleb128)
+	{
+	  /* We're still at the opening parenthesis.  Leave it to expression()
+	     to parse it and find the matching closing one.  */
+	  expression (&e->exp);
+	}
+      else
+	{
+	  /* We may still be at the opening parenthesis.  Leave it to expression()
+	     to parse it and find the matching closing one.  */
+	  e->reloc = do_parse_cons_expression (&e->exp, e->type);
+	}
+
       *tail = e;
       tail = &e->next;
     }
@@ -1204,7 +1267,7 @@ dot_cfi_label (int ignored ATTRIBUTE_UNUSED)
   demand_empty_rest_of_line ();
 }
 
-static void
+void
 dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
 {
   int sections = 0;
@@ -1235,6 +1298,8 @@ dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
 	else if (strcmp (name, tc_cfi_section_name) == 0)
 	  sections |= CFI_EMIT_target;
 #endif
+	else if (startswith (name, ".sframe"))
+	    sections |= CFI_EMIT_sframe;
 	else
 	  {
 	    *input_line_pointer = c;
@@ -1242,8 +1307,8 @@ dot_cfi_sections (int ignored ATTRIBUTE_UNUSED)
 	    break;
 	  }
 
-	*input_line_pointer = c;
-	SKIP_WHITESPACE_AFTER_NAME ();
+	restore_line_pointer (c);
+	SKIP_WHITESPACE ();
 	if (*input_line_pointer == ',')
 	  {
 	    name = input_line_pointer++;
@@ -1281,7 +1346,7 @@ dot_cfi_startproc (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  cfi_new_fde (symbol_temp_new_now ());
+  cfi_new_fde (symbol_temp_new_now (), listing & LISTING_LISTING);
 
   SKIP_WHITESPACE ();
   if (is_name_beginner (*input_line_pointer) || *input_line_pointer == '"')
@@ -1301,14 +1366,13 @@ dot_cfi_startproc (int ignored ATTRIBUTE_UNUSED)
     }
   demand_empty_rest_of_line ();
 
-  cfi_sections_set = true;
-  all_cfi_sections |= cfi_sections;
   cfi_set_sections ();
+
   frchain_now->frch_cfi_data->cur_cfa_offset = 0;
   if (!simple)
     tc_cfi_frame_initial_instructions ();
 
-  if ((cfi_sections & CFI_EMIT_target) != 0)
+  if ((all_cfi_sections & CFI_EMIT_target) != 0)
     tc_cfi_startproc ();
 }
 
@@ -1322,14 +1386,13 @@ dot_cfi_endproc (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  last_fde = frchain_now->frch_cfi_data->cur_fde_data;
+  cfi_set_last_fde (frchain_now->frch_cfi_data->cur_fde_data);
 
   cfi_end_fde (symbol_temp_new_now ());
 
   demand_empty_rest_of_line ();
 
-  cfi_sections_set = true;
-  if ((cfi_sections & CFI_EMIT_target) != 0)
+  if ((all_cfi_sections & CFI_EMIT_target) != 0)
     tc_cfi_endproc (last_fde);
 }
 
@@ -1337,14 +1400,33 @@ static segT
 get_cfi_seg (segT cseg, const char *base, flagword flags, int align)
 {
   /* Exclude .debug_frame sections for Compact EH.  */
-  if (SUPPORT_FRAME_LINKONCE || ((flags & SEC_DEBUGGING) == 0 && compact_eh))
+  if (SUPPORT_FRAME_LINKONCE || ((flags & SEC_DEBUGGING) == 0 && compact_eh)
+      || ((flags & SEC_DEBUGGING) == 0 && TARGET_MULTIPLE_EH_FRAME_SECTIONS))
     {
+      segT iseg = cseg;
       struct dwcfi_seg_list *l;
 
       l = dwcfi_hash_find_or_make (cseg, base, flags);
 
       cseg = l->seg;
       subseg_set (cseg, l->subseg);
+
+      if (TARGET_MULTIPLE_EH_FRAME_SECTIONS
+	  && (flags & DWARF2_EH_FRAME_READ_ONLY))
+	{
+	  const frchainS *ifrch = seg_info (iseg)->frchainP;
+	  const frchainS *frch = seg_info (cseg)->frchainP;
+	  expressionS exp;
+
+	  exp.X_op = O_symbol;
+	  exp.X_add_symbol = (symbolS *) local_symbol_make (cseg->name, cseg, frch->frch_root, 0);
+	  exp.X_add_number = 0;
+	  subseg_set (iseg, ifrch->frch_subseg);
+	  fix_new_exp (ifrch->frch_root, 0, 0, &exp, 0, BFD_RELOC_NONE);
+
+	  /* Restore the original segment info.  */
+	  subseg_set (cseg, l->subseg);
+	}
     }
   else
     {
@@ -1389,11 +1471,10 @@ dot_cfi_fde_data (int ignored ATTRIBUTE_UNUSED)
       return;
     }
 
-  last_fde = frchain_now->frch_cfi_data->cur_fde_data;
+  cfi_set_last_fde (frchain_now->frch_cfi_data->cur_fde_data);
 
-  cfi_sections_set = true;
-  if ((cfi_sections & CFI_EMIT_target) != 0
-      || (cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
+  if ((all_cfi_sections & CFI_EMIT_target) != 0
+      || (all_cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
     {
       struct cfi_escape_data *head, **tail, *e;
       int num_ops = 0;
@@ -1405,7 +1486,10 @@ dot_cfi_fde_data (int ignored ATTRIBUTE_UNUSED)
 	  do
 	    {
 	      e = XNEW (struct cfi_escape_data);
-	      do_parse_cons_expression (&e->exp, 1);
+	      e->reloc = do_parse_cons_expression (&e->exp, 1);
+	      if (e->reloc != TC_PARSE_CONS_RETURN_NONE
+		  || e->exp.X_op != O_constant)
+		as_bad (_("only constants may be used with .cfi_fde_data"));
 	      *tail = e;
 	      tail = &e->next;
 	      num_ops++;
@@ -1543,7 +1627,7 @@ dot_cfi_inline_lsda (int ignored ATTRIBUTE_UNUSED)
   if (last_fde->eh_header_type == EH_COMPACT_HAS_LSDA)
     output_compact_unwind_data (last_fde, align);
 
-  last_fde = NULL;
+  cfi_set_last_fde (NULL);
 
   return;
 }
@@ -1739,11 +1823,20 @@ output_cfi_insn (struct cfi_insn_data *insn)
       out_one (DW_CFA_GNU_window_save);
       break;
 
+    case DW_CFA_AARCH64_negate_ra_state_with_pc:
+      out_one (DW_CFA_AARCH64_negate_ra_state_with_pc);
+      break;
+
     case CFI_escape:
       {
 	struct cfi_escape_data *e;
 	for (e = insn->u.esc; e ; e = e->next)
-	  emit_expr (&e->exp, 1);
+	  {
+	    if (e->type == CFI_ESC_sleb128 || e->type == CFI_ESC_uleb128)
+	      emit_leb128_expr (&e->exp, e->type == CFI_ESC_sleb128);
+	    else
+	      emit_expr_with_reloc (&e->exp, e->type, e->reloc);
+	  }
 	break;
       }
 
@@ -2037,7 +2130,19 @@ output_fde (struct fde_entry *fde, struct cie_entry *cie,
 
   for (; first; first = first->next)
     if (CUR_SEG (first) == CUR_SEG (fde))
-      output_cfi_insn (first);
+      {
+#ifndef NO_LISTING
+	if (eh_frame)
+	  listing_override_tail (first->listing_ctxt);
+#endif
+	output_cfi_insn (first);
+      }
+
+#ifndef NO_LISTING
+  /* Associate any padding with .cfi_endproc.  */
+  if (eh_frame)
+    listing_override_tail (fde->listing_end);
+#endif
 
   frag_align (align, DW_CFA_nop, 0);
   symbol_set_value_now (end_address);
@@ -2167,7 +2272,7 @@ select_cie_for_fde (struct fde_entry *fde, bool eh_frame,
   cie->personality = fde->personality;
   cie->first = fde->data;
 #ifdef tc_cie_entry_init_extra
-  tc_cie_entry_init_extra (cie, fde)
+  tc_cie_entry_init_extra (cie, fde);
 #endif
 
   for (i = cie->first; i ; i = i->next)
@@ -2197,6 +2302,7 @@ cfi_change_reg_numbers (struct cfi_insn_data *insn, segT ccseg)
 	case DW_CFA_remember_state:
 	case DW_CFA_restore_state:
 	case DW_CFA_GNU_window_save:
+	case DW_CFA_AARCH64_negate_ra_state_with_pc:
 	case CFI_escape:
 	case CFI_label:
 	  break;
@@ -2283,12 +2389,17 @@ cfi_finish (void)
   segT cfi_seg, ccseg;
   struct fde_entry *fde;
   struct cfi_insn_data *first;
+#ifndef NO_LISTING
+  /* We may temporarily replace listing_tail, which otherwise isn't supposed
+     to be changing anymore.  Play safe and restore the original value
+     afterwards.  */
+  struct list_info_struct *saved_listing_tail = NULL;
+#endif
   int save_flag_traditional_format, seek_next_seg;
 
   if (all_fde_data == 0)
     return;
 
-  cfi_sections_set = true;
   if ((all_cfi_sections & CFI_EMIT_eh_frame) != 0
       || (all_cfi_sections & CFI_EMIT_eh_frame_compact) != 0)
     {
@@ -2314,13 +2425,6 @@ cfi_finish (void)
 	{
 	  ccseg = NULL;
 	  seek_next_seg = 0;
-
-	  for (cie = cie_root; cie; cie = cie_next)
-	    {
-	      cie_next = cie->next;
-	      free ((void *) cie);
-	    }
-	  cie_root = NULL;
 
 	  for (fde = all_fde_data; fde ; fde = fde->next)
 	    {
@@ -2373,11 +2477,28 @@ cfi_finish (void)
 		  fde->end_address = fde->start_address;
 		}
 
+#ifndef NO_LISTING
+	      {
+		struct list_info_struct *listing_prev
+		  = listing_override_tail (fde->listing_ctxt);
+
+		if (!saved_listing_tail)
+		  saved_listing_tail = listing_prev;
+	      }
+#endif
+
 	      cie = select_cie_for_fde (fde, true, &first, 2);
 	      fde->eh_loc = symbol_temp_new_now ();
 	      output_fde (fde, cie, true, first,
 			  fde->next == NULL ? EH_FRAME_ALIGNMENT : 2);
 	    }
+
+	  for (cie = cie_root; cie; cie = cie_next)
+	    {
+	      cie_next = cie->next;
+	      free (cie);
+	    }
+	  cie_root = NULL;
 	}
       while (EH_FRAME_LINKONCE && seek_next_seg == 2);
 
@@ -2475,7 +2596,32 @@ cfi_finish (void)
       flag_traditional_format = save_flag_traditional_format;
     }
 
-  cfi_sections_set = true;
+  /* Generate SFrame section if the user:
+	- enables via the command line option, or
+	- specifies .sframe in the .cfi_sections directive and does not disable
+	  via the command line.  */
+  if (flag_gen_sframe == GEN_SFRAME_ENABLED
+      || ((all_cfi_sections & CFI_EMIT_sframe) != 0
+	  && flag_gen_sframe != GEN_SFRAME_DISABLED))
+    {
+#ifdef support_sframe_p
+      if (support_sframe_p () && !SUPPORT_FRAME_LINKONCE)
+	{
+	  segT sframe_seg;
+	  int alignment = ffs (DWARF2_ADDR_SIZE (stdoutput)) - 1;
+
+	  sframe_seg = get_cfi_seg (NULL, ".sframe",
+				    (SEC_ALLOC | SEC_LOAD | SEC_DATA
+				     | DWARF2_EH_FRAME_READ_ONLY),
+				    alignment);
+	  elf_section_type (sframe_seg) = SHT_GNU_SFRAME;
+	  output_sframe (sframe_seg);
+	}
+      else
+#endif
+	as_bad (_(".sframe not supported for target"));
+    }
+
   if ((all_cfi_sections & CFI_EMIT_debug_frame) != 0)
     {
       int alignment = ffs (DWARF2_ADDR_SIZE (stdoutput)) - 1;
@@ -2489,13 +2635,6 @@ cfi_finish (void)
 	{
 	  ccseg = NULL;
 	  seek_next_seg = 0;
-
-	  for (cie = cie_root; cie; cie = cie_next)
-	    {
-	      cie_next = cie->next;
-	      free ((void *) cie);
-	    }
-	  cie_root = NULL;
 
 	  for (fde = all_fde_data; fde ; fde = fde->next)
 	    {
@@ -2535,6 +2674,13 @@ cfi_finish (void)
 	      cie = select_cie_for_fde (fde, false, &first, alignment);
 	      output_fde (fde, cie, false, first, alignment);
 	    }
+
+	  for (cie = cie_root; cie; cie = cie_next)
+	    {
+	      cie_next = cie->next;
+	      free (cie);
+	    }
+	  cie_root = NULL;
 	}
       while (SUPPORT_FRAME_LINKONCE && seek_next_seg == 2);
 
@@ -2542,6 +2688,22 @@ cfi_finish (void)
 	for (fde = all_fde_data; fde ; fde = fde->next)
 	  SET_HANDLED (fde, 0);
     }
+  all_fde_data = NULL;
+  last_fde_data = &all_fde_data;
+  cfi_sections_set = false;
+  cfi_sections = CFI_EMIT_eh_frame;
+  all_cfi_sections = 0;
+  last_fde = NULL;
+  if (dwcfi_hash)
+    {
+      htab_delete (dwcfi_hash);
+      dwcfi_hash = NULL;
+    }
+
+#ifndef NO_LISTING
+  if (saved_listing_tail)
+    listing_tail = saved_listing_tail;
+#endif
 }
 
 #else /* TARGET_USE_CFIPOP */
@@ -2575,14 +2737,16 @@ const pseudo_typeS cfi_pseudo_table[] =
     { "cfi_remember_state", dot_cfi_dummy, 0 },
     { "cfi_restore_state", dot_cfi_dummy, 0 },
     { "cfi_window_save", dot_cfi_dummy, 0 },
+    { "cfi_negate_ra_state", dot_cfi_dummy, 0 },
+    { "cfi_negate_ra_state_with_pc", dot_cfi_dummy, 0 },
     { "cfi_escape", dot_cfi_dummy, 0 },
     { "cfi_signal_frame", dot_cfi_dummy, 0 },
     { "cfi_personality", dot_cfi_dummy, 0 },
     { "cfi_personality_id", dot_cfi_dummy, 0 },
     { "cfi_lsda", dot_cfi_dummy, 0 },
     { "cfi_val_encoded_addr", dot_cfi_dummy, 0 },
-    { "cfi_label", dot_cfi_dummy, 0 },
     { "cfi_inline_lsda", dot_cfi_dummy, 0 },
+    { "cfi_label", dot_cfi_dummy, 0 },
     { "cfi_val_offset", dot_cfi_dummy, 0 },
     { NULL, NULL, 0 }
   };

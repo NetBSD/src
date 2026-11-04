@@ -1,5 +1,5 @@
 /* V850-specific support for 32-bit ELF
-   Copyright (C) 1996-2022 Free Software Foundation, Inc.
+   Copyright (C) 1996-2025 Free Software Foundation, Inc.
 
    This file is part of BFD, the Binary File Descriptor library.
 
@@ -1933,8 +1933,11 @@ v850_elf_info_to_howto_rela (bfd *abfd,
 static bool
 v850_elf_is_local_label_name (bfd *abfd ATTRIBUTE_UNUSED, const char *name)
 {
-  return (   (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
-	  || (name[0] == '_' &&  name[1] == '.' && name[2] == 'L' && name[3] == '_'));
+  if (name[0] == '.' && (name[1] == 'L' || name[1] == '.'))
+    return true;
+  if (name[0] == '_' && name[1] == '.' && name[2] == 'L' && name[3] == '_')
+    return true;
+  return false;
 }
 
 static bool
@@ -2389,6 +2392,7 @@ v850_elf_make_note_section (bfd * abfd)
     return NULL;
 
   s->contents = data;
+  s->alloced = 1;
 
   /* Provide default (= uninitilaised) values for all of the notes.  */
   for (id = V850_NOTE_ALIGNMENT; id <= NUM_V850_NOTES; id++)
@@ -3440,6 +3444,7 @@ v850_elf_relax_section (bfd *abfd,
   *again = false;
 
   if (bfd_link_relocatable (link_info)
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
       || (sec->flags & SEC_RELOC) == 0
       || sec->reloc_count == 0)
     return true;

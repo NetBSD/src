@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -27,6 +27,7 @@
 
 #include "config.h"
 #include <dlfcn.h>
+#include <stddef.h>
 #include <stdlib.h>
 #include <string.h>
 #include <ucontext.h>
@@ -39,12 +40,6 @@
 #include "libcol_util.h"
 #include "hwprofile.h"
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
 
 static int init_interface (CollectorInterface*);
 static int open_experiment (const char *);
@@ -181,22 +176,28 @@ open_experiment (const char *exp)
 				 module_interface.description);
 
   /* Record Profile packet description */
-  ClockPacket *cp = NULL;
   collector_interface->writeLog ("  <profpckt kind=\"%d\" uname=\"" STXT ("Clock profiling data") "\">\n", CLOCK_TYPE);
   collector_interface->writeLog ("    <field name=\"LWPID\" uname=\"" STXT ("Lightweight process id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->lwp_id, sizeof (cp->lwp_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, lwp_id),
+		fld_sizeof (ClockPacket, lwp_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"THRID\" uname=\"" STXT ("Thread number") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->thr_id, sizeof (cp->thr_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, thr_id),
+		fld_sizeof (ClockPacket, thr_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"CPUID\" uname=\"" STXT ("CPU id") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->cpu_id, sizeof (cp->cpu_id) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, cpu_id),
+		fld_sizeof (ClockPacket, cpu_id) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"TSTAMP\" uname=\"" STXT ("High resolution timestamp") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->tstamp, sizeof (cp->tstamp) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, tstamp),
+		fld_sizeof (ClockPacket, tstamp) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"FRINFO\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->frinfo, sizeof (cp->frinfo) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, frinfo),
+		fld_sizeof (ClockPacket, frinfo) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"MSTATE\" uname=\"" STXT ("Thread state") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->mstate, sizeof (cp->mstate) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, mstate),
+		fld_sizeof (ClockPacket, mstate) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("    <field name=\"NTICK\" uname=\"" STXT ("Duration") "\" offset=\"%d\" type=\"%s\"/>\n",
-				 &cp->nticks, sizeof (cp->nticks) == 4 ? "INT32" : "INT64");
+		(int) offsetof (ClockPacket, nticks),
+		fld_sizeof (ClockPacket, nticks) == 4 ? "INT32" : "INT64");
   collector_interface->writeLog ("  </profpckt>\n");
   collector_interface->writeLog ("</profile>\n");
   return COL_ERROR_NONE;
@@ -261,20 +262,19 @@ __collector_ext_profile_handler (siginfo_t *info, ucontext_t *context)
       return;
     }
   PUSH_REENTRANCE (guard);
-  TprintfT (DBG_LT3, "__collector_ext_profile_handler\n");
+  TprintfT (0, "__collector_ext_profile_handler\n");
   ucontext_t uctxmem;
   if (context == NULL)
     {
       /* assume this case is rare, and accept overhead of creating dummy_uc */
       TprintfT (0, "collector_profile_handler: ERROR: got NULL context!\n");
       context = &uctxmem;
-      getcontext (context);     /* initialize dummy context */
+      CALL_UTIL (getcontext) (context);     /* initialize dummy context */
       SETFUNCTIONCONTEXT (context, &__collector_lost_profile_context);
     }
-  ClockPacket pckt;
-  CALL_UTIL (memset)(&pckt, 0, sizeof ( pckt));
-  pckt.comm.tsize = sizeof ( pckt);
-  pckt.comm.type = CLOCK_TYPE;
+  static ClockPacket clock_pckt_0 = {.comm.type = CLOCK_TYPE,
+				     .comm.tsize = sizeof (ClockPacket)};
+  ClockPacket pckt = clock_pckt_0;
   pckt.lwp_id = __collector_lwp_self ();
   pckt.thr_id = __collector_thr_self ();
   pckt.cpu_id = CALL_UTIL (getcpuid)();

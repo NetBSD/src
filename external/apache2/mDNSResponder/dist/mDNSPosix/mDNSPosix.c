@@ -97,7 +97,9 @@ mDNSlocal void requestWriteEvents(PosixEventSource *eventSource,
                                      const char *taskName, mDNSPosixEventCallback callback, void *context);
 mDNSlocal void UDPReadCallback(int fd, void *context);
 mDNSlocal int SetupIPv4Socket(int fd);
+#if HAVE_IPV6
 mDNSlocal int SetupIPv6Socket(int fd);
+#endif
 
 // ***************************************************************************
 // Constants
@@ -243,6 +245,7 @@ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const ms
                     err = SetupIPv4Socket(sock);
                     if (err) { return err; }
                 }
+#if HAVE_IPV6
                 else
                 {
                     ((struct sockaddr_in6 *)&from)->sin6_family = AF_INET6;
@@ -251,6 +254,7 @@ mDNSexport mStatus mDNSPlatformSendUDP(const mDNS *const m, const void *const ms
                     err = SetupIPv6Socket(sock);
                     if (err) { return err; }
                 }
+#endif
 #ifndef NOT_HAVE_SA_LEN
                 ((struct sockaddr *)&from)->sa_len = fromlen;
 #endif
@@ -1094,6 +1098,7 @@ mDNSlocal void ClearInterfaceList(mDNS *const m)
     num_pkts_rejected = 0;
 }
 
+#if HAVE_IPV6
 mDNSlocal int SetupIPv6Socket(int fd)
 {
     int err;
@@ -1106,6 +1111,7 @@ mDNSlocal int SetupIPv6Socket(int fd)
     #endif
     return err;
 }
+#endif
 
 mDNSlocal int SetupIPv4Socket(int fd)
 {

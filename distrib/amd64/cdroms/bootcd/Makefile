@@ -1,5 +1,7 @@
-#	$NetBSD: Makefile,v 1.4 2011/01/18 00:16:13 jym Exp $
+#	$NetBSD: Makefile,v 1.4.60.1 2026/11/04 22:36:51 perseant Exp $
 #
+
+CDMAKEFSEXTRAOPTS=	-m 700m
 
 .include "${.CURDIR}/../Makefile.cdrom"
 

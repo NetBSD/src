@@ -1,5 +1,5 @@
 /* Opcode table for m680[012346]0/m6888[12]/m68851/mcf5200.
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU opcodes library.
 
@@ -1641,9 +1641,9 @@ const struct m68k_opcode m68k_opcodes[] =
 {"movel", 6,	one(0xa13c),	one(0xf9ff), "#leF", mcfemac }, /* #,ACCx.  */
 {"movel", 2,	one(0xab00),	one(0xfbc0), "Rsg]", mcfemac }, /* Rx,ACCEXTx.  */
 {"movel", 6,	one(0xab3c),	one(0xfbff), "#lg]", mcfemac }, /* #,ACCEXTx.  */
-{"movel", 2,	one(0xa900),	one(0xffc0), "RsG-", mcfemac }, /* Rx,macsr.  */
+{"movel", 2,	one(0xa900),	one(0xfff0), "RsG-", mcfemac }, /* Rx,macsr.  */
 {"movel", 6,	one(0xa93c),	one(0xffff), "#lG-", mcfemac }, /* #,macsr.  */
-{"movel", 2,	one(0xad00),	one(0xffc0), "RsH-", mcfemac }, /* Rx,mask.  */
+{"movel", 2,	one(0xad00),	one(0xfff0), "RsH-", mcfemac }, /* Rx,mask.  */
 {"movel", 6,	one(0xad3c),	one(0xffff), "#lH-", mcfemac }, /* #,mask.  */
 
 {"move", 2,	one(0030000),	one(0170000), "*w%d", m68000up },

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -42,7 +42,8 @@ enum Platform_t
   Sparcv8plus,
   Java,
   Amd64,
-  Aarch64
+  Aarch64,
+  RISCV
 };
 
 enum WSize_t

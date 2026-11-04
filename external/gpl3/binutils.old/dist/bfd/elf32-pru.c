@@ -1,5 +1,5 @@
 /* 32-bit ELF support for TI PRU.
-   Copyright (C) 2014-2022 Free Software Foundation, Inc.
+   Copyright (C) 2014-2025 Free Software Foundation, Inc.
    Contributed by Dimitar Dimitrov <dimitar@dinux.eu>
    Based on elf32-nios2.c
 
@@ -1354,8 +1354,10 @@ pru_elf32_relax_section (bfd *abfd, asection *sec,
      this section does not have relocs, or if this is not a
      code section.  */
   if (bfd_link_relocatable (link_info)
-    || (sec->flags & SEC_RELOC) == 0
-    || sec->reloc_count == 0 || (sec->flags & SEC_CODE) == 0)
+      || sec->reloc_count == 0
+      || (sec->flags & SEC_RELOC) == 0
+      || (sec->flags & SEC_HAS_CONTENTS) == 0
+      || (sec->flags & SEC_CODE) == 0)
     return true;
 
   symtab_hdr = & elf_tdata (abfd)->symtab_hdr;
@@ -1557,11 +1559,8 @@ pru_elf32_link_hash_table_create (bfd *abfd)
   if (ret == NULL)
     return NULL;
 
-  if (!_bfd_elf_link_hash_table_init (ret, abfd,
-				      link_hash_newfunc,
-				      sizeof (struct
-					      elf_link_hash_entry),
-				      PRU_ELF_DATA))
+  if (!_bfd_elf_link_hash_table_init (ret, abfd, link_hash_newfunc,
+				      sizeof (struct elf_link_hash_entry)))
     {
       free (ret);
       return NULL;
@@ -1602,6 +1601,8 @@ pru_elf32_link_hash_table_create (bfd *abfd)
 #define elf_backend_relocate_section	pru_elf32_relocate_section
 #define bfd_elf32_bfd_relax_section	pru_elf32_relax_section
 #define elf_backend_can_gc_sections	1
+
+#define elf_backend_default_execstack	0
 
 #define TARGET_LITTLE_SYM		pru_elf32_vec
 #define TARGET_LITTLE_NAME		"elf32-pru"

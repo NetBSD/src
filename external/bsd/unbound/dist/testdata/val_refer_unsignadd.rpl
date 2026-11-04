@@ -9,7 +9,9 @@ server:
 	qname-minimisation: "no"
 	fake-sha1: yes
 	trust-anchor-signaling: no
+	iter-scrub-promiscuous: no
 	rrset-roundrobin: no
+	val-clean-additional: yes
 
 stub-zone:
 	name: "."

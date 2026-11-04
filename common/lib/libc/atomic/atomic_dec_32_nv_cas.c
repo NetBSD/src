@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_dec_32_nv_cas.c,v 1.3 2008/04/28 20:22:52 martin Exp $	*/
+/*	$NetBSD: atomic_dec_32_nv_cas.c,v 1.3.84.1 2026/11/04 22:36:29 perseant Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/atomic.h>
 
-uint32_t
+uint32_t __noinline
 atomic_dec_32_nv(volatile uint32_t *addr)
 {
 	uint32_t old, new;
@@ -43,22 +43,27 @@ atomic_dec_32_nv(volatile uint32_t *addr)
 		new = old - 1;
 	} while (atomic_cas_32(addr, old, new) != old);
 
-	return (new);
+	return new;
 }
 
-#undef atomic_dec_32_nv
 atomic_op_alias(atomic_dec_32_nv,_atomic_dec_32_nv)
 
-#undef atomic_dec_uint_nv
 atomic_op_alias(atomic_dec_uint_nv,_atomic_dec_32_nv)
 __strong_alias(_atomic_dec_uint_nv,_atomic_dec_32_nv)
 
 #if !defined(_LP64)
-#undef atomic_dec_ulong_nv
 atomic_op_alias(atomic_dec_ulong_nv,_atomic_dec_32_nv)
 __strong_alias(_atomic_dec_ulong_nv,_atomic_dec_32_nv)
 
-#undef atomic_dec_ptr_nv
-atomic_op_alias(atomic_dec_ptr_nv,_atomic_dec_32_nv)
-__strong_alias(_atomic_dec_ptr_nv,_atomic_dec_32_nv)
+/*
+ * N.B. not an alias!  Pointer values may have a different return
+ * convention.
+ */
+void *
+atomic_dec_ptr_nv(volatile void *ptr)
+{
+	return (void *)atomic_dec_32_nv((volatile uint32_t *)ptr);
+}
+
+atomic_op_alias(atomic_dec_ptr_nv,_atomic_dec_ptr_nv)
 #endif /* _LP64 */

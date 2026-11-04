@@ -29,7 +29,7 @@ PARSE_AND_LIST_ARGS_CASE_Z_CET='
 				 | prop_report_ibt
 				 | prop_report_shstk);
 	  else
-	    einfo (_("%F%P: invalid option for -z cet-report=: %s\n"),
+	    fatal (_("%P: invalid option for -z cet-report=: %s\n"),
 		   optarg + 11);
 	}
 '

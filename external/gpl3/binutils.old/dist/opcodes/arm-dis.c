@@ -1,5 +1,5 @@
 /* Instruction printing code for the ARM
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
    Contributed by Richard Earnshaw (rwe@pegasus.esprit.ec.org)
    Modification by James G. Smith (jsmith@cygnus.co.uk)
 
@@ -405,16 +405,11 @@ struct opcode16
    %q			print shifter argument
    %u			print condition code (unconditional in ARM mode,
                           UNPREDICTABLE if not AL in Thumb)
-   %A			print address for ldc/stc/ldf/stf instruction
+   %A			print address for ldc/stc instruction
    %B			print vstm/vldm register list
    %C			print vscclrm register list
-   %I                   print cirrus signed shift immediate: bits 0..3|4..6
    %J			print register for VLDR instruction
    %K			print address for VLDR instruction
-   %F			print the COUNT field of a LFM/SFM instruction.
-   %P			print floating point precision in arithmetic insn
-   %Q			print floating point precision in ldf/stf insn
-   %R			print floating point rounding mode
 
    %<bitfield>c		print as a condition code (for vsel)
    %<bitfield>r		print as an ARM register
@@ -424,8 +419,6 @@ struct opcode16
    %<bitfield>k		print immediate for VFPv3 conversion instruction
    %<bitfield>x		print the bitfield in hex
    %<bitfield>X		print the bitfield as 1 hex digit without leading "0x"
-   %<bitfield>f		print a floating point constant if >7 else a
-			floating point register
    %<bitfield>w         print as an iWMMXt width field - [bhwd]ss/us
    %<bitfield>g         print as an iWMMXt 64-bit register
    %<bitfield>G         print as an iWMMXt general purpose or control register
@@ -458,10 +451,10 @@ enum opcode_sentinel_enum
   SENTINEL_GENERIC_START
 } opcode_sentinels;
 
-#define UNDEFINED_INSTRUCTION      "\t\t; <UNDEFINED> instruction: %0-31x"
-#define UNKNOWN_INSTRUCTION_32BIT  "\t\t; <UNDEFINED> instruction: %08x"
-#define UNKNOWN_INSTRUCTION_16BIT  "\t\t; <UNDEFINED> instruction: %04x"
-#define UNPREDICTABLE_INSTRUCTION  "\t; <UNPREDICTABLE>"
+#define UNDEFINED_INSTRUCTION      "\t\t@ <UNDEFINED> instruction: %0-31x"
+#define UNKNOWN_INSTRUCTION_32BIT  "\t\t@ <UNDEFINED> instruction: %08x"
+#define UNKNOWN_INSTRUCTION_16BIT  "\t\t@ <UNDEFINED> instruction: %04x"
+#define UNPREDICTABLE_INSTRUCTION  "\t@ <UNPREDICTABLE>"
 
 /* Common coprocessor opcodes shared between Arm and Thumb-2.  */
 
@@ -490,45 +483,45 @@ static const struct cdeopcode32 cde_opcodes[] =
   /* Custom Datapath Extension instructions.  */
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xee000000, 0xefc00840,
-	      "cx1%a\t%p, %12-15n, #%0-5,7,16-21d"),
+	      "cx1%a\t%p, %12-15n, %{I:#%0-5,7,16-21d%}"),
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xee000040, 0xefc00840,
-	      "cx1d%a\t%p, %12-15S, %12-15T, #%0-5,7,16-21d"),
+	      "cx1d%a\t%p, %12-15S, %12-15T, %{I:#%0-5,7,16-21d%}"),
 
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xee400000, 0xefc00840,
-	      "cx2%a\t%p, %12-15n, %16-19n, #%0-5,7,20-21d"),
+	      "cx2%a\t%p, %12-15n, %16-19n, %{I:#%0-5,7,20-21d%}"),
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xee400040, 0xefc00840,
-	      "cx2d%a\t%p, %12-15S, %12-15T, %16-19n, #%0-5,7,20-21d"),
+	      "cx2d%a\t%p, %12-15S, %12-15T, %16-19n, %{I:#%0-5,7,20-21d%}"),
 
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xee800000, 0xef800840,
-	      "cx3%a\t%p, %0-3n, %16-19n, %12-15n, #%4-5,7,20-22d"),
+	      "cx3%a\t%p, %0-3n, %16-19n, %12-15n, %{I:#%4-5,7,20-22d%}"),
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xee800040, 0xef800840,
-	     "cx3d%a\t%p, %0-3S, %0-3T, %16-19n, %12-15n, #%4-5,7,20-22d"),
+	     "cx3d%a\t%p, %0-3S, %0-3T, %16-19n, %12-15n, %{I:#%4-5,7,20-22d%}"),
 
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xec200000, 0xeeb00840,
-	      "vcx1%a\t%p, %12-15,22V, #%0-5,7,16-19d"),
+	      "vcx1%a\t%p, %12-15,22V, %{I:#%0-5,7,16-19d%}"),
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xec200040, 0xeeb00840,
-	      "vcx1%a\t%p, %12-15,22V, #%0-5,7,16-19,24d"),
+	      "vcx1%a\t%p, %12-15,22V, %{I:#%0-5,7,16-19,24d%}"),
 
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xec300000, 0xeeb00840,
-	      "vcx2%a\t%p, %12-15,22V, %0-3,5V, #%4,7,16-19d"),
+	      "vcx2%a\t%p, %12-15,22V, %0-3,5V, %{I:#%4,7,16-19d%}"),
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xec300040, 0xeeb00840,
-	      "vcx2%a\t%p, %12-15,22V, %0-3,5V, #%4,7,16-19,24d"),
+	      "vcx2%a\t%p, %12-15,22V, %0-3,5V, %{I:#%4,7,16-19,24d%}"),
 
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xec800000, 0xee800840,
-	      "vcx3%a\t%p, %12-15,22V, %16-19,7V, %0-3,5V, #%4,20-21d"),
+	      "vcx3%a\t%p, %12-15,22V, %16-19,7V, %0-3,5V, %{I:#%4,20-21d%}"),
   CDE_OPCODE (ARM_FEATURE_CORE_HIGH (ARM_EXT2_CDE),
 	      0xec800040, 0xee800840,
-	      "vcx3%a\t%p, %12-15,22V, %16-19,7V, %0-3,5V, #%4,20-21,24d"),
+	      "vcx3%a\t%p, %12-15,22V, %16-19,7V, %0-3,5V, %{I:#%4,20-21,24d%}"),
 
   CDE_OPCODE (ARM_FEATURE_CORE_LOW (0), 0, 0, 0)
 
@@ -539,16 +532,16 @@ static const struct sopcode32 coprocessor_opcodes[] =
   /* XScale instructions.  */
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200010, 0x0fff0ff0,
-    "mia%c\tacc0, %0-3r, %12-15r"},
+    "mia%c\t%{R:acc0%}, %0-3r, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e280010, 0x0fff0ff0,
-    "miaph%c\tacc0, %0-3r, %12-15r"},
+    "miaph%c\t%{R:acc0%}, %0-3r, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e2c0010, 0x0ffc0ff0, "mia%17'T%17`B%16'T%16`B%c\tacc0, %0-3r, %12-15r"},
+    0x0e2c0010, 0x0ffc0ff0, "mia%17'T%17`B%16'T%16`B%c\t%{R:acc0%}, %0-3r, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0c400000, 0x0ff00fff, "mar%c\tacc0, %12-15r, %16-19r"},
+    0x0c400000, 0x0ff00fff, "mar%c\t%{R:acc0%}, %12-15r, %16-19r"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0c500000, 0x0ff00fff, "mra%c\t%12-15r, %16-19r, acc0"},
+    0x0c500000, 0x0ff00fff, "mra%c\t%12-15r, %16-19r, %{R:acc0%}"},
 
   /* Intel Wireless MMX technology instructions.  */
   {ANY, ARM_FEATURE_CORE_LOW (0), SENTINEL_IWMMXT_START, 0, "" },
@@ -557,11 +550,11 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e400010, 0x0ff00f3f, "tbcst%6-7w%c\t%16-19g, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e130170, 0x0f3f0ff8, "textrc%22-23w%c\t%12-15r, #%0-2d"},
+    0x0e130170, 0x0f3f0ff8, "textrc%22-23w%c\t%12-15r, %{I:#%0-2d%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e100070, 0x0f300ff0, "textrm%3?su%22-23w%c\t%12-15r, %16-19g, #%0-2d"},
+    0x0e100070, 0x0f300ff0, "textrm%3?su%22-23w%c\t%12-15r, %16-19g, %{I:#%0-2d%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e600010, 0x0ff00f38, "tinsr%6-7w%c\t%16-19g, %12-15r, #%0-2d"},
+    0x0e600010, 0x0ff00f38, "tinsr%6-7w%c\t%16-19g, %12-15r, %{I:#%0-2d%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000110, 0x0ff00fff, "tmcr%c\t%16-19G, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
@@ -593,7 +586,7 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0ea001a0, 0x0ff00ff0, "waddsubhx%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e000020, 0x0f800ff0, "waligni%c\t%12-15g, %16-19g, %0-3g, #%20-22d"},
+    0x0e000020, 0x0f800ff0, "waligni%c\t%12-15g, %16-19g, %0-3g, %{I:#%20-22d%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e800020, 0x0fc00ff0, "walignr%20-21d%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
@@ -621,7 +614,7 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000160, 0x0f100ff0, "wmax%21?su%22-23w%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e000080, 0x0f100fe0, "wmerge%c\t%12-15g, %16-19g, %0-3g, #%21-23d"},
+    0x0e000080, 0x0f100fe0, "wmerge%c\t%12-15g, %16-19g, %0-3g, %{I:#%21-23d%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e0000a0, 0x0f800ff0, "wmia%21?tb%20?tb%22'n%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
@@ -651,7 +644,7 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000080, 0x0f000ff0, "wpack%20-23w%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0xfe300040, 0xff300ef0, "wror%22-23w\t%12-15g, %16-19g, #%i"},
+    0xfe300040, 0xff300ef0, "wror%22-23w\t%12-15g, %16-19g, %{I:#%i%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e300040, 0x0f300ff0, "wror%22-23w%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
@@ -659,21 +652,21 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000120, 0x0fa00ff0, "wsad%22?hb%20'z%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0x0e0001e0, 0x0f000ff0, "wshufh%c\t%12-15g, %16-19g, #%Z"},
+    0x0e0001e0, 0x0f000ff0, "wshufh%c\t%12-15g, %16-19g, %{I:#%Z%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0xfe100040, 0xff300ef0, "wsll%22-23w\t%12-15g, %16-19g, #%i"},
+    0xfe100040, 0xff300ef0, "wsll%22-23w\t%12-15g, %16-19g, %{I:#%i%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100040, 0x0f300ff0, "wsll%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e100148, 0x0f300ffc, "wsll%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0xfe000040, 0xff300ef0, "wsra%22-23w\t%12-15g, %16-19g, #%i"},
+    0xfe000040, 0xff300ef0, "wsra%22-23w\t%12-15g, %16-19g, %{I:#%i%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000040, 0x0f300ff0, "wsra%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e000148, 0x0f300ffc, "wsra%22-23w%8'g%c\t%12-15g, %16-19g, %0-3G"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
-    0xfe200040, 0xff300ef0, "wsrl%22-23w\t%12-15g, %16-19g, #%i"},
+    0xfe200040, 0xff300ef0, "wsrl%22-23w\t%12-15g, %16-19g, %{I:#%i%}"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
     0x0e200040, 0x0f300ff0, "wsrl%22-23w%8'g%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_COPROC (ARM_CEXT_XSCALE),
@@ -706,94 +699,6 @@ static const struct sopcode32 coprocessor_opcodes[] =
     0x0e100000, 0x0ff00ff0, "wxor%c\t%12-15g, %16-19g, %0-3g"},
   {ANY, ARM_FEATURE_CORE_LOW (0),
     SENTINEL_IWMMXT_END, 0, "" },
-
-  /* Floating point coprocessor (FPA) instructions.  */
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e000100, 0x0ff08f10, "adf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e100100, 0x0ff08f10, "muf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e200100, 0x0ff08f10, "suf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e300100, 0x0ff08f10, "rsf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e400100, 0x0ff08f10, "dvf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e500100, 0x0ff08f10, "rdf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e600100, 0x0ff08f10, "pow%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e700100, 0x0ff08f10, "rpw%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e800100, 0x0ff08f10, "rmf%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e900100, 0x0ff08f10, "fml%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ea00100, 0x0ff08f10, "fdv%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb00100, 0x0ff08f10, "frd%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ec00100, 0x0ff08f10, "pol%c%P%R\t%12-14f, %16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e008100, 0x0ff08f10, "mvf%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e108100, 0x0ff08f10, "mnf%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e208100, 0x0ff08f10, "abs%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e308100, 0x0ff08f10, "rnd%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e408100, 0x0ff08f10, "sqt%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e508100, 0x0ff08f10, "log%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e608100, 0x0ff08f10, "lgn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e708100, 0x0ff08f10, "exp%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e808100, 0x0ff08f10, "sin%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e908100, 0x0ff08f10, "cos%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ea08100, 0x0ff08f10, "tan%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb08100, 0x0ff08f10, "asn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ec08100, 0x0ff08f10, "acs%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ed08100, 0x0ff08f10, "atn%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ee08100, 0x0ff08f10, "urd%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ef08100, 0x0ff08f10, "nrm%c%P%R\t%12-14f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e000110, 0x0ff00f1f, "flt%c%P%R\t%16-18f, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e100110, 0x0fff0f98, "fix%c%R\t%12-15r, %0-2f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e200110, 0x0fff0fff, "wfs%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e300110, 0x0fff0fff, "rfs%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e400110, 0x0fff0fff, "wfc%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e500110, 0x0fff0fff, "rfc%c\t%12-15r"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0e90f110, 0x0ff8fff0, "cmf%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0eb0f110, 0x0ff8fff0, "cnf%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ed0f110, 0x0ff8fff0, "cmfe%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0ef0f110, 0x0ff8fff0, "cnfe%c\t%16-18f, %0-3f"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0c000100, 0x0e100f00, "stf%c%Q\t%12-14f, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V1),
-    0x0c100100, 0x0e100f00, "ldf%c%Q\t%12-14f, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
-    0x0c000200, 0x0e100f00, "sfm%c\t%12-14f, %F, %A"},
-  {ANY, ARM_FEATURE_COPROC (FPU_FPA_EXT_V2),
-    0x0c100200, 0x0e100f00, "lfm%c\t%12-14f, %F, %A"},
 
   /* Armv8.1-M Mainline instructions.  */
   {T32, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
@@ -846,13 +751,13 @@ static const struct sopcode32 coprocessor_opcodes[] =
     0xec000f80, 0xfe101f80, "vstr%c\t%J, %K"},
 
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0d200b01, 0x0fb00f01, "fstmdbx%c\t%16-19r!, %z3\t;@ Deprecated"},
+    0x0d200b01, 0x0fb00f01, "fstmdbx%c\t%16-19r!, %z3\t@ Deprecated"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0d300b01, 0x0fb00f01, "fldmdbx%c\t%16-19r!, %z3\t;@ Deprecated"},
+    0x0d300b01, 0x0fb00f01, "fldmdbx%c\t%16-19r!, %z3\t@ Deprecated"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0c800b01, 0x0f900f01, "fstmiax%c\t%16-19r%21'!, %z3\t;@ Deprecated"},
+    0x0c800b01, 0x0f900f01, "fstmiax%c\t%16-19r%21'!, %z3\t@ Deprecated"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0c900b01, 0x0f900f01, "fldmiax%c\t%16-19r%21'!, %z3\t;@ Deprecated"},
+    0x0c900b01, 0x0f900f01, "fldmiax%c\t%16-19r%21'!, %z3\t@ Deprecated"},
 
   /* Data transfer between ARM and NEON registers.  */
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
@@ -860,17 +765,17 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0x0c500b10, 0x0ff00fd0, "vmov%c\t%12-15r, %16-19r, %0-3,5D"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e000b10, 0x0fd00f70, "vmov%c.32\t%16-19,7D[%21d], %12-15r"},
+    0x0e000b10, 0x0fd00f70, "vmov%c.32\t%{R:%16-19,7D[%21d]%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e100b10, 0x0f500f70, "vmov%c.32\t%12-15r, %16-19,7D[%21d]"},
+    0x0e100b10, 0x0f500f70, "vmov%c.32\t%12-15r, %{R:%16-19,7D[%21d]%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e000b30, 0x0fd00f30, "vmov%c.16\t%16-19,7D[%6,21d], %12-15r"},
+    0x0e000b30, 0x0fd00f30, "vmov%c.16\t%{R:%16-19,7D[%6,21d]%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e100b30, 0x0f500f30, "vmov%c.%23?us16\t%12-15r, %16-19,7D[%6,21d]"},
+    0x0e100b30, 0x0f500f30, "vmov%c.%23?us16\t%12-15r, %{R:%16-19,7D[%6,21d]%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e400b10, 0x0fd00f10, "vmov%c.8\t%16-19,7D[%5,6,21d], %12-15r"},
+    0x0e400b10, 0x0fd00f10, "vmov%c.8\t%{R:%16-19,7D[%5,6,21d]%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0x0e500b10, 0x0f500f10, "vmov%c.%23?us8\t%12-15r, %16-19,7D[%5,6,21d]"},
+    0x0e500b10, 0x0f500f10, "vmov%c.%23?us8\t%12-15r, %{R:%16-19,7D[%5,6,21d]%}"},
   /* Half-precision conversion instructions.  */
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
     0x0eb20b40, 0x0fbf0f50, "vcvt%7?tb%c.f64.f16\t%z1, %y0"},
@@ -883,63 +788,63 @@ static const struct sopcode32 coprocessor_opcodes[] =
 
   /* Floating point coprocessor (VFP) instructions.  */
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ee00a10, 0x0fff0fff, "vmsr%c\tfpsid, %12-15r"},
+    0x0ee00a10, 0x0fff0fff, "vmsr%c\t%{R:fpsid%}, %12-15r"},
   {ANY, ARM_FEATURE (0, ARM_EXT2_V8_1M_MAIN, FPU_VFP_EXT_V1xD),
-    0x0ee10a10, 0x0fff0fff, "vmsr%c\tfpscr, %12-15r"},
+    0x0ee10a10, 0x0fff0fff, "vmsr%c\t%{R:fpscr%}, %12-15r"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0x0ee20a10, 0x0fff0fff, "vmsr%c\tfpscr_nzcvqc, %12-15r"},
+    0x0ee20a10, 0x0fff0fff, "vmsr%c\t%{R:fpscr_nzcvqc%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ee60a10, 0x0fff0fff, "vmsr%c\tmvfr1, %12-15r"},
+    0x0ee60a10, 0x0fff0fff, "vmsr%c\t%{R:mvfr1%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ee70a10, 0x0fff0fff, "vmsr%c\tmvfr0, %12-15r"},
+    0x0ee70a10, 0x0fff0fff, "vmsr%c\t%{R:mvfr0%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
-    0x0ee50a10, 0x0fff0fff, "vmsr%c\tmvfr2, %12-15r"},
+    0x0ee50a10, 0x0fff0fff, "vmsr%c\t%{R:mvfr2%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ee80a10, 0x0fff0fff, "vmsr%c\tfpexc, %12-15r"},
+    0x0ee80a10, 0x0fff0fff, "vmsr%c\t%{R:fpexc%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ee90a10, 0x0fff0fff, "vmsr%c\tfpinst, %12-15r\t@ Impl def"},
+    0x0ee90a10, 0x0fff0fff, "vmsr%c\t%{R:fpinst%}, %12-15r\t@ Impl def"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0eea0a10, 0x0fff0fff, "vmsr%c\tfpinst2, %12-15r\t@ Impl def"},
+    0x0eea0a10, 0x0fff0fff, "vmsr%c\t%{R:fpinst2%}, %12-15r\t@ Impl def"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
-    0x0eec0a10, 0x0fff0fff, "vmsr%c\tvpr, %12-15r"},
+    0x0eec0a10, 0x0fff0fff, "vmsr%c\t%{R:vpr%}, %12-15r"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
-    0x0eed0a10, 0x0fff0fff, "vmsr%c\tp0, %12-15r"},
+    0x0eed0a10, 0x0fff0fff, "vmsr%c\t%{R:p0%}, %12-15r"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0x0eee0a10, 0x0fff0fff, "vmsr%c\tfpcxt_ns, %12-15r"},
+    0x0eee0a10, 0x0fff0fff, "vmsr%c\t%{R:fpcxt_ns%}, %12-15r"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0x0eef0a10, 0x0fff0fff, "vmsr%c\tfpcxt_s, %12-15r"},
+    0x0eef0a10, 0x0fff0fff, "vmsr%c\t%{R:fpcxt_s%}, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ef00a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpsid"},
+    0x0ef00a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpsid%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ef1fa10, 0x0fffffff, "vmrs%c\tAPSR_nzcv, fpscr"},
+    0x0ef1fa10, 0x0fffffff, "vmrs%c\t%{R:APSR_nzcv%}, %{R:fpscr%}"},
   {ANY, ARM_FEATURE (0, ARM_EXT2_V8_1M_MAIN, FPU_VFP_EXT_V1xD),
-    0x0ef10a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpscr"},
+    0x0ef10a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpscr%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0x0ef20a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpscr_nzcvqc"},
+    0x0ef20a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpscr_nzcvqc%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_ARMV8),
-    0x0ef50a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr2"},
+    0x0ef50a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:mvfr2%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ef60a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr1"},
+    0x0ef60a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:mvfr1%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ef70a10, 0x0fff0fff, "vmrs%c\t%12-15r, mvfr0"},
+    0x0ef70a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:mvfr0%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ef80a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpexc"},
+    0x0ef80a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpexc%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0ef90a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpinst\t@ Impl def"},
+    0x0ef90a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpinst%}\t@ Impl def"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0efa0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpinst2\t@ Impl def"},
+    0x0efa0a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpinst2%}\t@ Impl def"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
-    0x0efc0a10, 0x0fff0fff, "vmrs%c\t%12-15r, vpr"},
+    0x0efc0a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:vpr%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
-    0x0efd0a10, 0x0fff0fff, "vmrs%c\t%12-15r, p0"},
+    0x0efd0a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:p0%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0x0efe0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpcxt_ns"},
+    0x0efe0a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpcxt_ns%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0x0eff0a10, 0x0fff0fff, "vmrs%c\t%12-15r, fpcxt_s"},
+    0x0eff0a10, 0x0fff0fff, "vmrs%c\t%12-15r, %{R:fpcxt_s%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
-    0x0e000b10, 0x0fd00fff, "vmov%c.32\t%z2[%21d], %12-15r"},
+    0x0e000b10, 0x0fd00fff, "vmov%c.32\t%z2[%{I:%21d%}], %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
-    0x0e100b10, 0x0fd00fff, "vmov%c.32\t%12-15r, %z2[%21d]"},
+    0x0e100b10, 0x0fd00fff, "vmov%c.32\t%12-15r, %z2[%{I:%21d%}]"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ee00a10, 0x0ff00fff, "vmsr%c\t<impl def %16-19x>, %12-15r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
@@ -949,9 +854,9 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0e100a10, 0x0ff00f7f, "vmov%c\t%12-15r, %y2"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
-    0x0eb50a40, 0x0fbf0f70, "vcmp%7'e%c.f32\t%y1, #0.0"},
+    0x0eb50a40, 0x0fbf0f70, "vcmp%7'e%c.f32\t%y1, %{I:#0.0%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
-    0x0eb50b40, 0x0fbf0f70, "vcmp%7'e%c.f64\t%z1, #0.0"},
+    0x0eb50b40, 0x0fbf0f70, "vcmp%7'e%c.f64\t%z1, %{I:#0.0%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0eb00a40, 0x0fbf0fd0, "vmov%c.f32\t%y1, %y0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
@@ -981,23 +886,23 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0eb40b40, 0x0fbf0f50, "vcmp%7'e%c.f64\t%z1, %z0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
-    0x0eba0a40, 0x0fbe0f50, "vcvt%c.f32.%16?us%7?31%7?26\t%y1, %y1, #%5,0-3k"},
+    0x0eba0a40, 0x0fbe0f50, "vcvt%c.f32.%16?us%7?31%7?26\t%y1, %y1, %{I:#%5,0-3k%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
-    0x0eba0b40, 0x0fbe0f50, "vcvt%c.f64.%16?us%7?31%7?26\t%z1, %z1, #%5,0-3k"},
+    0x0eba0b40, 0x0fbe0f50, "vcvt%c.f64.%16?us%7?31%7?26\t%z1, %z1, %{I:#%5,0-3k%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1xD),
     0x0ebc0a40, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f32\t%y1, %y0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0ebc0b40, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f64\t%y1, %z0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
-    0x0ebe0a40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f32\t%y1, %y1, #%5,0-3k"},
+    0x0ebe0a40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f32\t%y1, %y1, %{I:#%5,0-3k%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
-    0x0ebe0b40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f64\t%z1, %z1, #%5,0-3k"},
+    0x0ebe0b40, 0x0fbe0f50, "vcvt%c.%16?us%7?31%7?26.f64\t%z1, %z1, %{I:#%5,0-3k%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0c500b10, 0x0fb00ff0, "vmov%c\t%12-15r, %16-19r, %z0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3xD),
-    0x0eb00a00, 0x0fb00ff0, "vmov%c.f32\t%y1, #%0-3,16-19E"},
+    0x0eb00a00, 0x0fb00ff0, "vmov%c.f32\t%y1, %{I:#%0-3,16-19E%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V3),
-    0x0eb00b00, 0x0fb00ff0, "vmov%c.f64\t%z1, #%0-3,16-19E"},
+    0x0eb00b00, 0x0fb00ff0, "vmov%c.f64\t%z1, %{I:#%0-3,16-19E%}"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
     0x0c400a10, 0x0ff00fd0, "vmov%c\t%y4, %12-15r, %16-19r"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V2),
@@ -1040,180 +945,6 @@ static const struct sopcode32 coprocessor_opcodes[] =
     0x0e800a00, 0x0fb00f50, "vdiv%c.f32\t%y1, %y2, %y0"},
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_V1),
     0x0e800b00, 0x0fb00f50, "vdiv%c.f64\t%z1, %z2, %z0"},
-
-  /* Cirrus coprocessor instructions.  */
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c100400, 0x0f500f00, "cfldrs%c\tmvf%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d500400, 0x0f500f00, "cfldrd%c\tmvd%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c500400, 0x0f500f00, "cfldrd%c\tmvd%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d100500, 0x0f500f00, "cfldr32%c\tmvfx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c100500, 0x0f500f00, "cfldr32%c\tmvfx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d500500, 0x0f500f00, "cfldr64%c\tmvdx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c500500, 0x0f500f00, "cfldr64%c\tmvdx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d000400, 0x0f500f00, "cfstrs%c\tmvf%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c000400, 0x0f500f00, "cfstrs%c\tmvf%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d400400, 0x0f500f00, "cfstrd%c\tmvd%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c400400, 0x0f500f00, "cfstrd%c\tmvd%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d000500, 0x0f500f00, "cfstr32%c\tmvfx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c000500, 0x0f500f00, "cfstr32%c\tmvfx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0d400500, 0x0f500f00, "cfstr64%c\tmvdx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0c400500, 0x0f500f00, "cfstr64%c\tmvdx%12-15d, %A"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000450, 0x0ff00ff0, "cfmvsr%c\tmvf%16-19d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100450, 0x0ff00ff0, "cfmvrs%c\t%12-15r, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000410, 0x0ff00ff0, "cfmvdlr%c\tmvd%16-19d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100410, 0x0ff00ff0, "cfmvrdl%c\t%12-15r, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000430, 0x0ff00ff0, "cfmvdhr%c\tmvd%16-19d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100430, 0x0ff00fff, "cfmvrdh%c\t%12-15r, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000510, 0x0ff00fff, "cfmv64lr%c\tmvdx%16-19d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100510, 0x0ff00fff, "cfmvr64l%c\t%12-15r, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000530, 0x0ff00fff, "cfmv64hr%c\tmvdx%16-19d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100530, 0x0ff00fff, "cfmvr64h%c\t%12-15r, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200440, 0x0ff00fff, "cfmval32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100440, 0x0ff00fff, "cfmv32al%c\tmvfx%12-15d, mvax%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200460, 0x0ff00fff, "cfmvam32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100460, 0x0ff00fff, "cfmv32am%c\tmvfx%12-15d, mvax%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200480, 0x0ff00fff, "cfmvah32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100480, 0x0ff00fff, "cfmv32ah%c\tmvfx%12-15d, mvax%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004a0, 0x0ff00fff, "cfmva32%c\tmvax%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004a0, 0x0ff00fff, "cfmv32a%c\tmvfx%12-15d, mvax%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004c0, 0x0ff00fff, "cfmva64%c\tmvax%12-15d, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004c0, 0x0ff00fff, "cfmv64a%c\tmvdx%12-15d, mvax%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e2004e0, 0x0fff0fff, "cfmvsc32%c\tdspsc, mvdx%12-15d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004e0, 0x0fff0fff, "cfmv32sc%c\tmvdx%12-15d, dspsc"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000400, 0x0ff00fff, "cfcpys%c\tmvf%12-15d, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000420, 0x0ff00fff, "cfcpyd%c\tmvd%12-15d, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000460, 0x0ff00fff, "cfcvtsd%c\tmvd%12-15d, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000440, 0x0ff00fff, "cfcvtds%c\tmvf%12-15d, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000480, 0x0ff00fff, "cfcvt32s%c\tmvf%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004a0, 0x0ff00fff, "cfcvt32d%c\tmvd%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004c0, 0x0ff00fff, "cfcvt64s%c\tmvf%12-15d, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e0004e0, 0x0ff00fff, "cfcvt64d%c\tmvd%12-15d, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100580, 0x0ff00fff, "cfcvts32%c\tmvfx%12-15d, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005a0, 0x0ff00fff, "cfcvtd32%c\tmvfx%12-15d, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005c0, 0x0ff00fff, "cftruncs32%c\tmvfx%12-15d, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005e0, 0x0ff00fff, "cftruncd32%c\tmvfx%12-15d, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000550, 0x0ff00ff0, "cfrshl32%c\tmvfx%16-19d, mvfx%0-3d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000570, 0x0ff00ff0, "cfrshl64%c\tmvdx%16-19d, mvdx%0-3d, %12-15r"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000500, 0x0ff00f10, "cfsh32%c\tmvfx%12-15d, mvfx%16-19d, #%I"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200500, 0x0ff00f10, "cfsh64%c\tmvdx%12-15d, mvdx%16-19d, #%I"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100490, 0x0ff00ff0, "cfcmps%c\t%12-15r, mvf%16-19d, mvf%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1004b0, 0x0ff00ff0, "cfcmpd%c\t%12-15r, mvd%16-19d, mvd%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100590, 0x0ff00ff0, "cfcmp32%c\t%12-15r, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e1005b0, 0x0ff00ff0, "cfcmp64%c\t%12-15r, mvdx%16-19d, mvdx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300400, 0x0ff00fff, "cfabss%c\tmvf%12-15d, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300420, 0x0ff00fff, "cfabsd%c\tmvd%12-15d, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300440, 0x0ff00fff, "cfnegs%c\tmvf%12-15d, mvf%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300460, 0x0ff00fff, "cfnegd%c\tmvd%12-15d, mvd%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300480, 0x0ff00ff0, "cfadds%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004a0, 0x0ff00ff0, "cfaddd%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004c0, 0x0ff00ff0, "cfsubs%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3004e0, 0x0ff00ff0, "cfsubd%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100400, 0x0ff00ff0, "cfmuls%c\tmvf%12-15d, mvf%16-19d, mvf%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100420, 0x0ff00ff0, "cfmuld%c\tmvd%12-15d, mvd%16-19d, mvd%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300500, 0x0ff00fff, "cfabs32%c\tmvfx%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300520, 0x0ff00fff, "cfabs64%c\tmvdx%12-15d, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300540, 0x0ff00fff, "cfneg32%c\tmvfx%12-15d, mvfx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300560, 0x0ff00fff, "cfneg64%c\tmvdx%12-15d, mvdx%16-19d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300580, 0x0ff00ff0, "cfadd32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005a0, 0x0ff00ff0, "cfadd64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005c0, 0x0ff00ff0, "cfsub32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e3005e0, 0x0ff00ff0, "cfsub64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100500, 0x0ff00ff0, "cfmul32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100520, 0x0ff00ff0, "cfmul64%c\tmvdx%12-15d, mvdx%16-19d, mvdx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100540, 0x0ff00ff0, "cfmac32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100560, 0x0ff00ff0, "cfmsc32%c\tmvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e000600, 0x0ff00f10,
-    "cfmadd32%c\tmvax%5-7d, mvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e100600, 0x0ff00f10,
-    "cfmsub32%c\tmvax%5-7d, mvfx%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e200600, 0x0ff00f10,
-    "cfmadda32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
-  {ANY, ARM_FEATURE_COPROC (ARM_CEXT_MAVERICK),
-    0x0e300600, 0x0ff00f10,
-    "cfmsuba32%c\tmvax%5-7d, mvax%12-15d, mvfx%16-19d, mvfx%0-3d"},
 
   /* VFP Fused multiply add instructions.  */
   {ANY, ARM_FEATURE_COPROC (FPU_VFP_EXT_FMA),
@@ -1262,25 +993,25 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_CORE_LOW (0), SENTINEL_GENERIC_START, 0, "" },
   /* ARMv8.3 AdvSIMD instructions in the space of coprocessor 8.  */
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfc800800, 0xfeb00f10, "vcadd%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%24?29%24'70"},
+    0xfc800800, 0xfeb00f10, "vcadd%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, %{I:#%24?29%24'70%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfc900800, 0xfeb00f10, "vcadd%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%24?29%24'70"},
+    0xfc900800, 0xfeb00f10, "vcadd%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, %{I:#%24?29%24'70%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfc200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%23'90"},
+    0xfc200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, %{I:#%23'90%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfd200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, #%23?21%23?780"},
+    0xfd200800, 0xff300f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3,5V, %{I:#%23?21%23?780%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfc300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%23'90"},
+    0xfc300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, %{I:#%23'90%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfd300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, #%23?21%23?780"},
+    0xfd300800, 0xff300f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5V, %{I:#%23?21%23?780%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfe000800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3D[%5?10], #%20'90"},
+    0xfe000800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %{R:%0-3D[%5?10]%}, %{I:#%20'90%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfe200800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %0-3D[%5?10], #%20?21%20?780"},
+    0xfe200800, 0xffa00f10, "vcmla%c.f16\t%12-15,22V, %16-19,7V, %{R:%0-3D[%5?10]%}, %{I:#%20?21%20?780%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfe800800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20'90"},
+    0xfe800800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %{R:%0-3,5D[0]%}, %{I:#%20'90%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_3A),
-    0xfea00800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %0-3,5D[0], #%20?21%20?780"},
+    0xfea00800, 0xffa00f10, "vcmla%c.f32\t%12-15,22V, %16-19,7V, %{R:%0-3,5D[0]%}, %{I:#%20?21%20?780%}"},
 
   /* BFloat16 instructions.  */
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
@@ -1290,25 +1021,25 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
     0xfc200d00, 0xffb00f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3,5V"},
   {ANY, ARM_FEATURE_COPROC (FPU_NEON_EXT_DOTPROD),
-    0xfe200d00, 0xff200f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %0-3D[%5?10]"},
+    0xfe200d00, 0xff200f00, "v%4?usdot.%4?us8\t%12-15,22V, %16-19,7V, %{R:%0-3D[%5?10]%}"},
 
   /* ARMv8.2 FMAC Long instructions in the space of coprocessor 8.  */
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfc200810, 0xffb00f50, "vfmal.f16\t%12-15,22D, s%7,16-19d, s%5,0-3d"},
+    0xfc200810, 0xffb00f50, "vfmal.f16\t%12-15,22D, %{R:s%7,16-19d%}, %{R:s%5,0-3d%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfca00810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, s%7,16-19d, s%5,0-3d"},
+    0xfca00810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, %{R:s%7,16-19d%}, %{R:s%5,0-3d%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfc200850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, d%16-19,7d, d%0-3,5d"},
+    0xfc200850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, %{R:d%16-19,7d%}, %{R:d%0-3,5d%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfca00850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, d%16-19,7d, d%0-3,5d"},
+    0xfca00850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, %{R:d%16-19,7d%}, %{R:d%0-3,5d%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfe000810, 0xffb00f50, "vfmal.f16\t%12-15,22D, s%7,16-19d, s%5,0-2d[%3d]"},
+    0xfe000810, 0xffb00f50, "vfmal.f16\t%12-15,22D, %{R:s%7,16-19d%}, %{R:s%5,0-2d[%3d]%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfe100810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, s%7,16-19d, s%5,0-2d[%3d]"},
+    0xfe100810, 0xffb00f50, "vfmsl.f16\t%12-15,22D, %{R:s%7,16-19d%}, %{R:s%5,0-2d[%3d]%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfe000850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, d%16-19,7d, d%0-2d[%3,5d]"},
+    0xfe000850, 0xffb00f50, "vfmal.f16\t%12-15,22Q, %{R:d%16-19,7d%}, %{R:d%0-2d[%3,5d]%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST | ARM_EXT2_V8_2A),
-    0xfe100850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, d%16-19,7d, d%0-2d[%3,5d]"},
+    0xfe100850, 0xffb00f50, "vfmsl.f16\t%12-15,22Q, %{R:d%16-19,7d%}, %{R:d%0-2d[%3,5d]%}"},
 
   /* ARMv8.2 half-precision Floating point coprocessor 9 (VFP) instructions.
      cp_num: bit <11:8> == 0b1001.
@@ -1320,11 +1051,11 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0eb40940, 0x0fbf0f50, "vcmp%7'e%c.f16\t%y1, %y0"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
-    0x0eb50940, 0x0fbf0f70, "vcmp%7'e%c.f16\t%y1, #0.0"},
+    0x0eb50940, 0x0fbf0f70, "vcmp%7'e%c.f16\t%y1, %{I:#0.0%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
-    0x0eba09c0, 0x0fbe0fd0, "vcvt%c.f16.%16?us%7?31%7?26\t%y1, %y1, #%5,0-3k"},
+    0x0eba09c0, 0x0fbe0fd0, "vcvt%c.f16.%16?us%7?31%7?26\t%y1, %y1, %{I:#%5,0-3k%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
-    0x0ebe09c0, 0x0fbe0fd0, "vcvt%c.%16?us%7?31%7?26.f16\t%y1, %y1, #%5,0-3k"},
+    0x0ebe09c0, 0x0fbe0fd0, "vcvt%c.%16?us%7?31%7?26.f16\t%y1, %y1, %{I:#%5,0-3k%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0ebc0940, 0x0fbe0f50, "vcvt%7`r%c.%16?su32.f16\t%y1, %y0"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
@@ -1362,7 +1093,7 @@ static const struct sopcode32 coprocessor_opcodes[] =
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e000910, 0x0ff00f7f, "vmov%c.f16\t%y2, %12-15r"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
-    0xeb00900, 0x0fb00ff0, "vmov%c.f16\t%y1, #%0-3,16-19E"},
+    0xeb00900, 0x0fb00ff0, "vmov%c.f16\t%y1, %{I:#%0-3,16-19E%}"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0x0e200900, 0x0fb00f50, "vmul%c.f16\t%y1, %y2, %y0"},
   {ANY, ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
@@ -1398,49 +1129,49 @@ static const struct sopcode32 generic_coprocessor_opcodes[] =
 {
   /* Generic coprocessor instructions.  */
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5E),
-    0x0c400000, 0x0ff00000, "mcrr%c\t%8-11d, %4-7d, %12-15R, %16-19r, cr%0-3d"},
+    0x0c400000, 0x0ff00000, "mcrr%c\t%{I:%8-11d%}, %{I:%4-7d%}, %12-15R, %16-19r, %{R:cr%0-3d%}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5E),
     0x0c500000, 0x0ff00000,
-    "mrrc%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
+    "mrrc%c\t%{I:%8-11d%}, %{I:%4-7d%}, %12-15Ru, %16-19Ru, %{R:cr%0-3d%}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x0e000000, 0x0f000010,
-    "cdp%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "cdp%c\t%{I:%8-11d%}, %{I:%20-23d%}, %{R:cr%12-15d%}, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x0e10f010, 0x0f10f010,
-    "mrc%c\t%8-11d, %21-23d, APSR_nzcv, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "mrc%c\t%{I:%8-11d%}, %{I:%21-23d%}, %{R:APSR_nzcv%}, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x0e100010, 0x0f100010,
-    "mrc%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "mrc%c\t%{I:%8-11d%}, %{I:%21-23d%}, %12-15r, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x0e000010, 0x0f100010,
-    "mcr%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "mcr%c\t%{I:%8-11d%}, %{I:%21-23d%}, %12-15R, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0c000000, 0x0e100000, "stc%22'l%c\t%8-11d, cr%12-15d, %A"},
+    0x0c000000, 0x0e100000, "stc%22'l%c\t%{I:%8-11d%}, %{R:cr%12-15d%}, %A"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
-    0x0c100000, 0x0e100000, "ldc%22'l%c\t%8-11d, cr%12-15d, %A"},
+    0x0c100000, 0x0e100000, "ldc%22'l%c\t%{I:%8-11d%}, %{R:cr%12-15d%}, %A"},
 
   /* V6 coprocessor instructions.  */
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0xfc500000, 0xfff00000,
-    "mrrc2%c\t%8-11d, %4-7d, %12-15Ru, %16-19Ru, cr%0-3d"},
+    "mrrc2%c\t%{I:%8-11d%}, %{I:%4-7d%}, %12-15Ru, %16-19Ru, %{R:cr%0-3d%}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0xfc400000, 0xfff00000,
-    "mcrr2%c\t%8-11d, %4-7d, %12-15R, %16-19R, cr%0-3d"},
+    "mcrr2%c\t%{I:%8-11d%}, %{I:%4-7d%}, %12-15R, %16-19R, %{R:cr%0-3d%}"},
 
   /* V5 coprocessor instructions.  */
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfc100000, 0xfe100000, "ldc2%22'l%c\t%8-11d, cr%12-15d, %A"},
+    0xfc100000, 0xfe100000, "ldc2%22'l%c\t%{I:%8-11d%}, %{R:cr%12-15d%}, %A"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
-    0xfc000000, 0xfe100000, "stc2%22'l%c\t%8-11d, cr%12-15d, %A"},
+    0xfc000000, 0xfe100000, "stc2%22'l%c\t%{I:%8-11d%}, %{R:cr%12-15d%}, %A"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
     0xfe000000, 0xff000010,
-    "cdp2%c\t%8-11d, %20-23d, cr%12-15d, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "cdp2%c\t%{I:%8-11d%}, %{I:%20-23d%}, %{R:cr%12-15d%}, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
     0xfe000010, 0xff100010,
-    "mcr2%c\t%8-11d, %21-23d, %12-15R, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "mcr2%c\t%{I:%8-11d%}, %{I:%21-23d%}, %12-15R, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
   {ANY, ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
     0xfe100010, 0xff100010,
-    "mrc2%c\t%8-11d, %21-23d, %12-15r, cr%16-19d, cr%0-3d, {%5-7d}"},
+    "mrc2%c\t%{I:%8-11d%}, %{I:%21-23d%}, %12-15r, %{R:cr%16-19d%}, %{R:cr%0-3d%}, {%{I:%5-7d%}}"},
 
   {ANY, ARM_FEATURE_CORE_LOW (0), 0, 0, 0}
 };
@@ -1482,10 +1213,10 @@ static const struct opcode32 neon_opcodes[] =
   /* Extract.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf2b00840, 0xffb00850,
-    "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, #%8-11d"},
+    "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, %{I:#%8-11d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf2b00000, 0xffb00810,
-    "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, #%8-11d"},
+    "vext%c.8\t%12-15,22R, %16-19,7R, %0-3,5R, %{I:#%8-11d%}"},
 
   /* Data transfer between ARM and NEON registers.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
@@ -1503,11 +1234,11 @@ static const struct opcode32 neon_opcodes[] =
 
   /* Move data element to all lanes.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b40c00, 0xffb70f90, "vdup%c.32\t%12-15,22R, %0-3,5D[%19d]"},
+    0xf3b40c00, 0xffb70f90, "vdup%c.32\t%12-15,22R, %{R:%0-3,5D[%19d]%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b20c00, 0xffb30f90, "vdup%c.16\t%12-15,22R, %0-3,5D[%18-19d]"},
+    0xf3b20c00, 0xffb30f90, "vdup%c.16\t%12-15,22R, %{R:%0-3,5D[%18-19d]%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b10c00, 0xffb10f90, "vdup%c.8\t%12-15,22R, %0-3,5D[%17-19d]"},
+    0xf3b10c00, 0xffb10f90, "vdup%c.8\t%12-15,22R, %{R:%0-3,5D[%17-19d]%}"},
 
   /* Table lookup.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
@@ -1535,7 +1266,7 @@ static const struct opcode32 neon_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
     0xfc000d00, 0xffb00f10, "vdot.bf16\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
-    0xfe000d00, 0xffb00f10, "vdot.bf16\t%12-15,22R, %16-19,7R, d%0-3d[%5d]"},
+    0xfe000d00, 0xffb00f10, "vdot.bf16\t%12-15,22R, %16-19,7R, %{R:d%0-3d[%5d]%}"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
     0xfc000c40, 0xffb00f50, "vmmla.bf16\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
@@ -1543,7 +1274,7 @@ static const struct opcode32 neon_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
     0xfc300810, 0xffb00f10, "vfma%6?tb.bf16\t%12-15,22Q, %16-19,7Q, %0-3,5Q"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_BF16),
-    0xfe300810, 0xffb00f10, "vfma%6?tb.bf16\t%12-15,22Q, %16-19,7Q, %0-2D[%3,5d]"},
+    0xfe300810, 0xffb00f10, "vfma%6?tb.bf16\t%12-15,22Q, %16-19,7Q, %{R:%0-2D[%3,5d]%}"},
 
   /* Matrix Multiply instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
@@ -1555,9 +1286,9 @@ static const struct opcode32 neon_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
     0xfca00d00, 0xffb00f10, "vusdot.s8\t%12-15,22R, %16-19,7R, %0-3,5R"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
-    0xfe800d00, 0xffb00f10, "vusdot.s8\t%12-15,22R, %16-19,7R, d%0-3d[%5d]"},
+    0xfe800d00, 0xffb00f10, "vusdot.s8\t%12-15,22R, %16-19,7R, %{R:d%0-3d[%5d]%}"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_I8MM),
-    0xfe800d10, 0xffb00f10, "vsudot.u8\t%12-15,22R, %16-19,7R, d%0-3d[%5d]"},
+    0xfe800d10, 0xffb00f10, "vsudot.u8\t%12-15,22R, %16-19,7R, %{R:d%0-3d[%5d]%}"},
 
   /* Two registers, miscellaneous.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_ARMV8),
@@ -1604,7 +1335,7 @@ static const struct opcode32 neon_opcodes[] =
     0xf3b202c0, 0xffb30fd0, "vqmovn%c.u%18-19T2\t%12-15,22D, %0-3,5Q"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf3b20300, 0xffb30fd0,
-    "vshll%c.i%18-19S2\t%12-15,22Q, %0-3,5D, #%18-19S2"},
+    "vshll%c.i%18-19S2\t%12-15,22Q, %0-3,5D, %{I:#%18-19S2%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf3bb0400, 0xffbf0e90, "vrecpe%c.%8?fu%18-19S2\t%12-15,22R, %0-3,5R"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
@@ -1634,15 +1365,15 @@ static const struct opcode32 neon_opcodes[] =
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf3b20180, 0xffb30f90, "vzip%c.%18-19S2\t%12-15,22R, %0-3,5R"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b10000, 0xffb30b90, "vcgt%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, #0"},
+    0xf3b10000, 0xffb30b90, "vcgt%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, %{I:#0%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b10080, 0xffb30b90, "vcge%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, #0"},
+    0xf3b10080, 0xffb30b90, "vcge%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, %{I:#0%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b10100, 0xffb30b90, "vceq%c.%10?fi%18-19S2\t%12-15,22R, %0-3,5R, #0"},
+    0xf3b10100, 0xffb30b90, "vceq%c.%10?fi%18-19S2\t%12-15,22R, %0-3,5R, %{I:#0%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b10180, 0xffb30b90, "vcle%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, #0"},
+    0xf3b10180, 0xffb30b90, "vcle%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, %{I:#0%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3b10200, 0xffb30b90, "vclt%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, #0"},
+    0xf3b10200, 0xffb30b90, "vclt%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R, %{I:#0%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf3b10300, 0xffb30b90, "vabs%c.%10?fs%18-19S2\t%12-15,22R, %0-3,5R"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
@@ -1881,128 +1612,128 @@ static const struct opcode32 neon_opcodes[] =
 
   /* Two registers and a shift amount.  */
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880810, 0xffb80fd0, "vshrn%c.i16\t%12-15,22D, %0-3,5Q, #%16-18e"},
+    0xf2880810, 0xffb80fd0, "vshrn%c.i16\t%12-15,22D, %0-3,5Q, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880850, 0xffb80fd0, "vrshrn%c.i16\t%12-15,22D, %0-3,5Q, #%16-18e"},
+    0xf2880850, 0xffb80fd0, "vrshrn%c.i16\t%12-15,22D, %0-3,5Q, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880810, 0xfeb80fd0, "vqshrun%c.s16\t%12-15,22D, %0-3,5Q, #%16-18e"},
+    0xf2880810, 0xfeb80fd0, "vqshrun%c.s16\t%12-15,22D, %0-3,5Q, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880850, 0xfeb80fd0, "vqrshrun%c.s16\t%12-15,22D, %0-3,5Q, #%16-18e"},
+    0xf2880850, 0xfeb80fd0, "vqrshrun%c.s16\t%12-15,22D, %0-3,5Q, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880910, 0xfeb80fd0, "vqshrn%c.%24?us16\t%12-15,22D, %0-3,5Q, #%16-18e"},
+    0xf2880910, 0xfeb80fd0, "vqshrn%c.%24?us16\t%12-15,22D, %0-3,5Q, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf2880950, 0xfeb80fd0,
-    "vqrshrn%c.%24?us16\t%12-15,22D, %0-3,5Q, #%16-18e"},
+    "vqrshrn%c.%24?us16\t%12-15,22D, %0-3,5Q, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880a10, 0xfeb80fd0, "vshll%c.%24?us8\t%12-15,22Q, %0-3,5D, #%16-18d"},
+    0xf2880a10, 0xfeb80fd0, "vshll%c.%24?us8\t%12-15,22Q, %0-3,5D, %{I:#%16-18d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900810, 0xffb00fd0, "vshrn%c.i32\t%12-15,22D, %0-3,5Q, #%16-19e"},
+    0xf2900810, 0xffb00fd0, "vshrn%c.i32\t%12-15,22D, %0-3,5Q, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900850, 0xffb00fd0, "vrshrn%c.i32\t%12-15,22D, %0-3,5Q, #%16-19e"},
+    0xf2900850, 0xffb00fd0, "vrshrn%c.i32\t%12-15,22D, %0-3,5Q, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880510, 0xffb80f90, "vshl%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18d"},
+    0xf2880510, 0xffb80f90, "vshl%c.%24?us8\t%12-15,22R, %0-3,5R, %{I:#%16-18d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3880410, 0xffb80f90, "vsri%c.8\t%12-15,22R, %0-3,5R, #%16-18e"},
+    0xf3880410, 0xffb80f90, "vsri%c.8\t%12-15,22R, %0-3,5R, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3880510, 0xffb80f90, "vsli%c.8\t%12-15,22R, %0-3,5R, #%16-18d"},
+    0xf3880510, 0xffb80f90, "vsli%c.8\t%12-15,22R, %0-3,5R, %{I:#%16-18d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3880610, 0xffb80f90, "vqshlu%c.s8\t%12-15,22R, %0-3,5R, #%16-18d"},
+    0xf3880610, 0xffb80f90, "vqshlu%c.s8\t%12-15,22R, %0-3,5R, %{I:#%16-18d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900810, 0xfeb00fd0, "vqshrun%c.s32\t%12-15,22D, %0-3,5Q, #%16-19e"},
+    0xf2900810, 0xfeb00fd0, "vqshrun%c.s32\t%12-15,22D, %0-3,5Q, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900850, 0xfeb00fd0, "vqrshrun%c.s32\t%12-15,22D, %0-3,5Q, #%16-19e"},
+    0xf2900850, 0xfeb00fd0, "vqrshrun%c.s32\t%12-15,22D, %0-3,5Q, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900910, 0xfeb00fd0, "vqshrn%c.%24?us32\t%12-15,22D, %0-3,5Q, #%16-19e"},
+    0xf2900910, 0xfeb00fd0, "vqshrn%c.%24?us32\t%12-15,22D, %0-3,5Q, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf2900950, 0xfeb00fd0,
-    "vqrshrn%c.%24?us32\t%12-15,22D, %0-3,5Q, #%16-19e"},
+    "vqrshrn%c.%24?us32\t%12-15,22D, %0-3,5Q, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900a10, 0xfeb00fd0, "vshll%c.%24?us16\t%12-15,22Q, %0-3,5D, #%16-19d"},
+    0xf2900a10, 0xfeb00fd0, "vshll%c.%24?us16\t%12-15,22Q, %0-3,5D, %{I:#%16-19d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880010, 0xfeb80f90, "vshr%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
+    0xf2880010, 0xfeb80f90, "vshr%c.%24?us8\t%12-15,22R, %0-3,5R, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880110, 0xfeb80f90, "vsra%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
+    0xf2880110, 0xfeb80f90, "vsra%c.%24?us8\t%12-15,22R, %0-3,5R, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880210, 0xfeb80f90, "vrshr%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
+    0xf2880210, 0xfeb80f90, "vrshr%c.%24?us8\t%12-15,22R, %0-3,5R, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880310, 0xfeb80f90, "vrsra%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18e"},
+    0xf2880310, 0xfeb80f90, "vrsra%c.%24?us8\t%12-15,22R, %0-3,5R, %{I:#%16-18e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2880710, 0xfeb80f90, "vqshl%c.%24?us8\t%12-15,22R, %0-3,5R, #%16-18d"},
+    0xf2880710, 0xfeb80f90, "vqshl%c.%24?us8\t%12-15,22R, %0-3,5R, %{I:#%16-18d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00810, 0xffa00fd0, "vshrn%c.i64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+    0xf2a00810, 0xffa00fd0, "vshrn%c.i64\t%12-15,22D, %0-3,5Q, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00850, 0xffa00fd0, "vrshrn%c.i64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+    0xf2a00850, 0xffa00fd0, "vrshrn%c.i64\t%12-15,22D, %0-3,5Q, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900510, 0xffb00f90, "vshl%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19d"},
+    0xf2900510, 0xffb00f90, "vshl%c.%24?us16\t%12-15,22R, %0-3,5R, %{I:#%16-19d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3900410, 0xffb00f90, "vsri%c.16\t%12-15,22R, %0-3,5R, #%16-19e"},
+    0xf3900410, 0xffb00f90, "vsri%c.16\t%12-15,22R, %0-3,5R, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3900510, 0xffb00f90, "vsli%c.16\t%12-15,22R, %0-3,5R, #%16-19d"},
+    0xf3900510, 0xffb00f90, "vsli%c.16\t%12-15,22R, %0-3,5R, %{I:#%16-19d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3900610, 0xffb00f90, "vqshlu%c.s16\t%12-15,22R, %0-3,5R, #%16-19d"},
+    0xf3900610, 0xffb00f90, "vqshlu%c.s16\t%12-15,22R, %0-3,5R, %{I:#%16-19d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00a10, 0xfea00fd0, "vshll%c.%24?us32\t%12-15,22Q, %0-3,5D, #%16-20d"},
+    0xf2a00a10, 0xfea00fd0, "vshll%c.%24?us32\t%12-15,22Q, %0-3,5D, %{I:#%16-20d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900010, 0xfeb00f90, "vshr%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
+    0xf2900010, 0xfeb00f90, "vshr%c.%24?us16\t%12-15,22R, %0-3,5R, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900110, 0xfeb00f90, "vsra%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
+    0xf2900110, 0xfeb00f90, "vsra%c.%24?us16\t%12-15,22R, %0-3,5R, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900210, 0xfeb00f90, "vrshr%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
+    0xf2900210, 0xfeb00f90, "vrshr%c.%24?us16\t%12-15,22R, %0-3,5R, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900310, 0xfeb00f90, "vrsra%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19e"},
+    0xf2900310, 0xfeb00f90, "vrsra%c.%24?us16\t%12-15,22R, %0-3,5R, %{I:#%16-19e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2900710, 0xfeb00f90, "vqshl%c.%24?us16\t%12-15,22R, %0-3,5R, #%16-19d"},
+    0xf2900710, 0xfeb00f90, "vqshl%c.%24?us16\t%12-15,22R, %0-3,5R, %{I:#%16-19d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00810, 0xfea00fd0, "vqshrun%c.s64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+    0xf2a00810, 0xfea00fd0, "vqshrun%c.s64\t%12-15,22D, %0-3,5Q, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00850, 0xfea00fd0, "vqrshrun%c.s64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+    0xf2a00850, 0xfea00fd0, "vqrshrun%c.s64\t%12-15,22D, %0-3,5Q, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00910, 0xfea00fd0, "vqshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+    0xf2a00910, 0xfea00fd0, "vqshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf2a00950, 0xfea00fd0,
-    "vqrshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, #%16-20e"},
+    "vqrshrn%c.%24?us64\t%12-15,22D, %0-3,5Q, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00510, 0xffa00f90, "vshl%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20d"},
+    0xf2a00510, 0xffa00f90, "vshl%c.%24?us32\t%12-15,22R, %0-3,5R, %{I:#%16-20d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3a00410, 0xffa00f90, "vsri%c.32\t%12-15,22R, %0-3,5R, #%16-20e"},
+    0xf3a00410, 0xffa00f90, "vsri%c.32\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3a00510, 0xffa00f90, "vsli%c.32\t%12-15,22R, %0-3,5R, #%16-20d"},
+    0xf3a00510, 0xffa00f90, "vsli%c.32\t%12-15,22R, %0-3,5R, %{I:#%16-20d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3a00610, 0xffa00f90, "vqshlu%c.s32\t%12-15,22R, %0-3,5R, #%16-20d"},
+    0xf3a00610, 0xffa00f90, "vqshlu%c.s32\t%12-15,22R, %0-3,5R, %{I:#%16-20d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00010, 0xfea00f90, "vshr%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20e"},
+    0xf2a00010, 0xfea00f90, "vshr%c.%24?us32\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00110, 0xfea00f90, "vsra%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20e"},
+    0xf2a00110, 0xfea00f90, "vsra%c.%24?us32\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00210, 0xfea00f90, "vrshr%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20e"},
+    0xf2a00210, 0xfea00f90, "vrshr%c.%24?us32\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00310, 0xfea00f90, "vrsra%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20e"},
+    0xf2a00310, 0xfea00f90, "vrsra%c.%24?us32\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2a00710, 0xfea00f90, "vqshl%c.%24?us32\t%12-15,22R, %0-3,5R, #%16-20d"},
+    0xf2a00710, 0xfea00f90, "vqshl%c.%24?us32\t%12-15,22R, %0-3,5R, %{I:#%16-20d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2800590, 0xff800f90, "vshl%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21d"},
+    0xf2800590, 0xff800f90, "vshl%c.%24?us64\t%12-15,22R, %0-3,5R, %{I:#%16-21d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3800490, 0xff800f90, "vsri%c.64\t%12-15,22R, %0-3,5R, #%16-21e"},
+    0xf3800490, 0xff800f90, "vsri%c.64\t%12-15,22R, %0-3,5R, %{I:#%16-21e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3800590, 0xff800f90, "vsli%c.64\t%12-15,22R, %0-3,5R, #%16-21d"},
+    0xf3800590, 0xff800f90, "vsli%c.64\t%12-15,22R, %0-3,5R, %{I:#%16-21d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf3800690, 0xff800f90, "vqshlu%c.s64\t%12-15,22R, %0-3,5R, #%16-21d"},
+    0xf3800690, 0xff800f90, "vqshlu%c.s64\t%12-15,22R, %0-3,5R, %{I:#%16-21d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2800090, 0xfe800f90, "vshr%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21e"},
+    0xf2800090, 0xfe800f90, "vshr%c.%24?us64\t%12-15,22R, %0-3,5R, %{I:#%16-21e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2800190, 0xfe800f90, "vsra%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21e"},
+    0xf2800190, 0xfe800f90, "vsra%c.%24?us64\t%12-15,22R, %0-3,5R, %{I:#%16-21e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2800290, 0xfe800f90, "vrshr%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21e"},
+    0xf2800290, 0xfe800f90, "vrshr%c.%24?us64\t%12-15,22R, %0-3,5R, %{I:#%16-21e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2800390, 0xfe800f90, "vrsra%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21e"},
+    0xf2800390, 0xfe800f90, "vrsra%c.%24?us64\t%12-15,22R, %0-3,5R, %{I:#%16-21e%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
-    0xf2800790, 0xfe800f90, "vqshl%c.%24?us64\t%12-15,22R, %0-3,5R, #%16-21d"},
+    0xf2800790, 0xfe800f90, "vqshl%c.%24?us64\t%12-15,22R, %0-3,5R, %{I:#%16-21d%}"},
   {ARM_FEATURE_COPROC (FPU_NEON_EXT_V1),
     0xf2a00e10, 0xfea00e90,
-    "vcvt%c.%24,8?usff32.%24,8?ffus32\t%12-15,22R, %0-3,5R, #%16-20e"},
+    "vcvt%c.%24,8?usff32.%24,8?ffus32\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_FP16_INST),
     0xf2a00c10, 0xfea00e90,
-    "vcvt%c.%24,8?usff16.%24,8?ffus16\t%12-15,22R, %0-3,5R, #%16-20e"},
+    "vcvt%c.%24,8?usff16.%24,8?ffus16\t%12-15,22R, %0-3,5R, %{I:#%16-20e%}"},
 
   /* Three registers of different lengths.  */
   {ARM_FEATURE_COPROC (FPU_CRYPTO_EXT_ARMV8),
@@ -2372,13 +2103,13 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
    MVE_VCADD_FP,
    0xfc800840, 0xfea11f51,
-   "vcadd%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%24o"},
+   "vcadd%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, %{I:#%24o%}"},
 
   /* Vector VCADD.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VCADD_VEC,
    0xfe000f00, 0xff810f51,
-   "vcadd%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%12o"},
+   "vcadd%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, %{I:#%12o%}"},
 
   /* Vector VCLS.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -2396,7 +2127,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
    MVE_VCMLA_FP,
    0xfc200840, 0xfe211f51,
-   "vcmla%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%23-24o"},
+   "vcmla%v.f%20s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, %{I:#%23-24o%}"},
 
   /* Vector VCMP floating point T1.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
@@ -2505,7 +2236,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
    MVE_VCMUL_FP,
    0xee300e00, 0xefb10f50,
-   "vcmul%v.f%28s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%0,12o"},
+   "vcmul%v.f%28s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, %{I:#%0,12o%}"},
 
    /* Vector VCTP.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -2529,7 +2260,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
    MVE_VCVT_FP_FIX_VEC,
    0xef800c50, 0xef801cd1,
-   "vcvt%v.%s\t%13-15,22Q, %1-3,5Q, #%16-21k"},
+   "vcvt%v.%s\t%13-15,22Q, %1-3,5Q, %{I:#%16-21k%}"},
 
   /* Vector VCVT.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
@@ -2559,31 +2290,31 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VDDUP,
    0xee011f6e, 0xff811f7e,
-   "vddup%v.u%20-21s\t%13-15,22Q, %17-19l, #%0,7u"},
+   "vddup%v.u%20-21s\t%13-15,22Q, %17-19l, %{I:#%0,7u%}"},
 
   /* Vector VDWDUP.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VDWDUP,
    0xee011f60, 0xff811f70,
-   "vdwdup%v.u%20-21s\t%13-15,22Q, %17-19l, %1-3h, #%0,7u"},
+   "vdwdup%v.u%20-21s\t%13-15,22Q, %17-19l, %1-3h, %{I:#%0,7u%}"},
 
   /* Vector VHCADD.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VHCADD,
    0xee000f00, 0xff810f51,
-   "vhcadd%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, #%12o"},
+   "vhcadd%v.s%20-21s\t%13-15,22Q, %17-19,7Q, %1-3,5Q, %{I:#%12o%}"},
 
   /* Vector VIWDUP.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VIWDUP,
    0xee010f60, 0xff811f70,
-   "viwdup%v.u%20-21s\t%13-15,22Q, %17-19l, %1-3h, #%0,7u"},
+   "viwdup%v.u%20-21s\t%13-15,22Q, %17-19l, %1-3h, %{I:#%0,7u%}"},
 
   /* Vector VIDUP.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VIDUP,
    0xee010f6e, 0xff811f7e,
-   "vidup%v.u%20-21s\t%13-15,22Q, %17-19l, #%0,7u"},
+   "vidup%v.u%20-21s\t%13-15,22Q, %17-19l, %{I:#%0,7u%}"},
 
   /* Vector VLD2.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -2625,13 +2356,13 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VLDRW_GATHER_T5,
    0xfd101e00, 0xff111f00,
-   "vldrw%v.u32\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+   "vldrw%v.u32\t%13-15,22Q, [%17-19,7Q, %{I:#%a%0-6i%}]%w"},
 
   /* Vector VLDRD gather load, variant T6.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VLDRD_GATHER_T6,
    0xfd101f00, 0xff111f00,
-   "vldrd%v.u64\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+   "vldrd%v.u64\t%13-15,22Q, [%17-19,7Q, %{I:#%a%0-6i%}]%w"},
 
   /* Vector VLDRB.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -2763,7 +2494,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMLA,
    0xee010e40, 0xef811f70,
-   "vmla%v.%u%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
+   "vmla%v.i%20-21s\t%13-15,22Q, %17-19,7Q, %0-3r"},
 
   /* Vector VMLALDAV.  Note must appear before VMLADAV due to instruction
      opcode aliasing.  */
@@ -2848,7 +2579,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
    MVE_VMOV_GP_TO_VEC_LANE,
    0xee000b10, 0xff900f1f,
-   "vmov%c.%5-6,21-22s\t%17-19,7Q[%N], %12-15r"},
+   "vmov%c.%5-6,21-22s\t%{R:%17-19,7Q[%N]%}, %12-15r"},
 
   /* Vector VORR immediate to vector.
      NOTE: MVE_VORR_IMM must appear in the table
@@ -2864,7 +2595,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VQSHL_T2,
    0xef800750, 0xef801fd1,
-   "vqshl%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vqshl%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VQSHLU T3 Variant
      NOTE: MVE_VQSHL_T2 must appear in the table before
@@ -2873,7 +2604,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VQSHLU_T3,
    0xff800650, 0xff801fd1,
-   "vqshlu%v.s%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vqshlu%v.s%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VRSHR
      NOTE: MVE_VRSHR must appear in the table before
@@ -2881,7 +2612,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VRSHR,
    0xef800250, 0xef801fd1,
-   "vrshr%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vrshr%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VSHL.
      NOTE: MVE_VSHL must appear in the table before
@@ -2889,7 +2620,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSHL_T1,
    0xef800550, 0xff801fd1,
-   "vshl%v.i%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vshl%v.i%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VSHR
      NOTE: MVE_VSHR must appear in the table before
@@ -2897,7 +2628,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSHR,
    0xef800050, 0xef801fd1,
-   "vshr%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vshr%v.%u%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VSLI
      NOTE: MVE_VSLI must appear in the table before
@@ -2905,7 +2636,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSLI,
    0xff800550, 0xff801fd1,
-   "vsli%v.%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vsli%v.%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VSRI
      NOTE: MVE_VSRI must appear in the table before
@@ -2913,7 +2644,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSRI,
    0xff800450, 0xff801fd1,
-   "vsri%v.%19-21s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vsri%v.%19-21s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VMOV immediate to vector,
      undefinded for cmode == 1111 */
@@ -2936,38 +2667,38 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMOV2_VEC_LANE_TO_GP,
    0xec000f00, 0xffb01ff0,
-   "vmov%c\t%0-3r, %16-19r, %13-15,22Q[2], %13-15,22Q[0]"},
+   "vmov%c\t%0-3r, %16-19r, %{R:%13-15,22Q[2]%}, %{R:%13-15,22Q[0]%}"},
 
   /* Vector VMOV two 32-bit lanes to two gprs, idx = 1.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMOV2_VEC_LANE_TO_GP,
    0xec000f10, 0xffb01ff0,
-   "vmov%c\t%0-3r, %16-19r, %13-15,22Q[3], %13-15,22Q[1]"},
+   "vmov%c\t%0-3r, %16-19r, %{R:%13-15,22Q[3]%}, %{R:%13-15,22Q[1]%}"},
 
   /* Vector VMOV Two gprs to two 32-bit lanes, idx = 0.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMOV2_GP_TO_VEC_LANE,
    0xec100f00, 0xffb01ff0,
-   "vmov%c\t%13-15,22Q[2], %13-15,22Q[0], %0-3r, %16-19r"},
+   "vmov%c\t%{R:%13-15,22Q[2]%}, %{R:%13-15,22Q[0]%}, %0-3r, %16-19r"},
 
   /* Vector VMOV Two gprs to two 32-bit lanes, idx = 1.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VMOV2_GP_TO_VEC_LANE,
    0xec100f10, 0xffb01ff0,
-   "vmov%c\t%13-15,22Q[3], %13-15,22Q[1], %0-3r, %16-19r"},
+   "vmov%c\t%{R:%13-15,22Q[3]%}, %{R:%13-15,22Q[1]%}, %0-3r, %16-19r"},
 
   /* Vector VMOV Vector lane to gpr.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE_FP),
    MVE_VMOV_VEC_LANE_TO_GP,
    0xee100b10, 0xff100f1f,
-   "vmov%c.%u%5-6,21-22s\t%12-15r, %17-19,7Q[%N]"},
+   "vmov%c.%u%5-6,21-22s\t%12-15r, %{R:%17-19,7Q[%N]%}"},
 
   /* Vector VSHLL T1 Variant.  Note: VSHLL T1 must appear before MVE_VMOVL due
      to instruction opcode aliasing.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSHLL_T1,
    0xeea00f40, 0xefa00fd1,
-   "vshll%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vshll%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VMOVL long.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -3229,13 +2960,13 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VQRSHRN,
    0xee800f41, 0xefa00fd1,
-   "vqrshrn%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vqrshrn%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VQRSHRUN.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VQRSHRUN,
    0xfe800fc0, 0xffa00fd1,
-   "vqrshrun%T%v.s%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vqrshrun%T%v.s%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VQSHL T1 Variant.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -3253,13 +2984,13 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VQSHRN,
    0xee800f40, 0xefa00fd1,
-   "vqshrn%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vqshrn%T%v.%u%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VQSHRUN.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VQSHRUN,
    0xee800fc0, 0xffa00fd1,
-   "vqshrun%T%v.s%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vqshrun%T%v.s%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VQSUB T1 Variant.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -3325,7 +3056,7 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VRSHRN,
    0xfe800fc1, 0xffa00fd1,
-   "vrshrn%T%v.i%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vrshrn%T%v.i%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VSBC.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -3349,19 +3080,19 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSHLC,
    0xeea00fc0, 0xffa01ff0,
-   "vshlc%v\t%13-15,22Q, %0-3r, #%16-20d"},
+   "vshlc%v\t%13-15,22Q, %0-3r, %{I:#%16-20d%}"},
 
   /* Vector VSHLL T2 Variant.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSHLL_T2,
    0xee310e01, 0xefb30fd1,
-   "vshll%T%v.%u%18-19s\t%13-15,22Q, %1-3,5Q, #%18-19d"},
+   "vshll%T%v.%u%18-19s\t%13-15,22Q, %1-3,5Q, %{I:#%18-19d%}"},
 
   /* Vector VSHRN.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSHRN,
    0xee800fc1, 0xffa00fd1,
-   "vshrn%T%v.i%19-20s\t%13-15,22Q, %1-3,5Q, #%16-18d"},
+   "vshrn%T%v.i%19-20s\t%13-15,22Q, %1-3,5Q, %{I:#%16-18d%}"},
 
   /* Vector VST2 no writeback.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -3415,13 +3146,13 @@ static const struct mopcode32 mve_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSTRW_SCATTER_T5,
    0xfd001e00, 0xff111f00,
-   "vstrw%v.32\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+   "vstrw%v.32\t%13-15,22Q, [%17-19,7Q, %{I:#%a%0-6i%}]%w"},
 
   /* Vector VSTRD scatter store, T6 variant.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
    MVE_VSTRD_SCATTER_T6,
    0xfd001f00, 0xff111f00,
-   "vstrd%v.64\t%13-15,22Q, [%17-19,7Q, #%a%0-6i]%w"},
+   "vstrd%v.64\t%13-15,22Q, [%17-19,7Q, %{I:#%a%0-6i%}]%w"},
 
   /* Vector VSTRB.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_MVE),
@@ -3628,11 +3359,13 @@ static const struct mopcode32 mve_opcodes[] =
    %m			print register mask for ldm/stm instruction
    %o			print operand2 (immediate or register + shift)
    %p			print 'p' iff bits 12-15 are 15
+   %O			print 'OBSOLETE' iff bits 12-15 are 15
    %t			print 't' iff bit 21 set and bit 24 clear
    %B			print arm BLX(1) destination
    %C			print the PSR sub type.
    %U			print barrier type.
    %P			print address for pli instruction.
+   %T			print 'from Armv4T onwards'
 
    %<bitfield>r		print as an ARM register
    %<bitfield>T		print as an ARM register + 1
@@ -3657,12 +3390,12 @@ static const struct opcode32 arm_opcodes[] =
 {
   /* ARM instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0xe1a00000, 0xffffffff, "nop\t\t\t; (mov r0, r0)"},
+    0xe1a00000, 0xffffffff, "nop\t\t\t@ (mov r0, r0)"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0xe7f000f0, 0xfff000f0, "udf\t#%e"},
+    0xe7f000f0, 0xfff000f0, "udf\t%{I:#%e%}"},
 
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T | ARM_EXT_V5),
-    0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4),
+    0x012FFF10, 0x0ffffff0, "bx%c\t%0-3r%T"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
     0x00000090, 0x0fe000f0, "mul%20's%c\t%16-19R, %0-3R, %8-11R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V2),
@@ -3689,7 +3422,7 @@ static const struct opcode32 arm_opcodes[] =
     0x0320f005, 0x0fffffff, "sevl"},
   /* Defined in V8 but is in NOP space so available to all arch.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0xe1000070, 0xfff000f0, "hlt\t0x%16-19X%12-15X%8-11X%0-3X"},
+    0xe1000070, 0xfff000f0, "hlt\t%{I:0x%16-19X%12-15X%8-11X%0-3X%}"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_ATOMICS),
     0x01800e90, 0x0ff00ff0, "stlex%c\t%12-15r, %0-3r, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT2_ATOMICS),
@@ -3734,7 +3467,7 @@ static const struct opcode32 arm_opcodes[] =
 
   /* Privileged Access Never extension instructions.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_PAN),
-    0xf1100000, 0xfffffdff, "setpan\t#%9-9d"},
+    0xf1100000, 0xfffffdff, "setpan\t%{I:#%9-9d%}"},
 
   /* Virtualization Extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_VIRT), 0x0160006e, 0x0fffffff, "eret%c"},
@@ -3756,14 +3489,14 @@ static const struct opcode32 arm_opcodes[] =
 
   /* V7 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf450f000, 0xfd70f000, "pli\t%P"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0x0320f0f0, 0x0ffffff0, "dbg%c\t#%0-3d"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0x0320f0f0, 0x0ffffff0, "dbg%c\t%{I:#%0-3d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8), 0xf57ff051, 0xfffffff3, "dmb\t%U"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8), 0xf57ff041, 0xfffffff3, "dsb\t%U"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf57ff050, 0xfffffff0, "dmb\t%U"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf57ff040, 0xfffffff0, "dsb\t%U"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf57ff060, 0xfffffff0, "isb\t%U"},
    {ARM_FEATURE_CORE_LOW (ARM_EXT_V7),
-    0x0320f000, 0x0fffffff, "nop%c\t{%0-7d}"},
+    0x0320f000, 0x0fffffff, "nop%c\t{%{I:%0-7d%}}"},
 
   /* ARM V6T2 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -3787,7 +3520,7 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0x06ff0f30, 0x0fff0ff0, "rbit%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0x07a00050, 0x0fa00070, "%22?usbfx%c\t%12-15r, %0-3r, #%7-11d, #%16-20W"},
+    0x07a00050, 0x0fa00070, "%22?usbfx%c\t%12-15r, %0-3r, %{I:#%7-11d%}, %{I:#%16-20W%}"},
 
   /* ARM Security extension instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_SEC),
@@ -3822,29 +3555,29 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
     0x0320f004, 0x0fffffff, "sev%c"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K),
-    0x0320f000, 0x0fffff00, "nop%c\t{%0-7d}"},
+    0x0320f000, 0x0fffff00, "nop%c\t{%{I:%0-7d%}}"},
 
   /* ARM V6 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf1080000, 0xfffffe3f, "cpsie\t%8'a%7'i%6'f"},
+    0xf1080000, 0xfffffe3f, "cpsie\t%{B:%8'a%7'i%6'f%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf10a0000, 0xfffffe20, "cpsie\t%8'a%7'i%6'f,#%0-4d"},
+    0xf10a0000, 0xfffffe20, "cpsie\t%{B:%8'a%7'i%6'f%}, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf10C0000, 0xfffffe3f, "cpsid\t%8'a%7'i%6'f"},
+    0xf10C0000, 0xfffffe3f, "cpsid\t%{B:%8'a%7'i%6'f%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf10e0000, 0xfffffe20, "cpsid\t%8'a%7'i%6'f,#%0-4d"},
+    0xf10e0000, 0xfffffe20, "cpsid\t%{B:%8'a%7'i%6'f%}, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf1000000, 0xfff1fe20, "cps\t#%0-4d"},
+    0xf1000000, 0xfff1fe20, "cps\t%{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06800010, 0x0ff00ff0, "pkhbt%c\t%12-15R, %16-19R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06800010, 0x0ff00070, "pkhbt%c\t%12-15R, %16-19R, %0-3R, lsl #%7-11d"},
+    0x06800010, 0x0ff00070, "pkhbt%c\t%12-15R, %16-19R, %0-3R, %{B:lsl%} %{I:#%7-11d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06800050, 0x0ff00ff0, "pkhtb%c\t%12-15R, %16-19R, %0-3R, asr #32"},
+    0x06800050, 0x0ff00ff0, "pkhtb%c\t%12-15R, %16-19R, %0-3R, %{B:asr%} %{I:#32%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06800050, 0x0ff00070, "pkhtb%c\t%12-15R, %16-19R, %0-3R, asr #%7-11d"},
+    0x06800050, 0x0ff00070, "pkhtb%c\t%12-15R, %16-19R, %0-3R, %{B:asr%} %{I:#%7-11d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x01900f9f, 0x0ff00fff, "ldrex%c\tr%12-15d, [%16-19R]"},
+    0x01900f9f, 0x0ff00fff, "ldrex%c\t%{R:r%12-15d%}, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06200f10, 0x0ff00ff0, "qadd16%c\t%12-15R, %16-19R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
@@ -3928,103 +3661,103 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06bf0070, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06bf0470, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, ror #8"},
+    0x06bf0470, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06bf0870, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, ror #16"},
+    0x06bf0870, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06bf0c70, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, ror #24"},
+    0x06bf0c70, 0x0fff0ff0, "sxth%c\t%12-15R, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x068f0070, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x068f0470, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, ror #8"},
+    0x068f0470, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x068f0870, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, ror #16"},
+    0x068f0870, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x068f0c70, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, ror #24"},
+    0x068f0c70, 0x0fff0ff0, "sxtb16%c\t%12-15R, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06af0070, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06af0470, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, ror #8"},
+    0x06af0470, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06af0870, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, ror #16"},
+    0x06af0870, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06af0c70, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, ror #24"},
+    0x06af0c70, 0x0fff0ff0, "sxtb%c\t%12-15R, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06ff0070, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06ff0470, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, ror #8"},
+    0x06ff0470, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06ff0870, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, ror #16"},
+    0x06ff0870, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06ff0c70, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, ror #24"},
+    0x06ff0c70, 0x0fff0ff0, "uxth%c\t%12-15R, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06cf0070, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06cf0470, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, ror #8"},
+    0x06cf0470, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06cf0870, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, ror #16"},
+    0x06cf0870, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06cf0c70, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, ror #24"},
+    0x06cf0c70, 0x0fff0ff0, "uxtb16%c\t%12-15R, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06ef0070, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06ef0470, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, ror #8"},
+    0x06ef0470, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06ef0870, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, ror #16"},
+    0x06ef0870, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06ef0c70, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, ror #24"},
+    0x06ef0c70, 0x0fff0ff0, "uxtb%c\t%12-15R, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06b00070, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06b00470, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+    0x06b00470, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06b00870, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+    0x06b00870, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06b00c70, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+    0x06b00c70, 0x0ff00ff0, "sxtah%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06800070, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06800470, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+    0x06800470, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06800870, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+    0x06800870, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06800c70, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+    0x06800c70, 0x0ff00ff0, "sxtab16%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06a00070, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00470, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+    0x06a00470, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00870, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+    0x06a00870, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00c70, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+    0x06a00c70, 0x0ff00ff0, "sxtab%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06f00070, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06f00470, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+    0x06f00470, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06f00870, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+    0x06f00870, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06f00c70, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+    0x06f00c70, 0x0ff00ff0, "uxtah%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06c00070, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06c00470, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+    0x06c00470, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06c00870, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+    0x06c00870, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06c00c70, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ROR #24"},
+    0x06c00c70, 0x0ff00ff0, "uxtab16%c\t%12-15R, %16-19r, %0-3R, ROR %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06e00070, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00470, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, ror #8"},
+    0x06e00470, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#8%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00870, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, ror #16"},
+    0x06e00870, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#16%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00c70, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, ror #24"},
+    0x06e00c70, 0x0ff00ff0, "uxtab%c\t%12-15R, %16-19r, %0-3R, %{B:ror%} %{I:#24%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x06800fb0, 0x0ff00ff0, "sel%c\t%12-15R, %16-19R, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf1010000, 0xfffffc00, "setend\t%9?ble"},
+    0xf1010000, 0xfffffc00, "setend\t%{B:%9?ble%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x0700f010, 0x0ff0f0d0, "smuad%5'x%c\t%16-19R, %0-3R, %8-11R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
@@ -4044,15 +3777,15 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x075000d0, 0x0ff000d0, "smmls%5'r%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0xf84d0500, 0xfe5fffe0, "srs%23?id%24?ba\t%16-19r%21'!, #%0-4d"},
+    0xf84d0500, 0xfe5fffe0, "srs%23?id%24?ba\t%16-19r%21'!, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00010, 0x0fe00ff0, "ssat%c\t%12-15R, #%16-20W, %0-3R"},
+    0x06a00010, 0x0fe00ff0, "ssat%c\t%12-15R, %{I:#%16-20W%}, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00010, 0x0fe00070, "ssat%c\t%12-15R, #%16-20W, %0-3R, lsl #%7-11d"},
+    0x06a00010, 0x0fe00070, "ssat%c\t%12-15R, %{I:#%16-20W%}, %0-3R, %{B:lsl%} %{I:#%7-11d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00050, 0x0fe00070, "ssat%c\t%12-15R, #%16-20W, %0-3R, asr #%7-11d"},
+    0x06a00050, 0x0fe00070, "ssat%c\t%12-15R, %{I:#%16-20W%}, %0-3R, %{B:asr%} %{I:#%7-11d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06a00f30, 0x0ff00ff0, "ssat16%c\t%12-15r, #%16-19W, %0-3r"},
+    0x06a00f30, 0x0ff00ff0, "ssat16%c\t%12-15r, %{I:#%16-19W%}, %0-3r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x01800f90, 0x0ff00ff0, "strex%c\t%12-15R, %0-3R, [%16-19R]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
@@ -4062,13 +3795,13 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
     0x07800010, 0x0ff000f0, "usada8%c\t%16-19R, %0-3R, %8-11R, %12-15R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00010, 0x0fe00ff0, "usat%c\t%12-15R, #%16-20d, %0-3R"},
+    0x06e00010, 0x0fe00ff0, "usat%c\t%12-15R, %{I:#%16-20d%}, %0-3R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00010, 0x0fe00070, "usat%c\t%12-15R, #%16-20d, %0-3R, lsl #%7-11d"},
+    0x06e00010, 0x0fe00070, "usat%c\t%12-15R, %{I:#%16-20d%}, %0-3R, %{B:lsl%} %{I:#%7-11d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00050, 0x0fe00070, "usat%c\t%12-15R, #%16-20d, %0-3R, asr #%7-11d"},
+    0x06e00050, 0x0fe00070, "usat%c\t%12-15R, %{I:#%16-20d%}, %0-3R, %{B:asr%} %{I:#%7-11d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6),
-    0x06e00f30, 0x0ff00ff0, "usat16%c\t%12-15R, #%16-19d, %0-3R"},
+    0x06e00f30, 0x0ff00ff0, "usat16%c\t%12-15R, %{I:#%16-19d%}, %0-3R"},
 
   /* V5J instruction.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V5J),
@@ -4077,7 +3810,7 @@ static const struct opcode32 arm_opcodes[] =
   /* V5 Instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
     0xe1200070, 0xfff000f0,
-    "bkpt\t0x%16-19X%12-15X%8-11X%0-3X"},
+    "bkpt\t%{I:0x%16-19X%12-15X%8-11X%0-3X%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
     0xfa000000, 0xfe000000, "blx\t%B"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V5),
@@ -4140,7 +3873,7 @@ static const struct opcode32 arm_opcodes[] =
 
   /* ARM Instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x052d0004, 0x0fff0fff, "push%c\t{%12-15r}\t\t; (str%c %12-15r, %a)"},
+    0x052d0004, 0x0fff0fff, "push%c\t{%12-15r}\t\t@ (str%c %12-15r, %a)"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x04400000, 0x0e500000, "strb%t%c\t%12-15R, %a"},
@@ -4237,32 +3970,32 @@ static const struct opcode32 arm_opcodes[] =
     0x01000000, 0x0fb00cff, "mrs%c\t%12-15R, %R"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o"},
+    0x03000000, 0x0fe00000, "tst%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o"},
+    0x01000000, 0x0fe00010, "tst%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o"},
+    0x01000010, 0x0fe00090, "tst%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03300000, 0x0ff00000, "teq%p%c\t%16-19r, %o"},
+    0x03300000, 0x0ff00000, "teq%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o"},
+    0x01300000, 0x0ff00010, "teq%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o"},
+    0x01300010, 0x0ff00010, "teq%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o"},
+    0x03400000, 0x0fe00000, "cmp%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o"},
+    0x01400000, 0x0fe00010, "cmp%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o"},
+    0x01400010, 0x0fe00090, "cmp%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o"},
+    0x03600000, 0x0fe00000, "cmn%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o"},
+    0x01600000, 0x0fe00010, "cmn%p%c\t%16-19r, %o%O"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o"},
+    0x01600010, 0x0fe00090, "cmn%p%c\t%16-19R, %o%O"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x03800000, 0x0fe00000, "orr%20's%c\t%12-15r, %16-19r, %o"},
@@ -4303,7 +4036,7 @@ static const struct opcode32 arm_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x06000010, 0x0e000010, UNDEFINED_INSTRUCTION},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
-    0x049d0004, 0x0fff0fff, "pop%c\t{%12-15r}\t\t; (ldr%c %12-15r, %a)"},
+    0x049d0004, 0x0fff0fff, "pop%c\t{%12-15r}\t\t@ (ldr%c %12-15r, %a)"},
 
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x04500000, 0x0c500000, "ldrb%t%c\t%12-15R, %a"},
@@ -4398,7 +4131,7 @@ static const struct opcode32 arm_opcodes[] =
 
   /* The rest.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7),
-    0x03200000, 0x0fff00ff, "nop%c\t{%0-7d}" UNPREDICTABLE_INSTRUCTION},
+    0x03200000, 0x0fff00ff, "nop%c\t{%{I:%0-7d%}}" UNPREDICTABLE_INSTRUCTION},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V1),
     0x00000000, 0x00000000, UNDEFINED_INSTRUCTION},
   {ARM_FEATURE_CORE_LOW (0),
@@ -4419,7 +4152,7 @@ static const struct opcode32 arm_opcodes[] =
    %c			print the condition code
    %C			print the condition code, or "s" if not conditional
    %x			print warning if conditional an not at end of IT block"
-   %X			print "\t; unpredictable <IT:code>" if conditional
+   %X			print "\t@ unpredictable <IT:code>" if conditional
    %I			print IT instruction suffix and operands
    %W			print Thumb Writeback indicator for LDMIA
    %<bitfield>r		print bitfield as an ARM register
@@ -4443,7 +4176,7 @@ static const struct opcode16 thumb_opcodes[] =
   /* ARM V8 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),  0xbf50, 0xffff, "sevl%c"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8),  0xba80, 0xffc0, "hlt\t%0-5x"},
-  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_PAN),  0xb610, 0xfff7, "setpan\t#%3-3d"},
+  {ARM_FEATURE_CORE_HIGH (ARM_EXT2_PAN),  0xb610, 0xfff7, "setpan\t%{I:#%3-3d%}"},
 
   /* ARM V6K no-argument instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6K), 0xbf00, 0xffff, "nop%c"},
@@ -4461,13 +4194,13 @@ static const struct opcode16 thumb_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xbf00, 0xff00, "it%I%X"},
 
   /* ARM V6.  */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb660, 0xfff8, "cpsie\t%2'a%1'i%0'f%X"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb670, 0xfff8, "cpsid\t%2'a%1'i%0'f%X"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb660, 0xfff8, "cpsie\t%{B:%2'a%1'i%0'f%}%X"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb670, 0xfff8, "cpsid\t%{B:%2'a%1'i%0'f%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0x4600, 0xffc0, "mov%c\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xba00, 0xffc0, "rev%c\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xba40, 0xffc0, "rev16%c\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xbac0, 0xffc0, "revsh%c\t%0-2r, %3-5r"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb650, 0xfff7, "setend\t%3?ble%X"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb650, 0xfff7, "setend\t%{B:%3?ble%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb200, 0xffc0, "sxth%c\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb240, 0xffc0, "sxtb%c\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6), 0xb280, 0xffc0, "uxth%c\t%0-2r, %3-5r"},
@@ -4481,7 +4214,7 @@ static const struct opcode16 thumb_opcodes[] =
     0x4780, 0xff87, "blx%c\t%3-6r%x"},	/* note: 4 bit register number.  */
   /* ARM V4T ISA (Thumb v1).  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x46C0, 0xFFFF, "nop%c\t\t\t; (mov r8, r8)"},
+    0x46C0, 0xFFFF, "nop%c\t\t\t@ (mov r8, r8)"},
   /* Format 4.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x4000, 0xFFC0, "and%C\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x4040, 0xFFC0, "eor%C\t%0-2r, %3-5r"},
@@ -4500,8 +4233,8 @@ static const struct opcode16 thumb_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x4380, 0xFFC0, "bic%C\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x43C0, 0xFFC0, "mvn%C\t%0-2r, %3-5r"},
   /* format 13 */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xB000, 0xFF80, "add%c\tsp, #%0-6W"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xB080, 0xFF80, "sub%c\tsp, #%0-6W"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xB000, 0xFF80, "add%c\t%{R:sp%}, %{I:#%0-6W%}"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xB080, 0xFF80, "sub%c\t%{R:sp%}, %{I:#%0-6W%}"},
   /* format 5 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x4700, 0xFF80, "bx%c\t%S%x"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x4400, 0xFF00, "add%c\t%D, %S"},
@@ -4516,9 +4249,9 @@ static const struct opcode16 thumb_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
     0x1A00, 0xFE00, "sub%C\t%0-2r, %3-5r, %6-8r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x1C00, 0xFE00, "add%C\t%0-2r, %3-5r, #%6-8d"},
+    0x1C00, 0xFE00, "add%C\t%0-2r, %3-5r, %{I:#%6-8d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x1E00, 0xFE00, "sub%C\t%0-2r, %3-5r, #%6-8d"},
+    0x1E00, 0xFE00, "sub%C\t%0-2r, %3-5r, %{I:#%6-8d%}"},
   /* format 8 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
     0x5200, 0xFE00, "strh%c\t%0-2r, [%3-5r, %6-8r]"},
@@ -4534,50 +4267,50 @@ static const struct opcode16 thumb_opcodes[] =
   /* format 1 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x0000, 0xFFC0, "mov%C\t%0-2r, %3-5r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x0000, 0xF800, "lsl%C\t%0-2r, %3-5r, #%6-10d"},
+    0x0000, 0xF800, "lsl%C\t%0-2r, %3-5r, %{I:#%6-10d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x0800, 0xF800, "lsr%C\t%0-2r, %3-5r, %s"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x1000, 0xF800, "asr%C\t%0-2r, %3-5r, %s"},
   /* format 3 */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x2000, 0xF800, "mov%C\t%8-10r, #%0-7d"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x2800, 0xF800, "cmp%c\t%8-10r, #%0-7d"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x3000, 0xF800, "add%C\t%8-10r, #%0-7d"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x3800, 0xF800, "sub%C\t%8-10r, #%0-7d"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x2000, 0xF800, "mov%C\t%8-10r, %{I:#%0-7d%}"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x2800, 0xF800, "cmp%c\t%8-10r, %{I:#%0-7d%}"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x3000, 0xF800, "add%C\t%8-10r, %{I:#%0-7d%}"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0x3800, 0xF800, "sub%C\t%8-10r, %{I:#%0-7d%}"},
   /* format 6 */
   /* TODO: Disassemble PC relative "LDR rD,=<symbolic>" */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
     0x4800, 0xF800,
-    "ldr%c\t%8-10r, [pc, #%0-7W]\t; (%0-7a)"},
+    "ldr%c\t%8-10r, [%{R:pc%}, %{I:#%0-7W%}]\t@ (%0-7a)"},
   /* format 9 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x6000, 0xF800, "str%c\t%0-2r, [%3-5r, #%6-10W]"},
+    0x6000, 0xF800, "str%c\t%0-2r, [%3-5r, %{I:#%6-10W%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x6800, 0xF800, "ldr%c\t%0-2r, [%3-5r, #%6-10W]"},
+    0x6800, 0xF800, "ldr%c\t%0-2r, [%3-5r, %{I:#%6-10W%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x7000, 0xF800, "strb%c\t%0-2r, [%3-5r, #%6-10d]"},
+    0x7000, 0xF800, "strb%c\t%0-2r, [%3-5r, %{I:#%6-10d%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x7800, 0xF800, "ldrb%c\t%0-2r, [%3-5r, #%6-10d]"},
+    0x7800, 0xF800, "ldrb%c\t%0-2r, [%3-5r, %{I:#%6-10d%}]"},
   /* format 10 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x8000, 0xF800, "strh%c\t%0-2r, [%3-5r, #%6-10H]"},
+    0x8000, 0xF800, "strh%c\t%0-2r, [%3-5r, %{I:#%6-10H%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x8800, 0xF800, "ldrh%c\t%0-2r, [%3-5r, #%6-10H]"},
+    0x8800, 0xF800, "ldrh%c\t%0-2r, [%3-5r, %{I:#%6-10H%}]"},
   /* format 11 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x9000, 0xF800, "str%c\t%8-10r, [sp, #%0-7W]"},
+    0x9000, 0xF800, "str%c\t%8-10r, [%{R:sp%}, %{I:#%0-7W%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0x9800, 0xF800, "ldr%c\t%8-10r, [sp, #%0-7W]"},
+    0x9800, 0xF800, "ldr%c\t%8-10r, [%{R:sp%}, %{I:#%0-7W%}]"},
   /* format 12 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0xA000, 0xF800, "add%c\t%8-10r, pc, #%0-7W\t; (adr %8-10r, %0-7a)"},
+    0xA000, 0xF800, "add%c\t%8-10r, %{R:pc%}, %{I:#%0-7W%}\t@ (adr %8-10r, %0-7a)"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T),
-    0xA800, 0xF800, "add%c\t%8-10r, sp, #%0-7W"},
+    0xA800, 0xF800, "add%c\t%8-10r, %{R:sp%}, %{I:#%0-7W%}"},
   /* format 15 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xC000, 0xF800, "stmia%c\t%8-10r!, %M"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xC800, 0xF800, "ldmia%c\t%8-10r%W, %M"},
   /* format 17 */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xDF00, 0xFF00, "svc%c\t%0-7d"},
   /* format 16 */
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xDE00, 0xFF00, "udf%c\t#%0-7d"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xDE00, 0xFF00, "udf%c\t%{I:#%0-7d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xDE00, 0xFE00, UNDEFINED_INSTRUCTION},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V4T), 0xD000, 0xF000, "b%8-11c.n\t%0-7B%X"},
   /* format 18 */
@@ -4628,7 +4361,7 @@ static const struct opcode16 thumb_opcodes[] =
        %P		print address for pli instruction.
        %c		print the condition code
        %x		print warning if conditional an not at end of IT block"
-       %X		print "\t; unpredictable <IT:code>" if conditional
+       %X		print "\t@ unpredictable <IT:code>" if conditional
 
        %<bitfield>d	print bitfield in decimal
        %<bitfield>D     print bitfield plus one in decimal
@@ -4655,7 +4388,7 @@ static const struct opcode32 thumb32_opcodes[] =
   /* Arm v8.1-M Mainline Pointer Authentication and Branch Target
      Identification Extension.  */
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-   0xf3af802d, 0xffffffff, "aut\tr12, lr, sp"},
+   0xf3af802d, 0xffffffff, "aut\t%{R:r12%}, %{R:lr%}, %{R:sp%}"},
   {ARM_FEATURE_CORE_HIGH_HIGH (ARM_EXT3_PACBTI),
    0xfb500f00, 0xfff00ff0, "autg%c\t%12-15r, %16-19r, %0-3r"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
@@ -4663,9 +4396,9 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_HIGH_HIGH (ARM_EXT3_PACBTI),
    0xfb500f10, 0xfff00ff0, "bxaut%c\t%12-15r, %16-19r, %0-3r"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-   0xf3af801d, 0xffffffff, "pac\tr12, lr, sp"},
+   0xf3af801d, 0xffffffff, "pac\t%{R:r12%}, %{R:lr%}, %{R:sp%}"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-   0xf3af800d, 0xffffffff, "pacbti\tr12, lr, sp"},
+   0xf3af800d, 0xffffffff, "pacbti\t%{R:r12%}, %{R:lr%}, %{R:sp%}"},
   {ARM_FEATURE_CORE_HIGH_HIGH (ARM_EXT3_PACBTI),
    0xfb60f000, 0xfff0f0f0, "pacg%c\t%8-11r, %16-19r, %0-3r"},
 
@@ -4676,17 +4409,17 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
     0xf02fc001, 0xfffff001, "le\t%P"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf00fc001, 0xfffff001, "le\tlr, %P"},
+    0xf00fc001, 0xfffff001, "le\t%{R:lr%}, %P"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf01fc001, 0xfffff001, "letp\tlr, %P"},
+    0xf01fc001, 0xfffff001, "letp\t%{R:lr%}, %P"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf040c001, 0xfff0f001, "wls\tlr, %16-19S, %Q"},
+    0xf040c001, 0xfff0f001, "wls\t%{R:lr%}, %16-19S, %Q"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf000c001, 0xffc0f001, "wlstp.%20-21s\tlr, %16-19S, %Q"},
+    0xf000c001, 0xffc0f001, "wlstp.%20-21s\t%{R:lr%}, %16-19S, %Q"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf040e001, 0xfff0ffff, "dls\tlr, %16-19S"},
+    0xf040e001, 0xfff0ffff, "dls\t%{R:lr%}, %16-19S"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf000e001, 0xffc0ffff, "dlstp.%20-21s\tlr, %16-19S"},
+    0xf000e001, 0xffc0ffff, "dlstp.%20-21s\t%{R:lr%}, %16-19S"},
 
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
     0xf040e001, 0xf860f001, "bf%c\t%G, %W"},
@@ -4697,7 +4430,7 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
     0xf070e001, 0xf8f0f001, "bflx%c\t%G, %16-19S"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
-    0xf000e001, 0xf840f001, "bfcsel\t%G, %Z, %18-21c"},
+    0xf000e001, 0xf840f001, "bfcsel\t%G, %Z, %{B:%18-21c%}"},
 
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN),
     0xe89f0000, 0xffff2000, "clrm%c\t%n"},
@@ -4776,7 +4509,7 @@ static const struct opcode32 thumb32_opcodes[] =
 
   /* V7 instructions.  */
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf910f000, 0xff70f000, "pli%c\t%a"},
-  {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf3af80f0, 0xfffffff0, "dbg%c\t#%0-3d"},
+  {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf3af80f0, 0xfffffff0, "dbg%c\t%{I:#%0-3d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8), 0xf3bf8f51, 0xfffffff3, "dmb%c\t%U"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V8), 0xf3bf8f41, 0xfffffff3, "dsb%c\t%U"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V7), 0xf3bf8f50, 0xfffffff0, "dmb%c\t%U"},
@@ -4807,15 +4540,15 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8003, 0xffffffff, "wfi%c.w"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf3af8004, 0xffffffff, "sev%c.w"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3af8000, 0xffffff00, "nop%c.w\t{%0-7d}"},
+    0xf3af8000, 0xffffff00, "nop%c.w\t{%{I:%0-7d%}}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2), 0xf7f0a000, 0xfff0f000, "udf%c.w\t%H"},
 
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
     0xf3bf8f2f, 0xffffffff, "clrex%c"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3af8400, 0xffffff1f, "cpsie.w\t%7'a%6'i%5'f%X"},
+    0xf3af8400, 0xffffff1f, "cpsie.w\t%{B:%7'a%6'i%5'f%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3af8600, 0xffffff1f, "cpsid.w\t%7'a%6'i%5'f%X"},
+    0xf3af8600, 0xffffff1f, "cpsid.w\t%{B:%7'a%6'i%5'f%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf3c08f00, 0xfff0ffff, "bxj%c\t%16-19r%x"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -4825,17 +4558,17 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf3e08000, 0xffe0f000, "mrs%c\t%8-11r, %D"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3af8100, 0xffffffe0, "cps\t#%0-4d%X"},
+    0xf3af8100, 0xffffffe0, "cps\t%{I:#%0-4d%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xe8d0f000, 0xfff0fff0, "tbb%c\t[%16-19r, %0-3r]%x"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xe8d0f010, 0xfff0fff0, "tbh%c\t[%16-19r, %0-3r, lsl #1]%x"},
+    0xe8d0f010, 0xfff0fff0, "tbh%c\t[%16-19r, %0-3r, %{B:lsl%} %{I:#1%}]%x"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3af8500, 0xffffff00, "cpsie\t%7'a%6'i%5'f, #%0-4d%X"},
+    0xf3af8500, 0xffffff00, "cpsie\t%{B:%7'a%6'i%5'f%}, %{I:#%0-4d%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3af8700, 0xffffff00, "cpsid\t%7'a%6'i%5'f, #%0-4d%X"},
+    0xf3af8700, 0xffffff00, "cpsid\t%{B:%7'a%6'i%5'f%}, %{I:#%0-4d%}%X"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3de8f00, 0xffffff00, "subs%c\tpc, lr, #%0-7d"},
+    0xf3de8f00, 0xffffff00, "subs%c\t%{R:pc%}, %{R:lr%}, %{I:#%0-7d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf3808000, 0xffe0f000, "msr%c\t%C, %16-19r"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
@@ -4843,9 +4576,9 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
     0xe8d00f4f, 0xfff00fef, "ldrex%4?hb%c\t%12-15r, [%16-19r]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xe800c000, 0xffd0ffe0, "srsdb%c\t%16-19r%21'!, #%0-4d"},
+    0xe800c000, 0xffd0ffe0, "srsdb%c\t%16-19r%21'!, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xe980c000, 0xffd0ffe0, "srsia%c\t%16-19r%21'!, #%0-4d"},
+    0xe980c000, 0xffd0ffe0, "srsia%c\t%16-19r%21'!, %{I:#%0-4d%}"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xfa0ff080, 0xfffff0c0, "sxth%c.w\t%8-11r, %0-3r%R"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -4969,9 +4702,9 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
     0xe8c00f40, 0xfff00fe0, "strex%4?hb%c\t%0-3r, %12-15r, [%16-19r]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3200000, 0xfff0f0e0, "ssat16%c\t%8-11r, #%0-4D, %16-19r"},
+    0xf3200000, 0xfff0f0e0, "ssat16%c\t%8-11r, %{I:#%0-4D%}, %16-19r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3a00000, 0xfff0f0e0, "usat16%c\t%8-11r, #%0-4d, %16-19r"},
+    0xf3a00000, 0xfff0f0e0, "usat16%c\t%8-11r, %{I:#%0-4d%}, %16-19r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xfb20f000, 0xfff0f0e0, "smuad%4'x%c\t%8-11r, %16-19r, %0-3r"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -5035,7 +4768,7 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xfbe00060, 0xfff000f0, "umaal%c\t%12-15R, %8-11R, %16-19R, %0-3R"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
-    0xe8500f00, 0xfff00f00, "ldrex%c\t%12-15r, [%16-19r, #%0-7W]"},
+    0xe8500f00, 0xfff00f00, "ldrex%c\t%12-15r, [%16-19r, %{I:#%0-7W%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf04f0000, 0xfbef8000, "mov%20's%c.w\t%8-11r, %M"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -5077,9 +4810,9 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf8100e00, 0xfe900f00, "ldr%wt%c\t%12-15r, %a"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3000000, 0xffd08020, "ssat%c\t%8-11r, #%0-4D, %16-19r%s"},
+    0xf3000000, 0xffd08020, "ssat%c\t%8-11r, %{I:#%0-4D%}, %16-19r%s"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
-    0xf3800000, 0xffd08020, "usat%c\t%8-11r, #%0-4d, %16-19r%s"},
+    0xf3800000, 0xffd08020, "usat%c\t%8-11r, %{I:#%0-4d%}, %16-19r%s"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf2000000, 0xfbf08000, "addw%c\t%8-11r, %16-19r, %I"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
@@ -5109,7 +4842,7 @@ static const struct opcode32 thumb32_opcodes[] =
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xebc00000, 0xffe08000, "rsb%20's%c\t%8-11r, %16-19r, %S"},
   {ARM_FEATURE_CORE_HIGH (ARM_EXT2_V6T2_V8M),
-    0xe8400000, 0xfff00000, "strex%c\t%8-11r, %12-15r, [%16-19r, #%0-7W]"},
+    0xe8400000, 0xfff00000, "strex%c\t%8-11r, %12-15r, [%16-19r, %{I:#%0-7W%}]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf0000000, 0xfbe08000, "and%20's%c.w\t%8-11r, %16-19r, %M"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -5144,16 +4877,16 @@ static const struct opcode32 thumb32_opcodes[] =
     0xe9d00000, 0xffd000ff, "ldrd%c\t%12-15r, %8-11r, [%16-19r]"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xe9400000, 0xff500000,
-    "strd%c\t%12-15r, %8-11r, [%16-19r, #%23`-%0-7W]%21'!%L"},
+    "strd%c\t%12-15r, %8-11r, [%16-19r, %{I:#%23`-%0-7W%}]%21'!%L"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xe9500000, 0xff500000,
-    "ldrd%c\t%12-15r, %8-11r, [%16-19r, #%23`-%0-7W]%21'!%L"},
+    "ldrd%c\t%12-15r, %8-11r, [%16-19r, %{I:#%23`-%0-7W%}]%21'!%L"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xe8600000, 0xff700000,
-    "strd%c\t%12-15r, %8-11r, [%16-19r], #%23`-%0-7W%L"},
+    "strd%c\t%12-15r, %8-11r, [%16-19r], %{I:#%23`-%0-7W%}%L"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xe8700000, 0xff700000,
-    "ldrd%c\t%12-15r, %8-11r, [%16-19r], #%23`-%0-7W%L"},
+    "ldrd%c\t%12-15r, %8-11r, [%16-19r], %{I:#%23`-%0-7W%}%L"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
     0xf8000000, 0xff100000, "str%w%c.w\t%12-15r, %a"},
   {ARM_FEATURE_CORE_LOW (ARM_EXT_V6T2),
@@ -5184,9 +4917,6 @@ static const struct opcode32 thumb32_opcodes[] =
 static const char *const arm_conditional[] =
 {"eq", "ne", "cs", "cc", "mi", "pl", "vs", "vc",
  "hi", "ls", "ge", "lt", "gt", "le", "al", "<und>", ""};
-
-static const char *const arm_fp_const[] =
-{"0.0", "1.0", "2.0", "3.0", "4.0", "5.0", "0.5", "10.0"};
 
 static const char *const arm_shift[] =
 {"lsl", "lsr", "asr", "ror"};
@@ -5459,10 +5189,10 @@ arm_decode_bitfield (const char *ptr,
 }
 
 static void
-arm_decode_shift (long given, fprintf_ftype func, void *stream,
+arm_decode_shift (long given, fprintf_styled_ftype func, void *stream,
 		  bool print_shift)
 {
-  func (stream, "%s", arm_regnames[given & 0xf]);
+  func (stream, dis_style_register, "%s", arm_regnames[given & 0xf]);
 
   if ((given & 0xff0) != 0)
     {
@@ -5475,7 +5205,8 @@ arm_decode_shift (long given, fprintf_ftype func, void *stream,
 	    {
 	      if (shift == 3)
 		{
-		  func (stream, ", rrx");
+		  func (stream, dis_style_text, ", ");
+		  func (stream, dis_style_sub_mnemonic, "rrx");
 		  return;
 		}
 
@@ -5483,17 +5214,34 @@ arm_decode_shift (long given, fprintf_ftype func, void *stream,
 	    }
 
 	  if (print_shift)
-	    func (stream, ", %s #%d", arm_shift[shift], amount);
+	    {
+	      func (stream, dis_style_text, ", ");
+	      func (stream, dis_style_sub_mnemonic, "%s ", arm_shift[shift]);
+	      func (stream, dis_style_immediate, "#%d", amount);
+	    }
 	  else
-	    func (stream, ", #%d", amount);
+	    {
+	      func (stream, dis_style_text, ", ");
+	      func (stream, dis_style_immediate, "#%d", amount);
+	    }
 	}
       else if ((given & 0x80) == 0x80)
-	func (stream, "\t; <illegal shifter operand>");
+	func (stream, dis_style_comment_start,
+	      "\t@ <illegal shifter operand>");
       else if (print_shift)
-	func (stream, ", %s %s", arm_shift[(given & 0x60) >> 5],
-	      arm_regnames[(given & 0xf00) >> 8]);
+	{
+	  func (stream, dis_style_text, ", ");
+	  func (stream, dis_style_sub_mnemonic, "%s ",
+		arm_shift[(given & 0x60) >> 5]);
+	  func (stream, dis_style_register, "%s",
+		arm_regnames[(given & 0xf00) >> 8]);
+	}
       else
-	func (stream, ", %s", arm_regnames[(given & 0xf00) >> 8]);
+	{
+	  func (stream, dis_style_text, ", ");
+	  func (stream, dis_style_register, "%s",
+		arm_regnames[(given & 0xf00) >> 8]);
+	}
     }
 }
 
@@ -5532,7 +5280,7 @@ is_mve_okay_in_it (enum mve_instructions matched_insn)
 }
 
 static bool
-is_mve_architecture (struct disassemble_info *info)
+is_v81m_architecture (struct disassemble_info *info)
 {
   struct arm_private_data *private_data = info->private_data;
   arm_feature_set allowed_arches = private_data->features;
@@ -5929,7 +5677,7 @@ print_mve_vld_str_addr (struct disassemble_info *info,
 			enum mve_instructions matched_insn)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   unsigned long p, w, gpr, imm, add, mod_imm;
 
@@ -5983,18 +5731,25 @@ print_mve_vld_str_addr (struct disassemble_info *info,
   else
     add_sub = "-";
 
+  func (stream, dis_style_text, "[");
+  func (stream, dis_style_register, "%s", arm_regnames[gpr]);
   if (p == 1)
     {
+      func (stream, dis_style_text, ", ");
+      func (stream, dis_style_immediate, "#%s%lu", add_sub, mod_imm);
       /* Offset mode.  */
       if (w == 0)
-	func (stream, "[%s, #%s%lu]", arm_regnames[gpr], add_sub, mod_imm);
+	func (stream, dis_style_text, "]");
       /* Pre-indexed mode.  */
       else
-	func (stream, "[%s, #%s%lu]!", arm_regnames[gpr], add_sub, mod_imm);
+	func (stream, dis_style_text, "]!");
     }
   else if ((p == 0) && (w == 1))
-    /* Post-index mode.  */
-    func (stream, "[%s], #%s%lu", arm_regnames[gpr], add_sub, mod_imm);
+    {
+      /* Post-index mode.  */
+      func (stream, dis_style_text, "], ");
+      func (stream, dis_style_immediate, "#%s%lu", add_sub, mod_imm);
+    }
 }
 
 /* Return FALSE if GIVEN is not an undefined encoding for MATCHED_INSN.
@@ -6932,7 +6687,7 @@ print_mve_vmov_index (struct disassemble_info *info, unsigned long given)
   unsigned long h = arm_decode_field (given, 16, 16);
   unsigned long index_operand, esize, targetBeat, idx;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   if ((op1 & 0x2) == 0x2)
     {
@@ -6951,14 +6706,14 @@ print_mve_vmov_index (struct disassemble_info *info, unsigned long given)
     }
   else
     {
-      func (stream, "<undefined index>");
+      func (stream, dis_style_text, "<undefined index>");
       return;
     }
 
   targetBeat =  (op1 & 0x1) | (h << 1);
   idx = index_operand + targetBeat * (32/esize);
 
-  func (stream, "%lu", idx);
+  func (stream, dis_style_immediate, "%lu", idx);
 }
 
 /* Print neon and mve 8-bit immediate that can be a 8, 16, 32, or 64-bits
@@ -6975,7 +6730,7 @@ print_simd_imm8 (struct disassemble_info *info, unsigned long given,
   int size = 0;
   int isfloat = 0;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   /* On Neon the 'i' bit is at bit 24, on mve it is
      at bit 28.  */
@@ -7043,7 +6798,7 @@ print_simd_imm8 (struct disassemble_info *info, unsigned long given,
     }
   else
     {
-      func (stream, "<illegal constant %.8x:%x:%x>",
+      func (stream, dis_style_text, "<illegal constant %.8x:%x:%x>",
 	    bits, cmode, op);
       size = 32;
       return;
@@ -7067,14 +6822,13 @@ print_simd_imm8 (struct disassemble_info *info, unsigned long given,
   switch (size)
     {
     case 8:
-      func (stream, "#%ld\t; 0x%.2lx", value, value);
+      func (stream, dis_style_immediate, "#%ld", value);
+      func (stream, dis_style_comment_start, "\t@ 0x%.2lx", value);
       break;
 
     case 16:
-      func (stream,
-	    printU
-	    ? "#%lu\t; 0x%.4lx"
-	    : "#%ld\t; 0x%.4lx", value, value);
+      func (stream, dis_style_immediate, printU ? "#%lu" : "#%ld", value);
+      func (stream, dis_style_comment_start, "\t@ 0x%.4lx", value);
       break;
 
     case 32:
@@ -7094,22 +6848,22 @@ print_simd_imm8 (struct disassemble_info *info, unsigned long given,
 	    (& floatformat_ieee_single_little, valbytes,
 	     & fvalue);
 
-	  func (stream, "#%.7g\t; 0x%.8lx", fvalue,
-		value);
+	  func (stream, dis_style_immediate, "#%.7g", fvalue);
+	  func (stream, dis_style_comment_start, "\t@ 0x%.8lx", value);
 	}
       else
-	func (stream,
-	      printU
-	      ? "#%lu\t; 0x%.8lx"
-	      : "#%ld\t; 0x%.8lx",
-	      (long) (((value & 0x80000000L) != 0)
-		      && !printU
-		      ? value | ~0xffffffffL : value),
-	      value);
+	{
+	  func (stream, dis_style_immediate,
+		printU ? "#%lu" : "#%ld",
+		(long) (((value & 0x80000000L) != 0)
+			&& !printU
+			? value | ~0xffffffffL : value));
+	  func (stream, dis_style_comment_start, "\t@ 0x%.8lx", value);
+	}
       break;
 
     case 64:
-      func (stream, "#0x%.8lx%.8lx", hival, value);
+      func (stream, dis_style_immediate, "#0x%.8lx%.8lx", hival, value);
       break;
 
     default:
@@ -7123,84 +6877,87 @@ print_mve_undefined (struct disassemble_info *info,
 		     enum mve_undefined undefined_code)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
-
-  func (stream, "\t\tundefined instruction: ");
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  /* Initialize REASON to avoid compiler warning about uninitialized
+     usage, though such usage should be impossible.  */
+  const char *reason = "??";
 
   switch (undefined_code)
     {
     case UNDEF_SIZE:
-      func (stream, "illegal size");
+      reason = "illegal size";
       break;
 
     case UNDEF_SIZE_0:
-      func (stream, "size equals zero");
+      reason = "size equals zero";
       break;
 
     case UNDEF_SIZE_2:
-      func (stream, "size equals two");
+      reason = "size equals two";
       break;
 
     case UNDEF_SIZE_3:
-      func (stream, "size equals three");
+      reason = "size equals three";
       break;
 
     case UNDEF_SIZE_LE_1:
-      func (stream, "size <= 1");
+      reason = "size <= 1";
       break;
 
     case UNDEF_SIZE_NOT_0:
-      func (stream, "size not equal to 0");
+      reason = "size not equal to 0";
       break;
 
     case UNDEF_SIZE_NOT_2:
-      func (stream, "size not equal to 2");
+      reason = "size not equal to 2";
       break;
 
     case UNDEF_SIZE_NOT_3:
-      func (stream, "size not equal to 3");
+      reason = "size not equal to 3";
       break;
 
     case UNDEF_NOT_UNS_SIZE_0:
-      func (stream, "not unsigned and size = zero");
+      reason = "not unsigned and size = zero";
       break;
 
     case UNDEF_NOT_UNS_SIZE_1:
-      func (stream, "not unsigned and size = one");
+      reason = "not unsigned and size = one";
       break;
 
     case UNDEF_NOT_UNSIGNED:
-      func (stream, "not unsigned");
+      reason = "not unsigned";
       break;
 
     case UNDEF_VCVT_IMM6:
-      func (stream, "invalid imm6");
+      reason = "invalid imm6";
       break;
 
     case UNDEF_VCVT_FSI_IMM6:
-      func (stream, "fsi = 0 and invalid imm6");
+      reason = "fsi = 0 and invalid imm6";
       break;
 
     case UNDEF_BAD_OP1_OP2:
-      func (stream, "bad size with op2 = 2 and op1 = 0 or 1");
+      reason = "bad size with op2 = 2 and op1 = 0 or 1";
       break;
 
     case UNDEF_BAD_U_OP1_OP2:
-      func (stream, "unsigned with op2 = 0 and op1 = 0 or 1");
+      reason = "unsigned with op2 = 0 and op1 = 0 or 1";
       break;
 
     case UNDEF_OP_0_BAD_CMODE:
-      func (stream, "op field equal 0 and bad cmode");
+      reason = "op field equal 0 and bad cmode";
       break;
 
     case UNDEF_XCHG_UNS:
-      func (stream, "exchange and unsigned together");
+      reason = "exchange and unsigned together";
       break;
 
     case UNDEF_NONE:
+      reason = "";
       break;
     }
 
+  func (stream, dis_style_text, "\t\tundefined instruction: %s", reason);
 }
 
 static void
@@ -7208,64 +6965,68 @@ print_mve_unpredictable (struct disassemble_info *info,
 			 enum mve_unpredictable unpredict_code)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
-
-  func (stream, "%s: ", UNPREDICTABLE_INSTRUCTION);
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  /* Initialize REASON to avoid compiler warning about uninitialized
+     usage, though such usage should be impossible.  */
+  const char *reason = "??";
 
   switch (unpredict_code)
     {
     case UNPRED_IT_BLOCK:
-      func (stream, "mve instruction in it block");
+      reason = "mve instruction in it block";
       break;
 
     case UNPRED_FCA_0_FCB_1:
-      func (stream, "condition bits, fca = 0 and fcb = 1");
+      reason = "condition bits, fca = 0 and fcb = 1";
       break;
 
     case UNPRED_R13:
-      func (stream, "use of r13 (sp)");
+      reason = "use of r13 (sp)";
       break;
 
     case UNPRED_R15:
-      func (stream, "use of r15 (pc)");
+      reason = "use of r15 (pc)";
       break;
 
     case UNPRED_Q_GT_4:
-      func (stream, "start register block > r4");
+      reason = "start register block > r4";
       break;
 
     case UNPRED_Q_GT_6:
-      func (stream, "start register block > r6");
+      reason = "start register block > r6";
       break;
 
     case UNPRED_R13_AND_WB:
-      func (stream, "use of r13 and write back");
+      reason = "use of r13 and write back";
       break;
 
     case UNPRED_Q_REGS_EQUAL:
-      func (stream,
-	    "same vector register used for destination and other operand");
+      reason = "same vector register used for destination and other operand";
       break;
 
     case UNPRED_OS:
-      func (stream, "use of offset scaled");
+      reason = "use of offset scaled";
       break;
 
     case UNPRED_GP_REGS_EQUAL:
-      func (stream, "same general-purpose register used for both operands");
+      reason = "same general-purpose register used for both operands";
       break;
 
     case UNPRED_Q_REGS_EQ_AND_SIZE_1:
-      func (stream, "use of identical q registers and size = 1");
+      reason = "use of identical q registers and size = 1";
       break;
 
     case UNPRED_Q_REGS_EQ_AND_SIZE_2:
-      func (stream, "use of identical q registers and size = 1");
+      reason = "use of identical q registers and size = 1";
       break;
 
     case UNPRED_NONE:
+      reason = "";
       break;
     }
+
+  func (stream, dis_style_comment_start, "%s: %s",
+	UNPREDICTABLE_INSTRUCTION, reason);
 }
 
 /* Print register block operand for mve vld2/vld4/vst2/vld4.  */
@@ -7276,7 +7037,7 @@ print_mve_register_blocks (struct disassemble_info *info,
 			   enum mve_instructions matched_insn)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   unsigned long q_reg_start = arm_decode_field_multiple (given,
 							 13, 15,
@@ -7286,19 +7047,33 @@ print_mve_register_blocks (struct disassemble_info *info,
     case MVE_VLD2:
     case MVE_VST2:
       if (q_reg_start <= 6)
-	func (stream, "{q%ld, q%ld}", q_reg_start, q_reg_start + 1);
+	{
+	  func (stream, dis_style_text, "{");
+	  func (stream, dis_style_register, "q%ld", q_reg_start);
+	  func (stream, dis_style_text, ", ");
+	  func (stream, dis_style_register, "q%ld", q_reg_start + 1);
+	  func (stream, dis_style_text, "}");
+	}
       else
-	func (stream, "<illegal reg q%ld>", q_reg_start);
+	func (stream, dis_style_text, "<illegal reg q%ld>", q_reg_start);
       break;
 
     case MVE_VLD4:
     case MVE_VST4:
       if (q_reg_start <= 4)
-	func (stream, "{q%ld, q%ld, q%ld, q%ld}", q_reg_start,
-	      q_reg_start + 1, q_reg_start + 2,
-	      q_reg_start + 3);
+	{
+	  func (stream, dis_style_text, "{");
+	  func (stream, dis_style_register, "q%ld", q_reg_start);
+	  func (stream, dis_style_text, ", ");
+	  func (stream, dis_style_register, "q%ld", q_reg_start + 1);
+	  func (stream, dis_style_text, ", ");
+	  func (stream, dis_style_register, "q%ld", q_reg_start + 2);
+	  func (stream, dis_style_text, ", ");
+	  func (stream, dis_style_register, "q%ld", q_reg_start + 3);
+	  func (stream, dis_style_text, "}");
+	}
       else
-	func (stream, "<illegal reg q%ld>", q_reg_start);
+	func (stream, dis_style_text, "<illegal reg q%ld>", q_reg_start);
       break;
 
     default:
@@ -7312,7 +7087,7 @@ print_mve_rounding_mode (struct disassemble_info *info,
 			 enum mve_instructions matched_insn)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   switch (matched_insn)
     {
@@ -7321,19 +7096,19 @@ print_mve_rounding_mode (struct disassemble_info *info,
 	switch (arm_decode_field (given, 8, 9))
 	  {
 	  case 0:
-	    func (stream, "a");
+	    func (stream, dis_style_mnemonic, "a");
 	    break;
 
 	  case 1:
-	    func (stream, "n");
+	    func (stream, dis_style_mnemonic, "n");
 	    break;
 
 	  case 2:
-	    func (stream, "p");
+	    func (stream, dis_style_mnemonic, "p");
 	    break;
 
 	  case 3:
-	    func (stream, "m");
+	    func (stream, dis_style_mnemonic, "m");
 	    break;
 
 	  default:
@@ -7347,27 +7122,27 @@ print_mve_rounding_mode (struct disassemble_info *info,
 	switch (arm_decode_field (given, 7, 9))
 	  {
 	  case 0:
-	    func (stream, "n");
+	    func (stream, dis_style_mnemonic, "n");
 	    break;
 
 	  case 1:
-	    func (stream, "x");
+	    func (stream, dis_style_mnemonic, "x");
 	    break;
 
 	  case 2:
-	    func (stream, "a");
+	    func (stream, dis_style_mnemonic, "a");
 	    break;
 
 	  case 3:
-	    func (stream, "z");
+	    func (stream, dis_style_mnemonic, "z");
 	    break;
 
 	  case 5:
-	    func (stream, "m");
+	    func (stream, dis_style_mnemonic, "m");
 	    break;
 
 	  case 7:
-	    func (stream, "p");
+	    func (stream, dis_style_mnemonic, "p");
 
 	  case 4:
 	  case 6:
@@ -7389,7 +7164,7 @@ print_mve_vcvt_size (struct disassemble_info *info,
 {
   unsigned long mode = 0;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   switch (matched_insn)
     {
@@ -7402,35 +7177,35 @@ print_mve_vcvt_size (struct disassemble_info *info,
 	switch (mode)
 	  {
 	  case 0:
-	    func (stream, "f16.s16");
+	    func (stream, dis_style_mnemonic, "f16.s16");
 	    break;
 
 	  case 1:
-	    func (stream, "s16.f16");
+	    func (stream, dis_style_mnemonic, "s16.f16");
 	    break;
 
 	  case 2:
-	    func (stream, "f16.u16");
+	    func (stream, dis_style_mnemonic, "f16.u16");
 	    break;
 
 	  case 3:
-	    func (stream, "u16.f16");
+	    func (stream, dis_style_mnemonic, "u16.f16");
 	    break;
 
 	  case 4:
-	    func (stream, "f32.s32");
+	    func (stream, dis_style_mnemonic, "f32.s32");
 	    break;
 
 	  case 5:
-	    func (stream, "s32.f32");
+	    func (stream, dis_style_mnemonic, "s32.f32");
 	    break;
 
 	  case 6:
-	    func (stream, "f32.u32");
+	    func (stream, dis_style_mnemonic, "f32.u32");
 	    break;
 
 	  case 7:
-	    func (stream, "u32.f32");
+	    func (stream, dis_style_mnemonic, "u32.f32");
 	    break;
 
 	  default:
@@ -7448,19 +7223,19 @@ print_mve_vcvt_size (struct disassemble_info *info,
 	    switch (op)
 	      {
 	      case 0:
-		func (stream, "f16.s16");
+		func (stream, dis_style_mnemonic, "f16.s16");
 		break;
 
 	      case 1:
-		func (stream, "f16.u16");
+		func (stream, dis_style_mnemonic, "f16.u16");
 		break;
 
 	      case 2:
-		func (stream, "s16.f16");
+		func (stream, dis_style_mnemonic, "s16.f16");
 		break;
 
 	      case 3:
-		func (stream, "u16.f16");
+		func (stream, dis_style_mnemonic, "u16.f16");
 		break;
 
 	      default:
@@ -7472,19 +7247,19 @@ print_mve_vcvt_size (struct disassemble_info *info,
 	    switch (op)
 	      {
 	      case 0:
-		func (stream, "f32.s32");
+		func (stream, dis_style_mnemonic, "f32.s32");
 		break;
 
 	      case 1:
-		func (stream, "f32.u32");
+		func (stream, dis_style_mnemonic, "f32.u32");
 		break;
 
 	      case 2:
-		func (stream, "s32.f32");
+		func (stream, dis_style_mnemonic, "s32.f32");
 		break;
 
 	      case 3:
-		func (stream, "u32.f32");
+		func (stream, dis_style_mnemonic, "u32.f32");
 		break;
 	      }
 	  }
@@ -7495,9 +7270,9 @@ print_mve_vcvt_size (struct disassemble_info *info,
       {
 	unsigned long op = arm_decode_field (given, 28, 28);
 	if (op == 0)
-	  func (stream, "f16.f32");
+	  func (stream, dis_style_mnemonic, "f16.f32");
 	else if (op == 1)
-	  func (stream, "f32.f16");
+	  func (stream, dis_style_mnemonic, "f32.f16");
       }
       break;
 
@@ -7508,19 +7283,19 @@ print_mve_vcvt_size (struct disassemble_info *info,
 	switch (size)
 	  {
 	  case 2:
-	    func (stream, "s16.f16");
+	    func (stream, dis_style_mnemonic, "s16.f16");
 	    break;
 
 	  case 3:
-	    func (stream, "u16.f16");
+	    func (stream, dis_style_mnemonic, "u16.f16");
 	    break;
 
 	  case 4:
-	    func (stream, "s32.f32");
+	    func (stream, dis_style_mnemonic, "s32.f32");
 	    break;
 
 	  case 5:
-	    func (stream, "u32.f32");
+	    func (stream, dis_style_mnemonic, "u32.f32");
 	    break;
 
 	  default:
@@ -7539,17 +7314,17 @@ print_mve_rotate (struct disassemble_info *info, unsigned long rot,
 		  unsigned long rot_width)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   if (rot_width == 1)
     {
       switch (rot)
 	{
 	case 0:
-	  func (stream, "90");
+	  func (stream, dis_style_immediate, "90");
 	  break;
 	case 1:
-	  func (stream, "270");
+	  func (stream, dis_style_immediate, "270");
 	  break;
 	default:
 	  break;
@@ -7560,16 +7335,16 @@ print_mve_rotate (struct disassemble_info *info, unsigned long rot,
       switch (rot)
 	{
 	case 0:
-	  func (stream, "0");
+	  func (stream, dis_style_immediate, "0");
 	  break;
 	case 1:
-	  func (stream, "90");
+	  func (stream, dis_style_immediate, "90");
 	  break;
 	case 2:
-	  func (stream, "180");
+	  func (stream, dis_style_immediate, "180");
 	  break;
 	case 3:
-	  func (stream, "270");
+	  func (stream, dis_style_immediate, "270");
 	  break;
 	default:
 	  break;
@@ -7581,12 +7356,12 @@ static void
 print_instruction_predicate (struct disassemble_info *info)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   if (vpt_block_state.next_pred_state == PRED_THEN)
-    func (stream, "t");
+    func (stream, dis_style_mnemonic, "t");
   else if (vpt_block_state.next_pred_state == PRED_ELSE)
-    func (stream, "e");
+    func (stream, dis_style_mnemonic, "e");
 }
 
 static void
@@ -7595,7 +7370,7 @@ print_mve_size (struct disassemble_info *info,
 		enum mve_instructions matched_insn)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   switch (matched_insn)
     {
@@ -7698,9 +7473,9 @@ print_mve_size (struct disassemble_info *info,
     case MVE_VSUB_VEC_T1:
     case MVE_VSUB_VEC_T2:
       if (size <= 3)
-	func (stream, "%s", mve_vec_sizename[size]);
+	func (stream, dis_style_mnemonic, "%s", mve_vec_sizename[size]);
       else
-	func (stream, "<undef size>");
+	func (stream, dis_style_text, "<undef size>");
       break;
 
     case MVE_VABD_FP:
@@ -7727,9 +7502,9 @@ print_mve_size (struct disassemble_info *info,
     case MVE_VPT_FP_T1:
     case MVE_VPT_FP_T2:
       if (size == 0)
-	func (stream, "32");
+	func (stream, dis_style_mnemonic, "32");
       else if (size == 1)
-	func (stream, "16");
+	func (stream, dis_style_mnemonic, "16");
       break;
 
     case MVE_VCADD_FP:
@@ -7745,29 +7520,29 @@ print_mve_size (struct disassemble_info *info,
     case MVE_VQMOVN:
     case MVE_VQMOVUN:
       if (size == 0)
-	func (stream, "16");
+	func (stream, dis_style_mnemonic, "16");
       else if (size == 1)
-	func (stream, "32");
+	func (stream, dis_style_mnemonic, "32");
       break;
 
     case MVE_VMOVL:
       if (size == 1)
-	func (stream, "8");
+	func (stream, dis_style_mnemonic, "8");
       else if (size == 2)
-	func (stream, "16");
+	func (stream, dis_style_mnemonic, "16");
       break;
 
     case MVE_VDUP:
       switch (size)
 	{
 	case 0:
-	  func (stream, "32");
+	  func (stream, dis_style_mnemonic, "32");
 	  break;
 	case 1:
-	  func (stream, "16");
+	  func (stream, dis_style_mnemonic, "16");
 	  break;
 	case 2:
-	  func (stream, "8");
+	  func (stream, dis_style_mnemonic, "8");
 	  break;
 	default:
 	  break;
@@ -7779,17 +7554,17 @@ print_mve_size (struct disassemble_info *info,
       switch (size)
 	{
 	case 0: case 4:
-	  func (stream, "32");
+	  func (stream, dis_style_mnemonic, "32");
 	  break;
 
 	case 1: case 3:
 	case 5: case 7:
-	  func (stream, "16");
+	  func (stream, dis_style_mnemonic, "16");
 	  break;
 
 	case 8: case 9: case 10: case 11:
 	case 12: case 13: case 14: case 15:
-	  func (stream, "8");
+	  func (stream, dis_style_mnemonic, "8");
 	  break;
 
 	default:
@@ -7802,19 +7577,19 @@ print_mve_size (struct disassemble_info *info,
 	{
 	case 0: case 4: case 8:
 	case 12: case 24: case 26:
-	  func (stream, "i32");
+	  func (stream, dis_style_mnemonic, "i32");
 	  break;
 	case 16: case 20:
-	  func (stream, "i16");
+	  func (stream, dis_style_mnemonic, "i16");
 	  break;
 	case 28:
-	  func (stream, "i8");
+	  func (stream, dis_style_mnemonic, "i8");
 	  break;
 	case 29:
-	  func (stream, "i64");
+	  func (stream, dis_style_mnemonic, "i64");
 	  break;
 	case 30:
-	  func (stream, "f32");
+	  func (stream, dis_style_mnemonic, "f32");
 	  break;
 	default:
 	  break;
@@ -7823,9 +7598,9 @@ print_mve_size (struct disassemble_info *info,
 
     case MVE_VMULL_POLY:
       if (size == 0)
-	func (stream, "p8");
+	func (stream, dis_style_mnemonic, "p8");
       else if (size == 1)
-	func (stream, "p16");
+	func (stream, dis_style_mnemonic, "p16");
       break;
 
     case MVE_VMVN_IMM:
@@ -7833,11 +7608,11 @@ print_mve_size (struct disassemble_info *info,
 	{
 	case 0: case 2: case 4:
 	case 6: case 12: case 13:
-	  func (stream, "32");
+	  func (stream, dis_style_mnemonic, "32");
 	  break;
 
 	case 8: case 10:
-	  func (stream, "16");
+	  func (stream, dis_style_mnemonic, "16");
 	  break;
 
 	default:
@@ -7851,11 +7626,11 @@ print_mve_size (struct disassemble_info *info,
 	{
 	case 1: case 3:
 	case 5: case 7:
-	  func (stream, "32");
+	  func (stream, dis_style_mnemonic, "32");
 	  break;
 
 	case 9: case 11:
-	  func (stream, "16");
+	  func (stream, dis_style_mnemonic, "16");
 	  break;
 
 	default:
@@ -7873,11 +7648,11 @@ print_mve_size (struct disassemble_info *info,
 	switch (size)
 	{
 	case 1:
-	  func (stream, "16");
+	  func (stream, dis_style_mnemonic, "16");
 	  break;
 
 	case 2: case 3:
-	  func (stream, "32");
+	  func (stream, dis_style_mnemonic, "32");
 	  break;
 
 	default:
@@ -7898,15 +7673,15 @@ print_mve_size (struct disassemble_info *info,
 	switch (size)
 	{
 	case 1:
-	  func (stream, "8");
+	  func (stream, dis_style_mnemonic, "8");
 	  break;
 
 	case 2: case 3:
-	  func (stream, "16");
+	  func (stream, dis_style_mnemonic, "16");
 	  break;
 
 	case 4: case 5: case 6: case 7:
-	  func (stream, "32");
+	  func (stream, dis_style_mnemonic, "32");
 	  break;
 
 	default:
@@ -7920,12 +7695,40 @@ print_mve_size (struct disassemble_info *info,
     }
 }
 
+/* Return true if INSN is a shift insn with an immediate shift amount
+   which needs decoding as per print_mve_shift_n.  */
+
+static bool
+mve_shift_insn_p (enum mve_instructions insn)
+{
+  switch (insn)
+    {
+    case MVE_VQSHL_T2:
+    case MVE_VQSHLU_T3:
+    case MVE_VQSHRN:
+    case MVE_VQSHRUN:
+    case MVE_VQRSHRN:
+    case MVE_VQRSHRUN:
+    case MVE_VRSHR:
+    case MVE_VRSHRN:
+    case MVE_VSHL_T1:
+    case MVE_VSHLL_T1:
+    case MVE_VSHR:
+    case MVE_VSHRN:
+    case MVE_VSLI:
+    case MVE_VSRI:
+      return true;
+    default:
+      return false;
+    }
+}
+
 static void
 print_mve_shift_n (struct disassemble_info *info, long given,
 		   enum mve_instructions matched_insn)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
 
   int startAt0
     = matched_insn == MVE_VQSHL_T2
@@ -7949,7 +7752,7 @@ print_mve_shift_n (struct disassemble_info *info, long given,
   else
     print_mve_undefined (info, UNDEF_SIZE_0);
 
-  func (stream, "%u", shiftAmount);
+  func (stream, dis_style_immediate, "%u", shiftAmount);
 }
 
 static void
@@ -7957,7 +7760,7 @@ print_vec_condition (struct disassemble_info *info, long given,
 		     enum mve_instructions matched_insn)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
   long vec_cond = 0;
 
   switch (matched_insn)
@@ -7967,7 +7770,7 @@ print_vec_condition (struct disassemble_info *info, long given,
       vec_cond = (((given & 0x1000) >> 10)
 		  | ((given & 1) << 1)
 		  | ((given & 0x0080) >> 7));
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_FP_T2:
@@ -7975,43 +7778,43 @@ print_vec_condition (struct disassemble_info *info, long given,
       vec_cond = (((given & 0x1000) >> 10)
 		  | ((given & 0x0020) >> 4)
 		  | ((given & 0x0080) >> 7));
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_VEC_T1:
     case MVE_VCMP_VEC_T1:
       vec_cond = (given & 0x0080) >> 7;
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_VEC_T2:
     case MVE_VCMP_VEC_T2:
       vec_cond = 2 | ((given & 0x0080) >> 7);
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_VEC_T3:
     case MVE_VCMP_VEC_T3:
       vec_cond = 4 | ((given & 1) << 1) | ((given & 0x0080) >> 7);
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_VEC_T4:
     case MVE_VCMP_VEC_T4:
       vec_cond = (given & 0x0080) >> 7;
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_VEC_T5:
     case MVE_VCMP_VEC_T5:
       vec_cond = 2 | ((given & 0x0080) >> 7);
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_VPT_VEC_T6:
     case MVE_VCMP_VEC_T6:
       vec_cond = 4 | ((given & 0x0020) >> 4) | ((given & 0x0080) >> 7);
-      func (stream, "%s",vec_condnames[vec_cond]);
+      func (stream, dis_style_sub_mnemonic, "%s", vec_condnames[vec_cond]);
       break;
 
     case MVE_NONE:
@@ -8031,6 +7834,32 @@ print_vec_condition (struct disassemble_info *info, long given,
 #define NEGATIVE_BIT_SET  ((given & (1 << U_BIT)) == 0)
 #define PRE_BIT_SET	  (given & (1 << P_BIT))
 
+/* The assembler string for an instruction can include %{X:...%} patterns,
+   where the 'X' is one of the characters understood by this function.
+
+   This function takes the X character, and returns a new style.  This new
+   style will be used by the caller to temporarily change the current base
+   style.  */
+
+static enum disassembler_style
+decode_base_style (const char x)
+{
+  switch (x)
+    {
+    case 'A': return dis_style_address;
+    case 'B': return dis_style_sub_mnemonic;
+    case 'C': return dis_style_comment_start;
+    case 'D': return dis_style_assembler_directive;
+    case 'I': return dis_style_immediate;
+    case 'M': return dis_style_mnemonic;
+    case 'O': return dis_style_address_offset;
+    case 'R': return dis_style_register;
+    case 'S': return dis_style_symbol;
+    case 'T': return dis_style_text;
+    default:
+      abort ();
+    }
+}
 
 /* Print one coprocessor instruction on INFO->STREAM.
    Return TRUE if the instuction matched, FALSE if this is not a
@@ -8045,7 +7874,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 {
   const struct sopcode32 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
   unsigned long mask;
   unsigned long value = 0;
   int cond;
@@ -8054,6 +7883,8 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
   arm_feature_set allowed_arches = ARM_ARCH_NONE;
   arm_feature_set arm_ext_v8_1m_main =
     ARM_FEATURE_CORE_HIGH (ARM_EXT2_V8_1M_MAIN);
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   allowed_arches = private_data->features;
 
@@ -8177,10 +8008,26 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 	  if (*c == '%')
 	    {
 	      const char mod = *++c;
+
 	      switch (mod)
 		{
+		case '{':
+		  ++c;
+		  if (*c == '\0')
+		    abort ();
+		  old_base_style = base_style;
+		  base_style = decode_base_style (*c);
+		  ++c;
+		  if (*c != ':')
+		    abort ();
+		  break;
+
+		case '}':
+		  base_style = old_base_style;
+		  break;
+
 		case '%':
-		  func (stream, "%%");
+		  func (stream, base_style, "%%");
 		  break;
 
 		case 'A':
@@ -8192,7 +8039,9 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    if (mod == 'K')
 		      offset = given & 0x7f;
 
-		    func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+		    func (stream, dis_style_text, "[");
+		    func (stream, dis_style_register, "%s",
+			  arm_regnames [(given >> 16) & 0xf]);
 
 		    if (PRE_BIT_SET || WRITEBACK_BIT_SET)
 		      {
@@ -8213,36 +8062,53 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    if (PRE_BIT_SET)
 		      {
 			if (offset)
-			  func (stream, ", #%d]%s",
-				(int) offset,
-				WRITEBACK_BIT_SET ? "!" : "");
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_immediate, "#%d",
+				  (int) offset);
+			    func (stream, dis_style_text, "]%s",
+				  WRITEBACK_BIT_SET ? "!" : "");
+			  }
 			else if (NEGATIVE_BIT_SET)
-			  func (stream, ", #-0]");
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_immediate, "#-0");
+			    func (stream, dis_style_text, "]");
+			  }
 			else
-			  func (stream, "]");
+			  func (stream, dis_style_text, "]");
 		      }
 		    else
 		      {
-			func (stream, "]");
+			func (stream, dis_style_text, "]");
 
 			if (WRITEBACK_BIT_SET)
 			  {
 			    if (offset)
-			      func (stream, ", #%d", (int) offset);
+			      {
+				func (stream, dis_style_text, ", ");
+				func (stream, dis_style_immediate,
+				      "#%d", (int) offset);
+			      }
 			    else if (NEGATIVE_BIT_SET)
-			      func (stream, ", #-0");
+			      {
+				func (stream, dis_style_text, ", ");
+				func (stream, dis_style_immediate, "#-0");
+			      }
 			  }
 			else
 			  {
-			    func (stream, ", {%s%d}",
+			    func (stream, dis_style_text, ", {");
+			    func (stream, dis_style_immediate, "%s%d",
 				  (NEGATIVE_BIT_SET && !offset) ? "-" : "",
 				  (int) offset);
+			    func (stream, dis_style_text, "}");
 			    value_in_comment = offset;
 			  }
 		      }
 		    if (rn == 15 && (PRE_BIT_SET || WRITEBACK_BIT_SET))
 		      {
-			func (stream, "\t; ");
+			func (stream, dis_style_comment_start, "\t@ ");
 			/* For unaligned PCs, apply off-by-alignment
 			   correction.  */
 			info->print_address_func (offset + pc
@@ -8258,12 +8124,23 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    int regno = ((given >> 12) & 0xf) | ((given >> (22 - 4)) & 0x10);
 		    int offset = (given >> 1) & 0x3f;
 
+		    func (stream, dis_style_text, "{");
 		    if (offset == 1)
-		      func (stream, "{d%d}", regno);
+		      func (stream, dis_style_register, "d%d", regno);
 		    else if (regno + offset > 32)
-		      func (stream, "{d%d-<overflow reg d%d>}", regno, regno + offset - 1);
+		      {
+			func (stream, dis_style_register, "d%d", regno);
+			func (stream, dis_style_text, "-<overflow reg d%d>",
+			      regno + offset - 1);
+		      }
 		    else
-		      func (stream, "{d%d-d%d}", regno, regno + offset - 1);
+		      {
+			func (stream, dis_style_register, "d%d", regno);
+			func (stream, dis_style_text, "-");
+			func (stream, dis_style_register, "d%d",
+			      regno + offset - 1);
+		      }
+		    func (stream, dis_style_text, "}");
 		  }
 		  break;
 
@@ -8279,16 +8156,35 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    int maxreg = single ? 31 : 15;
 		    int topreg = reg + num - 1;
 
+		    func (stream, dis_style_text, "{");
 		    if (!num)
-		      func (stream, "{VPR}");
+		      {
+			/* Nothing.  */
+		      }
 		    else if (num == 1)
-		      func (stream, "{%c%d, VPR}", reg_prefix, reg);
+		      {
+			func (stream, dis_style_register,
+			      "%c%d", reg_prefix, reg);
+			func (stream, dis_style_text, ", ");
+		      }
 		    else if (topreg > maxreg)
-		      func (stream, "{%c%d-<overflow reg d%d, VPR}",
-			    reg_prefix, reg, single ? topreg >> 1 : topreg);
+		      {
+			func (stream, dis_style_register, "%c%d",
+			      reg_prefix, reg);
+			func (stream, dis_style_text, "-<overflow reg d%d, ",
+			      single ? topreg >> 1 : topreg);
+		      }
 		    else
-		      func (stream, "{%c%d-%c%d, VPR}", reg_prefix, reg,
-			    reg_prefix, topreg);
+		      {
+			func (stream, dis_style_register,
+			      "%c%d", reg_prefix, reg);
+			func (stream, dis_style_text, "-");
+			func (stream, dis_style_register, "%c%d",
+			      reg_prefix, topreg);
+			func (stream, dis_style_text, ", ");
+		      }
+		    func (stream, dis_style_register, "VPR");
+		    func (stream, dis_style_text, "}");
 		  }
 		  break;
 
@@ -8303,26 +8199,8 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 
 		  /* Fall through.  */
 		case 'b':
-		  func (stream, "%s", arm_conditional[cond]);
-		  break;
-
-		case 'I':
-		  /* Print a Cirrus/DSP shift immediate.  */
-		  /* Immediates are 7bit signed ints with bits 0..3 in
-		     bits 0..3 of opcode and bits 4..6 in bits 5..7
-		     of opcode.  */
-		  {
-		    int imm;
-
-		    imm = (given & 0xf) | ((given & 0xe0) >> 1);
-
-		    /* Is ``imm'' a negative number?  */
-		    if (imm & 0x40)
-		      imm -= 0x80;
-
-		    func (stream, "%d", imm);
-		  }
-
+		  func (stream, dis_style_mnemonic, "%s",
+			arm_conditional[cond]);
 		  break;
 
 		case 'J':
@@ -8333,98 +8211,29 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    switch (regno)
 		      {
 		      case 0x1:
-			func (stream, "FPSCR");
+			func (stream, dis_style_register, "FPSCR");
 			break;
 		      case 0x2:
-			func (stream, "FPSCR_nzcvqc");
+			func (stream, dis_style_register, "FPSCR_nzcvqc");
 			break;
 		      case 0xc:
-			func (stream, "VPR");
+			func (stream, dis_style_register, "VPR");
 			break;
 		      case 0xd:
-			func (stream, "P0");
+			func (stream, dis_style_register, "P0");
 			break;
 		      case 0xe:
-			func (stream, "FPCXTNS");
+			func (stream, dis_style_register, "FPCXTNS");
 			break;
 		      case 0xf:
-			func (stream, "FPCXTS");
+			func (stream, dis_style_register, "FPCXTS");
 			break;
 		      default:
-			func (stream, "<invalid reg %lu>", regno);
+			func (stream, dis_style_text, "<invalid reg %lu>",
+			      regno);
 			break;
 		      }
 		  }
-		  break;
-
-		case 'F':
-		  switch (given & 0x00408000)
-		    {
-		    case 0:
-		      func (stream, "4");
-		      break;
-		    case 0x8000:
-		      func (stream, "1");
-		      break;
-		    case 0x00400000:
-		      func (stream, "2");
-		      break;
-		    default:
-		      func (stream, "3");
-		    }
-		  break;
-
-		case 'P':
-		  switch (given & 0x00080080)
-		    {
-		    case 0:
-		      func (stream, "s");
-		      break;
-		    case 0x80:
-		      func (stream, "d");
-		      break;
-		    case 0x00080000:
-		      func (stream, "e");
-		      break;
-		    default:
-		      func (stream, _("<illegal precision>"));
-		      break;
-		    }
-		  break;
-
-		case 'Q':
-		  switch (given & 0x00408000)
-		    {
-		    case 0:
-		      func (stream, "s");
-		      break;
-		    case 0x8000:
-		      func (stream, "d");
-		      break;
-		    case 0x00400000:
-		      func (stream, "e");
-		      break;
-		    default:
-		      func (stream, "p");
-		      break;
-		    }
-		  break;
-
-		case 'R':
-		  switch (given & 0x60)
-		    {
-		    case 0:
-		      break;
-		    case 0x20:
-		      func (stream, "p");
-		      break;
-		    case 0x40:
-		      func (stream, "m");
-		      break;
-		    default:
-		      func (stream, "z");
-		      break;
-		    }
 		  break;
 
 		case '0': case '1': case '2': case '3': case '4':
@@ -8450,24 +8259,27 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			      is_unpredictable = true;
 			    u_reg = value;
 			  }
-			func (stream, "%s", arm_regnames[value]);
+			func (stream, dis_style_register, "%s",
+			      arm_regnames[value]);
 			break;
 		      case 'V':
 			if (given & (1 << 6))
 			  goto Q;
 			/* FALLTHROUGH */
 		      case 'D':
-			func (stream, "d%ld", value);
+			func (stream, dis_style_register, "d%ld", value);
 			break;
 		      case 'Q':
 		      Q:
 			if (value & 1)
-			  func (stream, "<illegal reg q%ld.5>", value >> 1);
+			  func (stream, dis_style_text,
+				"<illegal reg q%ld.5>", value >> 1);
 			else
-			  func (stream, "q%ld", value >> 1);
+			  func (stream, dis_style_register,
+				"q%ld", value >> 1);
 			break;
 		      case 'd':
-			func (stream, "%ld", value);
+			func (stream, base_style, "%ld", value);
 			value_in_comment = value;
 			break;
 		      case 'E':
@@ -8485,74 +8297,85 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			    (16 + (value & 0xF));
 
 			  if (!(decVal % 1000000))
-			    func (stream, "%ld\t; 0x%08x %c%u.%01u", value,
-				  floatVal, value & 0x80 ? '-' : ' ',
-				  decVal / 10000000,
-				  decVal % 10000000 / 1000000);
+			    {
+			      func (stream, dis_style_immediate, "%ld", value);
+			      func (stream, dis_style_comment_start,
+				    "\t@ 0x%08x %c%u.%01u",
+				    floatVal, value & 0x80 ? '-' : ' ',
+				    decVal / 10000000,
+				    decVal % 10000000 / 1000000);
+			    }
 			  else if (!(decVal % 10000))
-			    func (stream, "%ld\t; 0x%08x %c%u.%03u", value,
-				  floatVal, value & 0x80 ? '-' : ' ',
-				  decVal / 10000000,
-				  decVal % 10000000 / 10000);
+			    {
+			      func (stream, dis_style_immediate, "%ld", value);
+			      func (stream, dis_style_comment_start,
+				    "\t@ 0x%08x %c%u.%03u",
+				    floatVal, value & 0x80 ? '-' : ' ',
+				    decVal / 10000000,
+				    decVal % 10000000 / 10000);
+			    }
 			  else
-			    func (stream, "%ld\t; 0x%08x %c%u.%07u", value,
-				  floatVal, value & 0x80 ? '-' : ' ',
-				  decVal / 10000000, decVal % 10000000);
+			    {
+			      func (stream, dis_style_immediate, "%ld", value);
+			      func (stream, dis_style_comment_start,
+				    "\t@ 0x%08x %c%u.%07u",
+				    floatVal, value & 0x80 ? '-' : ' ',
+				    decVal / 10000000, decVal % 10000000);
+			    }
 			  break;
 			}
 		      case 'k':
 			{
 			  int from = (given & (1 << 7)) ? 32 : 16;
-			  func (stream, "%ld", from - value);
+			  func (stream, dis_style_immediate, "%ld",
+				from - value);
 			}
-			break;
-
-		      case 'f':
-			if (value > 7)
-			  func (stream, "#%s", arm_fp_const[value & 7]);
-			else
-			  func (stream, "f%ld", value);
 			break;
 
 		      case 'w':
 			if (width == 2)
-			  func (stream, "%s", iwmmxt_wwnames[value]);
+			  func (stream, dis_style_mnemonic, "%s",
+				iwmmxt_wwnames[value]);
 			else
-			  func (stream, "%s", iwmmxt_wwssnames[value]);
+			  func (stream, dis_style_mnemonic, "%s",
+				iwmmxt_wwssnames[value]);
 			break;
 
 		      case 'g':
-			func (stream, "%s", iwmmxt_regnames[value]);
+			func (stream, dis_style_register, "%s",
+			      iwmmxt_regnames[value]);
 			break;
 		      case 'G':
-			func (stream, "%s", iwmmxt_cregnames[value]);
+			func (stream, dis_style_register, "%s",
+			      iwmmxt_cregnames[value]);
 			break;
 
 		      case 'x':
-			func (stream, "0x%lx", (value & 0xffffffffUL));
+			func (stream, dis_style_immediate, "0x%lx",
+			      (value & 0xffffffffUL));
 			break;
 
 		      case 'c':
 			switch (value)
 			  {
 			  case 0:
-			    func (stream, "eq");
+			    func (stream, dis_style_mnemonic, "eq");
 			    break;
 
 			  case 1:
-			    func (stream, "vs");
+			    func (stream, dis_style_mnemonic, "vs");
 			    break;
 
 			  case 2:
-			    func (stream, "ge");
+			    func (stream, dis_style_mnemonic, "ge");
 			    break;
 
 			  case 3:
-			    func (stream, "gt");
+			    func (stream, dis_style_mnemonic, "gt");
 			    break;
 
 			  default:
-			    func (stream, "??");
+			    func (stream, dis_style_text, "??");
 			    break;
 			  }
 			break;
@@ -8560,15 +8383,16 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		      case '`':
 			c++;
 			if (value == 0)
-			  func (stream, "%c", *c);
+			  func (stream, dis_style_mnemonic, "%c", *c);
 			break;
 		      case '\'':
 			c++;
 			if (value == ((1ul << width) - 1))
-			  func (stream, "%c", *c);
+			  func (stream, base_style, "%c", *c);
 			break;
 		      case '?':
-			func (stream, "%c", c[(1 << width) - (int) value]);
+			func (stream, base_style, "%c",
+			      c[(1 << width) - (int) value]);
 			c += 1 << width;
 			break;
 		      default:
@@ -8620,7 +8444,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			break;
 
 		      case '3': /* List */
-			func (stream, "{");
+			func (stream, dis_style_text, "{");
 			regno = (given >> 12) & 0x0000000f;
 			if (single)
 			  {
@@ -8635,7 +8459,8 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 			abort ();
 		      }
 
-		    func (stream, "%c%d", single ? 's' : 'd', regno);
+		    func (stream, dis_style_register, "%c%d",
+			  single ? 's' : 'd', regno);
 
 		    if (*c == '3')
 		      {
@@ -8646,26 +8471,38 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 
 			if (--count)
 			  {
-			    func (stream, "-%c%d",
+			    func (stream, dis_style_text, "-");
+			    func (stream, dis_style_register, "%c%d",
 				  single ? 's' : 'd',
 				  regno + count);
 			  }
 
-			func (stream, "}");
+			func (stream, dis_style_text, "}");
 		      }
 		    else if (*c == '4')
-		      func (stream, ", %c%d", single ? 's' : 'd',
-			    regno + 1);
+		      {
+			func (stream, dis_style_text, ", ");
+			func (stream, dis_style_register, "%c%d",
+			      single ? 's' : 'd', regno + 1);
+		      }
 		  }
 		  break;
 
 		case 'L':
 		  switch (given & 0x00400100)
 		    {
-		    case 0x00000000: func (stream, "b"); break;
-		    case 0x00400000: func (stream, "h"); break;
-		    case 0x00000100: func (stream, "w"); break;
-		    case 0x00400100: func (stream, "d"); break;
+		    case 0x00000000:
+		      func (stream, dis_style_mnemonic, "b");
+		      break;
+		    case 0x00400000:
+		      func (stream, dis_style_mnemonic, "h");
+		      break;
+		    case 0x00000100:
+		      func (stream, dis_style_mnemonic, "w");
+		      break;
+		    case 0x00400100:
+		      func (stream, dis_style_mnemonic, "d");
+		      break;
 		    default:
 		      break;
 		    }
@@ -8675,7 +8512,7 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		  {
 		    /* given (20, 23) | given (0, 3) */
 		    value = ((given >> 16) & 0xf0) | (given & 0xf);
-		    func (stream, "%d", (int) value);
+		    func (stream, dis_style_immediate, "%d", (int) value);
 		  }
 		  break;
 
@@ -8687,7 +8524,9 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    int offset = given & 0xff;
 		    int multiplier = (given & 0x00000100) ? 4 : 1;
 
-		    func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+		    func (stream, dis_style_text, "[");
+		    func (stream, dis_style_register, "%s",
+			  arm_regnames [(given >> 16) & 0xf]);
 
 		    if (multiplier > 1)
 		      {
@@ -8699,17 +8538,24 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		    if (offset)
 		      {
 			if (PRE_BIT_SET)
-			  func (stream, ", #%s%d]%s",
-				NEGATIVE_BIT_SET ? "-" : "",
-				offset * multiplier,
-				WRITEBACK_BIT_SET ? "!" : "");
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_immediate, "#%s%d",
+				  NEGATIVE_BIT_SET ? "-" : "",
+				  offset * multiplier);
+			    func (stream, dis_style_text, "]%s",
+				  WRITEBACK_BIT_SET ? "!" : "");
+			  }
 			else
-			  func (stream, "], #%s%d",
-				NEGATIVE_BIT_SET ? "-" : "",
-				offset * multiplier);
+			  {
+			    func (stream, dis_style_text, "], ");
+			    func (stream, dis_style_immediate, "#%s%d",
+				  NEGATIVE_BIT_SET ? "-" : "",
+				  offset * multiplier);
+			  }
 		      }
 		    else
-		      func (stream, "]");
+		      func (stream, dis_style_text, "]");
 		  }
 		  break;
 
@@ -8725,25 +8571,41 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		      {
 		      case 1:
 		      case 3:
-			func (stream, "[%s], %c%s", rn, ubit ? '+' : '-', rm);
+			func (stream, dis_style_text, "[");
+			func (stream, dis_style_register, "%s", rn);
+			func (stream, dis_style_text, "], ");
+			func (stream, dis_style_text, "%c", ubit ? '+' : '-');
+			func (stream, dis_style_register, "%s", rm);
 			if (imm4)
-			  func (stream, ", lsl #%d", imm4);
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_sub_mnemonic, "lsl ");
+			    func (stream, dis_style_immediate, "#%d", imm4);
+			  }
 			break;
 
 		      case 4:
 		      case 5:
 		      case 6:
 		      case 7:
-			func (stream, "[%s, %c%s", rn, ubit ? '+' : '-', rm);
+			func (stream, dis_style_text, "[");
+			func (stream, dis_style_register, "%s", rn);
+			func (stream, dis_style_text, ", ");
+			func (stream, dis_style_text, "%c", ubit ? '+' : '-');
+			func (stream, dis_style_register, "%s", rm);
 			if (imm4 > 0)
-			  func (stream, ", lsl #%d", imm4);
-			func (stream, "]");
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_sub_mnemonic, "lsl ");
+			    func (stream, dis_style_immediate, "#%d", imm4);
+			  }
+			func (stream, dis_style_text, "]");
 			if (puw_bits == 5 || puw_bits == 7)
-			  func (stream, "!");
+			  func (stream, dis_style_text, "!");
 			break;
 
 		      default:
-			func (stream, "INVALID");
+			func (stream, dis_style_text, "INVALID");
 		      }
 		  }
 		  break;
@@ -8752,7 +8614,8 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		  {
 		    long imm5;
 		    imm5 = ((given & 0x100) >> 4) | (given & 0xf);
-		    func (stream, "%ld", (imm5 == 0) ? 32 : imm5);
+		    func (stream, dis_style_immediate, "%ld",
+			  (imm5 == 0) ? 32 : imm5);
 		  }
 		  break;
 
@@ -8761,14 +8624,23 @@ print_insn_coprocessor_1 (const struct sopcode32 *opcodes,
 		}
 	    }
 	  else
-	    func (stream, "%c", *c);
+	    {
+	      if (*c == '@')
+		base_style = dis_style_comment_start;
+
+	      if (*c == '\t')
+		base_style = dis_style_text;
+
+	      func (stream, base_style, "%c", *c);
+	    }
 	}
 
       if (value_in_comment > 32 || value_in_comment < -16)
-	func (stream, "\t; 0x%lx", (value_in_comment & 0xffffffffUL));
+	func (stream, dis_style_comment_start, "\t@ 0x%lx",
+	      (value_in_comment & 0xffffffffUL));
 
       if (is_unpredictable)
-	func (stream, UNPREDICTABLE_INSTRUCTION);
+	func (stream, dis_style_comment_start, UNPREDICTABLE_INSTRUCTION);
 
       return true;
     }
@@ -8804,7 +8676,7 @@ static signed long
 print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 {
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
   bfd_vma offset = 0;
 
   if (((given & 0x000f0000) == 0x000f0000)
@@ -8812,14 +8684,19 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
     {
       offset = given & 0xfff;
 
-      func (stream, "[pc");
+      func (stream, dis_style_text, "[");
+      func (stream, dis_style_register, "pc");
 
       if (PRE_BIT_SET)
 	{
 	  /* Pre-indexed.  Elide offset of positive zero when
 	     non-writeback.  */
 	  if (WRITEBACK_BIT_SET || NEGATIVE_BIT_SET || offset)
-	    func (stream, ", #%s%d", NEGATIVE_BIT_SET ? "-" : "", (int) offset);
+	    {
+	      func (stream, dis_style_text, ", ");
+	      func (stream, dis_style_immediate, "#%s%d",
+		    NEGATIVE_BIT_SET ? "-" : "", (int) offset);
+	    }
 
 	  if (NEGATIVE_BIT_SET)
 	    offset = -offset;
@@ -8830,23 +8707,26 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	     being used.  Probably a very dangerous thing
 	     for the programmer to do, but who are we to
 	     argue ?  */
-	  func (stream, "]%s", WRITEBACK_BIT_SET ? "!" : "");
+	  func (stream, dis_style_text, "]%s", WRITEBACK_BIT_SET ? "!" : "");
 	}
       else  /* Post indexed.  */
 	{
-	  func (stream, "], #%s%d", NEGATIVE_BIT_SET ? "-" : "", (int) offset);
+	  func (stream, dis_style_text, "], ");
+	  func (stream, dis_style_immediate, "#%s%d",
+		NEGATIVE_BIT_SET ? "-" : "", (int) offset);
 
 	  /* Ie ignore the offset.  */
 	  offset = pc + 8;
 	}
 
-      func (stream, "\t; ");
+      func (stream, dis_style_comment_start, "\t@ ");
       info->print_address_func (offset, info);
       offset = 0;
     }
   else
     {
-      func (stream, "[%s",
+      func (stream, dis_style_text, "[");
+      func (stream, dis_style_register, "%s",
 	    arm_regnames[(given >> 16) & 0xf]);
 
       if (PRE_BIT_SET)
@@ -8856,15 +8736,20 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	      /* Elide offset of positive zero when non-writeback.  */
 	      offset = given & 0xfff;
 	      if (WRITEBACK_BIT_SET || NEGATIVE_BIT_SET || offset)
-		func (stream, ", #%s%d", NEGATIVE_BIT_SET ? "-" : "", (int) offset);
+		{
+		  func (stream, dis_style_text, ", ");
+		  func (stream, dis_style_immediate, "#%s%d",
+			NEGATIVE_BIT_SET ? "-" : "", (int) offset);
+		}
 	    }
 	  else
 	    {
-	      func (stream, ", %s", NEGATIVE_BIT_SET ? "-" : "");
+	      func (stream, dis_style_text, ", %s",
+		    NEGATIVE_BIT_SET ? "-" : "");
 	      arm_decode_shift (given, func, stream, true);
 	    }
 
-	  func (stream, "]%s",
+	  func (stream, dis_style_text, "]%s",
 		WRITEBACK_BIT_SET ? "!" : "");
 	}
       else
@@ -8873,12 +8758,13 @@ print_arm_address (bfd_vma pc, struct disassemble_info *info, long given)
 	    {
 	      /* Always show offset.  */
 	      offset = given & 0xfff;
-	      func (stream, "], #%s%d",
+	      func (stream, dis_style_text, "], ");
+	      func (stream, dis_style_immediate, "#%s%d",
 		    NEGATIVE_BIT_SET ? "-" : "", (int) offset);
 	    }
 	  else
 	    {
-	      func (stream, "], %s",
+	      func (stream, dis_style_text, "], %s",
 		    NEGATIVE_BIT_SET ? "-" : "");
 	      arm_decode_shift (given, func, stream, true);
 	    }
@@ -8899,7 +8785,9 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 {
   const struct cdeopcode32 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   if (thumb)
   {
@@ -8923,8 +8811,23 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 	  {
 	    switch (*++c)
 	    {
+	      case '{':
+		++c;
+		if (*c == '\0')
+		  abort ();
+		old_base_style = base_style;
+		base_style = decode_base_style (*c);
+		++c;
+		if (*c != ':')
+		  abort ();
+		break;
+
+	      case '}':
+		base_style = old_base_style;
+		break;
+
 	      case '%':
-		func (stream, "%%");
+		func (stream, base_style, "%%");
 		break;
 
 	      case '0': case '1': case '2': case '3': case '4':
@@ -8946,29 +8849,32 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 		      is_unpredictable = true;
 		    /* Fall through.  */
 		  case 'r':
-		    func (stream, "%s", arm_regnames[value]);
+		    func (stream, dis_style_register, "%s",
+			  arm_regnames[value]);
 		    break;
 
 		  case 'n':
 		    if (value == 15)
-		      func (stream, "%s", "APSR_nzcv");
+		      func (stream, dis_style_register, "%s", "APSR_nzcv");
 		    else
-		      func (stream, "%s", arm_regnames[value]);
+		      func (stream, dis_style_register, "%s",
+			    arm_regnames[value]);
 		    break;
 
 		  case 'T':
-		    func (stream, "%s", arm_regnames[value + 1]);
+		    func (stream, dis_style_register, "%s",
+			  arm_regnames[(value + 1) & 15]);
 		    break;
 
 		  case 'd':
-		    func (stream, "%ld", value);
+		    func (stream, dis_style_immediate, "%ld", value);
 		    break;
 
 		  case 'V':
 		    if (given & (1 << 6))
-		      func (stream, "q%ld", value >> 1);
+		      func (stream, dis_style_register, "q%ld", value >> 1);
 		    else if (given & (1 << 24))
-		      func (stream, "d%ld", value);
+		      func (stream, dis_style_register, "d%ld", value);
 		    else
 		      {
 			/* Encoding for S register is different than for D and
@@ -8979,7 +8885,7 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 			uint8_t top_bit = (value >> 4) & 1;
 			uint8_t tmp = (value << 1) & 0x1e;
 			uint8_t res = tmp | top_bit;
-			func (stream, "s%u", res);
+			func (stream, dis_style_register, "s%u", res);
 		      }
 		    break;
 
@@ -8992,7 +8898,7 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 	    case 'p':
 	      {
 		uint8_t proc_number = (given >> 8) & 0x7;
-		func (stream, "p%u", proc_number);
+		func (stream, dis_style_register, "p%u", proc_number);
 		break;
 	      }
 
@@ -9000,7 +8906,7 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 	      {
 		uint8_t a_offset = 28;
 		if (given & (1 << a_offset))
-		  func (stream, "a");
+		  func (stream, dis_style_mnemonic, "a");
 		break;
 	      }
 	  default:
@@ -9008,11 +8914,18 @@ print_insn_cde (struct disassemble_info *info, long given, bool thumb)
 	  }
 	}
 	else
-	  func (stream, "%c", *c);
+	  {
+	    if (*c == '@')
+	      base_style = dis_style_comment_start;
+	    if (*c == '\t')
+	      base_style = dis_style_text;
+
+	    func (stream, base_style, "%c", *c);
+	  }
       }
 
       if (is_unpredictable)
-	func (stream, UNPREDICTABLE_INSTRUCTION);
+	func (stream, dis_style_comment_start, UNPREDICTABLE_INSTRUCTION);
 
       return true;
       }
@@ -9033,7 +8946,9 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 {
   const struct opcode32 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   if (thumb)
     {
@@ -9111,8 +9026,23 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 		{
 		  switch (*++c)
 		    {
+		    case '{':
+		      ++c;
+		      if (*c == '\0')
+			abort ();
+		      old_base_style = base_style;
+		      base_style = decode_base_style (*c);
+		      ++c;
+		      if (*c != ':')
+			abort ();
+		      break;
+
+		    case '}':
+		      base_style = old_base_style;
+		      break;
+
 		    case '%':
-		      func (stream, "%%");
+		      func (stream, base_style, "%%");
 		      break;
 
 		    case 'u':
@@ -9121,7 +9051,8 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 
 		      /* Fall through.  */
 		    case 'c':
-		      func (stream, "%s", arm_conditional[cond]);
+		      func (stream, dis_style_mnemonic, "%s",
+			    arm_conditional[cond]);
 		      break;
 
 		    case 'A':
@@ -9149,22 +9080,42 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			int stride = (enc[type] >> 4) + 1;
 			int ix;
 
-			func (stream, "{");
+			func (stream, dis_style_text, "{");
 			if (stride > 1)
 			  for (ix = 0; ix != n; ix++)
-			    func (stream, "%sd%d", ix ? "," : "", rd + ix * stride);
+			    {
+			      if (ix > 0)
+				func (stream, dis_style_text, ",");
+			      func (stream, dis_style_register, "d%d",
+				    rd + ix * stride);
+			    }
 			else if (n == 1)
-			  func (stream, "d%d", rd);
+			  func (stream, dis_style_register, "d%d", rd);
 			else
-			  func (stream, "d%d-d%d", rd, rd + n - 1);
-			func (stream, "}, [%s", arm_regnames[rn]);
+			  {
+			    func (stream, dis_style_register, "d%d", rd);
+			    func (stream, dis_style_text, "-");
+			    func (stream, dis_style_register, "d%d",
+				  rd + n - 1);
+			  }
+			func (stream, dis_style_text, "}, [");
+			func (stream, dis_style_register, "%s",
+			      arm_regnames[rn]);
 			if (align)
-			  func (stream, " :%d", 32 << align);
-			func (stream, "]");
+			  {
+			    func (stream, dis_style_text, " :");
+			    func (stream, dis_style_immediate, "%d",
+				  32 << align);
+			  }
+			func (stream, dis_style_text, "]");
 			if (rm == 0xd)
-			  func (stream, "!");
+			  func (stream, dis_style_text, "!");
 			else if (rm != 0xf)
-			  func (stream, ", %s", arm_regnames[rm]);
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[rm]);
+			  }
 		      }
 		      break;
 
@@ -9228,18 +9179,31 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
                             abort ();
                           }
 
-			func (stream, "{");
+			func (stream, dis_style_text, "{");
                         for (i = 0; i < length; i++)
-                          func (stream, "%sd%d[%d]", (i == 0) ? "" : ",",
-                            rd + i * stride, idx);
-                        func (stream, "}, [%s", arm_regnames[rn]);
+			  {
+			    if (i > 0)
+			      func (stream, dis_style_text, ",");
+			    func (stream, dis_style_register, "d%d[%d]",
+				  rd + i * stride, idx);
+			  }
+			func (stream, dis_style_text, "}, [");
+			func (stream, dis_style_register, "%s",
+			      arm_regnames[rn]);
 			if (align)
-			  func (stream, " :%d", align);
-			func (stream, "]");
+			  {
+			    func (stream, dis_style_text, " :");
+			    func (stream, dis_style_immediate, "%d", align);
+			  }
+			func (stream, dis_style_text, "]");
 			if (rm == 0xd)
-			  func (stream, "!");
+			  func (stream, dis_style_text, "!");
 			else if (rm != 0xf)
-			  func (stream, ", %s", arm_regnames[rm]);
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[rm]);
+			  }
 		      }
 		      break;
 
@@ -9260,30 +9224,51 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			else
 			  stride++;
 
-			func (stream, "{");
+			func (stream, dis_style_text, "{");
 			if (stride > 1)
 			  for (ix = 0; ix != n; ix++)
-			    func (stream, "%sd%d[]", ix ? "," : "", rd + ix * stride);
+			    {
+			      if (ix > 0)
+				func (stream, dis_style_text, ",");
+			      func (stream, dis_style_register, "d%d[]",
+				    rd + ix * stride);
+			    }
 			else if (n == 1)
-			  func (stream, "d%d[]", rd);
+			  func (stream, dis_style_register, "d%d[]", rd);
 			else
-			  func (stream, "d%d[]-d%d[]", rd, rd + n - 1);
-			func (stream, "}, [%s", arm_regnames[rn]);
+			  {
+			    func (stream, dis_style_register, "d%d[]", rd);
+			    func (stream, dis_style_text, "-");
+			    func (stream, dis_style_register, "d%d[]",
+				  rd + n - 1);
+			  }
+			func (stream, dis_style_text, "}, [");
+			func (stream, dis_style_register, "%s",
+			      arm_regnames[rn]);
 			if (align)
 			  {
                             align = (8 * (type + 1)) << size;
                             if (type == 3)
                               align = (size > 1) ? align >> 1 : align;
 			    if (type == 2 || (type == 0 && !size))
-			      func (stream, " :<bad align %d>", align);
+			      func (stream, dis_style_text,
+				    " :<bad align %d>", align);
 			    else
-			      func (stream, " :%d", align);
+			      {
+				func (stream, dis_style_text, " :");
+				func (stream, dis_style_immediate,
+				      "%d", align);
+			      }
 			  }
-			func (stream, "]");
+			func (stream, dis_style_text, "]");
 			if (rm == 0xd)
-			  func (stream, "!");
+			  func (stream, dis_style_text, "!");
 			else if (rm != 0xf)
-			  func (stream, ", %s", arm_regnames[rm]);
+			  {
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[rm]);
+			  }
 		      }
 		      break;
 
@@ -9294,7 +9279,7 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			int reg = raw_reg & ((4 << size) - 1);
 			int ix = raw_reg >> size >> 2;
 
-			func (stream, "d%d[%d]", reg, ix);
+			func (stream, dis_style_register, "d%d[%d]", reg, ix);
 		      }
 		      break;
 
@@ -9373,7 +9358,8 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			  }
 			else
 			  {
-			    func (stream, "<illegal constant %.8x:%x:%x>",
+			    func (stream, dis_style_text,
+				  "<illegal constant %.8x:%x:%x>",
                                   bits, cmode, op);
                             size = 32;
 			    break;
@@ -9381,11 +9367,15 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
                         switch (size)
                           {
                           case 8:
-			    func (stream, "#%ld\t; 0x%.2lx", value, value);
+			    func (stream, dis_style_immediate, "#%ld", value);
+			    func (stream, dis_style_comment_start,
+				  "\t@ 0x%.2lx", value);
                             break;
 
                           case 16:
-                            func (stream, "#%ld\t; 0x%.4lx", value, value);
+			    func (stream, dis_style_immediate, "#%ld", value);
+			    func (stream, dis_style_comment_start,
+				  "\t@ 0x%.4lx", value);
                             break;
 
                           case 32:
@@ -9405,18 +9395,24 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
                                   (& floatformat_ieee_single_little, valbytes,
                                   & fvalue);
 
-                                func (stream, "#%.7g\t; 0x%.8lx", fvalue,
-                                      value);
+				func (stream, dis_style_immediate,
+				      "#%.7g", fvalue);
+				func (stream, dis_style_comment_start,
+				      "\t@ 0x%.8lx", value);
                               }
                             else
-                              func (stream, "#%ld\t; 0x%.8lx",
-				    (long) (((value & 0x80000000L) != 0)
-					    ? value | ~0xffffffffL : value),
-				    value);
+			      {
+				func (stream, dis_style_immediate, "#%ld",
+				      (long) (((value & 0x80000000L) != 0)
+					      ? value | ~0xffffffffL : value));
+				func (stream, dis_style_comment_start,
+				      "\t@ 0x%.8lx", value);
+			      }
                             break;
 
                           case 64:
-                            func (stream, "#0x%.8lx%.8lx", hival, value);
+			    func (stream, dis_style_immediate,
+				  "#0x%.8lx%.8lx", hival, value);
                             break;
 
                           default:
@@ -9430,12 +9426,23 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			int regno = ((given >> 16) & 0xf) | ((given >> (7 - 4)) & 0x10);
 			int num = (given >> 8) & 0x3;
 
+			func (stream, dis_style_text, "{");
 			if (!num)
-			  func (stream, "{d%d}", regno);
+			  func (stream, dis_style_register, "d%d", regno);
 			else if (num + regno >= 32)
-			  func (stream, "{d%d-<overflow reg d%d}", regno, regno + num);
+			  {
+			    func (stream, dis_style_register, "d%d", regno);
+			    func (stream, dis_style_text, "-<overflow reg d%d",
+				  regno + num);
+			  }
 			else
-			  func (stream, "{d%d-d%d}", regno, regno + num);
+			  {
+			    func (stream, dis_style_register, "d%d", regno);
+			    func (stream, dis_style_text, "-");
+			    func (stream, dis_style_register, "d%d",
+				  regno + num);
+			  }
+			func (stream, dis_style_text, "}");
 		      }
 		      break;
 
@@ -9451,14 +9458,16 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			switch (*c)
 			  {
 			  case 'r':
-			    func (stream, "%s", arm_regnames[value]);
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[value]);
 			    break;
 			  case 'd':
-			    func (stream, "%ld", value);
+			    func (stream, base_style, "%ld", value);
 			    value_in_comment = value;
 			    break;
 			  case 'e':
-			    func (stream, "%ld", (1ul << width) - value);
+			    func (stream, dis_style_immediate, "%ld",
+				  (1ul << width) - value);
 			    break;
 
 			  case 'S':
@@ -9481,9 +9490,11 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			      high = limit & 3;
 
 			      if (value < low || value > high)
-				func (stream, "<illegal width %d>", base << value);
+				func (stream, dis_style_text,
+				      "<illegal width %d>", base << value);
 			      else
-				func (stream, "%d", base << value);
+				func (stream, base_style, "%d",
+				      base << value);
 			    }
 			    break;
 			  case 'R':
@@ -9491,28 +9502,31 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 			      goto Q;
 			    /* FALLTHROUGH */
 			  case 'D':
-			    func (stream, "d%ld", value);
+			    func (stream, dis_style_register, "d%ld", value);
 			    break;
 			  case 'Q':
 			  Q:
 			    if (value & 1)
-			      func (stream, "<illegal reg q%ld.5>", value >> 1);
+			      func (stream, dis_style_text,
+				    "<illegal reg q%ld.5>", value >> 1);
 			    else
-			      func (stream, "q%ld", value >> 1);
+			      func (stream, dis_style_register,
+				    "q%ld", value >> 1);
 			    break;
 
 			  case '`':
 			    c++;
 			    if (value == 0)
-			      func (stream, "%c", *c);
+			      func (stream, dis_style_text, "%c", *c);
 			    break;
 			  case '\'':
 			    c++;
 			    if (value == ((1ul << width) - 1))
-			      func (stream, "%c", *c);
+			      func (stream, dis_style_text, "%c", *c);
 			    break;
 			  case '?':
-			    func (stream, "%c", c[(1 << width) - (int) value]);
+			    func (stream, dis_style_mnemonic, "%c",
+				  c[(1 << width) - (int) value]);
 			    c += 1 << width;
 			    break;
 			  default:
@@ -9526,14 +9540,24 @@ print_insn_neon (struct disassemble_info *info, long given, bool thumb)
 		    }
 		}
 	      else
-		func (stream, "%c", *c);
+		{
+		  if (*c == '@')
+		    base_style = dis_style_comment_start;
+
+		  if (*c == '\t')
+		    base_style = dis_style_text;
+
+		  func (stream, base_style, "%c", *c);
+
+		}
 	    }
 
 	  if (value_in_comment > 32 || value_in_comment < -16)
-	    func (stream, "\t; 0x%lx", value_in_comment);
+	    func (stream, dis_style_comment_start, "\t@ 0x%lx",
+		  value_in_comment);
 
 	  if (is_unpredictable)
-	    func (stream, UNPREDICTABLE_INSTRUCTION);
+	    func (stream, dis_style_comment_start, UNPREDICTABLE_INSTRUCTION);
 
 	  return true;
 	}
@@ -9550,7 +9574,9 @@ print_insn_mve (struct disassemble_info *info, long given)
 {
   const struct mopcode32 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   for (insn = mve_opcodes; insn->assembler; insn++)
     {
@@ -9591,19 +9617,35 @@ print_insn_mve (struct disassemble_info *info, long given)
 		{
 		  switch (*++c)
 		    {
+		    case '{':
+		      ++c;
+		      if (*c == '\0')
+			abort ();
+		      old_base_style = base_style;
+		      base_style = decode_base_style (*c);
+		      ++c;
+		      if (*c != ':')
+			abort ();
+		      break;
+
+		    case '}':
+		      base_style = old_base_style;
+		      break;
+
 		    case '%':
-		      func (stream, "%%");
+		      func (stream, base_style, "%%");
 		      break;
 
 		    case 'a':
 		      /* Don't print anything for '+' as it is implied.  */
 		      if (arm_decode_field (given, 23, 23) == 0)
-			func (stream, "-");
+			func (stream, dis_style_immediate, "-");
 		      break;
 
 		    case 'c':
 		      if (ifthen_state)
-			func (stream, "%s", arm_conditional[IFTHEN_COND]);
+			func (stream, dis_style_mnemonic, "%s",
+			      arm_conditional[IFTHEN_COND]);
 		      break;
 
 		    case 'd':
@@ -9613,7 +9655,8 @@ print_insn_mve (struct disassemble_info *info, long given)
 		    case 'i':
 		      {
 			long mve_mask = mve_extract_pred_mask (given);
-			func (stream, "%s", mve_predicatenames[mve_mask]);
+			func (stream, dis_style_mnemonic, "%s",
+			      mve_predicatenames[mve_mask]);
 		      }
 		      break;
 
@@ -9622,12 +9665,13 @@ print_insn_mve (struct disassemble_info *info, long given)
 			unsigned int imm5 = 0;
 			imm5 |= arm_decode_field (given, 6, 7);
 			imm5 |= (arm_decode_field (given, 12, 14) << 2);
-			func (stream, "#%u", (imm5 == 0) ? 32 : imm5);
+			func (stream, dis_style_immediate, "#%u",
+			      (imm5 == 0) ? 32 : imm5);
 		      }
 		      break;
 
 		    case 'k':
-		      func (stream, "#%u",
+		      func (stream, dis_style_immediate, "#%u",
 			    (arm_decode_field (given, 7, 7) == 0) ? 64 : 48);
 		      break;
 
@@ -9642,7 +9686,9 @@ print_insn_mve (struct disassemble_info *info, long given)
 			    = arm_decode_field (given, 4, 4)
 			      | (arm_decode_field (given, 6, 6) << 1);
 
-			  func (stream, ", uxtw #%lu", size);
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_sub_mnemonic, "uxtw ");
+			  func (stream, dis_style_immediate, "#%lu", size);
 			}
 		      break;
 
@@ -9668,17 +9714,17 @@ print_insn_mve (struct disassemble_info *info, long given)
 				    && ((op1 == 0) || (op1 == 1)))
 				  ;
 				else
-				  func (stream, "s");
+				  func (stream, dis_style_mnemonic, "s");
 			      }
 			    else
-			      func (stream, "u");
+			      func (stream, dis_style_mnemonic, "u");
 			  }
 			else
 			  {
 			    if (arm_decode_field (given, 28, 28) == 0)
-			      func (stream, "s");
+			      func (stream, dis_style_mnemonic, "s");
 			    else
-			      func (stream, "u");
+			      func (stream, dis_style_mnemonic, "u");
 			  }
 		      }
 		      break;
@@ -9689,7 +9735,7 @@ print_insn_mve (struct disassemble_info *info, long given)
 
 		    case 'w':
 		      if (arm_decode_field (given, 21, 21) == 1)
-			func (stream, "!");
+			func (stream, dis_style_text, "!");
 		      break;
 
 		    case 'B':
@@ -9708,14 +9754,14 @@ print_insn_mve (struct disassemble_info *info, long given)
 
 		    case 'T':
 		      if (arm_decode_field (given, 12, 12) == 0)
-			func (stream, "b");
+			func (stream, dis_style_mnemonic, "b");
 		      else
-			func (stream, "t");
+			func (stream, dis_style_mnemonic, "t");
 		      break;
 
 		    case 'X':
 		      if (arm_decode_field (given, 12, 12) == 1)
-			func (stream, "x");
+			func (stream, dis_style_mnemonic, "x");
 		      break;
 
 		    case '0': case '1': case '2': case '3': case '4':
@@ -9732,25 +9778,29 @@ print_insn_mve (struct disassemble_info *info, long given)
 			    if (value == 13)
 			      is_unpredictable = true;
 			    else if (value == 15)
-			      func (stream, "zr");
+			      func (stream, dis_style_register, "zr");
 			    else
-			      func (stream, "%s", arm_regnames[value]);
+			      func (stream, dis_style_register, "%s",
+				    arm_regnames[value]);
 			    break;
 
 			  case 'c':
-			    func (stream, "%s", arm_conditional[value]);
+			    func (stream, dis_style_sub_mnemonic, "%s",
+				  arm_conditional[value]);
 			    break;
 
 			  case 'C':
 			    value ^= 1;
-			    func (stream, "%s", arm_conditional[value]);
+			    func (stream, dis_style_sub_mnemonic, "%s",
+				  arm_conditional[value]);
 			    break;
 
 			  case 'S':
 			    if (value == 13 || value == 15)
 			      is_unpredictable = true;
 			    else
-			      func (stream, "%s", arm_regnames[value]);
+			      func (stream, dis_style_register, "%s",
+				    arm_regnames[value]);
 			    break;
 
 			  case 's':
@@ -9760,16 +9810,17 @@ print_insn_mve (struct disassemble_info *info, long given)
 			    break;
 			  case 'I':
 			    if (value == 1)
-			      func (stream, "i");
+			      func (stream, dis_style_mnemonic, "i");
 			    break;
 			  case 'A':
 			    if (value == 1)
-			      func (stream, "a");
+			      func (stream, dis_style_mnemonic, "a");
 			    break;
 			  case 'h':
 			    {
 			      unsigned int odd_reg = (value << 1) | 1;
-			      func (stream, "%s", arm_regnames[odd_reg]);
+			      func (stream, dis_style_register, "%s",
+				    arm_regnames[odd_reg]);
 			    }
 			    break;
 			  case 'i':
@@ -9793,32 +9844,35 @@ print_insn_mve (struct disassemble_info *info, long given)
 				  break;
 				}
 
-			      func (stream, "%lu", mod_imm);
+			      func (stream, dis_style_immediate, "%lu",
+				    mod_imm);
 			    }
 			    break;
 			  case 'k':
-			    func (stream, "%lu", 64 - value);
+			    func (stream, dis_style_immediate, "%lu",
+				  64 - value);
 			    break;
 			  case 'l':
 			    {
 			      unsigned int even_reg = value << 1;
-			      func (stream, "%s", arm_regnames[even_reg]);
+			      func (stream, dis_style_register, "%s",
+				    arm_regnames[even_reg]);
 			    }
 			    break;
 			  case 'u':
 			    switch (value)
 			      {
 			      case 0:
-				func (stream, "1");
+				func (stream, dis_style_immediate, "1");
 				break;
 			      case 1:
-				func (stream, "2");
+				func (stream, dis_style_immediate, "2");
 				break;
 			      case 2:
-				func (stream, "4");
+				func (stream, dis_style_immediate, "4");
 				break;
 			      case 3:
-				func (stream, "8");
+				func (stream, dis_style_immediate, "8");
 				break;
 			      default:
 				break;
@@ -9828,57 +9882,36 @@ print_insn_mve (struct disassemble_info *info, long given)
 			    print_mve_rotate (info, value, width);
 			    break;
 			  case 'r':
-			    func (stream, "%s", arm_regnames[value]);
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[value]);
 			    break;
 			  case 'd':
-			    if (insn->mve_op == MVE_VQSHL_T2
-				|| insn->mve_op == MVE_VQSHLU_T3
-				|| insn->mve_op == MVE_VRSHR
-				|| insn->mve_op == MVE_VRSHRN
-				|| insn->mve_op == MVE_VSHL_T1
-				|| insn->mve_op == MVE_VSHLL_T1
-				|| insn->mve_op == MVE_VSHR
-				|| insn->mve_op == MVE_VSHRN
-				|| insn->mve_op == MVE_VSLI
-				|| insn->mve_op == MVE_VSRI)
+			    if (mve_shift_insn_p (insn->mve_op))
 			      print_mve_shift_n (info, given, insn->mve_op);
 			    else if (insn->mve_op == MVE_VSHLL_T2)
-			      {
-				switch (value)
-				  {
-				  case 0x00:
-				    func (stream, "8");
-				    break;
-				  case 0x01:
-				    func (stream, "16");
-				    break;
-				  case 0x10:
-				    print_mve_undefined (info, UNDEF_SIZE_0);
-				    break;
-				  default:
-				    assert (0);
-				    break;
-				  }
-			      }
+			      func (stream, dis_style_immediate, "%s",
+				    mve_vec_sizename[value]);
 			    else
 			      {
 				if (insn->mve_op == MVE_VSHLC && value == 0)
 				  value = 32;
-				func (stream, "%ld", value);
+				func (stream, base_style, "%ld", value);
 				value_in_comment = value;
 			      }
 			    break;
 			  case 'F':
-			    func (stream, "s%ld", value);
+			    func (stream, dis_style_register, "s%ld", value);
 			    break;
 			  case 'Q':
 			    if (value & 0x8)
-			      func (stream, "<illegal reg q%ld.5>", value);
+			      func (stream, dis_style_text,
+				    "<illegal reg q%ld.5>", value);
 			    else
-			      func (stream, "q%ld", value);
+			      func (stream, dis_style_register, "q%ld", value);
 			    break;
 			  case 'x':
-			    func (stream, "0x%08lx", value);
+			    func (stream, dis_style_immediate,
+				  "0x%08lx", value);
 			    break;
 			  default:
 			    abort ();
@@ -9890,11 +9923,20 @@ print_insn_mve (struct disassemble_info *info, long given)
 		    }
 		}
 	      else
-		func (stream, "%c", *c);
+		{
+		  if (*c == '@')
+		    base_style = dis_style_comment_start;
+
+		  if (*c == '\t')
+		    base_style = dis_style_text;
+
+		  func (stream, base_style, "%c", *c);
+		}
 	    }
 
 	  if (value_in_comment > 32 || value_in_comment < -16)
-	    func (stream, "\t; 0x%lx", value_in_comment);
+	    func (stream, dis_style_comment_start, "\t@ 0x%lx",
+		  value_in_comment);
 
 	  if (is_unpredictable)
 	    print_mve_unpredictable (info, unpredictable_cond);
@@ -9991,8 +10033,10 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 {
   const struct opcode32 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
   struct arm_private_data *private_data = info->private_data;
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   if (print_insn_coprocessor (pc, info, given, false))
     return;
@@ -10032,8 +10076,23 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  switch (*++c)
 		    {
+		    case '{':
+		      ++c;
+		      if (*c == '\0')
+			abort ();
+		      old_base_style = base_style;
+		      base_style = decode_base_style (*c);
+		      ++c;
+		      if (*c != ':')
+			abort ();
+		      break;
+
+		    case '}':
+		      base_style = old_base_style;
+		      break;
+
 		    case '%':
-		      func (stream, "%%");
+		      func (stream, base_style, "%%");
 		      break;
 
 		    case 'a':
@@ -10044,6 +10103,18 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		      /* Set P address bit and use normal address
 			 printing routine.  */
 		      value_in_comment = print_arm_address (pc, info, given | (1 << P_BIT));
+		      break;
+
+		    case 'T':
+		      /* Armv4 does not have a BX instruction, however, when
+			 assembled with the --fix-v4bx option GAS will accept
+			 and assemble a BX instruction when assembling for
+			 Armv4.  When disassembling we also disassemble it as a
+			 BX instruction, but do make the user aware that this
+			 instruction is only supported on HW from Armv4T
+			 onwards.  */
+		      if (info->mach == bfd_mach_arm_4)
+			func (stream, dis_style_text, "\t@ from Armv4T onwards");
 		      break;
 
 		    case 'S':
@@ -10059,18 +10130,33 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			    {
 			      /* Elide positive zero offset.  */
 			      if (offset || NEGATIVE_BIT_SET)
-				func (stream, "[pc, #%s%d]\t; ",
-				      NEGATIVE_BIT_SET ? "-" : "", (int) offset);
+				{
+				  func (stream, dis_style_text, "[");
+				  func (stream, dis_style_register, "pc");
+				  func (stream, dis_style_text, ", ");
+				  func (stream, dis_style_immediate, "#%s%d",
+					(NEGATIVE_BIT_SET ? "-" : ""),
+					(int) offset);
+				  func (stream, dis_style_text, "]");
+				}
 			      else
-				func (stream, "[pc]\t; ");
+				{
+				  func (stream, dis_style_text, "[");
+				  func (stream, dis_style_register, "pc");
+				  func (stream, dis_style_text, "]");
+				}
 			      if (NEGATIVE_BIT_SET)
 				offset = -offset;
+			      func (stream, dis_style_comment_start, "\t@ ");
 			      info->print_address_func (offset + pc + 8, info);
 			    }
 			  else
 			    {
 			      /* Always show the offset.  */
-			      func (stream, "[pc], #%s%d",
+			      func (stream, dis_style_text, "[");
+			      func (stream, dis_style_register, "pc");
+			      func (stream, dis_style_text, "], ");
+			      func (stream, dis_style_immediate, "#%s%d",
 				    NEGATIVE_BIT_SET ? "-" : "", (int) offset);
 			      if (! allow_unpredictable)
 				is_unpredictable = true;
@@ -10080,7 +10166,8 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			{
 			  int offset = ((given & 0xf00) >> 4) | (given & 0xf);
 
-			  func (stream, "[%s",
+			  func (stream, dis_style_text, "[");
+			  func (stream, dis_style_register, "%s",
 				arm_regnames[(given >> 16) & 0xf]);
 
 			  if (PRE_BIT_SET)
@@ -10091,8 +10178,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				     positive zero.  */
 				  if (WRITEBACK_BIT_SET || NEGATIVE_BIT_SET
 				      || offset)
-				    func (stream, ", #%s%d",
-					  NEGATIVE_BIT_SET ? "-" : "", offset);
+				    {
+				      func (stream, dis_style_text, ", ");
+				      func (stream, dis_style_immediate,
+					    "#%s%d",
+					    (NEGATIVE_BIT_SET ? "-" : ""),
+					    offset);
+				    }
 
 				  if (NEGATIVE_BIT_SET)
 				    offset = -offset;
@@ -10102,8 +10194,9 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			      else
 				{
 				  /* Register Offset or Register Pre-Indexed.  */
-				  func (stream, ", %s%s",
-					NEGATIVE_BIT_SET ? "-" : "",
+				  func (stream, dis_style_text, ", %s",
+					NEGATIVE_BIT_SET ? "-" : "");
+				  func (stream, dis_style_register, "%s",
 					arm_regnames[given & 0xf]);
 
 				  /* Writing back to the register that is the source/
@@ -10114,7 +10207,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				    is_unpredictable = true;
 				}
 
-			      func (stream, "]%s",
+			      func (stream, dis_style_text, "]%s",
 				    WRITEBACK_BIT_SET ? "!" : "");
 			    }
 			  else
@@ -10123,7 +10216,8 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				{
 				  /* Immediate Post-indexed.  */
 				  /* PR 10924: Offset must be printed, even if it is zero.  */
-				  func (stream, "], #%s%d",
+				  func (stream, dis_style_text, "], ");
+				  func (stream, dis_style_immediate, "#%s%d",
 					NEGATIVE_BIT_SET ? "-" : "", offset);
 				  if (NEGATIVE_BIT_SET)
 				    offset = -offset;
@@ -10132,8 +10226,9 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			      else
 				{
 				  /* Register Post-indexed.  */
-				  func (stream, "], %s%s",
-					NEGATIVE_BIT_SET ? "-" : "",
+				  func (stream, dis_style_text, "], %s",
+					NEGATIVE_BIT_SET ? "-" : "");
+				  func (stream, dis_style_register, "%s",
 					arm_regnames[given & 0xf]);
 
 				  /* Writing back to the register that is the source/
@@ -10173,7 +10268,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 'c':
 		      if (((given >> 28) & 0xf) != 0xe)
-			func (stream, "%s",
+			func (stream, dis_style_mnemonic, "%s",
 			      arm_conditional [(given >> 28) & 0xf]);
 		      break;
 
@@ -10182,16 +10277,17 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			int started = 0;
 			int reg;
 
-			func (stream, "{");
+			func (stream, dis_style_text, "{");
 			for (reg = 0; reg < 16; reg++)
 			  if ((given & (1 << reg)) != 0)
 			    {
 			      if (started)
-				func (stream, ", ");
+				func (stream, dis_style_text, ", ");
 			      started = 1;
-			      func (stream, "%s", arm_regnames[reg]);
+			      func (stream, dis_style_register, "%s",
+				    arm_regnames[reg]);
 			    }
-			func (stream, "}");
+			func (stream, dis_style_text, "}");
 			if (! started)
 			  is_unpredictable = true;
 		      }
@@ -10217,9 +10313,13 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			      break;
 
 			  if (i != rotate)
-			    func (stream, "#%d, %d", immed, rotate);
+			    {
+			      func (stream, dis_style_immediate, "#%d", immed);
+			      func (stream, dis_style_text, ", ");
+			      func (stream, dis_style_immediate, "%d", rotate);
+			    }
 			  else
-			    func (stream, "#%d", a);
+			    func (stream, dis_style_immediate, "#%d", a);
 			  value_in_comment = a;
 			}
 		      else
@@ -10228,24 +10328,17 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    case 'p':
 		      if ((given & 0x0000f000) == 0x0000f000)
-			{
-			  arm_feature_set arm_ext_v6 =
-			    ARM_FEATURE_CORE_LOW (ARM_EXT_V6);
-
-			  /* The p-variants of tst/cmp/cmn/teq are the pre-V6
-			     mechanism for setting PSR flag bits.  They are
-			     obsolete in V6 onwards.  */
-			  if (! ARM_CPU_HAS_FEATURE (private_data->features, \
-						     arm_ext_v6))
-			    func (stream, "p");
-			  else
-			    is_unpredictable = true;
-			}
+			func (stream, dis_style_mnemonic, "p");
+		      break;
+		    case 'O':
+		      if ((given & 0x0000f000) == 0x0000f000)
+			func (stream, dis_style_text,
+			      "\t@ p-variant is OBSOLETE");
 		      break;
 
 		    case 't':
 		      if ((given & 0x01200000) == 0x00200000)
-			func (stream, "t");
+			func (stream, dis_style_mnemonic, "t");
 		      break;
 
 		    case 'A':
@@ -10256,29 +10349,32 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			if (NEGATIVE_BIT_SET)
 			  value_in_comment = - value_in_comment;
 
-			func (stream, "[%s", arm_regnames [(given >> 16) & 0xf]);
+			func (stream, dis_style_text, "[%s",
+			      arm_regnames [(given >> 16) & 0xf]);
 
 			if (PRE_BIT_SET)
 			  {
 			    if (offset)
-			      func (stream, ", #%d]%s",
+			      func (stream, dis_style_text, ", #%d]%s",
 				    (int) value_in_comment,
 				    WRITEBACK_BIT_SET ? "!" : "");
 			    else
-			      func (stream, "]");
+			      func (stream, dis_style_text, "]");
 			  }
 			else
 			  {
-			    func (stream, "]");
+			    func (stream, dis_style_text, "]");
 
 			    if (WRITEBACK_BIT_SET)
 			      {
 				if (offset)
-				  func (stream, ", #%d", (int) value_in_comment);
+				  func (stream, dis_style_text,
+					", #%d", (int) value_in_comment);
 			      }
 			    else
 			      {
-				func (stream, ", {%d}", (int) offset);
+				func (stream, dis_style_text,
+				      ", {%d}", (int) offset);
 				value_in_comment = offset;
 			      }
 			  }
@@ -10323,22 +10419,24 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			  name = banked_regname (sysm);
 
 			  if (name != NULL)
-			    func (stream, "%s", name);
+			    func (stream, dis_style_register, "%s", name);
 			  else
-			    func (stream, "(UNDEF: %lu)", (unsigned long) sysm);
+			    func (stream, dis_style_text,
+				  "(UNDEF: %lu)", (unsigned long) sysm);
 			}
 		      else
 			{
-			  func (stream, "%cPSR_",
+			  func (stream, dis_style_register, "%cPSR_",
 				(given & 0x00400000) ? 'S' : 'C');
+
 			  if (given & 0x80000)
-			    func (stream, "f");
+			    func (stream, dis_style_register, "f");
 			  if (given & 0x40000)
-			    func (stream, "s");
+			    func (stream, dis_style_register, "s");
 			  if (given & 0x20000)
-			    func (stream, "x");
+			    func (stream, dis_style_register, "x");
 			  if (given & 0x10000)
-			    func (stream, "c");
+			    func (stream, dis_style_register, "c");
 			}
 		      break;
 
@@ -10347,9 +10445,12 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			{
 			  switch (given & 0xf)
 			    {
-			    case 0xf: func (stream, "sy"); break;
+			    case 0xf:
+			      func (stream, dis_style_sub_mnemonic, "sy");
+			      break;
 			    default:
-			      func (stream, "#%d", (int) given & 0xf);
+			      func (stream, dis_style_immediate, "#%d",
+				    (int) given & 0xf);
 			      break;
 			    }
 			}
@@ -10357,9 +10458,10 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			{
 			  const char * opt = data_barrier_option (given & 0xf);
 			  if (opt != NULL)
-			    func (stream, "%s", opt);
+			    func (stream, dis_style_sub_mnemonic, "%s", opt);
 			  else
-			      func (stream, "#%d", (int) given & 0xf);
+			    func (stream, dis_style_immediate,
+				  "#%d", (int) given & 0xf);
 			}
 		      break;
 
@@ -10401,46 +10503,54 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 				  is_unpredictable = true;
 				U_reg = value;
 			      }
-			    func (stream, "%s", arm_regnames[value]);
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[value]);
 			    break;
 			  case 'd':
-			    func (stream, "%ld", value);
+			    func (stream, base_style, "%ld", value);
 			    value_in_comment = value;
 			    break;
 			  case 'b':
-			    func (stream, "%ld", value * 8);
+			    func (stream, dis_style_immediate,
+				  "%ld", value * 8);
 			    value_in_comment = value * 8;
 			    break;
 			  case 'W':
-			    func (stream, "%ld", value + 1);
+			    func (stream, dis_style_immediate,
+				  "%ld", value + 1);
 			    value_in_comment = value + 1;
 			    break;
 			  case 'x':
-			    func (stream, "0x%08lx", value);
+			    func (stream, dis_style_immediate,
+				  "0x%08lx", value);
 
 			    /* Some SWI instructions have special
 			       meanings.  */
 			    if ((given & 0x0fffffff) == 0x0FF00000)
-			      func (stream, "\t; IMB");
+			      func (stream, dis_style_comment_start,
+				    "\t@ IMB");
 			    else if ((given & 0x0fffffff) == 0x0FF00001)
-			      func (stream, "\t; IMBRange");
+			      func (stream, dis_style_comment_start,
+				    "\t@ IMBRange");
 			    break;
 			  case 'X':
-			    func (stream, "%01lx", value & 0xf);
+			    func (stream, dis_style_immediate,
+				  "%01lx", value & 0xf);
 			    value_in_comment = value;
 			    break;
 			  case '`':
 			    c++;
 			    if (value == 0)
-			      func (stream, "%c", *c);
+			      func (stream, dis_style_text, "%c", *c);
 			    break;
 			  case '\'':
 			    c++;
 			    if (value == ((1ul << width) - 1))
-			      func (stream, "%c", *c);
+			      func (stream, base_style, "%c", *c);
 			    break;
 			  case '?':
-			    func (stream, "%c", c[(1 << width) - (int) value]);
+			    func (stream, base_style, "%c",
+				  c[(1 << width) - (int) value]);
 			    c += 1 << width;
 			    break;
 			  default:
@@ -10454,7 +10564,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			int imm;
 
 			imm = (given & 0xf) | ((given & 0xfff00) >> 4);
-			func (stream, "%d", imm);
+			func (stream, dis_style_immediate, "%d", imm);
 			value_in_comment = imm;
 		      }
 		      break;
@@ -10468,9 +10578,14 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			long w = msb - lsb + 1;
 
 			if (w > 0)
-			  func (stream, "#%lu, #%lu", lsb, w);
+			  {
+			    func (stream, dis_style_immediate, "#%lu", lsb);
+			    func (stream, dis_style_text, ", ");
+			    func (stream, dis_style_immediate, "#%lu", w);
+			  }
 			else
-			  func (stream, "(invalid: %lu:%lu)", lsb, msb);
+			  func (stream, dis_style_text,
+				"(invalid: %lu:%lu)", lsb, msb);
 		      }
 		      break;
 
@@ -10484,9 +10599,10 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			name = banked_regname (sysm);
 
 			if (name != NULL)
-			  func (stream, "%s", name);
+			  func (stream, dis_style_register, "%s", name);
 			else
-			  func (stream, "(UNDEF: %lu)", (unsigned long) sysm);
+			  func (stream, dis_style_text,
+				"(UNDEF: %lu)", (unsigned long) sysm);
 		      }
 		      break;
 
@@ -10498,7 +10614,7 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 			long lo = (given & 0x00000fff);
 			long imm16 = hi | lo;
 
-			func (stream, "#%lu", imm16);
+			func (stream, dis_style_immediate, "#%lu", imm16);
 			value_in_comment = imm16;
 		      }
 		      break;
@@ -10508,19 +10624,30 @@ print_insn_arm (bfd_vma pc, struct disassemble_info *info, long given)
 		    }
 		}
 	      else
-		func (stream, "%c", *c);
+		{
+
+		  if (*c == '@')
+		    base_style = dis_style_comment_start;
+
+		  if (*c == '\t')
+		    base_style = dis_style_text;
+
+		  func (stream, base_style, "%c", *c);
+		}
 	    }
 
 	  if (value_in_comment > 32 || value_in_comment < -16)
-	    func (stream, "\t; 0x%lx", (value_in_comment & 0xffffffffUL));
+	    func (stream, dis_style_comment_start, "\t@ 0x%lx",
+		  (value_in_comment & 0xffffffffUL));
 
 	  if (is_unpredictable)
-	    func (stream, UNPREDICTABLE_INSTRUCTION);
+	    func (stream, dis_style_comment_start, UNPREDICTABLE_INSTRUCTION);
 
 	  return;
 	}
     }
-  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
+  func (stream, dis_style_comment_start, UNKNOWN_INSTRUCTION_32BIT,
+	(unsigned) given);
   return;
 }
 
@@ -10531,7 +10658,9 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 {
   const struct opcode16 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   for (insn = thumb_opcodes; insn->assembler; insn++)
     if ((given & insn->mask) == insn->value)
@@ -10546,26 +10675,50 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 
 	    if (*c != '%')
 	      {
-		func (stream, "%c", *c);
+		if (*c == '@')
+		  base_style = dis_style_comment_start;
+
+		if (*c == '\t')
+		  base_style = dis_style_text;
+
+		func (stream, base_style, "%c", *c);
+
 		continue;
 	      }
 
 	    switch (*++c)
 	      {
+		case '{':
+		  ++c;
+		  if (*c == '\0')
+		    abort ();
+		  old_base_style = base_style;
+		  base_style = decode_base_style (*c);
+		  ++c;
+		  if (*c != ':')
+		    abort ();
+		  break;
+
+		case '}':
+		  base_style = old_base_style;
+		  break;
+
 	      case '%':
-		func (stream, "%%");
+		func (stream, base_style, "%%");
 		break;
 
 	      case 'c':
 		if (ifthen_state)
-		  func (stream, "%s", arm_conditional[IFTHEN_COND]);
+		  func (stream, dis_style_mnemonic, "%s",
+			arm_conditional[IFTHEN_COND]);
 		break;
 
 	      case 'C':
 		if (ifthen_state)
-		  func (stream, "%s", arm_conditional[IFTHEN_COND]);
+		  func (stream, dis_style_mnemonic, "%s",
+			arm_conditional[IFTHEN_COND]);
 		else
-		  func (stream, "s");
+		  func (stream, dis_style_mnemonic, "s");
 		break;
 
 	      case 'I':
@@ -10574,19 +10727,24 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  ifthen_next_state = given & 0xff;
 		  for (tmp = given << 1; tmp & 0xf; tmp <<= 1)
-		    func (stream, ((given ^ tmp) & 0x10) ? "e" : "t");
-		  func (stream, "\t%s", arm_conditional[(given >> 4) & 0xf]);
+		    func (stream, dis_style_mnemonic,
+			  ((given ^ tmp) & 0x10) ? "e" : "t");
+		  func (stream, dis_style_text, "\t");
+		  func (stream, dis_style_sub_mnemonic, "%s",
+			arm_conditional[(given >> 4) & 0xf]);
 		}
 		break;
 
 	      case 'x':
 		if (ifthen_next_state)
-		  func (stream, "\t; unpredictable branch in IT block\n");
+		  func (stream, dis_style_comment_start,
+			"\t@ unpredictable branch in IT block\n");
 		break;
 
 	      case 'X':
 		if (ifthen_state)
-		  func (stream, "\t; unpredictable <IT:%s>",
+		  func (stream, dis_style_comment_start,
+			"\t@ unpredictable <IT:%s>",
 			arm_conditional[IFTHEN_COND]);
 		break;
 
@@ -10598,7 +10756,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		  if (given & (1 << 6))
 		    reg += 8;
 
-		  func (stream, "%s", arm_regnames[reg]);
+		  func (stream, dis_style_register, "%s", arm_regnames[reg]);
 		}
 		break;
 
@@ -10610,7 +10768,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		  if (given & (1 << 7))
 		    reg += 8;
 
-		  func (stream, "%s", arm_regnames[reg]);
+		  func (stream, dis_style_register, "%s", arm_regnames[reg]);
 		}
 		break;
 
@@ -10627,7 +10785,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		  int started = 0;
 		  int reg;
 
-		  func (stream, "{");
+		  func (stream, dis_style_text, "{");
 
 		  /* It would be nice if we could spot
 		     ranges, and generate the rS-rE format: */
@@ -10635,27 +10793,30 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		    if ((given & (1 << reg)) != 0)
 		      {
 			if (started)
-			  func (stream, ", ");
+			  func (stream, dis_style_text, ", ");
 			started = 1;
-			func (stream, "%s", arm_regnames[reg]);
+			func (stream, dis_style_register, "%s",
+			      arm_regnames[reg]);
 		      }
 
 		  if (domasklr)
 		    {
 		      if (started)
-			func (stream, ", ");
+			func (stream, dis_style_text, ", ");
 		      started = 1;
-		      func (stream, "%s", arm_regnames[14] /* "lr" */);
+		      func (stream, dis_style_register, "%s",
+			    arm_regnames[14] /* "lr" */);
 		    }
 
 		  if (domaskpc)
 		    {
 		      if (started)
-			func (stream, ", ");
-		      func (stream, "%s", arm_regnames[15] /* "pc" */);
+			func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_register, "%s",
+			    arm_regnames[15] /* "pc" */);
 		    }
 
-		  func (stream, "}");
+		  func (stream, dis_style_text, "}");
 		}
 		break;
 
@@ -10664,7 +10825,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		   writeback if the base register is not in the register
 		   mask.  */
 		if ((given & (1 << ((given & 0x0700) >> 8))) == 0)
-		  func (stream, "!");
+		  func (stream, dis_style_text, "!");
 		break;
 
 	      case 'b':
@@ -10689,7 +10850,7 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		  long imm = (given & 0x07c0) >> 6;
 		  if (imm == 0)
 		    imm = 32;
-		  func (stream, "#%ld", imm);
+		  func (stream, dis_style_immediate, "#%ld", imm);
 		}
 		break;
 
@@ -10719,21 +10880,25 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			switch (*c)
 			  {
 			  case 'r':
-			    func (stream, "%s", arm_regnames[reg]);
+			    func (stream, dis_style_register, "%s",
+				  arm_regnames[reg]);
 			    break;
 
 			  case 'd':
-			    func (stream, "%ld", (long) reg);
+			    func (stream, dis_style_immediate, "%ld",
+				  (long) reg);
 			    value_in_comment = reg;
 			    break;
 
 			  case 'H':
-			    func (stream, "%ld", (long) (reg << 1));
+			    func (stream, dis_style_immediate, "%ld",
+				  (long) (reg << 1));
 			    value_in_comment = reg << 1;
 			    break;
 
 			  case 'W':
-			    func (stream, "%ld", (long) (reg << 2));
+			    func (stream, dis_style_immediate, "%ld",
+				  (long) (reg << 2));
 			    value_in_comment = reg << 2;
 			    break;
 
@@ -10747,7 +10912,8 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			    break;
 
 			  case 'x':
-			    func (stream, "0x%04lx", (long) reg);
+			    func (stream, dis_style_immediate, "0x%04lx",
+				  (long) reg);
 			    break;
 
 			  case 'B':
@@ -10763,7 +10929,8 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 			    break;
 
 			  case 'c':
-			    func (stream, "%s", arm_conditional [reg]);
+			    func (stream, dis_style_mnemonic, "%s",
+				  arm_conditional [reg]);
 			    break;
 
 			  default:
@@ -10775,15 +10942,15 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 		    case '\'':
 		      c++;
 		      if ((given & (1 << bitstart)) != 0)
-			func (stream, "%c", *c);
+			func (stream, base_style, "%c", *c);
 		      break;
 
 		    case '?':
 		      ++c;
 		      if ((given & (1 << bitstart)) != 0)
-			func (stream, "%c", *c++);
+			func (stream, base_style, "%c", *c++);
 		      else
-			func (stream, "%c", *++c);
+			func (stream, base_style, "%c", *++c);
 		      break;
 
 		    default:
@@ -10798,12 +10965,14 @@ print_insn_thumb16 (bfd_vma pc, struct disassemble_info *info, long given)
 	  }
 
 	if (value_in_comment > 32 || value_in_comment < -16)
-	  func (stream, "\t; 0x%lx", value_in_comment);
+	  func (stream, dis_style_comment_start,
+		"\t@ 0x%lx", value_in_comment);
 	return;
       }
 
   /* No match.  */
-  func (stream, UNKNOWN_INSTRUCTION_16BIT, (unsigned)given);
+  func (stream, dis_style_comment_start, UNKNOWN_INSTRUCTION_16BIT,
+	(unsigned) given);
   return;
 }
 
@@ -10830,6 +10999,14 @@ psr_name (int regno)
     case 0x12: return "BASEPRI_MAX";
     case 0x13: return "FAULTMASK";
     case 0x14: return "CONTROL";
+    case 0x20: return "PAC_KEY_P_0";
+    case 0x21: return "PAC_KEY_P_1";
+    case 0x22: return "PAC_KEY_P_2";
+    case 0x23: return "PAC_KEY_P_3";
+    case 0x24: return "PAC_KEY_U_0";
+    case 0x25: return "PAC_KEY_U_1";
+    case 0x26: return "PAC_KEY_U_2";
+    case 0x27: return "PAC_KEY_U_3";
     case 0x88: return "MSP_NS";
     case 0x89: return "PSP_NS";
     case 0x8a: return "MSPLIM_NS";
@@ -10839,6 +11016,14 @@ psr_name (int regno)
     case 0x93: return "FAULTMASK_NS";
     case 0x94: return "CONTROL_NS";
     case 0x98: return "SP_NS";
+    case 0xa0: return "PAC_KEY_P_0_NS";
+    case 0xa1: return "PAC_KEY_P_1_NS";
+    case 0xa2: return "PAC_KEY_P_2_NS";
+    case 0xa3: return "PAC_KEY_P_3_NS";
+    case 0xa4: return "PAC_KEY_U_0_NS";
+    case 0xa5: return "PAC_KEY_U_1_NS";
+    case 0xa6: return "PAC_KEY_U_2_NS";
+    case 0xa7: return "PAC_KEY_U_3_NS";
     default: return "<unknown>";
     }
 }
@@ -10850,8 +11035,10 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 {
   const struct opcode32 *insn;
   void *stream = info->stream;
-  fprintf_ftype func = info->fprintf_func;
-  bool is_mve = is_mve_architecture (info);
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+  bool is_mve = is_v81m_architecture (info);
+  enum disassembler_style base_style = dis_style_mnemonic;
+  enum disassembler_style old_base_style = base_style;
 
   if (print_insn_coprocessor (pc, info, given, true))
     return;
@@ -10880,29 +11067,51 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 	  {
 	    if (*c != '%')
 	      {
-		func (stream, "%c", *c);
+		if (*c == '@')
+		  base_style = dis_style_comment_start;
+		if (*c == '\t')
+		  base_style = dis_style_text;
+		func (stream, base_style, "%c", *c);
 		continue;
 	      }
 
 	    switch (*++c)
 	      {
+	      case '{':
+		++c;
+		if (*c == '\0')
+		  abort ();
+		old_base_style = base_style;
+		base_style = decode_base_style (*c);
+		++c;
+		if (*c != ':')
+		  abort ();
+		break;
+
+	      case '}':
+		base_style = old_base_style;
+		break;
+
 	      case '%':
-		func (stream, "%%");
+		func (stream, base_style, "%%");
 		break;
 
 	      case 'c':
 		if (ifthen_state)
-		  func (stream, "%s", arm_conditional[IFTHEN_COND]);
+		  func (stream, dis_style_mnemonic, "%s",
+			arm_conditional[IFTHEN_COND]);
 		break;
 
 	      case 'x':
 		if (ifthen_next_state)
-		  func (stream, "\t; unpredictable branch in IT block\n");
+		  func (stream, dis_style_comment_start,
+			"\t@ unpredictable branch in IT block\n");
 		break;
 
 	      case 'X':
 		if (ifthen_state)
-		  func (stream, "\t; unpredictable <IT:%s>",
+		  func (stream, dis_style_comment_start,
+			"\t@ unpredictable <IT:%s>",
 			arm_conditional[IFTHEN_COND]);
 		break;
 
@@ -10913,7 +11122,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  imm12 |= (given & 0x000000ffu);
 		  imm12 |= (given & 0x00007000u) >> 4;
 		  imm12 |= (given & 0x04000000u) >> 15;
-		  func (stream, "#%u", imm12);
+		  func (stream, dis_style_immediate, "#%u", imm12);
 		  value_in_comment = imm12;
 		}
 		break;
@@ -10938,7 +11147,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      imm8 = (bits & 0x07f) | 0x80;
 		      imm  = (((imm8 << (32 - mod)) | (imm8 >> mod)) & 0xffffffff);
 		    }
-		  func (stream, "#%u", imm);
+		  func (stream, dis_style_immediate, "#%u", imm);
 		  value_in_comment = imm;
 		}
 		break;
@@ -10951,7 +11160,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  imm |= (given & 0x00007000u) >> 4;
 		  imm |= (given & 0x04000000u) >> 15;
 		  imm |= (given & 0x000f0000u) >> 4;
-		  func (stream, "#%u", imm);
+		  func (stream, dis_style_immediate, "#%u", imm);
 		  value_in_comment = imm;
 		}
 		break;
@@ -10963,7 +11172,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  imm |= (given & 0x000f0000u) >> 16;
 		  imm |= (given & 0x00000ff0u) >> 0;
 		  imm |= (given & 0x0000000fu) << 12;
-		  func (stream, "#%u", imm);
+		  func (stream, dis_style_immediate, "#%u", imm);
 		  value_in_comment = imm;
 		}
 		break;
@@ -10974,7 +11183,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  imm |= (given & 0x000f0000u) >> 4;
 		  imm |= (given & 0x00000fffu) >> 0;
-		  func (stream, "#%u", imm);
+		  func (stream, dis_style_immediate, "#%u", imm);
 		  value_in_comment = imm;
 		}
 		break;
@@ -10985,7 +11194,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  imm |= (given & 0x00000fffu);
 		  imm |= (given & 0x000f0000u) >> 4;
-		  func (stream, "#%u", imm);
+		  func (stream, dis_style_immediate, "#%u", imm);
 		  value_in_comment = imm;
 		}
 		break;
@@ -10998,31 +11207,46 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  imm |= (given & 0x000000c0u) >> 6;
 		  imm |= (given & 0x00007000u) >> 10;
 
-		  func (stream, "%s", arm_regnames[reg]);
+		  func (stream, dis_style_register, "%s", arm_regnames[reg]);
 		  switch (stp)
 		    {
 		    case 0:
 		      if (imm > 0)
-			func (stream, ", lsl #%u", imm);
+			{
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_sub_mnemonic, "lsl ");
+			  func (stream, dis_style_immediate, "#%u", imm);
+			}
 		      break;
 
 		    case 1:
 		      if (imm == 0)
 			imm = 32;
-		      func (stream, ", lsr #%u", imm);
+		      func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_sub_mnemonic, "lsr ");
+		      func (stream, dis_style_immediate, "#%u", imm);
 		      break;
 
 		    case 2:
 		      if (imm == 0)
 			imm = 32;
-		      func (stream, ", asr #%u", imm);
+		      func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_sub_mnemonic, "asr ");
+		      func (stream, dis_style_immediate, "#%u", imm);
 		      break;
 
 		    case 3:
 		      if (imm == 0)
-			func (stream, ", rrx");
+			{
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_sub_mnemonic, "rrx");
+			}
 		      else
-			func (stream, ", ror #%u", imm);
+			{
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_sub_mnemonic, "ror ");
+			  func (stream, dis_style_immediate, "#%u", imm);
+			}
 		    }
 		}
 		break;
@@ -11037,7 +11261,8 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  bool writeback = false, postind = false;
 		  bfd_vma offset = 0;
 
-		  func (stream, "[%s", arm_regnames[Rn]);
+		  func (stream, dis_style_text, "[");
+		  func (stream, dis_style_register, "%s", arm_regnames[Rn]);
 		  if (U) /* 12-bit positive immediate offset.  */
 		    {
 		      offset = i12;
@@ -11051,10 +11276,16 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      unsigned int Rm = (i8 & 0x0f);
 		      unsigned int sh = (i8 & 0x30) >> 4;
 
-		      func (stream, ", %s", arm_regnames[Rm]);
+		      func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_register, "%s",
+			    arm_regnames[Rm]);
 		      if (sh)
-			func (stream, ", lsl #%u", sh);
-		      func (stream, "]");
+			{
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_sub_mnemonic, "lsl ");
+			  func (stream, dis_style_immediate, "#%u", sh);
+			}
+		      func (stream, dis_style_text, "]");
 		      break;
 		    }
 		  else switch (op)
@@ -11088,22 +11319,29 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		      break;
 
 		    default:
-		      func (stream, ", <undefined>]");
+		      func (stream, dis_style_text, ", <undefined>]");
 		      goto skip;
 		    }
 
 		  if (postind)
-		    func (stream, "], #%d", (int) offset);
+		    {
+		      func (stream, dis_style_text, "], ");
+		      func (stream, dis_style_immediate, "#%d", (int) offset);
+		    }
 		  else
 		    {
 		      if (offset)
-			func (stream, ", #%d", (int) offset);
-		      func (stream, writeback ? "]!" : "]");
+			{
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_immediate, "#%d",
+				(int) offset);
+			}
+		      func (stream, dis_style_text, writeback ? "]!" : "]");
 		    }
 
 		  if (Rn == 15)
 		    {
-		      func (stream, "\t; ");
+		      func (stream, dis_style_comment_start, "\t@ ");
 		      info->print_address_func (((pc + 4) & ~3) + offset, info);
 		    }
 		}
@@ -11117,30 +11355,36 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  unsigned int Rn  = (given & 0x000f0000) >> 16;
 		  unsigned int off = (given & 0x000000ff);
 
-		  func (stream, "[%s", arm_regnames[Rn]);
+		  func (stream, dis_style_text, "[");
+		  func (stream, dis_style_register, "%s", arm_regnames[Rn]);
 
 		  if (PRE_BIT_SET)
 		    {
 		      if (off || !U)
 			{
-			  func (stream, ", #%c%u", U ? '+' : '-', off * 4);
+			  func (stream, dis_style_text, ", ");
+			  func (stream, dis_style_immediate, "#%c%u",
+				U ? '+' : '-', off * 4);
 			  value_in_comment = off * 4 * (U ? 1 : -1);
 			}
-		      func (stream, "]");
+		      func (stream, dis_style_text, "]");
 		      if (W)
-			func (stream, "!");
+			func (stream, dis_style_text, "!");
 		    }
 		  else
 		    {
-		      func (stream, "], ");
+		      func (stream, dis_style_text, "], ");
 		      if (W)
 			{
-			  func (stream, "#%c%u", U ? '+' : '-', off * 4);
+			  func (stream, dis_style_immediate, "#%c%u",
+				U ? '+' : '-', off * 4);
 			  value_in_comment = off * 4 * (U ? 1 : -1);
 			}
 		      else
 			{
-			  func (stream, "{%u}", off);
+			  func (stream, dis_style_text, "{");
+			  func (stream, dis_style_immediate, "%u", off);
+			  func (stream, dis_style_text, "}");
 			  value_in_comment = off;
 			}
 		    }
@@ -11154,14 +11398,18 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  switch (type)
 		    {
-		    case 0: func (stream, Sbit ? "sb" : "b"); break;
-		    case 1: func (stream, Sbit ? "sh" : "h"); break;
+		    case 0:
+		      func (stream, dis_style_mnemonic, Sbit ? "sb" : "b");
+		      break;
+		    case 1:
+		      func (stream, dis_style_mnemonic, Sbit ? "sh" : "h");
+		      break;
 		    case 2:
 		      if (Sbit)
-			func (stream, "??");
+			func (stream, dis_style_text, "??");
 		      break;
 		    case 3:
-		      func (stream, "??");
+		      func (stream, dis_style_text, "??");
 		      break;
 		    }
 		}
@@ -11175,21 +11423,23 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  int started = 0;
 		  int reg;
 
-		  func (stream, "{");
+		  func (stream, dis_style_text, "{");
 		  for (reg = 0; reg < 16; reg++)
 		    if ((given & (1 << reg)) != 0)
 		      {
 			if (started)
-			  func (stream, ", ");
+			  func (stream, dis_style_text, ", ");
 			started = 1;
 			if (is_clrm && reg == 13)
-			  func (stream, "(invalid: %s)", arm_regnames[reg]);
+			  func (stream, dis_style_text, "(invalid: %s)",
+				arm_regnames[reg]);
 			else if (is_clrm && reg == 15)
-			  func (stream, "%s", "APSR");
+			  func (stream, dis_style_register, "%s", "APSR");
 			else
-			  func (stream, "%s", arm_regnames[reg]);
+			  func (stream, dis_style_register, "%s",
+				arm_regnames[reg]);
 		      }
-		  func (stream, "}");
+		  func (stream, dis_style_text, "}");
 		}
 		break;
 
@@ -11200,7 +11450,9 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  lsb |= (given & 0x000000c0u) >> 6;
 		  lsb |= (given & 0x00007000u) >> 10;
-		  func (stream, "#%u, #%u", lsb, msb - lsb + 1);
+		  func (stream, dis_style_immediate, "#%u", lsb);
+		  func (stream, dis_style_text, ", ");
+		  func (stream, dis_style_immediate, "#%u", msb - lsb + 1);
 		}
 		break;
 
@@ -11211,14 +11463,16 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		  lsb |= (given & 0x000000c0u) >> 6;
 		  lsb |= (given & 0x00007000u) >> 10;
-		  func (stream, "#%u, #%u", lsb, width);
+		  func (stream, dis_style_immediate, "#%u", lsb);
+		  func (stream, dis_style_text, ", ");
+		  func (stream, dis_style_immediate, "#%u", width);
 		}
 		break;
 
 	      case 'G':
 		{
 		  unsigned int boff = (((given & 0x07800000) >> 23) << 1);
-		  func (stream, "%x", boff);
+		  func (stream, dis_style_immediate, "%x", boff);
 		}
 		break;
 
@@ -11274,8 +11528,9 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  unsigned int T    = (given & 0x00020000u) >> 17;
 		  unsigned int endoffset = (((given & 0x07800000) >> 23) << 1);
 		  unsigned int boffset   = (T == 1) ? 4 : 2;
-		  func (stream, ", ");
-		  func (stream, "%x", endoffset + boffset);
+		  func (stream, dis_style_text, ", ");
+		  func (stream, dis_style_immediate, "%x",
+			endoffset + boffset);
 		}
 		break;
 
@@ -11364,9 +11619,17 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  shift |= (given & 0x000000c0u) >> 6;
 		  shift |= (given & 0x00007000u) >> 10;
 		  if (WRITEBACK_BIT_SET)
-		    func (stream, ", asr #%u", shift);
+		    {
+		      func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_sub_mnemonic, "asr ");
+		      func (stream, dis_style_immediate, "#%u", shift);
+		    }
 		  else if (shift)
-		    func (stream, ", lsl #%u", shift);
+		    {
+		      func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_sub_mnemonic, "lsl ");
+		      func (stream, dis_style_immediate, "#%u", shift);
+		    }
 		  /* else print nothing - lsl #0 */
 		}
 		break;
@@ -11376,7 +11639,11 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  unsigned int rot = (given & 0x00000030) >> 4;
 
 		  if (rot)
-		    func (stream, ", ror #%u", rot * 8);
+		    {
+		      func (stream, dis_style_text, ", ");
+		      func (stream, dis_style_sub_mnemonic, "ror ");
+		      func (stream, dis_style_immediate, "#%u", rot * 8);
+		    }
 		}
 		break;
 
@@ -11385,35 +11652,45 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		  {
 		    switch (given & 0xf)
 		      {
-			case 0xf: func (stream, "sy"); break;
-			default:
-			  func (stream, "#%d", (int) given & 0xf);
-			      break;
+		      case 0xf:
+			func (stream, dis_style_sub_mnemonic, "sy");
+			break;
+		      default:
+			func (stream, dis_style_immediate, "#%d",
+			      (int) given & 0xf);
+			break;
 		      }
 		  }
 		else
 		  {
 		    const char * opt = data_barrier_option (given & 0xf);
 		    if (opt != NULL)
-		      func (stream, "%s", opt);
+		      func (stream, dis_style_sub_mnemonic, "%s", opt);
 		    else
-		      func (stream, "#%d", (int) given & 0xf);
+		      func (stream, dis_style_immediate, "#%d",
+			    (int) given & 0xf);
 		   }
 		break;
 
 	      case 'C':
 		if ((given & 0xff) == 0)
 		  {
-		    func (stream, "%cPSR_", (given & 0x100000) ? 'S' : 'C');
+		    func (stream, dis_style_register, "%cPSR_",
+			  (given & 0x100000) ? 'S' : 'C');
+
 		    if (given & 0x800)
-		      func (stream, "f");
+		      func (stream, dis_style_register, "f");
 		    if (given & 0x400)
-		      func (stream, "s");
+		      func (stream, dis_style_register, "s");
 		    if (given & 0x200)
-		      func (stream, "x");
+		      func (stream, dis_style_register, "x");
 		    if (given & 0x100)
-		      func (stream, "c");
+		      func (stream, dis_style_register, "c");
 		  }
+		else if (is_v81m_architecture (info))
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
+
 		else if ((given & 0x20) == 0x20)
 		  {
 		    char const* name;
@@ -11424,19 +11701,24 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    name = banked_regname (sysm);
 
 		    if (name != NULL)
-		      func (stream, "%s", name);
+		      func (stream, dis_style_register, "%s", name);
 		    else
-		      func (stream, "(UNDEF: %lu)", (unsigned long) sysm);
+		      func (stream, dis_style_text,
+			    "(UNDEF: %lu)", (unsigned long) sysm);
 		  }
 		else
 		  {
-		    func (stream, "%s", psr_name (given & 0xff));
+		    func (stream, dis_style_register, "%s",
+			  psr_name (given & 0xff));
 		  }
 		break;
 
 	      case 'D':
-		if (((given & 0xff) == 0)
-		    || ((given & 0x20) == 0x20))
+		if (is_v81m_architecture (info))
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
+		else if (((given & 0xff) == 0)
+			 || ((given & 0x20) == 0x20))
 		  {
 		    char const* name;
 		    unsigned sm = (given & 0xf0000) >> 16;
@@ -11446,12 +11728,14 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    name = banked_regname (sm);
 
 		    if (name != NULL)
-		      func (stream, "%s", name);
+		      func (stream, dis_style_register, "%s", name);
 		    else
-		      func (stream, "(UNDEF: %lu)", (unsigned long) sm);
+		      func (stream, dis_style_text,
+			    "(UNDEF: %lu)", (unsigned long) sm);
 		  }
 		else
-		  func (stream, "%s", psr_name (given & 0xff));
+		  func (stream, dis_style_register, "%s",
+			psr_name (given & 0xff));
 		break;
 
 	      case '0': case '1': case '2': case '3': case '4':
@@ -11466,23 +11750,24 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 		    {
 		    case 's':
 		      if (val <= 3)
-			func (stream, "%s", mve_vec_sizename[val]);
+			func (stream, dis_style_mnemonic, "%s",
+			      mve_vec_sizename[val]);
 		      else
-			func (stream, "<undef size>");
+			func (stream, dis_style_text, "<undef size>");
 		      break;
 
 		    case 'd':
-		      func (stream, "%lu", val);
+		      func (stream, base_style, "%lu", val);
 		      value_in_comment = val;
 		      break;
 
 		    case 'D':
-		      func (stream, "%lu", val + 1);
+		      func (stream, dis_style_immediate, "%lu", val + 1);
 		      value_in_comment = val + 1;
 		      break;
 
 		    case 'W':
-		      func (stream, "%lu", val * 4);
+		      func (stream, dis_style_immediate, "%lu", val * 4);
 		      value_in_comment = val * 4;
 		      break;
 
@@ -11495,32 +11780,35 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 			is_unpredictable = true;
 		      /* Fall through.  */
 		    case 'r':
-		      func (stream, "%s", arm_regnames[val]);
+		      func (stream, dis_style_register, "%s",
+			    arm_regnames[val]);
 		      break;
 
 		    case 'c':
-		      func (stream, "%s", arm_conditional[val]);
+		      func (stream, base_style, "%s", arm_conditional[val]);
 		      break;
 
 		    case '\'':
 		      c++;
 		      if (val == ((1ul << width) - 1))
-			func (stream, "%c", *c);
+			func (stream, base_style, "%c", *c);
 		      break;
 
 		    case '`':
 		      c++;
 		      if (val == 0)
-			func (stream, "%c", *c);
+			func (stream, dis_style_immediate, "%c", *c);
 		      break;
 
 		    case '?':
-		      func (stream, "%c", c[(1 << width) - (int) val]);
+		      func (stream, dis_style_mnemonic, "%c",
+			    c[(1 << width) - (int) val]);
 		      c += 1 << width;
 		      break;
 
 		    case 'x':
-		      func (stream, "0x%lx", val & 0xffffffffUL);
+		      func (stream, dis_style_immediate, "0x%lx",
+			    val & 0xffffffffUL);
 		      break;
 
 		    default:
@@ -11539,7 +11827,7 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 
 		    if ((given & (1 << 23)) == 0)
 		      offset = - offset;
-		    func (stream, "\t; ");
+		    func (stream, dis_style_comment_start, "\t@ ");
 		    info->print_address_func ((pc & ~3) + 4 + offset, info);
 		  }
 		break;
@@ -11550,16 +11838,18 @@ print_insn_thumb32 (bfd_vma pc, struct disassemble_info *info, long given)
 	  }
 
 	if (value_in_comment > 32 || value_in_comment < -16)
-	  func (stream, "\t; 0x%lx", value_in_comment);
+	  func (stream, dis_style_comment_start, "\t@ 0x%lx",
+		value_in_comment);
 
 	if (is_unpredictable)
-	  func (stream, UNPREDICTABLE_INSTRUCTION);
+	  func (stream, dis_style_comment_start, UNPREDICTABLE_INSTRUCTION);
 
 	return;
       }
 
   /* No match.  */
-  func (stream, UNKNOWN_INSTRUCTION_32BIT, (unsigned)given);
+  func (stream, dis_style_comment_start, UNKNOWN_INSTRUCTION_32BIT,
+	(unsigned) given);
   return;
 }
 
@@ -11570,16 +11860,24 @@ print_insn_data (bfd_vma pc ATTRIBUTE_UNUSED,
 		 struct disassemble_info *info,
 		 long given)
 {
+  fprintf_styled_ftype func = info->fprintf_styled_func;
+
   switch (info->bytes_per_chunk)
     {
     case 1:
-      info->fprintf_func (info->stream, ".byte\t0x%02lx", given);
+      func (info->stream, dis_style_assembler_directive, ".byte");
+      func (info->stream, dis_style_text, "\t");
+      func (info->stream, dis_style_immediate, "0x%02lx", given);
       break;
     case 2:
-      info->fprintf_func (info->stream, ".short\t0x%04lx", given);
+      func (info->stream, dis_style_assembler_directive, ".short");
+      func (info->stream, dis_style_text, "\t");
+      func (info->stream, dis_style_immediate, "0x%04lx", given);
       break;
     case 4:
-      info->fprintf_func (info->stream, ".word\t0x%08lx", given);
+      func (info->stream, dis_style_assembler_directive, ".word");
+      func (info->stream, dis_style_text, "\t");
+      func (info->stream, dis_style_immediate, "0x%08lx", given);
       break;
     default:
       abort ();
@@ -11767,13 +12065,14 @@ find_ifthen_state (bfd_vma pc,
    mapping symbol.  */
 
 static int
-is_mapping_symbol (struct disassemble_info *info, int n,
+is_mapping_symbol (struct disassemble_info *info,
+		   int n,
 		   enum map_type *map_type)
 {
-  const char *name;
+  const char *name = bfd_asymbol_name (info->symtab[n]);
 
-  name = bfd_asymbol_name (info->symtab[n]);
-  if (name[0] == '$' && (name[1] == 'a' || name[1] == 't' || name[1] == 'd')
+  if (name[0] == '$'
+      && (name[1] == 'a' || name[1] == 't' || name[1] == 'd')
       && (name[2] == 0 || name[2] == '.'))
     {
       *map_type = ((name[1] == 'a') ? MAP_ARM
@@ -11810,12 +12109,18 @@ get_sym_code_type (struct disassemble_info *info,
 {
   elf_symbol_type *es;
   unsigned int type;
+  asymbol * sym;
 
   /* If the symbol is in a different section, ignore it.  */
   if (info->section != NULL && info->section != info->symtab[n]->section)
     return false;
 
-  es = *(elf_symbol_type **)(info->symtab + n);
+  /* PR 30230: Reject non-ELF symbols, eg synthetic ones.  */
+  sym = info->symtab[n];
+  if (bfd_asymbol_flavour (sym) != bfd_target_elf_flavour)
+    return false;
+
+  es = (elf_symbol_type *) sym;
   type = ELF_ST_TYPE (es->internal_elf_sym.st_info);
 
   /* If the symbol has function type then use that.  */
@@ -11851,6 +12156,10 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
   bool found = false;
   bool can_use_search_opt_p = false;
 
+  /* Sanity check.  */
+  if (info == NULL)
+    return false;
+
   /* Default to DATA.  A text section is required by the ABI to contain an
      INSN mapping symbol at the start.  A data section has no such
      requirement, hence if no mapping symbol is found the section must
@@ -11864,78 +12173,76 @@ mapping_symbol_for_insn (bfd_vma pc, struct disassemble_info *info,
     type = MAP_ARM;
   struct arm_private_data *private_data;
 
-  if (info->private_data == NULL
+  if (info->private_data == NULL || info->symtab == NULL
+      || info->symtab_size == 0
       || bfd_asymbol_flavour (*info->symtab) != bfd_target_elf_flavour)
     return false;
 
   private_data = info->private_data;
 
   /* First, look for mapping symbols.  */
-  if (info->symtab_size != 0)
-  {
-    if (pc <= private_data->last_mapping_addr)
-      private_data->last_mapping_sym = -1;
+  if (pc <= private_data->last_mapping_addr)
+    private_data->last_mapping_sym = -1;
 
-    /* Start scanning at the start of the function, or wherever
-       we finished last time.  */
-    n = info->symtab_pos + 1;
+  /* Start scanning at the start of the function, or wherever
+     we finished last time.  */
+  n = info->symtab_pos + 1;
 
-    /* If the last stop offset is different from the current one it means we
-       are disassembling a different glob of bytes.  As such the optimization
-       would not be safe and we should start over.  */
-    can_use_search_opt_p
-      = private_data->last_mapping_sym >= 0
-	&& info->stop_offset == private_data->last_stop_offset;
+  /* If the last stop offset is different from the current one it means we
+     are disassembling a different glob of bytes.  As such the optimization
+     would not be safe and we should start over.  */
+  can_use_search_opt_p
+    = (private_data->last_mapping_sym >= 0
+       && info->stop_offset == private_data->last_stop_offset);
 
-    if (n >= private_data->last_mapping_sym && can_use_search_opt_p)
-      n = private_data->last_mapping_sym;
+  if (n >= private_data->last_mapping_sym && can_use_search_opt_p)
+    n = private_data->last_mapping_sym;
 
-    /* Look down while we haven't passed the location being disassembled.
-       The reason for this is that there's no defined order between a symbol
-       and an mapping symbol that may be at the same address.  We may have to
-       look at least one position ahead.  */
-    for (; n < info->symtab_size; n++)
-      {
-	addr = bfd_asymbol_value (info->symtab[n]);
-	if (addr > pc)
-	  break;
-	if (get_map_sym_type (info, n, &type))
-	  {
-	    last_sym = n;
-	    found = true;
-	  }
-      }
+  /* Look down while we haven't passed the location being disassembled.
+     The reason for this is that there's no defined order between a symbol
+     and an mapping symbol that may be at the same address.  We may have to
+     look at least one position ahead.  */
+  for (; n < info->symtab_size; n++)
+    {
+      addr = bfd_asymbol_value (info->symtab[n]);
+      if (addr > pc)
+	break;
+      if (get_map_sym_type (info, n, &type))
+	{
+	  last_sym = n;
+	  found = true;
+	}
+    }
 
-    if (!found)
-      {
-	n = info->symtab_pos;
-	if (n >= private_data->last_mapping_sym && can_use_search_opt_p)
-	  n = private_data->last_mapping_sym;
+  if (!found)
+    {
+      n = info->symtab_pos;
+      if (n >= private_data->last_mapping_sym && can_use_search_opt_p)
+	n = private_data->last_mapping_sym;
 
-	/* No mapping symbol found at this address.  Look backwards
-	   for a preceeding one, but don't go pass the section start
-	   otherwise a data section with no mapping symbol can pick up
-	   a text mapping symbol of a preceeding section.  The documentation
-	   says section can be NULL, in which case we will seek up all the
-	   way to the top.  */
-	if (info->section)
-	  section_vma = info->section->vma;
+      /* No mapping symbol found at this address.  Look backwards
+	 for a preceeding one, but don't go pass the section start
+	 otherwise a data section with no mapping symbol can pick up
+	 a text mapping symbol of a preceeding section.  The documentation
+	 says section can be NULL, in which case we will seek up all the
+	 way to the top.  */
+      if (info->section)
+	section_vma = info->section->vma;
 
-	for (; n >= 0; n--)
-	  {
-	    addr = bfd_asymbol_value (info->symtab[n]);
-	    if (addr < section_vma)
+      for (; n >= 0; n--)
+	{
+	  addr = bfd_asymbol_value (info->symtab[n]);
+	  if (addr < section_vma)
+	    break;
+
+	  if (get_map_sym_type (info, n, &type))
+	    {
+	      last_sym = n;
+	      found = true;
 	      break;
-
-	    if (get_map_sym_type (info, n, &type))
-	      {
-		last_sym = n;
-		found = true;
-		break;
-	      }
-	  }
-      }
-  }
+	    }
+	}
+    }
 
   /* If no mapping symbol was found, try looking up without a mapping
      symbol.  This is done by walking up from the current PC to the nearest
@@ -11989,15 +12296,12 @@ select_arm_features (unsigned long mach,
     case bfd_mach_arm_3:	 ARM_SET_FEATURES (ARM_ARCH_V3); break;
     case bfd_mach_arm_3M:	 ARM_SET_FEATURES (ARM_ARCH_V3M); break;
     case bfd_mach_arm_4:	 ARM_SET_FEATURES (ARM_ARCH_V4); break;
+    case bfd_mach_arm_ep9312:
     case bfd_mach_arm_4T:	 ARM_SET_FEATURES (ARM_ARCH_V4T); break;
     case bfd_mach_arm_5:	 ARM_SET_FEATURES (ARM_ARCH_V5); break;
     case bfd_mach_arm_5T:	 ARM_SET_FEATURES (ARM_ARCH_V5T); break;
     case bfd_mach_arm_5TE:	 ARM_SET_FEATURES (ARM_ARCH_V5TE); break;
     case bfd_mach_arm_XScale:	 ARM_SET_FEATURES (ARM_ARCH_XSCALE); break;
-    case bfd_mach_arm_ep9312:
-	ARM_SET_FEATURES (ARM_FEATURE_LOW (ARM_AEXT_V4T,
-					   ARM_CEXT_MAVERICK | FPU_MAVERICK));
-       break;
     case bfd_mach_arm_iWMMXt:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT); break;
     case bfd_mach_arm_iWMMXt2:	 ARM_SET_FEATURES (ARM_ARCH_IWMMXT2); break;
     case bfd_mach_arm_5TEJ:	 ARM_SET_FEATURES (ARM_ARCH_V5TEJ); break;
@@ -12018,7 +12322,7 @@ select_arm_features (unsigned long mach,
 	  ARM_MERGE_FEATURE_SETS (arch_fset, arch_fset, armv8_6_ext_fset);
 	  break;
 	}
-    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R); break;
+    case bfd_mach_arm_8R:	 ARM_SET_FEATURES (ARM_ARCH_V8R_CRC); break;
     case bfd_mach_arm_8M_BASE:	 ARM_SET_FEATURES (ARM_ARCH_V8M_BASE); break;
     case bfd_mach_arm_8M_MAIN:	 ARM_SET_FEATURES (ARM_ARCH_V8M_MAIN); break;
     case bfd_mach_arm_8_1M_MAIN:
@@ -12084,9 +12388,15 @@ print_insn (bfd_vma pc, struct disassemble_info *info, bool little)
     {
       static struct arm_private_data private;
 
-      if ((info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
+      if (info->flavour != bfd_target_elf_flavour
+	  && (info->flags & USER_SPECIFIED_MACHINE_TYPE) == 0)
 	/* If the user did not use the -m command line switch then default to
 	   disassembling all types of ARM instruction.
+
+	   If this is an arm elf target, build attributes will be used to
+	   determine info->mach, which enable us to be more accurate when
+	   disassembling since we know what the target architecture version is.
+	   For any other target see the comment below:
 
 	   The info->mach value has to be ignored as this will be based on
 	   the default archictecture for the target and/or hints in the notes

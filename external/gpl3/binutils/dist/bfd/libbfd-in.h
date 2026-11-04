@@ -1,7 +1,7 @@
 /* libbfd.h -- Declarations used by bfd library *implementation*.
    (This include file is not for users of the library.)
 
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
 
    Written by Cygnus Support.
 
@@ -25,15 +25,8 @@
 #ifndef _LIBBFD_H
 #define _LIBBFD_H 1
 
-#ifndef ATTRIBUTE_HIDDEN
-#if HAVE_HIDDEN
-#define ATTRIBUTE_HIDDEN __attribute__ ((__visibility__ ("hidden")))
-#else
-#define ATTRIBUTE_HIDDEN
-#endif
-#endif
-
 #include "hashtab.h"
+#include "hidden.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -186,7 +179,7 @@ extern bool _bfd_bool_bfd_uint_true
 extern bool _bfd_bool_bfd_asection_bfd_asection_true
   (bfd *, asection *, bfd *, asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_bool_bfd_asymbol_bfd_asymbol_true
-  (bfd *, asymbol *, bfd *, asymbol *) ATTRIBUTE_HIDDEN;
+  (bfd *, asymbol **, bfd *, asymbol **) ATTRIBUTE_HIDDEN;
 extern bool _bfd_bool_bfd_ptr_true
   (bfd *, void *) ATTRIBUTE_HIDDEN;
 extern void *_bfd_ptr_bfd_null_error
@@ -248,7 +241,7 @@ extern int bfd_generic_stat_arch_elt
 #define _bfd_read_ar_hdr(abfd) \
 	BFD_SEND (abfd, _bfd_read_ar_hdr_fn, (abfd))
 #define _bfd_write_ar_hdr(archive, abfd)	 \
-	BFD_SEND (abfd, _bfd_write_ar_hdr_fn, (archive, abfd))
+	BFD_SEND (archive, _bfd_write_ar_hdr_fn, (archive, abfd))
 
 /* Generic routines to use for BFD_JUMP_TABLE_GENERIC.  Use
    BFD_JUMP_TABLE_GENERIC (_bfd_generic).  */
@@ -262,8 +255,6 @@ extern bool _bfd_generic_new_section_hook
   (bfd *, asection *) ATTRIBUTE_HIDDEN;
 extern bool _bfd_generic_get_section_contents
   (bfd *, asection *, void *, file_ptr, bfd_size_type) ATTRIBUTE_HIDDEN;
-extern bool _bfd_generic_get_section_contents_in_window
-  (bfd *, asection *, bfd_window *, file_ptr, bfd_size_type) ATTRIBUTE_HIDDEN;
 
 /* Generic routines to use for BFD_JUMP_TABLE_COPY.  Use
    BFD_JUMP_TABLE_COPY (_bfd_generic).  */
@@ -272,16 +263,13 @@ extern bool _bfd_generic_get_section_contents_in_window
 #define _bfd_generic_bfd_merge_private_bfd_data \
   _bfd_bool_bfd_link_true
 #define _bfd_generic_bfd_set_private_flags _bfd_bool_bfd_uint_true
-#define _bfd_generic_bfd_copy_private_section_data \
-  _bfd_bool_bfd_asection_bfd_asection_true
+extern bool _bfd_generic_bfd_copy_private_section_data
+  (bfd *, asection *, bfd *, asection *, struct bfd_link_info *)
+  ATTRIBUTE_HIDDEN;
 #define _bfd_generic_bfd_copy_private_symbol_data \
   _bfd_bool_bfd_asymbol_bfd_asymbol_true
 #define _bfd_generic_bfd_copy_private_header_data _bfd_bool_bfd_bfd_true
 #define _bfd_generic_bfd_print_private_bfd_data _bfd_bool_bfd_ptr_true
-
-extern bool _bfd_generic_init_private_section_data
-  (bfd *, asection *, bfd *, asection *, struct bfd_link_info *)
-  ATTRIBUTE_HIDDEN;
 
 /* Routines to use for BFD_JUMP_TABLE_CORE when there is no core file
    support.  Use BFD_JUMP_TABLE_CORE (_bfd_nocore).  */
@@ -417,7 +405,7 @@ extern bool _bfd_vms_lib_ia64_mkarchive
 /* Routines to use for BFD_JUMP_TABLE_SYMBOLS where there is no symbol
    support.  Use BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols).  */
 
-#define _bfd_nosymbols_get_symtab_upper_bound _bfd_long_bfd_n1_error
+#define _bfd_nosymbols_get_symtab_upper_bound _bfd_long_bfd_0
 extern long _bfd_nosymbols_canonicalize_symtab
   (bfd *, asymbol **) ATTRIBUTE_HIDDEN;
 #define _bfd_nosymbols_make_empty_symbol _bfd_generic_make_empty_symbol
@@ -459,7 +447,7 @@ extern long _bfd_norelocs_get_reloc_upper_bound
   (bfd *, asection *) ATTRIBUTE_HIDDEN;
 extern long _bfd_norelocs_canonicalize_reloc
   (bfd *, asection *, arelent **, asymbol **) ATTRIBUTE_HIDDEN;
-extern void _bfd_norelocs_set_reloc
+extern bool _bfd_norelocs_finalize_section_relocs
   (bfd *, asection *, arelent **, unsigned int) ATTRIBUTE_HIDDEN;
 extern reloc_howto_type *_bfd_norelocs_bfd_reloc_type_lookup
   (bfd *, bfd_reloc_code_real_type) ATTRIBUTE_HIDDEN;
@@ -494,7 +482,6 @@ extern bool _bfd_nolink_bfd_relax_section
 #define _bfd_nolink_bfd_gc_sections _bfd_bool_bfd_link_false_error
 extern bool _bfd_nolink_bfd_lookup_section_flags
   (struct bfd_link_info *, struct flag_info *, asection *) ATTRIBUTE_HIDDEN;
-#define _bfd_nolink_bfd_merge_sections _bfd_bool_bfd_link_false_error
 extern bool _bfd_nolink_bfd_is_group_section
   (bfd *, const asection *) ATTRIBUTE_HIDDEN;
 extern const char *_bfd_nolink_bfd_group_name
@@ -647,12 +634,6 @@ extern bool _bfd_generic_link_add_archive_symbols
 /* Forward declaration to avoid prototype errors.  */
 typedef struct bfd_link_hash_entry _bfd_link_hash_entry;
 
-/* Generic routine to add a single symbol.  */
-extern bool _bfd_generic_link_add_one_symbol
-  (struct bfd_link_info *, bfd *, const char *name, flagword,
-   asection *, bfd_vma, const char *, bool copy,
-   bool constructor, struct bfd_link_hash_entry **) ATTRIBUTE_HIDDEN;
-
 /* Generic routine to mark section as supplying symbols only.  */
 extern void _bfd_generic_link_just_syms
   (asection *, struct bfd_link_info *) ATTRIBUTE_HIDDEN;
@@ -699,26 +680,15 @@ extern bfd_reloc_status_type _bfd_relocate_contents
 extern bfd_reloc_status_type _bfd_clear_contents
   (reloc_howto_type *, bfd *, asection *, bfd_byte *, bfd_vma) ATTRIBUTE_HIDDEN;
 
-/* Register a SEC_MERGE section as a candidate for merging.  */
-
-extern bool _bfd_add_merge_section
-  (bfd *, void **, asection *, void **) ATTRIBUTE_HIDDEN;
-
-/* Attempt to merge SEC_MERGE sections.  */
-
-extern bool _bfd_merge_sections
-  (bfd *, struct bfd_link_info *, void *, void (*) (bfd *, asection *))
-  ATTRIBUTE_HIDDEN;
-
 /* Write out a merged section.  */
 
 extern bool _bfd_write_merged_section
-  (bfd *, asection *, void *) ATTRIBUTE_HIDDEN;
+  (bfd *, asection *) ATTRIBUTE_HIDDEN;
 
 /* Find an offset within a modified SEC_MERGE section.  */
 
 extern bfd_vma _bfd_merged_section_offset
-  (bfd *, asection **, void *, bfd_vma) ATTRIBUTE_HIDDEN;
+  (bfd *, asection **, bfd_vma) ATTRIBUTE_HIDDEN;
 
 /* Tidy up when done.  */
 
@@ -845,10 +815,14 @@ extern bfd_vma _bfd_safe_read_leb128
 extern bfd_byte * _bfd_write_unsigned_leb128
   (bfd_byte *, bfd_byte *, bfd_vma) ATTRIBUTE_HIDDEN;
 
-extern struct bfd_link_info *_bfd_get_link_info (bfd *);
-
-extern bool _bfd_link_keep_memory (struct bfd_link_info *)
+extern struct bfd_link_info *_bfd_get_link_info (bfd *)
   ATTRIBUTE_HIDDEN;
+
+#ifdef HAVE_MMAP
+extern uintptr_t _bfd_pagesize ATTRIBUTE_HIDDEN;
+extern uintptr_t _bfd_pagesize_m1 ATTRIBUTE_HIDDEN;
+extern uintptr_t _bfd_minimum_mmap_size ATTRIBUTE_HIDDEN;
+#endif
 
 #if GCC_VERSION >= 7000
 #define _bfd_mul_overflow(a, b, res) __builtin_mul_overflow (a, b, res)
@@ -909,3 +883,35 @@ _bfd_malloc_and_read (bfd *abfd, bfd_size_type asize, bfd_size_type rsize)
     }
   return NULL;
 }
+
+#ifdef USE_MMAP
+extern void *_bfd_mmap_persistent
+  (bfd *, size_t) ATTRIBUTE_HIDDEN;
+extern void *_bfd_mmap_temporary
+  (bfd *, size_t, void **, size_t *) ATTRIBUTE_HIDDEN;
+extern void _bfd_munmap_temporary
+  (void *, size_t) ATTRIBUTE_HIDDEN;
+#else
+static inline void *
+_bfd_mmap_persistent (bfd *abfd, size_t rsize)
+{
+  return _bfd_alloc_and_read (abfd, rsize, rsize);
+}
+static inline void *
+_bfd_mmap_temporary (bfd *abfd, size_t rsize, void **map_addr,
+		     size_t *map_size)
+{
+  void *mem = _bfd_malloc_and_read (abfd, rsize, rsize);
+  *map_addr = mem;
+  *map_size = rsize;
+  return mem;
+}
+static inline void
+_bfd_munmap_temporary (void *ptr, size_t rsize ATTRIBUTE_UNUSED)
+{
+  free (ptr);
+}
+#endif
+
+extern bool _bfd_mmap_read_temporary
+  (void **, size_t *, void **, bfd *, bool) ATTRIBUTE_HIDDEN;

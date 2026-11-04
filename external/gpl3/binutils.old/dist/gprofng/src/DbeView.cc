@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -552,7 +552,7 @@ DbeView::get_metric_list (MetricType mtype)
 
       // set the defaults
       if (settings->str_dmetrics == NULL)
-	settings->str_dmetrics = strdup (Command::DEFAULT_METRICS);
+	settings->str_dmetrics = xstrdup (Command::DEFAULT_METRICS);
       char *status = setMetrics (settings->str_dmetrics, true);
       if (status != NULL)
 	{
@@ -1122,7 +1122,7 @@ DbeView::setSort (char * sort_list, MetricType mtype, bool fromRcFile)
   if ((sort_list == NULL) || (strcmp (sort_list, Command::DEFAULT_CMD) == 0))
     {
       if (settings->str_dsort == NULL)
-	settings->str_dsort = strdup (Command::DEFAULT_METRICS);
+	settings->str_dsort = xstrdup (Command::DEFAULT_METRICS);
       sort_list = settings->get_default_sort ();
     }
   mlist = get_metric_list (mtype);

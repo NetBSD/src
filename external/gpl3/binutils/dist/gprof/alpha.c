@@ -95,6 +95,7 @@ alpha_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
   bfd_vma pc, dest_pc;
   unsigned int insn;
   Sym *child;
+  Sym_Table *symtab = get_symtab ();
 
   if (indirect_child.name == NULL)
     {
@@ -149,7 +150,7 @@ alpha_find_call (Sym *parent, bfd_vma p_lowpc, bfd_vma p_highpc)
 			       ^ 0x100000) - 0x100000);
 	  if (hist_check_address (dest_pc))
 	    {
-	      child = sym_lookup (&symtab, dest_pc);
+	      child = sym_lookup (symtab, dest_pc);
               if (child)
                 {
 	          DBG (CALLDEBUG,

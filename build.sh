@@ -1,5 +1,5 @@
 #! /usr/bin/env sh
-#	$NetBSD: build.sh,v 1.377.2.1 2025/08/02 05:18:23 perseant Exp $
+#	$NetBSD: build.sh,v 1.377.2.2 2026/11/04 22:36:12 perseant Exp $
 #
 # Copyright (c) 2001-2023 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -658,6 +658,7 @@ initdefaults()
 valid_MACHINE_ARCH='
 MACHINE=acorn32		MACHINE_ARCH=earmv4	ALIAS=eacorn32 DEFAULT
 MACHINE=algor		MACHINE_ARCH=mips64el	ALIAS=algor64
+MACHINE=algor		MACHINE_ARCH=mipsn64el	ALIAS=algorn64
 MACHINE=algor		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=alpha		MACHINE_ARCH=alpha
 MACHINE=amd64		MACHINE_ARCH=x86_64
@@ -705,6 +706,8 @@ MACHINE=evbsh3		MACHINE_ARCH=		NO_DEFAULT
 MACHINE=evbsh3		MACHINE_ARCH=sh3eb	ALIAS=evbsh3-eb
 MACHINE=evbsh3		MACHINE_ARCH=sh3el	ALIAS=evbsh3-el
 MACHINE=ews4800mips	MACHINE_ARCH=mipseb
+MACHINE=hb68k		MACHINE_ARCH=m68000	ALIAS=hb68010
+MACHINE=hb68k		MACHINE_ARCH=m68k	DEFAULT
 MACHINE=hp300		MACHINE_ARCH=m68k
 MACHINE=hppa		MACHINE_ARCH=hppa
 MACHINE=hpcarm		MACHINE_ARCH=earmv4	ALIAS=hpcearm DEFAULT
@@ -716,7 +719,8 @@ MACHINE=ibmnws		MACHINE_ARCH=powerpc
 MACHINE=iyonix		MACHINE_ARCH=earm	ALIAS=eiyonix DEFAULT
 MACHINE=landisk		MACHINE_ARCH=sh3el
 MACHINE=luna68k		MACHINE_ARCH=m68k
-MACHINE=mac68k		MACHINE_ARCH=m68k
+MACHINE=mac68k		MACHINE_ARCH=m68ksf	ALIAS=mac68ksf
+MACHINE=mac68k		MACHINE_ARCH=m68k	DEFAULT
 MACHINE=macppc		MACHINE_ARCH=powerpc	DEFAULT
 MACHINE=macppc		MACHINE_ARCH=powerpc64	ALIAS=macppc64
 MACHINE=mipsco		MACHINE_ARCH=mipseb
@@ -732,6 +736,7 @@ MACHINE=ofppc		MACHINE_ARCH=powerpc64	ALIAS=ofppc64
 MACHINE=or1k		MACHINE_ARCH=or1k
 MACHINE=playstation2	MACHINE_ARCH=mipsel
 MACHINE=pmax		MACHINE_ARCH=mips64el	ALIAS=pmax64
+MACHINE=pmax		MACHINE_ARCH=mipsn64el	ALIAS=pmaxn64
 MACHINE=pmax		MACHINE_ARCH=mipsel	DEFAULT
 MACHINE=prep		MACHINE_ARCH=powerpc
 MACHINE=riscv		MACHINE_ARCH=riscv64	ALIAS=riscv64 DEFAULT
@@ -1696,6 +1701,69 @@ sanitycheck()
 		bomb "Experimental \`build.sh pkg=...'" \
 		     "does not support -x/MKX11=yes"
 	fi
+
+	# A mismatched Darwin SDK can cause mysterious failures
+	# in the tools build, which come and go as we update external
+	# code that may use different versions of autoconf.  Avoid them.
+	if [ "${uname_s}" = "Darwin" ] && [ -z "${SDKROOT}" ]; then
+	    _host_cc="${HOST_CC:-cc}"
+	    case "$("${_host_cc}" --version 2>/dev/null)" in
+	    *Apple*clang* | *Apple*LLVM*)
+		_host_ver=$(sw_vers -productVersion 2>/dev/null)
+		_host_major=${_host_ver%%.*}
+		_sdk_ver=$(xcrun --show-sdk-version 2>/dev/null)
+		_sdk_major=${_sdk_ver%%.*}
+
+		if [ -n "${_host_major}" ] && [ -n "${_sdk_major}" ] && \
+		   [ "${_sdk_major}" -gt "${_host_major}" ]; then
+		    statusmsg "Active Xcode SDK (${_sdk_ver}) is newer than" \
+		    	      "host MacOS (${_host_ver})"
+		    _compat_sdk=""
+		    _best_major=0
+		    _xcbase="$(xcode-select -p 2>/dev/null)"
+
+		    for _sdk_dir in \
+		        /Library/Developer/CommandLineTools/SDKs \
+		        "${_xcbase}"/Platforms/MacOSX.platform/Developer/SDKs;
+		    do
+			[ -d "${_sdk_dir}" ] || continue
+			for _s in "${_sdk_dir}"/MacOSX*.sdk; do
+			    [ -d "${_s}" ] || continue
+			    _base=$(basename "${_s}")
+			    _s_major=$(echo "${_base}" | sed -E -n \
+				       's/^MacOSX([0-9]+).*\.sdk$/\1/p')
+
+			    if [ -n "${_s_major}" ] && \
+			       [ "${_s_major}" -le "${_host_major}" ] && \
+			       [ "${_s_major}" -gt "${_best_major}" ]; then
+			        _best_major="${_s_major}"
+				_compat_sdk="${_s}"
+			    fi
+		    done
+		done
+
+		if [ -n "${_compat_sdk}" ]; then
+		    statusmsg "Redirecting host toolchain to compatible SDK: " \
+			      "${_compat_sdk}"
+		    setmakeenv SDKROOT "${_compat_sdk}"
+		    export SDKROOT="${_compat_sdk}"
+		else
+		    if ${do_expertmode}; then
+		    	warning "Default Xcode SDK (${_sdk_ver}) > host " \
+				"macOS (${_host_ver} and " \
+				"no older Xcode SDK found."
+		    else
+		    	bomb "${_host_cc} is from an Xcode SDK too new "
+			     "for this system and no alternative is installed."
+		    fi
+		fi
+	    fi
+	    ;;
+	*)
+	    # Compiler is not from Xcode.  Carry on, then.
+	    ;;
+	esac
+    fi
 }
 
 # find a command in PATH and print the full filename
@@ -1873,7 +1941,8 @@ rebuildmake()
 	make="$(print_tooldir_make)"
 	if [ -n "${make}" ] && [ -x "${make}" ]
 	then
-		for f in usr.bin/make/*.[ch]
+		for f in tools/make/configure tools/make/*.in \
+                        usr.bin/make/*.[ch]
 		do
 			if [ "${f}" -nt "${make}" ]
 			then
@@ -1895,7 +1964,7 @@ rebuildmake()
 	fi
 
 	# Silent configure with MAKEVERBOSE==0
-	if [ ${MAKEVERBOSE:-2} -eq 0 ]
+	if [ "${MAKEVERBOSE:-2}" -eq 0 ]
 	then
 		configure_args=--silent
 	fi
@@ -2223,7 +2292,7 @@ createmakewrapper()
 	eval cat <<EOF ${makewrapout}
 #! ${HOST_SH}
 # Set proper variables to allow easy "make" building of a NetBSD subtree.
-# Generated from:  \$NetBSD: build.sh,v 1.377.2.1 2025/08/02 05:18:23 perseant Exp $
+# Generated from:  \$NetBSD: build.sh,v 1.377.2.2 2026/11/04 22:36:12 perseant Exp $
 # with these arguments: ${_args}
 #
 
@@ -2496,7 +2565,7 @@ buildpkg()
 		;;
 	esac
 
-	if [ "${MAKEVERBOSE}" -eq 0 ]
+	if [ "${MAKEVERBOSE:-2}" -eq 0 ]
 	then
 		quiet="--quiet"
 	else

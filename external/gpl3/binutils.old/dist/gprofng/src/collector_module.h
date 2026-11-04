@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -25,6 +25,7 @@
 #include <stdarg.h>
 #include <stdio.h>
 #include <unistd.h>
+#include <ucontext.h>
 #include <dirent.h>
 
 #include "gp-defs.h"
@@ -39,12 +40,12 @@ struct tm;
  * If you add any, please put it in the right place */
 typedef struct CollectorUtilFuncs
 {
-  int (*access)();
+  int (*access)(const char *, int);
   int (*atoi)(const char *nptr);
   void *(*calloc)(size_t nelem, size_t elsize);
   int (*clearenv)(void);
   int (*close)(int);
-  int (*closedir)();
+  int (*closedir)(DIR *);
   int (*execv)(const char *path, char *const argv[]);
   void (*exit)(int status);
   int (*fclose)(FILE *stream);
@@ -52,9 +53,11 @@ typedef struct CollectorUtilFuncs
   char *(*fgets)(char *s, int n, FILE *stream);
   FILE *(*fopen)(const char *filename, const char *mode);
   pid_t (*vfork)();
-  int (*fprintf)(FILE *stream, const char *format, ...);
+  int (*fprintf)(FILE *stream, const char *format, ...)
+	__attribute__ ((format (printf, 2, 3)));
   void (*free)(void *ptr);
   int (*fstat)(int fd, struct stat *buf);
+  int (*getcontext)(ucontext_t *ucp);
   int (*getcpuid)();
   char *(*getcwd)(char *buf, size_t size);
   char *(*getenv)(const char *name);
@@ -63,24 +66,25 @@ typedef struct CollectorUtilFuncs
   off_t (*lseek)(int fd, off_t offset, int whence);
   void *(*malloc)(size_t size);
   void *(*memset)(void *s1, int c, size_t n);
-  int (*mkdir)();
+  int (*mkdir)(const char *, mode_t);
   time_t (*mktime)(struct tm *timeptr);
   void *(*mmap)(void *, size_t, int, int, int, off_t);
-  void *(*mmap64)();
-  int (*munmap)();
+  void *(*mmap64_)(void *, size_t, int, int, int, off_t);
+  int (*munmap)(void *, size_t);
   int (*open)(const char *, int, ...);
   int (*open_bare)(const char *, int, ...);
-  DIR *(*opendir)();
+  DIR *(*opendir)(const char *);
   int (*pclose)(FILE *stream);
   FILE *(*popen)(const char *command, const char *mode);
   int (*putenv)(char *string);
-  ssize_t (*pwrite)();
-  ssize_t (*pwrite64)();
-  ssize_t (*read)();
+  ssize_t (*pwrite)(int, const void *, size_t, off_t);
+  ssize_t (*pwrite64_)(int, const void *, size_t, off_t);
+  ssize_t (*read)(int, void *, size_t);
   int (*setenv)(const char *name, const char *value, int overwrite);
   int (*sigfillset)(sigset_t *set);
   int (*sigprocmask)(int how, const sigset_t *set, sigset_t *oldset);
-  int (*snprintf)(char *str, size_t size, const char *format, ...);
+  int (*snprintf)(char *str, size_t size, const char *format, ...)
+	__attribute__ ((format (printf, 3, 4)));
   int (*stack_getbounds)();
   char *(*strchr)(const char *name, int c);
   int (*strcmp)(const char *s1, const char *s2);
@@ -103,12 +107,11 @@ typedef struct CollectorUtilFuncs
   int (*symlink)(const char *s1, const char *s2);
   int (*syscall)(int number, ...);
   long (*sysconf)(int name);
-  long (*sysinfo)(int command, char *buf, long count);
   time_t (*time)(time_t *tloc);
   int (*unsetenv)(const char *name);
-  int (*vsnprintf)(char *str, size_t size, const char *format, va_list ap);
+  int (*vsnprintf)(char *str, size_t size, const char *format, ...);
   pid_t (*waitpid)(pid_t pid, int *stat_loc, int options);
-  ssize_t (*write)();
+  ssize_t (*write)(int, void *, size_t);
   double (*atof)();
   void *n_a;
 } CollectorUtilFuncs;
@@ -166,12 +169,13 @@ typedef struct CollectorInterface
   CollectorModule (*registerModule)(struct ModuleInterface*);
   const char *(*getParams)();
   const char *(*getExpDir)();
-  int (*writeLog)(char *format, ...);
+  int (*writeLog)(char *format, ...) __attribute__ ((format (printf, 1, 2)));
   FrameInfo (*getFrameInfo)(CollectorModule modl, HiResTime ts, int mode, void *arg);
   FrameInfo (*getUID)(CM_Array *arg);
   FrameInfo (*getUID2)(CM_Array *arg, FrameInfo uid);
   int (*getStackTrace)(void *buf, int size, void *bptr, void *eptr, void *arg);
-  int (*writeMetaData)(CollectorModule modl, char *format, ...);
+  int (*writeMetaData)(CollectorModule modl, char *format, ...)
+	__attribute__ ((format (printf, 2, 3)));
 
   /* writeDataRecord ensures that the header is filled in, and then calls writeDataPacket */
   int (*writeDataRecord)(CollectorModule modl, struct Common_packet *pckt);
@@ -218,17 +222,6 @@ extern "C"
   CollectorModule __collector_register_module (ModuleInterface *modint);
 #ifdef __cplusplus
 }
-#endif
-
-#ifdef __has_attribute
-# if __has_attribute (__symver__)
-#  define SYMVER_ATTRIBUTE(sym, symver) \
-    __attribute__ ((__symver__ (#symver)))
-# endif
-#endif
-#ifndef SYMVER_ATTRIBUTE
-# define SYMVER_ATTRIBUTE(sym, symver) \
-  __asm__(".symver " #sym "," #symver);
 #endif
 
 #endif /* _COLLECTOR_MODULE_H */

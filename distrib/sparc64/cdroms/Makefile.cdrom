@@ -1,13 +1,10 @@
-# $NetBSD: Makefile.cdrom,v 1.1 2024/05/15 16:29:53 christos Exp $
+# $NetBSD: Makefile.cdrom,v 1.1.2.1 2026/11/04 22:37:09 perseant Exp $
 
 .include <bsd.own.mk>
 
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd
 CD_SETS=	base etc
-.if ${MKKMOD} != "no"
-CD_SETS+=	modules
-.endif
 .if ${MKMAN} != "no"
 CD_SETS+=	man
 .endif
@@ -23,6 +20,9 @@ SPEC_EXTRA:=${.PARSEDIR}/spec.in
 
 image_md_pre:
 	${RM} -f cdrom/etc/gettytab cdrom/etc/ttys cdrom/etc/rc
+.for file in ${CDSETS_EXCLUDE}
+	${RM} -f cdrom/${file}
+.endfor
 	${HOST_LN} -fs /tmp/gettytab cdrom/etc/gettytab
 	${INSTALL} ${COPY} ${.CURDIR}/../installcd/etc.ttys cdrom/etc/ttys
 	${INSTALL} ${COPY} ${.CURDIR}/../installcd/etc.rc cdrom/etc/rc

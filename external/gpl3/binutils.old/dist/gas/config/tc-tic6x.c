@@ -1,5 +1,5 @@
 /* TI C6X assembler.
-   Copyright (C) 2010-2022 Free Software Foundation, Inc.
+   Copyright (C) 2010-2025 Free Software Foundation, Inc.
    Contributed by Joseph Myers <joseph@codesourcery.com>
    		  Bernd Schmidt  <bernds@codesourcery.com>
 
@@ -48,7 +48,7 @@ const char line_separator_chars[] = "@";
 const char EXP_CHARS[] = "eE";
 const char FLT_CHARS[] = "dDfF";
 
-const char *md_shortopts = "";
+const char md_shortopts[] = "";
 
 enum
   {
@@ -63,7 +63,7 @@ enum
     OPTION_MGENERATE_REL
   };
 
-struct option md_longopts[] =
+const struct option md_longopts[] =
   {
     { "march", required_argument, NULL, OPTION_MARCH },
     { "mbig-endian", no_argument, NULL, OPTION_MBIG_ENDIAN },
@@ -76,7 +76,7 @@ struct option md_longopts[] =
     { "mgenerate-rel", no_argument, NULL, OPTION_MGENERATE_REL },
     { NULL, no_argument, NULL, 0 }
   };
-size_t md_longopts_size = sizeof (md_longopts);
+const size_t md_longopts_size = sizeof (md_longopts);
 
 /* The instructions enabled based only on the selected architecture
    (all instructions, if no architecture specified).  */
@@ -489,7 +489,8 @@ s_tic6x_arch (int ignored ATTRIBUTE_UNUSED)
   char *arch;
 
   arch = input_line_pointer;
-  while (*input_line_pointer && !ISSPACE (*input_line_pointer))
+  while (!is_end_of_stmt (*input_line_pointer)
+	 && !is_whitespace (*input_line_pointer))
     input_line_pointer++;
   c = *input_line_pointer;
   *input_line_pointer = 0;
@@ -658,8 +659,7 @@ s_tic6x_scomm (int ignore ATTRIBUTE_UNUSED)
 
       symbol_set_frag (symbolP, frag_now);
 
-      pfrag = frag_var (rs_org, 1, 1, (relax_substateT) 0, symbolP, size,
-			(char *) 0);
+      pfrag = frag_var (rs_org, 1, 1, 0, symbolP, size, NULL);
       *pfrag = 0;
       S_SET_SIZE (symbolP, size);
       S_SET_SEGMENT (symbolP, sbss_section);
@@ -668,7 +668,7 @@ s_tic6x_scomm (int ignore ATTRIBUTE_UNUSED)
     }
   else
     {
-      S_SET_VALUE (symbolP, (valueT) size);
+      S_SET_VALUE (symbolP, size);
       S_SET_ALIGN (symbolP, 1 << align2);
       S_SET_EXTERNAL (symbolP);
       S_SET_SEGMENT (symbolP, &scom_section);
@@ -786,7 +786,6 @@ md_begin (void)
   scom_section.name           = ".scommon";
   scom_section.output_section = & scom_section;
   scom_section.symbol         = & scom_symbol;
-  scom_section.symbol_ptr_ptr = & scom_section.symbol;
   scom_symbol                 = * bfd_com_section_ptr->symbol;
   scom_symbol.name            = ".scommon";
   scom_symbol.section         = & scom_section;
@@ -846,7 +845,7 @@ tic6x_unrecognized_line (int c)
 	 If it looks like one but not a valid one, give a better
 	 error.  */
       p = input_line_pointer;
-      while (*p != ']' && !is_end_of_line[(unsigned char) *p])
+      while (*p != ']' && !is_end_of_stmt (*p))
 	p++;
       if (*p != ']')
 	return 0;
@@ -1037,7 +1036,7 @@ bool
 tic6x_do_align (int n, char *fill, int len ATTRIBUTE_UNUSED, int max)
 {
   /* Given code alignments of 4, 8, 16 or 32 bytes, we try to handle
-     them in the md_end pass by inserting NOPs in parallel with
+     them in the md_finish pass by inserting NOPs in parallel with
      previous instructions.  We only do this in sections containing
      nothing but instructions.  Code alignments of 1 or 2 bytes have
      no effect in such sections (but we record them with
@@ -1181,7 +1180,7 @@ typedef struct
   } value;
 } tic6x_operand;
 
-#define skip_whitespace(str)  do { if (*(str) == ' ') ++(str); } while (0)
+#define skip_whitespace(str)  do { if (is_whitespace (*(str))) ++(str); } while (0)
 
 /* Parse a register operand, or part of an operand, starting at *P.
    If syntactically OK (including that the number is in the range 0 to
@@ -1329,7 +1328,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  char *rq = q + 2;
 
 	  skip_whitespace (rq);
-	  if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
+	  if (is_end_of_stmt (*rq) || *rq == ',')
 	    {
 	      op->form = TIC6X_OP_FUNC_UNIT;
 	      op->value.func_unit.base = base;
@@ -1350,7 +1349,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  char *rq = q + 3;
 
 	  skip_whitespace (rq);
-	  if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
+	  if (is_end_of_stmt (*rq) || *rq == ',')
 	    {
 	      op->form = TIC6X_OP_IRP;
 	      operand_parsed = true;
@@ -1369,7 +1368,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  char *rq = q + 3;
 
 	  skip_whitespace (rq);
-	  if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
+	  if (is_end_of_stmt (*rq) || *rq == ',')
 	    {
 	      op->form = TIC6X_OP_NRP;
 	      operand_parsed = true;
@@ -1392,7 +1391,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	      char *rq = q + len;
 
 	      skip_whitespace (rq);
-	      if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
+	      if (is_end_of_stmt (*rq) || *rq == ',')
 		{
 		  op->form = TIC6X_OP_CTRL;
 		  op->value.ctrl = crid;
@@ -1560,7 +1559,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
       if (mem_ok)
 	{
 	  skip_whitespace (mq);
-	  if (!is_end_of_line[(unsigned char) *mq] && *mq != ',')
+	  if (!is_end_of_stmt (*mq) && *mq != ',')
 	    mem_ok = false;
 	}
 
@@ -1604,7 +1603,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	      if (reg_ok)
 		{
 		  skip_whitespace (rq);
-		  if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
+		  if (is_end_of_stmt (*rq) || *rq == ',')
 		    {
 		      if ((second_reg.num & 1)
 			  || (first_reg.num != second_reg.num + 1)
@@ -1622,7 +1621,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  else if (op_forms & TIC6X_OP_REG)
 	    {
 	      skip_whitespace (rq);
-	      if (is_end_of_line[(unsigned char) *rq] || *rq == ',')
+	      if (is_end_of_stmt (*rq) || *rq == ',')
 		{
 		  op->form = TIC6X_OP_REG;
 		  op->value.reg = first_reg;
@@ -1662,12 +1661,12 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
       /* Now the operand has been parsed, there must be nothing more
 	 before the comma or end of line.  */
       skip_whitespace (q);
-      if (!is_end_of_line[(unsigned char) *q] && *q != ',')
+      if (!is_end_of_stmt (*q) && *q != ',')
 	{
 	  operand_parsed = false;
 	  as_bad (_("junk after operand %u of '%.*s'"), opno,
 		  opc_len, str);
-	  while (!is_end_of_line[(unsigned char) *q] && *q != ',')
+	  while (!is_end_of_stmt (*q) && *q != ',')
 	    q++;
 	}
     }
@@ -1704,7 +1703,7 @@ tic6x_parse_operand (char **p, tic6x_operand *op, unsigned int op_forms,
 	  break;
 
 	}
-      while (!is_end_of_line[(unsigned char) *q] && *q != ',')
+      while (!is_end_of_stmt (*q) && *q != ',')
 	q++;
     }
   *p = q;
@@ -3084,14 +3083,13 @@ static valueT
 md_chars_to_number (char *buf, int n)
 {
   valueT result = 0;
-  unsigned char *p = (unsigned char *) buf;
 
   if (target_big_endian)
     {
       while (n--)
 	{
 	  result <<= 8;
-	  result |= (*p++ & 0xff);
+	  result |= (*buf++ & 0xff);
 	}
     }
   else
@@ -3099,7 +3097,7 @@ md_chars_to_number (char *buf, int n)
       while (n--)
 	{
 	  result <<= 8;
-	  result |= (p[n] & 0xff);
+	  result |= (buf[n] & 0xff);
 	}
     }
 
@@ -3149,7 +3147,7 @@ md_assemble (char *str)
   char *output;
 
   p = str;
-  while (*p && !is_end_of_line[(unsigned char) *p] && *p != ' ')
+  while (!is_end_of_stmt (*p) && !is_whitespace (*p))
     p++;
 
   /* This function should only have been called when there is actually
@@ -3209,10 +3207,10 @@ md_assemble (char *str)
 
       if (good_func_unit)
 	{
-	  if (p[3] == ' ' || is_end_of_line[(unsigned char) p[3]])
+	  if (is_whitespace (p[3]) || is_end_of_stmt (p[3]))
 	    p += 3;
 	  else if ((p[3] == 'x' || p[3] == 'X')
-		   && (p[4] == ' ' || is_end_of_line[(unsigned char) p[4]]))
+		   && (is_whitespace (p[4]) || is_end_of_stmt (p[4])))
 	    {
 	      maybe_cross = 1;
 	      p += 4;
@@ -3220,7 +3218,7 @@ md_assemble (char *str)
 	  else if (maybe_base == tic6x_func_unit_d
 		   && (p[3] == 't' || p[3] == 'T')
 		   && (p[4] == '1' || p[4] == '2')
-		   && (p[5] == ' ' || is_end_of_line[(unsigned char) p[5]]))
+		   && (is_whitespace (p[5]) || is_end_of_stmt (p[5])))
 	    {
 	      maybe_data_side = p[4] - '0';
 	      p += 5;
@@ -3357,7 +3355,7 @@ md_assemble (char *str)
   while (true)
     {
       skip_whitespace (p);
-      if (is_end_of_line[(unsigned char) *p])
+      if (is_end_of_stmt (*p))
 	{
 	  if (num_operands_read > 0)
 	    {
@@ -3380,7 +3378,7 @@ md_assemble (char *str)
 	bad_operands = true;
       num_operands_read++;
 
-      if (is_end_of_line[(unsigned char) *p])
+      if (is_end_of_stmt (*p))
 	break;
       else if (*p == ',')
 	{
@@ -3527,7 +3525,7 @@ md_assemble (char *str)
       bool found_match = false;
 
       for (i = 0; i < TIC6X_NUM_PREFER; i++)
-	opc_rank[i] = (unsigned int) -1;
+	opc_rank[i] = -1u;
 
       min_rank = TIC6X_NUM_PREFER - 1;
       max_rank = 0;
@@ -3576,7 +3574,7 @@ md_assemble (char *str)
 	      if (rank > max_rank)
 		max_rank = rank;
 
-	      if (opc_rank[rank] == (unsigned int) -1)
+	      if (opc_rank[rank] == -1u)
 		opc_rank[rank] = i;
 	      else
 		/* The opcode table should provide a total ordering
@@ -3607,7 +3605,7 @@ md_assemble (char *str)
     {
       fix_needed = false;
 
-      if (opc_rank[try_rank] == (unsigned int) -1)
+      if (opc_rank[try_rank] == -1u)
 	continue;
 
       opcode_value = tic6x_try_encode (opcm[opc_rank[try_rank]], operands,
@@ -4078,7 +4076,7 @@ md_atof (int type, char *litP, int *sizeP)
   return ieee_md_atof (type, litP, sizeP, target_big_endian);
 }
 
-/* Adjust the frags in SECTION (see tic6x_end).  */
+/* Adjust the frags in SECTION (see tic6x_md_finish).  */
 
 static void
 tic6x_adjust_section (bfd *abfd ATTRIBUTE_UNUSED, segT section,
@@ -4381,7 +4379,9 @@ tic6x_set_attribute_int (int tag, int value)
       || tag >= NUM_KNOWN_OBJ_ATTRIBUTES)
     abort ();
   if (!tic6x_attributes_set_explicitly[tag])
-    bfd_elf_add_proc_attr_int (stdoutput, tag, value);
+    if (!bfd_elf_add_proc_attr_int (stdoutput, tag, value))
+      as_fatal (_("error adding attribute: %s"),
+		bfd_errmsg (bfd_get_error ()));
 }
 
 /* Set object attributes deduced from the input file and command line
@@ -4403,7 +4403,7 @@ tic6x_set_attributes (void)
    relaxing.  */
 
 void
-tic6x_end (void)
+tic6x_md_finish (void)
 {
   /* Set object attributes at this point if not explicitly set.  */
   tic6x_set_attributes ();
@@ -4419,7 +4419,7 @@ tic6x_end (void)
 }
 
 /* No machine-dependent frags at this stage; all converted in
-   tic6x_end.  */
+   tic6x_md_finish.  */
 
 void
 md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT asec ATTRIBUTE_UNUSED,
@@ -4429,7 +4429,7 @@ md_convert_frag (bfd *abfd ATTRIBUTE_UNUSED, segT asec ATTRIBUTE_UNUSED,
 }
 
 /* No machine-dependent frags at this stage; all converted in
-   tic6x_end.  */
+   tic6x_md_finish.  */
 
 int
 md_estimate_size_before_relax (fragS *fragp ATTRIBUTE_UNUSED,
@@ -4466,7 +4466,7 @@ tic6x_pcrel_from_section (fixS *fixp, segT sec)
       && (!S_IS_DEFINED (fixp->fx_addsy)
 	  || S_GET_SEGMENT (fixp->fx_addsy) != sec))
     return 0;
-  return (fixp->fx_where + fixp->fx_frag->fr_address) & ~(long) 0x1f;
+  return (fixp->fx_where + fixp->fx_frag->fr_address) & ~0x1fULL;
 }
 
 /* Round up a section size to the appropriate boundary.  */
@@ -4499,8 +4499,8 @@ tc_gen_reloc (asection *section ATTRIBUTE_UNUSED, fixS *fixp)
   asymbol *symbol;
   bfd_reloc_code_real_type r_type;
 
-  reloc = XNEW (arelent);
-  reloc->sym_ptr_ptr = XNEW (asymbol *);
+  reloc = notes_alloc (sizeof (arelent));
+  reloc->sym_ptr_ptr = notes_alloc (sizeof (asymbol *));
   symbol = symbol_get_bfdsym (fixp->fx_addsy);
   *reloc->sym_ptr_ptr = symbol;
   reloc->address = fixp->fx_frag->fr_address + fixp->fx_where;
@@ -4660,7 +4660,7 @@ tic6x_start_unwind_section (const segT text_seg, int idx)
     }
 
   obj_elf_change_section (sec_name, type, flags, 0, &match,
-			  linkonce, 0);
+			  linkonce);
 
   /* Set the section link for index tables.  */
   if (idx)

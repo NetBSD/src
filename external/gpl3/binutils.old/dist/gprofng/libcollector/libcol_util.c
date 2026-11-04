@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -39,12 +39,6 @@
 #include "Emsgnum.h"
 #include "memmgr.h"  // __collector_allocCSize, __collector_freeCSize
 #include "tsd.h"
-
-/* TprintfT(<level>,...) definitions.  Adjust per module as needed */
-#define DBG_LT0 0 // for high-level configuration, unexpected errors/warnings
-#define DBG_LT1 1 // for configuration details, warnings
-#define DBG_LT2 2
-#define DBG_LT3 3
 
 /*
  *    This file is intended for collector's own implementation of
@@ -137,7 +131,7 @@ atomic_swap (volatile int * p, int v)
 int
 __collector_mutex_lock (collector_mutex_t *lock_var)
 {
-  volatile unsigned int i; /* xxxx volatile may not be honored on amd64 -x04 */
+  volatile unsigned int i = 0; /* xxxx volatile may not be honored on amd64 -x04 */
 
   if (!(*lock_var) && !atomic_swap (lock_var, 1))
     return 0;
@@ -1019,7 +1013,6 @@ __collector_open (const char *path, int oflag, ...)
   mode_t mode = 0;
 
   hrtime_t t_timeout = __collector_gethrtime () + 5 * ((hrtime_t) NANOSEC);
-  int nretries = 0;
   long long delay = 100; /* start at some small, arbitrary value */
 
   /* get optional mode argument if it's expected/required */
@@ -1064,7 +1057,6 @@ __collector_open (const char *path, int oflag, ...)
       delay *= 2;
       if (delay > 100000000)
 	delay = 100000000; /* cap at some large, arbitrary value */
-      nretries++;
     }
   return fd;
 }
@@ -1116,13 +1108,13 @@ __collector_util_init ()
   /*    internal calls for mapping in libcollector call mmap64 */
   ptr = dlsym (libc, "mmap64");
   if (ptr)
-    __collector_util_funcs.mmap64 = (void*(*)(void *, size_t, int, int, int, off_t))ptr;
+    __collector_util_funcs.mmap64_ = (void*(*)(void *, size_t, int, int, int, off_t))ptr;
   else
-    __collector_util_funcs.mmap64 = __collector_util_funcs.mmap;
+    __collector_util_funcs.mmap64_ = __collector_util_funcs.mmap;
 
   ptr = dlsym (libc, "munmap");
   if (ptr)
-    __collector_util_funcs.munmap = (int(*)())ptr;
+    __collector_util_funcs.munmap = (int(*)(void *, size_t))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT munmap: %s\n", dlerror ());
@@ -1131,7 +1123,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "close");
   if (ptr)
-    __collector_util_funcs.close = (int(*)())ptr;
+    __collector_util_funcs.close = (int(*)(int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT close: %s\n", dlerror ());
@@ -1147,26 +1139,15 @@ __collector_util_init ()
       err = COL_ERROR_UTIL_INIT;
     }
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "open64", "GLIBC_2.2"); // it is in /lib/libpthread.so.0
+  ptr = dlsym (libc, "open64");
   if (ptr)
     __collector_util_funcs.open_bare = (int(*)(const char *path, int oflag, ...))ptr;
   else
-    {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "open64", "GLIBC_2.2");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "open64");
-      if (ptr)
-	__collector_util_funcs.open_bare = (int(*)(const char *path, int oflag, ...))ptr;
-      else
-	__collector_util_funcs.open_bare = __collector_util_funcs.open;
-#if ARCH(Intel) && WSIZE(32)
-    }
-#endif /* ARCH(Intel) && WSIZE(32) */
+    __collector_util_funcs.open_bare = __collector_util_funcs.open;
 
   ptr = dlsym (libc, "close");
   if (ptr)
-    __collector_util_funcs.close = (int(*)())ptr;
+    __collector_util_funcs.close = (int(*)(int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT close: %s\n", dlerror ());
@@ -1175,7 +1156,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "read");
   if (ptr)
-    __collector_util_funcs.read = (ssize_t (*)())ptr;
+    __collector_util_funcs.read = (ssize_t (*)(int, void*, size_t))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT read: %s\n", dlerror ());
@@ -1184,53 +1165,31 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "write");
   if (ptr)
-    __collector_util_funcs.write = (ssize_t (*)())ptr;
+    __collector_util_funcs.write = (ssize_t (*)(int, void*, size_t))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT write: %s\n", dlerror ());
       err = COL_ERROR_UTIL_INIT;
     }
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "pwrite", "GLIBC_2.2"); // it is in /lib/libpthread.so.0
+  ptr = dlsym (libc, "pwrite");
   if (ptr)
-    __collector_util_funcs.pwrite = (ssize_t (*)())ptr;
+    __collector_util_funcs.pwrite = (ssize_t (*)(int, const void*, size_t, off_t))ptr;
   else
     {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "pwrite", "GLIBC_2.2");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "pwrite");
-      if (ptr)
-	__collector_util_funcs.pwrite = (ssize_t (*)())ptr;
-      else
-	{
-	  CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT pwrite: %s\n", dlerror ());
-	  err = COL_ERROR_UTIL_INIT;
-	}
-#if ARCH(Intel) && WSIZE(32)
+      CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT pwrite: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
     }
-#endif
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "pwrite64", "GLIBC_2.2"); // it is in /lib/libpthread.so.0
+  ptr = dlsym (libc, "pwrite64");
   if (ptr)
-    __collector_util_funcs.pwrite64 = (ssize_t (*)())ptr;
+    __collector_util_funcs.pwrite64_ = (ssize_t (*)(int, const void*, size_t, off_t))ptr;
   else
-    {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "pwrite64", "GLIBC_2.2");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "pwrite64");
-      if (ptr)
-	__collector_util_funcs.pwrite64 = (ssize_t (*)())ptr;
-      else
-	__collector_util_funcs.pwrite64 = __collector_util_funcs.pwrite;
-#if ARCH(Intel) && WSIZE(32)
-    }
-#endif /* ARCH(Intel) && WSIZE(32) */
+    __collector_util_funcs.pwrite64_ = __collector_util_funcs.pwrite;
 
   ptr = dlsym (libc, "lseek");
   if (ptr)
-    __collector_util_funcs.lseek = (off_t (*)())ptr;
+    __collector_util_funcs.lseek = (off_t (*)(int, off_t, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT lseek: %s\n", dlerror ());
@@ -1239,7 +1198,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "access");
   if (ptr)
-    __collector_util_funcs.access = (int(*)())ptr;
+    __collector_util_funcs.access = (int(*)(const char*, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT access: %s\n", dlerror ());
@@ -1248,7 +1207,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "mkdir");
   if (ptr)
-    __collector_util_funcs.mkdir = (int(*)())ptr;
+    __collector_util_funcs.mkdir = (int(*)(const char*, mode_t))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT mkdir: %s\n", dlerror ());
@@ -1257,7 +1216,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "opendir");
   if (ptr)
-    __collector_util_funcs.opendir = (DIR * (*)())ptr;
+    __collector_util_funcs.opendir = (DIR * (*)(const char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT opendir: %s\n", dlerror ());
@@ -1266,7 +1225,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "closedir");
   if (ptr)
-    __collector_util_funcs.closedir = (int(*)())ptr;
+    __collector_util_funcs.closedir = (int(*)(DIR*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT closedir: %s\n", dlerror ());
@@ -1275,7 +1234,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "execv");
   if (ptr)
-    __collector_util_funcs.execv = (int(*)())ptr;
+    __collector_util_funcs.execv = (int(*)(const char*, char* const*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT execv: %s\n", dlerror ());
@@ -1284,7 +1243,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "exit");
   if (ptr)
-    __collector_util_funcs.exit = (void(*)())ptr;
+    __collector_util_funcs.exit = (void(*)(int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT exit: %s\n", dlerror ());
@@ -1293,7 +1252,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "vfork");
   if (ptr)
-    __collector_util_funcs.vfork = (pid_t (*)())ptr;
+    __collector_util_funcs.vfork = (pid_t (*)(void))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT vfork: %s\n", dlerror ());
@@ -1302,7 +1261,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "waitpid");
   if (ptr)
-    __collector_util_funcs.waitpid = (pid_t (*)())ptr;
+    __collector_util_funcs.waitpid = (pid_t (*)(pid_t, int*, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT waitpid: %s\n", dlerror ());
@@ -1319,6 +1278,15 @@ __collector_util_init ()
   __collector_util_funcs.getcpuid = __collector_getcpuid;
   __collector_util_funcs.memset = collector_memset;
 
+  ptr = dlsym (libc, "getcontext");
+  if (ptr)
+    __collector_util_funcs.getcontext = (int(*)(ucontext_t*))ptr;
+  else
+    {
+      CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT getcontext: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
+    }
+
   ptr = dlsym (libc, "malloc");
   if (ptr)
     __collector_util_funcs.malloc = (void *(*)(size_t))ptr;
@@ -1330,7 +1298,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "putenv");
   if (ptr)
-    __collector_util_funcs.putenv = (int(*)())ptr;
+    __collector_util_funcs.putenv = (int(*)(char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT putenv: %s\n", dlerror ());
@@ -1339,7 +1307,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "getenv");
   if (ptr)
-    __collector_util_funcs.getenv = (char*(*)())ptr;
+    __collector_util_funcs.getenv = (char*(*)(const char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT getenv: %s\n", dlerror ());
@@ -1348,7 +1316,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "time");
   if (ptr)
-    __collector_util_funcs.time = (time_t (*)())ptr;
+    __collector_util_funcs.time = (time_t (*)(time_t*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT time: %s\n", dlerror ());
@@ -1357,7 +1325,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "mktime");
   if (ptr)
-    __collector_util_funcs.mktime = (time_t (*)())ptr;
+    __collector_util_funcs.mktime = (time_t (*)(struct tm*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT mktime: %s\n", dlerror ());
@@ -1371,7 +1339,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "gmtime_r");
   if (ptr)
-    __collector_util_funcs.gmtime_r = (struct tm * (*)())ptr;
+    __collector_util_funcs.gmtime_r = (struct tm * (*)(const time_t*, struct tm*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT gmtime_r: %s\n", dlerror ());
@@ -1380,7 +1348,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "strtol");
   if (ptr)
-    __collector_util_funcs.strtol = (long (*)())ptr;
+    __collector_util_funcs.strtol = (long (*)(const char*, char**, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strtol: %s\n", dlerror ());
@@ -1389,7 +1357,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "strtoll");
   if (ptr)
-    __collector_util_funcs.strtoll = (long long (*)())ptr;
+    __collector_util_funcs.strtoll = (long long (*)(const char*, char**, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strtoll: %s\n", dlerror ());
@@ -1401,7 +1369,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "setenv");
   if (ptr)
-    __collector_util_funcs.setenv = (int(*)())ptr;
+    __collector_util_funcs.setenv = (int(*)(const char*, const char*, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT setenv: %s\n", dlerror ());
@@ -1410,7 +1378,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "unsetenv");
   if (ptr)
-    __collector_util_funcs.unsetenv = (int(*)())ptr;
+    __collector_util_funcs.unsetenv = (int(*)(const char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT unsetenv: %s\n", dlerror ());
@@ -1426,15 +1394,6 @@ __collector_util_init ()
       err = COL_ERROR_UTIL_INIT;
     }
 
-  ptr = dlsym (libc, "sysinfo");
-  if (ptr)
-    __collector_util_funcs.sysinfo = (long (*)())ptr;
-  else
-    {
-      CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT sysinfo: %s\n", dlerror ());
-      err = COL_ERROR_UTIL_INIT;
-    }
-
   ptr = dlsym (libc, "clearenv");
   if (ptr)
     __collector_util_funcs.clearenv = (int(*)())ptr;
@@ -1447,58 +1406,66 @@ __collector_util_init ()
       /* don't treat this as fatal, so that S10 could work */
     }
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "fopen", "GLIBC_2.1");
-  if (ptr)
-    __collector_util_funcs.fopen = (FILE * (*)())ptr;
+  if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.17")) != NULL)
+    __collector_util_funcs.fopen = ptr;
+  else if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.2.5")) != NULL)
+    __collector_util_funcs.fopen = ptr;
+  else if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.1")) != NULL)
+    __collector_util_funcs.fopen = ptr;
+  else if ((ptr = dlvsym (libc, "fopen", "GLIBC_2.0")) != NULL)
+    __collector_util_funcs.fopen = ptr;
   else
+  {
+    ptr = dlsym (libc, "fopen");
+    if(ptr) __collector_util_funcs.fopen = ptr;
+  }
+  if (__collector_util_funcs.fopen == NULL)
     {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "fopen", "GLIBC_2.1");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "fopen");
-      if (ptr)
-	__collector_util_funcs.fopen = (FILE * (*)())ptr;
-      else
-	{
-	  CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT fopen: %s\n", dlerror ());
-	  err = COL_ERROR_UTIL_INIT;
-	}
-#if ARCH(Intel) && WSIZE(32)
-    }
-#endif
-
-  ptr = dlsym (libc, "popen");
-  if (ptr)
-    __collector_util_funcs.popen = (FILE * (*)())ptr;
-  else
-    {
-      CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT popen: %s\n", dlerror ());
+      CALL_UTIL (fprintf)(stderr, "COL_ERROR_UTIL_INIT fopen: %s\n", dlerror ());
       err = COL_ERROR_UTIL_INIT;
     }
 
-#if ARCH(Intel) && WSIZE(32)
-  ptr = dlvsym (libc, "fclose", "GLIBC_2.1");
-  if (ptr)
-    __collector_util_funcs.fclose = (int(*)())ptr;
+  if ((ptr = dlvsym (libc, "popen", "GLIBC_2.17")) != NULL)
+    __collector_util_funcs.popen = ptr;
+  else if ((ptr = dlvsym (libc, "popen", "GLIBC_2.2.5")) != NULL)
+    __collector_util_funcs.popen = ptr;
+  else if ((ptr = dlvsym (libc, "popen", "GLIBC_2.1")) != NULL)
+    __collector_util_funcs.popen = ptr;
+  else if ((ptr = dlvsym (libc, "popen", "GLIBC_2.0")) != NULL)
+    __collector_util_funcs.popen = ptr;
   else
+  {
+    ptr = dlsym (libc, "popen");
+    if(ptr) __collector_util_funcs.popen = ptr;
+  }
+  if (__collector_util_funcs.popen == NULL)
     {
-      Tprintf (DBG_LT0, "libcol_util: WARNING: dlvsym for %s@%s failed. Using dlsym() instead.", "fclose", "GLIBC_2.1");
-#endif /* ARCH(Intel) && WSIZE(32) */
-      ptr = dlsym (libc, "fclose");
-      if (ptr)
-	__collector_util_funcs.fclose = (int(*)())ptr;
-      else
-	{
-	  CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT fclose: %s\n", dlerror ());
-	  err = COL_ERROR_UTIL_INIT;
-	}
-#if ARCH(Intel) && WSIZE(32)
+      CALL_UTIL (fprintf)(stderr, "COL_ERROR_UTIL_INIT popen: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
     }
-#endif
+
+  if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.17")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.2.5")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.1")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else if ((ptr = dlvsym (libc, "fclose", "GLIBC_2.0")) != NULL)
+    __collector_util_funcs.fclose = ptr;
+  else
+  {
+    ptr = dlsym (libc, "fclose");
+    if(ptr) __collector_util_funcs.fclose = ptr;
+  }
+  if (__collector_util_funcs.fclose == NULL)
+    {
+      CALL_UTIL (fprintf)(stderr, "COL_ERROR_UTIL_INIT fclose: %s\n", dlerror ());
+      err = COL_ERROR_UTIL_INIT;
+    }
 
   ptr = dlsym (libc, "pclose");
   if (ptr)
-    __collector_util_funcs.pclose = (int(*)())ptr;
+    __collector_util_funcs.pclose = (int(*)(FILE*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT pclose: %s\n", dlerror ());
@@ -1507,7 +1474,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "fgets");
   if (ptr)
-    __collector_util_funcs.fgets = (char*(*)())ptr;
+    __collector_util_funcs.fgets = (char*(*)(char*, int, FILE*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT fgets: %s\n", dlerror ());
@@ -1534,7 +1501,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "vsnprintf");
   if (ptr)
-    __collector_util_funcs.vsnprintf = (int(*)())ptr;
+    __collector_util_funcs.vsnprintf = (int(*)(char*, size_t, const char*, ...))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT vsnprintf: %s\n", dlerror ());
@@ -1543,7 +1510,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "atoi");
   if (ptr)
-    __collector_util_funcs.atoi = (int(*)())ptr;
+    __collector_util_funcs.atoi = (int(*)(const char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT atoi: %s\n", dlerror ());
@@ -1552,7 +1519,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "calloc");
   if (ptr)
-    __collector_util_funcs.calloc = (void*(*)())ptr;
+    __collector_util_funcs.calloc = (void*(*)(size_t, size_t))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT calloc: %s\n", dlerror ());
@@ -1562,7 +1529,7 @@ __collector_util_init ()
   ptr = dlsym (libc, "free");
   if (ptr)
     {
-      __collector_util_funcs.free = (void(*)())ptr;
+      __collector_util_funcs.free = (void(*)(void*))ptr;
     }
   else
     {
@@ -1572,7 +1539,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "strdup");
   if (ptr)
-    __collector_util_funcs.libc_strdup = (char*(*)())ptr;
+    __collector_util_funcs.libc_strdup = (char*(*)(const char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strdup: %s\n", dlerror ());
@@ -1585,7 +1552,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "strerror");
   if (ptr)
-    __collector_util_funcs.strerror = (char*(*)())ptr;
+    __collector_util_funcs.strerror = (char*(*)(int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strerror: %s\n", dlerror ());
@@ -1593,7 +1560,7 @@ __collector_util_init ()
     }
   ptr = dlsym (libc, "strerror_r");
   if (ptr)
-    __collector_util_funcs.strerror_r = (int(*)())ptr;
+    __collector_util_funcs.strerror_r = (int(*)(int, char*, size_t))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strerror_r: %s\n", dlerror ());
@@ -1601,7 +1568,7 @@ __collector_util_init ()
     }
   ptr = dlsym (libc, "strspn");
   if (ptr)
-    __collector_util_funcs.strspn = (size_t (*)())ptr;
+    __collector_util_funcs.strspn = (size_t (*)(const char*, const char*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strspn: %s\n", dlerror ());
@@ -1610,7 +1577,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "strtoul");
   if (ptr)
-    __collector_util_funcs.strtoul = (unsigned long int(*)())ptr;
+    __collector_util_funcs.strtoul = (unsigned long int(*)(const char*, char**, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strtoul: %s\n", dlerror ());
@@ -1619,7 +1586,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "strtoull");
   if (ptr)
-    __collector_util_funcs.strtoull = (unsigned long long int(*)())ptr;
+    __collector_util_funcs.strtoull = (unsigned long long int(*)(const char*, char**, int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT strtoull: %s\n", dlerror ());
@@ -1664,7 +1631,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "sysconf");
   if (ptr)
-    __collector_util_funcs.sysconf = (long(*)())ptr;
+    __collector_util_funcs.sysconf = (long(*)(int))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT sysconf: %s\n", dlerror ());
@@ -1673,7 +1640,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "sigfillset");
   if (ptr)
-    __collector_util_funcs.sigfillset = (int(*)())ptr;
+    __collector_util_funcs.sigfillset = (int(*)(sigset_t*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT sigfillset: %s\n", dlerror ());
@@ -1682,7 +1649,7 @@ __collector_util_init ()
 
   ptr = dlsym (libc, "sigprocmask");
   if (ptr)
-    __collector_util_funcs.sigprocmask = (int(*)())ptr;
+    __collector_util_funcs.sigprocmask = (int(*)(int, const sigset_t*, sigset_t*))ptr;
   else
     {
       CALL_UTIL (fprintf)(stderr, "collector_util_init COL_ERROR_UTIL_INIT sigprocmask: %s\n", dlerror ());

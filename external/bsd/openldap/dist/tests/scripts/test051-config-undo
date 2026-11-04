@@ -2,7 +2,7 @@
 # $OpenLDAP$
 ## This work is part of OpenLDAP Software <http://www.openldap.org/>.
 ##
-## Copyright 1998-2021 The OpenLDAP Foundation.
+## Copyright 1998-2024 The OpenLDAP Foundation.
 ## All rights reserved.
 ##
 ## Redistribution and use in source and binary forms, with or without
@@ -75,7 +75,7 @@ RC=$?
 if test $RC != 80 ; then
 	echo "invalid objectclass modify allowed ($RC)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 $LDAPMODIFY -D cn=config -H $URI1 -y $CONFIGPWF \
@@ -90,7 +90,7 @@ RC=$?
 if test $RC != 80 ; then
 	echo "invalid attributeType modify allowed ($RC)"
 	test $KILLSERVERS != no && kill -HUP $KILLPIDS
-	exit -1
+	exit 1
 fi
 
 echo Surveying the damage
@@ -105,7 +105,7 @@ RC=$?
 if test $RC != 0 ; then
     echo "schema destroyed by an unsuccessful operation"
     test $KILLSERVERS != no && kill -HUP $KILLPIDS
-    exit -1
+    exit 1
 fi
 
 test $KILLSERVERS != no && kill -HUP $KILLPIDS

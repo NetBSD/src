@@ -15,6 +15,7 @@
 
 #include "buffer.h"
 #include "region-allocator.h"
+#include "dns.h" /* for MAXDOMAINLEN */
 
 #if defined(NAMEDB_UPPERCASE) || defined(USE_NAMEDB_UPPERCASE)
 #define DNAME_NORMALIZE        toupper
@@ -180,8 +181,9 @@ dname_label(const dname_type *dname, uint8_t label)
  * RIGHT.  The comparison is case sensitive.
  *
  * Pre: left != NULL && right != NULL
+ * left and right are dname_type*.
  */
-int dname_compare(const dname_type *left, const dname_type *right);
+int dname_compare(const void *left, const void *right);
 
 
 /*
@@ -346,6 +348,19 @@ label_next(const uint8_t *label)
 const char *dname_to_string(const dname_type *dname,
 			    const dname_type *origin);
 
+/*
+ * Convert DNAME to its string representation.  The result if written
+ * to the provided buffer buf, which must be at least 5 times
+ * MAXDOMAINNAMELEN.
+ *
+ * If ORIGIN is provided and DNAME is a subdomain of ORIGIN the dname
+ * will be represented relative to ORIGIN.
+ *
+ * Pre: dname != NULL
+ */
+const char *dname_to_string_buf(const dname_type *dname,
+                                const dname_type *origin,
+                                char buf[MAXDOMAINLEN * 5]);
 
 /*
  * Create a dname containing the single label specified by STR
@@ -380,5 +395,57 @@ char* wiredname2str(const uint8_t* dname);
 char* wirelabel2str(const uint8_t* label);
 /** check if two uncompressed dnames of the same total length are equal */
 int dname_equal_nocase(uint8_t* a, uint8_t* b, uint16_t len);
+
+/* Test is the name is a subdomain of the other name. Equal names return true.
+ * Subdomain d of d2 returns true, otherwise false. The names are in
+ * wireformat, uncompressed. Does not perform canonicalization, it is case
+ * sensitive. */
+int is_dname_subdomain_of_case(const uint8_t* d, unsigned int len,
+	const uint8_t* d2, unsigned int len2);
+
+/*
+ * Calculate length of dname in uncompressed wireformat in buffer.
+ * @param buf: The buffer with the uncompressed dname.
+ * @param len: length of the buffer.
+ * @return 0 on error, otherwise the uncompressed wireformat dname
+ *	length is returned.
+ */
+size_t buf_dname_length(const uint8_t* buf, size_t len);
+
+/* This structure is sufficient in size for a struct dname. It can
+ * be cast to a struct dname*, since it has the same data. */
+struct dname_buffer {
+	struct dname dname;
+	/* storage for labelcount, and for the wireformat name.
+	 * The labelcount can be 1 byte per label, maxlen/2 + 1(root label).
+	 * The wireformat name, MAXDOMAINLEN+1.
+	 * This allocates storage for it, due to alignment, the struct
+	 * dname may have padding. The content is stored after the
+	 * sizeof(struct dname), with label_offsets and name. */
+	uint8_t storage[MAXDOMAINLEN/2 + 1 + MAXDOMAINLEN+1 ];
+};
+
+/*
+ * Make the dname and label offsets.
+ * @param dname: the buffer with size. The result is in here, at the
+ *	start of the allocated size. The input is also buffered temporarily
+ *	in here.
+ * @param name: input name, points into the buffer space of dname.
+ * @param normalize: if the dname has to be normalized.
+ * @return 0 on failure.
+ */
+int dname_make_buffered(struct dname_buffer* dname, uint8_t *name,
+	int normalize);
+
+/*
+ * Parse a domain name from packet and store it in the buffer.
+ * @param dname: the buffer with sufficient size for the dname.
+ * @param packet: packet, at the position of the dname. The position is moved.
+ * @param allow_pointers: set to true if compression pointers are allowed.
+ * @param normalize: set to true if the domain name has to be normalized.
+ * @return 0 on failure, or name_length when done.
+ */
+int dname_make_from_packet_buffered(struct dname_buffer* dname,
+	buffer_type *packet, int allow_pointers, int normalize);
 
 #endif /* DNAME_H */

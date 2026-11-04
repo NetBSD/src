@@ -163,6 +163,9 @@
 /* change file/directory permissions and errors if it fails */
 #define assertChmod(pathname, mode)				\
   assertion_chmod(__FILE__, __LINE__, pathname, mode)
+/* change file/directory ownership and errors if it fails */
+#define assertChown(pathname, user, group)			\
+  assertion_chown(__FILE__, __LINE__, pathname, user, group)
 /* Assert two files have the same file flags */
 #define assertEqualFflags(patha, pathb)	\
   assertion_compare_fflags(__FILE__, __LINE__, patha, pathb, 0)
@@ -279,6 +282,7 @@ void failure(const char *fmt, ...) __LA_PRINTFLIKE(1, 2);
 int assertion_assert(const char *, int, int, const char *, void *);
 int assertion_chdir(const char *, int, const char *);
 int assertion_chmod(const char *, int, const char *, int);
+int assertion_chown(const char *, int, const char *, int, int);
 int assertion_compare_fflags(const char *, int, const char *, const char *,
     int);
 int assertion_empty_file(const char *, int, const char *);
@@ -340,8 +344,14 @@ int canGrzip(void);
 /* Return true if this platform can run the "gzip" program. */
 int canGzip(void);
 
-/* Return true if this platform can run the specified command. */
-int canRunCommand(const char *);
+/* Return true if this platform can run the specified command.
+ *
+ * Result can be optionally cached with `*tested`:
+ *   - 0 if not tested yet
+ *   - <0 if already tested negative
+ *   - >0 if already tested positive
+ */
+int canRunCommand(const char *cmd, int *tested);
 
 /* Return true if this platform can run the "lrzip" program. */
 int canLrzip(void);
@@ -467,4 +477,4 @@ void assertVersion(const char *prog, const char *base);
 
 #include "test_utils.h"
 
-#endif	/* TEST_COMMON_H */
+#endif	/* !TEST_COMMON_H */

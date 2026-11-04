@@ -1,10 +1,10 @@
-/*	$NetBSD: key.c,v 1.3 2021/08/14 16:15:00 christos Exp $	*/
+/*	$NetBSD: key.c,v 1.3.4.1 2026/11/04 22:39:25 perseant Exp $	*/
 
 /* index.c - routines for dealing with attribute indexes */
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 2000-2021 The OpenLDAP Foundation.
+ * Copyright 2000-2024 The OpenLDAP Foundation.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: key.c,v 1.3 2021/08/14 16:15:00 christos Exp $");
+__RCSID("$NetBSD: key.c,v 1.3.4.1 2026/11/04 22:39:25 perseant Exp $");
 
 #include "portable.h"
 

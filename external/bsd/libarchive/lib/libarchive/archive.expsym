@@ -1,5 +1,7 @@
 archive_bzlib_version
 archive_clear_error
+archive_cng_version
+archive_commoncrypto_version
 archive_compression
 archive_compression_name
 archive_copy_error
@@ -100,6 +102,7 @@ archive_entry_set_ctime
 archive_entry_set_dev
 archive_entry_set_devmajor
 archive_entry_set_devminor
+archive_entry_set_digest
 archive_entry_set_fflags
 archive_entry_set_filetype
 archive_entry_set_gid
@@ -177,8 +180,19 @@ archive_filter_name
 archive_format
 archive_format_name
 archive_free
+archive_libacl_version
+archive_libattr_version
+archive_libbsdxml_version
+archive_libexpat_version
+archive_libiconv_version
 archive_liblz4_version
 archive_liblzma_version
+archive_liblzo2_version
+archive_libmd_version
+archive_libpcre2_version
+archive_libpcre_version
+archive_librichacl_version
+archive_libxml2_version
 archive_libzstd_version
 archive_match_exclude_entry
 archive_match_exclude_pattern
@@ -210,6 +224,10 @@ archive_match_path_unmatched_inclusions_next
 archive_match_path_unmatched_inclusions_next_w
 archive_match_set_inclusion_recursion
 archive_match_time_excluded
+archive_mbedtls_version
+archive_nettle_version
+archive_openssl_version
+archive_parse_date
 archive_position_compressed
 archive_position_uncompressed
 archive_read_add_callback_data
@@ -337,6 +355,7 @@ archive_utility_string_sort
 archive_version_details
 archive_version_number
 archive_version_string
+archive_wincrypt_version
 archive_write_add_filter
 archive_write_add_filter_b64encode
 archive_write_add_filter_by_name
@@ -424,6 +443,10 @@ archive_write_set_options
 archive_write_set_passphrase
 archive_write_set_passphrase_callback
 archive_write_set_skip_file
+archive_write_zip_set_compression_bzip2
 archive_write_zip_set_compression_deflate
+archive_write_zip_set_compression_lzma
 archive_write_zip_set_compression_store
+archive_write_zip_set_compression_xz
+archive_write_zip_set_compression_zstd
 archive_zlib_version

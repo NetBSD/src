@@ -1,6 +1,6 @@
 dnl Process this file with autoconf to produce a configure script.
 dnl
-dnl   Copyright (C) 2012-2022 Free Software Foundation, Inc.
+dnl   Copyright (C) 2012-2025 Free Software Foundation, Inc.
 dnl
 dnl This file is free software; you can redistribute it and/or modify
 dnl it under the terms of the GNU General Public License as published by
@@ -18,7 +18,7 @@ dnl <http://www.gnu.org/licenses/>.
 dnl
 
 m4_include([version.m4])
-AC_INIT([bfd], BFD_VERSION)
+AC_INIT([bfd], [BFD_VERSION])
 AC_CONFIG_SRCDIR([libbfd.c])
 
 AC_CANONICAL_TARGET
@@ -36,7 +36,6 @@ dnl configure option --enable-shared.
 AC_DISABLE_SHARED
 
 AC_PROG_CC
-AC_GNU_SOURCE
 AC_USE_SYSTEM_EXTENSIONS
 
 LT_INIT([dlopen])
@@ -82,7 +81,13 @@ if test x$ac_checking != x ; then
   AC_DEFINE(ENABLE_CHECKING, 1, [Define if you want run-time sanity checks.])
 fi
 
-BFD_64_BIT
+AC_ARG_ENABLE(64-bit-bfd,
+  AS_HELP_STRING([--enable-64-bit-bfd],
+		 [64-bit support (on hosts with narrower word sizes)]),
+  [AS_CASE([$enableval],
+	   [yes|no], [],
+	   [*], [AC_MSG_ERROR(bad value ${enableval} for 64-bit-bfd option)])],
+  [enable_64_bit_bfd=no])
 if test $enable_64_bit_bfd = yes ; then
   want64=true
 else
@@ -113,7 +118,7 @@ AC_ARG_WITH(mmap,
   yes)  want_mmap=true ;;
   no)   want_mmap=false ;;
   *)    AC_MSG_ERROR(bad value ${withval} for BFD with-mmap option) ;;
-esac],[want_mmap=false])dnl
+esac],[want_mmap=true])dnl
 
 AC_ARG_ENABLE(secureplt,
 [  --enable-secureplt      Default to creating read-only plt entries],
@@ -193,6 +198,8 @@ AM_CONDITIONAL(GENINSRC_NEVER, false)
 AM_INSTALL_LIBBFD
 AC_EXEEXT
 
+AC_C_BIGENDIAN
+
 host64=false
 target64=false
 bfd_default_target_size=32
@@ -200,8 +207,8 @@ bfd_default_target_size=32
 # host stuff:
 
 ALL_LINGUAS="da es fi fr hr id ja ro ru rw sr sv tr uk vi zh_CN pt"
-ZW_GNU_GETTEXT_SISTER_DIR
 AM_PO_SUBDIRS
+ZW_GNU_GETTEXT_SISTER_DIR
 
 # Permit host specific settings.
 . ${srcdir}/configure.host
@@ -227,12 +234,16 @@ AC_CHECK_FUNCS(fcntl fdopen fileno fls getgid getpagesize getrlimit getuid \
 	       sysconf)
 
 AC_CHECK_DECLS([basename, ffs, stpcpy, asprintf, vasprintf, strnlen])
+AC_CHECK_DECLS([___lc_codepage_func], [], [], [[#include <locale.h>]])
 
 BFD_BINARY_FOPEN
 
-# Link in zlib if we can.  This allows us to read compressed debug sections.
+AX_TLS
+
+# Link in zlib/zstd if we can.  This allows us to read compressed debug sections.
 # This is used only by compress.c.
 AM_ZLIB
+AC_ZSTD
 
 save_CFLAGS="$CFLAGS"
 CFLAGS="$CFLAGS -Werror"
@@ -247,18 +258,6 @@ if test $bfd_cv_hidden = yes; then
   AC_DEFINE(HAVE_HIDDEN, 1,
 	    [Define if your compiler supports hidden visibility.])
 fi
-
-AC_CACHE_CHECK([printf int64_t format], [bfd_cv_int64_fmt],
-  for style in I64 ll l; do
-    [AC_COMPILE_IFELSE([AC_LANG_PROGRAM([[
-       #define __STDC_FORMAT_MACROS 1
-       #include <stdio.h>
-       #include <inttypes.h>
-       extern char PRId64_probe[sizeof PRId64 == sizeof "${style}d" ? 1 : -1];
-      ]])], [bfd_cv_int64_fmt=${style}], [])]
-  done)
-BFD_INT64_FMT=\"$bfd_cv_int64_fmt\"
-AC_SUBST(BFD_INT64_FMT)
 
 # Check if linker supports --as-needed and --no-as-needed options
 AC_CACHE_CHECK(linker --as-needed support, bfd_cv_ld_as_needed,
@@ -286,7 +285,7 @@ changequote([,])dnl
   fi
 fi
 
-SHARED_LIBADD="$SHARED_LIBADD $LIBINTL"
+SHARED_LIBADD="$SHARED_LIBADD $LTLIBINTL"
 
 if test "$enable_shared" = "yes"; then
   case "${host}" in
@@ -394,7 +393,7 @@ selarchs="$f"
 tb=
 
 elf="elf.lo elflink.lo elf-attrs.lo elf-strtab.lo elf-eh-frame.lo
-     dwarf1.lo dwarf2.lo"
+     elf-sframe.lo dwarf1.lo dwarf2.lo"
 coffgen="coffgen.lo dwarf2.lo"
 coff="cofflink.lo $coffgen"
 ecoff="ecofflink.lo $coffgen"
@@ -415,7 +414,8 @@ do
     aarch64_elf64_le_vec)	   tb="$tb elf64-aarch64.lo elfxx-aarch64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     aarch64_elf64_le_cloudabi_vec) tb="$tb elf64-aarch64.lo elfxx-aarch64.lo elf-ifunc.lo elf64.lo $elf"; target_size=64 ;;
     aarch64_mach_o_vec)		 tb="$tb mach-o-aarch64.lo"; target_size=64 ;;
-    aarch64_pei_vec)		 tb="$tb pei-aarch64.lo pe-aarch64igen.lo $coff"; target_size=64 ;;
+    aarch64_pei_le_vec)		 tb="$tb pei-aarch64.lo pe-aarch64igen.lo $coff"; target_size=64 ;;
+    aarch64_pe_le_vec)		 tb="$tb pe-aarch64.lo pe-aarch64igen.lo $coff"; target_size=64 ;;
     alpha_ecoff_le_vec)		 tb="$tb coff-alpha.lo ecoff.lo $ecoff"; target_size=64 ;;
     alpha_elf64_vec)		 tb="$tb elf64-alpha.lo elf64.lo $elf"; target_size=64 ;;
     alpha_elf64_fbsd_vec)	 tb="$tb elf64-alpha.lo elf64.lo $elf"; target_size=64 ;;
@@ -503,10 +503,13 @@ do
     ia64_pei_vec)		 tb="$tb pei-ia64.lo pepigen.lo $coff"; target_size=64 ;;
     ip2k_elf32_vec)		 tb="$tb elf32-ip2k.lo elf32.lo $elf" ;;
     iq2000_elf32_vec)		 tb="$tb elf32-iq2000.lo elf32.lo $elf" ;;
+    kvx_elf32_vec)		 tb="$tb elf32-kvx.lo elfxx-kvx.lo elf32.lo $elf $ipa" ;;
+    kvx_elf64_vec)		 tb="$tb elf64-kvx.lo elfxx-kvx.lo elf64.lo $elf $ipa"; target_size=64 ;;
     lm32_elf32_vec)		 tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     lm32_elf32_fdpic_vec)	 tb="$tb elf32-lm32.lo elf32.lo $elf" ;;
     loongarch_elf32_vec)	 tb="$tb elf32-loongarch.lo elfxx-loongarch.lo elf32.lo elf-ifunc.lo $elf" ;;
     loongarch_elf64_vec)	 tb="$tb elf64-loongarch.lo elf64.lo elfxx-loongarch.lo elf32.lo elf-ifunc.lo $elf"; target_size=64 ;;
+    loongarch64_pei_vec)	 tb="$tb pei-loongarch64.lo pe-loongarch64igen.lo $coff"; target_size=64 ;;
     m32c_elf32_vec)		 tb="$tb elf32-m32c.lo elf32.lo $elf" ;;
     m32r_elf32_vec)		 tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
     m32r_elf32_le_vec)		 tb="$tb elf32-m32r.lo elf32.lo $elf" ;;
@@ -567,11 +570,10 @@ do
     nds32_elf32_linux_be_vec)	 tb="$tb elf32-nds32.lo elf32.lo $elf" ;;
     nds32_elf32_linux_le_vec)	 tb="$tb elf32-nds32.lo elf32.lo $elf" ;;
     nfp_elf64_vec)		 tb="$tb elf64-nfp.lo elf64.lo $elf" ;;
-    nios2_elf32_be_vec)		 tb="$tb elf32-nios2.lo elf32.lo $elf" ;;
-    nios2_elf32_le_vec)		 tb="$tb elf32-nios2.lo elf32.lo $elf" ;;
     ns32k_aout_pc532mach_vec)	 tb="$tb pc532-mach.lo aout-ns32k.lo" ;;
     ns32k_aout_pc532nbsd_vec)	 tb="$tb ns32knetbsd.lo aout-ns32k.lo" ;;
     or1k_elf32_vec)		 tb="$tb elf32-or1k.lo elf32.lo $elf" ;;
+    pdb_vec)			 tb="$tb pdb.lo" ;;
     pdp11_aout_vec)		 tb="$tb pdp11.lo" ;;
     pef_vec)			 tb="$tb pef.lo" ;;
     pef_xlib_vec)		 tb="$tb pef.lo" ;;
@@ -592,6 +594,7 @@ do
     riscv_elf64_vec)		 tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf"; target_size=64 ;;
     riscv_elf32_be_vec)		 tb="$tb elf32-riscv.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf" ;;
     riscv_elf64_be_vec)		 tb="$tb elf64-riscv.lo elf64.lo elfxx-riscv.lo elf-ifunc.lo elf32.lo $elf"; target_size=64 ;;
+    riscv64_pei_vec)		 tb="$tb pei-riscv64.lo pe-riscv64igen.lo $coff"; target_size=64 ;;
     rl78_elf32_vec)		 tb="$tb elf32-rl78.lo elf32.lo $elf" ;;
     rs6000_xcoff64_vec)		 tb="$tb coff64-rs6000.lo aix5ppc-core.lo $xcoff"; target_size=64 ;;
     rs6000_xcoff64_aix_vec)	 tb="$tb coff64-rs6000.lo aix5ppc-core.lo $xcoff"; target_size=64 ;;
@@ -673,8 +676,8 @@ do
     x86_64_pei_vec)		 tb="$tb pei-x86_64.lo pex64igen.lo $coff"; target_size=64 ;;
     xgate_elf32_vec)		 tb="$tb elf32-xgate.lo elf32.lo $elf" ;;
     xstormy16_elf32_vec)	 tb="$tb elf32-xstormy16.lo elf32.lo $elf" ;;
-    xtensa_elf32_be_vec)	 tb="$tb xtensa-isa.lo xtensa-modules.lo elf32-xtensa.lo elf32.lo $elf" ;;
-    xtensa_elf32_le_vec)	 tb="$tb xtensa-isa.lo xtensa-modules.lo elf32-xtensa.lo elf32.lo $elf" ;;
+    xtensa_elf32_be_vec)	 tb="$tb xtensa-dynconfig.lo xtensa-isa.lo xtensa-modules.lo elf32-xtensa.lo elf32.lo $elf" ;;
+    xtensa_elf32_le_vec)	 tb="$tb xtensa-dynconfig.lo xtensa-isa.lo xtensa-modules.lo elf32-xtensa.lo elf32.lo $elf" ;;
     z80_coff_vec)		 tb="$tb coff-z80.lo reloc16.lo $coffgen" ;;
     z80_elf32_vec)		 tb="$tb elf32-z80.lo elf32.lo $elf" ;;
     z8k_coff_vec)		 tb="$tb coff-z8k.lo reloc16.lo $coff" ;;
@@ -820,7 +823,6 @@ if test "${target}" = "${host}"; then
   arm*-*-netbsd* | arm-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
-  arm-*-riscix)		COREFILE=trad-core.lo ;;
   hppa*-*-hpux*)	COREFILE=hpux-core.lo ;;
   hppa*-*-hiux*)	COREFILE=hpux-core.lo ;;
   hppa*-*-mpeix*)	COREFILE=hpux-core.lo ;;
@@ -831,25 +833,12 @@ if test "${target}" = "${host}"; then
 	;;
 
 changequote(,)dnl
-  i[3-7]86-sequent-bsd*)
-changequote([,])dnl
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/symmetry.h"'
-	;;
-changequote(,)dnl
-  i[3-7]86-sequent-sysv4*) ;;
-  i[3-7]86-sequent-sysv*)
-changequote([,])dnl
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/symmetry.h"'
-	;;
-changequote(,)dnl
   i[3-7]86-*-bsdi)
 changequote([,])dnl
 	COREFILE=
 	;;
 changequote(,)dnl
-  i[3-7]86-*-bsd* | i[3-7]86-*-freebsd[123] | i[3-7]86-*-freebsd[123]\.* | i[3-7]86-*-freebsd4\.[01234] | i[3-7]86-*-freebsd4\.[01234]\.* | i[3-7]86-*-freebsd*aout*)
+  i[3-7]86-*-bsd* | i[3-7]86-*-freebsd[123] | i[3-7]86-*-freebsd[123]\.* | i[3-7]86-*-freebsd4\.[01234] | i[3-7]86-*-freebsd4\.[01234]\.*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/i386bsd.h"'
@@ -872,17 +861,6 @@ changequote([,])dnl
 	TRAD_HEADER='"hosts/esix.h"'
 	;;
 changequote(,)dnl
-  i[3-7]86-*-sco3.2v5*)
-changequote([,])dnl
-	COREFILE=sco5-core.lo
-	;;
-changequote(,)dnl
-  i[3-7]86-*-sco* | i[3-7]86-*-isc*)
-changequote([,])dnl
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/i386sco.h"'
-	;;
-changequote(,)dnl
   i[3-7]86-*-mach3*)
 changequote([,])dnl
 	COREFILE=trad-core.lo
@@ -898,16 +876,12 @@ changequote([,])dnl
 	  CORE_HEADER='"hosts/x86-64linux.h"'
 	esac
 	;;
-changequote(,)dnl
-  i[3-7]86-*-isc*)	COREFILE=trad-core.lo ;;
-  i[3-7]86-*-aix*)	COREFILE=aix386-core.lo ;;
-changequote([,])dnl
   mips*-*-netbsd* | mips*-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
-  mips-sgi-irix4*)	COREFILE=irix-core.lo ;;
-  mips-sgi-irix5*)	COREFILE=irix-core.lo ;;
-  mips-sgi-irix6*)	COREFILE=irix-core.lo ;;
+  mips-*-irix*)
+	COREFILE=irix-core.lo
+	;;
   m68*-*-linux-*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/m68klinux.h"'
@@ -963,14 +937,6 @@ changequote([,])dnl
   vax-*-netbsd* | vax-*-openbsd*)
 	COREFILE=netbsd-core.lo
 	;;
-  vax-*-ultrix2*)
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/vaxult2.h"'
-	;;
-  vax-*-ultrix*)
-	COREFILE=trad-core.lo
-	TRAD_HEADER='"hosts/vaxult2.h"'
-	;;
   vax-*-linux-*)
 	COREFILE=trad-core.lo
 	TRAD_HEADER='"hosts/vaxlinux.h"'
@@ -988,7 +954,6 @@ changequote([,])dnl
   esac
 
   case "$COREFILE" in
-  aix386-core.lo)	COREFLAG=-DAIX386_CORE ;;
   hppabsd-core.lo)	COREFLAG=-DHPPABSD_CORE ;;
   hpux-core.lo)		COREFLAG=-DHPUX_CORE ;;
   irix-core.lo)		COREFLAG=-DIRIX_CORE ;;
@@ -997,7 +962,6 @@ changequote([,])dnl
   osf-core.lo)		COREFLAG=-DOSF_CORE ;;
   ptrace-core.lo)	COREFLAG=-DPTRACE_CORE ;;
   rs6000-core.lo)	COREFLAG="$COREFLAG -DAIX_CORE" ;;
-  sco5-core.lo)		COREFLAG="$COREFLAG -DSCO5_CORE" ;;
   trad-core.lo)		COREFLAG="$COREFLAG -DTRAD_CORE" ;;
   esac
 
@@ -1069,7 +1033,7 @@ AC_MSG_RESULT($bfd_file_ptr)
 AC_SUBST(bfd_file_ptr)
 AC_SUBST(bfd_ufile_ptr)
 
-AC_FUNC_MMAP
+GCC_AC_FUNC_MMAP
 AC_CHECK_FUNCS(madvise mprotect)
 case ${want_mmap}+${ac_cv_func_mmap_fixed_mapped} in
   true+yes )  AC_DEFINE(USE_MMAP, 1, [Use mmap if it's available?]) ;;

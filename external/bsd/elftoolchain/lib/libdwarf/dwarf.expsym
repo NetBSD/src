@@ -85,6 +85,7 @@ _dwarf_ranges_add
 _dwarf_ranges_cleanup
 _dwarf_ranges_find
 _dwarf_read_block
+_dwarf_read_indexed_str
 _dwarf_read_lsb
 _dwarf_read_msb
 _dwarf_read_sleb128
@@ -103,6 +104,7 @@ _dwarf_section_cleanup
 _dwarf_section_free
 _dwarf_section_init
 _dwarf_set_error
+_dwarf_str_offsets_cleanup
 _dwarf_strtab_add
 _dwarf_strtab_cleanup
 _dwarf_strtab_gen

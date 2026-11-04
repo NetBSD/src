@@ -29,6 +29,7 @@
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/cred.h>
+#include <sys/ioctl.h>
 #include <sys/dmu.h>
 #include <sys/zio.h>
 #include <sys/nvpair.h>

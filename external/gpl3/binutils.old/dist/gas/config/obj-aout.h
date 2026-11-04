@@ -1,5 +1,5 @@
 /* obj-aout.h, a.out object file format for gas, the assembler.
-   Copyright (C) 1989-2022 Free Software Foundation, Inc.
+   Copyright (C) 1989-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -27,10 +27,9 @@
 
 #define OUTPUT_FLAVOR bfd_target_aout_flavour
 
-extern const pseudo_typeS aout_pseudo_table[];
-
+extern void aout_pop_insert (void);
 #ifndef obj_pop_insert
-#define obj_pop_insert() pop_insert (aout_pseudo_table)
+#define obj_pop_insert() aout_pop_insert ()
 #endif
 
 /* Symbol table entry data type.  */

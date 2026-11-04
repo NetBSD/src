@@ -1,6 +1,6 @@
 .lf 1 stdin
-.TH SLAPO-SYNCPROV 5 "2020/04/28" "OpenLDAP 2.4.50"
-.\" Copyright 2004-2020 The OpenLDAP Foundation All Rights Reserved.
+.TH SLAPO-SYNCPROV 5 "2025/05/22" "OpenLDAP 2.6.10"
+.\" Copyright 2004-2024 The OpenLDAP Foundation All Rights Reserved.
 .\" Copying restrictions apply.  See COPYRIGHT/LICENSE.
 .\" $OpenLDAP$
 .SH NAME
@@ -22,7 +22,7 @@ memory on startup, and maintained in memory thereafter. Checkpoints may be
 configured to write the contextCSN into the underlying database to minimize
 recovery time after an unclean shutdown.
 
-On databases that support inequality indexing, it is mandatory to set an
+On databases that support inequality indexing, it is highly recommended to set an
 eq index on the entryCSN attribute when using this overlay.
 .SH CONFIGURATION
 These
@@ -49,6 +49,14 @@ specifies the number of operations that are recorded in the log. All write
 operations (except Adds) are recorded in the log.
 When using the session log, it is helpful to set an eq index on the
 entryUUID attribute in the underlying database.
+.TP
+.B syncprov\-sessionlog\-source <dn>
+Should not be set when syncprov-sessionlog is set and vice versa.
+
+When accesslog for this database is configured and is logging at this suffix,
+it can be used as the session log source instead of the in-memory session log
+mentioned above. This log has the advantage of not starting afresh every time
+the server is restarted.
 .TP
 .B syncprov\-nopresent TRUE | FALSE
 Specify that the Present phase of refreshing should be skipped. This value
@@ -77,4 +85,4 @@ OpenLDAP Administrator's Guide.
 is developed and maintained by The OpenLDAP Project <http://www.openldap.org/>.
 .B "OpenLDAP Software"
 is derived from the University of Michigan LDAP 3.3 Release.  
-.lf 74 stdin
+.lf 82 stdin

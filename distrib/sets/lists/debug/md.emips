@@ -1,5 +1,5 @@
-# $NetBSD: md.emips,v 1.2.4.1 2025/08/02 05:20:31 perseant Exp $
+# $NetBSD: md.emips,v 1.2.4.2 2026/11/04 22:37:02 perseant Exp $
 #
-./usr/libdata/debug/nfsnetbsd-GENERIC.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-INSTALL.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/nfsnetbsd-RAMDISK.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/nfsnetbsd-GENERIC.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-INSTALL.debug	comp-sysutil-debug	debugkernel
+./usr/libdata/debug/nfsnetbsd-RAMDISK.debug	comp-sysutil-debug	debugkernel

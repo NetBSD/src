@@ -10,7 +10,7 @@ Source1: nsd.init
 Source2: nsd.cron
 Group: System Environment/Daemons
 BuildRoot: %{_tmppath}/%{name}-%{version}-%{release}-root-%(%{__id_u} -n)
-BuildRequires: flex, openssl-devel
+BuildRequires: flex, openssl-devel, fstrm-devel, protobuf-c-devel
 Requires(pre): shadow-utils
 
 %description
@@ -24,10 +24,10 @@ consult the REQUIREMENTS document which is a part of this distribution.
 %setup -q -n %{name}-%{version}
 
 %build
-%configure --enable-pie --enable-relro-now --enable-ratelimit \
-           --enable-bind8-stats --enable-plugins --enable-checking \
-           --enable-mmap --with-ssl --enable-nsec3 --enable-nsid \
-           --with-pidfile=%{_localstatedir}/run/%{name}/%{name}.pid --with-ssl \
+%configure --enable-pie --enable-relro-now \
+           --enable-checking \
+           --enable-mmap \
+           --with-pidfile=%{_localstatedir}/run/%{name}/%{name}.pid \
            --with-user=nsd --with-xfrdfile=%{_localstatedir}/lib/%{name}/ixfr.state
 
 %{__make} %{?_smp_mflags}

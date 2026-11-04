@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -22,6 +22,27 @@
 
 #ifndef __HWC_CPUS_H
 #define __HWC_CPUS_H
+
+typedef struct
+{
+  int cpu_cnt;
+  int cpu_clk_freq;
+  int cpu_model;
+  int cpu_family;
+  int cpu_vendor;
+  char *cpu_vendorstr;
+  char *cpu_modelstr;
+} cpu_info_t;
+
+#ifdef __cplusplus
+extern "C"
+{
+#endif
+extern cpu_info_t *read_cpuinfo();
+
+#ifdef __cplusplus
+}
+#endif
 
 #define MAX_PICS    20 /* Max # of HW ctrs that can be enabled simultaneously */
 
@@ -86,11 +107,16 @@
 #define CPC_INTEL_HASWELL       2060
 #define CPC_INTEL_BROADWELL     2070
 #define CPC_INTEL_SKYLAKE       2080
+#define CPC_INTEL_ICELAKE       2081
 #define CPC_INTEL_UNKNOWN       2499
 #define CPC_AMD_K8C             2500 /* Opteron, Athlon... */
 #define CPC_AMD_FAM_10H         2501 /* Barcelona, Shanghai... */
 #define CPC_AMD_FAM_11H         2502 /* Griffin... */
 #define CPC_AMD_FAM_15H         2503
+#define CPC_AMD_Authentic       2504
+#define CPC_AMD_FAM_19H_ZEN3    2505
+#define CPC_AMD_FAM_19H_ZEN4    2506
+  
 #define CPC_KPROF               3003 // OBSOLETE (To support 12.3 and earlier)
 #define CPC_FOX                 3004 /* pseudo-chip */
 
@@ -102,13 +128,57 @@
 #define CPC_SPARC64_X       4006 /* Athena */
 #define CPC_SPARC64_XII     4010 /* Athena++ */
 
-// aarch64. Constants from arch/arm64/include/asm/cputype.h
+// Arm
+#define CPC_ARM_GENERIC     3500
+#define CPC_ARM64_AMCC      3501 /* Applied Micro Circuits Corporation (ARM) */
+#define CPC_ARM_NEOVERSE_N1 3502
+#define CPC_ARM_AMPERE_1    3503
+
+#define	AMD_FAM_19H_ZEN3_NAME	"AMD Family 19h (Zen3)"
+#define	AMD_FAM_19H_ZEN4_NAME	"AMD Family 19h (Zen4)"
+
+enum Amd_famaly
+{
+  AMD_ZEN_FAMILY = 0x17,
+  AMD_ZEN3_FAMILY = 0x19
+};
+
+enum Amd_model
+{
+  AMD_ZEN_RYZEN = 0x1,
+  AMD_ZENPLUS_RYZEN = 0x8,
+  AMD_ZENPLUS_RYZEN2 = 0x18,
+  AMD_ZEN2_RYZEN = 0x31,
+  AMD_ZEN2_RYZEN2 = 0x71,
+  AMD_ZEN2_RYZEN3 = 0x60,
+  AMD_ZEN3_RYZEN = 0x1,
+  AMD_ZEN3_RYZEN2 = 0x21,
+  AMD_ZEN3_RYZEN3 = 0x50,
+  AMD_ZEN3_EPYC_TRENTO = 0x30,
+  AMD_ZEN4_RYZEN = 0x61,
+  AMD_ZEN4_EPYC = 0x11
+};
+
+    // aarch64. Constants from tools/arch/arm64/include/asm/cputype.h
+// in https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git
 enum {
     ARM_CPU_IMP_ARM     = 0x41,
     ARM_CPU_IMP_BRCM    = 0x42,
     ARM_CPU_IMP_CAVIUM  = 0x43,
+    ARM_CPU_IMP_FUJITSU = 0x46,
+    ARM_CPU_IMP_NVIDIA  = 0x4E,
+    ARM_CPU_IMP_HISI    = 0x48,
     ARM_CPU_IMP_APM     = 0x50,
-    ARM_CPU_IMP_QCOM    = 0x51
+    ARM_CPU_IMP_QCOM    = 0x51,
+    ARM_CPU_IMP_APPLE   = 0x61,
+    ARM_CPU_IMP_AMPERE  = 0xC0
+};
+
+// riscv Constants from arch/riscv/include/asm/vendorid_list.h
+enum {
+    ANDES_VENDOR_ID		= 0x31e,
+    SIFIVE_VENDOR_ID	        = 0x489,
+    THEAD_VENDOR_ID		= 0x5b7
 };
 
 #define	AARCH64_VENDORSTR_ARM	"ARM"
@@ -126,6 +196,8 @@ enum {
   {CPC_AMD_FAM_15H           , "AMD Family 15h Model 01h"}, \
   {CPC_AMD_FAM_15H           , "AMD Family 15h Model 02h"},/*future*/ \
   {CPC_AMD_FAM_15H           , "AMD Family 15h Model 03h"},/*future*/ \
+  {CPC_AMD_FAM_19H_ZEN3      , AMD_FAM_19H_ZEN3_NAME}, \
+  {CPC_AMD_FAM_19H_ZEN4      , AMD_FAM_19H_ZEN4_NAME}, \
   {CPC_PENTIUM_4_HT          , "Pentium 4 with HyperThreading"}, \
   {CPC_PENTIUM_4             , "Pentium 4"}, \
   {CPC_PENTIUM_PRO_MMX       , "Pentium Pro with MMX, Pentium II"}, \
@@ -191,6 +263,7 @@ enum {
   {CPC_ULTRA2                , "UltraSPARC I&II"}, \
   {CPC_ULTRA1                , "UltraSPARC I&II"}, \
   {ARM_CPU_IMP_APM           , AARCH64_VENDORSTR_ARM}, \
+  {CPC_AMD_Authentic         , "AuthenticAMD"}, \
   {0, NULL}
   /* init like this:
      static libcpc2_cpu_lookup_t cpu_table[]={LIBCPC2_CPU_LOOKUP_LIST};

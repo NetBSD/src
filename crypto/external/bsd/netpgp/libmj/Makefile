@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2012/07/10 19:38:17 christos Exp $
+# $NetBSD: Makefile,v 1.2.46.1 2026/11/04 22:36:35 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -14,5 +14,7 @@ EXTDIST=${.CURDIR}/../dist
 
 INCS+= mj.h
 INCSDIR=/usr/include
+
+COPTS.mj.c+=	${CC_WNO_CALLOC_TRANSPOSED_ARGS}
 
 .include <bsd.lib.mk>

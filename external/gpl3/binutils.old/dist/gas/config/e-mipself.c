@@ -1,4 +1,4 @@
-/* Copyright (C) 2007-2022 Free Software Foundation, Inc.
+/* Copyright (C) 2007-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,16 +20,6 @@
 #include "as.h"
 #include "emul.h"
 
-static const char *mipself_bfd_name (void);
-
-static const char *
-mipself_bfd_name (void)
-{
-  abort ();
-  return NULL;
-}
-
-#define emul_bfd_name	mipself_bfd_name
 #define emul_format	&elf_format_ops
 
 #define emul_name	"mipsbelf"

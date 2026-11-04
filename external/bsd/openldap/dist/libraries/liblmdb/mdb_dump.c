@@ -1,4 +1,4 @@
-/*	$NetBSD: mdb_dump.c,v 1.3 2021/08/14 16:14:57 christos Exp $	*/
+/*	$NetBSD: mdb_dump.c,v 1.3.4.1 2026/11/04 22:39:14 perseant Exp $	*/
 
 /* mdb_dump.c - memory-mapped database dump tool */
 /*
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 			break;
 		case 'l':
 			list = 1;
-			/*FALLTHROUGH*/;
+			/*FALLTHROUGH*/
 		case 'a':
 			if (subname)
 				usage(prog);

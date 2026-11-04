@@ -1,5 +1,337 @@
 NSD RELEASE NOTES
 
+4.14.0
+================
+FEATURES:
+	- Fix #137: Adds tcp-listen-queue: number config option to set
+	  the TCP backlog. And the default for the listen TCP backlog is
+	  set to -1 on BSDs and Linux.
+	- Merge #444: Refactor RDATA storage to reduce memory footprint
+BUG FIXES:
+	- Fix empty debug statement body in catalog consumer zone process.
+	- Merge #459: Check for libfstrm version >= 0.4.
+	- For #459: Add configure check for fstrm_tcp_writer_options_init
+	  in addition to the check for fstrm_iothr_init.
+	- Merge #460: Add XDP_OBJ fixing link errors for XDP.
+	- Fix XDP build error with --enable-checking
+	- Resolve warnings about mixed declaration and code and unused variable
+	- Fix confusing report for default send and receive buffer-size by
+	  nsd-checkconf
+	- Fix to log more details when send-buffer-size or receive-buffer-size
+	  is not granted, on verbosity level 2.
+	- Update in acx_nlnetlabs.m4 to version 49.
+	- Update in acx_nlnetlabs.m4 to version 50, with cache value for
+	  malloc function check.
+	- Update acx_nlnetlabs.m4 to version 51, with nonstring unknown
+	  attribute warning fix.
+	- Merge #466: Do not delete nodes from non-existent zone's NSEC3 hash   
+	  trees 
+
+4.13.0
+================
+FEATURES:
+	- Use '(all)' and '(none)' for the socket server affinity
+	  log output instead of '*' and '-'.
+	- The --enable-bind8-stats feature, was already enabled by default,
+	  is described as enabled by default in usage.
+	- The --enable-zone-stats feature is enabled by default. It can be
+	  turned on with config like `zonestats: "%s"`.
+	- The --enable-ratelimit feature is enabled by default. The
+	  ratelimit value is off by default. It can be turned on with
+	  config like `rrl-ratelimit: 200`.
+	- The --enable-dnstap feature is enabled by default. If fstrm-devel
+	  or protobuf-c are not found by configure it prints an error.
+	  It can be turned on with config like `dnstap-enable: yes`.
+	- Change default for send-buffer-size to 4m, to mitigate a
+	  cross-layer issue where the UDP socket send buffers are
+	  exhausted waiting for ARP/NDP resolution. Thanks to Reflyable
+	  for the report.
+	- Disable TLSv1.2 if TLSv1.3 is available.
+	- Merge #449: Add useful logging for XoT transfers.
+	- Merge #425: Add experimental XDP (AF_XDP) support for UDP traffic
+	- Merge #455: --with-dbdir option for configure to set the base
+	  directory for the xfrd zone timer state file, the zone list file
+	  and the cookie secrets file. Thanks Simon Josefsson.
+	- Merge #456: Spelling fixes in metrics.c. Thanks Simon Josefsson.
+
+
+BUG FIXES:
+	- Fix punctuation of nsd -h output for the -a option.
+	- Fix checkconf unit test for when metrics are not enabled.
+	- Prometheus metrics tests require --enable-zone-stats.
+	- Add unit test for socket server affinity log output.
+	- Move xfrd-tcp unit test to its own file.
+	- Fix contrib/nsd.spec to omit configure flags that are default or
+	  that do not exist.
+	- Fix to remove mention of obsolete root-server option.
+	- Fix mention of draft-rrtypes and root-server configure options.
+	- Fix ci workflow for enable dnstap.
+	- Fix to remove use of sprintf from metrics.
+	- Fix for fstrm and protobuf-c for ci workflow coverity-scan.
+	- Fix for parallel build of dnstap protoc-c output.
+	- Fix to remove unneeded mkdir from Makefile.
+	- Fix dnstap to use protoc and keep dnstap_config.h unchanged if
+	  possible.
+	- Fix to provide doc for --enable-systemd.
+	- Fix to remove debug printout for configure dnstap header.
+	- Fix #441: SystemD script for NSD prevents using chroot.
+	- Fix to add checks for compression pointers and too long dnames in
+	  internal dname routines, dname_make and ixfr dname_length.
+	- Fix to remove shell assignment operator from Makefile for DATE.
+	- make depend.
+	- Fix bitwise operators in conditional expressions with parentheses.
+	- Fix conditional expressions with parentheses for bitwise and.
+	- Merge #445: contrib/nsd.openrc.in: use supervise-daemon and
+	  add `need net`.
+	- Fix #446 nsd_size_db_in_mem_bytes (size.db.mem) metric not
+	  updated on reload.
+	- Merge #447: Minimize disruptions on reconfig.
+	- For #447: Updated simdzone to latest commit. With the padding
+	  test changes.
+	- For #447: use need_to_send_reload to detect if a reload is issued.
+	- For #447: acl_list_equal already tests for TSIG key changes, so
+	  removed the duplicate checks.
+	- For #447: log crypto error with the SSL_write error.
+	- Update simdzone with support for --enable-pie.
+	- Merge #454 from jaredmauch: handle rare case but seen in
+	  production where data->query is NULL.
+	- Fix zonestatfd check
+	- Fix code analyzer warning, and bail out of handle_tcp_writing
+	  and handle_tls_writing early when data->query is NULL.
+
+4.12.0
+================
+FEATURES:
+	- Merge #418: Support for DSYNC, EID, NIMLOC, SINK, TALINK, DOA,
+	  AMTRELAY and IPN resource record types.
+	- Merge #420: Zones get state "old-serial" with                         
+	  `nsd-control zonestatus` when the served serial is older than         
+	  the one received by the transfer daemon.
+	- Merge #429: Add prometheus metrics
+
+BUG FIXES:
+	- Fix re-enable to configure dns-cookies from config file, which was
+	  accidentally removed with the 4.11.1 release.
+	- Fix #426: nsd crashes with patterns in config_apply_pattern.
+	- Fix for #430: Confusing documentation: word "outgoing".
+	- Fix for #430: Confusing documentation: word "outgoing". Add wording
+	  to tcp-count, xfrd-tcp-max, xfrd-tcp-pipeline options.
+	- Fix that nsec3 prehash after a full transfer can create the nsec3
+	  zone trees if they are needed.
+	- Fix in nsd-mem for a zone with ixfr data.
+	- Fix ixfr read routine for use after the temp region is freed of rr.
+	- Fix ixfr file read to manage numlist in temp domains.
+	- Fix nsd-mem to clean ixfr storage.
+	- Fix log print assert in server sockets for printing '-' empty.
+	- Fix notify_fmt test for xfrd file location.
+	- Fix sanitizer warnings in read_uint32.
+	- Fix sanitizer warning in tsig write of zero length mac and otherdata.
+	- Fix to please sanitizer for ixfr store of data in cancelled state.
+	- Fix multiple zone transfers in one reload so that xfrd does not
+	  check the update as failed and restart the transfer.
+	- Fix read of ixfr file with rdata subdomain.
+	- Fix test checkconf for metrics options.
+	- Updated simdzone to include fixes for NSAP-PTR, LOC,
+	  uninitialized reads, and comment nit.
+	- Fix #436: Fix print of RR type NSAP-PTR.
+	- Fix unit test call to zone_parse_string and initialize padding.
+	- Fix escape more characters when printing an RR type with an
+	  unquoted string.
+	- Fix memory leak in the process of addzone.
+	- Fix to update common.sh for speed of kill_pid.
+	- Fix nsd-checkzone ixfr create cleanup on exit.
+
+
+4.11.1
+================
+BUG FIXES:
+        - Fix #415: Fix out of tree builds. Thanks Florian Obser (@fobser).
+	- Fix #414: XoT interoperability with BIND and Knot
+	- Fix #421: old-main can quit before the reload process received        
+	  from old-main that it is done on the reload_listener pipe.            
+	  Thanks Otto Retter. 
+	- Fix whitespace in comment.
+	- Fix #424: Stalled updates after corrupt transfer.
+
+4.11.0
+================
+FEATURES:
+	- Support reloading configuration on SIGHUP.
+	- Fix #383: log timestamps in ISO8601 format with timezone.
+	  This adds the option `log-time-iso: yes` that logs in ISO8601
+	  format.
+	- Updated cookie secrets management.
+	  The default cookie secret file location can be set at compile time
+	  with the --with-cookiesecretsfile=path option to configure. The
+	  default location is changed to {dbdir}/cookiesecrets.txt. The
+	  previous default location will be checked at startup when there is
+	  no cookie secrets file at the new default location.
+	  A staging cookie can now also be configured in the configuration
+	  file and secrets configured in the configuration file now take
+	  precedence over those read from file.
+	  All DNS related setting in the configuration file will be reevaluated
+	  and effectuated after nsd-control reconfig.
+	- Merge #398: RFC 9660 The DNS Zone Version (ZONEVERSION) Option
+	- Merge #406: ohttp and tls-supported-groups SvcParam suppor
+	- Merge #408: NINFO, RKEY, RESINFO, WALLET, CLA and TA RR types
+	- Merge #409: Writing of NSAP-PTR, GPOS and HIP RR types
+	- Merge #407: Better balanced verbosity levels for logging.
+
+BUG FIXES:
+	- Fix title underline and declaration after statement warnings.
+	- Add cross platform freebsd, openbsd and netbsd to github ci.
+	- Update simdzone to include fix for netbsd double bswap declarations,
+	  and also semantic checks for DS and ZONEMD. And CFLAGS has -march
+	  prepended to fix detection.
+	- Merge #376: Point the user towards tcpdump for logging individual
+	  queries.
+	- Track $INCLUDEs in zone files.
+	- Fix ci to update macos-12 to the macos-15 runner image.
+	- Merge #390: Apply non-xfr tasks before xfr tasks.
+	  This fixes an issue where non-xfr tasks are lost when they are
+	  batch processed together with non-xfr tasks.
+	  This merge also changes that notifies are passed on from the serve
+	  processes to the xfrd directly instead of via main. This was
+	  necessary to allow applying the non-xfr tasks without forking a
+	  backup-main for the sole purpose of forwarding notifies.
+	- Merge #391: Update copyright lines (in version output).
+	- Fix #392: Inconsistent documentation about control-interface.
+	- Merge #395: Explain the zonefile example better.
+	- Merge #394: Fix the path to use doc/manual/.
+	- Fix analyzer issue in do_print_cookie_secrets to check for failure.
+	- Merge #404: Introducing Sphinx substitution in code blocks.
+	  As well as other fixes with Sphinx build.
+	- Update Copyright lines in help output
+	- Merge #395: Explain zonefile example better
+	- Merge #394: Fix doc path (fixes "Edit on GitHub" button in the docs)
+	- Fix Makefile for parallel build failure around bison rule.
+	- Fix #405: Fix typo in documentation.
+	- Treat a mismatch in RRset TTLs as a warning.
+
+4.10.1
+================
+FEATURES:
+	- Merge #352 from orlitzky: contrib: add OpenRC service script, config
+	  file, and tmpfiles entry.
+	- Merge #337 from bilias: Mutual TLS-AUTH.
+
+BUG FIXES:
+	- Fix incorrect punctuation of log messages.
+	- Fix for #317, document more text on pidfile permissions.
+	- Fix #334: RFC8482 behavior documentation.
+	- Fix for OpenSSL 3.0 deprecated functions.
+	- Merge #341: Fix allow-query wording in nsd.conf.5.in.
+	- Fix test script from making spurious output.
+	- Fix cpu_affinity and socket_partitioning tests for --enable-log-role.
+	- Fix #344: Update simdzone.
+	- Fix #347: Adjust verbosity for TLS (+TCP) to be 5.
+	- Merge #348: Move TLS logging to verbosity level 5.
+	- For #347: Also adjust verbosity of log message for remaining TCP
+	  connections.
+	- Merge #349: log file name before loading.
+	- Use MAKE variable rather than make command directly in Makefile.
+	- Serialize WKS RRs using numeric values rather than names.
+	- Fix propagation of Makefile targets to simdzone.
+	- Do not log ACL mismatch on followed CNAMEs.
+	- Fix link of xfr-inspect for libssl dependency.
+	- Initialize tls_auth_port and tls_auth_xfr_only options.
+	- Merge #358: Fix Hurd build error due to log_err.
+	- Update simdzone to fix detection of AVX2 support.
+
+4.10.0
+================
+FEATURES:
+	- Merge #278: Replace Flex+Bison based zone parser with simdzone.
+	  Performance of loading zones and IXFRs is greatly improved by using
+	  the simdzone project by NLnet Labs. The optimized presentation format
+	  parser leverages SIMD instructions in modern CPUs to improve throughput.
+	  Right now SSE4.2 and AVX2 instruction sets are supported, other
+	  instruction sets will use the fallback implementation, which still is
+	  a decent improvement over the Flex+Bison based parser.
+
+BUG FIXES:
+	- Fix that when the server truncates the pidfile, it does not follow
+	  symbolic links.
+	- Fix #317: nsd should not chown its PID file.
+	- For #317: Modify nsd service script to stop NSD from creating a
+	  pid file that systemd is not using.
+	- Fix #324: Clarify the purpose of contrib/bug390.patch.
+	- Fix IXFR requests upstream for zones with a long name. Thanks for
+	  the report to Yuuki Wakisaka from Internet Initiative Japan Inc.
+	- Unit test for dname subdomain test used by xfrd-tcp.c.
+	- Fix #329: TCP accept queues number.
+	- Fix that the reload handler for sigchild uses signal_add, and
+	  also that the signal handler is restored when done.
+	- Fix that when server verify is done it resets the sigchild handler.
+	- Fix makedist.sh for simdzone inclusion.
+	- Fix makedist.sh to remove simdzone git tracking information and
+	  scripting temporaries from tarball.
+	- Fix error output of makedist.sh.
+	- Use simdzone version with name parser fix.
+	- Bump simdzone version to fix OpenBSD build issues.
+	- Bump simdzone to include minor fixes.
+
+4.9.1
+================
+BUG FIXES:
+	- Use rooted temporary path in makedist.sh.
+
+4.9.0
+================
+FEATURES:
+	- Merge #315: Allow SOA apex queries to otherwise with allow-query
+	  protected zones for clients matching a provide-xfr rule, because
+	  clients that are allowed to transfer the zone need to be able to
+	  query SOA at the apex preceding the actual transfer.
+	- Merge #304: Support for Catalog zones version "2" as specified in
+	  RFC 9432. Both the consumer as well as the producer role are
+	  implemented, but only a single catalog consumer zone is allowed.
+	  The "coo" property, only relevant with multiple catalog consumer,
+	  is therefore not supported. The "group" property is supported.
+	  Have a look at the nsd.conf man page for details on how to
+	  configure and use catalog zones.
+
+BUG FIXES:
+	- Fix to sync the tests script file common.sh.
+	- Update test script file common.sh.
+	- Fix #306: Missing AC_SUBST(dbdir) breaks installation with 4.8.0.
+	- Fix for #306: Create directory for xfrd.state and zone.list files
+	  in make install.
+	- Merge #307 from anandb-ripencc: Many improvements to the nsd.conf
+	  man page.
+	- Fix #308: Deprecate "multi-master-check" in favour of
+	  "multi-primary-check".
+	- Merge #309: More RFC 8499 compliance.
+	- Fix control-reconfig-xfrd test for zonestatus primary that is
+	  printed by nsd-control zonestatus.
+	- Move acx_nlnetlabs.m4 to version 47, with crypt32 check.
+	- Move acx_nlnetlabs.m4 to version 48, with ssp and getaddrinfo
+	  include check.
+	- Fix #313: nsd 4.8 stats with implausible spikes.
+	- Fix compile with memclean for xfrd nsd.db close.
+	- In xfrd del secondary zone, the timer could perhaps have
+	  event_added, and if so, it would not be event_del if a tcp connection
+	  is active at the time. This could cause the libevent event lists
+	  to fail. Also fix to make sure to set event_added for the
+	  nsd-control ssl nonblocking handshake and check event_added there
+	  too, for extra certainty.
+	- Merge #316: Fix to reap defunct children by the reload process that
+	  emerged when some serve child processes were still serving TCP
+	  request while the others had already quit, while the reload process
+	  was waiting for the signal from the backup/old main process that all
+	  children exited.
+	- Fix (also from Merge #316) to reap exited children more frequently
+	  from server main loop for processes that exited during reload, but
+	  missed the initial reaping at start of the main loop because they
+	  took somewhat longer to exit.
+	- Fix timing sensitivity in ixfr_outsync test.
+	- Test if debug is available in do-tests.
+	- Enforce timeout from NSD in ixfr_gone test.
+	- Update expressions in ixfr_and_restart test.
+	- Make algorithm explicit in control-repattern test.
+	- Switch algorithm to hmac-256 for testplan_mess test.
+	- Replace multiple strcat and strcpy by snprintf.
+
 4.8.0
 ================
 FEATURES:

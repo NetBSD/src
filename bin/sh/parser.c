@@ -1,4 +1,4 @@
-/*	$NetBSD: parser.c,v 1.181.2.1 2025/08/02 05:18:26 perseant Exp $	*/
+/*	$NetBSD: parser.c,v 1.181.2.2 2026/11/04 22:36:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)parser.c	8.7 (Berkeley) 5/16/95";
 #else
-__RCSID("$NetBSD: parser.c,v 1.181.2.1 2025/08/02 05:18:26 perseant Exp $");
+__RCSID("$NetBSD: parser.c,v 1.181.2.2 2026/11/04 22:36:15 perseant Exp $");
 #endif
 #endif /* not lint */
 
@@ -2244,7 +2244,7 @@ parsesub: {
 			if (c == '#') {
 				if ((c = pgetc_linecont()) == CLOSEBRACE)
 					c = '#';
-				else if (is_name(c) || isdigit(c))
+				else if (is_name(c) || is_digit(c))
 					subtype = VSLENGTH;
 				else if (is_special(c)) {
 					/*
@@ -2288,28 +2288,6 @@ parsesub: {
 				c = pgetc_linecont();
 			} while (is_in_name(c));
 
-#if 0
-			if (out - p == 6 && strncmp(p, "LINENO", 6) == 0) {
-				int i;
-				int linno;
-				char buf[10];
-
-				/*
-				 * The "LINENO hack"
-				 *
-				 * Replace the variable name with the
-				 * current line number.
-				 */
-				linno = plinno;
-				if (funclinno != 0)
-					linno -= funclinno - 1;
-				snprintf(buf, sizeof(buf), "%d", linno);
-				STADJUST(-6, out);
-				for (i = 0; buf[i] != '\0'; i++)
-					STPUTC(buf[i], out);
-				flags |= VSLINENO;
-			}
-#endif
 		} else if (is_digit(c)) {
 			do {
 				VTRACE(DBG_LEXER, ("%c", c));
@@ -2703,13 +2681,13 @@ getprompt(void *unused)
  * behaviour.
  */
 static const char *
-expandonstack(char *ps, int cmdsub, int lineno)
+expandonstack(const char *ps, int cmdsub, int lineno)
 {
 	union node n;
 	struct jmploc jmploc;
 	struct jmploc *const savehandler = handler;
 	struct parsefile *const savetopfile = getcurrentfile();
-	char * const save_ps = ps;
+	const char * const save_ps = ps;
 	const int save_x = xflag;
 	const int save_e_s = errors_suppressed;
 	struct parse_state new_state = init_parse_state;
@@ -2767,7 +2745,7 @@ expandonstack(char *ps, int cmdsub, int lineno)
 }
 
 const char *
-expandstr(char *ps, int lineno)
+expandstr(const char *ps, int lineno)
 {
 	const char *result = NULL;
 	struct stackmark smark;
@@ -2842,7 +2820,7 @@ expandstr(char *ps, int lineno)
  */
 
 const char *
-expandvar(char *var, int flags)
+expandvar(const char *var, int flags)
 {
 	const char *result = NULL;
 	struct stackmark smark;
@@ -2918,7 +2896,7 @@ expandvar(char *var, int flags)
  * Simply return the result, even if it is on the stack
  */
 const char *
-expandenv(char *arg)
+expandenv(const char *arg)
 {
 	return expandonstack(arg, 0, 0);
 }

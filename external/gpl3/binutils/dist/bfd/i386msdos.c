@@ -1,5 +1,5 @@
 /* BFD back-end for MS-DOS executables.
-   Copyright (C) 1990-2024 Free Software Foundation, Inc.
+   Copyright (C) 1990-2026 Free Software Foundation, Inc.
    Written by Bryan Ford of the University of Utah.
 
    Contributed by the Center for Software Science at the
@@ -219,14 +219,11 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_bfd_free_cached_info _bfd_generic_bfd_free_cached_info
 #define msdos_new_section_hook _bfd_generic_new_section_hook
 #define msdos_get_section_contents _bfd_generic_get_section_contents
-#define msdos_get_section_contents_in_window \
-  _bfd_generic_get_section_contents_in_window
 #define msdos_bfd_get_relocated_section_contents \
   bfd_generic_get_relocated_section_contents
 #define msdos_bfd_relax_section bfd_generic_relax_section
 #define msdos_bfd_gc_sections bfd_generic_gc_sections
 #define msdos_bfd_lookup_section_flags bfd_generic_lookup_section_flags
-#define msdos_bfd_merge_sections bfd_generic_merge_sections
 #define msdos_bfd_is_group_section bfd_generic_is_group_section
 #define msdos_bfd_group_name bfd_generic_group_name
 #define msdos_bfd_discard_group bfd_generic_discard_group
@@ -263,7 +260,7 @@ msdos_set_section_contents (bfd *abfd,
 #define msdos_minisymbol_to_symbol _bfd_nosymbols_minisymbol_to_symbol
 
 #define msdos_canonicalize_reloc _bfd_norelocs_canonicalize_reloc
-#define msdos_set_reloc _bfd_norelocs_set_reloc
+#define msdos_finalize_section_relocs _bfd_norelocs_finalize_section_relocs
 #define msdos_get_reloc_upper_bound _bfd_norelocs_get_reloc_upper_bound
 #define msdos_32_bfd_link_split_section  _bfd_generic_link_split_section
 
@@ -281,6 +278,7 @@ const bfd_target i386_msdos_vec =
     16,				/* ar_max_namelen */
     0,				/* match priority.  */
     TARGET_KEEP_UNUSED_SECTION_SYMBOLS, /* keep unused section symbols.  */
+    TARGET_MERGE_SECTIONS,
     bfd_getl64, bfd_getl_signed_64, bfd_putl64,
     bfd_getl32, bfd_getl_signed_32, bfd_putl32,
     bfd_getl16, bfd_getl_signed_16, bfd_putl16,	/* data */
@@ -297,13 +295,13 @@ const bfd_target i386_msdos_vec =
     {
       _bfd_bool_bfd_false_error,
       msdos_mkobject,
-      _bfd_generic_mkarchive,
+      _bfd_bool_bfd_false_error,
       _bfd_bool_bfd_false_error,
     },
     {				/* bfd_write_contents */
       _bfd_bool_bfd_false_error,
       msdos_write_object_contents,
-      _bfd_write_archive_contents,
+      _bfd_bool_bfd_false_error,
       _bfd_bool_bfd_false_error,
     },
 

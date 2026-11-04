@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -154,7 +154,7 @@ StringMap<Value_t>::put (const char *key, Value_t val)
       chunks[nchunks - 1] = new Entry[CHUNK_SIZE];
     }
   entry = &chunks[entries / CHUNK_SIZE][entries % CHUNK_SIZE];
-  entry->key = strdup (key);
+  entry->key = xstrdup (key);
   entry->val = val;
   index->insert (lo, entry);
   hashTable[idx] = entry;

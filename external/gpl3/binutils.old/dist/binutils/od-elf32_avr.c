@@ -1,5 +1,5 @@
 /* od-avrelf.c -- dump information about an AVR elf object file.
-   Copyright (C) 2011-2022 Free Software Foundation, Inc.
+   Copyright (C) 2011-2025 Free Software Foundation, Inc.
    Written by Senthil Kumar Selvaraj, Atmel.
 
    This file is part of GNU Binutils.
@@ -36,12 +36,14 @@
 /* Index of the options in the options[] array.  */
 #define OPT_MEMUSAGE 0
 #define OPT_AVRPROP 1
+#define OPT_AVRDEVICEINFO 2
 
 /* List of actions.  */
 static struct objdump_private_option options[] =
   {
     { "mem-usage", 0 },
     { "avr-prop",  0},
+    { "avr-deviceinfo",  0},
     { NULL, 0 }
   };
 
@@ -52,8 +54,9 @@ elf32_avr_help (FILE *stream)
 {
   fprintf (stream, _("\
 For AVR ELF files:\n\
-  mem-usage   Display memory usage\n\
-  avr-prop    Display contents of .avr.prop section\n\
+  mem-usage       Display memory usage\n\
+  avr-prop        Display contents of .avr.prop section\n\
+  avr-deviceinfo  Display contents of .note.gnu.avr.deviceinfo section\n\
 "));
 }
 
@@ -164,79 +167,60 @@ elf32_avr_get_device_info (bfd *abfd, char *description,
   device->name = str_table + device_name_index;
 }
 
+/* Get the size of section *SECNAME, truncated to a reasonable value in
+   order to catch PR 27285 and dysfunctional binaries.  */
+
+static bfd_size_type
+elf32_avr_get_truncated_size (bfd *abfd, const char *secname)
+{
+  /* Max size of around 1 MiB is more than any reasonable AVR will
+     ever be able to swallow.  And it's small enough so that we won't
+     get overflows / UB as demonstrated in PR 27285.  */
+  const bfd_size_type max_size = 1000000;
+  bfd_size_type size = 0;
+  asection *section;
+
+  section = bfd_get_section_by_name (abfd, secname);
+
+  if (section != NULL)
+    {
+      size = bfd_section_size (section);
+      if (size > INT32_MAX)
+	{
+	  fprintf (stderr, _("Warning: section %s has a negative size of"
+			     " %ld bytes, saturating to 0 bytes\n"),
+		   secname, (long) (int32_t) size);
+	  size = 0;
+	}
+      else if (size > max_size)
+	{
+	  fprintf (stderr, _("Warning: section %s has an impossible size of"
+			     " %lu bytes, truncating to %lu bytes\n"),
+		   secname, (unsigned long) size, (unsigned long) max_size);
+	  size = max_size;
+	}
+    }
+
+  return size;
+}
+
 static void
 elf32_avr_get_memory_usage (bfd *abfd,
 			    bfd_size_type *text_usage,
 			    bfd_size_type *data_usage,
 			    bfd_size_type *eeprom_usage)
 {
+  bfd_size_type avr_textsize = elf32_avr_get_truncated_size (abfd, ".text");
+  bfd_size_type avr_datasize = elf32_avr_get_truncated_size (abfd, ".data");;
+  bfd_size_type avr_bsssize  = elf32_avr_get_truncated_size (abfd, ".bss");
+  bfd_size_type noinitsize = elf32_avr_get_truncated_size (abfd, ".noinit");
+  bfd_size_type rodatasize = elf32_avr_get_truncated_size (abfd, ".rodata");
+  bfd_size_type eepromsize = elf32_avr_get_truncated_size (abfd, ".eeprom");
+  bfd_size_type bootloadersize = elf32_avr_get_truncated_size (abfd,
+							       ".bootloader");
 
-  bfd_size_type avr_datasize = 0;
-  bfd_size_type avr_textsize = 0;
-  bfd_size_type avr_bsssize = 0;
-  bfd_size_type bootloadersize = 0;
-  bfd_size_type noinitsize = 0;
-  bfd_size_type eepromsize = 0;
-  bfd_size_type res;
-  asection *section;
-
-  if ((section = bfd_get_section_by_name (abfd, ".data")) != NULL)
-    avr_datasize = bfd_section_size (section);
-  if ((section = bfd_get_section_by_name (abfd, ".text")) != NULL)
-    avr_textsize = bfd_section_size (section);
-  if ((section = bfd_get_section_by_name (abfd, ".bss")) != NULL)
-    avr_bsssize = bfd_section_size (section);
-  if ((section = bfd_get_section_by_name (abfd, ".bootloader")) != NULL)
-    bootloadersize = bfd_section_size (section);
-  if ((section = bfd_get_section_by_name (abfd, ".noinit")) != NULL)
-    noinitsize = bfd_section_size (section);
-  if ((section = bfd_get_section_by_name (abfd, ".eeprom")) != NULL)
-    eepromsize = bfd_section_size (section);
-
-  /* PR 27285: Check for overflow.  */
-  res = avr_textsize + avr_datasize;
-  if (res < avr_textsize || res < avr_datasize)
-    {
-      fprintf (stderr, _("Warning: textsize (%#lx) + datasize (%#lx) overflows size type\n"),
-	       (long) avr_textsize, (long) avr_datasize);
-      res = (bfd_size_type) -1;
-    }
-  else
-    {
-      bfd_size_type res2;
-      res2 = res + bootloadersize;
-      if (res2 < bootloadersize || res2 < res)
-	{
-	  fprintf (stderr, _("Warning: textsize (%#lx) + datasize (%#lx) + bootloadersize (%#lx) overflows size type\n"),
-		   (long) avr_textsize, (long) avr_datasize, (long) bootloadersize);
-	  res2 = (bfd_size_type) -1;
-	}
-      res = res2;
-    }
-  *text_usage = res;
-
-  res = avr_datasize + avr_bsssize;
-  if (res < avr_datasize || res < avr_bsssize)
-    {
-      fprintf (stderr, _("Warning: datatsize (%#lx) + bssssize (%#lx) overflows size type\n"),
-	       (long) avr_datasize, (long) avr_bsssize);
-      res = (bfd_size_type) -1;
-    }
-  else
-    {
-      bfd_size_type res2;
-
-      res2 = res + noinitsize;
-      if (res2 < res || res2 < noinitsize)
-	{
-	  fprintf (stderr, _("Warning: datasize (%#lx) + bsssize (%#lx) + noinitsize (%#lx) overflows size type\n"),
-		   (long) avr_datasize, (long) avr_bsssize, (long) noinitsize);
-	  res2 = (bfd_size_type) -1;
-	}
-      res = res2;
-    }
-  *data_usage = res;
-
+  *text_usage = avr_textsize + avr_datasize + rodatasize + bootloadersize;
+  *data_usage = avr_datasize + avr_bsssize + noinitsize;
   *eeprom_usage = eepromsize;
 }
 
@@ -270,25 +254,26 @@ elf32_avr_dump_mem_usage (bfd *abfd)
           "Device: %s\n\n", device.name);
 
   /* Text size */
-  printf ("Program:%8lu bytes", text_usage);
+  printf ("Program:%8" PRIu64 " bytes", (uint64_t) text_usage);
   if (device.flash_size > 0)
-    printf (" (%2.1f%% Full)", ((float) text_usage / device.flash_size) * 100);
+    printf (" (%2.1f%% Full)", (double) text_usage / device.flash_size * 100);
 
-  printf ("\n(.text + .data + .bootloader)\n\n");
+  printf ("\n(.text + .data + .rodata + .bootloader)\n\n");
 
   /* Data size */
-  printf ("Data:   %8lu bytes", data_usage);
+  printf ("Data:   %8" PRIu64 " bytes", (uint64_t) data_usage);
   if (device.ram_size > 0)
-    printf (" (%2.1f%% Full)", ((float) data_usage / device.ram_size) * 100);
+    printf (" (%2.1f%% Full)", (double) data_usage / device.ram_size * 100);
 
   printf ("\n(.data + .bss + .noinit)\n\n");
 
   /* EEPROM size */
   if (eeprom_usage > 0)
     {
-      printf ("EEPROM: %8lu bytes", eeprom_usage);
+      printf ("EEPROM: %8" PRIu64 " bytes", (uint64_t) eeprom_usage);
       if (device.eeprom_size > 0)
-        printf (" (%2.1f%% Full)", ((float) eeprom_usage / device.eeprom_size) * 100);
+	printf (" (%2.1f%% Full)",
+		(double) eeprom_usage / device.eeprom_size * 100);
 
       printf ("\n(.eeprom)\n\n");
     }
@@ -315,12 +300,12 @@ elf32_avr_dump_avr_prop (bfd *abfd)
 
   for (i = 0; i < r_list->record_count; ++i)
     {
-      printf ("   %d %s @ %s + %#08lx (%#08lx)\n",
+      printf ("   %d %s @ %s + %#08" PRIx64" (%#08" PRIx64 ")\n",
 	      i,
 	      avr_elf32_property_record_name (&r_list->records [i]),
 	      r_list->records [i].section->name,
-	      r_list->records [i].offset,
-	      (bfd_section_vma (r_list->records [i].section)
+	      (uint64_t) r_list->records [i].offset,
+	      ((uint64_t) bfd_section_vma (r_list->records [i].section)
 	       + r_list->records [i].offset));
       switch (r_list->records [i].type)
         {
@@ -347,12 +332,61 @@ elf32_avr_dump_avr_prop (bfd *abfd)
 }
 
 static void
+elf32_avr_dump_avr_deviceinfo (bfd *abfd)
+{
+  char *description = NULL;
+  bfd_size_type sec_size, desc_size;
+
+  deviceinfo dinfo = { 0, 0, 0, 0, 0, 0, NULL };
+  dinfo.name = "Unknown";
+
+  char *contents = elf32_avr_get_note_section_contents (abfd, &sec_size);
+
+  if (contents == NULL)
+    return;
+
+  description = elf32_avr_get_note_desc (abfd, contents, sec_size, &desc_size);
+  elf32_avr_get_device_info (abfd, description, desc_size, &dinfo);
+
+  printf ("AVR Device Info\n"
+	  "----------------\n"
+	  "Device: %s\n\n", dinfo.name);
+
+  printf ("Memory     Start      Size      Start      Size\n");
+
+  printf ("Flash  %9" PRIu32 " %9" PRIu32 "  %#9" PRIx32 " %#9" PRIx32 "\n",
+	  dinfo.flash_start, dinfo.flash_size,
+	  dinfo.flash_start, dinfo.flash_size);
+
+  /* FIXME: There are devices like ATtiny11 without RAM, and where the
+     avr/io*.h header has defines like
+	 #define RAMSTART    0x60
+	 // Last memory addresses
+	 #define RAMEND	     0x1F
+     which results in a negative RAM size.  The correct display would be to
+     show a size of 0, however we also want to show what's actually in the
+     note section as precise as possible.  Hence, display the decimal size
+     as %d, not as %u.	*/
+  printf ("RAM    %9" PRIu32 " %9" PRId32 "  %#9" PRIx32 " %#9" PRIx32 "\n",
+	  dinfo.ram_start, dinfo.ram_size,
+	  dinfo.ram_start, dinfo.ram_size);
+
+  printf ("EEPROM %9" PRIu32 " %9" PRIu32 "  %#9" PRIx32 " %#9" PRIx32 "\n",
+	  dinfo.eeprom_start, dinfo.eeprom_size,
+	  dinfo.eeprom_start, dinfo.eeprom_size);
+
+  free (contents);
+}
+
+static void
 elf32_avr_dump (bfd *abfd)
 {
   if (options[OPT_MEMUSAGE].selected)
     elf32_avr_dump_mem_usage (abfd);
   if (options[OPT_AVRPROP].selected)
     elf32_avr_dump_avr_prop (abfd);
+  if (options[OPT_AVRDEVICEINFO].selected)
+    elf32_avr_dump_avr_deviceinfo (abfd);
 }
 
 const struct objdump_private_desc objdump_private_desc_elf32_avr =

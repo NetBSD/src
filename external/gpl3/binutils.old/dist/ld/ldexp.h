@@ -1,5 +1,5 @@
 /* ldexp.h -
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -133,6 +133,8 @@ enum relro_enum {
   exp_seg_relro_end,
 };
 
+struct lang_output_section_statement_struct;
+
 typedef struct {
   enum phase_enum phase;
 
@@ -176,9 +178,16 @@ struct ldexp_control {
   etree_value_type result;
   bfd_vma dot;
 
-  /* Current dot and section passed to ldexp folder.  */
+  /* Current dot and section passed to ldexp folder.  SECTION will be
+     bfd_abs_section for expressions outside of an output section
+     statement.  */
   bfd_vma *dotp;
   asection *section;
+
+  /* Last output section statement.  For expressions within an output
+     section statement, this will be the current output section
+     statement being processed.  */
+  struct lang_output_section_statement_struct *last_os;
 
   /* State machine and results for DATASEG.  */
   seg_align_type dataseg;
@@ -211,9 +220,10 @@ etree_type *exp_bigintop
 etree_type *exp_relop
   (asection *, bfd_vma);
 void exp_fold_tree
-  (etree_type *, asection *, bfd_vma *);
+  (etree_type *, struct lang_output_section_statement_struct *,
+   asection *, bfd_vma *);
 void exp_fold_tree_no_dot
-  (etree_type *);
+  (etree_type *, struct lang_output_section_statement_struct *);
 etree_type *exp_binop
   (int, etree_type *, etree_type *);
 etree_type *exp_trinop
@@ -233,16 +243,16 @@ etree_type *exp_assert
 void exp_print_tree
   (etree_type *);
 bfd_vma exp_get_vma
-  (etree_type *, bfd_vma, char *);
+  (etree_type *, struct lang_output_section_statement_struct *, bfd_vma, char *);
 int exp_get_power
-  (etree_type *, char *);
+  (etree_type *, struct lang_output_section_statement_struct *, char *);
 fill_type *exp_get_fill
   (etree_type *, fill_type *, char *);
 bfd_vma exp_get_abs_int
   (etree_type *, int, char *);
-void ldexp_init (void);
+void ldexp_init (bool);
 void ldexp_finalize_syms (void);
 bool ldexp_is_final_sym_absolute (const struct bfd_link_hash_entry *);
-void ldexp_finish (void);
+void ldexp_finish (bool);
 
 #endif

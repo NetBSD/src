@@ -70,7 +70,8 @@ server_set_marked(struct session *s, struct winlink *wl, struct window_pane *wp)
 	cmd_find_clear_state(&marked_pane, 0);
 	marked_pane.s = s;
 	marked_pane.wl = wl;
-	marked_pane.w = wl->window;
+	if (wl != NULL)
+		marked_pane.w = wl->window;
 	marked_pane.wp = wp;
 }
 
@@ -206,6 +207,7 @@ server_start(struct tmuxproc *client, uint64_t flags, struct event_base *base,
 		fatal("pledge failed");
 
 	input_key_build();
+	utf8_update_width_cache();
 	RB_INIT(&windows);
 	RB_INIT(&all_window_panes);
 	TAILQ_INIT(&clients);

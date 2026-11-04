@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -957,7 +957,7 @@ BinaryConstantPool::getString (int index)
       return NULL;
     }
   u2 len = input->readUnsignedShort ();
-  strings[index] = (char *) malloc (len + 1);
+  strings[index] = (char *) xmalloc (len + 1);
   input->copy_bytes (strings[index], len);
   return strings[index];
 }
@@ -1006,7 +1006,7 @@ ClassFile::openFile (const char *fname)
       append_msg (CMSG_ERROR, GTXT ("Cannot open file %s"), fname);
       return;
     }
-  struct stat64 stat_buf;
+  dbe_stat_t stat_buf;
   if ((fstat64 (fd, &stat_buf) == -1) || (stat_buf.st_size == 0))
     {
       close (fd);
@@ -1014,7 +1014,7 @@ ClassFile::openFile (const char *fname)
       return;
     }
   cf_bufsz = stat_buf.st_size;
-  cf_buf = (unsigned char *) malloc (cf_bufsz);
+  cf_buf = (unsigned char *) xmalloc (cf_bufsz);
   if (cf_bufsz != read_from_file (fd, cf_buf, cf_bufsz))
     {
       free (cf_buf);
@@ -1409,7 +1409,7 @@ ClassFile::readFile ()
       class_filename = dbe_strdup (bcpool->getString (classNameInd));
       if (class_filename)
 	{
-	  class_name = strdup (class_filename);
+	  class_name = xstrdup (class_filename);
 	  convertName (class_name);
 	}
 
@@ -1527,7 +1527,7 @@ ClassFile::readFile ()
   if (class_filename)
     {
       if (strcmp (class_filename, get_name ()) != 0)
-	set_name (strdup (class_filename));
+	set_name (xstrdup (class_filename));
       if (source_name)
 	{
 	  char *bname = strrchr (class_filename, '/');
@@ -1535,13 +1535,13 @@ ClassFile::readFile ()
 	    fnm = dbe_sprintf (NTXT ("%.*s/%s"), (int) (bname - class_filename),
 			       class_filename, source_name);
 	  else
-	    fnm = strdup (source_name);
+	    fnm = xstrdup (source_name);
 	}
       else
 	fnm = get_java_file_name (class_filename, false);
     }
   else if (source_name)
-    fnm = strdup (source_name);
+    fnm = xstrdup (source_name);
   if (fnm)
     {
       set_file_name (fnm);
@@ -1594,7 +1594,7 @@ ClassFile::get_disasm (uint64_t inst_address, uint64_t end_address,
     {
       append_msg (CMSG_ERROR, GTXT ("Cannot disassemble class file %s (%s), implausible size = %lld"),
 		  get_name (), dbeFile->get_location (),
-		  (end_address - start_address));
+		  (long long) (end_address - start_address));
       inst_size = 0;
       return NULL;
     }
@@ -1631,7 +1631,7 @@ ClassFile::get_java_file_name (char *clname, bool classSuffix)
       if (tmp)
 	len = tmp - clname;
     }
-  char *clpath = (char *) malloc (len + 10);
+  char *clpath = (char *) xmalloc (len + 10);
   for (size_t i = 0; i < len; i++)
     clpath[i] = (clname[i] == '.') ? '/' : clname[i];
   snprintf (clpath + len, 10, classSuffix ? NTXT (".class") : NTXT (".java"));

@@ -42,9 +42,6 @@
    type by default. */
 #undef DEFAULT_GENERATE_ELF_STT_COMMON
 
-/* Define to 1 if you want to generate x86 relax relocations by default. */
-#undef DEFAULT_GENERATE_X86_RELAX_RELOCATIONS
-
 /* Define to 1 if you want to fix Loongson3 LLSC Errata by default. */
 #undef DEFAULT_MIPS_FIX_LOONGSON3_LLSC
 
@@ -59,6 +56,12 @@
 
 /* Define default value for RISC-V -mpriv-spec */
 #undef DEFAULT_RISCV_PRIV_SPEC
+
+/* Define to 1 if you want to emit SFrames by default. */
+#undef DEFAULT_SFRAME
+
+/* Define to 1 if you want to check x86 TLS relocation by default. */
+#undef DEFAULT_X86_TLS_CHECK
 
 /* Define to 1 if you want to generate GNU x86 used ISA and feature properties
    by default. */
@@ -85,10 +88,6 @@
 /* Define if the GNU dcgettext() function is already present or preinstalled.
    */
 #undef HAVE_DCGETTEXT
-
-/* Define to 1 if you have the declaration of `asprintf', and to 0 if you
-   don't. */
-#undef HAVE_DECL_ASPRINTF
 
 /* Is the prototype for getopt in <unistd.h> in the expected format? */
 #undef HAVE_DECL_GETOPT
@@ -266,9 +265,6 @@
 
 /* Target OS. */
 #undef TARGET_OS
-
-/* Define if default target is PowerPC Solaris. */
-#undef TARGET_SOLARIS_COMMENT
 
 /* Target vendor. */
 #undef TARGET_VENDOR

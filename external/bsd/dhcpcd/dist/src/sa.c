@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * Socket Address handling for dhcpcd
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2015-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -26,8 +26,8 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/socket.h>
 #include <sys/types.h>
+#include <sys/socket.h>
 
 #include <arpa/inet.h>
 #ifdef AF_LINK
@@ -40,11 +40,11 @@
 #include <errno.h>
 #include <stdbool.h>
 #include <stddef.h>
-#include <stdio.h>
 #include <stdint.h>
+#include <stdio.h>
 #include <string.h>
 
-#include "config.h"
+#include "config.h" // IWYU pragma: keep
 #include "common.h"
 #include "sa.h"
 
@@ -55,18 +55,17 @@ static bool sa_inprefix;
 socklen_t
 sa_addroffset(const struct sockaddr *sa)
 {
-
 	assert(sa != NULL);
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 #ifdef INET
 	case AF_INET:
 		return offsetof(struct sockaddr_in, sin_addr) +
-		       offsetof(struct in_addr, s_addr);
+		    offsetof(struct in_addr, s_addr);
 #endif /* INET */
 #ifdef INET6
 	case AF_INET6:
 		return offsetof(struct sockaddr_in6, sin6_addr) +
-		       offsetof(struct in6_addr, s6_addr);
+		    offsetof(struct in6_addr, s6_addr);
 #endif /* INET6 */
 	default:
 		errno = EAFNOSUPPORT;
@@ -79,7 +78,7 @@ sa_addrlen(const struct sockaddr *sa)
 {
 #define membersize(type, member) sizeof(((type *)0)->member)
 	assert(sa != NULL);
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 #ifdef INET
 	case AF_INET:
 		return membersize(struct in_addr, s_addr);
@@ -98,7 +97,6 @@ sa_addrlen(const struct sockaddr *sa)
 socklen_t
 sa_len(const struct sockaddr *sa)
 {
-
 	switch (sa->sa_family) {
 #ifdef AF_LINK
 	case AF_LINK:
@@ -121,9 +119,8 @@ sa_len(const struct sockaddr *sa)
 bool
 sa_is_unspecified(const struct sockaddr *sa)
 {
-
 	assert(sa != NULL);
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 	case AF_UNSPEC:
 		return true;
 #ifdef INET
@@ -142,8 +139,11 @@ sa_is_unspecified(const struct sockaddr *sa)
 
 #ifdef INET6
 #ifndef IN6MASK128
-#define IN6MASK128 {{{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, \
-		       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }}}
+#define IN6MASK128                                                       \
+	{                                                                \
+		{{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, \
+		       0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff }} \
+	}
 #endif
 static const struct in6_addr in6allones = IN6MASK128;
 #endif
@@ -151,14 +151,12 @@ static const struct in6_addr in6allones = IN6MASK128;
 bool
 sa_is_allones(const struct sockaddr *sa)
 {
-
 	assert(sa != NULL);
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 	case AF_UNSPEC:
 		return false;
 #ifdef INET
-	case AF_INET:
-	{
+	case AF_INET: {
 		const struct sockaddr_in *sin;
 
 		sin = satocsin(sa);
@@ -166,8 +164,7 @@ sa_is_allones(const struct sockaddr *sa)
 	}
 #endif /* INET */
 #ifdef INET6
-	case AF_INET6:
-	{
+	case AF_INET6: {
 		const struct sockaddr_in6 *sin6;
 
 		sin6 = satocsin6(sa);
@@ -183,14 +180,12 @@ sa_is_allones(const struct sockaddr *sa)
 bool
 sa_is_loopback(const struct sockaddr *sa)
 {
-
 	assert(sa != NULL);
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 	case AF_UNSPEC:
 		return false;
 #ifdef INET
-	case AF_INET:
-	{
+	case AF_INET: {
 		const struct sockaddr_in *sin;
 
 		sin = satocsin(sa);
@@ -198,8 +193,7 @@ sa_is_loopback(const struct sockaddr *sa)
 	}
 #endif /* INET */
 #ifdef INET6
-	case AF_INET6:
-	{
+	case AF_INET6: {
 		const struct sockaddr_in6 *sin6;
 
 		sin6 = satocsin6(sa);
@@ -218,10 +212,9 @@ sa_toprefix(const struct sockaddr *sa)
 	int prefix;
 
 	assert(sa != NULL);
-	switch(sa->sa_family) {
+	switch (sa->sa_family) {
 #ifdef INET
-	case AF_INET:
-	{
+	case AF_INET: {
 		const struct sockaddr_in *sin;
 		uint32_t mask;
 
@@ -231,20 +224,20 @@ sa_toprefix(const struct sockaddr *sa)
 			break;
 		}
 		mask = ntohl(sin->sin_addr.s_addr);
-		prefix = 33 - ffs((int)mask);	/* 33 - (1 .. 32) -> 32 .. 1 */
-		if (prefix < 32) {		/* more than 1 bit in mask */
+		prefix = 33 - ffs((int)mask); /* 33 - (1 .. 32) -> 32 .. 1 */
+		if (prefix < 32) {	      /* more than 1 bit in mask */
 			/* check for non-contig netmask */
-			if ((mask^(((1U << prefix)-1) << (32 - prefix))) != 0) {
+			if ((mask ^ (((1U << prefix) - 1) << (32 - prefix))) !=
+			    0) {
 				errno = EINVAL;
-				return -1;	/* noncontig, no pfxlen */
+				return -1; /* noncontig, no pfxlen */
 			}
 		}
 		break;
 	}
 #endif
 #ifdef INET6
-	case AF_INET6:
-	{
+	case AF_INET6: {
 		const struct sockaddr_in6 *sin6;
 		int x, y;
 		const uint8_t *lim, *p;
@@ -288,11 +281,12 @@ sa_toprefix(const struct sockaddr *sa)
 #ifndef NDEBUG
 	/* Ensure the calculation is correct */
 	if (!sa_inprefix) {
-		union sa_ss ss = { .sa = { .sa_family = sa->sa_family } };
+		struct sockaddr_storage ss = { .ss_family = sa->sa_family };
+		struct sockaddr *ss_sa = (struct sockaddr *)&ss;
 
 		sa_inprefix = true;
-		sa_fromprefix(&ss.sa, prefix);
-		assert(sa_cmp(sa, &ss.sa) == 0);
+		sa_fromprefix(ss_sa, prefix);
+		assert(sa_cmp(sa, ss_sa) == 0);
 		sa_inprefix = false;
 	}
 #endif
@@ -314,7 +308,7 @@ ipbytes_fromprefix(uint8_t *ap, int prefix, int max_prefix)
 		uint8_t a;
 
 		a = 0xff;
-		a  = (uint8_t)(a << (8 - bits));
+		a = (uint8_t)(a << (8 - bits));
 		*ap++ = a;
 	}
 	bytes = (max_prefix - prefix) / NBBY;
@@ -457,8 +451,7 @@ sa_cmp(const struct sockaddr *sa1, const struct sockaddr *sa2)
 		break;
 	}
 
-	return memcmp((const char *)sa1 + offset,
-	    (const char *)sa2 + offset,
+	return memcmp((const char *)sa1 + offset, (const char *)sa2 + offset,
 	    len);
 }
 

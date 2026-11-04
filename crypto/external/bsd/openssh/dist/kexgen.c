@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgen.c,v 1.7.4.1 2025/08/02 05:18:46 perseant Exp $	*/
-/* $OpenBSD: kexgen.c,v 1.10 2024/09/09 02:39:57 djm Exp $ */
+/*	$NetBSD: kexgen.c,v 1.7.4.2 2026/11/04 22:36:39 perseant Exp $	*/
+/* $OpenBSD: kexgen.c,v 1.15 2026/09/16 00:31:27 djm Exp $ */
 
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
@@ -29,6 +29,7 @@ __RCSID("$NetBSD");
 
 #include <sys/types.h>
 
+#include <stdarg.h>
 #include <stdio.h>
 #include <string.h>
 #include <signal.h>
@@ -42,8 +43,8 @@ __RCSID("$NetBSD");
 #include "digest.h"
 #include "ssherr.h"
 
-static int input_kex_gen_init(int, u_int32_t, struct ssh *);
-static int input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh);
+static int input_kex_gen_init(int, uint32_t, struct ssh *);
+static int input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh);
 
 static int
 kex_gen_hash(
@@ -114,6 +115,9 @@ kex_gen_client(struct ssh *ssh)
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_keypair(kex);
 		break;
+	case KEX_KEM_MLKEM768ECDH_SHA256:
+		r = kex_kem_mlkem768ecdh_keypair(kex);
+		break;
 #endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
 		r = kex_c25519_keypair(kex);
@@ -140,7 +144,7 @@ kex_gen_client(struct ssh *ssh)
 }
 
 static int
-input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_gen_reply(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	struct sshkey *server_host_key = NULL;
@@ -163,7 +167,8 @@ input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
 		r = SSH_ERR_ALLOC_FAIL;
 		goto out;
 	}
-	if ((r = sshkey_fromb(tmp, &server_host_key)) != 0)
+	if ((r = sshkey_fromb_allowlist(tmp, &server_host_key,
+	    kex->hostkey_alg, NULL)) != 0)
 		goto out;
 	if ((r = kex_verify_host_key(ssh, server_host_key)) != 0)
 		goto out;
@@ -187,6 +192,10 @@ input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
 		break;
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_dec(kex, server_blob, &shared_secret);
+		break;
+	case KEX_KEM_MLKEM768ECDH_SHA256:
+		r = kex_kem_mlkem768ecdh_dec(kex, server_blob,
+		    &shared_secret);
 		break;
 #endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
@@ -273,7 +282,7 @@ kex_gen_server(struct ssh *ssh)
 }
 
 static int
-input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
+input_kex_gen_init(int type, uint32_t seq, struct ssh *ssh)
 {
 	struct kex *kex = ssh->kex;
 	struct sshkey *server_host_private, *server_host_public;
@@ -310,6 +319,10 @@ input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_enc(kex, client_pubkey, &server_pubkey,
 		    &shared_secret);
+		break;
+	case KEX_KEM_MLKEM768ECDH_SHA256:
+		r = kex_kem_mlkem768ecdh_enc(kex, client_pubkey,
+		    &server_pubkey, &shared_secret);
 		break;
 #endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:

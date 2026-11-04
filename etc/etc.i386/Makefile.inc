@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.70 2024/03/20 13:51:35 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.70.2.1 2026/11/04 22:37:17 perseant Exp $
 #
 #	etc.i386/Makefile.inc -- i386-specific etc Makefile targets
 #
@@ -11,6 +11,7 @@ KERNEL_SETS+=	MONOLITHIC
 KERNEL_SETS+=	LEGACY
 KERNEL_SETS+=	XEN3PAE_DOM0
 KERNEL_SETS+=	XEN3PAE_DOMU
+KERNEL_SETS+=	MICROVM
 # KERNEL_SETS+=	GENERIC_USERMODE
 # KERNEL_SETS+=	GENERIC_TINY
 # KERNEL_SETS+=	GENERIC_PS2TINY

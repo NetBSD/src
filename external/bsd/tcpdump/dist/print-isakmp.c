@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-isakmp.c,v 1.12.2.1 2025/08/02 05:23:24 perseant Exp $");
+__RCSID("$NetBSD: print-isakmp.c,v 1.12.2.2 2026/11/04 22:39:56 perseant Exp $");
 #endif
 
 /* \summary: Internet Security Association and Key Management Protocol (ISAKMP) printer */
@@ -118,9 +118,9 @@ struct isakmp {
 #define ISAKMP_FLAG_extra 0x04
 
 /* IKEv2 */
-#define ISAKMP_FLAG_I (1 << 3)  /* (I)nitiator */
-#define ISAKMP_FLAG_V (1 << 4)  /* (V)ersion   */
-#define ISAKMP_FLAG_R (1 << 5)  /* (R)esponse  */
+#define ISAKMP_FLAG_I (1 << 3)  /* Initiator */
+#define ISAKMP_FLAG_V (1 << 4)  /* Version   */
+#define ISAKMP_FLAG_R (1 << 5)  /* Response  */
 
 
 /* 3.2 Payload Generic Header
@@ -239,7 +239,7 @@ struct ikev1_pl_cr {
 	Certificate Types (variable length)
 	  -- Contains a list of the types of certificates requested,
 	  sorted in order of preference.  Each individual certificate
-	  type is 1 octet.  This field is NOT requiredo
+	  type is 1 octet.  This field is NOT required.
 	*/
 	/* # Certificate Authorities (1 octet) */
 	/* Certificate Authorities (variable length) */

@@ -1,0 +1,4 @@
+dn: name=regex,olcOverlay={0}variant,olcDatabase={1}@BACKEND@,cn=config
+changetype: add
+objectclass: olcVariantRegex
+olcVariantEntryRegex: .*

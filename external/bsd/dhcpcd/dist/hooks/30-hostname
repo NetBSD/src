@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: BSD-2-Clause
+# Copyright (c) 2020-2024 Roy Marples <roy@marples.name>
+
 # Set the hostname from DHCP data if required
 
 # A hostname can either be a short hostname or a FQDN.
@@ -24,7 +27,7 @@ _hostname()
 {
 	if [ -z "${1+x}" ]; then
 		if [ -r /proc/sys/kernel/hostname ]; then
-			read name </proc/sys/kernel/hostname && echo "$name"
+			read name </proc/sys/kernel/hostname && printf '%s\n' "$name"
 		elif command -v hostname >/dev/null 2>/dev/null; then
 			hostname
 		elif sysctl kern.hostname >/dev/null 2>&1; then
@@ -38,7 +41,7 @@ _hostname()
 	fi
 
 	if [ -w /proc/sys/kernel/hostname ]; then
-		echo "$1" >/proc/sys/kernel/hostname
+		printf '%s\n' "$1" >/proc/sys/kernel/hostname
 	elif [ -n "$1" ] && command -v hostname >/dev/null 2>&1; then
 		hostname "$1"
 	elif sysctl kern.hostname >/dev/null 2>&1; then

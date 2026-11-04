@@ -1,6 +1,6 @@
 
 #------------------------------------------------------------------------------
-# $File: database,v 1.69 2023/01/12 00:14:04 christos Exp $
+# $File: database,v 1.75 2025/11/10 16:06:19 christos Exp $
 # database:  file(1) magic for various databases
 #
 # extracted from header/code files by Graeme Wilford (eep2gw@ee.surrey.ac.uk)
@@ -740,13 +740,6 @@
 >32	lelong	0x2601196D		version 6, little-endian
 >>36	lelong	x			hash size %d bytes
 
-# SE Linux policy database
-0       lelong  0xf97cff8c      SE Linux policy
->16     lelong  x               v%d
->20     lelong  1      MLS
->24     lelong  x       %d symbols
->28     lelong  x       %d ocons
-
 # ICE authority file data (Wolfram Kleff)
 2	string		ICE		ICE authority data
 
@@ -820,7 +813,9 @@
 0	string		ZEC3	Zope Object Database Client Cache File (data)
 
 # IDA (Interactive Disassembler) database
+0	string		IDA0	IDA (Interactive Disassembler) database
 0	string		IDA1	IDA (Interactive Disassembler) database
+0	string		IDA2	IDA (Interactive Disassembler) database
 
 # Hopper (reverse engineering tool) https://www.hopperapp.com/
 0	string		hopperdb	Hopper database
@@ -871,8 +866,31 @@
 # Used by older versions of Mozilla Suite and Firefox,
 # and current versions of Thunderbird.
 # From: David Korth <gerbilsoft@gerbilsoft.com>
+# Update:	Joerg Jenderek
+# URL:		http://fileformats.archiveteam.org/wiki/Mork
+#		https://en.wikipedia.org/wiki/Mork_(file_format)
+# Note:		called "Mork" by DROID via fmt/612
 0	string	//\ <!--\ <mdb:mork:z\ v="	Mozilla Mork database
+# display Mozilla Mork database (strength=260=260+0) before "exported SGML document" (strength=28=38-10) via ./sgml
+#!:strength +0
+#!:mime	text/plain
+!:mime	text/x-mozilla-mork
+# version like 1.4
 >23	string	x		\b, version %.3s
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/d/msf.trid.xml
+# Note:		called "Mozilla Mail Summary file" by TrID
+>26	search/7516	mailboxName		\b, Mail Summary file
+# like: Archives.msf Drafts.msf INBOX.msf Junk.msf Sent.msf Templates.msf Trash.msf 
+!:ext						msf
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/m/mab.trid.xml
+# Note:		called "Mozilla Address Book" by TrID
+>26	search/192	addrbk			\b, Address Book
+!:ext						mab
+# Reference:	http://mark0.net/download/triddefs_xml.7z/defs/d/dat-mork.trid.xml
+# Note:		called "Mozilla Mail folder cache" by TrID
+>26	search/210	indexingPriority	\b, Mail folder cache
+# panacea.dat
+!:ext						dat
 
 # URL:		https://en.wikipedia.org/wiki/Management_Information_Format
 # Reference:	https://www.dmtf.org/sites/default/files/standards/documents/DSP0005.pdf
@@ -884,3 +902,110 @@
 !:mime	text/x-dmtf-mif
 !:ext	mif
 
+# https://github.com/boltdb/bolt
+# https://github.com/etcd-io/bbolt 
+# See magic value here: https://github.com/boltdb/bolt/blob/fd01fc79c553a8e99d512a07e8e0c63d4a3ccfc5/db.go#L24
+# The magic value is written according to endianess of the host,
+# so we check both to detect them also on hosts with differnet endianess
+16      lelong    0xED0CDAED      BoltDB database
+16      belong    0xED0CDAED      BoltDB database, big-endian
+
+# https://en.wikipedia.org/wiki/HCL_Notes
+0	string	\x1A\x00\x00\x03\x00\x00	Notes Storage Facility database
+
+# PostgreSQL WAL segment
+# repo: https://git.postgresql.org/gitweb/?p=postgresql.git;a=summary
+# file: src/include/access/xlog_internal.h
+# header structure is XLogPageHeaderData+XLogLongPageHeaderData
+# magic header numbers are defined in XLOG_PAGE_MAGIC
+# The magic number is too short to safely identify a file; but since the
+# WAL log pages repeat in a file, we can test the magic number on the
+# headers of more than one page to make a safer match. Two is ok for now.
+
+0        short 0xd118
+(0x24.l) short 0xd118 PostgreSQL 18 
+>0 use pgwal
+
+0        short 0xd116
+(0x24.l) short 0xd116 PostgreSQL 17 
+>0 use pgwal
+
+0        short 0xd113
+(0x24.l) short 0xd113 PostgreSQL 16 
+>0 use pgwal
+
+0        short 0xd110
+(0x24.l) short 0xd110 PostgreSQL 15 
+>0 use pgwal
+
+0        short 0xd10d
+(0x24.l) short 0xd10d PostgreSQL 14 
+>0 use pgwal
+
+0        short 0xd106
+(0x24.l) short 0xd106 PostgreSQL 13 
+>0 use pgwal
+
+0        short 0xd101
+(0x24.l) short 0xd101 PostgreSQL 12 
+>0 use pgwal
+
+0        short 0xd098
+(0x24.l) short 0xd098 PostgreSQL 11 
+>0 use pgwal
+
+0        short 0xd097
+(0x24.l) short 0xd097 PostgreSQL 10 
+>0 use pgwal
+
+0        short 0xd093
+(0x24.l) short 0xd093 PostgreSQL 9.6 
+>0 use pgwal
+
+0        short 0xd087
+(0x24.l) short 0xd087 PostgreSQL 9.5 
+>0 use pgwal
+
+0        short 0xd07e
+(0x24.l) short 0xd07e PostgreSQL 9.4 
+>0 use pgwal
+
+0        short 0xd075
+(0x24.l) short 0xd075 PostgreSQL 9.3 
+>0 use pgwal
+
+0        short 0xd071
+(0x24.l) short 0xd071 PostgreSQL 9.2 
+>0 use pgwal
+
+0        short 0xd066
+(0x24.l) short 0xd066 PostgreSQL 9.1 
+>0 use pgwal
+
+0        short 0xd064
+(0x24.l) short 0xd064 PostgreSQL 9.0 
+>0 use pgwal
+
+0        short 0xd063
+(0x24.l) short 0xd063 PostgreSQL 8.4 
+>0 use pgwal
+
+0        short 0xd062
+(0x24.l) short 0xd062 PostgreSQL 8.3 
+>0 use pgwal
+
+0        short 0xd05e
+(0x24.l) short 0xd05e PostgreSQL 8.2 
+>0 use pgwal
+
+0        short 0xd05d
+(0x24.l) short 0xd05d PostgreSQL 8.1 
+>0 use pgwal
+
+0        short 0xd05c
+(0x24.l) short 0xd05c PostgreSQL 8.0 
+>0 use pgwal
+
+0     name  pgwal     WAL segment file
+>0x18 quad  x         (System ID %lld,
+>0x04 long  x         Timeline %d)

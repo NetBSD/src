@@ -7,6 +7,8 @@ bignum.h
 bit_fix.h
 cgen.c
 cgen.h
+codeview.c
+codeview.h
 compress-debug.c
 compress-debug.h
 cond.c
@@ -15,10 +17,9 @@ config/atof-vax.c
 config/bfin-lex-wrapper.c
 config/e-crisaout.c
 config/e-criself.c
-config/e-i386aout.c
-config/e-i386coff.c
-config/e-i386elf.c
 config/e-mipself.c
+config/kvx-parse.c
+config/kvx-parse.h
 config/obj-aout.c
 config/obj-aout.h
 config/obj-coff.c
@@ -85,6 +86,8 @@ config/tc-ip2k.c
 config/tc-ip2k.h
 config/tc-iq2000.c
 config/tc-iq2000.h
+config/tc-kvx.c
+config/tc-kvx.h
 config/tc-lm32.c
 config/tc-lm32.h
 config/tc-loongarch.c
@@ -119,8 +122,6 @@ config/tc-mt.c
 config/tc-mt.h
 config/tc-nds32.c
 config/tc-nds32.h
-config/tc-nios2.c
-config/tc-nios2.h
 config/tc-ns32k.c
 config/tc-ns32k.h
 config/tc-or1k.c
@@ -198,7 +199,6 @@ config/te-go32.h
 config/te-hppa.h
 config/te-hppa64.h
 config/te-hppalinux64.h
-config/te-ia64aix.h
 config/te-interix.h
 config/te-lynx.h
 config/te-macos.h
@@ -207,7 +207,6 @@ config/te-nbsd532.h
 config/te-pc532mach.h
 config/te-pe.h
 config/te-solaris.h
-config/te-svr4.h
 config/te-tmips.h
 config/te-vms.c
 config/te-vxworks.h
@@ -232,6 +231,10 @@ flonum-mult.c
 flonum.h
 frags.c
 frags.h
+gen-sframe.c
+gen-sframe.h
+ginsn.c
+ginsn.h
 hash.c
 hash.h
 input-file.c
@@ -254,6 +257,11 @@ read.h
 remap.c
 sb.c
 sb.h
+scfi.c
+scfi.h
+scfidw2gen.c
+scfidw2gen.h
+sframe-opt.c
 stabs.c
 subsegs.c
 subsegs.h

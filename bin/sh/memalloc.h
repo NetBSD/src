@@ -1,4 +1,4 @@
-/*	$NetBSD: memalloc.h,v 1.20.4.1 2025/08/02 05:18:26 perseant Exp $	*/
+/*	$NetBSD: memalloc.h,v 1.20.4.2 2026/11/04 22:36:15 perseant Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -58,7 +58,7 @@ void rststackmark(struct stackmark *);
 void growstackblock(void);
 void grabstackblock(int);
 char *growstackstr(void);
-char *makestrspace(void);
+char *makestrspace(int);
 void ungrabstackstr(char *, char *);
 
 char *ststrcat(size_t *, ...);
@@ -70,12 +70,13 @@ char *ststrcat(size_t *, ...);
 #define stackblocksize() stacknleft
 #define STARTSTACKSTR(p)	p = stackblock(), sstrnleft = stackblocksize()
 #define STPUTC(c, p)	(--sstrnleft >= 0? (*p++ = (c)) : (p = growstackstr(), *p++ = (c)))
-#define CHECKSTRSPACE(n, p)	{ if (sstrnleft < n) p = makestrspace(); }
+#define CHECKSTRSPACE(n, p)	{ if (sstrnleft < n) p = makestrspace(n); }
 #define USTPUTC(c, p)	(--sstrnleft, *p++ = (c))
 #define STACKSTRNUL(p)	(sstrnleft == 0? (p = growstackstr(), sstrnleft++, *p = '\0') : (*p = '\0'))
 #define STUNPUTC(p)	(++sstrnleft, --p)
 #define STTOPC(p)	p[-1]
 #define STADJUST(amount, p)	(p += (amount), sstrnleft -= (amount))
+#define STSTRLEN()	(stackblocksize() - sstrnleft)
 #define grabstackstr(p)	stalloc((p) - stackblock())
 
 #define ckfree(p)	free((pointer)(p))

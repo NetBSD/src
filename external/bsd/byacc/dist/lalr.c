@@ -1,10 +1,10 @@
-/*	$NetBSD: lalr.c,v 1.11.8.1 2025/08/02 05:20:54 perseant Exp $	*/
+/*	$NetBSD: lalr.c,v 1.11.8.2 2026/11/04 22:37:23 perseant Exp $	*/
 
 #include "defs.h"
-/* Id: lalr.c,v 1.14 2021/05/20 23:57:23 tom Exp  */
+/* Id: lalr.c,v 1.16 2025/10/08 00:22:08 tom Exp  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lalr.c,v 1.11.8.1 2025/08/02 05:20:54 perseant Exp $");
+__RCSID("$NetBSD: lalr.c,v 1.11.8.2 2026/11/04 22:37:23 perseant Exp $");
 
 typedef struct shorts
 {
@@ -116,7 +116,7 @@ static void
 set_maxrhs(void)
 {
     Value_t *itemp;
-    Value_t *item_end;
+    const Value_t *item_end;
     int length;
     int max;
 
@@ -530,7 +530,9 @@ static void
 compute_lookaheads(void)
 {
     int i, n;
-    unsigned *fp1, *fp2, *fp3;
+    unsigned *fp1;
+    const unsigned *fp2;
+    unsigned *fp3;
     shorts *sp, *next;
     unsigned *rowp;
 
@@ -590,9 +592,9 @@ traverse(int i)
 {
     unsigned *fp1;
     unsigned *fp2;
-    unsigned *fp3;
+    const unsigned *fp3;
     int j;
-    Value_t *rp;
+    const Value_t *rp;
 
     Value_t height;
     unsigned *base;
@@ -645,7 +647,7 @@ traverse(int i)
 void
 lalr_leaks(void)
 {
-    if (includes != 0)
+    if (includes != NULL)
     {
 	int i;
 

@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -194,7 +194,7 @@ private:
   ValueTag valtype;                 // e.g. VT_LLONG
   long long precision;              // e.g. METRIC_SIG_PRECISION, 1, etc.
   Hwcentry *hw_ctr;                 // HWC definition
-  ProfData_type packet_type;        // e.g. DATA_HWC, or -1 for N/A
+  ProfData_type packet_type;        // e.g. DATA_HWC, or DATA_NONE for N/A
   bool zeroThreshold;               // deadlock stuff
   Presentation_clock_unit clock_unit;
 

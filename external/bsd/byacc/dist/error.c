@@ -1,10 +1,10 @@
-/*	$NetBSD: error.c,v 1.14.12.1 2025/08/02 05:20:54 perseant Exp $	*/
+/*	$NetBSD: error.c,v 1.14.12.2 2026/11/04 22:37:23 perseant Exp $	*/
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: error.c,v 1.14.12.1 2025/08/02 05:20:54 perseant Exp $");
-/* Id: error.c,v 1.17 2023/05/18 21:38:35 tom Exp  */
+__RCSID("$NetBSD: error.c,v 1.14.12.2 2026/11/04 22:37:23 perseant Exp $");
+/* Id: error.c,v 1.18 2024/12/14 14:34:34 tom Exp  */
 
 /* routines for printing error messages  */
 
@@ -53,7 +53,7 @@ print_pos(const char *st_line, const char *st_cptr)
 {
     const char *s;
 
-    if (st_line == 0)
+    if (st_line == NULL)
 	return;
     for (s = st_line; *s != '\n'; ++s)
     {

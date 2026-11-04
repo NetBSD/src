@@ -1,5 +1,5 @@
 .TH SLAPO-RWM 5 "RELEASEDATE" "OpenLDAP LDVERSION"
-.\" Copyright 1998-2021 The OpenLDAP Foundation, All Rights Reserved.
+.\" Copyright 1998-2024 The OpenLDAP Foundation, All Rights Reserved.
 .\" Copying restrictions apply.  See the COPYRIGHT file.
 .\" Copyright 2004, Pierangelo Masarati, All rights reserved. <ando@sys-net.it>
 .\" $OpenLDAP$
@@ -243,7 +243,7 @@ code set to
 .BR n ;
 or, in other words, `@' is equivalent to `U{0}'.
 Positive errors are allowed, indicating the related LDAP error codes
-as specified in \fIdraft-ietf-ldapbis-protocol\fP.
+as specified in \fIRFC4511\fP.
 .LP
 The ordering of the flags can be significant.
 For instance: `IG{2}' means ignore errors and jump two lines ahead
@@ -492,6 +492,37 @@ LDAP map, the
 portion must contain exactly one attribute, and if
 a multi-valued attribute is used, only the first value is considered.
 
+.TP
+.B escape [escape2dn|escape2filter|unescapedn|unescapefilter]...
+The
+.B escape
+map makes it possible use DNs or their parts in filter strings and vice versa.
+It processes a value according to the operations listed in order. Supported
+operations include:
+
+.RS
+.TP
+.B escape2dn
+takes a string and escapes it so it can safely be pasted in a DN
+.TP
+.B escape2filter
+takes a string and escapes it so it can safely be pasted in a filter
+.TP
+.B unescapedn
+takes a string and undoes DN escaping
+.TP
+.B unescapefilter
+takes a string and undoes filter escaping
+.RE
+
+.RS
+It is advised that each
+.B escape
+map ends with an
+.B escape
+operation as that is the only safe way to handle arbitrary strings.
+.RE
+
 .SH "REWRITE CONFIGURATION EXAMPLES"
 .nf
 # set to `off' to disable rewriting
@@ -566,6 +597,9 @@ rwm\-rewriteContext  searchEntryDN
 rwm\-rewriteRule     "(.*[^ ],)?[ ]?dc=OpenLDAP,[ ]?dc=org$"
                 "${>eatBlanks($1)}dc=home,dc=net"    ":"
 
+# Transform a DN value such that it can be used in a filter
+rwm\-rewriteMap escape dn2filter unescapedn escape2filter
+
 # Bind with email instead of full DN: we first need
 # an ldap map that turns attributes into a DN (the
 # argument used when invoking the map is appended to 
@@ -579,8 +613,13 @@ rwm\-rewriteMap ldap attr2dn "ldap://host/dc=my,dc=org?dn?sub"
 # to real naming contexts, we also need to rewrite
 # regular DNs, because the definition of a bindDN
 # rewrite context overrides the default definition.
+#
+# While actual email addresses tend not to contain filter
+# special characters, the provided Bind DN has no such
+# restrictions.
 rwm\-rewriteContext bindDN
-rwm\-rewriteRule "^mail=[^,]+@[^,]+$" "${attr2dn($0)}" ":@I"
+rwm\-rewriteRule "^(mail=)([^,]+@[^,]+)$"
+                "${attr2dn($1${dn2filter($2)})}" ":@I"
 
 # This is a rather sophisticated example. It massages a
 # search filter in case who performs the search has

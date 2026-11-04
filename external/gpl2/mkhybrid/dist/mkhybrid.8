@@ -124,6 +124,10 @@ mkhybrid \- create an hybrid ISO9660/JOLIET/HFS filesystem with optional Rock Ri
 .I TABLE_NAME
 ]
 [
+.B \-timestamp
+.I seconds
+]
+[
 .B \-v
 ]
 [
@@ -456,6 +460,15 @@ the
 option may only be uses in conjunction with the
 .B \-M
 option.
+.TP
+.BI \-timestamp " seconds
+Set every time in the volume to
+.I seconds
+since the epoch, for fully-reproducible output from identical input.
+The
+.B SOURCE_DATE_EPOCH
+environment variable, if set, has the same effect; if both are set, the
+option takes precedence.
 .TP
 .BI \-c " boot_catalog
 Specifies the path and filename of the boot catalog to be used when making

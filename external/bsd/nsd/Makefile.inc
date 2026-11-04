@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.8.2.1 2025/08/02 05:22:07 perseant Exp $
+# $NetBSD: Makefile.inc,v 1.8.2.2 2026/11/04 22:38:38 perseant Exp $
 
 .include <bsd.own.mk>
 
@@ -7,7 +7,8 @@ USE_FORT?= yes  # network client/server
 NSD:=${.PARSEDIR}/dist
 
 CPPFLAGS+=-D_NETBSD_SOURCE
-CPPFLAGS+=-I${NSD} -I${NSD}/../include
+CPPFLAGS+=-I${NSD} -I${NSD}/../include -I${NSD}/simdzone/include
+
 .PATH: ${NSD}
 
 .if (${USE_INET6} != "no")
@@ -23,7 +24,6 @@ DPLIBS+= ssl ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libs
 DPLIBS+= crypto ${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 DPLIBS+= crypt ${NETBSDSRCDIR}/lib/libcrypt
 DPLIBS+= util ${NETBSDSRCDIR}/lib/libutil
-DPLIBS+= pthread ${NETBSDSRCDIR}/lib/libpthread
 
 __subst: .USE
 	${TOOL_SED} \

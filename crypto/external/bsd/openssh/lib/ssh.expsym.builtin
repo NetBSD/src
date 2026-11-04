@@ -1,0 +1,5 @@
+aesctr_encrypt_bytes
+aesctr_ivsetup
+aesctr_keysetup
+rijndaelEncrypt
+rijndaelKeySetupEnc

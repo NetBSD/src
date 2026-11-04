@@ -1,4 +1,7 @@
-#	$NetBSD: Makefile,v 1.5 2019/09/23 13:42:33 christos Exp $
+#	$NetBSD: Makefile,v 1.5.10.1 2026/11/04 22:36:55 perseant Exp $
+
+CDMAKEFSEXTRAOPTS=	-m 700m
+
 CDBASE=		macppccd		# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
 CDRELEASE_NODEBUG=	true

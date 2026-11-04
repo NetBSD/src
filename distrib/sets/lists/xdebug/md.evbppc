@@ -1,8 +1,10 @@
-# $NetBSD: md.evbppc,v 1.5.2.1 2025/08/02 05:20:37 perseant Exp $
+# $NetBSD: md.evbppc,v 1.5.2.2 2026/11/04 22:37:06 perseant Exp $
 #
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug		xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug		xdebug-xorg-server-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	xdebug-dri-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.2.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/modesetting_drv.so.0.debug	xdebug-modesetting-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	xdebug-xf86-video-wsfb-debug	xorg,debug

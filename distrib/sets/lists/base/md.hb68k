@@ -1,0 +1,8 @@
+# $NetBSD: md.hb68k,v 1.1.2.2 2026/11/04 22:36:58 perseant Exp $
+#
+./usr/bin/fdformat				base-util-bin
+./usr/sbin/ofctl				base-sysutil-bin
+./usr/share/sysinst/catalog/sysinstmsgs.de	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.es	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.fr	base-util-share
+./usr/share/sysinst/catalog/sysinstmsgs.pl	base-util-share

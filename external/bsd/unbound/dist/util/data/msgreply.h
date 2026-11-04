@@ -44,6 +44,10 @@
 #include "util/storage/lruhash.h"
 #include "util/data/packed_rrset.h"
 #include "sldns/rrdef.h"
+#ifdef __QNX__
+/* For struct timeval */
+#include <sys/time.h>
+#endif /* __QNX__ */
 struct sldns_buffer;
 struct comm_reply;
 struct alloc_cache;
@@ -58,10 +62,7 @@ struct msg_parse;
 struct rrset_parse;
 struct local_rrset;
 struct dns_msg;
-
-/** calculate the prefetch TTL as 90% of original. Calculation
- * without numerical overflow (uin32_t) */
-#define PREFETCH_TTL_CALC(ttl) ((ttl) - (ttl)/10)
+enum comm_point_type;
 
 /**
  * Structure to store query information that makes answers to queries
@@ -144,7 +145,7 @@ struct reply_info {
 	/** 32 bit padding to pad struct member alignment to 64 bits. */
 	uint32_t padding;
 
-	/** 
+	/**
 	 * TTL of the entire reply (for negative caching).
 	 * only for use when there are 0 RRsets in this message.
 	 * if there are RRsets, check those instead.
@@ -157,11 +158,23 @@ struct reply_info {
 	 */
 	time_t prefetch_ttl;
 
-	/** 
+	/**
 	 * Reply TTL extended with serve expired TTL, to limit time to serve
 	 * expired message.
 	 */
 	time_t serve_expired_ttl;
+
+	/**
+	 * TTL for an expired entry to be used without attempting recursion
+	 * since a previous recursion attempt failed to update the message.
+	 * This is just an efficiency timer when serve-expired-client-timeout
+	 * is configured. It will make Unbound immediately reply with the
+	 * expired entry instead of trying resolution first.
+	 * It is set on cached entries by modules that identified problems
+	 * while resolving, e.g., failed upstreams from Iterator, or failed
+	 * validation from Validator.
+	 */
+	time_t serve_expired_norec_ttl;
 
 	/**
 	 * The security status from DNSSEC validation of this message.
@@ -243,6 +256,7 @@ struct msgreply_entry {
  * @param ttl: TTL of replyinfo
  * @param prettl: prefetch ttl
  * @param expttl: serve expired ttl
+ * @param norecttl: serve expired no recursion ttl
  * @param an: an count
  * @param ns: ns count
  * @param ar: ar count
@@ -254,8 +268,8 @@ struct msgreply_entry {
  */
 struct reply_info*
 construct_reply_info_base(struct regional* region, uint16_t flags, size_t qd,
-	time_t ttl, time_t prettl, time_t expttl, size_t an, size_t ns,
-	size_t ar, size_t total, enum sec_status sec,
+	time_t ttl, time_t prettl, time_t expttl, time_t norecttl, size_t an,
+	size_t ns, size_t ar, size_t total, enum sec_status sec,
 	sldns_ede_code reason_bogus);
 
 /** 
@@ -325,6 +339,15 @@ void reply_info_sortref(struct reply_info* rep);
  * @param timenow: the current time.
  */
 void reply_info_set_ttls(struct reply_info* rep, time_t timenow);
+
+/**
+ * Set TTLs inside the replyinfo to the given absolute values.
+ * @param rep: reply info. rrsets must be filled in.
+ *	Also refs must be filled in.
+ * @param ttl: absolute ttl value to be set.
+ * @param ttl_add: the current time to be used verbatim for ttl_add in the rrsets.
+ */
+void reply_info_absolute_ttls(struct reply_info* rep, time_t ttl, time_t ttl_add);
 
 /** 
  * Delete reply_info and packed_rrsets (while they are not yet added to the
@@ -398,6 +421,24 @@ struct reply_info* reply_info_copy(struct reply_info* rep,
 int reply_info_alloc_rrset_keys(struct reply_info* rep,
 	struct alloc_cache* alloc, struct regional* region);
 
+/**
+ * Check if an *expired* (checked by the caller already) reply info can be used
+ * as an expired answer.
+ * @param rep: expired reply info to check.
+ * @param timenow: the current time.
+ * @return 1 if it can be used as an answer, 0 otherwise.
+ */
+int reply_info_can_answer_expired(struct reply_info* rep, time_t timenow);
+
+/**
+ * Check if an *expired* (checked by the caller already) reply info could be
+ * useful data to stay in the cache.
+ * @param rep: expired reply info to check.
+ * @param timenow: the current time.
+ * @return 1 if it is useful, 0 otherwise.
+ */
+int reply_info_could_use_expired(struct reply_info* rep, time_t timenow);
+
 /*
  * Create a new reply_info based on 'rep'.  The new info is based on
  * the passed 'rep', but ignores any rrsets except for the first 'an_numrrsets'
@@ -452,6 +493,9 @@ int reply_check_cname_chain(struct query_info* qinfo, struct reply_info* rep);
  *    True if there are zero RRs.
  */
 int reply_all_rrsets_secure(struct reply_info* rep);
+
+/** Check status of answer and authority section RRs. */
+int reply_an_ns_rrsets_secure(struct reply_info* rep);
 
 /**
  * Find answer rrset in reply, the one matching qinfo. Follows CNAMEs, so the
@@ -520,10 +564,15 @@ void log_dns_msg(const char* str, struct query_info* qinfo,
  * @param cached: whether or not the reply is coming from
  *                    the cache, or an outside network.
  * @param rmsg: sldns buffer packet.
+ * @param daddr: if not NULL, the destination address and port are logged.
+ * @param tp: type of the comm point for logging destination connection type.
+ * @param ssl: the SSL pointer of the connection, to see if the connection
+ *	type is tcp or dot.
  */
 void log_reply_info(enum verbosity_value v, struct query_info *qinf,
 	struct sockaddr_storage *addr, socklen_t addrlen, struct timeval dur,
-	int cached, struct sldns_buffer *rmsg);
+	int cached, struct sldns_buffer *rmsg, struct sockaddr_storage* daddr,
+	enum comm_point_type tp, void* ssl);
 
 /**
  * Print string with neat domain name, type, class from query info.
@@ -535,7 +584,7 @@ void log_query_info(enum verbosity_value v, const char* str,
 	struct query_info* qinf);
 
 /**
- * Append edns option to edns option list
+ * Append edns option to edns option list.
  * @param list: the edns option list to append the edns option to.
  * @param code: the edns option's code.
  * @param len: the edns option's length.
@@ -547,20 +596,23 @@ int edns_opt_list_append(struct edns_option** list, uint16_t code, size_t len,
         uint8_t* data, struct regional* region);
 
 /**
- * Append edns EDE option to edns options list
+ * Append edns EDE option to edns options list.
+ * We need ATTR_NONSTRING because we are trimming the trailing \0 of static
+ * string (TXT) when assigning to ede.text; it silences compiler nonstring
+ * warnings.
  * @param LIST: the edns option list to append the edns option to.
  * @param REGION: region to allocate the new edns option.
  * @param CODE: the EDE code.
- * @param TXT: Additional text for the option
+ * @param TXT: Additional text for the option.
  */
 #define EDNS_OPT_LIST_APPEND_EDE(LIST, REGION, CODE, TXT) 		\
 	do {								\
 		struct {						\
 			uint16_t code;					\
-			char text[sizeof(TXT) - 1];			\
+			char ATTR_NONSTRING(text[sizeof(TXT) - 1]) ;	\
 		} ede = { htons(CODE), TXT };				\
                 verbose(VERB_ALGO, "attached EDE code: %d with"		\
-                        " message: %s", CODE, TXT);			\
+                        " message: '%s'", CODE, TXT);			\
 		edns_opt_list_append((LIST), LDNS_EDNS_EDE, 		\
 			sizeof(uint16_t) + sizeof(TXT) - 1,		\
 			(void *)&ede, (REGION));			\
@@ -763,5 +815,15 @@ int edns_opt_compare(struct edns_option* p, struct edns_option* q);
  * Compare edns option lists, also the order and contents of edns-options.
  */
 int edns_opt_list_compare(struct edns_option* p, struct edns_option* q);
+
+/**
+ * Swallow copy the local_alias into the given qname and qname_len.
+ * @param local_alias: the local_alias.
+ * @param qname: the qname to copy to.
+ * @param qname_len: the qname_len to copy to.
+ * @return false on current local_alias assumptions, true otherwise.
+ */
+int local_alias_shallow_copy_qname(struct local_rrset* local_alias, uint8_t** qname,
+	size_t* qname_len);
 
 #endif /* UTIL_DATA_MSGREPLY_H */

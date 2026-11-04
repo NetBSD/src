@@ -1,5 +1,5 @@
 /* size.c -- report size of various sections of an executable file.
-   Copyright (C) 1991-2022 Free Software Foundation, Inc.
+   Copyright (C) 1991-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -92,11 +92,12 @@ usage (FILE *stream, int status)
   -A|-B|-G  --format={sysv|berkeley|gnu}  Select output style (default is %s)\n\
   -o|-d|-x  --radix={8|10|16}         Display numbers in octal, decimal or hex\n\
   -t        --totals                  Display the total sizes (Berkeley only)\n\
+  -f                                  Ignored.\n\
             --common                  Display total size for *COM* syms\n\
             --target=<bfdname>        Set the binary file format\n\
             @<file>                   Read options from <file>\n\
-  -h        --help                    Display this information\n\
-  -v        --version                 Display the program's version\n\
+  -h|-H|-?  --help                    Display this information\n\
+  -v|-V     --version                 Display the program's version\n\
 \n"),
 #if BSD_DEFAULT
   "berkeley"
@@ -367,16 +368,15 @@ display_bfd (bfd *abfd)
 static void
 display_archive (bfd *file)
 {
-  bfd *arfile = (bfd *) NULL;
-  bfd *last_arfile = (bfd *) NULL;
-
+  bfd *last_arfile = NULL;
   for (;;)
     {
-      bfd_set_error (bfd_error_no_error);
-
-      arfile = bfd_openr_next_archived_file (file, arfile);
-      if (arfile == NULL)
+      bfd *arfile = bfd_openr_next_archived_file (file, last_arfile);
+      if (arfile == NULL
+	  || arfile == last_arfile)
 	{
+	  if (arfile != NULL)
+	    bfd_set_error (bfd_error_malformed_archive);
 	  if (bfd_get_error () != bfd_error_no_more_archived_files)
 	    {
 	      bfd_nonfatal (bfd_get_filename (file));
@@ -385,17 +385,10 @@ display_archive (bfd *file)
 	  break;
 	}
 
-      display_bfd (arfile);
-
       if (last_arfile != NULL)
-	{
-	  bfd_close (last_arfile);
+	bfd_close (last_arfile);
 
-	  /* PR 17512: file: a244edbc.  */
-	  if (last_arfile == arfile)
-	    return;
-	}
-
+      display_bfd (arfile);
       last_arfile = arfile;
     }
 
@@ -440,12 +433,9 @@ size_number (bfd_size_type num)
 {
   char buffer[40];
 
-  sprintf (buffer,
-	   (radix == decimal ? "%" BFD_VMA_FMT "u" :
-	   ((radix == octal) ? "0%" BFD_VMA_FMT "o" : "0x%" BFD_VMA_FMT "x")),
-	   num);
-
-  return strlen (buffer);
+  return sprintf (buffer, (radix == decimal ? "%" PRIu64
+			   : radix == octal ? "0%" PRIo64 : "0x%" PRIx64),
+		  (uint64_t) num);
 }
 
 static void
@@ -453,10 +443,9 @@ rprint_number (int width, bfd_size_type num)
 {
   char buffer[40];
 
-  sprintf (buffer,
-	   (radix == decimal ? "%" BFD_VMA_FMT "u" :
-	   ((radix == octal) ? "0%" BFD_VMA_FMT "o" : "0x%" BFD_VMA_FMT "x")),
-	   num);
+  sprintf (buffer, (radix == decimal ? "%" PRIu64
+		    : radix == octal ? "0%" PRIo64 : "0x%" PRIx64),
+	   (uint64_t) num);
 
   printf ("%*s", width, buffer);
 }

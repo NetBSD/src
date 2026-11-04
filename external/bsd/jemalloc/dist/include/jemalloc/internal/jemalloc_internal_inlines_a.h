@@ -1,23 +1,21 @@
 #ifndef JEMALLOC_INTERNAL_INLINES_A_H
 #define JEMALLOC_INTERNAL_INLINES_A_H
 
+#include "jemalloc/internal/jemalloc_preamble.h"
+#include "jemalloc/internal/arena.h"
+#include "jemalloc/internal/arenas_management.h"
 #include "jemalloc/internal/atomic.h"
 #include "jemalloc/internal/bit_util.h"
 #include "jemalloc/internal/jemalloc_internal_types.h"
+#include "jemalloc/internal/os.h"
 #include "jemalloc/internal/sc.h"
+#include "jemalloc/internal/tcache.h"
 #include "jemalloc/internal/ticker.h"
 
 JEMALLOC_ALWAYS_INLINE malloc_cpuid_t
 malloc_getcpu(void) {
 	assert(have_percpu_arena);
-#if defined(_WIN32)
-	return GetCurrentProcessorNumber();
-#elif defined(JEMALLOC_HAVE_SCHED_GETCPU)
-	return (malloc_cpuid_t)sched_getcpu();
-#else
-	not_reached();
-	return -1;
-#endif
+	return (malloc_cpuid_t)os_cpu_current();
 }
 
 /* Return the chosen arena index based on current cpu. */
@@ -29,8 +27,8 @@ percpu_arena_choose(void) {
 	assert(cpuid >= 0);
 
 	unsigned arena_ind;
-	if ((opt_percpu_arena == percpu_arena) || ((unsigned)cpuid < ncpus /
-	    2)) {
+	if ((opt_percpu_arena == percpu_arena)
+	    || ((unsigned)cpuid < ncpus / 2)) {
 		arena_ind = cpuid;
 	} else {
 		assert(opt_percpu_arena == per_phycpu_arena);

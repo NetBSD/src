@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17.2.1 2025/08/02 05:21:49 perseant Exp $
+#	$NetBSD: Makefile,v 1.17.2.2 2026/11/04 22:38:29 perseant Exp $
 
 .include <bsd.init.mk>
 
@@ -39,11 +39,11 @@ SRCS=		archive_acl.c \
 		archive_entry_stat.c \
 		archive_entry_strmode.c \
 		archive_entry_xattr.c \
-		archive_getdate.c \
 		archive_hmac.c \
 		archive_match.c \
 		archive_options.c \
 		archive_pack_dev.c \
+		archive_parse_date.c \
 		archive_pathmatch.c \
 		archive_ppmd7.c \
 		archive_ppmd8.c \
@@ -97,6 +97,7 @@ SRCS=		archive_acl.c \
 		archive_read_support_format_zip.c \
 		archive_string.c \
 		archive_string_sprintf.c \
+		archive_time.c \
 		archive_util.c \
 		archive_version_details.c \
 		archive_virtual.c \

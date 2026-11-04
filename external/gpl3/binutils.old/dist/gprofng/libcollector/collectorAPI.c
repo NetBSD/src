@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -26,16 +26,17 @@
 #include "collectorAPI.h"
 #include "gp-experiment.h"
 
-static void *__real_collector_sample = NULL;
-static void *__real_collector_pause = NULL;
-static void *__real_collector_resume = NULL;
-static void *__real_collector_terminate_expt = NULL;
-static void *__real_collector_func_load = NULL;
-static void *__real_collector_func_unload = NULL;
+static void (*__real_collector_sample)(const char *) = NULL;
+static void (*__real_collector_pause)() = NULL;
+static void (*__real_collector_resume)() = NULL;
+static void (*__real_collector_terminate_expt)() = NULL;
+static void (*__real_collector_func_load)(const char *, const char *,
+		const char *, void *, int, int, Lineno *) = NULL;
+static void (*__real_collector_func_unload)(void *) = NULL;
 
 #define INIT_API        if (init_API == 0) collectorAPI_initAPI()
 #define NULL_PTR(x)     (__real_##x == NULL)
-#define CALL_REAL(x)    (*(void(*)())__real_##x)
+#define CALL_REAL(x)    (__real_##x)
 #define CALL_IF_REAL(x) INIT_API; if (!NULL_PTR(x)) CALL_REAL(x)
 
 static int init_API = 0;

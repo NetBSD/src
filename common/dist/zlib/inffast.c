@@ -1,7 +1,7 @@
-/*	$NetBSD: inffast.c,v 1.5.8.1 2025/08/02 05:18:28 perseant Exp $	*/
+/*	$NetBSD: inffast.c,v 1.5.8.2 2026/11/04 22:36:16 perseant Exp $	*/
 
 /* inffast.c -- fast decoding
- * Copyright (C) 1995-2017 Mark Adler
+ * Copyright (C) 1995-2026 Mark Adler
  * For conditions of distribution and use, see copyright notice in zlib.h
  */
 
@@ -157,7 +157,8 @@ void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
                 dist += (unsigned)hold & ((1U << op) - 1);
 #ifdef INFLATE_STRICT
                 if (dist > dmax) {
-                    strm->msg = (char *)"invalid distance too far back";
+                    strm->msg = (z_const char *)
+                        "invalid distance too far back";
                     state->mode = BAD;
                     break;
                 }
@@ -170,8 +171,8 @@ void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
                     op = dist - op;             /* distance back in window */
                     if (op > whave) {
                         if (state->sane) {
-                            strm->msg =
-                                __UNCONST("invalid distance too far back");
+                            strm->msg = (z_const char *)
+                                "invalid distance too far back";
                             state->mode = BAD;
                             break;
                         }
@@ -267,7 +268,7 @@ void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
                 goto dodist;
             }
             else {
-                strm->msg = __UNCONST("invalid distance code");
+                strm->msg = (z_const char *)"invalid distance code";
                 state->mode = BAD;
                 break;
             }
@@ -282,7 +283,7 @@ void ZLIB_INTERNAL inflate_fast(z_streamp strm, unsigned start) {
             break;
         }
         else {
-            strm->msg = __UNCONST("invalid literal/length code");
+            strm->msg = (z_const char *)"invalid literal/length code";
             state->mode = BAD;
             break;
         }

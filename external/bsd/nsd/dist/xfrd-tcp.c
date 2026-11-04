@@ -24,13 +24,104 @@
 #include "xfrd.h"
 #include "xfrd-disk.h"
 #include "util.h"
-#ifdef HAVE_TLS_1_3
+#ifdef HAVE_SSL
 #include <openssl/ssl.h>
 #include <openssl/err.h>
+#include <openssl/x509.h>
+#include <openssl/evp.h>
 #endif
 
-#ifdef HAVE_TLS_1_3
+#ifdef HAVE_SSL
 void log_crypto_err(const char* str); /* in server.c */
+
+/* Extract certificate information for logging */
+void
+get_cert_info(SSL* ssl, region_type* region, char** cert_serial,
+              char** key_id, char** cert_algorithm, char** tls_version)
+{
+    X509* cert = NULL;
+    ASN1_INTEGER* serial = NULL;
+    EVP_PKEY* pkey = NULL;
+    unsigned char key_fingerprint[EVP_MAX_MD_SIZE];
+    unsigned int key_fingerprint_len = 0;
+    const EVP_MD* md = EVP_sha256();
+    const char* pkey_name = NULL;
+    const char* version_name = NULL;
+    int i;
+    char temp_buffer[1024]; /* Temporary buffer for serial number */
+
+    *cert_serial = NULL;
+    *key_id = NULL;
+    *cert_algorithm = NULL;
+    *tls_version = NULL;
+
+#ifdef HAVE_SSL_GET1_PEER_CERTIFICATE
+    cert = SSL_get1_peer_certificate(ssl);
+#else
+    cert = SSL_get_peer_certificate(ssl);
+#endif
+
+    if (!cert) {
+        return;
+    }
+
+    /* Get certificate serial number */
+    serial = X509_get_serialNumber(cert);
+    if (serial) {
+        BIGNUM* bn = ASN1_INTEGER_to_BN(serial, NULL);
+        if (bn) {
+            char* hex_serial = BN_bn2hex(bn);
+            if (hex_serial) {
+                snprintf(temp_buffer, sizeof(temp_buffer), "%s", hex_serial);
+                *cert_serial = region_strdup(region, temp_buffer);
+                OPENSSL_free(hex_serial);
+            }
+            BN_free(bn);
+        }
+    }
+
+    /* Get public key identifier (SHA-256 fingerprint) */
+    if (X509_pubkey_digest(cert, md, key_fingerprint, &key_fingerprint_len) == 1 && key_fingerprint_len >= 8) {
+        size_t id_len = 8; /* Use first 8 bytes as key identifier */
+        char key_id_buffer[17]; /* 8 bytes * 2 hex chars + null terminator */
+        for (i = 0; i < (int)id_len; i++) {
+            snprintf(key_id_buffer + (i * 2), sizeof(key_id_buffer) - (i * 2), "%02x", key_fingerprint[i]);
+        }
+        *key_id = region_strdup(region, key_id_buffer);
+    }
+
+    /* Get certificate algorithm using OpenSSL's native functions */
+    pkey = X509_get_pubkey(cert);
+    if (pkey) {
+#ifdef HAVE_EVP_PKEY_GET0_TYPE_NAME
+        pkey_name = EVP_PKEY_get0_type_name(pkey);
+#else
+        pkey_name = OBJ_nid2sn(EVP_PKEY_type(EVP_PKEY_id(pkey)));
+#endif
+        if (pkey_name) {
+            *cert_algorithm = region_strdup(region, pkey_name);
+        } else {
+            int pkey_type = EVP_PKEY_id(pkey);
+            char algo_buffer[32];
+            snprintf(algo_buffer, sizeof(algo_buffer), "Unknown(%d)", pkey_type);
+            *cert_algorithm = region_strdup(region, algo_buffer);
+        }
+        EVP_PKEY_free(pkey);
+    }
+
+    /* Get TLS version using OpenSSL's native function */
+    version_name = SSL_get_version(ssl);
+    if (version_name) {
+        *tls_version = region_strdup(region, version_name);
+    } else {
+        int version = SSL_version(ssl);
+        char version_buffer[16];
+        snprintf(version_buffer, sizeof(version_buffer), "Unknown(%d)", version);
+        *tls_version = region_strdup(region, version_buffer);
+    }
+
+    X509_free(cert);
+}
 
 static SSL_CTX*
 create_ssl_context()
@@ -304,7 +395,7 @@ xfrd_tcp_pipeline_create(region_type* region, int tcp_pipeline)
 	tp->unused = (uint16_t*)region_alloc_zero(region,
 		sizeof(tp->unused[0])*tp->pipe_num);
 	tp->tcp_r = xfrd_tcp_create(region, QIOBUFSZ);
-	tp->tcp_w = xfrd_tcp_create(region, 512);
+	tp->tcp_w = xfrd_tcp_create(region, QIOBUFSZ);
 	xfrd_tcp_pipeline_init(tp);
 	return tp;
 }
@@ -377,7 +468,8 @@ xfrd_tcp_pipeline_skip_id(struct xfrd_tcp_pipeline* tp, uint16_t id)
 
 void
 xfrd_setup_packet(buffer_type* packet,
-	uint16_t type, uint16_t klass, const dname_type* dname, uint16_t qid)
+	uint16_t type, uint16_t klass, const dname_type* dname, uint16_t qid,
+	int* apex_compress)
 {
 	/* Set up the header */
 	buffer_clear(packet);
@@ -391,6 +483,8 @@ xfrd_setup_packet(buffer_type* packet,
 	buffer_skip(packet, QHEADERSZ);
 
 	/* The question record. */
+	if(apex_compress)
+		*apex_compress = buffer_position(packet);
 	buffer_write(packet, dname_name(dname), dname->name_size);
 	buffer_write_u16(packet, type);
 	buffer_write_u16(packet, klass);
@@ -469,11 +563,14 @@ xfrd_acl_sockaddr_frm(acl_options_type* acl, struct sockaddr_in *frm)
 
 void
 xfrd_write_soa_buffer(struct buffer* packet,
-	const dname_type* apex, struct xfrd_soa* soa)
+	const dname_type* apex, struct xfrd_soa* soa, int apex_compress)
 {
 	size_t rdlength_pos;
 	uint16_t rdlength;
-	buffer_write(packet, dname_name(apex), apex->name_size);
+	if(apex_compress > 0 && apex_compress < (int)buffer_limit(packet) &&
+		apex->name_size > 1)
+		buffer_write_u16(packet, 0xc000 | apex_compress);
+	else	buffer_write(packet, dname_name(apex), apex->name_size);
 
 	/* already in network order */
 	buffer_write(packet, &soa->type, sizeof(soa->type));
@@ -482,9 +579,28 @@ xfrd_write_soa_buffer(struct buffer* packet,
 	rdlength_pos = buffer_position(packet);
 	buffer_skip(packet, sizeof(rdlength));
 
-	/* uncompressed dnames */
-	buffer_write(packet, soa->prim_ns+1, soa->prim_ns[0]);
-	buffer_write(packet, soa->email+1, soa->email[0]);
+	/* compress dnames to apex if possible */
+	if(apex_compress > 0 && apex_compress < (int)buffer_limit(packet) &&
+		apex->name_size > 1 && is_dname_subdomain_of_case(
+		soa->prim_ns+1, soa->prim_ns[0], dname_name(apex),
+		apex->name_size)) {
+		if(soa->prim_ns[0] > apex->name_size)
+			buffer_write(packet, soa->prim_ns+1, soa->prim_ns[0]-
+				apex->name_size);
+		buffer_write_u16(packet, 0xc000 | apex_compress);
+	} else {
+		buffer_write(packet, soa->prim_ns+1, soa->prim_ns[0]);
+	}
+	if(apex_compress > 0 && apex_compress < (int)buffer_limit(packet) &&
+		apex->name_size > 1 && is_dname_subdomain_of_case(soa->email+1,
+		soa->email[0], dname_name(apex), apex->name_size)) {
+		if(soa->email[0] > apex->name_size)
+			buffer_write(packet, soa->email+1, soa->email[0]-
+				apex->name_size);
+		buffer_write_u16(packet, 0xc000 | apex_compress);
+	} else {
+		buffer_write(packet, soa->email+1, soa->email[0]);
+	}
 
 	buffer_write(packet, &soa->serial, sizeof(uint32_t));
 	buffer_write(packet, &soa->refresh, sizeof(uint32_t));
@@ -879,14 +995,6 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 	if (zone->master->tls_auth_options &&
 		zone->master->tls_auth_options->auth_domain_name) {
 #ifdef HAVE_TLS_1_3
-		if (!setup_ssl(tp, set, zone->master->tls_auth_options->auth_domain_name)) {
-			log_msg(LOG_ERR, "xfrd: Cannot setup TLS on pipeline for %s to %s",
-					zone->apex_str, zone->master->ip_address_spec);
-			close(fd);
-			xfrd_set_refresh_now(zone);
-			return 0;
-		}
-
 		/* Load client certificate (if provided) */
 		if (zone->master->tls_auth_options->client_cert &&
 		    zone->master->tls_auth_options->client_key) {
@@ -903,6 +1011,29 @@ xfrd_tcp_open(struct xfrd_tcp_set* set, struct xfrd_tcp_pipeline* tp,
 			if (SSL_CTX_use_PrivateKey_file(set->ssl_ctx, zone->master->tls_auth_options->client_key, SSL_FILETYPE_PEM) != 1) {
 				log_msg(LOG_ERR, "xfrd tls: Unable to load private key from file %s", zone->master->tls_auth_options->client_key);
 			}
+
+			if (!SSL_CTX_check_private_key(set->ssl_ctx)) {
+				log_msg(LOG_ERR, "xfrd tls: Client private key from file %s does not match the certificate from file %s",
+				                 zone->master->tls_auth_options->client_key,
+				                 zone->master->tls_auth_options->client_cert);
+			}
+		/* If client certificate/private key loading has failed,
+		   client will not try to authenticate to the server but the connection
+		   will procceed and will be up to the server to allow or deny the
+		   unauthenticated connection. A server that does not enforce authentication
+		   (or a badly configured server?) might allow the transfer.
+		   XXX: Maybe we should close the connection now to make it obvious that
+		   there is something wrong from our side. Alternatively make it obvious
+		   to the operator that we're not being authenticated to the server.
+		*/
+		}
+
+		if (!setup_ssl(tp, set, zone->master->tls_auth_options->auth_domain_name)) {
+			log_msg(LOG_ERR, "xfrd: Cannot setup TLS on pipeline for %s to %s",
+					zone->apex_str, zone->master->ip_address_spec);
+			close(fd);
+			xfrd_set_refresh_now(zone);
+			return 0;
 		}
 
 		tp->handshake_done = 0;
@@ -978,20 +1109,28 @@ xfrd_tcp_setup_write_packet(struct xfrd_tcp_pipeline* tp, xfrd_zone_type* zone)
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request full zone transfer "
 						"(AXFR) for %s to %s",
 			zone->apex_str, zone->master->ip_address_spec));
+		VERBOSITY(3, (LOG_INFO, "request full zone transfer "
+						"(AXFR) for %s to %s",
+			zone->apex_str, zone->master->ip_address_spec));
 
 		xfrd_setup_packet(tcp->packet, TYPE_AXFR, CLASS_IN, zone->apex,
-			zone->query_id);
+			zone->query_id, NULL);
 		xfrd_prepare_zone_xfr(zone, TYPE_AXFR);
 	} else {
+		int apex_compress = 0;
 		DEBUG(DEBUG_XFRD,1, (LOG_INFO, "request incremental zone "
+						"transfer (IXFR) for %s to %s",
+			zone->apex_str, zone->master->ip_address_spec));
+		VERBOSITY(3, (LOG_INFO, "request incremental zone "
 						"transfer (IXFR) for %s to %s",
 			zone->apex_str, zone->master->ip_address_spec));
 
 		xfrd_setup_packet(tcp->packet, TYPE_IXFR, CLASS_IN, zone->apex,
-			zone->query_id);
+			zone->query_id, &apex_compress);
 		xfrd_prepare_zone_xfr(zone, TYPE_IXFR);
 		NSCOUNT_SET(tcp->packet, 1);
-		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk);
+		xfrd_write_soa_buffer(tcp->packet, zone->apex, &zone->soa_disk,
+			apex_compress);
 	}
 	if(zone->master->key_options && zone->master->key_options->tsig_key) {
 		xfrd_tsig_sign_request(
@@ -1513,7 +1652,7 @@ xfrd_tcp_read(struct xfrd_tcp_pipeline* tp)
 			/* fall through to remove zone from tp */
 			/* fallthrough */
 		case xfrd_packet_transfer:
-			if(zone->zone_options->pattern->multi_master_check) {
+			if(zone->zone_options->pattern->multi_primary_check) {
 				xfrd_tcp_release(xfrd->tcp_set, zone);
 				xfrd_make_request(zone);
 				break;

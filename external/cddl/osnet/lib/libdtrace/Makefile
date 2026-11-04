@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32.2.1 2025/08/02 05:24:33 perseant Exp $
+#	$NetBSD: Makefile,v 1.32.2.2 2026/11/04 22:40:59 perseant Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -129,7 +129,7 @@ LFLAGS+=-l
 
 YFLAGS+=-d
 
-CLEANFILES=	dt_errtags.c dt_names.c dt_grammar.h
+CLEANFILES+=	dt_errtags.c dt_names.c dt_grammar.h
 
 MKERRTAGS=${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/mkerrtags.sh 
 dt_errtags.c: ${MKERRTAGS} ${OPENSOLARIS_USR_DISTDIR}/lib/libdtrace/common/dt_errtags.h 
@@ -150,5 +150,7 @@ beforedepend:	dt_errtags.c dt_names.c
 LIBDPLIBS=	proc	${NETBSDSRCDIR}/external/bsd/libproc/lib
 
 COPTS.dt_link.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 10:? -Wno-restrict :}
+# GCC 14 is wrong.
+COPTS.dt_open.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 14:? -Wuse-after-free :}
 
 .include <bsd.lib.mk>

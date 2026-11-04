@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.47.2.1 2025/08/02 05:20:37 perseant Exp $
+# $NetBSD: mi,v 1.47.2.2 2026/11/04 22:37:06 perseant Exp $
 #
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
@@ -15,7 +15,7 @@
 ./usr/X11R7/lib/libXRes_g.a				xdebug-libXres-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXTrap_g.a				xdebug-obsolete xorg,obsolete
 ./usr/X11R7/lib/libXau_g.a				xdebug-libXau-debuglib	xorg,debuglib,compatx11file
-./usr/X11R7/lib/libXaw6_g.a				xdebug-libXaw6-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libXaw6_g.a				xdebug-obsolete	xorg,debuglib,compatx11file,obsolete
 ./usr/X11R7/lib/libXaw7_g.a				xdebug-libXaw-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXaw8_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libXcomposite_g.a			xdebug-libXcomposite-debuglib	xorg,debuglib,compatx11file
@@ -64,7 +64,6 @@
 ./usr/X11R7/lib/liblbxutil_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/liblisp_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libmp_g.a				xdebug-obsolete	xorg,obsolete
-./usr/X11R7/lib/libxcvt_g.a				xdebug-libxcvt-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libpciaccess_g.a			xdebug-libpciaccess-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libpixman-1_g.a				xdebug-pixman-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libpthread-stubs_g.a			xdebug-obsolete		obsolete
@@ -104,6 +103,7 @@
 ./usr/X11R7/lib/libxcb-xv_g.a				xdebug-libxcb-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libxcb-xvmc_g.a				xdebug-libxcb-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libxcb_g.a				xdebug-libxcb-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libxcvt_g.a				xdebug-libxcvt-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libxkbfile_g.a				xdebug-libxkbfile-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libxkbui_g.a				xdebug-libxkbui-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libxshmfence_g.a			xdebug-libxshmfence-debuglib	xorg,debuglib,compatx11file

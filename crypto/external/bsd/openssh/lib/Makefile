@@ -1,4 +1,19 @@
-#	$NetBSD: Makefile,v 1.38.2.1 2025/08/02 05:18:50 perseant Exp $
+#	$NetBSD: Makefile,v 1.38.2.2 2026/11/04 22:36:47 perseant Exp $
+
+# libssh is not meant for applications to link against -- it's a
+# private library of the ssh/sshd/&c. executables we ship.  So don't
+# expose the .so symlink or .a static library for applications to link
+# against.
+#
+# (We do, however, build compat libssh intentionally for other ABIs --
+# not because other-ABI applications might be linked against it, but
+# because other-ABI applications might _load_ other-ABI pam_ssh.so
+# which is legitimately linked against the private libssh.)
+#
+# Note that while NOLINKLIB suppresses _installing_ the .so symlink,
+# the .so symlink is still created in the objdir so bin/ssh can still
+# use it to link.
+NOLINKLIB=		# defined
 
 .include <bsd.own.mk>
 
@@ -23,25 +38,23 @@ cipher-chachapoly.c \
 cipher.c \
 cleanup.c \
 compat.c \
-dh.c \
 dispatch.c \
 dns.c \
 ed25519.c \
 fatal.c \
 freezero.c \
-hash.c \
+getexecpath.c \
 hmac.c \
 hostfile.c \
 kex.c \
+kexc25519.c \
 kex-names.c \
-kexdh.c \
-kexecdh.c \
 kexgen.c \
-kexgex.c \
-kexgexc.c \
+kexmlkem768ecdh.c \
 kexmlkem768x25519.c \
 kexsntrup761x25519.c \
 krl.c \
+libcrux-mlkem-mldsa.c \
 log.c \
 mac.c \
 match.c \
@@ -58,33 +71,31 @@ smult_curve25519_ref.c \
 sntrup761.c \
 ssh-ed25519.c \
 ssh-ed25519-sk.c \
+ssh-mldsa-eddsa.c \
 ssh-pkcs11.c \
 ssh-sk-client.c \
-ssh-xmss.c \
 sshbuf-getput-basic.c \
-sshbuf-getput-crypto.c \
 sshbuf-misc.c \
 sshbuf-io.c \
 sshbuf.c \
 ssherr.c \
-sshkey-xmss.c \
+ssherr-libcrypto.c \
 sshkey.c \
 ttymodes.c \
 uidswap.c \
 umac.c \
 umac128.c \
 utf8.c \
-xmalloc.c \
-xmss_commons.c \
-xmss_fast.c \
-xmss_hash.c \
-xmss_hash_address.c \
-xmss_wots.c
+xmalloc.c 
 
 OPENSSL_SRCS=\
+dh.c \
 digest-openssl.c \
-kexc25519.c \
-ssh-dss.c \
+kexdh.c \
+kexecdh.c \
+kexgex.c \
+kexgexc.c \
+sshbuf-getput-crypto.c \
 ssh-ecdsa.c \
 ssh-ecdsa-sk.c \
 ssh-rsa.c
@@ -92,15 +103,13 @@ ssh-rsa.c
 SRCS+=	fmt_scaled.c
 SRCS+=	readpassphrase.c getpeereid.c getrrsetbyname.c
 COPTS.monitor_fdpass.c+=-Wno-stack-protector
-COPTS.xmss_fast.c+=	-Wno-stack-protector
-COPTS.xmss_hash.c+=	-Wno-stack-protector
-COPTS.xmss_wots.c+=	-Wno-stack-protector
 COPTS.sntrup761.c+=	-Wno-stack-protector
 
-.if WITH_OPENSSL
+.ifdef WITH_OPENSSL
 SRCS+=		${OPENSSL_SRCS}
+LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
 .else
-SRCS+=		digest-libc.c
+SRCS+=		cipher-aesctr.c digest-libc.c rijndael.c
 .endif
 
 CPPFLAGS+= -DHAVE_BLF_H
@@ -108,8 +117,7 @@ CPPFLAGS+= -DHAVE_BLF_H
 CPPFLAGS+=	-I${SSHDIST}
 .PATH:		${SSHDIST}
 
-LIBDPLIBS+=	crypto	${NETBSDSRCDIR}/crypto/external/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
-		crypt	${NETBSDSRCDIR}/lib/libcrypt \
+LIBDPLIBS+=	crypt	${NETBSDSRCDIR}/lib/libcrypt \
 		z	${NETBSDSRCDIR}/lib/libz
 
 .for f in dns channels hostfile ssh-pkcs11
@@ -123,11 +131,13 @@ COPTS.hostfile.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.sshkey.c+=	${CC_WNO_FORMAT_TRUNCATION}
 COPTS.cipher.c+=	-Wno-error=deprecated-declarations
 COPTS.dh.c+=		-Wno-error=deprecated-declarations
+COPTS.digest-libc.c+=	-Wno-error=cast-function-type
+COPTS.ed25519.c+=	-Wno-error=deprecated-declarations
 COPTS.kex.c+=		-Wno-error=deprecated-declarations
+COPTS.kexmlkem768ecdh.c+=	-Wno-error=deprecated-declarations
 COPTS.kexdh.c+=		-Wno-error=deprecated-declarations
 COPTS.kexecdh.c+=	-Wno-error=deprecated-declarations
 COPTS.kexgexc.c+=	-Wno-error=deprecated-declarations
-COPTS.ssh-dss.c+=	-Wno-error=deprecated-declarations
 COPTS.ssh-ecdsa-sk.c+=	-Wno-error=deprecated-declarations
 COPTS.ssh-ecdsa.c+=	-Wno-error=deprecated-declarations
 COPTS.ssh-pkcs11.c+=	-Wno-error=deprecated-declarations
@@ -136,8 +146,22 @@ COPTS.sshbuf-getput-crypto.c+=	-Wno-error=deprecated-declarations
 COPTS.sshkey.c+=	-Wno-error=deprecated-declarations
 COPTS.umac.c+=		-Wno-error=deprecated-declarations
 COPTS.umac128.c+=	-Wno-error=deprecated-declarations
+COPTS.ssherr-libcrypto.c+=	-Wno-error=deprecated-declarations
 COPTS.kexmlkem768x25519.c+=${${ACTIVE_CC} == "clang":? -Wno-error=missing-noreturn:}
 
+EXPSYM_SRCS=	ssh.expsym.common
+.if ${WITH_OPENSSL:U0} == 1
+EXPSYM_SRCS+=	ssh.expsym.openssl
+.else
+EXPSYM_SRCS+=	ssh.expsym.builtin
+.endif
+
+LIB_EXPSYM=     ssh.expsym
+${LIB_EXPSYM}: ${EXPSYM_SRCS}
+	${_MKTARGET_CREATE}
+	LC_ALL=C sort -m ${.ALLSRC} > ${.TARGET}.tmp && \
+	${MV} ${.TARGET}.tmp ${.TARGET}
+CLEANFILES+=    ${LIB_EXPSYM} ${LIB_EXPSYM}.tmp
 
 
 .include <bsd.lib.mk>

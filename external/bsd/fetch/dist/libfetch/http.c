@@ -1,6 +1,6 @@
-/*	$NetBSD: http.c,v 1.5.2.1 2025/08/02 05:21:03 perseant Exp $	*/
+/*	$NetBSD: http.c,v 1.5.2.2 2026/11/04 22:37:38 perseant Exp $	*/
 /*-
- * Copyright (c) 2000-2004 Dag-Erling Coïdan Smørgrav
+ * Copyright (c) 2000-2004 Dag-Erling CoÃ¯dan SmÃ¸rgrav
  * Copyright (c) 2003 Thomas Klausner <wiz@NetBSD.org>
  * Copyright (c) 2008, 2009 Joerg Sonnenberger <joerg@NetBSD.org>
  * All rights reserved.
@@ -72,10 +72,8 @@
 #define _GNU_SOURCE
 #endif
 
-#ifndef _REENTRANT
 /* Needed for gmtime_r on Interix */
 #define _REENTRANT
-#endif
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -99,6 +97,9 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#if defined(__APPLE__)
+#include <xlocale.h>	/* for strptime_l */
+#endif
 #include <unistd.h>
 
 #include <netinet/in.h>
@@ -139,6 +140,7 @@
 
 #define HTTP_ERROR(xyz) ((xyz) > 400 && (xyz) < 599)
 
+static int http_cmd(conn_t *, const char *, ...) LIBFETCH_PRINTFLIKE(2, 3);
 
 /*****************************************************************************
  * I/O functions for decoding chunked streams
@@ -494,6 +496,16 @@ http_match(const char *str, const char *hdr)
 	return (hdr);
 }
 
+/* Remove whitespace at the end of the buffer */
+static void
+http_conn_trimright(conn_t *conn)
+{
+	while (conn->buflen &&
+	    isspace((unsigned char)conn->buf[conn->buflen - 1]))
+		conn->buflen--;
+	conn->buf[conn->buflen] = '\0';
+}
+
 /*
  * Get the next header and return the appropriate symbolic code.
  */
@@ -502,13 +514,20 @@ http_next_header(conn_t *conn, const char **p)
 {
 	int i;
 
-	if (fetch_getln(conn) == -1)
-		return (hdr_syserror);
-	while (conn->buflen && isspace((unsigned char)conn->buf[conn->buflen - 1]))
-		conn->buflen--;
-	conn->buf[conn->buflen] = '\0';
+	/*
+	 * Have to do the stripping here because of the first line. So
+	 * it's done twice for the subsequent lines. No big deal
+	 */
+	http_conn_trimright(conn);
+
 	if (conn->buflen == 0)
 		return (hdr_end);
+
+	if (fetch_getln(conn) == -1)
+		return (hdr_syserror);
+
+	http_conn_trimright(conn);
+
 	/*
 	 * We could check for malformed headers but we don't really care.
 	 * A valid header starts with a token immediately followed by a
@@ -538,15 +557,14 @@ http_parse_mtime(const char *p, time_t *mtime)
 	locale = strdup(setlocale(LC_TIME, NULL));
 	if (locale == NULL)
 		return (-1);
-
 	setlocale(LC_TIME, "C");
 	r = strptime(p, "%a, %d %b %Y %H:%M:%S GMT", &tm);
 	/* XXX should add support for date-2 and date-3 */
 	setlocale(LC_TIME, locale);
 	free(locale);
 #endif
- 	if (r == NULL)
- 		return (-1);
+	if (r == NULL)
+		return (-1);
 	*mtime = timegm(&tm);
 	return (0);
 }
@@ -621,13 +639,12 @@ http_base64(const char *src)
 	    "0123456789+/";
 	char *str, *dst;
 	size_t l;
-	unsigned int t, r;
+	int t;
 
 	l = strlen(src);
 	if ((str = malloc(((l + 2) / 3) * 4 + 1)) == NULL)
 		return (NULL);
 	dst = str;
-	r = 0;
 
 	while (l >= 3) {
 		t = (src[0] << 16) | (src[1] << 8) | src[2];
@@ -636,7 +653,7 @@ http_base64(const char *src)
 		dst[2] = base64[(t >> 6) & 0x3f];
 		dst[3] = base64[(t >> 0) & 0x3f];
 		src += 3; l -= 3;
-		dst += 4; r += 4;
+		dst += 4;
 	}
 
 	switch (l) {
@@ -647,7 +664,6 @@ http_base64(const char *src)
 		dst[2] = base64[(t >> 6) & 0x3f];
 		dst[3] = '=';
 		dst += 4;
-		r += 4;
 		break;
 	case 1:
 		t = src[0] << 16;
@@ -655,7 +671,6 @@ http_base64(const char *src)
 		dst[1] = base64[(t >> 12) & 0x3f];
 		dst[2] = dst[3] = '=';
 		dst += 4;
-		r += 4;
 		break;
 	case 0:
 		break;
@@ -804,6 +819,7 @@ http_connect(struct url *URL, struct url *purl, const char *flags, int *cached)
 #else
 		errno = EPERM;
 #endif
+		fetch_syserr();
 		goto ouch;
 	}
 
@@ -851,7 +867,7 @@ set_if_modified_since(conn_t *conn, time_t last_modified)
 	gmtime_r(&last_modified, &tm);
 	snprintf(buf, sizeof(buf), "%.3s, %02d %.3s %4ld %02d:%02d:%02d GMT",
 	    weekdays + tm.tm_wday * 3, tm.tm_mday, months + tm.tm_mon * 3,
-	    (long)tm.tm_year + 1900, tm.tm_hour, tm.tm_min, tm.tm_sec);
+	    (long)(tm.tm_year + 1900), tm.tm_hour, tm.tm_min, tm.tm_sec);
 	http_cmd(conn, "If-Modified-Since: %s\r\n", buf);
 }
 

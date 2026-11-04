@@ -204,7 +204,7 @@ struct query_info {
 
 %inline %{
    PyObject* dnameAsStr(PyObject* dname) {
-       char buf[LDNS_MAX_DOMAINLEN+1];
+       char buf[LDNS_MAX_DOMAINLEN];
        buf[0] = '\0';
        dname_str((uint8_t*)PyBytes_AsString(dname), buf);
        return PyString_FromString(buf);
@@ -729,11 +729,12 @@ struct module_env {
         int check_ratelimit,
         struct sockaddr_storage* addr, socklen_t addrlen,
         uint8_t* zone, size_t zonelen, int tcp_upstream, int ssl_upstream,
-        char* tls_auth_name, struct module_qstate* q, int* was_ratelimited);
+        char* tls_auth_name, struct module_qstate* q, int* was_ratelimited,
+        int* ratelimit_incremented);
     void (*detach_subs)(struct module_qstate* qstate);
     int (*attach_sub)(struct module_qstate* qstate,
-        struct query_info* qinfo, uint16_t qflags, int prime,
-        int valrec, struct module_qstate** newq);
+        struct query_info* qinfo, struct respip_client_info* cinfo,
+        uint16_t qflags, int prime, int valrec, struct module_qstate** newq);
     void (*kill_sub)(struct module_qstate* newq);
     int (*detect_cycle)(struct module_qstate* qstate,
         struct query_info* qinfo, uint16_t flags, int prime,
@@ -1009,6 +1010,7 @@ struct config_file {
    int harden_short_bufsize;
    int harden_large_queries;
    int harden_glue;
+   int harden_unverified_glue;
    int harden_dnssec_stripped;
    int harden_referral_path;
    int use_caps_bits_for_id;
@@ -1416,7 +1418,7 @@ struct delegpt* dns_cache_find_delegation(struct module_env* env,
 int iter_dp_is_useless(struct query_info* qinfo, uint16_t qflags,
         struct delegpt* dp, int supports_ipv4, int supports_ipv6, int use_nat64);
 struct iter_hints_stub* hints_lookup_stub(struct iter_hints* hints,
-        uint8_t* qname, uint16_t qclass, struct delegpt* dp);
+        uint8_t* qname, uint16_t qclass, struct delegpt* dp, int nolock);
 
 /* Custom function to perform logic similar to the one in daemon/cachedump.c */
 struct delegpt* find_delegation(struct module_qstate* qstate, char *nm, size_t nmlen);
@@ -1433,6 +1435,7 @@ struct delegpt* find_delegation(struct module_qstate* qstate, char *nm, size_t n
     struct query_info qinfo;
     struct iter_hints_stub* stub;
     uint32_t timenow = *qstate->env->now;
+    int nolock = 0;
 
     regional_free_all(region);
     qinfo.qname = (uint8_t*)nm;
@@ -1455,9 +1458,12 @@ struct delegpt* find_delegation(struct module_qstate* qstate, char *nm, size_t n
             dname_str((uint8_t*)nm, b);
             continue;
         }
-        stub = hints_lookup_stub(qstate->env->hints, qinfo.qname, qinfo.qclass, dp);
+        stub = hints_lookup_stub(qstate->env->hints, qinfo.qname,
+            qinfo.qclass, dp, nolock);
         if (stub) {
-            return stub->dp;
+            struct delegpt* stubdp = delegpt_copy(stub->dp, region);
+            lock_rw_unlock(&qstate->env->hints->lock);
+            return stubdp;
         } else {
             return dp;
         }

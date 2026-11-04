@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.49.2.1 2025/08/02 05:20:42 perseant Exp $
+$NetBSD: TODO.smpnet,v 1.49.2.2 2026/11/04 22:37:13 perseant Exp $
 
 MP-safe components
 ==================
@@ -17,6 +17,7 @@ kernel option.  Some components scale up and some don't.
    - ixl(4)
    - ixv(4)
    - mcx(4)
+   - re(4)
    - rge(4)
    - se(4)
    - sunxi_emac(4)

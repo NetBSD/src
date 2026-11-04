@@ -1,6 +1,6 @@
 ## Process this file with automake to generate Makefile.in
 #
-#   Copyright (C) 2021 Free Software Foundation, Inc.
+#   Copyright (C) 2021-2025 Free Software Foundation, Inc.
 #
 # This file is free software; you can redistribute it and/or modify
 # it under the terms of the GNU General Public License as published by
@@ -18,8 +18,6 @@
 
 AUTOMAKE_OPTIONS = foreign
 ACLOCAL_AMFLAGS = -I . -I ../.. 
-
-GPROFNG_VARIANT = @GPROFNG_VARIANT@
 
 CSOURCES = \
 	gethrtime.c \
@@ -46,7 +44,7 @@ AM_CPPFLAGS = $(GPROFNG_CPPFLAGS) -I.. -I$(srcdir) \
 	-I$(srcdir)/../common -I$(srcdir)/../src \
 	-I$(srcdir)/../../include
 AM_LDFLAGS = -module -avoid-version \
-	-Wl,--version-script,$(srcdir)/mapfile.$(GPROFNG_VARIANT) \
+	-Wl,--version-script,$(srcdir)/libgprofng.ver \
 	$(LD_NO_AS_NEEDED) -Wl,-lrt -Wl,-ldl
 
 myincludedir = @includedir@

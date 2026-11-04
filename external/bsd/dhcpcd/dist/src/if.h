@@ -1,6 +1,6 @@
-/* SPDX-License-Identifier: BSD-2-Clause */
 /*
  * dhcpcd - DHCP client daemon
+ * SPDX-License-Identifier: BSD-2-Clause
  * Copyright (c) 2006-2025 Roy Marples <roy@marples.name>
  * All rights reserved
 
@@ -30,17 +30,17 @@
 #define INTERFACE_H
 
 #include <net/if.h>
-#include <net/route.h>		/* for RTM_ADD et all */
+#include <net/route.h> /* for RTM_ADD et all */
 #include <netinet/in.h>
 #ifdef BSD
-#include <netinet/in_var.h>	/* for IN_IFF_TENTATIVE et all */
+#include <netinet/in_var.h> /* for IN_IFF_TENTATIVE et all */
 #endif
 
 #include <ifaddrs.h>
 
 /* If the interface does not support carrier status (ie PPP),
  * dhcpcd can poll it for the relevant flags periodically */
-#define IF_POLL_UP	100	/* milliseconds */
+#define IF_POLL_UP 100 /* milliseconds */
 
 /*
  * Systems which handle 1 address per alias.
@@ -52,9 +52,9 @@
  * restriction.
  */
 #ifndef ALIAS_ADDR
-#  ifdef __sun
-#    define ALIAS_ADDR
-#  endif
+#ifdef __sun
+#define ALIAS_ADDR
+#endif
 #endif
 
 #include "config.h"
@@ -63,9 +63,9 @@
  * Everyone else use an unsigned long, which happens to be the bigger one
  * so we use that in our on wire API. */
 #ifdef IOCTL_REQUEST_TYPE
-typedef IOCTL_REQUEST_TYPE	ioctl_request_t;
+typedef IOCTL_REQUEST_TYPE ioctl_request_t;
 #else
-typedef unsigned long		ioctl_request_t;
+typedef unsigned long ioctl_request_t;
 #endif
 
 #include "dhcpcd.h"
@@ -73,25 +73,25 @@ typedef unsigned long		ioctl_request_t;
 #include "ipv6.h"
 #include "route.h"
 
-#define EUI64_ADDR_LEN			8
-#define INFINIBAND_ADDR_LEN		20
+#define EUI64_ADDR_LEN	    8
+#define INFINIBAND_ADDR_LEN 20
 
 /* Linux 2.4 doesn't define this */
 #ifndef ARPHRD_IEEE1394
-#  define ARPHRD_IEEE1394		24
+#define ARPHRD_IEEE1394 24
 #endif
 
 /* The BSD's don't define this yet */
 #ifndef ARPHRD_INFINIBAND
-#  define ARPHRD_INFINIBAND		32
+#define ARPHRD_INFINIBAND 32
 #endif
 
 /* Maximum frame length.
  * Support jumbo frames and some extra. */
-#define	FRAMEHDRLEN_MAX			14	/* only ethernet support */
-#define	FRAMELEN_MAX			(FRAMEHDRLEN_MAX + 9216)
+#define FRAMEHDRLEN_MAX 14 /* only ethernet support */
+#define FRAMELEN_MAX	(FRAMEHDRLEN_MAX + 9216)
 
-#define UDPLEN_MAX			64 * 1024
+#define UDPLEN_MAX	64 * 1024
 
 /* Work out if we have a private address or not
  * 10/8
@@ -99,14 +99,15 @@ typedef unsigned long		ioctl_request_t;
  * 192.168/16
  */
 #ifndef IN_PRIVATE
-# define IN_PRIVATE(addr) (((addr & IN_CLASSA_NET) == 0x0a000000) ||	      \
-	    ((addr & 0xfff00000)    == 0xac100000) ||			      \
+#define IN_PRIVATE(addr)                           \
+	(((addr & IN_CLASSA_NET) == 0x0a000000) || \
+	    ((addr & 0xfff00000) == 0xac100000) || \
 	    ((addr & IN_CLASSB_NET) == 0xc0a80000))
 #endif
 
 #ifndef CLLADDR
 #ifdef AF_LINK
-#  define CLLADDR(sdl) (const void *)((sdl)->sdl_data + (sdl)->sdl_nlen)
+#define CLLADDR(sdl) (const void *)((sdl)->sdl_data + (sdl)->sdl_nlen)
 #endif
 #endif
 
@@ -127,7 +128,7 @@ struct priv {
 #ifdef INET6
 	int pf_inet6_fd;
 #endif
-#if defined(SIOCALIFADDR) && defined(IFLR_ACTIVE) /*NetBSD */
+#if (defined(SIOCALIFADDR) && defined(IFLR_ACTIVE)) || defined(SIOCGIFSTATUS)
 	int pf_link_fd;
 #endif
 };
@@ -152,24 +153,25 @@ struct priv {
  * See if-sun.c for details why. */
 struct ifaddrs;
 int if_getifaddrs(struct ifaddrs **);
-#define	getifaddrs	if_getifaddrs
+#define getifaddrs if_getifaddrs
 int if_getsubnet(struct dhcpcd_ctx *, const char *, int, void *, size_t);
 #endif
 
 int if_ioctl(struct dhcpcd_ctx *, ioctl_request_t, void *, size_t);
 #ifdef HAVE_PLEDGE
-#define	pioctl(ctx, req, data, len) if_ioctl((ctx), (req), (data), (len))
+#define pioctl(ctx, req, data, len) if_ioctl((ctx), (req), (data), (len))
 #else
-#define	pioctl(ctx, req, data, len) ioctl((ctx)->pf_inet_fd, (req),(data),(len))
+#define pioctl(ctx, req, data, len) \
+	ioctl((ctx)->pf_inet_fd, (req), (data), (len))
 #endif
 int if_setflag(struct interface *, short, short);
 int if_getmtu(const struct interface *);
-#define if_up(ifp) if_setflag((ifp), (IFF_UP | IFF_RUNNING), 0)
+#define if_up(ifp)   if_setflag((ifp), (IFF_UP | IFF_RUNNING), 0)
 #define if_down(ifp) if_setflag((ifp), 0, IFF_UP);
 bool if_is_link_up(const struct interface *);
 bool if_valid_hwaddr(const uint8_t *, size_t);
-struct if_head *if_discover(struct dhcpcd_ctx *, struct ifaddrs **,
-    int, char * const *);
+struct if_head *if_discover(struct dhcpcd_ctx *, struct ifaddrs **, int,
+    char *const *);
 void if_freeifaddrs(struct dhcpcd_ctx *ctx, struct ifaddrs **);
 void if_markaddrsstale(struct if_head *);
 void if_learnaddrs(struct dhcpcd_ctx *, struct if_head *, struct ifaddrs **);
@@ -204,14 +206,15 @@ int if_nametospec(const char *, struct if_spec *);
 
 /* The below functions are provided by if-KERNEL.c */
 int os_init(void);
-int if_conf(struct interface *);
-int if_init(struct interface *);
+int if_init(struct interface *);    /* init interface from kernel */
+int if_init_os(struct interface *); /* init kernel from interface */
+int if_conf(struct interface *);    /* finish configuration from kernel */
 int if_getssid(struct interface *);
 int if_ignoregroup(int, const char *);
 bool if_ignore(struct dhcpcd_ctx *, const char *);
 int if_vimaster(struct dhcpcd_ctx *ctx, const char *);
 unsigned short if_vlanid(const struct interface *);
-char * if_getnetworknamespace(char *, size_t); /* used by udev */
+char *if_getnetworknamespace(char *, size_t); /* used by udev */
 int if_opensockets(struct dhcpcd_ctx *);
 int if_opensockets_os(struct dhcpcd_ctx *);
 void if_closesockets(struct dhcpcd_ctx *);
@@ -224,26 +227,26 @@ int if_setmac(struct interface *ifp, void *, uint8_t);
  * If the platform doesn't use these flags,
  * map them in the platform interace file. */
 #ifndef RTM_ADD
-#define RTM_ADD		0x1	/* Add Route */
-#define RTM_DELETE	0x2	/* Delete Route */
-#define RTM_CHANGE	0x3	/* Change Metrics or flags */
-#define RTM_GET		0x4	/* Report Metrics */
+#define RTM_ADD	   0x1 /* Add Route */
+#define RTM_DELETE 0x2 /* Delete Route */
+#define RTM_CHANGE 0x3 /* Change Metrics or flags */
+#define RTM_GET	   0x4 /* Report Metrics */
 #endif
 
 /* Define SOCK_CLOEXEC and SOCK_NONBLOCK for systems that lack it.
  * xsocket() in if.c will map them to fctnl FD_CLOEXEC and O_NONBLOCK. */
 #ifdef SOCK_CLOEXEC
-# define HAVE_SOCK_CLOEXEC
+#define HAVE_SOCK_CLOEXEC
 #else
-# define SOCK_CLOEXEC	0x10000000
+#define SOCK_CLOEXEC 0x10000000
 #endif
 #ifdef SOCK_NONBLOCK
-# define HAVE_SOCK_NONBLOCK
+#define HAVE_SOCK_NONBLOCK
 #else
-# define SOCK_NONBLOCK	0x20000000
+#define SOCK_NONBLOCK 0x20000000
 #endif
 #ifndef SOCK_CXNB
-#define	SOCK_CXNB	SOCK_CLOEXEC | SOCK_NONBLOCK
+#define SOCK_CXNB SOCK_CLOEXEC | SOCK_NONBLOCK
 #endif
 int xsocket(int, int, int);
 int xsocketpair(int, int, int, int[2]);
@@ -280,8 +283,8 @@ int if_getlifetime6(struct ipv6_addr *);
 #endif
 
 int if_machinearch(char *, size_t);
-struct interface *if_findifpfromcmsg(struct dhcpcd_ctx *,
-    struct msghdr *, int *);
+struct interface *if_findifpfromcmsg(struct dhcpcd_ctx *, struct msghdr *,
+    int *);
 
 #ifdef __linux__
 int if_linksocket(struct sockaddr_nl *, int, int);

@@ -26,6 +26,13 @@
 
 #if !defined(_WIN32) || defined(__CYGWIN__)
 
+#ifdef HAVE_GETEUID
+#define getuid() geteuid()
+#endif
+#ifdef HAVE_GETEGID
+#define getgid() getegid()
+#endif
+
 #define UMASK 022
 
 static long _default_gid = -1;
@@ -94,21 +101,21 @@ searchgid(void)
 	close(fd);
 }
 
-static int
+static long
 altgid(void)
 {
 	searchgid();
 	return (_alt_gid);
 }
 
-static int
+static long
 invalidgid(void)
 {
 	searchgid();
 	return (_invalid_gid);
 }
 
-static int
+static long
 defaultgid(void)
 {
 	searchgid();
@@ -142,7 +149,7 @@ DEFINE_TEST(test_write_disk_perms)
 	 * and we're on a system where group ownership is inherited.
 	 * (Because we're not allowed to SGID files with defaultgid().)
 	 */
-	assertEqualInt(0, chown(".", getuid(), getgid()));
+	assertChown(".", getuid(), getgid());
 
 	/* Create an archive_write_disk object. */
 	assert((a = archive_write_disk_new()) != NULL);
@@ -208,7 +215,7 @@ DEFINE_TEST(test_write_disk_perms)
 	if (getuid() == 0) {
 		original_uid = getuid() + 1;
 		try_to_change_uid = getuid();
-		assertEqualInt(0, chown("dir_owner", original_uid, getgid()));
+		assertChown("dir_owner", original_uid, getgid());
 	} else {
 		original_uid = getuid();
 		try_to_change_uid = getuid() + 1;
@@ -216,7 +223,7 @@ DEFINE_TEST(test_write_disk_perms)
 
 	/* Check original owner. */
 	assertEqualInt(0, stat("dir_owner", &st));
-	failure("dir_owner: st.st_uid=%d", st.st_uid);
+	failure("dir_owner: st.st_uid=%jd", (intmax_t)st.st_uid);
 	assertEqualInt(st.st_uid, original_uid);
 	/* Shouldn't try to edit the owner when no overwrite option is set. */
 	assert((ae = archive_entry_new()) != NULL);
@@ -230,7 +237,7 @@ DEFINE_TEST(test_write_disk_perms)
 	assertEqualIntA(a, ARCHIVE_OK, archive_write_finish_entry(a));
 	/* Make sure they're unchanged. */
 	assertEqualInt(0, stat("dir_owner", &st));
-	failure("dir_owner: st.st_uid=%d", st.st_uid);
+	failure("dir_owner: st.st_uid=%jd", (intmax_t)st.st_uid);
 	assertEqualInt(st.st_uid, original_uid);
 
 	/* Write a regular file with SUID bit, but don't use _EXTRACT_PERM. */
@@ -475,8 +482,8 @@ DEFINE_TEST(test_write_disk_perms)
 		assertEqualInt(0, stat("file_bad_owner", &st));
 		failure("file_bad_owner: st.st_mode=%o", st.st_mode);
 		assertEqualInt(st.st_mode & 07777, 0744);
-		failure("file_bad_owner: st.st_uid=%d getuid()=%d",
-		    st.st_uid, getuid());
+		failure("file_bad_owner: st.st_uid=%jd getuid()=%jd",
+		    (intmax_t)st.st_uid, (intmax_t)getuid());
 		/* The entry had getuid()+1, but because we're
 		 * not root, we should not have been able to set that. */
 		assertEqualInt(st.st_uid, getuid());

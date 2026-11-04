@@ -81,8 +81,7 @@ allocate_domain_nsec3(domain_table_type* table, domain_type* result)
 }
 #endif /* NSEC3 */
 
-/** make the domain last in the numlist, changes numbers of domains */
-static void
+void
 numlist_make_last(domain_table_type* table, domain_type* domain)
 {
 	uint32_t sw;
@@ -122,8 +121,7 @@ numlist_make_last(domain_table_type* table, domain_type* domain)
 	table->numlist_last = domain;
 }
 
-/** pop the biggest domain off the numlist */
-static domain_type*
+domain_type*
 numlist_pop_last(domain_table_type* table)
 {
 	domain_type* d = table->numlist_last;
@@ -162,7 +160,7 @@ int domain_is_prehash(domain_table_type* table, domain_type* domain)
 void
 zone_del_domain_in_hash_tree(rbtree_type* tree, rbnode_type* node)
 {
-	if(!node->key)
+	if(!node->key || !tree)
 		return;
 	rbtree_delete(tree, node->key);
 	/* note that domain is no longer in the tree */
@@ -541,6 +539,24 @@ domain_find_any_rrset(domain_type* domain, zone_type* zone)
 	return NULL;
 }
 
+rrset_type *
+domain_find_rrset_and_prev(domain_type* domain, zone_type* zone, uint16_t type,
+	rrset_type** prev)
+{
+	rrset_type* result = domain->rrsets, *prevp = NULL;
+
+	while (result) {
+		if (result->zone == zone && rrset_rrtype(result) == type) {
+			*prev = prevp;
+			return result;
+		}
+		prevp = result;
+		result = result->next;
+	}
+	*prev = NULL;
+	return NULL;
+}
+
 zone_type *
 domain_find_zone(namedb_type* db, domain_type* domain)
 {
@@ -649,11 +665,11 @@ zone_is_secure(zone_type* zone)
 uint16_t
 rr_rrsig_type_covered(rr_type* rr)
 {
+	uint16_t type;
 	assert(rr->type == TYPE_RRSIG);
-	assert(rr->rdata_count > 0);
-	assert(rdata_atom_size(rr->rdatas[0]) == sizeof(uint16_t));
-
-	return ntohs(* (uint16_t *) rdata_atom_data(rr->rdatas[0]));
+	assert(rr->rdlength > 2);
+	memcpy(&type, rr->rdata, sizeof(type));
+	return ntohs(type);
 }
 
 zone_type *
@@ -723,7 +739,7 @@ rr_type *zone_rr_iter_next(struct zone_rr_iter *iter)
 
 	while(iter->rrset != NULL) {
 		if(iter->index < iter->rrset->rr_count) {
-			return &iter->rrset->rrs[iter->index++];
+			return iter->rrset->rrs[iter->index++];
 		}
 		iter->index = 0;
 		if(iter->domain == NULL) {

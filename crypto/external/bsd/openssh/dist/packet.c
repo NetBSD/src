@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.50.2.1 2025/08/02 05:18:47 perseant Exp $	*/
-/* $OpenBSD: packet.c,v 1.318 2025/02/18 08:02:12 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.50.2.2 2026/11/04 22:36:40 perseant Exp $	*/
+/* $OpenBSD: packet.c,v 1.346 2026/09/22 22:51:43 job Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -40,15 +40,15 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.50.2.1 2025/08/02 05:18:47 perseant Exp $");
+__RCSID("$NetBSD: packet.c,v 1.50.2.2 2026/11/04 22:36:40 perseant Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/socket.h>
 #include <sys/time.h>
+
 #include <netinet/in.h>
-#include <netinet/ip.h>
 
 #include <errno.h>
 #include <netdb.h>
@@ -61,6 +61,7 @@ __RCSID("$NetBSD: packet.c,v 1.50.2.1 2025/08/02 05:18:47 perseant Exp $");
 #include <poll.h>
 #include <signal.h>
 #include <time.h>
+#include <util.h>
 
 #ifdef WITH_ZLIB
 #include <zlib.h>
@@ -70,18 +71,17 @@ __RCSID("$NetBSD: packet.c,v 1.50.2.1 2025/08/02 05:18:47 perseant Exp $");
 #include "compat.h"
 #include "ssh2.h"
 #include "cipher.h"
-#include "sshkey.h"
 #include "kex.h"
 #include "digest.h"
 #include "mac.h"
 #include "log.h"
 #include "canohost.h"
 #include "misc.h"
-#include "channels.h"
-#include "ssh.h"
 #include "packet.h"
 #include "ssherr.h"
 #include "sshbuf.h"
+#include "version.h"
+#include "fmt_scaled.h"
 
 #ifdef PACKET_DEBUG
 #define DBG(x) x
@@ -92,10 +92,10 @@ __RCSID("$NetBSD: packet.c,v 1.50.2.1 2025/08/02 05:18:47 perseant Exp $");
 #define PACKET_MAX_SIZE (256 * 1024)
 
 struct packet_state {
-	u_int32_t seqnr;
-	u_int32_t packets;
-	u_int64_t blocks;
-	u_int64_t bytes;
+	uint32_t seqnr;
+	uint32_t packets;
+	uint64_t blocks;
+	uint64_t bytes;
 };
 
 struct packet {
@@ -154,6 +154,9 @@ struct session_state {
 	/* Flag indicating whether this module has been initialized. */
 	int initialized;
 
+	/* Monotonic clock timestamp when the connection was started. */
+	time_t start_time;
+
 	/* Set to true if the connection is interactive. */
 	int interactive_mode;
 
@@ -173,10 +176,11 @@ struct session_state {
 	struct packet_state p_read, p_send;
 
 	/* Volume-based rekeying */
-	u_int64_t max_blocks_in, max_blocks_out, rekey_limit;
+	uint64_t hard_max_blocks_in, hard_max_blocks_out;
+	uint64_t max_blocks_in, max_blocks_out, rekey_limit;
 
 	/* Time-based rekeying */
-	u_int32_t rekey_interval;	/* how often in seconds */
+	uint32_t rekey_interval;	/* how often in seconds */
 	time_t rekey_time;	/* time of last rekeying */
 
 	/* roundup current message to extra_pad bytes */
@@ -196,14 +200,23 @@ struct session_state {
 	/* Used in ssh_packet_send_mux() */
 	int mux;
 
-	/* Used in packet_set_interactive */
-	int set_interactive_called;
+	/* QoS handling */
+	int qos_interactive, qos_other;
 
 	/* Used in packet_set_maxsize */
 	int set_maxsize_called;
 
 	/* One-off warning about weak ciphers */
 	int cipher_warning_done;
+
+	/*
+	 * Disconnect in progress. Used to prevent reentry in
+	 * ssh_packet_disconnect()
+	 */
+	int disconnecting;
+
+	/* Nagle disabled on socket */
+	int nodelay_set;
 
 	/* Hook for fuzzing inbound packets */
 	ssh_packet_hook_fn *hook_in;
@@ -233,6 +246,8 @@ ssh_alloc_session_state(void)
 	state->connection_out = -1;
 	state->max_packet_size = 32768;
 	state->packet_timeout_ms = -1;
+	state->interactive_mode = 1;
+	state->qos_interactive = state->qos_other = -1;
 	state->p_send.packets = state->p_read.packets = 0;
 	state->initialized = 1;
 	/*
@@ -280,7 +295,7 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 {
 	struct session_state *state;
 	const struct sshcipher *none = cipher_by_name("none");
-	int r;
+	int r, wasnull = ssh == NULL;
 
 	if (none == NULL) {
 		error_f("cannot load cipher 'none'");
@@ -293,6 +308,7 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 		return NULL;
 	}
 	state = ssh->state;
+	state->start_time = monotime();
 	state->connection_in = fd_in;
 	state->connection_out = fd_out;
 	if ((r = cipher_init(&state->send_context, none,
@@ -300,7 +316,8 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 	    (r = cipher_init(&state->receive_context, none,
 	    (const u_char *)"", 0, NULL, 0, CIPHER_DECRYPT)) != 0) {
 		error_fr(r, "cipher_init failed");
-		free(ssh); /* XXX need ssh_free_session_state? */
+		if (wasnull)
+			free(ssh); /* XXX need ssh_free_session_state? */
 		return NULL;
 	}
 	state->newkeys[MODE_IN] = state->newkeys[MODE_OUT] = NULL;
@@ -429,14 +446,16 @@ ssh_packet_connection_is_on_socket(struct ssh *ssh)
 	state = ssh->state;
 	if (state->connection_in == -1 || state->connection_out == -1)
 		return 0;
-	/* filedescriptors in and out are the same, so it's a socket */
-	if (state->connection_in == state->connection_out)
-		return 1;
 	fromlen = sizeof(from);
 	memset(&from, 0, sizeof(from));
 	if (getpeername(state->connection_in, (struct sockaddr *)&from,
 	    &fromlen) == -1)
 		return 0;
+	if (from.ss_family != AF_INET && from.ss_family != AF_INET6)
+		return 0;
+	/* filedescriptors in and out are the same, so it's a socket */
+	if (state->connection_in == state->connection_out)
+		return 1;
 	tolen = sizeof(to);
 	memset(&to, 0, sizeof(to));
 	if (getpeername(state->connection_out, (struct sockaddr *)&to,
@@ -444,13 +463,11 @@ ssh_packet_connection_is_on_socket(struct ssh *ssh)
 		return 0;
 	if (fromlen != tolen || memcmp(&from, &to, fromlen) != 0)
 		return 0;
-	if (from.ss_family != AF_INET && from.ss_family != AF_INET6)
-		return 0;
 	return 1;
 }
 
 void
-ssh_packet_get_bytes(struct ssh *ssh, u_int64_t *ibytes, u_int64_t *obytes)
+ssh_packet_get_bytes(struct ssh *ssh, uint64_t *ibytes, uint64_t *obytes)
 {
 	if (ibytes)
 		*ibytes = ssh->state->p_read.bytes;
@@ -657,6 +674,7 @@ ssh_packet_close_internal(struct ssh *ssh, int do_close)
 {
 	struct session_state *state = ssh->state;
 	u_int mode;
+	struct packet *p;
 
 	if (!state->initialized)
 		return;
@@ -673,6 +691,11 @@ ssh_packet_close_internal(struct ssh *ssh, int do_close)
 	sshbuf_free(state->output);
 	sshbuf_free(state->outgoing_packet);
 	sshbuf_free(state->incoming_packet);
+	while ((p = TAILQ_FIRST(&state->outgoing))) {
+		sshbuf_free(p->payload);
+		TAILQ_REMOVE(&state->outgoing, p, next);
+		free(p);
+	}
 	for (mode = 0; mode < MODE_MAX; mode++) {
 		kex_free_newkeys(state->newkeys[mode]);	/* current keys */
 		state->newkeys[mode] = NULL;
@@ -722,6 +745,13 @@ ssh_packet_close_internal(struct ssh *ssh, int do_close)
 }
 
 void
+ssh_packet_free(struct ssh *ssh)
+{
+	ssh_packet_close_internal(ssh, 1);
+	freezero(ssh, sizeof(*ssh));
+}
+
+void
 ssh_packet_close(struct ssh *ssh)
 {
 	ssh_packet_close_internal(ssh, 1);
@@ -765,14 +795,13 @@ ssh_packet_init_compression(struct ssh *ssh)
 
 #ifdef WITH_ZLIB
 static int
-start_compression_out(struct ssh *ssh, int level)
+start_compression_out(struct ssh *ssh)
 {
-	if (level < 1 || level > 9)
-		return SSH_ERR_INVALID_ARGUMENT;
-	debug("Enabling compression at level %d.", level);
+	debug("Enabling compression.");
 	if (ssh->state->compression_out_started == 1)
 		deflateEnd(&ssh->state->compression_out_stream);
-	switch (deflateInit(&ssh->state->compression_out_stream, level)) {
+	switch (deflateInit2(&ssh->state->compression_out_stream,
+	    Z_BEST_SPEED, Z_DEFLATED, 15, 8, Z_HUFFMAN_ONLY)) {
 	case Z_OK:
 		ssh->state->compression_out_started = 1;
 		break;
@@ -874,6 +903,8 @@ uncompress_buffer(struct ssh *ssh, struct sshbuf *in, struct sshbuf *out)
 			if ((r = sshbuf_put(out, buf, sizeof(buf) -
 			    ssh->state->compression_in_stream.avail_out)) != 0)
 				return r;
+			if (sshbuf_len(out) >= PACKET_MAX_SIZE)
+				return SSH_ERR_INVALID_FORMAT;
 			break;
 		case Z_BUF_ERROR:
 			/*
@@ -898,7 +929,7 @@ uncompress_buffer(struct ssh *ssh, struct sshbuf *in, struct sshbuf *out)
 #else	/* WITH_ZLIB */
 
 static int
-start_compression_out(struct ssh *ssh, int level)
+start_compression_out(struct ssh *ssh)
 {
 	return SSH_ERR_INTERNAL_ERROR;
 }
@@ -940,7 +971,7 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 	struct sshcomp *comp;
 	struct sshcipher_ctx **ccp;
 	struct packet_state *ps;
-	u_int64_t *max_blocks;
+	uint64_t *max_blocks, *hard_max_blocks;
 	const char *wmsg;
 	int r, crypt_type;
 	const char *dir = mode == MODE_OUT ? "out" : "in";
@@ -951,11 +982,13 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 		ccp = &state->send_context;
 		crypt_type = CIPHER_ENCRYPT;
 		ps = &state->p_send;
+		hard_max_blocks = &state->hard_max_blocks_out;
 		max_blocks = &state->max_blocks_out;
 	} else {
 		ccp = &state->receive_context;
 		crypt_type = CIPHER_DECRYPT;
 		ps = &state->p_read;
+		hard_max_blocks = &state->hard_max_blocks_in;
 		max_blocks = &state->max_blocks_in;
 	}
 	if (state->newkeys[mode] != NULL) {
@@ -1002,7 +1035,7 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 		if ((r = ssh_packet_init_compression(ssh)) < 0)
 			return r;
 		if (mode == MODE_OUT) {
-			if ((r = start_compression_out(ssh, 6)) != 0)
+			if ((r = start_compression_out(ssh)) != 0)
 				return r;
 		} else {
 			if ((r = start_compression_in(ssh)) != 0)
@@ -1016,34 +1049,67 @@ ssh_set_newkeys(struct ssh *ssh, int mode)
 	 * See RFC4344 section 3.2.
 	 */
 	if (enc->block_size >= 16)
-		*max_blocks = (u_int64_t)1 << (enc->block_size*2);
+		*hard_max_blocks = (uint64_t)1 << (enc->block_size*2);
 	else
-		*max_blocks = ((u_int64_t)1 << 30) / enc->block_size;
-	if (state->rekey_limit)
+		*hard_max_blocks = ((uint64_t)1 << 30) / enc->block_size;
+	*max_blocks = *hard_max_blocks;
+	if (state->rekey_limit) {
 		*max_blocks = MINIMUM(*max_blocks,
 		    state->rekey_limit / enc->block_size);
+	}
 	debug("rekey %s after %llu blocks", dir,
 	    (unsigned long long)*max_blocks);
 	return 0;
 }
 
 #define MAX_PACKETS	(1U<<31)
+/*
+ * Checks whether the packet- or block- based rekeying limits have been
+ * exceeded. If the 'hard' flag is set, the checks are performed against the
+ * absolute maximum we're willing to accept for the given cipher. Otherwise
+ * the checks are performed against the RekeyLimit volume, which may be lower.
+ */
+static inline int
+ssh_packet_check_rekey_blocklimit(struct ssh *ssh, u_int packet_len, int hard)
+{
+	struct session_state *state = ssh->state;
+	uint32_t out_blocks;
+	const uint64_t max_blocks_in = hard ?
+	    state->hard_max_blocks_in : state->max_blocks_in;
+	const uint64_t max_blocks_out = hard ?
+	    state->hard_max_blocks_out : state->max_blocks_out;
+
+	/*
+	 * Always rekey when MAX_PACKETS sent in either direction
+	 * As per RFC4344 section 3.1 we do this after 2^31 packets.
+	 */
+	if (state->p_send.packets > MAX_PACKETS ||
+	    state->p_read.packets > MAX_PACKETS)
+		return 1;
+
+	if (state->newkeys[MODE_OUT] == NULL)
+		return 0;
+
+	/* Rekey after (cipher-specific) maximum blocks */
+	out_blocks = ROUNDUP(packet_len,
+	    state->newkeys[MODE_OUT]->enc.block_size);
+	return (max_blocks_out &&
+	    (state->p_send.blocks + out_blocks > max_blocks_out)) ||
+	    (max_blocks_in &&
+	    (state->p_read.blocks > max_blocks_in));
+}
+
 static int
 ssh_packet_need_rekeying(struct ssh *ssh, u_int outbound_packet_len)
 {
 	struct session_state *state = ssh->state;
-	u_int32_t out_blocks;
 
-	/* XXX client can't cope with rekeying pre-auth */
+	/* Don't attempt rekeying during pre-auth */
 	if (!state->after_authentication)
 		return 0;
 
 	/* Haven't keyed yet or KEX in progress. */
 	if (ssh_packet_is_rekeying(ssh))
-		return 0;
-
-	/* Peer can't rekey */
-	if (ssh->compat & SSH_BUG_NOREKEY)
 		return 0;
 
 	/*
@@ -1058,26 +1124,30 @@ ssh_packet_need_rekeying(struct ssh *ssh, u_int outbound_packet_len)
 	    (int64_t)state->rekey_time + state->rekey_interval <= monotime())
 		return 1;
 
-	/*
-	 * Always rekey when MAX_PACKETS sent in either direction
-	 * As per RFC4344 section 3.1 we do this after 2^31 packets.
-	 */
-	if (state->p_send.packets > MAX_PACKETS ||
-	    state->p_read.packets > MAX_PACKETS)
-		return 1;
+	return ssh_packet_check_rekey_blocklimit(ssh, outbound_packet_len, 0);
+}
 
-	/* Rekey after (cipher-specific) maximum blocks */
-	out_blocks = ROUNDUP(outbound_packet_len,
-	    state->newkeys[MODE_OUT]->enc.block_size);
-	return (state->max_blocks_out &&
-	    (state->p_send.blocks + out_blocks > state->max_blocks_out)) ||
-	    (state->max_blocks_in &&
-	    (state->p_read.blocks > state->max_blocks_in));
+/* Checks that the hard rekey limits have not been exceeded during preauth */
+static int
+ssh_packet_check_rekey_preauth(struct ssh *ssh, u_int outgoing_packet_len)
+{
+	if (ssh->state->after_authentication)
+		return 0;
+
+	if (ssh_packet_check_rekey_blocklimit(ssh, 0, 1)) {
+		error("RekeyLimit exceeded before authentication completed");
+		return SSH_ERR_NEED_REKEY;
+	}
+	return 0;
 }
 
 int
 ssh_packet_check_rekey(struct ssh *ssh)
 {
+	int r;
+
+	if ((r = ssh_packet_check_rekey_preauth(ssh, 0)) != 0)
+		return r;
 	if (!ssh_packet_need_rekeying(ssh, 0))
 		return 0;
 	debug3_f("rekex triggered");
@@ -1110,7 +1180,7 @@ ssh_packet_enable_delayed_compress(struct ssh *ssh)
 			if ((r = ssh_packet_init_compression(ssh)) != 0)
 				return r;
 			if (mode == MODE_OUT) {
-				if ((r = start_compression_out(ssh, 6)) != 0)
+				if ((r = start_compression_out(ssh)) != 0)
 					return r;
 			} else {
 				if ((r = start_compression_in(ssh)) != 0)
@@ -1288,8 +1358,7 @@ ssh_packet_send2_wrapped(struct ssh *ssh)
 		logit("outgoing seqnr wraps around");
 	}
 	if (++state->p_send.packets == 0)
-		if (!(ssh->compat & SSH_BUG_NOREKEY))
-			return SSH_ERR_NEED_REKEY;
+		return SSH_ERR_NEED_REKEY;
 	state->p_send.blocks += len / block_size;
 	state->p_send.bytes += len;
 	sshbuf_reset(state->outgoing_packet);
@@ -1338,6 +1407,11 @@ ssh_packet_send2(struct ssh *ssh)
 	type = sshbuf_ptr(state->outgoing_packet)[5];
 	need_rekey = !ssh_packet_type_is_kex(type) &&
 	    ssh_packet_need_rekeying(ssh, sshbuf_len(state->outgoing_packet));
+
+	/* Enforce hard rekey limit during pre-auth */
+	if (!state->rekeying && !ssh_packet_type_is_kex(type) &&
+	    (r = ssh_packet_check_rekey_preauth(ssh, 0)) != 0)
+		return r;
 
 	/*
 	 * During rekeying we can only send key exchange messages.
@@ -1413,7 +1487,7 @@ ssh_packet_send2(struct ssh *ssh)
  */
 
 int
-ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
+ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, uint32_t *seqnr_p)
 {
 	struct session_state *state = ssh->state;
 	int len, r, ms_remain = 0;
@@ -1500,12 +1574,12 @@ ssh_packet_read(struct ssh *ssh)
 	int r;
 
 	if ((r = ssh_packet_read_seqnr(ssh, &type, NULL)) != 0)
-		fatal_fr(r, "read");
+		sshpkt_fatal(ssh, r, "read");
 	return type;
 }
 
 static int
-ssh_packet_read_poll2_mux(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
+ssh_packet_read_poll2_mux(struct ssh *ssh, u_char *typep, uint32_t *seqnr_p)
 {
 	struct session_state *state = ssh->state;
 	const u_char *cp;
@@ -1543,7 +1617,7 @@ ssh_packet_read_poll2_mux(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 }
 
 int
-ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
+ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, uint32_t *seqnr_p)
 {
 	struct session_state *state = ssh->state;
 	u_int padlen, need;
@@ -1705,8 +1779,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 		logit("incoming seqnr wraps around");
 	}
 	if (++state->p_read.packets == 0)
-		if (!(ssh->compat & SSH_BUG_NOREKEY))
-			return SSH_ERR_NEED_REKEY;
+		return SSH_ERR_NEED_REKEY;
 	state->p_read.blocks += (state->packlen + 4) / block_size;
 	state->p_read.bytes += state->packlen + 4;
 
@@ -1781,7 +1854,7 @@ ssh_packet_read_poll2(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 }
 
 int
-ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
+ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, uint32_t *seqnr_p)
 {
 	struct session_state *state = ssh->state;
 	u_int reason, seqnr;
@@ -1872,6 +1945,13 @@ ssh_packet_read_poll_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			DBG(debug("Received SSH2_MSG_PONG len %zu", len));
 			break;
 		default:
+			if (ssh->kex != NULL &&
+			    (ssh->kex->flags & KEX_INIT_RECVD) != 0 &&
+			    !ssh_packet_type_is_kex(*typep)) {
+				error("non-transport message %u received "
+				    "from peer during key exchange", *typep);
+				return SSH_ERR_PROTOCOL_ERROR;
+			}
 			return 0;
 		}
 	}
@@ -1963,7 +2043,7 @@ ssh_packet_send_debug(struct ssh *ssh, const char *fmt,...)
 	    (r = sshpkt_put_cstring(ssh, "")) != 0 ||
 	    (r = sshpkt_send(ssh)) != 0 ||
 	    (r = ssh_packet_write_wait(ssh)) < 0)
-		fatal_fr(r, "send DEBUG");
+		sshpkt_fatal(ssh, r, "send DEBUG");
 }
 
 void
@@ -2054,12 +2134,12 @@ ssh_packet_disconnect(struct ssh *ssh, const char *fmt,...)
 {
 	char buf[1024], remote_id[512];
 	va_list args;
-	static int disconnecting = 0;
 	int r;
 
-	if (disconnecting)	/* Guard against recursive invocations. */
+	/* Guard against recursive invocations. */
+	if (ssh->state->disconnecting)
 		fatal("packet_disconnect called recursively.");
-	disconnecting = 1;
+	ssh->state->disconnecting = 1;
 
 	/*
 	 * Format the message.  Note that the caller must make sure the
@@ -2198,41 +2278,41 @@ ssh_packet_interactive_data_to_write(struct ssh *ssh)
 	    sshbuf_len(ssh->state->output) < 256;
 }
 
-void
-ssh_packet_set_tos(struct ssh *ssh, int tos)
+static void
+apply_qos(struct ssh *ssh)
 {
-	if (!ssh_packet_connection_is_on_socket(ssh) || tos == INT_MAX)
+	struct session_state *state = ssh->state;
+	int qos = state->interactive_mode ?
+	    state->qos_interactive : state->qos_other;
+
+	if (!ssh_packet_connection_is_on_socket(ssh))
 		return;
-	set_sock_tos(ssh->state->connection_in, tos);
+	if (!state->nodelay_set) {
+		set_nodelay(state->connection_in);
+		state->nodelay_set = 1;
+	}
+	set_sock_tos(ssh->state->connection_in, qos);
 }
 
-/* Informs that the current session is interactive.  Sets IP flags for that. */
-
+/* Informs that the current session is interactive. */
 void
-ssh_packet_set_interactive(struct ssh *ssh, int interactive, int qos_interactive, int qos_bulk)
+ssh_packet_set_interactive(struct ssh *ssh, int interactive)
 {
 	struct session_state *state = ssh->state;
 
-	if (state->set_interactive_called)
-		return;
-	state->set_interactive_called = 1;
-
-	/* Record that we are in interactive mode. */
 	state->interactive_mode = interactive;
-
-	/* Only set socket options if using a socket.  */
-	if (!ssh_packet_connection_is_on_socket(ssh))
-		return;
-	set_nodelay(state->connection_in);
-	ssh_packet_set_tos(ssh, interactive ? qos_interactive : qos_bulk);
+	apply_qos(ssh);
 }
 
-/* Returns true if the current connection is interactive. */
-
-int
-ssh_packet_is_interactive(struct ssh *ssh)
+/* Set QoS flags to be used for interactive and non-interactive sessions */
+void
+ssh_packet_set_qos(struct ssh *ssh, int qos_interactive, int qos_other)
 {
-	return ssh->state->interactive_mode;
+	struct session_state *state = ssh->state;
+
+	state->qos_interactive = qos_interactive;
+	state->qos_other = qos_other;
+	apply_qos(ssh);
 }
 
 int
@@ -2274,8 +2354,11 @@ ssh_packet_get_maxsize(struct ssh *ssh)
 }
 
 void
-ssh_packet_set_rekey_limits(struct ssh *ssh, u_int64_t bytes, u_int32_t seconds)
+ssh_packet_set_rekey_limits(struct ssh *ssh, uint64_t bytes, uint32_t seconds)
 {
+	if (bytes == 0 && seconds == 0)
+		return;
+
 	debug3("rekey after %llu bytes, %u seconds", (unsigned long long)bytes,
 	    (unsigned int)seconds);
 	ssh->state->rekey_limit = bytes;
@@ -2351,7 +2434,10 @@ kex_to_blob(struct sshbuf *m, struct kex *kex)
 	    (r = sshbuf_put_stringb(m, kex->client_version)) != 0 ||
 	    (r = sshbuf_put_stringb(m, kex->server_version)) != 0 ||
 	    (r = sshbuf_put_stringb(m, kex->session_id)) != 0 ||
-	    (r = sshbuf_put_u32(m, kex->flags)) != 0)
+	    (r = sshbuf_put_u32(m, kex->flags)) != 0 ||
+	    (r = sshbuf_put_u32(m, kex->warn_weak_crypto)) != 0 ||
+	    (r = sshbuf_put_u32(m, kex->pq_kex_negotiated)) != 0 ||
+	    (r = sshbuf_put_u32(m, kex->non_pq_kex_warned)) != 0)
 		return r;
 	return 0;
 }
@@ -2407,6 +2493,7 @@ ssh_packet_get_state(struct ssh *ssh, struct sshbuf *m)
 	struct session_state *state = ssh->state;
 	int r;
 
+#define ENCODE_INT(v) (((v) < 0) ? 0xFFFFFFFF : (u_int)v)
 	if ((r = kex_to_blob(m, ssh->kex)) != 0 ||
 	    (r = newkeys_to_blob(m, ssh, MODE_OUT)) != 0 ||
 	    (r = newkeys_to_blob(m, ssh, MODE_IN)) != 0 ||
@@ -2421,9 +2508,12 @@ ssh_packet_get_state(struct ssh *ssh, struct sshbuf *m)
 	    (r = sshbuf_put_u32(m, state->p_read.packets)) != 0 ||
 	    (r = sshbuf_put_u64(m, state->p_read.bytes)) != 0 ||
 	    (r = sshbuf_put_stringb(m, state->input)) != 0 ||
-	    (r = sshbuf_put_stringb(m, state->output)) != 0)
+	    (r = sshbuf_put_stringb(m, state->output)) != 0 ||
+	    (r = sshbuf_put_u32(m, ENCODE_INT(state->interactive_mode))) != 0 ||
+	    (r = sshbuf_put_u32(m, ENCODE_INT(state->qos_interactive))) != 0 ||
+	    (r = sshbuf_put_u32(m, ENCODE_INT(state->qos_other))) != 0)
 		return r;
-
+#undef ENCODE_INT
 	return 0;
 }
 
@@ -2458,7 +2548,14 @@ newkeys_from_blob(struct sshbuf *m, struct ssh *ssh, int mode)
 	    (r = sshbuf_get_string(b, &enc->key, &keylen)) != 0 ||
 	    (r = sshbuf_get_string(b, &enc->iv, &ivlen)) != 0)
 		goto out;
-	if ((enc->cipher = cipher_by_name(enc->name)) == NULL) {
+	if ((enc->cipher = cipher_by_name(enc->name)) == NULL ||
+	    enc->block_size != cipher_blocksize(enc->cipher) ||
+	    cipher_is_internal(enc->cipher)) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
+	if (keylen != cipher_keylen(enc->cipher) ||
+	    ivlen != cipher_ivlen(enc->cipher)) {
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}
@@ -2470,7 +2567,7 @@ newkeys_from_blob(struct sshbuf *m, struct ssh *ssh, int mode)
 		if ((r = sshbuf_get_u32(b, (u_int *)&mac->enabled)) != 0 ||
 		    (r = sshbuf_get_string(b, &mac->key, &maclen)) != 0)
 			goto out;
-		if (maclen > mac->key_len) {
+		if (maclen != mac->key_len) {
 			r = SSH_ERR_INVALID_FORMAT;
 			goto out;
 		}
@@ -2514,8 +2611,15 @@ kex_from_blob(struct sshbuf *m, struct kex **kexp)
 	    (r = sshbuf_get_stringb(m, kex->client_version)) != 0 ||
 	    (r = sshbuf_get_stringb(m, kex->server_version)) != 0 ||
 	    (r = sshbuf_get_stringb(m, kex->session_id)) != 0 ||
-	    (r = sshbuf_get_u32(m, &kex->flags)) != 0)
+	    (r = sshbuf_get_u32(m, &kex->flags)) != 0 ||
+	    (r = sshbuf_get_u32(m, &kex->warn_weak_crypto)) != 0 ||
+	    (r = sshbuf_get_u32(m, &kex->pq_kex_negotiated)) != 0 ||
+	    (r = sshbuf_get_u32(m, &kex->non_pq_kex_warned)) != 0)
 		goto out;
+	if (kex->we_need > 1024) {
+		r = SSH_ERR_INVALID_FORMAT;
+		goto out;
+	}
 	kex->server = 1;
 	kex->done = 1;
 	r = 0;
@@ -2542,6 +2646,7 @@ ssh_packet_set_state(struct ssh *ssh, struct sshbuf *m)
 	const u_char *input, *output;
 	size_t ilen, olen;
 	int r;
+	u_int interactive, qos_interactive, qos_other;
 
 	if ((r = kex_from_blob(m, &ssh->kex)) != 0 ||
 	    (r = newkeys_from_blob(m, ssh, MODE_OUT)) != 0 ||
@@ -2578,6 +2683,16 @@ ssh_packet_set_state(struct ssh *ssh, struct sshbuf *m)
 	    (r = sshbuf_put(state->output, output, olen)) != 0)
 		return r;
 
+	if ((r = sshbuf_get_u32(m, &interactive)) != 0 ||
+	    (r = sshbuf_get_u32(m, &qos_interactive)) != 0 ||
+	    (r = sshbuf_get_u32(m, &qos_other)) != 0)
+		return r;
+#define DECODE_INT(v) ((v) > INT_MAX ? -1 : (int)(v))
+	state->interactive_mode = DECODE_INT(interactive);
+	state->qos_interactive = DECODE_INT(qos_interactive);
+	state->qos_other = DECODE_INT(qos_other);
+#undef DECODE_INT
+
 	if (sshbuf_len(m))
 		return SSH_ERR_INVALID_FORMAT;
 	debug3_f("done");
@@ -2607,13 +2722,13 @@ sshpkt_put_u8(struct ssh *ssh, u_char val)
 }
 
 int
-sshpkt_put_u32(struct ssh *ssh, u_int32_t val)
+sshpkt_put_u32(struct ssh *ssh, uint32_t val)
 {
 	return sshbuf_put_u32(ssh->state->outgoing_packet, val);
 }
 
 int
-sshpkt_put_u64(struct ssh *ssh, u_int64_t val)
+sshpkt_put_u64(struct ssh *ssh, uint64_t val)
 {
 	return sshbuf_put_u64(ssh->state->outgoing_packet, val);
 }
@@ -2671,13 +2786,13 @@ sshpkt_get_u8(struct ssh *ssh, u_char *valp)
 }
 
 int
-sshpkt_get_u32(struct ssh *ssh, u_int32_t *valp)
+sshpkt_get_u32(struct ssh *ssh, uint32_t *valp)
 {
 	return sshbuf_get_u32(ssh->state->incoming_packet, valp);
 }
 
 int
-sshpkt_get_u64(struct ssh *ssh, u_int64_t *valp)
+sshpkt_get_u64(struct ssh *ssh, uint64_t *valp)
 {
 	return sshbuf_get_u64(ssh->state->incoming_packet, valp);
 }
@@ -2800,7 +2915,7 @@ ssh_packet_send_mux(struct ssh *ssh)
 int
 sshpkt_msg_ignore(struct ssh *ssh, u_int nbytes)
 {
-	u_int32_t rnd = 0;
+	uint32_t rnd = 0;
 	int r;
 	u_int i;
 
@@ -2861,6 +2976,171 @@ sshpkt_add_padding(struct ssh *ssh, u_char pad)
 {
 	ssh->state->extra_pad = pad;
 	return 0;
+}
+
+static char *
+format_traffic_stats(struct packet_state *ps)
+{
+	char *stats = NULL, bytes[FMT_SCALED_STRSIZE];
+
+	if (ps->bytes > LLONG_MAX || fmt_scaled(ps->bytes, bytes) != 0)
+		strlcpy(bytes, "OVERFLOW", sizeof(bytes));
+
+	xasprintf(&stats, "%lu pkts %llu blks %sB",
+	    (unsigned long)ps->packets, (unsigned long long)ps->blocks, bytes);
+	return stats;
+}
+
+static char *
+dedupe_alg_names(const char *in, const char *out)
+{
+	char *names = NULL;
+
+	if (in == NULL)
+		in = "<implicit>";
+	if (out == NULL)
+		out = "<implicit>";
+
+	if (strcmp(in, out) == 0) {
+		names = xstrdup(in);
+	} else {
+		xasprintf(&names, "%s in, %s out", in, out);
+	}
+	return names;
+}
+
+static char *
+comp_status_message(struct ssh *ssh)
+{
+#ifdef WITH_ZLIB
+	char *ret = NULL;
+	struct session_state *state = ssh->state;
+	unsigned long long iraw = 0, icmp = 0, oraw = 0, ocmp = 0;
+	char iraw_f[FMT_SCALED_STRSIZE] = "", oraw_f[FMT_SCALED_STRSIZE] = "";
+	char icmp_f[FMT_SCALED_STRSIZE] = "", ocmp_f[FMT_SCALED_STRSIZE] = "";
+
+	if (state->compression_buffer) {
+		if (state->compression_in_started) {
+			iraw = state->compression_in_stream.total_out;
+			icmp = state->compression_in_stream.total_in;
+			if (fmt_scaled(iraw, iraw_f) != 0)
+				strlcpy(iraw_f, "OVERFLOW", sizeof(iraw_f));
+			if (fmt_scaled(icmp, icmp_f) != 0)
+				strlcpy(icmp_f, "OVERFLOW", sizeof(icmp_f));
+		}
+		if (state->compression_out_started) {
+			oraw = state->compression_out_stream.total_in;
+			ocmp = state->compression_out_stream.total_out;
+			if (fmt_scaled(oraw, oraw_f) != 0)
+				strlcpy(oraw_f, "OVERFLOW", sizeof(oraw_f));
+			if (fmt_scaled(ocmp, ocmp_f) != 0)
+				strlcpy(ocmp_f, "OVERFLOW", sizeof(ocmp_f));
+		}
+		xasprintf(&ret,
+		    "    compressed %s/%s (*%.3f) in,"
+		    " %s/%s (*%.3f) out\r\n",
+		    icmp_f, iraw_f, iraw == 0 ? 0.0 : (double)icmp / iraw,
+		    ocmp_f, oraw_f, oraw == 0 ? 0.0 : (double)ocmp / oraw);
+		return ret;
+	}
+#endif	/* WITH_ZLIB */
+	return xstrdup("");
+}
+
+char *
+connection_info_message(struct ssh *ssh)
+{
+	char *ret = NULL, *cipher = NULL, *mac = NULL, *comp = NULL;
+	char *rekey_volume = NULL, *rekey_time = NULL, *comp_info = NULL;
+	char thishost[NI_MAXHOST] = "unknown", *tcp_info = NULL;
+	struct kex *kex;
+	struct session_state *state;
+	struct newkeys *nk_in, *nk_out;
+	char *stats_in = NULL, *stats_out = NULL;
+	uint64_t epoch = (uint64_t)time(NULL) - monotime();
+
+	if (ssh == NULL)
+		return NULL;
+	state = ssh->state;
+	kex = ssh->kex;
+
+	(void)gethostname(thishost, sizeof(thishost));
+
+	if (ssh_local_port(ssh) != 65535 ||
+	     strcmp(ssh_local_ipaddr(ssh), "UNKNOWN") != 0) {
+		xasprintf(&tcp_info, "  tcp %s:%d -> %s:%d\r\n",
+		    ssh_local_ipaddr(ssh), ssh_local_port(ssh),
+		    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh));
+	} else {
+		tcp_info = xstrdup("");
+	}
+
+	nk_in = ssh->state->newkeys[MODE_IN];
+	nk_out = ssh->state->newkeys[MODE_OUT];
+	stats_in = format_traffic_stats(&ssh->state->p_read);
+	stats_out = format_traffic_stats(&ssh->state->p_send);
+
+	cipher = dedupe_alg_names(nk_in->enc.name, nk_out->enc.name);
+	mac = dedupe_alg_names(nk_in->mac.name, nk_out->mac.name);
+	comp = dedupe_alg_names(nk_in->comp.name, nk_out->comp.name);
+
+	/* Volume based rekeying. */
+	if (state->rekey_limit == 0) {
+		xasprintf(&rekey_volume, "limit none");
+	} else {
+		char *volumes = NULL, in[32], out[32];
+
+		snprintf(in, sizeof(in), "%llu",
+		   (unsigned long long)state->max_blocks_in);
+		snprintf(out, sizeof(out), "%llu",
+		   (unsigned long long)state->max_blocks_out);
+		volumes = dedupe_alg_names(in, out);
+		xasprintf(&rekey_volume, "limit blocks %s", volumes);
+		free(volumes);
+	}
+
+	/* Time based rekeying. */
+	if (state->rekey_interval == 0) {
+		rekey_time = xstrdup("interval none");
+	} else {
+		char rekey_next[64];
+
+		format_absolute_time(epoch + state->rekey_time +
+		    state->rekey_interval, rekey_next, sizeof(rekey_next));
+		xasprintf(&rekey_time, "interval %s, next %s",
+		    fmt_timeframe(state->rekey_interval), rekey_next);
+	}
+	comp_info = comp_status_message(ssh);
+
+	xasprintf(&ret, "Connection information for %s pid %lld\r\n"
+	    "  versions %s -> %s\r\n"
+	    "%s"
+	    "  duration %s\r\n"
+	    "  kexalgorithm %s\r\n  hostkeyalgorithm %s\r\n"
+	    "  cipher %s\r\n  mac %s\r\n  compression %s\r\n"
+	    "  rekey %s %s\r\n"
+	    "  traffic %s in, %s out\r\n"
+	    "%s",
+	    thishost, (long long)getpid(),
+	    SSH_RELEASE, ssh->remote_version,
+	    tcp_info,
+	    fmt_timeframe(monotime() - state->start_time),
+	    kex->name, kex->hostkey_alg,
+	    cipher, mac, comp,
+	    rekey_volume, rekey_time,
+	    stats_in, stats_out,
+	    comp_info
+	);
+	free(tcp_info);
+	free(cipher);
+	free(mac);
+	free(comp);
+	free(stats_in);
+	free(stats_out);
+	free(rekey_volume);
+	free(rekey_time);
+	free(comp_info);
+	return ret;
 }
 
 int

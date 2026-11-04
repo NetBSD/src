@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-dag.c,v 1.7.2.1 2025/08/02 05:21:57 perseant Exp $	*/
+/*	$NetBSD: pcap-dag.c,v 1.7.2.2 2026/11/04 22:38:35 perseant Exp $	*/
 
 /*
  * pcap-dag.c: Packet capture interface for Endace DAG cards.
@@ -10,7 +10,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-dag.c,v 1.7.2.1 2025/08/02 05:21:57 perseant Exp $");
+__RCSID("$NetBSD: pcap-dag.c,v 1.7.2.2 2026/11/04 22:38:35 perseant Exp $");
 
 #include <config.h>
 
@@ -1430,8 +1430,7 @@ pcapint_platform_finddevs(pcap_if_list_t *devlistp _U_, char *errbuf)
 pcap_t *
 pcapint_create_interface(const char *device, char *errbuf)
 {
-	snprintf(errbuf, PCAP_ERRBUF_SIZE,
-	    "This version of libpcap only supports DAG cards");
+	snprintf(errbuf, PCAP_ERRBUF_SIZE, PCAP_ENODEV_MESSAGE, "DAG");
 	return NULL;
 }
 
@@ -1441,6 +1440,6 @@ pcapint_create_interface(const char *device, char *errbuf)
 const char *
 pcap_lib_version(void)
 {
-	return (PCAP_VERSION_STRING " (DAG-only)");
+	return (PCAP_VERSION_STRING_WITH_ADDITIONAL_INFO("DAG-only"));
 }
 #endif

@@ -1,9 +1,9 @@
-/*	$NetBSD: msctrl.c,v 1.2 2021/08/14 16:14:56 christos Exp $	*/
+/*	$NetBSD: msctrl.c,v 1.2.4.1 2026/11/04 22:39:12 perseant Exp $	*/
 
 /* $OpenLDAP$ */
 /* This work is part of OpenLDAP Software <http://www.openldap.org/>.
  *
- * Copyright 1998-2021 The OpenLDAP Foundation.
+ * Copyright 1998-2024 The OpenLDAP Foundation.
  * Portions Copyright 2018 Howard Chu.
  * All rights reserved.
  *
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: msctrl.c,v 1.2 2021/08/14 16:14:56 christos Exp $");
+__RCSID("$NetBSD: msctrl.c,v 1.2.4.1 2026/11/04 22:39:12 perseant Exp $");
 
 #include "portable.h"
 

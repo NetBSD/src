@@ -1,5 +1,5 @@
 /* emul-target.h.  Default values for struct emulation defined in emul.h
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
 
    This file is part of GAS, the GNU Assembler.
 
@@ -20,10 +20,6 @@
 
 #ifndef emul_init
 #define emul_init			common_emul_init
-#endif
-
-#ifndef emul_bfd_name
-#define emul_bfd_name			default_emul_bfd_name
 #endif
 
 #ifndef emul_local_labels_fb
@@ -48,10 +44,8 @@
 
 struct emulation emul_struct_name =
   {
-    0,
     emul_name,
     emul_init,
-    emul_bfd_name,
     emul_local_labels_fb, emul_local_labels_dollar,
     emul_leading_underscore,
     emul_default_endian,

@@ -1,5 +1,5 @@
 /* srconv.c -- Sysroff conversion program
-   Copyright (C) 1994-2022 Free Software Foundation, Inc.
+   Copyright (C) 1994-2025 Free Software Foundation, Inc.
 
    This file is part of GNU Binutils.
 
@@ -595,7 +595,7 @@ wr_dps_end (struct coff_section *section ATTRIBUTE_UNUSED,
 static int *
 nints (int x)
 {
-  return (int *) (xcalloc (sizeof (int), x));
+  return (int *) (xcalloc (x, sizeof (int)));
 }
 
 static void
@@ -1183,7 +1183,7 @@ wr_du (struct coff_ofile *p, struct coff_sfile *sfile, int n)
   du.spare = 0;
   du.unit = n;
   du.sections = p->nsections - 1;
-  du.san = (int *) xcalloc (sizeof (int), du.sections);
+  du.san = (int *) xcalloc (du.sections, sizeof (int));
   du.address = nints (du.sections);
   du.length = nints (du.sections);
 
@@ -1242,7 +1242,7 @@ wr_dus (struct coff_ofile *p ATTRIBUTE_UNUSED, struct coff_sfile *sfile)
   dus.efn = 0x1001;
   dus.ns = 1;			/* p->nsources; sac 14 jul 94 */
   dus.drb = nints (dus.ns);
-  dus.fname = (char **) xcalloc (sizeof (char *), dus.ns);
+  dus.fname = (char **) xcalloc (dus.ns, sizeof (char *));
   dus.spare = nints (dus.ns);
   dus.ndir = 0;
   /* Find the filenames.  */

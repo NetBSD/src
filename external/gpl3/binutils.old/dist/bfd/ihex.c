@@ -1,5 +1,5 @@
 /* BFD back-end for Intel Hex objects.
-   Copyright (C) 1995-2022 Free Software Foundation, Inc.
+   Copyright (C) 1995-2025 Free Software Foundation, Inc.
    Written by Ian Lance Taylor of Cygnus Support <ian@cygnus.com>.
 
    This file is part of BFD, the Binary File Descriptor library.
@@ -194,14 +194,14 @@ ihex_get_byte (bfd *abfd, bool *errorptr)
 {
   bfd_byte c;
 
-  if (bfd_bread (&c, (bfd_size_type) 1, abfd) != 1)
+  if (bfd_read (&c, 1, abfd) != 1)
     {
       if (bfd_get_error () != bfd_error_file_truncated)
 	*errorptr = true;
       return EOF;
     }
 
-  return (int) (c & 0xff);
+  return c & 0xff;
 }
 
 /* Report a problem in an Intel Hex file.  */
@@ -248,7 +248,7 @@ ihex_scan (bfd *abfd)
   size_t bufsize;
   int c;
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     goto error_return;
 
   abfd->start_address = 0;
@@ -289,7 +289,7 @@ ihex_scan (bfd *abfd)
 	  pos = bfd_tell (abfd) - 1;
 
 	  /* Read the header bytes.  */
-	  if (bfd_bread (hdr, (bfd_size_type) 8, abfd) != 8)
+	  if (bfd_read (hdr, 8, abfd) != 8)
 	    goto error_return;
 
 	  for (i = 0; i < 8; i++)
@@ -309,13 +309,13 @@ ihex_scan (bfd *abfd)
 	  chars = len * 2 + 2;
 	  if (chars >= bufsize)
 	    {
-	      buf = (bfd_byte *) bfd_realloc (buf, (bfd_size_type) chars);
+	      buf = bfd_realloc (buf, chars);
 	      if (buf == NULL)
 		goto error_return;
 	      bufsize = chars;
 	    }
 
-	  if (bfd_bread (buf, (bfd_size_type) chars, abfd) != chars)
+	  if (bfd_read (buf, chars, abfd) != chars)
 	    goto error_return;
 
 	  for (i = 0; i < chars; i++)
@@ -486,16 +486,15 @@ ihex_scan (bfd *abfd)
 static bfd_cleanup
 ihex_object_p (bfd *abfd)
 {
-  void * tdata_save;
   bfd_byte b[9];
   unsigned int i;
   unsigned int type;
 
   ihex_init ();
 
-  if (bfd_seek (abfd, (file_ptr) 0, SEEK_SET) != 0)
+  if (bfd_seek (abfd, 0, SEEK_SET) != 0)
     return NULL;
-  if (bfd_bread (b, (bfd_size_type) 9, abfd) != 9)
+  if (bfd_read (b, 9, abfd) != 9)
     {
       if (bfd_get_error () == bfd_error_file_truncated)
 	bfd_set_error (bfd_error_wrong_format);
@@ -525,12 +524,12 @@ ihex_object_p (bfd *abfd)
     }
 
   /* OK, it looks like it really is an Intel Hex file.  */
-  tdata_save = abfd->tdata.any;
-  if (! ihex_mkobject (abfd) || ! ihex_scan (abfd))
+  if (!ihex_mkobject (abfd))
+    return NULL;
+
+  if (!ihex_scan (abfd))
     {
-      if (abfd->tdata.any != tdata_save && abfd->tdata.any != NULL)
-	bfd_release (abfd, abfd->tdata.any);
-      abfd->tdata.any = tdata_save;
+      bfd_release (abfd, abfd->tdata.any);
       return NULL;
     }
 
@@ -568,7 +567,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 	 know the exact format.  */
       BFD_ASSERT (c == ':');
 
-      if (bfd_bread (hdr, (bfd_size_type) 8, abfd) != 8)
+      if (bfd_read (hdr, 8, abfd) != 8)
 	goto error_return;
 
       len = HEX2 (hdr);
@@ -585,13 +584,13 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 
       if (len * 2 > bufsize)
 	{
-	  buf = (bfd_byte *) bfd_realloc (buf, (bfd_size_type) len * 2);
+	  buf = bfd_realloc (buf, len * 2);
 	  if (buf == NULL)
 	    goto error_return;
 	  bufsize = len * 2;
 	}
 
-      if (bfd_bread (buf, (bfd_size_type) len * 2, abfd) != len * 2)
+      if (bfd_read (buf, len * 2, abfd) != len * 2)
 	goto error_return;
 
       for (i = 0; i < len; i++)
@@ -604,7 +603,7 @@ ihex_read_section (bfd *abfd, asection *section, bfd_byte *contents)
 	}
 
       /* Skip the checksum.  */
-      if (bfd_bread (buf, (bfd_size_type) 2, abfd) != 2)
+      if (bfd_read (buf, 2, abfd) != 2)
 	goto error_return;
     }
 
@@ -745,7 +744,7 @@ ihex_write_record (bfd *abfd,
   p[3] = '\n';
 
   total = 9 + count * 2 + 4;
-  if (bfd_bwrite (buf, (bfd_size_type) total, abfd) != total)
+  if (bfd_write (buf, total, abfd) != total)
     return false;
 
   return true;
@@ -917,36 +916,12 @@ ihex_set_arch_mach (bfd *abfd,
   return true;
 }
 
-/* Get the size of the headers, for the linker.  */
-
-static int
-ihex_sizeof_headers (bfd *abfd ATTRIBUTE_UNUSED,
-		     struct bfd_link_info *info ATTRIBUTE_UNUSED)
-{
-  return 0;
-}
-
 /* Some random definitions for the target vector.  */
 
 #define	ihex_close_and_cleanup			  _bfd_generic_close_and_cleanup
 #define ihex_bfd_free_cached_info		  _bfd_generic_bfd_free_cached_info
 #define ihex_new_section_hook			  _bfd_generic_new_section_hook
-#define ihex_get_section_contents_in_window	  _bfd_generic_get_section_contents_in_window
-#define ihex_get_symtab_upper_bound		  _bfd_long_bfd_0
-#define ihex_canonicalize_symtab		  _bfd_nosymbols_canonicalize_symtab
-#define ihex_make_empty_symbol			  _bfd_generic_make_empty_symbol
-#define ihex_print_symbol			  _bfd_nosymbols_print_symbol
-#define ihex_get_symbol_info			  _bfd_nosymbols_get_symbol_info
-#define ihex_get_symbol_version_string		  _bfd_nosymbols_get_symbol_version_string
-#define ihex_bfd_is_target_special_symbol	  _bfd_bool_bfd_asymbol_false
-#define ihex_bfd_is_local_label_name		  _bfd_nosymbols_bfd_is_local_label_name
-#define ihex_get_lineno				  _bfd_nosymbols_get_lineno
-#define ihex_find_nearest_line			  _bfd_nosymbols_find_nearest_line
-#define ihex_find_line				  _bfd_nosymbols_find_line
-#define ihex_find_inliner_info			  _bfd_nosymbols_find_inliner_info
-#define ihex_bfd_make_debug_symbol		  _bfd_nosymbols_bfd_make_debug_symbol
-#define ihex_read_minisymbols			  _bfd_nosymbols_read_minisymbols
-#define ihex_minisymbol_to_symbol		  _bfd_nosymbols_minisymbol_to_symbol
+#define ihex_sizeof_headers			  _bfd_nolink_sizeof_headers
 #define ihex_bfd_get_relocated_section_contents	  bfd_generic_get_relocated_section_contents
 #define ihex_bfd_relax_section			  bfd_generic_relax_section
 #define ihex_bfd_gc_sections			  bfd_generic_gc_sections
@@ -998,13 +973,13 @@ const bfd_target ihex_vec =
   {
     _bfd_bool_bfd_false_error,
     ihex_mkobject,
-    _bfd_generic_mkarchive,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
   {				/* bfd_write_contents.  */
     _bfd_bool_bfd_false_error,
     ihex_write_object_contents,
-    _bfd_write_archive_contents,
+    _bfd_bool_bfd_false_error,
     _bfd_bool_bfd_false_error,
   },
 
@@ -1012,7 +987,7 @@ const bfd_target ihex_vec =
   BFD_JUMP_TABLE_COPY (_bfd_generic),
   BFD_JUMP_TABLE_CORE (_bfd_nocore),
   BFD_JUMP_TABLE_ARCHIVE (_bfd_noarchive),
-  BFD_JUMP_TABLE_SYMBOLS (ihex),
+  BFD_JUMP_TABLE_SYMBOLS (_bfd_nosymbols),
   BFD_JUMP_TABLE_RELOCS (_bfd_norelocs),
   BFD_JUMP_TABLE_WRITE (ihex),
   BFD_JUMP_TABLE_LINK (ihex),

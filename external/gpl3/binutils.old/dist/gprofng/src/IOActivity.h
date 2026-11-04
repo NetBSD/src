@@ -1,4 +1,4 @@
-/* Copyright (C) 2021 Free Software Foundation, Inc.
+/* Copyright (C) 2021-2025 Free Software Foundation, Inc.
    Contributed by Oracle.
 
    This file is part of GNU Binutils.
@@ -78,7 +78,6 @@ private:
   Hist_data *hist_data_file_all;
   Hist_data *hist_data_vfd_all;
   Hist_data *hist_data_callstack_all;
-  Hist_data *hist_data_callstack;
 
   DbeView *dbev;
 };

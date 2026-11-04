@@ -1,5 +1,5 @@
 /* ldbuildid.c - Build Id support routines
-   Copyright (C) 2013-2022 Free Software Foundation, Inc.
+   Copyright (C) 2013-2025 Free Software Foundation, Inc.
 
    This file is part of the GNU Binutils.
 
@@ -23,6 +23,10 @@
 #include "safe-ctype.h"
 #include "md5.h"
 #include "sha1.h"
+#ifdef WITH_XXHASH
+#define XXH_INLINE_ALL
+#include <xxhash.h>
+#endif
 #include "ldbuildid.h"
 #ifdef __MINGW32__
 #include <windows.h>
@@ -35,6 +39,9 @@ bool
 validate_build_id_style (const char *style)
 {
   if ((streq (style, "md5")) || (streq (style, "sha1"))
+#ifdef WITH_XXHASH
+      || (streq (style, "xx"))
+#endif
       || (streq (style, "uuid")) || (startswith (style, "0x")))
     return true;
 
@@ -46,6 +53,11 @@ compute_build_id_size (const char *style)
 {
   if (streq (style, "md5") || streq (style, "uuid"))
     return 128 / 8;
+
+#ifdef WITH_XXHASH
+  if (streq (style, "xx"))
+    return 128 / 8;
+#endif
 
   if (streq (style, "sha1"))
     return 160 / 8;
@@ -93,6 +105,16 @@ read_hex (const char xdigit)
   return 0;
 }
 
+
+#ifdef WITH_XXHASH
+static void
+xx_process_bytes(const void* buffer, size_t size, void* state)
+{
+  XXH3_128bits_update ((XXH3_state_t*) state, buffer, size);
+}
+#endif
+
+
 bool
 generate_build_id (bfd *abfd,
 		   const char *style,
@@ -100,7 +122,31 @@ generate_build_id (bfd *abfd,
 		   unsigned char *id_bits,
 		   int size ATTRIBUTE_UNUSED)
 {
-  if (streq (style, "md5"))
+#ifdef WITH_XXHASH
+  if (streq (style, "xx"))
+    {
+      XXH3_state_t* state = XXH3_createState ();
+      if (!state)
+        {
+          return false;
+        }
+      XXH3_128bits_reset (state);
+      if (!(*checksum_contents) (abfd, &xx_process_bytes, state))
+        {
+          XXH3_freeState (state);
+          return false;
+        }
+      XXH128_hash_t result = XXH3_128bits_digest (state);
+      XXH3_freeState (state);
+      /* Use canonical-endianness output. */
+      XXH128_canonical_t result_canon;
+      XXH128_canonicalFromHash (&result_canon, result);
+      memcpy (id_bits, &result_canon,
+	      (size_t) size < sizeof (result) ? (size_t) size : sizeof (result));
+    }
+  else
+#endif
+    if (streq (style, "md5"))
     {
       struct md5_ctx ctx;
 
@@ -114,7 +160,8 @@ generate_build_id (bfd *abfd,
       struct sha1_ctx ctx;
 
       sha1_init_ctx (&ctx);
-      if (!(*checksum_contents) (abfd, (sum_fn) &sha1_process_bytes, &ctx))
+      if (!(*checksum_contents) (abfd, (sum_fn) sha1_choose_process_bytes (),
+				 &ctx))
 	return false;
       sha1_finish_ctx (&ctx, id_bits);
     }

@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.34.2.1 2025/08/02 05:22:03 perseant Exp $	
+# $NetBSD: Makefile,v 1.34.2.2 2026/11/04 22:38:37 perseant Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.init.mk>
@@ -6,6 +6,9 @@ USE_FORT?= yes	# network protocol library
 
 CPPFLAGS+= -DPCAP_DONT_INCLUDE_PCAP_BPF_H -DHAVE_CONFIG_H -DENABLE_REMOTE
 CPPFLAGS+= -DPCAP_SUPPORT_RPCAP
+# The following is for a pure build but we can't do that because other
+# programs use the internal functions (rpcapd for example)
+#CPPFLAGS+= -fvisibility=hidden -Dpcap_EXPORTS
 CPPFLAGS+= -I${.OBJDIR}
 
 .SUFFIXES: .3 .3pcap
@@ -42,6 +45,7 @@ pcap_freecode.3pcap \
 pcap_get_required_select_timeout.3pcap \
 pcap_get_selectable_fd.3pcap \
 pcap_geterr.3pcap \
+pcap_init.3pcap \
 pcap_inject.3pcap \
 pcap_is_swapped.3pcap \
 pcap_lib_version.3pcap \
@@ -55,6 +59,7 @@ pcap_open_live.3pcap \
 pcap_set_buffer_size.3pcap \
 pcap_set_datalink.3pcap \
 pcap_set_promisc.3pcap \
+pcap_set_protocol_linux.3pcap \
 pcap_set_rfmon.3pcap \
 pcap_set_snaplen.3pcap \
 pcap_set_timeout.3pcap \

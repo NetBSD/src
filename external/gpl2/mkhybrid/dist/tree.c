@@ -140,6 +140,8 @@ FDECL2(stat_filter, char *, path, struct stat *, st)
   int result = stat(path, st);
   if (result >= 0 && rationalize)
     stat_fix(st);
+  if (result >= 0 && force_time_set)
+    st->st_atime = st->st_mtime = st->st_ctime = force_time;
   return result;
 }
 
@@ -149,6 +151,8 @@ FDECL2(lstat_filter, char *, path, struct stat *, st)
   int result = lstat(path, st);
   if (result >= 0 && rationalize)
     stat_fix(st);
+  if (result >= 0 && force_time_set)
+    st->st_atime = st->st_mtime = st->st_ctime = force_time;
   return result;
 }
 
@@ -597,8 +601,8 @@ static void generate_reloc_directory()
 	time_t current_time;
 	struct directory_entry  *s_entry;
 
-	/* Create an  entry for our internal tree */
-	time (&current_time);
+	/* Create an entry for our internal tree */
+	current_time = time_now();
 	reloc_dir = (struct directory *) 
 		e_malloc(sizeof(struct directory));
 	memset(reloc_dir, 0, sizeof(struct directory));
@@ -2165,7 +2169,7 @@ void init_fstatbuf()
 
   if(fstatbuf.st_ctime == 0)
     {
-      time (&current_time);
+      current_time = time_now();
       if( rationalize )
 	{
 	  fstatbuf.st_uid = 0;

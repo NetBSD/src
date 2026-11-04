@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.46.8.1 2025/08/02 05:20:38 perseant Exp $
+# $NetBSD: mi,v 1.46.8.2 2026/11/04 22:37:07 perseant Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4471,18 +4471,18 @@
 ./usr/X11R7/lib/X11/fonts/misc/olgl12.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/olgl14.pcf.gz		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/olgl19.pcf.gz		xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/spleen-12x24.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/spleen-12x24-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/spleen-16x32.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-12x24.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/spleen-16x32-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/spleen-32x64.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-16x32.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/spleen-32x64-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/spleen-5x8.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-32x64.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/spleen-5x8-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/spleen-6x12.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-5x8.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/spleen-6x12-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
-./usr/X11R7/lib/X11/fonts/misc/spleen-8x16.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-6x12.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/misc/spleen-8x16-ISO8859-1.pcf.gz	xfont	share,xorg,x11fonts
+./usr/X11R7/lib/X11/fonts/misc/spleen-8x16.pcf.gz	xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-1		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-10		xfont	share,xorg,x11fonts
 ./usr/X11R7/lib/X11/fonts/util/map-ISO8859-11		xfont	share,xorg,x11fonts
