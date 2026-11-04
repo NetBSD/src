@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.375 2026/08/28 13:58:27 riastradh Exp $	*/
+/*	$NetBSD: proc.h,v 1.376 2026/11/04 18:41:11 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -261,6 +261,7 @@ struct proc {
 
 	pid_t		p_pid;		/* :: Process identifier. */
 	LIST_ENTRY(proc) p_pglist;	/* l: List of processes in pgrp. */
+	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 	struct proc 	*p_pptr;	/* l: Pointer to parent process. */
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
@@ -319,6 +320,11 @@ struct proc {
 
 /*
  * The following fields are all copied upon creation in fork.
+ *
+ * All fields from p_startcopy (inclusive) to p_endcopy (exclusive)
+ * must be either:
+ * - p: protected by p_lock, or
+ * - :: unlocked and stable after exec/spawn.
  */
 #define	p_startcopy	p_sigctx
 
@@ -327,7 +333,6 @@ struct proc {
 	u_char		p_nice;		/* p: Process "nice" value */
 	char		p_comm[MAXCOMLEN+1];
 					/* p: basename of last exec file */
-	struct pgrp 	*p_pgrp;	/* l: Pointer to process group */
 
 	vaddr_t		p_psstrp;	/* :: address of process's ps_strings */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
