@@ -1,5 +1,5 @@
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,15 +56,8 @@ test_bpf_code(void *code, size_t size)
 	m = mbuf_get_pkt(AF_INET, IPPROTO_TCP,
 	    "192.168.2.100", "10.0.0.1", 15000, 80);
 	npc = get_cached_pkt(m, NULL, NPF_RULE_LAYER_3);
-#ifdef _NPF_STANDALONE
-	bc_args.pkt = (const uint8_t *)nbuf_dataptr(npc->npc_nbuf);
-#else
-	bc_args.pkt = (const uint8_t *)m;
-#endif
-	bc_args.buflen = m_length(m);
-	bc_args.wirelen = bc_args.buflen;
-	bc_args.mem = memstore;
-	bc_args.arg = npc;
+
+	npf_bpf_prepare(npc, &bc_args, memstore);
 
 	/* BPF byte code */
 	ret = npf_bpf_filter(&bc_args, code, NULL);
@@ -92,7 +85,7 @@ npf_bpfcop_run(unsigned reg)
 		BPF_STMT(BPF_LD+BPF_W+BPF_MEM, reg),
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
-	return test_bpf_code(&insns_npf_bpfcop, sizeof(insns_npf_bpfcop));
+	return test_bpf_code(&insns_npf_bpfcop, __arraycount(insns_npf_bpfcop));
 }
 
 static bool
@@ -103,7 +96,7 @@ npf_bpfcop_test(void)
 		BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
-	CHECK_TRUE(test_bpf_code(&insns_ipver, sizeof(insns_ipver)) == IPVERSION);
+	CHECK_TRUE(test_bpf_code(&insns_ipver, __arraycount(insns_ipver)) == IPVERSION);
 
 	/* BPF_MW_IPVERI <- IP version */
 	CHECK_TRUE(npf_bpfcop_run(BPF_MW_IPVER) == IPVERSION);
