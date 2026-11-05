@@ -1,4 +1,4 @@
-/*	$NetBSD: uts.c,v 1.18 2025/04/07 11:13:15 hans Exp $	*/
+/*	$NetBSD: uts.c,v 1.19 2026/11/05 01:17:54 nat Exp $	*/
 
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.18 2025/04/07 11:13:15 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uts.c,v 1.19 2026/11/05 01:17:54 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,9 +74,12 @@ int	utsdebug = 0;
 struct uts_softc {
 	device_t sc_dev;
 	struct uhidev *sc_hdev;
+	struct usbd_device *sc_udev;
 
 	struct hid_location sc_loc_x, sc_loc_y, sc_loc_z;
 	struct hid_location sc_loc_btn;
+
+	bool	sc_alwayson;
 
 	int sc_enabled;
 
@@ -139,16 +142,22 @@ uts_attach(device_t parent, device_t self, void *aux)
 	struct uts_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
 	struct wsmousedev_attach_args a;
-	int size;
+	int error, size;
 	void *desc;
 	uint32_t flags;
 	struct hid_data * d;
 	struct hid_item item;
+	uint32_t quirks;
 
 	aprint_normal("\n");
 
 	sc->sc_dev = self;
 	sc->sc_hdev = uha->parent;
+	sc->sc_udev = uha->uiaa->uiaa_device;
+
+	quirks = usbd_get_quirks(sc->sc_udev)->uq_flags;
+	if (quirks & UQ_ALWAYS_ON)
+		sc->sc_alwayson = true;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 
@@ -263,6 +272,14 @@ uts_attach(device_t parent, device_t self, void *aux)
 	tpcalib_ioctl(&sc->sc_tpcalib, WSMOUSEIO_SCALIBCOORDS,
 	    (void *)&sc->sc_calibcoords, 0, 0);
 
+	if (sc->sc_alwayson) {
+		error = uhidev_open(sc->sc_hdev, &uts_intr, sc);
+		if (error != 0) {
+			aprint_error_dev(self,
+			    "WARNING: couldn't open always-on device\n");
+			sc->sc_alwayson = false;
+		}
+	}
 	return;
 }
 
@@ -272,8 +289,10 @@ uts_detach(device_t self, int flags)
 	struct uts_softc *sc = device_private(self);
 	int error;
 
-	__USE(sc);
 	DPRINTF(("uts_detach: sc=%p flags=%d\n", sc, flags));
+
+	if (sc->sc_alwayson)
+		uhidev_close(sc->sc_hdev);
 
 	error = config_detach_children(self, flags);
 	if (error)
@@ -320,7 +339,12 @@ uts_enable(void *v)
 	if (sc->sc_enabled)
 		return EBUSY;
 
-	error = uhidev_open(sc->sc_hdev, &uts_intr, sc);
+	error = 0;
+	if (!sc->sc_alwayson) {
+		error = uhidev_open(sc->sc_hdev, &uts_intr, sc);
+		if (error)
+			sc->sc_enabled = 0;
+	}
 
 	if (error != 0)
 		return error;
@@ -342,7 +366,8 @@ uts_disable(void *v)
 		return;
 
 	sc->sc_enabled = 0;
-	uhidev_close(sc->sc_hdev);
+	if (!sc->sc_alwayson)
+		uhidev_close(sc->sc_hdev);
 }
 
 Static int

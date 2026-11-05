@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_quirks.c,v 1.108 2024/02/28 21:52:40 dholland Exp $	*/
+/*	$NetBSD: usb_quirks.c,v 1.109 2026/11/05 01:17:54 nat Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_quirks.c,v 1.30 2003/01/02 04:15:55 imp Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.108 2024/02/28 21:52:40 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_quirks.c,v 1.109 2026/11/05 01:17:54 nat Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -396,6 +396,8 @@ Static const struct usbd_quirk_entry {
  * unless it's kept open.
  */
  { USB_VENDOR_CHICONY,		USB_PRODUCT_CHICONY_OPTMOUSE0939,	ANY,
+	{ UQ_ALWAYS_ON, NULL }},
+ { USB_VENDOR_ELAN,		USB_PRODUCT_ELAN_TPANEL,		ANY,
 	{ UQ_ALWAYS_ON, NULL }},
  { USB_VENDOR_PIXART,		USB_PRODUCT_PIXART_RPIMOUSE,		ANY,
 	{ UQ_ALWAYS_ON, NULL }},
