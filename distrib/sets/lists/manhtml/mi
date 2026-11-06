@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.64 2026/10/30 22:32:03 nia Exp $
+# $NetBSD: mi,v 1.65 2026/11/06 17:16:49 nia Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1402,6 +1402,7 @@
 ./usr/share/man/html4/luna68k/mem.html		man-sys-htmlman		html
 ./usr/share/man/html4/luna68k/xp.html		man-sys-htmlman		html
 ./usr/share/man/html4/lxtphy.html		man-sys-htmlman		html
+./usr/share/man/html4/lynxfb.html		man-sys-htmlman		html
 ./usr/share/man/html4/m25p.html			man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/ae.html		man-sys-htmlman		html
 ./usr/share/man/html4/mac68k/ascaudio.html	man-sys-htmlman		html

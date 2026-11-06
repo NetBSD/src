@@ -1,0 +1,77 @@
+.\"	$NetBSD: lynxfb.4,v 1.1 2026/11/06 17:16:50 nia Exp $
+.\"
+.\" Copyright (c) 2026 The NetBSD Foundation
+.\" All rights reserved.
+.\"
+.\" Redistribution and use in source and binary forms, with or without
+.\" modification, are permitted provided that the following conditions
+.\" are met:
+.\" 1. Redistributions of source code must retain the above copyright
+.\"    notice, this list of conditions and the following disclaimer.
+.\" 2. Redistributions in binary form must reproduce the above copyright
+.\"    notice, this list of conditions and the following disclaimer in the
+.\"    documentation and/or other materials provided with the distribution.
+.\"
+.\" THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
+.\" IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
+.\" OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED.
+.\" IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY DIRECT, INDIRECT,
+.\" INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING,
+.\" BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS OR SERVICES;
+.\" LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION) HOWEVER CAUSED
+.\" AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT LIABILITY,
+.\" OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+.\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+.\" SUCH DAMAGE.
+.\"
+.Dd November 6, 2026
+.Dt LYNXFB 4
+.Os
+.Sh NAME
+.Nm lynxfb
+.Nd Silicon Motion SM712 framebuffer driver
+.Sh SYNOPSIS
+.Cd "lynxfb* at pci?"
+.Cd "wsdisplay* at lynxfb?"
+.Pp
+.Cd options LYNXFB_DEFAULT_WIDTH=1024
+.Cd options LYNXFB_DEFAULT_HEIGHT=600
+.Cd options LYNXFB_DEFAULT_DEPTH=16
+.Cd options LYNXFB_DEFAULT_STRIDE=0
+.Sh DESCRIPTION
+Silicon Motion's SM712 framebuffer chip (also known as the LynxEM+)
+is a PCI display controller designed for mobile computers.
+.Pp
+The controller is capable of driving multiple displays simultaneously
+and supports 2MB or 4MB of video RAM.
+It also provides support for basic 2D acceleration, including a
+blitter, and hardware support for YUV-RGB conversions.
+The
+.Nm
+driver takes advantage of the 2D acceleration capabilities via the
+.Xr rasops 9
+framework.
+.Pp
+Only a limited range of resolutions are supported by the controller,
+typically up to 1024x768, although it is often used with 1024x600
+screens in small laptops, including the Lemote Yeeloong.
+.Pp
+It is also found in industrial and embedded computers, and servers
+from various manufacturers.
+Low-profile PCI cards utilizing the SM712 are also known to exist,
+targeting the rackmount server market, such as the "Rattler M4".
+.Sh SEE ALSO
+.Xr wscons 4 ,
+.Xr wsdisplay 4 ,
+.Xr rasops 9
+.Sh HISTORY
+The
+.Nm
+driver originally appeared in
+.Ox ,
+where it was known as
+.Sy smfb .
+It was later ported to
+.Nx
+and first appeared in
+.Nx 7.0 .

@@ -1,4 +1,4 @@
-.\"	$NetBSD: pci.4,v 1.130 2026/07/11 21:20:12 nia Exp $
+.\"	$NetBSD: pci.4,v 1.131 2026/11/06 17:16:50 nia Exp $
 .\"
 .\" Copyright (c) 1997 Jason R. Thorpe.  All rights reserved.
 .\" Copyright (c) 1997 Jonathan Stone
@@ -29,7 +29,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd July 11, 2026
+.Dd November 6, 2026
 .Dt PCI 4
 .Os
 .Sh NAME
@@ -436,6 +436,8 @@ generic framebuffer console driver
 Intel Graphics Media Accelerator framebuffers
 .It Xr igsfb 4
 IGA 1682 and CyberPro series graphics cards
+.It Xr lynxfb 4
+Silicon Motion SM712 framebuffer driver
 .It Xr machfb 4
 ATI Mach64/RAGE framebuffer driver
 .It Xr pm3fb 4
