@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.34 2026/04/23 02:54:40 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.35 2026/11/06 14:56:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.34 2026/04/23 02:54:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.35 2026/11/06 14:56:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_modular.h"
@@ -99,7 +99,7 @@ void *_bootstrap(void);
 /*
  * Preserve symbols and strings by setting esym.
  */
-static void 
+static void __attribute__((no_instrument_function))
 _save_symtab(void)
 {
 	int i;
@@ -152,7 +152,7 @@ _save_symtab(void)
  *
  * Returns the new kernel %sp value for lwp0.
  */
-static void *
+static void * __attribute__((no_instrument_function))
 _vm_init(void)
 {
 	vaddr_t nextva;
@@ -208,7 +208,7 @@ _vm_init(void)
  * XXX: move the rest of this to identifycpu().
  * XXX: Move cache_size stuff to cache.c.
  */
-static void 
+static void __attribute__((no_instrument_function))
 _verify_hardware(void)
 {
 	unsigned char machtype;
@@ -256,7 +256,7 @@ _verify_hardware(void)
  * hp300 port (and other m68k) but which we prefer to do in C code.
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
-void *
+void * __attribute__((no_instrument_function))
 _bootstrap(void)
 {
 	extern struct consdev consdev_prom;	/* XXX */
