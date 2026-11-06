@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.109 2026/09/09 07:24:52 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.110 2026/11/06 07:11:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -37,7 +37,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.109 2026/09/09 07:24:52 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.110 2026/11/06 07:11:31 skrll Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_NONPOSTED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -191,6 +191,7 @@ aarch64_fatal:
  */
 vstart:
 	DPRINTREG("PC               = ", x20)
+	DPRINTREG("SP               = ", sp)
 
 	/* set exception vector */
 	adrl	x0, _C_LABEL(el1_vectors)
