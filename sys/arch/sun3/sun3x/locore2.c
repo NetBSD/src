@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.46 2026/04/06 14:45:32 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.47 2026/11/06 15:10:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.46 2026/04/06 14:45:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.47 2026/11/06 15:10:44 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -88,7 +88,7 @@ void *_bootstrap(void);
 /*
  * Preserve DDB symbols and strings by setting esym.
  */
-static void
+static void __attribute__((no_instrument_function))
 _save_symtab(void)
 {
 	int i;
@@ -140,7 +140,7 @@ _save_symtab(void)
  *
  * Returns the new kernel %sp value for lwp0.
  */
-static void *
+static void * __attribute__((no_instrument_function))
 _vm_init(void)
 {
 	vaddr_t nextva;
@@ -196,7 +196,7 @@ _vm_init(void)
  * hp300 port (and other m68k) but which we prefer to do in C code.
  * Also do setup specific to the Sun PROM monitor and IDPROM here.
  */
-void *
+void * __attribute__((no_instrument_function))
 _bootstrap(void)
 {
 	extern struct consdev consdev_prom;	/* XXX */
