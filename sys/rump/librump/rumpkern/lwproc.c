@@ -1,4 +1,4 @@
-/*      $NetBSD: lwproc.c,v 1.59 2025/04/06 01:13:55 riastradh Exp $	*/
+/*      $NetBSD: lwproc.c,v 1.60 2026/11/06 17:24:26 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
 #define RUMP__CURLWP_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.59 2025/04/06 01:13:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lwproc.c,v 1.60 2026/11/06 17:24:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -275,6 +275,7 @@ lwproc_newproc(struct proc *parent, struct vmspace *vm, int flags)
 	mutex_enter(&proc_lock);
 	LIST_INSERT_HEAD(&allproc, p, p_list);
 	LIST_INSERT_HEAD(&parent->p_children, p, p_sibling);
+	p->p_pgrp = parent->p_pgrp;
 	LIST_INSERT_AFTER(parent, p, p_pglist);
 	mutex_exit(&proc_lock);
 
