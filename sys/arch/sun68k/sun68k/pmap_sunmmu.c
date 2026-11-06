@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_sunmmu.c,v 1.5 2026/09/01 18:01:25 andvar Exp $	*/
+/*	$NetBSD: pmap_sunmmu.c,v 1.6 2026/11/06 15:07:49 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.5 2026/09/01 18:01:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.6 2026/11/06 15:07:49 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -299,6 +299,9 @@ static vaddr_t hole_start, hole_size;
 
 /* This is where we map a PMEG without a context. */
 static vaddr_t temp_seg_va;
+#ifdef DIAGNOSTIC
+static int temp_seg_inuse;
+#endif
 
 /*
  * Location to store virtual addresses
@@ -1593,7 +1596,7 @@ pmap_common_init(pmap_t pmap)
  * after the "start/end" globals are set.
  * This function must NOT leave context zero.
  */
-paddr_t
+paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap(vaddr_t nextva)
 {
 	vaddr_t va, eva;
@@ -2197,6 +2200,7 @@ pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 	 * thing we have to handle here is possibly allocating additional
 	 * PMEGs and inserting them into the appropriate contexts.
 	 */
+	kernel_context_enter();
 
 	/*
 	 * In detail:
@@ -2210,7 +2214,6 @@ pmap_enter_kernel(vaddr_t pgva, int new_pte, bool wired)
 	 *		use pv_stuff, for change, pmap_remove() possibly.
 	 * (e) change/add pte
 	 */
-	kernel_context_enter();
 
 #ifdef	DIAGNOSTIC
 	if ((pgva < virtual_avail) || (pgva >= DVMA_MAP_END))

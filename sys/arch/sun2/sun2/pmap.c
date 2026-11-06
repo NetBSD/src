@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2026/09/01 18:01:25 andvar Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2026/11/06 15:06:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2026/09/01 18:01:25 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2026/11/06 15:06:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1479,7 +1479,7 @@ pmap_common_init(pmap_t pmap)
  * after the "start/end" globals are set.
  * This function must NOT leave context zero.
  */
-paddr_t
+paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap(vaddr_t nextva)
 {
 	vaddr_t va, eva;
