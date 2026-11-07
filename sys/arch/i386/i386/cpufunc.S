@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.54 2025/09/06 02:53:22 riastradh Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.55 2026/11/07 15:23:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007, 2020, 2023 The NetBSD Foundation, Inc.
@@ -39,9 +39,10 @@
 
 #include <machine/asm.h>
 #include <machine/frameasm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.54 2025/09/06 02:53:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.55 2026/11/07 15:23:54 riastradh Exp $");
 
 #include "opt_dtrace.h"
+#include "opt_efi.h"
 #include "opt_xen.h"
 
 #include <machine/specialreg.h>
@@ -398,3 +399,14 @@ ENTRY(outl)
 	outl	%eax, %dx
 	ret
 END(outl)
+
+#ifdef EFI_RUNTIME
+/*
+ * pcb_onfault routine for EFI runtime services.  Error code is in %eax.
+ * All other registers are undefined.  See efi_machdep.c for usage.
+ */
+ENTRY(efi_runtime_pcb_onfault)
+	movl	%eax,%edi
+	jmp	_C_LABEL(efi_runtime_fault_abort)
+END(efi_runtime_pcb_onfault)
+#endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: efi_machdep.c,v 1.8 2026/07/01 00:59:57 riastradh Exp $	*/
+/*	$NetBSD: efi_machdep.c,v 1.9 2026/11/07 15:23:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.8 2026/07/01 00:59:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi_machdep.c,v 1.9 2026/11/07 15:23:54 riastradh Exp $");
 
 #include "efi.h"
 #include "opt_efi.h"
@@ -811,7 +811,44 @@ fail:	/*
 
 struct efi_runtime_cookie {
 	void	*erc_pmap_cookie;
+	label_t	*erc_label;
 };
+
+/*
+ * efi_runtime_fault_cookie, efi_runtime_fault_error
+ *
+ *	State for longjmp on fault.  Access serialized by
+ *	efi_runtime_lock.
+ */
+static struct efi_runtime_cookie *efi_runtime_fault_cookie;
+static int efi_runtime_fault_error;
+
+/*
+ * efi_runtime_pcb_onfault
+ *
+ *	Return address for pcb_onfault during EFI runtime services
+ *	call.  This assembly stub defined in cpufunc.S takes an error
+ *	code in %eax/%rax as if it were a return value -- it is not a
+ *	normal function to call.
+ */
+void efi_runtime_pcb_onfault(void);
+
+/*
+ * efi_runtime_fault_abort(error)
+ *
+ *	Standard procedure call triggered by pcb_onfault.  Invoked by
+ *	assembly stub efi_runtime_pcb_onfault in cpufunc.S.  Makes 1
+ *	come flying out of the setjmp that began the EFI runtime
+ *	services call.
+ */
+void efi_runtime_fault_abort(int);
+void
+efi_runtime_fault_abort(int error)
+{
+
+	efi_runtime_fault_error = error;
+	longjmp(efi_runtime_fault_cookie->erc_label);
+}
 
 /*
  * efi_runtime_enter(cookie)
@@ -821,8 +858,9 @@ struct efi_runtime_cookie {
  *	done.
  */
 static void
-efi_runtime_enter(struct efi_runtime_cookie *cookie)
+efi_runtime_enter(struct efi_runtime_cookie *cookie, label_t *label)
 {
+	struct pcb * const pcb = lwp_getpcb(curlwp);
 
 	KASSERT(efi_runtime_pmap != NULL);
 
@@ -853,6 +891,15 @@ efi_runtime_enter(struct efi_runtime_cookie *cookie)
 	 * run privileged, which they need in order to do I/O anyway.
 	 */
 	cookie->erc_pmap_cookie = pmap_activate_sync(efi_runtime_pmap);
+
+	/*
+	 * If the EFI runtime services code is broken, try to recover
+	 * gracefully.
+	 */
+	cookie->erc_label = label;
+	efi_runtime_fault_cookie = cookie;
+	KASSERT(pcb->pcb_onfault == NULL);
+	pcb->pcb_onfault = &efi_runtime_pcb_onfault;
 }
 
 /*
@@ -864,10 +911,35 @@ efi_runtime_enter(struct efi_runtime_cookie *cookie)
 static void
 efi_runtime_exit(struct efi_runtime_cookie *cookie)
 {
+	struct pcb * const pcb = lwp_getpcb(curlwp);
 
+	KASSERT(pcb->pcb_onfault == &efi_runtime_pcb_onfault);
+	pcb->pcb_onfault = NULL;
 	pmap_deactivate_sync(efi_runtime_pmap, cookie->erc_pmap_cookie);
 	fpu_kern_leave();
 	mutex_exit(&efi_runtime_lock);
+}
+
+/*
+ * efi_runtime_faulted()
+ *
+ *	To be called by an EFI runtime services wrapper function when 1
+ *	comes flying out of setjmp, meaning the actual call had
+ *	faulted.
+ */
+static efi_status
+efi_runtime_faulted(void)
+{
+	struct efi_runtime_cookie *cookie = efi_runtime_fault_cookie;
+	int error = efi_runtime_fault_error;
+
+	KASSERT(mutex_owned(&efi_runtime_lock));
+	KASSERT(cookie != NULL);
+
+	efi_runtime_exit(cookie);
+
+	/* XXX */
+	return (error == EFAULT ? EFI_DEVICE_ERROR : EFI_INVALID_PARAMETER);
 }
 
 /*
@@ -880,11 +952,15 @@ efi_runtime_gettime(struct efi_tm *tm, struct efi_tmcap *tmcap)
 {
 	efi_status status;
 	struct efi_runtime_cookie cookie;
+	label_t label;
 
 	if (efi_rt.rt_gettime == NULL)
 		return EFI_UNSUPPORTED;
 
-	efi_runtime_enter(&cookie);
+	if (setjmp(&label))
+		return efi_runtime_faulted();
+
+	efi_runtime_enter(&cookie, &label);
 	status = efi_rt.rt_gettime(tm, tmcap);
 	efi_runtime_exit(&cookie);
 
@@ -901,11 +977,15 @@ efi_runtime_settime(struct efi_tm *tm)
 {
 	efi_status status;
 	struct efi_runtime_cookie cookie;
+	label_t label;
 
 	if (efi_rt.rt_settime == NULL)
 		return EFI_UNSUPPORTED;
 
-	efi_runtime_enter(&cookie);
+	if (setjmp(&label))
+		return efi_runtime_faulted();
+
+	efi_runtime_enter(&cookie, &label);
 	status = efi_rt.rt_settime(tm);
 	efi_runtime_exit(&cookie);
 
@@ -923,11 +1003,15 @@ efi_runtime_getvar(efi_char *name, struct uuid *vendor, uint32_t *attrib,
 {
 	efi_status status;
 	struct efi_runtime_cookie cookie;
+	label_t label;
 
 	if (efi_rt.rt_getvar == NULL)
 		return EFI_UNSUPPORTED;
 
-	efi_runtime_enter(&cookie);
+	if (setjmp(&label))
+		return efi_runtime_faulted();
+
+	efi_runtime_enter(&cookie, &label);
 	status = efi_rt.rt_getvar(name, vendor, attrib, datasize, data);
 	efi_runtime_exit(&cookie);
 
@@ -945,11 +1029,15 @@ efi_runtime_nextvar(unsigned long *namesize, efi_char *name,
 {
 	efi_status status;
 	struct efi_runtime_cookie cookie;
+	label_t label;
 
 	if (efi_rt.rt_scanvar == NULL)
 		return EFI_UNSUPPORTED;
 
-	efi_runtime_enter(&cookie);
+	if (setjmp(&label))
+		return efi_runtime_faulted();
+
+	efi_runtime_enter(&cookie, &label);
 	status = efi_rt.rt_scanvar(namesize, name, vendor);
 	efi_runtime_exit(&cookie);
 
@@ -967,11 +1055,15 @@ efi_runtime_setvar(efi_char *name, struct uuid *vendor, uint32_t attrib,
 {
 	efi_status status;
 	struct efi_runtime_cookie cookie;
+	label_t label;
 
 	if (efi_rt.rt_setvar == NULL)
 		return EFI_UNSUPPORTED;
 
-	efi_runtime_enter(&cookie);
+	if (setjmp(&label))
+		return efi_runtime_faulted();
+
+	efi_runtime_enter(&cookie, &label);
 	status = efi_rt.rt_setvar(name, vendor, attrib, datasize, data);
 	efi_runtime_exit(&cookie);
 

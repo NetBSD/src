@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.71 2026/01/17 10:53:19 bouyer Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.72 2026/11/07 15:23:54 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2020, 2023 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <machine/segments.h>
 
 #include "opt_dtrace.h"
+#include "opt_efi.h"
 #include "opt_xen.h"
 #include "opt_svs.h"
 
@@ -510,3 +511,14 @@ ENTRY(svs_quad_copy)
 	movsq
 	ret
 END(svs_quad_copy)
+
+#ifdef EFI_RUNTIME
+/*
+ * pcb_onfault routine for EFI runtime services.  Error code is in %rax.
+ * All other registers are undefined.  See efi_machdep.c for usage.
+ */
+ENTRY(efi_runtime_pcb_onfault)
+	movq	%rax,%rdi
+	jmp	_C_LABEL(efi_runtime_fault_abort)
+END(efi_runtime_pcb_onfault)
+#endif
