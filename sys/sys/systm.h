@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.309 2026/07/17 02:18:56 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.310 2026/11/07 20:33:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -684,10 +684,10 @@ bool wsdisplay_cn_isconsole(dev_t);
 #endif
 #endif
 
-void cn_init_magic(cnm_state_t *);
-void cn_destroy_magic(cnm_state_t *);
-int cn_set_magic(const char *);
-int cn_get_magic(char *, size_t);
+void	cn_init_magic(cnm_state_t *);
+void	cn_destroy_magic(cnm_state_t *);
+int	cn_set_magic(const char *);
+int	cn_get_magic(char *, size_t);
 /* This should be called for each byte read */
 #ifndef cn_check_magic
 #define cn_check_magic(d, k, s)						\
@@ -729,9 +729,9 @@ extern int db_fromconsole; /* XXX ddb/ddbvar.h */
 #endif
 
 /* For SYSCALL_DEBUG */
-void scdebug_init(void);
-void scdebug_call(register_t, const register_t[]);
-void scdebug_ret(register_t, int, const register_t[]);
+void	scdebug_init(void);
+void	scdebug_call(register_t, const register_t[]);
+void	scdebug_ret(register_t, int, const register_t[]);
 
 void	kernel_lock_init(void);
 void	_kernel_lock(int);
