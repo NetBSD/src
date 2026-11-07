@@ -1,0 +1,14 @@
+# Approximate NetBSD KNF formatting conventions from share/misc/style.
+# clang-format is not an authoritative KNF checker; review changes manually.
+BasedOnStyle: LLVM
+Language: Cpp
+IndentWidth: 8
+TabWidth: 8
+UseTab: ForContinuationAndIndentation
+ColumnLimit: 80
+BreakBeforeBraces: Linux
+IndentCaseLabels: false
+PointerAlignment: Right
+SpaceBeforeParens: ControlStatements
+AlignEscapedNewlines: Right
+SortIncludes: false
