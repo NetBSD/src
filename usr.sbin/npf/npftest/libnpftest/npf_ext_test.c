@@ -144,13 +144,13 @@ run_raw_testcase(npf_cache_t *npc, unsigned i, bool verbose)
 }
 
 static void
-npf_get_normalize_params(npf_cache_t *npc, uint16_t *ip_ttl, uint8_t *ip_id, int *df, uint16_t *maxmss)
+npf_get_normalize_params(npf_cache_t *npc, uint16_t *ip_ttl, uint8_t *ip_id, int *ip_off, uint16_t *maxmss)
 {
     int wscale;
     struct ip *ip = npc->npc_ip.v4;
     *ip_id = ip->ip_id;
     *ip_ttl = ip->ip_ttl;
-    *df = ntohs(ip->ip_off);
+    *ip_off = ntohs(ip->ip_off);
     npf_fetch_tcpopts(npc, maxmss, &wscale);
 }
 
@@ -164,7 +164,7 @@ npf_procedure_test(bool verbose)
 		struct mbuf *m;
 		uint16_t ip_ttl;
     	uint8_t ip_id;
-    	int df;
+    	int ip_off;
     	uint16_t maxmss;
 
 		if (npf_test_getif(t->ifname) == NULL) {
@@ -188,7 +188,7 @@ npf_procedure_test(bool verbose)
 			printf("Normalization:\texpected 164 ttl but got %u\n", ip_ttl);
 			printf("Normalization:\texpected 1321 maxmss but got %u\n", maxmss);
 		}
-		CHECK_TRUE((df & IP_DF) == 0);
+		CHECK_TRUE((ip_off & IP_DF) == 0);
     	CHECK_TRUE(maxmss == 1321);
 		CHECK_TRUE(ip_ttl == 164);
 		put_cached_pkt(npc);
