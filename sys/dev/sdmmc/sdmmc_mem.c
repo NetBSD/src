@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.81 2026/08/12 10:03:18 yurix Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.82 2026/11/07 02:52:13 thorpej Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.81 2026/08/12 10:03:18 yurix Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.82 2026/11/07 02:52:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -1399,7 +1399,7 @@ sdmmc_mem_send_ssr(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_datalen = datalen;
 	cmd.c_blklen = datalen;
 	cmd.c_arg = 0;
-	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1 | SCF_RSP_SPI_R1;
+	cmd.c_flags = SCF_CMD_ADTC | SCF_CMD_READ | SCF_RSP_R1 | SCF_RSP_SPI_R2;
 	cmd.c_opcode = SD_APP_SD_STATUS;
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA))
 		cmd.c_dmamap = sc->sc_dmap;
