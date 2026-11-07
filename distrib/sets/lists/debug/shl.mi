@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.419 2026/11/07 16:14:33 wiz Exp $
+# $NetBSD: shl.mi,v 1.420 2026/11/07 16:17:51 wiz Exp $
 #
 # Note: Like base/shl.mi, entries here for shared libraries should
 #       generally NOT be marked `obsolete' and instead should be
@@ -81,9 +81,6 @@
 ./usr/libdata/debug/usr/lib/libatf-c++.so.2.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libatf-c.so.0.0.debug		comp-atf-debug	debug,compatfile,atf
 ./usr/libdata/debug/usr/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,compatfile,zfs
-./usr/libdata/debug/usr/lib/libbfd.so.16.0.debug		comp-sys-debug	debug,compatfile,binutils=231
-./usr/libdata/debug/usr/lib/libbfd.so.17.0.debug		comp-sys-debug	debug,compatfile,binutils=234
-./usr/libdata/debug/usr/lib/libbfd.so.18.0.debug		comp-sys-debug	debug,compatfile,binutils=239
 ./usr/libdata/debug/usr/lib/libbfd.so.19.0.debug		comp-sys-debug	debug,compatfile,binutils=242
 ./usr/libdata/debug/usr/lib/libbfd.so.20.0.debug		comp-sys-debug	debug,compatfile,binutils=245
 ./usr/libdata/debug/usr/lib/libbfd.so.21.0.debug		comp-sys-debug	debug,compatfile,binutils=246
@@ -119,8 +116,6 @@
 ./usr/libdata/debug/usr/lib/libform.so.8.0.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libgcc_s.so.1.0.debug		comp-sys-debug	debug,compatfile,gcc
 ./usr/libdata/debug/usr/lib/libgfortran.so.5.0.debug		comp-sys-debug	debug,compatfile,gcc=14
-./usr/libdata/debug/usr/lib/libgnuctf.so.0.0.debug		comp-sys-debug	debug,compatfile,binutils=234
-./usr/libdata/debug/usr/lib/libgnuctf.so.1.0.debug		comp-sys-debug	debug,compatfile,binutils=239
 ./usr/libdata/debug/usr/lib/libgnuctf.so.2.0.debug		comp-sys-debug	debug,compatfile,binutils=242
 ./usr/libdata/debug/usr/lib/libgnuctf.so.3.0.debug		comp-sys-debug	debug,compatfile,binutils=245
 ./usr/libdata/debug/usr/lib/libgnuctf.so.3.0.debug		comp-sys-debug	debug,compatfile,binutils=246
@@ -168,12 +163,9 @@
 ./usr/libdata/debug/usr/lib/libnvmm.so.0.1.debug		comp-sys-shlib		nvmm,pic,debug
 ./usr/libdata/debug/usr/lib/libnvpair.so.0.0.debug		comp-zfs-debug	debug,compatfile,zfs
 ./usr/libdata/debug/usr/lib/libobjc.so.4.0.debug		comp-sys-debug	debug,compatfile,gcc
-./usr/libdata/debug/usr/lib/libopcodes.so.10.0.debug		comp-c-debug	debug,compatfile,binutils=234
-./usr/libdata/debug/usr/lib/libopcodes.so.11.0.debug		comp-c-debug	debug,compatfile,binutils=239
 ./usr/libdata/debug/usr/lib/libopcodes.so.12.0.debug		comp-c-debug	debug,compatfile,binutils=242
 ./usr/libdata/debug/usr/lib/libopcodes.so.12.0.debug		comp-c-debug	debug,compatfile,binutils=245
 ./usr/libdata/debug/usr/lib/libopcodes.so.13.0.debug		comp-c-debug	debug,compatfile,binutils=246
-./usr/libdata/debug/usr/lib/libopcodes.so.9.0.debug		comp-c-debug	debug,compatfile,binutils=231
 ./usr/libdata/debug/usr/lib/libossaudio.so.1.1.debug		comp-sys-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libp2k.so.2.0.debug			comp-puffs-debug	debug,compatfile,rump
 ./usr/libdata/debug/usr/lib/libpam.so.4.1.debug			comp-sys-debug	debug,compatfile,pam
