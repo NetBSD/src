@@ -40,17 +40,34 @@ along with GCC; see the file COPYING3.  If not see
 #define LONG_DOUBLE_TYPE_SIZE (TARGET_68020 ? 80 : 64)
 
 #undef SUBTARGET_OVERRIDE_OPTIONS
-#define SUBTARGET_OVERRIDE_OPTIONS \
-  { \
-    if (TARGET_COLDFIRE) \
-      { \
-	target_flags |= MASK_STRICT_ALIGNMENT | MASK_CF_HWDIV; \
-	if ((target_flags_explicit & MASK_HARD_FLOAT) == 0) \
-	  { \
-	    target_flags &= ~MASK_HARD_FLOAT; \
-	    m68k_fpu = FPUTYPE_NONE; \
-	  } \
-      } \
+#define SUBTARGET_OVERRIDE_OPTIONS					\
+  {									\
+    if (TARGET_COLDFIRE)						\
+      {									\
+	target_flags |= MASK_STRICT_ALIGNMENT | MASK_CF_HWDIV;		\
+	if ((target_flags_explicit & MASK_HARD_FLOAT) == 0)		\
+	  {								\
+	    target_flags &= ~MASK_HARD_FLOAT;				\
+	    m68k_fpu = FPUTYPE_NONE;					\
+	  }								\
+      }									\
+      /* NetBSD's __mcount() uses the standard m68k stack frame and	\
+         frame pointer like so:						\
+	 								\
+	 1- return address in __mcount()'s frame is used to get		\
+	    selfpc (i.e. the function being instrumented).		\
+	 								\
+	 2- __mcount() uses the saved-%fp in its own frame to get	\
+	    the frame pointer of the instrumented function, and uses	\
+	    return address in that frame to get the frompc.		\
+									\
+	 So, then profiling is enabled, ensure flag_omit_frame_pointer	\
+	 is disabled so that instrumented functions have the standard	\
+	 stack frame.  */						\
+      if (profile_flag)							\
+        {								\
+          flag_omit_frame_pointer = 0;					\
+	}								\
   }
 
 /* Provide a CPP_SPEC appropriate for NetBSD m68k targets.  Currently we
@@ -87,18 +104,11 @@ along with GCC; see the file COPYING3.  If not see
 
 /* Output assembler code to FILE to increment profiler label # LABELNO
    for profiling a function only.  */
-
+#define NO_PROFILE_COUNTERS 1
 #undef FUNCTION_PROFILER
 #define FUNCTION_PROFILER(FILE, LABELNO)				\
 do									\
   {									\
-    if (TARGET_COLDFIRE || TARGET_68010)				\
-      {									\
-        asm_fprintf (FILE, "\tmovea.l #%LLP%d-.,%Ra1\n", (LABELNO));	\
-        asm_fprintf (FILE, "\tlea (-6,%Rpc,%Ra1),%Ra1\n");	\
-      }									\
-    else								\
-      asm_fprintf (FILE, "\tlea (%LLP%d,%Rpc),%Ra1\n", (LABELNO));	\
     if (flag_pic)							\
       fprintf (FILE, "\tbsr.l __mcount@PLTPC\n");			\
     else								\
