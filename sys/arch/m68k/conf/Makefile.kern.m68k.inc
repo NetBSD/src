@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.kern.m68k.inc,v 1.4 2026/11/02 13:43:39 thorpej Exp $
+#	$NetBSD: Makefile.kern.m68k.inc,v 1.5 2026/11/07 01:13:16 thorpej Exp $
 
 # Special make rule to build fpu files in the kernel and avoid passing
 # -msoft-float.  Use this with config(1) file, eg:
@@ -11,7 +11,7 @@ M68K_KERN_FPU= \
 HAVE_DDB!=	grep '\#define[ 	]*DDB' opt_ddb.h 2>/dev/null || echo no
 HAVE_KGDB!=	grep '\#define[ 	]*KGDB' opt_kgdb.h 2>/dev/null || echo no
 
-.if defined(PROF) || ${HAVE_DDB} != "no" || ${HAVE_KGDB} != "no"
+.if ${HAVE_DDB} != "no" || ${HAVE_KGDB} != "no"
 CFLAGS+=	-fno-omit-frame-pointer
 .endif
 
