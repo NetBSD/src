@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2530 2026/08/04 21:31:06 andvar Exp $
+#	$NetBSD: mi,v 1.2531 2026/11/07 12:10:36 wiz Exp $
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
 ./usr/bin/addr2line				comp-debug-bin		binutils
@@ -4019,8 +4019,8 @@
 ./usr/lib/libavl.a				comp-zfs-lib		compatfile,zfs
 ./usr/lib/libavl_p.a				comp-zfs-proflib	compatfile,profile,zfs
 ./usr/lib/libbfd.a				comp-obsolete		obsolete
-./usr/lib/libbind9.a				comp-obsolete		obsolete
-./usr/lib/libbind9_p.a				comp-obsolete		obsolete
+./usr/lib/libbind9.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libbind9_p.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libblacklist.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libblacklist_p.a			comp-obsolete		obsolete,compatfile
 ./usr/lib/libblocklist.a			comp-c-lib		compatfile
@@ -4128,8 +4128,8 @@
 ./usr/lib/libintl_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libipsec.a				comp-c-lib		ipsec,compatfile
 ./usr/lib/libipsec_p.a				comp-c-proflib		ipsec,compatfile,profile
-./usr/lib/libirs.a				comp-obsolete		obsolete
-./usr/lib/libirs_p.a				comp-obsolete		obsolete,profile
+./usr/lib/libirs.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libirs_p.a				comp-obsolete		obsolete,profile,compatfile
 ./usr/lib/libisc.a				comp-bind-lib		compatfile,bind
 ./usr/lib/libisc_p.a				comp-bind-lib		compatfile,bind,profile
 ./usr/lib/libisccc.a				comp-bind-lib		compatfile,bind
@@ -4494,8 +4494,8 @@
 ./usr/lib/libsqlite3_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libss.a				comp-obsolete		obsolete
 ./usr/lib/libss_p.a				comp-obsolete		obsolete
-./usr/lib/libssh.a				comp-obsolete		obsolete
-./usr/lib/libssh_p.a				comp-obsolete		obsolete
+./usr/lib/libssh.a				comp-obsolete		obsolete,compatfile
+./usr/lib/libssh_p.a				comp-obsolete		obsolete,compatfile
 ./usr/lib/libssl.a				comp-c-lib		compatfile
 ./usr/lib/libssl_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libssp.a				comp-obsolete		obsolete
