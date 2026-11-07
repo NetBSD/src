@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.228 2026/02/12 04:10:44 kre Exp $
+# $NetBSD: mi,v 1.229 2026/11/07 16:14:33 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1474,7 +1474,7 @@
 ./usr/share/examples/named/named.conf		misc-obsolete		obsolete
 ./usr/share/examples/nsd/nsd.conf		misc-netutil-examples	share,nsd
 ./usr/share/examples/openssl/CA.pl		misc-crypto-examples	share
-./usr/share/examples/openssl/CA.sh		misc-crypto-examples	share,openssl=10
+./usr/share/examples/openssl/CA.sh		misc-obsolete		obsolete
 ./usr/share/examples/openssl/der_chop		misc-obsolete		obsolete
 ./usr/share/examples/openssl/openssl.cnf	misc-crypto-examples	share
 ./usr/share/examples/pf/ackpri			misc-pf-examples	pf,share
