@@ -181,7 +181,7 @@ npf_procedure_test(bool verbose)
 		}
 		CHECK_TRUE(ret == 1);
 
-		npf_get_normalize_params(npc, &ip_ttl, &ip_id, &df, &maxmss);
+		npf_get_normalize_params(npc, &ip_ttl, &ip_id, &ip_off, &maxmss);
 		maxmss = ntohs(maxmss);
 
 		if (verbose) {
