@@ -1,4 +1,4 @@
-/* $NetBSD: efi.c,v 1.10 2025/03/30 14:36:48 riastradh Exp $ */
+/* $NetBSD: efi.c,v 1.11 2026/11/07 13:48:56 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2021 Jared McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.10 2025/03/30 14:36:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.11 2026/11/07 13:48:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -341,7 +341,7 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 	efi_status status;
 	int error;
 
-	if (var->name == NULL || var->namesize == 0 ||
+	if (var->name == NULL || var->namesize < sizeof(namebuf[0]) ||
 	    (var->data != NULL && var->datasize == 0)) {
 		return EINVAL;
 	}
@@ -357,7 +357,7 @@ efi_ioctl_var_get(struct efi_var_ioc *var)
 	if (error != 0) {
 		goto done;
 	}
-	if (namebuf[var->namesize / 2 - 1] != '\0') {
+	if (namebuf[var->namesize/sizeof(namebuf[0]) - 1] != '\0') {
 		error = EINVAL;
 		goto done;
 	}
