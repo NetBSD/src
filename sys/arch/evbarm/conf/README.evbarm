@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.41 2025/12/12 07:08:57 andvar Exp $
+$NetBSD: README.evbarm,v 1.42 2026/11/07 08:36:14 yurix Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -13,11 +13,11 @@ CUBOX		2017/01/07	SolidRun Cubox
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
 GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GENERIC		2018/04/01	ARMv7 FDT based boards
+GENERIC_V5	2025/10/09	ARMv5 FDT based boards
 GENERIC64	2018/04/01	ARMv8 (aarch64) FDT based boards
 GUMSTIX		2006/10/16	Gumstix Inc. PXA255/270 based boards
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
 HPT5325		2012/03/31	HP t5325 Thin Client
-IMX23_OLINUXINO	2012/11/20	Olimex iMX233 based OLinuXino boards
 IMX31LITE	2008/04/27	Freescale i.MX31 DEV LITE KIT
 INTEGRATOR	2001/10/27	ARM Integrator board
 INTEGRATOR_CP	2013/02/19	ARM Integrator/CP board
