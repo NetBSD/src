@@ -96,6 +96,10 @@ npf_bpfcop_test(void)
 		BPF_STMT(BPF_MISC+BPF_COP, NPF_COP_L3),
 		BPF_STMT(BPF_RET+BPF_A, 0),
 	};
+
+	// PR kern/60975 add validate tests to be more verbose
+	CHECK_TRUE(npf_bpf_validate(&insns_ipver, __arraycount(insns_ipver)) != 0);
+
 	CHECK_TRUE(test_bpf_code(&insns_ipver, __arraycount(insns_ipver)) == IPVERSION);
 
 	/* BPF_MW_IPVERI <- IP version */
