@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.69 2023/04/11 12:58:03 riastradh Exp $	*/
+/*	$NetBSD: plcom.c,v 1.70 2026/11/07 22:20:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.69 2023/04/11 12:58:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.70 2026/11/07 22:20:12 thorpej Exp $");
 
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
@@ -140,8 +140,6 @@ __KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.69 2023/04/11 12:58:03 riastradh Exp $")
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
-
-#include <ddb/db_active.h>
 
 #include <evbarm/dev/plcomreg.h>
 #include <evbarm/dev/plcomvar.h>

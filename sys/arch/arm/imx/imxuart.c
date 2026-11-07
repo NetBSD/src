@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.30 2022/10/26 23:38:06 riastradh Exp $ */
+/* $NetBSD: imxuart.c,v 1.31 2026/11/07 22:20:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.30 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.31 2026/11/07 22:20:11 thorpej Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -155,8 +155,6 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.30 2022/10/26 23:38:06 riastradh Exp $
 #include <sys/intr.h>
 
 #include <sys/bus.h>
-
-#include <ddb/db_active.h>
 
 #include <arm/imx/imxuartreg.h>
 #include <arm/imx/imxuartvar.h>

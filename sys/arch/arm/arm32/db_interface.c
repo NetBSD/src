@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.67 2026/02/25 05:34:42 skrll Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:10 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2026/02/25 05:34:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:10 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2026/02/25 05:34:42 skrll Exp 
 #include <sys/intr.h>
 #include <sys/proc.h>
 #include <sys/reboot.h>
-#include <sys/systm.h>	/* just for boothowto */
+#include <sys/systm.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.67 2026/02/25 05:34:42 skrll Exp 
 #include <arm/undefined.h>
 
 #include <ddb/db_access.h>
-#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
@@ -80,7 +79,6 @@ volatile struct cpu_info *db_newcpu;
 #endif
 
 #ifdef DDB
-int	db_active = 0;
 db_regs_t ddb_regs;	/* register state */
 db_regs_t *ddb_regp;
 

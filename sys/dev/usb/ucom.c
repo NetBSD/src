@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.152 2025/12/02 01:16:41 manu Exp $	*/
+/*	$NetBSD: ucom.c,v 1.153 2026/11/07 22:20:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.152 2025/12/02 01:16:41 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.153 2026/11/07 22:20:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -69,8 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.152 2025/12/02 01:16:41 manu Exp $");
 #include <dev/usb/usbhist.h>
 
 #include <dev/usb/ucomvar.h>
-
-#include <ddb/db_active.h>
 
 #include "ucom.h"
 #include "locators.h"

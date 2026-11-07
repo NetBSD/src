@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_uart.c,v 1.8 2025/09/06 22:53:47 thorpej Exp $ */
+/* $NetBSD: exynos_uart.c,v 1.9 2026/11/07 22:20:11 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013-2021 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.8 2025/09/06 22:53:47 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.9 2026/11/07 22:20:11 thorpej Exp $");
 
 #define cn_trap()			\
 	do {				\
@@ -52,8 +52,6 @@ __KERNEL_RCSID(1, "$NetBSD: exynos_uart.c,v 1.8 2025/09/06 22:53:47 thorpej Exp 
 #include <sys/kauth.h>
 #include <sys/lwp.h>
 #include <sys/tty.h>
-
-#include <ddb/db_active.h>
 
 #include <dev/cons.h>
 

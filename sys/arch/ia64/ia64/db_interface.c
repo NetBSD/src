@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.10 2022/10/26 23:38:08 riastradh Exp $ */
+/* $NetBSD: db_interface.c,v 1.11 2026/11/07 22:20:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003-2005 Marcel Moolenaar
@@ -80,7 +80,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2022/10/26 23:38:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.11 2026/11/07 22:20:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2022/10/26 23:38:08 riastradh 
 #include <machine/md_var.h>
 #include <machine/db_machdep.h>
 
-#include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
@@ -106,8 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.10 2022/10/26 23:38:08 riastradh 
 #include <ddb/db_run.h>
 
 #include <ia64/disasm/disasm.h>
-
-int	db_active = 0;
 
 db_regs_t *ddb_regp;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.91 2026/08/17 18:58:56 riastradh Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.92 2026/11/07 22:20:12 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2026/08/17 18:58:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.92 2026/11/07 22:20:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -61,7 +61,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2026/08/17 18:58:56 riastradh 
 #include <machine/i82489var.h>
 #endif
 
-#include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
@@ -72,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.91 2026/08/17 18:58:56 riastradh 
 extern const char *const trap_type[];
 extern int trap_types;
 
-int	db_active = 0;
 #ifdef MULTIPROCESSOR
 /* ddb_regs defined as a macro */
 db_regs_t *ddb_regp = NULL;

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.140 2026/02/25 05:34:42 skrll Exp $ */
+/*	$NetBSD: db_interface.c,v 1.141 2026/11/07 22:20:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1996-2002 Eduardo Horvath.  All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.140 2026/02/25 05:34:42 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.141 2026/11/07 22:20:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -52,7 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.140 2026/02/25 05:34:42 skrll Exp
 #include <dev/cons.h>
 
 #include <machine/db_machdep.h>
-#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_variables.h>
@@ -94,10 +93,6 @@ extern struct traptrace {
 void fill_ddb_regs_from_tf(struct trapframe64 *tf);
 void ddb_restore_state(void);
 bool ddb_running_on_this_cpu(void);
-
-#ifdef DDB
-int	db_active = 0;
-#endif
 
 extern char *trap_type[];
 

@@ -1,4 +1,4 @@
-/* $NetBSD: db_machdep.c,v 1.45 2022/10/26 23:38:05 riastradh Exp $ */
+/* $NetBSD: db_machdep.c,v 1.46 2026/11/07 22:20:10 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.45 2022/10/26 23:38:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.46 2026/11/07 22:20:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -55,7 +55,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.45 2022/10/26 23:38:05 riastradh Ex
 #include <arm/cpufunc.h>
 
 #include <ddb/db_access.h>
-#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_proc.h>
@@ -236,8 +235,6 @@ const struct db_variable db_regs[] = {
 };
 
 const struct db_variable * const db_eregs = db_regs + __arraycount(db_regs);
-int db_active;
-
 
 void
 dump_trapframe(struct trapframe *tf, void (*pr)(const char *, ...))

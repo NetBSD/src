@@ -1,4 +1,4 @@
-/*	$NetBSD: veritefb.c,v 1.2 2026/07/15 20:53:22 rkujawa Exp $	*/
+/*	$NetBSD: veritefb.c,v 1.3 2026/11/07 22:20:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: veritefb.c,v 1.2 2026/07/15 20:53:22 rkujawa Exp $");
+__KERNEL_RCSID(0, "$NetBSD: veritefb.c,v 1.3 2026/11/07 22:20:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ __KERNEL_RCSID(0, "$NetBSD: veritefb.c,v 1.2 2026/07/15 20:53:22 rkujawa Exp $")
 #include <dev/i2c/i2c_bitbang.h>
 #include <dev/i2c/ddcvar.h>
 
-#include <ddb/db_active.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_command.h>

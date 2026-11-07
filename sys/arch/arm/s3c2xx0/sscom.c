@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.50 2022/10/26 23:38:06 riastradh Exp $ */
+/*	$NetBSD: sscom.c,v 1.51 2026/11/07 22:20:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.50 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.51 2026/11/07 22:20:11 thorpej Exp $");
 
 #include "opt_sscom.h"
 #include "opt_kgdb.h"
@@ -141,8 +141,6 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.50 2022/10/26 23:38:06 riastradh Exp $")
 #include <sys/intr.h>
 #include <sys/bus.h>
 #include <sys/mutex.h>
-
-#include <ddb/db_active.h>
 
 #include <arm/s3c2xx0/s3c2xx0reg.h>
 #include <arm/s3c2xx0/sscom_var.h>

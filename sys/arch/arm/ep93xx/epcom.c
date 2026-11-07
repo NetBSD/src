@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.36 2022/10/26 23:38:06 riastradh Exp $ */
+/*	$NetBSD: epcom.c,v 1.37 2026/11/07 22:20:11 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.36 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.37 2026/11/07 22:20:11 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "epcom.h"
@@ -110,8 +110,6 @@ __KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.36 2022/10/26 23:38:06 riastradh Exp $")
 
 #include <machine/intr.h>
 #include <sys/bus.h>
-
-#include <ddb/db_active.h>
 
 #include <arm/ep93xx/epcomreg.h>
 #include <arm/ep93xx/epcomvar.h>

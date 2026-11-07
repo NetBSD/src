@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.6 2024/05/04 02:04:54 dyoung Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.7 2026/11/07 22:20:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.6 2024/05/04 02:04:54 dyoung Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.7 2026/11/07 22:20:11 thorpej Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -131,8 +131,6 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.6 2024/05/04 02:04:54 dyoung Exp $")
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/tty.h>
-
-#include <ddb/db_active.h>
 
 #ifdef RND_COM
 #include <sys/rndsource.h>

@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.44 2025/12/21 07:00:26 skrll Exp $ */
+/* $NetBSD: db_interface.c,v 1.45 2026/11/07 22:20:10 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2025/12/21 07:00:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2026/11/07 22:20:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2025/12/21 07:00:26 skrll Exp 
 #include <machine/alpha_instruction.h>
 
 #include <ddb/db_user.h>
-#include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
@@ -84,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.44 2025/12/21 07:00:26 skrll Exp 
 extern char *trap_type[];
 extern int trap_types;
 #endif
-
-int	db_active = 0;
 
 db_regs_t *ddb_regp;
 

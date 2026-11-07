@@ -1,4 +1,4 @@
-/*	$NetBSD: gftty.c,v 1.7 2026/11/07 17:53:37 thorpej Exp $	*/
+/*	$NetBSD: gftty.c,v 1.8 2026/11/07 22:20:14 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.7 2026/11/07 17:53:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.8 2026/11/07 22:20:14 thorpej Exp $");
 
 #define	cn_trap()			\
 	do {				\
@@ -51,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: gftty.c,v 1.7 2026/11/07 17:53:37 thorpej Exp $");
 #include <sys/kauth.h>
 #include <sys/kmem.h>
 #include <sys/tty.h>
-
-#include <ddb/db_active.h>
 
 #include <uvm/uvm_extern.h>
 

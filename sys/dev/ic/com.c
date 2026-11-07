@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.391 2026/09/24 17:11:18 palle Exp $ */
+/* $NetBSD: com.c,v 1.392 2026/11/07 22:20:14 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.391 2026/09/24 17:11:18 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.392 2026/11/07 22:20:14 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -126,8 +126,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.391 2026/09/24 17:11:18 palle Exp $");
 #endif
 
 #include <sys/bus.h>
-
-#include <ddb/db_active.h>
 
 #include <dev/ic/comreg.h>
 #include <dev/ic/comvar.h>

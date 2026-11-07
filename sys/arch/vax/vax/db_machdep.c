@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.62 2026/02/24 00:28:19 mrg Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.63 2026/11/07 22:20:13 thorpej Exp $	*/
 
 /*
  * :set tabs=4
@@ -39,12 +39,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.62 2026/02/24 00:28:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.63 2026/11/07 22:20:13 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>		 /* just for boothowto --eichin */
+#include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/intr.h>
@@ -59,7 +59,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.62 2026/02/24 00:28:19 mrg Exp $");
 #include <machine/rpb.h>
 #include <vax/vax/gencons.h>
 
-#include <ddb/db_active.h>
 #include <ddb/db_sym.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
@@ -74,8 +73,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.62 2026/02/24 00:28:19 mrg Exp $");
 db_regs_t ddb_regs;
 
 void	kdbprinttrap(int, int);
-
-int	db_active = 0;
 
 static	int splsave; /* IPL before entering debugger */
 

@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp $ */
+/*	$Id: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $ */
 
 /*
  *
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -112,8 +112,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.19 2022/10/26 23:38:06 riastradh Exp 
 
 #include <machine/intr.h>
 #include <sys/bus.h>
-
-#include <ddb/db_active.h>
 
 #include <arm/at91/at91reg.h>
 #include <arm/at91/at91var.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.98 2023/10/26 10:41:03 andvar Exp $ */
+/*	$NetBSD: db_interface.c,v 1.99 2026/11/07 22:20:13 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.98 2023/10/26 10:41:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2026/11/07 22:20:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -56,7 +56,6 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.98 2023/10/26 10:41:03 andvar Exp
 #include <machine/locore.h>
 
 #include <ddb/db_access.h>
-#include <ddb/db_active.h>
 #include <ddb/ddbvar.h>
 
 #if defined(DDB) || defined(_KMEMUSER)
@@ -133,8 +132,6 @@ cpu_Debugger(void)
 #endif /* DDB */
 
 #if defined(DDB) || defined(_KMEMUSER)
-
-int	db_active = 0;
 
 #ifdef _KERNEL
 void kdb_kbd_trap(struct trapframe *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.19 2023/04/11 10:19:56 riastradh Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.20 2026/11/07 22:20:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.19 2023/04/11 10:19:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.20 2026/11/07 22:20:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.19 2023/04/11 10:19:56 riastradh Exp
 #include <sys/buf.h>
 #include <sys/cpu.h>
 #include <sys/msan.h>
-
-#include <ddb/db_active.h>
 
 static void kmsan_printf(const char *, ...);
 

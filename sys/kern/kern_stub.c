@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.55 2026/07/17 02:19:29 thorpej Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.56 2026/11/07 22:20:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.55 2026/07/17 02:19:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.56 2026/11/07 22:20:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -359,3 +359,11 @@ default_bus_space_is_equal(bus_space_tag_t t1, bus_space_tag_t t2)
 /* Stubs for architectures with no kernel FPU access.  */
 __weak_alias(kthread_fpu_enter_md, voidop);
 __weak_alias(kthread_fpu_exit_md, voidop);
+
+/*
+ * Kernel debugger-related stubs.
+ *
+ * N.B. Always declare db_active; it's referenced by drivers for certain
+ * kinds of console-related logic.
+ */
+int	db_active;

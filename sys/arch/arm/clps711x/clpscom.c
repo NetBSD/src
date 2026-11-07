@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.11 2023/09/01 08:53:52 andvar Exp $      */
+/*      $NetBSD: clpscom.c,v 1.12 2026/11/07 22:20:11 thorpej Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.11 2023/09/01 08:53:52 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.12 2026/11/07 22:20:11 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -43,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.11 2023/09/01 08:53:52 andvar Exp $");
 #include <sys/termios.h>
 #include <sys/tty.h>
 #include <sys/types.h>
-
-#include <ddb/db_active.h>
 
 #include <arm/clps711x/clps711xreg.h>
 #include <arm/clps711x/clpssocvar.h>

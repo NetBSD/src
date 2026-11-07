@@ -1,4 +1,4 @@
-/*	$NetBSD: ser.c,v 1.86 2022/10/26 23:38:06 riastradh Exp $ */
+/*	$NetBSD: ser.c,v 1.87 2026/11/07 22:20:10 thorpej Exp $ */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -40,7 +40,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.86 2022/10/26 23:38:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.87 2026/11/07 22:20:10 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: ser.c,v 1.86 2022/10/26 23:38:06 riastradh Exp $");
 #include <amiga/amiga/cc.h>
 
 #include <dev/cons.h>
-
-#include <ddb/db_active.h>
 
 #include "ser.h"
 #if NSER > 0

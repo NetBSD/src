@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.309 2026/04/08 04:06:41 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.310 2026/11/07 22:20:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019, 2023 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2026/04/08 04:06:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.310 2026/11/07 22:20:13 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -105,8 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.309 2026/04/08 04:06:41 thorpej Exp $"
 #include <sys/pserialize.h>
 
 #include <sys/exec_aout.h>
-
-#include <ddb/db_active.h>
 
 #include <dev/mm.h>
 
