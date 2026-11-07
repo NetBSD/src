@@ -1,4 +1,4 @@
-/*	$NetBSD: npftest.c,v 1.33 2026/11/06 23:30:15 joe Exp $	*/
+/*	$NetBSD: npftest.c,v 1.34 2026/11/07 00:16:34 joe Exp $	*/
 
 /*
  * NPF testing framework.
@@ -376,7 +376,7 @@ main(int argc, char **argv)
 		}
 	}
 
-	rumpns_npf_test_fini();
+	rumpns_npf_test_fini(config);
 	npf_kern_fini();
 
 	if (testname && !tname_matched)

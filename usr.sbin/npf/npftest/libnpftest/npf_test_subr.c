@@ -85,21 +85,22 @@ npf_test_init(int (*pton_func)(int, const char *, void *),
 }
 
 void
-npf_test_fini(void)
+npf_test_fini(const char *config)
 {
 	npf_t *npf = npf_getkernctx();
-	int ret;
 
-	ret = npf_config_read_enter(npf);
-	npf_config_procs_null(npf);
-	npf_config_read_exit(npf, ret);
+	if (config) {
+		int ret = npf_config_read_enter(npf);
+		npf_config_procs_null(npf);
+		npf_config_read_exit(npf, ret);
 
-	ret = npf_ext_log_fini(npf);
-	assert(ret == 0);
-	ret = npf_ext_normalize_fini(npf);
-	assert(ret == 0);
-	ret = npf_ext_route_fini(npf);
-	assert(ret == 0);
+		ret = npf_ext_log_fini(npf);
+		assert(ret == 0);
+		ret = npf_ext_normalize_fini(npf);
+		assert(ret == 0);
+		ret = npf_ext_route_fini(npf);
+		assert(ret == 0);
+	}
 
 	npfk_thread_unregister(npf);
 	npfk_destroy(npf);
