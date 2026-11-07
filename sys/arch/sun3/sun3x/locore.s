@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.91 2026/03/29 03:24:58 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.92 2026/11/07 13:16:47 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -113,10 +113,10 @@ L_high_code:
 | the backtrace algorithm used by KGDB terminates nicely.
 |
 | _bootstrap() returns lwp0 SP in %a0
-	lea	_ASM_LABEL(tmpstk)-32,%sp
+	lea	_ASM_LABEL(tmpstk)-32,%a0
+	INIT_KSP(%a0)
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 | Now turn off the transparent translation of the low 1GB.
 | (this also flushes the ATC)

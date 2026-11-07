@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.73 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.74 2026/11/07 13:16:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -150,7 +150,7 @@ ASENTRY_NOPROFILE(start)
 	movl	#0x20000000, %a5
 
 	ASRELOC(tmpstk, %a0)
-	movl	%a0, %sp		| give ourselves a temporary stack
+	INIT_KSP(%a0)			| give ourselves a temporary stack
 
 	RELOC(edata, %a0)
 	RELOC(end, %a1)
@@ -328,13 +328,13 @@ Lenab1:
 	.long	0x4e7b0006		| movc d0,dtt0
 	.long	0x4e7b0007		| movc d0,dtt1
 
-	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
+	INIT_KSP(%a0)
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 /* flush TLB and turn on caches */
 	jbsr	_C_LABEL(_TBIA)		| invalidate TLB

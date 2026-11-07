@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.210 2026/06/13 15:28:08 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.211 2026/11/07 13:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -127,7 +127,8 @@ BSS(esym,4)
 
 ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts.  ever.
-	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| give ourselves a temporary stack
+	INIT_KSP(%a0)
 
 	movl	#CACHE_OFF,%d0
 	movc	%d0,%cacr		| clear and disable on-chip cache(s)
@@ -421,12 +422,12 @@ LnokillTT:
  * Should be running mapped from this point on
  */
 Lloaddone:
-	lea	_ASM_LABEL(tmpstk),%sp	| temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
+	INIT_KSP(%a0)
 
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 /* flush TLB and turn on caches */
 	cmpl	#MMU_68040,_C_LABEL(mmutype) | 68040/060?

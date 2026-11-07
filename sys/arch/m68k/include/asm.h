@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.38 2026/03/15 17:10:34 christos Exp $	*/
+/*	$NetBSD: asm.h,v 1.39 2026/11/07 13:16:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -109,6 +109,13 @@
 #else
 #define _PROF_PROLOG
 #endif
+
+/*
+ * Macro for setting the initial kernel stack pointer.  Ensures tht
+ * the stack frame chain is terminated by also initializing the
+ * frame pointer to 0.
+ */
+#define	INIT_KSP(reg)		movl reg,%sp ; movl __IMMEDIATE 0,%a6
 
 #define ENTRY(name)		_ENTRY(_C_LABEL(name)) _PROF_PROLOG
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)) _PROF_PROLOG

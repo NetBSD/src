@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.114 2026/04/28 03:29:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.115 2026/11/07 13:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -171,8 +171,7 @@ ASENTRY_NOPROFILE(start)
 	| The existing sp onto it as an arg for next68k_bootargs.
 	ASRELOC(tmpstk, %a0)
 	movel	%sp,%a0@-
-	moveal  %a0,%sp
-	moveal  #0,%a6
+	INIT_KSP(%a0)
 
 	/* Read the header to get our segment list */
 	RELOC(next68k_bootargs,%a0)
@@ -307,7 +306,8 @@ Lmmuenabled:
  * arrays (so no other code gets confused and thinks we're using them)
  * and disable the TT registers.
  */
-	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
+	INIT_KSP(%a0)
 	moveq	#0,%d0
 #ifdef M68030
 	lea	_C_LABEL(mmu_tt30),%a0	| zap the 2 '030 TT slots
@@ -334,13 +334,13 @@ Lmmuenabled:
 	jbsr	_C_LABEL(mmu_load_tt30)
 #endif
 2:
-	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
+	INIT_KSP(%a0)
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization

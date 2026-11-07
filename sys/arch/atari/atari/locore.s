@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.144 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.145 2026/11/07 13:16:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -435,7 +435,8 @@ Lstart2:
 	jcc	Lstart2
 Lstart3:
 
-	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| give ourselves a temporary stack
+	INIT_KSP(%a0)
 
 	/*
 	 *  save the passed parameters. `prepass' them on the stack for
@@ -498,8 +499,7 @@ Lend_cpuset:
 	 * start_c() returns lwp0 SP in %a0
 	 */
 	jsr	_C_LABEL(start_c)
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 	/* flush TLB and turn on caches */
 	jbsr	_C_LABEL(_TBIA)		|  invalidate TLB

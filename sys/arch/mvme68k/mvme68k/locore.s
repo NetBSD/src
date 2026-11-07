@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.168 2026/04/28 03:29:10 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.169 2026/11/07 13:16:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -125,7 +125,7 @@ ASENTRY_NOPROFILE(start)
 	/* note: d3-d7 free, d2 still in use */
 
 	ASRELOC(tmpstk, %a0)
-	movl	%a0,%sp			| give ourselves a temporary stack
+	INIT_KSP(%a0)			| give ourselves a temporary stack
 
 	RELOC(edata,%a0)		| clear out BSS
 	movl	#_C_LABEL(end) - 4, %d0	| (must be <= 256 kB)
@@ -567,13 +567,13 @@ Lstart2:
  * Should be running mapped from this point on
  */
 Lmmuenabled:
-	lea	_ASM_LABEL(tmpstk),%sp	| re-load temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
+	INIT_KSP(%a0)
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization

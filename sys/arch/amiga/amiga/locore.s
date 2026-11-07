@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.190 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.191 2026/11/07 13:16:45 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -392,7 +392,7 @@ ASENTRY_NOPROFILE(start)
 
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	ASRELOC(tmpstk,%a6)
-	movl	%a6,%sp			| give ourselves a temporary stack
+	INIT_KSP(%a6)			| give ourselves a temporary stack
 
 	| save the passed parameters. "prepass" them on the stack for
 	| later catch by start_c()
@@ -581,13 +581,13 @@ Lenable030:
 Ltc:	.long	MMU51_TCR_BITS		| see pmap.h
 
 LMMUenable_end:
-	lea	_ASM_LABEL(tmpstk),%sp	| give ourselves a temporary stack
+	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
+	INIT_KSP(%a0)
 	jbsr	_C_LABEL(vec_init)	| initialize the vector table
 
 	/* start_c_finish() returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(start_c_finish)
-	movl	%a0,%sp			| now running on lwp0's stack
-	movl	#0,%a6			| terminate the stack back trace
+	INIT_KSP(%a0)			| now running on lwp0's stack
 
 /* flush TLB and turn on caches */
 	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
