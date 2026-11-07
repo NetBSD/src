@@ -10,6 +10,5 @@ BreakBeforeBraces: Linux
 IndentCaseLabels: false
 PointerAlignment: Right
 SpaceBeforeParens: ControlStatements
-AlignAfterOperator: true
 AlignEscapedNewlines: Right
 SortIncludes: false
