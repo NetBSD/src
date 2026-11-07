@@ -1,4 +1,4 @@
-#	$NetBSD: files.news68k,v 1.59 2026/09/20 10:29:11 tsutsui Exp $
+#	$NetBSD: files.news68k,v 1.60 2026/11/07 16:19:56 thorpej Exp $
 
 #	NEWS68K-specific configuration info
 
@@ -20,7 +20,6 @@ file	arch/news68k/news68k/bus_space.c
 file	arch/news68k/news68k/clock.c
 file	arch/news68k/news68k/machdep.c
 file	arch/news68k/news68k/mainbus.c
-file	arch/news68k/news68k/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/news68k/news68k/romcalls.S
 file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/dumpsys.c
