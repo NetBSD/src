@@ -150,7 +150,7 @@ npf_get_normalize_params(npf_cache_t *npc, uint16_t *ip_ttl, uint8_t *ip_id, int
     struct ip *ip = npc->npc_ip.v4;
     *ip_id = ip->ip_id;
     *ip_ttl = ip->ip_ttl;
-    *df = ip->ip_off & IP_DF;
+    *df = ntohs(ip->ip_off);
     npf_fetch_tcpopts(npc, maxmss, &wscale);
 }
 
