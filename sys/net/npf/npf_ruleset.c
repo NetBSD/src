@@ -34,7 +34,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.58 2026/09/01 19:04:48 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.59 2026/11/07 17:22:58 alnsn Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -733,7 +733,7 @@ npf_rule_setcode(npf_rule_t *rl, const int type, void *code, size_t size)
 	rl->r_type = type;
 	rl->r_code = code;
 	rl->r_clen = size;
-	rl->r_jcode = npf_bpf_compile(code, size);
+	rl->r_jcode = npf_bpf_compile(code, size / sizeof(struct bpf_insn));
 }
 
 void
