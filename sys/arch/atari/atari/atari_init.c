@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.122 2026/09/21 03:43:49 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.123 2026/11/07 16:00:51 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.122 2026/09/21 03:43:49 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.123 2026/11/07 16:00:51 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -975,7 +975,7 @@ map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 	 * of the PLX9080. We use this setting so we can read/write the
 	 * PLX registers (and PCI-config space) in big-endian mode.
 	 */
-	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V | 0x100;
+	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V | PTE40_U0;
 #else
 	pg_proto  = STIO_PHYS | PG_RW | PG_CI | PG_V;
 #endif
