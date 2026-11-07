@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.29 2026/11/06 16:22:38 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.30 2026/11/07 17:12:41 joe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -470,7 +470,7 @@ register_etherpfil_hook(npf_t *npf, ifnet_t *ifp, int i)
 }
 
 static int
-get_etherpfil_head(npf_t *npf)
+register_etherpfil_hooks(npf_t *npf)
 {
 	int error = 0, i = 0;
 	ifnet_t *ifp;
@@ -560,7 +560,7 @@ npf_pfil_register(bool init)
 		KASSERT(error == 0);
 	}
 
-	get_etherpfil_head(npf);
+	register_etherpfil_hooks(npf);
 
 	/*
 	 * It is necessary to re-sync all/any interface address tables,
