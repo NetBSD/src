@@ -1,4 +1,4 @@
-/* $NetBSD: ypcat.c,v 1.18 2012/03/02 18:55:16 matt Exp $	*/
+/* $NetBSD: ypcat.c,v 1.19 2026/11/08 16:19:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypcat.c,v 1.18 2012/03/02 18:55:16 matt Exp $");
+__RCSID("$NetBSD: ypcat.c,v 1.19 2026/11/08 16:19:49 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -71,7 +71,7 @@ main(int argc, char *argv[])
 	domainname = b_retry_cnt = NULL;
 	notrans = key = 0;
 	ypaliases = ypalias_init();
-	while((c = getopt(argc, argv, "bd:kstx")) != -1) {
+	while((c = getopt(argc, argv, "b:d:kstx")) != -1) {
 		switch (c) {
 		case 'b':
 			b_retry_cnt = optarg;
@@ -185,7 +185,7 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-kst] [-b <num-retry> "
+	(void)fprintf(stderr, "Usage: %s [-kst] [-b <num-retry>] "
 	    "[-d <domainname>] <mapname>\n", getprogname());
 	(void)fprintf(stderr, "       %s -x\n", getprogname());
 	exit(1);

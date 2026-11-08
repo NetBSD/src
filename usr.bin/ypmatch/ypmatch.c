@@ -1,4 +1,4 @@
-/*	$NetBSD: ypmatch.c,v 1.21 2012/03/02 18:57:27 matt Exp $	*/
+/*	$NetBSD: ypmatch.c,v 1.22 2026/11/08 16:19:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993 Theo de Raadt <deraadt@fsa.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ypmatch.c,v 1.21 2012/03/02 18:57:27 matt Exp $");
+__RCSID("$NetBSD: ypmatch.c,v 1.22 2026/11/08 16:19:50 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -66,7 +66,7 @@ main(int argc, char *argv[])
 	domainname = b_retry_cnt = NULL;
 	notrans = key = null = 0;
 	ypaliases = ypalias_init();
-	while ((c = getopt(argc, argv, "bd:ktxz")) != -1) {
+	while ((c = getopt(argc, argv, "b:d:ktxz")) != -1) {
 		switch (c) {
 		case 'x':
 			for(i = 0; ypaliases[i].alias; i++)
