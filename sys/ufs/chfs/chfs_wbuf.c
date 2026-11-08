@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_wbuf.c,v 1.7 2014/10/18 08:33:29 snj Exp $	*/
+/*	$NetBSD: chfs_wbuf.c,v 1.8 2026/11/08 21:31:26 andvar Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -240,7 +240,7 @@ outerr:
 }
 
 /*
- * chfs_flush_peding_wbuf - write wbuf to the flash
+ * chfs_flush_pending_wbuf - write wbuf to the flash
  * Used when we must flush wbuf right now.
  * If wbuf has free space, pad it to the size of wbuf and write out.
  */
