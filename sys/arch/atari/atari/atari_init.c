@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.125 2026/11/08 07:46:52 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.126 2026/11/08 07:51:25 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.125 2026/11/08 07:46:52 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.126 2026/11/08 07:51:25 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -1319,7 +1319,6 @@ initcpu(void)
 #ifdef DEBUG
 void dump_segtable(u_int *);
 void dump_pagetable(u_int *, u_int, u_int);
-u_int vmtophys(u_int *, u_int);
 
 void
 dump_segtable(u_int *stp)
@@ -1353,15 +1352,6 @@ dump_pagetable(u_int *ptp, u_int i, u_int n)
 		if (*p & PG_V)
 			printf("$%08x -> $%08x\t", i, *p & PG_FRAME);
 	printf("\n");
-}
-
-u_int
-vmtophys(u_int *ste, u_int vm)
-{
-
-	ste = (u_int *)(*(ste + (vm >> SEGSHIFT)) & SG_FRAME);
-	ste += (vm & SG_PMASK) >> PGSHIFT;
-	return (*ste & -PAGE_SIZE) | (vm & (PAGE_SIZE - 1));
 }
 
 #endif
