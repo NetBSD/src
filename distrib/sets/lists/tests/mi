@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1434 2026/11/07 16:14:33 wiz Exp $
+# $NetBSD: mi,v 1.1435 2026/11/08 05:14:44 blymn Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -3737,6 +3737,7 @@
 ./usr/tests/lib/libcurses/check_files/redrawwin3.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/scroll1.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/scroll2.chk		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libcurses/check_files/set_color.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/setscrreg.chk		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/slk1.chk			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libcurses/check_files/slk2.chk			tests-lib-tests		compattestfile,atf
