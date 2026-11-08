@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.124 2026/11/08 07:32:41 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.125 2026/11/08 07:46:52 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.124 2026/11/08 07:32:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.125 2026/11/08 07:46:52 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -588,7 +588,7 @@ start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
 		usable_segs[i].first_page +=
 		    (usable_segs[i-1].end - usable_segs[i-1].start) / PAGE_SIZE;
 	}
-	for (i = 0, physmem = 0; usable_segs[i].start; i++)
+	for (i = 0, physmem = 0; i < NMEM_SEGS && usable_segs[i].start; i++)
 		physmem += usable_segs[i].end - usable_segs[i].start;
 	physmem >>= PGSHIFT;
 
