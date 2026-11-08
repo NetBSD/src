@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_exec_elf32.c,v 1.102 2021/11/26 09:05:05 ryo Exp $	*/
+/*	$NetBSD: linux_exec_elf32.c,v 1.103 2026/11/08 13:54:35 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.102 2021/11/26 09:05:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_exec_elf32.c,v 1.103 2026/11/08 13:54:35 christos Exp $");
 
 #ifndef ELFSIZE
 /* XXX should die */
@@ -427,6 +427,7 @@ ELFNAME2(linux,signature)(struct lwp *l, struct exec_package *epp, Elf_Ehdr *eh,
 #if (ELFSIZE == 64)
 		    !strncmp(itp, "/lib64/ld-linux", 15) ||
 #endif
+		    !strncmp(itp, "/lib/ld-musl-", 13) ||
 		    !strncmp(itp, "/lib/ld.so.", 11))
 			error = 0;
 		else
