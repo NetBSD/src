@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.46 2024/01/18 05:12:29 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.47 2026/11/08 15:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.46 2024/01/18 05:12:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.47 2026/11/08 15:08:19 thorpej Exp $");
 
 #include "opt_mvmeconf.h"
 
@@ -559,22 +559,4 @@ zsc_pcccnputc(dev_t dev, int c)
 	struct zs_chanstate *cs = zs_conschan;
 
 	zs_putc(cs, c);
-}
-
-/*
- * Handle user request to enter kernel debugger.
- */
-void
-zs_abort(struct zs_chanstate *cs)
-{
-	int rr0;
-
-	/* Wait for end of break to avoid PROM abort. */
-	/* XXX - Limit the wait? */
-	do {
-		rr0 = *cs->cs_reg_csr;
-		ZS_DELAY();
-	} while (rr0 & ZSRR0_BREAK);
-
-	mvme68k_abort("SERIAL LINE ABORT");
 }

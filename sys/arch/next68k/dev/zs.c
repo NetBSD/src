@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.38 2023/02/04 14:38:09 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.39 2026/11/08 15:08:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.38 2023/02/04 14:38:09 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39 2026/11/08 15:08:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -493,36 +493,6 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 extern void Debugger(void);
 void *zs_conschan;
 int	zs_consunit = 0;
-
-/*
- * Handle user request to enter kernel debugger.
- */
-void
-zs_abort(struct zs_chanstate *cs)
-{
-#if defined(ZS_CONSOLE_ABORT)
-	volatile struct zschan *zc = zs_conschan;
-	int rr0;
-
-	/* Wait for end of break to avoid PROM abort. */
-	/* XXX - Limit the wait? */
-	do {
-		rr0 = zc->zc_csr;
-		ZS_DELAY();
-	} while (rr0 & ZSRR0_BREAK);
-
-#if defined(KGDB)
-	zskgdb(cs);
-#elif defined(DDB)
-	Debugger();
-#else
-	/* XXX eventually, drop into next rom monitor here */
-	printf("stopping on keyboard abort not supported without DDB or KGDB\n");
-#endif
-#else /* !ZS_CONSOLE_ABORT */
-	return;
-#endif
-}
 
 /*
  * Polled input char.

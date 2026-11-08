@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.29 2026/11/08 15:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2026/11/08 15:08:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -540,18 +540,6 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 	bus_space_write_1(zsc->cs_bustag, zsc->cs_regs, ZS_REG_DATA, val);
 	ZS_DELAY();
 }
-
-void
-zs_abort(struct zs_chanstate *cs)
-{
-
-#if defined(KGDB)
-	zskgdb(cs);
-#elif defined(DDB)
-	Debugger();
-#endif
-}
-
 
 /*********************************************************/
 /*  Polled character I/O functions for console and KGDB  */

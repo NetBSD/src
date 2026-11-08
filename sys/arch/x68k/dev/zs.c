@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.48 2022/05/26 14:30:11 tsutsui Exp $	*/
+/*	$NetBSD: zs.c,v 1.49 2026/11/08 15:08:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.48 2022/05/26 14:30:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2026/11/08 15:08:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -495,29 +495,6 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
  * the chip registers, and uses that to keep things simple.
  * XXX - I think I like the mvme167 code better. -gwr
  ****************************************************************/
-
-/*
- * Handle user request to enter kernel debugger.
- */
-void
-zs_abort(struct zs_chanstate *cs)
-{
-	int rr0;
-
-	/* Wait for end of break to avoid PROM abort. */
-	/* XXX - Limit the wait? */
-	do {
-		rr0 = *cs->cs_reg_csr;
-		ZS_DELAY();
-	} while (rr0 & ZSRR0_BREAK);
-
-#ifdef DDB
-	Debugger();
-#else
-	printf("BREAK!!\n");
-#endif
-}
-
 
 #if NZSTTY > 0
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.24 2021/09/11 20:28:03 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.25 2026/11/08 15:08:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.24 2021/09/11 20:28:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.25 2026/11/08 15:08:19 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -328,25 +328,6 @@ zs_set_modes(struct zs_chanstate *cs, int cflag)
 
 	/* Caller will stuff the pending registers. */
 	return (0);
-}
-
-/*
- * Handle user request to enter kernel debugger.
- */
-void
-zs_abort(struct zs_chanstate *cs)
-{
-	int rr0;
-
-	/* Wait for end of break to avoid PROM abort. */
-	/* XXX - Limit the wait? */
-	do {
-		rr0 = *cs->cs_reg_csr;
-		ZS_DELAY();
-	} while (rr0 & ZSRR0_BREAK);
-#ifdef DDB
-	console_debugger();
-#endif
 }
 
 /*

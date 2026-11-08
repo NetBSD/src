@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 2021/09/11 20:28:04 andvar Exp $	*/
+/*	$NetBSD: zs.c,v 1.29 2026/11/08 15:08:20 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28 2021/09/11 20:28:04 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2026/11/08 15:08:20 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -245,13 +245,4 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 
 	*cs->cs_reg_data = val;
 	ZS_DELAY();
-}
-
-void
-zs_abort(struct zs_chanstate *cs)
-{
-
-#ifdef DDB
-	Debugger();
-#endif
 }
