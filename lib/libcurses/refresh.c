@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.137 2026/09/02 04:20:20 blymn Exp $	*/
+/*	$NetBSD: refresh.c,v 1.138 2026/11/08 05:08:11 blymn Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.7 (Berkeley) 8/13/94";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.137 2026/09/02 04:20:20 blymn Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.138 2026/11/08 05:08:11 blymn Exp $");
 #endif
 #endif				/* not lint */
 
@@ -880,6 +880,8 @@ putattr(__LDATA *nsp)
 	 */
 	if (off & __TERMATTR && exit_attribute_mode != NULL) {
 		tputs(exit_attribute_mode, 0, __cputchar);
+		/* exit_attribute_mode resets the color to terminal default */
+		_cursesi_screen->curpair = -1;
 		curscr->wattr &= __mask_me;
 		off &= __mask_me;
 	}
@@ -2093,6 +2095,7 @@ __unsetattr(int checkms)
 	 */
 	if (curscr->wattr & __TERMATTR && isms) {
 		tputs(exit_attribute_mode, 0, __cputchar);
+		_cursesi_screen->curpair = -1;  /* tputs just reset it */
 		curscr->wattr &= __mask_me;
 	}
 	/* Don't leave the screen with altcharset set (don't check ms). */
