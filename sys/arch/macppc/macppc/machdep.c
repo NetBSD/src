@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.179 2026/02/24 21:54:38 jmcneill Exp $	*/
+/*	$NetBSD: machdep.c,v 1.180 2026/11/08 13:15:11 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.179 2026/02/24 21:54:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.180 2026/11/08 13:15:11 macallan Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -159,9 +159,11 @@ initppc(u_int startkernel, u_int endkernel, char *args)
 			ch = OF_peer(ch);
 		}
 		if (clock != 0) {
-			OF_package_to_path(clock, buffer, 128);
+			int len;
+			len = OF_package_to_path(clock, buffer, 128);
+			if (len >= 0) buffer[len] = 0;
 			printf("clock %s\n", buffer);
-			
+
 			int clock_ih = OF_open(buffer);
 			if (clock_ih != 0) {
 				OF_call_method_1("slew-high", clock_ih, 0);
