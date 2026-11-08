@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.80 2026/10/22 20:48:19 andvar Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.81 2026/11/08 16:11:40 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.80 2026/10/22 20:48:19 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.81 2026/11/08 16:11:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -856,6 +856,8 @@ __CTASSERT(PTE51_WP == PTE40_W);
 __CTASSERT(PTE51_U == PTE40_U);
 __CTASSERT(PTE51_M == PTE40_M);
 __CTASSERT(PTE51_CI == PTE40_CM_NC_SER);
+__CTASSERT(PMBM_F_U0 == PTE40_U0);
+__CTASSERT(PMBM_F_U1 == PTE40_U1);
 
 static pt_entry_t	pmap_pte_proto[UVM_PROT_ALL + 1];
 static pt_entry_t	pmap_pte_proto_ci[UVM_PROT_ALL + 1];
@@ -4444,6 +4446,8 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 			proto = proto_rw_pte;
 			break;
 		}
+		/* Add in any special PTE bits that might be required. */
+		proto |= (pmbm->pmbm_flags & PMBM_F_PTEBITS);
 		for (vsize_t size = m68k_round_page(pmbm->pmbm_size);
 		     size != 0;
 		     va += PAGE_SIZE, pa += PAGE_SIZE, size -= PAGE_SIZE) {
