@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.123 2026/11/07 16:00:51 thorpej Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.124 2026/11/08 07:32:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.123 2026/11/07 16:00:51 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.124 2026/11/08 07:32:41 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -1269,7 +1269,7 @@ mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 	}
 
 	/* Include additional level 2 table for Sysmap in protostfree */
-	protostfree = (~0 << (1 + nl1desc + 1)) /* & ~(~0 << MAXKL2SIZE) */;
+	protostfree = (~0U << (1 + nl1desc + 1)) /* & ~(~0U << MAXKL2SIZE) */;
 
 	/*
 	 * Initialize Sysptmap

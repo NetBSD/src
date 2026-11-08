@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.141 2026/05/30 10:10:11 thorpej Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.142 2026/11/08 07:32:41 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.141 2026/05/30 10:10:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.142 2026/11/08 07:32:41 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -497,7 +497,7 @@ start_c(int id, u_int fphystart, u_int fphysize, u_int cphysize,
 
 		/* Include additional level 2 table for Sysmap in protostfree */
 		RELOC(protostfree, u_int) =
-		    (~0 << (1 + nl1desc + 1)) /* & ~(~0 << MAXKL2SIZE) */;
+		    (~0U << (1 + nl1desc + 1)) /* & ~(~0U << MAXKL2SIZE) */;
 
 		/*
 		 * Initialize Sysptmap
