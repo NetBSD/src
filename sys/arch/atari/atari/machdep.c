@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.210 2026/11/08 08:00:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.210 2026/11/08 08:00:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -69,6 +69,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $"
 #include <sys/exec.h>
 #include <sys/cpu.h>
 #include <sys/exec_elf.h>
+#include <sys/core.h>
+#include <sys/kcore.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
@@ -82,6 +84,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $"
 #include <machine/reg.h>
 #include <machine/psl.h>
 #include <machine/pte.h>
+#include <machine/kcore.h>
 
 #include <m68k/pcr.h>
 
@@ -92,6 +95,10 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.209 2026/04/28 03:29:09 thorpej Exp $"
 #include "nvr.h"
 
 #define	DEV_NVRAM	11	/* Nvram minor-number */
+
+void cpu_init_kcorehdr(paddr_t, paddr_t);
+static int cpu_dumpsize(void);
+static int cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
 
 static void call_sicallbacks(void);
 void	straymfpint(int, u_short);
@@ -611,5 +618,125 @@ mm_md_readwrite(dev_t dev, struct uio *uio)
 #endif
 	default:
 		return ENXIO;
+	}
+}
+
+/*
+ * All info needed to generate a panic dump. All fields are setup by
+ * start_c().
+ * XXX: Should sheck usage of phys_segs. There is some unwanted overlap
+ *      here.... Also, the name is badly chosen. Phys_segs contains the
+ *      segment descriptions _after_ reservations are made.
+ * XXX: 'lowram' is obsoleted by the new panicdump format
+ */
+static cpu_kcore_hdr_t cpu_kcore_hdr;
+
+/*
+ * Used by dumpconf() to get the size of the machine-dependent panic-dump
+ * header in disk blocks.
+ */
+
+#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
+#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
+
+int
+cpu_dumpsize(void)
+{
+
+	return btodb(MDHDRSIZE);
+}
+
+/*
+ * Called by dumpsys() to dump the machine-dependent header.
+ * XXX: Assumes that it will all fit in one diskblock.
+ */
+int
+cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *p_blkno)
+{
+	int		buf[MDHDRSIZE/sizeof(int)];
+	int		error;
+	kcore_seg_t	*kseg_p;
+	cpu_kcore_hdr_t	*chdr_p;
+
+	kseg_p = (kcore_seg_t *)buf;
+	chdr_p = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*kseg_p)) / sizeof(int)];
+
+	/*
+	 * Generate a segment header
+	 */
+	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
+	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
+
+	/*
+	 * Add the md header
+	 */
+	*chdr_p = cpu_kcore_hdr;
+	error = dump(dumpdev, *p_blkno, (void *)buf, sizeof(buf));
+	*p_blkno += btodb(sizeof(buf));
+	return (error);
+}
+
+#if (M68K_NPHYS_RAM_SEGS < NMEM_SEGS)
+#error "Configuration error: M68K_NPHYS_RAM_SEGS < NMEM_SEGS"
+#endif
+/*
+ * Initialize the cpu_kcore_header.
+ */
+void __attribute__((no_instrument_function))
+cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
+{
+	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
+	struct m68k_kcore_hdr *m = &h->un._m68k;
+	extern int end;
+	int i;
+
+	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
+
+	/*
+	 * Initialize the `dispatcher' portion of the header.
+	 */
+	strcpy(h->name, machine);
+	h->page_size = PAGE_SIZE;
+	h->kernbase = KERNBASE;
+
+	/*
+	 * Fill in information about our MMU configuration.
+	 */
+	m->mmutype	= mmutype;
+	m->sg_v		= SG_V;
+	m->sg_frame	= SG_FRAME;
+	m->sg_ishift	= SG_ISHIFT;
+	m->sg_pmask	= SG_PMASK;
+	m->sg40_shift1	= SG4_SHIFT1;
+	m->sg40_mask2	= SG4_MASK2;
+	m->sg40_shift2	= SG4_SHIFT2;
+	m->sg40_mask3	= SG4_MASK3;
+	m->sg40_shift3	= SG4_SHIFT3;
+	m->sg40_addr1	= SG4_ADDR1;
+	m->sg40_addr2	= SG4_ADDR2;
+	m->pg_v		= PG_V;
+	m->pg_frame	= PG_FRAME;
+
+	/*
+	 * Initialize pointer to kernel segment table.
+	 */
+	m->sysseg_pa = sysseg_pa;		/* PA after relocation */
+
+	/*
+	 * Initialize relocation value such that:
+	 *
+	 *	pa = (va - KERNBASE) + reloc
+	 */
+	m->reloc = kbase;
+
+	/*
+	 * Define the end of the relocatable range.
+	 */
+	m->relocend = (vaddr_t)&end;
+
+	for (i = 0; i < NMEM_SEGS; i++) {
+		m->ram_segs[i].start = boot_segs[i].start;
+		m->ram_segs[i].size  = boot_segs[i].end -
+		    boot_segs[i].start;
 	}
 }

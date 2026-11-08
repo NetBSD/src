@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.128 2026/11/08 08:00:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.128 2026/11/08 08:00:59 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -54,8 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp
 #include <sys/reboot.h>
 #include <sys/exec.h>
 #include <sys/exec_aout.h>
-#include <sys/core.h>
-#include <sys/kcore.h>
 #include <sys/bus.h>
 
 #include <uvm/uvm_extern.h>
@@ -67,7 +65,6 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp
 #include <machine/mfp.h>
 #include <machine/scu.h>
 #include <machine/acia.h>
-#include <machine/kcore.h>
 #include <machine/intr.h>
 #include <machine/vectors.h>
 
@@ -81,9 +78,11 @@ __KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp
 
 #include "pci.h"
 
+/* Temporary cross-file declarations for the NEW_PMAP transition. */
+void cpu_init_kcorehdr(paddr_t, paddr_t);
+
 void *start_c(int, u_int, u_int, u_int, char *);
 static void atari_hwinit(void);
-static void cpu_init_kcorehdr(paddr_t, paddr_t);
 static void initcpu(void);
 static void mmu030_setup(paddr_t, u_int, paddr_t, psize_t, paddr_t, paddr_t);
 static void map_io_areas(paddr_t, psize_t, u_int);
@@ -109,16 +108,6 @@ static u_int milan_probe_bank(paddr_t paddr);
 #define MAGIC_32M	(32 - 1)
 #define MAGIC_64M	(64 - 1)
 #endif
-
-/*
- * All info needed to generate a panic dump. All fields are setup by
- * start_c().
- * XXX: Should sheck usage of phys_segs. There is some unwanted overlap
- *      here.... Also, the name is badly chosen. Phys_segs contains the
- *      segment descriptions _after_ reservations are made.
- * XXX: 'lowram' is obsoleted by the new panicdump format
- */
-static cpu_kcore_hdr_t cpu_kcore_hdr;
 
 extern u_int	lowram;
 int		machineid, mmutype, cputype;
@@ -1030,116 +1019,6 @@ map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 	 * ioaddr += BOOTM_VA_POOL;
 	 * pg = &pg[btoc(BOOTM_VA_POOL)];
 	 */
-}
-
-/*
- * Used by dumpconf() to get the size of the machine-dependent panic-dump
- * header in disk blocks.
- */
-
-#define CHDRSIZE (ALIGN(sizeof(kcore_seg_t)) + ALIGN(sizeof(cpu_kcore_hdr_t)))
-#define MDHDRSIZE roundup(CHDRSIZE, dbtob(1))
-
-int
-cpu_dumpsize(void)
-{
-
-	return btodb(MDHDRSIZE);
-}
-
-/*
- * Called by dumpsys() to dump the machine-dependent header.
- * XXX: Assumes that it will all fit in one diskblock.
- */
-int
-cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *p_blkno)
-{
-	int		buf[MDHDRSIZE/sizeof(int)];
-	int		error;
-	kcore_seg_t	*kseg_p;
-	cpu_kcore_hdr_t	*chdr_p;
-
-	kseg_p = (kcore_seg_t *)buf;
-	chdr_p = (cpu_kcore_hdr_t *)&buf[ALIGN(sizeof(*kseg_p)) / sizeof(int)];
-
-	/*
-	 * Generate a segment header
-	 */
-	CORE_SETMAGIC(*kseg_p, KCORE_MAGIC, MID_MACHINE, CORE_CPU);
-	kseg_p->c_size = MDHDRSIZE - ALIGN(sizeof(*kseg_p));
-
-	/*
-	 * Add the md header
-	 */
-	*chdr_p = cpu_kcore_hdr;
-	error = dump(dumpdev, *p_blkno, (void *)buf, sizeof(buf));
-	*p_blkno += btodb(sizeof(buf));
-	return (error);
-}
-
-#if (M68K_NPHYS_RAM_SEGS < NMEM_SEGS)
-#error "Configuration error: M68K_NPHYS_RAM_SEGS < NMEM_SEGS"
-#endif
-/*
- * Initialize the cpu_kcore_header.
- */
-static void __attribute__((no_instrument_function))
-cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
-{
-	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
-	struct m68k_kcore_hdr *m = &h->un._m68k;
-	extern char end[];
-	int i;
-
-	memset(&cpu_kcore_hdr, 0, sizeof(cpu_kcore_hdr));
-
-	/*
-	 * Initialize the `dispatcher' portion of the header.
-	 */
-	strcpy(h->name, machine);
-	h->page_size = PAGE_SIZE;
-	h->kernbase = KERNBASE;
-
-	/*
-	 * Fill in information about our MMU configuration.
-	 */
-	m->mmutype	= mmutype;
-	m->sg_v		= SG_V;
-	m->sg_frame	= SG_FRAME;
-	m->sg_ishift	= SG_ISHIFT;
-	m->sg_pmask	= SG_PMASK;
-	m->sg40_shift1	= SG4_SHIFT1;
-	m->sg40_mask2	= SG4_MASK2;
-	m->sg40_shift2	= SG4_SHIFT2;
-	m->sg40_mask3	= SG4_MASK3;
-	m->sg40_shift3	= SG4_SHIFT3;
-	m->sg40_addr1	= SG4_ADDR1;
-	m->sg40_addr2	= SG4_ADDR2;
-	m->pg_v		= PG_V;
-	m->pg_frame	= PG_FRAME;
-
-	/*
-	 * Initialize pointer to kernel segment table.
-	 */
-	m->sysseg_pa = sysseg_pa;		/* PA after relocation */
-
-	/*
-	 * Initialize relocation value such that:
-	 *
-	 *	pa = (va - KERNBASE) + reloc
-	 */
-	m->reloc = kbase;
-
-	/*
-	 * Define the end of the relocatable range.
-	 */
-	m->relocend = (vaddr_t)end;
-
-	for (i = 0; i < NMEM_SEGS; i++) {
-		m->ram_segs[i].start = boot_segs[i].start;
-		m->ram_segs[i].size  = boot_segs[i].end -
-		    boot_segs[i].start;
-	}
 }
 
 void __attribute__((no_instrument_function))

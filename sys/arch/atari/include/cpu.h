@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.78 2026/04/26 12:49:37 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.79 2026/11/08 08:00:59 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -83,12 +83,6 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 
 #if defined(_KERNEL)
 extern int machineid;
-
-/*
- * Prototypes from atari_init.c
- */
-int	cpu_dump(int (*)(dev_t, daddr_t, void *, size_t), daddr_t *);
-int	cpu_dumpsize(void);
 
 /*
  * Prototypes from autoconf.c
