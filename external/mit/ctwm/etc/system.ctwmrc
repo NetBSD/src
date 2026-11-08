@@ -1,5 +1,5 @@
 #
-# $NetBSD: system.ctwmrc,v 1.21 2026/10/28 09:49:53 nia Exp $
+# $NetBSD: system.ctwmrc,v 1.22 2026/11/08 02:19:53 nia Exp $
 #
 # ctwmrc by nia
 #
@@ -330,9 +330,6 @@ menu "titleops"
     " Iconify"     f.iconify
     " Resize"      f.resize
     " Move"        f.move
-    ""             f.separator
-    " Occupy ..."  f.occupy
-    " Occupy All"  f.occupyall
     ""             f.separator
     " Raise"       f.raise
     " Lower"       f.lower
