@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.67 2026/11/07 21:25:42 wiz Exp $
+# $NetBSD: mi,v 1.68 2026/11/08 09:17:39 wiz Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3108,4 +3108,4 @@
 ./usr/share/man/html9lua/intro.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/pmf.html		man-sys-htmlman		html
 ./usr/share/man/html9lua/systm.html		man-sys-htmlman		html
-./var/db/obsolete/manhtml			base-sys-root
+./var/db/obsolete/manhtml			base-sys-root		html
