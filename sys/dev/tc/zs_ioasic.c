@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.47 2026/11/08 19:34:01 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.48 2026/11/08 19:47:12 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.47 2026/11/08 19:34:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.48 2026/11/08 19:47:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -615,29 +615,6 @@ zs_write_data(struct zs_chanstate *cs, u_int val)
 /****************************************************************
  * Console support functions
  ****************************************************************/
-
-/*
- * Handle user request to enter kernel debugger.
- */
-void
-zs_abort(struct zs_chanstate *cs)
-{
-	u_int rr0;
-
-	/* Wait for end of break. */
-	/* XXX - Limit the wait? */
-	do {
-		rr0 = zs_read_csr(cs);
-	} while (rr0 & ZSRR0_BREAK);
-
-#if defined(KGDB)
-	zskgdb();
-#elif defined(DDB)
-	Debugger();
-#else
-	printf("zs_abort: ignoring break on console\n");
-#endif
-}
 
 /*
  * Polled input char.
