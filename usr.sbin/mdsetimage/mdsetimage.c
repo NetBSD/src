@@ -1,4 +1,4 @@
-/*	$NetBSD: mdsetimage.c,v 1.25 2020/06/14 18:24:21 tsutsui Exp $	*/
+/*	$NetBSD: mdsetimage.c,v 1.26 2026/11/08 16:25:57 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 2002 Christopher G. Demetriou
@@ -37,7 +37,7 @@
 #if !defined(lint)
 __COPYRIGHT("@(#) Copyright (c) 1996\
  Christopher G. Demetriou.  All rights reserved.");
-__RCSID("$NetBSD: mdsetimage.c,v 1.25 2020/06/14 18:24:21 tsutsui Exp $");
+__RCSID("$NetBSD: mdsetimage.c,v 1.26 2026/11/08 16:25:57 christos Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -87,7 +87,7 @@ main(int argc, char *argv[])
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "I:S:b:svx")) != -1)
+	while ((ch = getopt(argc, argv, "I:S:T:b:svx")) != -1)
 		switch (ch) {
 		case 'I':
 			md_root_image = optarg;
