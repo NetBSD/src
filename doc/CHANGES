@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3307 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3308 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -471,4 +471,34 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	hppa: Enable FORTIFY_SOURCE in userland. [riastradh 20261019]
 	mozilla-certdata: Update to 20261020. [riastradh 20261020]
 	unbound(8): Import 1.26.2. [christos 20261022]
+	atto(1): Add a new modeless screen-based text editor as an
+		alternative to vi(1) aimed at new users. [nia 20261026]
+	atto(1): Add to the rescue set. [nia 20261027]
+	pchtemp(4): Add support for suspend/resume. [riastradh 20261027]
+	evbarm: Add device tree for Netgate SG-1000 board.
+		[yurix 20261027]
+	libc: Add three new locales (x1_X1, x1_X2, x1_X3) designed to
+		stress libc locale support in the test suite.
+		[kre 20261028]
+	wdc(4): When attached at a FDT bus (e.g. on embedded m68k
+		boards), support systems where the aux control block
+		isn't decoded by the ATA device (e.g. dedicated
+		CompactFlash interfaces). [thorpej 20261029]
+	pcfrtc(4): Add support for changing the mode on PCF8583 RTC
+		chips, and additional modes and i2c addresses,
+		from Dave Tyson. [jdc 20261029]
+	pcfrtc(4): Add manual page, from Dave Tyson. [jdc 20261029]
 	tzdata: Updated to 2026f (using 2026fgtz) [kre 20261029]
+	atto(1): Use system's glob(3) implementation instead of
+		rolling own file name completion. [christos 20261030]
+	atto(1): Add support for libmenu, the menu is opened by
+		pressing the escape key twice. [nia 20261030]
+	atto(1): Rename to natto(1) to reflect slightly different
+		direction from the original code base. [nia 20261030]
+	menu(3x): Convert many functions to use "const char *" and
+		"void *" arguments for compatibility with modern C
+		compilers and ncurses. [nia 20261103]
+	lynxfb(4): Add a manual page. [nia 20261106]
+	m68k: Various fixes for profiling support. [thorpej 20261107]
+	drm(4): Various stability fixes for several GPU drivers.
+		[riastradh 20261107]
