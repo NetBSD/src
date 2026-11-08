@@ -1,4 +1,4 @@
-/* $NetBSD: zs_ioasic.c,v 1.46 2022/07/20 14:19:38 thorpej Exp $ */
+/* $NetBSD: zs_ioasic.c,v 1.47 2026/11/08 19:34:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1996, 1998 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.46 2022/07/20 14:19:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_ioasic.c,v 1.47 2026/11/08 19:34:01 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -631,7 +631,7 @@ zs_abort(struct zs_chanstate *cs)
 	} while (rr0 & ZSRR0_BREAK);
 
 #if defined(KGDB)
-	zskgdb(cs);
+	zskgdb();
 #elif defined(DDB)
 	Debugger();
 #else

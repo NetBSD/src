@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.8 2008/03/29 19:15:34 tsutsui Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.9 2026/11/08 19:34:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,5 +122,5 @@ void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 
 #if defined(_KERNEL) && defined(KGDB)
 void zs_kgdb_init(void);
-void zskgdb(struct zs_chanstate *);
+void zskgdb(void);
 #endif

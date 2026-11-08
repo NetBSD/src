@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.4 2012/10/13 06:27:51 tsutsui Exp $	*/
+/*	$NetBSD: cons.h,v 1.5 2026/11/08 19:34:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -59,7 +59,7 @@ extern void zs_putc(void *arg, int c);
 
 #ifdef	KGDB
 void zs_kgdb_init(void);
-void zskgdb(struct zs_chanstate *);
+void zskgdb(void);
 void *zs_find_prom(int);
 #endif
 

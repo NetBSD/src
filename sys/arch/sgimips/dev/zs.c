@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.44 2026/11/08 15:08:20 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.45 2026/11/08 19:34:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2000 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.44 2026/11/08 15:08:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.45 2026/11/08 19:34:00 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -120,7 +120,7 @@ static int  zscngetc (dev_t);
 static void zscnputc (dev_t, int);
 static void zscnpollc (dev_t, int);
 #ifdef KGDB
-void zskgdb (struct zs_chanstate *);
+void zskgdb (void);
 #endif
 
 static int  cons_port;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.6 2021/01/24 07:36:53 mrg Exp $	*/
+/*	$NetBSD: cons.h,v 1.7 2026/11/08 19:34:00 thorpej Exp $	*/
 
 
 /*
@@ -14,5 +14,5 @@ extern struct consdev consdev_prom;
 #ifdef	KGDB
 struct zs_chanstate;
 void zs_kgdb_init(void);
-void zskgdb(struct zs_chanstate *);
+void zskgdb(void);
 #endif

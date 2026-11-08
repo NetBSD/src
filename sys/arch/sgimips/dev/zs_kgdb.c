@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_kgdb.c,v 1.17 2023/10/24 21:45:49 andvar Exp $	*/
+/*	$NetBSD: zs_kgdb.c,v 1.18 2026/11/08 19:34:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.17 2023/10/24 21:45:49 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.18 2026/11/08 19:34:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,7 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: zs_kgdb.c,v 1.17 2023/10/24 21:45:49 andvar Exp $");
  */
 
 void zs_kgdb_init (void);
-void zskgdb (struct zs_chanstate *);
+void zskgdb (void);
 
 static void	zs_setparam (struct zs_chanstate *, int, int);
 static struct	zsops zsops_kgdb;
@@ -176,7 +176,7 @@ zs_check_kgdb(struct zs_chanstate *cs, int dev)
  * should time out after a few seconds to avoid hanging on spurious input.
  */
 void
-zskgdb(struct zs_chanstate *cs)
+zskgdb(void)
 {
 	int unit = minor(kgdb_dev);
 
@@ -222,7 +222,7 @@ zs_kgdb_rxint(struct zs_chanstate *cs)
 	}
 
 	if (c == KGDB_START) {
-		zskgdb(cs);
+		zskgdb();
 	} else {
 		kgdb_input_lost++;
 	}
@@ -247,7 +247,7 @@ zs_kgdb_stint(register struct zs_chanstate *cs, int force)
 	 * even when interrupts are locking up the machine.
 	 */
 	if (rr0 & ZSRR0_BREAK) {
-		zskgdb(cs);
+		zskgdb();
 	}
 }
 
