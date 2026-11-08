@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2022/11/10 06:13:29 blymn Exp $
+# $NetBSD: Makefile,v 1.13 2026/11/08 05:08:53 blymn Exp $
 
 NOMAN=		# defined
 
@@ -215,6 +215,7 @@ FILES+=		redrawwin2.chk
 FILES+=		redrawwin3.chk
 FILES+=		scroll1.chk
 FILES+=		scroll2.chk
+FILES+=		set_color.chk
 FILES+=		setscrreg.chk
 FILES+=		slk1.chk
 FILES+=		slk2.chk

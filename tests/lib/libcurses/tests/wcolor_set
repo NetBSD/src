@@ -1,7 +1,8 @@
 include window
 call OK start_color
 call OK refresh
-comparend color_start.chk
+#comparend color_start.chk
+comparend set_color.chk
 comparend home.chk
 compare color_blank_draw.chk
 call OK init_pair 4 $COLOR_RED $COLOR_GREEN
