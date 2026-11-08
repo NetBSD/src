@@ -1,4 +1,4 @@
-/*	$NetBSD: resize_lfs.c,v 1.16 2023/08/07 23:27:07 mrg Exp $	*/
+/*	$NetBSD: resize_lfs.c,v 1.17 2026/11/08 15:44:17 christos Exp $	*/
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -158,7 +158,7 @@ main(int argc, char **argv)
 		snprintf(cmd, sizeof(cmd), "/libexec/lfs_cleanerd -q -i %d %s",
 			 i, fsname);
 		if (system(cmd) != 0)
-			err(1, "invalidating segment %d", i);
+			errx(1, "invalidating segment %d failed", i);
 	}
 
 	/* Tell the filesystem to resize itself. */

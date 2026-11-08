@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.51 2022/08/06 10:22:22 rin Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.52 2026/11/08 15:44:17 christos Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.51 2022/08/06 10:22:22 rin Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.52 2026/11/08 15:44:17 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -201,7 +201,7 @@ main(int argc, char *argv[])
 	argc -= optind;
 	argv += optind;
 	if (quiet && humantime)
-		err(EXIT_FAILURE, "-t cannot be used with -T");
+		errx(EXIT_FAILURE, "-t cannot be used with -T");
 
 	if (memf == NULL) {
 #endif

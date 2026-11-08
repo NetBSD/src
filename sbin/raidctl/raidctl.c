@@ -1,4 +1,4 @@
-/*      $NetBSD: raidctl.c,v 1.91 2026/10/28 21:33:13 tls Exp $   */
+/*      $NetBSD: raidctl.c,v 1.92 2026/11/08 15:44:17 christos Exp $   */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -39,7 +39,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: raidctl.c,v 1.91 2026/10/28 21:33:13 tls Exp $");
+__RCSID("$NetBSD: raidctl.c,v 1.92 2026/11/08 15:44:17 christos Exp $");
 #endif
 
 
@@ -151,7 +151,7 @@ main(int argc,char *argv[])
 			if (fstat(fd, &st) == -1)
 				err(1, "stat failure on: %s", dev_name);
 			if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
-				err(1, "invalid device: %s", dev_name);
+				errx(1, "invalid device: %s", dev_name);
 
 			raidID = DISKUNIT(st.st_rdev);
 			if (strncmp(argv[2],"create",6)==0) {
@@ -350,7 +350,7 @@ main(int argc,char *argv[])
 	if (prog_fstat(fd, &st) == -1)
 		err(1, "stat failure on: %s", dev_name);
 	if (!S_ISBLK(st.st_mode) && !S_ISCHR(st.st_mode))
-		err(1, "invalid device: %s", dev_name);
+		errx(1, "invalid device: %s", dev_name);
 
 	raidID = DISKUNIT(st.st_rdev);
 
@@ -646,7 +646,7 @@ rf_pm_configure(int fd, int raidID, char *parityconf, int parityparams[])
 		return;
 		/* XXX the control flow here could be prettier. */
 	} else
-		err(1, "`%s' is not a valid parity map command", parityconf);
+		errx(1, "`%s' is not a valid parity map command", parityconf);
 
 	do_ioctl(fd, RAIDFRAME_PARITYMAP_SET_DISABLE, &dis,
 	    "RAIDFRAME_PARITYMAP_SET_DISABLE");
@@ -786,7 +786,7 @@ get_component_number(int fd, char *component_name, int *component_number,
 	}
 
 	if (!found)
-		err(1,"%s is not a component of this device", component_name);
+		errx(1, "%s is not a component of this device", component_name);
 }
 
 static void

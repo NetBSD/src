@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.58 2025/09/14 21:29:31 wiz Exp $	 */
+/* $NetBSD: main.c,v 1.59 2026/11/08 15:44:17 christos Exp $	 */
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -111,7 +111,7 @@ main(int argc, char **argv)
 		case 'm':
 			lfmode = argtoi('m', "mode", optarg, 8);
 			if (lfmode & ~07777)
-				err(1, "bad mode to -m: %o", lfmode);
+				errx(1, "bad mode to -m: %o", lfmode);
 			printf("** lost+found creation mode %o\n", lfmode);
 			break;
 

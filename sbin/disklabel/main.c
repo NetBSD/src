@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.60 2026/08/07 02:00:43 thorpej Exp $	*/
+/*	$NetBSD: main.c,v 1.61 2026/11/08 15:44:17 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@ __COPYRIGHT("@(#) Copyright (c) 1987, 1993\
 static char sccsid[] = "@(#)disklabel.c	8.4 (Berkeley) 5/4/95";
 /* from static char sccsid[] = "@(#)disklabel.c	1.2 (Symmetric) 11/28/85"; */
 #else
-__RCSID("$NetBSD: main.c,v 1.60 2026/08/07 02:00:43 thorpej Exp $");
+__RCSID("$NetBSD: main.c,v 1.61 2026/11/08 15:44:17 christos Exp $");
 #endif
 #endif	/* not lint */
 
@@ -562,19 +562,19 @@ main(int argc, char *argv[])
 		case 'L':	/* Label sector */
 			val = strtoul(optarg, NULL, 10);
 			if ((val == ULONG_MAX && errno == ERANGE) || val > UINT_MAX)
-				err(EXIT_FAILURE, "invalid label sector: %s", optarg);
+				errx(EXIT_FAILURE, "invalid label sector: %s", optarg);
 			labelsector = val;
 			break;
 		case 'O':	/* Label offset */
 			val = strtoul(optarg, NULL, 10);
 			if ((val == ULONG_MAX && errno == ERANGE) || val > UINT_MAX)
-				err(EXIT_FAILURE, "invalid label offset: %s", optarg);
+				errx(EXIT_FAILURE, "invalid label offset: %s", optarg);
 			labeloffset = val;
 			break;
 		case 'P':	/* Max partitions */
 			val = strtoul(optarg, NULL, 10);
 			if ((val == ULONG_MAX && errno == ERANGE) || val < 1 || val > UINT_MAX)
-				err(EXIT_FAILURE, "invalid max partitions: %s", optarg);
+				errx(EXIT_FAILURE, "invalid max partitions: %s", optarg);
 			maxpartitions = val;
 			break;
 #endif

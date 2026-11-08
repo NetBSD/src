@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.37 2021/06/19 13:56:35 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.38 2026/11/08 15:44:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.6 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.37 2021/06/19 13:56:35 christos Exp $");
+__RCSID("$NetBSD: main.c,v 1.38 2026/11/08 15:44:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -121,7 +121,7 @@ main(int argc, char *argv[])
 		case 'D':
 			ddesc = digest_lookup(optarg);
 			if (ddesc == NULL)
-				err(1, "unknown digest algorithm: %s", optarg);
+				errx(1, "unknown digest algorithm: %s", optarg);
 			Dflag = 1;
 			break;
 		case 'd':

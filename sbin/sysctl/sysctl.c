@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.c,v 1.167 2026/04/19 20:08:24 rillig Exp $ */
+/*	$NetBSD: sysctl.c,v 1.168 2026/11/08 15:44:18 christos Exp $ */
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@ __COPYRIGHT("@(#) Copyright (c) 1993\
 #if 0
 static char sccsid[] = "@(#)sysctl.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: sysctl.c,v 1.167 2026/04/19 20:08:24 rillig Exp $");
+__RCSID("$NetBSD: sysctl.c,v 1.168 2026/11/08 15:44:18 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -2362,7 +2362,7 @@ kern_drivers(HANDLER_ARGS)
 	}
 
 	if (sz % sizeof(*kd))
-		err(EXIT_FAILURE, "bad size %zu for kern.drivers", sz);
+		errx(EXIT_FAILURE, "bad size %zu for kern.drivers", sz);
 
 	kd = malloc(sz);
 	if (kd == NULL) {
