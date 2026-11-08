@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.88 2022/09/02 06:25:43 msaitoh Exp $	*/
+/*	$NetBSD: route.c,v 1.89 2026/11/08 16:17:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "from: @(#)route.c	8.3 (Berkeley) 3/9/94";
 #else
-__RCSID("$NetBSD: route.c,v 1.88 2022/09/02 06:25:43 msaitoh Exp $");
+__RCSID("$NetBSD: route.c,v 1.89 2026/11/08 16:17:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -255,7 +255,7 @@ p_krtentry(struct rtentry *rt)
 	p_addr(addr, mask, rt->rt_flags, nflag);
 	p_gwaddr(kgetsa(rt->rt_gateway), kgetsa(rt->rt_gateway)->sa_family,
 	    nflag);
-	p_flags(rt->rt_flags);
+	p_flags(rt->rt_flags, nflag);
 	printf("%6d %8"PRIu64" ", rt->rt_refcnt, rt->rt_use);
 	if (rt->rt_rmx.rmx_mtu)
 		printf("%6"PRIu64, rt->rt_rmx.rmx_mtu);

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtutil.h,v 1.4 2019/06/30 11:38:16 sevan Exp $	*/
+/*	$NetBSD: rtutil.h,v 1.5 2026/11/08 16:17:24 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,12 +37,13 @@
 #define RT_VFLAG	__BIT(2)	/* show verbose statistics */
 #define RT_NFLAG	__BIT(3)	/* numeric output */
 #define RT_LFLAG	__BIT(4)	/* don't show LLINFO entries */
+#define RT_SFLAG	__BIT(5)	/* print a space for missing flags */
 
 void p_rttables(int, int, int, int);
 void p_rthdr(int, int);
 void p_family(int);
 void p_sockaddr(const struct sockaddr *, const struct sockaddr *, int, int, int);
-void p_flags(int);
+void p_flags(int, int);
 struct rt_metrics;
 void p_rtrmx(const struct rt_metrics *);
 void p_addr(const struct sockaddr *sa, const struct sockaddr *mask, int, int);

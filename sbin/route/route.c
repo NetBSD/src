@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.169 2022/04/10 09:50:45 andvar Exp $	*/
+/*	$NetBSD: route.c,v 1.170 2026/11/08 16:17:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.169 2022/04/10 09:50:45 andvar Exp $");
+__RCSID("$NetBSD: route.c,v 1.170 2026/11/08 16:17:24 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -180,7 +180,7 @@ main(int argc, char * const *argv)
 			qflag = 1;
 			break;
 		case 'S':
-			Sflag = 1;
+			Sflag = RT_SFLAG;
 			break;
 		case 's':
 			shortoutput = 1;
@@ -239,7 +239,7 @@ main(int argc, char * const *argv)
 		return newroute(argc, argv);
 
 	case K_SHOW:
-		show(argc, argv, Lflag|nflag|Tflag|verbose);
+		show(argc, argv, Lflag|nflag|Sflag|Tflag|verbose);
 		return 0;
 
 #ifndef SMALL

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtutil.c,v 1.11 2020/08/29 19:27:40 christos Exp $	*/
+/*	$NetBSD: rtutil.c,v 1.12 2026/11/08 16:17:24 christos Exp $	*/
 /*	$OpenBSD: show.c,v 1.1 2006/05/27 19:16:37 claudio Exp $	*/
 
 /*
@@ -95,6 +95,18 @@ static const struct bits bits[] = {
 	{ RTF_BROADCAST, 'b'},
 	{ 0, 0 }
 };
+
+/*
+ * Width of the flags column: with RT_SFLAG every entry of the table
+ * above gets its own character position so that the flags line up.
+ * 6 is the default field width.
+ */
+static int
+p_flags_width(int flags)
+{
+
+	return (flags & RT_SFLAG) ? (int)__arraycount(bits) - 1 : 6;
+}
 
 #ifndef SMALL
 static void p_tag(const struct sockaddr *sa);
@@ -204,6 +216,7 @@ p_rttables(int paf, int flags, int pflags, int interesting)
 void
 p_rthdr(int paf, int flags)
 {
+	int fw = p_flags_width(flags);
 #ifndef SMALL
 	if (flags & RT_AFLAG)
 		printf("%-*.*s ", PLEN, PLEN, "Address");
@@ -214,23 +227,23 @@ p_rthdr(int paf, int flags)
 		return;
 	}
 	if (flags & RT_TFLAG) {
-	    printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s %7.7s"
+	    printf("%-*.*s %-*.*s %-*.*s %6.6s %8.8s %6.6s %7.7s"
 		" %s\n", WID_DST(paf), WID_DST(paf), "Destination",
 		WID_GW(paf), WID_GW(paf), "Gateway",
-		"Flags", "Refs", "Use", "Mtu", "Tag", "Interface");
+		fw, fw, "Flags", "Refs", "Use", "Mtu", "Tag", "Interface");
 	    return;
 	}
 #endif
 #ifndef SMALL
-	printf("%-*.*s %-*.*s %-6.6s %6.6s %8.8s %6.6s %s\n",
+	printf("%-*.*s %-*.*s %-*.*s %6.6s %8.8s %6.6s %s\n",
 	    WID_DST(paf), WID_DST(paf), "Destination",
 	    WID_GW(paf), WID_GW(paf), "Gateway",
-	    "Flags", "Refs", "Use", "Mtu", "Interface");
+	    fw, fw, "Flags", "Refs", "Use", "Mtu", "Interface");
 #else
-	printf("%-*.*s %-*.*s %-6.6s\n",
+	printf("%-*.*s %-*.*s %-*.*s\n",
 	    WID_DST(paf), WID_DST(paf), "Destination",
 	    WID_GW(paf), WID_GW(paf), "Gateway",
-	    "Flags");
+	    fw, fw, "Flags");
 #endif
 }
 
@@ -279,7 +292,7 @@ p_rtentry(struct rt_msghdr *rtm, int flags, int interesting)
 	p_sockaddr(sa, mask, rtm->rtm_flags, WID_DST(sa->sa_family), flags);
 	p_sockaddr(rti_info[RTAX_GATEWAY], NULL, RTF_HOST,
 	    WID_GW(sa->sa_family), flags);
-	p_flags(rtm->rtm_flags & interesting);
+	p_flags(rtm->rtm_flags & interesting, flags);
 #if 0 /* XXX-elad */
 	printf("%6d %8"PRId64" ", (int)rtm->rtm_rmx.rmx_refcnt,
 	    rtm->rtm_rmx.rmx_pksent);
@@ -380,16 +393,19 @@ p_sockaddr(const struct sockaddr *sa, const struct sockaddr *mask, int rflags,
 }
 
 void
-p_flags(int f)
+p_flags(int f, int fl)
 {
 	char name[33], *flags;
 	const struct bits *p = bits;
+	int width = p_flags_width(fl);
 
 	for (flags = name; p->b_mask && flags < &name[sizeof(name) - 2]; p++)
 		if (p->b_mask & f)
 			*flags++ = p->b_val;
+		else if (fl & RT_SFLAG)
+			*flags++ = ' ';
 	*flags = '\0';
-	printf("%-6.6s ", name);
+	printf("%-*.*s ", width, width, name);
 }
 
 #ifndef SMALL
