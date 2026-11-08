@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.167 2025/09/19 05:22:20 mrg Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.168 2026/11/08 10:39:24 tsutsui Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.167 2025/09/19 05:22:20 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.168 2026/11/08 10:39:24 tsutsui Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -1108,7 +1108,7 @@ wsdisplayclose(dev_t dev, int flag, int mode, struct lwp *l)
 		(*scr->scr_syncops->destroy)(scr->scr_synccookie);
 
 	if (WSSCREEN_HAS_EMULATOR(scr)) {
-		scr->scr_flags &= ~SCR_GRAPHICS;
+		scr->scr_flags &= ~(SCR_GRAPHICS | SCR_DUMBFB);
 		(*scr->scr_dconf->wsemul->reset)(scr->scr_dconf->wsemulcookie,
 						 WSEMUL_RESET);
 		if (wsdisplay_clearonclose)
@@ -1361,7 +1361,7 @@ wsdisplay_internal_ioctl(struct wsdisplay_softc *sc, struct wsscreen *scr,
 			return EINVAL;
 
 	    if (WSSCREEN_HAS_EMULATOR(scr)) {
-		    scr->scr_flags &= ~SCR_GRAPHICS;
+		    scr->scr_flags &= ~(SCR_GRAPHICS | SCR_DUMBFB);
 		    if (d == WSDISPLAYIO_MODE_MAPPED ||
 			d == WSDISPLAYIO_MODE_DUMBFB)
 			    scr->scr_flags |= SCR_GRAPHICS |
