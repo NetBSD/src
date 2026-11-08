@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.126 2026/11/08 07:51:25 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.126 2026/11/08 07:51:25 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.127 2026/11/08 07:54:14 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -194,7 +194,7 @@ int	reloc_kernel = RELOC_KERNEL;		/* Patchable	*/
  */
 int kernel_copyback = 1;
 
-void *
+void * __attribute__((no_instrument_function))
 start_c(int id, u_int ttphystart, u_int ttphysize, u_int stphysize,
     char *esym_addr)
 	/* id:			 Machine id			*/
@@ -948,7 +948,7 @@ atari_hwinit(void)
  * inhibited!
  * All I/O areas are virtually mapped at the end of the pt-table.
  */
-static void
+static void __attribute__((no_instrument_function))
 map_io_areas(paddr_t ptpa, psize_t ptsize, u_int ptextra)
 	/* ptsize:	 Size of 'pt' in bytes		*/
 	/* ptextra:	 #of additional I/O pte's	*/
@@ -1083,7 +1083,7 @@ cpu_dump(int (*dump)(dev_t, daddr_t, void *, size_t), daddr_t *p_blkno)
 /*
  * Initialize the cpu_kcore_header.
  */
-static void
+static void __attribute__((no_instrument_function))
 cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 {
 	cpu_kcore_hdr_t *h = &cpu_kcore_hdr;
@@ -1142,7 +1142,7 @@ cpu_init_kcorehdr(paddr_t kbase, paddr_t sysseg_pa)
 	}
 }
 
-void
+void __attribute__((no_instrument_function))
 mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
     paddr_t sysptmap_pa, paddr_t kbase)
 	/* sysseg_pa:	 System segment table		*/
@@ -1194,7 +1194,7 @@ mmu030_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
 }
 
 #if defined(M68040) || defined(M68060)
-void
+void __attribute__((no_instrument_function))
 mmu040_setup(paddr_t sysseg_pa, u_int kstsize, paddr_t ptpa, psize_t ptsize,
     paddr_t sysptmap_pa, paddr_t kbase)
 	/* sysseg_pa:	 System segment table		*/
