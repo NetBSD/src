@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.23 2026/11/08 16:11:40 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.24 2026/11/08 18:40:53 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -216,14 +216,15 @@ struct pmap_bootmap {
 	int			pmbm_flags;
 };
 
-#define	PMBM_F_VAONLY	__BIT(0)
-#define	PMBM_F_FIXEDVA	__BIT(1)
-#define	PMBM_F_KEEPOUT	__BIT(2)
-#define	PMBM_F_CI	__BIT(3)	/* cache-inhibited mapping */
-#define	PMBM_F_CWT	__BIT(4)	/* write-through cacheable mapping */
-#define	PMBM_F_RO	__BIT(5)	/* read-only mapping */
+#define	PMBM_F_RO	__BIT(2)	/* same as PTE40 W bit */
 #define	PMBM_F_U0	__BIT(8)	/* same as PTE40 U0 bit */
 #define	PMBM_F_U1	__BIT(9)	/* same as PTE40 U1 bit */
+
+#define	PMBM_F_VAONLY	__BIT(16)
+#define	PMBM_F_FIXEDVA	__BIT(17)
+#define	PMBM_F_KEEPOUT	__BIT(18)
+#define	PMBM_F_CI	__BIT(19)	/* cache-inhibited mapping */
+#define	PMBM_F_CWT	__BIT(20)	/* write-through cacheable mapping */
 
 #define	PMBM_F_PTEBITS	(PMBM_F_U0 | PMBM_F_U1)
 
