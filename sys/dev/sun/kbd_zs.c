@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd_zs.c,v 1.24 2022/09/25 21:30:29 thorpej Exp $	*/
+/*	$NetBSD: kbd_zs.c,v 1.25 2026/11/08 19:51:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.24 2022/09/25 21:30:29 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd_zs.c,v 1.25 2026/11/08 19:51:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -237,7 +237,7 @@ kbd_zs_rxint(struct zs_chanstate *cs)
 		if (c == k->k_magic2) {
 			/* Magic "L1-A" sequence; enter debugger. */
 			if (k->k_kbd.k_isconsole) {
-				zs_abort(cs);
+				zs_abort();
 				/* Debugger done.  Fake L1-up to finish it. */
 				c = k->k_magic1 | KBD_UP;
 			} else {
@@ -296,7 +296,7 @@ kbd_zs_stint(struct zs_chanstate *cs, int force)
 #if 0
 	if (rr0 & ZSRR0_BREAK) {
 		/* Keyboard unplugged? */
-		zs_abort(cs);
+		zs_abort();
 		return;
 	}
 #endif

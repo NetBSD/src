@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.28 2026/11/08 19:34:00 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.29 2026/11/08 19:51:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.28 2026/11/08 19:34:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2026/11/08 19:51:14 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -546,7 +546,7 @@ extern void Debugger(void);
  * Handle user request to enter kernel debugger.
  */
 void
-zs_abort(struct zs_chanstate *cs)
+zs_abort(void)
 {
 	volatile struct zschan *zc = zs_conschan_get;
 	int rr0;
