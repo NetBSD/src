@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3308 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3309 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -477,9 +477,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	pchtemp(4): Add support for suspend/resume. [riastradh 20261027]
 	evbarm: Add device tree for Netgate SG-1000 board.
 		[yurix 20261027]
-	libc: Add three new locales (x1_X1, x1_X2, x1_X3) designed to
-		stress libc locale support in the test suite.
-		[kre 20261028]
 	wdc(4): When attached at a FDT bus (e.g. on embedded m68k
 		boards), support systems where the aux control block
 		isn't decoded by the ATA device (e.g. dedicated
