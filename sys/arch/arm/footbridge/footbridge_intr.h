@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.22 2021/08/13 11:40:43 skrll Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.23 2026/11/10 03:49:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -126,7 +126,9 @@ footbridge_splraise(int ipl)
 	int	old;
 
 	old = curcpl();
-	set_curcpl(ipl);
+	if (ipl > old) {
+		set_curcpl(ipl);
+	}
 
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();

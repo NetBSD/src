@@ -1,4 +1,4 @@
-/* $NetBSD: ixp12x0_intr.c,v 1.33 2020/11/20 18:26:26 thorpej Exp $ */
+/* $NetBSD: ixp12x0_intr.c,v 1.34 2026/11/10 03:49:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.33 2020/11/20 18:26:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_intr.c,v 1.34 2026/11/10 03:49:17 thorpej Exp $");
 
 /*
  * Interrupt support for the Intel ixp12x0
@@ -278,7 +278,9 @@ _splraise(int ipl)
 
 	oldirqstate = disable_interrupts(I32_bit);
 	old = curcpl();
-	set_curcpl(ipl);
+	if (ipl > old) {
+		set_curcpl(ipl);
+	}
 	restore_interrupts(oldirqstate);
 	return (old);
 }

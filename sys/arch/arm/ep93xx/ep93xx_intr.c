@@ -1,4 +1,4 @@
-/* $NetBSD: ep93xx_intr.c,v 1.28 2023/05/02 09:49:33 jmcneill Exp $ */
+/* $NetBSD: ep93xx_intr.c,v 1.29 2026/11/10 03:49:17 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.28 2023/05/02 09:49:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ep93xx_intr.c,v 1.29 2026/11/10 03:49:17 thorpej Exp $");
 
 /*
  * Interrupt support for the Cirrus Logic EP93XX
@@ -221,7 +221,9 @@ _splraise(int ipl)
 
 	oldirqstate = disable_interrupts(I32_bit);
 	old = curcpl();
-	set_curcpl(ipl);
+	if (ipl > old) {
+		set_curcpl(ipl);
+	}
 	restore_interrupts(oldirqstate);
 	return (old);
 }

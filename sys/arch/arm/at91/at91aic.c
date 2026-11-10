@@ -1,5 +1,5 @@
-/*	$Id: at91aic.c,v 1.13 2022/07/21 10:09:20 andvar Exp $	*/
-/*	$NetBSD: at91aic.c,v 1.13 2022/07/21 10:09:20 andvar Exp $	*/
+/*	$Id: at91aic.c,v 1.14 2026/11/10 03:49:17 thorpej Exp $	*/
+/*	$NetBSD: at91aic.c,v 1.14 2026/11/10 03:49:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy.
@@ -207,7 +207,7 @@ _splraise(int ipl)
 
 	oldirqstate = disable_interrupts(I32_bit);
 	old = curcpl();
-	if (old != ipl) {
+	if (ipl > old) {
 		set_curcpl(ipl);
 		at91_set_intrmask(aic_imask[ipl]);
 	}
