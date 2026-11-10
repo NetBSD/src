@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.119 2025/02/28 20:11:21 hans Exp $	     */
+/*	$NetBSD: vm_machdep.c,v 1.120 2026/11/10 12:34:23 kalvisd Exp $	     */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.119 2025/02/28 20:11:21 hans Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.120 2026/11/10 12:34:23 kalvisd Exp $");
 
 #include "opt_execfmt.h"
 #include "opt_compat_ultrix.h"
@@ -97,6 +97,16 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	memset(pcb2, 0, sizeof(*pcb2));
 
 	/*
+	 * Set initial values for the base and length registers.
+	 *
+	 * Set the initial AST level to AST_PCB (no ASTs pending)
+	 */
+	pcb2->P0BR = (struct pte *)KERNBASE;
+	pcb2->P0LR = (0 / sizeof(struct pte)) | AST_PCB;
+	pcb2->P1BR = (struct pte *)KERNBASE;
+	pcb2->P1LR = (1 << 21) - (0 / sizeof(struct pte));
+
+	/*
 	 * Copy the trap frame.
 	 */
 	const vaddr_t uv = uvm_lwp_getuarea(l2);
@@ -104,13 +114,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	l2->l_md.md_utf = tf;
 	*tf = *l1->l_md.md_utf;
 
-	/*
-	 * Activate address space for the new process.	The PTEs have
-	 * already been allocated by way of pmap_create().
-	 * This writes the page table registers to the PCB.
-	 */
-	pcb2->pcb_pm = NULL;
-	pmap_activate(l2);
+	/* Address space for the new LWP will be activated when the
+	 * LWP is next scheduled */
 
 	/* Mark guard page invalid in kernel stack */
 	kvtopte((uintptr_t)uv + REDZONEADDR)->pg_v = 0;
