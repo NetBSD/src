@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.78 2022/08/07 02:52:25 simonb Exp $
+#	$NetBSD: TS7200,v 1.79 2026/11/10 03:46:23 thorpej Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -246,6 +246,7 @@ wd*	at atabus? drive ? flags 0x00ff
 #iophy*	at mii? phy ?			# Intel 82553 PHYs
 #lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 #makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
+micphy* at mii? phy ?			# Micrel KSZ[89]xxx PHYs
 #nsphy*	at mii? phy ?			# NS83840 PHYs
 #nsphyter* at mii? phy ? 		# NS83843 PHYs
 #pnaphy* at mii? phy ?			# generic HomePNA PHYs
