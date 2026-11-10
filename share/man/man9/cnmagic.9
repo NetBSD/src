@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.19 2026/11/10 04:33:14 thorpej Exp $
+.\" $NetBSD: cnmagic.9,v 1.20 2026/11/10 08:45:00 uwe Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -101,10 +101,10 @@ This is the raw data and may be keycodes rather than
 processed characters, depending on the console device.
 .Sh FUNCTIONS
 The following functions describe the console magic interface.
-.Bl -tag -width indent
-.It Fn cn_init_magic "cnm"
+.Bl -tag -width Fn
+.It Fn cn_init_magic "cnms"
 Initialize the console magic state pointed to by
-.Fa cnm
+.Fa cnms
 to a usable state.
 .It Fn cn_isconsole "dev"
 Determine whether a given
