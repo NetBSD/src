@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.32 2021/08/07 16:19:06 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.33 2026/11/10 17:08:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.32 2021/08/07 16:19:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.33 2026/11/10 17:08:40 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -86,7 +86,7 @@ cpu_configure(void)
 		kgdb_connect(1);
 #else	/* KGDB */
 		/* Either DDB or no debugger (just PROM). */
-		Debugger();
+		cpu_Debugger();
 #endif	/* KGDB */
 	}
 

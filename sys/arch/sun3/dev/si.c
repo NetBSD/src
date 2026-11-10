@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.65 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: si.c,v 1.66 2026/11/10 17:08:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.65 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.66 2026/11/10 17:08:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -185,7 +185,7 @@ si_minphys(struct buf *bp)
 #ifdef	DEBUG
 		if (si_debug) {
 			printf("%s len = 0x%x.\n", __func__, bp->b_bcount);
-			Debugger();
+			cpu_Debugger();
 		}
 #endif
 		bp->b_bcount = MAX_DMA_LEN;
@@ -289,7 +289,7 @@ si_dma_alloc(struct ncr5380_softc *ncr_sc)
 	 */
 	if (xlen > MAX_DMA_LEN) {
 		printf("%s: excessive xlen=0x%x\n", __func__, xlen);
-		Debugger();
+		cpu_Debugger();
 		ncr_sc->sc_datalen = xlen = MAX_DMA_LEN;
 	}
 

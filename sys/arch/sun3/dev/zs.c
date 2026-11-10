@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.93 2026/11/08 19:51:14 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.94 2026/11/10 17:08:40 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.93 2026/11/08 19:51:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.94 2026/11/10 17:08:40 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -564,7 +564,7 @@ zs_abort(void)
 	} while (rr0 & ZSRR0_BREAK);
 
 	/* This is always available on the Sun3. */
-	Debugger();
+	cpu_Debugger();
 }
 
 /*
