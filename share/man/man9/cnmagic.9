@@ -1,4 +1,4 @@
-.\" $NetBSD: cnmagic.9,v 1.18 2026/10/17 23:57:32 uwe Exp $
+.\" $NetBSD: cnmagic.9,v 1.19 2026/11/10 04:33:14 thorpej Exp $
 .\"
 .\" Copyright (c) 2000 Eduardo Horvath
 .\" All rights reserved.
@@ -32,34 +32,37 @@
 .\"
 .\" --(license Id: LICENSE.proto,v 1.1 2000/06/13 21:40:26 cgd Exp )--
 .\"
-.Dd July 7, 2019
+.Dd November 8, 2026
 .Dt CNMAGIC 9
 .Os
 .Sh NAME
 .Nm cn_init_magic ,
-.Nm cn_trap ,
 .Nm cn_isconsole ,
 .Nm cn_check_magic ,
+.Nm cn_check_magic_impl ,
 .Nm cn_destroy_magic ,
 .Nm cn_set_magic ,
-.Nm cn_get_magic
+.Nm cn_get_magic ,
+.Nm cn_set_magic_action ,
 .Nd console magic sequence management
 .Sh SYNOPSIS
-.In sys/systm.h
+.In dev/cons.h
 .Ft void
 .Fn cn_init_magic "cnm_state_t *cnms"
-.Ft void
-.Fn cn_trap "void"
-.Ft int
+.Ft bool
 .Fn cn_isconsole "dev_t dev"
-.Ft void
+.Ft bool
 .Fn cn_check_magic "dev_t dev" "int k" "cnm_state_t *cnms"
+.Ft bool
+.Fn cn_check_magic_impl "int k" "cnm_state_t *cnms"
 .Ft void
 .Fn cn_destroy_magic "cnm_state_t *cnms"
 .Ft int
 .Fn cn_set_magic "const char *magic"
 .Ft int
 .Fn cn_get_magic "char *magic" "int len"
+.Ft int
+.Fn cn_set_magic_action "void (*func)(void)"
 .Sh DESCRIPTION
 The
 .Nx
@@ -103,11 +106,6 @@ The following functions describe the console magic interface.
 Initialize the console magic state pointed to by
 .Fa cnm
 to a usable state.
-.It Fn cn_trap
-Trap into the kernel debugger or ROM monitor.
-By default this function-like macro is defined to be
-.Fn console_debugger
-but can be overridden in MI header files.
 .It Fn cn_isconsole "dev"
 Determine whether a given
 .Fa dev
@@ -115,30 +113,36 @@ is the system console.
 This macro tests to see if
 .Fa dev
 is the same as
-.Va cn_tab\^ Ns Li -> Ns Va cn_dev
-but can be overridden in MI header files.
+.Va cn_tab\^ Ns Li -> Ns Va cn_dev .
 .It Fn cn_check_magic "dev" "k" "cnms"
+This inline first checks that
+.Fa dev
+is the system console using
+.Fn cn_isconsole .
+If true, it passes the remaining arguments to
+.Fn cn_check_magic_impl .
+.It Fn cn_check_magic_impl "k" "cnms"
+Runs the input value
+.Fa k
+through the state machine and checks to see if the magic sequence has
+completed.
+If so, the magic sequence action is invoked and
+.Dv true
+is returned, otherwise returns
+.Dv false .
+.Pp
 All input should be passed through
 .Fn cn_check_magic
+or
+.Fn cn_cneck_magic_impl
 so the state machine remains in a consistent state.
+The state machine ignores all input and resets to the initial
+state when the kernel debugger is already active.
 To report serial line
 .Tn BREAK
 condition pass
 .Dv CNC_BREAK
 as input.
-.Pp
-.Fn cn_check_magic
-calls
-.Fn cn_isconsole
-with
-.Fa dev
-to determine if this is the console.
-If that returns true then it runs the input value
-.Fa k
-through the state machine.
-If the state machine completes a match of the current console magic sequence
-.Fn cn_trap
-is called.
 .It Fn cn_destroy_magic "cnms"
 This should be called once what
 .Fa cnms
@@ -178,6 +182,14 @@ It uses the same encoding accepted by
 Returns
 .Li 0
 on success or a non-zero error value.
+.It Fn cn_set_magic_action "cnms" "func"
+The default action when a magic sequence is completed is to invoke the
+kernel debugger via the
+.Fn console_debugger
+function.
+.Fn cn_set_magic_action
+allows for an alternate action to be specified if a driver has special
+requirements.
 .El
 .Sh SEE ALSO
 .Xr ddb 4 ,
