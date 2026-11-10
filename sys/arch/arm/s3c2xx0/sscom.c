@@ -1,4 +1,4 @@
-/*	$NetBSD: sscom.c,v 1.51 2026/11/07 22:20:11 thorpej Exp $ */
+/*	$NetBSD: sscom.c,v 1.52 2026/11/10 03:04:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.51 2026/11/07 22:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.52 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "opt_sscom.h"
 #include "opt_kgdb.h"
@@ -108,18 +108,6 @@ __KERNEL_RCSID(0, "$NetBSD: sscom.c,v 1.51 2026/11/07 22:20:11 thorpej Exp $");
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1565,19 +1553,17 @@ sscomrxintr(void *arg)
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 
 			while (cc > 0) {
-				int cn_trapped = 0;
-
 				/* get status and received character.
 				   read status register first */
 				uerstat = sscom_geterr(iot, ioh);
 				put[0] = sscom_getc(iot, ioh);
 
 				if (ISSET(uerstat, UERSTAT_BREAK)) {
-					int con_trapped = 0;
-					cn_check_magic(sc->sc_tty->t_dev,
-					    CNC_BREAK, sscom_cnm_state);
-					if (con_trapped)
+					if (cn_check_magic(sc->sc_tty->t_dev,
+							   CNC_BREAK,
+							   &sscom_cnm_state)) {
 						continue;
+					}
 #if defined(KGDB)
 					if (ISSET(sc->sc_hwflags,
 					    SSCOM_HW_KGDB)) {
@@ -1588,9 +1574,8 @@ sscomrxintr(void *arg)
 				}
 
 				put[1] = uerstat;
-				cn_check_magic(sc->sc_tty->t_dev,
-					       put[0], sscom_cnm_state);
-				if (!cn_trapped) {
+				if (! cn_check_magic(sc->sc_tty->t_dev,
+					       put[0], &sscom_cnm_state)) {
 					put += 2;
 					if (put >= end)
 						put = sc->sc_rbuf;
@@ -1925,11 +1910,9 @@ sscomcngetc(dev_t dev)
 
 	c = sscom_getc(sscomconstag, sscomconsioh);
 	stat = sscom_geterr(sscomconstag, sscomconsioh);
-	{
-		int cn_trapped __unused = 0;
-		if (!db_active)
-			cn_check_magic(dev, c, sscom_cnm_state);
-	}
+
+	cn_check_magic(dev, c, &sscom_cnm_state);
+
 	splx(s);
 	return c;
 }
@@ -1948,10 +1931,9 @@ sscomcnputc(dev_t dev, int c)
 	if (sscom_readaheadcount < MAX_READAHEAD && 
 	    sscom_rxrdy(sscomconstag, sscomconsioh)) {
 	    
-		int __attribute__((__unused__))cn_trapped = 0;
 		cin = sscom_getc(sscomconstag, sscomconsioh);
 		stat = sscom_geterr(sscomconstag, sscomconsioh);
-		cn_check_magic(dev, cin, sscom_cnm_state);
+		cn_check_magic(dev, cin, &sscom_cnm_state);
 		sscom_readahead[sscom_readaheadcount++] = cin;
 	}
 

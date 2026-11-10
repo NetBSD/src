@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.7 2026/11/07 22:20:11 thorpej Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.8 2026/11/10 03:04:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.7 2026/11/07 22:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.8 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -104,18 +104,6 @@ __KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.7 2026/11/07 22:20:11 thorpej Exp $"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define	cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 
@@ -1702,16 +1690,13 @@ zynquartintr_read(struct zynquart_softc *sc)
 	bus_space_write_4(iot, ioh, UART_CHNL_INT_STS, INT_TIMEOUT);
 
 	while (cc > 0) {
-		int cn_trapped = 0;
-
 		sc->sc_rbuf[sc->sc_rbuf_in] = rd =
 		    bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
 
-		cn_check_magic(sc->sc_tty->t_dev,
-		    rd & 0xff, zynquart_cnm_state);
-
-		if (!cn_trapped) {
-			sc->sc_rbuf_in = ZYNQUART_RBUF_INC(sc, sc->sc_rbuf_in, 1);
+		if (! cn_check_magic(sc->sc_tty->t_dev, rd & 0xff,
+				     &zynquart_cnm_state)) {
+			sc->sc_rbuf_in =
+			    ZYNQUART_RBUF_INC(sc, sc->sc_rbuf_in, 1);
 			cc--;
 		}
 
@@ -1902,10 +1887,7 @@ zynquart_common_getc(dev_t dev, struct zynquart_regs *regsp)
 
 	c = 0xff & bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
 
-	if (!db_active) {
-		int cn_trapped __unused = 0;
-		cn_check_magic(dev, c, zynquart_cnm_state);
-	}
+	cn_check_magic(dev, c, &zynquart_cnm_state);
 	splx(s);
 	return (c);
 }
@@ -1920,10 +1902,8 @@ zynquart_common_putc(dev_t dev, struct zynquart_regs *regsp, int c)
 
 	if (!READAHEAD_IS_FULL() &&
 	    !(bus_space_read_4(iot, ioh, UART_CHANNEL_STS) & STS_REMPTY)) {
-		int cn_trapped __unused = 0;
-
 		cin = bus_space_read_4(iot, ioh, UART_TX_RX_FIFO);
-		cn_check_magic(dev, cin & 0xff, zynquart_cnm_state);
+		cn_check_magic(dev, cin & 0xff, &zynquart_cnm_state);
 		zynquart_readahead_in = (zynquart_readahead_in + 1) &
 		    (READAHEAD_RING_LEN-1);
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.54 2025/09/14 14:24:12 andvar Exp $ */
+/* $NetBSD: siotty.c,v 1.55 2026/11/10 03:04:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.54 2025/09/14 14:24:12 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.55 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "siotty.h"
@@ -238,7 +238,7 @@ siottyintr(void *arg)
 	sio = sc->sc_ctl;
 	rr = getsiocsr(sio);
 	if ((rr & RR_BREAK) != 0) {
-		cn_check_magic(sc->sc_tty->t_dev, CNC_BREAK, siotty_cnm_state);
+		cn_check_magic(sc->sc_tty->t_dev, CNC_BREAK, &siotty_cnm_state);
 	}
 	/* XXX should handle RR_DCD and RR_CTS */
 	sio->sio_cmd = WR0_RSTINT;
@@ -248,7 +248,7 @@ siottyintr(void *arg)
 			if (cc > 0) {
 				c = sio->sio_data;
 				cn_check_magic(sc->sc_tty->t_dev, c,
-				    siotty_cnm_state);
+				    &siotty_cnm_state);
 				put->data = c;
 				put->stat = rr & 0xff;
 				put++;

@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.70 2026/11/07 22:20:12 thorpej Exp $	*/
+/*	$NetBSD: plcom.c,v 1.71 2026/11/10 03:04:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -99,24 +99,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.70 2026/11/07 22:20:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.71 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "opt_plcom.h"
 #include "opt_kgdb.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2100,7 +2088,6 @@ plcomintr(void *arg)
 		if (!ISSET(fr, PL01X_FR_RXFE) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			while (cc > 0) {
-				int cn_trapped = 0;
 				put[0] = PREAD1(pi, PL01XCOM_DR);
 				rsr = PREAD1(pi, PL01XCOM_RSR);
 				/* Clear any error status.  */
@@ -2108,11 +2095,11 @@ plcomintr(void *arg)
 					PWRITE1(pi, PL01XCOM_ECR, 0);
 
 				if (ISSET(rsr, PL01X_RSR_BE)) {
-					cn_trapped = 0;
-					cn_check_magic(sc->sc_tty->t_dev,
-					    CNC_BREAK, plcom_cnm_state);
-					if (cn_trapped)
+					if (cn_check_magic(sc->sc_tty->t_dev,
+							   CNC_BREAK,
+							   &plcom_cnm_state)) {
 						continue;
+					}
 #if defined(KGDB)
 					if (ISSET(sc->sc_hwflags,
 					    PLCOM_HW_KGDB)) {
@@ -2123,14 +2110,11 @@ plcomintr(void *arg)
 				}
 
 				put[1] = rsr;
-				cn_trapped = 0;
-				cn_check_magic(sc->sc_tty->t_dev, put[0],
-				    plcom_cnm_state);
-				if (cn_trapped) {
+				if (cn_check_magic(sc->sc_tty->t_dev, put[0],
+						   &plcom_cnm_state)) {
 					fr = PREAD1(pi, PL01XCOM_FR);
 					if (ISSET(fr, PL01X_FR_RXFE))
 						break;
-
 					continue;
 				}
 				put += 2;
@@ -2429,12 +2413,9 @@ plcom_common_getc(dev_t dev, struct plcom_instance *pi)
 	}
 
 	c = PREAD1(pi, PL01XCOM_DR);
-	{
-		int cn_trapped __unused = 0;
 
-		if (!db_active)
-			cn_check_magic(dev, c, plcom_cnm_state);
-	}
+	cn_check_magic(dev, c, &plcom_cnm_state);
+
 	splx(s);
 	return c;
 }
@@ -2448,9 +2429,8 @@ plcom_common_putc(dev_t dev, struct plcom_instance *pi, int c)
 	int cin, stat;
 	if (plcom_readaheadcount < MAX_READAHEAD
 	     && !ISSET(stat = PREAD1(pi, PL01XCOM_FR), PL01X_FR_RXFE)) {
-		int cn_trapped __unused = 0;
 		cin = PREAD1(pi, PL01XCOM_DR);
-		cn_check_magic(dev, cin, plcom_cnm_state);
+		cn_check_magic(dev, cin, &plcom_cnm_state);
 		plcom_readahead[plcom_readaheadcount++] = cin;
 	}
 

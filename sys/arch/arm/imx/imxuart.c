@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.31 2026/11/07 22:20:11 thorpej Exp $ */
+/* $NetBSD: imxuart.c,v 1.32 2026/11/10 03:04:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.31 2026/11/07 22:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.32 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -122,18 +122,6 @@ __KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.31 2026/11/07 22:20:11 thorpej Exp $")
 #ifndef	IMXUART_FREQ
 #define	IMXUART_FREQ	(56900000)
 #endif
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define	cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1715,12 +1703,10 @@ imxuintr(void *arg)
 		    usr2 & (IMX_USR2_BRCD|IMX_USR2_ORE));
 		if (usr2 & IMX_USR2_BRCD) {
 			/* Break signal detected */
-			int cn_trapped = 0;
-
-			cn_check_magic(sc->sc_tty->t_dev,
-				       CNC_BREAK, imxuart_cnm_state);
-			if (cn_trapped)
+			if (cn_check_magic(sc->sc_tty->t_dev,
+					   CNC_BREAK, &imxuart_cnm_state)) {
 				goto next;
+			}
 #if defined(KGDB) && !defined(DDB)
 			if (ISSET(sc->sc_hwflags, IMXUART_HW_KGDB)) {
 				kgdb_connect(1);
@@ -1817,13 +1803,13 @@ imxuintr_read(struct imxuart_softc *sc)
 	bus_space_write_4(iot, ioh, IMX_USR1, IMX_USR1_AGTIM);
 
 	while (cc > 0) {
-		int cn_trapped = 0;
+		bool cn_trapped = false;
 
 		sc->sc_rbuf[sc->sc_rbuf_in] = rd =
 		    bus_space_read_4(iot, ioh, IMX_URXD);
 
-		cn_check_magic(sc->sc_tty->t_dev,
-		    rd & 0xff, imxuart_cnm_state);
+		cn_trapped = cn_check_magic(sc->sc_tty->t_dev,
+		    rd & 0xff, &imxuart_cnm_state);
 
 		if (!cn_trapped) {
 #if defined(DDB) && defined(DDB_KEYCODE)
@@ -2124,11 +2110,8 @@ imxuart_common_getc(dev_t dev, struct imxuart_regs *regsp)
 
 	c = 0xff & bus_space_read_4(iot, ioh, IMX_URXD);
 
-	{
-		int cn_trapped __unused = 0;
-		if (!db_active)
-			cn_check_magic(dev, c, imxuart_cnm_state);
-	}
+	cn_check_magic(dev, c, &imxuart_cnm_state);
+
 	splx(s);
 	return (c);
 }
@@ -2145,9 +2128,8 @@ imxuart_common_putc(dev_t dev, struct imxuart_regs *regsp, int c)
 	if (!READAHEAD_IS_FULL() &&
 	    ((usr2 = bus_space_read_4(iot, ioh, IMX_USR2)) & IMX_USR2_RDR)) {
 
-		int __attribute__((__unused__))cn_trapped = 0;
 		cin = bus_space_read_4(iot, ioh, IMX_URXD);
-		cn_check_magic(dev, cin & 0xff, imxuart_cnm_state);
+		cn_check_magic(dev, cin & 0xff, &imxuart_cnm_state);
 		imxuart_readahead[imxuart_readahead_in] = cin & 0xff;
 		imxuart_readahead_in = (imxuart_readahead_in + 1) &
 		    (READAHEAD_RING_LEN-1);

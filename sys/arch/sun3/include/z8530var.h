@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.15 2026/11/08 19:51:14 thorpej Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.16 2026/11/10 03:05:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -109,6 +109,9 @@ void  zs_write_reg(struct zs_chanstate *, uint8_t, uint8_t);
 void  zs_write_csr(struct zs_chanstate *, uint8_t);
 void  zs_write_data(struct zs_chanstate *, uint8_t);
 
+void	zs_abort(void);
+#define	ZSTTY_CNMAGIC_ACTION	zs_abort
+
 /* Everyone has splzs() in <machine/intr.h> */
 
 /* We want to call it "zs" instead of "zsc" (sigh). */
@@ -116,6 +119,3 @@ void  zs_write_data(struct zs_chanstate *, uint8_t);
 #define ZSCCF_CHANNEL 0
 #define ZSCCF_CHANNEL_DEFAULT -1
 #endif
-
-#undef cn_trap
-#define cn_trap() zs_abort()

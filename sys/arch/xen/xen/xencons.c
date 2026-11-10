@@ -1,4 +1,4 @@
-/*	$NetBSD: xencons.c,v 1.53 2023/02/25 00:35:40 riastradh Exp $	*/
+/*	$NetBSD: xencons.c,v 1.54 2026/11/10 03:05:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -53,7 +53,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.53 2023/02/25 00:35:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xencons.c,v 1.54 2026/11/10 03:05:00 thorpej Exp $");
 
 #include "opt_xen.h"
 
@@ -499,7 +499,7 @@ xencons_tty_input(struct xencons_softc *sc, char* buf, int len)
 		return;
 
 	for (i = 0; i < len; i++) {
-		cn_check_magic(sc->sc_tty->t_dev, buf[i], xencons_cnm_state);
+		cn_check_magic(sc->sc_tty->t_dev, buf[i], &xencons_cnm_state);
 		(*tp->t_linesw->l_rint)(buf[i], tp);
 	}
 }
@@ -555,7 +555,7 @@ xenconscn_getc(dev_t dev)
 	if (xendomain_is_dom0()) {
 		while (HYPERVISOR_console_io(CONSOLEIO_read, 1, &c) == 0)
 			;
-		cn_check_magic(dev, c, xencons_cnm_state);
+		cn_check_magic(dev, c, &xencons_cnm_state);
 		splx(s);
 		return c;
 	}
@@ -584,7 +584,7 @@ xenconscn_getc(dev_t dev)
 	    xencons_interface->in)];
 	xen_wmb();
 	xencons_interface->in_cons = cons + 1;
-	cn_check_magic(dev, c, xencons_cnm_state);
+	cn_check_magic(dev, c, &xencons_cnm_state);
 	splx(s);
 	return c;
 }

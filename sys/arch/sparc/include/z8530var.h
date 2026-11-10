@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530var.h,v 1.12 2026/11/08 19:51:13 thorpej Exp $	*/
+/*	$NetBSD: z8530var.h,v 1.13 2026/11/10 03:04:59 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -79,6 +79,9 @@ void  zs_write_reg(struct zs_chanstate *cs, uint8_t reg, uint8_t val);
 void  zs_write_csr(struct zs_chanstate *cs, uint8_t val);
 void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 
+void	zs_abort(void);
+#define	ZSTTY_CNMAGIC_ACTION	zs_abort
+
 /* The sparc has splzs() in psl.h */
 
 /* We want to call it "zs" instead of "zsc" (sigh). */
@@ -86,6 +89,3 @@ void  zs_write_data(struct zs_chanstate *cs, uint8_t val);
 #define ZSCCF_CHANNEL 0
 #define ZSCCF_CHANNEL_DEFAULT -1
 #endif
-
-#undef cn_trap
-#define cn_trap() zs_abort()

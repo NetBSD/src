@@ -1,4 +1,4 @@
-/* $NetBSD: ttycons.c,v 1.20 2014/07/25 08:10:35 dholland Exp $ */
+/* $NetBSD: ttycons.c,v 1.21 2026/11/10 03:05:00 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.20 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttycons.c,v 1.21 2026/11/10 03:05:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -378,7 +378,7 @@ ttycons_softintr(void *priv)
 
 	while ((c = thunk_pollchar()) >= 0) {
 		ch = (unsigned char)c;
-		cn_check_magic(t->t_dev, ch, ttycons_cnm_state);
+		cn_check_magic(t->t_dev, ch, &ttycons_cnm_state);
 		t->t_linesw->l_rint(ch, t);
 	}
 }
@@ -407,7 +407,7 @@ ttycons_softctrlc(void *priv)
 	struct tty *t = sc->sc_tty;
 	unsigned char ch = 3;	/* ETX */
 
-	cn_check_magic(t->t_dev, ch, ttycons_cnm_state);
+	cn_check_magic(t->t_dev, ch, &ttycons_cnm_state);
 	t->t_linesw->l_rint(ch, t);
 }
 
@@ -433,6 +433,6 @@ ttycons_softctrlz(void *priv)
 	struct tty *t = sc->sc_tty;
 	unsigned char ch = 26;	/* SUB */
 
-	cn_check_magic(t->t_dev, ch, ttycons_cnm_state);
+	cn_check_magic(t->t_dev, ch, &ttycons_cnm_state);
 	t->t_linesw->l_rint(ch, t);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.311 2026/11/07 22:20:15 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.312 2026/11/10 03:05:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -47,7 +47,6 @@
 #include "opt_kcsan.h"
 #include "opt_kmsan.h"
 #include "opt_modular.h"
-#include "opt_wsdisplay_compat.h"
 #endif
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
@@ -658,76 +657,13 @@ void	machdep_init(void);
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>
 
-/*
- * Stuff to handle debugger magic key sequences.
- */
-#define CNS_LEN			128
-#define CNS_MAGIC_VAL(x)	((x)&0x1ff)
-#define CNS_MAGIC_NEXT(x)	(((x)>>9)&0x7f)
-#define CNS_TERM		0x7f	/* End of sequence */
-
-typedef struct cnm_state {
-	int	cnm_state;
-	u_short	*cnm_magic;
-} cnm_state_t;
-
-/* Override db_console() in MD headers */
-#ifndef cn_trap
-#define cn_trap()	console_debugger()
-#endif
-#ifndef cn_isconsole
-#ifndef WSDISPLAY_MULTICONS
-#define cn_isconsole(d)	(cn_tab != NULL && (d) == cn_tab->cn_dev)
-#else
-bool wsdisplay_cn_isconsole(dev_t);
-#define cn_isconsole(d)	wsdisplay_cn_isconsole(d)
-#endif
-#endif
-
-void	cn_init_magic(cnm_state_t *);
-void	cn_destroy_magic(cnm_state_t *);
-int	cn_set_magic(const char *);
-int	cn_get_magic(char *, size_t);
-/* This should be called for each byte read */
-#ifndef cn_check_magic
-#define cn_check_magic(d, k, s)						\
-	do {								\
-		if (cn_isconsole(d)) {					\
-			int _v = (s).cnm_magic[(s).cnm_state];		\
-			if ((k) == CNS_MAGIC_VAL(_v)) {			\
-				(s).cnm_state = CNS_MAGIC_NEXT(_v);	\
-				if ((s).cnm_state == CNS_TERM) {	\
-					cn_trap();			\
-					(s).cnm_state = 0;		\
-				}					\
-			} else {					\
-				(s).cnm_state = 0;			\
-			}						\
-		}							\
-	} while (0)
-#endif
-
-/* Encode out-of-band events this way when passing to cn_check_magic() */
-#define	CNC_BREAK		0x100
-
 extern int db_active;
 
-#if defined(DDB) || defined(sun3) || defined(sun2)
-/* note that cpu_Debugger() is always available on sun[23] */
 void	cpu_Debugger(void);
-#define Debugger	cpu_Debugger
-#endif
+void	console_debugger(void);
 
-#ifdef DDB
-/*
- * Enter debugger(s) from console attention if enabled
- */
-extern int db_fromconsole; /* XXX ddb/ddbvar.h */
-#define console_debugger() if (db_fromconsole) Debugger()
-#elif defined(Debugger)
-#define console_debugger() Debugger()
-#else
-#define console_debugger() do {} while (0) /* NOP */
+#if defined(DDB)
+#define Debugger	cpu_Debugger
 #endif
 
 /* For SYSCALL_DEBUG */

@@ -1,4 +1,4 @@
-/*      $NetBSD: clpscom.c,v 1.12 2026/11/07 22:20:11 thorpej Exp $      */
+/*      $NetBSD: clpscom.c,v 1.13 2026/11/10 03:04:58 thorpej Exp $      */
 /*
  * Copyright (c) 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.12 2026/11/07 22:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clpscom.c,v 1.13 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -308,7 +308,7 @@ clpscom_rxintr(void *arg)
 				break;
 			data = CLPSCOM_READ(sc);
 			cn_check_magic(sc->sc_tty->t_dev, data & 0xff,
-			    clpscom_cnm_state);
+				       &clpscom_cnm_state);
 
 			put[0] = data & 0xff;
 			put[1] = (data >> 8) & 0xff;
@@ -1070,8 +1070,7 @@ clpscom_cngetc(dev_t dev)
 
 	ch = CLPSCOM_CNREAD();
 
-	if (!db_active)
-		cn_check_magic(dev, ch, clpscom_cnm_state);
+	cn_check_magic(dev, ch, &clpscom_cnm_state);
 
 	splx(s);
 	return ch;

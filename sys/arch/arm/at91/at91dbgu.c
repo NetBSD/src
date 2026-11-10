@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $ */
+/*	$Id: at91dbgu.c,v 1.21 2026/11/10 03:04:58 thorpej Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.21 2026/11/10 03:04:58 thorpej Exp $ */
 
 /*
  *
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.21 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -84,18 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.20 2026/11/07 22:20:10 thorpej Exp $"
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -891,11 +879,7 @@ at91dbgu_cn_getc(dev_t dev)
 		DBGUREG(DBGU_CR) = DBGU_CR_RSTSTA;	// reset status bits
 		c = CNC_BREAK;
 	}
-	if (!db_active) {
-		int cn_trapped __unused = 0;
-
-		cn_check_magic(dev, c, at91dbgu_cnm_state);
-	}
+	cn_check_magic(dev, c, &at91dbgu_cnm_state);
 	splx(s);
 
 	c &= 0xff;
@@ -1058,16 +1042,15 @@ dbgu_intr(void* arg)
 
 	// ok, we DO have some interrupts to serve!
 	if (sr & DBGU_SR_RXRDY) {
-		int cn_trapped = 0;
-
+		bool cn_trapped = false;
 		c = DBGUREG(DBGU_RHR);
 		if (ISSET(sr, (DBGU_SR_OVRE | DBGU_SR_FRAME | DBGU_SR_PARE)))
 			DBGUREG(DBGU_CR) = DBGU_CR_RSTSTA;
 		if (ISSET(sr, DBGU_SR_FRAME) && c == 0) {
 			c = CNC_BREAK;
 		}
-		if (!db_active)
-			cn_check_magic(cn_tab->cn_dev, c, at91dbgu_cnm_state);
+		cn_trapped = cn_check_magic(cn_tab->cn_dev, c,
+					    &at91dbgu_cnm_state);
 		if (!cn_trapped && cc) {
 			put[0] = c & 0xff;
 			put[1] = sr & 0xff;

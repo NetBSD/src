@@ -1,4 +1,4 @@
-/*	$NetBSD: z8530tty.c,v 1.135 2022/10/26 23:45:25 riastradh Exp $	*/
+/*	$NetBSD: z8530tty.c,v 1.136 2026/11/10 03:05:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994, 1995, 1996, 1997, 1998, 1999
@@ -137,7 +137,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.135 2022/10/26 23:45:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: z8530tty.c,v 1.136 2026/11/10 03:05:01 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_ntp.h"
@@ -342,6 +342,9 @@ zstty_attach(device_t parent, device_t self, void *aux)
 
 	callout_init(&zst->zst_diag_ch, 0);
 	cn_init_magic(&zstty_cnm_state);
+#ifdef ZSTTY_CNMAGIC_ACTION
+	cn_set_magic_action(&zstty_cnm_state, ZSTTY_CNMAGIC_ACTION);
+#endif
 
 	tty_unit = device_unit(self);
 	channel = args->channel;
@@ -1369,7 +1372,7 @@ zstty_rxint(struct zs_chanstate *cs)
 			zs_write_csr(cs, ZSWR0_RESET_ERRORS);
 		}
 
-		cn_check_magic(zst->zst_tty->t_dev, c, zstty_cnm_state);
+		cn_check_magic(zst->zst_tty->t_dev, c, &zstty_cnm_state);
 		put[0] = c;
 		put[1] = rr1;
 		put += 2;
@@ -1474,8 +1477,10 @@ zstty_stint(struct zs_chanstate *cs, int force)
 	 * Check here for console break, so that we can abort
 	 * even when interrupts are locking up the machine.
 	 */
-	if (ISSET(rr0, ZSRR0_BREAK))
-		cn_check_magic(zst->zst_tty->t_dev, CNC_BREAK, zstty_cnm_state);
+	if (ISSET(rr0, ZSRR0_BREAK)) {
+		cn_check_magic(zst->zst_tty->t_dev, CNC_BREAK,
+			       &zstty_cnm_state);
+	}
 
 	if (!force)
 		delta = rr0 ^ cs->cs_rr0;

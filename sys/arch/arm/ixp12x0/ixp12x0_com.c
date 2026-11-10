@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp12x0_com.c,v 1.50 2022/07/21 10:09:20 andvar Exp $ */
+/*	$NetBSD: ixp12x0_com.c,v 1.51 2026/11/10 03:04:58 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.50 2022/07/21 10:09:20 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp12x0_com.c,v 1.51 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1071,7 +1071,7 @@ ixpcomintr(void* arg)
 	 */
 	if (ISSET(sr, SR_FRE)) {
 		cn_check_magic(sc->sc_tty->t_dev,
-			       CNC_BREAK, ixpcom_cnm_state);
+			       CNC_BREAK, &ixpcom_cnm_state);
 	}
 
 	end = sc->sc_ebuf;
@@ -1087,12 +1087,12 @@ ixpcomintr(void* arg)
 				if (ISSET(c, DR_FRE)) {
 					cn_check_magic(sc->sc_tty->t_dev,
 						       CNC_BREAK,
-						       ixpcom_cnm_state);
+						       &ixpcom_cnm_state);
 				}
 				put[0] = c & 0xff;
 				put[1] = (c >> 8) & 0xff;
 				cn_check_magic(sc->sc_tty->t_dev,
-					       put[0], ixpcom_cnm_state);
+					       put[0], &ixpcom_cnm_state);
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;

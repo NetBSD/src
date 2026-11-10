@@ -1,5 +1,5 @@
-/*	$Id: at91usart.c,v 1.15 2026/11/07 22:20:10 thorpej Exp $	*/
-/*	$NetBSD: at91usart.c,v 1.15 2026/11/07 22:20:10 thorpej Exp $ */
+/*	$Id: at91usart.c,v 1.16 2026/11/10 03:04:58 thorpej Exp $	*/
+/*	$NetBSD: at91usart.c,v 1.16 2026/11/10 03:04:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -77,28 +77,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.15 2026/11/07 22:20:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91usart.c,v 1.16 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
-
-#ifdef	NOTYET
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
-#endif	/* NOTYET */
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,11 +930,7 @@ at91usart_cn_getc(dev_t dev)
 		USARTREG(USART_CR) = USART_CR_RSTSTA;	// reset status bits
 		c = CNC_BREAK;
 	}
-	if (!db_active) {
-		int cn_trapped __unused = 0;
-
-		cn_check_magic(dev, c, at91usart_cnm_state);
-	}
+	cn_check_magic(dev, c, &at91usart_cnm_state);
 	splx(s);
 
 	c &= 0xff;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zsvar.h,v 1.9 2020/03/13 01:48:16 rin Exp $	*/
+/*	$NetBSD: zsvar.h,v 1.10 2026/11/10 03:05:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -43,19 +43,6 @@
 #include <machine/bus.h>
 #include <dev/ic/z8530sc.h>
 #include <sun2/dev/zsreg.h>
-
-#ifdef _KERNEL_OPT
-#include "kbd.h"
-#endif
-
-#if NKBD > 0
-/*
- * Need to override cn_console_dev() for zstty and zskbd.
- */
-extern struct consdev *cn_hw;
-#undef cn_isconsole
-#define cn_isconsole(d)	((d) == cn_tab->cn_dev || (d) == cn_hw->cn_dev)
-#endif
 
 struct zsc_softc {
 	device_t		zsc_dev;	/* base device */
@@ -103,6 +90,9 @@ uint8_t zs_read_data(struct zs_chanstate *);
 void  zs_write_reg(struct zs_chanstate *, uint8_t, uint8_t);
 void  zs_write_csr(struct zs_chanstate *, uint8_t);
 void  zs_write_data(struct zs_chanstate *, uint8_t);
+
+void	zs_abort(void);
+#define	ZSTTY_CNMAGIC_ACTION	zs_abort
 
 /* Everyone has splzs() in <machine/intr.h> */
 

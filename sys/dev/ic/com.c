@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.392 2026/11/07 22:20:14 thorpej Exp $ */
+/* $NetBSD: com.c,v 1.393 2026/11/10 03:05:01 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.392 2026/11/07 22:20:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.393 2026/11/10 03:05:01 thorpej Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -88,19 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: com.c,v 1.392 2026/11/07 22:20:14 thorpej Exp $");
 #ifdef COM16650
 #error Obsolete COM16650 option; use COM_16650 instead.
 #endif
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-		(void)cn_trapped;		\
-	} while (/* CONSTCOND */ 0)
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2480,12 +2467,10 @@ again:	do {
 
 		lsr = CSR_READ_1(regsp, COM_REG_LSR);
 		if (ISSET(lsr, LSR_BI)) {
-			int cn_trapped = 0; /* see above: cn_trap() */
-
-			cn_check_magic(sc->sc_tty->t_dev,
-				       CNC_BREAK, com_cnm_state);
-			if (cn_trapped)
+			if (cn_check_magic(sc->sc_tty->t_dev,
+					   CNC_BREAK, &com_cnm_state)) {
 				continue;
+			}
 #if defined(KGDB) && !defined(DDB)
 			if (ISSET(sc->sc_hwflags, COM_HW_KGDB)) {
 				kgdb_connect(1);
@@ -2500,13 +2485,12 @@ again:	do {
 		if (ISSET(lsr, LSR_RCV_MASK) &&
 		    !ISSET(sc->sc_rx_flags, RX_IBUF_OVERFLOWED)) {
 			while (cc > 0) {
-				int cn_trapped = 0;
 				put[0] = CSR_READ_1(regsp, COM_REG_RXDATA);
 				put[1] = lsr;
-				cn_check_magic(sc->sc_tty->t_dev,
-					       put[0], com_cnm_state);
-				if (cn_trapped)
+				if (cn_check_magic(sc->sc_tty->t_dev,
+						   put[0], &com_cnm_state)) {
 					goto next;
+				}
 				put += 2;
 				if (put >= end)
 					put = sc->sc_rbuf;
@@ -2735,11 +2719,9 @@ com_common_getc(dev_t dev, struct com_regs *regsp)
 
 	c = CSR_READ_1(regsp, COM_REG_RXDATA);
 	stat = CSR_READ_1(regsp, COM_REG_IIR);
-	{
-		int cn_trapped = 0;	/* required by cn_trap, see above */
-		if (!db_active)
-			cn_check_magic(dev, c, com_cnm_state);
-	}
+
+	cn_check_magic(dev, c, &com_cnm_state);
+
 	splx(s);
 	return (c);
 }
@@ -2752,10 +2734,9 @@ com_common_putc(dev_t dev, struct com_regs *regsp, int c, int with_readahead)
 
 	if (with_readahead && com_readaheadcount < MAX_READAHEAD
 	     && ISSET(stat = CSR_READ_1(regsp, COM_REG_LSR), LSR_RXRDY)) {
-		int cn_trapped = 0;
 		cin = CSR_READ_1(regsp, COM_REG_RXDATA);
 		stat = CSR_READ_1(regsp, COM_REG_IIR);
-		cn_check_magic(dev, cin, com_cnm_state);
+		cn_check_magic(dev, cin, &com_cnm_state);
 		com_readahead[com_readaheadcount++] = cin;
 	}
 

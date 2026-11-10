@@ -1,4 +1,4 @@
-/*	$NetBSD: pcons.c,v 1.34 2014/07/25 08:10:35 dholland Exp $	*/
+/*	$NetBSD: pcons.c,v 1.35 2026/11/10 03:04:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000 Eduardo E. Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.34 2014/07/25 08:10:35 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcons.c,v 1.35 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -268,7 +268,7 @@ pcons_poll(void *aux)
 	char ch;
 	
 	while (prom_read(prom_stdin(), &ch, 1) > 0) {
-		cn_check_magic(tp->t_dev, ch, pcons_cnm_state);
+		cn_check_magic(tp->t_dev, ch, &pcons_cnm_state);
 		if (tp && (tp->t_state & TS_ISOPEN))
 			(*tp->t_linesw->l_rint)(ch, tp);
 	}

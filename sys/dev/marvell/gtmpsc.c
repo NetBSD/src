@@ -1,4 +1,4 @@
-/*	$NetBSD: gtmpsc.c,v 1.50 2024/09/10 17:56:35 andvar Exp $	*/
+/*	$NetBSD: gtmpsc.c,v 1.51 2026/11/10 03:05:01 thorpej Exp $	*/
 /*
  * Copyright (c) 2009 KIYOHARA Takashi
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.50 2024/09/10 17:56:35 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gtmpsc.c,v 1.51 2026/11/10 03:05:01 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -905,12 +905,10 @@ gtmpsc_intr_rx(struct gtmpsc_softc *sc)
 		    BUS_DMASYNC_POSTREAD);
 		vrxp->rxdesc.sdma_cnt &= SDMA_RX_CNT_BCNT_MASK;
 		if (vrxp->rxdesc.sdma_csr & SDMA_CSR_RX_BR) {
-			int cn_trapped = 0;
-
-			cn_check_magic(sc->sc_tty->t_dev,
-			    CNC_BREAK, gtmpsc_cnm_state);
-			if (cn_trapped)
+			if (cn_check_magic(sc->sc_tty->t_dev,
+					   CNC_BREAK, &gtmpsc_cnm_state)) {
 				continue;
+			}
 #if defined(KGDB) && !defined(DDB)
 			if (ISSET(sc->sc_flags, GTMPSC_KGDB)) {
 				kgdb_connect(1);

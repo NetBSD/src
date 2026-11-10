@@ -1,4 +1,4 @@
-/*	$NetBSD: dz.c,v 1.44 2024/02/02 15:44:43 tsutsui Exp $	*/
+/*	$NetBSD: dz.c,v 1.45 2026/11/10 03:05:00 thorpej Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.44 2024/02/02 15:44:43 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz.c,v 1.45 2026/11/10 03:05:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ dzrint(void *arg)
 		else
 			mcc = cc;
 
-		cn_check_magic(tp->t_dev, mcc, dz_cnm_state);
+		cn_check_magic(tp->t_dev, mcc, &dz_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
 			cv_broadcast(&tp->t_rawcv);

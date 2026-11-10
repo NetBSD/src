@@ -1,4 +1,4 @@
-/*	$NetBSD: pdc.c,v 1.7 2025/09/07 21:45:13 thorpej Exp $	*/
+/*	$NetBSD: pdc.c,v 1.8 2026/11/10 03:04:59 thorpej Exp $	*/
 
 /*	$OpenBSD: pdc.c,v 1.14 2001/04/29 21:05:43 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.7 2025/09/07 21:45:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdc.c,v 1.8 2026/11/10 03:04:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -434,7 +434,7 @@ pdctimeout(void *v)
 	int c;
 
 	while (pdccnlookc(tp->t_dev, &c)) {
-		cn_check_magic(tp->t_dev, c, pdc_cnm_state);
+		cn_check_magic(tp->t_dev, c, &pdc_cnm_state);
 		if (tp->t_state & TS_ISOPEN)
 			(*tp->t_linesw->l_rint)(c, tp);
 	}

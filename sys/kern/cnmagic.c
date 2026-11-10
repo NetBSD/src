@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.14 2017/05/04 11:01:16 kamil Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.15 2026/11/10 03:05:01 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -26,11 +26,17 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.14 2017/05/04 11:01:16 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.15 2026/11/10 03:05:01 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+
+#include <dev/cons.h>
+
+#define	CNS_MAGIC_VAL(x)	((x)&0x1ff)
+#define	CNS_MAGIC_NEXT(x)	(((x)>>9)&0x7f)
+#define	CNS_TERM		0x7f		/* End of sequence */
 
 #define ENCODE_STATE(c, n) (short)(((c)&0x1ff)|(((n)&0x7f)<<9))
 
@@ -43,7 +49,13 @@ void
 cn_init_magic(cnm_state_t *cnm)
 {
 	cnm->cnm_state = 0;
-	cnm->cnm_magic = cn_magic;
+	cnm->cnm_action = console_debugger;	/* default action */
+}
+
+void
+cn_set_magic_action(cnm_state_t *cnm, void (*action)(void))
+{
+	cnm->cnm_action = action;
 }
 
 /*
@@ -53,7 +65,7 @@ void
 cn_destroy_magic(cnm_state_t *cnm)
 {
 	cnm->cnm_state = 0;
-	cnm->cnm_magic = NULL;
+	cnm->cnm_action = NULL;
 }
 
 /*
@@ -165,4 +177,27 @@ finish:
 	/* Either termination state or empty machine */
 	ADD_CHAR('\0');
 	return 0;
+}
+
+bool
+cn_check_magic_impl(int ch, cnm_state_t *state)
+{
+	if (__predict_false(db_active)) {
+		state->cnm_state = 0;
+	} else {
+		int v = cn_magic[state->cnm_state];
+		if (ch == CNS_MAGIC_VAL(v)) {
+			state->cnm_state = CNS_MAGIC_NEXT(v);
+			if (state->cnm_state == CNS_TERM) {
+				if (state->cnm_action != NULL) {
+					(*state->cnm_action)();
+				}
+				state->cnm_state = 0;
+				return true;
+			}
+		} else {
+			state->cnm_state = 0;
+		}
+	}
+	return false;
 }

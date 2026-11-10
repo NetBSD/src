@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.96 2025/12/20 10:51:05 skrll Exp $	*/
+/*	$NetBSD: cons.c,v 1.97 2026/11/10 03:05:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.96 2025/12/20 10:51:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.97 2026/11/10 03:05:00 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -92,8 +92,30 @@ const struct cdevsw cons_cdevsw = {
 static struct kmutex cn_lock;
 
 struct	tty *volatile constty;	/* virtual console output device */
-struct	consdev *cn_tab;	/* physical console device info */
 struct	vnode *cn_devvp[2];	/* vnode for underlying device. */
+
+struct	consdev *cn_tab;	/* physical console device info */
+
+/*
+ * Some platforms have a split upper/lower console scheme and have
+ * to check both layers in cn_isconsole().  Those platforms will
+ * provide the cn_hw symbol.
+ */
+struct consdev * const cn_hw_null;
+__weak_alias(cn_hw, cn_hw_null);
+
+/*
+ * Alternative function that's consulted after cn_tab and cn_hw
+ * to see if the specified dev_t matches the console.  For when
+ * complex logic is necessary.
+ */
+bool	(*_cn_isconsole_func)(dev_t);
+
+void
+cn_set_isconsole_func(bool (*func)(dev_t))
+{
+	_cn_isconsole_func = func;
+}
 
 void
 cn_set_tab(struct consdev *tab)

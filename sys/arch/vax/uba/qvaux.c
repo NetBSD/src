@@ -1,4 +1,4 @@
-/*	$NetBSD: qvaux.c,v 1.5 2022/10/27 00:00:25 riastradh Exp $	*/
+/*	$NetBSD: qvaux.c,v 1.6 2026/11/10 03:05:00 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -431,7 +431,7 @@ qvauxrint(void *arg)
 		else
 			mcc = cc;
 
-		cn_check_magic(tp->t_dev, mcc, qvaux_cnm_state);
+		cn_check_magic(tp->t_dev, mcc, &qvaux_cnm_state);
 
 		if (!(tp->t_state & TS_ISOPEN)) {
 			cv_broadcast(&tp->t_rawcv);

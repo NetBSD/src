@@ -1,4 +1,4 @@
-/*	$NetBSD: epcom.c,v 1.37 2026/11/07 22:20:11 thorpej Exp $ */
+/*	$NetBSD: epcom.c,v 1.38 2026/11/10 03:04:58 thorpej Exp $ */
 /*
  * Copyright (c) 1998, 1999, 2001, 2002, 2004 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.37 2026/11/07 22:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.38 2026/11/10 03:04:58 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "epcom.h"
@@ -81,19 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: epcom.c,v 1.37 2026/11/07 22:20:11 thorpej Exp $");
 #ifdef RND_COM
 #include <sys/rndsource.h>
 #endif
-
-/*
- * Override cnmagic(9) macro before including <sys/systm.h>.
- * We need to know if cn_check_magic triggered debugger, so set a flag.
- * Callers of cn_check_magic must declare int cn_trapped = 0;
- * XXX: this is *ugly*!
- */
-#define cn_trap()				\
-	do {					\
-		console_debugger();		\
-		cn_trapped = 1;			\
-	} while (/* CONSTCOND */ 0)
-
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -886,11 +873,7 @@ epcom_common_getc(struct epcom_cons_softc *sc, dev_t dev)
 	sts = bus_space_read_4(iot, ioh, EPCOM_RXSts);
 	if (ISSET(sts, RXSts_BE))
 		c = CNC_BREAK;
-	if (!db_active) {
-		int cn_trapped __unused = 0;
-
-		cn_check_magic(dev, c, epcom_cnm_state);
-	}
+	cn_check_magic(dev, c, &epcom_cnm_state);
 	c &= 0xff;
 	splx(s);
 
@@ -1051,25 +1034,21 @@ epcomintr(void* arg)
 				c = bus_space_read_4(iot, ioh, EPCOM_Data);
 				csts = bus_space_read_4(iot, ioh, EPCOM_RXSts);
 				if (ISSET(csts, RXSts_BE)) {
-					int cn_trapped = 0;
-
-					cn_check_magic(sc->sc_tty->t_dev,
-					  CNC_BREAK, epcom_cnm_state);
-					if (cn_trapped)
+					if (cn_check_magic(sc->sc_tty->t_dev,
+							   CNC_BREAK,
+							   &epcom_cnm_state)) {
 						goto next;
+					}
 #if defined(KGDB) && !defined(DDB)
 					if (ISSET(sc->sc_hwflags, COM_HW_KGDB)){
 						kgdb_connect(1);
 						goto next;
 					}
 #endif
-				} else {
-					int cn_trapped = 0;
-
-					cn_check_magic(sc->sc_tty->t_dev,
-					  (c & 0xff), epcom_cnm_state);
-					if (cn_trapped)
-						goto next;
+				} else if (cn_check_magic(sc->sc_tty->t_dev,
+							  (c & 0xff),
+							  &epcom_cnm_state)) {
+					goto next;
 				}
 
 

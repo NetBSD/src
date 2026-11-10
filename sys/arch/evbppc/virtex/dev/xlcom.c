@@ -1,4 +1,4 @@
-/* 	$NetBSD: xlcom.c,v 1.13 2025/12/31 15:33:51 andvar Exp $ */
+/* 	$NetBSD: xlcom.c,v 1.14 2026/11/10 03:04:59 thorpej Exp $ */
 
 /*
  * Copyright (c) 2006 Jachym Holecek
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.13 2025/12/31 15:33:51 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xlcom.c,v 1.14 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "opt_kgdb.h"
 
@@ -345,7 +345,7 @@ xlcom_recv_chunk(struct xlcom_softc *sc)
 	while ((stat & STAT_RX_DATA) != 0 && sc->sc_ravail > 0) {
 		c = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XLCOM_RX_FIFO);
 
-		cn_check_magic(sc->sc_tty->t_dev, c, xlcom_cnm_state);
+		cn_check_magic(sc->sc_tty->t_dev, c, &xlcom_cnm_state);
 
 		/* XXX: Should we pass rx-overrun upstream too? */
 		c |= ((stat & STAT_PARITY_ERR) != 0 ? XLCOM_CHAR_PE : 0) |

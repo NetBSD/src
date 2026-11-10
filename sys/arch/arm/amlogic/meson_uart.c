@@ -1,4 +1,4 @@
-/* $NetBSD: meson_uart.c,v 1.9 2026/11/07 22:20:10 thorpej Exp $ */
+/* $NetBSD: meson_uart.c,v 1.10 2026/11/10 03:04:57 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,13 +34,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.9 2026/11/07 22:20:10 thorpej Exp $");
-
-#define cn_trap()			\
-	do {				\
-		console_debugger();	\
-		cn_trapped = 1;		\
-	} while (/* CONSTCOND */ 0)
+__KERNEL_RCSID(1, "$NetBSD: meson_uart.c,v 1.10 2026/11/10 03:04:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -262,10 +256,7 @@ meson_uart_cngetc(dev_t dev)
 	}
 
 	c = bus_space_read_4(bst, bsh, UART_RFIFO_REG) & 0xff;
-	if (!db_active) {
-		int cn_trapped __unused = 0;
-		cn_check_magic(dev, c, meson_uart_cnm_state);
-	}
+	cn_check_magic(dev, c, &meson_uart_cnm_state);
 
 	splx(s);
 
@@ -463,23 +454,23 @@ meson_uart_intr(void *priv)
 
 	mutex_spin_enter(&sc->sc_intr_lock);
 	for (;;) {
-		int cn_trapped = 0;
 		status = bus_space_read_4(sc->sc_bst, sc->sc_bsh,
 		    UART_STATUS_REG);
 		if (status & UART_STATUS_RX_EMPTY) {
 			break;
 		}
 		if (status & UART_STATUS_BREAK) {
-			cn_check_magic(tp->t_dev, CNC_BREAK,
-			    meson_uart_cnm_state);
-			if (cn_trapped)
+			if (cn_check_magic(tp->t_dev, CNC_BREAK,
+					   &meson_uart_cnm_state)) {
 				continue;
+			}
 		}
 
 		c = bus_space_read_4(sc->sc_bst, sc->sc_bsh, UART_RFIFO_REG);
-		cn_check_magic(tp->t_dev, c & 0xff, meson_uart_cnm_state);
-		if (cn_trapped)
+		if (cn_check_magic(tp->t_dev, c & 0xff,
+				   &meson_uart_cnm_state)) {
 			continue;
+		}
 
 		if ((sc->sc_rbuf_w - sc->sc_rbuf_r) >= (MESON_RBUFSZ - 1))
 			continue;

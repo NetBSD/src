@@ -1,4 +1,4 @@
-/*      $NetBSD: wmcom.c,v 1.11 2026/11/07 22:20:11 thorpej Exp $      */
+/*      $NetBSD: wmcom.c,v 1.12 2026/11/10 03:04:59 thorpej Exp $      */
 /*
  * Copyright (c) 2012 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.11 2026/11/07 22:20:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wmcom.c,v 1.12 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "rnd.h"
 
@@ -248,7 +248,7 @@ wmcom_intr(void *arg)
 				break;
 			data = bus_space_read_4(iot, ioh, UARTDR);
 			cn_check_magic(sc->sc_tty->t_dev, data & 0xff,
-			    wmcom_cnm_state);
+			    &wmcom_cnm_state);
 
 			put[0] = data & 0xff;
 			put[1] = (data >> 8) & 0xff;
@@ -889,10 +889,7 @@ wmcom_cngetc(dev_t dev)
 
 	ch = WMCOM_CNREAD_4(UARTDR);
 
-	{
-		if (!db_active)
-			cn_check_magic(dev, ch, wmcom_cnm_state);
-	}
+	cn_check_magic(dev, ch, &wmcom_cnm_state);
 
 	splx(s);
 	return ch;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.h,v 1.29 2022/10/03 19:12:29 riastradh Exp $	*/
+/*	$NetBSD: cons.h,v 1.30 2026/11/10 03:05:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -72,11 +72,49 @@ struct consdev {
 #define CN_REMOTE	4	/* serial interface with remote bit set */
 
 #ifdef _KERNEL
-
 extern	struct consdev constab[];
 extern	struct consdev *cn_tab;
+extern	struct consdev *cn_hw;
 
 void	cn_set_tab(struct consdev *);
+
+/*
+ * Stuff to handle debugger magic key sequences.
+ */
+typedef struct cnm_state {
+	int	cnm_state;
+	void	(*cnm_action)(void);
+} cnm_state_t;
+
+#define	CNS_LEN			128	/* exposed for init_sysctl.c */
+
+extern bool (*_cn_isconsole_func)(dev_t);
+void	cn_set_isconsole_func(bool (*)(dev_t));
+
+#define	_cn_isconsole__cn_tab(d) (cn_tab != NULL && (d) == cn_tab->cn_dev)
+#define	_cn_isconsole__cn_hw(d)	 (cn_hw  != NULL && (d) == cn_hw->cn_dev)
+#define	_cn_isconsole(d)	 (_cn_isconsole__cn_tab(d) ||		\
+				  _cn_isconsole__cn_hw(d))
+
+#define	_cn_isconsole__func(d)	 (_cn_isconsole_func != NULL &&		\
+				  (*_cn_isconsole_func)(d))
+
+#define	cn_isconsole(d)							\
+	(_cn_isconsole(d) || _cn_isconsole__func(d))
+
+void	cn_init_magic(cnm_state_t *);
+void	cn_set_magic_action(cnm_state_t *, void (*)(void));
+void	cn_destroy_magic(cnm_state_t *);
+int	cn_set_magic(const char *);
+int	cn_get_magic(char *, size_t);
+bool	cn_check_magic_impl(int, cnm_state_t *);
+
+/* This should be called for each byte read */
+#define	cn_check_magic(d, k, s)						\
+	(cn_isconsole(d) ? cn_check_magic_impl((k), (s)) : false)
+
+/* Encode out-of-band events this way when passing to cn_check_magic() */
+#define	CNC_BREAK		0x100
 
 void	cninit(void);
 int	cngetc(void);

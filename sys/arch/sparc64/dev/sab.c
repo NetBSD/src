@@ -1,4 +1,4 @@
-/*	$NetBSD: sab.c,v 1.58 2022/10/26 23:59:36 riastradh Exp $	*/
+/*	$NetBSD: sab.c,v 1.59 2026/11/10 03:04:59 thorpej Exp $	*/
 /*	$OpenBSD: sab.c,v 1.7 2002/04/08 17:49:42 jason Exp $	*/
 
 /*
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.58 2022/10/26 23:59:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sab.c,v 1.59 2026/11/10 03:04:59 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include <sys/types.h>
@@ -537,7 +537,7 @@ sabtty_intr(struct sabtty_softc *sc, int *needsoftp)
 			b = SAB_READ(sc, SAB_RFIFO);
 			if (i % 2 == 0) /* skip status byte */
 				cn_check_magic(sc->sc_tty->t_dev,
-					       b, sabtty_cnm_state);
+					       b, &sabtty_cnm_state);
 			*ptr++ = b;
 			if (ptr == sc->sc_rend)
 				ptr = sc->sc_rbuf;
@@ -564,7 +564,7 @@ sabtty_intr(struct sabtty_softc *sc, int *needsoftp)
 
 	if (isr1 & SAB_ISR1_BRKT)
 		cn_check_magic(sc->sc_tty->t_dev,
-			       CNC_BREAK, sabtty_cnm_state);
+			       CNC_BREAK, &sabtty_cnm_state);
 
 	if (isr1 & (SAB_ISR1_XPR | SAB_ISR1_ALLS)) {
 		if ((SAB_READ(sc, SAB_STAR) & SAB_STAR_XFW) &&
