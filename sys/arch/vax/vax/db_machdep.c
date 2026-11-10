@@ -1,4 +1,4 @@
-/*	$NetBSD: db_machdep.c,v 1.63 2026/11/07 22:20:13 thorpej Exp $	*/
+/*	$NetBSD: db_machdep.c,v 1.64 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*
  * :set tabs=4
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.63 2026/11/07 22:20:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.64 2026/11/10 03:43:27 thorpej Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -64,6 +64,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_machdep.c,v 1.63 2026/11/07 22:20:13 thorpej Exp 
 #include <ddb/db_output.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/db_interface.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_proc.h>

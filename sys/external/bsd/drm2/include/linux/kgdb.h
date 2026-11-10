@@ -1,4 +1,4 @@
-/*	$NetBSD: kgdb.h,v 1.5 2026/11/07 22:20:14 thorpej Exp $	*/
+/*	$NetBSD: kgdb.h,v 1.6 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,10 +34,11 @@
 
 #include <sys/stdbool.h>
 
+#include <ddb/db_active.h>
+
 static inline bool
 in_dbg_master(void)
 {
-	extern int db_active;	/* XXX <sys/systm.h> too much? */
 	return db_active;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.256 2026/11/07 22:20:14 thorpej Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.257 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.256 2026/11/07 22:20:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.257 2026/11/10 03:43:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -49,6 +49,8 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.256 2026/11/07 22:20:14 thorpej Exp $");
 #include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.382 2026/11/07 22:20:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.383 2026/11/10 03:43:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2026/11/07 22:20:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.383 2026/11/10 03:43:25 thorpej Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -204,6 +204,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.382 2026/11/07 22:20:10 thorpej Exp $"
 #include <xen/include/public/vcpu.h>
 #endif /* XEN */
 
+#include <ddb/db_active.h>
 #ifdef DDB
 #include <machine/db_machdep.h>
 #include <ddb/db_extern.h>

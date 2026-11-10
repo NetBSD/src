@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.99 2026/11/07 22:20:13 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.100 2026/11/10 03:43:26 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2026/11/07 22:20:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.100 2026/11/10 03:43:26 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.99 2026/11/07 22:20:13 thorpej Ex
 #include <machine/locore.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/ddbvar.h>
 
 #if defined(DDB) || defined(_KMEMUSER)

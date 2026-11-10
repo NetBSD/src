@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.258 2026/11/07 22:20:15 thorpej Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.259 2026/11/10 03:43:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.258 2026/11/07 22:20:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.259 2026/11/10 03:43:28 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -111,6 +111,8 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.258 2026/11/07 22:20:15 thorpej Exp $
 #include <sys/radixtree.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
+
+#include <ddb/db_active.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>

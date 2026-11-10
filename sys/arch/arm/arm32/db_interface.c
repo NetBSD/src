@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:10 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.69 2026/11/10 03:43:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996 Scott K. Stevens
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.69 2026/11/10 03:43:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -56,6 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:10 thorpej Ex
 #include <arm/undefined.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>

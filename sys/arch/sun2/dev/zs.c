@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.29 2026/11/08 19:51:14 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.30 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2026/11/08 19:51:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.30 2026/11/10 03:43:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.29 2026/11/08 19:51:14 thorpej Exp $");
 #include <sys/time.h>
 #include <sys/syslog.h>
 #include <sys/intr.h>
+
+#include <ddb/db_active.h>
 
 #include <machine/autoconf.h>
 #include <machine/promlib.h>

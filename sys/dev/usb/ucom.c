@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.154 2026/11/10 03:05:01 thorpej Exp $	*/
+/*	$NetBSD: ucom.c,v 1.155 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.154 2026/11/10 03:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.155 2026/11/10 03:43:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -59,6 +59,8 @@ __KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.154 2026/11/10 03:05:01 thorpej Exp $");
 #include <sys/timepps.h>
 #include <sys/tty.h>
 #include <sys/vnode.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/cons.h>
 

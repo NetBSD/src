@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:13 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.69 2026/11/10 03:43:26 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2002 UCHIYAMA Yasushi.  All rights reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.68 2026/11/07 22:20:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.69 2026/11/10 03:43:26 thorpej Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack_debug.h"
@@ -57,6 +57,7 @@ db_regs_t ddb_regs;		/* register state */
 #include <sh3/mmu_sh3.h>
 #include <sh3/mmu_sh4.h>
 
+#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_output.h>

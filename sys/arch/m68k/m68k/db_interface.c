@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.38 2026/11/07 22:20:12 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.39 2026/11/10 03:43:26 thorpej Exp $	*/
 
 /*
  * Mach Operating System
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2026/11/07 22:20:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.39 2026/11/10 03:43:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.38 2026/11/07 22:20:12 thorpej Ex
 #include <machine/trap.h>
 #include <machine/db_machdep.h>
 
+#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_sym.h>
 #ifdef _KERNEL

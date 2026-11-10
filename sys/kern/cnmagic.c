@@ -1,4 +1,4 @@
-/*	$NetBSD: cnmagic.c,v 1.15 2026/11/10 03:05:01 thorpej Exp $	*/
+/*	$NetBSD: cnmagic.c,v 1.16 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Eduardo Horvath
@@ -26,11 +26,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.15 2026/11/10 03:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cnmagic.c,v 1.16 2026/11/10 03:43:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+
+#include <ddb/db_active.h>
 
 #include <dev/cons.h>
 

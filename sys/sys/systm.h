@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.312 2026/11/10 03:05:01 thorpej Exp $	*/
+/*	$NetBSD: systm.h,v 1.313 2026/11/10 03:43:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -656,8 +656,6 @@ void	machdep_init(void);
 
 #ifdef _KERNEL
 #include <lib/libkern/libkern.h>
-
-extern int db_active;
 
 void	cpu_Debugger(void);
 void	console_debugger(void);

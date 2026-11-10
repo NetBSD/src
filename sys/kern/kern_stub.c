@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.57 2026/11/10 03:05:01 thorpej Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.58 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.57 2026/11/10 03:05:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.58 2026/11/10 03:43:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.57 2026/11/10 03:05:01 thorpej Exp $
 #include <sys/syscall.h>
 #include <sys/userconf.h>
 
+#include <ddb/db_active.h>
 #ifdef DDB
 #include <ddb/ddbvar.h>
 #endif

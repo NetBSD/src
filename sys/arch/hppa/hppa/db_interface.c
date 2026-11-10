@@ -1,4 +1,4 @@
-/*	$NetBSD: db_interface.c,v 1.29 2026/11/07 22:20:12 thorpej Exp $	*/
+/*	$NetBSD: db_interface.c,v 1.30 2026/11/10 03:43:25 thorpej Exp $	*/
 
 /*	$OpenBSD: db_interface.c,v 1.16 2001/03/22 23:31:45 mickey Exp $	*/
 
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2026/11/07 22:20:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.30 2026/11/10 03:43:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.29 2026/11/07 22:20:12 thorpej Ex
 #include <machine/cpufunc.h>
 
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/db_command.h>
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>

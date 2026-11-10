@@ -1,8 +1,8 @@
-/*	$NetBSD: db_interface.c,v 1.65 2026/11/07 22:20:12 thorpej Exp $ */
+/*	$NetBSD: db_interface.c,v 1.66 2026/11/10 03:43:26 thorpej Exp $ */
 /*	$OpenBSD: db_interface.c,v 1.2 1996/12/28 06:21:50 rahnds Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2026/11/07 22:20:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.66 2026/11/10 03:43:26 thorpej Exp $");
 
 #define USERACC
 
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.65 2026/11/07 22:20:12 thorpej Ex
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/db_lex.h>
 #include <ddb/db_output.h>
 #include <ddb/db_run.h>	/* for db_continue_cmd() proto */

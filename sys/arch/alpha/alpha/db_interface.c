@@ -1,4 +1,4 @@
-/* $NetBSD: db_interface.c,v 1.45 2026/11/07 22:20:10 thorpej Exp $ */
+/* $NetBSD: db_interface.c,v 1.46 2026/11/10 03:43:25 thorpej Exp $ */
 
 /*
  * Mach Operating System
@@ -54,7 +54,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2026/11/07 22:20:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.46 2026/11/10 03:43:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_interface.c,v 1.45 2026/11/07 22:20:10 thorpej Ex
 #include <ddb/db_command.h>
 #include <ddb/db_extern.h>
 #include <ddb/db_access.h>
+#include <ddb/db_active.h>
 #include <ddb/db_output.h>
 #include <ddb/db_variables.h>
 #include <ddb/db_interface.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.170 2026/11/07 22:20:13 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.171 2026/11/10 03:43:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.170 2026/11/07 22:20:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.171 2026/11/10 03:43:27 thorpej Exp $");
 
 #include "opt_acpi.h"
 #include "opt_intrdebug.h"
@@ -157,6 +157,8 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.170 2026/11/07 22:20:13 thorpej Exp $");
 
 #include <sys/kauth.h>
 #include <sys/conf.h>
+
+#include <ddb/db_active.h>
 
 #include <uvm/uvm_extern.h>
 
