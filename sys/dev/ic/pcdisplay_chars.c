@@ -1,4 +1,4 @@
-/* $NetBSD: pcdisplay_chars.c,v 1.16 2010/02/25 11:20:10 drochner Exp $ */
+/* $NetBSD: pcdisplay_chars.c,v 1.17 2026/11/10 05:21:43 andvar Exp $ */
 
 /*
  * Copyright (c) 1998
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.16 2010/02/25 11:20:10 drochner Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcdisplay_chars.c,v 1.17 2026/11/10 05:21:43 andvar Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -304,7 +304,7 @@ static const struct {
 	{_e007U, 0xda, 2}, /* bracelefttp -> light down and right */
 	{_e008U, 0xc0, 2}, /* braceleftbt -> light up and right */
 	{_e009U, 0xbf, 2}, /* bracerighttp -> light down and left */
-	{_e00aU, 0xd9, 2}, /* bracerighrbt -> light up and left */
+	{_e00aU, 0xd9, 2}, /* bracerightbt -> light up and left */
 	{_e00dU, 0x3c, 2}, /* inverted angle? -> < */
 	{_e00eU, 0x3c, 2}, /* angle? -> < */
 	{_e00fU, 0xd9, 2}, /* mirrored not sign? -> light up and left */

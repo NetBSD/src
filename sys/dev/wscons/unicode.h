@@ -1,4 +1,4 @@
-/* $NetBSD: unicode.h,v 1.4 2010/02/25 11:20:09 drochner Exp $ */
+/* $NetBSD: unicode.h,v 1.5 2026/11/10 05:21:43 andvar Exp $ */
 
 /*
  * some private character definitions for stuff not found
@@ -11,7 +11,7 @@
 #define _e007U 0xe007 /* bracelefttp */
 #define _e008U 0xe008 /* braceleftbt */
 #define _e009U 0xe009 /* bracerighttp */
-#define _e00aU 0xe00a /* bracerighrbt */
+#define _e00aU 0xe00a /* bracerightbt */
 #define _e00bU 0xe00b /* braceleftmid */
 #define _e00cU 0xe00c /* bracerightmid */
 #define _e00dU 0xe00d /* inverted angle? */
