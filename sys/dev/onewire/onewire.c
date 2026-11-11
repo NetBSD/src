@@ -1,4 +1,4 @@
-/*	$NetBSD: onewire.c,v 1.22 2021/08/07 16:19:14 thorpej Exp $	*/
+/*	$NetBSD: onewire.c,v 1.23 2026/11/11 12:22:42 brad Exp $	*/
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*-
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.22 2021/08/07 16:19:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.23 2026/11/11 12:22:42 brad Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -155,8 +155,7 @@ onewire_detach(device_t self, int flags)
 		kthread_join(sc->sc_thread);
 	}
 
-	//rv = config_detach_children(self, flags);
-	rv = 0;  /* XXX riz */
+	rv = config_detach_children(self, flags);
 
 	return rv;
 }
