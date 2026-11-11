@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_spi.c,v 1.13 2025/09/14 16:00:04 thorpej Exp $ */
+/* $NetBSD: fdt_spi.c,v 1.14 2026/11/11 21:21:27 yurix Exp $ */
 
 /*
  * Copyright (c) 2021, 2022, 2025 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.13 2025/09/14 16:00:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_spi.c,v 1.14 2026/11/11 21:21:27 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -124,6 +124,10 @@ fdtbus_spi_enumerate_devices(device_t dev, devhandle_t call_handle, void *v)
 	spi_node = devhandle_to_of(call_handle);
 
 	for (node = OF_child(spi_node); node != 0; node = OF_peer(node)) {
+		if (!fdtbus_status_okay(node)) {
+			continue;
+		}
+
 		if (OF_getprop(node, "name", name, sizeof(name)) <= 0) {
 			continue;
 		}
