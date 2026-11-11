@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.15 2025/09/16 11:55:17 thorpej Exp $ */
+/* $NetBSD: ti_iic.c,v 1.16 2026/11/11 22:04:44 yurix Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.15 2025/09/16 11:55:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.16 2026/11/11 22:04:44 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -563,8 +563,16 @@ ti_iic_handle_intr(struct ti_iic_softc *sc, uint32_t stat)
 	KASSERT(stat != 0);
 	DPRINTF(("ti_iic_handle_intr stat %#x\n", stat));
 
-	if (stat &
-	    (I2C_IRQSTATUS_NACK|I2C_IRQSTATUS_AL)) {
+	/*
+	 * The transfer is already over.  On a NACK the controller
+	 * interrupts with NACK first and with ARDY separately after
+	 * that.  Don't let the late ARDY turn TI_I2CERROR into
+	 * TI_I2CDONE.
+	 */
+	if (sc->sc_op != TI_I2CREAD && sc->sc_op != TI_I2CWRITE) {
+		return;
+	}
+	if (stat & (I2C_IRQSTATUS_NACK|I2C_IRQSTATUS_AL)) {
 		sc->sc_op = TI_I2CERROR;
 		return;
 	}
