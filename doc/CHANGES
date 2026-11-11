@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3310 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3311 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -501,4 +501,4 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 		[riastradh 20261107]
 	ds2482ow(4): Add support for the DS2483 and DS2484 chip family
 		members. [brad 20261111]
-
+	zlib: Import 1.4.0 [christos 20261111]
