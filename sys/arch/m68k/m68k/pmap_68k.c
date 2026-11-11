@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.81 2026/11/08 16:11:40 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.82 2026/11/11 15:23:21 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -217,7 +217,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.81 2026/11/08 16:11:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.82 2026/11/11 15:23:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -988,15 +988,19 @@ pte_clr_ci(pt_entry_t pte)
 static void
 pmap_pte_proto_init(void)
 {
-	pt_entry_t c_bits, ro_c_bits, rw_c_bits, ci_bits, prot_bits, um_bits;
+	pt_entry_t c_bits, rw_c_bits, ci_bits, prot_bits, um_bits;
 	int prot;
 
+	/*
+	 * N.B. PTE40_CM_WT == 0, so "write-though" caching has the same
+	 * PTE bits on all variants of the MMU.
+	 */
+
 	if (MMU_IS_68040_CLASS) {
-		ro_c_bits = PTE40_CM_WT; /* this is what the Hibler pmap did */
 		rw_c_bits = PTE40_CM_CB;
 		ci_bits = PTE40_CM_NC_SER;
 	} else {
-		ro_c_bits = rw_c_bits = 0;
+		rw_c_bits = 0;
 		ci_bits = PTE51_CI;
 	}
 
@@ -1008,7 +1012,7 @@ pmap_pte_proto_init(void)
 			prot_bits = PTE_WP;
 			um_bits = PTE_U;
 		}
-		c_bits = (prot & UVM_PROT_WRITE) ? rw_c_bits : ro_c_bits;
+		c_bits = (prot & UVM_PROT_WRITE) ? rw_c_bits : 0;
 		pmap_pte_proto[prot]    = PTE_VALID | prot_bits | c_bits;
 		pmap_pte_proto_ci[prot] = PTE_VALID | prot_bits | ci_bits;
 		pmap_pte_proto_um[prot] = um_bits;
@@ -2263,8 +2267,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 	if (flags & PRM_CFLUSH) {
 #if MMU_CONFIG_68040_CLASS
 		if (MMU_IS_68040_CLASS) {
-			DCFP(pa);
-			ICPP(pa);
+			DCFP(pa);	/* cpushp dc */
+			ICPP(pa);	/* cinvp ic */
 		}
 #endif
 #if MMU_CONFIG_HP_CLASS
@@ -3384,10 +3388,18 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 			}
 #if MMU_CONFIG_68040_CLASS
 			if (__predict_false(cflush_040)) {
-				paddr_t pa = VM_PAGE_TO_PHYS(pg);
-				DCFP(pa);
-				ICPP(pa);
-				cflush_040 = false;
+				/*
+				 * Cache push is only necessary if
+				 * the critical page attribute (W, CM)
+				 * were changed.  If we're just clearing
+				 * U or M, no push is necessary.
+				 */
+				if ((opte ^ npte) & PTE_CRIT_BITS) {
+					paddr_t pa = VM_PAGE_TO_PHYS(pg);
+					DCFP(pa);	/* cpushp dc */
+					ICPP(pa);	/* cinvp ic */
+					cflush_040 = false;
+				}
 			}
 #endif
 			if (pte_update(ptep, opte, npte)) {
@@ -4062,16 +4074,19 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	pt_entry_t proto_rw_ci_pte;	/* read-write, cache-inhibited */
 	pt_entry_t proto_ste;
 
+	/*
+	 * N.B. PTE40_CM_WT == 0, so "write-though" caching has the same
+	 * PTE bits on all variants of the MMU.
+	 */
+	proto_ro_pte     = PTE_VALID|PTE_WIRED|PTE_WP;
+	proto_rw_cwt_pte = PTE_VALID|PTE_WIRED;
+
 	if (is_68040_class) {
-		proto_ro_pte     = PTE_VALID|PTE_WIRED|PTE_WP|PTE40_CM_WT;
-		proto_rw_pte     = PTE_VALID|PTE_WIRED       |PTE40_CM_CB;
-		proto_rw_cwt_pte = PTE_VALID|PTE_WIRED       |PTE40_CM_WT;
-		proto_rw_ci_pte  = PTE_VALID|PTE_WIRED       |PTE40_CM_NC_SER;
+		proto_rw_pte    = PTE_VALID|PTE_WIRED|PTE40_CM_CB;
+		proto_rw_ci_pte = PTE_VALID|PTE_WIRED|PTE40_CM_NC_SER;
 	} else {
-		proto_ro_pte     = PTE_VALID|PTE_WIRED|PTE_WP;
-		proto_rw_pte     = PTE_VALID|PTE_WIRED;
-		proto_rw_cwt_pte = PTE_VALID|PTE_WIRED;
-		proto_rw_ci_pte  = PTE_VALID|PTE_WIRED       |PTE51_CI;
+		proto_rw_pte    = PTE_VALID|PTE_WIRED;
+		proto_rw_ci_pte = PTE_VALID|PTE_WIRED|PTE51_CI;
 	}
 	proto_ste = DTE51_U | DT51_SHORT;
 
