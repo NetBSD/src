@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3309 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.3310 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -499,3 +499,6 @@ Changes from NetBSD 11.0 to NetBSD 12.0:
 	m68k: Various fixes for profiling support. [thorpej 20261107]
 	drm(4): Various stability fixes for several GPU drivers.
 		[riastradh 20261107]
+	ds2482ow(4): Add support for the DS2483 and DS2484 chip family
+		members. [brad 20261111]
+
