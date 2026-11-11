@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.34 2025/09/17 13:51:47 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.35 2026/11/11 20:37:58 yurix Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
 #include "acpica.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.34 2025/09/17 13:51:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.35 2026/11/11 20:37:58 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,6 +110,7 @@ static int I2C_HID_POWER_OFF	= 0x1;
 
 static int	ihidev_match(device_t, cfdata_t, void *);
 static void	ihidev_attach(device_t, device_t, void *);
+static void	ihidev_attach_interrutps(device_t);
 static int	ihidev_detach(device_t, int);
 CFATTACH_DECL_NEW(ihidev, sizeof(struct ihidev_softc),
     ihidev_match, ihidev_attach, ihidev_detach, NULL);
@@ -158,11 +159,8 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 {
 	struct ihidev_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
-	struct ihidev_attach_arg iha;
-	device_t dev;
 	int repid, repsz;
 	int isize;
-	int locs[IHIDBUSCF_NLOCS];
 
 	sc->sc_dev = self;
 	sc->sc_tag = ia->ia_tag;
@@ -214,11 +212,23 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 		    device_xname(sc->sc_dev), repid, repsz));
 	}
 	sc->sc_ibuf = kmem_zalloc(sc->sc_isize, KM_SLEEP);
+
+	config_interrupts(self, ihidev_attach_interrutps);
+}
+
+static void
+ihidev_attach_interrutps(device_t self)
+{
+	struct ihidev_softc *sc = device_private(self);
+	struct ihidev_attach_arg iha;
+	device_t dev;
+	int repid;
+	int locs[IHIDBUSCF_NLOCS];
+
 	if (!ihidev_intr_init(sc)) {
 		return;
 	}
 
-	iha.iaa = ia;
 	iha.parent = sc;
 
 	/* Look for a driver claiming all report IDs first. */

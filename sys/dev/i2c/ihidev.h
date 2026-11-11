@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.h,v 1.8 2025/09/17 13:51:47 thorpej Exp $ */
+/* $NetBSD: ihidev.h,v 1.9 2026/11/11 20:37:58 yurix Exp $ */
 /* $OpenBSD ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 
 /*-
@@ -159,7 +159,6 @@ struct ihidev {
 };
 
 struct ihidev_attach_arg {
-	struct i2c_attach_args	*iaa;
 	struct ihidev_softc	*parent;
 	uint8_t			 reportid;
 #define	IHIDEV_CLAIM_ALLREPORTID	255
