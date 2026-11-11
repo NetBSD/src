@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_intr.h,v 1.13 2021/08/06 08:58:42 rin Exp $	*/
+/*	$NetBSD: i80321_intr.h,v 1.14 2026/11/11 05:31:23 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2006 Wasabi Systems, Inc.
@@ -105,7 +105,7 @@ i80321_splraise(int ipl)
 		__insn_barrier();
 	}
 
-	return (old);
+	return old;
 }
 
 static inline int __attribute__((__unused__))

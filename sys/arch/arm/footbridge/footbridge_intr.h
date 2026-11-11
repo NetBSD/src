@@ -1,4 +1,4 @@
-/* 	$NetBSD: footbridge_intr.h,v 1.23 2026/11/10 03:49:17 thorpej Exp $	*/
+/* 	$NetBSD: footbridge_intr.h,v 1.24 2026/11/11 05:30:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -123,9 +123,7 @@ footbridge_splx(int ipl)
 static inline int __attribute__((__unused__))
 footbridge_splraise(int ipl)
 {
-	int	old;
-
-	old = curcpl();
+	int old = curcpl();
 	if (ipl > old) {
 		set_curcpl(ipl);
 	}
@@ -133,7 +131,7 @@ footbridge_splraise(int ipl)
 	/* Don't let the compiler re-order this code with subsequent code */
 	__insn_barrier();
 
-	return (old);
+	return old;
 }
 
 static inline int __attribute__((__unused__))
@@ -142,7 +140,7 @@ footbridge_spllower(int ipl)
 	int old = curcpl();
 
 	footbridge_splx(ipl);
-	return(old);
+	return old;
 }
 
 /* should only be defined in footbridge_intr.c */

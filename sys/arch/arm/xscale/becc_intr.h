@@ -1,4 +1,4 @@
-/*	$NetBSD: becc_intr.h,v 1.7 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: becc_intr.h,v 1.8 2026/11/11 05:34:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@ becc_splraise(int ipl)
 
 	set_curcpl(old | becc_imask[ipl]);
 
-	return (old);
+	return old;
 }
 
 static inline void __attribute__((__unused__))
@@ -100,7 +100,7 @@ becc_spllower(int ipl)
 	uint32_t old = curcpl();
 
 	becc_splx(becc_imask[ipl]);
-	return (old);
+	return old;
 }
 
 #if !defined(EVBARM_SPL_NOINLINE)
