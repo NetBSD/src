@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.82 2026/11/11 15:23:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.83 2026/11/11 15:32:21 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -193,17 +193,19 @@
  *   small-memory configs in virt68k (qemu 68040 **with fixed MMU
  *   emulation**) and mac68k (10MB 68040, 68030).
  *
- * - Ports that have been adapted: hp300, luna68k (default),
+ * - Ports that have been adapted: hp300 (default), luna68k (default),
  *   mac68k (default), mvme68k (default), news68k (default),
  *   next68k (default), virt68k (default), x68k.
  *
  * XXX TODO XXX
  *
  * - Adapt amiga (hard), atari (hard), cesfic (easy).
- * - Test on 68020 + 68851.
- * - Test on machines above listed as "not tested".
+ * - Test on 68020 + 68851.  It turns out, there is a pretty rare
+ *   combination to find out in the wild.  No problems are anticipated,
+ *   however, since the 68030's MMU is essentially identical for our
+ *   purposes.
+ * - Test on real HP MMU.
  * - More rigorous testing in various emulators (Nono, UAE?).
- * - Finish HP MMU support and test on real HP MMU.
  * - Convert '851 / '030 to 3-level (maybe?).
  * - Optimize ATC / cache manipulation.
  * - Add some more instrumentation.
@@ -217,7 +219,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.82 2026/11/11 15:23:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.83 2026/11/11 15:32:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
