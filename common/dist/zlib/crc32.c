@@ -1,4 +1,4 @@
-/*	$NetBSD: crc32.c,v 1.8 2026/05/03 16:36:09 christos Exp $	*/
+/*	$NetBSD: crc32.c,v 1.9 2026/11/11 15:50:27 christos Exp $	*/
 
 /* crc32.c -- compute the CRC-32 of a data stream
  * Copyright (C) 1995-2026 Mark Adler
@@ -688,7 +688,7 @@ uLong ZEXPORT crc32_z(uLong crc, const unsigned char FAR *buf, z_size_t len) {
 #endif
 
             /* Initialize the CRC for each braid. */
-            crc0 = crc;
+            crc0 = (z_crc_t)crc;
 #if N > 1
             crc1 = 0;
 #if N > 2

@@ -1,4 +1,4 @@
-/*	$NetBSD: uncompr.c,v 1.6 2026/05/03 16:36:09 christos Exp $	*/
+/*	$NetBSD: uncompr.c,v 1.7 2026/11/11 15:50:27 christos Exp $	*/
 
 /* uncompr.c -- decompress a memory buffer
  * Copyright (C) 1995-2026 Jean-loup Gailly, Mark Adler
@@ -35,8 +35,8 @@ int ZEXPORT uncompress2_z(Bytef *dest, z_size_t *destLen, const Bytef *source,
     const uInt max = (uInt)-1;
     z_size_t len, left;
 
-    if (sourceLen == NULL || (*sourceLen > 0 && source == NULL) ||
-        destLen == NULL || (*destLen > 0 && dest == NULL))
+    if (sourceLen == Z_NULL || (*sourceLen > 0 && source == Z_NULL) ||
+        destLen == Z_NULL || (*destLen > 0 && dest == Z_NULL))
         return Z_STREAM_ERROR;
 
     len = *sourceLen;

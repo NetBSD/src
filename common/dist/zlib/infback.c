@@ -1,4 +1,4 @@
-/*	$NetBSD: infback.c,v 1.6 2026/05/03 16:36:09 christos Exp $	*/
+/*	$NetBSD: infback.c,v 1.7 2026/11/11 15:50:27 christos Exp $	*/
 
 /* infback.c -- inflate using a call-back interface
  * Copyright (C) 1995-2026 Mark Adler
@@ -425,8 +425,6 @@ int ZEXPORT inflateBack(z_streamp strm, in_func in, void FAR *in_desc,
             /* use inflate_fast() if we have enough input and output */
             if (have >= 6 && left >= 258) {
                 RESTORE();
-                if (state->whave < state->wsize)
-                    state->whave = state->wsize - left;
                 inflate_fast(strm, state->wsize);
                 LOAD();
                 break;

@@ -1,4 +1,4 @@
-/*	$NetBSD: zconf.h,v 1.7 2026/05/03 16:36:09 christos Exp $	*/
+/*	$NetBSD: zconf.h,v 1.8 2026/11/11 15:50:27 christos Exp $	*/
 
 /* zconf.h -- configuration of the zlib compression library
  * Copyright (C) 1995-2026 Jean-loup Gailly, Mark Adler
@@ -537,6 +537,10 @@ typedef uLong FAR uLongf;
 
 #if defined(_LFS64_LARGEFILE) && _LFS64_LARGEFILE-0
 #  define Z_LFS64
+#elif defined(_WIN32) && !defined(__CYGWIN__) && !defined(__BORLANDC__) && \
+      !defined(UNDER_CE) && (defined(__MINGW32__) || !defined(__GNUC__))
+#  define Z_LFS64       /* native Windows has 64-bit file offsets */
+#  define Z_WINLFS
 #endif
 
 #if defined(_LARGEFILE64_SOURCE) && defined(Z_LFS64)
@@ -554,7 +558,7 @@ typedef uLong FAR uLongf;
 #endif
 
 #ifndef z_off_t
-#  define z_off_t long long
+#  define z_off_t long
 #endif
 #ifndef z_ptrdiff_t
 #  define z_ptrdiff_t long
@@ -570,6 +574,11 @@ typedef uLong FAR uLongf;
 #  define z_off64_t offset_t
 #else
 #  define z_off64_t z_off_t
+#endif
+
+#if defined(Z_WINLFS) && defined(Z_WANT64) && !defined(Z_SOLO)
+#  undef z_off_t
+#  define z_off_t z_off64_t
 #endif
 
 /* MVS linker does not support external names larger than 8 bytes */
