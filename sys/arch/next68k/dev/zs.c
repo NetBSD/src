@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.39 2026/11/08 15:08:20 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.40 2026/11/11 03:04:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.39 2026/11/08 15:08:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.40 2026/11/11 03:04:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -484,13 +484,12 @@ zs_write_data(struct zs_chanstate *cs, uint8_t val)
 }
 
 /****************************************************************
- * Console support functions (Sun specific!)
+ * Console support functions (NeXT specific!)
  * Note: this code is allowed to know about the layout of
  * the chip registers, and uses that to keep things simple.
  * XXX - I think I like the mvme167 code better. -gwr
  ****************************************************************/
 
-extern void Debugger(void);
 void *zs_conschan;
 int	zs_consunit = 0;
 
