@@ -1,4 +1,4 @@
-/*	$NetBSD: svwsata.c,v 1.25 2026/03/30 16:43:45 tls Exp $	*/
+/*	$NetBSD: svwsata.c,v 1.26 2026/11/11 05:24:12 martin Exp $	*/
 
 /*
  * Copyright (c) 2005 Mark Kettenis
@@ -17,7 +17,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.25 2026/03/30 16:43:45 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svwsata.c,v 1.26 2026/11/11 05:24:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,17 @@ svwsata_match(device_t parent, cfdata_t match, void *aux)
 
 	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_SERVERWORKS) {
 		if (pciide_lookup_product(pa->pa_id,
-		    pciide_svwsata_products))
+		    pciide_svwsata_products)) {
+			if (PCI_PRODUCT(pa->pa_id)
+			    == PCI_PRODUCT_SERVERWORKS_K2_SATA
+			    && pa->pa_function > 0)
+				/*
+				 * The 4-port version has a dummy second
+				 * function.
+				 */
+				return 0;
 			return (2);
+		}
 	}
 	return (0);
 }
@@ -115,7 +124,11 @@ svwsata_chip_map(struct pciide_softc *sc, const struct pci_attach_args *pa)
 	/* The 4-port version has a dummy second function. */
 	if (pci_conf_read(sc->sc_pc, sc->sc_tag,
 	    PCI_MAPREG_START + 0x14) == 0) {
-		aprint_normal("\n");
+		aprint_error_dev(sc->sc_wdcdev.sc_atac.atac_dev,
+		    "please file a PR if you see this: "
+		    "vendor: %x, product: %x, function: %d\n",
+		    PCI_VENDOR(pa->pa_id), PCI_PRODUCT(pa->pa_id),
+		    pa->pa_function);
 		return;
 	}
 
