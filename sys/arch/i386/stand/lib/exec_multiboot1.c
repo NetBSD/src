@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot1.c,v 1.3 2019/10/18 01:09:46 manu Exp $ */
+/* $NetBSD: exec_multiboot1.c,v 1.4 2026/11/11 22:15:04 andvar Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -147,12 +147,11 @@ exec_multiboot1(struct multiboot_package *mbp)
 		bim = (struct bi_modulelist_entry *)
 		  (((char *) btinfo_modulelist) +
 		   sizeof(struct btinfo_modulelist));
-		for (i = 0; i < btinfo_modulelist->num; i++) {
+		for (i = 0; i < btinfo_modulelist->num; i++, bim++) {
 			mbm[i].mmo_start = bim->base;
 			mbm[i].mmo_end = bim->base + bim->len;
 			mbm[i].mmo_string = (char *)vtophys(bim->path);
 			mbm[i].mmo_reserved = 0;
-			bim++;
 		}
 		mbi->mi_flags |= MULTIBOOT_INFO_HAS_MODS;
 		mbi->mi_mods_count = btinfo_modulelist->num;
