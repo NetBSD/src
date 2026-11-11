@@ -1,4 +1,4 @@
-/*	$NetBSD: monetary.h,v 1.5 2024/10/30 15:56:10 riastradh Exp $	*/
+/*	$NetBSD: monetary.h,v 1.6 2026/11/11 00:45:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -45,7 +45,8 @@ typedef	_BSD_SSIZE_T_	ssize_t;
 #undef	_BSD_SSIZE_T_
 #endif
 
-#if defined(_NETBSD_SOURCE)
+#if defined(_NETBSD_SOURCE) || \
+   (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE - 0 >= 200809L)
 #  ifndef __LOCALE_T_DECLARED
 typedef struct _locale		*locale_t;
 #  define __LOCALE_T_DECLARED
