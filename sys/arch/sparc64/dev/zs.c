@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.85 2026/11/10 03:43:26 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.86 2026/11/11 03:05:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.85 2026/11/10 03:43:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.86 2026/11/11 03:05:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -703,8 +703,6 @@ zs_write_data(struct zs_chanstate *cs, u_char val)
  * XXX - I think I like the mvme167 code better. -gwr
  ****************************************************************/
 
-extern void Debugger(void);
-
 /*
  * Handle user request to enter kernel debugger.
  */
@@ -725,7 +723,7 @@ zs_abort(void)
 	zskgdb();
 #elif defined(DDB)
 	if (!db_active)
-		Debugger();
+		cpu_Debugger();
 	else
 		/* Debugger is probably hozed */
 		callrom();
