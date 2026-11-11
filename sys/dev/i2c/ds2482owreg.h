@@ -1,4 +1,4 @@
-/*	$NetBSD: ds2482owreg.h,v 1.1 2024/11/04 20:43:38 brad Exp $	*/
+/*	$NetBSD: ds2482owreg.h,v 1.2 2026/11/11 12:30:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -37,6 +37,7 @@
 #define		DS2482_REGISTER_DATA	0xE1
 #define		DS2482_REGISTER_CONFIG	0xC3
 #define		DS2482_REGISTER_CHANNEL	0xD2 /* DS2482-800 only */
+#define		DS2484_REGISTER_PORT_CONFIG 0xB4
 #define DS2482_WRITE_CONFIG		0xD2
 #define		DS2482_CONFIG_1WS	0x08
 #define		DS2482_CONFIG_SPU	0x04
@@ -50,6 +51,7 @@
 #define 	DS2482_CHANNEL_IO5	0xA5
 #define 	DS2482_CHANNEL_IO6	0x96
 #define 	DS2482_CHANNEL_IO7	0x87
+#define DS2484_SET_PORT_CONFIG		0xC3
 #define DS2482_ONEWIRE_RESET		0xB4
 #define DS2482_ONEWIRE_SINGLE_BIT	0x87
 #define		DS2482_ONEWIRE_BIT_ZERO		0x00

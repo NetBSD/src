@@ -1,4 +1,4 @@
-.\" $NetBSD: ds2482ow.4,v 1.1 2024/11/04 20:43:37 brad Exp $
+.\" $NetBSD: ds2482ow.4,v 1.2 2026/11/11 12:30:13 brad Exp $
 .\"
 .\" Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -19,9 +19,9 @@
 .Os
 .Sh NAME
 .Nm ds2482ow
-.Nd Driver for Maxim DS2482-100 and DS2482-800 IC2 to 1-Wire bridge
+.Nd Driver for Maxim DS2482-100, DS2482-800, DS2483 and DS2484 IC2 to 1-Wire bridge
 .Sh SYNOPSIS
-.Cd "ds2482ow* at iic? addr 0x18"
+.Cd "ds2482ow* at iic? addr 0x18" Only one available to the DS2483 and DS2484
 .Cd "ds2482ow* at iic? addr 0x19"
 .Cd "ds2482ow* at iic? addr 0x1a"
 .Cd "ds2482ow* at iic? addr 0x1b"
@@ -66,7 +66,59 @@ use an internal passive resister.
 If the driver is compiled with
 .Dv DS2482_DEBUG ,
 this node will appear and can be used to set the debugging level.
+.It Li hw.ds2482ow0.port.tREC0
+.It Li hw.ds2482ow0.port.RWPU
+.It Li hw.ds2482ow0.port.standard.tRSTL
+.It Li hw.ds2482ow0.port.standard.tMSP
+.It Li hw.ds2482ow0.port.standard.tW0L
+On a DS2483 and DS2484 chip these nodes will be present and can be
+used to adjust various timing values.
+The value used in these nodes range from 0 to 15 and map to
+microsecond timing values used in the 1-Wire protocol.
+The following table has the mapping for 1-Wire standard speed:
 .El
+.Bd -filled -offset indent
+.TS
+box tab(:);
+l | l | l | l | l | l
+= | = | = | = | = | =
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l
+l | l | l | l | l | l.
+Parameter:tRSTL:tMSP:tW0L:tREC0:RWPU
+0:440:58:52:2.75:500
+1:460:58:54:2.75:500
+2:480:60:56:2.75:500
+3:500:62:58:2.75:500
+4:520:64:60:2.75:500
+5:540:66:62:2.75:500
+6:560:68:64:5.25:1000
+7:580:70:66:7.75:1000
+8:600:72:68:10.25:1000
+9:620:74:70:12.75:1000
+10:640:76:70:15.25:1000
+11:660:76:70:17.75:1000
+12:680:76:70:20.25:1000
+13:700:76:70:20.75:1000
+14:720:76:70:25.25:1000
+15:740:76:70:25.25:1000
+.TE
+.Ed
+.Pp
+The datasheet for the DS2483 or DS2484 should be consulted for more
+details on the meaning of these parameters.
 .Sh SEE ALSO
 .Xr onewire 4 ,
 .Xr iic 4 ,
@@ -83,5 +135,5 @@ The
 driver was written by
 .An Brad Spencer Aq Mt brad@anduin.eldar.org .
 .Sh BUGS
-The DS2482 chip supports overdrive speed on a 1-Wire bus.
-This driver does not support overdrive speed mode.
+The DS248x chip family supports overdrive speed on a 1-Wire bus, but
+this driver does not support overdrive speed mode.

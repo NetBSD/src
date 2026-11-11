@@ -1,4 +1,4 @@
-/*	$NetBSD: ds2482owvar.h,v 1.3 2024/11/06 19:42:25 riastradh Exp $	*/
+/*	$NetBSD: ds2482owvar.h,v 1.4 2026/11/11 12:30:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -38,16 +38,25 @@ struct ds2482_instance {
 	struct ds2482ow_sc		*sc;
 };
 
+typedef enum {
+	DS248X_DS2482_100,
+	DS248X_DS2482_800,
+	DS248X_DS2484,
+} ds248x_chip_type_t;
+
 struct ds2482ow_sc {
-	int 		sc_ds2482debug;
-	device_t 	sc_dev;
-	i2c_tag_t 	sc_tag;
-	i2c_addr_t 	sc_addr;
-	kmutex_t 	sc_mutex;
-	struct sysctllog *sc_ds2482log;
-	bool		sc_activepullup;
-	bool		sc_strongpullup;
-	bool		sc_is_800;
+	int 			sc_ds2482debug;
+	bool			sc_dying;
+	device_t 		sc_dev;
+	i2c_tag_t 		sc_tag;
+	i2c_addr_t 		sc_addr;
+	kmutex_t 		sc_mutex;
+	struct sysctllog 	*sc_ds2482log;
+	bool			sc_activepullup;
+	bool			sc_strongpullup;
+	ds248x_chip_type_t	sc_chip_type;
+	int			sc_port_configs[8];
+	int			sc_last_port_configs[8];
 	struct		ds2482_instance	sc_instances[DS2482_NUM_INSTANCES];
 };
 

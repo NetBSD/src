@@ -1,4 +1,4 @@
-/*	$NetBSD: ds2482ow.c,v 1.2 2024/11/06 15:49:36 riastradh Exp $	*/
+/*	$NetBSD: ds2482ow.c,v 1.3 2026/11/11 12:30:13 brad Exp $	*/
 
 /*
  * Copyright (c) 2024 Brad Spencer <brad@anduin.eldar.org>
@@ -17,10 +17,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds2482ow.c,v 1.2 2024/11/06 15:49:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds2482ow.c,v 1.3 2026/11/11 12:30:13 brad Exp $");
 
 /*
- * Driver for the DS2482-100 and DS2482-800 I2C to Onewire bridge
+ * Driver for the DS2482-100, DS2482-800, DS2483, and DS2484 I2C to Onewire bridge
  */
 
 #include <sys/param.h>
@@ -44,7 +44,9 @@ static int 	ds2482_poke(i2c_tag_t, i2c_addr_t, bool);
 static int 	ds2482_match(device_t, cfdata_t, void *);
 static void 	ds2482_attach(device_t, device_t, void *);
 static int 	ds2482_detach(device_t, int);
+static int	ds2482_activate(device_t, enum devact);
 static int 	ds2482_verify_sysctl(SYSCTLFN_ARGS);
+static int	ds2484_verify_port_config(SYSCTLFN_ARGS);
 
 static int	ds2482_ow_reset(void *);
 static int	ds2482_ow_read_bit(void *);
@@ -76,7 +78,7 @@ static int	ds2482_ow_triplet(void *, int);
 #endif
 
 CFATTACH_DECL_NEW(ds2482ow, sizeof(struct ds2482ow_sc),
-    ds2482_match, ds2482_attach, ds2482_detach, NULL);
+    ds2482_match, ds2482_attach, ds2482_detach, ds2482_activate);
 
 #define DS2482_QUICK_DELAY 18
 #define DS2482_SLOW_DELAY 35
@@ -95,6 +97,27 @@ ds2482_verify_sysctl(SYSCTLFN_ARGS)
 		return error;
 
 	if (t < 0)
+		return EINVAL;
+
+	*(int *)rnode->sysctl_data = t;
+
+	return 0;
+}
+
+int
+ds2484_verify_port_config(SYSCTLFN_ARGS)
+{
+	int error, t;
+	struct sysctlnode node;
+
+	node = *rnode;
+	t = *(int *)rnode->sysctl_data;
+	node.sysctl_data = &t;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (t < 0 || t > 0x0f)
 		return EINVAL;
 
 	*(int *)rnode->sysctl_data = t;
@@ -185,6 +208,7 @@ ds2482_cmd(i2c_tag_t tag, i2c_addr_t addr, uint8_t *cmd,
 	case DS2482_SET_READ_POINTER:
 	case DS2482_WRITE_CONFIG:
 	case DS2482_SELECT_CHANNEL:
+	/* case DS2484_SET_PORT_CONFIG: */
 		KASSERT(cmdarg != NULL);
 
 		error = 0;
@@ -496,11 +520,280 @@ ds2482_set_channel(struct ds2482ow_sc *sc, int channel)
 
 	KASSERT(channel >= 0 && channel < DS2482_NUM_INSTANCES);
 
-	if (sc->sc_is_800) {
+	if (sc->sc_chip_type == DS248X_DS2482_800) {
 		error = ds2482_cmdr(sc, DS2482_SELECT_CHANNEL,
 		    ds2482_channels[channel], NULL, 0);
 	}
 
+	return error;
+}
+
+static int
+ds2484_set_port_configs(struct ds2482ow_sc *sc)
+{
+	int error = 0;
+
+	if (sc->sc_chip_type == DS248X_DS2484) {
+		int p = 0;
+		uint8_t v;
+
+		if (sc->sc_port_configs[0] != sc->sc_last_port_configs[0]) {
+			v = 0;
+			v = p << 5;
+			v |= (uint8_t)sc->sc_port_configs[0];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		if (!error &&
+		    sc->sc_port_configs[1] != sc->sc_last_port_configs[1]) {
+			v = 0;
+			v = p << 5;
+			v |= 0x10;
+			v |= (uint8_t)sc->sc_port_configs[1];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		p++;
+
+		if (!error &&
+		    sc->sc_port_configs[2] != sc->sc_last_port_configs[2]) {
+			v = 0;
+			v = p << 5;
+			v |= (uint8_t)sc->sc_port_configs[2];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		if (!error &&
+		    sc->sc_port_configs[3] != sc->sc_last_port_configs[3]) {
+			v = 0;
+			v = p << 5;
+			v |= 0x10;
+			v |= (uint8_t)sc->sc_port_configs[3];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		p++;
+
+		if (!error &&
+		    sc->sc_port_configs[4] != sc->sc_last_port_configs[4]) {
+			v = 0;
+			v = p << 5;
+			v |= (uint8_t)sc->sc_port_configs[4];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		if (!error &&
+		    sc->sc_port_configs[5] != sc->sc_last_port_configs[5]) {
+			v = 0;
+			v = p << 5;
+			v |= 0x10;
+			v |= (uint8_t)sc->sc_port_configs[5];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		p++;
+
+		if (!error &&
+		    sc->sc_port_configs[6] != sc->sc_last_port_configs[6]) {
+			v = 0;
+			v = p << 5;
+			v |= (uint8_t)sc->sc_port_configs[6];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+		p++;
+
+		if (!error &&
+		    sc->sc_port_configs[7] != sc->sc_last_port_configs[7]) {
+			v = 0;
+			v = p << 5;
+			v |= (uint8_t)sc->sc_port_configs[7];
+			error = ds2482_cmdr(sc, DS2484_SET_PORT_CONFIG,
+			    v, NULL, 0);
+		}
+
+		if (!error) {
+			for(int i=0; i <= 7; i++)
+				sc->sc_last_port_configs[i] = sc->sc_port_configs[i];
+		}
+	}
+
+	return error;
+}
+
+static int
+ds2484_get_port_configs(struct ds2482ow_sc *sc)
+{
+	int error = 0;
+
+	error = ds2482_cmdr(sc, DS2482_SET_READ_POINTER,
+	    DS2484_REGISTER_PORT_CONFIG, NULL, 0);
+	if (!error) {
+		uint8_t buf[8];
+
+		error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, NULL, 0,
+		    buf, 8, 0);
+		if (!error) {
+			for(int i=0; i <= 7; i++)
+				sc->sc_port_configs[i] = sc->sc_last_port_configs[i] = buf[i];
+		}
+	}
+
+	return error;
+}
+
+static int
+ds248x_sysctl_init(struct ds2482ow_sc *sc)
+{
+	int error = 0;
+	const struct sysctlnode *cnode;
+	int sysctlroot_num, pullup_num;
+
+	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+		    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
+		    SYSCTL_DESCR("DS248x controls"), NULL, 0, NULL, 0, CTL_HW,
+		    CTL_CREATE, CTL_EOL)) != 0)
+		goto out;
+
+	sysctlroot_num = cnode->sysctl_num;
+
+#ifdef DS2482_DEBUG
+	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
+		    SYSCTL_DESCR("Debug level"), ds2482_verify_sysctl, 0,
+		    &sc->sc_ds2482debug, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
+		    CTL_EOL)) != 0)
+		goto out;
+#endif
+
+	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+		    0, CTLTYPE_NODE, "pullup",
+		    SYSCTL_DESCR("Pullup controls"), NULL, 0, NULL, 0, CTL_HW,
+		    sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto out;
+
+	pullup_num = cnode->sysctl_num;
+
+	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "active",
+		    SYSCTL_DESCR("Active pullup"), NULL, 0, &sc->sc_activepullup,
+		    0, CTL_HW, sysctlroot_num, pullup_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto out;
+
+	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+		    CTLFLAG_READWRITE, CTLTYPE_BOOL, "strong",
+		    SYSCTL_DESCR("Strong pullup"), NULL, 0, &sc->sc_strongpullup,
+		    0, CTL_HW, sysctlroot_num, pullup_num, CTL_CREATE, CTL_EOL)) != 0)
+		goto out;
+
+	if (sc->sc_chip_type == DS248X_DS2484) {
+		int port_config_tree_num,
+		    port_config_standard_num;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    0, CTLTYPE_NODE, "port",
+			    SYSCTL_DESCR("Port configurations"), NULL, 0, NULL, 0, CTL_HW,
+			    sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
+			goto out;
+
+		port_config_tree_num = cnode->sysctl_num;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    0, CTLTYPE_NODE, "standard",
+			    SYSCTL_DESCR("Port configurations for standard speed"), NULL, 0, NULL, 0, CTL_HW,
+			    sysctlroot_num, port_config_tree_num, CTL_CREATE, CTL_EOL)) != 0)
+			goto out;
+
+		port_config_standard_num = cnode->sysctl_num;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tRSTL",
+			    SYSCTL_DESCR("tRSTL for standard speed"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[0], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, port_config_standard_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tMSP",
+			    SYSCTL_DESCR("tMSP for standard speed"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[2], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, port_config_standard_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tW0L",
+			    SYSCTL_DESCR("tW0L for standard speed"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[4], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, port_config_standard_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tREC0",
+			    SYSCTL_DESCR("tREC0"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[6], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "RWPU",
+			    SYSCTL_DESCR("RWPU"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[7], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+#ifdef __NOTYET
+
+/* XXX - the onewire(4) infrastructure does not support a way to
+ * enable overdrive mode, so don't expose these sysctls at this time.
+ */
+		int port_config_overdrive_num;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    0, CTLTYPE_NODE, "overdrive",
+			    SYSCTL_DESCR("Port configurations for overdrive speed"), NULL, 0, NULL, 0, CTL_HW,
+			    sysctlroot_num, port_config_tree_num, CTL_CREATE, CTL_EOL)) != 0)
+			goto out;
+
+		port_config_overdrive_num = cnode->sysctl_num;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tRSTL",
+			    SYSCTL_DESCR("tRSTL for overdrive speed"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[1], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, port_config_overdrive_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tMSP",
+			    SYSCTL_DESCR("tMSP for overdrive speed"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[3], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, port_config_overdrive_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+
+		if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
+			    CTLFLAG_READWRITE, CTLTYPE_INT, "tW0L",
+			    SYSCTL_DESCR("tW0L for overdrive speed"), ds2484_verify_port_config, 0,
+			    &sc->sc_port_configs[5], 0, CTL_HW, sysctlroot_num,
+			    port_config_tree_num, port_config_overdrive_num, CTL_CREATE,
+			    CTL_EOL)) != 0)
+			goto out;
+#endif
+
+		error = iic_acquire_bus(sc->sc_tag, 0);
+		if (error)
+			goto out;
+		error = ds2484_get_port_configs(sc);
+		iic_release_bus(sc->sc_tag, 0);
+	}
+
+out:
 	return error;
 }
 
@@ -558,8 +851,7 @@ ds2482_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia;
 	int error, i, num_channels = 1;
 	struct onewirebus_attach_args oba;
-	const struct sysctlnode *cnode;
-	int sysctlroot_num, pullup_num;
+	char chip_name[14];
 
 	ia = aux;
 	sc = device_private(self);
@@ -570,48 +862,13 @@ ds2482_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ds2482debug = 0;
 	sc->sc_activepullup = false;
 	sc->sc_strongpullup = false;
-	sc->sc_is_800 = false;
+	sc->sc_chip_type = DS248X_DS2482_100;
+	strncpy(chip_name, "DS2482-100", sizeof(chip_name));
+	sc->sc_dying = false;
 
 	aprint_normal("\n");
 
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NONE);
-
-	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
-	    0, CTLTYPE_NODE, device_xname(sc->sc_dev),
-	    SYSCTL_DESCR("DS2482 controls"), NULL, 0, NULL, 0, CTL_HW,
-	    CTL_CREATE, CTL_EOL)) != 0)
-		goto out;
-
-	sysctlroot_num = cnode->sysctl_num;
-
-#ifdef DS2482_DEBUG
-	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_INT, "debug",
-	    SYSCTL_DESCR("Debug level"), ds2482_verify_sysctl, 0,
-	    &sc->sc_ds2482debug, 0, CTL_HW, sysctlroot_num, CTL_CREATE,
-	    CTL_EOL)) != 0)
-		goto out;
-#endif
-
-	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
-	    0, CTLTYPE_NODE, "pullup",
-	    SYSCTL_DESCR("Pullup controls"), NULL, 0, NULL, 0, CTL_HW,
-	    sysctlroot_num, CTL_CREATE, CTL_EOL)) != 0)
-		goto out;
-
-	pullup_num = cnode->sysctl_num;
-
-	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "active",
-	    SYSCTL_DESCR("Active pullup"), NULL, 0, &sc->sc_activepullup,
-	    0, CTL_HW, sysctlroot_num, pullup_num, CTL_CREATE, CTL_EOL)) != 0)
-		goto out;
-
-	if ((error = sysctl_createv(&sc->sc_ds2482log, 0, NULL, &cnode,
-	    CTLFLAG_READWRITE, CTLTYPE_BOOL, "strong",
-	    SYSCTL_DESCR("Strong pullup"), NULL, 0, &sc->sc_strongpullup,
-	    0, CTL_HW, sysctlroot_num, pullup_num, CTL_CREATE, CTL_EOL)) != 0)
-		goto out;
 
 	error = iic_acquire_bus(sc->sc_tag, 0);
 	if (error) {
@@ -626,10 +883,19 @@ ds2482_attach(device_t parent, device_t self, void *aux)
 
 	if (!error) {
 		int xerror;
-		xerror = ds2482_cmdr(sc, DS2482_SELECT_CHANNEL,
-		    DS2482_CHANNEL_IO0, NULL, 0);
-		if (!xerror)
-			sc->sc_is_800 = true;
+		xerror = ds2482_cmdr(sc, DS2482_SET_READ_POINTER,
+		    DS2484_REGISTER_PORT_CONFIG, NULL, 0);
+		if (!xerror) {
+			sc->sc_chip_type = DS248X_DS2484;
+			strncpy(chip_name, "DS2483/DS2484", sizeof(chip_name));
+		} else {
+			xerror = ds2482_cmdr(sc, DS2482_SET_READ_POINTER,
+			    DS2482_REGISTER_CHANNEL, NULL, 0);
+			if (!xerror) {
+				sc->sc_chip_type = DS248X_DS2482_800;
+				strncpy(chip_name, "DS2482-800", sizeof(chip_name));
+			}
+		}
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
@@ -639,13 +905,18 @@ ds2482_attach(device_t parent, device_t self, void *aux)
 		goto out;
 	}
 
-	if (sc->sc_is_800) {
+	if (sc->sc_chip_type == DS248X_DS2482_800) {
 		num_channels = DS2482_NUM_INSTANCES;
 	}
 
-	aprint_normal_dev(self, "Maxim DS2482-%s I2C to 1-Wire bridge,"
+	if ((error = ds248x_sysctl_init(sc)) != 0) {
+		aprint_error_dev(self, "Can't setup sysctl tree (%d)\n", error);
+		goto out;
+	}
+
+	aprint_normal_dev(self, "Maxim %s I2C to 1-Wire bridge,"
 	    " Channels available: %d\n",
-	    sc->sc_is_800 ? "800" : "100",
+	    chip_name,
 	    num_channels);
 
 	for (i = 0; i < num_channels; i++) {
@@ -685,14 +956,20 @@ ds2482_generic_action(struct ds2482_instance *sci, uint8_t cmd, uint8_t cmdarg,
     uint8_t *buf, size_t blen)
 {
 	struct ds2482ow_sc *sc = sci->sc;
-	int rv;
+	int rv = 0;
+
+	if (sc->sc_dying)
+		return rv;
 
 	mutex_enter(&sc->sc_mutex);
 	rv = iic_acquire_bus(sc->sc_tag, 0);
 	if (!rv) {
 		rv = ds2482_set_channel(sc, sci->sc_i_channel);
-		if (!rv)
-			rv = ds2482_cmdr(sc, cmd, cmdarg, buf, blen);
+		if (!rv) {
+			rv = ds2484_set_port_configs(sc);
+			if (!rv)
+				rv = ds2482_cmdr(sc, cmd, cmdarg, buf, blen);
+		}
 	}
 	iic_release_bus(sc->sc_tag, 0);
 	mutex_exit(&sc->sc_mutex);
@@ -804,9 +1081,16 @@ ds2482_ow_triplet(void *arg, int dir)
 static int
 ds2482_detach(device_t self, int flags)
 {
-	struct ds2482ow_sc *sc;
+	struct ds2482ow_sc *sc = device_private(self);
+	int error = 0;
 
-	sc = device_private(self);
+	mutex_enter(&sc->sc_mutex);
+	sc->sc_dying = true;
+	mutex_exit(&sc->sc_mutex);
+
+	error = config_detach_children(self, flags);
+	if (error)
+		return error;
 
 	/* Remove the sysctl tree */
 	sysctl_teardown(&sc->sc_ds2482log);
@@ -814,7 +1098,21 @@ ds2482_detach(device_t self, int flags)
 	/* Remove the mutex */
 	mutex_destroy(&sc->sc_mutex);
 
-	return 0;
+	return error;
+}
+
+static int
+ds2482_activate(device_t self, enum devact act)
+{
+	struct ds2482ow_sc *sc = device_private(self);
+
+	switch (act) {
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = true;
+		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
 MODULE(MODULE_CLASS_DRIVER, ds2482ow, "iic,onewire");
@@ -826,23 +1124,27 @@ MODULE(MODULE_CLASS_DRIVER, ds2482ow, "iic,onewire");
 static int
 ds2482ow_modcmd(modcmd_t cmd, void *opaque)
 {
+	int error;
 
+	error = 0;
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 #ifdef _MODULE
-		return config_init_component(cfdriver_ioconf_ds2482ow,
+		error = config_init_component(cfdriver_ioconf_ds2482ow,
 		    cfattach_ioconf_ds2482ow, cfdata_ioconf_ds2482ow);
-#else
-		return 0;
+		if (error)
+			aprint_error("%s: unable to init component\n",
+			    ds2482ow_cd.cd_name);
 #endif
+		break;
 	case MODULE_CMD_FINI:
 #ifdef _MODULE
-		return config_fini_component(cfdriver_ioconf_ds2482ow,
-		      cfattach_ioconf_ds2482ow, cfdata_ioconf_ds2482ow);
-#else
-		return 0;
+		config_fini_component(cfdriver_ioconf_ds2482ow,
+		    cfattach_ioconf_ds2482ow, cfdata_ioconf_ds2482ow);
 #endif
+		break;
 	default:
-		return ENOTTY;
+		error = ENOTTY;
 	}
+	return error;
 }
