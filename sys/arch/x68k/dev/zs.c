@@ -1,4 +1,4 @@
-/*	$NetBSD: zs.c,v 1.49 2026/11/08 15:08:20 thorpej Exp $	*/
+/*	$NetBSD: zs.c,v 1.50 2026/11/11 03:05:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 Minoura Makoto
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2026/11/08 15:08:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.50 2026/11/11 03:05:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,9 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: zs.c,v 1.49 2026/11/08 15:08:20 thorpej Exp $");
 #define ZSCN_SPEED 9600
 #endif
 #include "zstty.h"
-
-
-extern void Debugger(void);
 
 /*
  * Some warts needed by z8530tty.c -
