@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.10 2026/08/15 14:14:50 riastradh Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.11 2026/11/11 21:59:41 andvar Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -514,7 +514,7 @@ mbi_modules(struct multiboot_package *mbp, void *buf)
 	len = 0;
 
 	bim = (struct bi_modulelist_entry *)(btinfo_modulelist + 1);
-	for (i = 0; i < btinfo_modulelist->num; i++) {
+	for (i = 0; i < btinfo_modulelist->num; i++, bim++) {
 		size_t pathlen = strlen(bim->path) + 1;
 		size_t mbt_len = sizeof(*mbt) + pathlen;
 		size_t mbt_len_align = roundup(mbt_len, MULTIBOOT_TAG_ALIGN);
