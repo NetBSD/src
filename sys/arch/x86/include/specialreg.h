@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.224 2026/11/12 05:00:41 andvar Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.225 2026/11/12 05:12:58 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -190,7 +190,7 @@
  * either in the kernel when preempting threads, or on the user's stack
  * when delivering a signal.
  *
- * The kernel can dyanmically allocate larger sizes (on amd64, anyway,
+ * The kernel can dynamically allocate larger sizes (on amd64, anyway,
  * though not currently on i386 or Xen PV).  But if the XSAVE area is
  * expanded so much that it and mcontext_t exceed MINSIGSTKSZ
  * (currently 8192), a userland ABI change and compatibility layer is
@@ -612,7 +612,7 @@
 #define CPUID_SEF_AMX_BF16	__BIT(22) /* AMX bfloat16 */
 #define CPUID_SEF_AVX512_FP16	__BIT(23) /* AVX512 FP16 */
 #define CPUID_SEF_AMX_TILE	__BIT(24) /* Tile architecture */
-#define CPUID_SEF_AMX_INT8	__BIT(25) /* AMX 8bit interger */
+#define CPUID_SEF_AMX_INT8	__BIT(25) /* AMX 8bit integer */
 #define CPUID_SEF_IBRS		__BIT(26) /* IBRS / IBPB Speculation Control */
 #define CPUID_SEF_STIBP		__BIT(27) /* STIBP Speculation Control */
 #define CPUID_SEF_L1D_FLUSH	__BIT(28) /* IA32_FLUSH_CMD MSR */
@@ -759,7 +759,7 @@
 #define CPUID_PES1_XSAVEC	__BIT(1)	/* xsavec & compacted XRSTOR */
 #define CPUID_PES1_XGETBV	__BIT(2)	/* xgetbv with ECX = 1 */
 #define CPUID_PES1_XSAVES	__BIT(3)	/* xsaves/xrstors, IA32_XSS */
-#define CPUID_PES1_XFD		__BIT(4)	/* eXtened Feature Disable */
+#define CPUID_PES1_XFD		__BIT(4)	/* eXtended Feature Disable */
 
 #define CPUID_PES1_FLAGS	"\20"					\
 	"\1XSAVEOPT"	"\2XSAVEC"	"\3XGETBV"	"\4XSAVES"	\
