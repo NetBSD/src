@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.2276 2026/11/11 15:57:11 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.2277 2026/11/12 08:50:49 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -465,11 +465,11 @@ use file2netbsd
 
 Package:	flex
 Version:	2.6.4
-Current Vers:	2.6.4
+Current Vers:	2.6.9
 Maintainer:	Will Estes <wlestes@users.sourceforge.net>
 Archive Site:	https://github.com/westes/flex/releases
 Home Page:	https://github.com/westes/flex
-Date:		2026-01-30
+Date:		2026-11-12
 Mailing List:	http://lists.sourceforge.net/mailman/listinfo/flex-announce
 Responsible:
 License:	BSD-like
