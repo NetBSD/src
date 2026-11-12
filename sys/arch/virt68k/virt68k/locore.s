@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.52 2026/11/12 03:05:02 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.53 2026/11/12 05:39:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -70,9 +70,8 @@ ASGLOBAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	IMMEDIATE		#
 #define	_RELOC(var, ar)			\
-	movl	IMMEDIATE var,ar;	\
+	movl	__IMMEDIATE var,ar;	\
 	addl	%a5,ar
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
