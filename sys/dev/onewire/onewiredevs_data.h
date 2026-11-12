@@ -1,10 +1,10 @@
-/*	$NetBSD: onewiredevs_data.h,v 1.4 2025/01/19 19:39:45 brad Exp $	*/
+/*	$NetBSD: onewiredevs_data.h,v 1.5 2026/11/12 19:40:33 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * Generated from:
- *	NetBSD: onewiredevs,v 1.3 2020/04/14 13:32:26 macallan Exp 
+ *	NetBSD: onewiredevs,v 1.4 2025/01/19 19:39:25 brad Exp 
  */
 
 static const struct onewire_family onewire_famtab[] = {
@@ -21,5 +21,6 @@ static const struct onewire_family onewire_famtab[] = {
 	{ ONEWIRE_FAMILY_DS1822, "Temperature" },
 	{ ONEWIRE_FAMILY_DS18B20, "Temperature" },
 	{ ONEWIRE_FAMILY_DS28E17, "I2C bridge" },
+	{ ONEWIRE_FAMILY_DS2413, "2 port GPIO" },
 	{ 0, NULL }
 };

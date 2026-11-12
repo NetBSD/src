@@ -1,10 +1,10 @@
-/*	$NetBSD: onewiredevs.h,v 1.4 2025/01/19 19:39:45 brad Exp $	*/
+/*	$NetBSD: onewiredevs.h,v 1.5 2026/11/12 19:40:33 brad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * Generated from:
- *	NetBSD: onewiredevs,v 1.3 2020/04/14 13:32:26 macallan Exp 
+ *	NetBSD: onewiredevs,v 1.4 2025/01/19 19:39:25 brad Exp 
  */
 
 #define ONEWIRE_FAMILY_DS1990	0x01
@@ -20,3 +20,4 @@
 #define ONEWIRE_FAMILY_DS1822	0x22
 #define ONEWIRE_FAMILY_DS18B20	0x28
 #define ONEWIRE_FAMILY_DS28E17	0x19
+#define ONEWIRE_FAMILY_DS2413	0x3a
