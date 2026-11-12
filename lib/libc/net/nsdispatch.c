@@ -1,4 +1,4 @@
-/*	$NetBSD: nsdispatch.c,v 1.39 2022/04/19 20:32:15 rillig Exp $	*/
+/*	$NetBSD: nsdispatch.c,v 1.40 2026/11/12 05:16:23 andvar Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: nsdispatch.c,v 1.39 2022/04/19 20:32:15 rillig Exp $");
+__RCSID("$NetBSD: nsdispatch.c,v 1.40 2026/11/12 05:16:23 andvar Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
@@ -286,7 +286,7 @@ _nsmodfree(ns_mod *mod)
 }
 
 /*
- * Load a built-in or dyanamically linked module.  If the `reg_fn'
+ * Load a built-in or dynamically linked module.  If the `reg_fn'
  * argument is non-NULL, assume a built-in module and use `reg_fn'
  * to register it.  Otherwise, search for a dynamic nsswitch module.
  */
