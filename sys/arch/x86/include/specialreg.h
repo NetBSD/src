@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.223 2026/09/29 22:31:52 andvar Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.224 2026/11/12 05:00:41 andvar Exp $	*/
 
 /*
  * Copyright (c) 2014-2020 The NetBSD Foundation, Inc.
@@ -246,7 +246,7 @@
 
 /*
  * Maximum size of XSAVE state that we can handle without ABI changes
- * to userland.  Must match usage in cpu_getmcontext.  Extra 8 is neeed
+ * to userland.  Must match usage in cpu_getmcontext.  Extra 8 is needed
  * on amd64 to have space for return address in 16-byte-aligned stack
  * frame.
  */
