@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.8 2026/07/03 17:35:10 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.9 2026/11/12 04:34:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -51,8 +51,6 @@
 
 #ifdef _KERNEL
 #include <machine/intr.h>
-
-#define	MSGBUFSIZE	0x2000		/* 8KB of space before kernel text */
 
 /*
  * Minimum and maximum sizes of the kernel malloc arena in PAGE_SIZE-sized
