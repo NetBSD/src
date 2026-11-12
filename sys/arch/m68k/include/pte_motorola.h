@@ -1,4 +1,4 @@
-/*	$NetBSD: pte_motorola.h,v 1.12 2026/05/06 04:45:03 thorpej Exp $	*/
+/*	$NetBSD: pte_motorola.h,v 1.13 2026/11/12 16:09:14 thorpej Exp $	*/
 
 /*
  * THIS HEADER FILE EXISTS ONLY TO SUPPORT THE UTAH-DERIVED PMAP MODULE
@@ -126,12 +126,7 @@ typedef u_int	pt_entry_t;	/* page table entry */
  * Kernel virtual address to page table entry and to physical address.
  */
 
-#ifdef cesfic
-#define	kvtopte(va) \
-	(&Sysmap[((unsigned)(va)) >> PAGE_SHIFT])
-#else
 #define	kvtopte(va) \
 	(&Sysmap[((unsigned)(va) - VM_MIN_KERNEL_ADDRESS) >> PAGE_SHIFT])
-#endif
 
 #endif /* !_MACHINE_PTE_H_ */

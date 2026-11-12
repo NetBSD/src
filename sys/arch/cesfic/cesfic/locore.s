@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.74 2026/11/07 13:16:45 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.75 2026/11/12 16:09:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -111,8 +111,8 @@ ASGLOBAL(tmpstk)
 /*
  * Macro to relocate a symbol, used before MMU is enabled.
  */
-#define	_RELOC(var, ar)		\
-	lea	var-KERNBASE,ar;		\
+#define	_RELOC(var, ar)			\
+	movl	__IMMEDIATE var,ar;	\
 	addl	%a5,ar
 
 #define	RELOC(var, ar)		_RELOC(_C_LABEL(var), ar)
@@ -121,11 +121,8 @@ ASGLOBAL(tmpstk)
 /*
  * Initialization
  *
- * A4 contains the address of the end of the symtab
- * A5 contains physical load point from boot
- * VBR contains zero from ROM.  Exceptions will continue to vector
- * through ROM until MMU is turned on at which time they will vector
- * through our table (vectors.s).
+ * We are loaded via OS-9 at some address beyond what OS-9 is using,
+ * and need to relocate ourselves down to our link address.
  */
 
 BSS(lowram,4)
@@ -133,122 +130,88 @@ BSS(esym,4)
 
 	.text
 ASENTRY_NOPROFILE(start)
-	movw	#PSL_HIGHIPL, %sr	| no interrupts
-	movl	#CACHE_OFF, %d0
-	movc	%d0, %cacr		| clear and disable on-chip cache(s)
+	movw	#PSL_HIGHIPL,%sr	| no interrupts
 
-	/* XXX fixed load address */
-	movl	#0x20100000, %a5
+	movl	#CACHE_OFF,%d0
+	movc	%d0,%cacr		| clear and disable on-chip cache(s)
 
-	movl	#0x20000000, %a0
-	RELOC(edata, %a1)
-1:
-	movl	%a5@+, %a0@+
-	cmpl	%a5, %a1
-	bne	1b
+	/* Determine where where we were loaded. */
+	lea	%pc@(_ASM_LABEL(start)),%a5
 
-	movl	#0x20000000, %a5
+	movl	#_ASM_LABEL(start),%a1	| destination address = link addr
+	addl	#0x20000000,%a0		| (phys)
+	movl	#_C_LABEL(edata),%a1	| destination limit
+	addl	#0x20000000,%a1		| (phys)
+
+	/* Copy text+data to run-time location. */
+1:	movl	%a5@+,%a0@+
+	cmpl	%a0,%a1			| dest == limit?
+	bne	1b			| no, copy more
+
+	/* Now jump into the relocated kernel. */
+	movl	#_ASM_LABEL(Lrelocdone),%a0
+	addl	#0x20000000,%a0		| (phys)
+	jmp	%a0@
+Lrelocdone:
+	/* %a5 == start of RAM == relocation offset until MMU is enabled. */
+	movl	#0x20000000,%a5
+
+	/*
+	 * NOTE: %a5 cannot be used until after the MMU is enabled; it
+	 * is used by the RELOC() macro.
+	 */
 
 	ASRELOC(tmpstk, %a0)
 	INIT_KSP(%a0)			| give ourselves a temporary stack
 
-	RELOC(edata, %a0)
+	RELOC(edata, %a0)		| clear out BSS
 	RELOC(end, %a1)
-2:
-	clrb	%a0@+
+1:	clrb	%a0@+
 	cmpl	%a0, %a1
-	bne	2b
+	bne	1b
 
 	RELOC(esym, %a0)
-#if 0
-	movl	%a4, %a0@		| store end of symbol table
-#else
-	clrl	%a0@			| no symbol table, yet
-#endif
+	clrl	%a0@			| no symbol table from OS-9 loader
 
 	RELOC(lowram, %a0)
 	movl	%a5, %a0@		| store start of physical memory
 
-#if 0
-	RELOC(boothowto, %a0)		| save reboot flags
-	movl	%d7, %a0@
-	RELOC(bootdev, %a0)		|   and boot device
-	movl	%d6, %a0@
-#endif
-
 	/*
-	 * All data registers are now free.  All address registers
-	 * except a5 are free.  a5 is used by the RELOC() macro,
-	 * and cannot be used until after the MMU is enabled.
+	 * All FIC8234 boards have 68040s; don't bother probing
+	 * for the CPU type.  The FPU will be checked later.
 	 */
-
-/* determine our CPU/MMU combo - check for all regardless of kernel config */
-	movl	#0x200,%d0		| data freeze bit
-	movc	%d0,%cacr		|   only exists on 68030
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lnot68030		| yes, we have 68020/68040
-	RELOC(mmutype, %a0)		| no, we have 68030
-	movl	#MMU_68030,%a0@		| set to reflect 68030 PMMU
-	RELOC(cputype, %a0)
-	movl	#CPU_68030,%a0@		| and 68030 CPU
-	jra	Lstart1
-Lnot68030:
-	bset	#31,%d0			| data cache enable bit
-	movc	%d0,%cacr		|   only exists on 68040
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	beq	Lis68020		| yes, we have 68020
-	moveq	#0,%d0			| now turn it back off
-	movec	%d0,%cacr		|   before we access any data
-	RELOC(mmutype, %a0)
-	movl	#MMU_68040,%a0@		| with a 68040 MMU
-	RELOC(cputype, %a0)
-	movl	#CPU_68040,%a0@		| and a 68040 CPU
-	RELOC(fputype, %a0)
-	movl	#FPU_68040,%a0@		| ...and FPU
-	jra	Lstart1
-Lis68020:
-	/* impossible */
-
-Lstart1:
 
 /* initialize memory size (for pmap_bootstrap1) */
 	movl	0x5c00ac00, %d0
 	andb	#0x60, %d0
 	jne	Lnot8M
-	movl	#0x20800000, %d1	| memory end, 8M
+	movl	#0x00800000, %d1	| memory size, 8M
 	jra	Lmemok
 Lnot8M:
 	cmpb	#0x20, %d0
 	jne	Lunkmem
-	movl	#0x22000000, %d1	| memory end, 32M
+	movl	#0x02000000, %d1	| memory size, 32M
 	jra	Lmemok
 Lunkmem:
 	/* ??? */
-	movl	#0x20400000, %d1	| memory end, assume at least 4M
+	movl	#0x00400000, %d1	| assume at least 4M
 	
 Lmemok:
 	moveq	#PGSHIFT,%d2
 	lsrl	%d2,%d1			| convert to page (click) number
-	movl	%a5,%d0			| lowram value from ROM via boot
-	lsrl	%d2,%d0			| convert to page number
-	subl	%d0,%d1			| compute amount of RAM present
-	RELOC(physmem, %a0)
-	movl	%d1,%a0@		| and physmem
-/* configure kernel and lwp0 VA space so we can get going */
-	.globl	_Sysseg_pa, _pmap_bootstrap, _avail_start
+	RELOC(physmem, %a0)		| physmem = %d1
+	movl	%d1,%a0@
+
 #if NKSYMS || defined(DDB) || defined(MODULAR)
 	RELOC(esym,%a0)			| end of static kernel test/data/syms
 	movl	%a0@,%a4
 	tstl	%a4
-	jne	Lstart2
+	jne	1f
 #endif
 	movl	#_C_LABEL(end),%a4	| end of static kernel text/data
-Lstart2:
+1:
 	addl	%a5,%a4			| convert to PA
-	subl	#KERNBASE, %a4
-	pea	%a5@			| firstpa
+	pea	%a5@			| reloff
 	pea	%a4@			| nextpa
 	RELOC(pmap_bootstrap1,%a0)
 	jbsr	%a0@			| pmap_bootstrap1(firstpa, nextpa)
@@ -265,86 +228,50 @@ Lstart2:
 
 /*
  * Prepare to enable MMU.
+ * Since the kernel is not mapped logical == physical, we must ensure
+ * that when the MMU is turned on, all prefetched addresses (including
+ * the PC) are valid.  In order to guarantee that, we use the transparent
+ * translation registers (which provide VA == PA mappings) and just
+ * turn on the MMU, then jump from the VA == PA address (at 0x20XXXXXX)
+ * to the actual kernel virtual address (at 0x00XXXXXX) code via a far
+ * jump instruction so that we can defeat the prefetch.
+ *
+ * The TT register values are pre-initialized in the mmu_tt40[]
+ * array (see genassym.cf) and loaded from there before the MMU is
+ * turned on.
  */
-	RELOC(Sysseg_pa, %a0)		| system segment table addr
-	movl	%a0@,%d1		| read value (a PA)
-	subl	#KERNBASE, %d1
-
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu1		| no, skip
-	.long	0x4e7b1807		| movc d1,srp
-	jra	Lstploaddone
-Lmotommu1:
-#ifdef M68030
-	RELOC(protorp, %a0)
-	movl	%d1,%a0@(4)		| segtable address
-	pmove	%a0@,%srp		| load the supervisor root pointer
-#endif /* M68030 */
-Lstploaddone:
-
-	RELOC(mmutype, %a0)
-	cmpl	#MMU_68040,%a0@		| 68040?
-	jne	Lmotommu2		| no, skip
-
-	movel #0x2000c000, %d0		| double map RAM
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0006		| movc d0,dtt0
-	moveq	#0, %d0			| ensure TT regs are disabled
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0007		| movc d0,dtt1
-
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-
-	movl	#MMU40_TCR_BITS, %d0
-	.long	0x4e7b0003		| movc d0,tc
-	movl	#0x80008000, %d0
-	movc	%d0, %cacr		| turn on both caches
-
-	jmp	Lenab1:l		| avoid pc-relative
-Lmotommu2:
-	/* XXX do TT here */
-	pflusha
-	RELOC(prototc, %a2)
-	movl	#MMU51_TCR_BITS,%a2@	| value to load TC with
-	pmove	%a2@,%tc		| load it
-	jmp	Lenab1
+#include <m68k/m68k/mmu_enable.s>
 
 /*
  * Should be running mapped from this point on
  */
-Lenab1:
-	.word	0xf4d8			| cinva bc
-	.word	0xf518			| pflusha
-	nop
-	nop
-	nop
-	nop
-	nop
-	moveq	#0,%d0			| ensure TT regs are disabled
-	.long	0x4e7b0004		| movc d0,itt0
-	.long	0x4e7b0005		| movc d0,itt1
-	.long	0x4e7b0006		| movc d0,dtt0
-	.long	0x4e7b0007		| movc d0,dtt1
-
+Lmmuenabled:
+/*
+ * Now that the MMU is enabled, we need to clear out the TT values
+ * from mmu_tt40[] that we don't want (so no other code gets confused
+ * and thinks we're using them) and disable those TT registers.
+ */
 	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
 	INIT_KSP(%a0)
+
+	moveq	#0,%d0
+
+	lea	_C_LABEL(mmu_tt40),%a0	| zap the 4 '040 TT slots
+	movl	%d0,%a0@+
+	movl	%d0,%a0@+
+	movl	%d0,%a0@+
+	movl	%d0,%a0@+
+
+	/* disable '040 TTs */
+	pea	_C_LABEL(mmu_tt40)
+	jbsr	_C_LABEL(mmu_load_tt40)
+
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
 	jbsr	_C_LABEL(pmap_bootstrap2)
 	INIT_KSP(%a0)			| now running on lwp0's stack
 
-/* flush TLB and turn on caches */
-	jbsr	_C_LABEL(_TBIA)		| invalidate TLB
-	cmpl	#MMU_68040,_C_LABEL(mmutype)	| 68040?
-	jeq	Lnocache0		| yes, cache already on
-	movl	#CACHE_ON,%d0
-	movc	%d0,%cacr		| clear cache(s)
-Lnocache0:
-
-/* Final setup for call to main(). */
 	movl	%d7,%sp@-		| push nextpa saved above
 	jbsr	_C_LABEL(machine_init)	| additional pre-main initialization
 	addql	#4,%sp

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.27 2026/04/20 09:47:45 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.28 2026/11/12 16:09:14 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -34,8 +34,11 @@
 include <sys/device.h>
 include <sys/intr.h>
 
-# VM parameters
-define	KERNBASE		KERNBASE
+# For mmu_subr.s
+# These values are used only during initial bootstrap; the TT registers
+# are subsequently disabled.
+define	MACHINE_ITT0		CESFIC_TT40_KERN
+define	MACHINE_DTT0		CESFIC_TT40_KERN
 
 # interrupt/fault metering
 define	CLOCK_INTRCNT		((sizeof(struct evcnt)*6) + offsetof(struct evcnt, ev_count32))

@@ -1,10 +1,10 @@
-$NetBSD: README,v 1.3 2005/12/11 12:17:04 christos Exp $
+$NetBSD: README,v 1.4 2026/11/12 16:09:14 thorpej Exp $
 
 This is a port of NetBSD to the FIC8234 VME processor board, made by the
 swiss company CES (Geneve). These boards are (or have been) popular in
 high energy physics data acquisition (think of CERN!). See
 http://www.ces.ch/Products/CPUs/FIC8234/FIC8234.html
-for some technical data.
+for some technical data (you will have to use the Way Back Machine).
 
 The highlights:
 - MC68040 processor at 25 MHz (optional dual-processor)
@@ -20,8 +20,15 @@ It is good enough for multiuser, self-hosting etc. however.
 
 To start it:
 - make OS image by "objcopy --output-target=binary netbsd <imagename>"
-- load image to physical address 0x20100000 (RAM start + 1M)
-- jump to 0x20100400
+- load image to physical address 0x20200000 (RAM start + 2M)
+- jump to 0x20200000
 
-For questions and contributions, contact Matthias Drochner
-(drochner@NetBSD.org).
+The kernel will first relocate itself down into low RAM before bootstrapping
+virtual memory.  Note that the kernel can determine where it's located on
+its own, and must be loaded beyond where it will copy itself to (cannot
+overlap), so if you need to load it beyond +2M, that's also fine!
+
+Sadly, the person who ported NetBSD to the FIC8234, Matthias Drochner,
+is no longer with us.  If you have a FIC8234 and are interesting in
+helping to keep this this port of NetBSD going, please reach out to
+Jason Thorpe (thorpej@NetBSD.org).

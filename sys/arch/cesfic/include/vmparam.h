@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.32 2026/05/03 19:10:40 thorpej Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.33 2026/11/12 16:09:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -40,12 +40,6 @@
 
 #ifndef _MACHINE_VMPARAM_H_
 #define	_MACHINE_VMPARAM_H_
-
-#if defined(_KERNEL) && !defined(_MODULE)
-
-#define VM_MIN_KERNEL_ADDRESS	((vaddr_t)0x00002000)	/* XXX */
-
-#endif /* _KERNEL && !_MODULE */
 
 #include <m68k/vmparam.h>
 
