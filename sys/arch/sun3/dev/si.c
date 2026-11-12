@@ -1,4 +1,4 @@
-/*	$NetBSD: si.c,v 1.66 2026/11/10 17:08:40 thorpej Exp $	*/
+/*	$NetBSD: si.c,v 1.67 2026/11/12 14:00:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.66 2026/11/10 17:08:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si.c,v 1.67 2026/11/12 14:00:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -233,7 +233,7 @@ si_intr(void *arg)
 		if (!claimed) {
 			printf("%s: spurious from SBC\n", __func__);
 			if (si_debug & 4)
-				Debugger();	/* XXX */
+				cpu_Debugger();	/* XXX */
 		}
 #endif
 		/* Yes, we DID cause this interrupt. */

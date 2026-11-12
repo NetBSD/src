@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.154 2026/04/28 03:29:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.155 2026/11/12 14:00:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.154 2026/04/28 03:29:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.155 2026/11/12 14:00:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -159,7 +159,7 @@ consinit(void)
 		kgdb_connect(1);
 #else	/* KGDB */
 		/* Either DDB or no debugger (just PROM). */
-		Debugger();
+		cpu_Debugger();
 #endif	/* KGDB */
 	}
 }

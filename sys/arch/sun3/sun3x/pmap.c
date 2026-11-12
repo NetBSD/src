@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.131 2026/07/06 16:08:13 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.132 2026/11/12 14:00:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.131 2026/07/06 16:08:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.132 2026/11/12 14:00:31 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1981,7 +1981,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (c_pte->attr.raw & ~(MMU_SHORT_PTE_M |
 		MMU_SHORT_PTE_USED | MMU_SHORT_PTE_WIRED)) {
 		printf("pmap_enter: junk left in PTE at %p\n", c_pte);
-		Debugger();
+		cpu_Debugger();
 	}
 #endif
 	c_pte->attr.raw |= ((u_long) pa | MMU_DT_PAGE);
@@ -2576,7 +2576,7 @@ pmap_release(pmap_t pmap)
 #ifdef	PMAP_DEBUG /* XXX - todo! */
 		/* XXX - Now complain... */
 		printf("pmap_release: still have table\n");
-		Debugger();
+		cpu_Debugger();
 #endif
 		free_a_table(pmap->pm_a_tmgr, true);
 		pmap->pm_a_tmgr = NULL;

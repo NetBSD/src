@@ -1,4 +1,4 @@
-/*	$NetBSD: si_obio.c,v 1.39 2024/12/20 23:52:00 tsutsui Exp $	*/
+/*	$NetBSD: si_obio.c,v 1.40 2026/11/12 14:00:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  ****************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.39 2024/12/20 23:52:00 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: si_obio.c,v 1.40 2026/11/12 14:00:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,7 +333,7 @@ si_obio_dma_setup(struct ncr5380_softc *ncr_sc)
 	if (si->fifo_count != xlen) {
 		printf("%s: fifo_count=0x%x, xlen=0x%x\n",
 		    __func__, si->fifo_count, xlen);
-		Debugger();
+		cpu_Debugger();
 	}
 #endif
 
