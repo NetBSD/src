@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.84 2026/11/12 03:00:59 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.85 2026/11/12 03:10:25 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.84 2026/11/12 03:00:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.85 2026/11/12 03:10:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4576,6 +4576,12 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
  * context.
  */
 __CTASSERT(PAGE_SIZE != 0);
+
+/*
+ * This serves to provide assurance that other bits of m68k code can
+ * assume that USPACE is 8KB in size.
+ */
+__CTASSERT(USPACE == 8192);
 
 /*
  * pmap_bootstrap2:
