@@ -1,4 +1,4 @@
-$NetBSD: onewiredevs,v 1.4 2025/01/19 19:39:25 brad Exp $
+$NetBSD: onewiredevs,v 1.5 2026/11/12 19:40:12 brad Exp $
 /* $OpenBSD: onewiredevs,v 1.1 2006/03/04 16:27:03 grange Exp $ */
 
 /*
@@ -39,3 +39,4 @@ family	DS2430		0x14	256bit EEPROM
 family	DS1822		0x22	Temperature
 family	DS18B20		0x28	Temperature
 family	DS28E17		0x19	I2C bridge
+family	DS2413		0x3a	2 port GPIO
