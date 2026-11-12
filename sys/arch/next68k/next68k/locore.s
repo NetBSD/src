@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.115 2026/11/07 13:16:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.116 2026/11/12 15:44:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -283,11 +283,11 @@ Lstart3:
 
 /*
  * Prepare to enable MMU.
- * Since the kernel is not mapped logical == physical we must insure
+ * Since the kernel is not mapped logical == physical we must ensure
  * that when the MMU is turned on, all prefetched addresses (including
  * the PC) are valid.  In order guarantee that, we use the transparent
  * translation registers (which provide PA == VA mappings) and just
- * turns on the MMU, then jump from the VA == PA address (at 0x40XXXXXX)
+ * turn on the MMU, then jump from the VA == PA address (at 0x40XXXXXX)
  * to the actual kernel virtual address (at 0x00XXXXXX) code via a far
  * jump instruction so that we can defeat the prefetch.
  *
@@ -334,8 +334,6 @@ Lmmuenabled:
 	jbsr	_C_LABEL(mmu_load_tt30)
 #endif
 2:
-	lea	_ASM_LABEL(tmpstk),%a0	| re-load the temporary stack
-	INIT_KSP(%a0)
 	jbsr	_C_LABEL(vec_init)	| initialize vector table
 
 	/* phase 2 of pmap setup, returns lwp0 SP in %a0 */
