@@ -799,6 +799,7 @@ wide_char(const char *p, int all)
 	if (n < 0) {
 		warn("Arg %d: %s", ARGNUM, p);
 		rval = 1;
+		return 0;
 	} else if (all && (size_t)n != len) {
 		warnx("Arg %d: %s: not completely converted",
 		    ARGNUM, p);
