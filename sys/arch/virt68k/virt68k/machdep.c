@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.45 2026/07/14 13:37:21 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.46 2026/11/12 03:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.45 2026/07/14 13:37:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2026/11/12 03:05:02 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -106,8 +106,6 @@ machine_init(paddr_t nextpa)
 {
 	struct bi_record *bi __unused;
 
-	extern paddr_t msgbufpa;
-
 	/*
 	 * Find the console in the bootinfo and attach it.
 	 */
@@ -130,14 +128,6 @@ machine_init(paddr_t nextpa)
 	 * Just use the default pager_map_size for now.  We may decide
 	 * to make it larger for large memory configs.
 	 */
-
-	/*
-	 * We've arranged the kernel to be linked at >= 0x2000,
-	 * so we can steal the first 8KB of RAM for the kernel
-	 * message buffer.
-	 */
-	KASSERT(MSGBUFSIZE <= 8192);
-	msgbufpa = 0;
 
 	machine_init_common(nextpa);
 

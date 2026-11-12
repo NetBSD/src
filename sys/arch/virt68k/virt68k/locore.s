@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.51 2026/11/07 13:16:47 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.52 2026/11/12 03:05:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -53,13 +53,8 @@
 #include "ksyms.h"
 
 /*
- * Memory starts at 0x0000.0000, and we have linked the kernel
- * at 0x0000.2000 to ensure that VA==0 is unmapped once we turn
- * on the MMU.  We arrive here running VA==PA and with the MMU
- * disabled.
- *
- * This first 8KB of RAM at PA==0 won't go to waste, though; we
- * will use it for the kernel message buffer.
+ * Memory starts at 0x0000.0000.  We arrive here running VA==PA and
+ * with the MMU disabled.
  */
 
 /*
@@ -128,6 +123,16 @@ ASENTRY_NOPROFILE(start)
 	lsrl	#2,%d0
 1:	clrl	%a0@+
 	dbra	%d0,1b
+
+	/*
+	 * We've linked the kernel at 0x2000 so that the first
+	 * virtual page can remain unmapped.  We use those pages
+	 * of RAM for LWP0's u-area.
+	 */
+	RELOC(kernel_text,%a1)		| %a1 = phys address of kernel_text
+	subl	#USPACE,%a1		| %a1 -= USPACE
+	RELOC(lwp0upa,%a0)
+	movl	%a1,%a0@
 
 	/*
 	 * Qemu does not pass us the symbols, so leave esym alone.
