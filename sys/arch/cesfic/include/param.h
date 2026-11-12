@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.17 2026/07/03 17:35:09 thorpej Exp $	*/
+/*	$NetBSD: param.h,v 1.18 2026/11/12 04:34:56 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -44,18 +44,6 @@
  */
 #define	_MACHINE	cesfic
 #define	MACHINE		"cesfic"
-
-/*
- * Round p (pointer or byte index) up to a correctly-aligned value for all
- * data types (int, long, ...).   The result is u_int and must be cast to
- * any desired pointer type.
- *
- * ALIGNED_POINTER is a boolean macro that checks whether an address
- * is valid to fetch data elements of type t from on this architecture.
- * This does not reflect the optimal alignment, just the possibility
- * (within reasonable limits). 
- *
- */
 
 #define	PGSHIFT		12		/* LOG2(NBPG) */
 
