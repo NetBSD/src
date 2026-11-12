@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.83 2026/11/11 15:32:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.84 2026/11/12 03:00:59 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -219,7 +219,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.83 2026/11/11 15:32:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.84 2026/11/12 03:00:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3980,6 +3980,7 @@ __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
  */
 
 static vaddr_t	lwp0uarea;
+       paddr_t	lwp0upa = (paddr_t)-1;
        char *	vmmap;
 
 /* XXX Doesn't belong here. */
@@ -4014,7 +4015,7 @@ extern void *	msgbufaddr;
 paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 {
-	paddr_t lwp0upa, stnext_endpa, stnext_pa;
+	paddr_t stnext_endpa, stnext_pa;
 	paddr_t pa, kernimg_endpa, kern_lev1pa;
 	vaddr_t va, nextva, kern_lev1va;
 	pt_entry_t *pte, *epte;
@@ -4144,11 +4145,15 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	kernimg_endpa = nextpa;
 
 	/*
-	 * lwp0 u-area.  We allocate it here, and finish setting it
-	 * up in pmap_bootstrap2().
+	 * lwp0 u-area.  If the caller hasn't already told us where
+	 * to put it (heh), then allocate it here.
+	 *
+	 * In either case, we finish setting it up in pmap_bootstrap2().
 	 */
-	lwp0upa = nextpa;
-	nextpa += USPACE;
+	if (RELOC(lwp0upa, paddr_t) == (paddr_t)-1) {
+		RELOC(lwp0upa, paddr_t) = nextpa;
+		nextpa += USPACE;
+	}
 	RELOC(lwp0uarea, vaddr_t) = nextva;
 	nextva += USPACE;
 
@@ -4385,7 +4390,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 	}
 
 	/* lwp0 u-area - read-write. */
-	pa = lwp0upa;
+	pa = RELOC(lwp0upa, paddr_t);
 	pte = VA_PTE_BASE(RELOC(lwp0uarea, vaddr_t), var);
 	epte = VA_PTE_BASE(RELOC(lwp0uarea, vaddr_t) + USPACE, var);
 	while (pte < epte) {
