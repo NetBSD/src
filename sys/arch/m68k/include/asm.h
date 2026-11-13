@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.39 2026/11/07 13:16:46 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.40 2026/11/13 19:11:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -110,13 +110,6 @@
 #define _PROF_PROLOG
 #endif
 
-/*
- * Macro for setting the initial kernel stack pointer.  Ensures tht
- * the stack frame chain is terminated by also initializing the
- * frame pointer to 0.
- */
-#define	INIT_KSP(reg)		movl reg,%sp ; movl __IMMEDIATE 0,%a6
-
 #define ENTRY(name)		_ENTRY(_C_LABEL(name)) _PROF_PROLOG
 #define	ASENTRY(name)		_ENTRY(_ASM_LABEL(name)) _PROF_PROLOG
 
@@ -197,6 +190,14 @@
 #endif
 
 #ifdef _KERNEL
+
+/*
+ * Macro for setting the initial kernel stack pointer.  Ensures tht
+ * the stack frame chain is terminated by also initializing the
+ * frame pointer to 0.
+ */
+#define	INIT_KSP(reg)		movl reg,%sp ; movl __IMMEDIATE 0,%a6
+
 /*
  * Shorthand for calling panic().
  * Note the side-effect: it uses up the 9: label, so be careful!
@@ -224,6 +225,10 @@
 	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
 	addx.l	%d0,%d1;					\
 	move.l	%d1,(%a1)
+
+/* Increment/decrement the interrupt depth. */
+#define	INTR_DEPTH_INCR		addql	__IMMEDIATE 1,_C_LABEL(intr_depth)
+#define	INTR_DEPTH_DECR		subql	__IMMEDIATE 1,_C_LABEL(intr_depth)
 
 #endif /* _KERNEL */
 
