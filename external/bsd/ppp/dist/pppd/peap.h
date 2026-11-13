@@ -74,6 +74,7 @@
 #define	PEAP_L_FLAG_SET			0x80
 #define	PEAP_LM_FLAG_SET		0xC0
 #define	PEAP_M_FLAG_SET			0x40
+#define	PEAP_T_FLAG_SET			0x10
 #define	PEAP_NO_FLAGS			0x00
 
 #define	EAP_TLS_KEY_LEN			0x40

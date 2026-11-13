@@ -1,5 +1,5 @@
 /*
- * ppp-des.c - PPP/DES implementation for MS-CHAP and EAP SRP-SHA1
+ * ppp-des.c - PPP/DES implementation for MS-CHAP
  *
  * Extracted from chap_ms.c by James Carlson.
  * Added abstraction via PPP_Digest* callbacks by Eivind Næss

@@ -277,7 +277,7 @@ usage(void)
 	    "   -t timeout     -- Initial timeout for discovery packets in seconds\n"
 	    "   -a attempts    -- Number of discovery attempts\n"
 	    "   -V             -- Print version and exit.\n"
-	    "   -Q             -- Quit Mode: Do not print access concentrator names\n"
+	    "   -Q             -- Quiet Mode: Do not print access concentrator names\n"
 	    "   -S name        -- Set desired service name.\n"
 	    "   -C name        -- Set desired access concentrator name.\n"
 	    "   -U             -- Use Host-Unique to allow multiple PPPoE sessions.\n"

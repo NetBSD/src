@@ -98,6 +98,20 @@ test_parent_notdir() {
 }
 
 int
+test_explicit_bzero()
+{
+    unsigned char buf[] = { 1, 2, 3, 4 };
+    size_t i;
+
+    ppp_explicit_bzero(buf, sizeof(buf));
+    for (i = 0; i < sizeof(buf); ++i)
+	if (buf[i] != 0)
+	    return -1;
+
+    return 0;
+}
+
+int
 main()
 {
     char *base_dir = strdup("/tmp/ppp_utils_utest.XXXXXX");
@@ -130,6 +144,11 @@ main()
 
     if (test_parent_notdir()) {
 	printf("Creating over a file appeared to work?\n");
+	failure++;
+    }
+
+    if (test_explicit_bzero()) {
+	printf("Could not securely erase buffer\n");
 	failure++;
     }
 

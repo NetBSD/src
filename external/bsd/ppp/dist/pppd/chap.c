@@ -62,13 +62,16 @@ int chapms_strip_domain = 0;
  */
 static struct option chap_option_list[] = {
 	{ "chap-restart", o_int, &chap_server_timeout_time,
-	  "Set timeout for CHAP (as server)", OPT_PRIO },
+	  "Set timeout for CHAP (as server)",
+	  OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
 	{ "chap-max-challenge", o_int, &chap_max_transmits,
 	  "Set max #xmits for challenge", OPT_PRIO },
 	{ "chap-interval", o_int, &chap_rechallenge_time,
-	  "Set interval for rechallenge", OPT_PRIO },
+	  "Set interval for rechallenge",
+	  OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
 	{ "chap-timeout", o_int, &chap_client_timeout_time,
-	  "Set timeout for CHAP (as client)", OPT_PRIO },
+	  "Set timeout for CHAP (as client)",
+	  OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
 	{ "chapms-strip-domain", o_bool, &chapms_strip_domain,
 	  "Strip the domain prefix before the Username", 1 },
 	{ NULL }
@@ -304,7 +307,7 @@ chap_client_timeout(void *arg)
 static void
 chap_generate_challenge(struct chap_server_state *ss)
 {
-	int clen = 1, nlen, len;
+	size_t clen = 1, nlen, len;
 	unsigned char *p;
 
 	p = ss->challenge;

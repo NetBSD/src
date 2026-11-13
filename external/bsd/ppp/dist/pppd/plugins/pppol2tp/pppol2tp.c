@@ -38,7 +38,6 @@
 
 #include <linux/version.h>
 #include <linux/sockios.h>
-#include <linux/ppp-ioctl.h>
 
 #ifndef aligned_u64
 /* should be defined in sys/types.h */
@@ -50,6 +49,8 @@
 #include <linux/ppp_defs.h>
 #include <linux/if_pppox.h>
 #include <linux/if_pppol2tp.h>
+
+#include <linux/ppp-ioctl.h>
 
 #include <pppd/pppd.h>
 #include <pppd/options.h>
@@ -356,7 +357,7 @@ static void pppol2tp_lcp_snoop(unsigned char *buf, int len, int incoming)
 	len -= 2;
 
 	/* Unreasonably short frame?? */
-	if (len <= 0) return;
+	if (len < 4) return;
 
 	/* Look for Configure-Ack or Configure-Reject code */
 	if (buf[0] != CONFACK && buf[0] != CONFREJ) return;
@@ -372,7 +373,7 @@ static void pppol2tp_lcp_snoop(unsigned char *buf, int len, int incoming)
 	len = lcp_pkt_len - 4;
 	buf += 4;
 
-	while (len > 0) {
+	while (len >= 2) {
 		/* Pull off an option */
 		opt = buf[0];
 		opt_len = buf[1];

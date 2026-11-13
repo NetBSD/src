@@ -1,5 +1,5 @@
 /*
- * pppcrypt.c - PPP/DES linkage for MS-CHAP and EAP SRP-SHA1
+ * pppcrypt.c - PPP/DES linkage for MS-CHAP
  *
  * Extracted from chap_ms.c by James Carlson.
  * Updated to better reflect RFC2759 by Eivind Naess

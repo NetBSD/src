@@ -195,9 +195,9 @@ parsePADOTags(UINT16_t type, UINT16_t len, unsigned char *data,
 	    ptr += sprintf(ptr, "Relay-ID:");
 	    /* Print first 20 bytes of relay ID */
 	    for (i=0; i<len && i < 20; i++) {
-		ptr += printf(ptr, " %02x", (unsigned) data[i]);
+		ptr += sprintf(ptr, " %02x", (unsigned) data[i]);
 	    }
-	    if (i < len) ptr += printf(ptr, "...");
+	    if (i < len) ptr += sprintf(ptr, "...");
 	    info(buffer);
 	}
 	if (conn->discoveryState != STATE_RECEIVED_PADO) {
