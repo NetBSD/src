@@ -1,4 +1,4 @@
-#	$NetBSD: std.cesfic,v 1.7 2026/11/13 01:23:13 thorpej Exp $
+#	$NetBSD: std.cesfic,v 1.8 2026/11/13 01:23:43 thorpej Exp $
 #
 # Options/devices that all cesfics should have
 #
@@ -11,4 +11,4 @@ options 	M68040		# All FIC8234 have a 68040
 
 options 	EXEC_AOUT	# support for exec'ing a.out
 
-#options 	__HAVE_NEW_PMAP_68K
+options 	__HAVE_NEW_PMAP_68K
