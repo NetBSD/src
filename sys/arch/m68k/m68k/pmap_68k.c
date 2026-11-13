@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.89 2026/11/13 16:07:30 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.90 2026/11/13 16:53:17 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.89 2026/11/13 16:07:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.90 2026/11/13 16:53:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -938,7 +938,7 @@ pte_store(volatile pt_entry_t *ptep, pt_entry_t npte)
  * AND.L and OR.L don't use the RMC signal, so they aren't subject
  * to the same constraints.
  */
-static inline bool
+static inline pt_entry_t
 pte_update(volatile pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 {
 	/*
@@ -949,7 +949,7 @@ pte_update(volatile pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 	 * XXX Should turn this into a single instruction when possible
 	 * XXX to deduce at compile time.
 	 */
-	return atomic_cas_uint(ptep, opte, npte) == opte;
+	return atomic_cas_uint(ptep, opte, npte);
 }
 
 #if MMU_CONFIG_HP_CLASS
@@ -1853,12 +1853,13 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 		 * extremely uncommon in that scenario.
 		 */
 		for (pv = newpv->pv_next; pv != NULL; pv = pv->pv_next) {
+			pt_entry_t actual;
 			pmap_evcnt(pv_enter_ci_multi);
 			ptep = pmap_pv_pte(pv);
-			for (;;) {
-				opte = pte_load(ptep);
+			for (opte = pte_load(ptep);; opte = actual) {
 				npte = pte_set_ci(opte);
-				if (pte_update(ptep, opte, npte)) {
+				actual = pte_update(ptep, opte, npte);
+				if (__predict_true(actual == opte)) {
 					if (active_pmap(pv->pv_pmap)) {
 						TBIS(PV_VA(pv));
 					}
@@ -2042,11 +2043,13 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 		KASSERT(pv == NULL);
 		VM_MDPAGE_CLR_CI(pg);
 		for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
+			pt_entry_t actual;
 			ptep = pmap_pv_pte(pv);
-			for (;;) {
+			for (opte = pte_load(ptep);; opte = actual) {
 				opte = pte_load(ptep);
 				npte = pte_clr_ci(opte);
-				if (pte_update(ptep, opte, npte)) {
+				actual = pte_update(ptep, opte, npte);
+				if (__predict_true(actual == opte)) {
 					if (active_pmap(pv->pv_pmap)) {
 						TBIS(PV_VA(pv));
 					}
@@ -2636,8 +2639,9 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 		 * already have the correct protection.
 		 */
 		for (; sva < nextseg; ptep++, sva += PAGE_SIZE) {
- try_again:
+			pt_entry_t actual;
 			opte = pte_load(ptep);
+ try_again:
 			if (! pte_valid_p(opte)) {
 				continue;
 			}
@@ -2656,8 +2660,10 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 				ICPP(pa);
 			}
 #endif
-			if (! pte_update(ptep, opte, npte)) {
+			actual = pte_update(ptep, opte, npte);
+			if (__predict_false(actual != opte)) {
 				/* Lost race updating PTE; try again. */
+				opte = actual;
 				goto try_again;
 			}
 			if (need_tflush) {
@@ -3051,15 +3057,14 @@ void
 pmap_unwire(pmap_t pmap, vaddr_t va)
 {
 	struct pmap_table *pt;
-	pt_entry_t opte, npte, *ptep;
+	pt_entry_t actual, opte, npte, *ptep;
 
 	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 	ptep = pmap_pte_lookup(pmap, va, &pt);
 	KASSERT(ptep != NULL);
 
-	for (;;) {
-		opte = pte_load(ptep);
+	for (opte = pte_load(ptep);; opte = actual) {
 		KASSERT(pte_valid_p(opte));
 
 		/*
@@ -3072,7 +3077,8 @@ pmap_unwire(pmap_t pmap, vaddr_t va)
 			break;
 		}
 		npte = opte & ~PTE_WIRED;
-		if (pte_update(ptep, opte, npte)) {
+		actual = pte_update(ptep, opte, npte);
+		if (__predict_true(actual == opte)) {
 			pmap_stat_update(pmap, wired_count, -1);
 			break;
 		}
@@ -3399,10 +3405,10 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	 * not clearing.
 	 */
 	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
+		pt_entry_t actual;
 		pmap_busy(pv->pv_pmap);
-		for (;;) {
-			ptep = pmap_pv_pte(pv);
-			opte = pte_load(ptep);
+		ptep = pmap_pv_pte(pv);
+		for (opte = pte_load(ptep);; opte = actual) {
 			npte = (opte | set) & mask;
 			combined_pte |= opte;
 
@@ -3425,7 +3431,8 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 				}
 			}
 #endif
-			if (pte_update(ptep, opte, npte)) {
+			actual = pte_update(ptep, opte, npte);
+			if (__predict_true(actual == opte)) {
 				break;
 			}
 			/* Lost race, try again. */
