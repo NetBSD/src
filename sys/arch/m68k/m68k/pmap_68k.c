@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.90 2026/11/13 16:53:17 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.91 2026/11/13 17:16:29 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.90 2026/11/13 16:53:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.91 2026/11/13 17:16:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,11 +945,16 @@ pte_update(volatile pt_entry_t *ptep, pt_entry_t opte, pt_entry_t npte)
 	 * Use compare-and-swap to update the PTE.  This ensures there's
 	 * no possibility of losing any hardware-maintained bits when
 	 * updating the PTE.
-	 *
-	 * XXX Should turn this into a single instruction when possible
-	 * XXX to deduce at compile time.
 	 */
+#if !defined(__HAVE_M68K_BROKEN_RMC)
+	__asm __volatile("casl %1,%2,%0"
+		: "+m" (*ptep), "+d" (opte)
+		: "d" (npte)
+		: "cc", "memory");
+	return opte;
+#else
 	return atomic_cas_uint(ptep, opte, npte);
+#endif
 }
 
 #if MMU_CONFIG_HP_CLASS
