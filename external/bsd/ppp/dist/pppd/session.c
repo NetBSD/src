@@ -182,7 +182,6 @@ session_start(const int flags, const char *user, const char *passwd, const char 
     char *cbuf;
 #ifdef HAVE_SHADOW_H
     struct spwd *spwd;
-    struct spwd *getspnam();
     long now = 0;
 #endif /* #ifdef HAVE_SHADOW_H */
 #endif /* #ifdef PPP_WITH_PAM */

@@ -30,11 +30,15 @@ file. Space or horizontal tab characters should be used to separate
 the strings.
 .TP
 .B \-t \fI<timeout>
-Set the timeout for the expected string to be received. If the string
+Set the timeout (in seconds) for the expected string to be received.
+If the string
 is not received within the time limit then the reply string is not
 sent. An alternate reply may be sent or the script will fail if there
 is no alternate reply string. A failed script will cause the
 \fIchat\fR program to terminate with a non-zero error code.
+A value of zero means no timeout. The default is 45 seconds.
+The timeout can also be set within the chat script using the TIMEOUT
+string.
 .TP
 .B \-r \fI<report file>
 Set the file for output of the report strings. If you use the keyword
@@ -347,8 +351,8 @@ ogin:\-\-BREAK\-\-ogin: real_account
 \fIetc ...\fR
 .LP
 .SH TIMEOUT
-The initial timeout value is 45 seconds. This may be changed using the \fB\-t\fR
-parameter.
+Sets the timeout in seconds to the value of the following word.
+A value of 0 resets the timeout to the default (45 seconds).
 .LP
 To change the timeout value for the next expect string, the following
 example may be used:

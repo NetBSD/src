@@ -312,7 +312,11 @@ chapms_make_response(unsigned char *response, int id, char *our_name,
 		     unsigned char *challenge, char *secret, int secret_len,
 		     unsigned char *private)
 {
-	challenge++;	/* skip length, should be 8 */
+	/* Make sure the challenge is at least 8 bytes (we only use 8) */
+	if (*challenge++ < 8) {
+		*response = 0;	/* generate 0-length response */
+		return;
+	}
 	*response++ = MS_CHAP_RESPONSE_LEN;
 	ChapMS(challenge, secret, secret_len, response);
 }
@@ -381,7 +385,11 @@ chapms2_make_response(unsigned char *response, int id, char *our_name,
 	const struct chapms2_response_cache_entry *cache_entry;
 	unsigned char auth_response[MS_AUTH_RESPONSE_LENGTH+1];
 
-	challenge++;	/* skip length, should be 16 */
+	/* Make sure the challenge is at least 16 bytes (we only use 16) */
+	if (*challenge++ < 16) {
+		*response = 0;	/* generate 0-length response */
+		return;
+	}
 	*response++ = MS_CHAP2_RESPONSE_LEN;
 	cache_entry = chapms2_find_in_response_cache(id, challenge, NULL);
 	if (cache_entry) {
@@ -582,6 +590,16 @@ ascii2unicode(char ascii[], int ascii_len, u_char unicode[])
 {
     int i;
 
+    /*
+     * This check should never trigger, because ascii[] is always a
+     * secret returned from get_secret(), which limits secret_len
+     * (i.e. ascii_len) to MAXSECRETLEN, which is 256, the same as
+     * MAX_NT_PASSWORD.  But let's be defensive anyway.
+     */
+    if (ascii_len > MAX_NT_PASSWORD)
+	ascii_len = MAX_NT_PASSWORD;
+    if (ascii_len <= 0)
+	return;
     BZERO(unicode, ascii_len * 2);
     for (i = 0; i < ascii_len; i++)
 	unicode[i * 2] = (u_char) ascii[i];

@@ -4,14 +4,15 @@ How to contribute patches to the PPP project.
 The PPP project source code is maintained in a Git repository, which
 is publicly available at
 
-git://git.ozlabs.org/~paulus/ppp.git
+https://github.com/ppp-project/ppp.git
 
 and
 
-https://github.com/paulusmack/ppp.git
+git://git.ozlabs.org/~paulus/ppp.git
 
-The linux-ppp@vger.kernel.org mailing list is a suitable place to
-discuss issues relating to the PPP code and to post patches.
+Github issues in the ppp-project/ppp repository, and the
+linux-ppp@vger.kernel.org mailing list, are suitable places to discuss
+issues relating to the PPP code and to post patches for discussion.
 
 Although there is a copy of the repository on github.com, the PPP
 project is not a "github project", in the sense that the development

@@ -85,7 +85,6 @@
 
 #define PPP_PATH_UPAPFILE       PPP_PATH_CONFDIR "/pap-secrets"
 #define PPP_PATH_CHAPFILE       PPP_PATH_CONFDIR "/chap-secrets"
-#define PPP_PATH_SRPFILE        PPP_PATH_CONFDIR "/srp-secrets"
 
 #ifdef PPP_WITH_EAPTLS
 #define PPP_PATH_EAPTLSCLIFILE  PPP_PATH_CONFDIR "/eaptls-client"

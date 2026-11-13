@@ -344,7 +344,7 @@ static void remove_bundle_link(void)
 	TDB_DATA key, rec;
 	char entry[32];
 	char *p, *q;
-	int l;
+	size_t l;
 
 	key.dptr = blinks_id;
 	key.dsize = strlen(blinks_id);
@@ -536,7 +536,7 @@ str_to_epdisc(struct epdisc *ep, char *str)
 	char *p, *endp;
 
 	for (i = EPD_NULL; i <= EPD_PHONENUM; ++i) {
-		int sl = strlen(endp_class_names[i]);
+		size_t sl = strlen(endp_class_names[i]);
 		if (strncasecmp(str, endp_class_names[i], sl) == 0) {
 			str += sl;
 			break;

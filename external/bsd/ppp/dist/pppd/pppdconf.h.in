@@ -64,9 +64,6 @@
 /* Support for Pluggable Authentication Modules */
 #undef PPP_WITH_PAM
 
-/* Have EAP-SRP authentication support */
-#undef PPP_WITH_SRP
-
 /* Have EAP-TLS authentication support */
 #undef PPP_WITH_EAPTLS
 

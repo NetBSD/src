@@ -78,20 +78,6 @@ extern "C" {
 #define CHAP_SUCCESS		3
 #define CHAP_FAILURE		4
 
-/* EAP SRP-SHA1 Subtypes */
-#define	EAPSRP_CHALLENGE	1	/* Request 1 - Challenge */
-#define	EAPSRP_CKEY		1	/* Response 1 - Client Key */
-#define	EAPSRP_SKEY		2	/* Request 2 - Server Key */
-#define	EAPSRP_CVALIDATOR	2	/* Response 2 - Client Validator */
-#define	EAPSRP_SVALIDATOR	3	/* Request 3 - Server Validator */
-#define	EAPSRP_ACK		3	/* Response 3 - final ack */
-#define	EAPSRP_LWRECHALLENGE	4	/* Req/resp 4 - Lightweight rechal */
-
-#define	SRPVAL_EBIT	0x00000001	/* Use shared key for ECP */
-
-#define	SRP_PSEUDO_ID	"pseudo_"
-#define	SRP_PSEUDO_LEN	7
-
 #define MIN_CHALLENGE_LENGTH	16
 #define MAX_CHALLENGE_LENGTH	24
 
@@ -100,6 +86,7 @@ enum eap_state_code {
 	eapPending,	/* Waiting for LCP (no timer) */
 	eapClosed,	/* Authentication not in use */
 	eapListen,	/* Client ready (and timer running) */
+	eapAuthRecv,	/* Receive further requests in a sequence */
 	eapIdentify,	/* EAP Identify sent */
 	eapTlsStart,	/* Send EAP-TLS start packet */
 	eapTlsRecv,	/* Receive EAP-TLS tls data */
@@ -111,33 +98,24 @@ enum eap_state_code {
 	eapTlsRecvAlertAck,	/* Receive EAP-TLS ack after sending alert */
 	eapTlsRecvSuccess,	/* Receive EAP success */
 	eapTlsRecvFailure,	/* Receive EAP failure */
-	eapSRP1,	/* Sent EAP SRP-SHA1 Subtype 1 */
-	eapSRP2,	/* Sent EAP SRP-SHA1 Subtype 2 */
-	eapSRP3,	/* Sent EAP SRP-SHA1 Subtype 3 */
 	eapMD5Chall,	/* Sent MD5-Challenge */
 	eapMSCHAPv2Chall,	/* Sent MSCHAPv2-Challenge */
 	eapOpen,	/* Completed authentication */
-	eapSRP4,	/* Sent EAP SRP-SHA1 Subtype 4 */
 	eapBadAuth	/* Failed authentication */
 };
 
 #define	EAP_STATES	\
-	"Initial", "Pending", "Closed", "Listen", "Identify", \
+	"Initial", "Pending", "Closed", "Listen", "AuthRecv", "Identify", \
 	"TlsStart", "TlsRecv", "TlsSendAck", "TlsSend", "TlsRecvAck", "TlsRecvClient",\
 	"TlsSendAlert", "TlsRecvAlertAck" , "TlsRecvSuccess", "TlsRecvFailure", \
-	"SRP1", "SRP2", "SRP3", "MD5Chall", "MSCHAPv2Chall", "Open", "SRP4", "BadAuth"
+	"MD5Chall", "MSCHAPv2Chall", "Open", "BadAuth"
 
-#ifdef PPP_WITH_EAPTLS
-#define	eap_client_active(esp)	((esp)->es_client.ea_state != eapInitial &&\
-				 (esp)->es_client.ea_state != eapPending &&\
-				 (esp)->es_client.ea_state != eapClosed)
-#else
-#define eap_client_active(esp)	((esp)->es_client.ea_state == eapListen)
-#endif /* PPP_WITH_EAPTLS */
+#define eap_client_active(esp)	((esp)->es_client.ea_state > eapClosed &&\
+				 (esp)->es_client.ea_state < eapOpen)
 
 #define	eap_server_active(esp)	\
 	((esp)->es_server.ea_state >= eapIdentify && \
-	 (esp)->es_server.ea_state <= eapMD5Chall)
+	 (esp)->es_server.ea_state <= eapMSCHAPv2Chall)
 
 struct eap_auth {
 	char *ea_name;		/* Our name */
@@ -146,6 +124,8 @@ struct eap_auth {
 	unsigned char *ea_skey;	/* Shared encryption key */
 	int ea_timeout;		/* Time to wait (for retransmit/fail) */
 	int ea_maxrequests;	/* Max Requests allowed */
+	short ea_authtype;	/* EAP type we're using */
+	short ea_typeacked;	/* set when peer agreed to authtype */
 	unsigned short ea_namelen;	/* Length of our name */
 	unsigned short ea_peerlen;	/* Length of peer's name */
 	enum eap_state_code ea_state;
@@ -177,8 +157,6 @@ typedef struct eap_state {
 #endif
 	int es_savedtime;		/* Saved timeout */
 	int es_rechallenge;		/* EAP rechallenge interval */
-	int es_lwrechallenge;		/* SRP lightweight rechallenge inter */
-	bool es_usepseudo;		/* Use SRP Pseudonym if offered one */
 	int es_usedpseudo;		/* Set if we already sent PN */
 	int es_challen;			/* Length of challenge string */
 	unsigned char es_challenge[MAX_CHALLENGE_LENGTH];

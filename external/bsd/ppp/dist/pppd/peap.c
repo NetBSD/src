@@ -68,6 +68,7 @@
 #include "chap_ms.h"
 #include "mppe.h"
 #include "peap.h"
+#include "fsm.h"
 
 #ifdef UNIT_TEST
 #define novm(x)
@@ -261,6 +262,14 @@ static void peap_response(eap_state *esp, u_char id, u_char *buf, int len)
 	else
 		peap_len = PEAP_HEADERLEN + len;
 
+	/*
+	 * XXX Dying here is better (just) than overflowing outpacket_buf[].
+	 * There's not much point trying to continue, since the negotiation
+	 * will stall at this point and never complete.
+	 */
+	if (peap_len > MIN(peer_mru[esp->es_unit], PPP_MRU))
+		fatal("BUG! PEAP Response fragmentation not implemented!");
+
 	PUTSHORT(peap_len, outp);
 	PUTCHAR(EAPT_PEAP, outp);
 
@@ -287,8 +296,8 @@ void peap_do_inner_eap(u_char *in_buf, int in_len, eap_state *esp, int id,
 
 	dbglog("PEAP: EAP (in): %.*B", in_len, in_buf);
 
-	if (*(in_buf + EAP_HEADERLEN) == PEAP_CAPABILITIES_TYPE &&
-			in_len  == (EAP_HEADERLEN + PEAP_CAPABILITIES_LEN)) {
+	if (in_len == (EAP_HEADERLEN + PEAP_CAPABILITIES_LEN) &&
+	    *(in_buf + EAP_HEADERLEN) == PEAP_CAPABILITIES_TYPE) {
 		/* use original packet as template for response */
 		BCOPY(in_buf, outp, EAP_HEADERLEN + PEAP_CAPABILITIES_LEN);
 		PUTCHAR(EAP_RESPONSE, outp);
@@ -298,8 +307,8 @@ void peap_do_inner_eap(u_char *in_buf, int in_len, eap_state *esp, int id,
 		used = EAP_HEADERLEN + PEAP_CAPABILITIES_LEN;
 		goto done;
 	}
-	if (*(in_buf + EAP_HEADERLEN + PEAP_TLV_HEADERLEN) == PEAP_TLV_TYPE &&
-			in_len == PEAP_TLV_LEN) {
+	if (in_len == PEAP_TLV_LEN &&
+	    *(in_buf + EAP_HEADERLEN + PEAP_TLV_HEADERLEN) == PEAP_TLV_TYPE) {
 		/* PEAP TLV message, do cryptobinding */
 		SSL_export_keying_material(psm->ssl, psm->tk, PEAP_TLV_TK_LEN,
 				PEAP_TLV_TK_SEED_LABEL, strlen(PEAP_TLV_TK_SEED_LABEL), NULL, 0, 0);
@@ -321,6 +330,10 @@ void peap_do_inner_eap(u_char *in_buf, int in_len, eap_state *esp, int id,
 		goto done;
 	}
 
+	if (in_len < 1) {
+		dbglog("PEAP inner: dropping 0-length message");
+		goto done;
+	}
 	GETCHAR(typenum, in_buf);
 	in_len--;
 
@@ -371,6 +384,10 @@ void peap_do_inner_eap(u_char *in_buf, int in_len, eap_state *esp, int id,
 			u_char *challenge = in_buf;	// VLEN + VALUE
 			u_char vsize;
 
+			if (in_len < 1) {
+				error("PEAP inner: received empty CHAP_CHALLENGE");
+				goto done;
+			}
 			GETCHAR(vsize, in_buf);
 			in_len -= 1;
 
@@ -549,6 +566,8 @@ int peap_process(eap_state *esp, u_char id, u_char *inp, int len)
 {
 	int ret;
 	int out_len;
+	int hlen;
+	int flags;
 
 	struct peap_state *psm = esp->ea_peap;
 
@@ -556,69 +575,75 @@ int peap_process(eap_state *esp, u_char id, u_char *inp, int len)
 		info("PEAP: retransmits are not supported..");
 		return -1;
 	}
+	if (len < 1) {
+		error("PEAP received empty packet, discarding");
+		return 0;
+	}
+	flags = *inp;
+	dbglog("PEAP: flags=%c%c%c%c len=%d",
+	       (flags & PEAP_L_FLAG_SET? 'L': '-'),
+	       (flags & PEAP_M_FLAG_SET? 'M': '-'),
+	       (flags & PEAP_S_FLAG_SET? 'S': '-'),
+	       (flags & PEAP_T_FLAG_SET? 'T': '-'), len);
+	hlen = 1;
+	if (flags & PEAP_L_FLAG_SET) {
+		hlen += PEAP_FRAGMENT_LENGTH_FIELD;
+		if (len < hlen) {
+			error("PEAP received short packet (%d bytes), discarding", len);
+			return 0;
+		}
+	}
+	inp += hlen;
+	len -= hlen;
 
-	switch (*inp) {
-	case PEAP_S_FLAG_SET:
-		dbglog("PEAP: S bit is set, starting PEAP phase 1");
+	if (flags & PEAP_S_FLAG_SET) {
+		if (psm->phase == PEAP_PHASE_2) {
+			warn("PEAP: Discarding spurious PEAP Start packet in phase 2");
+			return 0;
+		}
+		dbglog("PEAP: starting PEAP phase 1");
+		if (len > 0)
+			warn("PEAP: Unexpected data in PEAP Start packet (%d bytes)", len);
+	} else if (len > 0) {
+		psm->written = BIO_write(psm->in_bio, inp, len);
+	}
+
+	if (flags & PEAP_M_FLAG_SET) {
+		peap_ack(esp, id);
+		return 0;
+	}
+
+	if (psm->phase == PEAP_PHASE_1) {
+		if (!(flags & PEAP_S_FLAG_SET))
+			dbglog("PEAP TLS: continue handshake");
 		ret = SSL_do_handshake(psm->ssl);
 		if (ret != 1) {
 			ret = SSL_get_error(psm->ssl, ret);
-			if (ret != SSL_ERROR_WANT_READ && ret != SSL_ERROR_WANT_WRITE)
-				fatal("SSL_do_handshake(): %s", ERR_error_string(ret, NULL));
-
+			if (ret != SSL_ERROR_WANT_READ && ret != SSL_ERROR_WANT_WRITE) {
+				error("SSL_do_handshake(): %s", ERR_error_string(ret, NULL));
+				return -1;
+			}
 		}
-		psm->read = BIO_read(psm->out_bio, psm->out_buf, TLS_RECORD_MAX_SIZE);
+		if (SSL_is_init_finished(psm->ssl))
+			psm->phase = PEAP_PHASE_2;
+		if (BIO_ctrl_pending(psm->out_bio) == 0) {
+			peap_ack(esp, id);
+			return 0;
+		}
+		psm->read = BIO_read(psm->out_bio, psm->out_buf,
+				     TLS_RECORD_MAX_SIZE);
+		if (psm->read <= 0) {
+			error("PEAP: error reading TLS data to send (phase 1)");
+			return 0;
+		}
 		peap_response(esp, id, psm->out_buf, psm->read);
-		break;
-
-	case PEAP_LM_FLAG_SET:
-		dbglog("PEAP TLS: LM bits are set, need to get more TLS fragments");
-		inp = inp + PEAP_FRAGMENT_LENGTH_FIELD + PEAP_FLAGS_FIELD;
-		psm->written = BIO_write(psm->in_bio, inp, len - PEAP_FRAGMENT_LENGTH_FIELD - PEAP_FLAGS_FIELD);
-		peap_ack(esp, id);
-		break;
-
-	case PEAP_M_FLAG_SET:
-		dbglog("PEAP TLS: M bit is set, need to get more TLS fragments");
-		inp = inp + PEAP_FLAGS_FIELD;
-		psm->written = BIO_write(psm->in_bio, inp, len - PEAP_FLAGS_FIELD);
-		peap_ack(esp, id);
-		break;
-
-	case PEAP_L_FLAG_SET:
-	case PEAP_NO_FLAGS:
-		if (*inp == PEAP_L_FLAG_SET) {
-			dbglog("PEAP TLS: L bit is set");
-			inp = inp + PEAP_FRAGMENT_LENGTH_FIELD + PEAP_FLAGS_FIELD;
-			psm->written = BIO_write(psm->in_bio, inp, len - PEAP_FRAGMENT_LENGTH_FIELD - PEAP_FLAGS_FIELD);
-		} else {
-			dbglog("PEAP TLS: all bits are off");
-			inp = inp + PEAP_FLAGS_FIELD;
-			psm->written = BIO_write(psm->in_bio, inp, len - PEAP_FLAGS_FIELD);
-		}
-
-		if (psm->phase == PEAP_PHASE_1) {
-			dbglog("PEAP TLS: continue handshake");
-			ret = SSL_do_handshake(psm->ssl);
-			if (ret != 1) {
-				ret = SSL_get_error(psm->ssl, ret);
-				if (ret != SSL_ERROR_WANT_READ && ret != SSL_ERROR_WANT_WRITE)
-					fatal("SSL_do_handshake(): %s", ERR_error_string(ret, NULL));
-			}
-			if (SSL_is_init_finished(psm->ssl))
-				psm->phase = PEAP_PHASE_2;
-			if (BIO_ctrl_pending(psm->out_bio) == 0) {
-				peap_ack(esp, id);
-				break;
-			}
-			psm->read = 0;
-			psm->read = BIO_read(psm->out_bio, psm->out_buf,
-					TLS_RECORD_MAX_SIZE);
-			peap_response(esp, id, psm->out_buf, psm->read);
-			break;
-		}
+	} else {
 		psm->read = SSL_read(psm->ssl, psm->in_buf,
 				TLS_RECORD_MAX_SIZE);
+		if (psm->read <= 0) {
+			error("PEAP: error reading tunneled data (phase 2)");
+			return 0;
+		}
 		out_len = TLS_RECORD_MAX_SIZE;
 		peap_do_inner_eap(psm->in_buf, psm->read, esp, id,
 				psm->out_buf, &out_len);
@@ -626,9 +651,12 @@ int peap_process(eap_state *esp, u_char id, u_char *inp, int len)
 			psm->written = SSL_write(psm->ssl, psm->out_buf, out_len);
 			psm->read = BIO_read(psm->out_bio, psm->out_buf,
 				TLS_RECORD_MAX_SIZE);
+			if (psm->read <= 0) {
+				error("PEAP: error reading TLS data to send (phase 2)");
+				return 0;
+			}
 			peap_response(esp, id, psm->out_buf, psm->read);
 		}
-		break;
 	}
 	return 0;
 }

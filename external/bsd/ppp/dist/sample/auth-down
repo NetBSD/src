@@ -1,8 +1,8 @@
 #!/bin/sh
 #
-# A program or script which is executed after the remote system
-# successfully authenticates itself. It is executed with the parameters
-# <interface-name> <peer-name> <user-name> <tty-device> <speed>
+# A program or script which is executed when the link goes down, if the remote
+# system successfully authenticates itself. It is executed with the parameters
+# <interface-name> <peer-name> <user-name> <tty-device> <speed> <ipparam>
 #
 
 #

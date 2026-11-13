@@ -74,6 +74,8 @@ u_int32_t netmask = 0;		/* IP netmask to set on interface */
 bool	disable_defaultip = 0;	/* Don't use hostname for default IP adrs */
 bool	noremoteip = 0;		/* Let him have no IP address */
 
+unsigned dfl_route_metric = 0;	/* metric of the default route to set over the PPP link */
+
 ip_up_hook_fn *ip_up_hook = NULL;
 ip_down_hook_fn *ip_down_hook = NULL;
 ip_choose_hook_fn *ip_choose_hook = NULL;
@@ -136,6 +138,8 @@ static int setvjslots (char **);
 static int setdnsaddr (char **);
 static int setwinsaddr (char **);
 static int setnetmask (char **);
+static int replacedefaultroute_nonfunctional();
+
 int setipaddr (char *, char **, int);
 static void printipaddr (struct option *, void (*)(void *, char *,...),void *);
 
@@ -179,7 +183,7 @@ static struct option ipcp_option_list[] = {
       "Nameserver for SMB over TCP/IP for peer", OPT_A2LIST },
 
     { "ipcp-restart", o_int, &ipcp_fsm[0].timeouttime,
-      "Set timeout for IPCP", OPT_PRIO },
+      "Set timeout for IPCP", OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
     { "ipcp-max-terminate", o_int, &ipcp_fsm[0].maxtermtransmits,
       "Set max #xmits for term-reqs", OPT_PRIO },
     { "ipcp-max-configure", o_int, &ipcp_fsm[0].maxconfreqtransmits,
@@ -188,7 +192,7 @@ static struct option ipcp_option_list[] = {
       "Set max #conf-naks for IPCP", OPT_PRIO },
 
     { "defaultroute", o_bool, &ipcp_wantoptions[0].default_route,
-      "Add default route", OPT_ENABLE|1, &ipcp_allowoptions[0].default_route },
+      "Add default route", OPT_PRIV|OPT_ENABLE|1, &ipcp_allowoptions[0].default_route },
     { "nodefaultroute", o_bool, &ipcp_allowoptions[0].default_route,
       "disable defaultroute option", OPT_A2CLR,
       &ipcp_wantoptions[0].default_route },
@@ -196,15 +200,20 @@ static struct option ipcp_option_list[] = {
       "disable defaultroute option", OPT_ALIAS | OPT_A2CLR,
       &ipcp_wantoptions[0].default_route },
 
+    { "defaultroute-metric", o_int, &dfl_route_metric,
+      "Metric to use for the default route (Linux only; default 0)",
+      OPT_PRIV|OPT_LLIMIT|OPT_INITONLY, NULL, 0, -1 },
+
 #ifdef __linux__
-    { "replacedefaultroute", o_bool,
-				&ipcp_wantoptions[0].replace_default_route,
-      "Replace default route", OPT_PRIV | 1
-    },
-    { "noreplacedefaultroute", o_bool,
-				&ipcp_wantoptions[0].replace_default_route,
-      "Do not replace default route", 0 },
+	{ "replacedefaultroute", o_special_noarg,
+		&replacedefaultroute_nonfunctional,
+		"Removed option to replace default route", OPT_PRIV
+	},
+	{ "noreplacedefaultroute", o_special_noarg,
+		&replacedefaultroute_nonfunctional,
+		"Removed option to not replace default route", 0 },
 #endif
+
     { "proxyarp", o_bool, &ipcp_wantoptions[0].proxy_arp,
       "Add proxy ARP entry", OPT_ENABLE|1, &ipcp_allowoptions[0].proxy_arp },
     { "noproxyarp", o_bool, &ipcp_allowoptions[0].proxy_arp,
@@ -284,8 +293,8 @@ struct protent ipcp_protent = {
     ip_active_pkt
 };
 
-static void ipcp_clear_addrs (int, u_int32_t, u_int32_t, bool);
-static void ipcp_script (char *, int);	/* Run an up/down script */
+static void ipcp_clear_addrs (int, u_int32_t, u_int32_t);
+static void ipcp_script (char *, int, const char *);	/* Run an up/down script */
 static void ipcp_script_done (void *);
 
 /*
@@ -437,7 +446,7 @@ setipaddr(char *arg, char **argv, int doit)
 	return 0;
     if (!doit)
 	return 1;
-  
+
     /*
      * If colon first character, then no local addr.
      */
@@ -459,7 +468,7 @@ setipaddr(char *arg, char **argv, int doit)
 	*colon = ':';
 	prio_local = option_priority;
     }
-  
+
     /*
      * If colon last character, then no remote addr.
      */
@@ -525,6 +534,14 @@ setnetmask(char **argv)
     slprintf(netmask_str, sizeof(netmask_str), "%I", mask);
 
     return (1);
+}
+
+static int
+replacedefaultroute_nonfunctional()
+{
+    ppp_option_error("replacedefaultroute and noreplacedefaultroute route options no longer have any effect.");
+    ppp_option_error("Please refer to the man page for defaultroute and defaultroute-metric.");
+    return 1;
 }
 
 int
@@ -851,7 +868,7 @@ ipcp_addci(fsm *f, u_char *ucp, int *lenp)
     ADDCIWINS(CI_MS_WINS1, go->req_wins1, go->winsaddr[0]);
 
     ADDCIWINS(CI_MS_WINS2, go->req_wins2, go->winsaddr[1]);
-    
+
     *lenp -= len;
 }
 
@@ -1451,18 +1468,23 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
     u_int32_t l = *len;		/* Length left */
     u_char maxslotindex, cflag;
     int d;
+    int dup, warned = 0;
+    int seendns[2], seenwins[2];
 
     /*
      * Reset all his options.
      */
     BZERO(ho, sizeof(*ho));
-    
+    seendns[0] = seendns[1] = 0;
+    seenwins[0] = seenwins[1] = 0;
+
     /*
      * Process all his options.
      */
     next = inp;
     while (l) {
 	orc = CONFACK;			/* Assume success */
+	dup = 0;
 	cip = p = next;			/* Remember begining of CI */
 	if (l < 2 ||			/* Not enough data for CI header or */
 	    p[1] < 2 ||			/*  CI length too small or */
@@ -1480,6 +1502,11 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 
 	switch (citype) {		/* Check CI type */
 	case CI_ADDRS:
+	    if (ho->old_addrs) {
+		dup = 1;
+		break;
+	    }
+	    ho->old_addrs = 1;
 	    if (!ao->old_addrs || ho->neg_addr ||
 		cilen != CILEN_ADDRS) {	/* Check CI length */
 		orc = CONFREJ;		/* Reject CI */
@@ -1530,12 +1557,16 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 		}
 	    }
 
-	    ho->old_addrs = 1;
 	    ho->hisaddr = ciaddr1;
 	    ho->ouraddr = ciaddr2;
 	    break;
 
 	case CI_ADDR:
+	    if (ho->neg_addr) {
+		dup = 1;
+		break;
+	    }
+	    ho->neg_addr = 1;
 	    if (!ao->neg_addr || ho->old_addrs ||
 		cilen != CILEN_ADDR) {	/* Check CI length */
 		orc = CONFREJ;		/* Reject CI */
@@ -1566,8 +1597,7 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 		wo->req_addr = 0;	/* don't NAK with 0.0.0.0 later */
 		break;
 	    }
-	
-	    ho->neg_addr = 1;
+
 	    ho->hisaddr = ciaddr1;
 	    break;
 
@@ -1575,6 +1605,11 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 	case CI_MS_DNS2:
 	    /* Microsoft primary or secondary DNS request */
 	    d = citype == CI_MS_DNS2;
+	    if (seendns[d]) {
+		dup = 1;
+		break;
+	    }
+	    seendns[d] = 1;
 
 	    /* If we do not have a DNS address then we cannot send it */
 	    if (ao->dnsaddr[d] == 0 ||
@@ -1595,6 +1630,11 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 	case CI_MS_WINS2:
 	    /* Microsoft primary or secondary WINS request */
 	    d = citype == CI_MS_WINS2;
+	    if (seenwins[d]) {
+		dup = 1;
+		break;
+	    }
+	    seenwins[d] = 1;
 
 	    /* If we do not have a WINS address then we cannot send it */
 	    if (ao->winsaddr[d] == 0 ||
@@ -1610,8 +1650,13 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 		orc = CONFNAK;
             }
             break;
-	
+
 	case CI_COMPRESSTYPE:
+	    if (ho->neg_vj) {
+		dup = 1;
+		break;
+	    }
+	    ho->neg_vj = 1;
 	    if (!ao->neg_vj ||
 		(cilen != CILEN_VJ && cilen != CILEN_COMPRESS)) {
 		orc = CONFREJ;
@@ -1625,11 +1670,10 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 		break;
 	    }
 
-	    ho->neg_vj = 1;
 	    ho->vj_protocol = cishort;
 	    if (cilen == CILEN_VJ) {
 		GETCHAR(maxslotindex, p);
-		if (maxslotindex > ao->maxslotindex) { 
+		if (maxslotindex > ao->maxslotindex) {
 		    orc = CONFNAK;
 		    if (!reject_if_disagree){
 			DECPTR(1, p);
@@ -1656,6 +1700,13 @@ ipcp_reqci(fsm *f, u_char *inp,	int *len, int reject_if_disagree)
 	default:
 	    orc = CONFREJ;
 	    break;
+	}
+	if (dup) {
+	    if (!warned) {
+		warn("IPCP: ignoring duplicate configuration option(s)");
+		warned = 1;
+	    }
+	    continue;
 	}
 endswitch:
 	if (orc == CONFACK &&		/* Good CI */
@@ -1692,13 +1743,14 @@ endswitch:
     /*
      * If we aren't rejecting this packet, and we want to negotiate
      * their address, and they didn't send their address, then we
-     * send a NAK with a CI_ADDR option appended.  We assume the
+     * send a NAK with a CI_ADDR option appended.  We check that the
      * input buffer is long enough that we can append the extra
      * option safely.
      */
     if (rc != CONFREJ && !ho->neg_addr && !ho->old_addrs &&
 	wo->req_addr && !reject_if_disagree &&
-	((wo->hisaddr && !wo->accept_remote) || !noremoteip)) {
+	((wo->hisaddr && !wo->accept_remote) || !noremoteip) &&
+	(rc == CONFACK || ucp + CILEN_ADDR <= inp + PPP_MRU - HEADERLEN)) {
 	if (rc == CONFACK) {
 	    rc = CONFNAK;
 	    ucp = inp;			/* reset pointer */
@@ -1770,14 +1822,13 @@ ip_demand_conf(int u)
     }
     if (!sifaddr(u, wo->ouraddr, wo->hisaddr, GetMask(wo->ouraddr)))
 	return 0;
-    ipcp_script(path_ippreup, 1);
+    ipcp_script(path_ippreup, 1, "ip-pre-up");
     if (!sifup(u))
 	return 0;
     if (!sifnpmode(u, PPP_IP, NPMODE_QUEUE))
 	return 0;
     if (wo->default_route)
-	if (sifdefaultroute(u, wo->ouraddr, wo->hisaddr,
-					    wo->replace_default_route))
+	if (sifdefaultroute(u, wo->ouraddr, wo->hisaddr))
 	    default_route_set[u] = 1;
     if (wo->proxy_arp)
 	if (sifproxyarp(u, wo->hisaddr))
@@ -1811,7 +1862,8 @@ ipcp_up(fsm *f)
      * We must have a non-zero IP address for both ends of the link.
      */
 
-    if (wo->hisaddr && !wo->accept_remote && (!(ho->neg_addr || ho->old_addrs) || ho->hisaddr != wo->hisaddr)) {
+    if (wo->hisaddr && !wo->accept_remote && !noremoteip &&
+	(!(ho->neg_addr || ho->old_addrs) || ho->hisaddr != wo->hisaddr)) {
 	error("Peer refused to agree to his IP address");
 	ipcp_close(f->unit, "Refused his IP address");
 	return;
@@ -1878,8 +1930,7 @@ ipcp_up(fsm *f)
      */
     if (demand) {
 	if (go->ouraddr != wo->ouraddr || ho->hisaddr != wo->hisaddr) {
-	    ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr,
-				      wo->replace_default_route);
+	    ipcp_clear_addrs(f->unit, wo->ouraddr, wo->hisaddr);
 	    if (go->ouraddr != wo->ouraddr) {
 		warn("Local IP address changed to %I", go->ouraddr);
 		ppp_script_setenv("OLDIPLOCAL", ip_ntoa(wo->ouraddr), 0);
@@ -1904,9 +1955,8 @@ ipcp_up(fsm *f)
 	    }
 
 	    /* assign a default route through the interface if required */
-	    if (ipcp_wantoptions[f->unit].default_route) 
-		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr,
-					     wo->replace_default_route))
+	    if (ipcp_wantoptions[f->unit].default_route)
+		if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
 		    default_route_set[f->unit] = 1;
 
 	    /* Make a proxy ARP entry if requested. */
@@ -1936,7 +1986,7 @@ ipcp_up(fsm *f)
 	ifindex = if_nametoindex(ifname);
 
 	/* run the pre-up script, if any, and wait for it to finish */
-	ipcp_script(path_ippreup, 1);
+	ipcp_script(path_ippreup, 1, "ip-pre-up");
 
 	/* check if preup script renamed the interface */
 	if (!if_indextoname(ifindex, ifname)) {
@@ -1964,9 +2014,8 @@ ipcp_up(fsm *f)
 	sifnpmode(f->unit, PPP_IP, NPMODE_PASS);
 
 	/* assign a default route through the interface if required */
-	if (ipcp_wantoptions[f->unit].default_route) 
-	    if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr,
-					 wo->replace_default_route))
+	if (ipcp_wantoptions[f->unit].default_route)
+	    if (sifdefaultroute(f->unit, go->ouraddr, ho->hisaddr))
 		default_route_set[f->unit] = 1;
 
 	/* Make a proxy ARP entry if requested. */
@@ -2000,7 +2049,7 @@ ipcp_up(fsm *f)
      */
     if (ipcp_script_state == s_down && ipcp_script_pid == 0) {
 	ipcp_script_state = s_up;
-	ipcp_script(path_ipup, 0);
+	ipcp_script(path_ipup, 0, "ip-up");
     }
 }
 
@@ -2043,13 +2092,13 @@ ipcp_down(fsm *f)
 	sifnpmode(f->unit, PPP_IP, NPMODE_DROP);
 	sifdown(f->unit);
 	ipcp_clear_addrs(f->unit, ipcp_gotoptions[f->unit].ouraddr,
-			 ipcp_hisoptions[f->unit].hisaddr, 0);
+			 ipcp_hisoptions[f->unit].hisaddr);
     }
 
     /* Execute the ip-down script */
     if (ipcp_script_state == s_up && ipcp_script_pid == 0) {
 	ipcp_script_state = s_down;
-	ipcp_script(path_ipdown, 0);
+	ipcp_script(path_ipdown, 0, "ip-down");
     }
 }
 
@@ -2059,21 +2108,13 @@ ipcp_down(fsm *f)
  * proxy arp entries, etc.
  */
 static void
-ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr, bool replacedefaultroute)
+ipcp_clear_addrs(int unit, u_int32_t ouraddr, u_int32_t hisaddr)
 {
     if (proxy_arp_set[unit]) {
 	cifproxyarp(unit, hisaddr);
 	proxy_arp_set[unit] = 0;
     }
-    /* If replacedefaultroute, sifdefaultroute will be called soon
-     * with replacedefaultroute set and that will overwrite the current
-     * default route. This is the case only when doing demand, otherwise
-     * during demand, this cifdefaultroute would restore the old default
-     * route which is not what we want in this case. In the non-demand
-     * case, we'll delete the default route and restore the old if there
-     * is one saved by an sifdefaultroute with replacedefaultroute.
-     */
-    if (!replacedefaultroute && default_route_set[unit]) {
+    if (default_route_set[unit]) {
 	cifdefaultroute(unit, ouraddr, hisaddr);
 	default_route_set[unit] = 0;
     }
@@ -2106,13 +2147,13 @@ ipcp_script_done(void *arg)
     case s_up:
 	if (ipcp_fsm[0].state != OPENED) {
 	    ipcp_script_state = s_down;
-	    ipcp_script(path_ipdown, 0);
+	    ipcp_script(path_ipdown, 0, "ip-down");
 	}
 	break;
     case s_down:
 	if (ipcp_fsm[0].state == OPENED) {
 	    ipcp_script_state = s_up;
-	    ipcp_script(path_ipup, 0);
+	    ipcp_script(path_ipup, 0, "ip-up");
 	}
 	break;
     }
@@ -2124,7 +2165,7 @@ ipcp_script_done(void *arg)
  * interface-name tty-name speed local-IP remote-IP.
  */
 static void
-ipcp_script(char *script, int wait)
+ipcp_script(char *script, int wait, const char* name)
 {
     char strspeed[32], strlocal[32], strremote[32];
     char *argv[8];
@@ -2142,10 +2183,10 @@ ipcp_script(char *script, int wait)
     argv[6] = ipparam;
     argv[7] = NULL;
     if (wait)
-	run_program(script, argv, 0, NULL, NULL, 1);
+	run_program(script, argv, 0, NULL, NULL, 1, name);
     else
 	ipcp_script_pid = run_program(script, argv, 0, ipcp_script_done,
-				      NULL, 0);
+				      NULL, 0, name);
 }
 
 /*

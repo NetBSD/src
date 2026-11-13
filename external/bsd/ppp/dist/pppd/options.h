@@ -80,7 +80,7 @@ typedef struct option option_t;
 #define OPT_ALIAS	0x200000 /* option is alias for previous option */
 #define OPT_A2COPY	0x400000 /* addr2 -> second location to rcv value */
 #define OPT_ENABLE	0x800000 /* use *addr2 as enable for option */
-#define OPT_A2CLR	0x1000000 /* clear *(bool *)addr2 */
+#define OPT_A2CLR	0x1000000 /* clear *(u_char *)addr2 */
 #define OPT_PRIVFIX	0x2000000 /* user can't override if set by root */
 #define OPT_INITONLY	0x4000000 /* option can only be set in init phase */
 #define OPT_DEVEQUIV	0x8000000 /* equiv to device name */

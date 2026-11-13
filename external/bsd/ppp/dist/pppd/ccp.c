@@ -68,6 +68,7 @@ static char deflate_value[8];
  */
 #ifdef PPP_WITH_MPPE
 bool refuse_mppe_stateful = 1;		/* Allow stateful mode? */
+static bool require_mppe;
 #endif
 
 static struct option ccp_option_list[] = {
@@ -111,24 +112,28 @@ static struct option ccp_option_list[] = {
 
 #ifdef PPP_WITH_MPPE
     /* MPPE options are symmetrical ... we only set wantoptions here */
-    { "require-mppe", o_bool, &ccp_wantoptions[0].mppe,
+    { "require-mppe", o_bool, &require_mppe,
       "require MPPE encryption",
-      OPT_PRIO | MPPE_OPT_40 | MPPE_OPT_128 },
-    { "+mppe", o_bool, &ccp_wantoptions[0].mppe,
+      OPT_PRIO | OPT_A2COPY | MPPE_OPT_40 | MPPE_OPT_128,
+      &ccp_wantoptions[0].mppe },
+    { "+mppe", o_bool, &require_mppe,
       "require MPPE encryption",
-      OPT_ALIAS | OPT_PRIO | MPPE_OPT_40 | MPPE_OPT_128 },
-    { "nomppe", o_bool, &ccp_wantoptions[0].mppe,
-      "don't allow MPPE encryption", OPT_PRIO },
-    { "-mppe", o_bool, &ccp_wantoptions[0].mppe,
-      "don't allow MPPE encryption", OPT_ALIAS | OPT_PRIO },
+      OPT_ALIAS | OPT_PRIO | OPT_A2COPY | MPPE_OPT_40 | MPPE_OPT_128,
+      &ccp_wantoptions[0].mppe },
+    { "nomppe", o_bool, &require_mppe,
+      "don't allow MPPE encryption", OPT_PRIO | OPT_A2CLR,
+      &ccp_wantoptions[0].mppe },
+    { "-mppe", o_bool, &require_mppe,
+      "don't allow MPPE encryption", OPT_ALIAS | OPT_PRIO | OPT_A2CLR,
+      &ccp_wantoptions[0].mppe },
 
+    { "require-mppe-40", o_bool, &require_mppe,
+      "require MPPE 40-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_40,
+      &ccp_wantoptions[0].mppe },
+    { "+mppe-40", o_bool, &require_mppe,
+      "require MPPE 40-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_40,
+      &ccp_wantoptions[0].mppe },
     /* We use ccp_allowoptions[0].mppe as a junk var ... it is reset later */
-    { "require-mppe-40", o_bool, &ccp_allowoptions[0].mppe,
-      "require MPPE 40-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_40,
-      &ccp_wantoptions[0].mppe },
-    { "+mppe-40", o_bool, &ccp_allowoptions[0].mppe,
-      "require MPPE 40-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_40,
-      &ccp_wantoptions[0].mppe },
     { "nomppe-40", o_bool, &ccp_allowoptions[0].mppe,
       "don't allow MPPE 40-bit encryption",
       OPT_PRIOSUB | OPT_A2CLRB | MPPE_OPT_40, &ccp_wantoptions[0].mppe },
@@ -137,10 +142,10 @@ static struct option ccp_option_list[] = {
       OPT_ALIAS | OPT_PRIOSUB | OPT_A2CLRB | MPPE_OPT_40,
       &ccp_wantoptions[0].mppe },
 
-    { "require-mppe-128", o_bool, &ccp_allowoptions[0].mppe,
+    { "require-mppe-128", o_bool, &require_mppe,
       "require MPPE 128-bit encryption", OPT_PRIO | OPT_A2OR | MPPE_OPT_128,
       &ccp_wantoptions[0].mppe },
-    { "+mppe-128", o_bool, &ccp_allowoptions[0].mppe,
+    { "+mppe-128", o_bool, &require_mppe,
       "require MPPE 128-bit encryption",
       OPT_ALIAS | OPT_PRIO | OPT_A2OR | MPPE_OPT_128,
       &ccp_wantoptions[0].mppe },
@@ -521,6 +526,12 @@ ccp_resetci(fsm *f)
     all_rejected[f->unit] = 0;
 
 #ifdef PPP_WITH_MPPE
+    ccp_allowoptions[f->unit].mppe = 0;
+    if (require_mppe && !go->mppe) {
+	error("MPPE required, but both 40-bit and 128-bit disabled.");
+	lcp_close(f->unit, "MPPE required but not available");
+	return;
+    }
     if (go->mppe) {
 	ccp_options *ao = &ccp_allowoptions[f->unit];
 	int auth_mschap_bits = auth_done[f->unit];
@@ -915,6 +926,9 @@ static int
 	} else if (((go->mppe | MPPE_OPT_STATEFUL) & try.mppe) != try.mppe) {
 	    /* Peer must have set options we didn't request (suggest) */
 	    try.mppe = 0;
+	} else if (!(try.mppe & (MPPE_OPT_40 | MPPE_OPT_128))) {
+	    /* Peer left us no strength to use */
+	    try.mppe = 0;
 	}
 
 	if (!try.mppe) {
@@ -1050,6 +1064,18 @@ ccp_rejci(fsm *f, u_char *p, int len)
     return 1;
 }
 
+#ifdef PPP_WITH_MPPE
+/*
+ * mppe_ci_is_noop - is p an MPPE option with every bit clear?
+ */
+static int
+mppe_ci_is_noop(u_char *p, int len)
+{
+    return len >= CILEN_MPPE && p[0] == CI_MPPE && p[1] == CILEN_MPPE
+	&& !(p[2] | p[3] | p[4] | p[5]);
+}
+#endif
+
 /*
  * ccp_reqci - processed a received configure-request.
  * Returns CONFACK, CONFNAK or CONFREJ and the packet modified
@@ -1066,11 +1092,15 @@ ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak)
 #ifdef PPP_WITH_MPPE
     bool rej_for_ci_mppe = 1;	/* Are we rejecting based on a bad/missing */
 				/* CI_MPPE, or due to other options?       */
+    bool noop_first = !ao->mppe && mppe_ci_is_noop(p, *lenp);
 #endif
+    int warned = 0;
+    bool seenci[CI_DEFLATE+1];
 
     ret = CONFACK;
     retp = p0 = p;
     len = *lenp;
+    BZERO(seenci, sizeof(seenci));
 
     memset(ho, 0, sizeof(ccp_options));
     ho->method = (len > 0)? p[0]: -1;
@@ -1086,9 +1116,24 @@ ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak)
 	    type = p[0];
 	    clen = p[1];
 
+	    if (type <= CI_DEFLATE) {
+		if (seenci[type]) {
+		    if (!warned) {
+			warn("CCP: ignoring duplicate configuration option(s)");
+			warned = 1;
+		    }
+		    p += clen;
+		    len -= clen;
+		    continue;
+		}
+		seenci[type] = 1;
+	    }
+
 	    switch (type) {
 #ifdef PPP_WITH_MPPE
 	    case CI_MPPE:
+		if (!ao->mppe && mppe_ci_is_noop(p, clen))
+		    break;
 		if (!ao->mppe || clen != CILEN_MPPE) {
 		    newret = CONFREJ;
 		    break;
@@ -1323,6 +1368,12 @@ ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak)
 	len -= clen;
     }
 
+#ifdef PPP_WITH_MPPE
+    if (noop_first) {
+	memset(ho, 0, sizeof(ccp_options));
+	ho->method = -1;
+    }
+#endif
     if (ret != CONFACK) {
 	if (ret == CONFREJ && *lenp == retp - p0)
 	    all_rejected[f->unit] = 1;
@@ -1330,7 +1381,7 @@ ccp_reqci(fsm *f, u_char *p, int *lenp, int dont_nak)
 	    *lenp = retp - p0;
     }
 #ifdef PPP_WITH_MPPE
-    if (ret == CONFREJ && ao->mppe && rej_for_ci_mppe) {
+    if (ccp_gotoptions[f->unit].mppe && rej_for_ci_mppe) {
 	error("MPPE required but peer negotiation failed");
 	lcp_close(f->unit, "MPPE required but peer negotiation failed");
     }

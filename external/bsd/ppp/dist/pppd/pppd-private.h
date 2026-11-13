@@ -199,10 +199,15 @@ extern int	req_unit;	/* interface unit number to use */
 extern char	path_net_init[]; /* pathname of net-init script */
 extern char	path_net_preup[];/* pathname of net-pre-up script */
 extern char	path_net_down[]; /* pathname of net-down script */
+extern char	path_auth_up[]; /* pathname of auth-up script */
+extern char	path_auth_down[]; /* pathname of auth-down script */
 extern char	path_ipup[]; 	/* pathname of ip-up script */
 extern char	path_ipdown[];	/* pathname of ip-down script */
 extern char	path_ippreup[];	/* pathname of ip-pre-up script */
 extern char	req_ifname[]; /* interface name to use (IFNAMSIZ) */
+#ifdef __linux__
+extern char	req_vrf[];	/* VRF name to bind with PPP interface */
+#endif
 extern bool	multilink;	/* enable multilink operation (options.c) */
 extern bool	noendpoint;	/* don't send or accept endpt. discrim. */
 extern char	*bundle_name;	/* bundle name for multilink */
@@ -214,6 +219,8 @@ extern char *current_option;    /* the name of the option being parsed */
 extern int  privileged_option;  /* set iff the current option came from root */
 extern char *option_source;     /* string saying where the option came from */
 extern int  option_priority;    /* priority of current options */
+extern bool strict_script_checks; /* Whether to enforce strict checking on scripts */
+extern bool strict_secrets_files; /* Whether strict checks are enabled on secrets files. */
 
 #ifdef PPP_WITH_IPV6CP
 extern char	path_ipv6up[]; /* pathname of ipv6-up script */
@@ -305,11 +312,11 @@ void detach(void);	/* Detach from controlling tty */
 void die(int);		/* Cleanup and exit */
 void quit(void);		/* like die(1) */
 
-void record_child(int, char *, void (*) (void *), void *, int);
+void record_child(int, const char *, void (*) (void *), void *, int);
 int  device_script(char *cmd, int in, int out, int dont_wait);
 				/* Run `cmd' with given stdin and stdout */
-pid_t run_program(char *prog, char * const * args, int must_exist,
-		  void (*done)(void *), void *arg, int wait);
+pid_t run_program(const char *prog, char * const * args, int must_exist,
+		  void (*done)(void *), void *arg, int wait, const char * name);
 				/* Run program prog with args in child */
 void reopen_log(void);	/* (re)open the connection to syslog */
 void print_link_stats(void); /* Print stats, if available */
@@ -331,6 +338,8 @@ void print_string(char *, int,  printer_func, void *);
 				/* Format a string for output */
 ssize_t complete_read(int, void *, size_t);
 				/* read a complete buffer */
+void ppp_explicit_bzero(void *, size_t);
+				/* securely erase a buffer */
 
 /* Procedures exported from auth.c */
 void link_required(int);	  /* we are starting to use the link */
@@ -359,8 +368,6 @@ int  check_passwd(int, char *, int, char *, int, char **);
 				/* Check peer-supplied username/password */
 int  get_secret(int, char *, char *, char *, int *, int);
 				/* get "secret" for chap */
-int  get_srp_secret(int unit, char *client, char *server, char *secret,
-    int am_server);
 int  auth_ip_addr(int, u_int32_t);
 				/* check if IP address is authorized */
 int  auth_number(void);	/* check if remote number is authorized */
@@ -373,6 +380,12 @@ void demand_discard(void); /* set all NPs to discard packets */
 void demand_rexmit(int);	/* retransmit saved frames for an NP */
 int  loop_chars(unsigned char *, int); /* process chars from loopback */
 int  loop_frame(unsigned char *, int); /* should we bring link up? */
+
+/* internal-only event handler procedures */
+void event_handler_init(void);	/* initialize the event handler */
+void wait_input(struct timeval *);
+				/* Wait for input, with timeout */
+void add_fd(int);		/* Add fd to set to wait for */
 
 /* Procedures exported from sys-*.c */
 void sys_init(void);	/* Do system-dependent initialization */
@@ -391,10 +404,6 @@ void set_up_tty(int, int); /* Set up port's speed, parameters, etc. */
 void restore_tty(int);	/* Restore port's original parameters */
 void setdtr(int, int);	/* Raise or lower port's DTR line */
 void output(int, unsigned char *, int); /* Output a PPP packet */
-void wait_input(struct timeval *);
-				/* Wait for input, with timeout */
-void add_fd(int);		/* Add fd to set to wait for */
-void remove_fd(int);	/* Remove fd from set to wait for */
 int  read_packet(unsigned char *); /* Read PPP packet */
 int  get_loop_output(void); /* Read pkts from loopback */
 void tty_send_config(int, u_int32_t, int, int);
@@ -430,7 +439,7 @@ int  sif6addr(int, eui64_t, eui64_t);
 int  cif6addr(int, eui64_t, eui64_t);
 				/* Remove an IPv6 address from i/f */
 #endif
-int  sifdefaultroute(int, u_int32_t, u_int32_t, bool replace_default_rt);
+int  sifdefaultroute(int, u_int32_t, u_int32_t);
 				/* Create default route through i/f */
 int  cifdefaultroute(int, u_int32_t, u_int32_t);
 				/* Delete default route through i/f */
@@ -464,7 +473,7 @@ int  get_first_ether_hwaddr(unsigned char *addr);
 int setipaddr(char *, char **, int); /* Set local/remote ip addresses */
 int  parse_args(int argc, char **argv);
 				/* Parse options from arguments given */
-int  getword(FILE *f, char *word, int *newlinep, char *filename);
+int  getword(FILE *f, char *word, int *newlinep, const char *filename);
 				/* Read a word from a file */
 int  options_from_user(void); /* Parse options from user's .ppprc */
 int  options_for_tty(void); /* Parse options from /etc/ppp/options.tty */
@@ -526,7 +535,7 @@ int parse_dotted_ip(char *, u_int32_t *);
 #define TIMEOUT(r, f, t)	ppp_timeout((r), (f), (t), 0)
 #define UNTIMEOUT(r, f)		ppp_untimeout((r), (f))
 
-#define BCOPY(s, d, l)		memcpy(d, s, l)
+#define BCOPY(s, d, l)		memmove(d, s, l)
 #define BZERO(s, n)		memset(s, 0, n)
 #define	BCMP(s1, s2, l)		memcmp(s1, s2, l)
 

@@ -67,8 +67,170 @@ use any IP address.  (This only applies where the peer is
 authenticating itself to you, of course.)
 
 
-What's new in ppp-2.5.2
+What's new in ppp-2.5.5
 ***********************
+
+This is a bug-fix and security release, with no new features.
+Changes include:
+
+* Fix bugs where hook scripts such as /etc/ppp/ip-up were not being
+  run.
+
+* Fix bugs causing PPP_SCRIPT_INSTANCE to be set incorrectly for some
+  scripts.
+
+* Fix validation of received frames in the RADIUS plugin, along with
+  some further hardening against incorrect received frames.
+
+* Fix generation of MPPE keys when EAP-TLS is being used with TLS 1.3.
+  This makes it work with Windows clients, but breaks compatibility
+  with earlier versions of pppd (but only in the case where EAP-TLS
+  and MPPE and the 'max-tls-version 1.3' option are all being used).
+
+* Various cases existed in the MPPE code where the link could come up
+  without MPPE encryption despite it being requested via one or more
+  of the 'require-mppe', 'require-mppe-40' or 'require-mppe-128'
+  options.  This is now fixed.  Also, pppd will now accept an MPPE
+  CCP configuration option requesting no encryption from the peer if
+  MPPE is not required (rather than rejecting it).
+
+* Fix a bug where the password from a file specified with the '+ua'
+  option was not being used.
+
+
+What was new in ppp-2.5.4
+*************************
+
+This is primarily a security release, fixing several vulnerabilities
+including CVE-2026-75883 and CVE-2026-85495.  For more details on this
+and other vulnerabilities fixed, see the github advisories at
+
+https://github.com/ppp-project/ppp/security/advisories?state=published
+
+These range in severity up to 6.8 (moderate).  Many of the
+vulnerabilities are actually only of concern if pppd is installed
+setuid-root, which some distros still do, though 'make install' in
+this project does not install pppd setuid-root.
+
+Other changes include:
+
+* A new environment variable is defined for scripts, called
+  PPP_SCRIPT_INSTANCE, which contains the original name of the script
+  (e.g., ip-up).  This can be useful when the name in argv[0] gets
+  lost because the script is executed by an interpreter.
+
+* New options 'strict-script-checks', 'nostrict-script-checks',
+  'strict-secrets-files' and 'nostrict-secrets-files' have been added.
+  The strict versions are the default, and the nostrict versions are
+  privileged.  'strict-script-checks' enables checks on script files
+  that are run as root (e.g., /etc/ppp/ip-up) to ensure that they are
+  owned by root and not writable by group or other.
+  'strict-secrets-checks' enables checks on secrets files (such as
+  /etc/ppp/chap-secrets) to ensure that they are not readable by group
+  or other; previously (and now with nostrict-secrets-checks) the check
+  was done but only produced a warning; now by default pppd will
+  refuse to use the file.
+
+* For EAP-TLS and PEAP, the verification of the 'common name' in TLS
+  certificates no longer stops the comparison at an embedded NUL
+  character.  The pppd man page now notes that the default
+  verification mode is 'none' and that the 'suffix' verification mode
+  doesn't check for a '.' in the common name before the matched suffix
+  (this was the behaviour previously but the man page was incorrect).
+
+* Many more options are now privileged, in particular all of the
+  RADIUS plugin options, and almost all the options relating to
+  EAP-TLS and PEAP.
+
+* OpenSSL engine support in EAP-TLS is disabled by default, since
+  engine support in OpenSSL 3 is deprecated.  If you need it, use the
+  --enable-openssl-engine flag to configure.
+
+* Pppd can now run as non-root as long as it has the CAP_NET_ADMIN
+  capability.  In that case, scripts are run as the invoking user,
+  the user can use privileged options (provided the pppd binary
+  was not marked as setuid or with additional capabilities), and the
+  ownership checks use the user's effective UID rather than 0.
+
+* Various pppd options that take an integer argument now enforce
+  sensible limits on the value.  This aids in avoiding edge cases
+  where vulnerabilities may lurk.
+
+* EAP-SRP support has been removed.  Previously it was disabled by
+  default.
+
+* Extra length checks have been added to ensure that the pppd code
+  doesn't access outside the bounds of received packets, even when
+  such accesses were harmless (i.e. within the bounds of the array
+  that the received packet was stored in, and not affecting any
+  result).
+
+* Various other minor bug fixes and improvements, including man page
+  updates.
+
+
+What was new in ppp-2.5.3
+*************************
+
+* Several security improvements:
+  - Some options are now privileged: 'set', 'unset',
+    'defaultroute', and 'defaultroute6'.  If a non-root user
+    running a setuid-root pppd needs to use these options,
+    the system administrator will have to make a 'call' file
+    in /etc/ppp/peers containing the required option(s) for
+    the user's use.
+
+  - Scripts, privileged options files and secrets files now are
+    subject to a path check, which checks that the file and each
+    directory in the real path to the file are owned by root and
+    not writable by non-root.
+
+  - If pppd is installed setuid-root and run by a non-root user,
+    the peer will be required to authenticate itself; previously
+    this requirement only applied if the system had a default
+    IPv4 route.
+
+* Default route handling has changed; pppd no longer checks for
+  an existing default route before adding its default route.  The
+  defaultroute and defaultroute6 options are now privileged, and
+  if used, the default route will always be added.  The metric of
+  the default route can be controlled with new defaultroute-metric
+  and defaultroute6-metric options, which are privileged.
+  The replacedefaultroute and noreplacedefaultroute options
+  are no longer functional, and just cause an error message to
+  be printed.
+
+* There is now a dhcpv6relay plugin, which can be used to provide
+  IPv6 RAs to the remote side and relay the subsequent incoming
+  DHCPv6 requests to a DHCPv6 server.  Note: This is to delegate
+  IPv6 to the remote side, not to configure IPv6 locally; in other
+  words, this is generally only useful for service providers.
+  For configuring IPv6 at an endpoint, projects like dhcpcd
+  and/or radvd may be useful.
+
+* VRF (Virtual Routing and Forwarding) support has been added
+  to pppd on Linux.  There is now a 'vrf' option which tells
+  pppd to bind the PPP interface to a specific VRF, so that
+  routes are installed in the VRF's routing table rather than
+  the main routing table.
+
+* The pppoe (PPP over ethernet) plugin now supports maximum
+  packet sizes greater than 1492 bytes if configured to do so,
+  a larger size is agreed upon during the PPPoE negotiation,
+  and the peer agrees.
+
+* CBCP (Callback control protocol) support can still be selected
+  at configuration time, but now a warning message will be
+  printed, warning that CBCP support will be removed in a
+  future version.  If you use CBCP in pppd, let the maintainer
+  know, for example by adding to the issue at:
+	https://github.com/ppp-project/ppp/issues/530
+
+* Various other bug fixes and minor enhancements.
+
+
+What was new in ppp-2.5.2
+*************************
 
 * Some old and probably unused code has been removed, notably the
   pppgetpass program and the passprompt plugin, and some of the files

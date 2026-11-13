@@ -283,7 +283,8 @@ void pppoe_log_packet(const char *prefix, PPPoEPacket *packet);
 
 static inline int parseHostUniq(const char *uniq, PPPoETag *tag)
 {
-    unsigned i, len = strlen(uniq);
+    unsigned i;
+    size_t len = strlen(uniq);
 
 #define hex(x) \
     (((x) <= '9') ? ((x) - '0') : \

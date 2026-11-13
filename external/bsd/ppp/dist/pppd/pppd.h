@@ -115,6 +115,16 @@ typedef enum ppp_exit_code
 } ppp_exit_code_t;
 
 /*
+ * Values for file types to be checked in pppd_check_access
+ */
+typedef enum
+{
+    PPP_FT_DEFAULT	    = 0,
+    PPP_FT_EXEC		    = 1,
+    PPP_FT_SECRET	    = 2,
+} ppp_file_type_t;
+
+/*
  * Type of notifier callbacks
  */
 typedef enum
@@ -299,6 +309,9 @@ void pr_log(void *, char *, ...);
 /* finish up after using pr_log */
 void end_pr_log(void);
 
+/* Check that a file can safely be used */
+int ppp_check_access(int fd, const char *path, ppp_file_type_t filetype);
+
 /*
  * Get the current exist status of pppd
  */
@@ -428,7 +441,7 @@ bool ppp_bad_ip_addr(uint32_t);
 /*
  * Expose an environment variable to scripts
  */
-void ppp_script_setenv(char *, char *, int);
+void ppp_script_setenv(const char *, const char *, int);
 
 /*
  * Unexpose an environment variable to scripts
@@ -439,6 +452,19 @@ void ppp_script_unsetenv(char *);
  * Test whether ppp kernel support exists
  */
 int ppp_check_kernel_support(void);
+
+/*
+ * Test whether we have the privileges needed to open the ppp device
+ * and configure interfaces.
+ */
+int ppp_privileged(void);
+
+/*
+ * Test whether this exec raised our privileges - a setuid or setgid bit
+ * on the binary, or file capabilities - which the kernel grants to
+ * whoever runs it, and not to us on their behalf.
+ */
+int ppp_secure_exec(void);
 
 /*
  * Restore device setting
@@ -563,6 +589,15 @@ extern int (*holdoff_hook)(void);
 extern int  (*allowed_address_hook)(uint32_t addr);
 extern void (*snoop_recv_hook)(unsigned char *p, int len);
 extern void (*snoop_send_hook)(unsigned char *p, int len);
+
+/* mechanism to setup event handlers */
+typedef void (*event_cb)(int fd, void* ctx); /* callback signature */
+void add_fd_callback(int, event_cb, void*); /* add fd with callback */
+void remove_fd(int);	/* Remove fd from set to wait for */
+
+/* route management, be sure that prefix points to a correct buffer */
+int sifaddroute(int family, const void* prefix, uint8_t len, unsigned metric);
+int sifdelroute(int family, const void* prefix, uint8_t len, unsigned metric);
 
 #ifdef __cplusplus
 }

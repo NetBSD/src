@@ -53,15 +53,16 @@ mppe_set_keys(u_char *send_key, u_char *recv_key, int keylen)
 	if (length > MPPE_MAX_KEY_SIZE)
 		length = MPPE_MAX_KEY_SIZE;
 	
-	if (send_key) {
+	if (send_key)
 	    BCOPY(send_key, mppe_send_key, length);
-	    BZERO(send_key, keylen);
-	}
-
-	if (recv_key) {
+	if (recv_key)
 	    BCOPY(recv_key, mppe_recv_key, length);
+
+	/* Clear the callers' copies only now: they may be the same buffer */
+	if (send_key)
+	    BZERO(send_key, keylen);
+	if (recv_key)
 	    BZERO(recv_key, keylen);
-	}
 
 	mppe_keys_set = length;
 }

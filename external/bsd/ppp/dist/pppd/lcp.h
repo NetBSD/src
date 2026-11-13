@@ -76,6 +76,8 @@ extern "C" {
 #define CI_I18N		28	/* Internationalization */
 #define CI_SDL		29	/* Simple Data Link */
 
+#define CI_LCP_LAST	CI_SDL	/* update this if any new CIs get added */
+
 /*
  * LCP-specific packet types (code numbers).
  */

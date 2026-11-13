@@ -236,7 +236,7 @@ static struct option tty_options[] = {
 
     { "datarate", o_int, &max_data_rate,
       "Maximum data rate in bytes/sec (with pty, notty or record option)",
-      OPT_PRIO },
+      OPT_PRIO | OPT_LLIMIT, NULL, 0, 0 },
 
     { "escape", o_special, (void *)setescape,
       "List of character codes to escape on transmission",

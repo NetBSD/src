@@ -762,12 +762,13 @@ void
 fsm_sdata(fsm *f, int code, int id, u_char *data, int datalen)
 {
     u_char *outp;
-    int outlen;
+    int outlen, mtu;
 
     /* Adjust length to be smaller than MTU */
     outp = outpacket_buf;
-    if (datalen > peer_mru[f->unit] - HEADERLEN)
-	datalen = peer_mru[f->unit] - HEADERLEN;
+    mtu = MIN(peer_mru[f->unit], PPP_MRU) - HEADERLEN;
+    if (datalen > mtu)
+	datalen = mtu;
     if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)
 	BCOPY(data, outp + PPP_HDRLEN + HEADERLEN, datalen);
     outlen = datalen + HEADERLEN;
