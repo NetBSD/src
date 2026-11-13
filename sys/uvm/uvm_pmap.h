@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pmap.h,v 1.48 2026/05/04 04:13:32 thorpej Exp $	*/
+/*	$NetBSD: uvm_pmap.h,v 1.49 2026/11/13 15:27:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -115,6 +115,13 @@ extern struct pmap	*const kernel_pmap_ptr;
 
 /* = PMAP_NOCACHE but overrideable (e.g. on x86 by MTRRs) */
 #define PMAP_NOCACHE_OVR	0x00000400	/* [BOTH] */
+
+/* On reads, cachelines become shared or exclusive if allocated on cache miss.
+ * On writes, cachelines are allocated on a cache miss but are never dirty
+ * because the writes pass-through to the backing store.  Implies that
+ * no burst writes are made to backing store.  */
+#define	PMAP_WRITE_THROUGH	0x00000500	/* [BOTH] */
+
 
 #ifdef _KERNEL
 #include <machine/pmap.h>
