@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.280 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.281 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -49,7 +49,7 @@
 #include "empm.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.280 2026/04/28 03:29:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.281 2026/11/13 21:14:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -129,8 +129,6 @@ void ser_outintr(void);
 #if NFD > 0
 void fdintr(int);
 #endif
-
-volatile unsigned int intr_depth = 0;
 
 int	machineid;
 int	maxmem;			/* max memory per process */
@@ -755,13 +753,6 @@ intrhand(int sr)
 #ifdef REALLYDEBUG
 	printf("intrhand: leaving.\n");
 #endif
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return intr_depth != 0;
 }
 
 #if defined(DEBUG) && !defined(PANICBUTTON)

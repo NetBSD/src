@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.37 2026/03/18 04:08:38 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.38 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.37 2026/03/18 04:08:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.38 2026/11/13 21:14:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -83,7 +83,6 @@ int	intr_debug = 0;
  * to interrupt on different levels as listed in locore.s
  */
 uint16_t ipl2psl_table[NIPL];
-volatile unsigned int intr_depth;
 
 extern	u_int intrcnt[];	/* from locore.s */
 
@@ -211,13 +210,13 @@ intr_dispatch(struct clockframe frame)
 {
 	const int ipl = VECO_TO_VECI(frame.cf_vo) - VECI_INTRAV0;
 
-	intr_depth++;
+	curcpu()->ci_idepth++;
 
 	intrcnt[ipl]++;
 	curcpu()->ci_data.cpu_nintr++;
 
 	(void)(*intr_func[ipl])(intr_arg[ipl] ? intr_arg[ipl] : &frame);
-	intr_depth--;
+	curcpu()->ci_idepth--;
 }
 
 /*
@@ -227,20 +226,13 @@ static int
 intr_noint(void *arg)
 {
 #ifdef DEBUG
-	intr_depth++;
+	curcpu()->ci_idepth++;
 	if (intr_debug) {
 		const struct clockframe *frame = arg;
 		const int ipl = VECO_TO_VECI(frame->cf_vo) - VECI_INTRAV0;
 		printf("intr_noint: ipl %d\n", ipl);
 	}
-	intr_depth--;
+	curcpu()->ci_idepth--;
 #endif
 	return 0;
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return intr_depth != 0;
 }

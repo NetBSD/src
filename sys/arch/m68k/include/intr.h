@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.9 2024/02/08 20:11:56 andvar Exp $	*/
+/*	$NetBSD: intr.h,v 1.10 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2024 The NetBSD Foundation, Inc.
@@ -70,16 +70,9 @@ typedef struct {
 
 #ifndef _LOCORE
 
-extern volatile unsigned int intr_depth;/* interrupt depth */
 extern const uint16_t ipl2psl_table[NIPL];
 
 typedef int ipl_t;		/* logical IPL_* value */
-
-static inline bool
-cpu_intr_p(void)
-{
-	return intr_depth != 0;
-}
 
 static inline ipl_cookie_t
 makeiplcookie(ipl_t ipl)

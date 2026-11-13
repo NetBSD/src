@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr.c,v 1.13 2024/01/19 20:55:42 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr.c,v 1.14 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023, 2024 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.13 2024/01/19 20:55:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_intr.c,v 1.14 2026/11/13 21:14:17 thorpej Exp $");
 
 #define	_M68K_INTR_PRIVATE
 
@@ -69,8 +69,6 @@ extern char intrstub_vectored[];
 
 /* A dummy event counter where interrupt stats go to die. */
 static struct evcnt bitbucket;
-
-volatile unsigned int intr_depth;	/* updated in assembly glue */
 
 static struct m68k_intrhand_list m68k_intrhands_autovec[NAUTOVECTORS];
 #ifdef __HAVE_M68K_INTR_VECTORED

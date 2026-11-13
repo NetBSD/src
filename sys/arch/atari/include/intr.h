@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.26 2026/03/18 04:08:38 thorpej Exp $	*/
+/*	$NetBSD: intr.h,v 1.27 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2007 The NetBSD Foundation, Inc.
@@ -71,7 +71,6 @@ typedef struct {
 
 #ifdef _KERNEL
 extern const uint16_t ipl2psl_table[NIPL];
-extern volatile unsigned int intr_depth;
 
 typedef int ipl_t;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.31 2026/11/13 19:11:52 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.32 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -158,6 +158,12 @@ void	cpu_proc_fork(struct proc *, struct proc *);
 #define	curcpu()	(&cpu_info_store)
 #define cpu_number()	0
 
+static inline bool
+cpu_intr_p(void)
+{
+	return curcpu()->ci_idepth != 0;
+}
+
 #define LWP_PC(l)	(((struct trapframe *)((l)->l_md.md_regs))->tf_pc)
 
 /*
@@ -177,33 +183,13 @@ struct clockframe {
 #define	CLKF_USERMODE(framep)	(((framep)->cf_sr & PSL_S) == 0)
 #define	CLKF_PC(framep)		((framep)->cf_pc)
 
-#if 0
-/*
- * We can determine if we were previously in an interrupt context
- * if we were running on the interrupt stack (as opposed to the
- * "master" stack).
- *
- * XXX Actually, we can't, because we don't use the master stack
- * XXX right now.
- *
- * (Actually, it's unlikely that we'll ever use the master stack in NetBSD.
- * It would complicate the spl*() functions considerably and it just doesn't
- * seem like a good trade-off for what seems like extremely marginal gains.
- * So, just blissfully run the kernel on the interrupt stack all the time,
- * and it's been that way for >30 years and no one has really complained
- * about it.)
- */
-#define	CLKF_INTR(framep)	(((framep)->cf_sr & PSL_M) == 0)
-#else
 /*
  * The clock interrupt handler can determine if it's a nested
- * interrupt by checking for intr_depth > 1.
+ * interrupt by checking for curcpu()->ci_idepth > 1.
  * (Remember, the clock interrupt handler itself will cause the
  * depth counter to be incremented).
  */
-extern volatile unsigned int intr_depth;
-#define	CLKF_INTR(framep)	(intr_depth > 1)
-#endif
+#define	CLKF_INTR(framep)	(curcpu()->ci_idepth > 1)
 
 #ifndef __HAVE_M68K_HW_AST
 #define	cpu_set_hw_ast(l)	__nothing

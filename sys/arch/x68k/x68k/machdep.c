@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.233 2026/04/28 03:29:11 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.234 2026/11/13 21:14:18 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.233 2026/04/28 03:29:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.234 2026/11/13 21:14:18 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -636,15 +636,6 @@ setmemrange(void)
 		}
 	}
 #endif
-}
-
-volatile unsigned int intr_depth;
-
-bool
-cpu_intr_p(void)
-{
-
-	return intr_depth != 0;
 }
 
 int

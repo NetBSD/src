@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.5 2026/04/04 00:55:45 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.6 2026/11/13 21:14:18 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2023 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.5 2026/04/04 00:55:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.6 2026/11/13 21:14:18 thorpej Exp $");
 
 #define _VIRT68K_INTR_PRIVATE
 
@@ -130,8 +130,6 @@ __CTASSERT(__arraycount(intr_evcnt) == NIRQ);
 #define	IRQ_TO_IHLIST(x) ((x) - IRQ_PIC_BASE)
 #define	IRQ_TO_IPL(x)	 ((IRQ_TO_IHLIST(x) >> 5) + 1)
 static LIST_HEAD(intrhand_list, intrhand) intrhands[IHLIST_COUNT];
-
-volatile unsigned int	intr_depth;	/* used in locore.s */
 
 static struct gfpic_softc *pics[NPIC];
 
@@ -300,10 +298,4 @@ m68k_intr_autovec(struct clockframe frame)
 	if (!rv) {
 		printf("Spurious interrupt on CPU ipl %d\n", ipl);
 	}
-}
-
-bool
-cpu_intr_p(void)
-{
-	return intr_depth != 0;
 }

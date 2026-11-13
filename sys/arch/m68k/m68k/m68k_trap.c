@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.12 2026/07/06 15:46:41 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.13 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.12 2026/07/06 15:46:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.13 2026/11/13 21:14:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1017,7 +1017,7 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 #endif
 
 #ifdef DIAGNOSTIC
-		if (intr_depth && !panicking) {
+		if (curcpu()->ci_idepth && !panicking) {
 			printf("trap: calling pmap_fault() from interrupt!\n");
 			goto dopanic;
 		}

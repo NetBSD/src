@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.4 2026/11/12 03:00:59 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.5 2026/11/13 21:14:17 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -126,6 +126,7 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 
 # interrupt/fault metering
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
+define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	SIZEOF_EVCNT		sizeof(struct evcnt)
 define	EV_COUNT		offsetof(struct evcnt, ev_count)
 define	EV_COUNT32		offsetof(struct evcnt, ev_count32)

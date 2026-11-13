@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.35 2026/03/18 04:08:38 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.36 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2026/03/18 04:08:38 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.36 2026/11/13 21:14:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.35 2026/03/18 04:08:38 thorpej Exp $");
 typedef LIST_HEAD(, intrhand) ih_list_t;
 static ih_list_t autovec_list[AVEC_MAX - AVEC_MIN + 1];
 static ih_list_t uservec_list[UVEC_MAX - UVEC_MIN + 1];
-volatile unsigned int intr_depth;
 
 void
 intr_init(void)
@@ -304,13 +303,6 @@ intr_dispatch(struct clockframe frame)
 		panic("%s: too many stray interrupts", __func__);
 	else
 		printf("%s: stray level %d interrupt\n", __func__, vector);
-}
-
-bool
-cpu_intr_p(void)
-{
-
-	return intr_depth != 0;
 }
 
 const uint16_t ipl2psl_table[NIPL] = {

@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.40 2026/11/13 19:11:30 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.41 2026/11/13 21:14:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -227,8 +227,10 @@
 	move.l	%d1,(%a1)
 
 /* Increment/decrement the interrupt depth. */
-#define	INTR_DEPTH_INCR		addql	__IMMEDIATE 1,_C_LABEL(intr_depth)
-#define	INTR_DEPTH_DECR		subql	__IMMEDIATE 1,_C_LABEL(intr_depth)
+#define	INTR_DEPTH_INCR						\
+	addql	__IMMEDIATE 1,_C_LABEL(cpu_info_store)+CI_IDEPTH
+#define	INTR_DEPTH_DECR						\
+	subql	__IMMEDIATE 1,_C_LABEL(cpu_info_store)+CI_IDEPTH
 
 #endif /* _KERNEL */
 
