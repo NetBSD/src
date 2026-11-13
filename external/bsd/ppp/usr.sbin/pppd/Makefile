@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2025/10/19 00:59:58 riastradh Exp $
+#	$NetBSD: Makefile,v 1.7 2026/11/13 16:41:48 christos Exp $
 
 .include "../Makefile.inc"
 
@@ -16,6 +16,7 @@ demand.c \
 eap.c \
 eap-tls.c \
 ecp.c \
+event-handler.c \
 fsm.c \
 ipcp.c \
 lcp.c \

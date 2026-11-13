@@ -220,7 +220,7 @@ bool bundle_terminating;
  */
 struct subprocess {
     pid_t	pid;
-    char	*prog;
+    const char	*prog;
     void	(*done)(void *);
     void	*arg;
     int		killable;
@@ -249,7 +249,7 @@ static void holdoff_end(void *);
 static void forget_child(int pid, int status);
 static int reap_kids(void);
 static void childwait_end(void *);
-static void run_net_script(char* script, int wait);
+static void run_net_script(char* script, int wait, const char* name);
 
 #ifdef PPP_WITH_TDB
 static void update_db_entry(void);
@@ -371,6 +371,9 @@ main(int argc, char *argv[])
     strlcpy(path_net_preup, PPP_PATH_NET_PREUP, MAXPATHLEN);
     strlcpy(path_net_down, PPP_PATH_NET_DOWN, MAXPATHLEN);
 
+    strlcpy(path_auth_up, PPP_PATH_AUTHUP, MAXPATHLEN);
+    strlcpy(path_auth_down, PPP_PATH_AUTHDOWN, MAXPATHLEN);
+
     strlcpy(path_ipup, PPP_PATH_IPUP, MAXPATHLEN);
     strlcpy(path_ipdown, PPP_PATH_IPDOWN, MAXPATHLEN);
     strlcpy(path_ippreup, PPP_PATH_IPPREUP, MAXPATHLEN);
@@ -403,7 +406,11 @@ main(int argc, char *argv[])
     umask(umask(0777) | 022);
 
     uid = getuid();
-    privileged = uid == 0;
+    /* Privileged options come from the invoking user's own authority, so a
+     * pppd that gained privileges from the exec itself must not hand them
+     * to whoever ran it. */
+    privileged = uid == 0 || (uid == geteuid() && !ppp_secure_exec() &&
+                              ppp_privileged());
     slprintf(numbuf, sizeof(numbuf), "%d", uid);
     ppp_script_setenv("ORIG_UID", numbuf, 0);
 
@@ -454,10 +461,11 @@ main(int argc, char *argv[])
     }
 
     /*
-     * Check that we are running as root.
+     * Check that we have the privileges needed to open the ppp device
+     * and configure interfaces.
      */
-    if (geteuid() != 0) {
-	ppp_option_error("must be root to run %s, since it is not setuid-root",
+    if (!ppp_privileged()) {
+	ppp_option_error("%s must be run as root or with CAP_NET_ADMIN",
 		     argv[0]);
 	exit(EXIT_NOT_ROOT);
     }
@@ -501,6 +509,8 @@ main(int argc, char *argv[])
 	    fatal("Critical shortage of file descriptors: dup failed: %m");
 	fd_devnull = i;
     }
+
+    event_handler_init();
 
     /*
      * Initialize system-dependent stuff.
@@ -817,7 +827,8 @@ setup_signals(void)
 /*
  * net-* scripts to be run come through here.
  */
-void run_net_script(char* script, int wait)
+static
+void run_net_script(char* script, int wait, const char* name)
 {
     char strspeed[32];
     char *argv[6];
@@ -831,7 +842,7 @@ void run_net_script(char* script, int wait)
     argv[4] = ipparam;
     argv[5] = NULL;
 
-    run_program(script, argv, 0, NULL, NULL, wait);
+    run_program(script, argv, 0, NULL, NULL, wait, name);
 }
 
 /*
@@ -849,6 +860,10 @@ set_ifunit(int iskey)
 	slprintf(ifname, sizeof(ifname), "%s%d", PPP_DRV_NAME, ifunit);
     info("Using interface %s", ifname);
     ppp_script_setenv("IFNAME", ifname, iskey);
+#ifdef __linux__
+    if (req_vrf[0] != '\0')
+        ppp_script_setenv("VRF", req_vrf, iskey);
+#endif
     slprintf(ifkey, sizeof(ifkey), "%d", ifunit);
     ppp_script_setenv("UNIT", ifkey, iskey);
     if (iskey) {
@@ -857,7 +872,7 @@ set_ifunit(int iskey)
     }
     if (*remote_number)
         ppp_script_setenv("REMOTENUMBER", remote_number, 0);
-    run_net_script(path_net_init, 1);
+    run_net_script(path_net_init, 1, "net-init");
 }
 
 /*
@@ -1267,7 +1282,7 @@ new_phase(ppp_phase_t p)
 	if (phase <= PHASE_NETWORK) {
 	    char iftmpname[IFNAMSIZ];
 	    int ifindex = if_nametoindex(ifname);
-	    run_net_script(path_net_preup, 1);
+	    run_net_script(path_net_preup, 1, "net-pre-up");
 	    if (if_indextoname(ifindex, iftmpname) && strcmp(iftmpname, ifname)) {
 		info("Detected interface name change from %s to %s.", ifname, iftmpname);
 		strcpy(ifname, iftmpname);
@@ -1275,7 +1290,7 @@ new_phase(ppp_phase_t p)
 	}
 	break;
     case PHASE_DISCONNECT:
-	run_net_script(path_net_down, 0);
+	run_net_script(path_net_down, 0, "net-down");
 	break;
     default:
 	break;
@@ -1718,8 +1733,10 @@ ppp_safe_fork(int infd, int outfd, int errfd)
 	/* Executing in the child */
 	ppp_sys_close();
 #ifdef PPP_WITH_TDB
-	if (pppdb != NULL)
+	if (pppdb != NULL) {
 		tdb_close(pppdb);
+		pppdb = NULL;	/* tdb_close() can't null the caller's pointer */
+	}
 #endif
 
 	/* make sure infd, outfd and errfd won't get tromped on below */
@@ -1890,7 +1907,7 @@ update_script_environment(void)
     for (uep = userenv_list; uep != NULL; uep = uep->ue_next) {
 	int i;
 	char *p, *newstring;
-	int nlen = strlen(uep->ue_name);
+	size_t nlen = strlen(uep->ue_name);
 
 	for (i = 0; (p = script_env[i]) != NULL; i++) {
 	    if (strncmp(p, uep->ue_name, nlen) == 0 && p[nlen] == '=')
@@ -1924,31 +1941,39 @@ update_script_environment(void)
  * reap_kids) iff the return value is > 0.
  */
 pid_t
-run_program(char *prog, char * const *args, int must_exist, void (*done)(void *), void *arg, int wait)
+run_program(const char *prog, char * const *args, int must_exist, void (*done)(void *), void *arg, int wait, const char* name)
 {
-    int pid, status, ret;
-    struct stat sbuf;
+    int fd, pid, status, ret;
 
     /*
-     * First check if the file exists and is executable.
-     * We don't use access() because that would use the
-     * real user-id, which might not be root, and the script
-     * might be accessible only to root.
+     * First check if the file exists and is executable by root,
+     * and couldn't have been modified by a non-root process.
      */
-    errno = EINVAL;
-    if (stat(prog, &sbuf) < 0 || !S_ISREG(sbuf.st_mode)
-	|| (sbuf.st_mode & (S_IXUSR|S_IXGRP|S_IXOTH)) == 0) {
-	if (must_exist || errno != ENOENT)
-	    warn("Can't execute %s: %m", prog);
+#if defined(O_PATH)
+    fd = open(prog, O_PATH);
+#elif defined(O_EXEC)
+    fd = open(prog, O_EXEC);
+#else
+    fd = open(prog, O_RDONLY);
+#endif
+    if (fd < 0) {
+	if (errno != ENOENT || must_exist)
+	    error("Can't access %s: %m", prog);
+	return 0;
+    }
+    if (!ppp_check_access(fd, prog, PPP_FT_EXEC)) {
+	close(fd);
 	return 0;
     }
 
     pid = ppp_safe_fork(fd_devnull, fd_devnull, fd_devnull);
     if (pid == -1) {
 	error("Failed to create child process for %s: %m", prog);
+	close(fd);
 	return -1;
     }
     if (pid != 0) {
+	close(fd);
 	if (debug)
 	    dbglog("Script %s started (pid %d)", prog, pid);
 	record_child(pid, prog, done, arg, 0);
@@ -1970,9 +1995,11 @@ run_program(char *prog, char * const *args, int must_exist, void (*done)(void *)
     if (ret != 0) {
         fatal("Failed to change directory to '/', %m");
     }
-    ret = setuid(0);		/* set real UID = root */
-    if (ret != 0) {
-        fatal("Failed to set uid, %m");
+    if (geteuid() == 0) {
+	ret = setuid(0);	/* set real UID = root */
+	if (ret != 0) {
+	    fatal("Failed to set uid, %m");
+	}
     }
     ret = setgid(getegid());
     if (ret != 0) {
@@ -1985,16 +2012,48 @@ run_program(char *prog, char * const *args, int must_exist, void (*done)(void *)
 	warn("can't reset priority to 0: %m");
 #endif
 
+    ppp_script_setenv("PPP_SCRIPT_INSTANCE", name, 0);
+
     /* run the program */
     update_script_environment();
-    execve(prog, args, script_env);
-    if (must_exist || errno != ENOENT) {
-	/* have to reopen the log, there's nowhere else
-	   for the message to go. */
-	reopen_log();
-	syslog(LOG_ERR, "Can't execute %s: %m", prog);
-	closelog();
+
+    if (strict_script_checks) {
+#if defined(SOL2)
+	/*
+	 * Solaris/illumos can't exec a #! script through its fd:
+	 * fexecve() fails with EFAULT, /dev/fd/N with EACCES, and
+	 * /proc/self/fd/N hangs.  Exec by path instead, but only if
+	 * the path still names the file ppp_check_access() vetted.
+	 */
+	struct stat fst, pst;
+
+	if (fstat(fd, &fst) == 0 && stat(prog, &pst) == 0
+	    && fst.st_dev == pst.st_dev && fst.st_ino == pst.st_ino)
+	    execve(prog, args, script_env);
+	else
+	    errno = ESTALE;
+#elif defined(HAVE_FEXECVE)
+	fexecve(fd, args, script_env);
+#else
+	char fdpath[32];
+
+	snprintf(fdpath, sizeof(fdpath), "/dev/fd/%d", fd);
+	execve(fdpath, args, script_env);
+	if (errno == ENOENT) {
+	    snprintf(fdpath, sizeof(fdpath), "/proc/self/fd/%d", fd);
+	    execve(fdpath, args, script_env);
+	}
+#endif
+    } else {
+	/* This is risky.  Allows for certain TOCTAU issues, but usually we should be OKay */
+	execve(prog, args, script_env);
     }
+    /* have to reopen the log, there's nowhere else for the message to go. */
+    ret = errno;	/* reopen_log() may clobber errno */
+    reopen_log();
+    errno = ret;
+    syslog(LOG_ERR, "Can't execute %s: %m", prog);
+    closelog();
     _exit(99);
 }
 
@@ -2004,7 +2063,7 @@ run_program(char *prog, char * const *args, int must_exist, void (*done)(void *)
  * to use.
  */
 void
-record_child(int pid, char *prog, void (*done)(void *), void *arg, int killable)
+record_child(int pid, const char *prog, void (*done)(void *), void *arg, int killable)
 {
     struct subprocess *chp;
 
@@ -2185,7 +2244,7 @@ novm(const char *msg)
  * for scripts that we run (e.g. ip-up, auth-up, etc.)
  */
 void
-ppp_script_setenv(char *var, char *value, int iskey)
+ppp_script_setenv(const char *var, const char *value, int iskey)
 {
     size_t varl = strlen(var);
     size_t vl = varl + strlen(value) + 2;
@@ -2248,7 +2307,7 @@ ppp_script_setenv(char *var, char *value, int iskey)
 void
 ppp_script_unsetenv(char *var)
 {
-    int vl = strlen(var);
+    size_t vl = strlen(var);
     int i;
     char *p;
 

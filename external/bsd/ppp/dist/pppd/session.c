@@ -1,4 +1,4 @@
-/*	$NetBSD: session.c,v 1.7 2025/01/09 18:27:46 martin Exp $	*/
+/*	$NetBSD: session.c,v 1.8 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * session.c - PPP session control.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: session.c,v 1.7 2025/01/09 18:27:46 martin Exp $");
+__RCSID("$NetBSD: session.c,v 1.8 2026/11/13 16:41:47 christos Exp $");
 
 
 #ifdef HAVE_CONFIG_H
@@ -196,7 +196,6 @@ session_start(const int flags, const char *user, const char *passwd, const char 
 #endif
 #ifdef HAVE_SHADOW_H
     struct spwd *spwd;
-    struct spwd *getspnam();
     long now = 0;
 #endif /* #ifdef HAVE_SHADOW_H */
 #endif /* #ifdef PPP_WITH_PAM */

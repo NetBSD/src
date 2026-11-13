@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: lcp.h,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * lcp.h - Link Control Protocol definitions.
@@ -77,6 +77,8 @@ extern "C" {
 #define CI_MPHDRFMT	27	/* MP Header Format */
 #define CI_I18N		28	/* Internationalization */
 #define CI_SDL		29	/* Simple Data Link */
+
+#define CI_LCP_LAST	CI_SDL	/* update this if any new CIs get added */
 
 /*
  * LCP-specific packet types (code numbers).

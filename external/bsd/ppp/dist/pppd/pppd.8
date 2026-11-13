@@ -75,11 +75,11 @@ so pppd will ask the peer not to escape any control characters.
 To escape transmitted characters, use the \fIescape\fR option.
 .TP
 .B auth
-Require the peer to authenticate itself before allowing network
-packets to be sent or received.  This option is the default if the
-system has a default route.  If neither this option nor the
-\fInoauth\fR option is specified, pppd will only allow the peer to use
-IP addresses to which the system does not already have a route.
+Require the peer to authenticate itself before allowing network packets to be
+sent or received.  For security reasons this option is the default if pppd is
+executed as a non-privileged user, unless the \fInoauth\fR option is
+in effect (since \fInoauth\fR is a privileged option, it would
+need to come from a privileged options file, not the command line).
 .TP
 .B call \fIname
 Read additional options from the file /etc/ppp/peers/\fIname\fR.  This
@@ -119,18 +119,11 @@ a modem control line.
 Add a default route to the system routing tables, using the peer as
 the gateway, when IPCP negotiation is successfully completed.
 This entry is removed when the PPP connection is broken.  This option
-is privileged if the \fInodefaultroute\fR option has been specified.
+is privileged.
 .TP
 .B defaultroute-metric
-Define the metric of the \fIdefaultroute\fR and only add it if there
-is no other default route with the same metric.  With the default
-value of -1, the route is only added if there is no default route at
-all.
-.TP
-.B replacedefaultroute
-This option is a flag to the defaultroute option. If defaultroute is
-set and this flag is also set, pppd replaces an existing default route
-with the new default route.  This option is privileged.
+Define the metric of the \fIdefaultroute\fR.  By default the default route will
+be added with a metric of 0.  This option is privileged.
 .TP
 .B disconnect \fIscript
 Execute the command specified by \fIscript\fR, by passing it to a
@@ -268,11 +261,12 @@ compression in the corresponding direction.  Use \fInobsdcomp\fR or
 This option is used on the client-side in conjunction with the \fBcert\fR
 and \fBkey\fR options.  Either \fIca\fR, or \fIcapath\fR options are required
 for PEAP. EAP-TLS may also use the entry in eaptls-client or eaptls-server
-for a CA certificate associated with a particular peer.
+for a CA certificate associated with a particular peer. This option is privileged.
 .TP
 .B capath \fIpath
 (EAP-TLS, or PEAP) Specify a location that contains public CA certificates.
 Either \fIca\fR, or \fIcapath\fR options are required for PEAP.
+This option is privileged.
 .TP
 .B cdtrcts
 Use a non-standard hardware flow control (i.e. DTR/CTS) to control
@@ -289,7 +283,7 @@ control mode does not permit using DTR as a modem control line.
 (EAP-TLS) Use the file \fIcertfile\fR as the X.509 certificate (in PEM
 format), needed for setting up an EAP-TLS connection. This option is
 used on the client-side in conjunction with the \fBca\fR and 
-\fBkey\fR options.
+\fBkey\fR options. This option is privileged.
 .TP
 .B chap\-interval \fIn
 If this option is given, pppd will rechallenge the peer every \fIn\fR
@@ -332,13 +326,13 @@ or \fBpty\fR option is used.
 (EAP-TLS, or PEAP) Use the file \fIfilename\fR as the Certificate Revocation List
 to check for the validity of the peer's certificate. This option is not
 mandatory for setting up a TLS connection. Also see the \fBcrl-dir\fR
-option.
+option. This option is privileged.
 .TP
 .B crl-dir \fIdirectory
 (EAP-TLS, or PEAP) Use the directory \fIdirectory\fR to scan for CRL files in
 has format ($hash.r0) to check for the validity of the peer's certificate.
 This option is not mandatory for setting up a TLS connection.
-Also see the \fBcrl\fR option.
+Also see the \fBcrl\fR option. This option is privileged.
 .TP
 .B debug
 Enables connection debugging facilities.
@@ -361,12 +355,16 @@ transmit and receive direction.
 Add a default IPv6 route to the system routing tables, using the peer as
 the gateway, when IPv6CP negotiation is successfully completed.
 This entry is removed when the PPP connection is broken.  This option
-is privileged if the \fInodefaultroute6\fR option has been specified.
+is privileged.
 \fBWARNING: Do not enable this option by default\fR.  IPv6 routing tables
-are managed by kernel (as apposite to IPv4) and IPv6 default route is
-configured by kernel automatically too based on ICMPv6 Router Advertisement
+are managed by kernel (as opposed to IPv4) and IPv6 default route is
+configured by kernel automatically based on ICMPv6 Router Advertisement
 packets.  This option may conflict with kernel IPv6 route setup and should
 be used only for broken IPv6 networks.
+.TP
+.B defaultroute6-metric
+Define the metric of the \fIdefaultroute6\fR.  By default the default route will
+be added with a metric of 0.  This option is privileged.
 .TP
 .B deflate \fInr,nt
 Request that the peer compress packets that it sends, using the
@@ -502,7 +500,7 @@ Set the maximum number of IPCP configure-request transmissions to
 .TP
 .B ipcp\-max\-failure \fIn
 Set the maximum number of IPCP configure-NAKs returned before starting
-to send configure-Rejects instead to \fIn\fR (default 10).
+to send configure-Rejects instead to \fIn\fR (default 100).
 .TP
 .B ipcp\-max\-terminate \fIn
 Set the maximum number of IPCP terminate-request transmissions to
@@ -591,7 +589,7 @@ the kernel are logged by syslog(1) to a file as directed in the
 (EAP-TLS) Use the file \fIkeyfile\fR as the private key file (in PEM
 format), needed for setting up an EAP-TLS connection. This option is
 used on the client-side in conjunction with the \fBca\fR and 
-\fBcert\fR options.
+\fBcert\fR options. This option is privileged.
 .TP
 .B ktune
 Enables pppd to alter kernel settings as appropriate.  Under Linux,
@@ -692,10 +690,11 @@ network control protocol comes up).
 Terminate after \fIn\fR consecutive failed connection attempts.  A
 value of 0 means no limit.  The default value is 10.
 .TP
-.B max\-tls-\version \fIstring
+.B max\-tls\-version \fIstring
 (EAP-TLS, or PEAP) Configures the max allowed TLS version used during
 negotiation with a peer.  The default value for this is \fI1.2\fR.  Values
 allowed for this option is \fI1.0.\fR, \fI1.1\fR, \fI1.2\fR, \fI1.3\fR.
+This option is privileged.
 .TP
 .B modem
 Use the modem control lines.  This option is the default.  With this
@@ -799,18 +798,10 @@ This option is a synonym for \fInocrtscts\fR. Either of these options will
 disable both forms of hardware flow control.
 .TP
 .B nodefaultroute
-Disable the \fIdefaultroute\fR option.  The system administrator who
-wishes to prevent users from adding a default route with pppd
-can do so by placing this option in the /etc/ppp/options file.
-.TP
-.B noreplacedefaultroute
-Disable the \fIreplacedefaultroute\fR option. This allows to disable a
-\fIreplacedefaultroute\fR option set previously in the configuration.
+Disable the \fIdefaultroute\fR option.
 .TP
 .B nodefaultroute6
-Disable the \fIdefaultroute6\fR option.  The system administrator who
-wishes to prevent users from adding a default route with pppd
-can do so by placing this option in the /etc/ppp/options file.
+Disable the \fIdefaultroute6\fR option.
 .TP
 .B nodeflate
 Disables Deflate compression; pppd will not request or agree to
@@ -919,6 +910,12 @@ traffic.
 .B nosendip
 Don't send our local IP address to peer during IP address negotiation.
 .TP
+.B nostrict\-script\-checks
+Disabled strict\-script\-checks.  This option is privileged.
+.TP
+.B nostrict\-secrets\-files
+Disabled strict\-secrets\-files.  This option is privileged.
+.TP
 .B notty
 Normally, pppd requires a terminal device.  With this option, pppd
 will allocate itself a pseudo-tty master/slave pair and use the slave
@@ -987,6 +984,12 @@ Do not exit after a connection is terminated; instead try to reopen
 the connection. The \fBmaxfail\fR option still has an effect on
 persistent connections.
 .TP
+.B pkcs12 \fIpkcs12file
+(EAP-TLS) Read credentials for client-side EAP-TLS authentication
+from the file \fIpkcs12file\fR in PKCS12 format. This option is
+an alternative to the \fBcert\fR and \fBkey\fR options.
+This option is privileged.
+.TP
 .B plugin \fIfilename
 Load the shared library object file \fIfilename\fR as a plugin.  This
 is a privileged option.  If \fIfilename\fR does not contain a slash
@@ -1022,6 +1025,11 @@ pseudo-tty master as its standard input and output.  An explicit
 device name may not be given if this option is used.  (Note: if the
 \fIrecord\fR option is used in conjunction with the \fIpty\fR option,
 the child process will have pipes on its standard input and output.)
+
+It is important to note that script will be executed by passing it to /bin/sh
+using -c, such that if script contains arguments /bin/sh may attempt to
+interpret that, and thus any arguments should be escaped to avoid shell
+expansion.
 .TP
 .B receive\-all
 With this option, pppd will accept all control characters from the
@@ -1142,6 +1150,25 @@ file any pseudonym offered by the peer during authentication.
 Set the number of stop bits for the serial port. Valid values are 1 or 2.
 The default value is 1.
 .TP
+.B strict\-script\-checks
+This option (which is on by default) will enforce stricter rules on scripts,
+specifically they must be owned by root (or the effective id), and not be
+writable by either group or other.  The option is not privileged.  The inverse
+nostrict\-script\-checks to disable the checks however is.  This switches from
+using execve() when invoking scripts to using execveat() - which means we
+perform the relevant checks on the file we are guaranteed to exec to, with the
+caveat that if these are scripts with shebangs (#!) then $0 (argv[0]) will be
+lost - your scripts should either know who/what they are - or rely on
+PPP_SCRIPT_INSTANCE environment variable.  On Solaris and illumos, which
+cannot execute a #! script through a file descriptor, scripts are executed by
+path instead, after checking that the path still refers to the file that was
+checked.
+.TP
+.B strict\-secrets\-files
+This option (which is on be default) will refuse to operate using secrets files
+that are group or world readable.  This option is not privileged, but it's
+inverse (nostrict\-secrets\-files) is.
+.TP
 .B sync
 Use synchronous HDLC serial encoding instead of asynchronous.
 The device used by pppd with this option must have sync support.
@@ -1152,11 +1179,16 @@ under Linux and FreeBSD 2.2.8 and later.
 (EAP-TLS, or PEAP) Match the value specified for \fIremotename\fR to that that
 of the X509 certificates subject name, common name, or suffix of the common
 name.  Respective values allowed for this option is: \fInone\fR, \fIsubject\fR,
-\fIname\fR, or \fIsuffix\fR.  The default value for this option is \fIname\fR.
+\fIname\fR, or \fIsuffix\fR.  The default value for this option is \fInone\fR.
+This option is privileged.
 .TP
 .B tls\-verify\-key\-usage
-(EAP-TLS, or PEAP) Enables examination of peer certificate's purpose, and
-extended key usage attributes.
+(EAP-TLS, or PEAP) Enables examination of peer certificate's purpose,
+and extended key usage attributes. If this option is given, pppd will
+require that the peer's certificate is suitable for use for TLS
+authentication as a client (regardless of whether pppd is
+authenticating the peer, or being authenticated).
+This option is privileged.
 .TP
 .B unit \fInum
 Sets the ppp unit number (for a ppp0 or ppp1 etc interface name) for outbound
@@ -1167,6 +1199,12 @@ be used.
 Set the ppp interface name for outbound connections.  If the interface name is
 already in use, or if the name cannot be used for any other reason, pppd will
 terminate.
+.TP
+.B vrf \fIname
+Bind the ppp interface to the existing VRF (Virtual Routing and Forwarding)
+instance \fIname\fR on Linux.  Routes installed by pppd will go into the
+routing table of VRF \fIname\fR instead of the default table.  This option
+is only available on Linux systems that support VRF.
 .TP
 .B unset \fIname
 Remove a variable from the environment variable for scripts that are
@@ -1309,16 +1347,12 @@ those which permit potentially insecure configurations; these options
 are only accepted in files which are under the control of the system
 administrator, or if pppd is being run by root.
 .PP
-The default behaviour of pppd is to allow an unauthenticated peer to
-use a given IP address only if the system does not already have a
-route to that IP address.  For example, a system with a
-permanent connection to the wider internet will normally have a
-default route, and thus all peers will have to authenticate themselves
-in order to set up a connection.  On such a system, the \fIauth\fR
-option is the default.  On the other hand, a system where the
-PPP link is the only connection to the internet will not normally have
-a default route, so the peer will be able to use almost any IP address
-without authenticating itself.
+If pppd is run by a non-privileged user, by default the peer must
+authenticate itself, and the IP address(es) it may use are controlled
+by the secrets file entry used to authenticate it.  For the peer not
+to be required to authenticate itself, either pppd must be run by root
+or a privileged options file containing the \fInoauth\fR option must
+be invoked.
 .PP
 As indicated above, some security-sensitive options are privileged,
 which means that they may not be used by an ordinary non-privileged
@@ -1328,6 +1362,17 @@ option.  Privileged options may be used in /etc/ppp/options file or in
 an options file read using the \fIcall\fR option.  If pppd is being
 run by the root user, privileged options can be used without
 restriction.
+.PP
+On Linux, pppd does not have to be run by root: it will also run when
+it has the CAP_NET_ADMIN capability, which is what the kernel requires
+in order to open /dev/ppp and to configure network interfaces.  Pppd
+can thus be run unprivileged under a service manager or in a container
+which grants it that capability, and privileged options can then be
+used without restriction, as for root.  This does not apply to a pppd
+which is setuid-root or setgid, or which has file capabilities set on
+it, and is invoked by a non-privileged user, since there the privilege
+comes from the way the binary is installed rather than from the user
+running it; such a pppd is restricted as described above.
 .PP
 When opening the device, pppd uses either the invoking user's user ID
 or the root UID (that is, 0), depending on whether the device name was
@@ -1373,7 +1418,7 @@ could use different authentication protocols, and in principle,
 different names could be used in the two exchanges.
 .LP
 The default behaviour of pppd is to agree to authenticate if
-requested, and to not require authentication from the peer.  However,
+requested.  However,
 pppd will not agree to authenticate itself with a particular protocol
 if it has no secrets which could be used to do so.
 .LP
@@ -1685,7 +1730,9 @@ An error was detected in processing the options given, such as two
 mutually exclusive options being used.
 .TP
 .B 3
-Pppd is not setuid-root and the invoking user is not root.
+Pppd does not have the privileges required to run; that is, it is not
+being run by root, and (on Linux) does not have the CAP_NET_ADMIN
+capability.
 .TP
 .B 4
 The kernel does not support PPP, for example, the PPP kernel driver is
@@ -1746,21 +1793,31 @@ Pppd invokes scripts at various stages in its processing which can be
 used to perform site-specific ancillary processing.  These scripts are
 usually shell scripts, but could be executable code files instead.
 Pppd does not wait for the scripts to finish (except for the net\-init,
-net\-pre\-up and ip\-pre\-up scripts).  The scripts are
-executed as root (with the real and effective user-id set to 0), so
-that they can do things such as update routing tables or run
-privileged daemons.  Be careful that the contents of these scripts do
-not compromise your system's security.  Pppd runs the scripts with
+net\-pre\-up and ip\-pre\-up scripts).  When pppd is running as root,
+the scripts are executed as root (with the real and effective user-id
+set to 0), so that they can do things such as update routing tables or
+run privileged daemons; otherwise they are executed with pppd's own
+user-id and inherit any ambient capabilities it has.  Be careful that
+the contents of these scripts do not compromise your system's
+security.  Pppd runs the scripts with
 standard input, output and error redirected to /dev/null, and with an
 environment that is empty except for some environment variables that
 give information about the link.  The environment variables that pppd
 sets are:
 .TP
+.B PPP_SCRIPT_INSTANCE
+The name of the intended script, as documented, not as referenced.  For
+example, even if you set ip\-up\-script /some/other/path this variable will
+still be ip-up.
 .B DEVICE
 The name of the serial tty device being used.
 .TP
 .B IFNAME
 The name of the network interface being used.
+.TP
+.B VRF
+The name of the VRF to which the ppp interface is bound.  This is only set if
+the ppp interface has been bound to a VRF using the \fIvrf\fR option.
 .TP
 .B IPLOCAL
 The IP address for the local end of the link.  This is only set when
@@ -1853,11 +1910,15 @@ successfully authenticates itself.  It is executed with the parameters
 .IP
 Note that this script is not executed if the peer doesn't authenticate
 itself, for example when the \fInoauth\fR option is used.
+.IP
+\fIOverride option\fR: auth\-up\-script /alternative/path
 .TP
 .B /etc/ppp/auth\-down
 A program or script which is executed when the link goes down, if
 /etc/ppp/auth\-up was previously executed.  It is executed in the same
 manner with the same parameters as /etc/ppp/auth\-up.
+.IP
+\fIOverride option\fR: auth\-down\-script /alternative/path
 .TP
 .B /etc/ppp/ip\-pre\-up
 A program or script which is executed just before the ppp network
@@ -1867,14 +1928,16 @@ IP addresses assigned but is still down.  This can be used to
 add firewall rules before any IP traffic can pass through the
 interface.  Pppd will wait for this script to finish before bringing
 the interface up, so this script should run quickly.
-.PP
-WARNING:  Please note that on systems where a single interface carries multiple
+.IP
+\fBWARNING\fR:  Please note that on systems where a single interface carries multiple
 protocols (Linux) ip-pre-up is NOT actually guaranteed to execute prior to the
 interface moving into an up state, although IP information won't be known you
 should consider using net-pre-up instead, alternatively, disable other NCPs
 such that IPv4 is the only negotiated protocol - which will also result in a
 guarantee that ip-pre-up is called prior to the interface going into an UP
 state.
+.IP
+\fIOverride option\fR: ip\-pre\-up\-script /alternative/path
 .TP
 .B /etc/ppp/ip\-up
 A program or script which is executed when the link is available for
@@ -1883,6 +1946,8 @@ executed with the parameters
 .IP
 \fIinterface\-name tty\-device speed local\-IP\-address
 remote\-IP\-address ipparam\fR
+.IP
+\fIOverride option\fR: ip\-up\-script /alternative/path
 .TP
 .B /etc/ppp/ip\-down
 A program or script which is executed when the link is no longer
@@ -1891,6 +1956,8 @@ used for undoing the effects of the /etc/ppp/ip\-up and
 /etc/ppp/ip\-pre\-up scripts.  It is
 invoked in the same manner and with the same parameters as the ip\-up
 script.
+.IP
+\fIOverride option\fR: ip\-down\-script /alternative/path
 .TP
 .B /etc/ppp/ipv6\-up
 Like /etc/ppp/ip\-up, except that it is executed when the link is available 
@@ -1898,11 +1965,16 @@ for sending and receiving IPv6 packets. It is executed with the parameters
 .IP
 \fIinterface\-name tty\-device speed local\-link\-local\-address
 remote\-link\-local\-address ipparam\fR
+.IP
+\fIOverride option\fR: ipv6\-up\-script /alternative/path
 .TP
 .B /etc/ppp/ipv6\-down
 Similar to /etc/ppp/ip\-down, but it is executed when IPv6 packets can no
 longer be transmitted on the link. It is executed with the same parameters 
 as the ipv6\-up script.
+.IP
+\fIOverride option\fR: ipv6\-down\-script /alternative/path
+.TP
 .TP
 .B /etc/ppp/net\-init
 This script will be executed the moment the ppp unit number is known.  This
@@ -1912,6 +1984,8 @@ guaranteed point where a script can be executed knowing the ppp unit number
 prior to LCP being initiated.  It is executed with the parameters
 .IP
 \fIinterface\-name tty\-device speed ipparam
+.IP
+\fIOverride option\fR: net\-init\-script /alternative/path
 .TP
 .B /etc/ppp/net\-pre\-up
 This script will be executed just prior to NCP negotiations initiating, and is
@@ -1920,11 +1994,16 @@ guaranteed to be executed whilst the interface (Linux) and/or sub-interfaces
 this script to complete, and the interface may be safely renamed in this script
 (using for example "ip li set dev $1 name ppp-foobar".  The parameters are the
 same as for net\-init.
+.IP
+\fIOverride option\fR: net\-pre\-up\-script /alternative/path
 .TP
 .B /etc/ppp/net\-down
 This script will be executed just prior to ppp terminating and will not be
 waited for.  The parameters are the same as for net\-init.
+.IP
+\fIOverride option\fR: net\-down\-script /alternative/path
 .TP
+.SH OTHER FILES
 .B /var/run/ppp\fIn\fB.pid \fR(BSD or Linux), \fB/etc/ppp/ppp\fIn\fB.pid \fR(others)
 Process-ID for pppd process on ppp interface unit \fIn\fR.
 .TP

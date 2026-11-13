@@ -201,9 +201,6 @@ static int sock6_fd = -1;	/* socket for doing ipv6 interface ioctls */
 #endif /* INET6 */
 static int ttyfd = -1;		/* the file descriptor of the tty */
 
-static fd_set in_fds;		/* set of fds that wait_input waits for */
-static int max_in_fd;		/* highest fd set in in_fds */
-
 static int if_is_up;		/* the interface is currently up */
 #ifdef INET6
 static int if6_is_up;		/* the interface is currently up */
@@ -289,9 +286,6 @@ sys_init(void)
 	sock6_fd = -1;
     }
 #endif
-
-    FD_ZERO(&in_fds);
-    max_in_fd = 0;
 }
 
 /*
@@ -358,6 +352,29 @@ sys_check_options(void)
     }
 #endif
     return 1;
+}
+
+/*
+ * Check whether we have the privileges needed to open the ppp device
+ * and configure interfaces.  The kernel requires CAP_NET_ADMIN to open
+ * /dev/ppp (ppp_open in drivers/net/ppp/ppp_generic.c).
+ */
+int ppp_privileged(void)
+{
+    if (geteuid() == 0)
+	return 1;
+
+    return 0;
+}
+
+/*
+ * Test whether this exec raised our privileges.  The kernel sets AT_SECURE
+ * when a setuid or setgid bit or file capabilities did so, granting them
+ * to whoever runs the binary rather than to us on their behalf.
+ */
+int ppp_secure_exec(void)
+{
+    return issetugid();
 }
 
 /*
@@ -1060,45 +1077,6 @@ output(int unit, u_char *p, int len)
 }
 
 
-/*
- * wait_input - wait until there is data available,
- * for the length of time specified by *timo (indefinite
- * if timo is NULL).
- */
-void
-wait_input(struct timeval *timo)
-{
-    fd_set ready, eready;
-    int n;
-
-    ready = in_fds;
-    eready = in_fds;
-    n = select(max_in_fd + 1, &ready, NULL, &eready, timo);
-    if (n < 0 && errno != EINTR)
-	fatal("%s: select: %m", __func__);
-}
-
-
-/*
- * add_fd - add an fd to the set that wait_input waits for.
- */
-void add_fd(int fd)
-{
-    if (fd >= FD_SETSIZE)
-	fatal("%s: descriptor too big", __func__);
-    FD_SET(fd, &in_fds);
-    if (fd > max_in_fd)
-	max_in_fd = fd;
-}
-
-/*
- * remove_fd - remove an fd from the set that wait_input waits for.
- */
-void remove_fd(int fd)
-{
-    FD_CLR(fd, &in_fds);
-}
-
 #if 0
 /*
  * wait_loop_output - wait until there is data available on the
@@ -1592,10 +1570,8 @@ cifaddr(int u, u_int32_t o, u_int32_t h)
  * sifdefaultroute - assign a default route through the address given.
  */
 int
-sifdefaultroute(int u, u_int32_t l, u_int32_t g, bool replace)
+sifdefaultroute(int u, u_int32_t l, u_int32_t g)
 {
-    if (replace)
-	dodefaultroute(g, 'c');
     return dodefaultroute(g, 's');
 }
 

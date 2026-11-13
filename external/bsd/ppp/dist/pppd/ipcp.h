@@ -1,4 +1,4 @@
-/*	$NetBSD: ipcp.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: ipcp.h,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * ipcp.h - IP Control Protocol definitions.
@@ -78,7 +78,6 @@ typedef struct ipcp_options {
     bool old_addrs;		/* Use old (IP-Addresses) option? */
     bool req_addr;		/* Ask peer to send IP address? */
     bool default_route;		/* Assign default route through interface? */
-    bool replace_default_route;	/* Replace default route through interface? */
     bool proxy_arp;		/* Make proxy ARP entry for peer? */
     bool neg_vj;		/* Van Jacobson Compression? */
     bool old_vj;		/* use old (short) form of VJ option? */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ipv6cp.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: ipv6cp.c,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * ipv6cp.c - PPP IPV6 Control Protocol.
@@ -139,7 +139,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ipv6cp.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+__RCSID("$NetBSD: ipv6cp.c,v 1.7 2026/11/13 16:41:47 christos Exp $");
 
 /*
  * TODO: 
@@ -184,6 +184,8 @@ ipv6cp_options ipv6cp_gotoptions[NUM_PPP];	/* Options that peer ack'd */
 ipv6cp_options ipv6cp_allowoptions[NUM_PPP];	/* Options we allow peer to request */
 ipv6cp_options ipv6cp_hisoptions[NUM_PPP];	/* Options that we ack'd */
 int no_ifaceid_neg = 0;
+
+unsigned dfl_route6_metric = 0;	/* metric of the default route to set over the PPP link */
 
 /* local vars */
 static int default_route_set[NUM_PPP];		/* Have set up a default route */
@@ -256,13 +258,17 @@ static struct option ipv6cp_option_list[] = {
       "Accept peer's interface identifier for itself", 1 },
 
     { "defaultroute6", o_bool, &ipv6cp_wantoptions[0].default_route,
-      "Add default IPv6 route", OPT_ENABLE|1, &ipv6cp_allowoptions[0].default_route },
+      "Add default IPv6 route", OPT_PRIV|OPT_ENABLE|1, &ipv6cp_allowoptions[0].default_route },
     { "nodefaultroute6", o_bool, &ipv6cp_allowoptions[0].default_route,
       "disable defaultroute6 option", OPT_A2CLR,
       &ipv6cp_wantoptions[0].default_route },
     { "-defaultroute6", o_bool, &ipv6cp_allowoptions[0].default_route,
       "disable defaultroute6 option", OPT_ALIAS | OPT_A2CLR,
       &ipv6cp_wantoptions[0].default_route },
+
+    { "defaultroute6-metric", o_int, &dfl_route6_metric,
+      "Metric to use for the default route (Linux only; default 0)",
+      OPT_PRIV|OPT_LLIMIT|OPT_INITONLY, NULL, 0, -1 },
 
     { "ipv6cp-use-ipaddr", o_bool, &ipv6cp_allowoptions[0].use_ip,
       "Use (default) IPv4 addresses for both local and remote interface identifiers", 1 },
@@ -279,7 +285,7 @@ static struct option ipv6cp_option_list[] = {
       "Don't send local interface identifier to peer", OPT_A2CLR },
 
     { "ipv6cp-restart", o_int, &ipv6cp_fsm[0].timeouttime,
-      "Set timeout for IPv6CP", OPT_PRIO },
+      "Set timeout for IPv6CP", OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
     { "ipv6cp-max-terminate", o_int, &ipv6cp_fsm[0].maxtermtransmits,
       "Set max #xmits for term-reqs", OPT_PRIO },
     { "ipv6cp-max-configure", o_int, &ipv6cp_fsm[0].maxconfreqtransmits,
@@ -328,7 +334,7 @@ struct protent ipv6cp_protent = {
 };
 
 static void ipv6cp_clear_addrs (int, eui64_t, eui64_t);
-static void ipv6cp_script (char *);
+static void ipv6cp_script (char *, const char *);
 static void ipv6cp_script_done (void *);
 
 /*
@@ -919,11 +925,13 @@ ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree)
     u_char *p;			/* Pointer to next char to parse */
     u_char *ucp = inp;		/* Pointer to current output char */
     int l = *len;		/* Length left */
+    bool warned = 0, seenci[CI_COMPRESSTYPE+1];
 
     /*
      * Reset all his options.
      */
     BZERO(ho, sizeof(*ho));
+    BZERO(seenci, sizeof(seenci));
     
     /*
      * Process all his options.
@@ -945,6 +953,17 @@ ipv6cp_reqci(fsm *f, u_char *inp, int *len, int reject_if_disagree)
 	GETCHAR(cilen, p);		/* Parse CI length */
 	l -= cilen;			/* Adjust remaining length */
 	next += cilen;			/* Step to next CI */
+
+	if (citype <= CI_COMPRESSTYPE) {
+	    if (seenci[citype]) {
+		if (!warned) {
+		    warn("IPV6CP: ignoring duplicate configuration option(s)");
+		    warned = 1;
+		}
+		continue;
+	    }
+	    seenci[citype] = 1;
+	}
 
 	switch (citype) {		/* Check CI type */
 	case CI_IFACEID:
@@ -1387,7 +1406,7 @@ ipv6cp_up(fsm *f)
      */
     if (ipv6cp_script_state == s_down && ipv6cp_script_pid == 0) {
 	ipv6cp_script_state = s_up;
-	ipv6cp_script(path_ipv6up);
+	ipv6cp_script(path_ipv6up, "ipv6-up");
     }
 }
 
@@ -1438,7 +1457,7 @@ ipv6cp_down(fsm *f)
     /* Execute the ipv6-down script */
     if (ipv6cp_script_state == s_up && ipv6cp_script_pid == 0) {
 	ipv6cp_script_state = s_down;
-	ipv6cp_script(path_ipv6down);
+	ipv6cp_script(path_ipv6down, "ipv6-down");
     }
 }
 
@@ -1476,13 +1495,13 @@ ipv6cp_script_done(void *arg)
     case s_up:
 	if (ipv6cp_fsm[0].state != OPENED) {
 	    ipv6cp_script_state = s_down;
-	    ipv6cp_script(path_ipv6down);
+	    ipv6cp_script(path_ipv6down, "ipv6-down");
 	}
 	break;
     case s_down:
 	if (ipv6cp_fsm[0].state == OPENED) {
 	    ipv6cp_script_state = s_up;
-	    ipv6cp_script(path_ipv6up);
+	    ipv6cp_script(path_ipv6up, "ipv6-up");
 	}
 	break;
     }
@@ -1494,7 +1513,7 @@ ipv6cp_script_done(void *arg)
  * interface-name tty-name speed local-LL remote-LL.
  */
 static void
-ipv6cp_script(char *script)
+ipv6cp_script(char *script, const char* name)
 {
     char strspeed[32], strlocal[64], strremote[64];
     char *argv[8];
@@ -1514,7 +1533,7 @@ ipv6cp_script(char *script)
     argv[7] = NULL;
 
     ipv6cp_script_pid = run_program(script, argv, 0, ipv6cp_script_done,
-				    NULL, 0);
+				    NULL, 0, name);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: upap.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: upap.c,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * upap.c - User/Password Authentication Protocol.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: upap.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+__RCSID("$NetBSD: upap.c,v 1.7 2026/11/13 16:41:47 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -73,11 +73,11 @@ static struct option pap_option_list[] = {
       "Show password string in debug log messages", OPT_PRIOSUB | 0 },
 
     { "pap-restart", o_int, &upap[0].us_timeouttime,
-      "Set retransmit timeout for PAP", OPT_PRIO },
+      "Set retransmit timeout for PAP", OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
     { "pap-max-authreq", o_int, &upap[0].us_maxtransmits,
       "Set max number of transmissions for auth-reqs", OPT_PRIO },
     { "pap-timeout", o_int, &upap[0].us_reqtimeout,
-      "Set time limit for peer PAP authentication", OPT_PRIO },
+      "Set time limit for peer PAP authentication", OPT_PRIO | OPT_LLIMIT, 0, 0 },
 
     { NULL }
 };
@@ -415,7 +415,7 @@ upap_rauthreq(upap_state *u, u_char *inp, int id, int len)
      */
     retcode = check_passwd(u->us_unit, ruser, ruserlen, rpasswd,
 			   rpasswdlen, &msg);
-    BZERO(rpasswd, rpasswdlen);
+    ppp_explicit_bzero(rpasswd, rpasswdlen);
 
     /*
      * Check remote number authorization.  A plugin may have filled in

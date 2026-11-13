@@ -1,4 +1,4 @@
-/*	$NetBSD: pathnames.h,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: pathnames.h,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * pathnames.h - define default paths for pppd
@@ -87,7 +87,6 @@
 
 #define PPP_PATH_UPAPFILE       PPP_PATH_CONFDIR "/pap-secrets"
 #define PPP_PATH_CHAPFILE       PPP_PATH_CONFDIR "/chap-secrets"
-#define PPP_PATH_SRPFILE        PPP_PATH_CONFDIR "/srp-secrets"
 
 #ifdef PPP_WITH_EAPTLS
 #define PPP_PATH_EAPTLSCLIFILE  PPP_PATH_CONFDIR "/eaptls-client"

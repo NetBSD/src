@@ -1,4 +1,4 @@
-/*	$NetBSD: fsm.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: fsm.c,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * fsm.c - {Link, IP} Control Protocol Finite State Machine.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fsm.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+__RCSID("$NetBSD: fsm.c,v 1.7 2026/11/13 16:41:47 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -767,12 +767,13 @@ void
 fsm_sdata(fsm *f, int code, int id, u_char *data, int datalen)
 {
     u_char *outp;
-    int outlen;
+    int outlen, mtu;
 
     /* Adjust length to be smaller than MTU */
     outp = outpacket_buf;
-    if (datalen > peer_mru[f->unit] - HEADERLEN)
-	datalen = peer_mru[f->unit] - HEADERLEN;
+    mtu = MIN(peer_mru[f->unit], PPP_MRU) - HEADERLEN;
+    if (datalen > mtu)
+	datalen = mtu;
     if (datalen && data != outp + PPP_HDRLEN + HEADERLEN)
 	BCOPY(data, outp + PPP_HDRLEN + HEADERLEN, datalen);
     outlen = datalen + HEADERLEN;

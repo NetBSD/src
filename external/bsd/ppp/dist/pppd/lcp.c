@@ -1,4 +1,4 @@
-/*	$NetBSD: lcp.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: lcp.c,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * lcp.c - PPP Link Control Protocol.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: lcp.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+__RCSID("$NetBSD: lcp.c,v 1.7 2026/11/13 16:41:47 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -139,7 +139,8 @@ static struct option lcp_option_list[] = {
 
     { "mru", o_int, &lcp_wantoptions[0].mru,
       "Set MRU (maximum received packet size) for negotiation",
-      OPT_PRIO, &lcp_wantoptions[0].neg_mru },
+      OPT_PRIO | OPT_LIMITS, &lcp_wantoptions[0].neg_mru,
+      MAXMRU, MINMRU },
     { "default-mru", o_bool, &lcp_wantoptions[0].neg_mru,
       "Disable MRU negotiation (use default 1500)",
       OPT_PRIOSUB | OPT_A2CLR, &lcp_allowoptions[0].neg_mru },
@@ -169,14 +170,16 @@ static struct option lcp_option_list[] = {
       "Set number of consecutive echo failures to indicate link failure",
       OPT_PRIO },
     { "lcp-echo-interval", o_int, &lcp_echo_interval,
-      "Set time in seconds between LCP echo requests", OPT_PRIO },
+      "Set time in seconds between LCP echo requests",
+      OPT_PRIO | OPT_LLIMIT, NULL, 0, 0 },
     { "lcp-echo-adaptive", o_bool, &lcp_echo_adaptive,
       "Suppress LCP echo requests if traffic was received", 1 },
     { "lcp-rtt-file", o_string, &lcp_rtt_file,
       "Filename for logging the round-trip time of LCP echo requests",
       OPT_PRIO | OPT_PRIV },
     { "lcp-restart", o_int, &lcp_fsm[0].timeouttime,
-      "Set time in seconds between LCP retransmissions", OPT_PRIO },
+      "Set time in seconds between LCP retransmissions",
+      OPT_PRIO | OPT_LLIMIT, NULL, 0, 1 },
     { "lcp-max-terminate", o_int, &lcp_fsm[0].maxtermtransmits,
       "Set maximum number of LCP terminate-request transmissions", OPT_PRIO },
     { "lcp-max-configure", o_int, &lcp_fsm[0].maxconfreqtransmits,
@@ -190,7 +193,7 @@ static struct option lcp_option_list[] = {
 #ifdef PPP_WITH_MULTILINK
     { "mrru", o_int, &lcp_wantoptions[0].mrru,
       "Maximum received packet size for multilink bundle",
-      OPT_PRIO, &lcp_wantoptions[0].neg_mrru },
+      OPT_PRIO | OPT_LIMITS, &lcp_wantoptions[0].neg_mrru, 65535, MINMRU },
 
     { "mpshortseq", o_bool, &lcp_wantoptions[0].neg_ssnhf,
       "Use short sequence numbers in multilink headers",
@@ -1499,11 +1502,13 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
     u_char *rejp;		/* Pointer to next char in reject frame */
     u_char *nakp;		/* Pointer to next char in Nak frame */
     int l = *lenp;		/* Length left */
+    bool warned, seenci[CI_LCP_LAST+1];
 
     /*
      * Reset all his options.
      */
     BZERO(ho, sizeof(*ho));
+    BZERO(seenci, sizeof(seenci));
 
     /*
      * Process all his options.
@@ -1528,6 +1533,20 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 	GETCHAR(cilen, p);		/* Parse CI length */
 	l -= cilen;			/* Adjust remaining length */
 	next += cilen;			/* Step to next CI */
+
+	if (rc == CONFREJ)
+	    nakp = nak_buffer;
+
+	if (citype <= CI_LCP_LAST) {
+	    if (seenci[citype]) {
+		if (!warned) {
+		    warn("LCP: ignoring duplicate configuration option(s)");
+		    warned = 1;
+		}
+		continue;
+	    }
+	    seenci[citype] = 1;
+	}
 
 	switch (citype) {		/* Check CI type */
 	case CI_MRU:
@@ -1595,19 +1614,13 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 	     * Note: if more than one of ao->neg_upap, ao->neg_chap, and
 	     * ao->neg_eap are set, and the peer sends a Configure-Request
 	     * with two or more authenticate-protocol requests, then we will
-	     * reject the second request.
-	     * Whether we end up doing CHAP, UPAP, or EAP depends then on
-	     * the ordering of the CIs in the peer's Configure-Request.
+	     * simply ignore the second and following requests, because
+	     * RFC1661 says "An implementation MUST NOT include multiple
+	     * Authentication-Protocol Configuration Options in its
+	     * Configure-Request packets".
              */
 
 	    if (cishort == PPP_PAP) {
-		/* we've already accepted CHAP or EAP */
-		if (ho->neg_chap || ho->neg_eap ||
-		    cilen != CILEN_SHORT) {
-		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE PAP, rejecting..."));
-		    orc = CONFREJ;
-		    break;
-		}
 		if (!ao->neg_upap) {	/* we don't want to do PAP */
 		    orc = CONFNAK;	/* NAK it and suggest CHAP or EAP */
 		    PUTCHAR(CI_AUTHTYPE, nakp);
@@ -1625,13 +1638,6 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 		break;
 	    }
 	    if (cishort == PPP_CHAP) {
-		/* we've already accepted PAP or EAP */
-		if (ho->neg_upap || ho->neg_eap ||
-		    cilen != CILEN_CHAP) {
-		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE CHAP, rejecting..."));
-		    orc = CONFREJ;
-		    break;
-		}
 		if (!ao->neg_chap) {	/* we don't want to do CHAP */
 		    orc = CONFNAK;	/* NAK it and suggest EAP or PAP */
 		    PUTCHAR(CI_AUTHTYPE, nakp);
@@ -1661,12 +1667,6 @@ lcp_reqci(fsm *f, u_char *inp, int *lenp, int reject_if_disagree)
 		break;
 	    }
 	    if (cishort == PPP_EAP) {
-		/* we've already accepted CHAP or PAP */
-		if (ho->neg_chap || ho->neg_upap || cilen != CILEN_SHORT) {
-		    LCPDEBUG(("lcp_reqci: rcvd AUTHTYPE EAP, rejecting..."));
-		    orc = CONFREJ;
-		    break;
-		}
 		if (!ao->neg_eap) {	/* we don't want to do EAP */
 		    orc = CONFNAK;	/* NAK it and suggest CHAP or PAP */
 		    PUTCHAR(CI_AUTHTYPE, nakp);
@@ -1822,7 +1822,11 @@ endswitch:
 	    continue;			/* Don't send this one */
 
 	if (orc == CONFNAK) {		/* Nak this CI? */
-	    if (reject_if_disagree	/* Getting fed up with sending NAKs? */
+	    /* If we get too many NAK'd CIs, reject instead. */
+	    /* Shouldn't be able to happen */
+	    if (nakp - nak_buffer > PPP_MRU - 8)
+		orc = CONFREJ;
+	    else if (reject_if_disagree	/* Getting fed up with sending NAKs? */
 		&& citype != CI_MAGICNUMBER) {
 		orc = CONFREJ;		/* Get tough if so */
 	    } else {
@@ -1906,8 +1910,13 @@ lcp_up(fsm *f)
 		    (lax_recv? 0: go->neg_asyncmap? go->asyncmap: 0xffffffff),
 		    go->neg_pcompression, go->neg_accompression);
 
-    if (ho->neg_mru)
-	peer_mru[f->unit] = ho->mru;
+    /*
+     * Make it explicit that peer_mru[] is between MINMRU and PPP_MRU.
+     * We wouldn't have accepted a proposed MRU from the peer that is
+     * less than MINMRU, but we might have accepted one greater than PPP_MRU.
+     */
+    if (ho->neg_mru && ho->mru < PPP_MRU)
+	peer_mru[f->unit] = MAX(ho->mru, MINMRU);
 
     lcp_echo_lowerup(f->unit);  /* Enable echo messages */
 
@@ -2283,10 +2292,11 @@ lcp_rtt_update_buffer (unsigned long rtt)
     unsigned int next_entry, lost;
 
     /* choose the next entry where the data will be stored */
-    if (ntohl(ring_header[2]) >= (LCP_RTT_ELEMENTS - 1) * 2)
+    next_entry = ntohl(ring_header[2]);
+    if (next_entry >= (LCP_RTT_ELEMENTS - 1) * 2)
 	next_entry = 0;				/* go back to the beginning */
     else
-	next_entry = ntohl(ring_header[2]) + 2;	/* use the next one */
+	next_entry += 2;			/* use the next one */
 
     /* update the data element */
     /* storing the timestamp in an *unsigned* long allows dates up to 2106 */

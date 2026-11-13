@@ -59,8 +59,9 @@
 /* Include TDB support */
 #define PPP_WITH_TDB 1
 
-#if 0
 /* Have IPv6 Control Protocol */
+#if 0
+/* from Makefile */
 #define PPP_WITH_IPV6CP 1
 #endif
 
@@ -71,9 +72,6 @@
 #undef PPP_WITH_PAM
 #endif
 
-/* Have EAP-SRP authentication support */
-/* #undef PPP_WITH_SRP */
-
 /* Have EAP-TLS authentication support */
 #define PPP_WITH_EAPTLS 1
 
@@ -81,6 +79,6 @@
 #define PPP_WITH_PEAP 1
 
 /* The pppd version */
-#define PPPD_VERSION "2.5.2"
+#define PPPD_VERSION "2.5.5"
 
 #endif

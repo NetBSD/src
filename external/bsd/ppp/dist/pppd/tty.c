@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: tty.c,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * tty.c - code for handling serial ports in pppd.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tty.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+__RCSID("$NetBSD: tty.c,v 1.7 2026/11/13 16:41:47 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include "config.h"
@@ -241,7 +241,7 @@ static struct option tty_options[] = {
 
     { "datarate", o_int, &max_data_rate,
       "Maximum data rate in bytes/sec (with pty, notty or record option)",
-      OPT_PRIO },
+      OPT_PRIO | OPT_LLIMIT, NULL, 0, 0 },
 
     { "escape", o_special, (void *)setescape,
       "List of character codes to escape on transmission",

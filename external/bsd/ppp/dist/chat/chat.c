@@ -621,9 +621,9 @@ void terminate(int status)
  * Allow the last of the report string to be gathered before we terminate.
  */
     if (report_gathering) {
-	int c, rep_len;
+	int c;
 
-	rep_len = strlen(report_buffer);
+	size_t rep_len = strlen(report_buffer);
 	while (rep_len + 1 < sizeof(report_buffer)) {
 	    alarm(1);
 	    c = get_char();
@@ -1027,7 +1027,7 @@ int chat_send (register char *s)
 
 	if (strcmp(s, "OFF") == 0)
 	    sa.sa_handler = SIG_IGN;
-        else
+	else
 	    sa.sa_handler = sighup;
 	sigaction(SIGHUP, &sa, NULL);
         return 0;
@@ -1357,7 +1357,8 @@ int echo_stderr(int n)
 int get_string(register char *string)
 {
     char temp[STR_LEN];
-    int c, len, minlen;
+    int c;
+    size_t len, minlen;
     char *s = temp, *end = s + STR_LEN;
     char *s1, *logged = temp;
 
@@ -1387,7 +1388,8 @@ int get_string(register char *string)
     alarmed = 0;
 
     while ( ! alarmed && (c = get_char()) >= 0) {
-	int n, abort_len, report_len;
+	int n;
+	size_t abort_len, report_len;
 
 	if (echo) {
 	    if (echo_stderr(c) != 0) {
@@ -1438,8 +1440,8 @@ int get_string(register char *string)
 	}
 	else {
 	    if (!iscntrl (c)) {
-		int rep_len = strlen (report_buffer);
-		if ((rep_len + 1) < sizeof(report_buffer)) {
+		size_t rep_len = strlen (report_buffer);
+		if (rep_len < sizeof(report_buffer) - 1) {
 		    report_buffer[rep_len]     = c;
 		    report_buffer[rep_len + 1] = '\0';
 		}

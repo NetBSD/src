@@ -1,4 +1,4 @@
-/*	$NetBSD: multilink.c,v 1.6 2025/01/08 19:59:39 christos Exp $	*/
+/*	$NetBSD: multilink.c,v 1.7 2026/11/13 16:41:47 christos Exp $	*/
 
 /*
  * multilink.c - support routines for multilink.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: multilink.c,v 1.6 2025/01/08 19:59:39 christos Exp $");
+__RCSID("$NetBSD: multilink.c,v 1.7 2026/11/13 16:41:47 christos Exp $");
 
 
 #ifdef HAVE_CONFIG_H
@@ -350,7 +350,7 @@ static void remove_bundle_link(void)
 	TDB_DATA key, rec;
 	char entry[32];
 	char *p, *q;
-	int l;
+	size_t l;
 
 	key.dptr = blinks_id;
 	key.dsize = strlen(blinks_id);
@@ -542,7 +542,7 @@ str_to_epdisc(struct epdisc *ep, char *str)
 	char *p, *endp;
 
 	for (i = EPD_NULL; i <= EPD_PHONENUM; ++i) {
-		int sl = strlen(endp_class_names[i]);
+		size_t sl = strlen(endp_class_names[i]);
 		if (strncasecmp(str, endp_class_names[i], sl) == 0) {
 			str += sl;
 			break;
