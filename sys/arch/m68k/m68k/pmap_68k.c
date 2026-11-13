@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.88 2026/11/13 15:17:04 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.89 2026/11/13 16:07:30 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.88 2026/11/13 15:17:04 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.89 2026/11/13 16:07:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -864,6 +864,7 @@ __CTASSERT(PMBM_F_U1 == PTE40_U1);
 
 static pt_entry_t	pmap_pte_proto[UVM_PROT_ALL + 1];
 static pt_entry_t	pmap_pte_proto_ci[UVM_PROT_ALL + 1];
+static pt_entry_t	pmap_pte_proto_cwt[UVM_PROT_ALL + 1];
 static pt_entry_t	pmap_pte_proto_um[UVM_PROT_ALL + 1];
 static pt_entry_t	pmap_ste_proto;
 
@@ -1016,9 +1017,10 @@ pmap_pte_proto_init(void)
 			um_bits = PTE_U;
 		}
 		c_bits = (prot & UVM_PROT_WRITE) ? rw_c_bits : 0;
-		pmap_pte_proto[prot]    = PTE_VALID | prot_bits | c_bits;
-		pmap_pte_proto_ci[prot] = PTE_VALID | prot_bits | ci_bits;
-		pmap_pte_proto_um[prot] = um_bits;
+		pmap_pte_proto[prot]     = PTE_VALID | prot_bits | c_bits;
+		pmap_pte_proto_ci[prot]  = PTE_VALID | prot_bits | ci_bits;
+		pmap_pte_proto_cwt[prot] = PTE_VALID | prot_bits;
+		pmap_pte_proto_um[prot]  = um_bits;
 	}
 
 	/*
@@ -1055,6 +1057,10 @@ pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
 	case PMAP_WRITE_COMBINE:
 	case PMAP_NOCACHE_OVR:
 		pte_proto = pmap_pte_proto_ci;
+		break;
+
+	case PMAP_WRITE_THROUGH:
+		pte_proto = pmap_pte_proto_cwt;
 		break;
 
 	default:
