@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.120 2026/11/13 14:44:29 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.121 2026/11/13 21:05:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,14 +375,14 @@ Lmmuenabled:
  */
 
 ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
-	addql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_INCR
 	INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
 	addql	#1,_C_LABEL(m68k_intr_evcnt)+AST_INTRCNT
 	movl	_C_LABEL(ctrl_ast),%a0
 	clrb	%a0@			| disable AST interrupt
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_DECR
 	jra	_ASM_LABEL(rei)		| handle AST
 
 #ifdef notyet
@@ -394,27 +394,27 @@ ENTRY_NOPROFILE(_softintr)		/* Level 2: software interrupt */
 #endif
 
 ENTRY_NOPROFILE(lev3intr)		/* Level 3: fd, lpt, vme etc. */
-	addql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_INCR
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev3)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_DECR
 	rte
 
 ENTRY_NOPROFILE(lev4intr)		/* Level 4: scsi, le, vme etc. */
-	addql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_INCR
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(intrhand_lev4)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_DECR
 	rte
 
 ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
-	addql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_INCR
 	INTERRUPT_SAVEREG
 	jbsr	_C_LABEL(clock_intr)
 	INTERRUPT_RESTOREREG
-	subql	#1,_C_LABEL(intr_depth)
+	INTR_DEPTH_DECR
 	rte
 
 #if 0
