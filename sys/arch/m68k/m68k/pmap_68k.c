@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.87 2026/11/13 01:25:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.88 2026/11/13 15:17:04 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.87 2026/11/13 01:25:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.88 2026/11/13 15:17:04 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1048,8 +1048,19 @@ pmap_pte_proto_init(void)
 static inline pt_entry_t
 pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
 {
-	pt_entry_t *pte_proto = (flags & PMAP_NOCACHE) ? pmap_pte_proto_ci
-						       : pmap_pte_proto;
+	pt_entry_t *pte_proto;
+
+	switch (flags & PMAP_CACHE_MASK) {
+	case PMAP_NOCACHE:
+	case PMAP_WRITE_COMBINE:
+	case PMAP_NOCACHE_OVR:
+		pte_proto = pmap_pte_proto_ci;
+		break;
+
+	default:
+		pte_proto = pmap_pte_proto;
+		break;
+	}
 
 	prot &= UVM_PROT_ALL;
 	KASSERT(prot != 0);
@@ -2683,9 +2694,12 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (__predict_false(pg == NULL)) {
 		/*
 		 * PA is not part of managed memory.  Make the mapping
-		 * cache-inhibited on the assumption that it's a device.
+		 * cache-inhibited on the assumption that it's a device
+		 * unless there cache mode has been explcitly called out.
 		 */
-		flags |= PMAP_NOCACHE;
+		if (__predict_true((flags & PMAP_CACHE_MASK) == 0)) {
+			flags |= PMAP_NOCACHE;
+		}
 	}
 
 	PMAP_CRIT_ENTER(pmap_busy(pmap));
