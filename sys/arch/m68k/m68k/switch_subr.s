@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.49 2026/11/13 01:11:55 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.50 2026/11/13 04:23:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -181,20 +181,6 @@ GLOBAL(cpu_switchto_restfpu_done)
 	movl	%d0,%a0			| (in a0, too)
 	rts
 
-#if defined(M68020) || defined(M68030) || defined(M68040)
-GLOBAL(cpu_switch_savefpu_disp)
-	.word	.Lcpu_switchto_savefpu - .Lcpu_switchto_savefpu_from + 2
-GLOBAL(cpu_switch_restfpu_disp)
-	.word	.Lcpu_switchto_restfpu - .Lcpu_switchto_restfpu_from + 2
-#endif
-
-#if defined(M68060)
-GLOBAL(cpu_switch_savefpu60_disp)
-	.word	.Lcpu_switchto_savefpu60 - .Lcpu_switchto_savefpu_from + 2
-GLOBAL(cpu_switch_restfpu60_disp)
-	.word	.Lcpu_switchto_restfpu60 - .Lcpu_switchto_restfpu_from + 2
-#endif
-
 /*
  * savectx(pcb)
  * Update pcb, saving current processor state.
@@ -207,35 +193,38 @@ ENTRY(savectx)
 	moveml	%d2-%d7/%a2-%a7,PCB_REGS(%a1)	| save non-scratch registers
 
 #ifdef M68K_FPCOPROC
-	tstl	_C_LABEL(fputype)	| Do we have FPU?
-	jeq	.Lsavectx_nofpsave	| No?  Then don't save state.
+GLOBAL(savectx_fpu_patch)
+	bra.w	_C_LABEL(savectx_fpu_done)
+.Lsavectx_fpu_from:
 
+#if defined(M68060)
+.Lsavectx_fpu60:
 	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
 	fsave	(%a0)			| save FP state
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	.Lsavectx_savfp60
-#endif
-	tstb	(%a0)			| null state frame?
-	jeq	.Lsavectx_nofpsave	| yes, all done
-	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
-#if defined(M68060)
-	jra	.Lsavectx_nofpsave
-#endif
-#endif
-#if defined(M68060)
-.Lsavectx_savfp60:
 	tstb	2(%a0)			| null state frame?
-	jeq	.Lsavectx_nofpsave	| yes, all done
+	beq	_C_LABEL(savectx_fpu_done)
 	fmovem	%fp0-%fp7,FPF_REGS(%a0) | save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a0)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	bra	_C_LABEL(savectx_fpu_done)
 #endif
-.Lsavectx_nofpsave:
+#endif
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+.Lsavectx_fpu:
+	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
+	fsave	(%a0)			| save FP state
+	tstb	(%a0)			| null state frame?
+	beq	_C_LABEL(savectx_fpu_done)
+	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
+	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
+#endif
 #endif /* M68K_FPCOPROC */
+
+GLOBAL(savectx_fpu_done)
+
 	moveq	#0,%d0			| return 0
 	rts
 
@@ -276,58 +265,88 @@ ENTRY(fpu_make_idle_frame)
 ENTRY(fpu_save)
 	movl	4(%sp),%a0		| save area pointer
 	fsave	(%a0)			| save state
-#if defined(M68020) || defined(M68030) || defined(M68040)
+GLOBAL(fpu_save_patch)
+	bra.w	_C_LABEL(fpu_save_done)
+.Lfpu_save_from:
+
 #if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	.Lm68060fpsave
-#endif
-.Lm68881fpsave:
-	tstb	(%a0)			| null state frame?
-	jeq	.Lm68881sdone		| yes, all done
-	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
-.Lm68881sdone:
-	rts
-#endif
-#if defined(M68060)
-.Lm68060fpsave:
+.Lfpu_save60:
 	tstb	2(%a0)			| null state frame?
-	jeq	.Lm68060sdone		| yes, all done
+	beq	_C_LABEL(fpu_save_done)
 	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a0)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a0)
 	fmovem	%fpi,FPF_FPI(%a0)
-.Lm68060sdone:
-        rts
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	rts
 #endif
+#endif
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+.Lfpu_save:
+	tstb	(%a0)			| null state frame?
+	beq	_C_LABEL(fpu_save_done)
+	fmovem	%fp0-%fp7,FPF_REGS(%a0)	| save FP general registers
+	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a0) | save FP control registers
+#endif
+GLOBAL(fpu_save_done)
+	rts
 
 ENTRY(fpu_restore)
 	movl	4(%sp),%a0		| save area pointer
-#if defined(M68020) || defined(M68030) || defined(M68040)
+GLOBAL(fpu_restore_patch)
+	bra.w	_C_LABEL(fpu_restore_done)
+.Lfpu_restore_from:
+
 #if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	.Lm68060fprestore
-#endif
-.Lm68881fprestore:
-	tstb	(%a0)			| null state frame?
-	jeq	.Lm68881rdone		| yes, easy
-	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
-	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
-.Lm68881rdone:
-	frestore (%a0)			| restore state
-	rts
-#endif
-#if defined(M68060)
-.Lm68060fprestore:
+.Lfpu_restore60:
 	tstb	2(%a0)			| null state frame?
-	jeq	.Lm68060fprdone		| yes, easy
+	beq	_C_LABEL(fpu_restore_done)
 	fmovem	FPF_FPCR(%a0),%fpcr	| restore FP control registers
 	fmovem	FPF_FPSR(%a0),%fpsr
 	fmovem	FPF_FPI(%a0),%fpi
 	fmovem	FPF_REGS(%a0),%fp0-%fp7 | restore FP general registers
-.Lm68060fprdone:
+#if defined(M68020) || defined(M68030) || defined(M68040)
 	frestore (%a0)			| restore state
 	rts
+#endif
+#endif
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+.Lfpu_restore:
+	tstb	(%a0)			| null state frame?
+	beq	_C_LABEL(fpu_restore_done)
+	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
+	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
+#endif
+	frestore (%a0)			| restore state
+GLOBAL(fpu_restore_done)
+	rts
+
+GLOBAL(fpu_patch_locs)
+	.long	_C_LABEL(cpu_switchto_savefpu_patch)
+	.long	_C_LABEL(cpu_switchto_restfpu_patch)
+	.long	_C_LABEL(savectx_fpu_patch)
+	.long	_C_LABEL(fpu_save_patch)
+	.long	_C_LABEL(fpu_restore_patch)
+	.long	0
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+GLOBAL(fpu_patch_disps)
+	.word	.Lcpu_switchto_savefpu - .Lcpu_switchto_savefpu_from + 2
+	.word	.Lcpu_switchto_restfpu - .Lcpu_switchto_restfpu_from + 2
+	.word	.Lsavectx_fpu - .Lsavectx_fpu_from + 2
+	.word	.Lfpu_save - .Lfpu_save_from + 2
+	.word	.Lfpu_restore - .Lfpu_restore_from + 2
+#endif
+
+#if defined(M68060)
+GLOBAL(fpu_patch_disps60)
+	.word	.Lcpu_switchto_savefpu60 - .Lcpu_switchto_savefpu_from + 2
+	.word	.Lcpu_switchto_restfpu60 - .Lcpu_switchto_restfpu_from + 2
+	.word	.Lsavectx_fpu60 - .Lsavectx_fpu_from + 2
+	.word	.Lfpu_save60 - .Lfpu_save_from + 2
+	.word	.Lfpu_restore60 - .Lfpu_restore_from + 2
 #endif
 
 #else /* ! M68K_FPCOPROC */
