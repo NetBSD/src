@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.30 2026/03/24 15:56:59 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.31 2026/11/13 19:11:52 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -139,13 +139,13 @@ extern int cacr_dc_clr;
 #include <sys/cpu_data.h>
 
 struct cpu_info {
-	struct cpu_data ci_data;	/* MI per-cpu data */
-	cpuid_t	ci_cpuid;
-	int	ci_mtx_count;
-	int	ci_mtx_oldspl;
-	volatile int	ci_want_resched;
-	volatile int	ci_idepth;
-	struct lwp *ci_onproc;		/* current user LWP / kthread */
+	struct cpu_data ci_data;	/* [MI] general per-cpu data */
+	cpuid_t	        ci_cpuid;	/* [MI] our CPU ID */
+	volatile int    ci_mtx_count;	/* [MI] neg count of spin mutexes */
+	volatile int    ci_mtx_oldspl;	/* [MI] for spin mutex splx */
+	volatile int    ci_want_resched;/* [MI] preempt current process */
+	volatile int    ci_idepth;	/*      interrupt depth */
+	struct lwp *    ci_onproc;	/* [MI] current user LWP / kthread */
 };
 #endif /* _KERNEL || _KMEMUSER */
 
@@ -156,12 +156,7 @@ struct	proc;
 void	cpu_proc_fork(struct proc *, struct proc *);
 
 #define	curcpu()	(&cpu_info_store)
-
-/*
- * definitions of cpu-dependent requirements
- * referenced in generic code
- */
-#define cpu_number()			0
+#define cpu_number()	0
 
 #define LWP_PC(l)	(((struct trapframe *)((l)->l_md.md_regs))->tf_pc)
 
