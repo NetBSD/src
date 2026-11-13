@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.55 2026/07/06 16:08:13 thorpej Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.56 2026/11/13 01:07:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -93,13 +93,13 @@ pmap_remove_all(struct pmap *pmap)
 #define	PMAP_NC		0x10	/* tells pmap_enter to set PG_NC */
 #define	PMAP_SPEC	0x1C	/* mask to get all above. */
 
-/* Kernel debugger support functions. */
-struct pmap_db_write_text_context {
+/* Support for patching kernel text. */
+struct pmap_write_text_context {
 	vaddr_t		pgva;
 	int		opte;
 };
-bool	pmap_db_write_text_enter(vaddr_t, struct pmap_db_write_text_context *);
-void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
+bool	pmap_write_text_enter(vaddr_t, struct pmap_write_text_context *);
+void	pmap_write_text_exit(struct pmap_write_text_context *);
 
 #endif /* _MODULE */
 

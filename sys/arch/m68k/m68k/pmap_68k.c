@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.85 2026/11/12 03:10:25 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.86 2026/11/13 01:07:14 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -200,7 +200,7 @@
  * XXX TODO XXX
  *
  * - Adapt amiga (hard), atari (hard), cesfic (easy).
- * - Test on 68020 + 68851.  It turns out, there is a pretty rare
+ * - Test on 68020 + 68851.  It turns out, this is a pretty rare
  *   combination to find out in the wild.  No problems are anticipated,
  *   however, since the 68030's MMU is essentially identical for our
  *   purposes.
@@ -219,7 +219,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.85 2026/11/12 03:10:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.86 2026/11/13 01:07:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3677,15 +3677,14 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
-#if defined(DDB) || defined(KGDB)
 /*
- * pmap_db_write_text_enter:
+ * pmap_write_text_enter:
  *
  *	Temporarily map a page of kernel text read-write for the
  *	kernel debugger.
  */
 bool
-pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+pmap_write_text_enter(vaddr_t pgva, struct pmap_write_text_context *ctx)
 {
 	pt_entry_t *pte = pmap_kernel_pte(pgva);
 
@@ -3725,17 +3724,16 @@ pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
 }
 
 /*
- * pmap_db_write_text_exit:
+ * pmap_write_text_exit:
  *
- *	Undo the effects of pmap_db_write_text_enter().
+ *	Undo the effects of pmap_write_text_enter().
  */
 void
-pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+pmap_write_text_exit(struct pmap_write_text_context *ctx)
 {
 	pte_store(ctx->ptep, ctx->opte);
 	TBIS(ctx->pgva);
 }
-#endif /* DDB || KGDB */
 
 static paddr_t kernel_reloc_offset;
 static vaddr_t kernel_reloc_end;

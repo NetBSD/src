@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pgmmu.c,v 1.1 2026/07/19 01:48:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_pgmmu.c,v 1.2 2026/11/13 01:07:14 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_pgmmu.c,v 1.1 2026/07/19 01:48:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_pgmmu.c,v 1.2 2026/11/13 01:07:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1976,13 +1976,13 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
 
 #if defined(DDB) || defined(KGDB)
 /*
- * pmap_db_write_text_enter:
+ * pmap_write_text_enter:
  *
  *	Temporarily map a page of kernel text read-write for the
  *	kernel debugger.
  */
 bool
-pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+pmap_write_text_enter(vaddr_t pgva, struct pmap_write_text_context *ctx)
 {
 	sm_entry_t sme = pgmmu_getsme0(pgva);
 	if (! sme_valid_p(sme)) {
@@ -2005,12 +2005,12 @@ pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
 }
 
 /*
- * pmap_db_write_text_exit:
+ * pmap_write_text_exit:
  *
- *	Undo the effects of pmap_db_write_text_enter().
+ *	Undo the effects of pmap_write_text_enter().
  */
 void
-pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+pmap_write_text_exit(struct pmap_write_text_context *ctx)
 {
 	pgmmu_setpme(ctx->pmeidx, ctx->opme);
 }

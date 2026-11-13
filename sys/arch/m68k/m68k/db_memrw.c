@@ -1,4 +1,4 @@
-/*	$NetBSD: db_memrw.c,v 1.10 2026/07/06 14:33:55 thorpej Exp $	*/
+/*	$NetBSD: db_memrw.c,v 1.11 2026/11/13 01:07:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.10 2026/07/06 14:33:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_memrw.c,v 1.11 2026/11/13 01:07:14 thorpej Exp $");
 
 #include <sys/param.h>
 
@@ -108,7 +108,7 @@ db_read_bytes(db_addr_t addr, size_t size, char *data)
 static void
 db_write_text(db_addr_t addr, size_t size, const char *data)
 {
-	struct pmap_db_write_text_context ctx;
+	struct pmap_write_text_context ctx;
 	char *dst;
 	vaddr_t pgva;
 	int limit;
@@ -131,7 +131,7 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 		size -= limit;
 
 		/* Temporarily make the page writable. */
-		if (!  pmap_db_write_text_enter(pgva, &ctx)) {
+		if (!  pmap_write_text_enter(pgva, &ctx)) {
 			printf(" address %p not a valid page\n", dst);
 			return;
 		}
@@ -143,7 +143,7 @@ db_write_text(db_addr_t addr, size_t size, const char *data)
 			*dst++ = *data++;
 
 		/* Restore previous page permissions. */
-		pmap_db_write_text_exit(&ctx);
+		pmap_write_text_exit(&ctx);
 	}
 
 	/*

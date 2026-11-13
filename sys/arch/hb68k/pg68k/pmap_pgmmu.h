@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pgmmu.h,v 1.1 2026/07/19 01:48:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_pgmmu.h,v 1.2 2026/11/13 01:07:14 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -189,13 +189,13 @@ bool	pmap_pa_has_static_mapping(paddr_t, size_t, vm_prot_t,
 	    vaddr_t *, int *);
 bool	pmap_va_is_static_mapping(vaddr_t, size_t);
 
-/* Kernel debugger support functions. */
-struct pmap_db_write_text_context {
+/* Support for patching kernel text. */
+struct pmap_write_text_context {
 	unsigned int	pmeidx;
 	pm_entry_t	opme;
 };
-bool	pmap_db_write_text_enter(vaddr_t, struct pmap_db_write_text_context *);
-void	pmap_db_write_text_exit(struct pmap_db_write_text_context *);
+bool	pmap_write_text_enter(vaddr_t, struct pmap_write_text_context *);
+void	pmap_write_text_exit(struct pmap_write_text_context *);
 
 /*
  * Functions exported for compatibility with the Hibler pmap, where

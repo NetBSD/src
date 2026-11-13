@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.111 2026/08/23 22:08:40 riastradh Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.112 2026/11/13 01:07:14 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.111 2026/08/23 22:08:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.112 2026/11/13 01:07:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2864,16 +2864,15 @@ pmap_procwr(struct proc	*p, vaddr_t va, size_t len)
 	(void)cachectl1(0x80000004, va, len, p);
 }
 
-#if defined(DDB) || defined(KGDB)
 /*
- *	Routine:	pmap_db_write_text_enter
+ *	Routine:	pmap_write_text_enter
  *
  *	Function:
  *		Temporarily map a page of kernel text read-write for the
  *		kernel debugger.
  */
 bool
-pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
+pmap_write_text_enter(vaddr_t pgva, struct pmap_write_text_context *ctx)
 {
 	volatile pt_entry_t *pte;
 	pt_entry_t oldpte, tmppte;
@@ -2912,18 +2911,17 @@ pmap_db_write_text_enter(vaddr_t pgva, struct pmap_db_write_text_context *ctx)
 }
 
 /*
- *	Routine:	pmap_db_write_text_exit
+ *	Routine:	pmap_write_text_exit
  *
  *	Function:
- *		Undo the effects of pmap_db_write_text_enter().
+ *		Undo the effects of pmap_write_text_enter().
  */
 void
-pmap_db_write_text_exit(struct pmap_db_write_text_context *ctx)
+pmap_write_text_exit(struct pmap_write_text_context *ctx)
 {
 	*ctx->ptep = ctx->opte;
 	TBIS(ctx->pgva);
 }
-#endif /* DDB || KGDB */
 
 void
 _pmap_set_page_cacheable(pmap_t pmap, vaddr_t va)
