@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.8 2026/10/31 20:53:49 thorpej Exp $	*/
+/*	$NetBSD: fpu.c,v 1.9 2026/11/13 01:11:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2026 The NetBSD Foundation, Inc.
@@ -37,13 +37,17 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2026/10/31 20:53:49 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.9 2026/11/13 01:11:55 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
 #include <sys/lwp.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <m68k/cacheops.h>
 
 #include <machine/pcb.h>
 #include <machine/psl.h>
@@ -60,6 +64,78 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.8 2026/10/31 20:53:49 thorpej Exp $");
  */
 #ifdef M68K_FPCOPROC
 int	fputype = FPU_UNKNOWN;
+
+extern uint16_t cpu_switchto_savefpu_patch[];
+extern uint16_t cpu_switchto_restfpu_patch[];
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+extern uint16_t cpu_switch_savefpu_disp;
+extern uint16_t cpu_switch_restfpu_disp;
+#endif
+
+#if defined(M68060)
+extern uint16_t cpu_switch_savefpu60_disp;
+extern uint16_t cpu_switch_restfpu60_disp;
+#endif
+
+/*
+ * Patch up the various FPU-related conditional code points.  The default
+ * paths branch around FPU code.  The patches update the 16-bit displacements
+ * in BRA.W insns to branch to the appropriate code path for the detected
+ * FPU.
+ */
+static void
+fpu_patch(void)
+{
+	static uint16_t * const patch_locs[] = {
+		cpu_switchto_savefpu_patch,
+		cpu_switchto_restfpu_patch,
+	};
+	uint16_t disp[2];
+
+	switch (fputype) {
+#if defined(M68060)
+	case FPU_68060:
+		disp[0] = cpu_switch_savefpu60_disp;
+		disp[1] = cpu_switch_restfpu60_disp;
+		break;
+#endif
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	case FPU_68881:
+	case FPU_68882:
+	case FPU_68040:
+		disp[0] = cpu_switch_savefpu_disp;
+		disp[1] = cpu_switch_restfpu_disp;
+		break;
+#endif
+	default:
+		return;
+	}
+
+	struct pmap_write_text_context ctx;
+	vaddr_t pgva, last_pgva = (vaddr_t)-1;
+	uint16_t *insn, *loc;
+
+	for (int i = 0; i < __arraycount(patch_locs); i++) {
+		insn = patch_locs[i];
+		loc = &insn[1];
+		pgva = trunc_page((vaddr_t)loc);
+		if (pgva != last_pgva) {
+			if (last_pgva != (vaddr_t)-1) {
+				pmap_write_text_exit(&ctx);
+			}
+			if (! pmap_write_text_enter(pgva, &ctx)) {
+				panic("%s: cannot make loc=%p writable",
+				    __func__, loc);
+			}
+			last_pgva = pgva;
+		}
+		*loc = disp[i];
+	}
+
+	pmap_write_text_exit(&ctx);
+	ICIA();
+}
 #else
 int	fputype = FPU_NONE;
 #endif
@@ -143,6 +219,7 @@ fpu_init(void)
 	}
 	if (fputype != FPU_UNKNOWN) {
 		fpu_make_idle_frame();
+		fpu_patch();
 		vec_init_fp();
 	}
 #else

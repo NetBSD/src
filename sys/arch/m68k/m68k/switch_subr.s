@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.48 2026/10/31 20:59:27 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.49 2026/11/13 01:11:55 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -79,34 +79,36 @@ ENTRY(cpu_switchto)
 	movl	%a2,PCB_USP(%a1)	| and save it
 
 #ifdef M68K_FPCOPROC
-	tstl	_C_LABEL(fputype)	| Do we have an FPU?
-	jeq	.Lcpu_switch_nofpsave	| No  Then don't attempt save.
+GLOBAL(cpu_switchto_savefpu_patch)
+	bra.w	_C_LABEL(cpu_switchto_savefpu_done)
+.Lcpu_switchto_savefpu_from:
 
+#if defined(M68060)
+.Lcpu_switchto_savefpu60:
 	lea	PCB_FPCTX(%a1),%a2	| pointer to FP save area
 	fsave	(%a2)			| save FP state
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	.Lcpu_switch_savfp60
-#endif
-	tstb	(%a2)			| null state frame?
-	jeq	.Lcpu_switch_nofpsave	| yes, all done
-	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers
-	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a2) | save FP control registers
-#if defined(M68060)
-	jra	.Lcpu_switch_nofpsave
-#endif
-#endif
-#if defined(M68060)
-.Lcpu_switch_savfp60:
 	tstb	2(%a2)			| null state frame?
-	jeq	.Lcpu_switch_nofpsave	| yes, all done
-	fmovem	%fp0-%fp7,FPF_REGS(%a2) | save FP general registers
+	beq	1f			| yes, all done
+	fmovem	%fp0-%fp7,FPF_REGS(%a2)	| save FP general registers
 	fmovem	%fpcr,FPF_FPCR(%a2)	| save FP control registers
 	fmovem	%fpsr,FPF_FPSR(%a2)
 	fmovem	%fpi,FPF_FPI(%a2)
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	bra	_C_LABEL(cpu_switchto_savefpu_done)
 #endif
-.Lcpu_switch_nofpsave:
+#endif
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+.Lcpu_switchto_savefpu:
+	lea	PCB_FPCTX(%a1),%a2	| pointer to FP save area
+	fsave	(%a2)			| save FP state
+	tstb	(%a2)			| null state frame?
+	beq	_C_LABEL(cpu_switchto_savefpu_done)
+	fmovem	%fp0-%fp7,FPF_REGS(%a2)	| save FP general registers
+	fmovem	%fpcr/%fpsr/%fpi,FPF_FPCR(%a2) | save FP control registers
+#endif
+
+GLOBAL(cpu_switchto_savefpu_done)
 #endif	/* M68K_FPCOPROC */
 
 	movl	8(%sp),%a0		| get newlwp
@@ -144,41 +146,54 @@ ENTRY(cpu_switchto)
 	movl	%a0,%usp		      | and USP
 
 #ifdef M68K_FPCOPROC
-	tstl	_C_LABEL(fputype)	| Do we have an FPU?
-	jeq	.Lcpu_switch_nofprest	| No  Then don't attempt restore.
+GLOBAL(cpu_switchto_restfpu_patch)
+	bra.w	_C_LABEL(cpu_switchto_restfpu_done)
+.Lcpu_switchto_restfpu_from:
 
+#if defined(M68060)
+.Lcpu_switchto_restfpu60:
 	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
-#if defined(M68020) || defined(M68030) || defined(M68040)
-#if defined(M68060)
-	cmpl	#FPU_68060,_C_LABEL(fputype)
-	jeq	.Lcpu_switch_resfp60rest1
-#endif
-	tstb	(%a0)			| null state frame?
-	jeq	.Lcpu_switch_resfprest	| yes, easy
-	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
-	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
-#if defined(M68060)
-	jra	.Lcpu_switch_resfprest
-#endif
-#endif
-
-#if defined(M68060)
-.Lcpu_switch_resfp60rest1:
 	tstb	2(%a0)			| null state frame?
-	jeq	.Lcpu_switch_resfprest	| yes, easy
+	beq	_C_LABEL(cpu_switchto_restfpu_done)
 	fmovem	FPF_FPCR(%a0),%fpcr	| restore FP control registers
 	fmovem	FPF_FPSR(%a0),%fpsr
 	fmovem	FPF_FPI(%a0),%fpi
-	fmovem	FPF_REGS(%a0),%fp0-%fp7 | restore FP general registers
+	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
+#if defined(M68020) || defined(M68030) || defined(M68040)
+	bra	1f			| go restore state
 #endif
-.Lcpu_switch_resfprest:
-	frestore (%a0)			| restore state
+#endif
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+.Lcpu_switchto_restfpu:
+	lea	PCB_FPCTX(%a1),%a0	| pointer to FP save area
+	tstb	(%a0)			| null state frame?
+	beq	_C_LABEL(cpu_switchto_restfpu_done)
+	fmovem	FPF_FPCR(%a0),%fpcr/%fpsr/%fpi | restore FP control registers
+	fmovem	FPF_REGS(%a0),%fp0-%fp7	| restore FP general registers
+#endif
+1:	frestore (%a0)			| restore state
+
+GLOBAL(cpu_switchto_restfpu_done)
 #endif /* M68K_FPCOPROC */
 
-.Lcpu_switch_nofprest:
 	movl	%d1,%d0			| return outgoing lwp
 	movl	%d0,%a0			| (in a0, too)
 	rts
+
+#if defined(M68020) || defined(M68030) || defined(M68040)
+GLOBAL(cpu_switch_savefpu_disp)
+	.word	.Lcpu_switchto_savefpu - .Lcpu_switchto_savefpu_from + 2
+GLOBAL(cpu_switch_restfpu_disp)
+	.word	.Lcpu_switchto_restfpu - .Lcpu_switchto_restfpu_from + 2
+#endif
+
+#if defined(M68060)
+GLOBAL(cpu_switch_savefpu60_disp)
+	.word	.Lcpu_switchto_savefpu60 - .Lcpu_switchto_savefpu_from + 2
+GLOBAL(cpu_switch_restfpu60_disp)
+	.word	.Lcpu_switchto_restfpu60 - .Lcpu_switchto_restfpu_from + 2
+#endif
 
 /*
  * savectx(pcb)
