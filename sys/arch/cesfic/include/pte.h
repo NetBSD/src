@@ -1,3 +1,5 @@
-/*	$NetBSD: pte.h,v 1.2 2002/10/14 05:18:46 chs Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2026/11/13 01:23:13 thorpej Exp $	*/
 
+#ifndef __HAVE_NEW_PMAP_68K
 #include <m68k/pte_motorola.h>
+#endif

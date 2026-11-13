@@ -1,4 +1,4 @@
-/*	$NetBSD: zs_pcc.c,v 1.9 2008/03/29 19:15:34 tsutsui Exp $	*/
+/*	$NetBSD: zs_pcc.c,v 1.10 2026/11/13 01:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.9 2008/03/29 19:15:34 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zs_pcc.c,v 1.10 2026/11/13 01:23:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ extern void sic_enable_int(int, int, int, int, int);
 static int	zsc_pcc_match(device_t, cfdata_t, void *);
 static void	zsc_pcc_attach(device_t, device_t, void *);
 
-static char *zsbase;
+vaddr_t zsbase;
 
 CFATTACH_DECL_NEW(zsc_pcc, sizeof(struct zsc_softc),
     zsc_pcc_match, zsc_pcc_attach, NULL, NULL);
@@ -81,7 +81,7 @@ zsc_pcc_attach(device_t parent, device_t self, void *aux)
 		mainbus_map(0x58000000, 0x10000, 0, (void *)&zsbase);
 
 	/* Do common parts of SCC configuration. */
-	zs_config(zsc, zsbase);
+	zs_config(zsc, (void *)zsbase);
 
 	/*
 	 * Now safe to install interrupt handlers.  Note the arguments
@@ -101,10 +101,7 @@ zsc_pcc_attach(device_t parent, device_t self, void *aux)
 }
 
 void
-zs_cnattach(void *base)
+zs_cnattach(void)
 {
-
-	zsbase = base;
-
-	zs_cninit(zsbase);
+	zs_cninit((void *)zsbase);
 }

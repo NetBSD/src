@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.30 2023/12/20 00:40:43 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.31 2026/11/13 01:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.30 2023/12/20 00:40:43 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.31 2026/11/13 01:23:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -122,12 +122,17 @@ mainbus_map(u_long physaddr, int size, int cacheable, void ** virtaddr)
 
 	*virtaddr = (void*)(va + (physaddr & PGOFSET));
 	for (; pa < endpa; pa += PAGE_SIZE, va += PAGE_SIZE) {
+#ifdef __HAVE_NEW_PMAP_68K
+		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+		    cacheable ? 0 : PMAP_NOCACHE);
+#else
 		pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 		if (!cacheable) {
 			pt_entry_t *pte = kvtopte(va);
 			*pte |= PG_CI;
 			*pte &= ~PG_CCB;
 		}
+#endif /* __HAVE_NEW_PMAP_68K */
 	}
 	TBIAS();
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.cesfic,v 1.34 2026/07/06 16:21:47 thorpej Exp $
+#	$NetBSD: files.cesfic,v 1.35 2026/11/13 01:23:13 thorpej Exp $
 #
 # cesfic-specific configuration info
 
@@ -52,7 +52,7 @@ file	arch/cesfic/dev/if_le.c		le
 file	arch/cesfic/cesfic/autoconf.c
 file	arch/cesfic/cesfic/clock.c
 file	arch/cesfic/cesfic/machdep.c
-file	arch/cesfic/cesfic/pmap_bootstrap.c
+file	arch/cesfic/cesfic/pmap_bootstrap.c	!__have_new_pmap_68k
 file	arch/m68k/m68k/delay.s
 file	arch/m68k/m68k/m68k_intr.c
 file	arch/m68k/m68k/m68k_intr_stubs.s

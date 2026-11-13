@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.75 2026/11/12 16:09:14 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.76 2026/11/13 01:23:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -169,6 +169,18 @@ Lrelocdone:
 1:	clrb	%a0@+
 	cmpl	%a0, %a1
 	bne	1b
+
+#ifdef __HAVE_NEW_PMAP_68K
+	/*
+	 * We've linked the kernel at 0x2000 so that the first
+	 * virtual page can remain unmapped.  We use those pages
+	 * of RAM for LWP0's u-area.
+	 */
+	RELOC(kernel_text,%a1)		| %a1 = phys address of kernel_text
+	subl	#USPACE,%a1		| %a1 -= USPACE
+	RELOC(lwp0upa,%a0)
+	movl	%a1,%a0@
+#endif /* __HAVE_NEW_PMAP_68K */
 
 	RELOC(esym, %a0)
 	clrl	%a0@			| no symbol table from OS-9 loader

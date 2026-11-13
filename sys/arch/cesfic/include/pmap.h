@@ -1,9 +1,13 @@
-/*	$NetBSD: pmap.h,v 1.8 2026/11/12 16:09:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.9 2026/11/13 01:23:13 thorpej Exp $	*/
 
 #ifndef _CESFIC_PMAP_H_
 #define	_CESFIC_PMAP_H_
 
+#ifdef __HAVE_NEW_PMAP_68K
+#include <m68k/pmap_68k.h>
+#else
 #include <m68k/pmap_motorola.h>
+#endif /* __HAVE_NEW_PMAP_68K */
 
 #include <m68k/mmu_40.h>
 

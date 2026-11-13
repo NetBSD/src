@@ -1,4 +1,4 @@
-/* $NetBSD: sic6351.c,v 1.6 2009/03/14 21:04:08 dsl Exp $ */
+/* $NetBSD: sic6351.c,v 1.7 2026/11/13 01:23:13 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1999
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.6 2009/03/14 21:04:08 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.7 2026/11/13 01:23:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -35,18 +35,16 @@ __KERNEL_RCSID(0, "$NetBSD: sic6351.c,v 1.6 2009/03/14 21:04:08 dsl Exp $");
 #include <machine/cpu.h>
 #include <machine/pte.h>
 
-void sicinit(void*);
+void sicinit(void);
 int act2icr(int);
 void sic_enable_int(int, int, int, int, int);
 
-static char *sicbase;
+vaddr_t sicbase;
 
 void
-sicinit(void *base)
+sicinit(void)
 {
 	int i;
-
-	sicbase = base;
 
 	for(i = 0x100; i <= 0x1a4; i += 4)
 		*(volatile int *)(sicbase + i) = 0;
