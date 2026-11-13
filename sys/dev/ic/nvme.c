@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme.c,v 1.69 2024/03/11 21:10:46 riastradh Exp $	*/
+/*	$NetBSD: nvme.c,v 1.70 2026/11/13 14:25:16 skrll Exp $	*/
 /*	$OpenBSD: nvme.c,v 1.49 2016/04/18 05:59:50 dlg Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.69 2024/03/11 21:10:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme.c,v 1.70 2026/11/13 14:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2025,6 +2025,29 @@ nvme_q_free(struct nvme_softc *sc, struct nvme_queue *q)
 	kmem_free(q, sizeof(*q));
 }
 
+static bool
+nvme_q_pending(struct nvme_softc *sc, struct nvme_queue *q)
+{
+	struct nvme_cqe *ring = NVME_DMA_KVA(q->q_cq_dmamem);
+	uint16_t flags;
+
+	mutex_enter(&q->q_cq_mtx);
+	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_POSTREAD);
+	flags = lemtoh16(&ring[q->q_cq_head].flags);
+	nvme_dmamem_sync(sc, q->q_cq_dmamem, BUS_DMASYNC_PREREAD);
+	mutex_exit(&q->q_cq_mtx);
+
+	return (flags & NVME_CQE_PHASE) == q->q_cq_phase;
+}
+
+bool
+nvme_intx_pending(struct nvme_softc *sc)
+{
+
+	return nvme_q_pending(sc, sc->sc_admin_q) ||
+	    (sc->sc_q != NULL && nvme_q_pending(sc, sc->sc_q[0]));
+}
+
 int
 nvme_intr(void *xsc)
 {
@@ -2058,13 +2081,12 @@ nvme_softintr_intx(void *xq)
 	if (sc->sc_q != NULL)
 	        nvme_q_complete(sc, sc->sc_q[0]);
 
-	/*
-	 * Processing done, tell controller to issue interrupts again. There
-	 * is no race, as NVMe spec requires the controller to maintain state,
-	 * and assert the interrupt whenever there are unacknowledged
-	 * completion queue entries.
-	 */
+	/* Processing done, tell controller to issue interrupts again. */
 	nvme_write4(sc, NVME_INTMC, 1);
+
+	/* Some controllers do not reassert for entries posted while masked. */
+	if (nvme_intx_pending(sc))
+		softint_schedule(sc->sc_softih[0]);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: nvme_pci.c,v 1.37 2022/08/15 18:06:04 pgoyette Exp $	*/
+/*	$NetBSD: nvme_pci.c,v 1.38 2026/11/13 14:25:16 skrll Exp $	*/
 /*	$OpenBSD: nvme_pci.c,v 1.3 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.37 2022/08/15 18:06:04 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvme_pci.c,v 1.38 2026/11/13 14:25:16 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,7 @@ struct nvme_pci_softc {
 	struct nvme_softc	psc_nvme;
 
 	pci_chipset_tag_t	psc_pc;
+	pcitag_t		psc_tag;
 	pci_intr_handle_t	*psc_intrs;
 	int			psc_nintrs;
 };
@@ -157,6 +158,7 @@ nvme_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	psc->psc_pc = pa->pa_pc;
+	psc->psc_tag = pa->pa_tag;
 	if (pci_dma64_available(pa))
 		sc->sc_dmat = pa->pa_dmat64;
 	else
@@ -309,6 +311,46 @@ nvme_pci_detach(device_t self, int flags)
 	return 0;
 }
 
+static void
+nvme_pci_intx_disable(struct nvme_pci_softc *psc, bool disable)
+{
+	pcireg_t command;
+
+	/* Write only the Command half to keep W1C Status bits intact. */
+	command = pci_conf_read(psc->psc_pc, psc->psc_tag,
+	    PCI_COMMAND_STATUS_REG) & PCI_COMMAND_MASK;
+	if (disable)
+		command |= PCI_COMMAND_INTERRUPT_DISABLE;
+	else
+		command &= ~PCI_COMMAND_INTERRUPT_DISABLE;
+	pci_conf_write(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG,
+	    command);
+	(void)pci_conf_read(psc->psc_pc, psc->psc_tag, PCI_COMMAND_STATUS_REG);
+}
+
+static int
+nvme_pci_intr_intx(void *arg)
+{
+	struct nvme_softc *sc = arg;
+
+	/* Some controllers keep INTx asserted after INTMS is set. */
+	nvme_pci_intx_disable((struct nvme_pci_softc *)sc, true);
+	return nvme_intr(sc);
+}
+
+static void
+nvme_pci_softintr_intx(void *arg)
+{
+	struct nvme_queue *q = arg;
+	struct nvme_softc *sc = q->q_sc;
+
+	nvme_softintr_intx(q);
+	nvme_pci_intx_disable((struct nvme_pci_softc *)sc, false);
+
+	if (nvme_intx_pending(sc))
+		softint_schedule(sc->sc_softih[0]);
+}
+
 static int
 nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
     struct nvme_queue *q)
@@ -336,6 +378,11 @@ nvme_pci_intr_establish(struct nvme_softc *sc, uint16_t qid,
 		ih_arg = sc;
 		ih_func = nvme_intr;
 		ih_func_soft = nvme_softintr_intx;
+		if (pci_intr_type(psc->psc_pc, psc->psc_intrs[0]) ==
+		    PCI_INTR_TYPE_INTX) {
+			ih_func = nvme_pci_intr_intx;
+			ih_func_soft = nvme_pci_softintr_intx;
+		}
 	} else {
 		if (qid == NVME_ADMIN_Q) {
 			snprintf(intr_xname, sizeof(intr_xname), "%s adminq",

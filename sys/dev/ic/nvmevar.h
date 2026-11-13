@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmevar.h,v 1.29 2026/03/14 20:11:02 andvar Exp $	*/
+/*	$NetBSD: nvmevar.h,v 1.30 2026/11/13 14:25:16 skrll Exp $	*/
 /*	$OpenBSD: nvmevar.h,v 1.8 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -193,6 +193,7 @@ int	nvme_suspend(struct nvme_softc *);
 int	nvme_resume(struct nvme_softc *);
 int	nvme_intr(void *);
 void	nvme_softintr_intx(void *);
+bool	nvme_intx_pending(struct nvme_softc *);
 int	nvme_intr_msi(void *);
 void	nvme_softintr_msi(void *);
 
