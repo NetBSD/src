@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.48 2026/08/30 00:46:50 thorpej Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.49 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.48 2026/08/30 00:46:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.49 2026/11/13 23:48:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,7 +101,7 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Copy pcb from lwp l1 to l2. */
 	if (l1 == curlwp) {
 		/* Sync the PCB before we copy it. */
-		savectx(curpcb);
+		savectx(pcb1);
 	} else {
 		KASSERT(l1 == &lwp0);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.29 2026/11/01 16:38:22 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.30 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -275,7 +275,7 @@ ENTRY_NOPROFILE(fpfault)
 	movl	%usp,%a0		| and save
 	movl	%a0,FR_SP(%sp)		|   the user stack pointer
 	clrl	-(%sp)			| no VA arg
-	movl	_C_LABEL(curpcb),%a0	| current pcb
+	GET_CURPCB(%a0)			| current pcb
 	lea	PCB_FPCTX(%a0),%a0	| address of FP savearea
 	fsave	(%a0)			| save state
 #if defined(M68020) || defined(M68030)
@@ -337,7 +337,7 @@ ENTRY_NOPROFILE(trap0)
  */
 ENTRY_NOPROFILE(trap12)
 #ifndef __mc68010__
-	movl	_C_LABEL(curlwp),%a0
+	GET_CURLWP(%a0)
 	movl	%a0@(L_PROC),-(%sp)	| push current proc pointer
 	movl	%d1,-(%sp)		| push length
 	movl	%a1,-(%sp)		| push addr

@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.11 2023/09/26 14:33:55 tsutsui Exp $	*/
+/*	$NetBSD: pcb.h,v 1.12 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -69,7 +69,5 @@ struct pcb {
 struct md_coredump {
 	int	md_exec[16];	/* exec structure for HP-UX core dumps */
 };
-
-extern struct pcb *curpcb;
 
 #endif /* _M68K_PCB_H_ */

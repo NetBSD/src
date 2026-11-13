@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.50 2026/11/13 04:23:27 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.51 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -48,11 +48,6 @@
 
 	.file	"switch_subr.s"
 	.text
-
-	.data
-GLOBAL(curpcb)
-GLOBAL(masterpaddr)		| XXXcompatibility (debuggers)
-	.long	0
 
 /*
  * When no processes are on the runq, Swtch branches to Idle
@@ -113,8 +108,6 @@ GLOBAL(cpu_switchto_savefpu_done)
 
 	movl	8(%sp),%a0		| get newlwp
 	movl	%a0,_C_LABEL(curlwp)	| curlwp = new lwp
-	movl	L_PCB(%a0),%a1		| get its pcb
-	movl	%a1,_C_LABEL(curpcb)	| curpcb = new pcb
 
 	/*
 	 * Check for restartable atomic sequences (RAS)
@@ -135,8 +128,8 @@ GLOBAL(cpu_switchto_savefpu_done)
 	movl	%a0,TF_PC(%a1)		| fixup return PC
 1:
 	movl	_C_LABEL(curlwp),%a0	| recover new lwp
-	movl	_C_LABEL(curpcb),%a1	| recover new pcb
 2:
+	movl	L_PCB(%a0),%a1		| get new pcb
 	movl	%a0,%d0			| free up %a0
 	movl	4(%sp),%d1		| get oldlwp for return value
 	lea	_ASM_LABEL(tmpstk),%sp	| switch to tmp stack in case of NMI

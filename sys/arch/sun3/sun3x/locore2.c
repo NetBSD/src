@@ -1,4 +1,4 @@
-/*	$NetBSD: locore2.c,v 1.47 2026/11/06 15:10:44 thorpej Exp $	*/
+/*	$NetBSD: locore2.c,v 1.48 2026/11/13 23:48:35 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.47 2026/11/06 15:10:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore2.c,v 1.48 2026/11/13 23:48:35 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -78,8 +78,6 @@ int mmutype = MMU_68030;
 /*
  * Now our own stuff.
  */
-
-extern struct pcb *curpcb;
 
 /* First C code called by locore.s */
 void *_bootstrap(void);
@@ -172,7 +170,6 @@ _vm_init(void)
 	uvm_lwp_setuarea(&lwp0, nextva);
 	memset((void *)nextva, 0, USPACE);
 	curlwp = &lwp0;
-	curpcb = lwp_getpcb(&lwp0);
 
 	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
 	struct trapframe *tf = (struct trapframe *)(nextva + USPACE) - 1;

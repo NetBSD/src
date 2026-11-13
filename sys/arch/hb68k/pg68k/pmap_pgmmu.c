@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pgmmu.c,v 1.2 2026/11/13 01:07:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_pgmmu.c,v 1.3 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_pgmmu.c,v 1.2 2026/11/13 01:07:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_pgmmu.c,v 1.3 2026/11/13 23:48:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2405,7 +2405,6 @@ pmap_bootstrap2(void)
 	memset((void *)lwp0uarea, 0, USPACE);
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 	curlwp = &lwp0;
-	curpcb = lwp_getpcb(&lwp0);
 
 	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
 	struct trapframe *tf = (struct trapframe *)(lwp0uarea + USPACE) - 1;

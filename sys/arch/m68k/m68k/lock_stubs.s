@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.13 2026/03/24 06:00:40 thorpej Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.14 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -104,7 +104,7 @@ STRONG_ALIAS(_atomic_cas_ulong_ni,_atomic_cas_32)
  */
 ENTRY(mutex_enter)
 	movq	#0,%d0
-	movl	_C_LABEL(curlwp),%d1
+	GET_CURLWP(%d1)
 	movl	4(%sp),%a0
 	casl	%d0,%d1,(%a0)
 	bnes	1f
@@ -115,7 +115,7 @@ ENTRY(mutex_enter)
  * void mutex_exit(kmutex_t *mtx);
  */
 ENTRY(mutex_exit)
-	movl	_C_LABEL(curlwp),%d0
+	GET_CURLWP(%d0)
 	movq	#0,%d1
 	movl	4(%sp),%a0
 	casl	%d0,%d1,(%a0)

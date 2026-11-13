@@ -1,4 +1,4 @@
-/*	$NetBSD: atari_init.c,v 1.129 2026/11/08 08:39:10 tsutsui Exp $	*/
+/*	$NetBSD: atari_init.c,v 1.130 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1995 Leo Weppelman
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.129 2026/11/08 08:39:10 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atari_init.c,v 1.130 2026/11/13 23:48:34 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mbtype.h"
@@ -110,7 +110,6 @@ extern u_int	lowram;
 int		machineid, mmutype, cputype;
 
 extern char		*esym;
-extern struct pcb	*curpcb;
 
 /*
  * This is the virtual address of physical page 0. Used by 'do_boot()'.

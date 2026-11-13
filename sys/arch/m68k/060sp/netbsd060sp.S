@@ -1,6 +1,6 @@
 /*
 #
-# $NetBSD: netbsd060sp.S,v 1.8 2024/09/08 09:36:49 rillig Exp $
+# $NetBSD: netbsd060sp.S,v 1.9 2026/11/13 23:48:34 thorpej Exp $
 #
 #~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 # MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
@@ -177,7 +177,7 @@ ASENTRY_NOPROFILE(_060_dmem_read_byte)
 	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmrbs			|# supervisor
 dmrbu:
-	movl	_C_LABEL(curpcb),%a1	| fault handler
+	GET_CURPCB(%a1)			| fault handler
 	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsb	%a0@,%d0
 	bra	Lfdone
@@ -209,7 +209,7 @@ ASENTRY_NOPROFILE(_060_dmem_read_word)
 	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmrws			|# supervisor
 dmrwu:
-	movl	_C_LABEL(curpcb),%a1	| fault handler
+	GET_CURPCB(%a1)			| fault handler
 	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsw	%a0@,%d0
 	bra	Lfdone
@@ -240,7 +240,7 @@ ASENTRY_NOPROFILE(_060_dmem_read_long)
 	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmrls			|# supervisor
 dmrlu:
-	movl	_C_LABEL(curpcb),%a1	| fault handler
+	GET_CURPCB(%a1)			| fault handler
 	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsl	%a0@,%d0
 	bra	Lfdone
@@ -267,7 +267,7 @@ ASENTRY_NOPROFILE(_060_dmem_write_byte)
 	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmwbs			|# supervisor
 dmwbu:
-	movl	_C_LABEL(curpcb),%a1	| fault handler
+	GET_CURPCB(%a1)			| fault handler
 	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsb	%d0,%a0@
 	bra	Lfdone
@@ -294,7 +294,7 @@ ASENTRY_NOPROFILE(_060_dmem_write_word)
 	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmwws			|# supervisor
 dmwwu:
-	movl	_C_LABEL(curpcb),%a1	| fault handler
+	GET_CURPCB(%a1)			| fault handler
 	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsw	%d0,%a0@
 	bra	Lfdone
@@ -321,7 +321,7 @@ ASENTRY_NOPROFILE(_060_dmem_write_long)
 	btst	#0x5,%a6@(0x4)		|# check for supervisor state
 	bnes	dmwls			|# supervisor
 dmwlu:
-	movl	_C_LABEL(curpcb),%a1	| fault handler
+	GET_CURPCB(%a1)			| fault handler
 	movl	#Lferr,%a1@(PCB_ONFAULT)| set it
 	movsl	%d0,%a0@
 	bra	Lfdone

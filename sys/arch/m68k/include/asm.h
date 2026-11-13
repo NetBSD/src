@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.41 2026/11/13 21:14:17 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.42 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -225,6 +225,13 @@
 	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
 	addx.l	%d0,%d1;					\
 	move.l	%d1,(%a1)
+
+/* Get current process / current pcb */
+#define	GET_CURLWP(ar)						\
+	movl	_C_LABEL(curlwp),ar
+
+#define	GET_CURPCB(ar)						\
+	GET_CURLWP(ar); movl L_PCB(ar),ar
 
 /* Increment/decrement the interrupt depth. */
 #define	INTR_DEPTH_INCR						\

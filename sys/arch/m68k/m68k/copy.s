@@ -1,4 +1,4 @@
-/*	$NetBSD: copy.s,v 1.51 2026/03/21 22:00:15 thorpej Exp $	*/
+/*	$NetBSD: copy.s,v 1.52 2026/11/13 23:48:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2019 The NetBSD Foundation, Inc.
@@ -77,12 +77,6 @@
 	.file	"copy.s"
 	.text
 
-#ifdef CI_CURPCB
-#define	GETCURPCB(r)	movl	_C_LABEL(cpu_info_store)+CI_CURPCB,r
-#else
-#define	GETCURPCB(r)	movl	_C_LABEL(curpcb),r
-#endif
-
 #ifdef	DIAGNOSTIC
 /*
  * The following routines all use the "moves" instruction to access
@@ -120,7 +114,7 @@ ENTRY(copyin)
 	movl	12(%sp),%d0		| check count
 	jeq	.Lciret			| == 0, don't do anything
 	movl	%d2,-(%sp)		| save scratch register
-	GETCURPCB(%a0)			| set fault handler
+	GET_CURPCB(%a0)			| set fault handler
 	movl	#.Lcifault,PCB_ONFAULT(%a0)
 	movl	8(%sp),%a0		| src address
 	movl	12(%sp),%a1		| dest address
@@ -157,7 +151,7 @@ ENTRY(copyin)
 	jcc	.Lcibloop
 	clrl	%d0			| no error
 .Lcidone:
-	GETCURPCB(%a0)			| clear fault handler
+	GET_CURPCB(%a0)			| clear fault handler
 	clrl	PCB_ONFAULT(%a0)
 	movl	(%sp)+,%d2		| restore scratch register
 .Lciret:
@@ -181,7 +175,7 @@ ENTRY(copyout)
 	movl	12(%sp),%d0		| check count
 	jeq	.Lcoret			| == 0, don't do anything
 	movl	%d2,-(%sp)		| save scratch register
-	GETCURPCB(%a0)			| set fault handler
+	GET_CURPCB(%a0)			| set fault handler
 	movl	#.Lcofault,PCB_ONFAULT(%a0)
 	movl	8(%sp),%a0		| src address
 	movl	12(%sp),%a1		| dest address
@@ -218,7 +212,7 @@ ENTRY(copyout)
 	jcc	.Lcobloop
 	clrl	%d0			| no error
 .Lcodone:
-	GETCURPCB(%a0)			| clear fault handler
+	GET_CURPCB(%a0)			| clear fault handler
 	clrl	PCB_ONFAULT(%a0)
 	movl	(%sp)+,%d2		| restore scratch register
 .Lcoret:
@@ -235,7 +229,7 @@ ENTRY(copyout)
  */
 ENTRY(copyinstr)
 	CHECK_SFC
-	GETCURPCB(%a0)			| set fault handler
+	GET_CURPCB(%a0)			| set fault handler
 	movl	#.Lcisfault,PCB_ONFAULT(%a0)
 	movl	4(%sp),%a0		| a0 = fromaddr
 	movl	8(%sp),%a1		| a1 = toaddr
@@ -259,7 +253,7 @@ ENTRY(copyinstr)
 	movl	16(%sp),%a1		| store at return location
 	movl	%a0,(%a1)
 .Lcisexit:
-	GETCURPCB(%a0)			| clear fault handler
+	GET_CURPCB(%a0)			| clear fault handler
 	clrl	PCB_ONFAULT(%a0)
 	rts
 .Lcisfault:
@@ -274,7 +268,7 @@ ENTRY(copyinstr)
  */
 ENTRY(copyoutstr)
 	CHECK_DFC
-	GETCURPCB(%a0)			| set fault handler
+	GET_CURPCB(%a0)			| set fault handler
 	movl	#.Lcosfault,PCB_ONFAULT(%a0)
 	movl	4(%sp),%a0		| a0 = fromaddr
 	movl	8(%sp),%a1		| a1 = toaddr
@@ -298,7 +292,7 @@ ENTRY(copyoutstr)
 	movl	16(%sp),%a1		| store at return location
 	movl	%a0,(%a1)
 .Lcosexit:
-	GETCURPCB(%a0)			| clear fault handler
+	GET_CURPCB(%a0)			| clear fault handler
 	clrl	PCB_ONFAULT(%a0)
 	rts
 .Lcosfault:
@@ -316,7 +310,7 @@ ENTRY(copyoutstr)
  */
 ENTRY(kcopy)
 	link	%a6,#-4
-	GETCURPCB(%a0)			| set fault handler
+	GET_CURPCB(%a0)			| set fault handler
 	movl	PCB_ONFAULT(%a0),-4(%a6) | save old handler first
 	movl	#.Lkcfault,PCB_ONFAULT(%a0)
 	movl	16(%a6),-(%sp)		| push len
@@ -326,7 +320,7 @@ ENTRY(kcopy)
 	addl	#12,%sp			| pop args
 	clrl	%d0			| success!
 .Lkcdone:
-	GETCURPCB(%a0)			| restore fault handler
+	GET_CURPCB(%a0)			| restore fault handler
 	movl	-4(%a6),PCB_ONFAULT(%a0)
 	unlk	%a6
 	rts
@@ -337,7 +331,7 @@ ENTRY(kcopy)
 #define	UFETCH_PROLOGUE							\
 	CHECK_SFC						;	\
 	movl	4(%sp),%a0		/* address to read */	;	\
-	GETCURPCB(%a1)			/* a1 = curpcb */	;	\
+	GET_CURPCB(%a1)			/* a1 = curpcb */	;	\
 	movl	#.Lufetchstore_fault,PCB_ONFAULT(%a1)
 
 /* LINTSTUB: _ufetch_8(const uint8_t *uaddr, uint8_t *valp); */
@@ -367,7 +361,7 @@ ENTRY(_ufetch_32)
 #define	USTORE_PROLOGUE							\
 	CHECK_DFC						;	\
 	movl	4(%sp),%a0		/* address to write */	;	\
-	GETCURPCB(%a1)			/* a1 = curpcb */	;	\
+	GET_CURPCB(%a1)			/* a1 = curpcb */	;	\
 	movl	#.Lufetchstore_fault,PCB_ONFAULT(%a1)
 
 /* LINTSTUB: _ustore_8(uint8_t *uaddr, uint8_t val); */
@@ -401,7 +395,7 @@ ENTRY(_ustore_32)
 ENTRY(suline)
 	CHECK_DFC
 	movl	4(%sp),%a0		| address to write
-	GETCURPCB(%a1)			| current pcb
+	GET_CURPCB(%a1)			| current pcb
 	movl	.Lsuline_fault,PCB_ONFAULT(%a1) | fault handler
 	movl	8(%sp),%a1		| address of line data
 
@@ -422,7 +416,7 @@ ENTRY(suline)
 	nop
 
 	moveq	#0,%d0			| return 0 for success
-1:	GETCURPCB(%a1)			| current pcb
+1:	GET_CURPCB(%a1)			| current pcb
 	clrl	PCB_ONFAULT(%a1)	| clear fault handler
 	rts
 .Lsuline_fault:
