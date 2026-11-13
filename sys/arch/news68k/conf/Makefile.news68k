@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.news68k,v 1.26 2026/04/20 09:47:46 thorpej Exp $
+#	$NetBSD: Makefile.news68k,v 1.27 2026/11/13 14:44:29 thorpej Exp $
 #
 # Makefile for NetBSD
 #
@@ -61,7 +61,7 @@ locore.o: ${NEWS68K}/news68k/locore.s assym.h
 ## (5) link settings
 ##
 LINKFORMAT=	-n
-TEXTADDR?=	0
+TEXTADDR?=	2000
 
 ##
 ## (6) port specific target dependencies

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.119 2026/11/07 13:16:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.120 2026/11/13 14:44:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -120,15 +120,24 @@ ASENTRY_NOPROFILE(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 
 	movl	#0x0, %a5		| RAM starts at 0 (%a5)
-	movl	#0x0, %a6		| clear %fp to terminate debug trace
+
+	ASRELOC(tmpstk,%a0)
+	INIT_KSP(%a0)			| give ourselves a temporary stack
+
+	/*
+	 * We've linked the kernel at 0x2000 so that the first
+	 * virtual page can remain unmapped.  We use those pages
+	 * of RAM for LWP0's u-area.
+	 */
+	RELOC(kernel_text,%a1)		| %a1 = phys address of kernel_text
+	subl	#USPACE,%a1		| %a1 -= USPACE
+	RELOC(lwp0upa,%a0)
+	movl	%a1,%a0@
 
 	RELOC(bootdev,%a0)
 	movl	%d6, %a0@		| save bootdev
 	RELOC(boothowto,%a0)
 	movl	%d7, %a0@		| save boothowto
-
-	ASRELOC(tmpstk,%a0)
-	INIT_KSP(%a0)			| give ourselves a temporary stack
 
 	movc %vbr,%a0
 	movl %a0@(188),_ASM_LABEL(monitor)| save trap #15 to return PROM monitor
