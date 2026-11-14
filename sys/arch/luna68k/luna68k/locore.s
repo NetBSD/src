@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.117 2026/11/13 21:05:23 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.118 2026/11/14 19:02:12 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -261,33 +261,26 @@ ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */
 	jbsr	_C_LABEL(nmihand)	| call handler
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 #if 1	/* XXX wild timer -- how can I disable/enable the interrupt? */
 ENTRY_NOPROFILE(lev5intr)
-	INTR_DEPTH_INCR
 	btst	#7,OBIO_CLOCK		| check whether system clock
-	beq	2f
+	beq	_C_LABEL(intrstub_autovec) | XP device has also lev5 intr
 	movb	#1,OBIO_CLOCK		| clear the interrupt
 	tstl	_C_LABEL(clock_enable)	| is hardclock() available?
 	jeq	1f
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	lea	%sp@(0),%a1		| %a1 = &clockframe
 	movl	%a1,%sp@-
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
 	addql	#1,_C_LABEL(m68k_intr_evcnt)+CLOCK_INTRCNT
-	INTERRUPT_RESTOREREG
-1:
-	INTR_DEPTH_DECR
-	jra	_ASM_LABEL(rei)		| all done
-2:
-					| XP device has also lev5 intr,
-					| routing to autovec
-	INTR_DEPTH_DECR
-	jbra	_C_LABEL(intrstub_autovec)
+	INTERRUPT_EXIT
+1:	rte
 #endif
 
 /*

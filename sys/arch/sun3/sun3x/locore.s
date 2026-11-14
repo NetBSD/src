@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.92 2026/11/07 13:16:47 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.93 2026/11/14 19:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -143,10 +143,9 @@ L_high_code:
 	.align	2
 #endif
 GLOBAL(_isr_clock)
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(clock_intr)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	INTERRUPT_EXIT
 
 /*
  * Initialization is at the beginning of this file, because the

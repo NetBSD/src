@@ -1,4 +1,4 @@
-/*	$NetBSD: hdfd_intr.s,v 1.11 2023/01/06 10:28:28 tsutsui Exp $
+/*	$NetBSD: hdfd_intr.s,v 1.12 2026/11/14 19:02:12 thorpej Exp $
 
 /*
  * Copyright (c) 1996 Leo Weppelman.
@@ -48,7 +48,7 @@
 ENTRY_NOPROFILE(mfp_hdfd_nf)
 	addql	#1,nintr		|  add another interrupt
 
-	INTERRUPT_SAVEREG		|  Save scratch registers
+	_INTERRUPT_SAVEREG		|  Save scratch registers
 	movl	_C_LABEL(fdio_addr),%a0	|  Get base of fdc registers
 	movb	%a0@(fdsts),%d0		|  Get fdsts
 	btst	#5,%d0			|  DMA active?
@@ -65,7 +65,7 @@ hdfd_rd_nf:
 	subql	#1, _C_LABEL(fddmalen)	|  decrement bytecount
 	movl	%a1,_C_LABEL(fddmaaddr)	|  update DMA pointer
 |	addql	#1,_cnt+V_INTR		|  chalk up another interrupt
-	INTERRUPT_RESTOREREG
+	_INTERRUPT_RESTOREREG
 	rte
 hdfd_wrt_nf:
 	movb	%a1@+,%a0@(fddata)	|  Push a byte
@@ -77,7 +77,7 @@ hdfd_wrt_nf:
 ENTRY_NOPROFILE(mfp_hdfd_fifo)
 	addql	#1,_C_LABEL(intrcnt_user)+88	|  add another interrupt
 
-	INTERRUPT_SAVEREG		|  Save scratch registers
+	_INTERRUPT_SAVEREG		|  Save scratch registers
 	movl	_C_LABEL(fdio_addr),%a0	|  Get base of fdc registers
 	movb	%a0@(fdsts),%d0		|  Get fdsts
 	btst	#5,%d0			|  DMA active?
@@ -120,7 +120,7 @@ hdfdc1:
 	 */
 hdfdc_xit:
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
+	_INTERRUPT_RESTOREREG
 	rte
 
 	/*
@@ -135,8 +135,9 @@ hdfdc_norm:
 	addl	%d0, _C_LABEL(intrcnt_user)+88	|  add another interrupt
 	CPUINFO_ADD(CI_NINTR, %d0)
 0:	jbsr	_C_LABEL(fdc_ctrl_intr)		|  handle interrupt
-	INTERRUPT_RESTOREREG			|    and saved registers
-	jra	_ASM_LABEL(rei)
+	CHECK_ASTPENDING(%a0)			|  check for AST
+	_INTERRUPT_RESTOREREG			|    and saved registers
+	RTE_AST
 
 	.data
 nintr:

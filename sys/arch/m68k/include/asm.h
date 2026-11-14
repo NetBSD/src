@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.44 2026/11/14 14:16:31 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.45 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -177,18 +177,6 @@
 #define	ASBSS(name, size)				\
 	.comm	_ASM_LABEL(name),size
 
-/*
- * Need a better place for these but these are common across
- * all m68k ports so let's define just once.
- */
-#ifdef __mcoldfire__
-#define INTERRUPT_SAVEREG	lea -16(%sp),%sp; moveml #0xC0C0,(%sp)
-#define INTERRUPT_RESTOREREG	moveml (%sp),#0x0303; lea 16(%sp),%sp
-#else
-#define INTERRUPT_SAVEREG	moveml	#0xC0C0,-(%sp)
-#define INTERRUPT_RESTOREREG	moveml	(%sp)+,#0x0303
-#endif
-
 #ifdef _KERNEL
 
 /*
@@ -236,11 +224,60 @@
 #define	GET_CURPCB(ar)						\
 	GET_CURLWP(ar); movl L_PCB(ar),ar
 
+/*
+ * Check for pending ASTs.  Uses the specified scratch register
+ * and sets the condition codes. Z==no AST pending.
+ *
+ * After using this macro to set the condition codes, care must
+ * be taken to not alter them; MOVEM.L to restore registers and
+ * ADDQ.L to adjust an address register (e.g. %sp) are OK, but
+ * not much else!
+ */
+#define	CHECK_ASTPENDING(sr)					\
+	GET_CURLWP(sr); tstl L_MD_ASTPENDING(sr)
+
+/*
+ * Based on the condition codes set by CHECK_ASTPENDING(), either
+ * go processs the AST or just RTE.
+ */
+#define	RTE_AST			jne _ASM_LABEL(rte_ast); rte
+
+#ifdef __mcoldfire__
+#define _INTERRUPT_SAVEREG	lea -16(%sp),%sp; moveml #0xC0C0,(%sp)
+#define _INTERRUPT_RESTOREREG	moveml (%sp),#0x0303; lea 16(%sp),%sp
+#else
+#define _INTERRUPT_SAVEREG	moveml	#0xC0C0,-(%sp)
+#define _INTERRUPT_RESTOREREG	moveml	(%sp)+,#0x0303
+#endif
+
 /* Increment/decrement the interrupt depth. */
-#define	INTR_DEPTH_INCR						\
+#define	_INTR_DEPTH_INCR					\
 	addql	__IMMEDIATE 1,_C_LABEL(cpu_info_store)+CI_IDEPTH
-#define	INTR_DEPTH_DECR						\
+#define	_INTR_DEPTH_DECR					\
 	subql	__IMMEDIATE 1,_C_LABEL(cpu_info_store)+CI_IDEPTH
+
+/*
+ * Interrupt handler entry / exit.  Save registers first, as
+ * incrementing the interrupt depth might require a scratch
+ * register.
+ *
+ * If a platform supports hardware-assisted ASTs, we don't branch to
+ * rei() after the interrupt.  Instead, we simply do an rte.  Such
+ * platforms will have their own vector stub for dealing with ASTs,
+ * which will in turn call rei().
+ */
+#ifdef __HAVE_M68K_HW_AST
+#define	_INTERRUPT_RETURN	rte
+#else
+#define	_INTERRUPT_RETURN	RTE_AST
+#endif /* __HAVE_M68K_HW_AST */
+
+#define	INTERRUPT_ENTER						\
+	_INTERRUPT_SAVEREG ; _INTR_DEPTH_INCR
+
+#define	INTERRUPT_EXIT						\
+	_INTR_DEPTH_DECR ; CHECK_ASTPENDING(%a0) ;		\
+	_INTERRUPT_RESTOREREG ; _INTERRUPT_RETURN
 
 #endif /* _KERNEL */
 

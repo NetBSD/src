@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_13_sigreturn13.s,v 1.8 2024/01/17 12:19:06 thorpej Exp $	*/
+/*	$NetBSD: compat_13_sigreturn13.s,v 1.9 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -78,6 +78,7 @@ ENTRY_NOPROFILE(m68k_compat_13_sigreturn13_stub)
 	movl	%a0,%a1			| new HW frame base
 2:
 	movl	%a1,FR_SP(%sp)		| new SP value
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	(%sp)+,#0x7FFF		| restore user registers
 	movl	(%sp),%sp		| and our SP
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST

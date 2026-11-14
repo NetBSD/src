@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.211 2026/11/07 13:16:46 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.212 2026/11/14 19:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -498,17 +498,15 @@ GLOBAL(m68k_fault_addr)
  */
 
 ENTRY_NOPROFILE(spurintr)
+	INTERRUPT_ENTER
 	addql	#1,_C_LABEL(intrcnt)+0
-	INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(intrhand)
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(intr_dispatch)	| call dispatch routine
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(lev7intr)
 	addql	#1,_C_LABEL(intrcnt)+16
@@ -519,9 +517,10 @@ ENTRY_NOPROFILE(lev7intr)
 	jbsr	_C_LABEL(nmihand)	| call handler
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   %USP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SSP and align word
-	jra	_ASM_LABEL(rei)
+	RTE_AST
 
 /* 
  * We could tweak rtclock_intr and gain 12 cycles on the 020 and 030 by
@@ -543,9 +542,9 @@ ENTRY_NOPROFILE(rtclock_intr)
 	addql	#4,%sp			| pop param
 	jbsr	_C_LABEL(mrg_VBLQueue)	| give programs in the VBLqueue a chance
 	addql	#1,_C_LABEL(intrcnt)+32	| record a clock interrupt
-	INTERRUPT_SAVEREG
+	_INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
+	_INTERRUPT_RESTOREREG
 	movw	%d2,%sr			| restore SPL
 	movl	%sp@+,%d2		| restore %d2
 	rts				| go back from whence we came

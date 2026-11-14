@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.8 2020/12/06 02:26:33 christos Exp $	*/
+/*	$NetBSD: proc.h,v 1.9 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -42,6 +42,7 @@
 struct mdlwp {
 	int	*md_regs;		/* registers on current frame */
 	int	md_flags;		/* machine-dependent flags */
+	volatile int md_astpending;	/* AST pending for this thread */
 };
 
 /* md_flags */

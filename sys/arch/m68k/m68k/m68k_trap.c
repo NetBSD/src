@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.13 2026/11/13 21:14:17 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.14 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.13 2026/11/13 21:14:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.14 2026/11/14 19:02:12 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -86,8 +86,6 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.13 2026/11/13 21:14:17 thorpej Exp $
 #endif
 
 void	trap(struct frame *, int, u_int, u_int);
-
-volatile int astpending;
 
 static const char * const trap_descriptions[] = {
 	[T_BUSERR]	=	"Bus error",
@@ -945,7 +943,7 @@ trap(struct frame *fp, int type, unsigned int code, unsigned int v)
 		goto dopanic;
 
 	case T_ASTFLT|T_USER:	/* user async trap */
-		astpending = 0;
+		l->l_md.md_astpending = 0;
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);

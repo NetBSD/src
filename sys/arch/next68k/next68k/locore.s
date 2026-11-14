@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.116 2026/11/12 15:44:54 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.117 2026/11/14 19:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -368,10 +368,11 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
 	jbsr	_C_LABEL(nmihand)	| call handler
 	movl	%sp@(FR_SP),%a0		| restore
-	movl	%a0,%usp			|   user SP
+	movl	%a0,%usp		|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

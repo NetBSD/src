@@ -1,4 +1,4 @@
-/*	$NetBSD: trap_subr.s,v 1.30 2026/11/13 23:48:34 thorpej Exp $	*/
+/*	$NetBSD: trap_subr.s,v 1.31 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -67,9 +67,10 @@ ASENTRY_NOPROFILE(fault)
 	lea	16(%sp),%sp		| pop value args
 	movl	FR_SP(%sp),%a0		| restore
 	movl	%a0,%usp		|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	(%sp)+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 /*
  * Similar to above, but will tidy up the stack, if necessary.
@@ -84,9 +85,10 @@ ASGLOBAL(faultstkadjnotrap2)
 	movl	%a0,%usp		|   from save area
 	movw	FR_ADJ(%sp),%d0		| need to adjust stack?
 	jne	1f			| yes, go to it
-	moveml	(%sp)+,#0x7FFF		| no, restore most user regs
+	CHECK_ASTPENDING(%a0)		| no, check for AST
+	moveml	(%sp)+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| toss SSP and stkadj
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 1:
 	lea	FR_HW(%sp),%a1		| pointer to HW frame
 	addql	#8,%a1			| source pointer
@@ -95,9 +97,10 @@ ASGLOBAL(faultstkadjnotrap2)
 	movl	-(%a1),-(%a0)		| copy
 	movl	-(%a1),-(%a0)		|  8 bytes
 	movl	%a0,FR_SP(%sp)		| new SSP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	(%sp)+,#0x7FFF		| restore user registers
 	movl	(%sp),%sp		| and our SP
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 ASGLOBAL(buserr_common)
 	tstl	_C_LABEL(nofault)	| catch bus error?
@@ -234,6 +237,16 @@ ENTRY_NOPROFILE(fpfline_fpsp40)
 
 ENTRY_NOPROFILE(fpunsupp_fpsp40)
 	jmp	_ASM_LABEL(fpsp_unsupp)
+
+/*
+ * Helper for the FPSP exit point.  This takes the place of the
+ * fpsp_done in fpsp/netbsd.sa.
+ */
+ASENTRY_NOPROFILE(fpsp_done)
+	movl	%a0,-(%sp)		| save %a0
+	CHECK_ASTPENDING(%a0)		| check for AST
+	movl	(%sp)+,%a0		| restore %a0
+	RTE_AST
 #endif /* M68040 && FPSP */
 
 #if (defined(M68040) && !defined(FPSP)) || \
@@ -306,9 +319,10 @@ ENTRY_NOPROFILE(badtrap)
 	clrl	-(%sp)			| stack adjust count
 	moveml	#0xFFFF,-(%sp)		| save standard frame regs
 	jbsr	_C_LABEL(straytrap)	| report
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	(%sp)+,#0x7FFF		| restore all except %sp
 	addql	#8,%sp			| pop stack adjust count and %sp
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 /* trap #0 -- system calls */
 ENTRY_NOPROFILE(trap0)
@@ -319,7 +333,7 @@ ENTRY_NOPROFILE(trap0)
 	movl	%d0,-(%sp)		| push syscall number
 	jbsr	_C_LABEL(syscall)	| handle it
 	addql	#4,%sp			| pop syscall arg
-	tstl	_C_LABEL(astpending)	| AST pending?
+	CHECK_ASTPENDING(%a0)		| AST pending?
 	jne	_ASM_LABEL(doast)	| Yup, go deal with it.
 	movl	%sp@(FR_SP),%a0		| grab and restore
 	movl	%a0,%usp		|   user SP
@@ -334,6 +348,7 @@ ENTRY_NOPROFILE(trap0)
  *	cachectl(command, addr, length)
  *
  * command in d0, addr in a1, length in d1
+ * %a0 can be used as a scratch register
  */
 ENTRY_NOPROFILE(trap12)
 #ifndef __mc68010__
@@ -344,8 +359,11 @@ ENTRY_NOPROFILE(trap12)
 	movl	%d0,-(%sp)		| push command
 	jbsr	_C_LABEL(cachectl1)	| do it
 	lea	%sp@(16),%sp		| pop args
+	CHECK_ASTPENDING(%a0)		| check for AST
+	RTE_AST
+#else
+	rte				| total no-op on 68010
 #endif /* ! __mc68010__ */
-	jra	_ASM_LABEL(rei)		| all done
 
 /*
  * Trace (single-step) trap.  Kernel-mode is special.
@@ -431,25 +449,18 @@ Lkbrkpt:
 	rte				| all done
 
 /*
- * Emulation of VAX REI instruction.
+ * This code deals with servicing ASTs (profiling, scheduling).  We have
+ * side-channel entry point to provide a fast path to this for system calls.
  *
- * This code deals with checking for and servicing ASTs (profiling,
- * scheduling).  We have side-channel entry point to provide a fast
- * path to this for system calls.
- *
- * After identifying that we need an AST we drop the IPL to allow device
- * interrupts.
+ * Caller must check for a pending AST on curlwp before branching here.
+ * Stack is expected to contain the hardware trap frame, ready for RTE.
  *
  * This code is complicated by the fact that sendsig may have been called
  * necessitating a stack cleanup.
  */
-ASENTRY_NOPROFILE(rei)
-	tstl	_C_LABEL(astpending)	| AST pending?
-	jne	1f			| yes, next check...
-	rte				| nope, done.
-1:
+ASENTRY_NOPROFILE(rte_ast)
 	btst	#5,%sp@			| Are we returning to user mode?
-	jeq	1f			| yes, go do the work.
+	beq	1f			| yes, go do the work.
 	rte				| nope, done.
 1:
 	movw	#PSL_LOWIPL,%sr		| lower SPL

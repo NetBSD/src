@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.165 2026/11/13 21:05:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.166 2026/11/14 19:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -329,25 +329,22 @@ Lenab3:
  */
 
 ENTRY_NOPROFILE(spurintr)	/* level 0 */
+	_INTERRUPT_SAVEREG
 	addql	#1,_C_LABEL(intrcnt)+0
-	INTERRUPT_SAVEREG
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
+	_INTERRUPT_RESTOREREG
 	rte				| XXX mfpcure (x680x0 hardware bug)
 
 ENTRY_NOPROFILE(kbdtimer)
 	rte
 
 ENTRY_NOPROFILE(intiotrap)
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	pea	%sp@(16-(FR_HW))	| XXX
 	jbsr	_C_LABEL(intio_intr)
 	addql	#4,%sp
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	jra	rei
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(lev1intr)
 ENTRY_NOPROFILE(lev2intr)
@@ -355,8 +352,7 @@ ENTRY_NOPROFILE(lev3intr)
 ENTRY_NOPROFILE(lev4intr)
 ENTRY_NOPROFILE(lev5intr)
 ENTRY_NOPROFILE(lev6intr)
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 Lnotdma:
 	lea	_C_LABEL(intrcnt),%a0
 	movw	%sp@(22),%d0		| use vector offset
@@ -367,43 +363,42 @@ Lnotdma:
 	jbsr	_C_LABEL(intrhand)	| handle interrupt
 	addql	#4,%sp			| pop SR
 	CPUINFO_INCREMENT(CI_NINTR)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	jra	_ASM_LABEL(rei)
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(timertrap)
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG		| save scratch registers
+	INTERRUPT_ENTER
 	addql	#1,_C_LABEL(intrcnt)+32	| count hardclock interrupts
 	movl	%sp,%sp@-		| push pointer to clockframe
 	jbsr	_C_LABEL(hardclock)	| hardclock(&frame)
 	addql	#4,%sp
 	CPUINFO_INCREMENT(CI_NINTR)	| chalk up another interrupt
-	INTERRUPT_RESTOREREG		| restore scratch registers
-	INTR_DEPTH_DECR
-	jra	_ASM_LABEL(rei)		| all done
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(lev7intr)
-	INTR_DEPTH_INCR
 	addql	#1,_C_LABEL(intrcnt)+28
 	clrl	%sp@-
 	moveml	#0xFFFF,%sp@-		| save registers
 	movl	%usp,%a0		| and save
 	movl	%a0,%sp@(FR_SP)		|   the user stack pointer
+	_INTR_DEPTH_INCR
 	jbsr	_C_LABEL(nmihand)	| call handler
+	_INTR_DEPTH_DECR
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	INTR_DEPTH_DECR
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 /*
  * floppy ejection trap
  */
 
 ENTRY_NOPROFILE(fdeject)
-	jra	_ASM_LABEL(rei)
+	movl	%a0,-(%sp)		| save %a0
+	CHECK_ASTPENDING(%a0)		| check for AST
+	movl	(%sp)+,%a0		| restore %a0
+	RTE_AST
 
 /*
  * Handle the nitty-gritty of rebooting the machine.

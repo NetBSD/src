@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_intr_stubs.s,v 1.6 2026/11/13 19:11:30 thorpej Exp $	*/
+/*	$NetBSD: m68k_intr_stubs.s,v 1.7 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -50,29 +50,14 @@
 #endif
 
 /*
- * If a platform supports hardware-assisted ASTs, we don't branch to
- * rei() after the interrupt.  Instead, we simply do an rte.  Such
- * platforms will have their own vector stub for dealing with ASTs,
- * which will in turn call rei().
- */
-#ifdef __HAVE_M68K_HW_AST
-#define	INTERRUPT_RETURN	rte
-#else
-#define	INTERRUPT_RETURN	jra	_ASM_LABEL(rei)
-#endif /* __HAVE_M68K_HW_AST */
-
-/*
  * Vector stub for auto-vectored interrupts.  Calls the dispatch
  * routine with the frame BY VALUE (saves a few instructions).
  */
 	INTRSTUB_ALIGN
 ENTRY_NOPROFILE(intrstub_autovec)
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(m68k_intr_autovec)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	INTERRUPT_RETURN
+	INTERRUPT_EXIT
 
 #ifdef __HAVE_M68K_INTR_VECTORED
 /*
@@ -80,10 +65,7 @@ ENTRY_NOPROFILE(intrstub_autovec)
  */
 	INTRSTUB_ALIGN
 ENTRY_NOPROFILE(intrstub_vectored)
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(m68k_intr_vectored)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	INTERRUPT_RETURN
+	INTERRUPT_EXIT
 #endif /* __HAVE_M68K_INTR_VECTORED */

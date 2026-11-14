@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.53 2026/11/14 02:01:53 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.54 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -366,8 +366,11 @@ GLOBAL(fpu_restore)
 
 /*
  * lwp_trampoline: call function in register %a2 with %a3 as an arg
- * and then rei.
+ * and then rte.
  * %a0 will have old lwp from cpu_switchto(), and %a4 is new lwp
+ *
+ * N.B. it's totally possible to have been sent a signal before getting
+ * a chance to run, so we must check for ASTs.
  */
 ENTRY_NOPROFILE(lwp_trampoline)
 	movl	%a4,-(%sp)		| new lwp
@@ -379,6 +382,7 @@ ENTRY_NOPROFILE(lwp_trampoline)
 	addql	#4,%sp			| pop arg
 	movl	FR_SP(%sp),%a0		| grab and load
 	movl	%a0,%usp		|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	(%sp)+,#0x7FFF		| restore most user regs
 	addql	#8,%sp			| toss SP and stack adjust
-	jra	_ASM_LABEL(rei)		| and return
+	RTE_AST

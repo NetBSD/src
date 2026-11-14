@@ -1,4 +1,4 @@
-*	$NetBSD: netbsd.sa,v 1.6 2024/09/20 19:38:53 andvar Exp $
+*	$NetBSD: netbsd.sa,v 1.7 2026/11/14 19:02:12 thorpej Exp $
 
 *	MOTOROLA MICROPROCESSOR & MEMORY TECHNOLOGY GROUP
 *	M68000 Hi-Performance Microprocessor Division
@@ -357,11 +357,13 @@ fpsp_fmt_error:
 *	to return to user mode, but there may be OS specific code
 *	to execute before we do.  If there is, do it now.
 *
+*	NetBSD provides this label in m68k/trap_subr.s.
 *
-	xref	_ASM_LABEL(rei)
-	xdef	fpsp_done
-fpsp_done:
-	jmp		_ASM_LABEL(rei)
+*
+*	xref	_ASM_LABEL(fpsp_rte)
+*	xdef	fpsp_done
+*fpsp_done:
+*	jmp	_ASM_LABEL(fpsp_rte)
 
 *
 *	mem_write --- write to user or supervisor address space

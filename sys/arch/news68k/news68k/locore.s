@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.121 2026/11/13 21:05:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.122 2026/11/14 19:02:13 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -375,47 +375,36 @@ Lmmuenabled:
  */
 
 ENTRY_NOPROFILE(lev1intr)		/* Level 1: AST interrupt */
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	CPUINFO_INCREMENT(CI_NINTR)
 	addql	#1,_C_LABEL(m68k_intr_evcnt)+AST_INTRCNT
 	movl	_C_LABEL(ctrl_ast),%a0
 	clrb	%a0@			| disable AST interrupt
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	jra	_ASM_LABEL(rei)		| handle AST
+	_INTR_DEPTH_DECR
+	_INTERRUPT_RESTOREREG
+	jra	_ASM_LABEL(rte_ast)	| handle AST
 
 #ifdef notyet
 ENTRY_NOPROFILE(_softintr)		/* Level 2: software interrupt */
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(softintr_dispatch)
-	INTERRUPT_RESTOREREG
-	rte
+	INTERRUPT_EXIT
 #endif
 
 ENTRY_NOPROFILE(lev3intr)		/* Level 3: fd, lpt, vme etc. */
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(intrhand_lev3)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	rte
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(lev4intr)		/* Level 4: scsi, le, vme etc. */
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(intrhand_lev4)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	rte
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(_isr_clock)		/* Level 6: clock (see clock_hb.c) */
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	jbsr	_C_LABEL(clock_intr)
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	rte
+	INTERRUPT_EXIT
 
 #if 0
 ENTRY_NOPROFILE(lev7intr)		/* Level 7: NMI */

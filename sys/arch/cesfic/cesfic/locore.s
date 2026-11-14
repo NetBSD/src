@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.76 2026/11/13 01:23:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.77 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -294,7 +294,7 @@ Lmmuenabled:
  */
 
 ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	/* XXX */
 	movl _C_LABEL(clockbase), %a0
 	movl %a0@, %d0
@@ -312,8 +312,7 @@ ENTRY_NOPROFILE(lev6intr)	/* Level 6: clock */
 	jbsr	_C_LABEL(otherclock)
 	addql	#4, %sp
 2:
-	INTERRUPT_RESTOREREG
-	jra	_ASM_LABEL(rei)		| all done
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	addql	#1,_C_LABEL(m68k_intr_evcnt)+NMI_INTRCNT
@@ -324,9 +323,10 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	jbsr	_C_LABEL(nmihand)	| call handler
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp			|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 ENTRY_NOPROFILE(machine_reboot)
 	movl #0x5c00c060, %d0		| want phys addressing

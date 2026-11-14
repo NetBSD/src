@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.33 2026/11/14 14:16:31 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.34 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -224,10 +224,9 @@ struct clockframe {
 #define	cpu_set_hw_ast(l)	__nothing
 #endif
 
-extern volatile int astpending;
 #define	cpu_set_ast(l)							\
 	do {								\
-		__USE(l); astpending = 1; cpu_set_hw_ast(l);		\
+		(l)->l_md.md_astpending = 1; cpu_set_hw_ast(l);		\
 	} while (/*CONSTCOND*/0)
 
 /*

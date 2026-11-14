@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.220 2026/11/13 21:05:23 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.221 2026/11/14 19:02:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -529,8 +529,7 @@ Lmmuenabled:
 	movel	%d1,EVCNT_COUNTER(ipl)
 
 ENTRY_NOPROFILE(lev6intr)	/* level 6: clock */
-	INTR_DEPTH_INCR
-	INTERRUPT_SAVEREG
+	INTERRUPT_ENTER
 	CLKADDR(%a0)
 	movb	%a0@(CLKSR),%d0		| read clock status
 Lclkagain:
@@ -597,9 +596,7 @@ Lrecheck:
 					    |  in case the audio device
 					    |  generated the interrupt
 #endif
-	INTERRUPT_RESTOREREG
-	INTR_DEPTH_DECR
-	jra	_ASM_LABEL(rei)		| all done
+	INTERRUPT_EXIT
 
 ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	clrl	%sp@-
@@ -610,9 +607,10 @@ ENTRY_NOPROFILE(lev7intr)	/* level 7: parity errors, reset key */
 	jbsr	_C_LABEL(nmihand)	| call handler
 	movl	%sp@(FR_SP),%a0		| restore
 	movl	%a0,%usp		|   user SP
+	CHECK_ASTPENDING(%a0)		| check for AST
 	moveml	%sp@+,#0x7FFF		| and remaining registers
 	addql	#8,%sp			| pop SP and stack adjust
-	jra	_ASM_LABEL(rei)		| all done
+	RTE_AST
 
 ENTRY(ecacheon)
 	tstl	_C_LABEL(ectype)
