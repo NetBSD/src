@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.7 2026/11/14 19:02:12 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.8 2026/11/14 21:13:43 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -202,6 +202,7 @@ define	DELAY_MAGSHIFT		DELAY_MAGSHIFT
 define	PCB_PS			offsetof(struct pcb, pcb_ps)
 define	PCB_USP			offsetof(struct pcb, pcb_usp)
 define	PCB_REGS		offsetof(struct pcb, pcb_regs)
+define	PCB_REG_SP		offsetof(struct pcb, pcb_regs[PCB_REGS_SP])
 define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FPCTX		offsetof(struct pcb, pcb_fpregs)
 define	SIZEOF_PCB		sizeof(struct pcb)
