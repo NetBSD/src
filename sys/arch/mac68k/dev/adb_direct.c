@@ -1,4 +1,4 @@
-/*	$NetBSD: adb_direct.c,v 1.75 2026/06/14 02:03:57 thorpej Exp $	*/
+/*	$NetBSD: adb_direct.c,v 1.76 2026/11/14 14:56:06 nat Exp $	*/
 
 /* From: adb_direct.c 2.02 4/18/97 jpw */
 
@@ -62,7 +62,7 @@
 #ifdef __NetBSD__
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.75 2026/06/14 02:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adb_direct.c,v 1.76 2026/11/14 14:56:06 nat Exp $");
 
 #include "opt_adb.h"
 
@@ -245,6 +245,10 @@ int	adbStarting = 1;	/* doing ADBReInit so do polling differently */
 int	adbSendTalk = 0;	/* the intr routine is sending the talk, not
 				 * the user (II) */
 int	adbPolling = 0;		/* we are polling for service request */
+
+static int adbSamePolls = 0;
+
+#define ADB_MAX_SAME_POLLS	20
 int	adbPollCmd = 0;		/* the last poll command we sent */
 
 u_char	adbInputBuffer[ADB_MAX_MSG_LENGTH];	/* data input buffer */
@@ -844,6 +848,7 @@ switch_start:
 					printf_intr(" xSRQ! ");
 #endif
 				adb_guess_next_device();
+				adbSamePolls = 0;	/* walking the list */
 #ifdef ADB_DEBUG
 				if (adb_debug & 0x80)
 					printf_intr("try 0x%0x ",
@@ -905,7 +910,15 @@ switch_start:
 				if (adb_debug & 0x80)
 					printf_intr("XXending ");
 #endif
-				adb_guess_next_device();
+				/*
+				 * Keep polling the device that last had
+				 * something to say, rather than stepping
+				 * to the next one every single time.				 
+				 */
+				if (++adbSamePolls >= ADB_MAX_SAME_POLLS) {
+					adb_guess_next_device();
+					adbSamePolls = 0;
+				}
 				adbOutputBuffer[0] = 1;
 				adbOutputBuffer[1] = ((adbLastDevice & 0x0f) << 4) | 0x0c;
 				adbSentChars = 0;	/* nothing sent yet */
