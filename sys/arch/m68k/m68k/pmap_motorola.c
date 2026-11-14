@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.113 2026/11/13 23:48:34 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.114 2026/11/14 02:43:48 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.113 2026/11/13 23:48:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.114 2026/11/14 02:43:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -386,8 +386,8 @@ __CTASSERT(PAGE_SIZE != 0);
  *
  *	Phase 2 of pmap bootstrap.  (Phase 1 is system-specific.)
  *
- *	Initialize lwp0 uarea and curlwp after MMU is turned on,
- *	using lwp0uarea variable saved during pmap_bootstrap().
+ *	Initialize lwp0 uarea after MMU is turned on, using lwp0uarea
+ *	variable saved during pmap_bootstrap().
  *
  *	Returns the new kernel %sp value for lwp0.
  */
@@ -428,7 +428,6 @@ pmap_bootstrap2(void)
 	 */
 	memset((void *)lwp0uarea, 0, USPACE);
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
-	curlwp = &lwp0;
 
 	/* Create a fake exception frame so that cpu_lwp_fork() can copy it. */
 	struct trapframe *tf = (struct trapframe *)(lwp0uarea + USPACE) - 1;
