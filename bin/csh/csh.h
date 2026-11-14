@@ -1,4 +1,4 @@
-/* $NetBSD: csh.h,v 1.30 2024/04/24 15:47:11 nia Exp $ */
+/* $NetBSD: csh.h,v 1.31 2026/11/14 12:42:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -152,6 +152,7 @@ extern gid_t egid, gid;		/* Invokers gid */
 extern uid_t euid, uid;		/* Invokers uid */
 extern int shpgrp;		/* Pgrp of shell */
 extern int tpgrp;		/* Terminal process group */
+extern int insource;
 
 /* If tpgrp is -1, leave tty alone! */
 extern int opgrp;		/* Initial pgrp and tty pgrp */

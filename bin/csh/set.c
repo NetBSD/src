@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.40 2022/09/15 11:35:06 martin Exp $ */
+/* $NetBSD: set.c,v 1.41 2026/11/14 12:42:44 rillig Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.40 2022/09/15 11:35:06 martin Exp $");
+__RCSID("$NetBSD: set.c,v 1.41 2026/11/14 12:42:44 rillig Exp $");
 #endif
 #endif /* not lint */
 
@@ -709,10 +709,6 @@ exportpath(Char **val)
     Setenv(STRPATH, exppath);
 }
 
-#ifndef lint
- /*
-  * Lint thinks these have null effect
-  */
  /* macros to do single rotations on node p */
 #define rright(p) (\
 	t = (p)->v_left,\
@@ -726,19 +722,6 @@ exportpath(Char **val)
 	((p)->v_right = t->v_left) ? (t->v_left->v_parent = (p)) : 0,\
 	(t->v_left = (p))->v_parent = t,\
 	(p) = t)
-#else
-struct varent *
-rleft(struct varent *p)
-{
-    return (p);
-}
-struct varent *
-rright(struct varent *p)
-{
-    return (p);
-}
-#endif				/* ! lint */
-
 
 /*
  * Rebalance a tree, starting at p and up.
@@ -749,11 +732,7 @@ static void
 balance(struct varent *p, int f, int d)
 {
     struct varent *pp;
-
-#ifndef lint
     struct varent *t;	/* used by the rotate macros */
-
-#endif
     int ff;
 
     /*
