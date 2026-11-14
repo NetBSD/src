@@ -600,7 +600,7 @@ again:
 
   /* Construct PTID with a specified thread that received the event.
      If a signal was targeted to the whole process, lwp is 0.  */
-  wptid = ptid_t (pid, lwp, 0);
+  wptid = ptid_t (pid, lwp == pid ? 0 : lwp, 0);
 
   /* Bail out on non-debugger oriented signals..  */
   if (signo != SIGTRAP)
