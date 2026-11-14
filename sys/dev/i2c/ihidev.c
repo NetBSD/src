@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.35 2026/11/11 20:37:58 yurix Exp $ */
+/* $NetBSD: ihidev.c,v 1.36 2026/11/14 20:28:39 yurix Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -57,7 +57,7 @@
 #include "acpica.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.35 2026/11/11 20:37:58 yurix Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.36 2026/11/14 20:28:39 yurix Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -110,7 +110,7 @@ static int I2C_HID_POWER_OFF	= 0x1;
 
 static int	ihidev_match(device_t, cfdata_t, void *);
 static void	ihidev_attach(device_t, device_t, void *);
-static void	ihidev_attach_interrutps(device_t);
+static void	ihidev_attach_interrupts(device_t);
 static int	ihidev_detach(device_t, int);
 CFATTACH_DECL_NEW(ihidev, sizeof(struct ihidev_softc),
     ihidev_match, ihidev_attach, ihidev_detach, NULL);
@@ -213,11 +213,11 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_ibuf = kmem_zalloc(sc->sc_isize, KM_SLEEP);
 
-	config_interrupts(self, ihidev_attach_interrutps);
+	config_interrupts(self, ihidev_attach_interrupts);
 }
 
 static void
-ihidev_attach_interrutps(device_t self)
+ihidev_attach_interrupts(device_t self)
 {
 	struct ihidev_softc *sc = device_private(self);
 	struct ihidev_attach_arg iha;
