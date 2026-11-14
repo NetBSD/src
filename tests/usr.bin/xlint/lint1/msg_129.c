@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_129.c,v 1.12 2026/11/14 12:08:27 rillig Exp $	*/
+/*	$NetBSD: msg_129.c,v 1.13 2026/11/14 14:02:30 rillig Exp $	*/
 # 3 "msg_129.c"
 
 // Test for message: expression has null effect [129]
@@ -110,7 +110,7 @@ operator_comma(void)
 }
 
 void
-legitimate_use_cases(int void_name_arg, int void_addr_arg)
+legitimate_use_cases(int void_name_arg, int void_addr_arg, const char *ptr)
 {
 	int void_name_local = 3;
 	int void_addr_local = 4;
@@ -134,6 +134,12 @@ legitimate_use_cases(int void_name_arg, int void_addr_arg)
 
 	/* This is a shorthand notation for a do-nothing command. */
 	(void)0;
+
+	/* These variants are unusual enough to warrant a warning. */
+	/* expect+1: warning: expression has null effect [129] */
+	(void)0U;
+	/* expect+1: warning: expression has null effect [129] */
+	(void)0L;
 
 	/*
 	 * At the point where lint checks for expressions having a null
@@ -162,6 +168,8 @@ legitimate_use_cases(int void_name_arg, int void_addr_arg)
 	/* Double casts are unusual enough to warrant a warning. */
 	/* expect+1: warning: expression has null effect [129] */
 	(void)(void)0;
+
+	*(const volatile char *)ptr;
 }
 
 int

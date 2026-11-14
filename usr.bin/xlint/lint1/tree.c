@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.717 2026/11/14 12:08:26 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.718 2026/11/14 14:02:30 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.717 2026/11/14 12:08:26 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.718 2026/11/14 14:02:30 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3379,15 +3379,34 @@ check_assign_types_compatible(op_t op, const function_call *call, int arg,
 }
 
 static bool
-has_side_effect(const tnode_t *tn) /* NOLINT(misc-no-recursion) */
+has_side_effect(const tnode_t *tn)
 {
 	op_t op = tn->tn_op;
 
 	if (modtab[op].m_has_side_effect)
 		return true;
 
-	if (op == CVT && tn->tn_type->t_tspec == VOID)
-		return has_side_effect(tn->u.ops.left);
+	if (op == INDIR && tn->tn_type->t_volatile)
+		return true;
+
+	if (op == CVT && tn->tn_type->t_tspec == VOID) {
+		const tnode_t *ln = tn->u.ops.left;
+
+		if ((ln->tn_op == ADDR || ln->tn_op == LOAD)
+		    && ln->u.ops.left->tn_op == NAME
+		    && ln->u.ops.left->u.sym->s_scl == AUTO)
+			return true;
+
+		if (ln->tn_op == CON
+		    && ln->tn_type->t_tspec == INT
+		    && ln->u.value.u.integer == 0)
+			return true;
+
+		if (ln->tn_op == CVT)
+			return false;
+
+		return has_side_effect(ln);
+	}
 
 	if (op == LOGAND || op == LOGOR)
 		return has_side_effect(tn->u.ops.right);
@@ -3403,43 +3422,12 @@ has_side_effect(const tnode_t *tn) /* NOLINT(misc-no-recursion) */
 	return false;
 }
 
-static bool
-is_void_cast(const tnode_t *tn)
-{
-
-	return tn->tn_op == CVT && tn->tn_cast &&
-	    tn->tn_type->t_tspec == VOID;
-}
-
-static bool
-is_local_symbol(const tnode_t *tn)
-{
-
-	return (tn->tn_op == ADDR || tn->tn_op == LOAD) &&
-	    tn->u.ops.left->tn_op == NAME &&
-	    tn->u.ops.left->u.sym->s_scl == AUTO;
-}
-
-static bool
-is_int_constant_zero(const tnode_t *tn)
-{
-
-	return tn->tn_op == CON &&
-	    tn->tn_type->t_tspec == INT &&
-	    tn->u.value.u.integer == 0;
-}
-
 static void
 check_null_effect(const tnode_t *tn)
 {
-
-	if (hflag &&
-	    !has_side_effect(tn) &&
-	    !(is_void_cast(tn) && is_local_symbol(tn->u.ops.left)) &&
-	    !(is_void_cast(tn) && is_int_constant_zero(tn->u.ops.left))) {
+	if (hflag && !has_side_effect(tn))
 		/* expression has null effect */
 		warning(129);
-	}
 }
 
 /*
