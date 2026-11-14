@@ -1,4 +1,4 @@
-/* $NetBSD: debug.c,v 1.84 2025/07/11 19:03:01 rillig Exp $ */
+/* $NetBSD: debug.c,v 1.85 2026/11/14 15:02:46 rillig Exp $ */
 
 /*-
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: debug.c,v 1.84 2025/07/11 19:03:01 rillig Exp $");
+__RCSID("$NetBSD: debug.c,v 1.85 2026/11/14 15:02:46 rillig Exp $");
 #endif
 
 #include <stdlib.h>
@@ -359,8 +359,9 @@ type_attributes_string(type_attributes attrs)
 {
 	static char buf[32];
 
-	snprintf(buf, sizeof(buf), "%s%s%s",
+	snprintf(buf, sizeof(buf), "%s%s%s%s",
 	    attrs.used ? " used" : "",
+	    attrs.defined ? " defined" : "",
 	    attrs.noreturn ? " noreturn" : "",
 	    attrs.bit_width == 128 ? " 128bit" :
 	    attrs.bit_width == 64 ? " 64bit" : "");

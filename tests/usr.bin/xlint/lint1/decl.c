@@ -1,4 +1,4 @@
-/*	$NetBSD: decl.c,v 1.37 2026/06/16 05:27:58 rillig Exp $	*/
+/*	$NetBSD: decl.c,v 1.38 2026/11/14 15:02:46 rillig Exp $	*/
 # 3 "decl.c"
 
 /*
@@ -341,3 +341,9 @@ prototype_definition(void)
 typedef int shl_overflow_positive[1LL << 32 << 31];
 /* expect+1: warning: constant -0x8000000000000000 too large for 'int' [56] */
 typedef int shl_overflow_negative[-1LL << 32 << 31];
+
+
+// Even though this function is static, it need not be defined, as it refers
+// to a global function defined elsewhere.
+static int __libc_fegetround_ref(void)
+    __attribute__((__weakref__("fegetround")));

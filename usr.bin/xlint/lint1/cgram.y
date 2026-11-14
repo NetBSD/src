@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.539 2026/10/25 21:42:57 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.540 2026/11/14 15:02:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.539 2026/10/25 21:42:57 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.540 2026/11/14 15:02:46 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -1785,6 +1785,7 @@ abstract_decl_param_list:	/* specific to lint */
 		$$ = $2;
 		$$.prototype = true;
 		$$.used = $4.used;
+		$$.defined = $4.defined;
 		$$.noreturn = $4.noreturn;
 	}
 |	abstract_decl_lparen error T_RPAREN type_attribute_list_opt {
@@ -2599,6 +2600,8 @@ gcc_attribute:
 			if (strcmp(arg_name, "DI") == 0)
 				$$.bit_width = 64;
 		}
+		if (is_either(name, "weakref", "__weakref__"))
+			$$.defined = true;
 	}
 |	type_qualifier {
 		if (!$1.tq_const)

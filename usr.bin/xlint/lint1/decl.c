@@ -1,4 +1,4 @@
-/* $NetBSD: decl.c,v 1.430 2026/10/11 07:39:24 rillig Exp $ */
+/* $NetBSD: decl.c,v 1.431 2026/11/14 15:02:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: decl.c,v 1.430 2026/10/11 07:39:24 rillig Exp $");
+__RCSID("$NetBSD: decl.c,v 1.431 2026/11/14 15:02:46 rillig Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1416,8 +1416,10 @@ add_function(sym_t *decl, parameter_list params)
 			params.first = NULL;
 	} else
 		old_style_function(decl, params.first);
-	if (params.used)
+	if (params.used || params.defined)
 		decl->s_used = true;
+	if (params.defined)
+		decl->s_def = DEF;
 
 	/*
 	 * The symbols are removed from the symbol table by

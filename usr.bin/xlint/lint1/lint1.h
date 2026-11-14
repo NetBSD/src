@@ -1,4 +1,4 @@
-/* $NetBSD: lint1.h,v 1.241 2026/06/16 05:27:57 rillig Exp $ */
+/* $NetBSD: lint1.h,v 1.242 2026/11/14 15:02:46 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -95,6 +95,7 @@ typedef struct {
 
 typedef struct {
 	bool used;
+	bool defined;
 	bool noreturn;
 	unsigned bit_width;
 } type_attributes;
@@ -413,6 +414,7 @@ typedef struct {
 	bool	vararg:1;
 	bool	prototype:1;
 	bool	used:1;
+	bool	defined:1;
 	bool	noreturn:1;
 	bool	identifier:1;
 } parameter_list;
