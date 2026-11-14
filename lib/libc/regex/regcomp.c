@@ -1,4 +1,4 @@
-/*	$NetBSD: regcomp.c,v 1.49 2025/01/01 18:19:50 christos Exp $	*/
+/*	$NetBSD: regcomp.c,v 1.50 2026/11/14 14:57:33 christos Exp $	*/
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -51,7 +51,7 @@
 static char sccsid[] = "@(#)regcomp.c	8.5 (Berkeley) 3/20/94";
 __FBSDID("$FreeBSD: head/lib/libc/regex/regcomp.c 368359 2020-12-05 03:18:48Z kevans $");
 #endif
-__RCSID("$NetBSD: regcomp.c,v 1.49 2025/01/01 18:19:50 christos Exp $");
+__RCSID("$NetBSD: regcomp.c,v 1.50 2026/11/14 14:57:33 christos Exp $");
 
 #ifndef LIBHACK
 #define REGEX_GNU_EXTENSIONS
@@ -390,7 +390,7 @@ regcomp_internal(regex_t * __restrict preg,
 		computejumps(p, g);
 		computematchjumps(p, g);
 		if(g->matchjump == NULL && g->charjump != NULL) {
-			free(g->charjump);
+			free(&g->charjump[CHAR_MIN]);
 			g->charjump = NULL;
 		}
 	}
