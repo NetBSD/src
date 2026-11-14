@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.52 2026/11/14 01:53:54 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.53 2026/11/14 02:01:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -112,7 +112,7 @@ GLOBAL(cpu_switchto_savefpu_done)
 	 */
 
 	movl	8(%sp),%a2		| get newlwp
-	movl	%a2,_C_LABEL(curlwp)	| curlwp = new lwp
+	SET_CURLWP(%a2, %a0)		| curlwp = new lwp (%a0 = scratch)
 
 	/*
 	 * Check for restartable atomic sequences (RAS)
