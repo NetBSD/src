@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.716 2026/07/15 05:35:09 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.717 2026/11/14 12:08:26 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.716 2026/07/15 05:35:09 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.717 2026/11/14 12:08:26 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -3415,7 +3415,7 @@ static bool
 is_local_symbol(const tnode_t *tn)
 {
 
-	return tn->tn_op == LOAD &&
+	return (tn->tn_op == ADDR || tn->tn_op == LOAD) &&
 	    tn->u.ops.left->tn_op == NAME &&
 	    tn->u.ops.left->u.sym->s_scl == AUTO;
 }
