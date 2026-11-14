@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_data.s,v 1.1 2026/11/14 22:40:15 thorpej Exp $	*/
+/*	$NetBSD: locore_data.s,v 1.2 2026/11/14 23:08:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -65,4 +65,8 @@ GLOBAL(cpu_info_primary)
 ASGLOBAL(tmpstk)
 
 	.globl	cpu_info_store
+#ifdef CPUINFO_VA
+	_C_LABEL(cpu_info_store) = CPUINFO_VA
+#else
 	_C_LABEL(cpu_info_store) = _C_LABEL(cpu_info_primary)
+#endif

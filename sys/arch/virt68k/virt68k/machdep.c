@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.46 2026/11/12 03:05:02 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.47 2026/11/14 23:08:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2026/11/12 03:05:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.47 2026/11/14 23:08:26 thorpej Exp $");
 
 #include "opt_m68k_arch.h"
 
@@ -72,11 +72,20 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.46 2026/11/12 03:05:02 thorpej Exp $")
 /* Machine-dependent initialization routines. */
 void	machine_init(paddr_t);
 
-/*
- * Clamp the kernel virtual address space to keep it out of the
- * TT ranges we use for devices.
- */
 struct pmap_bootmap machine_bootmap[] = {
+	/*
+	 * We map the CPU info at a fixed VA range.  On the boot
+	 * CPU, we re-use the tmpstk page for this, and start()
+	 * will fill in that PA before calling pmap_bootstrap1().
+	 */
+	{ .pmbm_vaddr = CPUINFO_VA,
+	  .pmbm_paddr = 0,		/* filled in at boot time */
+	  .pmbm_size  = PAGE_SIZE,
+	  .pmbm_flags = PMBM_F_FIXEDVA },
+
+	/*
+	 * Keep out of the TT range we use to map the I/O devices.
+	 */
 	{ .pmbm_vaddr = VIRT68K_IO_BASE,
 	  .pmbm_size  = VIRT68K_IO_SIZE,
 	  .pmbm_flags = PMBM_F_KEEPOUT },

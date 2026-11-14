@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.8 2026/11/14 21:13:43 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.9 2026/11/14 23:08:26 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -129,6 +129,9 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+ifdef CPUINFO_VA
+define	CPUINFO_VA		CPUINFO_VA
+endif
 
 # interrupt/fault metering
 define	SIZEOF_EVCNT		sizeof(struct evcnt)
@@ -192,6 +195,9 @@ endif
 # pmap flags (dependent on pmap implementation)
 ifdef PMBM_F_CI
 define	PMBM_F_CI		PMBM_F_CI
+define	PMBM_PADDR		offsetof(struct pmap_bootmap, pmbm_paddr)
+define	PMBM_SIZE		offsetof(struct pmap_bootmap, pmbm_size)
+define	SIZEOF_PMAP_BOOTAMP	sizeof(struct pmap_bootmap)
 endif
 
 # delay(9) parameters

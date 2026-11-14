@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.6 2026/04/30 05:46:14 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.7 2026/11/14 23:08:26 thorpej Exp $	*/
 
 #ifndef _VIRT68K_PMAP_H_
 #define	_VIRT68K_PMAP_H_
@@ -22,6 +22,12 @@
 #define	VIRT68K_TT40_IO		(VIRT68K_IO_BASE |			\
 				 TTR40_E | TTR40_SUPER |		\
 				 PTE40_CM_NC_SER)
+
+/*
+ * We will place our cpu_info at the beginning of the last 32MB
+ * segment of kernel VA, below the IO_BASE.
+ */
+#define	CPUINFO_VA		0xfe000000
 
 #ifdef __HAVE_NEW_PMAP_68K
 #include <m68k/pmap_68k.h>

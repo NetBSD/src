@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.54 2026/11/14 22:40:16 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.55 2026/11/14 23:08:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -124,6 +124,15 @@ ASENTRY_NOPROFILE(start)
 	subl	#USPACE,%a1		| %a1 -= USPACE
 	RELOC(lwp0upa,%a0)
 	movl	%a1,%a0@
+
+	/*
+	 * The first machine_bootmap[] entry maps our primary cpu_info
+	 * at a fixed VA.  Now that the kernel's loaded, we know what
+	 * the physical address is going to be; provide it now.
+	 */
+	RELOC(machine_bootmap,%a0)	| %a0 = phys addr of &machine_bootmap[0]
+	RELOC(cpu_info_primary,%a1)	| %a1 = phys addr of cpu_info
+	movl	%a1,%a0@(PMBM_PADDR)
 
 	/*
 	 * Qemu does not pass us the symbols, so leave esym alone.
