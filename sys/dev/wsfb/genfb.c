@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.94 2026/01/10 23:55:24 jmcneill Exp $ */
+/*	$NetBSD: genfb.c,v 1.95 2026/11/14 14:49:49 nat Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.94 2026/01/10 23:55:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.95 2026/11/14 14:49:49 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,9 @@ struct genfb_private {
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
 	u_char sc_cmap_blue[256];
+	u_char sc_cmap_saved_red[256];
+	u_char sc_cmap_saved_green[256];
+	u_char sc_cmap_saved_blue[256];
 	bool sc_want_clear;
 #ifdef SPLASHSCREEN
 	struct splash_info sc_splash;
@@ -508,11 +511,25 @@ genfb_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 			return error;
 
 		if (new_mode != scp->sc_mode) {
+			if (scp->sc_mode == WSDISPLAYIO_MODE_EMUL) {
+				memcpy(scp->sc_cmap_saved_red,
+				    scp->sc_cmap_red, 256);
+				memcpy(scp->sc_cmap_saved_green,
+				    scp->sc_cmap_green, 256);
+				memcpy(scp->sc_cmap_saved_blue,
+				    scp->sc_cmap_blue, 256);
+			}
 			scp->sc_mode = new_mode;
 			if (scp->sc_modecb != NULL) {
 				scp->sc_modecb->gmc_setmode(sc, scp->sc_mode);
 			}
 			if (new_mode == WSDISPLAYIO_MODE_EMUL) {
+				memcpy(scp->sc_cmap_red,
+				    scp->sc_cmap_saved_red, 256);
+				memcpy(scp->sc_cmap_green,
+				    scp->sc_cmap_saved_green, 256);
+				memcpy(scp->sc_cmap_blue,
+				    scp->sc_cmap_saved_blue, 256);
 				genfb_restore_palette(sc);
 				vcons_redraw_screen(ms);
 			}
