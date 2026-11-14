@@ -154,6 +154,7 @@ main(int argc, char *argv[])
 	/* Source the user's defaults file. */
 	el_source(el, NULL);
 
+again:
 	while((line = el_wgets(el, &numc)) != NULL && numc != 0) {
 		int ac, cc, co, rc;
 		const wchar_t **av;
@@ -264,6 +265,11 @@ main(int argc, char *argv[])
 		}
 
 		tok_wreset(tok);
+	}
+	fprintf(stderr, "done %p %zu\n", line, numc);
+	if (line == NULL && numc == -1) {
+		el_reset(el);
+		goto again;
 	}
 
 	el_end(el);

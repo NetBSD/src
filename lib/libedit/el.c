@@ -1,4 +1,4 @@
-/*	$NetBSD: el.c,v 1.105 2026/08/15 10:12:49 christos Exp $	*/
+/*	$NetBSD: el.c,v 1.106 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)el.c	8.2 (Berkeley) 1/3/94";
 #else
-__RCSID("$NetBSD: el.c,v 1.105 2026/08/15 10:12:49 christos Exp $");
+__RCSID("$NetBSD: el.c,v 1.106 2026/11/14 17:50:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -100,6 +100,8 @@ el_init_internal(const char *prog, FILE *fin, FILE *fout, FILE *ferr,
 	el->el_flags = flags;
 
 	if (terminal_init(el) == -1) {
+		el_free(el->el_scratch.cbuff);
+		el_free(el->el_scratch.wbuff);
 		el_free(el->el_prog);
 		el_free(el);
 		return NULL;
@@ -172,6 +174,7 @@ el_reset(EditLine *el)
 {
 
 	tty_cookedmode(el);
+	el->el_refresh.r_error = 0;
 	ch_reset(el);		/* XXX: Do we want that? */
 }
 
@@ -335,6 +338,10 @@ el_wset(EditLine *el, int op, ...)
 		if (rv && !(el->el_flags & UNBUFFERED)) {
 			el->el_flags |= UNBUFFERED;
 			read_prepare(el);
+			if (el->el_refresh.r_error) {
+				rv = -1;
+				break;
+			}
 		} else if (!rv && (el->el_flags & UNBUFFERED)) {
 			el->el_flags &= ~UNBUFFERED;
 			read_finish(el);
@@ -381,9 +388,12 @@ el_wset(EditLine *el, int op, ...)
 	}
 
 	case EL_REFRESH:
+		el->el_refresh.r_error = 0;
 		re_clear_display(el);
 		re_refresh(el);
 		terminal__flush(el);
+		if (el->el_refresh.r_error)
+			rv = -1;
 		break;
 
 	case EL_WORDCHARS:

@@ -1,4 +1,4 @@
-/*	$NetBSD: eln.c,v 1.40 2026/03/03 23:04:02 christos Exp $	*/
+/*	$NetBSD: eln.c,v 1.41 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: eln.c,v 1.40 2026/03/03 23:04:02 christos Exp $");
+__RCSID("$NetBSD: eln.c,v 1.41 2026/11/14 17:50:15 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <errno.h>
@@ -253,10 +253,7 @@ el_set(EditLine *el, int op, ...)
 	}
 
 	case EL_REFRESH:
-		re_clear_display(el);
-		re_refresh(el);
-		terminal__flush(el);
-		ret = 0;
+		ret = el_wset(el, op);
 		break;
 
 	default:

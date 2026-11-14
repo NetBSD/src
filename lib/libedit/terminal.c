@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.47 2025/12/16 02:40:48 kre Exp $	*/
+/*	$NetBSD: terminal.c,v 1.48 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.47 2025/12/16 02:40:48 kre Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.48 2026/11/14 17:50:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: terminal.c,v 1.47 2025/12/16 02:40:48 kre Exp $");
  */
 #include <sys/types.h>
 #include <sys/ioctl.h>
+#include <errno.h>
 #include <limits.h>
 #include <signal.h>
 #include <stdio.h>
@@ -300,6 +301,8 @@ terminal_init(EditLine *el)
 	if (el->el_terminal.t_val == NULL)
 		goto out;
 	(void) terminal_set(el, NULL);
+	if (el->el_refresh.r_error)
+		goto out;
 	terminal_init_arrow(el);
 	return 0;
 out:
@@ -401,39 +404,56 @@ terminal_alloc(EditLine *el, const struct termcapstr *t, const char *cap)
 static int
 terminal_rebuffer_display(EditLine *el)
 {
-	coord_t *c = &el->el_terminal.t_size;
-
-	terminal_free_display(el);
-
-	c->h = Val(T_co);
-	c->v = Val(T_li);
-
-	if (terminal_alloc_display(el) == -1)
-		return -1;
-	return 0;
+	return terminal_alloc_display(el);
 }
 
+/* terminal_alloc_buffer():
+ *	Allocate a zeroed row-pointer array, leaving rows unallocated.
+ */
 static wint_t **
-terminal_alloc_buffer(EditLine *el)
+terminal_alloc_buffer(int rows)
 {
-	wint_t **b;
+	return el_calloc((size_t)(rows + 1), sizeof(wint_t *));
+}
+
+/* terminal_alloc_rows():
+ *	Allocate row buffers up to and including the specified row,
+ *	if not already allocated. Return -1 on allocation failure.
+ */
+libedit_private int
+terminal_alloc_rows(EditLine *el, int row)
+{
 	coord_t *c = &el->el_terminal.t_size;
+	wint_t *real, *virt;
 	int i;
 
-	b =  el_calloc((size_t)(c->v + 1), sizeof(*b));
-	if (b == NULL)
-		return NULL;
-	for (i = 0; i < c->v; i++) {
-		b[i] = el_calloc((size_t)(c->h + 1), sizeof(**b));
-		if (b[i] == NULL) {
-			while (--i >= 0)
-				el_free(b[i]);
-			el_free(b);
-			return NULL;
-		}
+	if (el->el_refresh.r_error)
+		return -1;
+
+	if (row < 0 || row >= c->v) {
+		(void) fprintf(el->el_errfile,
+		    "libedit: invalid display row %d\n", row);
+		(void) fflush(el->el_errfile);
+		abort();
 	}
-	b[c->v] = NULL;
-	return b;
+	while (el->el_terminal.t_allocated_rows <= row) {
+		i = el->el_terminal.t_allocated_rows;
+		real = el_calloc((size_t)(c->h + 1), sizeof(*real));
+		if (real == NULL)
+			goto fail;
+		virt = el_calloc((size_t)(c->h + 1), sizeof(*virt));
+		if (virt == NULL) {
+			el_free(real);
+			goto fail;
+		}
+		el->el_display[i] = real;
+		el->el_vdisplay[i] = virt;
+		el->el_terminal.t_allocated_rows++;
+	}
+	return 0;
+fail:
+	el->el_refresh.r_error = errno = ENOMEM;
+	return -1;
 }
 
 static void
@@ -459,15 +479,25 @@ terminal_free_buffer(wint_t ***bp)
 static int
 terminal_alloc_display(EditLine *el)
 {
-	el->el_display = terminal_alloc_buffer(el);
-	if (el->el_display == NULL)
-		goto done;
-	el->el_vdisplay = terminal_alloc_buffer(el);
-	if (el->el_vdisplay == NULL)
-		goto done;
-	return 0;
-done:
+	wint_t **display, **vdisplay;
+
+	display = terminal_alloc_buffer(Val(T_li));
+	if (display == NULL)
+		goto fail;
+	vdisplay = terminal_alloc_buffer(Val(T_li));
+	if (vdisplay == NULL) {
+		el_free(display);
+		goto fail;
+	}
+	/* Keep the old display and dimensions until both arrays are ready. */
 	terminal_free_display(el);
+	el->el_terminal.t_size.h = Val(T_co);
+	el->el_terminal.t_size.v = Val(T_li);
+	el->el_display = display;
+	el->el_vdisplay = vdisplay;
+	return 0;
+fail:
+	el->el_refresh.r_error = errno = ENOMEM;
 	return -1;
 }
 
@@ -480,6 +510,7 @@ terminal_free_display(EditLine *el)
 {
 	terminal_free_buffer(&el->el_display);
 	terminal_free_buffer(&el->el_vdisplay);
+	el->el_terminal.t_allocated_rows = 0;
 }
 
 
@@ -559,6 +590,9 @@ mc_again:
 				terminal_tputs(el, tgoto(Str(T_RI), del, del),
 				    del);
 			else {
+				/* A resize may leave this row unallocated. */
+				if (terminal_alloc_rows(el, el->el_cursor.v) == -1)
+					return;
 					/* if I can do tabs, use them */
 				if (EL_CAN_TAB) {
 					if ((el->el_cursor.h & 0370) !=
@@ -652,7 +686,8 @@ terminal_overwrite(EditLine *el, const wchar_t *cp, size_t n)
 				/* force the wrap to avoid the "magic"
 				 * situation */
 				wchar_t c;
-				if ((c = el->el_display[el->el_cursor.v]
+				if (el->el_display[el->el_cursor.v] != NULL &&
+				    (c = el->el_display[el->el_cursor.v]
 				    [el->el_cursor.h]) != '\0') {
 					terminal_overwrite(el, &c, (size_t)1);
 					while (el->el_display[el->el_cursor.v]
@@ -836,7 +871,7 @@ terminal_get(EditLine *el, const char **term)
 libedit_private int
 terminal_set(EditLine *el, const char *term)
 {
-	int i;
+	int i, rv;
 	char buf[TC_BUFSIZE];
 	char *area;
 	const struct termcapstr *t;
@@ -902,16 +937,14 @@ terminal_set(EditLine *el, const char *term)
 	if (Val(T_li) < 1)
 		Val(T_li) = 24;
 
-	el->el_terminal.t_size.v = Val(T_co);
-	el->el_terminal.t_size.h = Val(T_li);
-
 	terminal_setflags(el);
 
 				/* get the correct window size */
 	(void) terminal_get_size(el, &lins, &cols);
-	if (terminal_change_size(el, lins, cols) == -1)
-		return -1;
+	rv = terminal_change_size(el, lins, cols);
 	(void) sigprocmask(SIG_SETMASK, &oset, NULL);
+	if (rv == -1)
+		return -1;
 	terminal_bind_arrow(el);
 	el->el_terminal.t_name = term;
 	return i <= 0 ? -1 : 0;
@@ -969,8 +1002,11 @@ terminal_change_size(EditLine *el, int lins, int cols)
 	Val(T_li) = (lins < 1) ? 24 : lins;
 
 	/* re-make display buffers */
-	if (terminal_rebuffer_display(el) == -1)
+	if (terminal_rebuffer_display(el) == -1) {
+		Val(T_co) = el->el_terminal.t_size.h;
+		Val(T_li) = el->el_terminal.t_size.v;
 		return -1;
+	}
 	re_clear_display(el);
 	el->el_cursor = cur;
 	return 0;
@@ -1376,15 +1412,8 @@ terminal_settc(EditLine *el, int argc __attribute__((__unused__)),
 		return -1;
 	}
 	el->el_terminal.t_val[tv - tval] = (int) i;
-	i = 0;
-	if (tv == &tval[T_co]) {
-		el->el_terminal.t_size.v = Val(T_co);
-		i++;
-	} else if (tv == &tval[T_li]) {
-		el->el_terminal.t_size.h = Val(T_li);
-		i++;
-	}
-	if (i && terminal_change_size(el, Val(T_li), Val(T_co)) == -1)
+	if ((tv == &tval[T_co] || tv == &tval[T_li]) &&
+	    terminal_change_size(el, Val(T_li), Val(T_co)) == -1)
 		return -1;
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: read.c,v 1.109 2025/01/03 00:40:08 rillig Exp $	*/
+/*	$NetBSD: read.c,v 1.110 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)read.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: read.c,v 1.109 2025/01/03 00:40:08 rillig Exp $");
+__RCSID("$NetBSD: read.c,v 1.110 2026/11/14 17:50:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -288,6 +288,16 @@ read_char(EditLine *el, wchar_t *cp)
 	el->el_signal->sig_no = 0;
 	while ((num_read = read(el->el_infd, cbuf + cbp, (size_t)1)) == -1) {
 		int e = errno;
+
+		/*
+		 * An interrupting signal handler may have failed to allocate
+		 * display buffers during resize or redraw. Stop before retrying.
+		 */
+		if (el->el_refresh.r_error) {
+			errno = el->el_refresh.r_error;
+			*cp = L'\0';
+			return -1;
+		}
 		switch (el->el_signal->sig_no) {
 		case SIGCONT:
 			el_wset(el, EL_REFRESH);
@@ -382,6 +392,14 @@ el_wgetc(EditLine *el, wchar_t *cp)
 	struct macros *ma = &el->el_read->macros;
 	int num_read;
 
+	/*
+	 * Stop reading after a display error, including in nested prompts
+	 * and searches, so el_wgets() can report it to the caller.
+	 */
+	if (el->el_refresh.r_error) {
+		errno = el->el_refresh.r_error;
+		return -1;
+	}
 	terminal__flush(el);
 	for (;;) {
 		if (ma->level < 0)
@@ -421,6 +439,7 @@ el_wgetc(EditLine *el, wchar_t *cp)
 libedit_private void
 read_prepare(EditLine *el)
 {
+	el->el_refresh.r_error = 0;
 	if (el->el_flags & HANDLE_SIGNALS)
 		sig_set(el);
 	if (el->el_flags & NO_TTY)
@@ -506,8 +525,11 @@ el_wgets(EditLine *el, int *nread)
 	}
 #endif /* FIONREAD */
 
-	if ((el->el_flags & UNBUFFERED) == 0)
+	/* Retry a previous failed read_prepare() in unbuffered mode. */
+	if ((el->el_flags & UNBUFFERED) == 0 || el->el_refresh.r_error)
 		read_prepare(el);
+	if (el->el_refresh.r_error)
+		goto display_error;
 
 	if (el->el_flags & EDIT_DISABLED) {
 		if ((el->el_flags & UNBUFFERED) == 0)
@@ -603,6 +625,8 @@ el_wgets(EditLine *el, int *nread)
 			break;
 	}
 
+	if (el->el_refresh.r_error)
+		goto display_error;
 	terminal__flush(el);		/* flush any buffered output */
 	/* make sure the tty is set up correctly */
 	if ((el->el_flags & UNBUFFERED) == 0) {
@@ -620,4 +644,11 @@ el_wgets(EditLine *el, int *nread)
 		return NULL;
 	} else
 		return el->el_line.buffer;
+
+display_error:
+	if ((el->el_flags & UNBUFFERED) == 0)
+		read_finish(el);
+	*nread = -1;
+	errno = el->el_refresh.r_error;
+	return NULL;
 }

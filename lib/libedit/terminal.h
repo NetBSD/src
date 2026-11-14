@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.h,v 1.9 2016/05/09 21:46:56 christos Exp $	*/
+/*	$NetBSD: terminal.h,v 1.10 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -50,6 +50,7 @@ typedef struct {		/* Symbolic function key bindings	*/
 typedef struct {
 	const char *t_name;		/* the terminal name	*/
 	coord_t	  t_size;		/* # lines and cols	*/
+	int	  t_allocated_rows;	/* Number of allocated rows */
 	int	  t_flags;
 #define	TERM_CAN_INSERT		0x001	/* Has insert cap	*/
 #define	TERM_CAN_DELETE		0x002	/* Has delete cap	*/
@@ -90,6 +91,7 @@ libedit_private void	terminal_clear_screen(EditLine *);
 libedit_private void	terminal_beep(EditLine *);
 libedit_private int	terminal_change_size(EditLine *, int, int);
 libedit_private int	terminal_get_size(EditLine *, int *, int *);
+libedit_private int	terminal_alloc_rows(EditLine *, int);
 libedit_private int	terminal_init(EditLine *);
 libedit_private void	terminal_bind_arrow(EditLine *);
 libedit_private void	terminal_print_arrow(EditLine *, const wchar_t *);

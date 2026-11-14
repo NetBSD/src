@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.h,v 1.11 2017/06/27 23:23:48 christos Exp $	*/
+/*	$NetBSD: refresh.h,v 1.12 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -44,6 +44,7 @@ typedef struct {
 	coord_t	r_cursor;	/* Refresh cursor position	*/
 	int	r_oldcv;	/* Vertical locations		*/
 	int	r_newcv;
+	int	r_error;	/* Display error propagated to the caller */
 } el_refresh_t;
 
 libedit_private void	re_putc(EditLine *, wint_t, int);

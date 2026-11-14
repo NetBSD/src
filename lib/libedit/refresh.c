@@ -1,4 +1,4 @@
-/*	$NetBSD: refresh.c,v 1.61 2026/01/18 17:18:37 christos Exp $	*/
+/*	$NetBSD: refresh.c,v 1.62 2026/11/14 17:50:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)refresh.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: refresh.c,v 1.61 2026/01/18 17:18:37 christos Exp $");
+__RCSID("$NetBSD: refresh.c,v 1.62 2026/11/14 17:50:15 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -95,6 +95,9 @@ re_printstr(EditLine *el, const char *str, wchar_t *f, wchar_t *t)
 static void
 re_nextline(EditLine *el)
 {
+	if (el->el_refresh.r_error)
+		return;
+
 	el->el_refresh.r_cursor.h = 0;	/* reset it. */
 
 	/*
@@ -131,6 +134,8 @@ re_addc(EditLine *el, wint_t c)
 	case CHTYPE_TAB:        /* expand the tab */
 		for (;;) {
 			re_putc(el, ' ', 1);
+			if (el->el_refresh.r_error)
+				return;
 			if ((el->el_refresh.r_cursor.h & 07) == 0)
 				break;			/* go until tab stop */
 		}
@@ -170,6 +175,8 @@ re_putliteral(EditLine *el, const wchar_t *begin, const wchar_t *end)
 	c = literal_add(el, begin, end, &w);
 	if (c == 0 || w < 0)
 		return;
+	if (terminal_alloc_rows(el, cur->v) == -1)
+		return;
 	el->el_vdisplay[cur->v][cur->h] = c;
 
 	i = w;
@@ -200,9 +207,14 @@ re_putc(EditLine *el, wint_t c, int shift)
 	if (w == -1)
 		w = 0;
 
-	while (shift && (cur->h + w > sizeh))
-	    re_putc(el, ' ', 1);
+	while (shift && (cur->h + w > sizeh)) {
+		re_putc(el, ' ', 1);
+		if (el->el_refresh.r_error)
+			return;
+	}
 
+	if (terminal_alloc_rows(el, cur->v) == -1)
+		return;
 	el->el_vdisplay[cur->v][cur->h] = c;
 	/* assumes !shift is only used for single-column chars */
 	i = w;
@@ -322,6 +334,8 @@ re_refresh(EditLine *el)
 	}
 
 	re_putc(el, '\0', 0);	/* make line ended with NUL, no cursor shift */
+	if (el->el_refresh.r_error)
+		return;
 
 	el->el_refresh.r_newcv = el->el_refresh.r_cursor.v;
 
@@ -1098,9 +1112,14 @@ re_fastputc(EditLine *el, wint_t c)
 	int w;
 
 	w = wcwidth(c);
-	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h)
-	    re_fastputc(el, ' ');
+	while (w > 1 && el->el_cursor.h + w > el->el_terminal.t_size.h) {
+		re_fastputc(el, ' ');
+		if (el->el_refresh.r_error)
+			return;
+	}
 
+	if (terminal_alloc_rows(el, el->el_cursor.v) == -1)
+		return;
 	terminal__putc(el, c);
 	el->el_display[el->el_cursor.v][el->el_cursor.h++] = c;
 	while (--w > 0)
@@ -1126,6 +1145,9 @@ re_fastputc(EditLine *el, wint_t c)
 
 			el->el_display[i - 1] = lastline;
 		} else {
+			/* Allocate before advancing to the next row. */
+			if (terminal_alloc_rows(el, el->el_cursor.v + 1) == -1)
+				return;
 			el->el_cursor.v++;
 			lastline = el->el_display[++el->el_refresh.r_oldcv];
 		}
@@ -1202,7 +1224,7 @@ re_clear_display(EditLine *el)
 
 	el->el_cursor.v = 0;
 	el->el_cursor.h = 0;
-	for (i = 0; i < el->el_terminal.t_size.v; i++)
+	for (i = 0; i < el->el_terminal.t_allocated_rows; i++)
 		el->el_display[i][0] = '\0';
 	el->el_refresh.r_oldcv = 0;
 }
