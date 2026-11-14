@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sigreturn.S,v 1.2 2013/07/16 23:00:15 matt Exp $	*/
+/*	$NetBSD: compat_sigreturn.S,v 1.3 2026/11/14 23:22:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)sigreturn.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: compat_sigreturn.S,v 1.2 2013/07/16 23:00:15 matt Exp $")
+	RCSID("$NetBSD: compat_sigreturn.S,v 1.3 2026/11/14 23:22:14 thorpej Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -50,8 +50,8 @@
 #undef _PROF_PROLOG
 #define _PROF_PROLOG \
 	.data; 1: .long 0; \
-	.text; INTERRUPT_SAVEREG; LEA_LCL(1b,%a0); jbsr MCOUNT_ENTRY; \
-	INTERRUPT_RESTOREREG
+	.text; _INTERRUPT_SAVEREG; LEA_LCL(1b,%a0); jbsr MCOUNT_ENTRY; \
+	_INTERRUPT_RESTOREREG
 #endif /* GPROF */
 
 WARN_REFERENCES(sigreturn, \
