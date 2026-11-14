@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.30 2026/09/17 18:01:16 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.31 2026/11/14 16:18:20 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -544,14 +544,16 @@ struct dns_zone {
 #define ISC_ZONE_SET(z, f, o) \
 	({ \
 		isc_mutex_lock(&(z)->atomic_lock); \
-		uint64_t x = ((z)->f | (o)); \
+		uint64_t x = (z)->f; \
+		(z)->f |= (o); \
 		isc_mutex_unlock(&(z)->atomic_lock); \
 		x; \
 	})
 #define ISC_ZONE_CLR(z, f, o) \
 	({ \
 		isc_mutex_lock(&(z)->atomic_lock); \
-		uint64_t x = ((z)->f & ~(o)); \
+		uint64_t x = (z)->f; \
+		(z)->f &= ~(o); \
 		isc_mutex_unlock(&(z)->atomic_lock); \
 		x; \
 	})
