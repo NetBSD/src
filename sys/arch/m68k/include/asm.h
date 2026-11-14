@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.45 2026/11/14 19:02:12 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.46 2026/11/14 23:28:08 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -177,6 +177,20 @@
 #define	ASBSS(name, size)				\
 	.comm	_ASM_LABEL(name),size
 
+#ifdef __mcoldfire__
+#define _INTERRUPT_SAVEREG	lea -16(%sp),%sp; moveml #0xC0C0,(%sp)
+#define _INTERRUPT_RESTOREREG	moveml (%sp),#0x0303; lea 16(%sp),%sp
+#else
+#define _INTERRUPT_SAVEREG	moveml	#0xC0C0,-(%sp)
+#define _INTERRUPT_RESTOREREG	moveml	(%sp)+,#0x0303
+#endif
+
+#ifndef _KERNEL
+/* Compatiblity for user-space use of these macros. */
+#define	INTERRUPT_SAVEREG	_INTERRUPT_SAVEREG
+#define	INTERRUPT_RESTOREREG	_INTERRUPT_RESTOREREG
+#endif /* ! _KERNEL */
+
 #ifdef _KERNEL
 
 /*
@@ -241,14 +255,6 @@
  * go processs the AST or just RTE.
  */
 #define	RTE_AST			jne _ASM_LABEL(rte_ast); rte
-
-#ifdef __mcoldfire__
-#define _INTERRUPT_SAVEREG	lea -16(%sp),%sp; moveml #0xC0C0,(%sp)
-#define _INTERRUPT_RESTOREREG	moveml (%sp),#0x0303; lea 16(%sp),%sp
-#else
-#define _INTERRUPT_SAVEREG	moveml	#0xC0C0,-(%sp)
-#define _INTERRUPT_RESTOREREG	moveml	(%sp)+,#0x0303
-#endif
 
 /* Increment/decrement the interrupt depth. */
 #define	_INTR_DEPTH_INCR					\
