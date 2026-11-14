@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.166 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.167 2026/11/14 22:40:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -55,22 +55,14 @@
 
 #include <machine/asm.h>
 
+#include <m68k/m68k/locore_data.s>
+
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
  * of the kernel text segment (not necessarily the same as kernbase).
  */
 	.text
 GLOBAL(kernel_text)
-
-/*
- * Temporary stack for a variety of purposes.
- * Try and make this the first thing is the data segment so it
- * is page aligned.  Note that if we overflow here, we run into
- * our text segment.
- */
-	.data
-	.space	PAGE_SIZE
-ASGLOBAL(tmpstk)
 
 #include <x68k/x68k/vectors.s>
 

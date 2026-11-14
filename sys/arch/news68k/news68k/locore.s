@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.122 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.123 2026/11/14 22:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,15 +57,7 @@
 
 #include "ksyms.h"
 
-/*
- * Temporary stack for a variety of purposes.
- * Try and make this the first thing is the data segment so it
- * is page aligned.  Note that if we overflow here, we run into
- * our text segment.
- */
-	.data
-	.space	PAGE_SIZE
-ASGLOBAL(tmpstk)
+#include <m68k/m68k/locore_data.s>
 
 ASLOCAL(monitor)
 	.long	0

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.53 2026/11/12 05:39:37 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.54 2026/11/14 22:40:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,15 +57,7 @@
  * with the MMU disabled.
  */
 
-/*
- * Temporary stack for a variety of purposes.
- * Try and make this the first thing is the data segment so it
- * is page aligned.  Note that if we overflow here, we run into
- * our text segment.
- */
-	.data
-	.space	PAGE_SIZE
-ASGLOBAL(tmpstk)
+#include <m68k/m68k/locore_data.s>
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.

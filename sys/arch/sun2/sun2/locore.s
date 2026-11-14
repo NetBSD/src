@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.56 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.57 2026/11/14 22:40:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -87,6 +87,8 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include <m68k/m68k/locore_data.s>
+
 | Remember this is a fun project!
 
 | This is for kvm_mkdb, and should be the address of the beginning
@@ -94,15 +96,11 @@
 	.text
 GLOBAL(kernel_text)
 
-| This is the entry point, as well as the end of the temporary stack
-| used during process switch (two 2K pages ending at start)
-ASGLOBAL(tmpstk)
-ASGLOBAL(start)
-
 | As opposed to the sun3, on the sun2 the kernel is linked low.  The
 | boot loader loads us exactly where we are linked, so we don't have
 | to worry about writing position independent code or moving the 
 | kernel around.
+ASGLOBAL(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	moveq	#FC_CONTROL,%d0		| make movs access "control"
 	movc	%d0,%sfc		| space where the sun2 designers

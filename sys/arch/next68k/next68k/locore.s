@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.117 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.118 2026/11/14 22:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -104,6 +104,8 @@
 
 #include "ksyms.h"
 
+#include <m68k/m68k/locore_data.s>
+
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
  * of the kernel text segment (not necessarily the same as kernbase).
@@ -115,15 +117,6 @@ GLOBAL(kernel_text)
   * Leave page zero empty so it can be unmapped
   */
 	.space	PAGE_SIZE
-
-/*
- * Temporary stack for a variety of purposes.
- */
-	.data
-GLOBAL(endstack)
-	.space	PAGE_SIZE
-GLOBAL(bgnstack)
-ASGLOBAL(tmpstk)
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.

@@ -1,4 +1,4 @@
-/* $NetBSD: locore.s,v 1.118 2026/11/14 19:02:12 thorpej Exp $ */
+/* $NetBSD: locore.s,v 1.119 2026/11/14 22:40:15 thorpej Exp $ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -54,6 +54,8 @@
 
 #include "ksyms.h"
 
+#include <m68k/m68k/locore_data.s>
+
 #define	PRINT(msg) \
 	pea	9f		; \
 	jbsr	_C_LABEL(printf); \
@@ -62,16 +64,6 @@
      9:	.asciz	msg		; \
 	.text
 #undef	PRINT
-
-/*
- * Temporary stack for a variety of purposes.
- * Try and make this the first thing is the data segment so it
- * is page aligned.  Note that if we overflow here, we run into
- * our text segment.
- */
-	.data
-	.space	PAGE_SIZE
-ASGLOBAL(tmpstk)
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.130 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.131 2026/11/14 22:40:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -86,6 +86,8 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include <m68k/m68k/locore_data.s>
+
 | Remember this is a fun project!
 
 | This is for kvm_mkdb, and should be the address of the beginning
@@ -93,14 +95,10 @@
 	.text
 GLOBAL(kernel_text)
 
-| This is the entry point, as well as the end of the temporary stack
-| used during process switch (one 8K page ending at start)
-ASGLOBAL(tmpstk)
-ASGLOBAL(start)
-
 | First we need to set it up so we can access the sun MMU, and be otherwise
 | undisturbed.  Until otherwise noted, all code must be position independent
 | as the boot loader put us low in memory, but we are linked high.
+ASGLOBAL(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	moveq	#FC_CONTROL,%d0		| make movs access "control"
 	movc	%d0,%sfc		| space where the sun3 designers

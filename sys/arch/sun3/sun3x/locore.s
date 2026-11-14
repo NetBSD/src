@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.93 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.94 2026/11/14 22:40:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,6 +46,8 @@
 #include <machine/asm.h>
 #include <machine/trap.h>
 
+#include <m68k/m68k/locore_data.s>
+
 | Remember this is a fun project!
 
 	.data
@@ -56,11 +58,6 @@ GLOBAL(mon_crp)
 | of the kernel text segment (not necessarily the same as kernbase).
 	.text
 GLOBAL(kernel_text)
-
-| This is the entry point, as well as the end of the temporary stack
-| used during process switch (one 8K page ending at start)
-ASGLOBAL(tmpstk)
-ASGLOBAL(start)
 
 | The first step, after disabling interrupts, is to map enough of the kernel
 | into high virtual address space so that we can use position dependent code.
@@ -73,6 +70,7 @@ ASGLOBAL(start)
 | All code must be position independent until otherwise noted, as the
 | boot loader has loaded us into low memory but all the symbols in this
 | code have been linked high.
+ASGLOBAL(start)
 	movw	#PSL_HIGHIPL,%sr	| no interrupts
 	movl	#KERNBASE3X,%a5		| for vtop conversion
 	lea	_C_LABEL(mon_crp),%a0	| where to store the CRP
@@ -105,15 +103,11 @@ L_high_code:
 | for the low 1GB while _bootstrap() is doing its thing.
 
 | Do bootstrap stuff needed before main() gets called.
-| Our boot loader leaves a copy of the kernel's exec header
-| just before the start of the kernel text segment, so the
-| kernel can sanity-check the DDB symbols at [end...esym].
-| Pass the struct exec at tmpstk-32 to _bootstrap().
 | Also, make sure the initial frame pointer is zero so that
 | the backtrace algorithm used by KGDB terminates nicely.
 |
 | _bootstrap() returns lwp0 SP in %a0
-	lea	_ASM_LABEL(tmpstk)-32,%a0
+	lea	_ASM_LABEL(tmpstk),%a0
 	INIT_KSP(%a0)
 	jsr	_C_LABEL(_bootstrap)	| See locore2.c
 	INIT_KSP(%a0)			| now running on lwp0's stack

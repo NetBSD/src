@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.147 2026/11/14 19:02:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.148 2026/11/14 22:40:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -60,6 +60,8 @@
 
 #include "assym.h"
 #include <machine/asm.h>
+
+#include <m68k/m68k/locore_data.s>
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -598,9 +600,6 @@ ASLOCAL(zero)
 Ldorebootend:
 
 	.data
-	.p2align 2
-	.space	PAGE_SIZE
-ASGLOBAL(tmpstk)
 
 #ifdef M68060 /* XXX */
 L60iem:		.long	0

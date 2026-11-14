@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.193 2026/11/14 19:02:11 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.194 2026/11/14 22:40:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -56,6 +56,8 @@
 #include "assym.h"
 #include <machine/asm.h>
 #include <machine/trap.h>
+
+#include <m68k/m68k/locore_data.s>
 
 	.text
 GLOBAL(kernel_text)
@@ -851,9 +853,6 @@ ASLOCAL(zero)
 Ldorebootend:
 
 	.data
-	.space	PAGE_SIZE
-	.align	4
-ASGLOBAL(tmpstk)
 
 GLOBAL(mmutype)
 	.long	MMU_68851

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.221 2026/11/14 19:02:12 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.222 2026/11/14 22:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1980, 1990, 1993
@@ -99,6 +99,8 @@
 #include "audio.h"
 #include "ksyms.h"
 
+#include <m68k/m68k/locore_data.s>
+
 #define MMUADDR(ar)	movl	_C_LABEL(MMUbase),ar
 #define CLKADDR(ar)	movl	_C_LABEL(CLKbase),ar
 
@@ -117,16 +119,6 @@ GLOBAL(kernel_text)
  * a VA for it and map it later.
  */
 	.fill	PAGE_SIZE/4,4,0
-
-/*
- * Temporary stack for a variety of purposes.
- * Try and make this the first thing is the data segment so it
- * is page aligned.  Note that if we overflow here, we run into
- * our text segment.
- */
-	.data
-	.space	PAGE_SIZE
-ASGLOBAL(tmpstk)
 
 /*
  * Macro to relocate a symbol, used before MMU is enabled.

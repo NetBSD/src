@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.27 2026/11/14 14:16:31 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.28 2026/11/14 22:40:15 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.27 2026/11/14 14:16:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.28 2026/11/14 22:40:15 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -106,11 +106,6 @@ __KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.27 2026/11/14 14:16:31 thorpej Ex
 /* the following is used externally (sysctl_hw) */
 char	machine[] = MACHINE;		/* from <machine/param.h> */
 char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
-
-/* Our exported primary CPU info. */
-struct cpu_info cpu_info_store __aligned(16) = {
-	.ci_curlwp	= &lwp0,
-};
 
 /* cpu speed in kHz */
 int	cpuspeed_khz;
@@ -765,11 +760,9 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
 #endif /* EXEC_AOUT */
 
 /*
- * ABI-stable implementation of curcpu(), for the benefit of
- * loadable modules.
+ * On multi-processor systems, the cpu_info shares a page with the
+ * page tables that map it.  Those page tables occupy the last 1280
+ * bytes (512+512+256) of that page.  For good measure, assert that
+ * cpu_info fits in 2048 bytes.
  */
-struct cpu_info *
-curcpu_impl(void)
-{
-	return _curcpu_impl();
-}
+__CTASSERT(sizeof(struct cpu_info) <= 2048);

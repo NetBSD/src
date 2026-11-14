@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.212 2026/11/14 19:02:13 thorpej Exp $	*/
+/*	$NetBSD: locore.s,v 1.213 2026/11/14 22:40:15 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -87,6 +87,8 @@
 
 #include <machine/asm.h>
 #include <machine/trap.h>
+
+#include <m68k/m68k/locore_data.s>
 
 /*
  * This is for kvm_mkdb, and should be the address of the beginning
@@ -959,12 +961,6 @@ get_pte_fail10:
  * Misc. global variables.
  */
 	.data
-GLOBAL(sanity_check)
-	.long	0x18621862	| this is our stack overflow checker.
-
-	.space	4 * PAGE_SIZE
-	.align	4
-ASGLOBAL(tmpstk)
 
 GLOBAL(machineid)
 	.long	0		| default to 320
