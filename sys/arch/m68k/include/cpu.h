@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.34 2026/11/14 19:02:12 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.35 2026/11/14 22:41:43 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -176,14 +176,7 @@ struct	proc;
 void	cpu_proc_fork(struct proc *, struct proc *);
 struct cpu_info *curcpu_impl(void);
 
-#if defined(_MODULE)
-#define	curcpu()	curcpu_impl()
-#else
-#define	_curcpu_impl_up() (&cpu_info_store)
-#define	_curcpu_impl()	_curcpu_impl_up()
-#define	curcpu()	_curcpu_impl()
-#endif
-
+#define	curcpu()	(&cpu_info_store)
 #define	cpu_number()	curcpu()->ci_cpuid
 #define	curlwp		curcpu()->ci_curlwp
 
