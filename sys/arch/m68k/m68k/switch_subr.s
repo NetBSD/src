@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.51 2026/11/13 23:48:34 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.52 2026/11/14 01:53:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -106,33 +106,36 @@ GLOBAL(cpu_switchto_savefpu_patch)
 GLOBAL(cpu_switchto_savefpu_done)
 #endif	/* M68K_FPCOPROC */
 
-	movl	8(%sp),%a0		| get newlwp
-	movl	%a0,_C_LABEL(curlwp)	| curlwp = new lwp
+	/*
+	 *	%a2 = new lwp
+	 *	%a3 = new lwp's trap frame
+	 */
+
+	movl	8(%sp),%a2		| get newlwp
+	movl	%a2,_C_LABEL(curlwp)	| curlwp = new lwp
 
 	/*
 	 * Check for restartable atomic sequences (RAS)
 	 */
-	movl	L_PROC(%a0),%a2
-	tstl	P_RASLIST(%a2)		| p->p_raslist == NULL?
-	jeq	2f			| yes, skip it.
-	movl	L_MD_REGS(%a0),%a1
-	movl	TF_PC(%a1),-(%sp)	| push return PC
-	movl	%a2,-(%sp)		| push proc
-	jbsr	_C_LABEL(ras_lookup)	| a0 = ras_lookup(p, pc)
+	movl	L_PROC(%a2),%a0
+	tstl	P_RASLIST(%a0)		| p->p_raslist == NULL?
+	beq	1f			| yes, skip it.
+	movl	L_MD_REGS(%a2),%a3
+	movl	TF_PC(%a3),-(%sp)	| push return PC
+	movl	%a0,-(%sp)		| push proc
+	jbsr	_C_LABEL(ras_lookup)	| a0 = d0 = ras_lookup(p, pc)
 	addql	#8,%sp
-	movql	#-1,%d0
-	cmpl	%a0,%d0			| a0 == -1?
-	jeq	1f			| yes, skip it.
-	movl	_C_LABEL(curlwp),%a1
-	movl	L_MD_REGS(%a1),%a1
-	movl	%a0,TF_PC(%a1)		| fixup return PC
+	cmpl	#-1,%d0
+	beq	1f			| yes, skip it.
+	movl	%d0,TF_PC(%a3)		| fixup return PC
 1:
-	movl	_C_LABEL(curlwp),%a0	| recover new lwp
-2:
-	movl	L_PCB(%a0),%a1		| get new pcb
-	movl	%a0,%d0			| free up %a0
+	movl	L_PCB(%a2),%a1		| get new pcb
 	movl	4(%sp),%d1		| get oldlwp for return value
 	lea	_ASM_LABEL(tmpstk),%sp	| switch to tmp stack in case of NMI
+
+	/*
+	 *	%a1 = new pcb
+	 */
 
 	moveml	PCB_REGS(%a1),%d2-%d7/%a2-%a7 | restore registers
 	movl	PCB_USP(%a1),%a0
