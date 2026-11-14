@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.43 2026/11/14 02:01:53 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.44 2026/11/14 14:16:31 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -228,10 +228,10 @@
 
 /* Get current process / current pcb */
 #define	GET_CURLWP(ar)						\
-	movl	_C_LABEL(curlwp),ar
+	movl	_C_LABEL(cpu_info_store)+CI_CURLWP,ar
 
 #define	SET_CURLWP(ar, sr)					\
-	movl	ar,_C_LABEL(curlwp)
+	movl	ar,_C_LABEL(cpu_info_store)+CI_CURLWP
 
 #define	GET_CURPCB(ar)						\
 	GET_CURLWP(ar); movl L_PCB(ar),ar

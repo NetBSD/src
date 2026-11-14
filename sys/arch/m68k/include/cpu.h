@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.32 2026/11/13 21:14:17 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.33 2026/11/14 14:16:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -140,12 +140,32 @@ extern int cacr_dc_clr;
 
 struct cpu_info {
 	struct cpu_data ci_data;	/* [MI] general per-cpu data */
-	cpuid_t	        ci_cpuid;	/* [MI] our CPU ID */
 	volatile int    ci_mtx_count;	/* [MI] neg count of spin mutexes */
 	volatile int    ci_mtx_oldspl;	/* [MI] for spin mutex splx */
-	volatile int    ci_want_resched;/* [MI] preempt current process */
-	volatile int    ci_idepth;	/*      interrupt depth */
 	struct lwp *    ci_onproc;	/* [MI] current user LWP / kthread */
+	struct lwp *	ci_curlwp;	/*      LWP that owns CPU *now* */
+	volatile int    ci_idepth;	/*      interrupt depth */
+	int		ci__rsvd0;
+
+	/*
+	 * The following must be in their own cache line, as they are
+	 * stored to regularly by remote CPUs.
+	 */
+	volatile int    ci_want_resched	/* [MI] preempt current process */
+			    __aligned(16);
+	int		ci__rsvd1;
+	int		ci__spare0;
+	int		ci__spare1;
+
+	/*
+	 * These are largely static, and will be frequently fetched
+	 * by other CPUs.  For that reason, they get their own cache
+	 * line, too.
+	 */
+	cpuid_t	        ci_cpuid	/* [MI] our CPU ID */
+			    __aligned(16);
+	struct cpu_info *ci_next;
+	int		ci_flags;
 };
 #endif /* _KERNEL || _KMEMUSER */
 
@@ -154,9 +174,18 @@ extern struct cpu_info cpu_info_store;
 
 struct	proc;
 void	cpu_proc_fork(struct proc *, struct proc *);
+struct cpu_info *curcpu_impl(void);
 
-#define	curcpu()	(&cpu_info_store)
-#define cpu_number()	0
+#if defined(_MODULE)
+#define	curcpu()	curcpu_impl()
+#else
+#define	_curcpu_impl_up() (&cpu_info_store)
+#define	_curcpu_impl()	_curcpu_impl_up()
+#define	curcpu()	_curcpu_impl()
+#endif
+
+#define	cpu_number()	curcpu()->ci_cpuid
+#define	curlwp		curcpu()->ci_curlwp
 
 static inline bool
 cpu_intr_p(void)
