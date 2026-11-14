@@ -1,4 +1,4 @@
-/*	$NetBSD: obio.c,v 1.27 2021/08/07 16:18:57 thorpej Exp $	*/
+/*	$NetBSD: obio.c,v 1.28 2026/11/14 15:01:51 nat Exp $	*/
 
 /*
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.27 2021/08/07 16:18:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: obio.c,v 1.28 2026/11/14 15:01:51 nat Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -46,9 +46,19 @@ static int	obio_match(device_t, cfdata_t, void *);
 static void	obio_attach(device_t, device_t, void *);
 static int	obio_print(void *, const char *);
 static int	obio_search(device_t, cfdata_t, const int *, void *);
+static int	obio_rescan(device_t, const char *, const int *);
 
-CFATTACH_DECL_NEW(obio, 0,
-    obio_match, obio_attach, NULL, NULL);
+/*
+ * The bus tags are needed again by obio_rescan(), which has no aux
+ * argument to take them from, so keep them.
+ */
+struct obio_softc {
+	bus_space_tag_t	sc_bst;
+	bus_dma_tag_t	sc_dmat;
+};
+
+CFATTACH_DECL3_NEW(obio, sizeof(struct obio_softc),
+    obio_match, obio_attach, NULL, NULL, obio_rescan, NULL, 0);
 
 static int
 obio_match(device_t parent, cfdata_t cf, void *aux)
@@ -66,11 +76,35 @@ obio_match(device_t parent, cfdata_t cf, void *aux)
 static void
 obio_attach(device_t parent, device_t self, void *aux)
 {
+	struct obio_softc *sc = device_private(self);
+	struct mainbus_attach_args *mba = aux;
+
+	sc->sc_bst = mba->mba_bst;
+	sc->sc_dmat = mba->mba_dmat;
+
 	printf("\n");
 
 	/* Search for and attach children. */
 	config_search(self, aux,
 	    CFARGS(.search = obio_search));
+}
+
+static int
+obio_rescan(device_t self, const char *ifattr, const int *locators)
+{
+	struct obio_softc *sc = device_private(self);
+	struct mainbus_attach_args mba;
+
+	if (!ifattr_match(ifattr, "obio"))
+		return 0;
+
+	mba.mba_bst = sc->sc_bst;
+	mba.mba_dmat = sc->sc_dmat;
+
+	config_search(self, &mba,
+	    CFARGS(.search = obio_search));
+
+	return 0;
 }
 
 int
