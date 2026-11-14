@@ -1,4 +1,4 @@
-/*	$NetBSD: switch_subr.s,v 1.54 2026/11/14 19:02:12 thorpej Exp $	*/
+/*	$NetBSD: switch_subr.s,v 1.55 2026/11/14 19:43:16 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation.
@@ -131,13 +131,8 @@ GLOBAL(cpu_switchto_savefpu_done)
 1:
 	movl	L_PCB(%a2),%a1		| get new pcb
 	movl	4(%sp),%d1		| get oldlwp for return value
-	lea	_ASM_LABEL(tmpstk),%sp	| switch to tmp stack in case of NMI
-
-	/*
-	 *	%a1 = new pcb
-	 */
-
-	moveml	PCB_REGS(%a1),%d2-%d7/%a2-%a7 | restore registers
+	movl	PCB_REG_SP(%a1),%sp	| switch to new stack first
+	moveml	PCB_REGS(%a1),%d2-%d7/%a2-%a6 | restore other registers
 	movl	PCB_USP(%a1),%a0
 	movl	%a0,%usp		      | and USP
 
