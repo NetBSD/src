@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.28 2026/08/21 14:01:16 tls Exp $	*/
+/*	$NetBSD: machdep.c,v 1.29 2026/11/15 17:56:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.28 2026/08/21 14:01:16 tls Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.29 2026/11/15 17:56:27 skrll Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -867,6 +867,8 @@ cpu_model_cpuid(int modelno)
 	case HPPA_BOARD_HP715_100L:
 	case HPPA_BOARD_HP715_120L:
 	case HPPA_BOARD_HP715_80M:
+	case HPPA_BOARD_HPD210:
+	case HPPA_BOARD_HPD200:
 		return hpcxl;
 
 	case HPPA_BOARD_HP735_99:
