@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.95 2026/11/15 17:23:57 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.96 2026/11/15 17:29:06 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.95 2026/11/15 17:23:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.96 2026/11/15 17:29:06 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3663,10 +3663,10 @@ pmap_percpu_init(struct cpu_info *ci)
 	lev3   = lev2   - TBL40_L3_SIZE;
 	lev3pa = lev2pa - TBL40_L3_SIZE;
 
-	/* Copy the base kernel_lev1map into the lev1 map. */
 	mutex_enter(&pmap_growkernel_lock);
+
+	/* Copy the base kernel_lev1map into the lev1 map. */
 	memcpy((void *)lev1, kernel_lev1map, TBL40_L1_SIZE);
-	mutex_exit(&pmap_growkernel_lock);
 
 	/* Enter the lev2 table into the lev1 map. */
 	((pt_entry_t *)lev1)[LA40_RI(CPUINFO_VA)] = pmap_ste_proto | lev2pa;
@@ -3676,7 +3676,10 @@ pmap_percpu_init(struct cpu_info *ci)
 
 	/* Enter the page into the lev3 table. */
 	((pt_entry_t *)lev3)[LA40_PGI(CPUINFO_VA)] =
-	    pmap_make_pte(pgpa, VM_PROT_READ | VM_PROT_WRITE, 0);
+	    pmap_make_pte(pgpa, VM_PROT_READ | VM_PROT_WRITE,
+			  PMAP_WRITE_THROUGH);
+
+	mutex_exit(&pmap_growkernel_lock);
 
 	/* Allocate per-cpu temp VAs. */
 	va = uvm_km_alloc(kernel_map, PAGE_SIZE * 3, 0, UVM_KMF_VAONLY);
