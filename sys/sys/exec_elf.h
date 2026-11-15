@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.170 2022/06/08 10:12:42 rin Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.170.4.1 2026/11/15 13:59:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -1027,18 +1027,41 @@ typedef struct {
 #define ELF_NOTE_GO_BUILDID_DESCSZ	40
 #define ELF_NOTE_GO_BUILDID_NAME	"Go\0\0"
 
+#define	ELF_NOTE_FDO_NAMESZ	4
+#define	ELF_NOTE_FDO_NAME	"FDO\0"
+
 /*
  * FDO-specific note type: packaging metadata
  * name: FDO\0
  * namesz: 4
  * desc:
  *	a single JSON object encoded as a zero-terminated UTF-8 string
- *	(see https://systemd.io/COREDUMP_PACKAGE_METADATA/)
  * descsz: variable
+ * refs:
+ *	https://uapi-group.org/specifications/specs/package_metadata_for_executable_files/
+ *	https://web.archive.org/web/20261018141345/https://uapi-group.org/specifications/specs/package_metadata_for_executable_files/
  */
 #define	ELF_NOTE_TYPE_FDO_PACKAGING_METADATA	0xcafe1a7e
-#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAMESZ	4
-#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAME	"FDO\0"
+#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAMESZ	ELF_NOTE_FDO_NAMESZ
+#define	ELF_NOTE_FDO_PACKAGING_METADATA_NAME	ELF_NOTE_FDO_NAME
+
+/*
+ * FDO-specific note type: dlopen dependencies
+ * name: FDO\0
+ * namesz: 4
+ * desc:
+ *	a single JSON object encoded as a zero-terminated UTF-8 string
+ * descsz: variable
+ * refs:
+ *	https://uapi-group.org/specifications/specs/elf_dlopen_metadata/
+ *	https://web.archive.org/web/20261018142151/https://uapi-group.org/specifications/specs/elf_dlopen_metadata/
+ *	https://www.freedesktop.org/software/systemd/man/261/SD_ELF_NOTE_DLOPEN_TYPE.html
+ *	https://web.archive.org/web/20261018142151/https://www.freedesktop.org/software/systemd/man/261/SD_ELF_NOTE_DLOPEN_TYPE.html
+ *	https://github.com/systemd/systemd/blob/e056e2a7075322b365c41146c1138c4597dd2b11/src/systemd/sd-dlopen.h#L71-L97
+ */
+#define	ELF_NOTE_TYPE_FDO_DLOPEN		0x407c0c0a
+#define	ELF_NOTE_FDO_DLOPEN_NAMESZ		ELF_NOTE_FDO_NAMESZ
+#define	ELF_NOTE_FDO_DLOPEN_NAME		ELF_NOTE_FDO_NAME
 
 /* NetBSD-specific note type: NetBSD ABI version.
  * name: NetBSD\0\0

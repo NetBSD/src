@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.c,v 1.104 2022/10/26 23:20:36 riastradh Exp $	*/
+/*	$NetBSD: exec_elf.c,v 1.104.2.1 2026/11/15 13:59:49 martin Exp $	*/
 
 /*-
  * Copyright (c) 1994, 2000, 2005, 2015, 2020 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.104 2022/10/26 23:20:36 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_elf.c,v 1.104.2.1 2026/11/15 13:59:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -1082,9 +1082,6 @@ netbsd_elf_note(struct exec_package *epp,
 	case ELF_NOTE_TYPE_GO_BUILDID_TAG:
 		break;
 
-	case ELF_NOTE_TYPE_FDO_PACKAGING_METADATA:
-		break;
-
 	case ELF_NOTE_TYPE_NETBSD_EMUL_TAG:
 		/* Ancient NetBSD version tag */
 		break;
@@ -1098,6 +1095,11 @@ bad:
 		    memcmp(ndata, ELF_NOTE_GNU_NAME,
 		    ELF_NOTE_GNU_NAMESZ) == 0)
 		    break;
+
+		/* Ignore FDO (freedesktop.org) tags */
+		if (np->n_namesz == ELF_NOTE_FDO_NAMESZ &&
+		    memcmp(ndata, ELF_NOTE_FDO_NAME, ELF_NOTE_FDO_NAMESZ) == 0)
+			break;
 
 		int ns = (int)np->n_namesz;
 		printf("%s: Unknown elf note type %d (%s): "
