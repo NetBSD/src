@@ -1,4 +1,4 @@
-#	$NetBSD: README.files,v 1.5.38.2 2026/08/02 13:12:40 martin Exp $
+#	$NetBSD: README.files,v 1.5.38.3 2026/11/15 12:20:34 martin Exp $
 
 What's in this directory:
 
@@ -8,6 +8,8 @@ CHANGES-11.0	Changes between the creation of the netbsd-11 branch and
 		the 11.0 release.
 
 CHANGES-11.1	Changes between the 11.1 and the 11.0 release.
+
+CHANGES-11.2	Changes between the 11.2 and the 11.1 release.
 
 CHANGES.prev	Changes in previous NetBSD releases.
 
