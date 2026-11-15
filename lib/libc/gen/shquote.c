@@ -1,4 +1,4 @@
-/* $NetBSD: shquote.c,v 1.8 2006/03/19 02:33:02 christos Exp $ */
+/* $NetBSD: shquote.c,v 1.9 2026/11/15 18:47:07 rillig Exp $ */
 
 /*
  * Copyright (c) 2001 Christopher G. Demetriou
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: shquote.c,v 1.8 2006/03/19 02:33:02 christos Exp $");
+__RCSID("$NetBSD: shquote.c,v 1.9 2026/11/15 18:47:07 rillig Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -92,7 +92,7 @@ __weak_alias(shquote,_shquote)
 #define	XLATE_INCH()						\
     do {							\
 	n = mbrtowc(&c, arg, MB_CUR_MAX, &mbsi);		\
-    } while (/*LINTED const cond*/0)
+    } while (0)
 
 #else
 
@@ -100,7 +100,7 @@ __weak_alias(shquote,_shquote)
 #define	XLATE_INCH()						\
     do {							\
 	n = ((c = *arg) != '\0') ? 1 : 0;			\
-    } while (/*LINTED const cond*/0)
+    } while (0)
 
 #endif
 
@@ -122,7 +122,7 @@ __weak_alias(shquote,_shquote)
 			bufsize -= outchlen;			\
 		}						\
 	}							\
-    } while (/*LINTED const cond*/0)
+    } while (0)
 
 size_t
 shquote(const char *arg, char *buf, size_t bufsize)
