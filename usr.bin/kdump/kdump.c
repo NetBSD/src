@@ -1,4 +1,4 @@
-/*	$NetBSD: kdump.c,v 1.152 2026/02/02 15:25:44 christos Exp $	*/
+/*	$NetBSD: kdump.c,v 1.153 2026/11/15 22:32:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: kdump.c,v 1.152 2026/02/02 15:25:44 christos Exp $");
+__RCSID("$NetBSD: kdump.c,v 1.153 2026/11/15 22:32:54 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -565,6 +565,8 @@ output_long(u_long it, int as_x)
 static const char *
 fcntlname(u_long cmd)
 {
+	if (strcmp(cur_emul->name, "netbsd") != 0)
+		return NULL;
 	switch (cmd) {
 	CASERETURN(F_DUPFD);
 	CASERETURN(F_GETFD);
@@ -589,6 +591,8 @@ fcntlname(u_long cmd)
 static const char *
 sockproto(register_t proto)
 {
+	if (strcmp(cur_emul->name, "netbsd") != 0)
+		return NULL;
 	switch (proto) {
 	CASERETURN(IPPROTO_IP);
 	CASERETURN(IPPROTO_ICMP);
@@ -637,6 +641,8 @@ sockproto(register_t proto)
 static const char *
 sockoptname(register_t optname)
 {
+	if (strcmp(cur_emul->name, "netbsd") != 0)
+		return NULL;
 	switch (optname) {
 	CASERETURN(SO_ACCEPTCONN);
 	CASERETURN(SO_ACCEPTFILTER);
@@ -670,6 +676,8 @@ sockoptname(register_t optname)
 static const char *
 tcpoptname(register_t optname)
 {
+	if (strcmp(cur_emul->name, "netbsd") != 0)
+		return NULL;
 	switch (optname) {
 	CASERETURN(TCP_NODELAY);
 	CASERETURN(TCP_MAXSEG);
@@ -687,6 +695,8 @@ tcpoptname(register_t optname)
 static const char *
 ipoptname(register_t optname)
 {
+	if (strcmp(cur_emul->name, "netbsd") != 0)
+		return NULL;
 	switch (optname) {
 	CASERETURN(IP_OPTIONS);
 	CASERETURN(IP_HDRINCL);
@@ -911,6 +921,7 @@ ktrsyscall(struct ktr_syscall *ktr)
 			if ((cp = sockproto(level)) != NULL) {
 				(void)printf(",%s", cp);
 			} else {
+				(void)putchar(',');
 				output_long((long)*ap,
 				    !(decimal || small(*ap)));
 			}
