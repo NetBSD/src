@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap_68k.c,v 1.94 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.95 2026/11/15 17:23:57 thorpej Exp $	*/
 
 /*-     
- * Copyright (c) 2025 The NetBSD Foundation, Inc.
+ * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -213,14 +213,18 @@
  * - Eventually disable instrumentation by default.
  * - ...
  * - PROFIT!
+ *
+ * Oh, yah, and there's some work going on here to support multiprocessor
+ * machines.  It's not ready yet, so don't get too excited.
  */
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
 #include "opt_m68k_arch.h"
+#include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.94 2026/11/15 15:16:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.95 2026/11/15 17:23:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,9 +255,25 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.94 2026/11/15 15:16:24 thorpej Exp $"
  * XXX if we're in a critical section).
  */
 
+#if defined(MULTIPROCESSOR)
+
 #define	PMAP_CRIT_ENTER(code)	code
 #define	PMAP_CRIT_EXIT(code)	code
 #define	PMAP_CRIT_ASSERT()	__nothing
+
+#define	PMAP_MUTEX_ENTER(m)	mutex_enter(m)
+#define	PMAP_MUTEX_EXIT(m)	mutex_exit(m)
+
+#else
+
+#define	PMAP_CRIT_ENTER(code)	code
+#define	PMAP_CRIT_EXIT(code)	code
+#define	PMAP_CRIT_ASSERT()	__nothing
+
+#define	PMAP_MUTEX_ENTER(m)	__nothing
+#define	PMAP_MUTEX_EXIT(m)	__nothing
+
+#endif /* MULTIPROCESSOR */
 
 static inline void
 pmap_busy(pmap_t pmap)
@@ -571,7 +591,7 @@ pmap_init_vac(size_t vacsize)
 
 /***************************** PHYS <-> VM PAGE ******************************/
 
-static bool pmap_initialized_p;
+static bool pmap_initialized_p __read_mostly;
 
 static inline struct vm_page *
 pmap_pa_to_pg(paddr_t pa)
@@ -590,7 +610,7 @@ struct pmap * const kernel_pmap_ptr = &kernel_pmap_store;
  * Physical address of kernel level 1 table.  This name is compatible
  * with the Hibler pmap's name.
  */
-paddr_t		Sysseg_pa;
+paddr_t		Sysseg_pa __read_mostly;
 
 /*
  * Avoid a memory load when doing comparisons against pmap_kernel()
@@ -619,7 +639,7 @@ active_user_pmap(pmap_t pmap)
  * 0 - number of leaf page tables per page
  * 1 - number of segment tables per page
  */
-static unsigned int pmap_ptpage_table_counts[2];
+static unsigned int pmap_ptpage_table_counts[2] __read_mostly;
 
 __CTASSERT(LA40_L1_COUNT == LA40_L2_COUNT);
 
@@ -680,7 +700,9 @@ pmap_vpage_alloc(bool nowait, int flags, struct vm_page **pg_out)
 	    UVM_PROT_READ | UVM_PROT_WRITE, flags);
 	zeropage((void *)pgva);
 
-	*pg_out = pg;
+	if (__predict_true(pg_out != NULL)) {
+		*pg_out = pg;
+	}
 
 	return pgva;
 }
@@ -881,11 +903,11 @@ __CTASSERT(PTE51_CI == PTE40_CM_NC_SER);
 __CTASSERT(PMBM_F_U0 == PTE40_U0);
 __CTASSERT(PMBM_F_U1 == PTE40_U1);
 
-static pt_entry_t	pmap_pte_proto[UVM_PROT_ALL + 1];
-static pt_entry_t	pmap_pte_proto_ci[UVM_PROT_ALL + 1];
-static pt_entry_t	pmap_pte_proto_cwt[UVM_PROT_ALL + 1];
-static pt_entry_t	pmap_pte_proto_um[UVM_PROT_ALL + 1];
-static pt_entry_t	pmap_ste_proto;
+static pt_entry_t	pmap_pte_proto[UVM_PROT_ALL + 1] __read_mostly;
+static pt_entry_t	pmap_pte_proto_ci[UVM_PROT_ALL + 1] __read_mostly;
+static pt_entry_t	pmap_pte_proto_cwt[UVM_PROT_ALL + 1] __read_mostly;
+static pt_entry_t	pmap_pte_proto_um[UVM_PROT_ALL + 1] __read_mostly;
+static pt_entry_t	pmap_ste_proto __read_mostly;
 
 static inline paddr_t
 pte_pa(pt_entry_t pte)
@@ -1152,8 +1174,9 @@ pmap_make_pte(paddr_t pa, vm_prot_t prot, u_int flags)
  * pmap_virtual_space() and VM_MAX_KERNEL_ADDRESS.
  */
 #define	KERNEL_MAX_ADDRESS	((vaddr_t)0 - PAGE_SIZE)
-static vaddr_t kernel_virtual_start, kernel_virtual_end;
-       vaddr_t kernel_virtual_max = KERNEL_MAX_ADDRESS;
+static vaddr_t kernel_virtual_start __read_mostly;
+static vaddr_t kernel_virtual_end __read_mostly;
+       vaddr_t kernel_virtual_max __read_mostly = KERNEL_MAX_ADDRESS;
 
 /*
  * kernel_stnext_pa and kernel_stnext_endpa together implement a
@@ -1168,7 +1191,8 @@ static vaddr_t kernel_virtual_start, kernel_virtual_end;
  * kernel_stnext_pa and kernel_stnext_endpa updated to reflect
  * the newly-allocated page before the table is taken from it.
  */
-static paddr_t kernel_stnext_pa, kernel_stnext_endpa;
+static paddr_t kernel_stnext_pa __read_mostly;
+static paddr_t kernel_stnext_endpa __read_mostly;
 
 /*
  * Null segment table that every pmap gets as its initial level 1
@@ -1578,7 +1602,7 @@ pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
 
 /*************************** PTE LOOKUP FUNCTIONS ****************************/
 
-static pt_entry_t *kernel_ptes;
+static pt_entry_t *kernel_ptes __read_mostly;
 
 /*
  * pmap_kernel_pte:
@@ -2724,6 +2748,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	int error = 0;
 	const bool nowait = !!(flags & PMAP_CANFAIL);
 
+	/* cpu-local mappings never allowed via this path. */
+	KASSERT((flags & PMAP_CPU_LOCAL) == 0);
+
 	pmap_completion_init(&pc);
 
 	struct vm_page * const pg = pmap_pa_to_pg(pa);
@@ -3013,6 +3040,8 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * VA, but we're erring on the side of caution for now.
 	 */
 	TBIS(va);
+
+	/* if PMAP_CPU_LOCAL, we can avoid sending a TLB shootdown */
 }
 
 /*
@@ -3520,7 +3549,151 @@ pmap_phys_address(paddr_t cookie)
 	return m68k_ptob(cookie);
 }
 
-static pt_entry_t *kernel_lev1map;
+/*
+ * The kernel_lev1map is a little tricky.  This one is used only by
+ * the primary CPU.  Each secondary CPU has its own lev1map and its
+ * own lev2 and lev3 table that map its cpu_info at a fixed address
+ * (CPUINFO_VA).  These are all allocated in a single page that also
+ * holds that CPU's cpu_info.  It looks like this:
+ *
+ *	(high address)
+ *	+----------------------------------------+
+ *	|                                        |
+ *	|                                        |
+ *	|         CPUn lev1map (512 bytes)       |
+ *	|                                        |
+ *	|                                        |
+ *	+----------------------------------------+
+ *	|                                        |
+ *	|                                        |
+ *	| CPUn CPUINFO_VA lev2 table (512 bytes) |
+ *	|                                        |
+ *	|                                        |
+ *	+----------------------------------------+
+ *	|                                        |
+ *	| CPUn CPUINFO_VA lev3 table (256 bytes) |
+ *	|                                        |
+ *	+----------------------------------------+
+ *	/                                        /
+ *	\                                        \
+ *	/                                        /
+ *	\        (unused space ??? bytes)        \
+ *	/                                        /
+ *	\                                        \
+ *	/                                        /
+ *	+----------------------------------------+
+ *	|                                        |
+ *	|                                        |
+ *	|                                        |
+ *	|      CPUn cpu_info (<= 2048 bytes)     |
+ *	|                                        |
+ *	|                                        |
+ *	|                                        |
+ *	+----------------------------------------+
+ *	(low address)
+ *
+ * Each secondary CPU gets its own kernel lev1map to stash in its %srp,
+ * but it is initialized with the contents of the main kernel_lev1map
+ * except for the L1 slot that maps CPUINFO_VA.  That particular slot
+ * points to that CPU's CPUINFO_VA lev2 table, which in turn has a
+ * slot that points to that CPU's CPUINFO_VA lev3 table, which has a
+ * slot that maps this particular page at CPUINFO_VA.
+ *
+ * AND BECAUSE YOU ASKED!  YES!  If we happen to be running on a
+ * MP system that has a 68020+68851 or a 68030, then the MMU will
+ * be configured to use the same 3-level table structure as the
+ * 68040/68060, and thus we can use this same layout.
+ */
+static pt_entry_t *kernel_lev1map __read_mostly;
+
+#if defined(MULTIPROCESSOR)
+static kmutex_t pmap_growkernel_lock __cacheline_aligned;
+
+/*
+ * pmap_percpu_alloc:
+ *
+ *	Allocate a per-cpu page.
+ */
+struct cpu_info *
+pmap_percpu_alloc(void)
+{
+	/*
+	 * We're supposed to map PTs cache-inhibited, but we do not want
+	 * the cpu_info to be cache-inhibited, so what do we do?
+	 *
+	 * Well, these PTs aren't going to be accessed very frequently
+	 * at all.  Once at setup, and maybe again when pmap_growkernel()
+	 * is called.  So we will map the page as write-through.
+	 */
+	vaddr_t va = pmap_vpage_alloc(true/*nowait*/, PMAP_WRITE_THROUGH, NULL);
+	if (__predict_false(va == 0)) {
+		panic("%s: unable to allocate per-cpu page", __func__);
+	}
+
+	return (struct cpu_info *)va;
+}
+
+/*
+ * pmap_percpu_init:
+ *
+ *	Initialize a per-cpu page.  Must be called only after the
+ *	cpu_info associated with this per-cpu page has been linked
+ *	into cpu_info_list.
+ */
+void
+pmap_percpu_init(struct cpu_info *ci)
+{
+	vaddr_t va = (vaddr_t)ci, lev1, lev2, lev3;
+	paddr_t pgpa, lev1pa, lev2pa, lev3pa;
+
+	KASSERT(! CPU_IS_PRIMARY(ci));
+
+	if (! pmap_extract(pmap_kernel(), va, &pgpa)) {
+		panic("%s: can't get PA for per-cpu VA=0x%lx",
+		    __func__, va);
+	}
+
+	/* Compute the addresses of the L1, L2, and L3 tables. */
+	lev1   = (va   + PAGE_SIZE) - TBL40_L1_SIZE;
+	lev1pa = (pgpa + PAGE_SIZE) - TBL40_L1_SIZE;
+
+	lev2   = lev1   - TBL40_L2_SIZE;
+	lev2pa = lev1pa - TBL40_L2_SIZE;
+
+	lev3   = lev2   - TBL40_L3_SIZE;
+	lev3pa = lev2pa - TBL40_L3_SIZE;
+
+	/* Copy the base kernel_lev1map into the lev1 map. */
+	mutex_enter(&pmap_growkernel_lock);
+	memcpy((void *)lev1, kernel_lev1map, TBL40_L1_SIZE);
+	mutex_exit(&pmap_growkernel_lock);
+
+	/* Enter the lev2 table into the lev1 map. */
+	((pt_entry_t *)lev1)[LA40_RI(CPUINFO_VA)] = pmap_ste_proto | lev2pa;
+
+	/* Enter the lev3 table into the lev2 table. */
+	((pt_entry_t *)lev2)[LA40_PI(CPUINFO_VA)] = pmap_ste_proto | lev3pa;
+
+	/* Enter the page into the lev3 table. */
+	((pt_entry_t *)lev3)[LA40_PGI(CPUINFO_VA)] =
+	    pmap_make_pte(pgpa, VM_PROT_READ | VM_PROT_WRITE, 0);
+
+	/* Allocate per-cpu temp VAs. */
+	va = uvm_km_alloc(kernel_map, PAGE_SIZE * 3, 0, UVM_KMF_VAONLY);
+	if (__predict_false(va == 0)) {
+		panic("%s: unable to allocate per-cpu VAs", __func__);
+	}
+
+	ci->ci_tmpva_vmmap = va;
+	va += PAGE_SIZE;
+	ci->ci_tmpva_src = va;
+	va += PAGE_SIZE;
+	ci->ci_tmpva_dst = va;
+	va += PAGE_SIZE;
+
+	/* Fin. */
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * pmap_growkernel_alloc_page:
@@ -3551,6 +3724,34 @@ pmap_growkernel_alloc_page(void)
 	}
 #endif
 	return pa;
+}
+
+/*
+ * pmap_growkernel_insert_lev1map:
+ *
+ *	Helper for pmap_growkernel_link_kptpage().
+ */
+static void
+pmap_growkernel_insert_lev1map(vaddr_t va, pt_entry_t lev1ste)
+{
+	unsigned int idx = LA40_RI(va);
+
+	kernel_lev1map[idx] = lev1ste;
+
+#if defined(MULTIPROCESSOR)
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	vaddr_t pgva, lev1;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (CPU_IS_PRIMARY(ci)) {
+			continue;
+		}
+		pgva = (vaddr_t)ci;
+		lev1 = (pgva + PAGE_SIZE) - TBL40_L1_SIZE;
+		((pt_entry_t *)lev1)[idx] = lev1ste;
+	}
+#endif /* MULTIPROCESSOR */
 }
 
 /*
@@ -3596,8 +3797,8 @@ pmap_growkernel_link_kptpage(vaddr_t va, paddr_t ptp_pa)
 				    kernel_stnext_pa + PAGE_SIZE;
 				pmap_nkstpages_current_ev.ev_count++;
 			}
-			kernel_lev1map[LA40_RI(va)] =
-			    pmap_ste_proto | kernel_stnext_pa;
+			pmap_growkernel_insert_lev1map(va,
+			    pmap_ste_proto | kernel_stnext_pa);
 			kernel_stnext_pa += TBL40_L2_SIZE;
 		}
 		stpa = kernel_lev1map[LA40_RI(va)] & UTE40_PTA;
@@ -3629,7 +3830,7 @@ pmap_growkernel_link_kptpage(vaddr_t va, paddr_t ptp_pa)
 vaddr_t
 pmap_growkernel(vaddr_t maxkvaddr)
 {
-	PMAP_CRIT_ENTER();
+	PMAP_MUTEX_ENTER(&pmap_growkernel_lock);
 
 	KASSERT((kernel_virtual_end & PTPAGEVAOFS) == 0);
 
@@ -3670,7 +3871,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
  done:
 	pmap_maxkva_ev.ev_count32 = new_maxkva;
 	pmap_kvalimit_ev.ev_count32 = kernel_virtual_max;
-	PMAP_CRIT_EXIT();
+
+	PMAP_MUTEX_EXIT(&pmap_growkernel_lock);
+
 	return new_maxkva;
 }
 
@@ -3787,8 +3990,8 @@ pmap_write_text_exit(struct pmap_write_text_context *ctx)
 	TBIS(ctx->pgva);
 }
 
-static paddr_t kernel_reloc_offset;
-static vaddr_t kernel_reloc_end;
+static paddr_t kernel_reloc_offset __read_mostly;
+static vaddr_t kernel_reloc_end __read_mostly;
 
 /*
  * pmap_init_kcore_hdr:
@@ -4029,12 +4232,12 @@ __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
  * array needs 4MB of space on its own.
  */
 
-static vaddr_t	lwp0uarea;
-       paddr_t	lwp0upa = (paddr_t)-1;
+static vaddr_t	lwp0uarea __read_mostly;
+       paddr_t	lwp0upa __read_mostly = (paddr_t)-1;
 
 /* XXX Doesn't belong here. */
-paddr_t		avail_start;	/* PA of first available physical page */
-paddr_t		avail_end;	/* PA of last available physical page */
+paddr_t		avail_start __read_mostly;/* PA of first available page */
+paddr_t		avail_end __read_mostly;  /* PA of last available page */
 
 extern char *	kernel_text;
 extern char *	etext;
@@ -4672,6 +4875,10 @@ pmap_bootstrap2(void)
 	 */
 	setsfc(FC_USERD);
 	setdfc(FC_USERD);
+
+#ifdef MULTIPROCESSOR
+	mutex_init(&pmap_growkernel_lock, MUTEX_DEFAULT, IPL_NONE);
+#endif
 
 	return tf;
 }

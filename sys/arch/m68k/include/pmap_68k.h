@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.27 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.28 2026/11/15 17:23:57 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -426,6 +426,9 @@ do {								\
 void	pmap_procwr(struct proc *, vaddr_t, size_t);
 #define	PMAP_NEED_PROCWR
 
+/* machine-dependent flags for pmap_enter() / pmap_kenter_pa() */
+#define	PMAP_CPU_LOCAL	__BIT(24)	/* cpu-local mapping */
+
 /*
  * pmap_bootstrap1() is called before the MMU is turned on.
  * pmap_bootstrap2() is called after.
@@ -481,6 +484,11 @@ void	pmap_prefer(vaddr_t, vaddr_t *, int);
 
 /* Kernel crash dump support. */
 phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
+
+/* Multiprocessor supprt. */
+struct cpu_info;
+struct cpu_info *	pmap_percpu_alloc(void);
+void			pmap_percpu_init(struct cpu_info *);
 
 /*
  * pmap_bootstrap1() may need to relocate global references, and perform

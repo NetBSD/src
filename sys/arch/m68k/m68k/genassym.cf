@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 2026/11/15 15:16:24 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.11 2026/11/15 17:23:57 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -131,6 +131,7 @@ define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_SELF			offsetof(struct cpu_info, ci_self)
 define	CI_FLAGS		offsetof(struct cpu_info, ci_flags)
+define	CI_LEV1MAP		(PAGE_SIZE - TBL40_L1_SIZE)
 define	CPU_F_RUNNING		CPU_F_RUNNING
 ifdef CPUINFO_VA
 define	CPUINFO_VA		CPUINFO_VA
