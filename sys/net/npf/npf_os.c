@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.23.2.1 2026/09/13 13:37:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_os.c,v 1.23.2.2 2026/11/15 12:33:57 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pf.h"
@@ -476,7 +476,7 @@ get_etherpfil_head(npf_t *npf)
 	IFNET_GLOBAL_LOCK();
 	IFNET_WRITER_FOREACH(ifp) {
 		error = register_etherpfil_hook(npf, ifp, i);
-		if (!error)
+		if (error)
 			break;
 		i++;
 	}
