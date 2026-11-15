@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.389 2026/06/13 15:28:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.390 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.389 2026/06/13 15:28:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.390 2026/11/15 15:16:24 thorpej Exp $");
 
 #include "opt_adb.h"
 #include "opt_copy_symtab.h"
@@ -583,6 +583,7 @@ dumpsys(void)
 	paddr_t maddr;		/* PA being dumped */
 	int seg;		/* RAM segment being dumped */
 	int error;		/* error code from (*dump)() */
+	vaddr_t vmmap = curcpu()->ci_tmpva_vmmap;
 
 	/* XXX initialized here because of gcc lossage */
 	seg = 0;
@@ -633,11 +634,11 @@ dumpsys(void)
 			}
 			maddr = m->ram_segs[seg].start;
 		}
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, maddr,
+		pmap_enter(pmap_kernel(), vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		error = (*dump)(dumpdev, blkno, (void *)vmmap, PAGE_SIZE);
  bad:
 		switch (error) {
 		case 0:

@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_trap.c,v 1.14 2026/11/14 19:02:12 thorpej Exp $	*/
+/*	$NetBSD: m68k_trap.c,v 1.15 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.14 2026/11/14 19:02:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_trap.c,v 1.15 2026/11/15 15:16:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -300,8 +300,8 @@ m68040_writeback(struct frame *fp, int docachepush)
 	struct proc *p = l->l_proc;
 	struct pcb *pcb = lwp_getpcb(l);
 	int err = 0;
-	u_int fa = 0;
 	void *oonfault = pcb->pcb_onfault;
+	vaddr_t fa = 0, vmmap = curcpu()->ci_tmpva_vmmap;
 	paddr_t pa;
 
 #ifdef DEBUG
@@ -339,16 +339,15 @@ m68040_writeback(struct frame *fp, int docachepush)
 		 * cache push after a signal handler has been called.
 		 */
 		if (docachepush) {
-			pmap_enter(pmap_kernel(), (vaddr_t)vmmap,
+			pmap_enter(pmap_kernel(), vmmap,
 			    trunc_page(f->f_fa), VM_PROT_WRITE,
 			    VM_PROT_WRITE|PMAP_WIRED);
 			pmap_update(pmap_kernel());
-			fa = (u_int)&vmmap[m68k_page_offset(f->f_fa) & ~0xF];
+			fa = vmmap + (m68k_page_offset(f->f_fa) & ~0xF);
 			fastcopy16((void *)fa, (void *)&f->f_pd0);
 			(void) pmap_extract(pmap_kernel(), (vaddr_t)fa, &pa);
 			DCFL(pa);
-			pmap_remove(pmap_kernel(), (vaddr_t)vmmap,
-				    (vaddr_t)&vmmap[PAGE_SIZE]);
+			pmap_remove(pmap_kernel(), vmmap, vmmap + PAGE_SIZE);
 			pmap_update(pmap_kernel());
 		} else
 			printf("WARNING: pid %d(%s) uid %d: CPUSH not done\n",

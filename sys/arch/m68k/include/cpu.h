@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.35 2026/11/14 22:41:43 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.36 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -165,20 +165,36 @@ struct cpu_info {
 	cpuid_t	        ci_cpuid	/* [MI] our CPU ID */
 			    __aligned(16);
 	struct cpu_info *ci_next;
+	struct cpu_info *ci_self;	/*      always points to real address */
 	int		ci_flags;
+
+	/* VM / pmap-related data */
+	vaddr_t		ci_tmpva_vmmap;	/*      general tmp VA */
+	vaddr_t		ci_tmpva_src;	/*      for pmap_copy_page()... */
+	vaddr_t		ci_tmpva_dst;	/*      ...and pmap_zero_page() */
 };
 #endif /* _KERNEL || _KMEMUSER */
 
 #ifdef _KERNEL
-extern struct cpu_info cpu_info_store;
+extern struct cpu_info cpu_info_primary;
+extern struct cpu_info *cpu_info_list;
+extern struct cpu_info cpuinfo;		/* per-CPU alias */
+
+#define	CPU_INFO_ITERATOR		int __unused
+#define	CPU_INFO_FOREACH(cii, ci)	ci = cpu_info_list; \
+					ci != NULL; ci = ci->ci_next
+
+#define	CPU_IS_PRIMARY(ci)		((ci) == &cpu_info_primary)
+
+#define	CPU_F_RUNNING	__BIT(0)	/* CPU is running */
 
 struct	proc;
 void	cpu_proc_fork(struct proc *, struct proc *);
 struct cpu_info *curcpu_impl(void);
 
-#define	curcpu()	(&cpu_info_store)
-#define	cpu_number()	curcpu()->ci_cpuid
-#define	curlwp		curcpu()->ci_curlwp
+#define	curcpu()	(cpuinfo.ci_self)
+#define	cpu_number()	(cpuinfo.ci_cpuid)
+#define	curlwp		(cpuinfo.ci_curlwp)
 
 static inline bool
 cpu_intr_p(void)

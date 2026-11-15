@@ -1,4 +1,4 @@
-/*	$NetBSD: asm.h,v 1.46 2026/11/14 23:28:08 thorpej Exp $	*/
+/*	$NetBSD: asm.h,v 1.47 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -212,7 +212,7 @@
 
 /* 64-bit counter increments */
 #define CPUINFO_INCREMENT(n)					\
-	lea	_C_LABEL(cpu_info_store)+(n)+4,%a1;		\
+	lea	_C_LABEL(cpuinfo)+(n)+4,%a1;			\
 	addq.l	#1,(%a1);					\
 	clr.l	%d0;		/* doesn't change CCR[X] */	\
 	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
@@ -221,7 +221,7 @@
 
 /* 64-bit counter increments */
 #define CPUINFO_ADD(n, addend)					\
-	lea	_C_LABEL(cpu_info_store)+(n)+4,%a1;		\
+	lea	_C_LABEL(cpuinfo)+(n)+4,%a1;			\
 	add.l	addend,(%a1);					\
 	clr.l	%d0;		/* doesn't change CCR[X] */	\
 	move.l	-(%a1),%d1;	/* doesn't change CCR[X] */	\
@@ -230,10 +230,10 @@
 
 /* Get current process / current pcb */
 #define	GET_CURLWP(ar)						\
-	movl	_C_LABEL(cpu_info_store)+CI_CURLWP,ar
+	movl	_C_LABEL(cpuinfo)+CI_CURLWP,ar
 
 #define	SET_CURLWP(ar, sr)					\
-	movl	ar,_C_LABEL(cpu_info_store)+CI_CURLWP
+	movl	ar,_C_LABEL(cpuinfo)+CI_CURLWP
 
 #define	GET_CURPCB(ar)						\
 	GET_CURLWP(ar); movl L_PCB(ar),ar
@@ -258,9 +258,9 @@
 
 /* Increment/decrement the interrupt depth. */
 #define	_INTR_DEPTH_INCR					\
-	addql	__IMMEDIATE 1,_C_LABEL(cpu_info_store)+CI_IDEPTH
+	addql	__IMMEDIATE 1,_C_LABEL(cpuinfo)+CI_IDEPTH
 #define	_INTR_DEPTH_DECR					\
-	subql	__IMMEDIATE 1,_C_LABEL(cpu_info_store)+CI_IDEPTH
+	subql	__IMMEDIATE 1,_C_LABEL(cpuinfo)+CI_IDEPTH
 
 /*
  * Interrupt handler entry / exit.  Save registers first, as

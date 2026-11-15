@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pgmmu.h,v 1.2 2026/11/13 01:07:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_pgmmu.h,v 1.3 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -206,7 +206,6 @@ void	pmap_write_text_exit(struct pmap_write_text_context *);
 
 paddr_t		vtophys(vaddr_t);
 
-extern char *	vmmap;
 extern void *	msgbufaddr;
 
 /* Kernel crash dump support. */

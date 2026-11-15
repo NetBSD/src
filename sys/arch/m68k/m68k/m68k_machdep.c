@@ -1,4 +1,4 @@
-/*	$NetBSD: m68k_machdep.c,v 1.28 2026/11/14 22:40:15 thorpej Exp $	*/
+/*	$NetBSD: m68k_machdep.c,v 1.29 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2026 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.28 2026/11/14 22:40:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m68k_machdep.c,v 1.29 2026/11/15 15:16:24 thorpej Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -766,3 +766,6 @@ cpu_exec_aout_makecmds(struct lwp *l, struct exec_package *epp)
  * cpu_info fits in 2048 bytes.
  */
 __CTASSERT(sizeof(struct cpu_info) <= 2048);
+
+/* List of all CPUs present on the system. */
+struct cpu_info *cpu_info_list = &cpu_info_primary;

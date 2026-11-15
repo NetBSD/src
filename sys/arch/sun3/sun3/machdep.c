@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.227 2026/11/10 17:08:41 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.228 2026/11/15 15:16:25 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.227 2026/11/10 17:08:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.228 2026/11/15 15:16:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -149,9 +149,6 @@ const vaddr_t kernbase = KERNBASE3;
 const vaddr_t kern_end = KERN_END3;
 
 extern void *msgbufaddr;
-
-/* Virtual page frame for /dev/mem (see mem.c) */
-vaddr_t vmmap;
 
 /* Our private scratch page for dumping the MMU. */
 static vaddr_t dumppage;
@@ -229,8 +226,9 @@ cpu_startup(void)
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	cpu_info_primary.ci_tmpva_vmmap =
+	    uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+			 UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 
 	/*
 	 * Create the DVMA maps.
@@ -516,7 +514,8 @@ dumpsys(void)
 	} while (--chunk > 0);
 
 	/* Do the second chunk (avail_start <= PA < dumpsize) */
-	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
+	vaddr_t vmmap = curcpu()->ci_tmpva_vmmap;
+	vaddr = (char*)vmmap;
 	do {
 		if ((todo & 0xf) == 0)
 			printf_nolog("\r%4d", todo);

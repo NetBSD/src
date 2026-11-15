@@ -1,4 +1,4 @@
-/*	$NetBSD: dumpsys.c,v 1.1 2026/04/09 12:49:35 thorpej Exp $	*/
+/*	$NetBSD: dumpsys.c,v 1.2 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*      
  * Copyright (c) 1988 University of Utah.
@@ -38,7 +38,7 @@
  */     
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.1 2026/04/09 12:49:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dumpsys.c,v 1.2 2026/11/15 15:16:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,6 +209,7 @@ dumpsys(void)
 	daddr_t blkno;
 	int (*dump)(dev_t, daddr_t, void *, size_t);
 	int error;
+	vaddr_t vmmap = curcpu()->ci_tmpva_vmmap;
 
 	/* XXX Should save registers. */
 
@@ -268,12 +269,13 @@ dumpsys(void)
 				printf_nostamp("\rpages %6d", todo);
 			}
 
-			pmap_kenter_pa((vaddr_t)vmmap, maddr, VM_PROT_READ, 0);
+			pmap_kenter_pa(vmmap, maddr, VM_PROT_READ, 0);
 			pmap_update(pmap_kernel());
 
-			error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+			error = (*dump)(dumpdev, blkno, (void *)vmmap,
+					PAGE_SIZE);
 
-			pmap_kremove((vaddr_t)vmmap, PAGE_SIZE);
+			pmap_kremove(vmmap, PAGE_SIZE);
 			pmap_update(pmap_kernel());
 
 			if (error) {

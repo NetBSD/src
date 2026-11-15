@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_data.s,v 1.2 2026/11/14 23:08:26 thorpej Exp $	*/
+/*	$NetBSD: locore_data.s,v 1.3 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2026 The NetBSD Foundation, Inc.
@@ -58,15 +58,23 @@
 	.data
 	.align	PAGE_SIZE | Should already be true, but this costs nothing.
 GLOBAL(cpu_info_primary)
-	| We want to statically initialize cpu_info_store.ci_curlwp = &lwp0
+	| cpu_info_store.ci_curlwp = &lwp0;
 	.space	CI_CURLWP
-	.long	lwp0
-	.space	4096-CI_CURLWP-4
+	.long	_C_LABEL(lwp0)
+	| cpu_info_store.ci_self = &cpu_info_primary;
+	.space	CI_SELF-CI_CURLWP-4
+	.long	_C_LABEL(cpu_info_primary)
+	| cpu_info_store.ci_flags = CPU_F_RUNNING;
+#if CI_FLAGS != CI_SELF+4
+#error cpu_info layout botch
+#endif
+	.long	CPU_F_RUNNING
+	.space	4096-CI_FLAGS-4
 ASGLOBAL(tmpstk)
 
-	.globl	cpu_info_store
+	.globl	cpuinfo
 #ifdef CPUINFO_VA
-	_C_LABEL(cpu_info_store) = CPUINFO_VA
+	_C_LABEL(cpuinfo) = CPUINFO_VA
 #else
-	_C_LABEL(cpu_info_store) = _C_LABEL(cpu_info_primary)
+	_C_LABEL(cpuinfo) = _C_LABEL(cpu_info_primary)
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.272 2026/04/28 03:29:09 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.273 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.272 2026/04/28 03:29:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.273 2026/11/15 15:16:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -631,6 +631,7 @@ parityerrorfind(void)
 	volatile int *ip;
 	int i;
 	int found;
+	vaddr_t vmmap = curcpu()->ci_tmpva_vmmap;
 
 	/*
 	 * If looking is true we are searching for a known parity error
@@ -659,7 +660,7 @@ parityerrorfind(void)
 	looking = 1;
 	ecacheoff();
 	for (pg = btoc(lowram); pg < btoc(lowram)+physmem; pg++) {
-		pmap_enter(pmap_kernel(), (vaddr_t)vmmap, ctob(pg),
+		pmap_enter(pmap_kernel(), vmmap, ctob(pg),
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 		ip = (int *)vmmap;
@@ -674,7 +675,7 @@ parityerrorfind(void)
 	found = 0;
  done:
 	looking = 0;
-	pmap_remove(pmap_kernel(), (vaddr_t)vmmap, (vaddr_t)&vmmap[PAGE_SIZE]);
+	pmap_remove(pmap_kernel(), vmmap, vmmap + PAGE_SIZE);
 	pmap_update(pmap_kernel());
 	ecacheon();
 	splx(s);

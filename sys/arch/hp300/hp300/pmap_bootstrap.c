@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.70 2026/04/05 14:35:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.71 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.70 2026/04/05 14:35:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.71 2026/11/15 15:16:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -59,11 +59,9 @@ extern vaddr_t kernel_reloc_offset;
  * physical pages for a variety of temporary or permanent purposes:
  *
  *	CADDR1, CADDR2:	pmap zero/copy operations
- *	vmmap:		/dev/mem, crash dumps, parity error checking
  *	msgbufaddr:	kernel message buffer
  */
 void *CADDR1, *CADDR2;
-char *vmmap;
 extern void *msgbufaddr;
 
 paddr_t pmap_bootstrap1(paddr_t, paddr_t);
@@ -459,7 +457,7 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t firstpa)
 		va += PAGE_SIZE;
 		RELOC(CADDR2, void *) = (void *)va;
 		va += PAGE_SIZE;
-		RELOC(vmmap, void *) = (void *)va;
+		RELOC(cpu_info_primary.ci_tmpva_vmmap, vaddr_t) = va;
 		va += PAGE_SIZE;
 		RELOC(msgbufaddr, void *) = (void *)va;
 		va += m68k_round_page(MSGBUFSIZE);

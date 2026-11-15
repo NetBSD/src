@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_sunmmu.c,v 1.7 2026/11/13 01:07:15 thorpej Exp $	*/
+/*	$NetBSD: pmap_sunmmu.c,v 1.8 2026/11/15 15:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.7 2026/11/13 01:07:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_sunmmu.c,v 1.8 2026/11/15 15:16:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -303,19 +303,6 @@ static vaddr_t temp_seg_va;
 static int temp_seg_inuse;
 #endif
 
-/*
- * Location to store virtual addresses
- * to be used in copy/zero operations.
- */
-vaddr_t tmp_vpages[2] = {
-#if IS_SUN2
-	PAGE_SIZE * 8,
-	PAGE_SIZE * 9
-#else
-	SUN3_MONSHORTSEG,
-	SUN3_MONSHORTSEG + PAGE_SIZE
-#endif
-};
 int tmp_vpages_inuse;
 
 static int pmap_version = 1;
@@ -1750,6 +1737,8 @@ pmap_bootstrap(vaddr_t nextva)
 	 * but clear out all but the last PTE inside it.
 	 * Note we use this for tmp_vpages.
 	 */
+	cpu_info_primary.ci_tmpva_src = SUN3_MONSHORTSEG;
+	cpu_info_primary.ci_tmpva_dst = SUN3_MONSHORTSEG + PAGE_SIZE;
 	va  = SUN3_MONSHORTSEG;
 	eva = SUN3_MONSHORTPAGE;
 	sme = get_segmap(va);
@@ -1803,8 +1792,10 @@ pmap_bootstrap(vaddr_t nextva)
 	 * short-segment concept, so we reserve virtual pages eight
 	 * and nine for this.
 	 */
+	cpu_info_primary.ci_tmpva_src = va;
 	set_pte(va, PG_INVAL);
 	va += PAGE_SIZE;
+	cpu_info_primary.ci_tmpva_dst = va;
 	set_pte(va, PG_INVAL);
 	va += PAGE_SIZE;
 
@@ -3819,17 +3810,20 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	tmp_vpages_inuse++;
 #endif
 
+	vaddr_t srcva = curcpu()->ci_tmpva_src;
+	vaddr_t dstva = curcpu()->ci_tmpva_dst;
+
 	kernel_context_enter();
 
 	/* PG_PERM is short for (PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC) */
 	/* All mappings to vmp_vpages are non-cached, so no flush. */
 	pte = PG_PERM | PA_PGNUM(src);
-	set_pte(tmp_vpages[0], pte);
+	set_pte(srcva, pte);
 	pte = PG_PERM | PA_PGNUM(dst);
-	set_pte(tmp_vpages[1], pte);
-	copypage((char *) tmp_vpages[0], (char *) tmp_vpages[1]);
-	set_pte(tmp_vpages[0], PG_INVAL);
-	set_pte(tmp_vpages[1], PG_INVAL);
+	set_pte(dstva, pte);
+	copypage((char *) srcva, (char *) dstva);
+	set_pte(srcva, PG_INVAL);
+	set_pte(dstva, PG_INVAL);
 
 	kernel_context_exit();
 
@@ -3865,14 +3859,16 @@ pmap_zero_page(paddr_t pa)
 	tmp_vpages_inuse++;
 #endif
 
+	vaddr_t dstva = curcpu()->ci_tmpva_dst;
+
 	kernel_context_enter();
 
 	/* PG_PERM is short for (PG_VALID|PG_WRITE|PG_SYSTEM|PG_NC) */
 	/* All mappings to vmp_vpages are non-cached, so no flush. */
 	pte = PG_PERM | PA_PGNUM(pa);
-	set_pte(tmp_vpages[0], pte);
-	zeropage((char *) tmp_vpages[0]);
-	set_pte(tmp_vpages[0], PG_INVAL);
+	set_pte(dstva, pte);
+	zeropage((char *) dstva);
+	set_pte(dstva, PG_INVAL);
 
 	kernel_context_exit();
 

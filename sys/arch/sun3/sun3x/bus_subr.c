@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.34 2026/04/26 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.35 2026/11/15 15:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.34 2026/04/26 10:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.35 2026/11/15 15:16:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,10 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.34 2026/04/26 10:52:16 thorpej Exp $"
 
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3x/vme.h>
-
-/* These are defined in pmap.c */
-extern vaddr_t tmp_vpages[];
-extern int tmp_vpages_inuse;
 
 static const struct {
 	long base;
@@ -95,11 +91,8 @@ bus_tmapin(int bustype, int pa)
 	pa |= PMAP_NC;
 
 	s = splvm();
-	if (tmp_vpages_inuse)
-		panic("bus_tmapin: tmp_vpages_inuse");
-	tmp_vpages_inuse++;
-
-	pgva = tmp_vpages[1];
+	pgva = curcpu()->ci_tmpva_vmmap;
+	KASSERT(pgva != 0);
 	pmap_kenter_pa(pgva, pa, VM_PROT_READ | VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	splx(s);
@@ -114,13 +107,12 @@ bus_tmapout(void *vp)
 	int s;
 
 	pgva = m68k_trunc_page(vp);
-	if (pgva != tmp_vpages[1])
+	if (pgva != curcpu()->ci_tmpva_vmmap)
 		return;
 
 	s = splvm();
 	pmap_kremove(pgva, PAGE_SIZE);
 	pmap_update(pmap_kernel());
-	--tmp_vpages_inuse;
 	splx(s);
 }
 

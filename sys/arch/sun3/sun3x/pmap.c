@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.134 2026/11/13 23:48:35 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.135 2026/11/15 15:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.134 2026/11/13 23:48:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2026/11/15 15:16:25 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -271,9 +271,6 @@ paddr_t	avail_start, avail_end;
 
 /* This keep track of the end of the contiguously mapped range. */
 vaddr_t virtual_contig_end;
-
-/* These are used by pmap_copy_page(), etc. */
-vaddr_t tmp_vpages[2];
 
 /* memory pool for pmap structures */
 struct pool	pmap_pmap_pool;
@@ -795,14 +792,10 @@ pmap_bootstrap(vaddr_t nextva)
 	/*
 	 * Now allocate some virtual addresses, but not the physical pages
 	 * behind them.  Note that virtual_avail is already page-aligned.
-	 *
-	 * tmp_vpages[] is an array of two virtual pages used for temporary
-	 * kernel mappings in the pmap module to facilitate various physical
-	 * address-oritented operations.
 	 */
-	tmp_vpages[0] = virtual_avail;
+	cpu_info_primary.ci_tmpva_src = virtual_avail;
 	virtual_avail += PAGE_SIZE;
-	tmp_vpages[1] = virtual_avail;
+	cpu_info_primary.ci_tmpva_dst = virtual_avail;
 	virtual_avail += PAGE_SIZE;
 
 	/** Initialize the PV system **/
@@ -2449,10 +2442,11 @@ pmap_copy_page(paddr_t srcpa, paddr_t dstpa)
 	vaddr_t srcva, dstva;
 	int s;
 
-	srcva = tmp_vpages[0];
-	dstva = tmp_vpages[1];
-
 	s = splvm();
+
+	srcva = curcpu()->ci_tmpva_src;
+	dstva = curcpu()->ci_tmpva_dst;
+
 #ifdef DIAGNOSTIC
 	if (tmp_vpages_inuse++)
 		panic("pmap_copy_page: temporary vpages are in use.");
@@ -2487,8 +2481,9 @@ pmap_zero_page(paddr_t dstpa)
 	vaddr_t dstva;
 	int s;
 
-	dstva = tmp_vpages[1];
 	s = splvm();
+
+	dstva = curcpu()->ci_tmpva_dst;
 #ifdef DIAGNOSTIC
 	if (tmp_vpages_inuse++)
 		panic("pmap_zero_page: temporary vpages are in use.");

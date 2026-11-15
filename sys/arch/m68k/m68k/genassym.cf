@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.9 2026/11/14 23:08:26 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.10 2026/11/15 15:16:24 thorpej Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -129,6 +129,9 @@ define	P_VMSPACE		offsetof(struct proc, p_vmspace)
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 define	CI_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
+define	CI_SELF			offsetof(struct cpu_info, ci_self)
+define	CI_FLAGS		offsetof(struct cpu_info, ci_flags)
+define	CPU_F_RUNNING		CPU_F_RUNNING
 ifdef CPUINFO_VA
 define	CPUINFO_VA		CPUINFO_VA
 endif

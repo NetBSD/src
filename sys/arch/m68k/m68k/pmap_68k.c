@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.93 2026/11/14 02:43:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.94 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -220,7 +220,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.93 2026/11/14 02:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.94 2026/11/15 15:16:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -654,6 +654,37 @@ pmap_page_alloc(bool nowait)
 	return pg;
 }
 
+static vaddr_t
+pmap_vpage_alloc(bool nowait, int flags, struct vm_page **pg_out)
+{
+	struct vm_page *pg;
+	const int uvm_f_nowait = nowait ? UVM_KMF_NOWAIT : 0;
+	vaddr_t pgva;
+
+	/* Allocate a VA for the page. */
+	pgva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+			    UVM_KMF_VAONLY | uvm_f_nowait);
+	if (__predict_false(pgva == 0)) {
+		return 0;
+	}
+
+	/* Get a page. */
+	pg = pmap_page_alloc(nowait);
+	if (__predict_false(pg == NULL)) {
+		uvm_km_free(kernel_map, pgva, PAGE_SIZE, UVM_KMF_VAONLY);
+		return 0;
+	}
+
+	/* Map the page according to the flags and zero it out. */
+	pmap_kenter_pa(pgva, VM_PAGE_TO_PHYS(pg),
+	    UVM_PROT_READ | UVM_PROT_WRITE, flags);
+	zeropage((void *)pgva);
+
+	*pg_out = pg;
+
+	return pgva;
+}
+
 static struct pmap_ptpage *
 pmap_ptpage_alloc(bool segtab, bool nowait)
 {
@@ -661,10 +692,9 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 	const size_t size = sizeof(struct pmap_ptpage) +
 	    (sizeof(struct pmap_table) * tabcnt);
 	const size_t tabsize = PAGE_SIZE / tabcnt;
+	struct vm_page *pg;
 	struct pmap_ptpage *ptp;
 	struct pmap_table *pt;
-	struct vm_page *pg;
-	const int uvm_f_nowait = nowait ? UVM_KMF_NOWAIT : 0;
 	vaddr_t ptpva;
 
 	ptp = kmem_zalloc(size, nowait ? KM_NOSLEEP : KM_SLEEP);
@@ -672,26 +702,15 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 		return NULL;
 	}
 
-	/* Allocate a VA for the PT page. */
-	ptpva = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-			     UVM_KMF_VAONLY | uvm_f_nowait);
-	if (__predict_false(ptpva == 0)) {
+	/*
+	 * Allocate a mapped page for the PT page.  PT pages
+	 * are always mapped cache-inhibited.
+	 */
+	ptpva = pmap_vpage_alloc(nowait, PMAP_NOCACHE, &pg);
+	if (ptpva == 0) {
 		kmem_free(ptp, size);
 		return NULL;
 	}
-
-	/* Get a page. */
-	pg = pmap_page_alloc(nowait);
-	if (__predict_false(pg == NULL)) {
-		uvm_km_free(kernel_map, ptpva, PAGE_SIZE, UVM_KMF_VAONLY);
-		kmem_free(ptp, size);
-		return NULL;
-	}
-
-	/* Map the page cache-inhibited and zero it out. */
-	pmap_kenter_pa(ptpva, VM_PAGE_TO_PHYS(pg),
-	    UVM_PROT_READ | UVM_PROT_WRITE, PMAP_NOCACHE);
-	zeropage((void *)ptpva);
 
 	/*
 	 * All resources for the PT page have been allocated.
@@ -3236,9 +3255,6 @@ pmap_deactivate(struct lwp *l)
 	}
 }
 
-static vaddr_t pmap_tmpmap_srcva;
-static vaddr_t pmap_tmpmap_dstva;
-
 /*
  * pmap_zero_page:		[ INTERFACE ]
  *
@@ -3250,7 +3266,8 @@ pmap_zero_page(paddr_t pa)
 {
 	const int flags = MMU_IS_HP_CLASS ? PMAP_NOCACHE|PMAP_WIRED
 					  : PMAP_WIRED;
-	pt_entry_t * const dst_ptep = pmap_kernel_pte(pmap_tmpmap_dstva);
+	vaddr_t const dstva = curcpu()->ci_tmpva_dst;
+	pt_entry_t * const dst_ptep = pmap_kernel_pte(dstva);
 
 	/* Build the new PTE. */
 	const pt_entry_t dst_pte =
@@ -3260,14 +3277,14 @@ pmap_zero_page(paddr_t pa)
 	KASSERT(! pte_valid_p(pte_load(dst_ptep)));
 	pte_store(dst_ptep, dst_pte);
 	/* XXX Possibly being over-cautious here; see pmap_kenter_pa(). */
-	TBIS(pmap_tmpmap_dstva);
+	TBIS(dstva);
 
 	/* Zero the page. */
-	zeropage((void *)pmap_tmpmap_dstva);
+	zeropage((void *)dstva);
 
 	/* Invalidate the PTEs. */
 	pte_store(dst_ptep, 0);
-	TBIS(pmap_tmpmap_dstva);
+	TBIS(dstva);
 }
 
 /*
@@ -3281,8 +3298,10 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 {
 	const int flags = MMU_IS_HP_CLASS ? PMAP_NOCACHE|PMAP_WIRED
 					  : PMAP_WIRED;
-	pt_entry_t * const src_ptep = pmap_kernel_pte(pmap_tmpmap_srcva);
-	pt_entry_t * const dst_ptep = pmap_kernel_pte(pmap_tmpmap_dstva);
+	vaddr_t const srcva = curcpu()->ci_tmpva_src;
+	vaddr_t const dstva = curcpu()->ci_tmpva_dst;
+	pt_entry_t * const src_ptep = pmap_kernel_pte(srcva);
+	pt_entry_t * const dst_ptep = pmap_kernel_pte(dstva);
 
 	/* Build the new PTEs. */
 	const pt_entry_t src_pte =
@@ -3294,22 +3313,22 @@ pmap_copy_page(paddr_t src, paddr_t dst)
 	KASSERT(! pte_valid_p(pte_load(src_ptep)));
 	pte_store(src_ptep, src_pte);
 	/* XXX Possibly being over-cautious here; see pmap_kenter_pa(). */
-	TBIS(pmap_tmpmap_srcva);
+	TBIS(srcva);
 
 	KASSERT(! pte_valid_p(pte_load(dst_ptep)));
 	pte_store(dst_ptep, dst_pte);
 	/* XXX Possibly being over-cautious here; see pmap_kenter_pa(). */
-	TBIS(pmap_tmpmap_dstva);
+	TBIS(dstva);
 
 	/* Copy the page. */
-	copypage((void *)pmap_tmpmap_srcva, (void *)pmap_tmpmap_dstva);
+	copypage((void *)srcva, (void *)dstva);
 
 	/* Invalidate the PTEs. */
 	pte_store(src_ptep, 0);
-	TBIS(pmap_tmpmap_srcva);
+	TBIS(srcva);
 
 	pte_store(dst_ptep, 0);
-	TBIS(pmap_tmpmap_dstva);
+	TBIS(dstva);
 }
 
 /*
@@ -3553,11 +3572,11 @@ pmap_growkernel_link_kptpage(vaddr_t va, paddr_t ptp_pa)
 
 	/*
 	 * N.B. pmap_zero_page() is used in this process, which
-	 * uses pmap_tmpmap_dstva.  pmap_tmpmap_srcva is available
+	 * uses curcpu()->ci_tmpva_dst.  curcpu()->ci_tmpva_src is available
 	 * for our use, however, so that's what we used to temporarily
 	 * map inner segment table pages.
 	 */
-	const vaddr_t stpg_va = pmap_tmpmap_srcva;
+	const vaddr_t stpg_va = curcpu()->ci_tmpva_src;
 
 	paddr_t stpa, stpg_pa, stpgoff, last_stpg_pa = (paddr_t)-1;
 	paddr_t pa = ptp_pa, end_pa = ptp_pa + PAGE_SIZE;
@@ -4012,7 +4031,6 @@ __CTASSERT(VM_MIN_KERNEL_ADDRESS == 0);
 
 static vaddr_t	lwp0uarea;
        paddr_t	lwp0upa = (paddr_t)-1;
-       char *	vmmap;
 
 /* XXX Doesn't belong here. */
 paddr_t		avail_start;	/* PA of first available physical page */
@@ -4216,13 +4234,13 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
 #endif
 
 	/* pmap temporary map addresses */
-	RELOC(pmap_tmpmap_srcva, vaddr_t) = nextva;
+	RELOC(cpu_info_primary.ci_tmpva_src, vaddr_t) = nextva;
 	nextva += PAGE_SIZE;
-	RELOC(pmap_tmpmap_dstva, vaddr_t) = nextva;
+	RELOC(cpu_info_primary.ci_tmpva_dst, vaddr_t) = nextva;
 	nextva += PAGE_SIZE;
 
 	/* vmmap temporary map address */
-	RELOC(vmmap, vaddr_t) = nextva;
+	RELOC(cpu_info_primary.ci_tmpva_vmmap, vaddr_t) = nextva;
 	nextva += PAGE_SIZE;
 
 	/* kernel message buffer */

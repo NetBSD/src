@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.95 2026/11/13 01:23:13 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.96 2026/11/15 15:16:23 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.95 2026/11/13 01:23:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.96 2026/11/15 15:16:23 thorpej Exp $");
 
 #include "opt_bufcache.h"
 #include "opt_ddb.h"
@@ -306,6 +306,7 @@ dumpsys(void)
 	int pg;			/* page being dumped */
 	vm_offset_t maddr;	/* PA being dumped */
 	int error;		/* error code from (*dump)() */
+	vaddr_t vmmap = curcpu()->ci_tmpva_vmmap;
 
 	/* Don't put dump messages in msgbuf. */
 	msgbufmapped = 0;
@@ -336,11 +337,11 @@ dumpsys(void)
 		if (pg && (pg % NPGMB) == 0)
 			printf("%d ", pg / NPGMB);
 #undef NPGMB
-		pmap_enter(pmap_kernel(), (vm_offset_t)vmmap, maddr,
+		pmap_enter(pmap_kernel(), vmmap, maddr,
 		    VM_PROT_READ, VM_PROT_READ|PMAP_WIRED);
 		pmap_update(pmap_kernel());
 
-		error = (*dump)(dumpdev, blkno, vmmap, PAGE_SIZE);
+		error = (*dump)(dumpdev, blkno, (void *)vmmap, PAGE_SIZE);
 		switch (error) {
 		case 0:
 			maddr += PAGE_SIZE;

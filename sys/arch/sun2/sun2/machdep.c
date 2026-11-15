@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.100 2026/04/28 03:29:10 thorpej Exp $	*/
+/*	$NetBSD: machdep.c,v 1.101 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.100 2026/04/28 03:29:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.101 2026/11/15 15:16:24 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -231,9 +231,6 @@ extern u_int bufpages;
 
 extern void *msgbufaddr;
 
-/* Virtual page frame for /dev/mem (see mem.c) */
-vaddr_t vmmap;
-
 /* Soft copy of the enable register. */
 volatile u_short enable_reg_soft = ENABLE_REG_SOFT_UNDEF;
 
@@ -285,12 +282,13 @@ cpu_startup(void)
 	cpu_startup_common();
 
 	/*
-	 * Allocate a virtual page (for use by /dev/mem)
+	 * Allocate a virtual page for temporary use.
 	 * This page is handed to pmap_enter() therefore
 	 * it has to be in the normal kernel VA range.
 	 */
-	vmmap = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_VAONLY | UVM_KMF_WAITVA);
+	cpu_info_primary.ci_tmpva_vmmap =
+	    uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
+			 UVM_KMF_VAONLY | UVM_KMF_WAITVA);
 
 	/*
 	 * Allocate DMA map for devices on the bus.
@@ -575,7 +573,8 @@ dumpsys(void)
 	} while (--chunk > 0);
 
 	/* Do the second chunk (avail_start <= PA < dumpsize) */
-	vaddr = (char*)vmmap;	/* Borrow /dev/mem VA */
+	vaddr_t vmmap = curcpu()->ci_tmpva_vmmap;
+	vaddr = (char*)vmmap;
 	do {
 		if ((todo & 0xf) == 0)
 			printf_nolog("\r%4d", todo);

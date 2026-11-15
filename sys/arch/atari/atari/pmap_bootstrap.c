@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 2026/11/08 08:39:10 tsutsui Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 2026/11/15 15:16:23 thorpej Exp $	*/
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -144,7 +144,6 @@ extern paddr_t	msgbufpa;
  * All those kernel PT submaps that BSD is so fond of
  */
 void		*CADDR1, *CADDR2;
-char		*vmmap;
 
 paddr_t __attribute__((no_instrument_function))
 pmap_bootstrap1(paddr_t nextpa, paddr_t reloff)
@@ -721,10 +720,10 @@ pmap_bootstrap(void)
 
 	va = virtual_avail;
 
-	SYSMAP(void *   ,CADDR1	,1			)
-	SYSMAP(void *   ,CADDR2	,1			)
-	SYSMAP(void *   ,vmmap	,1			)
-	SYSMAP(void *	,msgbufaddr ,btoc(MSGBUFSIZE)	)
+	SYSMAP(void *   ,CADDR1	,1				)
+	SYSMAP(void *   ,CADDR2	,1				)
+	SYSMAP(vaddr_t  ,cpu_info_primary.ci_tmpva_vmmap,1	)
+	SYSMAP(void *	,msgbufaddr ,btoc(MSGBUFSIZE)		)
 
 	DCIS();
 

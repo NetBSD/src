@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_subr.c,v 1.19 2026/04/26 10:52:16 thorpej Exp $	*/
+/*	$NetBSD: bus_subr.c,v 1.20 2026/11/15 15:16:25 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.19 2026/04/26 10:52:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.20 2026/11/15 15:16:25 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,10 +52,6 @@ __KERNEL_RCSID(0, "$NetBSD: bus_subr.c,v 1.19 2026/04/26 10:52:16 thorpej Exp $"
 #include <sun3/sun3/control.h>
 #include <sun3/sun3/machdep.h>
 #include <sun3/sun3/vme.h>
-
-/* These are defined in pmap.c */
-extern vaddr_t tmp_vpages[];
-extern int tmp_vpages_inuse;
 
 #define OBIO_MASK 0xFFffff
 
@@ -101,11 +97,8 @@ bus_tmapin(int bustype, int pa)
 	pte |= (bus_info[bustype].type << PG_MOD_SHIFT);
 	pte |= (PG_VALID | PG_WRITE | PG_SYSTEM | PG_NC);
 
-	if (tmp_vpages_inuse)
-		panic("bus_tmapin: tmp_vpages_inuse");
-	tmp_vpages_inuse++;
-
-	pgva = tmp_vpages[1];
+	pgva = curcpu()->ci_tmpva_vmmap;
+	KASSERT(pgva != 0);
 	set_pte(pgva, pte);
 
 	return ((void *)(pgva + off));
@@ -117,11 +110,10 @@ bus_tmapout(void *vp)
 	vaddr_t pgva;
 
 	pgva = m68k_trunc_page(vp);
-	if (pgva != tmp_vpages[1])
+	if (pgva != curcpu()->ci_tmpva_dst)
 		return;
 
 	set_pte(pgva, PG_INVAL);
-	--tmp_vpages_inuse;
 }
 
 /*

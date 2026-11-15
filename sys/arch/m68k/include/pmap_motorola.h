@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.65 2026/11/13 01:07:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.66 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -243,7 +243,6 @@ extern vaddr_t		virtual_avail, virtual_end;
 extern u_int		protostfree;
 #endif
 
-extern char		*vmmap;		/* map for mem, dumps, etc. */
 extern void		*CADDR1, *CADDR2;
 extern void		*msgbufaddr;
 

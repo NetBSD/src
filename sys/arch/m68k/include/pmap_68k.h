@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.26 2026/11/13 01:07:14 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.27 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -466,7 +466,6 @@ void	pmap_write_text_exit(struct pmap_write_text_context *);
 paddr_t		vtophys(vaddr_t);
 
 extern paddr_t	lwp0upa;
-extern char *	vmmap;
 extern void *	msgbufaddr;
 
 /* Support functions for HP MMU. */

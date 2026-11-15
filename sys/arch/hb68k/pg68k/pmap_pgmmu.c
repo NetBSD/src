@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pgmmu.c,v 1.4 2026/11/14 02:43:48 thorpej Exp $	*/
+/*	$NetBSD: pmap_pgmmu.c,v 1.5 2026/11/15 15:16:24 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_pgmmu.c,v 1.4 2026/11/14 02:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_pgmmu.c,v 1.5 2026/11/15 15:16:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1759,12 +1759,6 @@ pmap_deactivate(struct lwp *l)
 	PMAP_CRIT_EXIT(pmap->pm_busy--);
 }
 
-static vaddr_t pmap_tmpmap_srcva;
-static vaddr_t pmap_tmpmap_dstva;
-
-static unsigned int pmap_tmpmap_srcidx;
-static unsigned int pmap_tmpmap_dstidx;
-
 /*
  * pmap_zero_page:		[ INTERFACE ]
  *
@@ -1775,21 +1769,13 @@ void
 pmap_zero_page(paddr_t pa)
 {
 	const int flags = PMAP_WIRED;
+	vaddr_t const dstva = curcpu()->ci_tmpva_dst;
 
-	/* Build the new PME. */
-	const pm_entry_t dst_pme =
-	    pmap_make_pme(pmap_kernel(), pa,
-			  UVM_PROT_READ | UVM_PROT_WRITE, flags);
+	pmap_kenter_pa(dstva, pa, UVM_PROT_READ | UVM_PROT_WRITE, flags);
 
-	/* Set the new PME. */
-	KASSERT(! pme_valid_p(pgmmu_getpme(pmap_tmpmap_dstidx)));
-	pgmmu_setpme(pmap_tmpmap_dstidx, dst_pme);
+	zeropage((void *)dstva);
 
-	/* Zero the page. */
-	zeropage((void *)pmap_tmpmap_dstva);
-
-	/* Invalidate the PME. */
-	pgmmu_setpme(pmap_tmpmap_dstidx, 0);
+	pmap_kremove(dstva, PAGE_SIZE);
 }
 
 /*
@@ -1802,27 +1788,16 @@ void
 pmap_copy_page(paddr_t src, paddr_t dst)
 {
 	const int flags = PMAP_WIRED;
+	vaddr_t const srcva = curcpu()->ci_tmpva_src;
+	vaddr_t const dstva = curcpu()->ci_tmpva_dst;
 
-	/* Build the new PMEs. */
-	const pm_entry_t src_pme =
-	    pmap_make_pme(pmap_kernel(), src,
-			  UVM_PROT_READ, flags);
-	const pm_entry_t dst_pme =
-	    pmap_make_pme(pmap_kernel(), dst,
-			  UVM_PROT_READ | UVM_PROT_WRITE, flags);
+	pmap_kenter_pa(srcva, src, UVM_PROT_READ, flags);
+	pmap_kenter_pa(dstva, dst, UVM_PROT_READ | UVM_PROT_WRITE, flags);
 
-	/* Set the new PMEs. */
-	KASSERT(! pme_valid_p(pgmmu_getpme(pmap_tmpmap_srcidx)));
-	pgmmu_setpme(pmap_tmpmap_srcidx, src_pme);
-	KASSERT(! pme_valid_p(pgmmu_getpme(pmap_tmpmap_dstidx)));
-	pgmmu_setpme(pmap_tmpmap_dstidx, dst_pme);
+	copypage((void *)srcva, (void *)dstva);
 
-	/* Copy the page. */
-	copypage((void *)pmap_tmpmap_srcva, (void *)pmap_tmpmap_dstva);
-
-	/* Invalidate the PMEs. */
-	pgmmu_setpme(pmap_tmpmap_srcidx, 0);
-	pgmmu_setpme(pmap_tmpmap_dstidx, 0);
+	pmap_kremove(srcva, PAGE_SIZE);
+	pmap_kremove(dstva, PAGE_SIZE);
 }
 
 /*
@@ -2354,18 +2329,14 @@ pmap_bootstrap1(paddr_t nextpa, paddr_t reloff __unused)
 	}
 
 	/* pmap temporary map addresses */
-	pmap_tmpmap_srcva = nextva;
+	cpu_info_primary.ci_tmpva_src = nextva;
 	nextva += PAGE_SIZE;
-	sme = pgmmu_getsme0(pmap_tmpmap_srcva);
-	pmap_tmpmap_srcidx = pme_index(sme_pmeg(sme), pmap_tmpmap_srcva);
 
-	pmap_tmpmap_dstva = nextva;
+	cpu_info_primary.ci_tmpva_dst = nextva;
 	nextva += PAGE_SIZE;
-	sme = pgmmu_getsme0(pmap_tmpmap_dstva);
-	pmap_tmpmap_dstidx = pme_index(sme_pmeg(sme), pmap_tmpmap_dstva);
 
 	/* vmmap temporary map address */
-	vmmap = (char *)nextva;
+	cpu_info_primary.ci_tmpva_vmmap = nextva;
 	nextva += PAGE_SIZE;
 
 	/* kernel message buffer */

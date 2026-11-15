@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_bootstrap.c,v 1.14 2026/04/12 03:41:55 thorpej Exp $	*/
+/*	$NetBSD: pmap_bootstrap.c,v 1.15 2026/11/15 15:16:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.14 2026/04/12 03:41:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_bootstrap.c,v 1.15 2026/11/15 15:16:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,6 @@ extern vaddr_t reserve_dumppages(vaddr_t);
  * All those kernel PT submaps that BSD is so fond of
  */
 void	*CADDR1, *CADDR2;
-char	*vmmap;
 
 /*
  *	Bootstrap the system enough to run with virtual memory.
@@ -192,9 +191,9 @@ pmap_bootstrap(paddr_t firstaddr, paddr_t loadaddr)
 
 	va = virtual_avail;
 
-	SYSMAP(void *	,CADDR1	 ,1			)
-	SYSMAP(void *	,CADDR2	 ,1			)
-	SYSMAP(void *	,vmmap	 ,1			)
+	SYSMAP(void *	,CADDR1	 ,1					)
+	SYSMAP(void *	,CADDR2	 ,1					)
+	SYSMAP(vaddr_t	,cpu_info_primary.ci_tmpva_vmmap,1		)
 	SYSMAP(void *	,msgbufaddr ,btoc(m68k_round_page(MSGBUFSIZE))	)
 
 	DCIS();
