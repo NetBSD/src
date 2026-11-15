@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_pages.c,v 1.6.4.1 2024/02/03 11:15:12 martin Exp $	*/
+/*	$NetBSD: i915_gem_pages.c,v 1.6.4.2 2026/11/15 13:03:47 martin Exp $	*/
 
 /*
  * SPDX-License-Identifier: MIT
@@ -7,7 +7,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.6.4.1 2024/02/03 11:15:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_pages.c,v 1.6.4.2 2026/11/15 13:03:47 martin Exp $");
 
 #include "i915_drv.h"
 #include "i915_gem_object.h"
@@ -647,7 +647,8 @@ i915_gem_object_get_dma_address_len(struct drm_i915_gem_object *obj,
 
 	for (seg = 0; seg < map->dm_nsegs; seg++) {
 		if (poff < map->dm_segs[seg].ds_len) {
-			*len = map->dm_segs[seg].ds_len - poff;
+			if (len)
+				*len = map->dm_segs[seg].ds_len - poff;
 			return map->dm_segs[seg].ds_addr + poff;
 		}
 		poff -= map->dm_segs[seg].ds_len;
