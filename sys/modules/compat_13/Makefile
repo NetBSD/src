@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.5 2024/06/17 22:39:36 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2026/11/15 00:11:10 thorpej Exp $
 
 .include <bsd.init.mk>
 
@@ -18,7 +18,7 @@ COMPAT_MACHDEP_SRCS=	compat_13_machdep.c
 .include "../Makefile.assym"
 
 COMPAT_MACHDEP_SRCS+=	compat_13_sigreturn13.s
-COPTS.compat_13_sigreturn13.s+=	-I. -x assembler-with-cpp
+COPTS.compat_13_sigreturn13.s+=	${CPPFLAGS} -I. -x assembler-with-cpp
 .endif
 
 .include "../Makefile.compat"

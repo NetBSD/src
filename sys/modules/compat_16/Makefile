@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2024/06/17 23:23:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.5 2026/11/15 00:11:10 thorpej Exp $
 
 .include <bsd.init.mk>
 
@@ -17,7 +17,7 @@ COMPAT_MACHDEP_SRCS=	compat_16_machdep.c
 .include "../Makefile.assym"
 
 COMPAT_MACHDEP_SRCS+=	compat_16_sigreturn14.s
-COPTS.compat_16_sigreturn14.s+=	-I. -x assembler-with-cpp
+COPTS.compat_16_sigreturn14.s+=	${CPPFLAGS} -I. -x assembler-with-cpp
 .endif
 .if ${MACHINE_CPU} == "powerpc"
 COMPAT_MACHDEP_SRCS+=	sigcode.S
