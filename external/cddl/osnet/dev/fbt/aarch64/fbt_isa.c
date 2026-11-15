@@ -1,4 +1,4 @@
-/*	$NetBSD: fbt_isa.c,v 1.7 2021/03/24 04:46:41 simonb Exp $	*/
+/*	$NetBSD: fbt_isa.c,v 1.7.6.1 2026/11/15 12:24:09 martin Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -151,6 +151,8 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 	if (strncmp(name, "_spl", 4) == 0 ||
 	    strcmp(name, "dosoftints") == 0 ||
 	    strcmp(name, "nanouptime") == 0 ||
+	    strcmp(name, "binuptime") == 0 ||
+	    strncmp(name, "trap_", 5) == 0 ||
 	    strncmp(name, "gtmr_", 5) == 0) {
 		return 0;
 	}
