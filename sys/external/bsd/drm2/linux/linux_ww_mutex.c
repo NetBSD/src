@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ww_mutex.c,v 1.14.4.2 2023/08/01 16:55:03 martin Exp $	*/
+/*	$NetBSD: linux_ww_mutex.c,v 1.14.4.3 2026/11/15 13:35:57 martin Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.14.4.2 2023/08/01 16:55:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ww_mutex.c,v 1.14.4.3 2026/11/15 13:35:57 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -1019,10 +1019,10 @@ ww_mutex_trylock(struct ww_mutex *mutex)
 		KASSERTMSG(((mutex->wwm_state != WW_CTX) ||
 		    (mutex->wwm_u.ctx->wwx_owner != curlwp)),
 		    "locking %p against myself: %p", mutex, curlwp);
-#endif
 		KASSERTMSG(((mutex->wwm_state != WW_WANTOWN) ||
 		    (mutex->wwm_u.ctx->wwx_owner != curlwp)),
 		    "locking %p against myself: %p", mutex, curlwp);
+#endif
 		ret = 0;
 	}
 	mutex_exit(&mutex->wwm_lock);
