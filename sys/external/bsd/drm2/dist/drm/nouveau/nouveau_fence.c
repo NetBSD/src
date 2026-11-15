@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fence.c,v 1.17 2021/12/19 10:49:13 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fence.c,v 1.17.4.1 2026/11/15 12:59:36 martin Exp $	*/
 
 /*
  * Copyright (C) 2007 Ben Skeggs.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.17 2021/12/19 10:49:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fence.c,v 1.17.4.1 2026/11/15 12:59:36 martin Exp $");
 
 #include <linux/atomic.h>
 #include <linux/ktime.h>
@@ -102,7 +102,7 @@ nouveau_fence_context_kill(struct nouveau_fence_chan *fctx, int error)
 	while (!list_empty(&fctx->pending)) {
 		fence = list_entry(fctx->pending.next, typeof(*fence), head);
 
-		if (error)
+		if (error && !dma_fence_is_signaled_locked(&fence->base))
 			dma_fence_set_error(&fence->base, error);
 
 		if (nouveau_fence_signal(fence))
