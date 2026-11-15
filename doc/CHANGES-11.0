@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.0,v 1.1.2.141 2026/07/30 15:23:12 martin Exp $
+# $NetBSD: CHANGES-11.0,v 1.1.2.142 2026/11/15 14:05:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 11.0 branch on 2025-07-30
 until the 11.0 release:
@@ -1024,7 +1024,7 @@ sys/dev/tc/sfb.c				1.90
 
 sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.18
 
-	nouveau(4): PR 59773: fix return value of fence wait.
+	nouveau(4): PR 59772: fix return value of fence wait.
 	[riastradh, ticket #105]
 
 sys/dev/pci/if_rge.c				1.34-1.46
