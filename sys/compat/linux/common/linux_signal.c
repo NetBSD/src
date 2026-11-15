@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_signal.c,v 1.92 2026/09/20 13:43:51 riastradh Exp $	*/
+/*	$NetBSD: linux_signal.c,v 1.93 2026/11/15 22:37:33 christos Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.92 2026/09/20 13:43:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_signal.c,v 1.93 2026/11/15 22:37:33 christos Exp $");
 
 #define COMPAT_LINUX 1
 
@@ -183,7 +183,7 @@ native_to_linux_siginfo(linux_siginfo_t *lsi, const struct _ksiginfo *ksi)
 
 	case SI_TIMER:
 	case SI_QUEUE:
-		lsi->lsi_uid = ksi->_reason._rt._uid;
+		lsi->lsi_pid = ksi->_reason._rt._pid;
 		lsi->lsi_uid = ksi->_reason._rt._uid;
 		lsi->lsi_value.sival_ptr = ksi->_reason._rt._value.sival_ptr;
 		break;
