@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.28 2026/10/31 11:42:18 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.29 2026/11/15 14:42:44 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -1358,4 +1358,74 @@ doc/3RDPARTY					(apply patch)
 	Updated tzdata to version 2026f (using 2026fgtz).
 	[kre, ticket #1408]
 
+external/cddl/osnet/dev/fbt/aarch64/fbt_isa.c	1.9
+
+	dtrace: exclude more symbols which can be called from fbt probe
+	context to avoid crashes/lockups.
+	[rin, ticket #1409]
+
+sys/kern/kern_exec.c				1.536
+sys/kern/kern_fork.c				1.237
+sys/rump/librump/rumpkern/lwproc.c		1.60
+
+	fork, posix_spawn: PR 60962: avoidfix p_pgrp inheritance race.
+	[riastradh, ticket #1410]
+
+sys/external/bsd/drm2/dist/drm/i915/gt/intel_lrc.c 1.9,1.10
+
+	i915: PR 58657: fix execlist submission register indexing.
+	[riastradh, ticket #1411]
+
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.19
+
+	nouveau: PR 58745: work around assertion failure in race
+	with hardware.
+	[riastradh, ticket #1412]
+
+sys/external/bsd/drm2/dist/drm/i915/gem/i915_gem_pages.c 1.8
+
+	i915: PR 60755: fix null pointer deref on Bay Trail CPUs.
+	[riastradh, ticket #1413]
+
+sys/external/bsd/drm2/linux/linux_ww_mutex.c	1.18
+
+	drm: PR 60926: remove a wrong ww_mutex assertion.
+	[riastradh, ticket #1414]
+
+sys/external/bsd/common/include/linux/rcupdate.h 1.9
+
+	drm (i915): PR 60980: fix rcu_update_pointer macro.
+	[riastradh, ticket #1415]
+
+etc/rc.d/network				1.86
+
+	PR 60836: Only configure cloned network devices matching
+	/etc/ifconfig.${cloner}${unit}.
+	[riastradh, ticket #1416]
+
+sys/dev/i2c/i2c.c				1.109
+
+	i2c(4): PR 60913: Avoid leaking kernel heap memory to userland.
+	[riastradh, ticket #1417]
+
+sys/kern/exec_elf.c				1.108,1.109
+sys/sys/exec_elf.h				1.187,1.188
+
+	exec_elf: PR 60901: ignore freedesktop.org dlopen ELF notes.
+	[riastradh, ticket #1418]
+
+sys/arch/x86/x86/efi_machdep.c			1.7,1.8
+
+	x86/efi: PR 60391: avoid kASAN incompatibility.
+	[riastradh, ticket #1419]
+
+sys/external/bsd/drm2/dist/drm/nouveau/nouveau_fence.c 1.18
+
+	nouveau(4): PR 59772: fix return value of fence wait.
+	[riastradh, ticket #1420]
+
+sys/external/bsd/drm2/dist/drm/i915/gt/intel_ggtt.c 1.20
+
+	i915: PR 60907: fix page indexing error in partial views.
+	[riastradh, ticket #1421]
 
