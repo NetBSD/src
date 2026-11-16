@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.128 2026/11/16 20:21:32 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.129 2026/11/16 20:21:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.128 2026/11/16 20:21:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.129 2026/11/16 20:21:39 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,9 +201,17 @@ fss_detach(device_t self, int flags)
 {
 	struct fss_softc *sc = device_private(self);
 
+	/*
+	 * Check whether the instance is still open.  This can't happen
+	 * if we arrive here via fss_close -> config_detach_release
+	 * (with DETACH_FORCE), but it can happen if we arrive here via
+	 * drvctl (without DETACH_FORCE).
+	 */
 	mutex_enter(&sc->sc_slock);
 	if (sc->sc_state != FSS_IDLE ||
 	    (sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != 0) {
+		KASSERTMSG((flags & DETACH_FORCE) == 0, "%s",
+		    device_xname(self));
 		mutex_exit(&sc->sc_slock);
 		return EBUSY;
 	}
@@ -325,14 +333,15 @@ restart:
 
 	KASSERT(sc->sc_state == FSS_IDLE);
 	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
+	sc->sc_flags &= ~mflag;
 	mutex_exit(&sc->sc_slock);
 	cf = device_cfdata(sc->sc_dev);
-	error = config_detach_release(sc->sc_dev, DETACH_QUIET);
-	if (! error)
-		kmem_free(cf, sizeof(*cf));
+	error = config_detach_release(sc->sc_dev, DETACH_QUIET|DETACH_FORCE);
+	KASSERTMSG(error == 0, "error=%d", error);
+	kmem_free(cf, sizeof(*cf));
 	mutex_exit(&fss_device_lock);
 
-	return error;
+	return 0;
 }
 
 void
