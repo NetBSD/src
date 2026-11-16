@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.119 2026/11/16 20:20:06 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.120 2026/11/16 20:20:15 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.119 2026/11/16 20:20:06 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.120 2026/11/16 20:20:15 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -219,6 +219,7 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 		sc = device_private(config_attach_pseudo(cf));
 		if (sc == NULL) {
 			mutex_exit(&fss_device_lock);
+			kmem_free(cf, sizeof(*cf));
 			return ENOMEM;
 		}
 	}
