@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.26 2026/11/16 18:51:21 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.27 2026/11/16 19:19:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.26 2026/11/16 18:51:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.27 2026/11/16 19:19:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,7 +85,7 @@ bus_space_map(bus_space_tag_t t, bus_addr_t bpa, bus_size_t size, int flags,
 		va += PAGE_SIZE;
 		bpa += PAGE_SIZE;
 	}
-	pmap_update(pmap_update());
+	pmap_update(pmap_kernel());
 
 	/*
 	 * All done.
