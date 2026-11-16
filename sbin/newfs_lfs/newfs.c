@@ -1,4 +1,4 @@
-/*	$NetBSD: newfs.c,v 1.30 2015/10/15 06:24:33 dholland Exp $	*/
+/*	$NetBSD: newfs.c,v 1.31 2026/11/16 08:32:32 nia Exp $	*/
 
 /*-
  * Copyright (c) 1989, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1989, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)newfs.c	8.5 (Berkeley) 5/24/95";
 #else
-__RCSID("$NetBSD: newfs.c,v 1.30 2015/10/15 06:24:33 dholland Exp $");
+__RCSID("$NetBSD: newfs.c,v 1.31 2026/11/16 08:32:32 nia Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ char	*disktype;
 int	preen = 0;		/* Coexistence with fsck_lfs */
 
 char	device[MAXPATHLEN];
-char	*progname, *special;
+const char	*progname, *special;
 
 extern long	dev_bsize;		/* device block size */
 
@@ -275,7 +275,9 @@ main(int argc, char **argv)
 	 * If the -N flag isn't specified, open the output file.  If no path
 	 * prefix, try /dev/r%s and then /dev/%s.
 	 */
-	special = argv[0];
+	special = findspecial(argv[0], 0);
+	if (special == NULL)
+		special = argv[0];
 	if (strchr(special, '/') == NULL) {
 		(void)snprintf(device, sizeof(device), "%sr%s", _PATH_DEV,
 		    special);

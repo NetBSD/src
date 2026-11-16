@@ -1,4 +1,4 @@
-/*	$NetBSD: extern.h,v 1.14 2015/10/15 06:24:33 dholland Exp $	*/
+/*	$NetBSD: extern.h,v 1.15 2026/11/16 08:32:32 nia Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -40,5 +40,5 @@ u_int	lfs_log2(u_int);
 int	make_lfs(int, uint, struct dkwedge_info *, int,
     int, int, int, int, int, int, daddr_t, int, int, u_int32_t, int);
 
-extern char	*progname;
-extern char	*special;
+extern const char	*progname;
+extern const char	*special;
