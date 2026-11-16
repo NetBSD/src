@@ -1,4 +1,4 @@
-/*	$NetBSD: fssvar.h,v 1.32 2019/02/20 10:03:25 hannken Exp $	*/
+/*	$NetBSD: fssvar.h,v 1.33 2026/11/16 20:21:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -153,7 +153,7 @@ struct fss_softc {
 #define FSS_CDEV_OPEN	0x40		/* character device open */
 #define FSS_BDEV_OPEN	0x80		/* block device open */
 	int		sc_uflags;	/* User visible flags */
-	struct disk	*sc_dkdev;	/* Generic disk device info */
+	struct disk	sc_dkdev;	/* Generic disk device info */
 	struct mount	*sc_mount;	/* Mount point */
 	char		sc_mntname[MNAMELEN]; /* Mount point */
 	struct timeval	sc_time;	/* Time this snapshot was taken */

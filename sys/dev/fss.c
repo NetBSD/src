@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.124 2026/11/16 20:21:00 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.125 2026/11/16 20:21:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.124 2026/11/16 20:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.125 2026/11/16 20:21:09 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -164,9 +164,8 @@ fss_attach(device_t parent, device_t self, void *aux)
 	cv_init(&sc->sc_work_cv, "fssbs");
 	cv_init(&sc->sc_cache_cv, "cowwait");
 	bufq_alloc(&sc->sc_bufq, "fcfs", 0);
-	sc->sc_dkdev = kmem_zalloc(sizeof(*sc->sc_dkdev), KM_SLEEP);
-	sc->sc_dkdev->dk_info = NULL;
-	disk_init(sc->sc_dkdev, device_xname(self), NULL);
+	sc->sc_dkdev.dk_info = NULL;
+	disk_init(&sc->sc_dkdev, device_xname(self), NULL);
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -200,8 +199,7 @@ fss_detach(device_t self, int flags)
 	cv_destroy(&sc->sc_cache_cv);
 	bufq_drain(sc->sc_bufq);
 	bufq_free(sc->sc_bufq);
-	disk_destroy(sc->sc_dkdev);
-	kmem_free(sc->sc_dkdev, sizeof(*sc->sc_dkdev));
+	disk_destroy(&sc->sc_dkdev);
 
 	return 0;
 }
@@ -605,7 +603,7 @@ fss_softc_alloc(struct fss_softc *sc)
 		return error;
 	}
 
-	disk_attach(sc->sc_dkdev);
+	disk_attach(&sc->sc_dkdev);
 
 	return 0;
 }
@@ -625,7 +623,7 @@ fss_softc_free(struct fss_softc *sc)
 		mutex_exit(&sc->sc_slock);
 		kthread_join(sc->sc_bs_lwp);
 
-		disk_detach(sc->sc_dkdev);
+		disk_detach(&sc->sc_dkdev);
 	}
 
 	if (sc->sc_copied != NULL)
@@ -1389,13 +1387,13 @@ fss_bs_thread(void *arg)
 			mutex_exit(&sc->sc_slock);
 
 			if (is_valid) {
-				disk_busy(sc->sc_dkdev);
+				disk_busy(&sc->sc_dkdev);
 				error = fss_bs_io(sc, FSS_READ, 0,
 				    dbtob(bp->b_blkno), bp->b_bcount,
 				    bp->b_data, &resid);
 				if (error)
 					resid = bp->b_bcount;
-				disk_unbusy(sc->sc_dkdev,
+				disk_unbusy(&sc->sc_dkdev,
 				    (error ? 0 : bp->b_bcount), is_read);
 			} else {
 				error = ENXIO;
@@ -1460,7 +1458,7 @@ fss_bs_thread(void *arg)
 			continue;
 		}
 
-		disk_busy(sc->sc_dkdev);
+		disk_busy(&sc->sc_dkdev);
 
 		/*
 		 * First read from the snapshotted block device unless
@@ -1497,7 +1495,7 @@ fss_bs_thread(void *arg)
 			if (error != 0) {
 				bp->b_resid = bp->b_bcount;
 				bp->b_error = nbp->b_error;
-				disk_unbusy(sc->sc_dkdev, 0, is_read);
+				disk_unbusy(&sc->sc_dkdev, 0, is_read);
 				biodone(bp);
 			}
 			putiobuf(nbp);
@@ -1557,7 +1555,8 @@ fss_bs_thread(void *arg)
 		}
 		mutex_exit(&sc->sc_slock);
 
-		disk_unbusy(sc->sc_dkdev, (error ? 0 : bp->b_bcount), is_read);
+		disk_unbusy(&sc->sc_dkdev, (error ? 0 : bp->b_bcount),
+		    is_read);
 		biodone(bp);
 
 		mutex_enter(&sc->sc_slock);
