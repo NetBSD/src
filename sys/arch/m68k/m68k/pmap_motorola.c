@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.c,v 1.114 2026/11/14 02:43:48 thorpej Exp $        */
+/*	$NetBSD: pmap_motorola.c,v 1.115 2026/11/16 22:56:33 thorpej Exp $        */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -122,7 +122,7 @@
 #include "opt_m68k_arch.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.114 2026/11/14 02:43:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_motorola.c,v 1.115 2026/11/16 22:56:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3143,6 +3143,19 @@ int
 kvtop(void *addr)
 {
 	return (int)vtophys((vaddr_t)addr);
+}
+
+/*
+ * pmap_update:
+ *
+ *	Require that all active physical maps contain no
+ *	incorrect entries NOW, by processing any deferred
+ *	pmap operations.
+ */
+void
+pmap_update(pmap_t pmap __unused)
+{
+	/* this implementation does not defer any operations */
 }
 
 /*

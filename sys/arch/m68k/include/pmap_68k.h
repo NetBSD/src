@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.28 2026/11/15 17:23:57 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.29 2026/11/16 22:56:33 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -538,12 +538,6 @@ void			pmap_percpu_init(struct cpu_info *);
 #endif
 
 #endif /* ! _MODULE */
-
-/*
- * Some pmap(9) API macros should be defined here for module(7).
- * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
- */
-#define	pmap_update(pmap)		__nothing
 
 #endif /* _KERNEL */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.35 2026/05/04 15:30:20 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.36 2026/11/16 22:56:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -41,12 +41,6 @@
 #if !defined(_MODULE)
 void pmap_procwr(struct proc *, vaddr_t, size_t);
 #endif
-
-/*
- * Some pmap(9) API macros should be defined here for module(7).
- * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
- */
-#define	pmap_update(pmap)	__nothing	/* nothing (yet) */
 
 #endif /* _KERNEL */
 

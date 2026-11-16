@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pgmmu.h,v 1.3 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_pgmmu.h,v 1.4 2026/11/16 22:56:32 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -229,12 +229,6 @@ phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 #define	PMAP_BOOTSTRAP_PA_TO_VA(pa)	(pa)
 
 #endif /* _MODULE */
-
-/*
- * Some pmap(9) API macros should be defined here for module(7).
- * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
- */
-#define	pmap_update(pmap)		__nothing
 
 #endif /* _KERNEL */
 

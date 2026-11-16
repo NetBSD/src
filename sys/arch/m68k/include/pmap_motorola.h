@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.66 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.67 2026/11/16 22:56:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -353,12 +353,6 @@ void	pmap_write_text_exit(struct pmap_write_text_context *);
 #endif
 
 #endif /* ! _MODULE */
-
-/*
- * Some pmap(9) API macros should be defined here for module(7).
- * Luckily, all m68k pmap implementations behave this way. (see PR/54869)
- */
-#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
 
 #endif /* _KERNEL */
 

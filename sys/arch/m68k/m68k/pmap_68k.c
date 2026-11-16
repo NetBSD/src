@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.97 2026/11/16 18:51:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.98 2026/11/16 22:56:33 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.97 2026/11/16 18:51:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.98 2026/11/16 22:56:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3240,7 +3240,11 @@ kvtop(void *v)
  *	incorrect entries NOW, by processing any deferred
  *	pmap operations.
  */
-/* call deleted in <machine/pmap.h> */
+void
+pmap_update(pmap_t pmap __unused)
+{
+	/* this implementation does not defer any operations */
+}
 
 /*
  * pmap_activate:		[ INTERFACE ]

@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.135 2026/11/15 15:16:25 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.136 2026/11/16 22:56:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.135 2026/11/15 15:16:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.136 2026/11/16 22:56:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1622,6 +1622,16 @@ pmap_stroll(pmap_t pmap, vaddr_t va, a_tmgr_t **a_tbl, b_tmgr_t **b_tbl,
 	*pte = &((*c_tbl)->ct_dtbl[*pte_idx]);
 
 	return true;
+}
+
+/* pmap_update			INTERFACE
+ **
+ * Process any deferred pmap operations.
+ */
+void
+pmap_update(pmap_t pmap __unused)
+{
+	/* this implementation does not defer any operations */
 }
 
 /* pmap_enter			INTERFACE

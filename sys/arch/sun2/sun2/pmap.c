@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.67 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.68 2026/11/16 22:56:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2026/11/15 15:16:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.68 2026/11/16 22:56:33 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1725,8 +1725,13 @@ pmap_kernel_init(pmap_t pmap)
  */
 
 /*
- * Support functions for vm_page_bootstrap().
+ * Process any deferred pmap operations.
  */
+void
+pmap_update(pmap_t pmap __unused)
+{
+	/* this implementation does not defer any operations */
+}
 
 /*
  * How much virtual space does this kernel have?
