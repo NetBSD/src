@@ -1,4 +1,4 @@
-/* $NetBSD: device.h,v 1.194 2026/05/26 14:50:52 simonb Exp $ */
+/* $NetBSD: device.h,v 1.195 2026/11/16 20:30:07 riastradh Exp $ */
 
 /*
  * Copyright (c) 2021 The NetBSD Foundation, Inc.
@@ -645,7 +645,9 @@ void		devhandle_impl_subclass(struct devhandle_impl *,
 				      devhandle_t *));
 
 device_t	deviter_first(deviter_t *, deviter_flags_t);
+device_t	deviter_first_acquire(deviter_t *, deviter_flags_t);
 void		deviter_init(deviter_t *, deviter_flags_t);
+device_t	deviter_next_acquire(deviter_t *);
 device_t	deviter_next(deviter_t *);
 void		deviter_release(deviter_t *);
 
@@ -658,7 +660,9 @@ void		device_active_deregister(device_t,
 bool		device_is_a(device_t, const char *);
 bool		device_attached_to_iattr(device_t, const char *);
 
+device_t	device_find_by_xname_acquire(const char *);
 device_t	device_find_by_xname(const char *);
+device_t	device_find_by_driver_unit_acquire(const char *, int);
 device_t	device_find_by_driver_unit(const char *, int);
 
 int		device_enumerate_children(device_t,

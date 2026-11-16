@@ -1,4 +1,4 @@
-/* $NetBSD: kern_drvctl.c,v 1.53 2026/01/04 01:32:41 riastradh Exp $ */
+/* $NetBSD: kern_drvctl.c,v 1.54 2026/11/16 20:30:07 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.53 2026/01/04 01:32:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_drvctl.c,v 1.54 2026/11/16 20:30:07 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -263,9 +263,9 @@ detachdevbyname(const char *devname)
 
 	KASSERT(KERNEL_LOCKED_P());
 
-	for (d = deviter_first(&di, DEVITER_F_RW);
+	for (d = deviter_first_acquire(&di, DEVITER_F_RW);
 	     d != NULL;
-	     d = deviter_next(&di)) {
+	     device_release(d), d = deviter_next_acquire(&di)) {
 		if (strcmp(device_xname(d), devname) == 0)
 			break;
 	}
@@ -284,11 +284,12 @@ detachdevbyname(const char *devname)
 	if (device_parent(d) &&
 	    !device_cfattach(device_parent(d))->ca_childdetached) {
 		error = SET_ERROR(ENOTSUP);
+		device_release(d);
 		goto out;
 	}
 #endif
 
-	error = config_detach(d, 0);
+	error = config_detach_release(d, 0);
 out:	deviter_release(&di);
 	return error;
 }

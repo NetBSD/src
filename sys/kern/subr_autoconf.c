@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.321 2026/08/01 20:33:46 thorpej Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.322 2026/11/16 20:30:07 riastradh Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.321 2026/08/01 20:33:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.322 2026/11/16 20:30:07 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1102,11 +1102,14 @@ config_cfdata_detach(cfdata_t cf)
 
 	KERNEL_LOCK(1, NULL);
 
-	for (d = deviter_first(&di, DEVITER_F_RW); d != NULL;
-	     d = deviter_next(&di)) {
-		if (!dev_in_cfdata(d, cf))
+	for (d = deviter_first_acquire(&di, DEVITER_F_RW);
+	     d != NULL;
+	     d = deviter_next_acquire(&di)) {
+		if (!dev_in_cfdata(d, cf)) {
+			device_release(d);
 			continue;
-		if ((error = config_detach(d, 0)) != 0)
+		}
+		if ((error = config_detach_release(d, 0)) != 0)
 			break;
 	}
 	deviter_release(&di);
@@ -2216,7 +2219,8 @@ config_detach_exit(device_t dev)
  * open to run and unwind their stacks.
  *
  * Caller must hold a reference with device_acquire or
- * device_lookup_acquire.
+ * device_lookup_acquire.  The reference is release unconditionally, on
+ * success or failure.
  */
 int
 config_detach_release(device_t dev, int flags)
@@ -2305,9 +2309,13 @@ config_detach_release(device_t dev, int flags)
 	}
 
 	/*
-	 * The device has now been successfully detached.
+	 * The device has now been successfully detached.  Set
+	 * dv_detach_done under alldevs_lock in order to coordinate
+	 * with deviter.
 	 */
+	mutex_enter(&alldevs_lock);
 	dev->dv_detach_done = true;
+	mutex_exit(&alldevs_lock);
 
 	/*
 	 * If .ca_detach didn't commit to detach, then do that for it.
@@ -2466,11 +2474,14 @@ config_detach_children(device_t parent, int flags)
 
 	KASSERT(KERNEL_LOCKED_P());
 
-	for (dv = deviter_first(&di, DEVITER_F_RW); dv != NULL;
-	     dv = deviter_next(&di)) {
-		if (device_parent(dv) != parent)
+	for (dv = deviter_first_acquire(&di, DEVITER_F_RW);
+	     dv != NULL;
+	     dv = deviter_next_acquire(&di)) {
+		if (device_parent(dv) != parent) {
+			device_release(dv);
 			continue;
-		if ((error = config_detach(dv, flags)) != 0)
+		}
+		if ((error = config_detach_release(dv, flags)) != 0)
 			break;
 	}
 	deviter_release(&di);
@@ -3037,19 +3048,24 @@ device_release(device_t dv)
 }
 
 /*
- * device_find_by_xname:
+ * device_find_by_xname_acquire:
  *
- *	Returns the device of the given name or NULL if it doesn't exist.
+ *	Returns the device of the given name or NULL if it doesn't
+ *	exist.  Acquires a reference which the caller must release with
+ *	device_release.
  */
 device_t
-device_find_by_xname(const char *name)
+device_find_by_xname_acquire(const char *name)
 {
 	device_t dv;
 	deviter_t di;
 
-	for (dv = deviter_first(&di, 0); dv != NULL; dv = deviter_next(&di)) {
+	for (dv = deviter_first_acquire(&di, 0);
+	     dv != NULL;
+	     dv = deviter_next_acquire(&di)) {
 		if (strcmp(device_xname(dv), name) == 0)
 			break;
+		device_release(dv);
 	}
 	deviter_release(&di);
 
@@ -3057,10 +3073,55 @@ device_find_by_xname(const char *name)
 }
 
 /*
+ * device_find_by_xname_acquire:
+ *
+ *	Returns the device of the given name or NULL if it doesn't
+ *	exist.  Does not acquire a reference to the device.
+ *
+ *	Caller is responsible for ensuring the device's state is
+ *	stable, either by holding a reference already obtained with
+ *	device_lookup_acquire or by otherwise ensuring the device is
+ *	attached and can't be detached (e.g., holding an open device
+ *	node and ensuring *_detach calls vdevgone).
+ */
+device_t
+device_find_by_xname(const char *name)
+{
+	device_t dv = device_find_by_xname_acquire(name);
+
+	if (dv)
+		device_release(dv);
+	return dv;
+}
+
+/*
+ * device_find_by_driver_unit_acquire:
+ *
+ *	Returns the device of the given driver name and unit or NULL if
+ *	it doesn't exist.  Acquires a reference which the caller must
+ *	release with device_release.
+ */
+device_t
+device_find_by_driver_unit_acquire(const char *name, int unit)
+{
+	struct cfdriver *cd;
+
+	if ((cd = config_cfdriver_lookup(name)) == NULL)
+		return NULL;
+	return device_lookup_acquire(cd, unit);
+}
+
+/*
  * device_find_by_driver_unit:
  *
- *	Returns the device of the given driver name and unit or
- *	NULL if it doesn't exist.
+ *	Returns the device of the given driver name and unit or NULL if
+ *	it doesn't exist.  Does not acquire a reference to the device.
+ *
+ *	Caller is responsible for ensuring the device's state is
+ *	stable, either by holding a reference already obtained with
+ *	device_lookup_acquire or by otherwise ensuring the device is
+ *	attached and can't be detached (e.g., holding an open device
+ *	node and ensuring *_detach calls vdevgone).
  */
 device_t
 device_find_by_driver_unit(const char *name, int unit)
@@ -3886,14 +3947,14 @@ deviter_init(deviter_t *di, deviter_flags_t flags)
 	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
 	case DEVITER_F_LEAVES_FIRST:
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
-			if (!deviter_visits(di, dv))
+			if (!deviter_visits(di, dv) || dv->dv_detach_done)
 				continue;
 			di->di_curdepth = MAX(di->di_curdepth, dv->dv_depth);
 		}
 		break;
 	case DEVITER_F_ROOT_FIRST:
 		TAILQ_FOREACH(dv, &alldevs, dv_list) {
-			if (!deviter_visits(di, dv))
+			if (!deviter_visits(di, dv) || dv->dv_detach_done)
 				continue;
 			di->di_maxdepth = MAX(di->di_maxdepth, dv->dv_depth);
 		}
@@ -3918,11 +3979,21 @@ deviter_reinit(deviter_t *di)
 }
 
 device_t
-deviter_first(deviter_t *di, deviter_flags_t flags)
+deviter_first_acquire(deviter_t *di, deviter_flags_t flags)
 {
 
 	deviter_init(di, flags);
-	return deviter_next(di);
+	return deviter_next_acquire(di);
+}
+
+device_t
+deviter_first(deviter_t *di, deviter_flags_t flags)
+{
+	device_t dv = deviter_first_acquire(di, flags);
+
+	if (dv)
+		device_release(dv);
+	return dv;
 }
 
 static device_t
@@ -3960,21 +4031,25 @@ deviter_next1(deviter_t *di)
 }
 
 device_t
-deviter_next(deviter_t *di)
+deviter_next_acquire(deviter_t *di)
 {
 	device_t dv = NULL;
 
 	mutex_enter(&alldevs_lock);
 	switch (di->di_flags & (DEVITER_F_LEAVES_FIRST|DEVITER_F_ROOT_FIRST)) {
 	case 0:
-		dv = deviter_next1(di);
+		while ((dv = deviter_next1(di)) != NULL) {
+			if (!dv->dv_detach_done)
+				break;
+		}
 		break;
 	case DEVITER_F_LEAVES_FIRST:
 		while (di->di_curdepth >= 0) {
 			if ((dv = deviter_next1(di)) == NULL) {
 				di->di_curdepth--;
 				deviter_reinit(di);
-			} else if (dv->dv_depth == di->di_curdepth)
+			} else if (dv->dv_depth == di->di_curdepth &&
+			    !dv->dv_detach_done)
 				break;
 		}
 		break;
@@ -3983,15 +4058,28 @@ deviter_next(deviter_t *di)
 			if ((dv = deviter_next1(di)) == NULL) {
 				di->di_curdepth++;
 				deviter_reinit(di);
-			} else if (dv->dv_depth == di->di_curdepth)
+			} else if (dv->dv_depth == di->di_curdepth &&
+			    !dv->dv_detach_done)
 				break;
 		}
 		break;
 	default:
 		break;
 	}
+	if (dv)
+		device_acquire(dv);
 	mutex_exit(&alldevs_lock);
 
+	return dv;
+}
+
+device_t
+deviter_next(deviter_t *di)
+{
+	device_t dv = deviter_next_acquire(di);
+
+	if (dv)
+		device_release(dv);
 	return dv;
 }
 
