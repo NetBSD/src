@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.130 2026/11/16 20:21:50 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.131 2026/11/16 20:28:31 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.130 2026/11/16 20:21:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.131 2026/11/16 20:28:31 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,11 +346,6 @@ fss_strategy(struct buf *bp)
 	const bool write = ((bp->b_flags & B_READ) != B_READ);
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(bp->b_dev));
 
-	if (sc == NULL) {
-		bp->b_error = ENXIO;
-		goto done;
-	}
-
 	mutex_enter(&sc->sc_slock);
 
 	if (write || sc->sc_state != FSS_ACTIVE) {
@@ -371,8 +366,7 @@ fss_strategy(struct buf *bp)
 	return;
 
 done:
-	if (sc != NULL)
-		mutex_exit(&sc->sc_slock);
+	mutex_exit(&sc->sc_slock);
 	bp->b_resid = bp->b_bcount;
 	biodone(bp);
 }
@@ -401,9 +395,6 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 #ifndef _LP64
 	struct fss_get50 *fsg50 = (struct fss_get50 *)data;
 #endif
-
-	if (sc == NULL)
-		return ENXIO;
 
 	switch (cmd) {
 	case FSSIOCSET50:
