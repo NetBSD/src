@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.132 2026/11/16 20:29:05 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.133 2026/11/16 20:29:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.132 2026/11/16 20:29:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.133 2026/11/16 20:29:44 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -72,10 +72,13 @@ dev_type_open(fss_cancel);
 dev_type_close(fss_close);
 dev_type_read(fss_read);
 dev_type_write(fss_write);
-dev_type_ioctl(fss_ioctl);
+dev_type_ioctl(fss_ioctl_bdev);
+dev_type_ioctl(fss_ioctl_cdev);
 dev_type_strategy(fss_strategy);
 dev_type_dump(fss_dump);
 dev_type_size(fss_size);
+
+static int fss_ioctl(dev_t, u_long, void *, int, int, struct lwp *);
 
 static void fss_unmount_hook(struct mount *);
 static int fss_copy_on_write(void *, struct buf *, bool);
@@ -84,7 +87,7 @@ static int fss_create_files(struct fss_softc *, struct fss_set *,
     off_t *, struct lwp *);
 static int fss_create_snapshot(struct fss_softc *, struct fss_set *,
     struct lwp *);
-static int fss_delete_snapshot(struct fss_softc *, struct lwp *);
+static int fss_delete_snapshot(struct fss_softc *, int, struct lwp *);
 static int fss_softc_alloc(struct fss_softc *);
 static void fss_softc_free(struct fss_softc *);
 static int fss_read_cluster(struct fss_softc *, u_int32_t);
@@ -107,7 +110,7 @@ const struct bdevsw fss_bdevsw = {
 	.d_cancel = fss_cancel,
 	.d_close = fss_close,
 	.d_strategy = fss_strategy,
-	.d_ioctl = fss_ioctl,
+	.d_ioctl = fss_ioctl_bdev,
 	.d_dump = fss_dump,
 	.d_psize = fss_size,
 	.d_discard = nodiscard,
@@ -120,7 +123,7 @@ const struct cdevsw fss_cdevsw = {
 	.d_close = fss_close,
 	.d_read = fss_read,
 	.d_write = fss_write,
-	.d_ioctl = fss_ioctl,
+	.d_ioctl = fss_ioctl_cdev,
 	.d_stop = nostop,
 	.d_tty = notty,
 	.d_poll = nopoll,
@@ -315,7 +318,7 @@ restart:
 	    (sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0) {
 		sc->sc_uflags &= ~FSS_UNCONFIG_ON_CLOSE;
 		mutex_exit(&sc->sc_slock);
-		error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
+		error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, mode, l);
 		goto restart;
 	}
 	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
@@ -383,8 +386,8 @@ fss_write(dev_t dev, struct uio *uio, int flags)
 	return physio(fss_strategy, NULL, dev, B_WRITE, minphys, uio);
 }
 
-int
-fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+static int
+fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, int mode, struct lwp *l)
 {
 	int error = 0;
 	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
@@ -482,7 +485,7 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		if (error)
 			break;
 
-		error = fss_delete_snapshot(sc, l);
+		error = fss_delete_snapshot(sc, mode, l);
 		mutex_enter(&sc->sc_slock);
 		if (error)
 			fss_error(sc, "Failed to delete snapshot");
@@ -557,6 +560,20 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 	}
 
 	return error;
+}
+
+int
+fss_ioctl_bdev(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+{
+
+	return fss_ioctl(dev, cmd, data, flag, S_IFBLK, l);
+}
+
+int
+fss_ioctl_cdev(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
+{
+
+	return fss_ioctl(dev, cmd, data, flag, S_IFCHR, l);
 }
 
 int
@@ -1172,8 +1189,41 @@ bad:
  * Delete a snapshot.
  */
 static int
-fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
+fss_delete_snapshot(struct fss_softc *sc, int mode, struct lwp *l)
 {
+	devmajor_t maj;
+	int mn = device_unit(sc->sc_dev);
+
+	/*
+	 * We want to revoke all vnodes for this fss instance except
+	 * for the one that is being used to delete the snapshot, so
+	 * that if the instance is subsequently reconfigured, anyone
+	 * who had the fss instance already open won't accidentally mix
+	 * data from the old configuration with data from the new
+	 * configuration.
+	 *
+	 * However, revoking all vnodes for this fss instance entails
+	 * synchronously waiting for all concurrent I/O operations to
+	 * complete.  And, all paths here are _in_ I/O operations
+	 * (ioctl or close).  So that would deadlock.
+	 *
+	 * What we can do, at least, is revoke all raw character device
+	 * vnodes if we hold the block device open, or all block device
+	 * vnodes if we hold the character device open.  Since there can
+	 * be only one open of the block device at any given time, this
+	 */
+	switch (mode & S_IFMT) {
+	case S_IFBLK:
+		maj = cdevsw_lookup_major(&fss_cdevsw);
+		vdevgone(maj, mn, mn, VCHR);
+		break;
+	case S_IFCHR:
+		maj = bdevsw_lookup_major(&fss_bdevsw);
+		vdevgone(maj, mn, mn, VBLK);
+		break;
+	default:
+		__unreachable();
+	}
 
 	mutex_enter(&sc->sc_slock);
 	KASSERTMSG(sc->sc_state == FSS_DESTROYING, "state=%d", sc->sc_state);
