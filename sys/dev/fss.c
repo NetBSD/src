@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.126 2026/11/16 20:21:18 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.127 2026/11/16 20:21:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.126 2026/11/16 20:21:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.127 2026/11/16 20:21:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,13 +240,14 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 		cf->cf_name = fss_cd.cd_name;
 		cf->cf_atname = fss_cd.cd_name;
 		cf->cf_unit = minor(dev);
-		cf->cf_fstate = FSTATE_STAR;
+		cf->cf_fstate = FSTATE_NOTFOUND;
 		dv = config_attach_pseudo_acquire(cf, NULL);
 		if (dv == NULL) {
 			mutex_exit(&fss_device_lock);
 			kmem_free(cf, sizeof(*cf));
 			return ENOMEM;
 		}
+		KASSERT(device_unit(dv) == minor(dev));
 	}
 	sc = device_private(dv);
 	KASSERT(dv == sc->sc_dev);
