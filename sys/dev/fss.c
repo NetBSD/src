@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.118 2026/11/16 20:19:59 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.119 2026/11/16 20:20:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.118 2026/11/16 20:19:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.119 2026/11/16 20:20:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -155,6 +155,7 @@ fss_attach(device_t parent, device_t self, void *aux)
 	struct fss_softc *sc = device_private(self);
 
 	sc->sc_dev = self;
+	sc->sc_state = FSS_IDLE;
 	sc->sc_bdev = NODEV;
 	mutex_init(&sc->sc_slock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&sc->sc_work_cv, "fssbs");
@@ -220,7 +221,6 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 			mutex_exit(&fss_device_lock);
 			return ENOMEM;
 		}
-		sc->sc_state = FSS_IDLE;
 	}
 
 	mutex_enter(&sc->sc_slock);
