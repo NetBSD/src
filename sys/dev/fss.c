@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.116 2026/07/29 17:39:23 hannken Exp $	*/
+/*	$NetBSD: fss.c,v 1.117 2026/11/16 20:19:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.116 2026/07/29 17:39:23 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.117 2026/11/16 20:19:52 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -795,14 +795,14 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	}
 	VOP_UNLOCK(vp2);
 
-	sc->sc_bs_vp = vp2;
-
 	if (vp2->v_type != VREG && vp2->v_type != VCHR) {
-		vrele(vp2);
+		vn_close(vp2, FREAD|FWRITE, l->l_cred);
 		pathbuf_destroy(pb2);
 		return EINVAL;
 	}
 	pathbuf_destroy(pb2);
+
+	sc->sc_bs_vp = vp2;
 
 	if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
 		error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
