@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.96 2026/11/15 17:29:06 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.97 2026/11/16 18:51:21 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.96 2026/11/15 17:29:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.97 2026/11/16 18:51:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4919,6 +4919,7 @@ pmap_test_mod_ref(void)
 
 	/* Enter non-seeded R/W mapping. */
 	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	pmap_update(pmap_kernel());
 
 	mod = pmap_is_modified(pg);
 	ref = pmap_is_referenced(pg);
@@ -4996,6 +4997,7 @@ pmap_test_mod_ref(void)
 
 	/* modify page again */
 	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	pmap_update(pmap_kernel());
 	*loc = 0xaa;
 
 	mod = pmap_is_modified(pg);
@@ -5021,6 +5023,7 @@ pmap_test_mod_ref(void)
 
 	/* modify page again */
 	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_ALL, 0);
+	pmap_update(pmap_kernel());
 	*loc = 0xaa;
 
 	mod = pmap_is_modified(pg);
@@ -5034,6 +5037,7 @@ pmap_test_mod_ref(void)
 
 	/* read-protect VA */
 	pmap_protect(pmap_kernel(), va, va+PAGE_SIZE, UVM_PROT_READ);
+	pmap_update(pmap_kernel());
 
 	mod = pmap_is_modified(pg);
 	ref = pmap_is_referenced(pg);
@@ -5046,6 +5050,7 @@ pmap_test_mod_ref(void)
 
 	/* none-protect VA */
 	pmap_protect(pmap_kernel(), va, va+PAGE_SIZE, UVM_PROT_NONE);
+	pmap_update(pmap_kernel());
 
 	mod = pmap_is_modified(pg);
 	ref = pmap_is_referenced(pg);
@@ -5076,6 +5081,7 @@ pmap_test_mod_ref(void)
 	/* Enter R-seeded R/W mapping. */
 	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_READ|UVM_PROT_WRITE,
 	    UVM_PROT_READ);
+	pmap_update(pmap_kernel());
 
 	mod = pmap_is_modified(pg);
 	ref = pmap_is_referenced(pg);
@@ -5089,6 +5095,7 @@ pmap_test_mod_ref(void)
 	/* Enter W-seeded R/W mapping. */
 	pmap_enter(pmap_kernel(), va, pa, UVM_PROT_READ|UVM_PROT_WRITE,
 	    UVM_PROT_WRITE);
+	pmap_update(pmap_kernel());
 
 	mod = pmap_is_modified(pg);
 	ref = pmap_is_referenced(pg);
@@ -5140,6 +5147,7 @@ pmap_test_mod_ref(void)
 
 	/* all done. */
 	pmap_remove(pmap_kernel(), va, va+PAGE_SIZE);
+	pmap_update(pmap_kernel());
 
 	printf("%s: done\n", __func__);
 }

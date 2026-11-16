@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.119 2025/11/29 19:32:52 thorpej Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.120 2026/11/16 18:51:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.119 2025/11/29 19:32:52 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.120 2026/11/16 18:51:21 thorpej Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -1071,6 +1071,7 @@ iomap(void *vpa, int size)
 		va += PAGE_SIZE;
 		pa += PAGE_SIZE;
 	}
+	pmap_update(pmap_kernel());
 
 	return (void *)kva;
 }
@@ -1090,6 +1091,7 @@ iounmap(void *kva, int size)
 	KASSERT((uint8_t *)kva < extiobase + ptoa(EIOMAPSIZE));
 
 	pmap_kremove(va, size);
+	pmap_update(pmap_kernel());
 
 	vmem_free(extio_arena, va, size);
 }

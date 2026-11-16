@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.34 2026/04/26 10:52:15 thorpej Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.35 2026/11/16 18:51:21 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.34 2026/04/26 10:52:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.35 2026/11/16 18:51:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,7 @@ bus_space_unmap(bus_space_tag_t t, bus_space_handle_t h, bus_size_t size)
 	 * Free the kernel virtual mapping.
 	 */
 	pmap_kremove(va, endva - va);
+	pmap_update(pmap_kernel());
 	uvm_km_free(kernel_map, va, endva - va, UVM_KMF_VAONLY);
 
 	if (extent_free(iomem_ex, bpa, size,

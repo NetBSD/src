@@ -1,4 +1,4 @@
-/*	$NetBSD: amiga_init.c,v 1.142 2026/11/08 07:32:41 tsutsui Exp $	*/
+/*	$NetBSD: amiga_init.c,v 1.143 2026/11/16 18:51:21 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1994 Michael L. Hitch
@@ -39,7 +39,7 @@
 #include "ser.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.142 2026/11/08 07:32:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amiga_init.c,v 1.143 2026/11/16 18:51:21 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -851,6 +851,7 @@ start_c_finish(void)
 			       msgbufpa + i * PAGE_SIZE,
 			       VM_PROT_READ|VM_PROT_WRITE, 0);
 	}
+	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, round_page(MSGBUFSIZE));
 
 	/*
