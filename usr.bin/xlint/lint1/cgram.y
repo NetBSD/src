@@ -1,5 +1,5 @@
 %{
-/* $NetBSD: cgram.y,v 1.540 2026/11/14 15:02:46 rillig Exp $ */
+/* $NetBSD: cgram.y,v 1.541 2026/11/16 23:56:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -35,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: cgram.y,v 1.540 2026/11/14 15:02:46 rillig Exp $");
+__RCSID("$NetBSD: cgram.y,v 1.541 2026/11/16 23:56:10 rillig Exp $");
 #endif
 
 #include <limits.h>
@@ -163,7 +163,7 @@ unconst_tnode(const tnode_t *p)
 
 %}
 
-%expect 110
+%expect 111
 
 %union {
 	val_t	*y_val;
@@ -273,6 +273,7 @@ unconst_tnode(const tnode_t *p)
 %token			T_SIZEOF
 %token			T_BUILTIN_OFFSETOF
 %token			T_TYPEOF
+%token			T_TYPEOF_UNQUAL
 %token			T_EXTENSION
 %token			T_ALIGNAS
 %token			T_ALIGNOF
@@ -1194,6 +1195,15 @@ notype_type_specifier:		/* see C99 6.7.2 */
 |	T_TYPEOF T_LPAREN expression T_RPAREN {	/* GCC extension */
 		$$ = $3 != NULL ? block_dup_type($3->tn_type) : gettyp(INT);
 		$$->t_typeof = true;
+	}
+|	T_TYPEOF_UNQUAL T_LPAREN expression T_RPAREN {	/* GCC extension */
+		if ($3 != NULL) {
+			$$ = block_dup_type($3->tn_type);
+			$$->t_typeof = true;
+			$$->t_const = false;
+			$$->t_volatile = false;
+		} else
+			$$ = gettyp(INT);
 	}
 |	atomic_type_specifier
 |	struct_or_union_specifier {

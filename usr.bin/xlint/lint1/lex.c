@@ -1,4 +1,4 @@
-/* $NetBSD: lex.c,v 1.241 2026/03/28 14:17:06 rillig Exp $ */
+/* $NetBSD: lex.c,v 1.242 2026/11/16 23:56:10 rillig Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: lex.c,v 1.241 2026/03/28 14:17:06 rillig Exp $");
+__RCSID("$NetBSD: lex.c,v 1.242 2026/11/16 23:56:10 rillig Exp $");
 #endif
 
 #include <ctype.h>
@@ -187,6 +187,7 @@ static const struct keyword {
 	kwdef_const(	"true",		NC_TRUE,		23,0,1),
 	kwdef_sclass(	"typedef",	TYPEDEF,		78,0,1),
 	kwdef_token(	"typeof",	T_TYPEOF,		78,1,7),
+	kwdef_token(	"typeof_unqual", T_TYPEOF_UNQUAL,	78,1,7),
 	kwdef_type(	"__uint128_t",	UINT128,		99),
 	kwdef("union",	T_STRUCT_OR_UNION, .u.kw_tspec = UNION,	78,0,1),
 	kwdef_type(	"unsigned",	UNSIGN,			78),
