@@ -1,4 +1,4 @@
-/* $NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $ */
+/* $NetBSD: engine.c,v 1.31 2026/11/16 17:36:40 christos Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-3-Clause
@@ -41,7 +41,7 @@
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/lib/libc/regex/engine.c 368358 2020-12-05 03:16:05Z kevans $");
 #endif
-__RCSID("$NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $");
+__RCSID("$NetBSD: engine.c,v 1.31 2026/11/16 17:36:40 christos Exp $");
 
 #include <stdbool.h>
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $");
 
 #ifdef SNAMES
 #define	stepback sstepback
+#define	prevchar sprevchar
 #define	matcher	smatcher
 #define	walk	swalk
 #define	dissect	sdissect
@@ -65,6 +66,7 @@ __RCSID("$NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $");
 #endif
 #ifdef LNAMES
 #define	stepback lstepback
+#define	prevchar lprevchar
 #define	matcher	lmatcher
 #define	walk	lwalk
 #define	dissect	ldissect
@@ -76,6 +78,7 @@ __RCSID("$NetBSD: engine.c,v 1.30 2024/01/23 15:32:54 christos Exp $");
 #endif
 #ifdef MNAMES
 #define	stepback mstepback
+#define	prevchar mprevchar
 #define	matcher	mmatcher
 #define	walk	mwalk
 #define	dissect	mdissect
@@ -189,6 +192,34 @@ stepback(const char *start, const char *cur, int nchar)
 out:
 #endif
 	return (cur - nchar) > start ? cur - nchar : NULL;
+}
+
+/*
+ * Return the character that ends at cur, without looking before start.
+ * A multibyte character is decoded whole and an invalid byte gives
+ * BADCHAR, so that a walk which starts at cur sees the same previous
+ * character as a walk which reached cur from further left.
+ */
+static wint_t
+prevchar(const char *start, const char *cur)
+{
+#ifdef NLS
+	mbstate_t mbs;
+	wchar_t wc;
+	size_t mbc, clen;
+
+	if (MB_CUR_MAX > 1) {
+		for (mbc = 1; mbc <= MB_CUR_MAX &&
+		    mbc <= (size_t)(cur - start); mbc++) {
+			memset(&mbs, 0, sizeof(mbs));
+			clen = mbrtowc(&wc, cur - mbc, mbc, &mbs);
+			if (clen == mbc || (clen == 0 && mbc == 1))
+				return wc;
+		}
+		return BADCHAR;
+	}
+#endif
+	return (uch)*(cur - 1);
 }
 
 /*
@@ -328,6 +359,11 @@ matcher(struct re_guts *g,
 			if (endp != NULL)
 				break;
 			assert(m->coldp < m->endp);
+			if (m->coldp >= m->endp) {
+				/* never walk past the end of the string */
+				error = REG_NOMATCH;
+				goto done;
+			}
 			m->coldp += XMBRTOWC(NULL, m->coldp,
 			    (size_t)(m->endp - m->coldp), &m->mbs, 0);
 		}
@@ -905,14 +941,8 @@ walk(struct match *m, const char *start, const char *stop, sopno startst,
 	matchp = NULL;
 	if (start == m->offp || (start == m->beginp && !(m->eflags&REG_NOTBOL)))
 		c = OUT;
-	else {
-		/*
-		 * XXX Wrong if the previous character was multi-byte.
-		 * Newline never is (in encodings supported by FreeBSD),
-		 * so this only breaks the ISWORD tests below.
-		 */
-		c = (uch)*(start - 1);
-	}
+	else
+		c = prevchar(m->offp, start);
 	for (;;) {
 		/* next character */
 		lastc = c;
@@ -1258,6 +1288,7 @@ pchar(int ch)
 #endif
 
 #undef	stepback
+#undef	prevchar
 #undef	matcher
 #undef	walk
 #undef	dissect
