@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.131 2026/11/16 20:28:31 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.132 2026/11/16 20:29:05 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.131 2026/11/16 20:28:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.132 2026/11/16 20:29:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -768,9 +768,11 @@ fss_get_mountpoint(const char *path, struct mount **mpp)
 
 	/*
 	 * Lock the vnode so we can read v_vflag & VV_ROOT and v_mount.
-	 * If it is concurrently revoked, fail.
+	 * Since we're not writing anything back, LK_SHARED is enough,
+	 * no need for LK_EXCLUSIVE.  If it is concurrently revoked,
+	 * fail.
 	 */
-	error = vn_lock(vp, LK_EXCLUSIVE);
+	error = vn_lock(vp, LK_SHARED);
 	if (error)
 		goto out;
 	locked = true;
