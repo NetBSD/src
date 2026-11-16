@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1435 2026/11/08 05:14:44 blymn Exp $
+# $NetBSD: mi,v 1.1436 2026/11/16 17:35:20 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.tests					tests-sys-root
@@ -3275,6 +3275,7 @@
 ./usr/tests/lib/libc/regex/data/subtle.in		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/regex/data/word_bound.in		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/regex/data/zero.in			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/regex/h_match			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/regex/h_regex			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/regex/h_regex_att			tests-obsolete		obsolete
 ./usr/tests/lib/libc/regex/t_exhaust			tests-lib-tests		compattestfile,atf
