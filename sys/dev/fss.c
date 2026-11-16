@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.123 2026/11/16 20:20:47 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.124 2026/11/16 20:21:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.123 2026/11/16 20:20:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.124 2026/11/16 20:21:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,6 +95,7 @@ static u_int32_t *fss_bs_indir(struct fss_softc *, u_int32_t);
 static kmutex_t fss_device_lock;	/* Protect all units. */
 static kcondvar_t fss_device_cv;	/* Serialize snapshot creation. */
 static bool fss_creating = false;	/* Currently creating a snapshot. */
+static kmutex_t fss_hook_lock;		/* Protect fss_vfs_hooks. */
 static int fss_num_attached = 0;	/* Number of attached devices. */
 static struct vfs_hooks fss_vfs_hooks = {
 	.vh_unmount = fss_unmount_hook
@@ -139,6 +140,8 @@ fssattach(int num)
 
 	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&fss_device_cv, "snapwait");
+	mutex_init(&fss_hook_lock, MUTEX_DEFAULT, IPL_NONE);
+
 	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
 		aprint_error("%s: unable to register\n", fss_cd.cd_name);
 }
@@ -167,8 +170,10 @@ fss_attach(device_t parent, device_t self, void *aux)
 	if (!pmf_device_register(self, NULL, NULL))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
+	mutex_enter(&fss_hook_lock);
 	if (fss_num_attached++ == 0)
 		vfs_hooks_attach(&fss_vfs_hooks);
+	mutex_exit(&fss_hook_lock);
 }
 
 static int
@@ -184,8 +189,10 @@ fss_detach(device_t self, int flags)
 	}
 	mutex_exit(&sc->sc_slock);
 
+	mutex_enter(&fss_hook_lock);
 	if (--fss_num_attached == 0)
 		vfs_hooks_detach(&fss_vfs_hooks);
+	mutex_exit(&fss_hook_lock);
 
 	pmf_device_deregister(self);
 	mutex_destroy(&sc->sc_slock);
@@ -1575,6 +1582,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 	case MODULE_CMD_INIT:
 		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
 		cv_init(&fss_device_cv, "snapwait");
+		mutex_init(&fss_hook_lock, MUTEX_DEFAULT, IPL_NONE);
 
 		error = devsw_attach(fss_cd.cd_name,
 		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
@@ -1611,6 +1619,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			break;
 		}
 		devsw_detach(&fss_bdevsw, &fss_cdevsw);
+		mutex_destroy(&fss_hook_lock);
 		cv_destroy(&fss_device_cv);
 		mutex_destroy(&fss_device_lock);
 		break;
