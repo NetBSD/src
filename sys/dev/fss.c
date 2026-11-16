@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.127 2026/11/16 20:21:25 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.128 2026/11/16 20:21:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.127 2026/11/16 20:21:25 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.128 2026/11/16 20:21:32 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -68,6 +68,7 @@ __KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.127 2026/11/16 20:21:25 riastradh Exp $");
 #include "ioconf.h"
 
 dev_type_open(fss_open);
+dev_type_open(fss_cancel);
 dev_type_close(fss_close);
 dev_type_read(fss_read);
 dev_type_write(fss_write);
@@ -103,6 +104,7 @@ static struct vfs_hooks fss_vfs_hooks = {
 
 const struct bdevsw fss_bdevsw = {
 	.d_open = fss_open,
+	.d_cancel = fss_cancel,
 	.d_close = fss_close,
 	.d_strategy = fss_strategy,
 	.d_ioctl = fss_ioctl,
@@ -114,6 +116,7 @@ const struct bdevsw fss_bdevsw = {
 
 const struct cdevsw fss_cdevsw = {
 	.d_open = fss_open,
+	.d_cancel = fss_cancel,
 	.d_close = fss_close,
 	.d_read = fss_read,
 	.d_write = fss_write,
@@ -261,6 +264,22 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 
 	device_release(dv);
 
+	return 0;
+}
+
+int
+fss_cancel(dev_t dev, int flags, int mode, struct lwp *l)
+{
+
+	/*
+	 * Nothing to do to cancel in-flight I/O operations like reads
+	 * or writes before we can enter close -- fss(4) has no
+	 * unbounded-time I/O operations, except insofar as the block
+	 * device underlying the file system or the backup store might
+	 * wait indefinitely for physio reads/writes, but we have no
+	 * way to find and cancel the struct buf xfers due to physio.
+	 * (Perhaps we should invent a physio_cancel(dev).)
+	 */
 	return 0;
 }
 
