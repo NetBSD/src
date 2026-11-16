@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.117 2026/11/16 20:19:52 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.118 2026/11/16 20:19:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.117 2026/11/16 20:19:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.118 2026/11/16 20:19:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,8 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 			error = cv_wait_sig(&fss_device_cv, &fss_device_lock);
 			if (error) {
 				mutex_enter(&sc->sc_slock);
-				KASSERT(sc->sc_state == FSS_CREATING);
+				KASSERTMSG(sc->sc_state == FSS_CREATING,
+				    "state=%d", sc->sc_state);
 				sc->sc_state = FSS_IDLE;
 				mutex_exit(&sc->sc_slock);
 				mutex_exit(&fss_device_lock);
@@ -391,10 +392,12 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = fss_create_snapshot(sc, fss, l);
 		mutex_enter(&sc->sc_slock);
 		if (error == 0) {
-			KASSERT(sc->sc_state == FSS_ACTIVE);
+			KASSERTMSG(sc->sc_state == FSS_ACTIVE, "state=%d",
+			    sc->sc_state);
 			sc->sc_uflags = fss->fss_flags;
 		} else {
-			KASSERT(sc->sc_state == FSS_CREATING);
+			KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
+			    sc->sc_state);
 			sc->sc_state = FSS_IDLE;
 		}
 		mutex_exit(&sc->sc_slock);
@@ -849,6 +852,8 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 	if (sc->sc_flags & FSS_PERSISTENT) {
 		fss_softc_alloc(sc);
 		mutex_enter(&sc->sc_slock);
+		KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
+		    sc->sc_state);
 		sc->sc_state = FSS_ACTIVE;
 		mutex_exit(&sc->sc_slock);
 		return 0;
@@ -917,6 +922,8 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 		error = fscow_establish(sc->sc_mount, fss_copy_on_write, sc);
 	if (error == 0) {
 		mutex_enter(&sc->sc_slock);
+		KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
+		    sc->sc_state);
 		sc->sc_state = FSS_ACTIVE;
 		mutex_exit(&sc->sc_slock);
 	}
@@ -955,6 +962,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 {
 
 	mutex_enter(&sc->sc_slock);
+	KASSERTMSG(sc->sc_state == FSS_DESTROYING, "state=%d", sc->sc_state);
 	if ((sc->sc_flags & FSS_PERSISTENT) == 0 &&
 	    (sc->sc_flags & FSS_ERROR) == 0) {
 		mutex_exit(&sc->sc_slock);
@@ -970,6 +978,7 @@ fss_delete_snapshot(struct fss_softc *sc, struct lwp *l)
 		vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 
 	mutex_enter(&sc->sc_slock);
+	KASSERTMSG(sc->sc_state == FSS_DESTROYING, "state=%d", sc->sc_state);
 	sc->sc_state = FSS_IDLE;
 	sc->sc_mount = NULL;
 	sc->sc_bdev = NODEV;
