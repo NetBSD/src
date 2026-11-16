@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.125 2026/11/16 20:21:09 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.126 2026/11/16 20:21:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.125 2026/11/16 20:21:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.126 2026/11/16 20:21:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -134,13 +134,31 @@ static int fss_detach(device_t, int);
 CFATTACH_DECL_NEW(fss, sizeof(struct fss_softc),
     fss_match, fss_attach, fss_detach, NULL);
 
-void
-fssattach(int num)
+static void
+fss_init(void)
 {
 
 	mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
 	cv_init(&fss_device_cv, "snapwait");
 	mutex_init(&fss_hook_lock, MUTEX_DEFAULT, IPL_NONE);
+}
+
+#ifdef _MODULE
+static void
+fss_fini(void)
+{
+
+	mutex_destroy(&fss_hook_lock);
+	cv_destroy(&fss_device_cv);
+	mutex_destroy(&fss_device_lock);
+}
+#endif
+
+void
+fssattach(int num)
+{
+
+	fss_init();
 
 	if (config_cfattach_attach(fss_cd.cd_name, &fss_ca))
 		aprint_error("%s: unable to register\n", fss_cd.cd_name);
@@ -1579,21 +1597,19 @@ fss_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		mutex_init(&fss_device_lock, MUTEX_DEFAULT, IPL_NONE);
-		cv_init(&fss_device_cv, "snapwait");
-		mutex_init(&fss_hook_lock, MUTEX_DEFAULT, IPL_NONE);
+		fss_init();
 
 		error = devsw_attach(fss_cd.cd_name,
 		    &fss_bdevsw, &fss_bmajor, &fss_cdevsw, &fss_cmajor);
 		if (error) {
-			mutex_destroy(&fss_device_lock);
+			fss_fini();
 			break;
 		}
 
 		error = config_cfdriver_attach(&fss_cd);
 		if (error) {
 			devsw_detach(&fss_bdevsw, &fss_cdevsw);
-			mutex_destroy(&fss_device_lock);
+			fss_fini();
 			break;
 		}
 
@@ -1601,7 +1617,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 		if (error) {
 			config_cfdriver_detach(&fss_cd);
 			devsw_detach(&fss_bdevsw, &fss_cdevsw);
-			mutex_destroy(&fss_device_lock);
+			fss_fini();
 			break;
 		}
 
@@ -1618,9 +1634,7 @@ fss_modcmd(modcmd_t cmd, void *arg)
 			break;
 		}
 		devsw_detach(&fss_bdevsw, &fss_cdevsw);
-		mutex_destroy(&fss_hook_lock);
-		cv_destroy(&fss_device_cv);
-		mutex_destroy(&fss_device_lock);
+		fss_fini();
 		break;
 
 	default:
