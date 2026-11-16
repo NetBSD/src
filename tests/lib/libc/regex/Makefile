@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.13 2025/01/02 01:45:19 kre Exp $
+# $NetBSD: Makefile,v 1.14 2026/11/16 17:33:45 christos Exp $
 
 NOMAN=
 
@@ -9,7 +9,7 @@ IMPLEMENTATION?=	-DREGEX_SPENCER -DSKIP_LEFTASSOC
 
 LIBC= 		${NETBSDSRCDIR}/lib/libc
 BINDIR=		${TESTSDIR}
-PROGS?=		h_regex
+PROGS?=		h_regex h_match
 SRCS.h_regex=	main.c split.c debug.c
 CPPFLAGS+=	-I${LIBC}/regex ${IMPLEMENTATION} -DNLS
 

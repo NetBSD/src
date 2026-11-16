@@ -1,4 +1,4 @@
-# $NetBSD: t_regex.sh,v 1.1 2012/08/24 20:24:40 jmmv Exp $
+# $NetBSD: t_regex.sh,v 1.2 2026/11/16 17:33:45 christos Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -49,6 +49,36 @@ create_tc()
 	atf_add_test_case "${name}"
 }
 
+multiback_data() {
+    cat << \_EOF 
+'\\B(a|b)[ab]' 20c3836262 1 case,rc=0 rm_so=3 rm_eo=5 (string is 5 bytes)
+'\\B(a|b)[ab]' 20c3836262 1 icase,rc=0 rm_so=3 rm_eo=5 (string is 5 bytes)
+'\\B[ab]' 20c3836262 1 case,rc=0 rm_so=3 rm_eo=4 (string is 5 bytes)
+'\\B(a|b)b' 20c3836262 1 case edge,rc=0 rm_so=3 rm_eo=5 (string is 5 bytes)
+'(a|b)[ab]' 20c3836262 1 case,rc=0 rm_so=3 rm_eo=5 (string is 5 bytes)
+'\\B(a|b)b' 20626262 1 case,rc=0 rm_so=2 rm_eo=4 (string is 4 bytes)
+'\\B[ab]' 0920c3836262206261 1 case edge,rc=0 rm_so=4 rm_eo=5 (string is 9 bytes)
+_EOF
+}
+
+atf_test_case multiback
+multiback_head()
+{
+	atf_set "descr" "Check that moving to the previous multibyte char works"
+}
+
+multiback_body()
+{
+	# for PR/61017
+	OIFS="$IFS"
+	IFS=","
+	prog="$(atf_get_srcdir)/h_match"
+	multiback_data | while read a b; do
+		eval atf_check -o inline:'"$b"\\n' ${prog} $a
+	done
+	IFS="$OIFS"
+}
+
 atf_init_test_cases()
 {
 	create_tc basic "Checks basic functionality"
@@ -70,4 +100,6 @@ atf_init_test_cases()
 	create_tc zero "Checks NULs"
 	create_tc word_bound "Checks word boundaries"
 	create_tc regress "Checks various past problems and suspected problems"
+
+	atf_add_test_case multiback
 }
