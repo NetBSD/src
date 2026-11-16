@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.120 2026/11/16 20:20:15 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.121 2026/11/16 20:20:24 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.120 2026/11/16 20:20:15 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.121 2026/11/16 20:20:24 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -851,7 +851,8 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 		goto bad;
 
 	if (sc->sc_flags & FSS_PERSISTENT) {
-		fss_softc_alloc(sc);
+		if ((error = fss_softc_alloc(sc)) != 0)
+			goto bad;
 		mutex_enter(&sc->sc_slock);
 		KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
 		    sc->sc_state);
