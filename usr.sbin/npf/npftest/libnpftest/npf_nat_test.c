@@ -33,6 +33,15 @@ static const struct test_case {
 } test_cases[] = {
 
 	/*
+	 * NAT using /32 for IPV4 should be treated as a single IP
+	 * with no mask.
+	 */
+	{
+		LOCAL_IP7,	15000,		REMOTE_IP1,	7000,
+		NPF_NATOUT,	IFNAME_EXT,	PFIL_OUT,
+		RESULT_PASS,	AF_INET,	PUB_IP4,	7000
+	},
+	/*
 	 * Traditional NAPT (outbound NAT):
 	 *	map $ext_if dynamic $local_net -> $pub_ip1
 	 */

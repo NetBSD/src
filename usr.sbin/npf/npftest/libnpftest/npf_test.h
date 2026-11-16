@@ -34,6 +34,7 @@
 #define	LOCAL_IP1	"10.1.1.1"
 #define	LOCAL_IP2	"10.1.1.2"
 #define	LOCAL_IP3	"10.1.1.3"
+#define LOCAL_IP7	"10.1.1.7"
 #define LOCAL_IP60	"192.168.64.60"
 #define LOCAL_IP70	"192.168.64.70"
 
@@ -41,6 +42,7 @@
 #define	PUB_IP1		"192.0.2.1"
 #define	PUB_IP2		"192.0.2.2"
 #define	PUB_IP3		"192.0.2.3"
+#define PUB_IP4		"192.0.2.4"
 
 #define	REMOTE_IP1	"192.0.2.101"
 #define	REMOTE_IP2	"192.0.2.102"

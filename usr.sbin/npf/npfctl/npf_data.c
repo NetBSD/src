@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.34 2025/07/01 19:55:15 joe Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.35 2026/11/16 15:11:42 joe Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -221,7 +221,12 @@ check:
 		max_mask = 128;
 		break;
 	}
-	return *mask <= max_mask;
+	if (*mask == max_mask) {
+		*mask = NPF_NO_NETMASK;
+		return true;
+	}
+
+	return *mask < max_mask;
 }
 
 /*
