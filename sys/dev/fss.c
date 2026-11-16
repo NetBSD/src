@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.122 2026/11/16 20:20:35 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.123 2026/11/16 20:20:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.122 2026/11/16 20:20:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.123 2026/11/16 20:20:47 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,7 +177,8 @@ fss_detach(device_t self, int flags)
 	struct fss_softc *sc = device_private(self);
 
 	mutex_enter(&sc->sc_slock);
-	if (sc->sc_state != FSS_IDLE) {
+	if (sc->sc_state != FSS_IDLE ||
+	    (sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != 0) {
 		mutex_exit(&sc->sc_slock);
 		return EBUSY;
 	}
@@ -203,26 +204,29 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int mflag;
 	cfdata_t cf;
+	device_t dv;
 	struct fss_softc *sc;
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 
 	mutex_enter(&fss_device_lock);
 
-	sc = device_lookup_private(&fss_cd, minor(dev));
-	if (sc == NULL) {
+	dv = device_lookup_acquire(&fss_cd, minor(dev));
+	if (dv == NULL) {
 		cf = kmem_zalloc(sizeof(*cf), KM_SLEEP);
 		cf->cf_name = fss_cd.cd_name;
 		cf->cf_atname = fss_cd.cd_name;
 		cf->cf_unit = minor(dev);
 		cf->cf_fstate = FSTATE_STAR;
-		sc = device_private(config_attach_pseudo(cf));
-		if (sc == NULL) {
+		dv = config_attach_pseudo_acquire(cf, NULL);
+		if (dv == NULL) {
 			mutex_exit(&fss_device_lock);
 			kmem_free(cf, sizeof(*cf));
 			return ENOMEM;
 		}
 	}
+	sc = device_private(dv);
+	KASSERT(dv == sc->sc_dev);
 
 	mutex_enter(&sc->sc_slock);
 
@@ -230,6 +234,8 @@ fss_open(dev_t dev, int flags, int mode, struct lwp *l)
 
 	mutex_exit(&sc->sc_slock);
 	mutex_exit(&fss_device_lock);
+
+	device_release(dv);
 
 	return 0;
 }
@@ -239,10 +245,13 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 {
 	int mflag, error;
 	cfdata_t cf;
-	struct fss_softc *sc = device_lookup_private(&fss_cd, minor(dev));
+	device_t dv = device_lookup_acquire(&fss_cd, minor(dev));
+	struct fss_softc *sc;
 
-	if (sc == NULL)
+	if (dv == NULL)
 		return ENXIO;
+	sc = device_private(dv);
+	KASSERT(dv == sc->sc_dev);
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
 	error = 0;
@@ -254,6 +263,7 @@ restart:
 		sc->sc_flags &= ~mflag;
 		mutex_exit(&sc->sc_slock);
 		mutex_exit(&fss_device_lock);
+		device_release(dv);
 		return 0;
 	}
 	if (sc->sc_state != FSS_IDLE &&
@@ -266,6 +276,7 @@ restart:
 	if (sc->sc_state != FSS_IDLE) {
 		mutex_exit(&sc->sc_slock);
 		mutex_exit(&fss_device_lock);
+		device_release(dv);
 		return error;
 	}
 
@@ -273,7 +284,7 @@ restart:
 	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
 	mutex_exit(&sc->sc_slock);
 	cf = device_cfdata(sc->sc_dev);
-	error = config_detach(sc->sc_dev, DETACH_QUIET);
+	error = config_detach_release(sc->sc_dev, DETACH_QUIET);
 	if (! error)
 		kmem_free(cf, sizeof(*cf));
 	mutex_exit(&fss_device_lock);
