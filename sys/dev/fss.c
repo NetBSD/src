@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.129 2026/11/16 20:21:39 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.130 2026/11/16 20:21:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.129 2026/11/16 20:21:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.130 2026/11/16 20:21:50 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,11 +297,8 @@ fss_close(dev_t dev, int flags, int mode, struct lwp *l)
 	int mflag, error;
 	cfdata_t cf;
 	device_t dv = device_lookup_acquire(&fss_cd, minor(dev));
-	struct fss_softc *sc;
+	struct fss_softc *sc = device_private(dv);
 
-	if (dv == NULL)
-		return ENXIO;
-	sc = device_private(dv);
 	KASSERT(dv == sc->sc_dev);
 
 	mflag = (mode == S_IFCHR ? FSS_CDEV_OPEN : FSS_BDEV_OPEN);
@@ -312,10 +309,7 @@ restart:
 	mutex_enter(&sc->sc_slock);
 	if ((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) != mflag) {
 		sc->sc_flags &= ~mflag;
-		mutex_exit(&sc->sc_slock);
-		mutex_exit(&fss_device_lock);
-		device_release(dv);
-		return 0;
+		goto out;
 	}
 	if (sc->sc_state != FSS_IDLE &&
 	    (sc->sc_uflags & FSS_UNCONFIG_ON_CLOSE) != 0) {
@@ -324,24 +318,26 @@ restart:
 		error = fss_ioctl(dev, FSSIOCCLR, NULL, FWRITE, l);
 		goto restart;
 	}
-	if (sc->sc_state != FSS_IDLE) {
-		mutex_exit(&sc->sc_slock);
-		mutex_exit(&fss_device_lock);
-		device_release(dv);
-		return error;
-	}
-
-	KASSERT(sc->sc_state == FSS_IDLE);
 	KASSERT((sc->sc_flags & (FSS_CDEV_OPEN|FSS_BDEV_OPEN)) == mflag);
 	sc->sc_flags &= ~mflag;
+	if (sc->sc_state != FSS_IDLE)
+		goto out;
 	mutex_exit(&sc->sc_slock);
+
 	cf = device_cfdata(sc->sc_dev);
 	error = config_detach_release(sc->sc_dev, DETACH_QUIET|DETACH_FORCE);
 	KASSERTMSG(error == 0, "error=%d", error);
+	sc = NULL;
+	dv = NULL;
 	kmem_free(cf, sizeof(*cf));
-	mutex_exit(&fss_device_lock);
 
-	return 0;
+out:	if (sc)
+		mutex_exit(&sc->sc_slock);
+	mutex_exit(&fss_device_lock);
+	if (dv)
+		device_release(dv);
+
+	return error;
 }
 
 void
