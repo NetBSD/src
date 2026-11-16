@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.121 2026/11/16 20:20:24 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.122 2026/11/16 20:20:35 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.121 2026/11/16 20:20:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.122 2026/11/16 20:20:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -393,9 +393,18 @@ fss_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = fss_create_snapshot(sc, fss, l);
 		mutex_enter(&sc->sc_slock);
 		if (error == 0) {
-			KASSERTMSG(sc->sc_state == FSS_ACTIVE, "state=%d",
+			/*
+			 * fss_create_snapshot must have transitioned
+			 * away from FSS_CREATING to FSS_ACTIVE on
+			 * success.  However, between that when we
+			 * reacquire the lock, another thread may have
+			 * concurrently transitioned from FSS_ACTIVE on
+			 * to FSS_DESTROYING or FSS_IDLE with
+			 * FSSIOCCLR, so we can only really assert that
+			 * the state is _not_ FSS_CREATING.
+			 */
+			KASSERTMSG(sc->sc_state != FSS_CREATING, "state=%d",
 			    sc->sc_state);
-			sc->sc_uflags = fss->fss_flags;
 		} else {
 			KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
 			    sc->sc_state);
@@ -687,13 +696,83 @@ fss_copy_on_write(void *v, struct buf *bp, bool data_valid)
 }
 
 /*
+ * fss_get_mountpoint(path, &mp)
+ *
+ *	Set mp to the struct mount pointer for the file system mounted
+ *	at path, and busy mp.
+ */
+static int
+fss_get_mountpoint(const char *path, struct mount **mpp)
+{
+	struct vnode *vp = NULL;
+	bool locked = false;
+	struct mount *mp = NULL;
+	int error;
+
+	/*
+	 * Look up the path.  If it's not there, fail.
+	 */
+	error = namei_simple_user(path, NSM_FOLLOW_NOEMULROOT, &vp);
+	if (error)
+		goto out;
+
+	/*
+	 * Lock the vnode so we can read v_vflag & VV_ROOT and v_mount.
+	 * If it is concurrently revoked, fail.
+	 */
+	error = vn_lock(vp, LK_EXCLUSIVE);
+	if (error)
+		goto out;
+	locked = true;
+
+	/*
+	 * If this isn't the root of a file system, fail.
+	 */
+	if ((vp->v_vflag & VV_ROOT) != VV_ROOT) {
+		error = EINVAL;
+		goto out;
+	}
+
+	/*
+	 * Busy the mount point.  If we can't, fail.
+	 */
+	mp = vp->v_mount;
+	error = vfs_busy(mp);
+	if (error) {
+		mp = NULL;
+		goto out;
+	}
+
+	/* Success! */
+	*mpp = mp;
+	mp = NULL;
+
+out:	if (mp)
+		vfs_unbusy(mp);
+	if (vp) {
+		if (locked)
+			VOP_UNLOCK(vp);
+		vrele(vp);
+	}
+	return error;
+}
+
+/*
  * Lookup and open needed files.
  *
  * For file system internal snapshot initializes sc_mntname, sc_mount,
  * sc_bs_vp and sc_time.
  *
  * Otherwise returns dev and size of the underlying block device.
- * Initializes sc_mntname, sc_mount, sc_bdev, sc_bs_vp and sc_mount
+ * Initializes sc_mntname, sc_mount, sc_bdev, sc_bs_vp and sc_mount.
+ *
+ * On success:
+ *
+ * - sc_mount is returned busied and must remain so until the softc
+ *   transitions out of state FSS_CREATING.
+ * - sc_bs_vp is returned:
+ *   . _referenced_ for persistent internal snapshots (vrele),
+ *   . _opened_ otherwise (vn_close).
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
@@ -703,133 +782,207 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 	uint64_t numsec;
 	unsigned int secsize;
 	struct timespec ts;
-	/* distinguish lookup 1 from lookup 2 to reduce mistakes */
-	struct pathbuf *pb2;
-	struct vnode *vp, *vp2;
+	struct vnode *bstore_vp = NULL, *block_vp = NULL;
+	bool bstore_locked = false, bstore_open = false;
+	struct mount *mp = NULL;
+	enum vtype bstore_type;
 
 	/*
 	 * Get the mounted file system.
 	 */
+	error = fss_get_mountpoint(fss->fss_mount, &mp);
+	if (error)
+		goto out;
+	memcpy(sc->sc_mntname, mp->mnt_stat.f_mntonname, MNAMELEN);
 
-	error = namei_simple_user(fss->fss_mount,
-				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error != 0)
-		return error;
+	/*
+	 * Get the block device the file system is mounted from and its
+	 * size.
+	 */
+	error = spec_node_lookup_by_mount(mp, &block_vp);
+	if (error)
+		goto out;
+	sc->sc_bdev = block_vp->v_rdev;
 
-	if ((vp->v_vflag & VV_ROOT) != VV_ROOT) {
-		vrele(vp);
-		return EINVAL;
+	error = getdisksize(block_vp, &numsec, &secsize);
+	if (error)
+		goto out;
+
+	vrele(block_vp);
+	block_vp = NULL;
+
+	*bsize = (off_t)numsec*secsize;
+
+	/*
+	 * Get the backing store.
+	 */
+	error = namei_simple_user(fss->fss_bstore, NSM_FOLLOW_NOEMULROOT,
+	    &bstore_vp);
+	if (error)
+		goto out;
+
+	/*
+	 * The backing store must be a regular file or a raw character
+	 * device.  If not, fail.
+	 */
+	bstore_type = bstore_vp->v_type;
+	if (bstore_type != VREG && bstore_type != VCHR) {
+		error = EINVAL;
+		goto out;
 	}
 
-	sc->sc_mount = vp->v_mount;
-	memcpy(sc->sc_mntname, sc->sc_mount->mnt_stat.f_mntonname, MNAMELEN);
-
-	vrele(vp);
+	/*
+	 * Lock the backing store so we can read its mount point and
+	 * open it.
+	 */
+	error = vn_lock(bstore_vp, LK_EXCLUSIVE);
+	if (error)
+		goto out;
+	bstore_locked = true;
 
 	/*
 	 * Check for file system internal snapshot.
 	 */
-
-	error = namei_simple_user(fss->fss_bstore,
-				NSM_FOLLOW_NOEMULROOT, &vp);
-	if (error != 0)
-		return error;
-
-	if (vp->v_type == VREG && vp->v_mount == sc->sc_mount) {
-		sc->sc_flags |= FSS_PERSISTENT;
-		sc->sc_bs_vp = vp;
-
-		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
+	if (bstore_type == VREG && bstore_vp->v_mount == mp) {
+		fsbsize = mp->mnt_stat.f_iosize;
 		bits = sizeof(sc->sc_bs_bshift)*NBBY;
 		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < bits;
 		    sc->sc_bs_bshift++)
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
-		if (sc->sc_bs_bshift >= bits)
-			return EINVAL;
+		if (sc->sc_bs_bshift >= bits) {
+			error = EINVAL;
+			goto out;
+		}
 
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
 		sc->sc_clshift = 0;
 
 		if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
+			VOP_UNLOCK(bstore_vp);
+			bstore_locked = false;
+
 			error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
 			if (error)
-				return error;
+				goto out;
+
+			error = vn_lock(bstore_vp, LK_EXCLUSIVE);
+			if (error)
+				goto out;
+			bstore_locked = true;
 		}
-		error = vn_lock(vp, LK_EXCLUSIVE);
-		if (error != 0)
-			return error;
-		error = VFS_SNAPSHOT(sc->sc_mount, sc->sc_bs_vp, &ts);
-		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
 
-		VOP_UNLOCK(sc->sc_bs_vp);
-
-		return error;
-	}
-	vrele(vp);
-
-	/*
-	 * Get the block device it is mounted on and its size.
-	 */
-
-	error = spec_node_lookup_by_mount(sc->sc_mount, &vp);
-	if (error)
-		return error;
-	sc->sc_bdev = vp->v_rdev;
-
-	error = getdisksize(vp, &numsec, &secsize);
-	vrele(vp);
-	if (error)
-		return error;
-
-	*bsize = (off_t)numsec*secsize;
-
-	/*
-	 * Get the backing store
-	 */
-
-	error = pathbuf_copyin(fss->fss_bstore, &pb2);
-	if (error) {
- 		return error;
-	}
-	error = vn_open(NULL, pb2, 0, FREAD|FWRITE, 0, &vp2, NULL, NULL);
-	if (error != 0) {
-		pathbuf_destroy(pb2);
-		return error;
-	}
-	VOP_UNLOCK(vp2);
-
-	if (vp2->v_type != VREG && vp2->v_type != VCHR) {
-		vn_close(vp2, FREAD|FWRITE, l->l_cred);
-		pathbuf_destroy(pb2);
-		return EINVAL;
-	}
-	pathbuf_destroy(pb2);
-
-	sc->sc_bs_vp = vp2;
-
-	if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
-		error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
+		error = VFS_SNAPSHOT(mp, bstore_vp, &ts);
 		if (error)
-			return error;
+			goto out;
+
+		TIMESPEC_TO_TIMEVAL(&sc->sc_time, &ts);
+		VOP_UNLOCK(bstore_vp);
+		bstore_locked = false;
+
+		/*
+		 * Success!  Record the resources in the softc.
+		 */
+		sc->sc_mount = mp;
+		mp = NULL;
+		sc->sc_flags |= FSS_PERSISTENT;
+		KASSERT(!bstore_open);
+		KASSERT(!bstore_locked);
+		sc->sc_bs_vp = bstore_vp;
+		bstore_vp = NULL;
+		error = 0;
+
+		goto out;
 	}
-	if (sc->sc_bs_vp->v_type == VREG) {
-		fsbsize = sc->sc_bs_vp->v_mount->mnt_stat.f_iosize;
-		if (fsbsize & (fsbsize-1))	/* No power of two */
-			return EINVAL;
+
+	/*
+	 * Verify the caller has access, open the backing store, and
+	 * take a reference for vn_close.
+	 *
+	 * XXX Can't use vn_open because we already looked up the
+	 * vnode, so open-code the relevant parts of it.
+	 */
+	error = vn_openchk(bstore_vp, l->l_cred, FREAD|FWRITE);
+	if (error)
+		goto out;
+	error = VOP_OPEN(bstore_vp, FREAD|FWRITE, l->l_cred);
+	if (error)
+		goto out;
+	vref(bstore_vp);
+	mutex_enter(bstore_vp->v_interlock);
+	bstore_vp->v_writecount++;
+	mutex_exit(bstore_vp->v_interlock);
+	bstore_open = true;
+
+	/*
+	 * Initialize sc_bs_bshift and sc_bs_bmask from the backing
+	 * store.
+	 */
+	switch (bstore_type) {
+	case VREG:
+		fsbsize = bstore_vp->v_mount->mnt_stat.f_iosize;
+		if (fsbsize & (fsbsize-1)) {	/* No power of two */
+			error = EINVAL;
+			goto out;
+		}
 		for (sc->sc_bs_bshift = 1; sc->sc_bs_bshift < 32;
 		    sc->sc_bs_bshift++)
 			if (FSS_FSBSIZE(sc) == fsbsize)
 				break;
-		if (sc->sc_bs_bshift >= 32)
-			return EINVAL;
+		if (sc->sc_bs_bshift >= 32) {
+			error = EINVAL;
+			goto out;
+		}
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
-	} else {
+		break;
+	case VCHR:
 		sc->sc_bs_bshift = DEV_BSHIFT;
 		sc->sc_bs_bmask = FSS_FSBSIZE(sc)-1;
+		break;
+	default:
+		__unreachable();
 	}
 
-	return 0;
+	/*
+	 * Backing store is valid and open, and we have retrieved all
+	 * the parameters we need from it.  Unlock it.
+	 */
+	VOP_UNLOCK(bstore_vp);
+	bstore_locked = false;
+
+	/*
+	 * If requested, unlink the backing store now that we have
+	 * opened it.
+	 */
+	if ((fss->fss_flags & FSS_UNLINK_ON_CREATE) != 0) {
+		error = do_sys_unlink(fss->fss_bstore, UIO_USERSPACE);
+		if (error)
+			goto out;
+	}
+
+	/*
+	 * Success!  Record the resources in the softc.
+	 */
+	sc->sc_mount = mp;
+	mp = NULL;
+	KASSERT(bstore_open);
+	KASSERT(!bstore_locked);
+	sc->sc_bs_vp = bstore_vp;
+	bstore_vp = NULL;
+	error = 0;
+
+out:	if (bstore_vp) {
+		if (bstore_locked)
+			VOP_UNLOCK(bstore_vp);
+		if (bstore_open)
+			vn_close(bstore_vp, FREAD|FWRITE, l->l_cred);
+		vrele(bstore_vp);
+	}
+	if (block_vp)
+		vrele(block_vp);
+	if (mp)
+		vfs_unbusy(mp);
+	return error;
 }
 
 /*
@@ -857,6 +1010,8 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 		KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
 		    sc->sc_state);
 		sc->sc_state = FSS_ACTIVE;
+		sc->sc_uflags = fss->fss_flags;
+		vfs_unbusy(sc->sc_mount);
 		mutex_exit(&sc->sc_slock);
 		return 0;
 	}
@@ -927,6 +1082,8 @@ fss_create_snapshot(struct fss_softc *sc, struct fss_set *fss, struct lwp *l)
 		KASSERTMSG(sc->sc_state == FSS_CREATING, "state=%d",
 		    sc->sc_state);
 		sc->sc_state = FSS_ACTIVE;
+		sc->sc_uflags = fss->fss_flags;
+		vfs_unbusy(sc->sc_mount);
 		mutex_exit(&sc->sc_slock);
 	}
 
@@ -952,6 +1109,9 @@ bad:
 			vn_close(sc->sc_bs_vp, FREAD|FWRITE, l->l_cred);
 	}
 	sc->sc_bs_vp = NULL;
+	if (sc->sc_mount != NULL)
+		vfs_unbusy(sc->sc_mount);
+	sc->sc_mount = NULL;
 
 	return error;
 }
