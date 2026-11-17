@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.23 2026/11/17 00:03:57 kre Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.24 2026/11/17 09:22:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.23 2026/11/17 00:03:57 kre Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.24 2026/11/17 09:22:59 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -113,6 +113,10 @@ __RCSID("$NetBSD: strfmon.c,v 1.23 2026/11/17 00:03:57 kre Exp $");
 	memcpy(bufend, thousands_sep, thousands_sep_size);	\
 	groups++;						\
 } while (0)
+
+#define	RANGE_CHECK(v, op, n)					\
+	((*(const unsigned char *)(v) op (n)) ||		\
+	    (((*(const unsigned char *)(v)) & 0x80) != 0))
 
 static void __setup_vars(int, char *, char *, char *, const char **,
     struct lconv *);
@@ -760,9 +764,9 @@ __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
 	/* Set default values for unspecified/invalid information. */
 	if (*cs_precedes != 0)
 		*cs_precedes = 1;
-	if (*sep_by_space > 2 || (int)*sep_by_space < 0)
+	if (RANGE_CHECK(sep_by_space, >, 2))
 		*sep_by_space = 0;
-	if (*sign_posn > 4 || (int)*sign_posn < 0)
+	if (RANGE_CHECK(sign_posn, >, 4))
 		*sign_posn = 1;
 }
 
@@ -864,15 +868,16 @@ __count_grps(int size, char *grouping)
 {
 	int	seps = 0;
 
-	if (*grouping == CHAR_MAX || (int)*grouping <= 0) /* no grouping ? */
+	if (*grouping == CHAR_MAX ||		/* no grouping ? */
+	    RANGE_CHECK(grouping, <=, 0))
 		return 0;
 
-	while (size > (int)*grouping) {
+	while (RANGE_CHECK(grouping, < , size)) {
 		seps++;
 		size -= (int)(unsigned char)*grouping++;
 
 		/* no more grouping ? */
-		if (*grouping == CHAR_MAX || (int)*grouping < 0)
+		if (RANGE_CHECK(grouping, ==, CHAR_MAX))
 			break;
 
 		/* remainder grouping with same value ? */
@@ -1029,7 +1034,7 @@ __format_grouped_double(double value, int *flags, int *usedp, int left_prec,
 			grouping++;
 
 			/* no more grouping ? */
-			if (*grouping == CHAR_MAX || (int)*grouping < 0)
+			if (RANGE_CHECK(grouping, ==, CHAR_MAX))
 				break;
 
 			/* rest grouping with same value ? */
