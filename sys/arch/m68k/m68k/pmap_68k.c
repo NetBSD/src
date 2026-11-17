@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.98 2026/11/16 22:56:33 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.99 2026/11/17 07:56:46 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.98 2026/11/16 22:56:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.99 2026/11/17 07:56:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -856,26 +856,29 @@ pmap_pv_free(struct pv_entry *pv)
  * do it in a batch with any locks released.  So, we have this around
  * to collect the garbage, as needed.
  */
-struct pmap_completion {
-	struct pmap_ptpage_list pc_ptpages;
-	struct pmap_pv_list pc_pvlist;
-};
+static inline void
+pmap_garbage_init(struct pmap_garbage *g)
+{
+	TAILQ_INIT(&g->g_ptpages);
+	LIST_INIT(&g->g_pvlist);
+}
 
 static inline void
-pmap_completion_init(struct pmap_completion *pc)
+pmap_garbage_transfer(struct pmap_garbage *to, struct pmap_garbage *from)
 {
-	TAILQ_INIT(&pc->pc_ptpages);
-	LIST_INIT(&pc->pc_pvlist);
+	TAILQ_INIT(&to->g_ptpages);
+	TAILQ_CONCAT(&to->g_ptpages, &from->g_ptpages, ptp_list);
+	LIST_MOVE(&from->g_pvlist, &to->g_pvlist, pv_pmlist);
 }
 
 static void
-pmap_completion_fini(struct pmap_completion *pc)
+pmap_garbage_collect(struct pmap_garbage *g)
 {
 	struct pmap_ptpage *ptp;
 	struct pv_entry *pv;
 
-	while ((ptp = TAILQ_FIRST(&pc->pc_ptpages)) != NULL) {
-		TAILQ_REMOVE(&pc->pc_ptpages, ptp, ptp_list);
+	while ((ptp = TAILQ_FIRST(&g->g_ptpages)) != NULL) {
+		TAILQ_REMOVE(&g->g_ptpages, ptp, ptp_list);
 		/*
 		 * Can't assert ptp_freecnt here; it won't match up
 		 * in the pmap_remove_all() case.
@@ -886,7 +889,7 @@ pmap_completion_fini(struct pmap_completion *pc)
 		pmap_ptpage_free(ptp);
 	}
 
-	while ((pv = LIST_FIRST(&pc->pc_pvlist)) != NULL) {
+	while ((pv = LIST_FIRST(&g->g_pvlist)) != NULL) {
 		LIST_REMOVE(pv, pv_pmlist);
 		pmap_pv_free(pv);
 	}
@@ -1320,14 +1323,11 @@ static const rb_tree_ops_t pmap_table_rb_ops = {
 };
 
 static struct pmap_table *
-pmap_table_alloc(pmap_t pmap, bool segtab, bool nowait,
-    struct pmap_completion *pc)
+pmap_table_alloc(pmap_t pmap, bool segtab, bool nowait)
 {
 	struct pmap_ptpage_list *pmlist = &pmap->pm_ptpages[segtab];
 	struct pmap_ptpage *ptp, *newptp = NULL;
 	struct pmap_table *pt;
-
-	KASSERT(pc != NULL);
 
  try_again:
 	if ((ptp = TAILQ_FIRST(pmlist)) == NULL || ptp->ptp_freecnt == 0) {
@@ -1356,7 +1356,8 @@ pmap_table_alloc(pmap_t pmap, bool segtab, bool nowait,
 	}
 	if (__predict_false(newptp != NULL && ptp != newptp)) {
 		/* Not using newly-allocated PT page; free it back. */
-		TAILQ_INSERT_TAIL(&pc->pc_ptpages, newptp, ptp_list);
+		TAILQ_INSERT_TAIL(&pmap->pm_garbage.g_ptpages, newptp,
+				  ptp_list);
 	}
 	pt = LIST_FIRST(&ptp->ptp_freelist);
 	KASSERT(pt != NULL);
@@ -1374,8 +1375,7 @@ pmap_table_alloc(pmap_t pmap, bool segtab, bool nowait,
 }
 
 static void
-pmap_table_free(pmap_t pmap, struct pmap_table *pt,
-		struct pmap_completion *pc)
+pmap_table_free(pmap_t pmap, struct pmap_table *pt, struct pmap_garbage *g)
 {
 	struct pmap_ptpage *ptp = pt->pt_ptpage;
 	struct pmap_ptpage_list *pmlist = &pmap->pm_ptpages[ptp->ptp_segtab];
@@ -1393,7 +1393,7 @@ pmap_table_free(pmap_t pmap, struct pmap_table *pt,
 	 */
 	if (ptp->ptp_freecnt == pmap_ptpage_table_counts[ptp->ptp_segtab]) {
 		TAILQ_REMOVE(pmlist, ptp, ptp_list);
-		TAILQ_INSERT_TAIL(&pc->pc_ptpages, ptp, ptp_list);
+		TAILQ_INSERT_TAIL(&g->g_ptpages, ptp, ptp_list);
 	}
 	/*
 	 * If the PT page now has exactly one free table, then
@@ -1456,7 +1456,7 @@ pmap_table_retain(struct pmap_table *pt)
  */
 static __noinline void
 pmap_table_release_slow(pmap_t pmap, struct pmap_table *pt,
-			struct pmap_completion *pc)
+			struct pmap_garbage *g)
 {
 	KASSERT(pt != NULL);
 	KASSERT(pt->pt_holdcnt != 0);
@@ -1471,7 +1471,7 @@ pmap_table_release_slow(pmap_t pmap, struct pmap_table *pt,
 	 * Going to zero is unexpected in this case, so blow up
 	 * if it happens.
 	 */
-	KASSERT(pc != NULL);
+	KASSERT(g != NULL);
 	if (__predict_true(pt == pmap->pm_pt_cache)) {
 		pmap->pm_pt_cache = NULL;
 	}
@@ -1482,24 +1482,24 @@ pmap_table_release_slow(pmap_t pmap, struct pmap_table *pt,
 		 */
 		pte_store(&pt->pt_st->pt_entries[pt->pt_stidx], 0);
 		rb_tree_remove_node(&pmap->pm_tables, pt);
-		pmap_table_release_slow(pmap, pt->pt_st, pc);
+		pmap_table_release_slow(pmap, pt->pt_st, g);
 		pt->pt_st = NULL;
 	} else if (pt == pmap->pm_lev1map) {
 		pmap_set_lev1map(pmap, NULL, null_segtab_pa);
 	}
-	pmap_table_free(pmap, pt, pc);
+	pmap_table_free(pmap, pt, g);
 }
 
 static inline void
 pmap_table_release(pmap_t pmap, struct pmap_table *pt,
-		   struct pmap_completion *pc)
+		   struct pmap_garbage *g)
 {
 	if (__predict_true(pt != NULL)) {
 		if (__predict_true(pt->pt_holdcnt > 1)) {
 			pt->pt_holdcnt--;
 			return;
 		}
-		pmap_table_release_slow(pmap, pt, pc);
+		pmap_table_release_slow(pmap, pt, g);
 	}
 }
 
@@ -1537,7 +1537,7 @@ pmap_table_lookup(pmap_t pmap, unsigned int segnum, bool segtab)
  */
 static struct pmap_table *
 pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
-    unsigned int segnum, bool segtab, bool nowait, struct pmap_completion *pc)
+    unsigned int segnum, bool segtab, bool nowait)
 {
 	struct pmap_table *t2, *ret_t;
 
@@ -1559,10 +1559,10 @@ pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
 
 	/* Allocate the new table. */
 	PMAP_CRIT_EXIT();
-	t2 = pmap_table_alloc(pmap, segtab, nowait, pc);
+	t2 = pmap_table_alloc(pmap, segtab, nowait);
 	PMAP_CRIT_ENTER();
 	if (__predict_false(t2 == NULL)) {
-		pmap_table_release(pmap, t1, pc);
+		pmap_table_release(pmap, t1, &pmap->pm_garbage);
 		return NULL;
 	}
 	t2->pt_key = pmap_table_make_key(segnum, segtab);
@@ -1582,7 +1582,7 @@ pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
 		 * a retain count on it.
 		 */
 		pmap_table_retain(ret_t);
-		pmap_table_release(pmap, t2, pc);
+		pmap_table_release(pmap, t2, &pmap->pm_garbage);
 		pmap_table_release(pmap, t1, NULL);
 		return ret_t;
 	}
@@ -1677,8 +1677,7 @@ pmap_pte_lookup(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt)
  *	(pmap_enter(), basically), should be aware of this.
  */
 static pt_entry_t *
-pmap_pte_alloc(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt,
-    bool nowait, struct pmap_completion *pc)
+pmap_pte_alloc(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt, bool nowait)
 {
 	struct pmap_table *st, *pt;
 	pt_entry_t *ptep;
@@ -1702,7 +1701,7 @@ pmap_pte_alloc(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt,
 		 * a segment table.
 		 */
 		PMAP_CRIT_EXIT();
-		st = pmap_table_alloc(pmap, true/*segtab*/, nowait, pc);
+		st = pmap_table_alloc(pmap, true/*segtab*/, nowait);
 		PMAP_CRIT_ENTER();
 		if (__predict_false(st == NULL)) {
 			return NULL;
@@ -1711,7 +1710,7 @@ pmap_pte_alloc(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt,
 		/* Re-validate that we still need the segment table. */
 		if (__predict_false(pmap->pm_lev1map != NULL)) {
 			/* Raced and lost. */
-			pmap_table_release(pmap, st, pc);
+			pmap_table_release(pmap, st, &pmap->pm_garbage);
 			st = pmap->pm_lev1map;
 			pmap_table_retain(st);
 		} else {
@@ -1729,18 +1728,18 @@ pmap_pte_alloc(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt,
 		/* Get the inner segment table for this virtual address. */
 		struct pmap_table * const st1 = st;
 		st = pmap_table_insert(pmap, st1, pmap_st1_index(va),
-		    pmap_st1_index(va), true/*segtab*/, nowait, pc);
+		    pmap_st1_index(va), true/*segtab*/, nowait);
 		if (__predict_false(st == NULL)) {
-			pmap_table_release(pmap, st1, pc);
+			pmap_table_release(pmap, st1, &pmap->pm_garbage);
 			return NULL;
 		}
 	}
 
 	/* We can now allocate and insert the leaf page table. */
 	pt = pmap_table_insert(pmap, st, pmap_st_index(va), pmap_segnum(va),
-	    false/*segtab*/, nowait, pc);
+	    false/*segtab*/, nowait);
 	if (__predict_false(pt == NULL)) {
-		pmap_table_release(pmap, st, pc);
+		pmap_table_release(pmap, st, &pmap->pm_garbage);
 		return NULL;
 	}
 
@@ -2028,7 +2027,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
  */
 static void
 pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
-    struct pmap_completion *pc)
+    struct pmap_garbage *g)
 {
 	struct pv_entry **pvp, *pv;
 	pt_entry_t *ptep, opte, npte;
@@ -2049,8 +2048,8 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
 	VM_MDPAGE_SETPVP(pvp, pv->pv_next);
 	LIST_REMOVE(pv, pv_pmlist);
 
-	KASSERT(pc != NULL);
-	LIST_INSERT_HEAD(&pc->pc_pvlist, pv, pv_pmlist);
+	KASSERT(g != NULL);
+	LIST_INSERT_HEAD(&g->g_pvlist, pv, pv_pmlist);
 
 #if MMU_CONFIG_HP_CLASS
 	if (MMU_IS_HP_CLASS) {
@@ -2199,6 +2198,8 @@ pmap_pinit(pmap_t pmap, paddr_t lev1pa)
 	TAILQ_INIT(&pmap->pm_ptpages[1]);
 	LIST_INIT(&pmap->pm_pvlist);
 
+	pmap_garbage_init(&pmap->pm_garbage);
+
 	pmap->pm_refcnt = 1;
 }
 
@@ -2283,6 +2284,10 @@ pmap_destroy(pmap_t pmap)
 	KASSERT(pmap->pm_lev1map == NULL);
 	KASSERT(pmap->pm_lev1pa == null_segtab_pa);
 
+	/* ...and all the garbage has been collected. */
+	KASSERT(TAILQ_EMPTY(&pmap->pm_garbage.g_ptpages));
+	KASSERT(LIST_EMPTY(&pmap->pm_garbage.g_pvlist));
+
 	pmap_free(pmap);
 }
 
@@ -2320,7 +2325,7 @@ pmap_reference(pmap_t pmap)
 static void
 pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
     struct pmap_table *pt, struct vm_page *pg,
-    int flags, struct pmap_completion *pc)
+    int flags, struct pmap_garbage *g)
 {
 	KASSERT(pt != NULL || pmap == pmap_kernel());
 	KASSERT(ptep != NULL);
@@ -2367,7 +2372,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 		KASSERT(pte_managed_p(opte));
 		/* Update cached U/M bits from mapping that's going away. */
 		VM_MDPAGE_ADD_UM(pg, opte);
-		pmap_pv_remove(pmap, pg, va, pc);
+		pmap_pv_remove(pmap, pg, va, g);
 	} else {
 		KASSERT(! pte_managed_p(opte));
 	}
@@ -2377,7 +2382,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 	 * had on the table.
 	 */
 	pte_store(ptep, 0);
-	pmap_table_release(pmap, pt, pc);
+	pmap_table_release(pmap, pt, g);
 
 	/*
 	 * Now that the ATC can't be reloaded from the PTE, invalidate
@@ -2400,9 +2405,8 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
  *	provide an initialized completion context, which we
  *	will finalize.
  */
-static void
-pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
-    struct pmap_completion *pc)
+void
+pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	pt_entry_t opte, *ptep;
 	struct pmap_table *pt;
@@ -2422,6 +2426,16 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 	 */
 	prm_flags = active_pmap(pmap) ? PRM_TFLUSH : 0;
 	if (pmap == pmap_kernel()) {
+		struct pmap_garbage kg;
+
+		/*
+		 * We can't safely defer freeing resources for the
+		 * kernel pmap because pmap_update() can be called
+		 * in an interrupt context, so we have to use our
+		 * own garbage can.
+		 */
+		pmap_garbage_init(&kg);
+
 		PMAP_CRIT_ENTER(pmap_busy(pmap));
 
 		for (ptep = pmap_kernel_pte(sva); sva < eva;
@@ -2438,7 +2452,7 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 				all_ci &= opte;
 #endif
 				pmap_remove_mapping(pmap, sva, ptep, NULL,
-				    NULL, prm_flags, pc);
+				    NULL, prm_flags, &kg);
 			}
 		}
 #if MMU_CONFIG_HP_CLASS
@@ -2453,10 +2467,10 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 		PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 
 		/* kernel PT pages are never freed. */
-		KASSERT(TAILQ_EMPTY(&pc->pc_ptpages));
+		KASSERT(TAILQ_EMPTY(&kg.g_ptpages));
 
 		/* ...but we might have freed PV entries. */
-		pmap_completion_fini(pc);
+		pmap_garbage_collect(&kg);
 
 		return;
 	}
@@ -2495,9 +2509,9 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 			all_ci &= opte;
 #endif
 			pmap_remove_mapping(pmap, sva, ptep, pt, NULL,
-			    prm_flags, pc);
+			    prm_flags, &pmap->pm_garbage);
 		}
-		pmap_table_release(pmap, pt, pc);
+		pmap_table_release(pmap, pt, &pmap->pm_garbage);
 	}
 #if MMU_CONFIG_HP_CLASS
 	if (MMU_IS_HP_CLASS && !all_ci) {
@@ -2513,17 +2527,6 @@ pmap_remove_internal(pmap_t pmap, vaddr_t sva, vaddr_t eva,
 	}
 #endif
 	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
-
-	pmap_completion_fini(pc);
-}
-
-void
-pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
-{
-	struct pmap_completion pc;
-	pmap_completion_init(&pc);
-	pmap_remove_internal(pmap, sva, eva, &pc);
-	/* pmap_remove_internal() calls pmap_completion_fini(). */
 }
 
 /*
@@ -2536,7 +2539,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 bool
 pmap_remove_all(pmap_t pmap)
 {
-	struct pmap_completion pc;
+	struct pmap_garbage g;
 	struct pv_entry *pv;
 	struct vm_page *pg;
 	pt_entry_t opte;
@@ -2554,11 +2557,13 @@ pmap_remove_all(pmap_t pmap)
 	 *
 	 * ==> (4) Zero the wired and resident count.
 	 *
+	 * ==> (5) Grab any garbage lingering in the pmap itself.
+	 *
 	 * Once we've done that, we just need to free everything
 	 * back to the system.
 	 */
 
-	pmap_completion_init(&pc);
+	pmap_garbage_init(&g);
 
 	PMAP_CRIT_ENTER(pmap_busy(pmap));
 
@@ -2567,8 +2572,8 @@ pmap_remove_all(pmap_t pmap)
 
 	/* Step 2. */
 	pmap->pm_pt_cache = NULL;
-	TAILQ_CONCAT(&pc.pc_ptpages, &pmap->pm_ptpages[0], ptp_list);
-	TAILQ_CONCAT(&pc.pc_ptpages, &pmap->pm_ptpages[1], ptp_list);
+	TAILQ_CONCAT(&g.g_ptpages, &pmap->pm_ptpages[0], ptp_list);
+	TAILQ_CONCAT(&g.g_ptpages, &pmap->pm_ptpages[1], ptp_list);
 	memset(&pmap->pm_tables, 0, sizeof(pmap->pm_tables));
 	rb_tree_init(&pmap->pm_tables, &pmap_table_rb_ops);
 	KASSERT(RB_TREE_MIN(&pmap->pm_tables) == NULL);
@@ -2580,16 +2585,20 @@ pmap_remove_all(pmap_t pmap)
 		pg = pmap_pa_to_pg(pte_pa(opte));
 		/* Update cached U/M bits from mapping that's going away. */
 		VM_MDPAGE_ADD_UM(pg, opte);
-		pmap_pv_remove(pmap, pg, PV_VA(pv), &pc);
+		pmap_pv_remove(pmap, pg, PV_VA(pv), &pmap->pm_garbage);
 	}
 
 	/* Step 4. */
 	pmap_stat_set(pmap, wired_count, 0);
 	pmap_stat_set(pmap, resident_count, 0);
 
+	/* Step 5. */
+	TAILQ_CONCAT(&g.g_ptpages, &pmap->pm_garbage.g_ptpages, ptp_list);
+	LIST_MOVE(&pmap->pm_garbage.g_pvlist, &g.g_pvlist, pv_pmlist);
+
 	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 
-	pmap_completion_fini(&pc);
+	pmap_garbage_collect(&g);
 
 	return true;
 }
@@ -2603,7 +2612,7 @@ pmap_remove_all(pmap_t pmap)
 void
 pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 {
-	struct pmap_completion pc;
+	struct pmap_garbage g;
 	struct pv_entry *pv;
 
 	if (prot & UVM_PROT_WRITE) {
@@ -2618,20 +2627,21 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 	}
 
 	/* Removing all mappings for a page. */
-	pmap_completion_init(&pc);
+	pmap_garbage_init(&g);
 
 	PMAP_CRIT_ENTER();
 
 	while ((pv = VM_MDPAGE_PVS(pg)) != NULL) {
 		pmap_busy(pv->pv_pmap);
 		pmap_remove_mapping(pv->pv_pmap, PV_VA(pv), pmap_pv_pte(pv),
-		    pv->pv_pt, pg, PRM_TFLUSH|PRM_CFLUSH, &pc);
+		    pv->pv_pt, pg, PRM_TFLUSH|PRM_CFLUSH, &g);
 		pmap_unbusy(pv->pv_pmap);
 	}
 
 	PMAP_CRIT_EXIT();
 
-	pmap_completion_fini(&pc);
+	/* Page-oriented operations must collect the garbage immediately. */
+	pmap_garbage_collect(&g);
 }
 
 /*
@@ -2652,10 +2662,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	bool need_tflush;
 
 	if ((prot & UVM_PROT_READ) == 0) {
-		struct pmap_completion pc;
-		pmap_completion_init(&pc);
-		pmap_remove_internal(pmap, sva, eva, &pc);
-		/* pmap_remove_internal() calls pmap_completion_fini(). */
+		pmap_remove(pmap, sva, eva);
 		return;
 	}
 
@@ -2744,14 +2751,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	struct pmap_table *pt;
 	pt_entry_t *ptep, npte, opte;
 	struct pv_entry *newpv;
-	struct pmap_completion pc;
 	int error = 0;
 	const bool nowait = !!(flags & PMAP_CANFAIL);
 
 	/* cpu-local mappings never allowed via this path. */
 	KASSERT((flags & PMAP_CPU_LOCAL) == 0);
-
-	pmap_completion_init(&pc);
 
 	struct vm_page * const pg = pmap_pa_to_pg(pa);
 	if (__predict_false(pg == NULL)) {
@@ -2774,7 +2778,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	}
 
 	/* Get the destination table. */
-	ptep = pmap_pte_alloc(pmap, va, &pt, nowait, &pc);
+	ptep = pmap_pte_alloc(pmap, va, &pt, nowait);
 	if (__predict_false(ptep == NULL)) {
 		pmap_evcnt(enter_pte_alloc_fail);
 		error = ENOMEM;
@@ -2885,7 +2889,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 */
 		pmap_evcnt(enter_pa_change);
 		pmap_remove_mapping(pmap, va, ptep, pt, NULL,
-		    PRM_TFLUSH|PRM_CFLUSH, &pc);
+		    PRM_TFLUSH|PRM_CFLUSH, &pmap->pm_garbage);
 	}
 
 	/*
@@ -2905,7 +2909,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * Managed pages also go on the PV list, so we are
 		 * going to need a PV entry.
 		 */
-		newpv = LIST_FIRST(&pc.pc_pvlist);
+		newpv = LIST_FIRST(&pmap->pm_garbage.g_pvlist);
 		if (__predict_true(newpv == NULL)) {
 			/*
 			 * No PV entry to recycle; allocate a new one.
@@ -2940,7 +2944,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 						pmap_stat_update(pmap,
 						    wired_count, -1);
 					}
-					LIST_INSERT_HEAD(&pc.pc_pvlist,
+					LIST_INSERT_HEAD(
+					    &pmap->pm_garbage.g_pvlist,
 					    newpv, pv_pmlist);
 					goto restart;
 				}
@@ -2960,7 +2965,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		 * The new mapping takes ownership of the PT
 		 * retain count we took while looking up the PTE.
 		 */
-		goto out_crit_exit;
+		goto out;
 	}
 
 	/*
@@ -2977,14 +2982,20 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	if (active_pmap(pmap)) {
 		TBIS(va);
 	}
-	goto out_crit_exit;
+	goto out;
 
  out_release:
-	pmap_table_release(pmap, pt, &pc);
- out_crit_exit:
-	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
+	pmap_table_release(pmap, pt, &pmap->pm_garbage);
  out:
-	pmap_completion_fini(&pc);
+	if (__predict_false(error != 0)) {
+		/* Don't rely on a pmap_update() call after a failure. */
+		struct pmap_garbage g;
+		pmap_garbage_transfer(&g, &pmap->pm_garbage);
+		PMAP_CRIT_EXIT();
+		pmap_garbage_collect(&pmap->pm_garbage);
+		return error;
+	}
+	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
 	return error;
 }
 
@@ -3241,9 +3252,26 @@ kvtop(void *v)
  *	pmap operations.
  */
 void
-pmap_update(pmap_t pmap __unused)
+pmap_update(pmap_t pmap)
 {
-	/* this implementation does not defer any operations */
+	struct pmap_garbage g;
+
+	/*
+	 * The kernel pmap is special and doesn't free page tables
+	 * or defer freeing of PV entries, because pmap_update() can
+	 * be called in an interrupt context.
+	 */
+	if (pmap == pmap_kernel()) {
+		KASSERT(TAILQ_EMPTY(&pmap->pm_garbage.g_ptpages));
+		KASSERT(LIST_EMPTY(&pmap->pm_garbage.g_pvlist));
+		return;
+	}
+
+	PMAP_CRIT_ENTER();
+	pmap_garbage_transfer(&g, &pmap->pm_garbage);
+	PMAP_CRIT_EXIT();
+
+	pmap_garbage_collect(&g);
 }
 
 /*

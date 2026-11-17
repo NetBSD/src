@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.29 2026/11/16 22:56:33 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.30 2026/11/17 07:56:45 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -88,6 +88,11 @@ typedef unsigned int	pt_entry_t;
 TAILQ_HEAD(pmap_ptpage_list, pmap_ptpage);
 LIST_HEAD(pmap_pv_list, pv_entry);
 
+struct pmap_garbage {
+	struct pmap_ptpage_list g_ptpages;
+	struct pmap_pv_list g_pvlist;
+};
+
 struct pmap {
 	struct pmap_table *pm_lev1map;	/* level 1 table */
 	paddr_t            pm_lev1pa;	/* PA of level 1 table */
@@ -107,6 +112,9 @@ struct pmap {
 	struct pmap_pv_list pm_pvlist;	/* all associated P->V entries */
 
 	struct pmap_statistics pm_stats;/* statistics */
+
+	/* We collect the garbage here for deferred resource disposal. */
+	struct pmap_garbage pm_garbage;
 };
 
 /*
