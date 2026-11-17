@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.99 2026/11/17 07:56:46 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.100 2026/11/17 14:10:57 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.99 2026/11/17 07:56:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.100 2026/11/17 14:10:57 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -488,10 +488,6 @@ static struct evcnt pmap_enter_pa_change_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pa change");
 EVCNT_ATTACH_STATIC(pmap_enter_pa_change_ev);
 
-static struct evcnt pmap_enter_pv_recycle_ev =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap enter", "pv recycle");
-EVCNT_ATTACH_STATIC(pmap_enter_pv_recycle_ev);
-
 static struct evcnt pmap_prm_got_pg_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap prm", "got pg");
 static struct evcnt pmap_prm_lookup_pg_hit_ev =
@@ -708,7 +704,7 @@ pmap_vpage_alloc(bool nowait, int flags, struct vm_page **pg_out)
 }
 
 static struct pmap_ptpage *
-pmap_ptpage_alloc(bool segtab, bool nowait)
+pmap_ptpage_alloc(pmap_t pmap, bool segtab, bool nowait)
 {
 	const unsigned int tabcnt = pmap_ptpage_table_counts[segtab];
 	const size_t size = sizeof(struct pmap_ptpage) +
@@ -718,6 +714,16 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 	struct pmap_ptpage *ptp;
 	struct pmap_table *pt;
 	vaddr_t ptpva;
+
+	/* First check to see if we have one in the garbage bin. */
+	ptp = TAILQ_FIRST(&pmap->pm_garbage.g_ptpages);
+	if (__predict_false(ptp != NULL)) {
+		ptpva = m68k_ptob(ptp->ptp_vpagenum);
+		pg = ptp->ptp_pg;
+		goto gotit;
+	}
+
+	PMAP_CRIT_EXIT();
 
 	ptp = kmem_zalloc(size, nowait ? KM_NOSLEEP : KM_SLEEP);
 	if (__predict_false(ptp == NULL)) {
@@ -734,10 +740,13 @@ pmap_ptpage_alloc(bool segtab, bool nowait)
 		return NULL;
 	}
 
+	PMAP_CRIT_ENTER();
+
 	/*
 	 * All resources for the PT page have been allocated.
 	 * Now initialize it and the individual table descriptors.
 	 */
+ gotit:
 	LIST_INIT(&ptp->ptp_freelist);
 	ptp->ptp_pg = pg;
 	ptp->ptp_vpagenum = m68k_btop(ptpva);
@@ -826,7 +835,7 @@ pmap_free(pmap_t pmap)
 }
 
 static struct pv_entry *
-pmap_pv_alloc(bool nowait)
+pmap_pv_alloc(pmap_t pmap, bool nowait)
 {
 	struct pv_entry *pv;
 
@@ -838,9 +847,21 @@ pmap_pv_alloc(bool nowait)
 	}
 #endif
 
+	/* Check for one in the garbage bin. */
+	pv = LIST_FIRST(&pmap->pm_garbage.g_pvlist);
+	if (__predict_false(pv != NULL)) {
+		return pv;
+	}
+
+	if (! nowait) {
+		PMAP_CRIT_EXIT();
+	}
 	pv = pool_get(&pmap_pv_pool, nowait ? PR_NOWAIT : 0);
 	if (__predict_true(pv != NULL)) {
 		KASSERT((((uintptr_t)pv) & PVH_ATTR_MASK) == 0);
+	}
+	if (! nowait) {
+		PMAP_CRIT_ENTER();
 	}
 	return pv;
 }
@@ -1340,7 +1361,11 @@ pmap_table_alloc(pmap_t pmap, bool segtab, bool nowait)
 		 */
 		KASSERT(ptp == NULL || LIST_FIRST(&ptp->ptp_freelist) == NULL);
 		if (newptp == NULL) {
-			newptp = pmap_ptpage_alloc(segtab, nowait);
+			/*
+			 * N.B. pmap_ptpage_alloc() will temporarily exit
+			 * the critical section.
+			 */
+			newptp = pmap_ptpage_alloc(pmap, segtab, nowait);
 			if (newptp == NULL) {
 				/*
 				 * If we didn't wait, then no one would
@@ -1557,10 +1582,12 @@ pmap_table_insert(pmap_t pmap, struct pmap_table *t1, unsigned int stidx,
 		return t2;
 	}
 
-	/* Allocate the new table. */
-	PMAP_CRIT_EXIT();
+	/*
+	 * Allocate the new table.
+	 *
+	 * N.B. pmap_table_alloc() will temporarily exit the critical section.
+	 */
 	t2 = pmap_table_alloc(pmap, segtab, nowait);
-	PMAP_CRIT_ENTER();
 	if (__predict_false(t2 == NULL)) {
 		pmap_table_release(pmap, t1, &pmap->pm_garbage);
 		return NULL;
@@ -1699,10 +1726,11 @@ pmap_pte_alloc(pmap_t pmap, vaddr_t va, struct pmap_table **out_pt, bool nowait)
 		/*
 		 * Oh look!  Baby pmap's first mapping!  Allocate
 		 * a segment table.
+		 *
+		 * N.B. pmap_table_alloc() will temporarily exit the
+		 * critical section.
 		 */
-		PMAP_CRIT_EXIT();
 		st = pmap_table_alloc(pmap, true/*segtab*/, nowait);
-		PMAP_CRIT_ENTER();
 		if (__predict_false(st == NULL)) {
 			return NULL;
 		}
@@ -2908,51 +2936,44 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/*
 		 * Managed pages also go on the PV list, so we are
 		 * going to need a PV entry.
+		 *
+		 * Because this is an extremely common case, we are
+		 * first going to attempt allocation while still in
+		 * the critical section.  If that fails and waiting
+		 * is allowed, we'll leave the critical section and
+		 * try a blocking allocation.
+		 *
+		 * N.B. pmap_pv_alloc() will check for a free entry
+		 * in the garbage bin and do the critical section
+		 * exit/re-entry for us.
 		 */
-		newpv = LIST_FIRST(&pmap->pm_garbage.g_pvlist);
-		if (__predict_true(newpv == NULL)) {
-			/*
-			 * No PV entry to recycle; allocate a new one.
-			 * Because this is an extremely common case, we
-			 * are first going to attempt allocation while
-			 * still in the critical section.  If that fails
-			 * and waiting is allowed, we'll leave the critical
-			 * section and try a blocking allocation.
-			 */
-			newpv = pmap_pv_alloc(true/*nowait flag*/);
-			if (__predict_false(newpv == NULL)) {
-				if (nowait) {
-					pmap_evcnt(enter_pv_alloc_fail);
-					error = ENOMEM;
-					goto out_release;
-				}
-				PMAP_CRIT_EXIT();
-				newpv = pmap_pv_alloc(false/*nowait flag*/);
-				KASSERT(newpv != NULL);
-				PMAP_CRIT_ENTER();
-				/*
-				 * Because we may have blocked while allocating
-				 * the PV entry, we have to re-validate our
-				 * environment, as another thread could have
-				 * inserted a mapping here behind our back.
-				 */
-				opte = pte_load(ptep);
-				if (__predict_false(pte_valid_p(opte))) {
-					pmap_stat_update(pmap,
-					    resident_count, -1);
-					if (pte_wired_p(npte)) {
-						pmap_stat_update(pmap,
-						    wired_count, -1);
-					}
-					LIST_INSERT_HEAD(
-					    &pmap->pm_garbage.g_pvlist,
-					    newpv, pv_pmlist);
-					goto restart;
-				}
+		newpv = pmap_pv_alloc(pmap, true/*nowait flag*/);
+		if (__predict_false(newpv == NULL)) {
+			if (nowait) {
+				pmap_evcnt(enter_pv_alloc_fail);
+				error = ENOMEM;
+				goto out_release;
 			}
-		} else {
-			pmap_evcnt(enter_pv_recycle);
-			LIST_REMOVE(newpv, pv_pmlist);
+			newpv = pmap_pv_alloc(pmap, false/*nowait flag*/);
+			KASSERT(newpv != NULL);
+			/*
+			 * Because we may have blocked while allocating
+			 * the PV entry, we have to re-validate our
+			 * environment, as another thread could have
+			 * inserted a mapping here behind our back.
+			 */
+			opte = pte_load(ptep);
+			if (__predict_false(pte_valid_p(opte))) {
+				pmap_stat_update(pmap,
+				    resident_count, -1);
+				if (pte_wired_p(npte)) {
+					pmap_stat_update(pmap,
+					    wired_count, -1);
+				}
+				LIST_INSERT_HEAD(&pmap->pm_garbage.g_pvlist,
+				    newpv, pv_pmlist);
+				goto restart;
+			}
 		}
 
 		/*
