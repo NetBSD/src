@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.19 2026/11/02 12:09:32 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.20 2026/11/17 19:46:46 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -348,6 +348,7 @@ npf_route(npf_cache_t *npc, void *meta, const npf_match_info_t __unused *mi,
 	if (*decision == NPF_DECISION_BLOCK || mi->mi_di == PFIL_IN) {
 		return true;
 	}
+	rv = true;
 
 	/* global lock for interface lookup */
 	KERNEL_LOCK(1, NULL);
@@ -451,24 +452,20 @@ fragment:
 	}
 
 /*
- * for routing procedures, when we dup-to, we need original packet to
- * continue its normal routing and copied packet go through our route.
- * if we don't dup-to, we need processing of the moving mbuf stopped either in a failure or success path
- * since we now care about the copied which is to be sent.
- * just return false and handle the freeing of the moving mbuf,
- * in a dup-to, where both packets leave successfully, we don't free any of them.
+ * after a route procedure is applied on non-duplicated, the packet
+ * has definitely been freed. make sure it NULLed from the
+ * mbuf chain.
  */
 bad:
 	if (!consumed)
 		m_freem(m0);
 	stats = NPF_STAT_NOREROUTE;
+	rv = false;
 done:
-	rv = true;
 	npf_stats_inc(npf, stats);
-
 	if (!dup_to) {
-		rv = false;
-		m = NULL;
+		memset(npc->npc_nbuf, 0, sizeof(*npc->npc_nbuf));
+		npc->npc_nbuf->nb_flags |= NBUF_RPROC_CONSUMED;
 	}
 
 	KERNEL_UNLOCK_ONE(NULL);

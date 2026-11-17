@@ -111,6 +111,7 @@ typedef uint8_t			npf_netmask_t;
  */
 
 #define	NBUF_DATAREF_RESET	0x01
+#define	NBUF_RPROC_CONSUMED	0x02
 
 struct mbuf;
 struct nbuf;
