@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1428.2.4 2026/08/25 19:51:33 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1428.2.5 2026/11/17 15:54:42 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -237,9 +237,8 @@ HAVE_LIBGCC_EH?=	yes
 HAVE_SSP?=	no
 .else
 HAVE_SSP?=	yes
-.if !defined(NOFORT) && ${USE_FORT:Uno} != "no"
-USE_SSP?=	yes
-.endif
+USE_SSP_DEFAULT?=	no
+USE_SSP?=	${!defined(NOFORT) && ${USE_FORT:Uno} != "no":?yes:${USE_SSP_DEFAULT}}
 .endif
 
 #
