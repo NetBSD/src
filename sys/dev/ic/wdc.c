@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.310.12.2 2026/08/25 19:13:46 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.310.12.3 2026/11/17 16:47:00 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.310.12.2 2026/08/25 19:13:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.310.12.3 2026/11/17 16:47:00 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -581,7 +581,7 @@ wdcprobe1(struct ata_channel *chp, int poll)
 			ret_value &= ~0x01;
 		if (st1 == 0xff || st1 == (WDSD_IBM | 0x10))
 			ret_value &= ~0x02;
-		else if (st0 == 0x00 &&
+		else if (st1 == 0x00 &&
 		    (wdc->cap & WDC_CAPABILITY_ZERO_ABSENT))
 			ret_value &= ~0x02;
 		/* Register writability test, drive 0. */
