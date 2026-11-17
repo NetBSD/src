@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1428.2.5 2026/11/17 15:54:42 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1428.2.6 2026/11/17 16:20:24 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -232,7 +232,6 @@ HAVE_LIBGCC_EH?=	yes
 # Coverity does not like SSP
 .if defined(COVERITY_TOP_CONFIG) || \
     ${MACHINE} == "alpha" || \
-    ${MACHINE} == "hppa" || \
     ${MACHINE} == "ia64"
 HAVE_SSP?=	no
 .else
