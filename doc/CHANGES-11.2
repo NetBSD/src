@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.2,v 1.1.2.2 2026/11/15 14:47:49 martin Exp $
+# $NetBSD: CHANGES-11.2,v 1.1.2.3 2026/11/17 16:48:10 martin Exp $
 
 A complete list of changes between the 11.1 release on 2026-11-02
 until the 11.2 release:
@@ -84,4 +84,42 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	uts(4): PR 60883: add quirk for ELAN touchscreens.
 	[nat, ticket #578]
+
+include/ssp/ssp.h				1.17
+lib/libc/ssp/ssp_redirect.c			1.4
+share/mk/bsd.own.mk				1.1488,1.1489
+sys/arch/amd64/conf/Makefile.amd64		1.87
+sys/arch/amd64/include/Makefile.inc		1.6
+sys/arch/i386/conf/Makefile.i386		1.198
+sys/arch/i386/include/Makefile.inc		1.4
+sys/arch/sparc64/conf/Makefile.sparc64		1.87
+sys/arch/xen/conf/Makefile.xen			1.51
+sys/conf/ssp.mk					1.6,1.7
+
+	ssp/fortify: PR 60858: fix ssp wrappers and fortify build options.
+	[riastradh, ticket #579]
+
+share/mk/bsd.own.mk				1.1491
+
+	hppa: PR 60858: enable fortify in userland.
+	[riastradh, ticket #580]
+
+xsrc/external/mit/fontconfig/dist/conf.d/60-latin.conf 1.2
+
+	X: PR 60991: fix font rendering regression.
+	[nia, ticket #581]
+
+share/man/man4/ds2482ow.4			1.2
+sys/dev/i2c/ds2482ow.c				1.3
+sys/dev/i2c/ds2482owreg.h			1.2
+sys/dev/i2c/ds2482owvar.h			1.4
+sys/dev/onewire/onewire.c			1.23
+
+	onewire(4): fix detaching of child devices.
+	[brad, ticket #582]
+
+sys/dev/ic/wdc.c				1.318
+
+	wdc(4): fix typo in probe code.
+	[tls, ticket #583]
 
