@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.i386,v 1.196 2020/05/11 15:15:15 joerg Exp $
+#	$NetBSD: Makefile.i386,v 1.196.20.1 2026/11/17 16:07:09 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -23,7 +23,7 @@ USETOOLS?=	no
 NEED_OWN_INSTALL_TARGET?=no
 .include <bsd.own.mk>
 
-USE_SSP?=	yes
+USE_SSP_DEFAULT=yes
 
 ##
 ## (1) port identification

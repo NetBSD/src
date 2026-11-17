@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.85 2020/05/11 15:15:15 joerg Exp $
+#	$NetBSD: Makefile.amd64,v 1.85.20.1 2026/11/17 16:07:08 martin Exp $
 
 # Makefile for NetBSD
 #
@@ -23,7 +23,7 @@ NEED_OWN_INSTALL_TARGET?=no
 NOSANITIZER=
 .include <bsd.init.mk>
 
-USE_SSP?=	yes
+USE_SSP_DEFAULT=yes
 
 ##
 ## (1) port identification
