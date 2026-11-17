@@ -83,6 +83,8 @@ device-major	twe		char 76 		twe
 #device-major	obsolete	char 98			obsolete (nsmb)
 device-major 	xlcom 		char 99 		xlcom
 
+device-major	gcport		char 100
+
 # Majors up to 143 are reserved for machine-dependent drivers.
 # New machine-independent driver majors are assigned in 
 # sys/conf/majors.

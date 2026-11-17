@@ -45,12 +45,13 @@ __KERNEL_RCSID(0, "$NetBSD: uhid_si.c,v 1.1 2026/01/09 22:54:30 jmcneill Exp $")
 
 static int	uhid_si_match(device_t, cfdata_t, void *);
 static void	uhid_si_attach(device_t, device_t, void *);
+static int	uhid_si_detach(device_t, int flags);
 
 static int	uhid_si_ioctl(struct uhid_softc *, u_long, void *, int,
 			      struct lwp *);
 
 CFATTACH_DECL_NEW(uhid_si, sizeof(struct uhid_softc),
-	uhid_si_match, uhid_si_attach, NULL, NULL);
+	uhid_si_match, uhid_si_attach, uhid_si_detach, NULL);
 
 static int
 uhid_si_match(device_t parent, cfdata_t cf, void *aux)
@@ -70,6 +71,14 @@ uhid_si_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hidev = saa->saa_hidev;
 
 	uhid_attach_common(sc);
+}
+
+static int
+uhid_si_detach(device_t self, int flags)
+{
+	struct uhid_softc * const sc = device_private(self);
+
+	return uhid_detach_common(sc);
 }
 
 static int
