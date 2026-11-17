@@ -1,4 +1,4 @@
-.\"	$NetBSD: strfmon.3,v 1.8 2017/12/07 22:19:17 kre Exp $
+.\"	$NetBSD: strfmon.3,v 1.9 2026/11/17 00:03:57 kre Exp $
 .\"
 .\" Copyright (c) 2001 Jeroen Ruigrok van der Werven <asmodai@FreeBSD.org>
 .\" All rights reserved.
@@ -26,7 +26,7 @@
 .\"
 .\" 	From: FreeBSD: Id: strfmon.3,v 1.7 2003/01/06 06:21:25 tjr Exp
 .\"
-.Dd December 7, 2017
+.Dd November 16, 2026
 .Dt STRFMON 3
 .Os
 .Sh NAME
@@ -37,9 +37,9 @@
 .Sh SYNOPSIS
 .In monetary.h
 .Ft ssize_t
-.Fn strfmon "char * restrict s" "size_t maxsize" "const char * restrict format" "..."
+.Fn strfmon "char * restrict s" "size_t maxsize" "const char * restrict format"  "double value" "..."
 .Ft ssize_t
-.Fn strfmon_l "char * restrict s" "size_t maxsize" "locale_t loc" "const char * restrict format" "..."
+.Fn strfmon_l "char * restrict s" "size_t maxsize" "locale_t loc" "const char * restrict format" "double value" "..."
 .Sh DESCRIPTION
 The
 .Fn strfmon
@@ -57,90 +57,222 @@ function behaves the same as
 .Fn strfmon ,
 but uses the locale
 .Fa loc
-instead of the process global locale.
+instead of the current locale of the process.
 .Pp
 The format string is composed of zero or more directives:
-ordinary characters (not
-.Cm % ) ,
-which are copied unchanged to the output stream; and conversion
-specifications, each of which results in fetching zero or more subsequent
-arguments.
+ordinary characters (anything other than
+.Sq Cm %
+which introduces conversions, and
+.Sq Cm \e0
+which ends the format string),
+which are copied unchanged to the output stream;
+and conversion specifications,
+each of which may result in fetching a subsequent
+.Em value
+argument.
 Each conversion specification is introduced by the
 .Cm %
 character.
 After the
 .Cm % ,
-the following appear in sequence:
-.Bl -bullet
+any of the following may appear, but only in the order shown here:
+.Bl -bullet -width 3m
 .It
-Zero or more of the following flags:
+Zero or more of the following flags,
+no more than once each,
+in any order:
 .Bl -tag -width "XXX"
 .It Cm = Ns Ar f
-A
+An
 .Sq Cm =
 character followed by another character
 .Ar f
 which is used as the numeric fill character.
+This character must be one which occupies exactly 1 column of output
+when using a fixed width font (mono spaced) to display it.
+If not the results are unspecified.
+This implementation ignores attempts to specify fill characters
+that are not 1 column wide.
+Others might treat this as a format error,
+or simply attempt to use the fill character specified,
+meaning that the alignment expected would not be obtained.
+The default is a space
+.Pq Sq \ \& .
+This character is used only when accompanied by a value
+for the
+.Cm "left precision"
+as specified below.
 .It Cm ^
-Do not use grouping characters, regardless of the current locale default.
+Do not use grouping characters in the integral part of the value,
+regardless of the current locale default.
+When this flag is not used, the integral part of the value might
+have grouping characters
+.Pq thousands separators ,
+as specified by the locale, included
+in the value at positions specified by the locale
+.Pq often before each group of three digits which is preceded by more digits .
+No grouping characters are inserted amongst the fill characters,
+even if the fill character happens to be a digit,
+and nor amongst any digits that follow the radix character (decimal point).
 .It Cm +
-Represent positive values by prefixing them with a positive sign,
-and negative values by prefixing them with a negative sign.
-This is the default.
+Represent positive values in the locale's default formats,
+using the locale's sign strings.
+This requires the locale to be defined in such a way that the
+difference between positive and negative values can be determined.
+That can be by different representations of the positive and negative
+sign strings, or by different positioning.
+It is an error if
+.Cm +
+is specified, and the sign of the value would be unable to be
+determined from the result.
+If the locale specifies that parentheses are normally used,
+rather than the appropriate sign string,
+the sign string will be placed before the value, and also
+before the currency symbol, if that is included in the output
+preceding the value.
+The C
+.Pq aka POSIX
+locale is one in which the
+.Cm +
+flag will fail, as it has no sign strings defined.
+.Pp
+The default is the locale's preferred representation,
+often similar to this format,
+while allowing much locale data to be substituted by
+reasonable defaults if required,
+such as using the
+.Dq \&\-
+character to indicate negative values if no sign strings exist,
+or placing a positive sign after the value and a negative
+sign before it,
+if the sign strings are identical.
 .It Cm \&(
-Enclose negative values in parentheses.
+Enclose negative values in parentheses,
+and positive values (or zero) with no sign indication.
+When this flag is used,
+the locale's sign strings and their positioning
+are irrelevant.
+Only one of the
+.Cm \&+
+and
+.Cm \&(
+flags may be included.
+Neither is required.
 .It Cm \&!
 Do not include a currency symbol in the output.
+The default is to include either the national currency symbol,
+or its international equivalent three letter form,
+if defined by the locale,
+at a position in the output defined by the locale.
 .It Cm \-
 Left justify the result.
-Only valid when a field width is specified.
+Only meaningful when a field width is specified.
+The default is for the result to be right justified within
+the specified field width.
 .El
 .It
-An optional minimum field width as a decimal number.
+A minimum field width as an unsigned decimal number.
 By default, there is no minimum width.
+This specifies the number of columns
+.Pq each wide enough for a single space character of a fixed width font
+the output is to occupy,
+and is unrelated to the number of bytes required to represent that string.
+The resulting formatted value is right justified within a
+field of this width (left justified if the
+.Cm \-
+flag was given) with unoccupied positions filled with spaces.
 .It
 A
 .Sq Cm #
-sign followed by a decimal number specifying the maximum
-expected number of digits before the radix character.
+sign followed by an unsigned decimal number specifying the
+maximum expected number of digits before the radix character.
+This is the
+.Dq Cm "Left Precision"
+of the result.
 When this option is used, values that do not exceed the
-specified number of digits are formatted so they will be
-correctly aligned with other values printed using the same
-format.
-This includes always leaving space for a possible sign
-indicator, even if none is needed for a particular value.
+specified number of digits before the radix are formatted so
+they will be correctly aligned with other values generated
+using the same format and locale,
+provided the results are displayed in columns using a fixed width font.
+Space is allowed for the number of digits specified, plus, 
+if grouping could be performed and has not been suppressed,
+the maximum possible number of thousands
+grouping characters that would be required by a value with
+the specified maximum number of digits.
+The fill character 
+.Po
+see the
+.Sq Cm \&=
+flag above
+.Pc
+is used to fill positions not used by a particular value.
+In no case is the value truncated by the left precision specified.
+Larger values will be represented correctly,
+but will not align with values that have no more than the
+specified left precision number of pre-radix digits.
+In addition, use of the left precision causes spaces to be inserted
+at any location where a value of the opposite sign,
+would insert a sign string or currency symbol, where the
+actual
+.Ar value
+inserts nothing, or a string of lesser width.
+The locale may also specify extra spaces in the output.
+All the generated converted 
+.Ar value Ns s ,
+for any
+.Ar value
+which needs no more
+that the specified number of pre-radix digits,
+will occupy the same number of columns of output.
 .It
 A
 .Sq Cm \&.
-character followed by a decimal number specifying the number
-of digits after the radix character.
-.It
-One of the following conversion specifiers:
-.Bl -tag -width "XXX"
+character followed by an unsigned decimal number specifying
+the number of digits to be placed after the radix character,
+known as the
+.Dq Cm "Right Precision" .
+The default is supplied by the locale
+.Pq often two .
+If the locale defines no radix character
+.Pq decimal point ,
+for either monetary or normal numeric values,
+then this value is always treated as if it were zero.
+The radix character, and following digits,
+are included in the output if, and only if,
+the effective value of this parameter is not zero.
+.El
+.Pp
+The conversion specification is terminated with one
+of the following conversion type indicator characters:
+.Bl -tag -width 3m
 .It Cm i
-The
+The next argument is treated as a
 .Vt double
-argument is formatted as an international monetary amount.
+to be formatted as an international monetary amount.
 .It Cm n
-The
+The next argument is treated as a
 .Vt double
-argument is formatted as a national monetary amount.
+to be formatted as a national monetary amount.
 .It Cm %
 A
 .Sq Li %
 character is written.
-.El
+No argument is consumed.
+No flags, widths, or precisions are permitted, the
+whole conversion must be
+.Dq %% .
 .El
 .Sh RETURN VALUES
-If the total number of resulting bytes including the terminating
-.Dv NULL
+If all specified conversions succeed,
+and the total number of resulting bytes including the terminating
+.Dv NUL
 byte is not more than
 .Fa maxsize ,
 .Fn strfmon
 returns the number of bytes placed into the array pointed to by
 .Fa s ,
 not including the terminating
-.Dv NULL
+.Dv NUL
 byte.
 Otherwise, \-1 is returned,
 the contents of the array are indeterminate,
@@ -153,33 +285,46 @@ The
 function will fail if:
 .Bl -tag -width Er
 .It Bq Er E2BIG
-Conversion stopped due to lack of space in the buffer.
+Conversion stopped due to lack of space in the array
+.Ar s .
+.It Bq Er EILSEQ
+An invalid character encoding was detected in the format string.
+In some instances, badly formatted characters in the locale data
+might also generate this error.
 .It Bq Er EINVAL
 The format string is invalid.
+This includes if it requests output which
+.Pq given the specification of the locale in question
+would not not allow all possible values to be correctly interpreted.
 .It Bq Er ENOMEM
 Not enough memory for temporary buffers.
 .El
 .Sh SEE ALSO
-.Xr localeconv 3
+.Xr localeconv 3 ,
+.Xr nls 7
 .Sh STANDARDS
 The
 .Fn strfmon
 function
 conforms to
-.St -p1003.1-2001 .
+.St -p1003.1-2001
+as updated by
+.St -p1003.1-2024
+and the resolution of Austin Group issue 2000, expected to be
+incorporated in a Technical Corrigendum to the latter.
 .Sh AUTHORS
 .An -nosplit
-The
+This
 .Fn strfmon
-function was implemented by
+function version was first implemented by
 .An Alexey Zelkin Aq Mt phantom@FreeBSD.org .
 .Pp
-This manual page was written by
+The manual page was written by
 .An Jeroen Ruigrok van der Werven Aq Mt asmodai@FreeBSD.org
 based on the standard's text.
-.Sh BUGS
-The
-.Fn strfmon
-function does not correctly handle multibyte characters in the
-.Fa format
-argument.
+.Pp
+Many modifications to the function code,
+and this manual page,
+have been made by
+.Nx
+developers.
