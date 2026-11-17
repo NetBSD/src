@@ -1,4 +1,4 @@
-.\"	$NetBSD: rdate.8,v 1.14 2017/08/27 20:45:47 wiz Exp $
+.\"	$NetBSD: rdate.8,v 1.15 2026/11/17 00:20:33 gutteridge Exp $
 .\"
 .\" Copyright (c) 1994 Christos Zoulas
 .\" All rights reserved.
@@ -23,7 +23,7 @@
 .\" (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 26, 2017
+.Dd November 17, 2026
 .Dt RDATE 8
 .Os
 .Sh NAME
@@ -40,6 +40,8 @@ host name or address given as the argument.
 It uses the RFC 868 protocol which is usually implemented as a
 built-in service of
 .Xr inetd 8 .
+Note this protocol is obsolescent as it is not capable of representing
+dates past February 7, 2036 06:28:15 UTC.
 .Pp
 Available options:
 .Bl -tag -width indent
