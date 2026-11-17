@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.24 2026/11/17 09:22:59 kre Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.25 2026/11/17 11:15:09 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.24 2026/11/17 09:22:59 kre Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.25 2026/11/17 11:15:09 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -120,8 +120,8 @@ __RCSID("$NetBSD: strfmon.c,v 1.24 2026/11/17 09:22:59 kre Exp $");
 
 static void __setup_vars(int, char *, char *, char *, const char **,
     struct lconv *);
-static int __calc_left_pad(int, char *, int, int, struct lconv *);
-static int __calc_right_pad(int, char *, int, int, struct lconv *);
+static int __calc_left_pad(int, int, int, struct lconv *);
+static int __calc_right_pad(int, int, int, struct lconv *);
 static char *__format_grouped_double(double, int *, int *, int, int,
     char *, size_t, struct lconv *, locale_t loc);
 static int __columns(const char *, locale_t);
@@ -344,16 +344,16 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 			     * only ASCII, so, just leave this (for now)
 			     */
 			    (l = strlen(currency_symbol)) > 3) {
-				size_t mblen;
+				size_t chlen;
 				const int e = errno;
 
 				(void)mbrtowc_l(NULL, NULL, 0, &mbs, loc);
 				/* any errno set here gets ignored, we deal */
-				mblen = mbrtowc_l(&space_char,
+				chlen = mbrtowc_l(&space_char,
 				    currency_symbol + 3, MAX_ENCODED_CHAR_LEN,
 				    &mbs, loc);
-				if (mblen == 0 ||
-				    mblen > MAX_ENCODED_CHAR_LEN ||
+				if (chlen == 0 ||
+				    chlen > MAX_ENCODED_CHAR_LEN ||
 				    wcwidth(space_char) != 1)
 					space_char = L' ';
 				currency_symbol[3] = '\0';
@@ -502,9 +502,8 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 		/* fill left_prec with amount of padding chars */
 		if (left_prec >= 0) {
 			pad_size = __calc_left_pad((flags ^ IS_NEGATIVE),
-				        currency_symbol, cs_cols, os_cols, lc)
-				 - __calc_left_pad(flags,
-					currency_symbol, cs_cols, ss_cols, lc);
+				        cs_cols, os_cols, lc)
+				 - __calc_left_pad(flags, cs_cols, ss_cols, lc);
 
 			if (pad_size < 0)
 				pad_size = 0;
@@ -652,9 +651,8 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 		/* if aligning, pad the right side as well */
 		if (left_prec >= 0) {
 			pad_size = __calc_right_pad((flags ^ IS_NEGATIVE),
-					currency_symbol, cs_cols, os_cols, lc)
-				 - __calc_right_pad(flags,
-					currency_symbol, cs_cols, ss_cols, lc);
+					cs_cols, os_cols, lc) -
+				  __calc_right_pad(flags, cs_cols, ss_cols, lc);
 
 			if (pad_size < 0)
 				pad_size = 0;
@@ -780,8 +778,7 @@ __setup_vars(int flags, char *cs_precedes, char *sep_by_space,
  * will reveal how many pad chars need to be inserted.
  */
 static int
-__calc_left_pad(int flags, char *cur_symb, int cs_cols, int s_cols,
-    struct lconv *lc)
+__calc_left_pad(int flags, int cs_cols, int s_cols, struct lconv *lc)
 {
 	char cs_precedes, sep_by_space, sign_posn;
 	int left_chars = 0;
@@ -822,8 +819,7 @@ __calc_left_pad(int flags, char *cur_symb, int cs_cols, int s_cols,
  * The same for the right side
  */
 static int
-__calc_right_pad(int flags, char *cur_symb, int cs_cols, int s_cols,
-    struct lconv *lc)
+__calc_right_pad(int flags, int cs_cols, int s_cols, struct lconv *lc)
 {
 	char cs_precedes, sep_by_space, sign_posn;
 	int right_chars = 0;
