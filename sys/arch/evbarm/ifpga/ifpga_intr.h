@@ -1,4 +1,4 @@
-/*	$NetBSD: ifpga_intr.h,v 1.9 2009/02/13 21:08:40 he Exp $	*/
+/*	$NetBSD: ifpga_intr.h,v 1.10 2026/11/18 22:22:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -96,7 +96,7 @@ ifpga_splraise(int ipl)
 
 	__insn_barrier();
 
-	return (old);
+	return old;
 }
 
 static inline int __attribute__((__unused__))
