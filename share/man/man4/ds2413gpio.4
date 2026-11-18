@@ -1,4 +1,4 @@
-.\" $NetBSD: ds2413gpio.4,v 1.1 2026/11/18 18:04:25 brad Exp $
+.\" $NetBSD: ds2413gpio.4,v 1.2 2026/11/18 19:59:03 gutteridge Exp $
 .\"
 .\" Copyright (c) 2026 Brad Spencer <brad@anduin.eldar.org>
 .\"
@@ -36,10 +36,10 @@ means logic 1.
 Likewise, writing a 0 to a pin will provide energy to the pin and a 1
 will remove energy from the pin.
 .Pp
-The driver will match the official famly ID of the DS2413 chip as well
+The driver will match the official family ID of the DS2413 chip as well
 as the commonly found clone family ID of 0x85.
 A kernel can be compiled with DS2413GPIO_EXTRA_FAMILYID to include an
-additional family IDe that will also match.
+additional family ID that will also match.
 .Sh SYSCTL VARIABLES
 The following
 .Xr sysctl 3
@@ -68,11 +68,11 @@ driver was written by
 .Sh BUGS
 It is not possible to tell if a pin is literally a input or output pin
 as both aspects are active at the same time.
-The drive will disallow setting a value on a pin that is set to
+The driver will disallow setting a value on a pin that is set to
 GPIO_PIN_INPUT and will report the latched setting on a pin read
 instead of the pin value for pins that are set to GPIO_PIN_OUTPUT.
 The driver will also set a pin to supply no energy on the pin when it
 is set to GPIO_PIN_INPUT.
-This should present a situation that is more consistant with
+This should present a situation that is more consistent with
 expectations at the cost of not being able to have a pin be both input
 and output at the same time.
