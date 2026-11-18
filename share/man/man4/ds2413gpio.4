@@ -1,0 +1,78 @@
+.\" $NetBSD: ds2413gpio.4,v 1.1 2026/11/18 18:04:25 brad Exp $
+.\"
+.\" Copyright (c) 2026 Brad Spencer <brad@anduin.eldar.org>
+.\"
+.\" Permission to use, copy, modify, and distribute this software for any
+.\" purpose with or without fee is hereby granted, provided that the above
+.\" copyright notice and this permission notice appear in all copies.
+.\"
+.\" THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL WARRANTIES
+.\" WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED WARRANTIES OF
+.\" MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR
+.\" ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
+.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER IN AN
+.\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
+.\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
+.\"
+.Dd October 15, 2026
+.Dt DS2413GPIO 4
+.Os
+.Sh NAME
+.Nm ds2413gpio
+.Nd Driver for Maxim DS2413 1-Wire GPIO chip
+.Sh SYNOPSIS
+.Cd "ds2413gpio* at onewire?"
+.Cd "options DS2413GPIO_EXTRA_FAMILYID 0x55"
+.Sh DESCRIPTION
+The
+.Nm
+driver provides a 1-Wire to GPIO bridge with a
+.Xr gpio 4
+bus at the far end using the DS2413 chip.
+.Pp
+The DS2413 uses inverted logic for the input and output of the pins.
+A 1 read from the pin means that the pin is at logic 0 and a 0 read
+means logic 1.
+Likewise, writing a 0 to a pin will provide energy to the pin and a 1
+will remove energy from the pin.
+.Pp
+The driver will match the official famly ID of the DS2413 chip as well
+as the commonly found clone family ID of 0x85.
+A kernel can be compiled with DS2413GPIO_EXTRA_FAMILYID to include an
+additional family IDe that will also match.
+.Sh SYSCTL VARIABLES
+The following
+.Xr sysctl 3
+variables are provided:
+.Bl -tag -width indent
+.It Li hw.ds2413gpio0.debug
+If the driver is compiled with
+.Dv DS2413GPIO_DEBUG ,
+this node will appear and can be used to set the debugging level.
+.El
+.Sh SEE ALSO
+.Xr gpio 4 ,
+.Xr onewire 4 ,
+.Xr sysctl 8
+.Sh HISTORY
+The
+.Nm
+driver first appeared in
+.Nx 12.0 .
+.Sh AUTHORS
+.An -nosplit
+The
+.Nm
+driver was written by
+.An Brad Spencer Aq Mt brad@anduin.eldar.org .
+.Sh BUGS
+It is not possible to tell if a pin is literally a input or output pin
+as both aspects are active at the same time.
+The drive will disallow setting a value on a pin that is set to
+GPIO_PIN_INPUT and will report the latched setting on a pin read
+instead of the pin value for pins that are set to GPIO_PIN_OUTPUT.
+The driver will also set a pin to supply no energy on the pin when it
+is set to GPIO_PIN_INPUT.
+This should present a situation that is more consistant with
+expectations at the cost of not being able to have a pin be both input
+and output at the same time.

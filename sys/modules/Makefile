@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.303 2026/10/19 07:32:19 martin Exp $
+#	$NetBSD: Makefile,v 1.304 2026/11/18 18:04:25 brad Exp $
 
 .include <bsd.own.mk>
 
@@ -60,6 +60,7 @@ SUBDIR+=	dbcool
 SUBDIR+=	des
 SUBDIR+=	dk_subr
 SUBDIR+=	drvctl
+SUBDIR+=	ds2413gpio
 SUBDIR+=	ds2482ow
 SUBDIR+=	ds28e17iic
 SUBDIR+=	efs

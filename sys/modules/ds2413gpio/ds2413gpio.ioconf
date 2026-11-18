@@ -1,0 +1,8 @@
+#	$NetBSD: ds2413gpio.ioconf,v 1.1 2026/11/18 18:04:25 brad Exp $
+
+ioconf		ds2413gpio
+
+include		"conf/files"
+
+pseudo-root	onewire*
+ds2413gpio*	at onewire?

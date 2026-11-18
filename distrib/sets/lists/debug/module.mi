@@ -1,4 +1,4 @@
-# $NetBSD: module.mi,v 1.35 2026/04/08 09:33:30 joe Exp $
+# $NetBSD: module.mi,v 1.36 2026/11/18 18:04:26 brad Exp $
 #
 ./usr/libdata/debug/@MODULEDIR@					modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/accf_dataready			modules-base-kernel	kmod,debug
@@ -125,6 +125,8 @@
 ./usr/libdata/debug/@MODULEDIR@/dm/dm.kmod.debug			modules-base-kernel	lvm,kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/drvctl				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/drvctl/drvctl.kmod.debug		modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ds2413gpio				modules-base-kernel	kmod,debug
+./usr/libdata/debug/@MODULEDIR@/ds2413gpio/ds2413gpio.kmod.debug	modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ds2482ow				modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ds2482ow/ds2482ow.kmod.debug		modules-base-kernel	kmod,debug
 ./usr/libdata/debug/@MODULEDIR@/ds28e17iic				modules-base-kernel	kmod,debug

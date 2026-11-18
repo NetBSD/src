@@ -1,4 +1,4 @@
-# $NetBSD: files.onewire,v 1.6 2025/01/23 19:02:42 brad Exp $
+# $NetBSD: files.onewire,v 1.7 2026/11/18 18:04:25 brad Exp $
 
 define	onewire {}
 defflag opt_onewire.h	ONEWIRE_DEBUG
@@ -24,3 +24,9 @@ file 	dev/onewire/oweeprom.c		oweeprom
 device	ds28e17iic: i2cbus, i2cexec
 attach	ds28e17iic at onewire
 file	dev/onewire/ds28e17iic.c	ds28e17iic
+
+# I2C GPIO
+defparam opt_ds2413gpio.h		DS2413GPIO_EXTRA_FAMILYID
+device	ds2413gpio: gpiobus
+attach	ds2413gpio at onewire
+file	dev/onewire/ds2413gpio.c	ds2413gpio
