@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.719 2026/11/18 05:24:32 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.720 2026/11/18 05:31:50 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.719 2026/11/18 05:24:32 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.720 2026/11/18 05:31:50 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -528,7 +528,7 @@ ic_unsigned_range(uint64_t minimum, uint64_t maximum)
 	c.smax = maximum <= INT64_MAX ? (int64_t)maximum : INT64_MAX;
 	c.umin = minimum;
 	c.umax = maximum;
-	c.bclr = ~c.umax;
+	c.bclr = ~u64_fill_right(c.umax);
 	return c;
 }
 
@@ -541,7 +541,7 @@ ic_signed_range(int64_t minimum, int64_t maximum)
 	c.smax = maximum;
 	c.umin = minimum >= 0 ? (uint64_t)minimum : 0;
 	c.umax = minimum >= 0 ? (uint64_t)maximum : UINT64_MAX;
-	c.bclr = ~c.umax;
+	c.bclr = 0;
 	return c;
 }
 
