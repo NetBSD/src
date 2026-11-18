@@ -1,4 +1,4 @@
-/*	$NetBSD: tree.c,v 1.718 2026/11/14 14:02:30 rillig Exp $	*/
+/*	$NetBSD: tree.c,v 1.719 2026/11/18 05:24:32 rillig Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Jochen Pohl
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID)
-__RCSID("$NetBSD: tree.c,v 1.718 2026/11/14 14:02:30 rillig Exp $");
+__RCSID("$NetBSD: tree.c,v 1.719 2026/11/18 05:24:32 rillig Exp $");
 #endif
 
 #include <float.h>
@@ -276,13 +276,21 @@ ic_mult(const type_t *tp, integer_constraints a, integer_constraints b)
 static integer_constraints
 ic_div(const type_t *tp, integer_constraints a, integer_constraints b)
 {
+	integer_constraints c;
+
 	if (ic_maybe_signed_binary(tp, a, b)) {
-		if (b.smin >= 0)
-			return a;
+		if (b.smin > 0) {
+			// C99 and later require truncation toward zero.
+			c.smin = a.smin / b.smin;
+			c.smax = a.smax / b.smin;
+			c.umin = a.umin / b.smin;
+			c.umax = a.umax / b.smin;
+			c.bclr = 0;
+			return c;
+		}
 		return ic_any(tp);
 	}
 
-	integer_constraints c;
 	c.smin = INT64_MIN;
 	c.smax = INT64_MAX;
 	c.umin = a.umin / u64_max(b.umax, 1);
@@ -294,26 +302,31 @@ ic_div(const type_t *tp, integer_constraints a, integer_constraints b)
 static integer_constraints
 ic_mod(const type_t *tp, integer_constraints a, integer_constraints b)
 {
-	if (ic_maybe_signed_binary(tp, a, b)) {
-		uint64_t max_abs_b = u64_max(s64_abs(b.smin), s64_abs(b.smax));
-		if (max_abs_b >> 63 != 0 || max_abs_b == 0)
-			return a;
-
+	if (is_uinteger(tp->t_tspec)) {
 		integer_constraints c;
-		c.smin = s64_max(a.smin, -(int64_t)(max_abs_b - 1));
-		c.smax = s64_min(a.smax, (int64_t)(max_abs_b - 1));
 		c.umin = 0;
-		c.umax = UINT64_MAX;
-		c.bclr = 0;
+		c.umax = u64_min(a.umax, b.umax - 1);
+		c.bclr = ~u64_fill_right(c.umax);
+		c.smin = c.umax >> 63 == 0 ? 0 : INT64_MIN;
+		c.smax = c.umax >> 63 == 0 ? (int64_t)c.umax : INT64_MAX;
 		return c;
 	}
 
+	uint64_t a_max_abs = u64_max(s64_abs(a.smin), s64_abs(a.smax));
+	uint64_t b_max_abs = u64_max(s64_abs(b.smin), s64_abs(b.smax));
+	if (b_max_abs == 0)
+		return ic_any(tp);
+
 	integer_constraints c;
-	c.smin = INT64_MIN;
-	c.smax = INT64_MAX;
+	c.smax = u64_min(a_max_abs, b_max_abs - 1);
+	c.smin = -c.smax;
+	if (a.smin >= 0 && c.smin < 0)
+		c.smin = 0;
+	if (a.smax <= 0 && c.smax > 0)
+		c.smax = 0;
 	c.umin = 0;
-	c.umax = b.umax - 1;
-	c.bclr = ~u64_fill_right(c.umax);
+	c.umax = c.smin >= 0 ? (uint64_t)c.smax : UINT64_MAX;
+	c.bclr = c.smin >= 0 ? ~u64_fill_right(c.umax) : 0;
 	return c;
 }
 
