@@ -39,7 +39,7 @@ static const struct test_case {
 	{
 		LOCAL_IP7,	15000,		REMOTE_IP1,	7000,
 		NPF_NATOUT,	IFNAME_EXT,	PFIL_OUT,
-		RESULT_PASS,	AF_INET,	PUB_IP4,	7000
+		RESULT_PASS,	AF_INET,	PUB_IP4,	15000
 	},
 	/*
 	 * Traditional NAPT (outbound NAT):
