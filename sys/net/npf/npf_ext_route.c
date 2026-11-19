@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.20 2026/11/17 19:46:46 joe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ext_route.c,v 1.21 2026/11/19 12:56:03 joe Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -462,12 +462,11 @@ bad:
 	stats = NPF_STAT_NOREROUTE;
 	rv = false;
 done:
-	npf_stats_inc(npf, stats);
 	if (!dup_to) {
 		memset(npc->npc_nbuf, 0, sizeof(*npc->npc_nbuf));
 		npc->npc_nbuf->nb_flags |= NBUF_RPROC_CONSUMED;
 	}
-
+	npf_stats_inc(npf, stats);
 	KERNEL_UNLOCK_ONE(NULL);
 	return rv;
 }
