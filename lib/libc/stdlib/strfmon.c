@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.25 2026/11/17 11:15:09 kre Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.26 2026/11/19 19:09:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.25 2026/11/17 11:15:09 kre Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.26 2026/11/19 19:09:38 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -81,7 +81,7 @@ __RCSID("$NetBSD: strfmon.c,v 1.25 2026/11/17 11:15:09 kre Exp $");
 	int __w__ = __add_wide_char(dst, s + maxsize, (WCH));	\
 	int __c__ = (CH);					\
 	switch (__w__) {					\
-	case -2:	goto e2big_error;		break;	\
+	case -2:	goto e2big_error;			\
 	case -1:	if (__c__ != 0) PRINT(__c__);	break;	\
 	default:	dst += __w__;			break;	\
 	}							\
@@ -333,8 +333,6 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 		if (currency_symbol != NULL)
 			free(currency_symbol);
 		if (flags & USE_INTL_CURRENCY) {
-			size_t l;
-
 			currency_symbol = strdup(lc->int_curr_symbol);
 			if (currency_symbol != NULL &&
 			    /*
@@ -343,7 +341,7 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 			     * is supposed to be from ISO4217:2015, so
 			     * only ASCII, so, just leave this (for now)
 			     */
-			    (l = strlen(currency_symbol)) > 3) {
+			    strlen(currency_symbol) > 3) {
 				size_t chlen;
 				const int e = errno;
 
