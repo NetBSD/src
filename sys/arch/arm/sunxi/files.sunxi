@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.75 2026/06/22 20:26:34 jakllsch Exp $
+#	$NetBSD: files.sunxi,v 1.76 2026/11/19 01:50:36 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -141,6 +141,7 @@ file	arch/arm/sunxi/sun8i_v3s_gpio.c		sunxi_gpio & soc_sun8i_v3s
 file	arch/arm/sunxi/sun9i_a80_gpio.c		sunxi_gpio & soc_sun9i_a80
 file	arch/arm/sunxi/sun50i_a64_gpio.c	sunxi_gpio & soc_sun50i_a64
 file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
+file	arch/arm/sunxi/sun60i_w2_gpio.c		sunxi_gpio & soc_sun60i_w2
 
 # PWM
 device	sunxipwm: fdt_clock, fdt_pwm
@@ -379,6 +380,11 @@ device	sun8icrypto: fdt_clock, fdt_reset
 attach	sun8icrypto at fdt with sun8i_crypto
 file	arch/arm/sunxi/sun8i_crypto.c		sun8i_crypto
 
+# PPU (A733)
+device	sun60iw2ppu: fdt_powerdomain
+attach	sun60iw2ppu at fdt with sun60i_w2_ppu
+file	arch/arm/sunxi/sun60i_w2_ppu.c		sun60i_w2_ppu
+
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
 defflag	opt_soc.h			SOC_SUNXI_MC
@@ -400,6 +406,8 @@ defflag	opt_soc.h			SOC_SUN50I: SOC_SUNXI
 defflag	opt_soc.h			SOC_SUN50I_A64: SOC_SUN50I
 defflag	opt_soc.h			SOC_SUN50I_H5: SOC_SUN50I, SOC_SUN8I_H3
 defflag	opt_soc.h			SOC_SUN50I_H6: SOC_SUN50I
+defflag	opt_soc.h			SOC_SUN60I: SOC_SUNXI
+defflag	opt_soc.h			SOC_SUN60I_W2: SOC_SUN60I
 
 makeoptions	sunxi_ccu	"CWARNFLAGS.sunxi_ccu_nm.c"+="${CC_WNO_MAYBE_UNINITIALIZED}"
 

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.233 2026/05/13 05:43:04 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.234 2026/11/19 01:50:36 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -23,6 +23,7 @@ options 	SOC_RK3588
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
+options 	SOC_SUN60I_W2
 options 	SOC_TEGRA210
 options 	MULTIPROCESSOR
 
@@ -405,6 +406,7 @@ wskbd*		at ikbd? mux 1
 
 # Power Domain controllers
 applepmgr* 	at fdt? pass 0
+sun60iw2ppu*	at fdt? pass 0		# Allwinner A733 PPU
 
 # Random number generators and security devices
 amdccp* 	at fdt?			# AMD Cryptographic Coprocessor RNG
