@@ -128,17 +128,15 @@ run_raw_testcase(npf_cache_t *npc, unsigned i, bool verbose)
 	}
 	npf_config_read_exit(npf, slock);
 
-	if (error)
-		return error;
+	CHECK_TRUE(error == 0);
 
 	rp = npf_rule_getrproc(rl);
 	assert(rp != NULL);
 
 	error = npf_rproc_run(npc, rp, &mi, &decision);
+	CHECK_TRUE(error == 1);
 
-	if (error == 1) {
-		npf_rproc_release(rp);
-	}
+	npf_rproc_release(rp);
 
 	return error;
 }
