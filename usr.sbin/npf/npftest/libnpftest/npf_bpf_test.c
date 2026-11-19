@@ -98,7 +98,7 @@ npf_bpfcop_test(void)
 	};
 
 	// PR kern/60975 add validate tests to be more verbose
-	CHECK_TRUE(npf_bpf_validate(&insns_ipver, __arraycount(insns_ipver)) != 0);
+	CHECK_TRUE(npf_bpf_validate(&insns_ipver, sizeof(insns_ipver)) != 0);
 
 	CHECK_TRUE(test_bpf_code(&insns_ipver, __arraycount(insns_ipver)) == IPVERSION);
 
