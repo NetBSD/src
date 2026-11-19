@@ -435,10 +435,7 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
 		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLG
 		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JSB
 		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JMP
-#if 0 /* port-vax/59326 */
-		       || S_IS_FUNCTION (fragP->fr_symbol)
-#endif
-	              )
+		       || S_IS_FUNCTION (fragP->fr_symbol))
 		reloc_type = BFD_RELOC_32_PLT_PCREL;
 	      else
 		reloc_type = BFD_RELOC_32_GOT_PCREL;
