@@ -426,7 +426,13 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
 	          || S_IS_EXTERNAL (fragP->fr_symbol)))
 	    {
 	      /* Indirect references cannot go through the GOT or PLT,
-	         let's hope they'll become local in the final link.  */
+	         let's hope they'll become local in the final link.
+	         Only calls and jumps may go through the PLT.  Any other
+	         reference wants the address of the symbol and must use the
+	         GOT, also for a function: a PLT reference is turned into an
+	         indirect one through the function's .got.plt slot, which
+	         holds the PLT entry until the lazy binding has happened, so
+	         the same function would have different addresses.  */
 	      if ((ELF_ST_VISIBILITY (S_GET_OTHER (fragP->fr_symbol))
 		   != STV_DEFAULT)
 		  || (p[0] & 0x10))
@@ -434,8 +440,7 @@ md_estimate_size_before_relax (fragS *fragP, segT segment)
 	      else if (((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLS
 		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_CALLG
 		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JSB
-		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JMP
-		       || S_IS_FUNCTION (fragP->fr_symbol))
+		       || ((unsigned char *) fragP->fr_opcode)[0] == VAX_JMP)
 		reloc_type = BFD_RELOC_32_PLT_PCREL;
 	      else
 		reloc_type = BFD_RELOC_32_GOT_PCREL;
