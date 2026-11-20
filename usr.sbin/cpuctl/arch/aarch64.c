@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.29 2026/11/20 07:04:30 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.30 2026/11/20 08:39:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.29 2026/11/20 07:04:30 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.30 2026/11/20 08:39:05 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -258,11 +258,11 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 	{
 		FIELDINFO(8, 4, "MTE") {
 			[0] = "Memory Tagging Extension not implemented",
-			[1] = "Instruction-only Memory Taggined Extension"
-			      " implemented",
+			[1] = "Instruction-only Memory Taggined Extension "
+			      "implemented",
 			[2] = "Full Memory Tagging Extension implemented",
-			[3] = "Memory Tagging Extension implemented"
-			      " with Tag Check Fault handling",
+			[3] = "Memory Tagging Extension implemented "
+			      "with Tag Check Fault handling",
 		}
 	},
 	{
@@ -306,22 +306,22 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 		FIELDINFO(12, 4, "SHA2") {
 			[0] = "No SHA2",
 			[1] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1",
-			[2] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1"
-			     "/SHA512H/SHA512H2/SHA512SU0/SHA512SU1",
+			[2] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1/"
+			      "SHA512H/SHA512H2/SHA512SU0/SHA512SU1",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "CRC32") {
 			[0] = "No CRC32",
-			[1] = "CRC32B/CRC32H/CRC32W/CRC32X"
-			      "/CRC32CB/CRC32CH/CRC32CW/CRC32CX",
+			[1] = "CRC32B/CRC32H/CRC32W/CRC32X/"
+			      "CRC32CB/CRC32CH/CRC32CW/CRC32CX",
 		}
 	},
 	{
 		FIELDINFO(20, 4, "Atomic") {
 			[0] = "No Atomic",
-			[2] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN"
-			      "/LDUMAX/LDUMIN/CAS/CASP/SWP",
+			[2] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN/"
+			      "LDUMAX/LDUMIN/CAS/CASP/SWP",
 		}
 	},
 	{
@@ -339,8 +339,8 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	{
 		FIELDINFO(36, 4, "SM3") {
 			[0] = "No SM3",
-			[1] = "SM3SS1/SM3TT1A/SM3TT1B/SM3TT2A/SM3TT2B"
-			      "/SM3PARTW1/SM3PARTW2",
+			[1] = "SM3SS1/SM3TT1A/SM3TT1B/SM3TT2A/SM3TT2B/"
+			      "SM3PARTW1/SM3PARTW2",
 		}
 	},
 	{
@@ -370,11 +370,11 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(56, 4, "TLBI") {
-			[0] = "No outer shareable and TLB range maintenance"
-			      " instructions",
+			[0] = "No outer shareable and TLB range maintenance "
+			      "instructions",
 			[1] = "Outer shareable TLB maintenance instructions",
-			[2] = "Outer shareable and TLB range maintenance"
-			      " instructions",
+			[2] = "Outer shareable and TLB range maintenance "
+			      "instructions",
 		}
 	},
 	{
@@ -467,8 +467,8 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 	{
 		FIELDINFO(44, 4, "BF16") {
 			[0] = "No BFloat16",
-			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT"
-			      "/BFMLALB/BFMLALT/BFMMLA",
+			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT/"
+			      "BFMLALB/BFMLALT/BFMMLA",
 		}
 	},
 	{
@@ -486,8 +486,8 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 	{
 		FIELDINFO(56, 4, "XS") {
 			[0] = "No XS/nXS qualifier",
-			[1] = "XS attribute, TLBI and DSB"
-			      " with nXS qualifier supported",
+			[1] = "XS attribute, TLBI and DSB "
+			      "with nXS qualifier supported",
 		}
 	},
 	{
@@ -580,10 +580,10 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(44, 4, "ExS") {
-			[0] = "All Exception entries and exits are context"
-			      " synchronization events",
-			[1] = "Non-context synchronizing exception entry and"
-			      " exit are supported",
+			[0] = "All Exception entries and exits are context "
+			      "synchronization events",
+			[1] = "Non-context synchronizing exception entry and "
+			      "exit are supported",
 		}
 	},
 	{
@@ -596,8 +596,8 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 		FIELDINFO(60, 4, "ECV") {
 			[0] = "Enhanced Counter Virtualization not implemented",
 			[1] = "Enhanced Counter Virtualization implemented",
-			[2] = "Enhanced Counter Virtualization"
-			      " + CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented",
+			[2] = "Enhanced Counter Virtualization "
+			      "+ CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented",
 		}
 	},
 
@@ -655,23 +655,23 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(28, 4, "XNX") {
-			[0] = "Distinction between EL0 and EL1 XN control"
-			      " at stage2 not supported",
-			[1] = "Distinction between EL0 and EL1 XN control"
-			      " at stage2 supported",
+			[0] = "Distinction between EL0 and EL1 XN control "
+			      "at stage2 not supported",
+			[1] = "Distinction between EL0 and EL1 XN control "
+			      "at stage2 supported",
 		}
 	},
 	{
 		FIELDINFO(32, 4, "TWED") {
-			[0] = "Configurable delayed trapping of WFE is not"
-			      " supported",
+			[0] = "Configurable delayed trapping of WFE is not "
+			      "supported",
 			[1] = "Configurable delayed trapping of WFE supported",
 		}
 	},
 	{
 		FIELDINFO(36, 4, "ETS") {
-			[0] = "Enhanced Translation Synchronization not"
-			      " supported",
+			[0] = "Enhanced Translation Synchronization not "
+			      "supported",
 			[1] = "Enhanced Translation Synchronization supported",
 		}
 	},
@@ -701,8 +701,8 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	{
 		FIELDINFO(0, 4, "DebugVer") {
 			[6] = "ARMv8 debug architecture",
-			[7] = "ARMv8 debug architecture"
-			      " with Virtualization Host Extensions",
+			[7] = "ARMv8 debug architecture "
+			      "with Virtualization Host Extensions",
 			[8] = "ARMv8.2 debug architecture",
 			[9] = "ARMv8.4 debug architecture",
 		}
@@ -750,8 +750,8 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 	},
 	{
 		FIELDINFO(48, 4, "MTPMU") {
-			[0] = "Multi-threaded PMU extension not implemented,"
-			      " or implementation defined",
+			[0] = "Multi-threaded PMU extension not implemented, "
+			      "or implementation defined",
 			[1] = "Multi-threaded PMU extension implemented",
 			[15] = "Multi-threaded PMU extension not implemented"
 		}
@@ -852,8 +852,8 @@ struct fieldinfo mvfr1_fieldinfo[] = {
 		FIELDINFO(20, 4, "SIMDHP") {
 			[0] = "No Advanced SIMD half precision",
 			[1] = "Advanced SIMD half precision conversion",
-			[2] = "Advanced SIMD half precision conversion"
-			      " and arithmetic",
+			[2] = "Advanced SIMD half precision conversion "
+			      "and arithmetic",
 		}
 	},
 	{
