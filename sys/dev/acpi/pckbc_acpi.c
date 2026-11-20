@@ -1,4 +1,4 @@
-/*	$NetBSD: pckbc_acpi.c,v 1.40 2024/11/10 13:29:38 martin Exp $	*/
+/*	$NetBSD: pckbc_acpi.c,v 1.41 2026/11/20 15:32:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.40 2024/11/10 13:29:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pckbc_acpi.c,v 1.41 2026/11/20 15:32:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -219,9 +219,9 @@ out:
 static void
 pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 {
-	struct pckbc_acpi_softc *psc = NULL; /* XXX: gcc */
-	void *rv = NULL;
-	ACPI_HANDLE handle;
+	struct pckbc_acpi_softc *psc;
+	void *ih = NULL;
+	ACPI_HANDLE handle = NULL;
 	char intr_name[64];
 	int i;
 
@@ -235,20 +235,20 @@ pckbc_acpi_intr_establish(struct pckbc_softc *sc, pckbc_slot_t slot)
 			break;
 		}
 	}
-	if (i < pckbc_cd.cd_ndevs) {
+	if (handle != NULL) {
 		snprintf(intr_name, sizeof(intr_name), "%s %s",
 		    device_xname(psc->sc_pckbc.sc_dv), pckbc_slot_names[slot]);
 
-		rv = acpi_intr_establish(sc->sc_dv, (uint64_t)(uintptr_t)handle,
+		ih = acpi_intr_establish(sc->sc_dv, (uint64_t)(uintptr_t)handle,
 		    IPL_TTY, false, pckbcintr, sc, intr_name);
 	}
-	if (rv == NULL) {
+	if (ih == NULL) {
 		aprint_error_dev(sc->sc_dv,
 		    "unable to establish interrupt for %s slot\n",
 		    pckbc_slot_names[slot]);
 	} else {
 		aprint_normal_dev(sc->sc_dv, "using %s for %s slot\n",
-		    acpi_intr_string(rv, intr_name, sizeof(intr_name)),
+		    acpi_intr_string(ih, intr_name, sizeof(intr_name)),
 		    pckbc_slot_names[slot]);
 	}
 }
