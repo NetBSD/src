@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.28 2026/11/19 09:20:25 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.29 2026/11/20 07:04:30 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.28 2026/11/19 09:20:25 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.29 2026/11/20 07:04:30 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -140,28 +140,28 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 		FIELDINFO(0, 4, "EL0") {
 			[0] = "No EL0",
 			[1] = "AArch64",
-			[2] = "AArch64/AArch32"
+			[2] = "AArch64/AArch32",
 		}
 	},
 	{
 		FIELDINFO(4, 4, "EL1") {
 			[0] = "No EL1",
 			[1] = "AArch64",
-			[2] = "AArch64/AArch32"
+			[2] = "AArch64/AArch32",
 		}
 	},
 	{
 		FIELDINFO(8, 4, "EL2") {
 			[0] = "No EL2",
 			[1] = "AArch64",
-			[2] = "AArch64/AArch32"
+			[2] = "AArch64/AArch32",
 		}
 	},
 	{
 		FIELDINFO(12, 4, "EL3") {
 			[0] = "No EL3",
 			[1] = "AArch64",
-			[2] = "AArch64/AArch32"
+			[2] = "AArch64/AArch32",
 		}
 	},
 	{
@@ -182,7 +182,7 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 		FIELDINFO(24, 4, "GIC") {
 			[0] = "GIC CPU interface sysregs not implemented",
 			[1] = "GIC CPU interface sysregs v3.0/4.0 supported",
-			[3] = "GIC CPU interface sysregs v4.1 supported"
+			[3] = "GIC CPU interface sysregs v4.1 supported",
 		}
 	},
 	{
@@ -252,7 +252,7 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 		FIELDINFO(4, 4, "SSBS") {
 			[0] = "Speculative Store Bypassing control not implemented",
 			[1] = "Speculative Store Bypassing control implemented",
-			[2] = "Speculative Store Bypassing control implemented, plus MSR/MRS"
+			[2] = "Speculative Store Bypassing control implemented, plus MSR/MRS",
 		}
 	},
 	{
@@ -262,26 +262,26 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 			      " implemented",
 			[2] = "Full Memory Tagging Extension implemented",
 			[3] = "Memory Tagging Extension implemented"
-			      " with Tag Check Fault handling"
+			      " with Tag Check Fault handling",
 		}
 	},
 	{
 		FIELDINFO(12, 4, "RAS_frac") {
 			[0] = "Regular RAS",
-			[1] = "RAS plus registers"
+			[1] = "RAS plus registers",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "MPAM_frac") {
 			[0] = "MPAM not implemented, or v1.0",
-			[1] = "MPAM v0.1 or v1.1"
+			[1] = "MPAM v0.1 or v1.1",
 		}
 	},
 	{
 		FIELDINFO(32, 4, "CSV2_frac") {
 			[0] = "not disclosed",
 			[1] = "SCXTNUM_ELx registers not supported",
-			[2] = "SCXTNUM_ELx registers supported"
+			[2] = "SCXTNUM_ELx registers supported",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -293,13 +293,13 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 		FIELDINFO(4, 4, "AES") {
 			[0] = "No AES",
 			[1] = "AESE/AESD/AESMC/AESIMC",
-			[2] = "AESE/AESD/AESMC/AESIMC+PMULL/PMULL2"
+			[2] = "AESE/AESD/AESMC/AESIMC+PMULL/PMULL2",
 		}
 	},
 	{
 		FIELDINFO(8, 4, "SHA1") {
 			[0] = "No SHA1",
-			[1] = "SHA1C/SHA1P/SHA1M/SHA1H/SHA1SU0/SHA1SU1"
+			[1] = "SHA1C/SHA1P/SHA1M/SHA1H/SHA1SU0/SHA1SU1",
 		}
 	},
 	{
@@ -307,14 +307,14 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 			[0] = "No SHA2",
 			[1] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1",
 			[2] = "SHA256H/SHA256H2/SHA256SU0/SHA256SU1"
-			     "/SHA512H/SHA512H2/SHA512SU0/SHA512SU1"
+			     "/SHA512H/SHA512H2/SHA512SU0/SHA512SU1",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "CRC32") {
 			[0] = "No CRC32",
 			[1] = "CRC32B/CRC32H/CRC32W/CRC32X"
-			      "/CRC32CB/CRC32CH/CRC32CW/CRC32CX"
+			      "/CRC32CB/CRC32CH/CRC32CW/CRC32CX",
 		}
 	},
 	{
@@ -392,7 +392,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 		FIELDINFO(0, 4, "DPB") {
 			[0] = "No DC CVAP",
 			[1] = "DC CVAP",
-			[2] = "DC CVAP/DC CVADP"
+			[2] = "DC CVAP/DC CVADP",
 		}
 	},
 	{
@@ -402,7 +402,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[2] = "QARMA with EnhancedPAC",
 			[3] = "QARMA with EnhancedPAC2",
 			[4] = "QARMA with EnhancedPAC/PAC2",
-			[5] = "QARMA with EnhancedPAC/PAC2/FPACCombined"
+			[5] = "QARMA with EnhancedPAC/PAC2/FPACCombined",
 		}
 	},
 	{
@@ -412,82 +412,82 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[2] = "EnhancedPAC",
 			[3] = "EnhancedPAC2",
 			[4] = "EnhancedPAC2/FPAC",
-			[5] = "EnhancedPAC2/FPAC/FPACCombined"
+			[5] = "EnhancedPAC2/FPAC/FPACCombined",
 		}
 	},
 	{
 		FIELDINFO(12, 4, "JSCVT") {
 			[0] = "No FJCVTZS",
-			[1] = "FJCVTZS"
+			[1] = "FJCVTZS",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "FCMA") {
 			[0] = "No FCMA",
-			[1] = "FCMLA/FCADD"
+			[1] = "FCMLA/FCADD",
 		}
 	},
 	{
 		FIELDINFO(20, 4, "LRCPC") {
 			[0] = "no LRCPC",
 			[1] = "LDAPR",
-			[2] = "LDAPR/LDAPUR/STLUR"
+			[2] = "LDAPR/LDAPUR/STLUR",
 		}
 	},
 	{
 		FIELDINFO(24, 4, "GPA") {
 			[0] = "No Architected Generic Authentication algorithm",
-			[1] = "QARMA with PACGA"
+			[1] = "QARMA with PACGA",
 		}
 	},
 	{
 		FIELDINFO(28, 4, "GPI") {
 			[0] = "No Generic Authentication algorithm",
-			[1] = "Generic Authentication algorithm implemented"
+			[1] = "Generic Authentication algorithm implemented",
 		}
 	},
 	{
 		FIELDINFO(32, 4, "FRINTTS") {
 			[0] = "No FRINTTS",
-			[1] = "FRINT32Z/FRINT32X/FRINT64Z/FRINT64X"
+			[1] = "FRINT32Z/FRINT32X/FRINT64Z/FRINT64X",
 		}
 	},
 	{
 		FIELDINFO(36, 4, "SB") {
 			[0] = "No SB",
-			[1] = "SB"
+			[1] = "SB",
 		}
 	},
 	{
 		FIELDINFO(40, 4, "SPECRES") {
 			[0] = "No SPECRES",
-			[1] = "CFP RCTX/DVP RCTX/CPP RCTX"
+			[1] = "CFP RCTX/DVP RCTX/CPP RCTX",
 		}
 	},
 	{
 		FIELDINFO(44, 4, "BF16") {
 			[0] = "No BFloat16",
 			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT"
-			      "/BFMLALB/BFMLALT/BFMMLA"
+			      "/BFMLALB/BFMLALT/BFMMLA",
 		}
 	},
 	{
 		FIELDINFO(48, 4, "DGH") {
 			[0] = "Data Gathering Hint not implemented",
-			[1] = "Data Gathering Hint implemented"
+			[1] = "Data Gathering Hint implemented",
 		}
 	},
 	{
 		FIELDINFO(52, 4, "I8MM") {
 			[0] = "No Int8 matrix",
-			[1] = "SMMLA/SUDOT/UMMLA/USMMLA/USDOT"
+			[1] = "SMMLA/SUDOT/UMMLA/USMMLA/USDOT",
 		}
 	},
 	{
 		FIELDINFO(56, 4, "XS") {
 			[0] = "No XS/nXS qualifier",
 			[1] = "XS attribute, TLBI and DSB"
-			      " with nXS qualifier supported"
+			      " with nXS qualifier supported",
 		}
 	},
 	{
@@ -511,37 +511,37 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[3] = "42bits/4TB",
 			[4] = "44bits/16TB",
 			[5] = "48bits/256TB",
-			[6] = "52bits/4PB"
+			[6] = "52bits/4PB",
 		}
 	},
 	{
 		FIELDINFO(4, 4, "ASIDBit") {
 			[0] = "8bits",
-			[2] = "16bits"
+			[2] = "16bits",
 		}
 	},
 	{
 		FIELDINFO(8, 4, "BigEnd") {
 			[0] = "No mixed-endian",
-			[1] = "Mixed-endian"
+			[1] = "Mixed-endian",
 		}
 	},
 	{
 		FIELDINFO(12, 4, "SNSMem") {
 			[0] = "No distinction B/W Secure and Non-secure Memory",
-			[1] = "Distinction B/W Secure and Non-secure Memory"
+			[1] = "Distinction B/W Secure and Non-secure Memory",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "BigEndEL0") {
 			[0] = "No mixed-endian at EL0",
-			[1] = "Mixed-endian at EL0"
+			[1] = "Mixed-endian at EL0",
 		}
 	},
 	{
 		FIELDINFO(20, 4, "TGran16") {
 			[0] = "No 16KB granule",
-			[1] = "16KB granule"
+			[1] = "16KB granule",
 		}
 	},
 	{
@@ -561,21 +561,21 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[0] = "same as TGran16",
 			[1] = "No 16KB granule at stage2",
 			[2] = "16KB granule at stage2",
-			[3] = "16KB granule at stage2/52bit"
+			[3] = "16KB granule at stage2/52bit",
 		}
 	},
 	{
 		FIELDINFO(36, 4, "TGran64_2") {
 			[0] = "same as TGran64",
 			[1] = "No 64KB granule at stage2",
-			[2] = "64KB granule at stage2"
+			[2] = "64KB granule at stage2",
 		}
 	},
 	{
 		FIELDINFO(40, 4, "TGran4_2") {
 			[0] = "same as TGran4",
 			[1] = "No 4KB granule at stage2",
-			[2] = "4KB granule at stage2"
+			[2] = "4KB granule at stage2",
 		}
 	},
 	{
@@ -583,13 +583,13 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[0] = "All Exception entries and exits are context"
 			      " synchronization events",
 			[1] = "Non-context synchronizing exception entry and"
-			      " exit are supported"
+			      " exit are supported",
 		}
 	},
 	{
 		FIELDINFO(56, 4, "FGT") {
 			[0] = "fine-grained trap controls not implemented",
-			[1] = "fine-grained trap controls implemented"
+			[1] = "fine-grained trap controls implemented",
 		}
 	},
 	{
@@ -597,7 +597,7 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[0] = "Enhanced Counter Virtualization not implemented",
 			[1] = "Enhanced Counter Virtualization implemented",
 			[2] = "Enhanced Counter Virtualization"
-			      " + CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented"
+			      " + CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented",
 		}
 	},
 
@@ -616,7 +616,7 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 	{
 		FIELDINFO(4, 4, "VMIDBits") {
 			[0] = "8bits",
-			[2] = "16bits"
+			[2] = "16bits",
 		}
 	},
 	{
@@ -629,13 +629,13 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 		FIELDINFO(12, 4, "HPDS") {
 			[0] = "Disabling of hierarchical controls not supported",
 			[1] = "Disabling of hierarchical controls supported",
-			[2] = "Disabling of hierarchical controls supported, plus PTD"
+			[2] = "Disabling of hierarchical controls supported, plus PTD",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "LO") {
 			[0] = "LORegions not supported",
-			[1] = "LORegions supported"
+			[1] = "LORegions supported",
 		}
 	},
 	{
@@ -644,13 +644,13 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 			[1] = "PAN supported",
 			[2] = "PAN supported, and instructions supported",
 			[3] = "PAN supported, instructions supported"
-			      ", and SCTLR_EL[12].EPAN bits supported"
+			      ", and SCTLR_EL[12].EPAN bits supported",
 		}
 	},
 	{
 		FIELDINFO(24, 4, "SpecSEI") {
 			[0] = "SError interrupt not supported",
-			[1] = "SError interrupt supported"
+			[1] = "SError interrupt supported",
 		}
 	},
 	{
@@ -658,39 +658,39 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 			[0] = "Distinction between EL0 and EL1 XN control"
 			      " at stage2 not supported",
 			[1] = "Distinction between EL0 and EL1 XN control"
-			      " at stage2 supported"
+			      " at stage2 supported",
 		}
 	},
 	{
 		FIELDINFO(32, 4, "TWED") {
 			[0] = "Configurable delayed trapping of WFE is not"
 			      " supported",
-			[1] = "Configurable delayed trapping of WFE supported"
+			[1] = "Configurable delayed trapping of WFE supported",
 		}
 	},
 	{
 		FIELDINFO(36, 4, "ETS") {
 			[0] = "Enhanced Translation Synchronization not"
 			      " supported",
-			[1] = "Enhanced Translation Synchronization supported"
+			[1] = "Enhanced Translation Synchronization supported",
 		}
 	},
 	{
 		FIELDINFO(40, 4, "HCX") {
 			[0] = "HCRX_EL2 not supported",
-			[1] = "HCRX_EL2 supported"
+			[1] = "HCRX_EL2 supported",
 		}
 	},
 	{
 		FIELDINFO(44, 4, "AFP") {
 			[0] = "FPCR.{AH,FIZ,NEP} fields not supported",
-			[1] = "FPCR.{AH,FIZ,NEP} fields supported"
+			[1] = "FPCR.{AH,FIZ,NEP} fields supported",
 		}
 	},
 	{
 		FIELDINFO(48, 4, "nTLBPA") {
 			[0] = "might include non-coherent caches",
-			[1] = "does not include non-coherent caches"
+			[1] = "does not include non-coherent caches",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -704,13 +704,13 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 			[7] = "ARMv8 debug architecture"
 			      " with Virtualization Host Extensions",
 			[8] = "ARMv8.2 debug architecture",
-			[9] = "ARMv8.4 debug architecture"
+			[9] = "ARMv8.4 debug architecture",
 		}
 	},
 	{
 		FIELDINFO(4, 4, "TraceVer") {
 			[0] = "Trace supported",
-			[1] = "Trace not supported"
+			[1] = "Trace not supported",
 		}
 	},
 	{
@@ -732,20 +732,20 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 			      "Event packet alignment flag implemented",
 			[3] = "Statistical Profiling Extension, "
 			      "Event packet alignment flag, and "
-			      "Branch target address packet, etc."
+			      "Branch target address packet, etc.",
 		}
 	},
 	{
 		FIELDINFO(36, 4, "DoubleLock") {
 			[0] = "OS Double Lock implemented",
-			[1] = "OS Double Lock not implemented"
+			[1] = "OS Double Lock not implemented",
 		}
 	},
 	{
 		FIELDINFO(40, 4, "TraceFilt") {
 			[0] = "ARMv8.4 Self-hosted Trace Extension not "
 			      "implemented",
-			[1] = "ARMv8.4 Self-hosted Trace Extension implemented"
+			[1] = "ARMv8.4 Self-hosted Trace Extension implemented",
 		}
 	},
 	{
@@ -766,51 +766,51 @@ struct fieldinfo mvfr0_fieldinfo[] = {
 		FIELDINFO(0, 4, "SIMDreg") {
 			[0] = "No SIMD",
 			[1] = "16x64-bit SIMD",
-			[2] = "32x64-bit SIMD"
+			[2] = "32x64-bit SIMD",
 		}
 	},
 	{
 		FIELDINFO(4, 4, "FPSP") {
 			[0] = "No VFP support single precision",
 			[1] = "VFPv2 support single precision",
-			[2] = "VFPv2/VFPv3/VFPv4 support single precision"
+			[2] = "VFPv2/VFPv3/VFPv4 support single precision",
 		}
 	},
 	{
 		FIELDINFO(8, 4, "FPDP") {
 			[0] = "No VFP support double precision",
 			[1] = "VFPv2 support double precision",
-			[2] = "VFPv2/VFPv3/VFPv4 support double precision"
+			[2] = "VFPv2/VFPv3/VFPv4 support double precision",
 		}
 	},
 	{
 		FIELDINFO(12, 4, "FPTrap") {
 			[0] = "No floating point exception trapping support",
-			[1] = "VFPv2/VFPv3/VFPv4 support exception trapping"
+			[1] = "VFPv2/VFPv3/VFPv4 support exception trapping",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "FPDivide") {
 			[0] = "VDIV not supported",
-			[1] = "VDIV supported"
+			[1] = "VDIV supported",
 		}
 	},
 	{
 		FIELDINFO(20, 4, "FPSqrt") {
 			[0] = "VSQRT not supported",
-			[1] = "VSQRT supported"
+			[1] = "VSQRT supported",
 		}
 	},
 	{
 		FIELDINFO(24, 4, "FPShVec") {
 			[0] = "Short Vectors not supported",
-			[1] = "Short Vectors supported"
+			[1] = "Short Vectors supported",
 		}
 	},
 	{
 		FIELDINFO(28, 4, "FPRound") {
 			[0] = "Only Round to Nearest mode",
-			[1] = "All rounding modes"
+			[1] = "All rounding modes",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -821,31 +821,31 @@ struct fieldinfo mvfr1_fieldinfo[] = {
 	{
 		FIELDINFO(0, 4, "FPFtZ") {
 			[0] = "only the Flush-to-Zero",
-			[1] = "full Denormalized number arithmetic"
+			[1] = "full Denormalized number arithmetic",
 		}
 	},
 	{
 		FIELDINFO(4, 4, "FPDNan") {
 			[0] = "Default NaN",
-			[1] = "Propagation of NaN"
+			[1] = "Propagation of NaN",
 		}
 	},
 	{
 		FIELDINFO(8, 4, "SIMDLS") {
 			[0] = "No Advanced SIMD Load/Store",
-			[1] = "Advanced SIMD Load/Store"
+			[1] = "Advanced SIMD Load/Store",
 		}
 	},
 	{
 		FIELDINFO(12, 4, "SIMDInt") {
 			[0] = "No Advanced SIMD Integer",
-			[1] = "Advanced SIMD Integer"
+			[1] = "Advanced SIMD Integer",
 		}
 	},
 	{
 		FIELDINFO(16, 4, "SIMDSP") {
 			[0] = "No Advanced SIMD single precision",
-			[1] = "Advanced SIMD single precision"
+			[1] = "Advanced SIMD single precision",
 		}
 	},
 	{
@@ -853,7 +853,7 @@ struct fieldinfo mvfr1_fieldinfo[] = {
 			[0] = "No Advanced SIMD half precision",
 			[1] = "Advanced SIMD half precision conversion",
 			[2] = "Advanced SIMD half precision conversion"
-			      " and arithmetic"
+			      " and arithmetic",
 		}
 	},
 	{
@@ -862,13 +862,13 @@ struct fieldinfo mvfr1_fieldinfo[] = {
 			[1] = "half/single precision conversion",
 			[2] = "half/single/double precision conversion",
 			[3] = "half/single/double precision conversion, and "
-			      "half precision arithmetic"
+			      "half precision arithmetic",
 		}
 	},
 	{
 		FIELDINFO(28, 4, "SIMDFMAC") {
 			[0] = "No Fused Multiply-Accumulate",
-			[1] = "Fused Multiply-Accumulate"
+			[1] = "Fused Multiply-Accumulate",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -884,7 +884,7 @@ struct fieldinfo mvfr2_fieldinfo[] = {
 			      ", Round to Integral floating point",
 			[3] = "Conversion to Integer w/Directed Rounding modes"
 			      ", Round to Integral floating point"
-			      ", MaxNum and MinNum"
+			      ", MaxNum and MinNum",
 		}
 	},
 	{
@@ -899,7 +899,7 @@ struct fieldinfo mvfr2_fieldinfo[] = {
 			[4] = "Floating point selection"
 			      ", Conversion to Integer w/Directed Rounding modes"
 			      ", Round to Integral floating point"
-			      ", MaxNum and MinNum"
+			      ", MaxNum and MinNum",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -911,7 +911,7 @@ const char * const clidr_cachetype[8] = { /* 8=3bit */
 	[1] = "Instruction cache",
 	[2] = "Data cache",
 	[3] = "Instruction and Data cache",
-	[4] = "Unified cache"
+	[4] = "Unified cache",
 };
 
 struct fieldinfo clidr_fieldinfo[] = {
@@ -976,7 +976,7 @@ struct fieldinfo ctr_fieldinfo[] = {
 			[0] = "VMID aware PIPT (VPIPT)",
 			[1] = "ASID-tagged VIVT (AIVIVT)",
 			[2] = "VIPT",
-			[3] = "PIPT"
+			[3] = "PIPT",
 		},
 	},
 	{
