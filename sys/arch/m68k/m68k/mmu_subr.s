@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_subr.s,v 1.6 2026/03/26 11:53:51 thorpej Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.7 2026/11/20 17:13:42 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -192,16 +192,11 @@ ENTRY_NOPROFILE(mmu_load_tt40)
 #if defined(M68K_MMU_HP)
 ENTRY_NOPROFILE(mmu_load_urp20hp)
 	movl	#CACHE_CLR,%d0
-	movc	%d0,%cacr		| invalidate caches
-	movl	_C_LABEL(MMUbase),%a0
-	movl	%a0@(MMUTBINVAL),%d1	| invalidate TLB
-	tstl	_C_LABEL(ectype)	| have an external VAC?
-	jle	1f			| no, skip
-	andl	#~MMU_CEN,%a0@(MMUCMD)	| toggle cache enable
-	orl	#MMU_CEN,%a0@(MMUCMD)	| to clear data cache
-1:	movl	%sp@(4),%d0		| get root table PA argument
+	movc	%d0,%cacr		| invalidate on-chip caches
+	movl	%sp@(4),%d0		| get root table PA argument
 	moveq	#PGSHIFT,%d1
 	lsrl	%d1,%d0			| convert to page frame number
+	movl	_C_LABEL(MMUbase),%a0
 	movl	%d0,%a0@(MMUUSTP)	| load to USTP register
 	rts
 #endif /* M68K_MMU_HP */
