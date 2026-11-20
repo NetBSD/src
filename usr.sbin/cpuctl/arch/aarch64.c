@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.30 2026/11/20 08:39:05 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.31 2026/11/20 08:41:37 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.30 2026/11/20 08:39:05 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.31 2026/11/20 08:41:37 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -369,7 +369,7 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 		}
 	},
 	{
-		FIELDINFO(56, 4, "TLBI") {
+		FIELDINFO(56, 4, "TLB") {
 			[0] = "No outer shareable and TLB range maintenance "
 			      "instructions",
 			[1] = "Outer shareable TLB maintenance instructions",
