@@ -1,4 +1,4 @@
-/*	$NetBSD: mmu_subr.s,v 1.7 2026/11/20 17:13:42 thorpej Exp $	*/
+/*	$NetBSD: mmu_subr.s,v 1.8 2026/11/20 17:20:47 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2023, 2025 The NetBSD Foundation, Inc.
@@ -118,14 +118,14 @@ ENTRY_NOPROFILE(mmu_load_urp51)
 	movl	%sp@(4),%d0		| get root table PA argument
 	lea	_C_LABEL(protorp),%a0	| CRP prototype
 	movl	%d0,%a0@(4)		| set new root table PA
-	pflusha				| flush ATC
+	pflush	#FC_USERD,#4		| flush USER ATC entries
 	pmove	%a0@,%crp		| load CRP register
 #ifdef __HAVE_M68K_DYNAMIC_CACR
 	movl	_C_LABEL(cacr_cache_clr),%d0
 #else
 	movl	#CACHE_CLR,%d0
 #endif
-	movc	%d0,%cacr		| invalidate caches
+	movc	%d0,%cacr		| invalidate on-chip caches
 	rts
 
 #ifdef M68030
