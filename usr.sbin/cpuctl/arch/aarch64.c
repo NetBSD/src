@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.31 2026/11/20 08:41:37 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.32 2026/11/20 08:51:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.31 2026/11/20 08:41:37 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.32 2026/11/20 08:51:21 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -1107,7 +1107,7 @@ identify_mpidr(const char *cpuname, uint64_t mpidr)
 
 }
 
-/* AA64DFR0 - Debug feature register 0 */
+/* ID_AA64DFR0_EL1 - Debug feature register 0 */
 static void
 identify_dfr0(const char *cpuname, uint64_t dfr0)
 {
