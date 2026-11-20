@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.101 2026/11/20 05:27:21 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.102 2026/11/20 18:02:34 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.101 2026/11/20 05:27:21 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.102 2026/11/20 18:02:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1904,16 +1904,11 @@ pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
 	pmap->pm_lev1pa = pa;
 
 	if (pmap == pmap_percpu()->pc_pmap) {
-#if MMU_CONFIG_HP_CLASS
 		/*
-		 * N.B. re-loading the user segment table pointer also
-		 * invalidates the user side of the VAC, so no additional
-		 * work is necessary.
+		 * The MMU-specific load-urp functions take care of
+		 * any necessary ATC / cache invalidations.
 		 */
-#endif
 		pmap_load_urp(pmap->pm_lev1pa);
-		TBIAU();		/* XXX optimize? */
-		ICIA();			/* XXX optimize? */
 	}
 }
 
