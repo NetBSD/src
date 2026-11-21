@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.36 2026/11/15 15:16:24 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.37 2026/11/21 17:39:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -162,7 +162,7 @@ struct cpu_info {
 	 * by other CPUs.  For that reason, they get their own cache
 	 * line, too.
 	 */
-	cpuid_t	        ci_cpuid	/* [MI] our CPU ID */
+	cpuid_t	        ci_cpuid	/* [MI] our CPU HW ID */
 			    __aligned(16);
 	struct cpu_info *ci_next;
 	struct cpu_info *ci_self;	/*      always points to real address */
@@ -190,7 +190,6 @@ extern struct cpu_info cpuinfo;		/* per-CPU alias */
 
 struct	proc;
 void	cpu_proc_fork(struct proc *, struct proc *);
-struct cpu_info *curcpu_impl(void);
 
 #define	curcpu()	(cpuinfo.ci_self)
 #define	cpu_number()	(cpuinfo.ci_cpuid)
