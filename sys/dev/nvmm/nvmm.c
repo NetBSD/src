@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.50 2026/08/08 15:00:07 riastradh Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.51 2026/11/21 15:26:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 Maxime Villard, m00nbsd.net
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.50 2026/08/08 15:00:07 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.51 2026/11/21 15:26:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1477,7 +1477,7 @@ nvmm_modcmd(modcmd_t cmd, void *arg)
 {
 #if defined(_MODULE)
 	devmajor_t bmajor = NODEVMAJOR;
-	devmajor_t cmajor = 345;
+	devmajor_t cmajor = NODEVMAJOR;
 #endif
 	int error;
 
