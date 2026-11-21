@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.102 2026/11/20 18:02:34 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.103 2026/11/21 18:44:45 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.102 2026/11/20 18:02:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.103 2026/11/21 18:44:45 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -499,6 +499,18 @@ EVCNT_ATTACH_STATIC(pmap_atc_dc_ev);
 static struct evcnt pmap_atc_bc_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "bc all");
 EVCNT_ATTACH_STATIC(pmap_atc_bc_ev);
+
+#if MMU_CONFIG_HP_CLASS
+static struct evcnt pmap_atc_vac_all_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "vac all");
+EVCNT_ATTACH_STATIC(pmap_atc_vac_all_ev);
+static struct evcnt pmap_atc_vac_super_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "vac super");
+EVCNT_ATTACH_STATIC(pmap_atc_vac_super_ev);
+static struct evcnt pmap_atc_vac_user_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "vac user");
+EVCNT_ATTACH_STATIC(pmap_atc_vac_user_ev);
+#endif
 
 static struct evcnt pmap_atc_bc60inv_all_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "bc60 all");
@@ -1167,20 +1179,23 @@ pmap_atc_process_hp(void)
 		ic20_inval();
 	}
 
-	/* XXX instrumentation */
 	if (atc->atc_flags & ATC_F_DC) {
 		switch (atc->atc_flags & (ATC_F_SUPER|ATC_F_USER)) {
 		case ATC_F_SUPER:
+			pmap_evcnt(atc_vac_super);
 			hp_vac_inv_super();
 			/* this also invalidates the TLB */
 			return;
 		case ATC_F_USER:
+			pmap_evcnt(atc_vac_user);
 			hp_vac_inv_user();
 			/* this also invalidates the TLB */
 			return;
 		default:
+			pmap_evcnt(atc_vac_all);
 			hp_vac_inv_all();
 			if (atc->atc_flags & ATC_F_ALL) {
+				pmap_evcnt(atc_all);
 				hp_tbia();
 				return;
 			}
@@ -1190,18 +1205,29 @@ pmap_atc_process_hp(void)
 
 	switch (atc->atc_flags & (ATC_F_ALL|ATC_F_SUPER|ATC_F_USER)) {
 	case ATC_F_ALL|ATC_F_SUPER|ATC_F_USER:
+		pmap_evcnt(atc_all);
 		hp_tbia();
 		return;
 	case ATC_F_ALL|ATC_F_SUPER:
+		pmap_evcnt(atc_all_super);
 		hp_tbias();
 		return;
 	case ATC_F_ALL|ATC_F_USER:
+		pmap_evcnt(atc_all_user);
 		hp_tbiau();
 		return;
 	}
 
 	setdfc(FC_PURGE);
 	for (int i = 0; i < atc->atc_count; i++) {
+		if (atc->atc_data[i].atc_pmap == pmap_kernel()) {
+			pmap_evcnt(atc_one_super);
+		} else if (atc->atc_data[i].atc_pmap == pc->pc_pmap) {
+			pmap_evcnt(atc_one_user);
+		} else {
+			pmap_evcnt(atc_one_skipped);
+			continue;
+		}
 		vaddr_t va = ATC_DAT_VA(atc, i);
 		hp_tbis(va);
 	}
