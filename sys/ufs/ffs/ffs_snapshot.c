@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.157 2026/07/22 14:44:49 hannken Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.158 2026/11/21 18:27:06 hannken Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.157 2026/07/22 14:44:49 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.158 2026/11/21 18:27:06 hannken Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1512,6 +1512,7 @@ ffs_snapremove(struct vnode *vp)
 	ip->i_flags &= ~(SF_SNAPSHOT | SF_SNAPINVAL);
 	DIP_ASSIGN(ip, flags, ip->i_flags);
 	ip->i_flag |= IN_CHANGE | IN_UPDATE;
+	UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 #if defined(QUOTA) || defined(QUOTA2)
 	chkdq(ip, DIP(ip, blocks), l->l_cred, FORCE);
 	chkiq(ip, 1, l->l_cred, FORCE);
@@ -1653,6 +1654,7 @@ retry:
 			}
 			DIP_ADD(ip, blocks, btodb(size));
 			ip->i_flag |= IN_CHANGE | IN_UPDATE;
+			UFS_WAPBL_UPDATE(vp, NULL, NULL, 0);
 			if (ip->i_nlink > 0 && mp->mnt_wapbl)
 				error = syncsnap(vp);
 			else
