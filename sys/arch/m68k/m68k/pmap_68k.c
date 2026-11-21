@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.103 2026/11/21 18:44:45 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.104 2026/11/21 19:04:09 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.103 2026/11/21 18:44:45 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.104 2026/11/21 19:04:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3599,7 +3599,8 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		struct pmap_garbage g;
 		pmap_garbage_transfer(&g, &pmap->pm_garbage);
 		PMAP_CRIT_EXIT();
-		pmap_garbage_collect(&pmap->pm_garbage);
+		pmap_atc_process();
+		pmap_garbage_collect(&g);
 		return error;
 	}
 	PMAP_CRIT_EXIT(pmap_unbusy(pmap));
@@ -3883,6 +3884,7 @@ pmap_activate(struct lwp *l)
 	struct pmap_percpu *pc = pmap_percpu();
 
 	KASSERT(l == curlwp);
+	KASSERT(pc->pc_atc.atc_count == 0);
 
 	/*
 	 * Because the kernel has a separate root pointer, we don't
