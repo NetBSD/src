@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.104 2026/11/21 19:04:09 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.105 2026/11/21 19:24:28 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.104 2026/11/21 19:04:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.105 2026/11/21 19:24:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2708,16 +2708,19 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
  *	Remove a physical->virtual entry from the pv table.
  */
 static void
-pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va,
+pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t opte,
     struct pmap_garbage *g)
 {
 	struct pv_entry **pvp, *pv;
-	pt_entry_t *ptep, opte, npte;
+	pt_entry_t *ptep, npte;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
 
 	pmap_evcnt(pv_remove_called);
 
 	PMAP_CRIT_ASSERT();
+
+	/* Update cached U/M bits from mapping that's going away. */
+	VM_MDPAGE_ADD_UM(pg, opte);
 
 	for (pvp = VM_MDPAGE_HEAD_PVP(pg), pv = VM_MDPAGE_PVS(pg);
 	     pv != NULL;
@@ -3039,9 +3042,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 	}
 	if (__predict_true(pg != NULL)) {
 		KASSERT(pte_managed_p(opte));
-		/* Update cached U/M bits from mapping that's going away. */
-		VM_MDPAGE_ADD_UM(pg, opte);
-		pmap_pv_remove(pmap, pg, va, g);
+		pmap_pv_remove(pmap, pg, va, opte, g);
 	} else {
 		KASSERT(! pte_managed_p(opte));
 	}
@@ -3207,9 +3208,7 @@ pmap_remove_all(pmap_t pmap)
 		KASSERT(pv->pv_pmap == pmap);
 		opte = pte_load(pmap_pv_pte(pv));
 		pg = pmap_pa_to_pg(pte_pa(opte));
-		/* Update cached U/M bits from mapping that's going away. */
-		VM_MDPAGE_ADD_UM(pg, opte);
-		pmap_pv_remove(pmap, pg, PV_VA(pv), &pmap->pm_garbage);
+		pmap_pv_remove(pmap, pg, PV_VA(pv), opte, &pmap->pm_garbage);
 	}
 
 	/* Step 4. */
