@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.110 2026/11/22 15:14:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.111 2026/11/22 16:36:26 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.110 2026/11/22 15:14:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.111 2026/11/22 16:36:26 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -280,13 +280,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.110 2026/11/22 15:14:20 thorpej Exp $
 #if !defined(M68K_MMU_MOTOROLA) && !defined(M68K_MMU_HP)
 #error Hit the road, Jack...
 #endif
-
-/****************************** SERIALIZATION ********************************/
-
-/*
- * A NOTE ON V->P vs P->V LOCKING.
- *
- */
 
 /**************************** MMU CONFIGURATION ******************************/
 
@@ -1019,6 +1012,20 @@ pmap_garbage_collect(struct pmap_garbage *g)
 }
 
 /*************************** PER-CPU PMAP DATA *******************************/
+
+#if defined(MULTIPROCESSOR)
+static inline uint32_t
+pmap_cpu_self(void)
+{
+	return 1U << cpu_number();
+}
+
+static inline uint32_t
+pmap_cpu_others(pmap_t pmap)
+{
+	return atomic_load_relaxed(&pmap->pm_cpus) & ~(1U << cpu_number());
+}
+#endif /* MULTIPROCESSOR */
 
 /*
  * We keep some per-cpu information immediately following the cpu_info
@@ -3974,6 +3981,9 @@ pmap_activate(struct lwp *l)
 	 */
 	if (pmap != pmap_kernel()) {
 		PMAP_LOCK(pmap);
+#if defined(MULTIPROCESSOR)
+		pmap->pm_cpus |= pmap_cpu_self();
+#endif
 		pmap_load_urp(pmap->pm_lev1pa);
 		PMAP_UNLOCK(pmap);
 	}
@@ -3995,6 +4005,13 @@ pmap_deactivate(struct lwp *l)
 	 * on this CPU.  All pmap_deactivate() calls are paired with a
 	 * nearly-immediate pmap_activate().
 	 */
+#if defined(MULTIPROCESSOR)
+	if (pmap != pmap_kernel()) {
+		PMAP_LOCK(pmap);
+		pmap->pm_cpus &= ~pmap_cpu_self();
+		PMAP_UNLOCK(pmap);
+	}
+#endif /* MULTIPROCESSOR */
 }
 
 /*
@@ -4401,6 +4418,16 @@ pmap_percpu_start(void)
 {
 	/* Load the null user segment table. */
 	pmap_load_urp(null_segtab_pa);
+
+#if defined(MULTIPROCESSOR)
+	/*
+	 * We mark the kernel pmap as always active on every CPU
+	 * in order to avoid having to special-case it later.
+	 */
+	PMAP_LOCK(pmap_kernel());
+	pmap_kernel()->pm_cpus |= pmap_cpu_self();
+	PMAP_UNLOCK(pmap_kernel());
+#endif
 }
 
 /*
@@ -5549,10 +5576,6 @@ pmap_bootstrap2(void)
 	/* Setup the MMU class; needed before anything else. */
 	pmap_mmuclass_init();
 
-	/* reference the kernel pmap */
-	pmap_percpu()->pc_pmap = pmap_kernel();
-	pmap_percpu_start();
-
 	/* Early low-level UVM initialization. */
 	uvmexp.pagesize = PAGE_SIZE;
 	uvm_md_init();
@@ -5562,6 +5585,10 @@ pmap_bootstrap2(void)
 
 	/* Initialize the kernel pmap. */
 	pmap_pinit(pmap_kernel(), Sysseg_pa);
+
+	/* reference the kernel pmap */
+	pmap_percpu()->pc_pmap = pmap_kernel();
+	pmap_percpu_start();
 
 	/* Initialize lwp0 u-area. */
 	memset((void *)lwp0uarea, 0, USPACE);

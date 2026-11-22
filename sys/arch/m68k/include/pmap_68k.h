@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.33 2026/11/22 15:14:20 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.34 2026/11/22 16:36:26 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -138,6 +138,18 @@ struct pmap {
 
 	/* We collect the garbage here for deferred resource disposal. */
 	struct pmap_garbage pm_garbage;
+#if defined(MULTIPROCESSOR)
+
+	/*
+	 * Bitmap of CPUs actively using this pmap, indexed by
+	 * HW CPU number.  These bits are set in pmap_activate()
+	 * and cleared in pmap_deactivate().  Must hold the pmap
+	 * lock to modify.  The kernel pmap is always considered
+	 * active, so we don't bother fiddling with it in that
+	 * case.
+	 */
+	volatile uint32_t  pm_cpus;
+#endif
 };
 
 #define	PMAP_LOCK(pmap)		PMAP_MUTEX_ENTER(&(pmap)->pm_mutex)
