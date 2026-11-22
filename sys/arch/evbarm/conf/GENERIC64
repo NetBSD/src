@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.234 2026/11/19 01:50:36 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.235 2026/11/22 10:17:13 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -240,6 +240,7 @@ sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
 sun50ia64rccu*	at fdt? pass 2		# Allwinner A64 CCU (PRCM)
 sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
 sun50ih6rccu*	at fdt? pass 2		# Allwinner H6 CCU (PRCM)
+sun60iw2rtcccu*	at fdt? pass 2		# Allwinner A733 CCU (RTC)
 sunxide2ccu*	at fdt? pass 3		# Allwinner DE2 clock controller
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
 sunxigates*	at fdt? pass 1		# Allwinner misc. gates
