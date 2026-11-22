@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.77 2026/11/22 10:17:13 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.78 2026/11/22 11:47:24 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -82,6 +82,11 @@ file	arch/arm/sunxi/sun50i_h6_ccu.c		sunxi_h6_ccu
 device	sun50ih6rccu: sunxi_ccu
 attach	sun50ih6rccu at fdt with sunxi_h6_r_ccu
 file	arch/arm/sunxi/sun50i_h6_r_ccu.c	sunxi_h6_r_ccu
+
+# CCU (W2 PRCM)
+device	sun60iw2rccu: sunxi_ccu
+attach	sun60iw2rccu at fdt with sunxi_w2_r_ccu
+file	arch/arm/sunxi/sun60i_w2_r_ccu.c	sunxi_w2_r_ccu
 
 # CCU (W2 RTC)
 device	sun60iw2rtcccu: sunxi_ccu
