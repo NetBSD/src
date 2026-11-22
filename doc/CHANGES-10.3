@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-10.3,v 1.1.2.30 2026/11/17 16:18:49 martin Exp $
+# $NetBSD: CHANGES-10.3,v 1.1.2.31 2026/11/22 11:38:21 martin Exp $
 
 A complete list of changes from the NetBSD 10.2 release on 2026-09-15
 until the 10.3 release:
@@ -1441,4 +1441,9 @@ sys/conf/ssp.mk					1.6,1.7
 
 	ssp/fortify: PR 60858: fix ssp wrappers and fortify build options.
 	[riastradh, ticket #1422]
+
+external/bsd/tmux/usr.bin/tmux/Makefile		1.47 (patch)
+
+	tmux(1): PR 61034: fix config file path.
+	[wiz, ticket #1423]
 
