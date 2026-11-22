@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.109 2026/11/22 05:12:39 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.110 2026/11/22 15:14:20 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.109 2026/11/22 05:12:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.110 2026/11/22 15:14:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -672,17 +672,6 @@ pmap_mmuclass_init(void)
 	}
 }
 
-/*
- * pmap_load_urp:
- *
- *	Load the user root table into the MMU.
- */
-static inline void
-pmap_load_urp(paddr_t urp)
-{
-	(*pmap_load_urp_func)(urp);
-}
-
 #if MMU_CONFIG_HP_CLASS
 static vaddr_t	pmap_aliasmask __read_mostly;
 #endif
@@ -1058,8 +1047,12 @@ struct pmap_atc {
 #define	ATC_DAT_VA(a, i)	((a)->atc_data[i].atc_addrflags & ~PAGE_MASK)
 
 struct pmap_percpu {
+	/* Never de-reference pc_pmap -- only use for pointer comparisons! */
 	pmap_t          pc_pmap;
 	struct pmap_atc	pc_atc;		/* ATC invalidation info */
+#if defined(MULTIPROCESSOR)
+	paddr_t		pc_lev1pa;	/* value currently loaded into %urp */
+#endif
 };
 
 /*
@@ -1921,6 +1914,43 @@ static paddr_t kernel_stnext_endpa __read_mostly;
  * we zero it out in pmap_init().
  */
 static paddr_t null_segtab_pa __read_mostly;
+
+/*
+ * pmap_load_urp:
+ *
+ *	Load the user root table into the MMU.
+ */
+static inline void
+pmap_load_urp(paddr_t urp)
+{
+#if defined(MULTIPROCESSOR)
+	pmap_percpu()->pc_lev1pa = urp;
+#endif
+	(*pmap_load_urp_func)(urp);
+}
+
+#if defined(MULTIPROCESSOR)
+/*
+ * pmap_reload_urp:
+ *
+ *	Re-load the user root table into the MMU for this pmap
+ *	if it's gotten a new one since the last time.
+ */
+static void
+pmap_reload_urp(pmap_t pmap)
+{
+	struct pmap_percpu *pc = pmap_percpu();
+
+	/*
+	 * The sender of the reload message holds the pmap lock,
+	 * ensuring the validity of pmap->pm_lev1pa.
+	 */
+
+	if (pmap == pc->pc_pmap && pmap->pm_lev1pa != pc->pc_lev1pa) {
+		pmap_load_urp(pmap->pm_lev1pa);
+	}
+}
+#endif /* MULTIPROCESSOR */
 
 static inline void
 pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
@@ -3960,10 +3990,10 @@ void
 pmap_deactivate(struct lwp *l)
 {
 	/*
-	 * There's no work to do here.  We continue to live on
-	 * this lev1map until the next pass through pmap_activate()
-	 * on this CPU.  All pmap_deactivate() calls are paired
-	 * with a nearly-immediate pmap_activate().
+	 * There's no real work for us to do here.  We continue to live
+	 * on this lev1map until the next pass through pmap_activate()
+	 * on this CPU.  All pmap_deactivate() calls are paired with a
+	 * nearly-immediate pmap_activate().
 	 */
 }
 
@@ -4360,6 +4390,18 @@ pmap_percpu_init(struct cpu_info *ci)
 	/* Fin. */
 }
 #endif /* MULTIPROCESSOR */
+
+/*
+ * pmap_percpu_start:
+ *
+ *	Tasks to do for the pmap when a CPU starts.
+ */
+void
+pmap_percpu_start(void)
+{
+	/* Load the null user segment table. */
+	pmap_load_urp(null_segtab_pa);
+}
 
 /*
  * pmap_growkernel_alloc_page:
@@ -5509,6 +5551,7 @@ pmap_bootstrap2(void)
 
 	/* reference the kernel pmap */
 	pmap_percpu()->pc_pmap = pmap_kernel();
+	pmap_percpu_start();
 
 	/* Early low-level UVM initialization. */
 	uvmexp.pagesize = PAGE_SIZE;

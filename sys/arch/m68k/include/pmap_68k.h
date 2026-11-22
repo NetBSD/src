@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.32 2026/11/22 04:30:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.33 2026/11/22 15:14:20 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -534,6 +534,7 @@ phys_ram_seg_t *	pmap_init_kcore_hdr(cpu_kcore_hdr_t *);
 struct cpu_info;
 struct cpu_info *	pmap_percpu_alloc(void);
 void			pmap_percpu_init(struct cpu_info *);
+void			pmap_percpu_start(void);
 
 /*
  * pmap_bootstrap1() may need to relocate global references, and perform
