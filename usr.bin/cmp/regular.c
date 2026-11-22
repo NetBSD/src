@@ -1,4 +1,4 @@
-/*	$NetBSD: regular.c,v 1.26 2025/01/12 06:38:21 simonb Exp $	*/
+/*	$NetBSD: regular.c,v 1.27 2026/11/22 13:13:45 nat Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)regular.c	8.3 (Berkeley) 4/2/94";
 #else
-__RCSID("$NetBSD: regular.c,v 1.26 2025/01/12 06:38:21 simonb Exp $");
+__RCSID("$NetBSD: regular.c,v 1.27 2026/11/22 13:13:45 nat Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,6 +99,7 @@ c_regular(int fd1, const char *file1, off_t skip1, off_t len1,
 			 */
 			p1 += blk_sz;
 			p2 += blk_sz;
+			byte += blk_sz;
 		} else {
 			for (; blk_cnt--; ++p1, ++p2, ++byte) {
 				if ((ch = *p1) != *p2) {
