@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.106 2026/11/22 00:36:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.107 2026/11/22 01:35:54 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.106 2026/11/22 00:36:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.107 2026/11/22 01:35:54 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,6 +248,32 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.106 2026/11/22 00:36:03 thorpej Exp $
 #endif
 
 /****************************** SERIALIZATION ********************************/
+
+/*
+ * A NOTE ON V->P vs P->V LOCKING.
+ *
+ * Most pmap operations acquire locks in the order: pmap -> pvh
+ *
+ * But there are some page-oriented operations that approach things
+ * in a different oder: pvh -> pmap
+ *
+ * We want to avoid a deadlock between these two different in-roads,
+ * so we provide an invariant: so long as a pv_entry is on a pvh list,
+ * it's always allowable to access the PTE associated by that pv_entry.
+ * This is sufficient for most P->V operations, where we're just setting
+ * or clearing bits in the PTE.
+ *
+ * Here are the rules:
+ *
+ * ==> To /modify/ a PTE, you must hold /either/ the pmap lock or the pvh
+ *     lock, and pte_update() (an MP-safe operation) must be used.
+ *
+ * ==> To /invalidate/ at PTE and remove a mapping, you must hold /both/
+ *     the pmap lock /and/ the pvh lock.
+ *
+ * ==> The canonocal locking order is pmap -> pvh.  pvh -> pmap must be
+ *     done using try-locking with a recovery path.
+ */
 
 /*
  * XXX Would like to make these do something lightweight-ish in
@@ -2843,16 +2869,23 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t opte,
 /***************** PMAP INTERFACE (AND ADJACENT) FUNCTIONS *******************/
 
 static inline void
-pmap_stat_update_impl(long *valp, int val)
+pmap_stat_update_impl(volatile long *valp, int val)
 {
-	*valp += val;
+#if defined(MULTIPROCESSOR)
+	atomic_add_long(valp, val);
+#else
+	/* Atomic vis a vis interrupts. */
+	__asm __volatile("addl %1,%0"
+		: "+m" (*valp)
+		: "d" (val));
+#endif
 }
 
 #define	pmap_stat_update(pm, stat, delta)		\
 	pmap_stat_update_impl(&(pm)->pm_stats.stat, (delta))
 
 static inline void
-pmap_stat_set_impl(long *valp, int val)
+pmap_stat_set_impl(volatile long *valp, int val)
 {
 	atomic_store_relaxed(valp, val);
 }
