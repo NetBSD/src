@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.105 2026/11/21 19:24:28 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.106 2026/11/22 00:36:03 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -224,7 +224,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.105 2026/11/21 19:24:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.106 2026/11/22 00:36:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,25 +255,9 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.105 2026/11/21 19:24:28 thorpej Exp $
  * XXX if we're in a critical section).
  */
 
-#if defined(MULTIPROCESSOR)
-
 #define	PMAP_CRIT_ENTER(code)	code
 #define	PMAP_CRIT_EXIT(code)	code
 #define	PMAP_CRIT_ASSERT()	__nothing
-
-#define	PMAP_MUTEX_ENTER(m)	mutex_enter(m)
-#define	PMAP_MUTEX_EXIT(m)	mutex_exit(m)
-
-#else
-
-#define	PMAP_CRIT_ENTER(code)	code
-#define	PMAP_CRIT_EXIT(code)	code
-#define	PMAP_CRIT_ASSERT()	__nothing
-
-#define	PMAP_MUTEX_ENTER(m)	__nothing
-#define	PMAP_MUTEX_EXIT(m)	__nothing
-
-#endif /* MULTIPROCESSOR */
 
 static inline void
 pmap_busy(pmap_t pmap)
@@ -2519,34 +2503,17 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 	PMAP_CRIT_ASSERT();
 	KASSERT(newpv != NULL);
 
+	KASSERT(PMAP_LOCK_OWNED(pmap));
+
 	npte |= PTE_PVLIST;
 
 	newpv->pv_pmap = pmap;
 	newpv->pv_vf = va;
 	newpv->pv_pt = pt;
 
-	pt_entry_t *ptep = pmap_pv_pte(newpv);
-
-#ifdef DEBUG
-	/*
-	 * Make sure the entry doesn't already exist.
-	 */
-	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
-		if (pmap == pv->pv_pmap && va == PV_VA(pv)) {
-			panic("%s: pmap=%p va=0x%08lx already in PV table",
-			    __func__, pmap, va);
-		}
-	}
-#endif
-
 	if (__predict_false(usr_ci)) {
 		newpv->pv_vf |= PV_F_CI_USR;
 	}
-
-	newpv->pv_next = VM_MDPAGE_PVS(pg);
-	VM_MDPAGE_SETPVP(VM_MDPAGE_HEAD_PVP(pg), newpv);
-	LIST_INSERT_HEAD(&pmap->pm_pvlist, newpv, pv_pmlist);
-	VM_MDPAGE_ADD_UM(pg, npte);
 
 	/*
 	 * If this is an EXEC mapping, then we have to ensure that
@@ -2561,6 +2528,29 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 		}
 #endif
 	}
+
+	pt_entry_t *ptep = pmap_pv_pte(newpv);
+
+	PVH_LOCK(pg);
+
+#ifdef DEBUG
+	/*
+	 * Make sure the entry doesn't already exist.
+	 */
+	for (pv = VM_MDPAGE_PVS(pg); pv != NULL; pv = pv->pv_next) {
+		if (pmap == pv->pv_pmap && va == PV_VA(pv)) {
+			PVH_UNLOCK(pg);
+			panic("%s: pmap=%p va=0x%08lx already in PV table",
+			    __func__, pmap, va);
+			/* NOTREACHED */
+		}
+	}
+#endif
+
+	newpv->pv_next = VM_MDPAGE_PVS(pg);
+	VM_MDPAGE_SETPVP(VM_MDPAGE_HEAD_PVP(pg), newpv);
+	LIST_INSERT_HEAD(&pmap->pm_pvlist, newpv, pv_pmlist);
+	VM_MDPAGE_ADD_UM(pg, npte);
 
 #if MMU_CONFIG_HP_CLASS
 	if (MMU_IS_HP_CLASS) {
@@ -2580,9 +2570,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 	if (__predict_false(VM_MDPAGE_CI_P(pg))) {
 		npte = pte_set_ci(npte);
 		pte_store(ptep, npte);
-		/* See below. */
-		pmap_atc_invalidate(pmap, va, pa, atc_flags);
-		return;
+		goto out;
 	}
 
 	/* Set the PTE for the new mapping. */
@@ -2594,7 +2582,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 	 * mappings of this page CI as well.
 	 */
 	if (__predict_false(usr_ci)) {
-		uint16_t atc_c_flags = MMU_IS_68040_CLASS ? ATC_F_BC : 0;
+		uint16_t atc_c_flags = ATC_F_BC;
 
 		VM_MDPAGE_SET_CI(pg);
 		pmap_evcnt(pv_enter_usr_ci);
@@ -2621,6 +2609,8 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 			}
 		}
 	}
+ out:
+	PVH_UNLOCK(pg);
 	pmap_atc_invalidate(pmap, va, pa, atc_flags);
 	return;
 
@@ -2664,6 +2654,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 
 	/* Set the PTE for the new mapping. */
 	pte_store(ptep, npte);
+	pmap_atc_invalidate(pmap, va, pa, atc_flags);
 
 	/*
 	 * Invalidate the ATC entry **after** storing the PTE so that
@@ -2687,6 +2678,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 
 	if (__predict_true(pv_flags == 0)) {
 		/* No new inhibitions! */
+		PVH_UNLOCK(pg);
 		return;
 	}
 
@@ -2699,6 +2691,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 			pmap_atc_invalidate_pv(pv, pa, ATC_F_DC);
 		}
 	}
+	PVH_UNLOCK(pg);
 #endif /* MMU_CONFIG_HP_CLASS */
 }
 
@@ -2718,6 +2711,8 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t opte,
 	pmap_evcnt(pv_remove_called);
 
 	PMAP_CRIT_ASSERT();
+	KASSERT(PVH_LOCK_OWNED(pg));
+	KASSERT(PMAP_LOCK_OWNED(pmap));
 
 	/* Update cached U/M bits from mapping that's going away. */
 	VM_MDPAGE_ADD_UM(pg, opte);
@@ -3009,6 +3004,9 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 	const paddr_t pa = pte_pa(opte);
 	KASSERT(pg == NULL || pa == VM_PAGE_TO_PHYS(pg));
 
+	KASSERT(pg == NULL || PVH_LOCK_OWNED(pg));
+	KASSERT(PMAP_LOCK_OWNED(pmap));
+
 	/* Update statistics. */
 	if (pte_wired_p(opte)) {
 		pmap_stat_update(pmap, wired_count, -1);
@@ -3078,6 +3076,7 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 {
 	pt_entry_t opte, *ptep;
 	struct pmap_table *pt;
+	struct vm_page *pg;
 	vaddr_t nextseg;
 
 	/*
@@ -3105,8 +3104,15 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 		     ptep++, sva += PAGE_SIZE) {
 			opte = pte_load(ptep);
 			if (pte_valid_p(opte)) {
-				pmap_remove_mapping(pmap, sva, ptep, NULL,
-				    NULL, 0, &kg);
+				pg = pmap_pa_to_pg(pte_pa(opte));
+				if (pg != NULL) {
+					PVH_LOCK(pg);
+				}
+				pmap_remove_mapping(pmap, sva,
+				    ptep, NULL/*pt*/, pg, 0, &kg);
+				if (pg != NULL) {
+					PVH_UNLOCK(pg);
+				}
 			}
 		}
 
@@ -3145,8 +3151,15 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 			if (! pte_valid_p(opte)) {
 				continue;
 			}
-			pmap_remove_mapping(pmap, sva, ptep, pt, NULL,
-			    0, &pmap->pm_garbage);
+			pg = pmap_pa_to_pg(pte_pa(opte));
+			if (pg != NULL) {
+				PVH_LOCK(pg);
+			}
+			pmap_remove_mapping(pmap, sva,
+			    ptep, pt, pg, 0, &pmap->pm_garbage);
+			if (pg != NULL) {
+				PVH_UNLOCK(pg);
+			}
 		}
 		pmap_table_release(pmap, pt, &pmap->pm_garbage);
 	}
@@ -3208,7 +3221,9 @@ pmap_remove_all(pmap_t pmap)
 		KASSERT(pv->pv_pmap == pmap);
 		opte = pte_load(pmap_pv_pte(pv));
 		pg = pmap_pa_to_pg(pte_pa(opte));
+		PVH_LOCK(pg);
 		pmap_pv_remove(pmap, pg, PV_VA(pv), opte, &pmap->pm_garbage);
+		PVH_UNLOCK(pg);
 	}
 
 	/* Step 4. */
@@ -3254,12 +3269,14 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 
 	PMAP_CRIT_ENTER();
 
+	PVH_LOCK(pg);
 	while ((pv = VM_MDPAGE_PVS(pg)) != NULL) {
 		pmap_busy(pv->pv_pmap);
 		pmap_remove_mapping(pv->pv_pmap, PV_VA(pv), pmap_pv_pte(pv),
 		    pv->pv_pt, pg, ATC_F_PV, &g);
 		pmap_unbusy(pv->pv_pmap);
 	}
+	PVH_UNLOCK(pg);
 
 	PMAP_CRIT_EXIT();
 
@@ -3566,13 +3583,11 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		/*
 		 * Enter the mapping into the PV list.  pmap_pv_enter()
 		 * will also set the PTE in the table.
-		 */
-		pmap_pv_enter(pmap, pg, va, prot, pt, npte, newpv);
-
-		/*
+		 *
 		 * The new mapping takes ownership of the PT
 		 * retain count we took while looking up the PTE.
 		 */
+		pmap_pv_enter(pmap, pg, va, prot, pt, npte, newpv);
 		goto out;
 	}
 
@@ -4001,9 +4016,11 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 	struct pv_entry *pv;
 	pt_entry_t combined_pte = 0;
 
+	PVH_LOCK(pg);
+
 	PMAP_CRIT_ENTER();
 
-	combined_pte = VM_MDPAGE_UM(pg);
+	combined_pte |= VM_MDPAGE_UM(pg);
 
 	for (pv = VM_MDPAGE_PVS(pg);
 	     (combined_pte & bit) == 0 && pv != NULL;
@@ -4016,6 +4033,8 @@ pmap_testbit(struct vm_page *pg, pt_entry_t bit)
 	VM_MDPAGE_ADD_UM(pg, combined_pte);
 
 	PMAP_CRIT_EXIT();
+
+	PVH_UNLOCK(pg);
 
 	return (combined_pte & bit) != 0;
 }
@@ -4054,8 +4073,10 @@ static pt_entry_t
 pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 {
 	struct pv_entry *pv;
-	pt_entry_t *ptep, combined_pte, opte, npte;
+	pt_entry_t *ptep, combined_pte = 0, opte, npte;
 	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+	PVH_LOCK(pg);
 
 	PMAP_CRIT_ENTER();
 
@@ -4065,7 +4086,7 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	 * state in the vm_page in the event there are no mappings
 	 * left to enumerate.
 	 */
-	combined_pte = VM_MDPAGE_UM(pg);
+	combined_pte |= VM_MDPAGE_UM(pg);
 
 	/*
 	 * Since we're running over every mapping for the page anyway,
@@ -4117,6 +4138,8 @@ pmap_changebit(struct vm_page *pg, pt_entry_t set, pt_entry_t mask)
 	VM_MDPAGE_SET_UM(pg, (combined_pte | set) & mask);
 
 	PMAP_CRIT_EXIT();
+
+	PVH_UNLOCK(pg);
 
 	pmap_atc_process();
 
@@ -4215,7 +4238,7 @@ pmap_phys_address(paddr_t cookie)
  */
 static pt_entry_t *kernel_lev1map __read_mostly;
 
-#if defined(MULTIPROCESSOR)
+#if defined(PMAP_ENABLE_LOCKS)
 static kmutex_t pmap_growkernel_lock __cacheline_aligned;
 
 /*
@@ -5487,9 +5510,7 @@ pmap_bootstrap2(void)
 	setsfc(FC_USERD);
 	setdfc(FC_USERD);
 
-#ifdef MULTIPROCESSOR
-	mutex_init(&pmap_growkernel_lock, MUTEX_DEFAULT, IPL_NONE);
-#endif
+	PMAP_MUTEX_INIT(&pmap_growkernel_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	return tf;
 }

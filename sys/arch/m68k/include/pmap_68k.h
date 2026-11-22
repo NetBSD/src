@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.30 2026/11/17 07:56:45 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.31 2026/11/22 00:36:03 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -68,10 +68,19 @@
 #ifndef _M68K_PMAP_68K_H_
 #define	_M68K_PMAP_68K_H_
 
+#ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
+#endif
+
 #if defined(_KERNEL)
 
 #if !defined(_MODULE)
 
+#if defined(MULTIPROCESSOR) || defined(PMAP_LOCK_DIAGNOSTIC)
+#define	PMAP_ENABLE_LOCKS
+#endif
+
+#include <sys/mutex.h>
 #include <sys/rbtree.h>
 #include <sys/queue.h>
 
@@ -116,6 +125,11 @@ struct pmap {
 	/* We collect the garbage here for deferred resource disposal. */
 	struct pmap_garbage pm_garbage;
 };
+
+#define	PMAP_LOCK(pmap)		__nothing
+#define	PMAP_TRYLOCK(pmap)	true
+#define	PMAP_UNLOCK(pmap)	__nothing
+#define	PMAP_LOCK_OWNED(pmap)	true
 
 /*
  * One entry per P->V mapping of a managed page.
@@ -349,6 +363,20 @@ struct pmap_bootmap {
 #define	pmap_round_seg1_3L(va)	(pmap_trunc_seg1_3L((vaddr_t)(va)+ SEG1OFSET3L))
 #define	pmap_seg1_offset_3L(va)	(((vaddr_t)(va)) & SEG1OFSET3L)
 
+#ifdef PMAP_ENABLE_LOCKS
+#define	PMAP_MUTEX_INIT(m, f, i) mutex_init((m), (f), (i))
+#define	PMAP_MUTEX_ENTER(m)	 mutex_enter(m)
+#define	PMAP_MUTEX_TRYENTER(m)	 mutex_tryenter(m)
+#define	PMAP_MUTEX_EXIT(m)	 mutex_exit(m)
+#define	PMAP_MUTEX_OWNED(m)	 mutex_owned(m)
+#else
+#define	PMAP_MUTEX_INIT(m, f, i) __nothing
+#define	PMAP_MUTEX_ENTER(m)	 __nothing
+#define	PMAP_MUTEX_TRYENTER(m)	 true
+#define	PMAP_MUTEX_EXIT(m)	 __nothing
+#define	PMAP_MUTEX_OWNED(m)	 true
+#endif /* PMAP_ENABLE_LOCKS */
+
 /*
  * pmap-specific data store in the vm_page structure.
  *
@@ -361,8 +389,15 @@ struct pmap_bootmap {
  */
 #define	__HAVE_VM_PAGE_MD
 struct vm_page_md {
+#ifdef PMAP_ENABLE_LOCKS
+	kmutex_t pvh_mutex;
+#endif
 	uintptr_t pvh_listx;		/* pv_entry list + attrs */
 };
+
+#define	PVH_LOCK(pg)		PMAP_MUTEX_ENTER(&(pg)->mdpage.pvh_mutex)
+#define	PVH_UNLOCK(pg)		PMAP_MUTEX_EXIT(&(pg)->mdpage.pvh_mutex)
+#define	PVH_LOCK_OWNED(pg)	PMAP_MUTEX_OWNED(&(pg)->mdpage.pvh_mutex)
 
 #define	PVH_UM_SHIFT	3
 #define	PVH_UM_MASK	__BITS(0,1)
@@ -372,6 +407,8 @@ struct vm_page_md {
 
 #define VM_MDPAGE_INIT(pg)					\
 do {								\
+	PMAP_MUTEX_INIT(&(pg)->mdpage.pvh_mutex, MUTEX_DEFAULT,	\
+	    IPL_NONE);						\
 	(pg)->mdpage.pvh_listx = 0;				\
 } while (/*CONSTCOND*/0)
 
