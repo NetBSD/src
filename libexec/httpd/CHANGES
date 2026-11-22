@@ -1,4 +1,4 @@
-$NetBSD: CHANGES,v 1.58 2026/05/08 16:46:40 mrg Exp $
+$NetBSD: CHANGES,v 1.59 2026/11/22 23:01:56 mrg Exp $
 
 changes in bozohttpd 20260508:
 	o  fix a memory leak and potential double free.  from shm.
@@ -14,6 +14,10 @@ changes in bozohttpd 20260503:
 
 changes in bozohttpd 20240428:
 	o  make directory listings mobile friendly. from D. Bohdan.
+
+changes in bozohttpd 20240226:
+	o  use "viewport" tag for directory listings, making mobile look
+	   significantly better.  from <dbohdan@sdf.org> in PR#57962.
 
 changes in bozohttpd 20240126:
 	o  add some more default mime types.
