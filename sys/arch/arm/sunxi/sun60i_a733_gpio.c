@@ -1,4 +1,4 @@
-/* $NetBSD: sun60i_w2_gpio.c,v 1.1 2026/11/19 01:50:36 jmcneill Exp $ */
+/* $NetBSD: sun60i_a733_gpio.c,v 1.1 2026/11/22 14:29:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2026 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun60i_w2_gpio.c,v 1.1 2026/11/19 01:50:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun60i_a733_gpio.c,v 1.1 2026/11/22 14:29:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: sun60i_w2_gpio.c,v 1.1 2026/11/19 01:50:36 jmcneill 
 
 #include <arm/sunxi/sunxi_gpio.h>
 
-static const struct sunxi_gpio_pins w2_pins[] = {
+static const struct sunxi_gpio_pins a733_pins[] = {
 	{ "PB0", 1, 0, { "gpio_in", "gpio_out", "uart2", "uart0", "spi2", "dsi", "lcd0", "jtag", NULL, NULL, NULL, NULL, NULL, NULL, "irq" }, 0, 0 },
 	{ "PB1", 1, 1, { "gpio_in", "gpio_out", "uart2", "uart0", "spi2", NULL, "lcd0", "jtag", NULL, NULL, NULL, NULL, NULL, NULL, "irq" }, 0, 1 },
 	{ "PB2", 1, 2, { "gpio_in", "gpio_out", "uart2", NULL, "spi2", "hdmi", "lcd0", "jtag", "twi0", NULL, NULL, NULL, NULL, NULL, "irq" }, 0, 2 },
@@ -229,7 +229,7 @@ static const struct sunxi_gpio_pins w2_pins[] = {
 	{ "PK25", 10, 25, { "gpio_in", "gpio_out", "mcsic", "mcsi1", "pwm0_7", "twi12", NULL, NULL, "twi10", NULL, NULL, NULL, NULL, NULL, "irq" }, 9, 25 },
 };
 
-static const struct sunxi_gpio_pins w2_r_pins[] = {
+static const struct sunxi_gpio_pins a733_r_pins[] = {
 	{ "PL0", 0, 0, { "gpio_in", "gpio_out", "s_twi0", "s_twi1", "s_twi2", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "irq" }, 0, 0 },
 	{ "PL1", 0, 1, { "gpio_in", "gpio_out", "s_twi0", "s_twi1", "s_twi2", "s_ir_rx", NULL, NULL, NULL, NULL, NULL, NULL, NULL, NULL, "irq" }, 0, 1 },
 	{ "PL2", 0, 2, { "gpio_in", "gpio_out", "s_uart1", "s_uart0", "s_twi1", NULL, "s_pwm0_0", NULL, NULL, NULL, NULL, NULL, NULL, NULL, "irq" }, 0, 2 },
@@ -253,12 +253,12 @@ static const struct sunxi_gpio_pins w2_r_pins[] = {
 	{ "PM5", 1, 5, { "gpio_in", "gpio_out", "s_uart0", "s_twi2", "s_twi1", "s_uart1", "s_pwm0_1", "s_ir_rx", NULL, NULL, NULL, NULL, NULL, NULL, "irq" }, 1, 5 },
 };
 
-const struct sunxi_gpio_padconf sun60i_w2_padconf = {
-	.npins = __arraycount(w2_pins),
-	.pins = w2_pins,
+const struct sunxi_gpio_padconf sun60i_a733_padconf = {
+	.npins = __arraycount(a733_pins),
+	.pins = a733_pins,
 };
 
-const struct sunxi_gpio_padconf sun60i_w2_r_padconf = {
-	.npins = __arraycount(w2_r_pins),
-	.pins = w2_r_pins,
+const struct sunxi_gpio_padconf sun60i_a733_r_padconf = {
+	.npins = __arraycount(a733_r_pins),
+	.pins = a733_r_pins,
 };

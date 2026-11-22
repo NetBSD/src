@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.236 2026/11/22 11:47:24 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.237 2026/11/22 14:29:22 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -23,7 +23,7 @@ options 	SOC_RK3588
 options 	SOC_SUN50I_A64
 options 	SOC_SUN50I_H5
 options 	SOC_SUN50I_H6
-options 	SOC_SUN60I_W2
+options 	SOC_SUN60I_A733
 options 	SOC_TEGRA210
 options 	MULTIPROCESSOR
 
@@ -240,8 +240,8 @@ sun50ia64ccu*	at fdt? pass 2		# Allwinner A64 CCU
 sun50ia64rccu*	at fdt? pass 2		# Allwinner A64 CCU (PRCM)
 sun50ih6ccu*	at fdt? pass 2		# Allwinner H6 CCU
 sun50ih6rccu*	at fdt? pass 2		# Allwinner H6 CCU (PRCM)
-sun60iw2rccu*	at fdt? pass 2		# Allwinner A733 CCU (PRCM)
-sun60iw2rtcccu*	at fdt? pass 2		# Allwinner A733 CCU (RTC)
+sun60ia733rccu*	at fdt? pass 2		# Allwinner A733 CCU (PRCM)
+sun60ia733rtc*	at fdt? pass 2		# Allwinner A733 CCU (RTC)
 sunxide2ccu*	at fdt? pass 3		# Allwinner DE2 clock controller
 sunxiresets*	at fdt? pass 1		# Allwinner misc. resets
 sunxigates*	at fdt? pass 1		# Allwinner misc. gates
@@ -408,7 +408,7 @@ wskbd*		at ikbd? mux 1
 
 # Power Domain controllers
 applepmgr* 	at fdt? pass 0
-sun60iw2ppu*	at fdt? pass 0		# Allwinner A733 PPU
+sun60ia733ppu*	at fdt? pass 0		# Allwinner A733 PPU
 
 # Random number generators and security devices
 amdccp* 	at fdt?			# AMD Cryptographic Coprocessor RNG

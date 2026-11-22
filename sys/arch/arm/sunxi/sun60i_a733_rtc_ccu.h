@@ -1,4 +1,4 @@
-/* $NetBSD: sun60i_w2_rtc_ccu.h,v 1.1 2026/11/22 10:17:13 jmcneill Exp $ */
+/* $NetBSD: sun60i_a733_rtc_ccu.h,v 1.1 2026/11/22 14:29:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2026 Jared McNeill <jmcneill@invisible.ca>
@@ -26,21 +26,21 @@
  * SUCH DAMAGE.
  */
 
-#ifndef _SUN60I_W2_RTC_CCU_H
-#define _SUN60I_W2_RTC_CCU_H
+#ifndef _SUN60I_A733_RTC_CCU_H
+#define _SUN60I_A733_RTC_CCU_H
 
-#define	W2_CLK_IOSC			0
-#define	W2_CLK_EXT32K_GATE		1
-#define	W2_CLK_IOSC_DIV32K		2
-#define	W2_CLK_OSC32K			3
-#define	W2_CLK_DCXO24M_DIV32K		4
-#define	W2_CLK_RTC32K			5
-#define	W2_CLK_RTC_1K			6
-#define	W2_CLK_RTC_32K_FANOUT		7
-#define	W2_CLK_RTC_DCXO_WAKEUP		8
-#define	W2_CLK_RTC_DCXO_SERDES1		9
-#define	W2_CLK_RTC_DCXO_SERDES0		10
-#define	W2_CLK_RTC_SPI			11
-#define	W2_CLK_DCXO			12
+#define	A733_CLK_IOSC			0
+#define	A733_CLK_EXT32K_GATE		1
+#define	A733_CLK_IOSC_DIV32K		2
+#define	A733_CLK_OSC32K			3
+#define	A733_CLK_DCXO24M_DIV32K		4
+#define	A733_CLK_RTC32K			5
+#define	A733_CLK_RTC_1K			6
+#define	A733_CLK_RTC_32K_FANOUT		7
+#define	A733_CLK_RTC_DCXO_WAKEUP	8
+#define	A733_CLK_RTC_DCXO_SERDES1	9
+#define	A733_CLK_RTC_DCXO_SERDES0	10
+#define	A733_CLK_RTC_SPI		11
+#define	A733_CLK_DCXO			12
 
-#endif /* !_SUN60I_W2_RTC_CCU_H */
+#endif /* !_SUN60I_A733_RTC_CCU_H */

@@ -1,4 +1,4 @@
-#	$NetBSD: files.sunxi,v 1.78 2026/11/22 11:47:24 jmcneill Exp $
+#	$NetBSD: files.sunxi,v 1.79 2026/11/22 14:29:22 jmcneill Exp $
 #
 # Configuration info for Allwinner sunxi family SoCs
 #
@@ -83,15 +83,15 @@ device	sun50ih6rccu: sunxi_ccu
 attach	sun50ih6rccu at fdt with sunxi_h6_r_ccu
 file	arch/arm/sunxi/sun50i_h6_r_ccu.c	sunxi_h6_r_ccu
 
-# CCU (W2 PRCM)
-device	sun60iw2rccu: sunxi_ccu
-attach	sun60iw2rccu at fdt with sunxi_w2_r_ccu
-file	arch/arm/sunxi/sun60i_w2_r_ccu.c	sunxi_w2_r_ccu
+# CCU (A733 PRCM)
+device	sun60ia733rccu: sunxi_ccu
+attach	sun60ia733rccu at fdt with sunxi_a733_r_ccu
+file	arch/arm/sunxi/sun60i_a733_r_ccu.c	sunxi_a733_r_ccu
 
-# CCU (W2 RTC)
-device	sun60iw2rtcccu: sunxi_ccu
-attach	sun60iw2rtcccu at fdt with sunxi_w2_rtc_ccu
-file	arch/arm/sunxi/sun60i_w2_rtc_ccu.c	sunxi_w2_rtc_ccu
+# CCU (A733 RTC)
+device	sun60ia733rtc: sunxi_ccu
+attach	sun60ia733rtc at fdt with sunxi_a733_rtc_ccu
+file	arch/arm/sunxi/sun60i_a733_rtc_ccu.c	sunxi_a733_rtc_ccu
 
 # Misc. clock resets
 device	sunxiresets: fdt_reset
@@ -151,7 +151,7 @@ file	arch/arm/sunxi/sun8i_v3s_gpio.c		sunxi_gpio & soc_sun8i_v3s
 file	arch/arm/sunxi/sun9i_a80_gpio.c		sunxi_gpio & soc_sun9i_a80
 file	arch/arm/sunxi/sun50i_a64_gpio.c	sunxi_gpio & soc_sun50i_a64
 file	arch/arm/sunxi/sun50i_h6_gpio.c		sunxi_gpio & soc_sun50i_h6
-file	arch/arm/sunxi/sun60i_w2_gpio.c		sunxi_gpio & soc_sun60i_w2
+file	arch/arm/sunxi/sun60i_a733_gpio.c	sunxi_gpio & soc_sun60i_a733
 
 # PWM
 device	sunxipwm: fdt_clock, fdt_pwm
@@ -391,9 +391,9 @@ attach	sun8icrypto at fdt with sun8i_crypto
 file	arch/arm/sunxi/sun8i_crypto.c		sun8i_crypto
 
 # PPU (A733)
-device	sun60iw2ppu: fdt_powerdomain
-attach	sun60iw2ppu at fdt with sun60i_w2_ppu
-file	arch/arm/sunxi/sun60i_w2_ppu.c		sun60i_w2_ppu
+device	sun60ia733ppu: fdt_powerdomain
+attach	sun60ia733ppu at fdt with sun60i_a733_ppu
+file	arch/arm/sunxi/sun60i_a733_ppu.c	sun60i_a733_ppu
 
 # SOC parameters
 defflag	opt_soc.h			SOC_SUNXI
@@ -417,7 +417,7 @@ defflag	opt_soc.h			SOC_SUN50I_A64: SOC_SUN50I
 defflag	opt_soc.h			SOC_SUN50I_H5: SOC_SUN50I, SOC_SUN8I_H3
 defflag	opt_soc.h			SOC_SUN50I_H6: SOC_SUN50I
 defflag	opt_soc.h			SOC_SUN60I: SOC_SUNXI
-defflag	opt_soc.h			SOC_SUN60I_W2: SOC_SUN60I
+defflag	opt_soc.h			SOC_SUN60I_A733: SOC_SUN60I
 
 makeoptions	sunxi_ccu	"CWARNFLAGS.sunxi_ccu_nm.c"+="${CC_WNO_MAYBE_UNINITIALIZED}"
 

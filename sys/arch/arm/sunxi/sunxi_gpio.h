@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gpio.h,v 1.12 2026/11/19 01:50:36 jmcneill Exp $ */
+/* $NetBSD: sunxi_gpio.h,v 1.13 2026/11/22 14:29:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -102,9 +102,9 @@ extern const struct sunxi_gpio_padconf sun50i_h6_padconf;
 extern const struct sunxi_gpio_padconf sun50i_h6_r_padconf;
 #endif
 
-#ifdef SOC_SUN60I_W2
-extern const struct sunxi_gpio_padconf sun60i_w2_padconf;
-extern const struct sunxi_gpio_padconf sun60i_w2_r_padconf;
+#ifdef SOC_SUN60I_A733
+extern const struct sunxi_gpio_padconf sun60i_a733_padconf;
+extern const struct sunxi_gpio_padconf sun60i_a733_r_padconf;
 #endif
 
 #endif /* _ARM_SUNXI_GPIO_H */

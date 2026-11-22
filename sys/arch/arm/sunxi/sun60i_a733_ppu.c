@@ -1,4 +1,4 @@
-/* $NetBSD: sun60i_w2_ppu.c,v 1.1 2026/11/19 01:50:36 jmcneill Exp $ */
+/* $NetBSD: sun60i_a733_ppu.c,v 1.1 2026/11/22 14:29:22 jmcneill Exp $ */
 
 /*-
  * Redistribution and use in source and binary forms, with or without
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sun60i_w2_ppu.c,v 1.1 2026/11/19 01:50:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sun60i_a733_ppu.c,v 1.1 2026/11/22 14:29:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -164,5 +164,5 @@ sunxi_ppu_attach(device_t parent, device_t self, void *aux)
 	}
 }
 
-CFATTACH_DECL_NEW(sun60i_w2_ppu, sizeof(struct sunxi_ppu_softc),
+CFATTACH_DECL_NEW(sun60i_a733_ppu, sizeof(struct sunxi_ppu_softc),
     sunxi_ppu_match, sunxi_ppu_attach, NULL, NULL);
