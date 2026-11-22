@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_gate.c,v 1.2 2017/06/29 17:06:21 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_gate.c,v 1.3 2026/11/22 10:15:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_gate.c,v 1.2 2017/06/29 17:06:21 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_gate.c,v 1.3 2026/11/22 10:15:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,6 +53,27 @@ sunxi_ccu_gate_enable(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk,
 	CCU_WRITE(sc, gate->reg, val);
 
 	return 0;
+}
+
+u_int
+sunxi_ccu_gate_get_rate(struct sunxi_ccu_softc *sc, struct sunxi_ccu_clk *clk)
+{
+	struct sunxi_ccu_gate *gate = &clk->u.gate;
+	struct clk *clkp_parent;
+
+	KASSERT(clk->type == SUNXI_CCU_GATE);
+
+	if (gate->fixed_rate != 0) {
+		return gate->fixed_rate;
+	}
+
+	clkp_parent = clk_get_parent(&clk->base);
+	if (clkp_parent == NULL) {
+		aprint_error("%s: no parent for %s\n", __func__,
+		    clk->base.name);
+		return 0;
+	}
+	return clk_get_rate(clkp_parent);
 }
 
 const char *
