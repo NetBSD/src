@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_nm.c,v 1.4 2017/10/28 13:13:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_nm.c,v 1.5 2026/11/22 11:46:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nm.c,v 1.4 2017/10/28 13:13:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_nm.c,v 1.5 2026/11/22 11:46:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,11 @@ sunxi_ccu_nm_get_rate(struct sunxi_ccu_softc *sc,
 		return 0;
 
 	val = CCU_READ(sc, nm->reg);
-	n = __SHIFTOUT(val, nm->n);
+	if (nm->n != 0) {
+		n = __SHIFTOUT(val, nm->n);
+	} else {
+		n = 0;
+	}
 	m = __SHIFTOUT(val, nm->m);
 
 	if (nm->enable && !(val & nm->enable))
@@ -109,7 +113,7 @@ sunxi_ccu_nm_set_rate(struct sunxi_ccu_softc *sc,
 	int best_diff;
 	uint32_t val;
 
-	const u_int n_max = __SHIFTOUT(nm->n, nm->n);
+	const u_int n_max = nm->n != 0 ? __SHIFTOUT(nm->n, nm->n) : 0;
 	const u_int m_max = __SHIFTOUT(nm->m, nm->m);
 
 	clkp = &clk->base;
@@ -177,8 +181,10 @@ sunxi_ccu_nm_set_rate(struct sunxi_ccu_softc *sc,
 	val = CCU_READ(sc, nm->reg);
 	val &= ~nm->sel;
 	val |= __SHIFTIN(best_parent, nm->sel);
-	val &= ~nm->n;
-	val |= __SHIFTIN(best_n, nm->n);
+	if (nm->n != 0) {
+		val &= ~nm->n;
+		val |= __SHIFTIN(best_n, nm->n);
+	}
 	val &= ~nm->m;
 	val |= __SHIFTIN(best_m, nm->m);
 	CCU_WRITE(sc, nm->reg, val);

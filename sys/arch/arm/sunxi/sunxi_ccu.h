@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.26 2026/11/22 10:15:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.27 2026/11/22 11:46:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -219,6 +219,12 @@ const char *sunxi_ccu_nm_get_parent(struct sunxi_ccu_softc *,
 		.set_parent = sunxi_ccu_nm_set_parent,		\
 		.get_parent = sunxi_ccu_nm_get_parent,		\
 	}
+#define	SUNXI_CCU_M(_id, _name, _parents, _reg, _m, _sel,	\
+		    _flags)					\
+	SUNXI_CCU_NM(_id, _name, _parents, _reg, 0, _m, _sel, 0, _flags)
+#define	SUNXI_CCU_M_GATE(_id, _name, _parents, _reg, _m, _sel,	\
+			 _enable, _flags)			\
+	SUNXI_CCU_NM(_id, _name, _parents, _reg, 0, _m, _sel, _enable, _flags)
 
 struct sunxi_ccu_div {
 	bus_size_t	reg;
