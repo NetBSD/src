@@ -135,6 +135,7 @@
 ./usr/libdata/debug/usr/tests/lib/libnvmm		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libobjc		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libossaudio		tests-lib-debug		compattestfile,atf
+./usr/libdata/debug/usr/tests/lib/libpam			tests-lib-debug		compattestfile,atf,pam
 ./usr/libdata/debug/usr/tests/lib/libposix		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/bsd		tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libposix/posix1	tests-lib-debug		compattestfile,atf
@@ -4106,6 +4107,10 @@
 ./usr/tests/lib/libossaudio/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libossaudio/Kyuafile			tests-lib-tests		compattestfile,atf,kyua
 ./usr/tests/lib/libossaudio/t_ossaudio			tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libpam					tests-lib-tests		compattestfile,atf,pam
+./usr/tests/lib/libpam/Atffile				tests-lib-tests		compattestfile,atf,pam
+./usr/tests/lib/libpam/Kyuafile				tests-lib-tests		compattestfile,atf,pam,kyua
+./usr/tests/lib/libpam/t_pam				tests-lib-tests		compattestfile,atf,pam
 ./usr/tests/lib/libposix				tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Atffile			tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libposix/Kyuafile			tests-lib-tests		compattestfile,atf,kyua

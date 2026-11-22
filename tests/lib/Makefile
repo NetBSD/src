@@ -25,6 +25,10 @@ ATFFILE_EXTRA_TPS=	liblutok
 TESTS_SUBDIRS+= libbluetooth
 .endif
 
+.if ${MKPAM} != "no"
+TESTS_SUBDIRS+= libpam
+.endif
+
 .if (${MKSKEY} != "no")
 TESTS_SUBDIRS+= libskey
 .endif
