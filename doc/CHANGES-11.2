@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-11.2,v 1.1.2.3 2026/11/17 16:48:10 martin Exp $
+# $NetBSD: CHANGES-11.2,v 1.1.2.4 2026/11/22 11:35:54 martin Exp $
 
 A complete list of changes between the 11.1 release on 2026-11-02
 until the 11.2 release:
@@ -122,4 +122,9 @@ sys/dev/ic/wdc.c				1.318
 
 	wdc(4): fix typo in probe code.
 	[tls, ticket #583]
+
+external/bsd/tmux/usr.bin/tmux/Makefile		1.47
+
+	tmux(1): PR 61034: fix config file path.
+	[wiz, ticket #584]
 
