@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.h,v 1.31 2026/11/22 00:36:03 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.h,v 1.32 2026/11/22 04:30:42 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025 The NetBSD Foundation, Inc.
@@ -90,6 +90,20 @@
 #include <sys/kcore.h>
 #include <m68k/kcore.h>
 
+#ifdef PMAP_ENABLE_LOCKS
+#define	PMAP_MUTEX_INIT(m, f, i) mutex_init((m), (f), (i))
+#define	PMAP_MUTEX_ENTER(m)	 mutex_enter(m)
+#define	PMAP_MUTEX_TRYENTER(m)	 mutex_tryenter(m)
+#define	PMAP_MUTEX_EXIT(m)	 mutex_exit(m)
+#define	PMAP_MUTEX_OWNED(m)	 mutex_owned(m)
+#else
+#define	PMAP_MUTEX_INIT(m, f, i) __nothing
+#define	PMAP_MUTEX_ENTER(m)	 __nothing
+#define	PMAP_MUTEX_TRYENTER(m)	 true
+#define	PMAP_MUTEX_EXIT(m)	 __nothing
+#define	PMAP_MUTEX_OWNED(m)	 true
+#endif /* PMAP_ENABLE_LOCKS */
+
 typedef unsigned int	pt_entry_t;
 
 #define	NPTEPG		(PAGE_SIZE / (sizeof(pt_entry_t)))
@@ -103,12 +117,12 @@ struct pmap_garbage {
 };
 
 struct pmap {
+#ifdef PMAP_ENABLE_LOCKS
+	kmutex_t           pm_mutex;	/* pmap's lock */
+#endif
 	struct pmap_table *pm_lev1map;	/* level 1 table */
 	paddr_t            pm_lev1pa;	/* PA of level 1 table */
-	uint16_t           pm_refcnt;	/* reference count */
-	uint16_t           pm_busy;	/* "busy" (currently loaded in
-					   to MMU, or involved in
-					   some pmap operation) count */
+	uint32_t           pm_refcnt;	/* reference count */
 
 	struct pmap_table *pm_pt_cache;	/* most recently used leaf table */
 
@@ -126,10 +140,10 @@ struct pmap {
 	struct pmap_garbage pm_garbage;
 };
 
-#define	PMAP_LOCK(pmap)		__nothing
-#define	PMAP_TRYLOCK(pmap)	true
-#define	PMAP_UNLOCK(pmap)	__nothing
-#define	PMAP_LOCK_OWNED(pmap)	true
+#define	PMAP_LOCK(pmap)		PMAP_MUTEX_ENTER(&(pmap)->pm_mutex)
+#define	PMAP_TRYLOCK(pmap)	PMAP_MUTEX_TRYENTER(&(pmap)->pm_mutex)
+#define	PMAP_UNLOCK(pmap)	PMAP_MUTEX_EXIT(&(pmap)->pm_mutex)
+#define	PMAP_LOCK_OWNED(pmap)	PMAP_MUTEX_OWNED(&(pmap)->pm_mutex)
 
 /*
  * One entry per P->V mapping of a managed page.
@@ -362,20 +376,6 @@ struct pmap_bootmap {
 #define	pmap_trunc_seg1_3L(va)	(((vaddr_t)(va)) & ~SEG1OFSET3L)
 #define	pmap_round_seg1_3L(va)	(pmap_trunc_seg1_3L((vaddr_t)(va)+ SEG1OFSET3L))
 #define	pmap_seg1_offset_3L(va)	(((vaddr_t)(va)) & SEG1OFSET3L)
-
-#ifdef PMAP_ENABLE_LOCKS
-#define	PMAP_MUTEX_INIT(m, f, i) mutex_init((m), (f), (i))
-#define	PMAP_MUTEX_ENTER(m)	 mutex_enter(m)
-#define	PMAP_MUTEX_TRYENTER(m)	 mutex_tryenter(m)
-#define	PMAP_MUTEX_EXIT(m)	 mutex_exit(m)
-#define	PMAP_MUTEX_OWNED(m)	 mutex_owned(m)
-#else
-#define	PMAP_MUTEX_INIT(m, f, i) __nothing
-#define	PMAP_MUTEX_ENTER(m)	 __nothing
-#define	PMAP_MUTEX_TRYENTER(m)	 true
-#define	PMAP_MUTEX_EXIT(m)	 __nothing
-#define	PMAP_MUTEX_OWNED(m)	 true
-#endif /* PMAP_ENABLE_LOCKS */
 
 /*
  * pmap-specific data store in the vm_page structure.
