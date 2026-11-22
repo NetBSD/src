@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.111 2026/11/22 16:36:26 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.112 2026/11/22 21:34:15 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.111 2026/11/22 16:36:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.112 2026/11/22 21:34:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4776,6 +4776,19 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
 #endif
 
 	return m->ram_segs;
+}
+
+/*
+ * pmap_fault:
+ *
+ *	Pmap hook for trap()'s page fault handler.  We intercept this
+ *	to take care of any lazy operations that can be resolved at page
+ *	fault time.
+ */
+int
+pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t prot)
+{
+	return uvm_fault(map, va, prot);
 }
 
 /***************************** PMAP BOOTSTRAP ********************************/
