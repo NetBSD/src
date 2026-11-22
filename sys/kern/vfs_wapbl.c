@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.117 2024/12/07 15:10:42 riastradh Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.118 2026/11/22 09:14:51 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.117 2024/12/07 15:10:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.118 2026/11/22 09:14:51 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -448,6 +448,27 @@ wapbl_dkcache_init(struct wapbl *wl)
 	/* Use DPO for journal writes if available */
 	if (ISSET(wl->wl_dkcache, DKCACHE_DPO))
 		wl->wl_jwrite_flags |= B_MEDIA_DPO;
+}
+
+static bool
+wapbl_should_flush(struct wapbl *wl, int nquarter)
+{
+	unsigned lockcount;
+
+	KASSERT(mutex_owned(&wl->wl_mtx));
+
+	/*
+	 * XXX this needs to be made much more sophisticated.
+	 * perhaps each wapbl_begin could reserve a specified
+	 * number of buffers and bytes.
+	 */
+	lockcount = wl->wl_lock_count;
+	return ((wl->wl_bufbytes + (lockcount * MAXPHYS)) >
+		wl->wl_bufbytes_max / 4 * nquarter) ||
+	    ((wl->wl_bufcount + (lockcount * 10)) >
+		wl->wl_bufcount_max / 4 * nquarter) ||
+	    (wapbl_transaction_len(wl) > wl->wl_circ_size / 4 * nquarter) ||
+	    (wl->wl_dealloccnt >= (wl->wl_dealloclim / 4 * nquarter));
 }
 
 static int
@@ -1203,24 +1224,12 @@ wapbl_circ_write(struct wapbl *wl, void *data, size_t len, off_t *offp)
 int
 wapbl_begin(struct wapbl *wl, const char *file, int line)
 {
-	int doflush;
-	unsigned lockcount;
+	bool doflush;
 
 	KDASSERT(wl);
 
-	/*
-	 * XXX this needs to be made much more sophisticated.
-	 * perhaps each wapbl_begin could reserve a specified
-	 * number of buffers and bytes.
-	 */
 	mutex_enter(&wl->wl_mtx);
-	lockcount = wl->wl_lock_count;
-	doflush = ((wl->wl_bufbytes + (lockcount * MAXPHYS)) >
-		wl->wl_bufbytes_max / 2) ||
-	    ((wl->wl_bufcount + (lockcount * 10)) >
-		wl->wl_bufcount_max / 2) ||
-	    (wapbl_transaction_len(wl) > wl->wl_circ_size / 2) ||
-	    (wl->wl_dealloccnt >= (wl->wl_dealloclim / 2));
+	doflush = wapbl_should_flush(wl, 2);
 	mutex_exit(&wl->wl_mtx);
 
 	if (doflush) {
@@ -2193,7 +2202,7 @@ wapbl_register_deallocation(struct wapbl *wl, daddr_t blk, int len, bool force,
 
 	mutex_enter(&wl->wl_mtx);
 
-	if (__predict_false(wl->wl_dealloccnt >= wl->wl_dealloclim)) {
+	if (__predict_false(wapbl_should_flush(wl, 3))) {
 		if (!force) {
 			error = SET_ERROR(EAGAIN);
 			goto out;
