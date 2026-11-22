@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2023/06/03 21:26:28 lukem Exp $
+#	$NetBSD: Makefile,v 1.7 2026/11/22 19:30:33 jakllsch Exp $
 
 PROG=		bootx64.efi
 OBJFMT=		pei-x86-64
@@ -6,7 +6,8 @@ NEWVERSWHAT=	"EFI Boot (x64)"
 
 EXTRA_SOURCES=	efibootx64.c startprog64.S multiboot64.S
 
-COPTS+=		-mno-red-zone
+CPUFLAGS=	-march=x86-64 -mtune=generic
+COPTS=		-mno-red-zone
 CPPFLAGS+=	-DEFI_FUNCTION_WRAPPER
 
 # Follow the suit of Makefile.kern.inc; needed for the lfs64 union
