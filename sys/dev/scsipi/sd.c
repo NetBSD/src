@@ -1,4 +1,4 @@
-/*	$NetBSD: sd.c,v 1.347 2025/10/11 13:58:57 mlelstv Exp $	*/
+/*	$NetBSD: sd.c,v 1.348 2026/11/22 16:08:10 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.347 2025/10/11 13:58:57 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sd.c,v 1.348 2026/11/22 16:08:10 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1474,7 +1474,22 @@ sd_read_capacity(struct sd_softc *sd, int *blksize, int flags)
 		    NULL, flags | XS_CTL_DATA_IN | XS_CTL_SILENT) == 0) {
 
 			*blksize = _4btol(datap->data.length);
-			rv = _4btol(datap->data.addr) + 1;
+			rv = (uint64_t)_4btol(datap->data.addr) + 1;
+		}
+
+		/*
+		 * Retry with READ_CAPACITY_16 for disks that do not
+		 * announce SPC-3 conformance but where READ_CAPACITY_10
+		 * delivered a truncated value.
+		 */
+		if (periph->periph_version < 5 && rv == 0x100000000 &&
+		    scsipi_command(periph, (void *)&cmd.cmd16,
+		    sizeof(cmd.cmd16), (void *)datap, sizeof(datap->data16),
+		    SCSIPIRETRIES, 20000, NULL,
+		    flags | XS_CTL_DATA_IN | XS_CTL_SILENT) == 0) {
+
+			*blksize = _4btol(datap->data16.length);
+			rv = _8btol(datap->data16.addr) + 1;
 		}
 	}
 
