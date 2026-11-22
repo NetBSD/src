@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28.2.3 2026/03/06 07:00:15 martin Exp $
+# $NetBSD: Makefile,v 1.28.2.4 2026/11/22 11:37:56 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -244,7 +244,7 @@ CPPFLAGS+=	\
 -DPACKAGE_URL=\"\" \
 -DPACKAGE_VERSION=\"3.6a\" \
 -DSTDC_HEADERS=1 \
--DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
+-DTMUX_CONF='"/etc/tmux.conf:~/.tmux.conf:$$XDG_CONFIG_HOME/tmux/tmux.conf:~/.config/tmux/tmux.conf"' \
 -DTMUX_LOCK_CMD='"lock -np"' \
 -DTMUX_TERM='"tmux-256color"' \
 -DTMUX_VERSION='"3.6a"' \
