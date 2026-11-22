@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.108 2026/11/22 04:30:42 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.109 2026/11/22 05:12:39 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -149,39 +149,73 @@
  *
  * LOCKING IN THIS PMAP MODULE:
  *
- * MULTIPROCESSING IS NOT SUPPORTED IN THIS PMAP MODULE.  Adding support
- * for it would not be terribly difficult, but there is little value in
- * doing that work until such time as a multiprocessor m68k machine exists
- * that NetBSD runs on.
+ * This pmap module supports fine-grained locking for multiprocessor
+ * systems.
  *
- * As such, there is **no** locking performed of any data structures here.
- * We do actually reap a benefit from this perceived laziness: we do not
- * have to worry about lock ordering, which means we can take some shortcuts
- * in some places (especially around pv_entry manipulation).
+ * There are two data structures that require access serialization: the
+ * pmap structures and the PV lists contained within the vm_page structures
+ * ("pvh").
  *
- * THERE IS A CAVEAT, HOWEVER!  Because there are no guard rails, we cannot,
- * under any circumstances, yield the CPU during the critical section of a
- * pmap operation, as doing so could cause the world to change beneath our
- * feet, possibly rendering our work, for lack of a better term, "crashy".
- * Specifically, this means:
+ * ** pmap locking **
+ * The general idea is that the pmap is locked for the duration of a
+ * pmap operation.  For the most part, pmap operations are non-blocking.
+ * and calls to memory allocators to free resources are deferred to
+ * pmap_update() calls which happen outside the critical path.
  *
- *	- Adaptive mutexes must not be acquired (e.g. when calling into
- *	  other code, e.g. UVM to get a VA or a page).
- *	- Waiting for memory is not allowed.
- *	- The current thread may not be preempted.
+ * There is an exception, however: pmap_enter() frequently needs to
+ * allocate resources to perform its work -- page tables and PV entries.
+ * The code around these allocations is structured in such a way that if
+ * the allocation may block, the pmap lock is dropped, the allocation
+ * performed, and then the operation is restarted from the beginning.
  *
- * If any of those things are required, they must be performed outside of
- * a critical section.  If we discover that this is required while inside
- * a critical section, then we must exit the critical section, perform the
- * blocking work, re-enter the critical section and re-evaluate everything.
- * Macros are provided to mark the boundaries of critical sections:
+ * ** PV list locking **
+ * PV lists are locked when mappings are entered or removed via the
+ * usual map-oriented entry points (pmap_enter(), pmap_remove(), etc.),
+ * also via the page-orgiented entry points (pmap_page_protect(),
+ * pmap_clear_reference(), etc.).  In the former case, the locks are
+ * acquired in the pmap -> pvh order.  In the latter case, the locks
+ * are acquired in the pvh -> pmap order.
  *
- *	- PMAP_CRIT_ENTER()
- *	- PMAP_CRIT_EXIT()
+ * In order to avoid a deadlock, we set forth that the canonical ordering
+ * is pmap -> pvh (i.e. virtual -> physical).  This is the vast majority
+ * of pmap interface calls.
  *
- * XXX Alas, doesn't seem to be a way for us to hook into ASSERT_SLEEPABLE()
- * XXX when inside a critical section.  We should explore that for a future
- * XXX enhancement.
+ * In oder to handle this situation, we have the following rules:
+ *
+ * ==> To /modify/ a PTE's attributes, you must hold /either/ the pmap lock
+ *     or the pvh lock, and an atomic update to that PTE must be performed
+ *     (this is generally handled with pte_update()).
+ *
+ * ==> To /invalidate/ a PTE and remove a mapping (including changing the
+ *     PA mapped by the PTE), you must hold /both/ the pmap lock /and/ the
+ *     pvh lock.
+ *
+ * ==> The canonocal locking order is pmap -> pvh.  pvh -> pmap must be
+ *     done using try-locking with a recovery path.  The place where
+ *     this matters is pmap_page_protect(), which might have to deal
+ *     with PROT_NONE, in which case it needs to acquire a pmap's lock
+ *     while holding the pvh lock for that page in order to remove all
+ *     mappings of the page.
+ *
+ * Notably, pmap_testbit() and pmap_changebit() (used to implement
+ * pmap_is_{modified,referenced}() and pmap_clear_{modify,reference}()
+ * respectively) do not have to lock any pmaps at all.
+ *
+ * Also note: the kernel pmap's lock is not acquired in pmap_kenter_pa()
+ * or pmap_kremove().  Those functions can be called from interrupt
+ * context, and their mappings are explcitiy not PV-tracked per the API
+ * contract.  Since the kernel pmap's PTEs are always made available
+ * ahead of time and never freed, there is no need to serialize any
+ * access within those functions.
+ *
+ * Now, as you might expect, there aren't exactly a lot of MP-capable
+ * m68k systems just floating around out there.  And so, this code has
+ * been structured such that, when built without the MULTIPROCESSOR
+ * option, no memory or cpu-time costs are paid -- all of the calls and
+ * initializations are compiled out and what remains is perfectly safe
+ * to run on a uni-processor system.  The blocking-for-allocation handling
+ * remains, however, since it's evert bit as relevant on a UP system as
+ * an MP system.
  */
 
 /*
@@ -224,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.108 2026/11/22 04:30:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.109 2026/11/22 05:12:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -252,27 +286,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.108 2026/11/22 04:30:42 thorpej Exp $
 /*
  * A NOTE ON V->P vs P->V LOCKING.
  *
- * Most pmap operations acquire locks in the order: pmap -> pvh
- *
- * But there are some page-oriented operations that approach things
- * in a different oder: pvh -> pmap
- *
- * We want to avoid a deadlock between these two different in-roads,
- * so we provide an invariant: so long as a pv_entry is on a pvh list,
- * it's always allowable to access the PTE associated by that pv_entry.
- * This is sufficient for most P->V operations, where we're just setting
- * or clearing bits in the PTE.
- *
- * Here are the rules:
- *
- * ==> To /modify/ a PTE, you must hold /either/ the pmap lock or the pvh
- *     lock, and pte_update() (an MP-safe operation) must be used.
- *
- * ==> To /invalidate/ at PTE and remove a mapping, you must hold /both/
- *     the pmap lock /and/ the pvh lock.
- *
- * ==> The canonocal locking order is pmap -> pvh.  pvh -> pmap must be
- *     done using try-locking with a recovery path.
  */
 
 /**************************** MMU CONFIGURATION ******************************/
