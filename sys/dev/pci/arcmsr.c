@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.45 2024/02/09 17:57:03 andvar Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.46 2026/11/23 06:05:21 jnemeth Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -18,10 +18,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
+#ifdef notyet
 #include "bio.h"
+#endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.45 2024/02/09 17:57:03 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.46 2026/11/23 06:05:21 jnemeth Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -83,6 +85,12 @@ static void 	arc_attach(device_t, device_t, void *);
 static int 	arc_detach(device_t, int);
 static bool 	arc_shutdown(device_t, int);
 static int 	arc_intr(void *);
+static int	arc_intr_A(void *);
+static int	arc_intr_B(void *);
+static int	arc_intr_C(void *);
+static int	arc_intr_D(void *);
+static int	arc_intr_E(void *);
+static int	arc_intr_F(void *);
 static void	arc_minphys(struct buf *);
 
 CFATTACH_DECL_NEW(arcmsr, sizeof(struct arc_softc),
@@ -126,13 +134,20 @@ static void 	arc_write(struct arc_softc *, bus_size_t, uint32_t);
 #if NBIO > 0
 static void 	arc_write_region(struct arc_softc *, bus_size_t, void *,
     size_t);
+static uint32_t arc_read2(struct arc_softc *, bus_size_t);
+static void 	arc_write_region2(struct arc_softc *, bus_size_t, void *,
+    size_t);
 #endif
+static void 	arc_read_region2(struct arc_softc *, bus_size_t, void *,
+    size_t);
+static void 	arc_write2(struct arc_softc *, bus_size_t, uint32_t);
 static int 	arc_wait_eq(struct arc_softc *, bus_size_t, uint32_t,
     uint32_t);
 #ifdef unused
 static int 	arc_wait_ne(struct arc_softc *, bus_size_t, uint32_t,
     uint32_t);
 #endif
+static int	arc_wait_doorbell(struct arc_softc *, bus_size_t, u_int32_t);
 static int	arc_msg0(struct arc_softc *, uint32_t);
 static struct arc_dmamem 	*arc_dmamem_alloc(struct arc_softc *, size_t);
 static void	arc_dmamem_free(struct arc_softc *,
@@ -152,6 +167,18 @@ static void 	arc_scsi_cmd_done(struct arc_softc *, struct arc_ccb *,
 static int 	arc_map_pci_resources(device_t, struct pci_attach_args *);
 static void 	arc_unmap_pci_resources(struct arc_softc *);
 static int 	arc_query_firmware(device_t);
+static int	arc_start_bkgrnd_rebuild(struct arc_softc *);
+static int	arc_wait_firmware_ready(struct arc_softc *);
+static void	arc_stop_bkgrnd_rebuild(device_t);
+static void	arc_flush_cache(device_t);
+static void	arc_iop_set_conf(struct arc_softc *);
+static void	arc_clear_doorbell_qbuffer(struct arc_softc *);
+static int	arc_get_firmware_config(struct arc_softc *,
+    struct arc_msg_firmware_info *);
+static void	arc_free_ccb_src(struct arc_softc *);
+static void	arc_enable_all_intr(struct arc_softc *);
+static void	arc_disable_all_intr(struct arc_softc *);
+
 
 /* 
  * stuff to do messaging via the doorbells.
@@ -167,37 +194,56 @@ static int 	arc_msgbuf(struct arc_softc *, void *, size_t, void *, size_t);
 #define arc_push(_s, _r)	arc_write((_s), ARC_REG_POST_QUEUE, (_r))
 #define arc_pop(_s)		arc_read((_s), ARC_REG_REPLY_QUEUE)
 
+static const struct arc_board arc_devices[] = {
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1110, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1120, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1130, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1160, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1170, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200, ARC_HBA_TYPE_B},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1200_B, ARC_HBA_TYPE_B},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1202, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1203, ARC_HBA_TYPE_B},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1210, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1214, ARC_HBA_TYPE_D},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1220, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1230, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1260, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1270, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1280, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1380, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1381, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1680, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1681, ARC_HBA_TYPE_A},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1880, ARC_HBA_TYPE_C},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1884, ARC_HBA_TYPE_E},
+	{PCI_VENDOR_ARECA, PCI_PRODUCT_ARECA_ARC1886, ARC_HBA_TYPE_F},
+};
+
+static const struct arc_board *
+arc_match_board(struct pci_attach_args *pa)
+{
+	const struct arc_board		*ab;
+	int				i, j;
+
+	j = sizeof(arc_devices) / sizeof(arc_devices[0]);
+	for (i = 0; i < j; i++) {
+		ab = &arc_devices[i];
+
+		if (PCI_VENDOR(pa->pa_id) == ab->ab_vendor &&
+		    PCI_PRODUCT(pa->pa_id) == ab->ab_product)
+			return ab;
+	}
+
+	return NULL;
+}
+
 static int
 arc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
 
-	if (PCI_VENDOR(pa->pa_id) == PCI_VENDOR_ARECA) {
-		switch (PCI_PRODUCT(pa->pa_id)) {
-		case PCI_PRODUCT_ARECA_ARC1110:
-		case PCI_PRODUCT_ARECA_ARC1120:
-		case PCI_PRODUCT_ARECA_ARC1130:
-		case PCI_PRODUCT_ARECA_ARC1160:
-		case PCI_PRODUCT_ARECA_ARC1170:
-		case PCI_PRODUCT_ARECA_ARC1200:
-		case PCI_PRODUCT_ARECA_ARC1202:
-		case PCI_PRODUCT_ARECA_ARC1210:
-		case PCI_PRODUCT_ARECA_ARC1220:
-		case PCI_PRODUCT_ARECA_ARC1230:
-		case PCI_PRODUCT_ARECA_ARC1260:
-		case PCI_PRODUCT_ARECA_ARC1270:
-		case PCI_PRODUCT_ARECA_ARC1280:
-		case PCI_PRODUCT_ARECA_ARC1380:
-		case PCI_PRODUCT_ARECA_ARC1381:
-		case PCI_PRODUCT_ARECA_ARC1680:
-		case PCI_PRODUCT_ARECA_ARC1681:
-			return 1;
-		default:
-			break;
-		}
-	}
-
-	return 0;
+	return ((arc_match_board(pa) == NULL) ? 0 : 1);
 }
 
 static void
@@ -207,6 +253,7 @@ arc_attach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args	*pa = aux;
 	struct scsipi_adapter	*adapt = &sc->sc_adapter;
 	struct scsipi_channel	*chan = &sc->sc_chan;
+	const struct arc_board	*ab;
 
 	sc->sc_dev = self;
 	sc->sc_talking = 0;
@@ -214,21 +261,34 @@ arc_attach(device_t parent, device_t self, void *aux)
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_condvar, "arcdb");
 
+	ab = arc_match_board(pa);
+	sc->sc_adp_type = ab->ab_io_type;
+	sc->ab_product = ab->ab_product;
 	if (arc_map_pci_resources(self, pa) != 0) {
 		/* error message printed by arc_map_pci_resources */
 		return;
 	}
 
-	if (arc_query_firmware(self) != 0) {
-		/* error message printed by arc_query_firmware */
-		goto unmap_pci;
-	}
-
+	sc->sc_req_count = ARCMSR_MAX_CCB_COUNT;
 	if (arc_alloc_ccbs(self) != 0) {
 		/* error message printed by arc_alloc_ccbs */
 		goto unmap_pci;
 	}
 
+	if (arc_query_firmware(self) != 0) {
+		/* error message printed by arc_query_firmware */
+		goto free_ccb;
+	}
+
+	arc_iop_set_conf(sc);
+
+	if (arc_start_bkgrnd_rebuild(sc)) {
+		aprint_debug_dev(self, "timeout waiting to start bg rebuild\n");
+		goto free_ccb;
+	}
+
+	arc_clear_doorbell_qbuffer(sc);
+	
 	if (!pmf_device_register1(self, NULL, NULL, arc_shutdown))
 		panic("%s: couldn't establish shutdown handler\n",
 		    device_xname(self));
@@ -258,8 +318,7 @@ arc_attach(device_t parent, device_t self, void *aux)
 	    CFARGS_NONE);
 
 	/* enable interrupts */
-	arc_write(sc, ARC_REG_INTRMASK,
-	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRSTAT_DOORBELL));
+	arc_enable_all_intr(sc);
 
 #if NBIO > 0
 	/*
@@ -280,21 +339,224 @@ arc_attach(device_t parent, device_t self, void *aux)
 #endif
 
         return;
-
+free_ccb:
+	arc_free_ccb_src(sc);
 unmap_pci:
 	arc_unmap_pci_resources(sc);
+}
+
+static void
+arc_enable_all_intr(struct arc_softc *sc)
+{
+	u_int32_t int_mask;
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		int_mask = arc_read(sc, ARC_REG_INTRMASK);
+		int_mask &= ~(ARC_REG_INTRMASK_POSTQUEUE |
+			ARC_REG_INTRMASK_DOORBELL);
+		arc_write(sc, ARC_REG_INTRMASK, int_mask);
+	    break;
+	case ARC_HBA_TYPE_B:
+		int_mask = sc->sc_int_mask | ARC_RB_I2D_INTR_ENABLE_DOORBELL;
+		arc_write(sc, sc->outb_doorbell_mask, int_mask);
+		break;
+	case ARC_HBA_TYPE_C:
+		int_mask = arc_read(sc, ARC_RC_INTR_MASK);
+		int_mask &= ~(ARC_RC_INTR_MASK_POSTQUEUE |
+			ARC_RC_INTR_MASK_DOORBELL | ARC_RC_INTR_MASK_UTILITY_A);
+		arc_write(sc, ARC_RC_INTR_MASK, int_mask);
+	    break;
+	case ARC_HBA_TYPE_D:
+		int_mask = arc_read(sc, ARC_RD_INTR_ENABLE);
+		int_mask |= ARC_RD_INTR_ENABLE_ALL;
+		arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
+	    break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		int_mask = arc_read(sc, ARC_RE_INTR_MASK);
+		int_mask &= ~(ARC_RE_INTR_MASK_POSTQUEUE |
+			ARC_RE_INTR_MASK_DOORBELL);
+		arc_write(sc, ARC_RE_INTR_MASK, int_mask);
+	    break;
+	}
+}
+
+static void
+arc_disable_all_intr(struct arc_softc *sc)
+{
+	uint32_t int_mask;
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		int_mask = arc_read(sc, ARC_REG_INTRMASK);
+		int_mask |= ARC_REG_INTRMASK_POSTQUEUE |
+			ARC_REG_INTRMASK_DOORBELL;
+		arc_write(sc, ARC_REG_INTRMASK, int_mask);
+		break;
+	case ARC_HBA_TYPE_B:
+		int_mask = arc_read(sc, sc->outb_doorbell_mask);
+		arc_write(sc, sc->outb_doorbell_mask, 0);
+		sc->sc_int_mask = int_mask;
+		break;
+	case ARC_HBA_TYPE_C:
+		int_mask = arc_read(sc, ARC_RC_INTR_MASK);
+		int_mask |= ARC_RC_INTR_MASK_ALL;
+		arc_write(sc, ARC_RC_INTR_MASK, int_mask);
+		break;
+	case ARC_HBA_TYPE_D:
+		int_mask = arc_read(sc, ARC_RD_INTR_ENABLE);
+		int_mask &= ~ARC_RD_INTR_ENABLE_ALL;
+		arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		int_mask = arc_read(sc, ARC_RE_INTR_MASK);
+		int_mask |= ARC_RE_INTR_MASK_ALL;
+		arc_write(sc, ARC_RE_INTR_MASK, int_mask);
+		break;
+	}
+}
+
+static void
+arc_iop_set_conf(struct arc_softc *sc)
+{
+	uint32_t iocmd_phys_hi;
+
+	iocmd_phys_hi = (uint64_t)ARC_DMA_DVA(sc->sc_requests) >> 32;
+	sc->sc_ccb_phys_hi = iocmd_phys_hi;
+	switch (sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		arc_write(sc, ARC_REG_MSGBUF, ARC_FWINFO_SIGNATURE_SET_CONFIG);
+		arc_write(sc, ARC_REG_MSGBUF+4, iocmd_phys_hi);
+		arc_msg0(sc, ARC_REG_INB_MSG0_SET_CONFIG);
+		break;
+	case ARC_HBA_TYPE_B: {
+		struct arc_HBB_Msgu *pmuB = sc->pmuB;
+		pmuB->postq_index = 0;
+		pmuB->doneq_index = 0;
+		arc_msg0(sc, ARC_RB_INB_MSG0_SET_POST_WINDOW);
+		arc_write2(sc, ARC_RB_MSG_RWBUF, ARC_FWINFO_SIGNATURE_SET_CONFIG);
+		arc_write2(sc, ARC_RB_MSG_RWBUF+4, iocmd_phys_hi);
+		arc_write2(sc, ARC_RB_MSG_RWBUF+8, sc->postQ_buffer);
+		arc_write2(sc, ARC_RB_MSG_RWBUF+12, sc->doneQ_buffer);
+		arc_write2(sc, ARC_RB_MSG_RWBUF+16, 1056);
+		arc_msg0(sc, ARC_RB_INB_MSG0_SET_CONFIG);
+		arc_msg0(sc, ARC_RB_INB_MSG0_START_DRIVER_MODE);
+		break;
+		}
+	case ARC_HBA_TYPE_C:
+		arc_write(sc, ARC_RC_MSG_RWBUF, ARC_FWINFO_SIGNATURE_SET_CONFIG);
+		arc_write(sc, ARC_RC_MSG_RWBUF+4, iocmd_phys_hi);
+		arc_msg0(sc, ARC_RC_INB_MSG0_SET_CONFIG);
+		break;
+	case ARC_HBA_TYPE_D: {
+		struct arc_HBD_Msgu *pmu = sc->pmuD;
+		pmu->postq_index = 0;
+		pmu->doneq_index = 0x40FF;
+		arc_write(sc, ARC_RD_MSG_RWBUF, ARC_FWINFO_SIGNATURE_SET_CONFIG);
+		arc_write(sc, ARC_RD_MSG_RWBUF+4, iocmd_phys_hi);
+		arc_write(sc, ARC_RD_MSG_RWBUF+8, sc->postQ_buffer);
+		arc_write(sc, ARC_RD_MSG_RWBUF+12, sc->doneQ_buffer);
+		arc_write(sc, ARC_RD_MSG_RWBUF+16, 0x100);
+		arc_msg0(sc, ARC_RD_INB_MSG0_SET_CONFIG);
+		break;
+		}
+	case ARC_HBA_TYPE_E:
+		arc_write(sc, ARC_RE_MSG_RWBUF, ARC_FWINFO_SIGNATURE_SET_CONFIG);
+		arc_write(sc, ARC_RE_MSG_RWBUF+4, ARC_SIGNATURE_1884);
+		sc->sc_ccb_phys_lo = ARC_DMA_DVA(sc->sc_requests);
+		arc_write(sc, ARC_RE_MSG_RWBUF+8, sc->sc_ccb_phys_lo);
+		arc_write(sc, ARC_RE_MSG_RWBUF+12, iocmd_phys_hi);
+		arc_write(sc, ARC_RE_MSG_RWBUF+16, ARC_MAX_IOCMDLEN);
+		arc_write(sc, ARC_RE_MSG_RWBUF+20, sc->doneq_phys_lo);
+		arc_write(sc, ARC_RE_MSG_RWBUF+24, sc->doneq_phys_hi);
+		arc_write(sc, ARC_RE_MSG_RWBUF+28, ARC_HBE_COMPLETION_Q_LEN);
+		arc_msg0(sc, ARC_RE_INB_MSG0_SET_CONFIG);
+		break;
+	case ARC_HBA_TYPE_F:
+		sc->msgcode_rwbuffer[0] = ARC_FWINFO_SIGNATURE_SET_CONFIG;
+		sc->msgcode_rwbuffer[1] = ARC_SIGNATURE_1886;
+		sc->sc_ccb_phys_lo = ARC_DMA_DVA(sc->sc_requests);
+		sc->msgcode_rwbuffer[2] = sc->sc_ccb_phys_lo;
+		sc->msgcode_rwbuffer[3] = iocmd_phys_hi;
+		sc->msgcode_rwbuffer[4] = ARC_MAX_IOCMDLEN;
+		sc->msgcode_rwbuffer[5] = sc->doneq_phys_lo;
+		sc->msgcode_rwbuffer[6] = sc->doneq_phys_hi;
+		sc->msgcode_rwbuffer[7] = ARC_HBF_COMPLETION_Q_LEN;
+		arc_msg0(sc, ARC_RE_INB_MSG0_SET_CONFIG);
+		break;
+	}
+}
+
+static void
+arc_stop_bkgrnd_rebuild(device_t self)
+{
+	struct arc_softc	*sc = device_private(self);
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
+			aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
+		break;
+	case ARC_HBA_TYPE_B:
+		if (arc_msg0(sc, ARC_RB_INB_MSG0_STOP_BGRB) != 0)
+			aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
+		break;
+	case ARC_HBA_TYPE_C:
+		if (arc_msg0(sc, ARC_RC_INB_MSG0_STOP_BGRB) != 0)
+			aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
+		break;
+	case ARC_HBA_TYPE_D:
+		if (arc_msg0(sc, ARC_RD_INB_MSG0_STOP_BGRB) != 0)
+			aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		if (arc_msg0(sc, ARC_RE_INB_MSG0_STOP_BGRB) != 0)
+			aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
+		break;
+	}
+}
+
+static void
+arc_flush_cache(device_t self)
+{
+	struct arc_softc	*sc = device_private(self);
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
+			aprint_error_dev(self, "timeout waiting to flush cache\n");
+		break;
+	case ARC_HBA_TYPE_B:
+		if (arc_msg0(sc, ARC_RB_INB_MSG0_FLUSH_CACHE) != 0)
+			aprint_error_dev(self, "timeout waiting to flush cache\n");
+		break;
+	case ARC_HBA_TYPE_C:
+		if (arc_msg0(sc, ARC_RC_INB_MSG0_FLUSH_CACHE) != 0)
+			aprint_error_dev(self, "timeout waiting to flush cache\n");
+		break;
+	case ARC_HBA_TYPE_D:
+		if (arc_msg0(sc, ARC_RD_INB_MSG0_FLUSH_CACHE) != 0)
+			aprint_error_dev(self, "timeout waiting to flush cache\n");
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		if (arc_msg0(sc, ARC_RE_INB_MSG0_FLUSH_CACHE) != 0)
+			aprint_error_dev(self, "timeout waiting to flush cache\n");
+		break;
+	}
 }
 
 static int
 arc_detach(device_t self, int flags)
 {
-	struct arc_softc		*sc = device_private(self);
+	struct arc_softc	*sc = device_private(self);
 
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
-		aprint_error_dev(self, "timeout waiting to stop bg rebuild\n"); 
-
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
-		aprint_error_dev(self, "timeout waiting to flush cache\n");
+	arc_stop_bkgrnd_rebuild(self);
+	arc_flush_cache(self);
+	arc_disable_all_intr(sc);
 
 	if (sc->sc_sme != NULL)
 		sysmon_envsys_unregister(sc->sc_sme);
@@ -305,14 +567,10 @@ arc_detach(device_t self, int flags)
 static bool
 arc_shutdown(device_t self, int how)
 {
-	struct arc_softc		*sc = device_private(self);
+	struct arc_softc	*sc = device_private(self);
 
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_STOP_BGRB) != 0)
-		aprint_error_dev(self, "timeout waiting to stop bg rebuild\n");
-
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_FLUSH_CACHE) != 0)
-		aprint_error_dev(self, "timeout waiting to flush cache\n");
-
+	arc_free_ccb_src(sc);
+	arc_unmap_pci_resources(sc);
 	return true;
 }
 
@@ -325,13 +583,13 @@ arc_minphys(struct buf *bp)
 }
 
 static int
-arc_intr(void *arg)
+arc_intr_A(void *arg)
 {
 	struct arc_softc		*sc = arg;
 	struct arc_ccb			*ccb = NULL;
 	char				*kva = ARC_DMA_KVA(sc->sc_requests);
 	struct arc_io_cmd		*cmd;
-	uint32_t			reg, intrstat;
+	uint32_t			reg, error, intrstat;
 
 	mutex_spin_enter(&sc->sc_mutex);
 	intrstat = arc_read(sc, ARC_REG_INTRSTAT);
@@ -363,17 +621,444 @@ arc_intr(void *arg)
 		cmd = (struct arc_io_cmd *)(kva +
 		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
 		    (uint32_t)ARC_DMA_DVA(sc->sc_requests)));
-		ccb = &sc->sc_ccbs[htole32(cmd->cmd.context)];
+		ccb = &sc->sc_ccbs[htole32(cmd->ccb_id)];
+		error = (reg & ARC_REG_REPLY_QUEUE_ERR)? 1:0;
 
 		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
 		    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		arc_scsi_cmd_done(sc, ccb, reg);
+		arc_scsi_cmd_done(sc, ccb, error);
 	}
 
 
 	return 1;
+}
+
+static int
+arc_intr_B(void *arg)
+{
+	struct arc_softc	*sc = arg;
+	struct arc_ccb		*ccb = NULL;
+	char			*kva = ARC_DMA_KVA(sc->sc_requests);
+	struct arc_io_cmd	*cmd;
+	uint32_t		reg, intrstat, error;
+	uint32_t		doneq_index;
+	int			ret = 0;
+	struct arc_HBB_Msgu	*pmuB;
+
+	intrstat = arc_read(sc, sc->outb_doorbell) &
+	    ARC_RB_I2D_INTR_ENABLE_DOORBELL;
+	if (!intrstat)
+		return ret;
+
+	arc_write(sc, sc->outb_doorbell, ~intrstat);
+	arc_write(sc, sc->inb_doorbell, ARC_RB_D2I_END_OF_INTERRUPT);
+	if (intrstat & ARC_RB_I2D_DOORBELL_INT) {
+		ret = 1;
+		if (sc->sc_talking) {
+			/* if an ioctl is talking, wake it up */
+			arc_write(sc, sc->outb_doorbell_mask, ARC_RB_I2D_CDB_DONE);
+			cv_broadcast(&sc->sc_condvar);
+		} else {
+			/* otherwise drop it */
+			if (intrstat & ARC_RB_I2D_DATA_WRITE_OK) {
+				arc_write(sc, sc->inb_doorbell,
+				    ARC_RB_I2D_DATA_READ_OK);
+			}
+/*			if (intrstat & ARC_RB_I2D_DATA_READ_OK) {
+				arc_write(sc, sc->inb_doorbell,
+				    ARC_RB_D2I_DATA_WRITE_OK);
+			}
+*/
+			if (intrstat & ARC_RB_I2D_MSG_CMD_DONE) {
+				arc_write(sc, sc->outb_doorbell,
+				    ARC_RB_MESSAGE_INT_CLEAR_PATTERN);
+			}
+			
+		}
+	}
+
+	if (intrstat & ARC_RB_I2D_POSTQ_INT) {
+		ret = 1;
+		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    sc->cmdQ_ptr_offset, ARC_HBB_CMDQ_PTR_LEN,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		pmuB = sc->pmuB;
+		doneq_index = pmuB->doneq_index;
+		while ((reg = pmuB->done_qbuffer[doneq_index]) != 0) {
+			if (doneq_index >= 4)
+				pmuB->done_qbuffer[doneq_index - 4] = 0;
+			else
+				pmuB->done_qbuffer[ARCMSR_MAX_HBB_POSTQUEUE -
+				    (4 - doneq_index)] = 0;
+			cmd = (struct arc_io_cmd *)(kva +
+		    	    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
+		    	    (uint32_t)ARC_DMA_DVA(sc->sc_requests)));
+			ccb = &sc->sc_ccbs[htole32(cmd->ccb_id)];
+			bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		   	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
+		   	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			error = (reg & ARC_RB_REPLY_QUEUE_ERR) ? 1 : 0;
+			arc_scsi_cmd_done(sc, ccb, error);
+			doneq_index++;
+			doneq_index %= ARCMSR_MAX_HBB_POSTQUEUE;
+			pmuB->doneq_index = doneq_index;
+		}
+	}
+	return ret;
+}
+
+static int
+arc_intr_C(void *arg)
+{
+	struct arc_softc		*sc = arg;
+	struct arc_ccb			*ccb = NULL;
+	char				*kva = ARC_DMA_KVA(sc->sc_requests);
+	struct arc_io_cmd		*cmd;
+	uint32_t			reg, intrstat, obmsg, error;
+	int				ret = 0, throttling;
+
+	intrstat = arc_read(sc, ARC_RC_INTR_STAT);
+	if (!(intrstat & (ARC_RC_INTR_STAT_POSTQUEUE | 
+		ARC_RC_INTR_STAT_DOORBELL)))
+		return ret;
+
+	if (intrstat & ARC_RC_INTR_STAT_DOORBELL) {
+		ret = 1;
+		if (sc->sc_talking) {
+			/* if an ioctl is talking, wake it up */
+			arc_write(sc, ARC_RC_INTR_MASK,
+			    ~ARC_RC_INTR_MASK_POSTQUEUE);
+			cv_broadcast(&sc->sc_condvar);
+		} else {
+			/* otherwise drop it */
+			reg = arc_read(sc, ARC_RC_OUTB_DOORBELL);
+			arc_write(sc, ARC_RC_OUTB_DOORBELL_CLR, reg);
+			if (reg & ARC_RC_I2D_DATA_WRITE_OK) {
+				arc_write(sc, ARC_RC_INB_DOORBELL,
+				    ARC_RC_I2D_DATA_READ_OK);
+			}
+/*			if (reg & ARC_RC_I2D_DATA_READ_OK) {
+				arc_write(sc, ARC_RC_INB_DOORBELL,
+				    ARC_RC_D2I_DATA_WRITE_OK);
+			}
+*/
+			if (reg & ARC_RC_I2D_MESSAGE_CMD_DONE) {
+				arc_write(sc, ARC_RC_OUTB_DOORBELL_CLR,
+					ARC_RC_I2D_MSG_CMD_DONE_CLR);
+				obmsg = arc_read(sc, ARC_RC_MSG_RWBUF);
+				if (obmsg == ARC_FWINFO_SIGNATURE_GET_CONFIG) {
+					;	/* handle devices hot-plug */
+				}
+			}
+			
+		}
+	}
+
+	if (intrstat & ARC_RC_INTR_STAT_POSTQUEUE) {
+		ret = 1;
+		throttling = 0;
+		while (arc_read(sc, ARC_RC_INTR_STAT) &
+			ARC_RC_INTR_STAT_POSTQUEUE) {
+			reg = arc_read(sc, ARC_RC_OUTB_REPLYQ_LOW);
+			if (reg == 0xFFFFFFFF)
+				break;
+			cmd = (struct arc_io_cmd *)(kva + ((reg & 0xFFFFFFE0) -
+		    	    (u_int32_t)ARC_DMA_DVA(sc->sc_requests)));
+			ccb = &sc->sc_ccbs[htole32(cmd->ccb_id)];
+
+			bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
+		    	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+
+			error = (reg & ARC_RC_REPLY_QUEUE_ERR);
+			arc_scsi_cmd_done(sc, ccb, error);
+			throttling++;
+			if(throttling == ARC_RC_THROTTLE) {
+				arc_write(sc, ARC_RC_INB_DOORBELL,
+				    ARC_RC_D2I_POSTQUEUE_THROTTLING);
+				throttling = 0;
+			}
+		}
+	}
+
+	return ret;
+}
+
+static uint16_t
+arcmsr_get_doneq_index(struct arc_HBD_Msgu *pmu)
+{
+	uint16_t doneq_index, index_stripped;
+
+	doneq_index = pmu->doneq_index;
+	if (doneq_index & 0x4000) {
+		index_stripped = doneq_index & 0xFF;
+		index_stripped += 1;
+		index_stripped %= ARCMSR_MAX_HBD_POSTQUEUE;
+		pmu->doneq_index = index_stripped ?
+		    (index_stripped | 0x4000) : index_stripped;
+	} else {
+		index_stripped = doneq_index;
+		index_stripped += 1;
+		index_stripped %= ARCMSR_MAX_HBD_POSTQUEUE;
+		pmu->doneq_index = index_stripped ?
+		    index_stripped : (index_stripped | 0x4000);
+	}
+	return (pmu->doneq_index);
+}
+
+static int
+arc_intr_D(void *arg)
+{
+	struct arc_softc		*sc = arg;
+	struct arc_ccb			*ccb = NULL;
+	char				*kva = ARC_DMA_KVA(sc->sc_requests);
+	struct arc_io_cmd		*cmd;
+	uint32_t			reg, intrstat, obmsg, error;
+	uint32_t			ob_write_ptr;
+	uint16_t			doneq_index;
+	int				ret = 0;
+	struct arc_HBD_Msgu		*pmu;
+
+	intrstat = arc_read(sc, ARC_RD_INTR_STAT);
+	if (!(intrstat & (ARC_RD_INTR_STAT_POSTQUEUE | 
+		ARC_RD_INTR_STAT_DOORBELL)))
+		return ret;
+
+	if (intrstat & ARC_RD_INTR_STAT_DOORBELL) {
+		ret = 1;
+		if (sc->sc_talking) {
+			/* if an ioctl is talking, wake it up */
+			arc_write(sc, ARC_RD_INTR_ENABLE,
+			    ARC_RD_INTR_ENABLE_POSTQUEUE);
+			cv_broadcast(&sc->sc_condvar);
+		} else {
+			/* otherwise drop it */
+			reg = arc_read(sc, ARC_RD_OUTB_DOORBELL);
+			arc_write(sc, ARC_RD_OUTB_DOORBELL, reg);
+			if (reg & ARC_RD_I2D_DATA_WRITE_OK) {
+				arc_write(sc, ARC_RD_INB_DOORBELL,
+				    ARC_RD_I2D_DATA_READ_OK);
+			}
+/*			if (reg & ARC_RD_I2D_DATA_READ_OK) {
+				arc_write(sc, ARC_RD_INB_DOORBELL,
+				    ARC_RD_D2I_DATA_WRITE_OK);
+			}
+*/
+			if (reg & ARC_RD_I2D_MESSAGE_CMD_DONE) {
+				arc_write(sc, ARC_RD_OUTB_DOORBELL_CLR,
+					ARC_RD_I2D_MSG_CMD_DONE_CLR);
+				obmsg = arc_read(sc, ARC_RD_MSG_RWBUF);
+				if (obmsg == ARC_FWINFO_SIGNATURE_GET_CONFIG) {
+					;	/* handle devices hot-plug */
+				}
+			}
+			
+		}
+	}
+
+	if (intrstat & ARC_RD_INTR_STAT_POSTQUEUE) {
+		ret = 1;
+		arc_write(sc, ARC_RD_OUTB_INTR_CAUSE, ARC_RD_OUTB_LIST_INT_CLR);
+		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    sc->cmdQ_ptr_offset, ARC_HBD_CMDQ_PTR_LEN,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		pmu = sc->pmuD;
+		ob_write_ptr = pmu->done_qbuffer[0].addressLow;
+		doneq_index = pmu->doneq_index;
+		while ((doneq_index & 0xFF) != (ob_write_ptr & 0xFF)) {
+			doneq_index = arcmsr_get_doneq_index(pmu);
+			reg = pmu->done_qbuffer[(doneq_index & 0xFF)+1].addressLow;
+			cmd = (struct arc_io_cmd *)(kva + ((reg & 0xFFFFFFF0) -
+		    	    (uint32_t)ARC_DMA_DVA(sc->sc_requests)));
+			ccb = &sc->sc_ccbs[htole32(cmd->ccb_id)];
+			bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		   	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
+		   	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			error = (reg & ARC_RD_REPLY_QUEUE_ERR);
+			arc_scsi_cmd_done(sc, ccb, error);
+			arc_write(sc, ARC_RD_OUTB_READ_PTR, doneq_index);
+			ob_write_ptr = pmu->done_qbuffer[0].addressLow;
+		}
+	}
+	return ret;
+}
+
+static int
+arc_intr_E(void *arg)
+{
+	struct arc_softc		*sc = arg;
+	struct arc_ccb			*ccb = NULL;
+	uint32_t			reg, intrstat, obmsg, error, val;
+	int				ret = 0;
+
+	intrstat = arc_read(sc, ARC_RE_INTR_STAT);
+	if (!(intrstat & (ARC_RE_INTR_STAT_POSTQUEUE | 
+		ARC_RE_INTR_STAT_DOORBELL)))
+		return ret;
+
+	if (intrstat & ARC_RE_INTR_STAT_DOORBELL) {
+		ret = 1;
+		if (sc->sc_talking) {
+			/* if an ioctl is talking, wake it up */
+			arc_write(sc, ARC_RE_INTR_MASK,
+			    ~ARC_RE_INTR_MASK_POSTQUEUE);
+			cv_broadcast(&sc->sc_condvar);
+		} else {
+			/* otherwise drop it */
+			reg = arc_read(sc, ARC_RE_OUTB_DOORBELL);
+			val = sc->in_doorbell ^ reg;
+			arc_write(sc, ARC_RE_INTR_STAT, 0);
+			if (val & ARC_RE_I2D_DATA_WRITE_OK) {
+				sc->out_doorbell ^= ARC_RE_I2D_DATA_READ_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+			}
+/*			if (val & ARC_RE_I2D_DATA_READ_OK) {
+				sc->out_doorbell ^= ARC_RE_D2I_DATA_WRITE_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+			}
+*/
+			if (val & ARC_RE_I2D_MESSAGE_CMD_DONE) {
+				obmsg = arc_read(sc, ARC_RE_MSG_RWBUF);
+				if (obmsg == ARC_FWINFO_SIGNATURE_GET_CONFIG) {
+					;	/* handle devices hot-plug */
+				}
+			}
+			
+		}
+	}
+
+	if (intrstat & ARC_RE_INTR_STAT_POSTQUEUE) {
+		uint16_t	cmdSMID;
+		uint16_t	doneq_index;
+		ret = 1;
+		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    sc->cmdQ_ptr_offset, ARC_HBE_COMPLETION_Q_LEN,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		while (arc_read(sc, ARC_RE_INTR_STAT) & ARC_RE_INTR_STAT_POSTQUEUE) {
+			doneq_index = sc->doneq_index;
+			if ((arc_read(sc, ARC_RE_REPLY_PRODUCER_INDEX) & 0xFFFF) != doneq_index) {
+				cmdSMID = sc->pmuE[doneq_index].cmdSMID;
+				ccb = &sc->sc_ccbs[cmdSMID];
+				bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+					 ccb->ccb_offset, ARC_MAX_IOCMDLEN,
+					BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				error = sc->pmuE[doneq_index].cmdFlag & ARC_RE_REPLY_QUEUE_ERR;
+				arc_scsi_cmd_done(sc, ccb, error);
+				doneq_index++;
+				if (doneq_index >= sc->doneq_entry)
+					doneq_index = 0;
+				sc->doneq_index = doneq_index;
+				arc_write(sc, ARC_RE_REPLY_CONSUMER_INDEX, doneq_index);
+			}
+		}
+	}
+	return ret;
+}
+
+static int
+arc_intr_F(void *arg)
+{
+	struct arc_softc		*sc = arg;
+	struct arc_ccb			*ccb = NULL;
+	uint32_t			reg, intrstat, obmsg, error, val;
+	int				ret = 0;
+
+	intrstat = arc_read(sc, ARC_RE_INTR_STAT);
+	if (!(intrstat & (ARC_RE_INTR_STAT_POSTQUEUE | 
+		ARC_RE_INTR_STAT_DOORBELL)))
+		return ret;
+
+	if (intrstat & ARC_RE_INTR_STAT_DOORBELL) {
+		ret = 1;
+		if (sc->sc_talking) {
+			/* if an ioctl is talking, wake it up */
+			arc_write(sc, ARC_RE_INTR_MASK,
+			    ~ARC_RE_INTR_MASK_POSTQUEUE);
+			cv_broadcast(&sc->sc_condvar);
+		} else {
+			/* otherwise drop it */
+			reg = arc_read(sc, ARC_RE_OUTB_DOORBELL);
+			val = sc->in_doorbell ^ reg;
+			arc_write(sc, ARC_RE_INTR_STAT, 0);
+			if (val & ARC_RE_I2D_DATA_WRITE_OK) {
+				sc->out_doorbell ^= ARC_RE_I2D_DATA_READ_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+			}
+/*			if (val & ARC_RE_I2D_DATA_READ_OK) {
+				sc->out_doorbell ^= ARC_RE_D2I_DATA_WRITE_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+			}
+*/
+			if (val & ARC_RE_I2D_MESSAGE_CMD_DONE) {
+				obmsg = sc->msgcode_rwbuffer[0];
+				if (obmsg == ARC_FWINFO_SIGNATURE_GET_CONFIG) {
+					;	/* handle devices hot-plug */
+				}
+			}
+			
+		}
+	}
+
+	if (intrstat & ARC_RE_INTR_STAT_POSTQUEUE) {
+		uint16_t	cmdSMID;
+		uint16_t	doneq_index;
+		ret = 1;
+		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    sc->cmdQ_ptr_offset, ARC_HBF_COMPLETION_Q_LEN,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		while (arc_read(sc, ARC_RE_INTR_STAT) & ARC_RE_INTR_STAT_POSTQUEUE) {
+			doneq_index = sc->doneq_index;
+			while (1) {
+				cmdSMID = sc->pmuF[doneq_index].cmdSMID;
+				if (cmdSMID == 0xffff)
+					break;
+				ccb = &sc->sc_ccbs[cmdSMID];
+				bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+					ccb->ccb_offset, ARC_MAX_IOCMDLEN,
+					BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+				error = sc->pmuF[doneq_index].cmdFlag & ARC_RE_REPLY_QUEUE_ERR;
+				arc_scsi_cmd_done(sc, ccb, error);
+				sc->pmuF[doneq_index].cmdSMID = 0xffff;
+				doneq_index++;
+				if (doneq_index >= sc->doneq_entry)
+					doneq_index = 0;
+			}
+			sc->doneq_index = doneq_index;
+			arc_write(sc, ARC_RE_REPLY_CONSUMER_INDEX, doneq_index);
+		}
+	}
+	return ret;
+}
+
+static int
+arc_intr(void *arg)
+{
+	struct arc_softc	*sc = arg;
+	int			ret = 0;
+
+	switch (sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		ret = arc_intr_A(arg);
+		break;
+	case ARC_HBA_TYPE_B:
+		ret = arc_intr_B(arg);
+		break;
+	case ARC_HBA_TYPE_C:
+		ret = arc_intr_C(arg);
+		break;
+	case ARC_HBA_TYPE_D:
+		ret = arc_intr_D(arg);
+		break;
+	case ARC_HBA_TYPE_E:
+		ret = arc_intr_E(arg);
+		break;
+	case ARC_HBA_TYPE_F:
+		ret = arc_intr_F(arg);
+		break;
+	}
+	return ret;
 }
 
 void
@@ -385,7 +1070,7 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	struct arc_softc		*sc = device_private(adapt->adapt_dev);
 	struct arc_ccb			*ccb;
 	struct arc_msg_scsicmd		*cmd;
-	uint32_t			reg;
+	uint32_t			reg, cdb_len;
 	uint8_t				target;
 
 	switch (req) {
@@ -449,10 +1134,10 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 		cmd->flags = ARC_MSG_SCSICMD_FLAG_WRITE;
 	if (ccb->ccb_dmamap->dm_nsegs > ARC_SGL_256LEN) {
 		cmd->flags |= ARC_MSG_SCSICMD_FLAG_SGL_BSIZE_512;
-		reg |= ARC_REG_POST_QUEUE_BIGFRAME;
+/*		reg |= ARC_REG_POST_QUEUE_BIGFRAME; */
 	}
 
-	cmd->context = htole32(ccb->ccb_id);
+	ccb->ccb_cmd->ccb_id = htole32(ccb->ccb_id);
 	cmd->data_len = htole32(xs->datalen);
 
 	memcpy(cmd->cdb, xs->cmd, xs->cmdlen);
@@ -462,7 +1147,90 @@ arc_scsi_cmd(struct scsipi_channel *chan, scsipi_adapter_req_t req, void *arg)
 	    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-	arc_push(sc, reg);
+	switch (sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		if (cmd->flags & ARC_MSG_SCSICMD_FLAG_SGL_BSIZE_512)
+			reg |= ARC_REG_POST_QUEUE_BIGFRAME;
+		arc_push(sc, reg);
+		break;
+	case ARC_HBA_TYPE_B: {
+		struct arc_HBB_Msgu *pmuB = sc->pmuB;
+		uint32_t ending_index, index = pmuB->postq_index;
+
+		ending_index = ((index + 1) % ARCMSR_MAX_HBB_POSTQUEUE);
+		pmuB->post_qbuffer[ending_index] = 0;
+		if (cmd->flags & ARC_MSG_SCSICMD_FLAG_SGL_BSIZE_512)
+			reg |= ARC_REG_POST_QUEUE_BIGFRAME;
+		pmuB->post_qbuffer[index] = reg;
+		index++;
+		index %= ARCMSR_MAX_HBB_POSTQUEUE; /* last index number reset to 0 */
+		pmuB->postq_index = index;
+		arc_write(sc, sc->inb_doorbell, ARC_RB_D2I_CDB_POSTED);
+		break;
+		}
+	case ARC_HBA_TYPE_C:
+		cdb_len = sizeof(struct arc_msg_scsicmd) +
+			sizeof(struct arc_sge) * ccb->ccb_dmamap->dm_nsegs;
+		if (cdb_len > 0x300)
+			cdb_len = 0x300;
+		reg = reg | ((cdb_len - 1) >> 6) | 1;
+		if (sc->sc_ccb_phys_hi)
+			arc_write(sc, ARC_RC_INB_POSTQ_HIGH, sc->sc_ccb_phys_hi);
+		arc_write(sc, ARC_RC_INB_POSTQ_LOW, reg);
+		break;
+	case ARC_HBA_TYPE_D: {
+		struct arc_HBD_Msgu *pmu;
+		uint16_t index_stripped, postq_index;
+		struct InBound_SRB *pinbound_srb;
+
+		pmu = sc->pmuD;
+		postq_index = pmu->postq_index;
+		pinbound_srb = (struct InBound_SRB *)&pmu->post_qbuffer[
+		    postq_index & 0xFF];
+		pinbound_srb->addressHigh = sc->sc_ccb_phys_hi;
+		pinbound_srb->addressLow = ccb->ccb_cmd_post;
+		pinbound_srb->length = ccb->arc_io_cmd_length >> 2;
+		cmd->context = ccb->ccb_cmd_post;
+		if (postq_index & 0x4000) {
+			index_stripped = postq_index & 0xFF;
+			index_stripped += 1;
+			index_stripped %= ARCMSR_MAX_HBD_POSTQUEUE;
+			pmu->postq_index = index_stripped ? (index_stripped |
+			    0x4000) : index_stripped;
+		} else {
+			index_stripped = postq_index;
+			index_stripped += 1;
+			index_stripped %= ARCMSR_MAX_HBD_POSTQUEUE;
+			pmu->postq_index = index_stripped ? index_stripped :
+			    (index_stripped | 0x4000);
+		}
+		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+		    sc->cmdQ_ptr_offset, ARC_HBD_CMDQ_PTR_LEN,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+		arc_write(sc, ARC_RD_INB_WRITE_PTR, postq_index);
+		break;
+		}
+	case ARC_HBA_TYPE_E:
+		cdb_len = sizeof(struct arc_msg_scsicmd) +
+			sizeof(struct arc_sge) * ccb->ccb_dmamap->dm_nsegs;
+		if (cdb_len > 0x300)
+			cdb_len = 0x300;
+		reg = ccb->smid | ((cdb_len - 1) >> 6);
+		arc_write(sc, ARC_RE_INB_POSTQ_HIGH, 0);
+		arc_write(sc, ARC_RE_INB_POSTQ_LOW, reg);
+		break;
+	case ARC_HBA_TYPE_F:
+		cdb_len = sizeof(struct arc_msg_scsicmd) +
+			sizeof(struct arc_sge) * ccb->ccb_dmamap->dm_nsegs;
+		if (cdb_len <= 0x300)
+			cdb_len = (cdb_len - 1) >> 6 | 1;
+		else
+			cdb_len = (((cdb_len + 0xff) >> 8) + 2) << 1 | 1;
+		reg = ccb->smid | cdb_len;
+		arc_write(sc, ARC_RE_INB_POSTQ_HIGH, 0);
+		arc_write(sc, ARC_RE_INB_POSTQ_LOW, reg);
+		break;
+	}
 	if (xs->xs_control & XS_CTL_POLL) {
 		if (arc_complete(sc, ccb, xs->timeout) != 0) {
 			xs->error = XS_DRIVER_STUFFUP;
@@ -484,9 +1252,13 @@ arc_load_xs(struct arc_ccb *ccb)
 	struct arc_sge			*sgl = ccb->ccb_cmd->sgl, *sge;
 	uint64_t			addr;
 	int				i, error;
+	uint32_t			msg_length;
 
-	if (xs->datalen == 0)
+	if (xs->datalen == 0) {
+		ccb->arc_io_cmd_length = sizeof(struct arc_msg_scsicmd);
+		ccb->ccb_cmd->cmd.msgPages = 1;
 		return 0;
+	}
 
 	error = bus_dmamap_load(sc->sc_dmat, dmap,
 	    xs->data, xs->datalen, NULL,
@@ -506,6 +1278,10 @@ arc_load_xs(struct arc_ccb *ccb)
 		sge->sg_hi_addr = htole32((uint32_t)(addr >> 32));
 		sge->sg_lo_addr = htole32((uint32_t)addr);
 	}
+	ccb->arc_io_cmd_length = sizeof(struct arc_msg_scsicmd) + 
+	    sizeof(struct arc_sge) * dmap->dm_nsegs;
+	msg_length = ccb->arc_io_cmd_length;
+	ccb->ccb_cmd->cmd.msgPages = (msg_length/256) + ((msg_length % 256) ? 1 : 0);
 
 	bus_dmamap_sync(sc->sc_dmat, dmap, 0, dmap->dm_mapsize,
 	    (xs->xs_control & XS_CTL_DATA_IN) ? BUS_DMASYNC_PREREAD :
@@ -514,8 +1290,8 @@ arc_load_xs(struct arc_ccb *ccb)
 	return 0;
 }
 
-void
-arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, uint32_t reg)
+static void
+arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, uint32_t error)
 {
 	struct scsipi_xfer		*xs = ccb->ccb_xs;
 	struct arc_msg_scsicmd		*cmd;
@@ -531,7 +1307,7 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, uint32_t reg)
 	/* timeout_del */
 	xs->status |= XS_STS_DONE;
 
-	if (reg & ARC_REG_REPLY_QUEUE_ERR) {
+	if (error) {
 		cmd = &ccb->ccb_cmd->cmd;
 
 		switch (cmd->status) {
@@ -569,16 +1345,104 @@ arc_scsi_cmd_done(struct arc_softc *sc, struct arc_ccb *ccb, uint32_t reg)
 	scsipi_done(xs);
 }
 
-int
+static int
 arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 {
 	struct arc_ccb			*ccb = NULL;
 	char				*kva = ARC_DMA_KVA(sc->sc_requests);
-	struct arc_io_cmd		*cmd;
-	uint32_t			reg;
+	struct arc_io_cmd		*cmd = NULL;
+	uint32_t			reg = 0, error;
 
 	do {
-		reg = arc_pop(sc);
+		switch (sc->sc_adp_type) {
+		case ARC_HBA_TYPE_A:
+			reg = arc_pop(sc);
+			error = (reg & ARC_REG_REPLY_QUEUE_ERR)? 1:0;
+			break;
+		case ARC_HBA_TYPE_B: {
+			uint32_t	doneq_index;
+			struct arc_HBB_Msgu *pmuB = sc->pmuB;
+			doneq_index = pmuB->doneq_index;
+			reg = pmuB->done_qbuffer[doneq_index];
+			if ( reg == 0) {
+				reg = 0xffffffff;
+				break;
+			}
+			pmuB->done_qbuffer[doneq_index] = 0;
+			doneq_index++;
+			doneq_index %= ARCMSR_MAX_HBB_POSTQUEUE;
+			pmuB->doneq_index = doneq_index;
+			error = (reg & ARC_RB_REPLY_QUEUE_ERR)? 1:0;
+			break;
+			}
+		case ARC_HBA_TYPE_C:
+			reg = arc_read(sc, ARC_RC_OUTB_REPLYQ_LOW);
+			error = (reg & ARC_RC_REPLY_QUEUE_ERR);
+			break;
+		case ARC_HBA_TYPE_D: {
+			uint16_t	doneq_index;
+			uint32_t	write_ptr;
+			struct arc_HBD_Msgu *pmu;
+			pmu = sc->pmuD;
+			write_ptr = pmu->done_qbuffer[0].addressLow;
+			doneq_index = pmu->doneq_index;
+			if((write_ptr & 0xff) == (doneq_index & 0xff)) {
+Loop0:
+				reg = 0xffffffff;
+			}	
+			else {
+				doneq_index = arcmsr_get_doneq_index(pmu);
+				reg = pmu->done_qbuffer[(doneq_index & 0xFF)+1].addressLow;
+				if (reg == 0)
+					goto Loop0;
+				arc_write(sc, ARC_RD_OUTB_READ_PTR, doneq_index);
+			}
+			error = (reg & ARC_RD_REPLY_QUEUE_ERR);
+			break;
+			}
+		case ARC_HBA_TYPE_E: {
+			u_int16_t	cmdSMID;
+			u_int16_t	doneq_index;
+			doneq_index = sc->doneq_index;
+			if ((arc_read(sc, ARC_RE_REPLY_PRODUCER_INDEX) & 0xFFFF) == doneq_index)
+				reg = 0xffffffff;
+			else {
+				cmdSMID = sc->pmuE[doneq_index].cmdSMID;
+				ccb = &sc->sc_ccbs[cmdSMID];
+				error = sc->pmuE[doneq_index].cmdFlag & ARC_RE_REPLY_QUEUE_ERR;
+				doneq_index++;
+				if (doneq_index >= sc->doneq_entry)
+					doneq_index = 0;
+				sc->doneq_index = doneq_index;
+				arc_write(sc, ARC_RE_REPLY_CONSUMER_INDEX, doneq_index);
+				reg = 0;
+			}
+			break;
+			}
+		case ARC_HBA_TYPE_F: {
+			u_int16_t	cmdSMID;
+			u_int16_t	doneq_index;
+			doneq_index = sc->doneq_index;
+			cmdSMID = sc->pmuF[doneq_index].cmdSMID;
+			if (cmdSMID == 0xFFFF)
+				reg = 0xffffffff;
+			else {
+				ccb = &sc->sc_ccbs[cmdSMID];
+				error = sc->pmuF[doneq_index].cmdFlag & ARC_RE_REPLY_QUEUE_ERR;
+				sc->pmuF[doneq_index].cmdSMID = 0xFFFF;
+				doneq_index++;
+				if (doneq_index >= sc->doneq_entry)
+					doneq_index = 0;
+				sc->doneq_index = doneq_index;
+				arc_write(sc, ARC_RE_REPLY_CONSUMER_INDEX, doneq_index);
+				reg = 0;
+			}
+			break;
+			}
+		default:
+			error = 1;
+			break;
+		}
 		if (reg == 0xffffffff) {
 			if (timeout-- == 0)
 				return 1;
@@ -587,22 +1451,36 @@ arc_complete(struct arc_softc *sc, struct arc_ccb *nccb, int timeout)
 			continue;
 		}
 
-		cmd = (struct arc_io_cmd *)(kva +
-		    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
-		    ARC_DMA_DVA(sc->sc_requests)));
-		ccb = &sc->sc_ccbs[htole32(cmd->cmd.context)];
+		switch(sc->sc_adp_type) {
+		case ARC_HBA_TYPE_A:
+		case ARC_HBA_TYPE_B:
+			cmd = (struct arc_io_cmd *)(kva +
+			    ((reg << ARC_REG_REPLY_QUEUE_ADDR_SHIFT) -
+			    ARC_DMA_DVA(sc->sc_requests)));
+			break;
+		case ARC_HBA_TYPE_C:
+		case ARC_HBA_TYPE_D:
+			cmd = (struct arc_io_cmd *)(kva + ((reg & 0xFFFFFFE0) -
+		    	    ARC_DMA_DVA(sc->sc_requests)));
+			break;
+		case ARC_HBA_TYPE_E:
+		case ARC_HBA_TYPE_F:
+			cmd = ccb->ccb_cmd;
+			break;
+		}
+		ccb = &sc->sc_ccbs[htole32(cmd->ccb_id)];
 
 		bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
 		    ccb->ccb_offset, ARC_MAX_IOCMDLEN,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
-		arc_scsi_cmd_done(sc, ccb, reg);
+		arc_scsi_cmd_done(sc, ccb, error);
 	} while (nccb != ccb);
 
 	return 0;
 }
 
-int
+static int
 arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 {
 	struct arc_softc		*sc = device_private(self);
@@ -614,12 +1492,81 @@ arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 	sc->sc_tag = pa->pa_tag;
 	sc->sc_dmat = pa->pa_dmat;
 
-	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_PCI_BAR);
-	if (pci_mapreg_map(pa, ARC_PCI_BAR, memtype, 0, &sc->sc_iot,
-	    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
-		aprint_error(": unable to map system interface register\n");
+	switch (sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_PCI_BAR);
+		if (pci_mapreg_map(pa, ARC_PCI_BAR, memtype, 0, &sc->sc_iot,
+		    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
+			aprint_error(": unable to map system interface register\n");
+			return 1;
+		}
+		break;
+	case ARC_HBA_TYPE_B:
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RB_DOORBELL_BAR);
+		if (pci_mapreg_map(pa, ARC_RB_DOORBELL_BAR, memtype, 0, &sc->sc_iot,
+	    	    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
+			aprint_error(": unable to map ARC_HBA_TYPE_B system"
+				" interface register\n");
+			return 1;
+		}
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RB_RWBUFFER_BAR);
+		if (pci_mapreg_map(pa, ARC_RB_RWBUFFER_BAR, memtype, 0, &sc->sc_msgt,
+	    	    &sc->sc_msgh, NULL, &sc->sc_msgs) != 0) {
+			aprint_error(": unable to map ARC_HBA_TYPE_B buffer"
+				" interface register\n");
+			bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+			return 1;
+		}
+		break;
+	case ARC_HBA_TYPE_C:
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RC_PCI_BAR);
+		if (pci_mapreg_map(pa, ARC_RC_PCI_BAR, memtype, 0, &sc->sc_iot,
+	    	    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
+			aprint_error(": unable to map ARC_HBA_TYPE_C system"
+				" interface register\n");
+			return 1;
+		}
+		break;
+	case ARC_HBA_TYPE_D:
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RD_PCI_BAR);
+		if (pci_mapreg_map(pa, ARC_RD_PCI_BAR, memtype, 0, &sc->sc_iot,
+	    	    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
+			aprint_error(": unable to map ARC_HBA_TYPE_D system"
+				" interface register\n");
+			return 1;
+		}
+		break; 
+	case ARC_HBA_TYPE_E:
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RE_PCI_BAR);
+		if (pci_mapreg_map(pa, ARC_RE_PCI_BAR, memtype, 0, &sc->sc_iot,
+	    	    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
+			aprint_error(": unable to map ARC_HBA_TYPE_E system"
+				" interface register\n");
+			return(1);
+		}
+		arc_write(sc, ARC_RE_INTR_STAT, 0);
+		arc_write(sc, ARC_RE_OUTB_DOORBELL, ARC_RE_DOORBELL_SYNC);
+		sc->in_doorbell = 0;
+		sc->out_doorbell = 0;
+		break;
+	case ARC_HBA_TYPE_F:
+		memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, ARC_RF_PCI_BAR);
+		if (pci_mapreg_map(pa, ARC_RF_PCI_BAR, memtype, 0, &sc->sc_iot,
+	    	    &sc->sc_ioh, NULL, &sc->sc_ios) != 0) {
+			aprint_error(": unable to map ARC_HBA_TYPE_F system"
+				" interface register\n");
+			return(1);
+		}
+		arc_write(sc, ARC_RE_INTR_STAT, 0);
+		arc_write(sc, ARC_RE_OUTB_DOORBELL, ARC_RF_DOORBELL_SYNC);
+		sc->in_doorbell = 0;
+		sc->out_doorbell = 0;
+		break;
+	default:
 		return 1;
 	}
+
+	arc_disable_all_intr(sc);
 
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error(": unable to map interrupt\n");
@@ -642,43 +1589,235 @@ arc_map_pci_resources(device_t self, struct pci_attach_args *pa)
 	return 0;
 
 unmap:
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
-	sc->sc_ios = 0;
+	arc_unmap_pci_resources(sc);
 	return 1;
 }
 
-void
+static void
 arc_unmap_pci_resources(struct arc_softc *sc)
 {
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_ios);
+	if (sc->sc_adp_type == ARC_HBA_TYPE_B)
+		bus_space_unmap(sc->sc_msgt, sc->sc_msgh, sc->sc_msgs);
 	sc->sc_ios = 0;
 }
 
-int
+static int
+arc_wait_firmware_ready(struct arc_softc *sc)
+{
+	int	ready = 1;
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		ready = arc_wait_eq(sc, ARC_REG_OUTB_ADDR1,
+		    ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
+		    ARC_REG_OUTB_ADDR1_FIRMWARE_OK);
+		break;
+	case ARC_HBA_TYPE_B:
+		ready = arc_wait_eq(sc, sc->outb_doorbell,
+		    ARC_RB_OUTB_DOORBELL_FIRMWARE_OK,
+	    	    ARC_RB_OUTB_DOORBELL_FIRMWARE_OK);
+		break;
+	case ARC_HBA_TYPE_C:
+		ready = arc_wait_eq(sc, ARC_RC_OUTB_MSGADDR1,
+		    ARC_RC_OUTB_MSG_FIRMWARE_OK,
+	    	    ARC_RC_OUTB_MSG_FIRMWARE_OK);
+		break;
+	case ARC_HBA_TYPE_D:
+		ready = arc_wait_eq(sc, ARC_RD_OUTB_MSGADDR1,
+		    ARC_RD_OUTB_MSG_FIRMWARE_OK,
+		    ARC_RD_OUTB_MSG_FIRMWARE_OK);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		ready = arc_wait_eq(sc, ARC_RE_OUTB_MSGADDR1,
+		    ARC_RE_OUTB_MSG_FIRMWARE_OK,
+		    ARC_RE_OUTB_MSG_FIRMWARE_OK);
+		break;
+	}
+	return ready;
+}
+
+static int
+arc_get_firmware_config(struct arc_softc *sc, struct arc_msg_firmware_info *fwinfo)
+{
+	int	ready = 1;
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		ready = arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG);
+		if (!ready)
+			arc_read_region(sc, ARC_REG_MSGBUF, fwinfo, sizeof(*fwinfo));
+		break;
+	case ARC_HBA_TYPE_B:
+		ready = arc_msg0(sc, ARC_RB_INB_MSG0_GET_CONFIG);
+		if (!ready)
+			arc_read_region2(sc, ARC_RB_MSG_RWBUF, fwinfo, sizeof(*fwinfo));
+		break;
+	case ARC_HBA_TYPE_C:
+		ready = arc_msg0(sc, ARC_RC_INB_MSG0_GET_CONFIG);
+		if (!ready)
+			arc_read_region(sc, ARC_RC_MSG_RWBUF, fwinfo, sizeof(*fwinfo));
+		break;
+	case ARC_HBA_TYPE_D:
+		ready = arc_msg0(sc, ARC_RD_INB_MSG0_GET_CONFIG);
+		if (!ready)
+			arc_read_region(sc, ARC_RD_MSG_RWBUF, fwinfo, sizeof(*fwinfo));
+		break;
+	case ARC_HBA_TYPE_E:
+		ready = arc_msg0(sc, ARC_RE_INB_MSG0_GET_CONFIG);
+		if (!ready)
+			arc_read_region(sc, ARC_RE_MSG_RWBUF, fwinfo, sizeof(*fwinfo));
+		break;
+	case ARC_HBA_TYPE_F:
+		ready = arc_msg0(sc, ARC_RE_INB_MSG0_GET_CONFIG);
+		if (!ready) {
+			uint32_t *des = (uint32_t *)fwinfo;
+			uint32_t *src = (uint32_t *)sc->msgcode_rwbuffer;
+			uint32_t i, cnt = sizeof(*fwinfo) >> 2;
+			bus_dmamap_sync(sc->sc_dmat, ARC_DMA_MAP(sc->sc_requests),
+			    sc->cmdQ_ptr_offset + ARC_HBF_COMPLETION_Q_LEN, ARC_HBF_MESG_BUFFER_SIZE,
+			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+			for (i = 0; i < cnt; i++) {
+				*des++ = *src++;
+			}
+		}
+		break;
+	}
+	return ready;
+}
+
+static int
+arc_start_bkgrnd_rebuild(struct arc_softc *sc)
+{
+	int	ready = 1;
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		ready = arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB);
+		break;
+	case ARC_HBA_TYPE_B:
+		ready = arc_msg0(sc, ARC_RB_INB_MSG0_START_BGRB);
+		break;
+	case ARC_HBA_TYPE_C:
+		ready = arc_msg0(sc, ARC_RC_INB_MSG0_START_BGRB);
+		break;
+	case ARC_HBA_TYPE_D:
+		ready = arc_msg0(sc, ARC_RD_INB_MSG0_START_BGRB);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		ready = arc_msg0(sc, ARC_RE_INB_MSG0_START_BGRB);
+		break;
+	}
+	return ready;
+}
+
+static void
+arc_clear_doorbell_qbuffer(struct arc_softc *sc)
+{
+	uint32_t	ob_doorbell, i, tmp;
+
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		ob_doorbell = arc_read(sc, ARC_REG_OUTB_DOORBELL);
+		arc_write(sc, ARC_REG_OUTB_DOORBELL, ob_doorbell);
+		arc_write(sc, ARC_REG_INB_DOORBELL, ARC_REG_INB_DOORBELL_READ_OK);
+		for (i = 0; i < 200; i++) {
+			delay(20000);
+			ob_doorbell = arc_read(sc, ARC_REG_OUTB_DOORBELL);
+			if (ob_doorbell & ARC_REG_OUTB_DOORBELL_WRITE_OK) {
+				arc_write(sc, ARC_REG_OUTB_DOORBELL, ob_doorbell);
+				arc_write(sc, ARC_REG_INB_DOORBELL,
+				    ARC_REG_INB_DOORBELL_READ_OK);
+			} else
+				break;
+		}
+		break;
+	case ARC_HBA_TYPE_B:
+		arc_write(sc, sc->outb_doorbell, ARC_RB_DOORBELL_INT_CLEAR_PATTERN);
+		arc_write(sc, sc->inb_doorbell, ARC_RB_D2I_DATA_READ_OK);
+		for (i = 0; i < 200; i++) {
+			delay(20000);
+			if (arc_read(sc, sc->outb_doorbell) & ARC_RB_I2D_DATA_WRITE_OK) {
+				arc_write(sc, sc->outb_doorbell,
+				    ARC_RB_DOORBELL_INT_CLEAR_PATTERN);
+				arc_write(sc, sc->inb_doorbell,
+				    ARC_RB_D2I_DATA_READ_OK);
+			} else
+				break;
+		}
+		break;
+	case ARC_HBA_TYPE_C:
+		ob_doorbell = arc_read(sc, ARC_RC_OUTB_DOORBELL);
+		arc_write(sc, ARC_RC_OUTB_DOORBELL_CLR, ob_doorbell);
+		arc_write(sc, ARC_RC_INB_DOORBELL, ARC_RC_D2I_DATA_READ_OK);
+		for (i = 0; i < 200; i++) {
+			delay(20000);
+			ob_doorbell = arc_read(sc, ARC_RC_OUTB_DOORBELL);
+			if (ob_doorbell & ARC_RC_I2D_DATA_WRITE_OK) {
+				arc_write(sc, ARC_RC_OUTB_DOORBELL_CLR,
+				    ob_doorbell);
+				arc_write(sc, ARC_RC_INB_DOORBELL,
+				    ARC_RC_D2I_DATA_READ_OK);
+			} else
+				break;
+		}
+		break;
+	case ARC_HBA_TYPE_D:
+		ob_doorbell = arc_read(sc, ARC_RD_OUTB_DOORBELL);
+		arc_write(sc, ARC_RD_OUTB_DOORBELL_CLR, ob_doorbell);
+		arc_write(sc, ARC_RD_INB_DOORBELL, ARC_RD_D2I_DATA_READ_OK);
+		for (i = 0; i < 200; i++) {
+			delay(20000);
+			ob_doorbell = arc_read(sc, ARC_RD_OUTB_DOORBELL);
+			if (ob_doorbell & ARC_RD_I2D_DATA_WRITE_OK) {
+				arc_write(sc, ARC_RD_OUTB_DOORBELL_CLR,
+				    ob_doorbell);
+				arc_write(sc, ARC_RD_INB_DOORBELL,
+				    ARC_RD_D2I_DATA_READ_OK);
+			} else
+				break;
+		}
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		sc->in_doorbell = arc_read(sc, ARC_RE_OUTB_DOORBELL);
+		arc_write(sc, ARC_RE_INTR_STAT, 0);
+		sc->out_doorbell ^= ARC_RE_D2I_DATA_READ_OK;
+		arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+		for (i = 0; i < 200; i++) {
+			delay(20000);
+			tmp = sc->in_doorbell;
+			sc->in_doorbell = arc_read(sc, ARC_RE_OUTB_DOORBELL);
+			if ((tmp ^ sc->in_doorbell) & ARC_RE_I2D_DATA_WRITE_OK) {
+				arc_write(sc, ARC_RE_INTR_STAT, 0);
+				sc->out_doorbell ^= ARC_RE_D2I_DATA_READ_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+			} else
+				break;
+		}
+		break;
+	}
+}
+
+static int
 arc_query_firmware(device_t self)
 {
 	struct arc_softc 		*sc = device_private(self);
 	struct arc_msg_firmware_info	fwinfo;
 	char				string[81]; /* sizeof(vendor)*2+1 */
 
-	if (arc_wait_eq(sc, ARC_REG_OUTB_ADDR1, ARC_REG_OUTB_ADDR1_FIRMWARE_OK,
-	    ARC_REG_OUTB_ADDR1_FIRMWARE_OK) != 0) {
+	if (arc_wait_firmware_ready(sc)) {
 		aprint_debug_dev(self, "timeout waiting for firmware ok\n");
 		return 1;
 	}
 
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_GET_CONFIG) != 0) {
+	if (arc_get_firmware_config(sc, &fwinfo)) {
 		aprint_debug_dev(self, "timeout waiting for get config\n");
 		return 1;
 	}
-
-	if (arc_msg0(sc, ARC_REG_INB_MSG0_START_BGRB) != 0) {
-		aprint_debug_dev(self, "timeout waiting to start bg rebuild\n");
-		return 1;
-	}
-
-	arc_read_region(sc, ARC_REG_MSGBUF, &fwinfo, sizeof(fwinfo));
 
 	DNPRINTF(ARC_D_INIT, "%s: signature: 0x%08x\n",
 	    device_xname(self), htole32(fwinfo.signature));
@@ -715,6 +1854,8 @@ arc_query_firmware(device_t self)
 	aprint_normal_dev(self, "%d ports, %dMB SDRAM, firmware <%s>\n",
 	    htole32(fwinfo.sata_ports), htole32(fwinfo.sdram_size), string);
 
+	printf("%s\n", ARCMSR_VERSION);
+
 	if (htole32(fwinfo.request_len) != ARC_MAX_IOCMDLEN) {
 		aprint_error_dev(self,
 		    "unexpected request frame size (%d != %d)\n",
@@ -722,7 +1863,7 @@ arc_query_firmware(device_t self)
 		return 1;
 	}
 
-	sc->sc_req_count = htole32(fwinfo.queue_len);
+//	sc->sc_req_count = htole32(fwinfo.queue_len);
 
 	return 0;
 }
@@ -1249,8 +2390,11 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 		request[0] = ARC_FW_SYSINFO;
 		error = arc_msgbuf(sc, request, 1, sysinfo,
 		    sizeof(struct arc_fw_sysinfo));
-		if (error != 0)
+		if (error != 0) {
+			aprint_error("%s: unable to query sys info\n",
+		    	device_xname(sc->sc_dev));
 			goto out;
+		}
 
 		sc->sc_maxraidset = sysinfo->max_raid_set;
 		sc->sc_maxvolset = sysinfo->max_volume_set;
@@ -1262,8 +2406,11 @@ arc_bio_inq(struct arc_softc *sc, struct bioc_inq *bi)
 		request[1] = i;
 		error = arc_msgbuf(sc, request, sizeof(request), raidinfo,
 		    sizeof(struct arc_fw_raidinfo));
-		if (error != 0)
+		if (error != 0) {
+			aprint_error("%s: unable to query raid info\n",
+		    	device_xname(sc->sc_dev));
 			goto out;
+		}
 
 		nvols += raidinfo->volumes;
 	}
@@ -1513,7 +2660,7 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	struct arc_fw_raidinfo	*raidinfo;
 	struct arc_fw_volinfo	*volinfo;
 	struct arc_fw_diskinfo	*diskinfo;
-	uint8_t			request[2];
+	uint8_t			request[3];
 	int			error = 0;
 
 	volinfo = kmem_zalloc(sizeof(*volinfo), KM_SLEEP);
@@ -1527,7 +2674,7 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	request[0] = ARC_FW_RAIDINFO;
 	request[1] = volinfo->raid_set_number;
 
-	error = arc_msgbuf(sc, request, sizeof(request), raidinfo,
+	error = arc_msgbuf(sc, request, 2, raidinfo,
 	    sizeof(struct arc_fw_raidinfo));
 	if (error != 0)
 		goto out;
@@ -1552,7 +2699,8 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	}
 
 	request[0] = ARC_FW_DISKINFO;
-	request[1] = raidinfo->device_array[bd->bd_diskid];
+	request[1] = raidinfo->devEncArray[bd->bd_diskid];
+	request[2] = raidinfo->device_array[bd->bd_diskid];
 	error = arc_msgbuf(sc, request, sizeof(request), diskinfo,
 	    sizeof(struct arc_fw_diskinfo));
 	if (error != 0)
@@ -1563,9 +2711,9 @@ arc_bio_disk_volume(struct arc_softc *sc, struct bioc_disk *bd)
 	    raidinfo->device_array[bd->bd_diskid]);
 
 out:
+	kmem_free(diskinfo, sizeof(*diskinfo));
 	kmem_free(raidinfo, sizeof(*raidinfo));
 	kmem_free(volinfo, sizeof(*volinfo));
-	kmem_free(diskinfo, sizeof(*diskinfo));
 	return error;
 }
 
@@ -1592,15 +2740,14 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	uint8_t			*wbuf, *rbuf;
 	int			wlen, wdone = 0, rlen, rdone = 0;
 	struct arc_fw_bufhdr	*bufhdr;
-	uint32_t		reg, rwlen;
+	uint32_t		reg, rwlen, write_ok, read_ok = 1;
 	int			error = 0;
-#ifdef ARC_DEBUG
 	int			i;
-#endif
+	uint32_t		xlen, *ptr, val;
 
 	wbuf = rbuf = NULL;
 
-	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wbuflen: %d rbuflen: %d\n",
+	DNPRINTF(ARC_D_DB, "%s: arc_msgbuf wbuflen: %ld rbuflen: %ld\n",
 	    device_xname(sc->sc_dev), wbuflen, rbuflen);
 
 	wlen = sizeof(struct arc_fw_bufhdr) + wbuflen + 1; /* 1 for cksum */
@@ -1619,15 +2766,34 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 	wbuf[wlen - 1] = arc_msg_cksum(wptr, wbuflen);
 
 	arc_lock(sc);
-	if (arc_read(sc, ARC_REG_OUTB_DOORBELL) != 0) {
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		reg = arc_read(sc, ARC_REG_OUTB_DOORBELL);
+		break;
+	case ARC_HBA_TYPE_B:
+		reg = arc_read(sc, sc->outb_doorbell);
+		break;
+	case ARC_HBA_TYPE_C:
+		reg = arc_read(sc, ARC_RC_OUTB_DOORBELL);
+		break;
+	case ARC_HBA_TYPE_D:
+		reg = arc_read(sc, ARC_RD_OUTB_DOORBELL);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		reg = arc_read(sc, ARC_RE_OUTB_DOORBELL);
+		break;
+	default:
+		reg = 1;
+		break;
+	}
+	if (reg != 0) {
 		error = EBUSY;
 		goto out;
 	}
 
-	reg = ARC_REG_OUTB_DOORBELL_READ_OK;
-
 	do {
-		if ((reg & ARC_REG_OUTB_DOORBELL_READ_OK) && wdone < wlen) {
+		if ((read_ok) && wdone < wlen) {
 			memset(rwbuf, 0, sizeof(rwbuf));
 			rwlen = (wlen - wdone) % sizeof(rwbuf);
 			memcpy(rwbuf, &wbuf[wdone], rwlen);
@@ -1642,28 +2808,150 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 			}
 #endif
 
-			/* copy the chunk to the hw */
-			arc_write(sc, ARC_REG_IOC_WBUF_LEN, rwlen);
-			arc_write_region(sc, ARC_REG_IOC_WBUF, rwbuf,
-			    sizeof(rwbuf));
+			switch(sc->sc_adp_type) {
+			case ARC_HBA_TYPE_A:
+				/* copy the chunk to the hw */
+				arc_write(sc, ARC_REG_IOC_WBUF_LEN, rwlen);
+				arc_write_region(sc, ARC_REG_IOC_WBUF, rwbuf,
+				    sizeof(rwbuf));
 
-			/* say we have a buffer for the hw */
-			arc_write(sc, ARC_REG_INB_DOORBELL,
-			    ARC_REG_INB_DOORBELL_WRITE_OK);
+				/* say we have a buffer for the hw */
+				arc_write(sc, ARC_REG_INB_DOORBELL,
+				    ARC_REG_INB_DOORBELL_WRITE_OK);
+				break;
+			case ARC_HBA_TYPE_B:
+				/* copy the chunk to the hw */
+				arc_write2(sc, ARC_RB_MSG_WBUF, rwlen);
+				arc_write_region2(sc, ARC_RB_MSG_WBUF+4, rwbuf,
+			    	    sizeof(rwbuf));
 
+				/* say we have a buffer for the hw */
+				arc_write(sc, sc->inb_doorbell,
+			    	    ARC_RB_D2I_DATA_WRITE_OK);
+				break;
+			case ARC_HBA_TYPE_C:
+				/* copy the chunk to the hw */
+				arc_write(sc, ARC_RC_MSG_WBUF_LEN, rwlen);
+				arc_write_region(sc, ARC_RC_MSG_WBUF, rwbuf,
+			    	sizeof(rwbuf));
+
+				/* say we have a buffer for the hw */
+				arc_write(sc, ARC_RC_INB_DOORBELL,
+			    	    ARC_RC_D2I_DATA_WRITE_OK);
+				break;
+			case ARC_HBA_TYPE_D:
+				/* copy the chunk to the hw */
+				arc_write(sc, ARC_RD_MSG_WBUF_LEN, rwlen);
+				arc_write_region(sc, ARC_RD_MSG_WBUF, rwbuf,
+			    	sizeof(rwbuf));
+
+				/* say we have a buffer for the hw */
+				arc_write(sc, ARC_RD_INB_DOORBELL,
+			    	    ARC_RD_D2I_DATA_WRITE_OK);
+				break;
+			case ARC_HBA_TYPE_E:
+				/* copy the chunk to the hw */
+				arc_write(sc, ARC_RE_MSG_WBUF_LEN, rwlen);
+				arc_write_region(sc, ARC_RE_MSG_WBUF, rwbuf,
+			    	sizeof(rwbuf));
+
+				/* say we have a buffer for the hw */
+				sc->out_doorbell ^= ARC_RE_D2I_DATA_WRITE_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+				break;
+			case ARC_HBA_TYPE_F: {
+				/* copy the chunk to the hw */
+				xlen = rwlen >> 2;
+				ptr = (uint32_t *)rwbuf;
+				sc->message_wbuffer[0] = rwlen;
+				for (i = 1; i <= xlen; i++)
+					sc->message_wbuffer[i] = *ptr++;
+
+				/* say we have a buffer for the hw */
+				sc->out_doorbell ^= ARC_RE_D2I_DATA_WRITE_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+				break;
+				}
+			}
 			wdone += rwlen;
 		}
 
-		while ((reg = arc_read(sc, ARC_REG_OUTB_DOORBELL)) == 0)
-			arc_wait(sc);
-
-		arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
+		switch(sc->sc_adp_type) {
+		case ARC_HBA_TYPE_A:
+			while ((reg = arc_read(sc, ARC_REG_OUTB_DOORBELL)) == 0)
+				arc_wait(sc);
+			write_ok = reg & ARC_REG_OUTB_DOORBELL_WRITE_OK;
+			read_ok = reg & ARC_REG_OUTB_DOORBELL_READ_OK;
+			arc_write(sc, ARC_REG_OUTB_DOORBELL, reg);
+			break;
+		case ARC_HBA_TYPE_B:
+			while ((reg = arc_read(sc, sc->outb_doorbell)) == 0)
+				arc_wait(sc);
+			arc_write(sc, sc->outb_doorbell, ~(reg & ARC_RB_I2D_DOORBELL_INT));
+			write_ok = reg & ARC_RB_I2D_DATA_WRITE_OK;
+			read_ok = reg & ARC_RB_I2D_DATA_READ_OK;
+			break;
+		case ARC_HBA_TYPE_C:
+			while ((reg = arc_read(sc, ARC_RC_OUTB_DOORBELL)) == 0)
+				arc_wait(sc);
+			arc_write(sc, ARC_RC_OUTB_DOORBELL_CLR, reg);
+			write_ok = reg & ARC_RC_I2D_DATA_WRITE_OK;
+			read_ok = reg & ARC_RC_I2D_DATA_READ_OK;
+			break;
+		case ARC_HBA_TYPE_D:
+			while ((reg = arc_read(sc, ARC_RD_OUTB_DOORBELL)) == 0)
+				arc_wait(sc);
+			arc_write(sc, ARC_RD_OUTB_DOORBELL_CLR, reg);
+			write_ok = reg & ARC_RD_I2D_DATA_WRITE_OK;
+			read_ok = reg & ARC_RD_I2D_DATA_READ_OK;
+			break;
+		case ARC_HBA_TYPE_E:
+		case ARC_HBA_TYPE_F: {
+			do {
+				arc_wait(sc);
+				reg = arc_read(sc, ARC_RE_OUTB_DOORBELL);
+			} while ((reg ^ sc->in_doorbell) == 0);
+			val = reg ^ sc->in_doorbell;
+			sc->in_doorbell = reg;
+			reg = val;
+			arc_write(sc, ARC_RE_INTR_STAT, 0);
+			write_ok = reg & ARC_RE_I2D_DATA_WRITE_OK;
+			read_ok = reg & ARC_RE_I2D_DATA_READ_OK;
+			break;
+			}
+		default:
+			write_ok = 0;
+			read_ok = 0;
+			break;
+		}
 
 		DNPRINTF(ARC_D_DB, "%s: reg: 0x%08x\n",
 		    device_xname(sc->sc_dev), reg);
 
-		if ((reg & ARC_REG_OUTB_DOORBELL_WRITE_OK) && rdone < rlen) {
-			rwlen = arc_read(sc, ARC_REG_IOC_RBUF_LEN);
+		if ((write_ok) && rdone < rlen) {
+			switch(sc->sc_adp_type) {
+			case ARC_HBA_TYPE_A:
+				rwlen = arc_read(sc, ARC_REG_IOC_RBUF_LEN);
+				break;
+			case ARC_HBA_TYPE_B:
+				rwlen = arc_read2(sc, ARC_RB_MSG_RBUF);
+				break;
+			case ARC_HBA_TYPE_C:
+				rwlen = arc_read(sc, ARC_RC_MSG_RBUF_LEN);
+				break;
+			case ARC_HBA_TYPE_D:
+				rwlen = arc_read(sc, ARC_RD_MSG_RBUF_LEN);
+				break;
+			case ARC_HBA_TYPE_E:
+				rwlen = arc_read(sc, ARC_RE_MSG_RBUF_LEN);
+				break;
+			case ARC_HBA_TYPE_F:
+				rwlen = sc->message_rbuffer[0];
+				break;
+			default:
+				rwlen = 0;
+				break;
+			}
 			if (rwlen > sizeof(rwbuf)) {
 				DNPRINTF(ARC_D_DB, "%s:  rwlen too big\n",
 				    device_xname(sc->sc_dev));
@@ -1671,11 +2959,48 @@ arc_msgbuf(struct arc_softc *sc, void *wptr, size_t wbuflen, void *rptr,
 				goto out;
 			}
 
-			arc_read_region(sc, ARC_REG_IOC_RBUF, rwbuf,
-			    sizeof(rwbuf));
+			switch(sc->sc_adp_type) {
+			case ARC_HBA_TYPE_A:
+				arc_read_region(sc, ARC_REG_IOC_RBUF, rwbuf,
+				    sizeof(rwbuf));
 
-			arc_write(sc, ARC_REG_INB_DOORBELL,
-			    ARC_REG_INB_DOORBELL_READ_OK);
+				arc_write(sc, ARC_REG_INB_DOORBELL,
+			 	   ARC_REG_INB_DOORBELL_READ_OK);
+			 	break;
+			case ARC_HBA_TYPE_B:
+				arc_read_region2(sc, ARC_RB_MSG_RBUF+4, rwbuf,
+			    	    sizeof(rwbuf));
+				arc_write(sc, sc->inb_doorbell,
+			    	    ARC_RB_I2D_DATA_READ_OK);
+				break;
+			case ARC_HBA_TYPE_C:
+				arc_read_region(sc, ARC_RC_MSG_RBUF, rwbuf,
+			    	    sizeof(rwbuf));
+				arc_write(sc, ARC_RC_INB_DOORBELL,
+			    	    ARC_RC_I2D_DATA_READ_OK);
+				break;
+			case ARC_HBA_TYPE_D:
+				arc_read_region(sc, ARC_RD_MSG_RBUF, rwbuf,
+			    	    sizeof(rwbuf));
+				arc_write(sc, ARC_RD_INB_DOORBELL,
+			    	    ARC_RD_I2D_DATA_READ_OK);
+				break;
+			case ARC_HBA_TYPE_E:
+				arc_read_region(sc, ARC_RE_MSG_RBUF, rwbuf,
+			    	sizeof(rwbuf));
+			    	sc->out_doorbell ^= ARC_RE_I2D_DATA_READ_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+				break;
+			case ARC_HBA_TYPE_F: {
+				xlen = rwlen >> 2;
+				ptr = (uint32_t *)rwbuf;
+				for (i = 1; i <= xlen; i++)
+					*ptr++ = sc->message_rbuffer[i];
+			    	sc->out_doorbell ^= ARC_RE_I2D_DATA_READ_OK;
+				arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+				break;
+				}
+			 }
 
 #ifdef ARC_DEBUG
 			printf("%s:  len: %d+%d=%d/%d\n",
@@ -1731,19 +3056,73 @@ out:
 static void
 arc_lock(struct arc_softc *sc)
 {
+	uint32_t	int_mask;
+
 	rw_enter(&sc->sc_rwlock, RW_WRITER);
 	mutex_spin_enter(&sc->sc_mutex);
-	arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+		break;
+	case ARC_HBA_TYPE_B:
+		int_mask = arc_read(sc, sc->outb_doorbell_mask) &
+		    ~ARC_RB_I2D_INTR_ENABLE_DOORBELL;
+		arc_write(sc, sc->outb_doorbell_mask, int_mask);
+		break;
+	case ARC_HBA_TYPE_C:
+		int_mask = arc_read(sc, ARC_RC_INTR_MASK) |
+		    ARC_RC_INTR_MASK_DOORBELL;
+		arc_write(sc, ARC_RC_INTR_MASK, int_mask);
+		break;
+	case ARC_HBA_TYPE_D:
+		int_mask = arc_read(sc, ARC_RD_INTR_ENABLE) &
+		    ~ARC_RD_INTR_ENABLE_DOORBELL;
+		arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		int_mask = arc_read(sc, ARC_RE_INTR_MASK) |
+		    ARC_RE_INTR_MASK_DOORBELL;
+		arc_write(sc, ARC_RE_INTR_MASK, int_mask);
+		break;
+	}
 	sc->sc_talking = 1;
 }
 
 static void
 arc_unlock(struct arc_softc *sc)
 {
+	uint32_t	int_mask;
+
 	KASSERT(mutex_owned(&sc->sc_mutex));
 
-	arc_write(sc, ARC_REG_INTRMASK,
-	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		arc_write(sc, ARC_REG_INTRMASK,
+		    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
+		break;
+	case ARC_HBA_TYPE_B:
+		int_mask = arc_read(sc, sc->outb_doorbell_mask) |
+		    ARC_RB_I2D_INTR_ENABLE_DOORBELL;
+		arc_write(sc, sc->outb_doorbell_mask, int_mask);
+		break;
+	case ARC_HBA_TYPE_C:
+		int_mask = arc_read(sc, ARC_RC_INTR_MASK) &
+		    ~ARC_RC_INTR_MASK_DOORBELL;
+		arc_write(sc, ARC_RC_INTR_MASK, int_mask);
+		break;
+	case ARC_HBA_TYPE_D:
+		int_mask = arc_read(sc, ARC_RD_INTR_ENABLE) |
+		    ARC_RD_INTR_ENABLE_DOORBELL;
+		arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		int_mask = arc_read(sc, ARC_RE_INTR_MASK) &
+		    ~ARC_RE_INTR_MASK_DOORBELL;
+		arc_write(sc, ARC_RE_INTR_MASK, int_mask);
+		break;
+	}
 	sc->sc_talking = 0;
 	mutex_spin_exit(&sc->sc_mutex);
 	rw_exit(&sc->sc_rwlock);
@@ -1752,12 +3131,55 @@ arc_unlock(struct arc_softc *sc)
 static void
 arc_wait(struct arc_softc *sc)
 {
+	uint32_t	int_mask;
+
 	KASSERT(mutex_owned(&sc->sc_mutex));
 
-	arc_write(sc, ARC_REG_INTRMASK,
-	    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
-	if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz) == EWOULDBLOCK)
-		arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		arc_write(sc, ARC_REG_INTRMASK,
+		    ~(ARC_REG_INTRMASK_POSTQUEUE|ARC_REG_INTRMASK_DOORBELL));
+		if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz) == EWOULDBLOCK)
+			arc_write(sc, ARC_REG_INTRMASK, ~ARC_REG_INTRMASK_POSTQUEUE);
+		break;
+	case ARC_HBA_TYPE_B:
+		int_mask = arc_read(sc, sc->outb_doorbell_mask) |
+		    ARC_RB_I2D_INTR_ENABLE_DOORBELL;
+		arc_write(sc, sc->outb_doorbell_mask, int_mask);
+		if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz) == EWOULDBLOCK) {
+			int_mask = arc_read(sc, sc->outb_doorbell_mask) &
+			    ~ARC_RB_I2D_INTR_ENABLE_DOORBELL;
+			arc_write(sc, sc->outb_doorbell_mask, int_mask);
+		}
+		break;
+	case ARC_HBA_TYPE_C:
+		int_mask = arc_read(sc, ARC_RC_INTR_MASK) & ~ARC_RC_INTR_MASK_DOORBELL;
+		arc_write(sc, ARC_RC_INTR_MASK, int_mask);
+		if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz) == EWOULDBLOCK) {
+			int_mask = arc_read(sc, ARC_RC_INTR_MASK) |
+			    ARC_RC_INTR_MASK_DOORBELL;
+			arc_write(sc, ARC_RC_INTR_MASK, int_mask);
+		}
+		break;
+	case ARC_HBA_TYPE_D:
+		int_mask = arc_read(sc, ARC_RD_INTR_ENABLE) | ARC_RD_INTR_ENABLE_DOORBELL;
+		arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
+		if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz) == EWOULDBLOCK) {
+			int_mask = arc_read(sc, ARC_RD_INTR_ENABLE) &
+			    ~ARC_RD_INTR_ENABLE_DOORBELL;
+			arc_write(sc, ARC_RD_INTR_ENABLE, int_mask);
+		}
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		int_mask = arc_read(sc, ARC_RE_INTR_MASK) & ~ARC_RE_INTR_MASK_DOORBELL;
+		arc_write(sc, ARC_RE_INTR_MASK, int_mask);
+		if (cv_timedwait(&sc->sc_condvar, &sc->sc_mutex, hz) == EWOULDBLOCK) {
+			int_mask = arc_read(sc, ARC_RE_INTR_MASK) | ARC_RE_INTR_MASK_DOORBELL;
+			arc_write(sc, ARC_RE_INTR_MASK, int_mask);
+		}
+		break;
+	}
 }
 
 
@@ -1972,6 +3394,47 @@ arc_write_region(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
 	bus_space_barrier(sc->sc_iot, sc->sc_ioh, r, len,
 	    BUS_SPACE_BARRIER_WRITE);
 }
+
+static uint32_t
+arc_read2(struct arc_softc *sc, bus_size_t r)
+{
+	uint32_t	v;
+
+	bus_space_barrier(sc->sc_msgt, sc->sc_msgh, r, 4,
+	    BUS_SPACE_BARRIER_READ);
+	v = bus_space_read_4(sc->sc_msgt, sc->sc_msgh, r);
+	return v;
+}
+#endif /* NBIO > 0 */
+
+static void
+arc_read_region2(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
+{
+	bus_space_barrier(sc->sc_msgt, sc->sc_msgh, r, len,
+	    BUS_SPACE_BARRIER_READ);
+	bus_space_read_region_4(sc->sc_msgt, sc->sc_msgh, r,
+	    (uint32_t *)buf, len >> 2);
+}
+
+static void
+arc_write2(struct arc_softc *sc, bus_size_t r, u_int32_t v)
+{
+	DNPRINTF(ARC_D_RW, "%s: arc_write 0x%lx 0x%08x\n", device_xname(sc->sc_dev), r, v);
+
+	bus_space_write_4(sc->sc_msgt, sc->sc_msgh, r, v);
+	bus_space_barrier(sc->sc_msgt, sc->sc_msgh, r, 4,
+	    BUS_SPACE_BARRIER_WRITE);
+}
+
+#if NBIO > 0
+static void
+arc_write_region2(struct arc_softc *sc, bus_size_t r, void *buf, size_t len)
+{
+	bus_space_write_region_4(sc->sc_msgt, sc->sc_msgh, r,
+	    (uint32_t *)buf, len >> 2);
+	bus_space_barrier(sc->sc_msgt, sc->sc_msgh, r, len,
+	    BUS_SPACE_BARRIER_WRITE);
+}
 #endif /* NBIO > 0 */
 
 static int
@@ -2013,18 +3476,90 @@ arc_wait_ne(struct arc_softc *sc, bus_size_t r, uint32_t mask,
 #endif
 
 static int
+arc_wait_doorbell(struct arc_softc *sc, bus_size_t r, u_int32_t mask)
+{
+	int	i;
+	u_int32_t	doorbell;
+
+	DNPRINTF(ARC_D_RW, "%s: arc_wait_doorbell 0x%lx 0x%08x\n",
+	    device_xname(sc->sc_dev), r, mask);
+
+	for (i = 0; i < 10000; i++) {
+		doorbell = arc_read(sc, r);
+		if ((sc->in_doorbell ^ doorbell) & mask) {
+			sc->in_doorbell = doorbell;
+			return (0);
+		}
+		delay(1000);
+	}
+
+	return (1);
+}
+
+static int
 arc_msg0(struct arc_softc *sc, uint32_t m)
 {
-	/* post message */
-	arc_write(sc, ARC_REG_INB_MSG0, m);
-	/* wait for the fw to do it */
-	if (arc_wait_eq(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0,
-	    ARC_REG_INTRSTAT_MSG0) != 0)
-		return 1;
+	switch(sc->sc_adp_type) {
+	case ARC_HBA_TYPE_A:
+		/* post message */
+		arc_write(sc, ARC_REG_INB_MSG0, m);
+		/* wait for the fw to do it */
+		if (arc_wait_eq(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0,
+		    ARC_REG_INTRSTAT_MSG0) != 0)
+			return 1;
 
-	/* ack it */
-	arc_write(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0);
+		/* ack it */
+		arc_write(sc, ARC_REG_INTRSTAT, ARC_REG_INTRSTAT_MSG0);
+		break;
+	case ARC_HBA_TYPE_B:
+		/* post message */
+		arc_write(sc, sc->inb_doorbell, m);
+		/* wait for the fw to do it */
+		if (arc_wait_eq(sc, sc->outb_doorbell, ARC_RB_I2D_MSG_CMD_DONE,
+	    	    ARC_RB_I2D_MSG_CMD_DONE) != 0)
+			return 1;
 
+		/* ack it */
+		arc_write(sc, sc->outb_doorbell, ARC_RB_MESSAGE_INT_CLEAR_PATTERN);
+		arc_write(sc, sc->inb_doorbell, ARC_RB_D2I_END_OF_INTERRUPT);
+		break;
+	case ARC_HBA_TYPE_C:
+		/* post message */
+		arc_write(sc, ARC_RC_INB_MSGADDR0, m);
+		arc_write(sc, ARC_RC_INB_DOORBELL, ARC_RC_D2I_MSG_CMD_DONE);
+		/* wait for the fw to do it */
+		if (arc_wait_eq(sc, ARC_RC_OUTB_DOORBELL, ARC_RC_I2D_MSG_CMD_DONE,
+	    	    ARC_RC_I2D_MSG_CMD_DONE) != 0)
+			return 1;
+
+		/* ack it */
+		arc_write(sc, ARC_RC_OUTB_DOORBELL_CLR, ARC_RC_I2D_MSG_CMD_DONE_CLR);
+		break;
+	case ARC_HBA_TYPE_D:
+		/* post message */
+		arc_write(sc, ARC_RD_INB_MSGADDR0, m);
+		/* wait for the fw to do it */
+		if (arc_wait_eq(sc, ARC_RD_OUTB_DOORBELL, ARC_RD_I2D_MSG_CMD_DONE,
+	    	    ARC_RD_I2D_MSG_CMD_DONE) != 0)
+			return 1;
+
+		/* ack it */
+		arc_write(sc, ARC_RD_OUTB_DOORBELL_CLR, ARC_RD_I2D_MSG_CMD_DONE_CLR);
+		break;
+	case ARC_HBA_TYPE_E:
+	case ARC_HBA_TYPE_F:
+		/* post message */
+		arc_write(sc, ARC_RE_INB_MSGADDR0, m);
+		sc->out_doorbell ^= ARC_RE_D2I_MSG_CMD_DONE;
+		arc_write(sc, ARC_RE_INB_DOORBELL, sc->out_doorbell);
+		/* wait for the fw to do it */
+		if (arc_wait_doorbell(sc, ARC_RE_OUTB_DOORBELL, ARC_RE_I2D_MSG_CMD_DONE) != 0)
+			return (1);
+
+		/* ack it */
+		arc_write(sc, ARC_RE_INTR_STAT, 0);
+		break;
+	}
 	return 0;
 }
 
@@ -2086,15 +3621,31 @@ arc_alloc_ccbs(device_t self)
 	struct arc_ccb		*ccb;
 	uint8_t			*cmd;
 	int			i;
-	size_t			ccbslen;
+	size_t			ccbslen, iolen, iolen2;
 
 	TAILQ_INIT(&sc->sc_ccb_free);
 
 	ccbslen = sizeof(struct arc_ccb) * sc->sc_req_count;
 	sc->sc_ccbs = kmem_zalloc(ccbslen, KM_SLEEP);
 
-	sc->sc_requests = arc_dmamem_alloc(sc,
-	    ARC_MAX_IOCMDLEN * sc->sc_req_count);
+	iolen = ARC_MAX_IOCMDLEN * sc->sc_req_count;
+	iolen2 = iolen;
+	if (sc->sc_adp_type == ARC_HBA_TYPE_B)
+		iolen2 += sizeof(struct arc_HBB_Msgu);
+	else if (sc->sc_adp_type == ARC_HBA_TYPE_D)
+		iolen2 += sizeof(struct arc_HBD_Msgu);
+	else if (sc->sc_adp_type == ARC_HBA_TYPE_E) {
+		iolen2 += ARC_HBE_COMPLETION_Q_LEN;
+		sc->doneq_size = ARC_HBE_COMPLETION_Q_LEN;
+		sc->doneq_entry = ARC_HBE_COMPLETION_Q_LEN / sizeof(struct arc_HBE_Msgu);
+		sc->doneq_index = 0;
+	} else if (sc->sc_adp_type == ARC_HBA_TYPE_F) {
+		iolen2 += ARC_HBF_COMPLETION_Q_LEN + ARC_HBF_MESG_BUFFER_SIZE;
+		sc->doneq_size = ARC_HBF_COMPLETION_Q_LEN;
+		sc->doneq_entry = ARC_HBF_COMPLETION_Q_LEN / sizeof(struct arc_HBE_Msgu);
+		sc->doneq_index = 0;
+	}
+	sc->sc_requests = arc_dmamem_alloc(sc, iolen2);
 	if (sc->sc_requests == NULL) {
 		aprint_error_dev(self, "unable to allocate ccb dmamem\n");
 		goto free_ccbs;
@@ -2113,14 +3664,67 @@ arc_alloc_ccbs(device_t self)
 
 		ccb->ccb_sc = sc;
 		ccb->ccb_id = i;
+		ccb->smid = i << 16;
 		ccb->ccb_offset = ARC_MAX_IOCMDLEN * i;
 
 		ccb->ccb_cmd = (struct arc_io_cmd *)&cmd[ccb->ccb_offset];
 		ccb->ccb_cmd_post = (ARC_DMA_DVA(sc->sc_requests) +
-		    ccb->ccb_offset) >> ARC_REG_POST_QUEUE_ADDR_SHIFT;
-
+		    ccb->ccb_offset);
+		if ((sc->sc_adp_type == ARC_HBA_TYPE_A) ||
+		    (sc->sc_adp_type == ARC_HBA_TYPE_B))
+			ccb->ccb_cmd_post = ccb->ccb_cmd_post >>
+				ARC_REG_POST_QUEUE_ADDR_SHIFT;
 		arc_put_ccb(sc, ccb);
 	}
+
+	if (sc->sc_adp_type == ARC_HBA_TYPE_B) {
+		sc->postQ_buffer = ARC_DMA_DVA(sc->sc_requests) + iolen;
+		sc->doneQ_buffer = sc->postQ_buffer + (sizeof(uint32_t) *
+		    ARCMSR_MAX_HBB_POSTQUEUE);
+		sc->pmuB = (struct arc_HBB_Msgu *)&cmd[iolen];
+		sc->cmdQ_ptr_offset = iolen;
+		if (sc->ab_product == PCI_PRODUCT_ARECA_ARC1203) {
+			sc->inb_doorbell = (bus_size_t)ARC_RB_INB_DOORBELL_1203;
+			sc->inb_doorbell_mask = (bus_size_t)ARC_RB_INB_DOORBELL_MASK_1203;
+			sc->outb_doorbell = (bus_size_t)ARC_RB_OUTB_DOORBELL_1203;
+			sc->outb_doorbell_mask = (bus_size_t)ARC_RB_OUTB_DOORBELL_MASK_1203;
+		} else {
+			sc->inb_doorbell = (bus_size_t)ARC_RB_INB_DOORBELL;
+			sc->inb_doorbell_mask = (bus_size_t)ARC_RB_INB_DOORBELL_MASK;
+			sc->outb_doorbell = (bus_size_t)ARC_RB_OUTB_DOORBELL;
+			sc->outb_doorbell_mask = (bus_size_t)ARC_RB_OUTB_DOORBELL_MASK;
+		}
+	} else if (sc->sc_adp_type == ARC_HBA_TYPE_D) {
+		sc->postQ_buffer = ARC_DMA_DVA(sc->sc_requests) + iolen;
+		sc->doneQ_buffer = sc->postQ_buffer + (sizeof(struct InBound_SRB) *
+		    ARCMSR_MAX_HBD_POSTQUEUE);
+		sc->pmuD = (struct arc_HBD_Msgu *)&cmd[iolen];
+		sc->cmdQ_ptr_offset = iolen;
+	} else if (sc->sc_adp_type == ARC_HBA_TYPE_E) {
+		sc->pmuE = (struct arc_HBE_Msgu *)&cmd[iolen];
+		sc->doneq_phys_lo = ARC_DMA_DVA(sc->sc_requests) + iolen;
+		sc->doneq_phys_hi = (uint64_t)(ARC_DMA_DVA(sc->sc_requests) + iolen) >> 32;
+		sc->cmdQ_ptr_offset = iolen;
+	} else if (sc->sc_adp_type == ARC_HBA_TYPE_F) {
+		sc->pmuF = (struct arc_HBE_Msgu *)&cmd[iolen];
+		sc->doneq_phys_lo = ARC_DMA_DVA(sc->sc_requests) + iolen;
+		sc->doneq_phys_hi = (uint64_t)(ARC_DMA_DVA(sc->sc_requests) + iolen) >> 32;
+		sc->cmdQ_ptr_offset = iolen;
+		memset((void *)sc->pmuF, 0xFF, ARC_HBF_COMPLETION_Q_LEN);
+		sc->message_wbuffer = (uint32_t *)(&cmd[iolen] + ARC_HBF_COMPLETION_Q_LEN);
+		sc->message_rbuffer = (uint32_t *)((uint64_t)sc->message_wbuffer + 0x100);
+		sc->msgcode_rwbuffer = (uint32_t *)((uint64_t)sc->message_rbuffer + 0x100);
+		sc->msgBuf_phys_lo = sc->doneq_phys_lo + ARC_HBF_COMPLETION_Q_LEN;
+		sc->msgBuf_phys_hi = (uint64_t)(ARC_DMA_DVA(sc->sc_requests) + iolen + ARC_HBF_COMPLETION_Q_LEN) >> 32;
+		memset((void *)sc->message_wbuffer, 0, ARC_HBF_MESG_BUFFER_SIZE);
+		if (!arc_wait_firmware_ready(sc)) {
+			arc_write(sc, ARC_RE_INB_MSGADDR0, sc->msgBuf_phys_lo | 1);
+			arc_write(sc, ARC_RE_INB_MSGADDR1, sc->msgBuf_phys_hi);
+			arc_write(sc, ARC_RE_INB_DOORBELL, ARC_RF_DOORBELL_SYNC1);
+		}
+	}
+
+
 
 	return 0;
 
@@ -2133,6 +3737,17 @@ free_ccbs:
 	kmem_free(sc->sc_ccbs, ccbslen);
 
 	return 1;
+}
+
+static void
+arc_free_ccb_src(struct arc_softc *sc)
+{
+	struct arc_ccb		*ccb;
+
+	while ((ccb = arc_get_ccb(sc)) != NULL)
+	    bus_dmamap_destroy(sc->sc_dmat, ccb->ccb_dmamap);
+	arc_dmamem_free(sc, sc->sc_requests);
+	kmem_free(sc->sc_ccbs, sizeof(struct arc_ccb) * sc->sc_req_count);
 }
 
 static struct arc_ccb *

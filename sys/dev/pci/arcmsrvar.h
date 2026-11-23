@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsrvar.h,v 1.16 2024/02/09 22:08:35 andvar Exp $ */
+/*	$NetBSD: arcmsrvar.h,v 1.17 2026/11/23 06:05:21 jnemeth Exp $ */
 /*	Derived from $OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,8 +21,30 @@
 #ifndef _PCI_ARCMSRVAR_H_
 #define _PCI_ARCMSRVAR_H_
 
-#define ARC_PCI_BAR			PCI_MAPREG_START
+#define ARCMSR_VERSION	"arcmsr v1.5.0.0-20200623" 
 
+#define ARC_HBA_TYPE_A			0x00000000
+#define ARC_HBA_TYPE_B			0x00000001
+#define ARC_HBA_TYPE_C			0x00000002
+#define ARC_HBA_TYPE_D			0x00000003
+#define ARC_HBA_TYPE_E			0x00000004
+#define ARC_HBA_TYPE_F			0x00000005
+
+#define ARC_PCI_BAR			PCI_MAPREG_START
+#define ARC_RB_DOORBELL_BAR		PCI_MAPREG_START
+#define ARC_RB_RWBUFFER_BAR		PCI_MAPREG_PPB_END
+#define ARC_RC_PCI_BAR			PCI_MAPREG_PCB_END
+#define ARC_RD_PCI_BAR			PCI_MAPREG_START
+#define ARC_RE_PCI_BAR			PCI_MAPREG_PCB_END
+#define ARC_RF_PCI_BAR			PCI_MAPREG_START
+
+#define ARCMSR_MAX_CCB_COUNT		264
+#define ARCMSR_MAX_HBB_POSTQUEUE	264
+#define ARCMSR_MAX_HBD_POSTQUEUE	256
+#define ARCMSR_MAX_HBE_COMPLETION_Q	256
+#define ARCMSR_MAX_HBF_COMPLETION_Q	256
+
+/* Areca boards using the Intel IOP are Type A (RA) */
 #define ARC_REG_INB_MSG0		0x0010
 #define  ARC_REG_INB_MSG0_NOP			(0x00000000)
 #define  ARC_REG_INB_MSG0_GET_CONFIG		(0x00000001)
@@ -71,9 +93,242 @@
 #define ARC_REG_IOC_RBUF		0x0f04
 #define  ARC_REG_IOC_RWBUF_MAXLEN	124 /* for both RBUF and WBUF */
 
+/* Areca boards using the Marvel IOP0 are Type B (RB) */
+
+#define ARC_RB_INB_DOORBELL			0x00020400
+#define ARC_RB_INB_DOORBELL_MASK		0x00020404
+#define ARC_RB_OUTB_DOORBELL			0x00020408
+#define ARC_RB_OUTB_DOORBELL_MASK		0x0002040c
+#define ARC_RB_OUTB_DOORBELL_FIRMWARE_OK	(1<<31)
+
+#define ARC_RB_OUTB_DOORBELL_1203		0x00021870
+#define ARC_RB_OUTB_DOORBELL_MASK_1203		0x00021874
+#define ARC_RB_INB_DOORBELL_1203		0x00021878
+#define ARC_RB_INB_DOORBELL_MASK_1203		0x0002187C
+
+#define ARC_RB_INB_MSG0_GET_CONFIG		0x00010008
+#define ARC_RB_INB_MSG0_SET_CONFIG		0x00020008
+#define ARC_RB_INB_MSG0_ABORT_CMD		0x00030008
+#define ARC_RB_INB_MSG0_STOP_BGRB		0x00040008
+#define ARC_RB_INB_MSG0_FLUSH_CACHE		0x00050008
+#define ARC_RB_INB_MSG0_START_BGRB		0x00060008
+#define ARC_RB_INB_MSG0_START_DRIVER_MODE	0x000E0008
+#define ARC_RB_INB_MSG0_SET_POST_WINDOW		0x000F0008
+#define ARC_RB_INB_MSG0_ACTIVE_EOI_MODE		0x00100008
+#define ARC_RB_INB_MSG0_FIRMWARE_OK		0x80000000
+
+#define ARC_RB_I2D_DATA_WRITE_OK		0x00000001
+#define ARC_RB_I2D_DATA_READ_OK			0x00000002
+#define ARC_RB_I2D_CDB_DONE			0x00000004
+#define ARC_RB_I2D_MSG_CMD_DONE			0x00000008
+#define ARC_RB_I2D_INTR_ENABLE_DOORBELL		0x0000000F
+#define ARC_RB_I2D_DOORBELL_INT			0x0000000B
+#define ARC_RB_I2D_POSTQ_INT			0x00000004
+
+#define ARC_RB_D2I_DATA_WRITE_OK		0x00000001
+#define ARC_RB_D2I_DATA_READ_OK			0x00000002
+#define ARC_RB_D2I_CDB_POSTED			0x00000004
+#define ARC_RB_D2I_MSG_CMD_POSTED		0x00000008
+#define ARC_RB_D2I_END_OF_INTERRUPT		0x00000010
+
+#define ARC_RB_DOORBELL_HANDLE_INT		0x0000000F
+#define ARC_RB_DOORBELL_INT_CLEAR_PATTERN	0xFF00FFF0
+#define ARC_RB_MESSAGE_INT_CLEAR_PATTERN	0xFF00FFF7
+
+/* data tunnel buffer between user space and firmware */
+#define ARC_RB_MSG_RWBUF			0x0000fa00
+#define ARC_RB_MSG_WBUF				0x0000fe00
+#define ARC_RB_MSG_RBUF				0x0000ff00
+
+#define  ARC_RB_REPLY_QUEUE_ERR			(1<<28)
+
+/* Areca boards using the LSI IOP are Type C (RC) */
+
+#define ARC_RC_INB_DOORBELL	   	0x20
+#define ARC_RC_INTR_STAT		0x30
+#define	ARC_RC_INTR_MASK		0x34
+#define	ARC_RC_OUTB_DOORBELL		0x9C
+#define	ARC_RC_OUTB_DOORBELL_CLR	0xA0
+#define	ARC_RC_D2I_MSG_CMD_DONE		0x08
+#define	ARC_RC_I2D_MSG_CMD_DONE		0x08
+#define	ARC_RC_I2D_MSG_CMD_DONE_CLR	0x08
+#define ARC_RC_INB_MSGADDR0		0xB0
+#define ARC_RC_INB_MSGADDR1		0xB4
+#define ARC_RC_OUTB_MSGADDR0		0xB8
+#define ARC_RC_OUTB_MSGADDR1		0xBC
+#define ARC_RC_OUTB_MSG_FIRMWARE_OK	0x80000000
+#define ARC_RC_INB_POSTQ_LOW		0xC0
+#define ARC_RC_INB_POSTQ_HIGH		0xC4
+#define	ARC_RC_OUTB_REPLYQ_LOW		0xC8
+#define	ARC_RC_OUTB_REPLYQ_HIGH		0xCC
+#define	ARC_RC_MSG_WBUF_LEN		0x2000
+#define	ARC_RC_MSG_WBUF			0x2004
+#define	ARC_RC_MSG_RBUF_LEN		0x2100
+#define	ARC_RC_MSG_RBUF			0x2104
+#define	ARC_RC_MSG_RWBUF		0x2200
+
+#define ARC_RC_INB_MSG0_NOP		(0x00000000)
+#define ARC_RC_INB_MSG0_GET_CONFIG	(0x00000001)
+#define ARC_RC_INB_MSG0_SET_CONFIG	(0x00000002)
+#define ARC_RC_INB_MSG0_ABORT_CMD	(0x00000003)
+#define ARC_RC_INB_MSG0_STOP_BGRB	(0x00000004)
+#define ARC_RC_INB_MSG0_FLUSH_CACHE	(0x00000005)
+#define ARC_RC_INB_MSG0_START_BGRB	(0x00000006)
+#define ARC_RC_INB_MSG0_CHK331PENDING	(0x00000007)
+#define ARC_RC_INB_MSG0_SYNC_TIMER	(0x00000008)
+
+#define ARC_RC_D2I_DATA_WRITE_OK	0x00000002
+#define ARC_RC_D2I_DATA_READ_OK		0x00000004
+#define ARC_RC_D2I_MESSAGE_CMD_DONE	0x00000008
+#define ARC_RC_D2I_POSTQUEUE_THROTTLING	0x00000010
+#define ARC_RC_I2D_DATA_WRITE_OK	0x00000002
+#define ARC_RC_I2D_DATA_WRITE_OK_CLEAR	0x00000002
+#define ARC_RC_I2D_DATA_READ_OK		0x00000004
+#define ARC_RC_I2D_DATA_READ_OK_CLEAR	0x00000004
+#define ARC_RC_I2D_MESSAGE_CMD_DONE	0x00000008
+#define ARC_RC_I2D_MESSAGE_CMD_DONE_CLEAR 0x00000008
+#define ARC_RC_MESSAGE_FIRMWARE_OK	0x80000000
+
+#define ARC_RC_INTR_STAT_UTILITY_A	(1<<0)
+#define ARC_RC_INTR_STAT_DOORBELL	(1<<2)
+#define ARC_RC_INTR_STAT_POSTQUEUE	(1<<3)
+#define ARC_RC_INTR_MASK_ALL		0x0000000D
+#define ARC_RC_INTR_MASK_UTILITY_A	(1<<0)
+#define ARC_RC_INTR_MASK_DOORBELL	(1<<2)
+#define ARC_RC_INTR_MASK_POSTQUEUE	(1<<3)
+#define ARC_RC_REPLY_QUEUE_ERR		1
+#define	ARC_RC_THROTTLE			12
+
+/* Areca boards using the Marvell IOP 9580 are Type D (RD) */
+
+#define ARC_RD_INTR_STAT		0x200
+#define ARC_RD_HOST_INT_ENABLE		0x204
+#define	ARC_RD_INTR_ENABLE		0x20C
+#define	ARC_RD_D2I_MSG_CMD_DONE		0x08
+#define	ARC_RD_I2D_MSG_CMD_DONE		0x2000000
+#define	ARC_RD_I2D_MSG_CMD_DONE_CLR	0x2000000
+#define ARC_RD_INB_MSGADDR0		0x400
+#define ARC_RD_INB_MSGADDR1		0x404
+#define ARC_RD_OUTB_MSGADDR0		0x420
+#define ARC_RD_OUTB_MSGADDR1		0x424
+#define ARC_RD_INB_DOORBELL		0x460
+#define	ARC_RD_OUTB_DOORBELL		0x480
+#define	ARC_RD_OUTB_DOORBELL_CLR	0x480
+#define	ARC_RD_OUTB_DOORBELL_ENABLE	0x484
+#define ARC_RD_OUTB_MSG_FIRMWARE_OK	0x80000000
+#define ARC_RD_INB_POSTQ_LOW		0x1000
+#define ARC_RD_INB_POSTQ_HIGH		0x1004
+#define	ARC_RD_OUTB_REPLYQ_LOW		0x1060
+#define	ARC_RD_OUTB_REPLYQ_HIGH		0x1064
+
+#define ARC_RD_INB_WRITE_PTR		0x1018
+#define ARC_RD_INB_READ_PTR		0x101C
+#define	ARC_RD_OUTB_COPY_PTR		0x106C
+#define	ARC_RD_OUTB_READ_PTR		0x1070
+#define	ARC_RD_OUTB_INTR_CAUSE		0x1088
+#define	ARC_RD_OUTB_INT_ENABLE		0x108C
+#define	ARC_RD_MSG_WBUF_LEN		0x2000
+#define	ARC_RD_MSG_WBUF			0x2004
+#define	ARC_RD_MSG_RBUF_LEN		0x2100
+#define	ARC_RD_MSG_RBUF			0x2104
+#define	ARC_RD_MSG_RWBUF		0x2200
+
+#define ARC_RD_INB_MSG0_NOP		(0x00000000)
+#define ARC_RD_INB_MSG0_GET_CONFIG	(0x00000001)
+#define ARC_RD_INB_MSG0_SET_CONFIG	(0x00000002)
+#define ARC_RD_INB_MSG0_ABORT_CMD	(0x00000003)
+#define ARC_RD_INB_MSG0_STOP_BGRB	(0x00000004)
+#define ARC_RD_INB_MSG0_FLUSH_CACHE	(0x00000005)
+#define ARC_RD_INB_MSG0_START_BGRB	(0x00000006)
+#define ARC_RD_INB_MSG0_CHK331PENDING	(0x00000007)
+#define ARC_RD_INB_MSG0_SYNC_TIMER	(0x00000008)
+
+#define ARC_RD_D2I_DATA_WRITE_OK	0x00000001
+#define ARC_RD_D2I_DATA_READ_OK		0x00000002
+#define ARC_RD_D2I_MESSAGE_CMD_DONE	0x02000000
+#define ARC_RD_D2I_POSTQUEUE_THROTTLING	0x00000010
+#define ARC_RD_I2D_DATA_WRITE_OK	0x00000001
+#define ARC_RD_I2D_DATA_WRITE_CLEAR	0x00000001
+#define ARC_RD_I2D_DATA_READ_OK		0x00000002
+#define ARC_RD_I2D_DATA_READ_CLEAR	0x00000002
+#define ARC_RD_I2D_MESSAGE_CMD_DONE	0x02000000
+#define ARC_RD_I2D_MESSAGE_CMD_DONE_CLEAR 0x02000000
+#define ARC_RD_MESSAGE_FIRMWARE_OK	0x80000000
+
+#define ARC_RD_INTR_STAT_DOORBELL	0x00001000
+#define ARC_RD_INTR_STAT_POSTQUEUE	0x00000010
+#define ARC_RD_INTR_ENABLE_ALL		0x00001010
+#define ARC_RD_INTR_DISABLE_ALL		0x00000000
+#define ARC_RD_INTR_ENABLE_DOORBELL	0x00001000
+#define ARC_RD_INTR_ENABLE_POSTQUEUE	0x00000010
+#define ARC_RD_REPLY_QUEUE_ERR		1
+#define	ARC_RD_OUTB_LIST_INT_CLR	1
+
+/* Areca boards using the LSI IOP are Type E (RE) */
+#define ARC_SIGNATURE_1884		0x188417D3
+
+#define ARC_RE_INB_DOORBELL	   	0x00
+#define	ARC_RE_OUTB_DOORBELL		0x00
+#define ARC_RE_INTR_STAT		0x30
+#define	ARC_RE_INTR_MASK		0x34
+#define	ARC_RE_D2I_MSG_CMD_DONE		0x08
+#define	ARC_RE_I2D_MSG_CMD_DONE		0x08
+#define ARC_RE_REPLY_PRODUCER_INDEX	0x68
+#define ARC_RE_REPLY_CONSUMER_INDEX	0x6C
+#define ARC_RE_INB_MSGADDR0		0xB0
+#define ARC_RE_INB_MSGADDR1		0xB4
+#define ARC_RE_OUTB_MSGADDR0		0xB8
+#define ARC_RE_OUTB_MSGADDR1		0xBC
+#define ARC_RE_INB_POSTQ_LOW		0xC0
+#define ARC_RE_INB_POSTQ_HIGH		0xC4
+#define	ARC_RE_OUTB_REPLYQ_LOW		0xC8
+#define	ARC_RE_OUTB_REPLYQ_HIGH		0xCC
+#define	ARC_RE_MSG_WBUF_LEN		0x2000
+#define	ARC_RE_MSG_WBUF			0x2004
+#define	ARC_RE_MSG_RBUF_LEN		0x2100
+#define	ARC_RE_MSG_RBUF			0x2104
+#define	ARC_RE_MSG_RWBUF		0x2200
+
+#define ARC_RE_INB_MSG0_NOP		(0x00000000)
+#define ARC_RE_INB_MSG0_GET_CONFIG	(0x00000001)
+#define ARC_RE_INB_MSG0_SET_CONFIG	(0x00000002)
+#define ARC_RE_INB_MSG0_ABORT_CMD	(0x00000003)
+#define ARC_RE_INB_MSG0_STOP_BGRB	(0x00000004)
+#define ARC_RE_INB_MSG0_FLUSH_CACHE	(0x00000005)
+#define ARC_RE_INB_MSG0_START_BGRB	(0x00000006)
+#define ARC_RE_INB_MSG0_SYNC_TIMER	(0x00000008)
+#define ARC_RE_DOORBELL_SYNC		(0x00000100)
+
+#define ARC_RE_D2I_DATA_WRITE_OK	0x00000002
+#define ARC_RE_D2I_DATA_READ_OK		0x00000004
+#define ARC_RE_D2I_MESSAGE_CMD_DONE	0x00000008
+#define ARC_RE_I2D_DATA_WRITE_OK	0x00000002
+#define ARC_RE_I2D_DATA_READ_OK		0x00000004
+#define ARC_RE_I2D_MESSAGE_CMD_DONE	0x00000008
+#define ARC_RE_MESSAGE_FIRMWARE_OK	0x80000000
+#define ARC_RE_OUTB_MSG_FIRMWARE_OK	0x80000000
+
+#define ARC_RE_INTR_STAT_DOORBELL	(1<<0)
+#define ARC_RE_INTR_STAT_POSTQUEUE	(1<<3)
+#define ARC_RE_INTR_MASK_ALL		0x00000009
+#define ARC_RE_INTR_MASK_DOORBELL	(1<<0)
+#define ARC_RE_INTR_MASK_POSTQUEUE	(1<<3)
+#define ARC_RE_REPLY_QUEUE_ERR		1
+
+/* Areca boards using the LSI IOP are Type F (RF) */
+// Type F register definition and offset are same as type E,
+// except message R/W/RW buffer register(in system memory)
+#define ARC_SIGNATURE_1886		0x188617D3
+#define ARC_RF_DOORBELL_SYNC		0x00000100
+//set host rw buffer physical address at inbound message 0, 1 (low,high)
+#define ARC_RF_DOORBELL_SYNC1		0x00000300
+#define ARC_RF_MESSAGE_FIRMWARE_OK	0x80000000
+#define ARC_RF_MSGE_NO_VOLUME_CHANGE	0x20000000
+
 struct arc_msg_firmware_info {
 	uint32_t	signature;
 #define ARC_FWINFO_SIGNATURE_GET_CONFIG		(0x87974060)
+#define ARC_FWINFO_SIGNATURE_SET_CONFIG		(0x87974063)
 	uint32_t	request_len;
 	uint32_t	queue_len;
 	uint32_t	sdram_size;
@@ -99,7 +354,7 @@ struct arc_msg_scsicmd {
 #define ARC_MSG_SCSICMD_FLAG_SIMPLEQ		(0x00)
 #define ARC_MSG_SCSICMD_FLAG_HEADQ		(0x08)
 #define ARC_MSG_SCSICMD_FLAG_ORDERQ		(0x10)
-	uint8_t		reserved;
+	uint8_t		msgPages;
 
 	uint32_t	context;
 	uint32_t	data_len;
@@ -134,7 +389,7 @@ struct arc_sge {
  */
 
 /* 
- * sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 38) == 508.
+ * sizeof(struct arc_msg_scsicmd) + (sizeof(struct arc_sge) * 38) == 504.
  */
 #define ARC_SGL_MAXLEN		38
 /* 
@@ -145,7 +400,30 @@ struct arc_sge {
 struct arc_io_cmd {
 	struct arc_msg_scsicmd	cmd;
 	struct arc_sge		sgl[ARC_SGL_MAXLEN];
+	uint32_t		reserved;
+	uint32_t		ccb_id;
 } __packed;
+
+#define ARC_IOCMD_LEN		sizeof(struct arc_io_cmd)
+
+/* 
+ * stuff to manage a scsi command.
+ */
+struct arc_ccb {
+	struct arc_softc	*ccb_sc;
+	int			ccb_id;
+
+	struct scsipi_xfer	*ccb_xs;
+
+	bus_dmamap_t		ccb_dmamap;
+	bus_addr_t		ccb_offset;
+	struct arc_io_cmd	*ccb_cmd;
+	uint32_t		ccb_cmd_post;
+
+	TAILQ_ENTRY(arc_ccb)	ccb_link;
+	uint32_t		arc_io_cmd_length;
+	uint32_t		smid;
+};
 
 /* 
  * definitions of the firmware commands sent via the doorbells.
@@ -302,6 +580,9 @@ struct arc_fw_raidinfo {
 	uint8_t		free_segments;
 	uint32_t	raw_stripes[8];
 	uint8_t		reserved2[12];
+	uint8_t		vol_ListX[112];
+	uint8_t		devEncArray[32];
+	uint8_t		reserved3[72];
 } __packed;
 
 struct arc_fw_volinfo {
@@ -337,7 +618,12 @@ struct arc_fw_volinfo {
 	uint8_t		new_member_disks;
 	uint8_t		new_raid_level;
 	uint8_t		raid_set_number;
-	uint8_t		reserved[5];
+	uint8_t		vol_state0;
+	uint32_t	host_speed;
+	uint32_t	vol_state;
+	uint8_t		vol_array[16];
+	uint8_t		num_5060volumes;
+	uint8_t		reserved[43];
 } __packed;
 
 struct arc_fw_diskinfo {
@@ -358,7 +644,7 @@ struct arc_fw_diskinfo {
 	uint8_t		drive_select;
 	uint8_t		raid_number;	/* 0xff unowned */
 	struct arc_fw_scsiattr	scsi_attr;
-	uint8_t		reserved[40];
+	uint8_t		reserved[208];
 } __packed;
 
 struct arc_fw_sysinfo {
@@ -401,10 +687,50 @@ struct arc_fw_sysinfo {
 	uint8_t		reserved[75];
 } __packed;
 
+struct arc_HBB_Msgu {
+	uint32_t post_qbuffer[ARCMSR_MAX_HBB_POSTQUEUE];
+	uint32_t done_qbuffer[ARCMSR_MAX_HBB_POSTQUEUE];
+	uint32_t postq_index;
+	uint32_t doneq_index;
+};
+
+#define	ARC_HBB_CMDQ_PTR_LEN	sizeof(struct arc_HBB_Msgu)
+
+struct InBound_SRB {
+	uint32_t addressLow;	/* pointer to SRB block */
+	uint32_t addressHigh;
+	uint32_t length;	/* in DWORDs */
+	uint32_t reserved0;
+};
+
+struct OutBound_SRB {
+	uint32_t addressLow;	/* pointer to SRB block */
+	uint32_t addressHigh;
+};
+
+struct arc_HBD_Msgu {
+ 	struct InBound_SRB post_qbuffer[ARCMSR_MAX_HBD_POSTQUEUE];
+   	struct OutBound_SRB done_qbuffer[ARCMSR_MAX_HBD_POSTQUEUE+1];
+	uint16_t postq_index;
+	uint16_t doneq_index;
+};
+
+#define		ARC_HBD_CMDQ_PTR_LEN	sizeof(struct arc_HBD_Msgu)
+
+struct arc_HBE_Msgu {
+	uint16_t	cmdFlag;
+	uint16_t	cmdSMID;
+	uint16_t	cmdLMID;        // reserved (0)
+	uint16_t	cmdFlag2;       // reserved (0)
+};
+
+#define		ARC_HBE_COMPLETION_Q_LEN	(sizeof(struct arc_HBE_Msgu) * ARCMSR_MAX_HBE_COMPLETION_Q + 128)
+#define		ARC_HBF_COMPLETION_Q_LEN	ARC_HBE_COMPLETION_Q_LEN
+#define		ARC_HBF_MESG_BUFFER_SIZE	(256 * 3)
+
 /*
  * autoconf(9) glue.
  */
-struct arc_ccb;
 TAILQ_HEAD(arc_ccb_list, arc_ccb);
 
 typedef struct arc_edata {
@@ -423,6 +749,9 @@ struct arc_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	bus_size_t		sc_ios;
+	bus_space_tag_t		sc_msgt;
+	bus_space_handle_t	sc_msgh;
+	bus_size_t		sc_msgs;
 	bus_dma_tag_t		sc_dmat;
 
 	void			*sc_ih;
@@ -449,6 +778,37 @@ struct arc_softc {
 
 	device_t		sc_dev;		/* self */
 	device_t		sc_scsibus_dv;
+
+	uint16_t		sc_adp_type;
+	uint16_t		ab_product;
+	uint32_t		sc_ccb_phys_lo;
+	uint32_t		sc_ccb_phys_hi;
+	union {
+		struct arc_HBB_Msgu	*pmuB;
+		struct arc_HBD_Msgu	*pmuD;
+		struct arc_HBE_Msgu	*pmuE;
+		struct arc_HBE_Msgu	*pmuF;
+	};
+	bus_size_t		inb_doorbell;
+	bus_size_t		inb_doorbell_mask;
+	bus_size_t		outb_doorbell;
+	bus_size_t		outb_doorbell_mask;
+	uint32_t		sc_int_mask;
+	uint32_t		postQ_buffer;
+	uint32_t		doneQ_buffer;
+	uint32_t		doneq_index;
+	bus_addr_t		cmdQ_ptr_offset;
+	uint32_t		doneq_size;
+	uint32_t		doneq_entry;
+	uint32_t		doneq_phys_lo;
+	uint32_t		doneq_phys_hi;
+	uint32_t		in_doorbell;
+	uint32_t		out_doorbell;
+	uint32_t		*message_wbuffer;
+	uint32_t		*message_rbuffer;
+	uint32_t		*msgcode_rwbuffer;
+	uint32_t		msgBuf_phys_lo;
+	uint32_t		msgBuf_phys_hi;
 };
 
 /* 
@@ -464,21 +824,10 @@ struct arc_dmamem {
 #define ARC_DMA_DVA(_adm)	((_adm)->adm_map->dm_segs[0].ds_addr)
 #define ARC_DMA_KVA(_adm)	((void *)(_adm)->adm_kva)
 
-/* 
- * stuff to manage a scsi command.
- */
-struct arc_ccb {
-	struct arc_softc	*ccb_sc;
-	int			ccb_id;
-
-	struct scsipi_xfer	*ccb_xs;
-
-	bus_dmamap_t		ccb_dmamap;
-	bus_addr_t		ccb_offset;
-	struct arc_io_cmd	*ccb_cmd;
-	uint32_t		ccb_cmd_post;
-
-	TAILQ_ENTRY(arc_ccb)	ccb_link;
+struct arc_board {
+	uint16_t		ab_vendor;
+	uint16_t		ab_product;
+	uint16_t		ab_io_type;
 };
 
 #endif /* ! _PCI_ARCMSRVAR_H_ */
