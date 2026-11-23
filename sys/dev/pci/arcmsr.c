@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.47 2026/11/23 15:59:56 martin Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.48 2026/11/23 16:34:31 kre Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -23,7 +23,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.47 2026/11/23 15:59:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.48 2026/11/23 16:34:31 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -3712,8 +3712,8 @@ arc_alloc_ccbs(device_t self)
 		sc->cmdQ_ptr_offset = iolen;
 		memset((void *)sc->pmuF, 0xFF, ARC_HBF_COMPLETION_Q_LEN);
 		sc->message_wbuffer = (uint32_t *)(&cmd[iolen] + ARC_HBF_COMPLETION_Q_LEN);
-		sc->message_rbuffer = (uint32_t *)((uintptr_t)sc->message_wbuffer + 0x100);
-		sc->msgcode_rwbuffer = (uint32_t *)((uintptr_t)sc->message_rbuffer + 0x100);
+		sc->message_rbuffer = sc->message_wbuffer + (0x100 / sizeof(uint32_t));
+		sc->msgcode_rwbuffer = sc->message_rbuffer + (0x100 / sizeof(uint32_t));
 		sc->msgBuf_phys_lo = sc->doneq_phys_lo + ARC_HBF_COMPLETION_Q_LEN;
 		sc->msgBuf_phys_hi = (uint64_t)(ARC_DMA_DVA(sc->sc_requests) + iolen + ARC_HBF_COMPLETION_Q_LEN) >> 32;
 		memset((void *)sc->message_wbuffer, 0, ARC_HBF_MESG_BUFFER_SIZE);
