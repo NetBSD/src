@@ -48,6 +48,9 @@
 #define	NPF_CONF_PATH	"/etc/npf.conf"
 #define	NPF_DB_PATH	"/var/db/npf.db"
 
+#define NPF_NETMASK_IPV4	32
+#define NPF_NETMASK_IPV6	128
+
 typedef struct fam_addr_mask {
 	sa_family_t	fam_family;
 	npf_addr_t	fam_addr;

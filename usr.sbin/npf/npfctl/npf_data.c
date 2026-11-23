@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_data.c,v 1.35 2026/11/16 15:11:42 joe Exp $");
+__RCSID("$NetBSD: npf_data.c,v 1.36 2026/11/23 14:44:48 joe Exp $");
 
 #include <stdlib.h>
 #include <stddef.h>
@@ -185,11 +185,23 @@ npfctl_parse_mask(const char *s, sa_family_t fam, npf_netmask_t *mask)
 		return true;
 	}
 
+	switch (fam) {
+	case AF_INET:
+		max_mask = NPF_NETMASK_IPV4;
+		break;
+	case AF_INET6:
+		max_mask = NPF_NETMASK_IPV6;
+		break;
+	}
+
 	errno = 0;
 	*mask = (npf_netmask_t)strtol(s, &ep, 0);
 	if (*ep == '\0' && s != ep && errno != ERANGE) {
 		/* Just a number -- CIDR notation. */
 		goto check;
+	} else {
+		/* quad dot notation */
+		*mask = max_mask;
 	}
 
 	/* Other characters: try to parse a full address. */
@@ -213,17 +225,13 @@ npfctl_parse_mask(const char *s, sa_family_t fam, npf_netmask_t *mask)
 	*mask = NPF_NO_NETMASK;
 	return true;
 check:
-	switch (fam) {
-	case AF_INET:
-		max_mask = 32;
-		break;
-	case AF_INET6:
-		max_mask = 128;
-		break;
-	}
 	if (*mask == max_mask) {
 		*mask = NPF_NO_NETMASK;
 		return true;
+	}
+
+	if (*mask > max_mask) {
+		yyerror("invalid address mask %s, mask too large\n", s);
 	}
 
 	return *mask < max_mask;
