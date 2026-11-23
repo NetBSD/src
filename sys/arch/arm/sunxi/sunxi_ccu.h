@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu.h,v 1.27 2026/11/22 11:46:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu.h,v 1.28 2026/11/23 16:35:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -95,7 +95,7 @@ const char *sunxi_ccu_gate_get_parent(struct sunxi_ccu_softc *,
 		.get_parent = sunxi_ccu_gate_get_parent,			\
 	}
 #define SUNXI_CCU_GATE(_id, _name, _pname, _reg, _bit)				\
-	SUNXI_CCU_GATE_FIXED_RATE(_id, _name, _pname, _reg, 0, _bit)
+	SUNXI_CCU_GATE_FIXED_RATE(_id, _name, _pname, _reg, _bit, 0)
 
 struct sunxi_ccu_nkmp_tbl {
 	u_int		rate;
