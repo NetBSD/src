@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.33 2026/11/23 06:55:42 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.34 2026/11/23 07:02:31 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.33 2026/11/23 06:55:42 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.34 2026/11/23 07:02:31 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -190,6 +190,7 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 			[0] = "Reliability/Availability/Serviceability not supported",
 			[1] = "Reliability/Availability/Serviceability supported",
 			[2] = "Reliability/Availability/Serviceability ARMv8.4 supported",
+			[3] = "Reliability/Availability/Serviceability ARMv8.9 supported (FEAT_RASv2)",
 		},
 	},
 	{
@@ -222,6 +223,14 @@ struct fieldinfo id_aa64pfr0_fieldinfo[] = {
 			[0] = "No Data-Independent Timing guarantees",
 			[1] = "Data-Independent Timing guaranteed by PSTATE.DIT",
 		},
+	},
+	{
+		FIELDINFO(52, 4, "RME") {
+			[0] = "Realm Management Extension not implemented.",
+			[1] = "RMEv1 is implemented.",
+			[2] = "RMEv1+GPC2 is implemented.",
+			[3] = "RMEv1+GPC2+GPC3 is implemented.",
+		}
 	},
 	{
 		FIELDINFO(56, 4, "CSV2") {
@@ -278,6 +287,19 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 		}
 	},
 	{
+		FIELDINFO(24, 4, "SME") {
+			[0] = "SME architectural state and programmers' model are not implemented.",
+			[1] = "SME architectural state and programmers' model are implemented.",
+			[2] = "SME architectural state and programmers' model are implemented, plus ZT0 (FEAT_SME2).",
+		}
+	},
+	{
+		FIELDINFO(28, 4, "RNDR_trap") {
+			[0] = "Trapping of RNDR and RNDRRS to EL3 is not supported.",
+			[1] = "Trapping of RNDR and RNDRRS to EL3 is supported. SCR_EL3.TRNDR is present.",
+		}
+	},
+	{
 		FIELDINFO(32, 4, "CSV2_frac") {
 			[0] = "not disclosed",
 			[1] = "SCXTNUM_ELx registers not supported",
@@ -322,6 +344,9 @@ struct fieldinfo id_aa64isar0_fieldinfo[] = {
 			[0] = "No Atomic",
 			[2] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN/"
 			      "LDUMAX/LDUMIN/CAS/CASP/SWP",
+			[3] = "LDADD/LDCLR/LDEOR/LDSET/LDSMAX/LDSMIN/"
+			      "LDUMAX/LDUMIN/CAS/CASP/SWP+"
+			      "LDCLRP/LDSETP/SWPP.",
 		}
 	},
 	{
@@ -462,6 +487,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 		FIELDINFO(40, 4, "SPECRES") {
 			[0] = "No SPECRES",
 			[1] = "CFP RCTX/DVP RCTX/CPP RCTX",
+			[2] = "CFP RCTX/DVP RCTX/CPP RCTX+COSP RCTX",
 		}
 	},
 	{
@@ -469,6 +495,9 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[0] = "No BFloat16",
 			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT/"
 			      "BFMLALB/BFMLALT/BFMMLA",
+			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT/"
+			      "BFMLALB/BFMLALT/BFMMLA+",
+			      "FPCR.EBF",
 		}
 	},
 	{
@@ -512,6 +541,7 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[4] = "44bits/16TB",
 			[5] = "48bits/256TB",
 			[6] = "52bits/4PB",
+			[7] = "56bits/64PB",
 		}
 	},
 	{
@@ -542,6 +572,7 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 		FIELDINFO(20, 4, "TGran16") {
 			[0] = "No 16KB granule",
 			[1] = "16KB granule",
+			[2] = "16KB granule/52-bit (FEAT_LPA2).",
 		}
 	},
 	{
@@ -553,6 +584,7 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 	{
 		FIELDINFO(28, 4, "TGran4") {
 			[0] = "4KB granule",
+			[1] = "4KB granule/52-bit (FEAT_LPA2).",
 			[15] = "No 4KB granule"
 		}
 	},
@@ -561,7 +593,7 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[0] = "same as TGran16",
 			[1] = "No 16KB granule at stage2",
 			[2] = "16KB granule at stage2",
-			[3] = "16KB granule at stage2/52bit",
+			[3] = "16KB granule at stage2/52bit (FEAT_LPA2)",
 		}
 	},
 	{
@@ -576,6 +608,7 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 			[0] = "same as TGran4",
 			[1] = "No 4KB granule at stage2",
 			[2] = "4KB granule at stage2",
+			[3] = "4KB granule at stage2/52-bit (FEAT_LPA2).",
 		}
 	},
 	{
