@@ -1,4 +1,4 @@
-/* $NetBSD: imx7d_ccm.c,v 1.3 2026/11/23 01:22:03 hkenken Exp $ */
+/* $NetBSD: imx7d_ccm.c,v 1.4 2026/11/23 02:38:31 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: imx7d_ccm.c,v 1.3 2026/11/23 01:22:03 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7d_ccm.c,v 1.4 2026/11/23 02:38:31 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,7 +140,6 @@ static struct imx_ccm_clk imx7d_ccm_clks[] = {
 
 	ANATOP_GATE(PLL_ENET_MAIN_500M_CLK, "pll_enet_500m_clk", "pll_enet_500m", 0xe0, __BIT(12)),
 	ANATOP_GATE(PLL_ENET_MAIN_250M_CLK, "pll_enet_250m_clk", "pll_enet_250m", 0xe0, __BIT(11)),
-	ANATOP_GATE(PLL_ENET_MAIN_250M_CLK, "pll_enet_250m_clk", "pll_enet_250m", 0xe0, __BIT(11)),
 	ANATOP_GATE(PLL_ENET_MAIN_125M_CLK, "pll_enet_125m_clk", "pll_enet_125m", 0xe0, __BIT(10)),
 	ANATOP_GATE(PLL_ENET_MAIN_100M_CLK, "pll_enet_100m_clk", "pll_enet_100m", 0xe0, __BIT(9)),
 	ANATOP_GATE(PLL_ENET_MAIN_50M_CLK, "pll_enet_50m_clk", "pll_enet_50m", 0xe0, __BIT(8)),
@@ -199,10 +198,10 @@ static struct imx_ccm_clk imx7d_ccm_clks[] = {
 	IMX_MUX(I2C3_ROOT_SRC, "i2c3_src", i2c_p, 0xae80, __BITS(26,24)),
 	IMX_MUX(I2C4_ROOT_SRC, "i2c4_src", i2c_p, 0xaf00, __BITS(26,24)),
 
-	IMX_GATE(I2C1_ROOT_CG, "i2c1_cg", "i2c1_src", 0xad80, __BIT(0)),
-	IMX_GATE(I2C2_ROOT_CG, "i2c2_cg", "i2c2_src", 0xae00, __BIT(0)),
-	IMX_GATE(I2C3_ROOT_CG, "i2c3_cg", "i2c3_src", 0xae80, __BIT(0)),
-	IMX_GATE(I2C4_ROOT_CG, "i2c4_cg", "i2c4_src", 0xaf00, __BIT(0)),
+	IMX_GATE(I2C1_ROOT_CG, "i2c1_cg", "i2c1_src", 0xad80, __BIT(28)),
+	IMX_GATE(I2C2_ROOT_CG, "i2c2_cg", "i2c2_src", 0xae00, __BIT(28)),
+	IMX_GATE(I2C3_ROOT_CG, "i2c3_cg", "i2c3_src", 0xae80, __BIT(28)),
+	IMX_GATE(I2C4_ROOT_CG, "i2c4_cg", "i2c4_src", 0xaf00, __BIT(28)),
 
 	IMX_DIV(I2C1_ROOT_PRE_DIV, "i2c1_pre_div", "i2c1_cg", 0xad80, __BITS(18,16), 0),
 	IMX_DIV(I2C2_ROOT_PRE_DIV, "i2c2_pre_div", "i2c2_cg", 0xae00, __BITS(18,16), 0),
@@ -261,8 +260,8 @@ static struct imx_ccm_clk imx7d_ccm_clks[] = {
 	IMX_GATE(USDHC2_ROOT_CG, "usdhc2_cg", "usdhc2_src", 0xab80, __BIT(28)),
 	IMX_GATE(USDHC3_ROOT_CG, "usdhc3_cg", "usdhc3_src", 0xac00, __BIT(28)),
 	IMX_DIV(USDHC1_ROOT_PRE_DIV, "usdhc1_pre_div", "usdhc1_cg", 0xab00, __BITS(18,16), 0),
-	IMX_DIV(USDHC1_ROOT_PRE_DIV, "usdhc2_pre_div", "usdhc2_cg", 0xab80, __BITS(18,16), 0),
-	IMX_DIV(USDHC1_ROOT_PRE_DIV, "usdhc3_pre_div", "usdhc3_cg", 0xac00, __BITS(18,16), 0),
+	IMX_DIV(USDHC2_ROOT_PRE_DIV, "usdhc2_pre_div", "usdhc2_cg", 0xab80, __BITS(18,16), 0),
+	IMX_DIV(USDHC3_ROOT_PRE_DIV, "usdhc3_pre_div", "usdhc3_cg", 0xac00, __BITS(18,16), 0),
 	IMX_DIV(USDHC1_ROOT_DIV, "usdhc1_post_div", "usdhc1_pre_div", 0xab00, __BITS(5,0), 0),
 	IMX_DIV(USDHC2_ROOT_DIV, "usdhc2_post_div", "usdhc2_pre_div", 0xab80, __BITS(5,0), 0),
 	IMX_DIV(USDHC3_ROOT_DIV, "usdhc3_post_div", "usdhc3_pre_div", 0xac00, __BITS(5,0), 0),
