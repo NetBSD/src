@@ -1,4 +1,4 @@
-/*	$NetBSD: strfmon.c,v 1.26 2026/11/19 19:09:38 christos Exp $	*/
+/*	$NetBSD: strfmon.c,v 1.27 2026/11/23 18:30:05 kre Exp $	*/
 
 /*-
  * Copyright (c) 2001 Alexey Zelkin <phantom@FreeBSD.org>
@@ -32,7 +32,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/lib/libc/stdlib/strfmon.c,v 1.14 2003/03/20 08:18:55 ache Exp $");
 #else
-__RCSID("$NetBSD: strfmon.c,v 1.26 2026/11/19 19:09:38 christos Exp $");
+__RCSID("$NetBSD: strfmon.c,v 1.27 2026/11/23 18:30:05 kre Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -333,6 +333,8 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 		if (currency_symbol != NULL)
 			free(currency_symbol);
 		if (flags & USE_INTL_CURRENCY) {
+			size_t l;
+
 			currency_symbol = strdup(lc->int_curr_symbol);
 			if (currency_symbol != NULL &&
 			    /*
@@ -341,17 +343,15 @@ vstrfmon_l(char * __restrict s, size_t maxsize, locale_t loc,
 			     * is supposed to be from ISO4217:2015, so
 			     * only ASCII, so, just leave this (for now)
 			     */
-			    strlen(currency_symbol) > 3) {
+			    (l = strlen(currency_symbol)) > 3) {
 				size_t chlen;
 				const int e = errno;
 
 				(void)mbrtowc_l(NULL, NULL, 0, &mbs, loc);
 				/* any errno set here gets ignored, we deal */
 				chlen = mbrtowc_l(&space_char,
-				    currency_symbol + 3, MAX_ENCODED_CHAR_LEN,
-				    &mbs, loc);
-				if (chlen == 0 ||
-				    chlen > MAX_ENCODED_CHAR_LEN ||
+				    currency_symbol + 3, l - 3, &mbs, loc);
+				if (chlen == 0 || chlen > l - 3 ||
 				    wcwidth(space_char) != 1)
 					space_char = L' ';
 				currency_symbol[3] = '\0';
