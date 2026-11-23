@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.73 2026/04/07 22:22:11 andvar Exp $	*/
+/*	$NetBSD: ite.c,v 1.74 2026/11/23 05:07:44 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.73 2026/04/07 22:22:11 andvar Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.74 2026/11/23 05:07:44 isaki Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -1928,7 +1928,8 @@ iteputchar(int c, struct ite_softc *ip)
 				ip->escape = 0;
 				return;
 
-			case '}': case '`':
+			case '}':
+			case '`':
 				/* status line control */
 				ip->escape = 0;
 				return;
