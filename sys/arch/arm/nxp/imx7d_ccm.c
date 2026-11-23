@@ -1,4 +1,4 @@
-/* $NetBSD: imx7d_ccm.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $ */
+/* $NetBSD: imx7d_ccm.c,v 1.3 2026/11/23 01:22:03 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: imx7d_ccm.c,v 1.2 2021/01/27 03:10:20 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx7d_ccm.c,v 1.3 2026/11/23 01:22:03 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -162,19 +162,19 @@ static struct imx_ccm_clk imx7d_ccm_clks[] = {
 	IMX_MUX(UART6_ROOT_SRC, "uart6_src", uart246_p, 0xb200, __BITS(26,24)),
 	IMX_MUX(UART7_ROOT_SRC, "uart7_src", uart1357_p, 0xb280, __BITS(26,24)),
 
-	IMX_GATE(UART1_ROOT_CG, "uart1_cg", "uart1_src", 0xaf80, __BIT(18)),
-	IMX_GATE(UART2_ROOT_CG, "uart2_cg", "uart2_src", 0xb000, __BIT(18)),
-	IMX_GATE(UART3_ROOT_CG, "uart3_cg", "uart3_src", 0xb080, __BIT(18)),
-	IMX_GATE(UART4_ROOT_CG, "uart4_cg", "uart4_src", 0xb100, __BIT(18)),
-	IMX_GATE(UART5_ROOT_CG, "uart5_cg", "uart5_src", 0xb180, __BIT(18)),
-	IMX_GATE(UART6_ROOT_CG, "uart6_cg", "uart6_src", 0xb200, __BIT(18)),
-	IMX_GATE(UART7_ROOT_CG, "uart7_cg", "uart7_src", 0xb280, __BIT(18)),
+	IMX_GATE(UART1_ROOT_CG, "uart1_cg", "uart1_src", 0xaf80, __BIT(28)),
+	IMX_GATE(UART2_ROOT_CG, "uart2_cg", "uart2_src", 0xb000, __BIT(28)),
+	IMX_GATE(UART3_ROOT_CG, "uart3_cg", "uart3_src", 0xb080, __BIT(28)),
+	IMX_GATE(UART4_ROOT_CG, "uart4_cg", "uart4_src", 0xb100, __BIT(28)),
+	IMX_GATE(UART5_ROOT_CG, "uart5_cg", "uart5_src", 0xb180, __BIT(28)),
+	IMX_GATE(UART6_ROOT_CG, "uart6_cg", "uart6_src", 0xb200, __BIT(28)),
+	IMX_GATE(UART7_ROOT_CG, "uart7_cg", "uart7_src", 0xb280, __BIT(28)),
 
 	IMX_DIV(UART1_ROOT_PRE_DIV, "uart1_pre_div", "uart1_cg", 0xaf80, __BITS(18,16), 0),
 	IMX_DIV(UART2_ROOT_PRE_DIV, "uart2_pre_div", "uart2_cg", 0xb000, __BITS(18,16), 0),
 	IMX_DIV(UART3_ROOT_PRE_DIV, "uart3_pre_div", "uart3_cg", 0xb080, __BITS(18,16), 0),
 	IMX_DIV(UART4_ROOT_PRE_DIV, "uart4_pre_div", "uart4_cg", 0xb100, __BITS(18,16), 0),
-	IMX_DIV(UART5_ROOT_PRE_DIV, "uart5_pre_div", "uart5_cg", 0xb100, __BITS(18,16), 0),
+	IMX_DIV(UART5_ROOT_PRE_DIV, "uart5_pre_div", "uart5_cg", 0xb180, __BITS(18,16), 0),
 	IMX_DIV(UART6_ROOT_PRE_DIV, "uart6_pre_div", "uart6_cg", 0xb200, __BITS(18,16), 0),
 	IMX_DIV(UART7_ROOT_PRE_DIV, "uart7_pre_div", "uart7_cg", 0xb280, __BITS(18,16), 0),
 
@@ -182,7 +182,7 @@ static struct imx_ccm_clk imx7d_ccm_clks[] = {
 	IMX_DIV(UART2_ROOT_DIV, "uart2_post_div", "uart2_pre_div", 0xb000, __BITS(5,0), 0),
 	IMX_DIV(UART3_ROOT_DIV, "uart3_post_div", "uart3_pre_div", 0xb080, __BITS(5,0), 0),
 	IMX_DIV(UART4_ROOT_DIV, "uart4_post_div", "uart4_pre_div", 0xb100, __BITS(5,0), 0),
-	IMX_DIV(UART5_ROOT_DIV, "uart5_post_div", "uart5_pre_div", 0xb100, __BITS(5,0), 0),
+	IMX_DIV(UART5_ROOT_DIV, "uart5_post_div", "uart5_pre_div", 0xb180, __BITS(5,0), 0),
 	IMX_DIV(UART6_ROOT_DIV, "uart6_post_div", "uart6_pre_div", 0xb200, __BITS(5,0), 0),
 	IMX_DIV(UART7_ROOT_DIV, "uart7_post_div", "uart7_pre_div", 0xb280, __BITS(5,0), 0),
 
