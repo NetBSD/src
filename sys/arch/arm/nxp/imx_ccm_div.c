@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_div.c,v 1.2 2026/11/22 23:49:40 hkenken Exp $ */
+/* $NetBSD: imx_ccm_div.c,v 1.3 2026/11/23 00:48:07 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.2 2026/11/22 23:49:40 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.3 2026/11/23 00:48:07 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,7 +86,7 @@ imx_ccm_div_set_rate(struct imx_ccm_softc *sc,
 	if (prate == 0)
 		return EIO;
 
-	for (n = 0; n < __SHIFTOUT_MASK(div->mask); n++) {
+	for (n = 0; n <= __SHIFTOUT_MASK(div->mask); n++) {
 		const u_int tmp_rate = prate / (n + 1);
 		const int diff = (int)rate - (int)tmp_rate;
 		if ((div->flags & IMX_DIV_ROUND_DOWN) != 0) {
