@@ -1,4 +1,4 @@
-/*	$NetBSD: srt0.S,v 1.3 2024/01/07 07:58:33 isaki Exp $	*/
+/*	$NetBSD: srt0.S,v 1.4 2026/11/23 06:40:42 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2001 Minoura Makoto
@@ -29,11 +29,11 @@
 #include <m68k/asm.h>
 
 ASENTRY(start)
-	bra		start0
-	.ascii		BOOT
-	.byte		0x20
-	.asciz		BOOT_VERS
-	.even
+		bra	start0
+		.ascii	BOOT
+		.byte	0x20
+		.asciz	BOOT_VERS
+		.even
 
 /*
  * via stack:	(firstpa, physsize, esym)
@@ -42,17 +42,17 @@ ASENTRY(start)
  *  for /boot, only %d6 is used.
  */
 start0:
-	moveml		%sp@+,%d0-%d2
-	lea		%pc@(start),%sp
+		moveml	%sp@+,%d0-%d2
+		lea	%pc@(start),%sp
 
-	movl		%d6,%sp@-
-	jbsr		_C_LABEL(bootmain)
+		movl	%d6,%sp@-
+		jbsr	_C_LABEL(bootmain)
 
 ENTRY_NOPROFILE(_rtt)
-	pea		%pc@(reboot_msg)
-	jbsr		_C_LABEL(printf)
-	jbsr		_C_LABEL(getchar)
-	trap		#10
+		pea	%pc@(reboot_msg)
+		jbsr	_C_LABEL(printf)
+		jbsr	_C_LABEL(getchar)
+		trap	#10
 
 reboot_msg:	.asciz	"\n[Hit key to reboot]"
 		.even
@@ -62,54 +62,55 @@ reboot_msg:	.asciz	"\n[Hit key to reboot]"
  * Note we've already confirmed it is not 68000/010.
  */
 ENTRY_NOPROFILE(detectmpu)
-	movl	#0x200,%d0		| data freeze bit
-	movc	%d0,%cacr		|   only exists on 68030
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lnot68030		| yes, we have 68020/68040/68060
-	moveq	#3,%d0
-	jra	Lgo			| no, we have 68030
+		movl	#0x200,%d0	| data freeze bit
+		movc	%d0,%cacr	|   only exists on 68030
+		movc	%cacr,%d0	| read it back
+		tstl	%d0		| zero?
+		jeq	Lnot68030	| yes, we have 68020/68040/68060
+		moveq	#3,%d0
+		jra	Lgo		| no, we have 68030
 Lnot68030:
-	bset	#31,%d0			| data cache enable bit
-	movc	%d0,%cacr		|   only exists on 68040/68060
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lis68020		| yes, we have 68020
-	moveq	#0,%d0			| now turn it back off
-	movec	%d0,%cacr		|   before we access any data
-	.word	0xf4d8			| cinva bc - invalidate caches XXX
-	bset	#30,%d0			| data cache no allocate mode bit
-	movc	%d0,%cacr		|   only exists on 68060
-	movc	%cacr,%d0		| read it back
-	tstl	%d0			| zero?
-	jeq	Lis68040		| yes, we have 68040
-	moveq	#6,%d0
-	jra	Lgo
+		bset	#31,%d0		| data cache enable bit
+		movc	%d0,%cacr	|   only exists on 68040/68060
+		movc	%cacr,%d0	| read it back
+		tstl	%d0		| zero?
+		jeq	Lis68020	| yes, we have 68020
+		moveq	#0,%d0		| now turn it back off
+		movec	%d0,%cacr	|   before we access any data
+		.word	0xf4d8		| cinva bc - invalidate caches XXX
+		bset	#30,%d0		| data cache no allocate mode bit
+		movc	%d0,%cacr	|   only exists on 68060
+		movc	%cacr,%d0	| read it back
+		tstl	%d0		| zero?
+		jeq	Lis68040	| yes, we have 68040
+		moveq	#6,%d0
+		jra	Lgo
 Lis68040:
-	moveq	#4,%d0
-	jra	Lgo
+		moveq	#4,%d0
+		jra	Lgo
 Lis68020:
-	movl	#2,%d0			| and a 68020 CPU
+		movl	#2,%d0		| and a 68020 CPU
 Lgo:
-	rts
+		rts
 
 /*
  * Check if the given address is valid for byte read.
  * From boot_ufs/boot.S.
  */
 ENTRY_NOPROFILE(badbaddr)
-		lea	0x0008:W,%a1		| MPU Bus Error vector
+		lea	0x0008:W,%a1	| MPU Bus Error vector
 		moveq	#1,%d0
 		lea	%pc@(badr1),%a0
 		movew	%sr,%sp@-
-		oriw	#0x0700,%sr		| keep out interrupts
+		oriw	#0x0700,%sr	| keep out interrupts
 		movel	%a1@,%sp@-
-		movel	%a0,%a1@		| set bus error vector
-		movel	%sp,%d1			| save sp
+		movel	%a0,%a1@	| set bus error vector
+		movel	%sp,%d1		| save sp
 		moveal	%sp@(10),%a0
-		tstb	%a0@			| try read...
-		moveq	#0,%d0			| this is skipped on bus error
-badr1:		moveal	%d1,%sp			| restore sp
+		tstb	%a0@		| try read...
+		moveq	#0,%d0		| this is skipped on bus error
+badr1:
+		moveal	%d1,%sp		| restore sp
 		movel	%sp@+,%a1@
 		movew	%sp@+,%sr
 		rts
