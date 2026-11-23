@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.6 2026/11/23 00:10:11 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.7 2026/11/23 02:27:40 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.6 2026/11/23 00:10:11 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.7 2026/11/23 02:27:40 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "opt_cputypes.h"
@@ -322,19 +322,25 @@ imxccm_clk_get_rate_pfd(struct imx6ccm_softc *sc, struct imx6_clk *iclk)
 }
 
 static int
-imxccm_clk_mux_wait(struct imx6ccm_softc *sc, struct imx6_clk_mux *mux)
+imxccm_clk_wait(struct imx6ccm_softc *sc, enum imx6_clk_reg base,
+    uint32_t busy_reg, uint32_t busy_mask)
 {
-	KASSERT(mux->busy_reg != 0);
-	KASSERT(mux->busy_mask != 0);
+	int tout = 0;
+
+	KASSERT(busy_reg != 0);
+	KASSERT(busy_mask != 0);
 
 	bus_space_handle_t ioh;
-	if (mux->base == IMX6_CLK_REG_CCM_ANALOG)
+	if (base == IMX6_CLK_REG_CCM_ANALOG)
 		ioh = sc->sc_ioh_analog;
 	else
 		ioh = sc->sc_ioh;
 
-	while (bus_space_read_4(sc->sc_iot, ioh, mux->busy_reg) & mux->busy_mask)
+	while (bus_space_read_4(sc->sc_iot, ioh, busy_reg) & busy_mask) {
+		if (++tout >= 1000)
+			return ETIMEDOUT;
 		delay(10);
+	}
 
 	return 0;
 }
@@ -346,6 +352,7 @@ imxccm_clk_set_parent_mux(struct imx6ccm_softc *sc,
 	struct imx6_clk_mux *mux = &iclk->clk.mux;
 	const char *pname = parent->name;
 	u_int sel;
+	int ret = 0;
 
 	KASSERT(iclk->type == IMX6_CLK_MUX);
 
@@ -371,9 +378,9 @@ imxccm_clk_set_parent_mux(struct imx6ccm_softc *sc,
 	iclk->parent = pname;
 
 	if (mux->type == IMX6_CLK_MUX_BUSY)
-		imxccm_clk_mux_wait(sc, mux);
+		ret = imxccm_clk_wait(sc, mux->base, mux->busy_reg, mux->busy_mask);
 
-	return 0;
+	return ret;
 }
 
 static struct imx6_clk *
@@ -415,6 +422,7 @@ imxccm_clk_set_rate_div(struct imx6ccm_softc *sc,
 {
 	struct imx6_clk_div *div = &iclk->clk.div;
 	struct imx6_clk *parent;
+	int ret = 0;
 
 	KASSERT(iclk->type == IMX6_CLK_DIV);
 
@@ -449,7 +457,10 @@ imxccm_clk_set_rate_div(struct imx6ccm_softc *sc,
 	}
 	bus_space_write_4(sc->sc_iot, ioh, div->reg, v);
 
-	return 0;
+	if (div->type == IMX6_CLK_DIV_BUSY)
+		ret = imxccm_clk_wait(sc, div->base, div->busy_reg, div->busy_mask);
+
+	return ret;
 }
 
 /*
