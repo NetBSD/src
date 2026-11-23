@@ -1,4 +1,4 @@
-/*	$NetBSD: ite.c,v 1.74 2026/11/23 05:07:44 isaki Exp $	*/
+/*	$NetBSD: ite.c,v 1.75 2026/11/23 05:31:08 isaki Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.74 2026/11/23 05:07:44 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ite.c,v 1.75 2026/11/23 05:31:08 isaki Exp $");
 
 #include "ite.h"
 #if NITE > 0
@@ -115,6 +115,7 @@ static inline void ite_lf(struct ite_softc *);
 static inline void ite_crlf(struct ite_softc *);
 static inline void ite_cr(struct ite_softc *);
 static inline void ite_rlf(struct ite_softc *);
+static inline void ite_sgr(struct ite_softc *);
 static void iteprecheckwrap(struct ite_softc *);
 static void itecheckwrap(struct ite_softc *);
 static int ite_argnum(struct ite_softc *);
@@ -1960,118 +1961,8 @@ iteputchar(int c, struct ite_softc *ip)
 				return;
 
 			case 'm':
-				/* big attribute setter/resetter */
-			{
-				char *c_p;
-
 				*ip->ap = 0;
-				/* kludge to make CSIm work (== CSI0m) */
-				if (ip->ap == ip->argbuf)
-					ip->ap++;
-				for (c_p = ip->argbuf; c_p < ip->ap; ) {
-					switch (*c_p) {
-					case 0:
-					case '0':
-						clr_attr(ip, ATTR_ALL);
-						ip->fgcolor = 7;
-						ip->bgcolor = 0;
-						c_p++;
-						break;
-
-					case '1':
-						set_attr(ip, ATTR_BOLD);
-						c_p++;
-						break;
-
-					case '2':
-						switch (c_p[1]) {
-						case '2':
-							clr_attr(ip, ATTR_BOLD);
-							c_p += 2;
-							break;
-
-						case '4':
-							clr_attr(ip, ATTR_UL);
-							c_p += 2;
-							break;
-
-						case '5':
-							clr_attr(ip,
-							    ATTR_BLINK);
-							c_p += 2;
-							break;
-
-						case '7':
-							clr_attr(ip, ATTR_INV);
-							c_p += 2;
-							break;
-
-						default:
-							c_p++;
-							break;
-						}
-						break;
-
-					case '3':
-						switch (c_p[1]) {
-						case '0':
-						case '1':
-						case '2':
-						case '3':
-						case '4':
-						case '5':
-						case '6':
-						case '7':
-							/* foreground colors */
-							ip->fgcolor =
-							    c_p[1] - '0';
-							c_p += 2;
-							break;
-						default:
-							c_p++;
-							break;
-						}
-						break;
-
-					case '4':
-						switch (c_p[1]) {
-						case '0':
-						case '1':
-						case '2':
-						case '3':
-						case '4':
-						case '5':
-						case '6':
-						case '7':
-							/* background colors */
-							ip->bgcolor =
-							    c_p[1] - '0';
-							c_p += 2;
-							break;
-						default:
-							set_attr(ip, ATTR_UL);
-							c_p++;
-							break;
-						}
-						break;
-
-					case '5':
-						set_attr(ip, ATTR_BLINK);
-						c_p++;
-						break;
-
-					case '7':
-						set_attr(ip, ATTR_INV);
-						c_p++;
-						break;
-
-					default:
-						c_p++;
-						break;
-					}
-				}
-
-			}
+				ite_sgr(ip);
 				ip->escape = 0;
 				return;
 
@@ -2392,6 +2283,82 @@ iteputchar(int c, struct ite_softc *ip)
 			ip->save_GL = 0;
 		}
 		break;
+	}
+}
+
+/* SGR (CSI <n> m) */
+static inline void
+ite_sgr(struct ite_softc *ip)
+{
+	int n;
+	char *p;
+
+	/* kludge to make CSIm work (== CSI0m) */
+	for (p = ip->argbuf; ;) {
+		n = 0;
+		/* atoi() but keep the end position */
+		for (; *p && '0' <= *p && *p <= '9'; p++) {
+			if (n < 100)
+				n = n * 10 + (*p - '0');
+		}
+		switch (n) {
+		case 0:
+			clr_attr(ip, ATTR_ALL);
+			ip->fgcolor = 7;
+			ip->bgcolor = 0;
+			break;
+		case 1:
+			set_attr(ip, ATTR_BOLD);
+			break;
+		case 4:
+			set_attr(ip, ATTR_UL);
+			break;
+		case 5:
+			set_attr(ip, ATTR_BLINK);
+			break;
+		case 7:
+			set_attr(ip, ATTR_INV);
+			break;
+		case 22:
+			clr_attr(ip, ATTR_BOLD);
+			break;
+		case 24:
+			clr_attr(ip, ATTR_UL);
+			break;
+		case 25:
+			clr_attr(ip, ATTR_BLINK);
+			break;
+		case 27:
+			clr_attr(ip, ATTR_INV);
+			break;
+		case 30:
+		case 31:
+		case 32:
+		case 33:
+		case 34:
+		case 35:
+		case 36:
+		case 37:
+			/* foreground colors */
+			ip->fgcolor = n - 30;
+			break;
+		case 40:
+		case 41:
+		case 42:
+		case 43:
+		case 44:
+		case 45:
+		case 46:
+		case 47:
+			/* background colors */
+			ip->bgcolor = n - 40;
+			break;
+		default:
+			/* ignore unknown sequence */
+			break;
+		}
+		if (*p++ != ';')
+			break;
 	}
 }
 
