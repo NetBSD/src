@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.10 2019/10/13 07:28:14 mrg Exp $
+# $NetBSD: Makefile,v 1.10.8.1 2026/11/23 15:13:12 martin Exp $
 
 NOMAN=		# defined
 
@@ -31,6 +31,7 @@ BINDIR=		${TESTSDIR}
 PROGS=		h_fgets
 PROGS+=		h_gets
 PROGS+=		h_getcwd
+PROGS+=		h_getcwd2
 PROGS+=		h_memcpy
 PROGS+=		h_memmove
 PROGS+=		h_memset

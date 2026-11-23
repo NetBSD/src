@@ -1,4 +1,4 @@
-/*	$NetBSD: ssp.h,v 1.13.26.1 2026/11/17 16:07:08 martin Exp $	*/
+/*	$NetBSD: ssp.h,v 1.13.26.2 2026/11/23 15:13:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2011 The NetBSD Foundation, Inc.
@@ -56,7 +56,8 @@
 #endif
 #define __ssp_real(fun)		__ssp_real_(fun)
 
-#define __ssp_inline static __inline __attribute__((__always_inline__))
+#define __ssp_inline extern __inline \
+    __attribute__((__always_inline__, __gnu_inline__))
 
 #define __ssp_bos(ptr) __builtin_object_size(ptr, __SSP_FORTIFY_LEVEL > 1)
 #define __ssp_bos0(ptr) __builtin_object_size(ptr, 0)
