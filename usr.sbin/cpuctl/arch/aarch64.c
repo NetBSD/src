@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.35 2026/11/23 07:07:28 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.36 2026/11/23 10:34:54 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.35 2026/11/23 07:07:28 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.36 2026/11/23 10:34:54 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -495,7 +495,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[0] = "No BFloat16",
 			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT/"
 			      "BFMLALB/BFMLALT/BFMMLA",
-			[1] = "BFCVT/BFCVTN/BFCVTN2/BFDOT/"
+			[2] = "BFCVT/BFCVTN/BFCVTN2/BFDOT/"
 			      "BFMLALB/BFMLALT/BFMMLA+",
 			      "FPCR.EBF",
 		}
