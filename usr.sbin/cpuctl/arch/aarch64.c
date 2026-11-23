@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.34 2026/11/23 07:02:31 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.35 2026/11/23 07:07:28 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.34 2026/11/23 07:02:31 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.35 2026/11/23 07:07:28 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -738,6 +738,8 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 			      "with Virtualization Host Extensions",
 			[8] = "ARMv8.2 debug architecture",
 			[9] = "ARMv8.4 debug architecture",
+			[10] = "ARMv8.8 debug architecture",
+			[11] = "ARMv8.9 debug architecture",
 		}
 	},
 	{
@@ -754,6 +756,8 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 			[5] = "Performance monitor unit v3 for ARMv8.4",
 			[6] = "Performance monitor unit v3 for ARMv8.5",
 			[7] = "Performance monitor unit v3 for ARMv8.7",
+			[8] = "Performance monitor unit v3 for ARMv8.8",
+			[9] = "Performance monitor unit v3 for ARMv8.9",
 			[15] = "implementation defined"
 		}
 	},
