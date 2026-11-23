@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.32 2026/11/20 08:51:21 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.33 2026/11/23 06:55:42 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.32 2026/11/20 08:51:21 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.33 2026/11/23 06:55:42 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -596,8 +596,8 @@ struct fieldinfo id_aa64mmfr0_fieldinfo[] = {
 		FIELDINFO(60, 4, "ECV") {
 			[0] = "Enhanced Counter Virtualization not implemented",
 			[1] = "Enhanced Counter Virtualization implemented",
-			[2] = "Enhanced Counter Virtualization "
-			      "+ CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented",
+			[2] = "Enhanced Counter Virtualization + "
+			      "CNTHCTL_EL2.ECV/CNTPOFF_EL2 implemented",
 		}
 	},
 
