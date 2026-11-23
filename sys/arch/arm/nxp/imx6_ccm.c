@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.5 2024/09/01 07:55:27 skrll Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.6 2026/11/23 00:10:11 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.5 2024/09/01 07:55:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.6 2026/11/23 00:10:11 hkenken Exp $");
 
 #include "opt_imx.h"
 #include "opt_cputypes.h"
@@ -324,8 +324,8 @@ imxccm_clk_get_rate_pfd(struct imx6ccm_softc *sc, struct imx6_clk *iclk)
 static int
 imxccm_clk_mux_wait(struct imx6ccm_softc *sc, struct imx6_clk_mux *mux)
 {
-	KASSERT(mux->busy_reg == 0);
-	KASSERT(mux->busy_mask == 0);
+	KASSERT(mux->busy_reg != 0);
+	KASSERT(mux->busy_mask != 0);
 
 	bus_space_handle_t ioh;
 	if (mux->base == IMX6_CLK_REG_CCM_ANALOG)
