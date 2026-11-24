@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.37 2026/11/24 08:11:11 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.38 2026/11/24 08:26:02 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.37 2026/11/24 08:11:11 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.38 2026/11/24 08:26:02 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -304,6 +304,48 @@ struct fieldinfo id_aa64pfr1_fieldinfo[] = {
 			[0] = "not disclosed",
 			[1] = "SCXTNUM_ELx registers not supported",
 			[2] = "SCXTNUM_ELx registers supported",
+		}
+	},
+	{
+		FIELDINFO(36, 4, "NMI") {
+			[0] = "NMI not supported.",
+			[1] = "NMI supported.",
+		}
+	},
+	{
+		FIELDINFO(40, 4, "MTE_frac") {
+			[0] = "Asynchronous reporting of a Tag Check Fault is supported.",
+			[15] = "Asynchronous reporting of a Tag Check Fault is not supported.",
+		}
+	},
+	{
+		FIELDINFO(44, 4, "GCS") {
+			[0] = "Guarded Control Stack is not implemented.",
+			[1] = "Guarded Control Stack is implemented.",
+		}
+	},
+	{
+		FIELDINFO(48, 4, "THE") {
+			[0] = "Translation Hardening Extension is not implemented.",
+			[1] = "Translation Hardening Extension (and RCW/RCWS) is implemented.",
+		}
+	},
+	{
+		FIELDINFO(52, 4, "MTEX") {
+			[0] = "Canonical Tag checking and Memory tagging with Address tagging disabled are not supported. (FEAT_MTE2)",
+			[1] = "Canonical Tag checking and Memory tagging with Address tagging disabled are supported. (FEAT_MTE2)",
+		}
+	},
+	{
+		FIELDINFO(56, 4, "DF2") {
+			[0] = "FEAT_DoubleFault2 is not implemented.",
+			[1] = "FEAT_DoubleFault2 is implemented.",
+		}
+	},
+	{
+		FIELDINFO(60, 4, "PFAR") {
+			[0] = "Physical fault address registers are not implemented. (FEAT_PFAR)",
+			[1] = "Physical fault address registers are implemented. (FEAT_PFAR)",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
