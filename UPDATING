@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.335 2022/11/17 06:40:38 chs Exp $
+$NetBSD: UPDATING,v 1.335.2.1 2026/11/24 07:04:58 martin Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -18,6 +18,12 @@ See also: BUILDING, build.sh, Makefile.
 
 Recent changes:
 ^^^^^^^^^^^^^^^
+
+20261123:
+	Fundamental fixes in the build system for Stack Smashing Protection
+	(ssp) compiler options require a full, clean rebuild of the whole
+	source tree. Remove all object directories (or run build.sh without
+	the -u option).
 
 20221116:
 
