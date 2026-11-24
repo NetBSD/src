@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_68k.c,v 1.112 2026/11/22 21:34:15 thorpej Exp $	*/
+/*	$NetBSD: pmap_68k.c,v 1.113 2026/11/24 21:30:20 thorpej Exp $	*/
 
 /*-     
  * Copyright (c) 2025, 2026 The NetBSD Foundation, Inc.
@@ -258,7 +258,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.112 2026/11/22 21:34:15 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_68k.c,v 1.113 2026/11/24 21:30:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -531,6 +531,25 @@ static struct evcnt pmap_atc_all_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "all");
 EVCNT_ATTACH_STATIC(pmap_atc_all_ev);
 
+static struct evcnt pmap_atc_k_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "k");
+EVCNT_ATTACH_STATIC(pmap_atc_k_ev);
+static struct evcnt pmap_atc_enter_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "enter");
+EVCNT_ATTACH_STATIC(pmap_atc_enter_ev);
+static struct evcnt pmap_atc_remove_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "remove");
+EVCNT_ATTACH_STATIC(pmap_atc_remove_ev);
+static struct evcnt pmap_atc_prot_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "prot");
+EVCNT_ATTACH_STATIC(pmap_atc_prot_ev);
+static struct evcnt pmap_atc_cache_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "cache");
+EVCNT_ATTACH_STATIC(pmap_atc_cache_ev);
+static struct evcnt pmap_atc_activate_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "activate");
+EVCNT_ATTACH_STATIC(pmap_atc_activate_ev);
+
 static struct evcnt pmap_atc_req_all_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "req all");
 EVCNT_ATTACH_STATIC(pmap_atc_req_all_ev);
@@ -589,6 +608,19 @@ EVCNT_ATTACH_STATIC(pmap_atc_7_ev);
 static struct evcnt pmap_atc_8_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap atc", "batch 8");
 EVCNT_ATTACH_STATIC(pmap_atc_8_ev);
+
+static struct evcnt pmap_lev1map_set_same_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap lev1map", "set same");
+EVCNT_ATTACH_STATIC(pmap_lev1map_set_same_ev);
+static struct evcnt pmap_lev1map_act_hit_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap lev1map", "act hit");
+EVCNT_ATTACH_STATIC(pmap_lev1map_act_hit_ev);
+static struct evcnt pmap_lev1map_act_miss_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap lev1map", "act miss");
+EVCNT_ATTACH_STATIC(pmap_lev1map_act_miss_ev);
+static struct evcnt pmap_lev1map_fault_null_ev =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pmap lev1map", "fault null");
+EVCNT_ATTACH_STATIC(pmap_lev1map_fault_null_ev);
 
 #define	pmap_evcnt(e)		pmap_ ## e ## _ev.ev_count++
 #else
@@ -1015,16 +1047,36 @@ pmap_garbage_collect(struct pmap_garbage *g)
 
 #if defined(MULTIPROCESSOR)
 static inline uint32_t
-pmap_cpu_self(void)
-{
-	return 1U << cpu_number();
-}
-
-static inline uint32_t
 pmap_cpu_others(pmap_t pmap)
 {
 	return atomic_load_relaxed(&pmap->pm_cpus) & ~(1U << cpu_number());
 }
+
+static inline void
+pmap_cpu_self_set(pmap_t pmap)
+{
+	/*
+	 * We use an atomic operation to synchronize against IPIs,
+	 * and require the mutex to be owned to synchronize with
+	 * anyone wanted to send ATC invalidation messages.
+	 */
+	KASSERT(PMAP_LOCK_OWNED(pmap));
+	atomic_or_32(&pmap->pm_cpus, 1U << cpu_number());
+}
+
+static inline void
+pmap_cpu_self_clear(pmap_t pmap)
+{
+	/*
+	 * Only atomic operations here; the worst thing that can
+	 * happen is we take an IPI and don't need to do any work.
+	 */
+	atomic_and_32(&pmap->pm_cpus, ~(1U << cpu_number()));
+}
+#else
+#define	pmap_cpu_others(pm)	0
+#define	pmap_cpu_self_set(pm)	__nothing
+#define	pmap_cpu_self_clear(pm)	__nothing
 #endif /* MULTIPROCESSOR */
 
 /*
@@ -1050,16 +1102,18 @@ struct pmap_atc {
 #define	ATC_F_IC	__BIT(4)	/* also flush the I cache */
 #define	ATC_F_DC	__BIT(5)	/* also flush the D cache */
 #define	ATC_F_BC	(ATC_F_IC|ATC_F_DC)
+#define	ATC_F_K		__BIT(6)	/* result of pmap_k*() */
+#define	ATC_F_ENTER	__BIT(7)	/* result of an "enter" */
+#define	ATC_F_REMOVE	__BIT(8)	/* result of a "remove" */
+#define	ATC_F_PROT	__BIT(9)	/* result of a protection op */
+#define	ATC_F_CACHE	__BIT(10)	/* result of a cache op */
 
 #define	ATC_DAT_VA(a, i)	((a)->atc_data[i].atc_addrflags & ~PAGE_MASK)
 
 struct pmap_percpu {
-	/* Never de-reference pc_pmap -- only use for pointer comparisons! */
 	pmap_t          pc_pmap;
 	struct pmap_atc	pc_atc;		/* ATC invalidation info */
-#if defined(MULTIPROCESSOR)
 	paddr_t		pc_lev1pa;	/* value currently loaded into %urp */
-#endif
 };
 
 /*
@@ -1519,6 +1573,18 @@ pmap_atc_invalidate(pmap_t pmap, vaddr_t va, paddr_t pa, uint16_t flags)
 	if (__predict_false(flags & ATC_F_PV)) {
 		pmap_evcnt(atc_pv);
 	}
+	if (flags & ATC_F_K) {
+		pmap_evcnt(atc_k);
+	}
+	if (flags & ATC_F_ENTER) {
+		pmap_evcnt(atc_enter);
+	}
+	if (flags & ATC_F_REMOVE) {
+		pmap_evcnt(atc_remove);
+	}
+	if (flags & ATC_F_PROT) {
+		pmap_evcnt(atc_prot);
+	}
 #endif
 
 	if (__predict_true(pmap != NULL)) {
@@ -1612,6 +1678,32 @@ pmap_atc_process(void)
 	}
 	atc->atc_flags = 0;
 }
+
+#if 0
+static bool
+pmap_atc_check(void)
+{
+	struct pmap_atc *atc = &pmap_percpu()->pc_atc;
+
+	if (__predict_true(atc->atc_count == 0)) {
+		return true;
+	}
+
+	printf("%s: atc_count=%u atc_flags=0x%x\n", __func__,
+	    atc->atc_count, atc->atc_flags);
+	for (int i = 0; i < atc->atc_count; i++) {
+		printf("\t%d: pmap=%p%s\n", i, atc->atc_data[i].atc_pmap,
+		    atc->atc_data[i].atc_pmap == pmap_kernel() ? " (k)" : "");
+		printf("\t   va=0x%lx\n", ATC_DAT_VA(atc, i));
+		printf("\t   flags=0x%lx\n",
+		    atc->atc_data[i].atc_addrflags & PAGE_MASK);
+		printf("\t   pa=0x%lx\n", atc->atc_data[i].atc_pa);
+	}
+	return false;
+}
+#else
+#define	pmap_atc_check()	true
+#endif
 
 /************************ PTE MANIPULATION HELPERS ***************************/
 
@@ -1930,9 +2022,7 @@ static paddr_t null_segtab_pa __read_mostly;
 static inline void
 pmap_load_urp(paddr_t urp)
 {
-#if defined(MULTIPROCESSOR)
 	pmap_percpu()->pc_lev1pa = urp;
-#endif
 	(*pmap_load_urp_func)(urp);
 }
 
@@ -1962,6 +2052,32 @@ pmap_reload_urp(pmap_t pmap)
 static inline void
 pmap_set_lev1map(pmap_t pmap, struct pmap_table *pt, paddr_t pa)
 {
+
+	KASSERT(PMAP_LOCK_OWNED(pmap));
+
+	/*
+	 * Make sure this is a reasonable transition.  There is a
+	 * situation where pmap points to null_segtab_pa and we're
+	 * asked to set null_segtab_pa.  This can happen if the
+	 * very first thing that a process does is take a signal
+	 * that causes process exit:
+	 *
+	 *	child_return -> userret -> postsig -> sigexit ->
+	 *	    uvm_proc_exit -> uvmspace_free -> pmap_remove_all
+	 *
+	 * Otherwise, only to/from null_segtab_pa are allowed.
+	 */
+	if (__predict_false(pmap->pm_lev1pa == pa)) {
+		KASSERT(pa == null_segtab_pa);
+		pmap_evcnt(lev1map_set_same);
+		return;
+	}
+	KASSERT((pmap->pm_lev1pa == null_segtab_pa && pa != null_segtab_pa)
+	     || (pmap->pm_lev1pa != null_segtab_pa && pa == null_segtab_pa));
+
+	KASSERT((pa == null_segtab_pa && pt == NULL)
+	     || (pa != null_segtab_pa && pt != NULL));
+
 	pmap->pm_lev1map = pt;
 	pmap->pm_lev1pa = pa;
 
@@ -2652,7 +2768,8 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 				actual = pte_update(ptep, opte, npte);
 				if (__predict_true(actual == opte)) {
 					pmap_atc_invalidate_pv(pv, pa,
-					    atc_flags | atc_c_flags);
+					    atc_flags | atc_c_flags |
+					    ATC_F_CACHE);
 					atc_c_flags = 0;
 					break;
 				}
@@ -2661,7 +2778,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 	}
  out:
 	PVH_UNLOCK(pg);
-	pmap_atc_invalidate(pmap, va, pa, atc_flags);
+	pmap_atc_invalidate(pmap, va, pa, atc_flags | ATC_F_ENTER);
 	return;
 
 #if MMU_CONFIG_HP_CLASS
@@ -2704,7 +2821,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 
 	/* Set the PTE for the new mapping. */
 	pte_store(ptep, npte);
-	pmap_atc_invalidate(pmap, va, pa, atc_flags);
+	pmap_atc_invalidate(pmap, va, pa, atc_flags | ATC_F_ENTER);
 
 	/*
 	 * Invalidate the ATC entry **after** storing the PTE so that
@@ -2738,7 +2855,7 @@ pmap_pv_enter(pmap_t pmap, struct vm_page *pg, vaddr_t va, vm_prot_t prot,
 			pmap_evcnt(pv_enter_ci_multi);
 			pv->pv_vf |= pv_flags;
 			pte_set(pmap_pv_pte(pv), PTE51_CI);
-			pmap_atc_invalidate_pv(pv, pa, ATC_F_DC);
+			pmap_atc_invalidate_pv(pv, pa, ATC_F_DC | ATC_F_CACHE);
 		}
 	}
 	PVH_UNLOCK(pg);
@@ -2827,7 +2944,8 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t opte,
 				npte = pte_clr_ci(opte);
 				actual = pte_update(ptep, opte, npte);
 				if (__predict_true(actual == opte)) {
-					pmap_atc_invalidate_pv(pv, pa, 0);
+					pmap_atc_invalidate_pv(pv, pa,
+					    ATC_F_REMOVE | ATC_F_CACHE);
 					break;
 				}
 			}
@@ -2876,7 +2994,8 @@ pmap_pv_remove(pmap_t pmap, struct vm_page *pg, vaddr_t va, pt_entry_t opte,
 				continue;
 			}
 			pte_mask(pmap_pv_pte(pv), ~((uint32_t)PTE51_CI));
-			pmap_atc_invalidate_pv(pv, pa, 0);
+			pmap_atc_invalidate_pv(pv, pa,
+			    ATC_F_REMOVE | ATC_F_CACHE);
 		}
 		all_ci_flags &= PV_F_CI_USR | PV_F_CI_VAC;
 		if (__predict_true(all_ci_flags == 0)) {
@@ -3015,6 +3134,13 @@ pmap_destroy(pmap_t pmap)
 		return;
 	}
 
+	/*
+	 * uvmspace_free() calls pmap_remove_all() but does not
+	 * call pmap_update() aftwards.  Do that pmap_update()
+	 * now.
+	 */
+	pmap_update(pmap);
+
 	/* We assume all mappings have been removed. */
 	KASSERT(pmap->pm_lev1map == NULL);
 	KASSERT(pmap->pm_lev1pa == null_segtab_pa);
@@ -3106,7 +3232,7 @@ pmap_remove_mapping(pmap_t pmap, vaddr_t va, pt_entry_t *ptep,
 	 * Now that the ATC can't be reloaded from the PTE, invalidate
 	 * the ATC entry.
 	 */
-	pmap_atc_invalidate(pmap, va, pa, atc_flags);
+	pmap_atc_invalidate(pmap, va, pa, atc_flags | ATC_F_REMOVE);
 }
 
 /*
@@ -3223,7 +3349,6 @@ pmap_remove(pmap_t pmap, vaddr_t sva, vaddr_t eva)
 bool
 pmap_remove_all(pmap_t pmap)
 {
-	struct pmap_garbage g;
 	struct pv_entry *pv;
 	struct vm_page *pg;
 	pt_entry_t opte;
@@ -3241,13 +3366,9 @@ pmap_remove_all(pmap_t pmap)
 	 *
 	 * ==> (4) Zero the wired and resident count.
 	 *
-	 * ==> (5) Grab any garbage lingering in the pmap itself.
-	 *
 	 * Once we've done that, we just need to free everything
 	 * back to the system.
 	 */
-
-	pmap_garbage_init(&g);
 
 	PMAP_LOCK(pmap);
 
@@ -3256,8 +3377,10 @@ pmap_remove_all(pmap_t pmap)
 
 	/* Step 2. */
 	pmap->pm_pt_cache = NULL;
-	TAILQ_CONCAT(&g.g_ptpages, &pmap->pm_ptpages[0], ptp_list);
-	TAILQ_CONCAT(&g.g_ptpages, &pmap->pm_ptpages[1], ptp_list);
+	TAILQ_CONCAT(&pmap->pm_garbage.g_ptpages, &pmap->pm_ptpages[0],
+	    ptp_list);
+	TAILQ_CONCAT(&pmap->pm_garbage.g_ptpages, &pmap->pm_ptpages[1],
+	    ptp_list);
 	memset(&pmap->pm_tables, 0, sizeof(pmap->pm_tables));
 	rb_tree_init(&pmap->pm_tables, &pmap_table_rb_ops);
 	KASSERT(RB_TREE_MIN(&pmap->pm_tables) == NULL);
@@ -3276,13 +3399,7 @@ pmap_remove_all(pmap_t pmap)
 	pmap_stat_set(pmap, wired_count, 0);
 	pmap_stat_set(pmap, resident_count, 0);
 
-	/* Step 5. */
-	TAILQ_CONCAT(&g.g_ptpages, &pmap->pm_garbage.g_ptpages, ptp_list);
-	LIST_MOVE(&pmap->pm_garbage.g_pvlist, &g.g_pvlist, pv_pmlist);
-
 	PMAP_UNLOCK(pmap);
-
-	pmap_garbage_collect(&g);
 
 	return true;
 }
@@ -3403,7 +3520,7 @@ pmap_protect(pmap_t pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			if (npte == opte) {
 				continue;
 			}
-			atc_flags = 0;
+			atc_flags = ATC_F_PROT;
 #if MMU_CONFIG_68040_CLASS
 			if (MMU_IS_68040_CLASS && removing_write) {
 				/*
@@ -3558,7 +3675,9 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 				    pte_ci_p(diff) && pte_ci_p(npte)) {
 					atc_flags |= ATC_F_DC;
 				}
-				pmap_atc_invalidate(pmap, va, pa, atc_flags);
+				/* XXX prot upgrade vs ??? */
+				pmap_atc_invalidate(pmap, va, pa,
+				    atc_flags | ATC_F_PROT);
 			}
 
 			/* All done! */
@@ -3666,7 +3785,7 @@ pmap_enter(pmap_t pmap, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 	 * See comments in pmap_pv_enter() for why we have to hit
 	 * the ATC here.
 	 */
-	pmap_atc_invalidate(pmap, va, pa, 0);
+	pmap_atc_invalidate(pmap, va, pa, ATC_F_ENTER);
 	goto out;
 
  out_release:
@@ -3695,7 +3814,7 @@ void
 pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 {
 	pmap_t const pmap = pmap_kernel();
-	int atc_flags = 0;
+	int atc_flags = ATC_F_K | ATC_F_ENTER;
 
 	KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 
@@ -3759,7 +3878,7 @@ pmap_kremove(vaddr_t va, vsize_t size)
 			KASSERT(! pte_managed_p(opte));
 			KASSERT(pte_wired_p(opte));
 
-			atc_flags = 0;
+			atc_flags = ATC_F_K | ATC_F_REMOVE;
 
 			/* See pmap_remove_mapping(). */
 			/* XXX We skip IC here.  On purpose. */
@@ -3973,21 +4092,40 @@ pmap_activate(struct lwp *l)
 	struct pmap_percpu *pc = pmap_percpu();
 
 	KASSERT(l == curlwp);
-	KASSERT(pc->pc_atc.atc_count == 0);
+#if 0
+	KASSERT(pmap_atc_check());
+#else
+	if (__predict_false(pc->pc_atc.atc_count != 0)) {
+		pmap_evcnt(atc_activate);
+		pmap_atc_process();
+	}
+#endif
 
 	/*
 	 * Because the kernel has a separate root pointer, we don't
 	 * need to activate the kernel pmap.
 	 */
 	if (pmap != pmap_kernel()) {
-		PMAP_LOCK(pmap);
 #if defined(MULTIPROCESSOR)
-		pmap->pm_cpus |= pmap_cpu_self();
+		int s = splhigh(); /* ensure pc_pmap is stable against IPIs */
+		pmap_t prev_pmap = pc->pc_pmap;
+		if (prev_pmap != NULL && prev_pmap != pmap) {
+			pc->pc_pmap = NULL;
+			pmap_cpu_self_clear(prev_pmap);
+		}
+		_splx(s);	   /* skip softint processing here */
 #endif
-		pmap_load_urp(pmap->pm_lev1pa);
+		PMAP_LOCK(pmap);
+		pmap_cpu_self_set(pmap);
+		if (pc->pc_lev1pa == pmap->pm_lev1pa) {
+			pmap_evcnt(lev1map_act_hit);
+		} else {
+			pmap_evcnt(lev1map_act_miss);
+			pmap_load_urp(pmap->pm_lev1pa);
+		}
 		PMAP_UNLOCK(pmap);
+		pc->pc_pmap = pmap;
 	}
-	pc->pc_pmap = pmap;
 }
 
 /*
@@ -4005,13 +4143,6 @@ pmap_deactivate(struct lwp *l)
 	 * on this CPU.  All pmap_deactivate() calls are paired with a
 	 * nearly-immediate pmap_activate().
 	 */
-#if defined(MULTIPROCESSOR)
-	if (pmap != pmap_kernel()) {
-		PMAP_LOCK(pmap);
-		pmap->pm_cpus &= ~pmap_cpu_self();
-		PMAP_UNLOCK(pmap);
-	}
-#endif /* MULTIPROCESSOR */
 }
 
 /*
@@ -4425,7 +4556,7 @@ pmap_percpu_start(void)
 	 * in order to avoid having to special-case it later.
 	 */
 	PMAP_LOCK(pmap_kernel());
-	pmap_kernel()->pm_cpus |= pmap_cpu_self();
+	pmap_cpu_self_set(pmap_kernel());
 	PMAP_UNLOCK(pmap_kernel());
 #endif
 }
@@ -4788,6 +4919,23 @@ pmap_init_kcore_hdr(cpu_kcore_hdr_t *h)
 int
 pmap_fault(struct vm_map *map, vaddr_t va, vm_prot_t prot)
 {
+	struct pmap_percpu * const pc = pmap_percpu();
+	pmap_t pmap = vm_map_pmap(map);
+
+	if (pmap != pmap_kernel()) {
+		/*
+		 * If the pmap gained a lev1map but this CPU is still
+		 * on the null_segtab, then load the new lev1map and
+		 * try again.
+		 */
+		if (pc->pc_lev1pa != pmap->pm_lev1pa) {
+			KASSERT(pc->pc_lev1pa == null_segtab_pa);
+			pmap_evcnt(lev1map_fault_null);
+			pmap_load_urp(pmap->pm_lev1pa);
+			return 0;
+		}
+	}
+
 	return uvm_fault(map, va, prot);
 }
 
