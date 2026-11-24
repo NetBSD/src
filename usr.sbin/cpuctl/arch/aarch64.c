@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.36 2026/11/23 10:34:54 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.37 2026/11/24 08:11:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.36 2026/11/23 10:34:54 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.37 2026/11/24 08:11:11 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -761,6 +761,9 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 			[15] = "implementation defined"
 		}
 	},
+	// 	FIELDINFO(12, 4, "BRPs") special handling
+	// 	FIELDINFO(23,20, "WRPs") special handling
+	//	FIELDINFO(28, 4, "CTX_CMPs") special handling
 	{
 		FIELDINFO(32, 4, "PMSVer") {
 			[0] = "Statistical Profiling Extension not implemented",
@@ -1146,16 +1149,31 @@ identify_mpidr(const char *cpuname, uint64_t mpidr)
 
 /* ID_AA64DFR0_EL1 - Debug feature register 0 */
 static void
-identify_dfr0(const char *cpuname, uint64_t dfr0)
+identify_dfr0(const char *cpuname, uint64_t dfr0, uint64_t dfr1)
 {
 	const char *setname = "debug feature 0";
 
-	printf("%s: %s: CTX_CMPs: %lu context-aware breakpoints\n",
-	    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_CTX_CMPS) + 1);
-	printf("%s: %s: WRPs: %lu watchpoints\n",
-	    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_WRPS) + 1);
-	printf("%s: %s: BRPs: %lu breakpoints\n",
-	    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_BRPS) + 1);
+	if (__SHIFTOUT(dfr1, ID_AA64DFR1_EL1_CTX_CMPS) == 0)
+		printf("%s: %s: CTX_CMPs: %lu context-aware breakpoints\n",
+		    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_CTX_CMPS) + 1);
+	else
+		printf("%s: %s: CTX_CMPs: defined in ID_AA64DFR1_EL1\n",
+		    cpuname, setname);
+
+	if (__SHIFTOUT(dfr1, ID_AA64DFR1_EL1_WRPS) == 0)
+		printf("%s: %s: WRPs: %lu watchpoints\n",
+		    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_WRPS) + 1);
+	else
+		printf("%s: %s: WRPs: defined in ID_AA64DFR1_EL1\n",
+		    cpuname, setname);
+
+	if (__SHIFTOUT(dfr1, ID_AA64DFR1_EL1_BRPS) == 0)
+		printf("%s: %s: BRPs: %lu breakpoints\n",
+		    cpuname, setname, __SHIFTOUT(dfr0, ID_AA64DFR0_EL1_BRPS) + 1);
+	else
+		printf("%s: %s: BRPs: defined in ID_AA64DFR1_EL1\n",
+		    cpuname, setname);
+
 	print_fieldinfo(cpuname, setname,
 	    id_aa64dfr0_fieldinfo, dfr0);
 }
@@ -1230,7 +1248,7 @@ identifycpu(int fd, const char *cpuname)
 	    id_aa64pfr0_fieldinfo, id->ac_aa64pfr0);
 	print_fieldinfo(cpuname, "processor feature 1",
 	    id_aa64pfr1_fieldinfo, id->ac_aa64pfr1);
-	identify_dfr0(cpuname, id->ac_aa64dfr0);
+	identify_dfr0(cpuname, id->ac_aa64dfr0, id->ac_aa64dfr1);
 
 	print_fieldinfo(cpuname, "media and VFP features 0",
 	    mvfr0_fieldinfo, id->ac_mvfr0);
