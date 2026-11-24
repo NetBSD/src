@@ -1,0 +1,87 @@
+#! /bin/sh
+
+# $NetBSD: renumber-sh-tests,v 1.1 2026/11/24 13:09:13 kre Exp $
+
+#	This script was apparently found up a tree in a swamp after
+#	a flood in July 1724.   Or at least that is the legend that
+#	has been passed down over time as it has moved from place
+#	to place.   It might predate human history.   It has evolved
+#	as time has passed and it moved from place to place.
+
+#	Use it here (and give it its current name) just for source
+#	code maintenance of the sh test shell scripts, to avoid
+#	needing to manually keep the sub-test numbers (where they
+#	are used) up to date by hand.
+
+# Usage:
+#
+#	sh $0 test-1.sh test-2.sh ...	(as needed)
+#	for N in 1 2 ...
+#	do
+#		diff test-$N.sh test-$N.sh.numbered
+#		if looks-OK
+#		then
+#			mv test-$N.sh.numbered test-$N.sh
+#		else
+#			rm test-$N-sh.numbered
+#			fix $0
+#			try-again...
+#		fi
+#	done
+#	if all-OK
+#	then
+#		for N in 1 2 ...
+#		do
+#			delta test-$N.sh; get test-$N.sh  # or whatever
+#		done
+#	fi
+
+X=0
+IFS=
+for T
+do
+	test -e "${T}.numbered" && {
+		printf >&2 '%s exists already.   Not reprocessing.\n' \
+		    "${T}.renumbered"
+		X=1
+		continue
+	}
+
+	exec 0<"${T}"
+	exec 1>"${T}.numbered"
+
+	N=0
+	I=1
+	while read -r line
+	do
+		case "${line}" in
+		( '{' )
+			N=0
+			;;
+		( '#'[1-9] | '#'[1-9][0-9] )
+			I=${line#\#}
+			;;
+
+		( *?\#[\ 1-9][\ 0-9][0-9] )
+			N=$(( N + I ))
+			line=${line%\#*}$(printf '#%3d' "$N")
+			;;
+
+		( *?\#[\ 1-9][0-9] )
+			N=$(( N + I ))
+			line=${line%\#*}$(printf '#%2d' "$N")
+			;;
+
+		( *?\#[1-9] )
+			N=$(( N + I ))
+			line=${line%\#*}$(printf '#%d' "$N")
+			;;
+
+		( * )
+			;;
+		esac
+		printf '%s\n' "${line}" || X=1
+	done
+done
+
+exit $X
