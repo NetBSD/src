@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.31 2026/03/27 19:02:46 kre Exp $
+# $NetBSD: t_expand.sh,v 1.32 2026/11/24 13:11:15 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -31,7 +31,8 @@
 # This file tests the functions in expand.c.
 #
 
-delim_argv() {
+delim_argv()
+{
 	str=
 	while [ $# -gt 0 ]; do
 		if [ -z "${str}" ]; then
@@ -45,12 +46,14 @@ delim_argv() {
 }
 
 atf_test_case dollar_at
-dollar_at_head() {
-	atf_set descr "Somewhere between 2.0.2 and 3.0 the expansion" \
-	                "of the \$@ variable had been broken.  Check for" \
-			"this behavior."
+dollar_at_head()
+{
+	atf_set descr 'Somewhere between 2.0.2 and 3.0 the expansion' \
+	                'of the $@ variable had been broken.  Check for' \
+			'this behavior.'
 }
-dollar_at_body() {
+dollar_at_body()
+{
 	# This one should work everywhere.
 	atf_check -s exit:0 -o inline:' EOL\n' -e empty \
 		${TEST_SH} -c 'echo "" "" | '" sed 's,\$,EOL,'"
@@ -64,13 +67,14 @@ dollar_at_body() {
 }
 
 atf_test_case dollar_at_unquoted_or_conditional
-dollar_at_unquoted_or_conditional_head() {
+dollar_at_unquoted_or_conditional_head()
+{
 	atf_set descr 'Sometime during 2013 the expansion of "${1+$@}"' \
-			' (where $1 and $2 (and maybe more) are set)' \
-			' seems to have broken.  Check for this bug.'
+			'(where $1 and $2 (and maybe more) are set)' \
+			'seems to have broken.  Check for this bug.'
 }
-dollar_at_unquoted_or_conditional_body() {
-
+dollar_at_unquoted_or_conditional_body()
+{
 	atf_check -s exit:0 -o inline:'a\na\nb\nb\n' -e empty \
 		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n $@'
 	atf_check -s exit:0 -o inline:'a\na\nb\nb\n' -e empty \
@@ -86,15 +90,18 @@ dollar_at_unquoted_or_conditional_body() {
 }
 
 atf_test_case dollar_at_with_text
-dollar_at_with_text_head() {
-	atf_set descr "Test \$@ expansion when it is surrounded by text" \
-	                "within the quotes.  PR bin/33956."
+dollar_at_with_text_head()
+{
+	atf_set descr 'Test $@ expansion when it is surrounded by text' \
+	                'within the quotes.  PR bin/33956.'
 }
-dollar_at_with_text_body() {
+dollar_at_with_text_body()
+{
 
 	cat <<'EOF' > h-f1
 
-delim_argv() {
+delim_argv()
+{
 	str=
 	while [ $# -gt 0 ]; do
 		if [ -z "${str}" ]; then
@@ -110,7 +117,8 @@ delim_argv() {
 EOF
 	cat <<'EOF' > h-f2
 
-delim_argv() {
+delim_argv()
+{
 	str=
 	while [ $# -gt 0 ]; do
 
@@ -159,18 +167,21 @@ EOF
 }
 
 atf_test_case dollar_at_empty_and_conditional
-dollar_at_empty_and_conditional_head() {
-	atf_set descr 'Test $@ expansion when there are no args, and ' \
+dollar_at_empty_and_conditional_head()
+{
+	atf_set descr 'Test $@ expansion when there are no args, and' \
 	                'when conditionally expanded.'
 }
-dollar_at_empty_and_conditional_body() {
+dollar_at_empty_and_conditional_body()
+{
 
 	# same task, implementation different from previous,
 	# that these work is also a test...
 
 	cat <<'EOF' > h-f3
 
-delim_argv() {
+delim_argv()
+{
 	str=
 	for Arg; do
 		str="${str:+${str} }>${Arg}<"
@@ -192,10 +203,6 @@ EOF
 		${TEST_SH} -c 'set -- "a a" "b b"; printf %s\\n "" "$@"'
 	atf_check -s exit:0 -o inline:'\n' -e empty \
 		${TEST_SH} -c 'set -- ; printf %s\\n "" "$@"'
-	atf_check -s exit:0 -o inline:'\n' -e empty \
-		${TEST_SH} -c 'set -- ; printf %s\\n ""${1+"$@"}'
-	atf_check -s exit:0 -o inline:'\n' -e empty \
-		${TEST_SH} -c 'set -- ; printf %s\\n """${1+$@}"'
 
 	# in these we prefix (concat) the $@ expansion with "" to make
 	# sure there is always at least one arg for the %s in printf
@@ -354,12 +361,14 @@ EOF
 }
 
 atf_test_case strip
-strip_head() {
-	atf_set descr "Checks that the %% operator works and strips" \
-	                "the contents of a variable from the given point" \
-			"to the end"
+strip_head()
+{
+	atf_set descr 'Checks that the %% operator works and strips' \
+	                'the contents of a variable from the given point' \
+			'to the end'
 }
-strip_body() {
+strip_body()
+{
 	line='#define bindir "/usr/bin" /* comment */'
 	stripped='#define bindir "/usr/bin" '
 
@@ -384,12 +393,14 @@ strip_body() {
 }
 
 atf_test_case wrap_strip
-wrap_strip_head() {
-	atf_set descr "Checks that the %% operator works and strips" \
-	                "the contents of a variable from the given point" \
+wrap_strip_head()
+{
+	atf_set descr 'Checks that the %% operator works and strips' \
+	                'the contents of a variable from the given point' \
 			'to the end, and that \ \n sequences do not break it'
 }
-wrap_strip_body() {
+wrap_strip_body()
+{
 	line='#define bindir "/usr/bin" /* comment */'
 	stripped='#define bindir "/usr/bin" '
 
@@ -428,10 +439,12 @@ ne%\
 }
 
 atf_test_case tilde
-tilde_head() {
-	atf_set descr "Checks that the ~ expansions work"
+tilde_head()
+{
+	atf_set descr 'Checks that the ~ expansions work'
 }
-tilde_body() {
+tilde_body()
+{
 	for HOME in '' / /home/foo /home/foo/ \
 /a/very/long/home/directory/path/that/might/push/the/tilde/expansion/code/beyond/what/it/would/normally/ever/see/on/any/sane/system/and/perhaps/expose/some/bugs
 	do
@@ -497,11 +510,13 @@ ${U4:=~/:~/}\t'"${HOME%/}"'/:'"${HOME%/}"'/\n' \
 }
 
 atf_test_case varpattern_backslashes
-varpattern_backslashes_head() {
-	atf_set descr "Tests that protecting wildcards with backslashes" \
-	                "works in variable patterns."
+varpattern_backslashes_head()
+{
+	atf_set descr 'Tests that protecting wildcards with backslashes' \
+	                'works in variable patterns.'
 }
-varpattern_backslashes_body() {
+varpattern_backslashes_body()
+{
 	line='/foo/bar/*/baz'
 	stripped='/foo/bar/'
 	atf_check -o inline:'/foo/bar/\n' -e empty ${TEST_SH} -c \
@@ -509,14 +524,15 @@ varpattern_backslashes_body() {
 }
 
 atf_test_case arithmetic
-arithmetic_head() {
-	atf_set descr "POSIX requires shell arithmetic to use signed" \
-	                "long or a wider type.  We use intmax_t, so at" \
-			"least 64 bits should be available.  Make sure" \
-			"this is true."
+arithmetic_head()
+{
+	atf_set descr 'POSIX requires shell arithmetic to use signed' \
+	                'long or a wider type.  We use intmax_t, so at' \
+			'least 64 bits should be available.  Make sure' \
+			'this is true.'
 }
-arithmetic_body() {
-
+arithmetic_body()
+{
 	atf_check -o inline:'3' -e empty ${TEST_SH} -c \
 		'printf %s $((1 + 2))'
 	atf_check -o inline:'2147483647' -e empty ${TEST_SH} -c \
@@ -531,42 +547,50 @@ arithmetic_body() {
 }
 
 atf_test_case iteration_on_null_parameter
-iteration_on_null_parameter_head() {
-	atf_set descr "Check iteration of \$@ in for loop when set to null;" \
-	                "the error \"sh: @: parameter not set\" is incorrect." \
-	                "PR bin/48202."
+iteration_on_null_parameter_head()
+{
+	atf_set descr 'Check iteration of $@ in for loop when set to null;' \
+	                'the error "sh: @: parameter not set" is incorrect.' \
+	                'PR bin/48202.'
 }
-iteration_on_null_parameter_body() {
+iteration_on_null_parameter_body()
+{
 	atf_check -o empty -e empty ${TEST_SH} -c \
 		'N=; set -- ${N};   for X; do echo "[$X]"; done'
 }
 
 atf_test_case iteration_on_quoted_null_parameter
-iteration_on_quoted_null_parameter_head() {
+iteration_on_quoted_null_parameter_head()
+{
 	atf_set descr \
 		'Check iteration of "$@" in for loop when set to null;'
 }
-iteration_on_quoted_null_parameter_body() {
+iteration_on_quoted_null_parameter_body()
+{
 	atf_check -o inline:'[]\n' -e empty ${TEST_SH} -c \
 		'N=; set -- "${N}"; for X; do echo "[$X]"; done'
 }
 
 atf_test_case iteration_on_null_or_null_parameter
-iteration_on_null_or_null_parameter_head() {
+iteration_on_null_or_null_parameter_head()
+{
 	atf_set descr \
 		'Check expansion of null parameter as default for another null'
 }
-iteration_on_null_or_null_parameter_body() {
+iteration_on_null_or_null_parameter_body()
+{
 	atf_check -o empty -e empty ${TEST_SH} -c \
 		'N=; E=; set -- ${N:-${E}}; for X; do echo "[$X]"; done'
 }
 
 atf_test_case iteration_on_null_or_missing_parameter
-iteration_on_null_or_missing_parameter_head() {
+iteration_on_null_or_missing_parameter_head()
+{
 	atf_set descr \
 	    'Check expansion of missing parameter as default for another null'
 }
-iteration_on_null_or_missing_parameter_body() {
+iteration_on_null_or_missing_parameter_body()
+{
 	# atf_expect_fail 'PR bin/50834'
 	atf_check -o empty -e empty ${TEST_SH} -c \
 		'N=; set -- ${N:-}; for X; do echo "[$X]"; done'
@@ -627,7 +651,7 @@ check()
 	fi
 	rm -f "${TEMP_FILE}"
 
-	# Remove newlines (use local shell for this)
+	# Remove newlines (use local shell for this) (replace with spaces)
 	oifs="$IFS"
 	IFS="$nl"
 	result="$(echo $result)"
@@ -679,50 +703,55 @@ results()
 ####### End helpers
 
 atf_test_case shell_params
-shell_params_head() {
-	atf_set descr "Test correct operation of the numeric parameters"
+shell_params_head()
+{
+	atf_set descr 'Test correct operation of the numeric parameters'
 }
-shell_params_body() {
+shell_params_body()
+{
 	atf_require_prog mktemp
 
 	reset shell_params
-
-	check 'set -- a b c; echo "$#: $1 $2 $3"' '3: a b c' 0
+#1
+	check 'set -- a b c; echo "$#: $1 $2 $3"' '3: a b c' 0		# 1
 	check 'set -- a b c d e f g h i j k l m; echo "$#: ${1}0 ${10} $10"' \
-		'13: a0 j a0' 0
+		'13: a0 j a0' 0						# 2
 	check 'x="$0"; set -- a b; y="$0";
 	      [ "x${x}y" = "x${y}y" ] && echo OK || echo x="$x" y="$y"' \
-		'OK' 0
-	check "${TEST_SH} -c 'echo 0=\$0 1=\$1 2=\$2' a b c" '0=a 1=b 2=c' 0
+		'OK' 0							# 3
+	check "${TEST_SH} -c 'echo 0=\$0 1=\$1 2=\$2' a b c" '0=a 1=b 2=c' 0 #4
 
 	echo 'echo 0="$0" 1="$1" 2="$2"' > helper.sh
-	check "${TEST_SH} helper.sh a b c" '0=helper.sh 1=a 2=b' 0
+	check "${TEST_SH} helper.sh a b c" '0=helper.sh 1=a 2=b' 0	# 5
 
 	check 'set -- a bb ccc dddd eeeee ffffff ggggggg hhhhhhhh \
 		iiiiiiiii jjjjjjjjjj kkkkkkkkkkk
 	       echo "${#}: ${#1} ${#2} ${#3} ${#4} ... ${#9} ${#10} ${#11}"' \
-		 '11: 1 2 3 4 ... 9 10 11' 0
+		 '11: 1 2 3 4 ... 9 10 11' 0				# 6
 
 	check 'set -- a b c; echo "$#: ${1-A} ${2-B} ${3-C} ${4-D} ${5-E}"' \
-		'3: a b c D E' 0
+		'3: a b c D E' 0					# 7
 	check 'set -- a "" c "" e
 	       echo "$#: ${1:-A} ${2:-B} ${3:-C} ${4:-D} ${5:-E}"' \
-		'5: a B c D e' 0
+		'5: a B c D e' 0					# 8
 	check 'set -- a "" c "" e
 	       echo "$#: ${1:+A} ${2:+B} ${3:+C} ${4:+D} ${5:+E}"' \
-		'5: A  C  E' 0
+		'5: A  C  E' 0					#9
 	check 'set -- "abab*cbb"
 	       echo "${1} ${1#a} ${1%b} ${1##ab} ${1%%b} ${1#*\*} ${1%\**}"' \
-	       'abab*cbb bab*cbb abab*cb ab*cbb abab*cb cbb abab' 0
+	       'abab*cbb bab*cbb abab*cb ab*cbb abab*cb cbb abab' 0	#10
 	check 'set -- "abab?cbb"
     echo "${1}:${1#*a}+${1%b*}-${1##*a}_${1%%b*}%${1#[ab]}=${1%?*}/${1%\?*}"' \
-	       'abab?cbb:bab?cbb+abab?cb-b?cbb_a%bab?cbb=abab?cb/abab' 0
-	check 'set -- a "" c "" e; echo "${2:=b}"' '' 1
+	       'abab?cbb:bab?cbb+abab?cb-b?cbb_a%bab?cbb=abab?cb/abab' 0  #11
+	check 'set -- a "" c "" e; echo "${2:=b}"' '' 1			#12
 
-	check 'set -- a b c d; echo ${4294967297}' '' 0  # result 'a' => ${1}
-	check 'set -- a b c; echo ${01}' 'a' 0
-	check "${TEST_SH} -c 'echo 0=\${00} 1=\${01} 2=\${02}' a b c" \
-			'0=a 1=b 2=c' 0
+	check 'set -- a b c d; echo ${4294967297}' '' 0  # result 'a' => ${1} #13
+	check 'set -- a b c; echo ${01}' 'a' 0				#14
+
+	# nb: ${00} is nominal positional arg 0, always unset
+	#     ${0} is a special parameter, the name of the script often
+	check "${TEST_SH} -c 'echo 0=\${0} 00=\${00} 1=\${01} 2=\${02}' a b c" \
+			'0=a 00= 1=b 2=c' 0					#15
 
 	# by special request, for PaulG...  (${0...} is not octal!)
 
@@ -732,19 +761,20 @@ shell_params_body() {
 
 	check \
 	    'set -- a b c d e f g h i j k l m; echo "$#: ${08} ${010} ${011}"' \
-		'13: h j k' 0
+		'13: h j k' 0						#16
 
 	results
 }
 
 atf_test_case var_with_embedded_cmdsub
-var_with_embedded_cmdsub_head() {
-	atf_set descr "Test expansion of vars with embedded cmdsub"
+var_with_embedded_cmdsub_head()
+{
+	atf_set descr 'Test expansion of vars with embedded cmdsub'
 }
-var_with_embedded_cmdsub_body() {
-
+var_with_embedded_cmdsub_body()
+{
 	reset var_with_embedded_cmdsub
-
+#1
 	check 'unset x; echo ${x-$(echo a)}$(echo b)'  'ab' 0	#1
 	check 'unset x; echo ${x:-$(echo a)}$(echo b)' 'ab' 0	#2
 	check 'x=""; echo ${x-$(echo a)}$(echo b)'     'b'  0	#3
@@ -795,11 +825,12 @@ var_with_embedded_cmdsub_body() {
 }
 
 atf_test_case dollar_hash
-dollar_hash_head() {
+dollar_hash_head()
+{
 	atf_set descr 'Test expansion of various aspects of $#'
 }
-dollar_hash_body() {
-
+dollar_hash_body()
+{
 #
 #	$# looks like it should be so simple that it doesn't really
 #	need a test of its own, and used in that way, it really doesn't.
@@ -838,7 +869,7 @@ dollar_hash_body() {
 #
 
 	reset dollar_hash
-
+#1
 	check 'set -- ; echo $#'			'0'		0  # 1
 	check 'set -- a b c; echo $#'			'3'		0  # 2
 	check 'set -- a b c d e f g h i j; echo $#'	'10'		0  # 3
@@ -957,7 +988,7 @@ dollar_hash_body() {
 	check 'set -- a b c; echo ${#:=bogus}'		'3'		0  #85
 	check 'set -- a b c; echo ${#=bogus}'		'3'		0  #86
 
-	for n in 0 1 10 25 100				#87 #88 #89 #90 #91
+	for n in 0 1 10 25 100				#87 #88 #89 #90 #91.
 	do
 		check "(exit $n)"'; echo ${#?}'		"${#n}"		0
 	done
@@ -1007,13 +1038,14 @@ dollar_hash_body() {
 }
 
 atf_test_case dollar_star
-dollar_star_head() {
+dollar_star_head()
+{
 	atf_set descr 'Test expansion of various aspects of $*'
 }
-dollar_star_body() {
-
+dollar_star_body()
+{
 	reset dollar_star
-
+#1
 	check 'set -- a b c; echo $# $*'		'3 a b c'	0  # 1
 	check 'set -- a b c; echo $# "$*"'		'3 a b c'	0  # 2
 	check 'set -- a "b c"; echo $# $*'		'2 a b c'	0  # 3
@@ -1051,13 +1083,14 @@ dollar_star_body() {
 }
 
 atf_test_case dollar_star_in_word
-dollar_star_in_word_head() {
+dollar_star_in_word_head()
+{
 	atf_set descr 'Test expansion $* occurring in word of ${var:-word}'
 }
-dollar_star_in_word_body() {
-
+dollar_star_in_word_body()
+{
 	reset dollar_star_in_word
-
+#1
 	unset xXx			; # just in case!
 
 	# Note that the expected results for these tests are identical
@@ -1103,13 +1136,14 @@ dollar_star_in_word_body() {
 }
 
 atf_test_case dollar_star_with_empty_ifs
-dollar_star_with_empty_ifs_head() {
+dollar_star_with_empty_ifs_head()
+{
 	atf_set descr 'Test expansion of $* with IFS=""'
 }
-dollar_star_with_empty_ifs_body() {
-
+dollar_star_with_empty_ifs_body()
+{
 	reset dollar_star_with_empty_ifs
-
+#1
 	check 'IFS=""; set -- a b c; echo $# $*'	'3 a b c'	0  # 1
 	check 'IFS=""; set -- a b c; echo $# "$*"'	'3 abc'		0  # 2
 	check 'IFS=""; set -- a "b c"; echo $# $*'	'2 a b c'	0  # 3
@@ -1137,13 +1171,14 @@ dollar_star_with_empty_ifs_body() {
 }
 
 atf_test_case dollar_star_in_word_empty_ifs
-dollar_star_in_word_empty_ifs_head() {
+dollar_star_in_word_empty_ifs_head()
+{
 	atf_set descr 'Test expansion of ${unset:-$*} with IFS=""'
 }
-dollar_star_in_word_empty_ifs_body() {
-
+dollar_star_in_word_empty_ifs_body()
+{
 	reset dollar_star_in_word_empty_ifs
-
+#1
 	unset xXx			; # just in case
 
 	# Note that the expected results for these tests are identical
@@ -1179,13 +1214,14 @@ dollar_star_in_word_empty_ifs_body() {
 }
 
 atf_test_case dollar_star_in_quoted_word
-dollar_star_in_quoted_word_head() {
+dollar_star_in_quoted_word_head()
+{
 	atf_set descr 'Test expansion $* occurring in word of ${var:-"word"}'
 }
-dollar_star_in_quoted_word_body() {
-
+dollar_star_in_quoted_word_body()
+{
 	reset dollar_star_in_quoted_word
-
+#1
 	unset xXx			; # just in case!
 
 	check 'set -- a b c; echo $# ${xXx:-"$*"}'		'3 a b c' 0  # 1
@@ -1239,12 +1275,14 @@ dollar_star_in_quoted_word_body() {
 }
 
 atf_test_case dollar_at_in_field_split_context
-dollar_at_in_field_split_context_head() {
+dollar_at_in_field_split_context_head()
+{
 	atf_set descr 'Test "$@" wth field splitting -- PR bin/54112'
 }
-dollar_at_in_field_split_context_body() {
+dollar_at_in_field_split_context_body()
+{
 	reset dollar_at_in_field_split_context
-
+#1
 		# the simple case (no field split) which always worked
 	check 'set -- ""; set -- ${0+"$@"}; echo $#'		1	0   #1
 
@@ -1281,7 +1319,7 @@ dollar_at_in_field_split_context_body() {
 	check 'set --; X=; set -- "$@$@"; echo $#'		0	0   #16
 
 	check 'set -- ""; X=; set -- "$X$@"; echo $#'		1	0   #17
-	check 'set -- ""; X=; set -- "$@$X"; echo $#'		1	0   #19
+	check 'set -- ""; X=; set -- "$@$X"; echo $#'		1	0   #18
 	check 'set -- ""; X=; set -- "$X$@$X"; echo $#'		1	0   #19
 	check 'set -- ""; X=; set -- "$@$@"; echo $#'		1	0   #20
 
@@ -1295,12 +1333,14 @@ dollar_at_in_field_split_context_body() {
 }
 
 atf_test_case dollar_star_unquoted
-dollar_star_unquoted_head() {
+dollar_star_unquoted_head()
+{
 	atf_set descr 'Test unquoted $* in various contexts'
 }
-dollar_star_unquoted_body() {
+dollar_star_unquoted_body()
+{
 	reset dollar_star_unquoted
-
+#1
 	check 'set -- ; set -- $* ; printf %d "$#"'		0	0   # 1
 	check 'set -- a ; set -- $* ; printf %d "$#"'		1	0   # 2
 	check 'set -- a b ; set -- $* ; printf %d "$#"'		2	0   # 3
@@ -1383,19 +1423,16 @@ dollar_star_unquoted_body() {
 	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*x$* ; printf %d "$#"' \
 								5	0   #36
 
-	check 'set -- "" a "" b "" ; set -- $*+$* ; printf %d "$#"' 5	0   #35
-	check 'IFS=+ ; set -- "" a "" b "" ; set -- $*+$* ; printf %d "$#"' \
-								5	0   #36
-
 	results
 }
 
 atf_test_case embedded_nl
-embedded_nl_head() {
+embedded_nl_head()
+{
 	atf_set descr 'Test literal \n in xxx string in ${var-xxx}'
 }
-embedded_nl_body() {
-
+embedded_nl_body()
+{
 	atf_check -s exit:0 -o inline:'a\nb\n' -e empty ${TEST_SH} <<- 'EOF'
 		unset V
 		X="${V-a
@@ -1450,16 +1487,18 @@ check3()
 }
 
 atf_test_case alternative
-alternative_head() {
+alternative_head()
+{
 	atf_set descr 'Test various possibilities for ${var+xxx}'
 }
-alternative_body() {
+alternative_body()
+{
 	reset alternative
-
+#1
 	# just to verify (validate) that the test method works as expected
 	# (this is currently the very first test performed in this test set)
 	check	'printf %s a b'				ab	0	#  1
-
+#3
 	check3	'set -- ${X+bar}; echo "$#:$1"'		1:bar 1:bar 0:  #  4
 	check3	'set -- ${X+}; echo "$#:$1"'		0: 0: 0:	#  7
 	check3	'set -- ${X+""}; echo "$#:$1"'		1: 1: 0:	# 10
@@ -1469,10 +1508,12 @@ alternative_body() {
 	check3	'set -- ${X+a b c}; echo "$#:$1"'	3:a 3:a 0:	# 19
 	check3	'set -- ${X+"a b c"}; echo "$#:$1"'	'1:a b c' '1:a b c' 0:
 	check3	'set -- "${X+a b c}"; echo "$#:$1"'	'1:a b c' '1:a b c' 1:
+#9
 	check3	'set -- ${X+a b\ c}; echo "$#:$1"'	2:a 2:a 0:	# 28
 	check3	'set -- ${X+"a b" c}; echo "$#:$1"'	'2:a b' '2:a b' 0:
-
+#6
 	check3	'printf %s "" ${X+}'			''  ''  ''	# 34
+#3
 	check3	'printf %s ""${X+bar}'			bar bar ''	# 37
 
 	check3	'Y=bar; printf %s ${X+x}${Y+y}'		xy  xy  y	# 40
@@ -1571,12 +1612,14 @@ alternative_body() {
 }
 
 atf_test_case default
-default_head() {
+default_head()
+{
 	atf_set descr 'Test various possibilities for ${var-xxx}'
 }
-default_body() {
+default_body()
+{
 	reset default
-
+#3
 	check3	'set -- ${X-bar}; echo "$#:$1"'		1:foo 0: 1:bar	#  3
 	check3	'set -- ${X-}; echo "$#:$1"'		1:foo 0: 0:	#  6
 	check3	'set -- ${X-""}; echo "$#:$1"'		1:foo 0: 1:	#  9
@@ -1615,10 +1658,12 @@ default_body() {
 	check3	'set -- ${X:-a b c}; echo "$#:$1"'	1:foo 3:a 3:a	# 90
 	check3	'set -- ${X:-"a b c"}; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
 	check3	'set -- "${X:-a b c}"; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+#9
 	check3	'set -- ${X:-a b\ c}; echo "$#:$1"'	1:foo 2:a 2:a	# 99
 	check3	'set -- ${X:-"a b" c}; echo "$#:$1"'	1:foo '2:a b' '2:a b'
-
+#6
 	check3	'printf %s "" ${X:-}'			foo ''  ''	#105
+#3
 	check3	'printf %s ""${X:-bar}'			foo bar bar	#108
 
 	check3	'Y=bar; printf %s ${X:-x}${Y:-y}'	foobar xbar xbar #111
@@ -1640,12 +1685,14 @@ default_body() {
 }
 
 atf_test_case assign
-assign_head() {
+assign_head()
+{
 	atf_set descr 'Test various possibilities for ${var=xxx}'
 }
-assign_body() {
+assign_body()
+{
 	reset assign
-
+#3
 	check3	'set -- ${X=bar}; echo "$#:$1"'		1:foo 0: 1:bar	#  3
 	check3	'set -- ${X=}; echo "$#:$1"'		1:foo 0: 0:	#  6
 	check3	'set -- ${X=""}; echo "$#:$1"'		1:foo 0: 0:	#  9
@@ -1681,8 +1728,9 @@ assign_body() {
 						1:foo:foo 1:: '1:a b c:a b c'
 	check3	'set -- ${X=a b\ c}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
 	check3	'set -- ${X="a b" c}; echo "$#:$1:$X"' 1:foo:foo 0:: '3:a:a b c'
-
+#18
 	check3	'printf %s ${X=}x}; printf :%s "${X-U}"' foox}:foo x}: x}: #90
+#3
 	check3	'printf %s ${X=}}; printf :%s "${X-U}"'  foo}:foo }:  }:   #93
 	check3	'printf %s ${X={}}; printf :%s "${X-U}"' foo}:foo }: {}:{  #96
 
@@ -1695,7 +1743,9 @@ assign_body() {
 	check3	'set -- ${X:=a b c}; echo "$#:$1"'	1:foo 3:a 3:a	#114
 	check3	'set -- ${X:="a b c"}; echo "$#:$1"' 1:foo 3:a 3:a	#117
 	check3	'set -- "${X:=a b c}"; echo "$#:$1"' 1:foo '1:a b c' '1:a b c'
+#6
 	check3	'set -- ${X:=a b\ c}; echo "$#:$1"'	1:foo 3:a 3:a	#123
+#3
 	check3	'set -- ${X:="a b" c}; echo "$#:$1"'	1:foo 3:a 3:a	#126
 
 	check3	'printf %s "" ${X:=}'			foo ''  ''	#129
@@ -1726,7 +1776,7 @@ assign_body() {
 				1:foo:foo '3:a:a b c' '3:a:a b c'	#183
 	check3	'set -- ${X:="a b" c}; echo "$#:$1:$X"' \
 				1:foo:foo '3:a:a b c' '3:a:a b c'	#186
-
+#12
 	check3	'printf %s ${X:=}x}; printf :%s "${X-U}"' foox}:foo x}: x}:
 	check3	'printf %s ${X:=}}; printf :%s "${X-U}"'  foo}:foo }:  }:
 	check3	'printf %s ${X:=\}}; printf :%s "${X-U}"' foo:foo }:}  }:}
@@ -1737,12 +1787,14 @@ assign_body() {
 }
 
 atf_test_case error
-error_head() {
+error_head()
+{
 	atf_set descr 'Test various possibilities for ${var?xxx}'
 }
-error_body() {
+error_body()
+{
 	reset error
-
+#1
 	check 'X=foo; printf %s ${X?X is not set}'	foo	0	#1
 	check 'X=; printf %s ${X?X is not set}'		''	0	#2
 	check 'unset X; printf %s ${X?X is not set}'	''	2	#3
@@ -1763,12 +1815,14 @@ error_body() {
 }
 
 atf_test_case land_mine
-land_mine_head() {
+land_mine_head()
+{
 	atf_set descr 'Attempt to test for land mines left by expansions'
 }
-land_mine_body() {
+land_mine_body()
+{
 	reset land_mine
-
+#1
 	# Land mines (in this sense) are bugs left in the shell state
 	# after an expansion, which very often are benign, and unnoticed
 	# by the vast majority of ordinary code, but in odd cases can
@@ -1882,7 +1936,8 @@ land_mine_body() {
 	results
 }
 
-atf_init_test_cases() {
+atf_init_test_cases()
+{
 	# Listed here in the order ATF runs them, not the order from above
 
 	atf_add_test_case alternative
