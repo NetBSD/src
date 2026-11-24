@@ -1,4 +1,4 @@
-/*	$NetBSD: fss.c,v 1.133 2026/11/16 20:29:44 riastradh Exp $	*/
+/*	$NetBSD: fss.c,v 1.134 2026/11/24 23:05:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.133 2026/11/16 20:29:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fss.c,v 1.134 2026/11/24 23:05:19 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -842,6 +842,8 @@ out:	if (mp)
  * - sc_bs_vp is returned:
  *   . _referenced_ for persistent internal snapshots (vrele),
  *   . _opened_ otherwise (vn_close).
+ *
+ * On failure, sc_mount and sc_bs_vp are not changed.
  */
 static int
 fss_create_files(struct fss_softc *sc, struct fss_set *fss,
@@ -951,6 +953,14 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 		/*
 		 * Success!  Record the resources in the softc.
+		 *
+		 * - Transfer ownership of vfs_busy on mp (from
+		 *   fss_get_mountpoint) to sc->sc_mount; caller will
+		 *   vfs_unbusy(sc->sc_mount).
+		 *
+		 * - Transfer ownership of vref on bstore_vp (from
+		 *   namei_simple_user) to sc->sc_bs_vp; cleanup in the
+		 *   FSS_PERSISTENT case will vrele(sc->sc_bs_vp).
 		 */
 		sc->sc_mount = mp;
 		mp = NULL;
@@ -1031,12 +1041,22 @@ fss_create_files(struct fss_softc *sc, struct fss_set *fss,
 
 	/*
 	 * Success!  Record the resources in the softc.
+	 *
+	 * - Transfer ownership of vfs_busy on mp (from
+	 *   fss_get_mountpoint) to sc->sc_mount; caller will
+	 *   vfs_unbusy(sc->sc_mount).
+	 *
+	 * - Transfer ownership of `vn_open' above on bstore_vp to
+	 *   sc->sc_bs_vp; cleanup in the !FSS_PERSISTENT case will
+	 *   vn_close(sc->sc_bs_vp).  But release our vref of bstore_vp
+	 *   from namei_simple_user.
 	 */
 	sc->sc_mount = mp;
 	mp = NULL;
 	KASSERT(bstore_open);
 	KASSERT(!bstore_locked);
 	sc->sc_bs_vp = bstore_vp;
+	vrele(bstore_vp);
 	bstore_vp = NULL;
 	error = 0;
 
