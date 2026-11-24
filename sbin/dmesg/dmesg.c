@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.53 2026/11/24 17:35:55 msaitoh Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.54 2026/11/24 21:53:49 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.53 2026/11/24 17:35:55 msaitoh Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.54 2026/11/24 21:53:49 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,7 +71,11 @@ static struct nlist nl[] = {
 static const char *radix;
 
 __dead static void	usage(void);
-static void	clearbuf(void);
+
+#ifndef KERN_MSGBUFCLR
+__dead
+#endif
+	static void	clearbuf(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
@@ -442,8 +446,10 @@ main(int argc, char *argv[])
 #endif
 	if (!newl)
 		(void)putchar('\n');
+#ifndef SMALL
 	if (clear)
 		clearbuf();
+#endif
 	return EXIT_SUCCESS;
 }
 
@@ -456,11 +462,11 @@ usage(void)
 		getprogname());
 	exit(EXIT_FAILURE);
 }
-#endif
 
-void
+static void
 clearbuf(void)
 {
+#ifdef KERN_MSGBUFCLR
 	int mib[2];
 	int on = 1;
 
@@ -468,4 +474,8 @@ clearbuf(void)
 	mib[1] = KERN_MSGBUFCLR;
 	if (sysctl(mib, 2, NULL, 0, &on, sizeof(on)) == -1)
 		err(EXIT_FAILURE, "can't clear msgbuf");
+#else
+	errx(EXIT_FAILURE, "Clearing msgbuf not supported");
+#endif /* KERN_MSGBUFCLR */
 }
+#endif	/* !SMALL */
