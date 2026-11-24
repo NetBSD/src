@@ -1,4 +1,4 @@
-/*	$NetBSD: show.c,v 1.60 2026/04/18 09:37:51 kre Exp $	*/
+/*	$NetBSD: show.c,v 1.61 2026/11/24 13:26:11 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -39,7 +39,7 @@
 #if 0
 static char sccsid[] = "@(#)show.c	8.3 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: show.c,v 1.60 2026/04/18 09:37:51 kre Exp $");
+__RCSID("$NetBSD: show.c,v 1.61 2026/11/24 13:26:11 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -124,6 +124,7 @@ void
 opentrace(void)
 {
 	char *s;
+	const char *p;
 	int fd;
 	int i;
 	pid_t pid;
@@ -140,7 +141,9 @@ opentrace(void)
 	DFlags = DBG_PID;	/* just force DBG_PID on, and leave it ... */
 #endif
 	pid = getpid();
-	if (asprintf(&s, "trace.%jd", (intmax_t)pid) <= 0) {
+	if ((p = getenv("SHELL_TRACES")) == NULL)
+		p = ".";
+	if (asprintf(&s, "%s/trace.%jd", p, (intmax_t)pid) <= 0) {
 		debug = 0;
 		error("Cannot asprintf tracefilename");
 	};
