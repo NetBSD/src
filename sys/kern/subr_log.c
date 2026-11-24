@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_log.c,v 1.68 2026/01/04 03:19:49 riastradh Exp $	*/
+/*	$NetBSD: subr_log.c,v 1.69 2026/11/24 17:35:55 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.68 2026/01/04 03:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_log.c,v 1.69 2026/11/24 17:35:55 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -155,6 +155,12 @@ loginit(void)
 		       SYSCTL_DESCR("Kernel message buffer"),
 		       sysctl_msgbuf, 0, NULL, 0,
 		       CTL_KERN, KERN_MSGBUF, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "msgbuf_clear",
+		       SYSCTL_DESCR("Clear the kernel message buffer"),
+		       sysctl_msgbuf, 0, NULL, 0,
+		       CTL_KERN, KERN_MSGBUFCLR, CTL_EOL);
 }
 
 /*ARGSUSED*/
@@ -462,10 +468,11 @@ out:
 static int
 sysctl_msgbuf(SYSCTLFN_ARGS)
 {
+	struct sysctlnode node = *rnode;
 	char *where = oldp;
 	size_t len, maxlen;
 	long beg, end;
-	int error;
+	int error, val;
 
 	if (!logenabled(msgbufp)) {
 		msgbufenabled = 0;
@@ -474,11 +481,27 @@ sysctl_msgbuf(SYSCTLFN_ARGS)
 
 	switch (rnode->sysctl_num) {
 	case KERN_MSGBUFSIZE: {
-		struct sysctlnode node = *rnode;
 		int msg_bufs = (int)msgbufp->msg_bufs;
 		node.sysctl_data = &msg_bufs;
 		return (sysctl_lookup(SYSCTLFN_CALL(&node)));
 	}
+	case KERN_MSGBUFCLR:
+		val = 0;
+		node.sysctl_data = &val;
+		error = sysctl_lookup(SYSCTLFN_CALL(&node));
+		if (error || newp == NULL)
+			return error;
+
+		if (val == 0)
+			return EINVAL;
+
+		mutex_spin_enter(&log_lock);
+		msgbufp->msg_bufx = 0;
+		msgbufp->msg_bufr = 0;
+		memset(msgbufp->msg_bufc, 0, msgbufp->msg_bufs);
+		mutex_spin_exit(&log_lock);
+
+		return 0;
 	case KERN_MSGBUF:
 		break;
 	default:

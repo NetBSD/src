@@ -1,4 +1,4 @@
-/*	$NetBSD: sysctl.h,v 1.242 2026/07/10 03:27:57 kre Exp $	*/
+/*	$NetBSD: sysctl.h,v 1.243 2026/11/24 17:35:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -276,6 +276,7 @@ struct ctlname {
 #define	KERN_EVCNT		84	/* struct: evcnts */
 #define	KERN_SOFIXEDBUF		85	/* bool: fixed socket buffer sizes */
 #define	KERN_ENTROPY		86	/* node: entropy(9) subsystem */
+#define	KERN_MSGBUFCLR		87	/* int: clear message buffer */
 
 /*
  *  KERN_CLOCKRATE structure

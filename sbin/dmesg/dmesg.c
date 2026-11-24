@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.52 2026/11/08 15:44:17 christos Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.53 2026/11/24 17:35:55 msaitoh Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.52 2026/11/08 15:44:17 christos Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.53 2026/11/24 17:35:55 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -71,6 +71,7 @@ static struct nlist nl[] = {
 static const char *radix;
 
 __dead static void	usage(void);
+static void	clearbuf(void);
 
 #define	KREAD(addr, var) \
 	kvm_read(kd, addr, &var, sizeof(var)) != sizeof(var)
@@ -159,6 +160,7 @@ main(int argc, char *argv[])
 	int scale;
 	int deltas, quiet, humantime;
 	bool frac, postts;
+	bool clear = false;
 
 	static const int bmib[] = { CTL_KERN, KERN_BOOTTIME };
 	size = sizeof(boottime);
@@ -177,8 +179,14 @@ main(int argc, char *argv[])
 	(void)sysctl(bmib, 2, &boottime, &size, NULL, 0);
 
 	memf = nlistf = NULL;
-	while ((ch = getopt(argc, argv, "dM:N:tT")) != -1)
+	while ((ch = getopt(argc, argv, "cCdM:N:tT")) != -1)
 		switch(ch) {
+		case 'c':
+			clear = true;
+			break;
+		case 'C':
+			clearbuf();
+			exit(0);
 		case 'd':
 			deltas = 1;
 			break;
@@ -434,6 +442,8 @@ main(int argc, char *argv[])
 #endif
 	if (!newl)
 		(void)putchar('\n');
+	if (clear)
+		clearbuf();
 	return EXIT_SUCCESS;
 }
 
@@ -442,8 +452,20 @@ static void
 usage(void)
 {
 
-	(void)fprintf(stderr, "Usage: %s [-dTt] [-M core] [-N system]\n",
+	(void)fprintf(stderr, "Usage: %s [-CcdTt] [-M core] [-N system]\n",
 		getprogname());
 	exit(EXIT_FAILURE);
 }
 #endif
+
+void
+clearbuf(void)
+{
+	int mib[2];
+	int on = 1;
+
+	mib[0] = CTL_KERN;
+	mib[1] = KERN_MSGBUFCLR;
+	if (sysctl(mib, 2, NULL, 0, &on, sizeof(on)) == -1)
+		err(EXIT_FAILURE, "can't clear msgbuf");
+}
