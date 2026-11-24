@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.201 2026/08/23 10:26:45 nia Exp $	*/
+/*	$NetBSD: eval.c,v 1.202 2026/11/24 13:25:53 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.201 2026/08/23 10:26:45 nia Exp $");
+__RCSID("$NetBSD: eval.c,v 1.202 2026/11/24 13:25:53 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -278,8 +278,10 @@ evaltree(union node *n, int flags)
 		displayhist = 1; /* show history substitutions done with fc */
 #endif
 		next = NULL;
-		CTRACE(DBG_EVAL, ("pid %d, evaltree(%p: %s(%d), %#x) called\n",
-		    getpid(), n, NODETYPENAME(n->type), n->type, flags));
+		CTRACE(DBG_EVAL,
+		    ("pid %d, evaltree(%p: %s(%d), %#x S:%#x) called%s\n",
+		    getpid(), n, NODETYPENAME(n->type), n->type, flags, sflags,
+		    do_etest ? " ET" : ""));
 	/*
 		if (n->type != NCMD && traps_invalid)
 			free_traps();
@@ -387,14 +389,16 @@ evaltree(union node *n, int flags)
 		}
 		n = next;
 		rststackmark(&smark);
-	} while(n != NULL);
- out1:
+	} while (n != NULL);
+ out1:;
 	popstackmark(&smark);
- out2:
+ out2:;
 	if (pendingsigs)
 		dotrap();
-	if (eflag && exitstatus != 0 && do_etest)
+	if (eflag && exitstatus != 0 && do_etest) {
+		CTRACE(DBG_EVAL, ("evaltree() -e exit(%d)\n", exitstatus));
 		exitshell(exitstatus);
+	}
 	if (flags & EV_EXIT)
 		exraise(EXEXIT);
 }
@@ -497,7 +501,7 @@ evalfor(union node *n, int flags)
 	}
 	loopnest--;
 	exitstatus = status;
- out:
+ out:;
 	popstackmark(&smark);
 }
 
@@ -535,7 +539,7 @@ evalcase(union node *n, int flags)
 			}
 		}
 	}
- out:
+ out:;
 	exitstatus = status;
 	popstackmark(&smark);
 }
@@ -609,13 +613,15 @@ expredir(union node *n)
 		case NTO:
 		case NCLOBBER:
 		case NAPPEND:
-			expandarg(redir->nfile.fname, &fn, EXP_TILDE | EXP_REDIR);
+			expandarg(redir->nfile.fname, &fn,
+			    EXP_TILDE | EXP_REDIR);
 			redir->nfile.expfname = fn.list->text;
 			break;
 		case NFROMFD:
 		case NTOFD:
 			if (redir->ndup.vname) {
-				expandarg(redir->ndup.vname, &fn, EXP_TILDE | EXP_REDIR);
+				expandarg(redir->ndup.vname, &fn,
+				    EXP_TILDE | EXP_REDIR);
 				fixredir(redir, fn.list->text, 1);
 			}
 			break;
@@ -808,7 +814,7 @@ evalbackcmd(union node *n, struct backcmd *result)
 		INTON;
 	}
 	popstackmark(&smark);
- out:
+ out:;
 	CTRACE(DBG_EVAL, ("evalbackcmd done: fd=%d buf=0x%x nleft=%d jp=0x%x\n",
 		result->fd, result->buf, result->nleft, result->jp));
 }
@@ -1224,7 +1230,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 			}
 	VFORK_END
 		} else {
- normal_fork:
+ normal_fork:;
 #endif
 			if (forkshell(jp, cmd, mode) != 0)
 				goto parent;	/* at end of routine */
@@ -1533,7 +1539,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 	}
 	goto out;
 
- parent:			/* parent process gets here (if we forked) */
+ parent:;			/* parent process gets here (if we forked) */
 
 	exitstatus = 0;		/* if not altered just below */
 	if (mode == FORK_FG) {	/* argument to fork */
@@ -1547,7 +1553,7 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 
 	FORCEINTON;
 
- out:
+ out:;
 	if (lastarg)
 		/* implement $_ for whatever use that really is */
 		(void) setvarsafe("_", lastarg, VNOERROR);
@@ -1733,7 +1739,7 @@ find_dot_file(char *basename)
 				 * But doing that here would (currently)
 				 * mean opening the file twice, which
 				 * might not be safe.  So, defer this
-				 * test until code is restructures so
+				 * test until code is restructured so
 				 * we can return a fd.   Then we also
 				 * get to fix the mem leak just below...
 				 */
