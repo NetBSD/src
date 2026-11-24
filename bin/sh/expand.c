@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.152 2026/08/15 19:23:51 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.153 2026/11/24 13:58:15 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.152 2026/08/15 19:23:51 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.153 2026/11/24 13:58:15 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -280,9 +280,10 @@ argstr(const char *p, int flag)
 			if (had_dol_at && *p == CTLQUOTEEND)
 				p++;
 			NULLTERM_4_TRACE(expdest);
-			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
-			    " after %2.2X; added \"%s\" to expdest\n",
-			    p, (c & 0xff),
+			VTRACE(DBG_EXPAND,
+			    ("argstr returning at %#x \"%.6s\"..."
+			    " after %2.2x; added \"%s\" to expdest\n",
+			    (*p & 0xFF), p, (c & 0xff),
 			    showstr(stackblock(), expdest - stackblock())));
 			return p;
 		case CTLQUOTEMARK:
@@ -366,6 +367,8 @@ argstr(const char *p, int flag)
 		case CTLBACKQ|CTLQUOTE: {
 			DEBUG_ONLY(unsigned int pos = expdest - stackblock());
 
+			if (flag & EXP_IN_QUOTES)
+				c |= CTLQUOTE;
 			expbackq(argbackq->n, c & CTLQUOTE, flag);
 			argbackq = argbackq->next;
 			NULLTERM_4_TRACE(expdest);
@@ -460,7 +463,7 @@ exptilde(const char *p, int flag)
 		}
 		STPUTC(c, user);
 	}
- done:
+ done:;
 	STACKSTRNUL(user);
 	user = stackblock();		/* to start of collected username */
 
@@ -884,7 +887,7 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 		abort();
 	}
 
- recordleft:
+ recordleft:;
 	*loc = c;
 	amount = ((str - 1) - (loc - startp)) - expdest;
 	STADJUST(amount, expdest);
@@ -892,7 +895,7 @@ subevalvar_trim(const char *p, int strloc, int subtype, int startloc,
 		*startp++ = *loc++;
 	return 1;
 
- recordright:
+ recordright:;
 	amount = loc - expdest;
 	STADJUST(amount, expdest);
 	STPUTC('\0', expdest);
@@ -929,10 +932,10 @@ evalvar(const char *p, int flag)
 	p = strchr(p, '=') + 1;
 
 	CTRACE(DBG_EXPAND,
-	    ("evalvar \"%.*s\", flag=%#X quotes=%#X vf=%#X subtype=%X\n",
+	    ("evalvar \"%.*s\", flag=%#x quotes=%#x vf=%#x subtype=%X\n",
 	    (int)(p - var - 1), var, flag, quotes, varflags, subtype));
 
- again: /* jump here after setting a variable with ${var=text} */
+ again:; /* jump here after setting a variable with ${var=text} */
 	if (special) {
 		set = varisset(var, varflags & VSNUL);
 		val = NULL;
@@ -1009,15 +1012,19 @@ evalvar(const char *p, int flag)
 
 
 	if (varflags & VSQUOTE) {
-		if  (*var == '@' && shellparam.nparam != 1)
+		flag |= EXP_IN_QUOTES;
+		if  (*var == '@' && shellparam.nparam != 1) {
 		    apply_ifs = 1;
-		else {
+		    VTRACE(DBG_EXPAND,
+			("evalvar: VSQUOTE flag:%#x apply_ifs=1\n", flag));
+		} else {
 		    /*
 		     * Mark so that we don't apply IFS if we recurse through
 		     * here expanding $bar from "${foo-$bar}".
 		     */
-		    flag |= EXP_IN_QUOTES;
 		    apply_ifs = 0;
+		    VTRACE(DBG_EXPAND,
+			("evalvar: VSQUOTE flag:%#x apply_ifs=0\n", flag));
 		}
 	} else if (flag & EXP_IN_QUOTES ||
 		   !(flag & (EXP_SPLIT|EXP_IFS_SPLIT))) {
@@ -1038,13 +1045,17 @@ evalvar(const char *p, int flag)
 		/* FALLTHROUGH */
 	case VSMINUS:
 		if (!set) {
-			argstr(p, flag | (apply_ifs ? EXP_IFS_SPLIT : 0));
+			VTRACE(DBG_EXPAND,
+			("evalvar expanding alternate (fl=%#x apply_ifs=%d)\n",
+			     flag, apply_ifs));
+			argstr(p, flag |
+				((flag & EXP_IN_QUOTES) ? 0 : EXP_IFS_SPLIT));
 			/*
 			 * ${x-a b c} doesn't get split, but removing the
 			 * 'apply_ifs = 0' apparently breaks ${1+"$@"}..
 			 * ${x-'a b' c} should generate 2 args.
 			 */
-			if (*p != CTLENDVAR)
+			if (*p != CTLENDVAR || flag & EXP_IN_QUOTES)
 			/* We should have marked stuff already */
 				apply_ifs = 0;
 		}
@@ -1149,7 +1160,7 @@ evalvar(const char *p, int flag)
  */
 
 STATIC int
-varisset(const char *name, int nulok)
+varisset(const char *name, int notnul)
 {
 	if (*name == '!')
 		return backgndpid != -1;
@@ -1157,7 +1168,7 @@ varisset(const char *name, int nulok)
 		if (*shellparam.p == NULL)
 			return 0;
 
-		if (nulok) {
+		if (notnul) {
 			char **av;
 
 			for (av = shellparam.p; *av; av++)
@@ -1177,16 +1188,26 @@ varisset(const char *name, int nulok)
 		if (errno != 0 || (*ap != '\0' && *ap != '='))
 			return 0;
 
-		if (num == 0)
-			ap = arg0;
-		else if (num > shellparam.nparam)
+		if (num == 0) {
+			if (ap == name + 1) {	/* ${0} but not ${00} */
+				ap = arg0;	/* a special param, not pos */
+				if (ap == NULL)
+					return 0;
+			} else
+				return 0;	/* ${00*} is always unset */
+
+		} else if (num > shellparam.nparam)
 			return 0;
 		else
 			ap = shellparam.p[num - 1];
 
-		if (nulok && (ap == NULL || *ap == '\0'))
+		if (notnul && (ap == NULL || *ap == '\0'))
 			return 0;
 	}
+	/*
+	 * All other special params, and any positional that makes it here
+	 * is set, and if requested (notnul), not ""
+	 */
 	return 1;
 }
 
@@ -1325,9 +1346,11 @@ varvalue(const char *name, int quoted, int subtype, int flag)
 			if (errno != 0 || (*p != '\0' && *p != '='))
 				return;
 
-			if (lnum == 0)
+			if (lnum == 0 && p == name + 1) {
 				p = arg0;
-			else if (lnum > 0 && lnum <= shellparam.nparam)
+				if (p == NULL)
+					return;
+			} else if (lnum > 0 && lnum <= shellparam.nparam)
 				p = shellparam.p[lnum - 1];
 			else
 				return;
@@ -2172,7 +2195,7 @@ patmatch(const char *pattern, const char *string, int squoted)
 				q++;
 			if (*q++ == c)
 				break;
-  backtrack:
+  backtrack:;
 			/*
 			 * If we have a mismatch (other than hitting the end
 			 * of the string), go back to the last '*' seen and
