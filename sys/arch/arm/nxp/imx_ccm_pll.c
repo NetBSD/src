@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_pll.c,v 1.1 2020/12/23 14:42:38 skrll Exp $ */
+/* $NetBSD: imx_ccm_pll.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_pll.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_pll.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx_ccm_pll.c,v 1.1 2020/12/23 14:42:38 skrll Exp $"
 #include <dev/clk/clk_backend.h>
 
 #include <arm/nxp/imx_ccm.h>
-
-#include <dev/fdt/fdtvar.h>
 
 #define	PLL_POWERDOWN		__BIT(12)
 #define	PLL_POWERDOWN_ENET	__BIT(5)

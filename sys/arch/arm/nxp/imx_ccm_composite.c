@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_composite.c,v 1.1 2020/12/23 14:42:38 skrll Exp $ */
+/* $NetBSD: imx_ccm_composite.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx_ccm_composite.c,v 1.1 2020/12/23 14:42:38 skrll 
 #include <dev/clk/clk_backend.h>
 
 #include <arm/nxp/imx_ccm.h>
-
-#include <dev/fdt/fdtvar.h>
 
 #define	CCM_TARGET_ROOT		0x00
 #define	 TARGET_ROOT_ENABLE	__BIT(28)
@@ -94,36 +92,21 @@ imx_ccm_composite_set_rate(struct imx_ccm_softc *sc,
 {
 	struct imx_ccm_composite *composite = &clk->u.composite;
 	u_int best_prediv, best_postdiv, best_diff;
-	struct imx_ccm_clk *rclk_parent;
 	struct clk *clk_parent;
 	uint32_t val;
 
 	KASSERT(clk->type == IMX_CCM_COMPOSITE);
 
-	if (composite->flags & IMX_COMPOSITE_SET_RATE_PARENT) {
-		clk_parent = clk_get_parent(&clk->base);
-		if (clk_parent == NULL)
-			return ENXIO;
+	clk_parent = clk_get_parent(&clk->base);
+	if (clk_parent == NULL)
+		return ENXIO;
+
+	if (composite->flags & IMX_COMPOSITE_SET_RATE_PARENT)
 		return clk_set_rate(clk_parent, rate);
-	}
 
 	best_prediv = 0;
 	best_postdiv = 0;
 	best_diff = INT_MAX;
-
-	val = CCM_READ(sc, clk->regidx, composite->reg + CCM_TARGET_ROOT);
-	const u_int mux = __SHIFTOUT(val, TARGET_ROOT_MUX);
-
-	if (mux >= composite->nparents)
-		return EIO;
-
-	rclk_parent = imx_ccm_clock_find(sc, composite->parents[mux]);
-	if (rclk_parent != NULL)
-		clk_parent = &rclk_parent->base;
-	else
-		clk_parent = fdtbus_clock_byname(composite->parents[mux]);
-	if (clk_parent == NULL)
-		return EIO;
 
 	const u_int prate = clk_get_rate(clk_parent);
 	if (prate == 0)

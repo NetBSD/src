@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.c,v 1.1 2020/12/23 14:42:38 skrll Exp $ */
+/* $NetBSD: imx_ccm.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,42 +27,16 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.1 2020/12/23 14:42:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm.c,v 1.2 2026/11/24 11:05:52 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 
-#include <dev/fdt/fdtvar.h>
-
 #include <dev/clk/clk_backend.h>
 
 #include <arm/nxp/imx_ccm.h>
-
-static struct clk *
-imx_ccm_clock_decode(device_t dev, int cc_phandle, const void *data, size_t len)
-{
-	struct imx_ccm_softc * const sc = device_private(dev);
-	struct imx_ccm_clk *clk;
-
-	if (len != 4)
-		return NULL;
-
-	const u_int clock_id = be32dec(data);
-
-	for (int i = 0; i < sc->sc_nclks; i++) {
-		clk = &sc->sc_clks[i];
-		if (clk->id == clock_id)
-			return &clk->base;
-	}
-
-	return NULL;
-}
-
-static const struct fdtbus_clock_controller_func imx_ccm_fdtclock_funcs = {
-	.decode = imx_ccm_clock_decode,
-};
 
 static struct clk *
 imx_ccm_clock_get(void *priv, const char *name)
@@ -211,8 +185,10 @@ imx_ccm_clock_get_parent(void *priv, struct clk *clkp)
 	if (clk_parent != NULL)
 		return &clk_parent->base;
 
-	/* No parent in this domain, try FDT */
-	return fdtbus_clock_byname(parent);
+	if (sc->sc_clock_find_parent != NULL)
+		return sc->sc_clock_find_parent(sc, parent);
+
+	return NULL;
 }
 
 const struct clk_funcs imx_ccm_clock_funcs = {
@@ -241,31 +217,15 @@ imx_ccm_clock_find(struct imx_ccm_softc *sc, const char *name)
 }
 
 int
-imx_ccm_attach(struct imx_ccm_softc *sc)
+imx_ccm_clock_attach(struct imx_ccm_softc *sc)
 {
-	bus_addr_t addr;
-	bus_size_t size;
-	int i;
-
-	if (fdtbus_get_reg(sc->sc_phandle, 0, &addr, &size) != 0) {
-		aprint_error(": couldn't get registers\n");
-		return ENXIO;
-	}
-	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh[0]) != 0) {
-		aprint_error(": couldn't map registers\n");
-		return ENXIO;
-	}
-
 	sc->sc_clkdom.name = device_xname(sc->sc_dev);
 	sc->sc_clkdom.funcs = &imx_ccm_clock_funcs;
 	sc->sc_clkdom.priv = sc;
-	for (i = 0; i < sc->sc_nclks; i++) {
+	for (int i = 0; i < sc->sc_nclks; i++) {
 		sc->sc_clks[i].base.domain = &sc->sc_clkdom;
 		clk_attach(&sc->sc_clks[i].base);
 	}
-
-	fdtbus_register_clock_controller(sc->sc_dev, sc->sc_phandle,
-	    &imx_ccm_fdtclock_funcs);
 
 	return 0;
 }

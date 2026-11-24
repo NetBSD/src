@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm.h,v 1.1 2020/12/23 14:42:38 skrll Exp $ */
+/* $NetBSD: imx_ccm.h,v 1.2 2026/11/24 11:05:52 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,6 @@
 #define _ARM_IMX_CCM_H
 
 #include <dev/clk/clk_backend.h>
-#include <dev/fdt/syscon.h>
 
 struct imx_ccm_softc;
 struct imx_ccm_clk;
@@ -334,9 +333,13 @@ struct imx_ccm_softc {
 
 	struct imx_ccm_clk	*sc_clks;
 	u_int			sc_nclks;
+
+	struct clk *		(*sc_clock_find_parent)(struct imx_ccm_softc *,
+	    const char *);
 };
 
 int	imx_ccm_attach(struct imx_ccm_softc *);
+int	imx_ccm_clock_attach(struct imx_ccm_softc *);
 struct imx_ccm_clk *imx_ccm_clock_find(struct imx_ccm_softc *,
 				     const char *);
 void	imx_ccm_print(struct imx_ccm_softc *);

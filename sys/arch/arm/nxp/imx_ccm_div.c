@@ -1,4 +1,4 @@
-/* $NetBSD: imx_ccm_div.c,v 1.3 2026/11/23 00:48:07 hkenken Exp $ */
+/* $NetBSD: imx_ccm_div.c,v 1.4 2026/11/24 11:05:52 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.3 2026/11/23 00:48:07 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.4 2026/11/24 11:05:52 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,8 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: imx_ccm_div.c,v 1.3 2026/11/23 00:48:07 hkenken Exp 
 #include <dev/clk/clk_backend.h>
 
 #include <arm/nxp/imx_ccm.h>
-
-#include <dev/fdt/fdtvar.h>
 
 u_int
 imx_ccm_div_get_rate(struct imx_ccm_softc *sc,

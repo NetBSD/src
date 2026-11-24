@@ -1,7 +1,9 @@
-#	$NetBSD: files.imx,v 1.4 2025/09/06 15:44:03 thorpej Exp $
+#	$NetBSD: files.imx,v 1.5 2026/11/24 11:05:52 hkenken Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
+
+include	"arch/arm/nxp/files.imx_ccm"
 
 file	arch/arm/nxp/imx6_platform.c		soc_imx
 
@@ -26,25 +28,18 @@ file	arch/arm/nxp/imx6sx_clk.c		imx6sxccm
 
 file	arch/arm/nxp/imx6_ccm.c			imx6ccm | imx6sxccm
 
-# Common FDT clock framework
-define	imx_ccm: fdt_clock
-file	arch/arm/nxp/imx_ccm.c			imx_ccm
-file	arch/arm/nxp/imx_ccm_composite.c	imx_ccm
-file	arch/arm/nxp/imx_ccm_div.c		imx_ccm
-file	arch/arm/nxp/imx_ccm_extclk.c		imx_ccm
-file	arch/arm/nxp/imx_ccm_fixed.c		imx_ccm
-file	arch/arm/nxp/imx_ccm_fixed_factor.c	imx_ccm
-file	arch/arm/nxp/imx_ccm_gate.c		imx_ccm
-file	arch/arm/nxp/imx_ccm_mux.c		imx_ccm
-file	arch/arm/nxp/imx_ccm_pll.c		imx_ccm
+# FDT
+define	imx_ccm_fdt: imx_ccm, fdt_clock
+file	arch/arm/nxp/imx_ccm_fdt.c		imx_ccm_fdt
+file	arch/arm/nxp/imx_ccm_extclk.c		imx_ccm_fdt
 
 # CCM (iMX7D)
-device	imx7dccm: imx_ccm
+device	imx7dccm: imx_ccm_fdt
 attach	imx7dccm at fdt with imx7d_ccm
 file	arch/arm/nxp/imx7d_ccm.c		imx7d_ccm
 
 # CCM (iMX8MQ)
-device	imx8mqccm: imx_ccm
+device	imx8mqccm: imx_ccm_fdt
 attach	imx8mqccm at fdt with imx8mq_ccm
 file	arch/arm/nxp/imx8mq_ccm.c		imx8mq_ccm
 
