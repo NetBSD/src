@@ -1,4 +1,4 @@
-/* $NetBSD: sun60i_a733_r_ccu.c,v 1.1 2026/11/22 14:29:22 jmcneill Exp $ */
+/* $NetBSD: sun60i_a733_r_ccu.c,v 1.2 2026/11/24 23:35:36 kre Exp $ */
 
 /*-
  * Copyright (c) 2026 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun60i_a733_r_ccu.c,v 1.1 2026/11/22 14:29:22 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun60i_a733_r_ccu.c,v 1.2 2026/11/24 23:35:36 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,7 +115,7 @@ static struct sunxi_ccu_clk sun60i_a733_r_ccu_clks[] = {
 	    __BITS(4, 0),		/* m */
 	    __BITS(26, 24),		/* sel */
 	    0),
-	SUNXI_CCU_M(A733_R_CLK_APBS0, "r-apbs1", r_apbs_parents,
+	SUNXI_CCU_M(A733_R_CLK_APBS1, "r-apbs1", r_apbs_parents,
 	    APBS1_CLK_REG,		/* reg */
 	    __BITS(4, 0),		/* m */
 	    __BITS(26, 24),		/* sel */
