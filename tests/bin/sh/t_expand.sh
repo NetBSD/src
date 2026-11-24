@@ -1,4 +1,4 @@
-# $NetBSD: t_expand.sh,v 1.32 2026/11/24 13:11:15 kre Exp $
+# $NetBSD: t_expand.sh,v 1.33 2026/11/24 13:58:11 kre Exp $
 #
 # Copyright (c) 2007, 2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1936,6 +1936,498 @@ land_mine_body()
 	results
 }
 
+# The following 4 test cases test variations on use of $@ with the + and -
+# expansion operators -- where the @ is the parameter being tested, rather
+# than being used in the word expanded when the test requires it (that latter
+# being the far more common, and specified, case -- tested in other places).
+#
+# As ${@-...} and ${@+...} (with or without the ':' modifier) are expressly
+# unspecified in the standard, only run these tests with the NetBSD sh as the
+# shell being tested, they allow testing the desired (unspecified) behaviour
+# of our shell, and help ensure no accidental changes slip into sh.
+#
+# The following four tests are verifying the behaviour when the expansion
+# is within "" and when it isn't, and when the : modifier is included,
+# and when it isn't.   Each test case tests both the - and + operator.
+
+atf_test_case dollar_quoted_at_null_tested
+dollar_quoted_at_null_tested_head()
+{
+	atf_set descr  'Checks for the (very ancient) issue where expansions'  \
+			'(quoted in this case) testing whether $@ is set (and' \
+			'in this case, not null) or not apply the "$@" rules'  \
+			'to the word in "${@-word}" when they should not.'     \
+			'Verify this is fixed.'				       \
+			'Also verify that (the useless) "${@+${@}}" still works.'
+}
+dollar_quoted_at_null_tested_body()
+{
+	${TEST_SH} -c 'test -n "${NETBSD_SHELL}"' ||
+		atf_skip 'this test case for the NetBSD shell only'
+
+	reset dollar_quoted_at_null_tested
+#1
+	check 'set --      ; printf "%s-" "${@:-foo}"'	"foo-"		0   # 1
+	check 'set -- A    ; printf "%s-" "${@:-foo}"'	"A-"		0   # 2
+	check 'set -- ""   ; printf "%s-" "${@:-foo}"'	"foo-"		0   # 3
+	check 'set -- A B  ; printf "%s-" "${@:-foo}"'	"A-B-"		0   # 4
+	check 'set -- "" ""; printf "%s-" "${@:-foo}"'	"foo-"		0   # 5
+	check 'set -- "A B"; printf "%s-" "${@:-foo}"'	"A B-"		0   # 6
+	check 'set -- A B C; printf "%s-" "${@:-foo}"'	"A-B-C-" 	0   # 7
+
+	check 'set --      ; set -- "${@:-foo}"; echo $#'	"1"	0   # 8
+	check 'set --      ; set -- "${@:-}"   ; echo $#'	"1"	0   # 9
+	check 'set --      ; set -- "${@}"     ; echo $#'	"0"	0   #10
+	check 'set -- "" ""; set -- "${@:-foo}"; echo $#'	"1"	0   #11
+	check 'set -- "" ""; set -- "${@:-}"   ; echo $#'	"1"	0   #12
+	check 'set -- "" ""; set -- "${@}"     ; echo $#'	"2"	0   #13
+
+	check 'set --      ; printf "%s-" "${@:-a b}"'	"a b-"		0   #14
+	check 'set -- A    ; printf "%s-" "${@:-a b}"'	"A-"		0   #15
+	check 'set -- ""   ; printf "%s-" "${@:-a b}"'	"a b-"		0   #16
+	check 'set -- A B  ; printf "%s-" "${@:-a b}"'	"A-B-"		0   #17
+	check 'set -- "" ""; printf "%s-" "${@:-a b}"'	"a b-"		0   #18
+	check 'set -- "A B"; printf "%s-" "${@:-a b}"'	"A B-"		0   #19
+	check 'set -- A B C; printf "%s-" "${@:-a b}"'	"A-B-C-" 	0   #20
+
+	check 'set --      ; printf "%s-" "${@:-echo a b}"' "echo a b-"	0   #21
+	check 'set -- A    ; printf "%s-" "${@:-echo a b}"' "A-"	0   #22
+	check 'set -- ""   ; printf "%s-" "${@:-echo a b}"' "echo a b-"	0   #23
+	check 'set -- A B  ; printf "%s-" "${@:-echo a b}"' "A-B-"	0   #24
+	check 'set -- "" ""; printf "%s-" "${@:-echo a b}"' "echo a b-"	0   #25
+	check 'set -- "A B"; printf "%s-" "${@:-echo a b}"' "A B-"	0   #26
+	check 'set -- A B C; printf "%s-" "${@:-echo a b}"' "A-B-C-" 	0   #27
+
+	check 'set --      ; printf "%s-" "${@:-$(echo a b)}"' "a b-"	0   #28
+	check 'set -- A    ; printf "%s-" "${@:-$(echo a b)}"' "A-"	0   #29
+	check 'set -- ""   ; printf "%s-" "${@:-$(echo a b)}"' "a b-"	0   #30
+	check 'set -- A B  ; printf "%s-" "${@:-$(echo a b)}"' "A-B-"	0   #31
+	check 'set -- "" ""; printf "%s-" "${@:-$(echo a b)}"' "a b-"	0   #32
+	check 'set -- "A B"; printf "%s-" "${@:-$(echo a b)}"' "A B-"	0   #33
+	check 'set -- A B C; printf "%s-" "${@:-$(echo a b)}"' "A-B-C-"	0   #34
+
+	check 'set --      ; printf "%s-" """${@:-${@}}"'   "-"		0   #35
+	check 'set -- A    ; printf "%s-" """${@:-${@}}"'   "A-"	0   #36
+	check 'set -- ""   ; printf "%s-" """${@:-${@}}"'   "-"		0   #37
+	check 'set -- ""   ; printf "%s-" """${@:-Q${@}}"'  "Q-"	0   #38
+	check 'set -- A B  ; printf "%s-" """${@:-${@}}"'   "A-B-"	0   #39
+	check 'set -- "" ""; printf "%s-" """${@:-${@}}"'   "--"	0   #40
+	check 'set -- "A B"; printf "%s-" """${@:-${@}}"'   "A B-"	0   #41
+	check 'set -- A B C; printf "%s-" """${@:-${@}}"'   "A-B-C-"	0   #42
+
+	check 'set --      ; printf "%s-" X"${@:+foo}"Y' "XY-"		0   #43
+	check 'set -- A    ; printf "%s-" X"${@:+foo}"Y' "XfooY-"	0   #44
+	check 'set -- ""   ; printf "%s-" X"${@:+foo}"Y' "XY-"		0   #45
+	check 'set -- A B  ; printf "%s-" X"${@:+foo}"Y' "XfooY-"	0   #46
+	check 'set -- "" ""; printf "%s-" X"${@:+foo}"Y' "XY-"		0   #47
+	check 'set -- "A B"; printf "%s-" X"${@:+foo}"Y' "XfooY-"	0   #48
+	check 'set -- A B C; printf "%s-" X"${@:+foo}"Y' "XfooY-" 	0   #49
+
+	check 'set --      ; printf "%s-" X"${@:+a b}"Y' "XY-"		0   #50
+	check 'set -- A    ; printf "%s-" X"${@:+a b}"Y' "Xa bY-"	0   #51
+	check 'set -- ""   ; printf "%s-" X"${@:+a b}"Y' "XY-"		0   #52
+	check 'set -- A B  ; printf "%s-" X"${@:+a b}"Y' "Xa bY-"	0   #53
+	check 'set -- "" ""; printf "%s-" X"${@:+a b}"Y' "XY-"		0   #54
+	check 'set -- "A B"; printf "%s-" X"${@:+a b}"Y' "Xa bY-"	0   #55
+	check 'set -- A B C; printf "%s-" X"${@:+a b}"Y' "Xa bY-" 	0   #56
+
+	check 'set --      ; printf "%s-" X"${@:+$(echo a b)}"Y' "XY-"	  0 #57
+	check 'set -- A    ; printf "%s-" X"${@:+$(echo a b)}"Y' "Xa bY-" 0 #58
+	check 'set -- ""   ; printf "%s-" X"${@:+$(echo a b)}"Y' "XY-"	  0 #59
+	check 'set -- A B  ; printf "%s-" X"${@:+$(echo a b)}"Y' "Xa bY-" 0 #60
+	check 'set -- "" ""; printf "%s-" X"${@:+$(echo a b)}"Y' "XY-"	  0 #61
+	check 'set -- "A B"; printf "%s-" X"${@:+$(echo a b)}"Y' "Xa bY-" 0 #62
+	check 'set -- A B C; printf "%s-" X"${@:+$(echo a b)}"Y' "Xa bY-" 0 #63
+
+	check 'set --      ; printf "%s-" X"${@:+${@}}"Y' "XY-"		0   #64
+	check 'set -- A    ; printf "%s-" X"${@:+${@}}"Y' "XAY-"	0   #65
+	check 'set -- ""   ; printf "%s-" X"${@:+${@}}"Y' "XY-"		0   #66
+	check 'set -- A B  ; printf "%s-" X"${@:+${@}}"Y' "XA-BY-"	0   #67
+	check 'set -- "" ""; printf "%s-" X"${@:+${@}}"Y' "XY-"		0   #68
+	check 'set -- "A B"; printf "%s-" X"${@:+${@}}"Y' "XA BY-"	0   #69
+	check 'set -- A B C; printf "%s-" X"${@:+${@}}"Y' "XA-B-CY-"	0   #70
+
+	results
+}
+
+atf_test_case dollar_quoted_at_tested
+dollar_quoted_at_tested_head()
+{
+	atf_set descr \
+		'Similar to dollar_quoted_at_null_tested without null test'
+}
+dollar_quoted_at_tested_body()
+{
+	${TEST_SH} -c 'test -n "${NETBSD_SHELL}"' ||
+		atf_skip 'this test case for the NetBSD shell only'
+
+	reset dollar_quoted_at_tested
+#1
+	check 'set --      ; printf "%s-" "${@-foo}"'	 "foo-"		0   # 1
+	check 'set --      ; printf "%s-" "${@-}"'	 "-"		0   # 2
+	check 'set -- A    ; printf "%s-" "${@-foo}"'	 "A-"		0   # 3
+	check 'set -- ""   ; printf "%s-" "${@-foo}"'	 "-"		0   # 4
+	check 'set -- A B  ; printf "%s-" "${@-foo}"'	 "A-B-"		0   # 5
+	check 'set -- "" ""; printf "%s-" "${@-foo}"'	 "--"		0   # 6
+	check 'set -- "A B"; printf "%s-" "${@-foo}"'	 "A B-"		0   # 7
+	check 'set -- A B C; printf "%s-" "${@-foo}"'	 "A-B-C-" 	0   # 8
+
+	check 'set --      ; set -- "${@-foo}"; echo $#' "1"		0   # 9
+	check 'set --      ; set -- "${@-}"   ; echo $#' "1"		0   #10
+	check 'set --      ; set -- "${@}"    ; echo $#' "0"		0   #11
+	check 'set -- "" ""; set -- "${@-foo}";	echo $#' "2"		0   #12
+	check 'set -- "" ""; set -- "${@-}";	echo $#' "2"		0   #13
+	check 'set -- "" ""; set -- "${@}";	echo $#' "2"		0   #14
+
+	check 'set --      ; printf "%s-" "${@-a b}"'	"a b-"		0   #15
+	check 'set -- A    ; printf "%s-" "${@-a b}"'	"A-"		0   #16
+	check 'set -- ""   ; printf "%s-" "${@-a b}"'	"-"		0   #17
+	check 'set -- A B  ; printf "%s-" "${@-a b}"'	"A-B-"		0   #18
+	check 'set -- "" ""; printf "%s-" "${@-a b}"'	"--"		0   #19
+	check 'set -- "A B"; printf "%s-" "${@-a b}"'	"A B-"		0   #20
+	check 'set -- A B C; printf "%s-" "${@-a b}"'	"A-B-C-"	0   #21
+
+	check 'set --      ; printf "%s-" "${@-echo a b}"' "echo a b-"	0   #22
+	check 'set -- A    ; printf "%s-" "${@-echo a b}"' "A-"		0   #23
+	check 'set -- ""   ; printf "%s-" "${@-echo a b}"' "-"		0   #24
+	check 'set -- A B  ; printf "%s-" "${@-echo a b}"' "A-B-"	0   #25
+	check 'set -- "" ""; printf "%s-" "${@-echo a b}"' "--"		0   #26
+	check 'set -- "A B"; printf "%s-" "${@-echo a b}"' "A B-"	0   #27
+	check 'set -- A B C; printf "%s-" "${@-echo a b}"' "A-B-C-" 	0   #28
+
+	check 'set --      ; printf "%s-" "${@-$(echo a b)}"' "a b-"	0   #29
+	check 'set -- A    ; printf "%s-" "${@-$(echo a b)}"' "A-"	0   #30
+	check 'set -- ""   ; printf "%s-" "${@-$(echo a b)}"' "-"	0   #31
+	check 'set -- A B  ; printf "%s-" "${@-$(echo a b)}"' "A-B-"	0   #32
+	check 'set -- "" ""; printf "%s-" "${@-$(echo a b)}"' "--"	0   #33
+	check 'set -- "A B"; printf "%s-" "${@-$(echo a b)}"' "A B-"	0   #34
+	check 'set -- A B C; printf "%s-" "${@-$(echo a b)}"' "A-B-C-"	0   #35
+
+	check 'set --      ; printf "%s-" """${@-${@}}"'  "-"		0   #36
+	check 'set --      ; printf "%s-" "${@-Q${@}}"'   "Q-"		0   #37
+	check 'set -- A    ; printf "%s-" """${@-${@}}"'  "A-"		0   #38
+	check 'set -- ""   ; printf "%s-" """${@-${@}}"'  "-"		0   #39
+	check 'set -- ""   ; printf "%s-" "${@-Q${@}}"'   "-"		0   #40
+	check 'set -- A B  ; printf "%s-" """${@-${@}}"'  "A-B-"	0   #41
+	check 'set -- "" ""; printf "%s-" """${@-${@}}"'  "--"		0   #42
+	check 'set -- "A B"; printf "%s-" """${@-${@}}"'  "A B-"	0   #43
+	check 'set -- A B C; printf "%s-" """${@-${@}}"'  "A-B-C-"	0   #44
+
+	check 'set --      ; printf "%s-" X"${@+foo}"Y' "XY-"		0   #45
+	check 'set -- A    ; printf "%s-" X"${@+foo}"Y' "XfooY-"	0   #46
+	check 'set -- ""   ; printf "%s-" X"${@+foo}"Y' "XfooY-"	0   #47
+	check 'set -- A B  ; printf "%s-" X"${@+foo}"Y' "XfooY-"	0   #48
+	check 'set -- "" ""; printf "%s-" X"${@+foo}"Y' "XfooY-"	0   #49
+	check 'set -- "A B"; printf "%s-" X"${@+foo}"Y' "XfooY-"	0   #50
+	check 'set -- A B C; printf "%s-" X"${@+foo}"Y' "XfooY-" 	0   #51
+
+	check 'set --      ; printf "%s-" X"${@+a b}"Y' "XY-"		0   #52
+	check 'set -- A    ; printf "%s-" X"${@+a b}"Y' "Xa bY-"	0   #53
+	check 'set -- ""   ; printf "%s-" X"${@+a b}"Y' "Xa bY-"	0   #54
+	check 'set -- A B  ; printf "%s-" X"${@+a b}"Y' "Xa bY-"	0   #55
+	check 'set -- "" ""; printf "%s-" X"${@+a b}"Y' "Xa bY-"	0   #56
+	check 'set -- "A B"; printf "%s-" X"${@+a b}"Y' "Xa bY-"	0   #57
+	check 'set -- A B C; printf "%s-" X"${@+a b}"Y' "Xa bY-" 	0   #58
+
+	check 'set --      ; printf "%s-" X"${@+$(echo a b)}"Y'    "XY-" 0  #59
+	check 'set --      ; printf "%s-" X"${@+$(echo P"$@"Q)}"Y' "XY-" 0  #60
+	check 'set -- A    ; printf "%s-" X"${@+$(echo a b)}"Y' "Xa bY-" 0  #61
+	check 'set -- ""   ; printf "%s-" X"${@+$(echo a b)}"Y' "Xa bY-" 0  #62
+	check 'set -- ""   ; printf "%s-" X"${@+$(echo P"$@"Q)}"Y' "XPQY-" 0 #63
+	check 'set -- A B  ; printf "%s-" X"${@+$(echo a b)}"Y' "Xa bY-" 0  #64
+	check 'set -- "" ""; printf "%s-" X"${@+$(echo a b)}"Y' "Xa bY-" 0  #65
+	check 'set -- "" ""; printf "%s-" X"${@+$(echo P"$@"Q)}"Y' "XP QY-" 0 #66
+	check 'set -- "A B"; printf "%s-" X"${@+$(echo a b)}"Y' "Xa bY-" 0  #67
+	check 'set -- A B C; printf "%s-" X"${@+$(echo a b)}"Y' "Xa bY-" 0  #68
+
+	check 'set --      ; printf "%s-" X"${@+${@}}"Y'   "XY-"	0   #69
+	check 'set --      ; printf "%s-" X"${@+P${@}Q}"Y' "XY-"	0   #70
+	check 'set -- A    ; printf "%s-" X"${@+${@}}"Y'   "XAY-"	0   #71
+	check 'set -- ""   ; printf "%s-" X"${@+P${@}Q}"Y' "XPQY-"	0   #72
+	check 'set -- A B  ; printf "%s-" X"${@+${@}}"Y'   "XA-BY-"	0   #73
+	check 'set -- "" ""; printf "%s-" X"${@+${@}}"Y'   "X-Y-"	0   #74
+	check 'set -- "" ""; printf "%s-" X"${@+P${@}Q}"Y' "XP-QY-"	0   #75
+	check 'set -- "A B"; printf "%s-" X"${@+${@}}"Y'   "XA BY-"	0   #76
+	check 'set -- A B C; printf "%s-" X"${@+${@}}"Y'   "XA-B-CY-"	0   #77
+
+	results
+}
+
+atf_test_case dollar_unquoted_at_null_tested
+dollar_unquoted_at_null_tested_head()
+{
+	atf_set descr 'Similar to dollar_quoted_at_null_tested but unquoted'
+}
+dollar_unquoted_at_null_tested_body()
+{
+	${TEST_SH} -c 'test -n "${NETBSD_SHELL}"' ||
+		atf_skip 'this test case for the NetBSD shell only'
+
+	reset dollar_unquoted_at_null_tested
+#1
+	check 'set --      ; printf "%s-" ${@:-foo}' "foo-"		0   # 1
+	check 'set -- A    ; printf "%s-" ${@:-foo}' "A-"		0   # 2
+	check 'set -- ""   ; printf "%s-" ${@:-foo}' "foo-"		0   # 3
+	check 'set -- A B  ; printf "%s-" ${@:-foo}' "A-B-"		0   # 4
+	check 'set -- "" ""; printf "%s-" ${@:-foo}' "foo-"		0   # 5
+	check 'set -- "A B"; printf "%s-" ${@:-foo}' "A-B-"		0   # 6
+	check 'set -- A B C; printf "%s-" ${@:-foo}' "A-B-C-"	 	0   # 7
+
+	check 'set --      ; printf "%s-" ${@:-a b}' "a-b-"		0   # 8
+	check 'set -- A    ; printf "%s-" ${@:-a b}' "A-"		0   # 9
+	check 'set -- ""   ; printf "%s-" ${@:-a b}' "a-b-"		0   #10
+	check 'set -- A B  ; printf "%s-" ${@:-a b}' "A-B-"		0   #11
+	check 'set -- "" ""; printf "%s-" ${@:-a b}' "a-b-"		0   #12
+	check 'set -- "A B"; printf "%s-" ${@:-a b}' "A-B-"		0   #13
+	check 'set -- A B C; printf "%s-" ${@:-a b}' "A-B-C-"	 	0   #14
+
+	check 'set --      ; printf "%s-" ${@:-"a b"}' "a b-"		0   #15
+	check 'set -- A    ; printf "%s-" ${@:-"a b"}' "A-"		0   #16
+	check 'set -- ""   ; printf "%s-" ${@:-"a b"}' "a b-"		0   #17
+	check 'set -- A B  ; printf "%s-" ${@:-"a b"}' "A-B-"		0   #18
+	check 'set -- "" ""; printf "%s-" ${@:-"a b"}' "a b-"		0   #19
+	check 'set -- "A B"; printf "%s-" ${@:-"a b"}' "A-B-"		0   #20
+	check 'set -- A B C; printf "%s-" ${@:-"a b"}' "A-B-C-"	 	0   #21
+
+	check 'set --      ; printf "%s-" ${@:-echo a b}' "echo-a-b-"	0   #22
+	check 'set -- A    ; printf "%s-" ${@:-echo a b}' "A-"		0   #23
+	check 'set -- ""   ; printf "%s-" ${@:-echo a b}' "echo-a-b-"	0   #24
+	check 'set -- A B  ; printf "%s-" ${@:-echo a b}' "A-B-"	0   #25
+	check 'set -- "" ""; printf "%s-" ${@:-echo a b}' "echo-a-b-"	0   #26
+	check 'set -- "A B"; printf "%s-" ${@:-echo a b}' "A-B-"	0   #27
+	check 'set -- A B C; printf "%s-" ${@:-echo a b}' "A-B-C-" 	0   #28
+
+	check 'set --      ; printf "%s-" ${@:-$(echo a b)}' "a-b-"	0   #29
+	check 'set -- A    ; printf "%s-" ${@:-$(echo a b)}' "A-"	0   #30
+	check 'set -- ""   ; printf "%s-" ${@:-$(echo a b)}' "a-b-"	0   #31
+	check 'set -- A B  ; printf "%s-" ${@:-$(echo a b)}' "A-B-"	0   #32
+	check 'set -- "" ""; printf "%s-" ${@:-$(echo a b)}' "a-b-"	0   #33
+	check 'set -- "A B"; printf "%s-" ${@:-$(echo a b)}' "A-B-"	0   #34
+	check 'set -- A B C; printf "%s-" ${@:-$(echo a b)}' "A-B-C-"	0   #35
+
+	check 'set --      ; printf "%s-" ${@:-"$(echo a b)"}' "a b-"	0   #36
+	check 'set -- A    ; printf "%s-" ${@:-"$(echo a b)"}' "A-"	0   #37
+	check 'set -- ""   ; printf "%s-" ${@:-"$(echo a b)"}' "a b-"	0   #38
+	check 'set -- A B  ; printf "%s-" ${@:-"$(echo a b)"}' "A-B-"	0   #39
+	check 'set -- "" ""; printf "%s-" ${@:-"$(echo a b)"}' "a b-"	0   #40
+	check 'set -- "A B"; printf "%s-" ${@:-"$(echo a b)"}' "A-B-"	0   #41
+	check 'set -- A B C; printf "%s-" ${@:-"$(echo a b)"}' "A-B-C-"	0   #42
+
+	check 'set --      ; printf "%s-" ""${@:-${@}}' "-"		0   #43
+	check 'set -- A    ; printf "%s-" ""${@:-${@}}' "A-"		0   #44
+	check 'set -- ""   ; printf "%s-" ""${@:-${@}}' "-"		0   #45
+	check 'set -- A B  ; printf "%s-" ""${@:-${@}}' "A-B-"		0   #46
+	check 'set -- "" ""; printf "%s-" ""${@:-${@}}' "--"		0   #47
+	check 'set -- "A B"; printf "%s-" ""${@:-${@}}' "A-B-"		0   #48
+	check 'set -- A B C; printf "%s-" ""${@:-${@}}' "A-B-C-"	0   #49
+
+	check 'set --      ; printf "%s-" ""${@:-"${@}"}' "-"		0   #50
+	check 'set -- A    ; printf "%s-" ""${@:-"${@}"}' "A-"		0   #51
+	check 'set -- ""   ; printf "%s-" ""${@:-"${@}"}' "-"		0   #52
+	check 'set -- A B  ; printf "%s-" ""${@:-"${@}"}' "A-B-"	0   #53
+	check 'set -- "" ""; printf "%s-" ""${@:-"${@}"}' "--"		0   #54
+	check 'set -- "A B"; printf "%s-" ""${@:-"${@}"}' "A-B-"	0   #55
+	check 'set -- A B C; printf "%s-" ""${@:-"${@}"}' "A-B-C-"	0   #56
+
+	check 'set --      ; printf "%s-" X${@:+foo}Y' "XY-"		0   #57
+	check 'set -- A    ; printf "%s-" X${@:+foo}Y' "XfooY-"		0   #58
+	check 'set -- ""   ; printf "%s-" X${@:+foo}Y' "XY-"		0   #59
+	check 'set -- A B  ; printf "%s-" X${@:+foo}Y' "XfooY-"		0   #60
+	check 'set -- "" ""; printf "%s-" X${@:+foo}Y' "XY-"		0   #61
+	check 'set -- "A B"; printf "%s-" X${@:+foo}Y' "XfooY-"		0   #62
+	check 'set -- A B C; printf "%s-" X${@:+foo}Y' "XfooY-"	 	0   #63
+
+	check 'set --      ; printf "%s-" X${@:+a b}Y' "XY-"		0   #64
+	check 'set -- A    ; printf "%s-" X${@:+a b}Y' "Xa-bY-"		0   #65
+	check 'set -- ""   ; printf "%s-" X${@:+a b}Y' "XY-"		0   #66
+	check 'set -- A B  ; printf "%s-" X${@:+a b}Y' "Xa-bY-"		0   #67
+	check 'set -- "" ""; printf "%s-" X${@:+a b}Y' "XY-"		0   #68
+	check 'set -- "A B"; printf "%s-" X${@:+a b}Y' "Xa-bY-"		0   #69
+	check 'set -- A B C; printf "%s-" X${@:+a b}Y' "Xa-bY-" 	0   #70
+
+	check 'set --      ; printf "%s-" X${@:+"a b"}Y' "XY-"		0   #71
+	check 'set -- A    ; printf "%s-" X${@:+"a b"}Y' "Xa bY-"	0   #72
+	check 'set -- ""   ; printf "%s-" X${@:+"a b"}Y' "XY-"		0   #73
+	check 'set -- A B  ; printf "%s-" X${@:+"a b"}Y' "Xa bY-"	0   #74
+	check 'set -- "" ""; printf "%s-" X${@:+"a b"}Y' "XY-"		0   #75
+	check 'set -- "A B"; printf "%s-" X${@:+"a b"}Y' "Xa bY-"	0   #76
+	check 'set -- A B C; printf "%s-" X${@:+"a b"}Y' "Xa bY-" 	0   #77
+
+	check 'set --      ; printf "%s-" X${@:+$(echo a b)}Y' "XY-"	0   #78
+	check 'set -- A    ; printf "%s-" X${@:+$(echo a b)}Y' "Xa-bY-"	0   #79
+	check 'set -- ""   ; printf "%s-" X${@:+$(echo a b)}Y' "XY-"	0   #80
+	check 'set -- A B  ; printf "%s-" X${@:+$(echo a b)}Y' "Xa-bY-"	0   #81
+	check 'set -- "" ""; printf "%s-" X${@:+$(echo a b)}Y' "XY-"	0   #82
+	check 'set -- "A B"; printf "%s-" X${@:+$(echo a b)}Y' "Xa-bY-"	0   #83
+	check 'set -- A B C; printf "%s-" X${@:+$(echo a b)}Y' "Xa-bY-"	0   #84
+
+	check 'set --      ; printf "%s-" X${@:+"$(echo a b)"}Y' "XY-"	0   #85
+	check 'set -- A    ; printf "%s-" X${@:+"$(echo a b)"}Y' "Xa bY-" 0 #86
+	check 'set -- ""   ; printf "%s-" X${@:+"$(echo a b)"}Y' "XY-"	0   #87
+	check 'set -- A B  ; printf "%s-" X${@:+"$(echo a b)"}Y' "Xa bY-" 0 #88
+	check 'set -- "" ""; printf "%s-" X${@:+"$(echo a b)"}Y' "XY-"	0   #89
+	check 'set -- "A B"; printf "%s-" X${@:+"$(echo a b)"}Y' "Xa bY-" 0 #90
+	check 'set -- A B C; printf "%s-" X${@:+"$(echo a b)"}Y' "Xa bY-" 0 #91
+
+	check 'set --      ; printf "%s-" X${@:+${@}}Y' "XY-"		0   #92
+	check 'set -- A    ; printf "%s-" X${@:+${@}}Y' "XAY-"		0   #93
+	check 'set -- ""   ; printf "%s-" X${@:+${@}}Y' "XY-"		0   #94
+	check 'set -- A B  ; printf "%s-" X${@:+${@}}Y' "XA-BY-"	0   #95
+	check 'set -- "" ""; printf "%s-" X${@:+${@}}Y' "XY-"		0   #96
+	check 'set -- "A B"; printf "%s-" X${@:+${@}}Y' "XA-BY-"	0   #97
+	check 'set -- A B C; printf "%s-" X${@:+${@}}Y' "XA-B-CY-"	0   #98
+
+	check 'set --      ; printf "%s-" X${@:+"${@}"}Y' "XY-"		0   #99
+	check 'set -- A    ; printf "%s-" X${@:+"${@}"}Y' "XAY-"	0   #100
+	check 'set -- ""   ; printf "%s-" X${@:+"${@}"}Y' "XY-"		0   #101
+	check 'set -- A B  ; printf "%s-" X${@:+"${@}"}Y' "XA-BY-"	0   #102
+	check 'set -- "" ""; printf "%s-" X${@:+"${@}"}Y' "XY-"		0   #103
+	check 'set -- "A B"; printf "%s-" X${@:+"${@}"}Y' "XA BY-"	0   #104
+	check 'set -- A B C; printf "%s-" X${@:+"${@}"}Y' "XA-B-CY-"	0   #105
+
+	results
+}
+
+atf_test_case dollar_unquoted_at_tested
+dollar_unquoted_at_tested_head()
+{
+	atf_set descr 'Similar to dollar_quoted_at_tested but unquoted'
+}
+dollar_unquoted_at_tested_body()
+{
+	${TEST_SH} -c 'test -n "${NETBSD_SHELL}"' ||
+		atf_skip 'this test case for the NetBSD shell only'
+
+	reset dollar_unquoted_at_tested
+#1
+	check 'set --      ; printf "%s-" ""${@-foo}'	"foo-"		0   # 1
+	check 'set -- A    ; printf "%s-" ""${@-foo}'	"A-"		0   # 2
+	check 'set -- ""   ; printf "%s-" ""${@-foo}'	"-"		0   # 3
+	check 'set -- A B  ; printf "%s-" ""${@-foo}'	"A-B-"		0   # 4
+	check 'set -- "" ""; printf "%s-" ""${@-foo}""'	"-"		0   # 5
+	check 'set -- "A B"; printf "%s-" ""${@-foo}'	"A-B-"		0   # 6
+	check 'set -- A B C; printf "%s-" ""${@-foo}'	"A-B-C-" 	0   # 7
+
+	check 'set --      ; printf "%s-" ""${@-a b}'	"a-b-"		0   # 8
+	check 'set -- A    ; printf "%s-" ""${@-a b}'	"A-"		0   # 9
+	check 'set -- ""   ; printf "%s-" ""${@-a b}'	"-"		0   #10
+	check 'set -- A B  ; printf "%s-" ""${@-a b}'	"A-B-"		0   #11
+	check 'set -- "" ""; printf "%s-" ""${@-a b}""'	"-"		0   #12
+	check 'set -- "A B"; printf "%s-" ""${@-a b}'	"A-B-"		0   #13
+	check 'set -- A B C; printf "%s-" ""${@-a b}'	"A-B-C-" 	0   #14
+
+	check 'set --      ; printf "%s-" ""${@-"a b"}'	"a b-"		0   #15
+	check 'set -- A    ; printf "%s-" ""${@-"a b"}'	"A-"		0   #16
+	check 'set -- ""   ; printf "%s-" ""${@-"a b"}'	"-"		0   #17
+	check 'set -- A B  ; printf "%s-" ""${@-"a b"}'	"A-B-"		0   #18
+	check 'set -- "" ""; printf "%s-" ""${@-"a b"}""' "-"		0   #19
+	check 'set -- "A B"; printf "%s-" ""${@-"a b"}'	"A-B-"		0   #20
+	check 'set -- A B C; printf "%s-" ""${@-"a b"}'	"A-B-C-" 	0   #21
+
+	check 'set --      ; printf "%s-" ""${@-echo a b}' "echo-a-b-"	0   #22
+	check 'set -- A    ; printf "%s-" ""${@-echo a b}' "A-"		0   #23
+	check 'set -- ""   ; printf "%s-" ""${@-echo a b}' "-"		0   #24
+	check 'set -- A B  ; printf "%s-" ""${@-echo a b}' "A-B-"	0   #25
+	check 'set -- "" ""; printf "%s-" ""${@-echo a b}""' "-"	0   #26
+	check 'set -- "A B"; printf "%s-" ""${@-echo a b}' "A-B-"	0   #27
+	check 'set -- A B C; printf "%s-" ""${@-echo a b}' "A-B-C-" 	0   #28
+
+	check 'set --      ; printf "%s-" ""${@-$(echo a b)}' "a-b-"	0   #29
+	check 'set -- A    ; printf "%s-" ""${@-$(echo a b)}' "A-"	0   #30
+	check 'set -- ""   ; printf "%s-" ""${@-$(echo a b)}' "-"	0   #31
+	check 'set -- A B  ; printf "%s-" ""${@-$(echo a b)}' "A-B-"	0   #32
+	check 'set -- "" ""; printf "%s-" ""${@-$(echo a b)}""' "-"	0   #33
+	check 'set -- "A B"; printf "%s-" ""${@-$(echo a b)}' "A-B-"	0   #34
+	check 'set -- A B C; printf "%s-" ""${@-$(echo a b)}' "A-B-C-"	0   #35
+
+	check 'set --      ; printf "%s-" ""${@-"$(echo a b)"}' "a b-"	0   #36
+	check 'set -- A    ; printf "%s-" ""${@-"$(echo a b)"}' "A-"	0   #37
+	check 'set -- ""   ; printf "%s-" ""${@-"$(echo a b)"}' "-"	0   #38
+	check 'set -- A B  ; printf "%s-" ""${@-"$(echo a b)"}' "A-B-"	0   #39
+	check 'set -- "" ""; printf "%s-" ""${@-"$(echo a b)"}""' "-"	0   #40
+	check 'set -- "A B"; printf "%s-" ""${@-"$(echo a b)"}' "A-B-"	0   #41
+	check 'set -- A B C; printf "%s-" ""${@-"$(echo a b)"}' "A-B-C-" 0  #42
+
+	check 'set --      ; printf "%s-" ""${@-${@}}'	"-"		0   #43
+	check 'set -- A    ; printf "%s-" ""${@-${@}}'	"A-"		0   #44
+	check 'set -- ""   ; printf "%s-" ""${@-${@}}'	"-"		0   #45
+	check 'set -- A B  ; printf "%s-" ""${@-${@}}'	"A-B-"		0   #46
+	check 'set -- "" ""; printf "%s-" ""${@-${@}}""' "-"		0   #47
+	check 'set -- "A B"; printf "%s-" ""${@-${@}}'	"A-B-"		0   #48
+	check 'set -- A B C; printf "%s-" ""${@-${@}}'	"A-B-C-"	0   #49
+
+	check 'set --      ; printf "%s-" ""${@-"${@}"}' "-"		0   #50
+	check 'set -- A    ; printf "%s-" ""${@-"${@}"}' "A-"		0   #51
+	check 'set -- ""   ; printf "%s-" ""${@-"${@}"}' "-"		0   #52
+	check 'set -- A B  ; printf "%s-" ""${@-"${@}"}' "A-B-"		0   #53
+	check 'set -- "" ""; printf "%s-" ""${@-"${@}"}' "-"		0   #54
+	check 'set -- "A B"; printf "%s-" ""${@-"${@}"}' "A-B-"		0   #55
+	check 'set -- A B C; printf "%s-" ""${@-"${@}"}' "A-B-C-"	0   #56
+
+	check 'set --      ; printf "%s-" X${@+foo}Y'	"XY-"		0   #57
+	check 'set -- A    ; printf "%s-" X${@+foo}Y'	"XfooY-"	0   #58
+	check 'set -- ""   ; printf "%s-" X${@+foo}Y'	"XfooY-"	0   #59
+	check 'set -- A B  ; printf "%s-" X${@+foo}Y'	"XfooY-"	0   #60
+	check 'set -- "" ""; printf "%s-" X${@+foo}Y'	"XfooY-"	0   #61
+	check 'set -- "A B"; printf "%s-" X${@+foo}Y'	"XfooY-"	0   #62
+	check 'set -- A B C; printf "%s-" X${@+foo}Y'	"XfooY-" 	0   #63
+
+	check 'set --      ; printf "%s-" X${@+a b}Y'	"XY-"		0   #64
+	check 'set -- A    ; printf "%s-" X${@+a b}Y'	"Xa-bY-"	0   #65
+	check 'set -- ""   ; printf "%s-" X${@+a b}Y'	"Xa-bY-"	0   #66
+	check 'set -- A B  ; printf "%s-" X${@+a b}Y'	"Xa-bY-"	0   #67
+	check 'set -- "" ""; printf "%s-" X${@+a b}Y'	"Xa-bY-"	0   #68
+	check 'set -- "A B"; printf "%s-" X${@+a b}Y'	"Xa-bY-"	0   #69
+	check 'set -- A B C; printf "%s-" X${@+a b}Y'	"Xa-bY-" 	0   #70
+
+	check 'set --      ; printf "%s-" X${@+"a b"}Y'	"XY-"		0   #71
+	check 'set -- A    ; printf "%s-" X${@+"a b"}Y'	"Xa bY-"	0   #72
+	check 'set -- ""   ; printf "%s-" X${@+"a b"}Y'	"Xa bY-"	0   #73
+	check 'set -- A B  ; printf "%s-" X${@+"a b"}Y'	"Xa bY-"	0   #74
+	check 'set -- "" ""; printf "%s-" X${@+"a b"}Y'	"Xa bY-"	0   #75
+	check 'set -- "A B"; printf "%s-" X${@+"a b"}Y'	"Xa bY-"	0   #76
+	check 'set -- A B C; printf "%s-" X${@+"a b"}Y'	"Xa bY-" 	0   #77
+
+	check 'set --      ; printf "%s-" X${@+$(echo a b)}Y' "XY-"	0   #78
+	check 'set -- A    ; printf "%s-" X${@+$(echo a b)}Y' "Xa-bY-"	0   #79
+	check 'set -- ""   ; printf "%s-" X${@+$(echo a b)}Y' "Xa-bY-"	0   #80
+	check 'set -- A B  ; printf "%s-" X${@+$(echo a b)}Y' "Xa-bY-"	0   #81
+	check 'set -- "" ""; printf "%s-" X${@+$(echo a b)}Y' "Xa-bY-"	0   #82
+	check 'set -- "A B"; printf "%s-" X${@+$(echo a b)}Y' "Xa-bY-"	0   #83
+	check 'set -- A B C; printf "%s-" X${@+$(echo a b)}Y' "Xa-bY-"	0   #84
+
+	check 'set --      ; printf "%s-" X${@+"$(echo a b)"}Y' "XY-"	0   #85
+	check 'set -- A    ; printf "%s-" X${@+"$(echo a b)"}Y' "Xa bY-" 0  #86
+	check 'set -- ""   ; printf "%s-" X${@+"$(echo a b)"}Y' "Xa bY-" 0  #87
+	check 'set -- A B  ; printf "%s-" X${@+"$(echo a b)"}Y' "Xa bY-" 0  #88
+	check 'set -- "" ""; printf "%s-" X${@+"$(echo a b)"}Y' "Xa bY-" 0  #89
+	check 'set -- "A B"; printf "%s-" X${@+"$(echo a b)"}Y' "Xa bY-" 0  #90
+	check 'set -- A B C; printf "%s-" X${@+"$(echo a b)"}Y' "Xa bY-" 0  #91
+
+	check 'set --      ; printf "%s-" X${@+${@}}Y'	"XY-"		0   #92
+	check 'set -- A    ; printf "%s-" X${@+${@}}Y'	"XAY-"		0   #93
+	check 'set -- ""   ; printf "%s-" X${@+${@}}Y'	"XY-"		0   #94
+	check 'set -- A B  ; printf "%s-" X${@+${@}}Y'	"XA-BY-"	0   #95
+	check 'set -- "" ""; printf "%s-" X${@+${@}}Y'	"X-Y-"		0   #96
+	check 'set -- "A B"; printf "%s-" X${@+${@}}Y'	"XA-BY-"	0   #97
+	check 'set -- A B C; printf "%s-" X${@+${@}}Y'	"XA-B-CY-"	0   #98
+
+	check 'set --      ; printf "%s-" X${@+"${@}"}Y' "XY-"		0   #99
+	check 'set -- A    ; printf "%s-" X${@+"${@}"}Y' "XAY-"		0  #100
+	check 'set -- ""   ; printf "%s-" X${@+"${@}"}Y' "XY-"		0  #101
+	check 'set -- A B  ; printf "%s-" X${@+"${@}"}Y' "XA-BY-"	0  #102
+	check 'set -- "" ""; printf "%s-" X${@+"${@}"}Y' "X-Y-"		0  #103
+	check 'set -- "A B"; printf "%s-" X${@+"${@}"}Y' "XA BY-"	0  #104
+	check 'set -- A B C; printf "%s-" X${@+"${@}"}Y' "XA-B-CY-"	0  #105
+
+	check 'set --      ; printf "%s-" X${@=value}Y'	''		2  #106
+	check 'set --      ; printf "%s-" X${@?No parameters}Y'  ''	2  #107
+
+	results
+}
+
+# =============================================================================
+
 atf_init_test_cases()
 {
 	# Listed here in the order ATF runs them, not the order from above
@@ -1950,12 +2442,16 @@ atf_init_test_cases()
 	atf_add_test_case dollar_at_unquoted_or_conditional
 	atf_add_test_case dollar_at_with_text
 	atf_add_test_case dollar_hash
+	atf_add_test_case dollar_quoted_at_tested
+	atf_add_test_case dollar_quoted_at_null_tested
 	atf_add_test_case dollar_star
 	atf_add_test_case dollar_star_in_quoted_word
 	atf_add_test_case dollar_star_in_word
 	atf_add_test_case dollar_star_in_word_empty_ifs
 	atf_add_test_case dollar_star_unquoted
 	atf_add_test_case dollar_star_with_empty_ifs
+	atf_add_test_case dollar_unquoted_at_tested
+	atf_add_test_case dollar_unquoted_at_null_tested
 	atf_add_test_case embedded_nl
 	atf_add_test_case error
 	atf_add_test_case iteration_on_null_parameter
