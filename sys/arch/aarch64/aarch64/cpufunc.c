@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.39 2026/11/03 06:52:27 skrll Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.40 2026/11/25 15:36:24 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.39 2026/11/03 06:52:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.40 2026/11/25 15:36:24 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -306,15 +306,12 @@ aarch64_printcacheinfo(device_t dev, struct cpu_info *ci)
 static inline void
 ln_dcache_wb_all(int level, struct aarch64_cache_unit *cunit)
 {
-	uint64_t x;
-	unsigned int set, way, setshift, wayshift;
+	unsigned int setshift = ffs(cunit->cache_line_size) - 1;
+	unsigned int wayshift = 32 - (ffs(cunit->cache_ways) - 1);
 
-	setshift = ffs(cunit->cache_line_size) - 1;
-	wayshift = 32 - (ffs(cunit->cache_ways) - 1);
-
-	for (way = 0; way < cunit->cache_ways; way++) {
-		for (set = 0; set < cunit->cache_sets; set++) {
-			x = (way << wayshift) | (set << setshift) |
+	for (unsigned int way = 0; way < cunit->cache_ways; way++) {
+		for (unsigned int set = 0; set < cunit->cache_sets; set++) {
+			uint64_t x = (way << wayshift) | (set << setshift) |
 			    (level << 1);
 			__asm __volatile ("dc csw, %0" :: "r"(x));
 		}
@@ -326,15 +323,12 @@ ln_dcache_wb_all(int level, struct aarch64_cache_unit *cunit)
 static inline void
 ln_dcache_wbinv_all(int level, struct aarch64_cache_unit *cunit)
 {
-	uint64_t x;
-	unsigned int set, way, setshift, wayshift;
+	unsigned int setshift = ffs(cunit->cache_line_size) - 1;
+	unsigned int wayshift = 32 - (ffs(cunit->cache_ways) - 1);
 
-	setshift = ffs(cunit->cache_line_size) - 1;
-	wayshift = 32 - (ffs(cunit->cache_ways) - 1);
-
-	for (way = 0; way < cunit->cache_ways; way++) {
-		for (set = 0; set < cunit->cache_sets; set++) {
-			x = (way << wayshift) | (set << setshift) |
+	for (unsigned int way = 0; way < cunit->cache_ways; way++) {
+		for (unsigned int set = 0; set < cunit->cache_sets; set++) {
+			uint64_t x = (way << wayshift) | (set << setshift) |
 			    (level << 1);
 			__asm __volatile ("dc cisw, %0" :: "r"(x));
 		}
@@ -346,15 +340,12 @@ ln_dcache_wbinv_all(int level, struct aarch64_cache_unit *cunit)
 static inline void
 ln_dcache_inv_all(int level, struct aarch64_cache_unit *cunit)
 {
-	uint64_t x;
-	unsigned int set, way, setshift, wayshift;
+	unsigned int setshift = ffs(cunit->cache_line_size) - 1;
+	unsigned int wayshift = 32 - (ffs(cunit->cache_ways) - 1);
 
-	setshift = ffs(cunit->cache_line_size) - 1;
-	wayshift = 32 - (ffs(cunit->cache_ways) - 1);
-
-	for (way = 0; way < cunit->cache_ways; way++) {
-		for (set = 0; set < cunit->cache_sets; set++) {
-			x = (way << wayshift) | (set << setshift) |
+	for (unsigned int way = 0; way < cunit->cache_ways; way++) {
+		for (unsigned int set = 0; set < cunit->cache_sets; set++) {
+			uint64_t x = (way << wayshift) | (set << setshift) |
 			    (level << 1);
 			__asm __volatile ("dc isw, %0" :: "r"(x));
 		}
@@ -370,9 +361,8 @@ aarch64_dcache_wbinv_all(void)
 
 	struct cpu_info * const ci = curcpu();
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
-	int level;
 
-	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
+	for (unsigned int level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
@@ -389,9 +379,8 @@ aarch64_dcache_inv_all(void)
 
 	struct cpu_info * const ci = curcpu();
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
-	int level;
 
-	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
+	for (unsigned int level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
@@ -408,9 +397,8 @@ aarch64_dcache_wb_all(void)
 
 	struct cpu_info * const ci = curcpu();
 	struct aarch64_cache_info * const cinfo = ci->ci_cacheinfo;
-	int level;
 
-	for (level = 0; level < MAX_CACHE_LEVEL; level++) {
+	for (unsigned int level = 0; level < MAX_CACHE_LEVEL; level++) {
 		if (cinfo[level].cacheable == CACHE_CACHEABLE_NONE)
 			break;
 
