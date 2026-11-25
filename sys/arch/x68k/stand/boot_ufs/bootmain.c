@@ -1,4 +1,4 @@
-/*	$NetBSD: bootmain.c,v 1.14 2019/06/14 14:17:58 isaki Exp $	*/
+/*	$NetBSD: bootmain.c,v 1.15 2026/11/25 10:51:48 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1993, 1994 Takumi Nakamura.
@@ -332,40 +332,19 @@ bootufs(void)
 	/*
 	 * Look for the 2nd stage boot.
 	 */
-
-	/* Try "boot" first */
 	size = load_file("boot", BOOT_TEXTADDR, &header);
 #ifdef BOOT_DEBUG
 	B_PRINT("done.\r\n");
 #endif
-	if (size > 0)
-		exec_image(BOOT_TEXTADDR, /* image loaded at */
-			   BOOT_TEXTADDR, /* image executed at */
-			   header.a_entry, /* entry point */
-			   size, /* image size */
-			   bootdev, RB_SINGLE); /* arguments */
-
-	B_PRINT("can't load the secondary bootstrap.;"
-		"trying /netbsd...\r\n");
-
-	/* fallback to /netbsd. */
-	/* always fails since NMAGIC loader is not yet implemented. */
-
-	size = load_file("netbsd", 0x6000, &header);
-	if (size > 0) {
-		if (*((short *)(0x6000 + header.a_entry - 2)) != 0) {
-			B_PRINT("boot interface of /netbsd is too new!\r\n");
-			goto fail;
-		}
-		exec_image(0x6000, /* image loaded at */
-			   0,	/* image executed at */
-			   header.a_entry, /* entry point */
-			   size, /* image size */
-			   bootdev, RB_SINGLE); /* arguments */
+	if (size == 0) {
+		BOOT_ERROR("can't load the secondary bootstrap.");
 		/* NOTREACHED */
 	}
 
- fail:
-	BOOT_ERROR("can't load the secondary bootstrap nor the kernel.");
+	exec_image(BOOT_TEXTADDR, /* image loaded at */
+		   BOOT_TEXTADDR, /* image executed at */
+		   header.a_entry, /* entry point */
+		   size, /* image size */
+		   bootdev, RB_SINGLE); /* arguments */
 	/* NOTREACHED */
 }
