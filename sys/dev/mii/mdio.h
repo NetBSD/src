@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.36 2026/11/25 14:26:39 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.37 2026/11/25 14:27:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -253,7 +253,10 @@
 #define MDIO_PMAPMD_PKGID1	14  /* PMA/PMD package identifier 1 */
 #define MDIO_PMAPMD_PKGID2	15  /*				  2 */
 #define MDIO_PMAPMD_EEECAP	16  /* PMA/PMD EEE capability */
-	/* Values from 17 to 20 are reserved */
+#define MDIO_PMAPMD_EPOC	17  /* EPoC PMA/PMD ability */
+#define MDIO_PMAPMD_BASE_T1	18  /* BASE-T1 extended ability */
+#define MDIO_PMAPMD_25G		19  /* 25G PMA/PMD extended ability */
+#define MDIO_PMAPMD_50G		20  /* 50G PMA/PMD extended ability */
 
 #define MDIO_PMAPMD_2P5G5GABLTY	21  /* 2.5G/5G PMA/PMD extended ability */
 #define   PMAPMD_2P5G5GABLTY_5G_KR	0x0008
@@ -261,12 +264,20 @@
 #define   PMAPMD_2P5G5GABLTY_5G_T	0x0002
 #define   PMAPMD_2P5G5GABLTY_2P5G_T	0x0001
 
-	/* Values from 22 to 29 are reserved */
-#define MDIO_PMAPMD_10P2B_CTRL	30  /* 10P/2B PMA/PMD control */
-#define MDIO_PMAPMD_10P2B_STAT	31  /* 10P/2B	      status */
-#define MDIO_PMAPMD_10P2B_LPCTRL 32 /* 10P/2B LP PMA/PMD control */
-#define MDIO_PMAPMD_10P2B_LPSTAT 33 /*			 status */
-	/* Values from 34 to 35 are reserved */
+#define MDIO_PMAPMD_BASE_H	  22 /* BASE-H PMA/PMD ext. ability */
+#define MDIO_PMAPMD_200G	  23 /* 200G PMA/PMD ext. ability */
+#define MDIO_PMAPMD_400G	  24 /* 400G PMA/PMD ext. ability */
+#define MDIO_PMAPMD_EXTABLTY2	  25 /* PMA/PMD extended ability 2 */
+#define MDIO_PMAPMD_40_100_EXA2	  26 /* 40G/100G ext. ability 2 */
+#define MDIO_PMAPMD_TXDIS_EXT	  27 /* PMD transmit disable ext. */
+#define MDIO_PMAPMD_RXSIGDTCT_EXT 28 /* PMD receive signal detect ext */
+#define MDIO_PMAPMD_CTRL3	  29 /* PMA/PMD control 3 */
+#define MDIO_PMAPMD_10P2B_CTRL	  30 /* 10P/2B PMA/PMD control */
+#define MDIO_PMAPMD_10P2B_STAT	  31 /* 10P/2B	       status */
+#define MDIO_PMAPMD_10P2B_LPCTRL  32 /* 10P/2B LP PMA/PMD control */
+#define MDIO_PMAPMD_10P2B_LPSTAT  33 /*			  status */
+#define MDIO_PMAPMD_BIDI_EXA1	  34 /* BiDi PMA/PMD extended ability 1 */
+#define MDIO_PMAPMD_BIDI_EXA2	  35 /*				      2 */
 #define MDIO_PMAPMD_10P2B_LLOSCNT     36 /* 10P/2B link loss counter */
 #define MDIO_PMAPMD_10P2B_RXSNRMGN    37 /* 10P/2B RX SNR margin */
 #define MDIO_PMAPMD_10P2B_LPRXSNRMGN  38 /* 10P/2B LP RX SNR margin */
