@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.32 2026/11/25 14:24:19 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.33 2026/11/25 14:24:45 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -465,7 +465,7 @@
 
 /*
  * WIS registers.
- * Table 45-99
+ * Table 45-213
  */
 #define MDIO_WIS_CTRL1		0   /* WIS control 1 */
 #define MDIO_WIS_STAT1		1   /* WIS status 1 */
@@ -517,7 +517,7 @@
 
 /*
  * PCS registers.
- * Table 45-119
+ * Table 45-233
  */
 #define MDIO_PCS_CTRL1		0   /* PCS control 1 */
 #define MDIO_PCS_STAT1		1   /* PCS status 1 */
@@ -599,7 +599,7 @@
 
 /*
  * PHY XS registers.
- * Table 45-164
+ * Table 45-314
  */
 #define MDIO_PHYXS_CTRL1	0   /* PHY XS control 1 */
 #define MDIO_PHYXS_STAT1	1   /* PHY XS status 1 */
@@ -635,7 +635,7 @@
 
 /*
  * DTE XS registers.
- * Table 45-175
+ * Table 45-339
  */
 #define MDIO_DTEXS_CTRL1	0   /* DTE XS control 1 */
 #define MDIO_DTEXS_STAT1	1   /* DTE XS status 1 */
@@ -671,7 +671,7 @@
 
 /*
  * Transmission Convergence(TC) registers.
- * Table 45-186
+ * Table 45-364
  */
 #define MDIO_TC_CTRL1		0   /* TC control 1 */
 	/* Value 1 is reserved */
@@ -710,7 +710,7 @@
 
 /*
  * Auto-Negotiation registers.
- * Table 45-200
+ * Table 45-378
  */
 #define MDIO_AN_CTRL1		0   /* AN control 1 */
 #define   AN_CTRL1_ANRESET	0x8000 /* AN reset */
@@ -823,7 +823,7 @@
 
 /*
  * Clause 22 extension registers.
- * Table 45-212
+ * Table 45-416
  */
 	/* Values from 0 to 4 are reserved */
 #define MDIO_CL22E_DEVS1	5   /* Clause 22 ext. devices in package 1 */
@@ -837,7 +837,7 @@
 
 /*
  * Vendor specific MMD 1 registers.
- * Table 45-218
+ * Table 45-422
  */
 	/* Values from 0 to 1 are vendor specific */
 #define MDIO_VSMMD1_DEVID1	2   /* Vendor specific MMD 1 device ident. 1 */
@@ -851,7 +851,7 @@
 
 /*
  * Vendor specific MMD 2 registers.
- * Table 45-220
+ * Table 45-424
  */
 	/* Values from 0 to 1 are vendor specific */
 #define MDIO_VSMMD2_DEVID1	2   /* Vendor specific MMD 2 device ident. 1 */
