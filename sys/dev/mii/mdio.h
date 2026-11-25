@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.17 2026/11/25 14:15:35 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.18 2026/11/25 14:16:21 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -570,7 +570,7 @@
 	/* Values 32768 to 65535 are vendor specific */
 
 /*
- * TC registers.
+ * Transmission Convergence(TC) registers.
  * Table 45-186
  */
 #define MDIO_TC_CTRL1		0   /* TC control 1 */
