@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.23 2026/11/25 14:19:33 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.24 2026/11/25 14:20:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -217,11 +217,11 @@
 #define   PMAPMD_CTRL2_TYPE_10G_EW	0x01
 #define   PMAPMD_CTRL2_TYPE_10G_CX4	0x00
 
-#define MDIO_PMAPMD_10GSTAT2	8   /* 10G PMA/PMD status 2 */
-#define MDIO_PMAPMD_10GTXDIS	9   /* 10G PMA/PMD transmit disable */
-#define MDIO_PMAPMD_RXSIGDTCT	10  /* 10G PMD receive signal detect */
+#define MDIO_PMAPMD_STAT2	8   /* PMA/PMD status 2 */
+#define MDIO_PMAPMD_TXDIS	9   /* PMA/PMD transmit disable */
+#define MDIO_PMAPMD_RXSIGDTCT	10  /* PMD receive signal detect */
 
-#define MDIO_PMAPMD_EXTABLTY	11  /* 10G PMA/PMD ext. ability reg */
+#define MDIO_PMAPMD_EXTABLTY	11  /* PMA/PMD extended ability */
 #define   PMAPMD_EXTABLTY_BASE_H	0x8000 /* BASE-H */
 #define   PMAPMD_EXTABLTY_2P5G_5G	0x4000 /* 2.5G and 5G */
 #define   PMAPMD_EXTABLTY_2HG_4HG	0x2000 /* 200G and 400G */
@@ -333,18 +333,18 @@
 #define MDIO_PMAPMD_10GTPASWPOLAR	130 /* 10G-T pair swap & polarity */
 #define MDIO_PMAPMD_10GTTXPWBOSHRCH	131 /* 10G-T PWR backoff&PHY shrt rch*/
 #define MDIO_PMAPMD_10GTTSTMODE		132 /* 10G-T test mode */
-#define MDIO_PMAPMD_10GTSNROMGNA	133 /* 10G-T SNR operating margin chA*/
-#define MDIO_PMAPMD_10GTSNROMGNB	134 /*				   B */
-#define MDIO_PMAPMD_10GTSNROMGNC	135 /*				   C */
-#define MDIO_PMAPMD_10GTSNROMGND	136 /*				   D */
-#define MDIO_PMAPMD_10GTMINMGNA		137 /* 10G-T minimum margin ch. A */
-#define MDIO_PMAPMD_10GTMINMGNB		138 /*				B */
-#define MDIO_PMAPMD_10GTMINMGNC		139 /*				C */
-#define MDIO_PMAPMD_10GTMINMGND		140 /*				D */
-#define MDIO_PMAPMD_10GTSIGPWRA		141 /* 10G-T RX signal power ch. A */
-#define MDIO_PMAPMD_10GTSIGPWRB		142 /*				 B */
-#define MDIO_PMAPMD_10GTSIGPWRC		143 /*				 C */
-#define MDIO_PMAPMD_10GTSIGPWRD		144 /*				 D */
+#define MDIO_PMAPMD_SNROMGNA	       133 /* SNR operating margin chann. A */
+#define MDIO_PMAPMD_SNROMGNB	       134 /*				  B */
+#define MDIO_PMAPMD_SNROMGNC	       135 /*				  C */
+#define MDIO_PMAPMD_SNROMGND	       136 /*				  D */
+#define MDIO_PMAPMD_MINMGNA	       137 /* Minimum margin channel A */
+#define MDIO_PMAPMD_MINMGNB	       138 /*			     B */
+#define MDIO_PMAPMD_MINMGNC	       139 /*			     C */
+#define MDIO_PMAPMD_MINMGND	       140 /*			     D */
+#define MDIO_PMAPMD_SIGPWRA	       141 /* RX signal power channel A */
+#define MDIO_PMAPMD_SIGPWRB	       142 /*			      B */
+#define MDIO_PMAPMD_SIGPWRC	       143 /*			      C */
+#define MDIO_PMAPMD_SIGPWRD	       144 /*			      D */
 #define MDIO_PMAPMD_10GTSKEWDLY1	145 /* 10G-T skew delay 1 */
 #define MDIO_PMAPMD_10GTSKEWDLY2	146 /*			2 */
 #define MDIO_PMAPMD_10GTFSTRETSTATCTRL	147 /* 10G-T fast retrain stat&ctrl */
@@ -517,8 +517,8 @@
 #define MDIO_PCS_SPEED		4   /* PCS speed ability */
 #define MDIO_PCS_DEVS1		5   /* PCS devices in package 1 */
 #define MDIO_PCS_DEVS2		6   /*			      2 */
-#define MDIO_PCS_10GCTRL2	7   /* 10G PCS control 2 */
-#define MDIO_PCS_10GSTAT2	8   /* 10G PCS status 2 */
+#define MDIO_PCS_CTRL2		7   /* PCS control 2 */
+#define MDIO_PCS_STAT2		8   /* PCS status 2 */
 	/* Values 9 to 13 are reserved */
 #define MDIO_PCS_PKGID1		14  /* PCS package identifier 1 */
 #define MDIO_PCS_PKGID2		15  /*			      2 */
