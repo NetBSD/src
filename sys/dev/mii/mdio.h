@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.27 2026/11/25 14:21:56 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.28 2026/11/25 14:22:29 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -256,78 +256,78 @@
 #define   PMAPMD_2P5G5GABLTY_2P5G_T	0x0001
 
 	/* Values 22 to 29 are reserved */
-#define MDIO_PMAPMD_10P2BCTRL	30  /* 10P/2B PMA/PMD control */
-#define MDIO_PMAPMD_10P2BSTAT	31  /* 10P/2B	      status */
-#define MDIO_PMAPMD_10P2BLPCTRL	32  /* 10P/2B LP PMA/PMD control */
-#define MDIO_PMAPMD_10P2BLPSTAT	33  /*			 status */
+#define MDIO_PMAPMD_10P2B_CTRL	30  /* 10P/2B PMA/PMD control */
+#define MDIO_PMAPMD_10P2B_STAT	31  /* 10P/2B	      status */
+#define MDIO_PMAPMD_10P2B_LPCTRL 32 /* 10P/2B LP PMA/PMD control */
+#define MDIO_PMAPMD_10P2B_LPSTAT 33 /*			 status */
 	/* Values 34 to 35 are reserved */
-#define MDIO_PMAPMD_10P2BLLOSCNT	36  /* 10P/2B link loss counter */
-#define MDIO_PMAPMD_10P2BRXSNRMGN	37  /* 10P/2B RX SNR margin */
-#define MDIO_PMAPMD_10P2BLPRXSNRMGN	38  /* 10P/2B LP RX SNR margin */
-#define MDIO_PMAPMD_10P2BLINEATTN	39  /* 10P/2B line attenuation */
-#define MDIO_PMAPMD_10P2BLPLINEATTN	40  /* 10P/2B LP line attenuation */
-#define MDIO_PMAPMD_10P2BLQTHRES	41  /* 10P/2B line quality thresholds*/
-#define MDIO_PMAPMD_10P2BLPLQLTHRES	42  /* 10P/2B LP LQ thresholds */
-#define MDIO_PMAPMD_10PFECCOERRS	43  /* 10P FEC correctable errors cnt*/
-#define MDIO_PMAPMD_10PFECUNCOERRS	44  /* 10P FEC uncorrectable err cnt */
-#define MDIO_PMAPMD_10PLPFECCOERRS	45  /* 10P LP FEC correctable err cnt*/
-#define MDIO_PMAPMD_10PLPFECUNCOERRS	46  /* 10P LP FEC uncorrectable errcn*/
-#define MDIO_PMAPMD_10PELECLENGTH	47  /* 10P electrical length */
-#define MDIO_PMAPMD_10PLPELECLENGTH	48  /* 10P LP electrical length */
-#define MDIO_PMAPMD_10PGENCONFIG	49  /* 10P PMA/PMD general config. */
-#define MDIO_PMAPMD_10PPSDCONFIG	50  /* 10P PSD configuration */
-#define MDIO_PMAPMD_10PDSDRCONF1	51  /* 10P downstream data rate cnf1 */
-#define MDIO_PMAPMD_10PDSDRCONF2	52  /*				   2 */
-#define MDIO_PMAPMD_10PDSRSCONF		53  /* 10P downstream ReedSolomon cnf*/
-#define MDIO_PMAPMD_10PUSDR1		54  /* 10P upstream data rate cnf1 */
-#define MDIO_PMAPMD_10PUSDR2		55  /*				 2 */
-#define MDIO_PMAPMD_10PUSRSCONF		56  /* 10P upstream ReedSolomon cnf */
-#define MDIO_PMAPMD_10PTONEGROUP1	57  /* 10P tone group 1 */
-#define MDIO_PMAPMD_10PTONEGROUP2	58  /*		      2 */
-#define MDIO_PMAPMD_10PTONEPARAM1	59  /* 10P tone parameter 1 */
-#define MDIO_PMAPMD_10PTONEPARAM2	60  /*			  2 */
-#define MDIO_PMAPMD_10PTONEPARAM3	61  /*			  3 */
-#define MDIO_PMAPMD_10PTONEPARAM4	62  /*			  4 */
-#define MDIO_PMAPMD_10PTONEPARAM5	63  /*			  5 */
-#define MDIO_PMAPMD_10PTONECTLACTN	64  /* 10P tone control action */
-#define MDIO_PMAPMD_10PTONESTAT1	65  /* 10P tone status 1 */
-#define MDIO_PMAPMD_10PTONESTAT2	66  /*		       2 */
-#define MDIO_PMAPMD_10PTONESTAT3	67  /*		       3 */
-#define MDIO_PMAPMD_10POUTINDICAT	68  /* 10P outgoing indicator bits */
-#define MDIO_PMAPMD_10PININDICAT	69  /* 10P incoming indicator bits */
-#define MDIO_PMAPMD_10PCYCLICEXTCNF	70  /* 10P cyclic extension config. */
-#define MDIO_PMAPMD_10PATTAINDSDR	71  /* 10P attainable downstream DR */
+#define MDIO_PMAPMD_10P2B_LLOSCNT     36 /* 10P/2B link loss counter */
+#define MDIO_PMAPMD_10P2B_RXSNRMGN    37 /* 10P/2B RX SNR margin */
+#define MDIO_PMAPMD_10P2B_LPRXSNRMGN  38 /* 10P/2B LP RX SNR margin */
+#define MDIO_PMAPMD_10P2B_LINEATTN    39 /* 10P/2B line attenuation */
+#define MDIO_PMAPMD_10P2B_LPLINEATTN  40 /* 10P/2B LP line attenuation */
+#define MDIO_PMAPMD_10P2B_LQTHRES     41 /* 10P/2B line quality thresholds */
+#define MDIO_PMAPMD_10P2B_LPLQLTHRES  42 /* 10P/2B LP LQ thresholds */
+#define MDIO_PMAPMD_10P_FECCOERRS     43 /* 10P FEC correctable errors count */
+#define MDIO_PMAPMD_10P_FECUNCOERRS   44 /* 10P FEC uncorrectable err count */
+#define MDIO_PMAPMD_10P_LPFECCOERRS   45 /* 10P LP FEC correctable err count */
+#define MDIO_PMAPMD_10P_LPFECUNCOERRS 46 /* 10P LP FEC uncorrectable err cnt */
+#define MDIO_PMAPMD_10P_ELECLENGTH    47 /* 10P electrical length */
+#define MDIO_PMAPMD_10P_LPELECLENGTH  48 /* 10P LP electrical length */
+#define MDIO_PMAPMD_10P_GENCONFIG     49 /* 10P PMA/PMD general config. */
+#define MDIO_PMAPMD_10P_PSDCONFIG     50 /* 10P PSD configuration */
+#define MDIO_PMAPMD_10P_DSDRCONF1     51 /* 10P downstream data rate conf 1 */
+#define MDIO_PMAPMD_10P_DSDRCONF2     52 /*				  2 */
+#define MDIO_PMAPMD_10P_DSRSCONF      53 /* 10P downstream ReedSolomon conf */
+#define MDIO_PMAPMD_10P_USDR1	      54 /* 10P upstream data rate config 1 */
+#define MDIO_PMAPMD_10P_USDR2	      55 /*				  2 */
+#define MDIO_PMAPMD_10P_USRSCONF      56 /* 10P upstream ReedSolomon config */
+#define MDIO_PMAPMD_10P_TONEGROUP1    57 /* 10P tone group 1 */
+#define MDIO_PMAPMD_10P_TONEGROUP2    58 /*		   2 */
+#define MDIO_PMAPMD_10P_TONEPARAM1    59 /* 10P tone parameter 1 */
+#define MDIO_PMAPMD_10P_TONEPARAM2    60 /*		       2 */
+#define MDIO_PMAPMD_10P_TONEPARAM3    61 /*		       3 */
+#define MDIO_PMAPMD_10P_TONEPARAM4    62 /*		       4 */
+#define MDIO_PMAPMD_10P_TONEPARAM5    63 /*		       5 */
+#define MDIO_PMAPMD_10P_TONECTLACTN   64 /* 10P tone control action */
+#define MDIO_PMAPMD_10P_TONESTAT1     65 /* 10P tone status 1 */
+#define MDIO_PMAPMD_10P_TONESTAT2     66 /*		    2 */
+#define MDIO_PMAPMD_10P_TONESTAT3     67 /*		    3 */
+#define MDIO_PMAPMD_10P_OUTINDICAT    68 /* 10P outgoing indicator bits */
+#define MDIO_PMAPMD_10P_ININDICAT     69 /* 10P incoming indicator bits */
+#define MDIO_PMAPMD_10P_CYCLICEXTCNF  70 /* 10P cyclic extension config. */
+#define MDIO_PMAPMD_10P_ATTAINDSDR    71 /* 10P attainable downstream DR */
 	/* Values 72 to 79 are reserved */
-#define MDIO_PMAPMD_2BGENPARAM		80  /* 2B general parameter */
-#define MDIO_PMAPMD_2BPMDPARAM1		81  /* 2B PMD parameter 1 */
-#define MDIO_PMAPMD_2BPMDPARAM2		82  /*			2 */
-#define MDIO_PMAPMD_2BPMDPARAM3		83  /*			3 */
-#define MDIO_PMAPMD_2BPMDPARAM4		84  /*			4 */
-#define MDIO_PMAPMD_2BPMDPARAM5		85  /*			5 */
-#define MDIO_PMAPMD_2BPMDPARAM6		86  /*			6 */
-#define MDIO_PMAPMD_2BPMDPARAM7		87  /*			7 */
-#define MDIO_PMAPMD_2BPMDPARAM8		88  /*			8 */
-#define MDIO_PMAPMD_2BCODEVIOERRCNT	89  /* 2B code violation errors cnt. */
-#define MDIO_PMAPMD_2BLPCODEVIOERR	90  /* 2B LP code violation errors */
-#define MDIO_PMAPMD_2BERRSECCNT		91  /* 2B errored seconds counter */
-#define MDIO_PMAPMD_2BLPERRSEC		92  /* 2B LP errored seconds */
-#define MDIO_PMAPMD_2BSEVERRSECCNT	93  /* 2B severely errored seconds cn*/
-#define MDIO_PMAPMD_2BLPSEVERRSECCNT	94  /* 2B LP severely errored secs cn*/
-#define MDIO_PMAPMD_2BLOSWCNT		95  /* 2B LOSW counter */
-#define MDIO_PMAPMD_2BLPLOSW		96  /* 2B LP LOSW */
-#define MDIO_PMAPMD_2BUNAVSECCNT	97  /* 2B unavailable seconds counter*/
-#define MDIO_PMAPMD_2BLPUNAVSECCNT	98  /* 2B LP unavailable seconds cnt */
-#define MDIO_PMAPMD_2BSTATDEFECT	99  /* 2B state defects */
-#define MDIO_PMAPMD_2BLPSTATDEFECT	100 /* 2B LP state defects */
-#define MDIO_PMAPMD_2BNEGOCONSTEL	101 /* 2B negotiated constellation */
-#define MDIO_PMAPMD_2BEXTPMDPARAM1	102 /* 2B extended PMD parameters 1 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM2	103 /*				  2 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM3	104 /*				  3 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM4	105 /*				  4 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM5	106 /*				  5 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM6	107 /*				  6 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM7	108 /*				  7 */
-#define MDIO_PMAPMD_2BEXTPMDPARAM8	109 /*				  8 */
+#define MDIO_PMAPMD_2B_GENPARAM	      80 /* 2B general parameter */
+#define MDIO_PMAPMD_2B_PMDPARAM1      81 /* 2B PMD parameter 1 */
+#define MDIO_PMAPMD_2B_PMDPARAM2      82 /*		     2 */
+#define MDIO_PMAPMD_2B_PMDPARAM3      83 /*		     3 */
+#define MDIO_PMAPMD_2B_PMDPARAM4      84 /*		     4 */
+#define MDIO_PMAPMD_2B_PMDPARAM5      85 /*		     5 */
+#define MDIO_PMAPMD_2B_PMDPARAM6      86 /*		     6 */
+#define MDIO_PMAPMD_2B_PMDPARAM7      87 /*		     7 */
+#define MDIO_PMAPMD_2B_PMDPARAM8      88 /*		     8 */
+#define MDIO_PMAPMD_2B_CODEVIOERRCNT  89 /* 2B code violation errors counter */
+#define MDIO_PMAPMD_2B_LPCODEVIOERR   90 /* 2B LP code violation errors cnt */
+#define MDIO_PMAPMD_2B_ERRSECCNT      91 /* 2B errored seconds counter */
+#define MDIO_PMAPMD_2B_LPERRSEC	      92 /* 2B LP errored seconds */
+#define MDIO_PMAPMD_2B_SEVERRSECCNT   93 /* 2B severely errored seconds cnt */
+#define MDIO_PMAPMD_2B_LPSEVERRSECCNT 94 /* 2B LP severely errored secs cnt */
+#define MDIO_PMAPMD_2B_LOSWCNT	      95 /* 2B LOSW counter */
+#define MDIO_PMAPMD_2B_LPLOSW	      96 /* 2B LP LOSW */
+#define MDIO_PMAPMD_2B_UNAVSECCNT     97 /* 2B unavailable seconds counter */
+#define MDIO_PMAPMD_2B_LPUNAVSECCNT   98 /* 2B LP unavailable seconds count */
+#define MDIO_PMAPMD_2B_STATDEFECT     99 /* 2B state defects */
+#define MDIO_PMAPMD_2B_LPSTATDEFECT   100 /* 2B LP state defects */
+#define MDIO_PMAPMD_2B_NEGOCONSTEL    101 /* 2B negotiated constellation */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM1   102 /* 2B extended PMD parameters 1 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM2   103 /*				2 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM3   104 /*				3 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM4   105 /*				4 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM5   106 /*				5 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM6   107 /*				6 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM7   108 /*				7 */
+#define MDIO_PMAPMD_2B_EXTPMDPARAM8   109 /*				8 */
 	/* Values 110 to 128 are reserved */
 #define MDIO_PMAPMD_MULTGTSTAT		129 /* MultiGBASE-T status */
 #define MDIO_PMAPMD_MULTGTPASWPOLAR	130 /* MultiGBASE-T pair swap & polar*/
@@ -546,20 +546,20 @@
 #define MDIO_PCS_MLBRPCSALGNSTAT3 52 /*					  3 */
 #define MDIO_PCS_MLBRPCSALGNSTAT4 53 /*					  4 */
 	/* Values 54 to 59 are reserved */
-#define MDIO_PCS_10P2BCAP	60  /* 10P/2B capability */
-#define MDIO_PCS_10P2BCTRL	61  /* 10P/2B PCS control */
-#define MDIO_PCS_10P2BPMEAVAIL1	62  /* 10P/2B PME available 1 */
-#define MDIO_PCS_10P2BPMEAVAIL2	63  /*			    2 */
-#define MDIO_PCS_10P2BPMEAGGRG1	64  /*		  aggregate 1 */
-#define MDIO_PCS_10P2BPMEAGGRG2	65  /*			    2 */
-#define MDIO_PCS_10P2BPAFRXERRCNT 66 /* 10P/2B PAF RX error counter */
-#define MDIO_PCS_10P2BPAFSMLFRCNT 67 /* 10P/2B PAF small fragment counter */
-#define MDIO_PCS_10P2BPAFLARFLCNT 68 /* 10P/2B PAF large fragment counter */
-#define MDIO_PCS_10P2BPAFOVFLCNT  69 /* 10P/2B PAF overflow counter */
-#define MDIO_PCS_10P2BPAFBADFLCNT 70 /* 10P/2B PAF bad fragments counter */
-#define MDIO_PCS_10P2BPAFLSTFLCNT 71 /* 10P/2B PAF lost fragments counter */
-#define MDIO_PCS_10P2BPAFLSTSTFLCNT 72 /* 10P/2B PAF lost starts of fr. cnt */
-#define MDIO_PCS_10P2BPAFLSTENFLCNT 73 /* 10P/2B PAF lost ends of fr. count */
+#define MDIO_PCS_10P2B_CAP	   60 /* 10P/2B capability */
+#define MDIO_PCS_10P2B_CTRL	   61 /* 10P/2B PCS control */
+#define MDIO_PCS_10P2B_PMEAVAIL1   62 /* 10P/2B PME available 1 */
+#define MDIO_PCS_10P2B_PMEAVAIL2   63 /*		      2 */
+#define MDIO_PCS_10P2B_PMEAGGRG1   64 /*	    aggregate 1 */
+#define MDIO_PCS_10P2B_PMEAGGRG2   65 /*		      2 */
+#define MDIO_PCS_10P2B_PAFRXERRCNT 66 /* 10P/2B PAF RX error counter */
+#define MDIO_PCS_10P2B_PAFSMLFRCNT 67 /* 10P/2B PAF small fragment counter */
+#define MDIO_PCS_10P2B_PAFLARFLCNT 68 /* 10P/2B PAF large fragment counter */
+#define MDIO_PCS_10P2B_PAFOVFLCNT  69 /* 10P/2B PAF overflow counter */
+#define MDIO_PCS_10P2B_PAFBADFLCNT 70 /* 10P/2B PAF bad fragments counter */
+#define MDIO_PCS_10P2B_PAFLSTFLCNT 71 /* 10P/2B PAF lost fragments counter */
+#define MDIO_PCS_10P2B_PAFLSTSTFLCNT 72 /* 10P/2B PAF lost starts of fr. cnt */
+#define MDIO_PCS_10P2B_PAFLSTENFLCNT 73 /* 10P/2B PAF lost ends of fr. count */
 #define MDIO_PCS_10GPRFECABLTY	    74 /* 10G-PR & 10/1G-PRX FEC ability */
 #define MDIO_PCS_10GPRFECCTRL	    75 /* 10G-PR & 10/1G-PRX FEC control */
 #define MDIO_PCS_10GPRCOFECCOCNT1   76 /* 10(/1)G-PR(X) corrected FECcodecnt1*/
@@ -674,18 +674,18 @@
 	/* Values 7 to 13 are reserved */
 #define MDIO_TC_PKGID1		14  /* TC package identifier 1 */
 #define MDIO_TC_PKGID2		15  /*			     2 */
-#define MDIO_TC_10P2BAGGDCCTRL	16  /* 10P/2B aggregation discovery control */
-#define MDIO_TC_10P2BAGGDCSTAT	17  /* 10P/2B aggregation&discovery status */
-#define MDIO_TC_10P2BAGGDCCODE1	18  /* 10P/2B aggregation discovery code 1 */
-#define MDIO_TC_10P2BAGGDCCODE2	19  /*					 2 */
-#define MDIO_TC_10P2BAGGDCCODE3	20  /*					 3 */
-#define MDIO_TC_10P2BLPPMEAGGCTRL 21 /* 10P/2B LP PME aggregate control */
-#define MDIO_TC_10P2BLPPMEAGGDAT1 22 /* 10P/2B LP PME aggregate data 1 */
-#define MDIO_TC_10P2BLPPMEAGGDAT2 23 /*				     2 */
-#define MDIO_TC_10P2BCRCERRCNT	  24 /* 10P/2B TC CRC error counter */
-#define MDIO_TC_10P2BTPSCOVIOCNT1 25 /* 10P/2B TPS-TC coding violat. cnt. 1 */
-#define MDIO_TC_10P2BTPSCOVIOCNT2 26 /*					  2 */
-#define MDIO_TC_10P2BINDIC	  27 /* 10P/2B TC indications */
+#define MDIO_TC_10P2B_AGGDCCTRL	16  /* 10P/2B aggregation discovery control */
+#define MDIO_TC_10P2B_AGGDCSTAT	17  /* 10P/2B aggregation&discovery status */
+#define MDIO_TC_10P2B_AGGDCCODE1 18 /* 10P/2B aggregation discovery code 1 */
+#define MDIO_TC_10P2B_AGGDCCODE2 19 /*					 2 */
+#define MDIO_TC_10P2B_AGGDCCODE3 20 /*					 3 */
+#define MDIO_TC_10P2B_LPPMEAGGCTRL 21 /* 10P/2B LP PME aggregate control */
+#define MDIO_TC_10P2B_LPPMEAGGDAT1 22 /* 10P/2B LP PME aggregate data 1 */
+#define MDIO_TC_10P2B_LPPMEAGGDAT2 23 /*			      2 */
+#define MDIO_TC_10P2B_CRCERRCNT	   24 /* 10P/2B TC CRC error counter */
+#define MDIO_TC_10P2B_TPSCOVIOCNT1 25 /* 10P/2B TPS-TC coding violat. cnt. 1 */
+#define MDIO_TC_10P2B_TPSCOVIOCNT2 26 /*				   2 */
+#define MDIO_TC_10P2B_INDIC	   27 /* 10P/2B TC indications */
 	/* Values 28 to 1799 are reserved */
 #define MDIO_TC_TSYNCCAP	1800 /* TimeSync TC capability */
 #define MDIO_TC_TSYNCTXMAXDLYL	1801 /* TimeSync TC TX MAX delay L */
