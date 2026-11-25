@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.19 2026/11/25 14:16:53 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.20 2026/11/25 14:17:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -119,7 +119,7 @@
 #define   PMAPMD_CTRL2_TYPE_100G_CR10	0x28
 #define   PMAPMD_CTRL2_TYPE_40G_ER4	0x25
 #define   PMAPMD_CTRL2_TYPE_40G_FR	0x24
-#define   PMAPMD_CTRL2_TYPE_40G_LR	0x23
+#define   PMAPMD_CTRL2_TYPE_40G_LR4	0x23
 #define   PMAPMD_CTRL2_TYPE_40G_SR4	0x22
 #define   PMAPMD_CTRL2_TYPE_40G_CR4	0x21
 #define   PMAPMD_CTRL2_TYPE_40G_KR4	0x20
