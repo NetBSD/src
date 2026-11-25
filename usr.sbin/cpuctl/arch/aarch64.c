@@ -1,4 +1,4 @@
-/*	$NetBSD: aarch64.c,v 1.40 2026/11/25 07:02:00 skrll Exp $	*/
+/*	$NetBSD: aarch64.c,v 1.41 2026/11/25 07:11:25 skrll Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu
@@ -29,7 +29,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: aarch64.c,v 1.40 2026/11/25 07:02:00 skrll Exp $");
+__RCSID("$NetBSD: aarch64.c,v 1.41 2026/11/25 07:11:25 skrll Exp $");
 #endif /* no lint */
 
 #include <sys/types.h>
@@ -470,6 +470,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[3] = "QARMA with EnhancedPAC2",
 			[4] = "QARMA with EnhancedPAC/PAC2",
 			[5] = "QARMA with EnhancedPAC/PAC2/FPACCombined",
+			[6] = "QARMA with EnhancedPAC/PAC2/FPACCombined/PAuthLR",
 		}
 	},
 	{
@@ -480,6 +481,7 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[3] = "EnhancedPAC2",
 			[4] = "EnhancedPAC2/FPAC",
 			[5] = "EnhancedPAC2/FPAC/FPACCombined",
+			[6] = "EnhancedPAC2/FPAC/FPACCombined/PAuthLR",
 		}
 	},
 	{
@@ -497,8 +499,10 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 	{
 		FIELDINFO(20, 4, "LRCPC") {
 			[0] = "no LRCPC",
-			[1] = "LDAPR",
-			[2] = "LDAPR/LDAPUR/STLUR",
+			[1] = "LDAPR{,B,H}",
+			[2] = "LDAPR{,B,H}+LDAPUR{,B,SB,H,SH,SW}/STUR{,B,H}",
+			[3] = "LDAPR{,B,H}/LDAPUR{,B,SB,H,SH,SW}/STUR{,B,H} + "
+			      "post-index LDAPR, LDIAPP, STILP, pre-index STLR, etc"
 		}
 	},
 	{
@@ -567,6 +571,8 @@ struct fieldinfo id_aa64isar1_fieldinfo[] = {
 			[1] = "LD64B/ST64B",
 			[2] = "LD64B/ST64B/ST64BV",
 			[3] = "LD64B/ST64B/ST64BV/ST64BV0/ACCDATA_EL1",
+			[4] = "LD64B/ST64B/ST64BV/ST64BV0/ACCDATA_EL1 + "
+			      "atomic accesses to Write-back Cacheable, Shareable memory."
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -686,6 +692,11 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 			[0] = "Access and Dirty flags not supported",
 			[1] = "Access flag supported",
 			[2] = "Access and Dirty flags supported",
+			[3] = "Access and Dirty flags supported + "
+			      "Access for table descriptors.",
+			[4] = "Access and Dirty flags supported / "
+			      "Access for table descriptors + "
+			      "hardware tracking of Dirty state Structure.",
 		}
 	},
 	{
@@ -747,7 +758,10 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 		FIELDINFO(36, 4, "ETS") {
 			[0] = "Enhanced Translation Synchronization not "
 			      "supported",
-			[1] = "Enhanced Translation Synchronization supported",
+			[1] = "Enhanced Translation Synchronization not "
+			      "supported",
+			[2] = "Enhanced Translation Synchronization supported. (FEAT_ETS2)",
+			[3] = "Enhanced Translation Synchronization supported. (FEAT_ETS3).",
 		}
 	},
 	{
@@ -766,6 +780,24 @@ struct fieldinfo id_aa64mmfr1_fieldinfo[] = {
 		FIELDINFO(48, 4, "nTLBPA") {
 			[0] = "might include non-coherent caches",
 			[1] = "does not include non-coherent caches",
+		}
+	},
+	{
+		FIELDINFO(52, 4, "TIDCP1") {
+			[0] = "Trapping control of implementation defined accesses not supported.",
+			[1] = "Trapping control of implementation defined accesses supported. (FEAT_TIDCP1)",
+		}
+	},
+	{
+		FIELDINFO(56, 4, "CMOW") {
+			[0] = "Control for cache maintenance permission not supported.",
+			[1] = "Control for cache maintenance permission supported. (FEAT_CMOW)",
+		}
+	},
+	{
+		FIELDINFO(60, 4, "ECBHB") {
+			[0] = "Exploitative control using branch history information not supported.",
+			[1] = "Exploitative control using branch history information is supported. (FEAT_ECBHB)",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
@@ -804,17 +836,23 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 		}
 	},
 	// 	FIELDINFO(12, 4, "BRPs") special handling
+	{
+		FIELDINFO(16, 4, "PMSS") {
+			[0] = "PMU snapshot extension not implemented.",
+			[1] = "PMU snapshot extension implemented.",
+		}
+	},
 	// 	FIELDINFO(20, 4, "WRPs") special handling
 	//	FIELDINFO(28, 4, "CTX_CMPs") special handling
 	{
 		FIELDINFO(32, 4, "PMSVer") {
 			[0] = "Statistical Profiling Extension not implemented",
 			[1] = "Statistical Profiling Extension implemented",
-			[2] = "Statistical Profiling Extension and "
-			      "Event packet alignment flag implemented",
-			[3] = "Statistical Profiling Extension, "
-			      "Event packet alignment flag, and "
-			      "Branch target address packet, etc.",
+			[2] = "Statistical Profiling Extension for Armv8.5",
+			[3] = "Statistical Profiling Extension for Armv8.7",
+			[4] = "Statistical Profiling Extension for Armv8.8",
+			[5] = "Statistical Profiling Extension for Armv8.9",
+			[6] = "Statistical Profiling Extension for Armv9.6",
 		}
 	},
 	{
@@ -831,11 +869,37 @@ struct fieldinfo id_aa64dfr0_fieldinfo[] = {
 		}
 	},
 	{
+		FIELDINFO(44, 4, "TraceBuffer") {
+			[0] = "Trace Buffer Extension not implemented.",
+			[1] = "Trace Buffer Extension implemented. (FEAT_TRBE)",
+			[2] = "Trace Buffer Extension implemented. (FEAT_TRBEv1p1)",
+		}
+	},
+	{
 		FIELDINFO(48, 4, "MTPMU") {
 			[0] = "Multi-threaded PMU extension not implemented, "
 			      "or implementation defined",
 			[1] = "Multi-threaded PMU extension implemented",
 			[15] = "Multi-threaded PMU extension not implemented"
+		}
+	},
+	{
+		FIELDINFO(52, 4, "BRBE") {
+			[0] = "Branch Record Buffer Extension not implemented.",
+			[1] = "Branch Record Buffer Extension implemented. (FEAT_BRBE)",
+			[2] = "Branch Record Buffer Extension implemented. (FEAT_BRBEv1p1)",
+		}
+	},
+	{
+		FIELDINFO(56, 4, "ExtTrcBuff") {
+			[0] = "Trace Buffer External Mode not implemented.",
+			[1] = "Trace Buffer External Mode implemented. (FEAT_TRBE_EXT)",
+		}
+	},
+	{
+		FIELDINFO(60, 4, "HPMN0") {
+			[0] = "Zero PMU event counters for a Guest operating system not implemented.",
+			[1] = "Zero PMU event counters for a Guest operating system implemented. (FEAT_HPMN0)",
 		}
 	},
 	{ .bitwidth = 0 }	/* end of table */
