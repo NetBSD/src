@@ -1,4 +1,4 @@
-/*	$NetBSD: mdio.h,v 1.12 2026/11/25 14:12:00 msaitoh Exp $	*/
+/*	$NetBSD: mdio.h,v 1.13 2026/11/25 14:12:38 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #ifndef _DEV_MII_MDIO_H_
-#define	_DEV_MII_MDIO_H_
+#define _DEV_MII_MDIO_H_
 
 /*
  * IEEE 802.3 Clause 45 definitions.
@@ -42,22 +42,22 @@
  * MDIO Manageable Device (MMD) addresses.
  * Table 45-1
  */
-#define	MDIO_MMD_PMAPMD		1
-#define	MDIO_MMD_WIS		2
-#define	MDIO_MMD_PCS		3
-#define	MDIO_MMD_PHYXS		4
-#define	MDIO_MMD_DTEXS		5
-#define	MDIO_MMD_TC		6
-#define	MDIO_MMD_AN		7
-#define	MDIO_MMD_SEPPMA1	8
-#define	MDIO_MMD_SEPPMA2	9
-#define	MDIO_MMD_SEPPMA3	10
-#define	MDIO_MMD_SEPPMA4	11
+#define MDIO_MMD_PMAPMD		1
+#define MDIO_MMD_WIS		2
+#define MDIO_MMD_PCS		3
+#define MDIO_MMD_PHYXS		4
+#define MDIO_MMD_DTEXS		5
+#define MDIO_MMD_TC		6
+#define MDIO_MMD_AN		7
+#define MDIO_MMD_SEPPMA1	8
+#define MDIO_MMD_SEPPMA2	9
+#define MDIO_MMD_SEPPMA3	10
+#define MDIO_MMD_SEPPMA4	11
 #define MDIO_MMD_OFDM_PMAPMD	12
 #define MDIO_MMD_PU		13
-#define	MDIO_MMD_CL22EXT	29
-#define	MDIO_MMD_VNDSP1		30
-#define	MDIO_MMD_VNDSP2		31
+#define MDIO_MMD_CL22EXT	29
+#define MDIO_MMD_VNDSP1		30
+#define MDIO_MMD_VNDSP2		31
 
 /*
  * PMA/PMD registers.
@@ -150,7 +150,7 @@
 #define MDIO_PMAPMD_40G100GEXTABLTY	13  /* 40G/100G extended ability */
 #define MDIO_PMAPMD_PKGID1		14  /* PMA/PMD package identifier 1 */
 #define MDIO_PMAPMD_PKGID2		15  /* PMA/PMD package identifier 2 */
-#define	MDIO_PMAPMD_EEECAP		16  /* PMA/PMD EEE capability */
+#define MDIO_PMAPMD_EEECAP		16  /* PMA/PMD EEE capability */
 	/* Values 17 to 29 are reserved */
 #define MDIO_PMAPMD_10P2BCTRL		30  /* 10P/2B PMA/PMD control */
 #define MDIO_PMAPMD_10P2BSTAT		31  /* 10P/2B PMA/PMD status */
@@ -354,40 +354,40 @@
  * WIS registers.
  * Table 45-99
  */
-#define	MDIO_WIS_CTRL1		0	/* WIS control 1 */
-#define	MDIO_WIS_STAT1		1	/* WIS status 1 */
-#define	MDIO_WIS_DEVID1		2	/* WIS device identifier 1 */
-#define	MDIO_WIS_DEVID2		3	/* WIS device identifier 2 */
-#define	MDIO_WIS_SPEED		4	/* WIS speed ability */
-#define	MDIO_WIS_DEVS1		5	/* WIS devices in package 1 */
-#define	MDIO_WIS_DEVS2		6	/* WIS devices in package 2 */
-#define	MDIO_WIS_10GCTRL2	7	/* 10G WIS control 2 */
-#define	MDIO_WIS_10GSTAT2	8	/* 10G WIS status 2 */
-#define	MDIO_WIS_10GTSTERRCNT	9	/* 10G WIS test-pattern error counter*/
+#define MDIO_WIS_CTRL1		0	/* WIS control 1 */
+#define MDIO_WIS_STAT1		1	/* WIS status 1 */
+#define MDIO_WIS_DEVID1		2	/* WIS device identifier 1 */
+#define MDIO_WIS_DEVID2		3	/* WIS device identifier 2 */
+#define MDIO_WIS_SPEED		4	/* WIS speed ability */
+#define MDIO_WIS_DEVS1		5	/* WIS devices in package 1 */
+#define MDIO_WIS_DEVS2		6	/* WIS devices in package 2 */
+#define MDIO_WIS_10GCTRL2	7	/* 10G WIS control 2 */
+#define MDIO_WIS_10GSTAT2	8	/* 10G WIS status 2 */
+#define MDIO_WIS_10GTSTERRCNT	9	/* 10G WIS test-pattern error counter*/
 	/* Values 10 to 13 are reserved */
-#define	MDIO_WIS_PKGID1		14	/* WIS package identifier 1 */
-#define	MDIO_WIS_PKGID2		15	/* WIS package identifier 2 */
+#define MDIO_WIS_PKGID1		14	/* WIS package identifier 1 */
+#define MDIO_WIS_PKGID2		15	/* WIS package identifier 2 */
 	/* Values 16 to 32 are reserved */
-#define	MDIO_WIS_10GSTAT3	33	/* 10G WIS status 3 */
+#define MDIO_WIS_10GSTAT3	33	/* 10G WIS status 3 */
 	/* Values 34 to 36 are reserved */
-#define	MDIO_WIS_10GFARENDPBERRCNT 37	/* 10G WIS far end path block errcnt */
+#define MDIO_WIS_10GFARENDPBERRCNT 37	/* 10G WIS far end path block errcnt */
 	/* Value 38 is reserved */
-#define	MDIO_WIS_J1XMIT(x)		/* 10G WIS J1 transmit */	     \
+#define MDIO_WIS_J1XMIT(x)		/* 10G WIS J1 transmit */	     \
 				(39 + ((x) / 2))/* 0to15. L8=even, H8=odd */
 
-#define	MDIO_WIS_J1RCV(x)		/* 10G WIS J1 receive */	     \
+#define MDIO_WIS_J1RCV(x)		/* 10G WIS J1 receive */	     \
 				(47 + ((x) / 2))/* 0to15. L8=even, H8=odd */
-#define	MDIO_WIS_FARENDLBIPERR1	55	/* 10G WIS far end line BIP errors 1 */
-#define	MDIO_WIS_FARENDLBIPERR2	56	/* 10G WIS far end line BIP errors 2 */
-#define	MDIO_WIS_LBIPERR1	57	/* 10G WIS line BIP errors 1 */
-#define	MDIO_WIS_LBIPERR2	58	/* 10G WIS line BIP errors 2 */
-#define	MDIO_WIS_PBERRCNT	59	/* 10G WIS path block error count */
-#define	MDIO_WIS_SECBIPERRCNT	60	/* 10G WIS section BIP error count */
+#define MDIO_WIS_FARENDLBIPERR1	55	/* 10G WIS far end line BIP errors 1 */
+#define MDIO_WIS_FARENDLBIPERR2	56	/* 10G WIS far end line BIP errors 2 */
+#define MDIO_WIS_LBIPERR1	57	/* 10G WIS line BIP errors 1 */
+#define MDIO_WIS_LBIPERR2	58	/* 10G WIS line BIP errors 2 */
+#define MDIO_WIS_PBERRCNT	59	/* 10G WIS path block error count */
+#define MDIO_WIS_SECBIPERRCNT	60	/* 10G WIS section BIP error count */
 	/* Values 61 to 63 are reserved */
-#define	MDIO_WIS_J0XMIT(x)		/* 10G WIS J0 transmit */	     \
+#define MDIO_WIS_J0XMIT(x)		/* 10G WIS J0 transmit */	     \
 				(64 + ((x) / 2))/* 0to15. L8=even, H8=odd */
 
-#define	MDIO_WIS_J0RCV(x)		/* 10G WIS J0 receive */	     \
+#define MDIO_WIS_J0RCV(x)		/* 10G WIS J0 receive */	     \
 				(72 + ((x) / 2))/* 0to15. L8=even, H8=odd */
 	/* Values 80 to 1799 are reserved */
 #define MDIO_WIS_TSYNCCAP	1800 /* TimeSync WIS capability */
@@ -406,65 +406,65 @@
  * PCS registers.
  * Table 45-119
  */
-#define	MDIO_PCS_CTRL1		0	/* PCS control 1 */
-#define	MDIO_PCS_STAT1		1	/* PCS status 1 */
-#define	MDIO_PCS_DEVID1		2	/* PCS device identifier 1 */
-#define	MDIO_PCS_DEVID2		3	/* PCS device identifier 2 */
-#define	MDIO_PCS_SPEED		4	/* PCS speed ability */
-#define	MDIO_PCS_DEVS1		5	/* PCS devices in package 1 */
-#define	MDIO_PCS_DEVS2		6	/* PCS devices in package 2 */
-#define	MDIO_PCS_10GCTRL2	7	/* 10G PCS control 2 */
-#define	MDIO_PCS_10GSTAT2	8	/* 10G PCS status 2 */
+#define MDIO_PCS_CTRL1		0	/* PCS control 1 */
+#define MDIO_PCS_STAT1		1	/* PCS status 1 */
+#define MDIO_PCS_DEVID1		2	/* PCS device identifier 1 */
+#define MDIO_PCS_DEVID2		3	/* PCS device identifier 2 */
+#define MDIO_PCS_SPEED		4	/* PCS speed ability */
+#define MDIO_PCS_DEVS1		5	/* PCS devices in package 1 */
+#define MDIO_PCS_DEVS2		6	/* PCS devices in package 2 */
+#define MDIO_PCS_10GCTRL2	7	/* 10G PCS control 2 */
+#define MDIO_PCS_10GSTAT2	8	/* 10G PCS status 2 */
 	/* Values 9 to 13 are reserved */
-#define	MDIO_PCS_PKGID1		14	/* PCS package identifier 1 */
-#define	MDIO_PCS_PKGID2		15	/* PCS package identifier 2 */
+#define MDIO_PCS_PKGID1		14	/* PCS package identifier 1 */
+#define MDIO_PCS_PKGID2		15	/* PCS package identifier 2 */
 	/* Values 16 to 19 are reserved */
-#define	MDIO_PCS_EEECTRLCAP	20	/* EEE control and capability */
+#define MDIO_PCS_EEECTRLCAP	20	/* EEE control and capability */
 	/* Value 21 is reserved */
-#define	MDIO_PCS_EEEWKERRCNT	22	/* EEE wake error counter */
+#define MDIO_PCS_EEEWKERRCNT	22	/* EEE wake error counter */
 	/* Value 23 is reserved */
-#define	MDIO_PCS_10GXSTAT	24	/* 10G-X PCS status */
-#define	MDIO_PCS_10GXSTSCTRL	25	/* 10G-X PCS test control */
+#define MDIO_PCS_10GXSTAT	24	/* 10G-X PCS status */
+#define MDIO_PCS_10GXSTSCTRL	25	/* 10G-X PCS test control */
 	/* Values 26 to 31 are reserved */
-#define	MDIO_PCS_BASERTSTAT1	32	/* BASE-R & 10G-T PCS status 1 */
-#define	MDIO_PCS_BASERTSTAT2	33	/* BASE-R & 10G-T PCS status 2 */
-#define	MDIO_PCS_10GRTPSEEDA(x)		/* 10G-R PCS test pattern seed A */ \
+#define MDIO_PCS_BASERTSTAT1	32	/* BASE-R & 10G-T PCS status 1 */
+#define MDIO_PCS_BASERTSTAT2	33	/* BASE-R & 10G-T PCS status 2 */
+#define MDIO_PCS_10GRTPSEEDA(x)		/* 10G-R PCS test pattern seed A */ \
 				(34 + (x)) /* 0 to 3 */
-#define	MDIO_PCS_10GRTPSEEDB(x)		/* 10G-R PCS test pattern seed B */ \
+#define MDIO_PCS_10GRTPSEEDB(x)		/* 10G-R PCS test pattern seed B */ \
 				(38 + (x)) /* 0 to 3 */
-#define	MDIO_PCS_10GRTPCTRL	42	/* 10G-R PCS test pattern control */
-#define	MDIO_PCS_10GRTPERRCNT	43	/* 10G-R PCS test pattern err counter*/
-#define	MDIO_PCS_BERHIORDERCNT	44	/* BER high order counter */
-#define	MDIO_PCS_ERRBHIORDERCNT	45	/* Errored blocks high order counter */
+#define MDIO_PCS_10GRTPCTRL	42	/* 10G-R PCS test pattern control */
+#define MDIO_PCS_10GRTPERRCNT	43	/* 10G-R PCS test pattern err counter*/
+#define MDIO_PCS_BERHIORDERCNT	44	/* BER high order counter */
+#define MDIO_PCS_ERRBHIORDERCNT	45	/* Errored blocks high order counter */
 	/* Values 46 to 49 are reserved */
 #define MDIO_PCS_MLBRPCSALGNSTAT1 50	/* Mlt-lane BASE-R PCS Align. Stat1 */
 #define MDIO_PCS_MLBRPCSALGNSTAT2 51	/* Mlt-lane BASE-R PCS Align. Stat2 */
 #define MDIO_PCS_MLBRPCSALGNSTAT3 52	/* Mlt-lane BASE-R PCS Align. Stat3 */
 #define MDIO_PCS_MLBRPCSALGNSTAT4 53	/* Mlt-lane BASE-R PCS Align. Stat4 */
 	/* Values 54 to 59 are reserved */
-#define	MDIO_PCS_10P2BCAP	60	/* 10P/2B capability */
-#define	MDIO_PCS_10P2BCTRL	61	/* 10P/2B PCS control */
-#define	MDIO_PCS_10P2BPMEAVAIL1	62	/* 10P/2B PME available 1 */
-#define	MDIO_PCS_10P2BPMEAVAIL2	63	/* 10P/2B PME available 2 */
-#define	MDIO_PCS_10P2BPMEAGGRG1	64	/* 10P/2B PME aggregate 1 */
-#define	MDIO_PCS_10P2BPMEAGGRG2	65	/* 10P/2B PME aggregate 2 */
-#define	MDIO_PCS_10P2BPAFRXERRCNT 66	/* 10P/2B PAF RX error counter */
-#define	MDIO_PCS_10P2BPAFSMLFRCNT 67	/* 10P/2B PAF small fragment counter */
-#define	MDIO_PCS_10P2BPAFLARFLCNT 68	/* 10P/2B PAF large fragment counter */
-#define	MDIO_PCS_10P2BPAFOVFLCNT 69    /* 10P/2B PAF overflow counter */
-#define	MDIO_PCS_10P2BPAFBADFLCNT 70   /* 10P/2B PAF bad fragments counter */
-#define	MDIO_PCS_10P2BPAFLSTFLCNT 71   /* 10P/2B PAF lost fragments counter */
-#define	MDIO_PCS_10P2BPAFLSTSTFLCNT 72 /* 10P/2B PAF lost starts of fr. cnt */
-#define	MDIO_PCS_10P2BPAFLSTENFLCNT 73 /* 10P/2B PAF lost ends of fr. count */
-#define	MDIO_PCS_10GPRFECABLTY	74	/* 10G-PR & 10/1G-PRX FEC ability */
-#define	MDIO_PCS_10GPRFECCTRL	75	/* 10G-PR & 10/1G-PRX FEC control */
-#define	MDIO_PCS_10GPRCOFECCOCNT1 76	/*10(/1)G-PR(X) corrected FECcodecnt1*/
-#define	MDIO_PCS_10GPRCOFECCOCNT2 77	/*10(/1)G-PR(X) corrected FECcodecnt2*/
-#define	MDIO_PCS_10GPRUNCOFECCOCNT1 78	/*10(/1)G-PR(X)uncorrected FECcdecnt1*/
-#define	MDIO_PCS_10GPRUNCOFECCOCNT2 79	/*10(/1)G-PR(X)uncorrected FECcdecnt2*/
-#define	MDIO_PCS_10GPRBERMONTMRCTRL 80	/*10(/1)G-PR(X) BER monitor tmr ctrl */
-#define	MDIO_PCS_10GPRBERMONSTAT 81	/*10(/1)G-PR(X) BER monitor status */
-#define	MDIO_PCS_10GPRBERMONTHRCTRL 82	/*10(/1)G-PR(X) BER mntr thresh ctrl */
+#define MDIO_PCS_10P2BCAP	60	/* 10P/2B capability */
+#define MDIO_PCS_10P2BCTRL	61	/* 10P/2B PCS control */
+#define MDIO_PCS_10P2BPMEAVAIL1	62	/* 10P/2B PME available 1 */
+#define MDIO_PCS_10P2BPMEAVAIL2	63	/* 10P/2B PME available 2 */
+#define MDIO_PCS_10P2BPMEAGGRG1	64	/* 10P/2B PME aggregate 1 */
+#define MDIO_PCS_10P2BPMEAGGRG2	65	/* 10P/2B PME aggregate 2 */
+#define MDIO_PCS_10P2BPAFRXERRCNT 66	/* 10P/2B PAF RX error counter */
+#define MDIO_PCS_10P2BPAFSMLFRCNT 67	/* 10P/2B PAF small fragment counter */
+#define MDIO_PCS_10P2BPAFLARFLCNT 68	/* 10P/2B PAF large fragment counter */
+#define MDIO_PCS_10P2BPAFOVFLCNT 69    /* 10P/2B PAF overflow counter */
+#define MDIO_PCS_10P2BPAFBADFLCNT 70   /* 10P/2B PAF bad fragments counter */
+#define MDIO_PCS_10P2BPAFLSTFLCNT 71   /* 10P/2B PAF lost fragments counter */
+#define MDIO_PCS_10P2BPAFLSTSTFLCNT 72 /* 10P/2B PAF lost starts of fr. cnt */
+#define MDIO_PCS_10P2BPAFLSTENFLCNT 73 /* 10P/2B PAF lost ends of fr. count */
+#define MDIO_PCS_10GPRFECABLTY	74	/* 10G-PR & 10/1G-PRX FEC ability */
+#define MDIO_PCS_10GPRFECCTRL	75	/* 10G-PR & 10/1G-PRX FEC control */
+#define MDIO_PCS_10GPRCOFECCOCNT1 76	/*10(/1)G-PR(X) corrected FECcodecnt1*/
+#define MDIO_PCS_10GPRCOFECCOCNT2 77	/*10(/1)G-PR(X) corrected FECcodecnt2*/
+#define MDIO_PCS_10GPRUNCOFECCOCNT1 78	/*10(/1)G-PR(X)uncorrected FECcdecnt1*/
+#define MDIO_PCS_10GPRUNCOFECCOCNT2 79	/*10(/1)G-PR(X)uncorrected FECcdecnt2*/
+#define MDIO_PCS_10GPRBERMONTMRCTRL 80	/*10(/1)G-PR(X) BER monitor tmr ctrl */
+#define MDIO_PCS_10GPRBERMONSTAT 81	/*10(/1)G-PR(X) BER monitor status */
+#define MDIO_PCS_10GPRBERMONTHRCTRL 82	/*10(/1)G-PR(X) BER mntr thresh ctrl */
 	/* Values 83 to 199 are reserved */
 #define MDIO_PCS_BIPERRCNT(x)	    	/* BIP Error Counter */ \
 				    (200 + (x)) /* lane 0 to 19 */
@@ -488,25 +488,25 @@
  * PHY XS registers.
  * Table 45-164
  */
-#define	MDIO_PHYXS_CTRL1	0	/* PHY XS control 1 */
-#define	MDIO_PHYXS_STAT1	1	/* PHY XS status 1 */
-#define	MDIO_PHYXS_DEVID1	2	/* PHY XS device identifier 1 */
-#define	MDIO_PHYXS_DEVID2	3	/* PHY XS device identifier 2 */
-#define	MDIO_PHYXS_SPEED	4	/* PHY XS speed ability */
-#define	MDIO_PHYXS_DEVS1	5	/* PHY XS devices in package 1 */
-#define	MDIO_PHYXS_DEVS2	6	/* PHY XS devices in package 2 */
+#define MDIO_PHYXS_CTRL1	0	/* PHY XS control 1 */
+#define MDIO_PHYXS_STAT1	1	/* PHY XS status 1 */
+#define MDIO_PHYXS_DEVID1	2	/* PHY XS device identifier 1 */
+#define MDIO_PHYXS_DEVID2	3	/* PHY XS device identifier 2 */
+#define MDIO_PHYXS_SPEED	4	/* PHY XS speed ability */
+#define MDIO_PHYXS_DEVS1	5	/* PHY XS devices in package 1 */
+#define MDIO_PHYXS_DEVS2	6	/* PHY XS devices in package 2 */
 	/* Value 7 is reserved */
-#define	MDIO_PHYXS_STAT2	8	/* PHY XS status 2 */
+#define MDIO_PHYXS_STAT2	8	/* PHY XS status 2 */
 	/* Values 9 to 13 are reserved */
-#define	MDIO_PHYXS_PKGID1	14	/* PHY XS package identifier 1 */
-#define	MDIO_PHYXS_PKGID2	15	/* PHY XS package identifier 2 */
+#define MDIO_PHYXS_PKGID1	14	/* PHY XS package identifier 1 */
+#define MDIO_PHYXS_PKGID2	15	/* PHY XS package identifier 2 */
 	/* Values 16 to 19 are reserved */
-#define	MDIO_PHYXS_EEECAP	20	/* EEE capability register */
+#define MDIO_PHYXS_EEECAP	20	/* EEE capability register */
 	/* Value 21 is reserved */
-#define	MDIO_PHYXS_EEEWKERRCNT	22	/* EEE wake error counter */
+#define MDIO_PHYXS_EEEWKERRCNT	22	/* EEE wake error counter */
 	/* Value 23 is reserved */
-#define	MDIO_PHYXS_10GXGXLNSTAT	24	/* 10G-X PHY XGXS lane status */
-#define	MDIO_PHYXS_10GXGXSTSCTRL 25	/* 10G-X PHY XGXS test control */
+#define MDIO_PHYXS_10GXGXLNSTAT	24	/* 10G-X PHY XGXS lane status */
+#define MDIO_PHYXS_10GXGXSTSCTRL 25	/* 10G-X PHY XGXS test control */
 	/* Values 26 to 1799 are reserved */
 #define MDIO_PHYXS_TSYNCCSP	  1800 /* TimeSync PHY XS capability */
 #define MDIO_PHYXS_TSYNCTXMAXDLYL 1801 /* TimeSync PHY XS TX MAX delay L */
@@ -524,25 +524,25 @@
  * DTE XS registers.
  * Table 45-175
  */
-#define	MDIO_DTEXS_CTRL1	0	/* DTE XS control 1 */
-#define	MDIO_DTEXS_STAT1	1	/* DTE XS status 1 */
-#define	MDIO_DTEXS_DEVID1	2	/* DTE XS device identifier 1 */
-#define	MDIO_DTEXS_DEVID2	3	/* DTE XS device identifier 2 */
-#define	MDIO_DTEXS_SPEED	4	/* DTE XS speed ability */
-#define	MDIO_DTEXS_DEVS1	5	/* DTE XS devices in package 1 */
-#define	MDIO_DTEXS_DEVS2	6	/* DTE XS devices in package 2 */
+#define MDIO_DTEXS_CTRL1	0	/* DTE XS control 1 */
+#define MDIO_DTEXS_STAT1	1	/* DTE XS status 1 */
+#define MDIO_DTEXS_DEVID1	2	/* DTE XS device identifier 1 */
+#define MDIO_DTEXS_DEVID2	3	/* DTE XS device identifier 2 */
+#define MDIO_DTEXS_SPEED	4	/* DTE XS speed ability */
+#define MDIO_DTEXS_DEVS1	5	/* DTE XS devices in package 1 */
+#define MDIO_DTEXS_DEVS2	6	/* DTE XS devices in package 2 */
 	/* Value 7 is reserved */
-#define	MDIO_DTEXS_STAT2	8	/* DTE XS status 2 */
+#define MDIO_DTEXS_STAT2	8	/* DTE XS status 2 */
 	/* Values 9 to 13 are reserved */
-#define	MDIO_DTEXS_PKGID1	14	/* DTE XS package identifier 1 */
-#define	MDIO_DTEXS_PKGID2	15	/* DTE XS package identifier 2 */
+#define MDIO_DTEXS_PKGID1	14	/* DTE XS package identifier 1 */
+#define MDIO_DTEXS_PKGID2	15	/* DTE XS package identifier 2 */
 	/* Values 16 to 19 are reserved */
-#define	MDIO_DTEXS_EEECAP	20	/* EEE capability register */
+#define MDIO_DTEXS_EEECAP	20	/* EEE capability register */
 	/* Value 21 is reserved */
-#define	MDIO_DTEXS_EEEWKERRCNT	22	/* EEE wake error counter */
+#define MDIO_DTEXS_EEEWKERRCNT	22	/* EEE wake error counter */
 	/* Value 23 is reserved */
-#define	MDIO_DTEXS_10GXGXLNSTAT	24	/* 10G DTE XGXS lane status */
-#define	MDIO_DTEXS_10GXGXSTSCTRL 25	/* 10G DTE XGXS test control */
+#define MDIO_DTEXS_10GXGXLNSTAT	24	/* 10G DTE XGXS lane status */
+#define MDIO_DTEXS_10GXGXSTSCTRL 25	/* 10G DTE XGXS test control */
 	/* Values 26 to 1799 are reserved */
 #define MDIO_DTEXS_TSYNCCAP	  1800 /* TimeSync DTE XS capability */
 #define MDIO_DTEXS_TSYNCTXMAXDLYL 1801 /* TimeSync DTE XS TX MAX delay L */
@@ -560,28 +560,28 @@
  * TC registers.
  * Table 45-186
  */
-#define	MDIO_TC_CTRL1		0	/* TC control 1 */
+#define MDIO_TC_CTRL1		0	/* TC control 1 */
 	/* Value 1 is reserved */
-#define	MDIO_TC_DEVID1		2	/* TC device identifier 1 */
-#define	MDIO_TC_DEVID2		3	/* TC device identifier 2 */
-#define	MDIO_TC_SPEED		4	/* TC speed ability */
-#define	MDIO_TC_DEVS1		5	/* TC devices in package 1 */
-#define	MDIO_TC_DEVS2		6	/* TC devices in package 2 */
+#define MDIO_TC_DEVID1		2	/* TC device identifier 1 */
+#define MDIO_TC_DEVID2		3	/* TC device identifier 2 */
+#define MDIO_TC_SPEED		4	/* TC speed ability */
+#define MDIO_TC_DEVS1		5	/* TC devices in package 1 */
+#define MDIO_TC_DEVS2		6	/* TC devices in package 2 */
 	/* Values 7 to 13 are reserved */
-#define	MDIO_TC_PKGID1		14	/* TC package identifier 1 */
-#define	MDIO_TC_PKGID2		15	/* TC package identifier 2 */
-#define	MDIO_TC_10P2BAGGDCCTRL	16	/* 10P/2B aggregation discovery ctrl */
-#define	MDIO_TC_10P2BAGGDCSTAT	17	/* 10P/2B aggregation&discovery stat */
-#define	MDIO_TC_10P2BAGGDCCODE1	18	/* 10P/2B aggregation discovery code1*/
-#define	MDIO_TC_10P2BAGGDCCODE2	19	/* 10P/2B aggregation discovery code2*/
-#define	MDIO_TC_10P2BAGGDCCODE3	20	/* 10P/2B aggregation discovery code3*/
-#define	MDIO_TC_10P2BLPPMEAGGCTRL 21	/* 10P/2B LP PME aggregate control */
-#define	MDIO_TC_10P2BLPPMEAGGDAT1 22	/* 10P/2B LP PME aggregate data 1 */
-#define	MDIO_TC_10P2BLPPMEAGGDAT2 23	/* 10P/2B LP PME aggregate data 2 */
-#define	MDIO_TC_10P2BCRCERRCNT	24	/* 10P/2B TC CRC error counter  */
-#define	MDIO_TC_10P2BTPSCOVIOCNT1 25	/* 10P/2B TPS-TC coding viol. cnt. 1 */
-#define	MDIO_TC_10P2BTPSCOVIOCNT2 26	/* 10P/2B TPS-TC coding viol. cnt. 2 */
-#define	MDIO_TC_10P2BINDIC	27	/* 10P/2B TC indications */
+#define MDIO_TC_PKGID1		14	/* TC package identifier 1 */
+#define MDIO_TC_PKGID2		15	/* TC package identifier 2 */
+#define MDIO_TC_10P2BAGGDCCTRL	16	/* 10P/2B aggregation discovery ctrl */
+#define MDIO_TC_10P2BAGGDCSTAT	17	/* 10P/2B aggregation&discovery stat */
+#define MDIO_TC_10P2BAGGDCCODE1	18	/* 10P/2B aggregation discovery code1*/
+#define MDIO_TC_10P2BAGGDCCODE2	19	/* 10P/2B aggregation discovery code2*/
+#define MDIO_TC_10P2BAGGDCCODE3	20	/* 10P/2B aggregation discovery code3*/
+#define MDIO_TC_10P2BLPPMEAGGCTRL 21	/* 10P/2B LP PME aggregate control */
+#define MDIO_TC_10P2BLPPMEAGGDAT1 22	/* 10P/2B LP PME aggregate data 1 */
+#define MDIO_TC_10P2BLPPMEAGGDAT2 23	/* 10P/2B LP PME aggregate data 2 */
+#define MDIO_TC_10P2BCRCERRCNT	24	/* 10P/2B TC CRC error counter  */
+#define MDIO_TC_10P2BTPSCOVIOCNT1 25	/* 10P/2B TPS-TC coding viol. cnt. 1 */
+#define MDIO_TC_10P2BTPSCOVIOCNT2 26	/* 10P/2B TPS-TC coding viol. cnt. 2 */
+#define MDIO_TC_10P2BINDIC	27	/* 10P/2B TC indications */
 	/* Values 28 to 1799 are reserved */
 #define MDIO_TC_TSYNCCAP	1800 /* TimeSync TC capability */
 #define MDIO_TC_TSYNCTXMAXDLYL	1801 /* TimeSync TC TX MAX delay L */
@@ -632,21 +632,21 @@
 	/* Values 34 to 47 are reserved */
 #define MDIO_AN_BPETHSTAT	48  /* BP Ethernet status */
 	/* Values 49 to 59 are reserved */
-#define	MDIO_AN_EEEADVERT	60  /* EEE advertisement */
-#define	AN_EEEADVERT_100G_CR4	0x2000	/* 100GBASE-CR4 */
-#define	AN_EEEADVERT_100G_KR4	0x1000	/* 100GBASE-KR4 */
-#define	AN_EEEADVERT_100G_KP4	0x0800	/* 100GBASE-KP4 */
-#define	AN_EEEADVERT_100G_CR10	0x0400	/* 100GBASE-CR10 */
-#define	AN_EEEADVERT_40G_CR4	0x0100	/* 40GBASE-CR4 */
-#define	AN_EEEADVERT_40G_KR4	0x0080	/* 40GBASE-KR4 */
-#define	AN_EEEADVERT_10G_KR	0x0040	/* 10GBASE-KR */
-#define	AN_EEEADVERT_10G_KX4	0x0020	/* 10GBASE-KX4 */
-#define	AN_EEEADVERT_1000_KX	0x0010	/* 1000BASE-KX */
-#define	AN_EEEADVERT_10G_T	0x0008	/* 10GBASE-T */
-#define	AN_EEEADVERT_1000_T	0x0004	/* 1000BASE-T */
-#define	AN_EEEADVERT_100_TX	0x0002	/* 100BASE-TX */
+#define MDIO_AN_EEEADVERT	60  /* EEE advertisement */
+#define AN_EEEADVERT_100G_CR4	0x2000	/* 100GBASE-CR4 */
+#define AN_EEEADVERT_100G_KR4	0x1000	/* 100GBASE-KR4 */
+#define AN_EEEADVERT_100G_KP4	0x0800	/* 100GBASE-KP4 */
+#define AN_EEEADVERT_100G_CR10	0x0400	/* 100GBASE-CR10 */
+#define AN_EEEADVERT_40G_CR4	0x0100	/* 40GBASE-CR4 */
+#define AN_EEEADVERT_40G_KR4	0x0080	/* 40GBASE-KR4 */
+#define AN_EEEADVERT_10G_KR	0x0040	/* 10GBASE-KR */
+#define AN_EEEADVERT_10G_KX4	0x0020	/* 10GBASE-KX4 */
+#define AN_EEEADVERT_1000_KX	0x0010	/* 1000BASE-KX */
+#define AN_EEEADVERT_10G_T	0x0008	/* 10GBASE-T */
+#define AN_EEEADVERT_1000_T	0x0004	/* 1000BASE-T */
+#define AN_EEEADVERT_100_TX	0x0002	/* 100BASE-TX */
 
-#define	MDIO_AN_EEELPABLTY	61  /* EEE LP ability */
+#define MDIO_AN_EEELPABLTY	61  /* EEE LP ability */
 	/* bitmap is the same as MDIO_AN_EEEADVERT(7.60) */
 
 	/* Values 62 to 32767 are reserved */
