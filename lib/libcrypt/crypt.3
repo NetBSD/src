@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.37 2025/11/17 21:28:37 uwe Exp $
+.\"	$NetBSD: crypt.3,v 1.38 2026/11/25 15:44:10 jschauma Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"     @(#)crypt.3	8.2 (Berkeley) 12/11/93
 .\"
-.Dd November 17, 2025
+.Dd November 25, 2026
 .Dt CRYPT 3
 .Os
 .
@@ -87,7 +87,9 @@ At the moment a
 .Ql $1
 chooses MD5 hashing,
 .Ql $2
-chooses Blowfish hashing, and
+chooses Blowfish hashing,
+.Ql $sha1
+chooses SHA1 hashing, and
 .Ql $argon2d ,
 .Ql $argon2i ,
 or
@@ -299,39 +301,6 @@ Only the first 8 characters of the
 .Fa salt
 are used; any other characters are silently ignored.
 .
-.Ss Argon2 password hashing
-.
-Argon2 is a memory-hard password hashing algorithm.
-.Fn crypt
-provides all three variants: Argon2d, Argon2i, and Argon2id.
-It is recommended to use Argon2id, which provides a hybrid combination
-using Argon2i on the first pass, and Argon2d on the remaining passes.
-We parameterize on three variables,
-although four variables separated by
-.Ql $
-are specified:
-.Pp
-The first parameter,
-.Va version ( Li v ) ,
-specifies the version of Argon to be used.
-This version is currently fixed per RFC9106 as decimal\~19.
-Next,
-.Va m_cost ( Li m ) ,
-specifies the memory usage in
-.Tn KB ;
-.Va t_cost ( Li t ) ,
-specifies the number of iterations, and lastly
-.Va parallelism ( Li p )
-specifies the number of threads.
-This is currently ignored and one thread will always be used.
-Following these parameters is the salt.
-.Pp
-A complete Argon2
-.Fa setting
-string might be
-.Pp
-.Dl $argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB
-.
 .Ss \(lqBlowfish\(rq bcrypt
 .
 The Blowfish version of
@@ -372,6 +341,56 @@ A complete Blowfish
 string might be
 .Pp
 .Dl $2a$12$eIAq8PR8sIUnJ1HaohxX2O
+.
+.Ss SHA1 password hashing
+.
+For the
+.Tn SHA1
+password hashing scheme, the string
+.Ql $sha1 ,
+the number of iterations, and up to 64 bytes of
+.Fa salt
+are separated by the
+.Ql $
+character and passed to
+.Nm
+via the
+.Fa setting
+argument as, e.g.,
+.Ql $sha1$64000$cSvxXFBF .
+.
+.Ss Argon2 password hashing
+.
+Argon2 is a memory-hard password hashing algorithm.
+.Fn crypt
+provides all three variants: Argon2d, Argon2i, and Argon2id.
+It is recommended to use Argon2id, which provides a hybrid combination
+using Argon2i on the first pass, and Argon2d on the remaining passes.
+We parameterize on three variables,
+although four variables separated by
+.Ql $
+are specified:
+.Pp
+The first parameter,
+.Va version ( Li v ) ,
+specifies the version of Argon to be used.
+This version is currently fixed per RFC9106 as decimal\~19.
+Next,
+.Va m_cost ( Li m ) ,
+specifies the memory usage in
+.Tn KB ;
+.Va t_cost ( Li t ) ,
+specifies the number of iterations, and lastly
+.Va parallelism ( Li p )
+specifies the number of threads.
+This is currently ignored and one thread will always be used.
+Following these parameters is the salt.
+.Pp
+A complete Argon2
+.Fa setting
+string might be
+.Pp
+.Dl $argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB
 .
 .Sh RETURN VALUES
 .
